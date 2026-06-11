@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Maurice">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Maurice — Training Coach</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bk:#0a0a0a;--dk:#111;--card:#181818;--bd:#2a2a2a;
+  --y:#f0c040;--yd:#c09020;--w:#f0f0f0;--g:#888;--g2:#aaa;
+  --red:#e04040;--grn:#40b040;--org:#e08030;
+  --f:'Barlow Condensed','Arial Narrow',Arial,sans-serif;
+  --fb:'Barlow',Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bk);color:var(--w);font-family:var(--fb);font-size:15px}
+body{display:flex;justify-content:center}
+#app{width:100%;max-width:480px;min-height:100vh;display:flex;flex-direction:column;position:relative;overflow:hidden}
+
+/* SCREENS */
+.scr{display:none;flex-direction:column;height:100vh;overflow:hidden}
+.scr.active{display:flex}
+
+/* HEADER */
+.hdr{background:var(--dk);border-bottom:1px solid var(--bd);padding:13px 16px 11px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.hdr-logo{font-family:var(--f);font-size:22px;font-weight:900;letter-spacing:1px;color:var(--y);line-height:1}
+.hdr-sub{font-family:var(--f);font-size:11px;color:var(--g);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.hdr-right{margin-left:auto;display:flex;gap:6px}
+.ibtn{background:none;border:none;color:var(--g);font-size:22px;cursor:pointer;padding:4px;line-height:1}
+.ibtn:active{color:var(--w)}
+
+/* NAV */
+.bnav{background:var(--dk);border-top:1px solid var(--bd);display:flex;flex-shrink:0}
+.ni{flex:1;padding:9px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:var(--g);cursor:pointer;font-family:var(--f);font-size:10px;letter-spacing:1px;text-transform:uppercase}
+.ni.active{color:var(--y)}
+.ni-icon{font-size:19px;line-height:1}
+
+/* SCROLL */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 24px}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--bd);border-radius:4px;margin-bottom:10px;overflow:hidden}
+.card-hd{padding:10px 14px 8px;border-bottom:1px solid var(--bd);display:flex;align-items:baseline;gap:8px}
+.card-title{font-family:var(--f);font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--y)}
+.card-sub{font-size:12px;color:var(--g);margin-left:auto}
+.card-body{padding:12px 14px}
+
+/* METRICS */
+.mgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.mbox{background:var(--dk);border-radius:3px;padding:10px 8px;text-align:center;border:1px solid var(--bd)}
+.mval{font-family:var(--f);font-size:26px;font-weight:800;line-height:1}
+.mval.y{color:var(--y)}
+.munit{font-family:var(--f);font-size:10px;color:var(--g);letter-spacing:1px;margin-top:2px}
+
+/* HRV BAR */
+.hrv-bar{display:flex;gap:5px;margin-bottom:10px}
+.hb{flex:1;padding:8px 4px;border-radius:3px;text-align:center;font-family:var(--f);font-size:10px;letter-spacing:1px;text-transform:uppercase;opacity:.3;border:1px solid transparent}
+.hb.on{opacity:1;border-color:currentColor}
+.hb.g{background:rgba(64,176,64,.15);color:var(--grn)}
+.hb.y{background:rgba(240,192,64,.15);color:var(--y)}
+.hb.o{background:rgba(224,128,48,.15);color:var(--org)}
+.hb.r{background:rgba(224,64,64,.15);color:var(--red)}
+
+/* INPUT */
+.inp{width:100%;background:var(--dk);border:1px solid var(--bd);border-radius:3px;padding:9px 10px;color:var(--w);font-size:16px;font-family:var(--fb);outline:none;-webkit-appearance:none;display:block}
+.inp:focus{border-color:var(--y)}
+.inp::placeholder{color:var(--g)}
+select.inp{cursor:pointer}
+.irow{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.ilbl{font-family:var(--f);font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--g);width:72px;flex-shrink:0}
+
+/* BUTTONS */
+.btn{display:block;width:100%;padding:13px;background:var(--y);color:var(--bk);font-family:var(--f);font-size:16px;font-weight:800;letter-spacing:2px;text-transform:uppercase;border:none;border-radius:3px;cursor:pointer}
+.btn:active{background:var(--yd)}
+.btn.sec{background:var(--card);color:var(--w);border:1px solid var(--bd)}
+.btn.sec:active{background:var(--bd)}
+.btn.sm{padding:7px 12px;font-size:12px;width:auto;display:inline-block}
+
+/* LOG ROWS */
+.lrow{display:flex;align-items:flex-start;gap:8px;padding:9px 0;border-bottom:1px solid var(--bd)}
+.lrow:last-child{border-bottom:none}
+.ldate{font-family:var(--f);font-size:11px;color:var(--g);width:76px;flex-shrink:0;margin-top:2px}
+.lval{font-family:var(--f);font-size:14px;font-weight:700;flex:1}
+.lnote{font-size:12px;color:var(--g);text-align:right;flex-shrink:0}
+
+/* EX CARDS */
+.exc{background:var(--card);border:1px solid var(--bd);border-radius:4px;padding:11px 14px;margin-bottom:8px;display:flex;align-items:center;cursor:pointer}
+.exc:active{border-color:var(--y)}
+.exc-name{font-family:var(--f);font-size:15px;font-weight:700}
+.exc-cat{font-family:var(--f);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--g);margin-top:2px}
+.sec-hd{font-family:var(--f);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--g);padding:10px 0 6px}
+
+/* CHAT */
+.chat-wrap{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:88%;padding:9px 12px;border-radius:3px;font-size:14px;line-height:1.55;white-space:pre-wrap}
+.msg.coach{background:var(--card);border:1px solid var(--bd);align-self:flex-start;border-left:3px solid var(--y)}
+.msg.user{background:rgba(240,192,64,.15);border:1px solid rgba(240,192,64,.3);align-self:flex-end}
+.msg.sys{background:rgba(64,176,64,.1);border:1px solid rgba(64,176,64,.2);align-self:center;font-size:12px;color:var(--g2);text-align:center;width:100%;max-width:100%}
+.chat-bar{background:var(--dk);border-top:1px solid var(--bd);padding:8px 10px;display:flex;gap:8px;align-items:flex-end;flex-shrink:0}
+.chat-inp{flex:1;background:var(--card);border:1px solid var(--bd);border-radius:3px;padding:9px 10px;color:var(--w);font-size:15px;font-family:var(--fb);outline:none;resize:none;max-height:100px;min-height:40px}
+.chat-inp:focus{border-color:var(--y)}
+.send-btn{background:var(--y);color:var(--bk);border:none;border-radius:3px;padding:10px 14px;font-size:18px;cursor:pointer;flex-shrink:0;line-height:1}
+.send-btn:active{background:var(--yd)}
+.send-btn:disabled{background:var(--bd);color:var(--g)}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.87);z-index:100;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-bg.open{opacity:1;pointer-events:all}
+.modal{background:var(--dk);border-radius:6px 6px 0 0;border-top:2px solid var(--y);padding:20px 16px 32px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:var(--f);font-size:18px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px}
+
+/* QUICK GRID */
+.qgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.qbtn{background:var(--dk);border:1px solid var(--bd);border-radius:3px;padding:12px 10px;cursor:pointer;text-align:left}
+.qbtn:active{border-color:var(--y)}
+.qname{font-family:var(--f);font-size:13px;font-weight:700;color:var(--w)}
+.qlast{font-size:11px;color:var(--g);margin-top:3px}
+
+/* SPINNER */
+.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--bd);border-top-color:var(--y);border-radius:50%;animation:sp .8s linear infinite;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* PROG BAR */
+.prog-wrap{height:4px;background:var(--bd);border-radius:2px;overflow:hidden;margin:6px 0}
+.prog-fill{height:100%;background:var(--y);border-radius:2px}
+
+/* CHART */
+.chart-wrap{position:relative;height:120px;margin:8px 0}
+canvas{width:100%;height:100%}
+
+/* SETTINGS ROWS */
+.srow{padding:13px 0;border-bottom:1px solid var(--bd);display:flex;align-items:center}
+.srow:last-child{border-bottom:none}
+
+/* PIN SCREEN (beheer toegang) */
+.pin-screen{display:none;flex-direction:column;height:100vh;overflow:hidden}
+.pin-screen.active{display:flex}
+.pin-dots{display:flex;gap:12px;justify-content:center;margin:14px 0}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:var(--bd);transition:background .15s}
+.pin-dot.on{background:var(--y)}
+.pin-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:12px 0}
+.pk{background:var(--card);border:1px solid var(--bd);border-radius:4px;padding:16px;font-family:var(--f);font-size:24px;font-weight:700;color:var(--w);cursor:pointer;text-align:center;border:none}
+.pk:active{background:var(--bd)}
+
+/* TOAST */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(240,192,64,.95);color:var(--bk);padding:10px 20px;border-radius:4px;font-family:var(--f);font-size:14px;font-weight:700;letter-spacing:1px;opacity:0;transition:all .3s;z-index:200;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- HOME -->
+<div class="scr active" id="s-home">
+  <div class="hdr">
+    <div><div class="hdr-logo">MAURICE</div><div class="hdr-sub">Training Coach 2026</div></div>
+    <div class="hdr-right">
+      <button class="ibtn" onclick="openModal('m-hrv')" title="Check-in">📊</button>
+    </div>
+  </div>
+  <div class="scroll">
+    <div id="home-hrv"></div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Quick Start</div></div>
+      <div class="card-body">
+        <div class="qgrid" id="quick-grid"></div>
+        <button class="btn sec" onclick="go('s-log')" style="margin-top:4px">Alle oefeningen</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Recente sessies</div><div class="card-sub" id="home-count">—</div></div>
+      <div class="card-body" id="home-recent"></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Gewicht</div><div class="card-sub" id="home-weight">—</div></div>
+      <div class="card-body">
+        <div class="chart-wrap"><canvas id="w-chart"></canvas></div>
+        <button class="btn sec sm" onclick="openModal('m-weight')" style="margin-top:6px">Loggen</button>
+      </div>
+    </div>
+    <div style="text-align:center;padding:8px 0 4px;font-family:var(--f);font-size:11px;letter-spacing:2px;color:#333">v2.2.0</div>
+  </div>
+  <nav class="bnav">
+    <button class="ni active" onclick="go('s-home')"><span class="ni-icon">🏠</span>Home</button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span>Coach</button>
+    <button class="ni" onclick="go('s-log')"><span class="ni-icon">📋</span>Log</button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span>Stats</button>
+    <button class="ni" onclick="go('s-pin')"><span class="ni-icon">⚙️</span>Beheer</button>
+  </nav>
+</div>
+
+<!-- COACH -->
+<div class="scr" id="s-coach">
+  <div class="hdr">
+    <div><div class="hdr-logo">COACH</div><div class="hdr-sub" id="coach-st">Klaar</div></div>
+    <div class="hdr-right"><button class="ibtn" onclick="clearChat()">🗑</button></div>
+  </div>
+  <div class="chat-wrap" id="chat-wrap"></div>
+  <div class="chat-bar">
+    <textarea class="chat-inp" id="chat-inp" placeholder="Bericht aan coach..." rows="1" onkeydown="ckd(event)" oninput="ar(this)"></textarea>
+    <button class="send-btn" id="send-btn" onclick="sendChat()">↑</button>
+  </div>
+  <nav class="bnav">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span>Home</button>
+    <button class="ni active" onclick="go('s-coach')"><span class="ni-icon">💬</span>Coach</button>
+    <button class="ni" onclick="go('s-log')"><span class="ni-icon">📋</span>Log</button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span>Stats</button>
+    <button class="ni" onclick="go('s-pin')"><span class="ni-icon">⚙️</span>Beheer</button>
+  </nav>
+</div>
+
+<!-- LOG -->
+<div class="scr" id="s-log">
+  <div class="hdr">
+    <div><div class="hdr-logo">LOG</div><div class="hdr-sub">Oefeningen</div></div>
+    <div class="hdr-right"><button class="ibtn" onclick="openModal('m-newex')">＋</button></div>
+  </div>
+  <div class="scroll" id="ex-list"></div>
+  <nav class="bnav">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span>Home</button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span>Coach</button>
+    <button class="ni active" onclick="go('s-log')"><span class="ni-icon">📋</span>Log</button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span>Stats</button>
+    <button class="ni" onclick="go('s-pin')"><span class="ni-icon">⚙️</span>Beheer</button>
+  </nav>
+</div>
+
+<!-- EX DETAIL -->
+<div class="scr" id="s-exdet">
+  <div class="hdr">
+    <div><div class="hdr-logo" id="exdet-name">—</div><div class="hdr-sub" id="exdet-cat">—</div></div>
+    <div class="hdr-right"><button class="ibtn" onclick="go('s-log')">✕</button></div>
+  </div>
+  <div class="scroll">
+    <button class="btn" onclick="openLogModal(curEx)" style="margin-bottom:12px">+ Set Loggen</button>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Geschiedenis</div></div>
+      <div class="card-body" id="exdet-hist"></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Progressie</div></div>
+      <div class="card-body"><div class="chart-wrap"><canvas id="ex-chart"></canvas></div></div>
+    </div>
+  </div>
+  <nav class="bnav">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span>Home</button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span>Coach</button>
+    <button class="ni active" onclick="go('s-log')"><span class="ni-icon">📋</span>Log</button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span>Stats</button>
+    <button class="ni" onclick="go('s-pin')"><span class="ni-icon">⚙️</span>Beheer</button>
+  </nav>
+</div>
+
+<!-- STATS -->
+<div class="scr" id="s-stats">
+  <div class="hdr"><div><div class="hdr-logo">STATS</div><div class="hdr-sub">Progressie</div></div></div>
+  <div class="scroll">
+    <div class="card"><div class="card-hd"><div class="card-title">Geschatte 1RM</div></div><div class="card-body" id="stat-1rm"></div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">HRV Trend 14 dagen</div></div><div class="card-body"><div class="chart-wrap"><canvas id="hrv-chart"></canvas></div></div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">Roei Progressie</div></div><div class="card-body" id="stat-row"></div></div>
+  </div>
+  <nav class="bnav">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span>Home</button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span>Coach</button>
+    <button class="ni" onclick="go('s-log')"><span class="ni-icon">📋</span>Log</button>
+    <button class="ni active" onclick="go('s-stats')"><span class="ni-icon">📈</span>Stats</button>
+    <button class="ni" onclick="go('s-pin')"><span class="ni-icon">⚙️</span>Beheer</button>
+  </nav>
+</div>
+
+<!-- PIN (beheer toegang) -->
+<div class="pin-screen" id="s-pin">
+  <div class="hdr">
+    <div><div class="hdr-logo">BEHEER</div><div class="hdr-sub">Pincode vereist</div></div>
+    <div class="hdr-right"><button class="ibtn" onclick="go('s-home')">✕</button></div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px">
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+    </div>
+    <div id="pin-err" style="color:var(--red);font-family:var(--f);font-size:13px;letter-spacing:1px;min-height:18px;margin-bottom:8px"></div>
+    <div class="pin-grid" style="width:240px">
+      <button class="pk" onclick="pp('1')">1</button><button class="pk" onclick="pp('2')">2</button><button class="pk" onclick="pp('3')">3</button>
+      <button class="pk" onclick="pp('4')">4</button><button class="pk" onclick="pp('5')">5</button><button class="pk" onclick="pp('6')">6</button>
+      <button class="pk" onclick="pp('7')">7</button><button class="pk" onclick="pp('8')">8</button><button class="pk" onclick="pp('9')">9</button>
+      <button class="pk" onclick="pb()" style="color:var(--g)">⌫</button><button class="pk" onclick="pp('0')">0</button><button class="pk" style="background:transparent"></button>
+    </div>
+  </div>
+  <nav class="bnav">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span>Home</button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span>Coach</button>
+    <button class="ni" onclick="go('s-log')"><span class="ni-icon">📋</span>Log</button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span>Stats</button>
+    <button class="ni active" onclick="go('s-pin')"><span class="ni-icon">⚙️</span>Beheer</button>
+  </nav>
+</div>
+
+<!-- BEHEER -->
+<div class="scr" id="s-admin">
+  <div class="hdr">
+    <div><div class="hdr-logo">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.2.0</div></div>
+    <div class="hdr-right"><button class="ibtn" onclick="go('s-home')">✕</button></div>
+  </div>
+  <div class="scroll">
+    <div class="card"><div class="card-body">
+      <div class="srow"><div><div style="font-size:15px">Anthropic API Sleutel</div><div style="font-size:12px;color:var(--g)" id="api-st">Niet ingesteld</div></div><div style="margin-left:auto"><button class="btn sec sm" onclick="openModal('m-apikey')">Wijzig</button></div></div>
+      <div class="srow"><div><div style="font-size:15px">Pincode wijzigen</div></div><div style="margin-left:auto"><button class="btn sec sm" onclick="openModal('m-changepin')">Wijzig</button></div></div>
+      <div class="srow"><div><div style="font-size:15px">Body comp loggen</div></div><div style="margin-left:auto"><button class="btn sec sm" onclick="openModal('m-bc')">Invoer</button></div></div>
+    </div></div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Oefeningen</div><div class="card-sub"><button class="btn sec sm" onclick="openModal('m-newex')">+ Nieuw</button></div></div>
+      <div class="card-body" id="admin-exlist"></div>
+    </div>
+  </div>
+  <nav class="bnav">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span>Home</button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span>Coach</button>
+    <button class="ni" onclick="go('s-log')"><span class="ni-icon">📋</span>Log</button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span>Stats</button>
+    <button class="ni active" onclick="go('s-pin')"><span class="ni-icon">⚙️</span>Beheer</button>
+  </nav>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="m-hrv" onclick="bgClose(event,'m-hrv')">
+  <div class="modal">
+    <div class="modal-title">Ochtend Check-in</div>
+    <div class="irow"><label class="ilbl">HRV</label><input class="inp" type="number" id="i-hrv" placeholder="ms" step="0.1"></div>
+    <div class="irow"><label class="ilbl">RHR</label><input class="inp" type="number" id="i-rhr" placeholder="bpm"></div>
+    <div class="irow"><label class="ilbl">Slaap</label><input class="inp" type="number" id="i-sleep-h" placeholder="uren" style="width:48%;margin-right:4px" min="0" max="12"><input class="inp" type="number" id="i-sleep-m" placeholder="min" style="width:48%" min="0" max="59"></div>
+    <div class="irow"><label class="ilbl">Gewicht</label><input class="inp" type="number" id="i-whrv" placeholder="kg" step="0.1"></div>
+    <div class="irow"><label class="ilbl">Oedeem</label><select class="inp" id="i-edema"><option value="">—</option><option>normaal</option><option>licht</option><option>flink opgezet</option></select></div>
+    <div class="irow"><label class="ilbl">Training</label><select class="inp" id="i-training"><option value="">— rust / onbekend —</option><option value="A">Training A</option><option value="B">Training B</option><option value="CrossFit">CrossFit</option><option value="C">Training C / herstel</option></select></div>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn sec" style="flex:1" onclick="closeModal('m-hrv')">Annuleer</button>
+      <button class="btn" style="flex:2" onclick="saveHRV()">Opslaan & Analyseer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-weight" onclick="bgClose(event,'m-weight')">
+  <div class="modal">
+    <div class="modal-title">Gewicht Loggen</div>
+    <div class="irow"><label class="ilbl">Gewicht</label><input class="inp" type="number" id="i-wlog" placeholder="kg" step="0.1"></div>
+    <div class="irow"><label class="ilbl">Schaal</label><select class="inp" id="i-wscale"><option>Tanita</option><option>Medisana</option><option>Overig</option></select></div>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn sec" style="flex:1" onclick="closeModal('m-weight')">Annuleer</button>
+      <button class="btn" style="flex:2" onclick="saveWeight()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-log" onclick="bgClose(event,'m-log')">
+  <div class="modal">
+    <div class="modal-title" id="m-log-title">Set Loggen</div>
+    <div id="m-log-fields"></div>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn sec" style="flex:1" onclick="closeModal('m-log')">Annuleer</button>
+      <button class="btn" style="flex:2" onclick="saveSession()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-newex" onclick="bgClose(event,'m-newex')">
+  <div class="modal">
+    <div class="modal-title">Nieuwe Oefening</div>
+    <div class="irow"><label class="ilbl">Naam</label><input class="inp" type="text" id="nx-name" placeholder="bijv. Tricep Pushdown"></div>
+    <div class="irow"><label class="ilbl">Training</label><select class="inp" id="nx-cat"><option value="A">Training A</option><option value="B">Training B</option><option value="CrossFit">CrossFit</option><option value="Overig">Overig</option></select></div>
+    <div class="irow"><label class="ilbl">Type</label><select class="inp" id="nx-type"><option value="strength">Kracht</option><option value="cardio">Cardio</option><option value="carry">Carry</option><option value="bodyweight">Bodyweight</option><option value="wod">WOD</option></select></div>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn sec" style="flex:1" onclick="closeModal('m-newex')">Annuleer</button>
+      <button class="btn" style="flex:2" onclick="saveNewEx()">Toevoegen</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-apikey" onclick="bgClose(event,'m-apikey')">
+  <div class="modal">
+    <div class="modal-title">API Sleutel</div>
+    <p style="font-size:13px;color:var(--g);margin-bottom:12px">Aanmaken via <strong style="color:var(--w)">console.anthropic.com</strong></p>
+    <input class="inp" type="password" id="i-apikey" placeholder="sk-ant-api03-...">
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn sec" style="flex:1" onclick="closeModal('m-apikey')">Annuleer</button>
+      <button class="btn" style="flex:2" onclick="saveApiKey()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-changepin" onclick="bgClose(event,'m-changepin')">
+  <div class="modal">
+    <div class="modal-title">Nieuwe Pincode</div>
+    <p style="font-size:13px;color:var(--g);margin-bottom:12px">Huidige pincode: 8931</p>
+    <input class="inp" type="number" id="i-newpin" placeholder="4 cijfers" maxlength="4">
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn sec" style="flex:1" onclick="closeModal('m-changepin')">Annuleer</button>
+      <button class="btn" style="flex:2" onclick="saveNewPin()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-bc" onclick="bgClose(event,'m-bc')">
+  <div class="modal">
+    <div class="modal-title">Lichaamscompositie</div>
+    <div class="irow"><label class="ilbl">Gewicht</label><input class="inp" type="number" id="bc-w" placeholder="kg" step="0.1"></div>
+    <div class="irow"><label class="ilbl">Vet%</label><input class="inp" type="number" id="bc-fat" placeholder="%" step="0.1"></div>
+    <div class="irow"><label class="ilbl">Spiermassa</label><input class="inp" type="number" id="bc-mus" placeholder="kg" step="0.1"></div>
+    <div class="irow"><label class="ilbl">BMR</label><input class="inp" type="number" id="bc-bmr" placeholder="kcal"></div>
+    <div class="irow"><label class="ilbl">Visceraal</label><input class="inp" type="number" id="bc-vis" placeholder="level"></div>
+    <div class="irow"><label class="ilbl">Taille</label><input class="inp" type="number" id="bc-wst" placeholder="cm" step="0.5"></div>
+    <div class="irow"><label class="ilbl">Oedeem</label><select class="inp" id="bc-edm"><option value="">—</option><option>normaal</option><option>licht</option><option>flink opgezet</option></select></div>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn sec" style="flex:1" onclick="closeModal('m-bc')">Annuleer</button>
+      <button class="btn" style="flex:2" onclick="saveBC()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+// CONSTANTS
+// ══════════════════════════════════════
+const APP_VERSION = 'v2.0.0';
+// PIN hash = sha256('8931') — geen salt, zelfde methode als Edna
+const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
+const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
+const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
+
+// ══════════════════════════════════════
+// SUPABASE REST HELPERS (geen library)
+// ══════════════════════════════════════
+const SB_H = {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
+
+async function sbGet(table, params=''){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/${table}?select=*${params}`,{headers:SB_H});
+    if(!r.ok) return [];
+    return await r.json();
+  }catch{return [];}
+}
+async function sbPost(table, data){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(data)});
+    return r.ok;
+  }catch{return false;}
+}
+async function sbPatch(table, filter, data){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/${table}?${filter}`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(data)});
+    return r.ok;
+  }catch{return false;}
+}
+async function sbUpsert(table, data){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(data)});
+    return r.ok;
+  }catch{return false;}
+}
+async function sbDelete(table, filter){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/${table}?${filter}`,{method:'DELETE',headers:SB_H});
+    return r.ok;
+  }catch{return false;}
+}
+
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+let exercises = [];
+let apiKey = localStorage.getItem('maurice_apikey') || '';
+let curEx = null;
+let chatHist = [];
+let sending = false;
+let pinBuf = '';
+
+// ══════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════
+function go(id){
+  document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='s-home') refreshHome();
+  if(id==='s-log') refreshLog();
+  if(id==='s-stats') refreshStats();
+  if(id==='s-coach') focusCoach();
+  if(id==='s-admin') refreshAdmin();
+  // Update nav active state
+  document.querySelectorAll('.ni').forEach(b=>{
+    const oc=b.getAttribute('onclick')||'';
+    b.classList.toggle('active',oc.includes(id)||(id==='s-admin'&&oc.includes('s-pin')));
+  });
+}
+
+// ══════════════════════════════════════
+// MODALS
+// ══════════════════════════════════════
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function bgClose(e,id){if(e.target===document.getElementById(id))closeModal(id);}
+
+// ══════════════════════════════════════
+// PIN
+// ══════════════════════════════════════
+async function sha256(str){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function pp(d){
+  if(pinBuf.length>=4) return;
+  pinBuf+=d;
+  updatePinDots();
+  if(pinBuf.length===4){
+    const h=await sha256(pinBuf);
+    if(h===PIN_HASH){
+      pinBuf='';updatePinDots();
+      go('s-admin');
+    } else {
+      document.getElementById('pin-err').textContent='Verkeerde pincode';
+      setTimeout(()=>{pinBuf='';updatePinDots();document.getElementById('pin-err').textContent='';},700);
+    }
+  }
+}
+function pb(){if(pinBuf.length>0){pinBuf=pinBuf.slice(0,-1);updatePinDots();}}
+function updatePinDots(){
+  for(let i=0;i<4;i++) document.getElementById('pd'+i).classList.toggle('on',i<pinBuf.length);
+}
+
+// ══════════════════════════════════════
+// HRV / WEIGHT
+// ══════════════════════════════════════
+async function saveHRV(){
+  const hrv=parseFloat(document.getElementById('i-hrv').value)||null;
+  const rhr=parseInt(document.getElementById('i-rhr').value)||null;
+  const slpH=parseInt(document.getElementById('i-sleep-h').value)||0;
+  const slpM=parseInt(document.getElementById('i-sleep-m').value)||0;
+  const slp=(slpH>0||slpM>0)?Math.round((slpH+slpM/60)*100)/100:null;
+  const wgt=parseFloat(document.getElementById('i-whrv').value)||null;
+  const edm=document.getElementById('i-edema').value||null;
+  const training=document.getElementById('i-training').value||null;
+  const note=document.getElementById('i-note').value||null;
+  const today=td();
+  const ops=[];
+  if(hrv||rhr||slp) ops.push(sbPost('hrv_log',{date:today,hrv,rhr,sleep:slp,edema:edm,note:note}));
+  if(wgt) ops.push(sbPost('weight_log',{date:today,weight:wgt,scale:'Tanita'}));
+  await Promise.all(ops);
+  closeModal('m-hrv');
+  const parts=[];
+  if(hrv) parts.push('HRV '+hrv+' ms');
+  if(rhr) parts.push('RHR '+rhr+' bpm');
+  if(slp){const sh=Math.floor(slp);const sm=Math.round((slp-sh)*60);parts.push('slaap '+sh+'u'+(sm?sm+'min':''));}
+  if(wgt) parts.push('gewicht '+wgt+' kg');
+  if(edm) parts.push('oedeem: '+edm);
+  if(training) parts.push('plan: '+training);
+  if(parts.length){go('s-coach');sendMsg(parts.join(', '));}
+  else{refreshHome();toast('Check-in opgeslagen');}
+}
+async function saveWeight(){
+  const w=parseFloat(document.getElementById('i-wlog').value);
+  if(!w){alert('Voer gewicht in');return;}
+  await sbPost('weight_log',{date:td(),weight:w,scale:document.getElementById('i-wscale').value});
+  closeModal('m-weight');refreshHome();toast('Gewicht opgeslagen');
+}
+async function saveBC(){
+  const row={date:td(),
+    weight:parseFloat(document.getElementById('bc-w').value)||null,
+    fat_pct:parseFloat(document.getElementById('bc-fat').value)||null,
+    muscle_mass:parseFloat(document.getElementById('bc-mus').value)||null,
+    bmr:parseInt(document.getElementById('bc-bmr').value)||null,
+    visceral_fat:parseInt(document.getElementById('bc-vis').value)||null,
+    waist_cm:parseFloat(document.getElementById('bc-wst').value)||null,
+    edema:document.getElementById('bc-edm').value||null,
+    source:'Tanita'
+  };
+  await sbPost('body_comp',row);
+  closeModal('m-bc');toast('Opgeslagen');
+}
+
+// ══════════════════════════════════════
+// SESSION LOGGING
+// ══════════════════════════════════════
+function openLogModal(ex){
+  if(typeof ex==='string') ex=exercises.find(e=>e.id===ex)||{id:ex,name:ex,type:'strength'};
+  curEx=ex;
+  document.getElementById('m-log-title').textContent=ex.name+' — Set loggen';
+  let f='';
+  if(ex.type==='strength'){
+    f='<div class="irow"><label class="ilbl">Gewicht</label><input class="inp" type="number" id="l-w" placeholder="kg" step="0.5"></div>'
+     +'<div class="irow"><label class="ilbl">Sets</label><input class="inp" type="number" id="l-s" value="4"></div>'
+     +'<div class="irow"><label class="ilbl">Reps</label><input class="inp" type="number" id="l-r" placeholder="reps"></div>'
+     +'<div class="irow"><label class="ilbl">RPE</label><input class="inp" type="number" id="l-rpe" placeholder="1-10" step="0.5"></div>'
+     +'<div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="l-n" placeholder="optioneel"></div>';
+  } else if(ex.type==='cardio'){
+    f='<div class="irow"><label class="ilbl">Afstand</label><input class="inp" type="number" id="l-dist" placeholder="m" oninput="calcSplit()"></div>'
+     +'<div class="irow"><label class="ilbl">Tijd</label><input class="inp" type="text" id="l-time" placeholder="bijv. 3:37" oninput="calcSplit()"></div>'
+     +'<div class="irow"><label class="ilbl">Watt</label><input class="inp" type="number" id="l-watt" placeholder="W"></div>'
+     +'<div class="irow"><label class="ilbl">500m split</label><input class="inp" type="text" id="l-split" placeholder="auto" readonly style="color:var(--y);background:var(--bk)"></div>'
+     +'<div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="l-n" placeholder="optioneel"></div>';
+  } else if(ex.type==='carry'){
+    f='<div class="irow"><label class="ilbl">Gewicht</label><input class="inp" type="number" id="l-w" placeholder="kg p/hand" step="0.5"></div>'
+     +'<div class="irow"><label class="ilbl">Afstand</label><input class="inp" type="number" id="l-dist" placeholder="m"></div>'
+     +'<div class="irow"><label class="ilbl">Stops</label><input class="inp" type="number" id="l-s" placeholder="0"></div>'
+     +'<div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="l-n" placeholder="optioneel"></div>';
+  } else if(ex.type==='wod'){
+    f='<div class="irow"><label class="ilbl">WOD</label><input class="inp" type="text" id="l-wn" placeholder="WOD 1713"></div>'
+     +'<div class="irow"><label class="ilbl">Type</label><input class="inp" type="text" id="l-wt" placeholder="AMRAP 20"></div>'
+     +'<div class="irow"><label class="ilbl">Score</label><input class="inp" type="text" id="l-time" placeholder="tijd / ronden"></div>'
+     +'<div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="l-n" placeholder="inhoud"></div>';
+  } else {
+    f='<div class="irow"><label class="ilbl">Sets</label><input class="inp" type="number" id="l-s" value="3"></div>'
+     +'<div class="irow"><label class="ilbl">Reps</label><input class="inp" type="number" id="l-r" placeholder="reps"></div>'
+     +'<div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="l-n" placeholder="optioneel"></div>';
+  }
+  document.getElementById('m-log-fields').innerHTML=f;
+  openModal('m-log');
+}
+
+function gv(id){const e=document.getElementById(id);return e?e.value:null;}
+
+async function saveSession(){
+  const ex=curEx;if(!ex)return;
+  const row={date:td(),exercise_id:ex.id,note:gv('l-n')||''};
+  if(ex.type==='strength'){
+    row.weight=parseFloat(gv('l-w'))||null;row.sets=parseInt(gv('l-s'))||null;
+    row.reps=parseInt(gv('l-r'))||null;row.rpe=parseFloat(gv('l-rpe'))||null;
+  } else if(ex.type==='cardio'){
+    row.distance=parseInt(gv('l-dist'))||null;row.time_str=gv('l-time');row.watt=parseInt(gv('l-watt'))||null;
+  } else if(ex.type==='carry'){
+    row.weight=parseFloat(gv('l-w'))||null;row.distance=parseInt(gv('l-dist'))||null;row.stops=parseInt(gv('l-s'))||0;
+  } else if(ex.type==='wod'){
+    row.wod_name=gv('l-wn');row.wod_type=gv('l-wt');row.score=gv('l-time');
+  } else {
+    row.sets=parseInt(gv('l-s'))||null;row.reps=parseInt(gv('l-r'))||null;
+  }
+  const ok=await sbPost('sessions',row);
+  if(ok){
+    if(row.weight){
+      const exObj=exercises.find(e=>e.id===ex.id);
+      if(exObj&&row.weight>(exObj.pr||0)){
+        await sbPatch('exercises','id=eq.'+ex.id,{pr:row.weight});
+        exObj.pr=row.weight;
+      }
+    }
+    closeModal('m-log');
+    toast('Opgeslagen ✓');
+    if(document.getElementById('s-exdet').classList.contains('active')) loadExDet(ex.id);
+  } else {
+    toast('Fout bij opslaan');
+  }
+}
+
+async function saveNewEx(){
+  const name=document.getElementById('nx-name').value.trim();
+  const cat=document.getElementById('nx-cat').value;
+  const type=document.getElementById('nx-type').value;
+  if(!name){alert('Vul naam in');return;}
+  const id=name.toLowerCase().replace(/[^a-z0-9]/g,'');
+  if(exercises.find(e=>e.id===id)){alert('Naam al in gebruik');return;}
+  const ok=await sbPost('exercises',{id,name,category:cat,type,sort_order:99,active:true});
+  if(ok){
+    exercises.push({id,name,category:cat,type,sort_order:99,active:true});
+    closeModal('m-newex');
+    toast(name+' toegevoegd');
+    refreshLog();
+    refreshAdmin();
+  }
+}
+
+// ══════════════════════════════════════
+// RENDER HOME
+// ══════════════════════════════════════
+async function refreshHome(){
+  // HRV
+  const hd=await sbGet('hrv_log','&order=date.desc&limit=1');
+  const lh=hd[0];
+  if(lh){
+    const st=hrvSt(lh.hrv);
+    document.getElementById('home-hrv').innerHTML=
+      '<div class="card"><div class="card-body">'
+      +'<div class="mgrid">'
+      +(lh.hrv?'<div class="mbox"><div class="mval y">'+lh.hrv+'</div><div class="munit">HRV ms</div></div>':'')
+      +(lh.rhr?'<div class="mbox"><div class="mval">'+lh.rhr+'</div><div class="munit">RHR bpm</div></div>':'')
+      +(lh.sleep?'<div class="mbox"><div class="mval">'+lh.sleep+'</div><div class="munit">Slaap u</div></div>':'')
+      +'</div>'
+      +'<div class="hrv-bar">'
+      +'<div class="hb g '+(st==='g'?'on':'')+'">>=24</div>'
+      +'<div class="hb y '+(st==='y'?'on':'')+'">18-23</div>'
+      +'<div class="hb o '+(st==='o'?'on':'')+'">14-17</div>'
+      +'<div class="hb r '+(st==='r'?'on':'')+'"><14</div>'
+      +'</div>'
+      +'<p style="font-size:12px;color:var(--g2)">'
+      +(st==='g'?'Optimaal':st==='y'?'Normaal':st==='o'?'Laag':'Kritiek')
+      +' — '+lh.date+(lh.edema?' · '+lh.edema:'')+'</p>'
+      +'</div></div>';
+  } else {
+    document.getElementById('home-hrv').innerHTML=
+      '<div class="card"><div class="card-body" style="text-align:center;padding:16px">'
+      +'<p style="color:var(--g);font-size:13px">Nog geen hersteldata</p>'
+      +'<button class="btn sm" onclick="openModal(\'m-hrv\')" style="margin-top:10px">Check-in invoeren</button>'
+      +'</div></div>';
+  }
+
+  // Quick grid
+  const qExs=[...exercises.filter(e=>e.category==='A').slice(0,2),...exercises.filter(e=>e.category==='B').slice(0,2)];
+  let qHTML='';
+  for(const ex of qExs){
+    const ls=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc&limit=1');
+    const last=ls[0];
+    let lastStr='Nog niet gelogd';
+    if(last) lastStr=last.weight&&last.reps?last.weight+' kg x '+last.reps+' ('+last.date+')':last.time_str?last.time_str+' ('+last.date+')':last.date;
+    qHTML+='<div class="qbtn" onclick="openLogModal(\''+ex.id+'\')"><div class="qname">'+ex.name+'</div><div class="qlast">'+lastStr+'</div></div>';
+  }
+  document.getElementById('quick-grid').innerHTML=qHTML;
+
+  // Recent
+  const rs=await sbGet('sessions','&order=created_at.desc&limit=8');
+  let rHTML='';
+  if(!rs.length) rHTML='<p style="color:var(--g);font-size:13px">Nog geen sessies</p>';
+  else rs.forEach(s=>{
+    const exName=exercises.find(e=>e.id===s.exercise_id)?.name||s.exercise_id;
+    const val=s.weight&&s.reps?s.weight+' kg x '+s.reps:s.time_str||'—';
+    rHTML+='<div class="lrow"><div class="ldate">'+s.date+'</div><div class="lval">'+exName+'</div><div class="lnote">'+val+'</div></div>';
+  });
+  document.getElementById('home-recent').innerHTML=rHTML;
+  document.getElementById('home-count').textContent=rs.length+'+ recente';
+
+  // Weight chart
+  const wd=await sbGet('weight_log','&order=date.asc&limit=20');
+  if(wd.length){
+    document.getElementById('home-weight').textContent=wd[wd.length-1].weight+' kg';
+    drawChart('w-chart',wd.map(w=>w.weight),wd.map(w=>w.date));
+  }
+
+  // Training day counter
+  const allSess=await sbGet('sessions','&order=date.desc&limit=50');
+  const today2=td();
+  let lastA=null,lastB=null;
+  for(const s of allSess){
+    const ex=exercises.find(e=>e.id===s.exercise_id);
+    if(!lastA&&ex&&ex.category==='A') lastA=s.date;
+    if(!lastB&&ex&&ex.category==='B') lastB=s.date;
+    if(lastA&&lastB) break;
+  }
+  function daysDiff(d){if(!d)return null;const ms=new Date(today2)-new Date(d);return Math.floor(ms/86400000);}
+  const dA=daysDiff(lastA),dB=daysDiff(lastB);
+  if(dA!==null||dB!==null){
+    let dc='';
+    if(dA!==null) dc+='<span style="font-family:var(--f);font-size:13px;color:var(--g2)">Laatste <strong style="color:var(--y)">Training A</strong>: '+(dA===0?'vandaag':dA===1?'gisteren':dA+' dagen geleden')+'</span>';
+    if(dA!==null&&dB!==null) dc+='<span style="color:var(--bd);margin:0 8px">|</span>';
+    if(dB!==null) dc+='<span style="font-family:var(--f);font-size:13px;color:var(--g2)">Laatste <strong style="color:var(--y)">Training B</strong>: '+(dB===0?'vandaag':dB===1?'gisteren':dB+' dagen geleden')+'</span>';
+    document.getElementById('home-daycounter').innerHTML=dc;
+    document.getElementById('home-daycounter-card').style.display='block';
+  }
+
+  // Daily note
+  const noteKey='maurice_note_'+today2;
+  const savedNote=localStorage.getItem(noteKey)||'';
+  document.getElementById('home-note-inp').value=savedNote;
+  document.getElementById('home-note-date').textContent=today2;
+}
+
+function hrvSt(v){
+  if(!v) return 'y';
+  if(v>=24) return 'g';
+  if(v>=18) return 'y';
+  if(v>=14) return 'o';
+  return 'r';
+}
+
+function calcSplit(){
+  const dist=parseInt(document.getElementById('l-dist')?.value)||0;
+  const timeStr=document.getElementById('l-time')?.value||'';
+  const splitEl=document.getElementById('l-split');
+  if(!splitEl) return;
+  if(!dist||!timeStr){splitEl.value='';return;}
+  const parts=timeStr.replace(',','.').split(':');
+  let sec=0;
+  if(parts.length===2) sec=parseFloat(parts[0])*60+parseFloat(parts[1]);
+  else sec=parseFloat(timeStr)*60;
+  if(!sec||!dist){splitEl.value='';return;}
+  const splitSec=(sec/dist)*500;
+  const sm=Math.floor(splitSec/60);
+  const ss=Math.round(splitSec%60);
+  splitEl.value=sm+':'+(ss<10?'0':'')+ss+'/500m';
+}
+
+function saveNote(val){
+  localStorage.setItem('maurice_note_'+td(), val);
+}
+
+// ══════════════════════════════════════
+// RENDER LOG
+// ══════════════════════════════════════
+async function refreshLog(){
+  const cats=['A','B','CrossFit','Overig'];
+  const labels={A:'Training A',B:'Training B',CrossFit:'CrossFit',Overig:'Overig'};
+  let html='';
+  for(const cat of cats){
+    const exs=exercises.filter(e=>e.category===cat&&e.active!==false);
+    if(!exs.length) continue;
+    html+='<div class="sec-hd">'+labels[cat]+'</div>';
+    for(const ex of exs){
+      const ls=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc&limit=1');
+      const last=ls[0];
+      let lastStr='';
+      if(last) lastStr=last.weight&&last.reps?last.weight+' kg x '+last.reps+' — '+last.date:last.time_str?last.time_str+' — '+last.date:last.date;
+      const pr=ex.pr?' · PR '+ex.pr+' kg':'';
+      html+='<div class="exc" onclick="openExDet(\''+ex.id+'\')">'
+        +'<div style="flex:1"><div class="exc-name">'+ex.name+'</div>'
+        +'<div class="exc-cat">Training '+ex.category+pr+'</div>'
+        +(lastStr?'<div style="font-size:11px;color:var(--g);margin-top:3px">'+lastStr+'</div>':'')
+        +'</div><div style="color:var(--g);font-size:18px">›</div></div>';
+    }
+  }
+  document.getElementById('ex-list').innerHTML=html;
+}
+
+async function openExDet(id){
+  curEx=exercises.find(e=>e.id===id)||{id};
+  document.getElementById('exdet-name').textContent=curEx.name||id;
+  document.getElementById('exdet-cat').textContent='Training '+(curEx.category||'—');
+  go('s-exdet');
+  loadExDet(id);
+}
+
+async function loadExDet(id){
+  const ss=await sbGet('sessions','&exercise_id=eq.'+id+'&order=date.desc&limit=30');
+  let html='';
+  if(!ss.length) html='<p style="color:var(--g);font-size:13px">Nog geen sessies</p>';
+  else ss.forEach(s=>{
+    let val='';
+    if(s.weight&&s.reps) val='<strong>'+(s.sets||'?')+'x'+s.reps+'</strong> @ <strong style="color:var(--y)">'+s.weight+' kg</strong>'+(s.rpe?' <span style="color:var(--g)">RPE '+s.rpe+'</span>':'');
+    else if(s.time_str) val='<strong>'+s.time_str+'</strong>'+(s.watt?' · '+s.watt+'W':'');
+    else if(s.distance) val='<strong>'+s.distance+'m</strong>';
+    else if(s.score) val='<strong>'+s.score+'</strong>';
+    html+='<div class="lrow"><div class="ldate">'+s.date+'</div><div style="flex:1">'+val+(s.note?'<div style="font-size:12px;color:var(--g);margin-top:2px">'+s.note+'</div>':'')+'</div></div>';
+  });
+  // RPE trend (last 5 sessions with RPE)
+  const rpeData=ss.filter(s=>s.rpe).slice(0,5).reverse();
+  let rpeHTML='';
+  if(rpeData.length>=2){
+    const avgRPE=Math.round(rpeData.reduce((a,s)=>a+s.rpe,0)/rpeData.length*10)/10;
+    const trend=rpeData[rpeData.length-1].rpe-rpeData[0].rpe;
+    const trendStr=trend>0?'↑ stijgend':trend<0?'↓ dalend':'→ stabiel';
+    const trendCol=trend>0?'var(--org)':trend<0?'var(--grn)':'var(--g2)';
+    rpeHTML='<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--bd)">'
+      +'<div style="font-family:var(--f);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--g);margin-bottom:6px">RPE Trend (laatste '+rpeData.length+' sessies)</div>'
+      +'<div style="display:flex;align-items:center;gap:12px">'
+      +'<span style="font-family:var(--f);font-size:22px;font-weight:800;color:var(--y)">'+avgRPE+'</span>'
+      +'<span style="font-size:13px;color:'+trendCol+'">'+trendStr+'</span>'
+      +'<div style="margin-left:auto;display:flex;gap:4px;align-items:flex-end">'
+      +rpeData.map(s=>'<div style="width:14px;background:var(--y);opacity:0.7;border-radius:2px 2px 0 0;height:'+(s.rpe*8)+'px" title="RPE '+s.rpe+'"></div>').join('')
+      +'</div></div></div>';
+  }
+  document.getElementById('exdet-hist').innerHTML=html+rpeHTML;
+  const pts=ss.filter(s=>s.weight).reverse();
+  if(pts.length>1) drawChart('ex-chart',pts.map(s=>s.weight),pts.map(s=>s.date));
+}
+
+// ══════════════════════════════════════
+// RENDER STATS
+// ══════════════════════════════════════
+// Peak 1RM doelen (15 aug 2026)
+const PEAK_TARGETS={
+  backsquat:140, bench:105, frontsquat:110,
+  shoulderpress:75, hexabar:300,
+  hpc:100, hps:70, cablerow:110, bentoverrow:100
+};
+
+// Tempo string naar seconden
+function tempoToSec(t){
+  if(!t) return null;
+  const parts=t.replace(',','.').split(':');
+  if(parts.length===2) return parseFloat(parts[0])*60+parseFloat(parts[1]);
+  return parseFloat(t)*60;
+}
+
+async function refreshStats(){
+  const strExs=exercises.filter(e=>e.type==='strength');
+  let rmHTML='';
+  for(const ex of strExs){
+    const ss=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=date.desc&limit=20');
+    let best=null;
+    ss.forEach(s=>{
+      const est=s.reps===1?s.weight:s.weight*(1+s.reps/30);
+      if(!best||est>best) best=est;
+    });
+    const disp=best?Math.round(best):ex.pr;
+    if(!disp) continue;
+    const target=PEAK_TARGETS[ex.id];
+    const pct=target?Math.round((disp/target)*100):null;
+    const fillPct=target?Math.min(100,pct):Math.min(100,disp/3);
+    const fillCol=pct?(pct>=100?'var(--grn)':pct>=85?'var(--y)':'var(--org)'):'var(--y)';
+    rmHTML+='<div style="margin-bottom:14px">'
+      +'<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">'
+      +'<span style="font-family:var(--f);font-size:14px;font-weight:700">'+ex.name+'</span>'
+      +'<span style="font-family:var(--f);font-size:18px;font-weight:800;color:var(--y);margin-left:auto">'+disp+' kg</span>'
+      +(target?'<span style="font-family:var(--f);font-size:12px;color:'+(pct>=100?'var(--grn)':'var(--g)')+'">/ '+target+' kg doel</span>':'')
+      +'</div>'
+      +'<div class="prog-wrap"><div class="prog-fill" style="width:'+fillPct+'%;background:'+fillCol+'"></div></div>'
+      +(target?'<div style="font-size:11px;color:var(--g);margin-top:2px">'+pct+'% van peakdoel'+(pct>=100?' ✓':(100-pct)+'% te gaan')+'</div>':'')
+      +'</div>';
+  }
+  document.getElementById('stat-1rm').innerHTML=rmHTML||'<p style="color:var(--g);font-size:13px">Log sets om schattingen te zien</p>';
+
+  const hd=await sbGet('hrv_log','&order=date.desc&limit=14');
+  if(hd.length>1){const rev=hd.slice().reverse();drawChart('hrv-chart',rev.map(r=>r.hrv),rev.map(r=>r.date),14,30);}
+
+  // Rowing met split berekening
+  const rd=await sbGet('sessions','&exercise_id=eq.roeien&order=date.desc&limit=8');
+  let rHTML=rd.length?'':'<p style="color:var(--g);font-size:13px">Nog geen roeisessies</p>';
+  rd.forEach(s=>{
+    let split='';
+    if(s.distance&&s.time_str){
+      const sec=tempoToSec(s.time_str);
+      if(sec){
+        const splitSec=(sec/s.distance)*500;
+        const sm=Math.floor(splitSec/60);
+        const ss2=Math.round(splitSec%60);
+        split=' · '+sm+':'+(ss2<10?'0':'')+ss2+'/500m';
+      }
+    }
+    rHTML+='<div class="lrow">'
+      +'<div class="ldate">'+s.date+'</div>'
+      +'<div class="lval">'+(s.distance||'?')+'m</div>'
+      +'<div class="lnote" style="text-align:right">'+(s.time_str||'')+(s.watt?' · '+s.watt+'W':'')+split+'</div>'
+      +'</div>';
+  });
+  document.getElementById('stat-row').innerHTML=rHTML;
+}
+
+// ══════════════════════════════════════
+// ADMIN
+// ══════════════════════════════════════
+function refreshAdmin(){
+  document.getElementById('admin-ver').textContent=APP_VERSION;
+  const apiSt=document.getElementById('api-st');
+  if(apiKey){apiSt.textContent='sk-....'+apiKey.slice(-6)+' ✓';apiSt.style.color='var(--grn)';}
+  else{apiSt.textContent='Niet ingesteld';apiSt.style.color='var(--red)';}
+  const cats=['A','B','CrossFit','Overig'];
+  const catLabels={A:'Training A',B:'Training B',CrossFit:'CrossFit',Overig:'Overig'};
+  let html='';
+  cats.forEach(cat=>{
+    const exs=exercises.filter(e=>e.active!==false&&e.category===cat);
+    if(!exs.length) return;
+    html+='<div style="font-family:var(--f);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--y);padding:10px 0 4px;margin-top:4px">'+catLabels[cat]+'</div>';
+    exs.forEach(ex=>{
+      html+='<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)"><div><div style="font-size:14px">'+ex.name+'</div><div style="font-size:11px;color:var(--g)">'+ex.type+'</div></div><button data-id="'+ex.id+'" onclick="delEx(this.dataset.id)" style="margin-left:auto;background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:4px">🗑</button></div>';
+    });
+  });
+  document.getElementById('admin-exlist').innerHTML=html;
+}
+
+async function delEx(id){
+  if(!confirm('Oefening verwijderen?')) return;
+  await sbPatch('exercises','id=eq.'+id,{active:false});
+  exercises=exercises.filter(e=>e.id!==id);
+  refreshAdmin();refreshLog();toast('Verwijderd');
+}
+
+async function saveApiKey(){
+  const key=document.getElementById('i-apikey').value.trim();
+  if(!key.startsWith('sk-')){alert('Ongeldige sleutel');return;}
+  apiKey=key;
+  localStorage.setItem('maurice_apikey',key);
+  closeModal('m-apikey');
+  refreshAdmin();
+  toast('API sleutel opgeslagen');
+}
+
+async function saveNewPin(){
+  const pin=document.getElementById('i-newpin').value.trim();
+  if(!/^\d{4}$/.test(pin)){alert('Voer 4 cijfers in');return;}
+  const h=await sha256(pin);
+  // Show hash to update in code
+  closeModal('m-changepin');
+  alert('Nieuwe pin hash:\n'+h+'\n\nGeef dit door aan de ontwikkelaar om in de code te zetten.');
+}
+
+// ══════════════════════════════════════
+// COACH
+// ══════════════════════════════════════
+async function focusCoach(){
+  if(chatHist.length===0){
+    const d=await sbGet('chat_history','&order=created_at.asc&limit=20');
+    if(d.length){
+      chatHist=d.map(r=>({role:r.role,content:r.content}));
+      renderChatHistory();
+    } else {
+      addMsg('coach','Goedemorgen! Deel je HRV, RHR en slaap via het 📊 icoontje, of stel direct een vraag.');
+    }
+  }
+  setTimeout(()=>{const w=document.getElementById('chat-wrap');w.scrollTop=w.scrollHeight;},100);
+}
+
+async function buildCtx(){
+  const hd=await sbGet('hrv_log','&order=date.desc&limit=7');
+  const wd=await sbGet('weight_log','&order=date.desc&limit=1');
+  let exCtx='';
+  for(const ex of exercises){
+    const ls=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc&limit=3');
+    if(ls.length){
+      const s=ls[0];
+      let str=s.date;
+      if(s.weight&&s.reps) str+=' '+(s.sets||'?')+'x'+s.reps+' @ '+s.weight+'kg'+(s.rpe?' RPE'+s.rpe:'');
+      else if(s.time_str) str+=' '+s.time_str+(s.watt?' @ '+s.watt+'W':'');
+      else if(s.distance) str+=' '+s.distance+'m';
+      exCtx+='\n- '+ex.name+': '+str;
+    }
+  }
+  const lh=hd[0];
+  const avg7=hd.length>=3?Math.round(hd.reduce((s,r)=>s+(r.hrv||0),0)/hd.length):null;
+  const hrvStr=lh?'HRV '+(lh.hrv||'?')+' ms | RHR '+(lh.rhr||'?')+' bpm | Slaap '+(lh.sleep||'?')+'u'+(avg7?' | 7-daags gem '+avg7+' ms':'')+(lh.edema?' | oedeem: '+lh.edema:''):'Geen recente HRV';
+  const wStr=wd[0]?'\nGewicht: '+wd[0].weight+' kg ('+wd[0].date+')':'';
+
+  return 'Je bent de persoonlijke trainingscoach van Maurice van Latum van Steensel. Nederlands. Direct, bondig, data-forward. Geen opvulling.\n\n'
+    +'PROFIEL:\n'
+    +'- Gewicht trend: 107.0 (mrt) -> 108.4 (apr) -> 109.3 kg (26 apr 2026)\n'
+    +'- Body comp (26 apr): vet% 14.2% (Tanita, realistisch ~21%), spiermassa 89.2 kg, BMR 2778 kcal, visceraal vet 6, metab. leeftijd 34\n'
+    +'- Lymphedema beide voeten: dagelijks variabel. Post-sessie 8-min lymfedrainage altijd uitvoeren.\n\n'
+    +'HERSTEL:\n'+hrvStr+wStr+'\n\n'
+    +'HRV DREMPELS (Maurice-specifiek — structureel lager dan norm):\n'
+    +'>=24 ms Optimaal | 18-23 ms Normaal | 14-17 ms 80% gewichten | <14 ms Rust\n'
+    +'RHR <=58 bpm = goed. RHR weegt zwaarder dan HRV. Persoonlijk bereik HRV: 17-27 ms.\n\n'
+    +'1RM REFERENTIES (meest recent):\n'
+    +'- Hexabar Deadlift: PR 240x3 (2 apr 2026) -> gesch. 1RM ~280 kg | ALTIJD eerste oefening B, fris\n'
+    +'- Backsquat: 5x3 @ 90 kg (11 apr) | paused 3x3 @ 95 kg CrossFit (23 apr) -> gesch. 1RM ~108-112 kg\n'
+    +'- Benchpress: 5x4 @ 80 kg (11 apr) -> gesch. 1RM ~93-95 kg | 82.5 nog niet geconsolideerd\n'
+    +'- Frontsquat: PR 92.5 kg (7 jun 2026) -> gesch. 1RM ~95 kg\n'
+    +'- Shoulder Press: PR 63.5 kg (28 mei 2026) -> gesch. 1RM ~64 kg\n'
+    +'- Hang Power Clean: singles tot 85 kg | techniek breekt bij triples\n'
+    +'- Hang Power Snatch: tot 57.5 kg (schouder mobiliteit = limiting factor)\n'
+    +'- Cable Row: 90 kg werkgewicht (31 mei 2026)\n'
+    +'- Farmer Carry: 55 kg/hand 218m record (18 apr) | 32 kg KB 400m (26 apr)\n'
+    +'- Roeien 1000m PR: 3:37.5 / 272W (31 mei 2026) | 1500m: 1:56.6/500m 220W (11 apr)\n\n'
+    +'HISTORISCHE SESSIES UIT LOGBOEK:\n'
+    +'- 25 mrt: Training A start programma, squat 87.5 kg\n'
+    +'- 28 mrt: Training B, hexabar PR 240x3 (HRV laag, Olympic lifts skip)\n'
+    +'- 11 apr: Training A, squat 5x3@90, bench 5x4@80, shoulder PR 60 kg\n'
+    +'- 18 apr: Training C, frontsquat vol. 4x12@50, farmer carry 218m @ 55 kg record\n'
+    +'- 23 apr: CrossFit WOD 1706, paused squat 95 kg, AMRAP 14min 2+ ronden\n'
+    +'- 26 apr: Training B, hexabar opbouw tot 200 kg (conservatief na CrossFit), cable row 85 kg, HPC tot 80 kg\n'
+    +'- 31 mei: Training B, hexabar gecapt 180 kg (rugstijfheid), cable row PR 90 kg, HPS 57.5 kg eerste formele sessie, roei PR 3:37.5\n'
+    +'- 7 jun: Training A, frontsquat PR 92.5 kg, shoulder press 62.5 kg RPE 7-8, bench 70 kg (spanningsgevoel linker triceps op 80 kg)\n\n'
+    +'APP SESSIES (recent gelogd):'+exCtx+'\n\n'
+    +'PROGRAMMASTRUCTUUR:\n'
+    +'Training A: Backsquat, Benchpress, Frontsquat, Shoulder Press, Farmer Carry\n'
+    +'Training B: Hexabar Deadlift (EERST, fris), Bent Over Row/Cable Row, HPC, HPS, RDL\n'
+    +'CrossFit: apart loggen, zwaar meewegen in herstelplanning\n'
+    +'Paused squat CrossFit 3x3@95 = equivalent Training A 4x3@110 voor hersteldoeleinden\n\n'
+    +'REGELS:\n'
+    +'- RPE <=7.5 +2.5 kg | 8-8.5 herhaal | >=9 deload\n'
+    +'- Hexabar: 1-3 reps >=85% 1RM, altijd eerste oefening B, nooit dag na zware A\n'
+    +'- Bench frequentie: 2 accessoire sets 70-75 kg toevoegen aan Training B\n'
+    +'- Shoulder press VOOR bench in Training A\n'
+    +'- HPC: singles/doubles (techniek breekt bij triples)\n'
+    +'- Tanita betrouwbaarheid: alleen vergelijken bij zelfde oedeemstatus\n'
+    +'- Post-sessie: 8-min lymfedrainage (been omhoog, kuitpompen, enkeldraaiingen, buikademhaling)\n'
+    +'- Peak target: 15 augustus 2026. Detraining ~21 aug - 9 sep.\n\n'
+    +'HRV/RHR ontvangen: herstelanalyse dan vraag of getraind wordt.\n'
+    +'Training: stap-voor-stap per oefening, vergelijk altijd vorige sessie, geef concreet doelgewicht.';
+}
+
+async function sendChat(){
+  const inp=document.getElementById('chat-inp');
+  const txt=inp.value.trim();
+  if(!txt||sending) return;
+  inp.value='';inp.style.height='';
+  sendMsg(txt);
+}
+
+async function sendMsg(txt){
+  if(sending) return;
+  if(!apiKey){
+    addMsg('sys','Geen API sleutel — ga naar Beheer (tandwiel) om in te stellen.');
+    return;
+  }
+  sending=true;
+  document.getElementById('send-btn').disabled=true;
+  document.getElementById('coach-st').textContent='Denkt na...';
+  addMsg('user',txt);
+  chatHist.push({role:'user',content:txt});
+  await sbPost('chat_history',{role:'user',content:txt});
+  const tid=addMsg('coach','<span class="spin"></span>',true);
+  try{
+    const sys=await buildCtx();
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,system:sys,messages:chatHist.slice(-12)})
+    });
+    const d=await res.json();
+    if(d.error){removeMsg(tid);addMsg('coach','Fout: '+d.error.message);}
+    else{
+      const reply=d.content[0].text;
+      removeMsg(tid);addMsg('coach',reply);
+      chatHist.push({role:'assistant',content:reply});
+      await sbPost('chat_history',{role:'assistant',content:reply});
+      const all=await sbGet('chat_history','&order=created_at.asc');
+      if(all.length>40){
+        const old=all.slice(0,all.length-40);
+        for(const r of old) await sbDelete('chat_history','id=eq.'+r.id);
+      }
+    }
+  }catch(e){removeMsg(tid);addMsg('coach','Verbindingsfout. Check internet.');}
+  sending=false;
+  document.getElementById('send-btn').disabled=false;
+  document.getElementById('coach-st').textContent='Klaar';
+}
+
+let mc=0;
+function addMsg(role,txt,retId=false){
+  const id='m'+(++mc);
+  const d=document.createElement('div');
+  d.className='msg '+role;d.id=id;
+  d.innerHTML=txt.replace(/\n/g,'<br>');
+  const w=document.getElementById('chat-wrap');
+  w.appendChild(d);w.scrollTop=w.scrollHeight;
+  return retId?id:null;
+}
+function removeMsg(id){const e=document.getElementById(id);if(e)e.remove();}
+function renderChatHistory(){
+  const w=document.getElementById('chat-wrap');w.innerHTML='';mc=0;
+  chatHist.forEach(m=>addMsg(m.role==='user'?'user':'coach',m.content));
+}
+async function clearChat(){
+  if(!confirm('Gesprek wissen?')) return;
+  chatHist=[];
+  const all=await sbGet('chat_history','');
+  for(const r of all) await sbDelete('chat_history','id=eq.'+r.id);
+  document.getElementById('chat-wrap').innerHTML='';
+  addMsg('coach','Nieuw gesprek. Deel je ochtenddata of stel een vraag.');
+}
+function ckd(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
+function ar(el){el.style.height='';el.style.height=Math.min(el.scrollHeight,100)+'px';}
+
+// ══════════════════════════════════════
+// CHART
+// ══════════════════════════════════════
+function drawChart(cid,vals,labels,yMin,yMax){
+  const c=document.getElementById(cid);if(!c||vals.length<2) return;
+  const ctx=c.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const rect=c.parentElement.getBoundingClientRect();
+  c.width=rect.width*dpr;c.height=120*dpr;ctx.scale(dpr,dpr);
+  const W=rect.width,H=120;
+  ctx.clearRect(0,0,W,H);
+  const mn=yMin!==undefined?yMin:Math.min(...vals)*.97;
+  const mx=yMax!==undefined?yMax:Math.max(...vals)*1.03;
+  const rng=mx-mn||1;
+  const tx=i=>(i/(vals.length-1))*(W-20)+10;
+  const ty=v=>H-20-((v-mn)/rng)*(H-30);
+  ctx.strokeStyle='#2a2a2a';ctx.lineWidth=1;
+  [.25,.5,.75].forEach(f=>{const y=H-20-f*(H-30);ctx.beginPath();ctx.moveTo(10,y);ctx.lineTo(W-10,y);ctx.stroke();});
+  ctx.beginPath();ctx.moveTo(tx(0),H-20);
+  vals.forEach((v,i)=>ctx.lineTo(tx(i),ty(v)));
+  ctx.lineTo(tx(vals.length-1),H-20);ctx.closePath();
+  ctx.fillStyle='rgba(240,192,64,.1)';ctx.fill();
+  ctx.beginPath();ctx.strokeStyle='#f0c040';ctx.lineWidth=2;
+  vals.forEach((v,i)=>{if(i===0)ctx.moveTo(tx(i),ty(v));else ctx.lineTo(tx(i),ty(v));});
+  ctx.stroke();
+  const li=vals.length-1;
+  ctx.beginPath();ctx.arc(tx(li),ty(vals[li]),4,0,Math.PI*2);ctx.fillStyle='#f0c040';ctx.fill();
+  ctx.fillStyle='#f0f0f0';ctx.font='bold 12px Barlow Condensed,Arial';ctx.textAlign='right';
+  ctx.fillText(vals[li],W-10,ty(vals[li])-6);
+}
+
+// ══════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+// ══════════════════════════════════════
+// UTIL
+// ══════════════════════════════════════
+function td(){return new Date().toISOString().split('T')[0];}
+
+// ══════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════
+window.addEventListener('load',async()=>{
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  const data=await sbGet('exercises','&order=sort_order.asc&active=eq.true');
+  exercises=data.length?data:[];
+  if(!exercises.length){
+    const defaults=[
+      {id:'backsquat',name:'Backsquat',category:'A',type:'strength',pr:95,sort_order:1,active:true},
+      {id:'bench',name:'Benchpress',category:'A',type:'strength',pr:80,sort_order:2,active:true},
+      {id:'frontsquat',name:'Frontsquat',category:'A',type:'strength',pr:92.5,sort_order:3,active:true},
+      {id:'shoulderpress',name:'Shoulder Press',category:'A',type:'strength',pr:63.5,sort_order:4,active:true},
+      {id:'farmercarry',name:'Farmer Carry',category:'A',type:'carry',pr:null,sort_order:5,active:true},
+      {id:'hexabar',name:'Hexabar Deadlift',category:'B',type:'strength',pr:240,sort_order:1,active:true},
+      {id:'bentoverrow',name:'Bent Over Row',category:'B',type:'strength',pr:80,sort_order:2,active:true},
+      {id:'cablerow',name:'Cable Row',category:'B',type:'strength',pr:85,sort_order:3,active:true},
+      {id:'hpc',name:'Hang Power Clean',category:'B',type:'strength',pr:85,sort_order:4,active:true},
+      {id:'hps',name:'Hang Power Snatch',category:'B',type:'strength',pr:57.5,sort_order:5,active:true},
+      {id:'rdl',name:'RDL',category:'B',type:'strength',pr:null,sort_order:6,active:true},
+      {id:'roeien',name:'Roeien',category:'B',type:'cardio',pr:null,sort_order:7,active:true},
+      {id:'crossfit',name:'CrossFit WOD',category:'CrossFit',type:'wod',pr:null,sort_order:1,active:true}
+    ];
+    for(const ex of defaults) await sbUpsert('exercises',ex);
+    exercises=defaults;
+  }
+  refreshHome();
+});
+</script>
+</body>
+</html>

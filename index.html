@@ -4,48 +4,48 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Maurice">
-<meta name="theme-color" content="#0a0a0a">
+<meta name="theme-color" content="#111111">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Maurice — Training Coach</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bk:#111;--dk:#111;--card:#fff;--bd:#EEEEEE;--border2:#ddd;
-  --y:#F5C518;--yd:#D4A800;--w:#111;--g:#AAAAAA;--g2:#666;
-  --red:#E74C3C;--grn:#2ECC71;--org:#e08030;
-  --g100:#F7F7F7;--g200:#EEEEEE;--g400:#AAAAAA;--g600:#666;
-  --f:'Barlow Condensed','Arial Narrow',Arial,sans-serif;
-  --fb:'Barlow',Arial,sans-serif;
+  --bk:#111;--y:#F5C518;--yd:#D4A800;--w:#fff;--g100:#F7F7F7;--g200:#EEEEEE;--g400:#AAAAAA;--g600:#666;
+  --grn:#2ECC71;--red:#E74C3C;--org:#e08030;--blue:#3B82F6;
+  --f:'Barlow Condensed',sans-serif;--fb:'Barlow',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:var(--bk);font-family:var(--fb);font-size:15px}
 body{display:flex;justify-content:center;align-items:flex-start}
 #app{width:100%;max-width:430px;min-height:100vh;background:#fff;display:flex;flex-direction:column;position:relative;overflow:hidden}
-
-/* SCREENS */
 .scr{display:none;flex-direction:column;height:100vh;overflow:hidden}
 .scr.active{display:flex}
 
 /* HEADER */
 .hdr{background:var(--bk);padding:14px 18px 18px;flex-shrink:0}
+.hdr-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
 .hdr-logo{font-family:var(--f);font-size:22px;font-weight:900;letter-spacing:2px;color:#fff;line-height:1}
 .hdr-sub{font-family:var(--f);font-size:11px;color:var(--g400);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
-.hdr-right{margin-left:auto;display:flex;gap:6px}
+.hdr-right{display:flex;gap:8px;align-items:center}
 .ibtn{background:none;border:none;color:var(--g400);font-size:22px;cursor:pointer;padding:4px;line-height:1}
 .ibtn:active{color:#fff}
 
 /* NAV */
-.bnav{background:var(--bk);display:flex;padding:10px 0;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));flex-shrink:0}
-.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;background:none;border:none}
+.bnav{background:var(--bk);display:flex;padding:10px 0 calc(10px + env(safe-area-inset-bottom,0px));flex-shrink:0}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;background:none;border:none;position:relative}
 .ni-icon{font-size:20px;line-height:1}
 .ni-label{font-size:9px;font-weight:700;letter-spacing:0.5px;color:var(--g400);text-transform:uppercase;font-family:var(--f)}
 .ni.active .ni-label{color:var(--y)}
+.ni-dot{position:absolute;top:0;right:calc(50% - 18px);width:8px;height:8px;background:var(--y);border-radius:50%;display:none}
+.ni-dot.show{display:block}
 
 /* SCROLL */
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 24px;background:#fff}
+.scroll::-webkit-scrollbar{width:3px}
+.scroll::-webkit-scrollbar-thumb{background:var(--g200);border-radius:99px}
 
 /* CARD */
 .card{background:#fff;border:1.5px solid var(--g200);border-radius:14px;overflow:hidden;margin-bottom:12px}
@@ -54,21 +54,15 @@ body{display:flex;justify-content:center;align-items:flex-start}
 .card-sub{font-size:12px;color:var(--g400);margin-left:auto}
 .card-body{padding:14px}
 
-/* METRICS */
-.mgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
-.mbox{background:var(--dk);border-radius:3px;padding:10px 8px;text-align:center;border:1px solid var(--bd)}
-.mval{font-family:var(--f);font-size:26px;font-weight:800;line-height:1}
-.mval.y{color:var(--y)}
-.munit{font-family:var(--f);font-size:10px;color:var(--g);letter-spacing:1px;margin-top:2px}
-
-/* HRV BAR */
-.hrv-bar{display:flex;gap:5px;margin-bottom:10px}
-.hb{flex:1;padding:7px 4px;border-radius:8px;text-align:center;font-family:var(--f);font-size:10px;letter-spacing:1px;text-transform:uppercase;opacity:.3;border:1.5px solid transparent}
-.hb.on{opacity:1;border-color:currentColor}
-.hb.g{background:rgba(64,176,64,.15);color:var(--grn)}
-.hb.y{background:rgba(240,192,64,.15);color:var(--y)}
-.hb.o{background:rgba(224,128,48,.15);color:var(--org)}
-.hb.r{background:rgba(224,64,64,.15);color:var(--red)}
+/* BUTTONS */
+.btn{display:flex;align-items:center;justify-content:center;padding:14px 20px;border-radius:12px;border:none;font-family:var(--f);font-weight:800;font-size:15px;letter-spacing:1px;cursor:pointer;width:100%;text-transform:uppercase;transition:transform 0.1s}
+.btn:active{transform:scale(0.97)}
+.btn-y{background:var(--y);color:var(--bk)}
+.btn-b{background:var(--bk);color:#fff}
+.btn-o{background:transparent;color:var(--bk);border:2px solid var(--bk)}
+.btn-r{background:#FEE2E2;color:#991B1B}
+.btn-g{background:#D1FAE5;color:#065F46}
+.btn-sm{padding:9px 14px;font-size:12px;border-radius:10px;width:auto;display:inline-flex}
 
 /* INPUT */
 .inp{width:100%;background:var(--g100);border:1.5px solid var(--g200);border-radius:10px;padding:10px 12px;color:var(--bk);font-size:16px;font-family:var(--fb);outline:none;-webkit-appearance:none;display:block}
@@ -78,12 +72,21 @@ select.inp{cursor:pointer}
 .irow{display:flex;gap:8px;align-items:center;margin-bottom:10px}
 .ilbl{font-family:var(--f);font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--g600);width:72px;flex-shrink:0}
 
-/* BUTTONS */
-.btn{display:flex;align-items:center;justify-content:center;padding:14px 20px;border-radius:12px;border:none;font-family:var(--f);font-weight:800;font-size:15px;letter-spacing:1px;cursor:pointer;width:100%;text-transform:uppercase;transition:transform 0.1s,opacity 0.1s;background:var(--y);color:var(--bk)}
-.btn:active{transform:scale(0.97)}
-.btn.sec{background:#fff;color:var(--bk);border:2px solid var(--bk)}
-.btn.sec:active{background:var(--g100)}
-.btn.sm{padding:9px 14px;font-size:13px;border-radius:10px;width:auto;display:inline-flex}
+/* METRICS */
+.mgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.mbox{background:var(--bk);border-radius:12px;padding:10px 8px;text-align:center}
+.mval{font-family:var(--f);font-size:26px;font-weight:800;line-height:1;color:#fff}
+.mval.y{color:var(--y)}
+.munit{font-family:var(--f);font-size:10px;color:var(--g400);letter-spacing:1px;margin-top:2px}
+
+/* HRV BAR */
+.hrv-bar{display:flex;gap:5px;margin-bottom:10px}
+.hb{flex:1;padding:7px 4px;border-radius:8px;text-align:center;font-family:var(--f);font-size:10px;letter-spacing:1px;text-transform:uppercase;opacity:.3;border:1.5px solid transparent}
+.hb.on{opacity:1;border-color:currentColor}
+.hb.g{background:rgba(46,204,113,.15);color:#27ae60}
+.hb.y{background:rgba(245,197,24,.15);color:var(--yd)}
+.hb.o{background:rgba(224,128,48,.15);color:var(--org)}
+.hb.r{background:rgba(231,76,60,.15);color:var(--red)}
 
 /* LOG ROWS */
 .lrow{display:flex;align-items:flex-start;gap:8px;padding:10px 0;border-bottom:1px solid var(--g200)}
@@ -92,7 +95,7 @@ select.inp{cursor:pointer}
 .lval{font-family:var(--f);font-size:14px;font-weight:700;color:var(--bk);flex:1}
 .lnote{font-size:12px;color:var(--g400);text-align:right;flex-shrink:0}
 
-/* EX CARDS */
+/* EX CARDS (log screen) */
 .exc{background:#fff;border:1.5px solid var(--g200);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;cursor:pointer}
 .exc:active{background:var(--g100)}
 .exc-name{font-family:var(--f);font-size:15px;font-weight:700;color:var(--bk)}
@@ -104,7 +107,7 @@ select.inp{cursor:pointer}
 .msg{max-width:85%;padding:11px 14px;font-size:13px;line-height:1.55;white-space:pre-wrap;margin-bottom:4px}
 .msg.coach{background:var(--bk);color:#fff;border-radius:4px 18px 18px 18px;align-self:flex-start}
 .msg.user{background:var(--y);color:var(--bk);border-radius:18px 18px 4px 18px;font-weight:600;align-self:flex-end}
-.msg.sys{background:var(--g100);border:1px solid var(--g200);align-self:center;font-size:12px;color:var(--g400);text-align:center;width:100%;max-width:100%;border-radius:10px}
+.msg.sys{background:var(--g100);border:1px solid var(--g200);align-self:center;font-size:12px;color:var(--g400);text-align:center;width:100%;max-width:100%;border-radius:10px;padding:8px}
 .chat-bar{background:#fff;border-top:1.5px solid var(--g200);padding:8px 10px;display:flex;gap:8px;align-items:flex-end;flex-shrink:0}
 .chat-inp{flex:1;background:var(--g100);border:1.5px solid var(--g200);border-radius:12px;padding:9px 12px;color:var(--bk);font-size:15px;font-family:var(--fb);outline:none;resize:none;max-height:100px;min-height:40px}
 .chat-inp:focus{border-color:var(--y)}
@@ -125,217 +128,145 @@ select.inp{cursor:pointer}
 .qname{font-family:var(--f);font-size:13px;font-weight:700;color:var(--bk)}
 .qlast{font-size:11px;color:var(--g400);margin-top:3px}
 
-/* SPINNER */
-.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--bd);border-top-color:var(--y);border-radius:50%;animation:sp .8s linear infinite;vertical-align:middle}
-@keyframes sp{to{transform:rotate(360deg)}}
-
 /* PROG BAR */
-.prog-wrap{height:4px;background:var(--bd);border-radius:2px;overflow:hidden;margin:6px 0}
-.prog-fill{height:100%;background:var(--y);border-radius:2px}
+.prog-wrap{background:#333;border-radius:99px;height:5px;overflow:hidden;margin:6px 0}
+.prog-fill{height:100%;background:var(--y);border-radius:99px;transition:width 0.4s}
 
 /* CHART */
 .chart-wrap{position:relative;height:120px;margin:8px 0}
 canvas{width:100%;height:100%}
 
-/* SETTINGS ROWS */
-.srow{padding:13px 0;border-bottom:1px solid var(--g200);display:flex;align-items:center}
-.srow:last-child{border-bottom:none}
-
-/* PIN SCREEN (beheer toegang) */
-.pin-screen{display:none;flex-direction:column;height:100vh;overflow:hidden;background:#fff}
-.pin-screen.active{display:flex}
-.pin-dots{display:flex;gap:12px;justify-content:center;margin:14px 0}
-.pin-dot{width:14px;height:14px;border-radius:50%;background:var(--g200);transition:background .15s}
-.pin-dot.on{background:var(--y)}
-.pin-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:12px 0}
-.pk{background:var(--g100);border:1.5px solid var(--g200);border-radius:12px;padding:16px;font-family:var(--f);font-size:24px;font-weight:700;color:var(--w);cursor:pointer;text-align:center;border:none}
-.pk:active{background:var(--g200)}
-
-/* TRAINING SCREENS — EDNA STIJL */
-.back-btn{color:var(--w);font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;background:none;border:none;font-family:var(--fb);}
-.back-btn:active{color:var(--y)}
+/* TRAINING SCREEN */
 .train-hdr{background:var(--bk);padding:14px 18px 18px;flex-shrink:0}
-.train-hdr-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.badge-a{background:var(--y);color:var(--bk);border-radius:99px;padding:3px 12px;font-family:var(--f);font-size:10px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase}
-.badge-b{background:var(--bk);color:#fff;border-radius:99px;padding:3px 12px;font-family:var(--f);font-size:10px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase}
-.train-title{font-family:var(--f);font-size:20px;font-weight:900;color:#fff;letter-spacing:0.5px}
-.train-sub{font-size:11px;color:var(--g400);margin:3px 0 10px}
+.train-badge{display:inline-flex;align-items:center;padding:3px 12px;border-radius:99px;font-size:10px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;font-family:var(--f)}
+.badge-a{background:var(--y);color:var(--bk)}
+.badge-b{background:#fff;color:var(--bk)}
+.train-title{font-family:var(--f);font-size:20px;font-weight:900;color:#fff;letter-spacing:0.5px;margin:8px 0 2px}
+.train-sub{font-size:11px;color:var(--g400);margin-bottom:10px}
 .prog-label-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
 .prog-label{font-family:var(--f);font-size:10px;font-weight:700;color:var(--g400);letter-spacing:1px;text-transform:uppercase}
 .prog-count{font-family:var(--f);font-size:10px;font-weight:800;color:var(--y)}
-.ex-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+
+/* EXERCISE ITEMS IN TRAINING */
+.ex-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff}
 .ex-item{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--g200);cursor:pointer;background:#fff;transition:background 0.1s}
 .ex-item:active{background:var(--g100)}
 .ex-icon{font-size:17px;width:26px;text-align:center;flex-shrink:0}
 .ex-info{flex:1}
 .ex-name{font-weight:700;font-size:14px;color:var(--bk)}
-.ex-meta{font-size:11px;color:var(--g);margin-top:2px}
+.ex-meta{font-size:11px;color:var(--g400);margin-top:2px}
+.ex-arrow{color:var(--g400);font-size:18px;transition:transform 0.2s}
 .ex-body{background:var(--g100);padding:14px 16px;border-top:1px solid var(--g200);display:none}
-.set-row{display:flex;align-items:center;gap:6px;margin-bottom:7px}
-.set-lbl{font-family:var(--f);font-weight:800;font-size:11px;color:var(--g);width:36px;flex-shrink:0;text-transform:uppercase;letter-spacing:1px}
-.set-inp{flex:1;padding:8px 6px;border:1.5px solid var(--g200);border-radius:8px;font-size:13px;font-weight:700;text-align:center;color:var(--bk);background:#fff;font-family:var(--fb);outline:none;-webkit-appearance:none}
+.ex-body.open{display:block}
+
+/* SET LOGGER */
+.sets-header{display:flex;gap:6px;margin-bottom:6px;padding:0 2px}
+.sets-header-lbl{font-family:var(--f);font-size:9px;font-weight:800;letter-spacing:1px;color:var(--g400);text-transform:uppercase}
+.set-row{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.set-lbl{font-family:var(--f);font-weight:800;font-size:11px;color:var(--g400);width:32px;flex-shrink:0;text-transform:uppercase}
+.set-lbl.warmup{color:#3B82F6}
+.set-inp{padding:10px 4px;border:1.5px solid var(--g200);border-radius:10px;font-size:15px;font-weight:700;text-align:center;color:var(--bk);background:#fff;font-family:var(--fb);outline:none;-webkit-appearance:none;min-width:0}
 .set-inp:focus{border-color:var(--y)}
 .set-inp.filled{background:#FFF9E6;border-color:var(--y)}
-.set-unit{font-family:var(--f);font-size:11px;color:var(--g);width:28px;text-align:center;flex-shrink:0}
-.rpe-sel{padding:8px 4px;border:1.5px solid var(--g200);border-radius:8px;font-size:11px;font-weight:700;background:#fff;color:var(--bk);outline:none;width:58px}
+.set-inp.warmup-filled{background:#EFF6FF;border-color:#3B82F6}
+.set-unit{font-size:10px;color:var(--g400);font-weight:600;flex-shrink:0;text-align:center}
+.rpe-sel{padding:10px 2px;border:1.5px solid var(--g200);border-radius:10px;font-size:12px;font-weight:700;background:#fff;color:var(--bk);outline:none;flex-shrink:0}
 .rpe-sel:focus{border-color:var(--y)}
 .tech-tip{background:#FFFBEA;border-left:3px solid var(--y);border-radius:0 8px 8px 0;padding:9px 12px;font-size:12px;color:#555;line-height:1.5;margin-bottom:12px}
+.set-section-lbl{font-family:var(--f);font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--g400);text-transform:uppercase;margin:10px 0 6px;display:flex;align-items:center;gap:6px}
+.set-section-lbl::after{content:'';flex:1;height:1px;background:var(--g200)}
+.add-set-btn{display:flex;align-items:center;gap:4px;background:none;border:1.5px dashed var(--g200);border-radius:8px;padding:7px 12px;font-family:var(--f);font-size:11px;font-weight:700;color:var(--g400);cursor:pointer;width:100%;justify-content:center;margin-top:4px}
+.add-set-btn:active{background:var(--g100)}
+
+/* ROWING INPUTS */
+.row-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.row-split-grid{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;align-items:center;margin-bottom:6px}
+.row-split-lbl{font-family:var(--f);font-size:11px;font-weight:800;color:var(--g400);text-transform:uppercase}
+.row-inp{width:100%;padding:10px 8px;border:1.5px solid var(--g200);border-radius:10px;font-size:15px;font-weight:700;text-align:center;color:var(--bk);background:#fff;font-family:var(--fb);outline:none;-webkit-appearance:none}
+.row-inp:focus{border-color:var(--y)}
+.row-inp.filled{background:#FFF9E6;border-color:var(--y)}
+.row-inp-lbl{font-family:var(--f);font-size:10px;color:var(--g400);text-align:center;margin-top:3px}
+
+/* ROWER SELECTOR */
+.rower-list{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;-webkit-overflow-scrolling:touch}
+.rower-list::-webkit-scrollbar{display:none}
+.rower-btn{flex-shrink:0;padding:8px 14px;border-radius:20px;border:1.5px solid var(--g200);font-family:var(--f);font-size:12px;font-weight:800;cursor:pointer;background:#fff;color:var(--g600);text-transform:uppercase;letter-spacing:0.5px}
+.rower-btn.sel{background:var(--bk);color:#fff;border-color:var(--bk)}
+.rower-btn:active{background:var(--g100)}
+
+/* BOTTOM ACTION BAR */
+.bottom-bar{padding:12px 16px;background:#fff;border-top:1.5px solid var(--g200);flex-shrink:0;display:flex;gap:8px}
+
+/* ASK COACH */
 .ask-coach-btn{display:inline-flex;align-items:center;gap:6px;background:var(--bk);border:none;border-radius:10px;padding:9px 14px;font-family:var(--f);font-size:12px;font-weight:700;letter-spacing:1px;color:#fff;cursor:pointer;margin-top:10px}
-.ask-coach-btn:active{border-color:var(--y);color:var(--y)}
-.save-session-wrap{padding:14px 16px;background:#fff;border-top:1.5px solid var(--g200);flex-shrink:0}
+.ask-coach-btn:active{opacity:.8}
+
+/* TIMER REMINDER */
+.timer-hint{display:none;align-items:center;gap:8px;background:#FFFBEA;border:1.5px solid var(--y);border-radius:10px;padding:8px 12px;margin-top:8px;cursor:pointer}
+.timer-hint.show{display:flex}
+.timer-hint-text{font-family:var(--f);font-size:12px;font-weight:700;color:var(--bk);letter-spacing:0.5px}
 
 /* STOPWATCH */
-.sw-bar{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:var(--bk);border:2px solid var(--y);border-radius:14px;padding:10px 16px;display:flex;align-items:center;gap:12px;z-index:150;box-shadow:0 4px 20px rgba(0,0,0,.6);transition:opacity .3s;min-width:260px}
+.sw-bar{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:var(--bk);border:2px solid var(--y);border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;z-index:150;box-shadow:0 4px 20px rgba(0,0,0,.6);min-width:280px;transition:opacity .3s}
 .sw-bar.hidden{opacity:0;pointer-events:none}
-.sw-time{font-family:var(--f);font-size:28px;font-weight:900;color:#fff;letter-spacing:2px;min-width:60px;text-align:center}
+.sw-time{font-family:var(--f);font-size:32px;font-weight:900;color:#fff;letter-spacing:2px;min-width:70px;text-align:center}
 .sw-time.done{color:var(--grn)}
 .sw-time.urgent{color:var(--red)}
 .sw-btns{display:flex;gap:6px;margin-left:auto}
-.sw-btn{background:#333;border:none;border-radius:8px;padding:6px 10px;font-family:var(--f);font-size:11px;font-weight:800;letter-spacing:1px;color:#fff;cursor:pointer;text-transform:uppercase}
-.sw-btn:active{background:var(--bd)}
-.sw-btn.active{background:var(--y);color:var(--bk);border-color:var(--y)}
-.sw-preset{display:flex;gap:6px;margin-top:8px}
-.sw-preset-btn{flex:1;background:#333;border:none;border-radius:6px;padding:6px 4px;font-family:var(--f);font-size:11px;font-weight:800;letter-spacing:1px;color:var(--g400);cursor:pointer;text-align:center}
-.sw-preset-btn:active{border-color:var(--y);color:var(--y)}
+.sw-btn{background:#333;border:none;border-radius:8px;padding:8px 12px;font-family:var(--f);font-size:11px;font-weight:800;letter-spacing:1px;color:#fff;cursor:pointer;text-transform:uppercase}
+.sw-btn.active{background:var(--y);color:var(--bk)}
+.sw-preset{display:flex;gap:5px;margin-top:8px}
+.sw-preset-btn{flex:1;background:#222;border:none;border-radius:6px;padding:6px 4px;font-family:var(--f);font-size:11px;font-weight:800;letter-spacing:1px;color:var(--g400);cursor:pointer;text-align:center}
+.sw-preset-btn:active{background:var(--y);color:var(--bk)}
+.sw-trigger{display:none;position:fixed;bottom:72px;right:14px;background:var(--bk);border:2px solid var(--y);border-radius:50%;width:50px;height:50px;font-size:22px;cursor:pointer;z-index:140;box-shadow:0 2px 10px rgba(0,0,0,.5);align-items:center;justify-content:center}
+.sw-trigger.show{display:flex}
+
+/* SESSION SUMMARY */
+.sess-item{padding:10px 0;border-bottom:1px solid var(--g200)}
+.sess-item:last-child{border-bottom:none}
+.sess-name{font-family:var(--f);font-size:14px;font-weight:800;color:var(--bk);margin-bottom:4px}
+.sess-sets{font-size:12px;color:var(--g600)}
+
+/* SETTINGS */
+.srow{padding:13px 0;border-bottom:1px solid var(--g200);display:flex;align-items:center}
+.srow:last-child{border-bottom:none}
+
+/* PIN */
+.pin-screen{display:none;flex-direction:column;height:100vh;overflow:hidden;background:#fff}
+.pin-screen.active{display:flex}
+.pin-dots{display:flex;gap:12px;justify-content:center;margin:14px 0}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:var(--g200);transition:background .15s}
+.pin-dot.on{background:var(--y)}
+.pin-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:240px}
+.pk{background:var(--g100);border:1.5px solid var(--g200);border-radius:12px;padding:16px;font-family:var(--f);font-size:24px;font-weight:700;color:var(--bk);cursor:pointer;text-align:center;border-style:none}
+.pk:active{background:var(--g200)}
 
 /* TOAST */
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bk);color:#fff;padding:10px 20px;border-radius:12px;font-family:var(--f);font-size:14px;font-weight:700;letter-spacing:1px;opacity:0;transition:all .3s;z-index:200;pointer-events:none}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bk);color:#fff;padding:10px 20px;border-radius:12px;font-family:var(--f);font-size:14px;font-weight:700;letter-spacing:1px;opacity:0;transition:all .3s;z-index:200;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* FLASH OVERLAY */
+.flash{position:fixed;inset:0;background:var(--y);opacity:0;pointer-events:none;z-index:300;transition:opacity 0.1s}
+
+/* STATS */
+.stat-1rm-item{margin-bottom:16px}
+.stat-name{font-family:var(--f);font-size:15px;font-weight:800;color:var(--bk)}
+.stat-val{font-family:var(--f);font-size:20px;font-weight:900;color:var(--y)}
+.stat-target{font-family:var(--f);font-size:13px;color:var(--g400)}
+.stat-pct{font-size:11px;color:var(--g600);margin-top:2px}
 </style>
 </head>
 <body>
 <div id="app">
 
-<!-- HOME -->
-<div class="scr active" id="s-home">
-  <div class="hdr">
-    <div><div class="hdr-logo">MAURICE</div><div class="hdr-sub">Training Coach 2026</div></div>
-    <div class="hdr-right">
-      <button class="ibtn" onclick="openModal('m-hrv')" title="Check-in">📊</button>
-    </div>
-  </div>
-  <div class="scroll">
-    <div id="home-hrv"></div>
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Start Training</div></div>
-      <div class="card-body">
-        <div style="display:flex;gap:10px;margin-bottom:10px">
-          <button class="btn" onclick="go('s-train-a')" style="flex:1;font-size:17px">TRAINING A</button>
-          <button class="btn" onclick="go('s-train-b')" style="flex:1;font-size:17px;background:var(--grn)">TRAINING B</button>
-        </div>
-        <button class="btn sec" onclick="go('s-log')" style="font-size:13px">Log losse set</button>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Recente sessies</div><div class="card-sub" id="home-count">—</div></div>
-      <div class="card-body" id="home-recent"></div>
-    </div>
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Gewicht</div><div class="card-sub" id="home-weight">—</div></div>
-      <div class="card-body">
-        <div class="chart-wrap"><canvas id="w-chart"></canvas></div>
-        <button class="btn sec sm" onclick="openModal('m-weight')" style="margin-top:6px">Loggen</button>
-      </div>
-    </div>
-    <div style="text-align:center;padding:8px 0 4px;font-family:var(--f);font-size:11px;letter-spacing:2px;color:#333">v2.5.0</div>
-  </div>
-  <nav class="bnav">
-    <button class="ni active" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="showTraining()"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
-    <button class="ni" onclick="go('s-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
-  </nav>
-</div>
+<!-- FLASH -->
+<div class="flash" id="flash"></div>
 
-<!-- COACH -->
-<div class="scr" id="s-coach">
-  <div class="hdr">
-    <div><div class="hdr-logo">COACH</div><div class="hdr-sub" id="coach-st">Klaar</div></div>
-    <div class="hdr-right"><button class="ibtn" onclick="clearChat()">🗑</button></div>
-  </div>
-  <div class="chat-wrap" id="chat-wrap"></div>
-  <div class="chat-bar">
-    <textarea class="chat-inp" id="chat-inp" placeholder="Bericht aan coach..." rows="1" onkeydown="ckd(event)" oninput="ar(this)"></textarea>
-    <button class="send-btn" id="send-btn" onclick="sendChat()">↑</button>
-  </div>
-  <nav class="bnav">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-log')"><span class="ni-icon">📋</span><span class="ni-label">Log</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
-    <button class="ni" onclick="go('s-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
-  </nav>
-</div>
-
-<!-- LOG -->
-<div class="scr" id="s-log">
-  <div class="hdr">
-    <div><div class="hdr-logo">LOG</div><div class="hdr-sub">Oefeningen</div></div>
-    <div class="hdr-right"><button class="ibtn" onclick="openModal('m-newex')">＋</button></div>
-  </div>
-  <div class="scroll" id="ex-list"></div>
-  <nav class="bnav">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="showTraining()"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni active" onclick="go('s-log')"><span class="ni-icon">📋</span><span class="ni-label">Log</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
-    <button class="ni" onclick="go('s-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
-  </nav>
-</div>
-
-<!-- EX DETAIL -->
-<div class="scr" id="s-exdet">
-  <div class="hdr">
-    <div><div class="hdr-logo" id="exdet-name">—</div><div class="hdr-sub" id="exdet-cat">—</div></div>
-    <div class="hdr-right"><button class="ibtn" onclick="go('s-log')">✕</button></div>
-  </div>
-  <div class="scroll">
-    <button class="btn" onclick="openLogModal(curEx)" style="margin-bottom:12px">+ Set Loggen</button>
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Geschiedenis</div></div>
-      <div class="card-body" id="exdet-hist"></div>
-    </div>
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Progressie</div></div>
-      <div class="card-body"><div class="chart-wrap"><canvas id="ex-chart"></canvas></div></div>
-    </div>
-  </div>
-  <nav class="bnav">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="showTraining()"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni active" onclick="go('s-log')"><span class="ni-icon">📋</span><span class="ni-label">Log</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
-    <button class="ni" onclick="go('s-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
-  </nav>
-</div>
-
-<!-- STATS -->
-<div class="scr" id="s-stats">
-  <div class="hdr"><div><div class="hdr-logo">STATS</div><div class="hdr-sub">Progressie</div></div></div>
-  <div class="scroll">
-    <div class="card"><div class="card-hd"><div class="card-title">Geschatte 1RM</div></div><div class="card-body" id="stat-1rm"></div></div>
-    <div class="card"><div class="card-hd"><div class="card-title">HRV Trend 14 dagen</div></div><div class="card-body"><div class="chart-wrap"><canvas id="hrv-chart"></canvas></div></div></div>
-    <div class="card"><div class="card-hd"><div class="card-title">Roei Progressie</div></div><div class="card-body" id="stat-row"></div></div>
-  </div>
-  <nav class="bnav">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-log')"><span class="ni-icon">📋</span><span class="ni-label">Log</span></button>
-    <button class="ni active" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
-    <button class="ni" onclick="go('s-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
-  </nav>
-</div>
-
-<!-- PIN (beheer toegang) -->
-<div class="pin-screen" id="s-pin">
-  <div class="hdr">
-    <div><div class="hdr-logo">BEHEER</div><div class="hdr-sub">Pincode vereist</div></div>
-    <div class="hdr-right"><button class="ibtn" onclick="go('s-home')">✕</button></div>
-  </div>
+<!-- PIN -->
+<div class="pin-screen active" id="s-pin-lock">
   <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px">
+    <div style="font-family:var(--f);font-size:36px;font-weight:900;color:var(--bk);letter-spacing:2px;margin-bottom:4px">MAURICE</div>
+    <div style="font-family:var(--f);font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--g400);margin-bottom:40px">Training Coach 2026</div>
     <div class="pin-dots">
       <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
       <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
@@ -347,41 +278,241 @@ canvas{width:100%;height:100%}
       <button class="pk" onclick="pp('7')">7</button><button class="pk" onclick="pp('8')">8</button><button class="pk" onclick="pp('9')">9</button>
       <button class="pk" onclick="pb()" style="color:var(--g400)">⌫</button><button class="pk" onclick="pp('0')">0</button><button class="pk" style="background:transparent"></button>
     </div>
+    <div style="margin-top:20px;font-family:var(--f);font-size:11px;letter-spacing:2px;color:var(--g200)">v2.5.1</div>
+  </div>
+</div>
+
+<!-- HOME -->
+<div class="scr" id="s-home">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-logo">MAURICE</div><div class="hdr-sub">Training Coach 2026</div></div>
+      <div class="hdr-right"><button class="ibtn" onclick="openModal('m-hrv')">📊</button></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div id="home-hrv"></div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Start Training</div><div class="card-sub" id="home-next"></div></div>
+      <div class="card-body">
+        <div style="display:flex;gap:10px;margin-bottom:10px">
+          <button class="btn btn-y" onclick="go('s-train-a')" style="flex:1">TRAINING A</button>
+          <button class="btn btn-b" onclick="go('s-train-b')" style="flex:1">TRAINING B</button>
+        </div>
+        <button class="btn btn-o btn-sm" onclick="go('s-log')" style="width:100%">Log losse set</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Recente sessies</div><div class="card-sub" id="home-count">—</div></div>
+      <div class="card-body" id="home-recent"></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Gewicht</div><div class="card-sub" id="home-weight">—</div></div>
+      <div class="card-body">
+        <div class="chart-wrap"><canvas id="w-chart"></canvas></div>
+        <button class="btn btn-o btn-sm" onclick="openModal('m-weight')" style="margin-top:8px;width:100%">Loggen</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Dagnotitie</div><div class="card-sub" id="home-note-date"></div></div>
+      <div class="card-body">
+        <textarea class="inp" id="home-note-inp" placeholder="Hoe voel je je vandaag..." rows="2" style="resize:none" oninput="saveNote(this.value)"></textarea>
+      </div>
+    </div>
+    <div style="text-align:center;padding:4px 0;font-family:var(--f);font-size:11px;letter-spacing:2px;color:var(--g200)">v2.5.1</div>
   </div>
   <nav class="bnav">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni active" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="go('s-train-a')" id="nav-train"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="train-dot"></div></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-log')"><span class="ni-icon">📋</span><span class="ni-label">Log</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
-    <button class="ni active" onclick="go('s-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
+    <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
   </nav>
 </div>
 
-<!-- BEHEER -->
-<div class="scr" id="s-admin">
-  <div class="hdr">
-    <div><div class="hdr-logo">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.5.0</div></div>
-    <div class="hdr-right"><button class="ibtn" onclick="go('s-home')">✕</button></div>
+<!-- TRAINING A -->
+<div class="scr" id="s-train-a">
+  <div class="train-hdr">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <button style="background:none;border:none;color:var(--g400);font-size:14px;cursor:pointer;font-family:var(--fb)" onclick="confirmLeaveTraining()">← Terug</button>
+      <span class="train-badge badge-a">TRAINING A</span>
+    </div>
+    <div class="train-title">SQUAT · BENCH · PRESS</div>
+    <div class="train-sub">Roeien · Backsquat · Shoulder Press · Bench · Frontsquat · Farmer Carry</div>
+    <div class="prog-label-row"><div class="prog-label">Voortgang</div><div class="prog-count" id="prog-a-lbl">0 / 6</div></div>
+    <div class="prog-wrap"><div class="prog-fill" id="prog-a" style="width:0%"></div></div>
   </div>
+  <div class="ex-list" id="ex-list-a"></div>
+  <div class="bottom-bar">
+    <button class="btn btn-o btn-sm" onclick="addExToSession('A')" style="flex:1">+ Oefening</button>
+    <button class="btn btn-y" onclick="showSessionSummary('A')" id="close-btn-a" style="flex:2">Sessie afsluiten</button>
+  </div>
+  <nav class="bnav">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni active"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+    <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
+  </nav>
+</div>
+
+<!-- TRAINING B -->
+<div class="scr" id="s-train-b">
+  <div class="train-hdr">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <button style="background:none;border:none;color:var(--g400);font-size:14px;cursor:pointer;font-family:var(--fb)" onclick="confirmLeaveTraining()">← Terug</button>
+      <span class="train-badge badge-b">TRAINING B</span>
+    </div>
+    <div class="train-title">DEADLIFT · PULL · CLEAN</div>
+    <div class="train-sub">Roeien · Hexabar · Row · HPC · HPS · RDL</div>
+    <div class="prog-label-row"><div class="prog-label">Voortgang</div><div class="prog-count" id="prog-b-lbl">0 / 7</div></div>
+    <div class="prog-wrap"><div class="prog-fill" id="prog-b" style="width:0%"></div></div>
+  </div>
+  <div class="ex-list" id="ex-list-b"></div>
+  <div class="bottom-bar">
+    <button class="btn btn-o btn-sm" onclick="addExToSession('B')" style="flex:1">+ Oefening</button>
+    <button class="btn btn-y" onclick="showSessionSummary('B')" id="close-btn-b" style="flex:2">Sessie afsluiten</button>
+  </div>
+  <nav class="bnav">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni active"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+    <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
+  </nav>
+</div>
+
+<!-- COACH -->
+<div class="scr" id="s-coach">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-logo">COACH</div><div class="hdr-sub" id="coach-st">Klaar</div></div>
+      <div class="hdr-right"><button class="ibtn" onclick="clearChat()">🗑</button></div>
+    </div>
+  </div>
+  <div class="chat-wrap" id="chat-wrap"></div>
+  <div class="chat-bar">
+    <textarea class="chat-inp" id="chat-inp" placeholder="Bericht aan coach..." rows="1" onkeydown="ckd(event)" oninput="ar(this)"></textarea>
+    <button class="send-btn" id="send-btn" onclick="sendChat()">↑</button>
+  </div>
+  <nav class="bnav">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="go('s-train-a')" ><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="train-dot2"></div></button>
+    <button class="ni active"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+    <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
+  </nav>
+</div>
+
+<!-- LOG -->
+<div class="scr" id="s-log">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-logo">LOG</div><div class="hdr-sub">Oefeningen</div></div>
+      <div class="hdr-right"><button class="ibtn" onclick="openModal('m-newex')">＋</button></div>
+    </div>
+  </div>
+  <div class="scroll" id="ex-log-list"></div>
+  <nav class="bnav">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="go('s-train-a')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni active"><span class="ni-icon">📋</span><span class="ni-label">Log</span></button>
+    <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
+  </nav>
+</div>
+
+<!-- STATS -->
+<div class="scr" id="s-stats">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-logo">STATS</div><div class="hdr-sub">Progressie</div></div></div></div>
+  <div class="scroll">
+    <div class="card"><div class="card-hd"><div class="card-title">Geschatte 1RM</div></div><div class="card-body" id="stat-1rm"></div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">HRV Trend 14 dagen</div></div><div class="card-body"><div class="chart-wrap"><canvas id="hrv-chart"></canvas></div></div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">Roei Progressie</div></div><div class="card-body" id="stat-row"></div></div>
+  </div>
+  <nav class="bnav">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="go('s-train-a')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni active"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+    <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
+  </nav>
+</div>
+
+<!-- ADMIN PIN -->
+<div class="pin-screen" id="s-admin-pin">
+  <div class="hdr" style="background:var(--bk)">
+    <div class="hdr-row">
+      <div><div class="hdr-logo">BEHEER</div><div class="hdr-sub">Pincode vereist</div></div>
+      <div class="hdr-right"><button class="ibtn" onclick="go('s-home')">✕</button></div>
+    </div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;background:#fff">
+    <div class="pin-dots">
+      <div class="pin-dot" id="apd0"></div><div class="pin-dot" id="apd1"></div>
+      <div class="pin-dot" id="apd2"></div><div class="pin-dot" id="apd3"></div>
+    </div>
+    <div id="apin-err" style="color:var(--red);font-family:var(--f);font-size:13px;letter-spacing:1px;min-height:18px;margin-bottom:8px"></div>
+    <div class="pin-grid" style="width:240px">
+      <button class="pk" onclick="app('1')">1</button><button class="pk" onclick="app('2')">2</button><button class="pk" onclick="app('3')">3</button>
+      <button class="pk" onclick="app('4')">4</button><button class="pk" onclick="app('5')">5</button><button class="pk" onclick="app('6')">6</button>
+      <button class="pk" onclick="app('7')">7</button><button class="pk" onclick="app('8')">8</button><button class="pk" onclick="app('9')">9</button>
+      <button class="pk" onclick="apb()" style="color:var(--g400)">⌫</button><button class="pk" onclick="app('0')">0</button><button class="pk" style="background:transparent"></button>
+    </div>
+  </div>
+  <nav class="bnav">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="go('s-train-a')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+    <button class="ni active"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
+  </nav>
+</div>
+
+<!-- ADMIN -->
+<div class="scr" id="s-admin">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-logo">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.5.1</div></div><div class="hdr-right"><button class="ibtn" onclick="go('s-home')">✕</button></div></div></div>
   <div class="scroll">
     <div class="card"><div class="card-body">
-      <div class="srow"><div><div style="font-size:15px">Anthropic API Sleutel</div><div style="font-size:12px;color:var(--g)" id="api-st">Niet ingesteld</div></div><div style="margin-left:auto"><button class="btn sec sm" onclick="openModal('m-apikey')">Wijzig</button></div></div>
-      <div class="srow"><div><div style="font-size:15px">Pincode wijzigen</div></div><div style="margin-left:auto"><button class="btn sec sm" onclick="openModal('m-changepin')">Wijzig</button></div></div>
-      <div class="srow"><div><div style="font-size:15px">Body comp loggen</div></div><div style="margin-left:auto"><button class="btn sec sm" onclick="openModal('m-bc')">Invoer</button></div></div>
+      <div class="srow"><div><div style="font-size:15px;font-weight:700">API Sleutel</div><div style="font-size:12px;color:var(--g400)" id="api-st">Niet ingesteld</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-apikey')">Wijzig</button></div></div>
+      <div class="srow"><div><div style="font-size:15px;font-weight:700">Body comp</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-bc')">Invoer</button></div></div>
+      <div class="srow"><div><div style="font-size:15px;font-weight:700">Roeiers (PM5)</div><div style="font-size:12px;color:var(--g400)">Beheer Concept 2 machines</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-rowers')">Beheer</button></div></div>
     </div></div>
     <div class="card">
-      <div class="card-hd"><div class="card-title">Oefeningen</div><div class="card-sub"><button class="btn sec sm" onclick="openModal('m-newex')">+ Nieuw</button></div></div>
+      <div class="card-hd"><div class="card-title">Oefeningen</div><div class="card-sub"><button class="btn btn-o btn-sm" onclick="openModal('m-newex')">+ Nieuw</button></div></div>
       <div class="card-body" id="admin-exlist"></div>
     </div>
   </div>
   <nav class="bnav">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="go('s-train-a')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-log')"><span class="ni-icon">📋</span><span class="ni-label">Log</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
-    <button class="ni active" onclick="go('s-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
+    <button class="ni active"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
   </nav>
 </div>
+
+<!-- STOPWATCH -->
+<div class="sw-bar hidden" id="sw-bar">
+  <div style="flex:1">
+    <div style="font-family:var(--f);font-size:10px;letter-spacing:1px;color:var(--g400);text-transform:uppercase;margin-bottom:2px">RUSTTIJD</div>
+    <div class="sw-time" id="sw-time">1:00</div>
+    <div class="sw-preset">
+      <button class="sw-preset-btn" onclick="swPreset(60)">1 min</button>
+      <button class="sw-preset-btn" onclick="swPreset(90)">1:30</button>
+      <button class="sw-preset-btn" onclick="swPreset(120)">2 min</button>
+      <button class="sw-preset-btn" onclick="swPreset(180)">3 min</button>
+    </div>
+  </div>
+  <div class="sw-btns" style="flex-direction:column;gap:6px">
+    <div style="display:flex;gap:6px">
+      <button class="sw-btn" id="sw-start-btn" onclick="swStartStop()">▶ START</button>
+      <button class="sw-btn" onclick="swReset()">↺</button>
+      <button class="sw-btn" onclick="swClose()">✕</button>
+    </div>
+  </div>
+</div>
+<button class="sw-trigger" id="sw-trigger" onclick="swShow()">⏱</button>
 
 <!-- MODALS -->
 <div class="modal-bg" id="m-hrv" onclick="bgClose(event,'m-hrv')">
@@ -389,13 +520,14 @@ canvas{width:100%;height:100%}
     <div class="modal-title">Ochtend Check-in</div>
     <div class="irow"><label class="ilbl">HRV</label><input class="inp" type="number" id="i-hrv" placeholder="ms" step="0.1"></div>
     <div class="irow"><label class="ilbl">RHR</label><input class="inp" type="number" id="i-rhr" placeholder="bpm"></div>
-    <div class="irow"><label class="ilbl">Slaap</label><input class="inp" type="number" id="i-sleep-h" placeholder="uren" style="width:48%;margin-right:4px" min="0" max="12"><input class="inp" type="number" id="i-sleep-m" placeholder="min" style="width:48%" min="0" max="59"></div>
+    <div class="irow"><label class="ilbl">Slaap</label><input class="inp" type="number" id="i-sleep-h" placeholder="uren" style="flex:1"> <span style="color:var(--g400);padding:0 4px;font-family:var(--f)">u</span> <input class="inp" type="number" id="i-sleep-m" placeholder="min" style="flex:1"> <span style="color:var(--g400);padding:0 4px;font-family:var(--f)">min</span></div>
     <div class="irow"><label class="ilbl">Gewicht</label><input class="inp" type="number" id="i-whrv" placeholder="kg" step="0.1"></div>
     <div class="irow"><label class="ilbl">Oedeem</label><select class="inp" id="i-edema"><option value="">—</option><option>normaal</option><option>licht</option><option>flink opgezet</option></select></div>
-    <div class="irow"><label class="ilbl">Training</label><select class="inp" id="i-training"><option value="">— rust / onbekend —</option><option value="A">Training A</option><option value="B">Training B</option><option value="CrossFit">CrossFit</option><option value="C">Training C / herstel</option></select></div>
+    <div class="irow"><label class="ilbl">Training</label><select class="inp" id="i-training"><option value="">— rust —</option><option value="A">Training A</option><option value="B">Training B</option><option value="CrossFit">CrossFit</option></select></div>
+    <div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="i-note" placeholder="hoe voel ik me..."></div>
     <div style="margin-top:14px;display:flex;gap:8px">
-      <button class="btn sec" style="flex:1" onclick="closeModal('m-hrv')">Annuleer</button>
-      <button class="btn" style="flex:2" onclick="saveHRV()">Opslaan & Analyseer</button>
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-hrv')">Annuleer</button>
+      <button class="btn btn-y" style="flex:2" onclick="saveHRV()">Opslaan & Analyseer</button>
     </div>
   </div>
 </div>
@@ -404,21 +536,10 @@ canvas{width:100%;height:100%}
   <div class="modal">
     <div class="modal-title">Gewicht Loggen</div>
     <div class="irow"><label class="ilbl">Gewicht</label><input class="inp" type="number" id="i-wlog" placeholder="kg" step="0.1"></div>
-    <div class="irow"><label class="ilbl">Schaal</label><select class="inp" id="i-wscale"><option>Tanita</option><option>Medisana</option><option>Overig</option></select></div>
+    <div class="irow"><label class="ilbl">Schaal</label><select class="inp" id="i-wscale"><option>Tanita</option><option>Medisana</option></select></div>
     <div style="margin-top:14px;display:flex;gap:8px">
-      <button class="btn sec" style="flex:1" onclick="closeModal('m-weight')">Annuleer</button>
-      <button class="btn" style="flex:2" onclick="saveWeight()">Opslaan</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-bg" id="m-log" onclick="bgClose(event,'m-log')">
-  <div class="modal">
-    <div class="modal-title" id="m-log-title">Set Loggen</div>
-    <div id="m-log-fields"></div>
-    <div style="margin-top:14px;display:flex;gap:8px">
-      <button class="btn sec" style="flex:1" onclick="closeModal('m-log')">Annuleer</button>
-      <button class="btn" style="flex:2" onclick="saveSession()">Opslaan</button>
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-weight')">Annuleer</button>
+      <button class="btn btn-y" style="flex:2" onclick="saveWeight()">Opslaan</button>
     </div>
   </div>
 </div>
@@ -428,10 +549,10 @@ canvas{width:100%;height:100%}
     <div class="modal-title">Nieuwe Oefening</div>
     <div class="irow"><label class="ilbl">Naam</label><input class="inp" type="text" id="nx-name" placeholder="bijv. Tricep Pushdown"></div>
     <div class="irow"><label class="ilbl">Training</label><select class="inp" id="nx-cat"><option value="A">Training A</option><option value="B">Training B</option><option value="CrossFit">CrossFit</option><option value="Overig">Overig</option></select></div>
-    <div class="irow"><label class="ilbl">Type</label><select class="inp" id="nx-type"><option value="strength">Kracht</option><option value="cardio">Cardio</option><option value="carry">Carry</option><option value="bodyweight">Bodyweight</option><option value="wod">WOD</option></select></div>
+    <div class="irow"><label class="ilbl">Type</label><select class="inp" id="nx-type"><option value="strength">Kracht</option><option value="cardio">Cardio/Roeien</option><option value="carry">Carry</option><option value="bodyweight">Bodyweight</option></select></div>
     <div style="margin-top:14px;display:flex;gap:8px">
-      <button class="btn sec" style="flex:1" onclick="closeModal('m-newex')">Annuleer</button>
-      <button class="btn" style="flex:2" onclick="saveNewEx()">Toevoegen</button>
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-newex')">Annuleer</button>
+      <button class="btn btn-y" style="flex:2" onclick="saveNewEx()">Toevoegen</button>
     </div>
   </div>
 </div>
@@ -439,23 +560,11 @@ canvas{width:100%;height:100%}
 <div class="modal-bg" id="m-apikey" onclick="bgClose(event,'m-apikey')">
   <div class="modal">
     <div class="modal-title">API Sleutel</div>
-    <p style="font-size:13px;color:var(--g);margin-bottom:12px">Aanmaken via <strong style="color:var(--w)">console.anthropic.com</strong></p>
+    <p style="font-size:13px;color:var(--g600);margin-bottom:12px">Aanmaken via <strong>console.anthropic.com</strong></p>
     <input class="inp" type="password" id="i-apikey" placeholder="sk-ant-api03-...">
     <div style="margin-top:14px;display:flex;gap:8px">
-      <button class="btn sec" style="flex:1" onclick="closeModal('m-apikey')">Annuleer</button>
-      <button class="btn" style="flex:2" onclick="saveApiKey()">Opslaan</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-bg" id="m-changepin" onclick="bgClose(event,'m-changepin')">
-  <div class="modal">
-    <div class="modal-title">Nieuwe Pincode</div>
-    <p style="font-size:13px;color:var(--g);margin-bottom:12px">Huidige pincode: 8931</p>
-    <input class="inp" type="number" id="i-newpin" placeholder="4 cijfers" maxlength="4">
-    <div style="margin-top:14px;display:flex;gap:8px">
-      <button class="btn sec" style="flex:1" onclick="closeModal('m-changepin')">Annuleer</button>
-      <button class="btn" style="flex:2" onclick="saveNewPin()">Opslaan</button>
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-apikey')">Annuleer</button>
+      <button class="btn btn-y" style="flex:2" onclick="saveApiKey()">Opslaan</button>
     </div>
   </div>
 </div>
@@ -471,208 +580,185 @@ canvas{width:100%;height:100%}
     <div class="irow"><label class="ilbl">Taille</label><input class="inp" type="number" id="bc-wst" placeholder="cm" step="0.5"></div>
     <div class="irow"><label class="ilbl">Oedeem</label><select class="inp" id="bc-edm"><option value="">—</option><option>normaal</option><option>licht</option><option>flink opgezet</option></select></div>
     <div style="margin-top:14px;display:flex;gap:8px">
-      <button class="btn sec" style="flex:1" onclick="closeModal('m-bc')">Annuleer</button>
-      <button class="btn" style="flex:2" onclick="saveBC()">Opslaan</button>
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-bc')">Annuleer</button>
+      <button class="btn btn-y" style="flex:2" onclick="saveBC()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-rowers" onclick="bgClose(event,'m-rowers')">
+  <div class="modal">
+    <div class="modal-title">Roeiers (PM5)</div>
+    <p style="font-size:13px;color:var(--g600);margin-bottom:12px">Voer de PM5 nummers in van de Concept 2 machines in de sportschool.</p>
+    <div id="rower-admin-list"></div>
+    <button class="btn btn-o btn-sm" onclick="addRowerInput()" style="margin-top:8px;width:100%">+ Roeier toevoegen</button>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-rowers')">Annuleer</button>
+      <button class="btn btn-y" style="flex:2" onclick="saveRowers()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-add-ex" onclick="bgClose(event,'m-add-ex')">
+  <div class="modal">
+    <div class="modal-title">Oefening toevoegen</div>
+    <div id="add-ex-list"></div>
+    <button class="btn btn-o btn-sm" onclick="closeModal('m-add-ex');openModal('m-newex')" style="margin-top:10px;width:100%">+ Nieuwe oefening</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-session-summary" onclick="">
+  <div class="modal">
+    <div class="modal-title">Sessie afsluiten</div>
+    <div id="session-summary-content"></div>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-session-summary')">Verder trainen</button>
+      <button class="btn btn-y" style="flex:2" onclick="finishSession()">Opslaan & Afsluiten</button>
     </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<!-- STOPWATCH / RUSTTIMER -->
-<div class="sw-bar hidden" id="sw-bar">
-  <div>
-    <div style="font-family:var(--f);font-size:10px;letter-spacing:1px;color:var(--g400);text-transform:uppercase;margin-bottom:2px">Rusttijd</div>
-    <div class="sw-time" id="sw-time">1:00</div>
-    <div class="sw-preset">
-      <button class="sw-preset-btn" onclick="swPreset(60)">1 min</button>
-      <button class="sw-preset-btn" onclick="swPreset(90)">1:30</button>
-      <button class="sw-preset-btn" onclick="swPreset(120)">2 min</button>
-      <button class="sw-preset-btn" onclick="swPreset(180)">3 min</button>
-    </div>
-  </div>
-  <div class="sw-btns">
-    <button class="sw-btn" id="sw-start-btn" onclick="swStartStop()">▶ START</button>
-    <button class="sw-btn" onclick="swReset()">↺</button>
-    <button class="sw-btn" onclick="swClose()">✕</button>
-  </div>
-</div>
-
-<!-- Stopwatch trigger button (shown during training) -->
-<button id="sw-trigger" onclick="swShow()" style="display:none;position:fixed;bottom:72px;right:14px;background:var(--card);border:1px solid var(--bd);border-radius:50%;width:48px;height:48px;font-size:20px;cursor:pointer;z-index:140;box-shadow:0 2px 10px rgba(0,0,0,.4)">⏱</button>
-
-<!-- TRAINING A -->
-<div class="scr" id="s-train-a" style="display:none;flex-direction:column;height:100vh">
-  <div class="train-hdr">
-    <div class="train-hdr-row">
-      <button class="back-btn" onclick="go('s-home')">← Terug</button>
-      <span class="badge-a">TRAINING A</span>
-    </div>
-    <div class="train-title">SQUAT · BENCH · PRESS</div>
-    <div class="train-sub">Roeien · Backsquat · Shoulder Press · Bench · Frontsquat · Farmer Carry</div>
-    <div class="prog-label-row">
-      <div class="prog-label">Voortgang</div>
-      <div class="prog-count" id="prog-a-label">0 / 5</div>
-    </div>
-    <div class="prog-wrap"><div class="prog-fill" id="prog-a" style="width:0%"></div></div>
-  </div>
-  <div class="ex-list" id="ex-list-a"></div>
-  <div class="save-session-wrap">
-    <button class="btn" id="save-btn-a" onclick="saveTrainSession('A')" disabled style="opacity:.4">SESSIE OPSLAAN 💪</button>
-  </div>
-  <nav class="bnav">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
-    <button class="ni" onclick="go('s-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
-  </nav>
-</div>
-
-<!-- TRAINING B -->
-<div class="scr" id="s-train-b" style="display:none;flex-direction:column;height:100vh">
-  <div class="train-hdr">
-    <div class="train-hdr-row">
-      <button class="back-btn" onclick="go('s-home')">← Terug</button>
-      <span class="badge-b">TRAINING B</span>
-    </div>
-    <div class="train-title">DEADLIFT · PULL · CLEAN</div>
-    <div class="train-sub">Roeien · Hexabar · Row · HPC · HPS · RDL</div>
-    <div class="prog-label-row">
-      <div class="prog-label">Voortgang</div>
-      <div class="prog-count" id="prog-b-label">0 / 7</div>
-    </div>
-    <div class="prog-wrap"><div class="prog-fill" id="prog-b" style="width:0%"></div></div>
-  </div>
-  <div class="ex-list" id="ex-list-b"></div>
-  <div class="save-session-wrap">
-    <button class="btn" id="save-btn-b" onclick="saveTrainSession('B')" disabled style="opacity:.4">SESSIE OPSLAAN 💪</button>
-  </div>
-  <nav class="bnav">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
-    <button class="ni" onclick="go('s-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
-  </nav>
-</div>
-
 <script>
 // ══════════════════════════════════════
 // CONSTANTS
 // ══════════════════════════════════════
-const APP_VERSION = 'v2.5.0';
-// PIN hash = sha256('8931') — geen salt, zelfde methode als Edna
+const APP_VERSION = 'v2.5.1';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
-
-// ══════════════════════════════════════
-// SUPABASE REST HELPERS (geen library)
-// ══════════════════════════════════════
 const SB_H = {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
 
-async function sbGet(table, params=''){
-  try{
-    const r=await fetch(`${SB_URL}/rest/v1/${table}?select=*${params}`,{headers:SB_H});
-    if(!r.ok) return [];
-    return await r.json();
-  }catch{return [];}
-}
-async function sbPost(table, data){
-  try{
-    const r=await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(data)});
-    return r.ok;
-  }catch{return false;}
-}
-async function sbPatch(table, filter, data){
-  try{
-    const r=await fetch(`${SB_URL}/rest/v1/${table}?${filter}`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(data)});
-    return r.ok;
-  }catch{return false;}
-}
-async function sbUpsert(table, data){
-  try{
-    const r=await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(data)});
-    return r.ok;
-  }catch{return false;}
-}
-async function sbDelete(table, filter){
-  try{
-    const r=await fetch(`${SB_URL}/rest/v1/${table}?${filter}`,{method:'DELETE',headers:SB_H});
-    return r.ok;
-  }catch{return false;}
-}
+const PEAK_TARGETS = {
+  backsquat:140, bench:105, frontsquat:110,
+  shoulderpress:75, hexabar:300,
+  hpc:100, hps:70, cablerow:110, bentoverrow:100
+};
+
+const TRAIN_CONFIG = {
+  A: [
+    {id:'roeien',      naam:'Roeien (warmup)',   type:'rowing', sets:1, reps:'1000m', rpe:'—', tip:'PR: 3:37.5 / 272W (31 mei 2026). Rustig opbouwen — warmup, niet maximaal.'},
+    {id:'backsquat',   naam:'Backsquat',         type:'strength', sets:4, reps:'3-5', rpe:'8', warmupSets:3, tip:'Heupen recht naar beneden. Borstkast omhoog. Voeten schouderbreedte.'},
+    {id:'shoulderpress',naam:'Shoulder Press',   type:'strength', sets:4, reps:'3-5', rpe:'8', warmupSets:2, tip:'Kern gespannen. Doorzakken lage rug voorkomen. VOOR bench uitvoeren.'},
+    {id:'bench',       naam:'Benchpress',        type:'strength', sets:4, reps:'4-6', rpe:'8', warmupSets:2, tip:'Schouderbladen samen. Let op linker triceps — stop bij spanning op 80 kg.'},
+    {id:'frontsquat',  naam:'Frontsquat',        type:'strength', sets:4, reps:'3',   rpe:'8', warmupSets:2, tip:'Ellebogen hoog. Romp verticaal. PR: 92.5 kg (7 jun 2026).'},
+    {id:'farmercarry', naam:'Farmer Carry',      type:'carry',   sets:3, reps:'40m', rpe:'8', tip:'Schouders omlaag en achteruit. Stap snel en gecontroleerd.'},
+  ],
+  B: [
+    {id:'roeien',      naam:'Roeien (warmup)',   type:'rowing', sets:1, reps:'1000m', rpe:'—', tip:'PR: 3:37.5 / 272W (31 mei 2026). Rustig opbouwen — warmup, niet maximaal.'},
+    {id:'hexabar',     naam:'Hexabar Deadlift',  type:'strength', sets:4, reps:'1-3', rpe:'8-9', warmupSets:3, tip:'FRIS na roeien. Heupen laag, borst omhoog. PR: 240×3 (apr 2026). Nooit dag na zware A.'},
+    {id:'bentoverrow', naam:'Bent Over Row',     type:'strength', sets:4, reps:'6',   rpe:'7-8', warmupSets:2, tip:'Romp ~45°. Trek naar navel. Schouderbladen samentrekken.'},
+    {id:'cablerow',    naam:'Cable Row',         type:'strength', sets:4, reps:'6-8', rpe:'7-8', warmupSets:1, tip:'Rug recht. Geen momentum. Werkgewicht: 90 kg.'},
+    {id:'hpc',         naam:'Hang Power Clean',  type:'strength', sets:5, reps:'1-2', rpe:'8',   warmupSets:2, tip:'Singles of doubles — techniek breekt bij triples. Explosief van boven de knie.'},
+    {id:'hps',         naam:'Hang Power Snatch', type:'strength', sets:4, reps:'1-2', rpe:'7-8', warmupSets:2, tip:'Schouder mobiliteit = limiting factor. Breed greep, explosief.'},
+    {id:'rdl',         naam:'RDL',               type:'strength', sets:3, reps:'6-8', rpe:'7',   warmupSets:1, tip:'Lichte kniebuiging. Heupen achteruit. Rug recht door hele beweging.'},
+  ]
+};
 
 // ══════════════════════════════════════
 // STATE
 // ══════════════════════════════════════
 let exercises = [];
 let apiKey = localStorage.getItem('maurice_apikey') || '';
-let curEx = null;
+let curTraining = null; // 'A' or 'B'
+let sessionLog = {}; // {exId: {warmup:[{kg,reps}], sets:[{kg,reps,rpe}]}}
+let sessionExtraExs = []; // extra exercises added during session
 let chatHist = [];
 let sending = false;
 let pinBuf = '';
+let adminPinBuf = '';
+let rowers = JSON.parse(localStorage.getItem('maurice_rowers') || '[]');
+if (!rowers.length) rowers = ['PM5 1','PM5 2','PM5 3','PM5 4','PM5 5','PM5 6','PM5 7','PM5 8','PM5 9','PM5 10'];
+let selectedRower = localStorage.getItem('maurice_rower') || rowers[0];
 
 // ══════════════════════════════════════
-// NAVIGATION
+// SUPABASE
 // ══════════════════════════════════════
-function go(id){
-  // Training schermen hebben speciale render logica
-  if(id==='s-train-a'){go_train('A');return;}
-  if(id==='s-train-b'){go_train('B');return;}
-  swHide_training();
-  document.querySelectorAll('.scr,.pin-screen').forEach(s=>{s.classList.remove('active');s.style.display='';});
-  const el=document.getElementById(id);
-  if(el) el.classList.add('active');
-  if(id==='s-home') refreshHome();
-  if(id==='s-log') refreshLog();
-  if(id==='s-stats') refreshStats();
-  if(id==='s-coach') focusCoach();
-  if(id==='s-admin') refreshAdmin();
-  // Update nav active state
-  document.querySelectorAll('.ni').forEach(b=>{
-    const oc=b.getAttribute('onclick')||'';
-    b.classList.toggle('active',oc.includes(id)||(id==='s-admin'&&oc.includes('s-pin')));
-  });
+async function sbGet(table, params=''){
+  try{const r=await fetch(`${SB_URL}/rest/v1/${table}?select=*${params}`,{headers:SB_H});return r.ok?await r.json():[];}catch{return [];}
+}
+async function sbPost(table, data){
+  try{const r=await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(data)});return r.ok;}catch{return false;}
+}
+async function sbPatch(table, filter, data){
+  try{const r=await fetch(`${SB_URL}/rest/v1/${table}?${filter}`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(data)});return r.ok;}catch{return false;}
+}
+async function sbUpsert(table, data){
+  try{const r=await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(data)});return r.ok;}catch{return false;}
+}
+async function sbDelete(table, filter){
+  try{const r=await fetch(`${SB_URL}/rest/v1/${table}?${filter}`,{method:'DELETE',headers:SB_H});return r.ok;}catch{return false;}
 }
 
 // ══════════════════════════════════════
-// MODALS
-// ══════════════════════════════════════
-function openModal(id){document.getElementById(id).classList.add('open');}
-function closeModal(id){document.getElementById(id).classList.remove('open');}
-function bgClose(e,id){if(e.target===document.getElementById(id))closeModal(id);}
-
-// ══════════════════════════════════════
-// PIN
+// PIN — LOCK SCREEN
 // ══════════════════════════════════════
 async function sha256(str){
   const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
-async function pp(d){
+function pp(d){
   if(pinBuf.length>=4) return;
-  pinBuf+=d;
-  updatePinDots();
-  if(pinBuf.length===4){
-    const h=await sha256(pinBuf);
-    if(h===PIN_HASH){
-      pinBuf='';updatePinDots();
-      go('s-admin');
-    } else {
-      document.getElementById('pin-err').textContent='Verkeerde pincode';
-      setTimeout(()=>{pinBuf='';updatePinDots();document.getElementById('pin-err').textContent='';},700);
-    }
+  pinBuf+=d; updPinDots();
+  if(pinBuf.length===4) verifyLockPin();
+}
+function pb(){if(pinBuf.length>0){pinBuf=pinBuf.slice(0,-1);updPinDots();}}
+function updPinDots(){for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.toggle('on',i<pinBuf.length);}
+async function verifyLockPin(){
+  const h=await sha256(pinBuf);
+  if(h===PIN_HASH){
+    document.getElementById('s-pin-lock').classList.remove('active');
+    go('s-home');
+  } else {
+    document.getElementById('pin-err').textContent='Verkeerde pincode';
+    setTimeout(()=>{pinBuf='';updPinDots();document.getElementById('pin-err').textContent='';},700);
   }
 }
-function pb(){if(pinBuf.length>0){pinBuf=pinBuf.slice(0,-1);updatePinDots();}}
-function updatePinDots(){
-  for(let i=0;i<4;i++) document.getElementById('pd'+i).classList.toggle('on',i<pinBuf.length);
+
+// Admin PIN
+function app(d){
+  if(adminPinBuf.length>=4) return;
+  adminPinBuf+=d; updAPinDots();
+  if(adminPinBuf.length===4) verifyAdminPin();
+}
+function apb(){if(adminPinBuf.length>0){adminPinBuf=adminPinBuf.slice(0,-1);updAPinDots();}}
+function updAPinDots(){for(let i=0;i<4;i++)document.getElementById('apd'+i).classList.toggle('on',i<adminPinBuf.length);}
+async function verifyAdminPin(){
+  const h=await sha256(adminPinBuf);
+  if(h===PIN_HASH){
+    adminPinBuf='';updAPinDots();
+    document.getElementById('s-admin-pin').classList.remove('active');
+    go('s-admin');
+  } else {
+    document.getElementById('apin-err').textContent='Verkeerde pincode';
+    setTimeout(()=>{adminPinBuf='';updAPinDots();document.getElementById('apin-err').textContent='';},700);
+  }
 }
 
 // ══════════════════════════════════════
-// HRV / WEIGHT
+// NAVIGATION
+// ══════════════════════════════════════
+function go(id){
+  if(id==='s-train-a'){startTraining('A');return;}
+  if(id==='s-train-b'){startTraining('B');return;}
+  document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById(id);
+  if(el) el.classList.add('active');
+  swHideTraining();
+  if(id==='s-home') refreshHome();
+  if(id==='s-log') refreshLog();
+  if(id==='s-stats') refreshStats();
+  if(id==='s-admin') refreshAdmin();
+  if(id==='s-coach') focusCoach();
+  if(id==='s-admin-pin'){adminPinBuf='';updAPinDots();}
+}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function bgClose(e,id){if(e.target===document.getElementById(id))closeModal(id);}
+
+// ══════════════════════════════════════
+// HRV / CHECK-IN
 // ══════════════════════════════════════
 async function saveHRV(){
   const hrv=parseFloat(document.getElementById('i-hrv').value)||null;
@@ -686,7 +772,7 @@ async function saveHRV(){
   const note=document.getElementById('i-note').value||null;
   const today=td();
   const ops=[];
-  if(hrv||rhr||slp) ops.push(sbPost('hrv_log',{date:today,hrv,rhr,sleep:slp,edema:edm,note:note}));
+  if(hrv||rhr||slp) ops.push(sbPost('hrv_log',{date:today,hrv,rhr,sleep:slp,edema:edm,note}));
   if(wgt) ops.push(sbPost('weight_log',{date:today,weight:wgt,scale:'Tanita'}));
   await Promise.all(ops);
   closeModal('m-hrv');
@@ -696,11 +782,12 @@ async function saveHRV(){
   if(slp){const sh=Math.floor(slp);const sm=Math.round((slp-sh)*60);parts.push('slaap '+sh+'u'+(sm?sm+'min':''));}
   if(wgt) parts.push('gewicht '+wgt+' kg');
   if(edm) parts.push('oedeem: '+edm);
-  if(training) parts.push('plan: '+training);
+  if(training) parts.push('plan: Training '+training);
+  if(note) parts.push(note);
   if(parts.length){
     if(apiKey){go('s-coach');sendMsg(parts.join(', '));}
     else{refreshHome();toast('Check-in opgeslagen — stel API sleutel in via Beheer');}
-  } else{refreshHome();toast('Check-in opgeslagen');}
+  } else {refreshHome();toast('Check-in opgeslagen');}
 }
 async function saveWeight(){
   const w=parseFloat(document.getElementById('i-wlog').value);
@@ -716,105 +803,426 @@ async function saveBC(){
     bmr:parseInt(document.getElementById('bc-bmr').value)||null,
     visceral_fat:parseInt(document.getElementById('bc-vis').value)||null,
     waist_cm:parseFloat(document.getElementById('bc-wst').value)||null,
-    edema:document.getElementById('bc-edm').value||null,
-    source:'Tanita'
-  };
-  await sbPost('body_comp',row);
-  closeModal('m-bc');toast('Opgeslagen');
+    edema:document.getElementById('bc-edm').value||null,source:'Tanita'};
+  await sbPost('body_comp',row);closeModal('m-bc');toast('Opgeslagen');
 }
 
 // ══════════════════════════════════════
-// SESSION LOGGING
+// TRAINING SESSION
 // ══════════════════════════════════════
-function openLogModal(ex){
-  if(typeof ex==='string') ex=exercises.find(e=>e.id===ex)||{id:ex,name:ex,type:'strength'};
-  curEx=ex;
-  document.getElementById('m-log-title').textContent=ex.name+' — Set loggen';
-  let f='';
-  if(ex.type==='strength'){
-    f='<div class="irow"><label class="ilbl">Gewicht</label><input class="inp" type="number" id="l-w" placeholder="kg" step="0.5"></div>'
-     +'<div class="irow"><label class="ilbl">Sets</label><input class="inp" type="number" id="l-s" value="4"></div>'
-     +'<div class="irow"><label class="ilbl">Reps</label><input class="inp" type="number" id="l-r" placeholder="reps"></div>'
-     +'<div class="irow"><label class="ilbl">RPE</label><input class="inp" type="number" id="l-rpe" placeholder="1-10" step="0.5"></div>'
-     +'<div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="l-n" placeholder="optioneel"></div>';
-  } else if(ex.type==='cardio'){
-    f='<div class="irow"><label class="ilbl">Afstand</label><input class="inp" type="number" id="l-dist" placeholder="m" oninput="calcSplit()"></div>'
-     +'<div class="irow"><label class="ilbl">Tijd</label><input class="inp" type="text" id="l-time" placeholder="bijv. 3:37" oninput="calcSplit()"></div>'
-     +'<div class="irow"><label class="ilbl">Watt</label><input class="inp" type="number" id="l-watt" placeholder="W"></div>'
-     +'<div class="irow"><label class="ilbl">500m split</label><input class="inp" type="text" id="l-split" placeholder="auto" readonly style="color:var(--y);background:var(--bk)"></div>'
-     +'<div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="l-n" placeholder="optioneel"></div>';
-  } else if(ex.type==='carry'){
-    f='<div class="irow"><label class="ilbl">Gewicht</label><input class="inp" type="number" id="l-w" placeholder="kg p/hand" step="0.5"></div>'
-     +'<div class="irow"><label class="ilbl">Afstand</label><input class="inp" type="number" id="l-dist" placeholder="m"></div>'
-     +'<div class="irow"><label class="ilbl">Stops</label><input class="inp" type="number" id="l-s" placeholder="0"></div>'
-     +'<div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="l-n" placeholder="optioneel"></div>';
-  } else if(ex.type==='wod'){
-    f='<div class="irow"><label class="ilbl">WOD</label><input class="inp" type="text" id="l-wn" placeholder="WOD 1713"></div>'
-     +'<div class="irow"><label class="ilbl">Type</label><input class="inp" type="text" id="l-wt" placeholder="AMRAP 20"></div>'
-     +'<div class="irow"><label class="ilbl">Score</label><input class="inp" type="text" id="l-time" placeholder="tijd / ronden"></div>'
-     +'<div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="l-n" placeholder="inhoud"></div>';
-  } else {
-    f='<div class="irow"><label class="ilbl">Sets</label><input class="inp" type="number" id="l-s" value="3"></div>'
-     +'<div class="irow"><label class="ilbl">Reps</label><input class="inp" type="number" id="l-r" placeholder="reps"></div>'
-     +'<div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="l-n" placeholder="optioneel"></div>';
+function startTraining(t){
+  // If already in a session for this training, resume
+  if(curTraining===t){
+    document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('s-train-'+t.toLowerCase()).classList.add('active');
+    swShowTraining();
+    return;
   }
-  document.getElementById('m-log-fields').innerHTML=f;
-  openModal('m-log');
+  // New session
+  curTraining=t;
+  sessionLog={};
+  sessionExtraExs=[];
+  renderTrainScreen(t);
+  document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s-train-'+t.toLowerCase()).classList.add('active');
+  swShowTraining();
+  // Show active dot
+  document.querySelectorAll('.ni-dot').forEach(d=>d.classList.add('show'));
 }
 
-function gv(id){const e=document.getElementById(id);return e?e.value:null;}
-
-async function saveSession(){
-  const ex=curEx;if(!ex)return;
-  const row={date:td(),exercise_id:ex.id,note:gv('l-n')||''};
-  if(ex.type==='strength'){
-    row.weight=parseFloat(gv('l-w'))||null;row.sets=parseInt(gv('l-s'))||null;
-    row.reps=parseInt(gv('l-r'))||null;row.rpe=parseFloat(gv('l-rpe'))||null;
-  } else if(ex.type==='cardio'){
-    row.distance=parseInt(gv('l-dist'))||null;row.time_str=gv('l-time');row.watt=parseInt(gv('l-watt'))||null;
-  } else if(ex.type==='carry'){
-    row.weight=parseFloat(gv('l-w'))||null;row.distance=parseInt(gv('l-dist'))||null;row.stops=parseInt(gv('l-s'))||0;
-  } else if(ex.type==='wod'){
-    row.wod_name=gv('l-wn');row.wod_type=gv('l-wt');row.score=gv('l-time');
-  } else {
-    row.sets=parseInt(gv('l-s'))||null;row.reps=parseInt(gv('l-r'))||null;
-  }
-  const ok=await sbPost('sessions',row);
-  if(ok){
-    if(row.weight){
-      const exObj=exercises.find(e=>e.id===ex.id);
-      if(exObj&&row.weight>(exObj.pr||0)){
-        await sbPatch('exercises','id=eq.'+ex.id,{pr:row.weight});
-        exObj.pr=row.weight;
-      }
+function confirmLeaveTraining(){
+  const logged = Object.keys(sessionLog).length;
+  if(logged>0){
+    if(confirm('Wil je de sessie pauzeren? Je data blijft bewaard.')){
+      document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
+      document.getElementById('s-home').classList.add('active');
+      swHideTraining();
+      refreshHome();
     }
-    closeModal('m-log');
-    toast('Opgeslagen ✓');
-    if(document.getElementById('s-exdet').classList.contains('active')) loadExDet(ex.id);
   } else {
-    toast('Fout bij opslaan');
+    curTraining=null;
+    document.querySelectorAll('.ni-dot').forEach(d=>d.classList.remove('show'));
+    go('s-home');
   }
 }
 
-async function saveNewEx(){
-  const name=document.getElementById('nx-name').value.trim();
-  const cat=document.getElementById('nx-cat').value;
-  const type=document.getElementById('nx-type').value;
-  if(!name){alert('Vul naam in');return;}
-  const id=name.toLowerCase().replace(/[^a-z0-9]/g,'');
-  if(exercises.find(e=>e.id===id)){alert('Naam al in gebruik');return;}
-  const ok=await sbPost('exercises',{id,name,category:cat,type,sort_order:99,active:true});
-  if(ok){
-    exercises.push({id,name,category:cat,type,sort_order:99,active:true});
-    closeModal('m-newex');
-    toast(name+' toegevoegd');
-    refreshLog();
-    refreshAdmin();
+function getSessionExs(t){
+  return [...TRAIN_CONFIG[t], ...sessionExtraExs.filter(e=>e._session===t)];
+}
+
+function renderTrainScreen(t){
+  const list=getSessionExs(t);
+  const container=document.getElementById('ex-list-'+t.toLowerCase());
+  if(!container) return;
+  container.innerHTML='';
+  list.forEach(ex=>{
+    const isLogged=sessionLog[ex.id]&&(
+      (sessionLog[ex.id].sets&&sessionLog[ex.id].sets.some(s=>s.kg||s.reps))||
+      (sessionLog[ex.id].rowing&&sessionLog[ex.id].rowing.time)
+    );
+    const div=document.createElement('div');
+    div.innerHTML=buildExItem(ex, isLogged, t);
+    container.appendChild(div);
+  });
+  updateTrainProgress(t);
+}
+
+function buildExItem(ex, isLogged, t){
+  const warmupCount=ex.warmupSets||0;
+  const workCount=ex.sets||4;
+
+  // Build set rows for strength
+  let bodyContent='';
+  if(ex.type==='rowing'){
+    bodyContent=buildRowingInputs(ex.id);
+  } else if(ex.type==='carry'){
+    bodyContent=buildCarryInputs(ex.id, workCount);
+  } else {
+    bodyContent=buildStrengthInputs(ex.id, warmupCount, workCount);
   }
+
+  return `<div class="ex-item" onclick="toggleEx('${ex.id}')">
+    <div class="ex-icon">${isLogged?'✅':'⬜'}</div>
+    <div class="ex-info">
+      <div class="ex-name">${ex.naam}</div>
+      <div class="ex-meta">${ex.sets}×${ex.reps}${ex.rpe&&ex.rpe!=='—'?' · RPE '+ex.rpe:''}</div>
+    </div>
+    <span style="color:var(--g400);font-size:18px" id="arr-${ex.id}">›</span>
+  </div>
+  <div class="ex-body" id="body-${ex.id}">
+    ${ex.tip?`<div class="tech-tip">💡 ${ex.tip}</div>`:''}
+    ${bodyContent}
+    <div class="timer-hint" id="hint-${ex.id}">
+      <span style="font-size:18px">⏱</span>
+      <span class="timer-hint-text">Start rusttijd?</span>
+      <button onclick="swShow();swStart()" style="background:var(--y);border:none;border-radius:8px;padding:5px 10px;font-family:var(--f);font-size:11px;font-weight:800;cursor:pointer;margin-left:auto">▶ START</button>
+    </div>
+    <button class="ask-coach-btn" onclick="askCoachEx('${ex.naam}','${t}')">🤖 Vraag de coach</button>
+  </div>`;
+}
+
+function buildStrengthInputs(exId, warmupCount, workCount){
+  let html='';
+  if(warmupCount>0){
+    html+=`<div class="set-section-lbl" style="color:#3B82F6">Opwarmsets</div>`;
+    for(let i=1;i<=warmupCount;i++){
+      html+=`<div class="set-row">
+        <div class="set-lbl warmup">W${i}</div>
+        <input class="set-inp" type="number" inputmode="decimal" placeholder="kg" id="w-${exId}-${i}-kg" style="flex:2" onchange="logSet('${exId}','warmup',${i})">
+        <div class="set-unit" style="width:16px">kg</div>
+        <input class="set-inp" type="number" inputmode="numeric" placeholder="reps" id="w-${exId}-${i}-reps" style="flex:1" onchange="logSet('${exId}','warmup',${i})">
+        <div class="set-unit" style="width:28px">reps</div>
+      </div>`;
+    }
+  }
+  html+=`<div class="set-section-lbl">Werksets</div>`;
+  for(let i=1;i<=workCount;i++){
+    html+=`<div class="set-row" id="set-row-${exId}-${i}">
+      <div class="set-lbl">S${i}</div>
+      <input class="set-inp" type="number" inputmode="decimal" placeholder="kg" id="s-${exId}-${i}-kg" style="flex:2" onchange="logSet('${exId}','work',${i})">
+      <div class="set-unit" style="width:16px">kg</div>
+      <input class="set-inp" type="number" inputmode="numeric" placeholder="reps" id="s-${exId}-${i}-reps" style="flex:1" onchange="logSet('${exId}','work',${i})">
+      <div class="set-unit" style="width:28px">reps</div>
+      <select class="rpe-sel" id="s-${exId}-${i}-rpe" style="width:60px" onchange="logSet('${exId}','work',${i})">
+        <option value="">RPE</option>
+        ${[5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10].map(v=>`<option value="${v}">${v}</option>`).join('')}
+      </select>
+    </div>`;
+  }
+  html+=`<button class="add-set-btn" onclick="addWorkSet('${exId}')">+ Set toevoegen</button>`;
+  return html;
+}
+
+function buildCarryInputs(exId, sets){
+  let html=`<div class="set-section-lbl">Sets</div>`;
+  for(let i=1;i<=sets;i++){
+    html+=`<div class="set-row">
+      <div class="set-lbl">S${i}</div>
+      <input class="set-inp" type="number" inputmode="decimal" placeholder="kg/hand" id="s-${exId}-${i}-kg" style="flex:2" onchange="logSet('${exId}','work',${i})">
+      <div class="set-unit" style="width:24px">kg</div>
+      <input class="set-inp" type="number" inputmode="numeric" placeholder="m" id="s-${exId}-${i}-reps" style="flex:1" onchange="logSet('${exId}','work',${i})">
+      <div class="set-unit" style="width:12px">m</div>
+    </div>`;
+  }
+  return html;
+}
+
+function buildRowingInputs(exId){
+  const rowerId=`row-${exId}`;
+  return `
+    <div style="margin-bottom:12px">
+      <div class="set-section-lbl">Machine selectie</div>
+      <div class="rower-list" id="${rowerId}-rowers">
+        ${rowers.map(r=>`<button class="rower-btn${r===selectedRower?' sel':''}" onclick="selectRower('${r}','${rowerId}','${exId}')">${r}</button>`).join('')}
+      </div>
+    </div>
+    <div class="set-section-lbl">Resultaat</div>
+    <div class="row-grid">
+      <div>
+        <input class="row-inp" type="text" inputmode="numeric" placeholder="1000" id="${exId}-dist" oninput="calcRowSplit('${exId}')">
+        <div class="row-inp-lbl">Afstand (m)</div>
+      </div>
+      <div>
+        <input class="row-inp" type="text" placeholder="3:37" id="${exId}-time" oninput="calcRowSplit('${exId}');logRowing('${exId}')">
+        <div class="row-inp-lbl">Totaal tijd</div>
+      </div>
+      <div>
+        <input class="row-inp" type="text" placeholder="auto" id="${exId}-split" readonly style="background:var(--g100);color:var(--y);font-weight:800">
+        <div class="row-inp-lbl">Split /500m</div>
+      </div>
+      <div>
+        <input class="row-inp" type="number" inputmode="numeric" placeholder="272" id="${exId}-watt" oninput="logRowing('${exId}')">
+        <div class="row-inp-lbl">Watt</div>
+      </div>
+      <div>
+        <input class="row-inp" type="number" inputmode="numeric" placeholder="26" id="${exId}-stroke" oninput="logRowing('${exId}')">
+        <div class="row-inp-lbl">Slag/min</div>
+      </div>
+      <div>
+        <input class="row-inp" type="number" inputmode="numeric" placeholder="167" id="${exId}-drag" oninput="logRowing('${exId}')">
+        <div class="row-inp-lbl">Drag factor</div>
+      </div>
+    </div>
+    <div class="set-section-lbl">Splits per 250m</div>
+    <div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;align-items:center;margin-bottom:8px">
+      <div style="font-family:var(--f);font-size:9px;font-weight:800;color:var(--g400)"></div>
+      <div style="font-family:var(--f);font-size:9px;font-weight:800;color:var(--g400);text-align:center">TIJD</div>
+      <div style="font-family:var(--f);font-size:9px;font-weight:800;color:var(--g400);text-align:center">SPLIT/500m</div>
+    </div>
+    ${[1,2,3,4].map(q=>`
+    <div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;align-items:center;margin-bottom:6px">
+      <div style="font-family:var(--f);font-size:11px;font-weight:800;color:var(--g400);width:48px">${q*250}m</div>
+      <input class="row-inp" type="text" placeholder=":58" id="${exId}-q${q}-time" oninput="logRowing('${exId}')">
+      <input class="row-inp" type="text" placeholder="auto" id="${exId}-q${q}-split" readonly style="background:var(--g100);color:var(--g600)">
+    </div>`).join('')}`;
+}
+
+function selectRower(r, rowerId, exId){
+  selectedRower=r;
+  localStorage.setItem('maurice_rower',r);
+  document.querySelectorAll(`#${rowerId}-rowers .rower-btn`).forEach(b=>b.classList.toggle('sel',b.textContent===r));
+  logRowing(exId);
+}
+
+function calcRowSplit(exId){
+  const dist=parseFloat(document.getElementById(exId+'-dist')?.value)||1000;
+  const timeStr=document.getElementById(exId+'-time')?.value||'';
+  const splitEl=document.getElementById(exId+'-split');
+  if(!splitEl||!timeStr) return;
+  const parts=timeStr.split(':');
+  let sec=0;
+  if(parts.length===2) sec=parseFloat(parts[0])*60+parseFloat(parts[1]);
+  else sec=parseFloat(timeStr)*60;
+  if(!sec||!dist){splitEl.value='';return;}
+  const ss=(sec/dist)*500;
+  const sm=Math.floor(ss/60);const sr=Math.round(ss%60);
+  splitEl.value=sm+':'+(sr<10?'0':'')+sr;
+  splitEl.classList.add('filled');
+  logRowing(exId);
+}
+
+function logRowing(exId){
+  if(!sessionLog[exId]) sessionLog[exId]={};
+  sessionLog[exId].rowing={
+    dist:document.getElementById(exId+'-dist')?.value,
+    time:document.getElementById(exId+'-time')?.value,
+    split:document.getElementById(exId+'-split')?.value,
+    watt:document.getElementById(exId+'-watt')?.value,
+    stroke:document.getElementById(exId+'-stroke')?.value,
+    drag:document.getElementById(exId+'-drag')?.value,
+    rower:selectedRower,
+    splits:[1,2,3,4].map(q=>({dist:q*250,time:document.getElementById(exId+'-q'+q+'-time')?.value||''}))
+  };
+  const icon=document.querySelector(`#body-${exId}`)?.previousElementSibling?.querySelector('.ex-icon');
+  if(icon&&sessionLog[exId].rowing.time) icon.textContent='✅';
+  updateTrainProgress(curTraining);
+}
+
+function logSet(exId, type, setNum){
+  if(!sessionLog[exId]) sessionLog[exId]={warmup:[],sets:[]};
+  const kg=document.getElementById((type==='warmup'?'w':'s')+'-'+exId+'-'+setNum+'-kg')?.value;
+  const reps=document.getElementById((type==='warmup'?'w':'s')+'-'+exId+'-'+setNum+'-reps')?.value;
+  const rpe=type==='work'?document.getElementById('s-'+exId+'-'+setNum+'-rpe')?.value:null;
+
+  if(type==='warmup'){
+    if(!sessionLog[exId].warmup) sessionLog[exId].warmup=[];
+    sessionLog[exId].warmup[setNum-1]={kg,reps};
+    if(kg) document.getElementById('w-'+exId+'-'+setNum+'-kg')?.classList.add('warmup-filled');
+    if(reps) document.getElementById('w-'+exId+'-'+setNum+'-reps')?.classList.add('warmup-filled');
+  } else {
+    if(!sessionLog[exId].sets) sessionLog[exId].sets=[];
+    sessionLog[exId].sets[setNum-1]={kg,reps,rpe};
+    if(kg) document.getElementById('s-'+exId+'-'+setNum+'-kg')?.classList.add('filled');
+    if(reps) document.getElementById('s-'+exId+'-'+setNum+'-reps')?.classList.add('filled');
+    // Show timer hint
+    if(kg&&reps){
+      document.getElementById('hint-'+exId)?.classList.add('show');
+    }
+  }
+  // Update icon
+  const hasData=sessionLog[exId].sets&&sessionLog[exId].sets.some(s=>s&&(s.kg||s.reps));
+  const icon=document.querySelector(`#body-${exId}`)?.previousElementSibling?.querySelector('.ex-icon');
+  if(icon&&hasData) icon.textContent='✅';
+  updateTrainProgress(curTraining);
+}
+
+function addWorkSet(exId){
+  const container=document.getElementById('body-'+exId);
+  if(!container) return;
+  const existing=container.querySelectorAll('.set-row[id^="set-row-'+exId+'"]').length;
+  const i=existing+1;
+  const div=document.createElement('div');
+  div.className='set-row';
+  div.id='set-row-'+exId+'-'+i;
+  div.innerHTML=`<div class="set-lbl">S${i}</div>
+    <input class="set-inp" type="number" inputmode="decimal" placeholder="kg" id="s-${exId}-${i}-kg" style="flex:2" onchange="logSet('${exId}','work',${i})">
+    <div class="set-unit" style="width:16px">kg</div>
+    <input class="set-inp" type="number" inputmode="numeric" placeholder="reps" id="s-${exId}-${i}-reps" style="flex:1" onchange="logSet('${exId}','work',${i})">
+    <div class="set-unit" style="width:28px">reps</div>
+    <select class="rpe-sel" id="s-${exId}-${i}-rpe" style="width:60px" onchange="logSet('${exId}','work',${i})">
+      <option value="">RPE</option>
+      ${[5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10].map(v=>`<option value="${v}">${v}</option>`).join('')}
+    </select>`;
+  const addBtn=container.querySelector('.add-set-btn');
+  if(addBtn) container.insertBefore(div,addBtn);
+  else container.appendChild(div);
+}
+
+function toggleEx(id){
+  const body=document.getElementById('body-'+id);
+  const arr=document.getElementById('arr-'+id);
+  if(!body) return;
+  const open=body.classList.contains('open');
+  document.querySelectorAll('.ex-body').forEach(b=>b.classList.remove('open'));
+  document.querySelectorAll('[id^="arr-"]').forEach(a=>a.textContent='›');
+  if(!open){body.classList.add('open');if(arr)arr.textContent='▲';}
+}
+
+function updateTrainProgress(t){
+  if(!t) return;
+  const list=getSessionExs(t);
+  const done=list.filter(ex=>{
+    const log=sessionLog[ex.id];
+    if(!log) return false;
+    if(ex.type==='rowing') return log.rowing&&log.rowing.time;
+    return log.sets&&log.sets.some(s=>s&&(s.kg||s.reps));
+  }).length;
+  const pct=list.length?Math.round((done/list.length)*100):0;
+  const fill=document.getElementById('prog-'+t.toLowerCase());
+  const lbl=document.getElementById('prog-'+t.toLowerCase()+'-lbl');
+  if(fill) fill.style.width=pct+'%';
+  if(lbl) lbl.textContent=done+' / '+list.length;
+}
+
+function addExToSession(t){
+  const addList=document.getElementById('add-ex-list');
+  if(!addList) return;
+  const currentIds=getSessionExs(t).map(e=>e.id);
+  const available=exercises.filter(e=>!currentIds.includes(e.id));
+  if(!available.length){toast('Alle oefeningen staan al in de sessie');return;}
+  addList.innerHTML=available.map(ex=>
+    `<div class="exc" onclick="addExToSessionConfirm('${ex.id}','${t}')">
+      <div style="flex:1"><div class="exc-name">${ex.name}</div><div class="exc-cat">${ex.category}</div></div>
+      <div style="color:var(--g400)">+</div>
+    </div>`
+  ).join('');
+  openModal('m-add-ex');
+}
+
+function addExToSessionConfirm(exId, t){
+  const ex=exercises.find(e=>e.id===exId);
+  if(!ex) return;
+  const newEx={id:ex.id,naam:ex.name,type:ex.type||'strength',sets:4,reps:'6-8',rpe:'8',_session:t};
+  sessionExtraExs.push(newEx);
+  closeModal('m-add-ex');
+  renderTrainScreen(t);
+  toast(ex.name+' toegevoegd aan sessie');
+}
+
+function showSessionSummary(t){
+  const list=getSessionExs(t);
+  let html='';
+  list.forEach(ex=>{
+    const log=sessionLog[ex.id];
+    if(!log) return;
+    let detail='';
+    if(ex.type==='rowing'&&log.rowing){
+      detail=`${log.rowing.dist||'?'}m in ${log.rowing.time||'?'} · ${log.rowing.split||'?'}/500m${log.rowing.watt?' · '+log.rowing.watt+'W':''}`;
+    } else if(log.sets&&log.sets.length){
+      const workSets=log.sets.filter(s=>s&&(s.kg||s.reps));
+      if(log.warmup&&log.warmup.length){
+        const ws=log.warmup.filter(s=>s&&(s.kg||s.reps));
+        if(ws.length) detail+=`<span style="color:#3B82F6">W: ${ws.map(s=>(s.kg||'?')+'kg×'+(s.reps||'?')).join(', ')}</span><br>`;
+      }
+      detail+=workSets.map(s=>(s.kg||'?')+'kg×'+(s.reps||'?')+(s.rpe?' @RPE'+s.rpe:'')).join(' · ');
+    }
+    if(detail){
+      html+=`<div class="sess-item"><div class="sess-name">${ex.naam}</div><div class="sess-sets">${detail}</div></div>`;
+    }
+  });
+  if(!html) html='<p style="color:var(--g400);font-size:13px">Nog geen oefeningen gelogd.</p>';
+  document.getElementById('session-summary-content').innerHTML=html;
+  openModal('m-session-summary');
+}
+
+async function finishSession(){
+  const t=curTraining;
+  const list=getSessionExs(t);
+  const today=td();
+  let saved=0;
+  for(const ex of list){
+    const log=sessionLog[ex.id];
+    if(!log) continue;
+    if(ex.type==='rowing'&&log.rowing&&log.rowing.time){
+      await sbPost('sessions',{
+        date:today,exercise_id:ex.id,
+        distance:parseInt(log.rowing.dist)||null,
+        time_str:log.rowing.time,
+        watt:parseInt(log.rowing.watt)||null,
+        stroke_rate:parseInt(log.rowing.stroke)||null,
+        training_type:t,
+        note:(log.rowing.rower||'')+' split:'+log.rowing.split
+      });
+      saved++;
+    } else if(log.sets){
+      const workSets=log.sets.filter(s=>s&&(s.kg||s.reps));
+      if(!workSets.length) continue;
+      const bestSet=workSets.reduce((b,s)=>(!b||(parseFloat(s.kg)||0)>(parseFloat(b.kg)||0))?s:b,null);
+      const warmupNote=log.warmup&&log.warmup.filter(s=>s&&s.kg).length?
+        'Opwarm: '+log.warmup.filter(s=>s&&s.kg).map(s=>s.kg+'kg×'+s.reps).join(', '):'';
+      await sbPost('sessions',{
+        date:today,exercise_id:ex.id,
+        sets:workSets.length,
+        reps:parseInt(bestSet?.reps)||null,
+        weight:parseFloat(bestSet?.kg)||null,
+        rpe:parseFloat(bestSet?.rpe)||null,
+        training_type:t,note:warmupNote
+      });
+      // Update PR if better
+      if(bestSet?.kg){
+        const exObj=exercises.find(e=>e.id===ex.id);
+        if(exObj&&parseFloat(bestSet.kg)>(exObj.pr||0)){
+          await sbPatch('exercises','id=eq.'+ex.id,{pr:parseFloat(bestSet.kg)});
+          exObj.pr=parseFloat(bestSet.kg);
+        }
+      }
+      saved++;
+    }
+  }
+  localStorage.setItem('maurice_last_training',t);
+  closeModal('m-session-summary');
+  curTraining=null;
+  sessionLog={};
+  sessionExtraExs=[];
+  document.querySelectorAll('.ni-dot').forEach(d=>d.classList.remove('show'));
+  swHideTraining();
+  toast(saved+' oefeningen opgeslagen ✓');
+  go('s-home');
+  refreshStats();
 }
 
 // ══════════════════════════════════════
-// RENDER HOME
+// HOME
 // ══════════════════════════════════════
 async function refreshHome(){
   // HRV
@@ -822,63 +1230,58 @@ async function refreshHome(){
   const lh=hd[0];
   if(lh){
     const st=hrvSt(lh.hrv);
-    document.getElementById('home-hrv').innerHTML=
-      '<div class="card"><div class="card-body">'
-      +'<div class="mgrid">'
-      +(lh.hrv?'<div class="mbox"><div class="mval y">'+lh.hrv+'</div><div class="munit">HRV ms</div></div>':'')
-      +(lh.rhr?'<div class="mbox"><div class="mval">'+lh.rhr+'</div><div class="munit">RHR bpm</div></div>':'')
-      +(lh.sleep?'<div class="mbox"><div class="mval">'+lh.sleep+'</div><div class="munit">Slaap u</div></div>':'')
-      +'</div>'
-      +'<div class="hrv-bar">'
-      +'<div class="hb g '+(st==='g'?'on':'')+'">>=24</div>'
-      +'<div class="hb y '+(st==='y'?'on':'')+'">18-23</div>'
-      +'<div class="hb o '+(st==='o'?'on':'')+'">14-17</div>'
-      +'<div class="hb r '+(st==='r'?'on':'')+'"><14</div>'
-      +'</div>'
-      +'<p style="font-size:12px;color:var(--g2)">'
-      +(st==='g'?'Optimaal':st==='y'?'Normaal':st==='o'?'Laag':'Kritiek')
-      +' — '+lh.date+(lh.edema?' · '+lh.edema:'')+'</p>'
-      +'</div></div>';
+    const cols={g:'#27ae60',y:'#D4A800',o:var_org,r:'#c0392b'};
+    document.getElementById('home-hrv').innerHTML=`<div class="card"><div class="card-body">
+      <div class="mgrid">
+        ${lh.hrv?`<div class="mbox"><div class="mval y">${lh.hrv}</div><div class="munit">HRV ms</div></div>`:''}
+        ${lh.rhr?`<div class="mbox"><div class="mval">${lh.rhr}</div><div class="munit">RHR bpm</div></div>`:''}
+        ${lh.sleep?`<div class="mbox"><div class="mval">${lh.sleep}</div><div class="munit">Slaap u</div></div>`:''}
+      </div>
+      <div class="hrv-bar">
+        <div class="hb g ${st==='g'?'on':''}">>=24</div>
+        <div class="hb y ${st==='y'?'on':''}">18-23</div>
+        <div class="hb o ${st==='o'?'on':''}">14-17</div>
+        <div class="hb r ${st==='r'?'on':''}">&lt;14</div>
+      </div>
+      <p style="font-size:12px;color:var(--g600)">${st==='g'?'Optimaal':st==='y'?'Normaal':st==='o'?'Laag':'Kritiek'} — ${lh.date}${lh.edema?' · '+lh.edema:''}</p>
+    </div></div>`;
   } else {
-    document.getElementById('home-hrv').innerHTML=
-      '<div class="card"><div class="card-body" style="text-align:center;padding:16px">'
-      +'<p style="color:var(--g);font-size:13px">Nog geen hersteldata</p>'
-      +'<button class="btn sm" onclick="openModal(\'m-hrv\')" style="margin-top:10px">Check-in invoeren</button>'
-      +'</div></div>';
+    document.getElementById('home-hrv').innerHTML=`<div class="card"><div class="card-body" style="text-align:center;padding:16px">
+      <p style="color:var(--g400);font-size:13px">Nog geen hersteldata</p>
+      <button class="btn btn-y btn-sm" onclick="openModal('m-hrv')" style="margin-top:10px">Check-in invoeren</button>
+    </div></div>`;
   }
 
-  // Quick grid
-  const qExs=[...exercises.filter(e=>e.category==='A').slice(0,2),...exercises.filter(e=>e.category==='B').slice(0,2)];
-  let qHTML='';
-  for(const ex of qExs){
-    const ls=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc&limit=1');
-    const last=ls[0];
-    let lastStr='Nog niet gelogd';
-    if(last) lastStr=last.weight&&last.reps?last.weight+' kg x '+last.reps+' ('+last.date+')':last.time_str?last.time_str+' ('+last.date+')':last.date;
-    qHTML+='<div class="qbtn" onclick="openLogModal(\''+ex.id+'\')"><div class="qname">'+ex.name+'</div><div class="qlast">'+lastStr+'</div></div>';
-  }
-  document.getElementById('quick-grid').innerHTML=qHTML;
+  // Next training
+  const lastT=localStorage.getItem('maurice_last_training');
+  const nextT=lastT==='A'?'B':lastT==='B'?'A':'A';
+  document.getElementById('home-next').textContent='Volgende: '+nextT;
 
-  // Recent
+  // Active session indicator
+  if(curTraining){
+    document.querySelectorAll('.ni-dot').forEach(d=>d.classList.add('show'));
+  }
+
+  // Recent sessions
   const rs=await sbGet('sessions','&order=created_at.desc&limit=8');
   let rHTML='';
-  if(!rs.length) rHTML='<p style="color:var(--g);font-size:13px">Nog geen sessies</p>';
+  if(!rs?.length) rHTML='<p style="color:var(--g400);font-size:13px">Nog geen sessies</p>';
   else rs.forEach(s=>{
     const exName=exercises.find(e=>e.id===s.exercise_id)?.name||s.exercise_id;
-    const val=s.weight&&s.reps?s.weight+' kg x '+s.reps:s.time_str||'—';
-    rHTML+='<div class="lrow"><div class="ldate">'+s.date+'</div><div class="lval">'+exName+'</div><div class="lnote">'+val+'</div></div>';
+    const val=s.weight&&s.reps?s.weight+' kg × '+s.reps:s.time_str||'—';
+    rHTML+=`<div class="lrow"><div class="ldate">${s.date}</div><div class="lval">${exName}</div><div class="lnote">${val}</div></div>`;
   });
   document.getElementById('home-recent').innerHTML=rHTML;
-  document.getElementById('home-count').textContent=rs.length+'+ recente';
+  document.getElementById('home-count').textContent=(rs?.length||0)+' recente';
 
   // Weight chart
   const wd=await sbGet('weight_log','&order=date.asc&limit=20');
-  if(wd.length){
+  if(wd?.length){
     document.getElementById('home-weight').textContent=wd[wd.length-1].weight+' kg';
     drawChart('w-chart',wd.map(w=>w.weight),wd.map(w=>w.date));
   }
 
-  // Training day counter + volgende training
+  // Day counter
   const allSess=await sbGet('sessions','&order=date.desc&limit=50');
   const today2=td();
   let lastA=null,lastB=null;
@@ -890,332 +1293,27 @@ async function refreshHome(){
   }
   function daysDiff(d){if(!d)return null;const ms=new Date(today2)-new Date(d);return Math.floor(ms/86400000);}
   const dA=daysDiff(lastA),dB=daysDiff(lastB);
-  // Bepaal volgende training
-  let nextTrain='A'; // default start met A
-  if(lastA&&!lastB) nextTrain='B';
-  else if(!lastA&&lastB) nextTrain='A';
-  else if(lastA&&lastB){
-    // Laatste was A of B?
-    if(new Date(lastA)>new Date(lastB)) nextTrain='B';
-    else nextTrain='A';
-  }
-  const nextCol=nextTrain==='A'?'var(--y)':'var(--grn)';
-  let dc='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
-  dc+='<span style="font-family:var(--f);font-size:13px;font-weight:800;color:'+nextCol+'">VOLGENDE: TRAINING '+nextTrain+'</span>';
-  dc+='<span style="color:var(--bd)">|</span>';
-  if(dA!==null) dc+='<span style="font-family:var(--f);font-size:12px;color:var(--g)">A: '+(dA===0?'vandaag':dA===1?'gisteren':dA+'d geleden')+'</span>';
-  if(dA!==null&&dB!==null) dc+='<span style="color:var(--bd);margin:0 4px">·</span>';
-  if(dB!==null) dc+='<span style="font-family:var(--f);font-size:12px;color:var(--g)">B: '+(dB===0?'vandaag':dB===1?'gisteren':dB+'d geleden')+'</span>';
+  const nextTrain=lastA&&lastB?(new Date(lastA)>new Date(lastB)?'B':'A'):lastA?'B':'A';
+  const nextCol=nextTrain==='A'?'var(--y)':'var(--bk)';
+  let dc=`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:2px 0">`;
+  dc+=`<span style="font-family:var(--f);font-size:14px;font-weight:900;color:${nextCol}">▶ TRAINING ${nextTrain}</span>`;
+  if(dA!==null) dc+=`<span style="font-family:var(--f);font-size:12px;color:var(--g400)">A: ${dA===0?'vandaag':dA+'d'}</span>`;
+  if(dB!==null) dc+=`<span style="font-family:var(--f);font-size:12px;color:var(--g400)">B: ${dB===0?'vandaag':dB+'d'}</span>`;
   dc+='</div>';
-  document.getElementById('home-daycounter').innerHTML=dc;
-  document.getElementById('home-daycounter-card').style.display='block';
+  document.getElementById('home-next').innerHTML=dc;
 
-  // Daily note
+  // Note
   const noteKey='maurice_note_'+today2;
-  const savedNote=localStorage.getItem(noteKey)||'';
-  document.getElementById('home-note-inp').value=savedNote;
+  document.getElementById('home-note-inp').value=localStorage.getItem(noteKey)||'';
   document.getElementById('home-note-date').textContent=today2;
 }
 
-function hrvSt(v){
-  if(!v) return 'y';
-  if(v>=24) return 'g';
-  if(v>=18) return 'y';
-  if(v>=14) return 'o';
-  return 'r';
-}
-
-function calcSplit(){
-  const dist=parseInt(document.getElementById('l-dist')?.value)||0;
-  const timeStr=document.getElementById('l-time')?.value||'';
-  const splitEl=document.getElementById('l-split');
-  if(!splitEl) return;
-  if(!dist||!timeStr){splitEl.value='';return;}
-  const parts=timeStr.replace(',','.').split(':');
-  let sec=0;
-  if(parts.length===2) sec=parseFloat(parts[0])*60+parseFloat(parts[1]);
-  else sec=parseFloat(timeStr)*60;
-  if(!sec||!dist){splitEl.value='';return;}
-  const splitSec=(sec/dist)*500;
-  const sm=Math.floor(splitSec/60);
-  const ss=Math.round(splitSec%60);
-  splitEl.value=sm+':'+(ss<10?'0':'')+ss+'/500m';
-}
+const var_org='#e08030';
+function hrvSt(v){if(!v)return 'y';if(v>=24)return 'g';if(v>=18)return 'y';if(v>=14)return 'o';return 'r';}
+function saveNote(val){localStorage.setItem('maurice_note_'+td(),val);}
 
 // ══════════════════════════════════════
-// TRAINING SESSIE LOGICA (Edna-stijl)
-// ══════════════════════════════════════
-let sessionLog = {}; // { exId: { set1: {kg,reps,rpe}, set2: ... } }
-let currentTraining = null;
-
-const TRAIN_CONFIG = {
-  A: [
-    {id:'roeien',      naam:'Roeien (warmup)',   sets:1, reps:'1000m',rpe:'—',   tip:'PR: 3:37.5 / 272W (31 mei 2026). Rustig opbouwen — dit is warmup, niet maximaal.'},
-    {id:'backsquat',   naam:'Backsquat',        sets:4, reps:'3-5', rpe:'8',   tip:'Heupen recht naar beneden. Borstkast omhoog. Voeten schouderbreedte.'},
-    {id:'shoulderpress',naam:'Shoulder Press',   sets:4, reps:'3-5', rpe:'8',   tip:'Kern gespannen. Voorkomen dat je doorzakt in de lage rug. VOOR bench uitvoeren.'},
-    {id:'bench',       naam:'Benchpress',        sets:4, reps:'4-6', rpe:'8',   tip:'Schouderbladen samen. Let op linker triceps — stop bij spanning op 80 kg.'},
-    {id:'frontsquat',  naam:'Frontsquat',        sets:4, reps:'3',   rpe:'8',   tip:'Ellebogen hoog. Romp verticaal. PR: 92.5 kg (7 jun 2026).'},
-    {id:'farmercarry', naam:'Farmer Carry',      sets:3, reps:'40m', rpe:'8',   tip:'Schouders omlaag en achteruit. Stap snel en gecontroleerd.'},
-  ],
-  B: [
-    {id:'roeien',      naam:'Roeien (warmup)',   sets:1, reps:'1000m',rpe:'—',   tip:'PR: 3:37.5 / 272W (31 mei 2026). Rustig opbouwen — dit is warmup, niet maximaal.'},
-    {id:'hexabar',     naam:'Hexabar Deadlift',  sets:4, reps:'1-3', rpe:'8-9', tip:'FRIS uitvoeren na roeien. Heupen laag, borst omhoog. PR: 240×3 (apr 2026). Nooit dag na zware A.'},
-    {id:'bentoverrow', naam:'Bent Over Row',      sets:4, reps:'6',   rpe:'7-8', tip:'Romp ~45°. Trek naar navel. Schouderbladen samentrekken.'},
-    {id:'cablerow',    naam:'Cable Row',          sets:4, reps:'6-8', rpe:'7-8', tip:'Rug recht. Geen momentum. Werkgewicht: 90 kg.'},
-    {id:'hpc',         naam:'Hang Power Clean',  sets:5, reps:'1-2', rpe:'8',   tip:'Singles of doubles — techniek breekt bij triples. Explosief van boven de knie.'},
-    {id:'hps',         naam:'Hang Power Snatch', sets:4, reps:'1-2', rpe:'7-8', tip:'Schouder mobiliteit = limiting factor. Breed greep, explosief.'},
-    {id:'rdl',         naam:'RDL',               sets:3, reps:'6-8', rpe:'7',   tip:'Lichte kniebuiging. Heupen achteruit. Rug recht door hele beweging.'},
-  ]
-};
-
-function showTraining(){
-  // Bepaal welke training aan de beurt is op basis van data
-  const last = getLastTrainingType();
-  if(last === 'A') go('s-train-b');
-  else go('s-train-a');
-}
-
-function getLastTrainingType(){
-  // Kijk in localStorage voor snelle check
-  return localStorage.getItem('maurice_last_training') || null;
-}
-
-function go_train(t){
-  sessionLog = {};
-  currentTraining = t;
-  renderTrainScreen(t);
-  // Show screen
-  document.querySelectorAll('.scr').forEach(s=>{s.classList.remove('active');s.style.display='';});
-  const el = document.getElementById('s-train-'+t.toLowerCase());
-  if(el){ el.style.display='flex'; el.classList.add('active'); }
-  swShow_training();
-}
-
-function renderTrainScreen(t){
-  const list = TRAIN_CONFIG[t] || [];
-  const container = document.getElementById('ex-list-'+t.toLowerCase());
-  if(!container) return;
-  container.innerHTML = '';
-
-  list.forEach(ex => {
-    const isLogged = sessionLog[ex.id] && Object.keys(sessionLog[ex.id]).length > 0;
-    const div = document.createElement('div');
-
-    // Build set rows
-    let setRows = '<div style="font-family:var(--f);font-weight:800;font-size:10px;letter-spacing:1.5px;color:var(--g);text-transform:uppercase;margin-bottom:8px">LOG JE SETS</div>';
-    for(let i=1; i<=ex.sets; i++){
-      setRows += `<div class="set-row">
-        <div class="set-lbl">Set ${i}</div>
-        <input class="set-inp" type="number" inputmode="decimal" placeholder="kg" id="s-${ex.id}-${i}-kg" onchange="logSet('${t}','${ex.id}',${i})">
-        <div class="set-unit">kg</div>
-        <input class="set-inp" type="number" inputmode="numeric" placeholder="reps" id="s-${ex.id}-${i}-reps" onchange="logSet('${t}','${ex.id}',${i})">
-        <div class="set-unit">reps</div>
-        <select class="rpe-sel" id="s-${ex.id}-${i}-rpe" onchange="logSet('${t}','${ex.id}',${i})">
-          <option value="">RPE</option>
-          ${[5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10].map(v=>`<option value="${v}">${v}</option>`).join('')}
-        </select>
-      </div>`;
-    }
-
-    div.innerHTML = `
-      <div class="ex-item" onclick="toggleExItem('${ex.id}')">
-        <div class="ex-icon">${isLogged?'✅':'⬜'}</div>
-        <div class="ex-info">
-          <div class="ex-name">${ex.naam}</div>
-          <div class="ex-meta">${ex.sets}×${ex.reps}${ex.rpe&&ex.rpe!=='—'?' · RPE '+ex.rpe:''}</div>
-        </div>
-        <span style="color:var(--g);font-size:18px" id="arr-${ex.id}">›</span>
-      </div>
-      <div class="ex-body" id="body-${ex.id}">
-        ${ex.tip?`<div class="tech-tip">💡 ${ex.tip}</div>`:''}
-        ${setRows}
-        <button class="ask-coach-btn" onclick="askCoachEx('${ex.naam}','${t}')">🤖 Vraag de coach</button>
-      </div>`;
-    container.appendChild(div);
-  });
-
-  updateTrainProgress(t);
-}
-
-function toggleExItem(id){
-  const body = document.getElementById('body-'+id);
-  const arr = document.getElementById('arr-'+id);
-  if(!body) return;
-  const open = body.style.display === 'block';
-  // Close all
-  document.querySelectorAll('.ex-body').forEach(b=>b.style.display='none');
-  document.querySelectorAll('[id^="arr-"]').forEach(a=>a.textContent='›');
-  if(!open){ body.style.display='block'; if(arr) arr.textContent='▲'; }
-}
-
-function logSet(training, exId, setNum){
-  const kg = document.getElementById(`s-${exId}-${setNum}-kg`)?.value;
-  const reps = document.getElementById(`s-${exId}-${setNum}-reps`)?.value;
-  const rpe = document.getElementById(`s-${exId}-${setNum}-rpe`)?.value;
-  if(!sessionLog[exId]) sessionLog[exId]={};
-  sessionLog[exId][`set${setNum}`]={kg,reps,rpe};
-  // Visual feedback
-  if(kg) document.getElementById(`s-${exId}-${setNum}-kg`)?.classList.add('filled');
-  if(reps) document.getElementById(`s-${exId}-${setNum}-reps`)?.classList.add('filled');
-  // Update icon
-  const icon = document.querySelector(`#body-${exId}`)?.previousElementSibling?.querySelector('.ex-icon');
-  if(icon) icon.textContent='✅';
-  updateTrainProgress(training);
-  // Auto-start rusttimer
-  if(kg && reps){
-    swReset();
-    swShow();
-    swStart();
-  }
-}
-
-function updateTrainProgress(t){
-  const list = TRAIN_CONFIG[t] || [];
-  const done = list.filter(ex => sessionLog[ex.id] && Object.keys(sessionLog[ex.id]).length > 0).length;
-  const pct = list.length ? Math.round((done/list.length)*100) : 0;
-  const fill = document.getElementById('prog-'+t.toLowerCase());
-  const label = document.getElementById('prog-'+t.toLowerCase()+'-label');
-  const btn = document.getElementById('save-btn-'+t.toLowerCase());
-  if(fill) fill.style.width = pct+'%';
-  if(label) label.textContent = done+' / '+list.length;
-  if(btn){ btn.disabled = done===0; btn.style.opacity = done>0?1:0.4; }
-}
-
-async function saveTrainSession(t){
-  const list = TRAIN_CONFIG[t] || [];
-  const today = td();
-  let saved = 0;
-  for(const ex of list){
-    const log = sessionLog[ex.id];
-    if(!log) continue;
-    // Save each set as a session entry
-    const sets = Object.values(log).filter(s=>s.kg||s.reps);
-    if(!sets.length) continue;
-    const bestSet = sets.reduce((best,s)=>(!best||(parseFloat(s.kg)||0)>(parseFloat(best.kg)||0))?s:best, null);
-    await sbPost('sessions',{
-      date:today,
-      exercise_id:ex.id,
-      sets:ex.sets,
-      reps:parseInt(bestSet?.reps)||null,
-      weight:parseFloat(bestSet?.kg)||null,
-      rpe:parseFloat(bestSet?.rpe)||null,
-      training_type:t,
-      note:'via training '+t
-    });
-    saved++;
-  }
-  localStorage.setItem('maurice_last_training', t);
-  toast(saved+' oefeningen opgeslagen ✓');
-  sessionLog = {};
-  go('s-home');
-}
-
-function askCoachEx(naam, training){
-  const msg = `Ik ga nu ${naam} doen (Training ${training}). Wat zijn de doelgewichten en techniekpunten?`;
-  go('s-coach');
-  sendMsg(msg);
-}
-
-// ══════════════════════════════════════
-// STOPWATCH / RUSTTIMER
-// ══════════════════════════════════════
-let swSecs = 60;
-let swTotal = 60;
-let swRunning = false;
-let swInterval = null;
-
-function swShow(){
-  document.getElementById('sw-bar').classList.remove('hidden');
-  document.getElementById('sw-trigger').style.display='none';
-}
-function swClose(){
-  document.getElementById('sw-bar').classList.add('hidden');
-  document.getElementById('sw-trigger').style.display='block';
-  swStop();
-}
-function swPreset(secs){
-  swStop();
-  swSecs = secs;
-  swTotal = secs;
-  swUpdateDisplay();
-}
-function swStartStop(){
-  if(swRunning) swStop();
-  else swStart();
-}
-function swStart(){
-  if(swSecs<=0) swReset();
-  swRunning = true;
-  document.getElementById('sw-start-btn').textContent='⏸ PAUZE';
-  document.getElementById('sw-start-btn').classList.add('active');
-  swInterval = setInterval(()=>{
-    swSecs--;
-    swUpdateDisplay();
-    if(swSecs<=0){
-      swStop();
-      swDone();
-    }
-  },1000);
-}
-function swStop(){
-  swRunning = false;
-  clearInterval(swInterval);
-  const btn = document.getElementById('sw-start-btn');
-  if(btn){ btn.textContent='▶ START'; btn.classList.remove('active'); }
-}
-function swReset(){
-  swStop();
-  swSecs = swTotal;
-  swUpdateDisplay();
-  const t = document.getElementById('sw-time');
-  if(t){ t.classList.remove('done','urgent'); }
-}
-function swUpdateDisplay(){
-  const m = Math.floor(swSecs/60);
-  const s = swSecs%60;
-  const str = m+':'+(s<10?'0':'')+s;
-  const el = document.getElementById('sw-time');
-  if(!el) return;
-  el.textContent = str;
-  el.classList.remove('done','urgent');
-  if(swSecs<=10 && swSecs>0) el.classList.add('urgent');
-}
-function swDone(){
-  const el = document.getElementById('sw-time');
-  if(el){ el.textContent='KLAAR!'; el.classList.add('done'); }
-  // Vibrate if supported
-  if(navigator.vibrate) navigator.vibrate([200,100,200,100,400]);
-  // Audio beep fallback
-  try{
-    const ctx = new (window.AudioContext||window.webkitAudioContext)();
-    [0,0.3,0.6].forEach(t=>{
-      const o=ctx.createOscillator();
-      const g=ctx.createGain();
-      o.connect(g);g.connect(ctx.destination);
-      o.frequency.value=880;
-      g.gain.setValueAtTime(0.3,ctx.currentTime+t);
-      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+0.2);
-      o.start(ctx.currentTime+t);
-      o.stop(ctx.currentTime+t+0.2);
-    });
-  }catch(e){}
-}
-
-function swShow_training(){
-  // Show stopwatch trigger during training
-  document.getElementById('sw-trigger').style.display='block';
-}
-function swHide_training(){
-  document.getElementById('sw-trigger').style.display='none';
-  document.getElementById('sw-bar').classList.add('hidden');
-}
-
-function saveNote(val){
-  localStorage.setItem('maurice_note_'+td(), val);
-}
-
-// ══════════════════════════════════════
-// RENDER LOG
+// LOG SCREEN
 // ══════════════════════════════════════
 async function refreshLog(){
   const cats=['A','B','CrossFit','Overig'];
@@ -1224,90 +1322,40 @@ async function refreshLog(){
   for(const cat of cats){
     const exs=exercises.filter(e=>e.category===cat&&e.active!==false);
     if(!exs.length) continue;
-    html+='<div class="sec-hd">'+labels[cat]+'</div>';
+    html+=`<div class="sec-hd">${labels[cat]}</div>`;
     for(const ex of exs){
       const ls=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc&limit=1');
       const last=ls[0];
       let lastStr='';
-      if(last) lastStr=last.weight&&last.reps?last.weight+' kg x '+last.reps+' — '+last.date:last.time_str?last.time_str+' — '+last.date:last.date;
+      if(last) lastStr=last.weight&&last.reps?last.weight+' kg × '+last.reps+' — '+last.date:last.time_str?last.time_str+' — '+last.date:last.date;
       const pr=ex.pr?' · PR '+ex.pr+' kg':'';
-      html+='<div class="exc" onclick="openExDet(\''+ex.id+'\')">'
-        +'<div style="flex:1"><div class="exc-name">'+ex.name+'</div>'
-        +'<div class="exc-cat">Training '+ex.category+pr+'</div>'
-        +(lastStr?'<div style="font-size:11px;color:var(--g);margin-top:3px">'+lastStr+'</div>':'')
-        +'</div><div style="color:var(--g);font-size:18px">›</div></div>';
+      html+=`<div class="exc" onclick="openLogModal('${ex.id}')">
+        <div style="flex:1"><div class="exc-name">${ex.name}</div><div class="exc-cat">Training ${ex.category}${pr}</div>${lastStr?`<div style="font-size:11px;color:var(--g400);margin-top:3px">${lastStr}</div>`:''}</div>
+        <div style="color:var(--g400);font-size:18px">›</div>
+      </div>`;
     }
   }
-  document.getElementById('ex-list').innerHTML=html;
+  document.getElementById('ex-log-list').innerHTML=html;
 }
 
-async function openExDet(id){
-  curEx=exercises.find(e=>e.id===id)||{id};
-  document.getElementById('exdet-name').textContent=curEx.name||id;
-  document.getElementById('exdet-cat').textContent='Training '+(curEx.category||'—');
-  go('s-exdet');
-  loadExDet(id);
-}
-
-async function loadExDet(id){
-  const ss=await sbGet('sessions','&exercise_id=eq.'+id+'&order=date.desc&limit=30');
-  let html='';
-  if(!ss.length) html='<p style="color:var(--g);font-size:13px">Nog geen sessies</p>';
-  else ss.forEach(s=>{
-    let val='';
-    if(s.weight&&s.reps) val='<strong>'+(s.sets||'?')+'x'+s.reps+'</strong> @ <strong style="color:var(--y)">'+s.weight+' kg</strong>'+(s.rpe?' <span style="color:var(--g)">RPE '+s.rpe+'</span>':'');
-    else if(s.time_str) val='<strong>'+s.time_str+'</strong>'+(s.watt?' · '+s.watt+'W':'');
-    else if(s.distance) val='<strong>'+s.distance+'m</strong>';
-    else if(s.score) val='<strong>'+s.score+'</strong>';
-    html+='<div class="lrow"><div class="ldate">'+s.date+'</div><div style="flex:1">'+val+(s.note?'<div style="font-size:12px;color:var(--g);margin-top:2px">'+s.note+'</div>':'')+'</div></div>';
-  });
-  // RPE trend (last 5 sessions with RPE)
-  const rpeData=ss.filter(s=>s.rpe).slice(0,5).reverse();
-  let rpeHTML='';
-  if(rpeData.length>=2){
-    const avgRPE=Math.round(rpeData.reduce((a,s)=>a+s.rpe,0)/rpeData.length*10)/10;
-    const trend=rpeData[rpeData.length-1].rpe-rpeData[0].rpe;
-    const trendStr=trend>0?'↑ stijgend':trend<0?'↓ dalend':'→ stabiel';
-    const trendCol=trend>0?'var(--org)':trend<0?'var(--grn)':'var(--g2)';
-    rpeHTML='<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--bd)">'
-      +'<div style="font-family:var(--f);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--g);margin-bottom:6px">RPE Trend (laatste '+rpeData.length+' sessies)</div>'
-      +'<div style="display:flex;align-items:center;gap:12px">'
-      +'<span style="font-family:var(--f);font-size:22px;font-weight:800;color:var(--y)">'+avgRPE+'</span>'
-      +'<span style="font-size:13px;color:'+trendCol+'">'+trendStr+'</span>'
-      +'<div style="margin-left:auto;display:flex;gap:4px;align-items:flex-end">'
-      +rpeData.map(s=>'<div style="width:14px;background:var(--y);opacity:0.7;border-radius:2px 2px 0 0;height:'+(s.rpe*8)+'px" title="RPE '+s.rpe+'"></div>').join('')
-      +'</div></div></div>';
-  }
-  document.getElementById('exdet-hist').innerHTML=html+rpeHTML;
-  const pts=ss.filter(s=>s.weight).reverse();
-  if(pts.length>1) drawChart('ex-chart',pts.map(s=>s.weight),pts.map(s=>s.date));
+function openLogModal(exId){
+  const ex=exercises.find(e=>e.id===exId)||{id:exId,name:exId,type:'strength'};
+  // Just start training with this exercise — for now open in a quick log approach
+  // TODO: dedicated single exercise log modal
+  toast('Log via Training A of B scherm');
 }
 
 // ══════════════════════════════════════
-// RENDER STATS
+// STATS — live berekend uit sessies
 // ══════════════════════════════════════
-// Peak 1RM doelen (15 aug 2026)
-const PEAK_TARGETS={
-  backsquat:140, bench:105, frontsquat:110,
-  shoulderpress:75, hexabar:300,
-  hpc:100, hps:70, cablerow:110, bentoverrow:100
-};
-
-// Tempo string naar seconden
-function tempoToSec(t){
-  if(!t) return null;
-  const parts=t.replace(',','.').split(':');
-  if(parts.length===2) return parseFloat(parts[0])*60+parseFloat(parts[1]);
-  return parseFloat(t)*60;
-}
-
 async function refreshStats(){
-  const strExs=exercises.filter(e=>e.type==='strength');
+  const strExs=exercises.filter(e=>e.type==='strength'||!e.type);
   let rmHTML='';
   for(const ex of strExs){
-    const ss=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=date.desc&limit=20');
+    const ss=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=created_at.desc&limit=30');
     let best=null;
     ss.forEach(s=>{
+      if(!s.weight||!s.reps) return;
       const est=s.reps===1?s.weight:s.weight*(1+s.reps/30);
       if(!best||est>best) best=est;
     });
@@ -1317,40 +1365,31 @@ async function refreshStats(){
     const pct=target?Math.round((disp/target)*100):null;
     const fillPct=target?Math.min(100,pct):Math.min(100,disp/3);
     const fillCol=pct?(pct>=100?'var(--grn)':pct>=85?'var(--y)':'var(--org)'):'var(--y)';
-    rmHTML+='<div style="margin-bottom:14px">'
-      +'<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">'
-      +'<span style="font-family:var(--f);font-size:14px;font-weight:700">'+ex.name+'</span>'
-      +'<span style="font-family:var(--f);font-size:18px;font-weight:800;color:var(--y);margin-left:auto">'+disp+' kg</span>'
-      +(target?'<span style="font-family:var(--f);font-size:12px;color:'+(pct>=100?'var(--grn)':'var(--g)')+'">/ '+target+' kg doel</span>':'')
-      +'</div>'
-      +'<div class="prog-wrap"><div class="prog-fill" style="width:'+fillPct+'%;background:'+fillCol+'"></div></div>'
-      +(target?'<div style="font-size:11px;color:var(--g);margin-top:2px">'+pct+'% van peakdoel'+(pct>=100?' ✓':(100-pct)+'% te gaan')+'</div>':'')
-      +'</div>';
+    rmHTML+=`<div class="stat-1rm-item">
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">
+        <span class="stat-name">${ex.name}</span>
+        <span class="stat-val" style="margin-left:auto">${disp} kg</span>
+        ${target?`<span class="stat-target">/ ${target} kg</span>`:''}
+      </div>
+      <div class="prog-wrap"><div class="prog-fill" style="width:${fillPct}%;background:${fillCol}"></div></div>
+      ${pct?`<div class="stat-pct">${pct}% van peakdoel${pct>=100?' ✓':' · '+(100-pct)+'% te gaan'}</div>`:''}
+    </div>`;
   }
-  document.getElementById('stat-1rm').innerHTML=rmHTML||'<p style="color:var(--g);font-size:13px">Log sets om schattingen te zien</p>';
+  document.getElementById('stat-1rm').innerHTML=rmHTML||'<p style="color:var(--g400);font-size:13px">Log sets om schattingen te zien</p>';
 
   const hd=await sbGet('hrv_log','&order=date.desc&limit=14');
   if(hd.length>1){const rev=hd.slice().reverse();drawChart('hrv-chart',rev.map(r=>r.hrv),rev.map(r=>r.date),14,30);}
 
-  // Rowing met split berekening
   const rd=await sbGet('sessions','&exercise_id=eq.roeien&order=date.desc&limit=8');
-  let rHTML=rd.length?'':'<p style="color:var(--g);font-size:13px">Nog geen roeisessies</p>';
+  let rHTML=rd.length?'':'<p style="color:var(--g400);font-size:13px">Nog geen roeisessies</p>';
   rd.forEach(s=>{
     let split='';
     if(s.distance&&s.time_str){
-      const sec=tempoToSec(s.time_str);
-      if(sec){
-        const splitSec=(sec/s.distance)*500;
-        const sm=Math.floor(splitSec/60);
-        const ss2=Math.round(splitSec%60);
-        split=' · '+sm+':'+(ss2<10?'0':'')+ss2+'/500m';
-      }
+      const parts=s.time_str.split(':');let sec=0;
+      if(parts.length===2) sec=parseFloat(parts[0])*60+parseFloat(parts[1]);
+      if(sec&&s.distance){const ss2=(sec/s.distance)*500;const sm=Math.floor(ss2/60);const sr=Math.round(ss2%60);split=' · '+sm+':'+(sr<10?'0':'')+sr+'/500m';}
     }
-    rHTML+='<div class="lrow">'
-      +'<div class="ldate">'+s.date+'</div>'
-      +'<div class="lval">'+(s.distance||'?')+'m</div>'
-      +'<div class="lnote" style="text-align:right">'+(s.time_str||'')+(s.watt?' · '+s.watt+'W':'')+split+'</div>'
-      +'</div>';
+    rHTML+=`<div class="lrow"><div class="ldate">${s.date}</div><div class="lval">${s.distance||'?'}m</div><div class="lnote">${s.time_str||''}${s.watt?' · '+s.watt+'W':''}${split}</div></div>`;
   });
   document.getElementById('stat-row').innerHTML=rHTML;
 }
@@ -1360,21 +1399,47 @@ async function refreshStats(){
 // ══════════════════════════════════════
 function refreshAdmin(){
   document.getElementById('admin-ver').textContent=APP_VERSION;
-  const apiSt=document.getElementById('api-st');
-  if(apiKey){apiSt.textContent='sk-....'+apiKey.slice(-6)+' ✓';apiSt.style.color='var(--grn)';}
-  else{apiSt.textContent='Niet ingesteld';apiSt.style.color='var(--red)';}
+  updateApiStatus();
   const cats=['A','B','CrossFit','Overig'];
   const catLabels={A:'Training A',B:'Training B',CrossFit:'CrossFit',Overig:'Overig'};
   let html='';
   cats.forEach(cat=>{
     const exs=exercises.filter(e=>e.active!==false&&e.category===cat);
     if(!exs.length) return;
-    html+='<div style="font-family:var(--f);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--y);padding:10px 0 4px;margin-top:4px">'+catLabels[cat]+'</div>';
+    html+=`<div style="font-family:var(--f);font-size:10px;font-weight:800;letter-spacing:2px;color:var(--y);text-transform:uppercase;padding:10px 0 4px;margin-top:4px">${catLabels[cat]}</div>`;
     exs.forEach(ex=>{
-      html+='<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)"><div><div style="font-size:14px">'+ex.name+'</div><div style="font-size:11px;color:var(--g)">'+ex.type+'</div></div><button data-id="'+ex.id+'" onclick="delEx(this.dataset.id)" style="margin-left:auto;background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:4px">🗑</button></div>';
+      html+=`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g200)">
+        <div><div style="font-size:14px;font-weight:700">${ex.name}</div><div style="font-size:11px;color:var(--g400)">${ex.type||'strength'}</div></div>
+        <button data-id="${ex.id}" onclick="delEx(this.dataset.id)" style="margin-left:auto;background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:4px">🗑</button>
+      </div>`;
     });
   });
   document.getElementById('admin-exlist').innerHTML=html;
+
+  // Rower admin
+  const radm=document.getElementById('rower-admin-list');
+  if(radm) renderRowerAdmin();
+}
+
+function renderRowerAdmin(){
+  const el=document.getElementById('rower-admin-list');
+  if(!el) return;
+  el.innerHTML=rowers.map((r,i)=>`
+    <div class="irow" style="margin-bottom:8px">
+      <label class="ilbl">PM5 ${i+1}</label>
+      <input class="inp" type="text" value="${r}" id="rower-inp-${i}" placeholder="PM5 430921286">
+    </div>`).join('');
+}
+
+function addRowerInput(){
+  rowers.push('');renderRowerAdmin();
+}
+
+function saveRowers(){
+  const inputs=document.querySelectorAll('[id^="rower-inp-"]');
+  rowers=Array.from(inputs).map(i=>i.value.trim()).filter(v=>v);
+  localStorage.setItem('maurice_rowers',JSON.stringify(rowers));
+  closeModal('m-rowers');toast('Roeiers opgeslagen');
 }
 
 async function delEx(id){
@@ -1387,20 +1452,25 @@ async function delEx(id){
 async function saveApiKey(){
   const key=document.getElementById('i-apikey').value.trim();
   if(!key.startsWith('sk-')){alert('Ongeldige sleutel');return;}
-  apiKey=key;
-  localStorage.setItem('maurice_apikey',key);
-  closeModal('m-apikey');
-  refreshAdmin();
-  toast('API sleutel opgeslagen');
+  apiKey=key;localStorage.setItem('maurice_apikey',key);
+  closeModal('m-apikey');refreshAdmin();toast('API sleutel opgeslagen');
 }
 
-async function saveNewPin(){
-  const pin=document.getElementById('i-newpin').value.trim();
-  if(!/^\d{4}$/.test(pin)){alert('Voer 4 cijfers in');return;}
-  const h=await sha256(pin);
-  // Show hash to update in code
-  closeModal('m-changepin');
-  alert('Nieuwe pin hash:\n'+h+'\n\nGeef dit door aan de ontwikkelaar om in de code te zetten.');
+async function saveNewEx(){
+  const name=document.getElementById('nx-name').value.trim();
+  const cat=document.getElementById('nx-cat').value;
+  const type=document.getElementById('nx-type').value;
+  if(!name){alert('Vul naam in');return;}
+  const id=name.toLowerCase().replace(/[^a-z0-9]/g,'');
+  if(exercises.find(e=>e.id===id)){alert('Naam al in gebruik');return;}
+  const ok=await sbPost('exercises',{id,name,category:cat,type,sort_order:99,active:true});
+  if(ok){exercises.push({id,name,category:cat,type,sort_order:99,active:true});closeModal('m-newex');toast(name+' toegevoegd');refreshLog();refreshAdmin();}
+}
+
+function updateApiStatus(){
+  const el=document.getElementById('api-st');if(!el)return;
+  if(apiKey){el.textContent='sk-....'+apiKey.slice(-6)+' ✓';el.style.color='var(--grn)';}
+  else{el.textContent='Niet ingesteld';el.style.color='var(--red)';}
 }
 
 // ══════════════════════════════════════
@@ -1409,12 +1479,8 @@ async function saveNewPin(){
 async function focusCoach(){
   if(chatHist.length===0){
     const d=await sbGet('chat_history','&order=created_at.asc&limit=20');
-    if(d.length){
-      chatHist=d.map(r=>({role:r.role,content:r.content}));
-      renderChatHistory();
-    } else {
-      addMsg('coach','Goedemorgen! Deel je HRV, RHR en slaap via het 📊 icoontje, of stel direct een vraag.');
-    }
+    if(d.length){chatHist=d.map(r=>({role:r.role,content:r.content}));renderChatHistory();}
+    else addMsg('coach','Goedemorgen! Deel je HRV, RHR en slaap via het 📊 icoontje, of stel direct een vraag.');
   }
   setTimeout(()=>{const w=document.getElementById('chat-wrap');w.scrollTop=w.scrollHeight;},100);
 }
@@ -1423,193 +1489,140 @@ async function buildCtx(){
   const hd=await sbGet('hrv_log','&order=date.desc&limit=7');
   const wd=await sbGet('weight_log','&order=date.desc&limit=1');
   let exCtx='';
-  for(const ex of exercises){
-    const ls=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc&limit=3');
-    if(ls.length){
-      const s=ls[0];
-      let str=s.date;
-      if(s.weight&&s.reps) str+=' '+(s.sets||'?')+'x'+s.reps+' @ '+s.weight+'kg'+(s.rpe?' RPE'+s.rpe:'');
-      else if(s.time_str) str+=' '+s.time_str+(s.watt?' @ '+s.watt+'W':'');
-      else if(s.distance) str+=' '+s.distance+'m';
-      exCtx+='\n- '+ex.name+': '+str;
-    }
+  for(const ex of exercises.slice(0,10)){
+    const ls=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc&limit=2');
+    if(ls.length){const s=ls[0];let str=s.date;if(s.weight&&s.reps)str+=' '+(s.sets||'?')+'x'+s.reps+' @ '+s.weight+'kg'+(s.rpe?' RPE'+s.rpe:'');else if(s.time_str)str+=' '+s.time_str+(s.watt?' @ '+s.watt+'W':'');exCtx+='\n- '+ex.name+': '+str;}
   }
-  const lh=hd[0];
-  const avg7=hd.length>=3?Math.round(hd.reduce((s,r)=>s+(r.hrv||0),0)/hd.length):null;
+  const lh=hd[0];const avg7=hd.length>=3?Math.round(hd.reduce((s,r)=>s+(r.hrv||0),0)/hd.length):null;
   const hrvStr=lh?'HRV '+(lh.hrv||'?')+' ms | RHR '+(lh.rhr||'?')+' bpm | Slaap '+(lh.sleep||'?')+'u'+(avg7?' | 7-daags gem '+avg7+' ms':'')+(lh.edema?' | oedeem: '+lh.edema:''):'Geen recente HRV';
   const wStr=wd[0]?'\nGewicht: '+wd[0].weight+' kg ('+wd[0].date+')':'';
-
-  return 'Je bent de persoonlijke trainingscoach van Maurice van Latum van Steensel. Nederlands. Direct, bondig, data-forward. Geen opvulling.\n\n'
-    +'PROFIEL:\n'
-    +'- Gewicht trend: 107.0 (mrt) -> 108.4 (apr) -> 109.3 kg (26 apr 2026)\n'
-    +'- Body comp (26 apr): vet% 14.2% (Tanita, realistisch ~21%), spiermassa 89.2 kg, BMR 2778 kcal, visceraal vet 6, metab. leeftijd 34\n'
-    +'- Lymphedema beide voeten: dagelijks variabel. Post-sessie 8-min lymfedrainage altijd uitvoeren.\n\n'
-    +'HERSTEL:\n'+hrvStr+wStr+'\n\n'
-    +'HRV DREMPELS (Maurice-specifiek — structureel lager dan norm):\n'
-    +'>=24 ms Optimaal | 18-23 ms Normaal | 14-17 ms 80% gewichten | <14 ms Rust\n'
-    +'RHR <=58 bpm = goed. RHR weegt zwaarder dan HRV. Persoonlijk bereik HRV: 17-27 ms.\n\n'
-    +'1RM REFERENTIES (meest recent):\n'
-    +'- Hexabar Deadlift: PR 240x3 (2 apr 2026) -> gesch. 1RM ~280 kg | ALTIJD eerste oefening B, fris\n'
-    +'- Backsquat: 5x3 @ 90 kg (11 apr) | paused 3x3 @ 95 kg CrossFit (23 apr) -> gesch. 1RM ~108-112 kg\n'
-    +'- Benchpress: 5x4 @ 80 kg (11 apr) -> gesch. 1RM ~93-95 kg | 82.5 nog niet geconsolideerd\n'
-    +'- Frontsquat: PR 92.5 kg (7 jun 2026) -> gesch. 1RM ~95 kg\n'
-    +'- Shoulder Press: PR 63.5 kg (28 mei 2026) -> gesch. 1RM ~64 kg\n'
-    +'- Hang Power Clean: singles tot 85 kg | techniek breekt bij triples\n'
-    +'- Hang Power Snatch: tot 57.5 kg (schouder mobiliteit = limiting factor)\n'
-    +'- Cable Row: 90 kg werkgewicht (31 mei 2026)\n'
-    +'- Farmer Carry: 55 kg/hand 218m record (18 apr) | 32 kg KB 400m (26 apr)\n'
-    +'- Roeien 1000m PR: 3:37.5 / 272W (31 mei 2026) | 1500m: 1:56.6/500m 220W (11 apr)\n\n'
-    +'HISTORISCHE SESSIES UIT LOGBOEK:\n'
-    +'- 25 mrt: Training A start programma, squat 87.5 kg\n'
-    +'- 28 mrt: Training B, hexabar PR 240x3 (HRV laag, Olympic lifts skip)\n'
-    +'- 11 apr: Training A, squat 5x3@90, bench 5x4@80, shoulder PR 60 kg\n'
-    +'- 18 apr: Training C, frontsquat vol. 4x12@50, farmer carry 218m @ 55 kg record\n'
-    +'- 23 apr: CrossFit WOD 1706, paused squat 95 kg, AMRAP 14min 2+ ronden\n'
-    +'- 26 apr: Training B, hexabar opbouw tot 200 kg (conservatief na CrossFit), cable row 85 kg, HPC tot 80 kg\n'
-    +'- 31 mei: Training B, hexabar gecapt 180 kg (rugstijfheid), cable row PR 90 kg, HPS 57.5 kg eerste formele sessie, roei PR 3:37.5\n'
-    +'- 7 jun: Training A, frontsquat PR 92.5 kg, shoulder press 62.5 kg RPE 7-8, bench 70 kg (spanningsgevoel linker triceps op 80 kg)\n\n'
-    +'APP SESSIES (recent gelogd):'+exCtx+'\n\n'
-    +'PROGRAMMASTRUCTUUR:\n'
-    +'Training A: Backsquat, Benchpress, Frontsquat, Shoulder Press, Farmer Carry\n'
-    +'Training B: Hexabar Deadlift (EERST, fris), Bent Over Row/Cable Row, HPC, HPS, RDL\n'
-    +'CrossFit: apart loggen, zwaar meewegen in herstelplanning\n'
-    +'Paused squat CrossFit 3x3@95 = equivalent Training A 4x3@110 voor hersteldoeleinden\n\n'
-    +'REGELS:\n'
-    +'- RPE <=7.5 +2.5 kg | 8-8.5 herhaal | >=9 deload\n'
-    +'- Hexabar: 1-3 reps >=85% 1RM, altijd eerste oefening B, nooit dag na zware A\n'
-    +'- Bench frequentie: 2 accessoire sets 70-75 kg toevoegen aan Training B\n'
-    +'- Shoulder press VOOR bench in Training A\n'
-    +'- HPC: singles/doubles (techniek breekt bij triples)\n'
-    +'- Tanita betrouwbaarheid: alleen vergelijken bij zelfde oedeemstatus\n'
-    +'- Post-sessie: 8-min lymfedrainage (been omhoog, kuitpompen, enkeldraaiingen, buikademhaling)\n'
-    +'- Peak target: 15 augustus 2026. Detraining ~21 aug - 9 sep.\n\n'
-    +'HRV/RHR ontvangen: herstelanalyse dan vraag of getraind wordt.\n'
-    +'Training: stap-voor-stap per oefening, vergelijk altijd vorige sessie, geef concreet doelgewicht.';
+  return 'Je bent de persoonlijke trainingscoach van Maurice van Latum van Steensel. Nederlands. Direct, bondig, data-forward. Geen opvulling.\n\nHERSTEL:\n'+hrvStr+wStr+'\n\nHRV DREMPELS (Maurice-specifiek):\n>=24 Optimaal | 18-23 Normaal | 14-17 80% gewichten | <14 Rust\nRHR <=58 bpm = goed. RHR weegt zwaarder dan HRV.\n\n1RM REFERENTIES:\n- Hexabar Deadlift: PR 240x3 (apr 2026) ~280 kg — altijd na roeien in B\n- Backsquat: ~108-112 kg | Benchpress: ~93-95 kg | Frontsquat: PR 92.5 kg (jun 2026)\n- Shoulder Press: PR 63.5 kg (mei 2026) | HPC: ~85 kg singles | HPS: ~57.5 kg\n- 1000m roei PR: 3:37.5 / 272W (mei 2026)\n\nRECENTE SESSIES:'+exCtx+'\n\nREGELS:\n- RPE <=7.5 +2.5 kg | 8-8.5 herhaal | >=9 deload\n- Hexabar: 1-3 reps >=85%, na roeien warmup\n- Bench: 2 accessoire sets 70-75 kg in B\n- HPC: singles/doubles\n- Lymphedema: post-sessie 8-min lymfedrainage\n- Peak: 15 aug 2026\n\nHRV/RHR ontvangen: herstelanalyse dan vraag of getraind wordt.\nTraining: stap-voor-stap, vergelijk vorige sessie, geef concreet doelgewicht.';
 }
 
 async function sendChat(){
-  const inp=document.getElementById('chat-inp');
-  const txt=inp.value.trim();
-  if(!txt||sending) return;
-  inp.value='';inp.style.height='';
-  sendMsg(txt);
+  const inp=document.getElementById('chat-inp');const txt=inp.value.trim();
+  if(!txt||sending)return;inp.value='';inp.style.height='';sendMsg(txt);
 }
 
 async function sendMsg(txt){
-  if(sending) return;
-  if(!apiKey){
-    addMsg('sys','Geen API sleutel — ga naar Beheer (tandwiel) om in te stellen.');
-    return;
-  }
+  if(sending)return;
+  if(!apiKey){addMsg('sys','Geen API sleutel — ga naar Beheer.');return;}
   sending=true;
   document.getElementById('send-btn').disabled=true;
   document.getElementById('coach-st').textContent='Denkt na...';
-  addMsg('user',txt);
-  chatHist.push({role:'user',content:txt});
+  addMsg('user',txt);chatHist.push({role:'user',content:txt});
   await sbPost('chat_history',{role:'user',content:txt});
-  const tid=addMsg('coach','<span class="spin"></span>',true);
+  const tid=addMsg('coach','<span style="display:inline-block;width:16px;height:16px;border:2px solid #444;border-top-color:var(--y);border-radius:50%;animation:sp .8s linear infinite;vertical-align:middle"></span>',true);
   try{
     const sys=await buildCtx();
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,system:sys,messages:chatHist.slice(-12)})
-    });
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,system:sys,messages:chatHist.slice(-12)})});
     const d=await res.json();
     if(d.error){removeMsg(tid);addMsg('coach','Fout: '+d.error.message);}
     else{
-      const reply=d.content[0].text;
-      removeMsg(tid);addMsg('coach',reply);
+      const reply=d.content[0].text;removeMsg(tid);addMsg('coach',reply);
       chatHist.push({role:'assistant',content:reply});
       await sbPost('chat_history',{role:'assistant',content:reply});
       const all=await sbGet('chat_history','&order=created_at.asc');
-      if(all.length>40){
-        const old=all.slice(0,all.length-40);
-        for(const r of old) await sbDelete('chat_history','id=eq.'+r.id);
-      }
+      if(all.length>40){for(const r of all.slice(0,all.length-40))await sbDelete('chat_history','id=eq.'+r.id);}
     }
   }catch(e){removeMsg(tid);addMsg('coach','Verbindingsfout. Check internet.');}
-  sending=false;
-  document.getElementById('send-btn').disabled=false;
-  document.getElementById('coach-st').textContent='Klaar';
+  sending=false;document.getElementById('send-btn').disabled=false;document.getElementById('coach-st').textContent='Klaar';
 }
+
+function askCoachEx(naam,training){sendMsg(`Ik ga nu ${naam} doen (Training ${training}). Doelgewichten en techniekpunten?`);go('s-coach');}
 
 let mc=0;
 function addMsg(role,txt,retId=false){
-  const id='m'+(++mc);
-  const d=document.createElement('div');
-  d.className='msg '+role;d.id=id;
-  d.innerHTML=txt.replace(/\n/g,'<br>');
-  const w=document.getElementById('chat-wrap');
-  w.appendChild(d);w.scrollTop=w.scrollHeight;
+  const id='m'+(++mc);const d=document.createElement('div');
+  d.className='msg '+role;d.id=id;d.innerHTML=txt.replace(/\n/g,'<br>');
+  const w=document.getElementById('chat-wrap');w.appendChild(d);w.scrollTop=w.scrollHeight;
   return retId?id:null;
 }
 function removeMsg(id){const e=document.getElementById(id);if(e)e.remove();}
-function renderChatHistory(){
-  const w=document.getElementById('chat-wrap');w.innerHTML='';mc=0;
-  chatHist.forEach(m=>addMsg(m.role==='user'?'user':'coach',m.content));
-}
-async function clearChat(){
-  if(!confirm('Gesprek wissen?')) return;
-  chatHist=[];
-  const all=await sbGet('chat_history','');
-  for(const r of all) await sbDelete('chat_history','id=eq.'+r.id);
-  document.getElementById('chat-wrap').innerHTML='';
-  addMsg('coach','Nieuw gesprek. Deel je ochtenddata of stel een vraag.');
-}
+function renderChatHistory(){const w=document.getElementById('chat-wrap');w.innerHTML='';mc=0;chatHist.forEach(m=>addMsg(m.role==='user'?'user':'coach',m.content));}
+async function clearChat(){if(!confirm('Gesprek wissen?'))return;chatHist=[];const all=await sbGet('chat_history','');for(const r of all)await sbDelete('chat_history','id=eq.'+r.id);document.getElementById('chat-wrap').innerHTML='';addMsg('coach','Nieuw gesprek. Deel je ochtenddata of stel een vraag.');}
 function ckd(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
 function ar(el){el.style.height='';el.style.height=Math.min(el.scrollHeight,100)+'px';}
+
+// ══════════════════════════════════════
+// STOPWATCH
+// ══════════════════════════════════════
+let swSecs=60,swTotal=60,swRunning=false,swInterval=null;
+function swShow(){document.getElementById('sw-bar').classList.remove('hidden');document.getElementById('sw-trigger').classList.remove('show');}
+function swClose(){document.getElementById('sw-bar').classList.add('hidden');if(curTraining)document.getElementById('sw-trigger').classList.add('show');swStop();}
+function swShowTraining(){document.getElementById('sw-trigger').classList.add('show');}
+function swHideTraining(){document.getElementById('sw-trigger').classList.remove('show');document.getElementById('sw-bar').classList.add('hidden');}
+function swPreset(s){swStop();swSecs=s;swTotal=s;swUpdateDisplay();}
+function swStartStop(){if(swRunning)swStop();else swStart();}
+function swStart(){
+  if(swSecs<=0)swReset();swRunning=true;
+  const btn=document.getElementById('sw-start-btn');
+  if(btn){btn.textContent='⏸ PAUZE';btn.classList.add('active');}
+  swInterval=setInterval(()=>{swSecs--;swUpdateDisplay();if(swSecs<=0){swStop();swDone();}},1000);
+}
+function swStop(){swRunning=false;clearInterval(swInterval);const btn=document.getElementById('sw-start-btn');if(btn){btn.textContent='▶ START';btn.classList.remove('active');}}
+function swReset(){swStop();swSecs=swTotal;swUpdateDisplay();const t=document.getElementById('sw-time');if(t)t.classList.remove('done','urgent');}
+function swUpdateDisplay(){
+  const m=Math.floor(swSecs/60);const s=swSecs%60;
+  const el=document.getElementById('sw-time');if(!el)return;
+  el.textContent=m+':'+(s<10?'0':'')+s;
+  el.classList.remove('done','urgent');
+  if(swSecs<=10&&swSecs>0)el.classList.add('urgent');
+}
+function swDone(){
+  const el=document.getElementById('sw-time');if(el){el.textContent='KLAAR!';el.classList.add('done');}
+  // Flash screen yellow
+  const f=document.getElementById('flash');
+  if(f){
+    let count=0;
+    const flashInterval=setInterval(()=>{
+      f.style.opacity=count%2===0?'0.4':'0';count++;
+      if(count>=6)clearInterval(flashInterval);
+    },200);
+  }
+  if(navigator.vibrate)navigator.vibrate([200,100,200,100,400]);
+  try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,0.3,0.6].forEach(t=>{const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.setValueAtTime(0.3,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+0.2);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+0.2);});}catch(e){}
+}
 
 // ══════════════════════════════════════
 // CHART
 // ══════════════════════════════════════
 function drawChart(cid,vals,labels,yMin,yMax){
-  const c=document.getElementById(cid);if(!c||vals.length<2) return;
-  const ctx=c.getContext('2d');
-  const dpr=window.devicePixelRatio||1;
+  const c=document.getElementById(cid);if(!c||vals.length<2)return;
+  const ctx=c.getContext('2d');const dpr=window.devicePixelRatio||1;
   const rect=c.parentElement.getBoundingClientRect();
   c.width=rect.width*dpr;c.height=120*dpr;ctx.scale(dpr,dpr);
-  const W=rect.width,H=120;
-  ctx.clearRect(0,0,W,H);
+  const W=rect.width,H=120;ctx.clearRect(0,0,W,H);
   const mn=yMin!==undefined?yMin:Math.min(...vals)*.97;
   const mx=yMax!==undefined?yMax:Math.max(...vals)*1.03;
   const rng=mx-mn||1;
   const tx=i=>(i/(vals.length-1))*(W-20)+10;
   const ty=v=>H-20-((v-mn)/rng)*(H-30);
-  ctx.strokeStyle='#2a2a2a';ctx.lineWidth=1;
+  ctx.strokeStyle='#eee';ctx.lineWidth=1;
   [.25,.5,.75].forEach(f=>{const y=H-20-f*(H-30);ctx.beginPath();ctx.moveTo(10,y);ctx.lineTo(W-10,y);ctx.stroke();});
   ctx.beginPath();ctx.moveTo(tx(0),H-20);
   vals.forEach((v,i)=>ctx.lineTo(tx(i),ty(v)));
   ctx.lineTo(tx(vals.length-1),H-20);ctx.closePath();
-  ctx.fillStyle='rgba(240,192,64,.1)';ctx.fill();
-  ctx.beginPath();ctx.strokeStyle='#f0c040';ctx.lineWidth=2;
-  vals.forEach((v,i)=>{if(i===0)ctx.moveTo(tx(i),ty(v));else ctx.lineTo(tx(i),ty(v));});
-  ctx.stroke();
+  ctx.fillStyle='rgba(245,197,24,.15)';ctx.fill();
+  ctx.beginPath();ctx.strokeStyle='#F5C518';ctx.lineWidth=2.5;
+  vals.forEach((v,i)=>{if(i===0)ctx.moveTo(tx(i),ty(v));else ctx.lineTo(tx(i),ty(v));});ctx.stroke();
   const li=vals.length-1;
-  ctx.beginPath();ctx.arc(tx(li),ty(vals[li]),4,0,Math.PI*2);ctx.fillStyle='#f0c040';ctx.fill();
-  ctx.fillStyle='#f0f0f0';ctx.font='bold 12px Barlow Condensed,Arial';ctx.textAlign='right';
-  ctx.fillText(vals[li],W-10,ty(vals[li])-6);
+  ctx.beginPath();ctx.arc(tx(li),ty(vals[li]),5,0,Math.PI*2);ctx.fillStyle='#F5C518';ctx.fill();
+  ctx.fillStyle='#111';ctx.font='bold 12px Barlow Condensed,Arial';ctx.textAlign='right';
+  ctx.fillText(vals[li],W-10,ty(vals[li])-8);
 }
 
 // ══════════════════════════════════════
-// TOAST
-// ══════════════════════════════════════
-function toast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2000);
-}
-
-// ══════════════════════════════════════
-// UTIL
+// UTILS
 // ══════════════════════════════════════
 function td(){return new Date().toISOString().split('T')[0];}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 // ══════════════════════════════════════
 // BOOT
 // ══════════════════════════════════════
 window.addEventListener('load',async()=>{
-  if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
   const data=await sbGet('exercises','&order=sort_order.asc&active=eq.true');
   exercises=data.length?data:[];
   if(!exercises.length){
@@ -1628,11 +1641,15 @@ window.addEventListener('load',async()=>{
       {id:'roeien',name:'Roeien',category:'B',type:'cardio',pr:null,sort_order:7,active:true},
       {id:'crossfit',name:'CrossFit WOD',category:'CrossFit',type:'wod',pr:null,sort_order:1,active:true}
     ];
-    for(const ex of defaults) await sbUpsert('exercises',ex);
+    for(const ex of defaults)await sbUpsert('exercises',ex);
     exercises=defaults;
   }
-  refreshHome();
 });
+
+// CSS animation for spinner
+const style=document.createElement('style');
+style.textContent='@keyframes sp{to{transform:rotate(360deg)}}';
+document.head.appendChild(style);
 </script>
 </body>
 </html>

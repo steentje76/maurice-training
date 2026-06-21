@@ -278,7 +278,7 @@ canvas{width:100%;height:100%}
       <button class="pk" onclick="pp('7')">7</button><button class="pk" onclick="pp('8')">8</button><button class="pk" onclick="pp('9')">9</button>
       <button class="pk" onclick="pb()" style="color:var(--g400)">⌫</button><button class="pk" onclick="pp('0')">0</button><button class="pk" style="background:transparent"></button>
     </div>
-    <div style="margin-top:20px;font-family:var(--f);font-size:11px;letter-spacing:2px;color:var(--g200)">v2.5.1</div>
+    <div style="margin-top:20px;font-family:var(--f);font-size:11px;letter-spacing:2px;color:var(--g200)">v2.5.2</div>
   </div>
 </div>
 
@@ -319,13 +319,13 @@ canvas{width:100%;height:100%}
         <textarea class="inp" id="home-note-inp" placeholder="Hoe voel je je vandaag..." rows="2" style="resize:none" oninput="saveNote(this.value)"></textarea>
       </div>
     </div>
-    <div style="text-align:center;padding:4px 0;font-family:var(--f);font-size:11px;letter-spacing:2px;color:var(--g200)">v2.5.1</div>
+    <div style="text-align:center;padding:4px 0;font-family:var(--f);font-size:11px;letter-spacing:2px;color:var(--g200)">v2.5.2</div>
   </div>
   <nav class="bnav">
     <button class="ni active" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="go('s-train-a')" id="nav-train"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="train-dot"></div></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+    <button class="ni" onclick="go('s-body')"><span class="ni-icon">📏</span><span class="ni-label">Meten</span></button>
     <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
   </nav>
 </div>
@@ -351,7 +351,7 @@ canvas{width:100%;height:100%}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni active"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+    <button class="ni" onclick="go('s-body')"><span class="ni-icon">📏</span><span class="ni-label">Meten</span></button>
     <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
   </nav>
 </div>
@@ -377,7 +377,7 @@ canvas{width:100%;height:100%}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni active"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+    <button class="ni" onclick="go('s-body')"><span class="ni-icon">📏</span><span class="ni-label">Meten</span></button>
     <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
   </nav>
 </div>
@@ -399,7 +399,7 @@ canvas{width:100%;height:100%}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="go('s-train-a')" ><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="train-dot2"></div></button>
     <button class="ni active"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+    <button class="ni" onclick="go('s-body')"><span class="ni-icon">📏</span><span class="ni-label">Meten</span></button>
     <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
   </nav>
 </div>
@@ -434,7 +434,7 @@ canvas{width:100%;height:100%}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="go('s-train-a')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni active"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+    <button class="ni" onclick="go('s-body')"><span class="ni-icon">📏</span><span class="ni-label">Meten</span></button>
     <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
   </nav>
 </div>
@@ -471,7 +471,7 @@ canvas{width:100%;height:100%}
 
 <!-- ADMIN -->
 <div class="scr" id="s-admin">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-logo">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.5.1</div></div><div class="hdr-right"><button class="ibtn" onclick="go('s-home')">✕</button></div></div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-logo">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.5.2</div></div><div class="hdr-right"><button class="ibtn" onclick="go('s-home')">✕</button></div></div></div>
   <div class="scroll">
     <div class="card"><div class="card-body">
       <div class="srow"><div><div style="font-size:15px;font-weight:700">API Sleutel</div><div style="font-size:12px;color:var(--g400)" id="api-st">Niet ingesteld</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-apikey')">Wijzig</button></div></div>
@@ -490,6 +490,99 @@ canvas{width:100%;height:100%}
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
     <button class="ni active"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
   </nav>
+</div>
+
+<!-- LICHAAMSSAMENSTELLING -->
+<div class="scr" id="s-body">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-logo">METEN</div><div class="hdr-sub">Lichaamssamenstelling</div></div>
+      <div class="hdr-right"><button class="ibtn" onclick="openModal('m-bc-full')">＋</button></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <!-- Gewicht trend -->
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Gewicht</div><div class="card-sub" id="bc-weight-latest">—</div></div>
+      <div class="card-body">
+        <div class="chart-wrap"><canvas id="bc-weight-chart"></canvas></div>
+        <div id="bc-weight-trend" style="font-size:12px;color:var(--g600);margin-top:6px"></div>
+      </div>
+    </div>
+    <!-- Tanita compositie -->
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Lichaamscompositie (Tanita)</div><div class="card-sub" id="bc-comp-date">—</div></div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+          <div style="background:var(--bk);border-radius:12px;padding:12px;text-align:center">
+            <div style="font-family:var(--f);font-size:28px;font-weight:900;color:var(--y)" id="bc-fat">—</div>
+            <div style="font-family:var(--f);font-size:10px;color:var(--g400);letter-spacing:1px;margin-top:2px">VET %</div>
+          </div>
+          <div style="background:var(--bk);border-radius:12px;padding:12px;text-align:center">
+            <div style="font-family:var(--f);font-size:28px;font-weight:900;color:#fff" id="bc-muscle">—</div>
+            <div style="font-family:var(--f);font-size:10px;color:var(--g400);letter-spacing:1px;margin-top:2px">SPIERMASSA kg</div>
+          </div>
+          <div style="background:var(--g100);border-radius:12px;padding:12px;text-align:center">
+            <div style="font-family:var(--f);font-size:24px;font-weight:900;color:var(--bk)" id="bc-bmr">—</div>
+            <div style="font-family:var(--f);font-size:10px;color:var(--g400);letter-spacing:1px;margin-top:2px">BMR kcal</div>
+          </div>
+          <div style="background:var(--g100);border-radius:12px;padding:12px;text-align:center">
+            <div style="font-family:var(--f);font-size:24px;font-weight:900;color:var(--bk)" id="bc-visc">—</div>
+            <div style="font-family:var(--f);font-size:10px;color:var(--g400);letter-spacing:1px;margin-top:2px">VISCERAAL VET</div>
+          </div>
+        </div>
+        <div id="bc-oedeem-note" style="font-size:12px;color:var(--g600);padding:8px;background:var(--g100);border-radius:8px;display:none"></div>
+      </div>
+    </div>
+    <!-- Afmetingen -->
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Afmetingen</div><div class="card-sub" id="bc-meting-date">—</div></div>
+      <div class="card-body" id="bc-metingen">
+        <p style="color:var(--g400);font-size:13px">Nog geen afmetingen gelogd</p>
+      </div>
+    </div>
+    <!-- Geschiedenis -->
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Geschiedenis</div></div>
+      <div class="card-body" id="bc-history"></div>
+    </div>
+    <!-- Coach analyse -->
+    <button class="btn btn-b" onclick="askCoachBC()" style="margin-bottom:12px">🤖 Coach: analyseer mijn metingen</button>
+  </div>
+  <nav class="bnav">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="go('s-train-a')" id="nav-train-body"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="train-dot3"></div></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni active" onclick="go('s-body')"><span class="ni-icon">📏</span><span class="ni-label">Meten</span></button>
+    <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
+  </nav>
+</div>
+
+<!-- MODAL: Volledige meting invoer -->
+<div class="modal-bg" id="m-bc-full" onclick="bgClose(event,'m-bc-full')">
+  <div class="modal">
+    <div class="modal-title">Nieuwe Meting</div>
+    <div style="font-family:var(--f);font-size:10px;font-weight:800;letter-spacing:2px;color:var(--g400);text-transform:uppercase;margin-bottom:8px">Gewicht & Tanita</div>
+    <div class="irow"><label class="ilbl">Gewicht</label><input class="inp" type="number" id="bcf-w" placeholder="kg" step="0.1"></div>
+    <div class="irow"><label class="ilbl">Vet%</label><input class="inp" type="number" id="bcf-fat" placeholder="%" step="0.1"></div>
+    <div class="irow"><label class="ilbl">Spiermassa</label><input class="inp" type="number" id="bcf-mus" placeholder="kg" step="0.1"></div>
+    <div class="irow"><label class="ilbl">BMR</label><input class="inp" type="number" id="bcf-bmr" placeholder="kcal"></div>
+    <div class="irow"><label class="ilbl">Visceraal</label><input class="inp" type="number" id="bcf-vis" placeholder="level"></div>
+    <div class="irow"><label class="ilbl">Metab. lft</label><input class="inp" type="number" id="bcf-age" placeholder="jaar"></div>
+    <div style="font-family:var(--f);font-size:10px;font-weight:800;letter-spacing:2px;color:var(--g400);text-transform:uppercase;margin:12px 0 8px">Afmetingen (cm)</div>
+    <div class="irow"><label class="ilbl">Taille</label><input class="inp" type="number" id="bcf-waist" placeholder="cm" step="0.5"></div>
+    <div class="irow"><label class="ilbl">Heupen</label><input class="inp" type="number" id="bcf-hips" placeholder="cm" step="0.5"></div>
+    <div class="irow"><label class="ilbl">Borst</label><input class="inp" type="number" id="bcf-chest" placeholder="cm" step="0.5"></div>
+    <div class="irow"><label class="ilbl">Bovenarm</label><input class="inp" type="number" id="bcf-arm" placeholder="cm" step="0.5"></div>
+    <div class="irow"><label class="ilbl">Dij</label><input class="inp" type="number" id="bcf-thigh" placeholder="cm" step="0.5"></div>
+    <div style="font-family:var(--f);font-size:10px;font-weight:800;letter-spacing:2px;color:var(--g400);text-transform:uppercase;margin:12px 0 8px">Status</div>
+    <div class="irow"><label class="ilbl">Oedeem</label><select class="inp" id="bcf-edm"><option value="">—</option><option>normaal</option><option>licht</option><option>flink opgezet</option></select></div>
+    <div class="irow"><label class="ilbl">Bron</label><select class="inp" id="bcf-src"><option>Tanita</option><option>Medisana</option></select></div>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-bc-full')">Annuleer</button>
+      <button class="btn btn-y" style="flex:2" onclick="saveFullBC()">Opslaan</button>
+    </div>
+  </div>
 </div>
 
 <!-- STOPWATCH -->
@@ -624,7 +717,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════
 // CONSTANTS
 // ══════════════════════════════════════
-const APP_VERSION = 'v2.5.1';
+const APP_VERSION = 'v2.5.2';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -749,6 +842,7 @@ function go(id){
   if(id==='s-home') refreshHome();
   if(id==='s-log') refreshLog();
   if(id==='s-stats') refreshStats();
+  if(id==='s-body') refreshBodyComp();
   if(id==='s-admin') refreshAdmin();
   if(id==='s-coach') focusCoach();
   if(id==='s-admin-pin'){adminPinBuf='';updAPinDots();}
@@ -873,7 +967,7 @@ function buildExItem(ex, isLogged, t){
 
   // Build set rows for strength
   let bodyContent='';
-  if(ex.type==='rowing'){
+  if(ex.type==='rowing'||ex.id==='roeien'||ex.type==='cardio'){
     bodyContent=buildRowingInputs(ex.id);
   } else if(ex.type==='carry'){
     bodyContent=buildCarryInputs(ex.id, workCount);
@@ -1118,21 +1212,32 @@ function addExToSession(t){
   const addList=document.getElementById('add-ex-list');
   if(!addList) return;
   const currentIds=getSessionExs(t).map(e=>e.id);
-  const available=exercises.filter(e=>!currentIds.includes(e.id));
-  if(!available.length){toast('Alle oefeningen staan al in de sessie');return;}
-  addList.innerHTML=available.map(ex=>
-    `<div class="exc" onclick="addExToSessionConfirm('${ex.id}','${t}')">
-      <div style="flex:1"><div class="exc-name">${ex.name}</div><div class="exc-cat">${ex.category}</div></div>
-      <div style="color:var(--g400)">+</div>
-    </div>`
-  ).join('');
+  // Show all exercises not yet in session, grouped
+  const cats=['A','B','CrossFit','Overig'];
+  const catLabels={A:'Training A',B:'Training B',CrossFit:'CrossFit',Overig:'Overig'};
+  let html='';
+  cats.forEach(cat=>{
+    const exs=exercises.filter(e=>!currentIds.includes(e.id)&&e.active!==false&&e.category===cat);
+    if(!exs.length) return;
+    html+=`<div style="font-family:var(--f);font-size:10px;font-weight:800;letter-spacing:2px;color:var(--g400);text-transform:uppercase;margin:10px 0 6px">${catLabels[cat]}</div>`;
+    exs.forEach(ex=>{
+      html+=`<div class="exc" onclick="addExToSessionConfirm('${ex.id}','${t}');this.style.opacity='0.5'">
+        <div style="flex:1"><div class="exc-name">${ex.name}</div><div class="exc-cat">${ex.category} · ${ex.type||'strength'}</div></div>
+        <div style="color:var(--grn);font-size:20px;font-weight:800">+</div>
+      </div>`;
+    });
+  });
+  if(!html) html='<p style="color:var(--g400);font-size:13px">Alle oefeningen staan al in de sessie.</p>';
+  addList.innerHTML=html;
   openModal('m-add-ex');
 }
 
 function addExToSessionConfirm(exId, t){
   const ex=exercises.find(e=>e.id===exId);
   if(!ex) return;
-  const newEx={id:ex.id,naam:ex.name,type:ex.type||'strength',sets:4,reps:'6-8',rpe:'8',_session:t};
+  // Determine correct type — roeien/cardio uses rowing inputs
+  const exType=(ex.id==='roeien'||ex.type==='cardio')?'rowing':ex.type||'strength';
+  const newEx={id:ex.id,naam:ex.name,type:exType,sets:4,reps:'6-8',rpe:'8',_session:t};
   sessionExtraExs.push(newEx);
   closeModal('m-add-ex');
   renderTrainScreen(t);
@@ -1617,6 +1722,121 @@ function drawChart(cid,vals,labels,yMin,yMax){
 // ══════════════════════════════════════
 function td(){return new Date().toISOString().split('T')[0];}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+// ══════════════════════════════════════
+// BODY COMPOSITION
+// ══════════════════════════════════════
+async function saveFullBC(){
+  const row={
+    date:td(),
+    weight:parseFloat(document.getElementById('bcf-w').value)||null,
+    fat_pct:parseFloat(document.getElementById('bcf-fat').value)||null,
+    muscle_mass:parseFloat(document.getElementById('bcf-mus').value)||null,
+    bmr:parseInt(document.getElementById('bcf-bmr').value)||null,
+    visceral_fat:parseInt(document.getElementById('bcf-vis').value)||null,
+    waist_cm:parseFloat(document.getElementById('bcf-waist').value)||null,
+    edema:document.getElementById('bcf-edm').value||null,
+    source:document.getElementById('bcf-src').value,
+    note:'arm:'+document.getElementById('bcf-arm').value+' heupen:'+document.getElementById('bcf-hips').value+' borst:'+document.getElementById('bcf-chest').value+' dij:'+document.getElementById('bcf-thigh').value+' metab_age:'+document.getElementById('bcf-age').value
+  };
+  if(row.weight) await sbPost('weight_log',{date:td(),weight:row.weight,scale:row.source});
+  await sbPost('body_comp',row);
+  closeModal('m-bc-full');
+  toast('Meting opgeslagen');
+  refreshBodyComp();
+}
+
+async function refreshBodyComp(){
+  // Latest comp
+  const bc=await sbGet('body_comp','&order=date.desc&limit=10');
+  const latest=bc[0];
+  if(latest){
+    document.getElementById('bc-fat').textContent=(latest.fat_pct||'—')+(latest.fat_pct?'%':'');
+    document.getElementById('bc-muscle').textContent=(latest.muscle_mass||'—')+(latest.muscle_mass?' kg':'');
+    document.getElementById('bc-bmr').textContent=latest.bmr||'—';
+    document.getElementById('bc-visc').textContent=latest.visceral_fat||'—';
+    document.getElementById('bc-comp-date').textContent=latest.date;
+    if(latest.edema){
+      const oe=document.getElementById('bc-oedeem-note');
+      oe.textContent='⚠️ Oedeem: '+latest.edema+' — Tanita waarden minder betrouwbaar';
+      oe.style.display='block';
+    }
+  }
+  // Weight trend
+  const wd=await sbGet('weight_log','&order=date.asc&limit=20');
+  if(wd.length){
+    const last=wd[wd.length-1];
+    const prev=wd.length>1?wd[wd.length-2]:null;
+    document.getElementById('bc-weight-latest').textContent=last.weight+' kg';
+    if(prev){
+      const diff=Math.round((last.weight-prev.weight)*10)/10;
+      const col=diff<0?'var(--grn)':diff>0?'var(--red)':'var(--g400)';
+      document.getElementById('bc-weight-trend').innerHTML=
+        `vs vorige meting (${prev.date}): <strong style="color:${col}">${diff>0?'+':''}${diff} kg</strong>`;
+    }
+    drawChart('bc-weight-chart',wd.map(w=>w.weight),wd.map(w=>w.date));
+  }
+  // Afmetingen uit notitie veld
+  if(latest?.note){
+    const parts={};
+    latest.note.split(' ').forEach(p=>{const kv=p.split(':');if(kv.length===2)parts[kv[0]]=kv[1];});
+    const items=[
+      {lbl:'Taille',val:latest.waist_cm,unit:'cm'},
+      {lbl:'Heupen',val:parts.heupen,unit:'cm'},
+      {lbl:'Borst',val:parts.borst,unit:'cm'},
+      {lbl:'Bovenarm',val:parts.arm,unit:'cm'},
+      {lbl:'Dij',val:parts.dij,unit:'cm'},
+    ].filter(i=>i.val&&i.val!=='null'&&i.val!=='');
+    if(items.length){
+      // Taille-heup ratio
+      const thr=latest.waist_cm&&parts.heupen?Math.round((latest.waist_cm/parseFloat(parts.heupen))*100)/100:null;
+      let html=items.map(i=>`<div class="lrow"><div class="ldate" style="width:80px">${i.lbl}</div><div class="lval">${i.val} ${i.unit}</div></div>`).join('');
+      if(thr) html+=`<div class="lrow"><div class="ldate" style="width:80px">T/H ratio</div><div class="lval" style="color:${thr<0.9?'var(--grn)':'var(--red)'}">${thr}</div><div class="lnote">${thr<0.9?'Goed':'Let op'}</div></div>`;
+      document.getElementById('bc-metingen').innerHTML=html;
+      document.getElementById('bc-meting-date').textContent=latest.date;
+    }
+  }
+  // Geschiedenis
+  let hist='';
+  bc.slice(0,8).forEach(r=>{
+    hist+=`<div class="lrow">
+      <div class="ldate">${r.date}</div>
+      <div class="lval">${r.weight||'—'} kg</div>
+      <div class="lnote">${r.fat_pct||'—'}% · ${r.muscle_mass||'—'} kg${r.edema?' · '+r.edema[0].toUpperCase():''}</div>
+    </div>`;
+  });
+  document.getElementById('bc-history').innerHTML=hist||'<p style="color:var(--g400);font-size:13px">Nog geen metingen</p>';
+  // Update stats too
+  refreshStats();
+}
+
+async function askCoachBC(){
+  const bc=await sbGet('body_comp','&order=date.desc&limit=3');
+  const wd=await sbGet('weight_log','&order=date.desc&limit=5');
+  if(!bc.length){toast('Geen meetdata beschikbaar');return;}
+  const latest=bc[0];
+  let msg=`Analyseer mijn lichaamssamenstelling:
+`;
+  msg+=`Gewicht: ${latest.weight||'?'} kg | Vet%: ${latest.fat_pct||'?'}% | Spiermassa: ${latest.muscle_mass||'?'} kg
+`;
+  msg+=`BMR: ${latest.bmr||'?'} kcal | Visceraal vet: ${latest.visceral_fat||'?'} | Datum: ${latest.date}
+`;
+  if(latest.edema) msg+=`Oedeem: ${latest.edema} (Tanita minder betrouwbaar)
+`;
+  if(bc.length>1){
+    const prev=bc[1];
+    msg+=`
+Vorige meting (${prev.date}): ${prev.weight||'?'} kg | Vet%: ${prev.fat_pct||'?'}% | Spier: ${prev.muscle_mass||'?'} kg
+`;
+  }
+  if(wd.length>1){
+    const wDiff=Math.round((wd[0].weight-wd[wd.length-1].weight)*10)/10;
+    msg+=`
+Gewichtstrend (${wd.length} metingen): ${wDiff>0?'+':''}${wDiff} kg`;
+  }
+  go('s-coach');
+  sendMsg(msg);
+}
 
 // ══════════════════════════════════════
 // BOOT

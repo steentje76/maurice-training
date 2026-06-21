@@ -238,6 +238,16 @@ canvas{width:100%;height:100%}
 .bc-lbl{font-size:10px;font-weight:600;color:var(--g4);margin-top:3px;text-transform:uppercase}
 
 /* TOAST */
+.vid-wrap{position:relative;width:100%;padding-top:56.25%;border-radius:10px;overflow:hidden;margin:8px 14px 4px;background:#000;cursor:pointer;width:calc(100% - 28px)}
+.vid-wrap img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
+.vid-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:48px;height:48px;background:rgba(61,214,214,0.95);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--dark)}
+.vid-label{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.8));padding:18px 10px 8px;font-size:11px;color:#fff;font-weight:700;letter-spacing:.3px}
+.vid-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
+.muscle-pills{display:flex;flex-wrap:wrap;gap:5px;padding:6px 14px 10px}
+.muscle-pill{padding:3px 9px;border-radius:12px;font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
+.muscle-pill.primary{background:rgba(61,214,214,.15);color:#007777;border:1px solid rgba(61,214,214,.4)}
+.muscle-pill.secondary{background:var(--g1);color:var(--g4);border:1px solid var(--g2)}
+
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--dark);color:#fff;padding:10px 18px;border-radius:24px;font-size:13px;font-weight:600;opacity:0;transition:all .25s;z-index:200;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
@@ -428,7 +438,7 @@ canvas{width:100%;height:100%}
 
 <!-- ═══ ADMIN ═══ -->
 <div class="scr" id="s-admin">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.6.1</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.6.2</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
   <div class="scroll" style="padding-top:8px">
     <div class="card"><div class="card-body" style="padding-top:8px">
       <div class="adm-row"><div><div class="adm-lbl">API Sleutel</div><div class="adm-sub" id="api-st">Niet ingesteld</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-apikey')">Wijzig</button></div></div>
@@ -587,7 +597,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v2.6.1';
+const APP_VER = 'v2.6.2';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -597,21 +607,21 @@ const PEAK = {backsquat:140,bench:105,frontsquat:110,shoulderpress:75,hexabar:30
 
 const TRAIN_CFG = {
   A:[
-    {id:'roeien',naam:'Roeien (warmup)',type:'rowing',sets:1,reps:'1000m',tip:'PR: 3:37.5 / 272W (31 mei 2026). Rustig opbouwen — warmup, niet maximaal.'},
-    {id:'backsquat',naam:'Backsquat',type:'strength',sets:4,reps:'3-5',rpe:'8',wu:3,tip:'Heupen recht naar beneden. Borstkast omhoog.'},
-    {id:'shoulderpress',naam:'Shoulder Press',type:'strength',sets:4,reps:'3-5',rpe:'8',wu:2,tip:'VOOR bench uitvoeren. Kern gespannen.'},
-    {id:'bench',naam:'Benchpress',type:'strength',sets:4,reps:'4-6',rpe:'8',wu:2,tip:'Let op linker triceps — stop bij spanning op 80 kg.'},
-    {id:'frontsquat',naam:'Frontsquat',type:'strength',sets:4,reps:'3',rpe:'8',wu:2,tip:'Ellebogen hoog. PR: 92.5 kg (7 jun 2026).'},
-    {id:'farmercarry',naam:'Farmer Carry',type:'carry',sets:3,reps:'40m',tip:'Schouders omlaag en achteruit.'},
+    {id:'roeien',naam:'Roeien (warmup)',type:'rowing',sets:1,reps:'1000m',tip:'PR: 3:37.5 / 272W (31 mei 2026). Rustig opbouwen — warmup, niet maximaal.',yt:'nolphB7VZJU',muscles:{p:['Rug','Benen','Core'],s:['Schouders','Armen']}},
+    {id:'backsquat',naam:'Backsquat',type:'strength',sets:4,reps:'3-5',rpe:'8',wu:3,tip:'Heupen recht naar beneden. Borstkast omhoog.',yt:'bEv6CCg2BC8',muscles:{p:['Quadriceps','Billen'],s:['Hamstrings','Core','Rug']}},
+    {id:'shoulderpress',naam:'Shoulder Press',type:'strength',sets:4,reps:'3-5',rpe:'8',wu:2,tip:'VOOR bench uitvoeren. Kern gespannen.',yt:'2yjwXTZbDtQ',muscles:{p:['Schouders'],s:['Triceps','Core']}},
+    {id:'bench',naam:'Benchpress',type:'strength',sets:4,reps:'4-6',rpe:'8',wu:2,tip:'Let op linker triceps — stop bij spanning op 80 kg.',yt:'vcBig73ojpE',muscles:{p:['Borst'],s:['Triceps','Schouders']}},
+    {id:'frontsquat',naam:'Frontsquat',type:'strength',sets:4,reps:'3',rpe:'8',wu:2,tip:'Ellebogen hoog. PR: 92.5 kg (7 jun 2026).',yt:'m4ytaCJZplE',muscles:{p:['Quadriceps','Core'],s:['Billen','Rug']}},
+    {id:'farmercarry',naam:'Farmer Carry',type:'carry',sets:3,reps:'40m',tip:'Schouders omlaag en achteruit.',yt:'rt0rmH6WJSY',muscles:{p:['Grip','Core','Traps'],s:['Schouders','Benen']}},
   ],
   B:[
-    {id:'roeien',naam:'Roeien (warmup)',type:'rowing',sets:1,reps:'1000m',tip:'PR: 3:37.5 / 272W (31 mei 2026). Rustig opbouwen.'},
-    {id:'hexabar',naam:'Hexabar Deadlift',type:'strength',sets:4,reps:'1-3',rpe:'8-9',wu:3,tip:'FRIS na roeien. PR: 240×3 (apr 2026). Nooit dag na zware A.'},
-    {id:'bentoverrow',naam:'Bent Over Row',type:'strength',sets:4,reps:'6',rpe:'7-8',wu:2,tip:'Romp ~45°. Trek naar navel.'},
-    {id:'cablerow',naam:'Cable Row',type:'strength',sets:4,reps:'6-8',rpe:'7-8',wu:1,tip:'Rug recht. Geen momentum. Werkgewicht: 90 kg.'},
-    {id:'hpc',naam:'Hang Power Clean',type:'strength',sets:5,reps:'1-2',rpe:'8',wu:2,tip:'Singles/doubles. Techniek breekt bij triples.'},
-    {id:'hps',naam:'Hang Power Snatch',type:'strength',sets:4,reps:'1-2',rpe:'7-8',wu:2,tip:'Schouder mobiliteit = limiting factor.'},
-    {id:'rdl',naam:'RDL',type:'strength',sets:3,reps:'6-8',rpe:'7',wu:1,tip:'Lichte kniebuiging. Heupen achteruit.'},
+    {id:'roeien',naam:'Roeien (warmup)',type:'rowing',sets:1,reps:'1000m',tip:'PR: 3:37.5 / 272W (31 mei 2026). Rustig opbouwen.',yt:'nolphB7VZJU',muscles:{p:['Rug','Benen','Core'],s:['Schouders','Armen']}},
+    {id:'hexabar',naam:'Hexabar Deadlift',type:'strength',sets:4,reps:'1-3',rpe:'8-9',wu:3,tip:'FRIS na roeien. PR: 240×3 (apr 2026). Nooit dag na zware A.',yt:'1ZXobu7JvvE',muscles:{p:['Rug','Billen','Hamstrings'],s:['Quadriceps','Core','Traps']}},
+    {id:'bentoverrow',naam:'Bent Over Row',type:'strength',sets:4,reps:'6',rpe:'7-8',wu:2,tip:'Romp ~45°. Trek naar navel.',yt:'kBWAon7ItDw',muscles:{p:['Rug','Biceps'],s:['Core','Achterste schouder']}},
+    {id:'cablerow',naam:'Cable Row',type:'strength',sets:4,reps:'6-8',rpe:'7-8',wu:1,tip:'Rug recht. Geen momentum. Werkgewicht: 90 kg.',yt:'xQNrFHEMhI4',muscles:{p:['Rug','Biceps'],s:['Core','Achterste schouder']}},
+    {id:'hpc',naam:'Hang Power Clean',type:'strength',sets:5,reps:'1-2',rpe:'8',wu:2,tip:'Singles/doubles. Techniek breekt bij triples.',yt:'0aP3tgKZcHQ',muscles:{p:['Rug','Benen','Schouders'],s:['Core','Armen','Billen']}},
+    {id:'hps',naam:'Hang Power Snatch',type:'strength',sets:4,reps:'1-2',rpe:'7-8',wu:2,tip:'Schouder mobiliteit = limiting factor.',yt:'8AyTzORaBM8',muscles:{p:['Rug','Benen','Schouders'],s:['Core','Armen','Billen']}},
+    {id:'rdl',naam:'RDL',type:'strength',sets:3,reps:'6-8',rpe:'7',wu:1,tip:'Lichte kniebuiging. Heupen achteruit.',yt:'hCDzSR6Vawk',muscles:{p:['Hamstrings','Billen'],s:['Rug','Core']}},
   ]
 };
 
@@ -782,6 +792,7 @@ async function renderTrainScreen(t){
       ${prevStr?`<div class="ex-prev"><strong>${prevStr}</strong></div>`:''}
       <div class="ex-body" id="body-${ex.id}">
         ${ex.tip?`<div style="background:#fffbea;border-left:3px solid var(--y);padding:8px 12px;font-size:12px;color:#666;margin:8px 14px;border-radius:0 8px 8px 0">💡 ${ex.tip}</div>`:''}
+        ${buildVideoMuscle(ex)}
         ${bodyHTML}
         <div class="add-row" onclick="addWorkSet('${ex.id}','${ex.type||'strength'}')">
           <span class="add-row-icon">+</span>
@@ -812,6 +823,20 @@ async function renderTrainScreen(t){
     <div style="height:16px"></div>`;
   container.appendChild(addDiv);
   updateProgress(t);
+}
+
+function buildVideoMuscle(ex){
+  let h='';
+  if(ex.yt){
+    h+=`<div class="vid-wrap" onclick="loadVid(this,'${ex.yt}')"><img src="https://img.youtube.com/vi/${ex.yt}/mqdefault.jpg" alt="${ex.naam}" onerror="this.parentElement.style.display='none'"><div class="vid-play">▶</div><div class="vid-label">▶ ${ex.naam} — techniek video</div></div>`;
+  }
+  if(ex.muscles){
+    h+='<div class="muscle-pills">';
+    (ex.muscles.p||[]).forEach(m=>h+=`<span class="muscle-pill primary">${m}</span>`);
+    (ex.muscles.s||[]).forEach(m=>h+=`<span class="muscle-pill secondary">${m}</span>`);
+    h+='</div>';
+  }
+  return h;
 }
 
 function buildStrengthBody(exId,wuCount,workCount){
@@ -1388,6 +1413,13 @@ function removeMsg(id){const e=document.getElementById(id);if(e)e.remove();}
 function renderChatHist(){const w=document.getElementById('chat-wrap');w.innerHTML='';mc=0;chatHist.forEach(m=>addMsg(m.role==='user'?'user':'coach',m.content));}
 function ckd(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
 function ar(el){el.style.height='';el.style.height=Math.min(el.scrollHeight,100)+'px';}
+
+// ══════════════════════════════════════════════════════════
+// VIDEO
+// ══════════════════════════════════════════════════════════
+function loadVid(el,id){
+  el.innerHTML=`<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0" allow="autoplay;encrypted-media" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;border-radius:10px"></iframe>`;
+}
 
 // ══════════════════════════════════════════════════════════
 // CHART

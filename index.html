@@ -457,7 +457,7 @@ canvas{width:100%;height:100%}
 
 <!-- ═══ ADMIN ═══ -->
 <div class="scr" id="s-admin">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.6.6</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.6.7</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
   <div class="scroll" style="padding-top:8px">
     <div class="card"><div class="card-body" style="padding-top:8px">
       <div class="adm-row"><div><div class="adm-lbl">API Sleutel</div><div class="adm-sub" id="api-st">Niet ingesteld</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-apikey')">Wijzig</button></div></div>
@@ -465,8 +465,7 @@ canvas{width:100%;height:100%}
       <div class="adm-row"><div><div class="adm-lbl">Import logboek</div><div class="adm-sub" id="import-status">Selecteer een JSON importbestand</div></div><div style="margin-left:auto"><label class="btn btn-o btn-sm" style="cursor:pointer">Kies bestand<input type="file" accept=".json" style="display:none" onchange="importFromFile(this)"></label></div></div>
       <div class="adm-row"><div><div class="adm-lbl">Roeiers (PM5)</div><div class="adm-sub">Concept 2 machines</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-rowers')">Beheer</button></div></div>
     </div></div>
-    <div class="sec-hd">Stats & Progressie</div>
-    <div class="card"><div class="card-body" style="padding-top:10px" id="stat-1rm"></div></div>
+
     <div class="sec-hd">Oefeningen</div>
     <div class="card">
       <div class="card-hd"><span class="card-title">Alle oefeningen</span><button class="btn btn-o btn-sm" onclick="openModal('m-newex')">+ Nieuw</button></div>
@@ -633,7 +632,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v2.6.6';
+const APP_VER = 'v2.6.7';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -1227,23 +1226,37 @@ async function loadHistory(append=false){
   let html='';
   Object.entries(byDate).sort((a,b)=>b[0].localeCompare(a[0])).forEach(([date,sess])=>{
     const tt=sess[0]?.training_type||'?';
+    const ttColor=tt==='A'?'var(--dark)':tt==='B'?'var(--red)':'var(--g4)';
+    const totalVol=sess.reduce((s,x)=>{if(x.weight&&x.reps&&x.sets)s+=x.weight*x.reps*x.sets;return s;},0);
     html+=`<div class="hist-day">
-      <div class="hist-day-hd" onclick="this.nextElementSibling.classList.toggle('open')">
-        <div>
-          <div class="hist-day-date">${date}</div>
-          <div style="font-size:12px;color:var(--g4);margin-top:2px">${sess.length} oefeningen</div>
+      <div class="hist-day-hd" onclick="toggleHistDay(this)">
+        <div style="flex:1">
+          <div class="hist-day-date">${fmtDate(date)}</div>
+          <div style="font-size:11px;color:var(--g4);margin-top:2px">${sess.length} oefeningen${totalVol>0?' · '+Math.round(totalVol)+' kg volume':''}</div>
         </div>
-        <span style="background:${tt==='A'?'var(--dark)':'var(--red)'};color:#fff;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">Training ${tt}</span>
+        <span style="background:${ttColor};color:#fff;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;margin-right:8px">Training ${tt}</span>
+        <span style="color:var(--g3);font-size:16px" class="hist-arr">›</span>
       </div>
       <div class="hist-day-body">
         ${sess.map(s=>{
           const n=exercises.find(e=>e.id===s.exercise_id)?.name||s.exercise_id;
-          let v='';if(s.weight&&s.reps)v=`<strong>${s.sets||'?'}×${s.reps}</strong> @ <strong style="color:var(--red)">${s.weight} kg</strong>${s.rpe?' · RPE '+s.rpe:''}`;else if(s.time_str)v=`<strong>${s.time_str}</strong>${s.watt?' · '+s.watt+'W':''}`;else if(s.distance)v=`<strong>${s.distance}m</strong>`;
-          return `<div class="hist-ex-item" onclick="openEditSess('${s.id}','${n}',${JSON.stringify(s).replace(/'/g,"'")})">
-            <div class="hist-ex-name">${n}</div>
-            <div class="hist-ex-sets">${v}${s.note&&s.note.includes('Opwarm')?` <span style="color:#3b82f6">${s.note}</span>`:''} <span style="float:right;color:var(--red)">✏️</span></div>
+          let v='',sub='';
+          if(s.weight&&s.reps) v=`${s.sets||'?'}×${s.reps} @ <strong>${s.weight} kg</strong>${s.rpe?' · RPE '+s.rpe:''}`;
+          else if(s.note&&s.note.includes('tijd:')) v=s.note.split('|')[0].replace('tijd:','');
+          else if(s.note) v=s.note.split('|')[0];
+          if(s.note&&s.note.includes('Opwarm:')) sub=`<div style="font-size:11px;color:#3b82f6;margin-top:2px">${s.note}</div>`;
+          const sJson=JSON.stringify(s).replace(/`/g,'\`').replace(/\\${/g,'\${');
+          return `<div class="hist-ex-item" onclick='openEditSess(${JSON.stringify(s.id)},${JSON.stringify(n)},${JSON.stringify(s)})'>
+            <div style="flex:1">
+              <div class="hist-ex-name">${n}</div>
+              <div class="hist-ex-sets">${v}</div>
+              ${sub}
+            </div>
+            <button onclick="event.stopPropagation();deleteSessionDirect(${JSON.stringify(s.id)})" style="background:none;border:none;color:var(--g3);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0">🗑</button>
+            <span style="color:var(--g3);font-size:16px;flex-shrink:0">✏️</span>
           </div>`;
         }).join('')}
+        <button onclick="addSetToDate('${date}','${tt}')" style="display:flex;align-items:center;gap:6px;width:100%;padding:10px 0;background:none;border:none;border-top:1px dashed var(--g2);color:var(--red);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f);margin-top:4px">+ Oefening toevoegen aan deze dag</button>
       </div>
     </div>`;
   });
@@ -1254,6 +1267,66 @@ async function loadHistory(append=false){
   histOff+=20;
 }
 function loadMoreHistory(){loadHistory(true);}
+
+function toggleHistDay(hd){
+  const body=hd.nextElementSibling;
+  const arr=hd.querySelector('.hist-arr');
+  const open=body.classList.contains('open');
+  body.classList.toggle('open',!open);
+  if(arr) arr.textContent=open?'›':'▼';
+}
+
+function fmtDate(d){
+  if(!d) return d;
+  const months=['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+  const parts=d.split('-');
+  if(parts.length!==3) return d;
+  return parseInt(parts[2])+' '+months[parseInt(parts[1])-1]+' '+parts[0];
+}
+
+async function deleteSessionDirect(id){
+  if(!confirm('Sessie verwijderen?')) return;
+  const ok=await sbDel('sessions','id=eq.'+id);
+  if(ok){toast('Verwijderd');loadHistory();}
+  else toast('Fout bij verwijderen');
+}
+
+function addSetToDate(date, tt){
+  // Open add exercise modal with date preset
+  curAddDate=date; curAddTT=tt;
+  const cur=[];
+  const avail=exercises.filter(e=>e.active!==false);
+  const cats=['A','B','CrossFit','Overig'];
+  const catL={A:'Training A',B:'Training B',CrossFit:'CrossFit',Overig:'Overig'};
+  let html='';
+  cats.forEach(cat=>{
+    const exs=avail.filter(e=>e.category===cat);
+    if(!exs.length) return;
+    html+=`<div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">${catL[cat]}</div>`;
+    exs.forEach(e=>{
+      html+=`<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--g2);cursor:pointer" onclick="openAddSetModal('${e.id}','${e.name}','${date}','${tt}');closeModal('m-add-ex')"><div style="flex:1;font-size:14px;font-weight:600;color:var(--dark)">${e.name}</div><span style="color:var(--red);font-size:20px;font-weight:700">+</span></div>`;
+    });
+  });
+  document.getElementById('add-ex-list').innerHTML=html;
+  openModal('m-add-ex');
+}
+
+let curAddDate=null, curAddTT=null, curAddExId=null, curAddExName=null;
+
+function openAddSetModal(exId, exName, date, tt){
+  curAddExId=exId; curAddExName=exName; curAddDate=date; curAddTT=tt;
+  document.getElementById('edit-sess-title').textContent=exName+' toevoegen ('+fmtDate(date)+')';
+  document.getElementById('edit-sess-fields').innerHTML=`
+    <div class="irow"><label class="ilbl">Gewicht</label><input class="inp" type="number" id="es-kg" placeholder="kg" step="0.5"></div>
+    <div class="irow"><label class="ilbl">Sets</label><input class="inp" type="number" id="es-sets" placeholder="sets"></div>
+    <div class="irow"><label class="ilbl">Reps</label><input class="inp" type="number" id="es-reps" placeholder="reps"></div>
+    <div class="irow"><label class="ilbl">RPE</label><input class="inp" type="number" id="es-rpe" placeholder="RPE" step="0.5"></div>
+    <div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="es-note" placeholder="optioneel"></div>`;
+  // Hide delete button for new entries
+  document.querySelector('#m-edit-session .btn-o[onclick="deleteSessionEntry()"]').style.display='none';
+  curEditSess=null; // signal: this is a new entry
+  openModal('m-edit-session');
+}
 
 function openEditSess(id,name,session){
   curEditSess={id,...session};
@@ -1275,6 +1348,28 @@ function openEditSess(id,name,session){
   openModal('m-edit-session');
 }
 async function saveEditSession(){
+  // New entry (from addSetToDate)
+  if(!curEditSess){
+    const row={
+      date:curAddDate,
+      exercise_id:curAddExId,
+      training_type:curAddTT,
+      sets:parseInt(document.getElementById('es-sets')?.value)||null,
+      reps:parseInt(document.getElementById('es-reps')?.value)||null,
+      weight:parseFloat(document.getElementById('es-kg')?.value)||null,
+      rpe:parseFloat(document.getElementById('es-rpe')?.value)||null,
+      note:document.getElementById('es-note')?.value||null,
+    };
+    const clean={};Object.entries(row).forEach(([k,v])=>{if(v!==null&&v!==undefined)clean[k]=v;});
+    const ok=await sbPost('sessions',clean);
+    if(ok){
+      // Restore delete button
+      const delBtn=document.querySelector('#m-edit-session .btn-o[onclick="deleteSessionEntry()"]');
+      if(delBtn) delBtn.style.display='';
+      closeModal('m-edit-session');toast('Toegevoegd');loadHistory();
+    } else toast('Fout bij opslaan');
+    return;
+  }
   if(!curEditSess)return;
   const u={date:document.getElementById('es-date')?.value||curEditSess.date,note:document.getElementById('es-note')?.value||''};
   if(document.getElementById('es-kg'))u.weight=parseFloat(document.getElementById('es-kg').value)||null;
@@ -1288,6 +1383,9 @@ async function saveEditSession(){
   if(ok){closeModal('m-edit-session');toast('Opgeslagen');loadHistory();}else toast('Fout bij opslaan');
 }
 async function deleteSessionEntry(){
+  // Restore delete button visibility
+  const delBtn=document.querySelector('#m-edit-session .btn-o[onclick="deleteSessionEntry()"]');
+  if(delBtn) delBtn.style.display='';
   if(!curEditSess||!confirm('Verwijderen?'))return;
   const ok=await sbDel('sessions','id=eq.'+curEditSess.id);
   if(ok){closeModal('m-edit-session');toast('Verwijderd');loadHistory();}

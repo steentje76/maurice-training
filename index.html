@@ -322,7 +322,7 @@ canvas{width:100%;height:100%}
     <button class="ni active" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="go('s-train-a')" id="nav-train"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-hist')"><span class="ni-icon">📋</span><span class="ni-label">Logboek</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
     <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
   </nav>
 </div>
@@ -350,7 +350,7 @@ canvas{width:100%;height:100%}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni active"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-hist')"><span class="ni-icon">📋</span><span class="ni-label">Logboek</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
     <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
   </nav>
 </div>
@@ -378,7 +378,7 @@ canvas{width:100%;height:100%}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni active"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-hist')"><span class="ni-icon">📋</span><span class="ni-label">Logboek</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
     <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
   </nav>
 </div>
@@ -395,7 +395,7 @@ canvas{width:100%;height:100%}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="go('s-train-a')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot2"></div></button>
     <button class="ni active"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-hist')"><span class="ni-icon">📋</span><span class="ni-label">Logboek</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
     <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
   </nav>
 </div>
@@ -416,7 +416,26 @@ canvas{width:100%;height:100%}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="go('s-train-a')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni active"><span class="ni-icon">📋</span><span class="ni-label">Logboek</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+    <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
+  </nav>
+</div>
+
+<!-- ═══ STATS ═══ -->
+<div class="scr" id="s-stats">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Progressie</div><div class="hdr-sub">1RM & Peakdoel 15 aug 2026</div></div><button class="ibtn" onclick="refreshStats()">↻</button></div></div>
+  <div class="scroll" style="padding-top:8px">
+    <div class="card"><div class="card-hd"><div class="card-title">Geschatte 1RM</div><div class="card-sub">Epley formule · live</div></div><div class="card-body" id="stats-1rm-list"></div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">HRV trend</div></div><div class="card-body"><div class="chart-wrap"><canvas id="stats-hrv-chart"></canvas></div></div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">Roei progressie</div></div><div class="card-body" id="stats-row-list"></div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">Lichaamscompositie</div></div><div class="card-body" id="stats-bc-list"></div></div>
+    <button class="btn btn-o" onclick="go('s-hist')" style="margin-bottom:10px">📋 Trainingslogboek bekijken</button>
+  </div>
+  <nav class="bnav">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="go('s-train-a')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni active"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
     <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
   </nav>
 </div>
@@ -438,11 +457,12 @@ canvas{width:100%;height:100%}
 
 <!-- ═══ ADMIN ═══ -->
 <div class="scr" id="s-admin">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.6.2</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.6.3</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
   <div class="scroll" style="padding-top:8px">
     <div class="card"><div class="card-body" style="padding-top:8px">
       <div class="adm-row"><div><div class="adm-lbl">API Sleutel</div><div class="adm-sub" id="api-st">Niet ingesteld</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-apikey')">Wijzig</button></div></div>
       <div class="adm-row"><div><div class="adm-lbl">Lichaamscompositie</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-bc')">Invoer</button></div></div>
+      <div class="adm-row"><div><div class="adm-lbl">Import logboek</div><div class="adm-sub">Trainingen t/m april 2026</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="importLogboek()" id="import-btn">Importeer</button></div></div>
       <div class="adm-row"><div><div class="adm-lbl">Roeiers (PM5)</div><div class="adm-sub">Concept 2 machines</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-rowers')">Beheer</button></div></div>
     </div></div>
     <div class="sec-hd">Stats & Progressie</div>
@@ -597,7 +617,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v2.6.2';
+const APP_VER = 'v2.6.3';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -670,6 +690,7 @@ function go(id){
   stopTrainTimer();
   if(id==='s-home')refreshHome();
   if(id==='s-hist'){histOff=0;loadHistory();}
+  if(id==='s-stats')refreshStatsScreen();
   if(id==='s-admin')refreshAdmin();
   if(id==='s-coach')focusCoach();
 }
@@ -1251,6 +1272,60 @@ async function deleteSessionEntry(){
 }
 
 // ══════════════════════════════════════════════════════════
+// STATS SCREEN
+// ══════════════════════════════════════════════════════════
+async function refreshStatsScreen(){
+  // 1RM
+  const strExs=exercises.filter(e=>e.type==='strength'||!e.type);
+  let h='';
+  for(const ex of strExs){
+    const ss=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=created_at.desc&limit=30');
+    let best=null;
+    ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=s.reps===1?s.weight:s.weight*(1+s.reps/30);if(!best||est>best)best=est;});
+    const disp=best?Math.round(best):ex.pr;if(!disp)continue;
+    const tgt=PEAK[ex.id];const pct=tgt?Math.round(disp/tgt*100):null;
+    const fc=pct?(pct>=100?'var(--green)':pct>=85?'var(--y)':'var(--accent)'):'var(--accent)';
+    h+=`<div class="stat-1rm-item">
+      <div class="stat-1rm-row"><span class="stat-1rm-name">${ex.name}</span><span class="stat-1rm-val">${disp} kg</span>${tgt?`<span class="stat-1rm-target">/ ${tgt} kg</span>`:''}</div>
+      <div class="prog-wrap"><div class="prog-fill" style="width:${Math.min(100,pct||Math.round(disp/3))}%;background:${fc}"></div></div>
+      ${pct?`<div class="stat-1rm-pct">${pct}% van peakdoel${pct>=100?' ✓':' · '+(100-pct)+'% te gaan'}</div>`:''}
+    </div>`;
+  }
+  const el1=document.getElementById('stats-1rm-list');
+  if(el1) el1.innerHTML=h||'<p style="color:var(--g4);font-size:13px;padding:4px 0">Log sets om schattingen te berekenen</p>';
+
+  // HRV chart
+  const hd=await sbGet('hrv_log','&order=date.desc&limit=14');
+  if(hd.length>1){const rev=hd.slice().reverse();drawChart('stats-hrv-chart',rev.map(r=>r.hrv||0),rev.map(r=>r.date));}
+
+  // Roeien
+  const rd=await sbGet('sessions','&exercise_id=eq.roeien&order=date.desc&limit=8');
+  let rh=rd.length?'':'<p style="color:var(--g4);font-size:13px">Nog geen roeisessies</p>';
+  rd.forEach(s=>{
+    let split='';
+    if(s.distance&&s.time_str&&s.time_str!=='—'){
+      const p=s.time_str.split(':');let sec=0;
+      if(p.length===2)sec=parseFloat(p[0])*60+parseFloat(p[1]);
+      if(sec&&s.distance){const ss2=(sec/s.distance)*500;const sm=Math.floor(ss2/60),sr=Math.round(ss2%60);split=' · '+sm+':'+(sr<10?'0':'')+sr+'/500m';}
+    }
+    rh+=`<div class="lrow"><div class="ldate">${s.date}</div><div class="lval">${s.distance||'?'}m</div><div class="lnote">${s.time_str||''}${s.watt?' · '+s.watt+'W':''}${split}</div></div>`;
+  });
+  const elr=document.getElementById('stats-row-list');if(elr)elr.innerHTML=rh;
+
+  // Body comp
+  const bc=await sbGet('body_comp','&order=date.desc&limit=4');
+  let bh='';
+  if(!bc.length)bh='<p style="color:var(--g4);font-size:13px">Nog geen metingen — invoer via Beheer</p>';
+  else{
+    const l=bc[0];
+    bh=`<div class="bc-grid"><div class="bc-box"><div class="bc-val">${l.fat_pct||'—'}${l.fat_pct?'%':''}</div><div class="bc-lbl">Vet%</div></div><div class="bc-box"><div class="bc-val">${l.muscle_mass||'—'}${l.muscle_mass?' kg':''}</div><div class="bc-lbl">Spiermassa</div></div><div class="bc-box"><div class="bc-val">${l.bmr||'—'}</div><div class="bc-lbl">BMR kcal</div></div><div class="bc-box"><div class="bc-val">${l.visceral_fat||'—'}</div><div class="bc-lbl">Visceraal</div></div></div>`;
+    bh+=`<div style="font-size:12px;color:var(--g4);margin:4px 0 8px">${l.date}${l.edema?' · oedeem: '+l.edema:''}</div>`;
+    bc.forEach(r=>{bh+=`<div class="lrow"><div class="ldate">${r.date}</div><div class="lval">${r.weight||'—'} kg</div><div class="lnote">${r.fat_pct||'—'}% · ${r.muscle_mass||'—'} kg</div></div>`;});
+  }
+  const elb=document.getElementById('stats-bc-list');if(elb)elb.innerHTML=bh;
+}
+
+// ══════════════════════════════════════════════════════════
 // STATS (in admin)
 // ══════════════════════════════════════════════════════════
 async function refreshStats(){
@@ -1310,7 +1385,30 @@ function addRowerInput(){rowers.push('');renderRowerAdmin();}
 function saveRowers(){const ins=document.querySelectorAll('[id^="rwr-"]');rowers=Array.from(ins).map(i=>i.value.trim()).filter(v=>v);localStorage.setItem('maurice_rowers',JSON.stringify(rowers));closeModal('m-rowers');toast('Roeiers opgeslagen');}
 async function delEx(id){if(!confirm('Verwijderen?'))return;await sbPatch('exercises','id=eq.'+id,{active:false});exercises=exercises.filter(e=>e.id!==id);refreshAdmin();toast('Verwijderd');}
 function saveApiKey(){const k=document.getElementById('i-apikey').value.trim();if(!k.startsWith('sk-')){alert('Ongeldige sleutel');return;}apiKey=k;localStorage.setItem('maurice_apikey',k);closeModal('m-apikey');refreshAdmin();toast('Opgeslagen');}
-async function saveNewEx(){const n=document.getElementById('nx-name').value.trim(),c=document.getElementById('nx-cat').value,t=document.getElementById('nx-type').value;if(!n){alert('Vul naam in');return;}const id=n.toLowerCase().replace(/[^a-z0-9]/g,'');if(exercises.find(e=>e.id===id)){alert('Naam al in gebruik');return;}const ok=await sbPost('exercises',{id,name:n,category:c,type:t,sort_order:99,active:true});if(ok){exercises.push({id,name:n,category:c,type:t,sort_order:99,active:true});closeModal('m-newex');toast(n+' toegevoegd');refreshAdmin();}}
+async function saveNewEx(){
+  const n=document.getElementById('nx-name').value.trim();
+  const c=document.getElementById('nx-cat').value;
+  const t=document.getElementById('nx-type').value;
+  if(!n){toast('Vul een naam in');return;}
+  const id=n.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+  if(exercises.find(e=>e.id===id)){toast('Naam al in gebruik');return;}
+  const newEx={id,name:n,category:c,type:t,sort_order:99,active:true,pr:null};
+  const ok=await sbPost('exercises',newEx);
+  if(ok){
+    exercises.push(newEx);
+    closeModal('m-newex');
+    document.getElementById('nx-name').value='';
+    toast(n+' toegevoegd ✓');
+    refreshAdmin();
+  } else {
+    // Fallback: add locally even if Supabase fails
+    exercises.push(newEx);
+    closeModal('m-newex');
+    document.getElementById('nx-name').value='';
+    toast(n+' toegevoegd (lokaal)');
+    refreshAdmin();
+  }
+}
 
 // ══════════════════════════════════════════════════════════
 // COACH — full system prompt
@@ -1425,6 +1523,61 @@ function loadVid(el,id){
 // CHART
 // ══════════════════════════════════════════════════════════
 function drawChart(cid,vals,labels){const c=document.getElementById(cid);if(!c||vals.length<2)return;const ctx=c.getContext('2d');const dpr=window.devicePixelRatio||1;const rect=c.parentElement.getBoundingClientRect();c.width=rect.width*dpr;c.height=100*dpr;ctx.scale(dpr,dpr);const W=rect.width,H=100;ctx.clearRect(0,0,W,H);const mn=Math.min(...vals)*.97,mx=Math.max(...vals)*1.03,rng=mx-mn||1;const tx=i=>(i/(vals.length-1))*(W-20)+10;const ty=v=>H-16-((v-mn)/rng)*(H-24);ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--g2')||'#eee';ctx.lineWidth=1;[.25,.5,.75].forEach(f=>{const y=H-16-f*(H-24);ctx.beginPath();ctx.moveTo(10,y);ctx.lineTo(W-10,y);ctx.stroke();});ctx.beginPath();ctx.moveTo(tx(0),H-16);vals.forEach((v,i)=>ctx.lineTo(tx(i),ty(v)));ctx.lineTo(tx(vals.length-1),H-16);ctx.closePath();ctx.fillStyle='rgba(61,214,214,.1)';ctx.fill();ctx.beginPath();ctx.strokeStyle='var(--accent)';ctx.lineWidth=2;vals.forEach((v,i)=>{if(i===0)ctx.moveTo(tx(i),ty(v));else ctx.lineTo(tx(i),ty(v));});ctx.stroke();const li=vals.length-1;ctx.beginPath();ctx.arc(tx(li),ty(vals[li]),4,0,Math.PI*2);ctx.fillStyle='var(--accent)';ctx.fill();ctx.fillStyle='var(--dark)';ctx.font='bold 11px Inter,sans-serif';ctx.textAlign='right';ctx.fillText(vals[li],W-10,ty(vals[li])-6);}
+
+// ══════════════════════════════════════════════════════════
+// IMPORT LOGBOEK
+// ══════════════════════════════════════════════════════════
+async function importLogboek(){
+  const btn=document.getElementById('import-btn');
+  if(btn)btn.textContent='Bezig...';
+  
+  const sessions=[
+    {date:'2026-04-11',exercise_id:'roeien',distance:1500,time_str:'—',watt:220,training_type:'A',note:'1:56.6/500m, laatste 250m 1:50.6 @ 259W'},
+    {date:'2026-04-26',exercise_id:'roeien',distance:1000,time_str:'3:53.1',watt:221,stroke_rate:26,training_type:'B',note:'split 1:56.5/500m, drag 145, splits: 1:59.2/1:59.6/1:56.0/1:51.2'},
+    {date:'2026-04-02',exercise_id:'hexabar',sets:1,reps:3,weight:240,training_type:'B',note:'PR! 240×3. HRV laag, Olympic lifts overgeslagen'},
+    {date:'2026-04-26',exercise_id:'hexabar',sets:5,reps:1,weight:200,training_type:'B',note:'Opbouw 100×4/140×3/170×2/190×1/200×1'},
+    {date:'2026-03-25',exercise_id:'backsquat',sets:1,reps:3,weight:87.5,training_type:'A',note:'6A start week 6'},
+    {date:'2026-04-11',exercise_id:'backsquat',sets:5,reps:3,weight:90,rpe:7.5,training_type:'A',note:'Standaard squat'},
+    {date:'2026-04-23',exercise_id:'backsquat',sets:3,reps:3,weight:95,training_type:'CrossFit',note:'Paused 3s AHAP: 90/92.5/95 kg. WOD 1706'},
+    {date:'2026-04-11',exercise_id:'bench',sets:5,reps:4,weight:80,rpe:8,training_type:'A',note:'5×4 @ 80 kg'},
+    {date:'2026-04-11',exercise_id:'frontsquat',sets:4,reps:3,weight:80,training_type:'A',note:'Fatigue-limited na bench'},
+    {date:'2026-04-18',exercise_id:'frontsquat',sets:4,reps:12,weight:50,training_type:'A',note:'Volume dag 7C'},
+    {date:'2026-04-11',exercise_id:'shoulderpress',sets:1,reps:1,weight:60,rpe:9.5,training_type:'A',note:'All-time PR! Vorige PR: 58 kg'},
+    {date:'2026-04-26',exercise_id:'cablerow',sets:6,reps:6,weight:85,training_type:'B',note:'Opbouw: 8×60/6×70/6×75/6×80/4×85/4×85'},
+    {date:'2026-04-26',exercise_id:'hpc',sets:7,reps:5,weight:80,training_type:'B',note:'Opbouw t/m 80 kg. Catch = limiting factor'},
+    {date:'2026-04-18',exercise_id:'farmercarry',sets:4,weight:55,training_type:'A',note:'218m @ 55 kg hexabar, 4 stops. Record!'},
+    {date:'2026-04-26',exercise_id:'farmercarry',sets:5,weight:32,training_type:'B',note:'400m @ 32 kg KB, 5 stops'},
+  ];
+  const weights=[
+    {date:'2026-03-25',weight:107.0,scale:'Tanita'},
+    {date:'2026-03-30',weight:107.8,scale:'Tanita'},
+    {date:'2026-04-12',weight:108.0,scale:'Tanita'},
+    {date:'2026-04-18',weight:108.4,scale:'Tanita'},
+    {date:'2026-04-26',weight:109.3,scale:'Tanita'},
+  ];
+  const bcs=[
+    {date:'2026-03-25',weight:107.0,fat_pct:15.2,muscle_mass:85.6,source:'Tanita'},
+    {date:'2026-04-26',weight:109.3,fat_pct:14.2,muscle_mass:89.2,bmr:2778,visceral_fat:6,source:'Tanita'},
+  ];
+  const hrvs=[
+    {date:'2026-04-21',hrv:24,note:'Weekstart hoog'},
+    {date:'2026-04-22',hrv:22},
+    {date:'2026-04-23',hrv:20},
+    {date:'2026-04-24',hrv:18,note:'Laagste week'},
+    {date:'2026-04-25',hrv:21,note:'Licht herstel'},
+    {date:'2026-04-26',hrv:18,rhr:59,note:'Weekgemiddelde 19 ms'},
+  ];
+
+  let ok=0,fail=0;
+  for(const s of sessions){const r=await sbPost('sessions',s);r?ok++:fail++;}
+  for(const w of weights){const r=await sbPost('weight_log',w);r?ok++:fail++;}
+  for(const b of bcs){const r=await sbPost('body_comp',b);r?ok++:fail++;}
+  for(const h of hrvs){const r=await sbPost('hrv_log',h);r?ok++:fail++;}
+  
+  if(btn)btn.textContent='Importeer';
+  toast(ok+' records geïmporteerd'+(fail?', '+fail+' mislukt':''));
+  refreshHome();
+}
 
 // ══════════════════════════════════════════════════════════
 // UTILS & BOOT

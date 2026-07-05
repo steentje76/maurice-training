@@ -1,8 +1,8 @@
 // Maurice Training Coach — Service Worker v2.7
 // Play Store ready — offline first
 
-const CACHE_NAME = 'maurice-training-v274';
-const CACHE_STATIC = 'maurice-static-v274';
+const CACHE_NAME = 'maurice-training-v275';
+const CACHE_STATIC = 'maurice-static-v275';
 
 const STATIC_ASSETS = [
   '/',
@@ -58,11 +58,16 @@ self.addEventListener('fetch', e => {
     return; // browser handelt zelf af
   }
 
-  // Navigation requests (pagina laden) — app shell
+  // Navigation requests (pagina laden) — network-first, zodat een nieuwe
+  // deploy meteen zichtbaar is; cache alleen als fallback bij offline
   if (e.request.mode === 'navigate') {
     e.respondWith(
-      caches.match('/index.html')
-        .then(cached => cached || fetch(e.request))
+      fetch(e.request)
+        .then(response => {
+          const clone = response.clone();
+          caches.open(CACHE_STATIC).then(cache => cache.put('/index.html', clone));
+          return response;
+        })
         .catch(() => caches.match('/index.html'))
     );
     return;

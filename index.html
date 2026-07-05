@@ -106,6 +106,27 @@ body{display:flex;justify-content:center}
 .set-field-lbl{font-size:9px;font-weight:600;color:var(--g4);margin-top:3px;text-transform:uppercase}
 .set-sep{font-size:14px;color:var(--g3);padding:0 2px}
 .set-more{background:none;border:none;color:var(--g4);font-size:18px;cursor:pointer;padding:4px;flex-shrink:0}
+.set-rest{background:none;border:none;color:var(--accent);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0}
+.rm-panel{margin:8px 14px 4px;padding:10px 12px;background:var(--g1);border-radius:10px}
+.rm-panel-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.rm-panel-row label{font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.3px}
+.rm-panel-row input{flex:1;padding:6px 10px;font-size:14px}
+.rm-plate-btn{padding:6px 10px;font-size:14px;flex:0}
+.rm-pct-row{display:flex;gap:6px;flex-wrap:wrap}
+.pct-btn{background:#fff;border:1.5px solid var(--g2);color:var(--dark);border-radius:8px;padding:5px 9px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--f)}
+.pct-btn:active{background:var(--accent);border-color:var(--accent)}
+.epley-hint{margin-top:8px;font-size:11px;color:var(--g4);display:flex;align-items:center;gap:8px}
+.epley-hint button{background:var(--dark);color:#fff;border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--f)}
+.eq-panel{margin:8px 14px 4px;background:var(--g1);border-radius:10px;overflow:hidden}
+.eq-panel-hd{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;cursor:pointer;font-size:12px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.3px}
+.eq-panel-body{padding:0 12px 10px}
+.eq-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--g2);font-size:13px}
+.eq-row .eq-label{flex:1;font-weight:600;color:var(--dark)}
+.eq-row .eq-value{color:var(--g4)}
+.eq-row button{background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;padding:2px 4px}
+.eq-add-row{display:flex;gap:6px;margin-top:8px}
+.eq-add-row .inp{flex:1;padding:6px 8px;font-size:12px}
+.eq-add-row button{flex:0 0 auto;padding:6px 12px;font-size:14px;font-weight:800}
 .warmup-lbl{font-size:10px;font-weight:700;color:var(--g3);width:38px;text-align:center;flex-shrink:0}
 
 /* ADD BUTTONS */
@@ -561,7 +582,7 @@ canvas{width:100%;height:100%}
 
 <!-- ═══ ADMIN ═══ -->
 <div class="scr" id="s-admin">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.7.2</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.7.4</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
   <div class="scroll" style="padding-top:8px">
     <div class="card"><div class="card-body" style="padding-top:8px">
       <div class="adm-row"><div><div class="adm-lbl">API Sleutel</div><div class="adm-sub" id="api-st">Niet ingesteld</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-apikey')">Wijzig</button></div></div>
@@ -789,6 +810,47 @@ canvas{width:100%;height:100%}
   </div>
 </div>
 
+<div class="modal-bg" id="m-rest-timer" onclick="bgClose(event,'m-rest-timer')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⏱ Rusttimer</div>
+    <div id="rt-duration-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <button class="btn btn-o" onclick="startRestTimer(30)">30 sec</button>
+      <button class="btn btn-o" onclick="startRestTimer(60)">1 min</button>
+      <button class="btn btn-o" onclick="startRestTimer(90)">1,5 min</button>
+      <button class="btn btn-o" onclick="startRestTimer(120)">2 min</button>
+      <button class="btn btn-o" onclick="startRestTimer(180)">3 min</button>
+      <button class="btn btn-o" onclick="startRestTimer(300)">5 min</button>
+      <button class="btn btn-o" onclick="startRestTimer(600)">10 min</button>
+    </div>
+  </div>
+</div>
+<div id="rest-timer-bar" style="display:none;position:fixed;left:0;right:0;bottom:64px;z-index:200;background:var(--dark);color:#fff;padding:10px 16px;align-items:center;justify-content:space-between;font-family:var(--f)">
+  <span style="font-weight:700;font-size:15px">⏱ Rust: <span id="rt-remaining">00:00</span></span>
+  <button onclick="cancelRestTimer()" style="background:none;border:1px solid #fff;color:#fff;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">Stop</button>
+</div>
+
+<div class="modal-bg" id="m-train-settings" onclick="bgClose(event,'m-train-settings')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⚙️ Training instellingen</div>
+    <div class="irow"><label class="ilbl">Standaard rusttimer</label>
+      <select class="inp" id="ts-rest-default" onchange="localStorage.setItem('maurice_rest_default',this.value)">
+        <option value="0">Uit</option>
+        <option value="30">30 sec</option>
+        <option value="60">1 min</option>
+        <option value="90">1,5 min</option>
+        <option value="120">2 min</option>
+        <option value="180">3 min</option>
+        <option value="300">5 min</option>
+        <option value="600">10 min</option>
+      </select>
+    </div>
+    <button class="btn btn-o" id="ts-plates-link" style="width:100%;margin-top:8px">⚖️ Plate Calculator</button>
+    <button class="btn btn-r" style="width:100%;margin-top:8px" onclick="closeModal('m-train-settings')">Sluiten</button>
+  </div>
+</div>
+
 <div class="modal-bg" id="m-plate-calc" onclick="bgClose(event,'m-plate-calc')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -889,7 +951,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v2.7.2';
+const APP_VER = 'v2.7.4';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -955,6 +1017,9 @@ const TRAIN_CFG = {
     {id:'rdl',naam:'RDL',type:'strength',sets:3,reps:'6-8',rpe:'7',wu:1,tip:'Lichte kniebuiging. Heupen achteruit.',yt:'hCDzSR6Vawk',muscles:{p:['Hamstrings','Billen'],s:['Rug','Core']}},
   ]
 };
+
+// Oefeningen die met een langhalter/barbell worden uitgevoerd — tonen plate calculator + 1RM-paneel
+const BARBELL_EXERCISES = new Set(['backsquat','bench','frontsquat','shoulderpress','hexabar','hpc','hps','bentoverrow','rdl']);
 
 // ══════════════════════════════════════════════════════════
 // STATE
@@ -1072,7 +1137,7 @@ async function startT(t){
     document.getElementById('s-train-'+t.toLowerCase()).classList.add('active');
     startTrainTimer(t);return;
   }
-  curT=t;sessionLog={};sessionExtra=[];
+  curT=t;sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;
   await renderTrainScreen(t);
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('s-train-'+t.toLowerCase()).classList.add('active');
@@ -1080,10 +1145,11 @@ async function startT(t){
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.add('show'));
 }
 
+let trainPaused=false, pausedAt=0, pausedAccumMs=0;
 function startTrainTimer(t){
   stopTrainTimer();
   trainInterval=setInterval(()=>{
-    const elapsed=Math.floor((Date.now()-(trainStart||Date.now()))/1000);
+    const elapsed=Math.floor((Date.now()-(trainStart||Date.now())-pausedAccumMs)/1000);
     const m=Math.floor(elapsed/60),s=elapsed%60;
     const str=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
     const el=document.getElementById('elapsed-'+t.toLowerCase());
@@ -1091,8 +1157,25 @@ function startTrainTimer(t){
   },1000);
 }
 function stopTrainTimer(){if(trainInterval){clearInterval(trainInterval);trainInterval=null;}}
-function pauseTraining(){stopTrainTimer();}
-function showSettings(){toast('Instellingen via Beheer');}
+function pauseTraining(){
+  const btns=document.querySelectorAll('.tact[onclick="pauseTraining()"]');
+  if(!trainPaused){
+    trainPaused=true;pausedAt=Date.now();
+    stopTrainTimer();
+    btns.forEach(b=>b.textContent='▶');
+    toast('Training gepauzeerd');
+  }else{
+    trainPaused=false;pausedAccumMs+=Date.now()-pausedAt;
+    if(curT)startTrainTimer(curT);
+    btns.forEach(b=>b.textContent='⏸');
+    toast('Training hervat');
+  }
+}
+function showSettings(){
+  document.getElementById('ts-plates-link').onclick=()=>{closeModal('m-train-settings');openPlateCalc(0);};
+  document.getElementById('ts-rest-default').value=localStorage.getItem('maurice_rest_default')||'0';
+  openModal('m-train-settings');
+}
 
 function getSessionExs(t){return [...TRAIN_CFG[t],...sessionExtra.filter(e=>e._t===t)];}
 
@@ -1106,6 +1189,7 @@ async function renderTrainScreen(t){
     // Load previous session data
     const prev=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc&limit=1');
     const prevS=prev[0];
+    const eqList=await loadEquipment(ex.id);
     let prevStr='';
     let prefillData=window._prefillMap?.[ex.id]||null;
     if(prevS){
@@ -1144,6 +1228,8 @@ async function renderTrainScreen(t){
       <div class="ex-body" id="body-${ex.id}">
         ${ex.tip?`<div style="background:#fffbea;border-left:3px solid var(--y);padding:8px 12px;font-size:12px;color:#666;margin:8px 14px;border-radius:0 8px 8px 0">💡 ${ex.tip}</div>`:''}
         ${buildVideoMuscle(ex)}
+        ${BARBELL_EXERCISES.has(ex.id)?buildRmPanel(ex):''}
+        ${buildEquipmentPanel(ex.id,eqList)}
         ${bodyHTML}
         <div class="add-row" onclick="addWorkSet('${ex.id}','${ex.type||'strength'}')">
           <span class="add-row-icon">+</span>
@@ -1191,6 +1277,137 @@ function buildVideoMuscle(ex){
   return h;
 }
 
+function getOneRM(exId){
+  const exObj=exercises.find(e=>e.id===exId);
+  if(exObj?.one_rm!=null)return parseFloat(exObj.one_rm);
+  const stored=localStorage.getItem('maurice_1rm_'+exId); // offline-fallback tot sync gelukt is
+  if(stored)return parseFloat(stored);
+  return exObj?.pr||null;
+}
+function epley1RM(kg,reps){
+  if(!kg||!reps||reps<1)return null;
+  if(reps===1)return kg;
+  return Math.round(kg*(1+reps/30)); // zelfde formule/afronding als Stats-scherm (geschatte 1RM)
+}
+function buildRmPanel(ex){
+  const rm=getOneRM(ex.id);
+  const pcts=[50,60,70,80,90,95,100];
+  return `<div class="rm-panel" id="rm-panel-${ex.id}">
+    <div class="rm-panel-row">
+      <label>1RM</label>
+      <input class="inp" type="number" id="rm-${ex.id}" value="${rm||''}" placeholder="kg" min="0" max="500" step="0.5" oninput="saveOneRM('${ex.id}',this.value)">
+      <button class="btn btn-o rm-plate-btn" onclick="openPlateCalcForEx('${ex.id}')">⚖️</button>
+    </div>
+    <div class="rm-pct-row">
+      ${pcts.map(p=>`<button class="pct-btn" onclick="applyPct('${ex.id}',${p})">${p}%</button>`).join('')}
+    </div>
+    <div id="rm-epley-hint-${ex.id}"></div>
+  </div>`;
+}
+async function saveOneRM(exId,val){
+  const exObj=exercises.find(e=>e.id===exId);
+  if(val===''){
+    localStorage.removeItem('maurice_1rm_'+exId);
+    if(exObj)exObj.one_rm=null;
+    await sbPatch('exercises','id=eq.'+exId,{one_rm:null});
+    return;
+  }
+  const v=parseFloat(val);
+  localStorage.setItem('maurice_1rm_'+exId,v); // meteen lokaal, ook als sync faalt
+  if(exObj)exObj.one_rm=v;
+  await sbPatch('exercises','id=eq.'+exId,{one_rm:v}); // faalt stil als kolom nog niet bestaat
+}
+// Toont een Epley-schatting o.b.v. een gelogde set (kg × reps) als suggestie voor het 1RM-veld
+function showEpleyHint(exId,kg,reps){
+  const est=epley1RM(kg,reps);
+  const el=document.getElementById('rm-epley-hint-'+exId);
+  if(!el||!est||reps<2)return;
+  el.innerHTML=`<div class="epley-hint">Epley-schatting: ~${est} kg <button onclick="acceptEpley('${exId}',${est})">gebruiken</button></div>`;
+}
+function acceptEpley(exId,est){
+  const inp=document.getElementById('rm-'+exId);
+  if(inp){inp.value=est;saveOneRM(exId,est);}
+  const el=document.getElementById('rm-epley-hint-'+exId);
+  if(el)el.innerHTML='';
+  toast('1RM bijgewerkt naar '+est+' kg');
+}
+function applyPct(exId,pct){
+  const rm=getOneRM(exId);
+  if(!rm){toast('Vul eerst een 1RM in');return;}
+  const target=Math.round((rm*pct/100)*2)/2; // afronden op 0.5 kg
+  // Vul de eerste lege werkset, anders de laatste werkset
+  const rows=document.querySelectorAll(`[id^="s-${exId}-"][id$="-kg"]`);
+  let filled=false;
+  rows.forEach(inp=>{
+    if(!filled&&!inp.value){inp.value=target;inp.dispatchEvent(new Event('input'));inp.dispatchEvent(new Event('change'));filled=true;}
+  });
+  if(!filled&&rows.length){const last=rows[rows.length-1];last.value=target;last.dispatchEvent(new Event('input'));last.dispatchEvent(new Event('change'));}
+  toast(pct+'% van 1RM = '+target+' kg');
+}
+function openPlateCalcForEx(exId){
+  const rows=document.querySelectorAll(`[id^="s-${exId}-"][id$="-kg"]`);
+  let w=0;
+  rows.forEach(inp=>{if(inp.value)w=parseFloat(inp.value);});
+  if(!w)w=getOneRM(exId)||0;
+  openPlateCalc(w);
+}
+
+// ══════════════════════════════════════════════════════════
+// EQUIPMENT-INSTELLINGEN PER OEFENING (Fase 1, gym_id nullable → Fase 4-klaar)
+// ══════════════════════════════════════════════════════════
+async function loadEquipment(exId){
+  return await sbGet('exercise_equipment','&exercise_id=eq.'+exId+'&gym_id=is.null&order=sort_order.asc');
+}
+function buildEquipmentPanel(exId,eqList){
+  return `<div class="eq-panel" id="eq-panel-${exId}">
+    <div class="eq-panel-hd" onclick="toggleEqPanel('${exId}')">
+      <span>🔧 Equipment${eqList.length?` (${eqList.length})`:''}</span>
+      <span class="eq-arrow" id="eq-arrow-${exId}">›</span>
+    </div>
+    <div class="eq-panel-body" id="eq-body-${exId}" style="display:none">
+      ${eqList.map(e=>`<div class="eq-row">
+        <span class="eq-label">${e.label}</span>
+        <span class="eq-value">${e.value}</span>
+        <button onclick="deleteEquipment('${e.id}','${exId}')">✕</button>
+      </div>`).join('')}
+      <div class="eq-add-row">
+        <input class="inp" placeholder="Naam (bv. Rek stand)" id="eq-new-label-${exId}">
+        <input class="inp" placeholder="Waarde (bv. 4)" id="eq-new-value-${exId}">
+        <button class="btn btn-o" onclick="addEquipment('${exId}')">+</button>
+      </div>
+    </div>
+  </div>`;
+}
+function toggleEqPanel(exId){
+  const body=document.getElementById('eq-body-'+exId);
+  const arrow=document.getElementById('eq-arrow-'+exId);
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'block';
+  if(arrow)arrow.textContent=open?'›':'⌄';
+}
+async function addEquipment(exId){
+  const labelEl=document.getElementById('eq-new-label-'+exId);
+  const valueEl=document.getElementById('eq-new-value-'+exId);
+  const label=labelEl.value.trim(), value=valueEl.value.trim();
+  if(!label||!value){toast('Vul naam en waarde in');return;}
+  const id='eq_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  const ok=await sbPost('exercise_equipment',{id,exercise_id:exId,gym_id:null,label,value,sort_order:Date.now()});
+  if(!ok){toast('Opslaan mislukt — tabel exercise_equipment bestaat mogelijk nog niet');return;}
+  await refreshEquipmentPanel(exId);
+}
+async function deleteEquipment(id,exId){
+  await sbDel('exercise_equipment','id=eq.'+id);
+  await refreshEquipmentPanel(exId);
+}
+async function refreshEquipmentPanel(exId){
+  const eq=await loadEquipment(exId);
+  const panel=document.getElementById('eq-panel-'+exId);
+  if(!panel)return;
+  const wasOpen=document.getElementById('eq-body-'+exId)?.style.display==='block';
+  panel.outerHTML=buildEquipmentPanel(exId,eq);
+  if(wasOpen)toggleEqPanel(exId);
+}
+
 function buildStrengthBody(exId,wuCount,workCount,prefill=null){
   let h='';
   if(wuCount>0){
@@ -1219,20 +1436,32 @@ function buildWorkSetRow(exId,i,prefill=null){
   return `<div class="set-row" id="sr-${exId}-${i}">
     <div class="set-circle" id="sc-${exId}-${i}" onclick="toggleSetDone('${exId}',${i})">${i}</div>
     <div class="set-fields">
-      <div class="set-field-wrap" style="flex:2"><input class="set-field" type="number" inputmode="decimal" placeholder="kg" id="s-${exId}-${i}-kg" value="${prefill?prefill.kg:''}"
-        oninput="logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'kg',this.value)"
+      <div class="set-field-wrap" style="flex:2"><input class="set-field" type="number" inputmode="decimal" placeholder="kg" id="s-${exId}-${i}-kg" value="${prefill?prefill.kg:''}" min="0" max="500"
+        oninput="clampNumInput(this,0,500);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'kg',this.value)"
         onchange="logSet('${exId}','work',${i},true)"><div class="set-field-lbl">kg</div></div>
       <div class="set-sep">×</div>
-      <div class="set-field-wrap" style="flex:1"><input class="set-field" type="number" inputmode="numeric" placeholder="reps" id="s-${exId}-${i}-reps" value="${prefill?prefill.reps:''}"
-        oninput="logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'reps',this.value)"
+      <div class="set-field-wrap" style="flex:1"><input class="set-field" type="number" inputmode="numeric" placeholder="reps" id="s-${exId}-${i}-reps" value="${prefill?prefill.reps:''}" min="1" max="100" step="1"
+        oninput="clampNumInput(this,1,100);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'reps',this.value)"
         onchange="logSet('${exId}','work',${i},true)"><div class="set-field-lbl">reps</div></div>
       <div class="set-sep" style="color:var(--g3)">@</div>
-      <div class="set-field-wrap" style="flex:1"><input class="set-field" type="number" inputmode="decimal" placeholder="RPE" id="s-${exId}-${i}-rpe" step="0.5"
-        oninput="logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'rpe',this.value)"
+      <div class="set-field-wrap" style="flex:1"><input class="set-field" type="number" inputmode="decimal" placeholder="RPE" id="s-${exId}-${i}-rpe" step="0.5" min="1" max="10"
+        oninput="clampNumInput(this,1,10);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'rpe',this.value)"
         onchange="logSet('${exId}','work',${i},true)" style="font-size:13px"><div class="set-field-lbl">RPE</div></div>
     </div>
+    <button class="set-rest" onclick="openRestTimer('${exId}',${i})" title="Rusttimer">⏱</button>
     <button class="set-more" onclick="showSetMenu('${exId}',${i},'work')">⋮</button>
   </div>`;
+}
+
+// Fix #8: clamp numerieke invoer binnen een logisch bereik (RPE max 10, reps-limiet etc.)
+function clampNumInput(el,min,max){
+  if(el.value==='')return;
+  let v=parseFloat(el.value.replace(',','.'));
+  if(isNaN(v))return;
+  if(v<min)v=min;
+  if(v>max)v=max;
+  // Voorkom oneindig lange invoer (bv. 3555) door te knippen op max digits vóór de komma
+  el.value=v;
 }
 
 function buildCarryBody(exId,sets){
@@ -1449,8 +1678,18 @@ function logSet(exId,type,setNum,isWork){
   else{if(!sessionLog[exId].sets)sessionLog[exId].sets=[];sessionLog[exId].sets[setNum-1]={kg,reps,rpe};}
   // Check PR
   if(isWork&&kg){
-    const pr=exercises.find(e=>e.id===exId)?.pr||0;
-    if(parseFloat(kg)>pr){const badge=document.getElementById('sc-'+exId+'-'+setNum);if(badge&&!badge.querySelector('.pr-badge'))badge.innerHTML+='<div class="pr-badge">PR</div>';}
+    const exObj=exercises.find(e=>e.id===exId);
+    const pr=exObj?.pr||0;
+    if(parseFloat(kg)>pr){
+      const badge=document.getElementById('sc-'+exId+'-'+setNum);
+      if(badge&&!badge.querySelector('.pr-badge'))badge.innerHTML+='<div class="pr-badge">PR</div>';
+      // Werk de lokale referentie direct bij zodat een volgende set op hetzelfde gewicht
+      // binnen dezelfde sessie niet opnieuw als PR wordt gemarkeerd.
+      if(exObj)exObj.pr=parseFloat(kg);
+    }
+  }
+  if(isWork&&kg&&reps&&BARBELL_EXERCISES.has(exId)){
+    showEpleyHint(exId,parseFloat(kg),parseInt(reps));
   }
   updateProgress(curT);
   updateSummary(curT);
@@ -1575,7 +1814,7 @@ function confirmLeave(){
   }else{curT=null;stopTrainTimer();document.querySelectorAll('.ni-dot').forEach(d=>d.classList.remove('show'));go('s-home');}
 }
 
-function showSessionSummary(t){
+function renderSessionSummaryContent(t){
   const list=getSessionExs(t);
   let html='';
   list.forEach(ex=>{
@@ -2054,6 +2293,7 @@ async function focusCoach(){
 }
 
 async function buildCtx(){
+  await ensureExercisesLoaded();
   const hd=await sbGet('hrv_log','&order=date.desc&limit=7');
   const wd=await sbGet('weight_log','&order=date.desc&limit=3');
   const bc=await sbGet('body_comp','&order=date.desc&limit=1');
@@ -2069,7 +2309,9 @@ async function buildCtx(){
   const wLast=wd[0],wPrev=wd[1];
   const wStr=wLast?`\nGewicht: ${wLast.weight} kg (${wLast.date})`+(wPrev?` | vorige: ${wPrev.weight} kg`:''): '';
   const bcStr=bc[0]?`\nTanita (${bc[0].date}): vet% ${bc[0].fat_pct}% | spier ${bc[0].muscle_mass} kg | BMR ${bc[0].bmr} | visceraal ${bc[0].visceral_fat}`+(bc[0].edema?` | oedeem: ${bc[0].edema}`:''): '';
-  const lastT=localStorage.getItem('maurice_last_training')||'?';
+  // nextT: afgeleid uit meest recente Supabase-sessie i.p.v. localStorage (kan verouderd/afwezig zijn)
+  const lastSessions=await sbGet('sessions','&training_type=in.(A,B)&order=date.desc&limit=1');
+  const lastT=lastSessions[0]?.training_type||localStorage.getItem('maurice_last_training')||'?';
   const nextT=lastT==='A'?'B':'A';
   const mf = mastersFactor(atleet?.leeftijd||50);
   return `Je bent de persoonlijke trainingscoach en data-analist van ${atleet?.naam||'Maurice'} van Latum van Steensel.
@@ -2535,13 +2777,14 @@ async function addExToCustomConfirm(exId, trainId){
   for(const e of list){
     const prev=await sbGet('sessions','&exercise_id=eq.'+e.id+'&order=date.desc&limit=1');
     const prevS=prev[0];
+    const eqList=await loadEquipment(e.id);
     let prevStr='';
     if(prevS){
       if(prevS.weight&&prevS.reps) prevStr='Vorige ('+prevS.date+'): '+prevS.weight+'kg×'+prevS.reps;
       else if(prevS.note) prevStr='Vorige: '+prevS.note.split('|')[0];
     }
     const div=document.createElement('div');
-    div.innerHTML=buildExItemHTML(e,prevStr,'custom_'+trainId);
+    div.innerHTML=buildExItemHTML(e,prevStr,'custom_'+trainId,eqList);
     container.appendChild(div);
   }
   // Add exercise + buttons
@@ -2551,7 +2794,7 @@ async function addExToCustomConfirm(exId, trainId){
   toast(ex.name+' toegevoegd');
 }
 
-function buildExItemHTML(ex, prevStr, trainId){
+function buildExItemHTML(ex, prevStr, trainId, eqList=[]){
   let bodyHTML='';
   if(ex.type==='rowing'||ex.type==='bikeerg'||ex.type==='skierg'||ex.type==='assaultbike'||ex.type==='running'){
     bodyHTML=buildCardioBody(ex.id, ex.cardioType||ex.type||'rowing');
@@ -2571,14 +2814,16 @@ function buildExItemHTML(ex, prevStr, trainId){
     ${prevStr?`<div class="ex-prev"><strong>${prevStr}</strong></div>`:''}
     <div class="ex-body" id="body-${ex.id}">
       ${ex.tip?`<div style="background:#fffbea;border-left:3px solid var(--y);padding:8px 12px;font-size:12px;color:#666;margin:8px 14px;border-radius:0 8px 8px 0">💡 ${ex.tip}</div>`:''}
+      ${BARBELL_EXERCISES.has(ex.id)?buildRmPanel(ex):''}
+      ${buildEquipmentPanel(ex.id,eqList)}
       ${bodyHTML}
       <button onclick="askCoachEx('${ex.naam}','${trainId}')" style="margin:8px 14px 12px;background:var(--dark);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">🤖 Vraag de coach</button>
     </div>
   </div>`;
 }
 
-// Override showSessionSummary to check for custom training save
-const _origShowSess=showSessionSummary;
+// showSessionSummary: checkt eerst op extra toegevoegde oefeningen (save-as-training),
+// rendert anders de sessie-samenvatting via renderSessionSummaryContent (was: duplicate-name bug)
 function showSessionSummary(t){
   // Check if extra exercises were added in A/B trainings
   const isAB=(t==='A'||t==='B');
@@ -2587,12 +2832,12 @@ function showSessionSummary(t){
     document.getElementById('sat-name').value='';
     return;
   }
-  _origShowSess(t);
+  renderSessionSummaryContent(t);
 }
 
 function finishSessionNoSave(){
   closeModal('m-save-as-training');
-  _origShowSess(curT);
+  renderSessionSummaryContent(curT);
 }
 
 function saveAsTrainingAndFinish(){
@@ -2603,7 +2848,41 @@ function saveAsTrainingAndFinish(){
   localStorage.setItem('maurice_trainings',JSON.stringify(customTrainings));
   closeModal('m-save-as-training');
   toast(name+' opgeslagen als training');
-  _origShowSess(curT);
+  renderSessionSummaryContent(curT);
+}
+
+// ══════════════════════════════════════════════════════════
+// RUSTTIMER PER SET
+// ══════════════════════════════════════════════════════════
+let restInterval=null, restEndAt=0;
+function openRestTimer(exId,setNum){
+  const def=parseInt(localStorage.getItem('maurice_rest_default'))||0;
+  if(def>0){startRestTimer(def);return;} // direct starten met standaardwaarde indien ingesteld
+  openModal('m-rest-timer');
+}
+function startRestTimer(seconds){
+  closeModal('m-rest-timer');
+  if(restInterval)clearInterval(restInterval);
+  restEndAt=Date.now()+seconds*1000;
+  const bar=document.getElementById('rest-timer-bar');
+  bar.style.display='flex';
+  const tick=()=>{
+    const rem=Math.max(0,Math.round((restEndAt-Date.now())/1000));
+    const m=Math.floor(rem/60),s=rem%60;
+    document.getElementById('rt-remaining').textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+    if(rem<=0){
+      clearInterval(restInterval);restInterval=null;
+      if(navigator.vibrate)navigator.vibrate([200,100,200]);
+      toast('Rust voorbij');
+      bar.style.display='none';
+    }
+  };
+  tick();
+  restInterval=setInterval(tick,1000);
+}
+function cancelRestTimer(){
+  if(restInterval){clearInterval(restInterval);restInterval=null;}
+  document.getElementById('rest-timer-bar').style.display='none';
 }
 
 // ══════════════════════════════════════════════════════════
@@ -2716,7 +2995,7 @@ async function startRepeatWorkout(){
     prefillMap[s.exercise_id]={kg:nw,reps:s.reps,rpe:s.rpe,sets:s.sets||4};
   });
   window._prefillMap=prefillMap;
-  curT=t;sessionLog={};sessionExtra=[];
+  curT=t;sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;
   await renderTrainScreen(t);
   window._prefillMap=null;
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
@@ -2929,6 +3208,39 @@ function downloadFile(content, filename, mimeType){
 function td(){return new Date().toISOString().split('T')[0];}
 const style=document.createElement('style');style.textContent='@keyframes sp{to{transform:rotate(360deg)}}';document.head.appendChild(style);
 
+let _exercisesLoading=null;
+// Idempotente loader: veilig meerdere keren aan te roepen (window-load EN buildCtx()).
+// Voorkomt race condition waarbij coach-context leeg is omdat exercises nog niet geladen zijn.
+async function ensureExercisesLoaded(){
+  if(exercises.length)return exercises;
+  if(_exercisesLoading)return _exercisesLoading;
+  _exercisesLoading=(async()=>{
+    const data=await sbGet('exercises','&order=sort_order.asc&active=eq.true');
+    exercises=data.length?data:[];
+    if(!exercises.length){
+      const defs=[
+        {id:'backsquat',name:'Backsquat',category:'A',type:'strength',pr:95,sort_order:1,active:true},
+        {id:'bench',name:'Benchpress',category:'A',type:'strength',pr:80,sort_order:2,active:true},
+        {id:'frontsquat',name:'Frontsquat',category:'A',type:'strength',pr:92.5,sort_order:3,active:true},
+        {id:'shoulderpress',name:'Shoulder Press',category:'A',type:'strength',pr:63.5,sort_order:4,active:true},
+        {id:'farmercarry',name:'Farmer Carry',category:'A',type:'carry',pr:null,sort_order:5,active:true},
+        {id:'hexabar',name:'Hexabar Deadlift',category:'B',type:'strength',pr:240,sort_order:1,active:true},
+        {id:'bentoverrow',name:'Bent Over Row',category:'B',type:'strength',pr:80,sort_order:2,active:true},
+        {id:'cablerow',name:'Cable Row',category:'B',type:'strength',pr:85,sort_order:3,active:true},
+        {id:'hpc',name:'Hang Power Clean',category:'B',type:'strength',pr:85,sort_order:4,active:true},
+        {id:'hps',name:'Hang Power Snatch',category:'B',type:'strength',pr:57.5,sort_order:5,active:true},
+        {id:'rdl',name:'RDL',category:'B',type:'strength',pr:null,sort_order:6,active:true},
+        {id:'roeien',name:'Roeien',category:'B',type:'rowing',pr:null,sort_order:7,active:true},
+      ];
+      for(const ex of defs)await sbUpsert('exercises',ex);
+      exercises=defs;
+    }
+    _exercisesLoading=null;
+    return exercises;
+  })();
+  return _exercisesLoading;
+}
+
 window.addEventListener('load',async()=>{
   if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
   // Start direct op home scherm — pincode alleen bij Beheer
@@ -2938,26 +3250,7 @@ window.addEventListener('load',async()=>{
   if(params.get('start')==='B') setTimeout(()=>go('s-train-b'),500);
   if(params.get('checkin')==='1') setTimeout(()=>openModal('m-hrv'),500);
   refreshHome();
-  const data=await sbGet('exercises','&order=sort_order.asc&active=eq.true');
-  exercises=data.length?data:[];
-  if(!exercises.length){
-    const defs=[
-      {id:'backsquat',name:'Backsquat',category:'A',type:'strength',pr:95,sort_order:1,active:true},
-      {id:'bench',name:'Benchpress',category:'A',type:'strength',pr:80,sort_order:2,active:true},
-      {id:'frontsquat',name:'Frontsquat',category:'A',type:'strength',pr:92.5,sort_order:3,active:true},
-      {id:'shoulderpress',name:'Shoulder Press',category:'A',type:'strength',pr:63.5,sort_order:4,active:true},
-      {id:'farmercarry',name:'Farmer Carry',category:'A',type:'carry',pr:null,sort_order:5,active:true},
-      {id:'hexabar',name:'Hexabar Deadlift',category:'B',type:'strength',pr:240,sort_order:1,active:true},
-      {id:'bentoverrow',name:'Bent Over Row',category:'B',type:'strength',pr:80,sort_order:2,active:true},
-      {id:'cablerow',name:'Cable Row',category:'B',type:'strength',pr:85,sort_order:3,active:true},
-      {id:'hpc',name:'Hang Power Clean',category:'B',type:'strength',pr:85,sort_order:4,active:true},
-      {id:'hps',name:'Hang Power Snatch',category:'B',type:'strength',pr:57.5,sort_order:5,active:true},
-      {id:'rdl',name:'RDL',category:'B',type:'strength',pr:null,sort_order:6,active:true},
-      {id:'roeien',name:'Roeien',category:'B',type:'rowing',pr:null,sort_order:7,active:true},
-    ];
-    for(const ex of defs)await sbUpsert('exercises',ex);
-    exercises=defs;
-  }
+  ensureExercisesLoaded();
 });
 </script>
 </body>

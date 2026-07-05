@@ -248,6 +248,15 @@ canvas{width:100%;height:100%}
 .muscle-pill.primary{background:rgba(61,214,214,.15);color:#007777;border:1px solid rgba(61,214,214,.4)}
 .muscle-pill.secondary{background:var(--g1);color:var(--g4);border:1px solid var(--g2)}
 
+.plate-btn{display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:6px;font-family:var(--f);font-weight:800;cursor:pointer;font-size:11px;letter-spacing:.5px;padding:4px 6px;margin:2px;min-width:36px}
+.plate-calc-wrap{background:var(--g1);border-radius:10px;padding:10px 12px;margin:8px 14px}
+.plate-disc{border-radius:4px;font-family:var(--f);font-weight:800;font-size:10px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.superset-wrap{border:2px solid #9C27B0;border-radius:12px;margin-bottom:8px;overflow:hidden}
+.superset-label{background:#9C27B0;color:#fff;font-family:var(--f);font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:4px 12px;display:flex;align-items:center;justify-content:space-between}
+.superset-ex{border-bottom:1px solid rgba(156,39,176,.2)}
+.superset-ex:last-child{border-bottom:none}
+.csv-btn{display:flex;align-items:center;gap:6px;padding:10px 14px;background:var(--g1);border:1.5px solid var(--g2);border-radius:10px;font-family:var(--f);font-size:13px;font-weight:700;cursor:pointer;width:100%;margin-bottom:8px;color:var(--dark)}
+.csv-btn:active{background:var(--g2)}
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--dark);color:#fff;padding:10px 18px;border-radius:24px;font-size:13px;font-weight:600;opacity:0;transition:all .25s;z-index:200;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
@@ -295,17 +304,22 @@ canvas{width:100%;height:100%}
         </div>
         <div class="hdr-sub" style="letter-spacing:2px;text-transform:uppercase;font-size:11px">Training Coach 2026</div>
       </div>
-      <button class="ibtn" onclick="openModal('m-hrv')">📊</button>
+      <div style="display:flex;gap:8px">
+        <button class="ibtn" onclick="openModal('m-hrv')">📊</button>
+        <button class="ibtn" onclick="go('s-admin-pin')">⚙️</button>
+      </div>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
     <div id="home-hrv-card"></div>
     <div class="sec-hd">Start training</div>
-    <div style="display:flex;gap:10px;margin-bottom:10px">
+    <div style="display:flex;gap:10px;margin-bottom:8px">
       <button onclick="go('s-train-a')" style="flex:1;padding:14px;border-radius:14px;border:none;background:var(--dark);color:#fff;font-family:var(--f);font-size:14px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:6px;justify-content:center"><div class="ni-dot" id="home-dot-a" style="position:static;background:#fff"></div>TRAINING A</button>
       <button onclick="go('s-train-b')" style="flex:1;padding:14px;border-radius:14px;border:none;background:var(--accent);color:var(--dark);font-family:var(--f);font-size:14px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:6px;justify-content:center"><div class="ni-dot" id="home-dot-b" style="position:static;background:var(--dark)"></div>TRAINING B</button>
     </div>
-    <div id="home-next-lbl" style="font-size:12px;color:var(--g4);font-weight:600;text-align:center;margin-bottom:14px"></div>
+    <div id="custom-train-btns"></div>
+    <div id="home-next-lbl" style="font-size:12px;color:var(--g4);font-weight:600;text-align:center;margin-bottom:10px"></div>
+    <button onclick="openPlateCalc(0)" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;background:var(--g1);border:1.5px solid var(--g2);border-radius:12px;font-family:var(--f);font-size:13px;font-weight:700;color:var(--dark);cursor:pointer;margin-bottom:10px">⚖️ Plate Calculator</button>
     <div class="sec-hd">Recente sessies</div>
     <div class="card"><div class="card-body" style="padding-top:10px" id="home-recent"></div></div>
     <div class="sec-hd">Gewicht</div>
@@ -320,10 +334,10 @@ canvas{width:100%;height:100%}
   </div>
   <nav class="bnav">
     <button class="ni active" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="go('s-train-a')" id="nav-train"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
-    <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
   </nav>
 </div>
 
@@ -348,10 +362,10 @@ canvas{width:100%;height:100%}
   <div class="scroll" id="train-a-list" style="padding-top:12px"></div>
   <nav class="bnav">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni active" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
-    <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
   </nav>
 </div>
 
@@ -376,10 +390,69 @@ canvas{width:100%;height:100%}
   <div class="scroll" id="train-b-list" style="padding-top:12px"></div>
   <nav class="bnav">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni active" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
-    <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
+  </nav>
+</div>
+
+<!-- ═══ PROFIEL ═══ -->
+<div class="scr" id="s-profiel">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title">Profiel</div><div class="hdr-sub">Atleet & Lichaamsmetingen</div></div>
+      <button class="ibtn" onclick="openModal('m-bc')">＋</button>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px">
+
+    <!-- Atleet profiel kaart -->
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Atleet</div><button class="btn btn-o btn-sm" onclick="openModal('m-atleet')">Bewerken</button></div>
+      <div class="card-body" id="profiel-atleet-card">
+        <p style="color:var(--g4);font-size:13px">Nog niet ingesteld</p>
+      </div>
+    </div>
+
+    <!-- Lichaamscompositie laatste meting -->
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Lichaamscompositie</div><div class="card-sub" id="profiel-bc-date">—</div></div>
+      <div class="card-body" id="profiel-bc-card">
+        <p style="color:var(--g4);font-size:13px">Geen metingen</p>
+      </div>
+    </div>
+
+    <!-- Afmetingen -->
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Afmetingen</div></div>
+      <div class="card-body" id="profiel-afmetingen-card">
+        <p style="color:var(--g4);font-size:13px">Geen metingen</p>
+      </div>
+    </div>
+
+    <!-- Gewicht grafiek -->
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Gewicht trend</div><div class="card-sub" id="profiel-weight-lbl">—</div></div>
+      <div class="card-body"><div class="chart-wrap"><canvas id="profiel-w-chart"></canvas></div></div>
+    </div>
+
+    <!-- Geschiedenis metingen -->
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Geschiedenis</div></div>
+      <div class="card-body" id="profiel-history"></div>
+    </div>
+
+    <!-- Coach analyse knop -->
+    <button class="btn btn-d" onclick="askCoachProfiel()" style="margin-bottom:12px">🤖 Coach: analyseer mijn metingen</button>
+    <div style="height:8px"></div>
+  </div>
+  <nav class="bnav">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni active" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
   </nav>
 </div>
 
@@ -393,10 +466,10 @@ canvas{width:100%;height:100%}
   </div>
   <nav class="bnav">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="go('s-train-a')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot2"></div></button>
-    <button class="ni active"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
+    <button class="ni active" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
-    <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
   </nav>
 </div>
 
@@ -414,10 +487,10 @@ canvas{width:100%;height:100%}
   </div>
   <nav class="bnav">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="go('s-train-a')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni active" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
-    <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
   </nav>
 </div>
 
@@ -426,6 +499,10 @@ canvas{width:100%;height:100%}
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Progressie</div><div class="hdr-sub">1RM & Peakdoel 15 aug 2026</div></div><button class="ibtn" onclick="refreshStats()">↻</button></div></div>
   <div class="scroll" style="padding-top:8px">
     <div class="card"><div class="card-hd"><div class="card-title">Geschatte 1RM</div><div class="card-sub">Epley formule · live</div></div><div class="card-body" id="stats-1rm-list"></div></div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Volume per spiergroep</div><div class="card-sub">Afgelopen 7 dagen</div></div>
+      <div class="card-body" id="stats-volume-content"><p style="color:var(--g4);font-size:13px">Laden...</p></div>
+    </div>
     <div class="card"><div class="card-hd"><div class="card-title">HRV trend</div></div><div class="card-body"><div class="chart-wrap"><canvas id="stats-hrv-chart"></canvas></div></div></div>
     <div class="card"><div class="card-hd"><div class="card-title">Roei progressie</div></div><div class="card-body" id="stats-row-list"></div></div>
     <div class="card"><div class="card-hd"><div class="card-title">Lichaamscompositie</div></div><div class="card-body" id="stats-bc-list"></div></div>
@@ -433,10 +510,37 @@ canvas{width:100%;height:100%}
   </div>
   <nav class="bnav">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="go('s-train-a')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni active"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
-    <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
+    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+    <button class="ni active" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+  </nav>
+</div>
+
+<!-- ═══ TRAINING BEHEER ═══ -->
+<div class="scr" id="s-train-mgr">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title">Trainingen</div><div class="hdr-sub">Beheer je trainingsschema's</div></div>
+      <button class="ibtn" onclick="openModal('m-new-training')">＋</button>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px">
+    <div class="sec-hd">Standaard</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <div class="card" style="flex:1;margin-bottom:0"><div class="card-body" style="padding:12px"><div style="font-size:15px;font-weight:700">Training A</div><div style="font-size:12px;color:var(--g4);margin-top:2px">Squat · Bench · Press</div></div></div>
+      <div class="card" style="flex:1;margin-bottom:0"><div class="card-body" style="padding:12px"><div style="font-size:15px;font-weight:700">Training B</div><div style="font-size:12px;color:var(--g4);margin-top:2px">Deadlift · Pull · Clean</div></div></div>
+    </div>
+    <div class="sec-hd">Eigen trainingen</div>
+    <div id="custom-train-list"></div>
+    <button class="btn btn-o" onclick="openModal('m-new-training')" style="margin-top:4px">+ Nieuwe training aanmaken</button>
+  </div>
+  <nav class="bnav">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni active" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
   </nav>
 </div>
 
@@ -457,12 +561,13 @@ canvas{width:100%;height:100%}
 
 <!-- ═══ ADMIN ═══ -->
 <div class="scr" id="s-admin">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.6.7</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.7.2</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
   <div class="scroll" style="padding-top:8px">
     <div class="card"><div class="card-body" style="padding-top:8px">
       <div class="adm-row"><div><div class="adm-lbl">API Sleutel</div><div class="adm-sub" id="api-st">Niet ingesteld</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-apikey')">Wijzig</button></div></div>
       <div class="adm-row"><div><div class="adm-lbl">Lichaamscompositie</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-bc')">Invoer</button></div></div>
       <div class="adm-row"><div><div class="adm-lbl">Import logboek</div><div class="adm-sub" id="import-status">Selecteer een JSON importbestand</div></div><div style="margin-left:auto"><label class="btn btn-o btn-sm" style="cursor:pointer">Kies bestand<input type="file" accept=".json" style="display:none" onchange="importFromFile(this)"></label></div></div>
+      <div class="adm-row"><div><div class="adm-lbl">Exporteren</div><div class="adm-sub">CSV / JSON backup</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-export')">Export</button></div></div>
       <div class="adm-row"><div><div class="adm-lbl">Roeiers (PM5)</div><div class="adm-sub">Concept 2 machines</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-rowers')">Beheer</button></div></div>
     </div></div>
 
@@ -476,10 +581,10 @@ canvas{width:100%;height:100%}
   </div>
   <nav class="bnav">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="go('s-train-a')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-hist')"><span class="ni-icon">📋</span><span class="ni-label">Logboek</span></button>
-    <button class="ni active"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
+    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+    <button class="ni active" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
   </nav>
 </div>
 
@@ -527,6 +632,44 @@ canvas{width:100%;height:100%}
   </div>
 </div>
 
+<div class="modal-bg" id="m-atleet" onclick="bgClose(event,'m-atleet')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Atleet profiel</div>
+    <div class="irow"><label class="ilbl">Naam</label><input class="inp" type="text" id="atl-naam" placeholder="Voornaam"></div>
+    <div class="irow"><label class="ilbl">Leeftijd</label><input class="inp" type="number" id="atl-leeftijd" placeholder="jaar" value="50"></div>
+    <div class="irow"><label class="ilbl">Geslacht</label><select class="inp" id="atl-geslacht"><option value="man">Man</option><option value="vrouw">Vrouw</option></select></div>
+    <div class="irow"><label class="ilbl">Lengte</label><input class="inp" type="number" id="atl-lengte" placeholder="cm" value="180"></div>
+    <div class="irow"><label class="ilbl">Erv. niveau</label><select class="inp" id="atl-niveau">
+      <option value="beginner">Beginner (&lt;1 jaar)</option>
+      <option value="gevorderd">Gevorderd (1-3 jaar)</option>
+      <option value="ervaren" selected>Ervaren (3-5 jaar)</option>
+      <option value="expert">Expert (5+ jaar)</option>
+    </select></div>
+    <div class="irow"><label class="ilbl">Gewichtsklasse</label><select class="inp" id="atl-klasse">
+      <option value="">—</option>
+      <option value="59">-59 kg</option>
+      <option value="66">-66 kg</option>
+      <option value="74">-74 kg</option>
+      <option value="83">-83 kg</option>
+      <option value="93">-93 kg</option>
+      <option value="105">-105 kg</option>
+      <option value="120">-120 kg</option>
+      <option value="120+">120+ kg</option>
+    </select></div>
+    <div class="irow"><label class="ilbl">Sport focus</label><select class="inp" id="atl-sport">
+      <option value="kracht">Kracht/Powerlifting</option>
+      <option value="crossfit" selected>CrossFit/Functioneel</option>
+      <option value="bodybuilding">Bodybuilding</option>
+      <option value="atletiek">Atletiek</option>
+    </select></div>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-atleet')">Annuleer</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveAtleet()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="m-bc" onclick="bgClose(event,'m-bc')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -558,7 +701,16 @@ canvas{width:100%;height:100%}
     <div class="modal-title">Nieuwe oefening</div>
     <div class="irow"><label class="ilbl">Naam</label><input class="inp" type="text" id="nx-name" placeholder="bijv. Tricep Pushdown"></div>
     <div class="irow"><label class="ilbl">Training</label><select class="inp" id="nx-cat"><option value="A">Training A</option><option value="B">Training B</option><option value="CrossFit">CrossFit</option><option value="Overig">Overig</option></select></div>
-    <div class="irow"><label class="ilbl">Type</label><select class="inp" id="nx-type"><option value="strength">Kracht</option><option value="rowing">Roeien</option><option value="carry">Carry</option><option value="bodyweight">Bodyweight</option></select></div>
+    <div class="irow"><label class="ilbl">Type</label><select class="inp" id="nx-type" onchange="updateNxType(this.value)">
+      <option value="strength">Kracht</option>
+      <option value="rowing">Roeien (Concept 2)</option>
+      <option value="bikeerg">Bike Erg</option>
+      <option value="skierg">Ski Erg</option>
+      <option value="assaultbike">Assault Bike</option>
+      <option value="running">Hardlopen</option>
+      <option value="carry">Carry</option>
+      <option value="bodyweight">Bodyweight</option>
+    </select></div>
     <div class="irow"><label class="ilbl">YouTube</label><input class="inp" type="text" id="nx-yt" placeholder="bijv. bEv6CCg2BC8 of https://youtu.be/..." oninput="previewYT('nx-yt','nx-yt-preview')"></div>
     <div id="nx-yt-preview" style="margin-bottom:8px"></div>
     <div style="display:flex;gap:8px;margin-top:14px">
@@ -601,7 +753,112 @@ canvas{width:100%;height:100%}
   </div>
 </div>
 
-<div class="modal-bg" id="m-edit-yt" onclick="bgClose(event,'m-edit-yt')">
+<div class="modal-bg" id="m-new-training" onclick="bgClose(event,'m-new-training')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Nieuwe training</div>
+    <div class="irow"><label class="ilbl">Naam</label><input class="inp" type="text" id="nt-name" placeholder="bijv. Upper Body, Cardio"></div>
+    <div class="irow"><label class="ilbl">Kleur</label>
+      <select class="inp" id="nt-color">
+        <option value="#111111">Zwart</option>
+        <option value="#e05a5a">Rood</option>
+        <option value="#3dd6d6">Cyaan</option>
+        <option value="#4caf50">Groen</option>
+        <option value="#ff9800">Oranje</option>
+        <option value="#9c27b0">Paars</option>
+      </select>
+    </div>
+    <div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="nt-note" placeholder="omschrijving (optioneel)"></div>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-new-training')">Annuleer</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveNewTraining()">Aanmaken</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-save-as-training" onclick="">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Opslaan als training?</div>
+    <p style="font-size:13px;color:var(--g4);margin-bottom:14px">Je hebt oefeningen toegevoegd die niet in het standaard schema staan. Wil je deze samenstelling opslaan als nieuwe training?</p>
+    <div class="irow"><label class="ilbl">Naam</label><input class="inp" type="text" id="sat-name" placeholder="bijv. Full Body"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-save-as-training');finishSessionNoSave()">Niet opslaan</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveAsTrainingAndFinish()">Opslaan & afsluiten</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-plate-calc" onclick="bgClose(event,'m-plate-calc')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⚖️ Plate Calculator</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+      <input class="inp" type="number" id="pc-target" placeholder="Doelgewicht kg" step="0.5" oninput="calcPlates()" style="flex:2">
+      <select class="inp" id="pc-bar" onchange="calcPlates()" style="flex:1">
+        <option value="20">Stang 20 kg</option>
+        <option value="15">Stang 15 kg</option>
+        <option value="10">Stang 10 kg</option>
+        <option value="0">Geen stang</option>
+      </select>
+    </div>
+    <div id="pc-visual" style="text-align:center;min-height:60px;margin:8px 0"></div>
+    <div id="pc-result" style="font-size:13px;color:var(--g4);text-align:center;margin-bottom:12px"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Beschikbare schijven (tik om aan/uit te zetten)</div>
+    <div id="pc-plates-avail"></div>
+    <div style="margin-top:14px"><button class="btn btn-o" onclick="closeModal('m-plate-calc')">Sluiten</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-repeat-workout" onclick="bgClose(event,'m-repeat-workout')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="rw-title">Sessie herhalen</div>
+    <p style="font-size:13px;color:var(--g4);margin-bottom:14px">Laad de vorige sessie en pas gewichten aan.</p>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button class="btn btn-r btn-sm" id="rw-same" onclick="setRepeatMode('same')" style="flex:1">Zelfde</button>
+      <button class="btn btn-o btn-sm" id="rw-plus" onclick="setRepeatMode('plus')" style="flex:1">+ kg</button>
+      <button class="btn btn-o btn-sm" id="rw-pct" onclick="setRepeatMode('pct')" style="flex:1">%</button>
+    </div>
+    <div id="rw-adj-wrap" style="display:none;margin-bottom:10px">
+      <div class="irow"><label class="ilbl" id="rw-adj-lbl">Waarde</label><input class="inp" type="number" id="rw-adj-val" placeholder="2.5" step="0.5" oninput="updateRepeatPreview()"></div>
+    </div>
+    <div id="rw-preview" style="max-height:220px;overflow-y:auto;margin-bottom:12px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-repeat-workout')">Annuleer</button>
+      <button class="btn btn-r" style="flex:2" onclick="startRepeatWorkout()">Start training</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-superset" onclick="bgClose(event,'m-superset')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Superset toevoegen</div>
+    <p style="font-size:13px;color:var(--g4);margin-bottom:14px">Kies twee of meer oefeningen die je afwisselend uitvoert zonder rust ertussen.</p>
+    <div id="superset-ex-list"></div>
+    <button class="btn btn-o btn-sm" onclick="addSupersetEx()" style="margin-top:8px;width:100%">+ Oefening toevoegen</button>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-superset')">Annuleer</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveSupersetToSession()">Toevoegen aan sessie</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-export" onclick="bgClose(event,'m-export')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Exporteren</div>
+    <button class="csv-btn" onclick="exportCSV('sessions')">📊 Trainingen exporteren (CSV)</button>
+    <button class="csv-btn" onclick="exportCSV('weight_log')">⚖️ Gewicht exporteren (CSV)</button>
+    <button class="csv-btn" onclick="exportCSV('hrv_log')">❤️ HRV data exporteren (CSV)</button>
+    <button class="csv-btn" onclick="exportCSV('body_comp')">📏 Lichaamscompositie exporteren (CSV)</button>
+    <button class="csv-btn" onclick="exportJSON()">💾 Alles exporteren (JSON backup)</button>
+    <div style="margin-top:14px"><button class="btn btn-o" onclick="closeModal('m-export')">Sluiten</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-edit-yt"    onclick="bgClose(event,'m-edit-yt')">
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title" id="edit-yt-title">YouTube Video</div>
@@ -632,13 +889,52 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v2.6.7';
+const APP_VER = 'v2.7.2';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
 const SB_H = {apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'};
 
 const PEAK = {backsquat:140,bench:105,frontsquat:110,shoulderpress:75,hexabar:300,hpc:100,hps:70,cablerow:110,bentoverrow:100};
+
+// Cardio type definities
+const CARDIO_TYPES = {
+  rowing: {
+    naam:'Roeien', unit:'m', splitUnit:'/500m',
+    fields:['dist','time','split','watt','stroke','drag'],
+    labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /500m',watt:'Watt',stroke:'Slag/min',drag:'Drag factor'},
+    splits:true, splitDist:250, splitTotal:1000,
+    machines:'rowers'
+  },
+  bikeerg: {
+    naam:'Bike Erg', unit:'m', splitUnit:'/500m',
+    fields:['dist','time','split','watt','rpm','resistance'],
+    labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /500m',watt:'Watt',rpm:'RPM',resistance:'Weerstand'},
+    splits:true, splitDist:250, splitTotal:1000,
+    machines:'bikeerg_machines'
+  },
+  skierg: {
+    naam:'Ski Erg', unit:'m', splitUnit:'/500m',
+    fields:['dist','time','split','watt','stroke'],
+    labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /500m',watt:'Watt',stroke:'Slag/min'},
+    splits:true, splitDist:250, splitTotal:1000,
+    machines:'skierg_machines'
+  },
+  assaultbike: {
+    naam:'Assault Bike', unit:'cal', splitUnit:'/min',
+    fields:['cals','time','watt','rpm'],
+    labels:{cals:'Calorieën',time:'Totaal tijd',watt:'Watt gem.',rpm:'RPM gem.'},
+    splits:false,
+    machines:'assault_machines'
+  },
+  running: {
+    naam:'Hardlopen', unit:'km', splitUnit:'/km',
+    fields:['dist_km','time','pace','hr'],
+    labels:{dist_km:'Afstand (km)',time:'Totaal tijd',pace:'Pace /km',hr:'Hartslag gem.'},
+    splits:true, splitDist:1, splitTotal:5,
+    machines:null
+  }
+};
 
 const TRAIN_CFG = {
   A:[
@@ -664,6 +960,10 @@ const TRAIN_CFG = {
 // STATE
 // ══════════════════════════════════════════════════════════
 let exercises=[], apiKey=localStorage.getItem('maurice_apikey')||'';
+let customTrainings=JSON.parse(localStorage.getItem('maurice_trainings')||'[]');
+let bikeergMachines=JSON.parse(localStorage.getItem('bikeerg_machines')||'["Bike 1","Bike 2","Bike 3"]');
+let skiergMachines=JSON.parse(localStorage.getItem('skierg_machines')||'["Ski 1","Ski 2"]');
+let assaultMachines=JSON.parse(localStorage.getItem('assault_machines')||'["Assault 1","Assault 2"]');
 let curT=null, sessionLog={}, sessionExtra=[], chatHist=[], sending=false;
 let pinBuf='', adminPinBuf='';
 let rowers=JSON.parse(localStorage.getItem('maurice_rowers')||'["PM5 1","PM5 2","PM5 3","PM5 4","PM5 5","PM5 6","PM5 7","PM5 8","PM5 9","PM5 10"]');
@@ -711,7 +1011,9 @@ function go(id){
   stopTrainTimer();
   if(id==='s-home')refreshHome();
   if(id==='s-hist'){histOff=0;loadHistory();}
+  if(id==='s-train-mgr'){renderCustomTrainList();renderCustomTrainBtns();}
   if(id==='s-stats')refreshStatsScreen();
+  if(id==='s-profiel')refreshProfiel();
   if(id==='s-admin')refreshAdmin();
   if(id==='s-coach')focusCoach();
 }
@@ -805,9 +1107,15 @@ async function renderTrainScreen(t){
     const prev=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc&limit=1');
     const prevS=prev[0];
     let prevStr='';
+    let prefillData=window._prefillMap?.[ex.id]||null;
     if(prevS){
-      if(prevS.weight&&prevS.reps)prevStr='Vorige ('+prevS.date+'): '+(prevS.sets||'?')+'×'+prevS.reps+' @ '+prevS.weight+' kg'+(prevS.rpe?' · RPE '+prevS.rpe:'');
-      else if(prevS.time_str)prevStr='Vorige ('+prevS.date+'): '+prevS.time_str+(prevS.watt?' · '+prevS.watt+'W':'');
+      if(prevS.weight&&prevS.reps){
+        prevStr='Vorige ('+prevS.date+'): '+(prevS.sets||'?')+'×'+prevS.reps+' @ '+prevS.weight+' kg'+(prevS.rpe?' · RPE '+prevS.rpe:'');
+        prefillData={kg:prevS.weight, reps:prevS.reps, rpe:prevS.rpe, sets:prevS.sets||4};
+      } else if(prevS.time_str||prevS.note){
+        const noteTime=prevS.note?.match(/tijd:([^|]+)/)?.[1];
+        prevStr='Vorige ('+prevS.date+'): '+(prevS.time_str||noteTime||'')+(prevS.watt?' · '+prevS.watt+'W':'');
+      }
     }
 
     const isDefault=TRAIN_CFG[t].some(e=>e.id===ex.id);
@@ -815,12 +1123,13 @@ async function renderTrainScreen(t){
     div.className='ex-card';
 
     let bodyHTML='';
-    if(ex.type==='rowing'){
-      bodyHTML=buildRowingBody(ex.id);
+    if(ex.type==='rowing'||ex.type==='bikeerg'||ex.type==='skierg'||ex.type==='assaultbike'||ex.type==='running'){
+      const cardioT=ex.cardioType||ex.type||'rowing';
+      bodyHTML=buildCardioBody(ex.id, cardioT);
     }else if(ex.type==='carry'){
       bodyHTML=buildCarryBody(ex.id,ex.sets||3);
     }else{
-      bodyHTML=buildStrengthBody(ex.id,ex.wu||0,ex.sets||4);
+      bodyHTML=buildStrengthBody(ex.id,ex.wu||0,ex.sets||4,prefillData);
     }
 
     div.innerHTML=`
@@ -850,6 +1159,7 @@ async function renderTrainScreen(t){
   addDiv.innerHTML=`
     <div style="display:flex;gap:10px;padding:0 0 12px">
       <button onclick="addExToSession('${t}')" style="flex:1;padding:13px;border-radius:22px;background:var(--g1);border:1.5px solid var(--g2);font-family:var(--f);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--red)">+ Oefening</button>
+      <button onclick="openSupersetModal('${t}')" style="flex:1;padding:13px;border-radius:22px;background:rgba(156,39,176,.1);border:1.5px solid rgba(156,39,176,.3);font-family:var(--f);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;color:#7b1fa2">⚡ Superset</button>
     </div>
     <div class="summary-card" id="sess-summary-${t}">
       <div style="font-size:13px;font-weight:700;color:var(--dark)">Sessie overzicht</div>
@@ -881,7 +1191,7 @@ function buildVideoMuscle(ex){
   return h;
 }
 
-function buildStrengthBody(exId,wuCount,workCount){
+function buildStrengthBody(exId,wuCount,workCount,prefill=null){
   let h='';
   if(wuCount>0){
     h+=`<div class="add-row" style="padding:8px 14px;cursor:default"><span style="font-size:11px;font-weight:700;color:var(--g3);text-transform:uppercase;letter-spacing:.5px">Opwarmsets</span></div>`;
@@ -897,22 +1207,29 @@ function buildStrengthBody(exId,wuCount,workCount){
       </div>`;
     }
   }
+  if(prefill) h+=`<div style="background:#e8f5e9;border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:6px 12px;font-size:11px;color:#2e7d32;margin:4px 14px 8px">📋 Vorige sessie: ${prefill.kg} kg × ${prefill.reps} reps${prefill.rpe?' · RPE '+prefill.rpe:''} — pre-ingevuld</div>`;
   h+=`<div class="add-row" style="padding:8px 14px;cursor:default"><span style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Werksets</span></div>`;
   for(let i=1;i<=workCount;i++){
-    h+=buildWorkSetRow(exId,i);
+    h+=buildWorkSetRow(exId,i,prefill);
   }
   return h;
 }
 
-function buildWorkSetRow(exId,i){
+function buildWorkSetRow(exId,i,prefill=null){
   return `<div class="set-row" id="sr-${exId}-${i}">
     <div class="set-circle" id="sc-${exId}-${i}" onclick="toggleSetDone('${exId}',${i})">${i}</div>
     <div class="set-fields">
-      <div class="set-field-wrap" style="flex:2"><input class="set-field" type="number" inputmode="decimal" placeholder="kg" id="s-${exId}-${i}-kg" onchange="logSet('${exId}','work',${i},true)"><div class="set-field-lbl">kg</div></div>
+      <div class="set-field-wrap" style="flex:2"><input class="set-field" type="number" inputmode="decimal" placeholder="kg" id="s-${exId}-${i}-kg" value="${prefill?prefill.kg:''}"
+        oninput="logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'kg',this.value)"
+        onchange="logSet('${exId}','work',${i},true)"><div class="set-field-lbl">kg</div></div>
       <div class="set-sep">×</div>
-      <div class="set-field-wrap" style="flex:1"><input class="set-field" type="number" inputmode="numeric" placeholder="reps" id="s-${exId}-${i}-reps" onchange="logSet('${exId}','work',${i},true)"><div class="set-field-lbl">reps</div></div>
+      <div class="set-field-wrap" style="flex:1"><input class="set-field" type="number" inputmode="numeric" placeholder="reps" id="s-${exId}-${i}-reps" value="${prefill?prefill.reps:''}"
+        oninput="logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'reps',this.value)"
+        onchange="logSet('${exId}','work',${i},true)"><div class="set-field-lbl">reps</div></div>
       <div class="set-sep" style="color:var(--g3)">@</div>
-      <div class="set-field-wrap" style="flex:1"><input class="set-field" type="number" inputmode="decimal" placeholder="RPE" id="s-${exId}-${i}-rpe" step="0.5" onchange="logSet('${exId}','work',${i},true)" style="font-size:13px"><div class="set-field-lbl">RPE</div></div>
+      <div class="set-field-wrap" style="flex:1"><input class="set-field" type="number" inputmode="decimal" placeholder="RPE" id="s-${exId}-${i}-rpe" step="0.5"
+        oninput="logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'rpe',this.value)"
+        onchange="logSet('${exId}','work',${i},true)" style="font-size:13px"><div class="set-field-lbl">RPE</div></div>
     </div>
     <button class="set-more" onclick="showSetMenu('${exId}',${i},'work')">⋮</button>
   </div>`;
@@ -931,6 +1248,124 @@ function buildCarryBody(exId,sets){
     </div>`;
   }
   return h;
+}
+
+function getMachineList(type){
+  if(type==='rowing') return rowers;
+  if(type==='bikeerg') return bikeergMachines;
+  if(type==='skierg') return skiergMachines;
+  if(type==='assaultbike') return assaultMachines;
+  return [];
+}
+
+function buildCardioBody(exId, cardioType){
+  const cfg=CARDIO_TYPES[cardioType]||CARDIO_TYPES.rowing;
+  const machines=getMachineList(cardioType);
+  let h='';
+  
+  // Machine selectie
+  if(machines.length>0){
+    const selM=localStorage.getItem('sel_'+cardioType)||machines[0];
+    h+=`<div style="padding:8px 14px 4px;font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Machine selectie</div>
+    <div class="rower-scroll" id="msel-${exId}">
+      ${machines.map(m=>`<button class="rower-chip${m===selM?' sel':''}" onclick="selMachine_fn('${m}','${cardioType}','${exId}')">${m}</button>`).join('')}
+    </div>`;
+  }
+  
+  h+=`<div style="padding:8px 14px 4px;font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Resultaat</div>
+  <div class="row-grid">`;
+  
+  cfg.fields.forEach(f=>{
+    const lbl=cfg.labels[f]||f;
+    const isComputed=f==='split'||f==='pace';
+    h+=`<div class="row-item">
+      <input class="${isComputed?'row-inp computed':'row-inp'}" type="text" placeholder="${isComputed?'auto':''}" id="${exId}-${f}" 
+        ${isComputed?'':''}
+        oninput="calcCardioSplit('${exId}','${cardioType}');logCardio('${exId}','${cardioType}')">
+      <div class="row-inp-lbl">${lbl}</div>
+    </div>`;
+  });
+  h+='</div>';
+  
+  // Splits
+  if(cfg.splits){
+    const numSplits=cfg.splitTotal/cfg.splitDist;
+    h+=`<div style="padding:4px 14px 4px;font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Splits per ${cfg.splitDist}${cfg.unit}</div>
+    <div class="splits-grid">
+      <div></div><div style="font-size:10px;font-weight:700;color:var(--g4);text-align:center">TIJD</div><div style="font-size:10px;font-weight:700;color:var(--g4);text-align:center">SPLIT</div>`;
+    for(let q=1;q<=numSplits;q++){
+      h+=`<div class="split-lbl">${q*cfg.splitDist}${cfg.unit}</div>
+      <input class="split-inp" type="text" placeholder=":58" id="${exId}-q${q}-t" oninput="logCardio('${exId}','${cardioType}')">
+      <input class="split-inp computed" type="text" placeholder="auto" id="${exId}-q${q}-s" readonly>`;
+    }
+    h+='</div>';
+  }
+  
+  // Hardlopen: pace veld
+  if(cardioType==='running'){
+    h+=`<div style="padding:4px 14px 8px;font-size:11px;color:var(--g4)">Pace wordt auto berekend uit afstand en tijd</div>`;
+  }
+  
+  return h;
+}
+
+function buildRowingBody(exId){
+  return buildCardioBody(exId,'rowing');
+}
+
+function selMachine_fn(m, type, exId){
+  localStorage.setItem('sel_'+type, m);
+  document.querySelectorAll(`#msel-${exId} .rower-chip`).forEach(b=>b.classList.toggle('sel',b.textContent===m));
+  logCardio(exId, type);
+}
+
+function calcCardioSplit(exId, cardioType){
+  const cfg=CARDIO_TYPES[cardioType]||CARDIO_TYPES.rowing;
+  const timeStr=document.getElementById(exId+'-time')?.value||'';
+  if(!timeStr) return;
+  const p=timeStr.split(':');let sec=0;
+  if(p.length===2) sec=parseFloat(p[0])*60+parseFloat(p[1]);
+  else if(p.length===3) sec=parseFloat(p[0])*3600+parseFloat(p[1])*60+parseFloat(p[2]);
+  else sec=parseFloat(timeStr);
+  if(!sec) return;
+  
+  if(cardioType==='running'){
+    const dist=parseFloat(document.getElementById(exId+'-dist_km')?.value)||0;
+    if(!dist) return;
+    const pace=sec/dist;
+    const pm=Math.floor(pace/60),ps=Math.round(pace%60);
+    const el=document.getElementById(exId+'-pace');
+    if(el){el.value=pm+':'+(ps<10?'0':'')+ps;}
+  } else {
+    const dist=parseFloat(document.getElementById(exId+'-dist')?.value)||1000;
+    const splitDist=cardioType==='assaultbike'?1:500;
+    const ss=(sec/dist)*splitDist;
+    const sm=Math.floor(ss/60),sr=Math.round(ss%60);
+    const el=document.getElementById(exId+'-split');
+    if(el){el.value=sm+':'+(sr<10?'0':'')+sr;}
+  }
+}
+
+function logCardio(exId, cardioType){
+  const cfg=CARDIO_TYPES[cardioType]||CARDIO_TYPES.rowing;
+  if(!sessionLog[exId]) sessionLog[exId]={};
+  const data={type:cardioType,machine:localStorage.getItem('sel_'+cardioType)||''};
+  cfg.fields.forEach(f=>{data[f]=document.getElementById(exId+'-'+f)?.value||'';});
+  if(cfg.splits){
+    const numSplits=cfg.splitTotal/cfg.splitDist;
+    data.splits=[];
+    for(let q=1;q<=numSplits;q++){
+      data.splits.push({t:document.getElementById(exId+'-q'+q+'-t')?.value||''});
+    }
+  }
+  sessionLog[exId].rowing=data;
+  updateProgress(curT);
+}
+
+function selRower_fn(r,exId){
+  selRower=r;localStorage.setItem('maurice_rower',r);
+  document.querySelectorAll(`#rower-sel-${exId} .rower-chip`).forEach(b=>b.classList.toggle('sel',b.textContent===r));
+  logCardio(exId,'rowing');
 }
 
 function buildRowingBody(exId){
@@ -985,6 +1420,23 @@ function logRow(exId){
   if(!sessionLog[exId])sessionLog[exId]={};
   sessionLog[exId].rowing={dist:document.getElementById(exId+'-dist')?.value,time:document.getElementById(exId+'-time')?.value,split:document.getElementById(exId+'-split')?.value,watt:document.getElementById(exId+'-watt')?.value,stroke:document.getElementById(exId+'-stroke')?.value,drag:document.getElementById(exId+'-drag')?.value,rower:selRower,splits:[1,2,3,4].map(q=>({t:document.getElementById(exId+'-q'+q+'-t')?.value||''}))};
   updateProgress(curT);
+}
+
+function copyToSets(exId, fromSet, field, val){
+  if(!val) return;
+  // Find all set rows for this exercise
+  let i=fromSet+1;
+  while(true){
+    const el=document.getElementById('s-'+exId+'-'+i+'-'+field);
+    if(!el) break;
+    // Only fill empty fields
+    if(!el.value){
+      el.value=val;
+      el.classList.add('filled');
+      logSet(exId,'work',i,true);
+    }
+    i++;
+  }
 }
 
 function logSet(exId,type,setNum,isWork){
@@ -1191,6 +1643,7 @@ async function refreshHome(){
   }else{
     document.getElementById('home-hrv-card').innerHTML=`<div class="card"><div class="card-body" style="padding:16px;text-align:center"><p style="color:var(--g4);font-size:13px;margin-bottom:10px">Geen hersteldata</p><button class="btn btn-o btn-sm" onclick="openModal('m-hrv')" style="width:100%">Check-in invoeren</button></div></div>`;
   }
+  renderCustomTrainBtns();
   const lastT=localStorage.getItem('maurice_last_training');
   const nextT=lastT==='A'?'B':lastT==='B'?'A':'A';
   document.getElementById('home-next-lbl').textContent='Volgende training: '+nextT;
@@ -1256,7 +1709,10 @@ async function loadHistory(append=false){
             <span style="color:var(--g3);font-size:16px;flex-shrink:0">✏️</span>
           </div>`;
         }).join('')}
-        <button onclick="addSetToDate('${date}','${tt}')" style="display:flex;align-items:center;gap:6px;width:100%;padding:10px 0;background:none;border:none;border-top:1px dashed var(--g2);color:var(--red);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f);margin-top:4px">+ Oefening toevoegen aan deze dag</button>
+        <div style="display:flex;gap:8px;border-top:1px dashed var(--g2);margin-top:4px;padding-top:4px">
+          <button onclick="addSetToDate('${date}','${tt}')" style="flex:1;padding:10px 0;background:none;border:none;color:var(--red);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">+ Oefening</button>
+          <button onclick="openRepeatWorkout('${date}','${tt}')" style="flex:1;padding:10px 0;background:none;border:none;color:var(--dark);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">🔄 Herhalen</button>
+        </div>
       </div>
     </div>`;
   });
@@ -1405,8 +1861,8 @@ async function refreshStatsScreen(){
     const disp=best?Math.round(best):ex.pr;if(!disp)continue;
     const tgt=PEAK[ex.id];const pct=tgt?Math.round(disp/tgt*100):null;
     const fc=pct?(pct>=100?'var(--green)':pct>=85?'var(--y)':'var(--accent)'):'var(--accent)';
-    h+=`<div class="stat-1rm-item">
-      <div class="stat-1rm-row"><span class="stat-1rm-name">${ex.name}</span><span class="stat-1rm-val">${disp} kg</span>${tgt?`<span class="stat-1rm-target">/ ${tgt} kg</span>`:''}</div>
+    h+=`<div class="stat-1rm-item" onclick="show1RMChart('${ex.id}','${ex.name}')" style="cursor:pointer">
+      <div class="stat-1rm-row"><span class="stat-1rm-name">${ex.name}</span><span class="stat-1rm-val">${disp} kg</span>${tgt?`<span class="stat-1rm-target">/ ${tgt} kg</span>`:''}<span style="color:var(--g3);font-size:14px;margin-left:4px">📈</span></div>
       <div class="prog-wrap"><div class="prog-fill" style="width:${Math.min(100,pct||Math.round(disp/3))}%;background:${fc}"></div></div>
       ${pct?`<div class="stat-1rm-pct">${pct}% van peakdoel${pct>=100?' ✓':' · '+(100-pct)+'% te gaan'}</div>`:''}
     </div>`;
@@ -1443,6 +1899,7 @@ async function refreshStatsScreen(){
     bc.forEach(r=>{bh+=`<div class="lrow"><div class="ldate">${r.date}</div><div class="lval">${r.weight||'—'} kg</div><div class="lnote">${r.fat_pct||'—'}% · ${r.muscle_mass||'—'} kg</div></div>`;});
   }
   const elb=document.getElementById('stats-bc-list');if(elb)elb.innerHTML=bh;
+  await refreshVolumeSpiergroep();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1504,6 +1961,12 @@ function renderRowerAdmin(){const el=document.getElementById('rower-admin-list')
 function addRowerInput(){rowers.push('');renderRowerAdmin();}
 function saveRowers(){const ins=document.querySelectorAll('[id^="rwr-"]');rowers=Array.from(ins).map(i=>i.value.trim()).filter(v=>v);localStorage.setItem('maurice_rowers',JSON.stringify(rowers));closeModal('m-rowers');toast('Roeiers opgeslagen');}
 let curEditYTId=null, curEditYTCat=null;
+
+function updateNxType(val){
+  const isCardio=['rowing','bikeerg','skierg','assaultbike','running'].includes(val);
+  const ytRow=document.querySelector('#m-newex .irow:has(#nx-yt)');
+  // Show/hide YouTube for non-cardio
+}
 
 function ytId(val){
   if(!val) return '';
@@ -1608,7 +2071,8 @@ async function buildCtx(){
   const bcStr=bc[0]?`\nTanita (${bc[0].date}): vet% ${bc[0].fat_pct}% | spier ${bc[0].muscle_mass} kg | BMR ${bc[0].bmr} | visceraal ${bc[0].visceral_fat}`+(bc[0].edema?` | oedeem: ${bc[0].edema}`:''): '';
   const lastT=localStorage.getItem('maurice_last_training')||'?';
   const nextT=lastT==='A'?'B':'A';
-  return `Je bent de persoonlijke trainingscoach en data-analist van Maurice van Latum van Steensel.
+  const mf = mastersFactor(atleet?.leeftijd||50);
+  return `Je bent de persoonlijke trainingscoach en data-analist van ${atleet?.naam||'Maurice'} van Latum van Steensel.
 Communiceer in het Nederlands. Datumnotatie: "26 april 2026 08:00".
 Direct, bondig, data-forward. Geen opvulling. Geen bevestigingszinnen. Geen disclaimers.
 Vergelijk altijd met de vorige vergelijkbare sessie. Geef altijd een concreet gewicht als advies.
@@ -1758,6 +2222,708 @@ async function importFromFile(input){
 }
 
 // ══════════════════════════════════════════════════════════
+// ATLEET PROFIEL
+// ══════════════════════════════════════════════════════════
+let atleet = JSON.parse(localStorage.getItem('maurice_atleet') || JSON.stringify({
+  naam: 'Maurice', leeftijd: 50, geslacht: 'man', lengte: 180,
+  niveau: 'ervaren', klasse: '120+', sport: 'crossfit'
+}));
+
+function saveAtleet(){
+  atleet = {
+    naam: document.getElementById('atl-naam').value || atleet.naam,
+    leeftijd: parseInt(document.getElementById('atl-leeftijd').value) || atleet.leeftijd,
+    geslacht: document.getElementById('atl-geslacht').value,
+    lengte: parseInt(document.getElementById('atl-lengte').value) || atleet.lengte,
+    niveau: document.getElementById('atl-niveau').value,
+    klasse: document.getElementById('atl-klasse').value,
+    sport: document.getElementById('atl-sport').value,
+  };
+  localStorage.setItem('maurice_atleet', JSON.stringify(atleet));
+  closeModal('m-atleet');
+  toast('Profiel opgeslagen');
+  refreshProfiel();
+}
+
+function openAtleetModal(){
+  document.getElementById('atl-naam').value = atleet.naam || '';
+  document.getElementById('atl-leeftijd').value = atleet.leeftijd || 50;
+  document.getElementById('atl-geslacht').value = atleet.geslacht || 'man';
+  document.getElementById('atl-lengte').value = atleet.lengte || 180;
+  document.getElementById('atl-niveau').value = atleet.niveau || 'ervaren';
+  document.getElementById('atl-klasse').value = atleet.klasse || '';
+  document.getElementById('atl-sport').value = atleet.sport || 'crossfit';
+  openModal('m-atleet');
+}
+
+// Masters leeftijdscorrectie (IPF Masters factor)
+function mastersFactor(leeftijd){
+  if(leeftijd < 40) return 1.0;
+  if(leeftijd < 45) return 1.01;
+  if(leeftijd < 50) return 1.02;
+  if(leeftijd < 55) return 1.04;  // Maurice: 50 jaar
+  if(leeftijd < 60) return 1.06;
+  if(leeftijd < 65) return 1.09;
+  return 1.12;
+}
+
+// Verwachte 1RM op basis van niveau en leeftijd
+function expected1RM(lift, gewicht, leeftijd, niveau){
+  const niveauFactor = {beginner:0.5, gevorderd:0.75, ervaren:1.0, expert:1.2}[niveau] || 1.0;
+  const mf = mastersFactor(leeftijd);
+  const norms = {
+    backsquat: 1.5, bench: 1.0, frontsquat: 1.2, shoulderpress: 0.65,
+    hexabar: 1.75, hpc: 0.75, hps: 0.55
+  };
+  const norm = norms[lift] || 1.0;
+  return Math.round(gewicht * norm * niveauFactor * mf);
+}
+
+async function refreshProfiel(){
+  // Atleet kaart
+  const el = document.getElementById('profiel-atleet-card');
+  if(el){
+    const bmi = atleet.lengte ? Math.round((atleet.lengte > 0 ? 0 : 0)) : null; // from weight_log
+    const mf = mastersFactor(atleet.leeftijd);
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div class="stat-box"><div class="stat-val">${atleet.leeftijd||'—'}</div><div class="stat-unit">jaar</div></div>
+        <div class="stat-box"><div class="stat-val">${atleet.lengte||'—'}</div><div class="stat-unit">cm</div></div>
+        <div class="stat-box"><div class="stat-val">${mf.toFixed(2)}×</div><div class="stat-unit">Masters factor</div></div>
+        <div class="stat-box"><div class="stat-val" style="font-size:14px">${atleet.niveau||'—'}</div><div class="stat-unit">niveau</div></div>
+      </div>
+      <div style="font-size:12px;color:var(--g4)">
+        ${atleet.klasse ? '⚖️ Gewichtsklasse: -'+atleet.klasse+' kg · ' : ''}
+        🎯 ${atleet.sport==='crossfit'?'CrossFit/Functioneel':atleet.sport||'—'}
+      </div>
+      ${atleet.leeftijd>=50?`<div style="background:#fff8e1;border-left:3px solid var(--y);border-radius:0 8px 8px 0;padding:8px 10px;font-size:11px;color:#666;margin-top:10px">
+        Masters 50+ atleet · IPF leeftijdscorrectie factor ${mf.toFixed(2)}× actief in coach berekeningen</div>`:''}`;
+  }
+
+  // Lichaamscompositie
+  const bc = await sbGet('body_comp','&order=date.desc&limit=1');
+  const lat = bc[0];
+  if(lat){
+    document.getElementById('profiel-bc-date').textContent = lat.date;
+    const wd = await sbGet('weight_log','&order=date.desc&limit=1');
+    const wt = wd[0]?.weight;
+    const bmiVal = (wt && atleet.lengte) ? Math.round(wt/Math.pow(atleet.lengte/100,2)*10)/10 : null;
+    document.getElementById('profiel-bc-card').innerHTML = `
+      <div class="bc-grid">
+        <div class="bc-box"><div class="bc-val">${lat.fat_pct||'—'}${lat.fat_pct?'%':''}</div><div class="bc-lbl">Vet%</div></div>
+        <div class="bc-box"><div class="bc-val">${lat.muscle_mass||'—'}${lat.muscle_mass?' kg':''}</div><div class="bc-lbl">Spiermassa</div></div>
+        <div class="bc-box"><div class="bc-val">${lat.bmr||'—'}</div><div class="bc-lbl">BMR kcal</div></div>
+        <div class="bc-box"><div class="bc-val">${lat.visceral_fat||'—'}</div><div class="bc-lbl">Visceraal vet</div></div>
+        ${bmiVal?`<div class="bc-box"><div class="bc-val">${bmiVal}</div><div class="bc-lbl">BMI</div></div>`:''}
+        ${wt?`<div class="bc-box"><div class="bc-val">${wt} kg</div><div class="bc-lbl">Gewicht</div></div>`:''}
+      </div>
+      ${lat.edema?`<div style="background:#fff8e1;border-left:3px solid var(--y);border-radius:0 8px 8px 0;padding:8px 10px;font-size:11px;color:#666;margin-top:8px">⚠️ Oedeem: ${lat.edema} — Tanita waarden minder betrouwbaar</div>`:''}`;
+    
+    // Afmetingen uit note veld
+    if(lat.note){
+      const parts = {};
+      lat.note.split('|').forEach(p=>{const kv=p.split(':');if(kv.length===2)parts[kv[0].trim()]=kv[1].trim();});
+      const items = [
+        {lbl:'Taille', val:lat.waist_cm, unit:'cm'},
+        {lbl:'Heupen', val:parts.hips, unit:'cm'},
+        {lbl:'Borst', val:parts.chest, unit:'cm'},
+        {lbl:'Bovenarm', val:parts.arm, unit:'cm'},
+        {lbl:'Dij', val:parts.thigh, unit:'cm'},
+      ].filter(i=>i.val&&i.val!=='null'&&i.val!=='');
+      if(items.length){
+        const thr = lat.waist_cm&&parts.hips ? Math.round((lat.waist_cm/parseFloat(parts.hips))*100)/100 : null;
+        let afm = items.map(i=>`<div class="lrow"><div class="ldate" style="width:80px">${i.lbl}</div><div class="lval">${i.val} ${i.unit}</div></div>`).join('');
+        if(thr) afm += `<div class="lrow"><div class="ldate" style="width:80px">T/H ratio</div><div class="lval" style="color:${thr<0.9?'var(--green)':'var(--red)'}">${thr}</div><div class="lnote">${thr<0.9?'✓ Goed':'Let op'}</div></div>`;
+        document.getElementById('profiel-afmetingen-card').innerHTML = afm;
+      }
+    }
+  }
+
+  // Gewicht grafiek
+  const wd2 = await sbGet('weight_log','&order=date.asc&limit=20');
+  if(wd2.length){
+    document.getElementById('profiel-weight-lbl').textContent = wd2[wd2.length-1].weight+' kg';
+    drawChart('profiel-w-chart', wd2.map(w=>w.weight), wd2.map(w=>w.date));
+  }
+
+  // Geschiedenis
+  const bcs = await sbGet('body_comp','&order=date.desc&limit=6');
+  let hist = '';
+  bcs.forEach(r=>{
+    const diff_fat = bcs.indexOf(r)<bcs.length-1 ? Math.round((r.fat_pct - bcs[bcs.indexOf(r)+1]?.fat_pct)*10)/10 : null;
+    hist += `<div class="lrow">
+      <div class="ldate">${r.date}</div>
+      <div class="lval">${r.weight||'—'} kg</div>
+      <div class="lnote" style="font-size:11px">
+        ${r.fat_pct||'—'}%
+        ${r.muscle_mass?' · '+r.muscle_mass+' kg':''}
+        ${diff_fat&&diff_fat!==0?`<span style="color:${diff_fat<0?'var(--green)':'var(--red)'}"> (${diff_fat>0?'+':''}${diff_fat}%)</span>`:''}
+      </div>
+    </div>`;
+  });
+  document.getElementById('profiel-history').innerHTML = hist || '<p style="color:var(--g4);font-size:13px">Nog geen metingen</p>';
+}
+
+async function askCoachProfiel(){
+  const bc = await sbGet('body_comp','&order=date.desc&limit=2');
+  const wd = await sbGet('weight_log','&order=date.desc&limit=3');
+  const l = bc[0];
+  const mf = mastersFactor(atleet.leeftijd);
+  let msg = `Analyseer mijn lichaamssamenstelling en profiel:
+`;
+  msg += `Leeftijd: ${atleet.leeftijd} jaar | Lengte: ${atleet.lengte} cm | Niveau: ${atleet.niveau}
+`;
+  msg += `Masters factor: ${mf.toFixed(2)}× (IPF leeftijdscorrectie)
+`;
+  if(l) msg += `Tanita (${l.date}): vet% ${l.fat_pct}% | spier ${l.muscle_mass} kg | BMR ${l.bmr} kcal | visceraal ${l.visceral_fat}${l.edema?' | oedeem: '+l.edema:''}
+`;
+  if(wd.length>1) msg += `Gewicht trend: ${wd[wd.length-1]?.weight} → ${wd[0]?.weight} kg
+`;
+  if(bc.length>1) msg += `Vorige meting (${bc[1].date}): vet% ${bc[1].fat_pct}% | spier ${bc[1].muscle_mass} kg
+`;
+  go('s-coach');
+  sendMsg(msg);
+}
+
+// ══════════════════════════════════════════════════════════
+// CUSTOM TRAININGEN
+// ══════════════════════════════════════════════════════════
+function saveNewTraining(){
+  const name=document.getElementById('nt-name').value.trim();
+  const color=document.getElementById('nt-color').value;
+  const note=document.getElementById('nt-note').value.trim();
+  if(!name){toast('Vul een naam in');return;}
+  const id='custom_'+Date.now();
+  const t={id,name,color,note,exercises:[]};
+  customTrainings.push(t);
+  localStorage.setItem('maurice_trainings',JSON.stringify(customTrainings));
+  closeModal('m-new-training');
+  document.getElementById('nt-name').value='';
+  toast(name+' aangemaakt');
+  renderCustomTrainBtns();
+  renderCustomTrainList();
+}
+
+function renderCustomTrainBtns(){
+  const el=document.getElementById('custom-train-btns');
+  if(!el) return;
+  if(!customTrainings.length){el.innerHTML='';return;}
+  let h='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px">';
+  customTrainings.forEach(t=>{
+    h+=`<button onclick="go('s-train-custom-${t.id}')" style="padding:12px 16px;border-radius:14px;border:none;background:${t.color};color:#fff;font-family:var(--f);font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer">${t.name}</button>`;
+  });
+  h+='</div>';
+  el.innerHTML=h;
+}
+
+function renderCustomTrainList(){
+  const el=document.getElementById('custom-train-list');
+  if(!el) return;
+  if(!customTrainings.length){el.innerHTML='<p style="color:var(--g4);font-size:13px">Nog geen eigen trainingen</p>';return;}
+  let h='';
+  customTrainings.forEach((t,i)=>{
+    h+=`<div class="card" style="margin-bottom:8px">
+      <div class="card-body" style="padding:12px;display:flex;align-items:center;gap:10px">
+        <div style="width:14px;height:14px;border-radius:50%;background:${t.color};flex-shrink:0"></div>
+        <div style="flex:1"><div style="font-size:15px;font-weight:700">${t.name}</div>${t.note?`<div style="font-size:12px;color:var(--g4)">${t.note}</div>`:''}</div>
+        <button onclick="startCustomTraining('${t.id}')" class="btn btn-o btn-sm">Start</button>
+        <button onclick="deleteCustomTraining('${t.id}')" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button>
+      </div>
+    </div>`;
+  });
+  el.innerHTML=h;
+}
+
+function deleteCustomTraining(id){
+  if(!confirm('Training verwijderen?')) return;
+  customTrainings=customTrainings.filter(t=>t.id!==id);
+  localStorage.setItem('maurice_trainings',JSON.stringify(customTrainings));
+  renderCustomTrainList();
+  renderCustomTrainBtns();
+  toast('Verwijderd');
+}
+
+function startCustomTraining(id){
+  const t=customTrainings.find(x=>x.id===id);
+  if(!t) return;
+  curT='custom_'+id;
+  sessionLog={};sessionExtra=[];
+  // Build training screen dynamically
+  buildCustomTrainScreen(t);
+  document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
+  // Use train-a screen as template, or create custom
+  const existingEl=document.getElementById('s-train-custom-'+id);
+  if(existingEl) existingEl.classList.add('active');
+  trainStart=Date.now();startTrainTimer('A'); // use elapsed-a display
+  document.querySelectorAll('.ni-dot').forEach(d=>d.classList.add('show'));
+}
+
+function buildCustomTrainScreen(t){
+  // Create or update custom training screen
+  let el=document.getElementById('s-train-custom-'+t.id);
+  if(!el){
+    el=document.createElement('div');
+    el.className='scr';
+    el.id='s-train-custom-'+t.id;
+    document.getElementById('app').appendChild(el);
+  }
+  el.style.display='flex';
+  el.style.flexDirection='column';
+  el.style.height='100vh';
+  el.style.overflow='hidden';
+  el.innerHTML=`
+    <div class="train-top">
+      <div class="train-timer-bar">
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="tact red" onclick="confirmLeave()">✕</button>
+          <span class="train-elapsed" id="elapsed-custom-${t.id}">00:00</span>
+        </div>
+        <div class="train-actions">
+          <button class="tact" onclick="pauseTraining()">⏸</button>
+          <button class="tact green" onclick="showSessionSummary('${t.id}')">✓</button>
+        </div>
+      </div>
+      <div style="font-size:13px;font-weight:700;color:var(--g4);letter-spacing:.3px;text-transform:uppercase;margin-bottom:4px">${t.name}</div>
+      <div style="font-size:11px;color:var(--g4);margin-bottom:8px" id="prog-${t.id}-lbl">0 oefeningen</div>
+      <div class="prog-wrap"><div class="prog-fill" id="prog-${t.id}" style="width:0%"></div></div>
+    </div>
+    <div class="scroll" id="train-custom-${t.id}-list" style="padding-top:12px">
+      <p style="color:var(--g4);font-size:13px;text-align:center;padding:20px">Voeg oefeningen toe om te beginnen</p>
+    </div>
+    <div style="padding:12px 16px;background:#fff;border-top:1px solid var(--g2);flex-shrink:0;display:flex;gap:8px">
+      <button onclick="addExToCustomSession('${t.id}')" class="btn btn-o" style="flex:1">+ Oefening</button>
+      <button onclick="showSessionSummary('${t.id}')" class="btn btn-r" style="flex:2">Sessie afsluiten</button>
+    </div>
+    <nav class="bnav">
+      <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+      <button class="ni active"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+      <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+      <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+      <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
+    </nav>`;
+}
+
+function addExToCustomSession(trainId){
+  const avail=exercises.filter(e=>e.active!==false);
+  const cats=['A','B','CrossFit','Overig'];
+  const catL={A:'Training A',B:'Training B',CrossFit:'CrossFit',Overig:'Overig'};
+  let html='';
+  cats.forEach(cat=>{
+    const exs=avail.filter(e=>e.category===cat);
+    if(!exs.length) return;
+    html+=`<div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">${catL[cat]}</div>`;
+    exs.forEach(e=>{
+      html+=`<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--g2);cursor:pointer" onclick="addExToCustomConfirm('${e.id}','${trainId}');closeModal('m-add-ex')"><div style="flex:1;font-size:14px;font-weight:600;color:var(--dark)">${e.name}</div><span style="color:var(--red);font-size:20px;font-weight:700">+</span></div>`;
+    });
+  });
+  document.getElementById('add-ex-list').innerHTML=html;
+  openModal('m-add-ex');
+}
+
+async function addExToCustomConfirm(exId, trainId){
+  const ex=exercises.find(e=>e.id===exId);if(!ex) return;
+  const exType=(ex.id==='roeien'||ex.type==='cardio'||ex.type==='rowing')?'rowing':ex.type||'strength';
+  const newEx={id:ex.id,naam:ex.name,type:exType,sets:4,reps:'6-8',rpe:'8',_t:'custom_'+trainId};
+  sessionExtra.push(newEx);
+  // Re-render custom screen
+  const t=customTrainings.find(x=>x.id===trainId);
+  if(!t) return;
+  const container=document.getElementById('train-custom-'+trainId+'-list');
+  if(!container) return;
+  container.innerHTML='';
+  const list=sessionExtra.filter(e=>e._t==='custom_'+trainId);
+  for(const e of list){
+    const prev=await sbGet('sessions','&exercise_id=eq.'+e.id+'&order=date.desc&limit=1');
+    const prevS=prev[0];
+    let prevStr='';
+    if(prevS){
+      if(prevS.weight&&prevS.reps) prevStr='Vorige ('+prevS.date+'): '+prevS.weight+'kg×'+prevS.reps;
+      else if(prevS.note) prevStr='Vorige: '+prevS.note.split('|')[0];
+    }
+    const div=document.createElement('div');
+    div.innerHTML=buildExItemHTML(e,prevStr,'custom_'+trainId);
+    container.appendChild(div);
+  }
+  // Add exercise + buttons
+  const addDiv=document.createElement('div');
+  addDiv.innerHTML=`<div style="padding:0 0 12px"><button onclick="addExToCustomSession('${trainId}')" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:13px;border-radius:22px;background:var(--g1);border:1.5px solid var(--g2);font-family:var(--f);font-size:13px;font-weight:700;cursor:pointer;color:var(--red)">+ Oefening toevoegen</button></div>`;
+  container.appendChild(addDiv);
+  toast(ex.name+' toegevoegd');
+}
+
+function buildExItemHTML(ex, prevStr, trainId){
+  let bodyHTML='';
+  if(ex.type==='rowing'||ex.type==='bikeerg'||ex.type==='skierg'||ex.type==='assaultbike'||ex.type==='running'){
+    bodyHTML=buildCardioBody(ex.id, ex.cardioType||ex.type||'rowing');
+  } else if(ex.type==='carry'){
+    bodyHTML=buildCarryBody(ex.id, ex.sets||3);
+  } else {
+    bodyHTML=buildStrengthBody(ex.id, ex.wu||0, ex.sets||4);
+  }
+  return `<div class="ex-card">
+    <div class="ex-card-hd" onclick="toggleExCard('${ex.id}')">
+      <div style="flex:1">
+        <div class="ex-card-name">${ex.naam} <button onclick="event.stopPropagation();removeExSession('${ex.id}')" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;margin-left:4px">✕</button></div>
+        <div class="ex-card-meta">${ex.type==='rowing'?'Warmup · 1000m':ex.sets+'×'+ex.reps}</div>
+      </div>
+      <span style="color:var(--g3);font-size:20px" id="arr-${ex.id}">›</span>
+    </div>
+    ${prevStr?`<div class="ex-prev"><strong>${prevStr}</strong></div>`:''}
+    <div class="ex-body" id="body-${ex.id}">
+      ${ex.tip?`<div style="background:#fffbea;border-left:3px solid var(--y);padding:8px 12px;font-size:12px;color:#666;margin:8px 14px;border-radius:0 8px 8px 0">💡 ${ex.tip}</div>`:''}
+      ${bodyHTML}
+      <button onclick="askCoachEx('${ex.naam}','${trainId}')" style="margin:8px 14px 12px;background:var(--dark);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">🤖 Vraag de coach</button>
+    </div>
+  </div>`;
+}
+
+// Override showSessionSummary to check for custom training save
+const _origShowSess=showSessionSummary;
+function showSessionSummary(t){
+  // Check if extra exercises were added in A/B trainings
+  const isAB=(t==='A'||t==='B');
+  if(isAB&&sessionExtra.filter(e=>e._t===t).length>0){
+    openModal('m-save-as-training');
+    document.getElementById('sat-name').value='';
+    return;
+  }
+  _origShowSess(t);
+}
+
+function finishSessionNoSave(){
+  closeModal('m-save-as-training');
+  _origShowSess(curT);
+}
+
+function saveAsTrainingAndFinish(){
+  const name=document.getElementById('sat-name').value.trim();
+  if(!name){toast('Vul een naam in');return;}
+  const t={id:'saved_'+Date.now(),name,color:'#111111',note:'Opgeslagen na sessie '+td(),exercises:sessionExtra.map(e=>e.id)};
+  customTrainings.push(t);
+  localStorage.setItem('maurice_trainings',JSON.stringify(customTrainings));
+  closeModal('m-save-as-training');
+  toast(name+' opgeslagen als training');
+  _origShowSess(curT);
+}
+
+// ══════════════════════════════════════════════════════════
+// PLATE CALCULATOR
+// ══════════════════════════════════════════════════════════
+const PLATE_COLORS = {'25':{bg:'#E53935',c:'#fff'},'20':{bg:'#1565C0',c:'#fff'},'15':{bg:'#F9A825',c:'#111'},'10':{bg:'#2E7D32',c:'#fff'},'5':{bg:'#eee',c:'#111'},'2.5':{bg:'#9E9E9E',c:'#fff'},'1.25':{bg:'#9C27B0',c:'#fff'},'1':{bg:'#00838F',c:'#fff'},'0.5':{bg:'#FF8F00',c:'#fff'}};
+let availPlates=JSON.parse(localStorage.getItem('maurice_plates')||'[25,20,15,10,5,2.5,1.25,1,0.5]');
+
+function openPlateCalc(w){
+  const el=document.getElementById('pc-target');
+  if(el) el.value=w||'';
+  renderPlateAvail();calcPlates();openModal('m-plate-calc');
+}
+
+function renderPlateAvail(){
+  const el=document.getElementById('pc-plates-avail');if(!el)return;
+  const all=[25,20,15,10,5,2.5,1.25,1,0.5];
+  el.innerHTML=all.map(p=>{
+    const on=availPlates.includes(p);
+    const c=PLATE_COLORS[String(p)]||{bg:'#666',c:'#fff'};
+    return `<button class="plate-btn" onclick="togglePlate(${p})" style="background:${on?c.bg:'var(--g2)'};color:${on?c.c:'var(--g4)'};opacity:${on?1:0.4}">${p} kg</button>`;
+  }).join('');
+}
+
+function togglePlate(p){
+  if(availPlates.includes(p)) availPlates=availPlates.filter(x=>x!==p);
+  else{availPlates.push(p);availPlates.sort((a,b)=>b-a);}
+  localStorage.setItem('maurice_plates',JSON.stringify(availPlates));
+  renderPlateAvail();calcPlates();
+}
+
+function calcPlates(){
+  const target=parseFloat(document.getElementById('pc-target')?.value)||0;
+  const bar=parseFloat(document.getElementById('pc-bar')?.value)||20;
+  const vis=document.getElementById('pc-visual');
+  const res=document.getElementById('pc-result');
+  if(!vis||!res) return;
+  if(target<bar&&target>0){vis.innerHTML='<div style="color:var(--red);font-size:13px">Doelgewicht lager dan stang</div>';res.textContent='';return;}
+  if(!target){vis.innerHTML='';res.textContent='';return;}
+  let rem=Math.round((target-bar)/2*100)/100;
+  const plates=[];
+  const sorted=[...availPlates].sort((a,b)=>b-a);
+  for(const p of sorted){while(rem>=p-0.001){plates.push(p);rem=Math.round((rem-p)*100)/100;}}
+  const achieved=bar+plates.reduce((s,p)=>s+p,0)*2;
+  const diff=Math.round((target-achieved)*10)/10;
+  let barH='<div style="display:flex;align-items:center;justify-content:center;gap:1px;flex-wrap:wrap;padding:8px 0">';
+  [...plates].reverse().forEach(p=>{const c=PLATE_COLORS[String(p)]||{bg:'#666',c:'#fff'};const h=Math.max(28,p*1.8);barH+=`<div style="background:${c.bg};color:${c.c};width:${Math.max(22,p*2)}px;height:${h}px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-family:var(--f);font-weight:800;font-size:9px">${p}</div>`;});
+  barH+=`<div style="background:#999;border-radius:2px;height:10px;width:50px"></div>`;
+  plates.forEach(p=>{const c=PLATE_COLORS[String(p)]||{bg:'#666',c:'#fff'};const h=Math.max(28,p*1.8);barH+=`<div style="background:${c.bg};color:${c.c};width:${Math.max(22,p*2)}px;height:${h}px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-family:var(--f);font-weight:800;font-size:9px">${p}</div>`;});
+  barH+='</div>';
+  vis.innerHTML=barH;
+  const counts={};plates.forEach(p=>{counts[p]=(counts[p]||0)+1;});
+  const summary=Object.entries(counts).sort((a,b)=>b[0]-a[0]).map(([p,n])=>n+'×'+p+' kg').join(' · ');
+  res.innerHTML=`<strong>${achieved} kg</strong>${diff?` <span style="color:${diff>0?'var(--red)':'var(--green)'}"> (${diff>0?'+':'-'}${Math.abs(diff)} kg)</span>`:''}<br><span style="color:var(--g4);font-size:11px">${summary} per kant</span>`;
+}
+
+// ══════════════════════════════════════════════════════════
+// WORKOUT HERHALEN
+// ══════════════════════════════════════════════════════════
+let repeatMode='same', repeatSessions=[], repeatDate=null, repeatT=null;
+
+function setRepeatMode(mode){
+  repeatMode=mode;
+  ['same','plus','pct'].forEach(m=>{
+    const b=document.getElementById('rw-'+m);
+    if(!b)return;
+    b.className=m===mode?'btn btn-r btn-sm':'btn btn-o btn-sm';
+  });
+  const wrap=document.getElementById('rw-adj-wrap');
+  const lbl=document.getElementById('rw-adj-lbl');
+  if(wrap) wrap.style.display=mode==='same'?'none':'block';
+  if(lbl) lbl.textContent=mode==='plus'?'+ kg toevoegen':'% aanpassing';
+  updateRepeatPreview();
+}
+
+function updateRepeatPreview(){
+  const adj=parseFloat(document.getElementById('rw-adj-val')?.value)||0;
+  const el=document.getElementById('rw-preview');if(!el) return;
+  let html='';
+  repeatSessions.forEach(s=>{
+    if(!s.weight||!s.reps) return;
+    let nw=s.weight;
+    if(repeatMode==='plus') nw=Math.round((s.weight+adj)*2)/2;
+    else if(repeatMode==='pct') nw=Math.round(s.weight*(1+adj/100)*2)/2;
+    const n=exercises.find(e=>e.id===s.exercise_id)?.name||s.exercise_id;
+    html+=`<div class="lrow"><div class="ldate" style="width:110px">${n}</div><div class="lval">${s.sets}×${s.reps} @ <strong>${nw} kg</strong>${nw!==s.weight?` <span style="color:${nw>s.weight?'var(--green)':'var(--red)'}">(was ${s.weight})</span>`:''}</div></div>`;
+  });
+  el.innerHTML=html||'<p style="color:var(--g4);font-size:13px">Geen krachtsessies gevonden</p>';
+}
+
+async function openRepeatWorkout(date,t){
+  repeatDate=date;repeatT=t;
+  document.getElementById('rw-title').textContent='Herhaal sessie '+fmtDate(date);
+  repeatSessions=await sbGet('sessions','&date=eq.'+date+'&training_type=eq.'+t+'&order=created_at.asc');
+  setRepeatMode('same');
+  updateRepeatPreview();
+  openModal('m-repeat-workout');
+}
+
+async function startRepeatWorkout(){
+  const adj=parseFloat(document.getElementById('rw-adj-val')?.value)||0;
+  closeModal('m-repeat-workout');
+  const t=(repeatT==='A'||repeatT==='B')?repeatT:'A';
+  const prefillMap={};
+  repeatSessions.forEach(s=>{
+    if(!s.weight||!s.reps) return;
+    let nw=s.weight;
+    if(repeatMode==='plus') nw=Math.round((s.weight+adj)*2)/2;
+    else if(repeatMode==='pct') nw=Math.round(s.weight*(1+adj/100)*2)/2;
+    prefillMap[s.exercise_id]={kg:nw,reps:s.reps,rpe:s.rpe,sets:s.sets||4};
+  });
+  window._prefillMap=prefillMap;
+  curT=t;sessionLog={};sessionExtra=[];
+  await renderTrainScreen(t);
+  window._prefillMap=null;
+  document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s-train-'+t.toLowerCase()).classList.add('active');
+  trainStart=Date.now();startTrainTimer(t);
+  document.querySelectorAll('.ni-dot').forEach(d=>d.classList.add('show'));
+  toast('Sessie van '+fmtDate(repeatDate)+' geladen');
+}
+
+// ══════════════════════════════════════════════════════════
+// SUPERSETS
+// ══════════════════════════════════════════════════════════
+let supersetCurT = null;
+let supersetExIds = [];
+
+function openSupersetModal(t){
+  supersetCurT = t;
+  supersetExIds = [];
+  renderSupersetList();
+  openModal('m-superset');
+}
+
+function renderSupersetList(){
+  const el = document.getElementById('superset-ex-list');
+  if(!el) return;
+  if(!supersetExIds.length){
+    el.innerHTML = '<p style="color:var(--g4);font-size:13px;margin-bottom:8px">Geen oefeningen geselecteerd</p>';
+    return;
+  }
+  el.innerHTML = supersetExIds.map((id,i)=>{
+    const ex = exercises.find(e=>e.id===id);
+    return `<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)">
+      <div style="font-size:14px;font-weight:600;color:var(--dark);flex:1">${ex?.name||id}</div>
+      <button onclick="supersetExIds.splice(${i},1);renderSupersetList()" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function addSupersetEx(){
+  const avail = exercises.filter(e=>e.active!==false&&!supersetExIds.includes(e.id));
+  const cats = ['A','B','CrossFit','Overig'];
+  const catL = {A:'Training A',B:'Training B',CrossFit:'CrossFit',Overig:'Overig'};
+  let html = '';
+  cats.forEach(cat=>{
+    const exs = avail.filter(e=>e.category===cat);
+    if(!exs.length) return;
+    html += `<div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">${catL[cat]}</div>`;
+    exs.forEach(e=>{
+      html += `<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--g2);cursor:pointer" onclick="supersetExIds.push('${e.id}');renderSupersetList();closeModal('m-add-ex')"><div style="flex:1;font-size:14px;font-weight:600;color:var(--dark)">${e.name}</div><span style="color:#9C27B0;font-size:20px;font-weight:700">+</span></div>`;
+    });
+  });
+  document.getElementById('add-ex-list').innerHTML = html;
+  openModal('m-add-ex');
+}
+
+async function saveSupersetToSession(){
+  if(supersetExIds.length < 2){toast('Voeg minimaal 2 oefeningen toe');return;}
+  const t = supersetCurT;
+  const ssId = 'ss_'+Date.now();
+  const supersetExs = supersetExIds.map(id=>{
+    const ex = exercises.find(e=>e.id===id)||{id,name:id,type:'strength'};
+    return {...ex,naam:ex.name,type:ex.type||'strength',sets:3,reps:'8-12',rpe:'8',_t:t,_superset:ssId};
+  });
+  sessionExtra.push(...supersetExs);
+  closeModal('m-superset');
+  await renderTrainScreen(t);
+  toast('Superset toegevoegd: '+supersetExs.map(e=>e.naam).join(' + '));
+}
+
+// ══════════════════════════════════════════════════════════
+// 1RM GRAFIEK PER OEFENING
+// ══════════════════════════════════════════════════════════
+async function show1RMChart(exId, exName){
+  const ss = await sbGet('sessions','&exercise_id=eq.'+exId+'&weight=not.is.null&reps=not.is.null&order=date.asc&limit=50');
+  if(!ss.length){toast('Geen data voor '+exName);return;}
+  const points = ss.map(s=>{
+    const est = s.reps===1?s.weight:s.weight*(1+s.reps/30);
+    return {date:s.date, est:Math.round(est), w:s.weight, r:s.reps};
+  });
+  const modal = document.createElement('div');
+  modal.className = 'modal-bg open';
+  modal.style.zIndex = '200';
+  modal.innerHTML = `<div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">${exName} — 1RM trend</div>
+    <div style="font-size:12px;color:var(--g4);margin-bottom:8px">Geschatte 1RM (Epley formule) over tijd</div>
+    <div style="height:160px;margin-bottom:12px"><canvas id="chart-1rm-modal"></canvas></div>
+    <div style="max-height:140px;overflow-y:auto">
+      ${points.slice(-8).reverse().map(p=>`<div class="lrow"><div class="ldate">${p.date}</div><div class="lval"><strong>${p.est} kg</strong> 1RM</div><div class="lnote">${p.w}×${p.r}</div></div>`).join('')}
+    </div>
+    <button class="btn btn-o" onclick="this.closest('.modal-bg').remove()" style="margin-top:14px">Sluiten</button>
+  </div>`;
+  document.getElementById('app').appendChild(modal);
+  modal.onclick = e=>{if(e.target===modal)modal.remove();};
+  setTimeout(()=>{
+    drawChart('chart-1rm-modal', points.map(p=>p.est), points.map(p=>p.date));
+  },100);
+}
+
+// ══════════════════════════════════════════════════════════
+// VOLUME PER SPIERGROEP
+// ══════════════════════════════════════════════════════════
+const MUSCLE_MAP = {
+  backsquat:   ['Quadriceps','Billen','Hamstrings'],
+  frontsquat:  ['Quadriceps','Core'],
+  hexabar:     ['Rug','Billen','Hamstrings'],
+  rdl:         ['Hamstrings','Billen','Rug'],
+  bench:       ['Borst','Triceps','Schouders'],
+  shoulderpress:['Schouders','Triceps'],
+  bentoverrow: ['Rug','Biceps'],
+  cablerow:    ['Rug','Biceps'],
+  hpc:         ['Rug','Benen','Schouders'],
+  hps:         ['Rug','Benen','Schouders'],
+  farmercarry: ['Core','Grip','Traps'],
+};
+
+async function refreshVolumeSpiergroep(){
+  const el = document.getElementById('stats-volume-chart');
+  if(!el) return;
+  // Get sessions from last 7 days
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate()-7);
+  const dateStr = weekAgo.toISOString().split('T')[0];
+  const ss = await sbGet('sessions','&date=gte.'+dateStr+'&weight=not.is.null&sets=not.is.null&reps=not.is.null');
+  const muscleVol = {};
+  ss.forEach(s=>{
+    const muscles = MUSCLE_MAP[s.exercise_id]||[];
+    const vol = (s.sets||1)*(s.reps||1)*(s.weight||0);
+    muscles.forEach(m=>{
+      muscleVol[m] = (muscleVol[m]||0) + vol;
+    });
+  });
+  // Set counts per muscle
+  const muscleSets = {};
+  ss.forEach(s=>{
+    const muscles = MUSCLE_MAP[s.exercise_id]||[];
+    muscles.forEach(m=>{
+      muscleSets[m] = (muscleSets[m]||0) + (s.sets||1);
+    });
+  });
+  const sorted = Object.entries(muscleSets).sort((a,b)=>b[1]-a[1]);
+  if(!sorted.length){
+    const container = document.getElementById('stats-volume-content');
+    if(container) container.innerHTML = '<p style="color:var(--g4);font-size:13px">Geen data afgelopen 7 dagen</p>';
+    return;
+  }
+  const max = sorted[0][1];
+  let html = sorted.map(([m,sets])=>{
+    const pct = Math.round(sets/max*100);
+    const optimal = sets >= 12;
+    const color = sets>=12?'var(--green)':sets>=6?'var(--y)':'var(--red)';
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+        <span style="font-size:13px;font-weight:700;color:var(--dark)">${m}</span>
+        <span style="font-size:12px;color:var(--g4)">${sets} sets${optimal?' ✓':' (doel: 12+)'}</span>
+      </div>
+      <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%;background:${color}"></div></div>
+    </div>`;
+  }).join('');
+  const container = document.getElementById('stats-volume-content');
+  if(container) container.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════
+// CSV / JSON EXPORT
+// ══════════════════════════════════════════════════════════
+async function exportCSV(table){
+  const data = await sbGet(table,'&order=date.asc&limit=5000');
+  if(!data.length){toast('Geen data om te exporteren');return;}
+  const headers = Object.keys(data[0]);
+  const escapeCSV = v => {
+    if(v===null||v===undefined) return '';
+    const s = String(v);
+    if(s.includes(',') || s.includes('"') || s.includes(String.fromCharCode(10))){
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+  };
+  const rows = data.map(r=>headers.map(h=>escapeCSV(r[h])).join(','));
+  const csv = [headers.join(',')].concat(rows).join(String.fromCharCode(10));
+  downloadFile(csv, table+'_export_'+td()+'.csv', 'text/csv');
+  toast(table+' geexporteerd');
+}
+
+async function exportJSON(){
+  const tables = ['sessions','weight_log','hrv_log','body_comp','exercises'];
+  const backup = {exported:new Date().toISOString(),version:APP_VER};
+  for(const t of tables){
+    backup[t] = await sbGet(t,'&limit=10000');
+  }
+  backup.atleet = atleet;
+  backup.customTrainings = customTrainings;
+  downloadFile(JSON.stringify(backup,null,2), 'maurice_backup_'+td()+'.json', 'application/json');
+  toast('Volledige backup gedownload');
+}
+
+function downloadFile(content, filename, mimeType){
+  const blob = new Blob([content], {type:mimeType});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ══════════════════════════════════════════════════════════
 // UTILS & BOOT
 // ══════════════════════════════════════════════════════════
 function td(){return new Date().toISOString().split('T')[0];}
@@ -1766,6 +2932,11 @@ const style=document.createElement('style');style.textContent='@keyframes sp{to{
 window.addEventListener('load',async()=>{
   if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
   // Start direct op home scherm — pincode alleen bij Beheer
+  // Handle PWA shortcuts
+  const params = new URLSearchParams(window.location.search);
+  if(params.get('start')==='A') setTimeout(()=>go('s-train-a'),500);
+  if(params.get('start')==='B') setTimeout(()=>go('s-train-b'),500);
+  if(params.get('checkin')==='1') setTimeout(()=>openModal('m-hrv'),500);
   refreshHome();
   const data=await sbGet('exercises','&order=sort_order.asc&active=eq.true');
   exercises=data.length?data:[];

@@ -452,6 +452,12 @@ canvas{width:100%;height:100%}
       </div>
     </div>
 
+    <!-- Taille trend -->
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Taille trend</div><div class="card-sub" id="profiel-waist-lbl">—</div></div>
+      <div class="card-body"><div class="chart-wrap"><canvas id="profiel-waist-chart"></canvas></div></div>
+    </div>
+
     <!-- Gewicht grafiek -->
     <div class="card">
       <div class="card-hd"><div class="card-title">Gewicht trend</div><div class="card-sub" id="profiel-weight-lbl">—</div></div>
@@ -582,7 +588,7 @@ canvas{width:100%;height:100%}
 
 <!-- ═══ ADMIN ═══ -->
 <div class="scr" id="s-admin">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.7.4</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.7.5</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
   <div class="scroll" style="padding-top:8px">
     <div class="card"><div class="card-body" style="padding-top:8px">
       <div class="adm-row"><div><div class="adm-lbl">API Sleutel</div><div class="adm-sub" id="api-st">Niet ingesteld</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-apikey')">Wijzig</button></div></div>
@@ -951,7 +957,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v2.7.4';
+const APP_VER = 'v2.7.5';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -1048,6 +1054,29 @@ async function sbPost(t,d){
   }catch(e){console.error('sbPost catch',t,e);return false;}
 }
 async function sbPatch(t,f,d){try{const r=await fetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(d)});return r.ok;}catch{return false;}}
+// Eén canoniek gewichtsrecord per dag: overschrijft bestaand record i.p.v. dupliceren
+// (voorheen schreven saveHRV/saveWeight/saveBC alle drie los naar weight_log)
+async function upsertWeightLog(weight,scale){
+  if(!weight)return;
+  const existing=await sbGet('weight_log','&date=eq.'+td()+'&limit=1');
+  if(existing.length)await sbPatch('weight_log','id=eq.'+existing[0].id,{weight,scale});
+  else await sbPost('weight_log',{date:td(),weight,scale});
+}
+// Afmetingen: nieuwe records gebruiken eigen kolommen, oude records vallen terug op het note-veld
+function resolveAfmetingen(row){
+  let hips=row.hips_cm??null,chest=row.chest_cm??null,arm=row.arm_cm??null,thigh=row.thigh_cm??null,metabAge=row.metab_age??null;
+  if((hips==null||chest==null||arm==null||thigh==null||metabAge==null)&&row.note){
+    const parts={};
+    row.note.split('|').forEach(p=>{const kv=p.split(':');if(kv.length===2)parts[kv[0].trim()]=kv[1].trim();});
+    const num=v=>(v&&v!=='null'&&v!==''?parseFloat(v):null);
+    if(hips==null)hips=num(parts.hips);
+    if(chest==null)chest=num(parts.chest);
+    if(arm==null)arm=num(parts.arm);
+    if(thigh==null)thigh=num(parts.thigh);
+    if(metabAge==null)metabAge=parts.metab_age&&parts.metab_age!=='null'&&parts.metab_age!==''?parseInt(parts.metab_age):null;
+  }
+  return {hips,chest,arm,thigh,metabAge};
+}
 async function sbDel(t,f){try{const r=await fetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'DELETE',headers:SB_H});return r.ok;}catch{return false;}}
 async function sbUpsert(t,d){try{const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(d)});return r.ok;}catch{return false;}}
 
@@ -1101,7 +1130,7 @@ async function saveHRV(){
   const note=document.getElementById('i-note').value||null;
   const ops=[];
   if(hrv||rhr||slp)ops.push(sbPost('hrv_log',{date:td(),hrv,rhr,sleep:slp,edema:edm,note}));
-  if(wgt)ops.push(sbPost('weight_log',{date:td(),weight:wgt,scale:'Tanita'}));
+  if(wgt)ops.push(upsertWeightLog(wgt,'Tanita'));
   await Promise.all(ops);
   closeModal('m-hrv');
   const parts=[];
@@ -1119,12 +1148,12 @@ async function saveHRV(){
 async function saveWeight(){
   const w=parseFloat(document.getElementById('i-wlog').value);
   if(!w)return;
-  await sbPost('weight_log',{date:td(),weight:w,scale:document.getElementById('i-wscale').value});
+  await upsertWeightLog(w,document.getElementById('i-wscale').value);
   closeModal('m-weight');refreshHome();toast('Gewicht opgeslagen');
 }
 async function saveBC(){
-  const row={date:td(),weight:parseFloat(document.getElementById('bc-w').value)||null,fat_pct:parseFloat(document.getElementById('bc-fat').value)||null,muscle_mass:parseFloat(document.getElementById('bc-mus').value)||null,bmr:parseInt(document.getElementById('bc-bmr').value)||null,visceral_fat:parseInt(document.getElementById('bc-vis').value)||null,waist_cm:parseFloat(document.getElementById('bc-waist').value)||null,edema:document.getElementById('bc-edm').value||null,source:document.getElementById('bc-src').value,note:'hips:'+document.getElementById('bc-hips').value+'|chest:'+document.getElementById('bc-chest').value+'|arm:'+document.getElementById('bc-arm').value+'|thigh:'+document.getElementById('bc-thigh').value+'|metab_age:'+document.getElementById('bc-age').value};
-  if(row.weight)await sbPost('weight_log',{date:td(),weight:row.weight,scale:row.source});
+  const row={date:td(),weight:parseFloat(document.getElementById('bc-w').value)||null,fat_pct:parseFloat(document.getElementById('bc-fat').value)||null,muscle_mass:parseFloat(document.getElementById('bc-mus').value)||null,bmr:parseInt(document.getElementById('bc-bmr').value)||null,visceral_fat:parseInt(document.getElementById('bc-vis').value)||null,waist_cm:parseFloat(document.getElementById('bc-waist').value)||null,hips_cm:parseFloat(document.getElementById('bc-hips').value)||null,chest_cm:parseFloat(document.getElementById('bc-chest').value)||null,arm_cm:parseFloat(document.getElementById('bc-arm').value)||null,thigh_cm:parseFloat(document.getElementById('bc-thigh').value)||null,metab_age:parseInt(document.getElementById('bc-age').value)||null,edema:document.getElementById('bc-edm').value||null,source:document.getElementById('bc-src').value};
+  if(row.weight)await upsertWeightLog(row.weight,row.source);
   await sbPost('body_comp',row);closeModal('m-bc');toast('Opgeslagen');refreshAdmin();
 }
 
@@ -2561,23 +2590,20 @@ async function refreshProfiel(){
       </div>
       ${lat.edema?`<div style="background:#fff8e1;border-left:3px solid var(--y);border-radius:0 8px 8px 0;padding:8px 10px;font-size:11px;color:#666;margin-top:8px">⚠️ Oedeem: ${lat.edema} — Tanita waarden minder betrouwbaar</div>`:''}`;
     
-    // Afmetingen uit note veld
-    if(lat.note){
-      const parts = {};
-      lat.note.split('|').forEach(p=>{const kv=p.split(':');if(kv.length===2)parts[kv[0].trim()]=kv[1].trim();});
-      const items = [
-        {lbl:'Taille', val:lat.waist_cm, unit:'cm'},
-        {lbl:'Heupen', val:parts.hips, unit:'cm'},
-        {lbl:'Borst', val:parts.chest, unit:'cm'},
-        {lbl:'Bovenarm', val:parts.arm, unit:'cm'},
-        {lbl:'Dij', val:parts.thigh, unit:'cm'},
-      ].filter(i=>i.val&&i.val!=='null'&&i.val!=='');
-      if(items.length){
-        const thr = lat.waist_cm&&parts.hips ? Math.round((lat.waist_cm/parseFloat(parts.hips))*100)/100 : null;
-        let afm = items.map(i=>`<div class="lrow"><div class="ldate" style="width:80px">${i.lbl}</div><div class="lval">${i.val} ${i.unit}</div></div>`).join('');
-        if(thr) afm += `<div class="lrow"><div class="ldate" style="width:80px">T/H ratio</div><div class="lval" style="color:${thr<0.9?'var(--green)':'var(--red)'}">${thr}</div><div class="lnote">${thr<0.9?'✓ Goed':'Let op'}</div></div>`;
-        document.getElementById('profiel-afmetingen-card').innerHTML = afm;
-      }
+    // Afmetingen: eigen kolommen, met fallback op legacy note-veld voor oude records
+    const afm = resolveAfmetingen(lat);
+    const items = [
+      {lbl:'Taille', val:lat.waist_cm, unit:'cm'},
+      {lbl:'Heupen', val:afm.hips, unit:'cm'},
+      {lbl:'Borst', val:afm.chest, unit:'cm'},
+      {lbl:'Bovenarm', val:afm.arm, unit:'cm'},
+      {lbl:'Dij', val:afm.thigh, unit:'cm'},
+    ].filter(i=>i.val!=null&&i.val!=='');
+    if(items.length){
+      const thr = lat.waist_cm&&afm.hips ? Math.round((lat.waist_cm/afm.hips)*100)/100 : null;
+      let afmHtml = items.map(i=>`<div class="lrow"><div class="ldate" style="width:80px">${i.lbl}</div><div class="lval">${i.val} ${i.unit}</div></div>`).join('');
+      if(thr) afmHtml += `<div class="lrow"><div class="ldate" style="width:80px">T/H ratio</div><div class="lval" style="color:${thr<0.9?'var(--green)':'var(--red)'}">${thr}</div><div class="lnote">${thr<0.9?'✓ Goed':'Let op'}</div></div>`;
+      document.getElementById('profiel-afmetingen-card').innerHTML = afmHtml;
     }
   }
 
@@ -2586,6 +2612,14 @@ async function refreshProfiel(){
   if(wd2.length){
     document.getElementById('profiel-weight-lbl').textContent = wd2[wd2.length-1].weight+' kg';
     drawChart('profiel-w-chart', wd2.map(w=>w.weight), wd2.map(w=>w.date));
+  }
+
+  // Taille trend (afmetingen-progressie, los van gewicht)
+  const bcTrend = await sbGet('body_comp','&order=date.asc&limit=30');
+  const waistPts = bcTrend.filter(r=>r.waist_cm!=null);
+  if(waistPts.length>=2){
+    document.getElementById('profiel-waist-lbl').textContent = waistPts[waistPts.length-1].waist_cm+' cm';
+    drawChart('profiel-waist-chart', waistPts.map(r=>r.waist_cm), waistPts.map(r=>r.date));
   }
 
   // Geschiedenis
@@ -2599,6 +2633,7 @@ async function refreshProfiel(){
       <div class="lnote" style="font-size:11px">
         ${r.fat_pct||'—'}%
         ${r.muscle_mass?' · '+r.muscle_mass+' kg':''}
+        ${r.waist_cm?' · taille '+r.waist_cm+'cm':''}
         ${diff_fat&&diff_fat!==0?`<span style="color:${diff_fat<0?'var(--green)':'var(--red)'}"> (${diff_fat>0?'+':''}${diff_fat}%)</span>`:''}
       </div>
     </div>`;

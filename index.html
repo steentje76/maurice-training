@@ -673,7 +673,7 @@ canvas{width:100%;height:100%}
 
 <!-- ═══ ADMIN ═══ -->
 <div class="scr" id="s-admin">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.8.4</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.8.5</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
   <div class="scroll" style="padding-top:8px">
     <div class="card"><div class="card-body" style="padding-top:8px">
       <div class="adm-row"><div><div class="adm-lbl">API Sleutel</div><div class="adm-sub" id="api-st">Niet ingesteld</div></div></div>
@@ -1075,7 +1075,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v2.8.4';
+const APP_VER = 'v2.8.5';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -1149,6 +1149,13 @@ const BARBELL_EXERCISES = new Set(['backsquat','bench','frontsquat','shoulderpre
 // STATE
 // ══════════════════════════════════════════════════════════
 let exercises=[];
+// Decimale slaapuren (bv. 6.87) naar leesbaar formaat (bv. "6u52m")
+function fmtSleep(h){
+  let sh=Math.floor(h);
+  let sm=Math.round((h-sh)*60);
+  if(sm===60){sh++;sm=0;}
+  return sh+'u'+(sm?sm+'m':'');
+}
 let equipmentTypes=[], _equipmentTypesLoading=null;
 let customTrainings=JSON.parse(localStorage.getItem('maurice_trainings')||'[]');
 let bikeergMachines=JSON.parse(localStorage.getItem('bikeerg_machines')||'["Bike 1","Bike 2","Bike 3"]');
@@ -1268,7 +1275,7 @@ async function saveHRV(){
   const parts=[];
   if(hrv)parts.push('HRV '+hrv+' ms');
   if(rhr)parts.push('RHR '+rhr+' bpm');
-  if(slp){const sh=Math.floor(slp);const sm=Math.round((slp-sh)*60);parts.push('slaap '+sh+'u'+(sm?sm+'min':''));}
+  if(slp)parts.push('slaap '+fmtSleep(slp));
   if(wgt)parts.push('gewicht '+wgt+' kg');
   if(edm)parts.push(edm);
   if(note)parts.push(note);
@@ -2176,7 +2183,7 @@ async function refreshHome(){
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">
         ${lh.hrv?`<div class="stat-box"><div class="stat-val red">${lh.hrv}</div><div class="stat-unit">HRV ms</div></div>`:''}
         ${lh.rhr?`<div class="stat-box"><div class="stat-val">${lh.rhr}</div><div class="stat-unit">RHR bpm</div></div>`:''}
-        ${lh.sleep?`<div class="stat-box"><div class="stat-val">${lh.sleep}</div><div class="stat-unit">Slaap u</div></div>`:''}
+        ${lh.sleep?`<div class="stat-box"><div class="stat-val">${fmtSleep(lh.sleep)}</div><div class="stat-unit">Slaap</div></div>`:''}
       </div>
       <div class="hrv-pills">
         <div class="${pill.g}${st==='g'?' on':''}">≥24</div>
@@ -2610,7 +2617,7 @@ async function buildCtx(){
   const lh=hd[0];
   const hvData=hd.filter(r=>r.hrv);
   const avg7=hvData.length>=3?Math.round(hvData.reduce((s,r)=>s+r.hrv,0)/hvData.length):null;
-  const hrvStr=lh?`HRV ${lh.hrv||'?'} ms | RHR ${lh.rhr||'?'} bpm | Slaap ${lh.sleep||'?'}u`+(avg7?` | 7d gem: ${avg7} ms`:'')+(lh.edema?` | oedeem: ${lh.edema}`:'')+(lh.note?` | ${lh.note}`:''): 'Geen recente HRV';
+  const hrvStr=lh?`HRV ${lh.hrv||'?'} ms | RHR ${lh.rhr||'?'} bpm | Slaap ${lh.sleep?fmtSleep(lh.sleep):'?'}`+(avg7?` | 7d gem: ${avg7} ms`:'')+(lh.edema?` | oedeem: ${lh.edema}`:'')+(lh.note?` | ${lh.note}`:''): 'Geen recente HRV';
   const wLast=wd[0],wPrev=wd[1];
   const wStr=wLast?`\nGewicht: ${wLast.weight} kg (${wLast.date})`+(wPrev?` | vorige: ${wPrev.weight} kg`:''): '';
   const bcStr=bc[0]?`\nTanita (${bc[0].date}): vet% ${bc[0].fat_pct}% | spier ${bc[0].muscle_mass} kg | BMR ${bc[0].bmr} | visceraal ${bc[0].visceral_fat}`+(bc[0].edema?` | oedeem: ${bc[0].edema}`:''): '';

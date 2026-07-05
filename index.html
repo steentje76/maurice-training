@@ -544,23 +544,101 @@ canvas{width:100%;height:100%}
   </nav>
 </div>
 
-<!-- ═══ TRAINING BEHEER ═══ -->
+<!-- ═══ TRAINING HUB ═══ -->
 <div class="scr" id="s-train-mgr">
   <div class="hdr">
     <div class="hdr-row">
-      <div><div class="hdr-title">Trainingen</div><div class="hdr-sub">Beheer je trainingsschema's</div></div>
+      <div><div class="hdr-title">Training</div><div class="hdr-sub">Kies hoe je wilt loggen</div></div>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px">
+    <div class="card" onclick="go('s-train-schema')" style="cursor:pointer">
+      <div class="card-body" style="padding:16px;display:flex;align-items:center;gap:12px">
+        <div style="font-size:28px">🏋️</div>
+        <div><div style="font-size:16px;font-weight:800">Schema</div><div style="font-size:12px;color:var(--g4)">Training A/B — vast schema met progressieregels</div></div>
+      </div>
+    </div>
+    <div class="card" onclick="go('s-train-workouts')" style="cursor:pointer">
+      <div class="card-body" style="padding:16px;display:flex;align-items:center;gap:12px">
+        <div style="font-size:28px">📋</div>
+        <div><div style="font-size:16px;font-weight:800">Workouts</div><div style="font-size:12px;color:var(--g4)">Eigen samengestelde trainingen</div></div>
+      </div>
+    </div>
+    <div class="card" onclick="openLosOefening()" style="cursor:pointer">
+      <div class="card-body" style="padding:16px;display:flex;align-items:center;gap:12px">
+        <div style="font-size:28px">✚</div>
+        <div><div style="font-size:16px;font-weight:800">Oefening</div><div style="font-size:12px;color:var(--g4)">Eén losse oefening loggen, zonder training</div></div>
+      </div>
+    </div>
+    <div class="card" onclick="go('s-programma')" style="cursor:pointer">
+      <div class="card-body" style="padding:16px;display:flex;align-items:center;gap:12px">
+        <div style="font-size:28px">🗓️</div>
+        <div><div style="font-size:16px;font-weight:800">Programma</div><div style="font-size:12px;color:var(--g4)">Meerdere weken vooruit plannen</div></div>
+      </div>
+    </div>
+  </div>
+  <nav class="bnav">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni active" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+  </nav>
+</div>
+
+<!-- ═══ SCHEMA (Training A/B keuze) ═══ -->
+<div class="scr" id="s-train-schema">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title">Schema</div><div class="hdr-sub">Vast trainingsschema</div></div>
+      <button class="ibtn" onclick="go('s-train-mgr')">✕</button>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px">
+    <button class="btn btn-r" onclick="go('s-train-a')" style="margin-bottom:10px">Training A</button>
+    <button class="btn btn-d" onclick="go('s-train-b')">Training B</button>
+  </div>
+  <nav class="bnav">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni active" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+  </nav>
+</div>
+
+<!-- ═══ WORKOUTS (eigen samengestelde trainingen) ═══ -->
+<div class="scr" id="s-train-workouts">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title">Workouts</div><div class="hdr-sub">Beheer je eigen trainingen</div></div>
       <button class="ibtn" onclick="openModal('m-new-training')">＋</button>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
-    <div class="sec-hd">Standaard</div>
-    <div style="display:flex;gap:8px;margin-bottom:10px">
-      <div class="card" style="flex:1;margin-bottom:0"><div class="card-body" style="padding:12px"><div style="font-size:15px;font-weight:700">Training A</div><div style="font-size:12px;color:var(--g4);margin-top:2px">Squat · Bench · Press</div></div></div>
-      <div class="card" style="flex:1;margin-bottom:0"><div class="card-body" style="padding:12px"><div style="font-size:15px;font-weight:700">Training B</div><div style="font-size:12px;color:var(--g4);margin-top:2px">Deadlift · Pull · Clean</div></div></div>
-    </div>
     <div class="sec-hd">Eigen trainingen</div>
     <div id="custom-train-list"></div>
     <button class="btn btn-o" onclick="openModal('m-new-training')" style="margin-top:4px">+ Nieuwe training aanmaken</button>
+  </div>
+  <nav class="bnav">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni active" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+  </nav>
+</div>
+
+<!-- ═══ PROGRAMMA ═══ -->
+<div class="scr" id="s-programma">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title">Programma</div><div class="hdr-sub">Meerdere weken vooruit</div></div>
+      <button class="ibtn" onclick="openModal('m-programma-gen')">＋</button>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px" id="programma-list">
+    <div style="text-align:center;color:var(--g4);font-size:13px;padding:30px 0">Nog geen programma. Tik op ＋ om er een te genereren.</div>
   </div>
   <nav class="bnav">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
@@ -588,10 +666,10 @@ canvas{width:100%;height:100%}
 
 <!-- ═══ ADMIN ═══ -->
 <div class="scr" id="s-admin">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.7.6</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.8.0</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
   <div class="scroll" style="padding-top:8px">
     <div class="card"><div class="card-body" style="padding-top:8px">
-      <div class="adm-row"><div><div class="adm-lbl">API Sleutel</div><div class="adm-sub" id="api-st">Niet ingesteld</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-apikey')">Wijzig</button></div></div>
+      <div class="adm-row"><div><div class="adm-lbl">API Sleutel</div><div class="adm-sub" id="api-st">Niet ingesteld</div></div></div>
       <div class="adm-row"><div><div class="adm-lbl">Lichaamscompositie</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-bc')">Invoer</button></div></div>
       <div class="adm-row"><div><div class="adm-lbl">Import logboek</div><div class="adm-sub" id="import-status">Selecteer een JSON importbestand</div></div><div style="margin-left:auto"><label class="btn btn-o btn-sm" style="cursor:pointer">Kies bestand<input type="file" accept=".json" style="display:none" onchange="importFromFile(this)"></label></div></div>
       <div class="adm-row"><div><div class="adm-lbl">Exporteren</div><div class="adm-sub">CSV / JSON backup</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-export')">Export</button></div></div>
@@ -646,18 +724,7 @@ canvas{width:100%;height:100%}
   </div>
 </div>
 
-<div class="modal-bg" id="m-apikey" onclick="bgClose(event,'m-apikey')">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">API Sleutel</div>
-    <p style="font-size:13px;color:var(--g4);margin-bottom:12px">Aanmaken via console.anthropic.com</p>
-    <input class="inp" type="password" id="i-apikey" placeholder="sk-ant-api03-...">
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-apikey')">Annuleer</button>
-      <button class="btn btn-r" style="flex:2" onclick="saveApiKey()">Opslaan</button>
-    </div>
-  </div>
-</div>
+
 
 <div class="modal-bg" id="m-atleet" onclick="bgClose(event,'m-atleet')">
   <div class="modal">
@@ -718,6 +785,40 @@ canvas{width:100%;height:100%}
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-bc')">Annuleer</button>
       <button class="btn btn-r" style="flex:2" onclick="saveBC()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LOSSE OEFENING ═══ -->
+<div class="modal-bg" id="m-los-oefening" onclick="bgClose(event,'m-los-oefening')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Losse oefening</div>
+    <div class="irow"><label class="ilbl">Oefening</label><select class="inp" id="los-ex"></select></div>
+    <div class="irow"><label class="ilbl">Gewicht</label><input class="inp" type="number" id="los-kg" placeholder="kg" step="0.5"></div>
+    <div class="irow"><label class="ilbl">Reps</label><input class="inp" type="number" id="los-reps" placeholder="reps"></div>
+    <div class="irow"><label class="ilbl">RPE</label><input class="inp" type="number" id="los-rpe" placeholder="RPE" step="0.5" min="1" max="10"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-los-oefening')">Annuleer</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveLosOefening()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PROGRAMMA GENEREREN (AI) ═══ -->
+<div class="modal-bg" id="m-programma-gen" onclick="bgClose(event,'m-programma-gen')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Programma genereren</div>
+    <div class="irow"><label class="ilbl">Naam</label><input class="inp" id="prog-naam" placeholder="bv. Kracht opbouw 8 weken"></div>
+    <div class="irow"><label class="ilbl">Doel</label><input class="inp" id="prog-doel" placeholder="bv. kracht opbouwen, HYROX-voorbereiding"></div>
+    <div class="irow"><label class="ilbl">Duur (weken)</label><input class="inp" type="number" id="prog-weken" placeholder="8" value="8"></div>
+    <div class="irow"><label class="ilbl">Dagen per week</label><input class="inp" type="number" id="prog-dagen" placeholder="2" value="2"></div>
+    <div id="prog-gen-status" style="font-size:12px;color:var(--g4);margin-top:6px"></div>
+    <div id="prog-concept" style="margin-top:10px"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-programma-gen')">Annuleer</button>
+      <button class="btn btn-r" style="flex:2" onclick="genereerProgramma()">AI genereren</button>
     </div>
   </div>
 </div>
@@ -957,7 +1058,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v2.7.6';
+const APP_VER = 'v2.8.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -1030,7 +1131,7 @@ const BARBELL_EXERCISES = new Set(['backsquat','bench','frontsquat','shoulderpre
 // ══════════════════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════════════════
-let exercises=[], apiKey=localStorage.getItem('maurice_apikey')||'';
+let exercises=[];
 let customTrainings=JSON.parse(localStorage.getItem('maurice_trainings')||'[]');
 let bikeergMachines=JSON.parse(localStorage.getItem('bikeerg_machines')||'["Bike 1","Bike 2","Bike 3"]');
 let skiergMachines=JSON.parse(localStorage.getItem('skierg_machines')||'["Ski 1","Ski 2"]');
@@ -1052,6 +1153,15 @@ async function sbPost(t,d){
     if(!r.ok){const err=await r.text();console.error('sbPost',t,r.status,err);}
     return r.ok;
   }catch(e){console.error('sbPost catch',t,e);return false;}
+// sbPostReturning: als sbPost, maar geeft het ingevoegde record terug i.p.v. true/false
+// (nodig zodra je het gegenereerde id direct verder wilt gebruiken, bv. program_id)
+}
+async function sbPostReturning(t,d){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(d)});
+    if(!r.ok){const err=await r.text();console.error('sbPostReturning',t,r.status,err);return null;}
+    return await r.json();
+  }catch(e){console.error('sbPostReturning catch',t,e);return null;}
 }
 async function sbPatch(t,f,d){try{const r=await fetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(d)});return r.ok;}catch{return false;}}
 // Eén canoniek gewichtsrecord per dag: overschrijft bestaand record i.p.v. dupliceren
@@ -1105,7 +1215,8 @@ function go(id){
   stopTrainTimer();
   if(id==='s-home')refreshHome();
   if(id==='s-hist'){histOff=0;loadHistory();}
-  if(id==='s-train-mgr'){renderCustomTrainList();renderCustomTrainBtns();}
+  if(id==='s-train-mgr'||id==='s-train-workouts'){renderCustomTrainList();renderCustomTrainBtns();}
+  if(id==='s-programma'){renderProgrammaList();}
   if(id==='s-stats')refreshStatsScreen();
   if(id==='s-profiel')refreshProfiel();
   if(id==='s-admin')refreshAdmin();
@@ -1140,9 +1251,7 @@ async function saveHRV(){
   if(wgt)parts.push('gewicht '+wgt+' kg');
   if(edm)parts.push('oedeem: '+edm);
   if(note)parts.push(note);
-  if(parts.length){
-    if(apiKey){go('s-coach');sendMsg(parts.join(', '));}
-    else{refreshHome();toast('Check-in opgeslagen — stel API sleutel in via Beheer');}
+  if(parts.length){go('s-coach');sendMsg(parts.join(', '));
   }else{refreshHome();toast('Opgeslagen');}
 }
 async function saveWeight(){
@@ -1155,6 +1264,100 @@ async function saveBC(){
   const row={date:td(),weight:parseFloat(document.getElementById('bc-w').value)||null,fat_pct:parseFloat(document.getElementById('bc-fat').value)||null,muscle_mass:parseFloat(document.getElementById('bc-mus').value)||null,bmr:parseInt(document.getElementById('bc-bmr').value)||null,visceral_fat:parseInt(document.getElementById('bc-vis').value)||null,waist_cm:parseFloat(document.getElementById('bc-waist').value)||null,hips_cm:parseFloat(document.getElementById('bc-hips').value)||null,chest_cm:parseFloat(document.getElementById('bc-chest').value)||null,arm_cm:parseFloat(document.getElementById('bc-arm').value)||null,thigh_cm:parseFloat(document.getElementById('bc-thigh').value)||null,metab_age:parseInt(document.getElementById('bc-age').value)||null,edema:document.getElementById('bc-edm').value||null,source:document.getElementById('bc-src').value};
   if(row.weight)await upsertWeightLog(row.weight,row.source);
   await sbPost('body_comp',row);closeModal('m-bc');toast('Opgeslagen');refreshAdmin();
+}
+
+// ══════════════════════════════════════════════════════════
+// LOSSE OEFENING (loggen buiten Schema/Workout om)
+// ══════════════════════════════════════════════════════════
+function openLosOefening(){
+  const sel=document.getElementById('los-ex');
+  sel.innerHTML=exercises.map(e=>`<option value="${e.id}">${e.naam}</option>`).join('');
+  document.getElementById('los-kg').value='';
+  document.getElementById('los-reps').value='';
+  document.getElementById('los-rpe').value='';
+  openModal('m-los-oefening');
+}
+async function saveLosOefening(){
+  const exId=document.getElementById('los-ex').value;
+  const kg=parseFloat(document.getElementById('los-kg').value)||null;
+  const reps=parseInt(document.getElementById('los-reps').value)||null;
+  const rpe=parseFloat(document.getElementById('los-rpe').value)||null;
+  if(!exId){toast('Kies een oefening');return;}
+  await sbPost('sessions',{date:td(),exercise_id:exId,sets:1,reps,weight:kg,rpe,training_type:null,note:'Losse oefening'});
+  closeModal('m-los-oefening');toast('Opgeslagen');
+}
+
+// ══════════════════════════════════════════════════════════
+// PROGRAMMA (AI-gegenereerde multi-week planning)
+// ══════════════════════════════════════════════════════════
+async function genereerProgramma(){
+  const naam=document.getElementById('prog-naam').value.trim()||'Programma';
+  const doel=document.getElementById('prog-doel').value.trim()||'algemene kracht opbouwen';
+  const weken=parseInt(document.getElementById('prog-weken').value)||8;
+  const dagen=parseInt(document.getElementById('prog-dagen').value)||2;
+  const statusEl=document.getElementById('prog-gen-status');
+  statusEl.textContent='AI genereert concept...';
+  document.getElementById('prog-concept').innerHTML='';
+  const sys=`Je bent trainingscoach. Genereer een periodiseringsschema van ${weken} weken, ${dagen} trainingsdagen per week, doel: ${doel}. Gebruik alleen 'A' of 'B' als training_ref (bestaande vaste schema's). Antwoord ALLEEN met geldige JSON, geen uitleg, in dit exacte formaat: {"blocks":[{"week_nr":1,"fase_naam":"Opbouw","training_ref":"A"}]}`;
+  try{
+    const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:2000,system:sys,messages:[{role:'user',content:'Genereer het programma.'}]})});
+    const d=await res.json();
+    if(d.error){statusEl.textContent='Fout: '+d.error.message;return;}
+    const txt=d.content[0].text;
+    const parsed=parseProgrammaJSON(txt);
+    if(!parsed){statusEl.textContent='AI-antwoord kon niet worden gelezen. Probeer opnieuw.';return;}
+    statusEl.textContent=parsed.blocks.length+' trainingsmomenten voorgesteld — controleer en pas aan voor opslaan.';
+    window._progConcept={naam,doel,blocks:parsed.blocks};
+    renderProgConcept(parsed.blocks);
+  }catch(e){statusEl.textContent='Verbindingsfout. Check internet.';}
+}
+// Pure parse/validatie-functie — apart zodat hij los testbaar is
+function parseProgrammaJSON(txt){
+  try{
+    const cleaned=txt.replace(/```json|```/g,'').trim();
+    const obj=JSON.parse(cleaned);
+    if(!obj.blocks||!Array.isArray(obj.blocks)||!obj.blocks.length)return null;
+    const valid=obj.blocks.every(b=>b.week_nr&&b.fase_naam&&(b.training_ref==='A'||b.training_ref==='B'));
+    return valid?obj:null;
+  }catch{return null;}
+}
+function renderProgConcept(blocks){
+  const el=document.getElementById('prog-concept');
+  el.innerHTML=blocks.map((b,i)=>`
+    <div class="eq-row">
+      <span class="eq-label">Wk ${b.week_nr} · ${b.fase_naam}</span>
+      <select class="inp" style="width:auto;padding:4px 8px;font-size:12px" onchange="window._progConcept.blocks[${i}].training_ref=this.value">
+        <option value="A" ${b.training_ref==='A'?'selected':''}>Training A</option>
+        <option value="B" ${b.training_ref==='B'?'selected':''}>Training B</option>
+      </select>
+    </div>`).join('')+`<button class="btn btn-r" style="margin-top:10px" onclick="opslaanProgramma()">Programma opslaan</button>`;
+}
+async function opslaanProgramma(){
+  const c=window._progConcept;
+  if(!c)return;
+  const prog=await sbPostReturning('programs',{naam:c.naam,doel:c.doel,start_date:td(),status:'actief'});
+  const progId=prog?.[0]?.id;
+  if(!progId){toast('Opslaan mislukt — tabel programs bestaat mogelijk nog niet');return;}
+  for(const b of c.blocks){await sbPost('program_blocks',{program_id:progId,week_nr:b.week_nr,fase_naam:b.fase_naam,training_ref:b.training_ref});}
+  window._progConcept=null;
+  closeModal('m-programma-gen');toast('Programma opgeslagen');
+  renderProgrammaList();
+}
+async function renderProgrammaList(){
+  const el=document.getElementById('programma-list');
+  if(!el)return;
+  const progs=await sbGet('programs','&order=start_date.desc');
+  if(!progs.length){el.innerHTML='<div style="text-align:center;color:var(--g4);font-size:13px;padding:30px 0">Nog geen programma. Tik op ＋ om er een te genereren.</div>';return;}
+  let h='';
+  for(const p of progs){
+    const blocks=await sbGet('program_blocks','&program_id=eq.'+p.id+'&order=week_nr.asc');
+    h+=`<div class="card"><div class="card-body" style="padding:14px">
+      <div style="font-size:15px;font-weight:700">${p.naam}</div>
+      <div style="font-size:12px;color:var(--g4);margin-bottom:8px">${p.doel||''} · ${blocks.length} trainingen · gestart ${p.start_date}</div>
+      ${blocks.map(b=>`<div class="lrow"><div class="ldate" style="width:90px">Wk ${b.week_nr}</div><div class="lval">${b.fase_naam}</div><div class="lnote">Training ${b.training_ref}</div></div>`).join('')}
+    </div></div>`;
+  }
+  el.innerHTML=h;
 }
 
 // ══════════════════════════════════════════════════════════
@@ -2198,8 +2401,7 @@ async function refreshStats(){
 async function refreshAdmin(){
   document.getElementById('admin-ver').textContent=APP_VER;
   const el=document.getElementById('api-st');
-  if(apiKey){el.textContent='sk-....'+apiKey.slice(-6)+' ✓';el.style.color='var(--green)';}
-  else{el.textContent='Niet ingesteld';el.style.color='var(--red)';}
+  el.textContent='Server-side (Netlify)';el.style.color='var(--green)';
   const cats=['A','B','CrossFit','Overig'];
   const catL={A:'Training A',B:'Training B',CrossFit:'CrossFit',Overig:'Overig'};
   let h='';
@@ -2285,7 +2487,7 @@ async function saveYT(){
 }
 
 async function delEx(id){if(!confirm('Verwijderen?'))return;await sbPatch('exercises','id=eq.'+id,{active:false});exercises=exercises.filter(e=>e.id!==id);refreshAdmin();toast('Verwijderd');}
-function saveApiKey(){const k=document.getElementById('i-apikey').value.trim();if(!k.startsWith('sk-')){alert('Ongeldige sleutel');return;}apiKey=k;localStorage.setItem('maurice_apikey',k);closeModal('m-apikey');refreshAdmin();toast('Opgeslagen');}
+
 async function saveNewEx(){
   const n=document.getElementById('nx-name').value.trim();
   const c=document.getElementById('nx-cat').value;
@@ -2396,14 +2598,13 @@ Nooit aannames over gewichten of RPE — altijd vragen als ontbreekt.`;
 async function sendChat(){const inp=document.getElementById('chat-inp');const txt=inp.value.trim();if(!txt||sending)return;inp.value='';inp.style.height='';sendMsg(txt);}
 async function sendMsg(txt){
   if(sending)return;
-  if(!apiKey){addMsg('sys','Geen API sleutel ingesteld. Ga naar Beheer → API Sleutel.');return;}
   sending=true;document.getElementById('send-btn').disabled=true;document.getElementById('coach-st').textContent='Denkt na...';
   addMsg('user',txt);chatHist.push({role:'user',content:txt});
   await sbPost('chat_history',{role:'user',content:txt});
   const tid=addMsg('coach','<span style="display:inline-block;width:14px;height:14px;border:2px solid #ccc;border-top-color:var(--dark);border-radius:50%;animation:sp .8s linear infinite;vertical-align:middle"></span>',true);
   try{
     const sys=await buildCtx();
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,system:sys,messages:chatHist.slice(-12)})});
+    const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,system:sys,messages:chatHist.slice(-12)})});
     const d=await res.json();
     if(d.error){removeMsg(tid);addMsg('coach','Fout: '+d.error.message);}
     else{const r=d.content[0].text;removeMsg(tid);addMsg('coach',r);chatHist.push({role:'assistant',content:r});await sbPost('chat_history',{role:'assistant',content:r});const all=await sbGet('chat_history','&order=created_at.asc');if(all.length>40)for(const x of all.slice(0,all.length-40))await sbDel('chat_history','id=eq.'+x.id);}

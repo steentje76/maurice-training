@@ -1,24 +1,69 @@
 {
   "name": "Maurice Training Coach",
-  "short_name": "Maurice",
-  "description": "Persoonlijk trainingscoach en log app 2026",
+  "short_name": "Training",
+  "description": "Persoonlijk trainingscoach, krachtlog en hersteltracker voor serieuze krachtsporters",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0a0a0a",
-  "theme_color": "#0a0a0a",
+  "background_color": "#f0f0f5",
+  "theme_color": "#111111",
+  "lang": "nl",
+  "categories": ["health", "fitness", "sports"],
+  "screenshots": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Training Coach Home"
+    }
+  ],
   "icons": [
     {
       "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "Training A starten",
+      "short_name": "Training A",
+      "url": "/?start=A",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Training B starten",
+      "short_name": "Training B",
+      "url": "/?start=B",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Check-in invoeren",
+      "short_name": "Check-in",
+      "url": "/?checkin=1",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
 }

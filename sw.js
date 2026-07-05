@@ -1,45 +1,123 @@
-// Cache versie — bij elke app update verhoogd zodat de browser ALTIJD refresht
-const CACHE_VERSION = 'maurice-v2.1.0';
+// Maurice Training Coach — Service Worker v2.7
+// Play Store ready — offline first
 
+const CACHE_NAME = 'maurice-training-v271';
+const CACHE_STATIC = 'maurice-static-v271';
+
+const STATIC_ASSETS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png',
+  'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap'
+];
+
+// URLs die nooit gecached worden
+const NO_CACHE_PATTERNS = [
+  'api.anthropic.com',
+  'supabase.co',
+  'youtube.com',
+  'img.youtube.com',
+  'googleapis.com/v1'
+];
+
+// ── INSTALL: cache static assets ──────────────────────────
 self.addEventListener('install', e => {
-  // Nieuwe service worker wordt direct actief, wacht niet op sluiten oude tabs
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', e => {
-  // Verwijder ALLE oude caches bij activatie
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.map(k => {
-        if (k !== CACHE_VERSION) {
-          console.log('SW: oude cache verwijderd:', k);
-          return caches.delete(k);
-        }
+    caches.open(CACHE_STATIC)
+      .then(cache => cache.addAll(STATIC_ASSETS).catch(err => {
+        console.warn('SW install cache partial fail:', err);
       }))
-    ).then(() => self.clients.claim()) // Neem direct controle over alle open tabs
+      .then(() => self.skipWaiting())
   );
 });
 
+// ── ACTIVATE: clean old caches ────────────────────────────
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys
+          .filter(k => k !== CACHE_NAME && k !== CACHE_STATIC)
+          .map(k => {
+            console.log('SW: deleting old cache', k);
+            return caches.delete(k);
+          })
+      )
+    ).then(() => self.clients.claim())
+  );
+});
+
+// ── FETCH: offline-first strategy ─────────────────────────
 self.addEventListener('fetch', e => {
-  // API calls nooit cachen
-  if (e.request.url.includes('api.anthropic.com') ||
-      e.request.url.includes('supabase.co') ||
-      e.request.url.includes('fonts.googleapis.com') ||
-      e.request.url.includes('fonts.gstatic.com')) {
+  const url = e.request.url;
+
+  // Laat API calls altijd door — nooit cachen
+  if (NO_CACHE_PATTERNS.some(p => url.includes(p))) {
+    return; // browser handelt zelf af
+  }
+
+  // Navigation requests (pagina laden) — app shell
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      caches.match('/index.html')
+        .then(cached => cached || fetch(e.request))
+        .catch(() => caches.match('/index.html'))
+    );
     return;
   }
 
-  // Voor app bestanden: network-first strategie
-  // Probeert altijd eerst het netwerk, valt terug op cache bij offline
+  // Statische assets — cache first, dan netwerk
   e.respondWith(
-    fetch(e.request)
-      .then(res => {
-        if (res && res.status === 200 && e.request.method === 'GET') {
-          const clone = res.clone();
-          caches.open(CACHE_VERSION).then(c => c.put(e.request, clone));
-        }
-        return res;
+    caches.match(e.request)
+      .then(cached => {
+        if (cached) return cached;
+        return fetch(e.request)
+          .then(response => {
+            // Cache succesvolle GET responses
+            if (response && response.status === 200 && e.request.method === 'GET') {
+              const clone = response.clone();
+              caches.open(CACHE_NAME)
+                .then(cache => cache.put(e.request, clone));
+            }
+            return response;
+          })
+          .catch(() => {
+            // Offline fallback
+            if (e.request.destination === 'image') return;
+            return caches.match('/index.html');
+          });
       })
-      .catch(() => caches.match(e.request).then(cached => cached || caches.match('/index.html')))
+  );
+});
+
+// ── BACKGROUND SYNC: voor als Supabase offline was ────────
+self.addEventListener('sync', e => {
+  if (e.tag === 'sync-sessions') {
+    console.log('SW: background sync sessions');
+    // Toekomstig: sync pending sessions van IndexedDB
+  }
+});
+
+// ── PUSH NOTIFICATIES: basis voor later ───────────────────
+self.addEventListener('push', e => {
+  if (!e.data) return;
+  const data = e.data.json();
+  e.waitUntil(
+    self.registration.showNotification(data.title || 'Training Coach', {
+      body: data.body || '',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: data.tag || 'training',
+      data: data.url || '/'
+    })
+  );
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(
+    clients.openWindow(e.notification.data || '/')
   );
 });

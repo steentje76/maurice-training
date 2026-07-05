@@ -343,14 +343,6 @@ canvas{width:100%;height:100%}
     <button onclick="openPlateCalc(0)" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;background:var(--g1);border:1.5px solid var(--g2);border-radius:12px;font-family:var(--f);font-size:13px;font-weight:700;color:var(--dark);cursor:pointer;margin-bottom:10px">⚖️ Plate Calculator</button>
     <div class="sec-hd">Recente sessies</div>
     <div class="card"><div class="card-body" style="padding-top:10px" id="home-recent"></div></div>
-    <div class="sec-hd">Gewicht</div>
-    <div class="card">
-      <div class="card-body" style="padding-top:10px">
-        <div id="home-weight-lbl" style="font-size:22px;font-weight:800;color:var(--dark);margin-bottom:6px"></div>
-        <div class="chart-wrap"><canvas id="w-chart"></canvas></div>
-        <button class="btn btn-o btn-sm" onclick="openModal('m-weight')" style="margin-top:8px;width:100%">Gewicht loggen</button>
-      </div>
-    </div>
     <div style="height:8px"></div>
   </div>
   <nav class="bnav">
@@ -436,6 +428,18 @@ canvas{width:100%;height:100%}
       </div>
     </div>
 
+    <!-- Condities (bv. rugklachten, knieklachten, oedeem — per atleet) -->
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Condities</div></div>
+      <div class="card-body" id="profiel-conditions-card">
+        <div id="conditions-list"></div>
+        <div class="eq-add-row">
+          <input class="inp" id="new-condition-label" placeholder="Naam (bv. Rugklachten)">
+          <button class="btn btn-r btn-sm" onclick="addCondition()">+</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Lichaamscompositie laatste meting -->
     <div class="card">
       <div class="card-hd"><div class="card-title">Lichaamscompositie</div><div class="card-sub" id="profiel-bc-date">—</div></div>
@@ -461,7 +465,10 @@ canvas{width:100%;height:100%}
     <!-- Gewicht grafiek -->
     <div class="card">
       <div class="card-hd"><div class="card-title">Gewicht trend</div><div class="card-sub" id="profiel-weight-lbl">—</div></div>
-      <div class="card-body"><div class="chart-wrap"><canvas id="profiel-w-chart"></canvas></div></div>
+      <div class="card-body">
+        <div class="chart-wrap"><canvas id="profiel-w-chart"></canvas></div>
+        <button class="btn btn-o btn-sm" onclick="openModal('m-weight')" style="margin-top:8px;width:100%">Gewicht loggen</button>
+      </div>
     </div>
 
     <!-- Geschiedenis metingen -->
@@ -666,7 +673,7 @@ canvas{width:100%;height:100%}
 
 <!-- ═══ ADMIN ═══ -->
 <div class="scr" id="s-admin">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.8.0</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.8.1</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
   <div class="scroll" style="padding-top:8px">
     <div class="card"><div class="card-body" style="padding-top:8px">
       <div class="adm-row"><div><div class="adm-lbl">API Sleutel</div><div class="adm-sub" id="api-st">Niet ingesteld</div></div></div>
@@ -702,7 +709,7 @@ canvas{width:100%;height:100%}
     <div class="irow"><label class="ilbl">RHR</label><input class="inp" type="number" id="i-rhr" placeholder="bpm"></div>
     <div class="irow"><label class="ilbl">Slaap</label><input class="inp" type="number" id="i-sleep-h" placeholder="uren" style="flex:1"><span style="color:var(--g4);padding:0 6px;font-weight:600">u</span><input class="inp" type="number" id="i-sleep-m" placeholder="min" style="flex:1"><span style="color:var(--g4);padding:0 6px;font-weight:600">m</span></div>
     <div class="irow"><label class="ilbl">Gewicht</label><input class="inp" type="number" id="i-whrv" placeholder="kg" step="0.1"></div>
-    <div class="irow"><label class="ilbl">Oedeem</label><select class="inp" id="i-edema"><option value="">—</option><option>normaal</option><option>licht</option><option>flink opgezet</option></select></div>
+    <div id="checkin-conditions-list"></div>
     <div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="i-note" placeholder="hoe voel ik me..."></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-hrv')">Annuleer</button>
@@ -1058,7 +1065,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v2.8.0';
+const APP_VER = 'v2.8.1';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -1222,7 +1229,7 @@ function go(id){
   if(id==='s-admin')refreshAdmin();
   if(id==='s-coach')focusCoach();
 }
-function openModal(id){document.getElementById(id).classList.add('open');}
+function openModal(id){if(id==='m-hrv')renderCheckinConditions();document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function bgClose(e,id){if(e.target===document.getElementById(id))closeModal(id);}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
@@ -1237,11 +1244,14 @@ async function saveHRV(){
   const slpM=parseInt(document.getElementById('i-sleep-m').value)||0;
   const slp=(slpH||slpM)?Math.round((slpH+slpM/60)*100)/100:null;
   const wgt=parseFloat(document.getElementById('i-whrv').value)||null;
-  const edm=document.getElementById('i-edema').value||null;
+  const condSelects=[...document.querySelectorAll('#checkin-conditions-list select')];
+  const loggedConditions=condSelects.map(s=>({label:s.dataset.condition,severity:s.value})).filter(c=>c.severity);
+  const edm=loggedConditions.length?loggedConditions.map(c=>c.label+': '+c.severity).join(', '):null;
   const note=document.getElementById('i-note').value||null;
   const ops=[];
   if(hrv||rhr||slp)ops.push(sbPost('hrv_log',{date:td(),hrv,rhr,sleep:slp,edema:edm,note}));
   if(wgt)ops.push(upsertWeightLog(wgt,'Tanita'));
+  for(const c of loggedConditions)ops.push(sbPost('checkin_conditions',{date:td(),condition_label:c.label,severity:c.severity}));
   await Promise.all(ops);
   closeModal('m-hrv');
   const parts=[];
@@ -1249,7 +1259,7 @@ async function saveHRV(){
   if(rhr)parts.push('RHR '+rhr+' bpm');
   if(slp){const sh=Math.floor(slp);const sm=Math.round((slp-sh)*60);parts.push('slaap '+sh+'u'+(sm?sm+'min':''));}
   if(wgt)parts.push('gewicht '+wgt+' kg');
-  if(edm)parts.push('oedeem: '+edm);
+  if(edm)parts.push(edm);
   if(note)parts.push(note);
   if(parts.length){go('s-coach');sendMsg(parts.join(', '));
   }else{refreshHome();toast('Opgeslagen');}
@@ -1264,6 +1274,45 @@ async function saveBC(){
   const row={date:td(),weight:parseFloat(document.getElementById('bc-w').value)||null,fat_pct:parseFloat(document.getElementById('bc-fat').value)||null,muscle_mass:parseFloat(document.getElementById('bc-mus').value)||null,bmr:parseInt(document.getElementById('bc-bmr').value)||null,visceral_fat:parseInt(document.getElementById('bc-vis').value)||null,waist_cm:parseFloat(document.getElementById('bc-waist').value)||null,hips_cm:parseFloat(document.getElementById('bc-hips').value)||null,chest_cm:parseFloat(document.getElementById('bc-chest').value)||null,arm_cm:parseFloat(document.getElementById('bc-arm').value)||null,thigh_cm:parseFloat(document.getElementById('bc-thigh').value)||null,metab_age:parseInt(document.getElementById('bc-age').value)||null,edema:document.getElementById('bc-edm').value||null,source:document.getElementById('bc-src').value};
   if(row.weight)await upsertWeightLog(row.weight,row.source);
   await sbPost('body_comp',row);closeModal('m-bc');toast('Opgeslagen');refreshAdmin();
+}
+
+// ══════════════════════════════════════════════════════════
+// CONDITIES (per atleet configureerbaar, bv. rugklachten, oedeem)
+// ══════════════════════════════════════════════════════════
+async function renderConditionsList(){
+  const el=document.getElementById('conditions-list');
+  if(!el)return;
+  const conditions=await sbGet('athlete_conditions','&active=eq.true&order=sort_order.asc');
+  if(!conditions.length){el.innerHTML='<p style="color:var(--g4);font-size:13px;margin-bottom:8px">Nog geen condities</p>';return;}
+  el.innerHTML=conditions.map(c=>`<div class="eq-row"><span class="eq-label">${c.label}</span><button onclick="removeCondition(${c.id})">✕</button></div>`).join('');
+}
+async function addCondition(){
+  const inp=document.getElementById('new-condition-label');
+  const label=inp.value.trim();
+  if(!label)return;
+  const ok=await sbPost('athlete_conditions',{label,active:true,sort_order:Date.now()});
+  if(!ok){toast('Opslaan mislukt — tabel athlete_conditions bestaat mogelijk nog niet');return;}
+  inp.value='';
+  renderConditionsList();
+}
+async function removeCondition(id){
+  await sbPatch('athlete_conditions','id=eq.'+id,{active:false});
+  renderConditionsList();
+}
+async function renderCheckinConditions(){
+  const el=document.getElementById('checkin-conditions-list');
+  if(!el)return;
+  const conditions=await sbGet('athlete_conditions','&active=eq.true&order=sort_order.asc');
+  el.innerHTML=conditions.map(c=>`
+    <div class="irow"><label class="ilbl">${c.label}</label>
+      <select class="inp" data-condition="${c.label}" id="checkin-cond-${c.id}">
+        <option value="">—</option>
+        <option>normaal</option>
+        <option>licht</option>
+        <option>matig</option>
+        <option>ernstig</option>
+      </select>
+    </div>`).join('');
 }
 
 // ══════════════════════════════════════════════════════════
@@ -2124,8 +2173,6 @@ async function refreshHome(){
   if(!rs?.length)rh='<p style="color:var(--g4);font-size:13px">Nog geen sessies gelogd</p>';
   else rs.forEach(s=>{const n=exercises.find(e=>e.id===s.exercise_id)?.name||s.exercise_id;const v=s.weight&&s.reps?s.weight+'kg×'+s.reps:s.time_str||'—';rh+=`<div class="lrow"><div class="ldate">${s.date}</div><div class="lval">${n}</div><div class="lnote">${v}</div></div>`;});
   document.getElementById('home-recent').innerHTML=rh;
-  const wd=await sbGet('weight_log','&order=date.asc&limit=20');
-  if(wd?.length){document.getElementById('home-weight-lbl').textContent=wd[wd.length-1].weight+' kg';drawChart('w-chart',wd.map(w=>w.weight),wd.map(w=>w.date));}
 }
 
 function hrvSt(v){if(!v)return 'y';if(v>=24)return 'g';if(v>=18)return 'y';if(v>=14)return 'o';return 'r';}
@@ -2752,6 +2799,7 @@ function expected1RM(lift, gewicht, leeftijd, niveau){
 }
 
 async function refreshProfiel(){
+  renderConditionsList();
   // Atleet kaart
   const el = document.getElementById('profiel-atleet-card');
   if(el){

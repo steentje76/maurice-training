@@ -673,7 +673,7 @@ canvas{width:100%;height:100%}
 
 <!-- ═══ ADMIN ═══ -->
 <div class="scr" id="s-admin">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.8.3</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.8.4</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
   <div class="scroll" style="padding-top:8px">
     <div class="card"><div class="card-body" style="padding-top:8px">
       <div class="adm-row"><div><div class="adm-lbl">API Sleutel</div><div class="adm-sub" id="api-st">Niet ingesteld</div></div></div>
@@ -687,6 +687,16 @@ canvas{width:100%;height:100%}
     <div class="card">
       <div class="card-hd"><span class="card-title">Alle oefeningen</span><button class="btn btn-o btn-sm" onclick="openModal('m-newex')">+ Nieuw</button></div>
       <div class="card-body" id="admin-exlist"></div>
+    </div>
+    <div class="sec-hd">Equipment types</div>
+    <div class="card">
+      <div class="card-body" style="padding-top:10px">
+        <div id="admin-eqtypes-list"></div>
+        <div class="eq-add-row">
+          <input class="inp" id="new-eqtype-label" placeholder="Naam (bv. Kniehoogte)">
+          <button class="btn btn-r btn-sm" onclick="addEquipmentType()">+</button>
+        </div>
+      </div>
     </div>
     <div class="sec-hd">Metingen</div>
     <div class="card"><div class="card-body" style="padding-top:10px" id="admin-bc"></div></div>
@@ -1065,7 +1075,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v2.8.3';
+const APP_VER = 'v2.8.4';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -1139,6 +1149,7 @@ const BARBELL_EXERCISES = new Set(['backsquat','bench','frontsquat','shoulderpre
 // STATE
 // ══════════════════════════════════════════════════════════
 let exercises=[];
+let equipmentTypes=[], _equipmentTypesLoading=null;
 let customTrainings=JSON.parse(localStorage.getItem('maurice_trainings')||'[]');
 let bikeergMachines=JSON.parse(localStorage.getItem('bikeerg_machines')||'["Bike 1","Bike 2","Bike 3"]');
 let skiergMachines=JSON.parse(localStorage.getItem('skierg_machines')||'["Ski 1","Ski 2"]');
@@ -1461,6 +1472,7 @@ function showSettings(){
 function getSessionExs(t){return [...(TRAIN_CFG[t]||[]),...sessionExtra.filter(e=>e._t===t)];}
 
 async function renderTrainScreen(t){
+  await ensureEquipmentTypesLoaded();
   const list=getSessionExs(t);
   const container=document.getElementById('train-'+t.toLowerCase()+'-list');
   if(!container)return;
@@ -1640,6 +1652,7 @@ async function loadEquipment(exId){
   return await sbGet('exercise_equipment','&exercise_id=eq.'+exId+'&gym_id=is.null&order=sort_order.asc');
 }
 function buildEquipmentPanel(exId,eqList){
+  const typeOptions=equipmentTypes.map(t=>`<option value="${t.label}">${t.label}</option>`).join('');
   return `<div class="eq-panel" id="eq-panel-${exId}">
     <div class="eq-panel-hd" onclick="toggleEqPanel('${exId}')">
       <span>🔧 Equipment${eqList.length?` (${eqList.length})`:''}</span>
@@ -1651,13 +1664,24 @@ function buildEquipmentPanel(exId,eqList){
         <span class="eq-value">${e.value}</span>
         <button onclick="deleteEquipment('${e.id}','${exId}')">✕</button>
       </div>`).join('')}
+      <select class="inp" id="eq-new-label-${exId}" onchange="toggleEqCustomLabel('${exId}')" style="margin-top:8px">
+        <option value="">Kies...</option>
+        ${typeOptions}
+        <option value="__other__">Anders...</option>
+      </select>
       <div class="eq-add-row">
-        <input class="inp" placeholder="Naam (bv. Rek stand)" id="eq-new-label-${exId}">
+        <input class="inp" placeholder="Naam" id="eq-new-label-custom-${exId}" style="display:none">
         <input class="inp" placeholder="Waarde (bv. 4)" id="eq-new-value-${exId}">
         <button class="btn btn-o" onclick="addEquipment('${exId}')">+</button>
       </div>
     </div>
   </div>`;
+}
+function toggleEqCustomLabel(exId){
+  const sel=document.getElementById('eq-new-label-'+exId);
+  const custom=document.getElementById('eq-new-label-custom-'+exId);
+  custom.style.display=sel.value==='__other__'?'block':'none';
+  if(sel.value==='__other__')custom.focus();
 }
 function toggleEqPanel(exId){
   const body=document.getElementById('eq-body-'+exId);
@@ -1667,10 +1691,12 @@ function toggleEqPanel(exId){
   if(arrow)arrow.textContent=open?'›':'⌄';
 }
 async function addEquipment(exId){
-  const labelEl=document.getElementById('eq-new-label-'+exId);
+  const sel=document.getElementById('eq-new-label-'+exId);
+  const customEl=document.getElementById('eq-new-label-custom-'+exId);
   const valueEl=document.getElementById('eq-new-value-'+exId);
-  const label=labelEl.value.trim(), value=valueEl.value.trim();
-  if(!label||!value){toast('Vul naam en waarde in');return;}
+  const label=sel.value==='__other__'?customEl.value.trim():sel.value;
+  const value=valueEl.value.trim();
+  if(!label||!value){toast('Kies of vul een naam in, en vul een waarde in');return;}
   const id='eq_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
   const ok=await sbPost('exercise_equipment',{id,exercise_id:exId,gym_id:null,label,value,sort_order:Date.now()});
   if(!ok){toast('Opslaan mislukt — tabel exercise_equipment bestaat mogelijk nog niet');return;}
@@ -2446,6 +2472,7 @@ async function refreshStats(){
 // ADMIN
 // ══════════════════════════════════════════════════════════
 async function refreshAdmin(){
+  renderAdminEqTypes();
   document.getElementById('admin-ver').textContent=APP_VER;
   const el=document.getElementById('api-st');
   el.textContent='Server-side (Netlify)';el.style.color='var(--green)';
@@ -3043,6 +3070,7 @@ function addExToCustomSession(trainId){
 }
 
 async function addExToCustomConfirm(exId, trainId){
+  await ensureEquipmentTypesLoaded();
   const ex=exercises.find(e=>e.id===exId);if(!ex) return;
   const exType=(ex.id==='roeien'||ex.type==='cardio'||ex.type==='rowing')?'rowing':ex.type||'strength';
   const newEx={id:ex.id,naam:ex.name,type:exType,sets:4,reps:'6-8',rpe:'8',_t:'custom_'+trainId};
@@ -3491,6 +3519,47 @@ const style=document.createElement('style');style.textContent='@keyframes sp{to{
 let _exercisesLoading=null;
 // Idempotente loader: veilig meerdere keren aan te roepen (window-load EN buildCtx()).
 // Voorkomt race condition waarbij coach-context leeg is omdat exercises nog niet geladen zijn.
+async function ensureEquipmentTypesLoaded(){
+  if(equipmentTypes.length)return equipmentTypes;
+  if(_equipmentTypesLoading)return _equipmentTypesLoading;
+  _equipmentTypesLoading=(async()=>{
+    const data=await sbGet('equipment_types','&active=eq.true&order=sort_order.asc');
+    equipmentTypes=data.length?data:[
+      {id:'seed_1',label:'Zitting',active:true,sort_order:1},
+      {id:'seed_2',label:'Rugsteun',active:true,sort_order:2},
+      {id:'seed_3',label:'Pin',active:true,sort_order:3},
+      {id:'seed_4',label:'Hoogte',active:true,sort_order:4},
+      {id:'seed_5',label:'Breedte',active:true,sort_order:5},
+    ];
+    return equipmentTypes;
+  })();
+  return _equipmentTypesLoading;
+}
+async function renderAdminEqTypes(){
+  const el=document.getElementById('admin-eqtypes-list');
+  if(!el)return;
+  await ensureEquipmentTypesLoaded();
+  const list=await sbGet('equipment_types','&active=eq.true&order=sort_order.asc');
+  const types=list.length?list:equipmentTypes;
+  el.innerHTML=types.map(t=>`<div class="eq-row"><span class="eq-label">${t.label}</span><button onclick="removeEquipmentType('${t.id}')">✕</button></div>`).join('');
+}
+async function addEquipmentType(){
+  const inp=document.getElementById('new-eqtype-label');
+  const label=inp.value.trim();
+  if(!label)return;
+  const ok=await sbPost('equipment_types',{label,active:true,sort_order:Date.now()});
+  if(!ok){toast('Opslaan mislukt — tabel equipment_types bestaat mogelijk nog niet');return;}
+  inp.value='';
+  equipmentTypes=[];// forceer herladen zodat de nieuwe optie meteen in de dropdown verschijnt
+  await ensureEquipmentTypesLoaded();
+  renderAdminEqTypes();
+}
+async function removeEquipmentType(id){
+  await sbPatch('equipment_types','id=eq.'+id,{active:false});
+  equipmentTypes=[];
+  await ensureEquipmentTypesLoaded();
+  renderAdminEqTypes();
+}
 async function ensureExercisesLoaded(){
   if(exercises.length)return exercises;
   if(_exercisesLoading)return _exercisesLoading;
@@ -3531,6 +3600,7 @@ window.addEventListener('load',async()=>{
   if(params.get('checkin')==='1') setTimeout(()=>openModal('m-hrv'),500);
   refreshHome();
   ensureExercisesLoaded();
+  ensureEquipmentTypesLoaded();
 });
 </script>
 </body>

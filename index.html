@@ -534,8 +534,16 @@ canvas{width:100%;height:100%}
   <div class="scroll" style="padding-top:8px">
     <div class="card"><div class="card-hd"><div class="card-title">Geschatte 1RM</div><div class="card-sub">Epley formule · live</div></div><div class="card-body" id="stats-1rm-list"></div></div>
     <div class="card">
+      <div class="card-hd"><div class="card-title">PR per herhaling</div><div class="card-sub">Beste gewicht per repbereik (1/3/5/10)</div></div>
+      <div class="card-body" id="stats-reppr-content"><p style="color:var(--g4);font-size:13px">Laden...</p></div>
+    </div>
+    <div class="card">
       <div class="card-hd"><div class="card-title">Volume per spiergroep</div><div class="card-sub">Afgelopen 7 dagen</div></div>
       <div class="card-body" id="stats-volume-content"><p style="color:var(--g4);font-size:13px">Laden...</p></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Spierherstel</div><div class="card-sub">Op basis van RPE & tijd sinds laatste training</div></div>
+      <div class="card-body" id="stats-recovery-content"><p style="color:var(--g4);font-size:13px">Laden...</p></div>
     </div>
     <div class="card"><div class="card-hd"><div class="card-title">HRV trend</div></div><div class="card-body"><div class="chart-wrap"><canvas id="stats-hrv-chart"></canvas></div></div></div>
     <div class="card"><div class="card-hd"><div class="card-title">Roei progressie</div></div><div class="card-body" id="stats-row-list"></div></div>
@@ -1075,7 +1083,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v2.8.5';
+const APP_VER = 'v2.8.7';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -1149,6 +1157,7 @@ const BARBELL_EXERCISES = new Set(['backsquat','bench','frontsquat','shoulderpre
 // STATE
 // ══════════════════════════════════════════════════════════
 let exercises=[];
+let repPRCache={};
 // Decimale slaapuren (bv. 6.87) naar leesbaar formaat (bv. "6u52m")
 function fmtSleep(h){
   let sh=Math.floor(h);
@@ -1489,6 +1498,7 @@ async function renderTrainScreen(t){
     // Load previous session data
     const prev=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc&limit=1');
     const prevS=prev[0];
+    if(ex.type==='strength'||!ex.type) await loadRepPRs(ex.id);
     const eqList=await loadEquipment(ex.id);
     let prevStr='';
     let prefillData=window._prefillMap?.[ex.id]||null;
@@ -1990,13 +2000,21 @@ function logSet(exId,type,setNum,isWork){
   const rpe=isWork?document.getElementById('s-'+exId+'-'+setNum+'-rpe')?.value:null;
   if(type==='wu'){if(!sessionLog[exId].wu)sessionLog[exId].wu=[];sessionLog[exId].wu[setNum-1]={kg,reps};}
   else{if(!sessionLog[exId].sets)sessionLog[exId].sets=[];sessionLog[exId].sets[setNum-1]={kg,reps,rpe};}
-  // Check PR
+  // Check PR (per rep-bucket 1/3/5/10, plus absolute-PR fallback voor niet-rep oefeningen)
   if(isWork&&kg){
     const exObj=exercises.find(e=>e.id===exId);
+    if(reps){
+      const bucket=nearestRepBucket(reps);
+      if(!repPRCache[exId])repPRCache[exId]={1:null,3:null,5:null,10:null};
+      const current=repPRCache[exId][bucket];
+      if(!current||parseFloat(kg)>current.weight){
+        const badge=document.getElementById('sc-'+exId+'-'+setNum);
+        if(badge&&!badge.querySelector('.pr-badge'))badge.innerHTML+='<div class="pr-badge">PR@'+bucket+'</div>';
+        repPRCache[exId][bucket]={weight:parseFloat(kg),date:td()};
+      }
+    }
     const pr=exObj?.pr||0;
     if(parseFloat(kg)>pr){
-      const badge=document.getElementById('sc-'+exId+'-'+setNum);
-      if(badge&&!badge.querySelector('.pr-badge'))badge.innerHTML+='<div class="pr-badge">PR</div>';
       // Werk de lokale referentie direct bij zodat een volgende set op hetzelfde gewicht
       // binnen dezelfde sessie niet opnieuw als PR wordt gemarkeerd.
       if(exObj)exObj.pr=parseFloat(kg);
@@ -2451,6 +2469,8 @@ async function refreshStatsScreen(){
   }
   const elb=document.getElementById('stats-bc-list');if(elb)elb.innerHTML=bh;
   await refreshVolumeSpiergroep();
+  await refreshMuscleRecovery();
+  await refreshRepPRs();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -3426,6 +3446,128 @@ const MUSCLE_MAP = {
   hps:         ['Rug','Benen','Schouders'],
   farmercarry: ['Core','Grip','Traps'],
 };
+
+// ══════════════════════════════════════════════════════════
+// SPIERHERSTEL — herstel% per spiergroep o.b.v. tijd + RPE
+// ══════════════════════════════════════════════════════════
+const MUSCLE_RECOVERY_HOURS = {
+  Quadriceps:72, Hamstrings:72, Billen:72, Rug:72, Benen:72,
+  Borst:60, Schouders:60,
+  Biceps:48, Triceps:48, Core:48, Grip:48, Traps:48
+};
+
+function rpeMultiplier(rpe){
+  const r = parseFloat(rpe);
+  if(!r || isNaN(r)) return 1;
+  if(r>=9) return 1.3;
+  if(r>=8) return 1.0;
+  return 0.85;
+}
+
+function computeMuscleRecoveryPct(hoursSince, baseHours, rpe){
+  const effHours = baseHours * rpeMultiplier(rpe);
+  return Math.min(100, Math.round(hoursSince/effHours*100));
+}
+
+async function refreshMuscleRecovery(){
+  const el = document.getElementById('stats-recovery-content');
+  if(!el) return;
+  const twoWeeksAgo = new Date();
+  twoWeeksAgo.setDate(twoWeeksAgo.getDate()-14);
+  const dateStr = twoWeeksAgo.toISOString().split('T')[0];
+  const ss = await sbGet('sessions','&date=gte.'+dateStr+'&weight=not.is.null&sets=not.is.null&reps=not.is.null&order=date.desc');
+  const lastHit = {};
+  ss.forEach(s=>{
+    const muscles = MUSCLE_MAP[s.exercise_id]||[];
+    muscles.forEach(m=>{
+      if(!lastHit[m]) lastHit[m] = {date:s.date, rpe:s.rpe};
+    });
+  });
+  const now = new Date();
+  const rows = Object.keys(MUSCLE_RECOVERY_HOURS).map(m=>{
+    const hit = lastHit[m];
+    if(!hit) return {muscle:m, pct:100, hours:null};
+    const hoursSince = (now - new Date(hit.date)) / 3600000;
+    const pct = computeMuscleRecoveryPct(hoursSince, MUSCLE_RECOVERY_HOURS[m], hit.rpe);
+    return {muscle:m, pct, hours:Math.round(hoursSince)};
+  }).sort((a,b)=>a.pct-b.pct);
+  const withData = rows.filter(r=>r.hours!==null);
+  const overall = withData.length ? Math.round(withData.reduce((a,r)=>a+r.pct,0)/withData.length) : 100;
+  const overallColor = overall>=85?'var(--green)':overall>=50?'var(--y)':'var(--red)';
+  let html = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+    <div style="font-size:28px;font-weight:800;color:${overallColor}">${overall}%</div>
+    <div style="font-size:12px;color:var(--g4)">Gemiddeld herstel — spiergroepen met trainingsdata laatste 14 dagen</div>
+  </div>`;
+  html += rows.map(r=>{
+    const color = r.pct>=85?'var(--green)':r.pct>=50?'var(--y)':'var(--red)';
+    const label = r.hours===null ? 'Geen recente training' : (r.pct>=100?'Volledig hersteld':r.pct+'% hersteld');
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+        <span style="font-size:13px;font-weight:700;color:var(--dark)">${r.muscle}</span>
+        <span style="font-size:12px;color:var(--g4)">${label}</span>
+      </div>
+      <div class="prog-wrap"><div class="prog-fill" style="width:${r.pct}%;background:${color}"></div></div>
+    </div>`;
+  }).join('');
+  el.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════
+// PR PER HERHALING (PR@1 / PR@3 / PR@5 / PR@10)
+// ══════════════════════════════════════════════════════════
+const REP_PR_BUCKETS = [1,3,5,10];
+
+function nearestRepBucket(reps){
+  const r = parseFloat(reps);
+  if(!r || isNaN(r)) return REP_PR_BUCKETS[0];
+  let best = REP_PR_BUCKETS[0], bestDiff = Math.abs(REP_PR_BUCKETS[0]-r);
+  for(let i=1;i<REP_PR_BUCKETS.length;i++){
+    const diff = Math.abs(REP_PR_BUCKETS[i]-r);
+    if(diff < bestDiff){ best = REP_PR_BUCKETS[i]; bestDiff = diff; }
+  }
+  return best;
+}
+
+function computeRepPRsFromSessions(sessions){
+  const result = {1:null,3:null,5:null,10:null};
+  sessions.forEach(s=>{
+    if(!s.weight || !s.reps) return;
+    const bucket = nearestRepBucket(s.reps);
+    const w = parseFloat(s.weight);
+    if(!result[bucket] || w > result[bucket].weight){
+      result[bucket] = {weight:w, date:s.date};
+    }
+  });
+  return result;
+}
+
+async function loadRepPRs(exId){
+  const ss = await sbGet('sessions','&exercise_id=eq.'+exId+'&weight=not.is.null&reps=not.is.null&order=date.desc&limit=300');
+  repPRCache[exId] = computeRepPRsFromSessions(ss);
+  return repPRCache[exId];
+}
+
+async function refreshRepPRs(){
+  const el = document.getElementById('stats-reppr-content');
+  if(!el) return;
+  const strExs = exercises.filter(e=>e.type==='strength'||!e.type);
+  let html = '';
+  for(const ex of strExs){
+    const prs = await loadRepPRs(ex.id);
+    const cells = REP_PR_BUCKETS.map(b=>{
+      const rec = prs[b];
+      return `<div style="text-align:center;flex:1">
+        <div style="font-size:10px;color:var(--g4);text-transform:uppercase;letter-spacing:.3px">PR@${b}</div>
+        <div style="font-size:14px;font-weight:800;color:var(--dark)">${rec?rec.weight+' kg':'—'}</div>
+      </div>`;
+    }).join('');
+    html += `<div style="margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:6px">${ex.name}</div>
+      <div style="display:flex;gap:4px">${cells}</div>
+    </div>`;
+  }
+  el.innerHTML = html || '<p style="color:var(--g4);font-size:13px">Log sets om PR\'s per herhaling te zien</p>';
+}
 
 async function refreshVolumeSpiergroep(){
   const el = document.getElementById('stats-volume-chart');

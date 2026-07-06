@@ -696,6 +696,15 @@ canvas{width:100%;height:100%}
       <div class="card-hd"><span class="card-title">Alle oefeningen</span><button class="btn btn-o btn-sm" onclick="openModal('m-newex')">+ Nieuw</button></div>
       <div class="card-body" id="admin-exlist"></div>
     </div>
+    <div class="sec-hd">Trainingsschema's</div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Training A</span><button class="btn btn-o btn-sm" onclick="openAddTrainEx('A')">+ Koppelen</button></div>
+      <div class="card-body" id="admin-taex-a"></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Training B</span><button class="btn btn-o btn-sm" onclick="openAddTrainEx('B')">+ Koppelen</button></div>
+      <div class="card-body" id="admin-taex-b"></div>
+    </div>
     <div class="sec-hd">Equipment types</div>
     <div class="card">
       <div class="card-body" style="padding-top:10px">
@@ -1087,6 +1096,38 @@ canvas{width:100%;height:100%}
   </div>
 </div>
 
+<div class="modal-bg" id="m-edit-muscles" onclick="bgClose(event,'m-edit-muscles')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="edit-muscles-title">Spiergroepen</div>
+    <p style="font-size:12px;color:var(--g4);margin-bottom:6px;font-weight:700">Primair</p>
+    <div id="edit-muscles-primary" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
+    <p style="font-size:12px;color:var(--g4);margin-bottom:6px;font-weight:700">Secundair</p>
+    <div id="edit-muscles-secondary" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-edit-muscles')">Annuleer</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveMuscles()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-add-trainex" onclick="bgClose(event,'m-add-trainex')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="add-trainex-title">Oefening koppelen</div>
+    <div class="irow"><label class="ilbl">Oefening</label><select class="inp" id="atx-exid"></select></div>
+    <div class="irow"><label class="ilbl">Sets</label><input class="inp" type="number" id="atx-sets" placeholder="bijv. 4" min="1"></div>
+    <div class="irow"><label class="ilbl">Reps</label><input class="inp" type="text" id="atx-reps" placeholder="bijv. 3-5 of 1000m"></div>
+    <div class="irow"><label class="ilbl">RPE (optioneel)</label><input class="inp" type="text" id="atx-rpe" placeholder="bijv. 8"></div>
+    <div class="irow"><label class="ilbl">Warming-up sets</label><input class="inp" type="number" id="atx-wu" placeholder="0" min="0"></div>
+    <div class="irow"><label class="ilbl">Tip (optioneel)</label><input class="inp" type="text" id="atx-tip" placeholder="Coach-aanwijzing"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-add-trainex')">Annuleer</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveAddTrainEx()">Koppelen</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="m-edit-session" onclick="bgClose(event,'m-edit-session')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -1104,7 +1145,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v2.8.8';
+const APP_VER = 'v2.9.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -1151,7 +1192,11 @@ const CARDIO_TYPES = {
   }
 };
 
-const TRAIN_CFG = {
+// TRAIN_CFG_SEED: oorspronkelijke hardcoded schema's, nu alleen gebruikt als
+// eenmalige seed-data voor de 'training_exercises'-koppeltabel in Supabase.
+// Oefeningen zelf leven voortaan in 'exercises' (incl. muscle_primary/secondary),
+// de koppeling+context (sets/reps/rpe/wu/tip) leeft in 'training_exercises'.
+const TRAIN_CFG_SEED = {
   A:[
     {id:'roeien',naam:'Roeien (warmup)',type:'rowing',sets:1,reps:'1000m',tip:'PR: 3:37.5 / 272W (31 mei 2026). Rustig opbouwen — warmup, niet maximaal.',yt:'nolphB7VZJU',muscles:{p:['Rug','Benen','Core'],s:['Schouders','Armen']}},
     {id:'backsquat',naam:'Backsquat',type:'strength',sets:4,reps:'3-5',rpe:'8',wu:3,tip:'Heupen recht naar beneden. Borstkast omhoog.',yt:'bEv6CCg2BC8',muscles:{p:['Quadriceps','Billen'],s:['Hamstrings','Core','Rug']}},
@@ -1170,6 +1215,56 @@ const TRAIN_CFG = {
     {id:'rdl',naam:'RDL',type:'strength',sets:3,reps:'6-8',rpe:'7',wu:1,tip:'Lichte kniebuiging. Heupen achteruit.',yt:'hCDzSR6Vawk',muscles:{p:['Hamstrings','Billen'],s:['Rug','Core']}},
   ]
 };
+
+// Vaste spiergroep-lijst (dropdown/checkboxes) — enige bron van waarheid voor tagging
+const MUSCLE_OPTIONS = ['Borst','Rug','Schouders','Achterste schouder','Armen','Biceps','Triceps','Grip','Quadriceps','Hamstrings','Billen','Benen','Core','Traps'];
+
+let TRAIN_CFG = {A:[],B:[]};
+let _trainCfgLoading=null;
+
+async function loadTrainCfg(){
+  if(_trainCfgLoading) return _trainCfgLoading;
+  _trainCfgLoading=(async()=>{
+    await ensureExercisesLoaded();
+    let rows=await sbGet('training_exercises','&order=training_ref.asc,sort_order.asc');
+    if(!rows.length){
+      // Eenmalige seed: schrijf de oorspronkelijke hardcoded schema's weg naar
+      // Supabase (training_exercises) + vul muscle_primary/secondary aan op exercises.
+      let sortA=0, sortB=0;
+      for(const t of ['A','B']){
+        for(const e of TRAIN_CFG_SEED[t]){
+          const sortOrder=(t==='A')?sortA++:sortB++;
+          await sbUpsert('training_exercises',{id:t+'_'+e.id,exercise_id:e.id,training_ref:t,sort_order:sortOrder,sets:e.sets||null,reps:e.reps||null,rpe:e.rpe||null,wu:e.wu||0,tip:e.tip||null});
+          let exObj=exercises.find(x=>x.id===e.id);
+          if(!exObj){
+            const newRow={id:e.id,name:e.naam,type:e.type,active:true,pr:null,yt:e.yt||null,muscle_primary:e.muscles?.p||[],muscle_secondary:e.muscles?.s||[]};
+            await sbUpsert('exercises',newRow);
+            exercises.push(newRow);
+          } else if(!exObj.muscle_primary || !exObj.muscle_primary.length){
+            await sbPatch('exercises','id=eq.'+e.id,{muscle_primary:e.muscles?.p||[],muscle_secondary:e.muscles?.s||[]});
+            exObj.muscle_primary=e.muscles?.p||[]; exObj.muscle_secondary=e.muscles?.s||[];
+          }
+        }
+      }
+      rows=await sbGet('training_exercises','&order=training_ref.asc,sort_order.asc');
+    }
+    const built={A:[],B:[]};
+    rows.forEach(r=>{
+      const exObj=exercises.find(x=>x.id===r.exercise_id);
+      if(!exObj) return;
+      if(!built[r.training_ref]) built[r.training_ref]=[];
+      built[r.training_ref].push({
+        id:exObj.id, naam:exObj.name, type:exObj.type,
+        sets:r.sets, reps:r.reps, rpe:r.rpe, wu:r.wu||0, tip:r.tip,
+        yt:exObj.yt, muscles:{p:exObj.muscle_primary||[], s:exObj.muscle_secondary||[]}
+      });
+    });
+    TRAIN_CFG.A=built.A||[]; TRAIN_CFG.B=built.B||[];
+    _trainCfgLoading=null;
+    return TRAIN_CFG;
+  })();
+  return _trainCfgLoading;
+}
 
 // Oefeningen die met een langhalter/barbell worden uitgevoerd — tonen plate calculator + 1RM-paneel
 const BARBELL_EXERCISES = new Set(['backsquat','bench','frontsquat','shoulderpress','hexabar','hpc','hps','bentoverrow','rdl']);
@@ -1510,6 +1605,7 @@ function getSessionExs(t){return [...(TRAIN_CFG[t]||[]),...sessionExtra.filter(e
 
 async function renderTrainScreen(t){
   await ensureEquipmentTypesLoaded();
+  await loadTrainCfg();
   const list=getSessionExs(t);
   const container=document.getElementById('train-'+t.toLowerCase()+'-list');
   if(!container)return;
@@ -2520,6 +2616,8 @@ async function refreshStats(){
 // ADMIN
 // ══════════════════════════════════════════════════════════
 async function refreshAdmin(){
+  await ensureExercisesLoaded();
+  await loadTrainCfg();
   renderAdminEqTypes();
   document.getElementById('admin-ver').textContent=APP_VER;
   const el=document.getElementById('api-st');
@@ -2531,7 +2629,7 @@ async function refreshAdmin(){
     const exs=exercises.filter(e=>e.active!==false&&e.category===cat);
     if(!exs.length)return;
     h+=`<div style="font-size:10px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;padding:10px 0 4px;margin-top:4px">${catL[cat]}</div>`;
-    exs.forEach(ex=>{h+=`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)"><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${ex.name}</div><div style="font-size:11px;color:var(--g4)">${ex.type||'strength'}${ex.rest_seconds?' · rust '+ex.rest_seconds+'s':''}</div></div><button onclick="openEditRest('${ex.id}','${ex.name}',${ex.rest_seconds||'null'})" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.rest_seconds?'⏱ '+ex.rest_seconds+'s':'⏱ Rust'}</button><button onclick="openEditYT('${ex.id}','${ex.name}','${ex.yt||''}','${ex.category}')" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.yt?'▶ YT':'+ YT'}</button><button data-id="${ex.id}" onclick="delEx(this.dataset.id)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button></div>`;});
+    exs.forEach(ex=>{h+=`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)"><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${ex.name}</div><div style="font-size:11px;color:var(--g4)">${ex.type||'strength'}${ex.rest_seconds?' · rust '+ex.rest_seconds+'s':''}${(ex.muscle_primary&&ex.muscle_primary.length)?' · '+ex.muscle_primary.join(', '):' · geen spieren'}</div></div><button onclick='openEditMuscles(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${JSON.stringify(ex.muscle_primary||[])},${JSON.stringify(ex.muscle_secondary||[])})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">💪</button><button onclick="openEditRest('${ex.id}','${ex.name}',${ex.rest_seconds||'null'})" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.rest_seconds?'⏱ '+ex.rest_seconds+'s':'⏱ Rust'}</button><button onclick="openEditYT('${ex.id}','${ex.name}','${ex.yt||''}','${ex.category}')" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.yt?'▶ YT':'+ YT'}</button><button data-id="${ex.id}" onclick="delEx(this.dataset.id)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button></div>`;});
   });
   document.getElementById('admin-exlist').innerHTML=h;
   // BC history
@@ -2547,6 +2645,7 @@ async function refreshAdmin(){
   document.getElementById('admin-bc').innerHTML=bh;
   await refreshStats();
   renderRowerAdmin();
+  renderTrainExAdmin();
 }
 
 function renderRowerAdmin(){const el=document.getElementById('rower-admin-list');if(!el)return;el.innerHTML=rowers.map((r,i)=>`<div class="irow"><label class="ilbl">PM5 ${i+1}</label><input class="inp" type="text" value="${r}" id="rwr-${i}" placeholder="PM5 430921286"></div>`).join('');}
@@ -2633,6 +2732,114 @@ async function saveRest(){
   }
 }
 
+let curEditMusclesId=null;
+function renderMuscleChecks(containerId, selected, groupName){
+  const el=document.getElementById(containerId);
+  el.innerHTML=MUSCLE_OPTIONS.map(m=>{
+    const checked=selected.includes(m);
+    return `<label style="display:flex;align-items:center;gap:4px;background:${checked?'var(--accent)':'var(--g1)'};border-radius:8px;padding:5px 9px;font-size:12px;font-weight:700;cursor:pointer;color:${checked?'#fff':'var(--dark)'}">
+      <input type="checkbox" data-group="${groupName}" value="${m}" ${checked?'checked':''} onchange="this.parentElement.style.background=this.checked?'var(--accent)':'var(--g1)';this.parentElement.style.color=this.checked?'#fff':'var(--dark)'" style="display:none">${m}</label>`;
+  }).join('');
+}
+function openEditMuscles(exId,exName,primary,secondary){
+  curEditMusclesId=exId;
+  document.getElementById('edit-muscles-title').textContent=exName+' — Spiergroepen';
+  renderMuscleChecks('edit-muscles-primary', primary||[], 'primary');
+  renderMuscleChecks('edit-muscles-secondary', secondary||[], 'secondary');
+  openModal('m-edit-muscles');
+}
+async function saveMuscles(){
+  const primary=Array.from(document.querySelectorAll('#edit-muscles-primary input:checked')).map(i=>i.value);
+  const secondary=Array.from(document.querySelectorAll('#edit-muscles-secondary input:checked')).map(i=>i.value);
+  const ok=await sbPatch('exercises','id=eq.'+curEditMusclesId,{muscle_primary:primary,muscle_secondary:secondary});
+  if(ok){
+    const ex=exercises.find(e=>e.id===curEditMusclesId);
+    if(ex){ex.muscle_primary=primary;ex.muscle_secondary=secondary;}
+    closeModal('m-edit-muscles');
+    toast('Spiergroepen opgeslagen');
+    refreshAdmin();
+  } else {
+    toast('Fout bij opslaan');
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// TRAINING A/B — OEFENINGEN KOPPELEN (training_exercises)
+// ══════════════════════════════════════════════════════════
+async function renderTrainExAdmin(){
+  for(const t of ['A','B']){
+    const el=document.getElementById('admin-taex-'+t.toLowerCase());
+    if(!el) continue;
+    const rows=await sbGet('training_exercises','&training_ref=eq.'+t+'&order=sort_order.asc');
+    if(!rows.length){el.innerHTML='<p style="color:var(--g4);font-size:13px">Nog geen oefeningen gekoppeld</p>';continue;}
+    el.innerHTML=rows.map((r,i)=>{
+      const ex=exercises.find(x=>x.id===r.exercise_id);
+      const naam=ex?ex.name:r.exercise_id;
+      const detail=[r.sets?r.sets+' sets':null,r.reps,r.rpe?'RPE '+r.rpe:null,r.wu?r.wu+' wu':null].filter(Boolean).join(' · ');
+      return `<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)">
+        <div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${naam}</div><div style="font-size:11px;color:var(--g4)">${detail||'—'}</div></div>
+        <button onclick="moveTrainEx('${t}','${r.exercise_id}',-1)" ${i===0?'disabled style="opacity:.3"':''} style="background:none;border:none;font-size:16px;cursor:pointer;padding:4px 6px">↑</button>
+        <button onclick="moveTrainEx('${t}','${r.exercise_id}',1)" ${i===rows.length-1?'disabled style="opacity:.3"':''} style="background:none;border:none;font-size:16px;cursor:pointer;padding:4px 6px">↓</button>
+        <button onclick="removeTrainEx('${t}','${r.exercise_id}')" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px 6px">🗑</button>
+      </div>`;
+    }).join('');
+  }
+}
+
+let curAddTrainRef=null;
+function openAddTrainEx(trainingRef){
+  curAddTrainRef=trainingRef;
+  document.getElementById('add-trainex-title').textContent='Oefening koppelen — Training '+trainingRef;
+  const sel=document.getElementById('atx-exid');
+  sel.innerHTML=exercises.filter(e=>e.active!==false).map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+  document.getElementById('atx-sets').value='';
+  document.getElementById('atx-reps').value='';
+  document.getElementById('atx-rpe').value='';
+  document.getElementById('atx-wu').value='';
+  document.getElementById('atx-tip').value='';
+  openModal('m-add-trainex');
+}
+async function saveAddTrainEx(){
+  const exId=document.getElementById('atx-exid').value;
+  if(!exId){toast('Kies een oefening');return;}
+  const existing=await sbGet('training_exercises','&training_ref=eq.'+curAddTrainRef+'&order=sort_order.desc&limit=1');
+  const nextSort=existing.length?(existing[0].sort_order+1):0;
+  const row={
+    id:curAddTrainRef+'_'+exId, exercise_id:exId, training_ref:curAddTrainRef, sort_order:nextSort,
+    sets:parseInt(document.getElementById('atx-sets').value)||null,
+    reps:document.getElementById('atx-reps').value.trim()||null,
+    rpe:document.getElementById('atx-rpe').value.trim()||null,
+    wu:parseInt(document.getElementById('atx-wu').value)||0,
+    tip:document.getElementById('atx-tip').value.trim()||null
+  };
+  const ok=await sbUpsert('training_exercises',row);
+  if(ok){
+    closeModal('m-add-trainex');
+    toast('Gekoppeld aan Training '+curAddTrainRef);
+    await loadTrainCfg();
+    renderTrainExAdmin();
+  } else {
+    toast('Fout bij koppelen');
+  }
+}
+async function removeTrainEx(trainingRef,exId){
+  if(!confirm('Deze oefening loskoppelen van Training '+trainingRef+'?'))return;
+  const ok=await sbDel('training_exercises','id=eq.'+trainingRef+'_'+exId);
+  if(ok){toast('Losgekoppeld');await loadTrainCfg();renderTrainExAdmin();}
+  else toast('Fout bij loskoppelen');
+}
+async function moveTrainEx(trainingRef,exId,dir){
+  const rows=await sbGet('training_exercises','&training_ref=eq.'+trainingRef+'&order=sort_order.asc');
+  const idx=rows.findIndex(r=>r.exercise_id===exId);
+  const swapIdx=idx+dir;
+  if(idx<0||swapIdx<0||swapIdx>=rows.length)return;
+  const a=rows[idx], b=rows[swapIdx];
+  await sbPatch('training_exercises','id=eq.'+a.id,{sort_order:b.sort_order});
+  await sbPatch('training_exercises','id=eq.'+b.id,{sort_order:a.sort_order});
+  await loadTrainCfg();
+  renderTrainExAdmin();
+}
+
 async function delEx(id){if(!confirm('Verwijderen?'))return;await sbPatch('exercises','id=eq.'+id,{active:false});exercises=exercises.filter(e=>e.id!==id);refreshAdmin();toast('Verwijderd');}
 
 async function saveNewEx(){
@@ -2644,7 +2851,7 @@ async function saveNewEx(){
   if(exercises.find(e=>e.id===id)){toast('Naam al in gebruik');return;}
   const ytRaw=document.getElementById('nx-yt')?.value.trim()||'';
   const ytVal=ytId(ytRaw);
-  const newEx={id,name:n,category:c,type:t,sort_order:99,active:true,pr:null,yt:ytVal||null,rest_seconds:null};
+  const newEx={id,name:n,category:c,type:t,sort_order:99,active:true,pr:null,yt:ytVal||null,rest_seconds:null,muscle_primary:[],muscle_secondary:[]};
   const ok=await sbPost('exercises',newEx);
   if(ok){
     exercises.push(newEx);
@@ -3482,19 +3689,13 @@ async function show1RMChart(exId, exName){
 // ══════════════════════════════════════════════════════════
 // VOLUME PER SPIERGROEP
 // ══════════════════════════════════════════════════════════
-const MUSCLE_MAP = {
-  backsquat:   ['Quadriceps','Billen','Hamstrings'],
-  frontsquat:  ['Quadriceps','Core'],
-  hexabar:     ['Rug','Billen','Hamstrings'],
-  rdl:         ['Hamstrings','Billen','Rug'],
-  bench:       ['Borst','Triceps','Schouders'],
-  shoulderpress:['Schouders','Triceps'],
-  bentoverrow: ['Rug','Biceps'],
-  cablerow:    ['Rug','Biceps'],
-  hpc:         ['Rug','Benen','Schouders'],
-  hps:         ['Rug','Benen','Schouders'],
-  farmercarry: ['Core','Grip','Traps'],
-};
+// Spiergroepen per oefening komen nu uit exercises.muscle_primary + muscle_secondary
+// (enige bron van waarheid), niet meer uit een los hardcoded object.
+function getExerciseMuscles(exId){
+  const ex=exercises.find(e=>e.id===exId);
+  if(!ex) return [];
+  return [...(ex.muscle_primary||[]),...(ex.muscle_secondary||[])];
+}
 
 // ══════════════════════════════════════════════════════════
 // SPIERHERSTEL — herstel% per spiergroep o.b.v. tijd + RPE
@@ -3502,7 +3703,7 @@ const MUSCLE_MAP = {
 const MUSCLE_RECOVERY_HOURS = {
   Quadriceps:72, Hamstrings:72, Billen:72, Rug:72, Benen:72,
   Borst:60, Schouders:60,
-  Biceps:48, Triceps:48, Core:48, Grip:48, Traps:48
+  Biceps:48, Triceps:48, Core:48, Grip:48, Traps:48, 'Achterste schouder':48, Armen:48
 };
 
 function rpeMultiplier(rpe){
@@ -3527,7 +3728,7 @@ async function refreshMuscleRecovery(){
   const ss = await sbGet('sessions','&date=gte.'+dateStr+'&weight=not.is.null&sets=not.is.null&reps=not.is.null&order=date.desc');
   const lastHit = {};
   ss.forEach(s=>{
-    const muscles = MUSCLE_MAP[s.exercise_id]||[];
+    const muscles = getExerciseMuscles(s.exercise_id);
     muscles.forEach(m=>{
       if(!lastHit[m]) lastHit[m] = {date:s.date, rpe:s.rpe};
     });
@@ -3628,7 +3829,7 @@ async function refreshVolumeSpiergroep(){
   const ss = await sbGet('sessions','&date=gte.'+dateStr+'&weight=not.is.null&sets=not.is.null&reps=not.is.null');
   const muscleVol = {};
   ss.forEach(s=>{
-    const muscles = MUSCLE_MAP[s.exercise_id]||[];
+    const muscles = getExerciseMuscles(s.exercise_id);
     const vol = (s.sets||1)*(s.reps||1)*(s.weight||0);
     muscles.forEach(m=>{
       muscleVol[m] = (muscleVol[m]||0) + vol;
@@ -3637,7 +3838,7 @@ async function refreshVolumeSpiergroep(){
   // Set counts per muscle
   const muscleSets = {};
   ss.forEach(s=>{
-    const muscles = MUSCLE_MAP[s.exercise_id]||[];
+    const muscles = getExerciseMuscles(s.exercise_id);
     muscles.forEach(m=>{
       muscleSets[m] = (muscleSets[m]||0) + (s.sets||1);
     });
@@ -3797,7 +3998,7 @@ window.addEventListener('load',async()=>{
   if(params.get('start')==='B') setTimeout(()=>go('s-train-b'),500);
   if(params.get('checkin')==='1') setTimeout(()=>openModal('m-hrv'),500);
   refreshHome();
-  ensureExercisesLoaded();
+  ensureExercisesLoaded().then(()=>loadTrainCfg());
   ensureEquipmentTypesLoaded();
 });
 </script>

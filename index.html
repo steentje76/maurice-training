@@ -1066,6 +1066,27 @@ canvas{width:100%;height:100%}
   </div>
 </div>
 
+<div class="modal-bg" id="m-edit-rest"  onclick="bgClose(event,'m-edit-rest')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="edit-rest-title">Rusttijd</div>
+    <div class="irow"><label class="ilbl">Seconden (leeg = app-standaard)</label><input class="inp" type="number" id="edit-rest-inp" placeholder="bijv. 90" min="0" step="5"></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+      <button class="timer-preset" onclick="document.getElementById('edit-rest-inp').value=30">30s</button>
+      <button class="timer-preset" onclick="document.getElementById('edit-rest-inp').value=60">1m</button>
+      <button class="timer-preset" onclick="document.getElementById('edit-rest-inp').value=90">1,5m</button>
+      <button class="timer-preset" onclick="document.getElementById('edit-rest-inp').value=120">2m</button>
+      <button class="timer-preset" onclick="document.getElementById('edit-rest-inp').value=180">3m</button>
+      <button class="timer-preset" onclick="document.getElementById('edit-rest-inp').value=''">Wis</button>
+    </div>
+    <p style="font-size:12px;color:var(--g4);margin-bottom:12px">Deze rusttijd start automatisch na het afvinken van een werkset bij deze oefening, i.p.v. de app-brede standaard.</p>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-edit-rest')">Annuleer</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveRest()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="m-edit-session" onclick="bgClose(event,'m-edit-session')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -1083,7 +1104,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v2.8.7';
+const APP_VER = 'v2.8.8';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -2510,7 +2531,7 @@ async function refreshAdmin(){
     const exs=exercises.filter(e=>e.active!==false&&e.category===cat);
     if(!exs.length)return;
     h+=`<div style="font-size:10px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;padding:10px 0 4px;margin-top:4px">${catL[cat]}</div>`;
-    exs.forEach(ex=>{h+=`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)"><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${ex.name}</div><div style="font-size:11px;color:var(--g4)">${ex.type||'strength'}</div></div><button onclick="openEditYT('${ex.id}','${ex.name}','${ex.yt||''}','${ex.category}')" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.yt?'▶ YT':'+ YT'}</button><button data-id="${ex.id}" onclick="delEx(this.dataset.id)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button></div>`;});
+    exs.forEach(ex=>{h+=`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)"><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${ex.name}</div><div style="font-size:11px;color:var(--g4)">${ex.type||'strength'}${ex.rest_seconds?' · rust '+ex.rest_seconds+'s':''}</div></div><button onclick="openEditRest('${ex.id}','${ex.name}',${ex.rest_seconds||'null'})" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.rest_seconds?'⏱ '+ex.rest_seconds+'s':'⏱ Rust'}</button><button onclick="openEditYT('${ex.id}','${ex.name}','${ex.yt||''}','${ex.category}')" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.yt?'▶ YT':'+ YT'}</button><button data-id="${ex.id}" onclick="delEx(this.dataset.id)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button></div>`;});
   });
   document.getElementById('admin-exlist').innerHTML=h;
   // BC history
@@ -2587,6 +2608,31 @@ async function saveYT(){
   }
 }
 
+let curEditRestId=null;
+function openEditRest(exId,exName,restVal){
+  curEditRestId=exId;
+  document.getElementById('edit-rest-title').textContent=exName+' — Rusttijd';
+  document.getElementById('edit-rest-inp').value=restVal||'';
+  openModal('m-edit-rest');
+}
+async function saveRest(){
+  const raw=document.getElementById('edit-rest-inp').value.trim();
+  const val=raw===''?null:Math.max(0,parseInt(raw)||0);
+  // gym_id blijft null (Fase 1, personal app); exercises krijgt in Fase 2 een
+  // eigen user_id-kolom volgens hetzelfde nullable-placeholder-patroon als
+  // exercise_equipment.gym_id — rest_seconds erft die scoping dan automatisch mee.
+  const ok=await sbPatch('exercises','id=eq.'+curEditRestId,{rest_seconds:val});
+  if(ok){
+    const ex=exercises.find(e=>e.id===curEditRestId);
+    if(ex) ex.rest_seconds=val;
+    closeModal('m-edit-rest');
+    toast(val?'Rusttijd '+val+'s opgeslagen':'Rusttijd teruggezet naar standaard');
+    refreshAdmin();
+  } else {
+    toast('Fout bij opslaan');
+  }
+}
+
 async function delEx(id){if(!confirm('Verwijderen?'))return;await sbPatch('exercises','id=eq.'+id,{active:false});exercises=exercises.filter(e=>e.id!==id);refreshAdmin();toast('Verwijderd');}
 
 async function saveNewEx(){
@@ -2598,7 +2644,7 @@ async function saveNewEx(){
   if(exercises.find(e=>e.id===id)){toast('Naam al in gebruik');return;}
   const ytRaw=document.getElementById('nx-yt')?.value.trim()||'';
   const ytVal=ytId(ytRaw);
-  const newEx={id,name:n,category:c,type:t,sort_order:99,active:true,pr:null,yt:ytVal||null};
+  const newEx={id,name:n,category:c,type:t,sort_order:99,active:true,pr:null,yt:ytVal||null,rest_seconds:null};
   const ok=await sbPost('exercises',newEx);
   if(ok){
     exercises.push(newEx);
@@ -3191,8 +3237,11 @@ function saveAsTrainingAndFinish(){
 // ══════════════════════════════════════════════════════════
 let restInterval=null, restEndAt=0;
 function openRestTimer(exId,setNum){
+  const exObj=exercises.find(e=>e.id===exId);
+  const perEx=exObj?.rest_seconds;
+  if(perEx!=null&&perEx>0){startRestTimer(perEx);return;} // per-oefening rusttijd heeft voorrang
   const def=parseInt(localStorage.getItem('maurice_rest_default'))||0;
-  if(def>0){startRestTimer(def);return;} // direct starten met standaardwaarde indien ingesteld
+  if(def>0){startRestTimer(def);return;} // anders app-brede standaardwaarde
   openModal('m-rest-timer');
 }
 function startRestTimer(seconds){

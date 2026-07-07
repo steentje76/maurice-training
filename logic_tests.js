@@ -642,6 +642,48 @@ test('12 rondes + 6 reps > 12 rondes + 3 reps', ()=> assert(amrapBeter({rounds:1
 test('13 rondes + 0 reps > 12 rondes + 9 reps', ()=> assert(amrapBeter({rounds:13,extra_reps:0},{rounds:12,extra_reps:9})));
 test('Gelijke score is niet "beter"', ()=> assertEq(amrapBeter({rounds:10,extra_reps:5},{rounds:10,extra_reps:5}), false));
 
+// ── SPIERBELASTING HEATMAP (Anatomy Engine) ─────────────
+console.log("\n💪 Spierbelasting heatmap");
+
+const MUSCLE_NAME_TO_SVG_IDS_TEST = {
+  Quadriceps: ['left_quadriceps','right_quadriceps'],
+  Billen: ['left_glute','right_glute'],
+  Borst: ['left_pectoralis','right_pectoralis'],
+  Core: ['rectus_abdominis','left_external_oblique','right_external_oblique'],
+};
+
+function muscleNamesToSvgIdsTest(names){
+  const ids = new Set();
+  names.forEach(name=>{
+    (MUSCLE_NAME_TO_SVG_IDS_TEST[name]||[]).forEach(id=>ids.add(id));
+  });
+  return [...ids];
+}
+
+test('Quadriceps mapt naar links+rechts SVG-ID', ()=>{
+  const ids = muscleNamesToSvgIdsTest(['Quadriceps']);
+  assert(ids.includes('left_quadriceps') && ids.includes('right_quadriceps'));
+});
+test('Meerdere spiernamen worden samengevoegd zonder duplicaten', ()=>{
+  const ids = muscleNamesToSvgIdsTest(['Quadriceps','Billen','Quadriceps']);
+  assertEq(ids.length, 4, 'geen dubbele IDs bij herhaalde naam');
+});
+test('Onbekende spiernaam levert geen crash, gewoon overgeslagen', ()=>{
+  const ids = muscleNamesToSvgIdsTest(['NietBestaandeSpier']);
+  assertEq(ids.length, 0);
+});
+test('Core mapt naar rectus_abdominis en obliques', ()=>{
+  const ids = muscleNamesToSvgIdsTest(['Core']);
+  assert(ids.includes('rectus_abdominis'));
+  assert(ids.includes('left_external_oblique'));
+});
+test('Alle SVG-IDs in de mapping zijn geldig snake_case', ()=>{
+  const validId = /^[a-z_]+$/;
+  Object.values(MUSCLE_NAME_TO_SVG_IDS_TEST).flat().forEach(id=>{
+    assert(validId.test(id), `${id} is geen geldig snake_case ID`);
+  });
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

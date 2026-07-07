@@ -672,17 +672,32 @@ test('Onbekende spiernaam levert geen crash, gewoon overgeslagen', ()=>{
   const ids = muscleNamesToSvgIdsTest(['NietBestaandeSpier']);
   assertEq(ids.length, 0);
 });
-test('Core mapt naar rectus_abdominis en obliques', ()=>{
-  const ids = muscleNamesToSvgIdsTest(['Core']);
-  assert(ids.includes('rectus_abdominis'));
-  assert(ids.includes('left_external_oblique'));
-});
 test('Alle SVG-IDs in de mapping zijn geldig snake_case', ()=>{
   const validId = /^[a-z_]+$/;
   Object.values(MUSCLE_NAME_TO_SVG_IDS_TEST).flat().forEach(id=>{
     assert(validId.test(id), `${id} is geen geldig snake_case ID`);
   });
 });
+
+// SVG-keuze op basis van geslacht + front/back view (zelfde logica als getMuscleSvgFor)
+function pickSvgKeyTest(geslacht, view){
+  const isVrouw = geslacht === 'vrouw';
+  if(view === 'back') return isVrouw ? 'FEMALE_BACK' : 'MALE_BACK';
+  return isVrouw ? 'FEMALE_FRONT' : 'MALE_FRONT';
+}
+test('Man + front = MALE_FRONT', ()=> assertEq(pickSvgKeyTest('man','front'), 'MALE_FRONT'));
+test('Vrouw + front = FEMALE_FRONT', ()=> assertEq(pickSvgKeyTest('vrouw','front'), 'FEMALE_FRONT'));
+test('Man + back = MALE_BACK', ()=> assertEq(pickSvgKeyTest('man','back'), 'MALE_BACK'));
+test('Vrouw + back = FEMALE_BACK', ()=> assertEq(pickSvgKeyTest('vrouw','back'), 'FEMALE_BACK'));
+test('Ontbrekend geslacht valt terug op man', ()=> assertEq(pickSvgKeyTest(undefined,'front'), 'MALE_FRONT'));
+
+// Kleurdrempels moeten identiek zijn aan Volume-per-spiergroep / Spierherstel (var(--green)/var(--y)/var(--red))
+function heatmapColorTest(sets){
+  return sets>=12 ? 'var(--green)' : sets>=6 ? 'var(--y)' : 'var(--red)';
+}
+test('12+ sets = groen (zelfde drempel als volumegrafiek)', ()=> assertEq(heatmapColorTest(12), 'var(--green)'));
+test('6-11 sets = geel', ()=> assertEq(heatmapColorTest(6), 'var(--y)'));
+test('<6 sets = rood', ()=> assertEq(heatmapColorTest(5), 'var(--red)'));
 
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);

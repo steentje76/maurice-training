@@ -1149,6 +1149,19 @@ canvas{width:100%;height:100%}
   </div>
 </div>
 
+<div class="modal-bg" id="m-edit-peak" onclick="bgClose(event,'m-edit-peak')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="edit-peak-title">Peakdoel</div>
+    <div class="irow"><label class="ilbl">Doel-1RM in kg (leeg = geen doel)</label><input class="inp" type="number" id="edit-peak-inp" placeholder="bijv. 140" min="0" step="2.5"></div>
+    <p style="font-size:12px;color:var(--g4);margin-bottom:12px">Dit doel bepaalt de voortgangsbalk en het percentage bij deze oefening op het tabblad Progressie.</p>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-edit-peak')">Annuleer</button>
+      <button class="btn btn-r" style="flex:2" onclick="savePeakGoal()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="m-add-trainex" onclick="bgClose(event,'m-add-trainex')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -1183,13 +1196,20 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v2.9.4';
+const APP_VER = 'v2.9.5';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
 const SB_H = {apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'};
 
-const PEAK = {backsquat:140,bench:105,frontsquat:110,shoulderpress:75,hexabar:300,hpc:100,hps:70,cablerow:110,bentoverrow:100};
+// Legacy fallback-waarden, alleen gebruikt zolang een oefening nog geen eigen
+// peak_goal heeft ingesteld (zie exercises.peak_goal, beheerbaar per gebruiker).
+const PEAK_FALLBACK = {backsquat:140,bench:105,frontsquat:110,shoulderpress:75,hexabar:300,hpc:100,hps:70,cablerow:110,bentoverrow:100};
+function peakGoalFor(exId){
+  const ex=exercises.find(e=>e.id===exId);
+  if(ex&&ex.peak_goal!=null&&ex.peak_goal!=='')return ex.peak_goal;
+  return PEAK_FALLBACK[exId]||null;
+}
 
 // Cardio type definities
 const CARDIO_TYPES = {
@@ -2815,12 +2835,12 @@ async function refreshStatsScreen(){
     let best=null;
     ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=s.reps===1?s.weight:s.weight*(1+s.reps/30);if(!best||est>best)best=est;});
     const disp=best?Math.round(best):ex.pr;if(!disp)continue;
-    const tgt=PEAK[ex.id];const pct=tgt?Math.round(disp/tgt*100):null;
+    const tgt=peakGoalFor(ex.id);const pct=tgt?Math.round(disp/tgt*100):null;
     const fc=pct?(pct>=100?'var(--green)':pct>=85?'var(--y)':'var(--accent)'):'var(--accent)';
     h+=`<div class="stat-1rm-item" onclick="show1RMChart('${ex.id}','${ex.name}')" style="cursor:pointer">
-      <div class="stat-1rm-row"><span class="stat-1rm-name">${ex.name}</span><span class="stat-1rm-val">${disp} kg</span>${tgt?`<span class="stat-1rm-target">/ ${tgt} kg</span>`:''}<span style="color:var(--g3);font-size:14px;margin-left:4px">📈</span></div>
+      <div class="stat-1rm-row"><span class="stat-1rm-name">${ex.name}</span><span class="stat-1rm-val">${disp} kg</span>${tgt?`<span class="stat-1rm-target">/ ${tgt} kg</span>`:''}<span style="color:var(--g3);font-size:14px;margin-left:4px">📈</span><button onclick="event.stopPropagation();openEditPeak('${ex.id}','${ex.name}',${tgt||'null'})" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-left:auto">🎯</button></div>
       <div class="prog-wrap"><div class="prog-fill" style="width:${Math.min(100,pct||Math.round(disp/3))}%;background:${fc}"></div></div>
-      ${pct?`<div class="stat-1rm-pct">${pct}% van peakdoel${pct>=100?' ✓':' · '+(100-pct)+'% te gaan'}</div>`:''}
+      ${pct?`<div class="stat-1rm-pct">${pct}% van peakdoel${pct>=100?' ✓':' · '+(100-pct)+'% te gaan'}</div>`:tgt===null?`<div class="stat-1rm-pct" style="color:var(--g4)">Nog geen peakdoel ingesteld</div>`:''}
     </div>`;
   }
   const el1=document.getElementById('stats-1rm-list');
@@ -2872,7 +2892,7 @@ async function refreshStats(){
     let best=null;
     ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=s.reps===1?s.weight:s.weight*(1+s.reps/30);if(!best||est>best)best=est;});
     const disp=best?Math.round(best):ex.pr;if(!disp)continue;
-    const tgt=PEAK[ex.id];const pct=tgt?Math.round(disp/tgt*100):null;
+    const tgt=peakGoalFor(ex.id);const pct=tgt?Math.round(disp/tgt*100):null;
     const fc=pct?(pct>=100?'var(--green)':pct>=85?'var(--y)':'var(--red)'):'var(--red)';
     h+=`<div class="stat-1rm-item">
       <div class="stat-1rm-row"><span class="stat-1rm-name">${ex.name}</span><span class="stat-1rm-val">${disp} kg</span>${tgt?`<span class="stat-1rm-target">/ ${tgt} kg</span>`:''}</div>
@@ -2900,7 +2920,7 @@ async function refreshAdmin(){
     const exs=exercises.filter(e=>e.active!==false&&e.category===cat);
     if(!exs.length)return;
     h+=`<div style="font-size:10px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;padding:10px 0 4px;margin-top:4px">${catL[cat]}</div>`;
-    exs.forEach(ex=>{h+=`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)"><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${ex.name}</div><div style="font-size:11px;color:var(--g4)">${ex.type||'strength'}${ex.rest_seconds?' · rust '+ex.rest_seconds+'s':''}${(ex.muscle_primary&&ex.muscle_primary.length)?' · '+ex.muscle_primary.join(', '):' · geen spieren'}</div></div><button onclick='openEditMuscles(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${JSON.stringify(ex.muscle_primary||[])},${JSON.stringify(ex.muscle_secondary||[])})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">💪</button><button onclick="openEditRest('${ex.id}','${ex.name}',${ex.rest_seconds||'null'})" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.rest_seconds?'⏱ '+ex.rest_seconds+'s':'⏱ Rust'}</button><button onclick="openEditYT('${ex.id}','${ex.name}','${ex.yt||''}','${ex.category}')" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.yt?'▶ YT':'+ YT'}</button><button data-id="${ex.id}" onclick="delEx(this.dataset.id)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button></div>`;});
+    exs.forEach(ex=>{h+=`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)"><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${ex.name}</div><div style="font-size:11px;color:var(--g4)">${ex.type||'strength'}${ex.rest_seconds?' · rust '+ex.rest_seconds+'s':''}${ex.peak_goal?' · doel '+ex.peak_goal+'kg':''}${(ex.muscle_primary&&ex.muscle_primary.length)?' · '+ex.muscle_primary.join(', '):' · geen spieren'}</div></div><button onclick='openEditMuscles(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${JSON.stringify(ex.muscle_primary||[])},${JSON.stringify(ex.muscle_secondary||[])})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">💪</button><button onclick="openEditRest('${ex.id}','${ex.name}',${ex.rest_seconds||'null'})" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.rest_seconds?'⏱ '+ex.rest_seconds+'s':'⏱ Rust'}</button><button onclick="openEditPeak('${ex.id}','${ex.name}',${ex.peak_goal||'null'})" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.peak_goal?'🎯 '+ex.peak_goal+'kg':'🎯 Doel'}</button><button onclick="openEditYT('${ex.id}','${ex.name}','${ex.yt||''}','${ex.category}')" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.yt?'▶ YT':'+ YT'}</button><button data-id="${ex.id}" onclick="delEx(this.dataset.id)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button></div>`;});
   });
   document.getElementById('admin-exlist').innerHTML=h;
   // BC history
@@ -3031,6 +3051,29 @@ async function saveMuscles(){
     closeModal('m-edit-muscles');
     toast('Spiergroepen opgeslagen');
     refreshAdmin();
+  } else {
+    toast('Fout bij opslaan');
+  }
+}
+
+let curEditPeakId=null;
+function openEditPeak(exId,exName,peakVal){
+  curEditPeakId=exId;
+  document.getElementById('edit-peak-title').textContent=exName+' — Peakdoel';
+  document.getElementById('edit-peak-inp').value=peakVal||'';
+  openModal('m-edit-peak');
+}
+async function savePeakGoal(){
+  const raw=document.getElementById('edit-peak-inp').value.trim();
+  const val=raw===''?null:Math.max(0,parseFloat(raw)||0);
+  const ok=await sbPatch('exercises','id=eq.'+curEditPeakId,{peak_goal:val});
+  if(ok){
+    const ex=exercises.find(e=>e.id===curEditPeakId);
+    if(ex) ex.peak_goal=val;
+    closeModal('m-edit-peak');
+    toast(val?'Peakdoel '+val+'kg opgeslagen':'Peakdoel gewist');
+    refreshAdmin();
+    refreshStatsScreen();
   } else {
     toast('Fout bij opslaan');
   }

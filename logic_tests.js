@@ -254,31 +254,40 @@ test('THR null bij lege data', ()=>{
   assert(thr(null, 100) === null);
 });
 
-// ── PEAKDOEL PER OEFENING (beheerbaar i.p.v. hardcoded) ──
-console.log("\n🎯 Peakdoel per oefening");
+// ── SPORT FILTER (oefeningenlijst per sport) ──────────────
+console.log("\n🏅 Sport filter oefeningenlijst");
 
-const PEAK_FALLBACK = {backsquat:140,bench:105};
-function peakGoalFor(exId, exercises){
-  const ex = exercises.find(e=>e.id===exId);
-  if(ex && ex.peak_goal != null && ex.peak_goal !== '') return ex.peak_goal;
-  return PEAK_FALLBACK[exId] || null;
+function filterExercisesBySport(exList, sport){
+  return exList.filter(e => !e.sports || !e.sports.length || e.sports.includes(sport));
 }
 
-test('Eigen peak_goal heeft voorrang boven fallback', ()=>{
-  const exs = [{id:'backsquat', peak_goal:160}];
-  assertEq(peakGoalFor('backsquat', exs), 160);
+const sportTestSet = [
+  {id:'backsquat', sports:['kracht','crossfit']},
+  {id:'lat_pulldown', sports:['bodybuilding']},
+  {id:'kb_swing', sports:['kettlebell','crossfit']},
+  {id:'legacy_ex', sports:[]},          // oude fallback-oefening zonder tag
+  {id:'legacy_ex2'},                    // sports veld ontbreekt volledig
+];
+
+test('Filtert op gekozen sport', ()=>{
+  const r = filterExercisesBySport(sportTestSet, 'bodybuilding');
+  assert(r.some(e=>e.id==='lat_pulldown'), 'lat_pulldown moet aanwezig zijn');
+  assert(!r.some(e=>e.id==='kb_swing'), 'kb_swing hoort niet bij bodybuilding');
 });
-test('Zonder eigen peak_goal wordt fallback gebruikt', ()=>{
-  const exs = [{id:'backsquat', peak_goal:null}];
-  assertEq(peakGoalFor('backsquat', exs), 140);
+test('Oefening met meerdere sporten verschijnt bij elk', ()=>{
+  const r1 = filterExercisesBySport(sportTestSet, 'kracht');
+  const r2 = filterExercisesBySport(sportTestSet, 'crossfit');
+  assert(r1.some(e=>e.id==='backsquat'));
+  assert(r2.some(e=>e.id==='backsquat'));
 });
-test('Zonder fallback en zonder peak_goal is doel null', ()=>{
-  const exs = [{id:'nieuweoefening', peak_goal:null}];
-  assertEq(peakGoalFor('nieuweoefening', exs), null);
+test('Oefening zonder sport-tag blijft altijd zichtbaar', ()=>{
+  const r = filterExercisesBySport(sportTestSet, 'swimming');
+  assert(r.some(e=>e.id==='legacy_ex'), 'lege sports array moet zichtbaar blijven');
+  assert(r.some(e=>e.id==='legacy_ex2'), 'ontbrekend sports veld moet zichtbaar blijven');
 });
-test('peak_goal 0 telt als bewust ingesteld doel', ()=>{
-  const exs = [{id:'backsquat', peak_goal:0}];
-  assertEq(peakGoalFor('backsquat', exs), 0);
+test('Sport zonder gekoppelde oefeningen geeft alleen legacy items', ()=>{
+  const r = filterExercisesBySport(sportTestSet, 'triathlon');
+  assertEq(r.length, 2, 'alleen de 2 legacy-oefeningen zonder tag horen over te blijven');
 });
 
 // ── SAMENVATTING ─────────────────────────────────────────

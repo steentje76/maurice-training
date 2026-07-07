@@ -829,10 +829,29 @@ canvas{width:100%;height:100%}
     <div class="modal-handle"></div>
     <div class="modal-title">Losse oefening</div>
     <div class="irow"><label class="ilbl">Oefening</label><select class="inp" id="los-ex" onchange="onLosExChange()"></select></div>
-    <div class="irow" id="los-ex-new-row" style="display:none"><label class="ilbl">Naam</label><input class="inp" type="text" id="los-ex-new" placeholder="bijv. Zercher Squat"></div>
-    <div class="irow"><label class="ilbl">Gewicht</label><input class="inp" type="number" id="los-kg" placeholder="kg" step="0.5"></div>
-    <div class="irow"><label class="ilbl">Reps</label><input class="inp" type="number" id="los-reps" placeholder="reps"></div>
-    <div class="irow"><label class="ilbl">RPE</label><input class="inp" type="number" id="los-rpe" placeholder="RPE" step="0.5" min="1" max="10"></div>
+    <div id="los-new-fields" style="display:none">
+      <div class="irow"><label class="ilbl">Naam</label><input class="inp" type="text" id="los-ex-new" placeholder="bijv. Zercher Squat"></div>
+      <div class="irow"><label class="ilbl">Type</label><select class="inp" id="los-ex-new-type" onchange="onLosNewTypeChange()">
+        <option value="strength">Kracht</option>
+        <option value="kettlebell">Kettlebell</option>
+        <option value="bodyweight">Bodyweight</option>
+        <option value="carry">Carry</option>
+        <option value="wod">CrossFit WOD</option>
+        <option value="rowing">Roeien</option>
+        <option value="bikeerg">Bike Erg</option>
+        <option value="skierg">Ski Erg</option>
+        <option value="assaultbike">Assault Bike</option>
+        <option value="stairmaster">Stairmaster</option>
+        <option value="running">Hardlopen</option>
+        <option value="swimming">Zwemmen</option>
+      </select></div>
+      <div class="irow" id="los-new-wodfmt-row" style="display:none"><label class="ilbl">WOD formaat</label><select class="inp" id="los-ex-new-wodfmt">
+        <option value="for_time">For Time</option>
+        <option value="amrap">AMRAP</option>
+        <option value="emom">EMOM</option>
+      </select></div>
+    </div>
+    <div id="los-body"></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-los-oefening')">Annuleer</button>
       <button class="btn btn-r" style="flex:2" onclick="saveLosOefening()">Opslaan</button>
@@ -866,13 +885,22 @@ canvas{width:100%;height:100%}
     <div class="irow"><label class="ilbl">Training</label><select class="inp" id="nx-cat"><option value="A">Training A</option><option value="B">Training B</option><option value="CrossFit">CrossFit</option><option value="Overig">Overig</option></select></div>
     <div class="irow"><label class="ilbl">Type</label><select class="inp" id="nx-type" onchange="updateNxType(this.value)">
       <option value="strength">Kracht</option>
+      <option value="kettlebell">Kettlebell</option>
+      <option value="bodyweight">Bodyweight</option>
+      <option value="carry">Carry</option>
+      <option value="wod">CrossFit WOD</option>
       <option value="rowing">Roeien (Concept 2)</option>
       <option value="bikeerg">Bike Erg</option>
       <option value="skierg">Ski Erg</option>
       <option value="assaultbike">Assault Bike</option>
+      <option value="stairmaster">Stairmaster</option>
       <option value="running">Hardlopen</option>
-      <option value="carry">Carry</option>
-      <option value="bodyweight">Bodyweight</option>
+      <option value="swimming">Zwemmen</option>
+    </select></div>
+    <div class="irow" id="nx-wodfmt-row" style="display:none"><label class="ilbl">WOD formaat</label><select class="inp" id="nx-wodfmt">
+      <option value="for_time">For Time</option>
+      <option value="amrap">AMRAP</option>
+      <option value="emom">EMOM</option>
     </select></div>
     <div class="irow"><label class="ilbl">YouTube</label><input class="inp" type="text" id="nx-yt" placeholder="bijv. bEv6CCg2BC8 of https://youtu.be/..." oninput="previewYT('nx-yt','nx-yt-preview')"></div>
     <div id="nx-yt-preview" style="margin-bottom:8px"></div>
@@ -1146,7 +1174,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v2.9.1';
+const APP_VER = 'v2.9.2';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -1189,6 +1217,20 @@ const CARDIO_TYPES = {
     fields:['dist_km','time','pace','hr'],
     labels:{dist_km:'Afstand (km)',time:'Totaal tijd',pace:'Pace /km',hr:'Hartslag gem.'},
     splits:true, splitDist:1, splitTotal:5,
+    machines:null
+  },
+  swimming: {
+    naam:'Zwemmen', unit:'m', splitUnit:'/100m',
+    fields:['dist','time','pace','stroke'],
+    labels:{dist:'Afstand (m)',time:'Totaal tijd',pace:'Pace /100m',stroke:'Slagtype'},
+    splits:true, splitDist:100, splitTotal:400,
+    machines:null
+  },
+  stairmaster: {
+    naam:'Stairmaster', unit:'min', splitUnit:null,
+    fields:['time','cals','floors'],
+    labels:{time:'Totaal tijd',cals:'Calorieën',floors:'Floors'},
+    splits:false,
     machines:null
   }
 };
@@ -1462,6 +1504,35 @@ async function renderCheckinConditions(){
 // ══════════════════════════════════════════════════════════
 // LOSSE OEFENING (loggen buiten Schema/Workout om)
 // ══════════════════════════════════════════════════════════
+// Tijd-string (mm:ss of h:mm:ss) omzetten naar seconden — gedeelde helper,
+// ook gebruikt door de cardio-splitberekening en getest in logic_tests.js.
+function parseTimeToSec(str){
+  if(!str)return null;
+  const p=String(str).trim().split(':');
+  let sec;
+  if(p.length===2)sec=parseFloat(p[0])*60+parseFloat(p[1]);
+  else if(p.length===3)sec=parseFloat(p[0])*3600+parseFloat(p[1])*60+parseFloat(p[2]);
+  else sec=parseFloat(str);
+  return isNaN(sec)?null:sec;
+}
+
+// Verzamelt alle ingevulde werksets (kg/reps/rpe) voor een gerenderde oefening-body,
+// ongeacht of dit de trainingsscreen of de Losse oefening modal is (zelfde DOM-ids).
+function collectWorkSets(domId){
+  const rows=[];
+  let i=1;
+  while(true){
+    const kgEl=document.getElementById('s-'+domId+'-'+i+'-kg');
+    const repsEl=document.getElementById('s-'+domId+'-'+i+'-reps');
+    if(!kgEl&&!repsEl)break;
+    const kg=kgEl?.value||'', reps=repsEl?.value||'';
+    const rpeEl=document.getElementById('s-'+domId+'-'+i+'-rpe');
+    if(kg||reps)rows.push({kg,reps,rpe:rpeEl?.value||''});
+    i++;
+  }
+  return rows;
+}
+
 async function openLosOefening(){
   await ensureExercisesLoaded();
   const sel=document.getElementById('los-ex');
@@ -1469,40 +1540,133 @@ async function openLosOefening(){
     .map(e=>`<option value="${e.id}">${e.name}</option>`).join('')
     +'<option value="__new__">+ Eigen oefening…</option>';
   document.getElementById('los-ex-new').value='';
-  document.getElementById('los-ex-new-row').style.display='none';
-  document.getElementById('los-kg').value='';
-  document.getElementById('los-reps').value='';
-  document.getElementById('los-rpe').value='';
+  document.getElementById('los-ex-new-type').value='strength';
+  document.getElementById('los-new-fields').style.display='none';
+  document.getElementById('los-new-wodfmt-row').style.display='none';
+  onLosExChange();
   openModal('m-los-oefening');
 }
 function onLosExChange(){
-  const isNew=document.getElementById('los-ex').value==='__new__';
-  document.getElementById('los-ex-new-row').style.display=isNew?'':'none';
-  if(isNew)document.getElementById('los-ex-new').focus();
+  const val=document.getElementById('los-ex').value;
+  const isNew=val==='__new__';
+  document.getElementById('los-new-fields').style.display=isNew?'':'none';
+  if(isNew){
+    document.getElementById('los-ex-new').focus();
+    renderLosBody();
+  } else {
+    const ex=exercises.find(e=>e.id===val);
+    if(ex)renderLosBody(ex);
+  }
+}
+function onLosNewTypeChange(){
+  const t=document.getElementById('los-ex-new-type').value;
+  document.getElementById('los-new-wodfmt-row').style.display=t==='wod'?'':'none';
+  renderLosBody();
+}
+// Rendert exact dezelfde oefening-body (set-cirkels, cardio-velden, WOD-velden, ...)
+// als tijdens een training — via de gedeelde buildExerciseBody-dispatcher.
+function renderLosBody(existingEx=null){
+  const container=document.getElementById('los-body');
+  let ex=existingEx;
+  if(!ex){
+    const t=document.getElementById('los-ex-new-type').value;
+    const wodFmt=document.getElementById('los-ex-new-wodfmt').value;
+    ex={id:'__new__',name:'',type:t,wod_format:wodFmt,sets:t==='carry'?3:4,wu:0};
+  }
+  container.innerHTML=buildExerciseBody(ex,{wu:ex.wu||0,sets:ex.sets});
 }
 async function saveLosOefening(){
   let exId=document.getElementById('los-ex').value;
-  const kg=parseFloat(document.getElementById('los-kg').value)||null;
-  const reps=parseInt(document.getElementById('los-reps').value)||null;
-  const rpe=parseFloat(document.getElementById('los-rpe').value)||null;
   if(!exId){toast('Kies een oefening');return;}
-  if(exId==='__new__'){
+  const isNew=exId==='__new__';
+  const domId=isNew?'__new__':exId;
+  let ex;
+  if(isNew){
     const naam=document.getElementById('los-ex-new').value.trim();
     if(!naam){toast('Vul een naam in');return;}
     const id=naam.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
     if(!id){toast('Ongeldige naam');return;}
-    if(exercises.find(e=>e.id===id)){
-      exId=id;
+    const type=document.getElementById('los-ex-new-type').value;
+    const wodFormat=type==='wod'?document.getElementById('los-ex-new-wodfmt').value:null;
+    const existing=exercises.find(e=>e.id===id);
+    if(existing){
+      ex=existing; exId=id;
     } else {
-      const newEx={id,name:naam,category:'Overig',type:'strength',sort_order:99,active:true,pr:null,yt:null,rest_seconds:null,muscle_primary:[],muscle_secondary:[]};
-      const ok=await sbPost('exercises',newEx);
+      ex={id,name:naam,category:'Overig',type,wod_format:wodFormat,sort_order:99,active:true,pr:null,yt:null,rest_seconds:null,muscle_primary:[],muscle_secondary:[]};
+      const ok=await sbPost('exercises',ex);
       if(!ok){toast('Fout bij aanmaken oefening');return;}
-      exercises.push(newEx);
+      exercises.push(ex);
       exId=id;
     }
+  } else {
+    ex=exercises.find(e=>e.id===exId);
+    if(!ex){toast('Kies een oefening');return;}
   }
-  await sbPost('sessions',{date:td(),exercise_id:exId,sets:1,reps,weight:kg,rpe,training_type:null,note:'Losse oefening'});
-  closeModal('m-los-oefening');toast('Opgeslagen');
+
+  // gym_id/user_id nullable placeholders — zelfde patroon als exercise_equipment,
+  // klaar voor RLS-rollout in Fase 2 zonder migratie.
+  const row={date:td(),exercise_id:exId,training_type:null,note:'Losse oefening',user_id:null,gym_id:null};
+  const cardioTypeKeys=Object.keys(CARDIO_TYPES);
+  const val=f=>document.getElementById(domId+'-'+f)?.value||'';
+
+  if(cardioTypeKeys.includes(ex.type)){
+    if(ex.type==='running'){
+      const km=parseFloat(val('dist_km'))||null;
+      row.distance=km?Math.round(km*1000):null;
+      row.time_str=val('time')||null;
+      row.hr_avg=parseInt(val('hr'))||null;
+    } else if(ex.type==='swimming'){
+      const dist=parseInt(val('dist'))||null;
+      const sec=parseTimeToSec(val('time'));
+      row.distance=dist;
+      row.time_str=val('time')||null;
+      row.pace_sec=(sec&&dist)?Math.round((sec/dist)*100):null;
+      row.stroke_type=val('stroke')||null;
+    } else if(ex.type==='stairmaster'){
+      row.time_str=val('time')||null;
+      row.calories=parseFloat(val('cals'))||null;
+      row.note='Losse oefening'+(val('floors')?' · '+val('floors')+' floors':'');
+    } else if(ex.type==='assaultbike'){
+      row.time_str=val('time')||null;
+      row.calories=parseFloat(val('cals'))||null;
+      row.watt=parseFloat(val('watt'))||null;
+    } else {
+      row.distance=parseInt(val('dist'))||null;
+      row.time_str=val('time')||null;
+      row.watt=parseFloat(val('watt'))||null;
+      row.stroke_rate=parseInt(val('stroke')||val('rpm'))||null;
+    }
+  } else if(ex.type==='wod'){
+    const fmtEl=document.getElementById(domId+'-wodfmt');
+    const fmt=fmtEl?fmtEl.value:(ex.wod_format||'for_time');
+    if(fmt==='for_time'){
+      row.time_str=document.getElementById(domId+'-time')?.value||null;
+    } else if(fmt==='amrap'){
+      row.rounds=parseInt(document.getElementById(domId+'-rounds')?.value)||null;
+      row.extra_reps=parseInt(document.getElementById(domId+'-extrareps')?.value)||null;
+    } else if(fmt==='emom'){
+      const min=parseInt(document.getElementById(domId+'-minutes')?.value)||null;
+      row.rounds=min;
+      row.completed=min?true:null;
+    }
+  } else {
+    const sets=collectWorkSets(domId);
+    if(!sets.length){toast('Vul minimaal 1 set in');return;}
+    const best=sets.reduce((b,s)=>(!b||parseFloat(s.kg||0)>parseFloat(b.kg||0))?s:b,null);
+    row.sets=sets.length;
+    row.weight=parseFloat(best.kg)||null;
+    row.reps=parseInt(best.reps)||null;
+    row.rpe=parseFloat(best.rpe)||null;
+    if(ex.type==='kettlebell'){
+      const sideBtn=document.querySelector('#kb-side-'+domId+' .rower-chip.sel');
+      if(sideBtn)row.note='Losse oefening · zijde: '+sideBtn.textContent;
+    }
+  }
+
+  const ok=await sbPost('sessions',row);
+  if(!ok){toast('Fout bij opslaan');return;}
+  closeModal('m-los-oefening');
+  toast('Opgeslagen');
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1659,15 +1823,7 @@ async function renderTrainScreen(t){
     const div=document.createElement('div');
     div.className='ex-card';
 
-    let bodyHTML='';
-    if(ex.type==='rowing'||ex.type==='bikeerg'||ex.type==='skierg'||ex.type==='assaultbike'||ex.type==='running'){
-      const cardioT=ex.cardioType||ex.type||'rowing';
-      bodyHTML=buildCardioBody(ex.id, cardioT);
-    }else if(ex.type==='carry'){
-      bodyHTML=buildCarryBody(ex.id,ex.sets||3);
-    }else{
-      bodyHTML=buildStrengthBody(ex.id,ex.wu||0,ex.sets||4,prefillData);
-    }
+    let bodyHTML=buildExerciseBody(ex,{wu:ex.wu||0,sets:ex.sets,prefill:prefillData});
 
     div.innerHTML=`
       <div class="ex-card-hd" onclick="toggleExCard('${ex.id}')">
@@ -1946,6 +2102,76 @@ function buildCarryBody(exId,sets){
   return h;
 }
 
+function buildKettlebellBody(exId,workCount,prefill=null){
+  let h=`<div style="padding:8px 14px 4px;font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Zijde</div>
+  <div class="rower-scroll" id="kb-side-${exId}">
+    ${['Beide','Links','Rechts'].map((s,i)=>`<button class="rower-chip${i===0?' sel':''}" onclick="selKbSide('${exId}',this)">${s}</button>`).join('')}
+  </div>
+  <div class="add-row" style="padding:8px 14px;cursor:default"><span style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Sets</span></div>`;
+  for(let i=1;i<=workCount;i++) h+=buildWorkSetRow(exId,i,prefill);
+  return h;
+}
+function selKbSide(exId,btn){
+  document.querySelectorAll('#kb-side-'+exId+' .rower-chip').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+
+function buildWodFieldsInner(exId,fmt,prefill){
+  if(fmt==='amrap'){
+    return `<div class="row-grid">
+      <div class="row-item"><input class="row-inp" type="number" inputmode="numeric" placeholder="12" id="${exId}-rounds" value="${prefill?.rounds||''}"><div class="row-inp-lbl">Rondes</div></div>
+      <div class="row-item"><input class="row-inp" type="number" inputmode="numeric" placeholder="6" id="${exId}-extrareps" value="${prefill?.extra_reps||''}"><div class="row-inp-lbl">+ Reps</div></div>
+    </div>`;
+  }
+  if(fmt==='emom'){
+    return `<div class="row-grid">
+      <div class="row-item"><input class="row-inp" type="number" inputmode="numeric" placeholder="10" id="${exId}-minutes"><div class="row-inp-lbl">Minuten voltooid</div></div>
+    </div>`;
+  }
+  return `<div class="row-grid">
+    <div class="row-item"><input class="row-inp" type="text" placeholder="3:42" id="${exId}-time"><div class="row-inp-lbl">Tijd</div></div>
+  </div>`;
+}
+function renderWodFields(exId){
+  const sel=document.getElementById(exId+'-wodfmt');
+  if(!sel)return;
+  const el=document.getElementById(exId+'-wodfields');
+  if(el)el.innerHTML=buildWodFieldsInner(exId,sel.value,null);
+}
+function buildWodBody(exId,ex,prefill=null){
+  const fmt=ex.wod_format||'for_time';
+  return `<div style="padding:8px 14px 4px;font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Formaat</div>
+  <div class="row-grid" style="grid-template-columns:1fr">
+    <select class="inp" id="${exId}-wodfmt" onchange="renderWodFields('${exId}')">
+      <option value="for_time"${fmt==='for_time'?' selected':''}>For Time</option>
+      <option value="amrap"${fmt==='amrap'?' selected':''}>AMRAP</option>
+      <option value="emom"${fmt==='emom'?' selected':''}>EMOM</option>
+    </select>
+  </div>
+  <div id="${exId}-wodfields">${buildWodFieldsInner(exId,fmt,prefill)}</div>`;
+}
+
+// Gedeelde dispatcher: bepaalt op basis van ex.type welke body gerenderd wordt.
+// Wordt gebruikt door zowel renderTrainScreen (training) als de Losse oefening modal,
+// zodat beide exact dezelfde invoervelden/weergave gebruiken per oefeningtype.
+function buildExerciseBody(ex,opts={}){
+  const wu=opts.wu??ex.wu??0;
+  const sets=opts.sets??ex.sets??(ex.type==='carry'?3:4);
+  const prefill=opts.prefill||null;
+  const cardioTypeKeys=Object.keys(CARDIO_TYPES);
+  if(cardioTypeKeys.includes(ex.type)){
+    return buildCardioBody(ex.id, ex.cardioType||ex.type);
+  } else if(ex.type==='carry'){
+    return buildCarryBody(ex.id, sets);
+  } else if(ex.type==='kettlebell'){
+    return buildKettlebellBody(ex.id, sets, prefill);
+  } else if(ex.type==='wod'){
+    return buildWodBody(ex.id, ex, prefill);
+  } else {
+    return buildStrengthBody(ex.id, wu, sets, prefill);
+  }
+}
+
 function getMachineList(type){
   if(type==='rowing') return rowers;
   if(type==='bikeerg') return bikeergMachines;
@@ -2032,6 +2258,15 @@ function calcCardioSplit(exId, cardioType){
     const pm=Math.floor(pace/60),ps=Math.round(pace%60);
     const el=document.getElementById(exId+'-pace');
     if(el){el.value=pm+':'+(ps<10?'0':'')+ps;}
+  } else if(cardioType==='swimming'){
+    const dist=parseFloat(document.getElementById(exId+'-dist')?.value)||0;
+    if(!dist) return;
+    const pace=(sec/dist)*100;
+    const pm=Math.floor(pace/60),ps=Math.round(pace%60);
+    const el=document.getElementById(exId+'-pace');
+    if(el){el.value=pm+':'+(ps<10?'0':'')+ps;}
+  } else if(cardioType==='stairmaster'){
+    // geen split/pace-berekening voor stairmaster
   } else {
     const dist=parseFloat(document.getElementById(exId+'-dist')?.value)||1000;
     const splitDist=cardioType==='assaultbike'?1:500;
@@ -2680,9 +2915,11 @@ function saveRowers(){const ins=document.querySelectorAll('[id^="rwr-"]');rowers
 let curEditYTId=null, curEditYTCat=null;
 
 function updateNxType(val){
-  const isCardio=['rowing','bikeerg','skierg','assaultbike','running'].includes(val);
+  const isCardio=['rowing','bikeerg','skierg','assaultbike','running','swimming','stairmaster'].includes(val);
   const ytRow=document.querySelector('#m-newex .irow:has(#nx-yt)');
   // Show/hide YouTube for non-cardio
+  const wodRow=document.getElementById('nx-wodfmt-row');
+  if(wodRow)wodRow.style.display=val==='wod'?'':'none';
 }
 
 function ytId(val){
@@ -2877,7 +3114,8 @@ async function saveNewEx(){
   if(exercises.find(e=>e.id===id)){toast('Naam al in gebruik');return;}
   const ytRaw=document.getElementById('nx-yt')?.value.trim()||'';
   const ytVal=ytId(ytRaw);
-  const newEx={id,name:n,category:c,type:t,sort_order:99,active:true,pr:null,yt:ytVal||null,rest_seconds:null,muscle_primary:[],muscle_secondary:[]};
+  const wodFmt=t==='wod'?(document.getElementById('nx-wodfmt')?.value||'for_time'):null;
+  const newEx={id,name:n,category:c,type:t,wod_format:wodFmt,sort_order:99,active:true,pr:null,yt:ytVal||null,rest_seconds:null,muscle_primary:[],muscle_secondary:[]};
   const ok=await sbPost('exercises',newEx);
   if(ok){
     exercises.push(newEx);

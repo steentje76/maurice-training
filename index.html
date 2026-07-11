@@ -117,6 +117,28 @@ body{display:flex;justify-content:center}
 .rm-pct-row{display:flex;gap:6px;flex-wrap:wrap}
 .pct-btn{background:#fff;border:1.5px solid var(--g2);color:var(--dark);border-radius:8px;padding:5px 9px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--f)}
 .pct-btn:active{background:var(--accent);border-color:var(--accent)}
+.pct-btn.active{background:var(--accent);border-color:var(--accent);color:var(--dark)}
+/* v306: verticale RPE-stepper */
+.rpe-stepper-v{gap:0}
+.rpe-stepper-v .rpe-btn{background:var(--g1)}
+.rpe-stepper-v .rpe-btn:active{background:var(--g2)}
+/* v306: opslaan-status training */
+.train-save-row{display:flex;align-items:center;justify-content:space-between;margin-top:6px;gap:8px}
+.save-status{font-size:10px;font-weight:700;color:var(--g4);letter-spacing:.2px}
+.save-btn{background:var(--g1);border:1.5px solid var(--g2);color:var(--dark);border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--f);flex-shrink:0}
+.save-btn:active{background:var(--accent);border-color:var(--accent)}
+/* v306: coach sessie */
+#coach-back-bar{display:none;padding:9px 16px;background:var(--g1);border-bottom:1px solid var(--g2);cursor:pointer}
+#coach-back-bar span{font-size:13px;font-weight:700;color:var(--dark)}
+.coach-chips-row{display:none;gap:6px;padding:8px 16px;flex-wrap:wrap;background:var(--card);border-bottom:1px solid var(--g2)}
+.coach-chip{background:var(--g1);border:1.5px solid var(--g2);color:var(--dark);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)}
+.coach-chip:active{background:var(--accent);border-color:var(--accent)}
+.coach-apply-btn{display:inline-block;margin-top:6px;background:var(--accent);color:var(--dark);border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer;font-family:var(--f)}
+.coach-apply-btn:disabled{opacity:.6}
+.coach-advice-card{margin:6px 14px 10px;padding:9px 12px;background:#eef9f9;border-left:3px solid var(--accent);border-radius:0 8px 8px 0;font-size:12px;color:var(--dark);line-height:1.5}
+.hist-session-row{padding:11px 4px;border-bottom:1px solid var(--g2);cursor:pointer}
+.hist-session-label{font-size:13px;font-weight:700;color:var(--dark)}
+.hist-session-date{font-size:11px;color:var(--g4);margin-top:2px}
 .epley-hint{margin-top:8px;font-size:11px;color:var(--g4);display:flex;align-items:center;gap:8px}
 .epley-hint button{background:var(--dark);color:#fff;border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--f)}
 .eq-panel{margin:8px 14px 4px;background:var(--g1);border-radius:10px;overflow:hidden}
@@ -393,6 +415,7 @@ canvas{width:100%;height:100%}
     <div style="font-size:13px;font-weight:700;color:var(--g4);letter-spacing:.3px;text-transform:uppercase;margin-bottom:4px">Training A</div>
     <div style="font-size:11px;color:var(--g4);margin-bottom:8px" id="prog-a-lbl">0 / 6 oefeningen</div>
     <div class="prog-wrap"><div class="prog-fill" id="prog-a" style="width:0%"></div></div>
+    <div class="train-save-row"><span class="save-status" id="train-save-status-a">✓ Alles opgeslagen</span><button class="save-btn" onclick="persistTrainingDraft(false)">Opslaan</button></div>
   </div>
   <div class="scroll" id="train-a-list" style="padding-top:12px"></div>
   <nav class="bnav">
@@ -421,6 +444,7 @@ canvas{width:100%;height:100%}
     <div style="font-size:13px;font-weight:700;color:var(--g4);letter-spacing:.3px;text-transform:uppercase;margin-bottom:4px">Training B</div>
     <div style="font-size:11px;color:var(--g4);margin-bottom:8px" id="prog-b-lbl">0 / 7 oefeningen</div>
     <div class="prog-wrap"><div class="prog-fill" id="prog-b" style="width:0%"></div></div>
+    <div class="train-save-row"><span class="save-status" id="train-save-status-b">✓ Alles opgeslagen</span><button class="save-btn" onclick="persistTrainingDraft(false)">Opslaan</button></div>
   </div>
   <div class="scroll" id="train-b-list" style="padding-top:12px"></div>
   <nav class="bnav">
@@ -514,7 +538,9 @@ canvas{width:100%;height:100%}
 
 <!-- ═══ COACH ═══ -->
 <div class="scr" id="s-coach">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Coach</div><div class="hdr-sub" id="coach-st">Klaar</div></div><button class="ibtn" onclick="clearChat()">🗑</button></div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Coach</div><div class="hdr-sub"><span id="coach-session-label">Algemeen gesprek</span> · <span id="coach-st">Klaar</span></div></div><div style="display:flex;gap:2px"><button class="ibtn" onclick="openCoachHistory()" title="Gespreksgeschiedenis">🕘</button><button class="ibtn" onclick="clearChat()">🗑</button></div></div></div>
+  <div id="coach-back-bar" onclick="history.back()"><span>← Terug naar training</span></div>
+  <div class="coach-chips-row" id="coach-chips"></div>
   <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 16px;display:flex;flex-direction:column;gap:6px;background:var(--bg)" id="chat-wrap"></div>
   <div style="background:var(--card);border-top:1px solid var(--g2);padding:10px 12px;display:flex;gap:8px;align-items:flex-end;flex-shrink:0">
     <textarea style="flex:1;background:var(--g1);border:1.5px solid var(--g2);border-radius:14px;padding:10px 12px;color:var(--dark);font-size:15px;font-family:var(--f);outline:none;resize:none;max-height:100px;min-height:42px" id="chat-inp" placeholder="Bericht aan coach..." rows="1" onkeydown="ckd(event)" oninput="ar(this)"></textarea>
@@ -1061,6 +1087,24 @@ canvas{width:100%;height:100%}
   </div>
 </div>
 
+<div class="modal-bg" id="m-coach-history" onclick="bgClose(event,'m-coach-history')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Gespreksgeschiedenis</div>
+    <div id="coach-history-list" style="max-height:60vh;overflow-y:auto"></div>
+    <button class="btn btn-o" style="width:100%;margin-top:12px" onclick="closeModal('m-coach-history')">Sluiten</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-ai-summary" onclick="">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🤖 Training samengevat</div>
+    <div id="ai-summary-body" style="font-size:13px;color:var(--dark);line-height:1.6;white-space:pre-wrap">Samenvatting laden...</div>
+    <button class="btn btn-r" style="width:100%;margin-top:16px" onclick="closeModal('m-ai-summary');go('s-home');refreshStats()">Naar Home</button>
+  </div>
+</div>
+
 <div class="modal-bg" id="m-new-training" onclick="bgClose(event,'m-new-training')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -1351,7 +1395,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.0.5';
+const APP_VER = 'v3.0.6';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -2109,7 +2153,7 @@ async function renderLosBody(existingEx=null){
       ${BARBELL_EXERCISES.has(ex.id)?buildRmPanel(ex):''}
       ${buildEquipmentPanel(ex.id,eqList)}`;
   }
-  const askBtn=`<button onclick="askCoachEx('${(ex.name||'deze oefening').replace(/'/g,"\\'")}','Losse oefening')" style="margin:8px 0 4px;background:var(--dark);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">🤖 Vraag de coach</button>`;
+  const askBtn=`<button onclick="askCoachEx('${(ex.name||'deze oefening').replace(/'/g,"\\'")}',null,'${ex.id}')" style="margin:8px 0 4px;background:var(--dark);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">🤖 Vraag de coach</button>`;
   container.innerHTML=panels+bodyHTML+askBtn;
 }
 async function saveLosOefening(){
@@ -2378,14 +2422,31 @@ async function deleteBlockExercise(){
 // ══════════════════════════════════════════════════════════
 // TRAINING SESSION
 // ══════════════════════════════════════════════════════════
+function isSameLocalDay(ts){
+  const a=new Date(ts),b=new Date();
+  return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+}
 async function startT(t){
   if(curT===t){
     document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
     document.getElementById('s-train-'+t.toLowerCase()).classList.add('active');
     startTrainTimer(t);return;
   }
-  curT=t;sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;
-  await renderTrainScreen(t);
+  // v306 #5: concept van eerder (zelfde dag, niet afgerond) aanbieden om te hervatten
+  const draft=restoreTrainingDraft();
+  const resumeDraft=draft&&draft.t===t&&isSameLocalDay(draft.ts)&&confirm('Niet-afgeronde Training '+t+' gevonden (laatst opgeslagen om '+new Date(draft.ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+'). Hervatten?');
+  pctSelection={};rpeManual={};warmupState={};
+  if(resumeDraft){
+    curT=t;sessionLog=draft.sessionLog||{};sessionExtra=draft.sessionExtra||[];trainPaused=false;pausedAccumMs=0;
+    await renderTrainScreen(t);
+    restoreSessionLogToDom(t);
+    lastSaveTs=draft.ts;saveState='saved';updateSaveIndicator();
+  }else{
+    if(draft)clearTrainingDraft();
+    curT=t;sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;
+    await renderTrainScreen(t);
+    saveState='saved';lastSaveTs=null;updateSaveIndicator();
+  }
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('s-train-'+t.toLowerCase()).classList.add('active');
   trainStart=Date.now();startTrainTimer(t);
@@ -2477,7 +2538,7 @@ async function renderTrainScreen(t){
           <span class="add-row-icon">+</span>
           <span class="add-row-lbl" style="color:var(--red);font-size:13px">Set toevoegen</span>
         </div>
-        <button onclick="askCoachEx('${ex.naam}','${t}')" style="margin:8px 14px 12px;background:var(--dark);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">🤖 Vraag de coach</button>
+        <button onclick="askCoachEx('${ex.naam}','${t}','${ex.id}')" style="margin:8px 14px 12px;background:var(--dark);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">🤖 Vraag de coach</button>
       </div>`;
     container.appendChild(div);
   }
@@ -2531,9 +2592,16 @@ function epley1RM(kg,reps){
   if(reps===1)return kg;
   return Math.round(kg*(1+reps/30)); // zelfde formule/afronding als Stats-scherm (geschatte 1RM)
 }
+// v306: centrale afrondingsregel (0.5 kg increments) — hergebruikt door alle nieuwe rekenfuncties
+function roundKg(v){ return Math.round(v*2)/2; }
+// v306: welk %1RM-knop actief staat per oefening, en of de gebruiker het gewicht daarna
+// handmatig heeft overschreven (dan stopt automatische herberekening bij een nieuwe 1RM).
+let pctSelection={};
+let settingViaPct=false; // onderdrukt de "handmatig"-markering terwijl applyPct zelf het veld vult
 function buildRmPanel(ex){
   const rm=getOneRM(ex.id);
   const pcts=[50,60,70,80,90,95,100];
+  const sel=pctSelection[ex.id];
   checkColdStart(ex.id); // fire-and-forget: vult hint async in zodra bekend of nodig
   return `<div class="rm-panel" id="rm-panel-${ex.id}">
     <div class="rm-panel-row">
@@ -2542,7 +2610,7 @@ function buildRmPanel(ex){
       <button class="btn btn-o rm-plate-btn" onclick="openPlateCalcForEx('${ex.id}')">⚖️</button>
     </div>
     <div class="rm-pct-row">
-      ${pcts.map(p=>`<button class="pct-btn" onclick="applyPct('${ex.id}',${p})">${p}%</button>`).join('')}
+      ${pcts.map(p=>`<button class="pct-btn${sel&&sel.pct===p?' active':''}" data-ex="${ex.id}" data-pct="${p}" onclick="applyPct('${ex.id}',${p})">${p}%</button>`).join('')}
     </div>
     <div id="rm-epley-hint-${ex.id}"></div>
     <div id="cold-start-hint-${ex.id}"></div>
@@ -2560,6 +2628,22 @@ async function saveOneRM(exId,val){
   localStorage.setItem('maurice_1rm_'+exId,v); // meteen lokaal, ook als sync faalt
   if(exObj)exObj.one_rm=v;
   await sbPatch('exercises','id=eq.'+exId,{one_rm:v}); // faalt stil als kolom nog niet bestaat
+  // v306: bij een nieuwe 1RM automatisch herberekenen als er een %-knop actief staat
+  // en de gebruiker het werkgewicht nog niet handmatig heeft overschreven.
+  const sel=pctSelection[exId];
+  if(sel&&!sel.manual)applyPct(exId,sel.pct,true);
+}
+function markActivePctBtn(exId,pct){
+  document.querySelectorAll(`.pct-btn[data-ex="${exId}"]`).forEach(b=>{
+    b.classList.toggle('active', pct!=null&&parseFloat(b.dataset.pct)===pct);
+  });
+}
+// v306: markeert set 1 als handmatig zodra de gebruiker het kg-veld zelf wijzigt,
+// zodat een latere 1RM-wijziging deze set niet meer overschrijft.
+function onManualKgEdit1(exId){
+  if(settingViaPct)return;
+  if(pctSelection[exId])pctSelection[exId].manual=true;
+  markActivePctBtn(exId,null);
 }
 // Toont een Epley-schatting o.b.v. een gelogde set (kg × reps) als suggestie voor het 1RM-veld
 function showEpleyHint(exId,kg,reps){
@@ -2627,18 +2711,27 @@ function acceptColdStart(exId,est){
   if(el)el.innerHTML='';
   toast('Startschatting 1RM ingevuld: '+est+' kg');
 }
-function applyPct(exId,pct){
+// v306: knop is nu functioneel — berekent het gewicht o.b.v. de huidige 1RM, rondt af
+// volgens de bestaande afrondingsregel, en vult ALTIJD werkset 1 (reps/RPE blijven staan).
+// silent=true wordt gebruikt bij automatische herberekening na een 1RM-wijziging.
+function applyPct(exId,pct,silent){
   const rm=getOneRM(exId);
-  if(!rm){toast('Vul eerst een 1RM in');return;}
-  const target=Math.round((rm*pct/100)*2)/2; // afronden op 0.5 kg
-  // Vul de eerste lege werkset, anders de laatste werkset
-  const rows=document.querySelectorAll(`[id^="s-${exId}-"][id$="-kg"]`);
-  let filled=false;
-  rows.forEach(inp=>{
-    if(!filled&&!inp.value){inp.value=target;inp.dispatchEvent(new Event('input'));inp.dispatchEvent(new Event('change'));filled=true;}
-  });
-  if(!filled&&rows.length){const last=rows[rows.length-1];last.value=target;last.dispatchEvent(new Event('input'));last.dispatchEvent(new Event('change'));}
-  toast(pct+'% van 1RM = '+target+' kg');
+  if(!rm){if(!silent)toast('Vul eerst een 1RM in');return;}
+  // Zorg dat set 1 in 'vast'-modus staat zodat het ingevulde getal het gewicht zelf is
+  const modeSel=document.getElementById('s-'+exId+'-1-wmode');
+  if(modeSel&&modeSel.value!=='vast'){modeSel.value='vast';onWeightModeChange(exId,1);}
+  const target=roundKg(rm*pct/100);
+  const kgInp=document.getElementById('s-'+exId+'-1-kg');
+  if(kgInp){
+    settingViaPct=true;
+    kgInp.value=target;
+    kgInp.dispatchEvent(new Event('input'));
+    kgInp.dispatchEvent(new Event('change'));
+    settingViaPct=false;
+  }
+  pctSelection[exId]={pct,manual:false};
+  markActivePctBtn(exId,pct);
+  if(!silent)toast(pct+'% van 1RM = '+target+' kg');
 }
 function openPlateCalcForEx(exId){
   const rows=document.querySelectorAll(`[id^="s-${exId}-"][id$="-kg"]`);
@@ -2718,22 +2811,100 @@ async function refreshEquipmentPanel(exId){
   if(wasOpen)toggleEqPanel(exId);
 }
 
+// ══════════════════════════════════════════════════════════
+// OPWARMSETS (v306) — dynamisch toevoegbaar/verwijderbaar + slimme auto-generatie
+// warmupState[exId] = {count, manual:{i:true}, values:{i:{kg,reps}}}
+// ══════════════════════════════════════════════════════════
+let warmupState={};
+function buildWarmupRow(exId,i){
+  const v=warmupState[exId]?.values?.[i]||{};
+  return `<div class="set-row" id="wr-${exId}-${i}">
+    <div class="warmup-lbl">W${i}</div>
+    <div class="set-fields">
+      <div class="set-field-wrap" style="flex:2"><input class="set-field" type="text" inputmode="decimal" placeholder="kg" id="w-${exId}-${i}-kg" value="${v.kg||''}" oninput="clampNumInput(this,0,500);onWarmupEdit('${exId}',${i})" onchange="logSet('${exId}','wu',${i},false)"><div class="set-field-lbl">kg</div></div>
+      <div class="set-sep">×</div>
+      <div class="set-field-wrap" style="flex:1"><input class="set-field" type="number" inputmode="numeric" placeholder="reps" id="w-${exId}-${i}-reps" value="${v.reps||''}" oninput="onWarmupEdit('${exId}',${i})" onchange="logSet('${exId}','wu',${i},false)"><div class="set-field-lbl">reps</div></div>
+    </div>
+    <button class="set-more" onclick="showWarmupMenu('${exId}',${i})">⋮</button>
+  </div>`;
+}
+function buildWarmupSection(exId,count){
+  let h=`<div class="add-row" style="padding:8px 14px;cursor:default;display:flex;justify-content:space-between;align-items:center">
+    <span style="font-size:11px;font-weight:700;color:var(--g3);text-transform:uppercase;letter-spacing:.5px">Opwarmsets</span>
+    <button onclick="regenerateWarmup('${exId}')" title="Opwarmsets opnieuw genereren" style="font-size:10px;background:none;border:none;color:var(--accent);font-weight:700;cursor:pointer;font-family:var(--f)">↻ genereren</button>
+  </div><div id="wu-rows-${exId}">`;
+  for(let i=1;i<=count;i++)h+=buildWarmupRow(exId,i);
+  h+=`</div><div class="add-row" onclick="addWarmupSet('${exId}')" style="padding:6px 14px 10px">
+    <span class="add-row-icon">+</span><span class="add-row-lbl" style="font-size:12px;color:var(--g4)">Opwarmset toevoegen</span></div>`;
+  return h;
+}
+function onWarmupEdit(exId,i){
+  if(!warmupState[exId])warmupState[exId]={count:1,manual:{},values:{}};
+  warmupState[exId].manual[i]=true;
+}
+function addWarmupSet(exId){
+  if(!warmupState[exId])warmupState[exId]={count:0,manual:{},values:{}};
+  warmupState[exId].count++;
+  const rows=document.getElementById('wu-rows-'+exId);
+  if(rows)rows.insertAdjacentHTML('beforeend',buildWarmupRow(exId,warmupState[exId].count));
+}
+function showWarmupMenu(exId,i){
+  if(confirm('Opwarmset W'+i+' verwijderen?'))removeWarmupSet(exId,i);
+}
+// Verzamelt de huidige waarden, verwijdert index i, en hernummert de rest (W1, W2, ...).
+function removeWarmupSet(exId,i){
+  const st=warmupState[exId];if(!st)return;
+  const vals=[];
+  for(let j=1;j<=st.count;j++){
+    if(j===i)continue;
+    const kg=document.getElementById('w-'+exId+'-'+j+'-kg')?.value||'';
+    const reps=document.getElementById('w-'+exId+'-'+j+'-reps')?.value||'';
+    vals.push({kg,reps,manual:!!st.manual[j]});
+  }
+  st.count=vals.length;st.values={};st.manual={};
+  vals.forEach((v,idx)=>{st.values[idx+1]={kg:v.kg,reps:v.reps};if(v.manual)st.manual[idx+1]=true;});
+  const rows=document.getElementById('wu-rows-'+exId);
+  if(rows)rows.innerHTML=vals.map((v,idx)=>buildWarmupRow(exId,idx+1)).join('');
+}
+// v306: slim opwarmschema o.b.v. het werkgewicht — zwaarder = meer opwarmsets, lichter = minder.
+function suggestWarmupScheme(workKg){
+  let pcts;
+  if(workKg>=120)pcts=[[0.4,8],[0.55,5],[0.7,3],[0.8,2],[0.9,1]];
+  else if(workKg>=80)pcts=[[0.4,8],[0.6,5],[0.75,3],[0.9,1]];
+  else if(workKg>=40)pcts=[[0.5,6],[0.7,4],[0.85,2]];
+  else pcts=[[0.5,8],[0.75,4]];
+  return pcts.map(([p,reps])=>({kg:roundKg(workKg*p),reps}));
+}
+// Genereert automatisch als werkgewicht 1 bekend is (anders 1RM als terugval). Overschrijft
+// nooit sets die de gebruiker handmatig heeft aangepast, tenzij forceRegen=true.
+function autoGenerateWarmup(exId,forceRegen){
+  if(!document.getElementById('wu-rows-'+exId))return; // geen opwarmsectie op dit scherm (bv. losse oefening zonder wu)
+  const st=warmupState[exId]||(warmupState[exId]={count:0,manual:{},values:{}});
+  let workKg=parseFloat(document.getElementById('s-'+exId+'-1-kg')?.value);
+  if(!workKg||isNaN(workKg))workKg=estimatedOneRM(exId)||getOneRM(exId);
+  if(!workKg)return;
+  const scheme=suggestWarmupScheme(workKg);
+  const manual=forceRegen?{}:st.manual;
+  if(forceRegen)st.manual={};
+  st.count=Math.max(st.count,scheme.length);
+  scheme.forEach((s,idx)=>{
+    const i=idx+1;
+    if(manual[i])return;
+    st.values[i]={kg:s.kg,reps:s.reps};
+  });
+  const rows=document.getElementById('wu-rows-'+exId);
+  if(rows){
+    let h='';
+    for(let i=1;i<=st.count;i++)h+=buildWarmupRow(exId,i);
+    rows.innerHTML=h;
+  }
+}
+function regenerateWarmup(exId){autoGenerateWarmup(exId,true);toast('Opwarmsets opnieuw gegenereerd');}
+
 function buildStrengthBody(exId,wuCount,workCount,prefill=null){
   let h='';
-  if(wuCount>0){
-    h+=`<div class="add-row" style="padding:8px 14px;cursor:default"><span style="font-size:11px;font-weight:700;color:var(--g3);text-transform:uppercase;letter-spacing:.5px">Opwarmsets</span></div>`;
-    for(let i=1;i<=wuCount;i++){
-      h+=`<div class="set-row">
-        <div class="warmup-lbl">W${i}</div>
-        <div class="set-fields">
-          <div class="set-field-wrap" style="flex:2"><input class="set-field" type="text" inputmode="decimal" placeholder="kg" id="w-${exId}-${i}-kg" oninput="clampNumInput(this,0,500)" onchange="logSet('${exId}','wu',${i},false)"><div class="set-field-lbl">kg</div></div>
-          <div class="set-sep">×</div>
-          <div class="set-field-wrap" style="flex:1"><input class="set-field" type="number" inputmode="numeric" placeholder="reps" id="w-${exId}-${i}-reps" onchange="logSet('${exId}','wu',${i},false)"><div class="set-field-lbl">reps</div></div>
-        </div>
-        <button class="set-more" onclick="showSetMenu('${exId}',${i},'wu')">⋮</button>
-      </div>`;
-    }
-  }
+  if(!warmupState[exId])warmupState[exId]={count:wuCount||0,manual:{},values:{}};
+  h+=buildWarmupSection(exId,warmupState[exId].count);
   if(prefill) h+=`<div style="background:#e8f5e9;border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:6px 12px;font-size:11px;color:#2e7d32;margin:4px 14px 8px">📋 Vorige sessie: ${prefill.kg} kg × ${prefill.reps} reps${prefill.rpe?' · RPE '+prefill.rpe:''} — pre-ingevuld</div>`;
   h+=`<div class="add-row" style="padding:8px 14px;cursor:default"><span style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Werksets</span></div>`;
   for(let i=1;i<=workCount;i++){
@@ -2743,7 +2914,7 @@ function buildStrengthBody(exId,wuCount,workCount,prefill=null){
 }
 
 // ══════════════════════════════════════════════════════════
-// GEWICHT-OPTIES per set (v3.0.3, uitgebreid v3.0.5)
+// GEWICHT-OPTIES per set (v3.0.3, uitgebreid v3.0.5, v306: presets+topset-suggestie)
 // Uitbreidbaar: nieuwe modi toevoegen aan WEIGHT_MODES volstaat —
 // getEffectiveKg() en de select-rendering lezen dit array uit.
 // ══════════════════════════════════════════════════════════
@@ -2756,6 +2927,22 @@ const WEIGHT_MODES=[
   {v:'backoff',l:'Backoff (% topset)',ph:'%'}
 ];
 function weightModePlaceholder(mode){return WEIGHT_MODES.find(m=>m.v===mode)?.ph||'kg';}
+// v306: vaste percentage-presets per modus i.p.v. vrije invoer — spec-item #2
+const PCT_PRESETS={pct:[90,95,100,102.5,105],'1rm':[50,55,60,65,70,75,80,85,90,95,100],backoff:[90,92.5,95]};
+const PCT_DEFAULTS={pct:100,'1rm':80,backoff:90};
+// Rendert het kg-veld: een select met presets voor % vorige/%1RM/backoff, anders een vrij invoerveld.
+// Behoudt bewust dezelfde id (s-{exId}-{i}-kg) zodat getEffectiveKg() ongewijzigd blijft werken.
+function kgFieldHtml(exId,i,mode,val){
+  const id=`s-${exId}-${i}-kg`;
+  if(PCT_PRESETS[mode]){
+    const opts=PCT_PRESETS[mode].map(p=>`<option value="${p}"${String(p)===String(val)?' selected':''}>${p}%</option>`).join('');
+    return `<select class="set-field" id="${id}" onchange="onKgSelectChange('${exId}',${i})">${opts}</select>`;
+  }
+  const ph=mode==='plus'?'+2.5':weightModePlaceholder(mode);
+  return `<input class="set-field" type="text" inputmode="decimal" placeholder="${ph}" id="${id}" value="${val||''}" min="0" max="500"
+    oninput="clampNumInput(this,0,500);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'kg',this.value);${i===1?`onManualKgEdit1('${exId}')`:''}"
+    onchange="logSet('${exId}','work',${i},true);${i===1?`autoGenerateWarmup('${exId}',false)`:''}">`;
+}
 // Geschatte 1RM (Epley), gecached per oefening zodat getEffectiveKg() synchroon kan blijven.
 // Wordt gevuld bij het openen van een oefening (zelfde call-site als loadRepPRs), valt terug
 // op de geregistreerde PR als er nog geen sessiedata gecached is.
@@ -2820,11 +3007,33 @@ function getEffectiveKg(exId,i){
   if(mode==='pct')return Math.round(prevKg*val/100*10)/10;
   return val;
 }
+// v306: bij modus-wissel wordt het kg-veld opnieuw gerenderd (input ↔ select met presets).
 function onWeightModeChange(exId,i){
   const mode=document.getElementById('s-'+exId+'-'+i+'-wmode')?.value||'vast';
-  const kgInp=document.getElementById('s-'+exId+'-'+i+'-kg');
-  if(kgInp)kgInp.placeholder=weightModePlaceholder(mode);
+  const wrap=document.getElementById('kgwrap-'+exId+'-'+i);
+  if(wrap){
+    const field=wrap.querySelector('.set-field');
+    const defaultVal=PCT_PRESETS[mode]?PCT_DEFAULTS[mode]:'';
+    if(field)field.outerHTML=kgFieldHtml(exId,i,mode,defaultVal);
+  }
+  if(mode==='topset')suggestTopset(exId,i);
   logSet(exId,'work',i,true);
+}
+function onKgSelectChange(exId,i){
+  if(i===1)onManualKgEdit1(exId);
+  logSet(exId,'work',i,true);
+  copyToSets(exId,i,'kg',document.getElementById('s-'+exId+'-'+i+'-kg')?.value);
+}
+// v306: automatische topset-suggestie (voorbereid voor latere verfijning) — schat ~90% van
+// de geschatte 1RM, alleen als het veld nog leeg is (niet overschrijven bij bestaande waarde).
+function suggestTopset(exId,i){
+  const inp=document.getElementById('s-'+exId+'-'+i+'-kg');
+  if(!inp||inp.value)return;
+  const rm=estimatedOneRM(exId)||getOneRM(exId);
+  if(!rm)return;
+  const sugg=roundKg(rm*0.9);
+  inp.value=sugg;
+  inp.dispatchEvent(new Event('input'));
 }
 function buildWeightModeSelect(exId,i,mode){
   return `<select class="wmode-sel" id="s-${exId}-${i}-wmode" onchange="onWeightModeChange('${exId}',${i})" title="Gewicht-modus">
@@ -2836,17 +3045,21 @@ function buildWeightModeSelect(exId,i,mode){
 // RPE-PICKER (v3.0.3) — vervangt vrije invoer door +/- stepper, stap 0.5.
 // Start automatisch bij de vorige RPE (prefill of cascade) i.p.v. leeg/0.
 // ══════════════════════════════════════════════════════════
+// v306: verticale bediening (+ boven, − onder) — smaller op mobiel dan de horizontale variant.
 function buildRpeStepper(exId,i,rpeVal,prevRpe){
   const disp=rpeVal!==undefined&&rpeVal!==null&&rpeVal!==''?rpeVal:'';
-  return `<div class="set-field-wrap rpe-stepper" style="flex:1;display:flex;flex-direction:column;align-items:center">
-    <div style="display:flex;align-items:center;gap:2px">
-      <button type="button" class="rpe-btn" onclick="adjustRpe('${exId}',${i},-0.5)" style="width:22px;height:22px;border-radius:6px;border:1px solid var(--g2);background:var(--g1);font-size:14px;line-height:1;cursor:pointer">−</button>
-      <input class="set-field rpe-display" type="text" readonly id="s-${exId}-${i}-rpe" data-prev-rpe="${prevRpe||''}" value="${disp}" placeholder="–" style="font-size:13px;width:34px;text-align:center">
-      <button type="button" class="rpe-btn" onclick="adjustRpe('${exId}',${i},0.5)" style="width:22px;height:22px;border-radius:6px;border:1px solid var(--g2);background:var(--g1);font-size:14px;line-height:1;cursor:pointer">+</button>
-    </div>
+  return `<div class="set-field-wrap rpe-stepper-v" style="flex:1;display:flex;flex-direction:column;align-items:center">
+    <button type="button" class="rpe-btn" onclick="adjustRpe('${exId}',${i},0.5)" style="width:28px;height:20px;border-radius:6px 6px 0 0;border:1px solid var(--g2);font-size:13px;line-height:1;cursor:pointer">+</button>
+    <input class="set-field rpe-display" type="text" readonly id="s-${exId}-${i}-rpe" data-prev-rpe="${prevRpe||''}" value="${disp}" placeholder="–" style="font-size:13px;width:34px;height:22px;text-align:center;border-radius:0;border-left:1px solid var(--g2);border-right:1px solid var(--g2);border-top:none;border-bottom:none">
+    <button type="button" class="rpe-btn" onclick="adjustRpe('${exId}',${i},-0.5)" style="width:28px;height:20px;border-radius:0 0 6px 6px;border:1px solid var(--g2);font-size:13px;line-height:1;cursor:pointer">−</button>
     <div class="set-field-lbl">RPE</div>
   </div>`;
 }
+// v306: cascade-logica. rpeManual houdt per set bij of de gebruiker die set zelf heeft
+// aangepast (dan cascadeert een wijziging elders die set niet meer).
+let rpeManual={};
+function markRpeManual(exId,i){ if(!rpeManual[exId])rpeManual[exId]={}; rpeManual[exId][i]=true; }
+function isRpeManual(exId,i){ return !!(rpeManual[exId]&&rpeManual[exId][i]); }
 function adjustRpe(exId,i,delta){
   const el=document.getElementById('s-'+exId+'-'+i+'-rpe');
   if(!el)return;
@@ -2860,8 +3073,24 @@ function adjustRpe(exId,i,delta){
   }
   if(cur<1)cur=1; if(cur>10)cur=10;
   el.value=cur;
+  markRpeManual(exId,i);
   logSet(exId,'work',i,true);
-  copyToSets(exId,i,'rpe',el.value);
+  cascadeRpe(exId,i,cur);
+  showPostSetAdvice(exId,i);
+}
+// Zet alle volgende, nog niet handmatig aangepaste sets op dezelfde RPE (overschrijft eerder
+// gecascadeerde waarden, maar nooit sets die de gebruiker zelf heeft ingesteld).
+function cascadeRpe(exId,fromSet,val){
+  let j=fromSet+1;
+  while(true){
+    const el=document.getElementById('s-'+exId+'-'+j+'-rpe');
+    if(!el)break;
+    if(!isRpeManual(exId,j)){
+      el.value=val;
+      logSet(exId,'work',j,true);
+    }
+    j++;
+  }
 }
 
 function buildWorkSetRow(exId,i,prefill=null){
@@ -2869,10 +3098,8 @@ function buildWorkSetRow(exId,i,prefill=null){
   return `<div class="set-row" id="sr-${exId}-${i}">
     <div class="set-circle" id="sc-${exId}-${i}" onclick="toggleSetDone('${exId}',${i})">${i}</div>
     <div class="set-fields">
-      <div class="set-field-wrap" style="flex:2">
-        <input class="set-field" type="text" inputmode="decimal" placeholder="kg" id="s-${exId}-${i}-kg" value="${prefill?prefill.kg:''}" min="0" max="500"
-        oninput="clampNumInput(this,0,500);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'kg',this.value)"
-        onchange="logSet('${exId}','work',${i},true)">
+      <div class="set-field-wrap" style="flex:2" id="kgwrap-${exId}-${i}">
+        ${kgFieldHtml(exId,i,mode,prefill?prefill.kg:'')}
         ${buildWeightModeSelect(exId,i,mode)}
         <div class="set-field-lbl">kg</div>
       </div>
@@ -3091,6 +3318,109 @@ function logCardio(exId, cardioType){
   updateProgress(curT);
 }
 
+// ══════════════════════════════════════════════════════════
+// TUSSENTIJDS OPSLAAN (v306 #5) — lokaal (IndexedDB-sync volgt na Fase 2, bewust uitgesteld
+// om niet twee keer te bouwen — zie roadmap). Beschermt tegen dataverlies bij app-crash/sluiten
+// zonder de server-sync-architectuur al vooruit te trekken.
+// ══════════════════════════════════════════════════════════
+let lastSaveTs=null, saveState='saved', autosaveTimer=null;
+function scheduleAutosave(){
+  saveState='dirty';
+  updateSaveIndicator();
+  clearTimeout(autosaveTimer);
+  autosaveTimer=setTimeout(()=>persistTrainingDraft(true),1200);
+}
+function persistTrainingDraft(silent){
+  if(!curT)return;
+  saveState='saving';updateSaveIndicator();
+  try{
+    localStorage.setItem('maurice_draft_training',JSON.stringify({t:curT,sessionLog,sessionExtra,ts:Date.now()}));
+    lastSaveTs=Date.now();saveState='saved';
+  }catch(e){saveState='dirty';}
+  updateSaveIndicator();
+  if(!silent)toast('Training opgeslagen');
+}
+function updateSaveIndicator(){
+  const time=lastSaveTs?new Date(lastSaveTs).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):null;
+  let txt;
+  if(saveState==='saving')txt='🔄 Opslaan...';
+  else if(saveState==='dirty')txt='🟡 Niet opgeslagen wijzigingen';
+  else txt='✓ Alles opgeslagen'+(time?' · '+time:'');
+  ['a','b'].forEach(sfx=>{const el=document.getElementById('train-save-status-'+sfx);if(el)el.textContent=txt;});
+}
+function restoreTrainingDraft(){
+  const raw=localStorage.getItem('maurice_draft_training');
+  if(!raw)return null;
+  try{return JSON.parse(raw);}catch(e){return null;}
+}
+function clearTrainingDraft(){localStorage.removeItem('maurice_draft_training');lastSaveTs=null;saveState='saved';}
+// Zet eerder gelogde waarden (bij hervatten van een concept-training) terug in de DOM-velden.
+function restoreSessionLogToDom(t){
+  const list=getSessionExs(t);
+  for(const ex of list){
+    const l=sessionLog[ex.id];if(!l)continue;
+    (l.wu||[]).forEach((s,idx)=>{
+      if(!s)return;const i=idx+1;
+      const kgEl=document.getElementById('w-'+ex.id+'-'+i+'-kg');if(kgEl&&s.kg)kgEl.value=s.kg;
+      const repsEl=document.getElementById('w-'+ex.id+'-'+i+'-reps');if(repsEl&&s.reps)repsEl.value=s.reps;
+    });
+    (l.sets||[]).forEach((s,idx)=>{
+      if(!s)return;const i=idx+1;
+      const kgEl=document.getElementById('s-'+ex.id+'-'+i+'-kg');if(kgEl&&s.kg)kgEl.value=s.kg;
+      const repsEl=document.getElementById('s-'+ex.id+'-'+i+'-reps');if(repsEl&&s.reps)repsEl.value=s.reps;
+      const rpeEl=document.getElementById('s-'+ex.id+'-'+i+'-rpe');if(rpeEl&&s.rpe)rpeEl.value=s.rpe;
+    });
+  }
+  updateProgress(t);updateSummary(t);
+}
+
+// ══════════════════════════════════════════════════════════
+// COACH — instant progressie-advies na een afgevinkte werkset (v306 #13)
+// Regelgebaseerd (geen API-call per set, i.v.m. snelheid/kosten) — gebruikt dezelfde
+// PROGRESSIEREGELS als de coach-systeemprompt, zodat advies altijd consistent is.
+// ══════════════════════════════════════════════════════════
+function computeProgression(rpe,curKg){
+  if(rpe==null||isNaN(rpe)||!curKg)return null;
+  if(rpe<=7.5)return{delta:2.5,label:'Verhogen'};
+  if(rpe<=8.5)return{delta:0,label:'Gelijk houden'};
+  return{delta:-7.5,label:'Deload'};
+}
+function showPostSetAdvice(exId,setNum){
+  const rpeEl=document.getElementById('s-'+exId+'-'+setNum+'-rpe');
+  if(!rpeEl)return; // geen RPE-veld (bv. carry) → geen advies
+  const kgVal=getEffectiveKg(exId,setNum);
+  const rpe=rpeEl.value?parseFloat(rpeEl.value):null;
+  const prog=computeProgression(rpe,kgVal);
+  if(!prog)return;
+  const nextIdx=setNum+1;
+  const nextInp=document.getElementById('s-'+exId+'-'+nextIdx+'-kg');
+  const target=roundKg(kgVal+prog.delta);
+  const txt=prog.delta===0?`RPE ${rpe} — gelijk houden op ${kgVal} kg volgende set.`:`RPE ${rpe} — ${prog.label.toLowerCase()} naar ${target} kg.`;
+  const applyBtn=nextInp?`<button class="coach-apply-btn" onclick="applyAdviceToSet('${exId}',${nextIdx},${target})">Toepassen</button>`:'';
+  const html=`🤖 ${txt}${applyBtn}`;
+  const existing=document.getElementById('advice-'+exId);
+  if(existing){existing.innerHTML=html;}
+  else{
+    const body=document.getElementById('body-'+exId);
+    const addRow=body?.querySelector('.add-row');
+    if(body){
+      const div=document.createElement('div');
+      div.id='advice-'+exId;div.className='coach-advice-card';div.innerHTML=html;
+      if(addRow)body.insertBefore(div,addRow);else body.appendChild(div);
+    }
+  }
+}
+function applyAdviceToSet(exId,setNum,kg){
+  const modeSel=document.getElementById('s-'+exId+'-'+setNum+'-wmode');
+  if(modeSel&&modeSel.value!=='vast'){toast('Set '+setNum+' gebruikt een berekende modus — pas handmatig aan');return;}
+  const inp=document.getElementById('s-'+exId+'-'+setNum+'-kg');
+  if(!inp)return;
+  settingViaPct=true;
+  inp.value=kg;inp.dispatchEvent(new Event('input'));inp.dispatchEvent(new Event('change'));
+  settingViaPct=false;
+  toast('Toegepast: '+kg+' kg');
+}
+
 function copyToSets(exId, fromSet, field, val){
   if(!val) return;
   // Find all set rows for this exercise
@@ -3143,14 +3473,18 @@ function logSet(exId,type,setNum,isWork){
   }
   updateProgress(curT);
   updateSummary(curT);
+  scheduleAutosave();
 }
 
 function toggleSetDone(exId,setNum){
   const c=document.getElementById('sc-'+exId+'-'+setNum);
   if(!c)return;
+  const nowDone=!c.classList.contains('done');
   c.classList.toggle('done');
   updateProgress(curT);
   updateSummary(curT);
+  scheduleAutosave();
+  if(nowDone)showPostSetAdvice(exId,setNum); // v306 #13: instant advies na afronden werkset
 }
 
 function addWorkSet(exId,type){
@@ -3189,6 +3523,7 @@ function toggleExCard(id){
 function removeExSession(id){
   sessionExtra=sessionExtra.filter(e=>e.id!==id);
   delete sessionLog[id];
+  delete pctSelection[id];delete rpeManual[id];delete warmupState[id];
   renderTrainScreen(curT);
 }
 
@@ -3297,12 +3632,14 @@ function renderSessionSummaryContent(t){
 
 async function finishSession(){
   const t=curT,list=getSessionExs(t),today=td();let saved=0;
+  const summaryData=[]; // v306 #10: input voor AI-samenvatting
   for(const ex of list){
     const l=sessionLog[ex.id];if(!l)continue;
     if(CARDIO_TYPES[ex.type]&&l.cardio&&(l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals)){
       const cRow=cardioDataToRow(ex.type,l.cardio);
       const extraNote=cRow.extraNote;delete cRow.extraNote;
       await sbPost('sessions',{date:today,exercise_id:ex.id,training_type:t,note:extraNote||'',...cRow});saved++;
+      summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
       const ws=l.sets.filter(s=>s&&(s.kg||s.reps));if(!ws.length)continue;
       const bestKg=s=>s.effKg!=null?s.effKg:parseFloat(s.kg||0);
@@ -3311,16 +3648,36 @@ async function finishSession(){
       // sets_detail: volledige per-set data (incl. gewicht-modus-resultaat), voor Logboek-editor.
       const setsDetail=ws.map(s=>({kg:s.kg,effKg:bestKg(s),reps:s.reps,rpe:s.rpe}));
       await sbPost('sessions',{date:today,exercise_id:ex.id,sets:ws.length,reps:parseInt(best?.reps)||null,weight:bestKg(best)||null,rpe:parseFloat(best?.rpe)||null,training_type:t,note:wuNote?'Opwarm: '+wuNote:'',sets_detail:setsDetail});
-      if(bestKg(best)){const exObj=exercises.find(e=>e.id===ex.id);if(exObj&&bestKg(best)>(exObj.pr||0)){await sbPatch('exercises','id=eq.'+ex.id,{pr:bestKg(best)});exObj.pr=bestKg(best);}}
+      let isPr=false;
+      if(bestKg(best)){const exObj=exercises.find(e=>e.id===ex.id);if(exObj&&bestKg(best)>(exObj.pr||0)){await sbPatch('exercises','id=eq.'+ex.id,{pr:bestKg(best)});exObj.pr=bestKg(best);isPr=true;}}
       saved++;
+      const avgRpe=ws.filter(s=>s.rpe).length?(ws.reduce((sum,s)=>sum+(parseFloat(s.rpe)||0),0)/ws.filter(s=>s.rpe).length).toFixed(1):null;
+      summaryData.push({naam:ex.naam,sets:setsDetail,isPr,zwaarste:bestKg(best),avgRpe});
     }
   }
   localStorage.setItem('maurice_last_training',t);
   closeModal('m-session-end');stopTrainTimer();
-  curT=null;sessionLog={};sessionExtra=[];
+  clearTrainingDraft();
+  curT=null;sessionLog={};sessionExtra=[];pctSelection={};rpeManual={};warmupState={};
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.remove('show'));
+  if(saved===0){toast('Niets om op te slaan');go('s-home');refreshStats();return;}
   toast(saved+' oefeningen opgeslagen');
-  go('s-home');refreshStats();
+  document.getElementById('ai-summary-body').textContent='Samenvatting laden...';
+  openModal('m-ai-summary');
+  const aiText=await generateSessionSummaryAI(t,summaryData);
+  document.getElementById('ai-summary-body').textContent=aiText||'Samenvatting kon niet worden opgehaald — je training is wel opgeslagen.';
+}
+// v306 #10: eenmalige AI-call na afronden training — géén advies per set (dat gebeurt al
+// lokaal/regelgebaseerd via showPostSetAdvice), dit is de overkoepelende terugblik.
+async function generateSessionSummaryAI(t,summaryData){
+  const sys=`Je bent trainingscoach. Vat deze zojuist afgeronde Training ${t} samen in het Nederlands. Kort en concreet, max 8 regels, geen opsomming van elke set. Behandel: PR's, gemiddelde RPE, opvallende prestaties, verbeterpunten, advies voor de volgende training. Geen opvulling, geen bevestigingszinnen.
+Sessiedata (JSON): ${JSON.stringify(summaryData)}`;
+  try{
+    const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:500,system:sys,messages:[{role:'user',content:'Geef de samenvatting.'}]})});
+    const d=await res.json();
+    if(d.error)return null;
+    return d.content[0].text;
+  }catch(e){return null;}
 }
 
 // ══════════════════════════════════════════════════════════
@@ -4096,12 +4453,85 @@ async function saveNewEx(){
 // ══════════════════════════════════════════════════════════
 // COACH — full system prompt
 // ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+// COACH — v306: sessie-gebaseerde gesprekken (#6-#10,#13)
+// activeSessionId=null → "algemeen gesprek" (bestaand gedrag, ongewijzigd, session_id IS NULL)
+// activeSessionId gezet → nieuw gesprek per oefening/training, apart opgeslagen (session_id)
+// ══════════════════════════════════════════════════════════
+let activeSessionId=null, activeSessionCtx=null, coachReturn=null, _openingCoachViaSession=false;
+
+// v306 #7: Android-back sluit niet langer de coach maar keert terug naar de actieve training.
+window.addEventListener('popstate',()=>{
+  const active=document.querySelector('.scr.active');
+  if(active&&active.id==='s-coach'&&coachReturn){returnToTraining();}
+});
+function returnToTraining(){
+  const ret=coachReturn;coachReturn=null;
+  if(!ret){go('s-home');return;}
+  go(ret.screen);
+  if(ret.exId){
+    setTimeout(()=>{
+      const body=document.getElementById('body-'+ret.exId);
+      if(body&&!body.classList.contains('open'))toggleExCard(ret.exId);
+      body?.scrollIntoView({block:'center'});
+    },80);
+  }
+}
+// v306 #6/#8: opent een NIEUW gesprek gekoppeld aan de huidige training/oefening — laadt
+// nooit het oude (algemene) gesprek. ctx: {exId, exNaam, trainingType}
+function openCoachSession(ctx){
+  activeSessionId='sess_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+  activeSessionCtx=ctx;
+  chatHist=[{role:'assistant',content:'Waar kan ik je mee helpen?'}];
+  coachReturn=ctx?.exId?{screen:'s-train-'+(ctx.trainingType||curT||'A').toLowerCase(),exId:ctx.exId}:null;
+  if(coachReturn){try{history.pushState({coach:true},'','#coach');}catch(e){}}
+  _openingCoachViaSession=true;
+  go('s-coach');
+}
+function askCoachEx(naam,t,exId){
+  openCoachSession({exId,exNaam:naam,trainingType:t});
+}
+function renderQuickChips(){
+  const wrap=document.getElementById('coach-chips');
+  if(!wrap)return;
+  const chips=[['Techniek','Wat zijn de belangrijkste techniekpunten voor deze oefening?'],
+    ['Gewicht','Wat is een goed werkgewicht voor vandaag?'],
+    ['RPE','Wat moet mijn RPE-target zijn?'],
+    ['Rust','Hoeveel rust tussen de sets?'],
+    ['Pijn','Ik voel iets — wat nu?'],
+    ['Vrije vraag','']];
+  wrap.innerHTML=chips.map(([label,q])=>`<button class="coach-chip" onclick="${q?`sendMsg('${q.replace(/'/g,"\\'")}')`:`document.getElementById('chat-inp').focus()`}">${label}</button>`).join('');
+}
 async function focusCoach(){
-  if(chatHist.length===0){const d=await sbGet('chat_history','&order=created_at.asc&limit=20');if(d.length){chatHist=d.map(r=>({role:r.role,content:r.content}));renderChatHist();}else addMsg('coach','Goedemorgen. Deel je HRV, RHR en slaap via het 📊 icoontje, of stel direct een vraag.');}
-  setTimeout(()=>{const w=document.getElementById('chat-wrap');w.scrollTop=w.scrollHeight;},100);
+  const backBar=document.getElementById('coach-back-bar');
+  if(backBar)backBar.style.display=coachReturn?'block':'none';
+  const chipsWrap=document.getElementById('coach-chips');
+  const labelEl=document.getElementById('coach-session-label');
+  if(!_openingCoachViaSession){
+    // Genavigeerd via onderste navigatiebalk (niet via een sessie-opener) → terug naar algemeen gesprek
+    if(activeSessionId){activeSessionId=null;activeSessionCtx=null;chatHist=[];}
+    coachReturn=null;
+    if(backBar)backBar.style.display='none';
+  }
+  _openingCoachViaSession=false;
+  if(activeSessionId){
+    if(labelEl)labelEl.textContent=activeSessionCtx?.exNaam?(activeSessionCtx.exNaam+(activeSessionCtx.trainingType?' · Training '+activeSessionCtx.trainingType:'')):'Nieuw gesprek';
+    if(chipsWrap){chipsWrap.style.display='flex';renderQuickChips();}
+  } else {
+    if(labelEl)labelEl.textContent='Algemeen gesprek';
+    if(chipsWrap)chipsWrap.style.display='none';
+    if(chatHist.length===0){
+      const d=await sbGet('chat_history','&session_id=is.null&order=created_at.asc&limit=20');
+      chatHist=d.length?d.map(r=>({role:r.role,content:r.content})):[{role:'assistant',content:'Goedemorgen. Deel je HRV, RHR en slaap via het 📊 icoontje, of stel direct een vraag.'}];
+    }
+  }
+  renderChatHist();
+  setTimeout(()=>{const w=document.getElementById('chat-wrap');if(w)w.scrollTop=w.scrollHeight;},100);
 }
 
-async function buildCtx(){
+// v306 #8: geeft de coach automatisch context van de huidige oefening/sessie mee, zodat de
+// gebruiker dit niet zelf hoeft uit te leggen. ctx (optioneel): {exId, exNaam, trainingType}
+async function buildCtx(ctx){
   await ensureExercisesLoaded();
   const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=7');
   const wd=await sbGet('weight_log','&order=date.desc,created_at.desc&limit=3');
@@ -4109,7 +4539,7 @@ async function buildCtx(){
   let exCtx='';
   for(const ex of exercises){
     const ls=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc,created_at.desc&limit=2');
-    if(ls.length){const s=ls[0];let str=s.date;if(s.weight&&s.reps)str+=' '+(s.sets||'?')+'×'+s.reps+' @ '+s.weight+'kg'+(s.rpe?' RPE'+s.rpe:'');else if(s.time_str)str+=' '+s.time_str+(s.watt?' @ '+s.watt+'W':'');if(ls[1]){const p=ls[1];str+=' | vorige: '+p.date+(p.weight?' '+p.weight+'kg':p.time_str?' '+p.time_str:'');}exCtx+='\n- '+ex.name+': '+str;}
+    if(ls.length){const s=ls[0];let str=s.date;if(s.weight&&s.reps)str+=' '+(s.sets||'?')+'×'+s.reps+' @ '+s.weight+'kg'+(s.rpe?' RPE'+s.rpe:'');else if(s.time_str)str+=' '+s.time_str+(s.watt?' @ '+s.watt+'W':'');if(ls[1]){const p=ls[1];str+=' | vorige: '+p.date+(p.weight?' '+p.weight+'kg':p.time_str?' '+p.time_str:'');}exCtx+='\n- '+ex.name+' [id:'+ex.id+']: '+str;}
   }
   const lh=hd[0];
   const hvData=hd.filter(r=>r.hrv);
@@ -4123,14 +4553,29 @@ async function buildCtx(){
   const lastT=lastSessions[0]?.training_type||localStorage.getItem('maurice_last_training')||'?';
   const nextT=lastT==='A'?'B':'A';
   const mf = mastersFactor(atleet?.leeftijd||50);
+  // v306 #6/#8: sessie-specifieke context — huidige oefening, schema, doel-RPE, reeds gelogde sets
+  let sessionCtx='';
+  if(ctx?.exId){
+    const exObj=exercises.find(e=>e.id===ctx.exId);
+    const cfgEx=curT?(TRAIN_CFG[curT]||[]).find(e=>e.id===ctx.exId):null;
+    const loggedSets=sessionLog[ctx.exId]?.sets?.filter(s=>s&&(s.kg||s.reps))||[];
+    sessionCtx=`\n\nHUIDIGE OEFENING IN DE APP:
+Naam: ${ctx.exNaam} [id:${ctx.exId}]${ctx.trainingType?' · Training '+ctx.trainingType:''}
+Target: ${cfgEx?cfgEx.sets+'×'+cfgEx.reps+(cfgEx.rpe?' · RPE '+cfgEx.rpe:''):'onbekend'}
+Huidige 1RM: ${exObj?.one_rm||exObj?.pr||'onbekend'} kg
+Reeds gelogde sets deze sessie: ${loggedSets.length?loggedSets.map((s,i)=>(i+1)+') '+s.kg+'kg×'+s.reps+(s.rpe?' RPE'+s.rpe:'')).join(', '):'nog geen'}`;
+  }
   return `Je bent de persoonlijke trainingscoach en data-analist van ${atleet?.naam||'Maurice'} van Latum van Steensel.
 Communiceer in het Nederlands. Datumnotatie: "26 april 2026 08:00".
 Direct, bondig, data-forward. Geen opvulling. Geen bevestigingszinnen. Geen disclaimers.
 Vergelijk altijd met de vorige vergelijkbare sessie. Geef altijd een concreet gewicht als advies.
+De gebruiker hoeft context (huidige oefening, schema, vorige training, doel-RPE, werkgewichten,
+reeds uitgevoerde sets) niet zelf te herhalen — die staat hieronder al voor je klaar.
 
 HUIDIGE STATUS:
 ${hrvStr}${wStr}${bcStr}
 Volgende training: ${nextT} (laatste was ${lastT})
+${sessionCtx}
 
 HRV DREMPELS (Maurice-specifiek — structureel lager dan norm, gebruik ALTIJD relatieve drempels):
 ≥24 ms → Optimaal — volledig programma, zwaar
@@ -4139,7 +4584,7 @@ HRV DREMPELS (Maurice-specifiek — structureel lager dan norm, gebruik ALTIJD r
 <14 ms → Kritiek — rust of mobiliteit
 RHR ≤58 bpm = goed herstel. 7-daagse HRV-trend weegt zwaarder dan dagmeting.
 
-RECENTE SESSIES (app):${exCtx}
+RECENTE SESSIES (app, [id:...] = exercise_id):${exCtx}
 
 PROGRAMMASTRUCTUUR:
 Training A: Roeien warmup → Backsquat → Shoulder Press → Benchpress → Frontsquat → Farmer Carry
@@ -4152,6 +4597,11 @@ Shoulder Press VOOR bench in A. Bench: 2 accessoire sets 70-75 kg toevoegen aan 
 HPC: singles/doubles (techniek breekt bij triples). Hexabar: nooit dag na zware A.
 Post-sessie: 8-min lymfedrainage altijd. Lymphedema voeten: dagelijks variabel.
 Peak target: 15 augustus 2026. Detraining ~21 aug - 9 sep.
+
+ACTIES (v306 #9): als je een concreet gewichtsadvies geeft voor de HUIDIGE OEFENING hierboven,
+voeg dan aan het einde van je antwoord toe: [[APPLY:<exercise_id>:<kg>]] — exact dit formaat,
+gebruik het exercise_id tussen [id:...], geen uitleg erbij. Alleen bij een concreet, toepasbaar
+gewichtsadvies voor de actieve oefening — niet bij algemene vragen.
 
 INTERACTIEFORMAT:
 Bij HRV/RHR ontvangen → geef direct:
@@ -4169,25 +4619,96 @@ async function sendMsg(txt){
   if(sending)return;
   sending=true;document.getElementById('send-btn').disabled=true;document.getElementById('coach-st').textContent='Denkt na...';
   addMsg('user',txt);chatHist.push({role:'user',content:txt});
-  await sbPost('chat_history',{role:'user',content:txt});
+  await sbPost('chat_history',{role:'user',content:txt,session_id:activeSessionId,session_label:activeSessionCtx?.exNaam||null});
   const tid=addMsg('coach','<span style="display:inline-block;width:14px;height:14px;border:2px solid #ccc;border-top-color:var(--dark);border-radius:50%;animation:sp .8s linear infinite;vertical-align:middle"></span>',true);
   try{
-    const sys=await buildCtx();
+    const sys=await buildCtx(activeSessionCtx);
     const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,system:sys,messages:chatHist.slice(-12)})});
     const d=await res.json();
     if(d.error){removeMsg(tid);addMsg('coach','Fout: '+d.error.message);}
-    else{const r=d.content[0].text;removeMsg(tid);addMsg('coach',r);chatHist.push({role:'assistant',content:r});await sbPost('chat_history',{role:'assistant',content:r});const all=await sbGet('chat_history','&order=created_at.asc');if(all.length>40)for(const x of all.slice(0,all.length-40))await sbDel('chat_history','id=eq.'+x.id);}
+    else{
+      const r=d.content[0].text;
+      removeMsg(tid);
+      renderCoachReply(r);
+      chatHist.push({role:'assistant',content:r});
+      await sbPost('chat_history',{role:'assistant',content:r,session_id:activeSessionId,session_label:activeSessionCtx?.exNaam||null});
+      if(!activeSessionId){ // opschonen alleen voor het algemene gesprek (bestaand gedrag)
+        const all=await sbGet('chat_history','&session_id=is.null&order=created_at.asc');
+        if(all.length>40)for(const x of all.slice(0,all.length-40))await sbDel('chat_history','id=eq.'+x.id);
+      }
+    }
   }catch(e){removeMsg(tid);addMsg('coach','Verbindingsfout. Check internet.');}
   sending=false;document.getElementById('send-btn').disabled=false;document.getElementById('coach-st').textContent='Klaar';
 }
-async function clearChat(){if(!confirm('Gesprek wissen?'))return;chatHist=[];const all=await sbGet('chat_history','');for(const r of all)await sbDel('chat_history','id=eq.'+r.id);document.getElementById('chat-wrap').innerHTML='';addMsg('coach','Nieuw gesprek. Deel je ochtenddata of stel een vraag.');}
-function askCoachEx(naam,t){sendMsg(`Ik ga nu ${naam} doen (Training ${t}). Doelgewichten en techniekpunten?`);go('s-coach');}
+// v306 #9: parseert [[APPLY:exId:kg]]-markers uit het coach-antwoord naar een Toepassen-knop.
+const APPLY_RE=/\[\[APPLY:([a-zA-Z0-9_\-]+):([\d.]+)\]\]/g;
+function renderCoachReply(raw){
+  const actions=[];
+  const clean=raw.replace(APPLY_RE,(m,exId,kg)=>{actions.push({exId,kg:parseFloat(kg)});return '';}).trim();
+  const id=addMsg('coach',clean,true);
+  if(actions.length){
+    const el=document.getElementById(id);
+    actions.forEach(a=>{
+      const exName=exercises.find(e=>e.id===a.exId)?.name||a.exId;
+      const btn=document.createElement('button');
+      btn.className='coach-apply-btn';
+      btn.textContent=`Toepassen: ${exName} → ${a.kg} kg`;
+      btn.onclick=()=>applyCoachSuggestion(a.exId,a.kg,btn);
+      el.appendChild(document.createElement('br'));
+      el.appendChild(btn);
+    });
+  }
+}
+function applyCoachSuggestion(exId,kg,btn){
+  if(!document.getElementById('s-'+exId+'-1-kg')){toast('Oefening niet actief in de huidige training');return;}
+  const modeSel=document.getElementById('s-'+exId+'-1-wmode');
+  if(modeSel&&modeSel.value!=='vast'){modeSel.value='vast';onWeightModeChange(exId,1);}
+  const kgInp=document.getElementById('s-'+exId+'-1-kg'); // opnieuw ophalen: modus-wissel vervangt het element
+  settingViaPct=true;
+  kgInp.value=kg;kgInp.dispatchEvent(new Event('input'));kgInp.dispatchEvent(new Event('change'));
+  settingViaPct=false;
+  btn.textContent='✓ Toegepast';btn.disabled=true;
+  toast('Gewicht aangepast naar '+kg+' kg');
+}
+// Wist alleen het HUIDIGE gesprek (algemeen óf de actieve sessie) — niet alle geschiedenis.
+async function clearChat(){
+  if(!confirm('Gesprek wissen?'))return;
+  if(activeSessionId){
+    const all=await sbGet('chat_history','&session_id=eq.'+activeSessionId);
+    for(const r of all)await sbDel('chat_history','id=eq.'+r.id);
+    chatHist=[{role:'assistant',content:'Nieuw gesprek. Stel je vraag.'}];
+  }else{
+    const all=await sbGet('chat_history','&session_id=is.null');
+    for(const r of all)await sbDel('chat_history','id=eq.'+r.id);
+    chatHist=[{role:'assistant',content:'Nieuw gesprek. Deel je ochtenddata of stel een vraag.'}];
+  }
+  renderChatHist();
+}
+// v306: Gespreksgeschiedenis — lijst van eerdere oefening/training-sessies (los van het
+// algemene gesprek), kunnen opnieuw geopend worden.
+async function openCoachHistory(){
+  const rows=await sbGet('chat_history','&session_id=not.is.null&order=created_at.desc&limit=200');
+  const seen=new Set(),sessions=[];
+  rows.forEach(r=>{if(!seen.has(r.session_id)){seen.add(r.session_id);sessions.push({id:r.session_id,label:r.session_label||'Gesprek',date:r.created_at});}});
+  const body=document.getElementById('coach-history-list');
+  body.innerHTML=sessions.length?sessions.map(s=>`<div class="hist-session-row" onclick="loadCoachSession('${s.id}',${JSON.stringify(s.label)})"><div class="hist-session-label">${s.label}</div><div class="hist-session-date">${new Date(s.date).toLocaleString('nl-NL')}</div></div>`).join(''):'<div style="padding:20px;text-align:center;color:var(--g4);font-size:13px">Nog geen sessiegesprekken</div>';
+  openModal('m-coach-history');
+}
+async function loadCoachSession(sessionId,label){
+  closeModal('m-coach-history');
+  const rows=await sbGet('chat_history','&session_id=eq.'+sessionId+'&order=created_at.asc');
+  activeSessionId=sessionId;activeSessionCtx={exNaam:label};coachReturn=null;
+  chatHist=rows.map(r=>({role:r.role,content:r.content}));
+  _openingCoachViaSession=true;
+  go('s-coach');
+}
 let mc=0;
 function addMsg(role,txt,retId=false){const id='m'+(++mc);const d=document.createElement('div');d.id=id;const isCoach=role==='coach',isUser=role==='user';d.style.cssText=`max-width:85%;padding:10px 14px;font-size:13px;line-height:1.55;white-space:pre-wrap;margin-bottom:6px;border-radius:${isCoach?'4px 16px 16px 16px':'16px 16px 4px 16px'};align-self:${isUser?'flex-end':'flex-start'};background:${isCoach?'var(--dark)':isUser?'var(--red)':'var(--g1)'};color:${isCoach||isUser?'#fff':'var(--g4)'};`;d.innerHTML=txt.replace(/\n/g,'<br>');const w=document.getElementById('chat-wrap');w.appendChild(d);w.scrollTop=w.scrollHeight;return retId?id:null;}
 function removeMsg(id){const e=document.getElementById(id);if(e)e.remove();}
 function renderChatHist(){const w=document.getElementById('chat-wrap');w.innerHTML='';mc=0;chatHist.forEach(m=>addMsg(m.role==='user'?'user':'coach',m.content));}
 function ckd(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
 function ar(el){el.style.height='';el.style.height=Math.min(el.scrollHeight,100)+'px';}
+
 
 // ══════════════════════════════════════════════════════════
 // VIDEO

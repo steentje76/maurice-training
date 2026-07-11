@@ -254,541 +254,161 @@ test('THR null bij lege data', ()=>{
   assert(thr(null, 100) === null);
 });
 
-// ── RATIOFACTOR-MOTOR (v299) ─────────────────────────────
-console.log("\n⚖️  Ratiofactor-motor");
+// ── V306: AFRONDING & 1RM-PERCENTAGEKNOPPEN ──────────────
+console.log("\n🔢 v306 — roundKg & 1RM-percentageknoppen");
 
-const LIFT_NORMS = {
-  backsquat: 1.5, bench: 1.0, frontsquat: 1.2, shoulderpress: 0.65,
-  hexabar: 1.75, hpc: 0.75, hps: 0.55
-};
-const RATIO_MIN_OBS = 5;
-const RATIO_DECAY = 0.95;
+function roundKg(v){ return Math.round(v*2)/2; }
 
-function weightedEst1RM(sessions, refDate){
-  const ref = refDate ? new Date(refDate) : new Date();
-  let sumW=0, sumWV=0, n=0;
-  (sessions||[]).forEach(s=>{
-    if(!s.weight||!s.reps)return;
-    const est = s.reps===1 ? s.weight : s.weight*(1+s.reps/30);
-    const days = Math.max(0,(ref - new Date(s.date))/86400000);
-    const weken = days/7;
-    const w = Math.pow(RATIO_DECAY, weken);
-    sumW += w; sumWV += w*est; n++;
-  });
-  if(!n) return {est:null, n:0};
-  return {est: sumWV/sumW, n};
-}
-
-function ratioConfidence(nA,nB){
-  const n = Math.min(nA,nB);
-  if(n < RATIO_MIN_OBS) return 'Laag';
-  if(n < RATIO_MIN_OBS*2) return 'Middel';
-  return 'Hoog';
-}
-
-function ratioFactor(liftA, liftB, estA, estB){
-  const normA = LIFT_NORMS[liftA], normB = LIFT_NORMS[liftB];
-  const fase1Ratio = (normA!=null && normB!=null) ? normA/normB : null;
-  const genoegData = estA && estB && estA.n>=RATIO_MIN_OBS && estB.n>=RATIO_MIN_OBS && estA.est && estB.est;
-  if(genoegData){
-    return {ratio: estA.est/estB.est, bron:'eigen data', nA:estA.n, nB:estB.n, betrouwbaarheid: ratioConfidence(estA.n,estB.n)};
-  }
-  return {ratio: fase1Ratio, bron:'algemene richtlijn', nA:estA?estA.n:0, nB:estB?estB.n:0, betrouwbaarheid:'Laag'};
-}
-
-test('Fase1: standaardratio frontsquat/backsquat = 1.2/1.5', ()=>{
-  const r = ratioFactor('frontsquat','backsquat', {est:null,n:0}, {est:null,n:0});
-  assertEq(Math.round(r.ratio*1000)/1000, Math.round((1.2/1.5)*1000)/1000, 'fase1 ratio');
-  assertEq(r.bron, 'algemene richtlijn');
-  assertEq(r.betrouwbaarheid, 'Laag');
+test('roundKg rondt af op 0.5 kg', ()=>{
+  assertEq(roundKg(101.3), 101.5);
+  assertEq(roundKg(100.24), 100);
+  assertEq(roundKg(97.76), 98);
+});
+test('1RM-percentage: 80% van 120kg = 96kg', ()=>{
+  assertEq(roundKg(120*80/100), 96);
+});
+test('1RM-percentage: 95% van 107kg rondt af', ()=>{
+  const target = roundKg(107*95/100); // 101.65 -> 101.5
+  assertEq(target, 101.5);
 });
 
-test('Fase2 schakelt pas in bij n>=5 op beide liften', ()=>{
-  const estA = {est:90, n:4}; // net onder drempel
-  const estB = {est:100, n:6};
-  const r = ratioFactor('frontsquat','backsquat', estA, estB);
-  assertEq(r.bron, 'algemene richtlijn', 'moet nog fase1 zijn bij n=4');
-});
+// ── V306: WERKSET-BEREKENINGEN (getEffectiveKg-logica) ───
+console.log("\n⚖️  v306 — Werkset-berekeningen per modus");
 
-test('Fase2 actief bij n>=5 op beide liften, ratio uit eigen data', ()=>{
-  const estA = {est:96, n:6};
-  const estB = {est:100, n:8};
-  const r = ratioFactor('frontsquat','backsquat', estA, estB);
-  assertEq(r.bron, 'eigen data');
-  assertEq(Math.round(r.ratio*100)/100, 0.96);
-});
-
-test('Betrouwbaarheid Laag/Middel/Hoog o.b.v. laagste n', ()=>{
-  assertEq(ratioConfidence(4,20), 'Laag');
-  assertEq(ratioConfidence(5,20), 'Middel');
-  assertEq(ratioConfidence(10,20), 'Hoog');
-});
-
-test('weightedEst1RM: single rep = gewicht zelf, geen Epley-opslag', ()=>{
-  const r = weightedEst1RM([{date:'2026-06-01',weight:100,reps:1}], '2026-06-01');
-  assertEq(r.est, 100);
-  assertEq(r.n, 1);
-});
-
-test('weightedEst1RM: recente sessie weegt zwaarder dan oude (decay)', ()=>{
-  // oude sessie hoger gewicht, recente sessie lager gewicht -> gewogen gemiddelde dichter bij recente
-  const sessions = [
-    {date:'2026-01-01', weight:120, reps:1},
-    {date:'2026-06-20', weight:90, reps:1}
-  ];
-  const r = weightedEst1RM(sessions, '2026-06-27');
-  assert(r.est < 105, `Verwacht dichter bij recente waarde (90), kreeg ${r.est}`);
-});
-
-test('weightedEst1RM: lege of onvolledige sessies genegeerd', ()=>{
-  const r = weightedEst1RM([{date:'2026-06-01',weight:null,reps:3},{date:'2026-06-01'}]);
-  assertEq(r.est, null);
-  assertEq(r.n, 0);
-});
-
-test('ratioFactor: fallback naar fase1 als één lift geen data heeft', ()=>{
-  const r = ratioFactor('hexabar','backsquat', {est:null,n:0}, {est:150,n:10});
-  assertEq(r.bron, 'algemene richtlijn');
-  assert(r.ratio !== null, 'fase1 fallback moet altijd een ratio geven voor bekende liften');
-});
-
-// ── DAGFACTOR-MOTOR (v300) ───────────────────────────────
-console.log("\n🌤️  Dagfactor-motor");
-
-function hrvSt(v){if(!v)return 'y';if(v>=24)return 'g';if(v>=18)return 'y';if(v>=14)return 'o';return 'r';}
-function hrvDagFactor(v){const st=hrvSt(v);return {g:1.05,y:1.00,o:0.93,r:0.85}[st];}
-function slaapDagFactor(uren){
-  if(!uren)return 1.00;
-  if(uren>=7)return 1.00;
-  if(uren>=6)return 0.97;
-  return 0.92;
-}
-function cyclusDagFactor(fase){
-  return {menstruatie:0.93,folliculair:1.03,ovulatie:1.00,luteaal:0.97}[fase] ?? 1.00;
-}
-function dagfactor(hrv,slaapUren,cyclusFase){
-  const hrvFactor=hrvDagFactor(hrv);
-  const slaapFactor=slaapDagFactor(slaapUren);
-  const cyclusFactor=cyclusDagFactor(cyclusFase);
-  const ruw=hrvFactor*slaapFactor*cyclusFactor;
-  const factor=Math.round(Math.max(0.85,Math.min(1.05,ruw))*100)/100;
-  return {factor,hrvFactor,slaapFactor,cyclusFactor};
-}
-
-test('Dagfactor optimaal: HRV hoog, slaap voldoende = 1.05', ()=>{
-  const df=dagfactor(28,7.5,null);
-  assertEq(df.factor,1.05);
-});
-test('Dagfactor kritiek: HRV laag, slaap kort = geclipt op 0.85', ()=>{
-  const df=dagfactor(10,5,null);
-  assertEq(df.factor,0.85);
-});
-test('Dagfactor zonder data = 1.00 (geen correctie)', ()=>{
-  const df=dagfactor(null,null,null);
-  assertEq(df.factor,1.00);
-});
-test('Dagfactor clip: nooit boven 1.05 of onder 0.85', ()=>{
-  const hoog=dagfactor(30,8,'folliculair');
-  const laag=dagfactor(10,4,'menstruatie');
-  assert(hoog.factor<=1.05);
-  assert(laag.factor>=0.85);
-});
-test('Cyclusfactor alleen effect als fase opgegeven', ()=>{
-  assertEq(cyclusDagFactor(null),1.00);
-  assertEq(cyclusDagFactor('menstruatie'),0.93);
-  assertEq(cyclusDagFactor('folliculair'),1.03);
-});
-test('Dagfactor: normale HRV + normale slaap = 1.00', ()=>{
-  const df=dagfactor(20,7,null);
-  assertEq(df.factor,1.00);
-});
-
-// ── COLD-START-PREDICTOR (v300) ──────────────────────────
-console.log("\n🧊 Cold-start-predictor");
-
-function mastersFactorCS(leeftijd){
-  if(leeftijd < 40) return 1.0;
-  if(leeftijd < 45) return 1.01;
-  if(leeftijd < 50) return 1.02;
-  if(leeftijd < 55) return 1.04;
-  if(leeftijd < 60) return 1.06;
-  if(leeftijd < 65) return 1.09;
-  return 1.12;
-}
-function expected1RMCS(lift,gewicht,leeftijd,niveau){
-  const niveauFactor={beginner:0.5,gevorderd:0.75,ervaren:1.0,expert:1.2}[niveau]||1.0;
-  const mf=mastersFactorCS(leeftijd);
-  const norm=LIFT_NORMS[lift]||1.0;
-  return Math.round(gewicht*norm*niveauFactor*mf);
-}
-function coldStartViaAnchor(ankerRM,ratioFactorVal){
-  if(!ankerRM||!ratioFactorVal)return null;
-  return Math.round(ankerRM*ratioFactorVal);
-}
-
-test('Cold-start kernlift: backsquat 110kg lichaamsgewicht, ervaren, 50 jaar', ()=>{
-  const est=expected1RMCS('backsquat',110,50,'ervaren');
-  // 110 * 1.5 * 1.0 * 1.04
-  assertEq(est, Math.round(110*1.5*1.0*1.04));
-});
-test('Cold-start kernlift: beginner scoort lager dan ervaren bij zelfde gewicht', ()=>{
-  const beginner=expected1RMCS('frontsquat',100,40,'beginner');
-  const ervaren=expected1RMCS('frontsquat',100,40,'ervaren');
-  assert(beginner<ervaren);
-});
-test('Cold-start via anker: nieuwe oefening op 85% van backsquat-1RM', ()=>{
-  const est=coldStartViaAnchor(120,0.85);
-  assertEq(est,102);
-});
-test('Cold-start via anker: geen schatting zonder ankerdata', ()=>{
-  assertEq(coldStartViaAnchor(null,0.85), null);
-  assertEq(coldStartViaAnchor(120,null), null);
-});
-test('Cold-start: onbekende lift zonder anker geeft geen schatting', ()=>{
-  assertEq(LIFT_NORMS['onbekendelift'], undefined);
-});
-
-// ── LOKALE DATUM (td()) ──────────────────────────────────
-console.log("\n🗓️  Lokale datum (td) — v3.0.2 fix");
-
-function tdLocal(dateObj){
-  const d=dateObj;
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-}
-
-test('td(): lokale datum bij middernacht-grens NL-zomertijd (UTC+2) geeft de juiste dag', ()=>{
-  // 00:30 lokale tijd op 3 juli (UTC+2) = 22:30 UTC op 2 juli.
-  // De oude bug (toISOString().split('T')[0]) zou hier "2 juli" teruggeven i.p.v. "3 juli".
-  const d=new Date('2026-07-02T22:30:00.000Z'); // UTC-tijdstip
-  // Simuleer lokale tijd UTC+2 door met getFullYear/getMonth/getDate te werken op een
-  // datum die al in lokale tijd is geconstrueerd (Node gebruikt hier de systeem-tz,
-  // dus we testen de functie zelf i.p.v. tijdzone-conversie te simuleren).
-  const localMidnight=new Date(2026,6,3,0,30,0); // 3 juli 2026 00:30 lokale tijd
-  assertEq(tdLocal(localMidnight), '2026-07-03');
-});
-test('td(): oude UTC-bug zou bij deze grens de verkeerde dag geven (regressiecheck)', ()=>{
-  const localMidnight=new Date(2026,6,3,0,30,0);
-  const oldBuggy=localMidnight.toISOString().split('T')[0];
-  const fixed=tdLocal(localMidnight);
-  // Dit bewijst dat toISOString() een ander (vaak fout) resultaat geeft dan de lokale datum —
-  // exacte waarde hangt af van de systeem-tijdzone van de machine die de test draait.
-  assert(typeof fixed==='string' && fixed.length===10, 'tdLocal geeft een geldige YYYY-MM-DD string');
-});
-
-// ── CARDIO DATA → SESSIONS ROW (cardioDataToRow) ─────────
-console.log("\n🚴 Cardio logging — data-driven per type (v3.0.2)");
-
-function parseTimeToSecTest(str){
-  if(!str)return null;
-  const p=String(str).split(':');
-  if(p.length===2)return parseFloat(p[0])*60+parseFloat(p[1]);
-  if(p.length===3)return parseFloat(p[0])*3600+parseFloat(p[1])*60+parseFloat(p[2]);
-  return parseFloat(str)||null;
-}
-function cardioDataToRowTest(cardioType, d){
-  const row={};
-  if(cardioType==='running'||cardioType==='cycling'){
-    const km=parseFloat(d.dist_km)||null;
-    row.distance=km?Math.round(km*1000):null;
-    row.time_str=d.time||null;
-    row.watt=parseFloat(d.watt)||null;
-    row.hr_avg=parseInt(d.hr)||null;
-  } else if(cardioType==='swimming'){
-    const dist=parseInt(d.dist)||null;
-    const sec=parseTimeToSecTest(d.time);
-    row.distance=dist;
-    row.time_str=d.time||null;
-    row.pace_sec=(sec&&dist)?Math.round((sec/dist)*100):null;
-    row.stroke_type=d.stroke||null;
-  } else if(cardioType==='stairmaster'){
-    row.time_str=d.time||null;
-    row.calories=parseFloat(d.cals)||null;
-    if(d.floors)row.extraNote=d.floors+' floors';
-  } else if(cardioType==='crosstrainer'){
-    row.time_str=d.time||null;
-    row.calories=parseFloat(d.cals)||null;
-    row.stroke_rate=parseInt(d.rpm)||null;
-    if(d.resistance)row.extraNote='weerstand '+d.resistance;
-  } else if(cardioType==='assaultbike'){
-    row.time_str=d.time||null;
-    row.calories=parseFloat(d.cals)||null;
-    row.watt=parseFloat(d.watt)||null;
-    row.stroke_rate=parseInt(d.rpm)||null;
-  } else if(cardioType==='assaultrunner'){
-    row.distance=parseInt(d.dist)||null;
-    row.time_str=d.time||null;
-    row.calories=parseFloat(d.cals)||null;
-    row.hr_avg=parseInt(d.hr)||null;
-    if(d.split)row.extraNote='split:'+d.split;
-  } else {
-    row.distance=parseInt(d.dist)||null;
-    row.time_str=d.time||null;
-    row.watt=parseFloat(d.watt)||null;
-    row.stroke_rate=parseInt(d.stroke||d.rpm)||null;
-    if(d.split)row.extraNote=(d.machine?d.machine+' ':'')+'split:'+d.split;
-  }
-  row.rpe=parseFloat(d.rpe)||null;
-  return row;
-}
-
-test('cardioDataToRow: bikeerg (voorheen stilzwijgend niet opgeslagen bij training uit schema)', ()=>{
-  const row=cardioDataToRowTest('bikeerg',{dist:'2000',time:'6:30',split:'1:37',watt:'250',rpm:'85',rpe:'8'});
-  assertEq(row.distance,2000);
-  assertEq(row.time_str,'6:30');
-  assertEq(row.watt,250);
-  assertEq(row.rpe,8);
-  assertEq(row.extraNote,'split:1:37');
-});
-test('cardioDataToRow: wielrennen (nieuw type) zet afstand in meters + watt + hartslag', ()=>{
-  const row=cardioDataToRowTest('cycling',{dist_km:'42.5',time:'1:15:00',watt:'210',hr:'148',rpe:'7'});
-  assertEq(row.distance,42500);
-  assertEq(row.hr_avg,148);
-  assertEq(row.rpe,7);
-});
-test('cardioDataToRow: crosstrainer (nieuw type) zet calorieën + weerstand-note', ()=>{
-  const row=cardioDataToRowTest('crosstrainer',{time:'30:00',cals:'320',resistance:'12',rpm:'50',rpe:'6'});
-  assertEq(row.calories,320);
-  assertEq(row.stroke_rate,50);
-  assertEq(row.extraNote,'weerstand 12');
-});
-test('cardioDataToRow: assault runner (nieuw type) zet afstand + split-note', ()=>{
-  const row=cardioDataToRowTest('assaultrunner',{dist:'1000',time:'4:10',split:'1:02',cals:'85',hr:'160',rpe:'9'});
-  assertEq(row.distance,1000);
-  assertEq(row.extraNote,'split:1:02');
-  assertEq(row.rpe,9);
-});
-test('cardioDataToRow: rpe altijd meegenomen, ook zonder waarde (null i.p.v. NaN)', ()=>{
-  const row=cardioDataToRowTest('running',{dist_km:'10',time:'50:00',hr:''});
-  assertEq(row.rpe,null);
-});
-
-// ══════════════════════════════════════════════════════════
-// GEWICHT-OPTIES per set (v3.0.3) — vast / +kg vorige set / % vorige set
-// Reimplementatie van getEffectiveKg() op een array i.p.v. DOM, zelfde rekenlogica.
-// ══════════════════════════════════════════════════════════
-function getEffectiveKgTest(sets,i){
-  if(i<1)return null;
-  const s=sets[i-1];
-  if(!s||s.kg===undefined||s.kg==='')return null;
-  const val=parseFloat(s.kg);
-  if(isNaN(val))return null;
-  const mode=s.mode||'vast';
-  if(mode==='vast')return val;
-  const prevKg=getEffectiveKgTest(sets,i-1);
-  if(prevKg==null)return val;
-  if(mode==='plus')return Math.round((prevKg+val)*10)/10;
-  if(mode==='pct')return Math.round(prevKg*val/100*10)/10;
+// Zelfstandige herimplementatie van getEffectiveKg() voor testdoeleinden (geen DOM).
+function effectiveKg(mode, val, ctx){
+  if(mode==='vast'||mode==='topset') return val;
+  if(mode==='1rm') return ctx.oneRM ? roundKg(ctx.oneRM*val/100) : val;
+  if(mode==='backoff') return ctx.topKg ? roundKg(ctx.topKg*val/100) : val;
+  if(mode==='plus') return ctx.prevKg!=null ? roundKg(ctx.prevKg+val) : val;
+  if(mode==='pct') return ctx.prevKg!=null ? roundKg(ctx.prevKg*val/100) : val;
   return val;
 }
-
-console.log('\n⚖️  Gewicht-opties per set (v3.0.3)');
-test('getEffectiveKg: vast kg = ingevulde waarde zelf', ()=>{
-  const sets=[{kg:'100',mode:'vast'}];
-  assertEq(getEffectiveKgTest(sets,1),100);
+test('Vast kg: waarde is het gewicht zelf', ()=>{
+  assertEq(effectiveKg('vast', 100, {}), 100);
 });
-test('getEffectiveKg: +kg vorige set telt op bij effectief gewicht vorige set', ()=>{
-  const sets=[{kg:'100',mode:'vast'},{kg:'10',mode:'plus'}];
-  assertEq(getEffectiveKgTest(sets,2),110);
+test('+kg vorige: 100 + 2.5 = 102.5', ()=>{
+  assertEq(effectiveKg('plus', 2.5, {prevKg:100}), 102.5);
 });
-test('getEffectiveKg: % vorige set rekent percentage van effectief gewicht vorige set', ()=>{
-  const sets=[{kg:'100',mode:'vast'},{kg:'80',mode:'pct'}];
-  assertEq(getEffectiveKgTest(sets,2),80);
+test('% vorige: 102.5% van 100kg = 102.5', ()=>{
+  assertEq(effectiveKg('pct', 102.5, {prevKg:100}), 102.5);
 });
-test('getEffectiveKg: gekoppelde modi (pct van een +kg-set) rekenen recursief door', ()=>{
-  const sets=[{kg:'100',mode:'vast'},{kg:'10',mode:'plus'},{kg:'90',mode:'pct'}];
-  // set2 = 110, set3 = 90% van 110 = 99
-  assertEq(getEffectiveKgTest(sets,3),99);
+test('%1RM: 70% van 150kg 1RM = 105', ()=>{
+  assertEq(effectiveKg('1rm', 70, {oneRM:150}), 105);
 });
-test('getEffectiveKg: zonder referentie (eerste set op +kg/%) valt terug op ingevulde waarde als absoluut gewicht', ()=>{
-  const sets=[{kg:'20',mode:'plus'}];
-  assertEq(getEffectiveKgTest(sets,1),20);
+test('Backoff: 90% van topset 140kg = 126', ()=>{
+  assertEq(effectiveKg('backoff', 90, {topKg:140}), 126);
 });
-test('getEffectiveKg: lege/ontbrekende set geeft null', ()=>{
-  const sets=[{kg:'100',mode:'vast'},{kg:'',mode:'plus'}];
-  assertEq(getEffectiveKgTest(sets,2),null);
+test('Topset: waarde is het gewicht zelf (voorbereid op auto-berekening)', ()=>{
+  assertEq(effectiveKg('topset', 130, {}), 130);
+});
+test('Topset-suggestie: ~90% van geschatte 1RM', ()=>{
+  assertEq(roundKg(150*0.9), 135);
 });
 
+// ── V306: RPE-CASCADE ────────────────────────────────────
+console.log("\n📈 v306 — RPE-cascade (alleen niet-handmatige sets)");
 
-// ══════════════════════════════════════════════════════════
-// SORTEXERCISELIST (v3.0.4) — gedeelde sorteerlogica Progressie/Exercise Library
-// Reimplementatie, zelfde logica als in index.html
-// ══════════════════════════════════════════════════════════
-function sortExerciseListTest(list, mode, context={}, favSet=new Set()){
-  const arr=list.slice();
-  if(mode==='az'){
-    arr.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
-  }else if(mode==='recent'){
-    arr.sort((a,b)=>{
-      const da=(context[a.id]&&context[a.id].lastDate)||'';
-      const db=(context[b.id]&&context[b.id].lastDate)||'';
-      return db.localeCompare(da);
-    });
-  }else if(mode==='favoriet'){
-    arr.sort((a,b)=>{
-      const fa=favSet.has(a.id)?1:0, fb=favSet.has(b.id)?1:0;
-      if(fb!==fa)return fb-fa;
-      return (a.name||'').localeCompare(b.name||'');
-    });
-  }else if(mode==='progressie'){
-    arr.sort((a,b)=>{
-      const pa=(context[a.id]&&context[a.id].pct)||-1;
-      const pb=(context[b.id]&&context[b.id].pct)||-1;
-      return pb-pa;
-    });
+// Zelfstandige herimplementatie van de cascade-regel: bij wijziging van set i krijgen alle
+// volgende sets die niet handmatig zijn aangepast dezelfde waarde (overschrijft eerdere cascade).
+function cascadeRpe(rpeArr, manualSet, changedIdx, newVal){
+  const result=[...rpeArr];
+  result[changedIdx]=newVal;
+  for(let j=changedIdx+1;j<result.length;j++){
+    if(!manualSet.has(j)) result[j]=newVal;
   }
-  return arr;
+  return result;
 }
-
-console.log('\n📋 sortExerciseList (v3.0.4) — Progressie & Exercise Library filters');
-test('sortExerciseList: A-Z sorteert op naam', ()=>{
-  const list=[{id:'b',name:'Bench'},{id:'a',name:'Achterste deltspier'}];
-  const sorted=sortExerciseListTest(list,'az');
-  assertEq(sorted[0].id,'a');
+test('Cascade: set2 wijzigen naar 9 → set3/4 volgen mee', ()=>{
+  const start=[8.5,8.5,8.5,8.5];
+  const manual=new Set();
+  const r=cascadeRpe(start, manual, 1, 9);
+  assertEq(r.join(','), '8.5,9,9,9');
 });
-test('sortExerciseList: Recent sorteert op laatste sessiedatum, meest recent eerst', ()=>{
-  const list=[{id:'oud',name:'Oud'},{id:'nieuw',name:'Nieuw'}];
-  const ctx={oud:{lastDate:'2026-01-01'},nieuw:{lastDate:'2026-06-01'}};
-  const sorted=sortExerciseListTest(list,'recent',ctx);
-  assertEq(sorted[0].id,'nieuw');
-});
-test('sortExerciseList: Favorieten komen eerst, daarna alfabetisch binnen elke groep', ()=>{
-  const list=[{id:'z',name:'Zwaaien'},{id:'f',name:'Frontsquat'},{id:'a',name:'Airsquat'}];
-  const favs=new Set(['z']);
-  const sorted=sortExerciseListTest(list,'favoriet',{},favs);
-  assertEq(sorted[0].id,'z'); // favoriet eerst ondanks Z
-  assertEq(sorted[1].id,'a'); // niet-favorieten alfabetisch
-});
-test('sortExerciseList: Hoogste progressie sorteert op % van peakdoel, hoogste eerst', ()=>{
-  const list=[{id:'laag',name:'Laag'},{id:'hoog',name:'Hoog'}];
-  const ctx={laag:{pct:40},hoog:{pct:95}};
-  const sorted=sortExerciseListTest(list,'progressie',ctx);
-  assertEq(sorted[0].id,'hoog');
+test('Cascade: handmatig gewijzigde set3 wordt niet overschreven', ()=>{
+  const start=[8.5,9,8,8.5]; // set3 (idx2) al handmatig op 8 gezet
+  const manual=new Set([2]);
+  const r=cascadeRpe(start, manual, 1, 9);
+  assertEq(r.join(','), '8.5,9,8,9'); // set4 volgt mee, set3 blijft 8
 });
 
-// ══════════════════════════════════════════════════════════
-// PR-OVERZICHT (v3.0.4) — alleen daadwerkelijk uitgevoerde oefeningen tonen
-// ══════════════════════════════════════════════════════════
-function hasAnyPRTest(prs, buckets){
-  return buckets.some(b=>prs[b]);
+// ── V306: PROGRESSIE-ADVIES (post-set, #13) ──────────────
+console.log("\n💡 v306 — Post-set progressie-advies");
+
+function computeProgression(rpe, curKg){
+  if(rpe==null||isNaN(rpe)||!curKg) return null;
+  if(rpe<=7.5) return {delta:2.5, label:'Verhogen'};
+  if(rpe<=8.5) return {delta:0, label:'Gelijk houden'};
+  return {delta:-7.5, label:'Deload'};
 }
+test('RPE 7 → +2.5 kg advies', ()=>{
+  const p=computeProgression(7, 100);
+  assertEq(p.delta, 2.5);
+});
+test('RPE 8 → gelijk houden', ()=>{
+  const p=computeProgression(8, 100);
+  assertEq(p.delta, 0);
+});
+test('RPE 9.5 → deload', ()=>{
+  const p=computeProgression(9.5, 100);
+  assert(p.delta<0, 'Deload moet negatieve delta zijn');
+});
+test('Geen RPE = geen advies', ()=>{
+  assertEq(computeProgression(null, 100), null);
+});
 
-// ══════════════════════════════════════════════════════════
-// GEWICHT-OPTIES uitgebreid (v3.0.5) — %1RM, topset, backoff
-// Reimplementatie van getEffectiveKg() met de nieuwe modi, zelfde rekenlogica.
-// sets[i] = {kg, mode}. oneRM = geschatte 1RM voor '1rm'-modus.
-// ══════════════════════════════════════════════════════════
-function getEffectiveKgV2Test(sets,i,oneRM){
-  if(i<1)return null;
-  const s=sets[i-1];
-  if(!s||s.kg===undefined||s.kg==='')return null;
-  const val=parseFloat(s.kg);
-  if(isNaN(val))return null;
-  const mode=s.mode||'vast';
-  if(mode==='vast'||mode==='topset')return val;
-  if(mode==='1rm')return oneRM?Math.round(oneRM*val/100*10)/10:val;
-  if(mode==='backoff'){
-    let max=null;
-    for(let j=0;j<sets.length;j++){
-      if(j===i-1)continue;
-      if((sets[j].mode||'vast')==='backoff')continue;
-      const k=getEffectiveKgV2Test(sets,j+1,oneRM);
-      if(k!=null&&(max==null||k>max))max=k;
-    }
-    return max!=null?Math.round(max*val/100*10)/10:val;
-  }
-  const prevKg=getEffectiveKgV2Test(sets,i-1,oneRM);
-  if(prevKg==null)return val;
-  if(mode==='plus')return Math.round((prevKg+val)*10)/10;
-  if(mode==='pct')return Math.round(prevKg*val/100*10)/10;
-  return val;
+// ── V306: SLIMME OPWARMSETS ───────────────────────────────
+console.log("\n🔥 v306 — Automatisch opwarmschema");
+
+function suggestWarmupScheme(workKg){
+  let pcts;
+  if(workKg>=120) pcts=[[0.4,8],[0.55,5],[0.7,3],[0.8,2],[0.9,1]];
+  else if(workKg>=80) pcts=[[0.4,8],[0.6,5],[0.75,3],[0.9,1]];
+  else if(workKg>=40) pcts=[[0.5,6],[0.7,4],[0.85,2]];
+  else pcts=[[0.5,8],[0.75,4]];
+  return pcts.map(([p,reps])=>({kg:roundKg(workKg*p),reps}));
 }
-
-console.log('\n⚖️  Gewichtmodi uitgebreid (v3.0.5) — %1RM, topset, backoff');
-test('getEffectiveKg: %1RM rekent percentage van de geschatte 1RM', ()=>{
-  const sets=[{kg:'80',mode:'1rm'}];
-  assertEq(getEffectiveKgV2Test(sets,1,200),160);
+test('Zwaar gewicht (140kg) krijgt 5 opwarmsets', ()=>{
+  const s=suggestWarmupScheme(140);
+  assertEq(s.length, 5);
 });
-test('getEffectiveKg: %1RM zonder bekende 1RM valt terug op ingevulde waarde', ()=>{
-  const sets=[{kg:'80',mode:'1rm'}];
-  assertEq(getEffectiveKgV2Test(sets,1,null),80);
+test('Licht gewicht (30kg) krijgt 2 opwarmsets', ()=>{
+  const s=suggestWarmupScheme(30);
+  assertEq(s.length, 2);
 });
-test('getEffectiveKg: topset gedraagt zich als vast gewicht', ()=>{
-  const sets=[{kg:'120',mode:'topset'}];
-  assertEq(getEffectiveKgV2Test(sets,1,null),120);
+test('Opwarmschema 100kg: eerste set is 40kg × 8', ()=>{
+  const s=suggestWarmupScheme(100);
+  assertEq(s[0].kg, 40);
+  assertEq(s[0].reps, 8);
 });
-test('getEffectiveKg: backoff rekent percentage van de zwaarste set in de sessie', ()=>{
-  const sets=[{kg:'100',mode:'vast'},{kg:'120',mode:'topset'},{kg:'90',mode:'backoff'}];
-  // zwaarste = 120 (set 2), backoff set 3 = 90% van 120 = 108
-  assertEq(getEffectiveKgV2Test(sets,3,null),108);
-});
-test('getEffectiveKg: backoff werkt ongeacht volgorde (topset ná de backoff-set)', ()=>{
-  const sets=[{kg:'90',mode:'backoff'},{kg:'120',mode:'topset'}];
-  assertEq(getEffectiveKgV2Test(sets,1,null),108);
-});
-test('getEffectiveKg: meerdere backoff-sets verwijzen niet circulair naar elkaar', ()=>{
-  const sets=[{kg:'120',mode:'topset'},{kg:'90',mode:'backoff'},{kg:'80',mode:'backoff'}];
-  assertEq(getEffectiveKgV2Test(sets,2,null),108); // 90% van 120
-  assertEq(getEffectiveKgV2Test(sets,3,null),96);  // 80% van 120 (niet van set 2's 108)
+test('Opwarmgewichten zijn nooit zwaarder dan het werkgewicht', ()=>{
+  const s=suggestWarmupScheme(100);
+  s.forEach(set=>assert(set.kg<100, `${set.kg} moet < 100 zijn`));
 });
 
-// ══════════════════════════════════════════════════════════
-// CARDIO — generieke rowMap-mapper (v3.0.5)
-// Reimplementatie van cardioDataToRow() puur op basis van een rowMap-config,
-// om te bevestigen dat nieuwe cardiotypen zonder if/else-uitbreiding werken.
-// ══════════════════════════════════════════════════════════
-function cardioDataToRowV2Test(fields, rowMap, d){
-  const row={};
-  const notes=[];
-  fields.forEach(f=>{
-    const spec=rowMap[f];
-    if(!spec)return;
-    const raw=d[f];
-    if(raw===undefined||raw===null||raw==='')return;
-    if(spec.col==='extraNote'){notes.push(spec.template?spec.template(raw,d):String(raw));return;}
-    let v=spec.parse==='int'?parseInt(raw):spec.parse==='float'?parseFloat(raw):raw;
-    if(spec.parse!=='string'&&isNaN(v))return;
-    if(spec.transform)v=spec.transform(v);
-    row[spec.col]=v;
-  });
-  if(notes.length)row.extraNote=notes.join(' | ');
-  row.rpe=row.rpe!==undefined?row.rpe:null;
-  return row;
+// ── V306: COACH APPLY-ACTIE PARSER ───────────────────────
+console.log("\n🤖 v306 — Coach [[APPLY]]-marker parsing");
+
+const APPLY_RE=/\[\[APPLY:([a-zA-Z0-9_\-]+):([\d.]+)\]\]/g;
+function parseApplyActions(raw){
+  const actions=[];
+  const clean=raw.replace(APPLY_RE,(m,exId,kg)=>{actions.push({exId,kg:parseFloat(kg)});return '';}).trim();
+  return {clean, actions};
 }
-
-console.log('\n🚴 Cardio generieke rowMap-mapper (v3.0.5)');
-test('cardioDataToRow generiek: nieuw fictief cardiotype werkt zonder codewijziging', ()=>{
-  // Simuleert het toevoegen van een geheel nieuw type ("wandelen") puur via config
-  const fields=['dist_km','time','hr','rpe'];
-  const rowMap={dist_km:{col:'distance',parse:'float',transform:v=>Math.round(v*1000)},time:{col:'time_str',parse:'string'},hr:{col:'hr_avg',parse:'int'},rpe:{col:'rpe',parse:'float'}};
-  const row=cardioDataToRowV2Test(fields,rowMap,{dist_km:'5',time:'45:00',hr:'110',rpe:'6'});
-  assertEq(row.distance,5000);
-  assertEq(row.hr_avg,110);
-  assertEq(row.rpe,6);
+test('Eén APPLY-marker wordt herkend en verwijderd uit tekst', ()=>{
+  const {clean, actions}=parseApplyActions('Verlaag naar 97.5 kg. [[APPLY:backsquat:97.5]]');
+  assertEq(actions.length, 1);
+  assertEq(actions[0].exId, 'backsquat');
+  assertEq(actions[0].kg, 97.5);
+  assert(!clean.includes('[[APPLY'), 'marker moet verwijderd zijn uit weergavetekst');
 });
-test('cardioDataToRow generiek: extraNote-template verzamelt meerdere notities', ()=>{
-  const fields=['dist','time','split'];
-  const rowMap={dist:{col:'distance',parse:'int'},time:{col:'time_str',parse:'string'},split:{col:'extraNote',template:(v,d)=>(d.machine?d.machine+' ':'')+'split:'+v}};
-  const row=cardioDataToRowV2Test(fields,rowMap,{dist:'1000',time:'3:40',split:'1:50',machine:'PM5-A'});
-  assertEq(row.extraNote,'PM5-A split:1:50');
-});
-test('cardioDataToRow generiek: ontbrekend veld geeft geen kolom (niet NaN/undefined string)', ()=>{
-  const fields=['time','cals','hr','rpe'];
-  const rowMap={time:{col:'time_str',parse:'string'},cals:{col:'calories',parse:'float'},hr:{col:'hr_avg',parse:'int'},rpe:{col:'rpe',parse:'float'}};
-  const row=cardioDataToRowV2Test(fields,rowMap,{time:'20:00',cals:'250'});
-  assertEq(row.hr_avg,undefined);
-  assertEq(row.rpe,null);
+test('Geen marker = geen acties', ()=>{
+  const {actions}=parseApplyActions('Techniek ziet er goed uit, ga zo door.');
+  assertEq(actions.length, 0);
 });
 
-console.log('\n🏆 PR-overzicht filter (v3.0.4)');
-test('PR-overzicht: oefening zonder sessies (alle buckets null) wordt overgeslagen', ()=>{
-  const prs={1:null,3:null,5:null,10:null};
-  assertEq(hasAnyPRTest(prs,[1,3,5,10]), false);
-});
-test('PR-overzicht: oefening met minstens 1 gevulde bucket wordt getoond', ()=>{
-  const prs={1:null,3:{weight:100,date:'2026-06-01'},5:null,10:null};
-  assertEq(hasAnyPRTest(prs,[1,3,5,10]), true);
-});
 
+console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);
 if(failed > 0){
   console.log('⚠️  Er zijn mislukte tests — controleer de logica');

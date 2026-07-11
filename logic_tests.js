@@ -276,13 +276,16 @@ test('1RM-percentage: 95% van 107kg rondt af', ()=>{
 console.log("\n⚖️  v306 — Werkset-berekeningen per modus");
 
 // Zelfstandige herimplementatie van getEffectiveKg() voor testdoeleinden (geen DOM).
+// v306.1: geen referentie beschikbaar (bv. 'plus' op set 1 zonder vorige set) → null
+// i.p.v. de parameter stilzwijgend als absoluut gewicht te gebruiken (was een verwarrende
+// fallback en verhulde bug #2/#3).
 function effectiveKg(mode, val, ctx){
   if(mode==='vast'||mode==='topset') return val;
-  if(mode==='1rm') return ctx.oneRM ? roundKg(ctx.oneRM*val/100) : val;
-  if(mode==='backoff') return ctx.topKg ? roundKg(ctx.topKg*val/100) : val;
-  if(mode==='plus') return ctx.prevKg!=null ? roundKg(ctx.prevKg+val) : val;
-  if(mode==='pct') return ctx.prevKg!=null ? roundKg(ctx.prevKg*val/100) : val;
-  return val;
+  if(mode==='1rm') return ctx.oneRM ? roundKg(ctx.oneRM*val/100) : null;
+  if(mode==='backoff') return ctx.topKg!=null ? roundKg(ctx.topKg*val/100) : null;
+  if(mode==='plus') return ctx.prevKg!=null ? roundKg(ctx.prevKg+val) : null;
+  if(mode==='pct') return ctx.prevKg!=null ? roundKg(ctx.prevKg*val/100) : null;
+  return null;
 }
 test('Vast kg: waarde is het gewicht zelf', ()=>{
   assertEq(effectiveKg('vast', 100, {}), 100);
@@ -290,11 +293,11 @@ test('Vast kg: waarde is het gewicht zelf', ()=>{
 test('+kg vorige: 100 + 2.5 = 102.5', ()=>{
   assertEq(effectiveKg('plus', 2.5, {prevKg:100}), 102.5);
 });
-test('% vorige: 102.5% van 100kg = 102.5', ()=>{
-  assertEq(effectiveKg('pct', 102.5, {prevKg:100}), 102.5);
+test('% vorige: 90% van 90kg vorige = 81kg (spec-voorbeeld bug #2)', ()=>{
+  assertEq(effectiveKg('pct', 90, {prevKg:90}), 81);
 });
-test('%1RM: 70% van 150kg 1RM = 105', ()=>{
-  assertEq(effectiveKg('1rm', 70, {oneRM:150}), 105);
+test('%1RM: 80% van 80kg 1RM = 64kg (spec-voorbeeld bug #2)', ()=>{
+  assertEq(effectiveKg('1rm', 80, {oneRM:80}), 64);
 });
 test('Backoff: 90% van topset 140kg = 126', ()=>{
   assertEq(effectiveKg('backoff', 90, {topKg:140}), 126);
@@ -304,6 +307,98 @@ test('Topset: waarde is het gewicht zelf (voorbereid op auto-berekening)', ()=>{
 });
 test('Topset-suggestie: ~90% van geschatte 1RM', ()=>{
   assertEq(roundKg(150*0.9), 135);
+});
+test('Geen referentie (plus zonder vorige set) → null, geen stille fallback', ()=>{
+  assertEq(effectiveKg('plus', 2.5, {prevKg:null}), null);
+  assertEq(effectiveKg('1rm', 80, {oneRM:null}), null);
+});
+
+// ── V306.1 — BUG 1: %1RM toepassen op ALLE werksets ──────
+console.log("\n🎯 v306.1 — Bug 1: %1RM-knop geldt voor de hele oefening");
+
+// Zelfstandige simulatie van applyPct(): itereert over alle sets, slaat sets over die
+// handmatig zijn aangepast of een eigen (niet-'vast') berekeningsmodus gebruiken.
+function simulateApplyPct(sets, oneRM, pct){
+  const target = roundKg(oneRM*pct/100);
+  return sets.map(s=>{
+    if(s.manual) return {...s};
+    if(s.mode!=='vast') return {...s};
+    return {...s, kg:target};
+  });
+}
+test('80% van 80kg 1RM → alle 4 werksets op 64kg', ()=>{
+  const sets=[{mode:'vast',kg:50},{mode:'vast',kg:55},{mode:'vast',kg:60},{mode:'vast',kg:62.5}];
+  const r=simulateApplyPct(sets, 80, 80);
+  assert(r.every(s=>s.kg===64), 'Alle sets moeten 64kg zijn: '+JSON.stringify(r));
+});
+test('Handmatig aangepaste set 3 blijft ongewijzigd, rest wordt bijgewerkt', ()=>{
+  const sets=[{mode:'vast',kg:50},{mode:'vast',kg:55},{mode:'vast',kg:70,manual:true},{mode:'vast',kg:62.5}];
+  const r=simulateApplyPct(sets, 80, 80);
+  assertEq(r[2].kg, 70); // set 3 (index 2) blijft 70
+  assertEq(r[0].kg, 64); assertEq(r[1].kg, 64); assertEq(r[3].kg, 64);
+});
+test('Set met eigen berekeningsmodus (bv. topset) wordt niet overschreven', ()=>{
+  const sets=[{mode:'vast',kg:50},{mode:'topset',kg:100}];
+  const r=simulateApplyPct(sets, 80, 80);
+  assertEq(r[0].kg, 64);
+  assertEq(r[1].kg, 100); // ongewijzigd — eigen modus
+});
+test('Nieuwe 1RM herberekent automatisch alle niet-handmatige sets', ()=>{
+  const sets=[{mode:'vast',kg:64,manual:false},{mode:'vast',kg:64,manual:true}];
+  const r=simulateApplyPct(sets, 90, 80); // 1RM gewijzigd naar 90kg, zelfde 80%-instelling
+  assertEq(r[0].kg, roundKg(90*0.8)); // 72
+  assertEq(r[1].kg, 64); // handmatige set blijft staan
+});
+
+// ── V306.1 — BUG 2/3/4: berekende modi tonen ALTIJD het gewicht ──
+console.log("\n🔁 v306.1 — Bug 2/3/4: kg-veld toont effectief gewicht, direct herberekend");
+
+// Simuleert de UI-staat van een set-rij (kgDisplay = wat het gewichtsveld toont).
+function simulateSetRow(mode, param, ctx){
+  if(mode==='vast'||mode==='topset') return {kgDisplay: ctx.kg, editable:true};
+  const eff = effectiveKg(mode, param, ctx);
+  return {kgDisplay: eff!=null?eff:'–', editable:false};
+}
+test('Bug #3: % vorige toont het berekende gewicht, niet de parameter "90%"', ()=>{
+  const row=simulateSetRow('pct', 90, {prevKg:90});
+  assertEq(row.kgDisplay, 81);
+  assert(row.kgDisplay!=='90%', 'Veld mag niet de parameter tonen');
+});
+test('Bug #3: +kg vorige toont het berekende gewicht, niet "+2.5"', ()=>{
+  const row=simulateSetRow('plus', 2.5, {prevKg:90});
+  assertEq(row.kgDisplay, 92.5);
+});
+test('Bug #3: %1RM toont het berekende gewicht, niet "80%"', ()=>{
+  const row=simulateSetRow('1rm', 80, {oneRM:80});
+  assertEq(row.kgDisplay, 64);
+});
+test('Bug #4: wijziging van de parameter berekent direct opnieuw', ()=>{
+  let row=simulateSetRow('pct', 90, {prevKg:90});
+  assertEq(row.kgDisplay, 81);
+  row=simulateSetRow('pct', 102.5, {prevKg:90}); // gebruiker kiest ander percentage
+  assertEq(row.kgDisplay, roundKg(90*102.5/100)); // 92.5
+});
+test('Bug #4: modus-wissel van vast naar %1RM berekent direct, geen tussenstap nodig', ()=>{
+  const vastRow=simulateSetRow('vast', null, {kg:70});
+  assertEq(vastRow.kgDisplay, 70);
+  const pctRow=simulateSetRow('1rm', 80, {oneRM:80}); // direct na wisselen naar %1RM
+  assertEq(pctRow.kgDisplay, 64);
+});
+test('Berekende modus is niet direct editable (voorkomt inconsistente handmatige overschrijving)', ()=>{
+  const row=simulateSetRow('pct', 90, {prevKg:90});
+  assertEq(row.editable, false);
+});
+test('Vast en Topset blijven vrij invoerbaar', ()=>{
+  assertEq(simulateSetRow('vast', null, {kg:70}).editable, true);
+  assertEq(simulateSetRow('topset', null, {kg:130}).editable, true);
+});
+test('Ketenreactie: set2 (%vorige) volgt automatisch als set1 (vast) wijzigt', ()=>{
+  let set1=70;
+  let set2=simulateSetRow('pct', 90, {prevKg:set1});
+  assertEq(set2.kgDisplay, 63);
+  set1=80; // gebruiker wijzigt set1
+  set2=simulateSetRow('pct', 90, {prevKg:set1}); // herberekening na wijziging
+  assertEq(set2.kgDisplay, 72);
 });
 
 // ── V306: RPE-CASCADE ────────────────────────────────────

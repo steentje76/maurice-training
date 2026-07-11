@@ -108,6 +108,8 @@ body{display:flex;justify-content:center}
 .set-more{background:none;border:none;color:var(--g4);font-size:18px;cursor:pointer;padding:4px;flex-shrink:0}
 .set-rest{background:none;border:none;color:var(--accent);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0}
 .wmode-sel{width:100%;margin-top:3px;padding:2px 1px;border:1px solid var(--g2);border-radius:6px;font-size:8px;font-weight:600;color:var(--g4);background:var(--g1);font-family:var(--f);text-align:center}
+.wmode-param{width:100%;margin-top:3px;padding:2px 1px;border:1px solid var(--accent);border-radius:6px;font-size:10px;font-weight:700;color:var(--dark);background:#fff;font-family:var(--f);text-align:center}
+.kg-computed{background:var(--g1)!important;color:var(--dark);cursor:default}
 .rpe-btn:active{background:var(--g2)}
 .rm-panel{margin:8px 14px 4px;padding:10px 12px;background:var(--g1);border-radius:10px}
 .rm-panel-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
@@ -1395,7 +1397,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.0.6';
+const APP_VER = 'v3.0.6.1';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -2594,10 +2596,12 @@ function epley1RM(kg,reps){
 }
 // v306: centrale afrondingsregel (0.5 kg increments) — hergebruikt door alle nieuwe rekenfuncties
 function roundKg(v){ return Math.round(v*2)/2; }
-// v306: welk %1RM-knop actief staat per oefening, en of de gebruiker het gewicht daarna
-// handmatig heeft overschreven (dan stopt automatische herberekening bij een nieuwe 1RM).
+// v306: welk %1RM-knop actief staat per oefening (instelling voor de HELE oefening).
 let pctSelection={};
-let settingViaPct=false; // onderdrukt de "handmatig"-markering terwijl applyPct zelf het veld vult
+let settingViaPct=false; // onderdrukt de "handmatig"-markering terwijl een script zelf het veld vult
+// v306.1: per-set bijhouden welke werksets de gebruiker zelf heeft ingetypt — die sets worden
+// nooit overschreven door de %1RM-knoppen, ongeacht welke set het is (niet alleen set 1).
+let manualKgSets={};
 function buildRmPanel(ex){
   const rm=getOneRM(ex.id);
   const pcts=[50,60,70,80,90,95,100];
@@ -2628,22 +2632,32 @@ async function saveOneRM(exId,val){
   localStorage.setItem('maurice_1rm_'+exId,v); // meteen lokaal, ook als sync faalt
   if(exObj)exObj.one_rm=v;
   await sbPatch('exercises','id=eq.'+exId,{one_rm:v}); // faalt stil als kolom nog niet bestaat
-  // v306: bij een nieuwe 1RM automatisch herberekenen als er een %-knop actief staat
-  // en de gebruiker het werkgewicht nog niet handmatig heeft overschreven.
+  // v306.1: bij een nieuwe 1RM automatisch herberekenen voor alle nog niet handmatig
+  // aangepaste werksets (applyPct respecteert manualKgSets per set zelf).
   const sel=pctSelection[exId];
-  if(sel&&!sel.manual)applyPct(exId,sel.pct,true);
+  if(sel)applyPct(exId,sel.pct,true);
 }
 function markActivePctBtn(exId,pct){
   document.querySelectorAll(`.pct-btn[data-ex="${exId}"]`).forEach(b=>{
     b.classList.toggle('active', pct!=null&&parseFloat(b.dataset.pct)===pct);
   });
 }
-// v306: markeert set 1 als handmatig zodra de gebruiker het kg-veld zelf wijzigt,
-// zodat een latere 1RM-wijziging deze set niet meer overschrijft.
-function onManualKgEdit1(exId){
+// v306.1: markeert een specifieke set als handmatig zodra de gebruiker het kg-veld zelf
+// wijzigt — geldt voor elke set (niet alleen set 1), zodat %1RM die set nooit meer overschrijft.
+function onManualKgEdit(exId,i){
   if(settingViaPct)return;
-  if(pctSelection[exId])pctSelection[exId].manual=true;
-  markActivePctBtn(exId,null);
+  if(!manualKgSets[exId])manualKgSets[exId]={};
+  manualKgSets[exId][i]=true;
+}
+// Alle werkset-rij-indices van een oefening ophalen (robuust tegen gaten na het verwijderen
+// van een individuele set — zie showSetMenu, dat niet hernummert).
+function getWorkSetIndices(exId){
+  const idxs=[];
+  document.querySelectorAll('.set-row[id^="sr-'+exId+'-"]').forEach(row=>{
+    const idx=parseInt(row.id.slice(('sr-'+exId+'-').length));
+    if(!isNaN(idx))idxs.push(idx);
+  });
+  return idxs.sort((a,b)=>a-b);
 }
 // Toont een Epley-schatting o.b.v. een gelogde set (kg × reps) als suggestie voor het 1RM-veld
 function showEpleyHint(exId,kg,reps){
@@ -2711,32 +2725,38 @@ function acceptColdStart(exId,est){
   if(el)el.innerHTML='';
   toast('Startschatting 1RM ingevuld: '+est+' kg');
 }
-// v306: knop is nu functioneel — berekent het gewicht o.b.v. de huidige 1RM, rondt af
-// volgens de bestaande afrondingsregel, en vult ALTIJD werkset 1 (reps/RPE blijven staan).
+// v306.1: het percentage is nu een instelling voor de HELE oefening — past toe op alle
+// werksets die (a) niet handmatig zijn aangepast én (b) in 'vast'-modus staan (sets met een
+// eigen berekeningsmethode, bv. Topset, worden met rust gelaten — dat is hún instelling).
 // silent=true wordt gebruikt bij automatische herberekening na een 1RM-wijziging.
 function applyPct(exId,pct,silent){
   const rm=getOneRM(exId);
   if(!rm){if(!silent)toast('Vul eerst een 1RM in');return;}
-  // Zorg dat set 1 in 'vast'-modus staat zodat het ingevulde getal het gewicht zelf is
-  const modeSel=document.getElementById('s-'+exId+'-1-wmode');
-  if(modeSel&&modeSel.value!=='vast'){modeSel.value='vast';onWeightModeChange(exId,1);}
   const target=roundKg(rm*pct/100);
-  const kgInp=document.getElementById('s-'+exId+'-1-kg');
-  if(kgInp){
+  const idxs=getWorkSetIndices(exId);
+  let filled=0;
+  idxs.forEach(i=>{
+    if(manualKgSets[exId]&&manualKgSets[exId][i])return; // handmatig aangepast: nooit overschrijven
+    const modeSel=document.getElementById('s-'+exId+'-'+i+'-wmode');
+    if(modeSel&&modeSel.value!=='vast')return; // set heeft een eigen berekeningsmethode: niet overschrijven
+    const kgInp=document.getElementById('s-'+exId+'-'+i+'-kg');
+    if(!kgInp)return;
     settingViaPct=true;
     kgInp.value=target;
     kgInp.dispatchEvent(new Event('input'));
     kgInp.dispatchEvent(new Event('change'));
     settingViaPct=false;
-  }
-  pctSelection[exId]={pct,manual:false};
+    filled++;
+  });
+  recomputeAllComputedSets(exId); // sets die via +kg/%vorige naar een zojuist bijgewerkte set verwijzen, verversen mee
+  pctSelection[exId]={pct};
   markActivePctBtn(exId,pct);
-  if(!silent)toast(pct+'% van 1RM = '+target+' kg');
+  if(!silent)toast(pct+'% van 1RM = '+target+' kg'+(idxs.length&&filled<idxs.length?' · '+(idxs.length-filled)+' set(s) overgeslagen (handmatig/eigen modus)':''));
 }
 function openPlateCalcForEx(exId){
   const rows=document.querySelectorAll(`[id^="s-${exId}-"][id$="-kg"]`);
   let w=0;
-  rows.forEach(inp=>{if(inp.value)w=parseFloat(inp.value);});
+  rows.forEach(inp=>{if(inp.value&&inp.value!=='–')w=parseFloat(inp.value);});
   if(!w)w=getOneRM(exId)||0;
   openPlateCalc(w);
 }
@@ -2927,21 +2947,43 @@ const WEIGHT_MODES=[
   {v:'backoff',l:'Backoff (% topset)',ph:'%'}
 ];
 function weightModePlaceholder(mode){return WEIGHT_MODES.find(m=>m.v===mode)?.ph||'kg';}
-// v306: vaste percentage-presets per modus i.p.v. vrije invoer — spec-item #2
+// v306.1: vaste percentage-presets per modus, nu in een APART parameterveld i.p.v. in het
+// gewichtsveld zelf (dat toonde voorheen "90%" i.p.v. het berekende gewicht — bug #2/#3).
 const PCT_PRESETS={pct:[90,95,100,102.5,105],'1rm':[50,55,60,65,70,75,80,85,90,95,100],backoff:[90,92.5,95]};
 const PCT_DEFAULTS={pct:100,'1rm':80,backoff:90};
-// Rendert het kg-veld: een select met presets voor % vorige/%1RM/backoff, anders een vrij invoerveld.
-// Behoudt bewust dezelfde id (s-{exId}-{i}-kg) zodat getEffectiveKg() ongewijzigd blijft werken.
+// v306.1: het kg-veld (id s-{exId}-{i}-kg) toont ALTIJD het effectieve gewicht.
+// - 'vast'/'topset': vrij invoerbaar, de waarde IS het gewicht.
+// - 'plus'/'pct'/'1rm'/'backoff': read-only, berekend vanuit het parameterveld (zie paramFieldHtml).
 function kgFieldHtml(exId,i,mode,val){
   const id=`s-${exId}-${i}-kg`;
-  if(PCT_PRESETS[mode]){
-    const opts=PCT_PRESETS[mode].map(p=>`<option value="${p}"${String(p)===String(val)?' selected':''}>${p}%</option>`).join('');
-    return `<select class="set-field" id="${id}" onchange="onKgSelectChange('${exId}',${i})">${opts}</select>`;
+  const computed=(mode==='plus'||!!PCT_PRESETS[mode]);
+  if(computed){
+    const disp=(val!=null&&val!=='')?val:'–';
+    return `<input class="set-field kg-computed" type="text" id="${id}" value="${disp}" readonly tabindex="-1">`;
   }
-  const ph=mode==='plus'?'+2.5':weightModePlaceholder(mode);
+  const ph=weightModePlaceholder(mode);
   return `<input class="set-field" type="text" inputmode="decimal" placeholder="${ph}" id="${id}" value="${val||''}" min="0" max="500"
-    oninput="clampNumInput(this,0,500);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'kg',this.value);${i===1?`onManualKgEdit1('${exId}')`:''}"
-    onchange="logSet('${exId}','work',${i},true);${i===1?`autoGenerateWarmup('${exId}',false)`:''}">`;
+    oninput="clampNumInput(this,0,500);onManualKgEdit('${exId}',${i});logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'kg',this.value);recomputeAllComputedSets('${exId}')"
+    onchange="logSet('${exId}','work',${i},true);${i===1?`autoGenerateWarmup('${exId}',false);`:''}recomputeAllComputedSets('${exId}')">`;
+}
+// v306.1: apart parameterveld — verschijnt onder de gewicht/modus-rij zodra een berekende
+// modus gekozen is. Presets als dropdown voor %-modi, vrij invoerveld voor +kg vorige.
+function paramFieldHtml(exId,i,mode,paramVal){
+  const id=`s-${exId}-${i}-param`;
+  if(PCT_PRESETS[mode]){
+    const opts=PCT_PRESETS[mode].map(p=>`<option value="${p}"${String(p)===String(paramVal)?' selected':''}>${p}%</option>`).join('');
+    return `<select class="wmode-param" id="${id}" onchange="onParamChange('${exId}',${i})">${opts}</select>`;
+  }
+  if(mode==='plus'){
+    return `<input class="wmode-param" type="text" inputmode="decimal" placeholder="+2.5" id="${id}" value="${paramVal||''}" oninput="clampDeltaInput(this);onParamChange('${exId}',${i})">`;
+  }
+  return '';
+}
+// Staat cijfers, punt/komma en een minteken toe (voor deload-achtige negatieve delta's).
+function clampDeltaInput(el){
+  if(el.value==='')return;
+  let v=el.value.replace(',','.').replace(/[^0-9.\-]/g,'');
+  el.value=v;
 }
 // Geschatte 1RM (Epley), gecached per oefening zodat getEffectiveKg() synchroon kan blijven.
 // Wordt gevuld bij het openen van een oefening (zelfde call-site als loadRepPRs), valt terug
@@ -2963,66 +3005,89 @@ async function loadEstOneRM(exId){
 // niet alleen eerdere), exclusief andere backoff-sets zelf om circulaire verwijzingen
 // tussen meerdere backoff-sets te voorkomen.
 function sessionTopSetKg(exId,excludeIdx){
-  let max=null,j=1;
-  while(true){
-    const el=document.getElementById('s-'+exId+'-'+j+'-kg');
-    if(!el)break;
-    if(j!==excludeIdx){
-      const m=document.getElementById('s-'+exId+'-'+j+'-wmode')?.value||'vast';
-      if(m!=='backoff'){
-        const k=getEffectiveKg(exId,j);
-        if(k!=null&&(max==null||k>max))max=k;
-      }
-    }
-    j++;
-  }
+  let max=null;
+  getWorkSetIndices(exId).forEach(j=>{
+    if(j===excludeIdx)return;
+    const m=document.getElementById('s-'+exId+'-'+j+'-wmode')?.value||'vast';
+    if(m==='backoff')return;
+    const k=getEffectiveKg(exId,j);
+    if(k!=null&&(max==null||k>max))max=k;
+  });
   return max;
 }
 // Berekent het daadwerkelijke gewicht van een set, rekening houdend met de gekozen modus.
 // Dit is de ENIGE plek waar gewicht-modi worden omgerekend — alle schermen (Training A/B,
 // Workout, Losse oefening, Logboek editor) roepen deze functie aan, geen eigen berekeningen.
-// 'vast'/'topset' = ingevulde waarde is het gewicht zelf.
-// 'plus'/'pct' = t.o.v. de vorige set (recursief terug tot een vaste referentie).
-// '1rm' = percentage van de geschatte 1RM (Epley).
-// 'backoff' = percentage van de zwaarste set in dezelfde sessie/oefening.
+// 'vast'/'topset': het kg-veld bevat het gewicht zelf.
+// 'plus'/'pct': parameterveld t.o.v. de vorige set (recursief terug tot een vaste referentie).
+// '1rm': parameterveld = percentage van de geschatte 1RM (Epley).
+// 'backoff': parameterveld = percentage van de zwaarste set in dezelfde sessie/oefening.
 function getEffectiveKg(exId,i){
   if(i<1)return null;
-  const raw=document.getElementById('s-'+exId+'-'+i+'-kg')?.value;
   const mode=document.getElementById('s-'+exId+'-'+i+'-wmode')?.value||'vast';
-  if(raw===undefined||raw==='')return null;
-  const val=parseFloat(raw);
-  if(isNaN(val))return null;
-  if(mode==='vast'||mode==='topset')return val;
+  if(mode==='vast'||mode==='topset'){
+    const raw=document.getElementById('s-'+exId+'-'+i+'-kg')?.value;
+    if(raw===undefined||raw===''||raw==='–')return null;
+    const val=parseFloat(raw);
+    return isNaN(val)?null:val;
+  }
+  const paramRaw=document.getElementById('s-'+exId+'-'+i+'-param')?.value;
+  if(paramRaw===undefined||paramRaw==='')return null;
+  const param=parseFloat(paramRaw);
+  if(isNaN(param))return null;
   if(mode==='1rm'){
     const oneRM=estimatedOneRM(exId);
-    return oneRM?Math.round(oneRM*val/100*10)/10:val;
+    return oneRM?roundKg(oneRM*param/100):null;
   }
   if(mode==='backoff'){
     const top=sessionTopSetKg(exId,i);
-    return top!=null?Math.round(top*val/100*10)/10:val;
+    return top!=null?roundKg(top*param/100):null;
   }
   const prevKg=getEffectiveKg(exId,i-1);
-  if(prevKg==null)return val; // geen referentie beschikbaar: val zelf als absoluut gewicht gebruiken
-  if(mode==='plus')return Math.round((prevKg+val)*10)/10;
-  if(mode==='pct')return Math.round(prevKg*val/100*10)/10;
-  return val;
+  if(prevKg==null)return null; // geen referentie beschikbaar: nog niet berekenbaar
+  if(mode==='plus')return roundKg(prevKg+param);
+  if(mode==='pct')return roundKg(prevKg*param/100);
+  return null;
 }
-// v306: bij modus-wissel wordt het kg-veld opnieuw gerenderd (input ↔ select met presets).
+// v306.1: schrijft de berekende waarde direct in het (read-only) kg-veld van één set.
+function recomputeEffectiveKg(exId,i){
+  const mode=document.getElementById('s-'+exId+'-'+i+'-wmode')?.value||'vast';
+  if(mode==='vast'||mode==='topset')return; // kg-veld IS de waarde, niets te berekenen
+  const kgEl=document.getElementById('s-'+exId+'-'+i+'-kg');
+  if(!kgEl)return;
+  const eff=getEffectiveKg(exId,i);
+  kgEl.value=eff!=null?eff:'–';
+}
+// Herberekent alle berekende (niet-vast/topset) sets van een oefening — nodig omdat +kg vorige,
+// % vorige en Backoff van elkaar/andere sets kunnen afhangen (bug #4: direct zichtbaar/ketenreactie).
+function recomputeAllComputedSets(exId){
+  getWorkSetIndices(exId).forEach(i=>recomputeEffectiveKg(exId,i));
+}
+// v306.1: bij modus-wissel worden het kg-veld (vrij ↔ berekend/read-only) EN het aparte
+// parameterveld opnieuw gerenderd, en wordt direct herberekend — lost bug #2/#4 op (voorheen
+// veranderde alleen het label/de select, zonder dat de berekening werd uitgevoerd).
 function onWeightModeChange(exId,i){
   const mode=document.getElementById('s-'+exId+'-'+i+'-wmode')?.value||'vast';
-  const wrap=document.getElementById('kgwrap-'+exId+'-'+i);
-  if(wrap){
-    const field=wrap.querySelector('.set-field');
-    const defaultVal=PCT_PRESETS[mode]?PCT_DEFAULTS[mode]:'';
-    if(field)field.outerHTML=kgFieldHtml(exId,i,mode,defaultVal);
+  const paramWrap=document.getElementById('paramwrap-'+exId+'-'+i);
+  const defaultParam=PCT_PRESETS[mode]?PCT_DEFAULTS[mode]:'';
+  if(paramWrap)paramWrap.innerHTML=paramFieldHtml(exId,i,mode,defaultParam);
+  const kgFieldEl=document.getElementById('s-'+exId+'-'+i+'-kg');
+  if(kgFieldEl){
+    const prevVal=kgFieldEl.value;
+    const carry=(prevVal&&prevVal!=='–')?prevVal:'';
+    kgFieldEl.outerHTML=kgFieldHtml(exId,i,mode,(mode==='vast'||mode==='topset')?carry:'');
   }
   if(mode==='topset')suggestTopset(exId,i);
+  recomputeEffectiveKg(exId,i);
+  recomputeAllComputedSets(exId);
   logSet(exId,'work',i,true);
 }
-function onKgSelectChange(exId,i){
-  if(i===1)onManualKgEdit1(exId);
+// v306.1: parameter (percentage/+kg) gewijzigd → direct herberekenen + ketenreactie naar
+// afhankelijke sets, i.p.v. alleen de parameterwaarde op te slaan zonder gevolg (bug #2).
+function onParamChange(exId,i){
+  recomputeEffectiveKg(exId,i);
   logSet(exId,'work',i,true);
-  copyToSets(exId,i,'kg',document.getElementById('s-'+exId+'-'+i+'-kg')?.value);
+  recomputeAllComputedSets(exId);
 }
 // v306: automatische topset-suggestie (voorbereid voor latere verfijning) — schat ~90% van
 // de geschatte 1RM, alleen als het veld nog leeg is (niet overschrijven bij bestaande waarde).
@@ -3101,6 +3166,7 @@ function buildWorkSetRow(exId,i,prefill=null){
       <div class="set-field-wrap" style="flex:2" id="kgwrap-${exId}-${i}">
         ${kgFieldHtml(exId,i,mode,prefill?prefill.kg:'')}
         ${buildWeightModeSelect(exId,i,mode)}
+        <div id="paramwrap-${exId}-${i}">${paramFieldHtml(exId,i,mode,'')}</div>
         <div class="set-field-lbl">kg</div>
       </div>
       <div class="set-sep">×</div>

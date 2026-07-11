@@ -272,13 +272,20 @@ canvas{width:100%;height:100%}
 .muscle-pill.secondary{background:var(--g1);color:var(--g4);border:1px solid var(--g2)}
 .ex-pick-trigger{display:flex;align-items:center;justify-content:space-between;width:100%;background:var(--g1);border:1px solid var(--g2);border-radius:10px;padding:10px 12px;font-family:var(--f);font-size:15px;color:var(--dark);cursor:pointer}
 .ex-pick-trigger span.ph{color:var(--g4)}
-.ex-pick-modal .modal{max-height:85vh;display:flex;flex-direction:column}
+/* Fullscreen bottomsheet: modal vult het scherm, alleen de lijst scrollt.
+   Zoekbalk/filters (sticky top) en actieknoppen (sticky bottom) blijven altijd zichtbaar,
+   ook wanneer het toetsenbord open staat — zie ook initExPickerKeyboardFix() in JS. */
+.ex-pick-modal .modal{height:100dvh;max-height:100dvh;border-radius:0;padding:0;overflow:hidden;display:flex;flex-direction:column}
+.ex-pick-sticky-top{flex-shrink:0;padding:16px 18px 0;background:var(--card)}
+.ex-pick-sticky-bottom{flex-shrink:0;padding:12px 18px calc(14px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--g2)}
 .ex-pick-search{width:100%;border:1px solid var(--g2);border-radius:10px;padding:10px 12px;font-family:var(--f);font-size:15px;background:var(--g1);margin-bottom:8px}
-.ex-pick-filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;max-height:74px;overflow-y:auto}
+.ex-pick-filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;max-height:98px;overflow-y:auto}
+.ex-pick-quickfilters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 .filter-chip{padding:4px 11px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:.2px;text-transform:uppercase;border:1px solid var(--g2);background:var(--g1);color:var(--g4);cursor:pointer;white-space:nowrap}
 .filter-chip.active{background:var(--accent);border-color:var(--accent2);color:#00504f}
-.ex-pick-list{overflow-y:auto;flex:1;border-top:1px solid var(--g2)}
-.ex-pick-item{padding:12px 4px;border-bottom:1px solid var(--g2);cursor:pointer;display:flex;flex-direction:column;gap:3px}
+.ex-pick-list{overflow-y:auto;flex:1;min-height:0;border-top:1px solid var(--g2);padding:0 18px}
+.ex-pick-item{padding:12px 4px;border-bottom:1px solid var(--g2);display:flex;align-items:center;gap:6px}
+.ex-pick-item-content{flex:1;cursor:pointer}
 .ex-pick-item:active{background:var(--g1)}
 .ex-pick-item-name{font-size:15px;font-weight:600;color:var(--dark)}
 .ex-pick-item-meta{font-size:11px;color:var(--g4);text-transform:uppercase;letter-spacing:.3px}
@@ -547,7 +554,18 @@ canvas{width:100%;height:100%}
 <div class="scr" id="s-stats">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Progressie</div><div class="hdr-sub">1RM & Peakdoel 15 aug 2026</div></div><button class="ibtn" onclick="refreshStats()">↻</button></div></div>
   <div class="scroll" style="padding-top:8px">
-    <div class="card"><div class="card-hd"><div class="card-title">Geschatte 1RM</div><div class="card-sub">Epley formule · live</div></div><div class="card-body" id="stats-1rm-list"></div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">Geschatte 1RM</div><div class="card-sub">Epley formule · live</div></div>
+      <div class="card-body">
+        <div class="ex-pick-filters" id="prog-filters" style="margin-bottom:6px"></div>
+        <select class="inp" id="prog-sort" style="width:auto;padding:4px 8px;font-size:12px;margin-bottom:10px" onchange="setProgSort(this.value)">
+          <option value="az">Sorteer: A-Z</option>
+          <option value="recent">Sorteer: Recent</option>
+          <option value="favoriet">Sorteer: Favorieten</option>
+          <option value="progressie">Sorteer: Hoogste progressie</option>
+        </select>
+        <div id="stats-1rm-list"></div>
+      </div>
+    </div>
     <div class="card"><div class="card-hd"><div class="card-title">Krachtverhoudingen</div><div class="card-sub">Verwacht t.o.v. backsquat · standaardratio of eigen data</div></div><div class="card-body" id="stats-ratio-list"></div></div>
     <div class="card">
       <div class="card-hd"><div class="card-title">PR per herhaling</div><div class="card-sub">Beste gewicht per repbereik (1/3/5/10)</div></div>
@@ -564,7 +582,7 @@ canvas{width:100%;height:100%}
     <div class="card">
       <div class="card-hd">
         <div><div class="card-title">Spierherstel</div><div class="card-sub">Herstel% · visueel</div></div>
-        <button class="ibtn" onclick="toggleMuscleRecoveryHeatmapView()" style="width:auto;height:auto;padding:6px 12px;border-radius:14px;font-size:11px;font-weight:700;font-family:var(--f)" id="recovery-heatmap-toggle-btn">Achterkant</button>
+        <button class="ibtn" onclick="toggleMuscleRecoveryHeatmapView()" style="width:auto;height:auto;padding:6px 12px;border-radius:14px;font-size:11px;font-weight:700;font-family:var(--f)" id="recovery-heatmap-toggle-btn">Voorkant</button>
       </div>
       <div class="card-body" style="display:flex;justify-content:center;padding:10px 14px 14px">
         <div id="recovery-heatmap-container" style="width:220px;max-width:100%"></div>
@@ -573,7 +591,7 @@ canvas{width:100%;height:100%}
     <div class="card">
       <div class="card-hd">
         <div><div class="card-title">Spierbelasting</div><div class="card-sub">Afgelopen 7 dagen · visueel</div></div>
-        <button class="ibtn" onclick="toggleMuscleHeatmapView()" style="width:auto;height:auto;padding:6px 12px;border-radius:14px;font-size:11px;font-weight:700;font-family:var(--f)" id="muscle-heatmap-toggle-btn">Achterkant</button>
+        <button class="ibtn" onclick="toggleMuscleHeatmapView()" style="width:auto;height:auto;padding:6px 12px;border-radius:14px;font-size:11px;font-weight:700;font-family:var(--f)" id="muscle-heatmap-toggle-btn">Voorkant</button>
       </div>
       <div class="card-body" style="display:flex;justify-content:center;padding:10px 14px 14px">
         <div id="muscle-heatmap-container" style="width:220px;max-width:100%"></div>
@@ -689,6 +707,27 @@ canvas{width:100%;height:100%}
   </div>
   <div class="scroll" style="padding-top:8px" id="programma-list">
     <div style="text-align:center;color:var(--g4);font-size:13px;padding:30px 0">Nog geen programma. Tik op ＋ om er een te genereren.</div>
+  </div>
+  <nav class="bnav">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni active" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+  </nav>
+</div>
+
+<!-- ═══ PROGRAMMA — TRAININGDETAIL ═══ -->
+<div class="scr" id="s-programma-detail">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title" id="pbd-title">Training</div><div class="hdr-sub" id="pbd-sub"></div></div>
+      <button class="ibtn" onclick="go('s-programma')">✕</button>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px">
+    <div id="pbd-ex-list"></div>
+    <button class="btn btn-o" onclick="addBlockExercise()" style="margin-top:4px">+ Oefening toevoegen</button>
   </div>
   <nav class="bnav">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
@@ -914,15 +953,18 @@ canvas{width:100%;height:100%}
   </div>
 </div>
 
-<!-- ═══ OEFENING PICKER (zoekbaar, filter op sport/spiergroep) ═══ -->
+<!-- ═══ OEFENING PICKER (zoekbaar, filter op sport/type/spiergroep, favorieten, recent) ═══ -->
 <div class="modal-bg ex-pick-modal" id="m-ex-picker" onclick="bgClose(event,'m-ex-picker')">
   <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">Oefening kiezen</div>
-    <input type="text" class="ex-pick-search" id="ex-pick-search" placeholder="Zoek op naam…" oninput="renderExPickerList()">
-    <div class="ex-pick-filters" id="ex-pick-filters"></div>
+    <div class="ex-pick-sticky-top">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Oefening kiezen</div>
+      <input type="text" class="ex-pick-search" id="ex-pick-search" placeholder="Zoek op naam…" oninput="renderExPickerList()">
+      <div class="ex-pick-quickfilters" id="ex-pick-quickfilters"></div>
+      <div class="ex-pick-filters" id="ex-pick-filters"></div>
+    </div>
     <div class="ex-pick-list" id="ex-pick-list"></div>
-    <div style="display:flex;gap:8px;margin-top:14px">
+    <div class="ex-pick-sticky-bottom" style="display:flex;gap:8px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-ex-picker')">Annuleer</button>
       <button class="btn btn-r" style="flex:2" onclick="selectExPickerNew()">+ Eigen oefening…</button>
     </div>
@@ -1257,6 +1299,24 @@ canvas{width:100%;height:100%}
   </div>
 </div>
 
+<!-- ═══ PROGRAMMA — OEFENING IN BLOK BEWERKEN ═══ -->
+<div class="modal-bg" id="m-block-ex-edit" onclick="bgClose(event,'m-block-ex-edit')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="bex-title">Oefening</div>
+    <div class="irow"><label class="ilbl">Sets</label><input class="inp" type="number" id="bex-sets" min="1" step="1" placeholder="bijv. 4"></div>
+    <div class="irow"><label class="ilbl">Reps</label><input class="inp" type="text" id="bex-reps" placeholder="bijv. 3-5"></div>
+    <div class="irow"><label class="ilbl">RPE</label><input class="inp" type="text" id="bex-rpe" placeholder="bijv. 8"></div>
+    <div class="irow"><label class="ilbl">Percentage 1RM</label><select class="inp" id="bex-pct"></select></div>
+    <div class="irow"><label class="ilbl">Notitie</label><textarea class="inp" id="bex-notes" rows="2" placeholder="optioneel"></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-block-ex-edit')">Annuleer</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveBlockExercise()">Opslaan</button>
+    </div>
+    <button id="bex-del-btn" style="width:100%;margin-top:8px;padding:10px;color:var(--red);background:none;border:1px solid var(--g2);border-radius:10px;font-family:var(--f);font-weight:700;cursor:pointer" onclick="deleteBlockExercise()">Verwijderen</button>
+  </div>
+</div>
+
 <div class="modal-bg" id="m-add-trainex" onclick="bgClose(event,'m-add-trainex')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -1291,7 +1351,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.0.3';
+const APP_VER = 'v3.0.5';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -1312,129 +1372,137 @@ function peakGoalFor(exId){
 
 // Cardio type definities — RPE overal aanwezig (nodig voor spierherstel-weging,
 // zelfde rpeMultiplier() als kracht). Nieuwe apparaten toevoegen = alleen hier
-// een entry toevoegen; logging/opslag/spierherstel pakken dit automatisch op
-// via CARDIO_TYPES-dispatch (buildCardioBody/logCardio/cardioDataToRow).
+// een entry toevoegen; logging/opslag/spierherstel/split-berekening pakken dit
+// automatisch op via CARDIO_TYPES-dispatch (buildCardioBody/logCardio/cardioDataToRow/
+// calcCardioSplit) — geen enkele van die functies bevat nog per-type if/else-logica.
+//
+// rowMap: veld → sessions-kolom. {col, parse:'int'|'float'|'string', transform?, template?}
+//   col:'extraNote' verzamelt (met template-fn) losse notities in één samengevoegde tekst.
+// calc: hoe de split/pace-berekening voor dit type werkt (null = geen berekening).
+//   type:'pace'  → afstand/tijd, resultaat in min:sec per `basis` eenheden (bv. 1 km, 100 m)
+//   type:'split' → tijd/afstand × `basis` (bv. elke 500m of 250m), met defaultDist als fallback
 const CARDIO_TYPES = {
   rowing: {
     naam:'Roeien', unit:'m', splitUnit:'/500m',
     fields:['dist','time','split','watt','stroke','drag','rpe'],
     labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /500m',watt:'Watt',stroke:'Slag/min',drag:'Drag factor',rpe:'RPE'},
     splits:true, splitDist:250, splitTotal:1000,
-    machines:'rowers'
+    machines:'rowers',
+    rowMap:{dist:{col:'distance',parse:'int'},time:{col:'time_str',parse:'string'},watt:{col:'watt',parse:'float'},stroke:{col:'stroke_rate',parse:'int'},split:{col:'extraNote',template:(v,d)=>(d.machine?d.machine+' ':'')+'split:'+v},rpe:{col:'rpe',parse:'float'}},
+    calc:{type:'split',distField:'dist',basis:500,defaultDist:1000}
   },
   bikeerg: {
     naam:'Bike Erg', unit:'m', splitUnit:'/500m',
     fields:['dist','time','split','watt','rpm','resistance','rpe'],
     labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /500m',watt:'Watt',rpm:'RPM',resistance:'Weerstand',rpe:'RPE'},
     splits:true, splitDist:250, splitTotal:1000,
-    machines:'bikeerg_machines'
+    machines:'bikeerg_machines',
+    rowMap:{dist:{col:'distance',parse:'int'},time:{col:'time_str',parse:'string'},watt:{col:'watt',parse:'float'},rpm:{col:'stroke_rate',parse:'int'},split:{col:'extraNote',template:(v,d)=>(d.machine?d.machine+' ':'')+'split:'+v},rpe:{col:'rpe',parse:'float'}},
+    calc:{type:'split',distField:'dist',basis:500,defaultDist:1000}
   },
   skierg: {
     naam:'Ski Erg', unit:'m', splitUnit:'/500m',
     fields:['dist','time','split','watt','stroke','rpe'],
     labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /500m',watt:'Watt',stroke:'Slag/min',rpe:'RPE'},
     splits:true, splitDist:250, splitTotal:1000,
-    machines:'skierg_machines'
+    machines:'skierg_machines',
+    rowMap:{dist:{col:'distance',parse:'int'},time:{col:'time_str',parse:'string'},watt:{col:'watt',parse:'float'},stroke:{col:'stroke_rate',parse:'int'},split:{col:'extraNote',template:(v,d)=>(d.machine?d.machine+' ':'')+'split:'+v},rpe:{col:'rpe',parse:'float'}},
+    calc:{type:'split',distField:'dist',basis:500,defaultDist:1000}
   },
   assaultbike: {
     naam:'Assault Bike', unit:'cal', splitUnit:'/min',
     fields:['cals','time','watt','rpm','rpe'],
     labels:{cals:'Calorieën',time:'Totaal tijd',watt:'Watt gem.',rpm:'RPM gem.',rpe:'RPE'},
     splits:false,
-    machines:'assault_machines'
+    machines:'assault_machines',
+    rowMap:{cals:{col:'calories',parse:'float'},time:{col:'time_str',parse:'string'},watt:{col:'watt',parse:'float'},rpm:{col:'stroke_rate',parse:'int'},rpe:{col:'rpe',parse:'float'}},
+    calc:null
   },
   running: {
     naam:'Hardlopen', unit:'km', splitUnit:'/km',
     fields:['dist_km','time','pace','hr','rpe'],
     labels:{dist_km:'Afstand (km)',time:'Totaal tijd',pace:'Pace /km',hr:'Hartslag gem.',rpe:'RPE'},
     splits:true, splitDist:1, splitTotal:5,
-    machines:null
+    machines:null,
+    rowMap:{dist_km:{col:'distance',parse:'float',transform:v=>Math.round(v*1000)},time:{col:'time_str',parse:'string'},hr:{col:'hr_avg',parse:'int'},rpe:{col:'rpe',parse:'float'}},
+    calc:{type:'pace',distField:'dist_km',basis:1}
   },
   swimming: {
     naam:'Zwemmen', unit:'m', splitUnit:'/100m',
     fields:['dist','time','pace','stroke','rpe'],
     labels:{dist:'Afstand (m)',time:'Totaal tijd',pace:'Pace /100m',stroke:'Slagtype',rpe:'RPE'},
     splits:true, splitDist:100, splitTotal:400,
-    machines:null
+    machines:null,
+    rowMap:{dist:{col:'distance',parse:'int'},time:{col:'time_str',parse:'string'},stroke:{col:'stroke_type',parse:'string'},rpe:{col:'rpe',parse:'float'}},
+    calc:{type:'pace',distField:'dist',basis:100},
+    derivePaceSec:true
   },
   stairmaster: {
     naam:'Stairmaster', unit:'min', splitUnit:null,
     fields:['time','cals','floors','rpe'],
     labels:{time:'Totaal tijd',cals:'Calorieën',floors:'Floors',rpe:'RPE'},
     splits:false,
-    machines:null
+    machines:null,
+    rowMap:{time:{col:'time_str',parse:'string'},cals:{col:'calories',parse:'float'},floors:{col:'extraNote',template:v=>v+' floors'},rpe:{col:'rpe',parse:'float'}},
+    calc:null
   },
   cycling: {
     naam:'Wielrennen', unit:'km', splitUnit:'/km',
     fields:['dist_km','time','pace','watt','hr','rpe'],
     labels:{dist_km:'Afstand (km)',time:'Totaal tijd',pace:'Tempo /km',watt:'Watt gem.',hr:'Hartslag gem.',rpe:'RPE'},
     splits:true, splitDist:1, splitTotal:5,
-    machines:null
+    machines:null,
+    rowMap:{dist_km:{col:'distance',parse:'float',transform:v=>Math.round(v*1000)},time:{col:'time_str',parse:'string'},watt:{col:'watt',parse:'float'},hr:{col:'hr_avg',parse:'int'},rpe:{col:'rpe',parse:'float'}},
+    calc:{type:'pace',distField:'dist_km',basis:1}
   },
   crosstrainer: {
     naam:'Crosstrainer', unit:'min', splitUnit:null,
     fields:['time','cals','resistance','rpm','hr','rpe'],
     labels:{time:'Totaal tijd',cals:'Calorieën',resistance:'Weerstand',rpm:'RPM',hr:'Hartslag gem.',rpe:'RPE'},
     splits:false,
-    machines:null
+    machines:null,
+    rowMap:{time:{col:'time_str',parse:'string'},cals:{col:'calories',parse:'float'},resistance:{col:'extraNote',template:v=>'weerstand '+v},rpm:{col:'stroke_rate',parse:'int'},hr:{col:'hr_avg',parse:'int'},rpe:{col:'rpe',parse:'float'}},
+    calc:null
   },
   assaultrunner: {
     naam:'Assault Runner', unit:'m', splitUnit:'/250m',
     fields:['dist','time','split','cals','hr','rpe'],
     labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /250m',cals:'Calorieën',hr:'Hartslag gem.',rpe:'RPE'},
     splits:true, splitDist:250, splitTotal:1000,
-    machines:null
+    machines:null,
+    rowMap:{dist:{col:'distance',parse:'int'},time:{col:'time_str',parse:'string'},cals:{col:'calories',parse:'float'},hr:{col:'hr_avg',parse:'int'},split:{col:'extraNote',template:v=>'split:'+v},rpe:{col:'rpe',parse:'float'}},
+    calc:{type:'split',distField:'dist',basis:250,defaultDist:1000}
   }
 };
 
-// Eén centrale, data-driven mapper van cardio-invoer (per CARDIO_TYPES-veldenset)
-// naar een 'sessions'-rij. Gebruikt door zowel saveLosOefening() als finishSession(),
-// zodat een nieuw cardiotype hier één keer wordt gedefinieerd en overal werkt —
-// geen aparte per-flow hardcoding meer per apparaat.
+// Eén centrale, data-driven mapper van cardio-invoer naar een 'sessions'-rij.
+// Leest uitsluitend cfg.rowMap uit — een nieuw cardiotype toevoegen aan CARDIO_TYPES
+// werkt hier automatisch mee, zonder deze functie aan te passen (geen switch/case meer).
 function cardioDataToRow(cardioType, d){
+  const cfg=CARDIO_TYPES[cardioType]||CARDIO_TYPES.rowing;
   const row={};
-  if(cardioType==='running'||cardioType==='cycling'){
-    const km=parseFloat(d.dist_km)||null;
-    row.distance=km?Math.round(km*1000):null;
-    row.time_str=d.time||null;
-    row.watt=parseFloat(d.watt)||null;
-    row.hr_avg=parseInt(d.hr)||null;
-  } else if(cardioType==='swimming'){
-    const dist=parseInt(d.dist)||null;
-    const sec=parseTimeToSec(d.time);
-    row.distance=dist;
-    row.time_str=d.time||null;
-    row.pace_sec=(sec&&dist)?Math.round((sec/dist)*100):null;
-    row.stroke_type=d.stroke||null;
-  } else if(cardioType==='stairmaster'){
-    row.time_str=d.time||null;
-    row.calories=parseFloat(d.cals)||null;
-    if(d.floors)row.extraNote=d.floors+' floors';
-  } else if(cardioType==='crosstrainer'){
-    row.time_str=d.time||null;
-    row.calories=parseFloat(d.cals)||null;
-    row.stroke_rate=parseInt(d.rpm)||null;
-    if(d.resistance)row.extraNote='weerstand '+d.resistance;
-  } else if(cardioType==='assaultbike'){
-    row.time_str=d.time||null;
-    row.calories=parseFloat(d.cals)||null;
-    row.watt=parseFloat(d.watt)||null;
-    row.stroke_rate=parseInt(d.rpm)||null;
-  } else if(cardioType==='assaultrunner'){
-    row.distance=parseInt(d.dist)||null;
-    row.time_str=d.time||null;
-    row.calories=parseFloat(d.cals)||null;
-    row.hr_avg=parseInt(d.hr)||null;
-    if(d.split)row.extraNote='split:'+d.split;
-  } else {
-    // rowing / bikeerg / skierg
-    row.distance=parseInt(d.dist)||null;
-    row.time_str=d.time||null;
-    row.watt=parseFloat(d.watt)||null;
-    row.stroke_rate=parseInt(d.stroke||d.rpm)||null;
-    if(d.split)row.extraNote=(d.machine?d.machine+' ':'')+'split:'+d.split;
+  const notes=[];
+  cfg.fields.forEach(f=>{
+    const spec=cfg.rowMap && cfg.rowMap[f];
+    if(!spec)return;
+    const raw=d[f];
+    if(raw===undefined||raw===null||raw==='')return;
+    if(spec.col==='extraNote'){
+      notes.push(spec.template?spec.template(raw,d):String(raw));
+      return;
+    }
+    let v = spec.parse==='int'?parseInt(raw):spec.parse==='float'?parseFloat(raw):raw;
+    if(spec.parse!=='string'&&isNaN(v))return;
+    if(spec.transform)v=spec.transform(v);
+    row[spec.col]=v;
+  });
+  if(notes.length)row.extraNote=notes.join(' | ');
+  // Zwemmen: pace_sec is een afgeleide kolom (geen los invoerveld), vandaar los van rowMap.
+  if(cfg.derivePaceSec&&row.distance&&row.time_str){
+    const sec=parseTimeToSec(row.time_str);
+    row.pace_sec=(sec&&row.distance)?Math.round((sec/row.distance)*100):null;
   }
-  row.rpe=parseFloat(d.rpe)||null;
+  row.rpe = row.rpe!==undefined?row.rpe:null;
   return row;
 }
 
@@ -1519,6 +1587,25 @@ const BARBELL_EXERCISES = new Set(['backsquat','bench','frontsquat','shoulderpre
 // STATE
 // ══════════════════════════════════════════════════════════
 let exercises=[];
+let favoriteExIds=new Set();
+let _favoritesLoaded=false;
+async function ensureFavoritesLoaded(){
+  if(_favoritesLoaded)return favoriteExIds;
+  const rows=await sbGet('exercise_favorites','');
+  favoriteExIds=new Set(rows.map(r=>r.exercise_id));
+  _favoritesLoaded=true;
+  return favoriteExIds;
+}
+function isExerciseFavorite(exId){return favoriteExIds.has(exId);}
+async function toggleFavorite(exId){
+  if(favoriteExIds.has(exId)){
+    await sbDel('exercise_favorites','exercise_id=eq.'+exId);
+    favoriteExIds.delete(exId);
+  }else{
+    await sbPost('exercise_favorites',{exercise_id:exId});
+    favoriteExIds.add(exId);
+  }
+}
 let repPRCache={};
 // Decimale slaapuren (bv. 6.87) naar leesbaar formaat (bv. "6u52m")
 function fmtSleep(h){
@@ -1530,6 +1617,8 @@ function fmtSleep(h){
 let equipmentTypes=[], _equipmentTypesLoading=null;
 let customTrainings=JSON.parse(localStorage.getItem('maurice_trainings')||'[]');
 const SPORT_LABELS={kracht:'Kracht/Powerlifting',crossfit:'CrossFit/Functioneel',hyrox:'HYROX',bodybuilding:'Bodybuilding',kettlebell:'Kettlebell',swimming:'Zwemmen',atletiek:'Atletiek',triathlon:'Triathlon',hardlopen:'Hardlopen',stairmaster:'Stairmaster'};
+const TYPE_LABELS={strength:'Kracht',wod:'WOD',kettlebell:'Kettlebell',carry:'Carry',cardio:'Cardio',rowing:'Roeien'};
+const PCT_1RM_OPTIONS=[60,70,80,90,100];
 let activeSport=localStorage.getItem('maurice_active_sport')||null;
 function getActiveSport(){return activeSport||atleet?.sport||'crossfit';}
 function setActiveSport(sport){activeSport=sport;localStorage.setItem('maurice_active_sport',sport);renderSportSwitcher();}
@@ -1797,22 +1886,115 @@ async function openLosOefening(){
 }
 // Zoekbare/filterbare oefening-picker. Toont standaard ALLE oefeningen (niet gefilterd
 // op actieve sport) — filters op sport/spiergroep zijn optioneel en door de sporter zelf te zetten.
-async function openExPicker(){
+// ══════════════════════════════════════════════════════════
+// GEDEELDE WIDGETS — voorkomen dubbele logica tussen Exercise Library,
+// Progressie en Programma-detail
+// ══════════════════════════════════════════════════════════
+
+// Generieke filter-chip renderer. groups = [{key:'sport', label:'Alle sporten', options:[{val,label}]}, ...]
+// state = {sport:'all', type:'all', muscle:'all'}. onChangeFn(key,val) wordt aangeroepen bij klik.
+function renderFilterChips(containerId, groups, state, onChangeFn){
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  let h='';
+  groups.forEach(g=>{
+    h+=`<div class="fc-group" data-fgroup="${g.key}" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">`;
+    h+=`<span class="filter-chip${state[g.key]==='all'?' active':''}" data-ftype="${g.key}" data-fval="all">${g.label}</span>`;
+    g.options.forEach(o=>{
+      h+=`<span class="filter-chip${state[g.key]===o.val?' active':''}" data-ftype="${g.key}" data-fval="${o.val}">${o.label}</span>`;
+    });
+    h+='</div>';
+  });
+  el.innerHTML=h;
+  el.querySelectorAll('.filter-chip').forEach(chip=>{
+    chip.onclick=()=>onChangeFn(chip.dataset.ftype, chip.dataset.fval);
+  });
+}
+
+// Generieke oefeningsregel: naam · sets×reps · RPE · % · notitie. Gebruikt door Programma-detail.
+function renderExerciseRow(ex, meta={}){
+  const parts=[];
+  if(meta.sets && meta.reps) parts.push(`${meta.sets}×${meta.reps}`);
+  if(meta.rpe_target) parts.push('RPE '+meta.rpe_target);
+  if(meta.pct_1rm) parts.push(meta.pct_1rm+'%');
+  return `<div class="lrow">
+    <div class="lval">${ex?ex.name:'(onbekende oefening)'}</div>
+    <div class="lnote">${parts.join(' · ')||'—'}${meta.notes?'<br><span style="font-style:italic">'+meta.notes+'</span>':''}</div>
+  </div>`;
+}
+
+// Gedeelde sorteerlogica. mode: 'az' | 'recent' | 'favoriet' | 'progressie'
+// context per exercise (optioneel): {lastDate, pct}
+function sortExerciseList(list, mode, context={}){
+  const arr=list.slice();
+  if(mode==='az'){
+    arr.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  }else if(mode==='recent'){
+    arr.sort((a,b)=>{
+      const da=(context[a.id]&&context[a.id].lastDate)||'';
+      const db=(context[b.id]&&context[b.id].lastDate)||'';
+      return db.localeCompare(da);
+    });
+  }else if(mode==='favoriet'){
+    arr.sort((a,b)=>{
+      const fa=isExerciseFavorite(a.id)?1:0, fb=isExerciseFavorite(b.id)?1:0;
+      if(fb!==fa)return fb-fa;
+      return (a.name||'').localeCompare(b.name||'');
+    });
+  }else if(mode==='progressie'){
+    arr.sort((a,b)=>{
+      const pa=(context[a.id]&&context[a.id].pct)||-1;
+      const pb=(context[b.id]&&context[b.id].pct)||-1;
+      return pb-pa;
+    });
+  }
+  return arr;
+}
+
+// exPickerCallback: indien gezet door de aanroeper (bv. Programma-detail), wordt deze
+// aangeroepen i.p.v. het standaard los-oefening-gedrag. Zo blijft de picker herbruikbaar
+// zonder de logica te dupliceren.
+let exPickerCallback=null;
+let exPickerFilterState={sport:'all',type:'all',muscle:'all'};
+let exPickerQuickFilter='all'; // 'all' | 'favoriet' | 'recent'
+let exPickerRecentIds=[];
+
+async function getRecentExerciseIds(){
+  const rows=await sbGet('sessions','&exercise_id=not.is.null&order=date.desc,created_at.desc&limit=60');
+  const seen=[];
+  rows.forEach(r=>{ if(r.exercise_id && !seen.includes(r.exercise_id)) seen.push(r.exercise_id); });
+  return seen.slice(0,15);
+}
+
+async function openExPicker(onSelect=null){
   await ensureExercisesLoaded();
-  exPickerSportFilter='all'; exPickerMuscleFilter='all';
+  await ensureFavoritesLoaded();
+  exPickerCallback=onSelect;
+  exPickerFilterState={sport:'all',type:'all',muscle:'all'};
+  exPickerQuickFilter='all';
+  exPickerRecentIds=await getRecentExerciseIds();
   document.getElementById('ex-pick-search').value='';
-  const sports=new Set(); const muscles=new Set();
-  exercises.forEach(e=>{ (e.sports||[]).forEach(s=>sports.add(s)); (e.muscle_primary||[]).forEach(m=>muscles.add(m)); });
-  let fh='<span class="filter-chip active" data-ftype="sport" data-fval="all" onclick="setExPickerFilter(\'sport\',\'all\')">Alle sporten</span>';
-  [...sports].sort().forEach(s=>{fh+=`<span class="filter-chip" data-ftype="sport" data-fval="${s}" onclick="setExPickerFilter('sport','${s}')">${SPORT_LABELS[s]||s}</span>`;});
-  fh+='<span class="filter-chip active" data-ftype="muscle" data-fval="all" onclick="setExPickerFilter(\'muscle\',\'all\')">Alle spiergroepen</span>';
-  [...muscles].sort().forEach(m=>{fh+=`<span class="filter-chip" data-ftype="muscle" data-fval="${m}" onclick="setExPickerFilter('muscle','${m}')">${m}</span>`;});
-  document.getElementById('ex-pick-filters').innerHTML=fh;
+  const sports=new Set(), types=new Set(), muscles=new Set();
+  exercises.forEach(e=>{ (e.sports||[]).forEach(s=>sports.add(s)); if(e.type)types.add(e.type); (e.muscle_primary||[]).forEach(m=>muscles.add(m)); });
+  renderFilterChips('ex-pick-filters',[
+    {key:'sport',label:'Alle sporten',options:[...sports].sort().map(s=>({val:s,label:SPORT_LABELS[s]||s}))},
+    {key:'type',label:'Alle types',options:[...types].sort().map(t=>({val:t,label:TYPE_LABELS[t]||t}))},
+    {key:'muscle',label:'Alle spiergroepen',options:[...muscles].sort().map(m=>({val:m,label:m}))}
+  ], exPickerFilterState, setExPickerFilter);
+  const qf=document.getElementById('ex-pick-quickfilters');
+  if(qf){
+    qf.innerHTML=`
+      <span class="filter-chip${exPickerQuickFilter==='all'?' active':''}" data-qf="all">Alles</span>
+      <span class="filter-chip${exPickerQuickFilter==='favoriet'?' active':''}" data-qf="favoriet">★ Favorieten</span>
+      <span class="filter-chip${exPickerQuickFilter==='recent'?' active':''}" data-qf="recent">🕐 Recent gebruikt</span>`;
+    qf.querySelectorAll('.filter-chip').forEach(c=>{c.onclick=()=>{exPickerQuickFilter=c.dataset.qf;qf.querySelectorAll('.filter-chip').forEach(x=>x.classList.toggle('active',x===c));renderExPickerList();};});
+  }
   renderExPickerList();
   openModal('m-ex-picker');
+  initExPickerKeyboardFix();
 }
 function setExPickerFilter(type,val){
-  if(type==='sport')exPickerSportFilter=val; else exPickerMuscleFilter=val;
+  exPickerFilterState[type]=val;
   document.querySelectorAll(`#ex-pick-filters .filter-chip[data-ftype="${type}"]`).forEach(el=>{
     el.classList.toggle('active',el.dataset.fval===val);
   });
@@ -1821,17 +2003,58 @@ function setExPickerFilter(type,val){
 function renderExPickerList(){
   const q=(document.getElementById('ex-pick-search').value||'').trim().toLowerCase();
   let list=exercises.slice();
-  if(exPickerSportFilter!=='all')list=list.filter(e=>(e.sports||[]).includes(exPickerSportFilter));
-  if(exPickerMuscleFilter!=='all')list=list.filter(e=>(e.muscle_primary||[]).includes(exPickerMuscleFilter));
+  if(exPickerFilterState.sport!=='all')list=list.filter(e=>(e.sports||[]).includes(exPickerFilterState.sport));
+  if(exPickerFilterState.type!=='all')list=list.filter(e=>e.type===exPickerFilterState.type);
+  if(exPickerFilterState.muscle!=='all')list=list.filter(e=>(e.muscle_primary||[]).includes(exPickerFilterState.muscle));
+  if(exPickerQuickFilter==='favoriet')list=list.filter(e=>isExerciseFavorite(e.id));
+  if(exPickerQuickFilter==='recent')list=list.filter(e=>exPickerRecentIds.includes(e.id));
   if(q)list=list.filter(e=>(e.name||'').toLowerCase().includes(q));
-  list.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  if(exPickerQuickFilter==='recent'){
+    list.sort((a,b)=>exPickerRecentIds.indexOf(a.id)-exPickerRecentIds.indexOf(b.id));
+  }else{
+    list.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  }
   const el=document.getElementById('ex-pick-list');
   if(!list.length){el.innerHTML='<div class="ex-pick-empty">Geen oefeningen gevonden</div>';return;}
-  el.innerHTML=list.map(e=>`<div class="ex-pick-item" onclick="selectExPickerItem('${e.id}')"><div class="ex-pick-item-name">${e.name}</div><div class="ex-pick-item-meta">${e.type||'strength'}${(e.muscle_primary&&e.muscle_primary.length)?' · '+e.muscle_primary.join(', '):''}</div></div>`).join('');
+  el.innerHTML=list.map(e=>`<div class="ex-pick-item">
+    <div class="ex-pick-item-content" onclick="selectExPickerItem('${e.id}')">
+      <div class="ex-pick-item-name">${e.name}</div>
+      <div class="ex-pick-item-meta">${TYPE_LABELS[e.type]||e.type||'strength'}${(e.muscle_primary&&e.muscle_primary.length)?' · '+e.muscle_primary.join(', '):''}</div>
+    </div>
+    <button onclick="event.stopPropagation();toggleFavorite('${e.id}').then(renderExPickerList)" style="background:none;border:none;font-size:18px;cursor:pointer;color:${isExerciseFavorite(e.id)?'var(--accent2)':'var(--g3)'}">${isExerciseFavorite(e.id)?'★':'☆'}</button>
+  </div>`).join('');
+}
+// Zorgt dat het toetsenbord de filters/lijst nooit afdekt: de modal-hoogte volgt
+// window.visualViewport (die krimpt zodra het klavier opent), i.p.v. vaste 100dvh.
+// Sticky top/bottom blijven zichtbaar, de lijst (flex:1) krimpt mee.
+let _exPickerVVHandler=null;
+function initExPickerKeyboardFix(){
+  if(!window.visualViewport)return;
+  const modalEl=document.querySelector('#m-ex-picker .modal');
+  const modalBg=document.getElementById('m-ex-picker');
+  if(_exPickerVVHandler)window.visualViewport.removeEventListener('resize',_exPickerVVHandler);
+  _exPickerVVHandler=()=>{
+    if(!modalBg.classList.contains('open')){
+      window.visualViewport.removeEventListener('resize',_exPickerVVHandler);
+      modalEl.style.height='';modalEl.style.maxHeight='';
+      return;
+    }
+    const vh=window.visualViewport.height;
+    modalEl.style.height=vh+'px';
+    modalEl.style.maxHeight=vh+'px';
+  };
+  window.visualViewport.addEventListener('resize',_exPickerVVHandler);
+  _exPickerVVHandler();
 }
 function selectExPickerItem(id){
   const ex=exercises.find(e=>e.id===id);
   if(!ex)return;
+  if(exPickerCallback){
+    closeModal('m-ex-picker');
+    exPickerCallback(ex);
+    exPickerCallback=null;
+    return;
+  }
   losSelectedExId=id;
   document.getElementById('los-ex-trigger-lbl').textContent=ex.name;
   document.getElementById('los-ex-trigger-lbl').className='';
@@ -1840,6 +2063,7 @@ function selectExPickerItem(id){
   renderLosBody(ex);
 }
 function selectExPickerNew(){
+  if(exPickerCallback){exPickerCallback=null;closeModal('m-ex-picker');toast('Nieuwe oefening aanmaken kan alleen via Training → Oefening');return;}
   losSelectedExId='__new__';
   document.getElementById('los-ex-trigger-lbl').textContent='+ Eigen oefening…';
   document.getElementById('los-ex-trigger-lbl').className='';
@@ -1878,7 +2102,7 @@ async function renderLosBody(existingEx=null){
   let panels='';
   if(ex.id!=='__new__'){
     await ensureEquipmentTypesLoaded();
-    if(ex.type==='strength'||!ex.type) await loadRepPRs(ex.id);
+    if(ex.type==='strength'||!ex.type){await loadRepPRs(ex.id);await loadEstOneRM(ex.id);}
     const eqList=await loadEquipment(ex.id);
     panels=`${ex.tip?`<div style="background:#fffbea;border-left:3px solid var(--y);padding:8px 12px;font-size:12px;color:#666;margin:8px 0;border-radius:0 8px 8px 0">💡 ${ex.tip}</div>`:''}
       ${buildVideoMuscle(ex)}
@@ -2027,6 +2251,10 @@ async function opslaanProgramma(){
   closeModal('m-programma-gen');toast('Programma opgeslagen');
   renderProgrammaList();
 }
+// Cache van program_block_exercises per blok — voorkomt herhaald ophalen bij elke uitklap-toggle.
+// Wordt geïnvalideerd (delete) zodra oefeningen in de detailpagina worden aangepast.
+let programBlockExCache={};
+
 async function renderProgrammaList(){
   const el=document.getElementById('programma-list');
   if(!el)return;
@@ -2038,10 +2266,113 @@ async function renderProgrammaList(){
     h+=`<div class="card"><div class="card-body" style="padding:14px">
       <div style="font-size:15px;font-weight:700">${p.naam}</div>
       <div style="font-size:12px;color:var(--g4);margin-bottom:8px">${p.doel||''} · ${blocks.length} trainingen · gestart ${p.start_date}</div>
-      ${blocks.map(b=>`<div class="lrow"><div class="ldate" style="width:90px">Wk ${b.week_nr}</div><div class="lval">${b.fase_naam}</div><div class="lnote">Training ${b.training_ref}</div></div>`).join('')}
+      ${blocks.map(b=>`
+        <div class="lrow" style="align-items:center">
+          <div class="ldate" style="width:60px">Wk ${b.week_nr}</div>
+          <div class="lval" style="cursor:pointer" onclick="openProgramBlockDetail('${b.id}')">${b.fase_naam}</div>
+          <div class="lnote">Training ${b.training_ref}</div>
+          <button onclick="toggleBlockExpand('${b.id}')" id="blk-chev-${b.id}" style="background:none;border:none;font-size:13px;cursor:pointer;color:var(--g4);padding:2px 4px 2px 8px">▸</button>
+        </div>
+        <div id="blk-exp-${b.id}" style="display:none;padding:0 0 10px 68px"></div>
+      `).join('')}
     </div></div>`;
   }
   el.innerHTML=h;
+}
+
+// Uitklappen: toont oefeningen/sets/reps/RPE/percentage/notities compact onder de trainingsrij,
+// via dezelfde renderExerciseRow-widget als de detailpagina — geen dubbele HTML-logica.
+async function toggleBlockExpand(blockId){
+  const box=document.getElementById('blk-exp-'+blockId);
+  const chev=document.getElementById('blk-chev-'+blockId);
+  if(!box)return;
+  const isOpen=box.style.display==='block';
+  if(isOpen){box.style.display='none';if(chev)chev.textContent='▸';return;}
+  if(chev)chev.textContent='▾';
+  box.style.display='block';
+  box.innerHTML='<div style="padding:6px 0;color:var(--g4);font-size:12px">Laden…</div>';
+  await ensureExercisesLoaded();
+  if(!programBlockExCache[blockId]){
+    programBlockExCache[blockId]=await sbGet('program_block_exercises','&program_block_id=eq.'+blockId+'&order=sort_order.asc');
+  }
+  const rows=programBlockExCache[blockId];
+  box.innerHTML=rows.length
+    ? rows.map(r=>renderExerciseRow(exercises.find(e=>e.id===r.exercise_id), r)).join('')
+    : '<div style="padding:6px 0;color:var(--g4);font-size:12px">Nog geen oefeningen — tik op de training voor de detailpagina.</div>';
+}
+
+// ── PROGRAMMA — TRAININGDETAIL ─────────────────────────────
+let curProgramBlockId=null;
+async function openProgramBlockDetail(blockId){
+  await ensureExercisesLoaded();
+  curProgramBlockId=blockId;
+  const block=(await sbGet('program_blocks','&id=eq.'+blockId))[0];
+  if(!block){toast('Training niet gevonden');return;}
+  document.getElementById('pbd-title').textContent=block.fase_naam||'Training';
+  document.getElementById('pbd-sub').textContent=`Wk ${block.week_nr} · Training ${block.training_ref}`;
+  await renderProgramBlockDetail();
+  go('s-programma-detail');
+}
+async function renderProgramBlockDetail(){
+  const el=document.getElementById('pbd-ex-list');
+  if(!el||!curProgramBlockId)return;
+  const rows=await sbGet('program_block_exercises','&program_block_id=eq.'+curProgramBlockId+'&order=sort_order.asc');
+  programBlockExCache[curProgramBlockId]=rows;
+  if(!rows.length){el.innerHTML='<div style="text-align:center;color:var(--g4);font-size:13px;padding:20px 0">Nog geen oefeningen in deze training.</div>';return;}
+  el.innerHTML=rows.map(r=>{
+    const ex=exercises.find(e=>e.id===r.exercise_id);
+    return `<div onclick='openEditBlockExercise(${JSON.stringify(r)})' style="cursor:pointer">${renderExerciseRow(ex,r)}</div>`;
+  }).join('');
+}
+function pctOptionsHtml(selected){
+  let h='<option value="">Geen</option>';
+  PCT_1RM_OPTIONS.forEach(p=>{h+=`<option value="${p}"${String(selected)===String(p)?' selected':''}>${p}%</option>`;});
+  return h;
+}
+function addBlockExercise(){
+  if(!curProgramBlockId)return;
+  openExPicker(async(ex)=>{
+    const rows=await sbGet('program_block_exercises','&program_block_id=eq.'+curProgramBlockId);
+    const inserted=await sbPostReturning('program_block_exercises',{program_block_id:curProgramBlockId,exercise_id:ex.id,sort_order:rows.length});
+    delete programBlockExCache[curProgramBlockId];
+    await renderProgramBlockDetail();
+    if(inserted&&inserted[0])openEditBlockExercise(inserted[0]);
+  });
+}
+let curBlockExRow=null;
+function openEditBlockExercise(row){
+  curBlockExRow=row;
+  const ex=exercises.find(e=>e.id===row.exercise_id);
+  document.getElementById('bex-title').textContent=ex?ex.name:'Oefening';
+  document.getElementById('bex-sets').value=row.sets||'';
+  document.getElementById('bex-reps').value=row.reps||'';
+  document.getElementById('bex-rpe').value=row.rpe_target||'';
+  document.getElementById('bex-pct').innerHTML=pctOptionsHtml(row.pct_1rm);
+  document.getElementById('bex-notes').value=row.notes||'';
+  openModal('m-block-ex-edit');
+}
+async function saveBlockExercise(){
+  if(!curBlockExRow)return;
+  const patch={
+    sets:document.getElementById('bex-sets').value?parseInt(document.getElementById('bex-sets').value):null,
+    reps:document.getElementById('bex-reps').value||null,
+    rpe_target:document.getElementById('bex-rpe').value||null,
+    pct_1rm:document.getElementById('bex-pct').value?parseFloat(document.getElementById('bex-pct').value):null,
+    notes:document.getElementById('bex-notes').value||null
+  };
+  await sbPatch('program_block_exercises','id=eq.'+curBlockExRow.id,patch);
+  delete programBlockExCache[curProgramBlockId];
+  closeModal('m-block-ex-edit');
+  await renderProgramBlockDetail();
+  toast('Opgeslagen');
+}
+async function deleteBlockExercise(){
+  if(!curBlockExRow)return;
+  await sbDel('program_block_exercises','id=eq.'+curBlockExRow.id);
+  delete programBlockExCache[curProgramBlockId];
+  closeModal('m-block-ex-edit');
+  await renderProgramBlockDetail();
+  toast('Oefening verwijderd');
 }
 
 // ══════════════════════════════════════════════════════════
@@ -2107,7 +2438,7 @@ async function renderTrainScreen(t){
     // Load previous session data
     const prev=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc,created_at.desc&limit=1');
     const prevS=prev[0];
-    if(ex.type==='strength'||!ex.type) await loadRepPRs(ex.id);
+    if(ex.type==='strength'||!ex.type){await loadRepPRs(ex.id);await loadEstOneRM(ex.id);}
     const eqList=await loadEquipment(ex.id);
     let prevStr='';
     let prefillData=window._prefillMap?.[ex.id]||null;
@@ -2412,21 +2743,61 @@ function buildStrengthBody(exId,wuCount,workCount,prefill=null){
 }
 
 // ══════════════════════════════════════════════════════════
-// GEWICHT-OPTIES per set (v3.0.3)
+// GEWICHT-OPTIES per set (v3.0.3, uitgebreid v3.0.5)
 // Uitbreidbaar: nieuwe modi toevoegen aan WEIGHT_MODES volstaat —
 // getEffectiveKg() en de select-rendering lezen dit array uit.
-// Gereserveerd voor later: %1RM, backoff, topset, AMRAP.
 // ══════════════════════════════════════════════════════════
 const WEIGHT_MODES=[
   {v:'vast',l:'Vast kg',ph:'kg'},
   {v:'plus',l:'+kg vorige',ph:'+kg'},
-  {v:'pct',l:'% vorige',ph:'%'}
-  // Toekomstig: {v:'1rm',l:'% 1RM',ph:'%'}, {v:'backoff',l:'Backoff',ph:'-kg'}, {v:'topset',l:'Topset',ph:'kg'}, {v:'amrap',l:'AMRAP',ph:'kg'}
+  {v:'pct',l:'% vorige',ph:'%'},
+  {v:'1rm',l:'% 1RM',ph:'%'},
+  {v:'topset',l:'Topset',ph:'kg'},
+  {v:'backoff',l:'Backoff (% topset)',ph:'%'}
 ];
 function weightModePlaceholder(mode){return WEIGHT_MODES.find(m=>m.v===mode)?.ph||'kg';}
+// Geschatte 1RM (Epley), gecached per oefening zodat getEffectiveKg() synchroon kan blijven.
+// Wordt gevuld bij het openen van een oefening (zelfde call-site als loadRepPRs), valt terug
+// op de geregistreerde PR als er nog geen sessiedata gecached is.
+let estOneRMCache={};
+function estimatedOneRM(exId){
+  if(estOneRMCache[exId]!=null)return estOneRMCache[exId];
+  const ex=exercises.find(e=>e.id===exId);
+  return ex?.pr||null;
+}
+async function loadEstOneRM(exId){
+  const ss=await sbGet('sessions','&exercise_id=eq.'+exId+'&weight=not.is.null&reps=not.is.null&order=created_at.desc&limit=30');
+  let best=null;
+  ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=s.reps===1?s.weight:s.weight*(1+s.reps/30);if(!best||est>best)best=est;});
+  estOneRMCache[exId]=best?Math.round(best):null;
+  return estOneRMCache[exId];
+}
+// Zoekt de zwaarste effectieve set van dezelfde oefening in de huidige sessie (alle sets,
+// niet alleen eerdere), exclusief andere backoff-sets zelf om circulaire verwijzingen
+// tussen meerdere backoff-sets te voorkomen.
+function sessionTopSetKg(exId,excludeIdx){
+  let max=null,j=1;
+  while(true){
+    const el=document.getElementById('s-'+exId+'-'+j+'-kg');
+    if(!el)break;
+    if(j!==excludeIdx){
+      const m=document.getElementById('s-'+exId+'-'+j+'-wmode')?.value||'vast';
+      if(m!=='backoff'){
+        const k=getEffectiveKg(exId,j);
+        if(k!=null&&(max==null||k>max))max=k;
+      }
+    }
+    j++;
+  }
+  return max;
+}
 // Berekent het daadwerkelijke gewicht van een set, rekening houdend met de gekozen modus.
-// 'vast' = ingevulde waarde is het gewicht zelf. 'plus'/'pct' verwijzen naar de vorige set
-// in dezelfde oefening (rekent recursief terug tot een 'vast'-set of het begin van de reeks).
+// Dit is de ENIGE plek waar gewicht-modi worden omgerekend — alle schermen (Training A/B,
+// Workout, Losse oefening, Logboek editor) roepen deze functie aan, geen eigen berekeningen.
+// 'vast'/'topset' = ingevulde waarde is het gewicht zelf.
+// 'plus'/'pct' = t.o.v. de vorige set (recursief terug tot een vaste referentie).
+// '1rm' = percentage van de geschatte 1RM (Epley).
+// 'backoff' = percentage van de zwaarste set in dezelfde sessie/oefening.
 function getEffectiveKg(exId,i){
   if(i<1)return null;
   const raw=document.getElementById('s-'+exId+'-'+i+'-kg')?.value;
@@ -2434,7 +2805,15 @@ function getEffectiveKg(exId,i){
   if(raw===undefined||raw==='')return null;
   const val=parseFloat(raw);
   if(isNaN(val))return null;
-  if(mode==='vast')return val;
+  if(mode==='vast'||mode==='topset')return val;
+  if(mode==='1rm'){
+    const oneRM=estimatedOneRM(exId);
+    return oneRM?Math.round(oneRM*val/100*10)/10:val;
+  }
+  if(mode==='backoff'){
+    const top=sessionTopSetKg(exId,i);
+    return top!=null?Math.round(top*val/100*10)/10:val;
+  }
   const prevKg=getEffectiveKg(exId,i-1);
   if(prevKg==null)return val; // geen referentie beschikbaar: val zelf als absoluut gewicht gebruiken
   if(mode==='plus')return Math.round((prevKg+val)*10)/10;
@@ -2675,41 +3054,25 @@ function selMachine_fn(m, type, exId){
   logCardio(exId, type);
 }
 
+// Generieke pace/split-berekening o.b.v. cfg.calc — nieuw cardiotype toevoegen met een
+// calc-spec in CARDIO_TYPES werkt hier automatisch mee, geen per-type takken meer nodig.
 function calcCardioSplit(exId, cardioType){
   const cfg=CARDIO_TYPES[cardioType]||CARDIO_TYPES.rowing;
+  if(!cfg.calc)return;
   const timeStr=document.getElementById(exId+'-time')?.value||'';
-  if(!timeStr) return;
-  const p=timeStr.split(':');let sec=0;
-  if(p.length===2) sec=parseFloat(p[0])*60+parseFloat(p[1]);
-  else if(p.length===3) sec=parseFloat(p[0])*3600+parseFloat(p[1])*60+parseFloat(p[2]);
-  else sec=parseFloat(timeStr);
-  if(!sec) return;
-  
-  if(cardioType==='running'||cardioType==='cycling'){
-    const dist=parseFloat(document.getElementById(exId+'-dist_km')?.value)||0;
-    if(!dist) return;
-    const pace=sec/dist;
-    const pm=Math.floor(pace/60),ps=Math.round(pace%60);
-    const el=document.getElementById(exId+'-pace');
-    if(el){el.value=pm+':'+(ps<10?'0':'')+ps;}
-  } else if(cardioType==='swimming'){
-    const dist=parseFloat(document.getElementById(exId+'-dist')?.value)||0;
-    if(!dist) return;
-    const pace=(sec/dist)*100;
-    const pm=Math.floor(pace/60),ps=Math.round(pace%60);
-    const el=document.getElementById(exId+'-pace');
-    if(el){el.value=pm+':'+(ps<10?'0':'')+ps;}
-  } else if(cardioType==='stairmaster'||cardioType==='crosstrainer'||cardioType==='assaultbike'){
-    // geen split/pace-berekening — dit type heeft geen 'split'-veld
-  } else {
-    // rowing/bikeerg/skierg: split /500m. assaultrunner: split /250m.
-    const dist=parseFloat(document.getElementById(exId+'-dist')?.value)||1000;
-    const splitDist=cardioType==='assaultrunner'?250:500;
-    const ss=(sec/dist)*splitDist;
-    const sm=Math.floor(ss/60),sr=Math.round(ss%60);
-    const el=document.getElementById(exId+'-split');
-    if(el){el.value=sm+':'+(sr<10?'0':'')+sr;}
+  const sec=parseTimeToSec(timeStr);
+  if(!sec)return;
+  const c=cfg.calc;
+  let dist=parseFloat(document.getElementById(exId+'-'+c.distField)?.value)||0;
+  if(!dist){
+    if(c.type==='split'&&c.defaultDist)dist=c.defaultDist;
+    else return;
   }
+  const outField=c.type==='pace'?'pace':'split';
+  const factor=(sec/dist)*c.basis;
+  const m=Math.floor(factor/60), s=Math.round(factor%60);
+  const el=document.getElementById(exId+'-'+outField);
+  if(el)el.value=m+':'+(s<10?'0':'')+s;
 }
 
 function logCardio(exId, cardioType){
@@ -3281,25 +3644,59 @@ async function deleteSessionEntry(){
 // ══════════════════════════════════════════════════════════
 // STATS SCREEN
 // ══════════════════════════════════════════════════════════
-async function refreshStatsScreen(){
-  // 1RM
-  const strExs=exercises.filter(e=>e.type==='strength'||!e.type);
+// Progressie-lijst: state + gecachte data (fetch één keer, filteren/sorteren zonder herladen)
+let progExData={};
+let progFilterState={sport:'all',type:'all',muscle:'all'};
+let progSortMode='az';
+function setProgSort(mode){progSortMode=mode;renderProgList();}
+function renderProgList(){
+  let list=exercises.filter(e=>progExData[e.id]); // alleen oefeningen die daadwerkelijk data hebben
+  if(progFilterState.sport!=='all')list=list.filter(e=>(e.sports||[]).includes(progFilterState.sport));
+  if(progFilterState.type!=='all')list=list.filter(e=>e.type===progFilterState.type);
+  if(progFilterState.muscle!=='all')list=list.filter(e=>(e.muscle_primary||[]).includes(progFilterState.muscle));
+  const context={};
+  list.forEach(e=>{context[e.id]={lastDate:progExData[e.id].lastDate,pct:progExData[e.id].pct};});
+  list=sortExerciseList(list,progSortMode,context);
   let h='';
-  for(const ex of strExs){
-    const ss=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=created_at.desc&limit=30');
-    let best=null;
-    ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=s.reps===1?s.weight:s.weight*(1+s.reps/30);if(!best||est>best)best=est;});
-    const disp=best?Math.round(best):ex.pr;if(!disp)continue;
-    const tgt=peakGoalFor(ex.id);const pct=tgt?Math.round(disp/tgt*100):null;
+  list.forEach(ex=>{
+    const {disp,tgt,pct}=progExData[ex.id];
     const fc=pct?(pct>=100?'var(--green)':pct>=85?'var(--y)':'var(--accent)'):'var(--accent)';
     h+=`<div class="stat-1rm-item" onclick="show1RMChart('${ex.id}','${ex.name}')" style="cursor:pointer">
-      <div class="stat-1rm-row"><span class="stat-1rm-name">${ex.name}</span><span class="stat-1rm-val">${disp} kg</span>${tgt?`<span class="stat-1rm-target">/ ${tgt} kg</span>`:''}<span style="color:var(--g3);font-size:14px;margin-left:4px">📈</span><button onclick="event.stopPropagation();openEditPeak('${ex.id}','${ex.name}',${tgt||'null'})" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-left:auto">🎯</button></div>
+      <div class="stat-1rm-row"><button onclick="event.stopPropagation();toggleFavorite('${ex.id}').then(renderProgList)" style="background:none;border:none;font-size:14px;cursor:pointer;color:${isExerciseFavorite(ex.id)?'var(--accent2)':'var(--g3)'};padding:0 4px 0 0">${isExerciseFavorite(ex.id)?'★':'☆'}</button><span class="stat-1rm-name">${ex.name}</span><span class="stat-1rm-val">${disp} kg</span>${tgt?`<span class="stat-1rm-target">/ ${tgt} kg</span>`:''}<span style="color:var(--g3);font-size:14px;margin-left:4px">📈</span><button onclick="event.stopPropagation();openEditPeak('${ex.id}','${ex.name}',${tgt||'null'})" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-left:auto">🎯</button></div>
       <div class="prog-wrap"><div class="prog-fill" style="width:${Math.min(100,pct||Math.round(disp/3))}%;background:${fc}"></div></div>
       ${pct?`<div class="stat-1rm-pct">${pct}% van peakdoel${pct>=100?' ✓':' · '+(100-pct)+'% te gaan'}</div>`:tgt===null?`<div class="stat-1rm-pct" style="color:var(--g4)">Nog geen peakdoel ingesteld</div>`:''}
     </div>`;
-  }
+  });
   const el1=document.getElementById('stats-1rm-list');
-  if(el1) el1.innerHTML=h||'<p style="color:var(--g4);font-size:13px;padding:4px 0">Log sets om schattingen te berekenen</p>';
+  if(el1) el1.innerHTML=h||'<p style="color:var(--g4);font-size:13px;padding:4px 0">Log sets om schattingen te berekenen, of pas de filters aan</p>';
+}
+
+async function refreshStatsScreen(){
+  await ensureFavoritesLoaded();
+  // 1RM data ophalen (één keer per refresh) — nieuwe oefeningen komen hier automatisch in
+  // zodra ze een sessie hebben, geen aparte registratiestap nodig.
+  const strExs=exercises.filter(e=>e.type==='strength'||!e.type);
+  progExData={};
+  for(const ex of strExs){
+    const ss=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=30');
+    let best=null;
+    ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=s.reps===1?s.weight:s.weight*(1+s.reps/30);if(!best||est>best)best=est;});
+    const disp=best?Math.round(best):ex.pr;
+    if(!disp)continue;
+    const tgt=peakGoalFor(ex.id);const pct=tgt?Math.round(disp/tgt*100):null;
+    progExData[ex.id]={disp,tgt,pct,lastDate:ss[0]?ss[0].date:null};
+  }
+  // filters opbouwen o.b.v. oefeningen die daadwerkelijk data hebben
+  const dataExs=strExs.filter(e=>progExData[e.id]);
+  const psports=new Set(), ptypes=new Set(), pmuscles=new Set();
+  dataExs.forEach(e=>{ (e.sports||[]).forEach(s=>psports.add(s)); if(e.type)ptypes.add(e.type); (e.muscle_primary||[]).forEach(m=>pmuscles.add(m)); });
+  renderFilterChips('prog-filters',[
+    {key:'sport',label:'Alle sporten',options:[...psports].sort().map(s=>({val:s,label:SPORT_LABELS[s]||s}))},
+    {key:'type',label:'Alle types',options:[...ptypes].sort().map(t=>({val:t,label:TYPE_LABELS[t]||t}))},
+    {key:'muscle',label:'Alle spiergroepen',options:[...pmuscles].sort().map(m=>({val:m,label:m}))}
+  ], progFilterState, (k,v)=>{progFilterState[k]=v;renderProgList();});
+  const sortEl=document.getElementById('prog-sort');if(sortEl)sortEl.value=progSortMode;
+  renderProgList();
 
   // HRV chart
   const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=14');
@@ -3741,15 +4138,6 @@ HRV DREMPELS (Maurice-specifiek — structureel lager dan norm, gebruik ALTIJD r
 14-17 ms → Laag — lichte sessie (80% gewichten)
 <14 ms → Kritiek — rust of mobiliteit
 RHR ≤58 bpm = goed herstel. 7-daagse HRV-trend weegt zwaarder dan dagmeting.
-
-BIOMETRICS REFERENTIE (26 april 2026):
-Gewicht: 109.3 kg | Vet%: 14.2% (realistisch ~21%) | Spiermassa: 89.2 kg | BMR: 2778 kcal | Visceraal vet: 6
-
-ACTUELE 1RM SCHATTINGEN:
-Hexabar Deadlift: 240×3 → ~280 kg | Backsquat: 95×3 paused → ~108-112 kg
-Benchpress: 80×5×4 → ~93-95 kg | Frontsquat: PR 92.5 kg (7 jun 2026) → ~95 kg
-Shoulder Press: PR 63.5 kg (28 mei 2026) | HPC: ~85 kg singles | HPS: ~57.5 kg
-Cable Row: werkgewicht 90 kg | 1000m roei PR: 3:37.5 / 272W (31 mei 2026)
 
 RECENTE SESSIES (app):${exCtx}
 
@@ -4590,10 +4978,15 @@ function renderMuscleHeatmap(containerId, setsBySvgId){
   });
 }
 
+// Labelconventie: de knop toont altijd de HUIDIGE weergave (moet overeenkomen met de afbeelding),
+// niet de bestemming. Gedeeld door beide toggles via updateViewToggleLabel().
+function updateViewToggleLabel(btnId, view){
+  const btn = document.getElementById(btnId);
+  if(btn) btn.textContent = view === 'front' ? 'Voorkant' : 'Achterkant';
+}
 function toggleMuscleHeatmapView(){
   muscleHeatmapView = muscleHeatmapView === 'front' ? 'back' : 'front';
-  const btn = document.getElementById('muscle-heatmap-toggle-btn');
-  if(btn) btn.textContent = muscleHeatmapView === 'front' ? 'Achterkant' : 'Voorkant';
+  updateViewToggleLabel('muscle-heatmap-toggle-btn', muscleHeatmapView);
   refreshMuscleHeatmap();
 }
 
@@ -4738,8 +5131,7 @@ function renderMuscleRecoveryHeatmap(containerId, pctBySvgId){
 
 function toggleMuscleRecoveryHeatmapView(){
   recoveryHeatmapView = recoveryHeatmapView === 'front' ? 'back' : 'front';
-  const btn = document.getElementById('recovery-heatmap-toggle-btn');
-  if(btn) btn.textContent = recoveryHeatmapView === 'front' ? 'Achterkant' : 'Voorkant';
+  updateViewToggleLabel('recovery-heatmap-toggle-btn', recoveryHeatmapView);
   refreshMuscleRecoveryHeatmap();
 }
 
@@ -4811,6 +5203,8 @@ async function refreshRepPRs(){
   let html = '';
   for(const ex of strExs){
     const prs = await loadRepPRs(ex.id);
+    // Alleen oefeningen tonen die daadwerkelijk uitgevoerd zijn (minstens 1 bucket gevuld)
+    if(!REP_PR_BUCKETS.some(b=>prs[b])) continue;
     const cells = REP_PR_BUCKETS.map(b=>{
       const rec = prs[b];
       return `<div style="text-align:center;flex:1">

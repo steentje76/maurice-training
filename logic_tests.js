@@ -609,7 +609,186 @@ test('getEffectiveKg: lege/ontbrekende set geeft null', ()=>{
 });
 
 
-console.log(`\n${'═'.repeat(50)}`);
+// ══════════════════════════════════════════════════════════
+// SORTEXERCISELIST (v3.0.4) — gedeelde sorteerlogica Progressie/Exercise Library
+// Reimplementatie, zelfde logica als in index.html
+// ══════════════════════════════════════════════════════════
+function sortExerciseListTest(list, mode, context={}, favSet=new Set()){
+  const arr=list.slice();
+  if(mode==='az'){
+    arr.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  }else if(mode==='recent'){
+    arr.sort((a,b)=>{
+      const da=(context[a.id]&&context[a.id].lastDate)||'';
+      const db=(context[b.id]&&context[b.id].lastDate)||'';
+      return db.localeCompare(da);
+    });
+  }else if(mode==='favoriet'){
+    arr.sort((a,b)=>{
+      const fa=favSet.has(a.id)?1:0, fb=favSet.has(b.id)?1:0;
+      if(fb!==fa)return fb-fa;
+      return (a.name||'').localeCompare(b.name||'');
+    });
+  }else if(mode==='progressie'){
+    arr.sort((a,b)=>{
+      const pa=(context[a.id]&&context[a.id].pct)||-1;
+      const pb=(context[b.id]&&context[b.id].pct)||-1;
+      return pb-pa;
+    });
+  }
+  return arr;
+}
+
+console.log('\n📋 sortExerciseList (v3.0.4) — Progressie & Exercise Library filters');
+test('sortExerciseList: A-Z sorteert op naam', ()=>{
+  const list=[{id:'b',name:'Bench'},{id:'a',name:'Achterste deltspier'}];
+  const sorted=sortExerciseListTest(list,'az');
+  assertEq(sorted[0].id,'a');
+});
+test('sortExerciseList: Recent sorteert op laatste sessiedatum, meest recent eerst', ()=>{
+  const list=[{id:'oud',name:'Oud'},{id:'nieuw',name:'Nieuw'}];
+  const ctx={oud:{lastDate:'2026-01-01'},nieuw:{lastDate:'2026-06-01'}};
+  const sorted=sortExerciseListTest(list,'recent',ctx);
+  assertEq(sorted[0].id,'nieuw');
+});
+test('sortExerciseList: Favorieten komen eerst, daarna alfabetisch binnen elke groep', ()=>{
+  const list=[{id:'z',name:'Zwaaien'},{id:'f',name:'Frontsquat'},{id:'a',name:'Airsquat'}];
+  const favs=new Set(['z']);
+  const sorted=sortExerciseListTest(list,'favoriet',{},favs);
+  assertEq(sorted[0].id,'z'); // favoriet eerst ondanks Z
+  assertEq(sorted[1].id,'a'); // niet-favorieten alfabetisch
+});
+test('sortExerciseList: Hoogste progressie sorteert op % van peakdoel, hoogste eerst', ()=>{
+  const list=[{id:'laag',name:'Laag'},{id:'hoog',name:'Hoog'}];
+  const ctx={laag:{pct:40},hoog:{pct:95}};
+  const sorted=sortExerciseListTest(list,'progressie',ctx);
+  assertEq(sorted[0].id,'hoog');
+});
+
+// ══════════════════════════════════════════════════════════
+// PR-OVERZICHT (v3.0.4) — alleen daadwerkelijk uitgevoerde oefeningen tonen
+// ══════════════════════════════════════════════════════════
+function hasAnyPRTest(prs, buckets){
+  return buckets.some(b=>prs[b]);
+}
+
+// ══════════════════════════════════════════════════════════
+// GEWICHT-OPTIES uitgebreid (v3.0.5) — %1RM, topset, backoff
+// Reimplementatie van getEffectiveKg() met de nieuwe modi, zelfde rekenlogica.
+// sets[i] = {kg, mode}. oneRM = geschatte 1RM voor '1rm'-modus.
+// ══════════════════════════════════════════════════════════
+function getEffectiveKgV2Test(sets,i,oneRM){
+  if(i<1)return null;
+  const s=sets[i-1];
+  if(!s||s.kg===undefined||s.kg==='')return null;
+  const val=parseFloat(s.kg);
+  if(isNaN(val))return null;
+  const mode=s.mode||'vast';
+  if(mode==='vast'||mode==='topset')return val;
+  if(mode==='1rm')return oneRM?Math.round(oneRM*val/100*10)/10:val;
+  if(mode==='backoff'){
+    let max=null;
+    for(let j=0;j<sets.length;j++){
+      if(j===i-1)continue;
+      if((sets[j].mode||'vast')==='backoff')continue;
+      const k=getEffectiveKgV2Test(sets,j+1,oneRM);
+      if(k!=null&&(max==null||k>max))max=k;
+    }
+    return max!=null?Math.round(max*val/100*10)/10:val;
+  }
+  const prevKg=getEffectiveKgV2Test(sets,i-1,oneRM);
+  if(prevKg==null)return val;
+  if(mode==='plus')return Math.round((prevKg+val)*10)/10;
+  if(mode==='pct')return Math.round(prevKg*val/100*10)/10;
+  return val;
+}
+
+console.log('\n⚖️  Gewichtmodi uitgebreid (v3.0.5) — %1RM, topset, backoff');
+test('getEffectiveKg: %1RM rekent percentage van de geschatte 1RM', ()=>{
+  const sets=[{kg:'80',mode:'1rm'}];
+  assertEq(getEffectiveKgV2Test(sets,1,200),160);
+});
+test('getEffectiveKg: %1RM zonder bekende 1RM valt terug op ingevulde waarde', ()=>{
+  const sets=[{kg:'80',mode:'1rm'}];
+  assertEq(getEffectiveKgV2Test(sets,1,null),80);
+});
+test('getEffectiveKg: topset gedraagt zich als vast gewicht', ()=>{
+  const sets=[{kg:'120',mode:'topset'}];
+  assertEq(getEffectiveKgV2Test(sets,1,null),120);
+});
+test('getEffectiveKg: backoff rekent percentage van de zwaarste set in de sessie', ()=>{
+  const sets=[{kg:'100',mode:'vast'},{kg:'120',mode:'topset'},{kg:'90',mode:'backoff'}];
+  // zwaarste = 120 (set 2), backoff set 3 = 90% van 120 = 108
+  assertEq(getEffectiveKgV2Test(sets,3,null),108);
+});
+test('getEffectiveKg: backoff werkt ongeacht volgorde (topset ná de backoff-set)', ()=>{
+  const sets=[{kg:'90',mode:'backoff'},{kg:'120',mode:'topset'}];
+  assertEq(getEffectiveKgV2Test(sets,1,null),108);
+});
+test('getEffectiveKg: meerdere backoff-sets verwijzen niet circulair naar elkaar', ()=>{
+  const sets=[{kg:'120',mode:'topset'},{kg:'90',mode:'backoff'},{kg:'80',mode:'backoff'}];
+  assertEq(getEffectiveKgV2Test(sets,2,null),108); // 90% van 120
+  assertEq(getEffectiveKgV2Test(sets,3,null),96);  // 80% van 120 (niet van set 2's 108)
+});
+
+// ══════════════════════════════════════════════════════════
+// CARDIO — generieke rowMap-mapper (v3.0.5)
+// Reimplementatie van cardioDataToRow() puur op basis van een rowMap-config,
+// om te bevestigen dat nieuwe cardiotypen zonder if/else-uitbreiding werken.
+// ══════════════════════════════════════════════════════════
+function cardioDataToRowV2Test(fields, rowMap, d){
+  const row={};
+  const notes=[];
+  fields.forEach(f=>{
+    const spec=rowMap[f];
+    if(!spec)return;
+    const raw=d[f];
+    if(raw===undefined||raw===null||raw==='')return;
+    if(spec.col==='extraNote'){notes.push(spec.template?spec.template(raw,d):String(raw));return;}
+    let v=spec.parse==='int'?parseInt(raw):spec.parse==='float'?parseFloat(raw):raw;
+    if(spec.parse!=='string'&&isNaN(v))return;
+    if(spec.transform)v=spec.transform(v);
+    row[spec.col]=v;
+  });
+  if(notes.length)row.extraNote=notes.join(' | ');
+  row.rpe=row.rpe!==undefined?row.rpe:null;
+  return row;
+}
+
+console.log('\n🚴 Cardio generieke rowMap-mapper (v3.0.5)');
+test('cardioDataToRow generiek: nieuw fictief cardiotype werkt zonder codewijziging', ()=>{
+  // Simuleert het toevoegen van een geheel nieuw type ("wandelen") puur via config
+  const fields=['dist_km','time','hr','rpe'];
+  const rowMap={dist_km:{col:'distance',parse:'float',transform:v=>Math.round(v*1000)},time:{col:'time_str',parse:'string'},hr:{col:'hr_avg',parse:'int'},rpe:{col:'rpe',parse:'float'}};
+  const row=cardioDataToRowV2Test(fields,rowMap,{dist_km:'5',time:'45:00',hr:'110',rpe:'6'});
+  assertEq(row.distance,5000);
+  assertEq(row.hr_avg,110);
+  assertEq(row.rpe,6);
+});
+test('cardioDataToRow generiek: extraNote-template verzamelt meerdere notities', ()=>{
+  const fields=['dist','time','split'];
+  const rowMap={dist:{col:'distance',parse:'int'},time:{col:'time_str',parse:'string'},split:{col:'extraNote',template:(v,d)=>(d.machine?d.machine+' ':'')+'split:'+v}};
+  const row=cardioDataToRowV2Test(fields,rowMap,{dist:'1000',time:'3:40',split:'1:50',machine:'PM5-A'});
+  assertEq(row.extraNote,'PM5-A split:1:50');
+});
+test('cardioDataToRow generiek: ontbrekend veld geeft geen kolom (niet NaN/undefined string)', ()=>{
+  const fields=['time','cals','hr','rpe'];
+  const rowMap={time:{col:'time_str',parse:'string'},cals:{col:'calories',parse:'float'},hr:{col:'hr_avg',parse:'int'},rpe:{col:'rpe',parse:'float'}};
+  const row=cardioDataToRowV2Test(fields,rowMap,{time:'20:00',cals:'250'});
+  assertEq(row.hr_avg,undefined);
+  assertEq(row.rpe,null);
+});
+
+console.log('\n🏆 PR-overzicht filter (v3.0.4)');
+test('PR-overzicht: oefening zonder sessies (alle buckets null) wordt overgeslagen', ()=>{
+  const prs={1:null,3:null,5:null,10:null};
+  assertEq(hasAnyPRTest(prs,[1,3,5,10]), false);
+});
+test('PR-overzicht: oefening met minstens 1 gevulde bucket wordt getoond', ()=>{
+  const prs={1:null,3:{weight:100,date:'2026-06-01'},5:null,10:null};
+  assertEq(hasAnyPRTest(prs,[1,3,5,10]), true);
+});
+
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);
 if(failed > 0){
   console.log('⚠️  Er zijn mislukte tests — controleer de logica');

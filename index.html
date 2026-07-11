@@ -268,6 +268,19 @@ canvas{width:100%;height:100%}
 .muscle-pill{padding:3px 9px;border-radius:12px;font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
 .muscle-pill.primary{background:rgba(61,214,214,.15);color:#007777;border:1px solid rgba(61,214,214,.4)}
 .muscle-pill.secondary{background:var(--g1);color:var(--g4);border:1px solid var(--g2)}
+.ex-pick-trigger{display:flex;align-items:center;justify-content:space-between;width:100%;background:var(--g1);border:1px solid var(--g2);border-radius:10px;padding:10px 12px;font-family:var(--f);font-size:15px;color:var(--dark);cursor:pointer}
+.ex-pick-trigger span.ph{color:var(--g4)}
+.ex-pick-modal .modal{max-height:85vh;display:flex;flex-direction:column}
+.ex-pick-search{width:100%;border:1px solid var(--g2);border-radius:10px;padding:10px 12px;font-family:var(--f);font-size:15px;background:var(--g1);margin-bottom:8px}
+.ex-pick-filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;max-height:74px;overflow-y:auto}
+.filter-chip{padding:4px 11px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:.2px;text-transform:uppercase;border:1px solid var(--g2);background:var(--g1);color:var(--g4);cursor:pointer;white-space:nowrap}
+.filter-chip.active{background:var(--accent);border-color:var(--accent2);color:#00504f}
+.ex-pick-list{overflow-y:auto;flex:1;border-top:1px solid var(--g2)}
+.ex-pick-item{padding:12px 4px;border-bottom:1px solid var(--g2);cursor:pointer;display:flex;flex-direction:column;gap:3px}
+.ex-pick-item:active{background:var(--g1)}
+.ex-pick-item-name{font-size:15px;font-weight:600;color:var(--dark)}
+.ex-pick-item-meta{font-size:11px;color:var(--g4);text-transform:uppercase;letter-spacing:.3px}
+.ex-pick-empty{padding:24px 4px;text-align:center;color:var(--g4);font-size:13px}
 
 .plate-btn{display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:6px;font-family:var(--f);font-weight:800;cursor:pointer;font-size:11px;letter-spacing:.5px;padding:4px 6px;margin:2px;min-width:36px}
 .plate-calc-wrap{background:var(--g1);border-radius:10px;padding:10px 12px;margin:8px 14px}
@@ -533,6 +546,7 @@ canvas{width:100%;height:100%}
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Progressie</div><div class="hdr-sub">1RM & Peakdoel 15 aug 2026</div></div><button class="ibtn" onclick="refreshStats()">↻</button></div></div>
   <div class="scroll" style="padding-top:8px">
     <div class="card"><div class="card-hd"><div class="card-title">Geschatte 1RM</div><div class="card-sub">Epley formule · live</div></div><div class="card-body" id="stats-1rm-list"></div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">Krachtverhoudingen</div><div class="card-sub">Verwacht t.o.v. backsquat · standaardratio of eigen data</div></div><div class="card-body" id="stats-ratio-list"></div></div>
     <div class="card">
       <div class="card-hd"><div class="card-title">PR per herhaling</div><div class="card-sub">Beste gewicht per repbereik (1/3/5/10)</div></div>
       <div class="card-body" id="stats-reppr-content"><p style="color:var(--g4);font-size:13px">Laden...</p></div>
@@ -544,6 +558,15 @@ canvas{width:100%;height:100%}
     <div class="card">
       <div class="card-hd"><div class="card-title">Spierherstel</div><div class="card-sub">Op basis van RPE & tijd sinds laatste training</div></div>
       <div class="card-body" id="stats-recovery-content"><p style="color:var(--g4);font-size:13px">Laden...</p></div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div><div class="card-title">Spierherstel</div><div class="card-sub">Herstel% · visueel</div></div>
+        <button class="ibtn" onclick="toggleMuscleRecoveryHeatmapView()" style="width:auto;height:auto;padding:6px 12px;border-radius:14px;font-size:11px;font-weight:700;font-family:var(--f)" id="recovery-heatmap-toggle-btn">Achterkant</button>
+      </div>
+      <div class="card-body" style="display:flex;justify-content:center;padding:10px 14px 14px">
+        <div id="recovery-heatmap-container" style="width:220px;max-width:100%"></div>
+      </div>
     </div>
     <div class="card">
       <div class="card-hd">
@@ -725,8 +748,6 @@ canvas{width:100%;height:100%}
         </div>
       </div>
     </div>
-    <div class="sec-hd">Metingen</div>
-    <div class="card"><div class="card-body" style="padding-top:10px" id="admin-bc"></div></div>
   </div>
   <nav class="bnav">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
@@ -746,6 +767,16 @@ canvas{width:100%;height:100%}
     <div class="irow"><label class="ilbl">RHR</label><input class="inp" type="number" id="i-rhr" placeholder="bpm"></div>
     <div class="irow"><label class="ilbl">Slaap</label><input class="inp" type="number" id="i-sleep-h" placeholder="uren" style="flex:1"><span style="color:var(--g4);padding:0 6px;font-weight:600">u</span><input class="inp" type="number" id="i-sleep-m" placeholder="min" style="flex:1"><span style="color:var(--g4);padding:0 6px;font-weight:600">m</span></div>
     <div class="irow"><label class="ilbl">Gewicht</label><input class="inp" type="number" id="i-whrv" placeholder="kg" step="0.1"></div>
+    <div class="irow" id="i-cyclus-row" style="display:none">
+      <label class="ilbl">Cyclus</label>
+      <select class="inp" id="i-cyclus">
+        <option value="">n.v.t.</option>
+        <option value="menstruatie">Menstruatie</option>
+        <option value="folliculair">Folliculair</option>
+        <option value="ovulatie">Ovulatie</option>
+        <option value="luteaal">Luteaal</option>
+      </select>
+    </div>
     <div id="checkin-conditions-list"></div>
     <div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="i-note" placeholder="hoe voel ik me..."></div>
     <div style="display:flex;gap:8px;margin-top:14px">
@@ -844,7 +875,7 @@ canvas{width:100%;height:100%}
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title">Losse oefening</div>
-    <div class="irow"><label class="ilbl">Oefening</label><select class="inp" id="los-ex" onchange="onLosExChange()"></select></div>
+    <div class="irow"><label class="ilbl">Oefening</label><button type="button" class="ex-pick-trigger" id="los-ex-trigger" onclick="openExPicker()"><span id="los-ex-trigger-lbl" class="ph">Kies oefening…</span><span style="color:var(--g3)">›</span></button></div>
     <div id="los-new-fields" style="display:none">
       <div class="irow"><label class="ilbl">Naam</label><input class="inp" type="text" id="los-ex-new" placeholder="bijv. Zercher Squat"></div>
       <div class="irow"><label class="ilbl">Type</label><select class="inp" id="los-ex-new-type" onchange="onLosNewTypeChange()">
@@ -871,6 +902,21 @@ canvas{width:100%;height:100%}
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-los-oefening')">Annuleer</button>
       <button class="btn btn-r" style="flex:2" onclick="saveLosOefening()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OEFENING PICKER (zoekbaar, filter op sport/spiergroep) ═══ -->
+<div class="modal-bg ex-pick-modal" id="m-ex-picker" onclick="bgClose(event,'m-ex-picker')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Oefening kiezen</div>
+    <input type="text" class="ex-pick-search" id="ex-pick-search" placeholder="Zoek op naam…" oninput="renderExPickerList()">
+    <div class="ex-pick-filters" id="ex-pick-filters"></div>
+    <div class="ex-pick-list" id="ex-pick-list"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-ex-picker')">Annuleer</button>
+      <button class="btn btn-r" style="flex:2" onclick="selectExPickerNew()">+ Eigen oefening…</button>
     </div>
   </div>
 </div>
@@ -1042,7 +1088,7 @@ canvas{width:100%;height:100%}
     <div class="modal-handle"></div>
     <div class="modal-title">⚖️ Plate Calculator</div>
     <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
-      <input class="inp" type="number" id="pc-target" placeholder="Doelgewicht kg" step="0.5" oninput="calcPlates()" style="flex:2">
+      <input class="inp" type="text" inputmode="decimal" id="pc-target" placeholder="Doelgewicht kg" step="0.5" oninput="clampNumInput(this,0,500);calcPlates()" style="flex:2">
       <select class="inp" id="pc-bar" onchange="calcPlates()" style="flex:1">
         <option value="20">Stang 20 kg</option>
         <option value="15">Stang 15 kg</option>
@@ -1169,6 +1215,31 @@ canvas{width:100%;height:100%}
   </div>
 </div>
 
+<div class="modal-bg" id="m-edit-anchor" onclick="bgClose(event,'m-edit-anchor')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="edit-anchor-title">Anker-koppeling</div>
+    <div class="irow"><label class="ilbl">Ankeroefening</label>
+      <select class="inp" id="edit-anchor-lift">
+        <option value="">geen</option>
+        <option value="backsquat">Backsquat</option>
+        <option value="bench">Bench</option>
+        <option value="frontsquat">Frontsquat</option>
+        <option value="shoulderpress">Shoulder Press</option>
+        <option value="hexabar">Hexabar</option>
+        <option value="hpc">HPC</option>
+        <option value="hps">HPS</option>
+      </select>
+    </div>
+    <div class="irow"><label class="ilbl">Ratio-factor</label><input class="inp" type="number" id="edit-anchor-factor" placeholder="bijv. 0.85" min="0" max="3" step="0.01"></div>
+    <p style="font-size:12px;color:var(--g4);margin-bottom:12px">Gebruikt voor een startschatting zolang deze oefening nog geen 1RM of sessies heeft. Bv. 0.85 = 85% van de ankeroefening-1RM.</p>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-edit-anchor')">Annuleer</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveAnchor()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="m-add-trainex" onclick="bgClose(event,'m-add-trainex')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -1203,7 +1274,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v2.9.6';
+const APP_VER = 'v3.0.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -1465,7 +1536,14 @@ function go(id){
   if(id==='s-admin')refreshAdmin();
   if(id==='s-coach')focusCoach();
 }
-function openModal(id){if(id==='m-hrv')renderCheckinConditions();document.getElementById(id).classList.add('open');}
+function openModal(id){
+  if(id==='m-hrv'){
+    renderCheckinConditions();
+    const cr=document.getElementById('i-cyclus-row');
+    if(cr)cr.style.display=(atleet.geslacht==='vrouw')?'flex':'none';
+  }
+  document.getElementById(id).classList.add('open');
+}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function bgClose(e,id){if(e.target===document.getElementById(id))closeModal(id);}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
@@ -1480,16 +1558,22 @@ async function saveHRV(){
   const slpM=parseInt(document.getElementById('i-sleep-m').value)||0;
   const slp=(slpH||slpM)?Math.round((slpH+slpM/60)*100)/100:null;
   const wgt=parseFloat(document.getElementById('i-whrv').value)||null;
+  const cyclusEl=document.getElementById('i-cyclus');
+  const cyclus=(atleet.geslacht==='vrouw'&&cyclusEl&&cyclusEl.value)?cyclusEl.value:null;
   const condSelects=[...document.querySelectorAll('#checkin-conditions-list select')];
   const loggedConditions=condSelects.map(s=>({label:s.dataset.condition,severity:s.value})).filter(c=>c.severity);
   const edm=loggedConditions.length?loggedConditions.map(c=>c.label+': '+c.severity).join(', '):null;
   const note=document.getElementById('i-note').value||null;
   const ops=[];
-  if(hrv||rhr||slp)ops.push(sbPost('hrv_log',{date:td(),hrv,rhr,sleep:slp,edema:edm,note}));
+  if(hrv||rhr||slp)ops.push(sbPost('hrv_log',{date:td(),hrv,rhr,sleep:slp,cyclus_fase:cyclus,edema:edm,note}));
   if(wgt)ops.push(upsertWeightLog(wgt,'Tanita'));
   for(const c of loggedConditions)ops.push(sbPost('checkin_conditions',{date:td(),condition_label:c.label,severity:c.severity}));
   await Promise.all(ops);
   closeModal('m-hrv');
+  if(hrv||slp){
+    const df=dagfactor(hrv,slp,cyclus);
+    toast('Dagfactor '+df.factor+' — '+dagfactorUitleg(hrv,slp,cyclus,df));
+  }
   const parts=[];
   if(hrv)parts.push('HRV '+hrv+' ms');
   if(rhr)parts.push('RHR '+rhr+' bpm');
@@ -1583,52 +1667,105 @@ function collectWorkSets(domId){
   return rows;
 }
 
+let losSelectedExId=null;
+let exPickerSportFilter='all', exPickerMuscleFilter='all';
+
 async function openLosOefening(){
   await ensureExercisesLoaded();
-  const sport=getActiveSport();
-  const sel=document.getElementById('los-ex');
-  const filtered=filterExercisesBySport(exercises,sport);
-  sel.innerHTML=filtered.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||''))
-    .map(e=>`<option value="${e.id}">${e.name}</option>`).join('')
-    +'<option value="__new__">+ Eigen oefening…</option>';
+  losSelectedExId=null;
+  document.getElementById('los-ex-trigger-lbl').textContent='Kies oefening…';
+  document.getElementById('los-ex-trigger-lbl').className='ph';
   document.getElementById('los-ex-new').value='';
   document.getElementById('los-ex-new-type').value='strength';
   document.getElementById('los-new-fields').style.display='none';
   document.getElementById('los-new-wodfmt-row').style.display='none';
-  onLosExChange();
+  document.getElementById('los-body').innerHTML='';
   openModal('m-los-oefening');
 }
-function onLosExChange(){
-  const val=document.getElementById('los-ex').value;
-  const isNew=val==='__new__';
-  document.getElementById('los-new-fields').style.display=isNew?'':'none';
-  if(isNew){
-    document.getElementById('los-ex-new').focus();
-    renderLosBody();
-  } else {
-    const ex=exercises.find(e=>e.id===val);
-    if(ex)renderLosBody(ex);
-  }
+// Zoekbare/filterbare oefening-picker. Toont standaard ALLE oefeningen (niet gefilterd
+// op actieve sport) — filters op sport/spiergroep zijn optioneel en door de sporter zelf te zetten.
+async function openExPicker(){
+  await ensureExercisesLoaded();
+  exPickerSportFilter='all'; exPickerMuscleFilter='all';
+  document.getElementById('ex-pick-search').value='';
+  const sports=new Set(); const muscles=new Set();
+  exercises.forEach(e=>{ (e.sports||[]).forEach(s=>sports.add(s)); (e.muscle_primary||[]).forEach(m=>muscles.add(m)); });
+  let fh='<span class="filter-chip active" data-ftype="sport" data-fval="all" onclick="setExPickerFilter(\'sport\',\'all\')">Alle sporten</span>';
+  [...sports].sort().forEach(s=>{fh+=`<span class="filter-chip" data-ftype="sport" data-fval="${s}" onclick="setExPickerFilter('sport','${s}')">${SPORT_LABELS[s]||s}</span>`;});
+  fh+='<span class="filter-chip active" data-ftype="muscle" data-fval="all" onclick="setExPickerFilter(\'muscle\',\'all\')">Alle spiergroepen</span>';
+  [...muscles].sort().forEach(m=>{fh+=`<span class="filter-chip" data-ftype="muscle" data-fval="${m}" onclick="setExPickerFilter('muscle','${m}')">${m}</span>`;});
+  document.getElementById('ex-pick-filters').innerHTML=fh;
+  renderExPickerList();
+  openModal('m-ex-picker');
+}
+function setExPickerFilter(type,val){
+  if(type==='sport')exPickerSportFilter=val; else exPickerMuscleFilter=val;
+  document.querySelectorAll(`#ex-pick-filters .filter-chip[data-ftype="${type}"]`).forEach(el=>{
+    el.classList.toggle('active',el.dataset.fval===val);
+  });
+  renderExPickerList();
+}
+function renderExPickerList(){
+  const q=(document.getElementById('ex-pick-search').value||'').trim().toLowerCase();
+  let list=exercises.slice();
+  if(exPickerSportFilter!=='all')list=list.filter(e=>(e.sports||[]).includes(exPickerSportFilter));
+  if(exPickerMuscleFilter!=='all')list=list.filter(e=>(e.muscle_primary||[]).includes(exPickerMuscleFilter));
+  if(q)list=list.filter(e=>(e.name||'').toLowerCase().includes(q));
+  list.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  const el=document.getElementById('ex-pick-list');
+  if(!list.length){el.innerHTML='<div class="ex-pick-empty">Geen oefeningen gevonden</div>';return;}
+  el.innerHTML=list.map(e=>`<div class="ex-pick-item" onclick="selectExPickerItem('${e.id}')"><div class="ex-pick-item-name">${e.name}</div><div class="ex-pick-item-meta">${e.type||'strength'}${(e.muscle_primary&&e.muscle_primary.length)?' · '+e.muscle_primary.join(', '):''}</div></div>`).join('');
+}
+function selectExPickerItem(id){
+  const ex=exercises.find(e=>e.id===id);
+  if(!ex)return;
+  losSelectedExId=id;
+  document.getElementById('los-ex-trigger-lbl').textContent=ex.name;
+  document.getElementById('los-ex-trigger-lbl').className='';
+  document.getElementById('los-new-fields').style.display='none';
+  closeModal('m-ex-picker');
+  renderLosBody(ex);
+}
+function selectExPickerNew(){
+  losSelectedExId='__new__';
+  document.getElementById('los-ex-trigger-lbl').textContent='+ Eigen oefening…';
+  document.getElementById('los-ex-trigger-lbl').className='';
+  document.getElementById('los-new-fields').style.display='';
+  closeModal('m-ex-picker');
+  document.getElementById('los-ex-new').focus();
+  renderLosBody();
 }
 function onLosNewTypeChange(){
   const t=document.getElementById('los-ex-new-type').value;
   document.getElementById('los-new-wodfmt-row').style.display=t==='wod'?'':'none';
   renderLosBody();
 }
-// Rendert exact dezelfde oefening-body (set-cirkels, cardio-velden, WOD-velden, ...)
-// als tijdens een training — via de gedeelde buildExerciseBody-dispatcher.
-function renderLosBody(existingEx=null){
+// Rendert exact dezelfde oefening-body als tijdens een training (buildExerciseBody-dispatcher),
+// PLUS dezelfde tip/video/spiergroep/1RM/equipment-panelen als renderTrainScreen, zodat het
+// logging-scherm van een losse oefening er identiek uitziet als tijdens Training A/B.
+async function renderLosBody(existingEx=null){
   const container=document.getElementById('los-body');
   let ex=existingEx;
   if(!ex){
     const t=document.getElementById('los-ex-new-type').value;
     const wodFmt=document.getElementById('los-ex-new-wodfmt').value;
-    ex={id:'__new__',name:'',type:t,wod_format:wodFmt,sets:t==='carry'?3:4,wu:0};
+    ex={id:'__new__',name:document.getElementById('los-ex-new').value||'',type:t,wod_format:wodFmt,sets:t==='carry'?3:4,wu:0};
   }
-  container.innerHTML=buildExerciseBody(ex,{wu:ex.wu||0,sets:ex.sets});
+  const bodyHTML=buildExerciseBody(ex,{wu:ex.wu||0,sets:ex.sets});
+  let panels='';
+  if(ex.id!=='__new__'){
+    await ensureEquipmentTypesLoaded();
+    if(ex.type==='strength'||!ex.type) await loadRepPRs(ex.id);
+    const eqList=await loadEquipment(ex.id);
+    panels=`${ex.tip?`<div style="background:#fffbea;border-left:3px solid var(--y);padding:8px 12px;font-size:12px;color:#666;margin:8px 0;border-radius:0 8px 8px 0">💡 ${ex.tip}</div>`:''}
+      ${buildVideoMuscle(ex)}
+      ${BARBELL_EXERCISES.has(ex.id)?buildRmPanel(ex):''}
+      ${buildEquipmentPanel(ex.id,eqList)}`;
+  }
+  container.innerHTML=panels+bodyHTML;
 }
 async function saveLosOefening(){
-  let exId=document.getElementById('los-ex').value;
+  let exId=losSelectedExId;
   if(!exId){toast('Kies een oefening');return;}
   const isNew=exId==='__new__';
   const domId=isNew?'__new__':exId;
@@ -1953,16 +2090,18 @@ function epley1RM(kg,reps){
 function buildRmPanel(ex){
   const rm=getOneRM(ex.id);
   const pcts=[50,60,70,80,90,95,100];
+  checkColdStart(ex.id); // fire-and-forget: vult hint async in zodra bekend of nodig
   return `<div class="rm-panel" id="rm-panel-${ex.id}">
     <div class="rm-panel-row">
       <label>1RM</label>
-      <input class="inp" type="number" id="rm-${ex.id}" value="${rm||''}" placeholder="kg" min="0" max="500" step="0.5" oninput="saveOneRM('${ex.id}',this.value)">
+      <input class="inp" type="text" inputmode="decimal" id="rm-${ex.id}" value="${rm||''}" placeholder="kg" min="0" max="500" step="0.5" oninput="clampNumInput(this,0,500);saveOneRM('${ex.id}',this.value)">
       <button class="btn btn-o rm-plate-btn" onclick="openPlateCalcForEx('${ex.id}')">⚖️</button>
     </div>
     <div class="rm-pct-row">
       ${pcts.map(p=>`<button class="pct-btn" onclick="applyPct('${ex.id}',${p})">${p}%</button>`).join('')}
     </div>
     <div id="rm-epley-hint-${ex.id}"></div>
+    <div id="cold-start-hint-${ex.id}"></div>
   </div>`;
 }
 async function saveOneRM(exId,val){
@@ -1991,6 +2130,58 @@ function acceptEpley(exId,est){
   const el=document.getElementById('rm-epley-hint-'+exId);
   if(el)el.innerHTML='';
   toast('1RM bijgewerkt naar '+est+' kg');
+}
+
+// ══════════════════════════════════════════════════════════
+// COLD-START-PREDICTOR (v300)
+// Startschatting voor een oefening zonder 1RM én zonder gelogde sessies.
+// 1. Kernlift zelf → expected1RM (lichaamsgewicht × norm × niveau × Masters-factor)
+// 2. Heeft ratio_anchor → ankeroefening-1RM (fase2 indien n≥5, anders fase1) × ratio_factor
+// 3. Geen van beide → geen suggestie, i.p.v. gokken
+// ══════════════════════════════════════════════════════════
+async function latestBodyweight(){
+  const bc=await sbGet('body_comp','&order=date.desc&limit=1');
+  return bc[0]?.weight||null;
+}
+async function coldStartEstimate(exId){
+  if(LIFT_NORMS[exId]!=null){
+    const bw=await latestBodyweight();
+    if(!bw)return null;
+    const waarde=expected1RM(exId,bw,atleet.leeftijd,atleet.niveau);
+    return {waarde,bron:'lichaamsgewicht + niveau'};
+  }
+  const exObj=exercises.find(e=>e.id===exId);
+  if(exObj?.ratio_anchor && exObj?.ratio_factor){
+    const anchorId=exObj.ratio_anchor;
+    const ss=await sbGet('sessions','&exercise_id=eq.'+anchorId+'&weight=not.is.null&reps=not.is.null&order=date.desc&limit=30');
+    const est=weightedEst1RM(ss);
+    let ankerRM=est.est;
+    if(!ankerRM && LIFT_NORMS[anchorId]!=null){
+      const bw=await latestBodyweight();
+      if(bw)ankerRM=expected1RM(anchorId,bw,atleet.leeftijd,atleet.niveau);
+    }
+    if(!ankerRM)return null;
+    const waarde=Math.round(ankerRM*exObj.ratio_factor);
+    const ankerNaam=exercises.find(e=>e.id===anchorId)?.name||anchorId;
+    return {waarde,bron:'via '+ankerNaam+(est.n>=RATIO_MIN_OBS?' (eigen data)':' (richtlijn)')};
+  }
+  return null;
+}
+async function checkColdStart(exId){
+  if(getOneRM(exId))return; // al een 1RM bekend
+  const ss=await sbGet('sessions','&exercise_id=eq.'+exId+'&weight=not.is.null&reps=not.is.null&limit=1');
+  if(ss.length)return; // al sessies gelogd
+  const est=await coldStartEstimate(exId);
+  const el=document.getElementById('cold-start-hint-'+exId);
+  if(!el||!est)return;
+  el.innerHTML=`<div class="epley-hint">Startschatting: ~${est.waarde} kg (${est.bron}) <button onclick="acceptColdStart('${exId}',${est.waarde})">gebruiken</button></div>`;
+}
+function acceptColdStart(exId,est){
+  const inp=document.getElementById('rm-'+exId);
+  if(inp){inp.value=est;saveOneRM(exId,est);}
+  const el=document.getElementById('cold-start-hint-'+exId);
+  if(el)el.innerHTML='';
+  toast('Startschatting 1RM ingevuld: '+est+' kg');
 }
 function applyPct(exId,pct){
   const rm=getOneRM(exId);
@@ -2091,7 +2282,7 @@ function buildStrengthBody(exId,wuCount,workCount,prefill=null){
       h+=`<div class="set-row">
         <div class="warmup-lbl">W${i}</div>
         <div class="set-fields">
-          <div class="set-field-wrap" style="flex:2"><input class="set-field" type="number" inputmode="decimal" placeholder="kg" id="w-${exId}-${i}-kg" onchange="logSet('${exId}','wu',${i},false)"><div class="set-field-lbl">kg</div></div>
+          <div class="set-field-wrap" style="flex:2"><input class="set-field" type="text" inputmode="decimal" placeholder="kg" id="w-${exId}-${i}-kg" oninput="clampNumInput(this,0,500)" onchange="logSet('${exId}','wu',${i},false)"><div class="set-field-lbl">kg</div></div>
           <div class="set-sep">×</div>
           <div class="set-field-wrap" style="flex:1"><input class="set-field" type="number" inputmode="numeric" placeholder="reps" id="w-${exId}-${i}-reps" onchange="logSet('${exId}','wu',${i},false)"><div class="set-field-lbl">reps</div></div>
         </div>
@@ -2111,7 +2302,7 @@ function buildWorkSetRow(exId,i,prefill=null){
   return `<div class="set-row" id="sr-${exId}-${i}">
     <div class="set-circle" id="sc-${exId}-${i}" onclick="toggleSetDone('${exId}',${i})">${i}</div>
     <div class="set-fields">
-      <div class="set-field-wrap" style="flex:2"><input class="set-field" type="number" inputmode="decimal" placeholder="kg" id="s-${exId}-${i}-kg" value="${prefill?prefill.kg:''}" min="0" max="500"
+      <div class="set-field-wrap" style="flex:2"><input class="set-field" type="text" inputmode="decimal" placeholder="kg" id="s-${exId}-${i}-kg" value="${prefill?prefill.kg:''}" min="0" max="500"
         oninput="clampNumInput(this,0,500);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'kg',this.value)"
         onchange="logSet('${exId}','work',${i},true)"><div class="set-field-lbl">kg</div></div>
       <div class="set-sep">×</div>
@@ -2119,7 +2310,7 @@ function buildWorkSetRow(exId,i,prefill=null){
         oninput="clampNumInput(this,1,100);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'reps',this.value)"
         onchange="logSet('${exId}','work',${i},true)"><div class="set-field-lbl">reps</div></div>
       <div class="set-sep" style="color:var(--g3)">@</div>
-      <div class="set-field-wrap" style="flex:1"><input class="set-field" type="number" inputmode="decimal" placeholder="RPE" id="s-${exId}-${i}-rpe" step="0.5" min="1" max="10"
+      <div class="set-field-wrap" style="flex:1"><input class="set-field" type="text" inputmode="decimal" placeholder="RPE" id="s-${exId}-${i}-rpe" step="0.5" min="1" max="10"
         oninput="clampNumInput(this,1,10);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'rpe',this.value)"
         onchange="logSet('${exId}','work',${i},true)" style="font-size:13px"><div class="set-field-lbl">RPE</div></div>
     </div>
@@ -2129,9 +2320,14 @@ function buildWorkSetRow(exId,i,prefill=null){
 }
 
 // Fix #8: clamp numerieke invoer binnen een logisch bereik (RPE max 10, reps-limiet etc.)
+// Belangrijk: bij type="text" velden (kg/RPE) komt een komma wél binnen (bij type="number"
+// werd die door de browser genegeerd, waardoor "57,5" als "575" gelezen werd en tegen de
+// max-clamp aanliep). Daarom hier eerst de comma in el.value zelf vervangen, zodat het
+// zichtbare veld meteen het correcte getal toont.
 function clampNumInput(el,min,max){
   if(el.value==='')return;
-  let v=parseFloat(el.value.replace(',','.'));
+  if(el.value.indexOf(',')!==-1) el.value = el.value.replace(',','.');
+  let v=parseFloat(el.value);
   if(isNaN(v))return;
   if(v<min)v=min;
   if(v>max)v=max;
@@ -2627,6 +2823,8 @@ async function refreshHome(){
   if(lh){
     const st=hrvSt(lh.hrv);
     const pill={g:'hrv-pill g',y:'hrv-pill y',o:'hrv-pill o',r:'hrv-pill r'};
+    const df=dagfactor(lh.hrv,lh.sleep,lh.cyclus_fase);
+    const dfKleur=df.factor>=1?'var(--green)':df.factor>=0.93?'var(--y)':'var(--red)';
     document.getElementById('home-hrv-card').innerHTML=`<div class="card"><div class="card-body" style="padding-top:10px">
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">
         ${lh.hrv?`<div class="stat-box"><div class="stat-val red">${lh.hrv}</div><div class="stat-unit">HRV ms</div></div>`:''}
@@ -2640,6 +2838,7 @@ async function refreshHome(){
         <div class="${pill.r}${st==='r'?' on':''}">&lt;14</div>
       </div>
       <div style="font-size:12px;color:var(--g4);font-weight:500">${st==='g'?'Optimaal':st==='y'?'Normaal':st==='o'?'Laag':'Kritiek'} — ${lh.date}${lh.edema?' · '+lh.edema:''}</div>
+      <div style="font-size:12px;font-weight:700;color:${dfKleur};margin-top:6px;border-top:1px solid var(--g2);padding-top:6px">Dagfactor ${df.factor} — ${dagfactorUitleg(lh.hrv,lh.sleep,lh.cyclus_fase,df)}</div>
     </div></div>`;
   }else{
     document.getElementById('home-hrv-card').innerHTML=`<div class="card"><div class="card-body" style="padding:16px;text-align:center"><p style="color:var(--g4);font-size:13px;margin-bottom:10px">Geen hersteldata</p><button class="btn btn-o btn-sm" onclick="openModal('m-hrv')" style="width:100%">Check-in invoeren</button></div></div>`;
@@ -2657,6 +2856,42 @@ async function refreshHome(){
 }
 
 function hrvSt(v){if(!v)return 'y';if(v>=24)return 'g';if(v>=18)return 'y';if(v>=14)return 'o';return 'r';}
+
+// ══════════════════════════════════════════════════════════
+// DAGFACTOR-MOTOR (v300)
+// Correctie op basis van HRV, slaap en (bij vrouwen) cyclusfase.
+// Puur informatief — past nergens automatisch een ingevuld gewicht aan.
+// Clip-principe zelfde als rekenmotor.py (MMP): dempt extreme uitschieters
+// als de drie factoren met elkaar vermenigvuldigd worden.
+// ══════════════════════════════════════════════════════════
+function hrvDagFactor(v){
+  const st=hrvSt(v);
+  return {g:1.05,y:1.00,o:0.93,r:0.85}[st];
+}
+function slaapDagFactor(uren){
+  if(!uren)return 1.00;
+  if(uren>=7)return 1.00;
+  if(uren>=6)return 0.97;
+  return 0.92;
+}
+function cyclusDagFactor(fase){
+  return {menstruatie:0.93,folliculair:1.03,ovulatie:1.00,luteaal:0.97}[fase] ?? 1.00;
+}
+function dagfactor(hrv,slaapUren,cyclusFase){
+  const hrvFactor=hrvDagFactor(hrv);
+  const slaapFactor=slaapDagFactor(slaapUren);
+  const cyclusFactor=cyclusDagFactor(cyclusFase);
+  const ruw=hrvFactor*slaapFactor*cyclusFactor;
+  const factor=Math.round(Math.max(0.85,Math.min(1.05,ruw))*100)/100;
+  return {factor,hrvFactor,slaapFactor,cyclusFactor};
+}
+function dagfactorUitleg(hrv,slaapUren,cyclusFase,df){
+  const parts=[];
+  if(hrv)parts.push(df.hrvFactor>=1?'HRV goed':df.hrvFactor>=0.93?'HRV laag':'HRV kritiek');
+  if(slaapUren)parts.push(df.slaapFactor>=1?'slaap voldoende':df.slaapFactor>=0.97?'slaap kort':'slaap te kort');
+  if(cyclusFase)parts.push('cyclus: '+cyclusFase);
+  return parts.join(', ')||'onvoldoende data';
+}
 
 // ══════════════════════════════════════════════════════════
 // HISTORY
@@ -2900,8 +3135,47 @@ async function refreshStatsScreen(){
   const elb=document.getElementById('stats-bc-list');if(elb)elb.innerHTML=bh;
   await refreshVolumeSpiergroep();
   await refreshMuscleRecovery();
+  await refreshMuscleRecoveryHeatmap();
   await refreshRepPRs();
   await refreshMuscleHeatmap();
+  await refreshRatioFactors();
+}
+
+// Krachtverhoudingen-kaart: verwachte 1RM per lift t.o.v. backsquat (anker),
+// op basis van fase1-standaardratio of fase2-geleerde ratio uit eigen data.
+async function refreshRatioFactors(){
+  const el=document.getElementById('stats-ratio-list');
+  if(!el)return;
+  const anchor='backsquat';
+  const lifts=Object.keys(LIFT_NORMS);
+  if(!lifts.includes(anchor)){el.innerHTML='';return;}
+
+  const data={};
+  for(const lift of lifts){
+    const ss=await sbGet('sessions','&exercise_id=eq.'+lift+'&weight=not.is.null&reps=not.is.null&order=date.desc&limit=30');
+    data[lift]=weightedEst1RM(ss);
+  }
+  const anchorEst=data[anchor];
+  if(!anchorEst.est){
+    el.innerHTML='<p style="color:var(--g4);font-size:13px;padding:4px 0">Log backsquat-sets om verhoudingen te berekenen</p>';
+    return;
+  }
+  let h='';
+  lifts.filter(l=>l!==anchor).forEach(lift=>{
+    const rf=ratioFactor(lift,anchor,data[lift],anchorEst);
+    if(rf.ratio==null)return;
+    const verwacht=Math.round(anchorEst.est*rf.ratio);
+    const werkelijk=data[lift].est?Math.round(data[lift].est):null;
+    const exObj=exercises.find(e=>e.id===lift);
+    const naam=exObj?exObj.name:lift;
+    const afwijking=werkelijk?Math.round((werkelijk-verwacht)/verwacht*100):null;
+    const kleur=rf.betrouwbaarheid==='Hoog'?'var(--green)':rf.betrouwbaarheid==='Middel'?'var(--y)':'var(--g4)';
+    h+=`<div class="stat-1rm-item">
+      <div class="stat-1rm-row"><span class="stat-1rm-name">${naam}</span><span class="stat-1rm-val">${werkelijk?werkelijk+' kg':'—'}</span><span class="stat-1rm-target">verwacht ${verwacht} kg</span></div>
+      <div class="stat-1rm-pct" style="color:${kleur}">${rf.bron} · betrouwbaarheid ${rf.betrouwbaarheid} (n=${rf.nA}/${rf.nB})${afwijking!=null?' · '+(afwijking>0?'+':'')+afwijking+'% t.o.v. verwacht':''}</div>
+    </div>`;
+  });
+  el.innerHTML=h||'<p style="color:var(--g4);font-size:13px;padding:4px 0">Onvoldoende data voor overige liften</p>';
 }
 
 // ══════════════════════════════════════════════════════════
@@ -2943,20 +3217,9 @@ async function refreshAdmin(){
     const exs=exercises.filter(e=>e.active!==false&&e.category===cat);
     if(!exs.length)return;
     h+=`<div style="font-size:10px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;padding:10px 0 4px;margin-top:4px">${catL[cat]}</div>`;
-    exs.forEach(ex=>{h+=`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)"><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${ex.name}</div><div style="font-size:11px;color:var(--g4)">${ex.type||'strength'}${ex.rest_seconds?' · rust '+ex.rest_seconds+'s':''}${ex.peak_goal?' · doel '+ex.peak_goal+'kg':''}${(ex.muscle_primary&&ex.muscle_primary.length)?' · '+ex.muscle_primary.join(', '):' · geen spieren'}</div></div><button onclick='openEditMuscles(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${JSON.stringify(ex.muscle_primary||[])},${JSON.stringify(ex.muscle_secondary||[])})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">💪</button><button onclick="openEditRest('${ex.id}','${ex.name}',${ex.rest_seconds||'null'})" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.rest_seconds?'⏱ '+ex.rest_seconds+'s':'⏱ Rust'}</button><button onclick="openEditPeak('${ex.id}','${ex.name}',${ex.peak_goal||'null'})" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.peak_goal?'🎯 '+ex.peak_goal+'kg':'🎯 Doel'}</button><button onclick="openEditYT('${ex.id}','${ex.name}','${ex.yt||''}','${ex.category}')" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.yt?'▶ YT':'+ YT'}</button><button data-id="${ex.id}" onclick="delEx(this.dataset.id)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button></div>`;});
+    exs.forEach(ex=>{h+=`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)"><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${ex.name}</div><div style="font-size:11px;color:var(--g4)">${ex.type||'strength'}${ex.rest_seconds?' · rust '+ex.rest_seconds+'s':''}${ex.peak_goal?' · doel '+ex.peak_goal+'kg':''}${ex.ratio_anchor?' · anker '+ex.ratio_anchor+' ×'+ex.ratio_factor:''}${(ex.muscle_primary&&ex.muscle_primary.length)?' · '+ex.muscle_primary.join(', '):' · geen spieren'}</div></div><button onclick='openEditMuscles(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${JSON.stringify(ex.muscle_primary||[])},${JSON.stringify(ex.muscle_secondary||[])})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">💪</button><button onclick="openEditRest('${ex.id}','${ex.name}',${ex.rest_seconds||'null'})" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.rest_seconds?'⏱ '+ex.rest_seconds+'s':'⏱ Rust'}</button><button onclick="openEditPeak('${ex.id}','${ex.name}',${ex.peak_goal||'null'})" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.peak_goal?'🎯 '+ex.peak_goal+'kg':'🎯 Doel'}</button><button onclick="openEditAnchor('${ex.id}','${ex.name}',${ex.ratio_anchor?`'${ex.ratio_anchor}'`:'null'},${ex.ratio_factor||'null'})" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.ratio_anchor?'🔗 '+ex.ratio_anchor:'🔗 Anker'}</button><button onclick="openEditYT('${ex.id}','${ex.name}','${ex.yt||''}','${ex.category}')" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.yt?'▶ YT':'+ YT'}</button><button data-id="${ex.id}" onclick="delEx(this.dataset.id)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button></div>`;});
   });
   document.getElementById('admin-exlist').innerHTML=h;
-  // BC history
-  const bc=await sbGet('body_comp','&order=date.desc&limit=5');
-  let bh='';
-  if(!bc.length)bh='<p style="color:var(--g4);font-size:13px">Nog geen metingen</p>';
-  else{
-    const l=bc[0];
-    bh=`<div class="bc-grid"><div class="bc-box"><div class="bc-val">${l.fat_pct||'—'}${l.fat_pct?'%':''}</div><div class="bc-lbl">Vet%</div></div><div class="bc-box"><div class="bc-val">${l.muscle_mass||'—'}${l.muscle_mass?' kg':''}</div><div class="bc-lbl">Spiermassa</div></div><div class="bc-box"><div class="bc-val">${l.bmr||'—'}</div><div class="bc-lbl">BMR kcal</div></div><div class="bc-box"><div class="bc-val">${l.visceral_fat||'—'}</div><div class="bc-lbl">Visceraal</div></div></div>`;
-    bh+=`<div style="font-size:12px;color:var(--g4);margin-bottom:8px">${l.date}${l.edema?' · oedeem: '+l.edema:''}</div>`;
-    bc.forEach(r=>{bh+=`<div class="lrow"><div class="ldate">${r.date}</div><div class="lval">${r.weight||'—'} kg</div><div class="lnote">${r.fat_pct||'—'}% · ${r.muscle_mass||'—'} kg</div></div>`;});
-  }
-  document.getElementById('admin-bc').innerHTML=bh;
   await refreshStats();
   renderRowerAdmin();
   renderTrainExAdmin();
@@ -3097,6 +3360,30 @@ async function savePeakGoal(){
     toast(val?'Peakdoel '+val+'kg opgeslagen':'Peakdoel gewist');
     refreshAdmin();
     refreshStatsScreen();
+  } else {
+    toast('Fout bij opslaan');
+  }
+}
+
+let curEditAnchorId=null;
+function openEditAnchor(exId,exName,anchorVal,factorVal){
+  curEditAnchorId=exId;
+  document.getElementById('edit-anchor-title').textContent=exName+' — Anker-koppeling';
+  document.getElementById('edit-anchor-lift').value=anchorVal||'';
+  document.getElementById('edit-anchor-factor').value=factorVal||'';
+  openModal('m-edit-anchor');
+}
+async function saveAnchor(){
+  const anchor=document.getElementById('edit-anchor-lift').value||null;
+  const rawFactor=document.getElementById('edit-anchor-factor').value.trim();
+  const factor=(anchor&&rawFactor!=='')?parseFloat(rawFactor):null;
+  const ok=await sbPatch('exercises','id=eq.'+curEditAnchorId,{ratio_anchor:anchor,ratio_factor:factor});
+  if(ok){
+    const ex=exercises.find(e=>e.id===curEditAnchorId);
+    if(ex){ex.ratio_anchor=anchor;ex.ratio_factor=factor;}
+    closeModal('m-edit-anchor');
+    toast(anchor?'Anker ingesteld: '+anchor+' ×'+factor:'Anker-koppeling gewist');
+    refreshAdmin();
   } else {
     toast('Fout bij opslaan');
   }
@@ -3433,16 +3720,62 @@ function mastersFactor(leeftijd){
   return 1.12;
 }
 
+// Bodyweight-relatieve literatuurnormen per lift — bron voor fase1-standaardratio's
+const LIFT_NORMS = {
+  backsquat: 1.5, bench: 1.0, frontsquat: 1.2, shoulderpress: 0.65,
+  hexabar: 1.75, hpc: 0.75, hps: 0.55
+};
 // Verwachte 1RM op basis van niveau en leeftijd
 function expected1RM(lift, gewicht, leeftijd, niveau){
   const niveauFactor = {beginner:0.5, gevorderd:0.75, ervaren:1.0, expert:1.2}[niveau] || 1.0;
   const mf = mastersFactor(leeftijd);
-  const norms = {
-    backsquat: 1.5, bench: 1.0, frontsquat: 1.2, shoulderpress: 0.65,
-    hexabar: 1.75, hpc: 0.75, hps: 0.55
-  };
-  const norm = norms[lift] || 1.0;
+  const norm = LIFT_NORMS[lift] || 1.0;
   return Math.round(gewicht * norm * niveauFactor * mf);
+}
+
+// ══════════════════════════════════════════════════════════
+// RATIOFACTOR-MOTOR (v299)
+// Fase1: standaardratio uit LIFT_NORMS (bodyweight-relatieve literatuurnormen)
+// Fase2: geleerd uit eigen data zodra n≥RATIO_MIN_OBS per lift (decay-gewogen 1RM)
+// Zelfde tweetraps-principe als revisiefactor.py (MMP-project): vaste standaardwaarde
+// tot er genoeg eigen observaties zijn, dan overschakelen, met bron-transparantie.
+// ══════════════════════════════════════════════════════════
+const RATIO_MIN_OBS = 5;    // drempel: vanaf hier telt fase2 (eigen data) mee per lift
+const RATIO_DECAY = 0.95;   // decay per week oud, zelfde principe als revisiefactor.py
+
+// Decay-gewogen 1RM-schatting uit een lijst sessies van 1 lift ({date,weight,reps})
+function weightedEst1RM(sessions, refDate){
+  const ref = refDate ? new Date(refDate) : new Date();
+  let sumW=0, sumWV=0, n=0;
+  (sessions||[]).forEach(s=>{
+    if(!s.weight||!s.reps)return;
+    const est = s.reps===1 ? s.weight : s.weight*(1+s.reps/30);
+    const days = Math.max(0,(ref - new Date(s.date))/86400000);
+    const weken = days/7;
+    const w = Math.pow(RATIO_DECAY, weken);
+    sumW += w; sumWV += w*est; n++;
+  });
+  if(!n) return {est:null, n:0};
+  return {est: sumWV/sumW, n};
+}
+
+function ratioConfidence(nA,nB){
+  const n = Math.min(nA,nB);
+  if(n < RATIO_MIN_OBS) return 'Laag';
+  if(n < RATIO_MIN_OBS*2) return 'Middel';
+  return 'Hoog';
+}
+
+// Kernfunctie: ratio tussen twee liften. estA/estB = output van weightedEst1RM.
+// Retourneert null-ratio als geen van beide bronnen beschikbaar is.
+function ratioFactor(liftA, liftB, estA, estB){
+  const normA = LIFT_NORMS[liftA], normB = LIFT_NORMS[liftB];
+  const fase1Ratio = (normA!=null && normB!=null) ? normA/normB : null;
+  const genoegData = estA && estB && estA.n>=RATIO_MIN_OBS && estB.n>=RATIO_MIN_OBS && estA.est && estB.est;
+  if(genoegData){
+    return {ratio: estA.est/estB.est, bron:'eigen data', nA:estA.n, nB:estB.n, betrouwbaarheid: ratioConfidence(estA.n,estB.n)};
+  }
+  return {ratio: fase1Ratio, bron:'algemene richtlijn', nA:estA?estA.n:0, nB:estB?estB.n:0, betrouwbaarheid:'Laag'};
 }
 
 async function refreshProfiel(){
@@ -4195,6 +4528,89 @@ async function refreshMuscleRecovery(){
     </div>`;
   }).join('');
   el.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════
+// SPIERHERSTEL HEATMAP (Anatomy Engine) — zelfde visualisatie als
+// Spierbelasting, maar op basis van herstel% i.p.v. sets-aantal.
+// Hergebruikt getMuscleSvgFor/getExerciseMuscles/muscleNamesToSvgIds/
+// computeMuscleRecoveryPct — de bestaande lijst-kaart hierboven
+// blijft ongewijzigd, dit is een aanvullende visualisatie.
+// ══════════════════════════════════════════════════════════
+const SVG_ID_RECOVERY_HOURS = (()=>{
+  // Volgorde: eerst de aggregaten (Benen/Armen/Achterste schouder), dan de
+  // specifieke groepen — specifiek overschrijft aggregaat bij overlap (bv.
+  // Schouders 60u wint van Achterste schouder 48u op dezelfde deltoid-svg-ids).
+  const order = ['Benen','Armen','Achterste schouder','Quadriceps','Hamstrings','Billen','Rug','Borst','Schouders','Biceps','Triceps','Core','Grip','Traps'];
+  const map = {};
+  order.forEach(name=>{
+    const hours = MUSCLE_RECOVERY_HOURS[name];
+    (MUSCLE_NAME_TO_SVG_IDS[name]||[]).forEach(id=>{ map[id] = hours; });
+  });
+  return map;
+})();
+
+let recoveryHeatmapView = 'front'; // eigen view-state, los van muscleHeatmapView (Spierbelasting)
+
+function renderMuscleRecoveryHeatmap(containerId, pctBySvgId){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  const svgText = getMuscleSvgFor(recoveryHeatmapView);
+  const key = recoveryHeatmapView + '_' + (atleet && atleet.geslacht);
+  if(el.dataset.svgKey !== key){
+    el.innerHTML = svgText;
+    el.dataset.svgKey = key;
+  }
+  const svg = el.querySelector('svg');
+  if(!svg) return;
+  svg.querySelectorAll('#muscles > g').forEach(g=>{
+    const path = g.querySelector('path');
+    // geen trainingsdata voor deze svg-id = volledig hersteld (zelfde aanname als lijst-kaart)
+    if(path){ path.style.fill = 'var(--green)'; path.style.opacity = '1'; }
+  });
+  Object.entries(pctBySvgId).forEach(([svgId, pct])=>{
+    const g = svg.querySelector('#'+CSS.escape(svgId));
+    if(!g) return;
+    const path = g.querySelector('path');
+    if(!path) return;
+    // zelfde drempels als de Spierherstel-lijst hierboven (var(--green)/var(--y)/var(--red))
+    const color = pct>=85 ? 'var(--green)' : pct>=50 ? 'var(--y)' : 'var(--red)';
+    path.style.fill = color;
+    path.style.opacity = '1';
+  });
+}
+
+function toggleMuscleRecoveryHeatmapView(){
+  recoveryHeatmapView = recoveryHeatmapView === 'front' ? 'back' : 'front';
+  const btn = document.getElementById('recovery-heatmap-toggle-btn');
+  if(btn) btn.textContent = recoveryHeatmapView === 'front' ? 'Achterkant' : 'Voorkant';
+  refreshMuscleRecoveryHeatmap();
+}
+
+async function refreshMuscleRecoveryHeatmap(){
+  const el = document.getElementById('recovery-heatmap-container');
+  if(!el) return;
+  const twoWeeksAgo = new Date();
+  twoWeeksAgo.setDate(twoWeeksAgo.getDate()-14);
+  const dateStr = twoWeeksAgo.toISOString().split('T')[0];
+  const ss = await sbGet('sessions','&date=gte.'+dateStr+'&weight=not.is.null&sets=not.is.null&reps=not.is.null&order=date.desc');
+  const lastHitBySvgId = {};
+  ss.forEach(s=>{
+    const names = getExerciseMuscles(s.exercise_id);
+    const svgIds = muscleNamesToSvgIds(names);
+    svgIds.forEach(id=>{
+      if(!lastHitBySvgId[id]) lastHitBySvgId[id] = {date:s.date, rpe:s.rpe};
+    });
+  });
+  const now = new Date();
+  const pctBySvgId = {};
+  Object.keys(SVG_ID_RECOVERY_HOURS).forEach(id=>{
+    const hit = lastHitBySvgId[id];
+    if(!hit){ pctBySvgId[id] = 100; return; }
+    const hoursSince = (now - new Date(hit.date)) / 3600000;
+    pctBySvgId[id] = computeMuscleRecoveryPct(hoursSince, SVG_ID_RECOVERY_HOURS[id], hit.rpe);
+  });
+  renderMuscleRecoveryHeatmap('recovery-heatmap-container', pctBySvgId);
 }
 
 // ══════════════════════════════════════════════════════════

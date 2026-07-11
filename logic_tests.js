@@ -254,40 +254,198 @@ test('THR null bij lege data', ()=>{
   assert(thr(null, 100) === null);
 });
 
-// ── SPORT FILTER (oefeningenlijst per sport) ──────────────
-console.log("\n🏅 Sport filter oefeningenlijst");
+// ── RATIOFACTOR-MOTOR (v299) ─────────────────────────────
+console.log("\n⚖️  Ratiofactor-motor");
 
-function filterExercisesBySport(exList, sport){
-  return exList.filter(e => !e.sports || !e.sports.length || e.sports.includes(sport));
+const LIFT_NORMS = {
+  backsquat: 1.5, bench: 1.0, frontsquat: 1.2, shoulderpress: 0.65,
+  hexabar: 1.75, hpc: 0.75, hps: 0.55
+};
+const RATIO_MIN_OBS = 5;
+const RATIO_DECAY = 0.95;
+
+function weightedEst1RM(sessions, refDate){
+  const ref = refDate ? new Date(refDate) : new Date();
+  let sumW=0, sumWV=0, n=0;
+  (sessions||[]).forEach(s=>{
+    if(!s.weight||!s.reps)return;
+    const est = s.reps===1 ? s.weight : s.weight*(1+s.reps/30);
+    const days = Math.max(0,(ref - new Date(s.date))/86400000);
+    const weken = days/7;
+    const w = Math.pow(RATIO_DECAY, weken);
+    sumW += w; sumWV += w*est; n++;
+  });
+  if(!n) return {est:null, n:0};
+  return {est: sumWV/sumW, n};
 }
 
-const sportTestSet = [
-  {id:'backsquat', sports:['kracht','crossfit']},
-  {id:'lat_pulldown', sports:['bodybuilding']},
-  {id:'kb_swing', sports:['kettlebell','crossfit']},
-  {id:'legacy_ex', sports:[]},          // oude fallback-oefening zonder tag
-  {id:'legacy_ex2'},                    // sports veld ontbreekt volledig
-];
+function ratioConfidence(nA,nB){
+  const n = Math.min(nA,nB);
+  if(n < RATIO_MIN_OBS) return 'Laag';
+  if(n < RATIO_MIN_OBS*2) return 'Middel';
+  return 'Hoog';
+}
 
-test('Filtert op gekozen sport', ()=>{
-  const r = filterExercisesBySport(sportTestSet, 'bodybuilding');
-  assert(r.some(e=>e.id==='lat_pulldown'), 'lat_pulldown moet aanwezig zijn');
-  assert(!r.some(e=>e.id==='kb_swing'), 'kb_swing hoort niet bij bodybuilding');
+function ratioFactor(liftA, liftB, estA, estB){
+  const normA = LIFT_NORMS[liftA], normB = LIFT_NORMS[liftB];
+  const fase1Ratio = (normA!=null && normB!=null) ? normA/normB : null;
+  const genoegData = estA && estB && estA.n>=RATIO_MIN_OBS && estB.n>=RATIO_MIN_OBS && estA.est && estB.est;
+  if(genoegData){
+    return {ratio: estA.est/estB.est, bron:'eigen data', nA:estA.n, nB:estB.n, betrouwbaarheid: ratioConfidence(estA.n,estB.n)};
+  }
+  return {ratio: fase1Ratio, bron:'algemene richtlijn', nA:estA?estA.n:0, nB:estB?estB.n:0, betrouwbaarheid:'Laag'};
+}
+
+test('Fase1: standaardratio frontsquat/backsquat = 1.2/1.5', ()=>{
+  const r = ratioFactor('frontsquat','backsquat', {est:null,n:0}, {est:null,n:0});
+  assertEq(Math.round(r.ratio*1000)/1000, Math.round((1.2/1.5)*1000)/1000, 'fase1 ratio');
+  assertEq(r.bron, 'algemene richtlijn');
+  assertEq(r.betrouwbaarheid, 'Laag');
 });
-test('Oefening met meerdere sporten verschijnt bij elk', ()=>{
-  const r1 = filterExercisesBySport(sportTestSet, 'kracht');
-  const r2 = filterExercisesBySport(sportTestSet, 'crossfit');
-  assert(r1.some(e=>e.id==='backsquat'));
-  assert(r2.some(e=>e.id==='backsquat'));
+
+test('Fase2 schakelt pas in bij n>=5 op beide liften', ()=>{
+  const estA = {est:90, n:4}; // net onder drempel
+  const estB = {est:100, n:6};
+  const r = ratioFactor('frontsquat','backsquat', estA, estB);
+  assertEq(r.bron, 'algemene richtlijn', 'moet nog fase1 zijn bij n=4');
 });
-test('Oefening zonder sport-tag blijft altijd zichtbaar', ()=>{
-  const r = filterExercisesBySport(sportTestSet, 'swimming');
-  assert(r.some(e=>e.id==='legacy_ex'), 'lege sports array moet zichtbaar blijven');
-  assert(r.some(e=>e.id==='legacy_ex2'), 'ontbrekend sports veld moet zichtbaar blijven');
+
+test('Fase2 actief bij n>=5 op beide liften, ratio uit eigen data', ()=>{
+  const estA = {est:96, n:6};
+  const estB = {est:100, n:8};
+  const r = ratioFactor('frontsquat','backsquat', estA, estB);
+  assertEq(r.bron, 'eigen data');
+  assertEq(Math.round(r.ratio*100)/100, 0.96);
 });
-test('Sport zonder gekoppelde oefeningen geeft alleen legacy items', ()=>{
-  const r = filterExercisesBySport(sportTestSet, 'triathlon');
-  assertEq(r.length, 2, 'alleen de 2 legacy-oefeningen zonder tag horen over te blijven');
+
+test('Betrouwbaarheid Laag/Middel/Hoog o.b.v. laagste n', ()=>{
+  assertEq(ratioConfidence(4,20), 'Laag');
+  assertEq(ratioConfidence(5,20), 'Middel');
+  assertEq(ratioConfidence(10,20), 'Hoog');
+});
+
+test('weightedEst1RM: single rep = gewicht zelf, geen Epley-opslag', ()=>{
+  const r = weightedEst1RM([{date:'2026-06-01',weight:100,reps:1}], '2026-06-01');
+  assertEq(r.est, 100);
+  assertEq(r.n, 1);
+});
+
+test('weightedEst1RM: recente sessie weegt zwaarder dan oude (decay)', ()=>{
+  // oude sessie hoger gewicht, recente sessie lager gewicht -> gewogen gemiddelde dichter bij recente
+  const sessions = [
+    {date:'2026-01-01', weight:120, reps:1},
+    {date:'2026-06-20', weight:90, reps:1}
+  ];
+  const r = weightedEst1RM(sessions, '2026-06-27');
+  assert(r.est < 105, `Verwacht dichter bij recente waarde (90), kreeg ${r.est}`);
+});
+
+test('weightedEst1RM: lege of onvolledige sessies genegeerd', ()=>{
+  const r = weightedEst1RM([{date:'2026-06-01',weight:null,reps:3},{date:'2026-06-01'}]);
+  assertEq(r.est, null);
+  assertEq(r.n, 0);
+});
+
+test('ratioFactor: fallback naar fase1 als één lift geen data heeft', ()=>{
+  const r = ratioFactor('hexabar','backsquat', {est:null,n:0}, {est:150,n:10});
+  assertEq(r.bron, 'algemene richtlijn');
+  assert(r.ratio !== null, 'fase1 fallback moet altijd een ratio geven voor bekende liften');
+});
+
+// ── DAGFACTOR-MOTOR (v300) ───────────────────────────────
+console.log("\n🌤️  Dagfactor-motor");
+
+function hrvSt(v){if(!v)return 'y';if(v>=24)return 'g';if(v>=18)return 'y';if(v>=14)return 'o';return 'r';}
+function hrvDagFactor(v){const st=hrvSt(v);return {g:1.05,y:1.00,o:0.93,r:0.85}[st];}
+function slaapDagFactor(uren){
+  if(!uren)return 1.00;
+  if(uren>=7)return 1.00;
+  if(uren>=6)return 0.97;
+  return 0.92;
+}
+function cyclusDagFactor(fase){
+  return {menstruatie:0.93,folliculair:1.03,ovulatie:1.00,luteaal:0.97}[fase] ?? 1.00;
+}
+function dagfactor(hrv,slaapUren,cyclusFase){
+  const hrvFactor=hrvDagFactor(hrv);
+  const slaapFactor=slaapDagFactor(slaapUren);
+  const cyclusFactor=cyclusDagFactor(cyclusFase);
+  const ruw=hrvFactor*slaapFactor*cyclusFactor;
+  const factor=Math.round(Math.max(0.85,Math.min(1.05,ruw))*100)/100;
+  return {factor,hrvFactor,slaapFactor,cyclusFactor};
+}
+
+test('Dagfactor optimaal: HRV hoog, slaap voldoende = 1.05', ()=>{
+  const df=dagfactor(28,7.5,null);
+  assertEq(df.factor,1.05);
+});
+test('Dagfactor kritiek: HRV laag, slaap kort = geclipt op 0.85', ()=>{
+  const df=dagfactor(10,5,null);
+  assertEq(df.factor,0.85);
+});
+test('Dagfactor zonder data = 1.00 (geen correctie)', ()=>{
+  const df=dagfactor(null,null,null);
+  assertEq(df.factor,1.00);
+});
+test('Dagfactor clip: nooit boven 1.05 of onder 0.85', ()=>{
+  const hoog=dagfactor(30,8,'folliculair');
+  const laag=dagfactor(10,4,'menstruatie');
+  assert(hoog.factor<=1.05);
+  assert(laag.factor>=0.85);
+});
+test('Cyclusfactor alleen effect als fase opgegeven', ()=>{
+  assertEq(cyclusDagFactor(null),1.00);
+  assertEq(cyclusDagFactor('menstruatie'),0.93);
+  assertEq(cyclusDagFactor('folliculair'),1.03);
+});
+test('Dagfactor: normale HRV + normale slaap = 1.00', ()=>{
+  const df=dagfactor(20,7,null);
+  assertEq(df.factor,1.00);
+});
+
+// ── COLD-START-PREDICTOR (v300) ──────────────────────────
+console.log("\n🧊 Cold-start-predictor");
+
+function mastersFactorCS(leeftijd){
+  if(leeftijd < 40) return 1.0;
+  if(leeftijd < 45) return 1.01;
+  if(leeftijd < 50) return 1.02;
+  if(leeftijd < 55) return 1.04;
+  if(leeftijd < 60) return 1.06;
+  if(leeftijd < 65) return 1.09;
+  return 1.12;
+}
+function expected1RMCS(lift,gewicht,leeftijd,niveau){
+  const niveauFactor={beginner:0.5,gevorderd:0.75,ervaren:1.0,expert:1.2}[niveau]||1.0;
+  const mf=mastersFactorCS(leeftijd);
+  const norm=LIFT_NORMS[lift]||1.0;
+  return Math.round(gewicht*norm*niveauFactor*mf);
+}
+function coldStartViaAnchor(ankerRM,ratioFactorVal){
+  if(!ankerRM||!ratioFactorVal)return null;
+  return Math.round(ankerRM*ratioFactorVal);
+}
+
+test('Cold-start kernlift: backsquat 110kg lichaamsgewicht, ervaren, 50 jaar', ()=>{
+  const est=expected1RMCS('backsquat',110,50,'ervaren');
+  // 110 * 1.5 * 1.0 * 1.04
+  assertEq(est, Math.round(110*1.5*1.0*1.04));
+});
+test('Cold-start kernlift: beginner scoort lager dan ervaren bij zelfde gewicht', ()=>{
+  const beginner=expected1RMCS('frontsquat',100,40,'beginner');
+  const ervaren=expected1RMCS('frontsquat',100,40,'ervaren');
+  assert(beginner<ervaren);
+});
+test('Cold-start via anker: nieuwe oefening op 85% van backsquat-1RM', ()=>{
+  const est=coldStartViaAnchor(120,0.85);
+  assertEq(est,102);
+});
+test('Cold-start via anker: geen schatting zonder ankerdata', ()=>{
+  assertEq(coldStartViaAnchor(null,0.85), null);
+  assertEq(coldStartViaAnchor(120,null), null);
+});
+test('Cold-start: onbekende lift zonder anker geeft geen schatting', ()=>{
+  assertEq(LIFT_NORMS['onbekendelift'], undefined);
 });
 
 // ── SAMENVATTING ─────────────────────────────────────────

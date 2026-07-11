@@ -888,8 +888,11 @@ canvas{width:100%;height:100%}
         <option value="bikeerg">Bike Erg</option>
         <option value="skierg">Ski Erg</option>
         <option value="assaultbike">Assault Bike</option>
+        <option value="crosstrainer">Crosstrainer</option>
+        <option value="assaultrunner">Assault Runner</option>
         <option value="stairmaster">Stairmaster</option>
         <option value="running">Hardlopen</option>
+        <option value="cycling">Wielrennen</option>
         <option value="swimming">Zwemmen</option>
       </select></div>
       <div class="irow" id="los-new-wodfmt-row" style="display:none"><label class="ilbl">WOD formaat</label><select class="inp" id="los-ex-new-wodfmt">
@@ -897,6 +900,8 @@ canvas{width:100%;height:100%}
         <option value="amrap">AMRAP</option>
         <option value="emom">EMOM</option>
       </select></div>
+      <div class="irow"><label class="ilbl">Spiergroepen — primair *</label><div id="los-new-muscles-primary" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
+      <div class="irow"><label class="ilbl">Spiergroepen — secundair</label><div id="los-new-muscles-secondary" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
     </div>
     <div id="los-body"></div>
     <div style="display:flex;gap:8px;margin-top:14px">
@@ -955,8 +960,11 @@ canvas{width:100%;height:100%}
       <option value="bikeerg">Bike Erg</option>
       <option value="skierg">Ski Erg</option>
       <option value="assaultbike">Assault Bike</option>
+      <option value="crosstrainer">Crosstrainer</option>
+      <option value="assaultrunner">Assault Runner</option>
       <option value="stairmaster">Stairmaster</option>
       <option value="running">Hardlopen</option>
+      <option value="cycling">Wielrennen</option>
       <option value="swimming">Zwemmen</option>
     </select></div>
     <div class="irow" id="nx-wodfmt-row" style="display:none"><label class="ilbl">WOD formaat</label><select class="inp" id="nx-wodfmt">
@@ -966,6 +974,8 @@ canvas{width:100%;height:100%}
     </select></div>
     <div class="irow"><label class="ilbl">YouTube</label><input class="inp" type="text" id="nx-yt" placeholder="bijv. bEv6CCg2BC8 of https://youtu.be/..." oninput="previewYT('nx-yt','nx-yt-preview')"></div>
     <div id="nx-yt-preview" style="margin-bottom:8px"></div>
+    <div class="irow"><label class="ilbl">Spiergroepen — primair *</label><div id="nx-muscles-primary" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
+    <div class="irow"><label class="ilbl">Spiergroepen — secundair</label><div id="nx-muscles-secondary" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-newex')">Annuleer</button>
       <button class="btn btn-r" style="flex:2" onclick="saveNewEx()">Toevoegen</button>
@@ -1274,7 +1284,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.0.1';
+const APP_VER = 'v3.0.2';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -1293,58 +1303,133 @@ function peakGoalFor(exId){
   return PEAK_FALLBACK[exId]||null;
 }
 
-// Cardio type definities
+// Cardio type definities — RPE overal aanwezig (nodig voor spierherstel-weging,
+// zelfde rpeMultiplier() als kracht). Nieuwe apparaten toevoegen = alleen hier
+// een entry toevoegen; logging/opslag/spierherstel pakken dit automatisch op
+// via CARDIO_TYPES-dispatch (buildCardioBody/logCardio/cardioDataToRow).
 const CARDIO_TYPES = {
   rowing: {
     naam:'Roeien', unit:'m', splitUnit:'/500m',
-    fields:['dist','time','split','watt','stroke','drag'],
-    labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /500m',watt:'Watt',stroke:'Slag/min',drag:'Drag factor'},
+    fields:['dist','time','split','watt','stroke','drag','rpe'],
+    labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /500m',watt:'Watt',stroke:'Slag/min',drag:'Drag factor',rpe:'RPE'},
     splits:true, splitDist:250, splitTotal:1000,
     machines:'rowers'
   },
   bikeerg: {
     naam:'Bike Erg', unit:'m', splitUnit:'/500m',
-    fields:['dist','time','split','watt','rpm','resistance'],
-    labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /500m',watt:'Watt',rpm:'RPM',resistance:'Weerstand'},
+    fields:['dist','time','split','watt','rpm','resistance','rpe'],
+    labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /500m',watt:'Watt',rpm:'RPM',resistance:'Weerstand',rpe:'RPE'},
     splits:true, splitDist:250, splitTotal:1000,
     machines:'bikeerg_machines'
   },
   skierg: {
     naam:'Ski Erg', unit:'m', splitUnit:'/500m',
-    fields:['dist','time','split','watt','stroke'],
-    labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /500m',watt:'Watt',stroke:'Slag/min'},
+    fields:['dist','time','split','watt','stroke','rpe'],
+    labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /500m',watt:'Watt',stroke:'Slag/min',rpe:'RPE'},
     splits:true, splitDist:250, splitTotal:1000,
     machines:'skierg_machines'
   },
   assaultbike: {
     naam:'Assault Bike', unit:'cal', splitUnit:'/min',
-    fields:['cals','time','watt','rpm'],
-    labels:{cals:'Calorieën',time:'Totaal tijd',watt:'Watt gem.',rpm:'RPM gem.'},
+    fields:['cals','time','watt','rpm','rpe'],
+    labels:{cals:'Calorieën',time:'Totaal tijd',watt:'Watt gem.',rpm:'RPM gem.',rpe:'RPE'},
     splits:false,
     machines:'assault_machines'
   },
   running: {
     naam:'Hardlopen', unit:'km', splitUnit:'/km',
-    fields:['dist_km','time','pace','hr'],
-    labels:{dist_km:'Afstand (km)',time:'Totaal tijd',pace:'Pace /km',hr:'Hartslag gem.'},
+    fields:['dist_km','time','pace','hr','rpe'],
+    labels:{dist_km:'Afstand (km)',time:'Totaal tijd',pace:'Pace /km',hr:'Hartslag gem.',rpe:'RPE'},
     splits:true, splitDist:1, splitTotal:5,
     machines:null
   },
   swimming: {
     naam:'Zwemmen', unit:'m', splitUnit:'/100m',
-    fields:['dist','time','pace','stroke'],
-    labels:{dist:'Afstand (m)',time:'Totaal tijd',pace:'Pace /100m',stroke:'Slagtype'},
+    fields:['dist','time','pace','stroke','rpe'],
+    labels:{dist:'Afstand (m)',time:'Totaal tijd',pace:'Pace /100m',stroke:'Slagtype',rpe:'RPE'},
     splits:true, splitDist:100, splitTotal:400,
     machines:null
   },
   stairmaster: {
     naam:'Stairmaster', unit:'min', splitUnit:null,
-    fields:['time','cals','floors'],
-    labels:{time:'Totaal tijd',cals:'Calorieën',floors:'Floors'},
+    fields:['time','cals','floors','rpe'],
+    labels:{time:'Totaal tijd',cals:'Calorieën',floors:'Floors',rpe:'RPE'},
     splits:false,
+    machines:null
+  },
+  cycling: {
+    naam:'Wielrennen', unit:'km', splitUnit:'/km',
+    fields:['dist_km','time','pace','watt','hr','rpe'],
+    labels:{dist_km:'Afstand (km)',time:'Totaal tijd',pace:'Tempo /km',watt:'Watt gem.',hr:'Hartslag gem.',rpe:'RPE'},
+    splits:true, splitDist:1, splitTotal:5,
+    machines:null
+  },
+  crosstrainer: {
+    naam:'Crosstrainer', unit:'min', splitUnit:null,
+    fields:['time','cals','resistance','rpm','hr','rpe'],
+    labels:{time:'Totaal tijd',cals:'Calorieën',resistance:'Weerstand',rpm:'RPM',hr:'Hartslag gem.',rpe:'RPE'},
+    splits:false,
+    machines:null
+  },
+  assaultrunner: {
+    naam:'Assault Runner', unit:'m', splitUnit:'/250m',
+    fields:['dist','time','split','cals','hr','rpe'],
+    labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /250m',cals:'Calorieën',hr:'Hartslag gem.',rpe:'RPE'},
+    splits:true, splitDist:250, splitTotal:1000,
     machines:null
   }
 };
+
+// Eén centrale, data-driven mapper van cardio-invoer (per CARDIO_TYPES-veldenset)
+// naar een 'sessions'-rij. Gebruikt door zowel saveLosOefening() als finishSession(),
+// zodat een nieuw cardiotype hier één keer wordt gedefinieerd en overal werkt —
+// geen aparte per-flow hardcoding meer per apparaat.
+function cardioDataToRow(cardioType, d){
+  const row={};
+  if(cardioType==='running'||cardioType==='cycling'){
+    const km=parseFloat(d.dist_km)||null;
+    row.distance=km?Math.round(km*1000):null;
+    row.time_str=d.time||null;
+    row.watt=parseFloat(d.watt)||null;
+    row.hr_avg=parseInt(d.hr)||null;
+  } else if(cardioType==='swimming'){
+    const dist=parseInt(d.dist)||null;
+    const sec=parseTimeToSec(d.time);
+    row.distance=dist;
+    row.time_str=d.time||null;
+    row.pace_sec=(sec&&dist)?Math.round((sec/dist)*100):null;
+    row.stroke_type=d.stroke||null;
+  } else if(cardioType==='stairmaster'){
+    row.time_str=d.time||null;
+    row.calories=parseFloat(d.cals)||null;
+    if(d.floors)row.extraNote=d.floors+' floors';
+  } else if(cardioType==='crosstrainer'){
+    row.time_str=d.time||null;
+    row.calories=parseFloat(d.cals)||null;
+    row.stroke_rate=parseInt(d.rpm)||null;
+    if(d.resistance)row.extraNote='weerstand '+d.resistance;
+  } else if(cardioType==='assaultbike'){
+    row.time_str=d.time||null;
+    row.calories=parseFloat(d.cals)||null;
+    row.watt=parseFloat(d.watt)||null;
+    row.stroke_rate=parseInt(d.rpm)||null;
+  } else if(cardioType==='assaultrunner'){
+    row.distance=parseInt(d.dist)||null;
+    row.time_str=d.time||null;
+    row.calories=parseFloat(d.cals)||null;
+    row.hr_avg=parseInt(d.hr)||null;
+    if(d.split)row.extraNote='split:'+d.split;
+  } else {
+    // rowing / bikeerg / skierg
+    row.distance=parseInt(d.dist)||null;
+    row.time_str=d.time||null;
+    row.watt=parseFloat(d.watt)||null;
+    row.stroke_rate=parseInt(d.stroke||d.rpm)||null;
+    if(d.split)row.extraNote=(d.machine?d.machine+' ':'')+'split:'+d.split;
+  }
+  row.rpe=parseFloat(d.rpe)||null;
+  return row;
+}
 
 // TRAIN_CFG_SEED: oorspronkelijke hardcoded schema's, nu alleen gebruikt als
 // eenmalige seed-data voor de 'training_exercises'-koppeltabel in Supabase.
@@ -1545,6 +1630,10 @@ function openModal(id){
     const cr=document.getElementById('i-cyclus-row');
     if(cr)cr.style.display=(atleet.geslacht==='vrouw')?'flex':'none';
   }
+  if(id==='m-newex'){
+    renderMuscleChecks('nx-muscles-primary', [], 'primary');
+    renderMuscleChecks('nx-muscles-secondary', [], 'secondary');
+  }
   document.getElementById(id).classList.add('open');
 }
 function closeModal(id){document.getElementById(id).classList.remove('open');}
@@ -1734,6 +1823,8 @@ function selectExPickerNew(){
   document.getElementById('los-ex-trigger-lbl').textContent='+ Eigen oefening…';
   document.getElementById('los-ex-trigger-lbl').className='';
   document.getElementById('los-new-fields').style.display='';
+  renderMuscleChecks('los-new-muscles-primary', [], 'primary');
+  renderMuscleChecks('los-new-muscles-secondary', [], 'secondary');
   closeModal('m-ex-picker');
   document.getElementById('los-ex-new').focus();
   renderLosBody();
@@ -1784,7 +1875,10 @@ async function saveLosOefening(){
     if(existing){
       ex=existing; exId=id;
     } else {
-      ex={id,name:naam,category:'Overig',type,wod_format:wodFormat,sort_order:99,active:true,pr:null,yt:null,rest_seconds:null,muscle_primary:[],muscle_secondary:[]};
+      const primary=Array.from(document.querySelectorAll('#los-new-muscles-primary input:checked')).map(i=>i.value);
+      const secondary=Array.from(document.querySelectorAll('#los-new-muscles-secondary input:checked')).map(i=>i.value);
+      if(!primary.length){toast('Kies minimaal één primaire spiergroep');return;}
+      ex={id,name:naam,category:'Overig',type,wod_format:wodFormat,sort_order:99,active:true,pr:null,yt:null,rest_seconds:null,muscle_primary:primary,muscle_secondary:secondary};
       const ok=await sbPost('exercises',ex);
       if(!ok){toast('Fout bij aanmaken oefening');return;}
       exercises.push(ex);
@@ -1802,32 +1896,12 @@ async function saveLosOefening(){
   const val=f=>document.getElementById(domId+'-'+f)?.value||'';
 
   if(cardioTypeKeys.includes(ex.type)){
-    if(ex.type==='running'){
-      const km=parseFloat(val('dist_km'))||null;
-      row.distance=km?Math.round(km*1000):null;
-      row.time_str=val('time')||null;
-      row.hr_avg=parseInt(val('hr'))||null;
-    } else if(ex.type==='swimming'){
-      const dist=parseInt(val('dist'))||null;
-      const sec=parseTimeToSec(val('time'));
-      row.distance=dist;
-      row.time_str=val('time')||null;
-      row.pace_sec=(sec&&dist)?Math.round((sec/dist)*100):null;
-      row.stroke_type=val('stroke')||null;
-    } else if(ex.type==='stairmaster'){
-      row.time_str=val('time')||null;
-      row.calories=parseFloat(val('cals'))||null;
-      row.note='Losse oefening'+(val('floors')?' · '+val('floors')+' floors':'');
-    } else if(ex.type==='assaultbike'){
-      row.time_str=val('time')||null;
-      row.calories=parseFloat(val('cals'))||null;
-      row.watt=parseFloat(val('watt'))||null;
-    } else {
-      row.distance=parseInt(val('dist'))||null;
-      row.time_str=val('time')||null;
-      row.watt=parseFloat(val('watt'))||null;
-      row.stroke_rate=parseInt(val('stroke')||val('rpm'))||null;
-    }
+    const d={machine:localStorage.getItem('sel_'+ex.type)||''};
+    CARDIO_TYPES[ex.type].fields.forEach(f=>{d[f]=val(f);});
+    const cRow=cardioDataToRow(ex.type,d);
+    const extraNote=cRow.extraNote;delete cRow.extraNote;
+    Object.assign(row,cRow);
+    row.note='Losse oefening'+(extraNote?' · '+extraNote:'');
   } else if(ex.type==='wod'){
     const fmtEl=document.getElementById(domId+'-wodfmt');
     const fmt=fmtEl?fmtEl.value:(ex.wod_format||'for_time');
@@ -1995,7 +2069,7 @@ async function renderTrainScreen(t){
 
   for(const ex of list){
     // Load previous session data
-    const prev=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc&limit=1');
+    const prev=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc,created_at.desc&limit=1');
     const prevS=prev[0];
     if(ex.type==='strength'||!ex.type) await loadRepPRs(ex.id);
     const eqList=await loadEquipment(ex.id);
@@ -2143,7 +2217,7 @@ function acceptEpley(exId,est){
 // 3. Geen van beide → geen suggestie, i.p.v. gokken
 // ══════════════════════════════════════════════════════════
 async function latestBodyweight(){
-  const bc=await sbGet('body_comp','&order=date.desc&limit=1');
+  const bc=await sbGet('body_comp','&order=date.desc,created_at.desc&limit=1');
   return bc[0]?.weight||null;
 }
 async function coldStartEstimate(exId){
@@ -2156,7 +2230,7 @@ async function coldStartEstimate(exId){
   const exObj=exercises.find(e=>e.id===exId);
   if(exObj?.ratio_anchor && exObj?.ratio_factor){
     const anchorId=exObj.ratio_anchor;
-    const ss=await sbGet('sessions','&exercise_id=eq.'+anchorId+'&weight=not.is.null&reps=not.is.null&order=date.desc&limit=30');
+    const ss=await sbGet('sessions','&exercise_id=eq.'+anchorId+'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=30');
     const est=weightedEst1RM(ss);
     let ankerRM=est.est;
     if(!ankerRM && LIFT_NORMS[anchorId]!=null){
@@ -2482,10 +2556,6 @@ function buildCardioBody(exId, cardioType){
   return h;
 }
 
-function buildRowingBody(exId){
-  return buildCardioBody(exId,'rowing');
-}
-
 function selMachine_fn(m, type, exId){
   localStorage.setItem('sel_'+type, m);
   document.querySelectorAll(`#msel-${exId} .rower-chip`).forEach(b=>b.classList.toggle('sel',b.textContent===m));
@@ -2502,7 +2572,7 @@ function calcCardioSplit(exId, cardioType){
   else sec=parseFloat(timeStr);
   if(!sec) return;
   
-  if(cardioType==='running'){
+  if(cardioType==='running'||cardioType==='cycling'){
     const dist=parseFloat(document.getElementById(exId+'-dist_km')?.value)||0;
     if(!dist) return;
     const pace=sec/dist;
@@ -2516,11 +2586,12 @@ function calcCardioSplit(exId, cardioType){
     const pm=Math.floor(pace/60),ps=Math.round(pace%60);
     const el=document.getElementById(exId+'-pace');
     if(el){el.value=pm+':'+(ps<10?'0':'')+ps;}
-  } else if(cardioType==='stairmaster'){
-    // geen split/pace-berekening voor stairmaster
+  } else if(cardioType==='stairmaster'||cardioType==='crosstrainer'||cardioType==='assaultbike'){
+    // geen split/pace-berekening — dit type heeft geen 'split'-veld
   } else {
+    // rowing/bikeerg/skierg: split /500m. assaultrunner: split /250m.
     const dist=parseFloat(document.getElementById(exId+'-dist')?.value)||1000;
-    const splitDist=cardioType==='assaultbike'?1:500;
+    const splitDist=cardioType==='assaultrunner'?250:500;
     const ss=(sec/dist)*splitDist;
     const sm=Math.floor(ss/60),sr=Math.round(ss%60);
     const el=document.getElementById(exId+'-split');
@@ -2540,67 +2611,7 @@ function logCardio(exId, cardioType){
       data.splits.push({t:document.getElementById(exId+'-q'+q+'-t')?.value||''});
     }
   }
-  sessionLog[exId].rowing=data;
-  updateProgress(curT);
-}
-
-function selRower_fn(r,exId){
-  selRower=r;localStorage.setItem('maurice_rower',r);
-  document.querySelectorAll(`#rower-sel-${exId} .rower-chip`).forEach(b=>b.classList.toggle('sel',b.textContent===r));
-  logCardio(exId,'rowing');
-}
-
-function buildRowingBody(exId){
-  return `<div style="padding:8px 14px 4px;font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Machine selectie</div>
-  <div class="rower-scroll" id="rower-sel-${exId}">
-    ${rowers.map(r=>`<button class="rower-chip${r===selRower?' sel':''}" onclick="selRower_fn('${r}','${exId}')">${r}</button>`).join('')}
-  </div>
-  <div style="padding:8px 14px 4px;font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Resultaat</div>
-  <div class="row-grid">
-    <div class="row-item"><input class="row-inp" type="text" placeholder="1000" id="${exId}-dist" inputmode="numeric" oninput="calcSplit('${exId}');logRow('${exId}')"><div class="row-inp-lbl">Afstand (m)</div></div>
-    <div class="row-item"><input class="row-inp" type="text" placeholder="3:37" id="${exId}-time" oninput="calcSplit('${exId}');logRow('${exId}')"><div class="row-inp-lbl">Totaal tijd</div></div>
-    <div class="row-item"><input class="row-inp computed" type="text" placeholder="auto" id="${exId}-split" readonly><div class="row-inp-lbl">Split /500m</div></div>
-    <div class="row-item"><input class="row-inp" type="number" placeholder="272" id="${exId}-watt" inputmode="numeric" oninput="logRow('${exId}')"><div class="row-inp-lbl">Watt</div></div>
-    <div class="row-item"><input class="row-inp" type="number" placeholder="26" id="${exId}-stroke" inputmode="numeric" oninput="logRow('${exId}')"><div class="row-inp-lbl">Slag/min</div></div>
-    <div class="row-item"><input class="row-inp" type="number" placeholder="167" id="${exId}-drag" inputmode="numeric" oninput="logRow('${exId}')"><div class="row-inp-lbl">Drag factor</div></div>
-  </div>
-  <div style="padding:4px 14px 4px;font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Splits per 250m</div>
-  <div class="splits-grid">
-    <div></div><div style="font-size:10px;font-weight:700;color:var(--g4);text-align:center">TIJD</div><div style="font-size:10px;font-weight:700;color:var(--g4);text-align:center">SPLIT</div>
-    ${[1,2,3,4].map(q=>`
-    <div class="split-lbl">${q*250}m</div>
-    <input class="split-inp" type="text" placeholder=":58" id="${exId}-q${q}-t" oninput="logRow('${exId}')">
-    <input class="split-inp computed" type="text" placeholder="auto" id="${exId}-q${q}-s" readonly>`).join('')}
-  </div>`;
-}
-
-function selRower_fn(r,exId){
-  selRower=r;localStorage.setItem('maurice_rower',r);
-  document.querySelectorAll(`#rower-sel-${exId} .rower-chip`).forEach(b=>b.classList.toggle('sel',b.textContent===r));
-  logRow(exId);
-}
-
-function calcSplit(exId){
-  const dist=parseFloat(document.getElementById(exId+'-dist')?.value)||1000;
-  const t=document.getElementById(exId+'-time')?.value||'';
-  const el=document.getElementById(exId+'-split');
-  if(!el||!t)return;
-  const p=t.split(':');let sec=0;
-  if(p.length===2)sec=parseFloat(p[0])*60+parseFloat(p[1]);
-  else sec=parseFloat(t)*60;
-  if(!sec){el.value='';return;}
-  const ss=(sec/dist)*500,sm=Math.floor(ss/60),sr=Math.round(ss%60);
-  el.value=sm+':'+(sr<10?'0':'')+sr;
-  // quarter splits
-  [1,2,3,4].forEach(q=>{
-    const qt=document.getElementById(exId+'-q'+q+'-t')?.value||'';
-    if(qt){const qp=qt.split(':');let qs=0;if(qp.length===2)qs=parseFloat(qp[0])*60+parseFloat(qp[1]);else qs=parseFloat(qt);const qss=(qs/250)*500,qsm=Math.floor(qss/60),qsr=Math.round(qss%60);const sel2=document.getElementById(exId+'-q'+q+'-s');if(sel2)sel2.value=qsm+':'+(qsr<10?'0':'')+qsr;}
-  });
-}
-
-function logRow(exId){
-  if(!sessionLog[exId])sessionLog[exId]={};
-  sessionLog[exId].rowing={dist:document.getElementById(exId+'-dist')?.value,time:document.getElementById(exId+'-time')?.value,split:document.getElementById(exId+'-split')?.value,watt:document.getElementById(exId+'-watt')?.value,stroke:document.getElementById(exId+'-stroke')?.value,drag:document.getElementById(exId+'-drag')?.value,rower:selRower,splits:[1,2,3,4].map(q=>({t:document.getElementById(exId+'-q'+q+'-t')?.value||''}))};
+  sessionLog[exId].cardio=data;
   updateProgress(curT);
 }
 
@@ -2708,7 +2719,7 @@ function updateProgress(t){
   const list=getSessionExs(t);
   const done=list.filter(ex=>{
     const l=sessionLog[ex.id];if(!l)return false;
-    if(ex.type==='rowing')return l.rowing?.time;
+    if(CARDIO_TYPES[ex.type])return !!(l.cardio&&(l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals));
     return l.sets?.some(s=>s&&(s.kg||s.reps));
   }).length;
   const pct=list.length?Math.round(done/list.length*100):0;
@@ -2781,7 +2792,19 @@ function renderSessionSummaryContent(t){
   list.forEach(ex=>{
     const l=sessionLog[ex.id];if(!l)return;
     let det='';
-    if(ex.type==='rowing'&&l.rowing?.time){det=`${l.rowing.dist||'?'}m in ${l.rowing.time||'?'} · ${l.rowing.split||'?'}/500m${l.rowing.watt?' · '+l.rowing.watt+'W':''}`;}
+    if(CARDIO_TYPES[ex.type]&&l.cardio){
+      const cfg=CARDIO_TYPES[ex.type],c=l.cardio,parts=[];
+      if(c.dist)parts.push(c.dist+cfg.unit);
+      if(c.dist_km)parts.push(c.dist_km+'km');
+      if(c.time)parts.push(c.time);
+      if(c.split)parts.push(c.split+(cfg.splitUnit||''));
+      if(c.pace)parts.push(c.pace+(cfg.splitUnit||''));
+      if(c.watt)parts.push(c.watt+'W');
+      if(c.cals)parts.push(c.cals+'kcal');
+      if(c.hr)parts.push(c.hr+'bpm');
+      if(c.rpe)parts.push('RPE'+c.rpe);
+      det=parts.join(' · ');
+    }
     else if(l.sets){
       const ws=l.sets.filter(s=>s&&(s.kg||s.reps));
       if(l.wu?.length){const wsd=l.wu.filter(s=>s&&s.kg);if(wsd.length)det+=`<span style="color:#3b82f6">W: ${wsd.map(s=>(s.kg||'?')+'×'+(s.reps||'?')).join(', ')}</span><br>`;}
@@ -2798,8 +2821,10 @@ async function finishSession(){
   const t=curT,list=getSessionExs(t),today=td();let saved=0;
   for(const ex of list){
     const l=sessionLog[ex.id];if(!l)continue;
-    if(ex.type==='rowing'&&l.rowing?.time){
-      await sbPost('sessions',{date:today,exercise_id:ex.id,distance:parseInt(l.rowing.dist)||null,time_str:l.rowing.time,watt:parseInt(l.rowing.watt)||null,stroke_rate:parseInt(l.rowing.stroke)||null,training_type:t,note:(l.rowing.rower||'')+' split:'+l.rowing.split});saved++;
+    if(CARDIO_TYPES[ex.type]&&l.cardio&&(l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals)){
+      const cRow=cardioDataToRow(ex.type,l.cardio);
+      const extraNote=cRow.extraNote;delete cRow.extraNote;
+      await sbPost('sessions',{date:today,exercise_id:ex.id,training_type:t,note:extraNote||'',...cRow});saved++;
     }else if(l.sets){
       const ws=l.sets.filter(s=>s&&(s.kg||s.reps));if(!ws.length)continue;
       const best=ws.reduce((b,s)=>(!b||parseFloat(s.kg||0)>parseFloat(b.kg||0))?s:b,null);
@@ -2821,7 +2846,7 @@ async function finishSession(){
 // HOME
 // ══════════════════════════════════════════════════════════
 async function refreshHome(){
-  const hd=await sbGet('hrv_log','&order=date.desc&limit=1');
+  const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=1');
   const lh=hd[0];
   if(lh){
     const st=hrvSt(lh.hrv);
@@ -2908,7 +2933,7 @@ function setHistFilter(f,btn){
 
 async function loadHistory(append=false){
   if(!append)histOff=0;
-  let p='&order=date.desc&limit=20&offset='+histOff;
+  let p='&order=date.desc,created_at.desc&limit=20&offset='+histOff;
   if(histFilter!=='all')p+='&training_type=eq.'+histFilter;
   const ss=await sbGet('sessions',p);
   const byDate={};
@@ -3108,11 +3133,11 @@ async function refreshStatsScreen(){
   if(el1) el1.innerHTML=h||'<p style="color:var(--g4);font-size:13px;padding:4px 0">Log sets om schattingen te berekenen</p>';
 
   // HRV chart
-  const hd=await sbGet('hrv_log','&order=date.desc&limit=14');
+  const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=14');
   if(hd.length>1){const rev=hd.slice().reverse();drawChart('stats-hrv-chart',rev.map(r=>r.hrv||0),rev.map(r=>r.date));}
 
   // Roeien
-  const rd=await sbGet('sessions','&exercise_id=eq.roeien&order=date.desc&limit=8');
+  const rd=await sbGet('sessions','&exercise_id=eq.roeien&order=date.desc,created_at.desc&limit=8');
   let rh=rd.length?'':'<p style="color:var(--g4);font-size:13px">Nog geen roeisessies</p>';
   rd.forEach(s=>{
     let split='';
@@ -3126,7 +3151,7 @@ async function refreshStatsScreen(){
   const elr=document.getElementById('stats-row-list');if(elr)elr.innerHTML=rh;
 
   // Body comp
-  const bc=await sbGet('body_comp','&order=date.desc&limit=4');
+  const bc=await sbGet('body_comp','&order=date.desc,created_at.desc&limit=4');
   let bh='';
   if(!bc.length)bh='<p style="color:var(--g4);font-size:13px">Nog geen metingen — invoer via Beheer</p>';
   else{
@@ -3155,7 +3180,7 @@ async function refreshRatioFactors(){
 
   const data={};
   for(const lift of lifts){
-    const ss=await sbGet('sessions','&exercise_id=eq.'+lift+'&weight=not.is.null&reps=not.is.null&order=date.desc&limit=30');
+    const ss=await sbGet('sessions','&exercise_id=eq.'+lift+'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=30');
     data[lift]=weightedEst1RM(ss);
   }
   const anchorEst=data[anchor];
@@ -3234,7 +3259,7 @@ function saveRowers(){const ins=document.querySelectorAll('[id^="rwr-"]');rowers
 let curEditYTId=null, curEditYTCat=null;
 
 function updateNxType(val){
-  const isCardio=['rowing','bikeerg','skierg','assaultbike','running','swimming','stairmaster'].includes(val);
+  const isCardio=Object.keys(CARDIO_TYPES).includes(val);
   const ytRow=document.querySelector('#m-newex .irow:has(#nx-yt)');
   // Show/hide YouTube for non-cardio
   const wodRow=document.getElementById('nx-wodfmt-row');
@@ -3476,12 +3501,15 @@ async function saveNewEx(){
   const c=document.getElementById('nx-cat').value;
   const t=document.getElementById('nx-type').value;
   if(!n){toast('Vul een naam in');return;}
+  const primary=Array.from(document.querySelectorAll('#nx-muscles-primary input:checked')).map(i=>i.value);
+  const secondary=Array.from(document.querySelectorAll('#nx-muscles-secondary input:checked')).map(i=>i.value);
+  if(!primary.length){toast('Kies minimaal één primaire spiergroep');return;}
   const id=n.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
   if(exercises.find(e=>e.id===id)){toast('Naam al in gebruik');return;}
   const ytRaw=document.getElementById('nx-yt')?.value.trim()||'';
   const ytVal=ytId(ytRaw);
   const wodFmt=t==='wod'?(document.getElementById('nx-wodfmt')?.value||'for_time'):null;
-  const newEx={id,name:n,category:c,type:t,wod_format:wodFmt,sort_order:99,active:true,pr:null,yt:ytVal||null,rest_seconds:null,muscle_primary:[],muscle_secondary:[]};
+  const newEx={id,name:n,category:c,type:t,wod_format:wodFmt,sort_order:99,active:true,pr:null,yt:ytVal||null,rest_seconds:null,muscle_primary:primary,muscle_secondary:secondary};
   const ok=await sbPost('exercises',newEx);
   if(ok){
     exercises.push(newEx);
@@ -3509,12 +3537,12 @@ async function focusCoach(){
 
 async function buildCtx(){
   await ensureExercisesLoaded();
-  const hd=await sbGet('hrv_log','&order=date.desc&limit=7');
-  const wd=await sbGet('weight_log','&order=date.desc&limit=3');
-  const bc=await sbGet('body_comp','&order=date.desc&limit=1');
+  const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=7');
+  const wd=await sbGet('weight_log','&order=date.desc,created_at.desc&limit=3');
+  const bc=await sbGet('body_comp','&order=date.desc,created_at.desc&limit=1');
   let exCtx='';
   for(const ex of exercises){
-    const ls=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc&limit=2');
+    const ls=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc,created_at.desc&limit=2');
     if(ls.length){const s=ls[0];let str=s.date;if(s.weight&&s.reps)str+=' '+(s.sets||'?')+'×'+s.reps+' @ '+s.weight+'kg'+(s.rpe?' RPE'+s.rpe:'');else if(s.time_str)str+=' '+s.time_str+(s.watt?' @ '+s.watt+'W':'');if(ls[1]){const p=ls[1];str+=' | vorige: '+p.date+(p.weight?' '+p.weight+'kg':p.time_str?' '+p.time_str:'');}exCtx+='\n- '+ex.name+': '+str;}
   }
   const lh=hd[0];
@@ -3525,7 +3553,7 @@ async function buildCtx(){
   const wStr=wLast?`\nGewicht: ${wLast.weight} kg (${wLast.date})`+(wPrev?` | vorige: ${wPrev.weight} kg`:''): '';
   const bcStr=bc[0]?`\nTanita (${bc[0].date}): vet% ${bc[0].fat_pct}% | spier ${bc[0].muscle_mass} kg | BMR ${bc[0].bmr} | visceraal ${bc[0].visceral_fat}`+(bc[0].edema?` | oedeem: ${bc[0].edema}`:''): '';
   // nextT: afgeleid uit meest recente Supabase-sessie i.p.v. localStorage (kan verouderd/afwezig zijn)
-  const lastSessions=await sbGet('sessions','&training_type=in.(A,B)&order=date.desc&limit=1');
+  const lastSessions=await sbGet('sessions','&training_type=in.(A,B)&order=date.desc,created_at.desc&limit=1');
   const lastT=lastSessions[0]?.training_type||localStorage.getItem('maurice_last_training')||'?';
   const nextT=lastT==='A'?'B':'A';
   const mf = mastersFactor(atleet?.leeftijd||50);
@@ -3788,11 +3816,11 @@ async function refreshProfiel(){
   }
 
   // Lichaamscompositie
-  const bc = await sbGet('body_comp','&order=date.desc&limit=1');
+  const bc = await sbGet('body_comp','&order=date.desc,created_at.desc&limit=1');
   const lat = bc[0];
   if(lat){
     document.getElementById('profiel-bc-date').textContent = lat.date;
-    const wd = await sbGet('weight_log','&order=date.desc&limit=1');
+    const wd = await sbGet('weight_log','&order=date.desc,created_at.desc&limit=1');
     const wt = wd[0]?.weight;
     const bmiVal = (wt && atleet.lengte) ? Math.round(wt/Math.pow(atleet.lengte/100,2)*10)/10 : null;
     document.getElementById('profiel-bc-card').innerHTML = `
@@ -3839,7 +3867,7 @@ async function refreshProfiel(){
   }
 
   // Geschiedenis
-  const bcs = await sbGet('body_comp','&order=date.desc&limit=6');
+  const bcs = await sbGet('body_comp','&order=date.desc,created_at.desc&limit=6');
   let hist = '';
   bcs.forEach(r=>{
     const diff_fat = bcs.indexOf(r)<bcs.length-1 ? Math.round((r.fat_pct - bcs[bcs.indexOf(r)+1]?.fat_pct)*10)/10 : null;
@@ -3858,8 +3886,8 @@ async function refreshProfiel(){
 }
 
 async function askCoachProfiel(){
-  const bc = await sbGet('body_comp','&order=date.desc&limit=2');
-  const wd = await sbGet('weight_log','&order=date.desc&limit=3');
+  const bc = await sbGet('body_comp','&order=date.desc,created_at.desc&limit=2');
+  const wd = await sbGet('weight_log','&order=date.desc,created_at.desc&limit=3');
   const l = bc[0];
   const mf = mastersFactor(atleet.leeftijd);
   let msg = `Analyseer mijn lichaamssamenstelling en profiel:
@@ -4023,7 +4051,7 @@ async function addExToCustomConfirm(exId, trainId){
   container.innerHTML='';
   const list=sessionExtra.filter(e=>e._t==='custom_'+trainId);
   for(const e of list){
-    const prev=await sbGet('sessions','&exercise_id=eq.'+e.id+'&order=date.desc&limit=1');
+    const prev=await sbGet('sessions','&exercise_id=eq.'+e.id+'&order=date.desc,created_at.desc&limit=1');
     const prevS=prev[0];
     const eqList=await loadEquipment(e.id);
     let prevStr='';
@@ -4044,8 +4072,8 @@ async function addExToCustomConfirm(exId, trainId){
 
 function buildExItemHTML(ex, prevStr, trainId, eqList=[]){
   let bodyHTML='';
-  if(ex.type==='rowing'||ex.type==='bikeerg'||ex.type==='skierg'||ex.type==='assaultbike'||ex.type==='running'){
-    bodyHTML=buildCardioBody(ex.id, ex.cardioType||ex.type||'rowing');
+  if(CARDIO_TYPES[ex.type]){
+    bodyHTML=buildCardioBody(ex.id, ex.cardioType||ex.type);
   } else if(ex.type==='carry'){
     bodyHTML=buildCarryBody(ex.id, ex.sets||3);
   } else {
@@ -4480,7 +4508,10 @@ async function refreshMuscleRecovery(){
   const twoWeeksAgo = new Date();
   twoWeeksAgo.setDate(twoWeeksAgo.getDate()-14);
   const dateStr = twoWeeksAgo.toISOString().split('T')[0];
-  const ss = await sbGet('sessions','&date=gte.'+dateStr+'&weight=not.is.null&sets=not.is.null&reps=not.is.null&order=date.desc');
+  // Geen weight/sets/reps-filter meer: dat sloot alle cardio-sessies (tijd/afstand-based)
+  // structureel uit van spierherstel, ook als ze getagd zijn. Herstel kijkt naar tijd
+  // sinds laatste sessie + RPE, niet naar setvolume — dus alle sessietypen tellen mee.
+  const ss = await sbGet('sessions','&date=gte.'+dateStr+'&order=date.desc,created_at.desc');
   const lastHit = {};
   ss.forEach(s=>{
     const muscles = getExerciseMuscles(s.exercise_id);
@@ -4580,7 +4611,7 @@ async function refreshMuscleRecoveryHeatmap(){
   const twoWeeksAgo = new Date();
   twoWeeksAgo.setDate(twoWeeksAgo.getDate()-14);
   const dateStr = twoWeeksAgo.toISOString().split('T')[0];
-  const ss = await sbGet('sessions','&date=gte.'+dateStr+'&weight=not.is.null&sets=not.is.null&reps=not.is.null&order=date.desc');
+  const ss = await sbGet('sessions','&date=gte.'+dateStr+'&order=date.desc,created_at.desc');
   const lastHitBySvgId = {};
   ss.forEach(s=>{
     const names = getExerciseMuscles(s.exercise_id);
@@ -4630,7 +4661,7 @@ function computeRepPRsFromSessions(sessions){
 }
 
 async function loadRepPRs(exId){
-  const ss = await sbGet('sessions','&exercise_id=eq.'+exId+'&weight=not.is.null&reps=not.is.null&order=date.desc&limit=300');
+  const ss = await sbGet('sessions','&exercise_id=eq.'+exId+'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=300');
   repPRCache[exId] = computeRepPRsFromSessions(ss);
   return repPRCache[exId];
 }
@@ -4750,7 +4781,12 @@ function downloadFile(content, filename, mimeType){
 // ══════════════════════════════════════════════════════════
 // UTILS & BOOT
 // ══════════════════════════════════════════════════════════
-function td(){return new Date().toISOString().split('T')[0];}
+function td(){
+  // Lokale datum, NIET toISOString() (die is UTC en rolt rond middernacht NL-tijd
+  // naar de verkeerde dag — dit was de oorzaak van "coach blijft op oude datum hangen").
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
 const style=document.createElement('style');style.textContent='@keyframes sp{to{transform:rotate(360deg)}}';document.head.appendChild(style);
 
 let _exercisesLoading=null;

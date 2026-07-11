@@ -199,7 +199,7 @@ body{display:flex;justify-content:center}
 .rower-scroll::-webkit-scrollbar{display:none}
 .rower-chip{flex-shrink:0;padding:6px 14px;border-radius:16px;border:1.5px solid var(--g2);font-size:12px;font-weight:700;cursor:pointer;background:var(--g1);color:var(--g6)}
 .rower-chip.sel{background:var(--dark);color:#fff;border-color:var(--dark)}
-.splits-grid{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;align-items:center;padding:0 14px 10px}
+.splits-grid{display:grid;grid-template-columns:auto 1fr;gap:6px;align-items:center;padding:0 14px 10px}
 .split-lbl{font-size:11px;font-weight:700;color:var(--g4)}
 .split-inp{padding:8px;border:1.5px solid var(--g2);border-radius:8px;font-size:13px;font-weight:700;text-align:center;color:var(--dark);background:var(--g1);font-family:var(--f);outline:none;-webkit-appearance:none;width:100%}
 .split-inp:focus{border-color:var(--red)}
@@ -940,11 +940,15 @@ canvas{width:100%;height:100%}
 </div>
 
 <!-- ═══ LOSSE OEFENING ═══ -->
-<div class="modal-bg" id="m-los-oefening" onclick="bgClose(event,'m-los-oefening')">
+<div class="modal-bg" id="m-los-oefening" onclick="">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">Losse oefening</div>
-    <div class="irow"><label class="ilbl">Oefening</label><button type="button" class="ex-pick-trigger" id="los-ex-trigger" onclick="openExPicker()"><span id="los-ex-trigger-lbl" class="ph">Kies oefening…</span><span style="color:var(--g3)">›</span></button></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <button type="button" onclick="losGoBack()" style="background:none;border:none;color:var(--dark);font-size:14px;font-weight:700;cursor:pointer;padding:6px 2px;font-family:var(--f)">← Terug</button>
+      <div class="modal-title" style="margin:0">Losse oefening</div>
+      <button type="button" onclick="losCancel()" style="background:none;border:none;color:var(--red);font-size:14px;font-weight:700;cursor:pointer;padding:6px 2px;font-family:var(--f)">✕ Annuleren</button>
+    </div>
+    <div class="irow"><label class="ilbl">Oefening</label><button type="button" class="ex-pick-trigger" id="los-ex-trigger" onclick="losChangeExercise()"><span id="los-ex-trigger-lbl" class="ph">Kies oefening…</span><span style="color:var(--g3)">›</span></button></div>
     <div class="irow" id="los-wu-row"><label class="ilbl">Opwarmsets</label><input class="inp" type="number" id="los-wu-count" value="0" min="0" max="6" step="1" oninput="onLosWuChange()"></div>
     <div id="los-new-fields" style="display:none">
       <div class="irow"><label class="ilbl">Naam</label><input class="inp" type="text" id="los-ex-new" placeholder="bijv. Zercher Squat"></div>
@@ -974,9 +978,20 @@ canvas{width:100%;height:100%}
       <div class="irow"><label class="ilbl">Spiergroepen — secundair</label><div id="los-new-muscles-secondary" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
     </div>
     <div id="los-body"></div>
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-los-oefening')">Annuleer</button>
-      <button class="btn btn-r" style="flex:2" onclick="saveLosOefening()">Opslaan</button>
+    <div style="margin-top:14px">
+      <button class="btn btn-r" style="width:100%" onclick="saveLosOefening()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-los-confirm-leave" onclick="">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Log verlaten?</div>
+    <p style="font-size:13px;color:var(--g4);margin:4px 0 16px">Je ingevoerde gegevens gaan verloren.</p>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-o" style="flex:1" onclick="losConfirmKeepLogging()">Verder loggen</button>
+      <button class="btn btn-r" style="flex:1" onclick="losConfirmDiscard()">Verlaten</button>
     </div>
   </div>
 </div>
@@ -1397,7 +1412,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.0.6.1';
+const APP_VER = 'v3.0.6.2';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -1420,7 +1435,7 @@ function peakGoalFor(exId){
 // zelfde rpeMultiplier() als kracht). Nieuwe apparaten toevoegen = alleen hier
 // een entry toevoegen; logging/opslag/spierherstel/split-berekening pakken dit
 // automatisch op via CARDIO_TYPES-dispatch (buildCardioBody/logCardio/cardioDataToRow/
-// calcCardioSplit) — geen enkele van die functies bevat nog per-type if/else-logica.
+// CardioEngine+recomputeCardioFields) — geen enkele van die functies bevat nog per-type if/else-logica.
 //
 // rowMap: veld → sessions-kolom. {col, parse:'int'|'float'|'string', transform?, template?}
 //   col:'extraNote' verzamelt (met template-fn) losse notities in één samengevoegde tekst.
@@ -1518,6 +1533,73 @@ const CARDIO_TYPES = {
     machines:null,
     rowMap:{dist:{col:'distance',parse:'int'},time:{col:'time_str',parse:'string'},cals:{col:'calories',parse:'float'},hr:{col:'hr_avg',parse:'int'},split:{col:'extraNote',template:v=>'split:'+v},rpe:{col:'rpe',parse:'float'}},
     calc:{type:'split',distField:'dist',basis:250,defaultDist:1000}
+  }
+};
+
+// v306.2: bepaalt op basis van een oefening-object welke CARDIO_TYPES-key van toepassing is.
+// Eén centrale plek — voorheen stond deze mapping (incl. de legacy generieke waarde "cardio")
+// los in 3 verschillende functies, wat ertoe leidde dat sommige plekken cardio-oefeningen niet
+// herkenden en per ongeluk de krachttraining-interface toonden.
+function resolveCardioType(ex){
+  if(!ex)return null;
+  if(ex.cardioType && CARDIO_TYPES[ex.cardioType])return ex.cardioType;
+  if(CARDIO_TYPES[ex.type])return ex.type;
+  if(ex.type==='cardio')return 'rowing'; // legacy generieke waarde uit oudere data — default naar roeien
+  return null;
+}
+function isCardioEx(ex){return !!resolveCardioType(ex);}
+
+// v306.2: CENTRALE Cardio Calculation Engine. Alle tijd/afstand/split/pace/watt-berekeningen
+// voor ELK cardio-apparaat verlopen via deze ene set functies — geen aparte logica per type,
+// alleen configuratie via CARDIO_TYPES.calc (distField/basis/type). Zuivere functies, geen DOM.
+const CardioEngine = {
+  parseTime(str){ return parseTimeToSec(str); },
+  formatTime(sec){
+    if(sec==null||isNaN(sec)||sec<0)return '';
+    sec=Math.round(sec);
+    const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60;
+    const mm=h>0?String(m).padStart(2,'0'):String(m);
+    const ss=String(s).padStart(2,'0');
+    return h>0?`${h}:${mm}:${ss}`:`${mm}:${ss}`;
+  },
+  // Split/pace = tijd per 'basis'-eenheid afstand (bv. seconden per 500m, of per km).
+  splitFromDistTime(dist,timeSec,basis){
+    if(!dist||!timeSec)return null;
+    return (timeSec/dist)*basis;
+  },
+  timeFromDistSplit(dist,splitSec,basis){
+    if(!dist||!splitSec)return null;
+    return (splitSec/basis)*dist;
+  },
+  distFromTimeSplit(timeSec,splitSec,basis){
+    if(!timeSec||!splitSec)return null;
+    return (timeSec/splitSec)*basis;
+  },
+  // Concept2-formule (geldt voor roei-/ski-/bike-ergs met split-basis 500m):
+  // watt = 2.80 / (split_per_500m_in_sec)^3, en de omgekeerde afleiding.
+  wattFromSplit500(splitSec){
+    if(!splitSec)return null;
+    return 2.80/Math.pow(splitSec/500,3);
+  },
+  splitFromWatt500(watt){
+    if(!watt)return null;
+    return Math.cbrt(2.80/watt)*500;
+  },
+  // Gelijkmatige (automatische) splits over de hele afstand — elk interval krijgt dezelfde tijd.
+  autoSplits(totalTimeSec,totalDist,splitDist){
+    if(!totalTimeSec||!totalDist||!splitDist)return [];
+    const n=Math.max(1,Math.round(totalDist/splitDist));
+    const per=totalTimeSec/n;
+    const splits={};
+    for(let i=1;i<=n;i++)splits[i]=per;
+    return splits;
+  },
+  // Uit handmatig ingevulde per-interval-tijden: totaal + gemiddelde.
+  fromManualSplits(splitSecMap){
+    const vals=Object.values(splitSecMap).filter(v=>v!=null&&!isNaN(v)&&v>0);
+    if(!vals.length)return null;
+    const total=vals.reduce((a,b)=>a+b,0);
+    return {total, avg:total/vals.length, count:vals.length};
   }
 };
 
@@ -1916,18 +1998,90 @@ function collectWuSets(domId){
 
 let losSelectedExId=null;
 let exPickerSportFilter='all', exPickerMuscleFilter='all';
+// v306.2: vaste, geïsoleerde DOM/sessie-namespace voor de Losse-oefening-flow (zelfde patroon
+// als ES_DOMID voor de Logboek-editor) — voorkomt dat sessieData vermengd raakt met een
+// eventueel lopende training op dezelfde oefening (#12, state management).
+const LOS_DOMID='los';
+let losConfirmAction=null;
+
+// Controleert of er al iets is ingevuld in de huidige losse-oefening-body (niet-lege,
+// niet-berekende invoervelden, of een afgevinkte set) — bepaalt of Terug/Annuleren/Oefening
+// wijzigen een bevestiging tonen (#9/#10/#11).
+function losHasUnsavedData(){
+  const body=document.getElementById('los-body');
+  if(!body)return false;
+  const inputs=body.querySelectorAll('input');
+  for(const el of inputs){
+    if(el.classList.contains('computed')||el.classList.contains('kg-computed'))continue; // afgeleide waarden tellen niet als eigen invoer
+    if(el.type==='checkbox'){ if(el.checked)return true; continue; }
+    if(el.value && el.value.trim()!=='')return true;
+  }
+  if(body.querySelector('.set-circle.done'))return true;
+  return false;
+}
+function clearLosSessionState(){
+  delete sessionLog[LOS_DOMID];
+  delete cardioSplitMode[LOS_DOMID];
+  delete cardioSplits[LOS_DOMID];
+  delete warmupState[LOS_DOMID];
+  delete pctSelection[LOS_DOMID];
+  delete manualKgSets[LOS_DOMID];
+  delete rpeManual[LOS_DOMID];
+}
+// Reset alleen de oefeningkeuze + body (voor "Oefening wijzigen"/"Terug") — de modal blijft open.
+function resetLosExerciseSelection(){
+  losSelectedExId=null;
+  losCurEx=null;
+  document.getElementById('los-ex-trigger-lbl').textContent='Kies oefening…';
+  document.getElementById('los-ex-trigger-lbl').className='ph';
+  document.getElementById('los-new-fields').style.display='none';
+  document.getElementById('los-wu-count').value='0';
+  document.getElementById('los-body').innerHTML='';
+  clearLosSessionState();
+}
+// Volledige reset (voor Annuleren/openen) — ook het "eigen oefening"-formulier.
+function resetLosAllState(){
+  resetLosExerciseSelection();
+  document.getElementById('los-ex-new').value='';
+  document.getElementById('los-ex-new-type').value='strength';
+  document.getElementById('los-new-wodfmt-row').style.display='none';
+}
+// Voert `action` direct uit als er niets is ingevuld; toont anders "Log verlaten?".
+function losRequestLeave(action){
+  if(losHasUnsavedData()){
+    losConfirmAction=action;
+    openModal('m-los-confirm-leave');
+  } else {
+    action();
+  }
+}
+function losConfirmKeepLogging(){ closeModal('m-los-confirm-leave'); losConfirmAction=null; }
+function losConfirmDiscard(){
+  closeModal('m-los-confirm-leave');
+  const action=losConfirmAction; losConfirmAction=null;
+  if(action)action();
+}
+// "← Terug": zonder gekozen oefening is er niets om naar terug te gaan → sluit meteen.
+// Mét gekozen oefening: terug naar de oefeningselector (na evt. bevestiging).
+function losGoBack(){
+  if(!losSelectedExId){ losExitToHub(); return; }
+  losRequestLeave(()=>{ resetLosExerciseSelection(); openExPicker(); });
+}
+// Link bij het oefeningveld zelf — zelfde gedrag als Terug wanneer al een oefening gekozen is.
+function losChangeExercise(){
+  if(!losSelectedExId){ openExPicker(); return; }
+  losRequestLeave(()=>{ resetLosExerciseSelection(); openExPicker(); });
+}
+function losCancel(){ losRequestLeave(losExitToHub); }
+function losExitToHub(){
+  closeModal('m-los-oefening');
+  resetLosAllState();
+  go('s-train-mgr');
+}
 
 async function openLosOefening(){
   await ensureExercisesLoaded();
-  losSelectedExId=null;
-  document.getElementById('los-ex-trigger-lbl').textContent='Kies oefening…';
-  document.getElementById('los-ex-trigger-lbl').className='ph';
-  document.getElementById('los-ex-new').value='';
-  document.getElementById('los-ex-new-type').value='strength';
-  document.getElementById('los-new-fields').style.display='none';
-  document.getElementById('los-new-wodfmt-row').style.display='none';
-  document.getElementById('los-wu-count').value='0';
-  document.getElementById('los-body').innerHTML='';
+  resetLosAllState();
   openModal('m-los-oefening');
 }
 // Zoekbare/filterbare oefening-picker. Toont standaard ALLE oefeningen (niet gefilterd
@@ -2101,6 +2255,7 @@ function selectExPickerItem(id){
     exPickerCallback=null;
     return;
   }
+  clearLosSessionState(); // v306.2 #12: nieuwe oefening start altijd volledig leeg
   losSelectedExId=id;
   document.getElementById('los-ex-trigger-lbl').textContent=ex.name;
   document.getElementById('los-ex-trigger-lbl').className='';
@@ -2110,6 +2265,7 @@ function selectExPickerItem(id){
 }
 function selectExPickerNew(){
   if(exPickerCallback){exPickerCallback=null;closeModal('m-ex-picker');toast('Nieuwe oefening aanmaken kan alleen via Training → Oefening');return;}
+  clearLosSessionState(); // v306.2 #12: nieuwe oefening start altijd volledig leeg
   losSelectedExId='__new__';
   document.getElementById('los-ex-trigger-lbl').textContent='+ Eigen oefening…';
   document.getElementById('los-ex-trigger-lbl').className='';
@@ -2142,9 +2298,13 @@ async function renderLosBody(existingEx=null){
     ex={id:'__new__',name:document.getElementById('los-ex-new').value||'',type:t,wod_format:wodFmt,sets:t==='carry'?3:4,wu:wuCount};
   }
   // Opwarmsets alleen zinvol/tonen bij kracht-achtige oefeningen (geen cardio/WOD)
-  const showWu=!CARDIO_TYPES[ex.type]&&ex.type!=='wod';
+  const showWu=!resolveCardioType(ex)&&ex.type!=='wod';
   if(wuRow)wuRow.style.display=showWu?'':'none';
-  const bodyHTML=buildExerciseBody(ex,{wu:showWu?wuCount:0,sets:ex.sets});
+  // v306.2: LOS_DOMID i.p.v. ex.id als DOM-namespace voor de invoervelden zelf — zo blijft
+  // deze sessie altijd geïsoleerd van een eventueel lopende training op dezelfde oefening.
+  // Dit is ook exact dezelfde uniforme Cardio Logger (buildCardioBody via de dispatcher) als
+  // tijdens een training: geen aparte cardio-interface meer voor losse oefeningen.
+  const bodyHTML=buildExerciseBody(ex,{wu:showWu?wuCount:0,sets:ex.sets,domId:LOS_DOMID});
   let panels='';
   if(ex.id!=='__new__'){
     await ensureEquipmentTypesLoaded();
@@ -2162,7 +2322,7 @@ async function saveLosOefening(){
   let exId=losSelectedExId;
   if(!exId){toast('Kies een oefening');return;}
   const isNew=exId==='__new__';
-  const domId=isNew?'__new__':exId;
+  const domId=LOS_DOMID; // v306.2: vaste namespace, ongeacht nieuw/bestaand
   let ex;
   if(isNew){
     const naam=document.getElementById('los-ex-new').value.trim();
@@ -2192,13 +2352,13 @@ async function saveLosOefening(){
   // gym_id/user_id nullable placeholders — zelfde patroon als exercise_equipment,
   // klaar voor RLS-rollout in Fase 2 zonder migratie.
   const row={date:td(),exercise_id:exId,training_type:null,note:'Losse oefening',user_id:null,gym_id:null};
-  const cardioTypeKeys=Object.keys(CARDIO_TYPES);
+  const cardioType=resolveCardioType(ex);
   const val=f=>document.getElementById(domId+'-'+f)?.value||'';
 
-  if(cardioTypeKeys.includes(ex.type)){
-    const d={machine:localStorage.getItem('sel_'+ex.type)||''};
-    CARDIO_TYPES[ex.type].fields.forEach(f=>{d[f]=val(f);});
-    const cRow=cardioDataToRow(ex.type,d);
+  if(cardioType){
+    const d={machine:localStorage.getItem('sel_'+cardioType)||''};
+    CARDIO_TYPES[cardioType].fields.forEach(f=>{d[f]=val(f);});
+    const cRow=cardioDataToRow(cardioType,d);
     const extraNote=cRow.extraNote;delete cRow.extraNote;
     Object.assign(row,cRow);
     row.note='Losse oefening'+(extraNote?' · '+extraNote:'');
@@ -2238,6 +2398,7 @@ async function saveLosOefening(){
   const ok=await sbPost('sessions',row);
   if(!ok){toast('Fout bij opslaan');return;}
   closeModal('m-los-oefening');
+  resetLosAllState();
   toast('Opgeslagen');
 }
 
@@ -2437,7 +2598,7 @@ async function startT(t){
   // v306 #5: concept van eerder (zelfde dag, niet afgerond) aanbieden om te hervatten
   const draft=restoreTrainingDraft();
   const resumeDraft=draft&&draft.t===t&&isSameLocalDay(draft.ts)&&confirm('Niet-afgeronde Training '+t+' gevonden (laatst opgeslagen om '+new Date(draft.ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+'). Hervatten?');
-  pctSelection={};rpeManual={};warmupState={};
+  pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};
   if(resumeDraft){
     curT=t;sessionLog=draft.sessionLog||{};sessionExtra=draft.sessionExtra||[];trainPaused=false;pausedAccumMs=0;
     await renderTrainScreen(t);
@@ -2525,7 +2686,7 @@ async function renderTrainScreen(t){
       <div class="ex-card-hd" onclick="toggleExCard('${ex.id}')">
         <div style="flex:1">
           <div class="ex-card-name">${ex.naam}${!isDefault?` <button onclick="event.stopPropagation();removeExSession('${ex.id}')" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;margin-left:4px">✕</button>`:''}</div>
-          <div class="ex-card-meta">${ex.type==='rowing'?'Warmup · 1000m':ex.sets+'×'+ex.reps+(ex.rpe?' · RPE '+ex.rpe:'')}</div>
+          <div class="ex-card-meta">${resolveCardioType(ex)?(CARDIO_TYPES[resolveCardioType(ex)]?.naam||'Cardio'):ex.sets+'×'+ex.reps+(ex.rpe?' · RPE '+ex.rpe:'')}</div>
         </div>
         <span style="color:var(--g3);font-size:20px" id="arr-${ex.id}">›</span>
       </div>
@@ -2536,10 +2697,10 @@ async function renderTrainScreen(t){
         ${BARBELL_EXERCISES.has(ex.id)?buildRmPanel(ex):''}
         ${buildEquipmentPanel(ex.id,eqList)}
         ${bodyHTML}
-        <div class="add-row" onclick="addWorkSet('${ex.id}','${ex.type||'strength'}')">
+        ${resolveCardioType(ex)?'':`<div class="add-row" onclick="addWorkSet('${ex.id}','${ex.type||'strength'}')">
           <span class="add-row-icon">+</span>
           <span class="add-row-lbl" style="color:var(--red);font-size:13px">Set toevoegen</span>
-        </div>
+        </div>`}
         <button onclick="askCoachEx('${ex.naam}','${t}','${ex.id}')" style="margin:8px 14px 12px;background:var(--dark);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">🤖 Vraag de coach</button>
       </div>`;
     container.appendChild(div);
@@ -3264,21 +3425,26 @@ function buildWodBody(exId,ex,prefill=null){
 // Gedeelde dispatcher: bepaalt op basis van ex.type welke body gerenderd wordt.
 // Wordt gebruikt door zowel renderTrainScreen (training) als de Losse oefening modal,
 // zodat beide exact dezelfde invoervelden/weergave gebruiken per oefeningtype.
+// v306.2: domId (optioneel) laat de caller een ANDER DOM-id-voorvoegsel gebruiken dan ex.id
+// voor de invoervelden — zo kan de Losse-oefening-flow een vaste, geïsoleerde namespace (LOS_DOMID)
+// gebruiken i.p.v. de echte exercise_id, zodat sessieData nooit vermengd raakt met een lopende
+// training op dezelfde oefening (v306.2 #12, state management).
 function buildExerciseBody(ex,opts={}){
+  const domId=opts.domId||ex.id;
   const wu=opts.wu??ex.wu??0;
   const sets=opts.sets??ex.sets??(ex.type==='carry'?3:4);
   const prefill=opts.prefill||null;
-  const cardioTypeKeys=Object.keys(CARDIO_TYPES);
-  if(cardioTypeKeys.includes(ex.type)){
-    return buildCardioBody(ex.id, ex.cardioType||ex.type);
+  const cardioType=resolveCardioType(ex);
+  if(cardioType){
+    return buildCardioBody(domId, cardioType);
   } else if(ex.type==='carry'){
-    return buildCarryBody(ex.id, sets);
+    return buildCarryBody(domId, sets);
   } else if(ex.type==='kettlebell'){
-    return buildKettlebellBody(ex.id, sets, prefill);
+    return buildKettlebellBody(domId, sets, prefill);
   } else if(ex.type==='wod'){
-    return buildWodBody(ex.id, ex, prefill);
+    return buildWodBody(domId, ex, prefill);
   } else {
-    return buildStrengthBody(ex.id, wu, sets, prefill);
+    return buildStrengthBody(domId, wu, sets, prefill);
   }
 }
 
@@ -3290,12 +3456,19 @@ function getMachineList(type){
   return [];
 }
 
+// v306.2: EEN uniforme Cardio Logger — dit is de ENIGE plek die cardio-invoervelden rendert.
+// Wordt aangeroepen vanuit buildExerciseBody, dus identiek voor Training A/B, Workout, Losse
+// oefening én de Logboek-editor. Toont uitsluitend cardio-relevante velden: nooit sets/kg/reps/
+// 1RM/percentages/backoff/gewichtsmodi (die horen bij buildStrengthBody, hier niet aangeroepen).
 function buildCardioBody(exId, cardioType){
   const cfg=CARDIO_TYPES[cardioType]||CARDIO_TYPES.rowing;
   const machines=getMachineList(cardioType);
+  // v306.2 #12: elke render start volledig leeg — geen oude splits/modus van een vorige
+  // oefening of vorige keer dat deze cardio-logger werd geopend.
+  cardioSplitMode[exId]='auto';
+  cardioSplits[exId]={};
   let h='';
-  
-  // Machine selectie
+
   if(machines.length>0){
     const selM=localStorage.getItem('sel_'+cardioType)||machines[0];
     h+=`<div style="padding:8px 14px 4px;font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Machine selectie</div>
@@ -3303,41 +3476,21 @@ function buildCardioBody(exId, cardioType){
       ${machines.map(m=>`<button class="rower-chip${m===selM?' sel':''}" onclick="selMachine_fn('${m}','${cardioType}','${exId}')">${m}</button>`).join('')}
     </div>`;
   }
-  
+
   h+=`<div style="padding:8px 14px 4px;font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Resultaat</div>
-  <div class="row-grid">`;
-  
+  <div class="row-grid" id="cardiofields-${exId}">`;
   cfg.fields.forEach(f=>{
     const lbl=cfg.labels[f]||f;
-    const isComputed=f==='split'||f==='pace';
+    // v306.2: geen placeholders ("auto", ":58") meer — uitsluitend echte waarden of leeg.
     h+=`<div class="row-item">
-      <input class="${isComputed?'row-inp computed':'row-inp'}" type="text" placeholder="${isComputed?'auto':''}" id="${exId}-${f}" 
-        ${isComputed?'':''}
-        oninput="calcCardioSplit('${exId}','${cardioType}');logCardio('${exId}','${cardioType}')">
+      <input class="row-inp" type="text" id="${exId}-${f}" value=""
+        oninput="onCardioFieldInput('${exId}','${cardioType}','${f}')">
       <div class="row-inp-lbl">${lbl}</div>
     </div>`;
   });
   h+='</div>';
-  
-  // Splits
-  if(cfg.splits){
-    const numSplits=cfg.splitTotal/cfg.splitDist;
-    h+=`<div style="padding:4px 14px 4px;font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Splits per ${cfg.splitDist}${cfg.unit}</div>
-    <div class="splits-grid">
-      <div></div><div style="font-size:10px;font-weight:700;color:var(--g4);text-align:center">TIJD</div><div style="font-size:10px;font-weight:700;color:var(--g4);text-align:center">SPLIT</div>`;
-    for(let q=1;q<=numSplits;q++){
-      h+=`<div class="split-lbl">${q*cfg.splitDist}${cfg.unit}</div>
-      <input class="split-inp" type="text" placeholder=":58" id="${exId}-q${q}-t" oninput="logCardio('${exId}','${cardioType}')">
-      <input class="split-inp computed" type="text" placeholder="auto" id="${exId}-q${q}-s" readonly>`;
-    }
-    h+='</div>';
-  }
-  
-  // Hardlopen: pace veld
-  if(cardioType==='running'){
-    h+=`<div style="padding:4px 14px 8px;font-size:11px;color:var(--g4)">Pace wordt auto berekend uit afstand en tijd</div>`;
-  }
-  
+
+  h+=buildSplitsSection(exId,cardioType);
   return h;
 }
 
@@ -3347,41 +3500,169 @@ function selMachine_fn(m, type, exId){
   logCardio(exId, type);
 }
 
-// Generieke pace/split-berekening o.b.v. cfg.calc — nieuw cardiotype toevoegen met een
-// calc-spec in CARDIO_TYPES werkt hier automatisch mee, geen per-type takken meer nodig.
-function calcCardioSplit(exId, cardioType){
-  const cfg=CARDIO_TYPES[cardioType]||CARDIO_TYPES.rowing;
-  if(!cfg.calc)return;
-  const timeStr=document.getElementById(exId+'-time')?.value||'';
-  const sec=parseTimeToSec(timeStr);
-  if(!sec)return;
-  const c=cfg.calc;
-  let dist=parseFloat(document.getElementById(exId+'-'+c.distField)?.value)||0;
-  if(!dist){
-    if(c.type==='split'&&c.defaultDist)dist=c.defaultDist;
-    else return;
+function getCardioVal(exId,f){ return document.getElementById(exId+'-'+f)?.value||''; }
+function setCardioVal(exId,f,v){ const el=document.getElementById(exId+'-'+f); if(el)el.value=v; }
+function round1(v){ return Math.round(v*10)/10; }
+
+// v306.2: BIDIRECTIONELE berekening via de centrale CardioEngine. Elke combinatie van twee
+// bekende waarden (afstand+tijd, afstand+split/pace, tijd+split/pace, en watt) berekent de
+// ontbrekende derde — ongeacht welk veld de gebruiker als laatste heeft ingevuld. Vervangt de
+// oude calcCardioSplit(), die alleen afstand+tijd→split kon en verder niets deed.
+function recomputeCardioFields(exId,cardioType,changedField){
+  const cfg=CARDIO_TYPES[cardioType];
+  if(!cfg.calc)return; // apparaten zonder tijd/afstand-verband (bv. Stairmaster, Assault Bike): niets te berekenen
+  const distF=cfg.calc.distField, basis=cfg.calc.basis;
+  const outField=cfg.calc.type==='pace'?'pace':'split';
+  const hasWatt=cfg.fields.includes('watt') && basis===500; // Concept2-formule geldt alleen bij split/500m
+
+  let distVal=parseFloat(getCardioVal(exId,distF))||null;
+  let timeVal=CardioEngine.parseTime(getCardioVal(exId,'time'));
+  let splitVal=CardioEngine.parseTime(getCardioVal(exId,outField));
+
+  // Watt ingevuld → eerst vertalen naar een split, die verderop weer tijd/afstand kan voeden.
+  if(hasWatt && changedField==='watt'){
+    const w=parseFloat(getCardioVal(exId,'watt'))||null;
+    if(w){
+      splitVal=CardioEngine.splitFromWatt500(w);
+      setCardioVal(exId,outField,CardioEngine.formatTime(splitVal));
+    }
   }
-  const outField=c.type==='pace'?'pace':'split';
-  const factor=(sec/dist)*c.basis;
-  const m=Math.floor(factor/60), s=Math.round(factor%60);
-  const el=document.getElementById(exId+'-'+outField);
-  if(el)el.value=m+':'+(s<10?'0':'')+s;
+
+  if(changedField!==outField && changedField!=='watt' && distVal && timeVal){
+    splitVal=CardioEngine.splitFromDistTime(distVal,timeVal,basis);
+    setCardioVal(exId,outField,CardioEngine.formatTime(splitVal));
+  } else if(changedField!==distF && splitVal && timeVal){
+    distVal=CardioEngine.distFromTimeSplit(timeVal,splitVal,basis);
+    setCardioVal(exId,distF,round1(distVal));
+  } else if(changedField!=='time' && distVal && splitVal){
+    timeVal=CardioEngine.timeFromDistSplit(distVal,splitVal,basis);
+    setCardioVal(exId,'time',CardioEngine.formatTime(timeVal));
+  }
+
+  // Watt afleiden uit de (evt. zojuist herberekende) split, tenzij watt zelf de invoer was.
+  if(hasWatt && changedField!=='watt'){
+    const finalSplit=CardioEngine.parseTime(getCardioVal(exId,outField));
+    if(finalSplit)setCardioVal(exId,'watt',Math.round(CardioEngine.wattFromSplit500(finalSplit)));
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// SPLITS (v306.2) — Automatisch of Handmatig, echt functioneel.
+// cardioSplitMode[exId]: 'auto' | 'handmatig'
+// cardioSplits[exId]: {intervalNr: seconden}
+// splitRowsHtml() genereert de rijen; wordt zowel bij de initiële render (inline in de
+// geretourneerde HTML-string) als bij live updates (via renderSplitRows → innerHTML) gebruikt,
+// zodat er maar één plek is die de rij-opmaak bepaalt.
+// ══════════════════════════════════════════════════════════
+let cardioSplitMode={};
+let cardioSplits={};
+function numSplitsFor(exId,cfg){
+  const distVal=parseFloat(getCardioVal(exId,cfg.calc?.distField))||cfg.splitTotal;
+  return Math.max(1,Math.round(distVal/cfg.splitDist));
+}
+function splitRowsHtml(exId,cardioType){
+  const cfg=CARDIO_TYPES[cardioType];
+  const mode=cardioSplitMode[exId]||'auto';
+  const n=numSplitsFor(exId,cfg);
+  const s=cardioSplits[exId]||{};
+  let rows='';
+  for(let q=1;q<=n;q++){
+    const val=s[q]!=null?CardioEngine.formatTime(s[q]):'';
+    rows+=`<div class="split-lbl">${q}. ${q*cfg.splitDist}${cfg.unit}</div>
+      <input class="split-inp${mode==='auto'?' computed':''}" type="text" id="${exId}-sp${q}" value="${val}" ${mode==='auto'?'readonly':''}
+        oninput="onManualSplitChange('${exId}','${cardioType}',${q})">`;
+  }
+  return rows;
+}
+function buildSplitsSection(exId,cardioType){
+  const cfg=CARDIO_TYPES[cardioType];
+  if(!cfg.splits)return '';
+  const mode=cardioSplitMode[exId]||'auto';
+  return `<div style="padding:4px 14px 4px;font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Splits per ${cfg.splitDist}${cfg.unit}</div>
+  <div class="rower-scroll" id="splitmode-${exId}">
+    <button class="rower-chip${mode==='auto'?' sel':''}" onclick="setCardioSplitMode('${exId}','${cardioType}','auto')">Automatisch</button>
+    <button class="rower-chip${mode==='handmatig'?' sel':''}" onclick="setCardioSplitMode('${exId}','${cardioType}','handmatig')">Handmatig</button>
+  </div>
+  <div class="splits-grid" id="splitsgrid-${exId}">${splitRowsHtml(exId,cardioType)}</div>
+  <div id="splitsummary-${exId}" style="padding:4px 14px 8px;font-size:11px;color:var(--g4)"></div>`;
+}
+function renderSplitRows(exId,cardioType){
+  const grid=document.getElementById('splitsgrid-'+exId);
+  if(!grid)return;
+  grid.innerHTML=splitRowsHtml(exId,cardioType);
+}
+function setCardioSplitMode(exId,cardioType,mode){
+  cardioSplitMode[exId]=mode;
+  const wrap=document.getElementById('splitmode-'+exId);
+  if(wrap)wrap.querySelectorAll('.rower-chip').forEach(b=>b.classList.toggle('sel',(b.textContent==='Automatisch')===(mode==='auto')));
+  if(mode==='auto')computeAutoSplits(exId,cardioType);
+  renderSplitRows(exId,cardioType);
+  updateSplitSummary(exId,cardioType);
+  logCardio(exId,cardioType);
+}
+// Automatisch: verdeelt de totale tijd gelijkmatig over alle intervallen.
+function computeAutoSplits(exId,cardioType){
+  const cfg=CARDIO_TYPES[cardioType];
+  const distVal=parseFloat(getCardioVal(exId,cfg.calc?.distField))||cfg.splitTotal;
+  const timeVal=CardioEngine.parseTime(getCardioVal(exId,'time'));
+  cardioSplits[exId]=timeVal?CardioEngine.autoSplits(timeVal,distVal,cfg.splitDist):{};
+}
+// Handmatig: gebruiker past een interval aan → totaal + gemiddelde direct herberekend,
+// en teruggeschreven naar de Tijd/Split-velden bovenaan (bidirectioneel, spec-eis #4/#5).
+function onManualSplitChange(exId,cardioType,q){
+  const val=CardioEngine.parseTime(getCardioVal(exId,'sp'+q));
+  if(!cardioSplits[exId])cardioSplits[exId]={};
+  cardioSplits[exId][q]=val;
+  updateSplitSummary(exId,cardioType);
+  logCardio(exId,cardioType);
+}
+function updateSplitSummary(exId,cardioType){
+  const cfg=CARDIO_TYPES[cardioType];
+  const mode=cardioSplitMode[exId]||'auto';
+  const n=numSplitsFor(exId,cfg);
+  const s=cardioSplits[exId]||{};
+  const summaryEl=document.getElementById('splitsummary-'+exId);
+  const agg=CardioEngine.fromManualSplits(s);
+  if(!agg){ if(summaryEl)summaryEl.textContent=''; return; }
+  if(mode==='handmatig'){
+    // Totale tijd/gem. split alleen "definitief" terugschrijven naar de topvelden wanneer
+    // alle intervallen zijn ingevuld — anders zou een gedeeltelijke som misleiden.
+    if(agg.count===n){
+      setCardioVal(exId,'time',CardioEngine.formatTime(agg.total));
+      const outField=cfg.calc?.type==='pace'?'pace':'split';
+      setCardioVal(exId,outField,CardioEngine.formatTime(agg.avg));
+      if(cfg.fields.includes('watt')&&cfg.calc?.basis===500)setCardioVal(exId,'watt',Math.round(CardioEngine.wattFromSplit500(agg.avg)));
+    }
+    if(summaryEl)summaryEl.textContent=agg.count===n
+      ? 'Gem. split: '+CardioEngine.formatTime(agg.avg)+' · Totaal: '+CardioEngine.formatTime(agg.total)
+      : agg.count+'/'+n+' splits ingevuld';
+  } else {
+    if(summaryEl)summaryEl.textContent='Gem. split: '+CardioEngine.formatTime(agg.avg)+' · Totaal: '+CardioEngine.formatTime(agg.total);
+  }
+}
+// v306.2: centrale input-handler voor alle top-level cardiovelden — vervangt calcCardioSplit()
+// (die alleen split berekende) én de losse logCardio()-aanroep in elk oninput-attribuut.
+function onCardioFieldInput(exId,cardioType,field){
+  recomputeCardioFields(exId,cardioType,field);
+  if(CARDIO_TYPES[cardioType]?.splits){
+    if((cardioSplitMode[exId]||'auto')==='auto'){computeAutoSplits(exId,cardioType);renderSplitRows(exId,cardioType);}
+    updateSplitSummary(exId,cardioType);
+  }
+  logCardio(exId,cardioType);
 }
 
 function logCardio(exId, cardioType){
   const cfg=CARDIO_TYPES[cardioType]||CARDIO_TYPES.rowing;
   if(!sessionLog[exId]) sessionLog[exId]={};
   const data={type:cardioType,machine:localStorage.getItem('sel_'+cardioType)||''};
-  cfg.fields.forEach(f=>{data[f]=document.getElementById(exId+'-'+f)?.value||'';});
+  cfg.fields.forEach(f=>{data[f]=getCardioVal(exId,f);});
   if(cfg.splits){
-    const numSplits=cfg.splitTotal/cfg.splitDist;
-    data.splits=[];
-    for(let q=1;q<=numSplits;q++){
-      data.splits.push({t:document.getElementById(exId+'-q'+q+'-t')?.value||''});
-    }
+    data.splitMode=cardioSplitMode[exId]||'auto';
+    data.splits=cardioSplits[exId]?{...cardioSplits[exId]}:{};
   }
   sessionLog[exId].cardio=data;
   updateProgress(curT);
+  if(typeof scheduleAutosave==='function')scheduleAutosave();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -3589,7 +3870,7 @@ function toggleExCard(id){
 function removeExSession(id){
   sessionExtra=sessionExtra.filter(e=>e.id!==id);
   delete sessionLog[id];
-  delete pctSelection[id];delete rpeManual[id];delete warmupState[id];
+  delete pctSelection[id];delete rpeManual[id];delete warmupState[id];delete cardioSplitMode[id];delete cardioSplits[id];delete manualKgSets[id];
   renderTrainScreen(curT);
 }
 
@@ -3598,7 +3879,7 @@ function updateProgress(t){
   const list=getSessionExs(t);
   const done=list.filter(ex=>{
     const l=sessionLog[ex.id];if(!l)return false;
-    if(CARDIO_TYPES[ex.type])return !!(l.cardio&&(l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals));
+    if(l.cardio||resolveCardioType(ex))return !!(l.cardio&&(l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals));
     return l.sets?.some(s=>s&&(s.kg||s.reps));
   }).length;
   const pct=list.length?Math.round(done/list.length*100):0;
@@ -3652,8 +3933,10 @@ function addExToSession(t){
 
 function addExConfirm(exId,t){
   const ex=exercises.find(e=>e.id===exId);if(!ex)return;
-  const exType=(ex.id==='roeien'||ex.type==='cardio'||ex.type==='rowing')?'rowing':ex.type||'strength';
-  sessionExtra.push({id:ex.id,naam:ex.name,type:exType,sets:4,reps:'6-8',rpe:'8',_t:t});
+  const cardioType=resolveCardioType(ex);
+  const exType=cardioType||ex.type||'strength';
+  const extra=cardioType?{id:ex.id,naam:ex.name,type:exType,_t:t}:{id:ex.id,naam:ex.name,type:exType,sets:4,reps:'6-8',rpe:'8',_t:t};
+  sessionExtra.push(extra);
   renderTrainScreen(t);
   toast(ex.name+' toegevoegd');
 }
@@ -3671,8 +3954,8 @@ function renderSessionSummaryContent(t){
   list.forEach(ex=>{
     const l=sessionLog[ex.id];if(!l)return;
     let det='';
-    if(CARDIO_TYPES[ex.type]&&l.cardio){
-      const cfg=CARDIO_TYPES[ex.type],c=l.cardio,parts=[];
+    if(l.cardio && CARDIO_TYPES[l.cardio.type]){
+      const cfg=CARDIO_TYPES[l.cardio.type],c=l.cardio,parts=[];
       if(c.dist)parts.push(c.dist+cfg.unit);
       if(c.dist_km)parts.push(c.dist_km+'km');
       if(c.time)parts.push(c.time);
@@ -3701,8 +3984,8 @@ async function finishSession(){
   const summaryData=[]; // v306 #10: input voor AI-samenvatting
   for(const ex of list){
     const l=sessionLog[ex.id];if(!l)continue;
-    if(CARDIO_TYPES[ex.type]&&l.cardio&&(l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals)){
-      const cRow=cardioDataToRow(ex.type,l.cardio);
+    if(l.cardio && CARDIO_TYPES[l.cardio.type] && (l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals)){
+      const cRow=cardioDataToRow(l.cardio.type,l.cardio);
       const extraNote=cRow.extraNote;delete cRow.extraNote;
       await sbPost('sessions',{date:today,exercise_id:ex.id,training_type:t,note:extraNote||'',...cRow});saved++;
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
@@ -3724,7 +4007,7 @@ async function finishSession(){
   localStorage.setItem('maurice_last_training',t);
   closeModal('m-session-end');stopTrainTimer();
   clearTrainingDraft();
-  curT=null;sessionLog={};sessionExtra=[];pctSelection={};rpeManual={};warmupState={};
+  curT=null;sessionLog={};sessionExtra=[];pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.remove('show'));
   if(saved===0){toast('Niets om op te slaan');go('s-home');refreshStats();return;}
   toast(saved+' oefeningen opgeslagen');
@@ -3970,8 +4253,9 @@ function openEditSess(id,name,session){
 
 function renderEditSessFields(ex,session){
   let f='';
-  if(Object.keys(CARDIO_TYPES).includes(ex.type)){
-    f+=buildCardioBody(ES_DOMID, ex.cardioType||ex.type);
+  const cardioType=resolveCardioType(ex);
+  if(cardioType){
+    f+=buildCardioBody(ES_DOMID, cardioType);
   } else if(ex.type==='wod'){
     f+=buildWodBody(ES_DOMID, ex, null);
   } else if(ex.type==='carry'){
@@ -4015,11 +4299,12 @@ async function saveEditSession(){
   const date=document.getElementById('es-date')?.value||curAddDate||curEditSess?.date;
   const note=document.getElementById('es-note')?.value||'';
   const row={date,note};
-  if(Object.keys(CARDIO_TYPES).includes(ex.type)){
-    const cfg=CARDIO_TYPES[ex.type];
-    const d={machine:localStorage.getItem('sel_'+ex.type)||''};
+  const cardioType=resolveCardioType(ex);
+  if(cardioType){
+    const cfg=CARDIO_TYPES[cardioType];
+    const d={machine:localStorage.getItem('sel_'+cardioType)||''};
     cfg.fields.forEach(fld=>{d[fld]=document.getElementById(ES_DOMID+'-'+fld)?.value||'';});
-    const cRow=cardioDataToRow(ex.type,d);
+    const cRow=cardioDataToRow(cardioType,d);
     const extraNote=cRow.extraNote;delete cRow.extraNote;
     Object.assign(row,cRow);
     if(extraNote)row.note=(note?note+' · ':'')+extraNote;
@@ -5124,8 +5409,10 @@ async function startCustomTraining(id){
   for(const exId of (t.exercises||[])){
     const ex=exercises.find(e=>e.id===exId);
     if(!ex) continue;
-    const exType=(ex.id==='roeien'||ex.type==='cardio'||ex.type==='rowing')?'rowing':ex.type||'strength';
-    sessionExtra.push({id:ex.id,naam:ex.name,type:exType,sets:4,reps:'6-8',rpe:'8',_t:curT,_preloaded:true});
+    const cardioType=resolveCardioType(ex);
+    const exType=cardioType||ex.type||'strength';
+    const extra=cardioType?{id:ex.id,naam:ex.name,type:exType,_t:curT,_preloaded:true}:{id:ex.id,naam:ex.name,type:exType,sets:4,reps:'6-8',rpe:'8',_t:curT,_preloaded:true};
+    sessionExtra.push(extra);
   }
   buildCustomTrainScreen(t);
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));

@@ -1,8 +1,8 @@
-// Maurice Training Coach — Service Worker v3.0.6.1
+// Maurice Training Coach — Service Worker v3.0.6.2
 // Play Store ready — offline first
 
-const CACHE_NAME = 'maurice-training-v3061';
-const CACHE_STATIC = 'maurice-static-v3061';
+const CACHE_NAME = 'maurice-training-v3062';
+const CACHE_STATIC = 'maurice-static-v3062';
 
 const STATIC_ASSETS = [
   '/',

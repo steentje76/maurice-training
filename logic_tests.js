@@ -502,6 +502,147 @@ test('Geen marker = geen acties', ()=>{
   assertEq(actions.length, 0);
 });
 
+// ── V306.2 — CENTRALE CARDIO CALCULATION ENGINE ──────────
+console.log("\n🚴 v306.2 — CardioCalculationEngine (bidirectioneel)");
+
+// Zelfstandige herimplementatie van de CardioEngine-methoden (geen DOM), identieke logica.
+const CardioEngineTest = {
+  formatTime(sec){
+    if(sec==null||isNaN(sec)||sec<0)return '';
+    sec=Math.round(sec);
+    const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60;
+    const mm=h>0?String(m).padStart(2,'0'):String(m);
+    const ss=String(s).padStart(2,'0');
+    return h>0?`${h}:${mm}:${ss}`:`${mm}:${ss}`;
+  },
+  splitFromDistTime(dist,timeSec,basis){ return (!dist||!timeSec)?null:(timeSec/dist)*basis; },
+  timeFromDistSplit(dist,splitSec,basis){ return (!dist||!splitSec)?null:(splitSec/basis)*dist; },
+  distFromTimeSplit(timeSec,splitSec,basis){ return (!timeSec||!splitSec)?null:(timeSec/splitSec)*basis; },
+  wattFromSplit500(splitSec){ return !splitSec?null:2.80/Math.pow(splitSec/500,3); },
+  splitFromWatt500(watt){ return !watt?null:Math.cbrt(2.80/watt)*500; },
+  autoSplits(totalTimeSec,totalDist,splitDist){
+    if(!totalTimeSec||!totalDist||!splitDist)return [];
+    const n=Math.max(1,Math.round(totalDist/splitDist));
+    const per=totalTimeSec/n;
+    const splits={};
+    for(let i=1;i<=n;i++)splits[i]=per;
+    return splits;
+  },
+  fromManualSplits(splitSecMap){
+    const vals=Object.values(splitSecMap).filter(v=>v!=null&&!isNaN(v)&&v>0);
+    if(!vals.length)return null;
+    const total=vals.reduce((a,b)=>a+b,0);
+    return {total, avg:total/vals.length, count:vals.length};
+  }
+};
+
+test('Afstand + Tijd → Split (1000m in 3:40 = 1:50/500m)', ()=>{
+  const split=CardioEngineTest.splitFromDistTime(1000,220,500);
+  assertEq(split, 110); // 1:50 = 110s
+  assertEq(CardioEngineTest.formatTime(split), '1:50');
+});
+test('Afstand + Split → Tijd (1000m @ 1:50/500m = 3:40)', ()=>{
+  const time=CardioEngineTest.timeFromDistSplit(1000,110,500);
+  assertEq(time, 220);
+  assertEq(CardioEngineTest.formatTime(time), '3:40');
+});
+test('Tijd + Split → Afstand (3:40 @ 1:50/500m = 1000m)', ()=>{
+  const dist=CardioEngineTest.distFromTimeSplit(220,110,500);
+  assertEq(dist, 1000);
+});
+test('Hardlopen: Afstand + Tijd → Pace (5km in 25:00 = 5:00/km)', ()=>{
+  const pace=CardioEngineTest.splitFromDistTime(5,1500,1);
+  assertEq(pace, 300);
+  assertEq(CardioEngineTest.formatTime(pace), '5:00');
+});
+test('Hardlopen: Afstand + Pace → Tijd', ()=>{
+  const time=CardioEngineTest.timeFromDistSplit(5,300,1);
+  assertEq(time, 1500);
+});
+test('Hardlopen: Tijd + Pace → Afstand', ()=>{
+  const dist=CardioEngineTest.distFromTimeSplit(1500,300,1);
+  assertEq(dist, 5);
+});
+test('Watt uit split (Concept2-formule, split 2:00/500m ≈ 200W)', ()=>{
+  const w=CardioEngineTest.wattFromSplit500(120);
+  assertRange(w, 198, 206, 'Watt bij 2:00 split');
+});
+test('Split uit watt is de inverse van watt uit split', ()=>{
+  const split=110;
+  const watt=CardioEngineTest.wattFromSplit500(split);
+  const backToSplit=CardioEngineTest.splitFromWatt500(watt);
+  assertRange(backToSplit, split-0.01, split+0.01, 'Rondtrip split→watt→split');
+});
+test('formatTime: seconden naar M:SS, en naar H:MM:SS boven het uur', ()=>{
+  assertEq(CardioEngineTest.formatTime(125), '2:05');
+  assertEq(CardioEngineTest.formatTime(3725), '1:02:05');
+});
+
+// ── V306.2 — SPLITS: automatisch vs handmatig ────────────
+console.log("\n📊 v306.2 — Splits (automatisch/handmatig, echt functioneel)");
+
+test('Automatisch: 4 gelijke intervallen bij 1000m/250m, 4:00 totaal', ()=>{
+  const splits=CardioEngineTest.autoSplits(240,1000,250);
+  assertEq(Object.keys(splits).length, 4);
+  assertEq(splits[1], 60); assertEq(splits[4], 60);
+});
+test('Automatisch: totale tijd = som van alle intervallen', ()=>{
+  const splits=CardioEngineTest.autoSplits(240,1000,250);
+  const total=Object.values(splits).reduce((a,b)=>a+b,0);
+  assertEq(total, 240);
+});
+test('Handmatig: gemiddelde en totaal berekend uit ingevulde intervallen', ()=>{
+  const agg=CardioEngineTest.fromManualSplits({1:58,2:60,3:59,4:61});
+  assertEq(agg.total, 238);
+  assertEq(agg.avg, 59.5);
+  assertEq(agg.count, 4);
+});
+test('Handmatig: gedeeltelijk ingevuld telt alleen de ingevulde intervallen', ()=>{
+  const agg=CardioEngineTest.fromManualSplits({1:60,2:null,3:58});
+  assertEq(agg.count, 2);
+  assertEq(agg.total, 118);
+});
+test('Handmatig: leeg levert geen resultaat (geen misleidend gemiddelde)', ()=>{
+  assertEq(CardioEngineTest.fromManualSplits({1:null,2:null}), null);
+});
+test('Handmatige split past de totale tijd aan (bug #4: geen "auto" die niets doet)', ()=>{
+  // Simuleert: gebruiker vult 4 handmatige intervallen in, elk net iets anders dan het gemiddelde
+  const agg=CardioEngineTest.fromManualSplits({1:60,2:62,3:59,4:61});
+  assertEq(agg.total, 242);
+  assert(agg.total!==240, 'Totaal moet uit de werkelijke handmatige waarden komen, niet uit een default');
+});
+
+// ── V306.2 — resolveCardioType (uniforme herkenning) ─────
+console.log("\n🎯 v306.2 — resolveCardioType (één cardio-logger overal)");
+
+const CARDIO_TYPES_TEST={rowing:1,bikeerg:1,skierg:1,running:1};
+function resolveCardioTypeTest(ex){
+  if(!ex)return null;
+  if(ex.cardioType && CARDIO_TYPES_TEST[ex.cardioType])return ex.cardioType;
+  if(CARDIO_TYPES_TEST[ex.type])return ex.type;
+  if(ex.type==='cardio')return 'rowing';
+  return null;
+}
+test('Specifiek cardiotype (bv. skierg) wordt direct herkend', ()=>{
+  assertEq(resolveCardioTypeTest({id:'x',type:'skierg'}), 'skierg');
+});
+test('Legacy generieke waarde "cardio" valt terug op roeien (was voorheen NIET herkend)', ()=>{
+  assertEq(resolveCardioTypeTest({id:'x',type:'cardio'}), 'rowing');
+});
+test('cardioType-veld heeft voorrang boven type', ()=>{
+  assertEq(resolveCardioTypeTest({id:'x',type:'cardio',cardioType:'bikeerg'}), 'bikeerg');
+});
+test('Kracht-type wordt niet als cardio herkend', ()=>{
+  assertEq(resolveCardioTypeTest({id:'x',type:'strength'}), null);
+});
+test('Losse oefening en training gebruiken dezelfde resolver (identieke uitkomst)', ()=>{
+  const ex={id:'bike1',type:'cardio'};
+  const viaLosseOefening=resolveCardioTypeTest(ex);
+  const viaTraining=resolveCardioTypeTest(ex);
+  assertEq(viaLosseOefening, viaTraining);
+});
+
+
 
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

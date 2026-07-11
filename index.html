@@ -435,7 +435,7 @@ canvas{width:100%;height:100%}
 
     <!-- Atleet profiel kaart -->
     <div class="card">
-      <div class="card-hd"><div class="card-title">Atleet</div><button class="btn btn-o btn-sm" onclick="openModal('m-atleet')">Bewerken</button></div>
+      <div class="card-hd"><div class="card-title">Atleet</div><button class="btn btn-o btn-sm" onclick="openAtleetModal()">Bewerken</button></div>
       <div class="card-body" id="profiel-atleet-card">
         <p style="color:var(--g4);font-size:13px">Nog niet ingesteld</p>
       </div>
@@ -1274,10 +1274,14 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.0.0';
+const APP_VER = 'v3.0.1';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
+// Let op Fase 2: SB_H is nu statisch (publishable key). Zodra Supabase Auth + RLS
+// actief wordt, moet de Authorization-header hier dynamisch de ingelogde user-JWT
+// gebruiken i.p.v. de vaste publishable key — alle sb*-functies hieronder lezen SB_H
+// via closure, dus dat is de enige plek die dan hoeft te veranderen.
 const SB_H = {apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'};
 
 // Legacy fallback-waarden, alleen gebruikt zolang een oefening nog geen eigen
@@ -1437,9 +1441,6 @@ const SPORT_LABELS={kracht:'Kracht/Powerlifting',crossfit:'CrossFit/Functioneel'
 let activeSport=localStorage.getItem('maurice_active_sport')||null;
 function getActiveSport(){return activeSport||atleet?.sport||'crossfit';}
 function setActiveSport(sport){activeSport=sport;localStorage.setItem('maurice_active_sport',sport);renderSportSwitcher();}
-function filterExercisesBySport(exList,sport){
-  return exList.filter(e=>!e.sports||!e.sports.length||e.sports.includes(sport));
-}
 function renderSportSwitcher(){
   const el=document.getElementById('sport-switcher');
   if(!el)return;
@@ -1459,7 +1460,9 @@ let curEditSess=null;
 // ══════════════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════════════
-async function sbGet(t,p=''){try{const r=await fetch(`${SB_URL}/rest/v1/${t}?select=*${p}`,{headers:SB_H});return r.ok?await r.json():[];}catch{return[];}}
+// Fout-logging toegevoegd (i.p.v. stille catch) — nodig zodra RLS actief is, anders
+// zijn 401/403-afwijzingen straks onzichtbaar en lijkt de app alleen "leeg" data te tonen.
+async function sbGet(t,p=''){try{const r=await fetch(`${SB_URL}/rest/v1/${t}?select=*${p}`,{headers:SB_H});if(!r.ok){console.error('sbGet',t,r.status,await r.text());return[];}return await r.json();}catch(e){console.error('sbGet catch',t,e);return[];}}
 async function sbPost(t,d){
   try{
     const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(d)});
@@ -1476,7 +1479,7 @@ async function sbPostReturning(t,d){
     return await r.json();
   }catch(e){console.error('sbPostReturning catch',t,e);return null;}
 }
-async function sbPatch(t,f,d){try{const r=await fetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(d)});return r.ok;}catch{return false;}}
+async function sbPatch(t,f,d){try{const r=await fetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)console.error('sbPatch',t,r.status,await r.text());return r.ok;}catch(e){console.error('sbPatch catch',t,e);return false;}}
 // Eén canoniek gewichtsrecord per dag: overschrijft bestaand record i.p.v. dupliceren
 // (voorheen schreven saveHRV/saveWeight/saveBC alle drie los naar weight_log)
 async function upsertWeightLog(weight,scale){
@@ -1500,8 +1503,8 @@ function resolveAfmetingen(row){
   }
   return {hips,chest,arm,thigh,metabAge};
 }
-async function sbDel(t,f){try{const r=await fetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'DELETE',headers:SB_H});return r.ok;}catch{return false;}}
-async function sbUpsert(t,d){try{const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(d)});return r.ok;}catch{return false;}}
+async function sbDel(t,f){try{const r=await fetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'DELETE',headers:SB_H});if(!r.ok)console.error('sbDel',t,r.status,await r.text());return r.ok;}catch(e){console.error('sbDel catch',t,e);return false;}}
+async function sbUpsert(t,d){try{const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(d)});if(!r.ok)console.error('sbUpsert',t,r.status,await r.text());return r.ok;}catch(e){console.error('sbUpsert catch',t,e);return false;}}
 
 // ══════════════════════════════════════════════════════════
 // PIN
@@ -3657,21 +3660,6 @@ async function importFromFile(input){
     if(statusEl) statusEl.textContent = 'Fout: '+e.message;
     toast('Importfout: '+e.message);
   }
-}async function importLogboek(){
-  const btn=document.getElementById('import-btn');
-  if(btn){btn.textContent='Bezig...';btn.disabled=true;}
-  const sessions=[{"date":"2026-04-11","exercise_id":"roeien","distance":1500,"time_str":"—","watt":220,"training_type":"A","note":"1:56.6/500m, laatste 250m 1:50.6 @ 259W"},{"date":"2026-04-26","exercise_id":"roeien","distance":1000,"time_str":"3:53.1","watt":221,"stroke_rate":26,"training_type":"B","note":"1:56.5/500m, drag 145, splits: 1:59.2/1:59.6/1:56.0/1:51.2"},{"date":"2026-04-30","exercise_id":"roeien","distance":1000,"time_str":"3:44.0","training_type":"A","note":"PR 3:44.0 (8A)"},{"date":"2026-05-08","exercise_id":"roeien","distance":1000,"time_str":"3:44.1","training_type":"A","note":"PR gekoppeld 3:44.1"},{"date":"2026-05-31","exercise_id":"roeien","distance":1000,"time_str":"3:37.5","watt":272,"training_type":"B","note":"PR ⭐ 3:37.5 / 272W"},{"date":"2026-06-14","exercise_id":"roeien","distance":1000,"time_str":"3:41.6","watt":257,"training_type":"A","note":"3:41.6 / 257W; benen niet fris"},{"date":"2026-04-02","exercise_id":"hexabar","sets":1,"reps":3,"weight":240.0,"training_type":"B","note":"PR! 240×3. HRV laag"},{"date":"2026-04-26","exercise_id":"hexabar","sets":5,"reps":1,"weight":200.0,"training_type":"B","note":"Opbouw 100/140/170/190/200 kg. Conservatief na CrossFit"},{"date":"2026-05-22","exercise_id":"hexabar","sets":3,"reps":2,"weight":190.0,"training_type":"B","note":"Top 190 kg; HRV 19"},{"date":"2026-05-31","exercise_id":"hexabar","sets":3,"reps":2,"weight":180.0,"training_type":"B","note":"Top 180 kg; roei PR dag"},{"date":"2026-06-20","exercise_id":"hexabar","sets":2,"reps":2,"weight":180.0,"training_type":"B","note":"Conv. deadlift (geen hexabar); top 2×180 kg; lichte lage rug gevoeligheid; roei warmup PR 3:36.5"},{"date":"2026-03-25","exercise_id":"backsquat","sets":3,"reps":3,"weight":87.5,"training_type":"A","note":"6A start week 6"},{"date":"2026-04-11","exercise_id":"backsquat","sets":5,"reps":3,"weight":90.0,"rpe":7.5,"training_type":"A","note":"Consolidatie excellent"},{"date":"2026-04-23","exercise_id":"backsquat","sets":3,"reps":3,"weight":95.0,"training_type":"CrossFit","note":"Paused 3s: 90/92.5/95 kg. WOD 1706"},{"date":"2026-04-30","exercise_id":"backsquat","sets":3,"reps":3,"weight":100.0,"training_type":"A","note":"100 kg (8A). PR werkset"},{"date":"2026-05-08","exercise_id":"backsquat","sets":4,"reps":3,"weight":93.0,"rpe":8.0,"training_type":"A","note":"93 kg RPE 8"},{"date":"2026-05-28","exercise_id":"backsquat","sets":4,"reps":3,"weight":95.0,"training_type":"A","note":"95 kg werksets"},{"date":"2026-06-07","exercise_id":"backsquat","sets":1,"reps":3,"weight":100.0,"rpe":8.5,"training_type":"A","note":"100 kg PR werkset HRV 24"},{"date":"2026-04-11","exercise_id":"bench","sets":5,"reps":4,"weight":80.0,"rpe":8.0,"training_type":"A","note":"5×4 @ 80 kg"},{"date":"2026-05-08","exercise_id":"bench","sets":4,"reps":3,"weight":82.5,"rpe":8.5,"training_type":"A","note":"82.5 kg; linker triceps spanning bij 85 kg"},{"date":"2026-05-28","exercise_id":"bench","sets":4,"reps":4,"weight":80.0,"training_type":"A","note":"80 kg werksets"},{"date":"2026-06-14","exercise_id":"bench","sets":3,"reps":3,"weight":85.0,"rpe":9.0,"training_type":"A","note":"PR 85×3 ⭐ werkset"},{"date":"2026-04-11","exercise_id":"frontsquat","sets":4,"reps":3,"weight":80.0,"training_type":"A","note":"Fatigue-limited na bench"},{"date":"2026-04-18","exercise_id":"frontsquat","sets":4,"reps":12,"weight":50.0,"training_type":"A","note":"Volume dag 7C"},{"date":"2026-04-30","exercise_id":"frontsquat","sets":4,"reps":3,"weight":90.0,"rpe":7.5,"training_type":"A","note":"Top 90 kg (8A); 95 kg afgebroken wegens tijd"},{"date":"2026-05-08","exercise_id":"frontsquat","sets":4,"reps":3,"weight":88.0,"rpe":8.0,"training_type":"A","note":"3×83 RPE7, 1×88 RPE8; duim lichte pijn bij grip"},{"date":"2026-05-28","exercise_id":"frontsquat","sets":4,"reps":2,"weight":90.0,"training_type":"A","note":"Top 90 kg × 2 (3e rep mentaal afgebroken)"},{"date":"2026-06-07","exercise_id":"frontsquat","sets":1,"reps":1,"weight":92.5,"training_type":"A","note":"PR ⭐ 92.5 kg! Superset met strict press. 95 kg fail"},{"date":"2026-06-14","exercise_id":"frontsquat","sets":3,"reps":3,"weight":90.0,"rpe":9.0,"training_type":"A","note":"Dagmax 90 kg RPE 9; benen niet fris"},{"date":"2026-04-11","exercise_id":"shoulderpress","sets":1,"reps":1,"weight":60.0,"rpe":9.5,"training_type":"A","note":"All-time PR! Vorige PR 58 kg"},{"date":"2026-04-30","exercise_id":"shoulderpress","sets":1,"reps":1,"weight":61.0,"rpe":8.5,"training_type":"A","note":"PR 61 kg! (8A)"},{"date":"2026-05-23","exercise_id":"shoulderpress","sets":5,"reps":5,"weight":61.0,"training_type":"CrossFit","note":"SP 61 kg / PP 80 kg / PJ 90 kg PR. WOD 1731"},{"date":"2026-05-28","exercise_id":"shoulderpress","sets":1,"reps":1,"weight":63.5,"rpe":8.5,"training_type":"A","note":"PR ⭐ 63.5 kg!"},{"date":"2026-06-07","exercise_id":"shoulderpress","sets":1,"reps":1,"weight":62.5,"rpe":7.5,"training_type":"A","note":"62.5 kg superset met frontsquat; 65 kg fail"},{"date":"2026-06-14","exercise_id":"shoulderpress","sets":1,"reps":1,"weight":62.5,"rpe":8.0,"training_type":"A","note":"62.5 kg RPE 8; 64+65.5 kg fails; press eerste in sessie"},{"date":"2026-04-26","exercise_id":"cablerow","sets":6,"reps":6,"weight":85.0,"training_type":"B","note":"Opbouw 60/70/75/80/85/85 kg"},{"date":"2026-05-05","exercise_id":"bentoverrow","sets":4,"reps":10,"weight":70.0,"training_type":"B","note":"BOR 55/65/70/70 kg. Eerste barbell BOR"},{"date":"2026-05-22","exercise_id":"cablerow","sets":4,"reps":8,"weight":90.0,"rpe":8.0,"training_type":"B","note":"4×8@80 + 3×90 kg. Werkgewicht 90 kg vastgesteld"},{"date":"2026-05-31","exercise_id":"cablerow","sets":4,"reps":6,"weight":90.0,"training_type":"B","note":"90 kg werkgewicht bevestigd; 95 kg huidig limiet"},{"date":"2026-06-20","exercise_id":"cablerow","sets":2,"reps":5,"weight":90.0,"rpe":8.5,"training_type":"B","note":"5×90 RPE8-9, 6×85 RPE8-9; volgende keer 80 kg consolideren"},{"date":"2026-04-26","exercise_id":"hpc","sets":7,"reps":5,"weight":80.0,"training_type":"B","note":"Opbouw t/m 80 kg. Catch = limiting factor"},{"date":"2026-05-05","exercise_id":"hpc","sets":6,"reps":1,"weight":82.5,"rpe":8.5,"training_type":"B","note":"PR 82.5 kg! 85 kg gemist"},{"date":"2026-05-22","exercise_id":"hpc","sets":4,"reps":1,"weight":77.5,"rpe":8.5,"training_type":"B","note":"Volledige catch techniek; RPE 8-9"},{"date":"2026-05-31","exercise_id":"hpc","sets":4,"reps":1,"weight":80.0,"training_type":"B","note":"80 kg goede catch; breekt bij multiples"},{"date":"2026-06-12","exercise_id":"hpc","sets":5,"reps":1,"weight":80.0,"rpe":8.0,"training_type":"B","note":"80 kg RPE 7-8; 82.5 miss; korte nacht"},{"date":"2026-06-20","exercise_id":"hpc","sets":5,"reps":1,"weight":82.5,"rpe":8.0,"training_type":"B","note":"82.5 kg RPE 8; 85 kg catch fail; pull sterk genoeg"},{"date":"2026-05-05","exercise_id":"hps","sets":4,"reps":2,"weight":55.0,"training_type":"B","note":"Eerste logging; stramme schouders"},{"date":"2026-05-31","exercise_id":"hps","sets":7,"reps":1,"weight":57.5,"rpe":7.5,"training_type":"B","note":"Eerste formele snatch; debut 57.5 kg"},{"date":"2026-06-20","exercise_id":"hps","sets":4,"reps":1,"weight":55.0,"training_type":"B","note":"HPS afgerond na HPC"},{"date":"2026-04-18","exercise_id":"farmercarry","sets":4,"weight":55.0,"training_type":"A","note":"218m @ 55 kg hexabar. Record!"},{"date":"2026-04-26","exercise_id":"farmercarry","sets":5,"weight":32.0,"training_type":"B","note":"400m @ 32 kg KB, 5 stops"},{"date":"2026-06-20","exercise_id":"hpc","sets":1,"reps":1,"weight":85.0,"rpe":8.0,"training_type":"B","note":"Power clean from floor 85 kg RPE 8 (geen hexabar beschikbaar)"}];
-  const weights=[{"date":"2026-03-25","weight":107.0,"scale":"Tanita"},{"date":"2026-03-30","weight":107.8,"scale":"Tanita"},{"date":"2026-04-12","weight":108.0,"scale":"Tanita"},{"date":"2026-04-18","weight":108.4,"scale":"Tanita"},{"date":"2026-04-26","weight":109.3,"scale":"Tanita"}];
-  const bcs=[{"date":"2026-03-25","weight":107.0,"fat_pct":15.2,"muscle_mass":85.6,"source":"Tanita"},{"date":"2026-04-26","weight":109.3,"fat_pct":14.2,"muscle_mass":89.2,"bmr":2778,"visceral_fat":6,"source":"Tanita"}];
-  const hrvs=[{"date":"2026-04-21","hrv":24,"note":"Weekstart hoog"},{"date":"2026-04-22","hrv":22},{"date":"2026-04-23","hrv":20},{"date":"2026-04-24","hrv":18,"note":"Laagste week"},{"date":"2026-04-25","hrv":21,"note":"Licht herstel"},{"date":"2026-04-26","hrv":18,"rhr":59,"note":"Weekgemiddelde 19 ms"},{"date":"2026-04-30","hrv":25,"note":"8A dag — hoog"},{"date":"2026-05-05","hrv":20},{"date":"2026-05-08","hrv":21},{"date":"2026-05-09","hrv":21},{"date":"2026-05-16","hrv":23},{"date":"2026-05-22","hrv":19},{"date":"2026-05-23","hrv":21},{"date":"2026-06-07","hrv":24},{"date":"2026-06-14","hrv":29,"note":"Hoogste meting dit blok"}];
-  let ok=0,fail=0;
-  for(const s of sessions){const r=await sbPost('sessions',s);r?ok++:fail++;}
-  for(const w of weights){const r=await sbPost('weight_log',w);r?ok++:fail++;}
-  for(const b of bcs){const r=await sbPost('body_comp',b);r?ok++:fail++;}
-  for(const h of hrvs){const r=await sbPost('hrv_log',h);r?ok++:fail++;}
-  if(btn){btn.textContent='Importeer';btn.disabled=false;}
-  toast(ok+' records geïmporteerd'+(fail?' · '+fail+' mislukt':''));
-  refreshHome();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -3783,7 +3771,6 @@ async function refreshProfiel(){
   // Atleet kaart
   const el = document.getElementById('profiel-atleet-card');
   if(el){
-    const bmi = atleet.lengte ? Math.round((atleet.lengte > 0 ? 0 : 0)) : null; // from weight_log
     const mf = mastersFactor(atleet.leeftijd);
     el.innerHTML = `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">

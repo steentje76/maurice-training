@@ -562,6 +562,52 @@ test('cardioDataToRow: rpe altijd meegenomen, ook zonder waarde (null i.p.v. NaN
   assertEq(row.rpe,null);
 });
 
+// ══════════════════════════════════════════════════════════
+// GEWICHT-OPTIES per set (v3.0.3) — vast / +kg vorige set / % vorige set
+// Reimplementatie van getEffectiveKg() op een array i.p.v. DOM, zelfde rekenlogica.
+// ══════════════════════════════════════════════════════════
+function getEffectiveKgTest(sets,i){
+  if(i<1)return null;
+  const s=sets[i-1];
+  if(!s||s.kg===undefined||s.kg==='')return null;
+  const val=parseFloat(s.kg);
+  if(isNaN(val))return null;
+  const mode=s.mode||'vast';
+  if(mode==='vast')return val;
+  const prevKg=getEffectiveKgTest(sets,i-1);
+  if(prevKg==null)return val;
+  if(mode==='plus')return Math.round((prevKg+val)*10)/10;
+  if(mode==='pct')return Math.round(prevKg*val/100*10)/10;
+  return val;
+}
+
+console.log('\n⚖️  Gewicht-opties per set (v3.0.3)');
+test('getEffectiveKg: vast kg = ingevulde waarde zelf', ()=>{
+  const sets=[{kg:'100',mode:'vast'}];
+  assertEq(getEffectiveKgTest(sets,1),100);
+});
+test('getEffectiveKg: +kg vorige set telt op bij effectief gewicht vorige set', ()=>{
+  const sets=[{kg:'100',mode:'vast'},{kg:'10',mode:'plus'}];
+  assertEq(getEffectiveKgTest(sets,2),110);
+});
+test('getEffectiveKg: % vorige set rekent percentage van effectief gewicht vorige set', ()=>{
+  const sets=[{kg:'100',mode:'vast'},{kg:'80',mode:'pct'}];
+  assertEq(getEffectiveKgTest(sets,2),80);
+});
+test('getEffectiveKg: gekoppelde modi (pct van een +kg-set) rekenen recursief door', ()=>{
+  const sets=[{kg:'100',mode:'vast'},{kg:'10',mode:'plus'},{kg:'90',mode:'pct'}];
+  // set2 = 110, set3 = 90% van 110 = 99
+  assertEq(getEffectiveKgTest(sets,3),99);
+});
+test('getEffectiveKg: zonder referentie (eerste set op +kg/%) valt terug op ingevulde waarde als absoluut gewicht', ()=>{
+  const sets=[{kg:'20',mode:'plus'}];
+  assertEq(getEffectiveKgTest(sets,1),20);
+});
+test('getEffectiveKg: lege/ontbrekende set geeft null', ()=>{
+  const sets=[{kg:'100',mode:'vast'},{kg:'',mode:'plus'}];
+  assertEq(getEffectiveKgTest(sets,2),null);
+});
+
 
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

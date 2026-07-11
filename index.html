@@ -107,6 +107,8 @@ body{display:flex;justify-content:center}
 .set-sep{font-size:14px;color:var(--g3);padding:0 2px}
 .set-more{background:none;border:none;color:var(--g4);font-size:18px;cursor:pointer;padding:4px;flex-shrink:0}
 .set-rest{background:none;border:none;color:var(--accent);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0}
+.wmode-sel{width:100%;margin-top:3px;padding:2px 1px;border:1px solid var(--g2);border-radius:6px;font-size:8px;font-weight:600;color:var(--g4);background:var(--g1);font-family:var(--f);text-align:center}
+.rpe-btn:active{background:var(--g2)}
 .rm-panel{margin:8px 14px 4px;padding:10px 12px;background:var(--g1);border-radius:10px}
 .rm-panel-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .rm-panel-row label{font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.3px}
@@ -876,6 +878,7 @@ canvas{width:100%;height:100%}
     <div class="modal-handle"></div>
     <div class="modal-title">Losse oefening</div>
     <div class="irow"><label class="ilbl">Oefening</label><button type="button" class="ex-pick-trigger" id="los-ex-trigger" onclick="openExPicker()"><span id="los-ex-trigger-lbl" class="ph">Kies oefening…</span><span style="color:var(--g3)">›</span></button></div>
+    <div class="irow" id="los-wu-row"><label class="ilbl">Opwarmsets</label><input class="inp" type="number" id="los-wu-count" value="0" min="0" max="6" step="1" oninput="onLosWuChange()"></div>
     <div id="los-new-fields" style="display:none">
       <div class="irow"><label class="ilbl">Naam</label><input class="inp" type="text" id="los-ex-new" placeholder="bijv. Zercher Squat"></div>
       <div class="irow"><label class="ilbl">Type</label><select class="inp" id="los-ex-new-type" onchange="onLosNewTypeChange()">
@@ -1042,12 +1045,16 @@ canvas{width:100%;height:100%}
 <div class="modal-bg" id="m-save-as-training" onclick="">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">Opslaan als training?</div>
-    <p style="font-size:13px;color:var(--g4);margin-bottom:14px">Je hebt oefeningen toegevoegd die niet in het standaard schema staan. Wil je deze samenstelling opslaan als nieuwe training?</p>
-    <div class="irow"><label class="ilbl">Naam</label><input class="inp" type="text" id="sat-name" placeholder="bijv. Full Body"></div>
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-save-as-training');finishSessionNoSave()">Niet opslaan</button>
-      <button class="btn btn-r" style="flex:2" onclick="saveAsTrainingAndFinish()">Opslaan & afsluiten</button>
+    <div class="modal-title">Extra oefening toegevoegd</div>
+    <p style="font-size:13px;color:var(--g4);margin-bottom:14px">Je hebt oefeningen toegevoegd die niet standaard in deze training staan. Wat wil je hiermee doen?</p>
+    <div style="display:flex;flex-direction:column;gap:8px" id="sat-choice-row">
+      <button class="btn btn-o" style="width:100%" onclick="closeModal('m-save-as-training');finishSessionNoSave()">Alleen vandaag</button>
+      <button class="btn btn-o" style="width:100%" onclick="permanentlyAddExtras()">Permanent toevoegen aan deze training</button>
+      <button class="btn btn-r" style="width:100%" onclick="chooseSaveAsNewTraining()">Nieuwe training maken</button>
+    </div>
+    <div id="sat-name-row" class="irow" style="display:none;margin-top:12px"><label class="ilbl">Naam</label><input class="inp" type="text" id="sat-name" placeholder="bijv. Full Body"></div>
+    <div id="sat-confirm-row" style="display:none;margin-top:10px">
+      <button class="btn btn-r" style="width:100%" onclick="saveAsTrainingAndFinish()">Bevestig & afsluiten</button>
     </div>
   </div>
 </div>
@@ -1284,7 +1291,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.0.2';
+const APP_VER = 'v3.0.3';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -1753,7 +1760,20 @@ function collectWorkSets(domId){
     if(!kgEl&&!repsEl)break;
     const kg=kgEl?.value||'', reps=repsEl?.value||'';
     const rpeEl=document.getElementById('s-'+domId+'-'+i+'-rpe');
-    if(kg||reps)rows.push({kg,reps,rpe:rpeEl?.value||''});
+    if(kg||reps)rows.push({kg,reps,rpe:rpeEl?.value||'',effKg:getEffectiveKg(domId,i)});
+    i++;
+  }
+  return rows;
+}
+function collectWuSets(domId){
+  const rows=[];
+  let i=1;
+  while(true){
+    const kgEl=document.getElementById('w-'+domId+'-'+i+'-kg');
+    const repsEl=document.getElementById('w-'+domId+'-'+i+'-reps');
+    if(!kgEl&&!repsEl)break;
+    const kg=kgEl?.value||'', reps=repsEl?.value||'';
+    if(kg||reps)rows.push({kg,reps});
     i++;
   }
   return rows;
@@ -1771,6 +1791,7 @@ async function openLosOefening(){
   document.getElementById('los-ex-new-type').value='strength';
   document.getElementById('los-new-fields').style.display='none';
   document.getElementById('los-new-wodfmt-row').style.display='none';
+  document.getElementById('los-wu-count').value='0';
   document.getElementById('los-body').innerHTML='';
   openModal('m-los-oefening');
 }
@@ -1837,15 +1858,23 @@ function onLosNewTypeChange(){
 // Rendert exact dezelfde oefening-body als tijdens een training (buildExerciseBody-dispatcher),
 // PLUS dezelfde tip/video/spiergroep/1RM/equipment-panelen als renderTrainScreen, zodat het
 // logging-scherm van een losse oefening er identiek uitziet als tijdens Training A/B.
+let losCurEx=null;
+function onLosWuChange(){renderLosBody(losCurEx);}
 async function renderLosBody(existingEx=null){
   const container=document.getElementById('los-body');
   let ex=existingEx;
+  losCurEx=existingEx||null;
+  const wuCount=parseInt(document.getElementById('los-wu-count')?.value)||0;
+  const wuRow=document.getElementById('los-wu-row');
   if(!ex){
     const t=document.getElementById('los-ex-new-type').value;
     const wodFmt=document.getElementById('los-ex-new-wodfmt').value;
-    ex={id:'__new__',name:document.getElementById('los-ex-new').value||'',type:t,wod_format:wodFmt,sets:t==='carry'?3:4,wu:0};
+    ex={id:'__new__',name:document.getElementById('los-ex-new').value||'',type:t,wod_format:wodFmt,sets:t==='carry'?3:4,wu:wuCount};
   }
-  const bodyHTML=buildExerciseBody(ex,{wu:ex.wu||0,sets:ex.sets});
+  // Opwarmsets alleen zinvol/tonen bij kracht-achtige oefeningen (geen cardio/WOD)
+  const showWu=!CARDIO_TYPES[ex.type]&&ex.type!=='wod';
+  if(wuRow)wuRow.style.display=showWu?'':'none';
+  const bodyHTML=buildExerciseBody(ex,{wu:showWu?wuCount:0,sets:ex.sets});
   let panels='';
   if(ex.id!=='__new__'){
     await ensureEquipmentTypesLoaded();
@@ -1856,7 +1885,8 @@ async function renderLosBody(existingEx=null){
       ${BARBELL_EXERCISES.has(ex.id)?buildRmPanel(ex):''}
       ${buildEquipmentPanel(ex.id,eqList)}`;
   }
-  container.innerHTML=panels+bodyHTML;
+  const askBtn=`<button onclick="askCoachEx('${(ex.name||'deze oefening').replace(/'/g,"\\'")}','Losse oefening')" style="margin:8px 0 4px;background:var(--dark);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">🤖 Vraag de coach</button>`;
+  container.innerHTML=panels+bodyHTML+askBtn;
 }
 async function saveLosOefening(){
   let exId=losSelectedExId;
@@ -1918,14 +1948,20 @@ async function saveLosOefening(){
   } else {
     const sets=collectWorkSets(domId);
     if(!sets.length){toast('Vul minimaal 1 set in');return;}
-    const best=sets.reduce((b,s)=>(!b||parseFloat(s.kg||0)>parseFloat(b.kg||0))?s:b,null);
+    const bestKg=s=>s.effKg!=null?s.effKg:parseFloat(s.kg||0);
+    const best=sets.reduce((b,s)=>(!b||bestKg(s)>bestKg(b))?s:b,null);
     row.sets=sets.length;
-    row.weight=parseFloat(best.kg)||null;
+    row.weight=bestKg(best)||null;
     row.reps=parseInt(best.reps)||null;
     row.rpe=parseFloat(best.rpe)||null;
+    row.sets_detail=sets.map(s=>({kg:s.kg,effKg:bestKg(s),reps:s.reps,rpe:s.rpe}));
+    const wuSets=collectWuSets(domId);
+    const wuNote=wuSets.length?'Opwarm: '+wuSets.map(s=>s.kg+'×'+s.reps).join(','):'';
     if(ex.type==='kettlebell'){
       const sideBtn=document.querySelector('#kb-side-'+domId+' .rower-chip.sel');
-      if(sideBtn)row.note='Losse oefening · zijde: '+sideBtn.textContent;
+      row.note='Losse oefening'+(sideBtn?' · zijde: '+sideBtn.textContent:'')+(wuNote?' · '+wuNote:'');
+    } else if(wuNote){
+      row.note='Losse oefening · '+wuNote;
     }
   }
 
@@ -2064,7 +2100,7 @@ async function renderTrainScreen(t){
   await loadTrainCfg();
   const list=getSessionExs(t);
   const container=document.getElementById('train-'+t.toLowerCase()+'-list');
-  if(!container)return;
+  if(!container)return; // Unified Training Editor: dezelfde functie rendert Training A/B én Workout (custom_*)
   container.innerHTML='';
 
   for(const ex of list){
@@ -2085,7 +2121,7 @@ async function renderTrainScreen(t){
       }
     }
 
-    const isDefault=TRAIN_CFG[t].some(e=>e.id===ex.id);
+    const isDefault=(TRAIN_CFG[t]||[]).some(e=>e.id===ex.id);
     const div=document.createElement('div');
     div.className='ex-card';
 
@@ -2375,21 +2411,98 @@ function buildStrengthBody(exId,wuCount,workCount,prefill=null){
   return h;
 }
 
+// ══════════════════════════════════════════════════════════
+// GEWICHT-OPTIES per set (v3.0.3)
+// Uitbreidbaar: nieuwe modi toevoegen aan WEIGHT_MODES volstaat —
+// getEffectiveKg() en de select-rendering lezen dit array uit.
+// Gereserveerd voor later: %1RM, backoff, topset, AMRAP.
+// ══════════════════════════════════════════════════════════
+const WEIGHT_MODES=[
+  {v:'vast',l:'Vast kg',ph:'kg'},
+  {v:'plus',l:'+kg vorige',ph:'+kg'},
+  {v:'pct',l:'% vorige',ph:'%'}
+  // Toekomstig: {v:'1rm',l:'% 1RM',ph:'%'}, {v:'backoff',l:'Backoff',ph:'-kg'}, {v:'topset',l:'Topset',ph:'kg'}, {v:'amrap',l:'AMRAP',ph:'kg'}
+];
+function weightModePlaceholder(mode){return WEIGHT_MODES.find(m=>m.v===mode)?.ph||'kg';}
+// Berekent het daadwerkelijke gewicht van een set, rekening houdend met de gekozen modus.
+// 'vast' = ingevulde waarde is het gewicht zelf. 'plus'/'pct' verwijzen naar de vorige set
+// in dezelfde oefening (rekent recursief terug tot een 'vast'-set of het begin van de reeks).
+function getEffectiveKg(exId,i){
+  if(i<1)return null;
+  const raw=document.getElementById('s-'+exId+'-'+i+'-kg')?.value;
+  const mode=document.getElementById('s-'+exId+'-'+i+'-wmode')?.value||'vast';
+  if(raw===undefined||raw==='')return null;
+  const val=parseFloat(raw);
+  if(isNaN(val))return null;
+  if(mode==='vast')return val;
+  const prevKg=getEffectiveKg(exId,i-1);
+  if(prevKg==null)return val; // geen referentie beschikbaar: val zelf als absoluut gewicht gebruiken
+  if(mode==='plus')return Math.round((prevKg+val)*10)/10;
+  if(mode==='pct')return Math.round(prevKg*val/100*10)/10;
+  return val;
+}
+function onWeightModeChange(exId,i){
+  const mode=document.getElementById('s-'+exId+'-'+i+'-wmode')?.value||'vast';
+  const kgInp=document.getElementById('s-'+exId+'-'+i+'-kg');
+  if(kgInp)kgInp.placeholder=weightModePlaceholder(mode);
+  logSet(exId,'work',i,true);
+}
+function buildWeightModeSelect(exId,i,mode){
+  return `<select class="wmode-sel" id="s-${exId}-${i}-wmode" onchange="onWeightModeChange('${exId}',${i})" title="Gewicht-modus">
+    ${WEIGHT_MODES.map(m=>`<option value="${m.v}"${mode===m.v?' selected':''}>${m.l}</option>`).join('')}
+  </select>`;
+}
+
+// ══════════════════════════════════════════════════════════
+// RPE-PICKER (v3.0.3) — vervangt vrije invoer door +/- stepper, stap 0.5.
+// Start automatisch bij de vorige RPE (prefill of cascade) i.p.v. leeg/0.
+// ══════════════════════════════════════════════════════════
+function buildRpeStepper(exId,i,rpeVal,prevRpe){
+  const disp=rpeVal!==undefined&&rpeVal!==null&&rpeVal!==''?rpeVal:'';
+  return `<div class="set-field-wrap rpe-stepper" style="flex:1;display:flex;flex-direction:column;align-items:center">
+    <div style="display:flex;align-items:center;gap:2px">
+      <button type="button" class="rpe-btn" onclick="adjustRpe('${exId}',${i},-0.5)" style="width:22px;height:22px;border-radius:6px;border:1px solid var(--g2);background:var(--g1);font-size:14px;line-height:1;cursor:pointer">−</button>
+      <input class="set-field rpe-display" type="text" readonly id="s-${exId}-${i}-rpe" data-prev-rpe="${prevRpe||''}" value="${disp}" placeholder="–" style="font-size:13px;width:34px;text-align:center">
+      <button type="button" class="rpe-btn" onclick="adjustRpe('${exId}',${i},0.5)" style="width:22px;height:22px;border-radius:6px;border:1px solid var(--g2);background:var(--g1);font-size:14px;line-height:1;cursor:pointer">+</button>
+    </div>
+    <div class="set-field-lbl">RPE</div>
+  </div>`;
+}
+function adjustRpe(exId,i,delta){
+  const el=document.getElementById('s-'+exId+'-'+i+'-rpe');
+  if(!el)return;
+  let cur=el.value!==''?parseFloat(el.value):null;
+  if(cur===null){
+    // Focus automatisch op vorige RPE i.p.v. bij 0/1 te starten
+    const prev=parseFloat(el.dataset.prevRpe);
+    cur=!isNaN(prev)?prev:8;
+  } else {
+    cur=Math.round((cur+delta)*10)/10;
+  }
+  if(cur<1)cur=1; if(cur>10)cur=10;
+  el.value=cur;
+  logSet(exId,'work',i,true);
+  copyToSets(exId,i,'rpe',el.value);
+}
+
 function buildWorkSetRow(exId,i,prefill=null){
+  const mode='vast';
   return `<div class="set-row" id="sr-${exId}-${i}">
     <div class="set-circle" id="sc-${exId}-${i}" onclick="toggleSetDone('${exId}',${i})">${i}</div>
     <div class="set-fields">
-      <div class="set-field-wrap" style="flex:2"><input class="set-field" type="text" inputmode="decimal" placeholder="kg" id="s-${exId}-${i}-kg" value="${prefill?prefill.kg:''}" min="0" max="500"
+      <div class="set-field-wrap" style="flex:2">
+        <input class="set-field" type="text" inputmode="decimal" placeholder="kg" id="s-${exId}-${i}-kg" value="${prefill?prefill.kg:''}" min="0" max="500"
         oninput="clampNumInput(this,0,500);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'kg',this.value)"
-        onchange="logSet('${exId}','work',${i},true)"><div class="set-field-lbl">kg</div></div>
+        onchange="logSet('${exId}','work',${i},true)">
+        ${buildWeightModeSelect(exId,i,mode)}
+        <div class="set-field-lbl">kg</div>
+      </div>
       <div class="set-sep">×</div>
       <div class="set-field-wrap" style="flex:1"><input class="set-field" type="number" inputmode="numeric" placeholder="reps" id="s-${exId}-${i}-reps" value="${prefill?prefill.reps:''}" min="1" max="100" step="1"
         oninput="clampNumInput(this,1,100);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'reps',this.value)"
         onchange="logSet('${exId}','work',${i},true)"><div class="set-field-lbl">reps</div></div>
       <div class="set-sep" style="color:var(--g3)">@</div>
-      <div class="set-field-wrap" style="flex:1"><input class="set-field" type="text" inputmode="decimal" placeholder="RPE" id="s-${exId}-${i}-rpe" step="0.5" min="1" max="10"
-        oninput="clampNumInput(this,1,10);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'rpe',this.value)"
-        onchange="logSet('${exId}','work',${i},true)" style="font-size:13px"><div class="set-field-lbl">RPE</div></div>
+      ${buildRpeStepper(exId,i,prefill&&i===1?prefill.rpe:'',prefill?prefill.rpe:'')}
     </div>
     <button class="set-rest" onclick="openRestTimer('${exId}',${i})" title="Rusttimer">⏱</button>
     <button class="set-more" onclick="showSetMenu('${exId}',${i},'work')">⋮</button>
@@ -2638,30 +2751,32 @@ function logSet(exId,type,setNum,isWork){
   const kg=document.getElementById(pfx+'-'+exId+'-'+setNum+'-kg')?.value;
   const reps=document.getElementById(pfx+'-'+exId+'-'+setNum+'-reps')?.value;
   const rpe=isWork?document.getElementById('s-'+exId+'-'+setNum+'-rpe')?.value:null;
+  // Effectief gewicht: houdt rekening met de gewicht-modus (vast/+kg/% vorige set).
+  const effKg=isWork?getEffectiveKg(exId,setNum):(parseFloat(kg)||null);
   if(type==='wu'){if(!sessionLog[exId].wu)sessionLog[exId].wu=[];sessionLog[exId].wu[setNum-1]={kg,reps};}
-  else{if(!sessionLog[exId].sets)sessionLog[exId].sets=[];sessionLog[exId].sets[setNum-1]={kg,reps,rpe};}
+  else{if(!sessionLog[exId].sets)sessionLog[exId].sets=[];sessionLog[exId].sets[setNum-1]={kg,reps,rpe,effKg};}
   // Check PR (per rep-bucket 1/3/5/10, plus absolute-PR fallback voor niet-rep oefeningen)
-  if(isWork&&kg){
+  if(isWork&&effKg){
     const exObj=exercises.find(e=>e.id===exId);
     if(reps){
       const bucket=nearestRepBucket(reps);
       if(!repPRCache[exId])repPRCache[exId]={1:null,3:null,5:null,10:null};
       const current=repPRCache[exId][bucket];
-      if(!current||parseFloat(kg)>current.weight){
+      if(!current||effKg>current.weight){
         const badge=document.getElementById('sc-'+exId+'-'+setNum);
         if(badge&&!badge.querySelector('.pr-badge'))badge.innerHTML+='<div class="pr-badge">PR@'+bucket+'</div>';
-        repPRCache[exId][bucket]={weight:parseFloat(kg),date:td()};
+        repPRCache[exId][bucket]={weight:effKg,date:td()};
       }
     }
     const pr=exObj?.pr||0;
-    if(parseFloat(kg)>pr){
+    if(effKg>pr){
       // Werk de lokale referentie direct bij zodat een volgende set op hetzelfde gewicht
       // binnen dezelfde sessie niet opnieuw als PR wordt gemarkeerd.
-      if(exObj)exObj.pr=parseFloat(kg);
+      if(exObj)exObj.pr=effKg;
     }
   }
-  if(isWork&&kg&&reps&&BARBELL_EXERCISES.has(exId)){
-    showEpleyHint(exId,parseFloat(kg),parseInt(reps));
+  if(isWork&&effKg&&reps&&BARBELL_EXERCISES.has(exId)){
+    showEpleyHint(exId,effKg,parseInt(reps));
   }
   updateProgress(curT);
   updateSummary(curT);
@@ -2737,7 +2852,7 @@ function updateSummary(t){
       if(ws.length){
         exCount++;setCount+=ws.length;
         ws.forEach(s=>{
-          const k=parseFloat(s.kg)||0,r=parseInt(s.reps)||0;
+          const k=(s.effKg!=null?s.effKg:parseFloat(s.kg))||0,r=parseInt(s.reps)||0;
           reps+=r;vol+=k*r;if(k>heavy)heavy=k;
         });
       }
@@ -2827,10 +2942,13 @@ async function finishSession(){
       await sbPost('sessions',{date:today,exercise_id:ex.id,training_type:t,note:extraNote||'',...cRow});saved++;
     }else if(l.sets){
       const ws=l.sets.filter(s=>s&&(s.kg||s.reps));if(!ws.length)continue;
-      const best=ws.reduce((b,s)=>(!b||parseFloat(s.kg||0)>parseFloat(b.kg||0))?s:b,null);
+      const bestKg=s=>s.effKg!=null?s.effKg:parseFloat(s.kg||0);
+      const best=ws.reduce((b,s)=>(!b||bestKg(s)>bestKg(b))?s:b,null);
       const wuNote=l.wu?.filter(s=>s&&s.kg).map(s=>s.kg+'×'+s.reps).join(',');
-      await sbPost('sessions',{date:today,exercise_id:ex.id,sets:ws.length,reps:parseInt(best?.reps)||null,weight:parseFloat(best?.kg)||null,rpe:parseFloat(best?.rpe)||null,training_type:t,note:wuNote?'Opwarm: '+wuNote:''});
-      if(best?.kg){const exObj=exercises.find(e=>e.id===ex.id);if(exObj&&parseFloat(best.kg)>(exObj.pr||0)){await sbPatch('exercises','id=eq.'+ex.id,{pr:parseFloat(best.kg)});exObj.pr=parseFloat(best.kg);}}
+      // sets_detail: volledige per-set data (incl. gewicht-modus-resultaat), voor Logboek-editor.
+      const setsDetail=ws.map(s=>({kg:s.kg,effKg:bestKg(s),reps:s.reps,rpe:s.rpe}));
+      await sbPost('sessions',{date:today,exercise_id:ex.id,sets:ws.length,reps:parseInt(best?.reps)||null,weight:bestKg(best)||null,rpe:parseFloat(best?.rpe)||null,training_type:t,note:wuNote?'Opwarm: '+wuNote:'',sets_detail:setsDetail});
+      if(bestKg(best)){const exObj=exercises.find(e=>e.id===ex.id);if(exObj&&bestKg(best)>(exObj.pr||0)){await sbPatch('exercises','id=eq.'+ex.id,{pr:bestKg(best)});exObj.pr=bestKg(best);}}
       saved++;
     }
   }
@@ -3031,73 +3149,124 @@ function addSetToDate(date, tt){
 
 let curAddDate=null, curAddTT=null, curAddExId=null, curAddExName=null;
 
+// ══════════════════════════════════════════════════════════
+// LOGBOEK-EDITOR (v3.0.3) — Unified Training Editor
+// Gebruikt dezelfde set-rows (buildWorkSetRow, incl. gewicht-modus + RPE-picker) en
+// dezelfde cardio/WOD/carry-bodies (buildCardioBody/buildWodBody/buildCarryBody) als
+// Training A/B, Losse oefening en Workout. Geen los simpel formulier meer.
+// Meerdere historische sets worden voorgevuld vanuit sets_detail (indien aanwezig);
+// oudere rijen zonder sets_detail vallen terug op de geaggregeerde waarden als 1 set.
+// ══════════════════════════════════════════════════════════
+let curEditExObj=null;
+const ES_DOMID='es';
+
 function openAddSetModal(exId, exName, date, tt){
   curAddExId=exId; curAddExName=exName; curAddDate=date; curAddTT=tt;
+  curEditSess=null; // signaal: nieuwe entry
+  curEditExObj=exercises.find(e=>e.id===exId)||{id:exId,name:exName,type:'strength',sets:4};
   document.getElementById('edit-sess-title').textContent=exName+' toevoegen ('+fmtDate(date)+')';
-  document.getElementById('edit-sess-fields').innerHTML=`
-    <div class="irow"><label class="ilbl">Gewicht</label><input class="inp" type="number" id="es-kg" placeholder="kg" step="0.5"></div>
-    <div class="irow"><label class="ilbl">Sets</label><input class="inp" type="number" id="es-sets" placeholder="sets"></div>
-    <div class="irow"><label class="ilbl">Reps</label><input class="inp" type="number" id="es-reps" placeholder="reps"></div>
-    <div class="irow"><label class="ilbl">RPE</label><input class="inp" type="number" id="es-rpe" placeholder="RPE" step="0.5"></div>
-    <div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="es-note" placeholder="optioneel"></div>`;
-  // Hide delete button for new entries
-  document.querySelector('#m-edit-session .btn-o[onclick="deleteSessionEntry()"]').style.display='none';
-  curEditSess=null; // signal: this is a new entry
+  renderEditSessFields(curEditExObj,null);
+  const delBtn=document.querySelector('#m-edit-session .btn-o[onclick="deleteSessionEntry()"]');
+  if(delBtn) delBtn.style.display='none';
   openModal('m-edit-session');
 }
 
 function openEditSess(id,name,session){
   curEditSess={id,...session};
+  const guessType=(session.time_str||session.distance||session.watt)?'rowing':'strength';
+  curEditExObj=exercises.find(e=>e.id===session.exercise_id)||{id:session.exercise_id,name,type:guessType,sets:4};
   document.getElementById('edit-sess-title').textContent=name+' bewerken';
-  let f='';
-  if(session.weight!==null&&session.weight!==undefined){
-    f+=`<div class="irow"><label class="ilbl">Gewicht</label><input class="inp" type="number" id="es-kg" value="${session.weight||''}" step="0.5"></div>`;
-    f+=`<div class="irow"><label class="ilbl">Sets</label><input class="inp" type="number" id="es-sets" value="${session.sets||''}"></div>`;
-    f+=`<div class="irow"><label class="ilbl">Reps</label><input class="inp" type="number" id="es-reps" value="${session.reps||''}"></div>`;
-    f+=`<div class="irow"><label class="ilbl">RPE</label><input class="inp" type="number" id="es-rpe" value="${session.rpe||''}" step="0.5"></div>`;
-  }else if(session.time_str){
-    f+=`<div class="irow"><label class="ilbl">Tijd</label><input class="inp" type="text" id="es-time" value="${session.time_str||''}"></div>`;
-    f+=`<div class="irow"><label class="ilbl">Afstand</label><input class="inp" type="number" id="es-dist" value="${session.distance||''}"></div>`;
-    f+=`<div class="irow"><label class="ilbl">Watt</label><input class="inp" type="number" id="es-watt" value="${session.watt||''}"></div>`;
-  }
-  f+=`<div class="irow"><label class="ilbl">Datum</label><input class="inp" type="date" id="es-date" value="${session.date||''}"></div>`;
-  f+=`<div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="es-note" value="${session.note||''}"></div>`;
-  document.getElementById('edit-sess-fields').innerHTML=f;
+  renderEditSessFields(curEditExObj,session);
+  const delBtn=document.querySelector('#m-edit-session .btn-o[onclick="deleteSessionEntry()"]');
+  if(delBtn) delBtn.style.display='';
   openModal('m-edit-session');
 }
+
+function renderEditSessFields(ex,session){
+  let f='';
+  if(Object.keys(CARDIO_TYPES).includes(ex.type)){
+    f+=buildCardioBody(ES_DOMID, ex.cardioType||ex.type);
+  } else if(ex.type==='wod'){
+    f+=buildWodBody(ES_DOMID, ex, null);
+  } else if(ex.type==='carry'){
+    const cnt=(session?.sets)||ex.sets||3;
+    f+=buildCarryBody(ES_DOMID, cnt);
+  } else {
+    // Strength/kettlebell/bodyweight: elke set krijgt zijn eigen historische waarde
+    // (i.p.v. één herhaald prefill zoals bij "vorige sessie"-hints tijdens een training).
+    const detail = session
+      ? (Array.isArray(session.sets_detail)&&session.sets_detail.length ? session.sets_detail : [{kg:session.weight,reps:session.reps,rpe:session.rpe}])
+      : [];
+    const count = detail.length || ex.sets || 4;
+    let setsHTML='';
+    for(let i=1;i<=count;i++){
+      const d=detail[i-1];
+      const pre=d?{kg:(d.kg!==undefined&&d.kg!==''?d.kg:d.effKg),reps:d.reps,rpe:d.rpe}:null;
+      setsHTML+=buildWorkSetRow(ES_DOMID,i,pre);
+    }
+    f+=`<div id="es-sets-wrap">${setsHTML}</div>
+      <div class="add-row" onclick="addEditSessSet()">
+        <span class="add-row-icon">+</span><span class="add-row-lbl" style="color:var(--red);font-size:13px">Set toevoegen</span>
+      </div>`;
+  }
+  f+=`<div class="irow"><label class="ilbl">Datum</label><input class="inp" type="date" id="es-date" value="${session?.date||curAddDate||td()}"></div>`;
+  f+=`<div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="es-note" value="${session?.note||''}"></div>`;
+  document.getElementById('edit-sess-fields').innerHTML=f;
+}
+
+function addEditSessSet(){
+  const wrap=document.getElementById('es-sets-wrap');
+  if(!wrap)return;
+  const existing=wrap.querySelectorAll('.set-row[id^="sr-'+ES_DOMID+'-"]').length;
+  const i=existing+1;
+  const tmp=document.createElement('div');
+  tmp.innerHTML=buildWorkSetRow(ES_DOMID,i);
+  wrap.appendChild(tmp.firstElementChild);
+}
+
 async function saveEditSession(){
-  // New entry (from addSetToDate)
+  const ex=curEditExObj||{type:'strength'};
+  const date=document.getElementById('es-date')?.value||curAddDate||curEditSess?.date;
+  const note=document.getElementById('es-note')?.value||'';
+  const row={date,note};
+  if(Object.keys(CARDIO_TYPES).includes(ex.type)){
+    const cfg=CARDIO_TYPES[ex.type];
+    const d={machine:localStorage.getItem('sel_'+ex.type)||''};
+    cfg.fields.forEach(fld=>{d[fld]=document.getElementById(ES_DOMID+'-'+fld)?.value||'';});
+    const cRow=cardioDataToRow(ex.type,d);
+    const extraNote=cRow.extraNote;delete cRow.extraNote;
+    Object.assign(row,cRow);
+    if(extraNote)row.note=(note?note+' · ':'')+extraNote;
+  } else if(ex.type==='wod'){
+    const fmtEl=document.getElementById(ES_DOMID+'-wodfmt');
+    const fmt=fmtEl?fmtEl.value:'for_time';
+    if(fmt==='for_time') row.time_str=document.getElementById(ES_DOMID+'-time')?.value||null;
+    else if(fmt==='amrap'){ row.rounds=parseInt(document.getElementById(ES_DOMID+'-rounds')?.value)||null; row.extra_reps=parseInt(document.getElementById(ES_DOMID+'-extrareps')?.value)||null; }
+    else if(fmt==='emom'){ const min=parseInt(document.getElementById(ES_DOMID+'-minutes')?.value)||null; row.rounds=min; row.completed=min?true:null; }
+  } else {
+    const sets=collectWorkSets(ES_DOMID);
+    if(!sets.length){toast('Vul minimaal 1 set in');return;}
+    const bestKg=s=>s.effKg!=null?s.effKg:parseFloat(s.kg||0);
+    const best=sets.reduce((b,s)=>(!b||bestKg(s)>bestKg(b))?s:b,null);
+    row.sets=sets.length;
+    row.weight=bestKg(best)||null;
+    row.reps=parseInt(best.reps)||null;
+    row.rpe=parseFloat(best.rpe)||null;
+    row.sets_detail=sets.map(s=>({kg:s.kg,effKg:bestKg(s),reps:s.reps,rpe:s.rpe}));
+  }
   if(!curEditSess){
-    const row={
-      date:curAddDate,
-      exercise_id:curAddExId,
-      training_type:curAddTT,
-      sets:parseInt(document.getElementById('es-sets')?.value)||null,
-      reps:parseInt(document.getElementById('es-reps')?.value)||null,
-      weight:parseFloat(document.getElementById('es-kg')?.value)||null,
-      rpe:parseFloat(document.getElementById('es-rpe')?.value)||null,
-      note:document.getElementById('es-note')?.value||null,
-    };
+    row.exercise_id=curAddExId;
+    row.training_type=curAddTT;
     const clean={};Object.entries(row).forEach(([k,v])=>{if(v!==null&&v!==undefined)clean[k]=v;});
     const ok=await sbPost('sessions',clean);
     if(ok){
-      // Restore delete button
       const delBtn=document.querySelector('#m-edit-session .btn-o[onclick="deleteSessionEntry()"]');
       if(delBtn) delBtn.style.display='';
       closeModal('m-edit-session');toast('Toegevoegd');loadHistory();
     } else toast('Fout bij opslaan');
     return;
   }
-  if(!curEditSess)return;
-  const u={date:document.getElementById('es-date')?.value||curEditSess.date,note:document.getElementById('es-note')?.value||''};
-  if(document.getElementById('es-kg'))u.weight=parseFloat(document.getElementById('es-kg').value)||null;
-  if(document.getElementById('es-sets'))u.sets=parseInt(document.getElementById('es-sets').value)||null;
-  if(document.getElementById('es-reps'))u.reps=parseInt(document.getElementById('es-reps').value)||null;
-  if(document.getElementById('es-rpe'))u.rpe=parseFloat(document.getElementById('es-rpe').value)||null;
-  if(document.getElementById('es-time'))u.time_str=document.getElementById('es-time').value;
-  if(document.getElementById('es-dist'))u.distance=parseInt(document.getElementById('es-dist').value)||null;
-  if(document.getElementById('es-watt'))u.watt=parseInt(document.getElementById('es-watt').value)||null;
-  const ok=await sbPatch('sessions','id=eq.'+curEditSess.id,u);
+  const ok=await sbPatch('sessions','id=eq.'+curEditSess.id,row);
   if(ok){closeModal('m-edit-session');toast('Opgeslagen');loadHistory();}else toast('Fout bij opslaan');
 }
 async function deleteSessionEntry(){
@@ -3964,17 +4133,30 @@ function deleteCustomTraining(id){
   toast('Verwijderd');
 }
 
-function startCustomTraining(id){
+// Unified Training Editor (v3.0.3): Workout (custom training) gebruikt vanaf hier exact
+// dezelfde render-/log-/cascade-/gewicht-modus-/RPE-picker-logica als Training A/B en
+// Losse oefening, via renderTrainScreen()+getSessionExs()+addExToSession()+showSessionSummary().
+// De losse buildExItemHTML-duplicaat is vervallen.
+async function startCustomTraining(id){
   const t=customTrainings.find(x=>x.id===id);
   if(!t) return;
   curT='custom_'+id;
   sessionLog={};sessionExtra=[];
-  // Build training screen dynamically
+  // Bestaande oefeningen van deze training vooraf laden in sessionExtra, zodat ze — net als
+  // bij Training A/B — direct zichtbaar zijn bij het starten, i.p.v. pas na handmatig toevoegen.
+  await ensureExercisesLoaded();
+  await ensureEquipmentTypesLoaded();
+  for(const exId of (t.exercises||[])){
+    const ex=exercises.find(e=>e.id===exId);
+    if(!ex) continue;
+    const exType=(ex.id==='roeien'||ex.type==='cardio'||ex.type==='rowing')?'rowing':ex.type||'strength';
+    sessionExtra.push({id:ex.id,naam:ex.name,type:exType,sets:4,reps:'6-8',rpe:'8',_t:curT,_preloaded:true});
+  }
   buildCustomTrainScreen(t);
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
-  // Use train-a screen as template, or create custom
   const existingEl=document.getElementById('s-train-custom-'+id);
   if(existingEl) existingEl.classList.add('active');
+  await renderTrainScreen(curT);
   trainStart=Date.now();startTrainTimer('A'); // use elapsed-a display
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.add('show'));
 }
@@ -3988,6 +4170,7 @@ function buildCustomTrainScreen(t){
     el.id='s-train-custom-'+t.id;
     document.getElementById('app').appendChild(el);
   }
+  const ctxT='custom_'+t.id;
   el.innerHTML=`
     <div class="train-top">
       <div class="train-timer-bar">
@@ -3997,20 +4180,14 @@ function buildCustomTrainScreen(t){
         </div>
         <div class="train-actions">
           <button class="tact" onclick="pauseTraining()">⏸</button>
-          <button class="tact green" onclick="showSessionSummary('${t.id}')">✓</button>
+          <button class="tact green" onclick="showSessionSummary('${ctxT}')">✓</button>
         </div>
       </div>
       <div style="font-size:13px;font-weight:700;color:var(--g4);letter-spacing:.3px;text-transform:uppercase;margin-bottom:4px">${t.name}</div>
-      <div style="font-size:11px;color:var(--g4);margin-bottom:8px" id="prog-${t.id}-lbl">0 oefeningen</div>
-      <div class="prog-wrap"><div class="prog-fill" id="prog-${t.id}" style="width:0%"></div></div>
+      <div style="font-size:11px;color:var(--g4);margin-bottom:8px" id="prog-${ctxT}-lbl">0 oefeningen</div>
+      <div class="prog-wrap"><div class="prog-fill" id="prog-${ctxT}" style="width:0%"></div></div>
     </div>
-    <div class="scroll" id="train-custom-${t.id}-list" style="padding-top:12px">
-      <p style="color:var(--g4);font-size:13px;text-align:center;padding:20px">Voeg oefeningen toe om te beginnen</p>
-    </div>
-    <div style="padding:12px 16px;background:#fff;border-top:1px solid var(--g2);flex-shrink:0;display:flex;gap:8px">
-      <button onclick="addExToCustomSession('${t.id}')" class="btn btn-o" style="flex:1">+ Oefening</button>
-      <button onclick="showSessionSummary('${t.id}')" class="btn btn-r" style="flex:2">Sessie afsluiten</button>
-    </div>
+    <div class="scroll" id="train-${ctxT.toLowerCase()}-list" style="padding-top:12px"></div>
     <nav class="bnav">
       <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
       <button class="ni active"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
@@ -4020,95 +4197,28 @@ function buildCustomTrainScreen(t){
     </nav>`;
 }
 
-function addExToCustomSession(trainId){
-  const avail=exercises.filter(e=>e.active!==false);
-  const cats=['A','B','CrossFit','Overig'];
-  const catL={A:'Training A',B:'Training B',CrossFit:'CrossFit',Overig:'Overig'};
-  let html='';
-  cats.forEach(cat=>{
-    const exs=avail.filter(e=>e.category===cat);
-    if(!exs.length) return;
-    html+=`<div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">${catL[cat]}</div>`;
-    exs.forEach(e=>{
-      html+=`<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--g2);cursor:pointer" onclick="addExToCustomConfirm('${e.id}','${trainId}');closeModal('m-add-ex')"><div style="flex:1;font-size:14px;font-weight:600;color:var(--dark)">${e.name}</div><span style="color:var(--red);font-size:20px;font-weight:700">+</span></div>`;
-    });
-  });
-  document.getElementById('add-ex-list').innerHTML=html;
-  openModal('m-add-ex');
-}
-
-async function addExToCustomConfirm(exId, trainId){
-  await ensureEquipmentTypesLoaded();
-  const ex=exercises.find(e=>e.id===exId);if(!ex) return;
-  const exType=(ex.id==='roeien'||ex.type==='cardio'||ex.type==='rowing')?'rowing':ex.type||'strength';
-  const newEx={id:ex.id,naam:ex.name,type:exType,sets:4,reps:'6-8',rpe:'8',_t:'custom_'+trainId};
-  sessionExtra.push(newEx);
-  // Re-render custom screen
-  const t=customTrainings.find(x=>x.id===trainId);
-  if(!t) return;
-  const container=document.getElementById('train-custom-'+trainId+'-list');
-  if(!container) return;
-  container.innerHTML='';
-  const list=sessionExtra.filter(e=>e._t==='custom_'+trainId);
-  for(const e of list){
-    const prev=await sbGet('sessions','&exercise_id=eq.'+e.id+'&order=date.desc,created_at.desc&limit=1');
-    const prevS=prev[0];
-    const eqList=await loadEquipment(e.id);
-    let prevStr='';
-    if(prevS){
-      if(prevS.weight&&prevS.reps) prevStr='Vorige ('+prevS.date+'): '+prevS.weight+'kg×'+prevS.reps;
-      else if(prevS.note) prevStr='Vorige: '+prevS.note.split('|')[0];
-    }
-    const div=document.createElement('div');
-    div.innerHTML=buildExItemHTML(e,prevStr,'custom_'+trainId,eqList);
-    container.appendChild(div);
-  }
-  // Add exercise + buttons
-  const addDiv=document.createElement('div');
-  addDiv.innerHTML=`<div style="padding:0 0 12px"><button onclick="addExToCustomSession('${trainId}')" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:13px;border-radius:22px;background:var(--g1);border:1.5px solid var(--g2);font-family:var(--f);font-size:13px;font-weight:700;cursor:pointer;color:var(--red)">+ Oefening toevoegen</button></div>`;
-  container.appendChild(addDiv);
-  toast(ex.name+' toegevoegd');
-}
-
-function buildExItemHTML(ex, prevStr, trainId, eqList=[]){
-  let bodyHTML='';
-  if(CARDIO_TYPES[ex.type]){
-    bodyHTML=buildCardioBody(ex.id, ex.cardioType||ex.type);
-  } else if(ex.type==='carry'){
-    bodyHTML=buildCarryBody(ex.id, ex.sets||3);
-  } else {
-    bodyHTML=buildStrengthBody(ex.id, ex.wu||0, ex.sets||4);
-  }
-  return `<div class="ex-card">
-    <div class="ex-card-hd" onclick="toggleExCard('${ex.id}')">
-      <div style="flex:1">
-        <div class="ex-card-name">${ex.naam} <button onclick="event.stopPropagation();removeExSession('${ex.id}')" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;margin-left:4px">✕</button></div>
-        <div class="ex-card-meta">${ex.type==='rowing'?'Warmup · 1000m':ex.sets+'×'+ex.reps}</div>
-      </div>
-      <span style="color:var(--g3);font-size:20px" id="arr-${ex.id}">›</span>
-    </div>
-    ${prevStr?`<div class="ex-prev"><strong>${prevStr}</strong></div>`:''}
-    <div class="ex-body" id="body-${ex.id}">
-      ${ex.tip?`<div style="background:#fffbea;border-left:3px solid var(--y);padding:8px 12px;font-size:12px;color:#666;margin:8px 14px;border-radius:0 8px 8px 0">💡 ${ex.tip}</div>`:''}
-      ${BARBELL_EXERCISES.has(ex.id)?buildRmPanel(ex):''}
-      ${buildEquipmentPanel(ex.id,eqList)}
-      ${bodyHTML}
-      <button onclick="askCoachEx('${ex.naam}','${trainId}')" style="margin:8px 14px 12px;background:var(--dark);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">🤖 Vraag de coach</button>
-    </div>
-  </div>`;
-}
-
 // showSessionSummary: checkt eerst op extra toegevoegde oefeningen (save-as-training),
 // rendert anders de sessie-samenvatting via renderSessionSummaryContent (was: duplicate-name bug)
+// Extra oefening bij afsluiten (v3.0.3): geldt voor elke trainingscontext (A/B/custom_*),
+// niet alleen A/B. _preloaded-oefeningen (al onderdeel van de training bij start) tellen
+// niet mee — alleen tijdens déze sessie toegevoegde extra's triggeren de keuze.
 function showSessionSummary(t){
-  // Check if extra exercises were added in A/B trainings
-  const isAB=(t==='A'||t==='B');
-  if(isAB&&sessionExtra.filter(e=>e._t===t).length>0){
-    openModal('m-save-as-training');
+  const extras=sessionExtra.filter(e=>e._t===t&&!e._preloaded);
+  if(extras.length>0){
+    document.getElementById('sat-choice-row').style.display='';
+    document.getElementById('sat-name-row').style.display='none';
+    document.getElementById('sat-confirm-row').style.display='none';
     document.getElementById('sat-name').value='';
+    openModal('m-save-as-training');
     return;
   }
   renderSessionSummaryContent(t);
+}
+
+function chooseSaveAsNewTraining(){
+  document.getElementById('sat-name-row').style.display='';
+  document.getElementById('sat-confirm-row').style.display='';
+  document.getElementById('sat-name').focus();
 }
 
 function finishSessionNoSave(){
@@ -4116,12 +4226,40 @@ function finishSessionNoSave(){
   renderSessionSummaryContent(curT);
 }
 
+// Voegt de extra's van deze sessie permanent toe aan de training zelf (schema A/B via
+// training_exercises, custom training via het lokale exercises-array) i.p.v. een nieuwe
+// training aan te maken.
+async function permanentlyAddExtras(){
+  const t=curT;
+  const extras=sessionExtra.filter(e=>e._t===t&&!e._preloaded);
+  if(!extras.length){closeModal('m-save-as-training');finishSessionNoSave();return;}
+  if(t==='A'||t==='B'){
+    const base=(TRAIN_CFG[t]||[]).length;
+    let sortOrder=base;
+    for(const e of extras){
+      await sbUpsert('training_exercises',{id:t+'_'+e.id,exercise_id:e.id,training_ref:t,sort_order:sortOrder++,sets:e.sets||null,reps:e.reps||null,rpe:e.rpe||null,wu:0});
+    }
+  } else if(t.startsWith('custom_')){
+    const id=t.slice('custom_'.length);
+    const ct=customTrainings.find(x=>x.id===id);
+    if(ct){
+      if(!ct.exercises)ct.exercises=[];
+      extras.forEach(e=>{if(!ct.exercises.includes(e.id))ct.exercises.push(e.id);});
+      localStorage.setItem('maurice_trainings',JSON.stringify(customTrainings));
+    }
+  }
+  closeModal('m-save-as-training');
+  toast('Permanent toegevoegd aan training');
+  renderSessionSummaryContent(curT);
+}
+
 function saveAsTrainingAndFinish(){
   const name=document.getElementById('sat-name').value.trim();
   if(!name){toast('Vul een naam in');return;}
-  const t={id:'saved_'+Date.now(),name,color:'#111111',note:'Opgeslagen na sessie '+td(),exercises:sessionExtra.map(e=>e.id)};
+  const t={id:'saved_'+Date.now(),name,color:'#111111',note:'Opgeslagen na sessie '+td(),exercises:sessionExtra.filter(e=>e._t===curT).map(e=>e.id)};
   customTrainings.push(t);
   localStorage.setItem('maurice_trainings',JSON.stringify(customTrainings));
+  renderCustomTrainBtns();
   closeModal('m-save-as-training');
   toast(name+' opgeslagen als training');
   renderSessionSummaryContent(curT);

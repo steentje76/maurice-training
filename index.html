@@ -1470,7 +1470,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.1.2';
+const APP_VER = 'v3.1.3';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -2563,6 +2563,14 @@ function repsPrefillFromRange(repsStr){
   const m=String(repsStr).match(/(\d+)/);
   return m?m[1]:'';
 }
+// Pure functie: bepaalt de prefill voor een programma-oefening. Gewicht komt uit de vorige
+// sessie (referentiepunt, anders staat het veld leeg en voelt het alsof alles gewist is),
+// reps/RPE komen uit de (evt. coach-aangepaste) programma-prescriptie — nooit andersom,
+// anders verdwijnt een net bevestigde aanpassing weer.
+function computeProgPrefill(ex,prevS){
+  if(!ex.reps&&!ex.rpe)return null;
+  return {kg:(prevS&&prevS.weight)?prevS.weight:'',reps:repsPrefillFromRange(ex.reps),rpe:ex.rpe||'',sets:ex.sets||4};
+}
 // Pure functie — bouwt de prompt voor één week, los testbaar
 // Vuistregel: ±12 minuten per oefening (opwarmen + werksets). Tussen 2 en 8 oefeningen,
 // zodat een korte 20-minuten-sessie niet toch 6 oefeningen krijgt opgedrongen.
@@ -2913,10 +2921,7 @@ async function renderTrainScreen(t){
       }
     }
     if(t.startsWith('prog_')){
-      // Programma-prescriptie (evt. net door de coach-checkin aangepast) blijft leidend.
-      // Bewust géén 'vorige sessie'-overschrijving zoals bij Training A/B — dat zou een
-      // net bevestigde coach-aanpassing (RPE/sets) stilletjes weer ongedaan maken.
-      prefillData=(ex.reps||ex.rpe)?{kg:'',reps:repsPrefillFromRange(ex.reps),rpe:ex.rpe||'',sets:ex.sets||4}:null;
+      prefillData=computeProgPrefill(ex,prevS);
     } else if(prevS&&prevS.weight&&prevS.reps){
       prefillData={kg:prevS.weight, reps:prevS.reps, rpe:prevS.rpe, sets:prevS.sets||4};
     }
@@ -5768,10 +5773,27 @@ async function evaluateProgAdjustment(){
     const uitleg=await generateProgAdviesAI(adj);
     document.getElementById('padv-body').innerHTML=`
       <div style="font-size:14px;line-height:1.5;margin-bottom:10px">${uitleg||capitalize(adj.redenen.join('. '))+'.'}</div>
-      <div style="font-size:12px;color:var(--g4);background:var(--g1);border-radius:8px;padding:8px 10px">Voorstel: ${voorstelTekst} voor deze training.${adj.painMuscle?'<br>Voel je pijn tijdens een oefening voor <b>'+adj.painMuscle+'</b>? Verwijder die dan met het kruisje in de trainingslijst.':''}</div>`;
+      ${renderMuscleRecoveryMiniList(muscleRows)}
+      <div style="font-size:12px;color:var(--g4);background:var(--g1);border-radius:8px;padding:8px 10px;margin-top:8px">Voorstel: ${voorstelTekst} voor deze training.${adj.painMuscle?'<br>Voel je pijn tijdens een oefening voor <b>'+adj.painMuscle+'</b>? Verwijder die dan met het kruisje in de trainingslijst.':''}</div>`;
   }else{
     await launchProgramTrainScreen(null);
   }
+}
+// Overzichtelijk lijstje met herstel% per spiergroep die deze training raakt — naast de
+// gesproken uitleg, als concrete context (niet als vervanging ervan).
+function renderMuscleRecoveryMiniList(rows){
+  if(!rows||!rows.length)return '';
+  const sorted=[...rows].sort((a,b)=>a.pct-b.pct);
+  return `<div style="margin-bottom:4px">
+    <div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Spierherstel voor deze training</div>
+    ${sorted.map(r=>{
+      const color=r.pct>=85?'var(--green)':r.pct>=50?'var(--y)':'var(--red)';
+      return `<div style="margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span style="font-weight:600">${r.muscle}</span><span style="color:var(--g4)">${r.pct}%</span></div>
+        <div class="prog-wrap" style="height:6px"><div class="prog-fill" style="width:${r.pct}%;background:${color};height:6px"></div></div>
+      </div>`;
+    }).join('')}
+  </div>`;
 }
 function capitalize(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
 // Korte, gesproken coach-uitleg o.b.v. de berekende redenen — geen droge opsomming van

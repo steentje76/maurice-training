@@ -581,6 +581,10 @@ function repsPrefillFromRange(repsStr){
   const m=String(repsStr).match(/(\d+)/);
   return m?m[1]:'';
 }
+function computeProgPrefill(ex,prevS){
+  if(!ex.reps&&!ex.rpe)return null;
+  return {kg:(prevS&&prevS.weight)?prevS.weight:'',reps:repsPrefillFromRange(ex.reps),rpe:ex.rpe||'',sets:ex.sets||4};
+}
 
 test('computeProgAdjustment: geen aanpassing bij goed herstel, geen klachten', ()=>{
   assertEq(computeProgAdjustment(1.02, [], 'goed', null), null);
@@ -650,6 +654,26 @@ test('repsPrefillFromRange: werkt ook met een los getal', ()=>{
 test('repsPrefillFromRange: lege invoer geeft lege string, geen crash', ()=>{
   assertEq(repsPrefillFromRange(''), '');
   assertEq(repsPrefillFromRange(null), '');
+});
+test('computeProgPrefill: gewicht komt uit vorige sessie, reps/RPE uit programma', ()=>{
+  const ex={reps:'12-15',rpe:'6',sets:3};
+  const prevS={weight:70,reps:10,rpe:9,sets:4};
+  const pf=computeProgPrefill(ex,prevS);
+  assertEq(pf.kg, 70);
+  assertEq(pf.reps, '12');
+  assertEq(pf.rpe, '6');
+  assertEq(pf.sets, 3);
+});
+test('computeProgPrefill: geen vorige sessie geeft leeg gewicht, geen crash', ()=>{
+  const pf=computeProgPrefill({reps:'8-10',rpe:'7',sets:3}, null);
+  assertEq(pf.kg, '');
+});
+test('computeProgPrefill: programma-RPE overschrijft nooit door vorige sessie-RPE', ()=>{
+  const pf=computeProgPrefill({reps:'8-10',rpe:'5.5',sets:3}, {weight:90,reps:1,rpe:10,sets:4});
+  assertEq(pf.rpe, '5.5');
+});
+test('computeProgPrefill: zonder reps/RPE-prescriptie geen prefill (cardio-achtige oefening)', ()=>{
+  assertEq(computeProgPrefill({}, {weight:50,reps:5,rpe:8}), null);
 });
 
 // ── SAMENVATTING ─────────────────────────────────────────

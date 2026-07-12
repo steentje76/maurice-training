@@ -349,6 +349,28 @@ canvas{width:100%;height:100%}
 
 <!-- PIN LOCK verwijderd — pincode alleen bij Beheer -->
 
+<!-- ═══ AUTH — INLOGGEN / REGISTREREN ═══ -->
+<div class="scr" id="s-auth">
+  <div class="scroll" style="padding-top:60px;display:flex;flex-direction:column;justify-content:center;min-height:100%">
+    <div style="text-align:center;margin-bottom:24px">
+      <svg width="56" height="56" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin:0 auto 10px">
+        <rect x="2" y="2" width="116" height="116" rx="4" stroke="#111" stroke-width="4"/>
+        <text x="60" y="52" font-family="Arial Narrow,Arial" font-size="28" font-weight="900" text-anchor="middle" fill="#111" letter-spacing="4">A·R·T</text>
+        <text x="60" y="78" font-family="Arial Narrow,Arial" font-size="13" font-weight="700" text-anchor="middle" fill="#111" letter-spacing="2">CROSSFIT</text>
+      </svg>
+      <div style="font-family:var(--f);font-size:22px;font-weight:900;letter-spacing:1px">MAURICE</div>
+      <div style="font-size:12px;color:var(--g4);letter-spacing:1px">TRAINING COACH 2026</div>
+    </div>
+    <div style="padding:0 20px">
+      <div class="irow"><label class="ilbl">E-mailadres</label><input class="inp" type="email" id="auth-email" placeholder="jij@voorbeeld.nl" autocomplete="username"></div>
+      <div class="irow"><label class="ilbl">Wachtwoord</label><input class="inp" type="password" id="auth-pass" placeholder="Minimaal 6 tekens" autocomplete="current-password" onkeydown="if(event.key==='Enter')authSubmit()"></div>
+      <div id="auth-status" style="font-size:12px;color:var(--g4);min-height:16px;margin-bottom:4px"></div>
+      <button class="btn btn-r" style="width:100%;margin-top:6px" id="auth-submit-btn" onclick="authSubmit()">Inloggen</button>
+      <button class="btn btn-o" style="width:100%;margin-top:8px" onclick="toggleAuthMode()" id="auth-toggle-btn">Nog geen account? Registreren</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ HOME ═══ -->
 <div class="scr active" id="s-home">
   <div class="hdr">
@@ -412,6 +434,15 @@ canvas{width:100%;height:100%}
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
+
+    <!-- Account -->
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Account</div></div>
+      <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div style="font-size:13px;color:var(--g4)" id="account-email-lbl">—</div>
+        <button class="btn btn-o btn-sm" onclick="authSignOut()">Uitloggen</button>
+      </div>
+    </div>
 
     <!-- Atleet profiel kaart -->
     <div class="card">
@@ -1432,7 +1463,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.1.9';
+const APP_VER = 'v3.2.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -1441,6 +1472,127 @@ const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
 // gebruiken i.p.v. de vaste publishable key — alle sb*-functies hieronder lezen SB_H
 // via closure, dus dat is de enige plek die dan hoeft te veranderen.
 const SB_H = {apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'};
+
+// ══════════════════════════════════════════════════════════
+// AUTH (v320) — e-mail+wachtwoord via Supabase Auth, persistente sessie.
+// SB_H is een gedeeld object (const, maar wél muteerbaar) — na inloggen zetten we
+// SB_H.Authorization om naar de user-JWT, en alle sb*-functies hierboven pakken dat
+// automatisch op omdat ze SB_H via closure lezen, niet als kopie.
+// ══════════════════════════════════════════════════════════
+const AUTH_SESSION_KEY='maurice_auth_session';
+let authSession=null; // {access_token, refresh_token, expires_at (ms epoch), user:{id,email}}
+let authRefreshTimer=null;
+let authMode='login'; // 'login' | 'signup'
+
+function loadAuthSession(){
+  try{
+    const raw=localStorage.getItem(AUTH_SESSION_KEY);
+    return raw?JSON.parse(raw):null;
+  }catch(e){return null;}
+}
+function saveAuthSession(s){
+  authSession=s;
+  localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(s));
+  SB_H.Authorization='Bearer '+s.access_token;
+  scheduleAuthRefresh();
+}
+function clearAuthSession(){
+  authSession=null;
+  localStorage.removeItem(AUTH_SESSION_KEY);
+  SB_H.Authorization='Bearer '+SB_KEY;
+  if(authRefreshTimer)clearTimeout(authRefreshTimer);
+}
+function scheduleAuthRefresh(){
+  if(authRefreshTimer)clearTimeout(authRefreshTimer);
+  if(!authSession)return;
+  // 5 minuten vóór verlopen proactief verversen, zodat je binnen de app nooit een
+  // verlopen token tegenkomt — Supabase-tokens leven doorgaans 1 uur.
+  const msUntilRefresh=Math.max(5000, authSession.expires_at-Date.now()-5*60*1000);
+  authRefreshTimer=setTimeout(()=>refreshAuthToken(), msUntilRefresh);
+}
+async function refreshAuthToken(){
+  if(!authSession?.refresh_token)return false;
+  try{
+    const r=await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`,{
+      method:'POST', headers:{apikey:SB_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({refresh_token:authSession.refresh_token})
+    });
+    if(!r.ok)return false;
+    const d=await r.json();
+    saveAuthSession({access_token:d.access_token, refresh_token:d.refresh_token, expires_at:Date.now()+d.expires_in*1000, user:{id:d.user.id, email:d.user.email}});
+    return true;
+  }catch(e){return false;}
+}
+// Bij app-start: bestaande sessie proberen te herstellen/verversen. Retourneert true
+// zodra er een geldige sessie is (app mag door), false als inloggen nodig is.
+async function ensureValidSession(){
+  const stored=loadAuthSession();
+  if(!stored)return false;
+  authSession=stored;
+  SB_H.Authorization='Bearer '+stored.access_token;
+  if(stored.expires_at-Date.now()<5*60*1000){
+    const ok=await refreshAuthToken();
+    if(!ok){clearAuthSession();return false;}
+  }else{
+    scheduleAuthRefresh();
+  }
+  return true;
+}
+function toggleAuthMode(){
+  authMode=authMode==='login'?'signup':'login';
+  document.getElementById('auth-submit-btn').textContent=authMode==='login'?'Inloggen':'Account aanmaken';
+  document.getElementById('auth-toggle-btn').textContent=authMode==='login'?'Nog geen account? Registreren':'Al een account? Inloggen';
+  document.getElementById('auth-status').textContent='';
+}
+async function authSubmit(){
+  const email=document.getElementById('auth-email').value.trim();
+  const pass=document.getElementById('auth-pass').value;
+  const statusEl=document.getElementById('auth-status');
+  if(!email||!pass){statusEl.textContent='Vul e-mailadres en wachtwoord in';return;}
+  if(pass.length<6){statusEl.textContent='Wachtwoord moet minimaal 6 tekens zijn';return;}
+  statusEl.textContent=authMode==='login'?'Bezig met inloggen...':'Account aanmaken...';
+  try{
+    if(authMode==='login'){
+      const r=await fetch(`${SB_URL}/auth/v1/token?grant_type=password`,{
+        method:'POST', headers:{apikey:SB_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify({email,password:pass})
+      });
+      const d=await r.json();
+      if(!r.ok){statusEl.textContent=d.error_description||d.msg||'Inloggen mislukt — check e-mail/wachtwoord';return;}
+      saveAuthSession({access_token:d.access_token, refresh_token:d.refresh_token, expires_at:Date.now()+d.expires_in*1000, user:{id:d.user.id, email:d.user.email}});
+      await afterAuthSuccess();
+    }else{
+      const r=await fetch(`${SB_URL}/auth/v1/signup`,{
+        method:'POST', headers:{apikey:SB_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify({email,password:pass})
+      });
+      const d=await r.json();
+      if(!r.ok){statusEl.textContent=d.error_description||d.msg||'Registreren mislukt';return;}
+      if(d.access_token){
+        // E-mailbevestiging staat uit in het Supabase-project — meteen ingelogd
+        saveAuthSession({access_token:d.access_token, refresh_token:d.refresh_token, expires_at:Date.now()+d.expires_in*1000, user:{id:d.user.id, email:d.user.email}});
+        await afterAuthSuccess();
+      }else{
+        statusEl.textContent='Account aangemaakt — check je e-mail om te bevestigen, log daarna in.';
+        authMode='login';
+        document.getElementById('auth-submit-btn').textContent='Inloggen';
+        document.getElementById('auth-toggle-btn').textContent='Nog geen account? Registreren';
+      }
+    }
+  }catch(e){statusEl.textContent='Verbindingsfout. Check internet.';}
+}
+async function afterAuthSuccess(){
+  document.getElementById('s-auth').classList.remove('active');
+  await startAppAfterAuth();
+}
+function authSignOut(){
+  if(!confirm('Uitloggen?'))return;
+  clearAuthSession();
+  document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s-auth').classList.add('active');
+  document.getElementById('auth-email').value='';
+  document.getElementById('auth-pass').value='';
+}
 
 // Legacy fallback-waarden, alleen gebruikt zolang een oefening nog geen eigen
 // peak_goal heeft ingesteld (zie exercises.peak_goal, beheerbaar per gebruiker).
@@ -5846,6 +5998,8 @@ function ratioFactor(liftA, liftB, estA, estB){
 }
 
 async function refreshProfiel(){
+  const accEl=document.getElementById('account-email-lbl');
+  if(accEl)accEl.textContent=authSession?.user?.email||'—';
   renderConditionsList();
   // Atleet kaart
   const el = document.getElementById('profiel-atleet-card');
@@ -7178,7 +7332,20 @@ async function ensureExercisesLoaded(){
 
 window.addEventListener('load',async()=>{
   if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
-  // Start direct op home scherm — pincode alleen bij Beheer
+  const hasSession=await ensureValidSession();
+  if(!hasSession){
+    document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('s-auth').classList.add('active');
+    return; // rest van de app-init pas ná succesvol inloggen (zie afterAuthSuccess)
+  }
+  await startAppAfterAuth();
+});
+// Gedeeld door zowel 'sessie hersteld bij opstart' als 'net ingelogd/geregistreerd'.
+async function startAppAfterAuth(){
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s-home').classList.add('active');
+  const accEl=document.getElementById('account-email-lbl');
+  if(accEl)accEl.textContent=authSession?.user?.email||'—';
   // Handle PWA shortcuts
   const params = new URLSearchParams(window.location.search);
   if(params.get('start')==='A') setTimeout(()=>startT('A'),500);
@@ -7187,7 +7354,7 @@ window.addEventListener('load',async()=>{
   refreshHome();
   ensureExercisesLoaded().then(()=>loadTrainCfg());
   ensureEquipmentTypesLoaded();
-});
+}
 </script>
 </body>
 </html>

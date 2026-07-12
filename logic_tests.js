@@ -254,396 +254,297 @@ test('THR null bij lege data', ()=>{
   assert(thr(null, 100) === null);
 });
 
-// ── V306: AFRONDING & 1RM-PERCENTAGEKNOPPEN ──────────────
-console.log("\n🔢 v306 — roundKg & 1RM-percentageknoppen");
+// ── RATIOFACTOR-MOTOR (v299) ─────────────────────────────
+console.log("\n⚖️  Ratiofactor-motor");
 
-function roundKg(v){ return Math.round(v*2)/2; }
-
-test('roundKg rondt af op 0.5 kg', ()=>{
-  assertEq(roundKg(101.3), 101.5);
-  assertEq(roundKg(100.24), 100);
-  assertEq(roundKg(97.76), 98);
-});
-test('1RM-percentage: 80% van 120kg = 96kg', ()=>{
-  assertEq(roundKg(120*80/100), 96);
-});
-test('1RM-percentage: 95% van 107kg rondt af', ()=>{
-  const target = roundKg(107*95/100); // 101.65 -> 101.5
-  assertEq(target, 101.5);
-});
-
-// ── V306: WERKSET-BEREKENINGEN (getEffectiveKg-logica) ───
-console.log("\n⚖️  v306 — Werkset-berekeningen per modus");
-
-// Zelfstandige herimplementatie van getEffectiveKg() voor testdoeleinden (geen DOM).
-// v306.1: geen referentie beschikbaar (bv. 'plus' op set 1 zonder vorige set) → null
-// i.p.v. de parameter stilzwijgend als absoluut gewicht te gebruiken (was een verwarrende
-// fallback en verhulde bug #2/#3).
-function effectiveKg(mode, val, ctx){
-  if(mode==='vast'||mode==='topset') return val;
-  if(mode==='1rm') return ctx.oneRM ? roundKg(ctx.oneRM*val/100) : null;
-  if(mode==='backoff') return ctx.topKg!=null ? roundKg(ctx.topKg*val/100) : null;
-  if(mode==='plus') return ctx.prevKg!=null ? roundKg(ctx.prevKg+val) : null;
-  if(mode==='pct') return ctx.prevKg!=null ? roundKg(ctx.prevKg*val/100) : null;
-  return null;
-}
-test('Vast kg: waarde is het gewicht zelf', ()=>{
-  assertEq(effectiveKg('vast', 100, {}), 100);
-});
-test('+kg vorige: 100 + 2.5 = 102.5', ()=>{
-  assertEq(effectiveKg('plus', 2.5, {prevKg:100}), 102.5);
-});
-test('% vorige: 90% van 90kg vorige = 81kg (spec-voorbeeld bug #2)', ()=>{
-  assertEq(effectiveKg('pct', 90, {prevKg:90}), 81);
-});
-test('%1RM: 80% van 80kg 1RM = 64kg (spec-voorbeeld bug #2)', ()=>{
-  assertEq(effectiveKg('1rm', 80, {oneRM:80}), 64);
-});
-test('Backoff: 90% van topset 140kg = 126', ()=>{
-  assertEq(effectiveKg('backoff', 90, {topKg:140}), 126);
-});
-test('Topset: waarde is het gewicht zelf (voorbereid op auto-berekening)', ()=>{
-  assertEq(effectiveKg('topset', 130, {}), 130);
-});
-test('Topset-suggestie: ~90% van geschatte 1RM', ()=>{
-  assertEq(roundKg(150*0.9), 135);
-});
-test('Geen referentie (plus zonder vorige set) → null, geen stille fallback', ()=>{
-  assertEq(effectiveKg('plus', 2.5, {prevKg:null}), null);
-  assertEq(effectiveKg('1rm', 80, {oneRM:null}), null);
-});
-
-// ── V306.1 — BUG 1: %1RM toepassen op ALLE werksets ──────
-console.log("\n🎯 v306.1 — Bug 1: %1RM-knop geldt voor de hele oefening");
-
-// Zelfstandige simulatie van applyPct(): itereert over alle sets, slaat sets over die
-// handmatig zijn aangepast of een eigen (niet-'vast') berekeningsmodus gebruiken.
-function simulateApplyPct(sets, oneRM, pct){
-  const target = roundKg(oneRM*pct/100);
-  return sets.map(s=>{
-    if(s.manual) return {...s};
-    if(s.mode!=='vast') return {...s};
-    return {...s, kg:target};
-  });
-}
-test('80% van 80kg 1RM → alle 4 werksets op 64kg', ()=>{
-  const sets=[{mode:'vast',kg:50},{mode:'vast',kg:55},{mode:'vast',kg:60},{mode:'vast',kg:62.5}];
-  const r=simulateApplyPct(sets, 80, 80);
-  assert(r.every(s=>s.kg===64), 'Alle sets moeten 64kg zijn: '+JSON.stringify(r));
-});
-test('Handmatig aangepaste set 3 blijft ongewijzigd, rest wordt bijgewerkt', ()=>{
-  const sets=[{mode:'vast',kg:50},{mode:'vast',kg:55},{mode:'vast',kg:70,manual:true},{mode:'vast',kg:62.5}];
-  const r=simulateApplyPct(sets, 80, 80);
-  assertEq(r[2].kg, 70); // set 3 (index 2) blijft 70
-  assertEq(r[0].kg, 64); assertEq(r[1].kg, 64); assertEq(r[3].kg, 64);
-});
-test('Set met eigen berekeningsmodus (bv. topset) wordt niet overschreven', ()=>{
-  const sets=[{mode:'vast',kg:50},{mode:'topset',kg:100}];
-  const r=simulateApplyPct(sets, 80, 80);
-  assertEq(r[0].kg, 64);
-  assertEq(r[1].kg, 100); // ongewijzigd — eigen modus
-});
-test('Nieuwe 1RM herberekent automatisch alle niet-handmatige sets', ()=>{
-  const sets=[{mode:'vast',kg:64,manual:false},{mode:'vast',kg:64,manual:true}];
-  const r=simulateApplyPct(sets, 90, 80); // 1RM gewijzigd naar 90kg, zelfde 80%-instelling
-  assertEq(r[0].kg, roundKg(90*0.8)); // 72
-  assertEq(r[1].kg, 64); // handmatige set blijft staan
-});
-
-// ── V306.1 — BUG 2/3/4: berekende modi tonen ALTIJD het gewicht ──
-console.log("\n🔁 v306.1 — Bug 2/3/4: kg-veld toont effectief gewicht, direct herberekend");
-
-// Simuleert de UI-staat van een set-rij (kgDisplay = wat het gewichtsveld toont).
-function simulateSetRow(mode, param, ctx){
-  if(mode==='vast'||mode==='topset') return {kgDisplay: ctx.kg, editable:true};
-  const eff = effectiveKg(mode, param, ctx);
-  return {kgDisplay: eff!=null?eff:'–', editable:false};
-}
-test('Bug #3: % vorige toont het berekende gewicht, niet de parameter "90%"', ()=>{
-  const row=simulateSetRow('pct', 90, {prevKg:90});
-  assertEq(row.kgDisplay, 81);
-  assert(row.kgDisplay!=='90%', 'Veld mag niet de parameter tonen');
-});
-test('Bug #3: +kg vorige toont het berekende gewicht, niet "+2.5"', ()=>{
-  const row=simulateSetRow('plus', 2.5, {prevKg:90});
-  assertEq(row.kgDisplay, 92.5);
-});
-test('Bug #3: %1RM toont het berekende gewicht, niet "80%"', ()=>{
-  const row=simulateSetRow('1rm', 80, {oneRM:80});
-  assertEq(row.kgDisplay, 64);
-});
-test('Bug #4: wijziging van de parameter berekent direct opnieuw', ()=>{
-  let row=simulateSetRow('pct', 90, {prevKg:90});
-  assertEq(row.kgDisplay, 81);
-  row=simulateSetRow('pct', 102.5, {prevKg:90}); // gebruiker kiest ander percentage
-  assertEq(row.kgDisplay, roundKg(90*102.5/100)); // 92.5
-});
-test('Bug #4: modus-wissel van vast naar %1RM berekent direct, geen tussenstap nodig', ()=>{
-  const vastRow=simulateSetRow('vast', null, {kg:70});
-  assertEq(vastRow.kgDisplay, 70);
-  const pctRow=simulateSetRow('1rm', 80, {oneRM:80}); // direct na wisselen naar %1RM
-  assertEq(pctRow.kgDisplay, 64);
-});
-test('Berekende modus is niet direct editable (voorkomt inconsistente handmatige overschrijving)', ()=>{
-  const row=simulateSetRow('pct', 90, {prevKg:90});
-  assertEq(row.editable, false);
-});
-test('Vast en Topset blijven vrij invoerbaar', ()=>{
-  assertEq(simulateSetRow('vast', null, {kg:70}).editable, true);
-  assertEq(simulateSetRow('topset', null, {kg:130}).editable, true);
-});
-test('Ketenreactie: set2 (%vorige) volgt automatisch als set1 (vast) wijzigt', ()=>{
-  let set1=70;
-  let set2=simulateSetRow('pct', 90, {prevKg:set1});
-  assertEq(set2.kgDisplay, 63);
-  set1=80; // gebruiker wijzigt set1
-  set2=simulateSetRow('pct', 90, {prevKg:set1}); // herberekening na wijziging
-  assertEq(set2.kgDisplay, 72);
-});
-
-// ── V306: RPE-CASCADE ────────────────────────────────────
-console.log("\n📈 v306 — RPE-cascade (alleen niet-handmatige sets)");
-
-// Zelfstandige herimplementatie van de cascade-regel: bij wijziging van set i krijgen alle
-// volgende sets die niet handmatig zijn aangepast dezelfde waarde (overschrijft eerdere cascade).
-function cascadeRpe(rpeArr, manualSet, changedIdx, newVal){
-  const result=[...rpeArr];
-  result[changedIdx]=newVal;
-  for(let j=changedIdx+1;j<result.length;j++){
-    if(!manualSet.has(j)) result[j]=newVal;
-  }
-  return result;
-}
-test('Cascade: set2 wijzigen naar 9 → set3/4 volgen mee', ()=>{
-  const start=[8.5,8.5,8.5,8.5];
-  const manual=new Set();
-  const r=cascadeRpe(start, manual, 1, 9);
-  assertEq(r.join(','), '8.5,9,9,9');
-});
-test('Cascade: handmatig gewijzigde set3 wordt niet overschreven', ()=>{
-  const start=[8.5,9,8,8.5]; // set3 (idx2) al handmatig op 8 gezet
-  const manual=new Set([2]);
-  const r=cascadeRpe(start, manual, 1, 9);
-  assertEq(r.join(','), '8.5,9,8,9'); // set4 volgt mee, set3 blijft 8
-});
-
-// ── V306: PROGRESSIE-ADVIES (post-set, #13) ──────────────
-console.log("\n💡 v306 — Post-set progressie-advies");
-
-function computeProgression(rpe, curKg){
-  if(rpe==null||isNaN(rpe)||!curKg) return null;
-  if(rpe<=7.5) return {delta:2.5, label:'Verhogen'};
-  if(rpe<=8.5) return {delta:0, label:'Gelijk houden'};
-  return {delta:-7.5, label:'Deload'};
-}
-test('RPE 7 → +2.5 kg advies', ()=>{
-  const p=computeProgression(7, 100);
-  assertEq(p.delta, 2.5);
-});
-test('RPE 8 → gelijk houden', ()=>{
-  const p=computeProgression(8, 100);
-  assertEq(p.delta, 0);
-});
-test('RPE 9.5 → deload', ()=>{
-  const p=computeProgression(9.5, 100);
-  assert(p.delta<0, 'Deload moet negatieve delta zijn');
-});
-test('Geen RPE = geen advies', ()=>{
-  assertEq(computeProgression(null, 100), null);
-});
-
-// ── V306: SLIMME OPWARMSETS ───────────────────────────────
-console.log("\n🔥 v306 — Automatisch opwarmschema");
-
-function suggestWarmupScheme(workKg){
-  let pcts;
-  if(workKg>=120) pcts=[[0.4,8],[0.55,5],[0.7,3],[0.8,2],[0.9,1]];
-  else if(workKg>=80) pcts=[[0.4,8],[0.6,5],[0.75,3],[0.9,1]];
-  else if(workKg>=40) pcts=[[0.5,6],[0.7,4],[0.85,2]];
-  else pcts=[[0.5,8],[0.75,4]];
-  return pcts.map(([p,reps])=>({kg:roundKg(workKg*p),reps}));
-}
-test('Zwaar gewicht (140kg) krijgt 5 opwarmsets', ()=>{
-  const s=suggestWarmupScheme(140);
-  assertEq(s.length, 5);
-});
-test('Licht gewicht (30kg) krijgt 2 opwarmsets', ()=>{
-  const s=suggestWarmupScheme(30);
-  assertEq(s.length, 2);
-});
-test('Opwarmschema 100kg: eerste set is 40kg × 8', ()=>{
-  const s=suggestWarmupScheme(100);
-  assertEq(s[0].kg, 40);
-  assertEq(s[0].reps, 8);
-});
-test('Opwarmgewichten zijn nooit zwaarder dan het werkgewicht', ()=>{
-  const s=suggestWarmupScheme(100);
-  s.forEach(set=>assert(set.kg<100, `${set.kg} moet < 100 zijn`));
-});
-
-// ── V306: COACH APPLY-ACTIE PARSER ───────────────────────
-console.log("\n🤖 v306 — Coach [[APPLY]]-marker parsing");
-
-const APPLY_RE=/\[\[APPLY:([a-zA-Z0-9_\-]+):([\d.]+)\]\]/g;
-function parseApplyActions(raw){
-  const actions=[];
-  const clean=raw.replace(APPLY_RE,(m,exId,kg)=>{actions.push({exId,kg:parseFloat(kg)});return '';}).trim();
-  return {clean, actions};
-}
-test('Eén APPLY-marker wordt herkend en verwijderd uit tekst', ()=>{
-  const {clean, actions}=parseApplyActions('Verlaag naar 97.5 kg. [[APPLY:backsquat:97.5]]');
-  assertEq(actions.length, 1);
-  assertEq(actions[0].exId, 'backsquat');
-  assertEq(actions[0].kg, 97.5);
-  assert(!clean.includes('[[APPLY'), 'marker moet verwijderd zijn uit weergavetekst');
-});
-test('Geen marker = geen acties', ()=>{
-  const {actions}=parseApplyActions('Techniek ziet er goed uit, ga zo door.');
-  assertEq(actions.length, 0);
-});
-
-// ── V306.2 — CENTRALE CARDIO CALCULATION ENGINE ──────────
-console.log("\n🚴 v306.2 — CardioCalculationEngine (bidirectioneel)");
-
-// Zelfstandige herimplementatie van de CardioEngine-methoden (geen DOM), identieke logica.
-const CardioEngineTest = {
-  formatTime(sec){
-    if(sec==null||isNaN(sec)||sec<0)return '';
-    sec=Math.round(sec);
-    const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60;
-    const mm=h>0?String(m).padStart(2,'0'):String(m);
-    const ss=String(s).padStart(2,'0');
-    return h>0?`${h}:${mm}:${ss}`:`${mm}:${ss}`;
-  },
-  splitFromDistTime(dist,timeSec,basis){ return (!dist||!timeSec)?null:(timeSec/dist)*basis; },
-  timeFromDistSplit(dist,splitSec,basis){ return (!dist||!splitSec)?null:(splitSec/basis)*dist; },
-  distFromTimeSplit(timeSec,splitSec,basis){ return (!timeSec||!splitSec)?null:(timeSec/splitSec)*basis; },
-  wattFromSplit500(splitSec){ return !splitSec?null:2.80/Math.pow(splitSec/500,3); },
-  splitFromWatt500(watt){ return !watt?null:Math.cbrt(2.80/watt)*500; },
-  autoSplits(totalTimeSec,totalDist,splitDist){
-    if(!totalTimeSec||!totalDist||!splitDist)return [];
-    const n=Math.max(1,Math.round(totalDist/splitDist));
-    const per=totalTimeSec/n;
-    const splits={};
-    for(let i=1;i<=n;i++)splits[i]=per;
-    return splits;
-  },
-  fromManualSplits(splitSecMap){
-    const vals=Object.values(splitSecMap).filter(v=>v!=null&&!isNaN(v)&&v>0);
-    if(!vals.length)return null;
-    const total=vals.reduce((a,b)=>a+b,0);
-    return {total, avg:total/vals.length, count:vals.length};
-  }
+const LIFT_NORMS = {
+  backsquat: 1.5, bench: 1.0, frontsquat: 1.2, shoulderpress: 0.65,
+  hexabar: 1.75, hpc: 0.75, hps: 0.55
 };
+const RATIO_MIN_OBS = 5;
+const RATIO_DECAY = 0.95;
 
-test('Afstand + Tijd → Split (1000m in 3:40 = 1:50/500m)', ()=>{
-  const split=CardioEngineTest.splitFromDistTime(1000,220,500);
-  assertEq(split, 110); // 1:50 = 110s
-  assertEq(CardioEngineTest.formatTime(split), '1:50');
-});
-test('Afstand + Split → Tijd (1000m @ 1:50/500m = 3:40)', ()=>{
-  const time=CardioEngineTest.timeFromDistSplit(1000,110,500);
-  assertEq(time, 220);
-  assertEq(CardioEngineTest.formatTime(time), '3:40');
-});
-test('Tijd + Split → Afstand (3:40 @ 1:50/500m = 1000m)', ()=>{
-  const dist=CardioEngineTest.distFromTimeSplit(220,110,500);
-  assertEq(dist, 1000);
-});
-test('Hardlopen: Afstand + Tijd → Pace (5km in 25:00 = 5:00/km)', ()=>{
-  const pace=CardioEngineTest.splitFromDistTime(5,1500,1);
-  assertEq(pace, 300);
-  assertEq(CardioEngineTest.formatTime(pace), '5:00');
-});
-test('Hardlopen: Afstand + Pace → Tijd', ()=>{
-  const time=CardioEngineTest.timeFromDistSplit(5,300,1);
-  assertEq(time, 1500);
-});
-test('Hardlopen: Tijd + Pace → Afstand', ()=>{
-  const dist=CardioEngineTest.distFromTimeSplit(1500,300,1);
-  assertEq(dist, 5);
-});
-test('Watt uit split (Concept2-formule, split 2:00/500m ≈ 200W)', ()=>{
-  const w=CardioEngineTest.wattFromSplit500(120);
-  assertRange(w, 198, 206, 'Watt bij 2:00 split');
-});
-test('Split uit watt is de inverse van watt uit split', ()=>{
-  const split=110;
-  const watt=CardioEngineTest.wattFromSplit500(split);
-  const backToSplit=CardioEngineTest.splitFromWatt500(watt);
-  assertRange(backToSplit, split-0.01, split+0.01, 'Rondtrip split→watt→split');
-});
-test('formatTime: seconden naar M:SS, en naar H:MM:SS boven het uur', ()=>{
-  assertEq(CardioEngineTest.formatTime(125), '2:05');
-  assertEq(CardioEngineTest.formatTime(3725), '1:02:05');
-});
-
-// ── V306.2 — SPLITS: automatisch vs handmatig ────────────
-console.log("\n📊 v306.2 — Splits (automatisch/handmatig, echt functioneel)");
-
-test('Automatisch: 4 gelijke intervallen bij 1000m/250m, 4:00 totaal', ()=>{
-  const splits=CardioEngineTest.autoSplits(240,1000,250);
-  assertEq(Object.keys(splits).length, 4);
-  assertEq(splits[1], 60); assertEq(splits[4], 60);
-});
-test('Automatisch: totale tijd = som van alle intervallen', ()=>{
-  const splits=CardioEngineTest.autoSplits(240,1000,250);
-  const total=Object.values(splits).reduce((a,b)=>a+b,0);
-  assertEq(total, 240);
-});
-test('Handmatig: gemiddelde en totaal berekend uit ingevulde intervallen', ()=>{
-  const agg=CardioEngineTest.fromManualSplits({1:58,2:60,3:59,4:61});
-  assertEq(agg.total, 238);
-  assertEq(agg.avg, 59.5);
-  assertEq(agg.count, 4);
-});
-test('Handmatig: gedeeltelijk ingevuld telt alleen de ingevulde intervallen', ()=>{
-  const agg=CardioEngineTest.fromManualSplits({1:60,2:null,3:58});
-  assertEq(agg.count, 2);
-  assertEq(agg.total, 118);
-});
-test('Handmatig: leeg levert geen resultaat (geen misleidend gemiddelde)', ()=>{
-  assertEq(CardioEngineTest.fromManualSplits({1:null,2:null}), null);
-});
-test('Handmatige split past de totale tijd aan (bug #4: geen "auto" die niets doet)', ()=>{
-  // Simuleert: gebruiker vult 4 handmatige intervallen in, elk net iets anders dan het gemiddelde
-  const agg=CardioEngineTest.fromManualSplits({1:60,2:62,3:59,4:61});
-  assertEq(agg.total, 242);
-  assert(agg.total!==240, 'Totaal moet uit de werkelijke handmatige waarden komen, niet uit een default');
-});
-
-// ── V306.2 — resolveCardioType (uniforme herkenning) ─────
-console.log("\n🎯 v306.2 — resolveCardioType (één cardio-logger overal)");
-
-const CARDIO_TYPES_TEST={rowing:1,bikeerg:1,skierg:1,running:1};
-function resolveCardioTypeTest(ex){
-  if(!ex)return null;
-  if(ex.cardioType && CARDIO_TYPES_TEST[ex.cardioType])return ex.cardioType;
-  if(CARDIO_TYPES_TEST[ex.type])return ex.type;
-  if(ex.type==='cardio')return 'rowing';
-  return null;
+function weightedEst1RM(sessions, refDate){
+  const ref = refDate ? new Date(refDate) : new Date();
+  let sumW=0, sumWV=0, n=0;
+  (sessions||[]).forEach(s=>{
+    if(!s.weight||!s.reps)return;
+    const est = s.reps===1 ? s.weight : s.weight*(1+s.reps/30);
+    const days = Math.max(0,(ref - new Date(s.date))/86400000);
+    const weken = days/7;
+    const w = Math.pow(RATIO_DECAY, weken);
+    sumW += w; sumWV += w*est; n++;
+  });
+  if(!n) return {est:null, n:0};
+  return {est: sumWV/sumW, n};
 }
-test('Specifiek cardiotype (bv. skierg) wordt direct herkend', ()=>{
-  assertEq(resolveCardioTypeTest({id:'x',type:'skierg'}), 'skierg');
-});
-test('Legacy generieke waarde "cardio" valt terug op roeien (was voorheen NIET herkend)', ()=>{
-  assertEq(resolveCardioTypeTest({id:'x',type:'cardio'}), 'rowing');
-});
-test('cardioType-veld heeft voorrang boven type', ()=>{
-  assertEq(resolveCardioTypeTest({id:'x',type:'cardio',cardioType:'bikeerg'}), 'bikeerg');
-});
-test('Kracht-type wordt niet als cardio herkend', ()=>{
-  assertEq(resolveCardioTypeTest({id:'x',type:'strength'}), null);
-});
-test('Losse oefening en training gebruiken dezelfde resolver (identieke uitkomst)', ()=>{
-  const ex={id:'bike1',type:'cardio'};
-  const viaLosseOefening=resolveCardioTypeTest(ex);
-  const viaTraining=resolveCardioTypeTest(ex);
-  assertEq(viaLosseOefening, viaTraining);
+
+function ratioConfidence(nA,nB){
+  const n = Math.min(nA,nB);
+  if(n < RATIO_MIN_OBS) return 'Laag';
+  if(n < RATIO_MIN_OBS*2) return 'Middel';
+  return 'Hoog';
+}
+
+function ratioFactor(liftA, liftB, estA, estB){
+  const normA = LIFT_NORMS[liftA], normB = LIFT_NORMS[liftB];
+  const fase1Ratio = (normA!=null && normB!=null) ? normA/normB : null;
+  const genoegData = estA && estB && estA.n>=RATIO_MIN_OBS && estB.n>=RATIO_MIN_OBS && estA.est && estB.est;
+  if(genoegData){
+    return {ratio: estA.est/estB.est, bron:'eigen data', nA:estA.n, nB:estB.n, betrouwbaarheid: ratioConfidence(estA.n,estB.n)};
+  }
+  return {ratio: fase1Ratio, bron:'algemene richtlijn', nA:estA?estA.n:0, nB:estB?estB.n:0, betrouwbaarheid:'Laag'};
+}
+
+test('Fase1: standaardratio frontsquat/backsquat = 1.2/1.5', ()=>{
+  const r = ratioFactor('frontsquat','backsquat', {est:null,n:0}, {est:null,n:0});
+  assertEq(Math.round(r.ratio*1000)/1000, Math.round((1.2/1.5)*1000)/1000, 'fase1 ratio');
+  assertEq(r.bron, 'algemene richtlijn');
+  assertEq(r.betrouwbaarheid, 'Laag');
 });
 
+test('Fase2 schakelt pas in bij n>=5 op beide liften', ()=>{
+  const estA = {est:90, n:4}; // net onder drempel
+  const estB = {est:100, n:6};
+  const r = ratioFactor('frontsquat','backsquat', estA, estB);
+  assertEq(r.bron, 'algemene richtlijn', 'moet nog fase1 zijn bij n=4');
+});
 
+test('Fase2 actief bij n>=5 op beide liften, ratio uit eigen data', ()=>{
+  const estA = {est:96, n:6};
+  const estB = {est:100, n:8};
+  const r = ratioFactor('frontsquat','backsquat', estA, estB);
+  assertEq(r.bron, 'eigen data');
+  assertEq(Math.round(r.ratio*100)/100, 0.96);
+});
 
+test('Betrouwbaarheid Laag/Middel/Hoog o.b.v. laagste n', ()=>{
+  assertEq(ratioConfidence(4,20), 'Laag');
+  assertEq(ratioConfidence(5,20), 'Middel');
+  assertEq(ratioConfidence(10,20), 'Hoog');
+});
+
+test('weightedEst1RM: single rep = gewicht zelf, geen Epley-opslag', ()=>{
+  const r = weightedEst1RM([{date:'2026-06-01',weight:100,reps:1}], '2026-06-01');
+  assertEq(r.est, 100);
+  assertEq(r.n, 1);
+});
+
+test('weightedEst1RM: recente sessie weegt zwaarder dan oude (decay)', ()=>{
+  // oude sessie hoger gewicht, recente sessie lager gewicht -> gewogen gemiddelde dichter bij recente
+  const sessions = [
+    {date:'2026-01-01', weight:120, reps:1},
+    {date:'2026-06-20', weight:90, reps:1}
+  ];
+  const r = weightedEst1RM(sessions, '2026-06-27');
+  assert(r.est < 105, `Verwacht dichter bij recente waarde (90), kreeg ${r.est}`);
+});
+
+test('weightedEst1RM: lege of onvolledige sessies genegeerd', ()=>{
+  const r = weightedEst1RM([{date:'2026-06-01',weight:null,reps:3},{date:'2026-06-01'}]);
+  assertEq(r.est, null);
+  assertEq(r.n, 0);
+});
+
+test('ratioFactor: fallback naar fase1 als één lift geen data heeft', ()=>{
+  const r = ratioFactor('hexabar','backsquat', {est:null,n:0}, {est:150,n:10});
+  assertEq(r.bron, 'algemene richtlijn');
+  assert(r.ratio !== null, 'fase1 fallback moet altijd een ratio geven voor bekende liften');
+});
+
+// ── DAGFACTOR-MOTOR (v300) ───────────────────────────────
+console.log("\n🌤️  Dagfactor-motor");
+
+function hrvSt(v){if(!v)return 'y';if(v>=24)return 'g';if(v>=18)return 'y';if(v>=14)return 'o';return 'r';}
+function hrvDagFactor(v){const st=hrvSt(v);return {g:1.05,y:1.00,o:0.93,r:0.85}[st];}
+function slaapDagFactor(uren){
+  if(!uren)return 1.00;
+  if(uren>=7)return 1.00;
+  if(uren>=6)return 0.97;
+  return 0.92;
+}
+function cyclusDagFactor(fase){
+  return {menstruatie:0.93,folliculair:1.03,ovulatie:1.00,luteaal:0.97}[fase] ?? 1.00;
+}
+function dagfactor(hrv,slaapUren,cyclusFase){
+  const hrvFactor=hrvDagFactor(hrv);
+  const slaapFactor=slaapDagFactor(slaapUren);
+  const cyclusFactor=cyclusDagFactor(cyclusFase);
+  const ruw=hrvFactor*slaapFactor*cyclusFactor;
+  const factor=Math.round(Math.max(0.85,Math.min(1.05,ruw))*100)/100;
+  return {factor,hrvFactor,slaapFactor,cyclusFactor};
+}
+
+test('Dagfactor optimaal: HRV hoog, slaap voldoende = 1.05', ()=>{
+  const df=dagfactor(28,7.5,null);
+  assertEq(df.factor,1.05);
+});
+test('Dagfactor kritiek: HRV laag, slaap kort = geclipt op 0.85', ()=>{
+  const df=dagfactor(10,5,null);
+  assertEq(df.factor,0.85);
+});
+test('Dagfactor zonder data = 1.00 (geen correctie)', ()=>{
+  const df=dagfactor(null,null,null);
+  assertEq(df.factor,1.00);
+});
+test('Dagfactor clip: nooit boven 1.05 of onder 0.85', ()=>{
+  const hoog=dagfactor(30,8,'folliculair');
+  const laag=dagfactor(10,4,'menstruatie');
+  assert(hoog.factor<=1.05);
+  assert(laag.factor>=0.85);
+});
+test('Cyclusfactor alleen effect als fase opgegeven', ()=>{
+  assertEq(cyclusDagFactor(null),1.00);
+  assertEq(cyclusDagFactor('menstruatie'),0.93);
+  assertEq(cyclusDagFactor('folliculair'),1.03);
+});
+test('Dagfactor: normale HRV + normale slaap = 1.00', ()=>{
+  const df=dagfactor(20,7,null);
+  assertEq(df.factor,1.00);
+});
+
+// ── COLD-START-PREDICTOR (v300) ──────────────────────────
+console.log("\n🧊 Cold-start-predictor");
+
+function mastersFactorCS(leeftijd){
+  if(leeftijd < 40) return 1.0;
+  if(leeftijd < 45) return 1.01;
+  if(leeftijd < 50) return 1.02;
+  if(leeftijd < 55) return 1.04;
+  if(leeftijd < 60) return 1.06;
+  if(leeftijd < 65) return 1.09;
+  return 1.12;
+}
+function expected1RMCS(lift,gewicht,leeftijd,niveau){
+  const niveauFactor={beginner:0.5,gevorderd:0.75,ervaren:1.0,expert:1.2}[niveau]||1.0;
+  const mf=mastersFactorCS(leeftijd);
+  const norm=LIFT_NORMS[lift]||1.0;
+  return Math.round(gewicht*norm*niveauFactor*mf);
+}
+function coldStartViaAnchor(ankerRM,ratioFactorVal){
+  if(!ankerRM||!ratioFactorVal)return null;
+  return Math.round(ankerRM*ratioFactorVal);
+}
+
+test('Cold-start kernlift: backsquat 110kg lichaamsgewicht, ervaren, 50 jaar', ()=>{
+  const est=expected1RMCS('backsquat',110,50,'ervaren');
+  // 110 * 1.5 * 1.0 * 1.04
+  assertEq(est, Math.round(110*1.5*1.0*1.04));
+});
+test('Cold-start kernlift: beginner scoort lager dan ervaren bij zelfde gewicht', ()=>{
+  const beginner=expected1RMCS('frontsquat',100,40,'beginner');
+  const ervaren=expected1RMCS('frontsquat',100,40,'ervaren');
+  assert(beginner<ervaren);
+});
+test('Cold-start via anker: nieuwe oefening op 85% van backsquat-1RM', ()=>{
+  const est=coldStartViaAnchor(120,0.85);
+  assertEq(est,102);
+});
+test('Cold-start via anker: geen schatting zonder ankerdata', ()=>{
+  assertEq(coldStartViaAnchor(null,0.85), null);
+  assertEq(coldStartViaAnchor(120,null), null);
+});
+test('Cold-start: onbekende lift zonder anker geeft geen schatting', ()=>{
+  assertEq(LIFT_NORMS['onbekendelift'], undefined);
+});
+
+// ── PROGRAMMA — kalenderplanning (v310) ──────────────────
+console.log("\n🗓️  Programma-generator: kalenderplanning + validatie");
+
+function isoWeekday(dateStr){
+  const wd=new Date(dateStr+'T00:00:00').getDay();
+  return wd===0?7:wd;
+}
+function addDaysStr(dateStr,n){
+  const d=new Date(dateStr+'T00:00:00');
+  d.setDate(d.getDate()+n);
+  return d.toISOString().slice(0,10);
+}
+function computeBlockPlannedDates(startDate,blockCount,schemaType,weekdagen,dagenPerWeek){
+  const dates=[];
+  if(schemaType==='weekdagen'&&weekdagen&&weekdagen.length){
+    const wd=[...weekdagen].sort((a,b)=>a-b);
+    let cursor=startDate,wdIdx=0;
+    for(let i=0;i<blockCount;i++){
+      const target=wd[wdIdx%wd.length];
+      while(isoWeekday(cursor)!==target){cursor=addDaysStr(cursor,1);}
+      dates.push(cursor);
+      cursor=addDaysStr(cursor,1);
+      wdIdx++;
+    }
+  }else{
+    const spacing=Math.max(1,Math.round(7/(dagenPerWeek||2)));
+    for(let i=0;i<blockCount;i++){dates.push(addDaysStr(startDate,i*spacing));}
+  }
+  return dates;
+}
+function parseProgrammaJSON(txt,exerciseList){
+  try{
+    const cleaned=txt.replace(/```json|```/g,'').trim();
+    const obj=JSON.parse(cleaned);
+    if(!obj.blocks||!Array.isArray(obj.blocks)||!obj.blocks.length)return null;
+    const ids=new Set((exerciseList||[]).map(e=>e.id));
+    const valid=obj.blocks.every(b=>b.week_nr&&b.fase_naam&&Array.isArray(b.oefeningen)&&b.oefeningen.length&&
+      b.oefeningen.every(o=>o.exercise_id&&o.sets&&o.reps&&(!ids.size||ids.has(o.exercise_id))));
+    return valid?obj:null;
+  }catch{return null;}
+}
+
+test('isoWeekday: maandag is 1, zondag is 7', ()=>{
+  assertEq(isoWeekday('2026-07-13'), 1); // maandag
+  assertEq(isoWeekday('2026-07-19'), 7); // zondag
+});
+test('addDaysStr: telt kalenderdagen correct op', ()=>{
+  assertEq(addDaysStr('2026-07-12', 5), '2026-07-17');
+});
+test('computeBlockPlannedDates (weekdagen): cyclet door gekozen dagen ma/do', ()=>{
+  // 2026-07-12 is een zondag; eerste ma erna is 2026-07-13
+  const dates=computeBlockPlannedDates('2026-07-12', 4, 'weekdagen', [1,4], 2);
+  assertEq(dates[0], '2026-07-13'); // ma
+  assertEq(dates[1], '2026-07-16'); // do
+  assertEq(dates[2], '2026-07-20'); // volgende ma
+  assertEq(dates[3], '2026-07-23'); // volgende do
+});
+test('computeBlockPlannedDates (weekdagen): sorteert ongeordende invoer', ()=>{
+  const dates=computeBlockPlannedDates('2026-07-12', 2, 'weekdagen', [4,1], 2);
+  assertEq(dates[0], '2026-07-13'); // ma, ook al stond 4 eerst in de invoer
+});
+test('computeBlockPlannedDates (interval): spreidt gelijkmatig o.b.v. dagen/week', ()=>{
+  const dates=computeBlockPlannedDates('2026-07-12', 3, 'interval', [], 7);
+  assertEq(dates[0], '2026-07-12');
+  assertEq(dates[1], '2026-07-13'); // spacing 1 dag bij 7x/week
+  assertEq(dates[2], '2026-07-14');
+});
+test('computeBlockPlannedDates (interval): minimaal 1 dag tussenruimte', ()=>{
+  const dates=computeBlockPlannedDates('2026-07-12', 2, 'interval', [], 14);
+  assert(dates[1] !== dates[0], 'spacing mag nooit 0 zijn');
+});
+test('parseProgrammaJSON: geldige oefeningen-bibliotheek-structuur wordt geaccepteerd', ()=>{
+  const lib=[{id:'backsquat'},{id:'bench'}];
+  const json=JSON.stringify({blocks:[{week_nr:1,fase_naam:'Opbouw',oefeningen:[{exercise_id:'backsquat',sets:3,reps:'10-12',rpe:7}]}]});
+  const parsed=parseProgrammaJSON(json, lib);
+  assert(parsed !== null);
+  assertEq(parsed.blocks.length, 1);
+});
+test('parseProgrammaJSON: onbekend exercise_id wordt geweigerd', ()=>{
+  const lib=[{id:'backsquat'}];
+  const json=JSON.stringify({blocks:[{week_nr:1,fase_naam:'Opbouw',oefeningen:[{exercise_id:'onbekend',sets:3,reps:'10'}]}]});
+  assertEq(parseProgrammaJSON(json, lib), null);
+});
+test('parseProgrammaJSON: blok zonder oefeningen wordt geweigerd', ()=>{
+  const json=JSON.stringify({blocks:[{week_nr:1,fase_naam:'Opbouw',oefeningen:[]}]});
+  assertEq(parseProgrammaJSON(json, []), null);
+});
+test('parseProgrammaJSON: strip ```json-fences voor het parsen', ()=>{
+  const lib=[{id:'bench'}];
+  const json='```json\n'+JSON.stringify({blocks:[{week_nr:1,fase_naam:'Piek',oefeningen:[{exercise_id:'bench',sets:2,reps:'3'}]}]})+'\n```';
+  assert(parseProgrammaJSON(json, lib) !== null);
+});
+test('parseProgrammaJSON: kapotte JSON geeft null, geen crash', ()=>{
+  assertEq(parseProgrammaJSON('geen geldige json', []), null);
+});
+
+// ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);
 if(failed > 0){

@@ -379,6 +379,7 @@ canvas{width:100%;height:100%}
   </div>
   <div class="scroll" style="padding-top:8px">
     <div id="home-hrv-card"></div>
+    <div id="home-program-card" style="margin-bottom:8px"></div>
     <div class="sec-hd">Start training</div>
     <div style="display:flex;gap:10px;margin-bottom:8px">
       <button onclick="go('s-train-a')" style="flex:1;padding:14px;border-radius:14px;border:none;background:var(--dark);color:#fff;font-family:var(--f);font-size:14px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:6px;justify-content:center"><div class="ni-dot" id="home-dot-a" style="position:static;background:#fff"></div>TRAINING A</button>
@@ -730,7 +731,7 @@ canvas{width:100%;height:100%}
   <div class="hdr">
     <div class="hdr-row">
       <div><div class="hdr-title">Programma</div><div class="hdr-sub">Meerdere weken vooruit</div></div>
-      <button class="ibtn" onclick="openModal('m-programma-gen')">＋</button>
+      <button class="ibtn" onclick="openProgGenModal()">＋</button>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px" id="programma-list">
@@ -756,6 +757,7 @@ canvas{width:100%;height:100%}
   <div class="scroll" style="padding-top:8px">
     <div id="pbd-ex-list"></div>
     <button class="btn btn-o" onclick="addBlockExercise()" style="margin-top:4px">+ Oefening toevoegen</button>
+    <button id="pbd-start-btn" class="btn btn-r" style="margin-top:10px;width:100%" onclick="startProgramBlockTraining(curProgramBlockId)">▶ Start deze training</button>
   </div>
   <nav class="bnav">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
@@ -1022,7 +1024,12 @@ canvas{width:100%;height:100%}
     <div class="irow"><label class="ilbl">Naam</label><input class="inp" id="prog-naam" placeholder="bv. Kracht opbouw 8 weken"></div>
     <div class="irow"><label class="ilbl">Doel</label><input class="inp" id="prog-doel" placeholder="bv. kracht opbouwen, HYROX-voorbereiding"></div>
     <div class="irow"><label class="ilbl">Duur (weken)</label><input class="inp" type="number" id="prog-weken" placeholder="8" value="8"></div>
-    <div class="irow"><label class="ilbl">Dagen per week</label><input class="inp" type="number" id="prog-dagen" placeholder="2" value="2"></div>
+    <div class="irow"><label class="ilbl">Dagen per week</label><input class="inp" type="number" id="prog-dagen" placeholder="2" value="2" onchange="renderProgWeekdagPicker()"></div>
+    <div class="irow"><label class="ilbl">Planning</label><select class="inp" id="prog-schema-type" onchange="renderProgWeekdagPicker()">
+      <option value="interval">Gewoon volgorde, geen vaste dag</option>
+      <option value="weekdagen">Vaste weekdagen</option>
+    </select></div>
+    <div id="prog-weekdag-picker" style="display:none;margin:-4px 0 10px"></div>
     <div id="prog-gen-status" style="font-size:12px;color:var(--g4);margin-top:6px"></div>
     <div id="prog-concept" style="margin-top:10px"></div>
     <div style="display:flex;gap:8px;margin-top:14px">
@@ -1412,7 +1419,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.0.6.2';
+const APP_VER = 'v3.1.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -2405,58 +2412,142 @@ async function saveLosOefening(){
 // ══════════════════════════════════════════════════════════
 // PROGRAMMA (AI-gegenereerde multi-week planning)
 // ══════════════════════════════════════════════════════════
+// ── PROGRAMMA — kalenderplanning (puur, los testbaar in logic_tests.js) ────
+// ISO-weekdag: 1=maandag ... 7=zondag
+function isoWeekday(dateStr){
+  const wd=new Date(dateStr+'T00:00:00').getDay();
+  return wd===0?7:wd;
+}
+function addDaysStr(dateStr,n){
+  const d=new Date(dateStr+'T00:00:00');
+  d.setDate(d.getDate()+n);
+  return d.toISOString().slice(0,10);
+}
+// Bepaalt de geplande kalenderdatum per blok. Bij 'weekdagen' wordt door de gekozen
+// weekdagen gecycled vanaf startDate; bij 'interval' wordt gelijkmatig gespreid o.b.v.
+// dagenPerWeek. Deze datum is een startvoorstel — welk blok "volgende" is wordt elders
+// altijd bepaald door completed_at, niet door deze datum (gemiste dagen schuiven door).
+function computeBlockPlannedDates(startDate,blockCount,schemaType,weekdagen,dagenPerWeek){
+  const dates=[];
+  if(schemaType==='weekdagen'&&weekdagen&&weekdagen.length){
+    const wd=[...weekdagen].sort((a,b)=>a-b);
+    let cursor=startDate,wdIdx=0;
+    for(let i=0;i<blockCount;i++){
+      const target=wd[wdIdx%wd.length];
+      while(isoWeekday(cursor)!==target){cursor=addDaysStr(cursor,1);}
+      dates.push(cursor);
+      cursor=addDaysStr(cursor,1);
+      wdIdx++;
+    }
+  }else{
+    const spacing=Math.max(1,Math.round(7/(dagenPerWeek||2)));
+    for(let i=0;i<blockCount;i++){dates.push(addDaysStr(startDate,i*spacing));}
+  }
+  return dates;
+}
+
+// ══════════════════════════════════════════════════════════
+// PROGRAMMA (AI-gegenereerde multi-week planning, op basis van de oefeningen-
+// bibliotheek — niet meer gekoppeld aan het vaste Training A/B-schema)
+// ══════════════════════════════════════════════════════════
+const WEEKDAG_LABELS=[{v:1,l:'Ma'},{v:2,l:'Di'},{v:3,l:'Wo'},{v:4,l:'Do'},{v:5,l:'Vr'},{v:6,l:'Za'},{v:7,l:'Zo'}];
+function renderProgWeekdagPicker(){
+  const type=document.getElementById('prog-schema-type').value;
+  const el=document.getElementById('prog-weekdag-picker');
+  if(type!=='weekdagen'){el.style.display='none';el.innerHTML='';return;}
+  const dagen=parseInt(document.getElementById('prog-dagen').value)||2;
+  el.style.display='block';
+  el.innerHTML=`<div style="font-size:11px;color:var(--g4);margin-bottom:4px">Kies ${dagen} dag(en) per week</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${WEEKDAG_LABELS.map(w=>`
+      <label style="display:flex;align-items:center;gap:3px;font-size:12px;background:var(--g1);border:1.5px solid var(--g2);border-radius:8px;padding:5px 8px;cursor:pointer">
+        <input type="checkbox" class="prog-weekdag-cb" value="${w.v}" style="margin:0"> ${w.l}
+      </label>`).join('')}</div>`;
+}
+function collectProgWeekdagen(){
+  return [...document.querySelectorAll('.prog-weekdag-cb:checked')].map(c=>parseInt(c.value)).sort((a,b)=>a-b);
+}
+function openProgGenModal(){
+  document.getElementById('prog-naam').value='';
+  document.getElementById('prog-doel').value='';
+  document.getElementById('prog-weken').value='8';
+  document.getElementById('prog-dagen').value='2';
+  document.getElementById('prog-schema-type').value='interval';
+  document.getElementById('prog-gen-status').textContent='';
+  document.getElementById('prog-concept').innerHTML='';
+  renderProgWeekdagPicker();
+  openModal('m-programma-gen');
+}
 async function genereerProgramma(){
   const naam=document.getElementById('prog-naam').value.trim()||'Programma';
   const doel=document.getElementById('prog-doel').value.trim()||'algemene kracht opbouwen';
   const weken=parseInt(document.getElementById('prog-weken').value)||8;
   const dagen=parseInt(document.getElementById('prog-dagen').value)||2;
+  const schemaType=document.getElementById('prog-schema-type').value;
+  const weekdagen=schemaType==='weekdagen'?collectProgWeekdagen():[];
+  if(schemaType==='weekdagen'&&!weekdagen.length){toast('Kies minstens 1 weekdag');return;}
   const statusEl=document.getElementById('prog-gen-status');
   statusEl.textContent='AI genereert concept...';
   document.getElementById('prog-concept').innerHTML='';
-  const sys=`Je bent trainingscoach. Genereer een periodiseringsschema van ${weken} weken, ${dagen} trainingsdagen per week, doel: ${doel}. Gebruik alleen 'A' of 'B' als training_ref (bestaande vaste schema's). Antwoord ALLEEN met geldige JSON, geen uitleg, in dit exacte formaat: {"blocks":[{"week_nr":1,"fase_naam":"Opbouw","training_ref":"A"}]}`;
+  await ensureExercisesLoaded();
+  const bibliotheek=exercises.filter(e=>e.active!==false).map(e=>`${e.id}:${e.name}(${e.type||'strength'})`).join(', ');
+  const sys=`Je bent trainingscoach. Genereer een periodiseringsschema van ${weken} weken, ${dagen} trainingsdagen per week, doel: ${doel}. Kies voor elke trainingsdag zelf de beste oefeningen UIT DEZE BIBLIOTHEEK (gebruik alleen deze exercise_id's, verzin geen nieuwe): ${bibliotheek}. Varieer oefeningen en volume logisch per fase (bv. hogere reps/lagere RPE bij opbouw, lagere reps/hogere RPE bij piek) en zorg voor een sluitende periodisering. Antwoord ALLEEN met geldige JSON, geen uitleg, in dit exacte formaat: {"blocks":[{"week_nr":1,"fase_naam":"Anatomische Aanpassing","oefeningen":[{"exercise_id":"backsquat","sets":3,"reps":"12-15","rpe":6.5}]}]}. Genereer exact ${weken*dagen} blokken (1 per trainingsdag, chronologisch), elk met 3-6 oefeningen.`;
   try{
-    const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:2000,system:sys,messages:[{role:'user',content:'Genereer het programma.'}]})});
+    const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:4000,system:sys,messages:[{role:'user',content:'Genereer het programma.'}]})});
     const d=await res.json();
     if(d.error){statusEl.textContent='Fout: '+d.error.message;return;}
     const txt=d.content[0].text;
-    const parsed=parseProgrammaJSON(txt);
+    const parsed=parseProgrammaJSON(txt,exercises);
     if(!parsed){statusEl.textContent='AI-antwoord kon niet worden gelezen. Probeer opnieuw.';return;}
-    statusEl.textContent=parsed.blocks.length+' trainingsmomenten voorgesteld — controleer en pas aan voor opslaan.';
-    window._progConcept={naam,doel,blocks:parsed.blocks};
+    statusEl.textContent=parsed.blocks.length+' trainingen voorgesteld — losse oefeningen kun je na opslaan nog aanpassen.';
+    window._progConcept={naam,doel,schemaType,weekdagen,dagenPerWeek:dagen,blocks:parsed.blocks};
     renderProgConcept(parsed.blocks);
   }catch(e){statusEl.textContent='Verbindingsfout. Check internet.';}
 }
 // Pure parse/validatie-functie — apart zodat hij los testbaar is
-function parseProgrammaJSON(txt){
+function parseProgrammaJSON(txt,exerciseList){
   try{
     const cleaned=txt.replace(/```json|```/g,'').trim();
     const obj=JSON.parse(cleaned);
     if(!obj.blocks||!Array.isArray(obj.blocks)||!obj.blocks.length)return null;
-    const valid=obj.blocks.every(b=>b.week_nr&&b.fase_naam&&(b.training_ref==='A'||b.training_ref==='B'));
+    const ids=new Set((exerciseList||[]).map(e=>e.id));
+    const valid=obj.blocks.every(b=>b.week_nr&&b.fase_naam&&Array.isArray(b.oefeningen)&&b.oefeningen.length&&
+      b.oefeningen.every(o=>o.exercise_id&&o.sets&&o.reps&&(!ids.size||ids.has(o.exercise_id))));
     return valid?obj:null;
   }catch{return null;}
 }
 function renderProgConcept(blocks){
   const el=document.getElementById('prog-concept');
-  el.innerHTML=blocks.map((b,i)=>`
-    <div class="eq-row">
-      <span class="eq-label">Wk ${b.week_nr} · ${b.fase_naam}</span>
-      <select class="inp" style="width:auto;padding:4px 8px;font-size:12px" onchange="window._progConcept.blocks[${i}].training_ref=this.value">
-        <option value="A" ${b.training_ref==='A'?'selected':''}>Training A</option>
-        <option value="B" ${b.training_ref==='B'?'selected':''}>Training B</option>
-      </select>
-    </div>`).join('')+`<button class="btn btn-r" style="margin-top:10px" onclick="opslaanProgramma()">Programma opslaan</button>`;
+  el.innerHTML=blocks.map(b=>`
+    <div style="border:1px solid var(--g2);border-radius:10px;padding:8px 10px;margin-bottom:6px">
+      <div style="font-size:12px;font-weight:700">Wk ${b.week_nr} · ${b.fase_naam}</div>
+      <div style="font-size:11px;color:var(--g4);margin-top:2px">${b.oefeningen.map(o=>{
+        const ex=exercises.find(e=>e.id===o.exercise_id);
+        return (ex?ex.name:o.exercise_id)+' '+o.sets+'×'+o.reps+(o.rpe?' @RPE'+o.rpe:'');
+      }).join(' · ')}</div>
+    </div>`).join('')+`<button class="btn btn-r" style="margin-top:10px;width:100%" onclick="opslaanProgramma()">Programma opslaan</button>`;
 }
 async function opslaanProgramma(){
   const c=window._progConcept;
   if(!c)return;
-  const prog=await sbPostReturning('programs',{naam:c.naam,doel:c.doel,start_date:td(),status:'actief'});
+  const startDate=td();
+  const plannedDates=computeBlockPlannedDates(startDate,c.blocks.length,c.schemaType,c.weekdagen,c.dagenPerWeek);
+  const prog=await sbPostReturning('programs',{naam:c.naam,doel:c.doel,start_date:startDate,status:'actief',schema_type:c.schemaType,weekdagen:(c.weekdagen&&c.weekdagen.length)?c.weekdagen:null});
   const progId=prog?.[0]?.id;
   if(!progId){toast('Opslaan mislukt — tabel programs bestaat mogelijk nog niet');return;}
-  for(const b of c.blocks){await sbPost('program_blocks',{program_id:progId,week_nr:b.week_nr,fase_naam:b.fase_naam,training_ref:b.training_ref});}
+  for(let i=0;i<c.blocks.length;i++){
+    const b=c.blocks[i];
+    const inserted=await sbPostReturning('program_blocks',{program_id:progId,week_nr:b.week_nr,fase_naam:b.fase_naam,planned_date:plannedDates[i]});
+    const blockId=inserted?.[0]?.id;
+    if(!blockId)continue;
+    let sortOrder=0;
+    for(const o of b.oefeningen){
+      await sbPost('program_block_exercises',{program_block_id:blockId,exercise_id:o.exercise_id,sort_order:sortOrder++,sets:o.sets||null,reps:o.reps?String(o.reps):null,rpe_target:o.rpe?String(o.rpe):null});
+    }
+  }
   window._progConcept=null;
   closeModal('m-programma-gen');toast('Programma opgeslagen');
   renderProgrammaList();
+  refreshHome();
 }
 // Cache van program_block_exercises per blok — voorkomt herhaald ophalen bij elke uitklap-toggle.
 // Wordt geïnvalideerd (delete) zodra oefeningen in de detailpagina worden aangepast.
@@ -2470,14 +2561,18 @@ async function renderProgrammaList(){
   let h='';
   for(const p of progs){
     const blocks=await sbGet('program_blocks','&program_id=eq.'+p.id+'&order=week_nr.asc');
+    const doneCount=blocks.filter(b=>b.completed_at).length;
     h+=`<div class="card"><div class="card-body" style="padding:14px">
-      <div style="font-size:15px;font-weight:700">${p.naam}</div>
-      <div style="font-size:12px;color:var(--g4);margin-bottom:8px">${p.doel||''} · ${blocks.length} trainingen · gestart ${p.start_date}</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="font-size:15px;font-weight:700">${p.naam}</div>
+        <button onclick="deleteProgramma('${p.id}')" title="Programma verwijderen" style="background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:0 2px;line-height:1">🗑</button>
+      </div>
+      <div style="font-size:12px;color:var(--g4);margin-bottom:8px">${p.doel||''} · ${doneCount}/${blocks.length} afgerond · gestart ${p.start_date}</div>
       ${blocks.map(b=>`
         <div class="lrow" style="align-items:center">
           <div class="ldate" style="width:60px">Wk ${b.week_nr}</div>
-          <div class="lval" style="cursor:pointer" onclick="openProgramBlockDetail('${b.id}')">${b.fase_naam}</div>
-          <div class="lnote">Training ${b.training_ref}</div>
+          <div class="lval" style="cursor:pointer${b.completed_at?';text-decoration:line-through;color:var(--g4)':''}" onclick="openProgramBlockDetail('${b.id}')">${b.fase_naam}</div>
+          <div class="lnote">${b.completed_at?'✓ gedaan':(b.planned_date||'')}</div>
           <button onclick="toggleBlockExpand('${b.id}')" id="blk-chev-${b.id}" style="background:none;border:none;font-size:13px;cursor:pointer;color:var(--g4);padding:2px 4px 2px 8px">▸</button>
         </div>
         <div id="blk-exp-${b.id}" style="display:none;padding:0 0 10px 68px"></div>
@@ -2485,6 +2580,17 @@ async function renderProgrammaList(){
     </div></div>`;
   }
   el.innerHTML=h;
+}
+async function deleteProgramma(progId){
+  if(!confirm('Programma verwijderen? Dit kan niet ongedaan worden gemaakt.'))return;
+  const blocks=await sbGet('program_blocks','&program_id=eq.'+progId);
+  for(const b of blocks){await sbDel('program_block_exercises','program_block_id=eq.'+b.id);}
+  await sbDel('program_blocks','program_id=eq.'+progId);
+  await sbDel('programs','id=eq.'+progId);
+  programBlockExCache={};
+  toast('Programma verwijderd');
+  renderProgrammaList();
+  refreshHome();
 }
 
 // Uitklappen: toont oefeningen/sets/reps/RPE/percentage/notities compact onder de trainingsrij,
@@ -2516,7 +2622,8 @@ async function openProgramBlockDetail(blockId){
   const block=(await sbGet('program_blocks','&id=eq.'+blockId))[0];
   if(!block){toast('Training niet gevonden');return;}
   document.getElementById('pbd-title').textContent=block.fase_naam||'Training';
-  document.getElementById('pbd-sub').textContent=`Wk ${block.week_nr} · Training ${block.training_ref}`;
+  document.getElementById('pbd-sub').textContent=`Wk ${block.week_nr}`+(block.planned_date?' · '+block.planned_date:'')+(block.completed_at?' · afgerond':'');
+  document.getElementById('pbd-start-btn').style.display=block.completed_at?'none':'block';
   await renderProgramBlockDetail();
   go('s-programma-detail');
 }
@@ -4010,6 +4117,9 @@ async function finishSession(){
   curT=null;sessionLog={};sessionExtra=[];pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.remove('show'));
   if(saved===0){toast('Niets om op te slaan');go('s-home');refreshStats();return;}
+  if(t.startsWith('prog_')){
+    await sbPatch('program_blocks','id=eq.'+t.slice('prog_'.length),{completed_at:new Date().toISOString()});
+  }
   toast(saved+' oefeningen opgeslagen');
   document.getElementById('ai-summary-body').textContent='Samenvatting laden...';
   openModal('m-ai-summary');
@@ -4059,6 +4169,7 @@ async function refreshHome(){
     document.getElementById('home-hrv-card').innerHTML=`<div class="card"><div class="card-body" style="padding:16px;text-align:center"><p style="color:var(--g4);font-size:13px;margin-bottom:10px">Geen hersteldata</p><button class="btn btn-o btn-sm" onclick="openModal('m-hrv')" style="width:100%">Check-in invoeren</button></div></div>`;
   }
   renderCustomTrainBtns();
+  renderHomeProgramCard();
   const lastT=localStorage.getItem('maurice_last_training');
   const nextT=lastT==='A'?'B':lastT==='B'?'A':'A';
   document.getElementById('home-next-lbl').textContent='Volgende training: '+nextT;
@@ -4068,6 +4179,32 @@ async function refreshHome(){
   if(!rs?.length)rh='<p style="color:var(--g4);font-size:13px">Nog geen sessies gelogd</p>';
   else rs.forEach(s=>{const n=exercises.find(e=>e.id===s.exercise_id)?.name||s.exercise_id;const v=s.weight&&s.reps?s.weight+'kg×'+s.reps:s.time_str||'—';rh+=`<div class="lrow"><div class="ldate">${s.date}</div><div class="lval">${n}</div><div class="lnote">${v}</div></div>`;});
   document.getElementById('home-recent').innerHTML=rh;
+}
+// "Verder met programma"-kaart: pakt het eerstvolgende niet-afgeronde blok van het meest
+// recent gestarte actieve programma. Bewust op completed_at i.p.v. planned_date, zodat een
+// gemiste dag automatisch doorschuift naar de eerstvolgende keer dat je logt.
+async function renderHomeProgramCard(){
+  const el=document.getElementById('home-program-card');
+  if(!el)return;
+  const progs=await sbGet('programs','&status=eq.actief&order=start_date.desc');
+  for(const p of progs){
+    const blocks=await sbGet('program_blocks','&program_id=eq.'+p.id+'&completed_at=is.null&order=week_nr.asc&limit=1');
+    if(blocks.length){
+      const b=blocks[0];
+      el.innerHTML=`<div class="card" onclick="startProgramBlockTraining('${b.id}')" style="cursor:pointer;border:2px solid var(--accent)">
+        <div class="card-body" style="padding:14px;display:flex;align-items:center;gap:12px">
+          <div style="font-size:24px">🗓️</div>
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--g4);font-weight:700;text-transform:uppercase">Verder met ${p.naam}</div>
+            <div style="font-size:15px;font-weight:800">${b.fase_naam||'Training'} · Wk ${b.week_nr}</div>
+          </div>
+          <div style="font-size:20px;color:var(--accent)">›</div>
+        </div>
+      </div>`;
+      return;
+    }
+  }
+  el.innerHTML='';
 }
 
 function hrvSt(v){if(!v)return 'y';if(v>=24)return 'g';if(v>=18)return 'y';if(v>=14)return 'o';return 'r';}
@@ -4127,8 +4264,9 @@ async function loadHistory(append=false){
   ss.forEach(s=>{if(!byDate[s.date])byDate[s.date]=[];byDate[s.date].push(s);});
   let html='';
   Object.entries(byDate).sort((a,b)=>b[0].localeCompare(a[0])).forEach(([date,sess])=>{
-    const tt=sess[0]?.training_type||'?';
-    const ttColor=tt==='A'?'var(--dark)':tt==='B'?'var(--red)':'var(--g4)';
+    const ttRaw=sess[0]?.training_type||'?';
+    const tt=ttRaw.startsWith('prog_')?'Programma':ttRaw.startsWith('custom_')?'Workout':ttRaw;
+    const ttColor=ttRaw==='A'?'var(--dark)':ttRaw==='B'?'var(--red)':'var(--g4)';
     const totalVol=sess.reduce((s,x)=>{if(x.weight&&x.reps&&x.sets)s+=x.weight*x.reps*x.sets;return s;},0);
     html+=`<div class="hist-day">
       <div class="hist-day-hd" onclick="toggleHistDay(this)">
@@ -4136,7 +4274,7 @@ async function loadHistory(append=false){
           <div class="hist-day-date">${fmtDate(date)}</div>
           <div style="font-size:11px;color:var(--g4);margin-top:2px">${sess.length} oefeningen${totalVol>0?' · '+Math.round(totalVol)+' kg volume':''}</div>
         </div>
-        <span style="background:${ttColor};color:#fff;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;margin-right:8px">Training ${tt}</span>
+        <span style="background:${ttColor};color:#fff;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;margin-right:8px">${(ttRaw==='A'||ttRaw==='B')?'Training '+tt:tt}</span>
         <span style="color:var(--g3);font-size:16px" class="hist-arr">›</span>
       </div>
       <div class="hist-day-body">
@@ -5423,6 +5561,75 @@ async function startCustomTraining(id){
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.add('show'));
 }
 
+// Programma-training starten (v310): zelfde Unified Training Editor als Training A/B en
+// Workouts, maar de oefeningenlijst komt uit program_block_exercises van dit specifieke
+// blok, inclusief de door de AI voorgestelde sets/reps/RPE. Bij afronden (finishSession)
+// wordt completed_at op het blok gezet — dat bepaalt wat de "Verder met programma"-knop
+// op home als volgende pakt.
+async function startProgramBlockTraining(blockId){
+  if(!blockId)return;
+  await ensureExercisesLoaded();
+  await ensureEquipmentTypesLoaded();
+  const block=(await sbGet('program_blocks','&id=eq.'+blockId))[0];
+  if(!block){toast('Training niet gevonden');return;}
+  const rows=await sbGet('program_block_exercises','&program_block_id=eq.'+blockId+'&order=sort_order.asc');
+  if(!rows.length){toast('Deze training heeft nog geen oefeningen — voeg ze eerst toe');return;}
+  const ctxT='prog_'+blockId;
+  curT=ctxT;sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;
+  pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};
+  rows.forEach(r=>{
+    const ex=exercises.find(e=>e.id===r.exercise_id);
+    if(!ex)return;
+    const cardioType=resolveCardioType(ex);
+    const exType=cardioType||ex.type||'strength';
+    const extra=cardioType
+      ?{id:ex.id,naam:ex.name,type:exType,_t:ctxT,_preloaded:true}
+      :{id:ex.id,naam:ex.name,type:exType,sets:r.sets||3,reps:r.reps||'8-10',rpe:r.rpe_target||'7',_t:ctxT,_preloaded:true};
+    sessionExtra.push(extra);
+  });
+  buildProgramTrainScreen(block);
+  document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s-train-prog-'+blockId)?.classList.add('active');
+  await renderTrainScreen(ctxT);
+  trainStart=Date.now();startTrainTimer(ctxT);
+  document.querySelectorAll('.ni-dot').forEach(d=>d.classList.add('show'));
+}
+function buildProgramTrainScreen(block){
+  let el=document.getElementById('s-train-prog-'+block.id);
+  if(!el){
+    el=document.createElement('div');
+    el.className='scr';
+    el.id='s-train-prog-'+block.id;
+    document.getElementById('app').appendChild(el);
+  }
+  const ctxT='prog_'+block.id;
+  el.innerHTML=`
+    <div class="train-top">
+      <div class="train-timer-bar">
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="tact red" onclick="confirmLeave()">✕</button>
+          <span class="train-elapsed" id="elapsed-${ctxT.toLowerCase()}">00:00</span>
+        </div>
+        <div class="train-actions">
+          <button class="tact" onclick="pauseTraining()">⏸</button>
+          <button class="tact" onclick="showSettings()">⚙️</button>
+          <button class="tact green" onclick="showSessionSummary('${ctxT}')">✓</button>
+        </div>
+      </div>
+      <div style="font-size:13px;font-weight:700;color:var(--g4);letter-spacing:.3px;text-transform:uppercase;margin-bottom:4px">${block.fase_naam||'Programma'} · Wk ${block.week_nr}</div>
+      <div style="font-size:11px;color:var(--g4);margin-bottom:8px" id="prog-${ctxT.toLowerCase()}-lbl">0 oefeningen</div>
+      <div class="prog-wrap"><div class="prog-fill" id="prog-${ctxT.toLowerCase()}" style="width:0%"></div></div>
+    </div>
+    <div class="scroll" id="train-${ctxT.toLowerCase()}-list" style="padding-top:12px"></div>
+    <nav class="bnav">
+      <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+      <button class="ni active"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+      <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+      <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+      <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+    </nav>`;
+}
+
 function buildCustomTrainScreen(t){
   // Create or update custom training screen
   let el=document.getElementById('s-train-custom-'+t.id);
@@ -5509,6 +5716,14 @@ async function permanentlyAddExtras(){
       extras.forEach(e=>{if(!ct.exercises.includes(e.id))ct.exercises.push(e.id);});
       localStorage.setItem('maurice_trainings',JSON.stringify(customTrainings));
     }
+  } else if(t.startsWith('prog_')){
+    const blockId=t.slice('prog_'.length);
+    const rows=await sbGet('program_block_exercises','&program_block_id=eq.'+blockId);
+    let sortOrder=rows.length;
+    for(const e of extras){
+      await sbPost('program_block_exercises',{program_block_id:blockId,exercise_id:e.id,sort_order:sortOrder++,sets:e.sets||null,reps:e.reps||null,rpe_target:e.rpe||null});
+    }
+    delete programBlockExCache[blockId];
   }
   closeModal('m-save-as-training');
   toast('Permanent toegevoegd aan training');

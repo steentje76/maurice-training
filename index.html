@@ -1432,7 +1432,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.1.8';
+const APP_VER = 'v3.1.9';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -3050,11 +3050,28 @@ async function deleteBlockExercise(){
 // ══════════════════════════════════════════════════════════
 // TRAINING SESSION
 // ══════════════════════════════════════════════════════════
+// v319-fix: elk trainingsscherm (Training-A/B, Workouts, Programma) wordt dynamisch
+// gebouwd en NOOIT afgebroken zodra je naar een andere training navigeert. Als twee
+// trainingen dezelfde oefening bevatten (bv. Backsquat in zowel Training A als een
+// programmablok), bestonden er dus twee keer een element met id="body-backsquat" in de
+// DOM tegelijk — toggleExCard/getElementById pakte dan de eerste (mogelijk verborgen,
+// inactieve) in plaats van de zichtbare. Daardoor leek de kaart niet te openen.
+// Fix: vóór het starten van een training, alle ANDERE trainingsschermen verwijderen —
+// veilig, want de echte sessiedata leeft in sessionLog/sessionExtra/localStorage-draft,
+// niet in de DOM-structuur zelf; die wordt toch altijd vers opgebouwd bij renderTrainScreen.
+function cleanupOtherTrainScreens(keepScreenId){
+  document.querySelectorAll('.scr').forEach(scr=>{
+    if(scr.id.startsWith('s-train-')&&scr.id!=='s-train-mgr'&&scr.id!=='s-train-schema'&&scr.id!=='s-train-workouts'&&scr.id!==keepScreenId){
+      scr.remove();
+    }
+  });
+}
 function isSameLocalDay(ts){
   const a=new Date(ts),b=new Date();
   return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
 }
 async function startT(t){
+  cleanupOtherTrainScreens('s-train-'+t.toLowerCase());
   await ensureVasteTrainingScreenExists(t);
   if(curT===t){
     document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
@@ -6020,6 +6037,7 @@ async function startCustomTraining(id){
     sessionExtra.push(extra);
   }
   buildCustomTrainScreen(t);
+  cleanupOtherTrainScreens('s-train-custom-'+t.id);
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
   const existingEl=document.getElementById('s-train-custom-'+id);
   if(existingEl) existingEl.classList.add('active');
@@ -6214,6 +6232,7 @@ async function launchProgramTrainScreen(adjustment){
     sessionExtra.push({id:ex.id,naam:ex.name,type:exType,sets,reps:r.reps||'8-10',rpe:String(rpe),_t:ctxT,_preloaded:true});
   });
   buildProgramTrainScreen(block,prog);
+  cleanupOtherTrainScreens('s-train-prog-'+blockId);
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('s-train-prog-'+blockId)?.classList.add('active');
   await renderTrainScreen(ctxT);

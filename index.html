@@ -1036,7 +1036,13 @@ canvas{width:100%;height:100%}
       <option value="stairmaster">Stairmaster</option>
     </select></div>
     <div class="irow"><label class="ilbl">Duur (weken)</label><input class="inp" type="number" id="prog-weken" placeholder="8" value="8"></div>
-    <div class="irow"><label class="ilbl">Dagen per week</label><input class="inp" type="number" id="prog-dagen" placeholder="2" value="2" onchange="renderProgWeekdagPicker()"></div>
+    <div class="irow"><label class="ilbl">Dagen per week</label><input class="inp" type="number" id="prog-dagen" placeholder="2" value="2" onchange="renderProgWeekdagPicker();renderProgDuurVariatie()"></div>
+    <div class="irow"><label class="ilbl">Duur per training</label><input class="inp" type="number" id="prog-duur" placeholder="60" value="60" onchange="renderProgDuurVariatie()"> </div>
+    <div class="irow"><label class="ilbl">Afwijkende dagen?</label><select class="inp" id="prog-duur-variatie" onchange="renderProgDuurVariatie()">
+      <option value="nee">Nee, elke keer ongeveer hetzelfde</option>
+      <option value="ja">Ja, sommige dagen langer/korter</option>
+    </select></div>
+    <div id="prog-duur-variatie-list" style="display:none;margin:-4px 0 10px"></div>
     <div class="irow"><label class="ilbl">Planning</label><select class="inp" id="prog-schema-type" onchange="renderProgWeekdagPicker()">
       <option value="interval">Gewoon volgorde, geen vaste dag</option>
       <option value="weekdagen">Vaste weekdagen</option>
@@ -1464,7 +1470,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.1.1';
+const APP_VER = 'v3.1.2';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -2511,26 +2517,66 @@ function renderProgWeekdagPicker(){
 function collectProgWeekdagen(){
   return [...document.querySelectorAll('.prog-weekdag-cb:checked')].map(c=>parseInt(c.value)).sort((a,b)=>a-b);
 }
+// Per-trainingsdag-binnen-de-week duur-uitzonderingen — los van schema_type (interval of
+// weekdagen), simpelweg "dag 1..N van de week", zodat het ook werkt zonder vaste weekdagen.
+function renderProgDuurVariatie(){
+  const variatie=document.getElementById('prog-duur-variatie').value;
+  const el=document.getElementById('prog-duur-variatie-list');
+  if(variatie!=='ja'){el.style.display='none';el.innerHTML='';return;}
+  const dagen=parseInt(document.getElementById('prog-dagen').value)||2;
+  const globalDuur=parseInt(document.getElementById('prog-duur').value)||60;
+  el.style.display='block';
+  el.innerHTML=`<div style="font-size:11px;color:var(--g4);margin-bottom:4px">Duur per trainingsdag binnen de week (leeg = ${globalDuur} min)</div>`+
+    Array.from({length:dagen},(_,i)=>i+1).map(d=>
+      `<div class="irow"><label class="ilbl">Dag ${d}</label><input class="inp prog-duur-override" data-dag="${d}" type="number" placeholder="${globalDuur}"></div>`
+    ).join('');
+}
+function collectProgDuurOverrides(){
+  const overrides={};
+  document.querySelectorAll('.prog-duur-override').forEach(inp=>{
+    const v=parseInt(inp.value);
+    if(v)overrides[inp.dataset.dag]=v;
+  });
+  return overrides;
+}
 function openProgGenModal(){
   document.getElementById('prog-naam').value='';
   document.getElementById('prog-doel').value='';
   document.getElementById('prog-sport').value=atleet.sport||'crossfit';
   document.getElementById('prog-weken').value='8';
   document.getElementById('prog-dagen').value='2';
+  document.getElementById('prog-duur').value='60';
+  document.getElementById('prog-duur-variatie').value='nee';
   document.getElementById('prog-schema-type').value='interval';
   document.getElementById('prog-gen-status').textContent='';
   document.getElementById('prog-concept').innerHTML='';
   document.getElementById('prog-gen-progress-wrap').style.display='none';
   renderProgWeekdagPicker();
+  renderProgDuurVariatie();
   openModal('m-programma-gen');
 }
 const SPORT_FOCUS_LABELS={kracht:'Kracht/Powerlifting',crossfit:'CrossFit/Functioneel',hyrox:'HYROX',bodybuilding:'Bodybuilding',kettlebell:'Kettlebell',swimming:'Zwemmen',atletiek:'Atletiek',triathlon:'Triathlon',hardlopen:'Hardlopen',stairmaster:'Stairmaster'};
+// Pure functie: haalt een enkel getal uit een reeks als "12-15" (voor invulveld dat maar
+// één waarde toont) — pakt de ondergrens als haalbaar startpunt.
+function repsPrefillFromRange(repsStr){
+  if(!repsStr)return '';
+  const m=String(repsStr).match(/(\d+)/);
+  return m?m[1]:'';
+}
 // Pure functie — bouwt de prompt voor één week, los testbaar
-function buildWeekPrompt(wk,weken,dagen,doel,sportLabel,profielTekst,bibliotheek,faseHistorie){
+// Vuistregel: ±12 minuten per oefening (opwarmen + werksets). Tussen 2 en 8 oefeningen,
+// zodat een korte 20-minuten-sessie niet toch 6 oefeningen krijgt opgedrongen.
+function exercisesTargetForDuration(minutes){
+  if(!minutes)return 4;
+  return Math.max(2,Math.min(8,Math.round(minutes/12)));
+}
+function buildWeekPrompt(wk,weken,dagDuren,doel,sportLabel,profielTekst,bibliotheek,faseHistorie){
+  const dagen=dagDuren.length;
   const context=(faseHistorie&&faseHistorie.length)
     ? `Eerdere weken hadden als fase: ${faseHistorie.join(' → ')}. Zorg dat week ${wk} logisch daarop voortbouwt richting een sluitende periodisering (opbouw → hypertrofie → kracht → deload waar passend).`
     : `Dit is de eerste week van het programma — kies een passende openingsfase.`;
-  return `Je bent trainingscoach. Je bouwt week ${wk} van ${weken} van een periodiseringsschema, ${dagen} trainingsdagen deze week. Sportrichting: ${sportLabel}. Doel: ${doel}. Atleetprofiel: ${profielTekst}. ${context} Kies voor elke trainingsdag zelf de beste oefeningen UIT DEZE BIBLIOTHEEK (gebruik alleen deze exercise_id's, verzin geen nieuwe): ${bibliotheek}. Antwoord ALLEEN met geldige JSON, geen uitleg, in dit exacte formaat: {"blocks":[{"week_nr":${wk},"fase_naam":"Anatomische Aanpassing","oefeningen":[{"exercise_id":"backsquat","sets":3,"reps":"12-15","rpe":6.5}]}]}. Genereer exact ${dagen} blokken voor deze week, elk met 3-6 oefeningen.`;
+  const dagInstructies=dagDuren.map((min,i)=>`dag ${i+1}: ${min} min → ±${exercisesTargetForDuration(min)} oefeningen`).join(', ');
+  return `Je bent trainingscoach. Je bouwt week ${wk} van ${weken} van een periodiseringsschema, ${dagen} trainingsdagen deze week. Sportrichting: ${sportLabel}. Doel: ${doel}. Atleetprofiel: ${profielTekst}. ${context} Beschikbare tijd per trainingsdag deze week (bepaalt hoeveel oefeningen passend zijn): ${dagInstructies}. Kies voor elke trainingsdag zelf de beste oefeningen UIT DEZE BIBLIOTHEEK (gebruik alleen deze exercise_id's, verzin geen nieuwe): ${bibliotheek}. Antwoord ALLEEN met geldige JSON, geen uitleg, in dit exacte formaat: {"blocks":[{"week_nr":${wk},"fase_naam":"Anatomische Aanpassing","oefeningen":[{"exercise_id":"backsquat","sets":3,"reps":"12-15","rpe":6.5}]}]}. Genereer exact ${dagen} blokken voor deze week (1 per dag, in volgorde dag 1..${dagen}), elk met het bij die dag passende aantal oefeningen.`;
 }
 function atleetProfielTekst(a){
   return `${a.leeftijd||'?'} jaar, ${a.geslacht||'?'}, ervaringsniveau ${a.niveau||'?'}${a.klasse?', gewichtsklasse '+a.klasse+'kg':''}`;
@@ -2545,6 +2591,10 @@ async function genereerProgramma(){
   const sport=document.getElementById('prog-sport').value;
   const weken=parseInt(document.getElementById('prog-weken').value)||8;
   const dagen=parseInt(document.getElementById('prog-dagen').value)||2;
+  const duur=parseInt(document.getElementById('prog-duur').value)||60;
+  const duurVariatie=document.getElementById('prog-duur-variatie').value==='ja';
+  const duurOverrides=duurVariatie?collectProgDuurOverrides():{};
+  const dagDuren=Array.from({length:dagen},(_,i)=>duurOverrides[i+1]||duur);
   const schemaType=document.getElementById('prog-schema-type').value;
   const weekdagen=schemaType==='weekdagen'?collectProgWeekdagen():[];
   if(schemaType==='weekdagen'&&!weekdagen.length){toast('Kies minstens 1 weekdag');return;}
@@ -2563,7 +2613,7 @@ async function genereerProgramma(){
   for(let wk=1; wk<=weken; wk++){
     statusEl.textContent=`Week ${wk}/${weken} genereren...`;
     progressFill.style.width=Math.round(((wk-1)/weken)*100)+'%';
-    const sys=buildWeekPrompt(wk,weken,dagen,doel,sportLabel,profielTekst,bibliotheek,faseHistorie);
+    const sys=buildWeekPrompt(wk,weken,dagDuren,doel,sportLabel,profielTekst,bibliotheek,faseHistorie);
     try{
       const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1500,system:sys,messages:[{role:'user',content:'Genereer week '+wk+'.'}]})});
       const d=await res.json();
@@ -2578,7 +2628,7 @@ async function genereerProgramma(){
   genBtn.disabled=false;
   if(allBlocks.length){
     statusEl.textContent=allBlocks.length+' trainingen voorgesteld — losse oefeningen kun je na opslaan nog aanpassen.';
-    window._progConcept={naam,doel,sport,schemaType,weekdagen,dagenPerWeek:dagen,blocks:allBlocks};
+    window._progConcept={naam,doel,sport,schemaType,weekdagen,dagenPerWeek:dagen,duur,duurOverrides,blocks:allBlocks};
     renderProgConcept(allBlocks,true);
   }else if(!statusEl.textContent){
     statusEl.textContent='Genereren mislukt. Probeer opnieuw.';
@@ -2612,7 +2662,7 @@ async function opslaanProgramma(){
   if(!c)return;
   const startDate=td();
   const plannedDates=computeBlockPlannedDates(startDate,c.blocks.length,c.schemaType,c.weekdagen,c.dagenPerWeek);
-  const prog=await sbPostReturning('programs',{naam:c.naam,doel:c.doel,sport:c.sport||null,start_date:startDate,status:'actief',schema_type:c.schemaType,weekdagen:(c.weekdagen&&c.weekdagen.length)?c.weekdagen:null});
+  const prog=await sbPostReturning('programs',{naam:c.naam,doel:c.doel,sport:c.sport||null,start_date:startDate,status:'actief',schema_type:c.schemaType,weekdagen:(c.weekdagen&&c.weekdagen.length)?c.weekdagen:null,duur_minuten:c.duur||null,duur_overrides:(c.duurOverrides&&Object.keys(c.duurOverrides).length)?c.duurOverrides:null});
   const progId=prog?.[0]?.id;
   if(!progId){toast('Opslaan mislukt — tabel programs bestaat mogelijk nog niet');return;}
   for(let i=0;i<c.blocks.length;i++){
@@ -2857,11 +2907,18 @@ async function renderTrainScreen(t){
     if(prevS){
       if(prevS.weight&&prevS.reps){
         prevStr='Vorige ('+prevS.date+'): '+(prevS.sets||'?')+'×'+prevS.reps+' @ '+prevS.weight+' kg'+(prevS.rpe?' · RPE '+prevS.rpe:'');
-        prefillData={kg:prevS.weight, reps:prevS.reps, rpe:prevS.rpe, sets:prevS.sets||4};
       } else if(prevS.time_str||prevS.note){
         const noteTime=prevS.note?.match(/tijd:([^|]+)/)?.[1];
         prevStr='Vorige ('+prevS.date+'): '+(prevS.time_str||noteTime||'')+(prevS.watt?' · '+prevS.watt+'W':'');
       }
+    }
+    if(t.startsWith('prog_')){
+      // Programma-prescriptie (evt. net door de coach-checkin aangepast) blijft leidend.
+      // Bewust géén 'vorige sessie'-overschrijving zoals bij Training A/B — dat zou een
+      // net bevestigde coach-aanpassing (RPE/sets) stilletjes weer ongedaan maken.
+      prefillData=(ex.reps||ex.rpe)?{kg:'',reps:repsPrefillFromRange(ex.reps),rpe:ex.rpe||'',sets:ex.sets||4}:null;
+    } else if(prevS&&prevS.weight&&prevS.reps){
+      prefillData={kg:prevS.weight, reps:prevS.reps, rpe:prevS.rpe, sets:prevS.sets||4};
     }
 
     const isDefault=(TRAIN_CFG[t]||[]).some(e=>e.id===ex.id);
@@ -5705,14 +5762,29 @@ async function evaluateProgAdjustment(){
   const adj=computeProgAdjustment(df.factor,muscleRows,progCheckinCtx.voelt,progCheckinCtx.pijn);
   progCheckinCtx.adjustment=adj;
   if(adj){
-    document.getElementById('padv-body').innerHTML=`
-      <div style="font-size:13px;color:var(--g4);margin-bottom:10px">${adj.redenen.map(r=>'• '+r).join('<br>')}</div>
-      <div style="font-size:13px">Voorstel: ${[adj.setsDelta?Math.abs(adj.setsDelta)+' set minder':'',adj.rpeDelta?'RPE '+adj.rpeDelta:''].filter(Boolean).join(' en ')||'lichtere belasting'} voor deze training.</div>
-      ${adj.painMuscle?`<div style="font-size:12px;color:var(--g4);margin-top:8px">Voel je pijn tijdens een oefening voor <b>${adj.painMuscle}</b>? Verwijder die dan met het kruisje in de trainingslijst.</div>`:''}`;
+    const voorstelTekst=[adj.setsDelta?Math.abs(adj.setsDelta)+' set minder':'',adj.rpeDelta?'RPE '+adj.rpeDelta:''].filter(Boolean).join(' en ')||'lichtere belasting';
+    document.getElementById('padv-body').innerHTML=`<div style="font-size:13px;color:var(--g4)">Advies laden...</div>`;
     openModal('m-prog-advies');
+    const uitleg=await generateProgAdviesAI(adj);
+    document.getElementById('padv-body').innerHTML=`
+      <div style="font-size:14px;line-height:1.5;margin-bottom:10px">${uitleg||capitalize(adj.redenen.join('. '))+'.'}</div>
+      <div style="font-size:12px;color:var(--g4);background:var(--g1);border-radius:8px;padding:8px 10px">Voorstel: ${voorstelTekst} voor deze training.${adj.painMuscle?'<br>Voel je pijn tijdens een oefening voor <b>'+adj.painMuscle+'</b>? Verwijder die dan met het kruisje in de trainingslijst.':''}</div>`;
   }else{
     await launchProgramTrainScreen(null);
   }
+}
+function capitalize(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
+// Korte, gesproken coach-uitleg o.b.v. de berekende redenen — geen droge opsomming van
+// cijfers, maar wel gebaseerd op diezelfde data. Valt terug op de kale redenen als de
+// AI-call faalt (nooit een lege modal).
+async function generateProgAdviesAI(adj){
+  const sys=`Je bent een trainingscoach die in 1-2 korte zinnen mondeling uitlegt waarom je een lichtere training voorstelt vandaag. Baseer je op deze data (JSON), maar noem niet elk cijfer letterlijk op: ${JSON.stringify(adj.redenen)}. Warme, directe coach-toon. Geen aanhef, geen afsluiting, geen opsomming.`;
+  try{
+    const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:200,system:sys,messages:[{role:'user',content:'Leg het kort uit.'}]})});
+    const d=await res.json();
+    if(d.error)return null;
+    return d.content[0].text.trim();
+  }catch(e){return null;}
 }
 function padvDecline(){closeModal('m-prog-advies');launchProgramTrainScreen(null);}
 async function padvAccept(){closeModal('m-prog-advies');await launchProgramTrainScreen(progCheckinCtx.adjustment);}

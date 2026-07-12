@@ -564,11 +564,22 @@ function computeProgAdjustment(factor,muscleRecoveryRows,voelt,painMuscle){
   if(painMuscle)redenen.push('pijn/ongemak gemeld: '+painMuscle);
   return {rpeDelta,setsDelta,redenen,painMuscle};
 }
-function buildWeekPrompt(wk,weken,dagen,doel,sportLabel,profielTekst,bibliotheek,faseHistorie){
+function exercisesTargetForDuration(minutes){
+  if(!minutes)return 4;
+  return Math.max(2,Math.min(8,Math.round(minutes/12)));
+}
+function buildWeekPrompt(wk,weken,dagDuren,doel,sportLabel,profielTekst,bibliotheek,faseHistorie){
+  const dagen=dagDuren.length;
   const context=(faseHistorie&&faseHistorie.length)
     ? `Eerdere weken hadden als fase: ${faseHistorie.join(' → ')}. Zorg dat week ${wk} logisch daarop voortbouwt richting een sluitende periodisering (opbouw → hypertrofie → kracht → deload waar passend).`
     : `Dit is de eerste week van het programma — kies een passende openingsfase.`;
-  return `Je bent trainingscoach. Je bouwt week ${wk} van ${weken} van een periodiseringsschema, ${dagen} trainingsdagen deze week. Sportrichting: ${sportLabel}. Doel: ${doel}. Atleetprofiel: ${profielTekst}. ${context} Kies voor elke trainingsdag zelf de beste oefeningen UIT DEZE BIBLIOTHEEK (gebruik alleen deze exercise_id's, verzin geen nieuwe): ${bibliotheek}. Antwoord ALLEEN met geldige JSON, geen uitleg, in dit exacte formaat: {"blocks":[{"week_nr":${wk},"fase_naam":"Anatomische Aanpassing","oefeningen":[{"exercise_id":"backsquat","sets":3,"reps":"12-15","rpe":6.5}]}]}. Genereer exact ${dagen} blokken voor deze week, elk met 3-6 oefeningen.`;
+  const dagInstructies=dagDuren.map((min,i)=>`dag ${i+1}: ${min} min → ±${exercisesTargetForDuration(min)} oefeningen`).join(', ');
+  return `Je bent trainingscoach. Je bouwt week ${wk} van ${weken} van een periodiseringsschema, ${dagen} trainingsdagen deze week. Sportrichting: ${sportLabel}. Doel: ${doel}. Atleetprofiel: ${profielTekst}. ${context} Beschikbare tijd per trainingsdag deze week (bepaalt hoeveel oefeningen passend zijn): ${dagInstructies}. Kies voor elke trainingsdag zelf de beste oefeningen UIT DEZE BIBLIOTHEEK (gebruik alleen deze exercise_id's, verzin geen nieuwe): ${bibliotheek}. Antwoord ALLEEN met geldige JSON, geen uitleg, in dit exacte formaat: {"blocks":[{"week_nr":${wk},"fase_naam":"Anatomische Aanpassing","oefeningen":[{"exercise_id":"backsquat","sets":3,"reps":"12-15","rpe":6.5}]}]}. Genereer exact ${dagen} blokken voor deze week (1 per dag, in volgorde dag 1..${dagen}), elk met het bij die dag passende aantal oefeningen.`;
+}
+function repsPrefillFromRange(repsStr){
+  if(!repsStr)return '';
+  const m=String(repsStr).match(/(\d+)/);
+  return m?m[1]:'';
 }
 
 test('computeProgAdjustment: geen aanpassing bij goed herstel, geen klachten', ()=>{
@@ -604,17 +615,41 @@ test('computeProgAdjustment: reden-teksten bevatten alle actieve triggers', ()=>
   assertEq(adj.redenen.length, 4);
 });
 test('buildWeekPrompt: eerste week krijgt openingsfase-instructie, geen historie', ()=>{
-  const p=buildWeekPrompt(1,8,3,'kracht','CrossFit','40 jaar, man, ervaren',  'backsquat:Backsquat(strength)', []);
+  const p=buildWeekPrompt(1,8,[60,60,60],'kracht','CrossFit','40 jaar, man, ervaren',  'backsquat:Backsquat(strength)', []);
   assert(p.includes('eerste week'));
   assert(!p.includes('Eerdere weken'));
 });
 test('buildWeekPrompt: latere week refereert aan eerdere fasen', ()=>{
-  const p=buildWeekPrompt(3,8,3,'kracht','CrossFit','40 jaar, man, ervaren','backsquat:Backsquat(strength)', ['Anatomische Aanpassing','Hypertrofie']);
+  const p=buildWeekPrompt(3,8,[60,60,60],'kracht','CrossFit','40 jaar, man, ervaren','backsquat:Backsquat(strength)', ['Anatomische Aanpassing','Hypertrofie']);
   assert(p.includes('Anatomische Aanpassing → Hypertrofie'));
 });
-test('buildWeekPrompt: vraagt exact dagen-aantal blokken voor die week', ()=>{
-  const p=buildWeekPrompt(2,8,4,'kracht','HYROX','30 jaar, vrouw, gevorderd','x:Y(strength)', ['A']);
+test('buildWeekPrompt: vraagt exact dagen-aantal blokken (afgeleid van duur-array lengte)', ()=>{
+  const p=buildWeekPrompt(2,8,[60,60,60,60],'kracht','HYROX','30 jaar, vrouw, gevorderd','x:Y(strength)', ['A']);
   assert(p.includes('exact 4 blokken'));
+});
+test('buildWeekPrompt: neemt afwijkende duur per dag mee in de instructie', ()=>{
+  const p=buildWeekPrompt(1,4,[30,90],'kracht','Kracht','40 jaar, man, ervaren','x:Y(strength)', []);
+  assert(p.includes('dag 1: 30 min'));
+  assert(p.includes('dag 2: 90 min'));
+});
+test('exercisesTargetForDuration: korte sessie geeft weinig oefeningen', ()=>{
+  assertEq(exercisesTargetForDuration(24), 2);
+});
+test('exercisesTargetForDuration: lange sessie wordt begrensd op 8', ()=>{
+  assertEq(exercisesTargetForDuration(180), 8);
+});
+test('exercisesTargetForDuration: geen duur opgegeven geeft redelijke default', ()=>{
+  assertEq(exercisesTargetForDuration(null), 4);
+});
+test('repsPrefillFromRange: pakt ondergrens uit een reeks', ()=>{
+  assertEq(repsPrefillFromRange('12-15'), '12');
+});
+test('repsPrefillFromRange: werkt ook met een los getal', ()=>{
+  assertEq(repsPrefillFromRange('8'), '8');
+});
+test('repsPrefillFromRange: lege invoer geeft lege string, geen crash', ()=>{
+  assertEq(repsPrefillFromRange(''), '');
+  assertEq(repsPrefillFromRange(null), '');
 });
 
 // ── SAMENVATTING ─────────────────────────────────────────

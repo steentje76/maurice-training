@@ -381,10 +381,7 @@ canvas{width:100%;height:100%}
     <div id="home-hrv-card"></div>
     <div id="home-program-card" style="margin-bottom:8px"></div>
     <div class="sec-hd">Start training</div>
-    <div style="display:flex;gap:10px;margin-bottom:8px">
-      <button onclick="go('s-train-a')" style="flex:1;padding:14px;border-radius:14px;border:none;background:var(--dark);color:#fff;font-family:var(--f);font-size:14px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:6px;justify-content:center"><div class="ni-dot" id="home-dot-a" style="position:static;background:#fff"></div>TRAINING A</button>
-      <button onclick="go('s-train-b')" style="flex:1;padding:14px;border-radius:14px;border:none;background:var(--accent);color:var(--dark);font-family:var(--f);font-size:14px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:6px;justify-content:center"><div class="ni-dot" id="home-dot-b" style="position:static;background:var(--dark)"></div>TRAINING B</button>
-    </div>
+    <div id="vaste-training-btns" style="display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap"></div>
     <div id="custom-train-btns"></div>
     <div id="home-next-lbl" style="font-size:12px;color:var(--g4);font-weight:600;text-align:center;margin-bottom:10px"></div>
     <button onclick="openPlateCalc(0)" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;background:var(--g1);border:1.5px solid var(--g2);border-radius:12px;font-family:var(--f);font-size:13px;font-weight:700;color:var(--dark);cursor:pointer;margin-bottom:10px">⚖️ Plate Calculator</button>
@@ -402,62 +399,9 @@ canvas{width:100%;height:100%}
 </div>
 
 <!-- ═══ TRAINING A ═══ -->
-<div class="scr" id="s-train-a">
-  <div class="train-top">
-    <div class="train-timer-bar">
-      <div style="display:flex;align-items:center;gap:10px">
-        <button class="tact red" onclick="confirmLeave()">✕</button>
-        <span class="train-elapsed" id="elapsed-a">00:00</span>
-      </div>
-      <div class="train-actions">
-        <button class="tact" onclick="pauseTraining()">⏸</button>
-        <button class="tact" onclick="showSettings()">⚙️</button>
-        <button class="tact green" onclick="showSessionSummary('A')">✓</button>
-      </div>
-    </div>
-    <div style="font-size:13px;font-weight:700;color:var(--g4);letter-spacing:.3px;text-transform:uppercase;margin-bottom:4px">Training A</div>
-    <div style="font-size:11px;color:var(--g4);margin-bottom:8px" id="prog-a-lbl">0 / 6 oefeningen</div>
-    <div class="prog-wrap"><div class="prog-fill" id="prog-a" style="width:0%"></div></div>
-    <div class="train-save-row"><span class="save-status" id="train-save-status-a">✓ Alles opgeslagen</span><button class="save-btn" onclick="persistTrainingDraft(false)">Opslaan</button></div>
-  </div>
-  <div class="scroll" id="train-a-list" style="padding-top:12px"></div>
-  <nav class="bnav">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
-  </nav>
-</div>
-
-<!-- ═══ TRAINING B ═══ -->
-<div class="scr" id="s-train-b">
-  <div class="train-top">
-    <div class="train-timer-bar">
-      <div style="display:flex;align-items:center;gap:10px">
-        <button class="tact red" onclick="confirmLeave()">✕</button>
-        <span class="train-elapsed" id="elapsed-b">00:00</span>
-      </div>
-      <div class="train-actions">
-        <button class="tact" onclick="pauseTraining()">⏸</button>
-        <button class="tact" onclick="showSettings()">⚙️</button>
-        <button class="tact green" onclick="showSessionSummary('B')">✓</button>
-      </div>
-    </div>
-    <div style="font-size:13px;font-weight:700;color:var(--g4);letter-spacing:.3px;text-transform:uppercase;margin-bottom:4px">Training B</div>
-    <div style="font-size:11px;color:var(--g4);margin-bottom:8px" id="prog-b-lbl">0 / 7 oefeningen</div>
-    <div class="prog-wrap"><div class="prog-fill" id="prog-b" style="width:0%"></div></div>
-    <div class="train-save-row"><span class="save-status" id="train-save-status-b">✓ Alles opgeslagen</span><button class="save-btn" onclick="persistTrainingDraft(false)">Opslaan</button></div>
-  </div>
-  <div class="scroll" id="train-b-list" style="padding-top:12px"></div>
-  <nav class="bnav">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
-  </nav>
-</div>
+<!-- Training-schermen (Training A/B en eventuele nieuwe vaste trainingen) worden sinds
+     v318 dynamisch gebouwd via buildVasteTrainingScreen(), net als Programma/Workouts.
+     Geen statische s-train-a/s-train-b meer — dat paste niet bij N vaste trainingen. -->
 
 <!-- ═══ PROFIEL ═══ -->
 <div class="scr" id="s-profiel">
@@ -562,10 +506,8 @@ canvas{width:100%;height:100%}
 <div class="scr" id="s-hist">
   <div class="hdr"><div class="hdr-title">Logboek</div><div class="hdr-sub">Trainingsgeschiedenis</div></div>
   <div class="scroll" style="padding-top:8px">
-    <div class="filter-tabs">
+    <div class="filter-tabs" id="hist-filter-tabs">
       <button class="filter-tab active" onclick="setHistFilter('all',this)">Alles</button>
-      <button class="filter-tab" onclick="setHistFilter('A',this)">Training A</button>
-      <button class="filter-tab" onclick="setHistFilter('B',this)">Training B</button>
     </div>
     <div id="hist-list"></div>
     <button class="btn btn-o" id="hist-more" onclick="loadMoreHistory()" style="margin-top:4px">Meer laden</button>
@@ -652,7 +594,7 @@ canvas{width:100%;height:100%}
     <div class="card" onclick="go('s-train-schema')" style="cursor:pointer">
       <div class="card-body" style="padding:16px;display:flex;align-items:center;gap:12px">
         <div style="font-size:28px">🏋️</div>
-        <div><div style="font-size:16px;font-weight:800">Schema</div><div style="font-size:12px;color:var(--g4)">Training A/B — vast schema met progressieregels</div></div>
+        <div><div style="font-size:16px;font-weight:800">Schema</div><div style="font-size:12px;color:var(--g4)">Je vaste trainingen — eigen namen, met progressieregels</div></div>
       </div>
     </div>
     <div class="card" onclick="go('s-train-workouts')" style="cursor:pointer">
@@ -683,17 +625,17 @@ canvas{width:100%;height:100%}
   </nav>
 </div>
 
-<!-- ═══ SCHEMA (Training A/B keuze) ═══ -->
+<!-- ═══ SCHEMA (vaste trainingen — N stuks, eigen namen) ═══ -->
 <div class="scr" id="s-train-schema">
   <div class="hdr">
     <div class="hdr-row">
-      <div><div class="hdr-title">Schema</div><div class="hdr-sub">Vast trainingsschema</div></div>
+      <div><div class="hdr-title">Schema</div><div class="hdr-sub">Je vaste trainingen</div></div>
       <button class="ibtn" onclick="go('s-train-mgr')">✕</button>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
-    <button class="btn btn-r" onclick="go('s-train-a')" style="margin-bottom:10px">Training A</button>
-    <button class="btn btn-d" onclick="go('s-train-b')">Training B</button>
+    <div id="schema-training-list"></div>
+    <button class="btn btn-o" style="width:100%;margin-top:6px" onclick="openAddVasteTraining()">+ Nieuwe vaste training</button>
   </div>
   <nav class="bnav">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
@@ -702,6 +644,19 @@ canvas{width:100%;height:100%}
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
   </nav>
+</div>
+
+<!-- ═══ VASTE TRAINING TOEVOEGEN/HERNOEMEN ═══ -->
+<div class="modal-bg" id="m-vt-naam" onclick="bgClose(event,'m-vt-naam')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="vt-naam-title">Nieuwe vaste training</div>
+    <div class="irow"><label class="ilbl">Naam</label><input class="inp" id="vt-naam-input" placeholder="bv. Training C, Push, Onderlichaam"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-vt-naam')">Annuleer</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveVasteTrainingName()">Opslaan</button>
+    </div>
+  </div>
 </div>
 
 <!-- ═══ WORKOUTS (eigen samengestelde trainingen) ═══ -->
@@ -797,18 +752,11 @@ canvas{width:100%;height:100%}
 
     <div class="sec-hd">Oefeningen</div>
     <div class="card">
-      <div class="card-hd"><span class="card-title">Alle oefeningen</span><button class="btn btn-o btn-sm" onclick="openModal('m-newex')">+ Nieuw</button></div>
+      <div class="card-hd"><span class="card-title">Alle oefeningen</span><button class="btn btn-o btn-sm" onclick="openNewExModal()">+ Nieuw</button></div>
       <div class="card-body" id="admin-exlist"></div>
     </div>
     <div class="sec-hd">Trainingsschema's</div>
-    <div class="card">
-      <div class="card-hd"><span class="card-title">Training A</span><button class="btn btn-o btn-sm" onclick="openAddTrainEx('A')">+ Koppelen</button></div>
-      <div class="card-body" id="admin-taex-a"></div>
-    </div>
-    <div class="card">
-      <div class="card-hd"><span class="card-title">Training B</span><button class="btn btn-o btn-sm" onclick="openAddTrainEx('B')">+ Koppelen</button></div>
-      <div class="card-body" id="admin-taex-b"></div>
-    </div>
+    <div id="admin-taex-cards"></div>
     <div class="sec-hd">Equipment types</div>
     <div class="card">
       <div class="card-body" style="padding-top:10px">
@@ -1109,7 +1057,7 @@ canvas{width:100%;height:100%}
     <div class="modal-handle"></div>
     <div class="modal-title">Nieuwe oefening</div>
     <div class="irow"><label class="ilbl">Naam</label><input class="inp" type="text" id="nx-name" placeholder="bijv. Tricep Pushdown"></div>
-    <div class="irow"><label class="ilbl">Training</label><select class="inp" id="nx-cat"><option value="A">Training A</option><option value="B">Training B</option><option value="CrossFit">CrossFit</option><option value="Overig">Overig</option></select></div>
+    <div class="irow"><label class="ilbl">Training</label><select class="inp" id="nx-cat"></select></div>
     <div class="irow"><label class="ilbl">Type</label><select class="inp" id="nx-type" onchange="updateNxType(this.value)">
       <option value="strength">Kracht</option>
       <option value="kettlebell">Kettlebell</option>
@@ -1484,7 +1432,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.1.7';
+const APP_VER = 'v3.1.8';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -1733,7 +1681,7 @@ const TRAIN_CFG_SEED = {
 // Vaste spiergroep-lijst (dropdown/checkboxes) — enige bron van waarheid voor tagging
 const MUSCLE_OPTIONS = ['Borst','Rug','Schouders','Achterste schouder','Armen','Biceps','Triceps','Grip','Quadriceps','Hamstrings','Billen','Benen','Core','Traps'];
 
-let TRAIN_CFG = {A:[],B:[]};
+let TRAIN_CFG = {};
 let _trainCfgLoading=null;
 
 async function loadTrainCfg(){
@@ -1762,7 +1710,9 @@ async function loadTrainCfg(){
       }
       rows=await sbGet('training_exercises','&order=training_ref.asc,sort_order.asc');
     }
-    const built={A:[],B:[]};
+    // v318 — Route 2: generiek voor elk training_ref (niet meer hardgecodeerd op A/B),
+    // zodat een willekeurig aantal vaste trainingen met eigen namen mogelijk is.
+    const built={};
     rows.forEach(r=>{
       const exObj=exercises.find(x=>x.id===r.exercise_id);
       if(!exObj) return;
@@ -1773,11 +1723,124 @@ async function loadTrainCfg(){
         yt:exObj.yt, muscles:{p:exObj.muscle_primary||[], s:exObj.muscle_secondary||[]}
       });
     });
-    TRAIN_CFG.A=built.A||[]; TRAIN_CFG.B=built.B||[];
+    TRAIN_CFG=built;
     _trainCfgLoading=null;
     return TRAIN_CFG;
   })();
   return _trainCfgLoading;
+}
+
+// ══════════════════════════════════════════════════════════
+// VASTE TRAININGEN (v318 — Route 2: generiek i.p.v. hardgecodeerd Training A/B)
+// ══════════════════════════════════════════════════════════
+let vasteTrainingen=[];
+let _vasteTrainingenLoaded=false;
+async function ensureVasteTrainingenLoaded(){
+  if(_vasteTrainingenLoaded)return vasteTrainingen;
+  await loadTrainCfg(); // garandeert dat training_exercises bestaat (seed) vóór migratie
+  vasteTrainingen=await sbGet('vaste_trainingen','&active=eq.true&order=sort_order.asc');
+  if(!vasteTrainingen.length){
+    await migreerABNaarVasteTrainingen();
+    vasteTrainingen=await sbGet('vaste_trainingen','&active=eq.true&order=sort_order.asc');
+  }
+  _vasteTrainingenLoaded=true;
+  return vasteTrainingen;
+}
+// Automatische, eenmalige migratie bij eerste keer openen na de v318-update: elke
+// bestaande training_ref in training_exercises (doorgaans 'A' en 'B') krijgt een
+// vaste_trainingen-rij met naam "Training A"/"Training B". Er wordt bewust NIETS aan
+// training_exercises of sessions veranderd — die verwijzen al generiek naar training_ref/
+// training_type, dus bestaande data en geschiedenis blijven vanzelf werken en tonen vanaf
+// nu de (hernoembare) naam uit vaste_trainingen i.p.v. de kale letter.
+async function migreerABNaarVasteTrainingen(){
+  const rows=await sbGet('training_exercises','');
+  const refs=[...new Set(rows.map(r=>r.training_ref))].sort();
+  let i=0;
+  for(const ref of refs){
+    await sbPost('vaste_trainingen',{id:ref,naam:'Training '+ref,sort_order:i++});
+  }
+}
+function newVasteTrainingId(){
+  return 'vt_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+}
+// Pure functie: welke vaste training is "aan de beurt"? Degene die het langst geleden (of
+// nog nooit) gedaan is — generaliseert de oude A/B-alternatie naar N trainingen.
+function computeNextVasteTraining(list,lastDoneMap){
+  if(!list||!list.length)return null;
+  let best=null,bestTime=Infinity;
+  for(const v of list){
+    const d=lastDoneMap?.[v.id];
+    const t=d?new Date(d).getTime():-Infinity; // nooit gedaan = wint altijd
+    if(t<bestTime){bestTime=t;best=v;}
+  }
+  return best;
+}
+async function computeLastDoneMap(list){
+  const map={};
+  for(const v of list){
+    const rows=await sbGet('sessions','&training_type=eq.'+v.id+'&order=date.desc&limit=1');
+    map[v.id]=rows[0]?.date||null;
+  }
+  return map;
+}
+async function renderVasteTrainingBtns(){
+  const el=document.getElementById('vaste-training-btns');
+  if(!el)return;
+  await ensureVasteTrainingenLoaded();
+  if(!vasteTrainingen.length){el.innerHTML='';return;}
+  el.innerHTML=vasteTrainingen.map((v,i)=>`
+    <button onclick="startT('${v.id}')" style="flex:1;min-width:120px;padding:14px;border-radius:14px;border:none;background:${i%2===0?'var(--dark)':'var(--accent)'};color:${i%2===0?'#fff':'var(--dark)'};font-family:var(--f);font-size:14px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:6px;justify-content:center">
+      <div class="ni-dot" id="home-dot-${v.id.toLowerCase()}" style="position:static;background:${i%2===0?'#fff':'var(--dark)'}"></div>${v.naam}
+    </button>`).join('');
+}
+async function renderSchemaTrainingList(){
+  const el=document.getElementById('schema-training-list');
+  if(!el)return;
+  await ensureVasteTrainingenLoaded();
+  if(!vasteTrainingen.length){el.innerHTML='<div style="text-align:center;color:var(--g4);font-size:13px;padding:20px 0">Nog geen vaste training. Tik hieronder om er een te maken.</div>';return;}
+  el.innerHTML=vasteTrainingen.map(v=>`
+    <div class="lrow" style="align-items:center">
+      <div class="lval" style="cursor:pointer;font-weight:700" onclick="startT('${v.id}')">${v.naam}</div>
+      <button onclick="event.stopPropagation();openRenameVasteTraining('${v.id}','${v.naam.replace(/'/g,"\\'")}')" style="background:none;border:none;color:var(--g4);font-size:14px;cursor:pointer;padding:4px 6px">✏️</button>
+      <button onclick="event.stopPropagation();deleteVasteTraining('${v.id}')" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;padding:4px 6px">🗑</button>
+    </div>`).join('');
+}
+let vtEditId=null;
+function openAddVasteTraining(){
+  vtEditId=null;
+  document.getElementById('vt-naam-title').textContent='Nieuwe vaste training';
+  document.getElementById('vt-naam-input').value='';
+  openModal('m-vt-naam');
+}
+function openRenameVasteTraining(id,naam){
+  vtEditId=id;
+  document.getElementById('vt-naam-title').textContent='Naam wijzigen';
+  document.getElementById('vt-naam-input').value=naam;
+  openModal('m-vt-naam');
+}
+async function saveVasteTrainingName(){
+  const naam=document.getElementById('vt-naam-input').value.trim();
+  if(!naam){toast('Vul een naam in');return;}
+  if(vtEditId){
+    await sbPatch('vaste_trainingen','id=eq.'+vtEditId,{naam});
+  }else{
+    await ensureVasteTrainingenLoaded();
+    await sbPost('vaste_trainingen',{id:newVasteTrainingId(),naam,sort_order:vasteTrainingen.length});
+  }
+  _vasteTrainingenLoaded=false;
+  closeModal('m-vt-naam');
+  await renderSchemaTrainingList();
+  await renderVasteTrainingBtns();
+  toast('Opgeslagen');
+}
+async function deleteVasteTraining(id){
+  if(!confirm('Deze vaste training verwijderen? De oefeningen erin gaan ook mee. Je sessiegeschiedenis blijft staan.'))return;
+  await sbDel('training_exercises','training_ref=eq.'+id);
+  await sbDel('vaste_trainingen','id=eq.'+id);
+  _vasteTrainingenLoaded=false;
+  await renderSchemaTrainingList();
+  await renderVasteTrainingBtns();
+  toast('Verwijderd');
 }
 
 // Oefeningen die met een langhalter/barbell worden uitgevoerd — tonen plate calculator + 1RM-paneel
@@ -1904,16 +1967,15 @@ async function vAPin(){const h=await sha256(adminPinBuf);if(h===PIN_HASH){adminP
 // NAVIGATION
 // ══════════════════════════════════════════════════════════
 function go(id){
-  if(id==='s-train-a'){startT('A');return;}
-  if(id==='s-train-b'){startT('B');return;}
   if(id==='s-admin-pin'){adminPinBuf='';updA();document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));document.getElementById('s-admin-pin').classList.add('active');return;}
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
   const el=document.getElementById(id);if(el)el.classList.add('active');
   stopTrainTimer();
   if(id==='s-home')refreshHome();
-  if(id==='s-hist'){histOff=0;loadHistory();}
+  if(id==='s-hist'){histOff=0;renderHistFilterTabs();loadHistory();}
   if(id==='s-train-mgr'||id==='s-train-workouts'){renderCustomTrainList();renderCustomTrainBtns();}
   if(id==='s-train-mgr'){renderSportSwitcher();}
+  if(id==='s-train-schema'){renderSchemaTrainingList();}
   if(id==='s-programma'){renderProgrammaList();}
   if(id==='s-stats')refreshStatsScreen();
   if(id==='s-profiel')refreshProfiel();
@@ -2993,6 +3055,7 @@ function isSameLocalDay(ts){
   return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
 }
 async function startT(t){
+  await ensureVasteTrainingScreenExists(t);
   if(curT===t){
     document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
     document.getElementById('s-train-'+t.toLowerCase()).classList.add('active');
@@ -3000,7 +3063,7 @@ async function startT(t){
   }
   // v306 #5: concept van eerder (zelfde dag, niet afgerond) aanbieden om te hervatten
   const draft=restoreTrainingDraft();
-  const resumeDraft=draft&&draft.t===t&&isSameLocalDay(draft.ts)&&confirm('Niet-afgeronde Training '+t+' gevonden (laatst opgeslagen om '+new Date(draft.ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+'). Hervatten?');
+  const resumeDraft=draft&&draft.t===t&&isSameLocalDay(draft.ts)&&confirm('Niet-afgeronde training gevonden (laatst opgeslagen om '+new Date(draft.ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+'). Hervatten?');
   pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};
   if(resumeDraft){
     curT=t;sessionLog=draft.sessionLog||{};sessionExtra=draft.sessionExtra||[];trainPaused=false;pausedAccumMs=0;
@@ -3017,6 +3080,51 @@ async function startT(t){
   document.getElementById('s-train-'+t.toLowerCase()).classList.add('active');
   trainStart=Date.now();startTrainTimer(t);
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.add('show'));
+}
+// Bouwt het trainingsscherm voor een vaste training (Training A/B of een nieuwe) dynamisch
+// op, net als Programma/Workouts al deden — nodig sinds v318 omdat het er nu N kunnen zijn
+// i.p.v. precies twee statische HTML-schermen.
+async function ensureVasteTrainingScreenExists(t){
+  if(document.getElementById('s-train-'+t.toLowerCase()))return;
+  await ensureVasteTrainingenLoaded();
+  const vt=vasteTrainingen.find(v=>v.id===t)||{id:t,naam:'Training '+t};
+  buildVasteTrainingScreen(vt);
+}
+function buildVasteTrainingScreen(vt){
+  const t=vt.id;
+  let el=document.getElementById('s-train-'+t.toLowerCase());
+  if(!el){
+    el=document.createElement('div');
+    el.className='scr';
+    el.id='s-train-'+t.toLowerCase();
+    document.getElementById('app').appendChild(el);
+  }
+  el.innerHTML=`
+    <div class="train-top">
+      <div class="train-timer-bar">
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="tact red" onclick="confirmLeave()">✕</button>
+          <span class="train-elapsed" id="elapsed-${t.toLowerCase()}">00:00</span>
+        </div>
+        <div class="train-actions">
+          <button class="tact" onclick="pauseTraining()">⏸</button>
+          <button class="tact" onclick="showSettings()">⚙️</button>
+          <button class="tact green" onclick="showSessionSummary('${t}')">✓</button>
+        </div>
+      </div>
+      <div style="font-size:13px;font-weight:700;color:var(--g4);letter-spacing:.3px;text-transform:uppercase;margin-bottom:4px">${vt.naam}</div>
+      <div style="font-size:11px;color:var(--g4);margin-bottom:8px" id="prog-${t.toLowerCase()}-lbl">0 oefeningen</div>
+      <div class="prog-wrap"><div class="prog-fill" id="prog-${t.toLowerCase()}" style="width:0%"></div></div>
+      <div class="train-save-row"><span class="save-status" id="train-save-status-${t.toLowerCase()}">✓ Alles opgeslagen</span><button class="save-btn" onclick="persistTrainingDraft(false)">Opslaan</button></div>
+    </div>
+    <div class="scroll" id="train-${t.toLowerCase()}-list" style="padding-top:12px"></div>
+    <nav class="bnav">
+      <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+      <button class="ni active" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
+      <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+      <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+      <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+    </nav>`;
 }
 
 let trainPaused=false, pausedAt=0, pausedAccumMs=0;
@@ -4326,8 +4434,10 @@ function updateSummary(t){
 function addExToSession(t){
   const cur=getSessionExs(t).map(e=>e.id);
   const avail=exercises.filter(e=>!cur.includes(e.id)&&e.active!==false);
-  const cats=['A','B','CrossFit','Overig'];
-  const catLbls={A:'Training A',B:'Training B',CrossFit:'CrossFit',Overig:'Overig'};
+  const cats=[...vasteTrainingen.map(v=>v.id),'CrossFit','Overig'];
+  const catLbls={};
+  vasteTrainingen.forEach(v=>catLbls[v.id]=v.naam);
+  catLbls.CrossFit='CrossFit';catLbls.Overig='Overig';
   let html='';
   cats.forEach(cat=>{
     const exs=avail.filter(e=>e.category===cat);
@@ -4474,9 +4584,15 @@ async function refreshHome(){
   }
   renderCustomTrainBtns();
   renderHomeProgramCard();
-  const lastT=localStorage.getItem('maurice_last_training');
-  const nextT=lastT==='A'?'B':lastT==='B'?'A':'A';
-  document.getElementById('home-next-lbl').textContent='Volgende training: '+nextT;
+  await renderVasteTrainingBtns();
+  const nextLblEl=document.getElementById('home-next-lbl');
+  if(vasteTrainingen.length){
+    const lastDoneMap=await computeLastDoneMap(vasteTrainingen);
+    const next=computeNextVasteTraining(vasteTrainingen,lastDoneMap);
+    nextLblEl.textContent=next?'Volgende training: '+next.naam:'';
+  }else{
+    nextLblEl.textContent='';
+  }
   if(curT){document.getElementById('home-dot-'+curT.toLowerCase())?.classList.add('show');}
   const rs=await sbGet('sessions','&order=created_at.desc&limit=6');
   let rh='';
@@ -4575,8 +4691,16 @@ function setHistFilter(f,btn){
   loadHistory();
 }
 
+async function renderHistFilterTabs(){
+  const el=document.getElementById('hist-filter-tabs');
+  if(!el)return;
+  await ensureVasteTrainingenLoaded();
+  el.innerHTML=`<button class="filter-tab${histFilter==='all'?' active':''}" onclick="setHistFilter('all',this)">Alles</button>`+
+    vasteTrainingen.map(v=>`<button class="filter-tab${histFilter===v.id?' active':''}" onclick="setHistFilter('${v.id}',this)">${v.naam}</button>`).join('');
+}
 async function loadHistory(append=false){
   if(!append)histOff=0;
+  await ensureVasteTrainingenLoaded();
   let p='&order=date.desc,created_at.desc&limit=20&offset='+histOff;
   if(histFilter!=='all')p+='&training_type=eq.'+histFilter;
   const ss=await sbGet('sessions',p);
@@ -4585,8 +4709,9 @@ async function loadHistory(append=false){
   let html='';
   Object.entries(byDate).sort((a,b)=>b[0].localeCompare(a[0])).forEach(([date,sess])=>{
     const ttRaw=sess[0]?.training_type||'?';
-    const tt=ttRaw.startsWith('prog_')?'Programma':ttRaw.startsWith('custom_')?'Workout':ttRaw;
-    const ttColor=ttRaw==='A'?'var(--dark)':ttRaw==='B'?'var(--red)':'var(--g4)';
+    const vtIdx=vasteTrainingen.findIndex(v=>v.id===ttRaw);
+    const tt=vtIdx>=0?vasteTrainingen[vtIdx].naam:ttRaw.startsWith('prog_')?'Programma':ttRaw.startsWith('custom_')?'Workout':ttRaw;
+    const ttColor=vtIdx>=0?(vtIdx%2===0?'var(--dark)':'var(--red)'):'var(--g4)';
     const totalVol=sess.reduce((s,x)=>{if(x.weight&&x.reps&&x.sets)s+=x.weight*x.reps*x.sets;return s;},0);
     html+=`<div class="hist-day">
       <div class="hist-day-hd" onclick="toggleHistDay(this)">
@@ -4594,7 +4719,7 @@ async function loadHistory(append=false){
           <div class="hist-day-date">${fmtDate(date)}</div>
           <div style="font-size:11px;color:var(--g4);margin-top:2px">${sess.length} oefeningen${totalVol>0?' · '+Math.round(totalVol)+' kg volume':''}</div>
         </div>
-        <span style="background:${ttColor};color:#fff;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;margin-right:8px">${(ttRaw==='A'||ttRaw==='B')?'Training '+tt:tt}</span>
+        <span style="background:${ttColor};color:#fff;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;margin-right:8px">${tt}</span>
         <span style="color:var(--g3);font-size:16px" class="hist-arr">›</span>
       </div>
       <div class="hist-day-body">
@@ -5150,10 +5275,19 @@ async function saveAnchor(){
 }
 
 // ══════════════════════════════════════════════════════════
-// TRAINING A/B — OEFENINGEN KOPPELEN (training_exercises)
+// VASTE TRAININGEN (v318) — OEFENINGEN KOPPELEN (training_exercises)
 // ══════════════════════════════════════════════════════════
 async function renderTrainExAdmin(){
-  for(const t of ['A','B']){
+  const cardsEl=document.getElementById('admin-taex-cards');
+  if(!cardsEl)return;
+  await ensureVasteTrainingenLoaded();
+  cardsEl.innerHTML=vasteTrainingen.map(v=>`
+    <div class="card">
+      <div class="card-hd"><span class="card-title">${v.naam}</span><button class="btn btn-o btn-sm" onclick="openAddTrainEx('${v.id}')">+ Koppelen</button></div>
+      <div class="card-body" id="admin-taex-${v.id.toLowerCase()}"></div>
+    </div>`).join('');
+  for(const v of vasteTrainingen){
+    const t=v.id;
     const el=document.getElementById('admin-taex-'+t.toLowerCase());
     if(!el) continue;
     const rows=await sbGet('training_exercises','&training_ref=eq.'+t+'&order=sort_order.asc');
@@ -5175,7 +5309,8 @@ async function renderTrainExAdmin(){
 let curAddTrainRef=null;
 function openAddTrainEx(trainingRef){
   curAddTrainRef=trainingRef;
-  document.getElementById('add-trainex-title').textContent='Oefening koppelen — Training '+trainingRef;
+  const vt=vasteTrainingen.find(v=>v.id===trainingRef);
+  document.getElementById('add-trainex-title').textContent='Oefening koppelen — '+(vt?vt.naam:trainingRef);
   const sel=document.getElementById('atx-exid');
   sel.innerHTML=exercises.filter(e=>e.active!==false).map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
   document.getElementById('atx-sets').value='';
@@ -5226,6 +5361,12 @@ async function moveTrainEx(trainingRef,exId,dir){
   renderTrainExAdmin();
 }
 
+async function openNewExModal(){
+  await ensureVasteTrainingenLoaded();
+  document.getElementById('nx-cat').innerHTML=vasteTrainingen.map(v=>`<option value="${v.id}">${v.naam}</option>`).join('')+
+    '<option value="CrossFit">CrossFit</option><option value="Overig">Overig</option>';
+  openModal('m-newex');
+}
 async function delEx(id){if(!confirm('Verwijderen?'))return;await sbPatch('exercises','id=eq.'+id,{active:false});exercises=exercises.filter(e=>e.id!==id);refreshAdmin();toast('Verwijderd');}
 
 async function saveNewEx(){
@@ -5357,10 +5498,16 @@ async function buildCtx(ctx){
   const wLast=wd[0],wPrev=wd[1];
   const wStr=wLast?`\nGewicht: ${wLast.weight} kg (${wLast.date})`+(wPrev?` | vorige: ${wPrev.weight} kg`:''): '';
   const bcStr=bc[0]?`\nTanita (${bc[0].date}): vet% ${bc[0].fat_pct}% | spier ${bc[0].muscle_mass} kg | BMR ${bc[0].bmr} | visceraal ${bc[0].visceral_fat}`+(bc[0].edema?` | oedeem: ${bc[0].edema}`:''): '';
-  // nextT: afgeleid uit meest recente Supabase-sessie i.p.v. localStorage (kan verouderd/afwezig zijn)
-  const lastSessions=await sbGet('sessions','&training_type=in.(A,B)&order=date.desc,created_at.desc&limit=1');
-  const lastT=lastSessions[0]?.training_type||localStorage.getItem('maurice_last_training')||'?';
-  const nextT=lastT==='A'?'B':'A';
+  // nextT/lastT: welke vaste training het langst geleden (of nog nooit) gedaan is
+  await ensureVasteTrainingenLoaded();
+  let nextT='?', lastT='?';
+  if(vasteTrainingen.length){
+    const lastDoneMap=await computeLastDoneMap(vasteTrainingen);
+    nextT=computeNextVasteTraining(vasteTrainingen,lastDoneMap)?.naam||'?';
+    const lastSessions=await sbGet('sessions','&training_type=in.('+vasteTrainingen.map(v=>v.id).join(',')+')&order=date.desc,created_at.desc&limit=1');
+    const lastRaw=lastSessions[0]?.training_type;
+    lastT=vasteTrainingen.find(v=>v.id===lastRaw)?.naam||lastRaw||'?';
+  }
   const mf = mastersFactor(atleet?.leeftijd||50);
   // v306 #6/#8: sessie-specifieke context — huidige oefening, schema, doel-RPE, reeds gelogde sets
   let sessionCtx='';
@@ -6184,7 +6331,8 @@ async function permanentlyAddExtras(){
   const t=curT;
   const extras=sessionExtra.filter(e=>e._t===t&&!e._preloaded);
   if(!extras.length){closeModal('m-save-as-training');finishSessionNoSave();return;}
-  if(t==='A'||t==='B'){
+  await ensureVasteTrainingenLoaded();
+  if(vasteTrainingen.some(v=>v.id===t)){
     const base=(TRAIN_CFG[t]||[]).length;
     let sortOrder=base;
     for(const e of extras){
@@ -6361,7 +6509,8 @@ async function openRepeatWorkout(date,t){
 async function startRepeatWorkout(){
   const adj=parseFloat(document.getElementById('rw-adj-val')?.value)||0;
   closeModal('m-repeat-workout');
-  const t=(repeatT==='A'||repeatT==='B')?repeatT:'A';
+  await ensureVasteTrainingenLoaded();
+  const t=vasteTrainingen.some(v=>v.id===repeatT)?repeatT:(vasteTrainingen[0]?.id||'A');
   const prefillMap={};
   repeatSessions.forEach(s=>{
     if(!s.weight||!s.reps) return;
@@ -6371,6 +6520,7 @@ async function startRepeatWorkout(){
     prefillMap[s.exercise_id]={kg:nw,reps:s.reps,rpe:s.rpe,sets:s.sets||4};
   });
   window._prefillMap=prefillMap;
+  await ensureVasteTrainingScreenExists(t);
   curT=t;sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;
   await renderTrainScreen(t);
   window._prefillMap=null;
@@ -6412,8 +6562,10 @@ function renderSupersetList(){
 
 function addSupersetEx(){
   const avail = exercises.filter(e=>e.active!==false&&!supersetExIds.includes(e.id));
-  const cats = ['A','B','CrossFit','Overig'];
-  const catL = {A:'Training A',B:'Training B',CrossFit:'CrossFit',Overig:'Overig'};
+  const cats = [...vasteTrainingen.map(v=>v.id),'CrossFit','Overig'];
+  const catL = {};
+  vasteTrainingen.forEach(v=>catL[v.id]=v.naam);
+  catL.CrossFit='CrossFit';catL.Overig='Overig';
   let html = '';
   cats.forEach(cat=>{
     const exs = avail.filter(e=>e.category===cat);
@@ -7010,8 +7162,8 @@ window.addEventListener('load',async()=>{
   // Start direct op home scherm — pincode alleen bij Beheer
   // Handle PWA shortcuts
   const params = new URLSearchParams(window.location.search);
-  if(params.get('start')==='A') setTimeout(()=>go('s-train-a'),500);
-  if(params.get('start')==='B') setTimeout(()=>go('s-train-b'),500);
+  if(params.get('start')==='A') setTimeout(()=>startT('A'),500);
+  if(params.get('start')==='B') setTimeout(()=>startT('B'),500);
   if(params.get('checkin')==='1') setTimeout(()=>openModal('m-hrv'),500);
   refreshHome();
   ensureExercisesLoaded().then(()=>loadTrainCfg());

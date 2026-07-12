@@ -810,6 +810,42 @@ test('formatProgDate: lege invoer geeft lege string, geen crash', ()=>{
   assertEq(formatProgDate(''), '');
 });
 
+// ── VASTE TRAININGEN — v318: Route 2 (generiek i.p.v. A/B) ──
+console.log("\n🏋️  Vaste trainingen: volgende-training-logica");
+function computeNextVasteTraining(list,lastDoneMap){
+  if(!list||!list.length)return null;
+  let best=null,bestTime=Infinity;
+  for(const v of list){
+    const d=lastDoneMap?.[v.id];
+    const t=d?new Date(d).getTime():-Infinity;
+    if(t<bestTime){bestTime=t;best=v;}
+  }
+  return best;
+}
+test('computeNextVasteTraining: pakt degene die nog nooit gedaan is', ()=>{
+  const list=[{id:'A',naam:'Training A'},{id:'B',naam:'Training B'}];
+  const next=computeNextVasteTraining(list,{A:'2026-07-10'});
+  assertEq(next.id, 'B');
+});
+test('computeNextVasteTraining: pakt de langst geleden gedane bij N trainingen', ()=>{
+  const list=[{id:'A',naam:'A'},{id:'B',naam:'B'},{id:'C',naam:'C'}];
+  const next=computeNextVasteTraining(list,{A:'2026-07-10',B:'2026-07-01',C:'2026-07-11'});
+  assertEq(next.id, 'B');
+});
+test('computeNextVasteTraining: werkt met precies twee (oude A/B-gedrag behouden)', ()=>{
+  const list=[{id:'A',naam:'A'},{id:'B',naam:'B'}];
+  const next=computeNextVasteTraining(list,{A:'2026-07-11',B:'2026-07-10'});
+  assertEq(next.id, 'B');
+});
+test('computeNextVasteTraining: lege lijst geeft null, geen crash', ()=>{
+  assertEq(computeNextVasteTraining([],{}), null);
+});
+test('computeNextVasteTraining: geen enkele training ooit gedaan pakt gewoon de eerste', ()=>{
+  const list=[{id:'A',naam:'A'},{id:'B',naam:'B'}];
+  const next=computeNextVasteTraining(list,{});
+  assertEq(next.id, 'A');
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

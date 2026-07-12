@@ -1065,6 +1065,9 @@ canvas{width:100%;height:100%}
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title">Voor je begint</div>
+    <div id="pchk-missing-hint" style="font-size:12px;color:var(--g4);margin-bottom:10px"></div>
+    <div id="pchk-hrv-row" class="irow"><label class="ilbl">HRV</label><input class="inp" type="number" id="pchk-hrv" placeholder="ms"></div>
+    <div id="pchk-rhr-row" class="irow"><label class="ilbl">Rusthartslag</label><input class="inp" type="number" id="pchk-rhr" placeholder="bpm"></div>
     <div id="pchk-sleep-row" class="irow"><label class="ilbl">Hoe geslapen?</label><input class="inp" type="number" step="0.5" id="pchk-sleep-h" placeholder="uur"></div>
     <div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">Hoe voel je je?</div>
     <div id="pchk-voelt-list" style="display:flex;gap:6px;flex-wrap:wrap"></div>
@@ -1470,7 +1473,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.1.3';
+const APP_VER = 'v3.1.4';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -2558,18 +2561,33 @@ function openProgGenModal(){
 const SPORT_FOCUS_LABELS={kracht:'Kracht/Powerlifting',crossfit:'CrossFit/Functioneel',hyrox:'HYROX',bodybuilding:'Bodybuilding',kettlebell:'Kettlebell',swimming:'Zwemmen',atletiek:'Atletiek',triathlon:'Triathlon',hardlopen:'Hardlopen',stairmaster:'Stairmaster'};
 // Pure functie: haalt een enkel getal uit een reeks als "12-15" (voor invulveld dat maar
 // één waarde toont) — pakt de ondergrens als haalbaar startpunt.
+// Brzycki-schatting: geeft een passend werkgewicht voor het geprogrammeerde aantal reps
+// en RPE-doel, op basis van een bekend/geschat 1RM. RPE→RIR (reps-in-reserve, RPE10=0,
+// RPE9=1, RPE6.5=3.5 enz.) wordt bij de reps opgeteld tot een geschat "reps-tot-falen",
+// waarna Brzycki wordt omgekeerd naar gewicht. Voorkomt dat een oud, zwaar 1-rep-gewicht
+// (bv. voor een 1RM-test) wordt aangeboden als startgewicht voor een licht 12-reps-blok.
+function suggestWeightForRepsRpe(oneRM,reps,rpe){
+  if(!oneRM||!reps)return null;
+  const rir=Math.max(0,10-(parseFloat(rpe)||8));
+  const repsToFailure=Math.min(20,reps+rir);
+  const w=oneRM*(37-repsToFailure)/36;
+  return w>0?roundKg(w):null;
+}
 function repsPrefillFromRange(repsStr){
   if(!repsStr)return '';
   const m=String(repsStr).match(/(\d+)/);
   return m?m[1]:'';
 }
-// Pure functie: bepaalt de prefill voor een programma-oefening. Gewicht komt uit de vorige
-// sessie (referentiepunt, anders staat het veld leeg en voelt het alsof alles gewist is),
-// reps/RPE komen uit de (evt. coach-aangepaste) programma-prescriptie — nooit andersom,
-// anders verdwijnt een net bevestigde aanpassing weer.
-function computeProgPrefill(ex,prevS){
+// Pure functie: bepaalt de prefill voor een programma-oefening. Gewicht komt bij voorkeur
+// uit een 1RM-gebaseerde schatting voor het geprogrammeerde reps/RPE-doel (dus altijd
+// passend bij vandaag's — evt. coach-aangepaste — prescriptie); alleen zonder 1RM-data
+// valt het terug op het gewicht van de vorige sessie als ruwe referentie.
+function computeProgPrefill(ex,prevS,oneRM){
   if(!ex.reps&&!ex.rpe)return null;
-  return {kg:(prevS&&prevS.weight)?prevS.weight:'',reps:repsPrefillFromRange(ex.reps),rpe:ex.rpe||'',sets:ex.sets||4};
+  const reps=repsPrefillFromRange(ex.reps);
+  const suggested=oneRM?suggestWeightForRepsRpe(oneRM,parseFloat(reps),ex.rpe):null;
+  const kg=(suggested!=null)?suggested:((prevS&&prevS.weight)?prevS.weight:'');
+  return {kg,reps,rpe:ex.rpe||'',sets:ex.sets||4};
 }
 // Pure functie — bouwt de prompt voor één week, los testbaar
 // Vuistregel: ±12 minuten per oefening (opwarmen + werksets). Tussen 2 en 8 oefeningen,
@@ -2921,7 +2939,8 @@ async function renderTrainScreen(t){
       }
     }
     if(t.startsWith('prog_')){
-      prefillData=computeProgPrefill(ex,prevS);
+      const oneRM=getOneRM(ex.id)||estimatedOneRM(ex.id);
+      prefillData=computeProgPrefill(ex,prevS,oneRM);
     } else if(prevS&&prevS.weight&&prevS.reps){
       prefillData={kg:prevS.weight, reps:prevS.reps, rpe:prevS.rpe, sets:prevS.sets||4};
     }
@@ -2954,6 +2973,9 @@ async function renderTrainScreen(t){
         <button onclick="askCoachEx('${ex.naam}','${t}','${ex.id}')" style="margin:8px 14px 12px;background:var(--dark);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">🤖 Vraag de coach</button>
       </div>`;
     container.appendChild(div);
+    // Prefill zet de kg-waarde alleen in het veld, triggert geen 'change'-event — zonder
+    // deze losse aanroep verschijnen er dus nooit opwarmsets totdat je zelf het kg-veld aanraakt.
+    if(prefillData?.kg&&!resolveCardioType(ex))autoGenerateWarmup(ex.id,false);
   }
 
   // Add exercise + summary buttons
@@ -5723,9 +5745,17 @@ async function startProgramBlockTraining(blockId){
 }
 async function openProgCheckin(){
   const hd=await sbGet('hrv_log','&date=eq.'+td()+'&order=created_at.desc&limit=1');
-  progCheckinCtx.todayHrv=hd[0]||null;
-  const sleepRow=document.getElementById('pchk-sleep-row');
-  sleepRow.style.display=(progCheckinCtx.todayHrv&&progCheckinCtx.todayHrv.sleep)?'none':'';
+  const th=hd[0]||null;
+  progCheckinCtx.todayHrv=th;
+  const missing=[];
+  document.getElementById('pchk-hrv-row').style.display=(th&&th.hrv)?'none':(missing.push('HRV'),'');
+  document.getElementById('pchk-rhr-row').style.display=(th&&th.rhr)?'none':(missing.push('rusthartslag'),'');
+  document.getElementById('pchk-sleep-row').style.display=(th&&th.sleep)?'none':(missing.push('slaap'),'');
+  document.getElementById('pchk-missing-hint').textContent=missing.length
+    ? `${missing.join(', ')} nog niet gelogd vandaag — helpt de coach je beter te programmeren.`
+    : '';
+  document.getElementById('pchk-hrv').value='';
+  document.getElementById('pchk-rhr').value='';
   document.getElementById('pchk-sleep-h').value='';
   document.getElementById('pchk-voelt-list').innerHTML=['slecht','matig','goed','top'].map(v=>
     `<button type="button" class="rower-chip" onclick="pchkSelectVoelt('${v}',this)">${v[0].toUpperCase()+v.slice(1)}</button>`).join('');
@@ -5747,9 +5777,22 @@ function pchkSelectPijn(v,btn){
 }
 async function pchkSkip(){closeModal('m-prog-checkin');await evaluateProgAdjustment();}
 async function pchkSubmit(){
-  const uren=parseFloat(document.getElementById('pchk-sleep-h').value)||null;
-  if(uren&&!(progCheckinCtx.todayHrv&&progCheckinCtx.todayHrv.sleep)){
-    await sbPost('hrv_log',{date:td(),sleep:uren,note:'Check-in bij programmatraining'});
+  const hrvVal=parseFloat(document.getElementById('pchk-hrv').value)||null;
+  const rhrVal=parseInt(document.getElementById('pchk-rhr').value)||null;
+  const slpVal=parseFloat(document.getElementById('pchk-sleep-h').value)||null;
+  const th=progCheckinCtx.todayHrv;
+  // Gemerged opslaan (bestaande waarden van vandaag + nieuw ingevulde) zodat de meest
+  // recente hrv_log-rij altijd het volledigste beeld heeft — anders verliest de
+  // dagfactor-berekening bv. de al gelogde slaap zodra alleen HRV wordt aangevuld.
+  if(hrvVal||rhrVal||slpVal){
+    await sbPost('hrv_log',{
+      date:td(),
+      hrv:hrvVal||th?.hrv||null,
+      rhr:rhrVal||th?.rhr||null,
+      sleep:slpVal||th?.sleep||null,
+      cyclus_fase:th?.cyclus_fase||null,
+      note:'Check-in bij programmatraining'
+    });
   }
   closeModal('m-prog-checkin');
   await evaluateProgAdjustment();

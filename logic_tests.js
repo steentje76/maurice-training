@@ -581,9 +581,20 @@ function repsPrefillFromRange(repsStr){
   const m=String(repsStr).match(/(\d+)/);
   return m?m[1]:'';
 }
-function computeProgPrefill(ex,prevS){
+function computeProgPrefill(ex,prevS,oneRM){
   if(!ex.reps&&!ex.rpe)return null;
-  return {kg:(prevS&&prevS.weight)?prevS.weight:'',reps:repsPrefillFromRange(ex.reps),rpe:ex.rpe||'',sets:ex.sets||4};
+  const reps=repsPrefillFromRange(ex.reps);
+  const suggested=oneRM?suggestWeightForRepsRpe(oneRM,parseFloat(reps),ex.rpe):null;
+  const kg=(suggested!=null)?suggested:((prevS&&prevS.weight)?prevS.weight:'');
+  return {kg,reps,rpe:ex.rpe||'',sets:ex.sets||4};
+}
+function roundKg(v){ return Math.round(v*2)/2; }
+function suggestWeightForRepsRpe(oneRM,reps,rpe){
+  if(!oneRM||!reps)return null;
+  const rir=Math.max(0,10-(parseFloat(rpe)||8));
+  const repsToFailure=Math.min(20,reps+rir);
+  const w=oneRM*(37-repsToFailure)/36;
+  return w>0?roundKg(w):null;
 }
 
 test('computeProgAdjustment: geen aanpassing bij goed herstel, geen klachten', ()=>{
@@ -655,25 +666,37 @@ test('repsPrefillFromRange: lege invoer geeft lege string, geen crash', ()=>{
   assertEq(repsPrefillFromRange(''), '');
   assertEq(repsPrefillFromRange(null), '');
 });
-test('computeProgPrefill: gewicht komt uit vorige sessie, reps/RPE uit programma', ()=>{
+test('suggestWeightForRepsRpe: laag-reps hoge-RPE geeft gewicht dicht bij 1RM', ()=>{
+  const w=suggestWeightForRepsRpe(110, 1, 10); // 1 rep @ RPE10 = zwaarste mogelijke set
+  assertEq(w, 110);
+});
+test('suggestWeightForRepsRpe: hoge reps + lage RPE geeft duidelijk lichter gewicht dan 1RM', ()=>{
+  const w=suggestWeightForRepsRpe(110, 12, 6);
+  assert(w < 70, 'verwacht een licht werkgewicht, kreeg '+w);
+  assert(w > 40, 'gewicht lijkt onrealistisch laag: '+w);
+});
+test('suggestWeightForRepsRpe: zonder 1RM geen suggestie', ()=>{
+  assertEq(suggestWeightForRepsRpe(null, 10, 8), null);
+});
+test('computeProgPrefill: met 1RM-data wordt een RPE-passend gewicht voorgesteld, niet het oude 1-rep-testgewicht', ()=>{
+  const ex={reps:'12-15',rpe:'6',sets:3};
+  const prevS={weight:110,reps:1,rpe:9,sets:5}; // zware 1RM-achtige set, niet representatief voor 12 reps @ RPE6
+  const pf=computeProgPrefill(ex,prevS,110);
+  assert(pf.kg < 110, 'verwacht een lager gewicht dan de oude 1-rep-test, kreeg '+pf.kg);
+});
+test('computeProgPrefill: zonder 1RM valt terug op gewicht van vorige sessie', ()=>{
   const ex={reps:'12-15',rpe:'6',sets:3};
   const prevS={weight:70,reps:10,rpe:9,sets:4};
-  const pf=computeProgPrefill(ex,prevS);
+  const pf=computeProgPrefill(ex,prevS,null);
   assertEq(pf.kg, 70);
-  assertEq(pf.reps, '12');
-  assertEq(pf.rpe, '6');
-  assertEq(pf.sets, 3);
 });
-test('computeProgPrefill: geen vorige sessie geeft leeg gewicht, geen crash', ()=>{
-  const pf=computeProgPrefill({reps:'8-10',rpe:'7',sets:3}, null);
-  assertEq(pf.kg, '');
-});
-test('computeProgPrefill: programma-RPE overschrijft nooit door vorige sessie-RPE', ()=>{
-  const pf=computeProgPrefill({reps:'8-10',rpe:'5.5',sets:3}, {weight:90,reps:1,rpe:10,sets:4});
+test('computeProgPrefill: reps/RPE komen altijd uit de programma-prescriptie', ()=>{
+  const pf=computeProgPrefill({reps:'8-10',rpe:'5.5',sets:3}, {weight:90,reps:1,rpe:10,sets:4}, 90);
   assertEq(pf.rpe, '5.5');
+  assertEq(pf.reps, '8');
 });
 test('computeProgPrefill: zonder reps/RPE-prescriptie geen prefill (cardio-achtige oefening)', ()=>{
-  assertEq(computeProgPrefill({}, {weight:50,reps:5,rpe:8}), null);
+  assertEq(computeProgPrefill({}, {weight:50,reps:5,rpe:8}, 100), null);
 });
 
 // ── SAMENVATTING ─────────────────────────────────────────

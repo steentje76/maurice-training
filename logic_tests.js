@@ -544,6 +544,79 @@ test('parseProgrammaJSON: kapotte JSON geeft null, geen crash', ()=>{
   assertEq(parseProgrammaJSON('geen geldige json', []), null);
 });
 
+// ── PROGRAMMA — coach-checkin & aanpassing (v311) ────────
+console.log("\n🩺 Programma coach-checkin: aanpassing-logica");
+
+function computeProgAdjustment(factor,muscleRecoveryRows,voelt,painMuscle){
+  const laag=(muscleRecoveryRows||[]).filter(r=>r.pct<70);
+  const slecht=voelt==='slecht';
+  const matig=voelt==='matig';
+  const nodig=factor<0.97||laag.length>0||slecht||matig||!!painMuscle;
+  if(!nodig)return null;
+  let rpeDelta=0,setsDelta=0;
+  if(factor<0.90||slecht){rpeDelta=-1.5;setsDelta=-1;}
+  else if(factor<0.97||matig||laag.length){rpeDelta=-0.5;}
+  const redenen=[];
+  if(factor<0.97)redenen.push('herstel-dagfactor '+factor);
+  if(laag.length)redenen.push('laag spierherstel: '+laag.map(r=>r.muscle+' '+r.pct+'%').join(', '));
+  if(slecht)redenen.push('je gaf aan je slecht te voelen');
+  if(matig)redenen.push('je gaf aan je matig te voelen');
+  if(painMuscle)redenen.push('pijn/ongemak gemeld: '+painMuscle);
+  return {rpeDelta,setsDelta,redenen,painMuscle};
+}
+function buildWeekPrompt(wk,weken,dagen,doel,sportLabel,profielTekst,bibliotheek,faseHistorie){
+  const context=(faseHistorie&&faseHistorie.length)
+    ? `Eerdere weken hadden als fase: ${faseHistorie.join(' → ')}. Zorg dat week ${wk} logisch daarop voortbouwt richting een sluitende periodisering (opbouw → hypertrofie → kracht → deload waar passend).`
+    : `Dit is de eerste week van het programma — kies een passende openingsfase.`;
+  return `Je bent trainingscoach. Je bouwt week ${wk} van ${weken} van een periodiseringsschema, ${dagen} trainingsdagen deze week. Sportrichting: ${sportLabel}. Doel: ${doel}. Atleetprofiel: ${profielTekst}. ${context} Kies voor elke trainingsdag zelf de beste oefeningen UIT DEZE BIBLIOTHEEK (gebruik alleen deze exercise_id's, verzin geen nieuwe): ${bibliotheek}. Antwoord ALLEEN met geldige JSON, geen uitleg, in dit exacte formaat: {"blocks":[{"week_nr":${wk},"fase_naam":"Anatomische Aanpassing","oefeningen":[{"exercise_id":"backsquat","sets":3,"reps":"12-15","rpe":6.5}]}]}. Genereer exact ${dagen} blokken voor deze week, elk met 3-6 oefeningen.`;
+}
+
+test('computeProgAdjustment: geen aanpassing bij goed herstel, geen klachten', ()=>{
+  assertEq(computeProgAdjustment(1.02, [], 'goed', null), null);
+});
+test('computeProgAdjustment: lage dagfactor triggert lichte aanpassing', ()=>{
+  const adj=computeProgAdjustment(0.94, [], null, null);
+  assert(adj !== null);
+  assertEq(adj.rpeDelta, -0.5);
+  assertEq(adj.setsDelta, 0);
+});
+test('computeProgAdjustment: kritieke dagfactor triggert zware aanpassing', ()=>{
+  const adj=computeProgAdjustment(0.87, [], null, null);
+  assertEq(adj.rpeDelta, -1.5);
+  assertEq(adj.setsDelta, -1);
+});
+test('computeProgAdjustment: "slecht" voelen triggert zware aanpassing ongeacht HRV', ()=>{
+  const adj=computeProgAdjustment(1.05, [], 'slecht', null);
+  assertEq(adj.rpeDelta, -1.5);
+});
+test('computeProgAdjustment: laag spierherstel (<70%) triggert aanpassing', ()=>{
+  const adj=computeProgAdjustment(1.0, [{muscle:'Schouders',pct:55}], null, null);
+  assert(adj !== null);
+  assert(adj.redenen.some(r=>r.includes('Schouders')));
+});
+test('computeProgAdjustment: pijn wordt altijd gemeld, ook zonder andere triggers', ()=>{
+  const adj=computeProgAdjustment(1.0, [], null, 'Rug');
+  assert(adj !== null);
+  assertEq(adj.painMuscle, 'Rug');
+});
+test('computeProgAdjustment: reden-teksten bevatten alle actieve triggers', ()=>{
+  const adj=computeProgAdjustment(0.85, [{muscle:'Borst',pct:40}], 'slecht', 'Knie');
+  assertEq(adj.redenen.length, 4);
+});
+test('buildWeekPrompt: eerste week krijgt openingsfase-instructie, geen historie', ()=>{
+  const p=buildWeekPrompt(1,8,3,'kracht','CrossFit','40 jaar, man, ervaren',  'backsquat:Backsquat(strength)', []);
+  assert(p.includes('eerste week'));
+  assert(!p.includes('Eerdere weken'));
+});
+test('buildWeekPrompt: latere week refereert aan eerdere fasen', ()=>{
+  const p=buildWeekPrompt(3,8,3,'kracht','CrossFit','40 jaar, man, ervaren','backsquat:Backsquat(strength)', ['Anatomische Aanpassing','Hypertrofie']);
+  assert(p.includes('Anatomische Aanpassing → Hypertrofie'));
+});
+test('buildWeekPrompt: vraagt exact dagen-aantal blokken voor die week', ()=>{
+  const p=buildWeekPrompt(2,8,4,'kracht','HYROX','30 jaar, vrouw, gevorderd','x:Y(strength)', ['A']);
+  assert(p.includes('exact 4 blokken'));
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

@@ -1023,6 +1023,18 @@ canvas{width:100%;height:100%}
     <div class="modal-title">Programma genereren</div>
     <div class="irow"><label class="ilbl">Naam</label><input class="inp" id="prog-naam" placeholder="bv. Kracht opbouw 8 weken"></div>
     <div class="irow"><label class="ilbl">Doel</label><input class="inp" id="prog-doel" placeholder="bv. kracht opbouwen, HYROX-voorbereiding"></div>
+    <div class="irow"><label class="ilbl">Sportrichting</label><select class="inp" id="prog-sport">
+      <option value="kracht">Kracht/Powerlifting</option>
+      <option value="crossfit">CrossFit/Functioneel</option>
+      <option value="hyrox">HYROX</option>
+      <option value="bodybuilding">Bodybuilding</option>
+      <option value="kettlebell">Kettlebell</option>
+      <option value="swimming">Zwemmen</option>
+      <option value="atletiek">Atletiek</option>
+      <option value="triathlon">Triathlon</option>
+      <option value="hardlopen">Hardlopen</option>
+      <option value="stairmaster">Stairmaster</option>
+    </select></div>
     <div class="irow"><label class="ilbl">Duur (weken)</label><input class="inp" type="number" id="prog-weken" placeholder="8" value="8"></div>
     <div class="irow"><label class="ilbl">Dagen per week</label><input class="inp" type="number" id="prog-dagen" placeholder="2" value="2" onchange="renderProgWeekdagPicker()"></div>
     <div class="irow"><label class="ilbl">Planning</label><select class="inp" id="prog-schema-type" onchange="renderProgWeekdagPicker()">
@@ -1030,11 +1042,44 @@ canvas{width:100%;height:100%}
       <option value="weekdagen">Vaste weekdagen</option>
     </select></div>
     <div id="prog-weekdag-picker" style="display:none;margin:-4px 0 10px"></div>
+    <div id="prog-gen-progress-wrap" style="display:none;margin-top:8px">
+      <div class="prog-wrap"><div class="prog-fill" id="prog-gen-progress-fill" style="width:0%"></div></div>
+    </div>
     <div id="prog-gen-status" style="font-size:12px;color:var(--g4);margin-top:6px"></div>
     <div id="prog-concept" style="margin-top:10px"></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-programma-gen')">Annuleer</button>
-      <button class="btn btn-r" style="flex:2" onclick="genereerProgramma()">AI genereren</button>
+      <button class="btn btn-r" style="flex:2" id="prog-gen-btn" onclick="genereerProgramma()">AI genereren</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PROGRAMMA — CHECK-IN VÓÓR START ═══ -->
+<div class="modal-bg" id="m-prog-checkin" onclick="">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Voor je begint</div>
+    <div id="pchk-sleep-row" class="irow"><label class="ilbl">Hoe geslapen?</label><input class="inp" type="number" step="0.5" id="pchk-sleep-h" placeholder="uur"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">Hoe voel je je?</div>
+    <div id="pchk-voelt-list" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 6px">Pijn of ongemak?</div>
+    <div id="pchk-pijn-list" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-o" style="flex:1" onclick="pchkSkip()">Overslaan</button>
+      <button class="btn btn-r" style="flex:2" onclick="pchkSubmit()">Doorgaan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PROGRAMMA — COACH-ADVIES (alleen als er reden toe is) ═══ -->
+<div class="modal-bg" id="m-prog-advies" onclick="">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Coach-advies</div>
+    <div id="padv-body"></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-o" style="flex:1" onclick="padvDecline()">Nee, gewoon starten</button>
+      <button class="btn btn-r" style="flex:2" onclick="padvAccept()">Pas aan en start</button>
     </div>
   </div>
 </div>
@@ -1419,7 +1464,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.1.0';
+const APP_VER = 'v3.1.1';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -2469,39 +2514,75 @@ function collectProgWeekdagen(){
 function openProgGenModal(){
   document.getElementById('prog-naam').value='';
   document.getElementById('prog-doel').value='';
+  document.getElementById('prog-sport').value=atleet.sport||'crossfit';
   document.getElementById('prog-weken').value='8';
   document.getElementById('prog-dagen').value='2';
   document.getElementById('prog-schema-type').value='interval';
   document.getElementById('prog-gen-status').textContent='';
   document.getElementById('prog-concept').innerHTML='';
+  document.getElementById('prog-gen-progress-wrap').style.display='none';
   renderProgWeekdagPicker();
   openModal('m-programma-gen');
 }
+const SPORT_FOCUS_LABELS={kracht:'Kracht/Powerlifting',crossfit:'CrossFit/Functioneel',hyrox:'HYROX',bodybuilding:'Bodybuilding',kettlebell:'Kettlebell',swimming:'Zwemmen',atletiek:'Atletiek',triathlon:'Triathlon',hardlopen:'Hardlopen',stairmaster:'Stairmaster'};
+// Pure functie — bouwt de prompt voor één week, los testbaar
+function buildWeekPrompt(wk,weken,dagen,doel,sportLabel,profielTekst,bibliotheek,faseHistorie){
+  const context=(faseHistorie&&faseHistorie.length)
+    ? `Eerdere weken hadden als fase: ${faseHistorie.join(' → ')}. Zorg dat week ${wk} logisch daarop voortbouwt richting een sluitende periodisering (opbouw → hypertrofie → kracht → deload waar passend).`
+    : `Dit is de eerste week van het programma — kies een passende openingsfase.`;
+  return `Je bent trainingscoach. Je bouwt week ${wk} van ${weken} van een periodiseringsschema, ${dagen} trainingsdagen deze week. Sportrichting: ${sportLabel}. Doel: ${doel}. Atleetprofiel: ${profielTekst}. ${context} Kies voor elke trainingsdag zelf de beste oefeningen UIT DEZE BIBLIOTHEEK (gebruik alleen deze exercise_id's, verzin geen nieuwe): ${bibliotheek}. Antwoord ALLEEN met geldige JSON, geen uitleg, in dit exacte formaat: {"blocks":[{"week_nr":${wk},"fase_naam":"Anatomische Aanpassing","oefeningen":[{"exercise_id":"backsquat","sets":3,"reps":"12-15","rpe":6.5}]}]}. Genereer exact ${dagen} blokken voor deze week, elk met 3-6 oefeningen.`;
+}
+function atleetProfielTekst(a){
+  return `${a.leeftijd||'?'} jaar, ${a.geslacht||'?'}, ervaringsniveau ${a.niveau||'?'}${a.klasse?', gewichtsklasse '+a.klasse+'kg':''}`;
+}
+// Genereert per week een aparte, kleine AI-call i.p.v. één grote call voor het hele programma.
+// Voorkomt de Netlify-timeout bij lange programma's (v310-bug) én levert een echte
+// voortgangsbalk op. Eerder gegenereerde weken blijven zichtbaar/opslaanbaar als een
+// latere week faalt.
 async function genereerProgramma(){
   const naam=document.getElementById('prog-naam').value.trim()||'Programma';
   const doel=document.getElementById('prog-doel').value.trim()||'algemene kracht opbouwen';
+  const sport=document.getElementById('prog-sport').value;
   const weken=parseInt(document.getElementById('prog-weken').value)||8;
   const dagen=parseInt(document.getElementById('prog-dagen').value)||2;
   const schemaType=document.getElementById('prog-schema-type').value;
   const weekdagen=schemaType==='weekdagen'?collectProgWeekdagen():[];
   if(schemaType==='weekdagen'&&!weekdagen.length){toast('Kies minstens 1 weekdag');return;}
   const statusEl=document.getElementById('prog-gen-status');
-  statusEl.textContent='AI genereert concept...';
+  const progressWrap=document.getElementById('prog-gen-progress-wrap');
+  const progressFill=document.getElementById('prog-gen-progress-fill');
+  const genBtn=document.getElementById('prog-gen-btn');
   document.getElementById('prog-concept').innerHTML='';
+  progressWrap.style.display='block';progressFill.style.width='0%';
+  genBtn.disabled=true;
   await ensureExercisesLoaded();
   const bibliotheek=exercises.filter(e=>e.active!==false).map(e=>`${e.id}:${e.name}(${e.type||'strength'})`).join(', ');
-  const sys=`Je bent trainingscoach. Genereer een periodiseringsschema van ${weken} weken, ${dagen} trainingsdagen per week, doel: ${doel}. Kies voor elke trainingsdag zelf de beste oefeningen UIT DEZE BIBLIOTHEEK (gebruik alleen deze exercise_id's, verzin geen nieuwe): ${bibliotheek}. Varieer oefeningen en volume logisch per fase (bv. hogere reps/lagere RPE bij opbouw, lagere reps/hogere RPE bij piek) en zorg voor een sluitende periodisering. Antwoord ALLEEN met geldige JSON, geen uitleg, in dit exacte formaat: {"blocks":[{"week_nr":1,"fase_naam":"Anatomische Aanpassing","oefeningen":[{"exercise_id":"backsquat","sets":3,"reps":"12-15","rpe":6.5}]}]}. Genereer exact ${weken*dagen} blokken (1 per trainingsdag, chronologisch), elk met 3-6 oefeningen.`;
-  try{
-    const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:4000,system:sys,messages:[{role:'user',content:'Genereer het programma.'}]})});
-    const d=await res.json();
-    if(d.error){statusEl.textContent='Fout: '+d.error.message;return;}
-    const txt=d.content[0].text;
-    const parsed=parseProgrammaJSON(txt,exercises);
-    if(!parsed){statusEl.textContent='AI-antwoord kon niet worden gelezen. Probeer opnieuw.';return;}
-    statusEl.textContent=parsed.blocks.length+' trainingen voorgesteld — losse oefeningen kun je na opslaan nog aanpassen.';
-    window._progConcept={naam,doel,schemaType,weekdagen,dagenPerWeek:dagen,blocks:parsed.blocks};
-    renderProgConcept(parsed.blocks);
-  }catch(e){statusEl.textContent='Verbindingsfout. Check internet.';}
+  const profielTekst=atleetProfielTekst(atleet);
+  const sportLabel=SPORT_FOCUS_LABELS[sport]||sport;
+  const allBlocks=[],faseHistorie=[];
+  for(let wk=1; wk<=weken; wk++){
+    statusEl.textContent=`Week ${wk}/${weken} genereren...`;
+    progressFill.style.width=Math.round(((wk-1)/weken)*100)+'%';
+    const sys=buildWeekPrompt(wk,weken,dagen,doel,sportLabel,profielTekst,bibliotheek,faseHistorie);
+    try{
+      const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1500,system:sys,messages:[{role:'user',content:'Genereer week '+wk+'.'}]})});
+      const d=await res.json();
+      if(d.error){statusEl.textContent='Fout in week '+wk+': '+d.error.message+(allBlocks.length?' — eerdere weken blijven staan.':'');break;}
+      const parsed=parseProgrammaJSON(d.content[0].text,exercises);
+      if(!parsed){statusEl.textContent='Week '+wk+' kon niet worden gelezen — gestopt.'+(allBlocks.length?' Eerdere weken blijven staan.':'');break;}
+      parsed.blocks.forEach(b=>{b.week_nr=wk;allBlocks.push(b);faseHistorie.push(b.fase_naam);});
+      renderProgConcept(allBlocks,false);
+    }catch(e){statusEl.textContent='Verbindingsfout bij week '+wk+'.'+(allBlocks.length?' Eerdere weken blijven staan.':'');break;}
+  }
+  progressFill.style.width='100%';
+  genBtn.disabled=false;
+  if(allBlocks.length){
+    statusEl.textContent=allBlocks.length+' trainingen voorgesteld — losse oefeningen kun je na opslaan nog aanpassen.';
+    window._progConcept={naam,doel,sport,schemaType,weekdagen,dagenPerWeek:dagen,blocks:allBlocks};
+    renderProgConcept(allBlocks,true);
+  }else if(!statusEl.textContent){
+    statusEl.textContent='Genereren mislukt. Probeer opnieuw.';
+  }
 }
 // Pure parse/validatie-functie — apart zodat hij los testbaar is
 function parseProgrammaJSON(txt,exerciseList){
@@ -2515,7 +2596,7 @@ function parseProgrammaJSON(txt,exerciseList){
     return valid?obj:null;
   }catch{return null;}
 }
-function renderProgConcept(blocks){
+function renderProgConcept(blocks,showSaveBtn){
   const el=document.getElementById('prog-concept');
   el.innerHTML=blocks.map(b=>`
     <div style="border:1px solid var(--g2);border-radius:10px;padding:8px 10px;margin-bottom:6px">
@@ -2524,14 +2605,14 @@ function renderProgConcept(blocks){
         const ex=exercises.find(e=>e.id===o.exercise_id);
         return (ex?ex.name:o.exercise_id)+' '+o.sets+'×'+o.reps+(o.rpe?' @RPE'+o.rpe:'');
       }).join(' · ')}</div>
-    </div>`).join('')+`<button class="btn btn-r" style="margin-top:10px;width:100%" onclick="opslaanProgramma()">Programma opslaan</button>`;
+    </div>`).join('')+(showSaveBtn!==false?`<button class="btn btn-r" style="margin-top:10px;width:100%" onclick="opslaanProgramma()">Programma opslaan</button>`:'');
 }
 async function opslaanProgramma(){
   const c=window._progConcept;
   if(!c)return;
   const startDate=td();
   const plannedDates=computeBlockPlannedDates(startDate,c.blocks.length,c.schemaType,c.weekdagen,c.dagenPerWeek);
-  const prog=await sbPostReturning('programs',{naam:c.naam,doel:c.doel,start_date:startDate,status:'actief',schema_type:c.schemaType,weekdagen:(c.weekdagen&&c.weekdagen.length)?c.weekdagen:null});
+  const prog=await sbPostReturning('programs',{naam:c.naam,doel:c.doel,sport:c.sport||null,start_date:startDate,status:'actief',schema_type:c.schemaType,weekdagen:(c.weekdagen&&c.weekdagen.length)?c.weekdagen:null});
   const progId=prog?.[0]?.id;
   if(!progId){toast('Opslaan mislukt — tabel programs bestaat mogelijk nog niet');return;}
   for(let i=0;i<c.blocks.length;i++){
@@ -5561,11 +5642,11 @@ async function startCustomTraining(id){
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.add('show'));
 }
 
-// Programma-training starten (v310): zelfde Unified Training Editor als Training A/B en
-// Workouts, maar de oefeningenlijst komt uit program_block_exercises van dit specifieke
-// blok, inclusief de door de AI voorgestelde sets/reps/RPE. Bij afronden (finishSession)
-// wordt completed_at op het blok gezet — dat bepaalt wat de "Verder met programma"-knop
-// op home als volgende pakt.
+// Programma-training starten (v311): eerst een korte check-in (slaap/gevoel/pijn), dan een
+// stille achtergrondcheck van herstel (dagfactor) + spierbelasting voor de spieren die deze
+// training raakt. Is er reden tot aanpassing, dan wordt dat als coach-advies voorgelegd —
+// pas na bevestiging worden sets/reps/RPE voor deze sessie aangepast. Nooit stilzwijgend.
+let progCheckinCtx=null;
 async function startProgramBlockTraining(blockId){
   if(!blockId)return;
   await ensureExercisesLoaded();
@@ -5574,6 +5655,70 @@ async function startProgramBlockTraining(blockId){
   if(!block){toast('Training niet gevonden');return;}
   const rows=await sbGet('program_block_exercises','&program_block_id=eq.'+blockId+'&order=sort_order.asc');
   if(!rows.length){toast('Deze training heeft nog geen oefeningen — voeg ze eerst toe');return;}
+  const prog=(await sbGet('programs','&id=eq.'+block.program_id))[0]||null;
+  progCheckinCtx={blockId,block,prog,rows,voelt:null,pijn:null};
+  await openProgCheckin();
+}
+async function openProgCheckin(){
+  const hd=await sbGet('hrv_log','&date=eq.'+td()+'&order=created_at.desc&limit=1');
+  progCheckinCtx.todayHrv=hd[0]||null;
+  const sleepRow=document.getElementById('pchk-sleep-row');
+  sleepRow.style.display=(progCheckinCtx.todayHrv&&progCheckinCtx.todayHrv.sleep)?'none':'';
+  document.getElementById('pchk-sleep-h').value='';
+  document.getElementById('pchk-voelt-list').innerHTML=['slecht','matig','goed','top'].map(v=>
+    `<button type="button" class="rower-chip" onclick="pchkSelectVoelt('${v}',this)">${v[0].toUpperCase()+v.slice(1)}</button>`).join('');
+  const pijnOpties=['Geen',...Object.keys(MUSCLE_RECOVERY_HOURS)];
+  document.getElementById('pchk-pijn-list').innerHTML=pijnOpties.map(m=>
+    `<button type="button" class="rower-chip" onclick="pchkSelectPijn('${m}',this)">${m}</button>`).join('');
+  progCheckinCtx.voelt=null;progCheckinCtx.pijn=null;
+  openModal('m-prog-checkin');
+}
+function pchkSelectVoelt(v,btn){
+  progCheckinCtx.voelt=v;
+  document.querySelectorAll('#pchk-voelt-list .rower-chip').forEach(c=>c.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+function pchkSelectPijn(v,btn){
+  progCheckinCtx.pijn=(v==='Geen')?null:v;
+  document.querySelectorAll('#pchk-pijn-list .rower-chip').forEach(c=>c.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+async function pchkSkip(){closeModal('m-prog-checkin');await evaluateProgAdjustment();}
+async function pchkSubmit(){
+  const uren=parseFloat(document.getElementById('pchk-sleep-h').value)||null;
+  if(uren&&!(progCheckinCtx.todayHrv&&progCheckinCtx.todayHrv.sleep)){
+    await sbPost('hrv_log',{date:td(),sleep:uren,note:'Check-in bij programmatraining'});
+  }
+  closeModal('m-prog-checkin');
+  await evaluateProgAdjustment();
+}
+// Stille achtergrondcheck: dagfactor (HRV/slaap) + spierherstel voor de spieren die deze
+// training raakt. Pure beslislogica zit in computeProgAdjustment (los testbaar).
+async function evaluateProgAdjustment(){
+  const {rows}=progCheckinCtx;
+  const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=1');
+  const lh=hd[0];
+  const df=lh?dagfactor(lh.hrv,lh.sleep,lh.cyclus_fase):{factor:1};
+  const muscleSet=new Set();
+  rows.forEach(r=>getExerciseMuscles(r.exercise_id).forEach(m=>muscleSet.add(m)));
+  const muscleRows=await getRelevantMuscleRecovery([...muscleSet]);
+  const adj=computeProgAdjustment(df.factor,muscleRows,progCheckinCtx.voelt,progCheckinCtx.pijn);
+  progCheckinCtx.adjustment=adj;
+  if(adj){
+    document.getElementById('padv-body').innerHTML=`
+      <div style="font-size:13px;color:var(--g4);margin-bottom:10px">${adj.redenen.map(r=>'• '+r).join('<br>')}</div>
+      <div style="font-size:13px">Voorstel: ${[adj.setsDelta?Math.abs(adj.setsDelta)+' set minder':'',adj.rpeDelta?'RPE '+adj.rpeDelta:''].filter(Boolean).join(' en ')||'lichtere belasting'} voor deze training.</div>
+      ${adj.painMuscle?`<div style="font-size:12px;color:var(--g4);margin-top:8px">Voel je pijn tijdens een oefening voor <b>${adj.painMuscle}</b>? Verwijder die dan met het kruisje in de trainingslijst.</div>`:''}`;
+    openModal('m-prog-advies');
+  }else{
+    await launchProgramTrainScreen(null);
+  }
+}
+function padvDecline(){closeModal('m-prog-advies');launchProgramTrainScreen(null);}
+async function padvAccept(){closeModal('m-prog-advies');await launchProgramTrainScreen(progCheckinCtx.adjustment);}
+
+async function launchProgramTrainScreen(adjustment){
+  const {blockId,block,prog,rows}=progCheckinCtx;
   const ctxT='prog_'+blockId;
   curT=ctxT;sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;
   pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};
@@ -5582,19 +5727,27 @@ async function startProgramBlockTraining(blockId){
     if(!ex)return;
     const cardioType=resolveCardioType(ex);
     const exType=cardioType||ex.type||'strength';
-    const extra=cardioType
-      ?{id:ex.id,naam:ex.name,type:exType,_t:ctxT,_preloaded:true}
-      :{id:ex.id,naam:ex.name,type:exType,sets:r.sets||3,reps:r.reps||'8-10',rpe:r.rpe_target||'7',_t:ctxT,_preloaded:true};
-    sessionExtra.push(extra);
+    if(cardioType){
+      sessionExtra.push({id:ex.id,naam:ex.name,type:exType,_t:ctxT,_preloaded:true});
+      return;
+    }
+    let sets=r.sets||3, rpe=parseFloat(r.rpe_target)||7;
+    if(adjustment){
+      sets=Math.max(1,sets+(adjustment.setsDelta||0));
+      rpe=Math.max(5,Math.min(10,rpe+(adjustment.rpeDelta||0)));
+    }
+    sessionExtra.push({id:ex.id,naam:ex.name,type:exType,sets,reps:r.reps||'8-10',rpe:String(rpe),_t:ctxT,_preloaded:true});
   });
-  buildProgramTrainScreen(block);
+  buildProgramTrainScreen(block,prog);
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('s-train-prog-'+blockId)?.classList.add('active');
   await renderTrainScreen(ctxT);
   trainStart=Date.now();startTrainTimer(ctxT);
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.add('show'));
+  if(adjustment)toast('Belasting aangepast voor deze training');
+  progCheckinCtx=null;
 }
-function buildProgramTrainScreen(block){
+function buildProgramTrainScreen(block,prog){
   let el=document.getElementById('s-train-prog-'+block.id);
   if(!el){
     el=document.createElement('div');
@@ -5616,6 +5769,7 @@ function buildProgramTrainScreen(block){
           <button class="tact green" onclick="showSessionSummary('${ctxT}')">✓</button>
         </div>
       </div>
+      ${prog?`<div style="font-size:10px;color:var(--accent);font-weight:700;letter-spacing:.3px;text-transform:uppercase">${prog.naam}</div>`:''}
       <div style="font-size:13px;font-weight:700;color:var(--g4);letter-spacing:.3px;text-transform:uppercase;margin-bottom:4px">${block.fase_naam||'Programma'} · Wk ${block.week_nr}</div>
       <div style="font-size:11px;color:var(--g4);margin-bottom:8px" id="prog-${ctxT.toLowerCase()}-lbl">0 oefeningen</div>
       <div class="prog-wrap"><div class="prog-fill" id="prog-${ctxT.toLowerCase()}" style="width:0%"></div></div>
@@ -6120,6 +6274,45 @@ function rpeMultiplier(rpe){
 function computeMuscleRecoveryPct(hoursSince, baseHours, rpe){
   const effHours = baseHours * rpeMultiplier(rpe);
   return Math.min(100, Math.round(hoursSince/effHours*100));
+}
+
+// Zelfde herstel-berekening als refreshMuscleRecovery, maar geschaald naar alleen de
+// spieren die vandaag's programmatraining raakt — voor de coach-check-in (v311).
+async function getRelevantMuscleRecovery(muscleNames){
+  if(!muscleNames||!muscleNames.length)return [];
+  const twoWeeksAgo=new Date();twoWeeksAgo.setDate(twoWeeksAgo.getDate()-14);
+  const dateStr=twoWeeksAgo.toISOString().split('T')[0];
+  const ss=await sbGet('sessions','&date=gte.'+dateStr+'&order=date.desc,created_at.desc');
+  const lastHit={};
+  ss.forEach(s=>{
+    getExerciseMuscles(s.exercise_id).forEach(m=>{if(!lastHit[m])lastHit[m]={date:s.date,rpe:s.rpe};});
+  });
+  const now=new Date();
+  return muscleNames.filter(m=>MUSCLE_RECOVERY_HOURS[m]).map(m=>{
+    const hit=lastHit[m];
+    if(!hit)return {muscle:m,pct:100,hours:null};
+    const hoursSince=(now-new Date(hit.date))/3600000;
+    return {muscle:m,pct:computeMuscleRecoveryPct(hoursSince,MUSCLE_RECOVERY_HOURS[m],hit.rpe),hours:Math.round(hoursSince)};
+  });
+}
+// Pure beslislogica — los testbaar. Bepaalt OF en welke aanpassing wordt voorgesteld
+// (nooit stilzwijgend toegepast — de checkin-flow legt dit altijd eerst voor).
+function computeProgAdjustment(factor,muscleRecoveryRows,voelt,painMuscle){
+  const laag=(muscleRecoveryRows||[]).filter(r=>r.pct<70);
+  const slecht=voelt==='slecht';
+  const matig=voelt==='matig';
+  const nodig=factor<0.97||laag.length>0||slecht||matig||!!painMuscle;
+  if(!nodig)return null;
+  let rpeDelta=0,setsDelta=0;
+  if(factor<0.90||slecht){rpeDelta=-1.5;setsDelta=-1;}
+  else if(factor<0.97||matig||laag.length){rpeDelta=-0.5;}
+  const redenen=[];
+  if(factor<0.97)redenen.push('herstel-dagfactor '+factor);
+  if(laag.length)redenen.push('laag spierherstel: '+laag.map(r=>r.muscle+' '+r.pct+'%').join(', '));
+  if(slecht)redenen.push('je gaf aan je slecht te voelen');
+  if(matig)redenen.push('je gaf aan je matig te voelen');
+  if(painMuscle)redenen.push('pijn/ongemak gemeld: '+painMuscle);
+  return {rpeDelta,setsDelta,redenen,painMuscle};
 }
 
 async function refreshMuscleRecovery(){

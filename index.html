@@ -1093,6 +1093,17 @@ canvas{width:100%;height:100%}
   </div>
 </div>
 
+<!-- ═══ PROGRAMMA — OEFENING WISSELEN (zelfde spiergroep, ander alternatief) ═══ -->
+<div class="modal-bg" id="m-swap-exercise" onclick="bgClose(event,'m-swap-exercise')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Wissel oefening</div>
+    <div style="font-size:12px;color:var(--g4);margin-bottom:10px">Alternatieven voor dezelfde spiergroep, alleen voor deze training</div>
+    <div id="swap-ex-list" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+    <button class="btn btn-o" style="margin-top:16px;width:100%" onclick="closeModal('m-swap-exercise')">Annuleer</button>
+  </div>
+</div>
+
 <div class="modal-bg" id="m-newex" onclick="bgClose(event,'m-newex')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -1473,7 +1484,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.1.4';
+const APP_VER = 'v3.1.5';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -2596,16 +2607,29 @@ function exercisesTargetForDuration(minutes){
   if(!minutes)return 4;
   return Math.max(2,Math.min(8,Math.round(minutes/12)));
 }
-function buildWeekPrompt(wk,weken,dagDuren,doel,sportLabel,profielTekst,bibliotheek,faseHistorie){
+function buildWeekPrompt(wk,weken,dagDuren,doel,sportLabel,profielTekst,bibliotheek,faseHistorie,extraContext){
   const dagen=dagDuren.length;
   const context=(faseHistorie&&faseHistorie.length)
     ? `Eerdere weken hadden als fase: ${faseHistorie.join(' → ')}. Zorg dat week ${wk} logisch daarop voortbouwt richting een sluitende periodisering (opbouw → hypertrofie → kracht → deload waar passend).`
     : `Dit is de eerste week van het programma — kies een passende openingsfase.`;
   const dagInstructies=dagDuren.map((min,i)=>`dag ${i+1}: ${min} min → ±${exercisesTargetForDuration(min)} oefeningen`).join(', ');
-  return `Je bent trainingscoach. Je bouwt week ${wk} van ${weken} van een periodiseringsschema, ${dagen} trainingsdagen deze week. Sportrichting: ${sportLabel}. Doel: ${doel}. Atleetprofiel: ${profielTekst}. ${context} Beschikbare tijd per trainingsdag deze week (bepaalt hoeveel oefeningen passend zijn): ${dagInstructies}. Kies voor elke trainingsdag zelf de beste oefeningen UIT DEZE BIBLIOTHEEK (gebruik alleen deze exercise_id's, verzin geen nieuwe): ${bibliotheek}. Antwoord ALLEEN met geldige JSON, geen uitleg, in dit exacte formaat: {"blocks":[{"week_nr":${wk},"fase_naam":"Anatomische Aanpassing","oefeningen":[{"exercise_id":"backsquat","sets":3,"reps":"12-15","rpe":6.5}]}]}. Genereer exact ${dagen} blokken voor deze week (1 per dag, in volgorde dag 1..${dagen}), elk met het bij die dag passende aantal oefeningen.`;
+  return `Je bent trainingscoach. Je bouwt week ${wk} van ${weken} van een periodiseringsschema, ${dagen} trainingsdagen deze week. Sportrichting: ${sportLabel}. Doel: ${doel}. Atleetprofiel: ${profielTekst}. ${context} Beschikbare tijd per trainingsdag deze week (bepaalt hoeveel oefeningen passend zijn): ${dagInstructies}.${extraContext?' '+extraContext:''} Kies voor elke trainingsdag zelf de beste oefeningen UIT DEZE BIBLIOTHEEK (gebruik alleen deze exercise_id's, verzin geen nieuwe): ${bibliotheek}. Antwoord ALLEEN met geldige JSON, geen uitleg, in dit exacte formaat: {"blocks":[{"week_nr":${wk},"fase_naam":"Anatomische Aanpassing","oefeningen":[{"exercise_id":"backsquat","sets":3,"reps":"12-15","rpe":6.5}]}]}. Genereer exact ${dagen} blokken voor deze week (1 per dag, in volgorde dag 1..${dagen}), elk met het bij die dag passende aantal oefeningen.`;
 }
 function atleetProfielTekst(a){
   return `${a.leeftijd||'?'} jaar, ${a.geslacht||'?'}, ervaringsniveau ${a.niveau||'?'}${a.klasse?', gewichtsklasse '+a.klasse+'kg':''}`;
+}
+// Vat recent gemelde pijn/ongemak (checkin_conditions, laatste 30 dagen) samen tot een
+// prompt-regel, zodat de generator zware belasting op die spiergroepen kan vermijden of
+// beperken. Geeft '' als er niets relevants gemeld is (dan blijft de prompt ongewijzigd).
+async function getRecentPainSummary(){
+  const since=new Date();since.setDate(since.getDate()-30);
+  const sinceStr=since.toISOString().split('T')[0];
+  const rows=await sbGet('checkin_conditions','&date=gte.'+sinceStr+'&condition_label=like.Pijn*');
+  if(!rows.length)return '';
+  const counts={};
+  rows.forEach(r=>{const loc=r.condition_label.replace('Pijn: ','');counts[loc]=(counts[loc]||0)+1;});
+  const summary=Object.entries(counts).map(([m,c])=>m+(c>1?' ('+c+'x gemeld)':'')).join(', ');
+  return `Recent gemelde pijn/ongemak (laatste 30 dagen): ${summary}. Vermijd of beperk zware belasting op deze spiergroepen, of kies alternatieve oefeningen.`;
 }
 // Genereert per week een aparte, kleine AI-call i.p.v. één grote call voor het hele programma.
 // Voorkomt de Netlify-timeout bij lange programma's (v310-bug) én levert een echte
@@ -2635,11 +2659,12 @@ async function genereerProgramma(){
   const bibliotheek=exercises.filter(e=>e.active!==false).map(e=>`${e.id}:${e.name}(${e.type||'strength'})`).join(', ');
   const profielTekst=atleetProfielTekst(atleet);
   const sportLabel=SPORT_FOCUS_LABELS[sport]||sport;
+  const blessureContext=await getRecentPainSummary();
   const allBlocks=[],faseHistorie=[];
   for(let wk=1; wk<=weken; wk++){
     statusEl.textContent=`Week ${wk}/${weken} genereren...`;
     progressFill.style.width=Math.round(((wk-1)/weken)*100)+'%';
-    const sys=buildWeekPrompt(wk,weken,dagDuren,doel,sportLabel,profielTekst,bibliotheek,faseHistorie);
+    const sys=buildWeekPrompt(wk,weken,dagDuren,doel,sportLabel,profielTekst,bibliotheek,faseHistorie,blessureContext);
     try{
       const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1500,system:sys,messages:[{role:'user',content:'Genereer week '+wk+'.'}]})});
       const d=await res.json();
@@ -2710,6 +2735,25 @@ async function opslaanProgramma(){
 // Wordt geïnvalideerd (delete) zodra oefeningen in de detailpagina worden aangepast.
 let programBlockExCache={};
 
+// Voortgang van een programma: adherence (% afgeronde blokken) + gemiddelde afwijking
+// tussen gelogde RPE en geprogrammeerde RPE-target over de al afgeronde blokken. Voedt
+// zowel het overzicht in de lijst als de context voor heergenereerResterendeWeken.
+async function computeProgramProgress(blocks){
+  const completed=blocks.filter(b=>b.completed_at);
+  if(!completed.length)return {adherencePct:0,avgRpeDelta:null,doneCount:0,total:blocks.length};
+  const rpeDeltas=[];
+  for(const b of completed){
+    const rows=await sbGet('program_block_exercises','&program_block_id=eq.'+b.id);
+    const presRpe=rows.map(r=>parseFloat(r.rpe_target)).filter(v=>!isNaN(v));
+    const avgPres=presRpe.length?presRpe.reduce((a,c)=>a+c,0)/presRpe.length:null;
+    const sess=await sbGet('sessions','&training_type=eq.prog_'+b.id);
+    const loggedRpe=sess.map(s=>parseFloat(s.rpe)).filter(v=>!isNaN(v));
+    const avgLogged=loggedRpe.length?loggedRpe.reduce((a,c)=>a+c,0)/loggedRpe.length:null;
+    if(avgPres!=null&&avgLogged!=null)rpeDeltas.push(avgLogged-avgPres);
+  }
+  const avgRpeDelta=rpeDeltas.length?Math.round((rpeDeltas.reduce((a,c)=>a+c,0)/rpeDeltas.length)*10)/10:null;
+  return {adherencePct:Math.round(completed.length/blocks.length*100),avgRpeDelta,doneCount:completed.length,total:blocks.length};
+}
 async function renderProgrammaList(){
   const el=document.getElementById('programma-list');
   if(!el)return;
@@ -2718,13 +2762,15 @@ async function renderProgrammaList(){
   let h='';
   for(const p of progs){
     const blocks=await sbGet('program_blocks','&program_id=eq.'+p.id+'&order=week_nr.asc');
-    const doneCount=blocks.filter(b=>b.completed_at).length;
+    const prog=await computeProgramProgress(blocks);
+    const hasIncomplete=blocks.some(b=>!b.completed_at);
     h+=`<div class="card"><div class="card-body" style="padding:14px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
         <div style="font-size:15px;font-weight:700">${p.naam}</div>
         <button onclick="deleteProgramma('${p.id}')" title="Programma verwijderen" style="background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:0 2px;line-height:1">🗑</button>
       </div>
-      <div style="font-size:12px;color:var(--g4);margin-bottom:8px">${p.doel||''} · ${doneCount}/${blocks.length} afgerond · gestart ${p.start_date}</div>
+      <div style="font-size:12px;color:var(--g4);margin-bottom:4px">${p.doel||''} · ${prog.doneCount}/${prog.total} afgerond · gestart ${p.start_date}</div>
+      <div style="font-size:11px;color:var(--g4);margin-bottom:8px">📊 ${prog.adherencePct}% adherence${prog.avgRpeDelta!=null?` · gem. RPE ${prog.avgRpeDelta>0?'+':''}${prog.avgRpeDelta} t.o.v. plan`:''}</div>
       ${blocks.map(b=>`
         <div class="lrow" style="align-items:center">
           <div class="ldate" style="width:60px">Wk ${b.week_nr}</div>
@@ -2734,6 +2780,7 @@ async function renderProgrammaList(){
         </div>
         <div id="blk-exp-${b.id}" style="display:none;padding:0 0 10px 68px"></div>
       `).join('')}
+      ${hasIncomplete?`<button class="btn btn-o" style="margin-top:8px;width:100%;font-size:12px" onclick="heergenereerResterendeWeken('${p.id}')">↻ Her-genereer resterende weken</button>`:''}
     </div></div>`;
   }
   el.innerHTML=h;
@@ -2746,6 +2793,63 @@ async function deleteProgramma(progId){
   await sbDel('programs','id=eq.'+progId);
   programBlockExCache={};
   toast('Programma verwijderd');
+  renderProgrammaList();
+  refreshHome();
+}
+// Vervangt alle nog niet-afgeronde blokken door een nieuwe generatie, met als extra context
+// hoe het écht ging (adherence + gemiddelde RPE-afwijking) en recent gemelde pijn. Al
+// afgeronde blokken/weken blijven volledig ongemoeid.
+async function heergenereerResterendeWeken(progId){
+  const prog=(await sbGet('programs','&id=eq.'+progId))[0];
+  if(!prog){toast('Programma niet gevonden');return;}
+  const blocks=await sbGet('program_blocks','&program_id=eq.'+progId+'&order=week_nr.asc');
+  const incomplete=blocks.filter(b=>!b.completed_at);
+  if(!incomplete.length){toast('Niets om te her-genereren — programma is al afgerond');return;}
+  const completed=blocks.filter(b=>b.completed_at);
+  const progress=await computeProgramProgress(blocks);
+  const dagenPerWeek=blocks.filter(b=>b.week_nr===blocks[0].week_nr).length||2;
+  const incompleteWeeks=[...new Set(incomplete.map(b=>b.week_nr))].sort((a,b)=>a-b);
+  const maxWeek=Math.max(...blocks.map(b=>b.week_nr));
+  const bevestiging=`Weken ${incompleteWeeks.join(', ')} opnieuw genereren o.b.v. hoe het écht ging (${progress.adherencePct}% adherence tot nu toe${progress.avgRpeDelta!=null?`, gem. RPE ${progress.avgRpeDelta>0?'+':''}${progress.avgRpeDelta} t.o.v. plan`:''})? Nog niet-uitgevoerde trainingen in deze weken worden vervangen.`;
+  if(!confirm(bevestiging))return;
+  await ensureExercisesLoaded();
+  for(const b of incomplete){
+    await sbDel('program_block_exercises','program_block_id=eq.'+b.id);
+    await sbDel('program_blocks','id=eq.'+b.id);
+  }
+  const bibliotheek=exercises.filter(e=>e.active!==false).map(e=>`${e.id}:${e.name}(${e.type||'strength'})`).join(', ');
+  const profielTekst=atleetProfielTekst(atleet);
+  const sportLabel=SPORT_FOCUS_LABELS[prog.sport]||prog.sport||'algemeen';
+  const dagDuren=Array.from({length:dagenPerWeek},(_,i)=>(prog.duur_overrides&&prog.duur_overrides[i+1])||prog.duur_minuten||60);
+  const faseHistorie=completed.filter(b=>b.week_nr<incompleteWeeks[0]).map(b=>b.fase_naam);
+  const blessureContext=await getRecentPainSummary();
+  const voortgangContext=`Voortgang tot nu toe: ${progress.adherencePct}% van de trainingen afgerond${progress.avgRpeDelta!=null?`, gemiddelde gelogde RPE lag ${progress.avgRpeDelta>0?progress.avgRpeDelta+' hoger':Math.abs(progress.avgRpeDelta)+' lager'} dan gepland — houd hier rekening mee (bv. iets conservatiever opbouwen als RPE stelselmatig hoger uitviel dan bedoeld).`:'.'}${blessureContext?' '+blessureContext:''}`;
+  toast('Resterende weken worden her-gegenereerd...');
+  const newBlocks=[];
+  for(const wk of incompleteWeeks){
+    const sys=buildWeekPrompt(wk,maxWeek,dagDuren,prog.doel,sportLabel,profielTekst,bibliotheek,faseHistorie,voortgangContext);
+    try{
+      const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1500,system:sys,messages:[{role:'user',content:'Genereer week '+wk+'.'}]})});
+      const d=await res.json();
+      if(d.error){toast('Fout bij week '+wk+': '+d.error.message);break;}
+      const parsed=parseProgrammaJSON(d.content[0].text,exercises);
+      if(!parsed){toast('Week '+wk+' kon niet worden gelezen — gestopt');break;}
+      parsed.blocks.forEach(b=>{b.week_nr=wk;newBlocks.push(b);faseHistorie.push(b.fase_naam);});
+    }catch(e){toast('Verbindingsfout bij week '+wk);break;}
+  }
+  if(!newBlocks.length){renderProgrammaList();return;}
+  const plannedDates=computeBlockPlannedDates(td(),newBlocks.length,prog.schema_type,prog.weekdagen||[],dagenPerWeek);
+  for(let i=0;i<newBlocks.length;i++){
+    const b=newBlocks[i];
+    const inserted=await sbPostReturning('program_blocks',{program_id:progId,week_nr:b.week_nr,fase_naam:b.fase_naam,planned_date:plannedDates[i]});
+    const blockId=inserted?.[0]?.id;
+    if(!blockId)continue;
+    let sortOrder=0;
+    for(const o of b.oefeningen){
+      await sbPost('program_block_exercises',{program_block_id:blockId,exercise_id:o.exercise_id,sort_order:sortOrder++,sets:o.sets||null,reps:o.reps?String(o.reps):null,rpe_target:o.rpe?String(o.rpe):null});
+    }
+  }
+  toast(newBlocks.length+' trainingen her-gegenereerd');
   renderProgrammaList();
   refreshHome();
 }
@@ -2954,7 +3058,7 @@ async function renderTrainScreen(t){
     div.innerHTML=`
       <div class="ex-card-hd" onclick="toggleExCard('${ex.id}')">
         <div style="flex:1">
-          <div class="ex-card-name">${ex.naam}${!isDefault?` <button onclick="event.stopPropagation();removeExSession('${ex.id}')" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;margin-left:4px">✕</button>`:''}</div>
+          <div class="ex-card-name">${ex.naam}${t.startsWith('prog_')?` <button onclick="event.stopPropagation();openSwapExercise('${ex.id}','${t}')" title="Wissel voor alternatief" style="background:none;border:none;color:var(--accent);font-size:13px;cursor:pointer;margin-left:4px">⇄</button>`:''}${!isDefault?` <button onclick="event.stopPropagation();removeExSession('${ex.id}')" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;margin-left:4px">✕</button>`:''}</div>
           <div class="ex-card-meta">${resolveCardioType(ex)?(CARDIO_TYPES[resolveCardioType(ex)]?.naam||'Cardio'):ex.sets+'×'+ex.reps+(ex.rpe?' · RPE '+ex.rpe:'')}</div>
         </div>
         <span style="color:var(--g3);font-size:20px" id="arr-${ex.id}">›</span>
@@ -5730,6 +5834,37 @@ async function startCustomTraining(id){
 // stille achtergrondcheck van herstel (dagfactor) + spierbelasting voor de spieren die deze
 // training raakt. Is er reden tot aanpassing, dan wordt dat als coach-advies voorgelegd —
 // pas na bevestiging worden sets/reps/RPE voor deze sessie aangepast. Nooit stilzwijgend.
+// Pure filter — los testbaar: kandidaten die minstens één primaire spiergroep delen met
+// de huidige oefening, met uitsluiting van al aanwezige/eigen oefeningen.
+function filterSwapCandidates(allExercises,currentMusclesPrimary,excludeIds){
+  const primary=new Set(currentMusclesPrimary||[]);
+  if(!primary.size)return [];
+  return allExercises.filter(e=>!excludeIds.includes(e.id)&&e.active!==false&&(e.muscle_primary||[]).some(m=>primary.has(m)));
+}
+let swapCtx=null;
+function openSwapExercise(exId,t){
+  const ex=exercises.find(e=>e.id===exId);
+  if(!ex){toast('Oefening niet gevonden');return;}
+  const excludeIds=[exId,...sessionExtra.map(e=>e.id)];
+  const candidates=filterSwapCandidates(exercises,ex.muscle_primary,excludeIds);
+  if(!candidates.length){toast('Geen alternatief gevonden voor dezelfde spiergroep');return;}
+  swapCtx={fromId:exId,t};
+  document.getElementById('swap-ex-list').innerHTML=candidates.slice(0,10).map(c=>
+    `<button type="button" class="rower-chip" onclick="confirmSwapExercise('${c.id}')">${c.name}</button>`).join('');
+  openModal('m-swap-exercise');
+}
+async function confirmSwapExercise(newId){
+  const {fromId,t}=swapCtx;
+  const idx=sessionExtra.findIndex(e=>e.id===fromId);
+  if(idx===-1){closeModal('m-swap-exercise');return;}
+  const newEx=exercises.find(e=>e.id===newId);
+  if(!newEx)return;
+  sessionExtra[idx]={...sessionExtra[idx],id:newId,naam:newEx.name,type:newEx.type||sessionExtra[idx].type};
+  delete sessionLog[fromId];delete pctSelection[fromId];delete rpeManual[fromId];delete warmupState[fromId];
+  closeModal('m-swap-exercise');
+  await renderTrainScreen(t);
+  toast('Oefening gewisseld voor deze training');
+}
 let progCheckinCtx=null;
 async function startProgramBlockTraining(blockId){
   if(!blockId)return;
@@ -5793,6 +5928,11 @@ async function pchkSubmit(){
       cyclus_fase:th?.cyclus_fase||null,
       note:'Check-in bij programmatraining'
     });
+  }
+  // Pijn/ongemak persisteren (was voorheen alleen tijdelijk voor dit advies) — bouwt een
+  // geschiedenis op die weer meegaat als context bij toekomstige programmagenerering.
+  if(progCheckinCtx.pijn){
+    await sbPost('checkin_conditions',{date:td(),condition_label:'Pijn: '+progCheckinCtx.pijn,severity:'gemeld'});
   }
   closeModal('m-prog-checkin');
   await evaluateProgAdjustment();

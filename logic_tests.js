@@ -568,13 +568,13 @@ function exercisesTargetForDuration(minutes){
   if(!minutes)return 4;
   return Math.max(2,Math.min(8,Math.round(minutes/12)));
 }
-function buildWeekPrompt(wk,weken,dagDuren,doel,sportLabel,profielTekst,bibliotheek,faseHistorie){
+function buildWeekPrompt(wk,weken,dagDuren,doel,sportLabel,profielTekst,bibliotheek,faseHistorie,extraContext){
   const dagen=dagDuren.length;
   const context=(faseHistorie&&faseHistorie.length)
     ? `Eerdere weken hadden als fase: ${faseHistorie.join(' → ')}. Zorg dat week ${wk} logisch daarop voortbouwt richting een sluitende periodisering (opbouw → hypertrofie → kracht → deload waar passend).`
     : `Dit is de eerste week van het programma — kies een passende openingsfase.`;
   const dagInstructies=dagDuren.map((min,i)=>`dag ${i+1}: ${min} min → ±${exercisesTargetForDuration(min)} oefeningen`).join(', ');
-  return `Je bent trainingscoach. Je bouwt week ${wk} van ${weken} van een periodiseringsschema, ${dagen} trainingsdagen deze week. Sportrichting: ${sportLabel}. Doel: ${doel}. Atleetprofiel: ${profielTekst}. ${context} Beschikbare tijd per trainingsdag deze week (bepaalt hoeveel oefeningen passend zijn): ${dagInstructies}. Kies voor elke trainingsdag zelf de beste oefeningen UIT DEZE BIBLIOTHEEK (gebruik alleen deze exercise_id's, verzin geen nieuwe): ${bibliotheek}. Antwoord ALLEEN met geldige JSON, geen uitleg, in dit exacte formaat: {"blocks":[{"week_nr":${wk},"fase_naam":"Anatomische Aanpassing","oefeningen":[{"exercise_id":"backsquat","sets":3,"reps":"12-15","rpe":6.5}]}]}. Genereer exact ${dagen} blokken voor deze week (1 per dag, in volgorde dag 1..${dagen}), elk met het bij die dag passende aantal oefeningen.`;
+  return `Je bent trainingscoach. Je bouwt week ${wk} van ${weken} van een periodiseringsschema, ${dagen} trainingsdagen deze week. Sportrichting: ${sportLabel}. Doel: ${doel}. Atleetprofiel: ${profielTekst}. ${context} Beschikbare tijd per trainingsdag deze week (bepaalt hoeveel oefeningen passend zijn): ${dagInstructies}.${extraContext?' '+extraContext:''} Kies voor elke trainingsdag zelf de beste oefeningen UIT DEZE BIBLIOTHEEK (gebruik alleen deze exercise_id's, verzin geen nieuwe): ${bibliotheek}. Antwoord ALLEEN met geldige JSON, geen uitleg, in dit exacte formaat: {"blocks":[{"week_nr":${wk},"fase_naam":"Anatomische Aanpassing","oefeningen":[{"exercise_id":"backsquat","sets":3,"reps":"12-15","rpe":6.5}]}]}. Genereer exact ${dagen} blokken voor deze week (1 per dag, in volgorde dag 1..${dagen}), elk met het bij die dag passende aantal oefeningen.`;
 }
 function repsPrefillFromRange(repsStr){
   if(!repsStr)return '';
@@ -697,6 +697,50 @@ test('computeProgPrefill: reps/RPE komen altijd uit de programma-prescriptie', (
 });
 test('computeProgPrefill: zonder reps/RPE-prescriptie geen prefill (cardio-achtige oefening)', ()=>{
   assertEq(computeProgPrefill({}, {weight:50,reps:5,rpe:8}, 100), null);
+});
+
+// ── PROGRAMMA — v315: her-generatie, wisselen, blessurecontext ──
+console.log("\n🔁 Programma v315: her-generatie & wissel-oefening");
+
+function filterSwapCandidates(allExercises,currentMusclesPrimary,excludeIds){
+  const primary=new Set(currentMusclesPrimary||[]);
+  if(!primary.size)return [];
+  return allExercises.filter(e=>!excludeIds.includes(e.id)&&e.active!==false&&(e.muscle_primary||[]).some(m=>primary.has(m)));
+}
+
+test('buildWeekPrompt: zonder extraContext blijft de prompt ongewijzigd werken', ()=>{
+  const p=buildWeekPrompt(1,8,[60,60],'kracht','CrossFit','40 jaar, man, ervaren','x:Y(strength)', []);
+  assert(p.includes('Kies voor elke trainingsdag'));
+});
+test('buildWeekPrompt: extraContext wordt toegevoegd als die is meegegeven', ()=>{
+  const p=buildWeekPrompt(1,8,[60,60],'kracht','CrossFit','40 jaar, man, ervaren','x:Y(strength)', [], 'Vermijd zware schouderbelasting.');
+  assert(p.includes('Vermijd zware schouderbelasting.'));
+});
+test('filterSwapCandidates: alleen oefeningen met overlappende primaire spiergroep', ()=>{
+  const lib=[
+    {id:'backsquat',active:true,muscle_primary:['Quadriceps','Billen']},
+    {id:'legpress',active:true,muscle_primary:['Quadriceps']},
+    {id:'benchpress',active:true,muscle_primary:['Borst']}
+  ];
+  const cands=filterSwapCandidates(lib,['Quadriceps','Billen'],['backsquat']);
+  assertEq(cands.length, 1);
+  assertEq(cands[0].id, 'legpress');
+});
+test('filterSwapCandidates: sluit al aanwezige oefeningen in de sessie uit', ()=>{
+  const lib=[
+    {id:'backsquat',active:true,muscle_primary:['Quadriceps']},
+    {id:'legpress',active:true,muscle_primary:['Quadriceps']}
+  ];
+  const cands=filterSwapCandidates(lib,['Quadriceps'],['backsquat','legpress']);
+  assertEq(cands.length, 0);
+});
+test('filterSwapCandidates: sluit inactieve oefeningen uit', ()=>{
+  const lib=[{id:'legpress',active:false,muscle_primary:['Quadriceps']}];
+  const cands=filterSwapCandidates(lib,['Quadriceps'],[]);
+  assertEq(cands.length, 0);
+});
+test('filterSwapCandidates: geen primaire spiergroepen bekend geeft lege lijst, geen crash', ()=>{
+  assertEq(filterSwapCandidates([{id:'x',active:true,muscle_primary:['A']}], [], []).length, 0);
 });
 
 // ── SAMENVATTING ─────────────────────────────────────────

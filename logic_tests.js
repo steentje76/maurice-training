@@ -568,6 +568,14 @@ function exercisesTargetForDuration(minutes){
   if(!minutes)return 4;
   return Math.max(2,Math.min(8,Math.round(minutes/12)));
 }
+function buildDagDuren(schemaType,weekdagen,dagenPerWeek,duur,duurOverrides){
+  const ov=duurOverrides||{};
+  const basis=duur||60;
+  if(schemaType==='weekdagen'&&weekdagen&&weekdagen.length){
+    return [...weekdagen].sort((a,b)=>a-b).map(wd=>ov[wd]||basis);
+  }
+  return Array.from({length:dagenPerWeek||2},(_,i)=>ov[i+1]||basis);
+}
 function buildWeekPrompt(wk,weken,dagDuren,doel,sportLabel,profielTekst,bibliotheek,faseHistorie,extraContext){
   const dagen=dagDuren.length;
   const context=(faseHistorie&&faseHistorie.length)
@@ -741,6 +749,65 @@ test('filterSwapCandidates: sluit inactieve oefeningen uit', ()=>{
 });
 test('filterSwapCandidates: geen primaire spiergroepen bekend geeft lege lijst, geen crash', ()=>{
   assertEq(filterSwapCandidates([{id:'x',active:true,muscle_primary:['A']}], [], []).length, 0);
+});
+
+// ── PROGRAMMA — v316: duur per échte weekdag ──────────────
+console.log("\n🗓️  Programma v316: duur per weekdag");
+test('buildDagDuren (weekdagen): gebruikt overrides op de echte, gesorteerde weekdagnummers', ()=>{
+  const dagen=buildDagDuren('weekdagen', [4,1], 2, 60, {1:45,4:90});
+  assertEq(dagen[0], 45); // ma (1) eerst na sortering
+  assertEq(dagen[1], 90); // do (4)
+});
+test('buildDagDuren (weekdagen): ontbrekende override valt terug op de standaardduur', ()=>{
+  const dagen=buildDagDuren('weekdagen', [1,4], 2, 60, {4:90});
+  assertEq(dagen[0], 60); // ma: geen override
+  assertEq(dagen[1], 90); // do: wel override
+});
+test('buildDagDuren (interval): blijft dag-index-gebaseerd, geen weekdagen nodig', ()=>{
+  const dagen=buildDagDuren('interval', [], 3, 45, {2:20});
+  assertEq(dagen.length, 3);
+  assertEq(dagen[0], 45);
+  assertEq(dagen[1], 20);
+  assertEq(dagen[2], 45);
+});
+test('buildDagDuren: zonder overrides overal de standaardduur', ()=>{
+  const dagen=buildDagDuren('weekdagen', [1,3,5], 3, 50, {});
+  assertEq(dagen.join(','), '50,50,50');
+});
+
+// ── HOME — v317: vriendelijk datumlabel programma-kaart ──
+console.log("\n🗓️  Home-kaart: geplande datum");
+function formatProgDate(dateStr){
+  if(!dateStr)return '';
+  const d=new Date(dateStr+'T00:00:00');
+  const today=new Date();today.setHours(0,0,0,0);
+  const diffDays=Math.round((d-today)/86400000);
+  if(diffDays===0)return 'vandaag';
+  if(diffDays===1)return 'morgen';
+  if(diffDays===-1)return 'gisteren';
+  const dagen=['zo','ma','di','wo','do','vr','za'];
+  const maanden=['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+  return dagen[d.getDay()]+' '+d.getDate()+' '+maanden[d.getMonth()];
+}
+function toDateStr(d){return d.toISOString().slice(0,10);}
+test('formatProgDate: vandaag wordt herkend', ()=>{
+  assertEq(formatProgDate(toDateStr(new Date())), 'vandaag');
+});
+test('formatProgDate: morgen wordt herkend', ()=>{
+  const t=new Date();t.setDate(t.getDate()+1);
+  assertEq(formatProgDate(toDateStr(t)), 'morgen');
+});
+test('formatProgDate: gisteren wordt herkend', ()=>{
+  const t=new Date();t.setDate(t.getDate()-1);
+  assertEq(formatProgDate(toDateStr(t)), 'gisteren');
+});
+test('formatProgDate: verdere datum krijgt dag+datum+maand-label', ()=>{
+  const lbl=formatProgDate('2026-07-18'); // zaterdag
+  assertEq(lbl, 'za 18 jul');
+});
+test('formatProgDate: lege invoer geeft lege string, geen crash', ()=>{
+  assertEq(formatProgDate(null), '');
+  assertEq(formatProgDate(''), '');
 });
 
 // ── SAMENVATTING ─────────────────────────────────────────

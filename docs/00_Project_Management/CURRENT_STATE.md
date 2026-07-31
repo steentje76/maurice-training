@@ -24,11 +24,12 @@ Nog geen formele sprint onder Project OS. Voorstel eerste sprint: "Project OS-mi
 - Ratiofactor-/dagfactor-motor + cold-start-predictor
 - Supabase Auth + RLS (auth.uid() = user_id) sinds 12 juli 2026
 - RLS op users/exercises/gyms/equipment_types/exercise_equipment sinds 31 juli 2026
+- sw.js navigatie: network-first i.p.v. cache-first (31 juli 2026)
 
 ## Wat niet werkt
 - Geen gebruikersbeheerinterface
-- sw.js caching-strategie nog niet geverifieerd (moet network-first zijn voor navigatie)
 - Offline IndexedDB-sync (bewust uitgesteld, geen bug)
+- Per-user profielscheiding nog niet apart geverifieerd (zie Volgende stap)
 
 ## Bekende bugs
 [nog aanvullen — geen expliciet gemelde openstaande bugs op dit moment]
@@ -43,4 +44,5 @@ Nog geen formele sprint onder Project OS. Voorstel eerste sprint: "Project OS-mi
 - Sport-specifieke AI-context splitsing (`buildCtx()` generiek + per-sport, voorstel 7 sporten) — wacht op bevestiging
 
 ## Volgende stap
-sw.js network-first-navigatie verifiëren en per-user profielscheiding testen — voorgesteld als eerste twee Stories onder Project OS.
+1. Browsertest sw.js-fix bevestigen (hard refresh na Netlify-deploy, DevTools > Application > Service Workers en Network-tab controleren).
+2. Per-user profielscheiding testen (tweede Story).

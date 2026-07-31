@@ -9,7 +9,7 @@ Maurice Training Coach (werktitel)
 Project OS (governance-niveau B) is 31 juli 2026 opgezet: PROJECT_KICKOFF, CURRENT_STATE, DECISION_LOG, Product Book, Blueprint, Roadmap en Product Reset Report staan klaar om in de repo geplaatst te worden. Kritieke RLS-lekken op 5 tabellen zijn gedicht. Nog niet in de repo gecommit — dat is de eerstvolgende actie.
 
 ## Laatste wijziging
-Project OS-documentenset (governance-niveau B) opgesteld op basis van bestaande projectdocumentatie (PROJECTPLAN_APP.md, PROJECTPLAN_AI_Performance_Coach_v3.1.md, CONTEXT_NIEUW_PROJECT.md) en de RLS-fix van vandaag.
+Project OS-documentenset gepusht (commit b040c2b). Eerste Story afgerond: sw.js navigatie omgezet van cache-first naar network-first (commit 62965e8) — automatisch live via Netlify auto-deploy. Browsertest nog niet bevestigd.
 
 ## Belangrijkste bestanden
 - docs/00_Project_Management/CURRENT_STATE.md — actuele status
@@ -17,10 +17,10 @@ Project OS-documentenset (governance-niveau B) opgesteld op basis van bestaande 
 - docs/00_Project_Management/DECISION_LOG.md — waarom dingen zijn zoals ze zijn
 
 ## Open problemen
-sw.js network-first-navigatie nog niet geverifieerd. Per-user profielscheiding nog niet getest. Zie CURRENT_STATE.md voor volledige lijst.
+sw.js-fix nog niet browser-getest door Product Owner (DevTools controle na deploy). Per-user profielscheiding nog niet getest. Zie CURRENT_STATE.md voor volledige lijst.
 
 ## Volgende actie
-Deze documentenset in de repo plaatsen (docs/ en AI_CONTEXT/ mappen), daarna eerste Stories schrijven voor sw.js-verificatie en profielscheiding-test.
+Browsertest van de sw.js-fix bevestigen, dan Story 2 starten: per-user profielscheiding testen.
 
 ## Belangrijke instructies voor AI
 Respecteer governance-niveau B — geen ADR's/Health Check toevoegen tenzij de Product Owner dat expliciet heroverweegt. Bestaande werkwijze (zie docs/Prompts/CLAUDE_SOFTWARE_ENGINEER_START.md) blijft leidend.

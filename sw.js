@@ -59,10 +59,15 @@ self.addEventListener('fetch', e => {
   }
 
   // Navigation requests (pagina laden) — app shell
+  // Network-first: altijd de nieuwste versie als online, cache alleen als offline-fallback.
   if (e.request.mode === 'navigate') {
     e.respondWith(
-      caches.match('/index.html')
-        .then(cached => cached || fetch(e.request))
+      fetch(e.request)
+        .then(response => {
+          const clone = response.clone();
+          caches.open(CACHE_STATIC).then(cache => cache.put('/index.html', clone));
+          return response;
+        })
         .catch(() => caches.match('/index.html'))
     );
     return;

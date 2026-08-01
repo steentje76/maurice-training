@@ -1580,7 +1580,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.7';
+const APP_VER = 'v3.3.8';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -4252,7 +4252,7 @@ function openPlateCalcForEx(exId){
 // EQUIPMENT-INSTELLINGEN PER OEFENING (Fase 1, gym_id nullable → Fase 4-klaar)
 // ══════════════════════════════════════════════════════════
 async function loadEquipment(exId){
-  return await sbGet('exercise_equipment','&exercise_id=eq.'+exId+'&gym_id=is.null&order=sort_order.asc');
+  return await sbGet('exercise_equipment','&exercise_id=eq.'+exId+'&order=sort_order.asc');
 }
 function buildEquipmentPanel(exId,eqList){
   const typeOptions=equipmentTypes.map(t=>`<option value="${t.label}">${t.label}</option>`).join('');
@@ -4301,12 +4301,13 @@ async function addEquipment(exId){
   const value=valueEl.value.trim();
   if(!label||!value){toast('Kies of vul een naam in, en vul een waarde in');return;}
   const id='eq_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
-  const ok=await sbPost('exercise_equipment',{id,exercise_id:exId,gym_id:null,label,value,sort_order:Date.now()});
-  if(!ok){toast('Opslaan mislukt — tabel exercise_equipment bestaat mogelijk nog niet');return;}
+  const ok=await sbPost('exercise_equipment',{id,exercise_id:exId,label,value,sort_order:Date.now()});
+  if(!ok){toast('Opslaan mislukt — check console (F12) voor details');return;}
   await refreshEquipmentPanel(exId);
 }
 async function deleteEquipment(id,exId){
-  await sbDel('exercise_equipment','id=eq.'+id);
+  const ok=await sbDel('exercise_equipment','id=eq.'+id);
+  if(!ok){toast('Verwijderen mislukt — check console (F12) voor details');return;}
   await refreshEquipmentPanel(exId);
 }
 async function refreshEquipmentPanel(exId){

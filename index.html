@@ -478,6 +478,9 @@ canvas{width:100%;height:100%}
         <div style="font-size:13px;color:var(--g4)" id="account-email-lbl">—</div>
         <button class="btn btn-o btn-sm" onclick="authSignOut()">Uitloggen</button>
       </div>
+      <div class="card-body" style="border-top:1px solid var(--g2)">
+        <button class="btn btn-o btn-sm" style="color:var(--red);border-color:var(--red);width:100%" onclick="deleteAccount()">Account verwijderen</button>
+      </div>
     </div>
 
     <!-- Atleet profiel kaart -->
@@ -1636,6 +1639,29 @@ function authSignOut(){
   document.getElementById('s-auth').classList.add('active');
   document.getElementById('auth-email').value='';
   document.getElementById('auth-pass').value='';
+}
+async function deleteAccount(){
+  if(!authSession?.access_token){toast('Geen actieve sessie');return;}
+  if(!confirm('Account verwijderen? Al je trainingsdata, profiel en geschiedenis gaan permanent verloren. Dit kan niet ongedaan worden gemaakt.'))return;
+  if(!confirm('Weet je het zeker? Er is geen manier om dit terug te draaien.'))return;
+  try{
+    const r=await fetch('/.netlify/functions/delete-account',{
+      method:'POST',
+      headers:{Authorization:'Bearer '+authSession.access_token}
+    });
+    if(!r.ok){
+      const d=await r.json().catch(()=>({}));
+      toast('Verwijderen mislukt: '+(d.error?.message||r.status));
+      return;
+    }
+    clearAuthSession();
+    localStorage.clear();
+    document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('s-auth').classList.add('active');
+    toast('Account verwijderd');
+  }catch(e){
+    toast('Verbindingsfout — probeer opnieuw');
+  }
 }
 function openPasswordReset(){
   document.getElementById('reset-email').value=document.getElementById('auth-email').value||'';

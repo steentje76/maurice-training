@@ -868,6 +868,50 @@ test('resolveSportBlock: onbekende sport-key zonder label valt terug op de key z
   assert(r.includes('onbekendesport'), 'moet de ruwe key tonen als er geen label bekend is');
 });
 
+console.log('\n🔒 Per-device cache-eigenaarschap (v332 — fix cross-account datalek)');
+// Zelfde logica als resetPersonalCacheIfNewDeviceOwner in index.html, los getest
+// met een gemockte localStorage — geen DOM/browser nodig.
+function makeMockStorage(){
+  const store={};
+  return {
+    getItem:k=>store[k]??null,
+    setItem:(k,v)=>{store[k]=v;},
+    removeItem:k=>{delete store[k];},
+    _dump:()=>({...store})
+  };
+}
+function resolveDeviceOwnerReset(ls, uid, personalKeys){
+  const CACHE_OWNER_KEY='maurice_cache_owner_uid';
+  const lastOwner=ls.getItem(CACHE_OWNER_KEY);
+  if(lastOwner===uid)return {wiped:false};
+  personalKeys.forEach(k=>ls.removeItem(k));
+  ls.setItem(CACHE_OWNER_KEY, uid);
+  return {wiped:true};
+}
+test('resetPersonalCacheIfNewDeviceOwner: zelfde gebruiker als vorige sessie -> cache blijft staan', ()=>{
+  const ls=makeMockStorage();
+  ls.setItem('maurice_cache_owner_uid','user-A');
+  ls.setItem('maurice_atleet', JSON.stringify({leeftijd:50}));
+  const r=resolveDeviceOwnerReset(ls,'user-A',['maurice_atleet']);
+  assertEq(r.wiped, false);
+  assert(ls.getItem('maurice_atleet')!==null, 'data van dezelfde gebruiker mag niet gewist worden');
+});
+test('resetPersonalCacheIfNewDeviceOwner: ander account op hetzelfde device -> cache wordt gewist (was het datalek)', ()=>{
+  const ls=makeMockStorage();
+  ls.setItem('maurice_cache_owner_uid','user-A'); // vorige gebruiker op dit device
+  ls.setItem('maurice_atleet', JSON.stringify({leeftijd:50,naam:'Maurice'})); // zijn echte profiel
+  const r=resolveDeviceOwnerReset(ls,'user-B',['maurice_atleet']); // nieuw account logt in
+  assertEq(r.wiped, true);
+  assertEq(ls.getItem('maurice_atleet'), null, 'oude-gebruiker-data mag niet zichtbaar blijven voor het nieuwe account');
+  assertEq(ls.getItem('maurice_cache_owner_uid'), 'user-B');
+});
+test('resetPersonalCacheIfNewDeviceOwner: eerste keer op een device (geen eerdere owner) -> ook wissen (schone lei)', ()=>{
+  const ls=makeMockStorage();
+  const r=resolveDeviceOwnerReset(ls,'user-A',['maurice_atleet']);
+  assertEq(r.wiped, true);
+  assertEq(ls.getItem('maurice_cache_owner_uid'), 'user-A');
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

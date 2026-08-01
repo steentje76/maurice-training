@@ -343,6 +343,23 @@ canvas{width:100%;height:100%}
 </style>
 </head>
 <body>
+<!-- TIJDELIJK — v3.3.14 debug: on-screen console voor mobiel onderzoek zonder desktop.
+     Activeren: open de app eenmalig met ?debug=1 achter de URL. Blijft daarna aan
+     (localStorage) tot je ?debug=0 bezoekt. Weer verwijderen zodra de opslaan-freeze
+     gevonden is. -->
+<script>
+(function(){
+  var qs=new URLSearchParams(location.search);
+  if(qs.get('debug')==='1')localStorage.setItem('kompasDebug','1');
+  if(qs.get('debug')==='0')localStorage.removeItem('kompasDebug');
+  if(localStorage.getItem('kompasDebug')==='1'){
+    var s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/eruda';
+    s.onload=function(){eruda.init();console.log('[DEBUG] Eruda actief — tik het zwevende icoontje rechtsonder voor de console.');};
+    document.head.appendChild(s);
+  }
+})();
+</script>
 <div id="app">
 <div class="flash" id="flash"></div>
 <div class="toast" id="toast"></div>
@@ -1580,7 +1597,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.13';
+const APP_VER = 'v3.3.14';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';

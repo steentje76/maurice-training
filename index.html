@@ -1580,7 +1580,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.0';
+const APP_VER = 'v3.3.1';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -2622,7 +2622,6 @@ function openTeamPinModal(){
 }
 async function submitTeamPin(){
   const pin=document.getElementById('team-pin-input').value.trim();
-  if(!pin){document.getElementById('team-pin-err').textContent='Vul een pincode in';return;}
   teamPin=pin;
   const ok=await loadTeamMembers();
   if(!ok)return; // fout staat al in de pincode-modal

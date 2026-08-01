@@ -6051,7 +6051,9 @@ async function syncAtleetFromSupabase(){
       localStorage.setItem('maurice_atleet', JSON.stringify(atleet));
       if(document.getElementById('s-profiel')?.classList.contains('active'))refreshProfiel();
     } else if(atleet && Object.values(atleet).some(v=>v)){
-      await sbUpsert('atleet_profiel', atleet);
+      // user_id is verplicht (NOT NULL, geen default) — zonder deze regel faalde
+      // dit altijd stil (constraint violation, gevangen in de catch hieronder).
+      if(authSession?.user?.id) await sbUpsert('atleet_profiel', {...atleet, user_id: authSession.user.id});
     }
   }catch(e){/* offline of eerste keer — lokale waarde blijft gewoon leidend */}
 }
@@ -6067,7 +6069,9 @@ async function saveAtleet(){
     sport: document.getElementById('atl-sport').value,
   };
   localStorage.setItem('maurice_atleet', JSON.stringify(atleet));
-  await sbUpsert('atleet_profiel', atleet);
+  // user_id is verplicht (NOT NULL, geen default) — zonder deze regel faalde
+  // dit altijd stil (constraint violation, gevangen in de catch in sbUpsert).
+  if(authSession?.user?.id) await sbUpsert('atleet_profiel', {...atleet, user_id: authSession.user.id});
   closeModal('m-atleet');
   toast('Profiel opgeslagen');
   refreshProfiel();

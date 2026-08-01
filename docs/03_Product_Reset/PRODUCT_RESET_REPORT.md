@@ -27,12 +27,13 @@ Naast alles uit v3.0.6.2 (trainingslogging, cardio, supersets, plate calculator,
 
 ## Problemen
 1. **(Opgelost 31-07-2026)** RLS op `users`, `exercises`, `gyms`, `equipment_types`, `exercise_equipment`.
-2. **sw.js caching-strategie nog te verifiëren** — moet network-first zijn voor navigatie, niet cache-first (expliciet genoemd als bekend risico).
-3. **Per-user scheiding van atleetprofiel nog niet geverifieerd**, ondanks dat Auth/RLS al actief zijn — een concrete test hierop staat nog open.
+2. **(Opgelost 01-08-2026 — Story 1)** sw.js was cache-first i.p.v. network-first voor navigatie — omgezet, functioneel bevestigd door Product Owner.
+3. **(Opgelost 01-08-2026 — Story 2)** Per-user scheiding van atleetprofiel bleek een echte bug: `atleet_profiel`-writes faalden stil door ontbrekende `user_id` (NOT NULL, geen default). Gefixt, functioneel bevestigd; `user_id` bleek bovendien al de primary key, dus geen aanvullende constraint nodig.
 4. **Geen gebruikersbeheerinterface.**
-5. **Governance-vraag:** Project OS v1.3 brengt een vrij uitgebreid governance-apparaat mee (ADR's, Project Health Check, Product Owner Dashboard, PROJECT_OS_RULES). Dat staat op gespannen voet met de expliciete, eerder gemaakte keuze om enterprise-blueprintstructuren af te wijzen voor dit solo-project. **Zie open vraag onderaan — dit bepaalt hoe de rest van de migratie wordt uitgevoerd.**
+5. **Governance-vraag:** Project OS v1.3 brengt een vrij uitgebreid governance-apparaat mee (ADR's, Project Health Check, Product Owner Dashboard, PROJECT_OS_RULES). Dat staat op gespannen voet met de expliciete, eerder gemaakte keuze om enterprise-blueprintstructuren af te wijzen voor dit solo-project. **Beantwoord: Optie B (Middenweg) gekozen, zie DECISION_LOG DEC-005.**
 6. Appnaam nog niet definitief (negen namen geprobeerd/bezet; richting "sport + zelfstandig naamwoord").
 7. Social/competitief-koers (teams, leaderboards) eerder afgewezen ("AI-coach, geen speeltuin"), later heropend ter discussie — nog geen besluit.
+8. **(Opgelost 01-08-2026)** `equipment_types`/`exercise_equipment` waren niet gedocumenteerd — nu vastgelegd in Blueprint.md: machine-instellingen per oefening, `gym_id` al vooruitgebouwd op Fase 4.
 
 ## Technische analyse
 - **Architectuur:** bewust simpel gehouden; migratie naar file-split of ander taalplatform is expliciet uitgesteld tot ná Fase 2, een bewuste, herhaaldelijk bevestigde keuze — geen technische schuld die "toevallig" is blijven liggen.
@@ -56,7 +57,7 @@ Naast alles uit v3.0.6.2 (trainingslogging, cardio, supersets, plate calculator,
 ## Te verbeteren onderdelen
 - sw.js network-first-navigatie verifiëren.
 - Per-user profielscheiding testen (nu dat Auth/RLS actief zijn).
-- [ongewijzigd overige punten uit v2: equipment_types/exercise_equipment documenteren, overige RLS-dekking één keer bevestigen]
+- [opgelost 01-08-2026: equipment_types/exercise_equipment documenteren] — overige RLS-dekking op de resterende ~25 tabellen nog één keer te bevestigen (buiten scope van Sprint 1)
 
 ## Te verwijderen onderdelen
 [ongewijzigd vanuit v2 — Edna training, oude versies naar archive/]

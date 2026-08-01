@@ -49,12 +49,12 @@ exports.handler = async function (event) {
     const [stateRow] = await stateRes.json();
 
     // Scopes: alleen wat we daadwerkelijk gebruiken (HRV, rusthartslag, slaap) — principe
-    // van minimale toegang, ook relevant voor een eventuele latere Google-verificatie.
-    // TE VERIFIËREN: exacte scope-namen in de Google Health API-documentatie/consent-
-    // screen-configuratie vóór productiegebruik (zie developers.google.com/health).
+    // van minimale toegang. Geverifieerd tegen developers.google.com/health/scopes na een
+    // eerdere live 400 invalid_scope-fout met de verkeerde (health.*) scope-namen —
+    // de juiste prefix is googlehealth.*, niet health.*.
     const scope = [
-      'https://www.googleapis.com/auth/health.metrics.readonly',
-      'https://www.googleapis.com/auth/health.sleep.readonly'
+      'https://www.googleapis.com/auth/googlehealth.health_metrics_and_measurements.readonly',
+      'https://www.googleapis.com/auth/googlehealth.sleep.readonly'
     ].join(' ');
 
     const params = new URLSearchParams({

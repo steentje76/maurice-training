@@ -48,4 +48,5 @@ Nog geen formele sprint onder Project OS. Voorstel eerste sprint: "Project OS-mi
 ## Volgende stap
 1. Browsertest sw.js-fix bevestigen.
 2. Functioneel bevestigen: profiel opslaan in de app, daarna in Supabase Table Editor checken of de rij in atleet_profiel verschijnt met het juiste user_id.
-3. Controleren of atleet_profiel een unique constraint op user_id heeft (nodig voor correcte upsert-werking per gebruiker) — nog niet gecheckt.
+3. [afgerond] user_id is de PRIMARY KEY van atleet_profiel — upsert werkt structureel correct, geen verdere actie nodig.
+4. Functioneel bevestigen: profiel opslaan in de app, daarna Table Editor checken.

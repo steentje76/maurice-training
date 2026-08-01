@@ -1639,7 +1639,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.22';
+const APP_VER = 'v3.3.23';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -8372,23 +8372,35 @@ async function removeEquipmentType(id){
 // of de "+ Nieuw"/bewerk-knoppen getoond worden.
 let equipmentCatalog=[], _equipmentCatalogLoading=null;
 function canEditEquipmentCatalog(){ return teamRoleLevel>=3 || teamRoleLevel===-1; }
+// v3.3.23 BUGFIX: de basislijst was een pure client-side illusie (nooit in de database) —
+// bewerken/verwijderen van zo'n item probeerde een rij te patchen/deactiveren die nooit
+// bestond, en faalde stil (PATCH op 0 matches "slaagt" zonder effect). Nu wordt de
+// basislijst bij de EERSTE keer laden (alleen door wie mag beheren) écht als rijen
+// aangemaakt, zodat bewerken/verwijderen daarna gewoon normale CRUD is.
+const EQUIPMENT_CATALOG_SEED=[
+  {id:'seed_1',name:'Leg Press',muscle_primary:['Quadriceps'],muscle_secondary:['Billen'],sort_order:1},
+  {id:'seed_2',name:'Lat Pulldown',muscle_primary:['Rug'],muscle_secondary:['Biceps'],sort_order:2},
+  {id:'seed_3',name:'Cable Row',muscle_primary:['Rug'],muscle_secondary:['Biceps'],sort_order:3},
+  {id:'seed_4',name:'Squat Rack',muscle_primary:['Quadriceps','Billen'],muscle_secondary:['Onderrug'],sort_order:4},
+  {id:'seed_5',name:'Leg Curl Machine',muscle_primary:['Hamstrings'],muscle_secondary:[],sort_order:5},
+  {id:'seed_6',name:'Leg Extension',muscle_primary:['Quadriceps'],muscle_secondary:[],sort_order:6},
+  {id:'seed_7',name:'Chest Press',muscle_primary:['Borst'],muscle_secondary:['Triceps'],sort_order:7},
+  {id:'seed_8',name:'Shoulder Press Machine',muscle_primary:['Schouders'],muscle_secondary:['Triceps'],sort_order:8},
+  {id:'seed_9',name:'Smith Machine',muscle_primary:[],muscle_secondary:[],sort_order:9},
+  {id:'seed_10',name:'Assisted Pull-up/Dip',muscle_primary:['Rug'],muscle_secondary:['Triceps','Biceps'],sort_order:10},
+];
 async function ensureEquipmentCatalogLoaded(){
   if(equipmentCatalog.length)return equipmentCatalog;
   if(_equipmentCatalogLoading)return _equipmentCatalogLoading;
   _equipmentCatalogLoading=(async()=>{
-    const data=await sbGet('equipment_catalog','&active=eq.true&order=sort_order.asc');
-    equipmentCatalog=data.length?data:[
-      {id:'seed_1',name:'Leg Press',muscle_primary:['Quadriceps'],muscle_secondary:['Billen'],usage_note:'',active:true,sort_order:1},
-      {id:'seed_2',name:'Lat Pulldown',muscle_primary:['Rug'],muscle_secondary:['Biceps'],usage_note:'',active:true,sort_order:2},
-      {id:'seed_3',name:'Cable Row',muscle_primary:['Rug'],muscle_secondary:['Biceps'],usage_note:'',active:true,sort_order:3},
-      {id:'seed_4',name:'Squat Rack',muscle_primary:['Quadriceps','Billen'],muscle_secondary:['Onderrug'],usage_note:'',active:true,sort_order:4},
-      {id:'seed_5',name:'Leg Curl Machine',muscle_primary:['Hamstrings'],muscle_secondary:[],usage_note:'',active:true,sort_order:5},
-      {id:'seed_6',name:'Leg Extension',muscle_primary:['Quadriceps'],muscle_secondary:[],usage_note:'',active:true,sort_order:6},
-      {id:'seed_7',name:'Chest Press',muscle_primary:['Borst'],muscle_secondary:['Triceps'],usage_note:'',active:true,sort_order:7},
-      {id:'seed_8',name:'Shoulder Press Machine',muscle_primary:['Schouders'],muscle_secondary:['Triceps'],usage_note:'',active:true,sort_order:8},
-      {id:'seed_9',name:'Smith Machine',muscle_primary:[],muscle_secondary:[],usage_note:'',active:true,sort_order:9},
-      {id:'seed_10',name:'Assisted Pull-up/Dip',muscle_primary:['Rug'],muscle_secondary:['Triceps','Biceps'],usage_note:'',active:true,sort_order:10},
-    ];
+    let data=await sbGet('equipment_catalog','&active=eq.true&order=sort_order.asc');
+    if(!data.length&&canEditEquipmentCatalog()){
+      for(const s of EQUIPMENT_CATALOG_SEED){
+        await sbPost('equipment_catalog',{id:'eqcat_'+s.id,name:s.name,muscle_primary:s.muscle_primary,muscle_secondary:s.muscle_secondary,usage_note:null,active:true,sort_order:s.sort_order});
+      }
+      data=await sbGet('equipment_catalog','&active=eq.true&order=sort_order.asc');
+    }
+    equipmentCatalog=data;
     return equipmentCatalog;
   })();
   return _equipmentCatalogLoading;

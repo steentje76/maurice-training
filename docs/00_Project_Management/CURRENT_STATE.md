@@ -25,14 +25,16 @@ Nog geen formele sprint onder Project OS. Voorstel eerste sprint: "Project OS-mi
 - Supabase Auth + RLS (auth.uid() = user_id) sinds 12 juli 2026
 - RLS op users/exercises/gyms/equipment_types/exercise_equipment sinds 31 juli 2026
 - sw.js navigatie: network-first i.p.v. cache-first (31 juli 2026)
+- atleet_profiel-sync naar Supabase gefixt: user_id ontbrak altijd, faalde stil op NOT NULL-constraint (1 augustus 2026)
 
 ## Wat niet werkt
 - Geen gebruikersbeheerinterface
 - Offline IndexedDB-sync (bewust uitgesteld, geen bug)
-- Per-user profielscheiding nog niet apart geverifieerd (zie Volgende stap)
 
 ## Bekende bugs
 [nog aanvullen — geen expliciet gemelde openstaande bugs op dit moment]
+
+**Opgelost (1 augustus 2026):** atleet_profiel-writes naar Supabase faalden stil door ontbrekende user_id (NOT NULL, geen default). Functionele bevestiging door Product Owner nog gewenst.
 
 ## Technische schuld
 - Rollen/entitlements-schema (migratie_v322: gym_role, plan_features, credit_packs, discounts) is aangelegd maar nog niet gehandhaafd — bewust uitgesteld naar Fase 5, geen abusievelijke schuld.
@@ -44,5 +46,6 @@ Nog geen formele sprint onder Project OS. Voorstel eerste sprint: "Project OS-mi
 - Sport-specifieke AI-context splitsing (`buildCtx()` generiek + per-sport, voorstel 7 sporten) — wacht op bevestiging
 
 ## Volgende stap
-1. Browsertest sw.js-fix bevestigen (hard refresh na Netlify-deploy, DevTools > Application > Service Workers en Network-tab controleren).
-2. Per-user profielscheiding testen (tweede Story).
+1. Browsertest sw.js-fix bevestigen.
+2. Functioneel bevestigen: profiel opslaan in de app, daarna in Supabase Table Editor checken of de rij in atleet_profiel verschijnt met het juiste user_id.
+3. Controleren of atleet_profiel een unique constraint op user_id heeft (nodig voor correcte upsert-werking per gebruiker) — nog niet gecheckt.

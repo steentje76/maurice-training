@@ -20,8 +20,10 @@ WHERE NOT EXISTS (SELECT 1 FROM gyms WHERE id = 'art-crossfit');
 ALTER TABLE gyms ADD COLUMN IF NOT EXISTS coach_pin_hash text;
 
 -- ── Stap 3: backfill — Maurice's bestaande account wordt owner ────────
-INSERT INTO users (id, email, name, gym_id, gym_role, gym_role_level, role, created_at)
-SELECT au.id::text, au.email, au.email, 'art-crossfit', 'owner', 3, 'authenticated', now()
+-- gym_role_level is een GENERATED kolom (automatisch afgeleid van gym_role) — mag niet
+-- expliciet worden meegegeven bij INSERT, vandaar niet in de kolomlijst hieronder.
+INSERT INTO users (id, email, name, gym_id, gym_role, role, created_at)
+SELECT au.id::text, au.email, au.email, 'art-crossfit', 'owner', 'authenticated', now()
 FROM auth.users au
 WHERE au.email = 'steentje76@gmail.com'
   AND NOT EXISTS (SELECT 1 FROM users u WHERE u.id = au.id::text);
@@ -33,8 +35,8 @@ WHERE au.email = 'steentje76@gmail.com'
 CREATE OR REPLACE FUNCTION provision_public_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.users (id, email, name, gym_id, gym_role, gym_role_level, role, created_at)
-  VALUES (NEW.id::text, NEW.email, NEW.email, 'art-crossfit', 'lid', 0, 'authenticated', now())
+  INSERT INTO public.users (id, email, name, gym_id, gym_role, role, created_at)
+  VALUES (NEW.id::text, NEW.email, NEW.email, 'art-crossfit', 'lid', 'authenticated', now())
   ON CONFLICT DO NOTHING;
   RETURN NEW;
 END;

@@ -86,7 +86,7 @@ exports.handler = async function (event) {
       const oldRole = target.gym_role;
       const updRes = await fetch(`${supabaseUrl}/rest/v1/users?id=eq.${targetUserId}`, {
         method: 'PATCH', headers: { ...sbHeaders, Prefer: 'return=minimal' },
-        body: JSON.stringify({ gym_role: newRole, gym_role_level: ROLE_LEVEL[newRole] })
+        body: JSON.stringify({ gym_role: newRole })
       });
       if (!updRes.ok) return { statusCode: 500, body: JSON.stringify({ error: { message: 'Bijwerken mislukt: ' + await updRes.text() } }) };
 

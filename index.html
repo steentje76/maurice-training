@@ -1580,7 +1580,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.5';
+const APP_VER = 'v3.3.6';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -3557,11 +3557,23 @@ function renderProgConcept(blocks,showSaveBtn){
         const ex=exercises.find(e=>e.id===o.exercise_id);
         return (ex?ex.name:o.exercise_id)+' '+o.sets+'×'+o.reps+(o.rpe?' @RPE'+o.rpe:'');
       }).join(' · ')}</div>
-    </div>`).join('')+(showSaveBtn!==false?`<button class="btn btn-r" style="margin-top:10px;width:100%" onclick="opslaanProgramma()">Programma opslaan</button>`:'');
+    </div>`).join('')+(showSaveBtn!==false?`<button class="btn btn-r" id="prog-save-btn" style="margin-top:10px;width:100%" onclick="opslaanProgramma()">Programma opslaan</button>`:'');
 }
+// v336: BUGFIX — geen enkele beveiliging tegen dubbel indrukken van "Programma
+// opslaan". window._progConcept werd pas ná de volledige (async, per-blok) opslaan-
+// loop gewist, en de knop bleef gewoon klikbaar tijdens het opslaan. Bij een dubbele
+// tap (aannemelijk: het scherm reageert niet meteen tijdens het wegschrijven) startte
+// een tweede identieke run — bevestigd: twee identieke programma's in productie.
+let programmaOpslaanBezig=false;
 async function opslaanProgramma(){
+  if(programmaOpslaanBezig)return;
   const c=window._progConcept;
   if(!c)return;
+  programmaOpslaanBezig=true;
+  window._progConcept=null; // meteen wissen — een eventuele tweede tap heeft dan niets meer om op te slaan
+  const btn=document.getElementById('prog-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Opslaan...';}
+  try{
   const startDate=td();
   const plannedDates=computeBlockPlannedDates(startDate,c.blocks.length,c.schemaType,c.weekdagen,c.dagenPerWeek);
   const prog=await sbPostReturning('programs',{naam:c.naam,doel:c.doel,sport:c.sport||null,start_date:startDate,status:'actief',schema_type:c.schemaType,weekdagen:(c.weekdagen&&c.weekdagen.length)?c.weekdagen:null,duur_minuten:c.duur||null,duur_overrides:(c.duurOverrides&&Object.keys(c.duurOverrides).length)?c.duurOverrides:null});
@@ -3582,7 +3594,6 @@ async function opslaanProgramma(){
       if(!ok)exErrors++;
     }
   }
-  window._progConcept=null;
   closeModal('m-programma-gen');
   if(blockErrors||exErrors){
     toast(`Opgeslagen met fouten: ${blockErrors} blok(ken) en ${exErrors} oefening(en) niet gelukt — check console (F12)`);
@@ -3591,6 +3602,10 @@ async function opslaanProgramma(){
   }
   renderProgrammaList();
   refreshHome();
+  }finally{
+    programmaOpslaanBezig=false;
+    if(btn){btn.disabled=false;btn.textContent='Programma opslaan';}
+  }
 }
 // Cache van program_block_exercises per blok — voorkomt herhaald ophalen bij elke uitklap-toggle.
 // Wordt geïnvalideerd (delete) zodra oefeningen in de detailpagina worden aangepast.

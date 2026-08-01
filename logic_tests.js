@@ -689,6 +689,26 @@ test('computeProgAdjustment: reden-teksten bevatten alle actieve triggers', ()=>
   const adj=computeProgAdjustment(0.85, [{muscle:'Borst',pct:40}], 'slecht', 'Knie');
   assertEq(adj.redenen.length, 4);
 });
+function buildSessionIntroTekst(faseNaam,weekNr,progDoel,oefeningNamen){
+  const faseDeel=faseNaam?`${faseNaam} — week ${weekNr}`:`Week ${weekNr}`;
+  const doelDeel=progDoel?` Doel: ${progDoel}.`:'';
+  const oefDeel=(oefeningNamen&&oefeningNamen.length)?` Vandaag: ${oefeningNamen.join(', ')}.`:'';
+  return `${faseDeel}.${doelDeel}${oefDeel}`;
+}
+test('buildSessionIntroTekst: volledige data geeft fase, doel en oefeningen', ()=>{
+  const t=buildSessionIntroTekst('Hypertrofie',3,'Kracht opbouwen',['Backsquat','RDL']);
+  assert(t.includes('Hypertrofie — week 3'));
+  assert(t.includes('Doel: Kracht opbouwen.'));
+  assert(t.includes('Vandaag: Backsquat, RDL.'));
+});
+test('buildSessionIntroTekst: zonder fase_naam valt terug op alleen weeknummer', ()=>{
+  const t=buildSessionIntroTekst(null,1,'Kracht opbouwen',['Backsquat']);
+  assert(t.startsWith('Week 1.'));
+});
+test('buildSessionIntroTekst: zonder doel/oefeningen geen crash, geen lege stukjes', ()=>{
+  const t=buildSessionIntroTekst('Kracht',2,null,[]);
+  assertEq(t, 'Kracht — week 2.');
+});
 test('phaseForWeek: kort programma (<=3 wk) krijgt alleen opbouw + kracht', ()=>{
   assertEq(phaseForWeek(1,2), 'Anatomische Aanpassing');
   assertEq(phaseForWeek(2,2), 'Kracht');

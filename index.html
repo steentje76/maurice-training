@@ -1590,7 +1590,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.19';
+const APP_VER = 'v3.3.20';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -2160,7 +2160,7 @@ async function renderVasteTrainingBtns(){
   if(!vasteTrainingen.length){el.innerHTML='';return;}
   el.innerHTML=vasteTrainingen.map((v,i)=>`
     <button onclick="startT('${v.id}')" style="flex:1;min-width:120px;padding:14px;border-radius:14px;border:none;background:${i%2===0?'var(--dark)':'var(--accent)'};color:${i%2===0?'#fff':'var(--dark)'};font-family:var(--f);font-size:14px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:6px;justify-content:center">
-      <div class="ni-dot" id="home-dot-${v.id.toLowerCase()}" style="position:static;background:${i%2===0?'#fff':'var(--dark)'}"></div>${v.naam}
+      <div class="ni-dot" id="home-dot-${v.id.toLowerCase()}" style="position:static;background:${i%2===0?'#fff':'var(--dark)'}"></div>${escHtml(v.naam)}
     </button>`).join('');
 }
 async function renderSchemaTrainingList(){
@@ -2170,8 +2170,8 @@ async function renderSchemaTrainingList(){
   if(!vasteTrainingen.length){el.innerHTML='<div style="text-align:center;color:var(--g4);font-size:13px;padding:20px 0">Nog geen vaste training. Tik hieronder om er een te maken.</div>';return;}
   el.innerHTML=vasteTrainingen.map(v=>`
     <div class="lrow" style="align-items:center">
-      <div class="lval" style="cursor:pointer;font-weight:700" onclick="startT('${v.id}')">${v.naam}</div>
-      <button onclick="event.stopPropagation();openRenameVasteTraining('${v.id}','${v.naam.replace(/'/g,"\\'")}')" style="background:none;border:none;color:var(--g4);font-size:14px;cursor:pointer;padding:4px 6px">✏️</button>
+      <div class="lval" style="cursor:pointer;font-weight:700" onclick="startT('${v.id}')">${escHtml(v.naam)}</div>
+      <button onclick='event.stopPropagation();openRenameVasteTraining(${JSON.stringify(v.id)},${JSON.stringify(v.naam)})' style="background:none;border:none;color:var(--g4);font-size:14px;cursor:pointer;padding:4px 6px">✏️</button>
       <button onclick="event.stopPropagation();deleteVasteTraining('${v.id}')" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;padding:4px 6px">🗑</button>
     </div>`).join('');
 }
@@ -2662,8 +2662,8 @@ async function loadTeamMembers(){
     listEl.innerHTML=(d.members||[]).map(m=>`
       <div class="lrow" style="align-items:center">
         <div style="flex:1">
-          <div class="lval" style="font-size:13px">${m.name||m.email}</div>
-          <div style="font-size:11px;color:var(--g4)">${m.email}</div>
+          <div class="lval" style="font-size:13px">${escHtml(m.name||m.email)}</div>
+          <div style="font-size:11px;color:var(--g4)">${escHtml(m.email)}</div>
         </div>
         ${teamRoleLevel>=2?`<select class="inp" style="width:auto;font-size:12px" onchange="changeTeamRole('${m.id}',this.value,this)">
           ${Object.entries(TEAM_ROLE_LABELS).filter(([k])=>ROLE_LEVEL_CLIENT[k]<=teamRoleLevel).map(([k,l])=>`<option value="${k}" ${m.gym_role===k?'selected':''}>${l}</option>`).join('')}
@@ -2847,7 +2847,7 @@ async function renderConditionsList(){
   if(!el)return;
   const conditions=await sbGet('athlete_conditions','&active=eq.true&order=sort_order.asc');
   if(!conditions.length){el.innerHTML='<p style="color:var(--g4);font-size:13px;margin-bottom:8px">Nog geen condities</p>';return;}
-  el.innerHTML=conditions.map(c=>`<div class="eq-row"><span class="eq-label">${c.label}</span><button onclick="removeCondition(${c.id})">✕</button></div>`).join('');
+  el.innerHTML=conditions.map(c=>`<div class="eq-row"><span class="eq-label">${escHtml(c.label)}</span><button onclick="removeCondition(${c.id})">✕</button></div>`).join('');
 }
 async function addCondition(){
   const inp=document.getElementById('new-condition-label');
@@ -2867,8 +2867,8 @@ async function renderCheckinConditions(){
   if(!el)return;
   const conditions=await sbGet('athlete_conditions','&active=eq.true&order=sort_order.asc');
   el.innerHTML=conditions.map(c=>`
-    <div class="irow"><label class="ilbl">${c.label}</label>
-      <select class="inp" data-condition="${c.label}" id="checkin-cond-${c.id}">
+    <div class="irow"><label class="ilbl">${escHtml(c.label)}</label>
+      <select class="inp" data-condition="${escHtml(c.label)}" id="checkin-cond-${c.id}">
         <option value="">—</option>
         <option>normaal</option>
         <option>licht</option>
@@ -3642,10 +3642,10 @@ function renderProgConcept(blocks,showSaveBtn){
   const el=document.getElementById('prog-concept');
   el.innerHTML=blocks.map(b=>`
     <div style="border:1px solid var(--g2);border-radius:10px;padding:8px 10px;margin-bottom:6px">
-      <div style="font-size:12px;font-weight:700">Wk ${b.week_nr} · ${b.fase_naam}</div>
+      <div style="font-size:12px;font-weight:700">Wk ${b.week_nr} · ${escHtml(b.fase_naam)}</div>
       <div style="font-size:11px;color:var(--g4);margin-top:2px">${b.oefeningen.map(o=>{
         const ex=exercises.find(e=>e.id===o.exercise_id);
-        return (ex?ex.name:o.exercise_id)+' '+o.sets+'×'+o.reps+(o.rpe?' @RPE'+o.rpe:'');
+        return escHtml(ex?ex.name:o.exercise_id)+' '+o.sets+'×'+o.reps+(o.rpe?' @RPE'+o.rpe:'');
       }).join(' · ')}</div>
     </div>`).join('')+(showSaveBtn!==false?`<button class="btn btn-r" id="prog-save-btn" style="margin-top:10px;width:100%" onclick="opslaanProgramma()">Programma opslaan</button>`:'');
 }
@@ -3735,15 +3735,15 @@ async function renderProgrammaList(){
     const hasIncomplete=blocks.some(b=>!b.completed_at);
     h+=`<div class="card"><div class="card-body" style="padding:14px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-        <div style="font-size:15px;font-weight:700">${p.naam}</div>
+        <div style="font-size:15px;font-weight:700">${escHtml(p.naam)}</div>
         <button onclick="deleteProgramma('${p.id}')" title="Programma verwijderen" style="background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:0 2px;line-height:1">🗑</button>
       </div>
-      <div style="font-size:12px;color:var(--g4);margin-bottom:4px">${p.doel||''} · ${prog.doneCount}/${prog.total} afgerond · gestart ${p.start_date}</div>
+      <div style="font-size:12px;color:var(--g4);margin-bottom:4px">${escHtml(p.doel||'')} · ${prog.doneCount}/${prog.total} afgerond · gestart ${p.start_date}</div>
       <div style="font-size:11px;color:var(--g4);margin-bottom:8px">📊 ${prog.adherencePct}% adherence${prog.avgRpeDelta!=null?` · gem. RPE ${prog.avgRpeDelta>0?'+':''}${prog.avgRpeDelta} t.o.v. plan`:''}</div>
       ${blocks.map(b=>`
         <div class="lrow" style="align-items:center">
           <div class="ldate" style="width:60px">Wk ${b.week_nr}</div>
-          <div class="lval" style="cursor:pointer${b.completed_at?';text-decoration:line-through;color:var(--g4)':''}" onclick="openProgramBlockDetail('${b.id}')">${b.fase_naam}</div>
+          <div class="lval" style="cursor:pointer${b.completed_at?';text-decoration:line-through;color:var(--g4)':''}" onclick="openProgramBlockDetail('${b.id}')">${escHtml(b.fase_naam)}</div>
           <div class="lnote">${b.completed_at?'✓ gedaan':(b.planned_date||'')}</div>
           <button onclick="toggleBlockExpand('${b.id}')" id="blk-chev-${b.id}" style="background:none;border:none;font-size:13px;cursor:pointer;color:var(--g4);padding:2px 4px 2px 8px">▸</button>
         </div>
@@ -4024,7 +4024,7 @@ function buildVasteTrainingScreen(vt){
           <button class="tact green" onclick="showSessionSummary('${t}')">✓</button>
         </div>
       </div>
-      <div style="font-size:13px;font-weight:700;color:var(--g4);letter-spacing:.3px;text-transform:uppercase;margin-bottom:4px">${vt.naam}</div>
+      <div style="font-size:13px;font-weight:700;color:var(--g4);letter-spacing:.3px;text-transform:uppercase;margin-bottom:4px">${escHtml(vt.naam)}</div>
       <div style="font-size:11px;color:var(--g4);margin-bottom:8px" id="prog-${t.toLowerCase()}-lbl">0 oefeningen</div>
       <div class="prog-wrap"><div class="prog-fill" id="prog-${t.toLowerCase()}" style="width:0%"></div></div>
       <div class="train-save-row"><span class="save-status" id="train-save-status-${t.toLowerCase()}">✓ Alles opgeslagen</span><button class="save-btn" onclick="persistTrainingDraft(false)">Opslaan</button></div>
@@ -4113,7 +4113,7 @@ async function renderTrainScreen(t){
     div.innerHTML=`
       <div class="ex-card-hd" onclick="toggleExCard('${ex.id}')">
         <div style="flex:1">
-          <div class="ex-card-name">${ex.naam}${t.startsWith('prog_')?` <button onclick="event.stopPropagation();openSwapExercise('${ex.id}','${t}')" title="Wissel voor alternatief" style="background:none;border:none;color:var(--accent);font-size:13px;cursor:pointer;margin-left:4px">⇄</button>`:''}${!isDefault?` <button onclick="event.stopPropagation();removeExSession('${ex.id}')" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;margin-left:4px">✕</button>`:''}</div>
+          <div class="ex-card-name">${escHtml(ex.naam)}${t.startsWith('prog_')?` <button onclick="event.stopPropagation();openSwapExercise('${ex.id}','${t}')" title="Wissel voor alternatief" style="background:none;border:none;color:var(--accent);font-size:13px;cursor:pointer;margin-left:4px">⇄</button>`:''}${!isDefault?` <button onclick="event.stopPropagation();removeExSession('${ex.id}')" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;margin-left:4px">✕</button>`:''}</div>
           <div class="ex-card-meta">${resolveCardioType(ex)?(CARDIO_TYPES[resolveCardioType(ex)]?.naam||'Cardio'):ex.sets+'×'+ex.reps+(ex.rpe?' · RPE '+ex.rpe:'')}</div>
         </div>
         <span style="color:var(--g3);font-size:20px" id="arr-${ex.id}">›</span>
@@ -4129,7 +4129,7 @@ async function renderTrainScreen(t){
           <span class="add-row-icon">+</span>
           <span class="add-row-lbl" style="color:var(--red);font-size:13px">Set toevoegen</span>
         </div>`}
-        <button onclick="askCoachEx('${ex.naam}','${t}','${ex.id}')" style="margin:8px 14px 12px;background:var(--dark);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">🤖 Vraag de coach</button>
+        <button onclick='askCoachEx(${JSON.stringify(ex.naam)},${JSON.stringify(t)},${JSON.stringify(ex.id)})' style="margin:8px 14px 12px;background:var(--dark);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">🤖 Vraag de coach</button>
       </div>`;
     container.appendChild(div);
     // Prefill zet de kg-waarde alleen in het veld, triggert geen 'change'-event — zonder
@@ -4163,7 +4163,7 @@ async function renderTrainScreen(t){
 function buildVideoMuscle(ex){
   let h='';
   if(ex.yt){
-    h+=`<div class="vid-wrap" onclick="loadVid(this,'${ex.yt}')"><img src="https://img.youtube.com/vi/${ex.yt}/mqdefault.jpg" alt="${ex.naam}" onerror="this.parentElement.style.display='none'"><div class="vid-play">▶</div><div class="vid-label">▶ ${ex.naam} — techniek video</div></div>`;
+    h+=`<div class="vid-wrap" onclick="loadVid(this,'${ex.yt}')"><img src="https://img.youtube.com/vi/${ex.yt}/mqdefault.jpg" alt="${escHtml(ex.naam)}" onerror="this.parentElement.style.display='none'"><div class="vid-play">▶</div><div class="vid-label">▶ ${escHtml(ex.naam)} — techniek video</div></div>`;
   }
   if(ex.muscles){
     h+='<div class="muscle-pills">';
@@ -4360,7 +4360,7 @@ async function loadEquipment(exId){
   return await sbGet('exercise_equipment','&exercise_id=eq.'+exId+'&order=sort_order.asc');
 }
 function buildEquipmentPanel(exId,eqList){
-  const typeOptions=equipmentTypes.map(t=>`<option value="${t.label}">${t.label}</option>`).join('');
+  const typeOptions=equipmentTypes.map(t=>`<option value="${escHtml(t.label)}">${escHtml(t.label)}</option>`).join('');
   return `<div class="eq-panel" id="eq-panel-${exId}">
     <div class="eq-panel-hd" onclick="toggleEqPanel('${exId}')">
       <span>🔧 Equipment${eqList.length?` (${eqList.length})`:''}</span>
@@ -4368,8 +4368,8 @@ function buildEquipmentPanel(exId,eqList){
     </div>
     <div class="eq-panel-body" id="eq-body-${exId}" style="display:none">
       ${eqList.map(e=>`<div class="eq-row">
-        <span class="eq-label">${e.label}</span>
-        <span class="eq-value">${e.value}</span>
+        <span class="eq-label">${escHtml(e.label)}</span>
+        <span class="eq-value">${escHtml(e.value)}</span>
         <button onclick="deleteEquipment('${e.id}','${exId}')">✕</button>
       </div>`).join('')}
       <select class="inp" id="eq-new-label-${exId}" onchange="toggleEqCustomLabel('${exId}')" style="margin-top:8px">
@@ -5355,9 +5355,9 @@ function addExToSession(t){
   cats.forEach(cat=>{
     const exs=avail.filter(e=>e.category===cat);
     if(!exs.length)return;
-    html+=`<div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">${catLbls[cat]}</div>`;
+    html+=`<div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">${escHtml(catLbls[cat])}</div>`;
     exs.forEach(e=>{
-      html+=`<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--g2);cursor:pointer" onclick="addExConfirm('${e.id}','${t}');closeModal('m-add-ex')"><div style="flex:1;font-size:14px;font-weight:600;color:var(--dark)">${e.name}</div><span style="color:var(--red);font-size:20px;font-weight:700">+</span></div>`;
+      html+=`<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--g2);cursor:pointer" onclick="addExConfirm('${e.id}','${t}');closeModal('m-add-ex')"><div style="flex:1;font-size:14px;font-weight:600;color:var(--dark)">${escHtml(e.name)}</div><span style="color:var(--red);font-size:20px;font-weight:700">+</span></div>`;
     });
   });
   if(!html)html='<p style="color:var(--g4);font-size:13px">Alle oefeningen zijn al toegevoegd.</p>';
@@ -5559,8 +5559,8 @@ async function renderHomeProgramCard(){
         <div class="card-body" style="padding:14px;display:flex;align-items:center;gap:12px">
           <div style="font-size:24px">🗓️</div>
           <div style="flex:1">
-            <div style="font-size:11px;color:var(--g4);font-weight:700;text-transform:uppercase">Verder met ${p.naam}</div>
-            <div style="font-size:15px;font-weight:800">${b.fase_naam||'Training'} · Wk ${b.week_nr}</div>
+            <div style="font-size:11px;color:var(--g4);font-weight:700;text-transform:uppercase">Verder met ${escHtml(p.naam)}</div>
+            <div style="font-size:15px;font-weight:800">${escHtml(b.fase_naam||'Training')} · Wk ${b.week_nr}</div>
             ${dateLbl?`<div style="font-size:12px;color:var(--accent);font-weight:700;margin-top:2px">Gepland: ${dateLbl}</div>`:''}
           </div>
           <div style="font-size:20px;color:var(--accent)">›</div>
@@ -5625,7 +5625,7 @@ async function renderHistFilterTabs(){
   if(!el)return;
   await ensureVasteTrainingenLoaded();
   el.innerHTML=`<button class="filter-tab${histFilter==='all'?' active':''}" onclick="setHistFilter('all',this)">Alles</button>`+
-    vasteTrainingen.map(v=>`<button class="filter-tab${histFilter===v.id?' active':''}" onclick="setHistFilter('${v.id}',this)">${v.naam}</button>`).join('');
+    vasteTrainingen.map(v=>`<button class="filter-tab${histFilter===v.id?' active':''}" onclick="setHistFilter('${v.id}',this)">${escHtml(v.naam)}</button>`).join('');
 }
 async function loadHistory(append=false){
   if(!append)histOff=0;
@@ -5735,7 +5735,7 @@ function addSetToDate(date, tt){
     if(!exs.length) return;
     html+=`<div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">${catL[cat]}</div>`;
     exs.forEach(e=>{
-      html+=`<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--g2);cursor:pointer" onclick="openAddSetModal('${e.id}','${e.name}','${date}','${tt}');closeModal('m-add-ex')"><div style="flex:1;font-size:14px;font-weight:600;color:var(--dark)">${e.name}</div><span style="color:var(--red);font-size:20px;font-weight:700">+</span></div>`;
+      html+=`<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--g2);cursor:pointer" onclick='openAddSetModal(${JSON.stringify(e.id)},${JSON.stringify(e.name)},${JSON.stringify(date)},${JSON.stringify(tt)});closeModal("m-add-ex")'><div style="flex:1;font-size:14px;font-weight:600;color:var(--dark)">${escHtml(e.name)}</div><span style="color:var(--red);font-size:20px;font-weight:700">+</span></div>`;
     });
   });
   document.getElementById('add-ex-list').innerHTML=html;
@@ -5898,8 +5898,8 @@ function renderProgList(){
   list.forEach(ex=>{
     const {disp,tgt,pct}=progExData[ex.id];
     const fc=pct?(pct>=100?'var(--green)':pct>=85?'var(--y)':'var(--accent)'):'var(--accent)';
-    h+=`<div class="stat-1rm-item" onclick="show1RMChart('${ex.id}','${ex.name}')" style="cursor:pointer">
-      <div class="stat-1rm-row"><button onclick="event.stopPropagation();toggleFavorite('${ex.id}').then(renderProgList)" style="background:none;border:none;font-size:14px;cursor:pointer;color:${isExerciseFavorite(ex.id)?'var(--accent2)':'var(--g3)'};padding:0 4px 0 0">${isExerciseFavorite(ex.id)?'★':'☆'}</button><span class="stat-1rm-name">${ex.name}</span><span class="stat-1rm-val">${disp} kg</span>${tgt?`<span class="stat-1rm-target">/ ${tgt} kg</span>`:''}<span style="color:var(--g3);font-size:14px;margin-left:4px">📈</span><button onclick="event.stopPropagation();openEditPeak('${ex.id}','${ex.name}',${tgt||'null'})" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-left:auto">🎯</button></div>
+    h+=`<div class="stat-1rm-item" onclick='show1RMChart(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)})' style="cursor:pointer">
+      <div class="stat-1rm-row"><button onclick="event.stopPropagation();toggleFavorite('${ex.id}').then(renderProgList)" style="background:none;border:none;font-size:14px;cursor:pointer;color:${isExerciseFavorite(ex.id)?'var(--accent2)':'var(--g3)'};padding:0 4px 0 0">${isExerciseFavorite(ex.id)?'★':'☆'}</button><span class="stat-1rm-name">${escHtml(ex.name)}</span><span class="stat-1rm-val">${disp} kg</span>${tgt?`<span class="stat-1rm-target">/ ${tgt} kg</span>`:''}<span style="color:var(--g3);font-size:14px;margin-left:4px">📈</span><button onclick='event.stopPropagation();openEditPeak(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${tgt||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-left:auto">🎯</button></div>
       <div class="prog-wrap"><div class="prog-fill" style="width:${Math.min(100,pct||Math.round(disp/3))}%;background:${fc}"></div></div>
       ${pct?`<div class="stat-1rm-pct">${pct}% van peakdoel${pct>=100?' ✓':' · '+(100-pct)+'% te gaan'}</div>`:tgt===null?`<div class="stat-1rm-pct" style="color:var(--g4)">Nog geen peakdoel ingesteld</div>`:''}
     </div>`;
@@ -6023,7 +6023,7 @@ async function refreshStats(){
     const tgt=peakGoalFor(ex.id);const pct=tgt?Math.round(disp/tgt*100):null;
     const fc=pct?(pct>=100?'var(--green)':pct>=85?'var(--y)':'var(--red)'):'var(--red)';
     h+=`<div class="stat-1rm-item">
-      <div class="stat-1rm-row"><span class="stat-1rm-name">${ex.name}</span><span class="stat-1rm-val">${disp} kg</span>${tgt?`<span class="stat-1rm-target">/ ${tgt} kg</span>`:''}</div>
+      <div class="stat-1rm-row"><span class="stat-1rm-name">${escHtml(ex.name)}</span><span class="stat-1rm-val">${disp} kg</span>${tgt?`<span class="stat-1rm-target">/ ${tgt} kg</span>`:''}</div>
       <div class="prog-wrap"><div class="prog-fill" style="width:${Math.min(100,pct||disp/3)}%;background:${fc}"></div></div>
       ${pct?`<div class="stat-1rm-pct">${pct}% van peakdoel${pct>=100?' ✓':' · '+(100-pct)+'% te gaan'}</div>`:''}
     </div>`;
@@ -6048,7 +6048,7 @@ async function refreshAdmin(){
     const exs=exercises.filter(e=>e.active!==false&&e.category===cat);
     if(!exs.length)return;
     h+=`<div style="font-size:10px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;padding:10px 0 4px;margin-top:4px">${catL[cat]}</div>`;
-    exs.forEach(ex=>{h+=`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)"><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${ex.name}</div><div style="font-size:11px;color:var(--g4)">${ex.type||'strength'}${ex.rest_seconds?' · rust '+ex.rest_seconds+'s':''}${ex.peak_goal?' · doel '+ex.peak_goal+'kg':''}${ex.ratio_anchor?' · anker '+ex.ratio_anchor+' ×'+ex.ratio_factor:''}${(ex.muscle_primary&&ex.muscle_primary.length)?' · '+ex.muscle_primary.join(', '):' · geen spieren'}</div></div><button onclick='openEditMuscles(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${JSON.stringify(ex.muscle_primary||[])},${JSON.stringify(ex.muscle_secondary||[])})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">💪</button><button onclick="openEditRest('${ex.id}','${ex.name}',${ex.rest_seconds||'null'})" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.rest_seconds?'⏱ '+ex.rest_seconds+'s':'⏱ Rust'}</button><button onclick="openEditPeak('${ex.id}','${ex.name}',${ex.peak_goal||'null'})" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.peak_goal?'🎯 '+ex.peak_goal+'kg':'🎯 Doel'}</button><button onclick="openEditAnchor('${ex.id}','${ex.name}',${ex.ratio_anchor?`'${ex.ratio_anchor}'`:'null'},${ex.ratio_factor||'null'})" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.ratio_anchor?'🔗 '+ex.ratio_anchor:'🔗 Anker'}</button><button onclick="openEditYT('${ex.id}','${ex.name}','${ex.yt||''}','${ex.category}')" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.yt?'▶ YT':'+ YT'}</button><button data-id="${ex.id}" onclick="delEx(this.dataset.id)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button></div>`;});
+    exs.forEach(ex=>{h+=`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)"><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${escHtml(ex.name)}</div><div style="font-size:11px;color:var(--g4)">${ex.type||'strength'}${ex.rest_seconds?' · rust '+ex.rest_seconds+'s':''}${ex.peak_goal?' · doel '+ex.peak_goal+'kg':''}${ex.ratio_anchor?' · anker '+escHtml(ex.ratio_anchor)+' ×'+ex.ratio_factor:''}${(ex.muscle_primary&&ex.muscle_primary.length)?' · '+escHtml(ex.muscle_primary.join(', ')):' · geen spieren'}</div></div><button onclick='openEditMuscles(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${JSON.stringify(ex.muscle_primary||[])},${JSON.stringify(ex.muscle_secondary||[])})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">💪</button><button onclick='openEditRest(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${ex.rest_seconds||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.rest_seconds?'⏱ '+ex.rest_seconds+'s':'⏱ Rust'}</button><button onclick='openEditPeak(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${ex.peak_goal||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.peak_goal?'🎯 '+ex.peak_goal+'kg':'🎯 Doel'}</button><button onclick='openEditAnchor(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${JSON.stringify(ex.ratio_anchor||null)},${ex.ratio_factor||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.ratio_anchor?'🔗 '+escHtml(ex.ratio_anchor):'🔗 Anker'}</button><button onclick='openEditYT(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${JSON.stringify(ex.yt||'')},${JSON.stringify(ex.category)})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.yt?'▶ YT':'+ YT'}</button><button data-id="${ex.id}" onclick="delEx(this.dataset.id)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button></div>`;});
   });
   document.getElementById('admin-exlist').innerHTML=h;
   await refreshStats();
@@ -6244,7 +6244,7 @@ async function renderTrainExAdmin(){
   await ensureVasteTrainingenLoaded();
   cardsEl.innerHTML=vasteTrainingen.map(v=>`
     <div class="card">
-      <div class="card-hd"><span class="card-title">${v.naam}</span><button class="btn btn-o btn-sm" onclick="openAddTrainEx('${v.id}')">+ Koppelen</button></div>
+      <div class="card-hd"><span class="card-title">${escHtml(v.naam)}</span><button class="btn btn-o btn-sm" onclick="openAddTrainEx('${v.id}')">+ Koppelen</button></div>
       <div class="card-body" id="admin-taex-${v.id.toLowerCase()}"></div>
     </div>`).join('');
   for(const v of vasteTrainingen){
@@ -6258,7 +6258,7 @@ async function renderTrainExAdmin(){
       const naam=ex?ex.name:r.exercise_id;
       const detail=[r.sets?r.sets+' sets':null,r.reps,r.rpe?'RPE '+r.rpe:null,r.wu?r.wu+' wu':null].filter(Boolean).join(' · ');
       return `<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)">
-        <div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${naam}</div><div style="font-size:11px;color:var(--g4)">${detail||'—'}</div></div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${escHtml(naam)}</div><div style="font-size:11px;color:var(--g4)">${detail||'—'}</div></div>
         <button onclick="moveTrainEx('${t}','${r.exercise_id}',-1)" ${i===0?'disabled style="opacity:.3"':''} style="background:none;border:none;font-size:16px;cursor:pointer;padding:4px 6px">↑</button>
         <button onclick="moveTrainEx('${t}','${r.exercise_id}',1)" ${i===rows.length-1?'disabled style="opacity:.3"':''} style="background:none;border:none;font-size:16px;cursor:pointer;padding:4px 6px">↓</button>
         <button onclick="removeTrainEx('${t}','${r.exercise_id}')" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px 6px">🗑</button>
@@ -6273,7 +6273,7 @@ function openAddTrainEx(trainingRef){
   const vt=vasteTrainingen.find(v=>v.id===trainingRef);
   document.getElementById('add-trainex-title').textContent='Oefening koppelen — '+(vt?vt.naam:trainingRef);
   const sel=document.getElementById('atx-exid');
-  sel.innerHTML=exercises.filter(e=>e.active!==false).map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+  sel.innerHTML=exercises.filter(e=>e.active!==false).map(e=>`<option value="${e.id}">${escHtml(e.name)}</option>`).join('');
   document.getElementById('atx-sets').value='';
   document.getElementById('atx-reps').value='';
   document.getElementById('atx-rpe').value='';
@@ -6324,7 +6324,7 @@ async function moveTrainEx(trainingRef,exId,dir){
 
 async function openNewExModal(){
   await ensureVasteTrainingenLoaded();
-  document.getElementById('nx-cat').innerHTML=vasteTrainingen.map(v=>`<option value="${v.id}">${v.naam}</option>`).join('')+
+  document.getElementById('nx-cat').innerHTML=vasteTrainingen.map(v=>`<option value="${v.id}">${escHtml(v.naam)}</option>`).join('')+
     '<option value="CrossFit">CrossFit</option><option value="Overig">Overig</option>';
   openModal('m-newex');
 }
@@ -6703,7 +6703,7 @@ async function openCoachHistory(){
   const seen=new Set(),sessions=[];
   rows.forEach(r=>{if(!seen.has(r.session_id)){seen.add(r.session_id);sessions.push({id:r.session_id,label:r.session_label||'Gesprek',date:r.created_at});}});
   const body=document.getElementById('coach-history-list');
-  body.innerHTML=sessions.length?sessions.map(s=>`<div class="hist-session-row" onclick="loadCoachSession('${s.id}',${JSON.stringify(s.label)})"><div class="hist-session-label">${s.label}</div><div class="hist-session-date">${new Date(s.date).toLocaleString('nl-NL')}</div></div>`).join(''):'<div style="padding:20px;text-align:center;color:var(--g4);font-size:13px">Nog geen sessiegesprekken</div>';
+  body.innerHTML=sessions.length?sessions.map(s=>`<div class="hist-session-row" onclick="loadCoachSession('${s.id}',${JSON.stringify(s.label)})"><div class="hist-session-label">${escHtml(s.label)}</div><div class="hist-session-date">${new Date(s.date).toLocaleString('nl-NL')}</div></div>`).join(''):'<div style="padding:20px;text-align:center;color:var(--g4);font-size:13px">Nog geen sessiegesprekken</div>';
   openModal('m-coach-history');
 }
 async function loadCoachSession(sessionId,label){
@@ -6715,7 +6715,7 @@ async function loadCoachSession(sessionId,label){
   go('s-coach');
 }
 let mc=0;
-function addMsg(role,txt,retId=false){const id='m'+(++mc);const d=document.createElement('div');d.id=id;const isCoach=role==='coach',isUser=role==='user';d.style.cssText=`max-width:85%;padding:10px 14px;font-size:13px;line-height:1.55;white-space:pre-wrap;margin-bottom:6px;border-radius:${isCoach?'4px 16px 16px 16px':'16px 16px 4px 16px'};align-self:${isUser?'flex-end':'flex-start'};background:${isCoach?'var(--dark)':isUser?'var(--red)':'var(--g1)'};color:${isCoach||isUser?'#fff':'var(--g4)'};`;d.innerHTML=txt.replace(/\n/g,'<br>');const w=document.getElementById('chat-wrap');w.appendChild(d);w.scrollTop=w.scrollHeight;return retId?id:null;}
+function addMsg(role,txt,retId=false){const id='m'+(++mc);const d=document.createElement('div');d.id=id;const isCoach=role==='coach',isUser=role==='user';d.style.cssText=`max-width:85%;padding:10px 14px;font-size:13px;line-height:1.55;white-space:pre-wrap;margin-bottom:6px;border-radius:${isCoach?'4px 16px 16px 16px':'16px 16px 4px 16px'};align-self:${isUser?'flex-end':'flex-start'};background:${isCoach?'var(--dark)':isUser?'var(--red)':'var(--g1)'};color:${isCoach||isUser?'#fff':'var(--g4)'};`;d.innerHTML=(isUser?escHtml(txt):txt).replace(/\n/g,'<br>');const w=document.getElementById('chat-wrap');w.appendChild(d);w.scrollTop=w.scrollHeight;return retId?id:null;}
 function removeMsg(id){const e=document.getElementById(id);if(e)e.remove();}
 function renderChatHist(){const w=document.getElementById('chat-wrap');w.innerHTML='';mc=0;chatHist.forEach(m=>addMsg(m.role==='user'?'user':'coach',m.content));}
 function ckd(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
@@ -7140,7 +7140,7 @@ function openSwapExercise(exId,t){
   if(!candidates.length){toast('Geen alternatief gevonden voor dezelfde spiergroep');return;}
   swapCtx={fromId:exId,t};
   document.getElementById('swap-ex-list').innerHTML=candidates.slice(0,10).map(c=>
-    `<button type="button" class="rower-chip" onclick="confirmSwapExercise('${c.id}')">${c.name}</button>`).join('');
+    `<button type="button" class="rower-chip" onclick="confirmSwapExercise('${c.id}')">${escHtml(c.name)}</button>`).join('');
   openModal('m-swap-exercise');
 }
 async function confirmSwapExercise(newId){
@@ -7352,8 +7352,8 @@ function buildProgramTrainScreen(block,prog){
           <button class="tact green" onclick="showSessionSummary('${ctxT}')">✓</button>
         </div>
       </div>
-      ${prog?`<div style="font-size:10px;color:var(--accent);font-weight:700;letter-spacing:.3px;text-transform:uppercase">${prog.naam}</div>`:''}
-      <div style="font-size:13px;font-weight:700;color:var(--g4);letter-spacing:.3px;text-transform:uppercase;margin-bottom:4px">${block.fase_naam||'Programma'} · Wk ${block.week_nr}</div>
+      ${prog?`<div style="font-size:10px;color:var(--accent);font-weight:700;letter-spacing:.3px;text-transform:uppercase">${escHtml(prog.naam)}</div>`:''}
+      <div style="font-size:13px;font-weight:700;color:var(--g4);letter-spacing:.3px;text-transform:uppercase;margin-bottom:4px">${escHtml(block.fase_naam||'Programma')} · Wk ${block.week_nr}</div>
       <div style="font-size:11px;color:var(--g4);margin-bottom:8px" id="prog-${ctxT.toLowerCase()}-lbl">0 oefeningen</div>
       <div class="prog-wrap"><div class="prog-fill" id="prog-${ctxT.toLowerCase()}" style="width:0%"></div></div>
     </div>
@@ -7683,9 +7683,9 @@ function addSupersetEx(){
   cats.forEach(cat=>{
     const exs = avail.filter(e=>e.category===cat);
     if(!exs.length) return;
-    html += `<div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">${catL[cat]}</div>`;
+    html += `<div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">${escHtml(catL[cat])}</div>`;
     exs.forEach(e=>{
-      html += `<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--g2);cursor:pointer" onclick="supersetExIds.push('${e.id}');renderSupersetList();closeModal('m-add-ex')"><div style="flex:1;font-size:14px;font-weight:600;color:var(--dark)">${e.name}</div><span style="color:#9C27B0;font-size:20px;font-weight:700">+</span></div>`;
+      html += `<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--g2);cursor:pointer" onclick="supersetExIds.push('${e.id}');renderSupersetList();closeModal('m-add-ex')"><div style="flex:1;font-size:14px;font-weight:600;color:var(--dark)">${escHtml(e.name)}</div><span style="color:#9C27B0;font-size:20px;font-weight:700">+</span></div>`;
     });
   });
   document.getElementById('add-ex-list').innerHTML = html;
@@ -8091,7 +8091,7 @@ async function refreshRepPRs(){
       </div>`;
     }).join('');
     html += `<div style="margin-bottom:14px">
-      <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:6px">${ex.name}</div>
+      <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:6px">${escHtml(ex.name)}</div>
       <div style="display:flex;gap:4px">${cells}</div>
     </div>`;
   }
@@ -8224,7 +8224,7 @@ async function renderAdminEqTypes(){
   await ensureEquipmentTypesLoaded();
   const list=await sbGet('equipment_types','&active=eq.true&order=sort_order.asc');
   const types=list.length?list:equipmentTypes;
-  el.innerHTML=types.map(t=>`<div class="eq-row"><span class="eq-label">${t.label}</span><button onclick="removeEquipmentType('${t.id}')">✕</button></div>`).join('');
+  el.innerHTML=types.map(t=>`<div class="eq-row"><span class="eq-label">${escHtml(t.label)}</span><button onclick="removeEquipmentType('${t.id}')">✕</button></div>`).join('');
 }
 async function addEquipmentType(){
   const inp=document.getElementById('new-eqtype-label');

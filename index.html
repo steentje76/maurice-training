@@ -428,7 +428,7 @@ canvas{width:100%;height:100%}
           <div class="hdr-title" style="font-size:24px;letter-spacing:2px;text-transform:uppercase">MAURICE</div>
         </div>
         <div class="hdr-sub" style="letter-spacing:2px;text-transform:uppercase;font-size:11px">Training Coach 2026</div>
-        <div id="offline-badge" style="display:none;margin-top:4px;font-size:11px;font-weight:700;color:var(--y,#b8860b);background:rgba(184,134,11,.12);border-radius:8px;padding:2px 8px;width:fit-content"></div>
+        <div id="offline-badge" style="display:none;margin-top:4px;font-size:11px;font-weight:700;color:var(--y,#b8860b);background:rgba(184,134,11,.12);border-radius:8px;padding:2px 8px;width:fit-content;cursor:pointer" onclick="openOfflineQueueModal()"></div>
       </div>
       <div style="display:flex;gap:8px">
         <button class="ibtn" onclick="openModal('m-hrv')">📊</button>
@@ -872,6 +872,18 @@ canvas{width:100%;height:100%}
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-hrv')">Annuleer</button>
       <button class="btn btn-r" style="flex:2" onclick="saveHRV()">Opslaan & Analyseer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-offline-queue" onclick="bgClose(event,'m-offline-queue')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Wachtend op sync</div>
+    <div style="font-size:12px;color:var(--g4);margin-bottom:10px">Deze items staan lokaal opgeslagen en worden automatisch verzonden zodra je weer online bent. Je kunt een item hier verwijderen als je het niet (meer) wilt versturen.</div>
+    <div id="offline-queue-list"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-offline-queue')">Sluiten</button>
     </div>
   </div>
 </div>
@@ -1503,7 +1515,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.2.3';
+const APP_VER = 'v3.2.4';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -2346,6 +2358,23 @@ async function sbPatchQ(t,f,d){
     return true;
   }
 }
+// sbDelQ: als sbDel, maar queuet bij netwerkfout. Wordt alleen aangeroepen met een échte
+// (al gesynchroniseerde) Supabase-id — voor een item dat zelf nog in de queue staat
+// (pending POST, dus nog geen echte id) verwijdert de aanroeper direct uit de queue i.p.v.
+// hier een DELETE te queuen, zie deleteSessionEntry/deleteSessionDirect.
+async function sbDelQ(t,f){
+  if(!navigator.onLine){await offlineQueueAdd({table:t,method:'DELETE',filter:f});updateOfflineBadge();return true;}
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'DELETE',headers:SB_H});
+    if(!r.ok){console.error('sbDelQ',t,r.status,await r.text());return false;}
+    return true;
+  }catch(e){
+    console.warn('sbDelQ offline, queued',t,e);
+    await offlineQueueAdd({table:t,method:'DELETE',filter:f});
+    updateOfflineBadge();
+    return true;
+  }
+}
 // Speelt de queue in volgorde af; stopt bij de eerste fout zodat de volgorde behouden
 // blijft.
 async function flushOfflineQueue(){
@@ -2357,22 +2386,74 @@ async function flushOfflineQueue(){
   for(const item of items){
     try{
       const url=item.method==='POST'?`${SB_URL}/rest/v1/${item.table}`:`${SB_URL}/rest/v1/${item.table}?${item.filter}`;
-      const r=await fetch(url,{method:item.method,headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(item.body)});
+      const opts=item.method==='DELETE'
+        ?{method:'DELETE',headers:SB_H}
+        :{method:item.method,headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(item.body)};
+      const r=await fetch(url,opts);
       if(!r.ok){console.error('flushOfflineQueue failed, stop',item.table,r.status,await r.text());break;}
       await offlineQueueRemove(item.id);
       syncedAny=true;
     }catch(e){console.warn('flushOfflineQueue offline again, stop',e);break;}
   }
   updateOfflineBadge();
+  if(document.getElementById('m-offline-queue')?.classList.contains('open'))renderOfflineQueueModal();
   if(syncedAny&&!(await offlineQueueAll()).length)toast('Offline sessies gesynchroniseerd');
 }
 function updateOfflineBadge(){
   offlineQueueAll().then(items=>{
     const el=document.getElementById('offline-badge');
     if(!el)return;
-    if(items.length){el.textContent=items.length+' wachtend op sync';el.style.display='block';}
+    if(items.length){el.textContent=items.length+' wachtend op sync — tik voor details';el.style.display='block';}
     else{el.style.display='none';}
   });
+}
+// Korte, leesbare omschrijving van een queue-item voor het beheerscherm.
+function describeOfflineQueueItem(item){
+  const methodLbl={POST:'Nieuw',PATCH:'Wijziging',DELETE:'Verwijdering'}[item.method]||item.method;
+  if(item.table==='sessions'&&item.body){
+    const n=exercises?.find(e=>e.id===item.body.exercise_id)?.name||item.body.exercise_id||'sessie';
+    return `${methodLbl}: ${n} — ${item.body.date||''}`;
+  }
+  if(item.table==='exercises'&&item.body)return `${methodLbl} oefening: ${item.body.name||item.body.id}`;
+  if(item.table==='exercises'&&item.filter)return `PR-update oefening`;
+  if(item.table==='program_blocks')return `Programma-blok afgerond`;
+  return `${methodLbl}: ${item.table}`;
+}
+async function openOfflineQueueModal(){
+  await renderOfflineQueueModal();
+  openModal('m-offline-queue');
+}
+async function renderOfflineQueueModal(){
+  const items=await offlineQueueAll();
+  items.sort((a,b)=>b.id-a.id);
+  const el=document.getElementById('offline-queue-list');
+  if(!el)return;
+  if(!items.length){el.innerHTML='<p style="color:var(--g4);font-size:13px">Geen items wachtend op sync</p>';return;}
+  el.innerHTML=items.map(item=>`
+    <div class="lrow" style="align-items:center">
+      <div style="flex:1">
+        <div class="lval" style="font-size:13px">${describeOfflineQueueItem(item)}</div>
+        <div style="font-size:11px;color:var(--g4)">${new Date(item.ts).toLocaleString('nl-NL')}</div>
+      </div>
+      <button onclick="removeOfflineQueueItem(${item.id})" style="background:none;border:none;color:var(--g3);font-size:16px;cursor:pointer;padding:4px">🗑</button>
+    </div>`).join('');
+}
+async function removeOfflineQueueItem(id){
+  if(!confirm('Dit item niet meer synchroniseren en verwijderen uit de wachtrij?'))return;
+  await offlineQueueRemove(id);
+  updateOfflineBadge();
+  renderOfflineQueueModal();
+  refreshHome();
+  if(document.getElementById('s-history')?.classList.contains('active'))loadHistory();
+}
+// Pending sessie-inserts (nog niet gesynchroniseerd) als weergeefbare rows, zodat ze
+// meteen zichtbaar zijn in Home/Logboek i.p.v. pas na sync. id krijgt prefix 'pending_'
+// zodat edit/delete-functies ze kunnen onderscheiden van al-gesynchroniseerde rows.
+async function getPendingSessionRows(){
+  const items=await offlineQueueAll();
+  return items
+    .filter(it=>it.table==='sessions'&&it.method==='POST')
+    .map(it=>({...it.body,id:'pending_'+it.id,_pending:true,_queueId:it.id}));
 }
 window.addEventListener('online',flushOfflineQueue);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')flushOfflineQueue();});
@@ -5038,10 +5119,12 @@ async function refreshHome(){
     nextLblEl.textContent='';
   }
   if(curT){document.getElementById('home-dot-'+curT.toLowerCase())?.classList.add('show');}
-  const rs=await sbGet('sessions','&order=created_at.desc&limit=6');
+  const rsSynced=await sbGet('sessions','&order=created_at.desc&limit=6');
+  const rsPending=await getPendingSessionRows();
+  const rs=[...rsPending,...rsSynced].slice(0,6);
   let rh='';
   if(!rs?.length)rh='<p style="color:var(--g4);font-size:13px">Nog geen sessies gelogd</p>';
-  else rs.forEach(s=>{const n=exercises.find(e=>e.id===s.exercise_id)?.name||s.exercise_id;const v=s.weight&&s.reps?s.weight+'kg×'+s.reps:s.time_str||'—';rh+=`<div class="lrow"><div class="ldate">${s.date}</div><div class="lval">${n}</div><div class="lnote">${v}</div></div>`;});
+  else rs.forEach(s=>{const n=exercises.find(e=>e.id===s.exercise_id)?.name||s.exercise_id;const v=s.weight&&s.reps?s.weight+'kg×'+s.reps:s.time_str||'—';rh+=`<div class="lrow">${s._pending?'<span title="Wachtend op sync" style="margin-right:4px">⏳</span>':''}<div class="ldate">${s.date}</div><div class="lval">${n}</div><div class="lnote">${v}</div></div>`;});
   document.getElementById('home-recent').innerHTML=rh;
 }
 // "Verder met programma"-kaart: pakt het eerstvolgende niet-afgeronde blok van het meest
@@ -5148,6 +5231,12 @@ async function loadHistory(append=false){
   let p='&order=date.desc,created_at.desc&limit=20&offset='+histOff;
   if(histFilter!=='all')p+='&training_type=eq.'+histFilter;
   const ss=await sbGet('sessions',p);
+  const syncedCount=ss.length;
+  if(!append){
+    let pending=await getPendingSessionRows();
+    if(histFilter!=='all')pending=pending.filter(s=>s.training_type===histFilter);
+    ss.unshift(...pending);
+  }
   const byDate={};
   ss.forEach(s=>{if(!byDate[s.date])byDate[s.date]=[];byDate[s.date].push(s);});
   let html='';
@@ -5175,14 +5264,16 @@ async function loadHistory(append=false){
           else if(s.note) v=s.note.split('|')[0];
           if(s.note&&s.note.includes('Opwarm:')) sub=`<div style="font-size:11px;color:#3b82f6;margin-top:2px">${s.note}</div>`;
           const sJson=JSON.stringify(s).replace(/`/g,'\`').replace(/\\${/g,'\${');
-          return `<div class="hist-ex-item" onclick='openEditSess(${JSON.stringify(s.id)},${JSON.stringify(n)},${JSON.stringify(s)})'>
+          const pendingTag=s._pending?'<span title="Wachtend op sync" style="margin-right:4px">⏳</span>':'';
+          const clickAttr=s._pending?`onclick='toast("Wachtend op sync — bewerken kan zodra online")'`:`onclick='openEditSess(${JSON.stringify(s.id)},${JSON.stringify(n)},${JSON.stringify(s)})'`;
+          return `<div class="hist-ex-item" ${clickAttr}>
             <div style="flex:1">
-              <div class="hist-ex-name">${n}</div>
+              <div class="hist-ex-name">${pendingTag}${n}</div>
               <div class="hist-ex-sets">${v}</div>
               ${sub}
             </div>
             <button onclick="event.stopPropagation();deleteSessionDirect(${JSON.stringify(s.id)})" style="background:none;border:none;color:var(--g3);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0">🗑</button>
-            <span style="color:var(--g3);font-size:16px;flex-shrink:0">✏️</span>
+            <span style="color:var(--g3);font-size:16px;flex-shrink:0">${s._pending?'':'✏️'}</span>
           </div>`;
         }).join('')}
         <div style="display:flex;gap:8px;border-top:1px dashed var(--g2);margin-top:4px;padding-top:4px">
@@ -5195,7 +5286,7 @@ async function loadHistory(append=false){
   const el=document.getElementById('hist-list');
   if(append)el.insertAdjacentHTML('beforeend',html);
   else el.innerHTML=html||'<p style="color:var(--g4);font-size:13px">Geen sessies gevonden</p>';
-  document.getElementById('hist-more').style.display=ss.length<20?'none':'block';
+  document.getElementById('hist-more').style.display=syncedCount<20?'none':'block';
   histOff+=20;
 }
 function loadMoreHistory(){loadHistory(true);}
@@ -5218,7 +5309,13 @@ function fmtDate(d){
 
 async function deleteSessionDirect(id){
   if(!confirm('Sessie verwijderen?')) return;
-  const ok=await sbDel('sessions','id=eq.'+id);
+  if(typeof id==='string'&&id.startsWith('pending_')){
+    await offlineQueueRemove(parseInt(id.slice('pending_'.length)));
+    updateOfflineBadge();
+    toast('Verwijderd');loadHistory();
+    return;
+  }
+  const ok=await sbDelQ('sessions','id=eq.'+id);
   if(ok){toast('Verwijderd');loadHistory();}
   else toast('Fout bij verwijderen');
 }
@@ -5372,7 +5469,7 @@ async function deleteSessionEntry(){
   const delBtn=document.querySelector('#m-edit-session .btn-o[onclick="deleteSessionEntry()"]');
   if(delBtn) delBtn.style.display='';
   if(!curEditSess||!confirm('Verwijderen?'))return;
-  const ok=await sbDel('sessions','id=eq.'+curEditSess.id);
+  const ok=await sbDelQ('sessions','id=eq.'+curEditSess.id);
   if(ok){closeModal('m-edit-session');toast('Verwijderd');loadHistory();}
 }
 

@@ -858,6 +858,7 @@ canvas{width:100%;height:100%}
     <div class="sec-hd">Trainingsschema's</div>
     <div id="admin-taex-cards"></div>
     <div class="sec-hd">Equipment types</div>
+    <p style="font-size:11px;color:var(--g4);margin:-4px 0 8px">Instellingsvelden per oefening op een machine — bv. "Zitting: 5", "Pin: 8". Los van welke machine het is.</p>
     <div class="card">
       <div class="card-body" style="padding-top:10px">
         <div id="admin-eqtypes-list"></div>
@@ -868,6 +869,7 @@ canvas{width:100%;height:100%}
       </div>
     </div>
     <div class="sec-hd">Apparatuur-catalogus</div>
+    <p style="font-size:11px;color:var(--g4);margin:-4px 0 8px">De daadwerkelijke machines zelf — bv. "Leg Press", "Lat Pulldown" — met spiergroepen en gebruiksuitleg.</p>
     <div class="card">
       <div class="card-hd"><span class="card-title" id="admin-eqcat-title">Apparaten</span><button class="btn btn-o btn-sm" id="admin-eqcat-new-btn" onclick="openNewEquipmentCatalogItem()">+ Nieuw</button></div>
       <div class="card-body" id="admin-eqcat-list" style="padding-top:10px"></div>
@@ -932,6 +934,17 @@ canvas{width:100%;height:100%}
     <div style="display:flex;gap:8px;margin-top:10px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-team-pin')">Annuleer</button>
       <button class="btn btn-r" style="flex:2" onclick="submitTeamPin()">Openen</button>
+    </div>
+    <!-- Alleen voor de owner (teamRoleLevel al bekend via whoami, geen pincode nodig) —
+         herstelt de pincode zonder de oude te hoeven weten. Roept dezelfde
+         gym-team-set-pin.js aan als de reguliere wijzig-pincode-actie in Team zelf. -->
+    <div id="team-pin-forgot-row" style="display:none;margin-top:14px;border-top:1px solid var(--g2);padding-top:10px">
+      <button type="button" onclick="toggleForgotPinForm()" style="background:none;border:none;color:var(--g4);font-size:12px;text-decoration:underline;cursor:pointer;padding:0">Pincode vergeten?</button>
+      <div id="team-pin-forgot-form" style="display:none;margin-top:10px">
+        <div class="irow"><label class="ilbl">Nieuwe pincode</label><input class="inp" type="text" inputmode="numeric" id="team-forgot-newpin-input" placeholder="4-8 cijfers"></div>
+        <div id="team-forgot-err" style="color:var(--red);font-size:12px;min-height:16px"></div>
+        <button class="btn btn-r" style="width:100%" onclick="resetForgottenPin(this)">Pincode instellen &amp; openen</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1087,11 +1100,7 @@ canvas{width:100%;height:100%}
       </select></div>
       <div class="irow"><label class="ilbl">Spiergroepen — primair *</label><div id="los-new-muscles-primary" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
       <div class="irow"><label class="ilbl">Spiergroepen — secundair</label><div id="los-new-muscles-secondary" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
-      <div class="irow" id="los-new-scope-row"><label class="ilbl">Zichtbaar voor</label><select class="inp" id="los-new-scope">
-        <option value="personal">Alleen ik</option>
-        <option value="gym">Mijn hele gym</option>
-        <option value="global">Iedereen (globale bibliotheek)</option>
-      </select></div>
+      <p style="font-size:11px;color:var(--g4);margin:-2px 0 8px">Deze oefening is alleen voor jou zichtbaar.</p>
     </div>
     <div id="los-body"></div>
     <div style="margin-top:14px">
@@ -1647,7 +1656,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.24';
+const APP_VER = 'v3.3.25';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -2689,7 +2698,43 @@ async function checkTeamAccess(){
 function openTeamPinModal(){
   document.getElementById('team-pin-input').value='';
   document.getElementById('team-pin-err').textContent='';
+  document.getElementById('team-pin-forgot-row').style.display=teamRoleLevel>=3?'block':'none';
+  document.getElementById('team-pin-forgot-form').style.display='none';
+  document.getElementById('team-forgot-newpin-input').value='';
+  document.getElementById('team-forgot-err').textContent='';
   openModal('m-team-pin');
+}
+function toggleForgotPinForm(){
+  const el=document.getElementById('team-pin-forgot-form');
+  el.style.display=el.style.display==='none'?'block':'none';
+}
+// v3.3.25 — Team gebruikt bewust nog steeds altijd de gedeelde pincode (extra
+// beveiligingslaag boven op de rol-check, zie gym-team.js) — dat blijft zo. Dit lost
+// alleen het ontbreken van een hersteloptie op: zonder dit kon een owner die de pincode
+// vergeten was er nooit meer in, want de wijzig-pincode-actie zat ZELF achter de
+// pincode-poort. gym-team-set-pin.js vereist toch al alleen het owner-schap (rol>=3) via
+// de sessie, nooit de oude pincode — deze knop maakt dat pad nu ook echt bereikbaar.
+async function resetForgottenPin(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  const errEl=document.getElementById('team-forgot-err');
+  errEl.textContent='';
+  try{
+    const newPin=document.getElementById('team-forgot-newpin-input').value.trim();
+    if(!/^\d{4,8}$/.test(newPin)){errEl.textContent='Pincode moet 4-8 cijfers zijn';return;}
+    const h=wearableAuthHeaders();
+    if(!h){errEl.textContent='Geen sessie — log opnieuw in';return;}
+    const r=await fetch('/.netlify/functions/gym-team-set-pin',{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({newPin})});
+    const d=await r.json();
+    if(!r.ok){errEl.textContent=d.error?.message||'Instellen mislukt';return;}
+    teamPin=newPin;
+    const ok=await loadTeamMembers();
+    if(!ok)return;
+    closeModal('m-team-pin');
+    document.getElementById('team-pin-owner-row').style.display='block';
+    switchTeamTab('members');
+    openModal('m-team');
+    toast('Nieuwe pincode ingesteld');
+  }finally{if(btnEl)btnEl.disabled=false;}
 }
 async function submitTeamPin(){
   const pin=document.getElementById('team-pin-input').value.trim();
@@ -3286,7 +3331,6 @@ function selectExPickerNew(){
   document.getElementById('los-new-fields').style.display='';
   renderMuscleChecks('los-new-muscles-primary', [], 'primary');
   renderMuscleChecks('los-new-muscles-secondary', [], 'secondary');
-  renderScopeOptions('los-new-scope');
   closeModal('m-ex-picker');
   document.getElementById('los-ex-new').focus();
   renderLosBody();
@@ -3355,16 +3399,13 @@ async function saveLosOefening(btnEl){
       const primary=Array.from(document.querySelectorAll('#los-new-muscles-primary input:checked')).map(i=>i.value);
       const secondary=Array.from(document.querySelectorAll('#los-new-muscles-secondary input:checked')).map(i=>i.value);
       if(!primary.length){toast('Kies minimaal één primaire spiergroep');return;}
-      // v333-fix: scope expliciet meesturen. Deze knop is momenteel alleen zichtbaar
-      // voor coach+ (v331-gate) en was bedoeld om gym-breed te delen — zonder dit veld
-      // viel de nieuwe kolom-default 'personal' terug, waardoor de oefening stilzwijgend
-      // alleen voor de maker zelf zichtbaar werd i.p.v. voor de hele gym.
-      // v333: scope komt nu uit de kiezer i.p.v. hardgecodeerd 'gym' — RLS/trigger op de
-      // server valideren sowieso dat de rol toereikend is voor de gekozen scope.
-      const scopeVal=document.getElementById('los-new-scope')?.value||'personal';
-      ex={id,name:naam,category:'Overig',type,wod_format:wodFormat,sort_order:99,active:true,pr:null,yt:null,rest_seconds:null,muscle_primary:primary,muscle_secondary:secondary,scope:scopeVal};
+      // v3.3.25: altijd 'personal' bij aanmaken tijdens een lopende training — een
+      // zwaardere zichtbaarheidskeuze (gym/globaal) hoort niet midden in een workout.
+      // Gym-breed/globaal delen kan (nog) alleen via Beheer → + Nieuw (owner-only), niet
+      // hier.
+      ex={id,name:naam,category:'Overig',type,wod_format:wodFormat,sort_order:99,active:true,pr:null,yt:null,rest_seconds:null,muscle_primary:primary,muscle_secondary:secondary,scope:'personal'};
       const ok=await sbPostQ('exercises',ex);
-      if(!ok){toast('Fout bij aanmaken oefening (alleen coach/manager/owner mag dit)');return;}
+      if(!ok){toast('Fout bij aanmaken oefening');return;}
       exercises.push(ex);
       exId=id;
     }
@@ -4191,6 +4232,11 @@ async function renderTrainScreen(t){
     }
 
     const isDefault=(TRAIN_CFG[t]||[]).some(e=>e.id===ex.id);
+    // v3.3.25: deel-knop voor persoonlijke oefeningen — was al mogelijk voor eigen
+    // trainingen (Workouts-lijst) maar ontbrak volledig voor losse oefeningen, terwijl de
+    // backend (content_shares) 'exercise' al net zo goed ondersteunt als 'training'.
+    const fullEx=exercises.find(e=>e.id===ex.id);
+    const isPersonalEx=fullEx&&fullEx.scope==='personal';
     const div=document.createElement('div');
     div.className='ex-card';
 
@@ -4199,7 +4245,7 @@ async function renderTrainScreen(t){
     div.innerHTML=`
       <div class="ex-card-hd" onclick="toggleExCard('${ex.id}')">
         <div style="flex:1">
-          <div class="ex-card-name">${escHtml(ex.naam)}${t.startsWith('prog_')?` <button onclick="event.stopPropagation();openSwapExercise('${ex.id}','${t}')" title="Wissel voor alternatief" style="background:none;border:none;color:var(--accent);font-size:13px;cursor:pointer;margin-left:4px">⇄</button>`:''}${!isDefault?` <button onclick="event.stopPropagation();removeExSession('${ex.id}')" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;margin-left:4px">✕</button>`:''}</div>
+          <div class="ex-card-name">${escHtml(ex.naam)}${t.startsWith('prog_')?` <button onclick="event.stopPropagation();openSwapExercise('${ex.id}','${t}')" title="Wissel voor alternatief" style="background:none;border:none;color:var(--accent);font-size:13px;cursor:pointer;margin-left:4px">⇄</button>`:''}${isPersonalEx?` <button onclick="event.stopPropagation();openShareModal('exercise','${ex.id}')" title="Delen met persoon" style="background:none;border:none;color:var(--g4);font-size:13px;cursor:pointer;margin-left:4px">🔗</button>`:''}${!isDefault?` <button onclick="event.stopPropagation();removeExSession('${ex.id}')" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;margin-left:4px">✕</button>`:''}</div>
           <div class="ex-card-meta">${resolveCardioType(ex)?(CARDIO_TYPES[resolveCardioType(ex)]?.naam||'Cardio'):ex.sets+'×'+ex.reps+(ex.rpe?' · RPE '+ex.rpe:'')}</div>
         </div>
         <span style="color:var(--g3);font-size:20px" id="arr-${ex.id}">›</span>

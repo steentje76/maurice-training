@@ -32,51 +32,9 @@ CREATE TABLE IF NOT EXISTS content_shares (
   UNIQUE(content_type, content_id, shared_with)
 );
 ALTER TABLE content_shares ENABLE ROW LEVEL SECURITY;
-
-DO $$
-DECLARE pol record;
-BEGIN
-  FOR pol IN SELECT policyname FROM pg_policies WHERE schemaname='public' AND tablename='content_shares'
-  LOOP
-    EXECUTE format('DROP POLICY %I ON content_shares', pol.policyname);
-  END LOOP;
-END $$;
-
--- Beide partijen (deler + ontvanger) mogen de share-rij zien; alleen de deler mag 'm
--- aanmaken/verwijderen. Server-side check dat je alleen je EIGEN personal-content mag
--- delen (niet andermans oefening/training) zit in de WITH CHECK hieronder.
-CREATE POLICY content_shares_select_own ON content_shares
-  FOR SELECT TO authenticated
-  USING (shared_by = auth.uid() OR shared_with = auth.uid());
-
-CREATE POLICY content_shares_insert_owner ON content_shares
-  FOR INSERT TO authenticated
-  WITH CHECK (
-    shared_by = auth.uid()
-    AND (
-      (content_type='exercise' AND EXISTS(
-        SELECT 1 FROM exercises e WHERE e.id=content_id AND e.scope='personal' AND e.created_by=auth.uid()))
-      OR (content_type='training' AND EXISTS(
-        SELECT 1 FROM custom_trainings ct WHERE ct.id::text=content_id AND ct.scope='personal' AND ct.user_id=auth.uid()))
-    )
-  );
-
-CREATE POLICY content_shares_delete_owner ON content_shares
-  FOR DELETE TO authenticated
-  USING (shared_by = auth.uid());
-
-CREATE OR REPLACE FUNCTION set_content_share_owner()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.shared_by := auth.uid(); -- nooit de client vertrouwen voor wie er deelt
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-DROP TRIGGER IF EXISTS trg_set_content_share_owner ON content_shares;
-CREATE TRIGGER trg_set_content_share_owner
-  BEFORE INSERT ON content_shares
-  FOR EACH ROW EXECUTE FUNCTION set_content_share_owner();
+-- Policies + trigger voor content_shares staan pas aan het EIND van dit script (DEEL 5):
+-- die verwijzen naar exercises.scope en custom_trainings.scope, die kolommen bestaan
+-- pas na DEEL 2/3 hieronder. Volgorde-afhankelijkheid, expres zo neergezet.
 
 -- ══════════════════════════════════════════════════════════
 -- DEEL 2: exercises — scope-kolom + backfill + nieuwe policies (vervangt v331)
@@ -330,6 +288,55 @@ CREATE POLICY custom_training_exercises_write_v333 ON custom_training_exercises
         OR (ct.scope='global' AND (SELECT gym_role_level FROM users WHERE id=auth.uid()::text) >= 3)
       ))
   );
+
+-- ══════════════════════════════════════════════════════════
+-- DEEL 5: content_shares — policies + trigger (moet ná DEEL 2/3, verwijst naar
+-- exercises.scope en custom_trainings.scope)
+-- ══════════════════════════════════════════════════════════
+DO $$
+DECLARE pol record;
+BEGIN
+  FOR pol IN SELECT policyname FROM pg_policies WHERE schemaname='public' AND tablename='content_shares'
+  LOOP
+    EXECUTE format('DROP POLICY %I ON content_shares', pol.policyname);
+  END LOOP;
+END $$;
+
+-- Beide partijen (deler + ontvanger) mogen de share-rij zien; alleen de deler mag 'm
+-- aanmaken/verwijderen. Server-side check dat je alleen je EIGEN personal-content mag
+-- delen (niet andermans oefening/training) zit in de WITH CHECK hieronder.
+CREATE POLICY content_shares_select_own ON content_shares
+  FOR SELECT TO authenticated
+  USING (shared_by = auth.uid() OR shared_with = auth.uid());
+
+CREATE POLICY content_shares_insert_owner ON content_shares
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    shared_by = auth.uid()
+    AND (
+      (content_type='exercise' AND EXISTS(
+        SELECT 1 FROM exercises e WHERE e.id=content_id AND e.scope='personal' AND e.created_by=auth.uid()))
+      OR (content_type='training' AND EXISTS(
+        SELECT 1 FROM custom_trainings ct WHERE ct.id::text=content_id AND ct.scope='personal' AND ct.user_id=auth.uid()))
+    )
+  );
+
+CREATE POLICY content_shares_delete_owner ON content_shares
+  FOR DELETE TO authenticated
+  USING (shared_by = auth.uid());
+
+CREATE OR REPLACE FUNCTION set_content_share_owner()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.shared_by := auth.uid(); -- nooit de client vertrouwen voor wie er deelt
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_set_content_share_owner ON content_shares;
+CREATE TRIGGER trg_set_content_share_owner
+  BEFORE INSERT ON content_shares
+  FOR EACH ROW EXECUTE FUNCTION set_content_share_owner();
 
 -- ══════════════════════════════════════════════════════════
 -- Let op — nog NIET meegenomen in deze migratie (bewust, komt met de UI-sessie):

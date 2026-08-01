@@ -1267,7 +1267,7 @@ canvas{width:100%;height:100%}
     <div id="session-end-content"></div>
     <div style="display:flex;gap:8px;margin-top:16px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-session-end')">Verder</button>
-      <button class="btn btn-r" style="flex:2" onclick="finishSession()">Opslaan & Afsluiten</button>
+      <button class="btn btn-r" id="finish-session-btn" style="flex:2" onclick="finishSession()">Opslaan & Afsluiten</button>
     </div>
   </div>
 </div>
@@ -1580,7 +1580,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.6';
+const APP_VER = 'v3.3.7';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -3656,7 +3656,7 @@ async function renderProgrammaList(){
         </div>
         <div id="blk-exp-${b.id}" style="display:none;padding:0 0 10px 68px"></div>
       `).join('')}
-      ${hasIncomplete?`<button class="btn btn-o" style="margin-top:8px;width:100%;font-size:12px" onclick="heergenereerResterendeWeken('${p.id}')">↻ Her-genereer resterende weken</button>`:''}
+      ${hasIncomplete?`<button class="btn btn-o" style="margin-top:8px;width:100%;font-size:12px" onclick="heergenereerResterendeWeken('${p.id}',this)">↻ Her-genereer resterende weken</button>`:''}
     </div></div>`;
   }
   el.innerHTML=h;
@@ -3675,7 +3675,11 @@ async function deleteProgramma(progId){
 // Vervangt alle nog niet-afgeronde blokken door een nieuwe generatie, met als extra context
 // hoe het écht ging (adherence + gemiddelde RPE-afwijking) en recent gemelde pijn. Al
 // afgeronde blokken/weken blijven volledig ongemoeid.
-async function heergenereerResterendeWeken(progId){
+// v337: zelfde bug als opslaanProgramma (v336) — lange lus (verwijderen + AI-generatie
+// + opnieuw inserten) zonder beveiliging tegen dubbel indrukken van de knop.
+let heergenererenBezig=false;
+async function heergenereerResterendeWeken(progId,btnEl){
+  if(heergenererenBezig)return;
   const prog=(await sbGet('programs','&id=eq.'+progId))[0];
   if(!prog){toast('Programma niet gevonden');return;}
   const blocks=await sbGet('program_blocks','&program_id=eq.'+progId+'&order=week_nr.asc');
@@ -3688,6 +3692,9 @@ async function heergenereerResterendeWeken(progId){
   const maxWeek=Math.max(...blocks.map(b=>b.week_nr));
   const bevestiging=`Weken ${incompleteWeeks.join(', ')} opnieuw genereren o.b.v. hoe het écht ging (${progress.adherencePct}% adherence tot nu toe${progress.avgRpeDelta!=null?`, gem. RPE ${progress.avgRpeDelta>0?'+':''}${progress.avgRpeDelta} t.o.v. plan`:''})? Nog niet-uitgevoerde trainingen in deze weken worden vervangen.`;
   if(!confirm(bevestiging))return;
+  heergenererenBezig=true;
+  if(btnEl){btnEl.disabled=true;btnEl.textContent='Bezig met her-genereren...';}
+  try{
   await ensureExercisesLoaded();
   for(const b of incomplete){
     await sbDel('program_block_exercises','program_block_id=eq.'+b.id);
@@ -3728,6 +3735,10 @@ async function heergenereerResterendeWeken(progId){
   toast(newBlocks.length+' trainingen her-gegenereerd');
   renderProgrammaList();
   refreshHome();
+  }finally{
+    heergenererenBezig=false;
+    if(btnEl){btnEl.disabled=false;btnEl.textContent='↻ Her-genereer resterende weken';}
+  }
 }
 
 // Uitklappen: toont oefeningen/sets/reps/RPE/percentage/notities compact onder de trainingsrij,
@@ -5296,7 +5307,17 @@ function renderSessionSummaryContent(t){
   openModal('m-session-end');
 }
 
+// v337: zelfde bug als opslaanProgramma/heergenereerResterendeWeken — een lus met
+// awaited sbPostQ-calls per oefening, zonder beveiliging tegen dubbel indrukken.
+// Dit is de meest gebruikte save-actie in de app (na élke training), dus het hoogste
+// risico op dubbele sessie-logs bij een dubbele tap op trage gym-wifi.
+let finishSessionBezig=false;
 async function finishSession(){
+  if(finishSessionBezig)return;
+  finishSessionBezig=true;
+  const btn=document.getElementById('finish-session-btn');
+  if(btn){btn.disabled=true;btn.textContent='Opslaan...';}
+  try{
   const t=curT,list=getSessionExs(t),today=td();let saved=0;
   const summaryData=[]; // v306 #10: input voor AI-samenvatting
   for(const ex of list){
@@ -5335,6 +5356,10 @@ async function finishSession(){
   openModal('m-ai-summary');
   const aiText=await generateSessionSummaryAI(t,summaryData);
   document.getElementById('ai-summary-body').textContent=aiText||'Samenvatting kon niet worden opgehaald — je training is wel opgeslagen.';
+  }finally{
+    finishSessionBezig=false;
+    if(btn){btn.disabled=false;btn.textContent='Opslaan & Afsluiten';}
+  }
 }
 // v306 #10: eenmalige AI-call na afronden training — géén advies per set (dat gebeurt al
 // lokaal/regelgebaseerd via showPostSetAdvice), dit is de overkoepelende terugblik.

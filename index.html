@@ -859,6 +859,11 @@ canvas{width:100%;height:100%}
         </div>
       </div>
     </div>
+    <div class="sec-hd">Apparatuur-catalogus</div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title" id="admin-eqcat-title">Apparaten</span><button class="btn btn-o btn-sm" id="admin-eqcat-new-btn" onclick="openNewEquipmentCatalogItem()">+ Nieuw</button></div>
+      <div class="card-body" id="admin-eqcat-list" style="padding-top:10px"></div>
+    </div>
   </div>
   <nav class="bnav">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
@@ -1526,6 +1531,24 @@ canvas{width:100%;height:100%}
   </div>
 </div>
 
+<!-- ═══ APPARATUUR-CATALOGUS (v335) — gym-owner of losse atleet, RLS handhaaft dit hard ═══ -->
+<div class="modal-bg" id="m-eqcat-edit" onclick="bgClose(event,'m-eqcat-edit')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="eqcat-edit-title">Apparaat</div>
+    <div class="irow"><label class="ilbl">Naam</label><input class="inp" type="text" id="eqcat-name" placeholder="bijv. Leg Press"></div>
+    <div class="irow"><label class="ilbl">Gebruiksuitleg</label><input class="inp" type="text" id="eqcat-usage" placeholder="korte uitleg (optioneel)"></div>
+    <p style="font-size:12px;color:var(--g4);margin-bottom:6px;font-weight:700">Spiergroepen — primair</p>
+    <div id="eqcat-muscles-primary" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
+    <p style="font-size:12px;color:var(--g4);margin-bottom:6px;font-weight:700">Spiergroepen — secundair</p>
+    <div id="eqcat-muscles-secondary" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-eqcat-edit')">Annuleer</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveEquipmentCatalogItem(this)">Opslaan</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="m-edit-peak" onclick="bgClose(event,'m-edit-peak')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -1616,7 +1639,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.21';
+const APP_VER = 'v3.3.22';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6093,6 +6116,7 @@ async function refreshAdmin(){
   await ensureExercisesLoaded();
   await loadTrainCfg();
   renderAdminEqTypes();
+  renderAdminEqCat();
   document.getElementById('admin-ver').textContent=APP_VER;
   const el=document.getElementById('api-st');
   el.textContent='Server-side (Netlify)';el.style.color='var(--green)';
@@ -8335,6 +8359,113 @@ async function removeEquipmentType(id){
   equipmentTypes=[];
   await ensureEquipmentTypesLoaded();
   renderAdminEqTypes();
+}
+// ══════════════════════════════════════════════════════════
+// APPARATUUR-CATALOGUS (v335) — los van equipment_types (instellingsvelden per oefening).
+// Dit is een catalogus van daadwerkelijke apparaten/machines met spiergroep-metadata.
+// Zichtbaarheid komt uit RLS (gym_id/user_id op de rij zelf, zie migratie_v335.sql) — de
+// client hoeft niet apart te filteren, sbGet('equipment_catalog',...) geeft al precies
+// de juiste rijen terug voor de ingelogde gebruiker.
+// Schrijfrechten: gym-owner (teamRoleLevel>=3) beheert de gym-lijst; een losse atleet
+// zonder gym-koppeling (teamRoleLevel===-1) beheert zijn eigen lijst. Gewone gym-leden
+// (0/1/2) zien alleen — de server (trigger) handhaaft dit sowieso hard, dit bepaalt enkel
+// of de "+ Nieuw"/bewerk-knoppen getoond worden.
+let equipmentCatalog=[], _equipmentCatalogLoading=null;
+function canEditEquipmentCatalog(){ return teamRoleLevel>=3 || teamRoleLevel===-1; }
+async function ensureEquipmentCatalogLoaded(){
+  if(equipmentCatalog.length)return equipmentCatalog;
+  if(_equipmentCatalogLoading)return _equipmentCatalogLoading;
+  _equipmentCatalogLoading=(async()=>{
+    const data=await sbGet('equipment_catalog','&active=eq.true&order=sort_order.asc');
+    equipmentCatalog=data.length?data:[
+      {id:'seed_1',name:'Leg Press',muscle_primary:['Quadriceps'],muscle_secondary:['Billen'],usage_note:'',active:true,sort_order:1},
+      {id:'seed_2',name:'Lat Pulldown',muscle_primary:['Rug'],muscle_secondary:['Biceps'],usage_note:'',active:true,sort_order:2},
+      {id:'seed_3',name:'Cable Row',muscle_primary:['Rug'],muscle_secondary:['Biceps'],usage_note:'',active:true,sort_order:3},
+      {id:'seed_4',name:'Squat Rack',muscle_primary:['Quadriceps','Billen'],muscle_secondary:['Onderrug'],usage_note:'',active:true,sort_order:4},
+      {id:'seed_5',name:'Leg Curl Machine',muscle_primary:['Hamstrings'],muscle_secondary:[],usage_note:'',active:true,sort_order:5},
+      {id:'seed_6',name:'Leg Extension',muscle_primary:['Quadriceps'],muscle_secondary:[],usage_note:'',active:true,sort_order:6},
+      {id:'seed_7',name:'Chest Press',muscle_primary:['Borst'],muscle_secondary:['Triceps'],usage_note:'',active:true,sort_order:7},
+      {id:'seed_8',name:'Shoulder Press Machine',muscle_primary:['Schouders'],muscle_secondary:['Triceps'],usage_note:'',active:true,sort_order:8},
+      {id:'seed_9',name:'Smith Machine',muscle_primary:[],muscle_secondary:[],usage_note:'',active:true,sort_order:9},
+      {id:'seed_10',name:'Assisted Pull-up/Dip',muscle_primary:['Rug'],muscle_secondary:['Triceps','Biceps'],usage_note:'',active:true,sort_order:10},
+    ];
+    return equipmentCatalog;
+  })();
+  return _equipmentCatalogLoading;
+}
+async function renderAdminEqCat(){
+  const el=document.getElementById('admin-eqcat-list');
+  const newBtn=document.getElementById('admin-eqcat-new-btn');
+  const titleEl=document.getElementById('admin-eqcat-title');
+  if(!el)return;
+  const editable=canEditEquipmentCatalog();
+  if(newBtn)newBtn.style.display=editable?'':'none';
+  if(titleEl)titleEl.textContent=teamRoleLevel>=3?'Apparaten (gym)':'Apparaten (persoonlijk)';
+  await ensureEquipmentCatalogLoaded();
+  const list=await sbGet('equipment_catalog','&active=eq.true&order=sort_order.asc');
+  const items=list.length?list:equipmentCatalog;
+  if(!items.length){el.innerHTML='<p style="color:var(--g4);font-size:13px">Nog geen apparaten</p>';return;}
+  el.innerHTML=items.map(it=>{
+    const muscles=[...(it.muscle_primary||[]),...(it.muscle_secondary||[])];
+    const sub=[muscles.length?muscles.join(', '):null,it.usage_note||null].filter(Boolean).join(' · ');
+    return `<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)">
+      <div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${escHtml(it.name)}</div>${sub?`<div style="font-size:11px;color:var(--g4)">${escHtml(sub)}</div>`:''}</div>
+      ${editable?`<button onclick='openEditEquipmentCatalogItem(${JSON.stringify(it.id)})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">✏️</button><button onclick="deleteEquipmentCatalogItem('${it.id}')" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button>`:''}
+    </div>`;
+  }).join('');
+}
+let curEqCatEditId=null;
+function openNewEquipmentCatalogItem(){
+  if(!canEditEquipmentCatalog()){toast('Alleen de gym-owner of een losse atleet mag de catalogus beheren');return;}
+  curEqCatEditId=null;
+  document.getElementById('eqcat-edit-title').textContent='Nieuw apparaat';
+  document.getElementById('eqcat-name').value='';
+  document.getElementById('eqcat-usage').value='';
+  renderMuscleChecks('eqcat-muscles-primary', [], 'primary');
+  renderMuscleChecks('eqcat-muscles-secondary', [], 'secondary');
+  openModal('m-eqcat-edit');
+}
+function openEditEquipmentCatalogItem(id){
+  const it=equipmentCatalog.find(e=>e.id===id);
+  if(!it)return;
+  curEqCatEditId=id;
+  document.getElementById('eqcat-edit-title').textContent='Apparaat bewerken';
+  document.getElementById('eqcat-name').value=it.name||'';
+  document.getElementById('eqcat-usage').value=it.usage_note||'';
+  renderMuscleChecks('eqcat-muscles-primary', it.muscle_primary||[], 'primary');
+  renderMuscleChecks('eqcat-muscles-secondary', it.muscle_secondary||[], 'secondary');
+  openModal('m-eqcat-edit');
+}
+async function saveEquipmentCatalogItem(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  try{
+  const name=document.getElementById('eqcat-name').value.trim();
+  if(!name){toast('Vul een naam in');return;}
+  const usage_note=document.getElementById('eqcat-usage').value.trim()||null;
+  const muscle_primary=Array.from(document.querySelectorAll('#eqcat-muscles-primary input:checked')).map(i=>i.value);
+  const muscle_secondary=Array.from(document.querySelectorAll('#eqcat-muscles-secondary input:checked')).map(i=>i.value);
+  let ok;
+  if(curEqCatEditId){
+    ok=await sbPatch('equipment_catalog','id=eq.'+curEqCatEditId,{name,usage_note,muscle_primary,muscle_secondary});
+  }else{
+    const id='eqcat_'+Date.now();
+    ok=await sbPost('equipment_catalog',{id,name,usage_note,muscle_primary,muscle_secondary,active:true,sort_order:Date.now()});
+  }
+  if(!ok){toast('Opslaan mislukt — check je rechten of dat migratie_v335.sql al gedraaid is');return;}
+  closeModal('m-eqcat-edit');
+  equipmentCatalog=[];
+  await ensureEquipmentCatalogLoaded();
+  renderAdminEqCat();
+  toast('Opgeslagen');
+  }finally{if(btnEl)btnEl.disabled=false;}
+}
+async function deleteEquipmentCatalogItem(id){
+  if(!confirm('Apparaat verwijderen?'))return;
+  const ok=await sbPatch('equipment_catalog','id=eq.'+id,{active:false});
+  if(!ok){toast('Verwijderen mislukt — check je rechten');return;}
+  equipmentCatalog=[];
+  await ensureEquipmentCatalogLoaded();
+  renderAdminEqCat();
 }
 async function ensureExercisesLoaded(){
   if(exercises.length)return exercises;

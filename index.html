@@ -746,7 +746,7 @@ canvas{width:100%;height:100%}
     <div class="irow"><label class="ilbl">Naam</label><input class="inp" id="vt-naam-input" placeholder="bv. Training C, Push, Onderlichaam"></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-vt-naam')">Annuleer</button>
-      <button class="btn btn-r" style="flex:2" onclick="saveVasteTrainingName()">Opslaan</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveVasteTrainingName(this)">Opslaan</button>
     </div>
   </div>
 </div>
@@ -892,7 +892,7 @@ canvas{width:100%;height:100%}
     <div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="i-note" placeholder="hoe voel ik me..."></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-hrv')">Annuleer</button>
-      <button class="btn btn-r" style="flex:2" onclick="saveHRV()">Opslaan & Analyseer</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveHRV(this)">Opslaan & Analyseer</button>
     </div>
   </div>
 </div>
@@ -953,7 +953,7 @@ canvas{width:100%;height:100%}
     <div class="irow"><label class="ilbl">Schaal</label><select class="inp" id="i-wscale"><option>Tanita</option><option>Medisana</option></select></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-weight')">Annuleer</button>
-      <button class="btn btn-r" style="flex:2" onclick="saveWeight()">Opslaan</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveWeight(this)">Opslaan</button>
     </div>
   </div>
 </div>
@@ -1007,7 +1007,7 @@ canvas{width:100%;height:100%}
     </select></div>
     <div style="margin-top:14px;display:flex;gap:8px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-atleet')">Annuleer</button>
-      <button class="btn btn-r" style="flex:2" onclick="saveAtleet()">Opslaan</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveAtleet(this)">Opslaan</button>
     </div>
   </div>
 </div>
@@ -1032,7 +1032,7 @@ canvas{width:100%;height:100%}
     <div class="irow"><label class="ilbl">Bron</label><select class="inp" id="bc-src"><option>Tanita</option><option>Medisana</option></select></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-bc')">Annuleer</button>
-      <button class="btn btn-r" style="flex:2" onclick="saveBC()">Opslaan</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveBC(this)">Opslaan</button>
     </div>
   </div>
 </div>
@@ -1077,7 +1077,7 @@ canvas{width:100%;height:100%}
     </div>
     <div id="los-body"></div>
     <div style="margin-top:14px">
-      <button class="btn btn-r" style="width:100%" onclick="saveLosOefening()">Opslaan</button>
+      <button class="btn btn-r" style="width:100%" onclick="saveLosOefening(this)">Opslaan</button>
     </div>
   </div>
 </div>
@@ -1244,7 +1244,7 @@ canvas{width:100%;height:100%}
     <div class="irow"><label class="ilbl">Spiergroepen — secundair</label><div id="nx-muscles-secondary" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-newex')">Annuleer</button>
-      <button class="btn btn-r" style="flex:2" onclick="saveNewEx()">Toevoegen</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveNewEx(this)">Toevoegen</button>
     </div>
   </div>
 </div>
@@ -1318,7 +1318,7 @@ canvas{width:100%;height:100%}
     <div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="nt-note" placeholder="omschrijving (optioneel)"></div>
     <div style="margin-top:14px;display:flex;gap:8px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-new-training')">Annuleer</button>
-      <button class="btn btn-r" style="flex:2" onclick="saveNewTraining()">Aanmaken</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveNewTraining(this)">Aanmaken</button>
     </div>
   </div>
 </div>
@@ -1335,7 +1335,7 @@ canvas{width:100%;height:100%}
     </div>
     <div id="sat-name-row" class="irow" style="display:none;margin-top:12px"><label class="ilbl">Naam</label><input class="inp" type="text" id="sat-name" placeholder="bijv. Full Body"></div>
     <div id="sat-confirm-row" style="display:none;margin-top:10px">
-      <button class="btn btn-r" style="width:100%" onclick="saveAsTrainingAndFinish()">Bevestig & afsluiten</button>
+      <button class="btn btn-r" style="width:100%" onclick="saveAsTrainingAndFinish(this)">Bevestig & afsluiten</button>
     </div>
   </div>
 </div>
@@ -1432,7 +1432,7 @@ canvas{width:100%;height:100%}
     <button class="btn btn-o btn-sm" onclick="addSupersetEx()" style="margin-top:8px;width:100%">+ Oefening toevoegen</button>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-superset')">Annuleer</button>
-      <button class="btn btn-r" style="flex:2" onclick="saveSupersetToSession()">Toevoegen aan sessie</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveSupersetToSession(this)">Toevoegen aan sessie</button>
     </div>
   </div>
 </div>
@@ -1459,7 +1459,7 @@ canvas{width:100%;height:100%}
     <p style="font-size:12px;color:var(--g4);margin-bottom:12px">Voer het YouTube video ID in (bijv. <strong>bEv6CCg2BC8</strong>) of plak de volledige URL.</p>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-edit-yt')">Annuleer</button>
-      <button class="btn btn-r" style="flex:2" onclick="saveYT()">Opslaan</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveYT(this)">Opslaan</button>
     </div>
   </div>
 </div>
@@ -1480,7 +1480,7 @@ canvas{width:100%;height:100%}
     <p style="font-size:12px;color:var(--g4);margin-bottom:12px">Deze rusttijd start automatisch na het afvinken van een werkset bij deze oefening, i.p.v. de app-brede standaard.</p>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-edit-rest')">Annuleer</button>
-      <button class="btn btn-r" style="flex:2" onclick="saveRest()">Opslaan</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveRest(this)">Opslaan</button>
     </div>
   </div>
 </div>
@@ -1495,7 +1495,7 @@ canvas{width:100%;height:100%}
     <div id="edit-muscles-secondary" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-edit-muscles')">Annuleer</button>
-      <button class="btn btn-r" style="flex:2" onclick="saveMuscles()">Opslaan</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveMuscles(this)">Opslaan</button>
     </div>
   </div>
 </div>
@@ -1508,7 +1508,7 @@ canvas{width:100%;height:100%}
     <p style="font-size:12px;color:var(--g4);margin-bottom:12px">Dit doel bepaalt de voortgangsbalk en het percentage bij deze oefening op het tabblad Progressie.</p>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-edit-peak')">Annuleer</button>
-      <button class="btn btn-r" style="flex:2" onclick="savePeakGoal()">Opslaan</button>
+      <button class="btn btn-r" style="flex:2" onclick="savePeakGoal(this)">Opslaan</button>
     </div>
   </div>
 </div>
@@ -1533,7 +1533,7 @@ canvas{width:100%;height:100%}
     <p style="font-size:12px;color:var(--g4);margin-bottom:12px">Gebruikt voor een startschatting zolang deze oefening nog geen 1RM of sessies heeft. Bv. 0.85 = 85% van de ankeroefening-1RM.</p>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-edit-anchor')">Annuleer</button>
-      <button class="btn btn-r" style="flex:2" onclick="saveAnchor()">Opslaan</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveAnchor(this)">Opslaan</button>
     </div>
   </div>
 </div>
@@ -1550,7 +1550,7 @@ canvas{width:100%;height:100%}
     <div class="irow"><label class="ilbl">Notitie</label><textarea class="inp" id="bex-notes" rows="2" placeholder="optioneel"></textarea></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-block-ex-edit')">Annuleer</button>
-      <button class="btn btn-r" style="flex:2" onclick="saveBlockExercise()">Opslaan</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveBlockExercise(this)">Opslaan</button>
     </div>
     <button id="bex-del-btn" style="width:100%;margin-top:8px;padding:10px;color:var(--red);background:none;border:1px solid var(--g2);border-radius:10px;font-family:var(--f);font-weight:700;cursor:pointer" onclick="deleteBlockExercise()">Verwijderen</button>
   </div>
@@ -1581,7 +1581,7 @@ canvas{width:100%;height:100%}
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1;background:#ffebee;color:var(--red);border-color:#ffcdd2" onclick="deleteSessionEntry()">Verwijder</button>
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-edit-session')">Annuleer</button>
-      <button class="btn btn-r" style="flex:2" onclick="saveEditSession()">Opslaan</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveEditSession(this)">Opslaan</button>
     </div>
   </div>
 </div>
@@ -1590,7 +1590,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.18';
+const APP_VER = 'v3.3.19';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -2188,7 +2188,9 @@ function openRenameVasteTraining(id,naam){
   document.getElementById('vt-naam-input').value=naam;
   openModal('m-vt-naam');
 }
-async function saveVasteTrainingName(){
+async function saveVasteTrainingName(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  try{
   const naam=document.getElementById('vt-naam-input').value.trim();
   if(!naam){toast('Vul een naam in');return;}
   if(vtEditId){
@@ -2202,6 +2204,7 @@ async function saveVasteTrainingName(){
   await renderSchemaTrainingList();
   await renderVasteTrainingBtns();
   toast('Opgeslagen');
+  }finally{if(btnEl)btnEl.disabled=false;}
 }
 async function deleteVasteTraining(id){
   if(!confirm('Deze vaste training verwijderen? De oefeningen erin gaan ook mee. Je sessiegeschiedenis blijft staan.'))return;
@@ -2782,7 +2785,9 @@ function toast(m){const t=document.getElementById('toast');t.textContent=m;t.cla
 // ══════════════════════════════════════════════════════════
 // HRV / WEIGHT
 // ══════════════════════════════════════════════════════════
-async function saveHRV(){
+async function saveHRV(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  try{
   const hrv=parseFloat(document.getElementById('i-hrv').value)||null;
   const rhr=parseInt(document.getElementById('i-rhr').value)||null;
   const slpH=parseInt(document.getElementById('i-sleep-h').value)||0;
@@ -2814,17 +2819,24 @@ async function saveHRV(){
   if(note)parts.push(note);
   if(parts.length){go('s-coach');sendMsg(parts.join(', '));
   }else{refreshHome();toast('Opgeslagen');}
+  }finally{if(btnEl)btnEl.disabled=false;}
 }
-async function saveWeight(){
+async function saveWeight(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  try{
   const w=parseFloat(document.getElementById('i-wlog').value);
   if(!w)return;
   await upsertWeightLog(w,document.getElementById('i-wscale').value);
   closeModal('m-weight');refreshHome();toast('Gewicht opgeslagen');
+  }finally{if(btnEl)btnEl.disabled=false;}
 }
-async function saveBC(){
+async function saveBC(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  try{
   const row={date:td(),weight:parseFloat(document.getElementById('bc-w').value)||null,fat_pct:parseFloat(document.getElementById('bc-fat').value)||null,muscle_mass:parseFloat(document.getElementById('bc-mus').value)||null,bmr:parseInt(document.getElementById('bc-bmr').value)||null,visceral_fat:parseInt(document.getElementById('bc-vis').value)||null,waist_cm:parseFloat(document.getElementById('bc-waist').value)||null,hips_cm:parseFloat(document.getElementById('bc-hips').value)||null,chest_cm:parseFloat(document.getElementById('bc-chest').value)||null,arm_cm:parseFloat(document.getElementById('bc-arm').value)||null,thigh_cm:parseFloat(document.getElementById('bc-thigh').value)||null,metab_age:parseInt(document.getElementById('bc-age').value)||null,edema:document.getElementById('bc-edm').value||null,source:document.getElementById('bc-src').value};
   if(row.weight)await upsertWeightLog(row.weight,row.source);
   await sbPost('body_comp',row);closeModal('m-bc');toast('Opgeslagen');refreshAdmin();
+  }finally{if(btnEl)btnEl.disabled=false;}
 }
 
 // ══════════════════════════════════════════════════════════
@@ -3238,7 +3250,9 @@ async function renderLosBody(existingEx=null){
   const askBtn=`<button onclick="askCoachEx('${(ex.name||'deze oefening').replace(/'/g,"\\'")}',null,'${ex.id}')" style="margin:8px 0 4px;background:var(--dark);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">🤖 Vraag de coach</button>`;
   container.innerHTML=panels+bodyHTML+askBtn;
 }
-async function saveLosOefening(){
+async function saveLosOefening(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  try{
   let exId=losSelectedExId;
   if(!exId){toast('Kies een oefening');return;}
   const isNew=exId==='__new__';
@@ -3324,6 +3338,7 @@ async function saveLosOefening(){
   closeModal('m-los-oefening');
   resetLosAllState();
   toast('Opgeslagen');
+  }finally{if(btnEl)btnEl.disabled=false;}
 }
 
 // ══════════════════════════════════════════════════════════
@@ -3900,7 +3915,9 @@ function openEditBlockExercise(row){
   document.getElementById('bex-notes').value=row.notes||'';
   openModal('m-block-ex-edit');
 }
-async function saveBlockExercise(){
+async function saveBlockExercise(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  try{
   if(!curBlockExRow)return;
   const patch={
     sets:document.getElementById('bex-sets').value?parseInt(document.getElementById('bex-sets').value):null,
@@ -3914,6 +3931,7 @@ async function saveBlockExercise(){
   closeModal('m-block-ex-edit');
   await renderProgramBlockDetail();
   toast('Opgeslagen');
+  }finally{if(btnEl)btnEl.disabled=false;}
 }
 async function deleteBlockExercise(){
   if(!curBlockExRow)return;
@@ -5802,7 +5820,9 @@ function addEditSessSet(){
   wrap.appendChild(tmp.firstElementChild);
 }
 
-async function saveEditSession(){
+async function saveEditSession(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  try{
   const ex=curEditExObj||{type:'strength'};
   const date=document.getElementById('es-date')?.value||curAddDate||curEditSess?.date;
   const note=document.getElementById('es-note')?.value||'';
@@ -5847,6 +5867,7 @@ async function saveEditSession(){
   }
   const ok=await sbPatchQ('sessions','id=eq.'+curEditSess.id,row);
   if(ok){closeModal('m-edit-session');toast('Opgeslagen');loadHistory();}else toast('Fout bij opslaan');
+  }finally{if(btnEl)btnEl.disabled=false;}
 }
 async function deleteSessionEntry(){
   // Restore delete button visibility
@@ -6076,7 +6097,9 @@ function openEditYT(exId, exName, ytVal, cat){
   openModal('m-edit-yt');
 }
 
-async function saveYT(){
+async function saveYT(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  try{
   const val=document.getElementById('edit-yt-inp').value.trim();
   const id=ytId(val);
   const ok=await sbPatch('exercises','id=eq.'+curEditYTId,{yt:id||null});
@@ -6094,6 +6117,7 @@ async function saveYT(){
   } else {
     toast('Fout bij opslaan');
   }
+  }finally{if(btnEl)btnEl.disabled=false;}
 }
 
 let curEditRestId=null;
@@ -6103,7 +6127,9 @@ function openEditRest(exId,exName,restVal){
   document.getElementById('edit-rest-inp').value=restVal||'';
   openModal('m-edit-rest');
 }
-async function saveRest(){
+async function saveRest(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  try{
   const raw=document.getElementById('edit-rest-inp').value.trim();
   const val=raw===''?null:Math.max(0,parseInt(raw)||0);
   // gym_id blijft null (Fase 1, personal app); exercises krijgt in Fase 2 een
@@ -6119,6 +6145,7 @@ async function saveRest(){
   } else {
     toast('Fout bij opslaan');
   }
+  }finally{if(btnEl)btnEl.disabled=false;}
 }
 
 let curEditMusclesId=null;
@@ -6137,7 +6164,9 @@ function openEditMuscles(exId,exName,primary,secondary){
   renderMuscleChecks('edit-muscles-secondary', secondary||[], 'secondary');
   openModal('m-edit-muscles');
 }
-async function saveMuscles(){
+async function saveMuscles(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  try{
   const primary=Array.from(document.querySelectorAll('#edit-muscles-primary input:checked')).map(i=>i.value);
   const secondary=Array.from(document.querySelectorAll('#edit-muscles-secondary input:checked')).map(i=>i.value);
   const ok=await sbPatch('exercises','id=eq.'+curEditMusclesId,{muscle_primary:primary,muscle_secondary:secondary});
@@ -6150,6 +6179,7 @@ async function saveMuscles(){
   } else {
     toast('Fout bij opslaan');
   }
+  }finally{if(btnEl)btnEl.disabled=false;}
 }
 
 let curEditPeakId=null;
@@ -6159,7 +6189,9 @@ function openEditPeak(exId,exName,peakVal){
   document.getElementById('edit-peak-inp').value=peakVal||'';
   openModal('m-edit-peak');
 }
-async function savePeakGoal(){
+async function savePeakGoal(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  try{
   const raw=document.getElementById('edit-peak-inp').value.trim();
   const val=raw===''?null:Math.max(0,parseFloat(raw)||0);
   const ok=await sbPatch('exercises','id=eq.'+curEditPeakId,{peak_goal:val});
@@ -6173,6 +6205,7 @@ async function savePeakGoal(){
   } else {
     toast('Fout bij opslaan');
   }
+  }finally{if(btnEl)btnEl.disabled=false;}
 }
 
 let curEditAnchorId=null;
@@ -6183,7 +6216,9 @@ function openEditAnchor(exId,exName,anchorVal,factorVal){
   document.getElementById('edit-anchor-factor').value=factorVal||'';
   openModal('m-edit-anchor');
 }
-async function saveAnchor(){
+async function saveAnchor(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  try{
   const anchor=document.getElementById('edit-anchor-lift').value||null;
   const rawFactor=document.getElementById('edit-anchor-factor').value.trim();
   const factor=(anchor&&rawFactor!=='')?parseFloat(rawFactor):null;
@@ -6197,6 +6232,7 @@ async function saveAnchor(){
   } else {
     toast('Fout bij opslaan');
   }
+  }finally{if(btnEl)btnEl.disabled=false;}
 }
 
 // ══════════════════════════════════════════════════════════
@@ -6294,7 +6330,9 @@ async function openNewExModal(){
 }
 async function delEx(id){if(!confirm('Verwijderen?'))return;await sbPatch('exercises','id=eq.'+id,{active:false});exercises=exercises.filter(e=>e.id!==id);refreshAdmin();toast('Verwijderd');}
 
-async function saveNewEx(){
+async function saveNewEx(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  try{
   const n=document.getElementById('nx-name').value.trim();
   const c=document.getElementById('nx-cat').value;
   const t=document.getElementById('nx-type').value;
@@ -6325,6 +6363,7 @@ async function saveNewEx(){
     toast(n+' toegevoegd (lokaal)');
     refreshAdmin();
   }
+  }finally{if(btnEl)btnEl.disabled=false;}
 }
 
 // ══════════════════════════════════════════════════════════
@@ -6769,7 +6808,9 @@ async function syncAtleetFromSupabase(){
   }catch(e){/* offline of eerste keer — lokale waarde blijft gewoon leidend */}
 }
 
-async function saveAtleet(){
+async function saveAtleet(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  try{
   atleet = {
     naam: document.getElementById('atl-naam').value || atleet.naam,
     leeftijd: parseInt(document.getElementById('atl-leeftijd').value) || atleet.leeftijd,
@@ -6786,6 +6827,7 @@ async function saveAtleet(){
   closeModal('m-atleet');
   toast('Profiel opgeslagen');
   refreshProfiel();
+  }finally{if(btnEl)btnEl.disabled=false;}
 }
 
 function openAtleetModal(){
@@ -6987,7 +7029,9 @@ async function askCoachProfiel(){
 // ══════════════════════════════════════════════════════════
 // CUSTOM TRAININGEN
 // ══════════════════════════════════════════════════════════
-function saveNewTraining(){
+function saveNewTraining(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  try{
   const name=document.getElementById('nt-name').value.trim();
   const color=document.getElementById('nt-color').value;
   const note=document.getElementById('nt-note').value.trim();
@@ -7002,6 +7046,7 @@ function saveNewTraining(){
   toast(name+' aangemaakt');
   renderCustomTrainBtns();
   renderCustomTrainList();
+  }finally{if(btnEl)btnEl.disabled=false;}
 }
 
 function renderCustomTrainBtns(){
@@ -7424,7 +7469,9 @@ async function permanentlyAddExtras(){
   renderSessionSummaryContent(curT);
 }
 
-function saveAsTrainingAndFinish(){
+function saveAsTrainingAndFinish(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  try{
   const name=document.getElementById('sat-name').value.trim();
   if(!name){toast('Vul een naam in');return;}
   const t={id:'saved_'+Date.now(),name,color:'#111111',note:'Opgeslagen na sessie '+td(),exercises:sessionExtra.filter(e=>e._t===curT).map(e=>e.id)};
@@ -7435,6 +7482,7 @@ function saveAsTrainingAndFinish(){
   closeModal('m-save-as-training');
   toast(name+' opgeslagen als training');
   renderSessionSummaryContent(curT);
+  }finally{if(btnEl)btnEl.disabled=false;}
 }
 
 // ══════════════════════════════════════════════════════════
@@ -7644,7 +7692,9 @@ function addSupersetEx(){
   openModal('m-add-ex');
 }
 
-async function saveSupersetToSession(){
+async function saveSupersetToSession(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  try{
   if(supersetExIds.length < 2){toast('Voeg minimaal 2 oefeningen toe');return;}
   const t = supersetCurT;
   const ssId = 'ss_'+Date.now();
@@ -7656,6 +7706,7 @@ async function saveSupersetToSession(){
   closeModal('m-superset');
   await renderTrainScreen(t);
   toast('Superset toegevoegd: '+supersetExs.map(e=>e.naam).join(' + '));
+  }finally{if(btnEl)btnEl.disabled=false;}
 }
 
 // ══════════════════════════════════════════════════════════

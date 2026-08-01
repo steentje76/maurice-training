@@ -846,6 +846,28 @@ test('computeNextVasteTraining: geen enkele training ooit gedaan pakt gewoon de 
   assertEq(next.id, 'A');
 });
 
+console.log('\n🏃 Sport-specifieke AI-context: buildCtx()-splitsing');
+// Zelfde implementatie als in index.html — pure functie, los getest.
+function resolveSportBlock(sportKey,blocks,labels){
+  if(blocks[sportKey])return blocks[sportKey];
+  return `IDENTITEIT: ${labels[sportKey]||sportKey} — geen sport-specifieke coaching-richtlijnen vastgelegd, val terug op algemene trainingsprincipes (progressieve overload, RPE-sturing, herstel).`;
+}
+test('resolveSportBlock: bestaande sport geeft het bijbehorende blok terug', ()=>{
+  const blocks={kracht:'KRACHT-BLOK-TEKST'};
+  assertEq(resolveSportBlock('kracht',blocks,{}), 'KRACHT-BLOK-TEKST');
+});
+test('resolveSportBlock: sport buiten scope (bv. kettlebell) geeft generieke tekst, geen crash', ()=>{
+  const blocks={kracht:'KRACHT-BLOK-TEKST'};
+  const labels={kettlebell:'Kettlebell'};
+  const r=resolveSportBlock('kettlebell',blocks,labels);
+  assert(r.includes('Kettlebell'), 'generieke tekst moet het sport-label bevatten');
+  assert(!r.includes('KRACHT-BLOK-TEKST'), 'mag niet per ongeluk het kracht-blok teruggeven — dit was de oorspronkelijke bug');
+});
+test('resolveSportBlock: onbekende sport-key zonder label valt terug op de key zelf', ()=>{
+  const r=resolveSportBlock('onbekendesport',{},{});
+  assert(r.includes('onbekendesport'), 'moet de ruwe key tonen als er geen label bekend is');
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

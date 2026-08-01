@@ -30,13 +30,11 @@ ALTER TABLE wearable_connections ENABLE ROW LEVEL SECURITY;
 -- Bewust geen enkele policy hier — default-deny voor anon/authenticated. Zie toelichting
 -- hierboven. Alleen de service_role (Netlify Functions) kan deze tabel benaderen.
 
--- Herbruikt de bestaande trg_set_user_id()-functie (aanwezig op de andere 16
--- gebruikersdata-tabellen, zie CURRENT_STATE.md). CONTROLEER voor het draaien van deze
--- migratie of die functie exact zo heet in jouw Supabase-project — zo niet, pas de
--- EXECUTE FUNCTION-regel hieronder aan naar de juiste naam.
+-- Herbruikt de bestaande set_user_id_from_auth()-functie (geverifieerd via
+-- SELECT proname FROM pg_proc WHERE proname ILIKE '%set_user_id%' — 1 augustus 2026).
 CREATE TRIGGER trg_set_user_id_wearable_connections
   BEFORE INSERT ON wearable_connections
-  FOR EACH ROW EXECUTE FUNCTION trg_set_user_id();
+  FOR EACH ROW EXECUTE FUNCTION set_user_id_from_auth();
 
 -- ── Kortlevende koppel-tabel voor de OAuth-state ──────────────────────────
 -- Nodig omdat Google's redirect terugkomt als kale browser-GET (geen Authorization-

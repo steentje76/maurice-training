@@ -3,15 +3,15 @@
 > Bijwerken na iedere afgeronde Story en iedere release.
 
 ## Projectnaam
-Maurice Training Coach (werktitel)
+Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en docs/Brand/BRAND_IDENTITY.md)
 
 ## Huidige versie
-v3.2.2
+v3.3.25
 
 ## Laatste release
-- Versie: v3.2.2
-- Datum: eind juli 2026 (exacte datum: [nog aanvullen])
-- Inhoud: AI-programmagenerator, pre-training coach check-in, Brzycki-gewichtsuggestie, Route 2 (vaste_trainingen), ratiofactor-/dagfactor-motor, cold-start-predictor, adherence tracking
+- Versie: v3.3.25
+- Datum: 1 augustus 2026
+- Inhoud: grote stabilisatiesessie (v3.3.9–v3.3.25) — kritieke security-fixes (coach.js JWT, RLS-audit), volledige XSS-remediatie, dubbel-klik-bescherming overal, v333 3-laags zichtbaarheidsmodel (UI-laag compleet: scope-kiezer, delen-met-persoon, rolgebaseerde Beheer-toegang), apparatuur-catalogus, AI-programmagenerator herzien (periodisering in code, sport-/PR-/historie-context), UX-doorlichting (Import/Export naar Profiel, pincode-vergeten-herstel voor Team). Zie DECISION_LOG.md DEC-010 voor de aansluitende roadmap-herprioritering (wearables/HYROX/menstruatiecyclus naar Fase 1/2, branding-model herzien, onboarding-flow toegevoegd).
 
 ## Actieve sprint
 Sprint 1 — "Project OS-migratie + sw.js/profielscheiding-verificatie": afgerond. Story 1 (sw.js network-first) en Story 2 (atleet_profiel user_id-bug) beide functioneel bevestigd door Product Owner op 1 augustus 2026.
@@ -41,10 +41,9 @@ Sprint 1 — "Project OS-migratie + sw.js/profielscheiding-verificatie": afgeron
 - File-split / migratie naar ander platform: bewust uitgesteld tot ná Fase 2.
 
 ## Openstaande beslissingen
-- Appnaam (nog niet definitief)
-- Social/competitief-koers (eerder afgewezen, later heropend — nog geen besluit)
 - Sport-specifieke AI-context splitsing (`buildCtx()` generiek + per-sport, voorstel 7 sporten) — wacht op bevestiging
+- Vorm van social/competitief (leaderboards/teams/badges/combinatie) — bevestigd DAT het gebouwd wordt (DEC-008), nog niet HOE
+- Architectuur experience-motor voor leden-branding (DEC-010) — nog niet uitgewerkt, volgt na gym-brede branding
 
 ## Volgende stap
-1. Accountverwijdering functioneel testen met wegwerp-account (Product Owner).
-2. Offline IndexedDB-sync oppakken (laatste open Fase 1/2-item).
+Zie Roadmap.md voor de volledige, herziene prioriteitenlijst (DEC-010, 1 augustus 2026). Op hoofdlijnen: onboarding-workflow, wearables-uitbreiding, HYROX/menstruatiecyclus-tracking, en dynamische branding lopen nu parallel aan de resterende Fase 2-punten (offline sync-bevestiging, profielscheiding-test).

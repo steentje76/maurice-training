@@ -72,6 +72,17 @@ exports.handler = async function(event) {
     });
     if (!exR.ok) failedTables.push('exercises (personal)');
 
+    // public.users: aparte behandeling — dit is de gym-lidmaatschapsrij zelf (rol,
+    // gym_id), primary key is 'id' (niet 'user_id' zoals de rest). Er bestaat GEEN
+    // echte foreign key/cascade naar auth.users (users.id is text, auth.users.id is
+    // uuid — geen automatische opruiming), dus zonder deze stap blijft de gebruiker
+    // na verwijdering als "spooklid" in de Team-ledenlijst van de gym staan.
+    const usersR = await fetch(`${supabaseUrl}/rest/v1/users?id=eq.${userId}`, {
+      method: 'DELETE',
+      headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, Prefer: 'return=minimal' }
+    });
+    if (!usersR.ok) failedTables.push('users');
+
     // Stap 3: verwijder het account zelf via de Admin API (vereist service_role).
     const delRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
       method: 'DELETE',

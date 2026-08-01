@@ -59,6 +59,19 @@ exports.handler = async function(event) {
       if (!r.ok) failedTables.push(table);
     }
 
+    // exercises: aparte behandeling, want (a) de eigenaarskolom heet created_by, niet
+    // user_id zoals de rest, en (b) alleen scope='personal' mag echt weg — gym/global-
+    // oefeningen van deze gebruiker blijven bestaan (gedeelde content voor anderen),
+    // created_by wordt daar automatisch NULL via ON DELETE SET NULL zodra het account
+    // hieronder (stap 3) verwijderd wordt. Zonder deze stap blijven persoonlijke
+    // oefeningen achter als onzichtbare rijen (created_by=NULL matcht geen enkele RLS-
+    // policy meer, dus niemand kan ze ooit nog zien of opruimen).
+    const exR = await fetch(`${supabaseUrl}/rest/v1/exercises?created_by=eq.${userId}&scope=eq.personal`, {
+      method: 'DELETE',
+      headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, Prefer: 'return=minimal' }
+    });
+    if (!exR.ok) failedTables.push('exercises (personal)');
+
     // Stap 3: verwijder het account zelf via de Admin API (vereist service_role).
     const delRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
       method: 'DELETE',

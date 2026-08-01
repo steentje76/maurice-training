@@ -1580,7 +1580,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.11';
+const APP_VER = 'v3.3.12';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6423,6 +6423,16 @@ function resolveSportBlock(sportKey,blocks,labels){
 
 // v306 #8: geeft de coach automatisch context van de huidige oefening/sessie mee, zodat de
 // gebruiker dit niet zelf hoeft uit te leggen. ctx (optioneel): {exId, exNaam, trainingType}
+// Geeft de huidige datum+tijd in het exacte format dat de coach-prompt van de AI
+// verwacht ("26 april 2026 08:00"). Zonder dit had de AI geen enkele grond om te weten
+// wat "vandaag" is — alleen het te gebruiken FORMAT stond in de prompt, niet de waarde
+// zelf. Dit was de oorzaak van af en toe verkeerde datums in coach-antwoorden.
+function huidigeDatumTijdNL(){
+  const d=new Date();
+  const maanden=['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+  const uu=String(d.getHours()).padStart(2,'0'), mm=String(d.getMinutes()).padStart(2,'0');
+  return `${d.getDate()} ${maanden[d.getMonth()]} ${d.getFullYear()} ${uu}:${mm}`;
+}
 async function buildCtx(ctx){
   await ensureExercisesLoaded();
   const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=7');
@@ -6466,7 +6476,7 @@ Huidige 1RM: ${exObj?.one_rm||exObj?.pr||'onbekend'} kg
 Reeds gelogde sets deze sessie: ${loggedSets.length?loggedSets.map((s,i)=>(i+1)+') '+s.kg+'kg×'+s.reps+(s.rpe?' RPE'+s.rpe:'')).join(', '):'nog geen'}`;
   }
   return `Je bent de persoonlijke trainingscoach en data-analist van ${atleet?.naam||'Maurice'} van Latum van Steensel.
-Communiceer in het Nederlands. Datumnotatie: "26 april 2026 08:00".
+Communiceer in het Nederlands. Vandaag is ${huidigeDatumTijdNL()}. Datumnotatie: "26 april 2026 08:00".
 Direct, bondig, data-forward. Geen opvulling. Geen bevestigingszinnen. Geen disclaimers.
 Vergelijk altijd met de vorige vergelijkbare sessie. Geef altijd een concreet gewicht als advies.
 De gebruiker hoeft context (huidige oefening, schema, vorige training, doel-RPE, werkgewichten,

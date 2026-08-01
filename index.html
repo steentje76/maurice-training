@@ -428,6 +428,7 @@ canvas{width:100%;height:100%}
           <div class="hdr-title" style="font-size:24px;letter-spacing:2px;text-transform:uppercase">MAURICE</div>
         </div>
         <div class="hdr-sub" style="letter-spacing:2px;text-transform:uppercase;font-size:11px">Training Coach 2026</div>
+        <div id="offline-badge" style="display:none;margin-top:4px;font-size:11px;font-weight:700;color:var(--y,#b8860b);background:rgba(184,134,11,.12);border-radius:8px;padding:2px 8px;width:fit-content"></div>
       </div>
       <div style="display:flex;gap:8px">
         <button class="ibtn" onclick="openModal('m-hrv')">📊</button>
@@ -1502,7 +1503,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.2.2';
+const APP_VER = 'v3.2.3';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -2266,6 +2267,117 @@ async function sbDel(t,f){try{const r=await fetch(`${SB_URL}/rest/v1/${t}?${f}`,
 async function sbUpsert(t,d){try{const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(d)});if(!r.ok)console.error('sbUpsert',t,r.status,await r.text());return r.ok;}catch(e){console.error('sbUpsert catch',t,e);return false;}}
 
 // ══════════════════════════════════════════════════════════
+// OFFLINE QUEUE — v1, scope: alleen sessie-opslag (finishSession/saveEditSession/
+// saveLosOefening en de writes die daar direct bij horen: PR-patch, programma-blok
+// afronden, nieuwe-oefening-aanmaak vanuit "losse oefening"). Andere schermen (HRV,
+// gewicht, chat, admin) blijven ongewijzigd falen bij offline, zoals voorheen.
+// Geen Background Sync API (sw.js 'sync'-event) — die werkt niet in Safari/iOS, en dit
+// project moet ook als iOS-PWA draaien. Sync gebeurt daarom vanuit de pagina zelf, bij
+// 'online'-event, bij terugkeer naar de app (visibilitychange) en bij opstart.
+// ══════════════════════════════════════════════════════════
+const OFFLINE_DB_NAME='maurice_offline', OFFLINE_STORE='queue';
+function offlineDb(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open(OFFLINE_DB_NAME,1);
+    req.onupgradeneeded=()=>{req.result.createObjectStore(OFFLINE_STORE,{keyPath:'id',autoIncrement:true});};
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}
+async function offlineQueueAdd(item){
+  try{
+    const db=await offlineDb();
+    return await new Promise((resolve,reject)=>{
+      const tx=db.transaction(OFFLINE_STORE,'readwrite');
+      tx.objectStore(OFFLINE_STORE).add({...item,ts:Date.now()});
+      tx.oncomplete=()=>resolve(true);
+      tx.onerror=()=>reject(tx.error);
+    });
+  }catch(e){console.error('offlineQueueAdd',e);return false;}
+}
+async function offlineQueueAll(){
+  try{
+    const db=await offlineDb();
+    return await new Promise((resolve,reject)=>{
+      const tx=db.transaction(OFFLINE_STORE,'readonly');
+      const req=tx.objectStore(OFFLINE_STORE).getAll();
+      req.onsuccess=()=>resolve(req.result);
+      req.onerror=()=>reject(req.error);
+    });
+  }catch(e){console.error('offlineQueueAll',e);return [];}
+}
+async function offlineQueueRemove(id){
+  try{
+    const db=await offlineDb();
+    return await new Promise((resolve,reject)=>{
+      const tx=db.transaction(OFFLINE_STORE,'readwrite');
+      tx.objectStore(OFFLINE_STORE).delete(id);
+      tx.oncomplete=()=>resolve(true);
+      tx.onerror=()=>reject(tx.error);
+    });
+  }catch(e){console.error('offlineQueueRemove',e);return false;}
+}
+// sbPostQ/sbPatchQ: als sbPost/sbPatch, maar queuen in IndexedDB bij netwerkfout i.p.v.
+// data verliezen. Geven bij een queue nog steeds true terug — de lokale flow (toast,
+// modal sluiten) mag gewoon doorgaan, de gebruiker hoeft niet te wachten op sync.
+async function sbPostQ(t,d){
+  if(!navigator.onLine){await offlineQueueAdd({table:t,method:'POST',body:d});updateOfflineBadge();return true;}
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(d)});
+    if(!r.ok){const err=await r.text();console.error('sbPostQ',t,r.status,err);return false;}
+    return true;
+  }catch(e){
+    console.warn('sbPostQ offline, queued',t,e);
+    await offlineQueueAdd({table:t,method:'POST',body:d});
+    updateOfflineBadge();
+    return true;
+  }
+}
+async function sbPatchQ(t,f,d){
+  if(!navigator.onLine){await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d});updateOfflineBadge();return true;}
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(d)});
+    if(!r.ok){console.error('sbPatchQ',t,r.status,await r.text());return false;}
+    return true;
+  }catch(e){
+    console.warn('sbPatchQ offline, queued',t,e);
+    await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d});
+    updateOfflineBadge();
+    return true;
+  }
+}
+// Speelt de queue in volgorde af; stopt bij de eerste fout zodat de volgorde behouden
+// blijft.
+async function flushOfflineQueue(){
+  if(!navigator.onLine)return;
+  const items=await offlineQueueAll();
+  if(!items.length)return;
+  items.sort((a,b)=>a.id-b.id);
+  let syncedAny=false;
+  for(const item of items){
+    try{
+      const url=item.method==='POST'?`${SB_URL}/rest/v1/${item.table}`:`${SB_URL}/rest/v1/${item.table}?${item.filter}`;
+      const r=await fetch(url,{method:item.method,headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(item.body)});
+      if(!r.ok){console.error('flushOfflineQueue failed, stop',item.table,r.status,await r.text());break;}
+      await offlineQueueRemove(item.id);
+      syncedAny=true;
+    }catch(e){console.warn('flushOfflineQueue offline again, stop',e);break;}
+  }
+  updateOfflineBadge();
+  if(syncedAny&&!(await offlineQueueAll()).length)toast('Offline sessies gesynchroniseerd');
+}
+function updateOfflineBadge(){
+  offlineQueueAll().then(items=>{
+    const el=document.getElementById('offline-badge');
+    if(!el)return;
+    if(items.length){el.textContent=items.length+' wachtend op sync';el.style.display='block';}
+    else{el.style.display='none';}
+  });
+}
+window.addEventListener('online',flushOfflineQueue);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')flushOfflineQueue();});
+
+// ══════════════════════════════════════════════════════════
 // PIN
 // ══════════════════════════════════════════════════════════
 async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
@@ -2788,7 +2900,7 @@ async function saveLosOefening(){
       const secondary=Array.from(document.querySelectorAll('#los-new-muscles-secondary input:checked')).map(i=>i.value);
       if(!primary.length){toast('Kies minimaal één primaire spiergroep');return;}
       ex={id,name:naam,category:'Overig',type,wod_format:wodFormat,sort_order:99,active:true,pr:null,yt:null,rest_seconds:null,muscle_primary:primary,muscle_secondary:secondary};
-      const ok=await sbPost('exercises',ex);
+      const ok=await sbPostQ('exercises',ex);
       if(!ok){toast('Fout bij aanmaken oefening');return;}
       exercises.push(ex);
       exId=id;
@@ -2844,7 +2956,7 @@ async function saveLosOefening(){
     }
   }
 
-  const ok=await sbPost('sessions',row);
+  const ok=await sbPostQ('sessions',row);
   if(!ok){toast('Fout bij opslaan');return;}
   closeModal('m-los-oefening');
   resetLosAllState();
@@ -4840,7 +4952,7 @@ async function finishSession(){
     if(l.cardio && CARDIO_TYPES[l.cardio.type] && (l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals)){
       const cRow=cardioDataToRow(l.cardio.type,l.cardio);
       const extraNote=cRow.extraNote;delete cRow.extraNote;
-      await sbPost('sessions',{date:today,exercise_id:ex.id,training_type:t,note:extraNote||'',...cRow});saved++;
+      await sbPostQ('sessions',{date:today,exercise_id:ex.id,training_type:t,note:extraNote||'',...cRow});saved++;
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
       const ws=l.sets.filter(s=>s&&(s.kg||s.reps));if(!ws.length)continue;
@@ -4849,9 +4961,9 @@ async function finishSession(){
       const wuNote=l.wu?.filter(s=>s&&s.kg).map(s=>s.kg+'×'+s.reps).join(',');
       // sets_detail: volledige per-set data (incl. gewicht-modus-resultaat), voor Logboek-editor.
       const setsDetail=ws.map(s=>({kg:s.kg,effKg:bestKg(s),reps:s.reps,rpe:s.rpe}));
-      await sbPost('sessions',{date:today,exercise_id:ex.id,sets:ws.length,reps:parseInt(best?.reps)||null,weight:bestKg(best)||null,rpe:parseFloat(best?.rpe)||null,training_type:t,note:wuNote?'Opwarm: '+wuNote:'',sets_detail:setsDetail});
+      await sbPostQ('sessions',{date:today,exercise_id:ex.id,sets:ws.length,reps:parseInt(best?.reps)||null,weight:bestKg(best)||null,rpe:parseFloat(best?.rpe)||null,training_type:t,note:wuNote?'Opwarm: '+wuNote:'',sets_detail:setsDetail});
       let isPr=false;
-      if(bestKg(best)){const exObj=exercises.find(e=>e.id===ex.id);if(exObj&&bestKg(best)>(exObj.pr||0)){await sbPatch('exercises','id=eq.'+ex.id,{pr:bestKg(best)});exObj.pr=bestKg(best);isPr=true;}}
+      if(bestKg(best)){const exObj=exercises.find(e=>e.id===ex.id);if(exObj&&bestKg(best)>(exObj.pr||0)){await sbPatchQ('exercises','id=eq.'+ex.id,{pr:bestKg(best)});exObj.pr=bestKg(best);isPr=true;}}
       saved++;
       const avgRpe=ws.filter(s=>s.rpe).length?(ws.reduce((sum,s)=>sum+(parseFloat(s.rpe)||0),0)/ws.filter(s=>s.rpe).length).toFixed(1):null;
       summaryData.push({naam:ex.naam,sets:setsDetail,isPr,zwaarste:bestKg(best),avgRpe});
@@ -4864,7 +4976,7 @@ async function finishSession(){
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.remove('show'));
   if(saved===0){toast('Niets om op te slaan');go('s-home');refreshStats();return;}
   if(t.startsWith('prog_')){
-    await sbPatch('program_blocks','id=eq.'+t.slice('prog_'.length),{completed_at:new Date().toISOString()});
+    await sbPatchQ('program_blocks','id=eq.'+t.slice('prog_'.length),{completed_at:new Date().toISOString()});
   }
   toast(saved+' oefeningen opgeslagen');
   document.getElementById('ai-summary-body').textContent='Samenvatting laden...';
@@ -5244,7 +5356,7 @@ async function saveEditSession(){
     row.exercise_id=curAddExId;
     row.training_type=curAddTT;
     const clean={};Object.entries(row).forEach(([k,v])=>{if(v!==null&&v!==undefined)clean[k]=v;});
-    const ok=await sbPost('sessions',clean);
+    const ok=await sbPostQ('sessions',clean);
     if(ok){
       const delBtn=document.querySelector('#m-edit-session .btn-o[onclick="deleteSessionEntry()"]');
       if(delBtn) delBtn.style.display='';
@@ -5252,7 +5364,7 @@ async function saveEditSession(){
     } else toast('Fout bij opslaan');
     return;
   }
-  const ok=await sbPatch('sessions','id=eq.'+curEditSess.id,row);
+  const ok=await sbPatchQ('sessions','id=eq.'+curEditSess.id,row);
   if(ok){closeModal('m-edit-session');toast('Opgeslagen');loadHistory();}else toast('Fout bij opslaan');
 }
 async function deleteSessionEntry(){
@@ -7551,6 +7663,8 @@ async function startAppAfterAuth(){
   ensureEquipmentTypesLoaded();
   syncAtleetFromSupabase();
   syncCustomTrainingsFromSupabase();
+  updateOfflineBadge();
+  flushOfflineQueue();
 }
 </script>
 </body>

@@ -38,6 +38,21 @@ exports.handler = async function (event) {
       return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gymId: caller.gym_id, gymRole: caller.gym_role, gymRoleLevel: caller.gym_role_level }) };
     }
 
+    // 'lookup_teammate' heeft ook geen pincode nodig — dit is geen management-actie maar
+    // een lichte opzoek-actie voor de "deel met persoon"-functie (v333-UI). Geeft alleen
+    // iets terug als het e-mailadres bij iemand in DEZELFDE gym hoort — geen platformbrede
+    // e-mail-enumeratie mogelijk.
+    if (action === 'lookup_teammate') {
+      const email = String(body.email || '').trim().toLowerCase();
+      if (!email) return { statusCode: 400, body: JSON.stringify({ error: { message: 'E-mailadres verplicht' } }) };
+      if (!caller.gym_id) return { statusCode: 403, body: JSON.stringify({ error: { message: 'Geen gym-koppeling' } }) };
+      const lookupRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}&gym_id=eq.${caller.gym_id}&select=id,name,email`, { headers: sbHeaders });
+      const [found] = await lookupRes.json();
+      if (!found) return { statusCode: 404, body: JSON.stringify({ error: { message: 'Niemand met dit e-mailadres gevonden in jouw gym' } }) };
+      if (found.id === callerId) return { statusCode: 400, body: JSON.stringify({ error: { message: 'Je kunt niet met jezelf delen' } }) };
+      return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: found.id, name: found.name || found.email }) };
+    }
+
     const minLevelForAction = { list: ROLE_LEVEL.coach, audit_log: ROLE_LEVEL.coach, update_role: ROLE_LEVEL.manager };
     if (!(action in minLevelForAction)) return { statusCode: 400, body: JSON.stringify({ error: { message: 'Onbekende actie' } }) };
     if ((caller.gym_role_level ?? -1) < minLevelForAction[action]) {

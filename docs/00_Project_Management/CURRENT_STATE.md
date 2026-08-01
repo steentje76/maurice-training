@@ -28,8 +28,8 @@ Sprint 1 — "Project OS-migratie + sw.js/profielscheiding-verificatie": afgeron
 - atleet_profiel-sync naar Supabase gefixt: user_id ontbrak altijd, faalde stil op NOT NULL-constraint (1 augustus 2026)
 
 ## Wat niet werkt
-- Geen gebruikersbeheerinterface
 - Offline IndexedDB-sync (bewust uitgesteld, geen bug)
+- Accountverwijdering: gebouwd en live gedeployed (SUPABASE_SERVICE_ROLE_KEY ingesteld op Netlify, 1 augustus), nog NIET functioneel getest — test met wegwerp-account volgt (Product Owner, thuis)
 
 ## Bekende bugs
 [nog aanvullen — geen expliciet gemelde openstaande bugs op dit moment]
@@ -46,4 +46,5 @@ Sprint 1 — "Project OS-migratie + sw.js/profielscheiding-verificatie": afgeron
 - Sport-specifieke AI-context splitsing (`buildCtx()` generiek + per-sport, voorstel 7 sporten) — wacht op bevestiging
 
 ## Volgende stap
-Sprint 1 volledig afgerond. Volgende kandidaten (zie Roadmap.md): equipment_types/exercise_equipment documenteren, of een nieuwe Story kiezen.
+1. Accountverwijdering functioneel testen met wegwerp-account (Product Owner).
+2. Offline IndexedDB-sync oppakken (laatste open Fase 1/2-item).

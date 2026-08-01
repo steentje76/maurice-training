@@ -1597,7 +1597,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.15';
+const APP_VER = 'v3.3.16';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -3506,13 +3506,52 @@ function exercisesTargetForDuration(minutes){
   if(!minutes)return 4;
   return Math.max(2,Math.min(8,Math.round(minutes/12)));
 }
-function buildWeekPrompt(wk,weken,dagDuren,doel,sportLabel,profielTekst,bibliotheek,faseHistorie,extraContext){
+// v3.3.16 BUGFIX/FEATURE — "elke week is identiek" bestond uit drie losse gaten:
+// 1) Het JSON-formaatvoorbeeld in de prompt gebruikte letterlijke, realistische waarden
+//    ("Anatomische Aanpassing", "backsquat" 3×12-15@6.5) — een LLM leunt zwaar op few-shot-
+//    voorbeelden en kopieerde die bijna elke week terug, i.p.v. ze als puur formaat te lezen.
+// 2) Periodisering was een vrijblijvend verzoek per (geïsoleerde) week-call, niet een
+//    afgedwongen schema — vandaar phaseForWeek() hieronder: de fase ligt nu al vast in code
+//    vóórdat de AI iets genereert.
+// 3) Het atleetprofiel bevatte geen sportcontext, PR's of recente trainingshistorie, dus de
+//    AI had domweg te weinig unieke input per week om zinvol te variëren.
+// Pure functie: bepaalt de periodiserings-fase voor een gegeven week, geschaald naar de
+// totale programmaduur (opbouw → hypertrofie → kracht → deload/peak in de laatste week bij
+// programma's van 4+ weken).
+function phaseForWeek(wk,weken){
+  if(weken<=1)return 'Opbouw';
+  if(weken<=3)return wk===1?'Anatomische Aanpassing':'Kracht';
+  const adaptWeeks=Math.max(1,Math.round(weken*0.2));
+  const deloadWeeks=1;
+  const hyperWeeks=Math.max(1,Math.round((weken-adaptWeeks-deloadWeeks)*0.55));
+  const strengthWeeks=Math.max(0,weken-adaptWeeks-deloadWeeks-hyperWeeks);
+  if(wk<=adaptWeeks)return 'Anatomische Aanpassing';
+  if(wk<=adaptWeeks+hyperWeeks)return 'Hypertrofie';
+  if(wk<=adaptWeeks+hyperWeeks+strengthWeeks)return 'Kracht';
+  return 'Deload / Peak';
+}
+// Pure functie: formatteert bekende 1RM's tot een compacte promptregel.
+function buildPRTekst(prList){
+  if(!prList||!prList.length)return '';
+  return `Bekende 1RM (kg): ${prList.map(p=>`${p.naam} ${p.kg}`).join(', ')}. Gebruik dit voor realistische belasting/progressie, niet als harde limiet.`;
+}
+// Pure functie: zet gebruikte/recent-gelogde exercise_id's om naar een variatie-instructie.
+// Hoofdliften mogen bewust herhaald worden voor progressieve overload — vandaar een
+// aansporing, geen harde uitsluiting.
+function buildVarietyTekst(gebruiktIds,recentIds,exerciseList){
+  const ids=[...new Set([...(gebruiktIds||[]),...(recentIds||[])])];
+  if(!ids.length)return '';
+  const namen=ids.map(id=>exerciseList.find(e=>e.id===id)?.name||id).filter(Boolean);
+  if(!namen.length)return '';
+  return `Recent gebruikt (dit programma en/of onlangs gelogd): ${namen.join(', ')}. Varieer waar mogelijk met andere oefeningen uit de bibliotheek, tenzij je een hoofdlift bewust herhaalt voor progressieve overload.`;
+}
+function buildWeekPrompt(wk,weken,dagDuren,doel,sportLabel,sportBlockTekst,profielTekst,bibliotheek,faseNaam,varietyTekst,extraContext){
   const dagen=dagDuren.length;
-  const context=(faseHistorie&&faseHistorie.length)
-    ? `Eerdere weken hadden als fase: ${faseHistorie.join(' → ')}. Zorg dat week ${wk} logisch daarop voortbouwt richting een sluitende periodisering (opbouw → hypertrofie → kracht → deload waar passend).`
-    : `Dit is de eerste week van het programma — kies een passende openingsfase.`;
+  const faseContext=`Dit is week ${wk} van ${weken} in een periodiseringsschema (opbouw → hypertrofie → kracht → deload/peak). Fase van déze week: "${faseNaam}" — kies oefeningen, volume (sets/reps) en intensiteit (RPE) die logisch bij deze fase passen.`;
+  const sportContext=sportBlockTekst?` Sport-specifieke coaching-context: ${sportBlockTekst}`:'';
+  const varietyBlock=varietyTekst?` ${varietyTekst}`:'';
   const dagInstructies=dagDuren.map((min,i)=>`dag ${i+1}: ${min} min → ±${exercisesTargetForDuration(min)} oefeningen`).join(', ');
-  return `Je bent trainingscoach. Je bouwt week ${wk} van ${weken} van een periodiseringsschema, ${dagen} trainingsdagen deze week. Sportrichting: ${sportLabel}. Doel: ${doel}. Atleetprofiel: ${profielTekst}. ${context} Beschikbare tijd per trainingsdag deze week (bepaalt hoeveel oefeningen passend zijn): ${dagInstructies}.${extraContext?' '+extraContext:''} Kies voor elke trainingsdag zelf de beste oefeningen UIT DEZE BIBLIOTHEEK (gebruik alleen deze exercise_id's, verzin geen nieuwe): ${bibliotheek}. Antwoord ALLEEN met geldige JSON, geen uitleg, in dit exacte formaat: {"blocks":[{"week_nr":${wk},"fase_naam":"Anatomische Aanpassing","oefeningen":[{"exercise_id":"backsquat","sets":3,"reps":"12-15","rpe":6.5}]}]}. Genereer exact ${dagen} blokken voor deze week (1 per dag, in volgorde dag 1..${dagen}), elk met het bij die dag passende aantal oefeningen.`;
+  return `Je bent trainingscoach. Je bouwt week ${wk} van ${weken} van een periodiseringsschema, ${dagen} trainingsdagen deze week. Sportrichting: ${sportLabel}.${sportContext} Doel: ${doel}. Atleetprofiel: ${profielTekst}. ${faseContext}${varietyBlock} Beschikbare tijd per trainingsdag deze week (bepaalt hoeveel oefeningen passend zijn): ${dagInstructies}.${extraContext?' '+extraContext:''} Kies voor elke trainingsdag zelf de beste oefeningen UIT DEZE BIBLIOTHEEK (gebruik alleen deze exercise_id's, verzin geen nieuwe): ${bibliotheek}. Antwoord ALLEEN met geldige JSON, geen uitleg. Dit is uitsluitend een STRUCTUUR-voorbeeld — de exercise_id/sets/reps/rpe-waarden hieronder zijn placeholders, kies zelf passende eigen waarden, kopieer ze niet letterlijk over: {"blocks":[{"week_nr":${wk},"fase_naam":"${faseNaam}","oefeningen":[{"exercise_id":"<kies uit bibliotheek>","sets":"<getal>","reps":"<range zoals 8-10>","rpe":"<getal 5-9>"}]}]}. Genereer exact ${dagen} blokken voor deze week (1 per dag, in volgorde dag 1..${dagen}), elk met het bij die dag passende aantal oefeningen.`;
 }
 function atleetProfielTekst(a){
   return `${a.leeftijd||'?'} jaar, ${a.geslacht||'?'}, ervaringsniveau ${a.niveau||'?'}${a.klasse?', gewichtsklasse '+a.klasse+'kg':''}`;
@@ -3556,21 +3595,26 @@ async function genereerProgramma(){
   genBtn.disabled=true;
   await ensureExercisesLoaded();
   const bibliotheek=exercises.filter(e=>e.active!==false).map(e=>`${e.id}:${e.name}(${e.type||'strength'})`).join(', ');
-  const profielTekst=atleetProfielTekst(atleet);
+  const prList=exercises.filter(e=>getOneRM(e.id)).map(e=>({naam:e.name,kg:getOneRM(e.id)})).slice(0,12);
+  const profielTekst=atleetProfielTekst(atleet)+(prList.length?' '+buildPRTekst(prList):'');
   const sportLabel=SPORT_FOCUS_LABELS[sport]||sport;
+  const sportBlockTekst=resolveSportBlock(sport,SPORT_BLOCKS,SPORT_FOCUS_LABELS);
   const blessureContext=await getRecentPainSummary();
-  const allBlocks=[],faseHistorie=[];
+  const recentIds=await getRecentExerciseIds();
+  const allBlocks=[],gebruiktIds=[];
   for(let wk=1; wk<=weken; wk++){
     statusEl.textContent=`Week ${wk}/${weken} genereren...`;
     progressFill.style.width=Math.round(((wk-1)/weken)*100)+'%';
-    const sys=buildWeekPrompt(wk,weken,dagDuren,doel,sportLabel,profielTekst,bibliotheek,faseHistorie,blessureContext);
+    const faseNaam=phaseForWeek(wk,weken);
+    const varietyTekst=buildVarietyTekst(gebruiktIds,recentIds,exercises);
+    const sys=buildWeekPrompt(wk,weken,dagDuren,doel,sportLabel,sportBlockTekst,profielTekst,bibliotheek,faseNaam,varietyTekst,blessureContext);
     try{
       const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1500,system:sys,messages:[{role:'user',content:'Genereer week '+wk+'.'}]})});
       const d=await res.json();
       if(d.error){statusEl.textContent='Fout in week '+wk+': '+d.error.message+(allBlocks.length?' — eerdere weken blijven staan.':'');break;}
       const parsed=parseProgrammaJSON(d.content[0].text,exercises);
       if(!parsed){statusEl.textContent='Week '+wk+' kon niet worden gelezen — gestopt.'+(allBlocks.length?' Eerdere weken blijven staan.':'');break;}
-      parsed.blocks.forEach(b=>{b.week_nr=wk;allBlocks.push(b);faseHistorie.push(b.fase_naam);});
+      parsed.blocks.forEach(b=>{b.week_nr=wk;b.fase_naam=faseNaam;allBlocks.push(b);b.oefeningen.forEach(o=>{if(o.exercise_id&&!gebruiktIds.includes(o.exercise_id))gebruiktIds.push(o.exercise_id);});});
       const _t0=performance.now();
       renderProgConcept(allBlocks,false);
       console.log('[DEBUG-PROG] renderProgConcept week',wk,'duurde',(performance.now()-_t0).toFixed(1),'ms, totaal',allBlocks.length,'blokken');
@@ -3766,23 +3810,32 @@ async function heergenereerResterendeWeken(progId,btnEl){
     await sbDel('program_blocks','id=eq.'+b.id);
   }
   const bibliotheek=exercises.filter(e=>e.active!==false).map(e=>`${e.id}:${e.name}(${e.type||'strength'})`).join(', ');
-  const profielTekst=atleetProfielTekst(atleet);
+  const prList=exercises.filter(e=>getOneRM(e.id)).map(e=>({naam:e.name,kg:getOneRM(e.id)})).slice(0,12);
+  const profielTekst=atleetProfielTekst(atleet)+(prList.length?' '+buildPRTekst(prList):'');
   const sportLabel=SPORT_FOCUS_LABELS[prog.sport]||prog.sport||'algemeen';
+  const sportBlockTekst=resolveSportBlock(prog.sport,SPORT_BLOCKS,SPORT_FOCUS_LABELS);
   const dagDuren=buildDagDuren(prog.schema_type,prog.weekdagen,dagenPerWeek,prog.duur_minuten,prog.duur_overrides);
-  const faseHistorie=completed.filter(b=>b.week_nr<incompleteWeeks[0]).map(b=>b.fase_naam);
   const blessureContext=await getRecentPainSummary();
+  const recentIds=await getRecentExerciseIds();
+  const gebruiktIds=[];
+  for(const b of completed){
+    const rows=await sbGet('program_block_exercises','&program_block_id=eq.'+b.id);
+    rows.forEach(r=>{if(r.exercise_id&&!gebruiktIds.includes(r.exercise_id))gebruiktIds.push(r.exercise_id);});
+  }
   const voortgangContext=`Voortgang tot nu toe: ${progress.adherencePct}% van de trainingen afgerond${progress.avgRpeDelta!=null?`, gemiddelde gelogde RPE lag ${progress.avgRpeDelta>0?progress.avgRpeDelta+' hoger':Math.abs(progress.avgRpeDelta)+' lager'} dan gepland — houd hier rekening mee (bv. iets conservatiever opbouwen als RPE stelselmatig hoger uitviel dan bedoeld).`:'.'}${blessureContext?' '+blessureContext:''}`;
   toast('Resterende weken worden her-gegenereerd...');
   const newBlocks=[];
   for(const wk of incompleteWeeks){
-    const sys=buildWeekPrompt(wk,maxWeek,dagDuren,prog.doel,sportLabel,profielTekst,bibliotheek,faseHistorie,voortgangContext);
+    const faseNaam=phaseForWeek(wk,maxWeek);
+    const varietyTekst=buildVarietyTekst(gebruiktIds,recentIds,exercises);
+    const sys=buildWeekPrompt(wk,maxWeek,dagDuren,prog.doel,sportLabel,sportBlockTekst,profielTekst,bibliotheek,faseNaam,varietyTekst,voortgangContext);
     try{
       const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1500,system:sys,messages:[{role:'user',content:'Genereer week '+wk+'.'}]})});
       const d=await res.json();
       if(d.error){toast('Fout bij week '+wk+': '+d.error.message);break;}
       const parsed=parseProgrammaJSON(d.content[0].text,exercises);
       if(!parsed){toast('Week '+wk+' kon niet worden gelezen — gestopt');break;}
-      parsed.blocks.forEach(b=>{b.week_nr=wk;newBlocks.push(b);faseHistorie.push(b.fase_naam);});
+      parsed.blocks.forEach(b=>{b.week_nr=wk;b.fase_naam=faseNaam;newBlocks.push(b);b.oefeningen.forEach(o=>{if(o.exercise_id&&!gebruiktIds.includes(o.exercise_id))gebruiktIds.push(o.exercise_id);});});
     }catch(e){toast('Verbindingsfout bij week '+wk);break;}
   }
   if(!newBlocks.length){renderProgrammaList();return;}

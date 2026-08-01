@@ -14,7 +14,7 @@ v3.2.2
 - Inhoud: AI-programmagenerator, pre-training coach check-in, Brzycki-gewichtsuggestie, Route 2 (vaste_trainingen), ratiofactor-/dagfactor-motor, cold-start-predictor, adherence tracking
 
 ## Actieve sprint
-Nog geen formele sprint onder Project OS. Voorstel eerste sprint: "Project OS-migratie + sw.js/profielscheiding-verificatie" — nog te starten.
+Sprint 1 — "Project OS-migratie + sw.js/profielscheiding-verificatie": afgerond. Story 1 (sw.js network-first) en Story 2 (atleet_profiel user_id-bug) beide functioneel bevestigd door Product Owner op 1 augustus 2026.
 
 ## Wat werkt
 - Volledige trainingslogging (A/B, cardio, supersets, plate calculator, PR-badges, rusttimer)
@@ -46,7 +46,4 @@ Nog geen formele sprint onder Project OS. Voorstel eerste sprint: "Project OS-mi
 - Sport-specifieke AI-context splitsing (`buildCtx()` generiek + per-sport, voorstel 7 sporten) — wacht op bevestiging
 
 ## Volgende stap
-1. Browsertest sw.js-fix bevestigen.
-2. Functioneel bevestigen: profiel opslaan in de app, daarna in Supabase Table Editor checken of de rij in atleet_profiel verschijnt met het juiste user_id.
-3. [afgerond] user_id is de PRIMARY KEY van atleet_profiel — upsert werkt structureel correct, geen verdere actie nodig.
-4. Functioneel bevestigen: profiel opslaan in de app, daarna Table Editor checken.
+Sprint 1 volledig afgerond. Volgende kandidaten (zie Roadmap.md): equipment_types/exercise_equipment documenteren, of een nieuwe Story kiezen.

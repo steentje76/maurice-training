@@ -9,7 +9,7 @@ Maurice Training Coach (werktitel)
 Project OS (governance-niveau B) is 31 juli 2026 opgezet: PROJECT_KICKOFF, CURRENT_STATE, DECISION_LOG, Product Book, Blueprint, Roadmap en Product Reset Report staan klaar om in de repo geplaatst te worden. Kritieke RLS-lekken op 5 tabellen zijn gedicht. Nog niet in de repo gecommit — dat is de eerstvolgende actie.
 
 ## Laatste wijziging
-Story 2 (per-user profielscheiding) opgepakt: bug gevonden en gefixt — atleet_profiel-writes faalden stil doordat user_id nooit werd meegestuurd (NOT NULL, geen default). Fix gepusht (commit 71fd2b8), live via Netlify auto-deploy. Functionele bevestiging nog nodig.
+Sprint 1 afgerond. Story 1 (sw.js network-first) en Story 2 (atleet_profiel user_id-bug) zijn beide gepusht EN functioneel bevestigd door de Product Owner (1 augustus 2026).
 
 ## Belangrijkste bestanden
 - docs/00_Project_Management/CURRENT_STATE.md — actuele status
@@ -17,10 +17,10 @@ Story 2 (per-user profielscheiding) opgepakt: bug gevonden en gefixt — atleet_
 - docs/00_Project_Management/DECISION_LOG.md — waarom dingen zijn zoals ze zijn
 
 ## Open problemen
-sw.js-fix nog niet browser-getest. atleet_profiel-fix nog niet functioneel bevestigd (profiel opslaan + Table Editor checken). Unique constraint op user_id nog niet gecontroleerd. Zie CURRENT_STATE.md.
+Geen openstaande problemen uit Sprint 1. Zie Roadmap.md voor de volgende kandidaten (o.a. equipment_types/exercise_equipment documenteren).
 
 ## Volgende actie
-Product Owner bevestigt beide fixes functioneel (sw.js + atleet_profiel). Daarna: unique constraint op user_id checken.
+Volgende Story kiezen — kandidaat: equipment_types/exercise_equipment documenteren (open punt uit PRODUCT_RESET_REPORT.md).
 
 ## Belangrijke instructies voor AI
 Respecteer governance-niveau B — geen ADR's/Health Check toevoegen tenzij de Product Owner dat expliciet heroverweegt. Bestaande werkwijze (zie docs/Prompts/CLAUDE_SOFTWARE_ENGINEER_START.md) blijft leidend.

@@ -57,3 +57,11 @@
 - Alternatieven: n.v.t. — controle, geen keuze.
 - Impact: geen resterende bekende RLS-gaten. Zegt niets over de inhoud van individuele policies (alleen óf RLS aanstaat, niet of elke policy correct is) — dat blijft per-tabel aandachtspunt bij toekomstig werk.
 - Verantwoordelijke: Maurice
+
+## DEC-008
+- Datum: 1 augustus 2026
+- Beslissing: social/competitief-koers (teams, leaderboards, badges) gaat van "afgewezen, later heropend zonder besluit" naar bevestigd: wordt gebouwd.
+- Reden: concreet gevraagd door leden en coaches van ART CrossFit (eerste beoogde gym-klant) — geen intern buikgevoel maar externe, geuite behoefte van de doelgroep uit Fase 3-4.
+- Alternatieven: koers ongewijzigd laten ("AI-coach, geen speeltuin") — verworpen nu er concrete externe vraag is; vroeger afgewezen omdat de behoefte toen niet aantoonbaar was.
+- Impact: social/competitief wordt onderdeel van de Roadmap (Fase 3, samen met coach-dashboard, aangezien het gym-context vereist — leaderboards zijn zinloos zonder de gym/klasse-structuur die daar al gepland staat). Scope (welke vorm: leaderboards, teams, badges, of een combinatie) nog niet vastgesteld — apart te bepalen.
+- Verantwoordelijke: Maurice

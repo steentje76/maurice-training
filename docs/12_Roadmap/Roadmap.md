@@ -16,6 +16,7 @@ Quota-handhaving, feature-blocking, Mollie-betalingen (individueel + gym), credi
 
 **Fase 3 — Coach dashboard**
 Coach-rol per gym_id, programma's toewijzen, coach-notities, AI-coach-voor-de-coach.
+**Social/competitief (bevestigd, DECISION_LOG DEC-008):** concreet gevraagd door leden/coaches ART CrossFit. Hoort hier thuis omdat leaderboards/teams de gym/klasse-structuur uit deze fase nodig hebben. Vorm (leaderboards / teams / badges / combinatie) nog te scopen — eerste stap: kort met ART CrossFit ophalen wat men precies bedoelt met "behoefte", vóór er Stories van gemaakt worden.
 
 **Fase 4 — White-label / sportschoolbeheer**
 Dynamische branding uit gyms-tabel (één app, branding na login), ledenadministratie, lesrooster (architectuur al vastgelegd: vaste_training → class_schedule → class_instance → enrollments, hergebruikt bestaande check-in-machinerie), owner dashboard, meerdere vestigingen.
@@ -27,7 +28,6 @@ Dynamische branding uit gyms-tabel (één app, branding na login), ledenadminist
 - Omgevingsdata (Open-Meteo, lat/lon + tijdstip in IndexedDB)
 - HYROX race-splits en triathlon-brick — expliciet uitgesteld
 - Menstruatiecyclus-tracking — uitgesteld
-- Social/competitief (teams, leaderboards, badges) — eerder afgewezen ("AI-coach, geen speeltuin"), later heropend — **verdient bewust ja/nee-besluit, geen automatische heropname**
 - Multi-AI provider (Claude default, Mistral eerste uitbreiding)
 - AFAS-koppeling, meertaligheid — backlog
 - Appnaam definitief kiezen (richting: "sport + zelfstandig naamwoord")

@@ -47,9 +47,15 @@ exports.handler = async function (event) {
     // Coach-pincode verifiëren tegen de gym van de aanroeper.
     const gymRes = await fetch(`${supabaseUrl}/rest/v1/gyms?id=eq.${caller.gym_id}&select=coach_pin_hash`, { headers: sbHeaders });
     const [gym] = await gymRes.json();
-    if (!gym?.coach_pin_hash) return { statusCode: 403, body: JSON.stringify({ error: { message: 'Er is nog geen coach-pincode ingesteld door de gym-owner' } }) };
-    const pinHash = await sha256Hex(String(pin || ''));
-    if (pinHash !== gym.coach_pin_hash) return { statusCode: 403, body: JSON.stringify({ error: { message: 'Onjuiste pincode' } }) };
+    if (!gym?.coach_pin_hash) {
+      // Kip-en-ei: er kan nog geen pincode ingevoerd worden als er nog nooit een is
+      // ingesteld. De owner mag er in dat specifieke geval doorheen (alleen om zelf de
+      // eerste pincode in te stellen); iedereen anders blijft geblokkeerd.
+      if (caller.gym_role_level < 3) return { statusCode: 403, body: JSON.stringify({ error: { message: 'Er is nog geen coach-pincode ingesteld door de gym-owner' } }) };
+    } else {
+      const pinHash = await sha256Hex(String(pin || ''));
+      if (pinHash !== gym.coach_pin_hash) return { statusCode: 403, body: JSON.stringify({ error: { message: 'Onjuiste pincode' } }) };
+    }
 
     if (action === 'list') {
       const listRes = await fetch(`${supabaseUrl}/rest/v1/users?gym_id=eq.${caller.gym_id}&select=id,name,email,gym_role,gym_role_level&order=gym_role_level.desc`, { headers: sbHeaders });

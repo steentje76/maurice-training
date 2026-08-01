@@ -1,7 +1,7 @@
 # PROJECT_KICKOFF — Maurice Training Coach
 
 ## Projectnaam
-Maurice Training Coach (werktitel — appnaam nog niet definitief; richting "sport + zelfstandig naamwoord", eerdere kandidaten: Trainr, CoachForge, TrainSense AI, Athleon Coach, PeakCoach AI, Adaptrain, StrengthPath, Bracket, Sport Trainr)
+Maurice Training Coach (werktitel — appnaam nog niet definitief. Op 1 augustus 2026 in Play Store geverifieerd als vrij: Sportkompas, Trainingskompas, Loadwise — nog geen keuze gemaakt. "-forge"-achtervoegsel (CoachForge e.d.) bewust losgelaten: verzadigd in deze niche, zie RepForge/GymForge/ActForge/MotionForge. Overige eerdere kandidaten: TrainSense AI, Athleon Coach, PeakCoach AI, Adaptrain, StrengthPath, Bracket, Sport Trainr)
 
 ## Product Owner
 Maurice
@@ -26,7 +26,7 @@ Trainingsbeslissingen (belasting, herstel, progressie) zijn foutgevoelig om hand
 Een AI-coach die op basis van HRV, herstel, RPE en trainingshistorie concrete, uitlegbare adviezen geeft — gecombineerd met volledige, frictieloze trainingslogging.
 
 ## Technologie
-E�n HTML-bestand (vanilla JS, geen framework) — bewuste keuze, geen migratie naar ander platform vóór Fase 2 is afgerond. Supabase (Postgres + PostgREST + RLS). Netlify hosting + auto-deploy vanuit GitHub. Claude Sonnet server-side via Netlify Function. PWA (manifest.json + sw.js); toekomstige store-distributie via Capacitor (iOS) en TWA/Bubblewrap (Android) — wrapping, geen rewrite.
+Eén HTML-bestand (vanilla JS, geen framework) — bewuste keuze, geen migratie naar ander platform vóór Fase 2 is afgerond. Supabase (Postgres + PostgREST + RLS). Netlify hosting + auto-deploy vanuit GitHub. Claude Sonnet server-side via Netlify Function. PWA (manifest.json + sw.js); toekomstige store-distributie via Capacitor (iOS) en TWA/Bubblewrap (Android) — wrapping, geen rewrite.
 
 ## Huidige fase
 Fase 1 (personal app) nagenoeg afgerond. Fase 2 (multi-user voorbereiding) is de huidige prioriteit en deels al gebouwd (Auth + RLS actief sinds 12 juli 2026).

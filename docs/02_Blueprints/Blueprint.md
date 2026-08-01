@@ -23,7 +23,9 @@ Plus (sinds migratie_v322, schema-voorbereiding voor Fase 5, nog niet gehandhaaf
 `plan_features`, `plan_feature_quota`, `credit_packs`, `discounts`, `user_credit_purchases`, `usage_log`.
 Nog niet gebouwd: `programs`, `program_exercises`, `assignments`, `coach_notes` (architectuur akkoord, bouw niet gestart).
 
-`equipment_types` en `exercise_equipment`: recentere toevoeging, doel/relatie tot `exercises` nog te documenteren [nog aanvullen].
+`equipment_types` en `exercise_equipment` — machine-instellingen per oefening (bv. leg press pin-stand, zitting, rugsteun, hoogte, breedte), zodat instellingen niet telkens opnieuw gezocht hoeven worden:
+- `equipment_types`: lijst mogelijke instellingstypes, uitbreidbaar via Beheer. Heeft een hardcoded fallback-seed (Zitting/Rugsteun/Pin/Hoogte/Breedte) als de tabel leeg/onbereikbaar is.
+- `exercise_equipment`: de daadwerkelijke waarde per oefening. Bevat al `gym_id` (nu altijd `null`) — bewust vooruitgebouwd op Fase 4, zodat een sportschool later eigen gedeelde machine-presets kan krijgen naast persoonlijke instellingen.
 
 ## Rollen/entitlements-model (schema-voorbereiding, handhaving in Fase 5)
 Drie assen: `gym_role`-hiërarchie (lid/coach/manager/owner) met `gym_role_level`, systeemrollen (tester/support/developer), feature-entitlements via `plan_features`. Individuele en gym-subscripties zijn additief. Metered features (`ai_coach`, `programma_generator`) met maandelijkse quota, creditpacks, 80%-waarschuwing. Losse Mollie-klantprofielen voor individuen vs. gyms.

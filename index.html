@@ -1580,7 +1580,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.8';
+const APP_VER = 'v3.3.9';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -2059,7 +2059,7 @@ async function loadTrainCfg(){
           await sbUpsert('training_exercises',{id:t+'_'+e.id,exercise_id:e.id,training_ref:t,sort_order:sortOrder,sets:e.sets||null,reps:e.reps||null,rpe:e.rpe||null,wu:e.wu||0,tip:e.tip||null});
           let exObj=exercises.find(x=>x.id===e.id);
           if(!exObj){
-            const newRow={id:e.id,name:e.naam,type:e.type,active:true,pr:null,yt:e.yt||null,muscle_primary:e.muscles?.p||[],muscle_secondary:e.muscles?.s||[]};
+            const newRow={id:e.id,name:e.naam,type:e.type,active:true,pr:null,yt:e.yt||null,muscle_primary:e.muscles?.p||[],muscle_secondary:e.muscles?.s||[],scope:'global'};
             await sbUpsert('exercises',newRow);
             exercises.push(newRow);
           } else if(!exObj.muscle_primary || !exObj.muscle_primary.length){
@@ -3236,7 +3236,11 @@ async function saveLosOefening(){
       const primary=Array.from(document.querySelectorAll('#los-new-muscles-primary input:checked')).map(i=>i.value);
       const secondary=Array.from(document.querySelectorAll('#los-new-muscles-secondary input:checked')).map(i=>i.value);
       if(!primary.length){toast('Kies minimaal één primaire spiergroep');return;}
-      ex={id,name:naam,category:'Overig',type,wod_format:wodFormat,sort_order:99,active:true,pr:null,yt:null,rest_seconds:null,muscle_primary:primary,muscle_secondary:secondary};
+      // v333-fix: scope expliciet meesturen. Deze knop is momenteel alleen zichtbaar
+      // voor coach+ (v331-gate) en was bedoeld om gym-breed te delen — zonder dit veld
+      // viel de nieuwe kolom-default 'personal' terug, waardoor de oefening stilzwijgend
+      // alleen voor de maker zelf zichtbaar werd i.p.v. voor de hele gym.
+      ex={id,name:naam,category:'Overig',type,wod_format:wodFormat,sort_order:99,active:true,pr:null,yt:null,rest_seconds:null,muscle_primary:primary,muscle_secondary:secondary,scope:'gym'};
       const ok=await sbPostQ('exercises',ex);
       if(!ok){toast('Fout bij aanmaken oefening (alleen coach/manager/owner mag dit)');return;}
       exercises.push(ex);
@@ -6220,7 +6224,9 @@ async function saveNewEx(){
   const ytRaw=document.getElementById('nx-yt')?.value.trim()||'';
   const ytVal=ytId(ytRaw);
   const wodFmt=t==='wod'?(document.getElementById('nx-wodfmt')?.value||'for_time'):null;
-  const newEx={id,name:n,category:c,type:t,wod_format:wodFmt,sort_order:99,active:true,pr:null,yt:ytVal||null,rest_seconds:null,muscle_primary:primary,muscle_secondary:secondary};
+  // v333-fix: scope expliciet meesturen, anders valt de kolom-default 'personal' terug
+  // i.p.v. de globale bibliotheek waar dit Beheer-scherm voor bedoeld is.
+  const newEx={id,name:n,category:c,type:t,wod_format:wodFmt,sort_order:99,active:true,pr:null,yt:ytVal||null,rest_seconds:null,muscle_primary:primary,muscle_secondary:secondary,scope:'global'};
   const ok=await sbPost('exercises',newEx);
   if(ok){
     exercises.push(newEx);
@@ -8099,7 +8105,7 @@ async function ensureExercisesLoaded(){
         {id:'rdl',name:'RDL',category:'B',type:'strength',pr:null,sort_order:6,active:true},
         {id:'roeien',name:'Roeien',category:'B',type:'rowing',pr:null,sort_order:7,active:true},
       ];
-      for(const ex of defs)await sbUpsert('exercises',ex);
+      for(const ex of defs)await sbUpsert('exercises',{...ex,scope:'global'});
       exercises=defs;
     }
     _exercisesLoading=null;

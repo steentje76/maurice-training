@@ -1,7 +1,7 @@
 {
-  "name": "Maurice Training Coach",
-  "short_name": "Training",
-  "description": "Persoonlijk trainingscoach, krachtlog en hersteltracker voor serieuze krachtsporters",
+  "name": "Trainingskompas",
+  "short_name": "Kompas",
+  "description": "Persoonlijke AI-trainingscoach, trainingslog en hersteltracker voor kracht, crossfit, hyrox en meer",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -16,7 +16,7 @@
       "sizes": "512x512",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Training Coach Home"
+      "label": "Trainingskompas Home"
     }
   ],
   "icons": [

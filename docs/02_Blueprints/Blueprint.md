@@ -11,7 +11,7 @@ Bron: PROJECTPLAN_APP.md + CONTEXT_NIEUW_PROJECT.md (stand v3.2.2, 12 juli 2026 
 | Database | Supabase (PostgreSQL + PostgREST + RLS) | mhfxhzkdmgkaplicdszg.supabase.co |
 | AI Coach | Anthropic Claude Sonnet | server-side via Netlify Function (netlify/functions/coach.js) — API-key niet client-side |
 | Auth | Supabase Auth | actief sinds 12 juli 2026 (e-mail/wachtwoord, persistente sessie, token refresh) |
-| Stijl | Barlow Condensed, cyaan #3dd6d6 | bewust generiek gehouden i.v.m. toekomstige white-label |
+| Stijl | Poppins, donkerblauw #0B1D2A / petrol #0E3B4A / teal #00B894 | merkidentiteit vastgesteld 1 augustus 2026 (DEC-010), zie docs/Brand/BRAND_IDENTITY.md. Vervangt de eerdere placeholder-stijl (Barlow Condensed/cyaan). App-UI zelf nog niet aangepast — huidige implementatie gebruikt nog de oude stijl, wordt onderdeel van het dynamische-branding-werk |
 | Distributie (later) | Capacitor (iOS), TWA/Bubblewrap (Android) | wrapping van bestaande PWA, geen rewrite |
 
 ## Databaseschema (kern)

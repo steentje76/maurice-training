@@ -1,7 +1,7 @@
 # PROJECT_KICKOFF — Maurice Training Coach
 
 ## Projectnaam
-Maurice Training Coach (werktitel — appnaam nog niet definitief. Op 1 augustus 2026 in Play Store geverifieerd als vrij: Sportkompas, Trainingskompas, Loadwise — nog geen keuze gemaakt. "-forge"-achtervoegsel (CoachForge e.d.) bewust losgelaten: verzadigd in deze niche, zie RepForge/GymForge/ActForge/MotionForge. Overige eerdere kandidaten: TrainSense AI, Athleon Coach, PeakCoach AI, Adaptrain, StrengthPath, Bracket, Sport Trainr)
+**Trainingskompas** — definitief vastgesteld 1 augustus 2026 (DEC-010), inclusief logo/kleurenpalet/typografie, zie docs/Brand/BRAND_IDENTITY.md. Was Maurice Training Coach (werktitel); op 1 augustus 2026 in Play Store geverifieerd als vrij naast Sportkompas/Loadwise. "-forge"-achtervoegsel (CoachForge e.d.) bewust losgelaten: verzadigd in deze niche, zie RepForge/GymForge/ActForge/MotionForge. Overige eerdere kandidaten: TrainSense AI, Athleon Coach, PeakCoach AI, Adaptrain, StrengthPath, Bracket, Sport Trainr.
 
 ## Product Owner
 Maurice

@@ -57,7 +57,7 @@ Naast alles uit v3.0.6.2 (trainingslogging, cardio, supersets, plate calculator,
 ## Te verbeteren onderdelen
 - sw.js network-first-navigatie verifiëren.
 - Per-user profielscheiding testen (nu dat Auth/RLS actief zijn).
-- [opgelost 01-08-2026: equipment_types/exercise_equipment documenteren] — overige RLS-dekking op de resterende ~25 tabellen nog één keer te bevestigen (buiten scope van Sprint 1)
+- [opgelost 01-08-2026: equipment_types/exercise_equipment documenteren] — [opgelost 01-08-2026: volledige RLS-audit — alle 31 tabellen in public hebben rowsecurity=true, geverifieerd via pg_tables]
 
 ## Te verwijderen onderdelen
 [ongewijzigd vanuit v2 — Edna training, oude versies naar archive/]

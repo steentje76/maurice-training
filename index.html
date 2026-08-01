@@ -432,7 +432,7 @@ canvas{width:100%;height:100%}
       </div>
       <div style="display:flex;gap:8px">
         <button class="ibtn" onclick="openModal('m-hrv')">📊</button>
-        <button class="ibtn" onclick="go('s-admin-pin')">⚙️</button>
+        <button class="ibtn" onclick="openBeheer()">⚙️</button>
       </div>
     </div>
   </div>
@@ -756,13 +756,13 @@ canvas{width:100%;height:100%}
   <div class="hdr">
     <div class="hdr-row">
       <div><div class="hdr-title">Workouts</div><div class="hdr-sub">Beheer je eigen trainingen</div></div>
-      <button class="ibtn" onclick="openModal('m-new-training')">＋</button>
+      <button class="ibtn" onclick="openNewTrainingModal()">＋</button>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
     <div class="sec-hd">Eigen trainingen</div>
     <div id="custom-train-list"></div>
-    <button class="btn btn-o" onclick="openModal('m-new-training')" style="margin-top:4px">+ Nieuwe training aanmaken</button>
+    <button class="btn btn-o" onclick="openNewTrainingModal()" style="margin-top:4px">+ Nieuwe training aanmaken</button>
   </div>
   <nav class="bnav">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
@@ -1074,6 +1074,11 @@ canvas{width:100%;height:100%}
       </select></div>
       <div class="irow"><label class="ilbl">Spiergroepen — primair *</label><div id="los-new-muscles-primary" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
       <div class="irow"><label class="ilbl">Spiergroepen — secundair</label><div id="los-new-muscles-secondary" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
+      <div class="irow" id="los-new-scope-row"><label class="ilbl">Zichtbaar voor</label><select class="inp" id="los-new-scope">
+        <option value="personal">Alleen ik</option>
+        <option value="gym">Mijn hele gym</option>
+        <option value="global">Iedereen (globale bibliotheek)</option>
+      </select></div>
     </div>
     <div id="los-body"></div>
     <div style="margin-top:14px">
@@ -1316,9 +1321,30 @@ canvas{width:100%;height:100%}
       </select>
     </div>
     <div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="nt-note" placeholder="omschrijving (optioneel)"></div>
+    <div class="irow"><label class="ilbl">Zichtbaar voor</label><select class="inp" id="nt-scope">
+      <option value="personal">Alleen ik</option>
+      <option value="gym">Mijn hele gym</option>
+      <option value="global">Iedereen (globaal)</option>
+    </select></div>
     <div style="margin-top:14px;display:flex;gap:8px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-new-training')">Annuleer</button>
       <button class="btn btn-r" style="flex:2" onclick="saveNewTraining(this)">Aanmaken</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DELEN MET PERSOON (v333/v3.3.21) — generiek voor exercise/training, alleen ═══
+     ═══ zinvol voor scope='personal' content (server/RLS handhaaft dit sowieso)   ═══ -->
+<div class="modal-bg" id="m-share-content" onclick="bgClose(event,'m-share-content')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Delen met persoon</div>
+    <p style="font-size:12px;color:var(--g4);margin:-4px 0 12px">Alleen mogelijk met iemand uit jouw eigen gym, en alleen voor content die je zelf hebt aangemaakt.</p>
+    <div class="irow"><label class="ilbl">E-mailadres</label><input class="inp" type="email" id="share-email" placeholder="naam@voorbeeld.nl"></div>
+    <div id="share-err" style="color:var(--red);font-size:12px;margin:-6px 0 8px;min-height:1em"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-share-content')">Sluiten</button>
+      <button class="btn btn-r" style="flex:2" onclick="submitShare(this)">Delen</button>
     </div>
   </div>
 </div>
@@ -1590,7 +1616,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.20';
+const APP_VER = 'v3.3.21';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -2652,6 +2678,20 @@ function switchTeamTab(tab){
 }
 const TEAM_ROLE_LABELS={lid:'Lid',coach:'Coach',manager:'Manager',owner:'Owner'};
 const ROLE_LEVEL_CLIENT={lid:0,coach:1,manager:2,owner:3};
+// Generieke scope-select-vuller voor het v333 3-laags-model (personal/gym/global).
+// Toont alleen opties die de huidige gebruiker daadwerkelijk mag gebruiken (RLS staat
+// dit sowieso af, maar zo krijgt de gebruiker nooit een optie te zien die toch faalt).
+// teamRoleLevel is -1 zolang whoami() nog niet is teruggekomen of de gebruiker geen
+// gym-account heeft — dan blijft alleen 'personal' over, wat altijd correct/veilig is.
+function renderScopeOptions(selectId){
+  const el=document.getElementById(selectId);
+  if(!el)return;
+  let opts='<option value="personal">Alleen ik</option>';
+  if(teamRoleLevel>=1)opts+='<option value="gym">Mijn hele gym</option>';
+  if(teamRoleLevel>=3)opts+='<option value="global">Iedereen (globale bibliotheek)</option>';
+  el.innerHTML=opts;
+  el.value='personal';
+}
 async function loadTeamMembers(){
   const h=wearableAuthHeaders();
   const listEl=document.getElementById('team-members-list');
@@ -2738,6 +2778,17 @@ async function vAPin(){const h=await sha256(adminPinBuf);if(h===PIN_HASH){adminP
 // ══════════════════════════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════════════════════════
+// v3.3.21 — Beheer-toegang herzien (v333-vervolg): was uitsluitend een gedeelde,
+// statische PIN (dezelfde voor iedereen, ongeacht rol) — met gym-brede toegang via v331/
+// v333 kon zo elk gym-lid dat de PIN kende Beheer openen, ook al zou de server (RLS)
+// schrijfacties daarna alsnog terecht weigeren. Nu gate op gym_role_level>=3 (owner) waar
+// bekend; PIN blijft de fallback voor situaties waar de rol nog niet vastgesteld kan
+// worden (bv. solo-gebruiker zonder gym-koppeling, whoami() nog niet teruggekomen).
+function openBeheer(){
+  if(teamRoleLevel>=3){go('s-admin');return;}
+  if(teamRoleLevel>=0){toast('Beheer is alleen voor gym-owners');return;}
+  go('s-admin-pin'); // teamRoleLevel onbekend (-1) — PIN-fallback
+}
 function go(id){
   if(id==='s-admin-pin'){adminPinBuf='';updA();document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));document.getElementById('s-admin-pin').classList.add('active');return;}
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
@@ -3204,6 +3255,7 @@ function selectExPickerNew(){
   document.getElementById('los-new-fields').style.display='';
   renderMuscleChecks('los-new-muscles-primary', [], 'primary');
   renderMuscleChecks('los-new-muscles-secondary', [], 'secondary');
+  renderScopeOptions('los-new-scope');
   closeModal('m-ex-picker');
   document.getElementById('los-ex-new').focus();
   renderLosBody();
@@ -3276,7 +3328,10 @@ async function saveLosOefening(btnEl){
       // voor coach+ (v331-gate) en was bedoeld om gym-breed te delen — zonder dit veld
       // viel de nieuwe kolom-default 'personal' terug, waardoor de oefening stilzwijgend
       // alleen voor de maker zelf zichtbaar werd i.p.v. voor de hele gym.
-      ex={id,name:naam,category:'Overig',type,wod_format:wodFormat,sort_order:99,active:true,pr:null,yt:null,rest_seconds:null,muscle_primary:primary,muscle_secondary:secondary,scope:'gym'};
+      // v333: scope komt nu uit de kiezer i.p.v. hardgecodeerd 'gym' — RLS/trigger op de
+      // server valideren sowieso dat de rol toereikend is voor de gekozen scope.
+      const scopeVal=document.getElementById('los-new-scope')?.value||'personal';
+      ex={id,name:naam,category:'Overig',type,wod_format:wodFormat,sort_order:99,active:true,pr:null,yt:null,rest_seconds:null,muscle_primary:primary,muscle_secondary:secondary,scope:scopeVal};
       const ok=await sbPostQ('exercises',ex);
       if(!ok){toast('Fout bij aanmaken oefening (alleen coach/manager/owner mag dit)');return;}
       exercises.push(ex);
@@ -7029,18 +7084,23 @@ async function askCoachProfiel(){
 // ══════════════════════════════════════════════════════════
 // CUSTOM TRAININGEN
 // ══════════════════════════════════════════════════════════
+function openNewTrainingModal(){
+  renderScopeOptions('nt-scope');
+  openModal('m-new-training');
+}
 function saveNewTraining(btnEl){
   if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
   try{
   const name=document.getElementById('nt-name').value.trim();
   const color=document.getElementById('nt-color').value;
   const note=document.getElementById('nt-note').value.trim();
+  const scopeVal=document.getElementById('nt-scope')?.value||'personal';
   if(!name){toast('Vul een naam in');return;}
   const id='custom_'+Date.now();
   const t={id,name,color,note,exercises:[]};
   customTrainings.push(t);
   localStorage.setItem('maurice_trainings',JSON.stringify(customTrainings));
-  sbPost('custom_trainings',{id,naam:name,kleur:color,notitie:note||null,sort_order:customTrainings.length-1});
+  sbPost('custom_trainings',{id,naam:name,kleur:color,notitie:note||null,sort_order:customTrainings.length-1,scope:scopeVal});
   closeModal('m-new-training');
   document.getElementById('nt-name').value='';
   toast(name+' aangemaakt');
@@ -7072,11 +7132,44 @@ function renderCustomTrainList(){
         <div style="width:14px;height:14px;border-radius:50%;background:${t.color};flex-shrink:0"></div>
         <div style="flex:1"><div style="font-size:15px;font-weight:700">${escHtml(t.name)}</div>${t.note?`<div style="font-size:12px;color:var(--g4)">${escHtml(t.note)}</div>`:''}</div>
         <button onclick="startCustomTraining('${t.id}')" class="btn btn-o btn-sm">Start</button>
+        <button onclick="openShareModal('training','${t.id}')" title="Delen met persoon" style="background:none;border:none;color:var(--g4);font-size:16px;cursor:pointer;padding:4px">🔗</button>
         <button onclick="deleteCustomTraining('${t.id}')" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button>
       </div>
     </div>`;
   });
   el.innerHTML=h;
+}
+
+// v333/v3.3.21 — "Delen met persoon": zoekt de ontvanger op via de gym-team-functie
+// (lookup_teammate, geen PIN nodig — zie gym-team.js) en schrijft daarna een rij naar
+// content_shares. RLS op content_shares handhaaft server-side dat dit alleen kan voor
+// eigen scope='personal'-content; een client-side scope-check is dus geen vereiste voor
+// veiligheid, wel voor een nette foutmelding i.p.v. een kale RLS-weigering.
+let shareCtx=null;
+function openShareModal(contentType,contentId){
+  shareCtx={contentType,contentId};
+  document.getElementById('share-email').value='';
+  document.getElementById('share-err').textContent='';
+  openModal('m-share-content');
+}
+async function submitShare(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  const errEl=document.getElementById('share-err');
+  errEl.textContent='';
+  try{
+    if(!shareCtx)return;
+    const email=document.getElementById('share-email').value.trim();
+    if(!email){errEl.textContent='Vul een e-mailadres in';return;}
+    const h=wearableAuthHeaders();
+    if(!h){errEl.textContent='Geen sessie — log opnieuw in';return;}
+    const lr=await fetch('/.netlify/functions/gym-team',{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({action:'lookup_teammate',email})});
+    const ld=await lr.json();
+    if(!lr.ok){errEl.textContent=ld.error?.message||'Niet gevonden';return;}
+    const ok=await sbPost('content_shares',{content_type:shareCtx.contentType,content_id:shareCtx.contentId,shared_with:ld.id});
+    if(!ok){errEl.textContent='Delen mislukt — is dit wel je eigen persoonlijke content?';return;}
+    closeModal('m-share-content');
+    toast('Gedeeld met '+ld.name);
+  }finally{if(btnEl)btnEl.disabled=false;}
 }
 
 function deleteCustomTraining(id){
@@ -7399,7 +7492,7 @@ function buildCustomTrainScreen(t){
       <button class="ni active"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
       <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
       <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
-      <button class="ni" onclick="go('s-admin-pin')"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
+      <button class="ni" onclick="openBeheer()"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
     </nav>`;
 }
 

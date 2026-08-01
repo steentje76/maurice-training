@@ -73,3 +73,16 @@
 - Correctie op DEC-006: de trigger bleek al aanwezig op atleet_profiel, athlete_conditions en checkin_conditions vóórdat de client-side user_id-fix (commit 71fd2b8) werd doorgevoerd. De oorspronkelijke diagnose in Story 2 ("write faalt stil door ontbrekende user_id, geen default") was gebaseerd op het kolomschema en klopte op zichzelf, maar hield geen rekening met een mogelijke trigger — die bleek er al te zijn. De code-fix is onschadelijk (overbodige dubbele beveiliging: JS zet user_id, trigger overschrijft 'm toch met dezelfde waarde), maar was mogelijk niet de daadwerkelijke oorzaak van de destijds waargenomen lege tabel. Reden voor de oorspronkelijk lege atleet_profiel-tabel blijft daarmee formeel niet 100% verklaard — waarschijnlijkste verklaring: de sync-push-functie (syncAtleetFromSupabase) draait maar één keer per browsersessie en had er simpelweg nog niet aan toegekomen.
 - Impact: geen resterende bekende user_id/RLS-gaten op persoonlijke datatabellen. Twee onschuldig-overbodige triggerpogingen op al bestaande triggers gaven terecht een foutmelding (42710, trigger already exists) — geen schade, query gewoon niet opnieuw uitgevoerd.
 - Verantwoordelijke: Maurice
+
+## DEC-010
+- Datum: 1 augustus 2026
+- Beslissing: meerdere koerswijzigingen tegelijk vastgesteld:
+  1. Appnaam definitief: **Trainingskompas** (logo/brand sheet vastgesteld, zie docs/Brand/BRAND_IDENTITY.md).
+  2. Wearables-uitbreiding (Apple HealthKit, Google Health Connect, Garmin/Whoop/Oura — voorheen "na Fase 2" in de Later-bucket), HYROX race-splits/triathlon-brick en menstruatiecyclus-tracking (beide voorheen expliciet uitgesteld) verplaatst naar prioriteit Fase 1/2.
+  3. Social/competitief (DEC-008, al bevestigd voor Fase 3) wordt nu actief opgepakt, niet pas na afronding van coach-dashboard/Fase 2.
+  4. Dynamische branding (Fase 4) krijgt een preciezere invulling: Trainingskompas blijft de basis-experience; gym-branding is een laag bovenop (skin), geen vervanging. De volledige naam "Trainingskompas" moet daarbij altijd zichtbaar blijven — ook in toekomstige krappe UI-plekken (herziet de bestaande "KOMPAS"-afkorting-gewoonte). Later, ná de gym-brede branding, volgt een "experience-motor" (naar analogie van wat de Product Owner "radioplanner" noemt) waarmee individuele leden zelf hun look-and-feel kunnen aanpassen, bovenop de gym-skin.
+  5. Onboarding-workflow voor nieuwe atleten (profiel + doelen instellen bij eerste gebruik) toegevoegd aan de roadmap — ontbrak nog volledig.
+- Reden: Product Owner-koerswijziging op basis van voortschrijdend inzicht na de stabilisatiesessie van 1 augustus 2026 (v3.3.9 t/m v3.3.25) — met een stabiele basis is er ruimte om vooruit te plannen.
+- Alternatieven: bestaande volgorde (wearables/HYROX/cyclus pas "later", branding pas volledig in Fase 4) aanhouden — verworpen, expliciete herprioritering door Product Owner.
+- Impact: Roadmap.md herzien (zie aldaar). Geen technische wijzigingen in deze sessie — uitsluitend planning/documentatie. Bouw van deze features volgt in latere sessies.
+- Verantwoordelijke: Maurice

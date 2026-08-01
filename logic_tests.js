@@ -456,9 +456,11 @@ function isoWeekday(dateStr){
   return wd===0?7:wd;
 }
 function addDaysStr(dateStr,n){
+  // v3.3.15: lokale datumcomponenten i.p.v. toISOString() — zie index.html voor de
+  // volledige uitleg van de bug die dit moest fixen (oneindige lus bij 'weekdagen').
   const d=new Date(dateStr+'T00:00:00');
   d.setDate(d.getDate()+n);
-  return d.toISOString().slice(0,10);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 function computeBlockPlannedDates(startDate,blockCount,schemaType,weekdagen,dagenPerWeek){
   const dates=[];
@@ -518,6 +520,33 @@ test('computeBlockPlannedDates (interval): spreidt gelijkmatig o.b.v. dagen/week
 test('computeBlockPlannedDates (interval): minimaal 1 dag tussenruimte', ()=>{
   const dates=computeBlockPlannedDates('2026-07-12', 2, 'interval', [], 14);
   assert(dates[1] !== dates[0], 'spacing mag nooit 0 zijn');
+});
+// REGRESSIETEST v3.3.15 — vangt de "programma opslaan bevriest bij Vaste weekdagen"-bug.
+// De sandbox/CI draait doorgaans op UTC, waardoor de oude toISOString()-bug in addDaysStr()
+// hier nooit zichtbaar werd — hij trad alleen op in een niet-UTC tijdzone (NL: UTC+1/+2).
+// Deze test zet TZ expliciet naar Europe/Amsterdam en zet daarna weer terug, zodat de test
+// robuust is ongeacht in welke tijdzone hij toevallig draait.
+test('addDaysStr: schuift echt door in een niet-UTC tijdzone (regressie v3.3.15)', ()=>{
+  const origTZ=process.env.TZ;
+  process.env.TZ='Europe/Amsterdam';
+  try{
+    assertEq(addDaysStr('2026-08-01', 1), '2026-08-02');
+    assertEq(addDaysStr('2026-08-01', 0), '2026-08-01');
+  }finally{
+    if(origTZ===undefined)delete process.env.TZ; else process.env.TZ=origTZ;
+  }
+});
+test('computeBlockPlannedDates (weekdagen): loopt niet vast als startdatum niet meteen matcht (regressie v3.3.15)', ()=>{
+  const origTZ=process.env.TZ;
+  process.env.TZ='Europe/Amsterdam';
+  try{
+    // 2026-08-01 is een zaterdag; target is woensdag(3) — de oude bug liep hier oneindig door
+    const dates=computeBlockPlannedDates('2026-08-01', 2, 'weekdagen', [3,6], 2);
+    assertEq(dates[0], '2026-08-05'); // eerstvolgende wo
+    assertEq(dates[1], '2026-08-08'); // eerstvolgende za
+  }finally{
+    if(origTZ===undefined)delete process.env.TZ; else process.env.TZ=origTZ;
+  }
 });
 test('parseProgrammaJSON: geldige oefeningen-bibliotheek-structuur wordt geaccepteerd', ()=>{
   const lib=[{id:'backsquat'},{id:'bench'}];

@@ -605,13 +605,36 @@ function buildDagDuren(schemaType,weekdagen,dagenPerWeek,duur,duurOverrides){
   }
   return Array.from({length:dagenPerWeek||2},(_,i)=>ov[i+1]||basis);
 }
-function buildWeekPrompt(wk,weken,dagDuren,doel,sportLabel,profielTekst,bibliotheek,faseHistorie,extraContext){
+function phaseForWeek(wk,weken){
+  if(weken<=1)return 'Opbouw';
+  if(weken<=3)return wk===1?'Anatomische Aanpassing':'Kracht';
+  const adaptWeeks=Math.max(1,Math.round(weken*0.2));
+  const deloadWeeks=1;
+  const hyperWeeks=Math.max(1,Math.round((weken-adaptWeeks-deloadWeeks)*0.55));
+  const strengthWeeks=Math.max(0,weken-adaptWeeks-deloadWeeks-hyperWeeks);
+  if(wk<=adaptWeeks)return 'Anatomische Aanpassing';
+  if(wk<=adaptWeeks+hyperWeeks)return 'Hypertrofie';
+  if(wk<=adaptWeeks+hyperWeeks+strengthWeeks)return 'Kracht';
+  return 'Deload / Peak';
+}
+function buildPRTekst(prList){
+  if(!prList||!prList.length)return '';
+  return `Bekende 1RM (kg): ${prList.map(p=>`${p.naam} ${p.kg}`).join(', ')}. Gebruik dit voor realistische belasting/progressie, niet als harde limiet.`;
+}
+function buildVarietyTekst(gebruiktIds,recentIds,exerciseList){
+  const ids=[...new Set([...(gebruiktIds||[]),...(recentIds||[])])];
+  if(!ids.length)return '';
+  const namen=ids.map(id=>exerciseList.find(e=>e.id===id)?.name||id).filter(Boolean);
+  if(!namen.length)return '';
+  return `Recent gebruikt (dit programma en/of onlangs gelogd): ${namen.join(', ')}. Varieer waar mogelijk met andere oefeningen uit de bibliotheek, tenzij je een hoofdlift bewust herhaalt voor progressieve overload.`;
+}
+function buildWeekPrompt(wk,weken,dagDuren,doel,sportLabel,sportBlockTekst,profielTekst,bibliotheek,faseNaam,varietyTekst,extraContext){
   const dagen=dagDuren.length;
-  const context=(faseHistorie&&faseHistorie.length)
-    ? `Eerdere weken hadden als fase: ${faseHistorie.join(' → ')}. Zorg dat week ${wk} logisch daarop voortbouwt richting een sluitende periodisering (opbouw → hypertrofie → kracht → deload waar passend).`
-    : `Dit is de eerste week van het programma — kies een passende openingsfase.`;
+  const faseContext=`Dit is week ${wk} van ${weken} in een periodiseringsschema (opbouw → hypertrofie → kracht → deload/peak). Fase van déze week: "${faseNaam}" — kies oefeningen, volume (sets/reps) en intensiteit (RPE) die logisch bij deze fase passen.`;
+  const sportContext=sportBlockTekst?` Sport-specifieke coaching-context: ${sportBlockTekst}`:'';
+  const varietyBlock=varietyTekst?` ${varietyTekst}`:'';
   const dagInstructies=dagDuren.map((min,i)=>`dag ${i+1}: ${min} min → ±${exercisesTargetForDuration(min)} oefeningen`).join(', ');
-  return `Je bent trainingscoach. Je bouwt week ${wk} van ${weken} van een periodiseringsschema, ${dagen} trainingsdagen deze week. Sportrichting: ${sportLabel}. Doel: ${doel}. Atleetprofiel: ${profielTekst}. ${context} Beschikbare tijd per trainingsdag deze week (bepaalt hoeveel oefeningen passend zijn): ${dagInstructies}.${extraContext?' '+extraContext:''} Kies voor elke trainingsdag zelf de beste oefeningen UIT DEZE BIBLIOTHEEK (gebruik alleen deze exercise_id's, verzin geen nieuwe): ${bibliotheek}. Antwoord ALLEEN met geldige JSON, geen uitleg, in dit exacte formaat: {"blocks":[{"week_nr":${wk},"fase_naam":"Anatomische Aanpassing","oefeningen":[{"exercise_id":"backsquat","sets":3,"reps":"12-15","rpe":6.5}]}]}. Genereer exact ${dagen} blokken voor deze week (1 per dag, in volgorde dag 1..${dagen}), elk met het bij die dag passende aantal oefeningen.`;
+  return `Je bent trainingscoach. Je bouwt week ${wk} van ${weken} van een periodiseringsschema, ${dagen} trainingsdagen deze week. Sportrichting: ${sportLabel}.${sportContext} Doel: ${doel}. Atleetprofiel: ${profielTekst}. ${faseContext}${varietyBlock} Beschikbare tijd per trainingsdag deze week (bepaalt hoeveel oefeningen passend zijn): ${dagInstructies}.${extraContext?' '+extraContext:''} Kies voor elke trainingsdag zelf de beste oefeningen UIT DEZE BIBLIOTHEEK (gebruik alleen deze exercise_id's, verzin geen nieuwe): ${bibliotheek}. Antwoord ALLEEN met geldige JSON, geen uitleg. Dit is uitsluitend een STRUCTUUR-voorbeeld — de exercise_id/sets/reps/rpe-waarden hieronder zijn placeholders, kies zelf passende eigen waarden, kopieer ze niet letterlijk over: {"blocks":[{"week_nr":${wk},"fase_naam":"${faseNaam}","oefeningen":[{"exercise_id":"<kies uit bibliotheek>","sets":"<getal>","reps":"<range zoals 8-10>","rpe":"<getal 5-9>"}]}]}. Genereer exact ${dagen} blokken voor deze week (1 per dag, in volgorde dag 1..${dagen}), elk met het bij die dag passende aantal oefeningen.`;
 }
 function repsPrefillFromRange(repsStr){
   if(!repsStr)return '';
@@ -666,21 +689,68 @@ test('computeProgAdjustment: reden-teksten bevatten alle actieve triggers', ()=>
   const adj=computeProgAdjustment(0.85, [{muscle:'Borst',pct:40}], 'slecht', 'Knie');
   assertEq(adj.redenen.length, 4);
 });
-test('buildWeekPrompt: eerste week krijgt openingsfase-instructie, geen historie', ()=>{
-  const p=buildWeekPrompt(1,8,[60,60,60],'kracht','CrossFit','40 jaar, man, ervaren',  'backsquat:Backsquat(strength)', []);
-  assert(p.includes('eerste week'));
-  assert(!p.includes('Eerdere weken'));
+test('phaseForWeek: kort programma (<=3 wk) krijgt alleen opbouw + kracht', ()=>{
+  assertEq(phaseForWeek(1,2), 'Anatomische Aanpassing');
+  assertEq(phaseForWeek(2,2), 'Kracht');
+  assertEq(phaseForWeek(1,3), 'Anatomische Aanpassing');
+  assertEq(phaseForWeek(3,3), 'Kracht');
 });
-test('buildWeekPrompt: latere week refereert aan eerdere fasen', ()=>{
-  const p=buildWeekPrompt(3,8,[60,60,60],'kracht','CrossFit','40 jaar, man, ervaren','backsquat:Backsquat(strength)', ['Anatomische Aanpassing','Hypertrofie']);
-  assert(p.includes('Anatomische Aanpassing → Hypertrofie'));
+test('phaseForWeek: 8-weken-schema doorloopt alle vier fasen in de juiste volgorde', ()=>{
+  assertEq(phaseForWeek(1,8), 'Anatomische Aanpassing');
+  assertEq(phaseForWeek(2,8), 'Anatomische Aanpassing');
+  assertEq(phaseForWeek(3,8), 'Hypertrofie');
+  assertEq(phaseForWeek(5,8), 'Hypertrofie');
+  assertEq(phaseForWeek(6,8), 'Kracht');
+  assertEq(phaseForWeek(7,8), 'Kracht');
+  assertEq(phaseForWeek(8,8), 'Deload / Peak'); // laatste week bij 4+ weken is altijd deload
+});
+test('phaseForWeek: programma\'s van 4+ weken eindigen altijd met een deload-week', ()=>{
+  assertEq(phaseForWeek(4,4), 'Deload / Peak');
+  assertEq(phaseForWeek(12,12), 'Deload / Peak');
+});
+test('phaseForWeek: fase is deterministisch — dezelfde week/lengte geeft altijd hetzelfde resultaat', ()=>{
+  assertEq(phaseForWeek(4,10), phaseForWeek(4,10));
+});
+test('buildPRTekst: lege lijst geeft lege string, geen crash', ()=>{
+  assertEq(buildPRTekst([]), '');
+  assertEq(buildPRTekst(null), '');
+});
+test('buildPRTekst: formatteert bekende 1RM\'s compact', ()=>{
+  const t=buildPRTekst([{naam:'Backsquat',kg:120},{naam:'Deadlift',kg:160}]);
+  assert(t.includes('Backsquat 120'));
+  assert(t.includes('Deadlift 160'));
+});
+test('buildVarietyTekst: niets gebruikt/gelogd geeft lege string', ()=>{
+  assertEq(buildVarietyTekst([],[],[{id:'backsquat',name:'Backsquat'}]), '');
+});
+test('buildVarietyTekst: zet exercise_id\'s om naar namen en dedupliceert', ()=>{
+  const lib=[{id:'backsquat',name:'Backsquat'},{id:'bench',name:'Benchpress'}];
+  const t=buildVarietyTekst(['backsquat'],['backsquat','bench'],lib);
+  assert(t.includes('Backsquat'));
+  assert(t.includes('Benchpress'));
+  assertEq((t.match(/Backsquat/g)||[]).length, 1); // niet dubbel, ondanks overlap in beide lijsten
+});
+test('buildWeekPrompt: fase komt letterlijk (en consistent) terug in instructie én JSON-voorbeeld', ()=>{
+  const p=buildWeekPrompt(3,8,[60,60,60],'kracht','CrossFit','','40 jaar, man, ervaren','backsquat:Backsquat(strength)','Hypertrofie','');
+  assert(p.includes('"Hypertrofie"'));
+  assert(p.includes('Fase van déze week: "Hypertrofie"'));
+});
+test('buildWeekPrompt: JSON-voorbeeld gebruikt neutrale placeholders, geen realistische ankerwaarden', ()=>{
+  const p=buildWeekPrompt(1,8,[60,60,60],'kracht','CrossFit','','40 jaar, man, ervaren','backsquat:Backsquat(strength)','Anatomische Aanpassing','');
+  assert(!p.includes('"backsquat"'), 'voorbeeld mag geen concrete exercise_id meer bevatten');
+  assert(!p.includes('3×12-15')&&!p.includes('"sets":3'), 'voorbeeld mag geen concreet sets/reps-getal meer bevatten');
+  assert(p.includes('<kies uit bibliotheek>'));
+});
+test('buildWeekPrompt: sport-context wordt toegevoegd indien gegeven', ()=>{
+  const p=buildWeekPrompt(1,8,[60,60],'kracht','CrossFit','IDENTITEIT: test-sportblok','40 jaar, man, ervaren','x:Y(strength)','Anatomische Aanpassing','');
+  assert(p.includes('IDENTITEIT: test-sportblok'));
 });
 test('buildWeekPrompt: vraagt exact dagen-aantal blokken (afgeleid van duur-array lengte)', ()=>{
-  const p=buildWeekPrompt(2,8,[60,60,60,60],'kracht','HYROX','30 jaar, vrouw, gevorderd','x:Y(strength)', ['A']);
+  const p=buildWeekPrompt(2,8,[60,60,60,60],'kracht','HYROX','','30 jaar, vrouw, gevorderd','x:Y(strength)','Hypertrofie','');
   assert(p.includes('exact 4 blokken'));
 });
 test('buildWeekPrompt: neemt afwijkende duur per dag mee in de instructie', ()=>{
-  const p=buildWeekPrompt(1,4,[30,90],'kracht','Kracht','40 jaar, man, ervaren','x:Y(strength)', []);
+  const p=buildWeekPrompt(1,4,[30,90],'kracht','Kracht','','40 jaar, man, ervaren','x:Y(strength)','Anatomische Aanpassing','');
   assert(p.includes('dag 1: 30 min'));
   assert(p.includes('dag 2: 90 min'));
 });
@@ -746,11 +816,11 @@ function filterSwapCandidates(allExercises,currentMusclesPrimary,excludeIds){
 }
 
 test('buildWeekPrompt: zonder extraContext blijft de prompt ongewijzigd werken', ()=>{
-  const p=buildWeekPrompt(1,8,[60,60],'kracht','CrossFit','40 jaar, man, ervaren','x:Y(strength)', []);
+  const p=buildWeekPrompt(1,8,[60,60],'kracht','CrossFit','','40 jaar, man, ervaren','x:Y(strength)','Anatomische Aanpassing','');
   assert(p.includes('Kies voor elke trainingsdag'));
 });
 test('buildWeekPrompt: extraContext wordt toegevoegd als die is meegegeven', ()=>{
-  const p=buildWeekPrompt(1,8,[60,60],'kracht','CrossFit','40 jaar, man, ervaren','x:Y(strength)', [], 'Vermijd zware schouderbelasting.');
+  const p=buildWeekPrompt(1,8,[60,60],'kracht','CrossFit','','40 jaar, man, ervaren','x:Y(strength)','Anatomische Aanpassing','','Vermijd zware schouderbelasting.');
   assert(p.includes('Vermijd zware schouderbelasting.'));
 });
 test('filterSwapCandidates: alleen oefeningen met overlappende primaire spiergroep', ()=>{

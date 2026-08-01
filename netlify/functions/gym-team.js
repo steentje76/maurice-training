@@ -82,6 +82,13 @@ exports.handler = async function (event) {
       if (ROLE_LEVEL[newRole] > caller.gym_role_level) {
         return { statusCode: 403, body: JSON.stringify({ error: { message: 'Je kunt geen rol toekennen die hoger is dan je eigen rol' } }) };
       }
+      // Je mag alleen iemand met een STRIKT lagere huidige rol dan jezelf aanpassen —
+      // zonder deze check kon een manager (level 2) bijvoorbeeld de owner (level 3)
+      // gewoon terugzetten naar 'lid', want alleen de NIEUWE rol werd tegen je eigen
+      // niveau gecontroleerd, nooit de HUIDIGE rol van het doelwit.
+      if ((target.gym_role_level ?? -1) >= caller.gym_role_level) {
+        return { statusCode: 403, body: JSON.stringify({ error: { message: 'Je kunt de rol van iemand met een gelijke of hogere rol dan jezelf niet aanpassen' } }) };
+      }
 
       const oldRole = target.gym_role;
       const updRes = await fetch(`${supabaseUrl}/rest/v1/users?id=eq.${targetUserId}`, {

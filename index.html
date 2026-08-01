@@ -1206,6 +1206,16 @@ canvas{width:100%;height:100%}
   </div>
 </div>
 
+<!-- ═══ PROGRAMMA — TRAININGSINTRO (geen aanpassing nodig, wel korte uitleg wat/waarom) ═══ -->
+<div class="modal-bg" id="m-prog-intro" onclick="">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Vandaag</div>
+    <div id="pintro-body"></div>
+    <button class="btn btn-r" style="margin-top:16px;width:100%" onclick="pintroStart()">Start training</button>
+  </div>
+</div>
+
 <!-- ═══ PROGRAMMA — OEFENING WISSELEN (zelfde spiergroep, ander alternatief) ═══ -->
 <div class="modal-bg" id="m-swap-exercise" onclick="bgClose(event,'m-swap-exercise')">
   <div class="modal">
@@ -1597,7 +1607,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.16';
+const APP_VER = 'v3.3.17';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -7216,7 +7226,7 @@ async function pchkSubmit(){
 // Stille achtergrondcheck: dagfactor (HRV/slaap) + spierherstel voor de spieren die deze
 // training raakt. Pure beslislogica zit in computeProgAdjustment (los testbaar).
 async function evaluateProgAdjustment(){
-  const {rows}=progCheckinCtx;
+  const {rows,block,prog}=progCheckinCtx;
   const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=1');
   const lh=hd[0];
   const df=lh?dagfactor(lh.hrv,lh.sleep,lh.cyclus_fase):{factor:1};
@@ -7225,19 +7235,24 @@ async function evaluateProgAdjustment(){
   const muscleRows=await getRelevantMuscleRecovery([...muscleSet]);
   const adj=computeProgAdjustment(df.factor,muscleRows,progCheckinCtx.voelt,progCheckinCtx.pijn);
   progCheckinCtx.adjustment=adj;
+  const oefeningNamen=rows.map(r=>exercises.find(e=>e.id===r.exercise_id)?.name).filter(Boolean);
+  const introTekst=buildSessionIntroTekst(block.fase_naam,block.week_nr,prog?.doel,oefeningNamen);
   if(adj){
     const voorstelTekst=[adj.setsDelta?Math.abs(adj.setsDelta)+' set minder':'',adj.rpeDelta?'RPE '+adj.rpeDelta:''].filter(Boolean).join(' en ')||'lichtere belasting';
     document.getElementById('padv-body').innerHTML=`<div style="font-size:13px;color:var(--g4)">Advies laden...</div>`;
     openModal('m-prog-advies');
     const uitleg=await generateProgAdviesAI(adj);
     document.getElementById('padv-body').innerHTML=`
+      <div style="font-size:13px;color:var(--g4);margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--g2)">${introTekst}</div>
       <div style="font-size:14px;line-height:1.5;margin-bottom:10px">${uitleg||capitalize(adj.redenen.join('. '))+'.'}</div>
       ${renderMuscleRecoveryMiniList(muscleRows)}
       <div style="font-size:12px;color:var(--g4);background:var(--g1);border-radius:8px;padding:8px 10px;margin-top:8px">Voorstel: ${voorstelTekst} voor deze training.${adj.painMuscle?'<br>Voel je pijn tijdens een oefening voor <b>'+adj.painMuscle+'</b>? Verwijder die dan met het kruisje in de trainingslijst.':''}</div>`;
   }else{
-    await launchProgramTrainScreen(null);
+    document.getElementById('pintro-body').innerHTML=`<div style="font-size:14px;line-height:1.5">${introTekst}</div>`;
+    openModal('m-prog-intro');
   }
 }
+function pintroStart(){closeModal('m-prog-intro');launchProgramTrainScreen(null);}
 // Overzichtelijk lijstje met herstel% per spiergroep die deze training raakt — naast de
 // gesproken uitleg, als concrete context (niet als vervanging ervan).
 function renderMuscleRecoveryMiniList(rows){
@@ -7255,6 +7270,16 @@ function renderMuscleRecoveryMiniList(rows){
   </div>`;
 }
 function capitalize(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
+// Pure functie: korte introtekst bij start van een programmatraining — wat de sessie
+// inhoudt en wat het doel is. Bewust GEEN AI-call (geen latency/kosten bij elke start van
+// elke training; de data is al bekend zodra de check-in start), gebaseerd op dezelfde
+// gegevens die op dat moment al geladen zijn (block.fase_naam, prog.doel, oefeningnamen).
+function buildSessionIntroTekst(faseNaam,weekNr,progDoel,oefeningNamen){
+  const faseDeel=faseNaam?`${faseNaam} — week ${weekNr}`:`Week ${weekNr}`;
+  const doelDeel=progDoel?` Doel: ${progDoel}.`:'';
+  const oefDeel=(oefeningNamen&&oefeningNamen.length)?` Vandaag: ${oefeningNamen.join(', ')}.`:'';
+  return `${faseDeel}.${doelDeel}${oefDeel}`;
+}
 // Korte, gesproken coach-uitleg o.b.v. de berekende redenen — geen droge opsomming van
 // cijfers, maar wel gebaseerd op diezelfde data. Valt terug op de kale redenen als de
 // AI-call faalt (nooit een lege modal).

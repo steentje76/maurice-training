@@ -2,16 +2,18 @@
 // en zet ze in hrv_log — als aanvulling op de handmatige check-in, niet als vervanging
 // (bestaande handmatige rijen voor dezelfde datum worden bijgewerkt, niet gedupliceerd).
 //
-// LET OP — TE VERIFIËREN VOOR EERSTE GEBRUIK: de exacte data-type-namen in
-// GOOGLE_HEALTH_DATA_TYPES hieronder zijn gebaseerd op de officiële Google Health
-// API-documentatie (developers.google.com/health/reference/rest/v4) maar zijn niet
-// getest tegen een echte account, omdat daar een geregistreerde OAuth-client + verbonden
-// Fitbit-account voor nodig is. Controleer de exacte data-type-slugs en JSON-veldnamen in
-// de respons zodra de eerste echte koppeling is gemaakt, en pas hieronder aan waar nodig.
+// v2 (1 augustus 2026) — gecorrigeerd na een live 400 INVALID_PARENT_DATA_TYPE_COLLECTION-
+// fout. De officiële datatype-tabel (developers.google.com/health/data-types) geeft: in de
+// URL moet de data-type-naam kebab-case zijn (bv. daily-heart-rate-variability), en elk
+// recordtype heeft een eigen filterveld-structuur:
+//   Daily   → {type}.date            (bv. daily_heart_rate_variability.date >= "2026-07-29")
+//   Session → {type}.interval.end_time
+// Sleep zit bewust onder een EIGEN scope ("sleep"), niet health_metrics_and_measurements —
+// vandaar de aparte googlehealth.sleep.readonly-scope in wearable-auth-start.js.
 const GOOGLE_HEALTH_DATA_TYPES = {
-  hrv: 'dailyHeartRateVariability',
-  rhr: 'dailyRestingHeartRate',
-  sleep: 'sleepSummary'
+  hrv:   { id: 'daily-heart-rate-variability', filterField: 'daily_heart_rate_variability', kind: 'daily' },
+  rhr:   { id: 'daily-resting-heart-rate',     filterField: 'daily_resting_heart_rate',     kind: 'daily' },
+  sleep: { id: 'sleep',                        filterField: 'sleep',                        kind: 'session' }
 };
 const GOOGLE_HEALTH_BASE = 'https://health.googleapis.com/v4';
 
@@ -73,24 +75,25 @@ exports.handler = async function (event) {
       });
     }
 
-    // Laatste 3 dagen ophalen (vangt gemiste syncs op zonder overdreven veel data per keer).
-    const since = new Date(); since.setDate(since.getDate() - 3);
-    const sinceStr = since.toISOString().split('T')[0] + 'T00:00:00';
+    // Laatste 7 dagen ophalen (vangt gemiste syncs op zonder overdreven veel data per keer).
+    const since = new Date(); since.setDate(since.getDate() - 7);
+    const sinceDate = since.toISOString().split('T')[0];
     const authFetch = (url) => fetch(url, { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } });
 
     const [hrvData, rhrData, sleepData] = await Promise.all([
-      fetchDataPoints(authFetch, GOOGLE_HEALTH_DATA_TYPES.hrv, sinceStr),
-      fetchDataPoints(authFetch, GOOGLE_HEALTH_DATA_TYPES.rhr, sinceStr),
-      fetchDataPoints(authFetch, GOOGLE_HEALTH_DATA_TYPES.sleep, sinceStr)
+      fetchDataPoints(authFetch, GOOGLE_HEALTH_DATA_TYPES.hrv, sinceDate),
+      fetchDataPoints(authFetch, GOOGLE_HEALTH_DATA_TYPES.rhr, sinceDate),
+      fetchDataPoints(authFetch, GOOGLE_HEALTH_DATA_TYPES.sleep, sinceDate)
     ]);
 
-    // Per datum samenvoegen. TE VERIFIËREN: exacte veldnamen in de respons (hrvMs/bpm/
-    // duration hieronder zijn een redelijke aanname o.b.v. de Google Health API-conventies,
-    // niet live geverifieerd — zie opmerking bovenaan dit bestand).
+    // Per datum samenvoegen. TE VERIFIËREN (nog niet live bevestigd): de exacte veldnamen
+    // in de respons per datapoint. Elke regel probeert een paar plausibele padnamen en
+    // valt terug op null i.p.v. te crashen — check de function-logs na de eerste sync en
+    // meld welk pad daadwerkelijk data teruggeeft, dan verwijderen we de gok-varianten.
     const byDate = {};
-    hrvData.forEach(p => { const d = dateOf(p); if (d) (byDate[d] ||= {}).hrv = p.dailyHeartRateVariability?.rmssdMillis ?? p.value ?? null; });
-    rhrData.forEach(p => { const d = dateOf(p); if (d) (byDate[d] ||= {}).rhr = p.dailyRestingHeartRate?.bpm ?? p.value ?? null; });
-    sleepData.forEach(p => { const d = dateOf(p); if (d) (byDate[d] ||= {}).sleep = p.sleepSummary?.durationMinutes ?? p.value ?? null; });
+    hrvData.forEach(p => { const d = dailyDateOf(p); if (d) (byDate[d] ||= {}).hrv = p.dailyHeartRateVariability?.rmssdMillis ?? p.dailyHeartRateVariability?.value ?? null; });
+    rhrData.forEach(p => { const d = dailyDateOf(p); if (d) (byDate[d] ||= {}).rhr = p.dailyRestingHeartRate?.bpm ?? p.dailyRestingHeartRate?.value ?? null; });
+    sleepData.forEach(p => { const d = sessionDateOf(p); if (d) (byDate[d] ||= {}).sleep = sleepMinutesOf(p); });
 
     let written = 0;
     for (const [date, vals] of Object.entries(byDate)) {
@@ -115,21 +118,41 @@ exports.handler = async function (event) {
   }
 };
 
-async function fetchDataPoints(authFetch, dataType, sinceIso) {
+async function fetchDataPoints(authFetch, dataType, sinceDate) {
   try {
-    const url = `${GOOGLE_HEALTH_BASE}/users/me/dataTypes/${dataType}/dataPoints?filter=${encodeURIComponent(`interval.start_time >= "${sinceIso}"`)}`;
+    const filter = dataType.kind === 'daily'
+      ? `${dataType.filterField}.date >= "${sinceDate}"`
+      : `${dataType.filterField}.interval.end_time >= "${sinceDate}T00:00:00Z"`;
+    const url = `${GOOGLE_HEALTH_BASE}/users/me/dataTypes/${dataType.id}/dataPoints?filter=${encodeURIComponent(filter)}`;
     const r = await authFetch(url);
-    if (!r.ok) { console.warn('wearable-sync fetchDataPoints niet ok', dataType, r.status, await r.text()); return []; }
+    if (!r.ok) { console.warn('wearable-sync fetchDataPoints niet ok', dataType.id, r.status, await r.text()); return []; }
     const d = await r.json();
     return d.dataPoints || d.data_points || [];
   } catch (e) {
-    console.warn('wearable-sync fetchDataPoints exception', dataType, e.message);
+    console.warn('wearable-sync fetchDataPoints exception', dataType.id, e.message);
     return [];
   }
 }
-function dateOf(point) {
-  const t = point?.interval?.startTime || point?.interval?.civilStartTime || point?.startTime;
+// Daily-datapoints dragen een 'date'-veld (jaar/maand/dag), geen interval.
+function dailyDateOf(point) {
+  const d = point?.date;
+  if (!d) return null;
+  if (typeof d === 'string') return d.split('T')[0];
+  if (d.year && d.month && d.day) return `${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`;
+  return null;
+}
+// Session-datapoints (sleep) dragen een interval — we koppelen aan de einddatum, omdat
+// een nachtelijke sessie meestal na middernacht eindigt en zo bij de juiste ochtend hoort.
+function sessionDateOf(point) {
+  const t = point?.interval?.endTime || point?.interval?.civilEndTime || point?.endTime;
   return t ? String(t).split('T')[0] : null;
+}
+function sleepMinutesOf(point) {
+  const ms = point?.sleep?.summary?.totalDurationMillis ?? point?.sleep?.totalDurationMillis;
+  if (ms) return Math.round(ms / 60000);
+  const sec = point?.sleep?.summary?.totalDurationSeconds ?? point?.sleep?.totalDurationSeconds;
+  if (sec) return Math.round(sec / 60);
+  return null;
 }
 async function markSyncStatus(supabaseUrl, sbHeaders, userId, status) {
   if (!userId) return;

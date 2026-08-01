@@ -1580,7 +1580,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.12';
+const APP_VER = 'v3.3.13';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -1589,6 +1589,16 @@ const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
 // gebruiken i.p.v. de vaste publishable key — alle sb*-functies hieronder lezen SB_H
 // via closure, dus dat is de enige plek die dan hoeft te veranderen.
 const SB_H = {apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'};
+
+// TIJDELIJK — v3.3.13 debug: onderzoek "programma opslaan lijkt vast te lopen".
+// Vangt anders onzichtbare fouten/blokkades op tijdens het genereren/opslaan van
+// een AI-programma. Weer verwijderen zodra de oorzaak gevonden is.
+window.addEventListener('error',function(e){
+  console.error('[DEBUG-GLOBAL] onError:',e.message,'@',e.filename+':'+e.lineno,e.error);
+});
+window.addEventListener('unhandledrejection',function(e){
+  console.error('[DEBUG-GLOBAL] unhandledrejection:',e.reason);
+});
 
 // ══════════════════════════════════════════════════════════
 // AUTH (v320) — e-mail+wachtwoord via Supabase Auth, persistente sessie.
@@ -3539,15 +3549,19 @@ async function genereerProgramma(){
       const parsed=parseProgrammaJSON(d.content[0].text,exercises);
       if(!parsed){statusEl.textContent='Week '+wk+' kon niet worden gelezen — gestopt.'+(allBlocks.length?' Eerdere weken blijven staan.':'');break;}
       parsed.blocks.forEach(b=>{b.week_nr=wk;allBlocks.push(b);faseHistorie.push(b.fase_naam);});
+      const _t0=performance.now();
       renderProgConcept(allBlocks,false);
-    }catch(e){statusEl.textContent='Verbindingsfout bij week '+wk+'.'+(allBlocks.length?' Eerdere weken blijven staan.':'');break;}
+      console.log('[DEBUG-PROG] renderProgConcept week',wk,'duurde',(performance.now()-_t0).toFixed(1),'ms, totaal',allBlocks.length,'blokken');
+    }catch(e){statusEl.textContent='Verbindingsfout bij week '+wk+'.'+(allBlocks.length?' Eerdere weken blijven staan.':'');console.error('[DEBUG-PROG] fout bij week',wk,e);break;}
   }
   progressFill.style.width='100%';
   genBtn.disabled=false;
   if(allBlocks.length){
     statusEl.textContent=allBlocks.length+' trainingen voorgesteld — losse oefeningen kun je na opslaan nog aanpassen.';
     window._progConcept={naam,doel,sport,schemaType,weekdagen,dagenPerWeek:dagen,duur,duurOverrides,blocks:allBlocks};
+    const _t1=performance.now();
     renderProgConcept(allBlocks,true);
+    console.log('[DEBUG-PROG] genereren klaar,',allBlocks.length,'blokken. Eind-render duurde',(performance.now()-_t1).toFixed(1),'ms. _progConcept gezet:',!!window._progConcept,'opslaan-knop aanwezig:',!!document.getElementById('prog-save-btn'));
   }else if(!statusEl.textContent){
     statusEl.textContent='Genereren mislukt. Probeer opnieuw.';
   }
@@ -3573,7 +3587,7 @@ function renderProgConcept(blocks,showSaveBtn){
         const ex=exercises.find(e=>e.id===o.exercise_id);
         return (ex?ex.name:o.exercise_id)+' '+o.sets+'×'+o.reps+(o.rpe?' @RPE'+o.rpe:'');
       }).join(' · ')}</div>
-    </div>`).join('')+(showSaveBtn!==false?`<button class="btn btn-r" id="prog-save-btn" style="margin-top:10px;width:100%" onclick="opslaanProgramma()">Programma opslaan</button>`:'');
+    </div>`).join('')+(showSaveBtn!==false?`<button class="btn btn-r" id="prog-save-btn" style="margin-top:10px;width:100%" onclick="console.log('[DEBUG-PROG] Opslaan-knop getikt @',Date.now());opslaanProgramma()">Programma opslaan</button>`:'');
 }
 // v336: BUGFIX — geen enkele beveiliging tegen dubbel indrukken van "Programma
 // opslaan". window._progConcept werd pas ná de volledige (async, per-blok) opslaan-
@@ -3582,34 +3596,43 @@ function renderProgConcept(blocks,showSaveBtn){
 // een tweede identieke run — bevestigd: twee identieke programma's in productie.
 let programmaOpslaanBezig=false;
 async function opslaanProgramma(){
-  if(programmaOpslaanBezig)return;
+  console.log('[DEBUG-PROG] opslaanProgramma() aangeroepen. bezig:',programmaOpslaanBezig,'heeft concept:',!!window._progConcept);
+  if(programmaOpslaanBezig){console.log('[DEBUG-PROG] genegeerd — al bezig');return;}
   const c=window._progConcept;
-  if(!c)return;
+  if(!c){console.log('[DEBUG-PROG] genegeerd — geen _progConcept (al opgeslagen of leeg)');return;}
   programmaOpslaanBezig=true;
   window._progConcept=null; // meteen wissen — een eventuele tweede tap heeft dan niets meer om op te slaan
   const btn=document.getElementById('prog-save-btn');
   if(btn){btn.disabled=true;btn.textContent='Opslaan...';}
+  console.log('[DEBUG-PROG] start opslaan,',c.blocks.length,'blokken. knop bijgewerkt naar Opslaan...');
   try{
   const startDate=td();
   const plannedDates=computeBlockPlannedDates(startDate,c.blocks.length,c.schemaType,c.weekdagen,c.dagenPerWeek);
+  console.log('[DEBUG-PROG] voor programma-insert...');
+  const _tp=performance.now();
   const prog=await sbPostReturning('programs',{naam:c.naam,doel:c.doel,sport:c.sport||null,start_date:startDate,status:'actief',schema_type:c.schemaType,weekdagen:(c.weekdagen&&c.weekdagen.length)?c.weekdagen:null,duur_minuten:c.duur||null,duur_overrides:(c.duurOverrides&&Object.keys(c.duurOverrides).length)?c.duurOverrides:null});
+  console.log('[DEBUG-PROG] programma-insert klaar na',(performance.now()-_tp).toFixed(0),'ms, resultaat:',prog);
   const progId=prog?.[0]?.id;
-  if(!progId){toast('Opslaan mislukt bij het programma zelf — check console (F12) voor details');return;}
+  if(!progId){console.error('[DEBUG-PROG] geen progId terug — stoppen');toast('Opslaan mislukt bij het programma zelf — check console (F12) voor details');return;}
   // Elke insert wordt nu individueel gecontroleerd — voorheen faalde een oefening soms
   // stil (bv. bij een onverwacht datatype voor cardio-oefeningen als "Duurloop") zonder
   // dat er iets zichtbaars gebeurde. Nu tellen en melden we mislukte inserts expliciet.
   let blockErrors=0, exErrors=0;
   for(let i=0;i<c.blocks.length;i++){
     const b=c.blocks[i];
+    const _tb=performance.now();
+    console.log('[DEBUG-PROG] blok',i+1,'/',c.blocks.length,'(week',b.week_nr+')','insert start...');
     const inserted=await sbPostReturning('program_blocks',{program_id:progId,week_nr:b.week_nr,fase_naam:b.fase_naam,planned_date:plannedDates[i]});
     const blockId=inserted?.[0]?.id;
-    if(!blockId){blockErrors++;continue;}
+    console.log('[DEBUG-PROG] blok',i+1,'insert klaar na',(performance.now()-_tb).toFixed(0),'ms, blockId:',blockId);
+    if(!blockId){blockErrors++;console.error('[DEBUG-PROG] blok',i+1,'mislukt, resultaat:',inserted);continue;}
     let sortOrder=0;
     for(const o of b.oefeningen){
       const ok=await sbPost('program_block_exercises',{program_block_id:blockId,exercise_id:o.exercise_id,sort_order:sortOrder++,sets:parseInt(o.sets)||null,reps:o.reps!=null?String(o.reps):null,rpe_target:o.rpe!=null?String(o.rpe):null});
-      if(!ok)exErrors++;
+      if(!ok){exErrors++;console.error('[DEBUG-PROG] oefening mislukt in blok',i+1,o);}
     }
   }
+  console.log('[DEBUG-PROG] alle blokken klaar. blockErrors:',blockErrors,'exErrors:',exErrors);
   closeModal('m-programma-gen');
   if(blockErrors||exErrors){
     toast(`Opgeslagen met fouten: ${blockErrors} blok(ken) en ${exErrors} oefening(en) niet gelukt — check console (F12)`);
@@ -3618,9 +3641,13 @@ async function opslaanProgramma(){
   }
   renderProgrammaList();
   refreshHome();
+  }catch(e){
+    console.error('[DEBUG-PROG] EXCEPTION tijdens opslaan:',e);
+    toast('Opslaan mislukt door een fout — check console (F12)');
   }finally{
     programmaOpslaanBezig=false;
     if(btn){btn.disabled=false;btn.textContent='Programma opslaan';}
+    console.log('[DEBUG-PROG] finally: bezig gereset, knop hersteld');
   }
 }
 // Cache van program_block_exercises per blok — voorkomt herhaald ophalen bij elke uitklap-toggle.

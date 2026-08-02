@@ -1,5 +1,23 @@
 # Trainingskompas — Changelog
 
+## v3.3.38 — 2 augustus 2026 (Premium Experience Sprint — Batch 2, deel 3: Werkset-ergonomie)
+*Geen functionaliteit verwijderd; de hoogfrequente werkset-rij ergonomischer en premium gemaakt.*
+
+### Verbeterd
+- **Grotere, duidelijkere tikvlakken** in de werkset-rij: set-cirkel 38→42px; de rusttimer- en meer-knop krijgen een tikvlak van ≥36×42px (was ~24px) — beter voor de kernactie "set afvinken" en de masters-doelgroep.
+- **⏱ en ⋮ emoji → lijn-iconen** (accent-groene klok voor de rusttimer, net drie-punts-menu), consistent met de nieuwe iconografie. Ook de opwarmset-⋮ meegenomen. `aria-label`s toegevoegd.
+
+### Bewust behouden (geen functieverlies)
+- Weight-mode-select (vast/+kg/%), RPE-stepper, rusttimer en meer-menu blijven volledig aanwezig. De RPE-stepper (verticaal) en de mode-select (8px, gedempt) waren al compact; een diepere flow-herstructurering (mode in het menu, ghost-values) is bewust níét in deze veilige pass gedaan wegens de sterk gekoppelde element-IDs — kandidaat voor een aparte, apart geverifieerde stap.
+
+### Getest
+- `node --check` OK · `logic_tests.js` 141/141 · headless: echte `buildWorkSetRow()` gerenderd (iconen + tikvlakken correct), 0 code-fouten.
+
+### Gewijzigd
+- `APP_VER` → v3.3.38; `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v3338`.
+
+---
+
 ## v3.3.37 — 2 augustus 2026 (Premium Experience Sprint — Batch 2, deel 2: Dagfactor-promotie)
 *Geen nieuwe functionaliteit; bestaande dagfactor-motor prominenter en uitlegbaar gemaakt (topaanbeveling Product Excellence Rapport §7/§14).*
 

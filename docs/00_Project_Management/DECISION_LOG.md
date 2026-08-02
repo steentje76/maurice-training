@@ -118,3 +118,11 @@
 - Alternatieven: ook semantische kleuren herzien naar merk-afgeleide tinten — afgewezen, zou een ontwerpbeslissing zijn die niet in BRAND_IDENTITY.md is vastgelegd (dus een aanname).
 - Impact: consistente merkweergave app-breed; dashboard-headertitel is verkleind (24px→17px) om de langere naam "Trainingskompas" te laten passen — nog niet visueel bevestigd op een echt device.
 - Verantwoordelijke: Maurice
+
+## DEC-015
+- Datum: 2 augustus 2026
+- Beslissing: tijdens Sprint 2.5 live device-validatie uitgevoerd op de daadwerkelijke productie-app (maurice-art.netlify.app) via een reeds actieve, ingelogde sessie van de Product Owner — niet met een apart testaccount. Twee echte bugs ontdekt via live console-logs (niet via statische code-analyse): ontbrekende `doel`-kolom (migratie v336, nog uit te voeren) en een pre-existing crash in `refreshStats()` bij bezoek aan Beheer (gefixt, defensieve null-check).
+- Reden: browsertoegang kwam tijdens deze sprint beschikbaar; er was geen apart testaccount voorhanden, en de bevindingen waren direct bruikbaar (echte, live foutmeldingen i.p.v. aannames).
+- Alternatieven: wachten op een apart testaccount — afgewezen, zou waardevolle live foutdetectie onnodig uitstellen; de sessie werd read-only gebruikt voor navigatie/inspectie, geen destructieve acties uitgevoerd op echte data.
+- Impact: twee reële bugs gevonden die met alleen statische code-analyse niet aan het licht waren gekomen. Aanbeveling voor toekomstige sprints: een apart wegwerp-testaccount aanmaken zodra device-validatie structureel onderdeel wordt van de werkwijze, om niet afhankelijk te zijn van een toevallig actieve sessie.
+- Verantwoordelijke: Maurice

@@ -182,3 +182,11 @@
 - Alternatieven: alleen de nieuwe Doelen-modal fixen — afgewezen, zou inconsistent zijn met de overige ~49 modals en het onderliggende probleem niet oplossen.
 - Impact: alle modals in de app tonen zich nu consistent in de 430px-kolom, ook op brede schermen. Live geverifieerd via `getBoundingClientRect()`: modal exact 430px breed, uitgelijnd met de app-kolom (745–1175px op een 1920px-breed venster). Geen wijziging in hoe de app op een echte telefoon (smal scherm) getoond wordt.
 - Verantwoordelijke: Maurice
+
+## DEC-023
+- Datum: 2 augustus 2026
+- Beslissing: Sprint 3.1 (live validatie/quality gate) uitgevoerd met expliciete grenzen — geen Lighthouse/axe-core-tool beschikbaar, geen synthetische schaalbaarheidsdata (100–10.000 sessies) aangemaakt in productie, geen screenshot-pack in de repo (browserscreenshots landen lokaal bij de Product Owner, niet in `docs/screenshots/`). Database-introspectiequeries klaargezet maar resultaat nog niet ontvangen.
+- Reden: deze onderdelen zouden ofwel gefabriceerde cijfers/aannames vereisen (in strijd met "geen aannames"), ofwel destructieve/riskante acties op de productiedatabase (in strijd met eerdere afspraak om nooit trainingsdata te riskeren).
+- Alternatieven: cijfers schatten of verzinnen om het rapport "compleet" te laten lijken — expliciet afgewezen.
+- Impact: Sprint 3.1-rapport bevat expliciete "niet vastgesteld"-secties i.p.v. ingevulde placeholders. Wel: twee echte bugs gevonden en gefixt tijdens live testen (user_id ontbrak bij goals-insert; modals te breed op desktop) — beide al gepusht vóór dit rapport (v3.3.31–v3.3.34). Doelen-CRUD is voor 3 van de 4 operaties (Create/Read/Delete) live bevestigd; Update ontbreekt nog als functionaliteit.
+- Verantwoordelijke: Maurice

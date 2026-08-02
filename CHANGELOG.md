@@ -1,5 +1,23 @@
 # Trainingskompas — Changelog
 
+## v3.3.43 — 2 augustus 2026 (Wordmark op het login-scherm + laatste ART-restant weg)
+*Volledige wordmark (logo + naam + tagline) op het inlogscherm.*
+
+### Verbeterd
+- **Login-scherm**: het oude A·R·T CrossFit-logo én de subtitel "AI TRAININGSCOACH 2026" (laatste merkrestant in de app) vervangen door de officiële **wordmark** ("Trainingskompas — Gericht trainen. Slimmer worden. Sterker blijven.") in een verzorgd, afgerond logo-kaartje dat in licht én donker thema werkt.
+- Nieuw asset `logo-wordmark.png` (bijgesneden, geoptimaliseerd, 640px) toegevoegd en opgenomen in de offline-precache van de service worker.
+
+### Upload-let op
+- Nieuw binair bestand `logo-wordmark.png` → via **Add file ▸ Upload files** (met `index.html` en `sw.js`).
+
+### Getest
+- `node --check` OK · `logic_tests.js` 141/141 · login-scherm gerenderd via lokale server (wordmark laadt, 640×521), 0 code-fouten.
+
+### Gewijzigd
+- `APP_VER` → v3.3.43; `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v3343`; `logo-wordmark.png` toegevoegd + in SW-precache.
+
+---
+
 ## v3.3.42 — 2 augustus 2026 (Officieel logo ingebouwd)
 *Definitief merklogo (kompas + atleet, navy/teal) doorgevoerd; vervangt de tijdelijke SVG-mark.*
 

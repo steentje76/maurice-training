@@ -31,7 +31,7 @@ Sprint 3 — "Doelen, Challenges & Persoonlijke Voortgang": code afgerond, geval
 1. ✅ **`migratie_v337.sql` uitgevoerd in Supabase** (2 augustus 2026) — na een typefix (`exercise_id` moest `text` zijn, niet `bigint`, zie DEC-019). Live functionele validatie van het Doelen-scherm zelf staat nog open.
 2. **Bevestigen of `migratie_v336.sql`** (Sprint 2.5) al is uitgevoerd — dat stond eerder als open actiepunt; als dat inmiddels is gebeurd mag dit punt vervallen.
 
-Daarnaast nog open: hertest van de mobiele `100vh`-hotfix (v3.3.29) op een echt toestel.
+✅ Mobiele `100vh`-hotfix (v3.3.29) bevestigd werkend op echt toestel door Product Owner. ✅ Doelen-module live end-to-end getest (DEC-021, met opruiming van het testdoel). Sprint 3 is hiermee volledig afgerond en bevestigd, niet alleen code-gevalideerd.
 
 ## Wat werkt
 - Volledige trainingslogging (A/B, cardio, supersets, plate calculator, PR-badges, rusttimer)
@@ -53,12 +53,13 @@ Daarnaast nog open: hertest van de mobiele `100vh`-hotfix (v3.3.29) op een echt 
 - Merkidentiteit doorgevoerd: Poppins-font, officiële kleuren (`#0B1D2A`/`#0E3B4A`/`#00B894`/`#E6EBEF`) op alle schermen via de bestaande design-tokens, KOMPAS-afkorting gecorrigeerd naar "Trainingskompas" op login- en dashboardscherm (DEC-010). (Sprint 2)
 
 ## Wat niet werkt
-- Doelen/Challenges (Sprint 3): code compleet, maar **functioneel nog niet gevalideerd** — vereist eerst migratie v337 en dan een live doorloop (aanmaken/bewerken/verwijderen van elk doeltype). Zie Sprintrapporten/Sprint3_Rapport.md voor precies wat wel/niet is getest.
+- (Doelen/Challenges: opgelost, zie hieronder bij Bekende bugs — nu live bevestigd werkend)
 - Offline IndexedDB-sync (bewust uitgesteld, geen bug — sw.js-niveau wél geverifieerd, zie boven)
 - Accountverwijdering: gebouwd en live gedeployed (SUPABASE_SERVICE_ROLE_KEY ingesteld op Netlify, 1 augustus), nog NIET functioneel getest — test met wegwerp-account volgt (Product Owner, thuis)
 - Geluid-instelling (Instellingen): opgeslagen voorkeur zonder huidig effect — de app heeft nog geen geluidseffecten om aan te koppelen.
 
 ## Bekende bugs
+- **(Sprint 3, opgelost)** `saveNewGoal()` stuurde geen `user_id` mee — RLS blokkeerde elke insert (42501). Live gevonden en gefixt (DEC-021), live opnieuw getest met een testdoel (aangemaakt, bevestigd correct, direct weer opgeruimd).
 - **(Sprint 1, opgelost)** Beheer-scherm (`s-admin`) toonde het label "Instellingen" in de header i.p.v. "Beheer" — verwarde met het (nog te bouwen) echte Instellingen-scherm. Gecorrigeerd.
 - **(Sprint 2, opgelost)** Instellingen-scherm (H6, 8.3) was in de Handbook-statusmarkering 🟢 maar bevatte in de praktijk alleen een smalle trainingsinstelling — nu volledig gebouwd conform Sprint 0.5-advies.
 - **(Sprint 2, opgelost)** KOMPAS-afkorting op login- en dashboardscherm ging tegen de bindende merkregel uit DEC-010 in — gecorrigeerd naar "Trainingskompas".

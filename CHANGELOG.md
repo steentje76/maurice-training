@@ -1,5 +1,17 @@
 # Trainingskompas — Changelog
 
+## v3.3.33 — 2 augustus 2026 (Hotfix — goals user_id ontbrak)
+
+### Opgelost
+- **`saveNewGoal()` stuurde geen `user_id` mee** — de RLS-policy op `goals` blokkeerde daardoor elke insert (42501 "new row violates row-level security policy"). Live gevonden via een end-to-end test in de browser (na migratie v337).
+- **Live bevestigd correct na de fix:** testdoel aangemaakt (PR-doel op Hexabar Deadlift), opgeslagen, correct weergegeven (240/300 kg, 80%), daarna zelf weer gearchiveerd. Doelen-module is hiermee voor het eerst end-to-end bevestigd werkend, niet langer alleen code-gevalideerd.
+- **Mobiele `100vh`-hotfix (v3.3.29) bevestigd** door Product Owner op een echt toestel.
+
+### Gewijzigd
+- `APP_VER` → v3.3.33, `CACHE_NAME` → maurice-training-v3333.
+
+---
+
 ## v3.3.32 — 2 augustus 2026 (Hotfix — zichtbare HTML-commentaartekst)
 
 ### Opgelost

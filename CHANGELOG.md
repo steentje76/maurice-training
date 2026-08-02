@@ -1,5 +1,28 @@
 # Trainingskompas — Changelog
 
+## v3.3.41 — 2 augustus 2026 (Premium Experience Sprint — Batch 2, deel 6: Gerichte toegankelijkheid)
+*Gerichte a11y-verbeteringen. Let op: dit is géén gecertificeerde WCAG-AA-audit — daarvoor zijn axe-core/Lighthouse en een echte-toestel-screenreadertest nodig, die in deze omgeving niet beschikbaar zijn (zie ook DEC-023).*
+
+### Verbeterd
+- **`aria-label`s toegevoegd aan de trainings-invoervelden**: gewicht ("Gewicht in kg"), herhalingen ("Herhalingen") en RPE ("RPE (ervaren zwaarte)"). Screenreaders benoemen deze nu correct i.p.v. een naamloos veld.
+
+### Al op orde (geverifieerd, geen wijziging nodig)
+- `<html lang="nl">` aanwezig · zichtbare focus (`:focus-visible`) · skip-link · `.sr-only`-utility · `prefers-reduced-motion` volledig ondersteund. De in Batch 2 toegevoegde componenten (bevestigingsmodal `role="dialog"`/`aria-modal` + Esc/Enter, dagfactor-uitklap met `aria-expanded`/`aria-controls`, icoonknoppen met `aria-label`) zijn toegankelijk gebouwd.
+
+### Bevinding voor besluit (niet eigenhandig gewijzigd)
+- **Contrast merkaccent**: `#00B894` op wit haalt **2,54:1** — onder WCAG AA (4,5:1 voor kleine tekst, 3:1 voor grote/bold). Dit raakt de vastgelegde merkkleur (DEC-010) en kleine accent-teksten/knoppen app-breed. Omdat dit een design-system-besluit is, is het **niet** in deze pass gewijzigd. Opties ter overweging: een iets donkerder teal (bv. `#00997a` = 3,6:1) uitsluitend voor tekst-op-wit, of accent-tekst altijd bold ≥ grote-tekst-grootte. Aanbevolen als apart besluit met de Product Owner.
+
+### Aanbevolen vervolg (buiten deze omgeving)
+- Draai Lighthouse + axe-core en een VoiceOver/TalkBack-doorloop op een echt toestel voor een volledige AA-bevestiging.
+
+### Getest
+- `node --check` OK · `logic_tests.js` 141/141 · 0 code-fouten.
+
+### Gewijzigd
+- `APP_VER` → v3.3.41; `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v3341`.
+
+---
+
 ## v3.3.40 — 2 augustus 2026 (Premium Experience Sprint — Batch 2, deel 5: Coach-scherm iconografie)
 *Iconografie doorgetrokken naar het Coach-scherm.*
 

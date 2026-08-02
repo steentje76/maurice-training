@@ -2157,7 +2157,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.40';
+const APP_VER = 'v3.3.41';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -5654,7 +5654,7 @@ function kgFieldHtml(exId,i,mode,val){
     return `<input class="set-field kg-computed" type="text" id="${id}" value="${disp}" readonly tabindex="-1">`;
   }
   const ph=weightModePlaceholder(mode);
-  return `<input class="set-field" type="text" inputmode="decimal" placeholder="${ph}" id="${id}" value="${val||''}" min="0" max="500"
+  return `<input class="set-field" type="text" inputmode="decimal" aria-label="Gewicht in kg" placeholder="${ph}" id="${id}" value="${val||''}" min="0" max="500"
     oninput="clampNumInput(this,0,500);onManualKgEdit('${exId}',${i});logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'kg',this.value);recomputeAllComputedSets('${exId}')"
     onchange="logSet('${exId}','work',${i},true);${i===1?`autoGenerateWarmup('${exId}',false);`:''}recomputeAllComputedSets('${exId}')">`;
 }
@@ -5807,7 +5807,7 @@ function buildRpeStepper(exId,i,rpeVal,prevRpe){
   const disp=rpeVal!==undefined&&rpeVal!==null&&rpeVal!==''?rpeVal:'';
   return `<div class="set-field-wrap rpe-stepper-v" style="flex:1;display:flex;flex-direction:column;align-items:center">
     <button type="button" class="rpe-btn" onclick="adjustRpe('${exId}',${i},0.5)" style="width:28px;height:20px;border-radius:6px 6px 0 0;border:1px solid var(--g2);font-size:13px;line-height:1;cursor:pointer">+</button>
-    <input class="set-field rpe-display" type="text" readonly id="s-${exId}-${i}-rpe" data-prev-rpe="${prevRpe||''}" value="${disp}" placeholder="–" style="font-size:13px;width:34px;height:22px;text-align:center;border-radius:0;border-left:1px solid var(--g2);border-right:1px solid var(--g2);border-top:none;border-bottom:none">
+    <input class="set-field rpe-display" type="text" readonly aria-label="RPE (ervaren zwaarte)" id="s-${exId}-${i}-rpe" data-prev-rpe="${prevRpe||''}" value="${disp}" placeholder="–" style="font-size:13px;width:34px;height:22px;text-align:center;border-radius:0;border-left:1px solid var(--g2);border-right:1px solid var(--g2);border-top:none;border-bottom:none">
     <button type="button" class="rpe-btn" onclick="adjustRpe('${exId}',${i},-0.5)" style="width:28px;height:20px;border-radius:0 0 6px 6px;border:1px solid var(--g2);font-size:13px;line-height:1;cursor:pointer">−</button>
     <div class="set-field-lbl">RPE</div>
   </div>`;
@@ -5862,7 +5862,7 @@ function buildWorkSetRow(exId,i,prefill=null){
         <div class="set-field-lbl">kg</div>
       </div>
       <div class="set-sep">×</div>
-      <div class="set-field-wrap" style="flex:1"><input class="set-field" type="number" inputmode="numeric" placeholder="reps" id="s-${exId}-${i}-reps" value="${prefill?prefill.reps:''}" min="1" max="100" step="1"
+      <div class="set-field-wrap" style="flex:1"><input class="set-field" type="number" inputmode="numeric" aria-label="Herhalingen" placeholder="reps" id="s-${exId}-${i}-reps" value="${prefill?prefill.reps:''}" min="1" max="100" step="1"
         oninput="clampNumInput(this,1,100);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'reps',this.value)"
         onchange="logSet('${exId}','work',${i},true)"><div class="set-field-lbl">reps</div></div>
       <div class="set-sep" style="color:var(--g3)">@</div>

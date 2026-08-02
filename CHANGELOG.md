@@ -1,5 +1,24 @@
 # Trainingskompas — Changelog
 
+## v3.3.42 — 2 augustus 2026 (Officieel logo ingebouwd)
+*Definitief merklogo (kompas + atleet, navy/teal) doorgevoerd; vervangt de tijdelijke SVG-mark.*
+
+### Verbeterd
+- **App-iconen** `icon-192.png` en `icon-512.png` vervangen door het officiële logo (icon-only versie), content gecentreerd met veilige marge — geschikt voor zowel gewone als **maskable** weergave (Play Store/startscherm).
+- **Home-header** toont nu het echte logo als een verzorgd, afgerond app-icon-tegeltje i.p.v. de tijdelijke bergpad-SVG.
+
+### Upload-let op
+- `icon-192.png` en `icon-512.png` zijn **binaire bestanden**: uploaden via GitHub **Add file ▸ Upload files** (niet via het potlood/plakken). Samen met `index.html` (en `sw.js` voor de cache-refresh).
+- WCAG-notitie: logo's/merknamen zijn uitgezonderd van de contrasteis — de teal in het logo is geen probleem, ook niet in de Play Store.
+
+### Getest
+- `node --check` OK · `logic_tests.js` 141/141 · header-logo laadt (192×192) en gerenderd via lokale server · 0 code-fouten.
+
+### Gewijzigd
+- `APP_VER` → v3.3.42; `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v3342`; `icon-192.png` + `icon-512.png` vervangen.
+
+---
+
 ## v3.3.41 — 2 augustus 2026 (Premium Experience Sprint — Batch 2, deel 6: Gerichte toegankelijkheid)
 *Gerichte a11y-verbeteringen. Let op: dit is géén gecertificeerde WCAG-AA-audit — daarvoor zijn axe-core/Lighthouse en een echte-toestel-screenreadertest nodig, die in deze omgeving niet beschikbaar zijn (zie ook DEC-023).*
 

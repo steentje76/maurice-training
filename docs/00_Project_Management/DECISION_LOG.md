@@ -86,3 +86,19 @@
 - Alternatieven: bestaande volgorde (wearables/HYROX/cyclus pas "later", branding pas volledig in Fase 4) aanhouden — verworpen, expliciete herprioritering door Product Owner.
 - Impact: Roadmap.md herzien (zie aldaar). Geen technische wijzigingen in deze sessie — uitsluitend planning/documentatie. Bouw van deze features volgt in latere sessies.
 - Verantwoordelijke: Maurice
+
+## DEC-011
+- Datum: 2 augustus 2026
+- Beslissing: eerder gedeelde GitHub Personal Access Token (in een geüpload PDF-bestand) als gecompromitteerd beschouwd; wordt vervangen. Geen GitHub-push uitgevoerd in Sprint 1 op basis hiervan.
+- Reden: token stond in platte tekst in een geüpload document — in strijd met de eigen Skill-regel dat tokens nooit in documentatie/prompts mogen staan.
+- Alternatieven: token toch gebruiken tot rotatie — verworpen, onnodig risico.
+- Impact: Sprint 1-wijzigingen zijn lokaal geverifieerd (syntax-check, volledige testsuite) en als bestanden opgeleverd, maar nog niet naar GitHub gepusht. Push volgt zodra een nieuwe PAT beschikbaar is.
+- Verantwoordelijke: Maurice
+
+## DEC-012
+- Datum: 2 augustus 2026
+- Beslissing: Sprint 0-audit bevestigd op één punt bijgesteld — Instellingen (Hoofdstuk 6, scherm 8.3) stond op 🟢, feitelijk is dit een smalle trainingsinstelling. Handbook-status blijft ongewijzigd (buiten scope om het Handbook zelf aan te passen zonder expliciete opdracht), maar CURRENT_STATE.md documenteert de discrepantie expliciet als openstaande bouwopgave.
+- Reden: voorkomen dat de discrepantie tussen Handbook-statusmarkering en werkelijke implementatie stilzwijgend blijft bestaan.
+- Alternatieven: Handbook H6 zelf aanpassen — afgewezen, vereist expliciete opdracht van de Product Owner (Skill-regel).
+- Impact: geen functionele wijziging; wel een gecorrigeerd UI-label ("Instellingen" → "Beheer" op het gym-ownerscherm `s-admin`), zie CHANGELOG.
+- Verantwoordelijke: Maurice

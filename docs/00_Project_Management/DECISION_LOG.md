@@ -102,3 +102,19 @@
 - Alternatieven: Handbook H6 zelf aanpassen — afgewezen, vereist expliciete opdracht van de Product Owner (Skill-regel).
 - Impact: geen functionele wijziging; wel een gecorrigeerd UI-label ("Instellingen" → "Beheer" op het gym-ownerscherm `s-admin`), zie CHANGELOG.
 - Verantwoordelijke: Maurice
+
+## DEC-013
+- Datum: 2 augustus 2026
+- Beslissing: onboarding-gate geïmplementeerd als device-lokale `localStorage`-vlag (`maurice_onboarding_done`), niet als account-/databasekolom.
+- Reden: een echte account-brede onboarding-status zou een nieuwe Supabase-kolom + migratie vereisen — buiten de "geen nieuwe architectuur"-scope van Sprint 2.
+- Alternatieven: Supabase-kolom `onboarding_done` op `atleet_profiel` — bewust uitgesteld, kan later alsnog als blijkt dat device-wissel in de praktijk een probleem is.
+- Impact: een gebruiker die op een nieuw toestel inlogt, doorloopt de onboarding opnieuw. Functioneel onschadelijk (idempotent — overschrijft enkel doel/niveau/sport opnieuw), wel een bekende beperking.
+- Verantwoordelijke: Maurice
+
+## DEC-014
+- Datum: 2 augustus 2026
+- Beslissing: merkidentiteit (Poppins, `#0B1D2A`/`#0E3B4A`/`#00B894`/`#E6EBEF`) toegepast op de bestaande light-theme-designtokens en de KOMPAS-afkorting op login- en dashboardscherm gecorrigeerd naar "Trainingskompas" (DEC-010). Semantische kleuren (waarschuwing-geel, foutmelding-rood, spierheatmap/grafiekkleuren) bewust ongewijzigd gelaten — deze staan niet in de vastgestelde 5-kleuren-merkpalet (BRAND_IDENTITY.md) en zijn functioneel, geen merkelement.
+- Reden: Sprint 2-opdracht ("voer de nieuwe merkidentiteit volledig door... geen redesign, alleen implementatie van de reeds goedgekeurde branding") — de goedgekeurde branding omvat expliciet vijf kleuren en een typografie, geen semantische statuskleuren.
+- Alternatieven: ook semantische kleuren herzien naar merk-afgeleide tinten — afgewezen, zou een ontwerpbeslissing zijn die niet in BRAND_IDENTITY.md is vastgelegd (dus een aanname).
+- Impact: consistente merkweergave app-breed; dashboard-headertitel is verkleind (24px→17px) om de langere naam "Trainingskompas" te laten passen — nog niet visueel bevestigd op een echt device.
+- Verantwoordelijke: Maurice

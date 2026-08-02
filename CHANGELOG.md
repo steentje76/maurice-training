@@ -1,5 +1,24 @@
 # Trainingskompas — Changelog
 
+## v3.3.37 — 2 augustus 2026 (Premium Experience Sprint — Batch 2, deel 2: Dagfactor-promotie)
+*Geen nieuwe functionaliteit; bestaande dagfactor-motor prominenter en uitlegbaar gemaakt (topaanbeveling Product Excellence Rapport §7/§14).*
+
+### Verbeterd
+- **Home: dagfactor gepromoveerd tot dominant, tikbaar dag-element.** Voorheen een kleine goud/tekst-regel onderaan de HRV-kaart; nu een kleur-gecodeerde hero-cirkel (accent-groen ≥1.00 · amber 0.93–0.99 · gedempt rood <0.93) met korte samenvatting bovenaan de kaart. Herstel vóór prestatie in de visuele hiërarchie (H3 P2).
+- **Tikbare explainability (H8), zonder extra API-call.** "Waarom? →" klapt de onderbouwing uit met vier vaste velden: **Waarom** (leesbare samenvatting), **Data** (gebruikte HRV/RHR/slaap/cyclus), **Logica** (`factor = HRV × slaap[ × cyclus]`, geclipt 0.85–1.05, met de expliciete melding dat het informatief is en nooit automatisch gewicht aanpast), **Confidence** (Hoog/Middel/Laag op basis van aanwezige signalen).
+- HRV/RHR/slaap-trio en de HRV-drempelpills blijven behouden als secundaire detaillaag onder de hero.
+
+### Technisch
+- `refreshHome()` HRV-kaart herbouwd; nieuwe `toggleDagfactorDetail()` (in/uitklappen, `aria-expanded` bijgewerkt). Hergebruikt de bestaande `dagfactor()`-motor (`{factor,hrvFactor,slaapFactor,cyclusFactor}`) — geen dubbele logica, geen nieuwe berekening.
+
+### Getest
+- `node --check` OK · `logic_tests.js` 141/141 · headless: toggle functioneel (uitleg klapt in/uit), 0 code-fouten, hero + uitleg visueel bevestigd.
+
+### Gewijzigd
+- `APP_VER` → v3.3.37; `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v3337`.
+
+---
+
 ## v3.3.36 — 2 augustus 2026 (Premium Experience Sprint — Batch 2, deel 1: Iconografie)
 *Geen nieuwe functionaliteit. Emoji-iconen vervangen door een consistente lijn-icon-set (H5), op de primaire schermen.*
 

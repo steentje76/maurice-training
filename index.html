@@ -2145,7 +2145,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.36';
+const APP_VER = 'v3.3.37';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6578,8 +6578,27 @@ async function refreshHome(){
     const st=hrvSt(lh.hrv);
     const pill={g:'hrv-pill g',y:'hrv-pill y',o:'hrv-pill o',r:'hrv-pill r'};
     const df=dagfactor(lh.hrv,lh.sleep,lh.cyclus_fase);
-    const dfKleur=df.factor>=1?'var(--green)':df.factor>=0.93?'var(--y)':'var(--red)';
-    document.getElementById('home-hrv-card').innerHTML=`<div class="card"><div class="card-body" style="padding-top:10px">
+    // v3.3.36 Batch 2 #1: dagfactor gepromoveerd tot dominant, tikbaar dag-element (H8 explainable AI).
+    const heroKleur=df.factor>=1?'var(--accent)':df.factor>=0.93?'var(--y)':'#B3454C';
+    const uitleg=dagfactorUitleg(lh.hrv,lh.sleep,lh.cyclus_fase,df);
+    const sig=[lh.hrv,lh.sleep,lh.cyclus_fase].filter(Boolean).length;
+    const conf=(lh.hrv&&lh.sleep)?'Hoog':(lh.hrv||lh.sleep)?'Middel':'Laag';
+    const cyc=lh.cyclus_fase?` × cyclus ${df.cyclusFactor.toFixed(2)}`:'';
+    document.getElementById('home-hrv-card').innerHTML=`<div class="card"><div class="card-body" style="padding-top:12px">
+      <button onclick="toggleDagfactorDetail()" aria-expanded="false" aria-controls="dagfactor-detail" style="width:100%;border:none;background:none;cursor:pointer;text-align:left;display:flex;align-items:center;gap:12px;padding:2px 2px 10px;font-family:var(--f)">
+        <div style="width:56px;height:56px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:#fff;background:${heroKleur}">${df.factor}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--g4)">Dagfactor vandaag</div>
+          <div style="font-size:14px;font-weight:700;color:var(--dark);line-height:1.3">${uitleg}</div>
+          <div id="dagfactor-chevron" style="font-size:11px;color:var(--accent);font-weight:700;margin-top:3px">Waarom? →</div>
+        </div>
+      </button>
+      <div id="dagfactor-detail" style="display:none;font-size:12px;line-height:1.55;background:var(--g1);border-radius:10px;padding:10px 12px;margin-bottom:10px">
+        <div style="margin-bottom:5px"><span style="font-weight:700;color:var(--dark)">Waarom:</span> <span style="color:var(--g6)">${uitleg}.</span></div>
+        <div style="margin-bottom:5px"><span style="font-weight:700;color:var(--dark)">Data:</span> <span style="color:var(--g6)">HRV ${lh.hrv||'—'} ms · RHR ${lh.rhr||'—'} · slaap ${lh.sleep?fmtSleep(lh.sleep):'—'}${lh.cyclus_fase?' · cyclus '+lh.cyclus_fase:''}</span></div>
+        <div style="margin-bottom:5px"><span style="font-weight:700;color:var(--dark)">Logica:</span> <span style="color:var(--g6)">${df.factor} = HRV ${df.hrvFactor.toFixed(2)} × slaap ${df.slaapFactor.toFixed(2)}${cyc}, geclipt op 0.85–1.05. Informatief — past nooit automatisch je gewicht aan.</span></div>
+        <div><span style="font-weight:700;color:var(--dark)">Confidence:</span> <span style="color:var(--g6)">${conf} (${sig}/3 signalen aanwezig)</span></div>
+      </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">
         ${lh.hrv?`<div class="stat-box"><div class="stat-val red">${lh.hrv}</div><div class="stat-unit">HRV ms</div></div>`:''}
         ${lh.rhr?`<div class="stat-box"><div class="stat-val">${lh.rhr}</div><div class="stat-unit">RHR bpm</div></div>`:''}
@@ -6591,8 +6610,7 @@ async function refreshHome(){
         <div class="${pill.o}${st==='o'?' on':''}">14-17</div>
         <div class="${pill.r}${st==='r'?' on':''}">&lt;14</div>
       </div>
-      <div style="font-size:12px;color:var(--g4);font-weight:500">${st==='g'?'Optimaal':st==='y'?'Normaal':st==='o'?'Laag':'Kritiek'} — ${lh.date}${lh.edema?' · '+lh.edema:''}</div>
-      <div style="font-size:12px;font-weight:700;color:${dfKleur};margin-top:6px;border-top:1px solid var(--g2);padding-top:6px">Dagfactor ${df.factor} — ${dagfactorUitleg(lh.hrv,lh.sleep,lh.cyclus_fase,df)}</div>
+      <div style="font-size:12px;color:var(--g4);font-weight:500;margin-top:8px">${st==='g'?'Optimaal':st==='y'?'Normaal':st==='o'?'Laag':'Kritiek'} — ${lh.date}${lh.edema?' · '+lh.edema:''}</div>
     </div></div>`;
   }else{
     document.getElementById('home-hrv-card').innerHTML=`<div class="card"><div class="card-body" style="padding:16px;text-align:center"><p style="color:var(--g4);font-size:13px;margin-bottom:10px">Geen hersteldata</p><button class="btn btn-o btn-sm" onclick="openModal('m-hrv')" style="width:100%">Check-in invoeren</button></div></div>`;
@@ -6723,6 +6741,17 @@ function dagfactorUitleg(hrv,slaapUren,cyclusFase,df){
   if(slaapUren)parts.push(df.slaapFactor>=1?'slaap voldoende':df.slaapFactor>=0.97?'slaap kort':'slaap te kort');
   if(cyclusFase)parts.push('cyclus: '+cyclusFase);
   return parts.join(', ')||'onvoldoende data';
+}
+// v3.3.36 Batch 2 #1: klap de uitlegbare onderbouwing van de dagfactor in/uit (geen extra API).
+function toggleDagfactorDetail(){
+  const d=document.getElementById('dagfactor-detail');
+  if(!d)return;
+  const c=document.getElementById('dagfactor-chevron');
+  const btn=d.previousElementSibling;
+  const open=d.style.display!=='none';
+  d.style.display=open?'none':'block';
+  if(c)c.textContent=open?'Waarom? →':'Verberg ↑';
+  if(btn&&btn.setAttribute)btn.setAttribute('aria-expanded',String(!open));
 }
 
 // ══════════════════════════════════════════════════════════

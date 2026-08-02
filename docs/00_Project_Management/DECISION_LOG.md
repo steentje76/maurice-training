@@ -158,3 +158,11 @@
 - Alternatieven: geen — dit is een directe typefout-correctie, geen ontwerpkeuze.
 - Impact: bijbehorende JS-code (`saveNewGoal()`) ook aangepast — stuurde `exercise_id` voorheen als `Number(...)`, nu als tekst, consistent met het gecorrigeerde kolomtype. Migratie v337 succesvol uitgevoerd door Product Owner na deze fix ("Success. No rows returned").
 - Verantwoordelijke: Maurice
+
+## DEC-020
+- Datum: 2 augustus 2026
+- Beslissing: HTML-commentaarblok gerepareerd dat tijdens Sprint 3 abusievelijk werd doormidden geknipt.
+- Reden: bij het invoegen van het Doelen-scherm (str_replace-bewerking) matchte de vervangen tekst slechts de openingsregel van het bestaande HTML-commentaarblok boven het Onboarding-scherm, niet het hele blok. Het resultaat: de resterende 3 regels van dat commentaar (incl. de sluitende `-->`) kwamen zonder openende `<!--` te staan, en werden dus als gewone, zichtbare paginatekst gerenderd — live gemeld door de Product Owner met telefoonscreenshots (zichtbaar onderaan het Instellingen-scherm, onder de bottom-navigatie).
+- Alternatieven: geen — dit is een directe fout-correctie.
+- Impact: comment-balans in het hele bestand geverifieerd (52 open = 52 sluit, was 51 vs 52 vóór de fix) — bevestigt dat dit de enige plek was. Geen enkele andere sectie geraakt.
+- Verantwoordelijke: Maurice

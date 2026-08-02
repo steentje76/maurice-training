@@ -1,5 +1,15 @@
 # Trainingskompas — Changelog
 
+## v3.3.32 — 2 augustus 2026 (Hotfix — zichtbare HTML-commentaartekst)
+
+### Opgelost
+- **Live gemeld door Product Owner (telefoonscreenshots):** een stuk HTML-commentaar werd zichtbaar als gewone tekst onderaan het Instellingen-scherm, onder de bottom-navigatie. Oorzaak: bij het invoegen van het Doelen-scherm in Sprint 3 werd een bestaand commentaarblok per ongeluk doormidden geknipt — de laatste 3 regels ervan (incl. sluitende `-->`) bleven zonder openende `<!--` staan. Hersteld; comment-balans in het hele bestand geverifieerd (52/52).
+
+### Gewijzigd
+- `APP_VER` → v3.3.32, `CACHE_NAME` → maurice-training-v3332.
+
+---
+
 ## v3.3.31 — 2 augustus 2026 (Hotfix — migratie v337 typefout)
 
 ### Opgelost

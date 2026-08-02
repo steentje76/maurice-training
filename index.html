@@ -1090,7 +1090,7 @@ canvas{width:100%;height:100%}
 
 <!-- ═══ COACH ═══ -->
 <div class="scr" id="s-coach">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Coach</div><div class="hdr-sub"><span id="coach-session-label">Algemeen gesprek</span> · <span id="coach-st">Klaar</span></div></div><div style="display:flex;gap:2px"><button class="ibtn" onclick="openCoachHistory()" title="Gespreksgeschiedenis" aria-label="Gespreksgeschiedenis">🕘</button><button class="ibtn" onclick="clearChat()" aria-label="Gesprek wissen">🗑</button></div></div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Coach</div><div class="hdr-sub"><span id="coach-session-label">Algemeen gesprek</span> · <span id="coach-st">Klaar</span></div></div><div style="display:flex;gap:2px"><button class="ibtn" onclick="openCoachHistory()" title="Gespreksgeschiedenis" aria-label="Gespreksgeschiedenis"><svg viewBox="0 0 24 24"><path d="M3.5 9A9 9 0 1 1 4 15"/><path d="M3 5v4h4"/><path d="M12 8.5V12l2.8 1.6"/></svg></button><button class="ibtn" onclick="clearChat()" aria-label="Gesprek wissen"><svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M6.5 7l1 13h9l1-13"/><path d="M10 11v6M14 11v6"/></svg></button></div></div></div>
   <div id="coach-back-bar" onclick="history.back()"><span>← Terug naar training</span></div>
   <div class="coach-chips-row" id="coach-chips"></div>
   <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 16px;display:flex;flex-direction:column;gap:6px;background:var(--bg)" id="chat-wrap"></div>
@@ -2157,7 +2157,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.39';
+const APP_VER = 'v3.3.40';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -8266,7 +8266,7 @@ function renderCustomTrainList(){
         <div style="flex:1"><div style="font-size:15px;font-weight:700">${escHtml(t.name)}</div>${t.note?`<div style="font-size:12px;color:var(--g4)">${escHtml(t.note)}</div>`:''}</div>
         <button onclick="startCustomTraining('${t.id}')" class="btn btn-o btn-sm">Start</button>
         <button onclick="openShareModal('training','${t.id}')" title="Delen met persoon" style="background:none;border:none;color:var(--g4);font-size:16px;cursor:pointer;padding:4px">🔗</button>
-        <button onclick="deleteCustomTraining('${t.id}')" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button>
+        <button onclick="deleteCustomTraining('${t.id}')" aria-label="Training verwijderen" style="background:none;border:none;color:var(--g4);cursor:pointer;padding:6px;display:flex;align-items:center"><svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M6.5 7l1 13h9l1-13"/><path d="M10 11v6M14 11v6"/></svg></button>
       </div>
     </div>`;
   });

@@ -1,5 +1,23 @@
 # Trainingskompas — Changelog
 
+## v3.3.40 — 2 augustus 2026 (Premium Experience Sprint — Batch 2, deel 5: Coach-scherm iconografie)
+*Iconografie doorgetrokken naar het Coach-scherm.*
+
+### Verbeterd
+- **Coach-header**: 🕘 → geschiedenis-lijnicoon, 🗑 → prullenbak-lijnicoon (consistent met nav/Home-header). Verzendknop (`↑`) ongewijzigd — is al een strak teken.
+- **Custom-trainingen**: verwijder-🗑 → prullenbak-lijnicoon, met `aria-label`.
+
+### Bewuste scope-correctie (eerlijk)
+- Een **volledige** emoji→lijnicoon-sweep over de héle app is groter dan eerder ingeschat (~50 emoji, veel in kaart-headers/labels waar ze deels decoratief/semantisch functioneren). De premium-kritische oppervlakken (bottom-nav, Home-header, werkset-acties, Coach-header) zijn nu gedaan; een uitputtende sweep is een aparte, grotere klus met lagere ROI en is bewust niet in deze pass meegenomen.
+
+### Getest
+- `node --check` OK · `logic_tests.js` 141/141 · headless render Coach-header bevestigd, 0 code-fouten.
+
+### Gewijzigd
+- `APP_VER` → v3.3.40; `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v3340`.
+
+---
+
 ## v3.3.39 — 2 augustus 2026 (Premium Experience Sprint — Batch 2, deel 4: Merkeigen bevestigingsdialogen)
 *Geen functionaliteit gewijzigd; alle native `confirm()`-dialogen vervangen door een merkeigen modal (Handbook/UX Constitution: geen native dialogen).*
 

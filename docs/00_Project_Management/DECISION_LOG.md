@@ -134,3 +134,19 @@
 - Alternatieven: JavaScript-gebaseerde viewport-hoogtemeting (`window.visualViewport`) — niet gekozen omdat `100dvh` de officiële, CSS-native oplossing is voor precies dit probleem en breed ondersteund wordt door moderne mobiele browsers (bevestigd via `CSS.supports('height','100dvh')` in de live sessie).
 - Impact: geen regressie op desktop (geverifieerd: `100dvh` = `100vh` = `window.innerHeight` wanneer er geen dynamische toolbar is). **Nog niet herbevestigd op het echte telefoon van de Product Owner** — dat is de enige resterende verificatiestap.
 - Verantwoordelijke: Maurice
+
+## DEC-017
+- Datum: 2 augustus 2026
+- Beslissing: Doelen (7.1) opgeslagen in één nieuwe tabel `goals` die uitsluitend het doel zelf bevat (type/streefwaarde/einddatum/motivatie/status). Actuele waarden (gewicht, vetpercentage, PR's, trainingsvolume, afstand) worden NOOIT gedupliceerd in `goals` — altijd live opgehaald uit de al bestaande tabellen (body_comp, weight_log, exercises, sessions).
+- Reden: expliciete Sprint 3-opdracht ("gebruik bestaande data, geen dubbele opslag") en goede praktijk — voorkomt dat doelvoortgang uit de pas gaat lopen met de brontabellen.
+- Alternatieven: alles in het bestaande `atleet_profiel` proppen — afgewezen, `atleet_profiel` is één rij per gebruiker en niet geschikt voor een 1-op-veel-relatie (meerdere gelijktijdige doelen).
+- Impact: PR-doelen hergebruiken zelfs een al bestaand veld (`exercises.peak_goal`) dat vóór Sprint 3 al bestond maar nog niet gekoppeld was aan een doelenoverzicht — dus zelfs voor het PR-doeltype is er geen nieuwe opslag nodig, alleen een nieuwe rij in `goals` met een verwijzing naar de oefening.
+- Verantwoordelijke: Maurice
+
+## DEC-018
+- Datum: 2 augustus 2026
+- Beslissing: Gym-/Team-challenges en "Perfecte trainingsweek" NIET gebouwd in Sprint 3, ondanks dat ze in de Handbook-voorbeelden en de sprintopdracht worden genoemd.
+- Reden: Gym-/Team-challenges vereisen cross-user data-aggregatie die nu niet bestaat (zou nieuwe architectuur zijn, expliciet buiten scope). "Perfecte trainingsweek" heeft geen eenduidige bestaande definitie van "perfect" in data of documentatie — die zelf verzinnen zou tegen de expliciete instructie "niet verzinnen" ingaan.
+- Alternatieven: een arbitraire drempel kiezen voor "perfecte week" (bv. ≥3 sessies) — afgewezen, dat zou een aanname zijn die de Product Owner niet heeft gevalideerd.
+- Impact: 5 van de in de opdracht genoemde Challenge-voorbeelden zijn gebouwd (100 trainingen, 30 dagen actief, 100 km roeien, 500 ton volume, 10 PR's — allemaal 100% herleid uit bestaande sessiedata). De overige 2 staan als aanbeveling voor een latere sprint, met de Product Owner te bepalen wat "perfect" precies betekent vóórdat het gebouwd wordt.
+- Verantwoordelijke: Maurice

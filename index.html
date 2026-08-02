@@ -536,6 +536,7 @@ canvas{width:100%;height:100%}
   <div class="scroll" style="padding-top:8px">
     <div id="home-hrv-card"></div>
     <div id="home-program-card" style="margin-bottom:8px"></div>
+    <div id="home-goals-card" style="margin-bottom:8px"></div>
     <div class="sec-hd">Start training</div>
     <div id="vaste-training-btns" style="display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap"></div>
     <div id="custom-train-btns"></div>
@@ -669,6 +670,14 @@ canvas{width:100%;height:100%}
     <div class="card">
       <div class="card-hd"><div class="card-title">Geschiedenis</div></div>
       <div class="card-body" id="profiel-history"></div>
+    </div>
+
+    <!-- Doelen — toegangspunt conform H10 Navigation. Sprint 3. -->
+    <div class="card">
+      <button class="set-nav-row" onclick="go('s-doelen')" style="padding:14px" aria-label="Doelen openen">
+        <div><div class="set-row-lbl">🎯 Doelen &amp; Challenges</div><div class="set-row-sub">Persoonlijke voortgang</div></div>
+        <span class="set-chevron" aria-hidden="true">›</span>
+      </button>
     </div>
 
     <!-- Instellingen — toegangspunt conform H10 Navigation (Profiel geeft toegang tot
@@ -870,7 +879,58 @@ canvas{width:100%;height:100%}
   </div>
 </div>
 
-<!-- ═══ ONBOARDING — Sprint 2 (Hoofdstuk 6, Scherm 1.2) ═══
+<!-- ═══ DOELEN (Hoofdstuk 6, Scherm 7.1) — Sprint 3 ═══ -->
+<div class="scr" id="s-doelen">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title" role="heading" aria-level="1">Doelen</div><div class="hdr-sub">Persoonlijke voortgang</div></div>
+      <div style="display:flex;gap:2px">
+        <button class="ibtn" onclick="openModal('m-goal-add')" aria-label="Nieuw doel toevoegen">＋</button>
+        <button class="ibtn" onclick="go('s-profiel')" aria-label="Sluiten, terug naar profiel">✕</button>
+      </div>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px" id="doelen-scroll">
+    <div id="doelen-list"><p style="color:var(--g4);font-size:13px;text-align:center;padding:24px 0">Doelen laden...</p></div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin:20px 0 8px">Challenges</div>
+    <div style="font-size:11px;color:var(--g4);margin-bottom:10px">Automatisch berekend uit je trainingsgeschiedenis — geen aparte registratie nodig.</div>
+    <div id="challenges-list"><p style="color:var(--g4);font-size:13px;text-align:center;padding:16px 0">Challenges berekenen...</p></div>
+  </div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+  </nav>
+</div>
+
+<!-- Modal: nieuw doel toevoegen -->
+<div class="modal-bg" id="m-goal-add" onclick="bgClose(event,'m-goal-add')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Nieuw doel</div>
+    <div class="irow"><label class="ilbl">Type</label><select class="inp" id="goal-type" onchange="renderGoalAddFields()">
+      <option value="gewicht">Gewicht</option>
+      <option value="vetpercentage">Vetpercentage</option>
+      <option value="spiermassa">Spiermassa</option>
+      <option value="pr">PR-doel (per oefening)</option>
+      <option value="frequentie">Trainingsfrequentie</option>
+      <option value="volume">Trainingsvolume</option>
+      <option value="conditie">Conditie (afstand)</option>
+      <option value="uithoudingsvermogen">Uithoudingsvermogen (afstand)</option>
+      <option value="eigen">Eigen doel</option>
+    </select></div>
+    <div id="goal-add-dynamic-fields"></div>
+    <div class="irow"><label class="ilbl">Einddatum</label><input class="inp" type="date" id="goal-einddatum"></div>
+    <div class="irow" style="align-items:flex-start"><label class="ilbl" style="margin-top:8px">Motivatie</label><textarea class="inp" id="goal-motivatie" rows="2" placeholder="Optioneel — waarom is dit belangrijk?"></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-goal-add')">Annuleer</button>
+      <button class="btn btn-r" style="flex:2" onclick="saveNewGoal()">Opslaan</button>
+    </div>
+  </div>
+</div>
      Verschijnt eenmalig ná succesvolle login, vóór het Dashboard (zie startAppAfterAuth()).
      Gate: localStorage 'maurice_onboarding_done'. Device-gescoped (bekende, gedocumenteerde
      vereenvoudiging - zie Sprint2-rapport §Risico's). -->
@@ -2047,7 +2107,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.29';
+const APP_VER = 'v3.3.30';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -3448,6 +3508,256 @@ function obFinish(){
   go('s-train-mgr');
 }
 
+// ══════════════════════════════════════════════════════════
+// SPRINT 3 — DOELEN (7.1) & CHALLENGES (7.2)
+// Kernprincipe: 'goals' bevat uitsluitend het doel zelf (type/streefwaarde/
+// einddatum). Actuele waarden worden hier ALTIJD live opgehaald uit de reeds
+// bestaande tabellen — nooit gedupliceerd in 'goals'.
+// ══════════════════════════════════════════════════════════
+let goalsCache=[];
+
+async function loadGoals(){
+  goalsCache = await sbGet('goals','&status=eq.actief&order=created_at.desc') || [];
+  return goalsCache;
+}
+
+// Haalt de actuele waarde op voor een doel, per type uit de juiste bestaande bron.
+async function getCurrentValueForGoal(g){
+  switch(g.type){
+    case 'gewicht':{
+      const w=await sbGet('weight_log','&order=date.desc,created_at.desc&limit=1');
+      return w[0]?.weight ?? null;
+    }
+    case 'vetpercentage':{
+      const b=await sbGet('body_comp','&order=date.desc,created_at.desc&limit=1');
+      return b[0]?.fat_pct ?? null;
+    }
+    case 'spiermassa':{
+      const b=await sbGet('body_comp','&order=date.desc,created_at.desc&limit=1');
+      return b[0]?.muscle_mass ?? null;
+    }
+    case 'pr':{
+      const ex=exercises.find(e=>e.id===g.exercise_id);
+      return ex?.pr ?? null;
+    }
+    case 'frequentie':{
+      // aantal sessies in de laatste 7 dagen
+      const weekAgo=new Date();weekAgo.setDate(weekAgo.getDate()-7);
+      const ds=weekAgo.toISOString().split('T')[0];
+      const ss=await sbGet('sessions','&date=gte.'+ds);
+      return ss.length;
+    }
+    case 'volume':{
+      // totaal volume (ton) sinds startdatum van het doel
+      const ss=await sbGet('sessions','&date=gte.'+g.startdatum+'&weight=not.is.null&sets=not.is.null&reps=not.is.null');
+      const kg=ss.reduce((sum,s)=>sum+(s.sets||1)*(s.reps||1)*(s.weight||0),0);
+      return Math.round(kg/100)/10; // ton, 1 decimaal
+    }
+    case 'conditie':case 'uithoudingsvermogen':{
+      // totale afstand (km) op cardio-oefeningen sinds startdatum
+      const ss=await sbGet('sessions','&date=gte.'+g.startdatum+'&distance=not.is.null');
+      const m=ss.reduce((sum,s)=>sum+(s.distance||0),0);
+      return Math.round(m/100)/10; // km, 1 decimaal
+    }
+    default: return null; // 'eigen' — handmatig bijgewerkt, geen automatische bron
+  }
+}
+
+function computeGoalProgress(g, currentVal){
+  if(currentVal==null||g.doelwaarde==null)return null;
+  const start = g.startwaarde!=null ? g.startwaarde : currentVal;
+  const span = g.doelwaarde - start;
+  if(span===0)return currentVal>=g.doelwaarde?100:0;
+  const pct = Math.round(((currentVal-start)/span)*100);
+  return Math.max(0,Math.min(100,pct));
+}
+function computeGoalProgressPr(g, ex){
+  if(!ex||ex.peak_goal==null)return null;
+  const cur=ex.pr||0;
+  return Math.max(0,Math.min(100,Math.round(cur/ex.peak_goal*100)));
+}
+
+// SMART-check (Handbook-vereiste): puur informatief, blokkeert niets.
+function smartCheck(g){
+  return {
+    specifiek: !!(g.type&&(g.type!=='eigen'||g.naam)),
+    meetbaar: g.type==='pr' ? !!g.exercise_id : (g.doelwaarde!=null),
+    acceptabel: true, // subjectief, niet automatisch te toetsen — altijd true, geen aanname
+    realistisch: true, // idem — geen harde drempel verzonnen
+    tijdgebonden: !!g.einddatum
+  };
+}
+
+const GOAL_TYPE_LABELS={gewicht:'Gewicht',vetpercentage:'Vetpercentage',spiermassa:'Spiermassa',pr:'PR-doel',frequentie:'Trainingsfrequentie',volume:'Trainingsvolume',conditie:'Conditie',uithoudingsvermogen:'Uithoudingsvermogen',eigen:'Eigen doel'};
+const GOAL_TYPE_UNITS={gewicht:'kg',vetpercentage:'%',spiermassa:'kg',frequentie:'sessies/week',volume:'ton',conditie:'km',uithoudingsvermogen:'km'};
+
+// -- Challenges (7.2) — uitsluitend PERSOONLIJK, alles live berekend, niets opgeslagen.
+// Gym-/Team-challenges bewust NIET gebouwd: vereisen cross-user aggregatie die nu niet
+// bestaat (zou nieuwe architectuur zijn, buiten Sprint 3-scope). 'Perfecte trainingsweek'
+// bewust NIET gebouwd: geen eenduidige bestaande definitie van 'perfect' — zou een
+// aanname/verzinsel zijn.
+async function computePersonalChallenges(){
+  const allSessions = await sbGet('sessions','&order=date.asc,created_at.asc&limit=2000');
+  const totalTrainingen = allSessions.length;
+
+  const thirtyAgo=new Date();thirtyAgo.setDate(thirtyAgo.getDate()-30);
+  const activeDays=new Set(allSessions.filter(s=>s.date&&new Date(s.date)>=thirtyAgo).map(s=>s.date)).size;
+
+  const roeiDist = allSessions.filter(s=>{
+    const ex=exercises.find(e=>e.id===s.exercise_id);
+    return ex && /roei/i.test(ex.name||'') && s.distance;
+  }).reduce((sum,s)=>sum+(s.distance||0),0);
+  const roeiKm = Math.round(roeiDist/100)/10;
+
+  const volumeKg = allSessions.filter(s=>s.weight&&s.sets&&s.reps).reduce((sum,s)=>sum+(s.sets*s.reps*s.weight),0);
+  const volumeTon = Math.round(volumeKg/100)/10;
+
+  // PR-telling: loopt chronologisch per oefening door de sessiehistorie en telt elk
+  // moment dat een nieuw record werd gezet (geen losse PR-log nodig — puur herleid).
+  const byExercise={};
+  allSessions.forEach(s=>{if(s.weight&&s.reps)(byExercise[s.exercise_id]=byExercise[s.exercise_id]||[]).push(s);});
+  let prCount=0;
+  Object.values(byExercise).forEach(list=>{
+    let best=0;
+    list.forEach(s=>{
+      const est=s.reps===1?s.weight:s.weight*(1+s.reps/30);
+      if(est>best){best=est;prCount++;}
+    });
+  });
+
+  return [
+    {naam:'100 trainingen',icoon:'🏋️',huidig:totalTrainingen,doel:100,eenheid:'trainingen'},
+    {naam:'30 dagen actief',icoon:'🔥',huidig:activeDays,doel:30,eenheid:'dagen (laatste 30)'},
+    {naam:'100 km roeien',icoon:'🚣',huidig:roeiKm,doel:100,eenheid:'km'},
+    {naam:'500 ton volume',icoon:'💪',huidig:volumeTon,doel:500,eenheid:'ton'},
+    {naam:'10 PRs',icoon:'🏆',huidig:Math.min(prCount,10),doel:10,eenheid:"PR's", werkelijkAantal:prCount},
+  ];
+}
+
+// -- Rendering: Doelen-scherm ----------------------------------------------
+async function renderDoelenScreen(){
+  const listEl=document.getElementById('doelen-list');
+  const chEl=document.getElementById('challenges-list');
+  listEl.innerHTML='<p style="color:var(--g4);font-size:13px;text-align:center;padding:24px 0">Doelen laden...</p>';
+  await ensureExercisesLoaded();
+  const goals=await loadGoals();
+  if(!goals.length){
+    listEl.innerHTML='<div class="card" style="text-align:center;padding:28px 16px"><div style="font-size:32px;margin-bottom:8px">🎯</div><div style="font-weight:700;color:var(--dark);margin-bottom:4px">Nog geen doelen</div><div style="font-size:13px;color:var(--g4)">Tik op ＋ rechtsboven om je eerste doel toe te voegen.</div></div>';
+  }else{
+    let h='';
+    for(const g of goals){
+      const ex = g.type==='pr' ? exercises.find(e=>e.id===g.exercise_id) : null;
+      const cur = g.type==='pr' ? (ex?.pr??null) : await getCurrentValueForGoal(g);
+      const pct = g.type==='pr' ? computeGoalProgressPr(g,ex) : computeGoalProgress(g,cur);
+      const target = g.type==='pr' ? ex?.peak_goal : g.doelwaarde;
+      const unit = g.type==='pr' ? 'kg' : (GOAL_TYPE_UNITS[g.type]||g.eenheid||'');
+      const sm=smartCheck(g);
+      const smartOk=Object.values(sm).every(Boolean);
+      h+=`<div class="card" style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+          <div>
+            <div style="font-weight:700;color:var(--dark);font-size:15px">${g.naam?escHtml(g.naam):GOAL_TYPE_LABELS[g.type]}</div>
+            <div style="font-size:11px;color:var(--g4)">${GOAL_TYPE_LABELS[g.type]}${g.einddatum?' · tot '+g.einddatum:''}</div>
+          </div>
+          <button class="ibtn" onclick="deleteGoalPrompt(${g.id})" aria-label="Doel verwijderen" style="width:28px;height:28px;font-size:14px">🗑</button>
+        </div>
+        ${pct!=null?`<div class="prog-wrap" style="margin:8px 0 4px"><div class="prog-fill" style="width:${pct}%;background:${pct>=100?'var(--green)':'var(--accent)'}"></div></div>
+        <div style="font-size:12px;color:var(--g4)">${cur??'—'}${unit?' '+unit:''} van ${target??'—'}${unit?' '+unit:''} · ${pct}%</div>`
+        :`<div style="font-size:12px;color:var(--g4)">Nog geen actuele meting gevonden${g.type==='pr'?' — stel een Peakdoel in via Beheer':''}.</div>`}
+        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <span style="font-size:10px;font-weight:700;color:${smartOk?'var(--green)':'var(--g4)'};background:${smartOk?'rgba(76,175,80,.12)':'var(--g1)'};padding:2px 8px;border-radius:8px">${smartOk?'✓ SMART':'SMART: '+Object.entries(sm).filter(([k,v])=>!v).map(([k])=>k).join(', ')}</span>
+          <button class="btn btn-o btn-sm" onclick="askCoachAboutGoal(${g.id})" style="margin-left:auto">🤖 Vraag de coach</button>
+        </div>
+        ${g.motivatie?`<div style="font-size:11px;color:var(--g4);font-style:italic;margin-top:6px">"${escHtml(g.motivatie)}"</div>`:''}
+      </div>`;
+    }
+    listEl.innerHTML=h;
+  }
+
+  chEl.innerHTML='<p style="color:var(--g4);font-size:13px;text-align:center;padding:16px 0">Challenges berekenen...</p>';
+  const challenges=await computePersonalChallenges();
+  chEl.innerHTML=challenges.map(c=>{
+    const pct=Math.min(100,Math.round((c.huidig/c.doel)*100));
+    const behaald=c.huidig>=c.doel;
+    return `<div class="card" style="margin-bottom:8px;padding:12px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-weight:700;color:var(--dark);font-size:14px">${c.icoon} ${c.naam}</div>
+        ${behaald?'<span style="font-size:10px;font-weight:800;color:var(--green)">✓ BEHAALD</span>':''}
+      </div>
+      <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%;background:${behaald?'var(--green)':'var(--accent)'}"></div></div>
+      <div style="font-size:11px;color:var(--g4);margin-top:4px">${c.huidig} / ${c.doel} ${c.eenheid}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderGoalAddFields(){
+  const type=document.getElementById('goal-type').value;
+  const el=document.getElementById('goal-add-dynamic-fields');
+  if(type==='pr'){
+    const opts=exercises.filter(e=>e.active!==false).map(e=>`<option value="${e.id}">${escHtml(e.name)}</option>`).join('');
+    el.innerHTML=`<div class="irow"><label class="ilbl">Oefening</label><select class="inp" id="goal-exercise">${opts}</select></div>
+      <div style="font-size:11px;color:var(--g4);margin:-4px 0 10px 80px">Gebruikt het bestaande Peakdoel van deze oefening (in te stellen via Beheer als dat nog niet gebeurd is).</div>`;
+  }else if(type==='eigen'){
+    el.innerHTML=`<div class="irow"><label class="ilbl">Naam</label><input class="inp" id="goal-naam" placeholder="Bijv. Eerste muscle-up"></div>
+      <div class="irow"><label class="ilbl">Streefwaarde</label><input class="inp" type="number" id="goal-doelwaarde" placeholder="Optioneel, indien meetbaar"></div>
+      <div class="irow"><label class="ilbl">Eenheid</label><input class="inp" id="goal-eenheid" placeholder="Bijv. reps, kg, keer"></div>`;
+  }else{
+    const unit=GOAL_TYPE_UNITS[type]||'';
+    el.innerHTML=`<div class="irow"><label class="ilbl">Streefwaarde</label><input class="inp" type="number" id="goal-doelwaarde" placeholder="${unit}" step="0.1"></div>`;
+  }
+}
+
+async function saveNewGoal(){
+  const type=document.getElementById('goal-type').value;
+  const einddatum=document.getElementById('goal-einddatum').value||null;
+  const motivatie=document.getElementById('goal-motivatie').value.trim()||null;
+  const payload={type,einddatum,motivatie,status:'actief'};
+  if(type==='pr'){
+    payload.exercise_id=Number(document.getElementById('goal-exercise').value);
+  }else if(type==='eigen'){
+    const naam=document.getElementById('goal-naam').value.trim();
+    if(!naam){toast('Geef je doel een naam');return;}
+    payload.naam=naam;
+    const dv=document.getElementById('goal-doelwaarde').value;
+    if(dv)payload.doelwaarde=Number(dv);
+    payload.eenheid=document.getElementById('goal-eenheid').value.trim()||null;
+  }else{
+    const dv=document.getElementById('goal-doelwaarde').value;
+    if(!dv){toast('Vul een streefwaarde in');return;}
+    payload.doelwaarde=Number(dv);
+    // startwaarde vastleggen op moment van aanmaken, voor eerlijke voortgangsberekening
+    const tmpGoal={...payload,startdatum:new Date().toISOString().split('T')[0]};
+    payload.startwaarde=await getCurrentValueForGoal(tmpGoal);
+  }
+  const ok=await sbPostQ('goals',payload);
+  if(ok){closeModal('m-goal-add');renderDoelenScreen();}
+  else toast('Opslaan mislukt — probeer het opnieuw');
+}
+
+async function deleteGoalPrompt(id){
+  if(!confirm("Dit doel verwijderen? Je meetgegevens (gewicht, PR's, sessies) blijven gewoon bewaard — alleen het doel zelf verdwijnt."))return;
+  await sbPatchQ('goals','id=eq.'+id,{status:'gearchiveerd'});
+  renderDoelenScreen();
+}
+
+async function askCoachAboutGoal(goalId){
+  const g=goalsCache.find(x=>x.id===goalId);
+  if(!g)return;
+  const label=g.naam||GOAL_TYPE_LABELS[g.type];
+  let msg=`Analyseer mijn voortgang op dit doel: "${label}" (${GOAL_TYPE_LABELS[g.type]}).\n`;
+  if(g.type==='pr'){
+    const ex=exercises.find(e=>e.id===g.exercise_id);
+    msg+=`Oefening: ${ex?.name||'onbekend'} | Huidige PR: ${ex?.pr??'onbekend'} kg | Peakdoel: ${ex?.peak_goal??'niet ingesteld'} kg\n`;
+  }else{
+    const cur=await getCurrentValueForGoal(g);
+    msg+=`Huidige waarde: ${cur??'onbekend'} | Streefwaarde: ${g.doelwaarde??'—'} ${g.eenheid||GOAL_TYPE_UNITS[g.type]||''}\n`;
+  }
+  if(g.einddatum)msg+=`Einddatum: ${g.einddatum}\n`;
+  if(g.motivatie)msg+=`Motivatie: ${g.motivatie}\n`;
+  go('s-coach');
+  sendMsg(msg);
+}
+
 function go(id){
   if(id==='s-admin-pin'){adminPinBuf='';updA();document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));const pinEl=document.getElementById('s-admin-pin');pinEl.classList.add('active');focusScreenForA11y(pinEl);return;}
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
@@ -3465,6 +3775,7 @@ function go(id){
   if(id==='s-coach')focusCoach();
   if(id==='s-settings')refreshSettingsScreen();
   if(id==='s-meldingen')refreshMeldingenScreen();
+  if(id==='s-doelen')renderDoelenScreen();
   if(id==='s-help'){const v=document.getElementById('help-app-ver');if(v)v.textContent=APP_VER;}
 }
 function openModal(id){
@@ -3476,6 +3787,12 @@ function openModal(id){
   if(id==='m-newex'){
     renderMuscleChecks('nx-muscles-primary', [], 'primary');
     renderMuscleChecks('nx-muscles-secondary', [], 'secondary');
+  }
+  if(id==='m-goal-add'){
+    document.getElementById('goal-type').value='gewicht';
+    document.getElementById('goal-einddatum').value='';
+    document.getElementById('goal-motivatie').value='';
+    renderGoalAddFields();
   }
   const m=document.getElementById(id);
   lastFocusedBeforeModal=document.activeElement;
@@ -6260,6 +6577,33 @@ async function refreshHome(){
   if(!rs?.length)rh='<p style="color:var(--g4);font-size:13px">Nog geen sessies gelogd</p>';
   else rs.forEach(s=>{const n=exercises.find(e=>e.id===s.exercise_id)?.name||s.exercise_id;const v=s.weight&&s.reps?s.weight+'kg×'+s.reps:s.time_str||'—';rh+=`<div class="lrow">${s._pending?'<span title="Wachtend op sync" style="margin-right:4px">⏳</span>':''}<div class="ldate">${s.date}</div><div class="lval">${n}</div><div class="lnote">${v}</div></div>`;});
   document.getElementById('home-recent').innerHTML=rh;
+  refreshHomeGoalsCard();
+}
+
+// Compacte Doelen-preview op het Dashboard (Sprint 3, H10 Navigation Dashboard-integratie).
+// Toont het meest recent aangemaakte actieve doel met een berekenbare voortgang.
+// Geen kaart als er geen doelen zijn — geen lege/misleidende UI.
+async function refreshHomeGoalsCard(){
+  const el=document.getElementById('home-goals-card');
+  if(!el)return;
+  const goals=await loadGoals();
+  if(!goals.length){el.innerHTML='';return;}
+  const g=goals[0];
+  const ex=g.type==='pr'?exercises.find(e=>e.id===g.exercise_id):null;
+  const cur=g.type==='pr'?(ex?.pr??null):await getCurrentValueForGoal(g);
+  const pct=g.type==='pr'?computeGoalProgressPr(g,ex):computeGoalProgress(g,cur);
+  const label=g.naam||GOAL_TYPE_LABELS[g.type];
+  el.innerHTML=`<div class="card" style="cursor:pointer" onclick="go('s-doelen')">
+    <div class="card-body" style="padding-top:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">🎯 Doel</div>
+        <span style="font-size:11px;color:var(--accent)">Alle doelen ›</span>
+      </div>
+      <div style="font-weight:700;color:var(--dark);font-size:14px;margin-bottom:6px">${escHtml(label)}</div>
+      ${pct!=null?`<div class="prog-wrap"><div class="prog-fill" style="width:${pct}%;background:${pct>=100?'var(--green)':'var(--accent)'}"></div></div><div style="font-size:11px;color:var(--g4);margin-top:4px">${pct}%</div>`
+      :'<div style="font-size:12px;color:var(--g4)">Nog geen meting</div>'}
+    </div>
+  </div>`;
 }
 // "Verder met programma"-kaart: pakt het eerstvolgende niet-afgeronde blok van het meest
 // recent gestarte actieve programma. Bewust op completed_at i.p.v. planned_date, zodat een

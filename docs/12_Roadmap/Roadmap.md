@@ -19,6 +19,9 @@
 
 **Nieuw toegevoegd (DEC-010, 1 augustus 2026):**
 - [x] **Onboarding-workflow nieuwe atleten** — profiel + doelen instellen bij eerste gebruik. Gebouwd in Sprint 2 (2 augustus 2026, v3.3.27): 9-staps wizard, verschijnt eenmalig na login. Nog niet op een echt device getest door Product Owner.
+- [x] **Doelen (7.1) en persoonlijke Challenges (7.2)** — Sprint 3 (2 augustus 2026, v3.3.30): 9 doeltypes met SMART-check, 5 data-onderbouwde Challenges, Dashboard-/Profiel-integratie, AI-coach-koppeling per doel. **Nog niet functioneel gevalideerd** (migratie v337 nog uit te voeren). Zie Sprintrapporten/Sprint3_Rapport.md.
+- [ ] **Gym-/Team-challenges** — expliciet niet gebouwd in Sprint 3 (DEC-018): vereist cross-user aggregatie-infrastructuur die nog niet bestaat.
+- [ ] **"Perfecte trainingsweek"-challenge** — expliciet niet gebouwd in Sprint 3 (DEC-018): geen bestaande, eenduidige definitie van "perfect" — vereist eerst input van de Product Owner over wat dit precies moet betekenen, vóór het gebouwd wordt.
 - [ ] **Wearables-uitbreiding** — Apple HealthKit, Google Health Connect, Garmin/Whoop/Oura, naast de bestaande Fitbit/Google Health-koppeling.
 - [ ] **HYROX race-splits en triathlon-brick** — was expliciet uitgesteld, nu geprioriteerd.
 - [ ] **Menstruatiecyclus-tracking** — was uitgesteld; `cyclus_fase`-veld bestaat al in hrv_log, uitbreiding tot volwaardige tracking nog te bouwen.

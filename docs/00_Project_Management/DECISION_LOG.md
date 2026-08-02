@@ -126,3 +126,11 @@
 - Alternatieven: wachten op een apart testaccount — afgewezen, zou waardevolle live foutdetectie onnodig uitstellen; de sessie werd read-only gebruikt voor navigatie/inspectie, geen destructieve acties uitgevoerd op echte data.
 - Impact: twee reële bugs gevonden die met alleen statische code-analyse niet aan het licht waren gekomen. Aanbeveling voor toekomstige sprints: een apart wegwerp-testaccount aanmaken zodra device-validatie structureel onderdeel wordt van de werkwijze, om niet afhankelijk te zijn van een toevallig actieve sessie.
 - Verantwoordelijke: Maurice
+
+## DEC-016
+- Datum: 2 augustus 2026
+- Beslissing: mobiele `100vh`-fix toegepast op `.scr` en `.pin-screen` (`height:100dvh` als progressive enhancement naast de bestaande `height:100vh`-fallback).
+- Reden: Product Owner meldde live, met telefoonscreenshot, dat de Terug/Volgende-knoppen op het onboarding-scherm buiten het zichtbare gebied vielen op een echt Android-toestel. Bevestigd als het bekende mobiele `100vh`-adresbalkprobleem: op desktop (waar `100vh` wél gelijk is aan `window.innerHeight`) gaf live meting in de browser een perfect sluitende layout (footer exact binnen 0–911px) — het probleem treedt dus specifiek op bij mobiele browsers met een dynamische adresbalk, niet in de layoutlogica zelf.
+- Alternatieven: JavaScript-gebaseerde viewport-hoogtemeting (`window.visualViewport`) — niet gekozen omdat `100dvh` de officiële, CSS-native oplossing is voor precies dit probleem en breed ondersteund wordt door moderne mobiele browsers (bevestigd via `CSS.supports('height','100dvh')` in de live sessie).
+- Impact: geen regressie op desktop (geverifieerd: `100dvh` = `100vh` = `window.innerHeight` wanneer er geen dynamische toolbar is). **Nog niet herbevestigd op het echte telefoon van de Product Owner** — dat is de enige resterende verificatiestap.
+- Verantwoordelijke: Maurice

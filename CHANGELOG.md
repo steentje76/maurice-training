@@ -1,5 +1,30 @@
 # Trainingskompas — Changelog
 
+## v3.3.28 — 2 augustus 2026 (Sprint 2.5 — Validatie, Polish & Release Readiness)
+
+### Toegevoegd
+- `migratie_v336.sql`: `doel`-kolom op `atleet_profiel` (verplicht uit te voeren in Supabase — zie CURRENT_STATE.md).
+
+### Opgelost
+- **Kritiek (live gevonden):** onboarding kon de gekozen `doel`-waarde niet naar Supabase syncen — schema miste de kolom. Device-lokaal werkte het al (geen dataverlies), sync faalde stil op de achtergrond.
+- **Pre-existing (live gevonden, niet Sprint 2):** `refreshStats()` crashte bij elk bezoek aan het Beheer-scherm, waardoor twee admin-secties (Roeiers, Custom-oefeningen) daar nooit ververst werden. Defensieve null-check toegevoegd.
+
+### Gevalideerd (live, op productie)
+- Alle 5 Sprint 2-schermen (Instellingen, Meldingen, Privacy, Help, Onboarding) bevestigd aanwezig en renderend op maurice-art.netlify.app.
+- Dark mode visueel bevestigd leesbaar (donkerblauw/petrol-tokens).
+- Onboarding privacy-checkbox-gate bevestigd functioneel (Volgende-knop correct disabled tot aanvinken).
+- Geen gebroken netwerkverzoeken (fonts, Supabase REST, Netlify Functions — alle 200 OK).
+- Dashboard-headertitel "Trainingskompas" bevestigd zonder overloop naast het kompas-icoon.
+
+### Gewijzigd
+- `APP_VER` → v3.3.28, `CACHE_NAME` → maurice-training-v3328.
+
+### Bekende problemen / niet gevalideerd
+- Geen Lighthouse-score, geen axe-core-scan, geen echte-devicetest (Android/tablet) — zie Sprint2.5_Rapport.md voor de volledige lijst van wat wél/niet kon worden vastgesteld.
+- Migratie v336 nog niet uitgevoerd — tot die tijd blijft de onboarding-Supabase-sync falen voor `doel`.
+
+---
+
 ## v3.3.27 — 2 augustus 2026 (Sprint 2 — Instellingen, Onboarding & Branding)
 
 ### Toegevoegd

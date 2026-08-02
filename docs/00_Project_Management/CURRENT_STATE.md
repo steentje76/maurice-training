@@ -6,22 +6,24 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en docs/Brand/BRAND_IDENTITY.md)
 
 ## Huidige versie
-v3.3.27
+v3.3.28
 
 ## Laatste release
+- Versie: v3.3.28
+- Datum: 2 augustus 2026
+- Inhoud: Sprint 2.5 — Validatie, Polish & Release Readiness. **Live device-/browservalidatie uitgevoerd** op de daadwerkelijke productie-app (maurice-art.netlify.app, met toestemming en via een reeds actieve sessie) — alle 5 Sprint 2-schermen bevestigd aanwezig en renderend, dark mode visueel bevestigd, privacy-checkbox-gate in onboarding bevestigd werkend. **Twee echte bugs gevonden via live console-logs en verholpen:** (1) `atleet_profiel`-writes vanuit onboarding faalden op een ontbrekende `doel`-kolom (migratie v336), (2) `refreshStats()` crashte bij elk bezoek aan Beheer omdat het scherm-specifieke element daar niet bestaat — dit was **al vóór Sprint 2 aanwezig**, nu pas ontdekt door live-logs. Zie `Sprintrapporten/Sprint2.5_Rapport.md` voor het volledige verslag inclusief wat wél en niet kon worden gevalideerd.
+
+## Laatste release (vorig)
 - Versie: v3.3.27
 - Datum: 2 augustus 2026
 - Inhoud: Sprint 2 — Instellingen, Onboarding & Branding. Instellingen-scherm (8.3) volledig gebouwd (thema/taal/meldingen/geluid-trillingen/privacy-link/offline-info/cachebeheer/app-info), Meldingen-scherm (8.2, 5 losse voorkeuren), Privacy-scherm (9.6, juridische tekst expliciet als placeholder gemarkeerd), Help-scherm (9.4/9.5/9.7), volledige 9-staps onboarding-wizard (eenmalig na login), merkidentiteit doorgevoerd (Poppins-font, officiële kleuren #0B1D2A/#0E3B4A/#00B894/#E6EBEF, handmatige thema-override naast automatische detectie), KOMPAS-afkorting gecorrigeerd naar volledige naam op login- én dashboardscherm (DEC-010). Zie `Sprintrapporten/Sprint2_Rapport.md` voor het volledige verslag.
 
-## Laatste release (vorig)
-- Versie: v3.3.26
-- Datum: 2 augustus 2026
-- Inhoud: Sprint 1 — Fundament, Accessibility & Stabilisatie (Skill v2.0-werkwijze, tegen het complete Handbook H1–H14). Accessibility-fundament (aria-navigatie/heading/dialoogrollen, focus-management bij scherm- en modalwissels, skip-link, focus-visible), Motion Framework-tokens + `prefers-reduced-motion`, Dark Mode-tokenfundament + automatische detectie (`prefers-color-scheme`), offline-verificatie (sw.js network-first bevestigd correct), QA-doorlichting (geen memory-leaks/dode code aangetroffen), labelfout "Instellingen" op het Beheer-scherm gecorrigeerd. Zie `Sprintrapporten/Sprint1_Rapport.md` voor het volledige verslag.
+> Oudere releases (t/m v3.3.26): zie DECISION_LOG.md en CHANGELOG.md.
 
 > Oudere releases (t/m v3.3.25): zie DECISION_LOG.md en CHANGELOG.md voor de volledige geschiedenis — hier bewust ingekort om dit document actueel en leesbaar te houden.
 
 ## Actieve sprint
-Sprint 2 — "Instellingen, Onboarding & Branding": afgerond, wacht op functionele bevestiging door Product Owner (met name: onboarding-flow en thema-wissel zijn nog niet op een echt device getest).
+Sprint 2.5 — "Validatie, Polish & Release Readiness": afgerond. Live device-/browservalidatie uitgevoerd op de productie-app; twee echte bugs gevonden en verholpen (zie Bekende bugs). **⚠ Actie vereist door Product Owner: `migratie_v336.sql` moet in Supabase worden uitgevoerd** — zonder deze migratie blijft de `atleet_profiel`-Supabase-sync falen voor elke gebruiker die onboarding doorloopt (device-lokaal werkt het al wel).
 
 ## Wat werkt
 - Volledige trainingslogging (A/B, cardio, supersets, plate calculator, PR-badges, rusttimer)
@@ -51,6 +53,8 @@ Sprint 2 — "Instellingen, Onboarding & Branding": afgerond, wacht op functione
 - **(Sprint 1, opgelost)** Beheer-scherm (`s-admin`) toonde het label "Instellingen" in de header i.p.v. "Beheer" — verwarde met het (nog te bouwen) echte Instellingen-scherm. Gecorrigeerd.
 - **(Sprint 2, opgelost)** Instellingen-scherm (H6, 8.3) was in de Handbook-statusmarkering 🟢 maar bevatte in de praktijk alleen een smalle trainingsinstelling — nu volledig gebouwd conform Sprint 0.5-advies.
 - **(Sprint 2, opgelost)** KOMPAS-afkorting op login- en dashboardscherm ging tegen de bindende merkregel uit DEC-010 in — gecorrigeerd naar "Trainingskompas".
+- **(Sprint 2.5, code opgelost — migratie nog uit te voeren)** `atleet_profiel`-sync vanuit onboarding faalde op elke poging: `sbUpsert` stuurde een `doel`-veld mee waarvoor geen kolom bestond (PGRST204, live aangetroffen in Maurice's eigen testsessie). Migratie `migratie_v336.sql` toegevoegd — **nog niet uitgevoerd in Supabase**.
+- **(Sprint 2.5, opgelost)** `refreshStats()` crashte (`TypeError: Cannot set properties of null`) bij elk bezoek aan het Beheer-scherm, waardoor `renderRowerAdmin()`/`renderTrainExAdmin()` daar nooit uitgevoerd werden. **Al aanwezig vóór Sprint 2** (bevestigd tegen v3.3.26), nu pas ontdekt via live console-logs. Gefixt met een defensieve null-check.
 
 **Opgelost (1 augustus 2026):** atleet_profiel-writes naar Supabase faalden stil door ontbrekende user_id (NOT NULL, geen default). Functionele bevestiging door Product Owner nog gewenst.
 

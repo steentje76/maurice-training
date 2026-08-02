@@ -1,5 +1,17 @@
 # Trainingskompas — Changelog
 
+## v3.3.29 — 2 augustus 2026 (Hotfix — mobiel 100vh-probleem)
+
+### Opgelost
+- **Kritiek, live gemeld door Product Owner (met telefoonscreenshot):** Terug/Volgende-knoppen op het onboarding-scherm vielen buiten het zichtbare gebied op een echt Android-toestel. Oorzaak: `height:100vh` op mobiele browsers rekent met de adresbalk mee, waardoor content onderaan buiten beeld valt. Fix: `height:100dvh` toegevoegd als progressive enhancement op `.scr` en `.pin-screen` (DEC-016).
+- Geverifieerd geen regressie op desktop (waar `100dvh` gelijk is aan `100vh`).
+- **Nog te bevestigen:** hertest op het echte toestel van de Product Owner.
+
+### Gewijzigd
+- `APP_VER` → v3.3.29, `CACHE_NAME` → maurice-training-v3329.
+
+---
+
 ## v3.3.28 — 2 augustus 2026 (Sprint 2.5 — Validatie, Polish & Release Readiness)
 
 ### Toegevoegd

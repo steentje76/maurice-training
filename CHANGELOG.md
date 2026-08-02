@@ -1,5 +1,15 @@
 # Trainingskompas — Changelog
 
+## v3.3.34 — 2 augustus 2026 (Hotfix — modals te breed op desktop)
+
+### Opgelost
+- **Alle modals (~50 stuks) app-breed** — `.modal-bg`/`.modal` misten een breedtebegrenzing, waardoor modals op brede (desktop-)vensters de volle breedte van het scherm besloegen i.p.v. de 430px app-kolom. Live gemeld door de Product Owner tijdens een testsessie. Geen echte-telefoon-impact (viewport daar altijd <430px) — puur een desktop-testartefact, nu voor iedereen consistent opgelost (DEC-022).
+
+### Gewijzigd
+- `APP_VER` → v3.3.34, `CACHE_NAME` → maurice-training-v3334.
+
+---
+
 ## v3.3.33 — 2 augustus 2026 (Hotfix — goals user_id ontbrak)
 
 ### Opgelost

@@ -1,5 +1,36 @@
 # Trainingskompas — Changelog
 
+## v3.3.27 — 2 augustus 2026 (Sprint 2 — Instellingen, Onboarding & Branding)
+
+### Toegevoegd
+- Instellingen-scherm (8.3): thema (light/dark/automatisch), taal (informatief), meldingen-doorverwijzing, geluid/trillingen-switches, privacy-doorverwijzing, offline-status + cache-verversen, app-informatie/debuginfo.
+- Meldingen-scherm (8.2): 5 losse voorkeuren (training/herstel/coach/updates/systeem) + browsertoestemming-aanvraag.
+- Privacy-scherm (9.6): feitelijke, code-geverifieerde uitleg + expliciet gemarkeerde placeholder voor de juridische privacyverklaring.
+- Help-scherm (9.4/9.5/9.7): FAQ, contact (placeholder), over de app, licenties.
+- Onboarding: volledige 9-staps wizard (welkom/intro/doel/niveau/sport/meldingen/offline-info/privacy-akkoord/start), verschijnt eenmalig na login.
+- Nieuwe CSS-componenten: Switch (`role="switch"`, conform H7) en Segmented Control, hergebruikt over Instellingen/Meldingen/Onboarding.
+- Handmatige thema-override (`data-theme`) naast de automatische `prefers-color-scheme`-detectie uit Sprint 1.
+
+### Verbeterd
+- Merkidentiteit doorgevoerd: Poppins-font (Barlow Condensed verwijderd, ook uit sw.js-precache), officiële kleuren `#0B1D2A`/`#0E3B4A`/`#00B894`/`#E6EBEF` op alle light-theme-tokens.
+- Bestaande rusttimer-trilling respecteert nu de Trillingen-instelling.
+
+### Gewijzigd
+- KOMPAS-afkorting op login- en dashboardscherm gecorrigeerd naar "Trainingskompas" (DEC-010).
+- `manifest.json`: `background_color`/`theme_color` bijgewerkt naar merkkleuren.
+- `APP_VER` → v3.3.27, `CACHE_NAME` → maurice-training-v3327 (sw.js).
+
+### Opgelost
+- Geen functionele bugs gevonden tijdens QA; twee vooraf bestaande, niet door Sprint 2 veroorzaakte issues gedocumenteerd (dubbele `nav-train-dot`-id's, klein div-tag-onbalans) — zie CURRENT_STATE.md, Technische schuld.
+
+### Bekende problemen
+- Onboarding en thema-wissel nog niet getest op een echt device/browser (geen device beschikbaar tijdens deze sprint).
+- Onboarding-gate is device-gescoped, niet account-gescoped (DEC-013).
+- Privacy- en Help-schermen bevatten bewust gemarkeerde placeholders — geen verzonnen juridische tekst.
+- Geluid-instelling heeft nog geen functioneel effect (geen audio-functionaliteit in de app).
+
+---
+
 ## v3.3.26 — 2 augustus 2026 (Sprint 1 — Fundament, Accessibility & Stabilisatie)
 
 ### Toegevoegd

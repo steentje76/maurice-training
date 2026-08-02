@@ -1,7 +1,7 @@
 // Trainingskompas — Service Worker v2.8
 // Play Store ready — offline first
 
-const CACHE_NAME = 'maurice-training-v3326';
+const CACHE_NAME = 'maurice-training-v3327';
 const CACHE_STATIC = 'maurice-static-v271';
 
 const STATIC_ASSETS = [
@@ -10,7 +10,7 @@ const STATIC_ASSETS = [
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
-  'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap'
+  'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap'
 ];
 
 // URLs die nooit gecached worden

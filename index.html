@@ -6,18 +6,30 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Kompas">
-<meta name="theme-color" content="#f0f0f5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#E6EBEF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B1D2A" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Trainingskompas</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script>
+// Sprint 2 — vroege thema-toepassing (vóór CSS-parse) om een flits van het verkeerde
+// thema te voorkomen wanneer de gebruiker handmatig Light/Dark heeft gekozen in
+// Instellingen (8.3). 'auto' (of geen keuze) laat de prefers-color-scheme-media-query
+// gewoon zijn werk doen — hier gebeurt dan bewust niets.
+(function(){
+  try{
+    var t=localStorage.getItem('maurice_theme');
+    if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);
+  }catch(e){/* localStorage niet beschikbaar (bv. privémodus) - val terug op systeeminstelling */}
+})();
+</script>
 <style>
 :root{
-  --bg:#f2f2f2;--card:#fff;--bk:#111111;--red:#111111;--green:#4caf50;
-  --accent:#3dd6d6;--accent2:#2bb8b8;
-  --y:#c8a84b;--g1:#f5f5f5;--g2:#e5e5e5;--g3:#bbbbbb;--g4:#888888;--g6:#444444;--dark:#111111;
-  --f:'Barlow Condensed','Arial Narrow',Arial,sans-serif;--r:8px;--shadow:0 1px 3px rgba(0,0,0,.1);
+  --bg:#E6EBEF;--card:#fff;--bk:#0B1D2A;--red:#111111;--green:#4caf50;
+  --accent:#00B894;--accent2:#0E3B4A;
+  --y:#c8a84b;--g1:#f5f5f5;--g2:#e5e5e5;--g3:#bbbbbb;--g4:#888888;--g6:#444444;--dark:#0B1D2A;
+  --f:'Poppins','Arial',sans-serif;--r:8px;--shadow:0 1px 3px rgba(0,0,0,.1);
 
   /* Sprint 1 — Dark Mode Fundament (Handbook H5 Deel 13). Alleen tokens + auto-detectie,
      nog geen restyle: lichte waarden hierboven blijven ongewijzigd de standaard. */
@@ -38,16 +50,30 @@
   --motion-ease:cubic-bezier(.4,0,.2,1);
 }
 
-/* Dark mode: automatische detectie op basis van systeeminstelling (prefers-color-scheme).
-   Fundament conform Sprint 1-scope — géén volledige restyle, alleen de kerntokens die
-   leesbaarheid/contrast bewaken zodra een scherm hiervan gebruikmaakt. */
+/* Dark mode: automatische detectie op basis van systeeminstelling (prefers-color-scheme). */
 @media (prefers-color-scheme: dark){
   :root{
-    --bg:#0B1D2A;--card:#0E3B4A;--bk:#f2f2f2;--dark:#f2f2f2;
+    --bg:#0B1D2A;--card:#0E3B4A;--bk:#E6EBEF;--dark:#E6EBEF;
     --g1:#12303e;--g2:#1b4353;--g3:#5c7a87;--g4:#9fb4bd;--g6:#e2e8ec;
     --shadow:0 1px 3px rgba(0,0,0,.4);
     --focus-ring:#00B894;
   }
+}
+
+/* Sprint 2 — Instellingen (8.3): handmatige thema-keuze overschrijft de systeeminstelling.
+   html[data-theme] heeft hogere specificiteit dan :root, dus dit wint altijd, ongeacht
+   volgorde t.o.v. de prefers-color-scheme-media-query hierboven. */
+html[data-theme="dark"]{
+  --bg:#0B1D2A;--card:#0E3B4A;--bk:#E6EBEF;--dark:#E6EBEF;
+  --g1:#12303e;--g2:#1b4353;--g3:#5c7a87;--g4:#9fb4bd;--g6:#e2e8ec;
+  --shadow:0 1px 3px rgba(0,0,0,.4);
+  --focus-ring:#00B894;
+}
+html[data-theme="light"]{
+  --bg:#E6EBEF;--card:#fff;--bk:#0B1D2A;--dark:#0B1D2A;
+  --g1:#f5f5f5;--g2:#e5e5e5;--g3:#bbbbbb;--g4:#888888;--g6:#444444;
+  --shadow:0 1px 3px rgba(0,0,0,.1);
+  --focus-ring:#0E3B4A;
 }
 
 /* Reduced motion: alle motion-tokens naar (nagenoeg) nul, conform WCAG 2.2 / H6-vereiste
@@ -81,6 +107,27 @@ body{display:flex;justify-content:center}
 .hdr-row{display:flex;justify-content:space-between;align-items:flex-start}
 .ibtn{background:var(--card);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;box-shadow:var(--shadow);flex-shrink:0}
 .ibtn:active{background:var(--g2)}
+
+/* SWITCH (H7 Component Library — role="switch") */
+.switch{width:44px;height:26px;border-radius:13px;background:var(--g3);border:none;position:relative;cursor:pointer;flex-shrink:0;padding:0;transition:background var(--motion-fast) var(--motion-ease)}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform var(--motion-fast) var(--motion-ease);box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.switch[aria-checked="true"]{background:var(--accent)}
+.switch[aria-checked="true"]::after{transform:translateX(18px)}
+
+/* SEGMENTED CONTROL (bv. thema-keuze: Light/Dark/Automatisch) */
+.seg{display:flex;background:var(--g1);border-radius:var(--r);padding:3px;gap:3px}
+.seg-opt{flex:1;border:none;background:transparent;border-radius:6px;padding:8px 4px;font-family:var(--f);font-size:12px;font-weight:600;color:var(--g4);cursor:pointer;transition:background var(--motion-fast) var(--motion-ease),color var(--motion-fast) var(--motion-ease)}
+.seg-opt[aria-checked="true"]{background:var(--card);color:var(--dark);box-shadow:var(--shadow)}
+
+/* Instellingen/Meldingen-rij (hergebruikt .adm-row-uiterlijk, consistent met Beheer-scherm) */
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--g2)}
+.set-row:last-child{border-bottom:none}
+.set-row-txt{flex:1;min-width:0}
+.set-row-lbl{font-size:14px;font-weight:600;color:var(--dark)}
+.set-row-sub{font-size:12px;color:var(--g4);margin-top:2px}
+.set-nav-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 0;border-bottom:1px solid var(--g2);cursor:pointer;background:none;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;font-family:var(--f)}
+.set-nav-row:last-child{border-bottom:none}
+.set-chevron{color:var(--g4);font-size:16px}
 
 /* TRAINING HEADER */
 .train-top{background:var(--bg);padding:14px 18px 0;flex-shrink:0}
@@ -408,7 +455,7 @@ canvas{width:100%;height:100%}
         <text x="60" y="52" font-family="Arial Narrow,Arial" font-size="28" font-weight="900" text-anchor="middle" fill="#111" letter-spacing="4">A·R·T</text>
         <text x="60" y="78" font-family="Arial Narrow,Arial" font-size="13" font-weight="700" text-anchor="middle" fill="#111" letter-spacing="2">CROSSFIT</text>
       </svg>
-      <div style="font-family:var(--f);font-size:22px;font-weight:900;letter-spacing:1px">KOMPAS</div>
+      <div style="font-family:var(--f);font-size:16px;font-weight:900;letter-spacing:.5px">TRAININGSKOMPAS</div>
       <div style="font-size:12px;color:var(--g4);letter-spacing:1px">AI TRAININGSCOACH 2026</div>
     </div>
     <div style="padding:0 20px">
@@ -475,7 +522,7 @@ canvas{width:100%;height:100%}
             <rect x="35" y="90" width="50" height="20" rx="2" stroke="#111" stroke-width="3" fill="none"/>
             <text x="60" y="106" font-family="Arial" font-size="12" font-weight="900" text-anchor="middle" fill="#111">00</text>
           </svg>
-          <div class="hdr-title" role="heading" aria-level="1" style="font-size:24px;letter-spacing:2px;text-transform:uppercase">KOMPAS</div>
+          <div class="hdr-title" role="heading" aria-level="1" style="font-size:17px;letter-spacing:1px;text-transform:uppercase;line-height:1.15">Trainingskompas</div>
         </div>
         <div class="hdr-sub" style="letter-spacing:2px;text-transform:uppercase;font-size:11px">AI Trainingscoach 2026</div>
         <div id="offline-badge" style="display:none;margin-top:4px;font-size:11px;font-weight:700;color:var(--y,#b8860b);background:rgba(184,134,11,.12);border-radius:8px;padding:2px 8px;width:fit-content;cursor:pointer" onclick="openOfflineQueueModal()"></div>
@@ -624,6 +671,15 @@ canvas{width:100%;height:100%}
       <div class="card-body" id="profiel-history"></div>
     </div>
 
+    <!-- Instellingen — toegangspunt conform H10 Navigation (Profiel geeft toegang tot
+         Instellingen/Wearables/Team/Abonnement). Sprint 2. -->
+    <div class="card">
+      <button class="set-nav-row" onclick="go('s-settings')" style="padding:14px" aria-label="Instellingen openen">
+        <div><div class="set-row-lbl">⚙️ Instellingen</div><div class="set-row-sub">Thema, meldingen, privacy, toegankelijkheid</div></div>
+        <span class="set-chevron" aria-hidden="true">›</span>
+      </button>
+    </div>
+
     <!-- Coach analyse knop -->
     <button class="btn btn-d" onclick="askCoachProfiel()" style="margin-bottom:12px">🤖 Coach: analyseer mijn metingen</button>
     <div style="height:8px"></div>
@@ -635,6 +691,291 @@ canvas{width:100%;height:100%}
     <button class="ni active" aria-current="page" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
   </nav>
+</div>
+
+<!-- ═══ INSTELLINGEN (Hoofdstuk 6, Scherm 8.3) — Sprint 2 ═══ -->
+<div class="scr" id="s-settings">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title" role="heading" aria-level="1">Instellingen</div><div class="hdr-sub">Thema, meldingen, privacy &amp; meer</div></div>
+      <button class="ibtn" onclick="go('s-profiel')" aria-label="Sluiten, terug naar profiel">✕</button>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px">
+
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Thema</div></div>
+      <div class="card-body">
+        <div class="seg" role="radiogroup" aria-label="Thema">
+          <button class="seg-opt" role="radio" id="theme-opt-light" onclick="setTheme('light')">Light</button>
+          <button class="seg-opt" role="radio" id="theme-opt-dark" onclick="setTheme('dark')">Dark</button>
+          <button class="seg-opt" role="radio" id="theme-opt-auto" onclick="setTheme('auto')">Automatisch</button>
+        </div>
+        <div style="font-size:11px;color:var(--g4);margin-top:8px">"Automatisch" volgt de instelling van je toestel.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Taal</div></div>
+      <div class="card-body">
+        <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Nederlands</div><div class="set-row-sub">Enige beschikbare taal op dit moment</div></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Meldingen &amp; Geluid</div></div>
+      <div class="card-body" style="padding:0 14px">
+        <button class="set-nav-row" onclick="go('s-meldingen')">
+          <div><div class="set-row-lbl">Meldingen</div><div class="set-row-sub">Per type in- of uitschakelen</div></div>
+          <span class="set-chevron" aria-hidden="true">›</span>
+        </button>
+        <div class="set-row">
+          <div class="set-row-txt"><div class="set-row-lbl">Geluid</div><div class="set-row-sub">De app heeft momenteel geen geluidseffecten — deze instelling wordt vast opgeslagen voor toekomstig gebruik.</div></div>
+          <button class="switch" role="switch" id="sw-sound" aria-checked="false" aria-label="Geluid"></button>
+        </div>
+        <div class="set-row">
+          <div class="set-row-txt"><div class="set-row-lbl">Trillingen</div><div class="set-row-sub">Bijv. bij het aflopen van de rusttimer</div></div>
+          <button class="switch" role="switch" id="sw-haptics" aria-checked="true" aria-label="Trillingen"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Privacy &amp; Toegankelijkheid</div></div>
+      <div class="card-body" style="padding:0 14px">
+        <button class="set-nav-row" onclick="go('s-privacy')">
+          <div><div class="set-row-lbl">Privacy</div><div class="set-row-sub">Wat we opslaan en waarom</div></div>
+          <span class="set-chevron" aria-hidden="true">›</span>
+        </button>
+        <div class="set-row">
+          <div class="set-row-txt"><div class="set-row-lbl">Toegankelijkheid — bewegingseffecten</div><div class="set-row-sub" id="reduced-motion-status">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Offline &amp; opslag</div></div>
+      <div class="card-body" style="padding:0 14px">
+        <div class="set-row">
+          <div class="set-row-txt"><div class="set-row-lbl">Verbindingsstatus</div><div class="set-row-sub" id="settings-online-status">—</div></div>
+        </div>
+        <button class="set-nav-row" onclick="openOfflineQueueModal()">
+          <div><div class="set-row-lbl">Wachtrij offline-acties</div><div class="set-row-sub" id="settings-queue-sub">Bekijk nog niet gesynchroniseerde acties</div></div>
+          <span class="set-chevron" aria-hidden="true">›</span>
+        </button>
+        <div class="set-row">
+          <div class="set-row-txt"><div class="set-row-lbl">Cache verversen</div><div class="set-row-sub">Haalt de nieuwste appversie op — je trainingsdata blijft bewaard</div></div>
+          <button class="btn btn-o btn-sm" onclick="clearAppCache()">Verversen</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd"><div class="card-title">App-informatie</div></div>
+      <div class="card-body" style="padding:0 14px">
+        <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Versie</div><div class="set-row-sub" id="settings-app-ver">—</div></div></div>
+        <button class="set-nav-row" onclick="go('s-help')">
+          <div><div class="set-row-lbl">Help &amp; over de app</div><div class="set-row-sub">FAQ, contact, feedback, licenties</div></div>
+          <span class="set-chevron" aria-hidden="true">›</span>
+        </button>
+        <div class="set-row">
+          <div class="set-row-txt"><div class="set-row-lbl">Debuginformatie</div><div class="set-row-sub" id="settings-debug-info" style="font-family:monospace;font-size:11px">—</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+  </nav>
+</div>
+
+<!-- ═══ MELDINGEN (Hoofdstuk 6, Scherm 8.2) — Sprint 2 ═══ -->
+<div class="scr" id="s-meldingen">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title" role="heading" aria-level="1">Meldingen</div><div class="hdr-sub">Per type in- of uitschakelen</div></div>
+      <button class="ibtn" onclick="go('s-settings')" aria-label="Sluiten, terug naar instellingen">✕</button>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px">
+    <div style="font-size:12px;color:var(--g4);margin-bottom:12px">Browsermeldingen vereisen eenmalig toestemming. Zonder toestemming blijven meldingen zichtbaar als in-app-badge (bv. bij Training).</div>
+    <div class="card">
+      <div class="card-body" style="padding:0 14px">
+        <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Trainingsherinneringen</div><div class="set-row-sub">Herinnering bij een geplande training</div></div><button class="switch" role="switch" id="sw-notif-training" aria-checked="true" aria-label="Trainingsherinneringen"></button></div>
+        <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Herstelmeldingen</div><div class="set-row-sub">Bij een significante wijziging in spierherstel</div></div><button class="switch" role="switch" id="sw-notif-herstel" aria-checked="true" aria-label="Herstelmeldingen"></button></div>
+        <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">AI Coach</div><div class="set-row-sub">Nieuw advies of belangrijke observatie</div></div><button class="switch" role="switch" id="sw-notif-coach" aria-checked="true" aria-label="AI Coach-meldingen"></button></div>
+        <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Updates</div><div class="set-row-sub">Nieuwe functies en verbeteringen</div></div><button class="switch" role="switch" id="sw-notif-updates" aria-checked="false" aria-label="Updatemeldingen"></button></div>
+        <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Systeemmeldingen</div><div class="set-row-sub">Bijv. wearable-koppeling verloopt binnenkort</div></div><button class="switch" role="switch" id="sw-notif-systeem" aria-checked="true" aria-label="Systeemmeldingen"></button></div>
+      </div>
+    </div>
+    <button class="btn btn-o" style="width:100%;margin-top:4px" onclick="requestNotifPermission()" id="notif-permission-btn">Browsermeldingen toestaan</button>
+    <div style="font-size:11px;color:var(--g4);margin-top:8px" id="notif-permission-status">—</div>
+  </div>
+</div>
+
+<!-- ═══ PRIVACY (Hoofdstuk 6, Scherm 9.6) — Sprint 2 ═══ -->
+<div class="scr" id="s-privacy">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title" role="heading" aria-level="1">Privacy</div><div class="hdr-sub">Wat we opslaan en waarom</div></div>
+      <button class="ibtn" onclick="go('s-settings')" aria-label="Sluiten, terug naar instellingen">✕</button>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px">
+    <div class="card"><div class="card-hd"><div class="card-title">Welke data</div></div><div class="card-body" style="font-size:13px;line-height:1.5">
+      Trainingskompas slaat trainingsdata (sessies, sets, gewicht), lichaamsmetingen, HRV/dagfactor-invoer en (indien gekoppeld) wearable-data op in je persoonlijke account. Toegang tot je gegevens is technisch afgeschermd per gebruiker (Row Level Security in de database) — andere gebruikers, inclusief gym-leden, kunnen jouw persoonlijke data niet inzien tenzij je die zelf expliciet deelt (zie 'Delen' bij een training/oefening).
+    </div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">AI-coach</div></div><div class="card-body" style="font-size:13px;line-height:1.5">
+      Je trainingsgeschiedenis en profielgegevens worden gebruikt om de AI-coach persoonlijk advies te laten geven. Dit gebeurt via een server-side koppeling (jouw gegevens gaan nooit rechtstreeks vanuit de app naar de AI-leverancier).
+    </div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">Bewaartermijn &amp; verwijdering</div></div><div class="card-body" style="font-size:13px;line-height:1.5">
+      Je kunt je account en alle bijbehorende data volledig verwijderen via Profiel → Account verwijderen. Dit verwijdert ook alles wat ooit voor AI-context is gebruikt.
+    </div></div>
+    <div class="card" style="border:1.5px dashed var(--g3)"><div class="card-hd"><div class="card-title" style="color:var(--y)">⚠ Nog niet definitief</div></div><div class="card-body" style="font-size:13px;line-height:1.5;color:var(--g4)">
+      <strong>[PLACEHOLDER — juridische privacyverklaring]</strong> Deze pagina bevat nog geen door een jurist opgestelde privacyverklaring of AVG-grondslagenoverzicht. De tekst hierboven beschrijft feitelijk hoe het systeem werkt (geverifieerd tegen de code), maar vervangt geen juridisch document. Vereist vóór een publieke/Store-release (zie Sprint 0.5-rapport, §12 Google Play Readiness).
+    </div></div>
+  </div>
+</div>
+
+<!-- ═══ HELP (Hoofdstuk 6, Scherm 9.4/9.5/9.7) — Sprint 2 ═══ -->
+<div class="scr" id="s-help">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title" role="heading" aria-level="1">Help &amp; over de app</div><div class="hdr-sub">FAQ, contact, feedback, licenties</div></div>
+      <button class="ibtn" onclick="go('s-settings')" aria-label="Sluiten, terug naar instellingen">✕</button>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px">
+    <div class="card"><div class="card-hd"><div class="card-title">Veelgestelde vragen</div></div><div class="card-body" style="font-size:13px;line-height:1.6">
+      <strong>Werkt de app zonder internet?</strong><br>Grotendeels wel — trainingslogging werkt offline en synchroniseert automatisch zodra je weer verbinding hebt. AI-coach-advies vereist een actieve verbinding.<br><br>
+      <strong>Hoe verwijder ik mijn account?</strong><br>Via Profiel → Account verwijderen. Dit is onomkeerbaar.<br><br>
+      <strong>Hoe koppel ik mijn wearable?</strong><br>Via Profiel → Wearable.
+    </div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">Contact &amp; feedback</div></div><div class="card-body" style="font-size:13px;line-height:1.5;color:var(--g4)">
+      <strong>[PLACEHOLDER]</strong> Er is nog geen vastgesteld contact-/feedbackkanaal (bv. e-mailadres of in-app formulier) gedocumenteerd in de projectdocumentatie. Toevoegen zodra bekend.
+    </div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">Over de app</div></div><div class="card-body" style="font-size:13px;line-height:1.5">
+      <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Versie</div><div class="set-row-sub" id="help-app-ver">—</div></div></div>
+      <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Ontwikkelaar</div><div class="set-row-sub">SteenSoft</div></div></div>
+    </div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">Licenties</div></div><div class="card-body" style="font-size:12px;line-height:1.6;color:var(--g4)">
+      Lettertype: Poppins (Google Fonts, Open Font License).<br>
+      <strong>[PLACEHOLDER]</strong> Volledig licentieoverzicht van gebruikte bibliotheken/diensten (Supabase, Netlify, Anthropic API e.a.) nog niet samengesteld.
+    </div></div>
+  </div>
+</div>
+
+<!-- ═══ ONBOARDING — Sprint 2 (Hoofdstuk 6, Scherm 1.2) ═══
+     Verschijnt eenmalig ná succesvolle login, vóór het Dashboard (zie startAppAfterAuth()).
+     Gate: localStorage 'maurice_onboarding_done'. Device-gescoped (bekende, gedocumenteerde
+     vereenvoudiging - zie Sprint2-rapport §Risico's). -->
+<div class="scr" id="s-onboarding">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title" role="heading" aria-level="1" id="ob-step-title">Welkom</div></div>
+    </div>
+    <div style="height:4px;background:var(--g2);border-radius:2px;margin-top:10px;overflow:hidden">
+      <div id="ob-progress" style="height:100%;background:var(--accent);width:11%;transition:width var(--motion-standard) var(--motion-ease)"></div>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:16px" id="ob-content">
+
+    <div class="ob-step" data-step="1">
+      <div style="font-size:40px;margin-bottom:12px">🧭</div>
+      <div style="font-size:20px;font-weight:800;color:var(--dark);margin-bottom:8px">Welkom bij Trainingskompas</div>
+      <div style="font-size:14px;color:var(--g4);line-height:1.5">Gericht trainen. Slimmer worden. Sterker blijven.<br><br>We stellen je in een paar stappen in — dit duurt minder dan een minuut.</div>
+    </div>
+
+    <div class="ob-step" data-step="2" style="display:none">
+      <div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:10px">Hoe werkt de app</div>
+      <div style="font-size:13px;color:var(--g4);line-height:1.6">
+        🏋️ <strong>Training</strong> — log je sets, de app onthoudt je voortgang.<br>
+        🤖 <strong>AI Coach</strong> — persoonlijk advies, altijd met uitleg waarom.<br>
+        📈 <strong>Herstel &amp; Stats</strong> — zie hoe je lichaam reageert op training.
+      </div>
+    </div>
+
+    <div class="ob-step" data-step="3" style="display:none">
+      <div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:10px">Wat is je belangrijkste doel?</div>
+      <select class="inp" id="ob-doel" style="width:100%">
+        <option value="kracht">Kracht opbouwen</option>
+        <option value="conditie">Conditie verbeteren</option>
+        <option value="afvallen">Afvallen / lichaamscompositie</option>
+        <option value="prestatie">Sportprestatie verbeteren</option>
+        <option value="algemeen" selected>Algemene fitheid</option>
+      </select>
+      <div style="font-size:11px;color:var(--g4);margin-top:8px">Dit helpt de AI-coach je advies beter af te stemmen. Een volledig Doelen-scherm met voortgangstracking volgt in een latere sprint.</div>
+    </div>
+
+    <div class="ob-step" data-step="4" style="display:none">
+      <div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:10px">Wat is je trainingsniveau?</div>
+      <select class="inp" id="ob-niveau" style="width:100%">
+        <option value="beginner">Beginner (&lt;1 jaar)</option>
+        <option value="gevorderd">Gevorderd (1-3 jaar)</option>
+        <option value="ervaren" selected>Ervaren (3-5 jaar)</option>
+        <option value="expert">Expert (5+ jaar)</option>
+      </select>
+    </div>
+
+    <div class="ob-step" data-step="5" style="display:none">
+      <div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:10px">Welke sport(en) train je vooral?</div>
+      <select class="inp" id="ob-sport" style="width:100%">
+        <option value="crossfit" selected>CrossFit</option>
+        <option value="kracht">Kracht (algemeen)</option>
+        <option value="powerlifting">Powerlifting</option>
+        <option value="bodybuilding">Bodybuilding</option>
+        <option value="hyrox">HYROX</option>
+        <option value="hardlopen">Hardlopen</option>
+        <option value="triathlon">Triatlon</option>
+        <option value="swimming">Zwemmen</option>
+        <option value="weightlifting">Weightlifting</option>
+        <option value="wielrennen">Wielrennen</option>
+        <option value="roeien">Roeien</option>
+        <option value="calisthenics">Calisthenics</option>
+        <option value="strongman">Strongman</option>
+        <option value="functioneel">Functionele fitness</option>
+        <option value="algemeen">Algemeen / gemixt</option>
+      </select>
+      <div style="font-size:11px;color:var(--g4);margin-top:8px">Bepaalt de AI-context van je coach — later aanpasbaar via Profiel.</div>
+    </div>
+
+    <div class="ob-step" data-step="6" style="display:none">
+      <div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:10px">Meldingen</div>
+      <div style="font-size:13px;color:var(--g4);line-height:1.5;margin-bottom:14px">Wil je herinneringen ontvangen voor trainingen en belangrijke herstelmeldingen?</div>
+      <button class="btn btn-r" style="width:100%;margin-bottom:8px" onclick="obRequestNotif()">Ja, meldingen toestaan</button>
+      <button class="btn btn-o" style="width:100%" onclick="obNext()">Niet nu</button>
+    </div>
+
+    <div class="ob-step" data-step="7" style="display:none">
+      <div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:10px">Offline gebruik</div>
+      <div style="font-size:13px;color:var(--g4);line-height:1.5">Trainingskompas werkt ook zonder internet: je kunt sets loggen tijdens je training, alles synchroniseert automatisch zodra je weer verbinding hebt. Hier is geen actie van je nodig.</div>
+    </div>
+
+    <div class="ob-step" data-step="8" style="display:none">
+      <div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:10px">Privacy</div>
+      <div style="font-size:13px;color:var(--g4);line-height:1.5;margin-bottom:14px">Je trainingsdata is persoonlijk en technisch afgeschermd per account. Lees de volledige toelichting in Instellingen → Privacy.</div>
+      <label style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--dark);cursor:pointer">
+        <input type="checkbox" id="ob-privacy-akkoord" style="margin-top:3px" onchange="document.getElementById('ob-next-btn').disabled=!this.checked">
+        <span>Ik heb dit gelezen en ga akkoord</span>
+      </label>
+    </div>
+
+    <div class="ob-step" data-step="9" style="display:none">
+      <div style="font-size:40px;margin-bottom:12px">🚀</div>
+      <div style="font-size:20px;font-weight:800;color:var(--dark);margin-bottom:8px">Je bent klaar</div>
+      <div style="font-size:14px;color:var(--g4);line-height:1.5">Alles staat ingesteld. Tijd voor je eerste stap.</div>
+    </div>
+
+  </div>
+  <div style="padding:14px 18px calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;flex-shrink:0">
+    <button class="btn btn-o" id="ob-back-btn" onclick="obBack()" style="flex:0 0 auto;padding-left:20px;padding-right:20px">Terug</button>
+    <button class="btn btn-r" id="ob-next-btn" onclick="obNext()" style="flex:1">Volgende</button>
+  </div>
 </div>
 
 <!-- ═══ COACH ═══ -->
@@ -1706,7 +2047,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.26';
+const APP_VER = 'v3.3.27';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -2943,6 +3284,170 @@ document.addEventListener('keydown',e=>{
   if(openModalEl)closeModal(openModalEl.id);
 });
 
+// ══════════════════════════════════════════════════════════
+// SPRINT 2 — INSTELLINGEN (8.3), MELDINGEN (8.2)
+// Kleine, additieve laag: leest/schrijft localStorage-voorkeuren, geen nieuwe
+// architectuur. Switches gebruiken role="switch" conform H7 Component Library.
+// ══════════════════════════════════════════════════════════
+
+// -- Generieke switch-helper --------------------------------------------
+function initSwitch(id, storageKey, defaultOn, onChange){
+  const el=document.getElementById(id);
+  if(!el)return;
+  const stored=localStorage.getItem(storageKey);
+  const on = stored===null ? defaultOn : stored==='1';
+  el.setAttribute('aria-checked', on?'true':'false');
+  el.onclick=()=>{
+    const now=el.getAttribute('aria-checked')==='true';
+    const next=!now;
+    el.setAttribute('aria-checked', next?'true':'false');
+    localStorage.setItem(storageKey, next?'1':'0');
+    if(onChange)onChange(next);
+  };
+}
+function isSettingOn(storageKey, defaultOn){
+  const stored=localStorage.getItem(storageKey);
+  return stored===null ? defaultOn : stored==='1';
+}
+
+// -- Thema ----------------------------------------------------------------
+function setTheme(mode){
+  // mode: 'light' | 'dark' | 'auto'
+  if(mode==='auto'){document.documentElement.removeAttribute('data-theme');}
+  else{document.documentElement.setAttribute('data-theme', mode);}
+  localStorage.setItem('maurice_theme', mode);
+  updateThemeSegUI();
+}
+function updateThemeSegUI(){
+  const current=localStorage.getItem('maurice_theme')||'auto';
+  ['light','dark','auto'].forEach(m=>{
+    const el=document.getElementById('theme-opt-'+m);
+    if(el)el.setAttribute('aria-checked', m===current?'true':'false');
+  });
+}
+
+// -- Cache verversen (Instellingen > Offline & opslag) --------------------
+// Wist alleen de Service-Worker-caches (app-shell/assets), NIET localStorage of
+// IndexedDB - trainingsdata en voorkeuren blijven onaangeroerd. Forceert daarna
+// een herlaad zodat de nieuwste sw.js/index.html actief wordt.
+async function clearAppCache(){
+  if(!confirm('Cache verversen? Je haalt hiermee de nieuwste appversie op. Je trainingsdata en voorkeuren blijven bewaard.'))return;
+  try{
+    if('caches' in window){
+      const keys=await caches.keys();
+      await Promise.all(keys.map(k=>caches.delete(k)));
+    }
+    if('serviceWorker' in navigator){
+      const regs=await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r=>r.update()));
+    }
+    toast('Cache geleegd, app wordt herladen...');
+    setTimeout(()=>location.reload(),600);
+  }catch(e){
+    toast('Verversen mislukt: '+e.message);
+  }
+}
+
+// -- Meldingen: browsertoestemming ----------------------------------------
+async function requestNotifPermission(){
+  if(!('Notification' in window)){
+    document.getElementById('notif-permission-status').textContent='Browsermeldingen worden niet ondersteund op dit toestel/deze browser.';
+    return;
+  }
+  const perm=await Notification.requestPermission();
+  updateNotifPermissionUI(perm);
+}
+function updateNotifPermissionUI(perm){
+  const btn=document.getElementById('notif-permission-btn');
+  const status=document.getElementById('notif-permission-status');
+  if(!btn||!status)return;
+  if(!('Notification' in window)){status.textContent='Browsermeldingen worden niet ondersteund op dit toestel/deze browser.';btn.style.display='none';return;}
+  if(perm==='granted'){status.textContent='Toestemming verleend.';btn.style.display='none';}
+  else if(perm==='denied'){status.textContent='Geblokkeerd — wijzig dit via de browser-/systeeminstellingen van je toestel.';btn.style.display='none';}
+  else{status.textContent='Nog geen toestemming gegeven.';btn.style.display='block';}
+}
+
+// -- Schermrefreshers -------------------------------------------------------
+function refreshSettingsScreen(){
+  initSwitch('sw-sound','maurice_sound_enabled',false);
+  initSwitch('sw-haptics','maurice_haptics_enabled',true);
+  updateThemeSegUI();
+  const verEl=document.getElementById('settings-app-ver');if(verEl)verEl.textContent=APP_VER;
+  const rmEl=document.getElementById('reduced-motion-status');
+  if(rmEl){
+    const reduced=window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    rmEl.textContent = reduced ? 'Verminderde beweging actief (systeeminstelling)' : 'Volgt systeeminstelling (momenteel normale animaties)';
+  }
+  const onlineEl=document.getElementById('settings-online-status');
+  if(onlineEl)onlineEl.textContent = navigator.onLine ? 'Online' : 'Offline';
+  const dbgEl=document.getElementById('settings-debug-info');
+  if(dbgEl)dbgEl.textContent = `${APP_VER} · ${navigator.userAgent.slice(0,60)}`;
+}
+function refreshMeldingenScreen(){
+  initSwitch('sw-notif-training','maurice_notif_training',true);
+  initSwitch('sw-notif-herstel','maurice_notif_herstel',true);
+  initSwitch('sw-notif-coach','maurice_notif_coach',true);
+  initSwitch('sw-notif-updates','maurice_notif_updates',false);
+  initSwitch('sw-notif-systeem','maurice_notif_systeem',true);
+  if('Notification' in window)updateNotifPermissionUI(Notification.permission);
+  else updateNotifPermissionUI(null);
+}
+window.addEventListener('online',()=>{const el=document.getElementById('settings-online-status');if(el)el.textContent='Online';});
+window.addEventListener('offline',()=>{const el=document.getElementById('settings-online-status');if(el)el.textContent='Offline';});
+
+// -- Onboarding-wizard (Sprint 2, Hoofdstuk 6 Scherm 1.2) ------------------
+const OB_TOTAL_STEPS=9;
+const OB_STEP_TITLES={1:'Welkom',2:'Hoe het werkt',3:'Je doel',4:'Trainingsniveau',5:'Sport',6:'Meldingen',7:'Offline',8:'Privacy',9:'Klaar'};
+let obStep=1;
+function initOnboarding(){
+  obStep=1;
+  renderObStep();
+}
+function renderObStep(){
+  document.querySelectorAll('.ob-step').forEach(s=>{
+    s.style.display = (Number(s.dataset.step)===obStep) ? 'block' : 'none';
+  });
+  const titleEl=document.getElementById('ob-step-title');
+  if(titleEl)titleEl.textContent=OB_STEP_TITLES[obStep]||'';
+  const progEl=document.getElementById('ob-progress');
+  if(progEl)progEl.style.width=Math.round((obStep/OB_TOTAL_STEPS)*100)+'%';
+  const backBtn=document.getElementById('ob-back-btn');
+  if(backBtn)backBtn.style.visibility = obStep===1 ? 'hidden' : 'visible';
+  const nextBtn=document.getElementById('ob-next-btn');
+  if(nextBtn){
+    nextBtn.textContent = obStep===OB_TOTAL_STEPS ? 'Aan de slag' : 'Volgende';
+    nextBtn.disabled = obStep===8 ? !document.getElementById('ob-privacy-akkoord')?.checked : false;
+  }
+  // Stap 6 (meldingen) heeft eigen knoppen i.p.v. de vaste 'Volgende'-knop, maar Terug blijft werken
+  if(nextBtn)nextBtn.style.display = obStep===6 ? 'none' : 'block';
+  focusScreenForA11y(document.getElementById('s-onboarding'));
+}
+function obNext(){
+  if(obStep===3){const v=document.getElementById('ob-doel');if(v)atleet.doel=v.value;}
+  if(obStep===4){const v=document.getElementById('ob-niveau');if(v)atleet.niveau=v.value;}
+  if(obStep===5){const v=document.getElementById('ob-sport');if(v)atleet.sport=v.value;}
+  if(obStep===OB_TOTAL_STEPS){obFinish();return;}
+  obStep++;
+  renderObStep();
+}
+function obBack(){
+  if(obStep<=1)return;
+  obStep--;
+  renderObStep();
+}
+async function obRequestNotif(){
+  if('Notification' in window){try{await Notification.requestPermission();}catch(e){/* negeren, gebruiker kan dit later alsnog via Instellingen doen */}}
+  obNext();
+}
+function obFinish(){
+  localStorage.setItem('maurice_atleet', JSON.stringify(atleet));
+  localStorage.setItem('maurice_onboarding_done','1');
+  if(authSession?.user?.id){
+    sbUpsert('atleet_profiel', {...atleet, user_id: authSession.user.id}).catch(()=>{/* device-lokaal blijft leidend als sync nu faalt; volgende syncAtleetFromSupabase() probeert opnieuw */});
+  }
+  go('s-train-mgr');
+}
+
 function go(id){
   if(id==='s-admin-pin'){adminPinBuf='';updA();document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));const pinEl=document.getElementById('s-admin-pin');pinEl.classList.add('active');focusScreenForA11y(pinEl);return;}
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
@@ -2958,6 +3463,9 @@ function go(id){
   if(id==='s-profiel')refreshProfiel();
   if(id==='s-admin')refreshAdmin();
   if(id==='s-coach')focusCoach();
+  if(id==='s-settings')refreshSettingsScreen();
+  if(id==='s-meldingen')refreshMeldingenScreen();
+  if(id==='s-help'){const v=document.getElementById('help-app-ver');if(v)v.textContent=APP_VER;}
 }
 function openModal(id){
   if(id==='m-hrv'){
@@ -7770,7 +8278,7 @@ function startRestTimer(seconds){
     document.getElementById('rt-remaining').textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
     if(rem<=0){
       clearInterval(restInterval);restInterval=null;
-      if(navigator.vibrate)navigator.vibrate([200,100,200]);
+      if(navigator.vibrate&&isSettingOn('maurice_haptics_enabled',true))navigator.vibrate([200,100,200]);
       toast('Rust voorbij');
       bar.style.display='none';
     }
@@ -8698,14 +9206,22 @@ function resetPersonalCacheIfNewDeviceOwner(uid){
 async function startAppAfterAuth(){
   resetPersonalCacheIfNewDeviceOwner(authSession?.user?.id);
   document.querySelectorAll('.scr').forEach(s=>s.classList.remove('active'));
-  document.getElementById('s-home').classList.add('active');
+  const onboardingDone = localStorage.getItem('maurice_onboarding_done')==='1';
+  if(onboardingDone){
+    document.getElementById('s-home').classList.add('active');
+  }else{
+    initOnboarding();
+    document.getElementById('s-onboarding').classList.add('active');
+  }
   const accEl=document.getElementById('account-email-lbl');
   if(accEl)accEl.textContent=authSession?.user?.email||'—';
   // Handle PWA shortcuts
   const params = new URLSearchParams(window.location.search);
-  if(params.get('start')==='A') setTimeout(()=>startT('A'),500);
-  if(params.get('start')==='B') setTimeout(()=>startT('B'),500);
-  if(params.get('checkin')==='1') setTimeout(()=>openModal('m-hrv'),500);
+  if(onboardingDone){
+    if(params.get('start')==='A') setTimeout(()=>startT('A'),500);
+    if(params.get('start')==='B') setTimeout(()=>startT('B'),500);
+    if(params.get('checkin')==='1') setTimeout(()=>openModal('m-hrv'),500);
+  }
   refreshHome();
   ensureExercisesLoaded().then(()=>loadTrainCfg());
   ensureEquipmentTypesLoaded();

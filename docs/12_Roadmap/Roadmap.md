@@ -18,7 +18,7 @@
 - [x] Dark mode-tokenfundament + automatische detectie — Sprint 1 (nog geen volledige restyle, zie Branding hieronder)
 
 **Nieuw toegevoegd (DEC-010, 1 augustus 2026):**
-- [ ] **Onboarding-workflow nieuwe atleten** — profiel + doelen instellen bij eerste gebruik. Ontbrak volledig; nu expliciet gepland vóórdat gym-brede ledeninstroom (Fase 3-4) relevant wordt.
+- [x] **Onboarding-workflow nieuwe atleten** — profiel + doelen instellen bij eerste gebruik. Gebouwd in Sprint 2 (2 augustus 2026, v3.3.27): 9-staps wizard, verschijnt eenmalig na login. Nog niet op een echt device getest door Product Owner.
 - [ ] **Wearables-uitbreiding** — Apple HealthKit, Google Health Connect, Garmin/Whoop/Oura, naast de bestaande Fitbit/Google Health-koppeling.
 - [ ] **HYROX race-splits en triathlon-brick** — was expliciet uitgesteld, nu geprioriteerd.
 - [ ] **Menstruatiecyclus-tracking** — was uitgesteld; `cyclus_fase`-veld bestaat al in hrv_log, uitbreiding tot volwaardige tracking nog te bouwen.
@@ -26,8 +26,8 @@
 - [ ] Gym-breed leespad via exercises.gym_id — al gerealiseerd via v331/v333; dit vinkje kan waarschijnlijk af, ter bevestiging bij volgende CURRENT_STATE-update.
 
 ## Branding (nieuw, DEC-010 — loopt parallel aan Fase 1/2/3, niet pas Fase 4)
-- [ ] **Dynamische gym-branding** — Trainingskompas blijft de basis-experience; gym-huisstijl is een skin bovenop, geen vervanging. Volledige naam "Trainingskompas" moet altijd zichtbaar blijven (zie docs/Brand/BRAND_IDENTITY.md) — herziet de bestaande "KOMPAS"-afkorting in krappe UI-plekken.
-- [ ] Merkidentiteit vastgesteld: logo, kleurenpalet (`#0B1D2A`/`#0E3B4A`/`#00B894`), Poppins-typografie — zie docs/Brand/BRAND_IDENTITY.md. Vervangt de placeholder-stijl (Barlow Condensed/cyaan) uit Blueprint.md.
+- [ ] **Dynamische gym-branding** — Trainingskompas blijft de basis-experience; gym-huisstijl is een skin bovenop, geen vervanging. Volledige naam "Trainingskompas" moet altijd zichtbaar blijven (zie docs/Brand/BRAND_IDENTITY.md). *KOMPAS-afkorting op login-/dashboardscherm al gecorrigeerd in Sprint 2 (2 aug 2026) — de per-gym-skin-architectuur zelf (Fase 4) is nog niet gebouwd.*
+- [x] Merkidentiteit vastgesteld: logo, kleurenpalet (`#0B1D2A`/`#0E3B4A`/`#00B894`), Poppins-typografie — zie docs/Brand/BRAND_IDENTITY.md. Vervangt de placeholder-stijl (Barlow Condensed/cyaan) uit Blueprint.md. **Doorgevoerd in Sprint 2 (2 augustus 2026, v3.3.27)** — kleuren/font app-breed via bestaande design-tokens; semantische kleuren (waarschuwing/foutmelding/grafiek) bewust ongewijzigd gelaten.
 - [ ] **Later — experience-motor voor leden** (na de gym-brede branding): individuele leden passen zelf hun look-and-feel aan, naar analogie van wat de Product Owner "radioplanner" noemt. Architectuur nog niet uitgewerkt — eerste stap is de gym-brede branding (hierboven) afronden.
 
 ## Fase 3 — Coach dashboard + Social/competitief (actief op te pakken, niet wachten op Fase 2-afronding)

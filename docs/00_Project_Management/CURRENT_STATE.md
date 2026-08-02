@@ -11,7 +11,7 @@ v3.3.30
 ## Laatste release
 - Versie: v3.3.30
 - Datum: 2 augustus 2026
-- Inhoud: Sprint 3 — Doelen (7.1) & Challenges (7.2), de eerste complete Premium gebruikersmodule. Nieuwe `goals`-tabel (migratie v337 — **nog niet uitgevoerd in Supabase**) die uitsluitend het doel zelf opslaat; actuele waarden worden altijd live gelezen uit bestaande tabellen (body_comp/weight_log/exercises/sessions) — geen dubbele opslag. Ondersteunt 9 doeltypes met SMART-check, en 5 persoonlijke Challenges die volledig herleid worden uit bestaande sessiehistorie (incl. een PR-telling zonder aparte PR-log). Geïntegreerd op Dashboard (compacte voortgangskaart) en Profiel (toegangspunt), met een "Vraag de coach"-knop per doel die de bestaande AI-coach hergebruikt. **Bewust niet gebouwd:** Gym/Team-challenges (vereist cross-user aggregatie-infrastructuur die niet bestaat) en "Perfecte trainingsweek" (geen eenduidige bestaande definitie — zou een aanname zijn). Zie `Sprintrapporten/Sprint3_Rapport.md`.
+- Inhoud: Sprint 3 — Doelen (7.1) & Challenges (7.2), de eerste complete Premium gebruikersmodule. Nieuwe `goals`-tabel (migratie v337, **uitgevoerd in Supabase op 2 augustus 2026 na een typefix — zie DEC-019**) die uitsluitend het doel zelf opslaat; actuele waarden worden altijd live gelezen uit bestaande tabellen (body_comp/weight_log/exercises/sessions) — geen dubbele opslag. Ondersteunt 9 doeltypes met SMART-check, en 5 persoonlijke Challenges die volledig herleid worden uit bestaande sessiehistorie (incl. een PR-telling zonder aparte PR-log). Geïntegreerd op Dashboard (compacte voortgangskaart) en Profiel (toegangspunt), met een "Vraag de coach"-knop per doel die de bestaande AI-coach hergebruikt. **Bewust niet gebouwd:** Gym/Team-challenges (vereist cross-user aggregatie-infrastructuur die niet bestaat) en "Perfecte trainingsweek" (geen eenduidige bestaande definitie — zou een aanname zijn). Zie `Sprintrapporten/Sprint3_Rapport.md`.
 
 ## Laatste release (vorig)
 - Versie: v3.3.29
@@ -28,7 +28,7 @@ v3.3.30
 
 ## Actieve sprint
 Sprint 3 — "Doelen, Challenges & Persoonlijke Voortgang": code afgerond, gevalideerd (syntax + 141/141 tests), **nog niet live geverifieerd** (migratie nog niet uitgevoerd, dus nog niet getest tegen de echte database). Twee acties vereist door Product Owner:
-1. **`migratie_v337.sql` uitvoeren in Supabase** (nieuwe `goals`-tabel) — zonder deze migratie toont het Doelen-scherm alleen de lege-staat (geen crash, want `sbGet` faalt stil, maar ook geen functionaliteit).
+1. ✅ **`migratie_v337.sql` uitgevoerd in Supabase** (2 augustus 2026) — na een typefix (`exercise_id` moest `text` zijn, niet `bigint`, zie DEC-019). Live functionele validatie van het Doelen-scherm zelf staat nog open.
 2. **Bevestigen of `migratie_v336.sql`** (Sprint 2.5) al is uitgevoerd — dat stond eerder als open actiepunt; als dat inmiddels is gebeurd mag dit punt vervallen.
 
 Daarnaast nog open: hertest van de mobiele `100vh`-hotfix (v3.3.29) op een echt toestel.

@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS public.goals (
   user_id uuid not null references auth.users(id) on delete cascade,
   type text not null check (type in ('gewicht','vetpercentage','spiermassa','pr','frequentie','volume','conditie','uithoudingsvermogen','eigen')),
   naam text,                    -- vrije naam, verplicht bij type='eigen', optioneel label bij andere types
-  exercise_id bigint references public.exercises(id) on delete set null,  -- alleen bij type='pr': verwijst naar bestaande exercises.peak_goal/pr
+  exercise_id text references public.exercises(id) on delete set null,  -- alleen bij type='pr': verwijst naar bestaande exercises.peak_goal/pr
   doelwaarde numeric,            -- streefwaarde; niet gebruikt bij type='pr' (die leest exercises.peak_goal)
   eenheid text,                  -- 'kg' | '%' | 'sessies' | 'ton' | 'km' | vrij (bij 'eigen')
   startwaarde numeric,            -- waarde op moment van aanmaken, voor voortgangsberekening t.o.v. startpunt

@@ -1,5 +1,31 @@
 # Trainingskompas — Changelog
 
+## v3.3.30 — 2 augustus 2026 (Sprint 3 — Doelen, Challenges & Persoonlijke Voortgang)
+
+### Toegevoegd
+- `migratie_v337.sql`: nieuwe `goals`-tabel (RLS, per gebruiker) — **nog niet uitgevoerd in Supabase**.
+- Doelen-scherm (7.1): 9 doeltypes (gewicht/vetpercentage/spiermassa/PR/frequentie/volume/conditie/uithoudingsvermogen/eigen), elk met live berekende voortgang en een SMART-check.
+- Persoonlijke Challenges (7.2): 100 trainingen, 30 dagen actief, 100 km roeien, 500 ton volume, 10 PR's — allemaal 100% herleid uit bestaande sessiedata, niets nieuws opgeslagen.
+- Dashboard-integratie: compacte doelenkaart met voortgangsbalk.
+- Profiel-integratie: nieuw toegangspunt "Doelen & Challenges".
+- "Vraag de coach"-knop per doel — hergebruikt de bestaande AI-coach-chatfunctie (`sendMsg()`), geen nieuwe AI.
+
+### Bewust niet toegevoegd
+- Gym-/Team-challenges (DEC-018) — vereist cross-user aggregatie-infrastructuur die niet bestaat.
+- "Perfecte trainingsweek" (DEC-018) — geen eenduidige bestaande definitie van "perfect".
+
+### Opgelost (tijdens bouwen ontdekt en gecorrigeerd, nooit live geweest)
+- Twee dubbele-backslash-escapefouten in stringliterals (`\\'` i.p.v. `\'`) die de syntax-check lieten falen — gecorrigeerd vóór commit.
+- Eerste opzet van de "nieuw doel"-modal gebruikte niet-bestaande CSS-klassen/functienamen (`sbInsert` i.p.v. `sbPostQ`, verzonnen modal-structuur i.p.v. het bestaande `.modal-bg`/`.modal`-patroon) — rechtgezet door het bestaande patroon eerst op te zoeken.
+
+### Gewijzigd
+- `APP_VER` → v3.3.30, `CACHE_NAME` → maurice-training-v3330.
+
+### Bekende problemen
+- **Functioneel nog niet gevalideerd** — migratie v337 moet eerst uitgevoerd worden, daarna volgt een live doorloop van alle doeltypes.
+
+---
+
 ## v3.3.29 — 2 augustus 2026 (Hotfix — mobiel 100vh-probleem)
 
 ### Opgelost

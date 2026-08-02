@@ -6,24 +6,32 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en docs/Brand/BRAND_IDENTITY.md)
 
 ## Huidige versie
-v3.3.28
+v3.3.30
 
 ## Laatste release
-- Versie: v3.3.28
+- Versie: v3.3.30
 - Datum: 2 augustus 2026
-- Inhoud: Sprint 2.5 — Validatie, Polish & Release Readiness. **Live device-/browservalidatie uitgevoerd** op de daadwerkelijke productie-app (maurice-art.netlify.app, met toestemming en via een reeds actieve sessie) — alle 5 Sprint 2-schermen bevestigd aanwezig en renderend, dark mode visueel bevestigd, privacy-checkbox-gate in onboarding bevestigd werkend. **Twee echte bugs gevonden via live console-logs en verholpen:** (1) `atleet_profiel`-writes vanuit onboarding faalden op een ontbrekende `doel`-kolom (migratie v336), (2) `refreshStats()` crashte bij elk bezoek aan Beheer omdat het scherm-specifieke element daar niet bestaat — dit was **al vóór Sprint 2 aanwezig**, nu pas ontdekt door live-logs. Zie `Sprintrapporten/Sprint2.5_Rapport.md` voor het volledige verslag inclusief wat wél en niet kon worden gevalideerd.
+- Inhoud: Sprint 3 — Doelen (7.1) & Challenges (7.2), de eerste complete Premium gebruikersmodule. Nieuwe `goals`-tabel (migratie v337 — **nog niet uitgevoerd in Supabase**) die uitsluitend het doel zelf opslaat; actuele waarden worden altijd live gelezen uit bestaande tabellen (body_comp/weight_log/exercises/sessions) — geen dubbele opslag. Ondersteunt 9 doeltypes met SMART-check, en 5 persoonlijke Challenges die volledig herleid worden uit bestaande sessiehistorie (incl. een PR-telling zonder aparte PR-log). Geïntegreerd op Dashboard (compacte voortgangskaart) en Profiel (toegangspunt), met een "Vraag de coach"-knop per doel die de bestaande AI-coach hergebruikt. **Bewust niet gebouwd:** Gym/Team-challenges (vereist cross-user aggregatie-infrastructuur die niet bestaat) en "Perfecte trainingsweek" (geen eenduidige bestaande definitie — zou een aanname zijn). Zie `Sprintrapporten/Sprint3_Rapport.md`.
 
 ## Laatste release (vorig)
-- Versie: v3.3.27
+- Versie: v3.3.29
 - Datum: 2 augustus 2026
-- Inhoud: Sprint 2 — Instellingen, Onboarding & Branding. Instellingen-scherm (8.3) volledig gebouwd (thema/taal/meldingen/geluid-trillingen/privacy-link/offline-info/cachebeheer/app-info), Meldingen-scherm (8.2, 5 losse voorkeuren), Privacy-scherm (9.6, juridische tekst expliciet als placeholder gemarkeerd), Help-scherm (9.4/9.5/9.7), volledige 9-staps onboarding-wizard (eenmalig na login), merkidentiteit doorgevoerd (Poppins-font, officiële kleuren #0B1D2A/#0E3B4A/#00B894/#E6EBEF, handmatige thema-override naast automatische detectie), KOMPAS-afkorting gecorrigeerd naar volledige naam op login- én dashboardscherm (DEC-010). Zie `Sprintrapporten/Sprint2_Rapport.md` voor het volledige verslag.
+- Inhoud: Hotfix — mobiel `100vh`-probleem. Product Owner meldde met telefoonscreenshot dat de Terug/Volgende-knoppen op onboarding buiten beeld vielen op een echt Android-toestel. `height:100dvh` toegevoegd als progressive enhancement op `.scr`/`.pin-screen` (DEC-016). Geverifieerd geen regressie op desktop; **hertest op echt toestel door Product Owner nog niet expliciet bevestigd.**
+
+- Versie: v3.3.28
+- Datum: 2 augustus 2026
+- Inhoud: Sprint 2.5 — Validatie, Polish & Release Readiness. Live device-/browservalidatie op de productie-app; twee echte bugs gevonden en verholpen (ontbrekende `doel`-kolom, `refreshStats()`-crash op Beheer-scherm). Zie `Sprintrapporten/Sprint2.5_Rapport.md`.
 
 > Oudere releases (t/m v3.3.26): zie DECISION_LOG.md en CHANGELOG.md.
 
 > Oudere releases (t/m v3.3.25): zie DECISION_LOG.md en CHANGELOG.md voor de volledige geschiedenis — hier bewust ingekort om dit document actueel en leesbaar te houden.
 
 ## Actieve sprint
-Sprint 2.5 — "Validatie, Polish & Release Readiness": afgerond. Live device-/browservalidatie uitgevoerd op de productie-app; twee echte bugs gevonden en verholpen (zie Bekende bugs). **⚠ Actie vereist door Product Owner: `migratie_v336.sql` moet in Supabase worden uitgevoerd** — zonder deze migratie blijft de `atleet_profiel`-Supabase-sync falen voor elke gebruiker die onboarding doorloopt (device-lokaal werkt het al wel).
+Sprint 3 — "Doelen, Challenges & Persoonlijke Voortgang": code afgerond, gevalideerd (syntax + 141/141 tests), **nog niet live geverifieerd** (migratie nog niet uitgevoerd, dus nog niet getest tegen de echte database). Twee acties vereist door Product Owner:
+1. **`migratie_v337.sql` uitvoeren in Supabase** (nieuwe `goals`-tabel) — zonder deze migratie toont het Doelen-scherm alleen de lege-staat (geen crash, want `sbGet` faalt stil, maar ook geen functionaliteit).
+2. **Bevestigen of `migratie_v336.sql`** (Sprint 2.5) al is uitgevoerd — dat stond eerder als open actiepunt; als dat inmiddels is gebeurd mag dit punt vervallen.
+
+Daarnaast nog open: hertest van de mobiele `100vh`-hotfix (v3.3.29) op een echt toestel.
 
 ## Wat werkt
 - Volledige trainingslogging (A/B, cardio, supersets, plate calculator, PR-badges, rusttimer)
@@ -45,6 +53,7 @@ Sprint 2.5 — "Validatie, Polish & Release Readiness": afgerond. Live device-/b
 - Merkidentiteit doorgevoerd: Poppins-font, officiële kleuren (`#0B1D2A`/`#0E3B4A`/`#00B894`/`#E6EBEF`) op alle schermen via de bestaande design-tokens, KOMPAS-afkorting gecorrigeerd naar "Trainingskompas" op login- en dashboardscherm (DEC-010). (Sprint 2)
 
 ## Wat niet werkt
+- Doelen/Challenges (Sprint 3): code compleet, maar **functioneel nog niet gevalideerd** — vereist eerst migratie v337 en dan een live doorloop (aanmaken/bewerken/verwijderen van elk doeltype). Zie Sprintrapporten/Sprint3_Rapport.md voor precies wat wel/niet is getest.
 - Offline IndexedDB-sync (bewust uitgesteld, geen bug — sw.js-niveau wél geverifieerd, zie boven)
 - Accountverwijdering: gebouwd en live gedeployed (SUPABASE_SERVICE_ROLE_KEY ingesteld op Netlify, 1 augustus), nog NIET functioneel getest — test met wegwerp-account volgt (Product Owner, thuis)
 - Geluid-instelling (Instellingen): opgeslagen voorkeur zonder huidig effect — de app heeft nog geen geluidseffecten om aan te koppelen.

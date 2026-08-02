@@ -1,5 +1,78 @@
 # Trainingskompas — Changelog
 
+## v3.3.36 — 2 augustus 2026 (Premium Experience Sprint — Batch 2, deel 1: Iconografie)
+*Geen nieuwe functionaliteit. Emoji-iconen vervangen door een consistente lijn-icon-set (H5), op de primaire schermen.*
+
+### Verbeterd
+- **Bottom-navigatie**: emoji (🏠🏋️💬👤📈) → consistente 1,8px lijn-iconen (huis, halter, chatbubbel, persoon, trendgrafiek) op een 24px-raster. Actief item kleurt nu ook qua icoon mee in accent-groen (voorheen alleen het label).
+- **Home-header**: 📊 → HRV/dagfactor-puls-icoon; ⚙️ → sliders/beheer-icoon.
+- **Plate Calculator-knop**: ⚖️ → halter-lijnicoon.
+
+### Technisch
+- DRY-aanpak: één `applyNavIcons()` mapt alle `.ni-icon`'s op basis van het label, i.p.v. de 12× gedupliceerde nav-markup handmatig te bewerken. Iconen erven `currentColor` (grijs → accent bij actief) en schalen mee met het thema.
+- `.ibtn`/`.ni-icon` SVG-styling toegevoegd; iconen respecteren dark mode.
+
+### Getest
+- `node --check` OK · `logic_tests.js` 141/141 · headless render 0 code-fouten · 65 nav-iconen correct geplaatst (13 navs × 5), header + plate-calc visueel bevestigd.
+
+### Nog open in Batch 2
+- Overige per-scherm-emoji (Coach 🕘/🗑, Stats ↻, admin-acties) → lijn-iconen; werkset ≤2 tikken; Home volledig Morning Report; 19× native `confirm()` → merkmodals; volledige WCAG-AA + performance-pass.
+
+### Gewijzigd
+- `APP_VER` → v3.3.36; `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v3336`.
+
+---
+
+## v3.3.35 — 2 augustus 2026 (Premium Experience Sprint — Batch 1)
+*Geen nieuwe functionaliteit. Doel: bestaande functionaliteit naar premium-niveau brengen — hogere kwaliteit, minder frictie, meer emotie, betere uitstraling. Batch 1 = veilige, hoog-zichtbare afwerking; structurele ingrepen volgen in Batch 2 (zie onderaan).*
+
+### Brand cleanup (zichtbaar)
+- **ART CrossFit-logo verwijderd** van het Home-scherm en vervangen door een eigen TrainingKompas-merkmark (bergpad-met-vlag-motief in de merkkleuren `#0B1D2A`/`#00B894`/`#E6EBEF`, conform H5). Live geverifieerd via headless render.
+- **Home-subtitel** "AI Trainingscoach 2026" → tijdloze merkbelofte "Slimmer trainen, elke dag" (geen verouderend jaartal meer).
+- **Stats-subtitel** "1RM & Peakdoel 15 aug 2026" → "1RM & peakdoel" (hardcoded, verouderende datum verwijderd; `id="stats-peak-sub"` toegevoegd voor toekomstige dynamische vulling).
+- **Beheer-subtitel** placeholder "v2.8.5" verwijderd (werd al door JS met `APP_VER` overschreven; toonde kort een stale versie).
+- **Systeemprompt** ontdaan van hardcoded persoonsnaam ("… van Latum van Steensel"); coach gebruikt nu `atleet.naam` met neutrale fallback "de atleet". Label "Maurice-specifiek" → "gebruiker-specifiek". Default atleet-`naam` niet meer "Maurice".
+- **manifest.json** `short_name` "Kompas" → "Trainingskompas" (schond DEC-010: merknaam altijd zichtbaar).
+- **sw.js** cachenamen `maurice-training-*` → `trainingskompas-*`; notificatie-fallbacktitel "Training Coach" → "Trainingskompas".
+
+### Premium micro-interacties (H11-tokens nu daadwerkelijk toegepast)
+- Zachte **schermtransitie** (`tk-screen-in`, `--motion-navigation`) bij elke navigatie.
+- **PR-badge pop** (`tk-pop`, `--motion-success`) — het emotionele kernmoment krijgt nadruk.
+- **Set-voltooid pop** op de set-cirkel (`tk-set-done`, `--motion-fast`) bij afvinken.
+- **AI Apply-knop** bevestigingsanimatie (`apply-ok`) bij toepassen van een coach-advies.
+- Druk-feedback op `.btn`/`.act-btn`/`.ibtn`. Alles neutraliseert onder `prefers-reduced-motion` (bestaande globale regel).
+
+### Premium AI-chat (alleen presentatie, geen prompt-logica gewijzigd)
+- **Markdown wordt nu gerenderd** i.p.v. letterlijke `**` te tonen — via een nieuwe veilige `mdInline()` (eerst HTML-escapen tegen XSS, daarna beperkte subset: vet/cursief/code/bullets).
+- **AI- vs. gebruikersbubbel** visueel onderscheiden: coach = petrol `#0E3B4A` (AI-content, conform H5), gebruiker = donkerblauw; eigen bubbelvormen.
+- Kale spinner → premium **typing-indicator** (drie pulserende puntjes).
+- Foutmeldingen "Fout: …" en "Verbindingsfout. Check internet." → verzorgde, herstelgerichte copy. Status "Denkt na..." → "Coach denkt mee…".
+
+### Premium states
+- Zichtbare "Laden..."-placeholders in Stats (PR/volume/herstel) en Profiel-wearable → **skeleton-loaders** (`tk-skel`, shimmer).
+- Lege spierbelasting-data → verzorgde empty state (`tk-empty`) met richting i.p.v. kale "Geen data".
+
+### Bewuste, veilige afwijking (dataveiligheid — productprioriteit)
+- **localStorage-sleutelprefix `maurice_` NIET hernoemd.** 47 sleutels (`maurice_auth_session`, `maurice_atleet`, `maurice_trainings`, `maurice_onboarding_done`, …) zijn opslag-identifiers; blind hernoemen zou alle bestaande gebruikersdata en de login wissen. Alleen zichtbare branding is opgeschoond; een eventuele sleutelmigratie hoort in een aparte, veilige migratiestap (Batch 2). Vastgelegd als beslissing.
+
+### Getest
+- `node --check` op alle ingebedde script-blokken: **OK**.
+- `node logic_tests.js`: **141/141 geslaagd, 0 mislukt** — geen regressies.
+- Headless boot (Playwright/Chromium): **0 code-fouten**; nieuwe Home-header visueel bevestigd.
+- *Niet uitvoerbaar in deze omgeving (geen tooling, eerlijk gemeld):* `npm run lint/typecheck/test` (repo heeft geen `package.json`/npm-toolchain); Lighthouse/axe; volledige before/after van datagedreven schermen (vereisen ingelogde live sessie).
+
+### Gewijzigd
+- `APP_VER` → v3.3.35; `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v3335`.
+
+### Openstaand — Batch 2 (structureel, met voorstel/before-after)
+- Emoji-navigatie → consistente lijn-icon-set (H5) + de 12× gedupliceerde bottom-nav dedupliceren (12 dubbele element-id's).
+- Werkset-rij naar ≤2 interacties (RPE compacter, weight-mode uit de rij, ghost-values, grotere touch-targets).
+- Home volledig als Morning Report met de dagfactor als dominant, tikbaar element (waarom/data/logica/confidence).
+- 19× native `confirm()` → merkeigen bevestigingsmodals.
+- Volledige WCAG-AA-pass (ARIA/focus/keyboard/contrast/touch-targets) en performance-pass.
+
+---
+
 ## Sprint 3.1 — 2 augustus 2026 (Live Validatie, Release Closure & Quality Gate)
 *Geen eigen versienummer — sluit v3.3.34 af met live validatie, geen codewijzigingen in dit deel.*
 

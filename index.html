@@ -143,7 +143,8 @@ body{display:flex;justify-content:center}
 .hdr-title{font-size:28px;font-weight:800;color:var(--dark);letter-spacing:-.5px}
 .hdr-sub{font-size:13px;color:var(--g4);margin-top:2px}
 .hdr-row{display:flex;justify-content:space-between;align-items:flex-start}
-.ibtn{background:var(--card);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;box-shadow:var(--shadow);flex-shrink:0}
+.ibtn{background:var(--card);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;box-shadow:var(--shadow);flex-shrink:0;color:var(--dark)}
+.ibtn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .ibtn:active{background:var(--g2)}
 
 /* SWITCH (H7 Component Library — role="switch") */
@@ -179,7 +180,10 @@ body{display:flex;justify-content:center}
 /* NAV */
 .bnav{background:var(--card);display:flex;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px));flex-shrink:0;border-top:1px solid var(--g2)}
 .ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;background:none;border:none;padding:4px 0;position:relative}
-.ni-icon{font-size:22px;line-height:1}
+.ni{color:var(--g4)}
+.ni.active{color:var(--accent)}
+.ni-icon{font-size:22px;line-height:1;height:23px;display:flex;align-items:center;justify-content:center}
+.ni-icon svg{width:23px;height:23px;display:block;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .ni-label{font-size:9px;font-weight:600;color:var(--g4);text-transform:uppercase;letter-spacing:.3px}
 .ni.active .ni-label{color:var(--accent)}
 .ni-dot{position:absolute;top:2px;right:calc(50% - 18px);width:8px;height:8px;background:var(--accent);border-radius:50%;display:none}
@@ -560,8 +564,8 @@ canvas{width:100%;height:100%}
         <div id="offline-badge" style="display:none;margin-top:4px;font-size:11px;font-weight:700;color:var(--y,#b8860b);background:rgba(184,134,11,.12);border-radius:8px;padding:2px 8px;width:fit-content;cursor:pointer" onclick="openOfflineQueueModal()"></div>
       </div>
       <div style="display:flex;gap:8px">
-        <button class="ibtn" onclick="openModal('m-hrv')" aria-label="Dagfactor en HRV invoeren">📊</button>
-        <button class="ibtn" onclick="openBeheer()" aria-label="Beheer openen">⚙️</button>
+        <button class="ibtn" onclick="openModal('m-hrv')" aria-label="Dagfactor en HRV invoeren"><svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 3.5 12 2.5-7 1.5 3h4"/></svg></button>
+        <button class="ibtn" onclick="openBeheer()" aria-label="Beheer openen"><svg viewBox="0 0 24 24"><path d="M4 7h8M18 7h2M4 12h2M10 12h10M4 17h6M16 17h4"/><circle cx="15" cy="7" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="13" cy="17" r="2"/></svg></button>
       </div>
     </div>
   </div>
@@ -573,7 +577,7 @@ canvas{width:100%;height:100%}
     <div id="vaste-training-btns" style="display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap"></div>
     <div id="custom-train-btns"></div>
     <div id="home-next-lbl" style="font-size:12px;color:var(--g4);font-weight:600;text-align:center;margin-bottom:10px"></div>
-    <button onclick="openPlateCalc(0)" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;background:var(--g1);border:1.5px solid var(--g2);border-radius:12px;font-family:var(--f);font-size:13px;font-weight:700;color:var(--dark);cursor:pointer;margin-bottom:10px">⚖️ Plate Calculator</button>
+    <button onclick="openPlateCalc(0)" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;background:var(--g1);border:1.5px solid var(--g2);border-radius:12px;font-family:var(--f);font-size:13px;font-weight:700;color:var(--dark);cursor:pointer;margin-bottom:10px"><svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:2px"><path d="M4 10v4M6.5 8v8M17.5 8v8M20 10v4M6.5 12h11"/></svg> Plate Calculator</button>
     <div class="sec-hd">Recente sessies</div>
     <div class="card"><div class="card-body" style="padding-top:10px" id="home-recent"></div></div>
     <div style="height:8px"></div>
@@ -2141,7 +2145,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.35';
+const APP_VER = 'v3.3.36';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -9553,8 +9557,26 @@ async function ensureExercisesLoaded(){
   return _exercisesLoading;
 }
 
+// v3.3.35 Batch 2: emoji-navigatie vervangen door consistente lijn-iconen (H5).
+// DRY: één functie mapt elke .ni-icon op basis van het label — geen 12x gedupliceerde
+// nav-markup handmatig bewerken. Iconen erven currentColor (grijs -> accent bij actief).
+function applyNavIcons(){
+  const I={
+    home:'<svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V19a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-8.5"/><path d="M9.5 20v-5.5h5V20"/></svg>',
+    training:'<svg viewBox="0 0 24 24"><path d="M4 10v4M7 8v8M17 8v8M20 10v4M7 12h10"/></svg>',
+    coach:'<svg viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4 19.5l1.3-4.1A7.5 7.5 0 1 1 20 11.5Z"/></svg>',
+    profiel:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>',
+    stats:'<svg viewBox="0 0 24 24"><path d="M4 4v16h16"/><path d="M7.5 14.5 11 11l2.5 2.5L19 8"/></svg>'
+  };
+  document.querySelectorAll('.bnav .ni').forEach(btn=>{
+    const lbl=(btn.querySelector('.ni-label')?.textContent||'').trim().toLowerCase();
+    const ic=btn.querySelector('.ni-icon');
+    if(ic && I[lbl]) ic.innerHTML=I[lbl];
+  });
+}
 window.addEventListener('load',async()=>{
   if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  try{applyNavIcons();}catch(e){}
   if(detectPasswordRecovery()){
     document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
     document.getElementById('s-auth-newpass').classList.add('active');

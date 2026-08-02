@@ -150,3 +150,11 @@
 - Alternatieven: een arbitraire drempel kiezen voor "perfecte week" (bv. ≥3 sessies) — afgewezen, dat zou een aanname zijn die de Product Owner niet heeft gevalideerd.
 - Impact: 5 van de in de opdracht genoemde Challenge-voorbeelden zijn gebouwd (100 trainingen, 30 dagen actief, 100 km roeien, 500 ton volume, 10 PR's — allemaal 100% herleid uit bestaande sessiedata). De overige 2 staan als aanbeveling voor een latere sprint, met de Product Owner te bepalen wat "perfect" precies betekent vóórdat het gebouwd wordt.
 - Verantwoordelijke: Maurice
+
+## DEC-019
+- Datum: 2 augustus 2026
+- Beslissing: `goals.exercise_id` gecorrigeerd van `bigint` naar `text`, matchend met het daadwerkelijke kolomtype van `exercises.id`.
+- Reden: migratie v337 faalde bij eerste uitvoering in Supabase met "foreign key constraint cannot be implemented... Key columns exercise_id and id are of incompatible types: bigint and text" — mijn aanname over het kolomtype van `exercises.id` was fout. Live foutmelding gebruikt om te corrigeren, niet geraden.
+- Alternatieven: geen — dit is een directe typefout-correctie, geen ontwerpkeuze.
+- Impact: bijbehorende JS-code (`saveNewGoal()`) ook aangepast — stuurde `exercise_id` voorheen als `Number(...)`, nu als tekst, consistent met het gecorrigeerde kolomtype. Migratie v337 succesvol uitgevoerd door Product Owner na deze fix ("Success. No rows returned").
+- Verantwoordelijke: Maurice

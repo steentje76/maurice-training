@@ -1,5 +1,16 @@
 # Trainingskompas — Changelog
 
+## v3.3.31 — 2 augustus 2026 (Hotfix — migratie v337 typefout)
+
+### Opgelost
+- **Migratie v337 faalde bij eerste uitvoering:** `goals.exercise_id` was aangemaakt als `bigint`, terwijl `exercises.id` in werkelijkheid `text` is — foreign key kon niet worden aangelegd. Gecorrigeerd naar `text`. Bijbehorende JS (`saveNewGoal()`) aangepast: stuurde `exercise_id` voorheen als `Number(...)`, nu als tekst.
+- Migratie v337 succesvol uitgevoerd door Product Owner na deze fix.
+
+### Gewijzigd
+- `APP_VER` → v3.3.31, `CACHE_NAME` → maurice-training-v3331.
+
+---
+
 ## v3.3.30 — 2 augustus 2026 (Sprint 3 — Doelen, Challenges & Persoonlijke Voortgang)
 
 ### Toegevoegd

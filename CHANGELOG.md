@@ -1,5 +1,25 @@
 # Trainingskompas — Changelog
 
+## Sprint 3.1 — 2 augustus 2026 (Live Validatie, Release Closure & Quality Gate)
+*Geen eigen versienummer — sluit v3.3.34 af met live validatie, geen codewijzigingen in dit deel.*
+
+### Live bevestigd
+- Doelen-module volledig end-to-end getest: Create/Read/Delete voor zowel PR-doel als eigen doel, Challenges tonen correcte live cijfers, 0 console-fouten over de volledige schermdoorloop (Doelen/Instellingen/Meldingen/Privacy/Help/Profiel/Statistieken/Coach/Dashboard).
+- Beide vorige hotfixes (v3.3.33 user_id, v3.3.34 modal-breedte) herbevestigd correct.
+
+### Expliciet niet geleverd (geen aannames/geen tooling)
+- Lighthouse- en axe-core-scores — geen tool beschikbaar.
+- Schaalbaarheidsbenchmarks (100–10.000 sessies) — zou synthetische data in productie of gefabriceerde cijfers vereisen.
+- Screenshot-pack in `docs/screenshots/` — browserscreenshots landen lokaal bij de Product Owner, niet in de repo.
+- Volledig Database Validatie Rapport — introspectiequeries klaargezet, resultaat nog niet ontvangen.
+
+### Bekend gat
+- Doelen-Update (bewerken) ontbreekt — alleen aanmaken/verwijderen is gebouwd.
+
+Zie `docs/Sprintrapporten/Sprint3.1_Rapport.md` voor het volledige verslag.
+
+---
+
 ## v3.3.34 — 2 augustus 2026 (Hotfix — modals te breed op desktop)
 
 ### Opgelost

@@ -6,17 +6,19 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en docs/Brand/BRAND_IDENTITY.md)
 
 ## Huidige versie
-v3.3.30
+v3.3.34
 
 ## Laatste release
-- Versie: v3.3.30
+- Versie: v3.3.34
 - Datum: 2 augustus 2026
-- Inhoud: Sprint 3 — Doelen (7.1) & Challenges (7.2), de eerste complete Premium gebruikersmodule. Nieuwe `goals`-tabel (migratie v337, **uitgevoerd in Supabase op 2 augustus 2026 na een typefix — zie DEC-019**) die uitsluitend het doel zelf opslaat; actuele waarden worden altijd live gelezen uit bestaande tabellen (body_comp/weight_log/exercises/sessions) — geen dubbele opslag. Ondersteunt 9 doeltypes met SMART-check, en 5 persoonlijke Challenges die volledig herleid worden uit bestaande sessiehistorie (incl. een PR-telling zonder aparte PR-log). Geïntegreerd op Dashboard (compacte voortgangskaart) en Profiel (toegangspunt), met een "Vraag de coach"-knop per doel die de bestaande AI-coach hergebruikt. **Bewust niet gebouwd:** Gym/Team-challenges (vereist cross-user aggregatie-infrastructuur die niet bestaat) en "Perfecte trainingsweek" (geen eenduidige bestaande definitie — zou een aanname zijn). Zie `Sprintrapporten/Sprint3_Rapport.md`.
+- Inhoud: Sprint 3.1 — Live Validatie, Release Closure & Quality Gate. Doelen-module (Sprint 3, v3.3.30) live end-to-end getest en bevestigd werkend: PR-doel en eigen doel beide aangemaakt/weergegeven/verwijderd, Challenges tonen correcte live cijfers, 0 console-fouten over de volledige schermdoorloop. Tijdens het testen 2 echte bugs gevonden en direct gefixt: `user_id` ontbrak bij het opslaan van een doel (RLS blokkeerde terecht alles, v3.3.33, DEC-021) en alle modals (~50 stuks, pre-existing, niet Sprint-3-specifiek) waren te breed op desktop-browsers (v3.3.34, DEC-022). Daartussenin ook nog een eerder gevonden, tot dan toe niet-gepushte fix meegenomen: zichtbare HTML-commentaartekst onder Instellingen (v3.3.32, DEC-020). **Bekend gat:** Doelen-CRUD mist nog een Update-functie (alleen aanmaken/verwijderen). Lighthouse/axe-core/schaalbaarheidsbenchmarks/screenshot-pack expliciet niet geleverd — geen tooling beschikbaar resp. zou aannames vereisen (DEC-023). Zie `Sprintrapporten/Sprint3.1_Rapport.md`.
 
 ## Laatste release (vorig)
-- Versie: v3.3.29
+- Versie: v3.3.30
 - Datum: 2 augustus 2026
-- Inhoud: Hotfix — mobiel `100vh`-probleem. Product Owner meldde met telefoonscreenshot dat de Terug/Volgende-knoppen op onboarding buiten beeld vielen op een echt Android-toestel. `height:100dvh` toegevoegd als progressive enhancement op `.scr`/`.pin-screen` (DEC-016). Geverifieerd geen regressie op desktop; **hertest op echt toestel door Product Owner nog niet expliciet bevestigd.**
+- Inhoud: Sprint 3 — Doelen (7.1) & Challenges (7.2), de eerste complete Premium gebruikersmodule. Zie `Sprintrapporten/Sprint3_Rapport.md`.
+
+> Oudere releases (t/m v3.3.29): zie DECISION_LOG.md en CHANGELOG.md.
 
 - Versie: v3.3.28
 - Datum: 2 augustus 2026
@@ -27,11 +29,12 @@ v3.3.30
 > Oudere releases (t/m v3.3.25): zie DECISION_LOG.md en CHANGELOG.md voor de volledige geschiedenis — hier bewust ingekort om dit document actueel en leesbaar te houden.
 
 ## Actieve sprint
-Sprint 3 — "Doelen, Challenges & Persoonlijke Voortgang": code afgerond, gevalideerd (syntax + 141/141 tests), **nog niet live geverifieerd** (migratie nog niet uitgevoerd, dus nog niet getest tegen de echte database). Twee acties vereist door Product Owner:
-1. ✅ **`migratie_v337.sql` uitgevoerd in Supabase** (2 augustus 2026) — na een typefix (`exercise_id` moest `text` zijn, niet `bigint`, zie DEC-019). Live functionele validatie van het Doelen-scherm zelf staat nog open.
-2. **Bevestigen of `migratie_v336.sql`** (Sprint 2.5) al is uitgevoerd — dat stond eerder als open actiepunt; als dat inmiddels is gebeurd mag dit punt vervallen.
+Sprint 3.1 — "Live Validatie, Release Closure & Quality Gate": **formeel afgesloten voor het functionele deel.** Doelen-module live end-to-end bevestigd (Create/Read/Delete, PR-doel én eigen doel, beide testdoelen weer opgeruimd — geen blijvende wijziging aan echte data). Twee bugs gevonden tijdens live testen, direct gefixt en herbevestigd: `user_id` ontbrak bij opslaan (v3.3.33), modals te breed op desktop (v3.3.34, pre-existing, alle ~50 modals geraakt niet alleen Doelen).
 
-✅ Mobiele `100vh`-hotfix (v3.3.29) bevestigd werkend op echt toestel door Product Owner. ✅ Doelen-module live end-to-end getest (DEC-021, met opruiming van het testdoel). Sprint 3 is hiermee volledig afgerond en bevestigd, niet alleen code-gevalideerd.
+**Nog open:**
+1. Database-introspectiequeries staan klaar in de chat — resultaat nog niet gedeeld door Product Owner, ER-overzicht/index-/rollbackdeel van het Sprint 3.1-rapport is daardoor nog onvolledig.
+2. Doelen-Update (bewerken) ontbreekt nog als functionaliteit — alleen aanmaken/verwijderen is gebouwd.
+3. Lighthouse/axe-core/schaalbaarheidsbenchmarks/screenshot-pack expliciet niet geleverd deze sprint (geen tooling/zou aannames vereisen) — blijft terugkerend aandachtspunt.
 
 ## Wat werkt
 - Volledige trainingslogging (A/B, cardio, supersets, plate calculator, PR-badges, rusttimer)

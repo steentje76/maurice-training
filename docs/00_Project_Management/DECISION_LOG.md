@@ -166,3 +166,11 @@
 - Alternatieven: geen — dit is een directe fout-correctie.
 - Impact: comment-balans in het hele bestand geverifieerd (52 open = 52 sluit, was 51 vs 52 vóór de fix) — bevestigt dat dit de enige plek was. Geen enkele andere sectie geraakt.
 - Verantwoordelijke: Maurice
+
+## DEC-021
+- Datum: 2 augustus 2026
+- Beslissing: `saveNewGoal()` gecorrigeerd — `user_id` ontbrak in de insert-payload naar `goals`, waardoor de RLS-policy elke poging blokkeerde (42501 "new row violates row-level security policy").
+- Reden: live end-to-end test (na migratie v337) via de browserverbinding toonde de fout direct. Live getest met een echt testdoel (PR-doel op Hexabar Deadlift), bevestigd correct opgeslagen én correct weergegeven (240/300 kg, 80%), daarna zelf weer gearchiveerd — geen data van de Product Owner is blijvend gewijzigd.
+- Alternatieven: geen — directe bugfix, geen ontwerpkeuze.
+- Impact: Doelen-module nu voor het eerst end-to-end live bevestigd werkend (aanmaken → opslaan → live voortgangsberekening → weergave), niet langer alleen code-gevalideerd.
+- Verantwoordelijke: Maurice

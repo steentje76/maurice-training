@@ -174,3 +174,11 @@
 - Alternatieven: geen — directe bugfix, geen ontwerpkeuze.
 - Impact: Doelen-module nu voor het eerst end-to-end live bevestigd werkend (aanmaken → opslaan → live voortgangsberekening → weergave), niet langer alleen code-gevalideerd.
 - Verantwoordelijke: Maurice
+
+## DEC-022
+- Datum: 2 augustus 2026
+- Beslissing: `.modal-bg`/`.modal` begrensd tot dezelfde 430px-kolom als de rest van de app (`justify-content:center` + `max-width:430px`), i.p.v. de volle breedte van het browservenster.
+- Reden: Product Owner merkte tijdens een screenshot van het live testen op dat de "Nieuw doel"-modal de volle breedte van het (brede desktop-)browservenster besloeg i.p.v. de smalle app-kolom. Onderzocht: dit was geen Sprint 3-fout en ook niet uniek voor deze ene modal — `.modal-bg{position:fixed;inset:0}` en `.modal{width:100%}` golden al voor alle ~50 modals in de app, sinds vóór dit project. Op een echte telefoon (viewport altijd <430px) was dit nooit zichtbaar; het werd nu pas zichtbaar doordat er via een brede desktop-browserverbinding werd getest.
+- Alternatieven: alleen de nieuwe Doelen-modal fixen — afgewezen, zou inconsistent zijn met de overige ~49 modals en het onderliggende probleem niet oplossen.
+- Impact: alle modals in de app tonen zich nu consistent in de 430px-kolom, ook op brede schermen. Live geverifieerd via `getBoundingClientRect()`: modal exact 430px breed, uitgelijnd met de app-kolom (745–1175px op een 1920px-breed venster). Geen wijziging in hoe de app op een echte telefoon (smal scherm) getoond wordt.
+- Verantwoordelijke: Maurice

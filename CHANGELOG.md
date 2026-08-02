@@ -1,5 +1,26 @@
 # Trainingskompas — Changelog
 
+## v3.3.39 — 2 augustus 2026 (Premium Experience Sprint — Batch 2, deel 4: Merkeigen bevestigingsdialogen)
+*Geen functionaliteit gewijzigd; alle native `confirm()`-dialogen vervangen door een merkeigen modal (Handbook/UX Constitution: geen native dialogen).*
+
+### Verbeterd
+- **Alle 22 native `confirm()`-aanroepen** vervangen door één herbruikbare `confirmModal()` — een verzorgde, gecentreerde merk-modal met titel, boodschap, "Annuleren" en een actieknop. Destructieve acties (verwijderen/loskoppelen/account) krijgen een **rode danger-knop** (`#B3454C`, H5), niet-destructieve (cache verversen, weken genereren, hervatten) de accent-knop. Elke knop heeft nu een **specifiek werkwoord** (Verwijderen/Loskoppelen/Wissen/Pauzeren/Hervatten) i.p.v. het generieke "OK".
+- Betreft o.a.: uitloggen, account verwijderen (dubbele bevestiging), sessie pauzeren, set/opwarmset/oefening/programma/doel/training/apparaat verwijderen, wearable loskoppelen, gesprek wissen, cache verversen, training hervatten, weken her-genereren.
+
+### Toegankelijkheid & interactie
+- Toetsenbord: **Esc = annuleren, Enter = bevestigen**; focus springt naar de actieknop; klik op de achtergrond annuleert. `role="dialog"`, `aria-modal`. Nette in/uit-animatie via de motion-tokens; opgeruimd na sluiten.
+
+### Technisch
+- `confirmModal(message,{title,okLabel,cancelLabel,danger})` retourneert `Promise<boolean>`; boodschappen ge-escapet (XSS-veilig via `escHtml`). Vijf UI-handlers die voorheen synchroon waren (authSignOut, deleteCustomTraining, showSetMenu, showWarmupMenu, confirmLeave) zijn `async` gemaakt — ze worden alleen vanuit onclick aangeroepen, dus geen effect op aanroepers.
+
+### Getest
+- `node --check` OK · `logic_tests.js` 141/141 · headless: modal rendert, OK→`true`, Annuleren→`false`, geen achtergebleven modals, 0 code-fouten. `grep` bevestigt: geen native `confirm(` meer in de code.
+
+### Gewijzigd
+- `APP_VER` → v3.3.39; `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v3339`.
+
+---
+
 ## v3.3.38 — 2 augustus 2026 (Premium Experience Sprint — Batch 2, deel 3: Werkset-ergonomie)
 *Geen functionaliteit verwijderd; de hoogfrequente werkset-rij ergonomischer en premium gemaakt.*
 

@@ -116,6 +116,17 @@ html[data-theme="light"]{
 .tk-empty{text-align:center;color:var(--g4);padding:22px 16px;font-size:13px;line-height:1.5}
 .tk-empty-emo{font-size:22px;opacity:.55;margin-bottom:6px}
 .tk-empty--error{color:var(--y)}
+/* Merkeigen bevestigingsdialoog (vervangt native confirm()) */
+.tk-confirm-bg{position:fixed;inset:0;background:rgba(11,29,42,.45);display:flex;align-items:center;justify-content:center;z-index:10000;padding:24px;opacity:0;transition:opacity var(--motion-fast) var(--motion-ease)}
+.tk-confirm-bg.show{opacity:1}
+.tk-confirm{background:var(--card);border-radius:16px;max-width:340px;width:100%;padding:20px;box-shadow:0 12px 40px rgba(0,0,0,.28);transform:translateY(10px);transition:transform var(--motion-normal) var(--motion-ease)}
+.tk-confirm-bg.show .tk-confirm{transform:none}
+.tk-confirm-title{font-size:16px;font-weight:800;color:var(--dark);margin-bottom:6px}
+.tk-confirm-msg{font-size:13px;line-height:1.55;color:var(--g6);margin-bottom:16px;white-space:pre-line}
+.tk-confirm-actions{display:flex;gap:8px;justify-content:flex-end}
+.tk-confirm-actions button{padding:10px 16px;border-radius:10px;font-family:var(--f);font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid var(--g2);background:var(--g1);color:var(--dark);min-width:92px}
+.tk-confirm-ok{background:var(--accent);border-color:var(--accent);color:#fff}
+.tk-confirm-ok.danger{background:#B3454C;border-color:#B3454C}
 /* Extra druk-feedback (bevestiging) op de kern-interactieve elementen */
 .btn:active,.act-btn:active,.ibtn:active{transform:scale(.97)}
 /* Premium AI-chatbubbels: visueel onderscheid tussen coach (petrol, AI-content) en gebruiker */
@@ -2146,7 +2157,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.38';
+const APP_VER = 'v3.3.39';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -2276,8 +2287,8 @@ async function afterAuthSuccess(){
   document.getElementById('s-auth').classList.remove('active');
   await startAppAfterAuth();
 }
-function authSignOut(){
-  if(!confirm('Uitloggen?'))return;
+async function authSignOut(){
+  if(!await confirmModal('Weet je zeker dat je wilt uitloggen?',{title:'Uitloggen',okLabel:'Uitloggen'}))return;
   clearAuthSession();
   wipePersonalCache(); // v332: niet wachten tot volgende login, meteen wissen bij uitloggen
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
@@ -2287,8 +2298,8 @@ function authSignOut(){
 }
 async function deleteAccount(){
   if(!authSession?.access_token){toast('Geen actieve sessie');return;}
-  if(!confirm('Account verwijderen? Al je trainingsdata, profiel en geschiedenis gaan permanent verloren. Dit kan niet ongedaan worden gemaakt.'))return;
-  if(!confirm('Weet je het zeker? Er is geen manier om dit terug te draaien.'))return;
+  if(!await confirmModal('Al je trainingsdata, profiel en geschiedenis gaan permanent verloren. Dit kan niet ongedaan worden gemaakt.',{title:'Account verwijderen',okLabel:'Verwijderen',danger:true}))return;
+  if(!await confirmModal('Er is geen manier om dit terug te draaien. Definitief verwijderen?',{title:'Weet je het zeker?',okLabel:'Definitief verwijderen',danger:true}))return;
   try{
     const r=await fetch('/.netlify/functions/delete-account',{
       method:'POST',
@@ -2763,7 +2774,7 @@ async function saveVasteTrainingName(btnEl){
   }finally{if(btnEl)btnEl.disabled=false;}
 }
 async function deleteVasteTraining(id){
-  if(!confirm('Deze vaste training verwijderen? De oefeningen erin gaan ook mee. Je sessiegeschiedenis blijft staan.'))return;
+  if(!await confirmModal('De oefeningen erin gaan ook mee. Je sessiegeschiedenis blijft staan.',{title:'Vaste training verwijderen',okLabel:'Verwijderen',danger:true}))return;
   await sbDel('training_exercises','training_ref=eq.'+id);
   await sbDel('vaste_trainingen','id=eq.'+id);
   _vasteTrainingenLoaded=false;
@@ -3074,7 +3085,7 @@ async function renderOfflineQueueModal(){
     </div>`).join('');
 }
 async function removeOfflineQueueItem(id){
-  if(!confirm('Dit item niet meer synchroniseren en verwijderen uit de wachtrij?'))return;
+  if(!await confirmModal('Dit item niet meer synchroniseren en verwijderen uit de wachtrij?',{title:'Uit wachtrij verwijderen',okLabel:'Verwijderen',danger:true}))return;
   await offlineQueueRemove(id);
   updateOfflineBadge();
   renderOfflineQueueModal();
@@ -3130,7 +3141,7 @@ async function wearableConnect(){
   }catch(e){toast('Verbindingsfout bij koppelen');}
 }
 async function wearableDisconnect(){
-  if(!confirm('Wearable loskoppelen? Automatische sync van HRV/RHR/slaap stopt dan.'))return;
+  if(!await confirmModal('Automatische sync van HRV/RHR/slaap stopt dan.',{title:'Wearable loskoppelen',okLabel:'Loskoppelen',danger:true}))return;
   const h=wearableAuthHeaders();
   if(!h){toast('Geen actieve sessie');return;}
   try{
@@ -3430,7 +3441,7 @@ function updateThemeSegUI(){
 // IndexedDB - trainingsdata en voorkeuren blijven onaangeroerd. Forceert daarna
 // een herlaad zodat de nieuwste sw.js/index.html actief wordt.
 async function clearAppCache(){
-  if(!confirm('Cache verversen? Je haalt hiermee de nieuwste appversie op. Je trainingsdata en voorkeuren blijven bewaard.'))return;
+  if(!await confirmModal('Je haalt hiermee de nieuwste appversie op. Je trainingsdata en voorkeuren blijven bewaard.',{title:'Cache verversen',okLabel:'Verversen'}))return;
   try{
     if('caches' in window){
       const keys=await caches.keys();
@@ -3774,7 +3785,7 @@ async function saveNewGoal(){
 }
 
 async function deleteGoalPrompt(id){
-  if(!confirm("Dit doel verwijderen? Je meetgegevens (gewicht, PR's, sessies) blijven gewoon bewaard — alleen het doel zelf verdwijnt."))return;
+  if(!await confirmModal("Je meetgegevens (gewicht, PR's, sessies) blijven gewoon bewaard — alleen het doel zelf verdwijnt.",{title:'Doel verwijderen',okLabel:'Verwijderen',danger:true}))return;
   await sbPatchQ('goals','id=eq.'+id,{status:'gearchiveerd'});
   renderDoelenScreen();
 }
@@ -4838,7 +4849,7 @@ async function renderProgrammaList(){
   el.innerHTML=h;
 }
 async function deleteProgramma(progId){
-  if(!confirm('Programma verwijderen? Dit kan niet ongedaan worden gemaakt.'))return;
+  if(!await confirmModal('Dit kan niet ongedaan worden gemaakt.',{title:'Programma verwijderen',okLabel:'Verwijderen',danger:true}))return;
   const blocks=await sbGet('program_blocks','&program_id=eq.'+progId);
   for(const b of blocks){await sbDel('program_block_exercises','program_block_id=eq.'+b.id);}
   await sbDel('program_blocks','program_id=eq.'+progId);
@@ -4867,7 +4878,7 @@ async function heergenereerResterendeWeken(progId,btnEl){
   const incompleteWeeks=[...new Set(incomplete.map(b=>b.week_nr))].sort((a,b)=>a-b);
   const maxWeek=Math.max(...blocks.map(b=>b.week_nr));
   const bevestiging=`Weken ${incompleteWeeks.join(', ')} opnieuw genereren o.b.v. hoe het écht ging (${progress.adherencePct}% adherence tot nu toe${progress.avgRpeDelta!=null?`, gem. RPE ${progress.avgRpeDelta>0?'+':''}${progress.avgRpeDelta} t.o.v. plan`:''})? Nog niet-uitgevoerde trainingen in deze weken worden vervangen.`;
-  if(!confirm(bevestiging))return;
+  if(!await confirmModal(bevestiging,{title:'Weken opnieuw genereren',okLabel:'Genereren'}))return;
   heergenererenBezig=true;
   if(btnEl){btnEl.disabled=true;btnEl.textContent='Bezig met her-genereren...';}
   try{
@@ -5058,7 +5069,7 @@ async function startT(t){
   }
   // v306 #5: concept van eerder (zelfde dag, niet afgerond) aanbieden om te hervatten
   const draft=restoreTrainingDraft();
-  const resumeDraft=draft&&draft.t===t&&isSameLocalDay(draft.ts)&&confirm('Niet-afgeronde training gevonden (laatst opgeslagen om '+new Date(draft.ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+'). Hervatten?');
+  const resumeDraft=(draft&&draft.t===t&&isSameLocalDay(draft.ts)) ? await confirmModal('Niet-afgeronde training gevonden (laatst opgeslagen om '+new Date(draft.ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+'). Wil je die hervatten?',{title:'Training hervatten',okLabel:'Hervatten',cancelLabel:'Nieuw starten'}) : false;
   pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};
   if(resumeDraft){
     curT=t;sessionLog=draft.sessionLog||{};sessionExtra=draft.sessionExtra||[];trainPaused=false;pausedAccumMs=0;
@@ -5549,8 +5560,8 @@ function addWarmupSet(exId){
   const rows=document.getElementById('wu-rows-'+exId);
   if(rows)rows.insertAdjacentHTML('beforeend',buildWarmupRow(exId,warmupState[exId].count));
 }
-function showWarmupMenu(exId,i){
-  if(confirm('Opwarmset W'+i+' verwijderen?'))removeWarmupSet(exId,i);
+async function showWarmupMenu(exId,i){
+  if(await confirmModal('Opwarmset W'+i+' verwijderen?',{title:'Opwarmset verwijderen',okLabel:'Verwijderen',danger:true}))removeWarmupSet(exId,i);
 }
 // Verzamelt de huidige waarden, verwijdert index i, en hernummert de rest (W1, W2, ...).
 function removeWarmupSet(exId,i){
@@ -6369,9 +6380,9 @@ function addWorkSet(exId,type){
   }
 }
 
-function showSetMenu(exId,setNum,type){
-  // Simple confirm delete
-  if(confirm('Set '+setNum+' verwijderen?')){
+async function showSetMenu(exId,setNum,type){
+  // v3.3.39: merk-modal i.p.v. native confirm
+  if(await confirmModal('Set '+setNum+' verwijderen?',{title:'Set verwijderen',okLabel:'Verwijderen',danger:true})){
     const row=document.getElementById('sr-'+exId+'-'+setNum);
     if(row)row.remove();
     if(sessionLog[exId]?.sets)sessionLog[exId].sets[setNum-1]=null;
@@ -6464,9 +6475,9 @@ function addExConfirm(exId,t){
   toast(ex.name+' toegevoegd');
 }
 
-function confirmLeave(){
+async function confirmLeave(){
   if(Object.keys(sessionLog).length>0){
-    if(confirm('Sessie pauzeren? Data blijft bewaard.')){{stopTrainTimer();go('s-home');}
+    if(await confirmModal('Je sessie wordt bewaard en je kunt later hervatten.',{title:'Sessie pauzeren',okLabel:'Pauzeren'})){{stopTrainTimer();go('s-home');}
     }
   }else{curT=null;stopTrainTimer();document.querySelectorAll('.ni-dot').forEach(d=>d.classList.remove('show'));go('s-home');}
 }
@@ -6855,7 +6866,7 @@ function fmtDate(d){
 }
 
 async function deleteSessionDirect(id){
-  if(!confirm('Sessie verwijderen?')) return;
+  if(!await confirmModal('Deze sessie verwijderen?',{title:'Sessie verwijderen',okLabel:'Verwijderen',danger:true})) return;
   if(typeof id==='string'&&id.startsWith('pending_')){
     await offlineQueueRemove(parseInt(id.slice('pending_'.length)));
     updateOfflineBadge();
@@ -7018,7 +7029,7 @@ async function deleteSessionEntry(){
   // Restore delete button visibility
   const delBtn=document.querySelector('#m-edit-session .btn-o[onclick="deleteSessionEntry()"]');
   if(delBtn) delBtn.style.display='';
-  if(!curEditSess||!confirm('Verwijderen?'))return;
+  if(!curEditSess||!(await confirmModal('Deze sessie verwijderen?',{title:'Sessie verwijderen',okLabel:'Verwijderen',danger:true})))return;
   const ok=await sbDelQ('sessions','id=eq.'+curEditSess.id);
   if(ok){closeModal('m-edit-session');toast('Verwijderd');loadHistory();}
 }
@@ -7451,7 +7462,7 @@ async function saveAddTrainEx(){
   }
 }
 async function removeTrainEx(trainingRef,exId){
-  if(!confirm('Deze oefening loskoppelen van Training '+trainingRef+'?'))return;
+  if(!await confirmModal('Deze oefening loskoppelen van Training '+trainingRef+'?',{title:'Oefening loskoppelen',okLabel:'Loskoppelen',danger:true}))return;
   const ok=await sbDel('training_exercises','id=eq.'+trainingRef+'_'+exId);
   if(ok){toast('Losgekoppeld');await loadTrainCfg();renderTrainExAdmin();}
   else toast('Fout bij loskoppelen');
@@ -7474,7 +7485,7 @@ async function openNewExModal(){
     '<option value="CrossFit">CrossFit</option><option value="Overig">Overig</option>';
   openModal('m-newex');
 }
-async function delEx(id){if(!confirm('Verwijderen?'))return;await sbPatch('exercises','id=eq.'+id,{active:false});exercises=exercises.filter(e=>e.id!==id);refreshAdmin();toast('Verwijderd');}
+async function delEx(id){if(!await confirmModal('Deze oefening verwijderen?',{title:'Oefening verwijderen',okLabel:'Verwijderen',danger:true}))return;await sbPatch('exercises','id=eq.'+id,{active:false});exercises=exercises.filter(e=>e.id!==id);refreshAdmin();toast('Verwijderd');}
 
 async function saveNewEx(btnEl){
   if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
@@ -7830,7 +7841,7 @@ function applyCoachSuggestion(exId,kg,btn){
 }
 // Wist alleen het HUIDIGE gesprek (algemeen óf de actieve sessie) — niet alle geschiedenis.
 async function clearChat(){
-  if(!confirm('Gesprek wissen?'))return;
+  if(!await confirmModal('Het huidige gesprek wordt gewist.',{title:'Gesprek wissen',okLabel:'Wissen',danger:true}))return;
   if(activeSessionId){
     const all=await sbGet('chat_history','&session_id=eq.'+activeSessionId);
     for(const r of all)await sbDel('chat_history','id=eq.'+r.id);
@@ -7859,6 +7870,26 @@ async function loadCoachSession(sessionId,label){
   chatHist=rows.map(r=>({role:r.role,content:r.content}));
   _openingCoachViaSession=true;
   go('s-coach');
+}
+// v3.3.39 Batch 2: merkeigen bevestigingsdialoog — vervangt native confirm() (Handbook: geen
+// native dialogen). Retourneert Promise<boolean>. Gebruik: `if(!await confirmModal('…'))return;`
+function confirmModal(message,opts){
+  opts=opts||{};
+  const title=opts.title||'Bevestigen',okLabel=opts.okLabel||'Bevestigen',cancelLabel=opts.cancelLabel||'Annuleren',danger=!!opts.danger;
+  return new Promise(resolve=>{
+    const bg=document.createElement('div');
+    bg.className='tk-confirm-bg';
+    bg.innerHTML='<div class="tk-confirm" role="dialog" aria-modal="true"><div class="tk-confirm-title">'+escHtml(title)+'</div><div class="tk-confirm-msg">'+escHtml(message)+'</div><div class="tk-confirm-actions"><button type="button" class="tk-confirm-cancel">'+escHtml(cancelLabel)+'</button><button type="button" class="tk-confirm-ok'+(danger?' danger':'')+'">'+escHtml(okLabel)+'</button></div></div>';
+    document.body.appendChild(bg);
+    let closed=false;
+    const done=(v)=>{if(closed)return;closed=true;document.removeEventListener('keydown',onKey);bg.classList.remove('show');setTimeout(()=>bg.remove(),160);resolve(v);};
+    const onKey=(e)=>{if(e.key==='Escape'){e.preventDefault();done(false);}else if(e.key==='Enter'){e.preventDefault();done(true);}};
+    bg.querySelector('.tk-confirm-cancel').onclick=()=>done(false);
+    bg.querySelector('.tk-confirm-ok').onclick=()=>done(true);
+    bg.addEventListener('click',e=>{if(e.target===bg)done(false);});
+    document.addEventListener('keydown',onKey);
+    requestAnimationFrame(()=>{bg.classList.add('show');const ok=bg.querySelector('.tk-confirm-ok');if(ok)ok.focus();});
+  });
 }
 let mc=0;
 // v3.3.35: veilige inline-markdown voor coach-berichten. Eerst HTML-escapen (XSS-preventie),
@@ -8274,8 +8305,8 @@ async function submitShare(btnEl){
   }finally{if(btnEl)btnEl.disabled=false;}
 }
 
-function deleteCustomTraining(id){
-  if(!confirm('Training verwijderen?')) return;
+async function deleteCustomTraining(id){
+  if(!await confirmModal('Deze training verwijderen?',{title:'Training verwijderen',okLabel:'Verwijderen',danger:true})) return;
   customTrainings=customTrainings.filter(t=>t.id!==id);
   localStorage.setItem('maurice_trainings',JSON.stringify(customTrainings));
   sbDel('custom_trainings','id=eq.'+id); // cascade ruimt custom_training_exercises vanzelf op
@@ -9550,7 +9581,7 @@ async function saveEquipmentCatalogItem(btnEl){
   }finally{if(btnEl)btnEl.disabled=false;}
 }
 async function deleteEquipmentCatalogItem(id){
-  if(!confirm('Apparaat verwijderen?'))return;
+  if(!await confirmModal('Dit apparaat verwijderen?',{title:'Apparaat verwijderen',okLabel:'Verwijderen',danger:true}))return;
   const ok=await sbPatch('equipment_catalog','id=eq.'+id,{active:false});
   if(!ok){toast('Verwijderen mislukt — check je rechten');return;}
   equipmentCatalog=[];

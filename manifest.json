@@ -1,6 +1,6 @@
 {
   "name": "Trainingskompas",
-  "short_name": "Kompas",
+  "short_name": "Trainingskompas",
   "description": "Persoonlijke AI-trainingscoach, trainingslog en hersteltracker voor kracht, crossfit, hyrox en meer",
   "start_url": "/",
   "scope": "/",

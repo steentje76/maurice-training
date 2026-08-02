@@ -93,6 +93,44 @@ html[data-theme="light"]{
 .skip-link{position:absolute;left:8px;top:-48px;background:var(--card);color:var(--dark);padding:10px 16px;border-radius:8px;z-index:9999;box-shadow:var(--shadow);transition:top var(--motion-fast) var(--motion-ease)}
 .skip-link:focus{top:8px}
 
+/* ═══ Sprint v3.3.35 — Premium micro-interacties (H11).
+   Rust is de default; beweging dient alleen oriëntatie, bevestiging of nadruk.
+   prefers-reduced-motion neutraliseert alle animaties via de globale regel hierboven. ═══ */
+@keyframes tk-screen-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.scr.active{animation:tk-screen-in var(--motion-navigation) var(--motion-ease)}
+/* PR-viering: pop bij verschijnen (uitsluitend voor het PR-badge, het emotionele kernmoment) */
+@keyframes tk-pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.14)}100%{transform:scale(1);opacity:1}}
+.pr-badge{animation:tk-pop var(--motion-success) var(--motion-ease)}
+/* Set voltooid: korte bevestigings-pop op de set-cirkel */
+@keyframes tk-set-done{0%{transform:scale(1)}45%{transform:scale(1.18)}100%{transform:scale(1)}}
+.set-circle.just-done{animation:tk-set-done var(--motion-fast) var(--motion-ease)}
+/* AI Apply-knop: subtiele bevestiging bij toepassen */
+@keyframes tk-apply-ok{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
+.apply-ok{animation:tk-apply-ok var(--motion-success) var(--motion-ease)}
+/* Premium skeleton-loader (vervangt kale "Laden…"-tekst) */
+@keyframes tk-shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.tk-skel{background:linear-gradient(90deg,var(--g1) 25%,var(--g2) 37%,var(--g1) 63%);background-size:200% 100%;animation:tk-shimmer var(--motion-loading-pulse) linear infinite;border-radius:8px;min-height:14px;width:100%}
+.tk-skel+.tk-skel{margin-top:8px}
+.tk-skel.w60{width:60%}.tk-skel.w40{width:40%}.tk-skel.h32{height:32px}
+/* Verzorgde lege- en fout-staten (vervangt "Geen data"/"Fout") */
+.tk-empty{text-align:center;color:var(--g4);padding:22px 16px;font-size:13px;line-height:1.5}
+.tk-empty-emo{font-size:22px;opacity:.55;margin-bottom:6px}
+.tk-empty--error{color:var(--y)}
+/* Extra druk-feedback (bevestiging) op de kern-interactieve elementen */
+.btn:active,.act-btn:active,.ibtn:active{transform:scale(.97)}
+/* Premium AI-chatbubbels: visueel onderscheid tussen coach (petrol, AI-content) en gebruiker */
+.msg-ai{background:var(--accent2)!important;color:#fff!important;border-radius:14px 14px 14px 4px}
+.msg-user{background:var(--dark)!important;color:#fff!important;border-radius:14px 14px 4px 14px}
+.msg-ai strong,.msg-user strong{font-weight:700}
+.msg-ai em{font-style:italic;opacity:.92}
+.msg-ai code,.msg-user code{background:rgba(255,255,255,.15);padding:1px 5px;border-radius:5px;font-size:12px}
+/* Premium "typing"-indicator (vervangt de kale spinner in de coach) */
+.tk-typing{display:inline-flex;gap:4px;align-items:center;padding:3px 0}
+.tk-typing span{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.4;animation:tk-typing-b 1s infinite}
+.tk-typing span:nth-child(2){animation-delay:.15s}
+.tk-typing span:nth-child(3){animation-delay:.3s}
+@keyframes tk-typing-b{0%,60%,100%{transform:translateY(0);opacity:.35}30%{transform:translateY(-4px);opacity:.95}}
+
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:var(--bg);font-family:var(--f);font-size:15px;color:var(--dark)}
 body{display:flex;justify-content:center}
@@ -510,21 +548,15 @@ canvas{width:100%;height:100%}
     <div class="hdr-row">
       <div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px">
-          <svg width="32" height="32" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="2" width="116" height="116" rx="4" stroke="#111" stroke-width="4"/>
-            <text x="60" y="52" font-family="Arial Narrow,Arial" font-size="28" font-weight="900" text-anchor="middle" fill="#111" letter-spacing="4">A·R·T</text>
-            <text x="60" y="72" font-family="Arial" font-size="11" text-anchor="middle" fill="#111" letter-spacing="3">CROSSFIT</text>
-            <circle cx="22" cy="22" r="10" stroke="#111" stroke-width="3" fill="none"/>
-            <line x1="22" y1="12" x2="22" y2="8" stroke="#111" stroke-width="3"/>
-            <line x1="18" y1="22" x2="10" y2="22" stroke="#111" stroke-width="3"/>
-            <line x1="26" y1="22" x2="34" y2="22" stroke="#111" stroke-width="3"/>
-            <line x1="2" y1="90" x2="118" y2="90" stroke="#111" stroke-width="4"/>
-            <rect x="35" y="90" width="50" height="20" rx="2" stroke="#111" stroke-width="3" fill="none"/>
-            <text x="60" y="106" font-family="Arial" font-size="12" font-weight="900" text-anchor="middle" fill="#111">00</text>
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img">
+            <rect width="32" height="32" rx="8" fill="var(--dark,#0B1D2A)"/>
+            <path d="M5 24 L12 13 L16 19 L21 11 L27 24 Z" fill="var(--accent,#00B894)"/>
+            <rect x="20.1" y="5.5" width="1.7" height="12.5" rx="0.85" fill="var(--bg,#E6EBEF)"/>
+            <path d="M21.8 6 L26.2 8.4 L21.8 10.8 Z" fill="var(--bg,#E6EBEF)"/>
           </svg>
           <div class="hdr-title" role="heading" aria-level="1" style="font-size:17px;letter-spacing:1px;text-transform:uppercase;line-height:1.15">Trainingskompas</div>
         </div>
-        <div class="hdr-sub" style="letter-spacing:2px;text-transform:uppercase;font-size:11px">AI Trainingscoach 2026</div>
+        <div class="hdr-sub" style="letter-spacing:2px;text-transform:uppercase;font-size:11px">Slimmer trainen, elke dag</div>
         <div id="offline-badge" style="display:none;margin-top:4px;font-size:11px;font-weight:700;color:var(--y,#b8860b);background:rgba(184,134,11,.12);border-radius:8px;padding:2px 8px;width:fit-content;cursor:pointer" onclick="openOfflineQueueModal()"></div>
       </div>
       <div style="display:flex;gap:8px">
@@ -600,7 +632,7 @@ canvas{width:100%;height:100%}
       <div class="card-hd"><div class="card-title">Wearable</div></div>
       <div class="card-body">
         <div style="font-size:12px;color:var(--g4);margin-bottom:10px">Koppel je Fitbit (via Google Health) om HRV, rusthartslag en slaap automatisch aan te vullen in je ochtend check-in.</div>
-        <div id="profiel-wearable-detail" style="font-size:13px;color:var(--dark);margin-bottom:10px">Laden...</div>
+        <div id="profiel-wearable-detail" style="font-size:13px;color:var(--dark);margin-bottom:10px"><div class="tk-skel w60"></div></div>
         <div id="profiel-wearable-actions" style="display:flex;gap:8px"></div>
       </div>
     </div>
@@ -1080,7 +1112,7 @@ canvas{width:100%;height:100%}
 
 <!-- ═══ STATS ═══ -->
 <div class="scr" id="s-stats">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Progressie</div><div class="hdr-sub">1RM & Peakdoel 15 aug 2026</div></div><button class="ibtn" onclick="refreshStats()" aria-label="Statistieken vernieuwen">↻</button></div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Progressie</div><div class="hdr-sub" id="stats-peak-sub">1RM &amp; peakdoel</div></div><button class="ibtn" onclick="refreshStats()" aria-label="Statistieken vernieuwen">↻</button></div></div>
   <div class="scroll" style="padding-top:8px">
     <div class="card"><div class="card-hd"><div class="card-title">Geschatte 1RM</div><div class="card-sub">Epley formule · live</div></div>
       <div class="card-body">
@@ -1097,15 +1129,15 @@ canvas{width:100%;height:100%}
     <div class="card"><div class="card-hd"><div class="card-title">Krachtverhoudingen</div><div class="card-sub">Verwacht t.o.v. backsquat · standaardratio of eigen data</div></div><div class="card-body" id="stats-ratio-list"></div></div>
     <div class="card">
       <div class="card-hd"><div class="card-title">PR per herhaling</div><div class="card-sub">Beste gewicht per repbereik (1/3/5/10)</div></div>
-      <div class="card-body" id="stats-reppr-content"><p style="color:var(--g4);font-size:13px">Laden...</p></div>
+      <div class="card-body" id="stats-reppr-content"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div>
     </div>
     <div class="card">
       <div class="card-hd"><div class="card-title">Volume per spiergroep</div><div class="card-sub">Afgelopen 7 dagen</div></div>
-      <div class="card-body" id="stats-volume-content"><p style="color:var(--g4);font-size:13px">Laden...</p></div>
+      <div class="card-body" id="stats-volume-content"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div>
     </div>
     <div class="card">
       <div class="card-hd"><div class="card-title">Spierherstel</div><div class="card-sub">Op basis van RPE & tijd sinds laatste training</div></div>
-      <div class="card-body" id="stats-recovery-content"><p style="color:var(--g4);font-size:13px">Laden...</p></div>
+      <div class="card-body" id="stats-recovery-content"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div>
     </div>
     <div class="card">
       <div class="card-hd">
@@ -1297,7 +1329,7 @@ canvas{width:100%;height:100%}
 
 <!-- ═══ ADMIN ═══ -->
 <div class="scr" id="s-admin">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Beheer</div><div class="hdr-sub" id="admin-ver">v2.8.5</div></div><button class="ibtn" onclick="go('s-home')" aria-label="Sluiten, terug naar dashboard">✕</button></div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Beheer</div><div class="hdr-sub" id="admin-ver"></div></div><button class="ibtn" onclick="go('s-home')" aria-label="Sluiten, terug naar dashboard">✕</button></div></div>
   <div class="scroll" style="padding-top:8px">
     <div class="card"><div class="card-body" style="padding-top:8px">
       <div class="adm-row"><div><div class="adm-lbl">Roeiers (PM5)</div><div class="adm-sub">Concept 2 machines</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-rowers')">Beheer</button></div></div>
@@ -2109,7 +2141,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.34';
+const APP_VER = 'v3.3.35';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6311,6 +6343,7 @@ function toggleSetDone(exId,setNum){
   if(!c)return;
   const nowDone=!c.classList.contains('done');
   c.classList.toggle('done');
+  if(nowDone){c.classList.add('just-done');setTimeout(()=>c.classList.remove('just-done'),220);}
   updateProgress(curT);
   updateSummary(curT);
   scheduleAutosave();
@@ -7664,7 +7697,7 @@ Target: ${cfgEx?cfgEx.sets+'×'+cfgEx.reps+(cfgEx.rpe?' · RPE '+cfgEx.rpe:''):'
 Huidige 1RM: ${exObj?.one_rm||exObj?.pr||'onbekend'} kg
 Reeds gelogde sets deze sessie: ${loggedSets.length?loggedSets.map((s,i)=>(i+1)+') '+s.kg+'kg×'+s.reps+(s.rpe?' RPE'+s.rpe:'')).join(', '):'nog geen'}`;
   }
-  return `Je bent de persoonlijke trainingscoach en data-analist van ${atleet?.naam||'Maurice'} van Latum van Steensel.
+  return `Je bent de persoonlijke trainingscoach en data-analist van ${atleet?.naam||'de atleet'}.
 Communiceer in het Nederlands. Vandaag is ${huidigeDatumTijdNL()}. Datumnotatie: "26 april 2026 08:00".
 Direct, bondig, data-forward. Geen opvulling. Geen bevestigingszinnen. Geen disclaimers.
 Vergelijk altijd met de vorige vergelijkbare sessie. Geef altijd een concreet gewicht als advies.
@@ -7676,7 +7709,7 @@ ${hrvStr}${wStr}${bcStr}
 Volgende training: ${nextT} (laatste was ${lastT})
 ${sessionCtx}
 
-HRV DREMPELS (Maurice-specifiek — structureel lager dan norm, gebruik ALTIJD relatieve drempels):
+HRV DREMPELS (gebruiker-specifiek — structureel lager dan norm, gebruik ALTIJD relatieve drempels):
 ≥24 ms → Optimaal — volledig programma, zwaar
 18-23 ms → Normaal — volledig programma, let op RPE
 14-17 ms → Laag — lichte sessie (80% gewichten)
@@ -7708,15 +7741,15 @@ Nooit aannames over gewichten of RPE — altijd vragen als ontbreekt.`;
 async function sendChat(){const inp=document.getElementById('chat-inp');const txt=inp.value.trim();if(!txt||sending)return;inp.value='';inp.style.height='';sendMsg(txt);}
 async function sendMsg(txt){
   if(sending)return;
-  sending=true;document.getElementById('send-btn').disabled=true;document.getElementById('coach-st').textContent='Denkt na...';
+  sending=true;document.getElementById('send-btn').disabled=true;document.getElementById('coach-st').textContent='Coach denkt mee…';
   addMsg('user',txt);chatHist.push({role:'user',content:txt});
   await sbPost('chat_history',{role:'user',content:txt,session_id:activeSessionId,session_label:activeSessionCtx?.exNaam||null});
-  const tid=addMsg('coach','<span style="display:inline-block;width:14px;height:14px;border:2px solid #ccc;border-top-color:var(--dark);border-radius:50%;animation:sp .8s linear infinite;vertical-align:middle"></span>',true);
+  const tid=addMsg('coach','<span class="tk-typing"><span></span><span></span><span></span></span>',true,true);
   try{
     const sys=await buildCtx(activeSessionCtx);
     const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,system:sys,messages:chatHist.slice(-12)})});
     const d=await res.json();
-    if(d.error){removeMsg(tid);addMsg('coach','Fout: '+d.error.message);}
+    if(d.error){removeMsg(tid);console.warn('coach error',d.error);addMsg('coach','Er ging iets mis bij het ophalen van je advies. Probeer het zo nog een keer.');}
     else{
       const r=d.content[0].text;
       removeMsg(tid);
@@ -7728,7 +7761,7 @@ async function sendMsg(txt){
         if(all.length>40)for(const x of all.slice(0,all.length-40))await sbDel('chat_history','id=eq.'+x.id);
       }
     }
-  }catch(e){removeMsg(tid);addMsg('coach','Verbindingsfout. Check internet.');}
+  }catch(e){removeMsg(tid);addMsg('coach','Geen verbinding — ik kan de coach nu niet bereiken. Controleer je internet en probeer het opnieuw.');}
   sending=false;document.getElementById('send-btn').disabled=false;document.getElementById('coach-st').textContent='Klaar';
 }
 // v306 #9: parseert [[APPLY:exId:kg]]-markers uit het coach-antwoord naar een Toepassen-knop.
@@ -7758,7 +7791,7 @@ function applyCoachSuggestion(exId,kg,btn){
   settingViaPct=true;
   kgInp.value=kg;kgInp.dispatchEvent(new Event('input'));kgInp.dispatchEvent(new Event('change'));
   settingViaPct=false;
-  btn.textContent='✓ Toegepast';btn.disabled=true;
+  btn.textContent='✓ Toegepast';btn.disabled=true;btn.classList.add('apply-ok');
   toast('Gewicht aangepast naar '+kg+' kg');
 }
 // Wist alleen het HUIDIGE gesprek (algemeen óf de actieve sessie) — niet alle geschiedenis.
@@ -7794,7 +7827,18 @@ async function loadCoachSession(sessionId,label){
   go('s-coach');
 }
 let mc=0;
-function addMsg(role,txt,retId=false){const id='m'+(++mc);const d=document.createElement('div');d.id=id;const isCoach=role==='coach',isUser=role==='user';d.style.cssText=`max-width:85%;padding:10px 14px;font-size:13px;line-height:1.55;white-space:pre-wrap;margin-bottom:6px;border-radius:${isCoach?'4px 16px 16px 16px':'16px 16px 4px 16px'};align-self:${isUser?'flex-end':'flex-start'};background:${isCoach?'var(--dark)':isUser?'var(--red)':'var(--g1)'};color:${isCoach||isUser?'#fff':'var(--g4)'};`;d.innerHTML=(isUser?escHtml(txt):txt).replace(/\n/g,'<br>');const w=document.getElementById('chat-wrap');w.appendChild(d);w.scrollTop=w.scrollHeight;return retId?id:null;}
+// v3.3.35: veilige inline-markdown voor coach-berichten. Eerst HTML-escapen (XSS-preventie),
+// daarna een beperkte, veilige subset renderen (**vet**, *cursief*, `code`, bullets).
+function mdInline(raw){
+  let s=escHtml(String(raw==null?'':raw));
+  s=s.replace(/`([^`]+)`/g,'<code>$1</code>');
+  s=s.replace(/\*\*([^*]+?)\*\*/g,'<strong>$1</strong>');
+  s=s.replace(/(^|[^*\w])\*(?!\s)([^*\n]+?)\*(?!\*)/g,'$1<em>$2</em>');
+  s=s.replace(/(^|\s)_(?!_)([^_\n]+?)_(?!\w)/g,'$1<em>$2</em>');
+  s=s.replace(/(^|<br>)\s*[-•]\s+/g,'$1• ');
+  return s.replace(/\n/g,'<br>');
+}
+function addMsg(role,txt,retId=false,raw=false){const id='m'+(++mc);const d=document.createElement('div');d.id=id;const isUser=role==='user';d.className=isUser?'msg-user':'msg-ai';d.style.cssText=`max-width:85%;padding:10px 14px;font-size:13px;line-height:1.55;margin-bottom:8px;align-self:${isUser?'flex-end':'flex-start'};`;d.innerHTML=raw?txt:(isUser?escHtml(txt).replace(/\n/g,'<br>'):mdInline(txt));const w=document.getElementById('chat-wrap');w.appendChild(d);w.scrollTop=w.scrollHeight;return retId?id:null;}
 function removeMsg(id){const e=document.getElementById(id);if(e)e.remove();}
 function renderChatHist(){const w=document.getElementById('chat-wrap');w.innerHTML='';mc=0;chatHist.forEach(m=>addMsg(m.role==='user'?'user':'coach',m.content));}
 function ckd(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
@@ -7863,7 +7907,7 @@ async function importFromFile(input){
 // ATLEET PROFIEL
 // ══════════════════════════════════════════════════════════
 let atleet = JSON.parse(localStorage.getItem('maurice_atleet') || JSON.stringify({
-  naam: 'Maurice', leeftijd: 50, geslacht: 'man', lengte: 180,
+  naam: '', leeftijd: 50, geslacht: 'man', lengte: 180,
   niveau: 'ervaren', klasse: '120+', sport: 'crossfit'
 }));
 // v322: atleet-profiel wordt nu ook in Supabase bewaard (multi-device), localStorage
@@ -9242,7 +9286,7 @@ async function refreshVolumeSpiergroep(){
   const sorted = Object.entries(muscleSets).sort((a,b)=>b[1]-a[1]);
   if(!sorted.length){
     const container = document.getElementById('stats-volume-content');
-    if(container) container.innerHTML = '<p style="color:var(--g4);font-size:13px">Geen data afgelopen 7 dagen</p>';
+    if(container) container.innerHTML = '<div class="tk-empty"><div class="tk-empty-emo">📊</div>Nog geen data van de afgelopen 7 dagen. Log een training om je herstel hier te zien.</div>';
     return;
   }
   const max = sorted[0][1];

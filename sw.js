@@ -1,8 +1,8 @@
-// Trainingskompas — Service Worker v2.8
+// Trainingskompas — Service Worker
 // Play Store ready — offline first
 
-const CACHE_NAME = 'maurice-training-v3334';
-const CACHE_STATIC = 'maurice-static-v271';
+const CACHE_NAME = 'trainingskompas-v3335';
+const CACHE_STATIC = 'trainingskompas-static-v3335';
 
 const STATIC_ASSETS = [
   '/',
@@ -110,7 +110,7 @@ self.addEventListener('push', e => {
   if (!e.data) return;
   const data = e.data.json();
   e.waitUntil(
-    self.registration.showNotification(data.title || 'Training Coach', {
+    self.registration.showNotification(data.title || 'Trainingskompas', {
       body: data.body || '',
       icon: '/icon-192.png',
       badge: '/icon-192.png',

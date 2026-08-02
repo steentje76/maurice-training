@@ -10,9 +10,12 @@
 - [x] v333 3-laags zichtbaarheidsmodel (personal/gym/global) — schema, RLS én UI-laag compleet
 - [x] Apparatuur-catalogus (los van equipment_types)
 - [x] AI-programmagenerator: periodisering afgedwongen in code, sport-context/PR's/trainingshistorie in de prompt
-- [ ] sw.js network-first-navigatie verifiëren
+- [x] sw.js network-first-navigatie verifiëren (Sprint 1, 2 augustus 2026 — bevestigd via code-inspectie, geen wijziging nodig)
 - [ ] Per-user profielscheiding testen
 - [ ] Offline sync queue (IndexedDB) — gebouwd, nog niet functioneel bevestigd
+- [x] Accessibility-fundament (aria/focus-management/skip-link) — Sprint 1, toegepast op bestaande kernschermen
+- [x] Motion-tokenfundament + `prefers-reduced-motion` — Sprint 1
+- [x] Dark mode-tokenfundament + automatische detectie — Sprint 1 (nog geen volledige restyle, zie Branding hieronder)
 
 **Nieuw toegevoegd (DEC-010, 1 augustus 2026):**
 - [ ] **Onboarding-workflow nieuwe atleten** — profiel + doelen instellen bij eerste gebruik. Ontbrak volledig; nu expliciet gepland vóórdat gym-brede ledeninstroom (Fase 3-4) relevant wordt.

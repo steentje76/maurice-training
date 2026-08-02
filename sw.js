@@ -1,7 +1,7 @@
 // Trainingskompas — Service Worker v2.8
 // Play Store ready — offline first
 
-const CACHE_NAME = 'maurice-training-v3325';
+const CACHE_NAME = 'maurice-training-v3326';
 const CACHE_STATIC = 'maurice-static-v271';
 
 const STATIC_ASSETS = [

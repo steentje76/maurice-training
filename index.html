@@ -6,7 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Kompas">
-<meta name="theme-color" content="#f0f0f5">
+<meta name="theme-color" content="#f0f0f5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0B1D2A" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Trainingskompas</title>
@@ -17,7 +18,55 @@
   --accent:#3dd6d6;--accent2:#2bb8b8;
   --y:#c8a84b;--g1:#f5f5f5;--g2:#e5e5e5;--g3:#bbbbbb;--g4:#888888;--g6:#444444;--dark:#111111;
   --f:'Barlow Condensed','Arial Narrow',Arial,sans-serif;--r:8px;--shadow:0 1px 3px rgba(0,0,0,.1);
+
+  /* Sprint 1 — Dark Mode Fundament (Handbook H5 Deel 13). Alleen tokens + auto-detectie,
+     nog geen restyle: lichte waarden hierboven blijven ongewijzigd de standaard. */
+  --focus-ring:#0E3B4A;
+
+  /* Sprint 1 — Motion Framework (Handbook H5 Deel 14 / H11). Tokennamen 1-op-1 uit het
+     Handbook overgenomen; bestaande transities gebruiken deze nog niet automatisch —
+     nieuwe/toekomstige animaties bouwen hierop voort (geen bestaand gedrag gewijzigd). */
+  --motion-instant:0ms;
+  --motion-fast:120ms;
+  --motion-standard:200ms;
+  --motion-normal:250ms;
+  --motion-success:320ms;
+  --motion-warning:250ms;
+  --motion-modal:220ms;
+  --motion-navigation:200ms;
+  --motion-loading-pulse:1200ms;
+  --motion-ease:cubic-bezier(.4,0,.2,1);
 }
+
+/* Dark mode: automatische detectie op basis van systeeminstelling (prefers-color-scheme).
+   Fundament conform Sprint 1-scope — géén volledige restyle, alleen de kerntokens die
+   leesbaarheid/contrast bewaken zodra een scherm hiervan gebruikmaakt. */
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0B1D2A;--card:#0E3B4A;--bk:#f2f2f2;--dark:#f2f2f2;
+    --g1:#12303e;--g2:#1b4353;--g3:#5c7a87;--g4:#9fb4bd;--g6:#e2e8ec;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+    --focus-ring:#00B894;
+  }
+}
+
+/* Reduced motion: alle motion-tokens naar (nagenoeg) nul, conform WCAG 2.2 / H6-vereiste
+   dat elk scherm zonder animatie functioneel identiek blijft. */
+@media (prefers-reduced-motion: reduce){
+  :root{
+    --motion-fast:0ms;--motion-standard:0ms;--motion-normal:0ms;--motion-success:0ms;
+    --motion-warning:0ms;--motion-modal:0ms;--motion-navigation:0ms;--motion-loading-pulse:0ms;
+  }
+  *,*::before,*::after{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important;scroll-behavior:auto!important}
+}
+
+/* Accessibility-basis (Sprint 1): focus-zichtbaarheid voor toetsenbordgebruikers en
+   screenreader-only tekst-utility. Geen visuele wijziging voor muis/touch-gebruikers. */
+:focus-visible{outline:3px solid var(--focus-ring);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.skip-link{position:absolute;left:8px;top:-48px;background:var(--card);color:var(--dark);padding:10px 16px;border-radius:8px;z-index:9999;box-shadow:var(--shadow);transition:top var(--motion-fast) var(--motion-ease)}
+.skip-link:focus{top:8px}
+
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:var(--bg);font-family:var(--f);font-size:15px;color:var(--dark)}
 body{display:flex;justify-content:center}
@@ -343,7 +392,8 @@ canvas{width:100%;height:100%}
 </style>
 </head>
 <body>
-<div id="app">
+<a href="#app" class="skip-link">Direct naar inhoud</a>
+<div id="app" tabindex="-1">
 <div class="flash" id="flash"></div>
 <div class="toast" id="toast"></div>
 
@@ -425,14 +475,14 @@ canvas{width:100%;height:100%}
             <rect x="35" y="90" width="50" height="20" rx="2" stroke="#111" stroke-width="3" fill="none"/>
             <text x="60" y="106" font-family="Arial" font-size="12" font-weight="900" text-anchor="middle" fill="#111">00</text>
           </svg>
-          <div class="hdr-title" style="font-size:24px;letter-spacing:2px;text-transform:uppercase">KOMPAS</div>
+          <div class="hdr-title" role="heading" aria-level="1" style="font-size:24px;letter-spacing:2px;text-transform:uppercase">KOMPAS</div>
         </div>
         <div class="hdr-sub" style="letter-spacing:2px;text-transform:uppercase;font-size:11px">AI Trainingscoach 2026</div>
         <div id="offline-badge" style="display:none;margin-top:4px;font-size:11px;font-weight:700;color:var(--y,#b8860b);background:rgba(184,134,11,.12);border-radius:8px;padding:2px 8px;width:fit-content;cursor:pointer" onclick="openOfflineQueueModal()"></div>
       </div>
       <div style="display:flex;gap:8px">
-        <button class="ibtn" onclick="openModal('m-hrv')">📊</button>
-        <button class="ibtn" onclick="openBeheer()">⚙️</button>
+        <button class="ibtn" onclick="openModal('m-hrv')" aria-label="Dagfactor en HRV invoeren">📊</button>
+        <button class="ibtn" onclick="openBeheer()" aria-label="Beheer openen">⚙️</button>
       </div>
     </div>
   </div>
@@ -448,8 +498,8 @@ canvas{width:100%;height:100%}
     <div class="card"><div class="card-body" style="padding-top:10px" id="home-recent"></div></div>
     <div style="height:8px"></div>
   </div>
-  <nav class="bnav">
-    <button class="ni active" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni active" aria-current="page" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
@@ -466,8 +516,8 @@ canvas{width:100%;height:100%}
 <div class="scr" id="s-profiel">
   <div class="hdr">
     <div class="hdr-row">
-      <div><div class="hdr-title">Profiel</div><div class="hdr-sub">Atleet & Lichaamsmetingen</div></div>
-      <button class="ibtn" onclick="openModal('m-bc')">＋</button>
+      <div><div class="hdr-title" role="heading" aria-level="1">Profiel</div><div class="hdr-sub">Atleet & Lichaamsmetingen</div></div>
+      <button class="ibtn" onclick="openModal('m-bc')" aria-label="Lichaamsmeting toevoegen">＋</button>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
@@ -578,18 +628,18 @@ canvas{width:100%;height:100%}
     <button class="btn btn-d" onclick="askCoachProfiel()" style="margin-bottom:12px">🤖 Coach: analyseer mijn metingen</button>
     <div style="height:8px"></div>
   </div>
-  <nav class="bnav">
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni active" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
   </nav>
 </div>
 
 <!-- ═══ COACH ═══ -->
 <div class="scr" id="s-coach">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Coach</div><div class="hdr-sub"><span id="coach-session-label">Algemeen gesprek</span> · <span id="coach-st">Klaar</span></div></div><div style="display:flex;gap:2px"><button class="ibtn" onclick="openCoachHistory()" title="Gespreksgeschiedenis">🕘</button><button class="ibtn" onclick="clearChat()">🗑</button></div></div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Coach</div><div class="hdr-sub"><span id="coach-session-label">Algemeen gesprek</span> · <span id="coach-st">Klaar</span></div></div><div style="display:flex;gap:2px"><button class="ibtn" onclick="openCoachHistory()" title="Gespreksgeschiedenis" aria-label="Gespreksgeschiedenis">🕘</button><button class="ibtn" onclick="clearChat()" aria-label="Gesprek wissen">🗑</button></div></div></div>
   <div id="coach-back-bar" onclick="history.back()"><span>← Terug naar training</span></div>
   <div class="coach-chips-row" id="coach-chips"></div>
   <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 16px;display:flex;flex-direction:column;gap:6px;background:var(--bg)" id="chat-wrap"></div>
@@ -597,10 +647,10 @@ canvas{width:100%;height:100%}
     <textarea style="flex:1;background:var(--g1);border:1.5px solid var(--g2);border-radius:14px;padding:10px 12px;color:var(--dark);font-size:15px;font-family:var(--f);outline:none;resize:none;max-height:100px;min-height:42px" id="chat-inp" placeholder="Bericht aan coach..." rows="1" onkeydown="ckd(event)" oninput="ar(this)"></textarea>
     <button style="background:var(--dark);color:#fff;border:none;border-radius:50%;width:42px;height:42px;font-size:20px;cursor:pointer;flex-shrink:0;line-height:1;display:flex;align-items:center;justify-content:center" id="send-btn" onclick="sendChat()">↑</button>
   </div>
-  <nav class="bnav">
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni active" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
   </nav>
@@ -608,7 +658,7 @@ canvas{width:100%;height:100%}
 
 <!-- ═══ LOGBOEK ═══ -->
 <div class="scr" id="s-hist">
-  <div class="hdr"><div class="hdr-title">Logboek</div><div class="hdr-sub">Trainingsgeschiedenis</div></div>
+  <div class="hdr"><div class="hdr-title" role="heading" aria-level="1">Logboek</div><div class="hdr-sub">Trainingsgeschiedenis</div></div>
   <div class="scroll" style="padding-top:8px">
     <div class="filter-tabs" id="hist-filter-tabs">
       <button class="filter-tab active" onclick="setHistFilter('all',this)">Alles</button>
@@ -616,18 +666,18 @@ canvas{width:100%;height:100%}
     <div id="hist-list"></div>
     <button class="btn btn-o" id="hist-more" onclick="loadMoreHistory()" style="margin-top:4px">Meer laden</button>
   </div>
-  <nav class="bnav">
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
-    <button class="ni active" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
   </nav>
 </div>
 
 <!-- ═══ STATS ═══ -->
 <div class="scr" id="s-stats">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Progressie</div><div class="hdr-sub">1RM & Peakdoel 15 aug 2026</div></div><button class="ibtn" onclick="refreshStats()">↻</button></div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Progressie</div><div class="hdr-sub">1RM & Peakdoel 15 aug 2026</div></div><button class="ibtn" onclick="refreshStats()" aria-label="Statistieken vernieuwen">↻</button></div></div>
   <div class="scroll" style="padding-top:8px">
     <div class="card"><div class="card-hd"><div class="card-title">Geschatte 1RM</div><div class="card-sub">Epley formule · live</div></div>
       <div class="card-body">
@@ -677,12 +727,12 @@ canvas{width:100%;height:100%}
     <div class="card"><div class="card-hd"><div class="card-title">Lichaamscompositie</div></div><div class="card-body" id="stats-bc-list"></div></div>
     <button class="btn btn-o" onclick="go('s-hist')" style="margin-bottom:10px">📋 Trainingslogboek bekijken</button>
   </div>
-  <nav class="bnav">
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
-    <button class="ni active" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
   </nav>
 </div>
 
@@ -690,7 +740,7 @@ canvas{width:100%;height:100%}
 <div class="scr" id="s-train-mgr">
   <div class="hdr">
     <div class="hdr-row">
-      <div><div class="hdr-title">Training</div><div class="hdr-sub">Kies hoe je wilt loggen</div></div>
+      <div><div class="hdr-title" role="heading" aria-level="1">Training</div><div class="hdr-sub">Kies hoe je wilt loggen</div></div>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
@@ -720,9 +770,9 @@ canvas{width:100%;height:100%}
       </div>
     </div>
   </div>
-  <nav class="bnav">
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
+    <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
@@ -733,17 +783,17 @@ canvas{width:100%;height:100%}
 <div class="scr" id="s-train-schema">
   <div class="hdr">
     <div class="hdr-row">
-      <div><div class="hdr-title">Schema</div><div class="hdr-sub">Je vaste trainingen</div></div>
-      <button class="ibtn" onclick="go('s-train-mgr')">✕</button>
+      <div><div class="hdr-title" role="heading" aria-level="1">Schema</div><div class="hdr-sub">Je vaste trainingen</div></div>
+      <button class="ibtn" onclick="go('s-train-mgr')" aria-label="Sluiten, terug naar trainingsbeheer">✕</button>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
     <div id="schema-training-list"></div>
     <button class="btn btn-o" style="width:100%;margin-top:6px" onclick="openAddVasteTraining()">+ Nieuwe vaste training</button>
   </div>
-  <nav class="bnav">
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
+    <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
@@ -767,8 +817,8 @@ canvas{width:100%;height:100%}
 <div class="scr" id="s-train-workouts">
   <div class="hdr">
     <div class="hdr-row">
-      <div><div class="hdr-title">Workouts</div><div class="hdr-sub">Beheer je eigen trainingen</div></div>
-      <button class="ibtn" onclick="openNewTrainingModal()">＋</button>
+      <div><div class="hdr-title" role="heading" aria-level="1">Workouts</div><div class="hdr-sub">Beheer je eigen trainingen</div></div>
+      <button class="ibtn" onclick="openNewTrainingModal()" aria-label="Nieuwe training toevoegen">＋</button>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
@@ -776,9 +826,9 @@ canvas{width:100%;height:100%}
     <div id="custom-train-list"></div>
     <button class="btn btn-o" onclick="openNewTrainingModal()" style="margin-top:4px">+ Nieuwe training aanmaken</button>
   </div>
-  <nav class="bnav">
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
+    <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
@@ -789,16 +839,16 @@ canvas{width:100%;height:100%}
 <div class="scr" id="s-programma">
   <div class="hdr">
     <div class="hdr-row">
-      <div><div class="hdr-title">Programma</div><div class="hdr-sub">Meerdere weken vooruit</div></div>
-      <button class="ibtn" onclick="openProgGenModal()">＋</button>
+      <div><div class="hdr-title" role="heading" aria-level="1">Programma</div><div class="hdr-sub">Meerdere weken vooruit</div></div>
+      <button class="ibtn" onclick="openProgGenModal()" aria-label="Nieuw programma genereren">＋</button>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px" id="programma-list">
     <div style="text-align:center;color:var(--g4);font-size:13px;padding:30px 0">Nog geen programma. Tik op ＋ om er een te genereren.</div>
   </div>
-  <nav class="bnav">
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
+    <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
@@ -809,8 +859,8 @@ canvas{width:100%;height:100%}
 <div class="scr" id="s-programma-detail">
   <div class="hdr">
     <div class="hdr-row">
-      <div><div class="hdr-title" id="pbd-title">Training</div><div class="hdr-sub" id="pbd-sub"></div></div>
-      <button class="ibtn" onclick="go('s-programma')">✕</button>
+      <div><div class="hdr-title" role="heading" aria-level="1" id="pbd-title">Training</div><div class="hdr-sub" id="pbd-sub"></div></div>
+      <button class="ibtn" onclick="go('s-programma')" aria-label="Sluiten, terug naar programma">✕</button>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
@@ -818,9 +868,9 @@ canvas{width:100%;height:100%}
     <button class="btn btn-o" onclick="addBlockExercise()" style="margin-top:4px">+ Oefening toevoegen</button>
     <button id="pbd-start-btn" class="btn btn-r" style="margin-top:10px;width:100%" onclick="startProgramBlockTraining(curProgramBlockId)">▶ Start deze training</button>
   </div>
-  <nav class="bnav">
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
+    <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
@@ -831,7 +881,7 @@ canvas{width:100%;height:100%}
 <div class="pin-screen" id="s-admin-pin">
   <div class="pin-logo">Beheer</div>
   <div class="pin-sub">Pincode vereist</div>
-  <div style="position:absolute;top:14px;right:18px"><button class="ibtn" onclick="go('s-home')">✕</button></div>
+  <div style="position:absolute;top:14px;right:18px"><button class="ibtn" onclick="go('s-home')" aria-label="Sluiten, terug naar dashboard">✕</button></div>
   <div class="pin-dots"><div class="pin-dot" id="apd0"></div><div class="pin-dot" id="apd1"></div><div class="pin-dot" id="apd2"></div><div class="pin-dot" id="apd3"></div></div>
   <div class="pin-err" id="apin-err"></div>
   <div class="pin-grid">
@@ -844,7 +894,7 @@ canvas{width:100%;height:100%}
 
 <!-- ═══ ADMIN ═══ -->
 <div class="scr" id="s-admin">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title">Instellingen</div><div class="hdr-sub" id="admin-ver">v2.8.5</div></div><button class="ibtn" onclick="go('s-home')">✕</button></div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Beheer</div><div class="hdr-sub" id="admin-ver">v2.8.5</div></div><button class="ibtn" onclick="go('s-home')" aria-label="Sluiten, terug naar dashboard">✕</button></div></div>
   <div class="scroll" style="padding-top:8px">
     <div class="card"><div class="card-body" style="padding-top:8px">
       <div class="adm-row"><div><div class="adm-lbl">Roeiers (PM5)</div><div class="adm-sub">Concept 2 machines</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-rowers')">Beheer</button></div></div>
@@ -875,12 +925,12 @@ canvas{width:100%;height:100%}
       <div class="card-body" id="admin-eqcat-list" style="padding-top:10px"></div>
     </div>
   </div>
-  <nav class="bnav">
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
-    <button class="ni active" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
   </nav>
 </div>
 
@@ -1656,7 +1706,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.25';
+const APP_VER = 'v3.3.26';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -2865,10 +2915,38 @@ function openBeheer(){
   if(teamRoleLevel>=0){toast('Beheer is alleen voor gym-owners');return;}
   go('s-admin-pin'); // teamRoleLevel onbekend (-1) — PIN-fallback
 }
+// ══════════════════════════════════════════════════════════
+// SPRINT 1 — ACCESSIBILITY FUNDAMENT (WCAG 2.2 AA, Handbook H4/H6)
+// Kleine, additieve helperfuncties. Wijzigen geen bestaande render-/datalogica,
+// alleen focus- en aria-state rondom scherm- en modalwissels.
+// ══════════════════════════════════════════════════════════
+let lastFocusedBeforeModal=null;
+
+function focusScreenForA11y(el){
+  // Verplaatst focus naar het nieuwe scherm zodat screenreaders de contextwissel
+  // aankondigen (WCAG 2.4.3 Focus Order). el is al tabindex="-1" via CSS/HTML-attribuut
+  // niet altijd aanwezig op bestaande .scr-containers -> hier defensief zelf zetten.
+  if(!el)return;
+  if(!el.hasAttribute('tabindex'))el.setAttribute('tabindex','-1');
+  try{el.focus({preventScroll:true});}catch(e){/* oudere browsers zonder focusopties-object */el.focus();}
+}
+
+function getFocusableIn(container){
+  if(!container)return[];
+  return[...container.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])')]
+    .filter(n=>!n.disabled&&n.offsetParent!==null);
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  const openModalEl=document.querySelector('.modal.open');
+  if(openModalEl)closeModal(openModalEl.id);
+});
+
 function go(id){
-  if(id==='s-admin-pin'){adminPinBuf='';updA();document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));document.getElementById('s-admin-pin').classList.add('active');return;}
+  if(id==='s-admin-pin'){adminPinBuf='';updA();document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));const pinEl=document.getElementById('s-admin-pin');pinEl.classList.add('active');focusScreenForA11y(pinEl);return;}
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
-  const el=document.getElementById(id);if(el)el.classList.add('active');
+  const el=document.getElementById(id);if(el){el.classList.add('active');focusScreenForA11y(el);}
   stopTrainTimer();
   if(id==='s-home')refreshHome();
   if(id==='s-hist'){histOff=0;renderHistFilterTabs();loadHistory();}
@@ -2891,9 +2969,23 @@ function openModal(id){
     renderMuscleChecks('nx-muscles-primary', [], 'primary');
     renderMuscleChecks('nx-muscles-secondary', [], 'secondary');
   }
-  document.getElementById(id).classList.add('open');
+  const m=document.getElementById(id);
+  lastFocusedBeforeModal=document.activeElement;
+  m.setAttribute('role','dialog');
+  m.setAttribute('aria-modal','true');
+  m.classList.add('open');
+  const focusables=getFocusableIn(m);
+  if(focusables.length)focusables[0].focus();
 }
-function closeModal(id){document.getElementById(id).classList.remove('open');}
+function closeModal(id){
+  const m=document.getElementById(id);
+  m.classList.remove('open');
+  m.removeAttribute('aria-modal');
+  if(lastFocusedBeforeModal&&typeof lastFocusedBeforeModal.focus==='function'){
+    lastFocusedBeforeModal.focus();
+    lastFocusedBeforeModal=null;
+  }
+}
 function bgClose(e,id){if(e.target===document.getElementById(id))closeModal(id);}
 // v3.3.10: XSS-fix, fase 1. User-input (oefeningnamen, trainingsnamen, conditie-labels)
 // werd op tientallen plekken ongefilterd in innerHTML gezet. Zolang de app single-user
@@ -4157,9 +4249,9 @@ function buildVasteTrainingScreen(vt){
       <div class="train-save-row"><span class="save-status" id="train-save-status-${t.toLowerCase()}">✓ Alles opgeslagen</span><button class="save-btn" onclick="persistTrainingDraft(false)">Opslaan</button></div>
     </div>
     <div class="scroll" id="train-${t.toLowerCase()}-list" style="padding-top:12px"></div>
-    <nav class="bnav">
+    <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
       <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-      <button class="ni active" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
+      <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
       <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
       <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
       <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
@@ -7527,9 +7619,9 @@ function buildProgramTrainScreen(block,prog){
       <div class="prog-wrap"><div class="prog-fill" id="prog-${ctxT.toLowerCase()}" style="width:0%"></div></div>
     </div>
     <div class="scroll" id="train-${ctxT.toLowerCase()}-list" style="padding-top:12px"></div>
-    <nav class="bnav">
+    <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
       <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-      <button class="ni active"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+      <button class="ni active" aria-current="page"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
       <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
       <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
       <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
@@ -7563,9 +7655,9 @@ function buildCustomTrainScreen(t){
       <div class="prog-wrap"><div class="prog-fill" id="prog-${ctxT}" style="width:0%"></div></div>
     </div>
     <div class="scroll" id="train-${ctxT.toLowerCase()}-list" style="padding-top:12px"></div>
-    <nav class="bnav">
+    <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
       <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-      <button class="ni active"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+      <button class="ni active" aria-current="page"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
       <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
       <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
       <button class="ni" onclick="openBeheer()"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>

@@ -127,6 +127,12 @@ html[data-theme="light"]{
 .tk-confirm-actions button{padding:10px 16px;border-radius:10px;font-family:var(--f);font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid var(--g2);background:var(--g1);color:var(--dark);min-width:92px}
 .tk-confirm-ok{background:var(--accent);border-color:var(--accent);color:#fff}
 .tk-confirm-ok.danger{background:#B3454C;border-color:#B3454C}
+/* v3.3.44 Epic 1 — Morning Report: primaire "Training van vandaag"-CTA (groot tikvlak) */
+.today-cta{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;min-height:66px;border:none;border-radius:16px;background:var(--dark);color:#fff;font-family:var(--f);cursor:pointer;box-shadow:var(--shadow);text-align:left}
+.today-cta-lbl{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;opacity:.72}
+.today-cta-name{font-size:19px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-top:2px;line-height:1.1}
+.today-cta-go{font-size:15px;font-weight:800;color:var(--accent);flex-shrink:0}
+.today-cta:active{transform:scale(.99)}
 /* Extra druk-feedback (bevestiging) op de kern-interactieve elementen */
 .btn:active,.act-btn:active,.ibtn:active{transform:scale(.97)}
 /* Premium AI-chatbubbels: visueel onderscheid tussen coach (petrol, AI-content) en gebruiker */
@@ -570,8 +576,10 @@ canvas{width:100%;height:100%}
       </div>
     </div>
   </div>
-  <div class="scroll" style="padding-top:8px">
+  <div class="scroll" style="padding-top:10px">
+    <div id="home-morning" style="margin-bottom:12px"></div>
     <div id="home-hrv-card"></div>
+    <div id="home-today-cta" style="margin:10px 0"></div>
     <div id="home-program-card" style="margin-bottom:8px"></div>
     <div id="home-goals-card" style="margin-bottom:8px"></div>
     <div class="sec-hd">Start training</div>
@@ -2146,7 +2154,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.43';
+const APP_VER = 'v3.3.44';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6575,6 +6583,7 @@ Sessiedata (JSON): ${JSON.stringify(summaryData)}`;
 async function refreshHome(){
   const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=1');
   const lh=hd[0];
+  let dfInfo=null,nextT=null;
   if(lh){
     const st=hrvSt(lh.hrv);
     const pill={g:'hrv-pill g',y:'hrv-pill y',o:'hrv-pill o',r:'hrv-pill r'};
@@ -6582,6 +6591,7 @@ async function refreshHome(){
     // v3.3.36 Batch 2 #1: dagfactor gepromoveerd tot dominant, tikbaar dag-element (H8 explainable AI).
     const heroKleur=df.factor>=1?'var(--accent)':df.factor>=0.93?'var(--y)':'#B3454C';
     const uitleg=dagfactorUitleg(lh.hrv,lh.sleep,lh.cyclus_fase,df);
+    dfInfo={factor:df.factor,uitleg,hero:heroKleur,st};
     const sig=[lh.hrv,lh.sleep,lh.cyclus_fase].filter(Boolean).length;
     const conf=(lh.hrv&&lh.sleep)?'Hoog':(lh.hrv||lh.sleep)?'Middel':'Laag';
     const cyc=lh.cyclus_fase?` × cyclus ${df.cyclusFactor.toFixed(2)}`:'';
@@ -6623,10 +6633,13 @@ async function refreshHome(){
   if(vasteTrainingen.length){
     const lastDoneMap=await computeLastDoneMap(vasteTrainingen);
     const next=computeNextVasteTraining(vasteTrainingen,lastDoneMap);
+    nextT=next;
     nextLblEl.textContent=next?'Volgende training: '+next.naam:'';
   }else{
     nextLblEl.textContent='';
   }
+  renderMorning(dfInfo,nextT);
+  renderTodayCta(nextT);
   if(curT){document.getElementById('home-dot-'+curT.toLowerCase())?.classList.add('show');}
   const rsSynced=await sbGet('sessions','&order=created_at.desc&limit=6');
   const rsPending=await getPendingSessionRows();
@@ -6636,6 +6649,42 @@ async function refreshHome(){
   else rs.forEach(s=>{const n=exercises.find(e=>e.id===s.exercise_id)?.name||s.exercise_id;const v=s.weight&&s.reps?s.weight+'kg×'+s.reps:s.time_str||'—';rh+=`<div class="lrow">${s._pending?'<span title="Wachtend op sync" style="margin-right:4px">⏳</span>':''}<div class="ldate">${s.date}</div><div class="lval">${n}</div><div class="lnote">${v}</div></div>`;});
   document.getElementById('home-recent').innerHTML=rh;
   refreshHomeGoalsCard();
+}
+
+// v3.3.44 Epic 1 — Morning Report. Persoonlijke ochtendtekst, uitsluitend uit bestaande
+// data (dagfactor-motor + volgende vaste training + atleetnaam). Geen nieuwe AI/API-call:
+// regelgebaseerd, instant en offline-veilig; "persoonlijk" via de echte cijfers.
+function buildMorningMessage(dfInfo,nextT){
+  const naam=(typeof atleet!=='undefined'&&atleet&&atleet.naam)?String(atleet.naam).trim().split(' ')[0]:'';
+  const h=new Date().getHours();
+  const groet=(h<12?'Goedemorgen':h<18?'Goedemiddag':'Goedenavond')+(naam?', '+naam:'');
+  let regel;
+  if(!dfInfo){
+    regel='Nog geen check-in vandaag — vul je HRV in voor je dagfactor.';
+  }else{
+    const f=dfInfo.factor;
+    const toon=f>=1?'Sterke dag — je lichaam staat op groen.'
+      :f>=0.93?'Prima dag. Houd je RPE in de gaten.'
+      :'Herstel-dag. Houd het licht en luister naar je lijf.';
+    regel=toon+(nextT?` Vandaag staat ${nextT.naam} klaar.`:'');
+  }
+  return {groet,regel};
+}
+function renderMorning(dfInfo,nextT){
+  const el=document.getElementById('home-morning');if(!el)return;
+  const m=buildMorningMessage(dfInfo,nextT);
+  el.innerHTML=`<div style="padding:0 2px">
+    <div style="font-size:20px;font-weight:800;color:var(--dark);line-height:1.2">${escHtml(m.groet)}</div>
+    <div style="font-size:13px;color:var(--g4);font-weight:600;margin-top:3px;line-height:1.4">${escHtml(m.regel)}</div>
+  </div>`;
+}
+function renderTodayCta(nextT){
+  const el=document.getElementById('home-today-cta');if(!el)return;
+  if(!nextT){el.innerHTML='';return;}
+  el.innerHTML=`<button onclick="startT('${nextT.id}')" class="today-cta" aria-label="Start training van vandaag: ${escHtml(nextT.naam)}">
+    <div><div class="today-cta-lbl">Training van vandaag</div><div class="today-cta-name">${escHtml(nextT.naam)}</div></div>
+    <div class="today-cta-go" aria-hidden="true">Start ›</div>
+  </button>`;
 }
 
 // Compacte Doelen-preview op het Dashboard (Sprint 3, H10 Navigation Dashboard-integratie).
@@ -6654,7 +6703,7 @@ async function refreshHomeGoalsCard(){
   el.innerHTML=`<div class="card" style="cursor:pointer" onclick="go('s-doelen')">
     <div class="card-body" style="padding-top:10px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">🎯 Doel</div>
+        <div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:5px"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2"/></svg>Doel</div>
         <span style="font-size:11px;color:var(--accent)">Alle doelen ›</span>
       </div>
       <div style="font-weight:700;color:var(--dark);font-size:14px;margin-bottom:6px">${escHtml(label)}</div>
@@ -6691,7 +6740,7 @@ async function renderHomeProgramCard(){
       const dateLbl=formatProgDate(b.planned_date);
       el.innerHTML=`<div class="card" onclick="startProgramBlockTraining('${b.id}')" style="cursor:pointer;border:2px solid var(--accent)">
         <div class="card-body" style="padding:14px;display:flex;align-items:center;gap:12px">
-          <div style="font-size:24px">🗓️</div>
+          <div style="width:40px;height:40px;border-radius:10px;background:var(--g1);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:var(--accent);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M3.5 9.5h17M8 3.2v3.6M16 3.2v3.6"/></svg></div>
           <div style="flex:1">
             <div style="font-size:11px;color:var(--g4);font-weight:700;text-transform:uppercase">Verder met ${escHtml(p.naam)}</div>
             <div style="font-size:15px;font-weight:800">${escHtml(b.fase_naam||'Training')} · Wk ${b.week_nr}</div>

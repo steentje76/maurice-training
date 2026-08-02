@@ -1,5 +1,47 @@
 # Trainingskompas — Changelog
 
+## v3.3.44 — 2 augustus 2026 (Epic 1 — Morning Experience)
+*Home wordt het Morning Report. Geen nieuwe DB/AI/architectuur; uitsluitend bestaande data, presentatie-verbetering.*
+
+### Toegevoegd — Home = Morning Report
+- **Persoonlijke ochtendtekst** bovenaan Home: tijdgebonden groet ("Goedemorgen, {naam}") + coach-zin afgeleid uit je eigen dagfactor + de training van vandaag. **Regelgebaseerd uit bestaande data** (dagfactor-motor, volgende vaste training, atleetnaam) — geen nieuwe AI/API-call, instant en offline-veilig (DEC-026).
+- **Prominente primaire CTA "Training van vandaag: {training}"** met groot tikvlak (min-hoogte 66px) die de volgende vaste training direct start. Hiërarchie herstel-vóór-prestatie: groet → dagfactor → training van vandaag.
+- Dagfactor blijft het dominante, tikbare dag-element met explainable uitleg (Waarom/Data/Logica/Confidence, v3.3.37).
+
+### Premium polish
+- Laatste Home-emoji vervangen door lijn-iconen: 🎯 (Doel) en 🗓️ (Programma). Home-scroll-spacing afgestemd op het report-ritme.
+
+### Bewust NIET gedaan (conform opdracht + FASE 0)
+- Geen nieuwe database, AI-logica of architectuur. De ochtendtekst gebruikt bewust de bestaande explainable rekenmotoren i.p.v. een AI-call op elke Home-load (zou latency/kosten/offline-risico toevoegen). Een live-AI ochtendbericht kan later als opt-in.
+
+### Getest
+- `node --check` OK · `logic_tests.js` 141/141 · headless render (ochtendtekst + CTA) 0 code-fouten.
+
+### Gewijzigd
+- `APP_VER` → v3.3.44; `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v3344`.
+
+---
+
+## SECURITY HOTFIX — 2 augustus 2026 (cross-account datalek — migratie_v338)
+*Databasewijziging (RLS/data). Geen app-codewijziging — geen nieuwe `index.html`/`sw.js` nodig; alleen `migratie_v338.sql` uitvoeren in Supabase.*
+
+### Probleem (kritiek, privacy)
+- Een tweede/nieuwe gebruiker zag bij **Stats → "Geschatte 1RM"** de 1RM-waarden en peakdoelen van de oorspronkelijke gebruiker.
+
+### Oorzaak
+- `migratie_v333` (regel 45) backfillde alle bestaande, persoonlijke oefeningen naar `scope='global'`. De RLS-SELECT-policy toont elke `scope='global'`-rij aan iedere ingelogde gebruiker, terwijl per-gebruiker-data (`pr`/1RM, `peak_goal`) OP de oefening-rij staat → die waarden lekten naar alle gebruikers.
+
+### Fix (migratie_v338)
+- Alle gelekte `global`-oefeningen teruggezet naar `personal` en toegewezen aan de eigenaar (`created_by`). 72 rijen hersteld; eigenaar behoudt alles, andere gebruikers zien niets meer.
+
+### Brede RLS-audit (uitgevoerd)
+- RLS staat aan op **alle 37 publieke tabellen**. 10 tabellen met 0 policies = deny-all (veilig; billing/config Fase 5 + server-side OAuth). 15 persoonlijke tabellen correct met `auth.uid()`. `custom_trainings` gebruikt hetzelfde `scope='global'`-patroon maar is leeg → geen lek. `exercises` was het enige actieve lek, nu gedicht. Zie DEC-025.
+
+### Architectuur-advies (aparte vervolgstap)
+- Per-gebruiker-prestatiedata (`pr`/`peak_goal`) hoort nooit op deelbare (`global`/`gym`) rijen. Óf oefeningen per gebruiker houden + schone globale starter-catalogus seeden, óf `pr`/`peak_goal` naar een aparte per-gebruiker tabel. Details in `migratie_v338.sql`.
+
+---
+
 ## v3.3.43 — 2 augustus 2026 (Wordmark op het login-scherm + laatste ART-restant weg)
 *Volledige wordmark (logo + naam + tagline) op het inlogscherm.*
 

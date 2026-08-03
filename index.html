@@ -133,6 +133,29 @@ html[data-theme="light"]{
 .today-cta-name{font-size:19px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-top:2px;line-height:1.1}
 .today-cta-go{font-size:15px;font-weight:800;color:var(--accent);flex-shrink:0}
 .today-cta:active{transform:scale(.99)}
+/* v3.3.45 Dashboard 2.0 — verrijkte hero-card */
+.today-card{background:var(--dark);color:#fff;border-radius:18px;padding:16px 18px;box-shadow:0 6px 20px rgba(11,29,42,.20)}
+.today-card .today-cta-lbl{opacity:.72}
+.today-card .today-cta-name{margin-top:2px}
+.today-meta{font-size:12px;color:rgba(255,255,255,.78);font-weight:600;margin-top:5px}
+.today-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.today-chip{font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;background:rgba(255,255,255,.12);color:#fff;padding:3px 9px;border-radius:8px}
+.today-start{width:100%;margin-top:14px;padding:14px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-family:var(--f);font-size:15px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;min-height:48px}
+.today-start:active{transform:scale(.99)}
+/* Stat-kaarten (actief / weekvolume) */
+.home-stat-row{display:flex;gap:10px}
+.home-stat{flex:1;min-width:0;background:var(--card);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow)}
+.home-stat-top{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--g4);display:flex;align-items:center;gap:5px}
+.home-stat-top svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.home-stat-val{font-size:24px;font-weight:800;color:var(--dark);margin-top:5px;line-height:1}
+.home-stat-sub{font-size:11px;font-weight:600;color:var(--g4);margin-top:3px}
+/* Quick Actions */
+.quick-row{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+.quick-act{flex:1;min-width:66px;background:var(--card);border:none;border-radius:14px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;box-shadow:var(--shadow);font-family:var(--f)}
+.quick-ic{width:40px;height:40px;border-radius:11px;background:var(--g1);display:flex;align-items:center;justify-content:center}
+.quick-ic svg{width:20px;height:20px;stroke:var(--dark);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.quick-lbl{font-size:10px;font-weight:700;color:var(--g6)}
+.quick-act:active{transform:scale(.97)}
 /* Extra druk-feedback (bevestiging) op de kern-interactieve elementen */
 .btn:active,.act-btn:active,.ibtn:active{transform:scale(.97)}
 /* Premium AI-chatbubbels: visueel onderscheid tussen coach (petrol, AI-content) en gebruiker */
@@ -580,13 +603,15 @@ canvas{width:100%;height:100%}
     <div id="home-morning" style="margin-bottom:12px"></div>
     <div id="home-hrv-card"></div>
     <div id="home-today-cta" style="margin:10px 0"></div>
+    <div id="home-weekstats" style="margin-bottom:10px"></div>
     <div id="home-program-card" style="margin-bottom:8px"></div>
     <div id="home-goals-card" style="margin-bottom:8px"></div>
     <div class="sec-hd">Start training</div>
     <div id="vaste-training-btns" style="display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap"></div>
     <div id="custom-train-btns"></div>
     <div id="home-next-lbl" style="font-size:12px;color:var(--g4);font-weight:600;text-align:center;margin-bottom:10px"></div>
-    <button onclick="openPlateCalc(0)" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;background:var(--g1);border:1.5px solid var(--g2);border-radius:12px;font-family:var(--f);font-size:13px;font-weight:700;color:var(--dark);cursor:pointer;margin-bottom:10px"><svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:2px"><path d="M4 10v4M6.5 8v8M17.5 8v8M20 10v4M6.5 12h11"/></svg> Plate Calculator</button>
+    <div class="sec-hd">Snelacties</div>
+    <div id="home-quick" style="margin-bottom:12px"></div>
     <div class="sec-hd">Recente sessies</div>
     <div class="card"><div class="card-body" style="padding-top:10px" id="home-recent"></div></div>
     <div style="height:8px"></div>
@@ -2154,7 +2179,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.44';
+const APP_VER = 'v3.3.45';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6640,6 +6665,8 @@ async function refreshHome(){
   }
   renderMorning(dfInfo,nextT);
   renderTodayCta(nextT);
+  renderWeekStats();
+  renderQuickActions();
   if(curT){document.getElementById('home-dot-'+curT.toLowerCase())?.classList.add('show');}
   const rsSynced=await sbGet('sessions','&order=created_at.desc&limit=6');
   const rsPending=await getPendingSessionRows();
@@ -6678,13 +6705,68 @@ function renderMorning(dfInfo,nextT){
     <div style="font-size:13px;color:var(--g4);font-weight:600;margin-top:3px;line-height:1.4">${escHtml(m.regel)}</div>
   </div>`;
 }
-function renderTodayCta(nextT){
+// v3.3.45 Dashboard 2.0 — verrijkte hero: naam + aantal oefeningen + spiergroepen (echte
+// data uit training_exercises + exercises.muscle_primary). Geen verzonnen duur/calorieën (DEC-027).
+async function renderTodayCta(nextT){
   const el=document.getElementById('home-today-cta');if(!el)return;
   if(!nextT){el.innerHTML='';return;}
-  el.innerHTML=`<button onclick="startT('${nextT.id}')" class="today-cta" aria-label="Start training van vandaag: ${escHtml(nextT.naam)}">
-    <div><div class="today-cta-lbl">Training van vandaag</div><div class="today-cta-name">${escHtml(nextT.naam)}</div></div>
-    <div class="today-cta-go" aria-hidden="true">Start ›</div>
-  </button>`;
+  let meta='',chips='';
+  try{
+    const texs=await sbGet('training_exercises','&training_ref=eq.'+encodeURIComponent(nextT.id)+'&order=sort_order.asc');
+    const n=texs.length;
+    const mset=new Set();
+    texs.forEach(te=>{const ex=exercises.find(e=>e.id===te.exercise_id);if(ex&&Array.isArray(ex.muscle_primary))ex.muscle_primary.forEach(m=>m&&mset.add(m));});
+    const muscles=[...mset];
+    if(n)meta=`${n} oefening${n===1?'':'en'}${muscles.length?` · ${muscles.length} spiergroep${muscles.length===1?'':'en'}`:''}`;
+    chips=muscles.slice(0,6).map(m=>`<span class="today-chip">${escHtml(m)}</span>`).join('');
+  }catch(e){}
+  el.innerHTML=`<div class="today-card">
+    <div class="today-cta-lbl">Training van vandaag</div>
+    <div class="today-cta-name">${escHtml(nextT.naam)}</div>
+    ${meta?`<div class="today-meta">${meta}</div>`:''}
+    ${chips?`<div class="today-chips">${chips}</div>`:''}
+    <button onclick="startT('${nextT.id}')" class="today-start" aria-label="Start ${escHtml(nextT.naam)}">▶ Start training</button>
+  </div>`;
+}
+// v3.3.45 Dashboard 2.0 — weekvolume + actieve dagen, uitsluitend uit bestaande sessies.
+async function renderWeekStats(){
+  const el=document.getElementById('home-weekstats');if(!el)return;
+  const d=n=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
+  let rows=[];
+  try{rows=await sbGet('sessions','&date=gte.'+d(30));}catch(e){}
+  if(!rows||!rows.length){el.innerHTML='';return;}
+  const d7=d(7),d14=d(14);
+  let volThis=0,volPrev=0;const days=new Set();
+  rows.forEach(s=>{days.add(s.date);const v=(parseFloat(s.weight)||0)*(parseInt(s.reps)||0)*(parseInt(s.sets)||1);if(s.date>=d7)volThis+=v;else if(s.date>=d14)volPrev+=v;});
+  const activeDays=days.size;
+  const pct=volPrev>0?Math.round((volThis-volPrev)/volPrev*100):null;
+  const volKg=Math.round(volThis).toLocaleString('nl-NL');
+  const pctStr=pct===null?'—':(pct>=0?`+${pct}%`:`${pct}%`);
+  const pctCol=pct===null?'var(--g4)':(pct>=0?'var(--accent)':'var(--y)');
+  el.innerHTML=`<div class="home-stat-row">
+    <div class="home-stat">
+      <div class="home-stat-top"><svg viewBox="0 0 24 24"><path d="M12 3c1.2 2.4.6 4.2-.9 5.7C9.3 10.5 8 12 8 14.2A4 4 0 0 0 16 14c0-1.3-.5-2.4-1.2-3.3.9.3 3.2 1.7 3.2 4.6A6 6 0 1 1 8 6.3C9.6 5 11.4 4 12 3Z"/></svg>Actief</div>
+      <div class="home-stat-val">${activeDays}</div>
+      <div class="home-stat-sub">dagen · laatste 30</div>
+    </div>
+    <div class="home-stat">
+      <div class="home-stat-top"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 19v-6M12 19v-9M16 19v-4M20 19v-11"/></svg>Weekvolume</div>
+      <div class="home-stat-val">${volKg}<span style="font-size:13px;font-weight:700"> kg</span></div>
+      <div class="home-stat-sub" style="color:${pctCol}">${pctStr} vs vorige week</div>
+    </div>
+  </div>`;
+}
+// v3.3.45 Dashboard 2.0 — Quick Actions (navigatie naar bestaande schermen).
+function renderQuickActions(){
+  const el=document.getElementById('home-quick');if(!el)return;
+  const acts=[
+    {l:'Plate',i:'<path d="M4 10v4M6.5 8v8M17.5 8v8M20 10v4M6.5 12h11"/>',o:"openPlateCalc(0)"},
+    {l:'Stats',i:'<path d="M4 4v16h16"/><path d="M7.5 14.5 11 11l2.5 2.5L19 8"/>',o:"go('s-stats')"},
+    {l:'Logboek',i:'<path d="M6 4h9l3 3v13H6z"/><path d="M9 10h6M9 14h6M9 18h4"/>',o:"go('s-hist')"},
+    {l:'Coach',i:'<path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4 19.5l1.3-4.1A7.5 7.5 0 1 1 20 11.5Z"/>',o:"go('s-coach')"},
+    {l:'Profiel',i:'<circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/>',o:"go('s-profiel')"}
+  ];
+  el.innerHTML='<div class="quick-row">'+acts.map(a=>`<button class="quick-act" onclick="${a.o}" aria-label="${a.l}"><span class="quick-ic"><svg viewBox="0 0 24 24">${a.i}</svg></span><span class="quick-lbl">${a.l}</span></button>`).join('')+'</div>';
 }
 
 // Compacte Doelen-preview op het Dashboard (Sprint 3, H10 Navigation Dashboard-integratie).

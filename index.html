@@ -30,6 +30,7 @@
   --accent:#00B894;--accent2:#0E3B4A;
   --y:#c8a84b;--g1:#f5f5f5;--g2:#e5e5e5;--g3:#bbbbbb;--g4:#888888;--g6:#444444;--dark:#0B1D2A;
   --f:'Poppins','Arial',sans-serif;--r:8px;--shadow:0 1px 3px rgba(0,0,0,.1);
+  --df-g:#00a082;--df-y:#a8842e;--df-r:#B3454C;
 
   /* Sprint 1 — Dark Mode Fundament (Handbook H5 Deel 13). Alleen tokens + auto-detectie,
      nog geen restyle: lichte waarden hierboven blijven ongewijzigd de standaard. */
@@ -57,6 +58,7 @@
     --g1:#12303e;--g2:#1b4353;--g3:#5c7a87;--g4:#9fb4bd;--g6:#e2e8ec;
     --shadow:0 1px 3px rgba(0,0,0,.4);
     --focus-ring:#00B894;
+    --df-g:#3fd3b6;--df-y:#e0c06a;--df-r:#f08a8f;
   }
 }
 
@@ -68,12 +70,14 @@ html[data-theme="dark"]{
   --g1:#12303e;--g2:#1b4353;--g3:#5c7a87;--g4:#9fb4bd;--g6:#e2e8ec;
   --shadow:0 1px 3px rgba(0,0,0,.4);
   --focus-ring:#00B894;
+  --df-g:#3fd3b6;--df-y:#e0c06a;--df-r:#f08a8f;
 }
 html[data-theme="light"]{
   --bg:#E6EBEF;--card:#fff;--bk:#0B1D2A;--dark:#0B1D2A;
   --g1:#f5f5f5;--g2:#e5e5e5;--g3:#bbbbbb;--g4:#888888;--g6:#444444;
   --shadow:0 1px 3px rgba(0,0,0,.1);
   --focus-ring:#0E3B4A;
+  --df-g:#00a082;--df-y:#a8842e;--df-r:#B3454C;
 }
 
 /* Reduced motion: alle motion-tokens naar (nagenoeg) nul, conform WCAG 2.2 / H6-vereiste
@@ -133,36 +137,53 @@ html[data-theme="light"]{
 .today-cta-name{font-size:19px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-top:2px;line-height:1.1}
 .today-cta-go{font-size:15px;font-weight:800;color:var(--accent);flex-shrink:0}
 .today-cta:active{transform:scale(.99)}
-/* v3.3.47 — Premium coach-koptekst (groet + advies) */
-.home-groet{font-size:22px;font-weight:800;color:var(--dark);line-height:1.15;letter-spacing:-.2px}
-.home-coach{font-size:13.5px;color:var(--g6);font-weight:600;margin-top:6px;line-height:1.5;max-width:54ch}
-/* v3.3.45/47 Dashboard — HERO: het zwaarste element van Home */
-.today-card{position:relative;background:linear-gradient(150deg,#123c4d 0%,#0a2029 100%);color:#fff;border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:18px 20px 20px;box-shadow:0 10px 28px rgba(0,0,0,.30);animation:tk-screen-in var(--motion-standard) var(--motion-ease);overflow:hidden}
+/* v3.3.47/48 — Premium coach-koptekst (groet + advies) */
+.home-groet{font-size:23px;font-weight:800;color:var(--dark);line-height:1.12;letter-spacing:-.3px}
+.home-coach{font-size:14px;color:var(--g6);font-weight:600;margin-top:7px;line-height:1.55;max-width:54ch}
+/* v3.3.45/47/48 Dashboard — HERO: het dominante element van Home (P1). Ruimer, groter,
+   subtiele accent-glow; voelt als "vandaag gaan we dit doen". */
+.today-card{position:relative;background:linear-gradient(150deg,#123c4d 0%,#0a2029 100%);color:#fff;border:1px solid rgba(255,255,255,.06);border-radius:22px;padding:24px 22px 26px;box-shadow:0 14px 34px rgba(0,0,0,.34);animation:tk-screen-in var(--motion-standard) var(--motion-ease);overflow:hidden}
 .today-card::before{content:'';position:absolute;left:0;top:0;height:100%;width:4px;background:var(--accent)}
-.today-card .today-cta-lbl{opacity:.72;color:var(--accent)}
-.today-card .today-cta-name{margin-top:3px;font-size:23px}
-.today-meta{font-size:12.5px;color:rgba(255,255,255,.80);font-weight:600;margin-top:6px}
-.today-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
-.today-chip{font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;background:rgba(255,255,255,.13);color:#fff;padding:4px 10px;border-radius:8px}
-.today-ready{display:flex;align-items:center;gap:8px;margin-top:13px;font-size:12.5px;font-weight:700;color:rgba(255,255,255,.92)}
-.today-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 3px rgba(255,255,255,.10)}
+.today-card::after{content:'';position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(0,184,148,.20) 0%,rgba(0,184,148,0) 70%);pointer-events:none}
+.today-card>*{position:relative;z-index:1}
+.today-card .today-cta-lbl{opacity:.85;color:var(--accent);letter-spacing:.8px}
+.today-card .today-cta-name{margin-top:5px;font-size:26px;line-height:1.05}
+.today-meta{font-size:13px;color:rgba(255,255,255,.82);font-weight:600;margin-top:9px}
+.today-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
+.today-chip{font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;background:rgba(255,255,255,.13);color:#fff;padding:5px 11px;border-radius:9px}
+.today-ready{display:flex;align-items:center;gap:9px;margin-top:16px;font-size:13px;font-weight:700;color:rgba(255,255,255,.94)}
+.today-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 4px rgba(255,255,255,.10)}
 .today-dot.g{background:var(--accent)}.today-dot.y{background:var(--y)}.today-dot.r{background:#E06A70}
-.today-start{width:100%;margin-top:14px;padding:15px;border:none;border-radius:14px;background:var(--accent);color:#fff;font-family:var(--f);font-size:15px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;min-height:52px;box-shadow:0 4px 14px rgba(0,184,148,.30);transition:transform var(--motion-fast) var(--motion-ease),box-shadow var(--motion-fast) var(--motion-ease)}
+.today-start{width:100%;margin-top:20px;padding:17px;border:none;border-radius:15px;background:var(--accent);color:#fff;font-family:var(--f);font-size:16px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;cursor:pointer;min-height:56px;box-shadow:0 5px 16px rgba(0,184,148,.32);transition:transform var(--motion-fast) var(--motion-ease),box-shadow var(--motion-fast) var(--motion-ease);animation:tk-cta-glow 2.8s var(--motion-ease) infinite}
 .today-start:active{transform:scale(.98);box-shadow:0 2px 8px rgba(0,184,148,.24)}
-/* v3.3.47 P3 — dagfactor-statuspill. Tekst = var(--dark) (flipt mee met dark mode → altijd
-   AA-contrast); kleur-identiteit via de tint + gekleurde dot. Banden = heroKleur-banden. */
-.df-status{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;padding:3px 9px 3px 8px;border-radius:20px;white-space:nowrap;color:var(--dark)}
-.df-status::before{content:'';width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.df-status.g{background:rgba(0,184,148,.16)}.df-status.g::before{background:var(--accent)}
-.df-status.y{background:rgba(200,168,75,.20)}.df-status.y::before{background:var(--y)}
-.df-status.r{background:rgba(224,106,112,.18)}.df-status.r::before{background:#E06A70}
+@keyframes tk-cta-glow{0%,100%{box-shadow:0 5px 16px rgba(0,184,148,.30)}50%{box-shadow:0 7px 24px rgba(0,184,148,.48)}}
+@media (prefers-reduced-motion:reduce){.today-start{animation:none}}
+/* v3.3.48 P3 — dagfactor betekenis-eerst (koptekst + betekenis + techniek) */
+.df-head{width:100%;border:none;background:none;cursor:pointer;text-align:left;display:flex;align-items:center;gap:14px;padding:2px 2px 10px;font-family:var(--f)}
+.df-ring{position:relative;width:64px;height:64px;flex-shrink:0}
+.df-ring-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:var(--dark)}
+.df-headline{font-size:17px;font-weight:800;letter-spacing:-.2px;line-height:1.15}
+.df-headline.g{color:var(--df-g)}.df-headline.y{color:var(--df-y)}.df-headline.r{color:var(--df-r)}
+.df-meaning{font-size:13.5px;font-weight:600;color:var(--dark);line-height:1.35;margin-top:3px}
+.df-tech{font-size:11.5px;font-weight:500;color:var(--g4);margin-top:4px}
+.df-why{font-size:11.5px;color:var(--accent);font-weight:700;margin-top:6px}
+/* v3.3.48 P4 — premium "Waarom vandaag?"-uitleg */
+.df-detail{font-size:12.5px;line-height:1.5;background:var(--g1);border-radius:12px;padding:12px 14px;margin-bottom:10px;animation:tk-screen-in var(--motion-standard) var(--motion-ease)}
+.dfd-title{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--g4);margin-bottom:8px}
+.dfd-row{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid var(--g2)}
+.dfd-lbl{font-weight:700;color:var(--dark);flex-shrink:0}
+.dfd-val{color:var(--g6);text-align:right}
+.dfd-concl{margin-top:10px;padding:10px 12px;background:rgba(0,184,148,.10);border-radius:10px;color:var(--dark);font-weight:600;line-height:1.45}
+.dfd-note{font-size:11px;color:var(--g4);margin-top:10px;line-height:1.5}
+/* v3.3.48 P3 — dagfactor headline-kleuren in dark mode (lichter voor contrast) */
 /* Stat-kaarten (actief / weekvolume) */
 .home-stat-row{display:flex;gap:10px}
-.home-stat{flex:1;min-width:0;background:var(--card);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow)}
+.home-stat{flex:1;min-width:0;background:var(--card);border-radius:16px;padding:14px 16px;box-shadow:var(--shadow)}
 .home-stat-top{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--g4);display:flex;align-items:center;gap:5px}
 .home-stat-top svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
-.home-stat-val{font-size:24px;font-weight:800;color:var(--dark);margin-top:5px;line-height:1}
-.home-stat-sub{font-size:11px;font-weight:600;color:var(--g4);margin-top:3px}
+.home-stat-val{font-size:26px;font-weight:800;color:var(--dark);margin-top:7px;line-height:1}
+.home-stat-u{font-size:13px;font-weight:700;color:var(--g4)}
+.home-stat-sub{font-size:11.5px;font-weight:600;color:var(--g4);margin-top:4px;line-height:1.3}
 /* Quick Actions */
 .quick-row{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
 .quick-act{flex:1;min-width:66px;background:var(--card);border:none;border-radius:14px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;box-shadow:var(--shadow);font-family:var(--f)}
@@ -2193,7 +2214,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.47';
+const APP_VER = 'v3.3.48';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6636,42 +6657,27 @@ async function refreshHome(){
     const sig=[lh.hrv,lh.sleep,lh.cyclus_fase].filter(Boolean).length;
     const conf=(lh.hrv&&lh.sleep)?'Hoog':(lh.hrv||lh.sleep)?'Middel':'Laag';
     const cyc=lh.cyclus_fase?` × cyclus ${df.cyclusFactor.toFixed(2)}`:'';
-    document.getElementById('home-hrv-card').innerHTML=`<div class="card"><div class="card-body" style="padding-top:12px">
-      <button onclick="toggleDagfactorDetail()" aria-expanded="false" aria-controls="dagfactor-detail" style="width:100%;border:none;background:none;cursor:pointer;text-align:left;display:flex;align-items:center;gap:12px;padding:2px 2px 10px;font-family:var(--f)">
-        <div style="position:relative;width:60px;height:60px;flex-shrink:0">
-          <svg width="60" height="60" viewBox="0 0 60 60" style="transform:rotate(-90deg);display:block" aria-hidden="true">
+    const dc=dagfactorCoach(df.factor);
+    // v3.3.48 — betekenis-eerst + premium "Waarom?": rauwe cijfers/pills verhuizen naar de
+    // uitklap (renderDagfactorDetail), zodat de kaart als coach voelt i.p.v. dashboard.
+    window.homeDfDetail={factor:df.factor,uitleg,hrv:lh.hrv,rhr:lh.rhr,sleep:lh.sleep,cyclus:lh.cyclus_fase,hrvF:df.hrvFactor,slaapF:df.slaapFactor,cycTxt:cyc,conf,sig,st,date:lh.date,statusTxt:dfStat.txt};
+    document.getElementById('home-hrv-card').innerHTML=`<div class="card"><div class="card-body" style="padding-top:14px">
+      <button onclick="toggleDagfactorDetail()" aria-expanded="false" aria-controls="dagfactor-detail" class="df-head">
+        <div class="df-ring">
+          <svg width="64" height="64" viewBox="0 0 60 60" style="transform:rotate(-90deg);display:block" aria-hidden="true">
             <circle cx="30" cy="30" r="24" fill="none" stroke="var(--g2)" stroke-width="5"/>
             <circle cx="30" cy="30" r="24" fill="none" stroke="${heroKleur}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${RC}" stroke-dashoffset="${Math.round(RC*(1-ringPct))}" style="transition:stroke-dashoffset var(--motion-success) var(--motion-ease)"/>
           </svg>
-          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:var(--dark)">${df.factor}</div>
+          <div class="df-ring-val">${df.factor}</div>
         </div>
         <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--g4)">Dagfactor vandaag</div>
-            <span class="df-status ${dfStat.cls}">${dfStat.txt}</span>
-          </div>
-          <div style="font-size:14px;font-weight:700;color:var(--dark);line-height:1.3;margin-top:2px">${uitleg}</div>
-          <div id="dagfactor-chevron" style="font-size:11px;color:var(--accent);font-weight:700;margin-top:3px">Waarom? →</div>
+          <div class="df-headline ${dc.cls}">${dc.headline}</div>
+          <div class="df-meaning">${dc.meaning}</div>
+          <div class="df-tech">${uitleg} · ${lh.date}</div>
+          <div id="dagfactor-chevron" class="df-why">Waarom vandaag? →</div>
         </div>
       </button>
-      <div id="dagfactor-detail" style="display:none;font-size:12px;line-height:1.55;background:var(--g1);border-radius:10px;padding:10px 12px;margin-bottom:10px">
-        <div style="margin-bottom:5px"><span style="font-weight:700;color:var(--dark)">Waarom:</span> <span style="color:var(--g6)">${uitleg}.</span></div>
-        <div style="margin-bottom:5px"><span style="font-weight:700;color:var(--dark)">Data:</span> <span style="color:var(--g6)">HRV ${lh.hrv||'—'} ms · RHR ${lh.rhr||'—'} · slaap ${lh.sleep?fmtSleep(lh.sleep):'—'}${lh.cyclus_fase?' · cyclus '+lh.cyclus_fase:''}</span></div>
-        <div style="margin-bottom:5px"><span style="font-weight:700;color:var(--dark)">Logica:</span> <span style="color:var(--g6)">${df.factor} = HRV ${df.hrvFactor.toFixed(2)} × slaap ${df.slaapFactor.toFixed(2)}${cyc}, geclipt op 0.85–1.05. Informatief — past nooit automatisch je gewicht aan.</span></div>
-        <div><span style="font-weight:700;color:var(--dark)">Confidence:</span> <span style="color:var(--g6)">${conf} (${sig}/3 signalen aanwezig)</span></div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">
-        ${lh.hrv?`<div class="stat-box"><div class="stat-val red">${lh.hrv}</div><div class="stat-unit">HRV ms</div></div>`:''}
-        ${lh.rhr?`<div class="stat-box"><div class="stat-val">${lh.rhr}</div><div class="stat-unit">RHR bpm</div></div>`:''}
-        ${lh.sleep?`<div class="stat-box"><div class="stat-val">${fmtSleep(lh.sleep)}</div><div class="stat-unit">Slaap</div></div>`:''}
-      </div>
-      <div class="hrv-pills">
-        <div class="${pill.g}${st==='g'?' on':''}">≥24</div>
-        <div class="${pill.y}${st==='y'?' on':''}">18-23</div>
-        <div class="${pill.o}${st==='o'?' on':''}">14-17</div>
-        <div class="${pill.r}${st==='r'?' on':''}">&lt;14</div>
-      </div>
-      <div style="font-size:12px;color:var(--g4);font-weight:500;margin-top:8px">${st==='g'?'Optimaal':st==='y'?'Normaal':st==='o'?'Laag':'Kritiek'} — ${lh.date}${lh.edema?' · '+lh.edema:''}</div>
+      <div id="dagfactor-detail" class="df-detail" style="display:none"></div>
     </div></div>`;
   }else{
     document.getElementById('home-hrv-card').innerHTML=`<div class="card"><div class="card-body" style="padding:16px;text-align:center"><p style="color:var(--g4);font-size:13px;margin-bottom:10px">Geen hersteldata</p><button class="btn btn-o btn-sm" onclick="openModal('m-hrv')" style="width:100%">Check-in invoeren</button></div></div>`;
@@ -6696,7 +6702,12 @@ async function refreshHome(){
       nextT._exCount=texs.length;nextT._muscles=[...mset];
     }catch(e){nextT._exCount=0;nextT._muscles=[];}
   }
-  await renderMorning(dfInfo,nextT);
+  let recRows=[];
+  if(nextT&&Array.isArray(nextT._muscles)&&nextT._muscles.length){
+    try{recRows=await getRelevantMuscleRecovery(nextT._muscles);}catch(e){recRows=[];}
+  }
+  window.homeMuscleRec=recRows;
+  await renderMorning(dfInfo,nextT,recRows);
   renderTodayCta(nextT,dfInfo);
   renderWeekStats();
   renderQuickActions();
@@ -6734,31 +6745,35 @@ function buildMorningMessage(dfInfo,nextT){
 // Combineert dagfactor-toon, echt spierherstel (getRelevantMuscleRecovery) en de
 // training van vandaag tot een aanbeveling. Uitsluitend bestaande data, geen AI-call.
 function joinNl(arr){arr=arr.filter(Boolean);if(arr.length<=1)return arr[0]||'';return arr.slice(0,-1).join(', ')+' en '+arr[arr.length-1];}
-async function buildCoachAdvice(dfInfo,nextT){
-  if(!dfInfo)return 'Nog geen check-in vandaag — vul je HRV in voor je persoonlijke dagfactor en advies.';
+// v3.3.48 — warmere coach-toon. Accepteert optioneel voorberekende recRows (uit één
+// getRelevantMuscleRecovery-call) zodat hero, coach-advies én "Waarom?" dezelfde data delen.
+async function buildCoachAdvice(dfInfo,nextT,recRows){
+  if(!dfInfo)return 'Nog geen check-in vandaag — vul je HRV in en ik vertel je precies wat vandaag slim is.';
   const f=dfInfo.factor;
   const tnaam=(nextT&&nextT.naam)?nextT.naam:'je training';
   let loaded=[],ready=[];
   try{
-    if(nextT&&Array.isArray(nextT._muscles)&&nextT._muscles.length){
-      const rec=await getRelevantMuscleRecovery(nextT._muscles);
+    let rec=recRows;
+    if(!rec&&nextT&&Array.isArray(nextT._muscles)&&nextT._muscles.length)rec=await getRelevantMuscleRecovery(nextT._muscles);
+    if(Array.isArray(rec)){
       const low=s=>String(s).charAt(0).toLowerCase()+String(s).slice(1);
       loaded=rec.filter(r=>r.pct<70).sort((a,b)=>a.pct-b.pct).map(r=>low(r.muscle));
       ready=rec.filter(r=>r.pct>=90).map(r=>low(r.muscle));
     }
   }catch(e){}
   if(f>=1){
-    if(loaded.length)return `Je algehele herstel is sterk, maar ${joinNl(loaded.slice(0,2))} ${loaded.length>1?'zijn':'is'} nog niet volledig hersteld. Houd daar rekening mee bij ${tnaam}.`;
-    if(ready.length)return `Je ${joinNl(ready.slice(0,2))} ${ready.length>1?'zijn':'is'} volledig hersteld. Vandaag is een uitstekend moment voor ${tnaam}.`;
+    if(loaded.length)return `Je algehele herstel is sterk. Let op: ${joinNl(loaded.slice(0,2))} ${loaded.length>1?'zijn':'is'} nog niet volledig hersteld — houd daar rekening mee bij ${tnaam}.`;
+    if(ready.length)return `Je lichaam is klaar voor belasting. ${joinNl(ready.slice(0,2)).replace(/^./,c=>c.toUpperCase())} ${ready.length>1?'zijn':'is'} volledig hersteld — vandaag is een uitstekend moment voor ${tnaam}.`;
     return `Je herstel is sterk. Vandaag heb je de grootste kans op progressie${nextT?` met ${tnaam}`:''}.`;
   }
   if(f>=0.93)return `Je herstel is oké. Train ${tnaam} vandaag op gevoel en houd je RPE in de gaten.`;
-  return `Je lichaam vraagt om rust. Houd ${tnaam} vandaag licht of kies voor actief herstel.`;
+  return `Je lichaam vraagt vandaag om rust. Houd ${tnaam} licht of kies voor actief herstel.`;
 }
-async function renderMorning(dfInfo,nextT){
+async function renderMorning(dfInfo,nextT,recRows){
   const el=document.getElementById('home-morning');if(!el)return;
   const m=buildMorningMessage(dfInfo,nextT);
-  const coach=await buildCoachAdvice(dfInfo,nextT);
+  const coach=await buildCoachAdvice(dfInfo,nextT,recRows);
+  window.homeCoachText=coach||'';
   el.innerHTML=`<div style="padding:0 2px">
     <div class="home-groet">${escHtml(m.groet)}</div>
     ${coach?`<div class="home-coach">${escHtml(coach)}</div>`:''}
@@ -6806,16 +6821,20 @@ async function renderWeekStats(){
   const volKg=Math.round(volThis).toLocaleString('nl-NL');
   const pctStr=pct===null?'—':(pct>=0?`+${pct}%`:`${pct}%`);
   const pctCol=pct===null?'var(--g4)':(pct>=0?'var(--accent)':'var(--y)');
+  // v3.3.48 P6 — context bij dezelfde cijfers (geen nieuwe statistiek, alleen duiding).
+  const routineLbl=activeDays>=12?'Sterke trainingsroutine':activeDays>=6?'Goede trainingsroutine':activeDays>=3?'Je ritme groeit':'Bouw je ritme op';
+  const volLbl=pct===null?'Basis voor volgende week':pct>=5?'Meer volume dan vorige week':pct<=-5?'Rustiger dan vorige week':'Gelijk aan vorige week';
+  window.homeWeekSummary={activeDays,volKg,pctStr,pct};
   el.innerHTML=`<div class="home-stat-row">
     <div class="home-stat">
       <div class="home-stat-top"><svg viewBox="0 0 24 24"><path d="M12 3c1.2 2.4.6 4.2-.9 5.7C9.3 10.5 8 12 8 14.2A4 4 0 0 0 16 14c0-1.3-.5-2.4-1.2-3.3.9.3 3.2 1.7 3.2 4.6A6 6 0 1 1 8 6.3C9.6 5 11.4 4 12 3Z"/></svg>Actief</div>
-      <div class="home-stat-val">${activeDays}</div>
-      <div class="home-stat-sub">dagen · laatste 30</div>
+      <div class="home-stat-val">${activeDays}<span class="home-stat-u"> dagen</span></div>
+      <div class="home-stat-sub">${routineLbl}</div>
     </div>
     <div class="home-stat">
       <div class="home-stat-top"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 19v-6M12 19v-9M16 19v-4M20 19v-11"/></svg>Weekvolume</div>
-      <div class="home-stat-val">${volKg}<span style="font-size:13px;font-weight:700"> kg</span></div>
-      <div class="home-stat-sub" style="color:${pctCol}">${pctStr} vs vorige week</div>
+      <div class="home-stat-val">${volKg}<span class="home-stat-u"> kg</span></div>
+      <div class="home-stat-sub"><span style="color:${pctCol};font-weight:700">${pctStr}</span> · ${volLbl}</div>
     </div>
   </div>`;
 }
@@ -6938,6 +6957,14 @@ function dagfactorStatus(f){
   if(f>=0.93)return {txt:'Normaal',cls:'y'};
   return {txt:'Rustiger trainen',cls:'r'};
 }
+// v3.3.48 P3 — betekenis-eerst: koptekst + één menselijke betekeniszin, puur uit de
+// bestaande dagfactor. Geen verzonnen analyse; alleen duiding van het bestaande getal.
+function dagfactorCoach(f){
+  if(f>=1.02)return {headline:'Uitstekende dag',meaning:'Je bent klaar voor een intensieve training.',cls:'g'};
+  if(f>=1.00)return {headline:'Goede dag',meaning:'Je lichaam staat op groen — een goede dag om te presteren.',cls:'g'};
+  if(f>=0.93)return {headline:'Normale dag',meaning:'Prima dag — train op gevoel en luister naar je lijf.',cls:'y'};
+  return {headline:'Rustiger trainen',meaning:'Je lichaam vraagt vandaag om rust. Houd het licht.',cls:'r'};
+}
 function dagfactorUitleg(hrv,slaapUren,cyclusFase,df){
   const parts=[];
   if(hrv)parts.push(df.hrvFactor>=1?'HRV goed':df.hrvFactor>=0.93?'HRV laag':'HRV kritiek');
@@ -6945,15 +6972,35 @@ function dagfactorUitleg(hrv,slaapUren,cyclusFase,df){
   if(cyclusFase)parts.push('cyclus: '+cyclusFase);
   return parts.join(', ')||'onvoldoende data';
 }
-// v3.3.36 Batch 2 #1: klap de uitlegbare onderbouwing van de dagfactor in/uit (geen extra API).
+// v3.3.48 P4 — premium "Waarom vandaag?": composeert de uitleg lui (bij eerste opening)
+// uit reeds bestaande, gecachte data (dagfactor, herstelsignalen, spiergroep-herstel,
+// weekvolume, coachconclusie). Geen nieuwe berekening; alleen inzichtelijk maken.
+function renderDagfactorDetail(){
+  const el=document.getElementById('dagfactor-detail');
+  const d=window.homeDfDetail;
+  if(!el||!d)return;
+  const rec=Array.isArray(window.homeMuscleRec)?window.homeMuscleRec:[];
+  const wk=window.homeWeekSummary;
+  const row=(lbl,val)=>`<div class="dfd-row"><span class="dfd-lbl">${lbl}</span><span class="dfd-val">${val}</span></div>`;
+  let html='<div class="dfd-title">Waarom vandaag?</div>';
+  html+=row('Dagfactor',`${d.factor} · ${escHtml(d.statusTxt)}`);
+  const sig=[d.hrv?`HRV ${d.hrv} ms`:'',d.rhr?`RHR ${d.rhr}`:'',d.sleep?`slaap ${fmtSleep(d.sleep)}`:'',d.cyclus?`cyclus ${d.cyclus}`:''].filter(Boolean).join(' · ')||'—';
+  html+=row('Herstelsignalen',escHtml(sig));
+  if(rec.length)html+=row('Spiergroepen',rec.slice(0,4).map(r=>`${escHtml(r.muscle)} ${r.pct}%`).join(' · '));
+  if(wk&&wk.volKg)html+=row('Weekvolume',`${wk.volKg} kg · ${wk.pctStr} vs vorige week`);
+  if(window.homeCoachText)html+=`<div class="dfd-concl">${escHtml(window.homeCoachText)}</div>`;
+  html+=`<div class="dfd-note">${d.factor} = HRV ${d.hrvF.toFixed(2)} × slaap ${d.slaapF.toFixed(2)}${d.cycTxt||''}, geclipt 0.85–1.05. Informatief — past nooit automatisch je gewicht aan. Confidence: ${d.conf} (${d.sig}/3 signalen).</div>`;
+  el.innerHTML=html;
+}
 function toggleDagfactorDetail(){
   const d=document.getElementById('dagfactor-detail');
   if(!d)return;
   const c=document.getElementById('dagfactor-chevron');
   const btn=d.previousElementSibling;
   const open=d.style.display!=='none';
+  if(!open&&!d.innerHTML.trim())renderDagfactorDetail();
   d.style.display=open?'none':'block';
-  if(c)c.textContent=open?'Waarom? →':'Verberg ↑';
+  if(c)c.textContent=open?'Waarom vandaag? →':'Verberg ↑';
   if(btn&&btn.setAttribute)btn.setAttribute('aria-expanded',String(!open));
 }
 

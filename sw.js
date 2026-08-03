@@ -1,8 +1,8 @@
 // Trainingskompas — Service Worker
 // Play Store ready — offline first
 
-const CACHE_NAME = 'trainingskompas-v3354';
-const CACHE_STATIC = 'trainingskompas-static-v3354';
+const CACHE_NAME = 'trainingskompas-v3356';
+const CACHE_STATIC = 'trainingskompas-static-v3356';
 
 const STATIC_ASSETS = [
   '/',

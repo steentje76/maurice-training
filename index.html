@@ -133,15 +133,29 @@ html[data-theme="light"]{
 .today-cta-name{font-size:19px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-top:2px;line-height:1.1}
 .today-cta-go{font-size:15px;font-weight:800;color:var(--accent);flex-shrink:0}
 .today-cta:active{transform:scale(.99)}
-/* v3.3.45 Dashboard 2.0 — verrijkte hero-card */
-.today-card{background:var(--dark);color:#fff;border-radius:18px;padding:16px 18px;box-shadow:0 6px 20px rgba(11,29,42,.20);animation:tk-screen-in var(--motion-standard) var(--motion-ease)}
-.today-card .today-cta-lbl{opacity:.72}
-.today-card .today-cta-name{margin-top:2px}
-.today-meta{font-size:12px;color:rgba(255,255,255,.78);font-weight:600;margin-top:5px}
-.today-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.today-chip{font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;background:rgba(255,255,255,.12);color:#fff;padding:3px 9px;border-radius:8px}
-.today-start{width:100%;margin-top:14px;padding:14px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-family:var(--f);font-size:15px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;min-height:48px}
-.today-start:active{transform:scale(.99)}
+/* v3.3.47 — Premium coach-koptekst (groet + advies) */
+.home-groet{font-size:22px;font-weight:800;color:var(--dark);line-height:1.15;letter-spacing:-.2px}
+.home-coach{font-size:13.5px;color:var(--g6);font-weight:600;margin-top:6px;line-height:1.5;max-width:54ch}
+/* v3.3.45/47 Dashboard — HERO: het zwaarste element van Home */
+.today-card{position:relative;background:linear-gradient(150deg,#123c4d 0%,#0a2029 100%);color:#fff;border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:18px 20px 20px;box-shadow:0 10px 28px rgba(0,0,0,.30);animation:tk-screen-in var(--motion-standard) var(--motion-ease);overflow:hidden}
+.today-card::before{content:'';position:absolute;left:0;top:0;height:100%;width:4px;background:var(--accent)}
+.today-card .today-cta-lbl{opacity:.72;color:var(--accent)}
+.today-card .today-cta-name{margin-top:3px;font-size:23px}
+.today-meta{font-size:12.5px;color:rgba(255,255,255,.80);font-weight:600;margin-top:6px}
+.today-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.today-chip{font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;background:rgba(255,255,255,.13);color:#fff;padding:4px 10px;border-radius:8px}
+.today-ready{display:flex;align-items:center;gap:8px;margin-top:13px;font-size:12.5px;font-weight:700;color:rgba(255,255,255,.92)}
+.today-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 3px rgba(255,255,255,.10)}
+.today-dot.g{background:var(--accent)}.today-dot.y{background:var(--y)}.today-dot.r{background:#E06A70}
+.today-start{width:100%;margin-top:14px;padding:15px;border:none;border-radius:14px;background:var(--accent);color:#fff;font-family:var(--f);font-size:15px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;min-height:52px;box-shadow:0 4px 14px rgba(0,184,148,.30);transition:transform var(--motion-fast) var(--motion-ease),box-shadow var(--motion-fast) var(--motion-ease)}
+.today-start:active{transform:scale(.98);box-shadow:0 2px 8px rgba(0,184,148,.24)}
+/* v3.3.47 P3 — dagfactor-statuspill. Tekst = var(--dark) (flipt mee met dark mode → altijd
+   AA-contrast); kleur-identiteit via de tint + gekleurde dot. Banden = heroKleur-banden. */
+.df-status{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;padding:3px 9px 3px 8px;border-radius:20px;white-space:nowrap;color:var(--dark)}
+.df-status::before{content:'';width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.df-status.g{background:rgba(0,184,148,.16)}.df-status.g::before{background:var(--accent)}
+.df-status.y{background:rgba(200,168,75,.20)}.df-status.y::before{background:var(--y)}
+.df-status.r{background:rgba(224,106,112,.18)}.df-status.r::before{background:#E06A70}
 /* Stat-kaarten (actief / weekvolume) */
 .home-stat-row{display:flex;gap:10px}
 .home-stat{flex:1;min-width:0;background:var(--card);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow)}
@@ -600,13 +614,13 @@ canvas{width:100%;height:100%}
     </div>
   </div>
   <div class="scroll" style="padding-top:10px">
-    <div id="home-morning" style="margin-bottom:12px"></div>
+    <div id="home-morning" style="margin-bottom:16px"></div>
+    <div id="home-today-cta" style="margin-bottom:18px"></div>
     <div id="home-hrv-card"></div>
-    <div id="home-today-cta" style="margin:10px 0"></div>
-    <div id="home-weekstats" style="margin-bottom:10px"></div>
+    <div id="home-weekstats" style="margin:12px 0 10px"></div>
     <div id="home-program-card" style="margin-bottom:8px"></div>
     <div id="home-goals-card" style="margin-bottom:8px"></div>
-    <div class="sec-hd">Start training</div>
+    <div class="sec-hd">Andere trainingen</div>
     <div id="vaste-training-btns" style="display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap"></div>
     <div id="custom-train-btns"></div>
     <div id="home-next-lbl" style="font-size:12px;color:var(--g4);font-weight:600;text-align:center;margin-bottom:10px"></div>
@@ -2179,7 +2193,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.46';
+const APP_VER = 'v3.3.47';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6615,6 +6629,7 @@ async function refreshHome(){
     const df=dagfactor(lh.hrv,lh.sleep,lh.cyclus_fase);
     // v3.3.36 Batch 2 #1: dagfactor gepromoveerd tot dominant, tikbaar dag-element (H8 explainable AI).
     const heroKleur=df.factor>=1?'var(--accent)':df.factor>=0.93?'var(--y)':'#B3454C';
+    const dfStat=dagfactorStatus(df.factor);
     const ringPct=Math.max(0,Math.min(1,(df.factor-0.85)/0.20));const RC=Math.round(2*Math.PI*24);
     const uitleg=dagfactorUitleg(lh.hrv,lh.sleep,lh.cyclus_fase,df);
     dfInfo={factor:df.factor,uitleg,hero:heroKleur,st};
@@ -6631,8 +6646,11 @@ async function refreshHome(){
           <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:var(--dark)">${df.factor}</div>
         </div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--g4)">Dagfactor vandaag</div>
-          <div style="font-size:14px;font-weight:700;color:var(--dark);line-height:1.3">${uitleg}</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--g4)">Dagfactor vandaag</div>
+            <span class="df-status ${dfStat.cls}">${dfStat.txt}</span>
+          </div>
+          <div style="font-size:14px;font-weight:700;color:var(--dark);line-height:1.3;margin-top:2px">${uitleg}</div>
           <div id="dagfactor-chevron" style="font-size:11px;color:var(--accent);font-weight:700;margin-top:3px">Waarom? →</div>
         </div>
       </button>
@@ -6679,7 +6697,7 @@ async function refreshHome(){
     }catch(e){nextT._exCount=0;nextT._muscles=[];}
   }
   await renderMorning(dfInfo,nextT);
-  renderTodayCta(nextT);
+  renderTodayCta(nextT,dfInfo);
   renderWeekStats();
   renderQuickActions();
   if(curT){document.getElementById('home-dot-'+curT.toLowerCase())?.classList.add('show');}
@@ -6712,41 +6730,65 @@ function buildMorningMessage(dfInfo,nextT){
   }
   return {groet,regel};
 }
-// v3.3.46 — Premium coach-zin: groet + dagfactor-toon + echte spierherstel-inzicht
-// (getRelevantMuscleRecovery op de spieren van vandaag). Max 3 regels, alleen bestaande data.
+// v3.3.47 — Premium coach-advies: groet + één coachende boodschap (max 2 regels).
+// Combineert dagfactor-toon, echt spierherstel (getRelevantMuscleRecovery) en de
+// training van vandaag tot een aanbeveling. Uitsluitend bestaande data, geen AI-call.
+function joinNl(arr){arr=arr.filter(Boolean);if(arr.length<=1)return arr[0]||'';return arr.slice(0,-1).join(', ')+' en '+arr[arr.length-1];}
+async function buildCoachAdvice(dfInfo,nextT){
+  if(!dfInfo)return 'Nog geen check-in vandaag — vul je HRV in voor je persoonlijke dagfactor en advies.';
+  const f=dfInfo.factor;
+  const tnaam=(nextT&&nextT.naam)?nextT.naam:'je training';
+  let loaded=[],ready=[];
+  try{
+    if(nextT&&Array.isArray(nextT._muscles)&&nextT._muscles.length){
+      const rec=await getRelevantMuscleRecovery(nextT._muscles);
+      const low=s=>String(s).charAt(0).toLowerCase()+String(s).slice(1);
+      loaded=rec.filter(r=>r.pct<70).sort((a,b)=>a.pct-b.pct).map(r=>low(r.muscle));
+      ready=rec.filter(r=>r.pct>=90).map(r=>low(r.muscle));
+    }
+  }catch(e){}
+  if(f>=1){
+    if(loaded.length)return `Je algehele herstel is sterk, maar ${joinNl(loaded.slice(0,2))} ${loaded.length>1?'zijn':'is'} nog niet volledig hersteld. Houd daar rekening mee bij ${tnaam}.`;
+    if(ready.length)return `Je ${joinNl(ready.slice(0,2))} ${ready.length>1?'zijn':'is'} volledig hersteld. Vandaag is een uitstekend moment voor ${tnaam}.`;
+    return `Je herstel is sterk. Vandaag heb je de grootste kans op progressie${nextT?` met ${tnaam}`:''}.`;
+  }
+  if(f>=0.93)return `Je herstel is oké. Train ${tnaam} vandaag op gevoel en houd je RPE in de gaten.`;
+  return `Je lichaam vraagt om rust. Houd ${tnaam} vandaag licht of kies voor actief herstel.`;
+}
 async function renderMorning(dfInfo,nextT){
   const el=document.getElementById('home-morning');if(!el)return;
   const m=buildMorningMessage(dfInfo,nextT);
-  const lines=[m.regel];
-  try{
-    if(dfInfo&&nextT&&Array.isArray(nextT._muscles)&&nextT._muscles.length){
-      const rec=await getRelevantMuscleRecovery(nextT._muscles);
-      const cap=s=>String(s).charAt(0).toUpperCase()+String(s).slice(1);
-      const loaded=rec.filter(r=>r.pct<70).sort((a,b)=>a.pct-b.pct);
-      const ready=rec.filter(r=>r.pct>=90);
-      if(loaded.length)lines.push(`Let op: ${loaded.slice(0,2).map(r=>cap(r.muscle)+' '+r.pct+'%').join(', ')} nog niet volledig hersteld.`);
-      else if(ready.length)lines.push(`${ready.slice(0,2).map(r=>cap(r.muscle)).join(' en ')} volledig hersteld — klaar voor belasting.`);
-    }
-  }catch(e){}
+  const coach=await buildCoachAdvice(dfInfo,nextT);
   el.innerHTML=`<div style="padding:0 2px">
-    <div style="font-size:20px;font-weight:800;color:var(--dark);line-height:1.2">${escHtml(m.groet)}</div>
-    <div style="font-size:13px;color:var(--g4);font-weight:600;margin-top:4px;line-height:1.45">${lines.slice(0,3).map(l=>escHtml(l)).join('<br>')}</div>
+    <div class="home-groet">${escHtml(m.groet)}</div>
+    ${coach?`<div class="home-coach">${escHtml(coach)}</div>`:''}
   </div>`;
 }
-// v3.3.45/46 — verrijkte hero. Leest de één keer voorgeladen data (nextT._exCount/_muscles),
-// geen dubbele query. Alleen echte data (geen verzonnen duur/calorieën, DEC-027).
-function renderTodayCta(nextT){
+// v3.3.45/46/47 — HERO: het zwaarste element van Home. Leest de één keer voorgeladen
+// data (nextT._exCount/_muscles), geen dubbele query. Gereed-status uit de bestaande
+// dagfactor (dfInfo). Alleen echte data (geen verzonnen duur/calorieën, DEC-027).
+function trainReadiness(dfInfo){
+  if(!dfInfo)return null;
+  const f=dfInfo.factor;
+  if(f>=1)return {cls:'g',txt:'Klaar om te trainen'};
+  if(f>=0.93)return {cls:'y',txt:'Train op gevoel'};
+  return {cls:'r',txt:'Houd het licht vandaag'};
+}
+function renderTodayCta(nextT,dfInfo){
   const el=document.getElementById('home-today-cta');if(!el)return;
   if(!nextT){el.innerHTML='';return;}
   const n=nextT._exCount||0,muscles=Array.isArray(nextT._muscles)?nextT._muscles:[];
   const meta=n?`${n} oefening${n===1?'':'en'}${muscles.length?` · ${muscles.length} spiergroep${muscles.length===1?'':'en'}`:''}`:'';
   const chips=muscles.slice(0,6).map(m=>`<span class="today-chip">${escHtml(m)}</span>`).join('');
+  const rd=trainReadiness(dfInfo);
+  const ready=rd?`<div class="today-ready"><span class="today-dot ${rd.cls}"></span>${escHtml(rd.txt)}</div>`:'';
   el.innerHTML=`<div class="today-card">
     <div class="today-cta-lbl">Training van vandaag</div>
     <div class="today-cta-name">${escHtml(nextT.naam)}</div>
     ${meta?`<div class="today-meta">${meta}</div>`:''}
     ${chips?`<div class="today-chips">${chips}</div>`:''}
-    <button onclick="startT('${nextT.id}')" class="today-start" aria-label="Start ${escHtml(nextT.naam)}">▶ Start training</button>
+    ${ready}
+    <button onclick="startT('${nextT.id}')" class="today-start" aria-label="Start ${escHtml(nextT.naam)}">Start training</button>
   </div>`;
 }
 // v3.3.45 Dashboard 2.0 — weekvolume + actieve dagen, uitsluitend uit bestaande sessies.
@@ -6887,6 +6929,14 @@ function dagfactor(hrv,slaapUren,cyclusFase){
   const ruw=hrvFactor*slaapFactor*cyclusFactor;
   const factor=Math.round(Math.max(0.85,Math.min(1.05,ruw))*100)/100;
   return {factor,hrvFactor,slaapFactor,cyclusFactor};
+}
+// v3.3.47 P3 — begrijpelijke dagfactor-status uit de bestaande dagfactor-waarde.
+// Vier niveaus, kleuren consistent met de heroKleur-banden. Geen nieuwe data.
+function dagfactorStatus(f){
+  if(f>=1.02)return {txt:'Uitstekend',cls:'g'};
+  if(f>=1.00)return {txt:'Goed',cls:'g'};
+  if(f>=0.93)return {txt:'Normaal',cls:'y'};
+  return {txt:'Rustiger trainen',cls:'r'};
 }
 function dagfactorUitleg(hrv,slaapUren,cyclusFase,df){
   const parts=[];

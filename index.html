@@ -442,6 +442,32 @@ body{display:flex;justify-content:center}
 .set-step{width:40px;height:46px;flex-shrink:0;border:1.5px solid var(--g2);background:var(--g1);color:var(--dark);border-radius:12px;font-size:22px;font-weight:700;line-height:1;cursor:pointer;font-family:var(--f);display:flex;align-items:center;justify-content:center;transition:transform var(--motion-fast) var(--motion-ease),background var(--motion-fast) var(--motion-ease)}
 .set-step:active{background:var(--accent);border-color:var(--accent);color:#fff;transform:scale(.94)}
 .rest-bar-next-lbl{display:block;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:1px}
+/* v3.3.54 — premium "vorige keer"-blok */
+.prev2{padding:10px 14px 11px}
+.prev2-lbl{font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--g4)}
+.prev2-main{font-size:15px;font-weight:800;color:var(--dark);margin-top:3px}
+.prev2-rpe{font-weight:600;color:var(--g4);font-size:13px}
+.prev2-today{font-size:12px;font-weight:700;margin-top:5px}
+.prev2-today.up{color:var(--df-g,#00a082)}.prev2-today.keep{color:var(--g6)}.prev2-today.down{color:var(--df-a,#b9702a)}
+/* v3.3.54 — gestructureerde coach-reactie per set */
+.coach-advice-body{flex:1;min-width:0}
+.coach-advice-head{font-size:14px;font-weight:800;line-height:1.2}
+.coach-advice-head.up{color:var(--df-g,#00a082)}.coach-advice-head.keep{color:var(--dark)}.coach-advice-head.down{color:var(--df-a,#b9702a)}
+.coach-advice-sub{font-size:12px;font-weight:600;color:var(--g6);margin-top:4px;line-height:1.4}
+.coach-advice-sub strong{color:var(--dark)}
+.coach-advice-dot.up{background:var(--accent)}.coach-advice-dot.keep{background:var(--g4)}.coach-advice-dot.down{background:#E0704A}
+.coach-next{font-size:12px;font-weight:600;color:var(--g6);margin-top:6px}
+.coach-next strong{color:var(--dark)}
+.coach-advice-card .coach-apply-btn{margin-top:8px}
+/* v3.3.54 Deel 6 — vergelijking met vorige keer op de afrondingskaart */
+.sess-cmp{background:var(--g1);border-radius:12px;padding:12px 14px;margin-bottom:16px}
+.sess-cmp-lbl{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--g4);margin-bottom:8px}
+.sess-cmp-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:4px 0}
+.sess-cmp-name{font-size:13px;font-weight:700;color:var(--dark)}
+.sess-cmp-vals{font-size:13px;color:var(--g6);white-space:nowrap}
+.sess-cmp-vals strong{color:var(--dark)}
+.sess-cmp-delta{font-weight:800;margin-left:4px}
+.sess-cmp-delta.up{color:var(--df-g,#00a082)}.sess-cmp-delta.down{color:var(--df-a,#b9702a)}
 .hist-session-row{padding:11px 4px;border-bottom:1px solid var(--g2);cursor:pointer}
 .hist-session-label{font-size:13px;font-weight:700;color:var(--dark)}
 .hist-session-date{font-size:11px;color:var(--g4);margin-top:2px}
@@ -1977,6 +2003,7 @@ canvas{width:100%;height:100%}
       <div class="sess-done-sub" id="sess-done-sub">Goed gewerkt — hier is je terugblik.</div>
     </div>
     <div id="ai-summary-stats" class="sess-stats"></div>
+    <div id="ai-summary-compare"></div>
     <div class="sess-coach-lbl">Coach terugblik</div>
     <div id="ai-summary-body" style="font-size:13px;color:var(--g6);line-height:1.6;white-space:pre-wrap">Samenvatting laden...</div>
     <button class="btn btn-r" style="width:100%;margin-top:16px" onclick="closeModal('m-ai-summary');go('s-home');refreshStats()">Naar Home</button>
@@ -2319,7 +2346,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.53';
+const APP_VER = 'v3.3.54';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -5369,11 +5396,14 @@ async function renderTrainScreen(t){
     const prevS=prev[0];
     if(ex.type==='strength'||!ex.type){await loadRepPRs(ex.id);await loadEstOneRM(ex.id);}
     const eqList=await loadEquipment(ex.id);
-    let prevStr='';
+    let prevStr='',prevBlockHtml='';
     let prefillData=window._prefillMap?.[ex.id]||null;
     if(prevS){
       if(prevS.weight&&prevS.reps){
-        prevStr='Vorige ('+prevS.date+'): '+(prevS.sets||'?')+'×'+prevS.reps+' @ '+prevS.weight+' kg'+(prevS.rpe?' · RPE '+prevS.rpe:'');
+        // v3.3.54 Deel 1 — premium "vorige keer" + "vandaag mogelijk" (uit computeProgression).
+        prevBlockHtml=buildPrevBlock(prevS);
+        if(!window._prevBestMap)window._prevBestMap={};
+        window._prevBestMap[ex.id]=parseFloat(prevS.weight)||null; // Deel 6 — vergelijking bij afronden
       } else if(prevS.time_str||prevS.note){
         const noteTime=prevS.note?.match(/tijd:([^|]+)/)?.[1];
         prevStr='Vorige ('+prevS.date+'): '+(prevS.time_str||noteTime||'')+(prevS.watt?' · '+prevS.watt+'W':'');
@@ -5405,7 +5435,7 @@ async function renderTrainScreen(t){
         </div>
         <span style="color:var(--g3);font-size:20px" id="arr-${ex.id}">›</span>
       </div>
-      ${prevStr?`<div class="ex-prev"><strong>${prevStr}</strong></div>`:''}
+      ${prevBlockHtml||(prevStr?`<div class="ex-prev"><strong>${prevStr}</strong></div>`:'')}
       <div class="ex-body" id="body-${ex.id}">
         ${ex.tip?`<div style="background:#fffbea;border-left:3px solid var(--y);padding:8px 12px;font-size:12px;color:#666;margin:8px 14px;border-radius:0 8px 8px 0">💡 ${ex.tip}</div>`:''}
         ${buildVideoMuscle(ex)}
@@ -6479,6 +6509,30 @@ function computeProgression(rpe,curKg){
   if(rpe<=8.5)return{delta:0,label:'Gelijk houden'};
   return{delta:-7.5,label:'Deload'};
 }
+// v3.3.54 — betekenis van een RPE-waarde (duiding, geen nieuwe berekening; zelfde banden).
+function rpeMeaning(rpe){
+  if(rpe==null||isNaN(rpe))return '';
+  if(rpe<=7.5)return 'Sterke marge';
+  if(rpe<=8.5)return 'Goede trainingsprikkel';
+  return 'Zware set';
+}
+// v3.3.54 Deel 1 — premium "vorige keer"-blok uit bestaande sessiedata + computeProgression.
+function buildPrevBlock(prevS){
+  if(!(prevS&&prevS.weight&&prevS.reps))return '';
+  const w=prevS.weight,r=prevS.reps,rpe=(prevS.rpe!=null&&prevS.rpe!=='')?parseFloat(prevS.rpe):null;
+  let today='';
+  const prog=(rpe!=null)?computeProgression(rpe,parseFloat(w)):null;
+  if(prog){
+    if(prog.delta>0)today=`<div class="prev2-today up">Vandaag: ${roundKg(parseFloat(w)+prog.delta)} kg mogelijk ↑</div>`;
+    else if(prog.delta===0)today=`<div class="prev2-today keep">Vandaag: ${w} kg aanhouden</div>`;
+    else today=`<div class="prev2-today down">Vandaag: focus op techniek</div>`;
+  }
+  return `<div class="ex-prev prev2">
+    <div class="prev2-lbl">Vorige keer</div>
+    <div class="prev2-main">${w} kg × ${r}${rpe!=null?` <span class="prev2-rpe">· RPE ${rpe}</span>`:''}</div>
+    ${today}
+  </div>`;
+}
 function showPostSetAdvice(exId,setNum){
   const rpeEl=document.getElementById('s-'+exId+'-'+setNum+'-rpe');
   if(!rpeEl)return; // geen RPE-veld (bv. carry) → geen advies
@@ -6489,15 +6543,26 @@ function showPostSetAdvice(exId,setNum){
   const nextIdx=setNum+1;
   const nextInp=document.getElementById('s-'+exId+'-'+nextIdx+'-kg');
   const target=roundKg(kgVal+prog.delta);
-  // v3.3.53 Deel 3/4 — coach-reactie op "hoe zwaar was deze set?" (uit computeProgression),
-  // met een actieknop die duidelijk maakt wat er gebeurt (geen kale "Toepassen").
-  const txt=prog.delta>0
-      ?`Sterke marge. Volgende set kun je verhogen naar ${target} kg.`
-      :prog.delta===0
-        ?`Perfect niveau. Behoud ${kgVal} kg voor je volgende set.`
-        :`Zware set. Herhaal ${kgVal} kg en focus op je techniek.`;
+  // v3.3.54 Deel 2/3/4 — gestructureerde coach-reactie (uit computeProgression): kop met
+  // richting + reden, RPE-betekenis, en de volgende actie. Zelfde bestaande logica.
+  const dir=prog.delta>0?'up':prog.delta===0?'keep':'down';
+  const heading=prog.delta>0?`↑ +${roundKg(prog.delta)} kg progressie mogelijk`
+      :prog.delta===0?`✓ Zelfde niveau behouden`
+      :`↓ Vandaag herstellen`;
+  const meaning=rpeMeaning(rpe);
+  // Deel 4 — volgende actie (volgende set + voorgesteld gewicht × reps, indien beschikbaar).
+  let nextLine='';
+  if(nextInp){
+    const nextReps=document.getElementById('s-'+exId+'-'+nextIdx+'-reps')?.value||document.getElementById('s-'+exId+'-'+setNum+'-reps')?.value||'';
+    const nkg=prog.delta>0?target:kgVal;
+    nextLine=`<div class="coach-next">Volgende: <strong>Set ${nextIdx}</strong>${nkg?` · ${nkg} kg${nextReps?` × ${nextReps}`:''}`:''}</div>`;
+  }
   const applyBtn=(nextInp&&prog.delta!==0)?`<button class="coach-apply-btn" onclick="applyAdviceToSet('${exId}',${nextIdx},${target})">Gebruik ${target} kg volgende set</button>`:'';
-  const html=`<span class="coach-advice-dot" style="background:var(--accent)"></span><span class="coach-advice-txt">Hoe zwaar was deze set? <strong>RPE ${rpe}</strong> · ${txt}</span>${applyBtn}`;
+  const html=`<span class="coach-advice-dot ${dir}"></span><div class="coach-advice-body">
+    <div class="coach-advice-head ${dir}">${heading}</div>
+    <div class="coach-advice-sub">Hoe zwaar was deze set? <strong>RPE ${rpe}</strong> · ${meaning}</div>
+    ${nextLine}${applyBtn}
+  </div>`;
   const existing=document.getElementById('advice-'+exId);
   if(existing){existing.innerHTML=html;}
   else{
@@ -6751,7 +6816,7 @@ async function finishSession(){
   const t=curT,list=getSessionExs(t),today=td();let saved=0;
   const summaryData=[]; // v306 #10: input voor AI-samenvatting
   // v3.3.52 P7 — premium afronding: aggregeer bestaande cijfers voor de samenvatting-kaart.
-  const sessStats={vol:0,sets:0,reps:0,pr:0,heavy:0,muscles:new Set()};
+  const sessStats={vol:0,sets:0,reps:0,pr:0,heavy:0,muscles:new Set(),compare:[]};
   for(const ex of list){
     const l=sessionLog[ex.id];if(!l)continue;
     try{(getExerciseMuscles(ex.id)||[]).forEach(m=>m&&sessStats.muscles.add(m));}catch(_){}
@@ -6778,6 +6843,9 @@ async function finishSession(){
       ws.forEach(s=>{const k=bestKg(s)||0,r=parseInt(s.reps)||0;sessStats.vol+=k*r;sessStats.reps+=r;});
       if(isPr)sessStats.pr++;
       if(bestKg(best)>sessStats.heavy)sessStats.heavy=bestKg(best);
+      // v3.3.54 Deel 6 — vergelijking met vorige keer (uit de bij render gestashte prev-best).
+      const prevBest=window._prevBestMap?.[ex.id];
+      if(prevBest!=null&&bestKg(best)!=null&&bestKg(best)!==prevBest)sessStats.compare.push({naam:ex.naam,prev:prevBest,now:bestKg(best)});
     }
   }
   localStorage.setItem('maurice_last_training',t);
@@ -6807,6 +6875,15 @@ async function finishSession(){
         (sessStats.heavy?cell(sessStats.heavy+'<span class="sess-stat-u"> kg</span>','zwaarste'):'')+
         (sessStats.pr>0?cell(sessStats.pr,'PR'+(sessStats.pr===1?'':'’s')):'')+
         (musc.length?`<div class="sess-muscles">${musc.map(m=>`<span class="sess-muscle">${escHtml(m)}</span>`).join('')}</div>`:'');
+    }
+    // v3.3.54 Deel 6 — "Vergeleken met vorige keer" (alleen bestaande cijfers).
+    const cmpEl=document.getElementById('ai-summary-compare');
+    if(cmpEl){
+      const rows=sessStats.compare.slice(0,4).map(c=>{
+        const d=Math.round((c.now-c.prev)*10)/10;const up=d>0;
+        return `<div class="sess-cmp-row"><span class="sess-cmp-name">${escHtml(c.naam)}</span><span class="sess-cmp-vals">${c.prev} → <strong>${c.now}</strong> kg <span class="sess-cmp-delta ${up?'up':'down'}">${up?'+':''}${d} kg</span></span></div>`;
+      }).join('');
+      cmpEl.innerHTML=rows?`<div class="sess-cmp"><div class="sess-cmp-lbl">Vergeleken met vorige keer</div>${rows}</div>`:'';
     }
   }catch(_){}
   openModal('m-ai-summary');
@@ -9227,8 +9304,18 @@ function saveAsTrainingAndFinish(btnEl){
 // ══════════════════════════════════════════════════════════
 let restInterval=null, restEndAt=0, restNextLabel='';
 function openRestTimer(exId,setNum){
-  // v3.3.53 Deel 5 — toon de volgende set in de rustbalk (presentatie; geen logica).
-  restNextLabel=(setNum!=null)?`Set ${setNum+1} klaar om te starten`:'';
+  // v3.3.53/54 Deel 5 — toon de volgende set + (indien beschikbaar) gewicht × reps.
+  restNextLabel='';
+  if(setNum!=null){
+    const nextIdx=setNum+1;
+    let kg=null,reps='';
+    try{
+      kg=(document.getElementById('s-'+exId+'-'+nextIdx+'-kg')?getEffectiveKg(exId,nextIdx):null);
+      if(kg==null)kg=getEffectiveKg(exId,setNum);
+      reps=document.getElementById('s-'+exId+'-'+nextIdx+'-reps')?.value||document.getElementById('s-'+exId+'-'+setNum+'-reps')?.value||'';
+    }catch(_){}
+    restNextLabel=(kg!=null)?`Set ${nextIdx} · ${kg} kg${reps?` × ${reps}`:''}`:`Set ${nextIdx} klaar om te starten`;
+  }
   const exObj=exercises.find(e=>e.id===exId);
   const perEx=exObj?.rest_seconds;
   if(perEx!=null&&perEx>0){startRestTimer(perEx);return;} // per-oefening rusttijd heeft voorrang

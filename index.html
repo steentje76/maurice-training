@@ -145,58 +145,68 @@ html[data-theme="light"]{
 #home-theme[data-day="vermoeid"]{--day:#D98A3D;--day-soft:rgba(217,138,61,.14);--day-glow:rgba(217,138,61,.22);--day-head:var(--df-a)}
 #home-theme[data-day="herstel"] {--day:#4A90C2;--day-soft:rgba(74,144,194,.14);--day-glow:rgba(74,144,194,.22);--day-head:var(--df-b)}
 #home-theme[data-day="slecht"]  {--day:#E0704A;--day-soft:rgba(224,112,74,.14);--day-glow:rgba(224,112,74,.22);--day-head:var(--df-r)}
-/* v3.3.47/48 — Premium coach-koptekst (groet + advies) */
-.home-groet{font-size:23px;font-weight:800;color:var(--dark);line-height:1.12;letter-spacing:-.3px}
-.home-coach{font-size:14.5px;color:var(--g6);font-weight:600;margin-top:7px;line-height:1.5;max-width:52ch}
-/* v3.3.50 P11 — subtiele gestapelde intro van het coachverhaal (fade + lichte lift) */
+/* v3.3.47/48/51 — Premium coach-koptekst (groet + advies). Spacing-systeem: 8/12/16/24. */
+.home-groet{font-size:24px;font-weight:800;color:var(--dark);line-height:1.1;letter-spacing:-.4px}
+.home-coach{font-size:14.5px;color:var(--g6);font-weight:600;margin-top:8px;line-height:1.5;max-width:52ch}
+/* v3.3.50/51 P11 — subtiele gestapelde intro van het coachverhaal (fade-up ≤200ms) */
 .hcoach-item{animation:tk-rise var(--motion-standard) var(--motion-ease) both}
 .hcoach-item:nth-child(1){animation-delay:0ms}
-.hcoach-item:nth-child(2){animation-delay:60ms}
-.hcoach-item:nth-child(3){animation-delay:120ms}
-.hcoach-item:nth-child(4){animation-delay:180ms}
-.hcoach-item:nth-child(5){animation-delay:240ms}
-.hcoach-item:nth-child(6){animation-delay:300ms}
-@keyframes tk-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-/* v3.3.45/47/48/50 Dashboard — HERO: het dominante element (P1), accent volgt het dag-thema. */
-.today-card{position:relative;background:linear-gradient(150deg,#123c4d 0%,#0a2029 100%);color:#fff;border:1px solid rgba(255,255,255,.06);border-radius:22px;padding:24px 22px 26px;box-shadow:0 14px 34px rgba(0,0,0,.34);overflow:hidden}
+.hcoach-item:nth-child(2){animation-delay:55ms}
+.hcoach-item:nth-child(3){animation-delay:110ms}
+.hcoach-item:nth-child(4){animation-delay:165ms}
+.hcoach-item:nth-child(5){animation-delay:200ms}
+.hcoach-item:nth-child(6){animation-delay:200ms}
+@keyframes tk-rise{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+/* v3.3.45…51 Dashboard — HERO: dominante element (P1). Gradient volgt subtiel de dagstatus (P1),
+   met een zachte, langzaam ademende lichtreflectie (P14). */
+.today-card{position:relative;background:linear-gradient(150deg,#123c4d 0%,#0a2029 100%);color:#fff;border:1px solid rgba(255,255,255,.06);border-radius:22px;padding:22px 22px 24px;box-shadow:0 14px 34px rgba(0,0,0,.32);overflow:hidden}
+#home-theme[data-day="goed"] .today-card{background:linear-gradient(150deg,#123f4a 0%,#0a2a28 100%)}
+#home-theme[data-day="normaal"] .today-card{background:linear-gradient(150deg,#133b46 0%,#0b2126 100%)}
+#home-theme[data-day="vermoeid"] .today-card{background:linear-gradient(150deg,#173539 0%,#0e1f22 100%)}
+#home-theme[data-day="herstel"] .today-card{background:linear-gradient(150deg,#123648 0%,#0a2130 100%)}
+#home-theme[data-day="slecht"] .today-card{background:linear-gradient(150deg,#1a3036 0%,#101d22 100%)}
 .today-card::before{content:'';position:absolute;left:0;top:0;height:100%;width:4px;background:var(--day,var(--accent))}
-.today-card::after{content:'';position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,var(--day-glow,rgba(0,184,148,.20)) 0%,rgba(0,0,0,0) 70%);pointer-events:none}
+.today-card::after{content:'';position:absolute;right:-40px;top:-40px;width:190px;height:190px;border-radius:50%;background:radial-gradient(circle,var(--day-glow,rgba(0,184,148,.20)) 0%,rgba(0,0,0,0) 70%);pointer-events:none;animation:tk-hero-breathe 7s ease-in-out infinite}
+@keyframes tk-hero-breathe{0%,100%{opacity:.75;transform:translate(0,0)}50%{opacity:1;transform:translate(-8px,6px)}}
 .today-card>*{position:relative;z-index:1}
-.today-card .today-cta-lbl{opacity:.9;color:var(--day,var(--accent));letter-spacing:.8px}
-.today-card .today-cta-name{margin-top:5px;font-size:26px;line-height:1.05}
-.today-human{font-size:15px;color:rgba(255,255,255,.94);font-weight:600;margin-top:11px;line-height:1.4}
-.today-meta{font-size:12.5px;color:rgba(255,255,255,.62);font-weight:600;margin-top:7px}
+.today-card .today-cta-lbl{opacity:.92;color:var(--day,var(--accent));letter-spacing:.9px}
+.today-card .today-cta-name{margin-top:6px;font-size:26px;line-height:1.05}
+.today-human{font-size:15px;color:rgba(255,255,255,.94);font-weight:600;margin-top:12px;line-height:1.4}
+.today-meta{font-size:12.5px;color:rgba(255,255,255,.60);font-weight:600;margin-top:8px}
 .today-ready{display:flex;align-items:center;gap:9px;margin-top:16px;font-size:13px;font-weight:700;color:rgba(255,255,255,.94)}
 .today-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;background:var(--day,var(--accent));box-shadow:0 0 0 4px rgba(255,255,255,.10)}
-.today-start{width:100%;margin-top:20px;padding:17px;border:none;border-radius:15px;background:var(--accent);color:#fff;font-family:var(--f);font-size:16px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;cursor:pointer;min-height:56px;box-shadow:0 5px 16px rgba(0,184,148,.32);transition:transform var(--motion-fast) var(--motion-ease),box-shadow var(--motion-fast) var(--motion-ease);animation:tk-cta-glow 2.8s var(--motion-ease) infinite}
-.today-start:active{transform:scale(.98);box-shadow:0 2px 8px rgba(0,184,148,.24)}
-@keyframes tk-cta-glow{0%,100%{box-shadow:0 5px 16px rgba(0,184,148,.30)}50%{box-shadow:0 7px 24px rgba(0,184,148,.48)}}
-@media (prefers-reduced-motion:reduce){.today-start{animation:none}}
-/* v3.3.48/50 P3 — dagfactor betekenis-eerst; koptekst volgt het dag-thema */
-.df-head{width:100%;border:none;background:none;cursor:pointer;text-align:left;display:flex;align-items:center;gap:14px;padding:2px 2px 10px;font-family:var(--f)}
-.df-ring{position:relative;width:52px;height:52px;flex-shrink:0;opacity:.9}
-.df-ring-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:var(--g6)}
-.df-headline{font-size:18px;font-weight:800;letter-spacing:-.2px;line-height:1.12;color:var(--day-head,var(--dark))}
-.df-meaning{font-size:14px;font-weight:600;color:var(--dark);line-height:1.35;margin-top:4px}
-.df-tech{font-size:11.5px;font-weight:500;color:var(--g4);margin-top:5px}
-.df-why{font-size:11.5px;color:var(--accent);font-weight:700;margin-top:7px}
-/* v3.3.49/50 P3/P5 — Coach Advies-kaart: eigen identiteit (day-soft wash + coach-icoon),
-   accent volgt het dag-thema. */
-.coach-advies{display:flex;gap:13px;background:linear-gradient(180deg,var(--day-soft,var(--g1)),var(--card) 60%);border:1px solid var(--g2);border-left:3px solid var(--day,var(--accent));border-radius:16px;padding:16px 16px 16px 17px;box-shadow:0 3px 12px rgba(0,0,0,.06)}
-.coach-advies-ic{width:40px;height:40px;border-radius:12px;background:var(--day-soft,rgba(0,184,148,.12));display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.coach-advies-ic svg{width:21px;height:21px;stroke:var(--day,var(--accent));fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+/* v3.3.51 P2 — premium CTA: zachtere schaduw, lichte hover-lift, scale-press */
+.today-start{width:100%;margin-top:20px;padding:17px;border:none;border-radius:15px;background:var(--accent);color:#fff;font-family:var(--f);font-size:16px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;cursor:pointer;min-height:56px;box-shadow:0 6px 18px rgba(0,184,148,.26);transition:transform var(--motion-fast) var(--motion-ease),box-shadow var(--motion-fast) var(--motion-ease);animation:tk-cta-glow 3s var(--motion-ease) infinite}
+.today-start:hover{transform:translateY(-1px);box-shadow:0 9px 22px rgba(0,184,148,.32)}
+.today-start:active{transform:scale(.985);box-shadow:0 3px 9px rgba(0,184,148,.22)}
+@keyframes tk-cta-glow{0%,100%{box-shadow:0 6px 18px rgba(0,184,148,.24)}50%{box-shadow:0 8px 22px rgba(0,184,148,.38)}}
+@media (prefers-reduced-motion:reduce){.today-start{animation:none}.today-card::after{animation:none}}
+/* v3.3.48/50/51 P5 — dagstatus: grotere ring + prominente koptekst; ring animeert bij openen */
+.df-head{width:100%;border:none;background:none;cursor:pointer;text-align:left;display:flex;align-items:center;gap:15px;padding:2px 2px 10px;font-family:var(--f)}
+.df-ring{position:relative;width:60px;height:60px;flex-shrink:0}
+.df-prog{animation:tk-ring var(--motion-success) var(--motion-ease) both}
+@keyframes tk-ring{from{stroke-dashoffset:var(--rc)}to{stroke-dashoffset:var(--tgt)}}
+.df-ring-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:var(--dark)}
+.df-headline{font-size:20px;font-weight:800;letter-spacing:-.3px;line-height:1.1;color:var(--day-head,var(--dark))}
+.df-meaning{font-size:14px;font-weight:600;color:var(--dark);line-height:1.35;margin-top:5px}
+.df-tech{font-size:11.5px;font-weight:500;color:var(--g4);margin-top:6px}
+.df-why{font-size:11.5px;color:var(--accent);font-weight:700;margin-top:8px}
+/* v3.3.49/50/51 P4 — Coach Advies-kaart: grotere icoon, day-soft wash, coachtekst = blikvanger */
+.coach-advies{display:flex;gap:14px;align-items:flex-start;background:linear-gradient(180deg,var(--day-soft,var(--g1)),var(--card) 62%);border:1px solid var(--g2);border-left:3px solid var(--day,var(--accent));border-radius:16px;padding:16px 16px 16px 17px;box-shadow:0 4px 16px rgba(0,0,0,.05)}
+.coach-advies-ic{width:44px;height:44px;border-radius:13px;background:var(--day-soft,rgba(0,184,148,.12));display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.coach-advies-ic svg{width:23px;height:23px;stroke:var(--day,var(--accent));fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .coach-advies-body{flex:1;min-width:0}
-.coach-advies-lbl{font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--day-head,var(--g4))}
-.coach-advies-title{font-size:15.5px;font-weight:800;color:var(--dark);line-height:1.2;margin-top:3px}
-.coach-advies-line{font-size:13px;font-weight:500;color:var(--g6);line-height:1.45;margin-top:5px}
+.coach-advies-lbl{font-size:9.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--g4)}
+.coach-advies-title{font-size:15.5px;font-weight:800;color:var(--dark);line-height:1.18;margin-top:4px;text-transform:uppercase;letter-spacing:.2px}
+.coach-advies-line{font-size:13px;font-weight:500;color:var(--g6);line-height:1.45;margin-top:6px}
 .coach-advies-reden{font-size:12px;font-weight:600;color:var(--g4);line-height:1.4;margin-top:5px}
 /* v3.3.49/50 P1/P8 — Motivatiekaart: afsluiter, volgt het dag-thema */
 .motiv-card{position:relative;background:linear-gradient(120deg,var(--day-soft,rgba(0,184,148,.10)),rgba(0,0,0,0));border-radius:14px;padding:15px 16px 15px 20px;font-size:13.5px;font-weight:600;color:var(--dark);line-height:1.5}
 .motiv-bar{position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:3px;background:var(--day,var(--accent))}
-/* v3.3.50 P10 — nette afsluiting van het coachverhaal vóór de utility-blokken */
-.home-divider{display:flex;align-items:center;gap:12px;margin:22px 2px 12px;color:var(--g4)}
+/* v3.3.50/51 P8/P10 — nette afsluiting met meer lucht vóór de utility-blokken */
+.home-divider{display:flex;align-items:center;gap:12px;margin:26px 2px 14px;color:var(--g4)}
 .home-divider::before,.home-divider::after{content:'';height:1px;flex:1;background:var(--g2)}
-.home-divider span{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}
+.home-divider span{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;white-space:nowrap}
 /* v3.3.48 P4 — premium "Waarom vandaag?"-uitleg */
 .df-detail{font-size:12.5px;line-height:1.5;background:var(--g1);border-radius:12px;padding:12px 14px;margin-bottom:10px;animation:tk-screen-in var(--motion-standard) var(--motion-ease)}
 .dfd-title{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--g4);margin-bottom:8px}
@@ -668,10 +678,10 @@ canvas{width:100%;height:100%}
   </div>
   <div class="scroll" id="home-theme" data-day="goed" style="padding-top:10px">
     <div id="home-morning" class="hcoach-item" style="margin-bottom:16px"></div>
-    <div id="home-today-cta" class="hcoach-item" style="margin-bottom:14px"></div>
+    <div id="home-today-cta" class="hcoach-item" style="margin-bottom:12px"></div>
     <div id="home-coach-advies" class="hcoach-item" style="margin-bottom:16px"></div>
-    <div id="home-hrv-card" class="hcoach-item"></div>
-    <div id="home-weekstats" class="hcoach-item" style="margin:14px 0 12px"></div>
+    <div id="home-hrv-card" class="hcoach-item" style="margin-bottom:16px"></div>
+    <div id="home-weekstats" class="hcoach-item" style="margin-bottom:16px"></div>
     <div id="home-motivatie" class="hcoach-item" style="margin-bottom:16px"></div>
     <div class="home-divider"><span>Meer mogelijkheden</span></div>
     <div id="home-program-card" style="margin-bottom:8px"></div>
@@ -2249,7 +2259,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.50';
+const APP_VER = 'v3.3.51';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6699,9 +6709,9 @@ async function refreshHome(){
     document.getElementById('home-hrv-card').innerHTML=`<div class="card"><div class="card-body" style="padding-top:14px">
       <button onclick="toggleDagfactorDetail()" aria-expanded="false" aria-controls="dagfactor-detail" class="df-head">
         <div class="df-ring">
-          <svg width="52" height="52" viewBox="0 0 60 60" style="transform:rotate(-90deg);display:block" aria-hidden="true">
-            <circle cx="30" cy="30" r="24" fill="none" stroke="var(--g2)" stroke-width="4"/>
-            <circle cx="30" cy="30" r="24" fill="none" stroke="${heroKleur}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${RC}" stroke-dashoffset="${Math.round(RC*(1-ringPct))}" style="transition:stroke-dashoffset var(--motion-success) var(--motion-ease)"/>
+          <svg width="60" height="60" viewBox="0 0 60 60" style="transform:rotate(-90deg);display:block" aria-hidden="true">
+            <circle cx="30" cy="30" r="24" fill="none" stroke="var(--g2)" stroke-width="4.5"/>
+            <circle class="df-prog" cx="30" cy="30" r="24" fill="none" stroke="${heroKleur}" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="${RC}" style="--rc:${RC};--tgt:${Math.round(RC*(1-ringPct))};stroke-dashoffset:${Math.round(RC*(1-ringPct))}"/>
           </svg>
           <div class="df-ring-val">${df.factor}</div>
         </div>
@@ -6912,9 +6922,9 @@ async function renderWeekStats(){
   const volKg=Math.round(volThis).toLocaleString('nl-NL');
   const pctStr=pct===null?'—':(pct>=0?`+${pct}%`:`${pct}%`);
   const pctCol=pct===null?'var(--g4)':(pct>=0?'var(--accent)':'var(--y)');
-  // v3.3.48 P6 — context bij dezelfde cijfers (geen nieuwe statistiek, alleen duiding).
-  const routineLbl=activeDays>=12?'Sterke trainingsroutine':activeDays>=6?'Goede trainingsroutine':activeDays>=3?'Je ritme groeit':'Bouw je ritme op';
-  const volLbl=pct===null?'Basis voor volgende week':pct>=5?'Meer volume dan vorige week':pct<=-5?'Rustiger dan vorige week':'Gelijk aan vorige week';
+  // v3.3.48/51 P6/P13 — coachende duiding bij dezelfde cijfers (geen nieuwe statistiek).
+  const routineLbl=activeDays>=12?'Je bent sterk consistent bezig.':activeDays>=6?'Je bouwt een mooi ritme op.':activeDays>=3?'Je ritme komt op gang.':'Zet vandaag de volgende stap.';
+  const volLbl=pct===null?'Je legt de basis voor volgende week.':pct>=5?'Je bouwt zichtbaar kracht op.':pct<=-5?'Rustiger week — herstel telt ook.':'Je houdt je niveau mooi vast.';
   window.homeWeekSummary={activeDays,volKg,pctStr,pct};
   // v3.3.49 P6 — coachend: de boodschap komt eerst, het cijfer ondersteunt.
   el.innerHTML=`<div class="home-stat-row">
@@ -6936,10 +6946,13 @@ function renderMotivatie(){
   const el=document.getElementById('home-motivatie');if(!el)return;
   const w=window.homeWeekSummary;
   if(!w){el.innerHTML='';return;}
+  // v3.3.51 P7/P13 — persoonlijke coach-afsluiter met het échte cijfer (geen nieuwe data).
+  const dagen=w.activeDays;
   let msg;
-  if(w.pct!==null&&w.pct>=10)msg=`Sterke trainingsweek — je bouwt zichtbaar momentum op. Blijf op deze lijn.`;
-  else if(w.activeDays>=12)msg=`Je consistentie is sterk. Dit ritme maakt op lange termijn het verschil.`;
-  else if(w.activeDays>=6)msg=`Goed bezig — je bouwt een stabiel ritme op. Elke sessie telt.`;
+  if(w.pct!==null&&w.pct>=10)msg=`Je bent al ${dagen} dagen actief deze maand en bouwt zichtbaar kracht op. Zet deze lijn door.`;
+  else if(dagen>=12)msg=`Al ${dagen} actieve dagen deze maand — je consistentie is sterk. Dit maakt op de lange termijn het verschil.`;
+  else if(dagen>=6)msg=`Je bent al ${dagen} dagen bezig deze maand. Nog een paar sessies en dit wordt een sterke week.`;
+  else if(dagen>=1)msg=`Je hebt deze maand ${dagen} ${dagen===1?'dag':'dagen'} getraind. Zet vandaag de volgende stap.`;
   else msg=`Elke sessie telt. Kom in beweging en bouw je ritme stap voor stap op.`;
   el.innerHTML=`<div class="motiv-card"><span class="motiv-bar" aria-hidden="true"></span>${escHtml(msg)}</div>`;
 }
@@ -7066,11 +7079,11 @@ function dagfactorStatus(f){
 // bestaande dagfactor (geen nieuwe berekening). key stuurt de thema-CSS (data-day) aan;
 // alle statuskaarten (hero-accent, coach advies, dagfactor) volgen dezelfde toestand.
 function dayState(f){
-  if(f>=1.00)return {key:'goed',    headline:'Goede dag',    meaning:'Je bent klaar voor een sterke training.'};
-  if(f>=0.95)return {key:'normaal', headline:'Normale dag',  meaning:'Een prima dag om te trainen op gevoel.'};
-  if(f>=0.90)return {key:'vermoeid',headline:'Licht vermoeid',meaning:'Train vandaag beheerst en houd wat over.'};
-  if(f>=0.87)return {key:'herstel', headline:'Hersteldag',   meaning:'Vandaag draait om herstel en opladen.'};
-  return             {key:'slecht',  headline:'Rustdag',      meaning:'Je lichaam vraagt om rust vandaag.'};
+  if(f>=1.00)return {key:'goed',    headline:'Goede dag',    meaning:'Een uitstekende dag om progressie te maken.'};
+  if(f>=0.95)return {key:'normaal', headline:'Normale dag',  meaning:'Een prima dag om op gevoel te trainen.'};
+  if(f>=0.90)return {key:'vermoeid',headline:'Licht vermoeid',meaning:'Train beheerst — kwaliteit boven kwantiteit.'};
+  if(f>=0.87)return {key:'herstel', headline:'Hersteldag',   meaning:'Focus vandaag op herstel en opladen.'};
+  return             {key:'slecht',  headline:'Rustdag',      meaning:'Je lichaam vraagt vandaag om rust.'};
 }
 // v3.3.48/50 P3 — betekenis-eerst; koptekst + betekeniszin komen uit dayState (één bron).
 function dagfactorCoach(f){

@@ -1,5 +1,28 @@
 # Trainingskompas — Changelog
 
+## v3.3.45 — 2 augustus 2026 (Home Dashboard 2.0 — Premium Morning Experience, deel 1)
+*Home van "kaarten onder elkaar" naar een coachend dashboard. Geen nieuwe DB/AI/architectuur; uitsluitend bestaande data (DEC-027).*
+
+### Toegevoegd / verbeterd
+- **Verrijkte hero "Training van vandaag"**: premium donkere kaart met naam + **aantal oefeningen** + **spiergroepen** (uit `training_exercises` + `exercises.muscle_primary`) als chips, en een grote accent-**▶ Start training**-knop (48px+ tikvlak). Geen verzonnen duur/calorieën.
+- **Stat-kaarten**: **Actieve dagen** (laatste 30) en **Weekvolume** met **%-verschil t.o.v. vorige week** — berekend uit bestaande sessies (weight × reps × sets).
+- **Quick Actions**-rij (horizontaal scrollbaar): Plate Calculator (verplaatst), Stats, Logboek, Coach, Profiel — consistente lijn-iconen.
+- Informatiehiërarchie: groet → dagfactor (herstel) → training van vandaag → week-stats → programma/doel → snelacties → recente sessies.
+
+### Databron-eerlijkheid (DEC-027)
+- Recovery blijft de bestaande **dagfactor** (geen verzonnen "recovery %"-score). Geen geschatte trainingsduur/calorieën. Eén betrouwbare waarheid boven een completer ogende kaart.
+
+### Bewust NIET in dit deel (volgt in deel 2)
+- Premium recente-sessie-kaarten (duur/rating), aparte "Coach Advies"-kaart met per-oefening progressie-hint, volledige Material 3-/responsive-/a11y-review en de resterende ~30 micro-polish-details. Eerlijk gerapporteerd: dit is deel 1 van Dashboard 2.0.
+
+### Getest
+- `node --check` OK · `logic_tests.js` 141/141 · headless render (hero + stats + quick actions) 0 code-fouten.
+
+### Gewijzigd
+- `APP_VER` → v3.3.45; `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v3345`.
+
+---
+
 ## v3.3.44 — 2 augustus 2026 (Epic 1 — Morning Experience)
 *Home wordt het Morning Report. Geen nieuwe DB/AI/architectuur; uitsluitend bestaande data, presentatie-verbetering.*
 

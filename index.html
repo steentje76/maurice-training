@@ -148,7 +148,8 @@ html[data-theme="light"]{
 .today-card>*{position:relative;z-index:1}
 .today-card .today-cta-lbl{opacity:.85;color:var(--accent);letter-spacing:.8px}
 .today-card .today-cta-name{margin-top:5px;font-size:26px;line-height:1.05}
-.today-meta{font-size:13px;color:rgba(255,255,255,.82);font-weight:600;margin-top:9px}
+.today-human{font-size:14.5px;color:rgba(255,255,255,.92);font-weight:600;margin-top:10px;line-height:1.35}
+.today-meta{font-size:12.5px;color:rgba(255,255,255,.66);font-weight:600;margin-top:6px}
 .today-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
 .today-chip{font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;background:rgba(255,255,255,.13);color:#fff;padding:5px 11px;border-radius:9px}
 .today-ready{display:flex;align-items:center;gap:9px;margin-top:16px;font-size:13px;font-weight:700;color:rgba(255,255,255,.94)}
@@ -160,13 +161,28 @@ html[data-theme="light"]{
 @media (prefers-reduced-motion:reduce){.today-start{animation:none}}
 /* v3.3.48 P3 — dagfactor betekenis-eerst (koptekst + betekenis + techniek) */
 .df-head{width:100%;border:none;background:none;cursor:pointer;text-align:left;display:flex;align-items:center;gap:14px;padding:2px 2px 10px;font-family:var(--f)}
-.df-ring{position:relative;width:64px;height:64px;flex-shrink:0}
-.df-ring-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:var(--dark)}
-.df-headline{font-size:17px;font-weight:800;letter-spacing:-.2px;line-height:1.15}
+.df-ring{position:relative;width:52px;height:52px;flex-shrink:0;opacity:.92}
+.df-ring-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:var(--g6)}
+.df-headline{font-size:18px;font-weight:800;letter-spacing:-.2px;line-height:1.12}
 .df-headline.g{color:var(--df-g)}.df-headline.y{color:var(--df-y)}.df-headline.r{color:var(--df-r)}
-.df-meaning{font-size:13.5px;font-weight:600;color:var(--dark);line-height:1.35;margin-top:3px}
-.df-tech{font-size:11.5px;font-weight:500;color:var(--g4);margin-top:4px}
-.df-why{font-size:11.5px;color:var(--accent);font-weight:700;margin-top:6px}
+.df-meaning{font-size:14px;font-weight:600;color:var(--dark);line-height:1.35;margin-top:4px}
+.df-tech{font-size:11.5px;font-weight:500;color:var(--g4);margin-top:5px}
+.df-why{font-size:11.5px;color:var(--accent);font-weight:700;margin-top:7px}
+/* v3.3.49 P3 — Coach Advies-kaart (premium, subtiele achtergrond + coach-icoon) */
+.coach-advies{display:flex;gap:13px;background:var(--card);border:1px solid var(--g2);border-left:3px solid var(--accent);border-radius:16px;padding:15px 16px;box-shadow:var(--shadow);animation:tk-screen-in var(--motion-standard) var(--motion-ease)}
+.coach-advies.y{border-left-color:var(--y)}.coach-advies.r{border-left-color:#E06A70}
+.coach-advies-ic{width:38px;height:38px;border-radius:11px;background:rgba(0,184,148,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.coach-advies.y .coach-advies-ic{background:rgba(200,168,75,.16)}.coach-advies.r .coach-advies-ic{background:rgba(224,106,112,.14)}
+.coach-advies-ic svg{width:20px;height:20px;stroke:var(--accent);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.coach-advies.y .coach-advies-ic svg{stroke:var(--y)}.coach-advies.r .coach-advies-ic svg{stroke:#E06A70}
+.coach-advies-body{flex:1;min-width:0}
+.coach-advies-lbl{font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--g4)}
+.coach-advies-title{font-size:15px;font-weight:800;color:var(--dark);line-height:1.2;margin-top:3px}
+.coach-advies-line{font-size:13px;font-weight:500;color:var(--g6);line-height:1.45;margin-top:4px}
+.coach-advies-reden{font-size:12px;font-weight:600;color:var(--g4);line-height:1.4;margin-top:5px}
+/* v3.3.49 P1/P8 — Motivatiekaart (afsluiter van het verhaal) */
+.motiv-card{position:relative;background:linear-gradient(120deg,rgba(0,184,148,.10),rgba(0,184,148,.03));border-radius:14px;padding:14px 16px 14px 20px;font-size:13.5px;font-weight:600;color:var(--dark);line-height:1.5}
+.motiv-bar{position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:3px;background:var(--accent)}
 /* v3.3.48 P4 — premium "Waarom vandaag?"-uitleg */
 .df-detail{font-size:12.5px;line-height:1.5;background:var(--g1);border-radius:12px;padding:12px 14px;margin-bottom:10px;animation:tk-screen-in var(--motion-standard) var(--motion-ease)}
 .dfd-title{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--g4);margin-bottom:8px}
@@ -183,7 +199,9 @@ html[data-theme="light"]{
 .home-stat-top svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 .home-stat-val{font-size:26px;font-weight:800;color:var(--dark);margin-top:7px;line-height:1}
 .home-stat-u{font-size:13px;font-weight:700;color:var(--g4)}
-.home-stat-sub{font-size:11.5px;font-weight:600;color:var(--g4);margin-top:4px;line-height:1.3}
+.home-stat-msg{font-size:14px;font-weight:700;color:var(--dark);margin-top:8px;line-height:1.25}
+.home-stat-fig{font-weight:800;color:var(--g6)}
+.home-stat-sub{font-size:11.5px;font-weight:600;color:var(--g4);margin-top:5px;line-height:1.3}
 /* Quick Actions */
 .quick-row{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
 .quick-act{flex:1;min-width:66px;background:var(--card);border:none;border-radius:14px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;box-shadow:var(--shadow);font-family:var(--f)}
@@ -636,9 +654,11 @@ canvas{width:100%;height:100%}
   </div>
   <div class="scroll" style="padding-top:10px">
     <div id="home-morning" style="margin-bottom:16px"></div>
-    <div id="home-today-cta" style="margin-bottom:18px"></div>
+    <div id="home-today-cta" style="margin-bottom:14px"></div>
+    <div id="home-coach-advies" style="margin-bottom:16px"></div>
     <div id="home-hrv-card"></div>
-    <div id="home-weekstats" style="margin:12px 0 10px"></div>
+    <div id="home-weekstats" style="margin:14px 0 12px"></div>
+    <div id="home-motivatie" style="margin-bottom:14px"></div>
     <div id="home-program-card" style="margin-bottom:8px"></div>
     <div id="home-goals-card" style="margin-bottom:8px"></div>
     <div class="sec-hd">Andere trainingen</div>
@@ -2214,7 +2234,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.48';
+const APP_VER = 'v3.3.49';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6664,9 +6684,9 @@ async function refreshHome(){
     document.getElementById('home-hrv-card').innerHTML=`<div class="card"><div class="card-body" style="padding-top:14px">
       <button onclick="toggleDagfactorDetail()" aria-expanded="false" aria-controls="dagfactor-detail" class="df-head">
         <div class="df-ring">
-          <svg width="64" height="64" viewBox="0 0 60 60" style="transform:rotate(-90deg);display:block" aria-hidden="true">
-            <circle cx="30" cy="30" r="24" fill="none" stroke="var(--g2)" stroke-width="5"/>
-            <circle cx="30" cy="30" r="24" fill="none" stroke="${heroKleur}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${RC}" stroke-dashoffset="${Math.round(RC*(1-ringPct))}" style="transition:stroke-dashoffset var(--motion-success) var(--motion-ease)"/>
+          <svg width="52" height="52" viewBox="0 0 60 60" style="transform:rotate(-90deg);display:block" aria-hidden="true">
+            <circle cx="30" cy="30" r="24" fill="none" stroke="var(--g2)" stroke-width="4"/>
+            <circle cx="30" cy="30" r="24" fill="none" stroke="${heroKleur}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${RC}" stroke-dashoffset="${Math.round(RC*(1-ringPct))}" style="transition:stroke-dashoffset var(--motion-success) var(--motion-ease)"/>
           </svg>
           <div class="df-ring-val">${df.factor}</div>
         </div>
@@ -6707,9 +6727,13 @@ async function refreshHome(){
     try{recRows=await getRelevantMuscleRecovery(nextT._muscles);}catch(e){recRows=[];}
   }
   window.homeMuscleRec=recRows;
-  await renderMorning(dfInfo,nextT,recRows);
+  // Waarom?-conclusie deelt dezelfde bron als de coaching (buildCoachAdvice); geen extra query.
+  try{window.homeCoachText=await buildCoachAdvice(dfInfo,nextT,recRows);}catch(e){window.homeCoachText='';}
+  await renderMorning(dfInfo,nextT);
   renderTodayCta(nextT,dfInfo);
-  renderWeekStats();
+  renderCoachAdvies(dfInfo,recRows);
+  await renderWeekStats();
+  renderMotivatie();
   renderQuickActions();
   if(curT){document.getElementById('home-dot-'+curT.toLowerCase())?.classList.add('show');}
   const rsSynced=await sbGet('sessions','&order=created_at.desc&limit=6');
@@ -6769,14 +6793,52 @@ async function buildCoachAdvice(dfInfo,nextT,recRows){
   if(f>=0.93)return `Je herstel is oké. Train ${tnaam} vandaag op gevoel en houd je RPE in de gaten.`;
   return `Je lichaam vraagt vandaag om rust. Houd ${tnaam} licht of kies voor actief herstel.`;
 }
-async function renderMorning(dfInfo,nextT,recRows){
+// v3.3.49 — Welkom + korte coachintro (P1/P7). De volledige, actiegerichte coaching
+// staat in de aparte Coach Advies-kaart; de intro is één warme framing-zin.
+function buildCoachIntro(dfInfo){
+  if(!dfInfo)return 'Vul je HRV in en ik vertel je precies hoe je ervoor staat.';
+  const f=dfInfo.factor;
+  if(f>=1.02)return 'Je staat er sterk bij vandaag.';
+  if(f>=1.00)return 'Een goede dag om te presteren.';
+  if(f>=0.93)return 'Een rustige, degelijke dag.';
+  return 'Vandaag draait om herstel.';
+}
+async function renderMorning(dfInfo,nextT){
   const el=document.getElementById('home-morning');if(!el)return;
   const m=buildMorningMessage(dfInfo,nextT);
-  const coach=await buildCoachAdvice(dfInfo,nextT,recRows);
-  window.homeCoachText=coach||'';
+  const intro=buildCoachIntro(dfInfo);
   el.innerHTML=`<div style="padding:0 2px">
     <div class="home-groet">${escHtml(m.groet)}</div>
-    ${coach?`<div class="home-coach">${escHtml(coach)}</div>`:''}
+    ${intro?`<div class="home-coach">${escHtml(intro)}</div>`:''}
+  </div>`;
+}
+// v3.3.49 P3 — Coach Advies-kaart: actiegericht RPE/progressie-advies uit de BESTAANDE
+// coachregel computeProgAdjustment (dagfactor + spierherstel). Geen nieuwe logica/AI.
+function musclePhrase(muscles){
+  const low=s=>String(s).charAt(0).toLowerCase()+String(s).slice(1);
+  return joinNl((muscles||[]).slice(0,3).map(low));
+}
+function buildCoachTraining(dfInfo,recRows){
+  if(!dfInfo)return null;
+  const adj=computeProgAdjustment(dfInfo.factor,recRows||[],null,null);
+  if(!adj)return {tone:'g',title:'Uitstekende dag om te presteren',line:'Je herstel is hoog — vandaag kun je veilig progressie maken. Ga voor je geplande sets tot RPE 8–9.'};
+  const laag=(recRows||[]).filter(r=>r.pct<70).sort((a,b)=>a.pct-b.pct);
+  const reden=laag.length?`Let op: ${musclePhrase(laag.map(r=>r.muscle))} nog niet volledig hersteld.`:'';
+  if(adj.rpeDelta<=-1.5)return {tone:'r',title:'Houd het vandaag rustiger',line:'Je herstel is nog beperkt. Houd 2 herhalingen over (±RPE 7) en laat waar nodig een set vallen.',reden};
+  return {tone:'y',title:'Train vandaag beheerst',line:'Je herstel is deels beperkt. Houd ongeveer 1 herhaling in reserve (±RPE 8).',reden};
+}
+function renderCoachAdvies(dfInfo,recRows){
+  const el=document.getElementById('home-coach-advies');if(!el)return;
+  const a=buildCoachTraining(dfInfo,recRows);
+  if(!a){el.innerHTML='';return;}
+  el.innerHTML=`<div class="coach-advies ${a.tone}">
+    <div class="coach-advies-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4 19.5l1.3-4.1A7.5 7.5 0 1 1 20 11.5Z"/></svg></div>
+    <div class="coach-advies-body">
+      <div class="coach-advies-lbl">Coach advies</div>
+      <div class="coach-advies-title">${escHtml(a.title)}</div>
+      <div class="coach-advies-line">${escHtml(a.line)}</div>
+      ${a.reden?`<div class="coach-advies-reden">${escHtml(a.reden)}</div>`:''}
+    </div>
   </div>`;
 }
 // v3.3.45/46/47 — HERO: het zwaarste element van Home. Leest de één keer voorgeladen
@@ -6793,15 +6855,16 @@ function renderTodayCta(nextT,dfInfo){
   const el=document.getElementById('home-today-cta');if(!el)return;
   if(!nextT){el.innerHTML='';return;}
   const n=nextT._exCount||0,muscles=Array.isArray(nextT._muscles)?nextT._muscles:[];
-  const meta=n?`${n} oefening${n===1?'':'en'}${muscles.length?` · ${muscles.length} spiergroep${muscles.length===1?'':'en'}`:''}`:'';
-  const chips=muscles.slice(0,6).map(m=>`<span class="today-chip">${escHtml(m)}</span>`).join('');
+  // v3.3.49 P2 — de hero spreekt als coach: "Vandaag train je borst en rug."
+  const human=muscles.length?`Vandaag train je ${musclePhrase(muscles)}.`:'';
+  const meta=n?`${n} oefening${n===1?'':'en'}`:'';
   const rd=trainReadiness(dfInfo);
   const ready=rd?`<div class="today-ready"><span class="today-dot ${rd.cls}"></span>${escHtml(rd.txt)}</div>`:'';
   el.innerHTML=`<div class="today-card">
     <div class="today-cta-lbl">Training van vandaag</div>
     <div class="today-cta-name">${escHtml(nextT.naam)}</div>
+    ${human?`<div class="today-human">${escHtml(human)}</div>`:''}
     ${meta?`<div class="today-meta">${meta}</div>`:''}
-    ${chips?`<div class="today-chips">${chips}</div>`:''}
     ${ready}
     <button onclick="startT('${nextT.id}')" class="today-start" aria-label="Start ${escHtml(nextT.naam)}">Start training</button>
   </div>`;
@@ -6825,18 +6888,32 @@ async function renderWeekStats(){
   const routineLbl=activeDays>=12?'Sterke trainingsroutine':activeDays>=6?'Goede trainingsroutine':activeDays>=3?'Je ritme groeit':'Bouw je ritme op';
   const volLbl=pct===null?'Basis voor volgende week':pct>=5?'Meer volume dan vorige week':pct<=-5?'Rustiger dan vorige week':'Gelijk aan vorige week';
   window.homeWeekSummary={activeDays,volKg,pctStr,pct};
+  // v3.3.49 P6 — coachend: de boodschap komt eerst, het cijfer ondersteunt.
   el.innerHTML=`<div class="home-stat-row">
     <div class="home-stat">
-      <div class="home-stat-top"><svg viewBox="0 0 24 24"><path d="M12 3c1.2 2.4.6 4.2-.9 5.7C9.3 10.5 8 12 8 14.2A4 4 0 0 0 16 14c0-1.3-.5-2.4-1.2-3.3.9.3 3.2 1.7 3.2 4.6A6 6 0 1 1 8 6.3C9.6 5 11.4 4 12 3Z"/></svg>Actief</div>
-      <div class="home-stat-val">${activeDays}<span class="home-stat-u"> dagen</span></div>
-      <div class="home-stat-sub">${routineLbl}</div>
+      <div class="home-stat-top"><svg viewBox="0 0 24 24"><path d="M12 3c1.2 2.4.6 4.2-.9 5.7C9.3 10.5 8 12 8 14.2A4 4 0 0 0 16 14c0-1.3-.5-2.4-1.2-3.3.9.3 3.2 1.7 3.2 4.6A6 6 0 1 1 8 6.3C9.6 5 11.4 4 12 3Z"/></svg>Ritme</div>
+      <div class="home-stat-msg">${routineLbl}</div>
+      <div class="home-stat-sub"><span class="home-stat-fig">${activeDays}</span> actieve dagen · 30 dgn</div>
     </div>
     <div class="home-stat">
-      <div class="home-stat-top"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 19v-6M12 19v-9M16 19v-4M20 19v-11"/></svg>Weekvolume</div>
-      <div class="home-stat-val">${volKg}<span class="home-stat-u"> kg</span></div>
-      <div class="home-stat-sub"><span style="color:${pctCol};font-weight:700">${pctStr}</span> · ${volLbl}</div>
+      <div class="home-stat-top"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 19v-6M12 19v-9M16 19v-4M20 19v-11"/></svg>Volume</div>
+      <div class="home-stat-msg">${volLbl}</div>
+      <div class="home-stat-sub"><span class="home-stat-fig">${volKg} kg</span> · <span style="color:${pctCol};font-weight:700">${pctStr}</span></div>
     </div>
   </div>`;
+}
+// v3.3.49 P1/P8 — Motivatiekaart: sluit het verhaal af met een menselijke boodschap,
+// uitsluitend uit reeds berekende weekcijfers (homeWeekSummary). Geen nieuwe statistiek.
+function renderMotivatie(){
+  const el=document.getElementById('home-motivatie');if(!el)return;
+  const w=window.homeWeekSummary;
+  if(!w){el.innerHTML='';return;}
+  let msg;
+  if(w.pct!==null&&w.pct>=10)msg=`Sterke trainingsweek — je bouwt zichtbaar momentum op. Blijf op deze lijn.`;
+  else if(w.activeDays>=12)msg=`Je consistentie is sterk. Dit ritme maakt op lange termijn het verschil.`;
+  else if(w.activeDays>=6)msg=`Goed bezig — je bouwt een stabiel ritme op. Elke sessie telt.`;
+  else msg=`Elke sessie telt. Kom in beweging en bouw je ritme stap voor stap op.`;
+  el.innerHTML=`<div class="motiv-card"><span class="motiv-bar" aria-hidden="true"></span>${escHtml(msg)}</div>`;
 }
 // v3.3.45 Dashboard 2.0 — Quick Actions (navigatie naar bestaande schermen).
 function renderQuickActions(){

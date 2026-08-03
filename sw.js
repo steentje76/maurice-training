@@ -1,8 +1,8 @@
 // Trainingskompas — Service Worker
 // Play Store ready — offline first
 
-const CACHE_NAME = 'trainingskompas-v3335';
-const CACHE_STATIC = 'trainingskompas-static-v3335';
+const CACHE_NAME = 'trainingskompas-v3352';
+const CACHE_STATIC = 'trainingskompas-static-v3352';
 
 const STATIC_ASSETS = [
   '/',
@@ -10,6 +10,7 @@ const STATIC_ASSETS = [
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
+  '/logo-wordmark.png',
   'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap'
 ];
 

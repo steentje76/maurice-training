@@ -336,11 +336,11 @@ body{display:flex;justify-content:center}
 .hrv-pill.r{background:#ffebee;color:#c62828;border-color:#ef9a9a}
 
 /* EXERCISE ITEMS */
-.ex-card{background:var(--card);border-radius:var(--r);margin-bottom:8px;overflow:hidden;box-shadow:var(--shadow)}
-.ex-card-hd{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.ex-card{background:var(--card);border-radius:14px;margin-bottom:10px;overflow:hidden;box-shadow:0 3px 12px rgba(0,0,0,.05),0 0 0 1px var(--g2)}
+.ex-card-hd{padding:14px 15px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
 .ex-card-hd:active{background:var(--g1)}
-.ex-card-name{font-size:15px;font-weight:700;color:var(--dark)}
-.ex-card-meta{font-size:12px;color:var(--g4);margin-top:2px}
+.ex-card-name{font-size:15.5px;font-weight:800;color:var(--dark);letter-spacing:-.2px}
+.ex-card-meta{font-size:12px;color:var(--g4);margin-top:3px;font-weight:600}
 .ex-prev{font-size:11px;color:var(--g4);padding:6px 14px;background:var(--g1);border-bottom:1px solid var(--g2)}
 .ex-prev strong{color:var(--dark)}
 .ex-body{display:none;padding:4px 0}
@@ -393,7 +393,36 @@ body{display:flex;justify-content:center}
 .coach-chip:active{background:var(--accent);border-color:var(--accent)}
 .coach-apply-btn{display:inline-block;margin-top:6px;background:var(--accent);color:var(--dark);border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer;font-family:var(--f)}
 .coach-apply-btn:disabled{opacity:.6}
-.coach-advice-card{margin:6px 14px 10px;padding:9px 12px;background:#eef9f9;border-left:3px solid var(--accent);border-radius:0 8px 8px 0;font-size:12px;color:var(--dark);line-height:1.5}
+.coach-advice-card{display:flex;align-items:flex-start;gap:9px;margin:6px 14px 10px;padding:10px 13px;background:var(--g1);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;font-size:12px;color:var(--g6);line-height:1.5}
+.coach-advice-card strong{color:var(--dark)}
+/* ═══ v3.3.52 — Premium Training Experience ═══ */
+.train-intro{position:relative;background:linear-gradient(150deg,#123c4d,#0a2029);color:#fff;border-radius:18px;padding:18px 18px 16px;margin:0 0 14px;box-shadow:0 10px 26px rgba(0,0,0,.28);overflow:hidden;border-left:4px solid var(--tcol,var(--accent));animation:tk-rise var(--motion-standard) var(--motion-ease) both}
+.train-intro-lbl{font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--tcol,var(--accent))}
+.train-intro-human{font-size:18px;font-weight:800;margin-top:6px;line-height:1.2}
+.train-intro-focus{font-size:13px;font-weight:600;color:rgba(255,255,255,.86);margin-top:8px;line-height:1.45}
+.train-intro-meta{font-size:11.5px;font-weight:600;color:rgba(255,255,255,.55);margin-top:11px}
+.rest-bar{position:fixed;left:12px;right:12px;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:200;background:linear-gradient(150deg,#123c4d,#0a2029);color:#fff;border-radius:16px;padding:0;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.4);font-family:var(--f)}
+.rest-bar-fill{height:4px;background:var(--accent);width:100%;transition:width 1s linear}
+.rest-bar-row{display:flex;align-items:center;gap:12px;padding:11px 14px}
+.rest-bar-info{flex-shrink:0}
+.rest-bar-lbl{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.rest-bar-time{font-size:22px;font-weight:800;line-height:1;margin-top:2px;font-variant-numeric:tabular-nums}
+.rest-bar-hint{flex:1;min-width:0;font-size:11px;font-weight:600;color:rgba(255,255,255,.75);line-height:1.3}
+.rest-bar-stop{flex-shrink:0;background:rgba(255,255,255,.14);border:none;color:#fff;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f);min-height:44px}
+.rest-bar-stop:active{transform:scale(.97)}
+.coach-advice-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.coach-advice-txt{flex:1}
+.sess-done-hd{text-align:center;margin:2px 0 14px}
+.sess-done-title{font-size:20px;font-weight:800;color:var(--dark);line-height:1.15;letter-spacing:-.3px}
+.sess-done-sub{font-size:13px;font-weight:600;color:var(--g4);margin-top:5px;line-height:1.4}
+.sess-stats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.sess-stat{flex:1 1 28%;min-width:74px;background:var(--g1);border-radius:12px;padding:12px 8px;text-align:center}
+.sess-stat-val{font-size:19px;font-weight:800;color:var(--dark);line-height:1}
+.sess-stat-u{font-size:11px;font-weight:700;color:var(--g4)}
+.sess-stat-lbl{font-size:10px;font-weight:600;color:var(--g4);margin-top:5px;text-transform:uppercase;letter-spacing:.3px}
+.sess-muscles{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.sess-muscle{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;background:var(--accent2);color:#fff;padding:4px 10px;border-radius:8px}
+.sess-coach-lbl{font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--g4);margin-bottom:6px}
 .hist-session-row{padding:11px 4px;border-bottom:1px solid var(--g2);cursor:pointer}
 .hist-session-label{font-size:13px;font-weight:700;color:var(--dark)}
 .hist-session-date{font-size:11px;color:var(--g4);margin-top:2px}
@@ -425,11 +454,11 @@ body{display:flex;justify-content:center}
 .act-btn.outline{background:var(--g1);color:var(--dark);border:1.5px solid var(--g2)}
 
 /* SUMMARY CARD */
-.summary-card{background:var(--card);border-radius:var(--r);padding:14px;box-shadow:var(--shadow);margin:0 0 10px}
-.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
-.sum-item{text-align:center}
-.sum-val{font-size:20px;font-weight:800;color:var(--dark)}
-.sum-lbl{font-size:10px;font-weight:600;color:var(--g4);margin-top:2px}
+.summary-card{background:var(--card);border-radius:16px;padding:16px;box-shadow:0 3px 12px rgba(0,0,0,.05),0 0 0 1px var(--g2);margin:0 0 10px}
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.sum-item{text-align:center;background:var(--g1);border-radius:10px;padding:10px 4px}
+.sum-val{font-size:20px;font-weight:800;color:var(--dark);line-height:1}
+.sum-lbl{font-size:10px;font-weight:600;color:var(--g4);margin-top:4px;text-transform:uppercase;letter-spacing:.3px}
 
 /* TIMER BAR */
 .timer-bar{background:var(--card);border-top:1px solid var(--g2);padding:12px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0}
@@ -1924,8 +1953,13 @@ canvas{width:100%;height:100%}
 <div class="modal-bg" id="m-ai-summary" onclick="">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">🤖 Training samengevat</div>
-    <div id="ai-summary-body" style="font-size:13px;color:var(--dark);line-height:1.6;white-space:pre-wrap">Samenvatting laden...</div>
+    <div class="sess-done-hd">
+      <div class="sess-done-title" id="sess-done-title">Sterke training afgerond</div>
+      <div class="sess-done-sub" id="sess-done-sub">Goed gewerkt — hier is je terugblik.</div>
+    </div>
+    <div id="ai-summary-stats" class="sess-stats"></div>
+    <div class="sess-coach-lbl">Coach terugblik</div>
+    <div id="ai-summary-body" style="font-size:13px;color:var(--g6);line-height:1.6;white-space:pre-wrap">Samenvatting laden...</div>
     <button class="btn btn-r" style="width:100%;margin-top:16px" onclick="closeModal('m-ai-summary');go('s-home');refreshStats()">Naar Home</button>
   </div>
 </div>
@@ -2006,9 +2040,16 @@ canvas{width:100%;height:100%}
     </div>
   </div>
 </div>
-<div id="rest-timer-bar" style="display:none;position:fixed;left:0;right:0;bottom:64px;z-index:200;background:var(--dark);color:#fff;padding:10px 16px;align-items:center;justify-content:space-between;font-family:var(--f)">
-  <span style="font-weight:700;font-size:15px">⏱ Rust: <span id="rt-remaining">00:00</span></span>
-  <button onclick="cancelRestTimer()" style="background:none;border:1px solid #fff;color:#fff;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">Stop</button>
+<div id="rest-timer-bar" class="rest-bar" style="display:none">
+  <div class="rest-bar-fill" id="rt-fill"></div>
+  <div class="rest-bar-row">
+    <div class="rest-bar-info">
+      <div class="rest-bar-lbl">Rust</div>
+      <div class="rest-bar-time"><span id="rt-remaining">00:00</span></div>
+    </div>
+    <div class="rest-bar-hint">Adem rustig door — klaar voor je volgende set.</div>
+    <button onclick="cancelRestTimer()" class="rest-bar-stop">Overslaan</button>
+  </div>
 </div>
 
 <div class="modal-bg" id="m-train-settings" onclick="bgClose(event,'m-train-settings')">
@@ -2259,7 +2300,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.51';
+const APP_VER = 'v3.3.52';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -5269,6 +5310,31 @@ function showSettings(){
 
 function getSessionExs(t){return [...(TRAIN_CFG[t]||[]),...sessionExtra.filter(e=>e._t===t)];}
 
+// v3.3.52 P1 — Premium Training Intro: coach-banner boven het oefeningenoverzicht.
+// Gebruikt uitsluitend bestaande data: spiergroepen van vandaag (getExerciseMuscles) +
+// bestaande dagstatus (dagfactor uit de laatste hrv_log → dayState). Geen nieuwe logica.
+async function buildTrainIntro(t,list){
+  const mset=new Set();
+  (list||[]).forEach(e=>{try{(getExerciseMuscles(e.id)||[]).forEach(m=>m&&mset.add(m));}catch(_){}});
+  const muscles=[...mset];
+  const n=(list||[]).length;
+  let key='goed';
+  try{const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=1');if(hd&&hd[0]){const df=dagfactor(hd[0].hrv,hd[0].sleep,hd[0].cyclus_fase);key=dayState(df.factor).key;}}catch(_){}
+  const focus={goed:'Je herstel is goed — focus op sterke, gecontroleerde sets.',
+    normaal:'Prima dag — train op gevoel en houd je techniek scherp.',
+    vermoeid:'Rustig opbouwen vandaag. Kwaliteit boven gewicht.',
+    herstel:'Vandaag herstelgericht — houd het licht en luister naar je lijf.',
+    slecht:'Rustig aan vandaag. Kwaliteit boven gewicht.'}[key];
+  const col={goed:'#00B894',normaal:'#C8A84B',vermoeid:'#D98A3D',herstel:'#4A90C2',slecht:'#E0704A'}[key];
+  const human=muscles.length?`Vandaag train je ${musclePhrase(muscles)}.`:'Vandaag zetten we een stap vooruit.';
+  const meta=`${n} oefening${n===1?'':'en'}${muscles.length?` · ${muscles.length} spiergroep${muscles.length===1?'':'en'}`:''}`;
+  return `<div class="train-intro" style="--tcol:${col}">
+    <div class="train-intro-lbl">Klaar voor je training</div>
+    <div class="train-intro-human">${escHtml(human)}</div>
+    <div class="train-intro-focus">${escHtml(focus)}</div>
+    ${meta?`<div class="train-intro-meta">${escHtml(meta)}</div>`:''}
+  </div>`;
+}
 async function renderTrainScreen(t){
   await ensureEquipmentTypesLoaded();
   await loadTrainCfg();
@@ -5276,6 +5342,7 @@ async function renderTrainScreen(t){
   const container=document.getElementById('train-'+t.toLowerCase()+'-list');
   if(!container)return; // Unified Training Editor: dezelfde functie rendert Training A/B én Workout (custom_*)
   container.innerHTML='';
+  try{const _intro=await buildTrainIntro(t,list);if(_intro){const _d=document.createElement('div');_d.innerHTML=_intro;if(_d.firstElementChild)container.appendChild(_d.firstElementChild);}}catch(_){}
 
   for(const ex of list){
     // Load previous session data
@@ -6375,9 +6442,14 @@ function showPostSetAdvice(exId,setNum){
   const nextIdx=setNum+1;
   const nextInp=document.getElementById('s-'+exId+'-'+nextIdx+'-kg');
   const target=roundKg(kgVal+prog.delta);
-  const txt=prog.delta===0?`RPE ${rpe} — gelijk houden op ${kgVal} kg volgende set.`:`RPE ${rpe} — ${prog.label.toLowerCase()} naar ${target} kg.`;
+  // v3.3.52 P4/P6 — coachende toon i.p.v. systeemtaal (bestaande computeProgression-uitkomst).
+  const txt=prog.delta>0
+      ?`Sterke marge — je kunt naar ${target} kg volgende set.`
+      :prog.delta===0
+        ?`Mooie set. Houd ${kgVal} kg aan voor je volgende set.`
+        :`Zware set — behoud je techniek, ${target} kg volgende set.`;
   const applyBtn=nextInp?`<button class="coach-apply-btn" onclick="applyAdviceToSet('${exId}',${nextIdx},${target})">Toepassen</button>`:'';
-  const html=`🤖 ${txt}${applyBtn}`;
+  const html=`<span class="coach-advice-dot" style="background:var(--accent)"></span><span class="coach-advice-txt">Hoe voelde deze set? <strong>RPE ${rpe}</strong> · ${txt}</span>${applyBtn}`;
   const existing=document.getElementById('advice-'+exId);
   if(existing){existing.innerHTML=html;}
   else{
@@ -6628,8 +6700,11 @@ async function finishSession(){
   try{
   const t=curT,list=getSessionExs(t),today=td();let saved=0;
   const summaryData=[]; // v306 #10: input voor AI-samenvatting
+  // v3.3.52 P7 — premium afronding: aggregeer bestaande cijfers voor de samenvatting-kaart.
+  const sessStats={vol:0,sets:0,reps:0,pr:0,heavy:0,muscles:new Set()};
   for(const ex of list){
     const l=sessionLog[ex.id];if(!l)continue;
+    try{(getExerciseMuscles(ex.id)||[]).forEach(m=>m&&sessStats.muscles.add(m));}catch(_){}
     if(l.cardio && CARDIO_TYPES[l.cardio.type] && (l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals)){
       const cRow=cardioDataToRow(l.cardio.type,l.cardio);
       const extraNote=cRow.extraNote;delete cRow.extraNote;
@@ -6648,6 +6723,11 @@ async function finishSession(){
       saved++;
       const avgRpe=ws.filter(s=>s.rpe).length?(ws.reduce((sum,s)=>sum+(parseFloat(s.rpe)||0),0)/ws.filter(s=>s.rpe).length).toFixed(1):null;
       summaryData.push({naam:ex.naam,sets:setsDetail,isPr,zwaarste:bestKg(best),avgRpe});
+      // v3.3.52 P7 — tel bestaande cijfers op (geen nieuwe data).
+      sessStats.sets+=ws.length;
+      ws.forEach(s=>{const k=bestKg(s)||0,r=parseInt(s.reps)||0;sessStats.vol+=k*r;sessStats.reps+=r;});
+      if(isPr)sessStats.pr++;
+      if(bestKg(best)>sessStats.heavy)sessStats.heavy=bestKg(best);
     }
   }
   localStorage.setItem('maurice_last_training',t);
@@ -6660,7 +6740,25 @@ async function finishSession(){
     await sbPatchQ('program_blocks','id=eq.'+t.slice('prog_'.length),{completed_at:new Date().toISOString()});
   }
   toast(saved+' oefeningen opgeslagen');
-  document.getElementById('ai-summary-body').textContent='Samenvatting laden...';
+  document.getElementById('ai-summary-body').textContent='Coach terugblik laden...';
+  // v3.3.52 P7 — premium afrondingskaart met bestaande cijfers.
+  try{
+    const titleEl=document.getElementById('sess-done-title'),subEl=document.getElementById('sess-done-sub'),statsEl=document.getElementById('ai-summary-stats');
+    if(titleEl)titleEl.textContent=sessStats.pr>0?`Nieuw record${sessStats.pr>1?'s':''}! Sterke training.`:'Sterke training afgerond';
+    if(subEl)subEl.textContent=sessStats.pr>0?`Je zette ${sessStats.pr} nieuwe persoonlijke record${sessStats.pr>1?'s':''} neer. Sterk werk.`:'Goed gewerkt — hier is je terugblik.';
+    if(statsEl){
+      const volStr=Math.round(sessStats.vol).toLocaleString('nl-NL');
+      const musc=[...sessStats.muscles].slice(0,4);
+      const cell=(v,l)=>`<div class="sess-stat"><div class="sess-stat-val">${v}</div><div class="sess-stat-lbl">${l}</div></div>`;
+      statsEl.innerHTML=
+        cell(saved,'oefening'+(saved===1?'':'en'))+
+        cell(sessStats.sets,'sets')+
+        cell(volStr+'<span class="sess-stat-u"> kg</span>','volume')+
+        (sessStats.heavy?cell(sessStats.heavy+'<span class="sess-stat-u"> kg</span>','zwaarste'):'')+
+        (sessStats.pr>0?cell(sessStats.pr,'PR'+(sessStats.pr===1?'':'’s')):'')+
+        (musc.length?`<div class="sess-muscles">${musc.map(m=>`<span class="sess-muscle">${escHtml(m)}</span>`).join('')}</div>`:'');
+    }
+  }catch(_){}
   openModal('m-ai-summary');
   const aiText=await generateSessionSummaryAI(t,summaryData);
   document.getElementById('ai-summary-body').textContent=aiText||'Samenvatting kon niet worden opgehaald — je training is wel opgeslagen.';
@@ -9091,11 +9189,14 @@ function startRestTimer(seconds){
   if(restInterval)clearInterval(restInterval);
   restEndAt=Date.now()+seconds*1000;
   const bar=document.getElementById('rest-timer-bar');
-  bar.style.display='flex';
+  bar.style.display='block';
   const tick=()=>{
     const rem=Math.max(0,Math.round((restEndAt-Date.now())/1000));
     const m=Math.floor(rem/60),s=rem%60;
     document.getElementById('rt-remaining').textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+    // v3.3.52 P5 — premium voortgangsbalk (gebruikt de in-scope 'seconds', geen nieuwe state)
+    const fill=document.getElementById('rt-fill');
+    if(fill&&seconds>0)fill.style.width=Math.max(0,Math.min(100,(rem/seconds)*100))+'%';
     if(rem<=0){
       clearInterval(restInterval);restInterval=null;
       if(navigator.vibrate&&isSettingOn('maurice_haptics_enabled',true))navigator.vibrate([200,100,200]);

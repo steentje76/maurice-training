@@ -423,6 +423,25 @@ body{display:flex;justify-content:center}
 .sess-muscles{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
 .sess-muscle{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;background:var(--accent2);color:#fff;padding:4px 10px;border-radius:8px}
 .sess-coach-lbl{font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--g4);margin-bottom:6px}
+/* ═══ v3.3.53 — Premium set-experience (± steppers, groter afvink-element, 2-regelig) ═══ */
+.setr{display:block;padding:14px 14px 16px}
+.setr-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.setr-circle{width:46px;height:46px;font-size:16px;position:relative}
+.setr-circle.done{color:transparent}
+.setr-circle.done::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:var(--dark)}
+.setr-num{flex:1;font-size:13px;font-weight:800;color:var(--dark);text-transform:uppercase;letter-spacing:.4px}
+.setr-actions{display:flex;gap:4px;flex-shrink:0}
+.setr-inputs{display:flex;flex-direction:column;gap:10px}
+.setr-row2{display:flex;align-items:flex-start;gap:12px}
+.setr-group{display:flex;align-items:center;gap:8px;min-width:0}
+.setr-group-kg{width:100%}
+.setr-group-reps{flex:1;min-width:0}
+.setr-fieldcol{flex:1;min-width:0}
+.setr-fieldcol .set-field{height:46px;font-size:19px}
+.setr-row2 .rpe-stepper-v{flex:0 0 auto}
+.set-step{width:40px;height:46px;flex-shrink:0;border:1.5px solid var(--g2);background:var(--g1);color:var(--dark);border-radius:12px;font-size:22px;font-weight:700;line-height:1;cursor:pointer;font-family:var(--f);display:flex;align-items:center;justify-content:center;transition:transform var(--motion-fast) var(--motion-ease),background var(--motion-fast) var(--motion-ease)}
+.set-step:active{background:var(--accent);border-color:var(--accent);color:#fff;transform:scale(.94)}
+.rest-bar-next-lbl{display:block;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:1px}
 .hist-session-row{padding:11px 4px;border-bottom:1px solid var(--g2);cursor:pointer}
 .hist-session-label{font-size:13px;font-weight:700;color:var(--dark)}
 .hist-session-date{font-size:11px;color:var(--g4);margin-top:2px}
@@ -2047,7 +2066,7 @@ canvas{width:100%;height:100%}
       <div class="rest-bar-lbl">Rust</div>
       <div class="rest-bar-time"><span id="rt-remaining">00:00</span></div>
     </div>
-    <div class="rest-bar-hint">Adem rustig door — klaar voor je volgende set.</div>
+    <div class="rest-bar-hint"><span class="rest-bar-next-lbl">Volgende</span><span id="rt-next">Klaar voor je volgende set</span></div>
     <button onclick="cancelRestTimer()" class="rest-bar-stop">Overslaan</button>
   </div>
 </div>
@@ -2300,7 +2319,7 @@ canvas{width:100%;height:100%}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.52';
+const APP_VER = 'v3.3.53';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6019,27 +6038,55 @@ function cascadeRpe(exId,fromSet,val){
   }
 }
 
+// v3.3.53 — Premium set-experience: ± steppers + groter afvink-element, 2-regelige kaart.
+// LET OP: exact dezelfde element-id's en handlers als voorheen (s-…-kg/-reps/-rpe, sc-…,
+// logSet, toggleSetDone, gewicht-modus, warmup). Alleen de layout is premium; geen logica.
 function buildWorkSetRow(exId,i,prefill=null){
   const mode='vast';
-  return `<div class="set-row" id="sr-${exId}-${i}">
-    <div class="set-circle" id="sc-${exId}-${i}" onclick="toggleSetDone('${exId}',${i})">${i}</div>
-    <div class="set-fields">
-      <div class="set-field-wrap" style="flex:2" id="kgwrap-${exId}-${i}">
-        ${kgFieldHtml(exId,i,mode,prefill?prefill.kg:'')}
-        ${buildWeightModeSelect(exId,i,mode)}
-        <div id="paramwrap-${exId}-${i}">${paramFieldHtml(exId,i,mode,'')}</div>
-        <div class="set-field-lbl">kg</div>
+  return `<div class="set-row setr" id="sr-${exId}-${i}">
+    <div class="setr-top">
+      <div class="set-circle setr-circle" id="sc-${exId}-${i}" onclick="toggleSetDone('${exId}',${i})" role="button" tabindex="0" aria-label="Set ${i} afronden">${i}</div>
+      <div class="setr-num">Set ${i}</div>
+      <div class="setr-actions">
+        <button class="set-rest" onclick="openRestTimer('${exId}',${i})" title="Rusttimer" aria-label="Rusttimer"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8.2V12l2.6 1.6"/></svg></button>
+        <button class="set-more" onclick="showSetMenu('${exId}',${i},'work')" aria-label="Meer opties"><svg viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
       </div>
-      <div class="set-sep">×</div>
-      <div class="set-field-wrap" style="flex:1"><input class="set-field" type="number" inputmode="numeric" aria-label="Herhalingen" placeholder="reps" id="s-${exId}-${i}-reps" value="${prefill?prefill.reps:''}" min="1" max="100" step="1"
-        oninput="clampNumInput(this,1,100);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'reps',this.value)"
-        onchange="logSet('${exId}','work',${i},true)"><div class="set-field-lbl">reps</div></div>
-      <div class="set-sep" style="color:var(--g3)">@</div>
-      ${buildRpeStepper(exId,i,prefill&&i===1?prefill.rpe:'',prefill?prefill.rpe:'')}
     </div>
-    <button class="set-rest" onclick="openRestTimer('${exId}',${i})" title="Rusttimer" aria-label="Rusttimer"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8.2V12l2.6 1.6"/></svg></button>
-    <button class="set-more" onclick="showSetMenu('${exId}',${i},'work')" aria-label="Meer opties"><svg viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
+    <div class="setr-inputs">
+      <div class="setr-group setr-group-kg">
+        <button type="button" class="set-step" tabindex="-1" aria-label="Gewicht omlaag" onclick="stepField('s-${exId}-${i}-kg',-2.5)">−</button>
+        <div class="set-field-wrap setr-fieldcol" style="flex:1" id="kgwrap-${exId}-${i}">
+          ${kgFieldHtml(exId,i,mode,prefill?prefill.kg:'')}
+          ${buildWeightModeSelect(exId,i,mode)}
+          <div id="paramwrap-${exId}-${i}">${paramFieldHtml(exId,i,mode,'')}</div>
+          <div class="set-field-lbl">kg</div>
+        </div>
+        <button type="button" class="set-step" tabindex="-1" aria-label="Gewicht omhoog" onclick="stepField('s-${exId}-${i}-kg',2.5)">+</button>
+      </div>
+      <div class="setr-row2">
+        <div class="setr-group setr-group-reps">
+          <button type="button" class="set-step" tabindex="-1" aria-label="Herhalingen omlaag" onclick="stepField('s-${exId}-${i}-reps',-1)">−</button>
+          <div class="set-field-wrap setr-fieldcol" style="flex:1"><input class="set-field" type="number" inputmode="numeric" aria-label="Herhalingen" placeholder="reps" id="s-${exId}-${i}-reps" value="${prefill?prefill.reps:''}" min="1" max="100" step="1"
+            oninput="clampNumInput(this,1,100);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'reps',this.value)"
+            onchange="logSet('${exId}','work',${i},true)"><div class="set-field-lbl">reps</div></div>
+          <button type="button" class="set-step" tabindex="-1" aria-label="Herhalingen omhoog" onclick="stepField('s-${exId}-${i}-reps',1)">+</button>
+        </div>
+        ${buildRpeStepper(exId,i,prefill&&i===1?prefill.rpe:'',prefill?prefill.rpe:'')}
+      </div>
+    </div>
   </div>`;
+}
+// v3.3.53 — additieve ± bediening: past het BESTAANDE veld aan en vuurt exact dezelfde
+// input/change-handlers (clamp, logSet, copyToSets, warmup, recompute). Geen aparte logica.
+function stepField(id,delta){
+  const el=document.getElementById(id);
+  if(!el||el.readOnly||el.disabled)return;
+  let v=parseFloat(String(el.value).replace(',','.'));
+  if(isNaN(v))v=0;
+  v=Math.max(0,Math.round((v+delta)*100)/100);
+  el.value=v;
+  el.dispatchEvent(new Event('input',{bubbles:true}));
+  el.dispatchEvent(new Event('change',{bubbles:true}));
 }
 
 // Fix #8: clamp numerieke invoer binnen een logisch bereik (RPE max 10, reps-limiet etc.)
@@ -6442,14 +6489,15 @@ function showPostSetAdvice(exId,setNum){
   const nextIdx=setNum+1;
   const nextInp=document.getElementById('s-'+exId+'-'+nextIdx+'-kg');
   const target=roundKg(kgVal+prog.delta);
-  // v3.3.52 P4/P6 — coachende toon i.p.v. systeemtaal (bestaande computeProgression-uitkomst).
+  // v3.3.53 Deel 3/4 — coach-reactie op "hoe zwaar was deze set?" (uit computeProgression),
+  // met een actieknop die duidelijk maakt wat er gebeurt (geen kale "Toepassen").
   const txt=prog.delta>0
-      ?`Sterke marge — je kunt naar ${target} kg volgende set.`
+      ?`Sterke marge. Volgende set kun je verhogen naar ${target} kg.`
       :prog.delta===0
-        ?`Mooie set. Houd ${kgVal} kg aan voor je volgende set.`
-        :`Zware set — behoud je techniek, ${target} kg volgende set.`;
-  const applyBtn=nextInp?`<button class="coach-apply-btn" onclick="applyAdviceToSet('${exId}',${nextIdx},${target})">Toepassen</button>`:'';
-  const html=`<span class="coach-advice-dot" style="background:var(--accent)"></span><span class="coach-advice-txt">Hoe voelde deze set? <strong>RPE ${rpe}</strong> · ${txt}</span>${applyBtn}`;
+        ?`Perfect niveau. Behoud ${kgVal} kg voor je volgende set.`
+        :`Zware set. Herhaal ${kgVal} kg en focus op je techniek.`;
+  const applyBtn=(nextInp&&prog.delta!==0)?`<button class="coach-apply-btn" onclick="applyAdviceToSet('${exId}',${nextIdx},${target})">Gebruik ${target} kg volgende set</button>`:'';
+  const html=`<span class="coach-advice-dot" style="background:var(--accent)"></span><span class="coach-advice-txt">Hoe zwaar was deze set? <strong>RPE ${rpe}</strong> · ${txt}</span>${applyBtn}`;
   const existing=document.getElementById('advice-'+exId);
   if(existing){existing.innerHTML=html;}
   else{
@@ -6533,6 +6581,8 @@ function toggleSetDone(exId,setNum){
   if(!c)return;
   const nowDone=!c.classList.contains('done');
   c.classList.toggle('done');
+  // v3.3.53 — kaart weerspiegelt de done-status (presentatie; circle blijft de bron).
+  document.getElementById('sr-'+exId+'-'+setNum)?.classList.toggle('done',nowDone);
   if(nowDone){c.classList.add('just-done');setTimeout(()=>c.classList.remove('just-done'),220);}
   updateProgress(curT);
   updateSummary(curT);
@@ -6770,7 +6820,7 @@ async function finishSession(){
 // v306 #10: eenmalige AI-call na afronden training — géén advies per set (dat gebeurt al
 // lokaal/regelgebaseerd via showPostSetAdvice), dit is de overkoepelende terugblik.
 async function generateSessionSummaryAI(t,summaryData){
-  const sys=`Je bent trainingscoach. Vat deze zojuist afgeronde Training ${t} samen in het Nederlands. Kort en concreet, max 8 regels, geen opsomming van elke set. Behandel: PR's, gemiddelde RPE, opvallende prestaties, verbeterpunten, advies voor de volgende training. Geen opvulling, geen bevestigingszinnen.
+  const sys=`Je bent de persoonlijke krachtcoach van deze sporter. Geef een korte, persoonlijke terugblik op de zojuist afgeronde Training ${t}, in het Nederlands, alsof je naast hem staat. Spreek de sporter direct aan ("je"). Max 3-4 zinnen. Verbind de cijfers aan betekenis: benoem concrete progressie (bv. "je verhoogde je bankdrukken met 2,5 kg terwijl je RPE beheerst bleef"), koppel het volume en de gemiddelde RPE aan hoe gecontroleerd de sessie was, en sluit af met één concrete focus voor de volgende keer (meestal techniek of een kleine progressie-stap). Geen opsomming van elke set, geen bulletlijst, geen opvulling, geen bevestigingszinnen zoals "Goed gedaan!". Warm en concreet.
 Sessiedata (JSON): ${JSON.stringify(summaryData)}`;
   try{
     const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:500,system:sys,messages:[{role:'user',content:'Geef de samenvatting.'}]})});
@@ -9175,8 +9225,10 @@ function saveAsTrainingAndFinish(btnEl){
 // ══════════════════════════════════════════════════════════
 // RUSTTIMER PER SET
 // ══════════════════════════════════════════════════════════
-let restInterval=null, restEndAt=0;
+let restInterval=null, restEndAt=0, restNextLabel='';
 function openRestTimer(exId,setNum){
+  // v3.3.53 Deel 5 — toon de volgende set in de rustbalk (presentatie; geen logica).
+  restNextLabel=(setNum!=null)?`Set ${setNum+1} klaar om te starten`:'';
   const exObj=exercises.find(e=>e.id===exId);
   const perEx=exObj?.rest_seconds;
   if(perEx!=null&&perEx>0){startRestTimer(perEx);return;} // per-oefening rusttijd heeft voorrang
@@ -9190,6 +9242,7 @@ function startRestTimer(seconds){
   restEndAt=Date.now()+seconds*1000;
   const bar=document.getElementById('rest-timer-bar');
   bar.style.display='block';
+  const nx=document.getElementById('rt-next');if(nx)nx.textContent=restNextLabel||'Klaar voor je volgende set';restNextLabel='';
   const tick=()=>{
     const rem=Math.max(0,Math.round((restEndAt-Date.now())/1000));
     const m=Math.floor(rem/60),s=rem%60;

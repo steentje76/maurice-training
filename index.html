@@ -1524,6 +1524,45 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 
 /* ═══ Sprint 17 Information Architecture ═══ */
 #home-theme > *:not(#home-dash){display:none!important}
+
+/* ═══ Sprint 18 Design System Completion ═══ */
+/* ══════════════════════════════════════════════════════════════════════
+   Sprint 18 — Premium Design System Completion (v4.1.0) — PRESENTATIE-ONLY
+   Één premium taal voor de gedeelde basiscomponenten, zodat oudere schermen
+   (Voortgang, Profiel, Training-beheer, dialogen) dezelfde kwaliteit krijgen
+   als de premium schermen (Home/Builder/Guided/Library). Laatste in de
+   cascade; wint op gelijke specificiteit. Wijzigt GEEN engine/HTML/logica.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Elevation: één premium zachte schaduw (beide thema's) ── */
+:root{--shadow:0 2px 12px rgba(11,29,42,.06)}
+html[data-theme="dark"]{--shadow:0 2px 14px rgba(0,0,0,.38)}
+
+/* ── Card System: één radius/rimte-taal (premium 16px i.p.v. 8px) ── */
+.card{border-radius:16px;margin-bottom:12px}
+.card-hd{padding:15px 16px 6px}
+.card-body{padding:0 16px 16px}
+.card-title{font-size:11px;font-weight:800;letter-spacing:.6px}
+
+/* ── Section headers: consistente ademruimte ── */
+.sec-hd{padding:18px 4px 8px;font-weight:800;letter-spacing:.6px}
+
+/* ── Buttons: één hiërarchie, premium afwerking ──
+   primair (btn-d) = teal + donkere tekst · sterk (btn-r) = navy + wit ·
+   secundair (btn-o) = rustige kaart met subtiele rand. */
+.btn{border-radius:14px;transition:transform .1s ease}
+.btn:active{transform:scale(.98)}
+.btn-o{background:var(--card);border:1.5px solid var(--g2);color:var(--dark)}
+.btn-sm{border-radius:11px}
+
+/* ── Lijstrijen: rustiger divider ── */
+.lrow{padding:11px 0;border-bottom:1px solid var(--g2)}
+
+/* ── Inputs: premium veld ── */
+.inp{border-radius:10px}
+
+/* ── Filter-pills (Voortgang): consistente premium chip-maat ── */
+
 </style>
 </head>
 <body>
@@ -2184,7 +2223,7 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 
 <!-- ═══ STATS ═══ -->
 <div class="scr" id="s-stats">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Progressie</div><div class="hdr-sub" id="stats-peak-sub">1RM &amp; peakdoel</div></div><button class="ibtn" onclick="refreshStats()" aria-label="Statistieken vernieuwen">↻</button></div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Voortgang</div><div class="hdr-sub" id="stats-peak-sub">1RM &amp; peakdoel</div></div><button class="ibtn" onclick="refreshStats()" aria-label="Statistieken vernieuwen">↻</button></div></div>
   <div class="scroll" style="padding-top:8px">
     <div class="card"><div class="card-hd"><div class="card-title">Geschatte 1RM</div><div class="card-sub">Epley formule · live</div></div>
       <div class="card-body">
@@ -3238,7 +3277,7 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.0.0';
+const APP_VER = 'v4.1.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';

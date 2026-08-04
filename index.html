@@ -1134,6 +1134,72 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 .lib-video-el{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:block!important;border-radius:14px}
 .lib-video-msg{display:flex!important;align-items:center;justify-content:center;text-align:center;padding:20px;font-size:12.5px;font-weight:700;color:#fff;line-height:1.4}
 
+
+/* Sprint 12 Workout Builder */
+/* ══ Adaptive Workout Builder (Sprint 12, v3.5.0) — additieve styles ══ */
+#s-builder .scroll{padding:12px 14px 90px}
+.wb-intro{font-size:12.5px;color:var(--g4,#6b7280);line-height:1.5;margin-bottom:14px}
+.wb-step{margin-bottom:14px}
+.wb-step-h{font-size:13px;font-weight:800;color:var(--g1,#111);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.wb-step-h small{font-weight:500;color:var(--g4,#9ca3af)}
+.wb-step-n{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--acc,#c0392b);color:#fff;font-size:11px;font-weight:800}
+.wb-chips{display:flex;flex-wrap:wrap;gap:7px}
+.wb-chip{font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:999px;border:1.5px solid var(--bd,#e5e7eb);background:var(--card,#fff);color:var(--g2,#374151);cursor:pointer;transition:transform .12s,background .15s,border-color .15s}
+.wb-chip:active{transform:scale(.95)}
+.wb-chip.on{background:var(--acc,#c0392b);border-color:var(--acc,#c0392b);color:#fff;box-shadow:0 2px 8px rgba(192,57,43,.28)}
+.wb-divider{display:flex;align-items:center;gap:10px;margin:18px 0 12px;color:var(--g4,#9ca3af);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.wb-divider::before,.wb-divider::after{content:"";flex:1;height:1px;background:var(--bd,#e5e7eb)}
+.wb-empty{text-align:center;color:var(--g4,#9ca3af);font-size:13px;padding:24px 10px}
+.wb-quality{display:flex;align-items:center;justify-content:space-between;border-radius:16px;padding:14px 16px;margin-bottom:10px;color:#fff}
+.wb-quality.hi{background:linear-gradient(135deg,#1f9d55,#16794a)}
+.wb-quality.mid{background:linear-gradient(135deg,#c8892b,#a86e1e)}
+.wb-quality.lo{background:linear-gradient(135deg,#c0392b,#96271c)}
+.wb-q-lbl{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;opacity:.9;font-weight:700}
+.wb-q-stars{font-size:18px;letter-spacing:2px;margin-top:2px}
+.wb-q-score{font-size:34px;font-weight:800;line-height:1}
+.wb-q-score small{font-size:14px;opacity:.8;font-weight:600}
+.wb-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
+.wb-stat{background:var(--card,#fff);border:1px solid var(--bd,#eef0f3);border-radius:12px;padding:10px 6px;text-align:center}
+.wb-stat-v{display:block;font-size:20px;font-weight:800;color:var(--g1,#111)}
+.wb-stat-l{display:block;font-size:10.5px;color:var(--g4,#9ca3af);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.wb-distrow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.wb-dist{font-size:11px;color:var(--g3,#6b7280);background:var(--soft,#f3f4f6);border-radius:8px;padding:3px 8px}
+.wb-dist b{color:var(--g1,#111)}
+.wb-coach{font-size:12.5px;line-height:1.55;color:var(--g2,#374151);background:var(--soft,#f6f7f9);border-left:3px solid var(--acc,#c0392b);border-radius:10px;padding:11px 13px;margin-bottom:14px}
+.wb-plan{display:flex;flex-direction:column;gap:10px}
+.wb-ex{border:1px solid var(--bd,#eef0f3);border-radius:14px;background:var(--card,#fff);overflow:hidden}
+.wb-ex-slot{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--acc,#c0392b);padding:9px 13px 0}
+.wb-heavy{color:#fff;background:#c0392b;border-radius:6px;padding:1px 6px;font-size:9px;letter-spacing:.5px;margin-left:4px}
+.wb-ex-main{display:flex;gap:11px;padding:6px 13px 10px}
+.wb-ex-thumb{width:64px;height:64px;border-radius:11px;background-size:cover;background-position:center;background-color:var(--soft,#f0f1f3);flex:0 0 auto}
+.wb-ex-body{flex:1;min-width:0}
+.wb-ex-name{font-size:14px;font-weight:800;color:var(--g1,#111);line-height:1.25}
+.wb-ex-meta{font-size:11.5px;color:var(--g4,#8b9099);margin-top:2px}
+.wb-ex-badges{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.wb-b{font-size:10px;font-weight:700;border-radius:7px;padding:2px 7px}
+.wb-b.fat{background:rgba(192,57,43,.1);color:#a13223}
+.wb-b.rec{background:rgba(31,157,85,.12);color:#16794a}
+.wb-ex-why{font-size:11.5px;line-height:1.5;color:var(--g3,#5b616b);padding:0 13px 10px}
+.wb-ex-why b{color:var(--g2,#374151)}
+.wb-ex-acts{display:flex;flex-wrap:wrap;gap:6px;padding:0 11px 11px}
+.wb-act{font-size:11px;font-weight:700;border:1px solid var(--bd,#e5e7eb);background:var(--card,#fff);color:var(--g2,#374151);border-radius:9px;padding:6px 9px;cursor:pointer}
+.wb-act:active{transform:scale(.95)}
+.wb-act.del{margin-left:auto;color:#c0392b;border-color:rgba(192,57,43,.3)}
+.wb-actbar{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}
+.wb-save{flex:1;min-width:130px;background:var(--acc,#c0392b);color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 3px 10px rgba(192,57,43,.28)}
+.wb-save2{flex:1;min-width:130px;background:var(--card,#fff);color:var(--g2,#374151);border:1.5px solid var(--bd,#e5e7eb);border-radius:12px;padding:13px;font-size:13px;font-weight:700;cursor:pointer}
+.wb-saved-h{font-size:13px;font-weight:800;color:var(--g1,#111);margin:20px 0 8px}
+.wb-saved{display:flex;align-items:center;gap:8px;border:1px solid var(--bd,#eef0f3);border-radius:12px;background:var(--card,#fff);padding:10px 12px;margin-bottom:8px}
+.wb-saved-b{flex:1;min-width:0;cursor:pointer}
+.wb-saved-n{font-size:13.5px;font-weight:700;color:var(--g1,#111)}
+.wb-saved-m{font-size:11px;color:var(--g4,#9ca3af);margin-top:1px}
+.wb-saved-a{display:flex;gap:4px}
+.wb-saved-a button{width:30px;height:30px;border-radius:8px;border:1px solid var(--bd,#e5e7eb);background:var(--card,#fff);cursor:pointer;font-size:13px;color:var(--g3,#6b7280)}
+.wb-entry{width:100%;display:flex;align-items:center;gap:12px;text-align:left;border:none;border-radius:16px;padding:15px 16px;margin:2px 0 8px;cursor:pointer;background:linear-gradient(135deg,#c0392b,#96271c);color:#fff;box-shadow:0 4px 14px rgba(192,57,43,.3)}
+.wb-entry-ic{font-size:24px}
+.wb-entry-tx{flex:1}.wb-entry-tx b{display:block;font-size:15px;font-weight:800}.wb-entry-tx small{display:block;font-size:11.5px;opacity:.9;margin-top:1px}
+.wb-entry-ar{font-size:22px;opacity:.85}
+
 </style>
 </head>
 <body>
@@ -1145,6 +1211,18 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 <!-- PIN LOCK verwijderd — pincode alleen bij Beheer -->
 
 <!-- ═══ AUTH — INLOGGEN / REGISTREREN ═══ -->
+<!-- ═══ SPRINT 12 · ADAPTIVE WORKOUT BUILDER ═══ -->
+<div class="scr" id="s-builder">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Workout Builder</div><div class="hdr-sub">Automatisch complete trainingen</div></div><button class="ibtn" onclick="go('s-home')" aria-label="Terug naar home">←</button></div></div>
+  <div class="scroll" id="wb-scroll"></div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+  </nav>
+</div>
 <div class="scr" id="s-auth">
   <div class="scroll" style="padding-top:60px;display:flex;flex-direction:column;justify-content:center;min-height:100%">
     <div style="text-align:center;margin-bottom:24px">
@@ -1230,6 +1308,7 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
     <div id="home-next-lbl" style="font-size:12px;color:var(--g4);font-weight:600;text-align:center;margin-bottom:10px"></div>
     <div class="sec-hd">Snelacties</div>
     <div id="home-quick" style="margin-bottom:12px"></div>
+    <button class="wb-entry" onclick="go('s-builder');WBUI.render()"><span class="wb-entry-ic">🧩</span><span class="wb-entry-tx"><b>Workout Builder</b><small>Genereer automatisch een complete training</small></span><span class="wb-entry-ar">›</span></button>
     <button class="lib-entry" onclick="go('s-library');renderLibrary()"><span class="lib-entry-ic">📚</span><span class="lib-entry-tx"><b>Oefeningen ontdekken</b><small>206 oefeningen · aanbevolen, favorieten &amp; meer</small></span><span class="lib-entry-ar">›</span></button>
     <div class="sec-hd">Recente sessies</div>
     <div class="card"><div class="card-body" style="padding-top:10px" id="home-recent"></div></div>
@@ -2823,7 +2902,7 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.4.14';
+const APP_VER = 'v3.5.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -4480,6 +4559,7 @@ function go(id){
   const el=document.getElementById(id);if(el){el.classList.add('active');focusScreenForA11y(el);}
   stopTrainTimer();
   if(id==='s-home')refreshHome();
+  if(id==='s-builder'&&window.WBUI)WBUI.render();
   if(id==='s-hist'){histOff=0;renderHistFilterTabs();loadHistory();}
   if(id==='s-train-mgr'||id==='s-train-workouts'){renderCustomTrainList();renderCustomTrainBtns();}
   if(id==='s-train-mgr'){renderSportSwitcher();}
@@ -11972,5 +12052,466 @@ async function wearableSyncSilent(){
   }catch(e){/* stil falen, zie last_sync_status in beheerscherm */}
 }
 </script>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   Adaptive Workout Builder — Sprint 12 (v3.5.0) — VOLLEDIG ADDITIEF
+   Leest UITSLUITEND (read-only) uit: ExerciseCatalogService (ECS),
+   ExerciseIntelligence, ExerciseAssetProvider. Geen nieuwe AI, geen nieuwe
+   intelligentievelden. Persistentie via nieuwe localStorage-sleutels
+   tk_wb_saved / tk_wb_draft. Raakt geen enkel bevroren systeem aan.
+   ══════════════════════════════════════════════════════════════════════ */
+var WB=(function(){
+  'use strict';
+  var E=function(){return window.ExerciseCatalogService;};
+  var X=function(){return window.ExerciseIntelligence;};
+  var A=function(){return window.ExerciseAssetProvider;};
+
+  /* ── Configuratie (afgeleid uit bestaande metadata-domeinen) ── */
+  var GOALS=[
+    {k:'hypertrofie',label:'Hypertrofie',ic:'💪',score:'hypertrofie',sets:[3,4],reps:'8-12',repMid:10,rest:75,work:40},
+    {k:'kracht',     label:'Kracht',     ic:'🏋️',score:'kracht',    sets:[4,5],reps:'3-5', repMid:4, rest:150,work:30},
+    {k:'power',      label:'Power',      ic:'⚡', score:'explosiviteit',sets:[5,5],reps:'2-3',repMid:3,rest:180,work:20},
+    {k:'conditie',   label:'Conditie',   ic:'🔥',score:'calorie',   sets:[3,4],reps:'15-20',repMid:17,rest:45,work:45},
+    {k:'mobiliteit', label:'Mobiliteit', ic:'🧘',score:'mobiliteit', sets:[2,3],reps:'30-45s',repMid:1,rest:30,work:38,hold:true},
+    {k:'stabiliteit',label:'Stabiliteit',ic:'🎯',score:'stabiliteit',sets:[3,3],reps:'10-12',repMid:11,rest:60,work:40},
+    {k:'herstel',    label:'Herstel',    ic:'🌿',score:'herstel',    sets:[2,3],reps:'12-15',repMid:13,rest:45,work:40}
+  ];
+  var MUSCLES=['Borst','Rug','Schouders','Biceps','Triceps','Quadriceps','Hamstrings','Billen','Kuiten','Core','Traps','Grip'];
+  var EQUIP=[{k:'bodyweight',l:'Lichaamsgewicht'},{k:'dumbbell',l:'Dumbbell'},{k:'barbell',l:'Barbell'},{k:'kettlebell',l:'Kettlebell'},{k:'band',l:'Band'},{k:'machine',l:'Machine'},{k:'cable machine',l:'Kabel'}];
+  var TIMES=[15,30,45,60,75,90];
+  var LEVELS=[{k:'beginner',l:'Beginner',max:1},{k:'intermediate',l:'Intermediate',max:2},{k:'advanced',l:'Advanced',max:3},{k:'elite',l:'Elite',max:9}];
+  var DRANK={beginner:1,intermediate:2,advanced:3,olympic:3};
+  // Trainingsvormen: region = toegestane primaire spieren; extra = filters/structuur
+  var PUSH=['Borst','Schouders','Triceps'], PULL=['Rug','Biceps','Traps'], LEGS=['Quadriceps','Hamstrings','Billen','Kuiten'];
+  var FORMS=[
+    {k:'full', label:'Full Body', region:null},
+    {k:'upper',label:'Upper',     region:PUSH.concat(PULL)},
+    {k:'lower',label:'Lower',     region:LEGS.concat(['Core'])},
+    {k:'push', label:'Push',      region:PUSH},
+    {k:'pull', label:'Pull',      region:PULL},
+    {k:'legs', label:'Legs',      region:LEGS},
+    {k:'ppl',  label:'PPL',       region:null, note:'push/pull/legs gebalanceerd'},
+    {k:'classic',label:'Classic Split',region:null},
+    {k:'hotel',label:'Hotel Gym', region:null, eqmode:'hotel'},
+    {k:'home', label:'Home Gym',  region:null, eqmode:'home'},
+    {k:'circuit',label:'Circuit', region:null, structure:'circuit'},
+    {k:'superset',label:'Superset',region:null, structure:'superset'},
+    {k:'reva', label:'Revalidatie',region:null, reva:true}
+  ];
+  var HOME_EQ={bodyweight:1,dumbbell:1,band:1,kettlebell:1};
+  var HOTEL_EQ={bodyweight:1,band:1,dumbbell:1};
+  var FATW={very_low:1,low:2,moderate:3,high:4,very_high:5};
+
+  /* ── State ── */
+  var st={sel:defaultSel(), plan:null, dirty:true};
+  function defaultSel(){return {goal:'hypertrofie',muscles:[],equipment:['bodyweight','dumbbell','barbell','machine','cable machine'],time:45,level:'intermediate',form:'full'};}
+  function goalCfg(k){for(var i=0;i<GOALS.length;i++)if(GOALS[i].k===k)return GOALS[i];return GOALS[0];}
+  function formCfg(k){for(var i=0;i<FORMS.length;i++)if(FORMS[i].k===k)return FORMS[i];return FORMS[0];}
+
+  /* ── Helpers ── */
+  function sc(ex){try{return X().scores(ex)||{};}catch(e){return {};}}
+  function goalScore(ex,gk){var s=sc(ex);if(gk==='herstel')return 100-(s.vermoeidheid||50);return s[goalCfg(gk).score]||0;}
+  function isHeavy(ex){var s=sc(ex);return ex.identity.type==='compound'&&((s.cns||0)>=65||(s.vermoeidheid||0)>=65);}
+  function fatVal(ex){return FATW[ex.intelligence.fatigue]||3;}
+  function eqOk(ex,sel){
+    var f=formCfg(sel.form);var eq=ex.identity.equipment||[];
+    if(f.eqmode==='home')return ex.flags.home_gym_ready||eq.every(function(e){return HOME_EQ[e];});
+    if(f.eqmode==='hotel')return ex.flags.travel_ready||eq.every(function(e){return HOTEL_EQ[e];});
+    // normaal: minstens één equipment in selectie (bodyweight altijd toegestaan indien gekozen)
+    if(!sel.equipment.length)return true;
+    return eq.some(function(e){return sel.equipment.indexOf(e)>=0;});
+  }
+  function muscleOf(ex){return (ex.identity.primary||[]).concat(ex.identity.secondary||[]);}
+  function regionOk(ex,sel){
+    var f=formCfg(sel.form);
+    if(sel.muscles&&sel.muscles.length){return muscleOf(ex).some(function(m){return sel.muscles.indexOf(m)>=0;})||ex.identity.category==='core';}
+    if(f.region){return (ex.identity.primary||[]).some(function(m){return f.region.indexOf(m)>=0;})||ex.identity.category==='core'||ex.identity.category==='mobility';}
+    return true;
+  }
+  function levelOk(ex,sel){var lv=LEVELS.filter(function(l){return l.k===sel.level;})[0]||LEVELS[1];return (DRANK[ex.identity.difficulty]||2)<=lv.max;}
+  function revaOk(ex){return ['very_low','low','moderate'].indexOf(ex.intelligence.fatigue)>=0&&(DRANK[ex.identity.difficulty]||2)<=2&&ex.identity.type!=='olympic';}
+
+  /* ── Pool ── */
+  function buildPool(sel){
+    var f=formCfg(sel.form);
+    return E().all().filter(function(ex){
+      if(!eqOk(ex,sel))return false;
+      if(!levelOk(ex,sel))return false;
+      if(f.reva&&!revaOk(ex))return false;
+      return true;
+    });
+  }
+
+  /* ── Blokschema (geordende slots) ── */
+  function slotPlan(sel){
+    var g=sel.goal,f=formCfg(sel.form);
+    var slots=[];
+    slots.push({block:'warmup',label:'Warming-up',pick:'warmup'});
+    if(sel.time>=30)slots.push({block:'activation',label:'Activatie',pick:'activation'});
+    slots.push({block:'compound',label:'Compound',pick:'compound',heavy:true});
+    if(sel.time>=30)slots.push({block:'secondary',label:'Secondaire compound',pick:'compound',heavy:true});
+    if(sel.time>=45)slots.push({block:'accessory',label:'Accessoire',pick:'accessory'});
+    if(sel.time>=60)slots.push({block:'accessory',label:'Accessoire',pick:'accessory'});
+    slots.push({block:'isolation',label:'Isolatie',pick:'isolation'});
+    if(sel.time>=45)slots.push({block:'isolation',label:'Isolatie',pick:'isolation'});
+    if(g!=='mobiliteit')slots.push({block:'core',label:'Core',pick:'core'});
+    if((g==='conditie'||g==='power'||sel.time>=75)&&!f.reva)slots.push({block:'conditioning',label:'Conditioning',pick:'conditioning'});
+    slots.push({block:'cooldown',label:'Cooldown',pick:'cooldown'});
+    return slots;
+  }
+
+  /* ── Kandidaten per slot-type ── */
+  function candidates(pick,pool,sel){
+    var g=sel.goal;
+    var list=pool.filter(function(ex){
+      var t=ex.identity.type,cat=ex.identity.category;
+      if(pick==='warmup'||pick==='cooldown')return t==='mobility'||(t==='isolation'&&fatVal(ex)<=2);
+      if(pick==='activation')return cat==='core'||t==='mobility'||(t==='isolation'&&fatVal(ex)<=2);
+      if(pick==='compound')return t==='compound'||t==='olympic';
+      if(pick==='accessory')return t==='compound'||t==='isolation';
+      if(pick==='isolation')return t==='isolation';
+      if(pick==='core')return cat==='core';
+      if(pick==='conditioning')return t==='plyometric'||t==='carry'||cat==='power'||(sc(ex).calorie||0)>=75;
+      return true;
+    });
+    // regio-filter alleen op de hoofdblokken (warmup/cooldown/core mogen breder)
+    if(['compound','secondary','accessory','isolation'].indexOf(pick)>=0)
+      list=list.filter(function(ex){return regionOk(ex,sel);});
+    return list;
+  }
+
+  /* ── Generator ── */
+  function generate(sel){
+    var g=goalCfg(sel.goal), pool=buildPool(sel), slots=slotPlan(sel);
+    var usedIds={}, usedFam={}, chosen=[], heavyStreak=0, muscleCount={};
+    var warmMin=4, coolMin=4;
+    var mainBudget=Math.max(6, sel.time - warmMin - coolMin);
+    var mainSpent=0;
+
+    function score(ex,pick){
+      var base=goalScore(ex,sel.goal);
+      // spierdekking: bonus voor nog niet/weinig gedekte doelspieren
+      var prim=ex.identity.primary||[], cov=0;
+      prim.forEach(function(m){cov+=(muscleCount[m]||0);});
+      var covBonus=Math.max(0,12-cov*4);
+      // gekozen spieren extra bonus
+      if(sel.muscles&&sel.muscles.length){var hit=muscleOf(ex).filter(function(m){return sel.muscles.indexOf(m)>=0;}).length;covBonus+=hit*6;}
+      // favoriet lichte bonus
+      var fav=0;try{fav=E().isFavorite(ex.catalog_id)?4:0;}catch(e){}
+      // CNS-pacing: als al 2 zware achter elkaar → straf zware picks
+      var cnsPen=(heavyStreak>=2&&isHeavy(ex))?-40:0;
+      return base+covBonus+fav+cnsPen;
+    }
+    function estDur(ex,pick){
+      var setsN=blockSets(pick,sel.goal);var gc=goalCfg(sel.goal);
+      if(pick==='warmup'||pick==='cooldown'||pick==='activation')return Math.round((setsN*(gc.work+25))/60*10)/10;
+      var work=gc.hold?gc.work:gc.work; return Math.round((setsN*(work+gc.rest))/60*10)/10 + 0.5;
+    }
+    function take(slot){
+      var pick=slot.pick;
+      var cands=candidates(pick,pool,sel).filter(function(ex){
+        if(usedIds[ex.catalog_id])return false;
+        // geen dubbele movement family in de hoofdblokken
+        if(['compound','secondary','accessory','isolation','conditioning'].indexOf(pick)>=0 && usedFam[ex.identity.family])return false;
+        return true;
+      });
+      if(!cands.length){ // relax family-dedup als niets over is
+        cands=candidates(pick,pool,sel).filter(function(ex){return !usedIds[ex.catalog_id];});
+      }
+      if(!cands.length)return null;
+      cands.sort(function(a,b){return score(b,pick)-score(a,pick);});
+      // kies uit top-3 (lichte variatie, deterministisch op catalog_id)
+      var top=cands.slice(0,3);
+      var choice=top[0];
+      var ex=choice;
+      usedIds[ex.catalog_id]=1; usedFam[ex.identity.family]=1;
+      (ex.identity.primary||[]).forEach(function(m){muscleCount[m]=(muscleCount[m]||0)+1;});
+      if(isHeavy(ex))heavyStreak++; else heavyStreak=0;
+      var dur=estDur(ex,pick);
+      if(pick!=='warmup'&&pick!=='cooldown')mainSpent+=dur;
+      return {id:ex.catalog_id,block:slot.block,label:slot.label,pick:pick,sets:blockSets(pick,sel.goal),dur:dur};
+    }
+    for(var i=0;i<slots.length;i++){
+      var slot=slots[i];
+      // tijdbudget: sla optionele middenblokken over als budget op is
+      if(['accessory','isolation','conditioning'].indexOf(slot.pick)>=0 && mainSpent>=mainBudget)continue;
+      var it=take(slot);
+      if(it)chosen.push(it);
+    }
+    st.sel=clone(sel); st.plan={items:chosen,at:Date.now()}; st.dirty=false;
+    saveDraft();
+    return st.plan;
+  }
+  function blockSets(pick,gk){
+    var gc=goalCfg(gk);
+    if(pick==='warmup'||pick==='cooldown')return 1;
+    if(pick==='activation'||pick==='core')return 2;
+    if(pick==='compound')return gc.sets[1];
+    return gc.sets[0];
+  }
+
+  /* ── Kwaliteitsscore (0-100) uit bestaande metadata ── */
+  function quality(plan,sel){
+    if(!plan||!plan.items.length)return {score:0,stars:0,parts:{}};
+    var main=plan.items.filter(function(it){return ['compound','secondary','accessory','isolation','conditioning'].indexOf(it.pick)>=0;});
+    var gs=main.map(function(it){return goalScore(E().byId(it.id),sel.goal);});
+    var goalFit=gs.length?avg(gs):0;
+    // familie-diversiteit
+    var fams={};main.forEach(function(it){fams[E().byId(it.id).identity.family]=1;});
+    var famDiv=main.length?(Object.keys(fams).length/main.length)*100:0;
+    // spierbalans: hoeveel doelspieren gedekt
+    var target=(sel.muscles&&sel.muscles.length)?sel.muscles:region(sel);
+    var covered={};main.forEach(function(it){(E().byId(it.id).identity.primary||[]).forEach(function(m){covered[m]=1;});});
+    var mBal=target&&target.length?(target.filter(function(m){return covered[m];}).length/target.length)*100:70;
+    // CNS-pacing: straf 3 zware achter elkaar
+    var streak=0,worst=0;plan.items.forEach(function(it){if(isHeavy(E().byId(it.id))){streak++;worst=Math.max(worst,streak);}else streak=0;});
+    var cns=worst>=3?55:(worst===2?85:100);
+    // structuur: warmup + compound-eerst + cooldown
+    var hasW=plan.items.some(function(it){return it.pick==='warmup';}),hasC=plan.items.some(function(it){return it.pick==='cooldown';});
+    var firstMain=plan.items.filter(function(it){return ['compound','secondary','accessory','isolation'].indexOf(it.pick)>=0;})[0];
+    var compFirst=firstMain&&firstMain.pick==='compound';
+    var struct=(hasW?34:0)+(hasC?33:0)+(compFirst?33:0);
+    // tijdfit
+    var est=totalTime(plan);var tf=Math.max(0,100-Math.abs(est-sel.time)/sel.time*100);
+    var parts={goalFit:goalFit,famDiv:famDiv,mBal:mBal,cns:cns,struct:struct,timeFit:tf};
+    var score=Math.round(goalFit*0.30+famDiv*0.18+mBal*0.15+cns*0.15+struct*0.12+tf*0.10);
+    score=Math.max(0,Math.min(100,score));
+    return {score:score,stars:Math.max(1,Math.round(score/20)),parts:parts};
+  }
+  function region(sel){var f=formCfg(sel.form);return f.region||MUSCLES.slice(0,9);}
+
+  /* ── Realtime stats ── */
+  function totalTime(plan){if(!plan)return 0;var t=0;plan.items.forEach(function(it){t+=it.dur;});return Math.round(t);}
+  function stats(plan,sel){
+    if(!plan)return {time:0,ex:0,sets:0,load:0,dist:[]};
+    var sets=0,load=0,dist={};
+    plan.items.forEach(function(it){var ex=E().byId(it.id);sets+=it.sets;
+      load+=fatVal(ex)*it.sets;
+      (ex.identity.primary||[]).forEach(function(m){dist[m]=(dist[m]||0)+it.sets;});
+    });
+    var tot=Object.keys(dist).reduce(function(a,k){return a+dist[k];},0)||1;
+    var distArr=Object.keys(dist).map(function(k){return {m:k,pct:Math.round(dist[k]/tot*100)};}).sort(function(a,b){return b.pct-a.pct;});
+    return {time:totalTime(plan),ex:plan.items.length,sets:sets,load:load,dist:distArr};
+  }
+
+  /* ── Coachsamenvatting (uit metadata, geen nieuwe AI, geen confidence) ── */
+  function summary(plan,sel){
+    if(!plan||!plan.items.length)return '';
+    var gc=goalCfg(sel.goal),comp=plan.items.filter(function(it){return it.pick==='compound'||it.pick==='secondary';});
+    var iso=plan.items.filter(function(it){return it.pick==='isolation';});
+    var s='Deze '+gc.label.toLowerCase()+'-training begint met '+(comp.length?'de zwaarste compounds':'gerichte oefeningen')+
+      ', omdat je daarvoor de meeste kracht en focus nodig hebt. ';
+    if(iso.length)s+='Daarna volgen accessoires en isolatie om extra trainingsvolume op te bouwen zonder onnodige CNS-belasting. ';
+    s+='De volgorde respecteert herstel: geen drie zware compounds achter elkaar en geen dubbele bewegingsfamilie. ';
+    var q=quality(plan,sel);
+    s+='Ingeschat op '+totalTime(plan)+' min voor '+plan.items.length+' oefeningen. Trainingskwaliteit '+q.score+'/100.';
+    return s;
+  }
+
+  /* ── Bewerken ── */
+  function altList(id){var ex=E().byId(id);if(!ex)return [];var r=ex.relations||{};
+    return (r.alternatives||[]).concat(r.regressions||[]).concat(r.progressions||[]).filter(function(x,i,a){return a.indexOf(x)===i;}).map(function(x){return E().byId(x);}).filter(Boolean);}
+  function replaceItem(idx,newId){if(!st.plan||!st.plan.items[idx])return;st.plan.items[idx].id=newId;saveDraft();}
+  function removeItem(idx){if(!st.plan)return;st.plan.items.splice(idx,1);saveDraft();}
+  function moveItem(idx,dir){if(!st.plan)return;var j=idx+dir;if(j<0||j>=st.plan.items.length)return;var a=st.plan.items;var t=a[idx];a[idx]=a[j];a[j]=t;saveDraft();}
+  function swapAlternative(idx){if(!st.plan)return;var cur=st.plan.items[idx];var alts=altList(cur.id).filter(function(ex){return !st.plan.items.some(function(it){return it.id===ex.catalog_id;});});if(!alts.length)return null;
+    // kies best passend alternatief voor het doel
+    alts.sort(function(a,b){return goalScore(b,st.sel.goal)-goalScore(a,st.sel.goal);});
+    st.plan.items[idx].id=alts[0].catalog_id;saveDraft();return alts[0].catalog_id;}
+
+  /* ── Persistentie ── */
+  function clone(o){return JSON.parse(JSON.stringify(o));}
+  function lsGet(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
+  function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function saveDraft(){lsSet('tk_wb_draft',{sel:st.sel,plan:st.plan});}
+  function loadDraft(){var d=lsGet('tk_wb_draft',null);if(d&&d.sel){st.sel=d.sel;st.plan=d.plan;return true;}return false;}
+  function savedList(){return lsGet('tk_wb_saved',[]);}
+  function saveWorkout(name){var arr=savedList();var q=quality(st.plan,st.sel);
+    arr.unshift({id:'w'+Date.now(),name:name||autoName(),sel:clone(st.sel),plan:clone(st.plan),fav:false,q:q.score,created:Date.now()});
+    lsSet('tk_wb_saved',arr.slice(0,60));return arr[0].id;}
+  function duplicateWorkout(wid){var arr=savedList();var w=arr.filter(function(x){return x.id===wid;})[0];if(!w)return;var c=clone(w);c.id='w'+Date.now();c.name=w.name+' (kopie)';c.created=Date.now();c.fav=false;arr.unshift(c);lsSet('tk_wb_saved',arr.slice(0,60));return c.id;}
+  function favWorkout(wid){var arr=savedList();arr.forEach(function(w){if(w.id===wid)w.fav=!w.fav;});lsSet('tk_wb_saved',arr);}
+  function deleteWorkout(wid){var arr=savedList().filter(function(w){return w.id!==wid;});lsSet('tk_wb_saved',arr);}
+  function resumeWorkout(wid){var w=savedList().filter(function(x){return x.id===wid;})[0];if(!w)return false;st.sel=clone(w.sel);st.plan=clone(w.plan);st.dirty=false;saveDraft();return true;}
+  function autoName(){var gc=goalCfg(st.sel.goal),f=formCfg(st.sel.form);return f.label+' · '+gc.label+' · '+st.sel.time+'m';}
+
+  function avg(a){return a.reduce(function(x,y){return x+y;},0)/a.length;}
+
+  return {
+    GOALS:GOALS,MUSCLES:MUSCLES,EQUIP:EQUIP,TIMES:TIMES,LEVELS:LEVELS,FORMS:FORMS,
+    st:st, goalCfg:goalCfg, formCfg:formCfg,
+    generate:generate, quality:quality, stats:stats, summary:summary, totalTime:totalTime,
+    goalScore:goalScore, isHeavy:isHeavy, fatVal:fatVal, blockSets:blockSets, region:region,
+    altList:altList, replaceItem:replaceItem, removeItem:removeItem, moveItem:moveItem, swapAlternative:swapAlternative,
+    saveDraft:saveDraft, loadDraft:loadDraft, savedList:savedList, saveWorkout:saveWorkout,
+    duplicateWorkout:duplicateWorkout, favWorkout:favWorkout, deleteWorkout:deleteWorkout, resumeWorkout:resumeWorkout,
+    defaultSel:defaultSel, autoName:autoName
+  };
+})();
+</script>
+
+<script>
+/* ══ Adaptive Workout Builder — UI (Sprint 12, v3.5.0) — ADDITIEF ══ */
+var WBUI=(function(){
+  'use strict';
+  function esc(s){return (window.escHtml?escHtml(s):String(s==null?'':s));}
+  function A(){return window.ExerciseAssetProvider;}
+  function ex(id){return window.ExerciseCatalogService.byId(id);}
+  var s=function(){return WB.st.sel;};
+
+  function chip(active,label,onclick,extra){
+    return '<button class="wb-chip'+(active?' on':'')+'" onclick="'+onclick+'" '+(extra||'')+'>'+esc(label)+'</button>';
+  }
+  function wizard(){
+    var sel=s(),h='';
+    // Stap 1 doel
+    h+='<div class="wb-step"><div class="wb-step-h"><span class="wb-step-n">1</span>Trainingsdoel</div><div class="wb-chips">';
+    WB.GOALS.forEach(function(g){h+=chip(sel.goal===g.k,g.ic+' '+g.label,"WBUI.setGoal('"+g.k+"')");});
+    h+='</div></div>';
+    // Stap 2 spieren
+    h+='<div class="wb-step"><div class="wb-step-h"><span class="wb-step-n">2</span>Spiergroepen <small>(optioneel, meerdere)</small></div><div class="wb-chips">';
+    WB.MUSCLES.forEach(function(m){h+=chip(sel.muscles.indexOf(m)>=0,m,"WBUI.toggleMuscle('"+m+"')");});
+    h+='</div></div>';
+    // Stap 3 materiaal
+    h+='<div class="wb-step"><div class="wb-step-h"><span class="wb-step-n">3</span>Beschikbaar materiaal</div><div class="wb-chips">';
+    WB.EQUIP.forEach(function(e){h+=chip(sel.equipment.indexOf(e.k)>=0,e.l,"WBUI.toggleEq('"+e.k+"')");});
+    h+='</div></div>';
+    // Stap 4 tijd
+    h+='<div class="wb-step"><div class="wb-step-h"><span class="wb-step-n">4</span>Beschikbare tijd</div><div class="wb-chips">';
+    WB.TIMES.forEach(function(t){h+=chip(sel.time===t,t+' min',"WBUI.setTime("+t+")");});
+    h+='</div></div>';
+    // Stap 5 ervaring
+    h+='<div class="wb-step"><div class="wb-step-h"><span class="wb-step-n">5</span>Ervaring</div><div class="wb-chips">';
+    WB.LEVELS.forEach(function(l){h+=chip(sel.level===l.k,l.l,"WBUI.setLevel('"+l.k+"')");});
+    h+='</div></div>';
+    // Stap 6 vorm
+    h+='<div class="wb-step"><div class="wb-step-h"><span class="wb-step-n">6</span>Trainingsvorm</div><div class="wb-chips">';
+    WB.FORMS.forEach(function(f){h+=chip(sel.form===f.k,f.label,"WBUI.setForm('"+f.k+"')");});
+    h+='</div></div>';
+    return h;
+  }
+
+  function qualityBar(){
+    var q=WB.quality(WB.st.plan,s());var st5='';for(var i=0;i<5;i++)st5+=(i<q.stars?'★':'☆');
+    var cls=q.score>=85?'hi':(q.score>=65?'mid':'lo');
+    return '<div class="wb-quality '+cls+'"><div class="wb-q-left"><div class="wb-q-lbl">Trainingskwaliteit</div><div class="wb-q-stars">'+st5+'</div></div>'+
+      '<div class="wb-q-score">'+q.score+'<small>/100</small></div></div>';
+  }
+  function statsBar(){
+    var t=WB.stats(WB.st.plan,s());
+    var dist=t.dist.slice(0,4).map(function(d){return '<span class="wb-dist"><b>'+d.pct+'%</b> '+esc(d.m)+'</span>';}).join('');
+    return '<div class="wb-stats">'+
+      '<div class="wb-stat"><span class="wb-stat-v">'+t.time+'</span><span class="wb-stat-l">min</span></div>'+
+      '<div class="wb-stat"><span class="wb-stat-v">'+t.ex+'</span><span class="wb-stat-l">oefeningen</span></div>'+
+      '<div class="wb-stat"><span class="wb-stat-v">'+t.sets+'</span><span class="wb-stat-l">sets</span></div>'+
+      '<div class="wb-stat"><span class="wb-stat-v">'+t.load+'</span><span class="wb-stat-l">belasting</span></div>'+
+      '</div><div class="wb-distrow">'+dist+'</div>';
+  }
+
+  var FAT_NL={very_low:'zeer laag',low:'laag',moderate:'gemiddeld',high:'hoog',very_high:'zeer hoog'};
+  var REC_NL={same_day:'zelfde dag','24_hours':'24 uur','48_hours':'48 uur','72_hours':'72 uur',multiple_days:'meerdere dagen'};
+  function whyChosen(e,it,sel){
+    var gc=WB.goalCfg(sel.goal),gscore=Math.round(WB.goalScore(e,sel.goal));
+    var m=(e.identity.primary||[]).join(', ');
+    return 'Sterke keuze voor '+gc.label.toLowerCase()+' ('+gscore+'/100 op dit doel) en traint '+esc(m)+'.';
+  }
+  function whyHere(it){
+    var map={warmup:'Als warming-up om soepel en veilig te starten.',activation:'Ter activatie van de rompspieren vóór de zware oefeningen.',
+      compound:'Vooraan geplaatst: de zwaarste compound waar je de meeste kracht voor nodig hebt.',secondary:'Tweede compound met een andere bewegingsfamilie voor extra basisvolume.',
+      accessory:'Accessoire voor gericht extra volume zonder onnodige CNS-belasting.',isolation:'Isolatie om de doelspier af te werken.',core:'Corewerk aan het eind, zodat je romp fris blijft tijdens de compounds.',
+      conditioning:'Conditioning-afsluiter voor de metabole prikkel.',cooldown:'Cooldown om herstel te bevorderen.'};
+    return map[it.pick]||'';
+  }
+  function exCard(it,idx){
+    var e=ex(it.id),sel=s();if(!e)return '';
+    var poster='';try{poster=A().poster(it.id)||'';}catch(_){}
+    var hasVid=false;try{hasVid=A().hasVideo(it.id);}catch(_){}
+    var gc=WB.goalCfg(sel.goal);
+    var reps=gc.reps;var heavy=WB.isHeavy(e);
+    return '<div class="wb-ex" data-idx="'+idx+'">'+
+      '<div class="wb-ex-slot">'+esc(it.label)+(heavy?' <span class="wb-heavy">zwaar</span>':'')+'</div>'+
+      '<div class="wb-ex-main">'+
+        '<div class="wb-ex-thumb" style="background-image:url(\''+esc(poster)+'\')"></div>'+
+        '<div class="wb-ex-body">'+
+          '<div class="wb-ex-name">'+esc(e.identity.name)+'</div>'+
+          '<div class="wb-ex-meta">'+it.sets+'×'+esc(reps)+' · ~'+it.dur+' min · '+esc((e.identity.equipment||[]).join(', '))+'</div>'+
+          '<div class="wb-ex-badges"><span class="wb-b fat">Fatigue: '+esc(FAT_NL[e.intelligence.fatigue]||e.intelligence.fatigue)+'</span>'+
+            '<span class="wb-b rec">Herstel: '+esc(REC_NL[e.intelligence.recovery]||e.intelligence.recovery)+'</span></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="wb-ex-why"><b>Waarom gekozen:</b> '+esc(whyChosen(e,it,sel))+'<br><b>Waarom hier:</b> '+esc(whyHere(it))+'</div>'+
+      '<div class="wb-ex-acts">'+
+        '<button class="wb-act" onclick="WBUI.alt('+idx+')" title="Alternatief">⟳ Alternatief</button>'+
+        '<button class="wb-act" onclick="WBUI.move('+idx+',-1)" title="Omhoog">↑</button>'+
+        '<button class="wb-act" onclick="WBUI.move('+idx+',1)" title="Omlaag">↓</button>'+
+        (hasVid?'<button class="wb-act" onclick="WBUI.open(\''+it.id+'\')" title="Video &amp; coach">▶ Video · coach</button>':'<button class="wb-act" onclick="WBUI.open(\''+it.id+'\')" title="Details">Details · coach</button>')+
+        '<button class="wb-act del" onclick="WBUI.remove('+idx+')" title="Verwijderen">✕</button>'+
+      '</div>'+
+    '</div>';
+  }
+  function planView(){
+    var plan=WB.st.plan;if(!plan||!plan.items.length)return '<div class="wb-empty">Kies je voorkeuren — de training bouwt zichzelf realtime op.</div>';
+    var h=qualityBar()+statsBar();
+    h+='<div class="wb-coach">'+esc(WB.summary(plan,s()))+'</div>';
+    h+='<div class="wb-plan">';
+    plan.items.forEach(function(it,i){h+=exCard(it,i);});
+    h+='</div>';
+    h+='<div class="wb-actbar">'+
+      '<button class="wb-save" onclick="WBUI.save()">💾 Opslaan</button>'+
+      '<button class="wb-save2" onclick="WBUI.dupe()">⧉ Dupliceren</button>'+
+      '<button class="wb-save2" onclick="WBUI.regen()">↻ Opnieuw genereren</button>'+
+    '</div>';
+    return h;
+  }
+  function savedView(){
+    var arr=WB.savedList();if(!arr.length)return '';
+    var h='<div class="wb-saved-h">Opgeslagen trainingen</div>';
+    arr.forEach(function(w){
+      h+='<div class="wb-saved"><div class="wb-saved-b" onclick="WBUI.resume(\''+w.id+'\')"><div class="wb-saved-n">'+(w.fav?'★ ':'')+esc(w.name)+'</div><div class="wb-saved-m">kwaliteit '+w.q+'/100 · '+w.plan.items.length+' oefeningen</div></div>'+
+        '<div class="wb-saved-a"><button onclick="WBUI.fav(\''+w.id+'\')" title="Favoriet">'+(w.fav?'★':'☆')+'</button>'+
+        '<button onclick="WBUI.dupeSaved(\''+w.id+'\')" title="Dupliceren">⧉</button>'+
+        '<button onclick="WBUI.del(\''+w.id+'\')" title="Verwijderen">✕</button></div></div>';
+    });
+    return h;
+  }
+
+  function render(){
+    var el=document.getElementById('wb-scroll');if(!el)return;
+    if(WB.st.dirty||!WB.st.plan)WB.generate(s());
+    el.innerHTML='<div class="wb-intro">Stel je voorkeuren in — Trainingskompas bouwt automatisch een complete, logisch opgebouwde training uit alle 206 oefeningen. Elke wijziging herberekent realtime.</div>'+
+      wizard()+
+      '<div class="wb-divider"><span>Jouw training</span></div>'+
+      planView()+
+      savedView();
+  }
+  function rebuild(){WB.st.dirty=true;render();}
+
+  /* interacties */
+  function setGoal(k){s().goal=k;rebuild();}
+  function toggleMuscle(m){var a=s().muscles,i=a.indexOf(m);if(i>=0)a.splice(i,1);else a.push(m);rebuild();}
+  function toggleEq(k){var a=s().equipment,i=a.indexOf(k);if(i>=0)a.splice(i,1);else a.push(k);if(!a.length)a.push('bodyweight');rebuild();}
+  function setTime(t){s().time=t;rebuild();}
+  function setLevel(k){s().level=k;rebuild();}
+  function setForm(k){s().form=k;rebuild();}
+  function alt(idx){var nid=WB.swapAlternative(idx);if(nid){render();if(window.toast)toast('Alternatief gekozen');}else if(window.toast)toast('Geen geschikt alternatief');}
+  function move(idx,dir){WB.moveItem(idx,dir);render();}
+  function remove(idx){WB.removeItem(idx);render();}
+  function open(id){go('s-library');if(window.renderLibrary)renderLibrary();if(window._libOpen)_libOpen(id);}
+  function regen(){WB.st.dirty=true;render();if(window.toast)toast('Training opnieuw gegenereerd');}
+  function save(){var id=WB.saveWorkout(null);render();if(window.toast)toast('Training opgeslagen');}
+  function dupe(){var id=WB.saveWorkout(WB.autoName()+' (kopie)');render();if(window.toast)toast('Gedupliceerd');}
+  function dupeSaved(wid){WB.duplicateWorkout(wid);render();if(window.toast)toast('Gedupliceerd');}
+  function fav(wid){WB.favWorkout(wid);render();}
+  function del(wid){WB.deleteWorkout(wid);render();if(window.toast)toast('Verwijderd');}
+  function resume(wid){if(WB.resumeWorkout(wid)){render();var sc=document.getElementById('wb-scroll');if(sc)sc.scrollTop=0;if(window.toast)toast('Training hervat');}}
+
+  return {render:render,rebuild:rebuild,setGoal:setGoal,toggleMuscle:toggleMuscle,toggleEq:toggleEq,setTime:setTime,setLevel:setLevel,setForm:setForm,
+    alt:alt,move:move,remove:remove,open:open,regen:regen,save:save,dupe:dupe,dupeSaved:dupeSaved,fav:fav,del:del,resume:resume};
+})();
+/* Draft herstellen bij load (stil, geen render) */
+try{WB.loadDraft();}catch(e){}
+</script>
+
 </body>
 </html>

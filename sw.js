@@ -1,8 +1,8 @@
 // Trainingskompas — Service Worker
 // Play Store ready — offline first
 
-const CACHE_NAME = 'trainingskompas-v391';
-const CACHE_STATIC = 'trainingskompas-static-v391';
+const CACHE_NAME = 'trainingskompas-v400';
+const CACHE_STATIC = 'trainingskompas-static-v400';
 // Video-cache: STABIEL en LOSGEKOPPELD van de app-versie. App-updates verwijderen video's NIET.
 const CACHE_VIDEOS = 'tk-videos-v1';
 const VIDEO_LIMIT_BYTES = 250 * 1024 * 1024; // 250 MB LRU-plafond

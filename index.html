@@ -1377,6 +1377,43 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 @keyframes dash-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion: reduce){.dash-hero,.dash-status,.dash-today{animation:none}}
 
+
+/* ═══ Sprint 15 Design System Unification ═══ */
+/* ══════════════════════════════════════════════════════════════════════
+   Sprint 15 — Design System Unification (v3.8.0) — VOLLEDIG ADDITIEF
+   Eén merk-accent (teal --accent #00B894) voor de HELE app. Overschrijft
+   uitsluitend BRAND-accent (primaire knoppen, slots, selectie, voortgangs-
+   balken, entry-knoppen) die in Sprint 12/13 als rood (#c0392b) waren
+   geïntroduceerd. SEMANTISCHE kleuren blijven bewust ongewijzigd: kwaliteit
+   hi/mid/lo (groen/amber/rood), vermoeidheid (rood-tint), herstel (groen),
+   verwijderen (rood), belasting-bar (amber→rood). Wijzigt GEEN module-bytes;
+   deze laag staat als laatste in de cascade en wint op gelijke specificiteit.
+   Teal vult wit-op-rood → donker-op-teal (contrast, conform .btn-d).
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* 1) Tokens naar het merk-accent (flipt var(--acc)/var(--gwa)-verwijzingen) */
+:root{--acc:var(--accent)}
+#s-guided{--gwa:var(--accent)}
+
+/* 2) Workout Builder — brand-accent overrides + contrast (donkere tekst op teal) */
+.wb-step-n{color:#0B1D2A}
+.wb-chip.on{color:#0B1D2A;box-shadow:0 2px 8px rgba(0,184,148,.28)}
+.wb-save{color:#0B1D2A;box-shadow:0 3px 10px rgba(0,184,148,.28)}
+.wb-entry{background:linear-gradient(135deg,#00B894,#0E8C74);color:#0B1D2A;box-shadow:0 4px 14px rgba(0,184,148,.3)}
+.wb-entry-tx small{opacity:.82}
+
+/* 3) Guided Workout — brand-accent overrides + contrast */
+#s-guided .gw-primary{color:#0B1D2A;box-shadow:0 4px 16px rgba(0,184,148,.3)}
+#s-guided .gw-prog-bar span{background:linear-gradient(90deg,#00B894,#4fd9bf)}
+#s-guided .gw-dist-bar span{background:linear-gradient(90deg,#00B894,#4fd9bf)}
+#s-guided .gw-trans{color:#0b7f68;background:rgba(0,184,148,.09)}
+#s-guided .gw-feel:hover{background:rgba(0,184,148,.05)}
+#s-guided .gw-intro-badge{background:rgba(0,184,148,.1)}
+
+/* 4) Entry-knoppen uniform (accent-entry = teal met donkere tekst) */
+.gw-entry{background:linear-gradient(135deg,#00B894,#0E8C74);color:#0B1D2A;box-shadow:0 5px 18px rgba(0,184,148,.3)}
+.gw-entry-tx small{opacity:.82}
+
 </style>
 </head>
 <body>
@@ -3091,7 +3128,7 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.7.0';
+const APP_VER = 'v3.8.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';

@@ -1200,6 +1200,121 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 .wb-entry-tx{flex:1}.wb-entry-tx b{display:block;font-size:15px;font-weight:800}.wb-entry-tx small{display:block;font-size:11.5px;opacity:.9;margin-top:1px}
 .wb-entry-ar{font-size:22px;opacity:.85}
 
+
+/* ═══ Sprint 13 Guided Workout styles ═══ */
+/* ══ Guided Workout Experience (Sprint 13, v3.6.0) — additieve styles ══ */
+/* Thema-correcte tokens: --dark = primaire tekst (donker in light-thema, licht in
+   dark-thema), --g4 = muted, --g6 = sterk secundair, --bg = zachte inset, --card =
+   kaartvlak. Merkaccent #c0392b (vast, consistent met Workout Builder). */
+#s-guided{--gwk:var(--dark);--gwm:var(--g4);--gws:var(--g6);--gwc:var(--card);--gwi:var(--bg);--gwa:#c0392b;--gwl:var(--bg)}
+#s-guided .scroll{padding:14px 15px 96px}
+.gw-prog{margin-bottom:16px}
+.gw-prog-bar{height:7px;border-radius:99px;background:var(--gwi);overflow:hidden}
+.gw-prog-bar span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#c0392b,#e05a49);transition:width .5s cubic-bezier(.4,0,.2,1)}
+.gw-prog-row{display:flex;justify-content:space-between;gap:6px;margin-top:7px;font-size:11px;color:var(--gwm)}
+.gw-prog-row b{color:var(--gwk);font-weight:800}
+.gw-fat{display:flex;align-items:center;gap:8px;margin-top:9px}
+.gw-fat-l{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--gwm);flex:0 0 auto}
+.gw-fat-bar{flex:1;height:5px;border-radius:99px;background:var(--gwi);overflow:hidden}
+.gw-fat-bar span{display:block;height:100%;background:linear-gradient(90deg,#c8892b,#c0392b);transition:width .5s ease}
+
+.gw-trans{font-size:12.5px;line-height:1.5;color:#a13223;background:rgba(192,57,43,.08);border-radius:12px;padding:11px 13px;margin-bottom:12px}
+
+.gw-card{border:1px solid var(--gwl);border-radius:20px;background:var(--gwc);padding:16px;box-shadow:0 4px 20px rgba(11,29,42,.06);margin-bottom:14px}
+.gw-slot{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--gwa);margin-bottom:10px}
+.gw-media{border-radius:15px;overflow:hidden;background:#000;aspect-ratio:16/9;margin-bottom:13px}
+.gw-video{width:100%;height:100%;display:block;object-fit:cover;background:#000}
+.gw-media-ph{position:relative;background-size:cover;background-position:center;background-color:var(--gwi)}
+.gw-media-tag{position:absolute;left:10px;bottom:10px;font-size:10px;font-weight:700;color:#fff;background:rgba(0,0,0,.55);border-radius:7px;padding:3px 8px}
+.gw-name{font-size:21px;font-weight:800;color:var(--gwk);line-height:1.2;margin:2px 0 4px}
+.gw-meta{font-size:12px;color:var(--gwm);margin-bottom:10px}
+.gw-badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px}
+.gw-b{font-size:10.5px;font-weight:700;border-radius:8px;padding:3px 8px}
+.gw-b.fat{background:rgba(192,57,43,.12);color:#c0392b}
+.gw-b.rec{background:rgba(31,157,85,.14);color:#1f9d55}
+.gw-b.prev{background:var(--gwi);color:var(--gws)}
+.gw-why{font-size:12px;line-height:1.55;color:var(--gws);border-top:1px solid var(--gwl);padding-top:11px;margin-top:3px}
+.gw-why b{color:var(--gwk)}
+.gw-coach{font-size:12.5px;line-height:1.6;color:var(--gwk);background:var(--gwi);border-left:3px solid var(--gwa);border-radius:11px;padding:12px 14px;margin-top:11px}
+
+.gw-live{display:flex;gap:10px;margin-bottom:11px}
+.gw-live-row{flex:1;display:flex;align-items:center;gap:8px;justify-content:center;background:var(--gwc);border:1px solid var(--gwl);border-radius:13px;padding:9px 8px}
+.gw-live-l{font-size:11px;color:var(--gwm);margin-right:auto}
+.gw-live-v{font-size:14px;font-weight:800;color:var(--gwk);min-width:52px;text-align:center}
+.gw-step{width:34px;height:34px;border-radius:10px;border:1.5px solid var(--gwl);background:var(--gwc);font-size:17px;font-weight:800;color:var(--gws);cursor:pointer;line-height:1}
+.gw-step:active{transform:scale(.92)}
+.gw-editbar{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+.gw-edit{flex:1;min-width:96px;font-size:11.5px;font-weight:700;border:1px solid var(--gwl);background:var(--gwc);color:var(--gws);border-radius:11px;padding:9px 8px;cursor:pointer}
+.gw-edit:active{transform:scale(.96)}
+.gw-setnow{text-align:center;font-size:13px;color:var(--gws);margin-bottom:10px}
+.gw-setnow b{font-size:16px;color:var(--gwk)}
+
+.gw-primary{width:100%;background:var(--gwa);color:#fff;border:none;border-radius:15px;padding:16px;font-size:15.5px;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(192,57,43,.3);margin-bottom:9px}
+.gw-primary:active{transform:scale(.98)}
+.gw-ghost{width:100%;background:transparent;color:var(--gwm);border:none;border-radius:13px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer}
+
+.gw-rpe{background:var(--gwc);border:1px solid var(--gwl);border-radius:18px;padding:16px;margin-bottom:12px}
+.gw-rpe-q{font-size:15px;font-weight:800;color:var(--gwk);text-align:center;margin-bottom:14px}
+.gw-rpe-opts{display:flex;flex-direction:column;gap:9px}
+.gw-feel{display:flex;align-items:center;gap:11px;font-size:14px;font-weight:600;color:var(--gwk);border:1.5px solid var(--gwl);background:var(--gwc);border-radius:13px;padding:14px 15px;cursor:pointer;transition:border-color .15s,background .15s,transform .1s;text-align:left}
+.gw-feel:active{transform:scale(.98)}
+.gw-feel:hover{border-color:var(--gwa);background:rgba(192,57,43,.05)}
+.gw-feel-o{font-size:18px;color:var(--gwa)}
+
+.gw-advice{background:var(--gwi);border-left:3px solid var(--gwa);border-radius:14px;padding:15px 16px;margin-bottom:14px}
+.gw-advice-h{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gwa);margin-bottom:6px}
+.gw-advice p{font-size:13.5px;line-height:1.6;color:var(--gwk);margin:0}
+
+.gw-rest{text-align:center;padding:26px 16px 10px}
+.gw-rest-lbl{font-size:12px;text-transform:uppercase;letter-spacing:2px;color:var(--gwm);font-weight:700}
+.gw-rest-num{font-size:66px;font-weight:800;color:var(--gwk);line-height:1.05;margin:6px 0 12px;font-variant-numeric:tabular-nums}
+.gw-rest-adj{display:flex;gap:10px;justify-content:center;margin-bottom:18px}
+.gw-rest-adj .gw-step{width:auto;padding:0 16px;height:40px;border-radius:12px;font-size:13px;font-weight:700}
+.gw-rest-tip{font-size:13px;line-height:1.6;color:var(--gwk);background:var(--gwi);border-radius:13px;padding:13px 15px;margin-bottom:12px;text-align:left}
+.gw-rest-next{font-size:12.5px;color:var(--gwm);margin-bottom:18px}
+.gw-rest-next b{color:var(--gwk)}
+
+.gw-intro{padding:8px 2px}
+.gw-intro-badge{display:inline-block;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--gwa);background:rgba(192,57,43,.1);border-radius:8px;padding:5px 10px;margin-bottom:14px}
+.gw-intro-h{font-size:24px;font-weight:800;color:var(--gwk);line-height:1.2;margin:0 0 10px}
+.gw-intro-lead{font-size:14px;line-height:1.65;color:var(--gws);margin:0 0 18px}
+.gw-intro-card{border:1px solid var(--gwl);border-radius:16px;background:var(--gwc);padding:16px;margin-bottom:16px}
+.gw-intro-k{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--gwm);margin-bottom:10px}
+.gw-intro-list{margin:0;padding-left:18px;font-size:13.5px;line-height:1.9;color:var(--gwk)}
+.gw-intro-first{font-size:13.5px;color:var(--gws);margin-bottom:20px}
+.gw-intro-first b{color:var(--gwk)}
+
+.gw-done{padding:8px 2px}
+.gw-done-badge{display:inline-block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#fff;background:linear-gradient(135deg,#1f9d55,#16794a);border-radius:9px;padding:6px 12px;margin-bottom:14px}
+.gw-done-h{font-size:23px;font-weight:800;color:var(--gwk);line-height:1.2;margin:0 0 12px}
+.gw-done-coach{margin-bottom:16px}
+.gw-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+.gw-stat{background:var(--gwc);border:1px solid var(--gwl);border-radius:14px;padding:13px 6px;text-align:center}
+.gw-stat-v{display:block;font-size:22px;font-weight:800;color:var(--gwk)}
+.gw-stat-l{display:block;font-size:10px;color:var(--gwm);text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
+.gw-done-sec{margin-bottom:18px}
+.gw-done-k{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--gwm);margin-bottom:11px}
+.gw-dist{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.gw-dist-m{font-size:12px;color:var(--gwk);flex:0 0 84px}
+.gw-dist-bar{flex:1;height:8px;border-radius:99px;background:var(--gwi);overflow:hidden}
+.gw-dist-bar span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#c0392b,#e05a49)}
+.gw-dist-p{font-size:11.5px;font-weight:700;color:var(--gws);flex:0 0 34px;text-align:right}
+.gw-done-load{font-size:13px;color:var(--gwk);margin-bottom:10px}
+.gw-done-load b{font-size:15px;color:var(--gwk)}
+
+.gw-empty,.gw-empty-screen{text-align:center;color:var(--gwm);font-size:13px;padding:20px 10px}
+.gw-empty-screen{padding:60px 20px}
+.gw-empty-screen .gw-primary{margin-top:18px}
+
+/* Entry vanuit Workout Builder */
+.gw-entry{width:100%;display:flex;align-items:center;gap:12px;text-align:left;border:none;border-radius:16px;padding:16px;margin:14px 0 4px;cursor:pointer;background:linear-gradient(135deg,#0b1d2a,#12303e);color:#fff;box-shadow:0 5px 18px rgba(11,29,42,.3)}
+.gw-entry:active{transform:scale(.98)}
+.gw-entry-ic{font-size:26px}
+.gw-entry-tx{flex:1}
+.gw-entry-tx b{display:block;font-size:15.5px;font-weight:800}
+.gw-entry-tx small{display:block;font-size:11.5px;opacity:.85;margin-top:2px}
+.gw-entry-ar{font-size:22px;opacity:.8}
+
 </style>
 </head>
 <body>
@@ -1218,6 +1333,17 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
+  </nav>
+</div>
+<div class="scr" id="s-guided">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Begeleide training</div><div class="hdr-sub">Je coach, stap voor stap</div></div><button class="ibtn" onclick="if(window.GWUI)GWUI.quit();else go('s-builder')" aria-label="Terug naar Workout Builder">←</button></div></div>
+  <div class="scroll" id="gw-scroll"></div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="go('s-builder')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">💬</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Stats</span></button>
@@ -2902,7 +3028,7 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.5.0';
+const APP_VER = 'v3.6.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -4560,6 +4686,7 @@ function go(id){
   stopTrainTimer();
   if(id==='s-home')refreshHome();
   if(id==='s-builder'&&window.WBUI)WBUI.render();
+  if(id==='s-guided'&&window.GWUI)GWUI.render();
   if(id==='s-hist'){histOff=0;renderHistFilterTabs();loadHistory();}
   if(id==='s-train-mgr'||id==='s-train-workouts'){renderCustomTrainList();renderCustomTrainBtns();}
   if(id==='s-train-mgr'){renderSportSwitcher();}
@@ -12457,6 +12584,7 @@ var WBUI=(function(){
     h+='<div class="wb-plan">';
     plan.items.forEach(function(it,i){h+=exCard(it,i);});
     h+='</div>';
+    h+='<button class="gw-entry" onclick="GWUI.launch()"><span class="gw-entry-ic">▶</span><span class="gw-entry-tx"><b>Start begeleide training</b><small>De coach leidt je stap voor stap door deze training</small></span><span class="gw-entry-ar">→</span></button>';
     h+='<div class="wb-actbar">'+
       '<button class="wb-save" onclick="WBUI.save()">💾 Opslaan</button>'+
       '<button class="wb-save2" onclick="WBUI.dupe()">⧉ Dupliceren</button>'+
@@ -12513,5 +12641,498 @@ var WBUI=(function(){
 try{WB.loadDraft();}catch(e){}
 </script>
 
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   Guided Workout Experience — Sprint 13 (v3.6.0) — VOLLEDIG ADDITIEF
+   Een begeleide trainingsbeleving: de coach loodst de sporter stap voor
+   stap door de training uit de Workout Builder. GEEN nieuwe database,
+   GEEN nieuwe AI. Leest UITSLUITEND read-only uit ExerciseCatalogService,
+   ExerciseIntelligence, ExerciseAssetProvider en hergebruikt WB.
+   Persistentie via NIEUWE localStorage-sleutels: tk_gw_active (hervatten),
+   tk_gw_hist (vorige prestatie), tk_gw_log (voltooide trainingen).
+   Toont NOOIT confidence. Raakt geen enkel bevroren systeem aan.
+   ══════════════════════════════════════════════════════════════════════ */
+var GW=(function(){
+  'use strict';
+  var E=function(){return window.ExerciseCatalogService;};
+  var X=function(){return window.ExerciseIntelligence;};
+  var A=function(){return window.ExerciseAssetProvider;};
+
+  /* ── RPE-gevoelsschaal (na iedere set) ── */
+  var FEELS=[
+    {k:'erg_makkelijk',l:'Erg makkelijk',rpe:5},
+    {k:'makkelijk',    l:'Makkelijk',    rpe:6.5},
+    {k:'goed',         l:'Goed',         rpe:8},
+    {k:'zwaar',        l:'Zwaar',        rpe:9},
+    {k:'maximaal',     l:'Maximaal',     rpe:10}
+  ];
+  var GOAL_RPE={hypertrofie:'7-8',kracht:'8-9',power:'8',conditie:'6-7',mobiliteit:'5-6',stabiliteit:'6-7',herstel:'5-6'};
+  var FAT_NL={very_low:'zeer laag',low:'laag',moderate:'gemiddeld',high:'hoog',very_high:'zeer hoog'};
+  var REC_NL={same_day:'zelfde dag','24_hours':'24 uur','48_hours':'48 uur','72_hours':'72 uur',multiple_days:'meerdere dagen'};
+  var REC_H={same_day:0,'24_hours':24,'48_hours':48,'72_hours':72,multiple_days:96};
+  var FATW={very_low:1,low:2,moderate:3,high:4,very_high:5};
+
+  /* ── State ── */
+  var st={active:null};
+
+  function clone(o){return JSON.parse(JSON.stringify(o));}
+  function lsGet(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
+  function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function ex(id){try{return E().byId(id);}catch(e){return null;}}
+  function goalCfg(k){return (window.WB&&WB.goalCfg)?WB.goalCfg(k):{label:k||'training',reps:'8-12',rest:75,work:40};}
+  function fatW(e){return e?(FATW[e.intelligence.fatigue]||3):3;}
+
+  function repsFor(pick,sel){
+    if(pick==='warmup')return '5-8 rustig';
+    if(pick==='cooldown')return '30-45 sec';
+    if(pick==='activation'||pick==='core')return '10-12';
+    return goalCfg(sel.goal).reps;
+  }
+  function restFor(pick,sel){
+    if(pick==='warmup')return 25;
+    if(pick==='cooldown')return 0;
+    if(pick==='activation'||pick==='core')return 40;
+    return goalCfg(sel.goal).rest||75;
+  }
+
+  /* ── Prestatiegeschiedenis (vorige prestatie per oefening) ── */
+  function hist(){return lsGet('tk_gw_hist',{});}
+  function prevOf(id){var h=hist();return h[id]||null;}
+
+  /* ── Start / levensduur ── */
+  function start(plan,sel){
+    if(!plan||!plan.items||!plan.items.length)return false;
+    var h=hist();
+    var items=plan.items.map(function(it){
+      var p=h[it.id]||null;
+      return {id:it.id,block:it.block,label:it.label,pick:it.pick,
+        setsTarget:it.sets||3,reps:repsFor(it.pick,sel),rest:restFor(it.pick,sel),
+        weight:(p&&p.weight!=null)?p.weight:null,prev:p,setsDone:[]};
+    });
+    st.active={sel:clone(sel),items:items,gi:0,phase:'intro',restLeft:0,lastFeel:null,
+      startedAt:Date.now(),endedAt:null};
+    persist();
+    return true;
+  }
+  function active(){return st.active;}
+  function cur(){return st.active?st.active.items[st.active.gi]:null;}
+  function phase(){return st.active?st.active.phase:null;}
+  function persist(){if(st.active&&st.active.phase!=='done')lsSet('tk_gw_active',st.active);}
+  function clearActive(){try{localStorage.removeItem('tk_gw_active');}catch(e){}}
+  function resume(){var a=lsGet('tk_gw_active',null);if(a&&a.items&&a.items.length&&a.phase!=='done'){st.active=a;return true;}return false;}
+  function hasActive(){var a=lsGet('tk_gw_active',null);return !!(a&&a.items&&a.items.length&&a.phase!=='done');}
+  function abort(){st.active=null;clearActive();}
+
+  /* ── Faseovergangen ── */
+  function begin(){if(!st.active)return;st.active.phase='exercise';persist();}
+  function finishSet(){if(!st.active)return;st.active.phase='rpe';persist();}
+  function rateSet(feelKey){
+    var c=cur();if(!c)return;
+    var f=null;for(var i=0;i<FEELS.length;i++)if(FEELS[i].k===feelKey)f=FEELS[i];
+    if(!f)f=FEELS[2];
+    c.setsDone.push({feel:f.k,rpe:f.rpe,at:Date.now()});
+    var h=hist();h[c.id]={weight:c.weight,reps:c.reps,feel:f.k,rpe:f.rpe,at:Date.now()};lsSet('tk_gw_hist',h);
+    st.active.lastFeel=f.k;
+    st.active.phase='advice';
+    persist();
+  }
+  function continueAfter(){
+    var c=cur();if(!c)return;
+    if(c.setsDone.length<c.setsTarget)startRest();
+    else nextExercise();
+  }
+  function startRest(){if(!st.active)return;var c=cur();st.active.restLeft=c?c.rest:60;st.active.phase='rest';persist();}
+  function skipRest(){if(!st.active)return;st.active.restLeft=0;st.active.phase='exercise';persist();}
+  function restTick(){
+    if(!st.active||st.active.phase!=='rest')return 0;
+    st.active.restLeft=Math.max(0,st.active.restLeft-1);
+    if(st.active.restLeft<=0)st.active.phase='exercise';
+    persist();return st.active.restLeft;
+  }
+  function adjustRest(d){if(!st.active)return;st.active.restLeft=Math.max(0,st.active.restLeft+d);persist();}
+
+  function nextExercise(){
+    if(!st.active)return;
+    if(st.active.gi>=st.active.items.length-1){finish();return;}
+    st.active.gi++;st.active.phase='exercise';persist();
+  }
+
+  /* ── Live bewerken tijdens training (geen herbouw van het plan) ── */
+  function adjustWeight(d){var c=cur();if(!c)return;var w=(c.weight==null?0:c.weight)+d;c.weight=Math.max(0,Math.round(w*2)/2);persist();}
+  function setWeight(v){var c=cur();if(!c)return;v=parseFloat(v);c.weight=isNaN(v)?null:Math.max(0,v);persist();}
+  function adjustSets(d){var c=cur();if(!c)return;var min=Math.max(1,c.setsDone.length);c.setsTarget=Math.max(min,Math.min(8,c.setsTarget+d));persist();}
+  function altList(id){return (window.WB&&WB.altList)?WB.altList(id):[];}
+  function replaceEx(newId){var c=cur();if(!c||!ex(newId))return false;c.id=newId;c.label=c.label;c.setsDone=[];c.prev=prevOf(newId);c.weight=(c.prev&&c.prev.weight!=null)?c.prev.weight:null;persist();return true;}
+
+  /* ── Coachadvies na een set (motiverend, professioneel, geen confidence) ── */
+  var SET_ADVICE={
+    erg_makkelijk:'Dit ging heel soepel — je hebt duidelijk marge. Verhoog de volgende keer het gewicht of de herhalingen een stapje, dan blijft de prikkel groeien.',
+    makkelijk:'Comfortabel uitgevoerd. Je zit onder je grens; een kleine verzwaring de volgende sessie houdt de progressie op gang.',
+    goed:'Precies de bedoeling — genoeg prikkel met behoud van techniek. Houd dit vast, hier bouw je het sterkst op.',
+    zwaar:'Stevige set. Dit is uitstekende trainingsprikkel; bewaak je techniek en neem gerust de rust die je nodig hebt.',
+    maximaal:'Maximale inspanning, knap gedaan. Let erop dat je vorm netjes blijft en overweeg de volgende set iets in te houden zodat je veilig traint.'
+  };
+  function setAdvice(feelKey){return SET_ADVICE[feelKey]||SET_ADVICE.goed;}
+  function coachText(id){var e=ex(id);return (e&&e.intelligence&&e.intelligence.why&&e.intelligence.why.coach)?e.intelligence.why.coach:'';}
+  function restTip(id){
+    var e=ex(id);var cue='';
+    try{var cues=e&&e.intelligence&&e.intelligence.cues;if(cues&&cues.length)cue=cues[0];}catch(_){}
+    if(cue)return 'Herstel rustig door. Voor de volgende set: '+cue;
+    return 'Adem rustig, schud de spieren los en zet je klaar voor een technisch scherpe volgende set.';
+  }
+  function estRPE(sel){return GOAL_RPE[sel.goal]||'7-8';}
+
+  /* ── Waarom deze oefening / waarom nu ── */
+  function whyChosen(it){
+    var e=ex(it.id),sel=st.active.sel;if(!e)return '';
+    var gc=goalCfg(sel.goal);
+    var gs=(window.WB&&WB.goalScore)?Math.round(WB.goalScore(e,sel.goal)):0;
+    var m=(e.identity.primary||[]).join(', ');
+    return 'Sterke keuze voor '+gc.label.toLowerCase()+' ('+gs+'/100 op dit doel)'+(m?', traint '+m:'')+'.';
+  }
+  var WHYNOW={warmup:'Als warming-up om soepel en veilig te starten.',
+    activation:'Ter activatie van de rompspieren vóór de zware oefeningen.',
+    compound:'Vooraan geplaatst: de zwaarste compound waar je de meeste kracht en focus voor nodig hebt.',
+    secondary:'Tweede compound met een andere bewegingsfamilie voor extra basisvolume.',
+    accessory:'Accessoire voor gericht extra volume zonder onnodige CNS-belasting.',
+    isolation:'Isolatie om de doelspier gericht af te werken.',
+    core:'Corewerk hier, zodat je romp fris blijft tijdens de zware compounds.',
+    conditioning:'Conditioning-afsluiter voor de metabole prikkel.',
+    cooldown:'Cooldown om je hartslag te laten dalen en het herstel te bevorderen.'};
+  function whyNow(it){return WHYNOW[it.pick]||'Deze oefening past logisch in de opbouw van je training.';}
+
+  /* ── Slimme overgang: waarom de volgende oefening volgt ── */
+  function transition(){
+    if(!st.active||st.active.gi<=0)return '';
+    var toIt=st.active.items[st.active.gi],fromIt=st.active.items[st.active.gi-1];
+    var b=ex(toIt.id),a=ex(fromIt.id);if(!b)return '';
+    if(toIt.pick==='cooldown')return 'We sluiten af met een cooldown zodat je hartslag daalt en het herstel op gang komt.';
+    if(toIt.pick==='core')return 'Nu je romp nog fris is na de compounds, plaatsen we het corewerk hier.';
+    if(!a)return 'We gaan verder met de volgende stap in je opbouw.';
+    var famA=a.identity.family,famB=b.identity.family,fatA=fatW(a),fatB=fatW(b);
+    if(famA&&famB&&famA!==famB)return 'Na '+a.identity.name+' wisselen we naar een andere bewegingsfamilie ('+famB+'). Zo verschuift de belasting en blijf je fris.';
+    if(fatB<fatA)return 'Deze oefening belast lichter dan de vorige — bewust zo geplaatst zodat je richting het einde blijft herstellen.';
+    return 'We bouwen logisch door: deze oefening sluit aan op de vorige binnen je trainingsopbouw.';
+  }
+
+  /* ── Realtime voortgang ── */
+  function progress(){
+    if(!st.active)return {exDone:0,exTotal:0,setsDone:0,setsTotal:0,elapsed:0,remain:0,fatiguePct:0};
+    var a=st.active,setsDone=0,setsTotal=0,exDone=0,load=0,remainMin=0;
+    var work=(goalCfg(a.sel.goal).work||40);
+    a.items.forEach(function(it){
+      setsTotal+=it.setsTarget;setsDone+=it.setsDone.length;
+      var e=ex(it.id);load+=fatW(e)*it.setsDone.length;
+      if(it.setsDone.length>=it.setsTarget)exDone++;
+      var left=Math.max(0,it.setsTarget-it.setsDone.length);
+      remainMin+=left*((work+it.rest)/60);
+    });
+    var elapsed=Math.max(0,Math.round((Date.now()-a.startedAt)/60000));
+    var fatiguePct=setsTotal?Math.min(100,Math.round(load/(setsTotal*5)*100)):0;
+    return {exDone:exDone,exTotal:a.items.length,setsDone:setsDone,setsTotal:setsTotal,
+      elapsed:elapsed,remain:Math.round(remainMin),fatiguePct:fatiguePct};
+  }
+
+  /* ── Eindoverzicht ── */
+  function summaryData(){
+    var a=st.active;if(!a)return {name:'',time:0,volume:0,exercises:0,load:0,avgRPE:0,dist:[],recoveryH:0,at:Date.now()};
+    var setsDone=0,load=0,rpes=[],dist={},maxRecH=0;
+    a.items.forEach(function(it){
+      var e=ex(it.id);
+      setsDone+=it.setsDone.length;
+      it.setsDone.forEach(function(s){rpes.push(s.rpe);});
+      if(e){
+        load+=fatW(e)*it.setsDone.length;
+        (e.identity.primary||[]).forEach(function(m){dist[m]=(dist[m]||0)+it.setsDone.length;});
+        if(it.setsDone.length>0){var hrs=REC_H[e.intelligence.recovery]||0;if(hrs>maxRecH)maxRecH=hrs;}
+      }
+    });
+    var tot=Object.keys(dist).reduce(function(x,k){return x+dist[k];},0)||1;
+    var distArr=Object.keys(dist).map(function(k){return {m:k,pct:Math.round(dist[k]/tot*100),sets:dist[k]};}).sort(function(x,y){return y.pct-x.pct;});
+    var mins=Math.max(1,Math.round(((a.endedAt||Date.now())-a.startedAt)/60000));
+    var avgRPE=rpes.length?Math.round(rpes.reduce(function(x,y){return x+y;},0)/rpes.length*10)/10:0;
+    return {name:goalCfg(a.sel.goal).label,time:mins,volume:setsDone,
+      exercises:a.items.filter(function(it){return it.setsDone.length>0;}).length,
+      load:load,avgRPE:avgRPE,dist:distArr,recoveryH:maxRecH,at:a.endedAt||Date.now()};
+  }
+  function recoveryAdvice(d){
+    if(!d)return '';
+    if(d.recoveryH>=72)return 'De zwaarst belaste spiergroepen hebben ruim herstel nodig. Plan minstens 72 uur voordat je ze opnieuw zwaar traint; houd de tussenliggende dagen licht of actief herstellend.';
+    if(d.recoveryH>=48)return 'Gun de zwaarst belaste spiergroepen ongeveer 48 uur herstel. Een lichte of andere trainingsprikkel morgen kan, mits je deze spieren ontziet.';
+    if(d.recoveryH>=24)return 'Ongeveer 24 uur herstel volstaat. Je kunt morgen alweer trainen, eventueel met een andere focus.';
+    return 'De belasting was licht. Je bent snel weer hersteld en kunt gerust binnen een dag opnieuw trainen.';
+  }
+  function plural(n,one,many){return n+' '+(n===1?one:many);}
+  function coachSummary(d){
+    if(!d||!d.volume)return 'Je training is afgerond. Elke voltooide set telt mee richting je doel — goed bezig.';
+    var s='Sterk gedaan. Je hebt '+plural(d.volume,'set','sets')+' over '+plural(d.exercises,'oefening','oefeningen')+' afgewerkt in '+plural(d.time,'minuut','minuten');
+    s+=(d.avgRPE?', met een gemiddelde inspanning rond RPE '+d.avgRPE:'')+'. ';
+    if(d.dist&&d.dist.length)s+='De nadruk lag op '+d.dist.slice(0,2).map(function(x){return x.m;}).join(' en ')+'. ';
+    s+='Deze prikkel is precies wat progressie oplevert — mits je hem koppelt aan goed herstel.';
+    return s;
+  }
+
+  function finish(){
+    if(!st.active)return;
+    st.active.phase='done';st.active.endedAt=Date.now();
+    var log=lsGet('tk_gw_log',[]);log.unshift(summaryData());lsSet('tk_gw_log',log.slice(0,50));
+    clearActive();
+  }
+
+  return {
+    FEELS:FEELS, GOAL_RPE:GOAL_RPE, FAT_NL:FAT_NL, REC_NL:REC_NL,
+    st:st, active:active, cur:cur, phase:phase,
+    start:start, resume:resume, hasActive:hasActive, abort:abort,
+    begin:begin, finishSet:finishSet, rateSet:rateSet, continueAfter:continueAfter,
+    startRest:startRest, skipRest:skipRest, restTick:restTick, adjustRest:adjustRest,
+    nextExercise:nextExercise, finish:finish,
+    adjustWeight:adjustWeight, setWeight:setWeight, adjustSets:adjustSets,
+    altList:altList, replaceEx:replaceEx, prevOf:prevOf, fatW:fatW,
+    setAdvice:setAdvice, coachText:coachText, restTip:restTip, estRPE:estRPE,
+    whyChosen:whyChosen, whyNow:whyNow, transition:transition,
+    progress:progress, summaryData:summaryData, recoveryAdvice:recoveryAdvice, coachSummary:coachSummary
+  };
+})();
+</script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   Guided Workout Experience — UI (Sprint 13, v3.6.0) — ADDITIEF
+   Rendert de begeleide trainingsbeleving in #gw-scroll. Video tijdens de
+   training via bestaande ExerciseAssetProvider. Geen confidence getoond.
+   ══════════════════════════════════════════════════════════════════════ */
+var GWUI=(function(){
+  'use strict';
+  function esc(s){return (window.escHtml?escHtml(s):String(s==null?'':s));}
+  function A(){return window.ExerciseAssetProvider;}
+  function ex(id){try{return ExerciseCatalogService.byId(id);}catch(e){return null;}}
+  var _tid=null,_lastKey='';
+
+  function fmt(sec){sec=Math.max(0,Math.round(sec));var m=Math.floor(sec/60),s=sec%60;return m+':'+(s<10?'0':'')+s;}
+
+  /* ── Video / techniekbeeld ── */
+  function media(it){
+    var id=it.id,has=false,poster='';
+    try{has=A().hasVideo(id);}catch(_){}
+    try{poster=A().poster(id)||'';}catch(_){}
+    if(has){
+      var src='';try{src=A().resolve(id,'video');}catch(_){}
+      return '<div class="gw-media"><video class="gw-video" controls playsinline preload="metadata" poster="'+poster+'">'+
+        '<source src="'+src+'" type="video/mp4"></video></div>';
+    }
+    return '<div class="gw-media gw-media-ph" style="background-image:url(\''+poster+'\')"><span class="gw-media-tag">Techniekbeeld</span></div>';
+  }
+
+  /* ── Voortgangsbalk ── */
+  function progressBar(){
+    var p=GW.progress();
+    var pct=p.setsTotal?Math.round(p.setsDone/p.setsTotal*100):0;
+    return '<div class="gw-prog">'+
+      '<div class="gw-prog-bar"><span style="width:'+pct+'%"></span></div>'+
+      '<div class="gw-prog-row">'+
+        '<span><b>'+p.exDone+'/'+p.exTotal+'</b> oefeningen</span>'+
+        '<span><b>'+p.setsDone+'/'+p.setsTotal+'</b> sets</span>'+
+        '<span><b>'+p.elapsed+'</b> min</span>'+
+        '<span>nog ~<b>'+p.remain+'</b> min</span>'+
+      '</div>'+
+      '<div class="gw-fat"><span class="gw-fat-l">Belasting</span><div class="gw-fat-bar"><span style="width:'+p.fatiguePct+'%"></span></div></div>'+
+    '</div>';
+  }
+
+  /* ── Intro / coach-introductie ── */
+  function introView(){
+    var a=GW.active();var p=GW.progress();var sel=a.sel;
+    var gc=(window.WB&&WB.goalCfg)?WB.goalCfg(sel.goal):{label:sel.goal};
+    var first=a.items[0];
+    return '<div class="gw-intro">'+
+      '<div class="gw-intro-badge">Begeleide training</div>'+
+      '<h2 class="gw-intro-h">'+esc(gc.label)+' · '+p.exTotal+' oefeningen</h2>'+
+      '<p class="gw-intro-lead">Ik loods je stap voor stap door je training. Per oefening zie je de uitvoering, je vorige prestatie en waarom die oefening op dit moment volgt. Na elke set vraag ik hoe het voelde, zodat het advies met je meebeweegt.</p>'+
+      '<div class="gw-intro-card">'+
+        '<div class="gw-intro-k">Zo pakken we het aan</div>'+
+        '<ul class="gw-intro-list">'+
+          '<li>Rustige warming-up om soepel en veilig te starten</li>'+
+          '<li>De zwaarste oefeningen eerst, als je fris bent</li>'+
+          '<li>Rust met tips tussen de sets, afgestemd op je doel</li>'+
+          '<li>Een cooldown en herstelvenster aan het einde</li>'+
+        '</ul>'+
+      '</div>'+
+      '<div class="gw-intro-first">Eerste oefening: <b>'+esc((ex(first.id)||{}).identity?ex(first.id).identity.name:'')+'</b></div>'+
+      '<button class="gw-primary" onclick="GWUI.begin()">Start warming-up →</button>'+
+      '<button class="gw-ghost" onclick="GWUI.quit()">Annuleren</button>'+
+    '</div>';
+  }
+
+  /* ── Header (terug + fase) ── */
+  function phaseLabel(ph){return ph==='rest'?'Rust':(ph==='rpe'?'Hoe voelde het?':(ph==='advice'?'Coach':'In training'));}
+
+  /* ── Oefening (exercise / rpe / advice delen dit scherm) ── */
+  function exerciseView(ph){
+    var a=GW.active(),it=GW.cur(),e=ex(it.id);if(!e)return '';
+    var setNo=Math.min(it.setsDone.length+1,it.setsTarget);
+    var trans=(a.gi>0&&it.setsDone.length===0&&ph==='exercise')?GW.transition():'';
+    var prevTxt='';
+    if(it.prev){prevTxt=(it.prev.weight!=null?it.prev.weight+' kg · ':'')+(it.prev.reps||'')+(it.prev.feel?' · voelde '+it.prev.feel.replace('_',' '):'');}
+    var h=progressBar();
+    if(trans)h+='<div class="gw-trans">➜ '+esc(trans)+'</div>';
+    h+='<div class="gw-card">';
+    h+='<div class="gw-slot">'+esc(it.label)+'</div>';
+    h+=media(it);
+    h+='<h3 class="gw-name">'+esc(e.identity.name)+'</h3>';
+    h+='<div class="gw-meta">'+it.setsTarget+' sets · '+esc(it.reps)+' herh. · rust '+it.rest+'s · geschatte RPE '+esc(GW.estRPE(a.sel))+'</div>';
+    h+='<div class="gw-badges">'+
+      '<span class="gw-b fat">Fatigue: '+esc(GW.FAT_NL[e.intelligence.fatigue]||e.intelligence.fatigue)+'</span>'+
+      '<span class="gw-b rec">Herstelimpact: '+esc(GW.REC_NL[e.intelligence.recovery]||e.intelligence.recovery)+'</span>'+
+      (it.prev?'<span class="gw-b prev">Vorige: '+esc(prevTxt)+'</span>':'<span class="gw-b prev">Vorige: eerste keer</span>')+
+    '</div>';
+    h+='<div class="gw-why"><b>Waarom deze oefening:</b> '+esc(GW.whyChosen(it))+'<br><b>Waarom nu:</b> '+esc(GW.whyNow(it))+'</div>';
+    var coach=GW.coachText(it.id);
+    if(coach)h+='<div class="gw-coach">'+esc(coach)+'</div>';
+    h+='</div>';
+
+    if(ph==='exercise'){
+      // gewicht + sets aanpassen (live edit)
+      h+='<div class="gw-live">'+
+        '<div class="gw-live-row"><span class="gw-live-l">Gewicht</span>'+
+          '<button class="gw-step" onclick="GWUI.wt(-2.5)">–</button>'+
+          '<span class="gw-live-v">'+(it.weight!=null?it.weight+' kg':'—')+'</span>'+
+          '<button class="gw-step" onclick="GWUI.wt(2.5)">+</button></div>'+
+        '<div class="gw-live-row"><span class="gw-live-l">Sets</span>'+
+          '<button class="gw-step" onclick="GWUI.sets(-1)">–</button>'+
+          '<span class="gw-live-v">'+it.setsTarget+'</span>'+
+          '<button class="gw-step" onclick="GWUI.sets(1)">+</button></div>'+
+      '</div>';
+      h+='<div class="gw-editbar">'+
+        '<button class="gw-edit" onclick="GWUI.alt()">⟳ Alternatief</button>'+
+        '<button class="gw-edit" onclick="GWUI.details()">▶ Video &amp; coach</button>'+
+        '<button class="gw-edit" onclick="GWUI.skip()">↦ Sla over</button>'+
+      '</div>';
+      h+='<div class="gw-setnow">Set <b>'+setNo+'</b> van '+it.setsTarget+'</div>';
+      h+='<button class="gw-primary" onclick="GWUI.setDone()">Set voltooid ✓</button>';
+      h+='<button class="gw-ghost" onclick="GWUI.quit()">Training pauzeren</button>';
+    }else if(ph==='rpe'){
+      h+='<div class="gw-rpe"><div class="gw-rpe-q">Hoe voelde set '+setNo+'?</div><div class="gw-rpe-opts">';
+      GW.FEELS.forEach(function(f){h+='<button class="gw-feel" onclick="GWUI.rate(\''+f.k+'\')"><span class="gw-feel-o">○</span>'+esc(f.l)+'</button>';});
+      h+='</div></div>';
+    }else if(ph==='advice'){
+      var last=it.setsDone[it.setsDone.length-1];
+      var more=it.setsDone.length<it.setsTarget;
+      h+='<div class="gw-advice"><div class="gw-advice-h">Coach</div><p>'+esc(GW.setAdvice(a.lastFeel))+'</p></div>';
+      if(more)h+='<button class="gw-primary" onclick="GWUI.next()">Naar rust →</button>';
+      else{
+        var lastEx=a.gi>=a.items.length-1;
+        h+='<button class="gw-primary" onclick="GWUI.next()">'+(lastEx?'Training afronden →':'Volgende oefening →')+'</button>';
+      }
+    }
+    return h;
+  }
+
+  /* ── Rusttimer ── */
+  function restView(){
+    var a=GW.active(),it=GW.cur();
+    var setNo=Math.min(it.setsDone.length+1,it.setsTarget);
+    return progressBar()+
+      '<div class="gw-rest">'+
+        '<div class="gw-rest-lbl">Rust</div>'+
+        '<div class="gw-rest-num" id="gw-rest-num">'+fmt(a.restLeft)+'</div>'+
+        '<div class="gw-rest-adj">'+
+          '<button class="gw-step" onclick="GWUI.rest(-15)">−15s</button>'+
+          '<button class="gw-step" onclick="GWUI.rest(15)">+15s</button>'+
+        '</div>'+
+        '<div class="gw-rest-tip">'+esc(GW.restTip(it.id))+'</div>'+
+        '<div class="gw-rest-next">Straks: set <b>'+setNo+'</b> van '+it.setsTarget+' — '+esc((ex(it.id)||{identity:{}}).identity.name||'')+'</div>'+
+        '<button class="gw-primary" onclick="GWUI.skipRest()">Volgende set →</button>'+
+      '</div>';
+  }
+
+  /* ── Eindscherm ── */
+  function doneView(){
+    var d=GW.summaryData();
+    var dist=(d.dist||[]).slice(0,5).map(function(x){return '<div class="gw-dist"><span class="gw-dist-m">'+esc(x.m)+'</span><div class="gw-dist-bar"><span style="width:'+x.pct+'%"></span></div><span class="gw-dist-p">'+x.pct+'%</span></div>';}).join('');
+    return '<div class="gw-done">'+
+      '<div class="gw-done-badge">✓ Voltooid</div>'+
+      '<h2 class="gw-done-h">'+esc(d.name)+'-training afgerond</h2>'+
+      '<div class="gw-coach gw-done-coach">'+esc(GW.coachSummary(d))+'</div>'+
+      '<div class="gw-stats">'+
+        '<div class="gw-stat"><span class="gw-stat-v">'+d.time+'</span><span class="gw-stat-l">minuten</span></div>'+
+        '<div class="gw-stat"><span class="gw-stat-v">'+d.volume+'</span><span class="gw-stat-l">sets</span></div>'+
+        '<div class="gw-stat"><span class="gw-stat-v">'+d.exercises+'</span><span class="gw-stat-l">oefeningen</span></div>'+
+        '<div class="gw-stat"><span class="gw-stat-v">'+(d.avgRPE||'—')+'</span><span class="gw-stat-l">gem. RPE</span></div>'+
+      '</div>'+
+      '<div class="gw-done-sec"><div class="gw-done-k">Spierverdeling</div>'+(dist||'<div class="gw-empty">Geen sets geregistreerd.</div>')+'</div>'+
+      '<div class="gw-done-sec"><div class="gw-done-k">Belasting &amp; herstel</div>'+
+        '<div class="gw-done-load">Totale belastingsindex: <b>'+d.load+'</b></div>'+
+        '<div class="gw-coach">'+esc(GW.recoveryAdvice(d))+'</div>'+
+      '</div>'+
+      '<button class="gw-primary" onclick="GWUI.finishHome()">Klaar</button>'+
+      '<button class="gw-ghost" onclick="GWUI.again()">Nieuwe training bouwen</button>'+
+    '</div>';
+  }
+
+  function emptyView(){
+    return '<div class="gw-empty-screen">Geen actieve training. Bouw eerst een training in de Workout Builder en start daarna de begeleide training.'+
+      '<button class="gw-primary" onclick="go(\'s-builder\')">Naar Workout Builder</button></div>';
+  }
+
+  /* ── Render-dispatcher ── */
+  function render(){
+    var el=document.getElementById('gw-scroll');if(!el)return;
+    stopTimer();
+    var a=GW.active();
+    if(!a){el.innerHTML=emptyView();return;}
+    var ph=a.phase;
+    if(ph==='intro')el.innerHTML=introView();
+    else if(ph==='done')el.innerHTML=doneView();
+    else if(ph==='rest')el.innerHTML=restView();
+    else el.innerHTML=exerciseView(ph);
+    if(ph==='rest')startTimer();
+    // scroll alleen resetten bij een echte fase-/oefening-wissel
+    var key=ph+'#'+a.gi+'#'+(GW.cur()?GW.cur().setsDone.length:0);
+    if(ph==='intro'||ph==='done'||ph==='exercise'){if(key!==_lastKey)el.scrollTop=0;}
+    _lastKey=key;
+  }
+
+  function startTimer(){
+    stopTimer();
+    _tid=setInterval(function(){
+      var a=GW.active();
+      if(!a||a.phase!=='rest'){stopTimer();render();return;}
+      var left=GW.restTick();
+      var n=document.getElementById('gw-rest-num');if(n)n.textContent=fmt(left);
+      if(left<=0){stopTimer();render();}
+    },1000);
+  }
+  function stopTimer(){if(_tid){clearInterval(_tid);_tid=null;}}
+
+  /* ── Interacties ── */
+  function launch(){
+    if(!window.GW)return;
+    if(GW.hasActive()){GW.resume();}
+    else{if(!(window.WB&&WB.st&&WB.st.plan))WB.generate(WB.st.sel);GW.start(WB.st.plan,WB.st.sel);}
+    go('s-guided');_lastKey='';render();
+  }
+  function begin(){GW.begin();render();}
+  function setDone(){GW.finishSet();render();}
+  function rate(k){GW.rateSet(k);render();}
+  function next(){GW.continueAfter();render();}
+  function skipRest(){GW.skipRest();render();}
+  function rest(d){GW.adjustRest(d);var n=document.getElementById('gw-rest-num');if(n)n.textContent=fmt(GW.active().restLeft);}
+  function wt(d){GW.adjustWeight(d);render();}
+  function sets(d){GW.adjustSets(d);render();}
+  function skip(){GW.nextExercise();render();}
+  function details(){var it=GW.cur();if(it){go('s-library');if(window.renderLibrary)renderLibrary();if(window._libOpen)_libOpen(it.id);}}
+  function alt(){
+    var it=GW.cur();if(!it)return;
+    var alts=GW.altList(it.id).filter(function(e){return e&&e.catalog_id!==it.id;});
+    if(!alts.length){if(window.toast)toast('Geen geschikt alternatief');return;}
+    if(GW.replaceEx(alts[0].catalog_id)){render();if(window.toast)toast('Alternatief gekozen');}
+  }
+  function quit(){go('s-builder');if(window.WBUI)WBUI.render();if(window.toast)toast('Training gepauzeerd — je kunt later hervatten');}
+  function finishHome(){GW.abort();go('s-home');}
+  function again(){GW.abort();go('s-builder');if(window.WBUI)WBUI.render();}
+
+  return {render:render,launch:launch,begin:begin,setDone:setDone,rate:rate,next:next,skipRest:skipRest,
+    rest:rest,wt:wt,sets:sets,skip:skip,details:details,alt:alt,quit:quit,finishHome:finishHome,again:again};
+})();
+</script>
 </body>
 </html>

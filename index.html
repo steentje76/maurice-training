@@ -1414,6 +1414,113 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 .gw-entry{background:linear-gradient(135deg,#00B894,#0E8C74);color:#0B1D2A;box-shadow:0 5px 18px rgba(0,184,148,.3)}
 .gw-entry-tx small{opacity:.82}
 
+
+/* ═══ Sprint 16 Premium Experience Redesign ═══ */
+/* ══ Premium Experience Redesign (Sprint 16, v3.9.0) — PRESENTATIE ══
+   Rustiger, meer witruimte, grotere typografie, progressive disclosure.
+   Eén primair accent (teal), donkere tekst op accent (contrast). */
+
+/* ── Guided Workout: trainen = alleen de essentie ── */
+#s-guided .scroll{padding:16px 18px 100px}
+.g2-top{margin-bottom:26px}
+.g2-bar{height:4px;border-radius:99px;background:var(--g2);overflow:hidden}
+.g2-bar span{display:block;height:100%;border-radius:99px;background:var(--accent);transition:width .5s cubic-bezier(.4,0,.2,1)}
+.g2-topline{font-size:12px;color:var(--g4);font-weight:600;margin-top:8px;text-align:center;letter-spacing:.3px}
+.g2-trans{font-size:13px;line-height:1.5;color:var(--g4);text-align:center;margin-bottom:20px;max-width:34ch;margin-left:auto;margin-right:auto}
+.g2-stage{text-align:center;padding:14px 0 8px}
+.g2-slot{font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+.g2-name{font-size:30px;font-weight:800;line-height:1.15;color:var(--dark);margin:0 0 6px;letter-spacing:-.5px}
+.g2-setline{font-size:13px;color:var(--g4);font-weight:600;margin-bottom:30px}
+.g2-nums{display:flex;justify-content:center;gap:14px;margin-bottom:14px}
+.g2-num{flex:1;max-width:170px;background:var(--card);border-radius:20px;padding:20px 10px;box-shadow:var(--shadow)}
+.g2-num-v{display:block;font-size:34px;font-weight:800;color:var(--dark);line-height:1;letter-spacing:-1px}
+.g2-num-l{display:block;font-size:11px;color:var(--g4);text-transform:uppercase;letter-spacing:.8px;margin-top:8px;position:relative}
+.g2-wt{width:30px;height:30px;border-radius:9px;border:1.5px solid var(--g2);background:var(--card);color:var(--dark);font-size:16px;font-weight:800;cursor:pointer;margin:0 3px;line-height:1;vertical-align:middle}
+.g2-wt:active{transform:scale(.9)}
+.g2-primary{width:100%;background:var(--accent);color:#0B1D2A;border:none;border-radius:16px;padding:18px;font-size:16px;font-weight:800;font-family:var(--f);cursor:pointer;margin-top:20px;box-shadow:0 4px 16px rgba(0,184,148,.28);transition:transform .1s}
+.g2-primary:active{transform:scale(.98)}
+.g2-more{width:100%;background:transparent;color:var(--accent);border:none;padding:14px;font-size:13.5px;font-weight:700;font-family:var(--f);cursor:pointer;margin-top:6px}
+.g2-quit{width:100%;background:transparent;color:var(--g4);border:none;padding:10px;font-size:12.5px;font-weight:600;font-family:var(--f);cursor:pointer}
+.g2-detail{margin-top:6px;animation:g2fade .28s ease both}
+.g2-badges{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:12px 0}
+.g2-why{font-size:12.5px;line-height:1.6;color:var(--g6);margin:12px 2px}
+.g2-why b{color:var(--dark)}
+.g2-editrow{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-top:12px}
+.g2-edit{font-size:12px;font-weight:700;border:1px solid var(--g2);background:var(--card);color:var(--g6);border-radius:11px;padding:9px 12px;cursor:pointer;font-family:var(--f)}
+.g2-edit:active{transform:scale(.96)}
+
+.g2-ask{padding:30px 0 8px}
+.g2-ask-q{font-size:22px;font-weight:800;color:var(--dark);text-align:center;margin-bottom:26px;letter-spacing:-.3px}
+.g2-feels{display:flex;flex-direction:column;gap:10px}
+.g2-advice{padding:34px 0 6px;text-align:center}
+.g2-advice .gw-advice-h{color:var(--accent)}
+.g2-advice p{font-size:16px;line-height:1.6;color:var(--dark);max-width:36ch;margin:10px auto 0}
+
+.g2-rest{text-align:center;padding:40px 0 8px}
+.g2-rest-lbl{font-size:12px;text-transform:uppercase;letter-spacing:2.4px;color:var(--g4);font-weight:700}
+.g2-rest-num{font-size:74px;font-weight:800;color:var(--dark);line-height:1;margin:10px 0 20px;font-variant-numeric:tabular-nums;letter-spacing:-2px}
+.g2-rest-adj{display:flex;gap:12px;justify-content:center;margin-bottom:22px}
+.g2-rest-adj .g2-wt{width:auto;height:42px;padding:0 20px;border-radius:12px;font-size:14px}
+.g2-rest-next{font-size:13px;color:var(--g4);margin-bottom:20px}
+
+.g2-intro{text-align:center;padding:40px 6px 8px}
+.g2-intro-k{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:16px}
+.g2-intro-h{font-size:34px;font-weight:800;color:var(--dark);margin:0 0 8px;letter-spacing:-1px}
+.g2-intro-s{font-size:14px;color:var(--g4);margin-bottom:40px;line-height:1.5}
+.g2-intro-first{font-size:14px;color:var(--g6);line-height:1.7;margin-bottom:40px}
+.g2-intro-first b{font-size:19px;color:var(--dark);font-weight:800}
+
+.g2-done{text-align:center;padding:36px 6px 8px}
+.g2-done-badge{display:inline-block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.6px;color:#0B1D2A;background:var(--accent);border-radius:9px;padding:6px 13px;margin-bottom:18px}
+.g2-done-h{font-size:30px;font-weight:800;color:var(--dark);margin:0 0 26px;letter-spacing:-.6px}
+.g2-done-nums{display:flex;justify-content:center;gap:12px;margin-bottom:24px}
+.g2-done-coach{text-align:left;margin-bottom:12px}
+.g2-empty{text-align:center;color:var(--g4);font-size:14px;padding:70px 20px}
+
+@keyframes g2fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.g2-detail{animation:none}}
+
+/* ── Workout Builder: instellingen ingeklapt, plan als held ── */
+#s-builder .scroll{padding:16px 16px 96px}
+.wb2-setup{width:100%;display:flex;align-items:center;gap:10px;background:var(--card);border:none;border-radius:15px;padding:14px 16px;box-shadow:var(--shadow);cursor:pointer;font-family:var(--f);text-align:left;margin-bottom:18px}
+.wb2-setup-k{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--g4);flex:0 0 auto}
+.wb2-setup-v{flex:1;min-width:0;font-size:13.5px;font-weight:700;color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wb2-setup-ar{color:var(--g4);font-size:12px;flex:0 0 auto}
+.wb2-wizard{margin:-6px 0 18px;animation:g2fade .28s ease both}
+.wb2-step{margin-bottom:14px}
+.wb2-step-h{font-size:12px;font-weight:800;color:var(--g6);margin-bottom:8px}
+.wb2-step-h small{font-weight:500;color:var(--g4)}
+.wb2-summary{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:0 2px}
+.wb2-sum-main{font-size:15px;font-weight:800;color:var(--dark)}
+.wb2-stars{font-size:14px;color:var(--accent);letter-spacing:1px}
+.wb2-plan{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.wb2-row{background:var(--card);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.wb2-row-head{width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;padding:14px 15px;cursor:pointer;font-family:var(--f);text-align:left}
+.wb2-row-tx{flex:1;min-width:0}
+.wb2-row-n{display:block;font-size:15px;font-weight:700;color:var(--dark);line-height:1.25}
+.wb2-row-m{display:block;font-size:12px;color:var(--g4);margin-top:3px}
+.wb2-row-ar{color:var(--g4);font-size:11px;flex:0 0 auto}
+.wb2-row-body{padding:0 15px 15px;animation:g2fade .24s ease both}
+.wb2-why{font-size:12.5px;line-height:1.55;color:var(--g6);margin-bottom:10px}
+.wb2-why b{color:var(--dark)}
+.wb2-badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px}
+.wb2-acts{display:flex;flex-wrap:wrap;gap:7px}
+.wb2-act{font-size:12px;font-weight:700;border:1px solid var(--g2);background:var(--card);color:var(--g6);border-radius:10px;padding:8px 11px;cursor:pointer;font-family:var(--f)}
+.wb2-act:active{transform:scale(.96)}
+.wb2-act.del{margin-left:auto;color:#c0392b;border-color:rgba(192,57,43,.3)}
+.wb2-primary{width:100%;background:var(--accent);color:#0B1D2A;border:none;border-radius:16px;padding:17px;font-size:16px;font-weight:800;font-family:var(--f);cursor:pointer;box-shadow:0 4px 16px rgba(0,184,148,.28);transition:transform .1s}
+.wb2-primary:active{transform:scale(.98)}
+.wb2-second{display:flex;gap:20px;justify-content:center;margin-top:12px}
+.wb2-second button{background:none;border:none;color:var(--g4);font-size:13px;font-weight:700;font-family:var(--f);cursor:pointer;padding:6px}
+.wb2-empty{text-align:center;color:var(--g4);font-size:14px;padding:40px 10px}
+.wb2-saved-h{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--g4);margin:26px 2px 10px}
+.wb2-saved{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:4px 8px 4px 4px;margin-bottom:8px}
+.wb2-saved-b{flex:1;min-width:0;background:none;border:none;text-align:left;cursor:pointer;font-family:var(--f);padding:9px 8px}
+.wb2-saved-n{display:block;font-size:13.5px;font-weight:700;color:var(--dark)}
+.wb2-saved-m{display:block;font-size:11px;color:var(--g4);margin-top:1px}
+.wb2-saved-a{display:flex;gap:3px;flex:0 0 auto}
+.wb2-saved-a button{width:30px;height:30px;border-radius:8px;border:1px solid var(--g2);background:var(--card);cursor:pointer;font-size:12px;color:var(--g6)}
+
 </style>
 </head>
 <body>
@@ -3128,7 +3235,7 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.8.0';
+const APP_VER = 'v3.9.1';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -12582,127 +12689,111 @@ var WB=(function(){
 </script>
 
 <script>
-/* ══ Adaptive Workout Builder — UI (Sprint 12, v3.5.0) — ADDITIEF ══ */
+/* ══ Adaptive Workout Builder — UI (Sprint 12 → herontworpen Sprint 16, v3.9.0) ══
+   PRESENTATIE-ONLY redesign: rustiger, minder, progressive disclosure.
+   De instellingen (wizard) staan ingeklapt achter een samenvatting; het plan
+   is de held met rustige regels; detail per oefening verschijnt op tik. Eén
+   primaire CTA. De engine (WB) is ONGEWIJZIGD. */
 var WBUI=(function(){
   'use strict';
   function esc(s){return (window.escHtml?escHtml(s):String(s==null?'':s));}
   function A(){return window.ExerciseAssetProvider;}
   function ex(id){return window.ExerciseCatalogService.byId(id);}
   var s=function(){return WB.st.sel;};
+  var _setup=false, _open={};
 
-  function chip(active,label,onclick,extra){
-    return '<button class="wb-chip'+(active?' on':'')+'" onclick="'+onclick+'" '+(extra||'')+'>'+esc(label)+'</button>';
+  function chip(active,label,onclick){
+    return '<button class="wb-chip'+(active?' on':'')+'" onclick="'+onclick+'">'+esc(label)+'</button>';
   }
   function wizard(){
-    var sel=s(),h='';
-    // Stap 1 doel
-    h+='<div class="wb-step"><div class="wb-step-h"><span class="wb-step-n">1</span>Trainingsdoel</div><div class="wb-chips">';
+    var sel=s(),h='<div class="wb2-wizard">';
+    h+='<div class="wb2-step"><div class="wb2-step-h">Trainingsdoel</div><div class="wb-chips">';
     WB.GOALS.forEach(function(g){h+=chip(sel.goal===g.k,g.ic+' '+g.label,"WBUI.setGoal('"+g.k+"')");});
     h+='</div></div>';
-    // Stap 2 spieren
-    h+='<div class="wb-step"><div class="wb-step-h"><span class="wb-step-n">2</span>Spiergroepen <small>(optioneel, meerdere)</small></div><div class="wb-chips">';
+    h+='<div class="wb2-step"><div class="wb2-step-h">Spiergroepen <small>optioneel</small></div><div class="wb-chips">';
     WB.MUSCLES.forEach(function(m){h+=chip(sel.muscles.indexOf(m)>=0,m,"WBUI.toggleMuscle('"+m+"')");});
     h+='</div></div>';
-    // Stap 3 materiaal
-    h+='<div class="wb-step"><div class="wb-step-h"><span class="wb-step-n">3</span>Beschikbaar materiaal</div><div class="wb-chips">';
+    h+='<div class="wb2-step"><div class="wb2-step-h">Materiaal</div><div class="wb-chips">';
     WB.EQUIP.forEach(function(e){h+=chip(sel.equipment.indexOf(e.k)>=0,e.l,"WBUI.toggleEq('"+e.k+"')");});
     h+='</div></div>';
-    // Stap 4 tijd
-    h+='<div class="wb-step"><div class="wb-step-h"><span class="wb-step-n">4</span>Beschikbare tijd</div><div class="wb-chips">';
+    h+='<div class="wb2-step"><div class="wb2-step-h">Tijd</div><div class="wb-chips">';
     WB.TIMES.forEach(function(t){h+=chip(sel.time===t,t+' min',"WBUI.setTime("+t+")");});
     h+='</div></div>';
-    // Stap 5 ervaring
-    h+='<div class="wb-step"><div class="wb-step-h"><span class="wb-step-n">5</span>Ervaring</div><div class="wb-chips">';
+    h+='<div class="wb2-step"><div class="wb2-step-h">Ervaring</div><div class="wb-chips">';
     WB.LEVELS.forEach(function(l){h+=chip(sel.level===l.k,l.l,"WBUI.setLevel('"+l.k+"')");});
     h+='</div></div>';
-    // Stap 6 vorm
-    h+='<div class="wb-step"><div class="wb-step-h"><span class="wb-step-n">6</span>Trainingsvorm</div><div class="wb-chips">';
+    h+='<div class="wb2-step"><div class="wb2-step-h">Trainingsvorm</div><div class="wb-chips">';
     WB.FORMS.forEach(function(f){h+=chip(sel.form===f.k,f.label,"WBUI.setForm('"+f.k+"')");});
-    h+='</div></div>';
+    h+='</div></div></div>';
     return h;
   }
-
-  function qualityBar(){
-    var q=WB.quality(WB.st.plan,s());var st5='';for(var i=0;i<5;i++)st5+=(i<q.stars?'★':'☆');
-    var cls=q.score>=85?'hi':(q.score>=65?'mid':'lo');
-    return '<div class="wb-quality '+cls+'"><div class="wb-q-left"><div class="wb-q-lbl">Trainingskwaliteit</div><div class="wb-q-stars">'+st5+'</div></div>'+
-      '<div class="wb-q-score">'+q.score+'<small>/100</small></div></div>';
-  }
-  function statsBar(){
-    var t=WB.stats(WB.st.plan,s());
-    var dist=t.dist.slice(0,4).map(function(d){return '<span class="wb-dist"><b>'+d.pct+'%</b> '+esc(d.m)+'</span>';}).join('');
-    return '<div class="wb-stats">'+
-      '<div class="wb-stat"><span class="wb-stat-v">'+t.time+'</span><span class="wb-stat-l">min</span></div>'+
-      '<div class="wb-stat"><span class="wb-stat-v">'+t.ex+'</span><span class="wb-stat-l">oefeningen</span></div>'+
-      '<div class="wb-stat"><span class="wb-stat-v">'+t.sets+'</span><span class="wb-stat-l">sets</span></div>'+
-      '<div class="wb-stat"><span class="wb-stat-v">'+t.load+'</span><span class="wb-stat-l">belasting</span></div>'+
-      '</div><div class="wb-distrow">'+dist+'</div>';
+  function setupBar(){
+    var sel=s(),gc=WB.goalCfg(sel.goal),fc=WB.formCfg(sel.form);
+    var lvl=(WB.LEVELS.filter(function(l){return l.k===sel.level;})[0]||{}).l||sel.level;
+    var line=gc.label+' · '+fc.label+' · '+sel.time+' min · '+lvl;
+    return '<button class="wb2-setup" onclick="WBUI.toggleSetup()" aria-expanded="'+(_setup?'true':'false')+'">'+
+      '<span class="wb2-setup-k">Instellingen</span><span class="wb2-setup-v">'+esc(line)+'</span>'+
+      '<span class="wb2-setup-ar">'+(_setup?'▲':'▾')+'</span></button>'+
+      (_setup?wizard():'');
   }
 
   var FAT_NL={very_low:'zeer laag',low:'laag',moderate:'gemiddeld',high:'hoog',very_high:'zeer hoog'};
   var REC_NL={same_day:'zelfde dag','24_hours':'24 uur','48_hours':'48 uur','72_hours':'72 uur',multiple_days:'meerdere dagen'};
   function whyChosen(e,it,sel){
     var gc=WB.goalCfg(sel.goal),gscore=Math.round(WB.goalScore(e,sel.goal));
-    var m=(e.identity.primary||[]).join(', ');
-    return 'Sterke keuze voor '+gc.label.toLowerCase()+' ('+gscore+'/100 op dit doel) en traint '+esc(m)+'.';
+    return 'Sterke keuze voor '+gc.label.toLowerCase()+' ('+gscore+'/100) en traint '+esc((e.identity.primary||[]).join(', '))+'.';
   }
   function whyHere(it){
-    var map={warmup:'Als warming-up om soepel en veilig te starten.',activation:'Ter activatie van de rompspieren vóór de zware oefeningen.',
-      compound:'Vooraan geplaatst: de zwaarste compound waar je de meeste kracht voor nodig hebt.',secondary:'Tweede compound met een andere bewegingsfamilie voor extra basisvolume.',
-      accessory:'Accessoire voor gericht extra volume zonder onnodige CNS-belasting.',isolation:'Isolatie om de doelspier af te werken.',core:'Corewerk aan het eind, zodat je romp fris blijft tijdens de compounds.',
-      conditioning:'Conditioning-afsluiter voor de metabole prikkel.',cooldown:'Cooldown om herstel te bevorderen.'};
+    var map={warmup:'Als warming-up om soepel en veilig te starten.',activation:'Ter activatie vóór de zware oefeningen.',
+      compound:'Vooraan: de zwaarste compound waar je de meeste kracht voor nodig hebt.',secondary:'Tweede compound met een andere bewegingsfamilie.',
+      accessory:'Accessoire voor gericht extra volume.',isolation:'Isolatie om de doelspier af te werken.',core:'Corewerk terwijl je romp fris blijft.',
+      conditioning:'Conditioning-afsluiter.',cooldown:'Cooldown om herstel te bevorderen.'};
     return map[it.pick]||'';
   }
-  function exCard(it,idx){
+  function exRow(it,idx){
     var e=ex(it.id),sel=s();if(!e)return '';
-    var poster='';try{poster=A().poster(it.id)||'';}catch(_){}
-    var hasVid=false;try{hasVid=A().hasVideo(it.id);}catch(_){}
-    var gc=WB.goalCfg(sel.goal);
-    var reps=gc.reps;var heavy=WB.isHeavy(e);
-    return '<div class="wb-ex" data-idx="'+idx+'">'+
-      '<div class="wb-ex-slot">'+esc(it.label)+(heavy?' <span class="wb-heavy">zwaar</span>':'')+'</div>'+
-      '<div class="wb-ex-main">'+
-        '<div class="wb-ex-thumb" style="background-image:url(\''+esc(poster)+'\')"></div>'+
-        '<div class="wb-ex-body">'+
-          '<div class="wb-ex-name">'+esc(e.identity.name)+'</div>'+
-          '<div class="wb-ex-meta">'+it.sets+'×'+esc(reps)+' · ~'+it.dur+' min · '+esc((e.identity.equipment||[]).join(', '))+'</div>'+
-          '<div class="wb-ex-badges"><span class="wb-b fat">Fatigue: '+esc(FAT_NL[e.intelligence.fatigue]||e.intelligence.fatigue)+'</span>'+
-            '<span class="wb-b rec">Herstel: '+esc(REC_NL[e.intelligence.recovery]||e.intelligence.recovery)+'</span></div>'+
-        '</div>'+
-      '</div>'+
-      '<div class="wb-ex-why"><b>Waarom gekozen:</b> '+esc(whyChosen(e,it,sel))+'<br><b>Waarom hier:</b> '+esc(whyHere(it))+'</div>'+
-      '<div class="wb-ex-acts">'+
-        '<button class="wb-act" onclick="WBUI.alt('+idx+')" title="Alternatief">⟳ Alternatief</button>'+
-        '<button class="wb-act" onclick="WBUI.move('+idx+',-1)" title="Omhoog">↑</button>'+
-        '<button class="wb-act" onclick="WBUI.move('+idx+',1)" title="Omlaag">↓</button>'+
-        (hasVid?'<button class="wb-act" onclick="WBUI.open(\''+it.id+'\')" title="Video &amp; coach">▶ Video · coach</button>':'<button class="wb-act" onclick="WBUI.open(\''+it.id+'\')" title="Details">Details · coach</button>')+
-        '<button class="wb-act del" onclick="WBUI.remove('+idx+')" title="Verwijderen">✕</button>'+
-      '</div>'+
-    '</div>';
+    var gc=WB.goalCfg(sel.goal);var open=!!_open[idx];
+    var h='<div class="wb2-row'+(open?' open':'')+'">';
+    h+='<button class="wb2-row-head" onclick="WBUI.toggleEx('+idx+')">'+
+        '<span class="wb2-row-tx"><span class="wb2-row-n">'+esc(e.identity.name)+'</span>'+
+          '<span class="wb2-row-m">'+esc(it.label)+' · '+it.sets+'×'+esc(gc.reps)+'</span></span>'+
+        '<span class="wb2-row-ar">'+(open?'▲':'▾')+'</span></button>';
+    if(open){
+      h+='<div class="wb2-row-body">'+
+         '<div class="wb2-why"><b>Waarom:</b> '+esc(whyChosen(e,it,sel))+' '+esc(whyHere(it))+'</div>'+
+         '<div class="wb2-badges"><span class="wb-b fat">Fatigue: '+esc(FAT_NL[e.intelligence.fatigue]||e.intelligence.fatigue)+'</span>'+
+           '<span class="wb-b rec">Herstel: '+esc(REC_NL[e.intelligence.recovery]||e.intelligence.recovery)+'</span></div>'+
+         '<div class="wb2-acts">'+
+           '<button class="wb2-act" onclick="WBUI.alt('+idx+')">⟳ Alternatief</button>'+
+           '<button class="wb2-act" onclick="WBUI.move('+idx+',-1)">↑</button>'+
+           '<button class="wb2-act" onclick="WBUI.move('+idx+',1)">↓</button>'+
+           '<button class="wb2-act" onclick="WBUI.open(\''+it.id+'\')">Video · coach</button>'+
+           '<button class="wb2-act del" onclick="WBUI.remove('+idx+')">✕</button>'+
+         '</div></div>';
+    }
+    h+='</div>';
+    return h;
   }
   function planView(){
-    var plan=WB.st.plan;if(!plan||!plan.items.length)return '<div class="wb-empty">Kies je voorkeuren — de training bouwt zichzelf realtime op.</div>';
-    var h=qualityBar()+statsBar();
-    h+='<div class="wb-coach">'+esc(WB.summary(plan,s()))+'</div>';
-    h+='<div class="wb-plan">';
-    plan.items.forEach(function(it,i){h+=exCard(it,i);});
+    var plan=WB.st.plan;if(!plan||!plan.items.length)return '<div class="wb2-empty">Kies je voorkeuren — de training bouwt zichzelf op.</div>';
+    var q=WB.quality(plan,s());var t=WB.stats(plan,s());
+    var st5='';for(var i=0;i<5;i++)st5+=(i<q.stars?'★':'☆');
+    var h='<div class="wb2-summary"><span class="wb2-sum-main">'+t.ex+' oefeningen · ~'+t.time+' min</span><span class="wb2-stars" title="Trainingskwaliteit '+q.score+'/100">'+st5+'</span></div>';
+    h+='<div class="wb2-plan">';
+    plan.items.forEach(function(it,i){h+=exRow(it,i);});
     h+='</div>';
-    h+='<button class="gw-entry" onclick="GWUI.launch()"><span class="gw-entry-ic">▶</span><span class="gw-entry-tx"><b>Start begeleide training</b><small>De coach leidt je stap voor stap door deze training</small></span><span class="gw-entry-ar">→</span></button>';
-    h+='<div class="wb-actbar">'+
-      '<button class="wb-save" onclick="WBUI.save()">💾 Opslaan</button>'+
-      '<button class="wb-save2" onclick="WBUI.dupe()">⧉ Dupliceren</button>'+
-      '<button class="wb-save2" onclick="WBUI.regen()">↻ Opnieuw genereren</button>'+
-    '</div>';
+    h+='<button class="wb2-primary" onclick="GWUI.launch()">Start begeleide training</button>';
+    h+='<div class="wb2-second"><button onclick="WBUI.save()">Opslaan</button><button onclick="WBUI.regen()">Opnieuw</button></div>';
     return h;
   }
   function savedView(){
     var arr=WB.savedList();if(!arr.length)return '';
-    var h='<div class="wb-saved-h">Opgeslagen trainingen</div>';
+    var h='<div class="wb2-saved-h">Opgeslagen</div>';
     arr.forEach(function(w){
-      h+='<div class="wb-saved"><div class="wb-saved-b" onclick="WBUI.resume(\''+w.id+'\')"><div class="wb-saved-n">'+(w.fav?'★ ':'')+esc(w.name)+'</div><div class="wb-saved-m">kwaliteit '+w.q+'/100 · '+w.plan.items.length+' oefeningen</div></div>'+
-        '<div class="wb-saved-a"><button onclick="WBUI.fav(\''+w.id+'\')" title="Favoriet">'+(w.fav?'★':'☆')+'</button>'+
-        '<button onclick="WBUI.dupeSaved(\''+w.id+'\')" title="Dupliceren">⧉</button>'+
-        '<button onclick="WBUI.del(\''+w.id+'\')" title="Verwijderen">✕</button></div></div>';
+      h+='<div class="wb2-saved"><button class="wb2-saved-b" onclick="WBUI.resume(\''+w.id+'\')"><span class="wb2-saved-n">'+(w.fav?'★ ':'')+esc(w.name)+'</span><span class="wb2-saved-m">'+w.plan.items.length+' oefeningen</span></button>'+
+        '<div class="wb2-saved-a"><button onclick="WBUI.fav(\''+w.id+'\')" aria-label="Favoriet">'+(w.fav?'★':'☆')+'</button>'+
+        '<button onclick="WBUI.dupeSaved(\''+w.id+'\')" aria-label="Dupliceren">⧉</button>'+
+        '<button onclick="WBUI.del(\''+w.id+'\')" aria-label="Verwijderen">✕</button></div></div>';
     });
     return h;
   }
@@ -12710,15 +12801,13 @@ var WBUI=(function(){
   function render(){
     var el=document.getElementById('wb-scroll');if(!el)return;
     if(WB.st.dirty||!WB.st.plan)WB.generate(s());
-    el.innerHTML='<div class="wb-intro">Stel je voorkeuren in — Trainingskompas bouwt automatisch een complete, logisch opgebouwde training uit alle 206 oefeningen. Elke wijziging herberekent realtime.</div>'+
-      wizard()+
-      '<div class="wb-divider"><span>Jouw training</span></div>'+
-      planView()+
-      savedView();
+    el.innerHTML=setupBar()+planView()+savedView();
   }
-  function rebuild(){WB.st.dirty=true;render();}
+  function rebuild(){WB.st.dirty=true;_open={};render();}
 
-  /* interacties */
+  /* interacties (engine-API ongewijzigd) */
+  function toggleSetup(){_setup=!_setup;render();}
+  function toggleEx(idx){_open[idx]=!_open[idx];render();}
   function setGoal(k){s().goal=k;rebuild();}
   function toggleMuscle(m){var a=s().muscles,i=a.indexOf(m);if(i>=0)a.splice(i,1);else a.push(m);rebuild();}
   function toggleEq(k){var a=s().equipment,i=a.indexOf(k);if(i>=0)a.splice(i,1);else a.push(k);if(!a.length)a.push('bodyweight');rebuild();}
@@ -12726,18 +12815,18 @@ var WBUI=(function(){
   function setLevel(k){s().level=k;rebuild();}
   function setForm(k){s().form=k;rebuild();}
   function alt(idx){var nid=WB.swapAlternative(idx);if(nid){render();if(window.toast)toast('Alternatief gekozen');}else if(window.toast)toast('Geen geschikt alternatief');}
-  function move(idx,dir){WB.moveItem(idx,dir);render();}
-  function remove(idx){WB.removeItem(idx);render();}
+  function move(idx,dir){WB.moveItem(idx,dir);_open={};render();}
+  function remove(idx){WB.removeItem(idx);_open={};render();}
   function open(id){go('s-library');if(window.renderLibrary)renderLibrary();if(window._libOpen)_libOpen(id);}
-  function regen(){WB.st.dirty=true;render();if(window.toast)toast('Training opnieuw gegenereerd');}
-  function save(){var id=WB.saveWorkout(null);render();if(window.toast)toast('Training opgeslagen');}
-  function dupe(){var id=WB.saveWorkout(WB.autoName()+' (kopie)');render();if(window.toast)toast('Gedupliceerd');}
+  function regen(){WB.st.dirty=true;_open={};render();if(window.toast)toast('Training opnieuw gegenereerd');}
+  function save(){WB.saveWorkout(null);render();if(window.toast)toast('Training opgeslagen');}
+  function dupe(){WB.saveWorkout(WB.autoName()+' (kopie)');render();if(window.toast)toast('Gedupliceerd');}
   function dupeSaved(wid){WB.duplicateWorkout(wid);render();if(window.toast)toast('Gedupliceerd');}
   function fav(wid){WB.favWorkout(wid);render();}
   function del(wid){WB.deleteWorkout(wid);render();if(window.toast)toast('Verwijderd');}
-  function resume(wid){if(WB.resumeWorkout(wid)){render();var sc=document.getElementById('wb-scroll');if(sc)sc.scrollTop=0;if(window.toast)toast('Training hervat');}}
+  function resume(wid){if(WB.resumeWorkout(wid)){_open={};render();var sc=document.getElementById('wb-scroll');if(sc)sc.scrollTop=0;if(window.toast)toast('Training hervat');}}
 
-  return {render:render,rebuild:rebuild,setGoal:setGoal,toggleMuscle:toggleMuscle,toggleEq:toggleEq,setTime:setTime,setLevel:setLevel,setForm:setForm,
+  return {render:render,rebuild:rebuild,toggleSetup:toggleSetup,toggleEx:toggleEx,setGoal:setGoal,toggleMuscle:toggleMuscle,toggleEq:toggleEq,setTime:setTime,setLevel:setLevel,setForm:setForm,
     alt:alt,move:move,remove:remove,open:open,regen:regen,save:save,dupe:dupe,dupeSaved:dupeSaved,fav:fav,del:del,resume:resume};
 })();
 /* Draft herstellen bij load (stil, geen render) */
@@ -13008,172 +13097,137 @@ var GWUI=(function(){
   function esc(s){return (window.escHtml?escHtml(s):String(s==null?'':s));}
   function A(){return window.ExerciseAssetProvider;}
   function ex(id){try{return ExerciseCatalogService.byId(id);}catch(e){return null;}}
-  var _tid=null,_lastKey='';
+  var _tid=null,_lastKey='',_detail=false;
 
   function fmt(sec){sec=Math.max(0,Math.round(sec));var m=Math.floor(sec/60),s=sec%60;return m+':'+(s<10?'0':'')+s;}
 
-  /* ── Video / techniekbeeld ── */
+  /* ── Slanke voortgang (één regel + dunne balk) ── */
+  function miniProgress(){
+    var p=GW.progress();
+    var pct=p.setsTotal?Math.round(p.setsDone/p.setsTotal*100):0;
+    return '<div class="g2-top"><div class="g2-bar"><span style="width:'+pct+'%"></span></div>'+
+      '<div class="g2-topline">Oefening '+(p.exDone+1>p.exTotal?p.exTotal:p.exDone+1)+' / '+p.exTotal+'</div></div>';
+  }
+
+  /* ── Detailpaneel (alleen op verzoek): video, coach, waarom, acties ── */
   function media(it){
     var id=it.id,has=false,poster='';
     try{has=A().hasVideo(id);}catch(_){}
     try{poster=A().poster(id)||'';}catch(_){}
-    if(has){
-      var src='';try{src=A().resolve(id,'video');}catch(_){}
-      return '<div class="gw-media"><video class="gw-video" controls playsinline preload="metadata" poster="'+poster+'">'+
-        '<source src="'+src+'" type="video/mp4"></video></div>';
-    }
+    if(has){var src='';try{src=A().resolve(id,'video');}catch(_){}
+      return '<div class="gw-media"><video class="gw-video" controls playsinline preload="metadata" poster="'+poster+'"><source src="'+src+'" type="video/mp4"></video></div>';}
     return '<div class="gw-media gw-media-ph" style="background-image:url(\''+poster+'\')"><span class="gw-media-tag">Techniekbeeld</span></div>';
   }
-
-  /* ── Voortgangsbalk ── */
-  function progressBar(){
-    var p=GW.progress();
-    var pct=p.setsTotal?Math.round(p.setsDone/p.setsTotal*100):0;
-    return '<div class="gw-prog">'+
-      '<div class="gw-prog-bar"><span style="width:'+pct+'%"></span></div>'+
-      '<div class="gw-prog-row">'+
-        '<span><b>'+p.exDone+'/'+p.exTotal+'</b> oefeningen</span>'+
-        '<span><b>'+p.setsDone+'/'+p.setsTotal+'</b> sets</span>'+
-        '<span><b>'+p.elapsed+'</b> min</span>'+
-        '<span>nog ~<b>'+p.remain+'</b> min</span>'+
-      '</div>'+
-      '<div class="gw-fat"><span class="gw-fat-l">Belasting</span><div class="gw-fat-bar"><span style="width:'+p.fatiguePct+'%"></span></div></div>'+
-    '</div>';
-  }
-
-  /* ── Intro / coach-introductie ── */
-  function introView(){
-    var a=GW.active();var p=GW.progress();var sel=a.sel;
-    var gc=(window.WB&&WB.goalCfg)?WB.goalCfg(sel.goal):{label:sel.goal};
-    var first=a.items[0];
-    return '<div class="gw-intro">'+
-      '<div class="gw-intro-badge">Begeleide training</div>'+
-      '<h2 class="gw-intro-h">'+esc(gc.label)+' · '+p.exTotal+' oefeningen</h2>'+
-      '<p class="gw-intro-lead">Ik loods je stap voor stap door je training. Per oefening zie je de uitvoering, je vorige prestatie en waarom die oefening op dit moment volgt. Na elke set vraag ik hoe het voelde, zodat het advies met je meebeweegt.</p>'+
-      '<div class="gw-intro-card">'+
-        '<div class="gw-intro-k">Zo pakken we het aan</div>'+
-        '<ul class="gw-intro-list">'+
-          '<li>Rustige warming-up om soepel en veilig te starten</li>'+
-          '<li>De zwaarste oefeningen eerst, als je fris bent</li>'+
-          '<li>Rust met tips tussen de sets, afgestemd op je doel</li>'+
-          '<li>Een cooldown en herstelvenster aan het einde</li>'+
-        '</ul>'+
-      '</div>'+
-      '<div class="gw-intro-first">Eerste oefening: <b>'+esc((ex(first.id)||{}).identity?ex(first.id).identity.name:'')+'</b></div>'+
-      '<button class="gw-primary" onclick="GWUI.begin()">Start warming-up →</button>'+
-      '<button class="gw-ghost" onclick="GWUI.quit()">Annuleren</button>'+
-    '</div>';
-  }
-
-  /* ── Header (terug + fase) ── */
-  function phaseLabel(ph){return ph==='rest'?'Rust':(ph==='rpe'?'Hoe voelde het?':(ph==='advice'?'Coach':'In training'));}
-
-  /* ── Oefening (exercise / rpe / advice delen dit scherm) ── */
-  function exerciseView(ph){
-    var a=GW.active(),it=GW.cur(),e=ex(it.id);if(!e)return '';
-    var setNo=Math.min(it.setsDone.length+1,it.setsTarget);
-    var trans=(a.gi>0&&it.setsDone.length===0&&ph==='exercise')?GW.transition():'';
-    var prevTxt='';
-    if(it.prev){prevTxt=(it.prev.weight!=null?it.prev.weight+' kg · ':'')+(it.prev.reps||'')+(it.prev.feel?' · voelde '+it.prev.feel.replace('_',' '):'');}
-    var h=progressBar();
-    if(trans)h+='<div class="gw-trans">➜ '+esc(trans)+'</div>';
-    h+='<div class="gw-card">';
-    h+='<div class="gw-slot">'+esc(it.label)+'</div>';
-    h+=media(it);
-    h+='<h3 class="gw-name">'+esc(e.identity.name)+'</h3>';
-    h+='<div class="gw-meta">'+it.setsTarget+' sets · '+esc(it.reps)+' herh. · rust '+it.rest+'s · geschatte RPE '+esc(GW.estRPE(a.sel))+'</div>';
-    h+='<div class="gw-badges">'+
-      '<span class="gw-b fat">Fatigue: '+esc(GW.FAT_NL[e.intelligence.fatigue]||e.intelligence.fatigue)+'</span>'+
-      '<span class="gw-b rec">Herstelimpact: '+esc(GW.REC_NL[e.intelligence.recovery]||e.intelligence.recovery)+'</span>'+
-      (it.prev?'<span class="gw-b prev">Vorige: '+esc(prevTxt)+'</span>':'<span class="gw-b prev">Vorige: eerste keer</span>')+
-    '</div>';
-    h+='<div class="gw-why"><b>Waarom deze oefening:</b> '+esc(GW.whyChosen(it))+'<br><b>Waarom nu:</b> '+esc(GW.whyNow(it))+'</div>';
+  function detailPanel(it,e){
     var coach=GW.coachText(it.id);
+    var h='<div class="g2-detail">';
+    h+=media(it);
+    h+='<div class="g2-badges"><span class="gw-b fat">Fatigue: '+esc(GW.FAT_NL[e.intelligence.fatigue]||e.intelligence.fatigue)+'</span>'+
+       '<span class="gw-b rec">Herstel: '+esc(GW.REC_NL[e.intelligence.recovery]||e.intelligence.recovery)+'</span>'+
+       (it.prev?'<span class="gw-b prev">Vorige: '+esc((it.prev.weight!=null?it.prev.weight+' kg · ':'')+(it.prev.reps||''))+'</span>':'')+'</div>';
+    h+='<div class="g2-why"><b>Waarom deze oefening:</b> '+esc(GW.whyChosen(it))+'<br><b>Waarom nu:</b> '+esc(GW.whyNow(it))+'</div>';
     if(coach)h+='<div class="gw-coach">'+esc(coach)+'</div>';
+    h+='<div class="g2-editrow">'+
+        '<button class="g2-edit" onclick="GWUI.alt()">⟳ Alternatief</button>'+
+        '<button class="g2-edit" onclick="GWUI.sets(1)">+ set</button>'+
+        '<button class="g2-edit" onclick="GWUI.sets(-1)">− set</button>'+
+        '<button class="g2-edit" onclick="GWUI.skip()">↦ Sla over</button>'+
+      '</div>';
     h+='</div>';
-
-    if(ph==='exercise'){
-      // gewicht + sets aanpassen (live edit)
-      h+='<div class="gw-live">'+
-        '<div class="gw-live-row"><span class="gw-live-l">Gewicht</span>'+
-          '<button class="gw-step" onclick="GWUI.wt(-2.5)">–</button>'+
-          '<span class="gw-live-v">'+(it.weight!=null?it.weight+' kg':'—')+'</span>'+
-          '<button class="gw-step" onclick="GWUI.wt(2.5)">+</button></div>'+
-        '<div class="gw-live-row"><span class="gw-live-l">Sets</span>'+
-          '<button class="gw-step" onclick="GWUI.sets(-1)">–</button>'+
-          '<span class="gw-live-v">'+it.setsTarget+'</span>'+
-          '<button class="gw-step" onclick="GWUI.sets(1)">+</button></div>'+
-      '</div>';
-      h+='<div class="gw-editbar">'+
-        '<button class="gw-edit" onclick="GWUI.alt()">⟳ Alternatief</button>'+
-        '<button class="gw-edit" onclick="GWUI.details()">▶ Video &amp; coach</button>'+
-        '<button class="gw-edit" onclick="GWUI.skip()">↦ Sla over</button>'+
-      '</div>';
-      h+='<div class="gw-setnow">Set <b>'+setNo+'</b> van '+it.setsTarget+'</div>';
-      h+='<button class="gw-primary" onclick="GWUI.setDone()">Set voltooid ✓</button>';
-      h+='<button class="gw-ghost" onclick="GWUI.quit()">Training pauzeren</button>';
-    }else if(ph==='rpe'){
-      h+='<div class="gw-rpe"><div class="gw-rpe-q">Hoe voelde set '+setNo+'?</div><div class="gw-rpe-opts">';
-      GW.FEELS.forEach(function(f){h+='<button class="gw-feel" onclick="GWUI.rate(\''+f.k+'\')"><span class="gw-feel-o">○</span>'+esc(f.l)+'</button>';});
-      h+='</div></div>';
-    }else if(ph==='advice'){
-      var last=it.setsDone[it.setsDone.length-1];
-      var more=it.setsDone.length<it.setsTarget;
-      h+='<div class="gw-advice"><div class="gw-advice-h">Coach</div><p>'+esc(GW.setAdvice(a.lastFeel))+'</p></div>';
-      if(more)h+='<button class="gw-primary" onclick="GWUI.next()">Naar rust →</button>';
-      else{
-        var lastEx=a.gi>=a.items.length-1;
-        h+='<button class="gw-primary" onclick="GWUI.next()">'+(lastEx?'Training afronden →':'Volgende oefening →')+'</button>';
-      }
-    }
     return h;
   }
 
-  /* ── Rusttimer ── */
-  function restView(){
-    var a=GW.active(),it=GW.cur();
+  /* ── Trainen: alleen de essentie ── */
+  function exerciseView(){
+    var a=GW.active(),it=GW.cur(),e=ex(it.id);if(!e)return '';
     var setNo=Math.min(it.setsDone.length+1,it.setsTarget);
-    return progressBar()+
-      '<div class="gw-rest">'+
-        '<div class="gw-rest-lbl">Rust</div>'+
-        '<div class="gw-rest-num" id="gw-rest-num">'+fmt(a.restLeft)+'</div>'+
-        '<div class="gw-rest-adj">'+
-          '<button class="gw-step" onclick="GWUI.rest(-15)">−15s</button>'+
-          '<button class="gw-step" onclick="GWUI.rest(15)">+15s</button>'+
-        '</div>'+
-        '<div class="gw-rest-tip">'+esc(GW.restTip(it.id))+'</div>'+
-        '<div class="gw-rest-next">Straks: set <b>'+setNo+'</b> van '+it.setsTarget+' — '+esc((ex(it.id)||{identity:{}}).identity.name||'')+'</div>'+
-        '<button class="gw-primary" onclick="GWUI.skipRest()">Volgende set →</button>'+
+    var trans=(a.gi>0&&it.setsDone.length===0)?GW.transition():'';
+    var h=miniProgress();
+    if(trans)h+='<div class="g2-trans">'+esc(trans)+'</div>';
+    h+='<div class="g2-stage">';
+    h+='<div class="g2-slot">'+esc(it.label)+'</div>';
+    h+='<h2 class="g2-name">'+esc(e.identity.name)+'</h2>';
+    h+='<div class="g2-setline">Set '+setNo+' van '+it.setsTarget+'</div>';
+    h+='<div class="g2-nums">'+
+        '<div class="g2-num"><span class="g2-num-v">'+esc(it.reps)+'</span><span class="g2-num-l">herhalingen</span></div>'+
+        '<div class="g2-num"><span class="g2-num-v">'+(it.weight!=null?it.weight:'—')+'</span><span class="g2-num-l">kg'+
+          '<button class="g2-wt" onclick="GWUI.wt(-2.5)" aria-label="Minder gewicht">−</button><button class="g2-wt" onclick="GWUI.wt(2.5)" aria-label="Meer gewicht">+</button></span></div>'+
       '</div>';
+    h+='</div>';
+    h+='<button class="g2-primary" onclick="GWUI.setDone()">Set voltooid</button>';
+    h+='<button class="g2-more" onclick="GWUI.detail()" aria-expanded="'+(_detail?'true':'false')+'">'+(_detail?'Verberg details':'Video, coach &amp; meer')+'</button>';
+    if(_detail)h+=detailPanel(it,e);
+    h+='<button class="g2-quit" onclick="GWUI.quit()">Pauzeren</button>';
+    return h;
   }
 
-  /* ── Eindscherm ── */
+  /* ── RPE: eigen rustig scherm ── */
+  function rpeView(){
+    var it=GW.cur();var setNo=Math.min(it.setsDone.length+1,it.setsTarget);
+    var h='<div class="g2-ask"><div class="g2-ask-q">Hoe voelde set '+setNo+'?</div><div class="g2-feels">';
+    GW.FEELS.forEach(function(f){h+='<button class="gw-feel" onclick="GWUI.rate(\''+f.k+'\')"><span class="gw-feel-o">○</span>'+esc(f.l)+'</button>';});
+    h+='</div></div>';
+    return h;
+  }
+  /* ── Coachadvies: eigen rustig scherm ── */
+  function adviceView(){
+    var a=GW.active(),it=GW.cur();
+    var more=it.setsDone.length<it.setsTarget;
+    var lastEx=a.gi>=a.items.length-1;
+    var h='<div class="g2-advice"><div class="gw-advice-h">Coach</div><p>'+esc(GW.setAdvice(a.lastFeel))+'</p></div>';
+    h+='<button class="g2-primary" onclick="GWUI.next()">'+(more?'Naar rust':(lastEx?'Training afronden':'Volgende oefening'))+'</button>';
+    return h;
+  }
+  /* ── Rust: alleen timer + volgende + tip achter tik ── */
+  function restView(){
+    var a=GW.active(),it=GW.cur();var setNo=Math.min(it.setsDone.length+1,it.setsTarget);
+    return '<div class="g2-rest">'+
+      '<div class="g2-rest-lbl">Rust</div>'+
+      '<div class="g2-rest-num" id="gw-rest-num">'+fmt(a.restLeft)+'</div>'+
+      '<div class="g2-rest-adj"><button class="g2-wt" onclick="GWUI.rest(-15)">−15s</button><button class="g2-wt" onclick="GWUI.rest(15)">+15s</button></div>'+
+      '<div class="g2-rest-next">Straks: set '+setNo+' van '+it.setsTarget+'</div>'+
+      '<button class="g2-primary" onclick="GWUI.skipRest()">Volgende set</button>'+
+      '<button class="g2-more" onclick="GWUI.detail()">'+(_detail?'Verberg tip':'Coachtip')+'</button>'+
+      (_detail?'<div class="g2-detail"><div class="gw-coach">'+esc(GW.restTip(it.id))+'</div></div>':'')+
+    '</div>';
+  }
+
+  /* ── Intro (rustig) ── */
+  function introView(){
+    var a=GW.active();var p=GW.progress();var sel=a.sel;
+    var gc=(window.WB&&WB.goalCfg)?WB.goalCfg(sel.goal):{label:sel.goal};
+    var first=a.items[0];var fe=ex(first.id);
+    return '<div class="g2-intro">'+
+      '<div class="g2-intro-k">Begeleide training</div>'+
+      '<h1 class="g2-intro-h">'+esc(gc.label)+'</h1>'+
+      '<div class="g2-intro-s">'+p.exTotal+' oefeningen · ik loods je stap voor stap</div>'+
+      '<div class="g2-intro-first">Eerste oefening<br><b>'+esc(fe?fe.identity.name:'')+'</b></div>'+
+      '<button class="g2-primary" onclick="GWUI.begin()">Start warming-up</button>'+
+      '<button class="g2-quit" onclick="GWUI.quit()">Annuleren</button>'+
+    '</div>';
+  }
+
+  /* ── Eindscherm (rustig) ── */
   function doneView(){
     var d=GW.summaryData();
-    var dist=(d.dist||[]).slice(0,5).map(function(x){return '<div class="gw-dist"><span class="gw-dist-m">'+esc(x.m)+'</span><div class="gw-dist-bar"><span style="width:'+x.pct+'%"></span></div><span class="gw-dist-p">'+x.pct+'%</span></div>';}).join('');
-    return '<div class="gw-done">'+
-      '<div class="gw-done-badge">✓ Voltooid</div>'+
-      '<h2 class="gw-done-h">'+esc(d.name)+'-training afgerond</h2>'+
-      '<div class="gw-coach gw-done-coach">'+esc(GW.coachSummary(d))+'</div>'+
-      '<div class="gw-stats">'+
-        '<div class="gw-stat"><span class="gw-stat-v">'+d.time+'</span><span class="gw-stat-l">minuten</span></div>'+
-        '<div class="gw-stat"><span class="gw-stat-v">'+d.volume+'</span><span class="gw-stat-l">sets</span></div>'+
-        '<div class="gw-stat"><span class="gw-stat-v">'+d.exercises+'</span><span class="gw-stat-l">oefeningen</span></div>'+
-        '<div class="gw-stat"><span class="gw-stat-v">'+(d.avgRPE||'—')+'</span><span class="gw-stat-l">gem. RPE</span></div>'+
-      '</div>'+
-      '<div class="gw-done-sec"><div class="gw-done-k">Spierverdeling</div>'+(dist||'<div class="gw-empty">Geen sets geregistreerd.</div>')+'</div>'+
-      '<div class="gw-done-sec"><div class="gw-done-k">Belasting &amp; herstel</div>'+
-        '<div class="gw-done-load">Totale belastingsindex: <b>'+d.load+'</b></div>'+
-        '<div class="gw-coach">'+esc(GW.recoveryAdvice(d))+'</div>'+
-      '</div>'+
-      '<button class="gw-primary" onclick="GWUI.finishHome()">Klaar</button>'+
-      '<button class="gw-ghost" onclick="GWUI.again()">Nieuwe training bouwen</button>'+
+    var dist=(d.dist||[]).slice(0,3).map(function(x){return esc(x.m)+' '+x.pct+'%';}).join(' · ');
+    return '<div class="g2-done">'+
+      '<div class="g2-done-badge">Voltooid</div>'+
+      '<h1 class="g2-done-h">'+esc(d.name)+'</h1>'+
+      '<div class="g2-done-nums"><div class="g2-num"><span class="g2-num-v">'+d.time+'</span><span class="g2-num-l">min</span></div>'+
+        '<div class="g2-num"><span class="g2-num-v">'+d.volume+'</span><span class="g2-num-l">sets</span></div>'+
+        '<div class="g2-num"><span class="g2-num-v">'+(d.avgRPE||'—')+'</span><span class="g2-num-l">gem. RPE</span></div></div>'+
+      '<div class="gw-coach g2-done-coach">'+esc(GW.coachSummary(d))+'</div>'+
+      '<button class="g2-more" onclick="GWUI.detail()">'+(_detail?'Verberg details':'Details & herstel')+'</button>'+
+      (_detail?'<div class="g2-detail">'+(dist?'<div class="g2-why"><b>Spierverdeling:</b> '+dist+'</div>':'')+
+        '<div class="gw-coach">'+esc(GW.recoveryAdvice(d))+'</div></div>':'')+
+      '<button class="g2-primary" onclick="GWUI.finishHome()">Klaar</button>'+
+      '<button class="g2-quit" onclick="GWUI.again()">Nieuwe training</button>'+
     '</div>';
   }
 
   function emptyView(){
-    return '<div class="gw-empty-screen">Geen actieve training. Bouw eerst een training in de Workout Builder en start daarna de begeleide training.'+
-      '<button class="gw-primary" onclick="go(\'s-builder\')">Naar Workout Builder</button></div>';
+    return '<div class="g2-empty">Geen actieve training.<button class="g2-primary" onclick="go(\'s-builder\')">Naar Workout Builder</button></div>';
   }
 
   /* ── Render-dispatcher ── */
@@ -13186,11 +13240,12 @@ var GWUI=(function(){
     if(ph==='intro')el.innerHTML=introView();
     else if(ph==='done')el.innerHTML=doneView();
     else if(ph==='rest')el.innerHTML=restView();
-    else el.innerHTML=exerciseView(ph);
+    else if(ph==='rpe')el.innerHTML=rpeView();
+    else if(ph==='advice')el.innerHTML=adviceView();
+    else el.innerHTML=exerciseView();
     if(ph==='rest')startTimer();
-    // scroll alleen resetten bij een echte fase-/oefening-wissel
-    var key=ph+'#'+a.gi+'#'+(GW.cur()?GW.cur().setsDone.length:0);
-    if(ph==='intro'||ph==='done'||ph==='exercise'){if(key!==_lastKey)el.scrollTop=0;}
+    var key=ph+'#'+a.gi;
+    if(key!==_lastKey){el.scrollTop=0;_detail=false;}
     _lastKey=key;
   }
 
@@ -13206,12 +13261,12 @@ var GWUI=(function(){
   }
   function stopTimer(){if(_tid){clearInterval(_tid);_tid=null;}}
 
-  /* ── Interacties ── */
+  /* ── Interacties (ongewijzigd t.o.v. engine-API) ── */
   function launch(){
     if(!window.GW)return;
     if(GW.hasActive()){GW.resume();}
     else{if(!(window.WB&&WB.st&&WB.st.plan))WB.generate(WB.st.sel);GW.start(WB.st.plan,WB.st.sel);}
-    go('s-guided');_lastKey='';render();
+    go('s-guided');_lastKey='';_detail=false;render();
   }
   function begin(){GW.begin();render();}
   function setDone(){GW.finishSet();render();}
@@ -13222,7 +13277,7 @@ var GWUI=(function(){
   function wt(d){GW.adjustWeight(d);render();}
   function sets(d){GW.adjustSets(d);render();}
   function skip(){GW.nextExercise();render();}
-  function details(){var it=GW.cur();if(it){go('s-library');if(window.renderLibrary)renderLibrary();if(window._libOpen)_libOpen(it.id);}}
+  function detail(){_detail=!_detail;render();}
   function alt(){
     var it=GW.cur();if(!it)return;
     var alts=GW.altList(it.id).filter(function(e){return e&&e.catalog_id!==it.id;});
@@ -13234,7 +13289,7 @@ var GWUI=(function(){
   function again(){GW.abort();go('s-builder');if(window.WBUI)WBUI.render();}
 
   return {render:render,launch:launch,begin:begin,setDone:setDone,rate:rate,next:next,skipRest:skipRest,
-    rest:rest,wt:wt,sets:sets,skip:skip,details:details,alt:alt,quit:quit,finishHome:finishHome,again:again};
+    rest:rest,wt:wt,sets:sets,skip:skip,detail:detail,details:detail,alt:alt,quit:quit,finishHome:finishHome,again:again};
 })();
 </script>
 <script>

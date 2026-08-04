@@ -907,6 +907,130 @@ html[data-theme="dark"] .lib-imgbox .lib-skel{background:linear-gradient(100deg,
 @keyframes lib9grow{from{width:0}}
 @media(prefers-reduced-motion:reduce){#s-library .scroll,.lib-secblock,.lib-cc,.lib-actbar span{animation:none}.lib-card,.lib-item,.lib-qchip,.lib-tchip,.lib-img,.lib-favbtn{transition:none}.lib-skel{animation:none}.lib-ripple{display:none}}
 
+
+/* ═══ Sprint 10 — Premium Exercise Experience v3 ═══ */
+/* Poster-overlays (subtiel, Apple Fitness) */
+.lib-imgbox .lib-ov{position:absolute;z-index:3;font-size:9.5px;font-weight:800;letter-spacing:.01em;color:#fff;background:rgba(15,25,35,.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);padding:3px 7px;border-radius:8px;line-height:1.2}
+.lib-imgbox .lib-ov-tl{top:7px;left:7px}
+.lib-imgbox .lib-ov-tr{top:7px;right:7px;color:#ffd66b}
+.lib-hero-grad{position:absolute;inset:auto 0 0 0;height:52%;z-index:2;background:linear-gradient(to top,rgba(10,20,30,.6),transparent);pointer-events:none}
+/* Image zoom on hover/press */
+.lib-imgbox .lib-img{transition:opacity .4s ease,transform .5s cubic-bezier(.2,.8,.2,1)}
+.lib-card:hover .lib-imgbox .lib-img.is-loaded{transform:scale(1.06)}
+.lib-card:active .lib-imgbox .lib-img.is-loaded{transform:scale(1.03)}
+/* Badge system — consistente kleuren */
+.lib-badges2{display:flex;flex-wrap:wrap;gap:5px}
+.lib-badges2.mini{margin-top:5px;gap:4px;flex-wrap:nowrap;overflow:hidden}
+.lib-b2{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:8px;white-space:nowrap;line-height:1.3;border:1px solid transparent}
+.lib-badges2.mini .lib-b2{font-size:10px;padding:2px 7px}
+.b-rating{background:rgba(245,166,35,.16);color:#c77f00;border-color:rgba(245,166,35,.28)}
+.b-compound{background:rgba(225,112,85,.14);color:#c0432a;border-color:rgba(225,112,85,.26)}
+.b-iso{background:rgba(0,184,148,.14);color:#00795f;border-color:rgba(0,184,148,.26)}
+.b-explo{background:rgba(108,92,231,.14);color:#4a3bbf;border-color:rgba(108,92,231,.26)}
+.b-pop{background:rgba(253,203,110,.18);color:#a9761a}
+.b-eq{background:rgba(99,110,114,.13);color:#3f4a4f;border-color:rgba(99,110,114,.2)}
+.b-muscle{background:rgba(9,132,227,.12);color:#0a6ebf;border-color:rgba(9,132,227,.22)}
+.b-goal{background:rgba(108,92,231,.12);color:#5544c0;border-color:rgba(108,92,231,.22)}
+.b-beg{background:rgba(0,184,148,.15);color:#00795f}
+.b-int{background:rgba(245,166,35,.16);color:#b07d13}
+.b-adv{background:rgba(214,48,49,.13);color:#b02324}
+html[data-theme="dark"] .b-rating{color:#ffce7a}html[data-theme="dark"] .b-compound{color:#ff9b82}html[data-theme="dark"] .b-iso{color:#4fe3c4}
+html[data-theme="dark"] .b-explo{color:#b3a6ff}html[data-theme="dark"] .b-eq{color:#c2ccd2}html[data-theme="dark"] .b-muscle{color:#7fc0ff}
+html[data-theme="dark"] .b-goal{color:#b3a6ff}html[data-theme="dark"] .b-beg{color:#4fe3c4}html[data-theme="dark"] .b-int{color:#ffce7a}html[data-theme="dark"] .b-adv{color:#ff8f90}
+/* Hero badges over poster */
+.lib-hero{position:relative}
+.lib-badges2.onhero{position:absolute;left:12px;right:12px;bottom:12px;z-index:4}
+.lib-badges2.onhero .lib-b2{background:rgba(15,25,35,.55);color:#fff;border-color:rgba(255,255,255,.14);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.lib-badges2.detailbadges{margin:0 0 14px}
+/* Motivatie */
+.lib-motiv{margin:0 0 12px;font-size:14px;font-style:italic;color:var(--g5,var(--g6));line-height:1.4;padding-left:12px;border-left:3px solid var(--accent)}
+/* Item rating */
+.lib-it-r{font-size:11px;font-weight:800;color:#c77f00;flex:none;margin-left:auto}
+html[data-theme="dark"] .lib-it-r{color:#ffce7a}
+.lib-item .lib-it-fav{margin-left:6px}
+/* Suggesties (typeahead) */
+.lib-sug{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 12px}
+.lib-sug-i{background:var(--card);border:1px solid var(--border,rgba(0,0,0,.08));color:var(--g6);border-radius:20px;padding:7px 12px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:var(--f);box-shadow:var(--shadow)}
+.lib-sug-i:active{transform:scale(.95)}
+.lib-tchip.hot{border-color:rgba(225,112,85,.35)}
+/* AI Coach card accenten (uitgebreid) */
+.lib-cc--zegt{border-left:3px solid #00b894}
+.lib-cc--eff{border-left:3px solid #e17055;background:linear-gradient(180deg,rgba(225,112,85,.05),transparent)}
+.lib-cc--best{border-left:3px solid #6c5ce7}
+.lib-cc--let{border-left:3px solid #d63031;background:linear-gradient(180deg,rgba(214,48,49,.05),transparent)}
+.lib-cc--wist{border-left:3px solid #0984e3;background:linear-gradient(180deg,rgba(9,132,227,.05),transparent)}
+.lib-cc--groei{border-left:3px solid #00cec9}
+.lib-cc--herstel{border-left:3px solid #e1a100;background:linear-gradient(180deg,rgba(245,166,35,.06),transparent)}
+.lib-cc--fav{border-left:3px solid #f5a623;background:linear-gradient(180deg,rgba(245,166,35,.09),transparent)}
+/* Blessurepreventie card */
+.lib-safe{border:1px solid rgba(214,48,49,.18);background:linear-gradient(180deg,rgba(214,48,49,.045),transparent)}
+.lib-safep{margin:0;font-size:13.5px;color:var(--g6);line-height:1.45}
+/* Exercise Intelligence — score grid */
+.lib-scores{display:grid;grid-template-columns:1fr 1fr;gap:9px 14px}
+.lib-score-l{display:flex;justify-content:space-between;font-size:11.5px;font-weight:600;color:var(--g6);margin-bottom:4px}
+.lib-score-l b{color:var(--accent);font-weight:800}
+.lib-scorebar{height:6px;border-radius:5px;background:var(--g1);overflow:hidden}
+.lib-scorebar span{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,#00b894,#00cec9);animation:lib10grow .6s ease both}
+/* KV grid (statistieken) */
+.lib-kv-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+.lib-kv{display:flex;justify-content:space-between;gap:8px;font-size:12px;border-bottom:1px solid var(--border,rgba(0,0,0,.06));padding:5px 0}
+.lib-kv span{color:var(--g4)}.lib-kv b{color:var(--g6);text-align:right;font-weight:700}
+/* Micro-interacties: stagger + section reveal */
+.lib-card{animation:lib10in .38s cubic-bezier(.2,.8,.2,1) both}
+@keyframes lib10in{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes lib10grow{from{width:0}}
+@media(prefers-reduced-motion:reduce){.lib-card{animation:none}.lib-imgbox .lib-img{transition:opacity .3s}.lib-card:hover .lib-imgbox .lib-img.is-loaded,.lib-card:active .lib-imgbox .lib-img.is-loaded{transform:none}.lib-scorebar span{animation:none}}
+/* ── Exercise Intelligence Dashboard ── */
+.lib-dash-top{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+.lib-dash-rating{font-size:15px;font-weight:800;color:#c77f00;background:rgba(245,166,35,.14);padding:4px 11px;border-radius:10px}
+html[data-theme="dark"] .lib-dash-rating{color:#ffce7a}
+.lib-dash-note{font-size:11px;color:var(--g4);line-height:1.3}
+.lib-radials{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 16px}
+.lib-radial{display:flex;flex-direction:column;align-items:center;position:relative}
+.lib-radial svg{width:56px;height:56px;transform:rotate(-90deg)}
+.lib-radial .rg{fill:none;stroke:var(--g1);stroke-width:5}
+.lib-radial .rf{fill:none;stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1)}
+.lib-radial-v{position:absolute;top:19px;font-size:14px;font-weight:800;color:var(--g6)}
+.lib-radial-l{font-size:10px;font-weight:600;color:var(--g4);margin-top:3px;text-align:center;line-height:1.2}
+.lib-idxs{display:flex;flex-direction:column;gap:11px}
+.lib-idx-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.lib-idx-l{font-size:12.5px;font-weight:700;color:var(--g6)}
+.lib-idx-v{font-size:12px;font-weight:800}
+.lib-idx-v.lvl-hoog{color:#00795f}.lib-idx-v.lvl-mid{color:#b07d13}.lib-idx-v.lvl-laag{color:#c0432a}
+html[data-theme="dark"] .lib-idx-v.lvl-hoog{color:#4fe3c4}html[data-theme="dark"] .lib-idx-v.lvl-mid{color:#ffce7a}html[data-theme="dark"] .lib-idx-v.lvl-laag{color:#ff9b82}
+.lib-idx-why{font-size:11px;color:var(--g4);margin-top:3px;line-height:1.35}
+.lib-cmp-btn{width:100%;margin-top:16px;padding:12px;border-radius:13px;border:1px solid var(--accent);background:rgba(0,184,148,.08);color:var(--accent);font-size:13.5px;font-weight:800;font-family:var(--f);cursor:pointer;position:relative;overflow:hidden}
+.lib-cmp-btn:active{transform:scale(.98)}
+/* ── Vergelijken ── */
+.lib-cmp-title{font-size:16px;font-weight:800;color:var(--g6);flex:1;text-align:center}
+.lib-cmp-heads{display:flex;align-items:stretch;gap:8px;margin:6px 0 16px}
+.lib-cmp-hd{flex:1;background:var(--card);border:1px solid var(--border,rgba(0,0,0,.06));border-radius:14px;padding:10px;text-align:center;box-shadow:var(--shadow)}
+.lib-cmp-hd .lib-imgbox.sm{width:100%;height:84px;aspect-ratio:auto;border-radius:11px;margin-bottom:8px}
+.lib-cmp-nm{font-size:12.5px;font-weight:700;color:var(--g6);line-height:1.25;min-height:2.4em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lib-cmp-r{font-size:12px;font-weight:800;color:#c77f00;margin-top:4px}
+html[data-theme="dark"] .lib-cmp-r{color:#ffce7a}
+.lib-cmp-sub{font-size:10.5px;color:var(--g4);margin-top:2px}
+.lib-cmp-vs{align-self:center;font-size:12px;font-weight:800;color:var(--g4)}
+.lib-cmp-rows{display:flex;flex-direction:column;gap:10px}
+.lib-cmp-row{display:grid;grid-template-columns:1fr 90px 1fr;align-items:center;gap:8px}
+.lib-cmp-lbl{text-align:center;font-size:11px;font-weight:700;color:var(--g4)}
+.lib-cmp-side{display:flex;align-items:center;gap:6px}
+.lib-cmp-side .lib-scorebar{flex:1;height:7px}
+.lib-cmp-side b{font-size:12px;font-weight:800;color:var(--g5,var(--g6));min-width:20px}
+.lib-cmp-side:first-child{flex-direction:row}
+.lib-cmp-side:first-child .lib-scorebar span{background:#0984e3;float:right}
+.lib-cmp-side:last-child .lib-scorebar span{background:#6c5ce7}
+.lib-cmp-side.win b{color:var(--accent)}
+.lib-cmp-chg{margin-top:16px}
+.lib-cmp-swap{width:100%;padding:11px;border-radius:12px;border:1px solid var(--border,rgba(0,0,0,.1));background:var(--card);color:var(--g6);font-size:13px;font-weight:700;font-family:var(--f);cursor:pointer}
+.lib-cmp-pick-h{font-size:13px;color:var(--g6);margin:4px 0 12px}
+/* ── Video placeholder ── */
+.lib-video-ph{position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;background:linear-gradient(135deg,#0e2733,#15384a);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;overflow:hidden}
+.lib-video-ph::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,rgba(0,184,148,.18),transparent 60%)}
+.lib-video-play{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.14);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;font-size:19px;color:#fff;z-index:1;padding-left:4px}
+.lib-video-txt{font-size:12.5px;font-weight:700;color:rgba(255,255,255,.85);z-index:1}
+.lib-video video{width:100%;border-radius:14px;display:block}
+
 </style>
 </head>
 <body>
@@ -2596,7 +2720,7 @@ html[data-theme="dark"] .lib-imgbox .lib-skel{background:linear-gradient(100deg,
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.3.59';
+const APP_VER = 'v3.3.60';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6324,8 +6448,125 @@ var ExerciseCatalogService=(function(){
   function uniq(f){var s={};C.forEach(function(c){[].concat(f(c)).forEach(function(v){if(v)s[v]=1;});});return Object.keys(s).sort();}
 })();
 
-/* ── Premium Exercise Experience v2 (Sprint 9) — presentatie; roept uitsluitend ECS + AssetProvider aan.
+/* ── Premium Exercise Experience v3 (Sprint 10) — presentatie + afgeleide intelligentie.
+   Behoudt Sprint 9 volledig (AssetProvider, lazy, ripple, recommendation, secties, detail) en
+   voegt toe: ExerciseIntelligence-engine, badges, motivatie, verrijkte cards/detail/coach/zoek.
    ECS Search Engine ONGEWIJZIGD. Media uitsluitend via ExerciseAssetProvider. ── */
+
+/* ═══ ExerciseIntelligence — 14 scores + richtlijn-metadata, volledig afgeleid uit bestaande metadata ═══ */
+var ExerciseIntelligence=(function(){
+  function cl(n){return Math.max(5,Math.min(100,Math.round(n)));}
+  function base(map,k,d){return (map[k]!=null)?map[k]:(d!=null?d:50);}
+  var _cache={};
+  function scores(c){var id=c.catalog_id;if(_cache[id])return _cache[id];
+    var Id=c.identity,I=c.intelligence||{},nm=(Id.name||'').toLowerCase(),T=Id.type,D=Id.difficulty,PAT=(Id.pattern||'')+' '+nm;
+    var G=Id.goals||[],P=Id.primary||[],S=Id.secondary||[],EQ=Id.equipment||[];
+    var has=function(a,v){return a.indexOf(v)>=0;},re=function(rx){return rx.test(PAT);};
+    var s={
+      kracht:cl(base({olympic:90,compound:82,plyometric:60,carry:58,isolation:46,mobility:12},T)+(has(G,'strength')?12:0)+((D==='advanced'||D==='expert')?6:0)),
+      hypertrofie:cl(base({isolation:80,compound:82,olympic:58,carry:40,plyometric:38,mobility:10},T)+(has(G,'hypertrophy')?12:0)),
+      techniek:cl(base({beginner:38,intermediate:58,advanced:78,expert:92},D,55)+(T==='olympic'?10:0)),
+      mobiliteit:cl(T==='mobility'?92:(has(G,'mobility')?76:(re(/stretch|mobility|rotation|rotatie/)?55:24))),
+      balans:cl(has(G,'stability')?78:(re(/lunge|single|split|pistol|unilat|step/)?70:(T==='carry'?66:(has(EQ,'bodyweight')?48:36)))),
+      stabiliteit:cl(has(G,'stability')?85:(re(/plank|carry|anti|core|hold|pallof/)?72:(T==='compound'?58:44))),
+      explosiviteit:cl(T==='plyometric'?92:(T==='olympic'?90:(has(G,'power')?80:(T==='compound'?45:22)))),
+      calorie:cl(base({compound:78,olympic:88,plyometric:82,carry:74,isolation:44,mobility:26},T)+base({very_high:10,high:6,moderate:0,low:-6,very_low:-10},I.fatigue,0)),
+      herstelbelasting:cl(base({same_day:20,'24_hours':38,'48_hours':62,'72_hours':82,multiple_days:92},I.recovery,50)),
+      cns:cl(base({very_low:14,low:30,moderate:52,high:76,very_high:92},I.fatigue,50)+(T==='olympic'?8:0)),
+      rom:cl(T==='mobility'?88:(T==='compound'?(re(/squat|deadlift|lunge|press|pull|chin|row/)?78:66):(T==='isolation'?52:60))),
+      complexiteit:cl(base({beginner:30,intermediate:52,advanced:74,expert:90},D,50)+Math.min(20,S.length*6)+(T==='olympic'?12:0)),
+      grip:cl((re(/deadlift|row|pull|chin|carry|shrug|curl|hold|farmer|hang/)?70:38)+(has(EQ,'barbell')?10:0)+(has(EQ,'dumbbell')?8:0)+(has(EQ,'kettlebell')?8:0)-(has(EQ,'machine')?18:0)),
+      coordinatie:cl(T==='olympic'?90:(T==='plyometric'?82:(re(/lunge|single|split|snatch|clean|turkish|pistol|get.?up/)?74:(has(EQ,'machine')?28:(T==='compound'?52:40))))),
+      vermoeidheid:cl(base({very_low:15,low:32,moderate:52,high:74,very_high:92},I.fatigue,50)),
+      herstelduur:cl(base({same_day:20,'24_hours':38,'48_hours':62,'72_hours':82,multiple_days:92},I.recovery,50)),
+      axiaal:cl(re(/overhead|snatch|clean|jerk/)?90:(re(/squat|deadlift|good.?morning/)?85:(re(/carry|farmer/)?72:(re(/lunge|row|press|thrust|hinge/)?(has(EQ,'barbell')?62:46):(has(EQ,'machine')?20:(T==='isolation'?24:40)))))),
+      volumegevoeligheid:cl((T==='isolation'?85:(T==='compound'?60:(T==='mobility'?42:(T==='olympic'?30:(T==='plyometric'?36:55)))))+(has(G,'hypertrophy')?8:0)-(['high','very_high'].indexOf(I.fatigue)>=0?6:0)),
+      blessurerisico:cl(24+((c.flags.injury_flags||[]).length*14)+((D==='advanced'||D==='expert')?12:0)+(re(/overhead|snatch|clean|deadlift|squat/)?10:0)+(I.fatigue==='very_high'?8:0))
+    };
+    _cache[id]=s;return s;}
+  function rating(c){var s=scores(c),Id=c.identity;
+    var blend=(0.30*s.kracht+0.24*s.hypertrofie+0.16*s.techniek+0.12*s.explosiviteit+0.10*s.stabiliteit+0.08*s.coordinatie)/100;
+    var r=3.5+1.5*blend+((Id.type==='compound'||Id.type==='olympic')?0.05:0);
+    return Math.round(Math.max(3.6,Math.min(5,r))*10)/10;}
+  /* Per-score uitleg (compact, banded — geen nieuwe AI-logica, statische copy-laag) */
+  var WHY={
+    kracht:['Uitstekend voor maximale krachtopbouw.','Draagt goed bij aan kracht.','Niet primair een krachtoefening.'],
+    hypertrofie:['Zeer effectief voor spiergroei.','Prima voor spiermassa.','Beperkte hypertrofie-prikkel.'],
+    techniek:['Vraagt goede motorische controle — leer ’m zorgvuldig.','Redelijk toegankelijk qua techniek.','Eenvoudig aan te leren.'],
+    explosiviteit:['Ideaal voor powerontwikkeling.','Enige explosieve component.','Rustige, gecontroleerde beweging.'],
+    mobiliteit:['Sterk mobiliteitsvoordeel.','Draagt bij aan bewegingsbereik.','Weinig mobiliteitscomponent.'],
+    stabiliteit:['Traint stabiliteit en controle stevig.','Vraagt enige stabiliteit.','Weinig stabiliteitseis.'],
+    balans:['Sterke balanscomponent.','Enige balanseis.','Weinig balans nodig.'],
+    coordinatie:['Coördinatief veeleisend.','Vraagt enige coördinatie.','Coördinatief eenvoudig.'],
+    rom:['Groot bewegingsbereik.','Gemiddeld bereik.','Kort bewegingsbereik.'],
+    grip:['Zwaar voor je grip.','Enige gripbelasting.','Nauwelijks gripbelasting.'],
+    cns:['Hoge CNS-belasting — plan herstel goed in.','Gemiddelde CNS-belasting.','Lage CNS-belasting, vaak herhaalbaar.'],
+    vermoeidheid:['Zeer vermoeiend — houd het volume in de gaten.','Gemiddeld vermoeiend.','Licht vermoeiend.'],
+    herstelduur:['Lange hersteltijd nodig.','Gemiddeld herstel.','Snel herstel.'],
+    herstelbelasting:['Lange hersteltijd nodig.','Gemiddeld herstel.','Snel herstel.'],
+    calorie:['Hoog energieverbruik.','Gemiddeld energieverbruik.','Laag energieverbruik.'],
+    complexiteit:['Complexe beweging.','Gemiddelde complexiteit.','Eenvoudige beweging.'],
+    axiaal:['Hoge axiale belasting op de wervelkolom.','Matige axiale belasting.','Lage axiale belasting.'],
+    volumegevoeligheid:['Reageert sterk op meer volume.','Reageert gemiddeld op volume.','Volume minder bepalend.'],
+    blessurerisico:['Verhoogd risico — techniek en opbouw zijn cruciaal.','Gemiddeld risico bij goede vorm.','Laag risico, toegankelijk.']
+  };
+  function why(key,v){var band=v>=67?0:(v>=40?1:2);var arr=WHY[key];return arr?arr[band]:'';}
+  function meta(c){var Id=c.identity,I=c.intelligence||{},G=Id.goals||[],T=Id.type;
+    var primaryGoal=has(G,'strength')?'strength':(has(G,'hypertrophy')?'hypertrophy':(has(G,'power')?'power':(has(G,'mobility')?'mobility':(G[0]||'strength'))));
+    function has(a,v){return a.indexOf(v)>=0;}
+    var setsMap={strength:'4–6',hypertrophy:'3–4',power:'3–5',mobility:'2–3',stability:'2–4',endurance:'2–3'};
+    var repsMap={strength:'3–6',hypertrophy:'8–12',power:'3–5',mobility:'8–15',stability:'8–12',endurance:'15–20'};
+    var tempoMap={strength:'2-1-1',hypertrophy:'3-1-1',power:'1-0-X',mobility:'rustig',stability:'gecontroleerd',endurance:'vloeiend'};
+    var recMap={same_day:'zelfde dag','24_hours':'~24 uur','48_hours':'~48 uur','72_hours':'~72 uur',multiple_days:'meerdere dagen'};
+    var weekMap={compound:'12–16',olympic:'8–12',isolation:'10–14',carry:'6–10',plyometric:'6–10',mobility:'dagelijks'};
+    var durMap={compound:'10–15 min',olympic:'10–15 min',isolation:'6–10 min',carry:'5–8 min',plyometric:'6–10 min',mobility:'3–6 min'};
+    return {rating:rating(c),difficulty:Id.difficulty,recovery:recMap[I.recovery]||'—',duration:durMap[T]||'8–12 min',
+      sets:setsMap[primaryGoal]||'3–5',reps:repsMap[primaryGoal]||'6–12',tempo:tempoMap[primaryGoal]||'gecontroleerd',
+      setsWeek:(weekMap[T]||'10–14')+' sets/week',primaryGoal:primaryGoal};}
+  var LABELS={kracht:'Kracht',hypertrofie:'Hypertrofie',techniek:'Techniek',mobiliteit:'Mobiliteit',balans:'Balans',stabiliteit:'Stabiliteit',explosiviteit:'Explosiviteit',calorie:'Calorieverbruik',herstelbelasting:'Herstelbelasting',cns:'CNS-belasting',rom:'ROM',complexiteit:'Complexiteit',grip:'Gripbelasting',coordinatie:'Coördinatie',vermoeidheid:'Vermoeidheid',herstelduur:'Herstelduur',axiaal:'Axiale belasting',volumegevoeligheid:'Volumegevoeligheid',blessurerisico:'Blessurerisico'};
+  function top(c,n){var s=scores(c);return ['kracht','hypertrofie','techniek','explosiviteit','mobiliteit','stabiliteit','coordinatie'].sort(function(a,b){return s[b]-s[a];}).slice(0,n||3).map(function(k){return {k:k,l:LABELS[k],v:s[k]};});}
+  return {scores:scores,rating:rating,meta:meta,top:top,labels:LABELS,why:why};
+})();
+
+/* ═══ Motivatie — oefening-specifiek (curated iconen + afgeleide template) ═══ */
+function _motivation(c){var Id=c.identity,nm=(Id.name||'').toLowerCase(),p=(Id.primary[0]||'spieren').toLowerCase();
+  var cur=[[/bench press|bankdruk/,'Dé compound voor maximale bovenlichaam-kracht.'],
+    [/back squat|barbell squat|front squat|goblet squat/,'De koning van alle beenoefeningen.'],
+    [/deadlift/,'Activeert vrijwel je volledige achterste spierketen.'],
+    [/overhead press|shoulder press|military/,'Bouwt sterke, brede schouders van de grond af.'],
+    [/bent.?over row|barbell row|pendlay/,'De basis voor een dikke, sterke rug.'],
+    [/pull.?up|chin.?up/,'De ultieme test van relatieve trekkracht.'],
+    [/romanian deadlift|rdl/,'Meedogenloos effectief voor hamstrings en bilspieren.'],
+    [/hip thrust/,'De directste weg naar krachtige bilspieren.'],
+    [/lunge/,'Bouwt sterke, gebalanceerde benen — één kant tegelijk.'],
+    [/lateral raise/,'Het geheim achter brede, ronde schouders.'],
+    [/(bicep|hammer).*curl|curl/,'Gerichte isolatie voor volle, sterke biceps.'],
+    [/plank/,'Stille kracht — je hele core onder spanning.'],
+    [/dip/,'Zwaartekracht als weerstand voor borst en triceps.'],
+    [/clean|snatch/,'Explosieve totale-lichaamskracht in één beweging.'],
+    [/face pull/,'Kleine beweging, groot effect op gezonde schouders.'],
+    [/calf raise/,'Consistente reps bouwen sterke, volle kuiten.']];
+  for(var i=0;i<cur.length;i++)if(cur[i][0].test(nm))return cur[i][1];
+  var tmpl={compound:'Een krachtige compound die je '+p+' en meer tegelijk traint.',isolation:'Gerichte isolatie voor sterke, volle '+p+'.',olympic:'Explosieve totale-lichaamskracht in één beweging.',plyometric:'Explosieve power die kracht omzet in snelheid.',carry:'Simpel en brutaal effectief voor grip en totale stabiliteit.',mobility:'Investeer in soepele beweging, betere houding en gezonde gewrichten.'};
+  return tmpl[Id.type]||('Een sterke keuze om je '+p+' gericht te trainen.');}
+
+/* ═══ Badge-systeem — consistente kleuren ═══ */
+function _eqBadge(EQ){var m={barbell:['🏋','Barbell'],dumbbell:['🏋','Dumbbell'],cable:['🔌','Cable'],machine:['🖥️','Machine'],bodyweight:['🤸','Bodyweight'],band:['🎗️','Band'],kettlebell:['🔔','Kettlebell'],smith:['🏋','Smith']};var e=(EQ[0]||'').toLowerCase();return m[e]?{i:m[e][0],l:m[e][1],cls:'b-eq'}:null;}
+function _typeBadge(T){var m={compound:{i:'🔥',l:'Compound',cls:'b-compound'},isolation:{i:'🎯',l:'Isolatie',cls:'b-iso'},olympic:{i:'⚡',l:'Olympisch',cls:'b-explo'},plyometric:{i:'⚡',l:'Explosief',cls:'b-explo'},carry:{i:'🧲',l:'Carry',cls:'b-iso'},mobility:{i:'🧠',l:'Mobiliteit',cls:'b-iso'}};return m[T]||null;}
+function _diffBadge(D){var m={beginner:{i:'🟢',l:'Beginner',cls:'b-beg'},intermediate:{i:'🟡',l:'Gemiddeld',cls:'b-int'},advanced:{i:'🔴',l:'Gevorderd',cls:'b-adv'},expert:{i:'🔴',l:'Expert',cls:'b-adv'}};return m[D]||null;}
+function _cardBadges(c){var Id=c.identity,out=[];var d=_diffBadge(Id.difficulty);if(d)out.push(d);
+  if(Id.primary[0])out.push({i:'💪',l:Id.primary[0],cls:'b-muscle'});
+  return out;}
+function _heroBadges(c){var Id=c.identity,m=ExerciseIntelligence.meta(c),out=[];
+  out.push({i:'★',l:m.rating.toFixed(1),cls:'b-rating'});var t=_typeBadge(Id.type);if(t)out.push(t);
+  if(Id.primary[0])out.push({i:'💪',l:Id.primary[0],cls:'b-muscle'});var e=_eqBadge(Id.equipment);if(e)out.push(e);
+  if((Id.goals||[]).length)out.push({i:'🎯',l:_goalNL(Id.goals[0]),cls:'b-goal'});
+  return out;}
+function _badgeRow(list,cls){return '<div class="lib-badges2'+(cls?' '+cls:'')+'">'+list.map(function(b){return '<span class="lib-b2 '+b.cls+'">'+b.i+' '+escHtml(b.l)+'</span>';}).join('')+'</div>';}
+function _overlayChip(c){var t=_typeBadge(c.identity.type);var loc=c.flags.home_gym_ready?{i:'🏠',l:'Thuis'}:{i:'🏋',l:'Gym'};
+  return '<span class="lib-ov lib-ov-tl">'+(t?t.i+' '+escHtml(t.l):escHtml(_libCap(c.identity.type)))+'</span><span class="lib-ov lib-ov-tr">★ '+ExerciseIntelligence.rating(c).toFixed(1)+'</span>';}
+
+/* ── State ── */
 var _libState={q:'',f:{},detail:null,view:'home',rq:[]};
 try{var _rq=JSON.parse(localStorage.getItem('tk_lib_recentq')||'[]');if(_rq&&_rq.length)_libState.rq=_rq;}catch(e){}
 function _libPersistQ(){try{localStorage.setItem('tk_lib_recentq',JSON.stringify(_libState.rq.slice(0,8)));}catch(e){}}
@@ -6336,22 +6577,22 @@ var _DIFF_NL={beginner:'Beginner',intermediate:'Gemiddeld',advanced:'Gevorderd',
 function _goalNL(g){return _GOAL_NL[g]||_libCap(g);}
 function _diffNL(d){return _DIFF_NL[d]||_libCap(d);}
 var LIB_POP=['Bench press','Squat','Deadlift','Row','Curl','Schouders','Core','Benen'];
+var LIB_TRENDING=['Squat','Deadlift','Bench press','Hip thrust','Pull up','Lateral raise'];
+var LIB_SUGGEST=[{i:'💪',l:'Borst',q:'borst'},{i:'🔙',l:'Rug',q:'rug'},{i:'🦵',l:'Benen',q:'benen'},{i:'🍑',l:'Billen',q:'billen'},{i:'💪',l:'Biceps',q:'biceps'},{i:'🎯',l:'Schouders',q:'schouders'},{i:'🏋',l:'Barbell',q:'barbell'},{i:'🏋',l:'Dumbbell',q:'dumbbell'},{i:'🖥️',l:'Machine',q:'machine'},{i:'🤸',l:'Bodyweight',q:'bodyweight'},{i:'🔥',l:'Kracht',q:'kracht'},{i:'🎯',l:'Spiergroei',q:'hypertrofie'}];
 
-/* ── Lazy images (IntersectionObserver) — geen layout shift, fade-in, memory-efficiënt ── */
-var _libIO=(typeof IntersectionObserver!=='undefined')?new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){_libLoad(en.target);_libIO.unobserve(en.target);}});},{rootMargin:'200px 0px'}):null;
+/* ── Lazy images + scroll-reveal ── */
+var _libIO=(typeof IntersectionObserver!=='undefined')?new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){_libLoad(en.target);_libIO.unobserve(en.target);}});},{rootMargin:'250px 0px'}):null;
 function _libLoad(img){if(img._done)return;img._done=1;var id=img.getAttribute('data-aid');var src=ExerciseAssetProvider.poster(id);if(src){img.onload=function(){img.classList.add('is-loaded');};img.src=src;}else{var box=img.parentNode;if(box)box.classList.add('no-img');}}
 function _libObserve(root){if(!root)return;var imgs=root.querySelectorAll('.lib-img[data-aid]');for(var i=0;i<imgs.length;i++){if(_libIO)_libIO.observe(imgs[i]);else _libLoad(imgs[i]);}}
-function _imgBox(id,name,extra){return '<span class="lib-imgbox'+(extra?' '+extra:'')+'"><span class="lib-skel"></span><img class="lib-img" alt="'+escHtml(name||'')+'" data-aid="'+id+'"></span>';}
-
-/* ── Ripple (premium pressed feedback) ── */
+function _imgBox(id,name,extra,overlay){return '<span class="lib-imgbox'+(extra?' '+extra:'')+'"><span class="lib-skel"></span><img class="lib-img" alt="'+escHtml(name||'')+'" data-aid="'+id+'">'+(overlay||'')+'</span>';}
 function _libRipple(e){var b=e.currentTarget;if(!b)return;var r=b.getBoundingClientRect();var s=document.createElement('span');s.className='lib-ripple';var d=Math.max(r.width,r.height);s.style.width=s.style.height=d+'px';s.style.left=((e.clientX||r.left+r.width/2)-r.left-d/2)+'px';s.style.top=((e.clientY||r.top+r.height/2)-r.top-d/2)+'px';b.appendChild(s);setTimeout(function(){if(s.parentNode)s.parentNode.removeChild(s);},520);}
 
-/* ── Cards ── */
-function _card(c){var Id=c.identity;return '<button class="lib-card" data-id="'+c.catalog_id+'" aria-label="'+escHtml(Id.name)+'">'+_imgBox(c.catalog_id,Id.name)+'<span class="lib-card-b"><span class="lib-card-name">'+escHtml(Id.name)+'</span><span class="lib-card-sub">'+escHtml(Id.primary[0]||_libCap(Id.family))+' · '+escHtml(_diffNL(Id.difficulty))+'</span></span></button>';}
-function _item(c){var Id=c.identity;return '<button class="lib-item" data-id="'+c.catalog_id+'" aria-label="'+escHtml(Id.name)+'">'+_imgBox(c.catalog_id,Id.name,'sm')+'<span class="lib-it-main"><span class="lib-it-name">'+escHtml(Id.name)+'</span><span class="lib-it-sub">'+escHtml(_libCap(Id.family))+' · '+escHtml(Id.primary.join(', ')||'—')+'</span></span>'+(ExerciseCatalogService.isFavorite(c.catalog_id)?'<span class="lib-it-fav" aria-label="Favoriet">★</span>':'')+'<span class="lib-it-badge">'+escHtml(_diffNL(Id.difficulty))+'</span></button>';}
-function _row(list){return '<div class="lib-row" role="list">'+list.map(function(c){return '<div role="listitem">'+_card(c)+'</div>';}).join('')+'</div>';}
+/* ── Cards (premium: poster-overlay + compacte badges) ── */
+function _card(c,ix){var Id=c.identity;return '<button class="lib-card" data-id="'+c.catalog_id+'" aria-label="'+escHtml(Id.name)+'" style="animation-delay:'+Math.min((ix||0)*40,240)+'ms">'+_imgBox(c.catalog_id,Id.name,'',_overlayChip(c))+'<span class="lib-card-b"><span class="lib-card-name">'+escHtml(Id.name)+'</span>'+_badgeRow(_cardBadges(c),'mini')+'</span></button>';}
+function _item(c){var Id=c.identity,r=ExerciseIntelligence.rating(c);return '<button class="lib-item" data-id="'+c.catalog_id+'" aria-label="'+escHtml(Id.name)+'">'+_imgBox(c.catalog_id,Id.name,'sm')+'<span class="lib-it-main"><span class="lib-it-name">'+escHtml(Id.name)+'</span><span class="lib-it-sub">'+escHtml(Id.primary.join(', ')||_libCap(Id.family))+' · '+escHtml(_diffNL(Id.difficulty))+'</span></span><span class="lib-it-r">★ '+r.toFixed(1)+'</span>'+(ExerciseCatalogService.isFavorite(c.catalog_id)?'<span class="lib-it-fav" aria-label="Favoriet">★</span>':'')+'</button>';}
+function _row(list){return '<div class="lib-row" role="list">'+list.map(function(c,ix){return '<div role="listitem">'+_card(c,ix)+'</div>';}).join('')+'</div>';}
 
-/* ── Recommendation Engine (bestaande data: recent, favorieten, doel, spiergroep) ── */
+/* ── Recommendation engine (Sprint 9, behouden) ── */
 function _inferGoal(){var E=ExerciseCatalogService;var tally={};E.favorites().concat(E.recent()).forEach(function(c){(c.identity.goals||[]).forEach(function(g){tally[g]=(tally[g]||0)+1;});});
   var best=null,bn=0;for(var g in tally)if(tally[g]>bn){bn=tally[g];best=g;}return best||'strength';}
 function _recommend(limit){var E=ExerciseCatalogService;limit=limit||10;
@@ -6374,18 +6615,25 @@ function _recommend(limit){var E=ExerciseCatalogService;limit=limit||10;
   cand.sort(function(a,b){return (b.sc-a.sc)||(a.c.identity.name<b.c.identity.name?-1:1);});
   return cand.slice(0,limit).map(function(x){return x.c;});}
 
-/* ── Dynamische Home-secties (elk max 10) ── */
-function _libSections(){var E=ExerciseCatalogService;var goal=_inferGoal();
-  var pop=['barbell-bench-press','barbell-squat','barbell-deadlift','barbell-overhead-press','barbell-bent-over-row','dumbbell-curl','chin-ups','dumbbell-lateral-raise'].map(function(s){return E.byProvider('movekit',s);}).filter(Boolean);
-  var recovery=E.search('',{lowfatigue:true},'name').filter(function(c){return c.identity.type==='mobility'||(c.identity.goals||[]).indexOf('mobility')>=0||(c.identity.goals||[]).indexOf('stability')>=0;}).slice(0,10);
+/* ── Dynamische Home-secties (intelligenter, elk max 10) ── */
+function _byScore(list,key){return list.slice().sort(function(a,b){return ExerciseIntelligence.scores(b)[key]-ExerciseIntelligence.scores(a)[key];});}
+function _byRating(list){return list.slice().sort(function(a,b){return ExerciseIntelligence.rating(b)-ExerciseIntelligence.rating(a);});}
+function _libSections(){var E=ExerciseCatalogService,all=E.all();var goal=_inferGoal();
+  var compounds=E.search('',{type:'compound'},'name');
+  var quick=all.filter(function(c){return c.identity.type==='isolation'||['very_low','low'].indexOf(c.intelligence.fatigue)>=0;});
+  var nieuw=all.slice().sort(function(a,b){return a.catalog_id<b.catalog_id?1:-1;}); // stabiel "nieuw toegevoegd" (hoogste TK-ID eerst)
   return [
-    {i:'🔥',t:'Vandaag aanbevolen',g:_recommend(10)},
+    {i:'🎯',t:'Vandaag aanbevolen',g:_recommend(10)},
+    {i:'🔥',t:'Trending',g:_byRating(compounds).slice(0,10)},
     {i:'⭐',t:'Favorieten',g:E.favorites(),he:true},
     {i:'🕒',t:'Recent bekeken',g:E.recent(),he:true},
-    {i:'💪',t:'Populair',g:pop},
-    {i:'🎯',t:'Past bij jouw doel · '+_goalNL(goal),g:E.search('',{goal:goal},'confidence').slice(0,10)},
-    {i:'❤️',t:'Hersteltraining',g:recovery},
-    {i:'🏋',t:'Compound oefeningen',g:E.search('',{type:'compound'},'name').slice(0,10)},
+    {i:'🏆',t:'Coach favorieten',g:_byRating(all).slice(0,10)},
+    {i:'💪',t:'Beste voor spiergroei',g:_byScore(E.search('',{goal:'hypertrophy'},'name'),'hypertrofie').slice(0,10)},
+    {i:'🏋',t:'Beste voor kracht',g:_byScore(E.search('',{goal:'strength'},'name'),'kracht').slice(0,10)},
+    {i:'🏠',t:'Beste thuisoefeningen',g:_byRating(E.search('',{home:true},'name')).slice(0,10)},
+    {i:'⚡',t:'Snelle oefeningen',g:_byRating(quick).slice(0,10)},
+    {i:'📈',t:'Deze week populair',g:_byRating(all).slice(4,14)},
+    {i:'🆕',t:'Nieuw toegevoegd',g:nieuw.slice(0,10)},
     {i:'🦵',t:'Benendag',g:E.search('',{muscleGroup:['Quadriceps','Hamstrings','Billen','Kuiten']},'name').slice(0,10)},
     {i:'👊',t:'Push Day',g:E.search('',{muscleGroup:['Borst','Schouders','Triceps']},'name').slice(0,10)},
     {i:'🧲',t:'Pull Day',g:E.search('',{muscleGroup:['Rug','Biceps','Traps']},'name').slice(0,10)}
@@ -6395,29 +6643,38 @@ var LIB_QCHIPS=[{i:'💪',l:'Borst',f:{muscleGroup:['Borst']}},{i:'🦵',l:'Bene
 
 function renderLibrary(){_libState.view='home';_libState.detail=null;_libState.q='';_libState.f={};var t=document.getElementById('lib-total');if(t)t.textContent=ExerciseCatalogService.count();renderLibBody();}
 
-function _searchBar(){var active=_libState.q.trim()||Object.keys(_libState.f).length;
+function _searchBar(){
   return '<div class="lib-searchwrap"><span class="lib-si" aria-hidden="true">🔎</span>'+
     '<input class="lib-search" id="lib-q" type="search" placeholder="Zoek oefening, spier, equipment of doel…" aria-label="Zoek oefeningen" value="'+escHtml(_libState.q)+'">'+
     (_libState.q?'<button class="lib-clear" id="lib-clear" aria-label="Wissen">✕</button>':'<button class="lib-voice" id="lib-voice" aria-label="Spraakzoeken (binnenkort)" title="Spraakzoeken komt binnenkort">🎤</button>')+
     '</div>'+
-    '<div class="lib-qchips" role="list">'+LIB_QCHIPS.map(function(ch,i){var on=JSON.stringify(_libState.f)===JSON.stringify(ch.f);return '<button class="lib-qchip'+(on?' on':'')+'" data-i="'+i+'" role="listitem" aria-pressed="'+(on?'true':'false')+'">'+ch.i+' '+ch.l+'</button>';}).join('')+(active?'<button class="lib-qchip clear" data-i="clear">✕ Reset</button>':'')+'</div>';}
+    '<div class="lib-qchips" role="list">'+LIB_QCHIPS.map(function(ch,i){var on=JSON.stringify(_libState.f)===JSON.stringify(ch.f);return '<button class="lib-qchip'+(on?' on':'')+'" data-i="'+i+'" role="listitem" aria-pressed="'+(on?'true':'false')+'">'+ch.i+' '+ch.l+'</button>';}).join('')+((_libState.q.trim()||Object.keys(_libState.f).length)?'<button class="lib-qchip clear" data-i="clear">✕ Reset</button>':'')+'</div>';}
 
 function _quickPanel(){var parts='';
   if(_libState.rq.length)parts+='<div class="lib-quick"><div class="lib-quick-h">🕓 Recent gezocht</div><div class="lib-chips">'+_libState.rq.map(function(q){return '<button class="lib-tchip" data-q="'+escHtml(q)+'">'+escHtml(q)+'</button>';}).join('')+'</div></div>';
-  parts+='<div class="lib-quick"><div class="lib-quick-h">🔥 Populaire zoektermen</div><div class="lib-chips">'+LIB_POP.map(function(q){return '<button class="lib-tchip" data-q="'+escHtml(q)+'">'+escHtml(q)+'</button>';}).join('')+'</div></div>';
+  parts+='<div class="lib-quick"><div class="lib-quick-h">🔥 Trending zoekopdrachten</div><div class="lib-chips">'+LIB_TRENDING.map(function(q){return '<button class="lib-tchip hot" data-q="'+escHtml(q)+'">'+escHtml(q)+'</button>';}).join('')+'</div></div>';
+  parts+='<div class="lib-quick"><div class="lib-quick-h">🎯 Snel filteren</div><div class="lib-chips">'+LIB_SUGGEST.map(function(s){return '<button class="lib-tchip" data-q="'+escHtml(s.q)+'">'+s.i+' '+escHtml(s.l)+'</button>';}).join('')+'</div></div>';
   return parts;}
+
+/* Typeahead: bovenaan de resultaten tonen we concept-suggesties (via ECS/alias, geen tweede zoeklaag) */
+function _suggestBox(q){q=q.toLowerCase().trim();if(q.length<1)return '';
+  var sug=LIB_SUGGEST.filter(function(s){return s.l.toLowerCase().indexOf(q)>=0||s.q.indexOf(q)>=0;}).slice(0,6);
+  if(!sug.length)return '';
+  return '<div class="lib-sug">'+sug.map(function(s){return '<button class="lib-sug-i" data-q="'+escHtml(s.q)+'">'+s.i+' '+escHtml(s.l)+'</button>';}).join('')+'</div>';}
 
 function renderLibBody(){
   var host=document.getElementById('lib-body');if(!host)return;var E=ExerciseCatalogService;
-  if(_libState.view==='detail'&&_libState.detail){host.innerHTML=_libDetailHtml(_libState.detail);_libBindDetail();var d=document.querySelector('#s-library .scroll');_libObserve(d);return;}
+  if(_libState.view==='detail'&&_libState.detail){host.innerHTML=_libDetailHtml(_libState.detail);_libBindDetail();_libObserve(document.querySelector('#s-library .scroll'));return;}
+  if(_libState.view==='cmppick'){host.innerHTML=_cmpPickerHtml(_libState.cmpA);_libBindCmpPick();_libObserve(document.getElementById('lib-scroll'));return;}
+  if(_libState.view==='compare'){host.innerHTML=_cmpHtml(_libState.cmpA,_libState.cmpB);_libBindCmp();_libObserve(document.getElementById('lib-scroll'));return;}
   var active=_libState.q.trim()||Object.keys(_libState.f).length;
   var head=_searchBar();
   if(!active){
     var secs=_libSections().filter(function(s){return !(s.he&&(!s.g||!s.g.length))&&s.g&&s.g.length;});
-    host.innerHTML='<div class="scroll" id="lib-scroll">'+head+_quickPanel()+secs.map(function(s){return '<section class="lib-secblock"><div class="lib-sechd"><h3>'+s.i+' '+escHtml(s.t)+'</h3></div>'+_row(s.g.slice(0,10))+'</section>';}).join('')+'<div style="height:20px"></div></div>';
+    host.innerHTML='<div class="scroll" id="lib-scroll">'+head+_quickPanel()+secs.map(function(s){return '<section class="lib-secblock"><div class="lib-sechd"><h3>'+s.i+' '+escHtml(s.t)+'</h3></div>'+_row(s.g.slice(0,10))+'</section>';}).join('')+'<div style="height:22px"></div></div>';
   } else {
     var list=E.search(_libState.q,_libState.f,_libState.q.trim()?'relevance':'name');
-    host.innerHTML='<div class="scroll" id="lib-scroll">'+head+'<div class="lib-count" aria-live="polite">'+list.length+' van '+E.count()+' oefeningen</div><div class="lib-list">'+(list.length?list.map(_item).join(''):'<div class="lib-empty">Geen oefeningen gevonden — probeer een andere zoekterm.</div>')+'</div><div style="height:20px"></div></div>';
+    host.innerHTML='<div class="scroll" id="lib-scroll">'+head+_suggestBox(_libState.q)+'<div class="lib-count" aria-live="polite">'+list.length+' van '+E.count()+' oefeningen</div><div class="lib-list">'+(list.length?list.map(_item).join(''):'<div class="lib-empty">Geen oefeningen gevonden — probeer een andere zoekterm.</div>')+'</div><div style="height:22px"></div></div>';
   }
   _libBindBody(host);
   _libObserve(document.getElementById('lib-scroll'));
@@ -6429,67 +6686,54 @@ function _libBindBody(host){
     q.onkeydown=function(e){if(e.key==='Enter'&&q.value.trim().length>=2)_libPushQ(q.value);};}
   var cl=document.getElementById('lib-clear');if(cl)cl.onclick=function(){_libState.q='';renderLibBody();var n=document.getElementById('lib-q');if(n)n.focus();};
   var vo=document.getElementById('lib-voice');if(vo)vo.onclick=function(){_libToast('Spraakzoeken komt binnenkort');};
-  host.querySelectorAll('.lib-tchip').forEach(function(b){b.onclick=function(){_libState.q=b.getAttribute('data-q');_libState.f={};_libPushQ(_libState.q);renderLibBody();};});
+  host.querySelectorAll('.lib-tchip,.lib-sug-i').forEach(function(b){b.onclick=function(){_libState.q=b.getAttribute('data-q');_libState.f={};_libPushQ(_libState.q);renderLibBody();};});
   host.querySelectorAll('.lib-qchip').forEach(function(b){b.onclick=function(){var i=b.dataset.i;if(i==='clear'){_libState.f={};_libState.q='';}else{var ch=LIB_QCHIPS[+i];_libState.f=(JSON.stringify(_libState.f)===JSON.stringify(ch.f))?{}:ch.f;}renderLibBody();};});
   host.querySelectorAll('.lib-card,.lib-item').forEach(function(b){b.addEventListener('pointerdown',_libRipple);b.onclick=function(){if(_libState.q.trim().length>=2)_libPushQ(_libState.q);_libOpen(b.dataset.id);};});
 }
-
 function _libOpen(id){_libState.detail=id;_libState.view='detail';ExerciseCatalogService.pushRecent(id);renderLibBody();var sc=document.querySelector('#s-library .scroll');if(sc)sc.scrollTop=0;}
-
 var _libToastT=null;
 function _libToast(msg){var el=document.getElementById('lib-toast');if(!el){el=document.createElement('div');el.id='lib-toast';el.className='lib-toast';document.body.appendChild(el);}el.textContent=msg;el.classList.add('show');if(_libToastT)clearTimeout(_libToastT);_libToastT=setTimeout(function(){el.classList.remove('show');},1800);}
 
-/* ── Afgeleide indicatoren (intern uitlegbaar; geen verzonnen feiten, confidence blijft intern) ── */
 function _stars(n){n=Math.max(0,Math.min(5,Math.round(n)));var s='';for(var i=0;i<5;i++)s+=(i<n?'★':'☆');return s;}
-function _insights(c){var Id=c.identity,I=c.intelligence;var g=Id.goals||[];
-  var actBase={compound:88,olympic:82,plyometric:76,carry:64,isolation:56,mobility:34}[Id.type]||60;
-  var fc={low:-6,moderate:0,high:8}[I.fatigue_cost]||0;var act=Math.max(20,Math.min(100,actBase+fc));
-  var strength=(g.indexOf('strength')>=0?(Id.type==='compound'?5:4):(Id.type==='compound'?3:2));
-  var hyper=(g.indexOf('hypertrophy')>=0?(Id.type==='isolation'?4:5):3);
-  var cal={compound:4,olympic:5,plyometric:5,carry:4,isolation:2,mobility:1}[Id.type]||3;if(I.fatigue==='very_high')cal=Math.min(5,cal+1);
-  var mob=(Id.type==='mobility'?5:(g.indexOf('mobility')>=0?4:(g.indexOf('stability')>=0?3:2)));
-  var stab=(g.indexOf('stability')>=0?5:(/anti|carry|plank|core/i.test(Id.pattern+' '+Id.name)?4:(Id.type==='compound'?3:2)));
-  var tech={beginner:2,intermediate:3,advanced:4,expert:5}[Id.difficulty]||3;
-  return {activation:act,primary:Id.primary[0]||'—',stars:[
-    {l:'Technische moeilijkheid',v:tech},{l:'Kracht',v:strength},{l:'Hypertrofie',v:hyper},
-    {l:'Calorieverbruik (indicatie)',v:cal},{l:'Mobiliteit',v:mob},{l:'Stabiliteit',v:stab}]};}
 
-/* ── AI Coach-kaarten (elk eigen icoon/accent; niet dezelfde layout) ── */
-function _coachCards(c){var Id=c.identity,I=c.intelligence;var out=[];
-  if(I.why&&I.why.coach)out.push({k:'eff',i:'💪',t:'Waarom effectief?',x:I.why.coach});
-  var when=(Id.type==='compound'&&Id.goals.indexOf('strength')>=0)?'Als hoofdoefening, vroeg in je training wanneer je fris bent.':(Id.type==='isolation')?'Als accessoire ná je grote compound-oefeningen.':(Id.type==='mobility')?'Als warming-up of op een hersteldag.':'Flexibel in te plannen binnen je sessie.';
-  out.push({k:'when',i:'⚡',t:'Wanneer gebruiken?',x:when});
-  out.push({k:'goal',i:'🎯',t:'Voor welk doel?',x:(Id.goals||[]).map(_goalNL).join(' · ')||'Algemene training'});
-  if(I.mistakes&&I.mistakes[0])out.push({k:'err',i:'🚫',t:'Veelgemaakte fout',x:I.mistakes[0]});
-  if(I.cues&&I.cues[0])out.push({k:'tip',i:'🔥',t:'Coach Tip',x:I.cues[0]});
-  if(I.why&&I.why.expert)out.push({k:'pro',i:'🧠',t:'Pro Tip',x:I.why.expert});
-  var inj=(c.flags.injury_flags||[]);var _jm={shoulder:'schouders',elbow:'ellebogen',knee:'knieën',lower_back:'onderrug',back:'rug',wrist:'polsen',hip:'heupen',ankle:'enkels'};
-  var jn=inj.map(function(j){return _jm[j]||j;});var jt=jn.length>1?(jn.slice(0,-1).join(', ')+' en '+jn[jn.length-1]):jn[0];
-  out.push({k:'safe',i:'⚠️',t:'Blessurepreventie',x:inj.length?('Let extra op je '+jt+'. Bouw de belasting rustig op en houd je techniek strak.'):'Warm goed op en houd je techniek strak bij zwaardere sets.'});
-  return out;}
+/* ── AI Coach-kaarten (uitgebreid; alleen relevante types) ── */
+function _coachCards(c){var Id=c.identity,I=c.intelligence,sc=ExerciseIntelligence.scores(c),m=ExerciseIntelligence.meta(c),out=[];
+  if(I.why&&I.why.coach)out.push({k:'zegt',i:'💪',t:'Coach zegt',x:I.why.coach});
+  var topScore=ExerciseIntelligence.top(c,1)[0];
+  out.push({k:'eff',i:'🔥',t:'Waarom effectief',x:'Scoort hoog op '+topScore.l.toLowerCase()+' ('+topScore.v+'/100) — '+(Id.type==='compound'?'traint meerdere spiergroepen in één beweging.':'gericht en efficiënt voor je '+(Id.primary[0]||'doelspier').toLowerCase()+'.')});
+  out.push({k:'best',i:'🎯',t:'Beste voor',x:(Id.goals||[]).map(_goalNL).join(' · ')||'Algemene training'});
+  if(I.mistakes&&I.mistakes[0])out.push({k:'let',i:'⚠️',t:'Let hier op',x:I.mistakes[0]});
+  // Wist je dat — afgeleide fun fact
+  var wist=(Id.type==='compound')?('Deze compound belast ook je '+(Id.secondary[0]||Id.primary[0]||'ondersteunende spieren').toLowerCase()+' als stabilisator.'):(Id.type==='isolation')?('Isolatie zoals dit laat je de '+(Id.primary[0]||'doelspier').toLowerCase()+' bewust en volledig aanspannen.'):(Id.type==='olympic')?'Olympische lifts trainen kracht én snelheid tegelijk — zeldzaam in de sportschool.':(Id.type==='mobility')?'Regelmatige mobiliteit verlaagt je blessurerisico meetbaar.':null;
+  if(wist)out.push({k:'wist',i:'🧠',t:'Wist je dat',x:wist});
+  // Groei-tip
+  var groei=(c.relations.progressions&&c.relations.progressions.length)?'Klaar voor meer? Bouw op naar een zwaardere progressie hieronder.':(m.primaryGoal==='hypertrophy')?'Voeg elke week ~1 set toe en houd '+m.reps+' reps met goede vorm.':'Verhoog de belasting pas als alle reps schoon zijn ('+m.reps+' @ RPE 8).';
+  out.push({k:'groei',i:'📈',t:'Groei-tip',x:groei});
+  // Hersteladvies (alleen relevant bij hoge CNS/lang herstel)
+  if(sc.cns>=60||['72_hours','multiple_days'].indexOf(I.recovery)>=0)out.push({k:'herstel',i:'⏱',t:'Hersteladvies',x:'Herstel ~'+m.recovery+' · CNS-belasting '+sc.cns+'/100. '+(sc.cns>=75?'Plan zware sets niet twee dagen op rij.':'Gun je systeem voldoende rust tussen zware sessies.')});
+  // Coach favoriet (alleen bij topbeoordeling)
+  if(m.rating>=4.5)out.push({k:'fav',i:'🏆',t:'Coach favoriet',x:'Topbeoordeling ('+m.rating.toFixed(1)+'★) — een bewezen keuze die coaches steeds opnieuw programmeren.'});
+  return out.slice(0,7);}
 
-/* ── Slimme alternatieven (via ECS-filters; enige bron) ── */
-function _relCards(ids,limit){if(!ids||!ids.length)return null;var cs=ids.map(function(id){return ExerciseCatalogService.byId(id);}).filter(Boolean).slice(0,limit||6);return cs.length?_row(cs):null;}
-function _altGroups(c){var E=ExerciseCatalogService,id=c.catalog_id,Id=c.identity;var pm=Id.primary,eq=(Id.equipment[0]||'').toLowerCase();
-  function same(filter){return E.search('',filter,'name').filter(function(x){return x.catalog_id!==id;});}
+/* ── Slimme alternatieven (categorieën, geen dubbele kaarten) ── */
+function _relCards(ids,limit,seen){if(!ids||!ids.length)return null;var cs=[];ids.forEach(function(id){if(seen[id])return;var c=ExerciseCatalogService.byId(id);if(c){seen[id]=1;cs.push(c);}});cs=cs.slice(0,limit||6);return cs.length?_row(cs):null;}
+function _altGroups(c){var E=ExerciseCatalogService,id=c.catalog_id,Id=c.identity;var pm=Id.primary,seen={};seen[id]=1;
   var diffOrder={beginner:0,intermediate:1,advanced:2,expert:3};var d0=diffOrder[Id.difficulty];
-  var lighter=(c.relations.regressions||[]).slice();var heavier=(c.relations.progressions||[]).slice();
-  var mid=(c.relations.alternatives||[]).slice();
+  function same(filter){return E.search('',filter,'name').filter(function(x){return x.catalog_id!==id;});}
+  function pick(list,limit){var cs=[];list.forEach(function(x){if(seen[x.catalog_id])return;seen[x.catalog_id]=1;cs.push(x);});cs=cs.slice(0,limit||6);return cs.length?_row(cs):null;}
   var byMuscle=same({muscleGroup:pm});
-  var lighterC=lighter.length?_relCards(lighter,6):_row(byMuscle.filter(function(x){return diffOrder[x.identity.difficulty]<d0;}).slice(0,6));
-  var heavierC=heavier.length?_relCards(heavier,6):_row(byMuscle.filter(function(x){return diffOrder[x.identity.difficulty]>d0;}).slice(0,6));
   var groups=[
-    {i:'⬇️',t:'Lichter',c:lighter.length?_relCards(lighter,6):(byMuscle.filter(function(x){return diffOrder[x.identity.difficulty]<d0;}).length?_row(byMuscle.filter(function(x){return diffOrder[x.identity.difficulty]<d0;}).slice(0,6)):null)},
-    {i:'↔️',t:'Gemiddeld',c:mid.length?_relCards(mid,6):null},
-    {i:'⬆️',t:'Zwaarder',c:heavier.length?_relCards(heavier,6):(byMuscle.filter(function(x){return diffOrder[x.identity.difficulty]>d0;}).length?_row(byMuscle.filter(function(x){return diffOrder[x.identity.difficulty]>d0;}).slice(0,6)):null)},
-    {i:'🖥️',t:'Machine',c:(function(){var r=same({muscleGroup:pm,equipment:'machine'});return r.length?_row(r.slice(0,6)):null;})()},
-    {i:'🏋',t:'Dumbbell',c:(function(){var r=same({muscleGroup:pm,equipment:'dumbbell'});return r.length?_row(r.slice(0,6)):null;})()},
-    {i:'🤸',t:'Bodyweight',c:(function(){var r=same({muscleGroup:pm,equipment:'bodyweight'});return r.length?_row(r.slice(0,6)):null;})()},
-    {i:'🏠',t:'Thuis',c:(function(){var r=same({muscleGroup:pm,home:true});return r.length?_row(r.slice(0,6)):null;})()}
+    {i:'⬇️',t:'Lichter alternatief',c:_relCards(c.relations.regressions,6,seen)||pick(byMuscle.filter(function(x){return diffOrder[x.identity.difficulty]<d0;}),6)},
+    {i:'⬆️',t:'Zwaarder alternatief',c:_relCards(c.relations.progressions,6,seen)||pick(byMuscle.filter(function(x){return diffOrder[x.identity.difficulty]>d0;}),6)},
+    {i:'↔️',t:'Zelfde spiergroep',c:pick(byMuscle,8)},
+    {i:'🔁',t:'Zelfde bewegingspatroon',c:pick(same({family:Id.family}),8)},
+    {i:'🖥️',t:'Machine alternatief',c:pick(same({muscleGroup:pm,equipment:'machine'}),6)},
+    {i:'🏋',t:'Dumbbell alternatief',c:pick(same({muscleGroup:pm,equipment:'dumbbell'}),6)},
+    {i:'🤸',t:'Bodyweight alternatief',c:pick(same({muscleGroup:pm,equipment:'bodyweight'}),6)},
+    {i:'🏠',t:'Thuis alternatief',c:pick(same({muscleGroup:pm,home:true}),6)}
   ];
   return groups.filter(function(g){return g.c;});}
 
-/* ── Belangrijkste voordelen (afgeleid) ── */
 function _benefits(c){var Id=c.identity,out=[];
   if(Id.primary[0])out.push('Traint gericht je '+Id.primary[0].toLowerCase());
   if(Id.type==='compound')out.push('Compound — traint meerdere spiergroepen tegelijk');
@@ -6500,48 +6744,122 @@ function _benefits(c){var Id=c.identity,out=[];
   if(c.flags.travel_ready)out.push('Werkt onderweg zonder apparatuur');
   return out.slice(0,4);}
 
-/* ── Detailpagina v2 (compact, premium; nieuwe volgorde) ── */
+/* Kleur: 'kosten'-metrics (hoog = meer belasting) krijgen inverse kleurschaal. */
+var _COST={cns:1,vermoeidheid:1,herstelduur:1,herstelbelasting:1,axiaal:1,complexiteit:1,blessurerisico:1};
+function _scoreCol(k,v){var good=v>=67,mid=v>=40;if(_COST[k]){return good?'#e17055':(mid?'#f5a623':'#00b894');}return good?'#00b894':(mid?'#f5a623':'#e17055');}
+function _radial(v,label,color){var R=22,Cc=2*Math.PI*R,off=Cc*(1-v/100);
+  return '<div class="lib-radial"><svg viewBox="0 0 56 56" aria-hidden="true"><circle class="rg" cx="28" cy="28" r="'+R+'"></circle><circle class="rf" cx="28" cy="28" r="'+R+'" style="stroke-dasharray:'+Cc.toFixed(1)+';stroke-dashoffset:'+off.toFixed(1)+';stroke:'+color+'"></circle></svg><span class="lib-radial-v">'+v+'</span><span class="lib-radial-l">'+escHtml(label)+'</span></div>';}
+/* ── Exercise Intelligence Dashboard (bestaande metadata → premium visualisaties + uitleg) ── */
+function _intelDashboard(c){var s=ExerciseIntelligence.scores(c),L=ExerciseIntelligence.labels,W=ExerciseIntelligence.why,m=ExerciseIntelligence.meta(c);
+  var head=['kracht','hypertrofie','explosiviteit','techniek'];
+  var radials='<div class="lib-radials">'+head.map(function(k){return _radial(s[k],L[k],_scoreCol(k,s[k]));}).join('')+'</div>';
+  var order=['kracht','hypertrofie','techniek','explosiviteit','mobiliteit','stabiliteit','cns','vermoeidheid','herstelduur','complexiteit','coordinatie','axiaal','volumegevoeligheid','blessurerisico'];
+  var bars=order.map(function(k){var v=s[k];var lvl=v>=67?'hoog':(v>=40?'mid':'laag');return '<div class="lib-idx"><div class="lib-idx-h"><span class="lib-idx-l">'+escHtml(L[k])+'</span><span class="lib-idx-v lvl-'+lvl+'">'+v+'</span></div><div class="lib-scorebar"><span style="width:'+v+'%;background:'+_scoreCol(k,v)+'"></span></div><div class="lib-idx-why">'+escHtml(W(k,v))+'</div></div>';}).join('');
+  return '<div class="lib-dash-top"><span class="lib-dash-rating">★ '+m.rating.toFixed(1)+'</span><span class="lib-dash-note">Afgeleide indicatoren — uit doel, type, herstel &amp; belasting</span></div>'+radials+'<div class="lib-idxs">'+bars+'</div><button class="lib-cmp-btn" id="lib-cmp" aria-label="Vergelijk oefeningen">⚖️ Vergelijk met andere oefening</button>';}
+
+/* ── Misschien ook interessant (Recommendation Engine + ECS-categorieën, gededupliceerd) ── */
+function _interessant(c){var E=ExerciseCatalogService,id=c.catalog_id,Id=c.identity,pm=Id.primary,seen={};seen[id]=1;
+  var diffOrder={beginner:0,intermediate:1,advanced:2,expert:3},d0=diffOrder[Id.difficulty];
+  function same(f){return E.search('',f,'name').filter(function(x){return x.catalog_id!==id;});}
+  function pick(list,limit){var cs=[];list.forEach(function(x){var xid=x.catalog_id||x;var obj=x.catalog_id?x:E.byId(x);if(!obj)return;xid=obj.catalog_id;if(seen[xid])return;seen[xid]=1;cs.push(obj);});return cs.slice(0,limit||6);}
+  var groups=[
+    {i:'💪',t:'Zelfde spiergroep',g:pick(same({muscleGroup:pm}),8)},
+    {i:'🎯',t:'Zelfde doel',g:pick(same({goal:(Id.goals||[])[0]}),8)},
+    {i:'🔁',t:'Zelfde bewegingspatroon',g:pick(same({family:Id.family}),8)},
+    {i:'⬆️',t:'Progressie',g:pick((c.relations.progressions||[]),6)},
+    {i:'⬇️',t:'Regressie',g:pick((c.relations.regressions||[]),6)},
+    {i:'🏠',t:'Alternatief thuis',g:pick(same({muscleGroup:pm,home:true}),6)},
+    {i:'🏋',t:'Alternatief gym',g:pick(same({muscleGroup:pm,equipment:'machine'}).concat(same({muscleGroup:pm,equipment:'cable'})),6)}
+  ];
+  return groups.filter(function(g){return g.g&&g.g.length;});}
+
+/* ── Video-sectie (voorbereid op Sprint 11 via ExerciseAssetProvider) ── */
+function _videoBlock(id){
+  if(ExerciseAssetProvider.has(id,'video')){var v=ExerciseAssetProvider.resolve(id,'video');return '<div class="lib-video"><video controls preload="none" src="'+v+'"></video></div>';}
+  return '<div class="lib-video-ph" role="img" aria-label="Video komt binnenkort beschikbaar"><span class="lib-video-play">▶</span><span class="lib-video-txt">Video komt binnenkort beschikbaar</span></div>';}
+
+function _statList(c){var m=ExerciseIntelligence.meta(c),Id=c.identity;
+  var rows=[['Populariteit','★ '+m.rating.toFixed(1)],['Moeilijkheid',_diffNL(Id.difficulty)],['Type',_libCap(Id.type)],['Trainingsdoel',(Id.goals||[]).map(_goalNL).join(', ')||'—'],['Primair',Id.primary.join(', ')||'—'],['Secundair',Id.secondary.join(', ')||'—'],['Equipment',Id.equipment.map(_libCap).join(', ')||'—'],['Gem. sets',m.sets],['Gem. reps',m.reps],['Tempo',m.tempo],['Sets/week',m.setsWeek],['Hersteltijd',m.recovery],['Gem. duur',m.duration]];
+  return '<div class="lib-kv-grid">'+rows.map(function(r){return '<div class="lib-kv"><span>'+escHtml(r[0])+'</span><b>'+escHtml(r[1])+'</b></div>';}).join('')+'</div><div class="lib-musc-note">Richtlijnen zijn indicatief, afgeleid uit doel/type/herstel.</div>';}
+
+/* ── Detailpagina v3 (nieuwe volgorde) ── */
 function _libDetailHtml(id){var E=ExerciseCatalogService;var c=E.byId(id);if(!c)return '<div class="scroll">Niet gevonden.</div>';
-  var Id=c.identity,I=c.intelligence;var fav=E.isFavorite(id);var hasPoster=!!ExerciseAssetProvider.poster(id);
-  var badge=function(t){return '<span class="lib-badge">'+escHtml(t)+'</span>';};
-  var coach=_coachCards(c);var ben=_benefits(c);var ins=_insights(c);var alts=_altGroups(c);
-  var sameMuscle=E.search('',{muscleGroup:Id.primary},'name').filter(function(x){return x.catalog_id!==id;}).slice(0,10);
+  var Id=c.identity,I=c.intelligence;var fav=E.isFavorite(id);var coach=_coachCards(c);var ben=_benefits(c);
   var out='<div class="scroll" id="lib-scroll">';
+  // Poster + hero-badges overlay
   out+='<div class="lib-detail-top"><button class="lib-back" id="lib-back" aria-label="Terug">←</button><button class="lib-favbtn'+(fav?' on':'')+'" id="lib-fav" aria-pressed="'+(fav?'true':'false')+'" aria-label="Favoriet">'+(fav?'★':'☆')+'</button></div>';
-  out+='<div class="lib-hero" data-muscle-visual="reserved">'+_imgBox(id,Id.name,'hero')+'</div>';
+  out+='<div class="lib-hero" data-muscle-visual="reserved">'+_imgBox(id,Id.name,'hero','<span class="lib-hero-grad"></span>')+_badgeRow(_heroBadges(c),'onhero')+'</div>';
+  // Titel + motivatie
   out+='<h2 class="lib-d-name">'+escHtml(Id.name)+'</h2>';
-  out+='<div class="lib-badges">'+badge(_diffNL(Id.difficulty))+badge(Id.primary[0]||_libCap(Id.family))+badge(Id.equipment.map(_libCap).join('/'))+badge(_libCap(Id.type))+'</div>';
-  // AI Coach tips
+  out+='<p class="lib-motiv">“'+escHtml(_motivation(c))+'”</p>';
+  // Belangrijkste badges
+  out+=_badgeRow(_heroBadges(c),'detailbadges');
+  // Uitvoering stap voor stap
+  if(I.cues&&I.cues.length)out+='<div class="lib-card2"><h4>Uitvoering — stap voor stap</h4><ol class="lib-steps">'+I.cues.map(function(x){return '<li>'+escHtml(x)+'</li>';}).join('')+'</ol></div>';
+  // Coach advies
   out+='<div class="lib-coach">'+coach.map(function(a){return '<div class="lib-cc lib-cc--'+a.k+'"><div class="lib-cc-h"><span class="lib-cc-i">'+a.i+'</span><b>'+escHtml(a.t)+'</b></div><p>'+escHtml(a.x)+'</p></div>';}).join('')+'</div>';
-  // Belangrijkste voordelen
+  // Voordelen
   if(ben.length)out+='<div class="lib-card2"><h4>Belangrijkste voordelen</h4><ul class="lib-ul check">'+ben.map(function(b){return '<li>'+escHtml(b)+'</li>';}).join('')+'</ul></div>';
-  // Waarom deze oefening
-  if(I.why)out+='<div class="lib-card2"><h4>Waarom deze oefening?</h4><div class="lib-why-cards"><div class="lib-why-c"><b>✅ Waarom kiezen</b><p>'+escHtml(I.why.coach)+'</p></div><div class="lib-why-c"><b>🎯 Voor welk doel</b><p>'+escHtml((Id.goals||[]).map(_goalNL).join(', ')||'Algemeen')+'</p></div>'+(I.why.expert?'<div class="lib-why-c"><b>🔬 Onderbouwing</b><p>'+escHtml(I.why.expert)+'</p></div>':'')+((c.flags.injury_flags||[]).length?'<div class="lib-why-c"><b>⚠️ Voorzichtig bij</b><p>'+escHtml((c.flags.injury_flags||[]).map(_libCap).join(', '))+'</p></div>':'')+'</div></div>';
-  // Techniek
-  if(I.cues&&I.cues.length)out+='<div class="lib-card2"><h4>Techniek — coach cues</h4><ul class="lib-ul">'+I.cues.map(function(x){return '<li>'+escHtml(x)+'</li>';}).join('')+'</ul></div>';
   // Veelgemaakte fouten
   if(I.mistakes&&I.mistakes.length)out+='<div class="lib-card2"><h4>Veelgemaakte fouten</h4><ul class="lib-ul warn">'+I.mistakes.map(function(x){return '<li>'+escHtml(x)+'</li>';}).join('')+'</ul></div>';
-  // Uitvoering stap voor stap (uit cues)
-  if(I.cues&&I.cues.length)out+='<div class="lib-card2"><h4>Uitvoering — stap voor stap</h4><ol class="lib-steps">'+I.cues.map(function(x){return '<li>'+escHtml(x)+'</li>';}).join('')+'</ol></div>';
-  // Spieractivatie & insights
-  out+='<div class="lib-card2"><h4>Oefening-insights</h4>'+
-    '<div class="lib-act"><div class="lib-act-l"><span>Spieractivatie · '+escHtml(ins.primary)+'</span><span>'+ins.activation+'%</span></div><div class="lib-actbar"><span style="width:'+ins.activation+'%"></span></div></div>'+
-    '<div class="lib-metrics">'+ins.stars.map(function(m){return '<div class="lib-metric"><span>'+escHtml(m.l)+'</span><b class="lib-star" aria-label="'+m.v+' van 5">'+_stars(m.v)+'</b></div>';}).join('')+'</div>'+
-    '<div class="lib-musc"><div><span class="lib-musc-lbl">Primair</span>'+(Id.primary.map(function(m){return '<span class="lib-mchip on">'+escHtml(m)+'</span>';}).join('')||'<span class="lib-muted">—</span>')+'</div><div><span class="lib-musc-lbl">Secundair</span>'+(Id.secondary.map(function(m){return '<span class="lib-mchip">'+escHtml(m)+'</span>';}).join('')||'<span class="lib-muted">—</span>')+'</div></div>'+
-    '<div class="lib-musc-note">Spieroverlay/heatmap volgt in een latere update.</div></div>';
-  // Slimme alternatieven
-  if(alts.length)out+='<div class="lib-card2"><h4>Slimme alternatieven</h4>'+alts.map(function(g){return '<div class="lib-altg"><div class="lib-altg-h">'+g.i+' '+escHtml(g.t)+'</div>'+g.c+'</div>';}).join('')+'</div>';
-  // Video (alleen als er ooit een video-asset is; nu nog niet → verborgen, geen placeholder)
-  if(ExerciseAssetProvider.has(id,'video'))out+='<div class="lib-card2"><h4>Video</h4><div class="lib-video" data-video="'+id+'"></div></div>';
-  // Gerelateerde oefeningen
-  if(sameMuscle.length)out+='<section class="lib-secblock"><div class="lib-sechd"><h3>💪 Gerelateerde oefeningen</h3></div>'+_row(sameMuscle)+'</section>';
-  out+='<div style="height:28px"></div></div>';
+  // Blessurepreventie
+  var inj=(c.flags.injury_flags||[]);var _jm={shoulder:'schouders',elbow:'ellebogen',knee:'knieën',lower_back:'onderrug',back:'rug',wrist:'polsen',hip:'heupen',ankle:'enkels'};
+  var jn=inj.map(function(j){return _jm[j]||j;});var jt=jn.length>1?(jn.slice(0,-1).join(', ')+' en '+jn[jn.length-1]):jn[0];
+  out+='<div class="lib-card2 lib-safe"><h4>⚠️ Blessurepreventie</h4><p class="lib-safep">'+(inj.length?('Let extra op je '+escHtml(jt)+'. Bouw de belasting rustig op en houd je techniek strak.'):'Warm goed op en houd je techniek strak bij zwaardere sets.')+'</p></div>';
+  // Misschien ook interessant (categorieën, gededupliceerd)
+  var inter=_interessant(c);
+  if(inter.length)out+='<div class="lib-card2"><h4>Misschien ook interessant</h4>'+inter.map(function(g){return '<div class="lib-altg"><div class="lib-altg-h">'+g.i+' '+escHtml(g.t)+'</div>'+_row(g.g)+'</div>';}).join('')+'</div>';
+  // Spieren + Equipment
+  out+='<div class="lib-card2"><h4>Spieren &amp; equipment</h4><div class="lib-musc"><div><span class="lib-musc-lbl">Primair</span>'+(Id.primary.map(function(mm){return '<span class="lib-mchip on">'+escHtml(mm)+'</span>';}).join('')||'<span class="lib-muted">—</span>')+'</div><div><span class="lib-musc-lbl">Secundair</span>'+(Id.secondary.map(function(mm){return '<span class="lib-mchip">'+escHtml(mm)+'</span>';}).join('')||'<span class="lib-muted">—</span>')+'</div><div><span class="lib-musc-lbl">Equipment</span>'+(Id.equipment.map(function(e){return '<span class="lib-mchip">'+escHtml(_libCap(e))+'</span>';}).join('')||'<span class="lib-muted">—</span>')+'</div></div><div class="lib-musc-note">Spieroverlay/heatmap volgt in een latere update.</div></div>';
+  // Exercise Intelligence Dashboard
+  out+='<div class="lib-card2"><h4>🧠 Exercise Intelligence</h4>'+_intelDashboard(c)+'</div>';
+  // Statistieken & richtlijnen
+  out+='<div class="lib-card2"><h4>Statistieken &amp; richtlijnen</h4>'+_statList(c)+'</div>';
+  // Video (voorbereid op Sprint 11)
+  out+='<div class="lib-card2"><h4>Video</h4>'+_videoBlock(id)+'</div>';
+  out+='<div style="height:30px"></div></div>';
+  return out;}
+
+/* ── Oefeningen vergelijken ── */
+function _cmpMetricRow(la,a,lb,b,label){var hi=a===b?'':(a>b?'a':'b');
+  return '<div class="lib-cmp-row"><div class="lib-cmp-side'+(hi==='a'?' win':'')+'"><div class="lib-scorebar"><span style="width:'+a+'%"></span></div><b>'+a+'</b></div><div class="lib-cmp-lbl">'+escHtml(label)+'</div><div class="lib-cmp-side'+(hi==='b'?' win':'')+'"><b>'+b+'</b><div class="lib-scorebar"><span style="width:'+b+'%"></span></div></div></div>';}
+function _cmpHtml(aId,bId){var E=ExerciseCatalogService,X=ExerciseIntelligence;var A=E.byId(aId),B=E.byId(bId);
+  if(!A||!B)return '<div class="scroll">Selecteer twee oefeningen.</div>';
+  var sa=X.scores(A),sb=X.scores(B),ma=X.meta(A),mb=X.meta(B);
+  function head(c,m){return '<div class="lib-cmp-hd">'+_imgBox(c.catalog_id,c.identity.name,'sm')+'<div class="lib-cmp-nm">'+escHtml(c.identity.name)+'</div><div class="lib-cmp-r">★ '+m.rating.toFixed(1)+'</div><div class="lib-cmp-sub">'+escHtml(_diffNL(c.identity.difficulty))+' · '+escHtml(c.identity.equipment.map(_libCap).join('/'))+'</div></div>';}
+  var rows=[['kracht','Kracht'],['hypertrofie','Hypertrofie'],['techniek','Techniek'],['explosiviteit','Explosiviteit'],['mobiliteit','Mobiliteit'],['stabiliteit','Stabiliteit'],['cns','CNS'],['herstelduur','Herstel'],['complexiteit','Complexiteit']];
+  var diffMap={beginner:25,intermediate:55,advanced:80,expert:100};
+  var out='<div class="scroll" id="lib-scroll"><div class="lib-detail-top"><button class="lib-back" id="lib-cmp-back" aria-label="Terug">←</button><span class="lib-cmp-title">Vergelijken</span><span style="width:44px"></span></div>';
+  out+='<div class="lib-cmp-heads">'+head(A,ma)+'<span class="lib-cmp-vs">VS</span>'+head(B,mb)+'</div>';
+  out+='<div class="lib-cmp-rows">';
+  out+=_cmpMetricRow('a',diffMap[A.identity.difficulty]||50,'b',diffMap[B.identity.difficulty]||50,'Moeilijkheid');
+  rows.forEach(function(r){out+=_cmpMetricRow('a',sa[r[0]],'b',sb[r[0]],r[1]);});
+  out+='</div>';
+  out+='<div class="lib-cmp-chg"><button class="lib-cmp-swap" id="lib-cmp-swap">🔁 Kies andere oefening</button></div>';
+  out+='<div style="height:24px"></div></div>';
+  return out;}
+function _cmpPickerHtml(aId){var E=ExerciseCatalogService;var A=E.byId(aId);
+  var list=E.search(_libState.q,{}, _libState.q.trim()?'relevance':'name').filter(function(x){return x.catalog_id!==aId;}).slice(0,60);
+  var out='<div class="scroll" id="lib-scroll"><div class="lib-detail-top"><button class="lib-back" id="lib-cmp-back" aria-label="Terug">←</button><span class="lib-cmp-title">Vergelijk met…</span><span style="width:44px"></span></div>';
+  out+='<p class="lib-cmp-pick-h">Kies een oefening om te vergelijken met <b>'+escHtml(A?A.identity.name:'')+'</b></p>';
+  out+='<div class="lib-searchwrap"><span class="lib-si" aria-hidden="true">🔎</span><input class="lib-search" id="lib-cmp-q" type="search" placeholder="Zoek oefening…" value="'+escHtml(_libState.q)+'"></div>';
+  out+='<div class="lib-list">'+list.map(_item).join('')+'</div><div style="height:24px"></div></div>';
   return out;}
 
 function _libBindDetail(){
   var back=document.getElementById('lib-back');if(back){back.addEventListener('pointerdown',_libRipple);back.onclick=function(){_libState.view=(_libState.q||Object.keys(_libState.f).length)?'list':'home';_libState.detail=null;renderLibBody();};}
   var fb=document.getElementById('lib-fav');if(fb)fb.onclick=function(){var on=ExerciseCatalogService.toggleFavorite(_libState.detail);fb.classList.toggle('on',on);fb.textContent=on?'★':'☆';fb.setAttribute('aria-pressed',on?'true':'false');fb.classList.remove('pop');void fb.offsetWidth;fb.classList.add('pop');};
+  var cmp=document.getElementById('lib-cmp');if(cmp){cmp.addEventListener('pointerdown',_libRipple);cmp.onclick=function(){_libState.cmpA=_libState.detail;_libState.cmpB=null;_libState.q='';_libState.view='cmppick';renderLibBody();var sc=document.querySelector('#s-library .scroll');if(sc)sc.scrollTop=0;};}
   document.querySelectorAll('#s-library .lib-card').forEach(function(b){b.addEventListener('pointerdown',_libRipple);b.onclick=function(){_libOpen(b.dataset.id);};});
+}
+function _libBindCmpPick(){
+  var back=document.getElementById('lib-cmp-back');if(back)back.onclick=function(){_libState.view='detail';_libState.detail=_libState.cmpA;renderLibBody();};
+  var q=document.getElementById('lib-cmp-q');if(q)q.oninput=function(){_libState.q=q.value;var p=q.selectionStart;renderLibBody();var n=document.getElementById('lib-cmp-q');if(n){n.focus();try{n.setSelectionRange(p,p);}catch(e){}}};
+  document.querySelectorAll('#s-library .lib-item').forEach(function(b){b.addEventListener('pointerdown',_libRipple);b.onclick=function(){_libState.cmpB=b.dataset.id;_libState.view='compare';renderLibBody();var sc=document.querySelector('#s-library .scroll');if(sc)sc.scrollTop=0;};});
+}
+function _libBindCmp(){
+  var back=document.getElementById('lib-cmp-back');if(back)back.onclick=function(){_libState.view='detail';_libState.detail=_libState.cmpA;renderLibBody();};
+  var sw=document.getElementById('lib-cmp-swap');if(sw)sw.onclick=function(){_libState.q='';_libState.view='cmppick';renderLibBody();var sc=document.querySelector('#s-library .scroll');if(sc)sc.scrollTop=0;};
 }
 
 function buildVideoMuscle(ex){

@@ -1315,6 +1315,68 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 .gw-entry-tx small{display:block;font-size:11.5px;opacity:.85;margin-top:2px}
 .gw-entry-ar{font-size:22px;opacity:.8}
 
+
+/* ═══ Sprint 14 Premium Dashboard styles ═══ */
+/* ══ Premium Dashboard (Sprint 14, v3.7.0) — additieve styles ══ */
+/* Sluit aan op het bestaande Design System: --accent/--day (accent), --dark
+   (primaire tekst), --g6 (body), --g4 (muted), --g1/--card/--bg (vlakken).
+   Hergebruikt .home-groet/.home-coach. Subtiele premium micro-animaties. */
+#home-dash{margin-bottom:6px}
+.dash-hero{padding:2px 2px 0;animation:dash-fade .4s var(--motion-ease,ease) both}
+.dash-status{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:16px;padding:13px 15px;margin:14px 0 12px;box-shadow:var(--shadow);cursor:pointer;animation:dash-rise .45s var(--motion-ease,ease) both;transition:transform .12s}
+.dash-status:active{transform:scale(.99)}
+.dash-status-ring{position:relative;width:46px;height:46px;flex:0 0 auto}
+.dash-status-ring svg{transform:rotate(-90deg);display:block}
+.dash-status-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--dark)}
+.dash-status-tx{flex:1;min-width:0}
+.dash-status-h{font-size:14px;font-weight:800;color:var(--dark);line-height:1.2}
+.dash-status-s{font-size:12px;color:var(--g4);margin-top:2px;line-height:1.35}
+.dash-status-ar{font-size:18px;color:var(--g4);flex:0 0 auto}
+
+.dash-today{border-radius:18px;padding:16px;margin-bottom:14px;color:#fff;background:linear-gradient(135deg,#0E3B4A,#0B1D2A);box-shadow:0 6px 20px rgba(11,29,42,.22);animation:dash-rise .5s var(--motion-ease,ease) both}
+.dash-today-k{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:1.4px;opacity:.8;margin-bottom:6px}
+.dash-today-h{font-size:19px;font-weight:800;line-height:1.2}
+.dash-today-s{font-size:12.5px;opacity:.9;margin-top:5px;line-height:1.45}
+.dash-today-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:13px;background:var(--accent,#00B894);color:#0B1D2A;border:none;border-radius:13px;padding:13px;font-size:14.5px;font-weight:800;font-family:var(--f);cursor:pointer;transition:transform .1s}
+.dash-today-btn:active{transform:scale(.98)}
+
+.dash-qa{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:16px}
+.dash-qa-btn{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;background:var(--card);border:none;border-radius:15px;padding:14px 6px;cursor:pointer;box-shadow:var(--shadow);font-family:var(--f);transition:transform .12s}
+.dash-qa-btn:active{transform:scale(.95)}
+.dash-qa-ic{width:38px;height:38px;border-radius:11px;background:var(--g1);display:flex;align-items:center;justify-content:center}
+.dash-qa-ic svg{width:20px;height:20px;fill:none;stroke:var(--dark);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.dash-qa-btn.accent .dash-qa-ic{background:var(--accent,#00B894)}
+.dash-qa-btn.accent .dash-qa-ic svg{stroke:#0B1D2A}
+.dash-qa-lbl{font-size:11px;font-weight:700;color:var(--dark);text-align:center;line-height:1.2}
+.dash-qa-badge{position:absolute;top:7px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--accent,#00B894);box-shadow:0 0 0 2px var(--card)}
+
+.dash-sec{margin:2px 0 16px}
+.dash-sec-hd{display:flex;align-items:baseline;justify-content:space-between;padding:2px 2px 8px}
+.dash-sec-t{font-size:12px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--g4)}
+.dash-sec-a{font-size:12px;font-weight:700;color:var(--accent,#00B894);cursor:pointer;background:none;border:none;font-family:var(--f)}
+
+.dash-mini{display:flex;gap:10px;background:var(--card);border-radius:15px;padding:13px 14px;box-shadow:var(--shadow);cursor:pointer;align-items:center;transition:transform .12s}
+.dash-mini:active{transform:scale(.99)}
+.dash-mini-ic{width:42px;height:42px;border-radius:12px;background:var(--g1);display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 auto}
+.dash-mini-tx{flex:1;min-width:0}
+.dash-mini-h{font-size:13.5px;font-weight:800;color:var(--dark);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash-mini-s{font-size:11.5px;color:var(--g4);margin-top:2px;line-height:1.3}
+.dash-mini-v{font-size:15px;font-weight:800;color:var(--accent,#00B894);flex:0 0 auto;text-align:right}
+.dash-mini-empty{font-size:12.5px;color:var(--g4);background:var(--card);border-radius:15px;padding:14px;box-shadow:var(--shadow);text-align:center}
+
+.dash-chips{display:flex;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:2px 2px 4px;scrollbar-width:none}
+.dash-chips::-webkit-scrollbar{display:none}
+.dash-chip{flex:0 0 auto;width:112px;background:var(--card);border:none;border-radius:14px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;text-align:left;font-family:var(--f);padding:0;transition:transform .12s}
+.dash-chip:active{transform:scale(.96)}
+.dash-chip-img{width:100%;height:74px;background-size:cover;background-position:center;background-color:var(--g1);display:block}
+.dash-chip-b{padding:8px 9px 10px}
+.dash-chip-n{font-size:11.5px;font-weight:700;color:var(--dark);line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:29px}
+.dash-chip-m{font-size:10px;color:var(--g4);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+@keyframes dash-fade{from{opacity:0}to{opacity:1}}
+@keyframes dash-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.dash-hero,.dash-status,.dash-today{animation:none}}
+
 </style>
 </head>
 <body>
@@ -1419,9 +1481,10 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
     </div>
   </div>
   <div class="scroll" id="home-theme" data-day="goed" style="padding-top:10px">
-    <div id="home-morning" class="hcoach-item" style="margin-bottom:16px"></div>
-    <div id="home-today-cta" class="hcoach-item" style="margin-bottom:12px"></div>
-    <div id="home-coach-advies" class="hcoach-item" style="margin-bottom:16px"></div>
+    <div id="home-dash"></div>
+    <div id="home-morning" class="hcoach-item" style="display:none"></div>
+    <div id="home-today-cta" class="hcoach-item" style="display:none"></div>
+    <div id="home-coach-advies" class="hcoach-item" style="display:none"></div>
     <div id="home-hrv-card" class="hcoach-item" style="margin-bottom:16px"></div>
     <div id="home-weekstats" class="hcoach-item" style="margin-bottom:16px"></div>
     <div id="home-motivatie" class="hcoach-item" style="margin-bottom:16px"></div>
@@ -3028,7 +3091,7 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v3.6.0';
+const APP_VER = 'v3.7.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -4685,6 +4748,7 @@ function go(id){
   const el=document.getElementById(id);if(el){el.classList.add('active');focusScreenForA11y(el);}
   stopTrainTimer();
   if(id==='s-home')refreshHome();
+  if(id==='s-home'&&window.DASHUI)DASHUI.render();
   if(id==='s-builder'&&window.WBUI)WBUI.render();
   if(id==='s-guided'&&window.GWUI)GWUI.render();
   if(id==='s-hist'){histOff=0;renderHistFilterTabs();loadHistory();}
@@ -8853,6 +8917,8 @@ async function refreshHome(){
   else rs.forEach(s=>{const n=exercises.find(e=>e.id===s.exercise_id)?.name||s.exercise_id;const v=s.weight&&s.reps?s.weight+'kg×'+s.reps:s.time_str||'—';rh+=`<div class="lrow">${s._pending?'<span title="Wachtend op sync" style="margin-right:4px">⏳</span>':''}<div class="ldate">${s.date}</div><div class="lval">${n}</div><div class="lnote">${v}</div></div>`;});
   document.getElementById('home-recent').innerHTML=rh;
   refreshHomeGoalsCard();
+  window.homeNextT=nextT;
+  if(window.DASHUI)DASHUI.render();
 }
 
 // v3.3.44 Epic 1 — Morning Report. Persoonlijke ochtendtekst, uitsluitend uit bestaande
@@ -13132,6 +13198,236 @@ var GWUI=(function(){
 
   return {render:render,launch:launch,begin:begin,setDone:setDone,rate:rate,next:next,skipRest:skipRest,
     rest:rest,wt:wt,sets:sets,skip:skip,details:details,alt:alt,quit:quit,finishHome:finishHome,again:again};
+})();
+</script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   Premium Dashboard — Sprint 14 (v3.7.0) — VOLLEDIG ADDITIEF
+   Aggregeert UITSLUITEND bestaande intelligentie/data (read-only):
+   dagfactor + spierherstel (home-globals uit refreshHome), volgende training,
+   ECS.favorites()/recent(), Guided-status/-log (tk_gw_active/tk_gw_log/
+   tk_gw_hist), atleetnaam. GEEN nieuwe AI, GEEN nieuwe database, GEEN nieuwe
+   metadata. Toont NOOIT confidence. Raakt geen bevroren systeem aan.
+   ══════════════════════════════════════════════════════════════════════ */
+var DASH=(function(){
+  'use strict';
+  function ecs(){return window.ExerciseCatalogService;}
+  function asset(){return window.ExerciseAssetProvider;}
+  function safe(fn,d){try{return fn();}catch(e){return d;}}
+
+  function firstName(){
+    return safe(function(){
+      var n=(window.atleet&&window.atleet.naam)?String(window.atleet.naam).trim():'';
+      return n?n.split(/\s+/)[0]:'';
+    },'');
+  }
+  function greeting(){
+    var h=new Date().getHours();
+    var g=h<12?'Goedemorgen':(h<18?'Goedemiddag':'Goedenavond');
+    var n=firstName();
+    return n?g+', '+n:g;
+  }
+  function df(){return window.homeDfDetail||null;}
+  function dayInfo(){
+    var d=df();if(!d)return null;
+    var k=safe(function(){return window.dayState?window.dayState(d.factor).key:null;},null);
+    return {factor:d.factor,status:d.statusTxt||'',st:d.st||'y',date:d.date||'',key:k};
+  }
+  function recovery(){
+    var rows=Array.isArray(window.homeMuscleRec)?window.homeMuscleRec:[];
+    var loaded=rows.filter(function(r){return r&&typeof r.pct==='number'&&r.pct<70;}).sort(function(a,b){return a.pct-b.pct;});
+    var ready=rows.filter(function(r){return r&&typeof r.pct==='number'&&r.pct>=90;});
+    return {rows:rows,loaded:loaded,ready:ready,has:rows.length>0};
+  }
+  function coachLine(){
+    var t=window.homeCoachText;
+    if(t&&String(t).trim())return String(t);
+    var d=df();
+    if(!d)return 'Vul je check-in in, dan vertel ik je precies wat vandaag slim is.';
+    return 'Bekijk hieronder wat vandaag verstandig is.';
+  }
+  function nextTraining(){return window.homeNextT||null;}
+
+  function guidedActive(){return safe(function(){return !!(window.GW&&GW.hasActive());},false);}
+  function guidedLog(){return safe(function(){return JSON.parse(localStorage.getItem('tk_gw_log')||'[]');},[]);}
+  function lastGuided(){var l=guidedLog();return (l&&l.length)?l[0]:null;}
+  function lastPerf(){
+    return safe(function(){
+      var h=JSON.parse(localStorage.getItem('tk_gw_hist')||'{}');
+      var arr=Object.keys(h).map(function(id){return {id:id,weight:h[id].weight,reps:h[id].reps,feel:h[id].feel,at:h[id].at};})
+        .filter(function(x){return x.weight!=null&&x.at;});
+      arr.sort(function(a,b){return b.at-a.at;});
+      return arr.length?arr[0]:null;
+    },null);
+  }
+
+  function favorites(n){
+    return safe(function(){return (ecs().favorites()||[]).slice(0,n||8);},[]);
+  }
+  function recent(n){
+    return safe(function(){return (ecs().recent()||[]).slice(0,n||8);},[]);
+  }
+  function poster(id){return safe(function(){return asset().poster(id)||'';},'');}
+  function nameOf(id){return safe(function(){var e=ecs().byId(id);return e?e.identity.name:id;},id);}
+  function exOf(id){return safe(function(){return ecs().byId(id);},null);}
+
+  return {
+    greeting:greeting, firstName:firstName,
+    df:df, dayInfo:dayInfo, recovery:recovery, coachLine:coachLine, nextTraining:nextTraining,
+    guidedActive:guidedActive, lastGuided:lastGuided, lastPerf:lastPerf,
+    favorites:favorites, recent:recent, poster:poster, nameOf:nameOf, exOf:exOf
+  };
+})();
+</script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   Premium Dashboard — UI (Sprint 14, v3.7.0) — ADDITIEF
+   Rendert het centrale dashboard in #home-dash. Sluit aan op het bestaande
+   Design System en de daghelpers (dayState). Geen confidence getoond.
+   ══════════════════════════════════════════════════════════════════════ */
+var DASHUI=(function(){
+  'use strict';
+  function esc(s){return (window.escHtml?escHtml(s):String(s==null?'':s));}
+  function low(s){s=String(s||'');return s.charAt(0).toLowerCase()+s.slice(1);}
+  function joinNl(a){a=(a||[]).filter(Boolean);if(a.length<=1)return a[0]||'';return a.slice(0,-1).join(', ')+' en '+a[a.length-1];}
+
+  /* ── Herstelstatus (dagfactor + spierherstel) ── */
+  function statusCard(){
+    var d=DASH.dayInfo();
+    if(!d){
+      return '<div class="dash-status" onclick="openModal(\'m-hrv\')" role="button" tabindex="0" aria-label="Check-in invoeren">'+
+        '<div class="dash-status-ring"><svg width="46" height="46" viewBox="0 0 46 46"><circle cx="23" cy="23" r="19" fill="none" stroke="var(--g2)" stroke-width="4"/></svg><div class="dash-status-val">?</div></div>'+
+        '<div class="dash-status-tx"><div class="dash-status-h">Nog geen check-in</div><div class="dash-status-s">Vul je herstel in voor persoonlijk dagadvies.</div></div>'+
+        '<div class="dash-status-ar">›</div></div>';
+    }
+    var rec=DASH.recovery();
+    var pct=Math.max(0,Math.min(1,(d.factor-0.85)/0.20));
+    var RC=Math.round(2*Math.PI*19);
+    var off=Math.round(RC*(1-pct));
+    var head=d.status||'Herstel';
+    var sub;
+    if(rec.loaded.length)sub='Let op: '+joinNl(rec.loaded.slice(0,2).map(function(r){return low(r.muscle);}))+' nog niet volledig hersteld.';
+    else if(rec.ready.length)sub=joinNl(rec.ready.slice(0,2).map(function(r){return low(r.muscle);})).replace(/^./,function(c){return c.toUpperCase();})+' volledig hersteld.';
+    else sub='Dagfactor '+d.factor+' · tik voor de onderbouwing.';
+    return '<div class="dash-status" onclick="(window.toggleDagfactorDetail?toggleDagfactorDetail():openModal(\'m-hrv\'))" role="button" tabindex="0" aria-label="Herstel en vermoeidheid bekijken">'+
+      '<div class="dash-status-ring"><svg width="46" height="46" viewBox="0 0 46 46"><circle cx="23" cy="23" r="19" fill="none" stroke="var(--g2)" stroke-width="4"/>'+
+      '<circle cx="23" cy="23" r="19" fill="none" stroke="var(--day,#00B894)" stroke-width="4" stroke-linecap="round" stroke-dasharray="'+RC+'" stroke-dashoffset="'+off+'"/></svg>'+
+      '<div class="dash-status-val">'+d.factor+'</div></div>'+
+      '<div class="dash-status-tx"><div class="dash-status-h">'+esc(head)+'</div><div class="dash-status-s">'+esc(sub)+'</div></div>'+
+      '<div class="dash-status-ar">›</div></div>';
+  }
+
+  /* ── Vandaag / volgende stap ── */
+  function todayCard(){
+    if(DASH.guidedActive()){
+      return '<div class="dash-today"><div class="dash-today-k">Openstaande sessie</div>'+
+        '<div class="dash-today-h">Begeleide training hervatten</div>'+
+        '<div class="dash-today-s">Je hebt een begeleide training openstaan — pak hem op waar je was gebleven.</div>'+
+        '<button class="dash-today-btn" onclick="GWUI.launch()">▶ Hervatten</button></div>';
+    }
+    var t=DASH.nextTraining();
+    if(t){
+      var n=t._exCount||0;
+      var muscles=Array.isArray(t._muscles)?t._muscles:[];
+      var human=safeFocus(muscles);
+      var meta=n?(n+' oefening'+(n===1?'':'en')):'';
+      return '<div class="dash-today"><div class="dash-today-k">Training van vandaag</div>'+
+        '<div class="dash-today-h">'+esc(t.naam)+'</div>'+
+        (human?'<div class="dash-today-s">'+esc(human)+(meta?' · '+meta:'')+'</div>':(meta?'<div class="dash-today-s">'+meta+'</div>':''))+
+        '<button class="dash-today-btn" onclick="startT(\''+esc(t.id)+'\')">Start training</button></div>';
+    }
+    return '<div class="dash-today"><div class="dash-today-k">Klaar om te trainen?</div>'+
+      '<div class="dash-today-h">Bouw je training van vandaag</div>'+
+      '<div class="dash-today-s">Laat de coach automatisch een complete training op maat samenstellen.</div>'+
+      '<button class="dash-today-btn" onclick="go(\'s-builder\');WBUI.render()">Nieuwe training</button></div>';
+  }
+  function safeFocus(muscles){
+    try{if(window.buildHeroFocus)return window.buildHeroFocus(muscles);}catch(e){}
+    return joinNl((muscles||[]).slice(0,3));
+  }
+
+  /* ── Snelle acties ── */
+  function ic(p){return '<span class="dash-qa-ic"><svg viewBox="0 0 24 24">'+p+'</svg></span>';}
+  function quickActions(){
+    var act=DASH.guidedActive();
+    var tiles=[
+      {c:'accent',badge:act,ic:'<path d="M8 5v14l11-7z"/>',l:act?'Hervatten':'Begeleid',o:'GWUI.launch()'},
+      {ic:'<path d="M12 5v14M5 12h14"/>',l:'Nieuwe training',o:"go('s-builder');WBUI.render()"},
+      {ic:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h5"/>',l:'Oefeningen',o:"go('s-library');renderLibrary()"},
+      {ic:'<path d="M6 4h9l3 3v13H6z"/><path d="M9 11h6M9 15h4"/>',l:'Programma',o:"go('s-programma')"},
+      {ic:'<path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/>',l:'Laatste training',o:"go('s-hist')"},
+      {ic:'<path d="M4 19V5M4 19h16M8 19v-6M12 19v-9M16 19v-4"/>',l:'Voortgang',o:"go('s-stats')"}
+    ];
+    return '<div class="dash-qa">'+tiles.map(function(t){
+      return '<button class="dash-qa-btn'+(t.c?' '+t.c:'')+'" onclick="'+t.o+'" aria-label="'+esc(t.l)+'">'+
+        (t.badge?'<span class="dash-qa-badge"></span>':'')+ic(t.ic)+'<span class="dash-qa-lbl">'+esc(t.l)+'</span></button>';
+    }).join('')+'</div>';
+  }
+
+  /* ── Laatste training + laatste prestatie ── */
+  function lastTrainingCard(){
+    var g=DASH.lastGuided();
+    if(g){
+      var when=g.at?relDate(g.at):'';
+      return '<div class="dash-mini" onclick="go(\'s-hist\')" role="button" tabindex="0">'+
+        '<div class="dash-mini-ic">🏁</div>'+
+        '<div class="dash-mini-tx"><div class="dash-mini-h">'+esc((g.name||'Training')+'-training')+'</div>'+
+        '<div class="dash-mini-s">'+(g.volume||0)+' sets · '+(g.exercises||0)+' oefeningen · '+(g.time||0)+' min'+(when?' · '+when:'')+'</div></div>'+
+        (g.avgRPE?'<div class="dash-mini-v">RPE '+g.avgRPE+'</div>':'')+'</div>';
+    }
+    return '<div class="dash-mini-empty">Nog geen begeleide training voltooid — start er een via Snelle acties.</div>';
+  }
+  function lastPerfCard(){
+    var p=DASH.lastPerf();
+    if(p){
+      return '<div class="dash-mini" onclick="go(\'s-stats\')" role="button" tabindex="0">'+
+        '<div class="dash-mini-ic">🏆</div>'+
+        '<div class="dash-mini-tx"><div class="dash-mini-h">'+esc(DASH.nameOf(p.id))+'</div>'+
+        '<div class="dash-mini-s">'+(p.reps?esc(p.reps)+' herh.':'')+(p.feel?' · voelde '+esc(String(p.feel).replace('_',' ')):'')+(p.at?' · '+relDate(p.at):'')+'</div></div>'+
+        '<div class="dash-mini-v">'+p.weight+' kg</div></div>';
+    }
+    return '<div class="dash-mini-empty">Je laatste prestaties verschijnen hier zodra je een gewicht logt.</div>';
+  }
+
+  /* ── Favorieten / recent bekeken (chips) ── */
+  function chip(ex){
+    var id=ex.catalog_id;var poster=DASH.poster(id);
+    var m=(ex.identity.primary||[])[0]||ex.identity.category||'';
+    return '<button class="dash-chip" onclick="go(\'s-library\');renderLibrary();if(window._libOpen)_libOpen(\''+id+'\')" aria-label="'+esc(ex.identity.name)+'">'+
+      '<span class="dash-chip-img" style="background-image:url(\''+poster+'\')"></span>'+
+      '<span class="dash-chip-b"><span class="dash-chip-n">'+esc(ex.identity.name)+'</span><span class="dash-chip-m">'+esc(m)+'</span></span></button>';
+  }
+  function chipRow(list){return '<div class="dash-chips">'+list.map(chip).join('')+'</div>';}
+  function section(title,linkLabel,linkAction,body){
+    return '<div class="dash-sec"><div class="dash-sec-hd"><span class="dash-sec-t">'+esc(title)+'</span>'+
+      (linkLabel?'<button class="dash-sec-a" onclick="'+linkAction+'">'+esc(linkLabel)+'</button>':'')+'</div>'+body+'</div>';
+  }
+
+  function relDate(ts){
+    try{var days=Math.floor((Date.now()-ts)/864e5);
+      if(days<=0)return 'vandaag';if(days===1)return 'gisteren';if(days<7)return days+' dgn geleden';
+      return new Date(ts).toLocaleDateString('nl-NL',{day:'numeric',month:'short'});}catch(e){return '';}
+  }
+
+  /* ── Render ── */
+  function render(){
+    var el=document.getElementById('home-dash');if(!el)return;
+    var fav=DASH.favorites(8),rec=DASH.recent(8);
+    var h='';
+    h+='<div class="dash-hero"><div class="home-groet">'+esc(DASH.greeting())+'</div>'+
+       '<div class="home-coach">'+esc(DASH.coachLine())+'</div></div>';
+    h+=statusCard();
+    h+=todayCard();
+    h+=quickActions();
+    h+=section('Laatste training',null,null,lastTrainingCard());
+    h+=section('Laatste prestatie','Alle records','go(\'s-stats\')',lastPerfCard());
+    if(fav.length)h+=section('Favoriete oefeningen','Alles','go(\'s-library\');renderLibrary()',chipRow(fav));
+    else h+=section('Favoriete oefeningen',null,null,'<div class="dash-mini-empty">Nog geen favorieten — tik het hartje bij een oefening om hem hier te zien.</div>');
+    if(rec.length)h+=section('Recent bekeken','Oefeningen','go(\'s-library\');renderLibrary()',chipRow(rec));
+    el.innerHTML=h;
+  }
+
+  return {render:render};
 })();
 </script>
 </body>

@@ -1563,6 +1563,20 @@ html[data-theme="dark"]{--shadow:0 2px 14px rgba(0,0,0,.38)}
 
 /* ── Filter-pills (Voortgang): consistente premium chip-maat ── */
 
+
+/* ============================================================
+   v3.3.50 WARMTE-LAAG (v4.2.0) — additief, uitsluitend presentatie.
+   Rondere kaarten, zachtere premium schaduw, warme oppervlakken,
+   coach-kaart met teal accent-rand. Engines/HTML/JS ongewijzigd.
+   ============================================================ */
+:root{ --r:14px; --shadow:0 10px 26px rgba(11,29,42,.10); }
+html[data-theme="dark"]{ --shadow:0 14px 32px rgba(0,0,0,.45); }
+html[data-theme="light"]{ --bg:#E9EDF1; }
+.card,.intel-card,.summary-card,.ex-card,.lib-card,.rm-panel,.eq-panel,.coach-advice-card,.dash-card,.dash-qa-btn{ border-radius:18px !important; box-shadow:var(--shadow) !important; }
+.today-card,.dash-hero,.lib-hero,.onhero{ border-radius:22px !important; box-shadow:0 16px 36px rgba(11,29,42,.16) !important; }
+.coach-advice-card{ border-left:5px solid var(--accent) !important; }
+.dash-today-btn,.act-btn,.save-btn,.coach-apply-btn,.today-cta,.dash-qa-btn{ border-radius:14px !important; }
+
 </style>
 </head>
 <body>
@@ -3277,7 +3291,7 @@ html[data-theme="dark"]{--shadow:0 2px 14px rgba(0,0,0,.38)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.1.0';
+const APP_VER = 'v4.2.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';

@@ -1522,8 +1522,13 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 .wb2-saved-a button{width:30px;height:30px;border-radius:8px;border:1px solid var(--g2);background:var(--card);cursor:pointer;font-size:12px;color:var(--g6)}
 
 
-/* ═══ Sprint 17 Information Architecture ═══ */
-#home-theme > *:not(#home-dash){display:none!important}
+/* ═══ Sprint 17 IA — herzien v4.3.0: hero-stack vervangt de launcher; de oude
+   launcher (#home-dash, behouden voor continuïteit) en de legacy-duplicaten blijven
+   verborgen. De hero + "rest op Home" (weekstats, motivatie, doelen, vaste) tonen. ═══ */
+#home-theme > #home-dash,
+#home-theme > #home-morning,
+#home-theme > #home-today-cta,
+#home-theme > #home-coach-advies{display:none!important}
 
 /* ═══ Sprint 18 Design System Completion ═══ */
 /* ══════════════════════════════════════════════════════════════════════
@@ -1577,6 +1582,112 @@ html[data-theme="light"]{ --bg:#E9EDF1; }
 .coach-advice-card{ border-left:5px solid var(--accent) !important; }
 .dash-today-btn,.act-btn,.save-btn,.coach-apply-btn,.today-cta,.dash-qa-btn{ border-radius:14px !important; }
 
+/* ══════════════════════════════════════════════════════════════════
+   v4.3.0 — Goedgekeurde referentie-Home + Training + Lichaam.
+   Additief; hergebruikt de bestaande anatomie-engine (renderMuscleRecoveryHeatmap)
+   en echte data (spierherstel, dagfactor, slaap). Geen nieuwe kleuren buiten tokens.
+   ══════════════════════════════════════════════════════════════════ */
+:root{--v43-mint:rgba(0,184,148,.10)}
+html[data-theme="dark"]{--v43-mint:rgba(0,184,148,.16)}
+/* Home header — begroeting */
+.v43-hh{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.v43-hh-greet{font-size:14px;color:var(--g4);font-weight:600;line-height:1.1}
+.v43-hh-name{font-size:25px;font-weight:800;color:var(--dark);line-height:1.12;letter-spacing:-.4px;margin-top:1px}
+.v43-hh-date{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--g4);font-weight:700;margin-top:6px}
+.v43-hh-date svg{width:14px;height:14px;stroke:var(--accent);fill:none;stroke-width:2}
+.v43-hh-r{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+.v43-bell{width:42px;height:42px;border-radius:50%;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;border:0;cursor:pointer;position:relative;padding:0}
+.v43-bell svg{width:19px;height:19px;stroke:var(--dark);fill:none;stroke-width:2}
+.v43-bell .bdot{position:absolute;top:9px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--accent);border:2px solid var(--card)}
+.v43-avatar{width:46px;height:46px;border-radius:50%;background:var(--g2);border:0;cursor:pointer;box-shadow:0 0 0 3px rgba(0,184,148,.5);display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto;padding:0}
+.v43-avatar svg{width:26px;height:26px;fill:var(--g4)}
+.v43-avatar img{width:100%;height:100%;object-fit:cover}
+/* Hero — Herstel nu */
+.v43-hero{position:relative;background:var(--card);border-radius:22px;box-shadow:0 16px 36px rgba(11,29,42,.16);padding:20px 18px;margin-bottom:16px;overflow:hidden}
+html[data-theme="dark"] .v43-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
+.v43-hero-top{display:flex;gap:8px;align-items:flex-start}
+.v43-hero-l{flex:1;min-width:0}
+.v43-lbl{font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--g4)}
+.v43-hero-title{font-size:25px;line-height:1.08;font-weight:800;color:var(--dark);letter-spacing:-.5px;margin-top:8px}
+.v43-hero-sub{font-size:13.5px;line-height:1.4;color:var(--g4);font-weight:500;margin-top:9px;max-width:23ch}
+.v43-hero-badge{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:#fff;font-size:15px;font-weight:800;margin-top:2px}
+.v43-figbox{width:112px;flex:0 0 auto;display:flex;align-items:flex-start;justify-content:center;margin-top:-2px}
+.v43-figbox svg{height:168px;width:auto;display:block}
+.v43-stats{display:flex;gap:6px;margin-top:18px}
+.v43-stat{flex:1;min-width:0}
+.v43-stat-ic{height:20px;margin-bottom:8px}
+.v43-stat-ic svg{width:20px;height:20px;stroke:var(--accent);fill:none;stroke-width:2}
+.v43-stat-v{font-size:21px;font-weight:800;color:var(--dark);line-height:1.05}
+.v43-stat-k{font-size:12px;color:var(--g4);font-weight:600;margin-top:2px}
+.v43-legend{display:flex;gap:12px;border-top:1px solid var(--g2);margin-top:16px;padding-top:14px;flex-wrap:wrap}
+.v43-legend .d{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--g4);line-height:1.2}
+.v43-legend .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+/* Coach vandaag */
+.v43-coach{background:var(--v43-mint);border-radius:18px;padding:16px;margin-bottom:16px;display:flex;gap:14px;align-items:center;cursor:pointer;border:0;width:100%;text-align:left}
+.v43-coach-ic{width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.v43-coach-ic svg{width:22px;height:22px;fill:#fff}
+.v43-coach-body{flex:1;min-width:0;display:flex;flex-direction:column}
+.v43-coach-body .k{font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent);margin-bottom:5px;display:block}
+.v43-coach-body .t{font-size:14px;font-weight:600;color:var(--dark);line-height:1.4;display:block}
+.v43-coach-ar{color:var(--g4);font-size:22px;flex:0 0 auto;line-height:1}
+/* Vandaag gepland + Laatste training gedeelde kaart */
+.v43-plan,.v43-last{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:18px;margin-bottom:16px}
+.v43-plan-top{display:flex;align-items:center;gap:14px;margin-top:9px}
+.v43-plan-ic,.v43-last-ic{width:52px;height:52px;border-radius:50%;background:var(--accent2);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.v43-plan-ic svg,.v43-last-ic svg{width:24px;height:24px;stroke:var(--accent);fill:none;stroke-width:2}
+.v43-plan-l,.v43-last-l{flex:1;min-width:0}
+.v43-plan-name{font-size:18px;font-weight:800;color:var(--dark);line-height:1.15}
+.v43-plan-meta{display:flex;gap:16px;margin-top:6px;font-size:12.5px;color:var(--g4);font-weight:600}
+.v43-plan-meta span{display:inline-flex;align-items:center;gap:5px}
+.v43-plan-meta svg{width:14px;height:14px;stroke:var(--g4);fill:none;stroke-width:2}
+.v43-start{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;border:0;border-radius:14px;padding:16px;font-weight:800;font-size:16px;background:var(--accent);color:#fff;margin-top:16px;cursor:pointer;box-shadow:0 10px 22px rgba(0,184,148,.32)}
+.v43-start svg{width:15px;height:15px;fill:#fff}
+/* Aandachtspunt */
+.v43-attn{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:15px 16px;margin-bottom:16px;display:flex;gap:13px;align-items:center}
+.v43-attn-ic{width:38px;height:38px;border-radius:11px;background:rgba(200,168,75,.18);color:var(--y);display:flex;align-items:center;justify-content:center;flex:0 0 auto;font-size:17px}
+.v43-attn-b{flex:1;min-width:0}
+.v43-attn-t{font-size:14px;font-weight:800;color:var(--dark);line-height:1.25}
+.v43-attn-s{font-size:12.5px;color:var(--g4);margin-top:3px;line-height:1.35}
+.v43-last-top{display:flex;align-items:center;gap:13px;margin-top:9px}
+.v43-last-name{font-size:15px;font-weight:800;color:var(--dark)}
+.v43-last-sub{font-size:12.5px;color:var(--g4);margin-top:2px}
+.v43-last-mt{display:flex;gap:26px;border-top:1px solid var(--g2);margin-top:14px;padding-top:12px}
+.v43-last-mt .m{display:flex;align-items:center;gap:8px}
+.v43-last-mt .mv{font-size:16px;font-weight:800;color:var(--dark)}
+.v43-last-mt .mk{font-size:11.5px;color:var(--g4);font-weight:600;line-height:1.15}
+.v43-last-mt svg{width:16px;height:16px;stroke:var(--accent);fill:none;stroke-width:2}
+/* Training-tab: snelle acties + mijn trainingen */
+.v43-tqa{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:4px}
+.v43-tqa .q{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:16px 8px;display:flex;flex-direction:column;align-items:center;gap:9px;cursor:pointer;text-align:center;border:0;min-width:0}
+.v43-tqa .q .ic{width:42px;height:42px;border-radius:12px;background:var(--v43-mint);color:var(--accent);display:flex;align-items:center;justify-content:center}
+.v43-tqa .q .ic svg{width:21px;height:21px;stroke:var(--accent);fill:none;stroke-width:2}
+.v43-tqa .q .t{font-size:12px;font-weight:800;color:var(--dark);line-height:1.15}
+.v43-tmt{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:2px 16px;margin-top:4px}
+.v43-tmt .row{display:flex;align-items:center;gap:13px;padding:15px 0;border-bottom:1px solid var(--g2);cursor:pointer;width:100%;background:0;border-left:0;border-right:0;border-top:0;text-align:left}
+.v43-tmt .row:last-child{border-bottom:0}
+.v43-tmt .ic{width:40px;height:40px;border-radius:12px;background:var(--v43-mint);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.v43-tmt .ic svg{width:20px;height:20px;stroke:var(--accent);fill:none;stroke-width:2}
+.v43-tmt .b{flex:1;min-width:0;display:flex;flex-direction:column}
+.v43-tmt .b .t{font-size:14.5px;font-weight:800;color:var(--dark);display:block}
+.v43-tmt .b .s{font-size:12px;color:var(--g4);margin-top:2px;display:block}
+.v43-tmt .ar{color:var(--g3);font-size:22px;flex:0 0 auto;line-height:1}
+/* Lichaam-tab */
+.v43-lich-hero{background:var(--card);border-radius:22px;box-shadow:0 16px 36px rgba(11,29,42,.16);padding:18px 14px;margin-bottom:14px;text-align:center}
+html[data-theme="dark"] .v43-lich-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
+.v43-lich-fig{display:flex;justify-content:center}
+.v43-lich-fig svg{height:290px;width:auto;display:block}
+.v43-lich-overall{font-size:34px;font-weight:800;margin-top:8px;line-height:1}
+.v43-lich-cap{font-size:12px;color:var(--g4);margin-top:2px}
+.v43-lich-toggle{display:inline-flex;gap:4px;background:var(--g1);border-radius:12px;padding:4px;margin-bottom:6px}
+.v43-lich-toggle button{border:0;background:transparent;padding:8px 20px;border-radius:9px;font-weight:700;font-size:13px;color:var(--g4);cursor:pointer}
+.v43-lich-toggle button.on{background:var(--card);color:var(--dark);box-shadow:var(--shadow)}
+.v43-lich-row{margin-bottom:12px}
+.v43-lich-row .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
+.v43-lich-row .nm{font-size:13px;font-weight:700;color:var(--dark)}
+.v43-lich-row .st{font-size:12px;color:var(--g4)}
+.v43-lich-bar{height:8px;border-radius:6px;background:var(--g2);overflow:hidden}
+.v43-lich-bar>span{display:block;height:100%;border-radius:6px}
+
 </style>
 </head>
 <body>
@@ -1595,7 +1706,7 @@ html[data-theme="light"]{ --bg:#E9EDF1; }
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ni-icon">📚</span><span class="ni-label">Oefeningen</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
@@ -1606,7 +1717,7 @@ html[data-theme="light"]{ --bg:#E9EDF1; }
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="go('s-builder')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ni-icon">📚</span><span class="ni-label">Oefeningen</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
@@ -1665,30 +1776,23 @@ html[data-theme="light"]{ --bg:#E9EDF1; }
 <!-- ═══ HOME ═══ -->
 <div class="scr active" id="s-home">
   <div class="hdr">
-    <div class="hdr-row">
-      <div>
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px">
-          <img src="/icon-192.png" alt="Trainingskompas logo" width="38" height="38" style="border-radius:9px;display:block;box-shadow:0 1px 3px rgba(0,0,0,.15)">
-          <div class="hdr-title" role="heading" aria-level="1" style="font-size:17px;letter-spacing:1px;text-transform:uppercase;line-height:1.15">Trainingskompas</div>
-        </div>
-        <div class="hdr-sub" style="letter-spacing:2px;text-transform:uppercase;font-size:11px">Slimmer trainen, elke dag</div>
-        <div id="offline-badge" style="display:none;margin-top:4px;font-size:11px;font-weight:700;color:var(--y,#b8860b);background:rgba(184,134,11,.12);border-radius:8px;padding:2px 8px;width:fit-content;cursor:pointer" onclick="openOfflineQueueModal()"></div>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="ibtn" onclick="openModal('m-hrv')" aria-label="Dagfactor en HRV invoeren"><svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 3.5 12 2.5-7 1.5 3h4"/></svg></button>
-        <button class="ibtn" onclick="openBeheer()" aria-label="Beheer openen"><svg viewBox="0 0 24 24"><path d="M4 7h8M18 7h2M4 12h2M10 12h10M4 17h6M16 17h4"/><circle cx="15" cy="7" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="13" cy="17" r="2"/></svg></button>
-      </div>
-    </div>
+    <div id="v43-home-head"></div>
+    <div id="offline-badge" style="display:none;margin-top:8px;font-size:11px;font-weight:700;color:var(--y,#b8860b);background:rgba(184,134,11,.12);border-radius:8px;padding:2px 8px;width:fit-content;cursor:pointer" onclick="openOfflineQueueModal()"></div>
   </div>
   <div class="scroll" id="home-theme" data-day="goed" style="padding-top:10px">
-    <div id="home-dash"></div>
+    <div id="home-dash" style="display:none"></div>
+    <div id="home-hero"></div>
+    <div id="home-coach-vandaag"></div>
+    <div id="home-plan"></div>
+    <div id="home-attn"></div>
+    <div id="home-last"></div>
     <div id="home-morning" class="hcoach-item" style="display:none"></div>
     <div id="home-today-cta" class="hcoach-item" style="display:none"></div>
     <div id="home-coach-advies" class="hcoach-item" style="display:none"></div>
+    <div class="home-divider"><span>Meer mogelijkheden</span></div>
     <div id="home-hrv-card" class="hcoach-item" style="margin-bottom:16px"></div>
     <div id="home-weekstats" class="hcoach-item" style="margin-bottom:16px"></div>
     <div id="home-motivatie" class="hcoach-item" style="margin-bottom:16px"></div>
-    <div class="home-divider"><span>Meer mogelijkheden</span></div>
     <div id="home-program-card" style="margin-bottom:8px"></div>
     <div id="home-goals-card" style="margin-bottom:8px"></div>
     <div class="sec-hd">Andere trainingen</div>
@@ -1697,7 +1801,6 @@ html[data-theme="light"]{ --bg:#E9EDF1; }
     <div id="home-next-lbl" style="font-size:12px;color:var(--g4);font-weight:600;text-align:center;margin-bottom:10px"></div>
     <div class="sec-hd">Snelacties</div>
     <div id="home-quick" style="margin-bottom:12px"></div>
-    <button class="wb-entry" onclick="go('s-builder');WBUI.render()"><span class="wb-entry-ic">🧩</span><span class="wb-entry-tx"><b>Workout Builder</b><small>Genereer automatisch een complete training</small></span><span class="wb-entry-ar">›</span></button>
     <button class="lib-entry" onclick="go('s-library');renderLibrary()"><span class="lib-entry-ic">📚</span><span class="lib-entry-tx"><b>Oefeningen ontdekken</b><small>206 oefeningen · aanbevolen, favorieten &amp; meer</small></span><span class="lib-entry-ar">›</span></button>
     <div class="sec-hd">Recente sessies</div>
     <div class="card"><div class="card-body" style="padding-top:10px" id="home-recent"></div></div>
@@ -1706,7 +1809,7 @@ html[data-theme="light"]{ --bg:#E9EDF1; }
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni active" aria-current="page" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ni-icon">📚</span><span class="ni-label">Oefeningen</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
@@ -1853,7 +1956,7 @@ html[data-theme="light"]{ --bg:#E9EDF1; }
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ni-icon">📚</span><span class="ni-label">Oefeningen</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
     <button class="ni active" aria-current="page" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
@@ -1954,7 +2057,7 @@ html[data-theme="light"]{ --bg:#E9EDF1; }
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ni-icon">📚</span><span class="ni-label">Oefeningen</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
     <button class="ni active" aria-current="page" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
@@ -2057,7 +2160,7 @@ html[data-theme="light"]{ --bg:#E9EDF1; }
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ni-icon">📚</span><span class="ni-label">Oefeningen</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
     <button class="ni active" aria-current="page" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
@@ -2210,7 +2313,7 @@ html[data-theme="light"]{ --bg:#E9EDF1; }
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ni-icon">📚</span><span class="ni-label">Oefeningen</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
@@ -2229,7 +2332,7 @@ html[data-theme="light"]{ --bg:#E9EDF1; }
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ni-icon">📚</span><span class="ni-label">Oefeningen</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
     <button class="ni active" aria-current="page" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
@@ -2290,7 +2393,7 @@ html[data-theme="light"]{ --bg:#E9EDF1; }
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ni-icon">📚</span><span class="ni-label">Oefeningen</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
     <button class="ni active" aria-current="page" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
@@ -2302,7 +2405,7 @@ html[data-theme="light"]{ --bg:#E9EDF1; }
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot"></div></button>
-    <button class="ni active" aria-current="page" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ni-icon">📚</span><span class="ni-label">Oefeningen</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
@@ -2316,36 +2419,52 @@ html[data-theme="light"]{ --bg:#E9EDF1; }
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
-    <div class="irow" style="margin-bottom:12px"><label class="ilbl">Sport vandaag</label><select class="inp" id="sport-switcher" onchange="setActiveSport(this.value)"></select></div>
-    <div class="card" onclick="go('s-train-schema')" style="cursor:pointer">
-      <div class="card-body" style="padding:16px;display:flex;align-items:center;gap:12px">
-        <div style="font-size:28px">🏋️</div>
-        <div><div style="font-size:16px;font-weight:800">Schema</div><div style="font-size:12px;color:var(--g4)">Je vaste trainingen — eigen namen, met progressieregels</div></div>
-      </div>
+    <div class="irow" style="margin-bottom:14px"><label class="ilbl">Sport vandaag</label><select class="inp" id="sport-switcher" onchange="setActiveSport(this.value)"></select></div>
+    <div id="v43-train-plan"></div>
+    <div class="v43-lbl" style="margin-bottom:10px">Snelle acties</div>
+    <div class="v43-tqa">
+      <button class="q" onclick="go('s-builder');if(window.WBUI)WBUI.render()"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span class="t">Nieuwe training</span></button>
+      <button class="q" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h9v18H6a2 2 0 0 0-2 2z"/><path d="M15 3h4a1 1 0 0 1 1 1v17"/></svg></span><span class="t">Oefeningen</span></button>
+      <button class="q" onclick="go('s-programma')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span><span class="t">Programma's</span></button>
     </div>
-    <div class="card" onclick="go('s-train-workouts')" style="cursor:pointer">
-      <div class="card-body" style="padding:16px;display:flex;align-items:center;gap:12px">
-        <div style="font-size:28px">📋</div>
-        <div><div style="font-size:16px;font-weight:800">Workouts</div><div style="font-size:12px;color:var(--g4)">Eigen samengestelde trainingen</div></div>
-      </div>
-    </div>
-    <div class="card" onclick="openLosOefening()" style="cursor:pointer">
-      <div class="card-body" style="padding:16px;display:flex;align-items:center;gap:12px">
-        <div style="font-size:28px">✚</div>
-        <div><div style="font-size:16px;font-weight:800">Oefening</div><div style="font-size:12px;color:var(--g4)">Eén losse oefening loggen, zonder training</div></div>
-      </div>
-    </div>
-    <div class="card" onclick="go('s-programma')" style="cursor:pointer">
-      <div class="card-body" style="padding:16px;display:flex;align-items:center;gap:12px">
-        <div style="font-size:28px">🗓️</div>
-        <div><div style="font-size:16px;font-weight:800">Programma</div><div style="font-size:12px;color:var(--g4)">Meerdere weken vooruit plannen</div></div>
-      </div>
+    <div class="v43-lbl" style="margin:20px 0 8px">Mijn trainingen</div>
+    <div class="v43-tmt">
+      <button class="row" onclick="go('s-train-schema')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></span><span class="b"><span class="t">Schema</span><span class="s">Je vaste trainingen met progressieregels</span></span><span class="ar">›</span></button>
+      <button class="row" onclick="go('s-train-workouts')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span><span class="b"><span class="t">Workouts</span><span class="s">Eigen samengestelde trainingen</span></span><span class="ar">›</span></button>
+      <button class="row" onclick="openLosOefening()"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 9v6M7 6v12M17 6v12M20 9v6M7 12h10"/></svg></span><span class="b"><span class="t">Losse oefening</span><span class="s">Eén oefening loggen, zonder training</span></span><span class="ar">›</span></button>
     </div>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ni-icon">📚</span><span class="ni-label">Oefeningen</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
+    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+  </nav>
+</div>
+
+<!-- ═══ LICHAAM (spierherstel — anatomie-engine, v4.3.0) ═══ -->
+<div class="scr" id="s-lichaam">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title" role="heading" aria-level="1">Lichaam</div><div class="hdr-sub">Spierherstel · anatomie</div></div>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px">
+    <div class="v43-lich-hero">
+      <div class="v43-lich-toggle"><button id="v43-lich-front" class="on" onclick="v43LichView('front')">Voorkant</button><button id="v43-lich-back" onclick="v43LichView('back')">Achterkant</button></div>
+      <div class="v43-lich-fig" id="v43-lich-figbox"></div>
+      <div class="v43-lich-overall" id="v43-lich-overall">—</div>
+      <div class="v43-lich-cap">Gemiddeld herstel · laatste 14 dagen</div>
+    </div>
+    <div class="v43-lbl" style="margin:4px 0 12px">Per spiergroep</div>
+    <div id="v43-lich-list"></div>
+    <div style="height:8px"></div>
+  </div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
@@ -2366,7 +2485,7 @@ html[data-theme="light"]{ --bg:#E9EDF1; }
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ni-icon">📚</span><span class="ni-label">Oefeningen</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
@@ -2401,7 +2520,7 @@ html[data-theme="light"]{ --bg:#E9EDF1; }
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ni-icon">📚</span><span class="ni-label">Oefeningen</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
@@ -2421,7 +2540,7 @@ html[data-theme="light"]{ --bg:#E9EDF1; }
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ni-icon">📚</span><span class="ni-label">Oefeningen</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
@@ -2443,7 +2562,7 @@ html[data-theme="light"]{ --bg:#E9EDF1; }
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ni-icon">📚</span><span class="ni-label">Oefeningen</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
@@ -2500,7 +2619,7 @@ html[data-theme="light"]{ --bg:#E9EDF1; }
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ni-icon">📚</span><span class="ni-label">Oefeningen</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
     <button class="ni active" aria-current="page" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
     <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
@@ -3291,7 +3410,7 @@ html[data-theme="light"]{ --bg:#E9EDF1; }
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.2.0';
+const APP_VER = 'v4.3.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -4953,7 +5072,8 @@ function go(id){
   if(id==='s-guided'&&window.GWUI)GWUI.render();
   if(id==='s-hist'){histOff=0;renderHistFilterTabs();loadHistory();}
   if(id==='s-train-mgr'||id==='s-train-workouts'){renderCustomTrainList();renderCustomTrainBtns();}
-  if(id==='s-train-mgr'){renderSportSwitcher();}
+  if(id==='s-train-mgr'){renderSportSwitcher();renderV43Train();}
+  if(id==='s-lichaam')renderLichaam();
   if(id==='s-train-schema'){renderSchemaTrainingList();}
   if(id==='s-programma'){renderProgrammaList();}
   if(id==='s-stats')refreshStatsScreen();
@@ -6264,7 +6384,7 @@ function buildVasteTrainingScreen(vt){
     <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
       <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
       <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-      <button class="ni" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ni-icon">📚</span><span class="ni-label">Oefeningen</span></button>
+      <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
       <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
       <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
     </nav>`;
@@ -9119,6 +9239,7 @@ async function refreshHome(){
   refreshHomeGoalsCard();
   window.homeNextT=nextT;
   if(window.DASHUI)DASHUI.render();
+  try{await renderV43Home(dfInfo,lh,nextT,recRows);}catch(e){console.warn('v43 home',e);}
 }
 
 // v3.3.44 Epic 1 — Morning Report. Persoonlijke ochtendtekst, uitsluitend uit bestaande
@@ -11297,7 +11418,7 @@ function buildProgramTrainScreen(block,prog){
     <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
       <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
       <button class="ni active" aria-current="page"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-      <button class="ni" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ni-icon">📚</span><span class="ni-label">Oefeningen</span></button>
+      <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
       <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
       <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
     </nav>`;
@@ -11333,7 +11454,7 @@ function buildCustomTrainScreen(t){
     <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
       <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
       <button class="ni active" aria-current="page"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-      <button class="ni" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ni-icon">📚</span><span class="ni-label">Oefeningen</span></button>
+      <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
       <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
       <button class="ni" onclick="openBeheer()"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
     </nav>`;
@@ -11989,6 +12110,230 @@ async function refreshMuscleRecoveryHeatmap(){
     pctBySvgId[id] = computeMuscleRecoveryPct(hoursSince, SVG_ID_RECOVERY_HOURS[id], hit.rpe);
   });
   renderMuscleRecoveryHeatmap('recovery-heatmap-container', pctBySvgId);
+}
+
+// ══════════════════════════════════════════════════════════
+// v4.3.0 — REFERENTIE-HOME + TRAINING + LICHAAM (goedgekeurd)
+// Hergebruikt de bestaande anatomie-engine (renderMuscleRecoveryHeatmap,
+// SVG_ID_RECOVERY_HOURS, computeMuscleRecoveryPct) en echte data
+// (spierherstel, dagfactor, slaap, laatste sessie). Geen verzonnen cijfers.
+// ══════════════════════════════════════════════════════════
+const V43I={
+  cal:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
+  bell:'<svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>',
+  user:'<svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+  heart:'<svg viewBox="0 0 24 24"><path d="M20 8.5a4.5 4.5 0 0 0-8-2.8A4.5 4.5 0 0 0 4 8.5c0 4 8 9 8 9s8-5 8-9Z"/></svg>',
+  bolt:'<svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>',
+  moon:'<svg viewBox="0 0 24 24"><path d="M21 12.8A8 8 0 1 1 11.2 3a6 6 0 0 0 9.8 9.8Z"/></svg>',
+  spark:'<svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>',
+  dumbbell:'<svg viewBox="0 0 24 24"><path d="M4 9v6M7 6v12M17 6v12M20 9v6M7 12h10"/></svg>',
+  list:'<svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
+  clock:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  play:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M7 5v14l12-7z"/></svg>',
+  star:'<svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.6l1-5.8L3.5 9.7l5.9-.9z"/></svg>',
+  pulse:'<svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 3.5 12 2.5-7 1.5 3h4"/></svg>'
+};
+function v43GereedheidScore(factor){
+  if(factor==null||isNaN(factor))return null;
+  return Math.round(Math.max(0,Math.min(1,(factor-0.85)/0.20))*100);
+}
+function v43RecColor(p){return p>=85?'var(--green)':p>=50?'var(--y)':'var(--red)';}
+function v43SlaapTxt(u){
+  if(!u&&u!==0)return '—';
+  const h=Math.floor(u),m=Math.round((u-h)*60);
+  return m?h+'u '+m+'m':h+'u';
+}
+// Gedeelde herstelberekening (zelfde logica als refreshMuscleRecovery + heatmap),
+// levert overall%, lijst-rijen én pct per svg-id voor de anatomiefiguur.
+// Offline-first: begrens elke sbGet zodat de Home nooit blijft hangen; bij time-out
+// of fout tonen we placeholders i.p.v. een leeg scherm.
+function v43SafeGet(table,q,ms){
+  ms=ms||4000;
+  return Promise.race([
+    Promise.resolve().then(()=>sbGet(table,q)).catch(()=>[]),
+    new Promise(res=>setTimeout(()=>res([]),ms))
+  ]).catch(()=>[]);
+}
+async function v43OverallRecovery(){
+  const twoWeeksAgo=new Date();twoWeeksAgo.setDate(twoWeeksAgo.getDate()-14);
+  const dateStr=twoWeeksAgo.toISOString().split('T')[0];
+  let ss=await v43SafeGet('sessions','&date=gte.'+dateStr+'&order=date.desc,created_at.desc');
+  if(!Array.isArray(ss))ss=[];
+  const lastHit={},lastHitSvg={};
+  ss.forEach(s=>{
+    const names=getExerciseMuscles(s.exercise_id);
+    names.forEach(m=>{if(!lastHit[m])lastHit[m]={date:s.date,rpe:s.rpe};});
+    muscleNamesToSvgIds(names).forEach(id=>{if(!lastHitSvg[id])lastHitSvg[id]={date:s.date,rpe:s.rpe};});
+  });
+  const now=new Date();
+  const rows=Object.keys(MUSCLE_RECOVERY_HOURS).map(m=>{
+    const hit=lastHit[m];
+    if(!hit)return {muscle:m,pct:100,hours:null};
+    const hoursSince=(now-new Date(hit.date))/3600000;
+    return {muscle:m,pct:computeMuscleRecoveryPct(hoursSince,MUSCLE_RECOVERY_HOURS[m],hit.rpe),hours:Math.round(hoursSince)};
+  }).sort((a,b)=>a.pct-b.pct);
+  const withData=rows.filter(r=>r.hours!==null);
+  const overall=withData.length?Math.round(withData.reduce((a,r)=>a+r.pct,0)/withData.length):100;
+  const pctBySvgId={};
+  Object.keys(SVG_ID_RECOVERY_HOURS).forEach(id=>{
+    const hit=lastHitSvg[id];
+    if(!hit){pctBySvgId[id]=100;return;}
+    const hoursSince=(now-new Date(hit.date))/3600000;
+    pctBySvgId[id]=computeMuscleRecoveryPct(hoursSince,SVG_ID_RECOVERY_HOURS[id],hit.rpe);
+  });
+  return {overall,rows,pctBySvgId,hasData:withData.length>0};
+}
+function v43HomeHeader(dfInfo){
+  const gEl=document.getElementById('v43-home-head');if(!gEl)return;
+  const naam=(typeof atleet!=='undefined'&&atleet&&atleet.naam)?String(atleet.naam).trim().split(' ')[0]:'';
+  const h=new Date().getHours();
+  const groet=h<12?'Goedemorgen':h<18?'Goedemiddag':'Goedenavond';
+  let dstr='';try{dstr=new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'});dstr=dstr.charAt(0).toUpperCase()+dstr.slice(1);}catch(e){}
+  const foto=(typeof atleet!=='undefined'&&atleet&&atleet.foto)?atleet.foto:'';
+  const avatarInner=foto?`<img src="${escHtml(foto)}" alt="Profiel">`:V43I.user;
+  const needCheckin=!dfInfo;
+  gEl.innerHTML=`<div class="v43-hh">
+    <div style="min-width:0">
+      <div class="v43-hh-greet">${escHtml(groet)},</div>
+      <div class="v43-hh-name">${escHtml(naam||'Atleet')}</div>
+      ${dstr?`<div class="v43-hh-date">${V43I.cal} ${escHtml(dstr)}</div>`:''}
+    </div>
+    <div class="v43-hh-r">
+      <button class="v43-bell" onclick="openModal('m-hrv')" aria-label="Dagelijkse check-in">${V43I.pulse}${needCheckin?'<span class="bdot"></span>':''}</button>
+      <button class="v43-avatar" onclick="go('s-profiel')" aria-label="Profiel">${avatarInner}</button>
+    </div>
+  </div>`;
+}
+async function renderV43Home(dfInfo,lh,nextT,recRows){
+  v43HomeHeader(dfInfo);
+  let rec={overall:100,pctBySvgId:{},rows:[],hasData:false};
+  try{rec=await v43OverallRecovery();}catch(e){}
+  window.v43LichRec=rec;
+  // HERO — Herstel nu
+  const heroEl=document.getElementById('home-hero');
+  if(heroEl){
+    const rd=(typeof trainReadiness==='function')?trainReadiness(dfInfo):null;
+    const title=dfInfo?(rd?rd.txt:'Klaar om te trainen'):'Doe je check-in';
+    const sub=dfInfo?(dfInfo.factor>=1?'Je lichaam is goed hersteld en klaar voor optimale prestaties.':dfInfo.factor>=0.93?'Train vandaag op gevoel en houd je RPE in de gaten.':'Je lichaam vraagt om rust — houd het vandaag licht.'):'Vul je HRV in voor je dagfactor en herstelbeeld.';
+    const badgeCls=dfInfo?(rd?rd.cls:'g'):'y';
+    const badge=badgeCls==='g'?`<span class="v43-hero-badge" style="background:var(--green)">✓</span>`:badgeCls==='r'?`<span class="v43-hero-badge" style="background:var(--red)">!</span>`:`<span class="v43-hero-badge" style="background:var(--y)">~</span>`;
+    const gereed=v43GereedheidScore(dfInfo?dfInfo.factor:null);
+    const slaap=(lh&&(lh.sleep||lh.sleep===0))?v43SlaapTxt(lh.sleep):'—';
+    heroEl.innerHTML=`<div class="v43-hero">
+      <div class="v43-hero-top">
+        <div class="v43-hero-l">
+          <div class="v43-lbl">Herstel nu</div>
+          <div class="v43-hero-title">${escHtml(title)}</div>
+          <div class="v43-hero-sub">${escHtml(sub)}</div>
+        </div>
+        ${badge}
+        <div class="v43-figbox" id="v43-hero-fig"></div>
+      </div>
+      <div class="v43-stats">
+        <div class="v43-stat"><div class="v43-stat-ic">${V43I.heart}</div><div class="v43-stat-v">${rec.hasData?rec.overall+'%':'—'}</div><div class="v43-stat-k">Herstel</div></div>
+        <div class="v43-stat"><div class="v43-stat-ic">${V43I.bolt}</div><div class="v43-stat-v">${gereed!=null?gereed:'—'}</div><div class="v43-stat-k">Gereedheid</div></div>
+        <div class="v43-stat"><div class="v43-stat-ic">${V43I.moon}</div><div class="v43-stat-v">${slaap}</div><div class="v43-stat-k">Slaap</div></div>
+      </div>
+      <div class="v43-legend">
+        <div class="d"><span class="dot" style="background:var(--green)"></span>Goed hersteld</div>
+        <div class="d"><span class="dot" style="background:var(--y)"></span>Matig hersteld</div>
+        <div class="d"><span class="dot" style="background:var(--red)"></span>Weinig hersteld</div>
+      </div>
+    </div>`;
+    try{recoveryHeatmapView='front';renderMuscleRecoveryHeatmap('v43-hero-fig',rec.pctBySvgId);}catch(e){}
+  }
+  // COACH VANDAAG
+  const coachEl=document.getElementById('home-coach-vandaag');
+  if(coachEl){
+    let txt=window.homeCoachText||'';
+    if(!txt){try{txt=await buildCoachAdvice(dfInfo,nextT,recRows);}catch(e){txt='';}}
+    coachEl.innerHTML=txt?`<button class="v43-coach" onclick="go('s-coach')">
+      <span class="v43-coach-ic">${V43I.spark}</span>
+      <span class="v43-coach-body"><span class="k">Coach vandaag</span><span class="t">${escHtml(txt)}</span></span>
+      <span class="v43-coach-ar">›</span>
+    </button>`:'';
+  }
+  // VANDAAG GEPLAND
+  v43RenderPlan('home-plan',nextT);
+  // AANDACHTSPUNT
+  const attnEl=document.getElementById('home-attn');
+  if(attnEl){
+    const low=(rec.rows||[]).filter(r=>r.hours!==null&&r.pct<50).sort((a,b)=>a.pct-b.pct);
+    if(low.length){
+      const m=low[0];
+      attnEl.innerHTML=`<div class="v43-attn">
+        <div class="v43-attn-ic">⚠</div>
+        <div class="v43-attn-b"><div class="v43-attn-t">${escHtml(m.muscle)}: nog niet volledig hersteld</div>
+        <div class="v43-attn-s">Pas op ${m.pct}% herstel — houd de belasting hier vandaag licht.</div></div>
+      </div>`;
+    } else attnEl.innerHTML='';
+  }
+  // LAATSTE TRAINING
+  const lastEl=document.getElementById('home-last');
+  if(lastEl){
+    try{
+      const ls=await v43SafeGet('sessions','&order=date.desc,created_at.desc&limit=1');
+      if(ls&&ls[0]){
+        const s=ls[0];
+        const nm=(exercises.find(e=>e.id===s.exercise_id)||{}).name||s.exercise_id;
+        let dtxt=s.date;try{dtxt=new Date(s.date).toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'});dtxt=dtxt.charAt(0).toUpperCase()+dtxt.slice(1);}catch(e){}
+        const val=(s.weight&&s.reps)?`${s.weight} kg × ${s.reps}`:(s.time_str||'');
+        const rpe=(s.rpe||s.rpe===0)?String(s.rpe).replace('.',','):'';
+        lastEl.innerHTML=`<div class="v43-last">
+          <div class="v43-lbl">Laatste training</div>
+          <div class="v43-last-top">
+            <div class="v43-last-ic">${V43I.dumbbell}</div>
+            <div class="v43-last-l"><div class="v43-last-name">${escHtml(nm)}</div><div class="v43-last-sub">${escHtml(dtxt)}</div></div>
+            <button class="ibtn" onclick="go('s-hist')" aria-label="Historie">›</button>
+          </div>
+          ${(val||rpe)?`<div class="v43-last-mt">${val?`<div class="m">${V43I.dumbbell}<div><div class="mv">${escHtml(val)}</div><div class="mk">Laatste set</div></div></div>`:''}${rpe?`<div class="m">${V43I.pulse}<div><div class="mv">${escHtml(rpe)}</div><div class="mk">RPE</div></div></div>`:''}</div>`:''}
+        </div>`;
+      } else lastEl.innerHTML='';
+    }catch(e){lastEl.innerHTML='';}
+  }
+}
+// Gedeelde "Vandaag gepland"-kaart (Home + Training-tab).
+function v43RenderPlan(elId,nextT){
+  const el=document.getElementById(elId);if(!el)return;
+  if(!nextT){el.innerHTML='';return;}
+  const n=nextT._exCount||0;
+  el.innerHTML=`<div class="v43-plan">
+    <div class="v43-lbl">Vandaag gepland</div>
+    <div class="v43-plan-top">
+      <div class="v43-plan-ic">${V43I.dumbbell}</div>
+      <div class="v43-plan-l"><div class="v43-plan-name">${escHtml(nextT.naam)}</div>
+      <div class="v43-plan-meta">${n?`<span>${V43I.list} ${n} oefening${n===1?'':'en'}</span>`:''}</div></div>
+    </div>
+    <button class="v43-start" onclick="startT('${nextT.id}')">${V43I.play} Start training</button>
+  </div>`;
+}
+function renderV43Train(){
+  v43RenderPlan('v43-train-plan',window.homeNextT);
+}
+// LICHAAM-tab — hergebruikt de anatomie-engine + herstelberekening.
+async function renderLichaam(){
+  let rec={overall:100,pctBySvgId:{},rows:[],hasData:false};
+  try{rec=await v43OverallRecovery();}catch(e){}
+  window.v43LichRec=rec;
+  const ov=document.getElementById('v43-lich-overall');
+  if(ov){ov.textContent=rec.hasData?rec.overall+'%':'—';ov.style.color=rec.hasData?v43RecColor(rec.overall):'var(--g4)';}
+  try{renderMuscleRecoveryHeatmap('v43-lich-figbox',rec.pctBySvgId);}catch(e){}
+  const list=document.getElementById('v43-lich-list');
+  if(list){
+    list.innerHTML=(rec.rows||[]).map(r=>{
+      const c=v43RecColor(r.pct);
+      const lab=r.hours===null?'Geen recente training':(r.pct>=100?'Volledig hersteld':r.pct+'% hersteld');
+      return `<div class="v43-lich-row"><div class="top"><span class="nm">${escHtml(r.muscle)}</span><span class="st">${lab}</span></div><div class="v43-lich-bar"><span style="width:${r.pct}%;background:${c}"></span></div></div>`;
+    }).join('');
+  }
+}
+function v43LichView(view){
+  recoveryHeatmapView=view;
+  const f=document.getElementById('v43-lich-front'),b=document.getElementById('v43-lich-back');
+  if(f)f.classList.toggle('on',view==='front');
+  if(b)b.classList.toggle('on',view==='back');
+  const rec=window.v43LichRec;
+  if(rec){try{renderMuscleRecoveryHeatmap('v43-lich-figbox',rec.pctBySvgId);}catch(e){}}
 }
 
 // ══════════════════════════════════════════════════════════

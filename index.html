@@ -1962,6 +1962,35 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .wb4-sv-m{font-size:11px;color:var(--g4);font-weight:600;margin-top:1px}
 .wb4-sv-a{display:flex;gap:4px;flex:0 0 auto}.wb4-sv-a button{width:30px;height:30px;border-radius:8px;background:var(--g1);border:0;color:var(--g4);font-size:13px;cursor:pointer}
 .wb4-empty{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:22px 16px;text-align:center;color:var(--g4);font-size:13px;font-weight:600}
+/* ══════════════════════════════════════════════════════════════════
+   v4.11.0 — Sprint 4.7 Fase 5: Oefeningen (premium bibliotheek).
+   Presentatie-only; ExerciseCatalogService/detail ongemoeid. Clean
+   zoekbalk + teal chips (geen emoji), rustige kaarten, echte posters.
+   ══════════════════════════════════════════════════════════════════ */
+#s-library .lib5-searchwrap{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:13px;box-shadow:var(--shadow);padding:0 14px;margin:2px 0 11px}
+#s-library .lib5-searchwrap .lib-si{position:static;display:flex;align-items:center;color:var(--g4);flex:0 0 auto}
+#s-library .lib5-searchwrap .lib-si svg{width:18px;height:18px;stroke:var(--g4)}
+#s-library .lib5-searchwrap .lib-search{flex:1;border:0;background:0;box-shadow:none;padding:13px 0;font-size:13px;font-weight:600;color:var(--dark);font-family:var(--f)}
+#s-library .lib5-searchwrap .lib-clear{background:0;border:0;color:var(--g4);font-size:15px;cursor:pointer;flex:0 0 auto}
+#s-library .lib5-qchips{display:flex;gap:7px;overflow-x:auto;padding:2px 0 4px;margin-bottom:6px}
+#s-library .lib5-qchips .lib-qchip{flex:0 0 auto;background:var(--card);border:0;box-shadow:var(--shadow);color:var(--dark);border-radius:10px;padding:8px 13px;font-size:11.5px;font-weight:700;min-height:0}
+#s-library .lib5-qchips .lib-qchip.on{background:var(--accent);color:#04231c;box-shadow:none}
+#s-library .lib5-qchips .lib-qchip.clear{background:var(--g1);color:var(--g4)}
+#s-library .lib-sechd h3,#s-library .lib-sechd span{font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--g4)}
+#s-library .lib5-card{border:0;border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+#s-library .lib5-card .lib-rib{top:8px;left:8px;background:var(--accent);color:#04231c;font-size:9px;font-weight:800;border-radius:7px;padding:3px 8px;letter-spacing:.2px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+#s-library .lib5-card .lib-card-b{padding:9px 11px 12px}
+#s-library .lib5-card .lib-card-name{font-size:13.5px;font-weight:800;color:var(--dark);min-height:0}
+#s-library .lib5-card .lib5-tag{display:block;font-size:10.5px;font-weight:700;color:var(--accent);margin-top:4px}
+#s-library .lib5-card .lib-card-meta{display:block;font-size:10.5px;color:var(--g4);font-weight:600;margin-top:7px}
+#s-library .lib5-card .lib5-rt{color:var(--dark);font-weight:800}
+/* Lijstrijen premium */
+#s-library .lib-list .lib-item{border-radius:14px;padding:11px 13px;gap:12px;margin-bottom:8px}
+#s-library .lib-list .lib-item .lib-imgbox.sm{width:46px;height:46px;border-radius:12px;flex:0 0 auto}
+#s-library .lib-list .lib-it-name{font-size:14px;font-weight:800;color:var(--dark)}
+#s-library .lib-list .lib-it-sub{font-size:11.5px;color:var(--g4);font-weight:600;margin-top:2px}
+#s-library .lib-list .lib-it-r{font-size:12.5px;font-weight:800;color:var(--dark)}
+#s-library .lib-count{font-size:11.5px;color:var(--g4);font-weight:700;margin:6px 2px 10px}
 
 </style>
 </head>
@@ -3721,7 +3750,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.10.0';
+const APP_VER = 'v4.11.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -7710,11 +7739,12 @@ function _overlayChip(c){var t=_typeBadge(c.identity.type);var loc=c.flags.home_
 function _scoreLabel(v){return v>=85?'UITSTEKEND':(v>=67?'HOOG':(v>=40?'GEMIDDELD':'LAAG'));}
 var _NEWEST=(function(){try{var ids=ExerciseCatalogService.all().map(function(c){return c.catalog_id;}).sort().slice(-15);var o={};ids.forEach(function(i){o[i]=1;});return o;}catch(e){return {};}})();
 function _ribbon(c){var m=ExerciseIntelligence.meta(c),s=ExerciseIntelligence.scores(c),Id=c.identity;
-  if(m.rating>=4.7)return {l:'🏆 Coach favoriet',cls:'rib-fav'};
-  if(Id.type==='compound'&&m.rating>=4.5)return {l:'🔥 Trending',cls:'rib-trend'};
-  if(s.explosiviteit>=82)return {l:'⚡ Explosief',cls:'rib-explo'};
-  if(_NEWEST[c.catalog_id])return {l:'🆕 Nieuw',cls:'rib-new'};
-  if(Id.type==='compound'&&s.kracht>=80)return {l:'💪 Krachttopper',cls:'rib-str'};
+  // v4.11.0 — tekstlabels zonder emoji (premium teal-pil via CSS).
+  if(m.rating>=4.7)return {l:'Coach-favoriet',cls:'rib-fav'};
+  if(Id.type==='compound'&&m.rating>=4.5)return {l:'Trending',cls:'rib-trend'};
+  if(s.explosiviteit>=82)return {l:'Explosief',cls:'rib-explo'};
+  if(_NEWEST[c.catalog_id])return {l:'Nieuw',cls:'rib-new'};
+  if(Id.type==='compound'&&s.kracht>=80)return {l:'Krachttopper',cls:'rib-str'};
   return null;}
 function _miniBars(c){var t=ExerciseIntelligence.top(c,3);return '<span class="lib-mini">'+t.map(function(x){return '<span class="lib-mini-r"><span class="lib-mini-l">'+escHtml(x.l)+'</span><span class="lib-mini-bar"><span style="width:'+x.v+'%;background:'+_scoreCol(x.k,x.v)+'"></span></span></span>';}).join('')+'</span>';}
 function _aiSummary(c){var s=ExerciseIntelligence.scores(c),Id=c.identity;var perfect=[],letop=[],wanneer=[];
@@ -7767,12 +7797,15 @@ function _libRipple(e){var b=e.currentTarget;if(!b)return;var r=b.getBoundingCli
 
 /* ── Cards (premium: poster-overlay + compacte badges) ── */
 function _card(c,ix){var Id=c.identity,rib=_ribbon(c),m=ExerciseIntelligence.meta(c);
-  return '<button class="lib-card" data-id="'+c.catalog_id+'" aria-label="'+escHtml(Id.name)+'" style="animation-delay:'+Math.min((ix||0)*40,240)+'ms">'+
+  // v4.11.0 — premium kaart: poster + tag (type · spier) + compacte meta (rating · herstel).
+  // Score-balken vervallen op de kaart (leven op de detailpagina) — rustiger, scanbaarder.
+  var tag=_libCap(Id.type)+((Id.primary&&Id.primary[0])?' · '+Id.primary[0]:'');
+  return '<button class="lib-card lib5-card" data-id="'+c.catalog_id+'" aria-label="'+escHtml(Id.name)+'" style="animation-delay:'+Math.min((ix||0)*40,240)+'ms">'+
     (rib?'<span class="lib-rib '+rib.cls+'">'+rib.l+'</span>':'')+
-    _imgBox(c.catalog_id,Id.name,'',_overlayChip(c))+
+    _imgBox(c.catalog_id,Id.name,'')+
     '<span class="lib-card-b"><span class="lib-card-name">'+escHtml(Id.name)+'</span>'+
-    _miniBars(c)+
-    '<span class="lib-card-meta">⏱ '+escHtml(m.recovery)+' · '+escHtml(_libCap(Id.type))+'</span>'+
+    '<span class="lib5-tag">'+escHtml(tag)+'</span>'+
+    '<span class="lib-card-meta"><span class="lib5-rt">★ '+m.rating.toFixed(1)+'</span> · '+escHtml(m.recovery)+'</span>'+
     '</span></button>';}
 function _item(c){var Id=c.identity,r=ExerciseIntelligence.rating(c);return '<button class="lib-item" data-id="'+c.catalog_id+'" aria-label="'+escHtml(Id.name)+'">'+_imgBox(c.catalog_id,Id.name,'sm')+'<span class="lib-it-main"><span class="lib-it-name">'+escHtml(Id.name)+'</span><span class="lib-it-sub">'+escHtml(Id.primary.join(', ')||_libCap(Id.family))+' · '+escHtml(_diffNL(Id.difficulty))+'</span></span><span class="lib-it-r">★ '+r.toFixed(1)+'</span>'+(ExerciseCatalogService.isFavorite(c.catalog_id)?'<span class="lib-it-fav" aria-label="Favoriet">★</span>':'')+'</button>';}
 function _row(list){return '<div class="lib-row" role="list">'+list.map(function(c,ix){return '<div role="listitem">'+_card(c,ix)+'</div>';}).join('')+'</div>';}
@@ -7839,11 +7872,13 @@ var LIB_QCHIPS=[{i:'💪',l:'Borst',f:{muscleGroup:['Borst']}},{i:'🦵',l:'Bene
 function renderLibrary(){_libState.view='home';_libState.detail=null;_libState.q='';_libState.f={};var t=document.getElementById('lib-total');if(t)t.textContent=ExerciseCatalogService.count();renderLibBody();}
 
 function _searchBar(){
-  return '<div class="lib-searchwrap"><span class="lib-si" aria-hidden="true">🔎</span>'+
-    '<input class="lib-search" id="lib-q" type="search" placeholder="Zoek oefening, spier, equipment of doel…" aria-label="Zoek oefeningen" value="'+escHtml(_libState.q)+'">'+
-    (_libState.q?'<button class="lib-clear" id="lib-clear" aria-label="Wissen">✕</button>':'<button class="lib-voice" id="lib-voice" aria-label="Spraakzoeken (binnenkort)" title="Spraakzoeken komt binnenkort">🎤</button>')+
+  // v4.11.0 — premium zoekbalk (SVG-icoon i.p.v. emoji) + clean filterchips (label-only, teal actief).
+  var SI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>';
+  return '<div class="lib-searchwrap lib5-searchwrap"><span class="lib-si" aria-hidden="true">'+SI+'</span>'+
+    '<input class="lib-search" id="lib-q" type="search" placeholder="Zoek oefening, spier of equipment…" aria-label="Zoek oefeningen" value="'+escHtml(_libState.q)+'">'+
+    (_libState.q?'<button class="lib-clear" id="lib-clear" aria-label="Wissen">✕</button>':'')+
     '</div>'+
-    '<div class="lib-qchips" role="list">'+LIB_QCHIPS.map(function(ch,i){var on=JSON.stringify(_libState.f)===JSON.stringify(ch.f);return '<button class="lib-qchip'+(on?' on':'')+'" data-i="'+i+'" role="listitem" aria-pressed="'+(on?'true':'false')+'">'+ch.i+' '+ch.l+'</button>';}).join('')+((_libState.q.trim()||Object.keys(_libState.f).length)?'<button class="lib-qchip clear" data-i="clear">✕ Reset</button>':'')+'</div>';}
+    '<div class="lib-qchips lib5-qchips" role="list">'+LIB_QCHIPS.map(function(ch,i){var on=JSON.stringify(_libState.f)===JSON.stringify(ch.f);return '<button class="lib-qchip'+(on?' on':'')+'" data-i="'+i+'" role="listitem" aria-pressed="'+(on?'true':'false')+'">'+escHtml(ch.l)+'</button>';}).join('')+((_libState.q.trim()||Object.keys(_libState.f).length)?'<button class="lib-qchip clear" data-i="clear">Reset</button>':'')+'</div>';}
 
 function _quickPanel(){var parts='';
   if(_libState.rq.length)parts+='<div class="lib-quick"><div class="lib-quick-h">🕓 Recent gezocht</div><div class="lib-chips">'+_libState.rq.map(function(q){return '<button class="lib-tchip" data-q="'+escHtml(q)+'">'+escHtml(q)+'</button>';}).join('')+'</div></div>';
@@ -7867,7 +7902,7 @@ function renderLibBody(){
   var head=_searchBar();
   if(!active){
     var secs=_libSections().filter(function(s){return !(s.he&&(!s.g||!s.g.length))&&s.g&&s.g.length;});
-    host.innerHTML='<div class="scroll" id="lib-scroll">'+head+_quickPanel()+secs.map(function(s){return '<section class="lib-secblock"><div class="lib-sechd"><h3>'+s.i+' '+escHtml(s.t)+'</h3></div>'+_row(s.g.slice(0,10))+'</section>';}).join('')+'<div style="height:22px"></div></div>';
+    host.innerHTML='<div class="scroll" id="lib-scroll">'+head+secs.map(function(s){return '<section class="lib-secblock"><div class="lib-sechd"><h3>'+escHtml(s.t)+'</h3></div>'+_row(s.g.slice(0,10))+'</section>';}).join('')+'<div style="height:22px"></div></div>';
   } else {
     var list=E.search(_libState.q,_libState.f,_libState.q.trim()?'relevance':'name');
     host.innerHTML='<div class="scroll" id="lib-scroll">'+head+_suggestBox(_libState.q)+'<div class="lib-count" aria-live="polite">'+list.length+' van '+E.count()+' oefeningen</div><div class="lib-list">'+(list.length?list.map(_item).join(''):'<div class="lib-empty">Geen oefeningen gevonden — probeer een andere zoekterm.</div>')+'</div><div style="height:22px"></div></div>';

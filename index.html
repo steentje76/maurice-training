@@ -2309,6 +2309,19 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-train-mine .mine-seg{display:flex;background:var(--g1);border-radius:12px;padding:4px;margin-bottom:14px}
 #s-train-mine .mine-seg-opt{flex:1;text-align:center;font-size:13px;font-weight:800;color:var(--g4);padding:9px;border-radius:9px;background:none;border:0;cursor:pointer;font-family:var(--f)}
 #s-train-mine .mine-seg-opt.on{background:var(--card);color:var(--dark);box-shadow:var(--shadow)}
+/* ══ v4.21.0 — Sprint 5.2 Voortgang premium: Deze week-hero ══ */
+#s-stats #stats-hero{background:#0E3B4A;border-radius:22px;padding:18px;margin-bottom:6px;box-shadow:0 14px 30px rgba(0,0,0,.28)}
+#s-stats #stats-hero:empty{display:none}
+#s-stats .vh-eye{font-size:10px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:rgba(230,240,243,.55)}
+#s-stats .vh-big{font-size:25px;font-weight:800;color:#fff;letter-spacing:-.5px;margin-top:6px}
+#s-stats .vh-trend{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;padding:4px 10px;border-radius:20px;margin-top:8px}
+#s-stats .vh-trend.up{color:#7ff0cf;background:rgba(0,196,143,.16);border:1px solid rgba(0,196,143,.34)}
+#s-stats .vh-trend.dn{color:#ffd8cf;background:rgba(229,83,61,.18);border:1px solid rgba(229,83,61,.4)}
+#s-stats .vh-row{display:flex;gap:8px;margin-top:14px}
+#s-stats .vh-m{flex:1;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 8px;text-align:center}
+#s-stats .vh-m .v{font-size:18px;font-weight:800;color:#fff}
+#s-stats .vh-m .k{font-size:9px;color:rgba(230,240,243,.6);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
+#s-stats .scroll>.card{border-radius:18px}
 </style>
 </head>
 <body>
@@ -2699,12 +2712,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       </div>
     </div>
   </div>
-  <div class="scroll" style="padding-top:8px" id="doelen-scroll">
-    <div id="doelen-list"><p style="color:var(--g4);font-size:13px;text-align:center;padding:24px 0">Doelen laden...</p></div>
-
-    <div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin:20px 0 8px">Challenges</div>
-    <div style="font-size:11px;color:var(--g4);margin-bottom:10px">Automatisch berekend uit je trainingsgeschiedenis — geen aparte registratie nodig.</div>
-    <div id="challenges-list"><p style="color:var(--g4);font-size:13px;text-align:center;padding:16px 0">Challenges berekenen...</p></div>
+  <div class="scroll" style="padding-top:8px">
+    <div class="card"><div class="card-body"><p style="font-size:13px;color:var(--g4);margin-bottom:10px">Doelen &amp; challenges staan nu in <b>Voortgang</b>.</p><button class="btn btn-r btn-sm" style="width:100%" onclick="go('s-stats')">Naar Voortgang</button></div></div>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
@@ -2891,13 +2900,24 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <div class="scr" id="s-stats">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Voortgang</div><div class="hdr-sub" id="stats-peak-sub">1RM &amp; peakdoel</div></div><button class="ibtn" onclick="refreshStats()" aria-label="Statistieken vernieuwen">↻</button></div></div>
   <div class="scroll" style="padding-top:8px">
+    <div id="stats-hero"></div>
+
+    <div class="v43-lbl" style="margin:18px 0 9px">Doelen</div>
     <div class="card">
-      <button class="set-nav-row" onclick="go('s-doelen')" style="padding:14px" aria-label="Doelen openen">
-        <div><div class="set-row-lbl">🎯 Doelen &amp; Challenges</div><div class="set-row-sub">Persoonlijke voortgang</div></div>
-        <span class="set-chevron" aria-hidden="true">›</span>
-      </button>
+      <div class="card-hd"><div class="card-title">Actieve doelen</div><button class="ibtn" onclick="openModal('m-goal-add')" style="width:auto;height:auto;padding:6px 12px;border-radius:12px;font-size:12px;font-weight:800;font-family:var(--f);background:var(--v43-mint);color:var(--accent)">+ Doel</button></div>
+      <div class="card-body" id="doelen-list"><p style="color:var(--g4);font-size:13px;text-align:center;padding:20px 0">Doelen laden...</p></div>
     </div>
-    <div class="card"><div class="card-hd"><div class="card-title">Geschatte 1RM</div><div class="card-sub">Epley formule · live</div></div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Challenges</div><div class="card-sub">automatisch berekend</div></div>
+      <div class="card-body" id="challenges-list"><p style="color:var(--g4);font-size:13px;text-align:center;padding:16px 0">Challenges berekenen...</p></div>
+    </div>
+
+    <div class="v43-lbl" style="margin:18px 0 9px">Persoonlijke records</div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">PR per herhaling</div><div class="card-sub">Beste gewicht per repbereik (1/3/5/10)</div></div>
+      <div class="card-body" id="stats-reppr-content"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div>
+    </div>
+    <div class="card"><div class="card-hd"><div class="card-title">Geschatte 1RM</div><div class="card-sub">Epley formule &middot; live</div></div>
       <div class="card-body">
         <div class="ex-pick-filters" id="prog-filters" style="margin-bottom:6px"></div>
         <select class="inp" id="prog-sort" style="width:auto;padding:4px 8px;font-size:12px;margin-bottom:10px" onchange="setProgSort(this.value)">
@@ -2909,41 +2929,17 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
         <div id="stats-1rm-list"></div>
       </div>
     </div>
-    <div class="card"><div class="card-hd"><div class="card-title">Krachtverhoudingen</div><div class="card-sub">Verwacht t.o.v. backsquat · standaardratio of eigen data</div></div><div class="card-body" id="stats-ratio-list"></div></div>
-    <div class="card">
-      <div class="card-hd"><div class="card-title">PR per herhaling</div><div class="card-sub">Beste gewicht per repbereik (1/3/5/10)</div></div>
-      <div class="card-body" id="stats-reppr-content"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div>
-    </div>
+    <div class="card"><div class="card-hd"><div class="card-title">Krachtverhoudingen</div><div class="card-sub">Verwacht t.o.v. backsquat &middot; standaardratio of eigen data</div></div><div class="card-body" id="stats-ratio-list"></div></div>
+
+    <div class="v43-lbl" style="margin:18px 0 9px">Trends</div>
     <div class="card">
       <div class="card-hd"><div class="card-title">Volume per spiergroep</div><div class="card-sub">Afgelopen 7 dagen</div></div>
-      <div class="card-body" id="stats-volume-content"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div>
-    </div>
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Spierherstel</div><div class="card-sub">Op basis van RPE & tijd sinds laatste training</div></div>
-      <div class="card-body" id="stats-recovery-content"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div>
-    </div>
-    <div class="card">
-      <div class="card-hd">
-        <div><div class="card-title">Spierherstel</div><div class="card-sub">Herstel% · visueel</div></div>
-        <button class="ibtn" onclick="toggleMuscleRecoveryHeatmapView()" style="width:auto;height:auto;padding:6px 12px;border-radius:14px;font-size:11px;font-weight:700;font-family:var(--f)" id="recovery-heatmap-toggle-btn">Voorkant</button>
-      </div>
-      <div class="card-body" style="display:flex;justify-content:center;padding:10px 14px 14px">
-        <div id="recovery-heatmap-container" style="width:220px;max-width:100%"></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-hd">
-        <div><div class="card-title">Spierbelasting</div><div class="card-sub">Afgelopen 7 dagen · visueel</div></div>
-        <button class="ibtn" onclick="toggleMuscleHeatmapView()" style="width:auto;height:auto;padding:6px 12px;border-radius:14px;font-size:11px;font-weight:700;font-family:var(--f)" id="muscle-heatmap-toggle-btn">Voorkant</button>
-      </div>
-      <div class="card-body" style="display:flex;justify-content:center;padding:10px 14px 14px">
-        <div id="muscle-heatmap-container" style="width:220px;max-width:100%"></div>
-      </div>
+      <div class="card-body" id="stats-volume-content"><span id="stats-volume-chart" hidden></span><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div>
     </div>
     <div class="card"><div class="card-hd"><div class="card-title">HRV trend</div></div><div class="card-body"><div class="chart-wrap"><canvas id="stats-hrv-chart"></canvas></div></div></div>
     <div class="card"><div class="card-hd"><div class="card-title">Roei progressie</div></div><div class="card-body" id="stats-row-list"></div></div>
-    <div class="card"><div class="card-hd"><div class="card-title">Lichaamscompositie</div></div><div class="card-body" id="stats-bc-list"></div></div>
-    <button class="btn btn-o" onclick="go('s-hist')" style="margin-bottom:10px">📋 Trainingslogboek bekijken</button>
+
+    <button class="btn btn-o" onclick="go('s-hist')" style="margin-bottom:10px">&#128203; Volledig trainingslogboek</button>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
@@ -3060,6 +3056,16 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
     <div class="v43-lbl" style="margin:4px 0 12px">Per spiergroep</div>
     <div id="v43-lich-list"></div>
+    <div class="v43-lbl" style="margin:16px 0 12px">Spierbelasting</div>
+    <div class="card">
+      <div class="card-hd">
+        <div><div class="card-title">Spierbelasting</div><div class="card-sub">Afgelopen 7 dagen &middot; visueel</div></div>
+        <button class="ibtn" onclick="toggleMuscleHeatmapView()" style="width:auto;height:auto;padding:6px 12px;border-radius:14px;font-size:11px;font-weight:700;font-family:var(--f)" id="muscle-heatmap-toggle-btn">Voorkant</button>
+      </div>
+      <div class="card-body" style="display:flex;justify-content:center;padding:10px 14px 14px">
+        <div id="muscle-heatmap-container" style="width:220px;max-width:100%"></div>
+      </div>
+    </div>
     <div class="v43-lbl" style="margin:16px 0 12px">Lichaamsmetingen</div>
     <div class="card">
       <div class="card-hd"><div class="card-title">Lichaamscompositie</div><div class="card-sub" id="profiel-bc-date">—</div></div>
@@ -4086,7 +4092,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.20.0';
+const APP_VER = 'v4.21.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -5804,6 +5810,8 @@ function go(id){
   // Bestaande routes blijven bestaan maar leiden naar het gecombineerde scherm met het juiste segment.
   if(id==='s-train-schema'){window._minePendingSeg='schema';id='s-train-mine';}
   if(id==='s-train-workouts'){window._minePendingSeg='workouts';id='s-train-mine';}
+  // v4.21.0 (Sprint 5.2) — Doelen geïntegreerd in Voortgang; oude Doelen-route redirect.
+  if(id==='s-doelen'){id='s-stats';}
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
   const el=document.getElementById(id);if(el){el.classList.add('active');focusScreenForA11y(el);}
   stopTrainTimer();
@@ -10870,11 +10878,36 @@ async function refreshStatsScreen(){
   }
   const elb=document.getElementById('stats-bc-list');if(elb)elb.innerHTML=bh;
   await refreshVolumeSpiergroep();
-  await refreshMuscleRecovery();
-  await refreshMuscleRecoveryHeatmap();
   await refreshRepPRs();
-  await refreshMuscleHeatmap();
   await refreshRatioFactors();
+  // v4.21.0 (Sprint 5.2) — Doelen geïntegreerd in Voortgang; herstel/belasting-heatmaps leven op Lichaam.
+  renderStatsHero();
+  renderDoelenScreen();
+}
+// v4.21.0 (Sprint 5.2) — premium "Deze week"-hero op echte data (volume/trainingen/herstel).
+async function renderStatsHero(){
+  const el=document.getElementById('stats-hero'); if(!el) return;
+  const now=new Date();
+  const d7=new Date(now); d7.setDate(d7.getDate()-7);
+  const d14=new Date(now); d14.setDate(d14.getDate()-14);
+  const iso=x=>x.toISOString().split('T')[0];
+  let rows=[];
+  try{ rows=await sbGet('sessions','&date=gte.'+iso(d14)+'&weight=not.is.null&reps=not.is.null&sets=not.is.null'); }catch(_){ rows=[]; }
+  let volThis=0, volPrev=0; const daysThis=new Set();
+  rows.forEach(s=>{ const v=(s.sets||1)*(s.reps||1)*(s.weight||0); if(s.date>=iso(d7)){volThis+=v; if(s.date)daysThis.add(s.date);} else volPrev+=v; });
+  let herstel=null;
+  try{ const rec=window.v43LichRec||(typeof v43OverallRecovery==='function'?await v43OverallRecovery():null); if(rec&&rec.hasData)herstel=rec.overall; }catch(_){}
+  const trendPct = volPrev>0 ? Math.round((volThis-volPrev)/volPrev*100) : null;
+  const up = trendPct!=null && trendPct>=0;
+  el.innerHTML = `
+    <div class="vh-eye">Deze week</div>
+    <div class="vh-big">${Math.round(volThis).toLocaleString('nl-NL')} kg getild</div>
+    ${trendPct!=null?`<div class="vh-trend ${up?'up':'dn'}">${up?'↑':'↓'} ${Math.abs(trendPct)}% t.o.v. vorige week</div>`:''}
+    <div class="vh-row">
+      <div class="vh-m"><div class="v">${daysThis.size}</div><div class="k">trainingen</div></div>
+      <div class="vh-m"><div class="v">${Math.round(volThis/1000)}k</div><div class="k">volume kg</div></div>
+      <div class="vh-m"><div class="v">${herstel!=null?herstel+'%':'—'}</div><div class="k">herstel</div></div>
+    </div>`;
 }
 
 // Krachtverhoudingen-kaart: verwachte 1RM per lift t.o.v. backsquat (anker),
@@ -13392,6 +13425,8 @@ async function renderLichaam(){
   }
   // v4.19.0 (Sprint 5.2) — lichaamsmetingen (verplaatst vanuit Profiel) op dit tabblad renderen.
   try{renderBodyMeasurements();}catch(e){}
+  // v4.21.0 (Sprint 5.2) — Spierbelasting-heatmap (verplaatst vanuit Voortgang) op Lichaam renderen.
+  try{refreshMuscleHeatmap();}catch(e){}
 }
 function v43LichView(view){
   recoveryHeatmapView=view;

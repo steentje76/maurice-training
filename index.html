@@ -2170,6 +2170,42 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #m-add-ex .oa-nm{display:block;font-size:12.5px;font-weight:800;color:var(--dark);line-height:1.15}
 #m-add-ex .oa-mus{display:block;font-size:10.5px;color:var(--accent);font-weight:700;margin-top:3px}
 #m-add-ex .oa-empty{color:var(--g4);font-size:13px;font-weight:600;padding:20px 0;text-align:center}
+/* ══════════════════════════════════════════════════════════════════
+   v4.17.0 — Sprint 4.8 Fase D: Logboek premium kaarten (P10) +
+   Recente-sessies-strip (P11). Presentatie-only; functies behouden.
+   ══════════════════════════════════════════════════════════════════ */
+#s-hist .filter-tabs{display:flex;gap:7px;margin-bottom:14px}
+#s-hist .filter-tab{flex:1;font-size:12px;font-weight:800;padding:9px;border-radius:11px;background:var(--card);box-shadow:var(--shadow);color:var(--g4);border:0;cursor:pointer}
+#s-hist .filter-tab.active{background:var(--accent);color:#04231c;box-shadow:none}
+#s-hist .lg-seclbl{font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--g4);margin:4px 2px 9px}
+#s-hist .lg-recent{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px}
+#s-hist .lg-rcard{flex:0 0 138px;background:#0E3B4A;border-radius:15px;padding:13px;color:#fff;position:relative;text-align:left;border:0;cursor:pointer}
+#s-hist .lg-rbadge{position:absolute;top:11px;right:11px;font-size:10px;font-weight:800;background:var(--accent);color:#04231c;border-radius:7px;padding:2px 8px}
+#s-hist .lg-rd{display:block;font-size:11px;color:rgba(230,240,243,.6);font-weight:700;padding-right:60px;line-height:1.3}
+#s-hist .lg-rst{display:block;font-size:11px;color:rgba(230,240,243,.75);font-weight:600;margin-top:8px}
+#s-hist .lg-day{background:var(--card);border-radius:18px;box-shadow:var(--shadow);margin-bottom:11px;overflow:hidden}
+#s-hist .lg-day-hd{display:flex;align-items:flex-start;padding:14px;cursor:pointer}
+#s-hist .lg-day-date{font-size:15px;font-weight:800;color:var(--dark)}
+#s-hist .lg-day-meta{font-size:11.5px;color:var(--g4);font-weight:600;margin-top:2px}
+#s-hist .lg-badge{font-size:10px;font-weight:800;background:var(--v43-mint);color:var(--accent);border-radius:8px;padding:5px 11px;white-space:nowrap}
+#s-hist .hist-day-body{padding:0 14px 12px}
+#s-hist .lg-ex{display:flex;gap:11px;align-items:center;padding:10px 0;border-top:1px solid var(--g2);cursor:pointer;text-align:left}
+#s-hist .lg-ex-th{width:42px;height:42px;border-radius:11px;background:#0E3B4A;display:flex;align-items:center;justify-content:center;flex:0 0 auto;overflow:hidden}
+#s-hist .lg-ex-th.has{background:var(--g1)}#s-hist .lg-ex-th img{width:100%;height:100%;object-fit:cover}
+#s-hist .lg-ex-th svg{width:20px;height:20px;stroke:var(--accent)}
+#s-hist .lg-ex-b{flex:1;min-width:0}
+#s-hist .lg-ex-nm{font-size:14px;font-weight:800;color:var(--dark)}
+#s-hist .lg-ex-did{font-size:12px;color:var(--g4);font-weight:600;margin-top:2px}
+#s-hist .lg-ex-did strong{color:var(--dark)}
+#s-hist .lg-ex-prog{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;color:var(--accent);font-weight:800;margin-top:4px}
+#s-hist .lg-ex-prog svg{width:12px;height:12px;stroke:var(--accent)}
+#s-hist .lg-ex-a{display:flex;gap:5px;align-items:center;flex:0 0 auto}
+#s-hist .lg-ex-i{color:var(--g4);display:flex}#s-hist .lg-ex-i svg{width:16px;height:16px;stroke:var(--g4)}
+#s-hist .lg-ex-a .del{width:32px;height:32px;border-radius:9px;background:var(--g1);border:0;color:var(--red);display:flex;align-items:center;justify-content:center;cursor:pointer}
+#s-hist .lg-ex-a .del svg{width:16px;height:16px;stroke:var(--red)}
+#s-hist .lg-day-act{display:flex;gap:8px;border-top:1px dashed var(--g2);margin-top:6px;padding-top:11px}
+#s-hist .lg-day-act button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:800;color:var(--accent);background:var(--v43-mint);border:0;border-radius:11px;padding:11px;cursor:pointer}
+#s-hist .lg-day-act button svg{width:14px;height:14px;stroke:var(--accent)}
 
 </style>
 </head>
@@ -3938,7 +3974,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.16.0';
+const APP_VER = 'v4.17.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -10349,55 +10385,77 @@ async function loadHistory(append=false){
   }
   const byDate={};
   ss.forEach(s=>{if(!byDate[s.date])byDate[s.date]=[];byDate[s.date].push(s);});
+  // v4.17.0 (Sprint 4.8 P10) — progressie per oefening: vorige keer (oudere sessie zelfde oefening).
+  const exSeq={};ss.forEach(s=>{const k=s.exercise_id;(exSeq[k]=exSeq[k]||[]).push(s);});
+  function prevOfSess(s){const arr=exSeq[s.exercise_id]||[];const i=arr.indexOf(s);for(let j=i+1;j<arr.length;j++){if(arr[j].weight)return arr[j];}return null;}
+  const A=window.ExerciseAssetProvider;
+  const LI={dumbbell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6M7 6v12M17 6v12M20 9v6M7 12h10"/></svg>',
+    edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>',
+    trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>',
+    repeat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>',
+    plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>',
+    up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M6 11l6-6 6 6"/></svg>'};
+  const ttName=(ttRaw)=>{const i=vasteTrainingen.findIndex(v=>v.id===ttRaw);return i>=0?vasteTrainingen[i].naam:ttRaw&&ttRaw.startsWith('prog_')?'Programma':ttRaw&&ttRaw.startsWith('custom_')?'Workout':(ttRaw||'—');};
+  const dayEntries=Object.entries(byDate).sort((a,b)=>b[0].localeCompare(a[0]));
+  // P11 — recente-sessies-strip (alleen bij eerste render).
+  let recentHtml='';
+  if(!append){
+    const rc=dayEntries.slice(0,4).map(([date,sess])=>{
+      const tt=ttName(sess[0]?.training_type);
+      const vol=sess.reduce((a,x)=>a+((x.weight&&x.reps&&x.sets)?x.weight*x.reps*x.sets:0),0);
+      return `<button class="lg-rcard" onclick="histOpenDay('${date}')"><span class="lg-rbadge">${escHtml(tt)}</span><span class="lg-rd">${escHtml(fmtDate(date))}</span><span class="lg-rst">${sess.length} oef${vol>0?' · '+Math.round(vol)+' kg':''}</span></button>`;
+    }).join('');
+    if(rc)recentHtml=`<div class="lg-seclbl">Recente sessies</div><div class="lg-recent">${rc}</div><div class="lg-seclbl">Geschiedenis</div>`;
+  }
   let html='';
-  Object.entries(byDate).sort((a,b)=>b[0].localeCompare(a[0])).forEach(([date,sess])=>{
-    const ttRaw=sess[0]?.training_type||'?';
-    const vtIdx=vasteTrainingen.findIndex(v=>v.id===ttRaw);
-    const tt=vtIdx>=0?vasteTrainingen[vtIdx].naam:ttRaw.startsWith('prog_')?'Programma':ttRaw.startsWith('custom_')?'Workout':ttRaw;
-    const ttColor=vtIdx>=0?(vtIdx%2===0?'var(--dark)':'var(--red)'):'var(--g4)';
+  dayEntries.forEach(([date,sess])=>{
+    const ttRaw=sess[0]?.training_type||'?';const tt=ttName(ttRaw);
     const totalVol=sess.reduce((s,x)=>{if(x.weight&&x.reps&&x.sets)s+=x.weight*x.reps*x.sets;return s;},0);
-    html+=`<div class="hist-day">
-      <div class="hist-day-hd" onclick="toggleHistDay(this)">
-        <div style="flex:1">
-          <div class="hist-day-date">${fmtDate(date)}</div>
-          <div style="font-size:11px;color:var(--g4);margin-top:2px">${sess.length} oefeningen${totalVol>0?' · '+Math.round(totalVol)+' kg volume':''}</div>
-        </div>
-        <span style="background:${ttColor};color:#fff;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;margin-right:8px">${tt}</span>
-        <span style="color:var(--g3);font-size:16px" class="hist-arr">›</span>
+    html+=`<div class="lg-day" data-date="${date}">
+      <div class="hist-day-hd lg-day-hd" onclick="toggleHistDay(this)">
+        <div style="flex:1"><div class="lg-day-date">${fmtDate(date)}</div>
+          <div class="lg-day-meta">${sess.length} oefening${sess.length===1?'':'en'}${totalVol>0?' · '+Math.round(totalVol)+' kg':''}</div></div>
+        <span class="lg-badge">${escHtml(tt)}</span>
+        <span class="hist-arr" style="color:var(--g3);font-size:15px;margin-left:8px">›</span>
       </div>
       <div class="hist-day-body">
         ${sess.map(s=>{
           const n=exercises.find(e=>e.id===s.exercise_id)?.name||s.exercise_id;
-          let v='',sub='';
+          let v='';
           if(s.weight&&s.reps) v=`${s.sets||'?'}×${s.reps} @ <strong>${s.weight} kg</strong>${s.rpe?' · RPE '+s.rpe:''}`;
           else if(s.note&&s.note.includes('tijd:')) v=s.note.split('|')[0].replace('tijd:','');
           else if(s.note) v=s.note.split('|')[0];
-          if(s.note&&s.note.includes('Opwarm:')) sub=`<div style="font-size:11px;color:#3b82f6;margin-top:2px">${s.note}</div>`;
-          const sJson=JSON.stringify(s).replace(/`/g,'\`').replace(/\\${/g,'\${');
+          let prog='';const pv=prevOfSess(s);
+          if(pv&&s.weight&&pv.weight){const d=Math.round((s.weight-pv.weight)*10)/10;if(d>0)prog=`<div class="lg-ex-prog">${LI.up} +${d} kg t.o.v. vorige</div>`;}
+          let poster=null;try{poster=(A&&A.poster)?A.poster(s.exercise_id):null;}catch(_){}
+          const thumb=poster?`<img src="${poster}" alt="">`:LI.dumbbell;
           const pendingTag=s._pending?'<span title="Wachtend op sync" style="margin-right:4px">⏳</span>':'';
           const clickAttr=s._pending?`onclick='toast("Wachtend op sync — bewerken kan zodra online")'`:`onclick='openEditSess(${JSON.stringify(s.id)},${JSON.stringify(n)},${JSON.stringify(s)})'`;
-          return `<div class="hist-ex-item" ${clickAttr}>
-            <div style="flex:1">
-              <div class="hist-ex-name">${pendingTag}${n}</div>
-              <div class="hist-ex-sets">${v}</div>
-              ${sub}
-            </div>
-            <button onclick="event.stopPropagation();deleteSessionDirect(${JSON.stringify(s.id)})" style="background:none;border:none;color:var(--g3);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0">🗑</button>
-            <span style="color:var(--g3);font-size:16px;flex-shrink:0">${s._pending?'':'✏️'}</span>
+          return `<div class="lg-ex" ${clickAttr}>
+            <span class="lg-ex-th${poster?' has':''}">${thumb}</span>
+            <div class="lg-ex-b"><div class="lg-ex-nm">${pendingTag}${escHtml(n)}</div><div class="lg-ex-did">${v}</div>${prog}</div>
+            <div class="lg-ex-a">${s._pending?'':`<span class="lg-ex-i">${LI.edit}</span>`}<button class="del" onclick="event.stopPropagation();deleteSessionDirect(${JSON.stringify(s.id)})" aria-label="Verwijderen">${LI.trash}</button></div>
           </div>`;
         }).join('')}
-        <div style="display:flex;gap:8px;border-top:1px dashed var(--g2);margin-top:4px;padding-top:4px">
-          <button onclick="addSetToDate('${date}','${tt}')" style="flex:1;padding:10px 0;background:none;border:none;color:var(--red);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">+ Oefening</button>
-          <button onclick="openRepeatWorkout('${date}','${tt}')" style="flex:1;padding:10px 0;background:none;border:none;color:var(--dark);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">🔄 Herhalen</button>
+        <div class="lg-day-act">
+          <button onclick="addSetToDate('${date}','${tt}')">${LI.plus} Oefening</button>
+          <button onclick="openRepeatWorkout('${date}','${tt}')">${LI.repeat} Herhalen</button>
         </div>
       </div>
     </div>`;
   });
   const el=document.getElementById('hist-list');
   if(append)el.insertAdjacentHTML('beforeend',html);
-  else el.innerHTML=html||'<p style="color:var(--g4);font-size:13px">Geen sessies gevonden</p>';
+  else el.innerHTML=recentHtml+(html||'<p style="color:var(--g4);font-size:13px">Geen sessies gevonden</p>');
   document.getElementById('hist-more').style.display=syncedCount<20?'none':'block';
   histOff+=20;
+}
+// P11 — open het dagblok vanuit de recente-sessies-strip.
+function histOpenDay(date){
+  const card=document.querySelector('.lg-day[data-date="'+date+'"]');if(!card)return;
+  const body=card.querySelector('.hist-day-body');const arr=card.querySelector('.hist-arr');
+  if(body&&!body.classList.contains('open')){body.classList.add('open');if(arr)arr.textContent='▼';}
+  card.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function loadMoreHistory(){loadHistory(true);}
 

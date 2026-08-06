@@ -1779,6 +1779,45 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .v47-bigc .b .t{display:block;font-size:15.5px;font-weight:800;color:var(--dark);line-height:1.15}
 .v47-bigc .b .s{display:block;font-size:11.5px;color:var(--g4);margin-top:3px;font-weight:600;line-height:1.35}
 .v47-bigc .ar{color:var(--g3);font-size:18px;flex:0 0 auto;line-height:1}
+/* ══════════════════════════════════════════════════════════════════
+   v4.7.1 — Sprint 4.7 Fase 1b: dag-detailscherm (pre-start overzicht).
+   Rijke weergave van de geplande training vóór starten. Uitsluitend
+   echte data (TRAIN_CFG + homeCoachText + homeMuscleRec); geen fabricatie.
+   ══════════════════════════════════════════════════════════════════ */
+.v47d-hero{background:#0E3B4A;border-radius:22px;padding:18px;margin-bottom:12px;box-shadow:0 14px 30px rgba(0,0,0,.30)}
+.v47d-eye{font-size:10.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:rgba(230,240,243,.6)}
+.v47d-name{font-size:24px;font-weight:800;color:#fff;line-height:1.06;margin-top:7px;letter-spacing:-.4px}
+.v47d-meta{font-size:12.5px;color:rgba(230,240,243,.74);font-weight:600;margin-top:6px}
+.v47d-say{display:flex;gap:10px;align-items:center;margin-top:13px;background:rgba(255,255,255,.07);border-radius:13px;padding:11px 12px}
+.v47d-say .ic{width:30px;height:30px;border-radius:50%;background:var(--accent);flex:0 0 auto;display:flex;align-items:center;justify-content:center}
+.v47d-say .ic svg{width:16px;height:16px;fill:#fff;stroke:none}
+.v47d-say p{font-size:12px;color:rgba(230,240,243,.92);line-height:1.4;font-weight:500}
+.v47d-hero .v43-start{margin-top:14px}
+/* Waarom vandaag — hergebruikt .v43-why patroon, in mint-kaart */
+.v47d-why{background:var(--v43-mint);border-radius:14px;padding:4px 14px 12px;margin-bottom:12px}
+.v47d-why .v43-why{border-top:0;margin-top:0;padding-top:11px}
+.v47d-why .v43-why-body{border-top-style:dashed}
+.v47d-why-row{display:flex;justify-content:space-between;gap:10px;padding:3px 0;font-size:12.5px}
+.v47d-why-row b{color:var(--dark);font-weight:700}
+/* Overzicht mini-cards (echte tellingen, geen verzonnen duur/calorieën) */
+.v47d-ov{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
+.v47d-ovc{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:12px 13px;display:flex;align-items:center;gap:10px}
+.v47d-ovc .ic{width:34px;height:34px;border-radius:10px;background:var(--v43-mint);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.v47d-ovc .ic svg{width:18px;height:18px;stroke:var(--accent);fill:none;stroke-width:2}
+.v47d-ovc .v{font-size:15px;font-weight:800;color:var(--dark);line-height:1}
+.v47d-ovc .k{font-size:10px;color:var(--g4);font-weight:600;margin-top:3px}
+/* Oefeningenlijst (rijk, echte oefeningen uit de training) */
+.v47d-exlbl{font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--g4);margin:14px 2px 9px}
+.v47d-ex{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:12px 13px;margin-bottom:9px;display:flex;gap:12px;align-items:center}
+.v47d-ex-th{width:44px;height:44px;border-radius:11px;background:#0E3B4A;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.v47d-ex-th svg{width:21px;height:21px;stroke:var(--accent);fill:none;stroke-width:2}
+.v47d-ex-b{flex:1;min-width:0}
+.v47d-ex-nm{font-size:14px;font-weight:800;color:var(--dark);line-height:1.15}
+.v47d-ex-mus{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+.v47d-ex-mus .tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;background:var(--v43-mint);color:var(--accent)}
+.v47d-ex-meta{font-size:12px;color:var(--g4);font-weight:700;text-align:right;flex:0 0 auto}
+.v47d-ex-meta b{color:var(--dark);font-size:13.5px}
+.v47d-empty{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:16px;text-align:center;color:var(--g4);font-size:12.5px;font-weight:600;margin-bottom:12px}
 
 </style>
 </head>
@@ -2525,6 +2564,24 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <button class="row" onclick="go('s-hist')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg></span><span class="b"><span class="t">Historie</span><span class="s">Je trainingsgeschiedenis</span></span><span class="ar">›</span></button>
     </div>
   </div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
+    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+  </nav>
+</div>
+
+<!-- ═══ TRAINING DAG-DETAIL (Sprint 4.7 Fase 1b — pre-start overzicht) ═══ -->
+<div class="scr" id="s-train-detail">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title" role="heading" aria-level="1">Training van vandaag</div><div class="hdr-sub" id="v47d-sub">Bekijk en start</div></div>
+      <button class="ibtn" onclick="go('s-train-mgr')" aria-label="Sluiten, terug naar Training">✕</button>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px" id="v47d-scroll"></div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
@@ -3501,7 +3558,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.7.0';
+const APP_VER = 'v4.7.1';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -12431,18 +12488,81 @@ function v43RenderPlan(elId,nextT){
   const n=nextT._exCount||0;
   const pi=window.v43ProgInfo;
   const chip=pi?`<div class="v43-prog-chip">${escHtml(pi.naam)}${pi.week?' · Week '+pi.week:''}${pi.fase?' · '+escHtml(pi.fase):''}</div>`:'';
-  el.innerHTML=`<div class="v43-plan">
+  el.innerHTML=`<div class="v43-plan" role="button" tabindex="0" onclick="openTrainDetail('${nextT.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openTrainDetail('${nextT.id}')}">
     <div class="v43-lbl">Vandaag gepland</div>
     <div class="v43-plan-top">
       <div class="v43-plan-ic">${V43I.dumbbell}</div>
       <div class="v43-plan-l"><div class="v43-plan-name">${escHtml(nextT.naam)}</div>
       <div class="v43-plan-meta">${n?`<span>${V43I.list} ${n} oefening${n===1?'':'en'}</span>`:''}</div>${chip}</div>
     </div>
-    <button class="v43-start" onclick="startT('${nextT.id}')">${V43I.play} Start training</button>
+    <button class="v43-start" onclick="event.stopPropagation();startT('${nextT.id}')">${V43I.play} Start training</button>
   </div>`;
 }
 function renderV43Train(){
   v43RenderPlan('v43-train-plan',window.homeNextT);
+}
+// Sprint 4.7 Fase 1b — dag-detailscherm. Rijke pre-start weergave van de geplande
+// training. Uitsluitend echte data: TRAIN_CFG (oefeningen), window.homeCoachText,
+// window.homeMuscleRec. Geen verzonnen duur/calorieën/metrics (DEC-027).
+async function openTrainDetail(t){
+  window._trainDetailT=t;
+  go('s-train-detail');
+  try{await renderTrainDetail(t);}catch(e){console.warn('train-detail',e);}
+}
+async function renderTrainDetail(t){
+  const el=document.getElementById('v47d-scroll');if(!el)return;
+  const nt=window.homeNextT;
+  const naam=(nt&&nt.id===t)?nt.naam:(vasteTrainingen.find(v=>v.id===t)?.naam||('Training '+t));
+  const sub=document.getElementById('v47d-sub');if(sub)sub.textContent=naam;
+  // Oefeningen uit de training (echte config).
+  let list=[];
+  try{if(!(TRAIN_CFG[t]&&TRAIN_CFG[t].length))await loadTrainCfg();list=getSessionExs(t)||[];}catch(e){try{list=getSessionExs(t)||[];}catch(_){list=[];}}
+  // Spiergroepen (echt) uit de oefeningen.
+  const mset=new Set();
+  list.forEach(e=>{try{(e.muscles?.p||getExerciseMuscles(e.id)||[]).forEach(m=>m&&mset.add(m));}catch(_){}});
+  const muscles=[...mset];
+  const n=list.length||(nt&&nt.id===t?nt._exCount:0)||0;
+  // Coachregel (echt, gedeeld met Home).
+  const coach=window.homeCoachText||'';
+  const say=coach?`<div class="v47d-say"><div class="ic">${V43I.spark}</div><p>${escHtml(coach)}</p></div>`:'';
+  // Overzicht: uitsluitend echte tellingen.
+  const ov=`<div class="v47d-ov">
+    <div class="v47d-ovc"><div class="ic">${V43I.dumbbell}</div><div><div class="v">${n}</div><div class="k">Oefening${n===1?'':'en'}</div></div></div>
+    <div class="v47d-ovc"><div class="ic">${V43I.heart}</div><div><div class="v">${muscles.length}</div><div class="k">Spiergroep${muscles.length===1?'':'en'}</div></div></div>
+  </div>`;
+  // "Waarom vandaag?" — herstel per relevante spiergroep (echte data uit homeMuscleRec).
+  const rec=window.homeMuscleRec||[];
+  let why='';
+  if(rec.length){
+    const rows=rec.slice(0,4).map(r=>`<div class="v47d-why-row"><span>${escHtml(r.muscle)}</span><b>${Math.round(r.pct)}% hersteld</b></div>`).join('');
+    why=`<div class="v47d-why"><button class="v43-why" onclick="v47dToggleWhy(this)"><span>Waarom vandaag?</span><span class="v43-why-chev">▾</span></button><div class="v43-why-body" hidden>${rows}</div></div>`;
+  }
+  // Oefeningenlijst (rijk, echt).
+  let exHtml='';
+  if(list.length){
+    exHtml='<div class="v47d-exlbl">Oefeningen</div>'+list.map(e=>{
+      const setsReps=(e.sets&&e.reps)?`${e.sets}×${e.reps}`:(e.sets?`${e.sets} sets`:'');
+      const rpe=e.rpe?` · RPE ${e.rpe}`:'';
+      const mus=(e.muscles?.p||getExerciseMuscles(e.id)||[]).slice(0,2).map(m=>`<span class="tag">${escHtml(m)}</span>`).join('');
+      return `<div class="v47d-ex"><div class="v47d-ex-th">${V43I.dumbbell}</div>
+        <div class="v47d-ex-b"><div class="v47d-ex-nm">${escHtml(e.naam||e.id)}</div>${mus?`<div class="v47d-ex-mus">${mus}</div>`:''}</div>
+        ${setsReps?`<div class="v47d-ex-meta"><b>${setsReps}</b>${rpe}</div>`:''}</div>`;
+    }).join('');
+  }else{
+    exHtml='<div class="v47d-empty">De oefeningen van deze training worden geladen zodra je online bent, of stel ze samen in de Workout Builder.</div>';
+  }
+  el.innerHTML=`<div class="v47d-hero">
+      <div class="v47d-eye">Training van vandaag</div>
+      <div class="v47d-name">${escHtml(naam)}</div>
+      <div class="v47d-meta">${n?`${n} oefening${n===1?'':'en'}`:''}${muscles.length?`${n?' · ':''}${escHtml(musclePhrase(muscles))}`:''}</div>
+      ${say}
+      <button class="v43-start" onclick="startT('${t}')">${V43I.play} Start training</button>
+    </div>${why}${ov}${exHtml}`;
+}
+function v47dToggleWhy(btn){
+  btn.classList.toggle('open');
+  const body=btn.parentElement.querySelector('.v43-why-body');
+  if(body)body.hidden=!body.hidden;
 }
 // LICHAAM-tab — hergebruikt de anatomie-engine + herstelberekening.
 async function renderLichaam(){

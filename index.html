@@ -1640,6 +1640,7 @@ html[data-theme="dark"] .v43-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
 .v43-plan-meta{display:flex;gap:16px;margin-top:6px;font-size:12.5px;color:var(--g4);font-weight:600}
 .v43-plan-meta span{display:inline-flex;align-items:center;gap:5px}
 .v43-plan-meta svg{width:14px;height:14px;stroke:var(--g4);fill:none;stroke-width:2}
+.v43-prog-chip{display:inline-block;margin-top:9px;font-size:11.5px;font-weight:700;color:var(--accent);background:var(--v43-mint);border-radius:8px;padding:4px 10px}
 .v43-start{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;border:0;border-radius:14px;padding:16px;font-weight:800;font-size:16px;background:var(--accent);color:#fff;margin-top:16px;cursor:pointer;box-shadow:0 10px 22px rgba(0,184,148,.32)}
 .v43-start svg{width:15px;height:15px;fill:#fff}
 /* Aandachtspunt */
@@ -1781,29 +1782,27 @@ html[data-theme="dark"] .v43-lich-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
   </div>
   <div class="scroll" id="home-theme" data-day="goed" style="padding-top:10px">
     <div id="home-dash" style="display:none"></div>
+    <!-- Home v2 (Sprint Home UX v2) — vaste volgorde: hero → coach → gepland → ritme/volume → consistentie → snelacties -->
     <div id="home-hero"></div>
+    <div id="home-hrv-card" class="hcoach-item" style="display:none;margin-bottom:14px"></div>
     <div id="home-coach-vandaag"></div>
     <div id="home-plan"></div>
-    <div id="home-attn"></div>
-    <div id="home-last"></div>
+    <div id="home-weekstats" class="hcoach-item" style="margin-bottom:14px"></div>
+    <div id="home-motivatie" class="hcoach-item" style="margin-bottom:4px"></div>
+    <div class="v43-lbl" style="margin:20px 2px 10px">Snelacties</div>
+    <div id="home-quick" style="margin-bottom:8px"></div>
+    <!-- Verborgen, behouden voor render/tests — wonen op Home v2 niet meer (bereikbaar via Training/Logboek/Lichaam) -->
+    <div id="home-attn" style="display:none"></div>
+    <div id="home-last" style="display:none"></div>
     <div id="home-morning" class="hcoach-item" style="display:none"></div>
     <div id="home-today-cta" class="hcoach-item" style="display:none"></div>
     <div id="home-coach-advies" class="hcoach-item" style="display:none"></div>
-    <div class="home-divider"><span>Meer mogelijkheden</span></div>
-    <div id="home-hrv-card" class="hcoach-item" style="margin-bottom:16px"></div>
-    <div id="home-weekstats" class="hcoach-item" style="margin-bottom:16px"></div>
-    <div id="home-motivatie" class="hcoach-item" style="margin-bottom:16px"></div>
-    <div id="home-program-card" style="margin-bottom:8px"></div>
-    <div id="home-goals-card" style="margin-bottom:8px"></div>
-    <div class="sec-hd">Andere trainingen</div>
-    <div id="vaste-training-btns" style="display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap"></div>
-    <div id="custom-train-btns"></div>
-    <div id="home-next-lbl" style="font-size:12px;color:var(--g4);font-weight:600;text-align:center;margin-bottom:10px"></div>
-    <div class="sec-hd">Snelacties</div>
-    <div id="home-quick" style="margin-bottom:12px"></div>
-    <button class="lib-entry" onclick="go('s-library');renderLibrary()"><span class="lib-entry-ic">📚</span><span class="lib-entry-tx"><b>Oefeningen ontdekken</b><small>206 oefeningen · aanbevolen, favorieten &amp; meer</small></span><span class="lib-entry-ar">›</span></button>
-    <div class="sec-hd">Recente sessies</div>
-    <div class="card"><div class="card-body" style="padding-top:10px" id="home-recent"></div></div>
+    <div id="home-program-card" style="display:none"></div>
+    <div id="home-goals-card" style="display:none"></div>
+    <div id="vaste-training-btns" style="display:none"></div>
+    <div id="custom-train-btns" style="display:none"></div>
+    <div id="home-next-lbl" style="display:none"></div>
+    <div id="home-recent" style="display:none"></div>
     <div style="height:8px"></div>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
@@ -3410,7 +3409,7 @@ html[data-theme="dark"] .v43-lich-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.3.0';
+const APP_VER = 'v4.4.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -9427,12 +9426,13 @@ function renderMotivatie(){
 // v3.3.45 Dashboard 2.0 — Quick Actions (navigatie naar bestaande schermen).
 function renderQuickActions(){
   const el=document.getElementById('home-quick');if(!el)return;
+  // Home v2 — vier snelacties (Coach · Stats · Logboek · Plate Calculator). Profiel verwijderd
+  // (heeft eigen tab), Oefeningen ontdekken verwijderd (woont volledig op Training).
   const acts=[
-    {l:'Plate',i:'<path d="M4 10v4M6.5 8v8M17.5 8v8M20 10v4M6.5 12h11"/>',o:"openPlateCalc(0)"},
+    {l:'Coach',i:'<path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4 19.5l1.3-4.1A7.5 7.5 0 1 1 20 11.5Z"/>',o:"go('s-coach')"},
     {l:'Stats',i:'<path d="M4 4v16h16"/><path d="M7.5 14.5 11 11l2.5 2.5L19 8"/>',o:"go('s-stats')"},
     {l:'Logboek',i:'<path d="M6 4h9l3 3v13H6z"/><path d="M9 10h6M9 14h6M9 18h4"/>',o:"go('s-hist')"},
-    {l:'Coach',i:'<path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4 19.5l1.3-4.1A7.5 7.5 0 1 1 20 11.5Z"/>',o:"go('s-coach')"},
-    {l:'Profiel',i:'<circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/>',o:"go('s-profiel')"}
+    {l:'Plate Calculator',i:'<path d="M4 10v4M6.5 8v8M17.5 8v8M20 10v4M6.5 12h11"/>',o:"openPlateCalc(0)"}
   ];
   el.innerHTML='<div class="quick-row">'+acts.map(a=>`<button class="quick-act" onclick="${a.o}" aria-label="${a.l}"><span class="quick-ic"><svg viewBox="0 0 24 24">${a.i}</svg></span><span class="quick-lbl">${a.l}</span></button>`).join('')+'</div>';
 }
@@ -12219,7 +12219,7 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
     const badge=badgeCls==='g'?`<span class="v43-hero-badge" style="background:var(--green)">✓</span>`:badgeCls==='r'?`<span class="v43-hero-badge" style="background:var(--red)">!</span>`:`<span class="v43-hero-badge" style="background:var(--y)">~</span>`;
     const gereed=v43GereedheidScore(dfInfo?dfInfo.factor:null);
     const slaap=(lh&&(lh.sleep||lh.sleep===0))?v43SlaapTxt(lh.sleep):'—';
-    heroEl.innerHTML=`<div class="v43-hero">
+    heroEl.innerHTML=`<div class="v43-hero" onclick="v43ToggleWhy()" style="cursor:pointer" role="button" aria-label="Herstelstatus — tik voor waarom vandaag">
       <div class="v43-hero-top">
         <div class="v43-hero-l">
           <div class="v43-lbl">Herstel nu</div>
@@ -12253,7 +12253,8 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
       <span class="v43-coach-ar">›</span>
     </button>`:'';
   }
-  // VANDAAG GEPLAND
+  // VANDAAG GEPLAND (met geïntegreerde programma-info)
+  try{window.v43ProgInfo=await v43ProgramInfo();}catch(e){window.v43ProgInfo=null;}
   v43RenderPlan('home-plan',nextT);
   // AANDACHTSPUNT
   const attnEl=document.getElementById('home-attn');
@@ -12292,17 +12293,39 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
     }catch(e){lastEl.innerHTML='';}
   }
 }
-// Gedeelde "Vandaag gepland"-kaart (Home + Training-tab).
+// Home v2 — dagfactor "Waarom vandaag?" onthullen via een tik op de Herstel nu-hero
+// (de detailkaart blijft bestaan; geen aparte kaart meer standaard zichtbaar op Home).
+function v43ToggleWhy(){
+  const el=document.getElementById('home-hrv-card');if(!el)return;
+  const open=el.style.display!=='none'&&el.style.display!=='';
+  el.style.display=open?'none':'block';
+  if(!open){try{el.scrollIntoView({behavior:'smooth',block:'nearest'});}catch(e){}}
+}
+// Home v2 — actief programma (naam · week · fase) t.b.v. de "Vandaag gepland"-kaart.
+// Uitsluitend echte data (dezelfde bron als renderHomeProgramCard); geen tweede programmakaart.
+async function v43ProgramInfo(){
+  try{
+    const progs=await v43SafeGet('programs','&status=eq.actief&order=start_date.desc');
+    for(const p of (progs||[])){
+      const blocks=await v43SafeGet('program_blocks','&program_id=eq.'+p.id+'&completed_at=is.null&order=week_nr.asc&limit=1');
+      if(blocks&&blocks.length){const b=blocks[0];return {naam:p.naam,week:b.week_nr,fase:b.fase_naam||''};}
+    }
+  }catch(e){}
+  return null;
+}
+// Gedeelde "Vandaag gepland"-kaart (Home + Training-tab). Integreert programma-info als chip.
 function v43RenderPlan(elId,nextT){
   const el=document.getElementById(elId);if(!el)return;
   if(!nextT){el.innerHTML='';return;}
   const n=nextT._exCount||0;
+  const pi=window.v43ProgInfo;
+  const chip=pi?`<div class="v43-prog-chip">${escHtml(pi.naam)}${pi.week?' · Week '+pi.week:''}${pi.fase?' · '+escHtml(pi.fase):''}</div>`:'';
   el.innerHTML=`<div class="v43-plan">
     <div class="v43-lbl">Vandaag gepland</div>
     <div class="v43-plan-top">
       <div class="v43-plan-ic">${V43I.dumbbell}</div>
       <div class="v43-plan-l"><div class="v43-plan-name">${escHtml(nextT.naam)}</div>
-      <div class="v43-plan-meta">${n?`<span>${V43I.list} ${n} oefening${n===1?'':'en'}</span>`:''}</div></div>
+      <div class="v43-plan-meta">${n?`<span>${V43I.list} ${n} oefening${n===1?'':'en'}</span>`:''}</div>${chip}</div>
     </div>
     <button class="v43-start" onclick="startT('${nextT.id}')">${V43I.play} Start training</button>
   </div>`;

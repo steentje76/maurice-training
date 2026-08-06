@@ -2116,6 +2116,32 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-guided .gw-ih-first{margin:15px 18px 0;font-size:12.5px;color:rgba(230,240,243,.7);line-height:1.5}#s-guided .gw-ih-first b{color:#fff;font-size:14px}
 #s-guided .gw-introhero .g2-primary{width:calc(100% - 36px);margin:15px 18px 0}
 #s-guided .gw-introhero .g2-quit{color:rgba(230,240,243,.6);margin-top:10px}
+/* ══════════════════════════════════════════════════════════════════
+   v4.15.0 — Sprint 4.8 Fase B: Schema → Program Dashboard (P5/P9).
+   Presentatie-only; echte data. Onderscheid Schema vs Workouts.
+   ══════════════════════════════════════════════════════════════════ */
+#s-train-schema .sc-intro{display:flex;gap:10px;align-items:flex-start;background:var(--v43-mint);border-radius:14px;padding:12px 13px;margin-bottom:14px}
+#s-train-schema .sc-intro-i{flex:0 0 auto;color:var(--accent)}#s-train-schema .sc-intro-i svg{width:18px;height:18px;stroke:var(--accent)}
+#s-train-schema .sc-intro p{font-size:12px;color:var(--dark);line-height:1.45;font-weight:500}#s-train-schema .sc-intro b{font-weight:800}
+#s-train-schema .sc-card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:16px;margin-bottom:11px}
+#s-train-schema .sc-card.next{border-left:4px solid var(--accent)}
+#s-train-schema .sc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+#s-train-schema .sc-nm{font-size:18px;font-weight:800;color:var(--dark);letter-spacing:-.3px}
+#s-train-schema .sc-st{font-size:10px;font-weight:800;padding:4px 10px;border-radius:8px;background:var(--g1);color:var(--g4);white-space:nowrap}
+#s-train-schema .sc-st.next{background:var(--accent);color:#04231c}
+#s-train-schema .sc-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+#s-train-schema .sc-tag{font-size:10px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--v43-mint);color:var(--accent)}
+#s-train-schema .sc-meta{display:flex;gap:16px;margin-top:12px;font-size:11.5px;color:var(--g4);font-weight:600;flex-wrap:wrap}
+#s-train-schema .sc-meta span{display:inline-flex;align-items:center;gap:5px}#s-train-schema .sc-meta svg{width:13px;height:13px;stroke:var(--g4);fill:none;stroke-width:2}
+#s-train-schema .sc-actions{display:flex;gap:8px;margin-top:14px}
+#s-train-schema .sc-start{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;background:var(--accent);color:#fff;border:0;border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 8px 18px rgba(0,196,143,.28)}
+#s-train-schema .sc-start svg{width:15px;height:15px;fill:#fff}
+#s-train-schema .sc-ic{width:46px;border-radius:12px;background:var(--g1);border:0;color:var(--g4);display:flex;align-items:center;justify-content:center;cursor:pointer}
+#s-train-schema .sc-ic svg{width:18px;height:18px;stroke:var(--g4)}
+#s-train-schema .sc-ic.del{color:var(--red)}#s-train-schema .sc-ic.del svg{stroke:var(--red)}
+#s-train-schema .sc-empty{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:20px;text-align:center;color:var(--g4);font-size:13px;font-weight:600;margin-bottom:11px}
+/* premium "Nieuwe vaste training"-CTA (bestaande knop restylen) */
+#s-train-schema .scroll>.btn-o{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--card)!important;border:1.5px dashed var(--g2)!important;border-radius:14px!important;padding:15px!important;font-weight:800!important;font-size:13.5px!important;color:var(--dark)!important;box-shadow:none!important}
 
 </style>
 </head>
@@ -2939,7 +2965,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <div class="scr" id="s-train-schema">
   <div class="hdr">
     <div class="hdr-row">
-      <div><div class="hdr-title" role="heading" aria-level="1">Schema</div><div class="hdr-sub">Je vaste trainingen</div></div>
+      <div><div class="hdr-title" role="heading" aria-level="1">Schema</div><div class="hdr-sub">Je vaste trainingsprogramma's</div></div>
       <button class="ibtn" onclick="go('s-train-mgr')" aria-label="Sluiten, terug naar trainingsbeheer">✕</button>
     </div>
   </div>
@@ -3875,7 +3901,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.14.0';
+const APP_VER = 'v4.15.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -4448,17 +4474,50 @@ async function renderVasteTrainingBtns(){
       <div class="ni-dot" id="home-dot-${v.id.toLowerCase()}" style="position:static;background:${i%2===0?'#fff':'var(--dark)'}"></div>${escHtml(v.naam)}
     </button>`).join('');
 }
+// v4.15.0 (Sprint 4.8 P5/P9) — Schema als premium Program Dashboard.
+// Uitsluitend echte data: naam, oefeningen (TRAIN_CFG), focus-spiergroepen (afgeleid),
+// laatst gedaan (sessies), "Volgende" (computeNextVasteTraining). Alle functies behouden.
+const V48I={
+  play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg>',
+  list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
+  clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>',
+  info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>'
+};
+function v48RelDate(d){
+  if(!d)return 'nog niet gedaan';
+  try{const now=new Date();const dt=new Date(d);const days=Math.floor((new Date(now.getFullYear(),now.getMonth(),now.getDate())-new Date(dt.getFullYear(),dt.getMonth(),dt.getDate()))/86400000);
+    if(days<=0)return 'vandaag';if(days===1)return 'gisteren';if(days<7)return days+' dagen geleden';if(days<14)return 'vorige week';return v48FmtDatum(d);}catch(e){return v48FmtDatum(d);}
+}
 async function renderSchemaTrainingList(){
   const el=document.getElementById('schema-training-list');
   if(!el)return;
   await ensureVasteTrainingenLoaded();
-  if(!vasteTrainingen.length){el.innerHTML='<div style="text-align:center;color:var(--g4);font-size:13px;padding:20px 0">Nog geen vaste training. Tik hieronder om er een te maken.</div>';return;}
-  el.innerHTML=vasteTrainingen.map(v=>`
-    <div class="lrow" style="align-items:center">
-      <div class="lval" style="cursor:pointer;font-weight:700" onclick="startT('${v.id}')">${escHtml(v.naam)}</div>
-      <button onclick='event.stopPropagation();openRenameVasteTraining(${JSON.stringify(v.id)},${JSON.stringify(v.naam)})' style="background:none;border:none;color:var(--g4);font-size:14px;cursor:pointer;padding:4px 6px">✏️</button>
-      <button onclick="event.stopPropagation();deleteVasteTraining('${v.id}')" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;padding:4px 6px">🗑</button>
-    </div>`).join('');
+  const intro=`<div class="sc-intro"><span class="sc-intro-i">${V48I.info}</span><p><b>Schema</b> = je vaste trainingsprogramma's die je herhaalt. Losse trainingen, templates en thuis/hotel vind je onder <b>Workouts</b>.</p></div>`;
+  if(!vasteTrainingen.length){el.innerHTML=intro+'<div class="sc-empty">Nog geen vaste training. Maak er hieronder een aan.</div>';return;}
+  let lastMap={},nextId=null;
+  try{lastMap=await computeLastDoneMap(vasteTrainingen);const nx=computeNextVasteTraining(vasteTrainingen,lastMap);nextId=nx?nx.id:null;}catch(e){}
+  try{if(window.loadTrainCfg)await loadTrainCfg();}catch(e){}
+  const cards=vasteTrainingen.map(v=>{
+    const cfg=(typeof TRAIN_CFG!=='undefined'&&TRAIN_CFG[v.id])||[];
+    const n=cfg.length;
+    const mset=[];cfg.forEach(e=>{(e.muscles&&e.muscles.p||[]).forEach(m=>{if(m&&mset.indexOf(m)<0)mset.push(m);});});
+    const tags=mset.slice(0,3).map(m=>`<span class="sc-tag">${escHtml(m)}</span>`).join('');
+    const isNext=(v.id===nextId);
+    const pill=isNext?'<span class="sc-st next">Volgende</span>':'';
+    return `<div class="sc-card${isNext?' next':''}">
+      <div class="sc-top"><div class="sc-nm">${escHtml(v.naam)}</div>${pill}</div>
+      ${tags?`<div class="sc-tags">${tags}</div>`:''}
+      <div class="sc-meta"><span>${V48I.list} ${n} oefening${n===1?'':'en'}</span><span>${V48I.clock} ${escHtml(v48RelDate(lastMap[v.id]))}</span></div>
+      <div class="sc-actions">
+        <button class="sc-start" onclick="startT('${v.id}')">${V48I.play} Start</button>
+        <button class="sc-ic" onclick='openRenameVasteTraining(${JSON.stringify(v.id)},${JSON.stringify(v.naam)})' aria-label="Hernoemen">${V48I.edit}</button>
+        <button class="sc-ic del" onclick="deleteVasteTraining('${v.id}')" aria-label="Verwijderen">${V48I.trash}</button>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML=intro+cards;
 }
 let vtEditId=null;
 function openAddVasteTraining(){

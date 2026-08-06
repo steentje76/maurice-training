@@ -2034,6 +2034,88 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 /* Vergelijk-knop */
 #s-library .lib5d-cmp{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:13px;padding:14px;font-weight:800;font-size:13.5px;background:var(--v43-mint);color:var(--accent);margin:4px 0 8px;cursor:pointer}
 #s-library .lib5d-cmp svg{width:16px;height:16px;stroke:var(--accent);fill:none}
+/* ══════════════════════════════════════════════════════════════════
+   v4.13.0 — Sprint 4.7 Fase 7: Live Training (begeleide sessie).
+   Presentatie-only; GW/GWUI-engine ongemoeid. Gefocust donker live-scherm,
+   premium rust-timer en RPE-vraag. Sprint 4.7 compleet.
+   ══════════════════════════════════════════════════════════════════ */
+#s-guided .g2-top{margin:2px 0 14px}
+#s-guided .g2-bar{height:5px;border-radius:99px;background:var(--g2)}
+#s-guided .g2-bar span{background:var(--accent)}
+#s-guided .g2-topline{margin-top:7px;font-size:11.5px;font-weight:700;color:var(--g4);text-align:left}
+#s-guided .g2-trans{background:var(--v43-mint);color:var(--g6);border-radius:13px;padding:11px 14px;font-size:12px;font-weight:500;line-height:1.4;margin-bottom:12px}
+/* Live-set hero (donker, gefocust) */
+#s-guided .g2-stage{background:#0E3B4A;border-radius:22px;padding:20px 18px;box-shadow:0 16px 34px rgba(0,0,0,.30);text-align:left}
+#s-guided .g2-stage .g2-slot{color:var(--accent);margin-bottom:0}
+#s-guided .g2-stage .g2-name{font-size:24px;font-weight:800;color:#fff;line-height:1.08;margin-top:8px;letter-spacing:-.4px;text-align:left}
+#s-guided .g2-stage .g2-setline{font-size:12.5px;color:rgba(230,240,243,.6);font-weight:700;margin-top:7px}
+#s-guided .g2-nums{display:flex;gap:10px;margin-top:16px}
+#s-guided .g2-num{flex:1;background:rgba(255,255,255,.07);border-radius:15px;padding:15px 12px;text-align:center}
+#s-guided .g2-num-v{font-size:26px;font-weight:800;color:#fff;line-height:1;letter-spacing:-.5px;display:block}
+#s-guided .g2-num-l{font-size:9.5px;color:rgba(230,240,243,.6);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:5px}
+#s-guided .g2-wt{width:32px;height:28px;border-radius:8px;background:rgba(255,255,255,.14);color:#fff;border:0;font-size:16px;font-weight:700;line-height:1}
+#s-guided .g2-stage .g2-primary{width:100%;background:var(--accent);color:#fff;border:0;border-radius:15px;padding:16px;font-size:16px;font-weight:800;margin-top:16px;box-shadow:0 10px 22px rgba(0,196,143,.32)}
+#s-guided .g2-more{display:block;width:100%;background:0;border:0;color:var(--accent);font-weight:800;font-size:13.5px;padding:12px;margin-top:14px;cursor:pointer;text-align:center}
+#s-guided .g2-quit{display:block;width:100%;background:0;border:0;color:var(--g4);font-weight:700;font-size:12.5px;padding:6px;cursor:pointer;text-align:center}
+/* Rust (donkere hero, grote timer) */
+#s-guided .g2-rest{background:#0E3B4A;border-radius:22px;padding:22px 18px;box-shadow:0 16px 34px rgba(0,0,0,.30);text-align:center}
+#s-guided .g2-rest-lbl{font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--accent)}
+#s-guided .g2-rest-num{font-size:58px;font-weight:800;color:#fff;letter-spacing:1px;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+#s-guided .g2-rest-adj{display:flex;gap:10px;justify-content:center;margin:8px 0 4px}
+#s-guided .g2-rest-adj .g2-wt{width:auto;height:auto;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:800}
+#s-guided .g2-rest-next{font-size:12.5px;color:rgba(230,240,243,.8);font-weight:700;margin-top:13px}
+#s-guided .g2-rest .g2-primary{width:100%;background:var(--accent);color:#fff;border:0;border-radius:14px;padding:15px;font-size:15px;font-weight:800;margin-top:14px;box-shadow:0 10px 22px rgba(0,196,143,.32)}
+#s-guided .g2-rest .g2-more{color:rgba(230,240,243,.7)}
+#s-guided .g2-rest .gw-coach{color:rgba(230,240,243,.9);text-align:left;background:rgba(255,255,255,.06);border-radius:12px;padding:11px 13px;margin-top:10px;font-size:12px;line-height:1.4}
+/* RPE-vraag premium */
+#s-guided .g2-ask-q{font-size:20px;font-weight:800;color:var(--dark);text-align:center;margin:10px 0 16px}
+#s-guided .g2-feels{display:flex;flex-direction:column;gap:9px}
+#s-guided .gw-feel{display:flex;align-items:center;gap:12px;background:var(--card);border:1.5px solid var(--g2);border-radius:14px;padding:15px 16px;font-size:14.5px;font-weight:700;color:var(--dark);box-shadow:var(--shadow)}
+#s-guided .gw-feel:hover{border-color:var(--accent)}
+#s-guided .gw-feel-o{font-size:17px;color:var(--accent)}
+/* Coachadvies / intro / eind — premium kaarten */
+#s-guided .g2-advice{background:var(--card);border-radius:18px;box-shadow:var(--shadow);border-left:4px solid var(--accent);padding:16px;margin-bottom:4px}
+#s-guided .g2-advice .gw-advice-h{font-size:10.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+#s-guided .g2-advice p{font-size:14px;color:var(--dark);line-height:1.45;font-weight:500}
+#s-guided .g2-advice+.g2-primary,#s-guided .g2-intro .g2-primary,#s-guided .g2-done .g2-primary{width:100%;background:var(--accent);color:#fff;border:0;border-radius:15px;padding:16px;font-size:15px;font-weight:800;margin-top:14px;box-shadow:0 10px 22px rgba(0,196,143,.32)}
+/* ══════════════════════════════════════════════════════════════════
+   v4.14.0 — Sprint 4.8 Fase A: Builder posters (P1/P2) + Begeleide-Training-hero (P4).
+   Presentatie-only; WB/GW-engine ongemoeid. Echte MoveKit-posters.
+   ══════════════════════════════════════════════════════════════════ */
+/* P1/P2 — Workout Builder poster-kaarten */
+#wb-scroll .wb4-ex5 .wb4-ex-hd{align-items:flex-start}
+#wb-scroll .wb4-poster{width:58px;height:58px;border-radius:13px;overflow:hidden;flex:0 0 auto;position:relative}
+#wb-scroll .wb4-poster.has{background:var(--g1)}
+#wb-scroll .wb4-poster img{width:100%;height:100%;object-fit:cover;display:block}
+#wb-scroll .wb4-poster:not(.has){background:#0E3B4A;display:flex;align-items:center;justify-content:center}
+#wb-scroll .wb4-poster:not(.has) svg{width:26px;height:26px;stroke:var(--accent);fill:none;stroke-width:2}
+#wb-scroll .wb4-ai{display:flex;gap:5px;align-items:flex-start;margin-top:6px;font-size:10.5px;color:var(--accent);font-weight:600;line-height:1.3}
+#wb-scroll .wb4-ai svg{width:12px;height:12px;fill:var(--accent);flex:0 0 auto;margin-top:1px}
+#wb-scroll .wb4-mini{display:flex;gap:11px;align-items:flex-start;margin-bottom:10px}
+#wb-scroll .wb4-mini-th{width:56px;height:56px;border-radius:12px;overflow:hidden;flex:0 0 auto;background:#0E3B4A;display:flex;align-items:center;justify-content:center}
+#wb-scroll .wb4-mini-th img{width:100%;height:100%;object-fit:cover}
+#wb-scroll .wb4-mini-th svg{width:24px;height:24px;stroke:var(--accent);fill:none;stroke-width:2}
+#wb-scroll .wb4-mini .wb4-why{margin:0;flex:1}
+/* P4 — Begeleide Training intro-hero */
+#s-guided .gw-introhero{background:#0E3B4A;border-radius:22px;padding:0 0 20px;overflow:hidden;box-shadow:0 16px 34px rgba(0,0,0,.30);text-align:left;max-width:none;margin:0}
+#s-guided .gw-ih-poster{height:150px;background:linear-gradient(135deg,#0e3b4a,#0a2028);display:flex;align-items:center;justify-content:center;overflow:hidden}
+#s-guided .gw-ih-poster.has{background:var(--g1)}
+#s-guided .gw-ih-poster img{width:100%;height:100%;object-fit:cover;display:block}
+#s-guided .gw-ih-poster:not(.has) svg{width:56px;height:56px;stroke:var(--accent);fill:none;stroke-width:2;opacity:.85}
+#s-guided .gw-ih-eye{font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--accent);padding:16px 18px 0}
+#s-guided .gw-ih-h{font-size:27px;font-weight:800;color:#fff;padding:0 18px;margin-top:4px;letter-spacing:-.5px}
+#s-guided .gw-ih-say{display:flex;gap:10px;align-items:flex-start;margin:13px 18px 0;background:rgba(255,255,255,.06);border-radius:13px;padding:12px}
+#s-guided .gw-ih-say-i{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+#s-guided .gw-ih-say-i svg{width:15px;height:15px;fill:#fff}
+#s-guided .gw-ih-say p{font-size:12px;color:rgba(230,240,243,.9);line-height:1.4;font-weight:500}
+#s-guided .gw-ih-meta{display:flex;gap:8px;margin:14px 18px 0}
+#s-guided .gw-ih-meta .m{flex:1;background:rgba(255,255,255,.06);border-radius:12px;padding:11px 8px;text-align:center}
+#s-guided .gw-ih-meta .mi{display:block;margin-bottom:4px}#s-guided .gw-ih-meta .mi svg{width:16px;height:16px;stroke:var(--accent);fill:none;stroke-width:2}
+#s-guided .gw-ih-meta .mv{font-size:16px;font-weight:800;color:#fff;display:block}
+#s-guided .gw-ih-meta .mk{font-size:9px;color:rgba(230,240,243,.6);font-weight:700;text-transform:uppercase;margin-top:2px;display:block}
+#s-guided .gw-ih-first{margin:15px 18px 0;font-size:12.5px;color:rgba(230,240,243,.7);line-height:1.5}#s-guided .gw-ih-first b{color:#fff;font-size:14px}
+#s-guided .gw-introhero .g2-primary{width:calc(100% - 36px);margin:15px 18px 0}
+#s-guided .gw-introhero .g2-quit{color:rgba(230,240,243,.6);margin-top:10px}
 
 </style>
 </head>
@@ -3793,7 +3875,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.12.0';
+const APP_VER = 'v4.14.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -13741,7 +13823,8 @@ var WBUI=(function(){
     dumbbell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6M7 6v12M17 6v12M20 9v6M7 12h10"/></svg>',
     settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a7 7 0 0 0-1.7-1L16 2h-4l-.8 2.5a7 7 0 0 0-1.7 1l-2.4-1-2 3.5L5 11a7 7 0 0 0 0 2l-2 1.5 2 3.5 2.4-1a7 7 0 0 0 1.7 1L12 22h4l.8-2.5a7 7 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5a7 7 0 0 0 .1-1z"/></svg>',
     save:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h7V3M8 21v-7h8v7"/></svg>',
-    refresh:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/></svg>'
+    refresh:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/></svg>',
+    spark:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>'
   };
   function heroView(){
     var plan=WB.st.plan;if(!plan||!plan.items.length)return '';
@@ -13781,19 +13864,30 @@ var WBUI=(function(){
       conditioning:'Conditioning-afsluiter.',cooldown:'Cooldown om herstel te bevorderen.'};
     return map[it.pick]||'';
   }
+  var _cap=function(x){return (window._libCap?_libCap(x):String(x||''));};
   function exRow(it,idx){
     var e=ex(it.id),sel=s();if(!e)return '';
     var gc=WB.goalCfg(sel.goal);var open=!!_open[idx];
-    var mus=(e.identity.primary||[]).slice(0,2).map(function(m){return '<span class="tag">'+esc(m)+'</span>';}).join('');
-    var h='<div class="wb4-ex'+(open?' open':'')+'">'+
+    // v4.14.0 (Sprint 4.8 P1) — poster i.p.v. icoon + rijkere tags + AI-opmerking.
+    var poster=(A()&&A().poster)?A().poster(it.id):null;
+    var thumb=poster?'<img src="'+poster+'" alt="" loading="lazy">':ICO.dumbbell;
+    var mn=(e.identity.primary||[])[0]||'', eq=(e.identity.equipment||[])[0]||'', ty=e.identity.type||'';
+    var tags=[mn,eq?_cap(eq):'',ty?_cap(ty):''].filter(Boolean).map(function(t){return '<span class="tag">'+esc(t)+'</span>';}).join('');
+    var aiShort='Sterke keuze voor '+gc.label.toLowerCase()+' ('+Math.round(WB.goalScore(e,sel.goal))+'/100)';
+    var h='<div class="wb4-ex wb4-ex5'+(open?' open':'')+'">'+
       '<button class="wb4-ex-hd" onclick="WBUI.toggleEx('+idx+')">'+
-        '<span class="wb4-ex-th">'+ICO.dumbbell+'</span>'+
-        '<span class="wb4-ex-b"><span class="wb4-ex-slot">'+esc(it.label)+'</span><span class="wb4-ex-nm">'+esc(e.identity.name)+'</span>'+(mus?'<span class="wb4-ex-tags">'+mus+'</span>':'')+'</span>'+
+        '<span class="wb4-ex-th wb4-poster'+(poster?' has':'')+'">'+thumb+'</span>'+
+        '<span class="wb4-ex-b"><span class="wb4-ex-slot">'+esc(it.label)+'</span><span class="wb4-ex-nm">'+esc(e.identity.name)+'</span>'+
+          (tags?'<span class="wb4-ex-tags">'+tags+'</span>':'')+
+          '<span class="wb4-ai">'+ICO.spark+'<span>'+esc(aiShort)+'</span></span>'+
+        '</span>'+
         '<span class="wb4-ex-sr"><b>'+it.sets+'×'+esc(gc.reps)+'</b><span class="wb4-ex-ar">'+(open?'▲':'▾')+'</span></span>'+
       '</button>';
     if(open){
+      var mposter=poster?'<img src="'+poster+'" alt="">':ICO.dumbbell;
       h+='<div class="wb4-exb">'+
-         '<div class="wb4-why"><b>Waarom:</b> '+esc(whyChosen(e,it,sel))+' '+esc(whyHere(it))+'</div>'+
+         '<div class="wb4-mini"><span class="wb4-mini-th'+(poster?' has':'')+'">'+mposter+'</span>'+
+         '<div class="wb4-why"><b>Waarom:</b> '+esc(whyChosen(e,it,sel))+' '+esc(whyHere(it))+'</div></div>'+
          '<div class="wb4-badges"><span class="wb4-bb">Fatigue: '+esc(FAT_NL[e.intelligence.fatigue]||e.intelligence.fatigue)+'</span>'+
            '<span class="wb4-bb">Herstel: '+esc(REC_NL[e.intelligence.recovery]||e.intelligence.recovery)+'</span></div>'+
          '<div class="wb4-acts">'+
@@ -14181,8 +14275,8 @@ var GWUI=(function(){
         '<div class="g2-num"><span class="g2-num-v">'+(it.weight!=null?it.weight:'—')+'</span><span class="g2-num-l">kg'+
           '<button class="g2-wt" onclick="GWUI.wt(-2.5)" aria-label="Minder gewicht">−</button><button class="g2-wt" onclick="GWUI.wt(2.5)" aria-label="Meer gewicht">+</button></span></div>'+
       '</div>';
-    h+='</div>';
     h+='<button class="g2-primary" onclick="GWUI.setDone()">Set voltooid</button>';
+    h+='</div>';
     h+='<button class="g2-more" onclick="GWUI.detail()" aria-expanded="'+(_detail?'true':'false')+'">'+(_detail?'Verberg details':'Video, coach &amp; meer')+'</button>';
     if(_detail)h+=detailPanel(it,e);
     h+='<button class="g2-quit" onclick="GWUI.quit()">Pauzeren</button>';
@@ -14225,13 +14319,35 @@ var GWUI=(function(){
     var a=GW.active();var p=GW.progress();var sel=a.sel;
     var gc=(window.WB&&WB.goalCfg)?WB.goalCfg(sel.goal):{label:sel.goal};
     var first=a.items[0];var fe=ex(first.id);
-    return '<div class="g2-intro">'+
-      '<div class="g2-intro-k">Begeleide training</div>'+
-      '<h1 class="g2-intro-h">'+esc(gc.label)+'</h1>'+
-      '<div class="g2-intro-s">'+p.exTotal+' oefeningen · ik loods je stap voor stap</div>'+
-      '<div class="g2-intro-first">Eerste oefening<br><b>'+esc(fe?fe.identity.name:'')+'</b></div>'+
-      '<button class="g2-primary" onclick="GWUI.begin()">Start warming-up</button>'+
-      '<button class="g2-quit" onclick="GWUI.quit()">Annuleren</button>'+
+    // v4.14.0 (Sprint 4.8 P4) — echte hero: poster, coach, doel, duur, oefeningen, focus.
+    var ICO={
+      spark:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>',
+      clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+      list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
+      target:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>',
+      dumbbell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6M7 6v12M17 6v12M20 9v6M7 12h10"/></svg>'
+    };
+    var poster=(A()&&A().poster&&first)?A().poster(first.id):null;
+    var mset={};(a.items||[]).forEach(function(it){var e2=ex(it.id);if(e2)(e2.identity.primary||[]).forEach(function(m){if(m)mset[m]=1;});});
+    var mcount=Object.keys(mset).length;
+    var stt=(window.WB&&WB.st&&WB.st.plan&&WB.stats)?WB.stats(WB.st.plan,sel):null;
+    var dur=stt?stt.time:null;
+    var say=(window.homeCoachText)||('Ik loods je stap voor stap door '+p.exTotal+' oefeningen — rustig en met scherpe techniek.');
+    var media=poster?'<div class="gw-ih-poster has"><img src="'+poster+'" alt=""></div>':'<div class="gw-ih-poster">'+ICO.dumbbell+'</div>';
+    return '<div class="g2-intro gw-introhero">'+media+
+      '<div class="gw-ih-body">'+
+        '<div class="gw-ih-eye">Begeleide training</div>'+
+        '<h1 class="gw-ih-h">'+esc(gc.label)+'</h1>'+
+        '<div class="gw-ih-say"><span class="gw-ih-say-i">'+ICO.spark+'</span><p>'+esc(say)+'</p></div>'+
+        '<div class="gw-ih-meta">'+
+          (dur!=null?'<div class="m"><span class="mi">'+ICO.clock+'</span><span class="mv">~'+dur+'</span><span class="mk">min</span></div>':'')+
+          '<div class="m"><span class="mi">'+ICO.list+'</span><span class="mv">'+p.exTotal+'</span><span class="mk">oefeningen</span></div>'+
+          '<div class="m"><span class="mi">'+ICO.target+'</span><span class="mv">'+mcount+'</span><span class="mk">spiergroepen</span></div>'+
+        '</div>'+
+        '<div class="gw-ih-first">Eerste oefening<br><b>'+esc(fe?fe.identity.name:'')+'</b></div>'+
+        '<button class="g2-primary" onclick="GWUI.begin()">Start warming-up</button>'+
+        '<button class="g2-quit" onclick="GWUI.quit()">Annuleren</button>'+
+      '</div>'+
     '</div>';
   }
 

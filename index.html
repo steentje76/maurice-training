@@ -1902,6 +1902,66 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .v49-ev .st.plan{background:var(--g1);color:var(--g4)}
 .v49-ev .st.deload{background:rgba(225,161,0,.16);color:#B08900}
 .v49-empty{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:16px;text-align:center;color:var(--g4);font-size:12.5px;font-weight:600}
+/* ══════════════════════════════════════════════════════════════════
+   v4.10.0 — Sprint 4.7 Fase 4: Workout Builder (premium presentatie).
+   Engine (WB.generate/quality/stats) ongemoeid; alleen WBUI-render + CSS.
+   ══════════════════════════════════════════════════════════════════ */
+.wb4-hero{background:#0E3B4A;border-radius:22px;padding:18px;margin-bottom:12px;box-shadow:0 14px 30px rgba(0,0,0,.28)}
+.wb4-hero .eye{font-size:10.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:rgba(230,240,243,.55)}
+.wb4-hname{font-size:22px;font-weight:800;color:#fff;margin-top:6px;letter-spacing:-.4px}
+.wb4-q{display:flex;align-items:center;gap:10px;margin-top:10px}
+.wb4-stars{color:#F0B429;font-size:16px;letter-spacing:2px}
+.wb4-score{color:#fff;font-size:15px;font-weight:800}.wb4-score small{color:rgba(230,240,243,.55);font-weight:700;font-size:11px}
+.wb4-meta{display:flex;gap:8px;margin-top:13px}
+.wb4-meta .m{flex:1;background:rgba(255,255,255,.06);border-radius:12px;padding:9px 8px;text-align:center}
+.wb4-meta .mv{font-size:16px;font-weight:800;color:#fff}
+.wb4-meta .mk{font-size:9px;color:rgba(230,240,243,.6);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+.wb4-cta{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:14px;padding:15px;font-weight:800;font-size:15px;background:var(--accent);color:#fff;margin-top:13px;cursor:pointer;box-shadow:0 10px 22px rgba(0,184,148,.32)}
+.wb4-cta svg{width:16px;height:16px;fill:#fff;stroke:none}
+.wb4-set{display:flex;align-items:center;gap:11px;width:100%;background:var(--card);border:0;border-radius:14px;box-shadow:var(--shadow);padding:12px 14px;margin-bottom:12px;text-align:left;cursor:pointer}
+.wb4-set .ic{width:34px;height:34px;border-radius:10px;background:var(--v43-mint);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.wb4-set .ic svg{width:18px;height:18px;stroke:var(--accent);fill:none;stroke-width:2}
+.wb4-set .b{flex:1;min-width:0}
+.wb4-set .k{display:block;font-size:9.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--g4)}
+.wb4-set .v{display:block;font-size:12.5px;font-weight:700;color:var(--dark);margin-top:2px}
+.wb4-set .ar{color:var(--g4);font-size:12px;flex:0 0 auto}
+/* wizard-chips (premium touch) */
+.wb4-wiz{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:6px 14px 14px;margin:-4px 0 12px}
+.wb4-wiz .wb2-step{padding-top:12px}
+.wb4-wiz .wb2-step-h{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--g4);margin-bottom:8px}
+.wb4-wiz .wb2-step-h small{text-transform:none;letter-spacing:0;color:var(--g3);font-weight:600;margin-left:5px}
+.wb4-wiz .wb-chips{display:flex;flex-wrap:wrap;gap:7px}
+.wb4-wiz .wb-chip{font-size:12px;font-weight:700;padding:8px 12px;border-radius:10px;background:var(--g1);color:var(--dark);border:0;cursor:pointer}
+.wb4-wiz .wb-chip.on{background:var(--accent);color:#fff}
+.wb4-exlbl{font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--g4);margin:2px 2px 9px}
+.wb4-ex{background:var(--card);border-radius:14px;box-shadow:var(--shadow);margin-bottom:8px;overflow:hidden}
+.wb4-ex.open{outline:2px solid var(--accent)}
+.wb4-ex-hd{display:flex;align-items:center;gap:11px;padding:12px 13px;cursor:pointer;width:100%;background:0;border:0;text-align:left}
+.wb4-ex-th{width:42px;height:42px;border-radius:11px;background:#0E3B4A;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.wb4-ex-th svg{width:20px;height:20px;stroke:var(--accent);fill:none;stroke-width:2}
+.wb4-ex-b{flex:1;min-width:0}
+.wb4-ex-slot{display:block;font-size:9px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
+.wb4-ex-nm{display:block;font-size:14px;font-weight:800;color:var(--dark);margin-top:1px;line-height:1.15}
+.wb4-ex-tags{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.wb4-ex-tags .tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;background:var(--v43-mint);color:var(--accent)}
+.wb4-ex-sr{display:flex;align-items:center;gap:8px;flex:0 0 auto;color:var(--dark);font-weight:700;font-size:13.5px}
+.wb4-ex-ar{color:var(--g4);font-size:12px}
+.wb4-exb{padding:0 13px 13px;border-top:1px dashed var(--g2);margin-top:2px;padding-top:11px}
+.wb4-why{font-size:12px;color:var(--g4);line-height:1.45}.wb4-why b{color:var(--dark)}
+.wb4-badges{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+.wb4-bb{font-size:10px;font-weight:700;padding:4px 9px;border-radius:7px;background:var(--g1);color:var(--g4)}
+.wb4-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.wb4-act{font-size:11px;font-weight:700;padding:7px 10px;border-radius:9px;background:var(--g1);color:var(--dark);border:0;cursor:pointer}
+.wb4-act.del{background:rgba(229,83,61,.12);color:#E5533D}
+.wb4-second{display:flex;gap:8px;margin-top:4px;margin-bottom:4px}
+.wb4-second button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;background:var(--card);box-shadow:var(--shadow);border:0;border-radius:13px;padding:13px;font-weight:800;font-size:13px;color:var(--dark);cursor:pointer}
+.wb4-second button svg{width:15px;height:15px;stroke:var(--accent);fill:none;stroke-width:2}
+.wb4-sv{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:13px;box-shadow:var(--shadow);padding:11px 13px;margin-bottom:8px}
+.wb4-sv-b{flex:1;min-width:0;background:0;border:0;text-align:left;cursor:pointer}
+.wb4-sv-n{font-size:13.5px;font-weight:800;color:var(--dark)}
+.wb4-sv-m{font-size:11px;color:var(--g4);font-weight:600;margin-top:1px}
+.wb4-sv-a{display:flex;gap:4px;flex:0 0 auto}.wb4-sv-a button{width:30px;height:30px;border-radius:8px;background:var(--g1);border:0;color:var(--g4);font-size:13px;cursor:pointer}
+.wb4-empty{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:22px 16px;text-align:center;color:var(--g4);font-size:13px;font-weight:600}
 
 </style>
 </head>
@@ -3661,7 +3721,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.9.0';
+const APP_VER = 'v4.10.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -13594,14 +13654,37 @@ var WBUI=(function(){
     h+='</div></div></div>';
     return h;
   }
+  // v4.10.0 (Fase 4) — premium presentatie. Iconen lokaal; engine-API ongewijzigd.
+  var ICO={
+    play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg>',
+    dumbbell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6M7 6v12M17 6v12M20 9v6M7 12h10"/></svg>',
+    settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a7 7 0 0 0-1.7-1L16 2h-4l-.8 2.5a7 7 0 0 0-1.7 1l-2.4-1-2 3.5L5 11a7 7 0 0 0 0 2l-2 1.5 2 3.5 2.4-1a7 7 0 0 0 1.7 1L12 22h4l.8-2.5a7 7 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5a7 7 0 0 0 .1-1z"/></svg>',
+    save:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h7V3M8 21v-7h8v7"/></svg>',
+    refresh:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/></svg>'
+  };
+  function heroView(){
+    var plan=WB.st.plan;if(!plan||!plan.items.length)return '';
+    var q=WB.quality(plan,s()),t=WB.stats(plan,s());
+    var st5='';for(var i=0;i<5;i++)st5+=(i<q.stars?'★':'☆');
+    return '<div class="wb4-hero"><div class="eye">Workout Builder</div>'+
+      '<div class="wb4-hname">Nieuwe training</div>'+
+      '<div class="wb4-q"><span class="wb4-stars">'+st5+'</span><span class="wb4-score">'+q.score+'<small>/100</small></span></div>'+
+      '<div class="wb4-meta">'+
+        '<div class="m"><div class="mv">'+t.ex+'</div><div class="mk">Oefeningen</div></div>'+
+        '<div class="m"><div class="mv">~'+t.time+'</div><div class="mk">Minuten</div></div>'+
+        '<div class="m"><div class="mv">'+t.sets+'</div><div class="mk">Sets</div></div>'+
+      '</div>'+
+      '<button class="wb4-cta" onclick="GWUI.launch()">'+ICO.play+' Start begeleide training</button></div>';
+  }
   function setupBar(){
     var sel=s(),gc=WB.goalCfg(sel.goal),fc=WB.formCfg(sel.form);
     var lvl=(WB.LEVELS.filter(function(l){return l.k===sel.level;})[0]||{}).l||sel.level;
     var line=gc.label+' · '+fc.label+' · '+sel.time+' min · '+lvl;
-    return '<button class="wb2-setup" onclick="WBUI.toggleSetup()" aria-expanded="'+(_setup?'true':'false')+'">'+
-      '<span class="wb2-setup-k">Instellingen</span><span class="wb2-setup-v">'+esc(line)+'</span>'+
-      '<span class="wb2-setup-ar">'+(_setup?'▲':'▾')+'</span></button>'+
-      (_setup?wizard():'');
+    return '<button class="wb4-set" onclick="WBUI.toggleSetup()" aria-expanded="'+(_setup?'true':'false')+'">'+
+      '<span class="ic">'+ICO.settings+'</span>'+
+      '<span class="b"><span class="k">Instellingen</span><span class="v">'+esc(line)+'</span></span>'+
+      '<span class="ar">'+(_setup?'▲':'▾')+'</span></button>'+
+      (_setup?('<div class="wb4-wiz">'+wizard()+'</div>'):'');
   }
 
   var FAT_NL={very_low:'zeer laag',low:'laag',moderate:'gemiddeld',high:'hoog',very_high:'zeer hoog'};
@@ -13620,45 +13703,42 @@ var WBUI=(function(){
   function exRow(it,idx){
     var e=ex(it.id),sel=s();if(!e)return '';
     var gc=WB.goalCfg(sel.goal);var open=!!_open[idx];
-    var h='<div class="wb2-row'+(open?' open':'')+'">';
-    h+='<button class="wb2-row-head" onclick="WBUI.toggleEx('+idx+')">'+
-        '<span class="wb2-row-tx"><span class="wb2-row-n">'+esc(e.identity.name)+'</span>'+
-          '<span class="wb2-row-m">'+esc(it.label)+' · '+it.sets+'×'+esc(gc.reps)+'</span></span>'+
-        '<span class="wb2-row-ar">'+(open?'▲':'▾')+'</span></button>';
+    var mus=(e.identity.primary||[]).slice(0,2).map(function(m){return '<span class="tag">'+esc(m)+'</span>';}).join('');
+    var h='<div class="wb4-ex'+(open?' open':'')+'">'+
+      '<button class="wb4-ex-hd" onclick="WBUI.toggleEx('+idx+')">'+
+        '<span class="wb4-ex-th">'+ICO.dumbbell+'</span>'+
+        '<span class="wb4-ex-b"><span class="wb4-ex-slot">'+esc(it.label)+'</span><span class="wb4-ex-nm">'+esc(e.identity.name)+'</span>'+(mus?'<span class="wb4-ex-tags">'+mus+'</span>':'')+'</span>'+
+        '<span class="wb4-ex-sr"><b>'+it.sets+'×'+esc(gc.reps)+'</b><span class="wb4-ex-ar">'+(open?'▲':'▾')+'</span></span>'+
+      '</button>';
     if(open){
-      h+='<div class="wb2-row-body">'+
-         '<div class="wb2-why"><b>Waarom:</b> '+esc(whyChosen(e,it,sel))+' '+esc(whyHere(it))+'</div>'+
-         '<div class="wb2-badges"><span class="wb-b fat">Fatigue: '+esc(FAT_NL[e.intelligence.fatigue]||e.intelligence.fatigue)+'</span>'+
-           '<span class="wb-b rec">Herstel: '+esc(REC_NL[e.intelligence.recovery]||e.intelligence.recovery)+'</span></div>'+
-         '<div class="wb2-acts">'+
-           '<button class="wb2-act" onclick="WBUI.alt('+idx+')">⟳ Alternatief</button>'+
-           '<button class="wb2-act" onclick="WBUI.move('+idx+',-1)">↑</button>'+
-           '<button class="wb2-act" onclick="WBUI.move('+idx+',1)">↓</button>'+
-           '<button class="wb2-act" onclick="WBUI.open(\''+it.id+'\')">Video · coach</button>'+
-           '<button class="wb2-act del" onclick="WBUI.remove('+idx+')">✕</button>'+
+      h+='<div class="wb4-exb">'+
+         '<div class="wb4-why"><b>Waarom:</b> '+esc(whyChosen(e,it,sel))+' '+esc(whyHere(it))+'</div>'+
+         '<div class="wb4-badges"><span class="wb4-bb">Fatigue: '+esc(FAT_NL[e.intelligence.fatigue]||e.intelligence.fatigue)+'</span>'+
+           '<span class="wb4-bb">Herstel: '+esc(REC_NL[e.intelligence.recovery]||e.intelligence.recovery)+'</span></div>'+
+         '<div class="wb4-acts">'+
+           '<button class="wb4-act" onclick="WBUI.alt('+idx+')">⟳ Alternatief</button>'+
+           '<button class="wb4-act" onclick="WBUI.move('+idx+',-1)">↑</button>'+
+           '<button class="wb4-act" onclick="WBUI.move('+idx+',1)">↓</button>'+
+           '<button class="wb4-act" onclick="WBUI.open(\''+it.id+'\')">Video · coach</button>'+
+           '<button class="wb4-act del" onclick="WBUI.remove('+idx+')">✕</button>'+
          '</div></div>';
     }
     h+='</div>';
     return h;
   }
   function planView(){
-    var plan=WB.st.plan;if(!plan||!plan.items.length)return '<div class="wb2-empty">Kies je voorkeuren — de training bouwt zichzelf op.</div>';
-    var q=WB.quality(plan,s());var t=WB.stats(plan,s());
-    var st5='';for(var i=0;i<5;i++)st5+=(i<q.stars?'★':'☆');
-    var h='<div class="wb2-summary"><span class="wb2-sum-main">'+t.ex+' oefeningen · ~'+t.time+' min</span><span class="wb2-stars" title="Trainingskwaliteit '+q.score+'/100">'+st5+'</span></div>';
-    h+='<div class="wb2-plan">';
+    var plan=WB.st.plan;if(!plan||!plan.items.length)return '<div class="wb4-empty">Kies je voorkeuren — de training bouwt zichzelf op.</div>';
+    var h='<div class="wb4-exlbl">Oefeningen</div>';
     plan.items.forEach(function(it,i){h+=exRow(it,i);});
-    h+='</div>';
-    h+='<button class="wb2-primary" onclick="GWUI.launch()">Start begeleide training</button>';
-    h+='<div class="wb2-second"><button onclick="WBUI.save()">Opslaan</button><button onclick="WBUI.regen()">Opnieuw</button></div>';
+    h+='<div class="wb4-second"><button onclick="WBUI.save()">'+ICO.save+' Opslaan</button><button onclick="WBUI.regen()">'+ICO.refresh+' Opnieuw</button></div>';
     return h;
   }
   function savedView(){
     var arr=WB.savedList();if(!arr.length)return '';
-    var h='<div class="wb2-saved-h">Opgeslagen</div>';
+    var h='<div class="wb4-exlbl" style="margin-top:16px">Opgeslagen</div>';
     arr.forEach(function(w){
-      h+='<div class="wb2-saved"><button class="wb2-saved-b" onclick="WBUI.resume(\''+w.id+'\')"><span class="wb2-saved-n">'+(w.fav?'★ ':'')+esc(w.name)+'</span><span class="wb2-saved-m">'+w.plan.items.length+' oefeningen</span></button>'+
-        '<div class="wb2-saved-a"><button onclick="WBUI.fav(\''+w.id+'\')" aria-label="Favoriet">'+(w.fav?'★':'☆')+'</button>'+
+      h+='<div class="wb4-sv"><button class="wb4-sv-b" onclick="WBUI.resume(\''+w.id+'\')"><div class="wb4-sv-n">'+(w.fav?'★ ':'')+esc(w.name)+'</div><div class="wb4-sv-m">'+w.plan.items.length+' oefeningen</div></button>'+
+        '<div class="wb4-sv-a"><button onclick="WBUI.fav(\''+w.id+'\')" aria-label="Favoriet">'+(w.fav?'★':'☆')+'</button>'+
         '<button onclick="WBUI.dupeSaved(\''+w.id+'\')" aria-label="Dupliceren">⧉</button>'+
         '<button onclick="WBUI.del(\''+w.id+'\')" aria-label="Verwijderen">✕</button></div></div>';
     });
@@ -13668,7 +13748,7 @@ var WBUI=(function(){
   function render(){
     var el=document.getElementById('wb-scroll');if(!el)return;
     if(WB.st.dirty||!WB.st.plan)WB.generate(s());
-    el.innerHTML=setupBar()+planView()+savedView();
+    el.innerHTML=heroView()+setupBar()+planView()+savedView();
   }
   function rebuild(){WB.st.dirty=true;_open={};render();}
 

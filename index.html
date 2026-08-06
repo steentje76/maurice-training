@@ -1764,6 +1764,21 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #home-hero .v43-hero:hover{box-shadow:0 16px 34px rgba(11,29,42,.16) !important}
 #home-hero .v43-hero:active,#home-plan .v43-plan:active,#home-coach-vandaag .v43-coach:active,#home-quick .quick-act:active{transform:scale(.994)}
 @media(prefers-reduced-motion:reduce){#home-hero .v43-hero,#home-plan .v43-plan,#home-coach-vandaag .v43-coach,#home-quick .quick-act,.v43-why-chev{transition:none}}
+/* ══════════════════════════════════════════════════════════════════
+   v4.7.0 — Sprint 4.7 Training Experience (Fase 1): beginpagina/hub.
+   Training-tab = startpunt om te bouwen, verkennen en plannen.
+   Additief; hergebruikt bestaande tokens + #v43-train-plan + .v43-tmt.
+   ══════════════════════════════════════════════════════════════════ */
+.v47-big{display:flex;flex-direction:column;gap:9px;margin-bottom:4px}
+.v47-bigc{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:15px;border:0;width:100%;text-align:left;cursor:pointer;transition:box-shadow .22s ease,transform .1s ease}
+.v47-bigc:hover{box-shadow:0 14px 30px rgba(11,29,42,.14)}
+.v47-bigc:active{transform:scale(.994)}
+.v47-bigc .ic{width:46px;height:46px;border-radius:12px;background:var(--v43-mint);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.v47-bigc .ic svg{width:22px;height:22px;stroke:var(--accent);fill:none;stroke-width:2}
+.v47-bigc .b{flex:1;min-width:0}
+.v47-bigc .b .t{display:block;font-size:15.5px;font-weight:800;color:var(--dark);line-height:1.15}
+.v47-bigc .b .s{display:block;font-size:11.5px;color:var(--g4);margin-top:3px;font-weight:600;line-height:1.35}
+.v47-bigc .ar{color:var(--g3);font-size:18px;flex:0 0 auto;line-height:1}
 
 </style>
 </head>
@@ -2490,23 +2505,24 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <div class="scr" id="s-train-mgr">
   <div class="hdr">
     <div class="hdr-row">
-      <div><div class="hdr-title" role="heading" aria-level="1">Training</div><div class="hdr-sub">Kies hoe je wilt loggen</div></div>
+      <div><div class="hdr-title" role="heading" aria-level="1">Training</div><div class="hdr-sub">Bouw, verken en plan je trainingen</div></div>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
     <div class="irow" style="margin-bottom:14px"><label class="ilbl">Sport vandaag</label><select class="inp" id="sport-switcher" onchange="setActiveSport(this.value)"></select></div>
-    <div id="v43-train-plan"></div>
-    <div class="v43-lbl" style="margin-bottom:10px">Snelle acties</div>
-    <div class="v43-tqa">
-      <button class="q" onclick="go('s-builder');if(window.WBUI)WBUI.render()"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span class="t">Nieuwe training</span></button>
-      <button class="q" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h9v18H6a2 2 0 0 0-2 2z"/><path d="M15 3h4a1 1 0 0 1 1 1v17"/></svg></span><span class="t">Oefeningen</span></button>
-      <button class="q" onclick="go('s-programma')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span><span class="t">Programma's</span></button>
+    <div class="v43-lbl" style="margin-bottom:10px">Aan de slag</div>
+    <div class="v47-big">
+      <button class="v47-bigc" onclick="go('s-builder');if(window.WBUI)WBUI.render()"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span class="b"><span class="t">Nieuwe training bouwen</span><span class="s">Workout Builder — AI stelt een training samen op je herstel</span></span><span class="ar">›</span></button>
+      <button class="v47-bigc" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></span><span class="b"><span class="t">Oefeningen verkennen</span><span class="s">206 oefeningen · video’s · alternatieven</span></span><span class="ar">›</span></button>
+      <button class="v47-bigc" onclick="go('s-programma')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></span><span class="b"><span class="t">Programma samenstellen</span><span class="s">Meerdere weken plannen — week, fase, doel</span></span><span class="ar">›</span></button>
     </div>
-    <div class="v43-lbl" style="margin:20px 0 8px">Mijn trainingen</div>
+    <div id="v43-train-plan" style="margin-top:16px"></div>
+    <div class="v43-lbl" style="margin:20px 0 8px">Meer</div>
     <div class="v43-tmt">
       <button class="row" onclick="go('s-train-schema')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></span><span class="b"><span class="t">Schema</span><span class="s">Je vaste trainingen met progressieregels</span></span><span class="ar">›</span></button>
       <button class="row" onclick="go('s-train-workouts')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span><span class="b"><span class="t">Workouts</span><span class="s">Eigen samengestelde trainingen</span></span><span class="ar">›</span></button>
       <button class="row" onclick="openLosOefening()"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 9v6M7 6v12M17 6v12M20 9v6M7 12h10"/></svg></span><span class="b"><span class="t">Losse oefening</span><span class="s">Eén oefening loggen, zonder training</span></span><span class="ar">›</span></button>
+      <button class="row" onclick="go('s-hist')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg></span><span class="b"><span class="t">Historie</span><span class="s">Je trainingsgeschiedenis</span></span><span class="ar">›</span></button>
     </div>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
@@ -3485,7 +3501,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.6.0';
+const APP_VER = 'v4.7.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';

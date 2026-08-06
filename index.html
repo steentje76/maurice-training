@@ -1818,6 +1818,48 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .v47d-ex-meta{font-size:12px;color:var(--g4);font-weight:700;text-align:right;flex:0 0 auto}
 .v47d-ex-meta b{color:var(--dark);font-size:13.5px}
 .v47d-empty{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:16px;text-align:center;color:var(--g4);font-size:12.5px;font-weight:600;margin-bottom:12px}
+/* ══════════════════════════════════════════════════════════════════
+   v4.8.0 — Sprint 4.7 Fase 2: Programma (premium herontwerp).
+   Uitsluitend echte velden (programs/program_blocks + computeProgramProgress).
+   Additief; alle bestaande functies (blok-detail, her-genereer, delete) behouden.
+   ══════════════════════════════════════════════════════════════════ */
+.v48-phero{background:#0E3B4A;border-radius:22px;padding:18px;margin-bottom:14px;box-shadow:0 14px 30px rgba(0,0,0,.28)}
+.v48-phero .eye{font-size:10.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:rgba(230,240,243,.55)}
+.v48-ptop{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.v48-pname{font-size:21px;font-weight:800;color:#fff;line-height:1.08;margin-top:6px;letter-spacing:-.3px}
+.v48-pdel{background:none;border:0;color:rgba(230,240,243,.5);font-size:15px;cursor:pointer;padding:2px 2px;line-height:1;flex:0 0 auto}
+.v48-pchip{display:inline-flex;align-items:center;gap:6px;margin-top:9px;font-size:11px;font-weight:700;color:#fff;background:rgba(255,255,255,.12);border-radius:8px;padding:4px 10px}
+.v48-pchip svg{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2;flex:0 0 auto}
+.v48-pstats{display:flex;gap:8px;margin-top:13px}
+.v48-pstat{flex:1;background:rgba(255,255,255,.06);border-radius:12px;padding:10px 8px;text-align:center}
+.v48-pstat .v{font-size:16px;font-weight:800;color:#fff;line-height:1}
+.v48-pstat .k{font-size:9px;color:rgba(230,240,243,.6);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
+.v48-pbarw{margin-top:13px}
+.v48-pbarl{display:flex;justify-content:space-between;font-size:10.5px;font-weight:700;color:rgba(230,240,243,.8);margin-bottom:5px}
+.v48-pbar{height:7px;border-radius:5px;background:rgba(255,255,255,.14);overflow:hidden}
+.v48-pbar>span{display:block;height:100%;background:var(--accent);border-radius:5px}
+.v48-wk{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:12px 13px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;width:100%;text-align:left;border:0;transition:box-shadow .22s ease,transform .1s ease}
+.v48-wk:active{transform:scale(.994)}
+.v48-wk.next{outline:2px solid var(--accent)}
+.v48-wk-d{width:40px;height:40px;border-radius:11px;background:var(--v43-mint);color:var(--accent);display:flex;flex-direction:column;align-items:center;justify-content:center;flex:0 0 auto;line-height:1}
+.v48-wk-d small{font-size:8px;font-weight:800;letter-spacing:.5px}
+.v48-wk-d b{font-size:15px;font-weight:800}
+.v48-wk.deload .v48-wk-d{background:rgba(200,168,75,.18);color:#B08900}
+.v48-wk-b{flex:1;min-width:0}
+.v48-wk-nm{font-size:14px;font-weight:800;color:var(--dark);line-height:1.1}
+.v48-wk-sub{font-size:11.5px;color:var(--g4);margin-top:2px}
+.v48-wk-st{font-size:10px;font-weight:800;padding:4px 9px;border-radius:8px;flex:0 0 auto;white-space:nowrap}
+.v48-wk-st.done{background:var(--v43-mint);color:var(--accent)}
+.v48-wk-st.next{background:var(--accent);color:#fff}
+.v48-wk-st.todo{background:var(--g1);color:var(--g4)}
+.v48-wk-st.deload{background:rgba(200,168,75,.18);color:#B08900}
+.v48-regen{width:100%;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:7px}
+.v48-regen svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
+.v48-pempty{text-align:center;padding:34px 16px}
+.v48-pempty .ic{width:64px;height:64px;border-radius:18px;background:var(--v43-mint);color:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.v48-pempty .ic svg{width:30px;height:30px;stroke:var(--accent);fill:none;stroke-width:2}
+.v48-pempty .t{font-size:16px;font-weight:800;color:var(--dark)}
+.v48-pempty .s{font-size:12.5px;color:var(--g4);font-weight:600;margin-top:6px;line-height:1.4;max-width:28ch;margin:6px auto 0}
 
 </style>
 </head>
@@ -3558,7 +3600,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.7.1';
+const APP_VER = 'v4.8.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6222,34 +6264,64 @@ async function computeProgramProgress(blocks){
   const avgRpeDelta=rpeDeltas.length?Math.round((rpeDeltas.reduce((a,c)=>a+c,0)/rpeDeltas.length)*10)/10:null;
   return {adherencePct:Math.round(completed.length/blocks.length*100),avgRpeDelta,doneCount:completed.length,total:blocks.length};
 }
+// Compacte NL-datum (bv. "2026-08-10" → "10 aug"); valt terug op de ruwe waarde.
+function v48FmtDatum(d){
+  try{const dt=new Date(d);if(isNaN(dt))return d;return dt.toLocaleDateString('nl-NL',{day:'numeric',month:'short'});}catch(e){return d;}
+}
+// v4.8.0 (Fase 2) — premium herontwerp Programma. Uitsluitend echte velden
+// (programs/program_blocks + computeProgramProgress). Alle bestaande functies
+// behouden: openProgramBlockDetail (week tik), deleteProgramma, heergenereer.
 async function renderProgrammaList(){
   const el=document.getElementById('programma-list');
   if(!el)return;
   const progs=await sbGet('programs','&order=start_date.desc');
-  if(!progs.length){el.innerHTML='<div style="text-align:center;color:var(--g4);font-size:13px;padding:30px 0">Nog geen programma. Tik op ＋ om er een te genereren.</div>';return;}
+  if(!progs.length){
+    el.innerHTML=`<div class="v48-pempty">
+      <div class="ic">${V43I.list}</div>
+      <div class="t">Nog geen programma</div>
+      <div class="s">Laat de AI een meerweeks programma samenstellen op basis van je doel, ervaring en beschikbaarheid.</div>
+      <button class="btn btn-r" style="margin-top:16px;max-width:260px" onclick="openProgGenModal()">+ Nieuw programma</button>
+    </div>`;
+    return;
+  }
   let h='';
   for(const p of progs){
     const blocks=await sbGet('program_blocks','&program_id=eq.'+p.id+'&order=week_nr.asc');
     const prog=await computeProgramProgress(blocks);
     const hasIncomplete=blocks.some(b=>!b.completed_at);
-    h+=`<div class="card"><div class="card-body" style="padding:14px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-        <div style="font-size:15px;font-weight:700">${escHtml(p.naam)}</div>
-        <button onclick="deleteProgramma('${p.id}')" title="Programma verwijderen" style="background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:0 2px;line-height:1">🗑</button>
+    const pct=prog.total?Math.round(prog.doneCount/prog.total*100):0;
+    const rpe=(prog.avgRpeDelta!=null)?`${prog.avgRpeDelta>0?'+':''}${prog.avgRpeDelta}`:'—';
+    // eerste niet-afgeronde blok = "volgende"
+    let nextId=null;for(const b of blocks){if(!b.completed_at){nextId=b.id;break;}}
+    const chip=(p.doel||p.start_date)?`<div class="v48-pchip">${V43I.target||''}${escHtml(p.doel||'Programma')}${p.start_date?` · gestart ${escHtml(v48FmtDatum(p.start_date))}`:''}</div>`:'';
+    const weeks=blocks.map(b=>{
+      const done=!!b.completed_at;
+      const isNext=(b.id===nextId);
+      const isDeload=/deload/i.test(b.fase_naam||'');
+      let stCls,stTxt,sub;
+      if(done){stCls='done';stTxt='✓ gedaan';sub='Voltooid';}
+      else if(isNext){stCls='next';stTxt='Volgende';sub='Klaar om te starten';}
+      else if(isDeload){stCls='deload';stTxt='Deload';sub='Herstelweek';}
+      else{stCls='todo';stTxt=b.planned_date?v48FmtDatum(b.planned_date):'Te doen';sub='Gepland';}
+      return `<button class="v48-wk${isNext?' next':''}${isDeload?' deload':''}" onclick="openProgramBlockDetail('${b.id}')">
+        <div class="v48-wk-d"><small>WK</small><b>${b.week_nr}</b></div>
+        <div class="v48-wk-b"><div class="v48-wk-nm">${escHtml(b.fase_naam||'Week '+b.week_nr)}</div><div class="v48-wk-sub">${escHtml(sub)}</div></div>
+        <span class="v48-wk-st ${stCls}">${escHtml(stTxt)}</span>
+      </button>`;
+    }).join('');
+    h+=`<div class="v48-phero">
+      <div class="v48-ptop"><div style="flex:1;min-width:0"><div class="eye">Actief programma</div><div class="v48-pname">${escHtml(p.naam)}</div>${chip}</div>
+        <button class="v48-pdel" onclick="deleteProgramma('${p.id}')" title="Programma verwijderen" aria-label="Programma verwijderen">🗑</button></div>
+      <div class="v48-pstats">
+        <div class="v48-pstat"><div class="v">${prog.doneCount}/${prog.total}</div><div class="k">Weken</div></div>
+        <div class="v48-pstat"><div class="v">${prog.adherencePct}%</div><div class="k">Adherence</div></div>
+        <div class="v48-pstat"><div class="v">${rpe}</div><div class="k">RPE vs plan</div></div>
       </div>
-      <div style="font-size:12px;color:var(--g4);margin-bottom:4px">${escHtml(p.doel||'')} · ${prog.doneCount}/${prog.total} afgerond · gestart ${p.start_date}</div>
-      <div style="font-size:11px;color:var(--g4);margin-bottom:8px">📊 ${prog.adherencePct}% adherence${prog.avgRpeDelta!=null?` · gem. RPE ${prog.avgRpeDelta>0?'+':''}${prog.avgRpeDelta} t.o.v. plan`:''}</div>
-      ${blocks.map(b=>`
-        <div class="lrow" style="align-items:center">
-          <div class="ldate" style="width:60px">Wk ${b.week_nr}</div>
-          <div class="lval" style="cursor:pointer${b.completed_at?';text-decoration:line-through;color:var(--g4)':''}" onclick="openProgramBlockDetail('${b.id}')">${escHtml(b.fase_naam)}</div>
-          <div class="lnote">${b.completed_at?'✓ gedaan':(b.planned_date||'')}</div>
-          <button onclick="toggleBlockExpand('${b.id}')" id="blk-chev-${b.id}" style="background:none;border:none;font-size:13px;cursor:pointer;color:var(--g4);padding:2px 4px 2px 8px">▸</button>
-        </div>
-        <div id="blk-exp-${b.id}" style="display:none;padding:0 0 10px 68px"></div>
-      `).join('')}
-      ${hasIncomplete?`<button class="btn btn-o" style="margin-top:8px;width:100%;font-size:12px" onclick="heergenereerResterendeWeken('${p.id}',this)">↻ Her-genereer resterende weken</button>`:''}
-    </div></div>`;
+      <div class="v48-pbarw"><div class="v48-pbarl"><span>Voortgang</span><span>${pct}%</span></div><div class="v48-pbar"><span style="width:${pct}%"></span></div></div>
+    </div>
+    <div class="v43-lbl" style="margin:2px 2px 10px">Weken</div>
+    ${weeks}
+    ${hasIncomplete?`<button class="btn btn-o v48-regen" onclick="heergenereerResterendeWeken('${p.id}',this)">${V43I.refresh||'↻'} Her-genereer resterende weken</button>`:''}`;
   }
   el.innerHTML=h;
 }
@@ -12280,7 +12352,9 @@ const V43I={
   clock:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
   play:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M7 5v14l12-7z"/></svg>',
   star:'<svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.6l1-5.8L3.5 9.7l5.9-.9z"/></svg>',
-  pulse:'<svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 3.5 12 2.5-7 1.5 3h4"/></svg>'
+  pulse:'<svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 3.5 12 2.5-7 1.5 3h4"/></svg>',
+  target:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>',
+  refresh:'<svg viewBox="0 0 24 24"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/></svg>'
 };
 function v43GereedheidScore(factor){
   if(factor==null||isNaN(factor))return null;

@@ -2142,6 +2142,34 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-train-schema .sc-empty{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:20px;text-align:center;color:var(--g4);font-size:13px;font-weight:600;margin-bottom:11px}
 /* premium "Nieuwe vaste training"-CTA (bestaande knop restylen) */
 #s-train-schema .scroll>.btn-o{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--card)!important;border:1.5px dashed var(--g2)!important;border-radius:14px!important;padding:15px!important;font-weight:800!important;font-size:13.5px!important;color:var(--dark)!important;box-shadow:none!important}
+#s-train-schema .sc-sub{font-size:11.5px;color:var(--accent);font-weight:700;margin-top:6px}
+/* ══════════════════════════════════════════════════════════════════
+   v4.16.0 — Sprint 4.8 Fase C: Nieuwe-vaste-training-velden (P6) +
+   Oefening toevoegen als Explorer-secties (P7). Presentatie-only.
+   ══════════════════════════════════════════════════════════════════ */
+/* P6 — velden in de sheet */
+#m-vt-naam .vt-field{margin-top:14px}
+#m-vt-naam .vt-lbl{font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--g4);margin-bottom:8px}
+#m-vt-naam .vt-chips{display:flex;flex-wrap:wrap;gap:7px}
+#m-vt-naam .vt-chip{font-size:12px;font-weight:700;padding:9px 14px;border-radius:11px;background:var(--g1);color:var(--dark);border:0;cursor:pointer}
+#m-vt-naam .vt-chip.on{background:var(--accent);color:#04231c}
+#m-vt-naam .vt-note{display:flex;gap:9px;align-items:flex-start;background:var(--v43-mint);border-radius:12px;padding:11px 12px;font-size:11.5px;color:var(--dark);line-height:1.4;font-weight:500;margin-top:16px}
+#m-vt-naam .vt-note-i{flex:0 0 auto;color:var(--accent)}#m-vt-naam .vt-note-i svg{width:16px;height:16px;stroke:var(--accent)}
+/* P7 — oefening toevoegen: Explorer-secties */
+#m-add-ex .oa-seclbl{font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--g4);margin:14px 0 9px}
+#m-add-ex .oa-row{display:flex;gap:11px;overflow-x:auto;padding:0 0 6px;margin:0 -4px;scroll-snap-type:x proximity}
+#m-add-ex .oa-row::-webkit-scrollbar{height:0}
+#m-add-ex .oa-card{flex:0 0 128px;background:0;border:0;padding:0 4px;text-align:left;cursor:pointer;scroll-snap-align:start}
+#m-add-ex .oa-poster{display:block;height:96px;border-radius:14px;background:#0E3B4A;position:relative;overflow:hidden;margin-bottom:8px}
+#m-add-ex .oa-poster.has{background:var(--g1)}
+#m-add-ex .oa-poster img{width:100%;height:100%;object-fit:cover;display:block}
+#m-add-ex .oa-poster:not(.has){display:flex;align-items:center;justify-content:center}
+#m-add-ex .oa-poster:not(.has) svg{width:30px;height:30px;stroke:var(--accent);opacity:.8}
+#m-add-ex .oa-add{position:absolute;bottom:7px;right:7px;width:28px;height:28px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,196,143,.4)}
+#m-add-ex .oa-add svg{width:16px;height:16px;stroke:#fff}
+#m-add-ex .oa-nm{display:block;font-size:12.5px;font-weight:800;color:var(--dark);line-height:1.15}
+#m-add-ex .oa-mus{display:block;font-size:10.5px;color:var(--accent);font-weight:700;margin-top:3px}
+#m-add-ex .oa-empty{color:var(--g4);font-size:13px;font-weight:600;padding:20px 0;text-align:center}
 
 </style>
 </head>
@@ -2987,7 +3015,16 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title" id="vt-naam-title">Nieuwe vaste training</div>
-    <div class="irow"><label class="ilbl">Naam</label><input class="inp" id="vt-naam-input" placeholder="bv. Training C, Push, Onderlichaam"></div>
+    <div class="irow"><label class="ilbl">Naam</label><input class="inp" id="vt-naam-input" placeholder="bv. Push, Onderlichaam"></div>
+    <div class="vt-field"><div class="vt-lbl">Trainingstype</div><div class="vt-chips" data-field="type">
+      <button class="vt-chip" onclick="vtPick('type','Push',this)">Push</button><button class="vt-chip" onclick="vtPick('type','Pull',this)">Pull</button><button class="vt-chip" onclick="vtPick('type','Legs',this)">Legs</button><button class="vt-chip" onclick="vtPick('type','Upper',this)">Upper</button><button class="vt-chip" onclick="vtPick('type','Lower',this)">Lower</button><button class="vt-chip" onclick="vtPick('type','Full Body',this)">Full Body</button></div></div>
+    <div class="vt-field"><div class="vt-lbl">Doel</div><div class="vt-chips" data-field="doel">
+      <button class="vt-chip" onclick="vtPick('doel','Hypertrofie',this)">Hypertrofie</button><button class="vt-chip" onclick="vtPick('doel','Kracht',this)">Kracht</button><button class="vt-chip" onclick="vtPick('doel','Conditie',this)">Conditie</button><button class="vt-chip" onclick="vtPick('doel','Vetverlies',this)">Vetverlies</button></div></div>
+    <div class="vt-field"><div class="vt-lbl">Trainingsdagen / week</div><div class="vt-chips" data-field="dagen">
+      <button class="vt-chip" onclick="vtPick('dagen','2',this)">2</button><button class="vt-chip" onclick="vtPick('dagen','3',this)">3</button><button class="vt-chip" onclick="vtPick('dagen','4',this)">4</button><button class="vt-chip" onclick="vtPick('dagen','5',this)">5</button><button class="vt-chip" onclick="vtPick('dagen','6',this)">6</button></div></div>
+    <div class="vt-field"><div class="vt-lbl">Aantal weken</div><div class="vt-chips" data-field="weken">
+      <button class="vt-chip" onclick="vtPick('weken','4',this)">4</button><button class="vt-chip" onclick="vtPick('weken','6',this)">6</button><button class="vt-chip" onclick="vtPick('weken','8',this)">8</button><button class="vt-chip" onclick="vtPick('weken','12',this)">12</button></div></div>
+    <div class="vt-note"><span class="vt-note-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span>Deze informatie gebruikt de AI Coach om jouw programma optimaal samen te stellen.</div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-vt-naam')">Annuleer</button>
       <button class="btn btn-r" style="flex:2" onclick="saveVasteTrainingName(this)">Opslaan</button>
@@ -3901,7 +3938,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.15.0';
+const APP_VER = 'v4.16.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -4506,8 +4543,13 @@ async function renderSchemaTrainingList(){
     const tags=mset.slice(0,3).map(m=>`<span class="sc-tag">${escHtml(m)}</span>`).join('');
     const isNext=(v.id===nextId);
     const pill=isNext?'<span class="sc-st next">Volgende</span>':'';
+    // P6 — type/doel/dagen/weken uit meta (localStorage), indien ingevuld.
+    const meta=(typeof vtMetaFor==='function')?vtMetaFor(v.id):{};
+    const subParts=[meta.type,meta.doel,meta.dagen?meta.dagen+' dagen':'',meta.weken?meta.weken+' weken':''].filter(Boolean);
+    const sub=subParts.length?`<div class="sc-sub">${escHtml(subParts.join(' · '))}</div>`:'';
     return `<div class="sc-card${isNext?' next':''}">
       <div class="sc-top"><div class="sc-nm">${escHtml(v.naam)}</div>${pill}</div>
+      ${sub}
       ${tags?`<div class="sc-tags">${tags}</div>`:''}
       <div class="sc-meta"><span>${V48I.list} ${n} oefening${n===1?'':'en'}</span><span>${V48I.clock} ${escHtml(v48RelDate(lastMap[v.id]))}</span></div>
       <div class="sc-actions">
@@ -4520,16 +4562,35 @@ async function renderSchemaTrainingList(){
   el.innerHTML=intro+cards;
 }
 let vtEditId=null;
+// v4.16.0 (Sprint 4.8 P6) — extra velden (type/doel/dagen/weken) additief in localStorage
+// (geen DB-migratie, geen kolom-fout). De AI Coach kan ze later benutten; engine ongewijzigd.
+let vtMetaSel={};
+function vtMetaGet(){try{return JSON.parse(localStorage.getItem('tk_vt_meta')||'{}');}catch(e){return {};}}
+function vtMetaFor(id){return vtMetaGet()[id]||{};}
+function vtMetaSave(id,meta){try{var m=vtMetaGet();m[id]=meta;localStorage.setItem('tk_vt_meta',JSON.stringify(m));}catch(e){}}
+function vtPick(field,val,btn){
+  vtMetaSel[field]=val;
+  var grp=btn&&btn.parentElement;if(grp)grp.querySelectorAll('.vt-chip').forEach(function(b){b.classList.toggle('on',b===btn);});
+}
+function vtApplyMeta(meta){
+  vtMetaSel=Object.assign({},meta||{});
+  document.querySelectorAll('#m-vt-naam .vt-chips').forEach(function(grp){
+    var f=grp.getAttribute('data-field');var val=(meta&&meta[f])||null;
+    grp.querySelectorAll('.vt-chip').forEach(function(b){b.classList.toggle('on',val!=null&&b.textContent===String(val));});
+  });
+}
 function openAddVasteTraining(){
   vtEditId=null;
   document.getElementById('vt-naam-title').textContent='Nieuwe vaste training';
   document.getElementById('vt-naam-input').value='';
+  vtApplyMeta({});
   openModal('m-vt-naam');
 }
 function openRenameVasteTraining(id,naam){
   vtEditId=id;
-  document.getElementById('vt-naam-title').textContent='Naam wijzigen';
+  document.getElementById('vt-naam-title').textContent='Training bewerken';
   document.getElementById('vt-naam-input').value=naam;
+  vtApplyMeta(vtMetaFor(id));
   openModal('m-vt-naam');
 }
 async function saveVasteTrainingName(btnEl){
@@ -4537,12 +4598,16 @@ async function saveVasteTrainingName(btnEl){
   try{
   const naam=document.getElementById('vt-naam-input').value.trim();
   if(!naam){toast('Vul een naam in');return;}
+  let vtId=vtEditId;
   if(vtEditId){
     await sbPatch('vaste_trainingen','id=eq.'+vtEditId,{naam});
   }else{
     await ensureVasteTrainingenLoaded();
-    await sbPost('vaste_trainingen',{id:newVasteTrainingId(),naam,sort_order:vasteTrainingen.length});
+    vtId=newVasteTrainingId();
+    await sbPost('vaste_trainingen',{id:vtId,naam,sort_order:vasteTrainingen.length});
   }
+  // P6 — extra velden additief opslaan (localStorage), zodat de AI ze later kan gebruiken.
+  if(vtId)vtMetaSave(vtId,{type:vtMetaSel.type||'',doel:vtMetaSel.doel||'',dagen:vtMetaSel.dagen||'',weken:vtMetaSel.weken||''});
   _vasteTrainingenLoaded=false;
   closeModal('m-vt-naam');
   await renderSchemaTrainingList();
@@ -9620,16 +9685,31 @@ function addExToSession(t){
   const catLbls={};
   vasteTrainingen.forEach(v=>catLbls[v.id]=v.naam);
   catLbls.CrossFit='CrossFit';catLbls.Overig='Overig';
-  let html='';
-  cats.forEach(cat=>{
-    const exs=avail.filter(e=>e.category===cat);
-    if(!exs.length)return;
-    html+=`<div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">${escHtml(catLbls[cat])}</div>`;
-    exs.forEach(e=>{
-      html+=`<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--g2);cursor:pointer" onclick="addExConfirm('${e.id}','${t}');closeModal('m-add-ex')"><div style="flex:1;font-size:14px;font-weight:600;color:var(--dark)">${escHtml(e.name)}</div><span style="color:var(--red);font-size:20px;font-weight:700">+</span></div>`;
-    });
+  // v4.16.0 (Sprint 4.8 P7) — premium Explorer-secties: groepeer op spiergroep,
+  // horizontale rijen met poster-kaarten. Zelfde bron (oefeningen-pool); poster
+  // uit ExerciseAssetProvider waar beschikbaar, anders een nette icoon-tegel.
+  const A=window.ExerciseAssetProvider;
+  const DB='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6M7 6v12M17 6v12M20 9v6M7 12h10"/></svg>';
+  const groups={},order=[];
+  avail.forEach(e=>{
+    const m=(e.muscle_primary&&e.muscle_primary[0])||catLbls[e.category]||'Overig';
+    if(!groups[m]){groups[m]=[];order.push(m);}
+    groups[m].push(e);
   });
-  if(!html)html='<p style="color:var(--g4);font-size:13px">Alle oefeningen zijn al toegevoegd.</p>';
+  let html='';
+  order.forEach(m=>{
+    html+=`<div class="oa-seclbl">${escHtml(m)}</div><div class="oa-row">`;
+    groups[m].forEach(e=>{
+      let poster=null;try{poster=(A&&A.poster)?A.poster(e.id):null;}catch(_){}
+      const thumb=poster?`<img src="${poster}" alt="" loading="lazy">`:DB;
+      const mus=(e.muscle_primary&&e.muscle_primary[0])||'';
+      html+=`<button class="oa-card" onclick="addExConfirm('${e.id}','${t}');closeModal('m-add-ex')" aria-label="${escHtml(e.name)} toevoegen">
+        <span class="oa-poster${poster?' has':''}">${thumb}<span class="oa-add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span></span>
+        <span class="oa-nm">${escHtml(e.name)}</span>${mus?`<span class="oa-mus">${escHtml(mus)}</span>`:''}</button>`;
+    });
+    html+=`</div>`;
+  });
+  if(!html)html='<div class="oa-empty">Alle oefeningen zijn al toegevoegd.</div>';
   document.getElementById('add-ex-list').innerHTML=html;
   openModal('m-add-ex');
 }

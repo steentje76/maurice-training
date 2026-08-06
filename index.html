@@ -2207,6 +2207,54 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-hist .lg-day-act button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:800;color:var(--accent);background:var(--v43-mint);border:0;border-radius:11px;padding:11px;cursor:pointer}
 #s-hist .lg-day-act button svg{width:14px;height:14px;stroke:var(--accent)}
 
+/* ══════════════════════════════════════════════════════════════════
+   v4.18.0 — Sprint 4.8 Workout-Flow Premium Polish.
+   P1 Logboek-thumbs · P2 Losse oefening premium + coachkaart ·
+   P3 Oefening kiezen filter · P4 2-koloms posters.
+   Presentatie-only; alle functies/engines/logica ongewijzigd.
+   ══════════════════════════════════════════════════════════════════ */
+/* P1 — Logboek: grotere postertegels + subtiele gradient-fallback */
+#s-hist .lg-ex-th{width:50px;height:50px;border-radius:13px;background:linear-gradient(135deg,#0E3B4A,#0a2a34)}
+#s-hist .lg-ex-th svg{width:23px;height:23px}
+
+/* P2 — Losse oefening premium */
+#m-los-oefening .ex-pick-trigger{background:var(--card);border:1.5px solid var(--g2);border-radius:14px;padding:13px 14px;box-shadow:var(--shadow);font-weight:700}
+#m-los-oefening #los-wu-count{border:1.5px solid var(--g2);border-radius:12px;padding:11px 12px;font-weight:700;background:var(--g1)}
+#m-los-oefening>.modal .btn-r{border-radius:15px;padding:15px;font-size:16px}
+.los-coach{background:var(--v43-mint);border-radius:16px;padding:13px 14px;margin:2px 0 12px}
+.los-coach .h{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.los-coach .h .ic{width:28px;height:28px;border-radius:50%;background:var(--accent);flex:0 0 auto;display:flex;align-items:center;justify-content:center}
+.los-coach .h .ic svg{width:15px;height:15px;fill:#fff}
+.los-coach .h .t{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.los-coach ul{list-style:none;display:flex;flex-direction:column;gap:8px;margin:0;padding:0}
+.los-coach li{display:flex;gap:9px;align-items:flex-start;font-size:12px;color:var(--dark);font-weight:600;line-height:1.35}
+.los-coach li .ck{width:17px;height:17px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;margin-top:1px}
+.los-coach li b{font-weight:800}
+
+/* P3 — Oefening kiezen: premium filter */
+#m-ex-picker .ex-pick-search{border:1.5px solid var(--g2);border-radius:14px;padding:12px 14px;font-size:15px;background:var(--card);box-shadow:var(--shadow)}
+#m-ex-picker .ex-pick-quickfilters{gap:8px}
+#m-ex-picker .ex-pick-quickfilters .filter-chip{flex:1;text-align:center;padding:9px 6px;border-radius:12px;font-size:11.5px;text-transform:none;letter-spacing:0;background:var(--g1);border:1px solid var(--g2)}
+#m-ex-picker .ex-pick-quickfilters .filter-chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+#m-ex-picker .pk-catlbl{font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--g4);margin:2px 2px 8px}
+#m-ex-picker .ex-pick-filters{max-height:150px}
+#m-ex-picker .ex-pick-filters .filter-chip{padding:8px 13px;border-radius:13px;font-size:12px;text-transform:none;letter-spacing:0;background:var(--card);border:1.5px solid var(--g2);color:var(--dark);box-shadow:var(--shadow)}
+#m-ex-picker .ex-pick-filters .filter-chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* P4 — 2-koloms posters */
+#m-ex-picker .pk-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:12px 0}
+#m-ex-picker .pk-gcard{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:9px;position:relative;cursor:pointer;text-align:left;border:0;font-family:var(--f);width:100%}
+#m-ex-picker .pk-pt{width:100%;aspect-ratio:1/1;border-radius:13px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0E3B4A,#0a2731)}
+#m-ex-picker .pk-pt img{width:100%;height:100%;object-fit:cover}
+#m-ex-picker .pk-pt svg{width:34px;height:34px;stroke:var(--accent);fill:none;stroke-width:2;opacity:.92}
+#m-ex-picker .pk-pt .mg{position:absolute;left:8px;bottom:8px;font-size:8.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:rgba(255,255,255,.82);background:rgba(0,0,0,.3);padding:2px 7px;border-radius:7px}
+#m-ex-picker .pk-fav{position:absolute;top:15px;right:15px;z-index:2;width:27px;height:27px;border-radius:50%;background:rgba(0,0,0,.34);border:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;cursor:pointer;line-height:1}
+#m-ex-picker .pk-fav.on{color:#F0B429}
+#m-ex-picker .pk-gym{position:absolute;top:15px;left:15px;z-index:2;font-size:8px;font-weight:800;color:#fff;background:var(--accent);padding:2px 6px;border-radius:6px}
+#m-ex-picker .pk-nm{font-size:13px;font-weight:800;color:var(--dark);margin:9px 3px 2px;line-height:1.12}
+#m-ex-picker .pk-mu{font-size:10.5px;font-weight:700;color:var(--g4);margin:0 3px 4px;text-transform:uppercase;letter-spacing:.3px}
+#m-ex-picker .pk-empty{padding:40px 0;text-align:center;color:var(--g4);font-size:13px;grid-column:1/-1}
+
 </style>
 </head>
 <body>
@@ -3379,6 +3427,14 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
     <div class="irow"><label class="ilbl">Oefening</label><button type="button" class="ex-pick-trigger" id="los-ex-trigger" onclick="losChangeExercise()"><span id="los-ex-trigger-lbl" class="ph">Kies oefening…</span><span style="color:var(--g3)">›</span></button></div>
     <div class="irow" id="los-wu-row"><label class="ilbl">Opwarmsets</label><input class="inp" type="number" id="los-wu-count" value="0" min="0" max="6" step="1" oninput="onLosWuChange()"></div>
+    <div class="los-coach" id="los-wu-coach" style="display:none">
+      <div class="h"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2l1.6 4.8L18 8l-4.4 1.2L12 14l-1.6-4.8L6 8l4.4-1.2z"/></svg></div><div class="t">Waarom opwarmsets?</div></div>
+      <ul>
+        <li><span class="ck">✓</span><span><b>Betere prestaties</b> — je zenuwstelsel en spieren zijn klaar voor je werksets.</span></li>
+        <li><span class="ck">✓</span><span><b>Minder blessurerisico</b> — pezen en gewrichten wennen geleidelijk aan de belasting.</span></li>
+        <li><span class="ck">✓</span><span><b>Betere techniek</b> — je oefent de beweging in vóór het écht zwaar wordt.</span></li>
+      </ul>
+    </div>
     <div id="los-new-fields" style="display:none">
       <div class="irow"><label class="ilbl">Naam</label><input class="inp" type="text" id="los-ex-new" placeholder="bijv. Zercher Squat"></div>
       <div class="irow"><label class="ilbl">Type</label><select class="inp" id="los-ex-new-type" onchange="onLosNewTypeChange()">
@@ -3434,6 +3490,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <div class="modal-title">Oefening kiezen</div>
       <input type="text" class="ex-pick-search" id="ex-pick-search" placeholder="Zoek op naam…" oninput="renderExPickerList()">
       <div class="ex-pick-quickfilters" id="ex-pick-quickfilters"></div>
+      <div class="pk-catlbl">Categorieën</div>
       <div class="ex-pick-filters" id="ex-pick-filters"></div>
     </div>
     <div class="ex-pick-list" id="ex-pick-list"></div>
@@ -3974,7 +4031,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.17.0';
+const APP_VER = 'v4.18.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6124,14 +6181,35 @@ function renderExPickerList(){
     list.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   }
   const el=document.getElementById('ex-pick-list');
-  if(!list.length){el.innerHTML='<div class="ex-pick-empty">Geen oefeningen gevonden</div>';return;}
-  el.innerHTML=list.map(e=>`<div class="ex-pick-item">
-    <div class="ex-pick-item-content" onclick="selectExPickerItem('${e.id}')">
-      <div class="ex-pick-item-name">${escHtml(e.name)}${e.gym_id?' <span style="font-size:10px;font-weight:700;color:var(--accent2);border:1px solid var(--accent2);border-radius:6px;padding:1px 5px;vertical-align:middle">GYM</span>':''}</div>
-      <div class="ex-pick-item-meta">${TYPE_LABELS[e.type]||e.type||'strength'}${(e.muscle_primary&&e.muscle_primary.length)?' · '+e.muscle_primary.join(', '):''}</div>
-    </div>
-    <button onclick="event.stopPropagation();toggleFavorite('${e.id}').then(renderExPickerList)" style="background:none;border:none;font-size:18px;cursor:pointer;color:${isExerciseFavorite(e.id)?'var(--accent2)':'var(--g3)'}">${isExerciseFavorite(e.id)?'★':'☆'}</button>
-  </div>`).join('');
+  // v4.18.0 (Sprint 4.8 P4) — premium 2-koloms posterkaarten i.p.v. tekstlijst.
+  // Poster UITSLUITEND via ExerciseAssetProvider (DEC-027: geen verzonnen media);
+  // ontbreekt de poster, dan een premium fallback-tegel met spiergroep-label + icoon.
+  // Selectie/favoriet/callback/'Eigen oefening' blijven identiek → geen functieverlies.
+  if(!list.length){el.innerHTML='<div class="pk-grid"><div class="pk-empty">Geen oefeningen gevonden</div></div>';return;}
+  const A=window.ExerciseAssetProvider;
+  el.innerHTML='<div class="pk-grid">'+list.map(e=>{
+    let poster=null;try{poster=(A&&A.poster)?(A.poster(e.id)||A.poster(e.catalog_id||'')):null;}catch(_){poster=null;}
+    const mu=(e.muscle_primary&&e.muscle_primary[0])||TYPE_LABELS[e.type]||e.type||'Overig';
+    const box=poster
+      ?`<div class="pk-pt"><img src="${poster}" alt="" loading="lazy"></div>`
+      :`<div class="pk-pt"><span class="mg">${escHtml(mu)}</span>${_pkIcon(e)}</div>`;
+    const fav=isExerciseFavorite(e.id);
+    const gym=e.gym_id?'<span class="pk-gym">GYM</span>':'';
+    return `<button class="pk-gcard" onclick="selectExPickerItem('${e.id}')">
+      ${gym}
+      <span class="pk-fav${fav?' on':''}" onclick="event.stopPropagation();toggleFavorite('${e.id}').then(renderExPickerList)" role="button" aria-label="Favoriet">${fav?'★':'☆'}</span>
+      ${box}
+      <div class="pk-nm">${escHtml(e.name)}</div>
+      <div class="pk-mu">${escHtml(mu)}</div>
+    </button>`;
+  }).join('')+'</div>';
+}
+// v4.18.0 — fallback-icoon per oefeningtype voor de posterkaart (geen media beschikbaar).
+function _pkIcon(e){
+  const t=(e&&e.type)||'strength';
+  if(resolveCardioType&&resolveCardioType(e))return '<svg viewBox="0 0 24 24"><path d="M3 12h4l3-3 4 6 3-3h4"/></svg>';
+  if(t==='carry')return '<svg viewBox="0 0 24 24"><path d="M12 3v18M8 7h8M8 17h8"/></svg>';
+  return '<svg viewBox="0 0 24 24"><path d="M4 9v6M7 6v12M17 6v12M20 9v6M7 12h10"/></svg>';
 }
 // Zorgt dat het toetsenbord de filters/lijst nooit afdekt: de modal-hoogte volgt
 // window.visualViewport (die krimpt zodra het klavier opent), i.p.v. vaste 100dvh.
@@ -6209,6 +6287,8 @@ async function renderLosBody(existingEx=null){
   // Opwarmsets alleen zinvol/tonen bij kracht-achtige oefeningen (geen cardio/WOD)
   const showWu=!resolveCardioType(ex)&&ex.type!=='wod';
   if(wuRow)wuRow.style.display=showWu?'':'none';
+  // v4.18.0 (Sprint 4.8 P2) — coachkaart 'Waarom opwarmsets?' volgt exact de opwarmsets-rij.
+  const wuCoach=document.getElementById('los-wu-coach');if(wuCoach)wuCoach.style.display=showWu?'':'none';
   // v306.2: LOS_DOMID i.p.v. ex.id als DOM-namespace voor de invoervelden zelf — zo blijft
   // deze sessie altijd geïsoleerd van een eventueel lopende training op dezelfde oefening.
   // Dit is ook exact dezelfde uniforme Cardio Logger (buildCardioBody via de dispatcher) als

@@ -1860,6 +1860,48 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .v48-pempty .ic svg{width:30px;height:30px;stroke:var(--accent);fill:none;stroke-width:2}
 .v48-pempty .t{font-size:16px;font-weight:800;color:var(--dark)}
 .v48-pempty .s{font-size:12.5px;color:var(--g4);font-weight:600;margin-top:6px;line-height:1.4;max-width:28ch;margin:6px auto 0}
+/* ══════════════════════════════════════════════════════════════════
+   v4.9.0 — Sprint 4.7 Fase 3: Kalender (maandweergave).
+   Markeringen uit echte data: sessions (gedaan) + program_blocks
+   (gepland/deload). Additief; leest bestaande tabellen, geen nieuwe data.
+   ══════════════════════════════════════════════════════════════════ */
+.v49-mnav{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:10px 12px;margin-bottom:11px}
+.v49-mnav button{background:none;border:0;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--accent)}
+.v49-mnav button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2}
+.v49-mnav .t{font-size:14px;font-weight:800;color:var(--dark)}
+.v49-wd{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:6px}
+.v49-wd span{text-align:center;font-size:9.5px;font-weight:800;color:var(--g4);text-transform:uppercase}
+.v49-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.v49-cell{aspect-ratio:1;border-radius:10px;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--dark);position:relative;border:0;cursor:default}
+.v49-cell.tap{cursor:pointer}
+.v49-cell.tap:active{transform:scale(.95)}
+.v49-cell.mut{color:var(--g3);opacity:.4;box-shadow:none;background:transparent}
+.v49-cell.today{outline:2px solid var(--accent)}
+.v49-cell.deload{background:rgba(225,161,0,.14)}
+.v49-dot{position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:6px;height:6px;border-radius:50%}
+.v49-dot.done{background:#22B07A}
+.v49-dot.plan{background:transparent;border:1.6px solid var(--accent)}
+.v49-dot.deload{background:#E1A100}
+.v49-legend{display:flex;gap:14px;flex-wrap:wrap;margin:13px 2px 4px}
+.v49-legend span{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;color:var(--g4)}
+.v49-legend i{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+.v49-legend i.done{background:#22B07A}
+.v49-legend i.plan{background:transparent;border:1.6px solid var(--accent)}
+.v49-legend i.deload{background:#E1A100}
+.v49-ev{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:12px 13px;margin-bottom:8px;display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;cursor:pointer;transition:box-shadow .22s ease,transform .1s ease}
+.v49-ev:active{transform:scale(.994)}
+.v49-ev.next{outline:2px solid var(--accent)}
+.v49-ev .ic{width:40px;height:40px;border-radius:11px;background:var(--v43-mint);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.v49-ev.deload .ic{background:rgba(225,161,0,.16);color:#B08900}
+.v49-ev .ic svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2}
+.v49-ev .b{flex:1;min-width:0}
+.v49-ev .nm{display:block;font-size:13.5px;font-weight:800;color:var(--dark);line-height:1.1}
+.v49-ev .sub{display:block;font-size:11.5px;color:var(--g4);font-weight:600;margin-top:2px}
+.v49-ev .st{font-size:10px;font-weight:800;padding:4px 9px;border-radius:8px;flex:0 0 auto;white-space:nowrap}
+.v49-ev .st.next{background:var(--accent);color:#fff}
+.v49-ev .st.plan{background:var(--g1);color:var(--g4)}
+.v49-ev .st.deload{background:rgba(225,161,0,.16);color:#B08900}
+.v49-empty{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:16px;text-align:center;color:var(--g4);font-size:12.5px;font-weight:600}
 
 </style>
 </head>
@@ -2603,6 +2645,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <button class="row" onclick="go('s-train-schema')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></span><span class="b"><span class="t">Schema</span><span class="s">Je vaste trainingen met progressieregels</span></span><span class="ar">›</span></button>
       <button class="row" onclick="go('s-train-workouts')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span><span class="b"><span class="t">Workouts</span><span class="s">Eigen samengestelde trainingen</span></span><span class="ar">›</span></button>
       <button class="row" onclick="openLosOefening()"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 9v6M7 6v12M17 6v12M20 9v6M7 12h10"/></svg></span><span class="b"><span class="t">Losse oefening</span><span class="s">Eén oefening loggen, zonder training</span></span><span class="ar">›</span></button>
+      <button class="row" onclick="go('s-kalender')"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span><span class="b"><span class="t">Kalender</span><span class="s">Plannen, deload &amp; historie</span></span><span class="ar">›</span></button>
       <button class="row" onclick="go('s-hist')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg></span><span class="b"><span class="t">Historie</span><span class="s">Je trainingsgeschiedenis</span></span><span class="ar">›</span></button>
     </div>
   </div>
@@ -2624,6 +2667,24 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
   </div>
   <div class="scroll" style="padding-top:8px" id="v47d-scroll"></div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
+    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+  </nav>
+</div>
+
+<!-- ═══ KALENDER (Sprint 4.7 Fase 3 — maandweergave, echte data) ═══ -->
+<div class="scr" id="s-kalender">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title" role="heading" aria-level="1">Kalender</div><div class="hdr-sub">Plannen, deload &amp; historie</div></div>
+      <button class="ibtn" onclick="go('s-train-mgr')" aria-label="Sluiten, terug naar Training">✕</button>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px" id="kalender-body"></div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
@@ -3600,7 +3661,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.8.0';
+const APP_VER = 'v4.9.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -5266,6 +5327,7 @@ function go(id){
   if(id==='s-lichaam')renderLichaam();
   if(id==='s-train-schema'){renderSchemaTrainingList();}
   if(id==='s-programma'){renderProgrammaList();}
+  if(id==='s-kalender'){renderKalender();}
   if(id==='s-stats')refreshStatsScreen();
   if(id==='s-profiel')refreshProfiel();
   if(id==='s-admin')refreshAdmin();
@@ -6324,6 +6386,82 @@ async function renderProgrammaList(){
     ${hasIncomplete?`<button class="btn btn-o v48-regen" onclick="heergenereerResterendeWeken('${p.id}',this)">${V43I.refresh||'↻'} Her-genereer resterende weken</button>`:''}`;
   }
   el.innerHTML=h;
+}
+// v4.9.0 (Fase 3) — Kalender. Maandweergave met markeringen uit echte data:
+// sessions (gedaan) + program_blocks (gepland/deload). Leest bestaande tabellen;
+// geen nieuwe data. Dag-tik → historie (gedaan) of blok-detail (gepland).
+function v49Nav(delta){
+  let m=(window._calM==null?new Date().getMonth():window._calM)+delta;
+  let y=(window._calY==null?new Date().getFullYear():window._calY);
+  if(m<0){m=11;y--;}else if(m>11){m=0;y++;}
+  window._calM=m;window._calY=y;renderKalender();
+}
+async function renderKalender(){
+  const el=document.getElementById('kalender-body');if(!el)return;
+  const now=new Date();
+  if(window._calY==null){window._calY=now.getFullYear();window._calM=now.getMonth();}
+  const Y=window._calY,M=window._calM;
+  const pad=n=>String(n).padStart(2,'0');
+  const daysInMonth=new Date(Y,M+1,0).getDate();
+  const start=`${Y}-${pad(M+1)}-01`, end=`${Y}-${pad(M+1)}-${pad(daysInMonth)}`;
+  const todayStr=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  // Gedaan: unieke datums uit sessions binnen de maand.
+  const doneSet=new Set();
+  try{const ss=await sbGet('sessions',`&date=gte.${start}&date=lte.${end}`);(ss||[]).forEach(s=>{if(s.date)doneSet.add(String(s.date).slice(0,10));});}catch(e){}
+  // Gepland/deload: alle program_blocks met planned_date.
+  const planMap={};const allBlocks=[];
+  try{const blk=await sbGet('program_blocks','&order=week_nr.asc');(blk||[]).forEach(b=>{allBlocks.push(b);if(b.planned_date){const d=String(b.planned_date).slice(0,10);planMap[d]={id:b.id,deload:/deload/i.test(b.fase_naam||''),fase:b.fase_naam||'',done:!!b.completed_at};}});}catch(e){}
+  // Maandtitel
+  let titel=new Date(Y,M,1).toLocaleDateString('nl-NL',{month:'long',year:'numeric'});
+  titel=titel.charAt(0).toUpperCase()+titel.slice(1);
+  // Raster (maandag-eerst)
+  const firstDow=(new Date(Y,M,1).getDay()+6)%7; // 0=ma
+  const wd=['M','D','W','D','V','Z','Z'].map(d=>`<span>${d}</span>`).join('');
+  let cells='';
+  for(let i=0;i<firstDow;i++)cells+='<div class="v49-cell mut"></div>';
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${Y}-${pad(M+1)}-${pad(d)}`;
+    const isDone=doneSet.has(ds);
+    const pl=planMap[ds];
+    const isDeload=pl&&pl.deload;
+    let cls='v49-cell';let dot='';let tap='';
+    if(isDeload)cls+=' deload';
+    if(ds===todayStr)cls+=' today';
+    if(isDone){dot='<span class="v49-dot done"></span>';cls+=' tap';tap=`onclick="go('s-hist')"`;}
+    else if(pl){dot=`<span class="v49-dot ${isDeload?'deload':'plan'}"></span>`;cls+=' tap';tap=`onclick="openProgramBlockDetail('${pl.id}')"`;}
+    const tag=tap?'button':'div';
+    cells+=`<${tag} class="${cls}" ${tap}>${d}${dot}</${tag}>`;
+  }
+  // Agenda: aankomende geplande blokken (niet afgerond), vanaf vandaag.
+  const upcoming=allBlocks
+    .filter(b=>b.planned_date&&!b.completed_at&&String(b.planned_date).slice(0,10)>=todayStr)
+    .sort((a,b)=>String(a.planned_date).localeCompare(String(b.planned_date)))
+    .slice(0,4);
+  let agenda='';
+  if(upcoming.length){
+    agenda='<div class="v43-lbl" style="margin:16px 2px 10px">Komende trainingen</div>'+upcoming.map((b,i)=>{
+      const isDeload=/deload/i.test(b.fase_naam||'');
+      const stCls=i===0?'next':(isDeload?'deload':'plan');
+      const stTxt=i===0?'Volgende':(isDeload?'Deload':'Gepland');
+      const dd=new Date(b.planned_date);
+      const wdl=isNaN(dd)?'':dd.toLocaleDateString('nl-NL',{weekday:'short'});
+      return `<button class="v49-ev${i===0?' next':''}${isDeload?' deload':''}" onclick="openProgramBlockDetail('${b.id}')">
+        <span class="ic">${V43I.cal}</span>
+        <span class="b"><span class="nm">${escHtml(b.fase_naam||'Training')}</span><span class="sub">${escHtml(wdl?wdl+' · ':'')}${escHtml(v48FmtDatum(b.planned_date))}</span></span>
+        <span class="st ${stCls}">${stTxt}</span></button>`;
+    }).join('');
+  }else{
+    agenda='<div class="v43-lbl" style="margin:16px 2px 10px">Komende trainingen</div><div class="v49-empty">Nog niets gepland. Maak een programma aan om je weken vooruit te plannen.</div>';
+  }
+  el.innerHTML=`<div class="v49-mnav">
+      <button onclick="v49Nav(-1)" aria-label="Vorige maand"><svg viewBox="0 0 24 24" style="transform:rotate(180deg)"><path d="M9 6l6 6-6 6"/></svg></button>
+      <div class="t">${escHtml(titel)}</div>
+      <button onclick="v49Nav(1)" aria-label="Volgende maand"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+    <div class="v49-wd">${wd}</div>
+    <div class="v49-grid">${cells}</div>
+    <div class="v49-legend"><span><i class="done"></i>Gedaan</span><span><i class="plan"></i>Gepland</span><span><i class="deload"></i>Deload</span></div>
+    ${agenda}`;
 }
 async function deleteProgramma(progId){
   if(!await confirmModal('Dit kan niet ongedaan worden gemaakt.',{title:'Programma verwijderen',okLabel:'Verwijderen',danger:true}))return;

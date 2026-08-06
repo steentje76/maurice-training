@@ -1719,6 +1719,52 @@ html[data-theme="dark"]{--v45-slate:#9db4c0}
 /* Sport-selector verborgen op Training (t-sport visible:false) */
 #s-train-mgr .scroll>.irow{display:none !important}
 
+/* ══════════════════════════════════════════════════════════════════
+   v4.6.0 — Sprint 23 Home UX Polish (Home-only, additief, geen data/logica).
+   ══════════════════════════════════════════════════════════════════ */
+/* Hero — dagfactor-cirkel als status + 4 kolommen */
+#home-hero .v43-stats{gap:5px}
+#home-hero .v43-stat-v{font-size:18px}
+.v43-stat-df{display:flex;flex-direction:column}
+.v43-df-circle{width:38px;height:38px;border-radius:50%;border:2.5px solid;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:800;margin-bottom:10px;background:rgba(0,184,148,.06)}
+html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
+/* Hero — inline "Waarom vandaag?" */
+.v43-why{display:flex;align-items:center;gap:7px;border-top:1px solid var(--g2);margin-top:12px;padding-top:11px;font-size:12.5px;font-weight:700;color:var(--accent)}
+.v43-why-chev{display:inline-block;transition:transform .22s ease;font-size:12px}
+.v43-why.open .v43-why-chev{transform:rotate(180deg)}
+.v43-why-body{font-size:12.5px;color:var(--g4);line-height:1.45;margin-top:11px;border-top:1px dashed var(--g2);padding-top:11px}
+.v43-why-body[hidden]{display:none}
+.v43-why-row{display:flex;justify-content:space-between;gap:10px;padding:3px 0}
+.v43-why-row b{color:var(--dark);font-weight:700;text-align:right}
+.v43-why-p{margin-top:6px}
+/* Coach — compacter, coach-tip (max 3 regels) */
+#home-coach-vandaag .v43-coach{padding:11px 14px !important}
+#home-coach-vandaag .v43-coach-ic{width:36px;height:36px}
+#home-coach-vandaag .v43-coach-body .t{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:12.5px}
+/* Vandaag gepland — grotere trainingsnaam (Home) */
+#home-plan .v43-plan-name{font-size:21px !important;letter-spacing:-.3px}
+/* Ritme + Volume — grotere cijfers, minder tekst */
+#home-weekstats .home-stat-msg{display:none !important}
+#home-weekstats .home-stat-fig{font-size:26px !important;display:block;line-height:1;margin-bottom:2px;letter-spacing:-.5px}
+#home-weekstats .home-stat-sub{font-size:11px}
+/* Consistentie — compacter */
+#home-motivatie .motiv-card{padding:10px 14px 10px 18px !important}
+/* Snelacties — grotere iconen, lagere tegels */
+#home-quick .quick-ic{width:44px !important;height:44px !important;border-radius:13px !important}
+#home-quick .quick-ic svg{width:23px !important;height:23px !important}
+#home-quick .quick-act{padding:11px 4px !important;border-radius:16px !important}
+/* Verticale spacing strakker (dashboard-gevoel) */
+#home-hero .v43-hero{margin-bottom:10px !important}
+#home-coach-vandaag .v43-coach{margin-bottom:10px !important}
+#home-plan .v43-plan{margin-bottom:10px !important}
+#home-weekstats{margin-bottom:10px !important}
+#home-motivatie{margin-bottom:6px !important}
+/* Premium-afwerking: hover/pressed/transities (geen nieuwe kleuren) */
+#home-hero .v43-hero,#home-plan .v43-plan,#home-coach-vandaag .v43-coach,#home-quick .quick-act,#home-hero .v43-start{transition:box-shadow .22s ease, transform .1s ease}
+#home-hero .v43-hero:hover{box-shadow:0 16px 34px rgba(11,29,42,.16) !important}
+#home-hero .v43-hero:active,#home-plan .v43-plan:active,#home-coach-vandaag .v43-coach:active,#home-quick .quick-act:active{transform:scale(.994)}
+@media(prefers-reduced-motion:reduce){#home-hero .v43-hero,#home-plan .v43-plan,#home-coach-vandaag .v43-coach,#home-quick .quick-act,.v43-why-chev{transition:none}}
+
 </style>
 </head>
 <body>
@@ -3439,7 +3485,7 @@ html[data-theme="dark"]{--v45-slate:#9db4c0}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.5.0';
+const APP_VER = 'v4.6.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -12245,21 +12291,37 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
     const rd=(typeof trainReadiness==='function')?trainReadiness(dfInfo):null;
     const title=dfInfo?(rd?rd.txt:'Klaar om te trainen'):'Doe je check-in';
     const sub=dfInfo?(dfInfo.factor>=1?'Je lichaam is goed hersteld en klaar voor optimale prestaties.':dfInfo.factor>=0.93?'Train vandaag op gevoel en houd je RPE in de gaten.':'Je lichaam vraagt om rust — houd het vandaag licht.'):'Vul je HRV in voor je dagfactor en herstelbeeld.';
-    const badgeCls=dfInfo?(rd?rd.cls:'g'):'y';
-    const badge=badgeCls==='g'?`<span class="v43-hero-badge" style="background:var(--green)">✓</span>`:badgeCls==='r'?`<span class="v43-hero-badge" style="background:var(--red)">!</span>`:`<span class="v43-hero-badge" style="background:var(--y)">~</span>`;
     const gereed=v43GereedheidScore(dfInfo?dfInfo.factor:null);
     const slaap=(lh&&(lh.sleep||lh.sleep===0))?v43SlaapTxt(lh.sleep):'—';
-    heroEl.innerHTML=`<div class="v43-hero" onclick="v43ToggleWhy()" style="cursor:pointer" role="button" aria-label="Herstelstatus — tik voor waarom vandaag">
+    // v4.6.0 — status-indicator = dagfactor-cirkel (vervangt het losse groene vinkje)
+    const factor=dfInfo?dfInfo.factor:null;
+    const dfCls=factor==null?'y':(factor>=1?'g':factor>=0.93?'y':'r');
+    const dfCol=dfCls==='g'?'var(--green)':dfCls==='r'?'var(--red)':'var(--y)';
+    const dfVal=factor==null?'—':String(factor);
+    // v4.6.0 — "Waarom vandaag?" inline in de hero (zelfde databron; de losse kaart vervalt)
+    const wReady=(rec.rows||[]).filter(r=>r.hours!==null&&r.pct>=90).map(r=>r.muscle);
+    const wLow=(rec.rows||[]).filter(r=>r.hours!==null&&r.pct<70).sort((a,b)=>a.pct-b.pct);
+    const wUit=(dfInfo&&dfInfo.uitleg)?dfInfo.uitleg:'';
+    let wTxt=window.homeCoachText||'';
+    if(!wTxt){try{wTxt=await buildCoachAdvice(dfInfo,nextT,recRows);}catch(e){wTxt='';}}
+    const wRow=(l,v)=>`<div class="v43-why-row"><span>${l}</span><b>${escHtml(v)}</b></div>`;
+    const whyBody=dfInfo?(
+      (wReady.length?wRow('Volledig hersteld',wReady.slice(0,3).join(', ')):'')+
+      (wLow.length?wRow('Nog herstellend',wLow.slice(0,2).map(r=>r.muscle+' '+r.pct+'%').join(', ')):'')+
+      (factor!=null?wRow('Dagfactor',dfVal+(wUit?' · '+wUit:'')):'')+
+      (wTxt?`<div class="v43-why-p">${escHtml(wTxt)}</div>`:'')
+    ):'<div class="v43-why-p">Doe je check-in (HRV + slaap) om je dagfactor en herstelbeeld te zien.</div>';
+    heroEl.innerHTML=`<div class="v43-hero" onclick="v43ToggleWhy()" style="cursor:pointer" role="button" aria-expanded="false" aria-label="Herstelstatus — tik voor waarom vandaag">
       <div class="v43-hero-top">
         <div class="v43-hero-l">
           <div class="v43-lbl">Herstel nu</div>
           <div class="v43-hero-title">${escHtml(title)}</div>
           <div class="v43-hero-sub">${escHtml(sub)}</div>
         </div>
-        ${badge}
         <div class="v43-figbox" id="v43-hero-fig"></div>
       </div>
       <div class="v43-stats">
+        <div class="v43-stat v43-stat-df"><div class="v43-df-circle" style="border-color:${dfCol};color:${dfCol}">${dfVal}</div><div class="v43-stat-k">Dagfactor</div></div>
         <div class="v43-stat"><div class="v43-stat-ic">${V43I.heart}</div><div class="v43-stat-v">${rec.hasData?rec.overall+'%':'—'}</div><div class="v43-stat-k">Herstel</div></div>
         <div class="v43-stat"><div class="v43-stat-ic">${V43I.bolt}</div><div class="v43-stat-v">${gereed!=null?gereed:'—'}</div><div class="v43-stat-k">Gereedheid</div></div>
         <div class="v43-stat"><div class="v43-stat-ic">${V43I.moon}</div><div class="v43-stat-v">${slaap}</div><div class="v43-stat-k">Slaap</div></div>
@@ -12269,6 +12331,8 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
         <div class="d"><span class="dot" style="background:var(--y)"></span>Matig hersteld</div>
         <div class="d"><span class="dot" style="background:var(--red)"></span>Weinig hersteld</div>
       </div>
+      <div class="v43-why" id="v43-why-toggle"><span class="v43-why-chev">▾</span> Waarom vandaag?</div>
+      <div class="v43-why-body" id="v43-why-body" hidden>${whyBody}</div>
     </div>`;
     try{recoveryHeatmapView='front';renderMuscleRecoveryHeatmap('v43-hero-fig',rec.pctBySvgId);}catch(e){}
   }
@@ -12324,12 +12388,13 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
   }
 }
 // Home v2 — dagfactor "Waarom vandaag?" onthullen via een tik op de Herstel nu-hero
-// (de detailkaart blijft bestaan; geen aparte kaart meer standaard zichtbaar op Home).
+// v4.6.0 — "Waarom vandaag?" klapt inline uit binnen de Hero (zelfde databron).
 function v43ToggleWhy(){
-  const el=document.getElementById('home-hrv-card');if(!el)return;
-  const open=el.style.display!=='none'&&el.style.display!=='';
-  el.style.display=open?'none':'block';
-  if(!open){try{el.scrollIntoView({behavior:'smooth',block:'nearest'});}catch(e){}}
+  const el=document.getElementById('v43-why-body');if(!el)return;
+  const open=!el.hasAttribute('hidden');
+  if(open)el.setAttribute('hidden','');else el.removeAttribute('hidden');
+  const t=document.getElementById('v43-why-toggle');if(t)t.classList.toggle('open',!open);
+  const hero=el.closest('.v43-hero');if(hero)hero.setAttribute('aria-expanded',String(!open));
 }
 // Home v2 — actief programma (naam · week · fase) t.b.v. de "Vandaag gepland"-kaart.
 // Uitsluitend echte data (dezelfde bron als renderHomeProgramCard); geen tweede programmakaart.

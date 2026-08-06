@@ -1689,6 +1689,36 @@ html[data-theme="dark"] .v43-lich-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
 .v43-lich-bar{height:8px;border-radius:6px;background:var(--g2);overflow:hidden}
 .v43-lich-bar>span{display:block;height:100%;border-radius:6px}
 
+/* ══════════════════════════════════════════════════════════════════
+   v4.5.0 — Indeling & stijl (goedgekeurde Design Dashboard-export).
+   Additief, alleen presentatie; gescoped op Home/Training/Lichaam.
+   ══════════════════════════════════════════════════════════════════ */
+:root{--v45-slate:#0E3B4A}
+html[data-theme="dark"]{--v45-slate:#9db4c0}
+/* Vandaag gepland → donkere kaart (Home + Training) */
+#home-plan .v43-plan,#v43-train-plan .v43-plan{background:#0E3B4A !important;box-shadow:0 14px 30px rgba(0,0,0,.30) !important;border-radius:22px !important}
+#home-plan .v43-plan .v43-lbl,#v43-train-plan .v43-plan .v43-lbl{color:rgba(230,240,243,.62) !important}
+#home-plan .v43-plan .v43-plan-name,#v43-train-plan .v43-plan .v43-plan-name{color:#fff !important}
+#home-plan .v43-plan .v43-plan-meta,#v43-train-plan .v43-plan .v43-plan-meta{color:rgba(230,240,243,.72) !important}
+#home-plan .v43-plan .v43-plan-meta svg,#v43-train-plan .v43-plan .v43-plan-meta svg{stroke:rgba(230,240,243,.72) !important}
+#home-plan .v43-plan .v43-plan-ic,#v43-train-plan .v43-plan .v43-plan-ic{background:rgba(255,255,255,.10) !important}
+#home-plan .v43-plan .v43-plan-ic svg,#v43-train-plan .v43-plan .v43-plan-ic svg{stroke:#fff !important}
+#home-plan .v43-plan .v43-prog-chip,#v43-train-plan .v43-plan .v43-prog-chip{background:rgba(255,255,255,.14) !important;color:#fff !important}
+/* Slate-accenten (Ritme/Volume/Consistentie/Snelacties + Training snelle acties) */
+#home-weekstats .home-stat-top{color:var(--v45-slate) !important}
+#home-motivatie .motiv-bar{background:var(--v45-slate) !important}
+#home-motivatie .motiv-card{background:linear-gradient(120deg,rgba(14,59,74,.10),rgba(0,0,0,0)) !important;border-radius:22px !important}
+#home-quick .quick-ic svg{stroke:var(--v45-slate) !important}
+.v43-tqa .q .ic{background:rgba(14,59,74,.12) !important;color:var(--v45-slate) !important}
+.v43-tqa .q .ic svg{stroke:var(--v45-slate) !important}
+/* Radius-afstemming (indeling) */
+#home-weekstats .home-stat{border-radius:22px !important}
+#home-quick .quick-act{border-radius:22px !important}
+/* Hero iets compacter */
+#home-hero .v43-hero{padding:16px 16px !important}
+/* Sport-selector verborgen op Training (t-sport visible:false) */
+#s-train-mgr .scroll>.irow{display:none !important}
+
 </style>
 </head>
 <body>
@@ -3409,7 +3439,7 @@ html[data-theme="dark"] .v43-lich-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.4.0';
+const APP_VER = 'v4.5.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';

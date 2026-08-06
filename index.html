@@ -2255,6 +2255,34 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #m-ex-picker .pk-mu{font-size:10.5px;font-weight:700;color:var(--g4);margin:0 3px 4px;text-transform:uppercase;letter-spacing:.3px}
 #m-ex-picker .pk-empty{padding:40px 0;text-align:center;color:var(--g4);font-size:13px;grid-column:1/-1}
 
+/* ══════════════════════════════════════════════════════════════════
+   v4.19.0 — Sprint 5.2 Profiel Redesign (account/voorkeuren-hub).
+   Presentatie-only; bestaande functies/handlers hergroepeerd.
+   ══════════════════════════════════════════════════════════════════ */
+#s-profiel .pf-hero{background:#0E3B4A;border-radius:22px;padding:18px;margin-bottom:6px;box-shadow:0 14px 30px rgba(0,0,0,.28);position:relative}
+#s-profiel .pf-hero-top{display:flex;gap:14px;align-items:center}
+#s-profiel .pf-av{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#0a8f74);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;flex:0 0 auto;overflow:hidden}
+#s-profiel .pf-av img{width:100%;height:100%;object-fit:cover}
+#s-profiel .pf-hero-nm{font-size:20px;font-weight:800;color:#fff;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#s-profiel .pf-hero-sub{font-size:12px;color:rgba(230,240,243,.72);font-weight:600;margin-top:3px}
+#s-profiel .pf-hero-edit{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.12);border:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#s-profiel .pf-hero-edit svg{width:15px;height:15px;stroke:#fff}
+#s-profiel .pf-hero-pills{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+#s-profiel .pf-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(0,196,143,.18);border:1px solid rgba(0,196,143,.4);color:#7ff0cf;font-size:11px;font-weight:700;padding:5px 11px;border-radius:20px}
+#s-profiel .pf-pill svg{width:12px;height:12px}
+#s-profiel .pf-sect{font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--g4);margin:16px 2px 9px}
+#s-profiel .pf-card{padding:0;overflow:hidden}
+#s-profiel .pf-row{display:flex;align-items:center;gap:13px;padding:13px 14px;border-top:1px solid var(--g2);width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0;cursor:pointer;font-family:var(--f)}
+#s-profiel .pf-card>.pf-row:first-child{border-top:0}
+#s-profiel .pf-ic{width:34px;height:34px;border-radius:10px;background:var(--v43-mint);display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:var(--accent)}
+#s-profiel .pf-ic svg{width:18px;height:18px}
+#s-profiel .pf-tx{flex:1;min-width:0}
+#s-profiel .pf-lb{font-size:14px;font-weight:700;color:var(--dark)}
+#s-profiel .pf-sb{font-size:11.5px;color:var(--g4);font-weight:500;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#s-profiel .pf-chev{color:var(--g4);font-size:18px;font-weight:700;flex:0 0 auto}
+#s-profiel .pf-danger .pf-ic{background:rgba(229,83,61,.14);color:#E5533D}
+#s-profiel .pf-danger .pf-lb{color:#E5533D}
+
 </style>
 </head>
 <body>
@@ -2274,8 +2302,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
     <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
 </div>
 <div class="scr" id="s-guided">
@@ -2285,8 +2313,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="go('s-builder')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
     <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
 </div>
 <div class="scr" id="s-auth">
@@ -2375,8 +2403,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni active" aria-current="page" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
 </div>
 
@@ -2389,66 +2417,25 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <div class="scr" id="s-profiel">
   <div class="hdr">
     <div class="hdr-row">
-      <div><div class="hdr-title" role="heading" aria-level="1">Profiel</div><div class="hdr-sub">Atleet & Lichaamsmetingen</div></div>
-      <button class="ibtn" onclick="openModal('m-bc')" aria-label="Lichaamsmeting toevoegen">＋</button>
+      <div><div class="hdr-title" role="heading" aria-level="1">Profiel</div><div class="hdr-sub">Account &amp; voorkeuren</div></div>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
+    <div class="pf-hero" id="pf-hero"></div>
 
-    <!-- Account -->
+    <div class="pf-sect">Mijn account</div>
+    <div class="card pf-card">
+      <div class="pf-row"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span><div class="pf-tx"><div class="pf-lb">E-mailadres</div><div class="pf-sb" id="account-email-lbl">&mdash;</div></div></div>
+      <button class="pf-row" onclick="openPasswordReset()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></span><div class="pf-tx"><div class="pf-lb">Wachtwoord</div><div class="pf-sb">Reset via e-maillink</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="authSignOut()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5H6v14h9M10 12h10M17 9l3 3-3 3"/></svg></span><div class="pf-tx"><div class="pf-lb">Uitloggen</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row pf-danger" onclick="deleteAccount()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></span><div class="pf-tx"><div class="pf-lb">Account verwijderen</div><div class="pf-sb">Onomkeerbaar</div></div><span class="pf-chev">&#8250;</span></button>
+    </div>
+
+    <div class="pf-sect">Trainingsprofiel</div>
     <div class="card">
-      <div class="card-hd"><div class="card-title">Account</div></div>
-      <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-        <div style="font-size:13px;color:var(--g4)" id="account-email-lbl">—</div>
-        <button class="btn btn-o btn-sm" onclick="authSignOut()">Uitloggen</button>
-      </div>
-      <div class="card-body" style="border-top:1px solid var(--g2)">
-        <button class="btn btn-o btn-sm" style="color:var(--red);border-color:var(--red);width:100%" onclick="deleteAccount()">Account verwijderen</button>
-      </div>
+      <div class="card-hd"><div class="card-title">Atleet profiel</div><button class="btn btn-o btn-sm" onclick="openAtleetModal()">Bewerken</button></div>
+      <div class="card-body" id="profiel-atleet-card"><p style="color:var(--g4);font-size:13px">Nog niet ingesteld</p></div>
     </div>
-
-    <!-- Data — hier i.p.v. Beheer (v3.3.24 verplaatst): eigen trainingslog importeren/
-         exporteren is persoonlijke data-actie, geen gym-beheer. Stond eerder in Beheer,
-         wat sinds de rolgebaseerde Beheer-gate (v3.3.21) per ongeluk owner-only was
-         geworden — elke gebruiker moet zijn eigen data kunnen back-uppen. -->
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Data</div></div>
-      <div class="card-body">
-        <div class="adm-row"><div><div class="adm-lbl">Import logboek</div><div class="adm-sub" id="import-status">Selecteer een JSON importbestand</div></div><div style="margin-left:auto"><label class="btn btn-o btn-sm" style="cursor:pointer">Kies bestand<input type="file" accept=".json" style="display:none" onchange="importFromFile(this)"></label></div></div>
-        <div class="adm-row" style="border-top:1px solid var(--g2);padding-top:10px;margin-top:10px"><div><div class="adm-lbl">Exporteren</div><div class="adm-sub">CSV / JSON backup</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-export')">Export</button></div></div>
-      </div>
-    </div>
-
-    <!-- Wearable-koppeling — hier i.p.v. Instellingen, zodat elke gebruiker dit zelf kan
-         doen zonder de (admin-)pincode nodig te hebben. -->
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Wearable</div></div>
-      <div class="card-body">
-        <div style="font-size:12px;color:var(--g4);margin-bottom:10px">Koppel je Fitbit (via Google Health) om HRV, rusthartslag en slaap automatisch aan te vullen in je ochtend check-in.</div>
-        <div id="profiel-wearable-detail" style="font-size:13px;color:var(--dark);margin-bottom:10px"><div class="tk-skel w60"></div></div>
-        <div id="profiel-wearable-actions" style="display:flex;gap:8px"></div>
-      </div>
-    </div>
-
-    <!-- Team — alleen zichtbaar voor coach/manager/owner (bepaald server-side via
-         gym-team.js whoami). Toegang tot de inhoud zelf vereist bovendien de door de
-         gym-owner ingestelde coach-pincode. -->
-    <div class="card" id="profiel-team-card" style="display:none">
-      <div class="card-hd"><div class="card-title">Team</div><button class="btn btn-o btn-sm" onclick="openTeamPinModal()">Openen</button></div>
-      <div class="card-body">
-        <div style="font-size:12px;color:var(--g4)">Ledenlijst, rollen en wijzigingslog voor je gym.</div>
-      </div>
-    </div>
-
-    <!-- Atleet profiel kaart -->
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Atleet</div><button class="btn btn-o btn-sm" onclick="openAtleetModal()">Bewerken</button></div>
-      <div class="card-body" id="profiel-atleet-card">
-        <p style="color:var(--g4);font-size:13px">Nog niet ingesteld</p>
-      </div>
-    </div>
-
-    <!-- Condities (bv. rugklachten, knieklachten, oedeem — per atleet) -->
     <div class="card">
       <div class="card-hd"><div class="card-title">Condities</div></div>
       <div class="card-body" id="profiel-conditions-card">
@@ -2460,70 +2447,119 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       </div>
     </div>
 
-    <!-- Lichaamscompositie laatste meting -->
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Lichaamscompositie</div><div class="card-sub" id="profiel-bc-date">—</div></div>
-      <div class="card-body" id="profiel-bc-card">
-        <p style="color:var(--g4);font-size:13px">Geen metingen</p>
-      </div>
-    </div>
-
-    <!-- Afmetingen -->
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Afmetingen</div></div>
-      <div class="card-body" id="profiel-afmetingen-card">
-        <p style="color:var(--g4);font-size:13px">Geen metingen</p>
-      </div>
-    </div>
-
-    <!-- Taille trend -->
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Taille trend</div><div class="card-sub" id="profiel-waist-lbl">—</div></div>
-      <div class="card-body"><div class="chart-wrap"><canvas id="profiel-waist-chart"></canvas></div></div>
-    </div>
-
-    <!-- Gewicht grafiek -->
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Gewicht trend</div><div class="card-sub" id="profiel-weight-lbl">—</div></div>
+    <div class="card" id="profiel-team-card" style="display:none">
+      <div class="card-hd"><div class="card-title">Team</div><button class="btn btn-o btn-sm" onclick="openTeamPinModal()">Openen</button></div>
       <div class="card-body">
-        <div class="chart-wrap"><canvas id="profiel-w-chart"></canvas></div>
-        <button class="btn btn-o btn-sm" onclick="openModal('m-weight')" style="margin-top:8px;width:100%">Gewicht loggen</button>
+        <div style="font-size:12px;color:var(--g4)">Ledenlijst, rollen en wijzigingslog voor je gym.</div>
       </div>
     </div>
 
-    <!-- Geschiedenis metingen -->
+    <div class="pf-sect">Meldingen</div>
     <div class="card">
-      <div class="card-hd"><div class="card-title">Geschiedenis</div></div>
-      <div class="card-body" id="profiel-history"></div>
+      <div class="card-hd"><div class="card-title">Meldingen &amp; Geluid</div></div>
+      <div class="card-body" style="padding:0 14px">
+        <button class="set-nav-row" onclick="go('s-meldingen')">
+          <div><div class="set-row-lbl">Meldingen</div><div class="set-row-sub">Per type in- of uitschakelen</div></div>
+          <span class="set-chevron" aria-hidden="true">&#8250;</span>
+        </button>
+        <div class="set-row">
+          <div class="set-row-txt"><div class="set-row-lbl">Geluid</div><div class="set-row-sub">De app heeft momenteel geen geluidseffecten &mdash; deze instelling wordt vast opgeslagen voor toekomstig gebruik.</div></div>
+          <button class="switch" role="switch" id="sw-sound" aria-checked="false" aria-label="Geluid"></button>
+        </div>
+        <div class="set-row">
+          <div class="set-row-txt"><div class="set-row-lbl">Trillingen</div><div class="set-row-sub">Bijv. bij het aflopen van de rusttimer</div></div>
+          <button class="switch" role="switch" id="sw-haptics" aria-checked="true" aria-label="Trillingen"></button>
+        </div>
+      </div>
     </div>
 
-    <!-- Doelen — toegangspunt conform H10 Navigation. Sprint 3. -->
+    <div class="pf-sect">Weergave</div>
     <div class="card">
-      <button class="set-nav-row" onclick="go('s-doelen')" style="padding:14px" aria-label="Doelen openen">
-        <div><div class="set-row-lbl">🎯 Doelen &amp; Challenges</div><div class="set-row-sub">Persoonlijke voortgang</div></div>
-        <span class="set-chevron" aria-hidden="true">›</span>
-      </button>
+      <div class="card-hd"><div class="card-title">Thema</div></div>
+      <div class="card-body">
+        <div class="seg" role="radiogroup" aria-label="Thema">
+          <button class="seg-opt" role="radio" id="theme-opt-light" onclick="setTheme('light')">Light</button>
+          <button class="seg-opt" role="radio" id="theme-opt-dark" onclick="setTheme('dark')">Dark</button>
+          <button class="seg-opt" role="radio" id="theme-opt-auto" onclick="setTheme('auto')">Automatisch</button>
+        </div>
+        <div style="font-size:11px;color:var(--g4);margin-top:8px">"Automatisch" volgt de instelling van je toestel.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Taal</div></div>
+      <div class="card-body">
+        <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Nederlands</div><div class="set-row-sub">Enige beschikbare taal op dit moment</div></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Privacy &amp; Toegankelijkheid</div></div>
+      <div class="card-body" style="padding:0 14px">
+        <button class="set-nav-row" onclick="go('s-privacy')">
+          <div><div class="set-row-lbl">Privacy</div><div class="set-row-sub">Wat we opslaan en waarom</div></div>
+          <span class="set-chevron" aria-hidden="true">&#8250;</span>
+        </button>
+        <div class="set-row">
+          <div class="set-row-txt"><div class="set-row-lbl">Toegankelijkheid &mdash; bewegingseffecten</div><div class="set-row-sub" id="reduced-motion-status">&mdash;</div></div>
+        </div>
+      </div>
     </div>
 
-    <!-- Instellingen — toegangspunt conform H10 Navigation (Profiel geeft toegang tot
-         Instellingen/Wearables/Team/Abonnement). Sprint 2. -->
+    <div class="pf-sect">Synchronisatie</div>
     <div class="card">
-      <button class="set-nav-row" onclick="go('s-settings')" style="padding:14px" aria-label="Instellingen openen">
-        <div><div class="set-row-lbl">⚙️ Instellingen</div><div class="set-row-sub">Thema, meldingen, privacy, toegankelijkheid</div></div>
-        <span class="set-chevron" aria-hidden="true">›</span>
-      </button>
+      <div class="card-hd"><div class="card-title">Data</div></div>
+      <div class="card-body">
+        <div class="adm-row"><div><div class="adm-lbl">Import logboek</div><div class="adm-sub" id="import-status">Selecteer een JSON importbestand</div></div><div style="margin-left:auto"><label class="btn btn-o btn-sm" style="cursor:pointer">Kies bestand<input type="file" accept=".json" style="display:none" onchange="importFromFile(this)"></label></div></div>
+        <div class="adm-row" style="border-top:1px solid var(--g2);padding-top:10px;margin-top:10px"><div><div class="adm-lbl">Exporteren</div><div class="adm-sub">CSV / JSON backup</div></div><div style="margin-left:auto"><button class="btn btn-o btn-sm" onclick="openModal('m-export')">Export</button></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Wearable</div></div>
+      <div class="card-body">
+        <div style="font-size:12px;color:var(--g4);margin-bottom:10px">Koppel je Fitbit (via Google Health) om HRV, rusthartslag en slaap automatisch aan te vullen in je ochtend check-in.</div>
+        <div id="profiel-wearable-detail" style="font-size:13px;color:var(--dark);margin-bottom:10px"><div class="tk-skel w60"></div></div>
+        <div id="profiel-wearable-actions" style="display:flex;gap:8px"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Offline &amp; opslag</div></div>
+      <div class="card-body" style="padding:0 14px">
+        <div class="set-row">
+          <div class="set-row-txt"><div class="set-row-lbl">Verbindingsstatus</div><div class="set-row-sub" id="settings-online-status">&mdash;</div></div>
+        </div>
+        <button class="set-nav-row" onclick="openOfflineQueueModal()">
+          <div><div class="set-row-lbl">Wachtrij offline-acties</div><div class="set-row-sub" id="settings-queue-sub">Bekijk nog niet gesynchroniseerde acties</div></div>
+          <span class="set-chevron" aria-hidden="true">&#8250;</span>
+        </button>
+        <div class="set-row">
+          <div class="set-row-txt"><div class="set-row-lbl">Cache verversen</div><div class="set-row-sub">Haalt de nieuwste appversie op &mdash; je trainingsdata blijft bewaard</div></div>
+          <button class="btn btn-o btn-sm" onclick="clearAppCache()">Verversen</button>
+        </div>
+      </div>
     </div>
 
-    <!-- Coach analyse knop -->
-    <button class="btn btn-d" onclick="askCoachProfiel()" style="margin-bottom:12px">🤖 Coach: analyseer mijn metingen</button>
+    <div class="pf-sect">Over</div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">App-informatie</div></div>
+      <div class="card-body" style="padding:0 14px">
+        <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Versie</div><div class="set-row-sub" id="settings-app-ver">&mdash;</div></div></div>
+        <button class="set-nav-row" onclick="go('s-help')">
+          <div><div class="set-row-lbl">Help &amp; over de app</div><div class="set-row-sub">FAQ, contact, feedback, licenties</div></div>
+          <span class="set-chevron" aria-hidden="true">&#8250;</span>
+        </button>
+        <div class="set-row">
+          <div class="set-row-txt"><div class="set-row-lbl">Debuginformatie</div><div class="set-row-sub" id="settings-debug-info" style="font-family:monospace;font-size:11px">&mdash;</div></div>
+        </div>
+      </div>
+    </div>
+
     <div style="height:8px"></div>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
 </div>
 
@@ -2536,95 +2572,17 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
-
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Thema</div></div>
-      <div class="card-body">
-        <div class="seg" role="radiogroup" aria-label="Thema">
-          <button class="seg-opt" role="radio" id="theme-opt-light" onclick="setTheme('light')">Light</button>
-          <button class="seg-opt" role="radio" id="theme-opt-dark" onclick="setTheme('dark')">Dark</button>
-          <button class="seg-opt" role="radio" id="theme-opt-auto" onclick="setTheme('auto')">Automatisch</button>
-        </div>
-        <div style="font-size:11px;color:var(--g4);margin-top:8px">"Automatisch" volgt de instelling van je toestel.</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Taal</div></div>
-      <div class="card-body">
-        <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Nederlands</div><div class="set-row-sub">Enige beschikbare taal op dit moment</div></div></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Meldingen &amp; Geluid</div></div>
-      <div class="card-body" style="padding:0 14px">
-        <button class="set-nav-row" onclick="go('s-meldingen')">
-          <div><div class="set-row-lbl">Meldingen</div><div class="set-row-sub">Per type in- of uitschakelen</div></div>
-          <span class="set-chevron" aria-hidden="true">›</span>
-        </button>
-        <div class="set-row">
-          <div class="set-row-txt"><div class="set-row-lbl">Geluid</div><div class="set-row-sub">De app heeft momenteel geen geluidseffecten — deze instelling wordt vast opgeslagen voor toekomstig gebruik.</div></div>
-          <button class="switch" role="switch" id="sw-sound" aria-checked="false" aria-label="Geluid"></button>
-        </div>
-        <div class="set-row">
-          <div class="set-row-txt"><div class="set-row-lbl">Trillingen</div><div class="set-row-sub">Bijv. bij het aflopen van de rusttimer</div></div>
-          <button class="switch" role="switch" id="sw-haptics" aria-checked="true" aria-label="Trillingen"></button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Privacy &amp; Toegankelijkheid</div></div>
-      <div class="card-body" style="padding:0 14px">
-        <button class="set-nav-row" onclick="go('s-privacy')">
-          <div><div class="set-row-lbl">Privacy</div><div class="set-row-sub">Wat we opslaan en waarom</div></div>
-          <span class="set-chevron" aria-hidden="true">›</span>
-        </button>
-        <div class="set-row">
-          <div class="set-row-txt"><div class="set-row-lbl">Toegankelijkheid — bewegingseffecten</div><div class="set-row-sub" id="reduced-motion-status">—</div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Offline &amp; opslag</div></div>
-      <div class="card-body" style="padding:0 14px">
-        <div class="set-row">
-          <div class="set-row-txt"><div class="set-row-lbl">Verbindingsstatus</div><div class="set-row-sub" id="settings-online-status">—</div></div>
-        </div>
-        <button class="set-nav-row" onclick="openOfflineQueueModal()">
-          <div><div class="set-row-lbl">Wachtrij offline-acties</div><div class="set-row-sub" id="settings-queue-sub">Bekijk nog niet gesynchroniseerde acties</div></div>
-          <span class="set-chevron" aria-hidden="true">›</span>
-        </button>
-        <div class="set-row">
-          <div class="set-row-txt"><div class="set-row-lbl">Cache verversen</div><div class="set-row-sub">Haalt de nieuwste appversie op — je trainingsdata blijft bewaard</div></div>
-          <button class="btn btn-o btn-sm" onclick="clearAppCache()">Verversen</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-hd"><div class="card-title">App-informatie</div></div>
-      <div class="card-body" style="padding:0 14px">
-        <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Versie</div><div class="set-row-sub" id="settings-app-ver">—</div></div></div>
-        <button class="set-nav-row" onclick="go('s-help')">
-          <div><div class="set-row-lbl">Help &amp; over de app</div><div class="set-row-sub">FAQ, contact, feedback, licenties</div></div>
-          <span class="set-chevron" aria-hidden="true">›</span>
-        </button>
-        <div class="set-row">
-          <div class="set-row-txt"><div class="set-row-lbl">Debuginformatie</div><div class="set-row-sub" id="settings-debug-info" style="font-family:monospace;font-size:11px">—</div></div>
-        </div>
-      </div>
-    </div>
-
+    <div class="card"><div class="card-body">
+      <p style="font-size:13px;color:var(--g4);margin-bottom:10px">Instellingen staan nu overzichtelijk in je Profiel (Thema, Meldingen, Synchronisatie, Over).</p>
+      <button class="btn btn-r btn-sm" style="width:100%" onclick="go('s-profiel')">Naar Profiel</button>
+    </div></div>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
     <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
 </div>
 
@@ -2726,8 +2684,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
     <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
 </div>
 
@@ -2879,8 +2837,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
 </div>
 
@@ -2898,8 +2856,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
 </div>
 
@@ -2907,6 +2865,12 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <div class="scr" id="s-stats">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Voortgang</div><div class="hdr-sub" id="stats-peak-sub">1RM &amp; peakdoel</div></div><button class="ibtn" onclick="refreshStats()" aria-label="Statistieken vernieuwen">↻</button></div></div>
   <div class="scroll" style="padding-top:8px">
+    <div class="card">
+      <button class="set-nav-row" onclick="go('s-doelen')" style="padding:14px" aria-label="Doelen openen">
+        <div><div class="set-row-lbl">🎯 Doelen &amp; Challenges</div><div class="set-row-sub">Persoonlijke voortgang</div></div>
+        <span class="set-chevron" aria-hidden="true">›</span>
+      </button>
+    </div>
     <div class="card"><div class="card-hd"><div class="card-title">Geschatte 1RM</div><div class="card-sub">Epley formule · live</div></div>
       <div class="card-body">
         <div class="ex-pick-filters" id="prog-filters" style="margin-bottom:6px"></div>
@@ -2959,8 +2923,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni active" aria-current="page" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
 </div>
 
@@ -2971,8 +2935,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot"></div></button>
     <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
 </div>
 
@@ -3005,8 +2969,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
 </div>
 
@@ -3023,8 +2987,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
 </div>
 
@@ -3041,8 +3005,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
 </div>
 
@@ -3050,7 +3014,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <div class="scr" id="s-lichaam">
   <div class="hdr">
     <div class="hdr-row">
-      <div><div class="hdr-title" role="heading" aria-level="1">Lichaam</div><div class="hdr-sub">Spierherstel · anatomie</div></div>
+      <div><div class="hdr-title" role="heading" aria-level="1">Lichaam</div><div class="hdr-sub">Spierherstel · anatomie · metingen</div></div>
+      <button class="ibtn" onclick="openModal('m-bc')" aria-label="Lichaamsmeting toevoegen">＋</button>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
@@ -3062,14 +3027,43 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
     <div class="v43-lbl" style="margin:4px 0 12px">Per spiergroep</div>
     <div id="v43-lich-list"></div>
+    <div class="v43-lbl" style="margin:16px 0 12px">Lichaamsmetingen</div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Lichaamscompositie</div><div class="card-sub" id="profiel-bc-date">—</div></div>
+      <div class="card-body" id="profiel-bc-card">
+        <p style="color:var(--g4);font-size:13px">Geen metingen</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Afmetingen</div></div>
+      <div class="card-body" id="profiel-afmetingen-card">
+        <p style="color:var(--g4);font-size:13px">Geen metingen</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Taille trend</div><div class="card-sub" id="profiel-waist-lbl">—</div></div>
+      <div class="card-body"><div class="chart-wrap"><canvas id="profiel-waist-chart"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Gewicht trend</div><div class="card-sub" id="profiel-weight-lbl">—</div></div>
+      <div class="card-body">
+        <div class="chart-wrap"><canvas id="profiel-w-chart"></canvas></div>
+        <button class="btn btn-o btn-sm" onclick="openModal('m-weight')" style="margin-top:8px;width:100%">Gewicht loggen</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Geschiedenis</div></div>
+      <div class="card-body" id="profiel-history"></div>
+    </div>
+    <button class="btn btn-d" onclick="askCoachProfiel()" style="margin-bottom:12px">🤖 Coach: analyseer mijn metingen</button>
     <div style="height:8px"></div>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
     <button class="ni active" aria-current="page" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
 </div>
 
@@ -3089,8 +3083,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
 </div>
 
@@ -3133,8 +3127,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
 </div>
 
@@ -3153,8 +3147,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
 </div>
 
@@ -3175,8 +3169,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
 </div>
 
@@ -3232,8 +3226,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
     <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni active" aria-current="page" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
   </nav>
 </div>
 
@@ -4031,7 +4025,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.18.0';
+const APP_VER = 'v4.19.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -5760,7 +5754,7 @@ function go(id){
   if(id==='s-programma'){renderProgrammaList();}
   if(id==='s-kalender'){renderKalender();}
   if(id==='s-stats')refreshStatsScreen();
-  if(id==='s-profiel')refreshProfiel();
+  if(id==='s-profiel'){refreshProfiel();refreshSettingsScreen();}
   if(id==='s-admin')refreshAdmin();
   if(id==='s-coach')focusCoach();
   if(id==='s-settings')refreshSettingsScreen();
@@ -7197,8 +7191,9 @@ function buildVasteTrainingScreen(vt){
       <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
       <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
       <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-      <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-      <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+      <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
+      
     </nav>`;
 }
 
@@ -11791,6 +11786,26 @@ function ratioFactor(liftA, liftB, estA, estB){
 async function refreshProfiel(){
   const accEl=document.getElementById('account-email-lbl');
   if(accEl)accEl.textContent=authSession?.user?.email||'—';
+  // v4.19.0 (Sprint 5.2) — premium Hero met identiteit + AI Coach-status (echte atleetdata).
+  const heroEl=document.getElementById('pf-hero');
+  if(heroEl){
+    const naam=(atleet&&atleet.naam&&String(atleet.naam).trim())||'Atleet';
+    const foto=(atleet&&atleet.foto)?atleet.foto:'';
+    const niv=(atleet&&atleet.niveau)?String(atleet.niveau):'';
+    const sportMap={crossfit:'CrossFit/Functioneel'};
+    const sport=(atleet&&atleet.sport)?(sportMap[atleet.sport]||atleet.sport):'';
+    const sub=[niv?niv.charAt(0).toUpperCase()+niv.slice(1)+' atleet':'', sport].filter(Boolean).join(' · ')||'Stel je atleetprofiel in';
+    const avInner=foto?`<img src="${escHtml(foto)}" alt="Profiel">`:escHtml(naam.charAt(0).toUpperCase());
+    heroEl.innerHTML=`
+      <div class="pf-hero-top">
+        <div class="pf-av">${avInner}</div>
+        <div style="min-width:0"><div class="pf-hero-nm">${escHtml(naam)}</div><div class="pf-hero-sub">${escHtml(sub)}</div></div>
+        <button class="pf-hero-edit" onclick="openAtleetModal()" aria-label="Profiel bewerken"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h4L18 10l-4-4L4 16v4zM14 6l4 4"/></svg></button>
+      </div>
+      <div class="pf-hero-pills">
+        <span class="pf-pill"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.6 4.8L18 8l-4.4 1.2L12 14l-1.6-4.8L6 8l4.4-1.2z"/></svg>AI Coach actief</span>
+      </div>`;
+  }
   renderConditionsList();
   renderWearableCard();
   checkTeamAccess();
@@ -11813,11 +11828,18 @@ async function refreshProfiel(){
         Masters 50+ atleet · IPF leeftijdscorrectie factor ${mf.toFixed(2)}× actief in coach berekeningen</div>`:''}`;
   }
 
+  // v4.19.0 (Sprint 5.2) — lichaamsmetingen leven nu op het Lichaam-tabblad.
+  // renderBodyMeasurements() wordt door renderLichaam() aangeroepen; hier niet meer.
+}
+
+// v4.19.0 (Sprint 5.2) — losgekoppelde render van de lichaamsmetingen (verplaatst
+// vanuit Profiel naar Lichaam). Zelfde data/logica; alleen locatie gewijzigd.
+async function renderBodyMeasurements(){
   // Lichaamscompositie
   const bc = await sbGet('body_comp','&order=date.desc,created_at.desc&limit=1');
   const lat = bc[0];
   if(lat){
-    document.getElementById('profiel-bc-date').textContent = lat.date;
+    const bcDateEl=document.getElementById('profiel-bc-date'); if(bcDateEl) bcDateEl.textContent = lat.date;
     const wd = await sbGet('weight_log','&order=date.desc,created_at.desc&limit=1');
     const wt = wd[0]?.weight;
     const bmiVal = (wt && atleet.lengte) ? Math.round(wt/Math.pow(atleet.lengte/100,2)*10)/10 : null;
@@ -12278,8 +12300,9 @@ function buildProgramTrainScreen(block,prog){
       <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
       <button class="ni active" aria-current="page"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
       <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-      <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-      <button class="ni" onclick="go('s-profiel')"><span class="ni-icon">👤</span><span class="ni-label">Profiel</span></button>
+      <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
+      
     </nav>`;
 }
 
@@ -12314,7 +12337,8 @@ function buildCustomTrainScreen(t){
       <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
       <button class="ni active" aria-current="page"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
       <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-      <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
+      <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
       <button class="ni" onclick="openBeheer()"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
     </nav>`;
 }
@@ -13292,6 +13316,8 @@ async function renderLichaam(){
       return `<div class="v43-lich-row"><div class="top"><span class="nm">${escHtml(r.muscle)}</span><span class="st">${lab}</span></div><div class="v43-lich-bar"><span style="width:${r.pct}%;background:${c}"></span></div></div>`;
     }).join('');
   }
+  // v4.19.0 (Sprint 5.2) — lichaamsmetingen (verplaatst vanuit Profiel) op dit tabblad renderen.
+  try{renderBodyMeasurements();}catch(e){}
 }
 function v43LichView(view){
   recoveryHeatmapView=view;

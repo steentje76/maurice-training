@@ -1991,6 +1991,49 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-library .lib-list .lib-it-sub{font-size:11.5px;color:var(--g4);font-weight:600;margin-top:2px}
 #s-library .lib-list .lib-it-r{font-size:12.5px;font-weight:800;color:var(--dark)}
 #s-library .lib-count{font-size:11.5px;color:var(--g4);font-weight:700;margin:6px 2px 10px}
+/* ══════════════════════════════════════════════════════════════════
+   v4.12.0 — Sprint 4.7 Fase 6: Oefening-detail (premium).
+   Presentatie-only; ExerciseIntelligence-dashboard/coach/video/vergelijken
+   behouden. Eén chip-rij (geen dubbele badges), SVG-chevrons, geen emoji.
+   ══════════════════════════════════════════════════════════════════ */
+#s-library.lib-detailview>.hdr{display:none}
+#s-library .lib-detail-top{display:flex;justify-content:space-between;align-items:center;padding:6px 0 8px}
+#s-library .lib-back,#s-library .lib-favbtn{width:40px;height:40px;border-radius:50%;background:var(--card);box-shadow:var(--shadow);border:0;display:flex;align-items:center;justify-content:center;color:var(--dark);font-size:18px;cursor:pointer}
+#s-library .lib-favbtn.on{color:#F0B429}
+#s-library .lib-hero{border-radius:20px;overflow:hidden;box-shadow:0 14px 30px rgba(0,0,0,.20);margin:2px 0 14px}
+#s-library .lib-hero .lib-imgbox.hero{aspect-ratio:16/11}
+#s-library .lib-d-name{font-size:25px;font-weight:800;color:var(--dark);letter-spacing:-.5px;line-height:1.05;margin:2px 0 0}
+#s-library .lib-motiv{font-size:13px;color:var(--g4);font-style:italic;margin-top:7px;border-left:3px solid var(--accent);padding-left:11px}
+/* Eén schone chip-rij (neutrale premium chips, geen kleurranden) */
+#s-library .lib-badges2.detailbadges{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
+#s-library .lib-badges2.detailbadges .lib-b2{background:var(--g1);color:var(--dark);border:0;font-size:11px;font-weight:700;padding:6px 11px;border-radius:9px}
+/* AI-analyse kaart */
+#s-library .lib-aiwrap{background:var(--card);border-radius:18px;box-shadow:var(--shadow);border-left:4px solid var(--accent);padding:2px;margin:16px 0 12px}
+#s-library .lib-ai{padding:15px}
+#s-library .lib-ai-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+#s-library .lib-ai-h span:first-child{font-size:15px;font-weight:800;color:var(--dark)}
+#s-library .lib-ai-stars{color:#F0B429;font-size:13px;font-weight:800}
+#s-library .lib-ai-cols{display:flex;flex-direction:column;gap:11px}
+#s-library .lib-ai-t{font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px}
+/* kleuren van .lib-ai-t komen uit de bestaande basisregels (met licht+dark-varianten) */
+#s-library .lib-ai-col ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin:0}
+#s-library .lib-ai-col li{font-size:11.5px;font-weight:600;color:var(--dark);background:var(--g1);border-radius:9px;padding:6px 10px}
+/* Accordions premium (SVG-chevron) */
+#s-library .lib5d-acc{background:var(--card);border-radius:14px;box-shadow:var(--shadow);margin-bottom:8px;overflow:hidden}
+#s-library .lib5d-acc.open{border-left:3px solid var(--accent)}
+#s-library .lib5d-acc .lib-acc-t{font-size:14.5px;font-weight:800;color:var(--dark)}
+#s-library .lib5d-acc .lib-acc-ar{display:flex;align-items:center;color:var(--g4);transition:transform .22s ease}
+#s-library .lib5d-acc .lib-acc-ar svg{width:18px;height:18px;stroke:var(--g4)}
+#s-library .lib5d-acc.open .lib-acc-ar{transform:rotate(180deg)}
+#s-library .lib5d-acc .lib-cs-chip,#s-library .lib5d-acc .lib-acc-chips .lib-cs-chip{font-size:10px;font-weight:700;padding:3px 8px;border-radius:7px;background:var(--g1);color:var(--g4)}
+/* Uitvoering-stappen: teal genummerd */
+#s-library .lib-steps{counter-reset:step;list-style:none;display:flex;flex-direction:column;gap:11px;padding:0}
+#s-library .lib-steps li{counter-increment:step;display:flex;gap:11px;align-items:flex-start;font-size:13.5px;color:var(--dark);font-weight:500;line-height:1.35}
+#s-library .lib-steps li::before{content:counter(step);width:24px;height:24px;border-radius:8px;background:var(--v43-mint);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:0 0 auto}
+#s-library .lib-sub-h{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--y);margin:15px 0 8px}
+/* Vergelijk-knop */
+#s-library .lib5d-cmp{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:13px;padding:14px;font-weight:800;font-size:13.5px;background:var(--v43-mint);color:var(--accent);margin:4px 0 8px;cursor:pointer}
+#s-library .lib5d-cmp svg{width:16px;height:16px;stroke:var(--accent);fill:none}
 
 </style>
 </head>
@@ -3750,7 +3793,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.11.0';
+const APP_VER = 'v4.12.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -7731,7 +7774,7 @@ function _heroBadges(c){var Id=c.identity,m=ExerciseIntelligence.meta(c),out=[];
   if(Id.primary[0])out.push({i:'💪',l:Id.primary[0],cls:'b-muscle'});var e=_eqBadge(Id.equipment);if(e)out.push(e);
   if((Id.goals||[]).length)out.push({i:'🎯',l:_goalNL(Id.goals[0]),cls:'b-goal'});
   return out;}
-function _badgeRow(list,cls){return '<div class="lib-badges2'+(cls?' '+cls:'')+'">'+list.map(function(b){return '<span class="lib-b2 '+b.cls+'">'+b.i+' '+escHtml(b.l)+'</span>';}).join('')+'</div>';}
+function _badgeRow(list,cls){return '<div class="lib-badges2'+(cls?' '+cls:'')+'">'+list.map(function(b){return '<span class="lib-b2 '+b.cls+'">'+escHtml(b.l)+'</span>';}).join('')+'</div>';}
 function _overlayChip(c){var t=_typeBadge(c.identity.type);var loc=c.flags.home_gym_ready?{i:'🏠',l:'Thuis'}:{i:'🏋',l:'Gym'};
   return '<span class="lib-ov lib-ov-tl">'+(t?t.i+' '+escHtml(t.l):escHtml(_libCap(c.identity.type)))+'</span><span class="lib-ov lib-ov-tr">★ '+ExerciseIntelligence.rating(c).toFixed(1)+'</span>';}
 
@@ -7894,6 +7937,9 @@ function _suggestBox(q){q=q.toLowerCase().trim();if(q.length<1)return '';
 
 function renderLibBody(){
   var host=document.getElementById('lib-body');if(!host)return;var E=ExerciseCatalogService;
+  // v4.12.0 — in detail/vergelijk-weergave de bibliotheek-kop verbergen (eigen top-bar).
+  var _sl=document.getElementById('s-library');
+  if(_sl)_sl.classList.toggle('lib-detailview',['detail','compare','cmppick'].indexOf(_libState.view)>=0);
   _libDisposeVideo(); // stop/ontkoppel actieve video vóór her-render (geen video na verlaten scherm)
   if(_libState.view==='detail'&&_libState.detail){host.innerHTML=_libDetailHtml(_libState.detail);_libBindDetail();_libObserve(document.querySelector('#s-library .scroll'));return;}
   if(_libState.view==='cmppick'){host.innerHTML=_cmpPickerHtml(_libState.cmpA);_libBindCmpPick();_libObserve(document.getElementById('lib-scroll'));return;}
@@ -7990,7 +8036,7 @@ function _radial(v,label,color){var R=22,Cc=2*Math.PI*R,off=Cc*(1-v/100);
 /* ── Exercise Intelligence Dashboard (bestaande metadata → premium visualisaties + uitleg) ── */
 function _aiCard(c){var m=ExerciseIntelligence.meta(c),sum=_aiSummary(c);
   var col=function(items,cls,ico,title){return '<div class="lib-ai-col"><div class="lib-ai-t '+cls+'">'+escHtml(title)+'</div><ul>'+items.map(function(x){return '<li>'+ico+' '+escHtml(x)+'</li>';}).join('')+'</ul></div>';};
-  return '<div class="lib-ai"><div class="lib-ai-h"><span>🤖 AI-analyse</span><span class="lib-ai-stars">'+_stars(Math.round(m.rating))+' '+m.rating.toFixed(1)+'</span></div><div class="lib-ai-cols">'+col(sum.perfect,'good','✔','Perfect voor')+col(sum.letop,'warn','⚠','Let op')+col(sum.wanneer,'info','✓','Geschikt wanneer')+'</div></div>';}
+  return '<div class="lib-ai"><div class="lib-ai-h"><span>AI-analyse</span><span class="lib-ai-stars">'+_stars(Math.round(m.rating))+' '+m.rating.toFixed(1)+'</span></div><div class="lib-ai-cols">'+col(sum.perfect,'good','✓','Perfect voor')+col(sum.letop,'warn','!','Let op')+col(sum.wanneer,'info','·','Geschikt wanneer')+'</div></div>';}
 function _idxBar(c,k){var s=ExerciseIntelligence.scores(c),L=ExerciseIntelligence.labels,W=ExerciseIntelligence.why;var v=s[k];var lvl=v>=67?'hoog':(v>=40?'mid':'laag');
   return '<div class="lib-idx"><div class="lib-idx-h"><span class="lib-idx-l">'+escHtml(L[k])+'</span><span class="lib-idx-v lvl-'+lvl+'">'+v+' <em>'+_scoreLabel(v)+'</em></span></div><div class="lib-scorebar"><span style="width:'+v+'%;background:'+_scoreCol(k,v)+'"></span></div><div class="lib-idx-why">'+escHtml(W(k,v))+'</div></div>';}
 function _intelDashboard(c){var s=ExerciseIntelligence.scores(c),L=ExerciseIntelligence.labels;
@@ -8004,7 +8050,7 @@ function _intelDashboard(c){var s=ExerciseIntelligence.scores(c),L=ExerciseIntel
     '<button class="lib-more" id="lib-more-idx" aria-expanded="false" aria-controls="lib-idx-rest">Meer analyses ▾</button>'+
     '<div class="lib-idxs" id="lib-idx-rest" hidden>'+restBars+'</div>';}
 /* Accordion-wrapper (overzicht; pure CSS-animatie) */
-function _acc(key,title,html,open,sub){return '<div class="lib-acc'+(open?' open':'')+'" data-acc="'+key+'"><button class="lib-acc-h" aria-expanded="'+(open?'true':'false')+'"><span class="lib-acc-t">'+title+(sub?'<span class="lib-acc-sub">'+sub+'</span>':'')+'</span><span class="lib-acc-ar">▾</span></button><div class="lib-acc-b"'+(open?'':' hidden')+'>'+html+'</div></div>';}
+function _acc(key,title,html,open,sub){return '<div class="lib-acc lib5d-acc'+(open?' open':'')+'" data-acc="'+key+'"><button class="lib-acc-h" aria-expanded="'+(open?'true':'false')+'"><span class="lib-acc-t">'+title+(sub?'<span class="lib-acc-sub">'+sub+'</span>':'')+'</span><span class="lib-acc-ar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span></button><div class="lib-acc-b"'+(open?'':' hidden')+'>'+html+'</div></div>';}
 
 /* ── Misschien ook interessant (Recommendation Engine + ECS-categorieën, gededupliceerd) ── */
 function _interessant(c){var E=ExerciseCatalogService,id=c.catalog_id,Id=c.identity,pm=Id.primary,seen={};seen[id]=1;
@@ -8076,7 +8122,7 @@ function _libDetailHtml(id){var E=ExerciseCatalogService;var c=E.byId(id);if(!c)
   var out='<div class="scroll" id="lib-scroll">';
   // Hero (parallax, gradient, glass badges, fade-in)
   out+='<div class="lib-detail-top"><button class="lib-back" id="lib-back" aria-label="Terug">←</button><button class="lib-favbtn'+(fav?' on':'')+'" id="lib-fav" aria-pressed="'+(fav?'true':'false')+'" aria-label="Favoriet toevoegen">'+(fav?'★':'☆')+'</button></div>';
-  out+='<div class="lib-hero" data-muscle-visual="reserved">'+_imgBox(id,Id.name,'hero','<span class="lib-hero-grad"></span>')+_badgeRow(_heroBadges(c),'onhero')+'</div>';
+  out+='<div class="lib-hero" data-muscle-visual="reserved">'+_imgBox(id,Id.name,'hero','<span class="lib-hero-grad"></span>')+'</div>';
   out+='<h2 class="lib-d-name">'+escHtml(Id.name)+'</h2>';
   out+='<p class="lib-motiv">“'+escHtml(_motivation(c))+'”</p>';
   out+=_badgeRow(_heroBadges(c),'detailbadges');
@@ -8086,23 +8132,23 @@ function _libDetailHtml(id){var E=ExerciseCatalogService;var c=E.byId(id);if(!c)
   // 1 Uitvoering (stappen + veelgemaakte fouten), standaard open
   if(I.cues&&I.cues.length){
     var stepsHtml='<ol class="lib-steps">'+I.cues.map(function(x){return '<li>'+escHtml(x)+'</li>';}).join('')+'</ol>'+
-      ((I.mistakes&&I.mistakes.length)?'<div class="lib-sub-h">⚠️ Veelgemaakte fouten</div><ul class="lib-ul warn">'+I.mistakes.map(function(x){return '<li>'+escHtml(x)+'</li>';}).join('')+'</ul>':'');
-    out+=_acc('steps','▶ Uitvoering',stepsHtml,true);
+      ((I.mistakes&&I.mistakes.length)?'<div class="lib-sub-h">Veelgemaakte fouten</div><ul class="lib-ul warn">'+I.mistakes.map(function(x){return '<li>'+escHtml(x)+'</li>';}).join('')+'</ul>':'');
+    out+=_acc('steps','Uitvoering',stepsHtml,true);
   }
   // 2 Coach
-  out+=_acc('coach','▶ Coach','<div class="lib-coach">'+coach.map(function(a){return '<div class="lib-cc lib-cc--'+a.k+'"><div class="lib-cc-h"><span class="lib-cc-i">'+a.i+'</span><b>'+escHtml(a.t)+'</b></div><p>'+escHtml(a.x)+'</p></div>';}).join('')+'</div>',false,'<span class="lib-acc-chips">'+[_goalNL(mm.primaryGoal),'RPE '+rpe,mm.recovery].map(function(x){return '<span class="lib-cs-chip">'+escHtml(x)+'</span>';}).join('')+'</span>');
+  out+=_acc('coach','Coach','<div class="lib-coach">'+coach.map(function(a){return '<div class="lib-cc lib-cc--'+a.k+'"><div class="lib-cc-h"><span class="lib-cc-i">'+a.i+'</span><b>'+escHtml(a.t)+'</b></div><p>'+escHtml(a.x)+'</p></div>';}).join('')+'</div>',false,'<span class="lib-acc-chips">'+[_goalNL(mm.primaryGoal),'RPE '+rpe,mm.recovery].map(function(x){return '<span class="lib-cs-chip">'+escHtml(x)+'</span>';}).join('')+'</span>');
   // 3 Exercise Intelligence Dashboard (+ spieren & equipment + statistieken)
   var muscHtml='<div class="lib-sub-h">Spieren &amp; equipment</div><div class="lib-musc"><div><span class="lib-musc-lbl">Primair</span>'+(Id.primary.map(function(x){return '<span class="lib-mchip on">'+escHtml(x)+'</span>';}).join('')||'<span class="lib-muted">—</span>')+'</div><div><span class="lib-musc-lbl">Secundair</span>'+(Id.secondary.map(function(x){return '<span class="lib-mchip">'+escHtml(x)+'</span>';}).join('')||'<span class="lib-muted">—</span>')+'</div><div><span class="lib-musc-lbl">Equipment</span>'+(Id.equipment.map(function(e){return '<span class="lib-mchip">'+escHtml(_libCap(e))+'</span>';}).join('')||'<span class="lib-muted">—</span>')+'</div></div>';
-  out+=_acc('intel','▶ Exercise Intelligence',_intelDashboard(c)+muscHtml+'<div class="lib-sub-h">Statistieken &amp; richtlijnen</div>'+_statList(c),false);
+  out+=_acc('intel','Exercise Intelligence',_intelDashboard(c)+muscHtml+'<div class="lib-sub-h">Statistieken &amp; richtlijnen</div>'+_statList(c),false);
   // 4 Vergelijkingen (CTA)
-  out+='<button class="lib-cmp-btn" id="lib-cmp" aria-label="Vergelijk met andere oefening">⚖️ Vergelijk met andere oefening</button>';
+  out+='<button class="lib-cmp-btn lib5d-cmp" id="lib-cmp" aria-label="Vergelijk met andere oefening"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v18M5 7h14M7 7l-3 6a3 3 0 006 0zM17 7l-3 6a3 3 0 006 0z"/></svg> Vergelijk met andere oefening</button>';
   // 5 Gerelateerde oefeningen (contextueel)
   var inter=_interessant(c);
-  if(inter.length)out+=_acc('reco','▶ Gerelateerde oefeningen','<p class="lib-reco-lead">Omdat je “'+escHtml(Id.name)+'” bekijkt:</p>'+inter.map(function(g){return '<div class="lib-altg"><div class="lib-altg-h">'+g.i+' '+escHtml(g.t)+'</div>'+_row(g.g)+'</div>';}).join(''),false);
+  if(inter.length)out+=_acc('reco','Gerelateerde oefeningen','<p class="lib-reco-lead">Omdat je “'+escHtml(Id.name)+'” bekijkt:</p>'+inter.map(function(g){return '<div class="lib-altg"><div class="lib-altg-h">'+escHtml(g.t)+'</div>'+_row(g.g)+'</div>';}).join(''),false);
   // 6 Video
-  out+=_acc('video','▶ Video',_videoBlock(id),false);
+  out+=_acc('video','Video',_videoBlock(id),false);
   // 7 Bronnen
-  out+=_acc('bron','▶ Bronnen','<ul class="lib-src"><li>📚 Oefening &amp; poster: <b>MoveKit Exercise Library</b></li><li>🧠 Intelligence-indicatoren: afgeleid uit doel, type, herstel &amp; belasting (bestaande metadata)</li><li>📊 Richtlijnen (sets/reps/tempo): indicatief, algemene kracht- &amp; hypertrofie-principes</li></ul>',false);
+  out+=_acc('bron','Bronnen','<ul class="lib-src"><li>Oefening &amp; poster: <b>MoveKit Exercise Library</b></li><li>Intelligence-indicatoren: afgeleid uit doel, type, herstel &amp; belasting (bestaande metadata)</li><li>Richtlijnen (sets/reps/tempo): indicatief, algemene kracht- &amp; hypertrofie-principes</li></ul>',false);
   out+='<div style="height:30px"></div></div>';
   return out;}
 

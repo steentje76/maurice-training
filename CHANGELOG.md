@@ -1,5 +1,26 @@
 # Trainingskompas — Changelog
 
+## v4.24.15 — 7 augustus 2026 (Sprint 6.0.1 — Data Architectuur: favorieten samengevoegd)
+*Onderdeel van Sprint 6.0, Enterprise Architecture & Data Foundation. Lost een sinds Sprint 5.9.3 bekende, tweemaal bewust uitgestelde bevinding op — nu wél in scope, want dit werkpakket vraagt letterlijk om "één duidelijke bron van waarheid" per gegevenssoort.*
+
+### Probleem
+Twee volledig gescheiden, nooit-gesynchroniseerde favorieten-systemen voor hetzelfde concept: `exercise_favorites` (Supabase, cross-device, gebruikt in de oefeningkiezer en de 1RM-statistieklijst) en `tk_lib_favs` (localStorage-only, gebruikt in het Bibliotheek-scherm). Een oefening favorieten vanuit de Bibliotheek toonde niet als favoriet elders in de app, en omgekeerd.
+
+### Fix
+- **Supabase (`exercise_favorites`) is nu de enige bron van waarheid.** `ExerciseCatalogService` (Bibliotheek-module) leest/schrijft niet langer een eigen lokale `_fav`-lijst, maar gebruikt de al bestaande, globale `favoriteExIds`/`toggleFavorite()`.
+- `isFavorite()` blijft synchroon (leest de al-geladen `favoriteExIds`-Set — geen rendervertraging). `toggleFavorite()` is nu async (roept de bestaande Supabase-aanroep aan); de enige aanroeper (het favorietknopje in de detailweergave) is meegenomen naar `await`.
+- **Eenmalige, veilige migratie** (`migrateLibraryFavoritesToSupabase()`): bestaande lokale Bibliotheek-favorieten worden overgezet naar Supabase zodra iemand na de update inlogt. De oude `tk_lib_favs`-sleutel wordt **uitsluitend opgeruimd als bevestigd is dat alles daadwerkelijk is overgezet** — bij een netwerkfout onderweg blijft de data staan voor een nieuwe poging bij de volgende app-load. Geen dataverlies mogelijk.
+- Ingehaakt op app-start (`startAppAfterAuth`), zelfde fire-and-forget-patroon als de overige achtergrond-caches daar — laadt meteen ook `favoriteExIds` vroeg, ruim vóór een gebruiker bewust naar de Bibliotheek navigeert.
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- `logic_tests.js`: 192/192 (uit Sprint 5.9) + 4 nieuwe tests voor de migratielogica (niets te migreren, volledige migratie, geen dubbele overzetting bij overlap, data behouden bij mislukte overzetting) = **196/196 geslaagd**.
+
+### Gewijzigd
+- `APP_VER` v4.24.14 → **v4.24.15**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v42415`.
+
+---
+
 ## Sprint 5.9.8 — 7 augustus 2026 (Schaalbaarheidsanalyse) — geen codewijziging
 *Onderdeel van Sprint 5.9. Zuiver analyserapport, geen implementatie — zie het volledige Sprint 5.9-eindrapport voor details.*
 

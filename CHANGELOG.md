@@ -1,5 +1,25 @@
 # Trainingskompas — Changelog
 
+## v4.24.1 — 7 augustus 2026 (Sprint 5.7.2 — Herstelmodel-transparantie, Scientific Integrity & Personalisation Engine)
+*Onderdeel van Sprint 5.7. Uitsluitend transparantie/bronvermelding — geen wijziging aan de herstel-rekenlogica zelf, geen UX-herontwerp, geen nieuwe schermen.*
+
+### Bewuste scope-beslissing
+De 48/60/72u-basiswaarden en de RPE-multiplier (`MUSCLE_RECOVERY_HOURS`, `rpeMultiplier`) zijn **niet** herschreven. Een echte fysiologische personalisatie van hersteltijden vereist nieuwe, nu niet vastgelegde signalen en een zelfstandig te ontwerpen algoritme — dat hoort niet thuis onder een "waar mogelijk"-instructie zonder expliciet akkoord op de exacte methode. Voorgesteld en uitgevoerd: transparantie over wat het model wél en niet is. Personalisatie van het herstelmodel zelf blijft een aanbeveling voor een latere sprint.
+
+### Wat wél is aangepast
+- Lichaam-tab (per-spiergroep-kaarten): vaste, altijd zichtbare bronregel toegevoegd — *"Vuistregel (48–72u, RPE-afhankelijk) — geen gemeten fysiologische waarde"*.
+- "Waarom vandaag?"-paneel (beide bestaande render-paden: de klassieke `dagfactor-detail`-uitklap én de nieuwere v43-hero-uitklap) tonen nu dezelfde disclaimer zodra er spierherstel-percentages worden getoond.
+- HRV-baseline-transparantie uit Sprint 5.7.1 bleek via `dagfactorUitleg()` al automatisch door te werken naar beide "Waarom vandaag?"-paden — geen aparte wijziging nodig.
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- `logic_tests.js`: 154/154 geslaagd (geen regressie — er is geen rekenlogica gewijzigd, alleen weergavetekst).
+
+### Gewijzigd (versienummers)
+- `APP_VER` v4.24.0 → **v4.24.1**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v4241`.
+
+---
+
 ## v4.24.0 — 7 augustus 2026 (Sprint 5.7.1 — HRV-baseline normaliseren, Scientific Integrity & Personalisation Engine)
 *Onderdeel van Sprint 5.7, n.a.v. Enterprise Audit & Scientific Integrity Review v1.0 (KRITIEK #3: "HRV op absolute drempels zonder persoonlijke baseline"). Uitsluitend de HRV-/dagfactor-rekenmotor — geen UX-herontwerp, geen nieuwe schermen, geen databasewijziging, geen AI Coach-uitbreiding.*
 

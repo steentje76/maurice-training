@@ -1044,6 +1044,33 @@ test('resetPersonalCacheIfNewDeviceOwner: eerste keer op een device (geen eerder
   assertEq(ls.getItem('maurice_cache_owner_uid'), 'user-A');
 });
 
+// ── NIEUWE-GEBRUIKER-EERLIJKHEID (Sprint 5.6.2 — RB4) ─────
+// Zelfde implementatie als de ready/loaded-filters in buildCoachAdvice() en
+// DASHUI.recovery() in index.html — pure functie, los getest.
+console.log("\n🆕 Nieuwe-gebruiker-eerlijkheid (RB4)");
+function classifyRecoveryRows(rows){
+  const loaded=rows.filter(r=>r.hours!==null&&r.pct<70).sort((a,b)=>a.pct-b.pct);
+  const ready=rows.filter(r=>r.hours!==null&&r.pct>=90);
+  return {loaded,ready};
+}
+test('Nieuwe gebruiker (geen enkele sessie): geen spier claimt \'volledig hersteld\'', ()=>{
+  const rows=[{muscle:'Borst',pct:100,hours:null},{muscle:'Rug',pct:100,hours:null}];
+  const {loaded,ready}=classifyRecoveryRows(rows);
+  assertEq(ready.length,0);
+  assertEq(loaded.length,0);
+});
+test('Ervaren gebruiker met echte lastHit-data: \'volledig hersteld\' blijft gewoon werken', ()=>{
+  const rows=[{muscle:'Borst',pct:95,hours:72},{muscle:'Benen',pct:40,hours:20}];
+  const {loaded,ready}=classifyRecoveryRows(rows);
+  assertEq(ready.length,1); assertEq(ready[0].muscle,'Borst');
+  assertEq(loaded.length,1); assertEq(loaded[0].muscle,'Benen');
+});
+test('Gemengd: spieren zonder data tellen niet mee, spieren mét data wel', ()=>{
+  const rows=[{muscle:'Borst',pct:100,hours:null},{muscle:'Schouders',pct:92,hours:65}];
+  const {ready}=classifyRecoveryRows(rows);
+  assertEq(ready.length,1); assertEq(ready[0].muscle,'Schouders');
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

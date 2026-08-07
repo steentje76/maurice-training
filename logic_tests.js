@@ -1256,6 +1256,66 @@ test('localStorage-uitval (privémodus) crasht de migratie niet', ()=>{
   assertEq(threw,false);
 });
 
+// ── VALIDATIEMATRIX (Sprint 5.7.6) ─────────────────────────
+// Doorloopt de volledige keten (HRV-baseline -> dagfactor -> factor-clip) voor elk van
+// de door de sprint gevraagde persona's. Doel: nooit een crash/NaN, en de uitkomst moet
+// altijd "logisch" blijven (binnen de geclipte 0.85-1.05-band, referentiefase nooit een
+// absolute claim).
+console.log("\n✅ Validatiematrix (Sprint 5.7.6)");
+
+test('Persona: gloednieuwe gebruiker (0 HRV, 0 sessies, 0 slaap) — geen crash, neutrale uitkomst', ()=>{
+  const hrvC=hrvDagFactorPersonal([], HRV_TEST_REF);
+  assertEq(hrvC.st,'ref');
+  const df=dagfactor(hrvC, null, null);
+  assertEq(df.factor,1.00);
+  assert(!isNaN(df.factor),'factor mag nooit NaN zijn');
+});
+test('Persona: weinig historie (3 metingen, 5 dagen oud) — blijft referentiefase, geen voorbarige claim', ()=>{
+  const rows=mkDaily(5,1,45,HRV_TEST_REF).slice(0,3);
+  const hrvC=hrvDagFactorPersonal(rows, HRV_TEST_REF);
+  assertEq(hrvC.st,'ref');
+  const df=dagfactor(hrvC, 6.5, null);
+  assert(df.factor>=0.85 && df.factor<=1.05,'blijft binnen de geclipte band');
+});
+test('Persona: ervaren gebruiker, volledige baseline (30 dagen, stabiel) + goede slaap = optimaal maar geclipt', ()=>{
+  const hrvC=hrvDagFactorPersonal(mkDaily(30,1,50,HRV_TEST_REF), HRV_TEST_REF);
+  assertEq(hrvC.baseline.fase,'volledig');
+  const df=dagfactor(hrvC, 8, null);
+  assertEq(df.factor,1.05);
+});
+test('Persona: veel trainingsdata (60 metingen) — baseline blijft stabiel berekenbaar, geen performance-crash', ()=>{
+  const rows=mkDaily(60,1,48,HRV_TEST_REF);
+  const b=hrvBaseline(rows, HRV_TEST_REF);
+  assertEq(b.ready,true); assertEq(b.n,60); assertEq(b.fase,'volledig');
+});
+test('Persona: ontbrekende HRV (wel slaap ingevuld) — dagfactor rekent door op slaap alleen', ()=>{
+  const df=dagfactor(null, 5, null); // geen hrvComponent, slaap kort
+  assertEq(df.hrvFactor,1.00); // neutraal, geen HRV-claim
+  assertEq(df.slaapFactor,0.92);
+  assert(!isNaN(df.factor));
+});
+test('Persona: ontbrekende slaap (wel volledige HRV-baseline) — dagfactor rekent door op HRV alleen', ()=>{
+  const hrvC=hrvDagFactorPersonal(mkDaily(30,1,50,HRV_TEST_REF), HRV_TEST_REF);
+  const df=dagfactor(hrvC, null, null);
+  assertEq(df.slaapFactor,1.00); // neutraal zonder slaapdata
+  assertEq(df.factor,1.05); // HRV-component blijft leidend
+});
+test('Persona: ontbrekend lichaamsgewicht — cold-start-predictor geeft null i.p.v. gokken (regressie uit Sprint 5.6.1)', ()=>{
+  assertEq(expected1RMCS('backsquat', null, 45, 'ervaren'), null);
+});
+test('Validatiematrix — alle scenario\'s samen: dagfactor blijft ALTIJD binnen 0.85-1.05, ongeacht combinatie', ()=>{
+  const scenarios=[
+    dagfactor(null,null,null),
+    dagfactor(hrvDagFactorPersonal([],HRV_TEST_REF), 4, 'menstruatie'),
+    dagfactor(hrvDagFactorPersonal(mkDaily(30,1,50,HRV_TEST_REF),HRV_TEST_REF), 8, 'folliculair'),
+    dagfactor(hrvDagFactorPersonal([...mkDaily(30,8,50,HRV_TEST_REF),...mkDaily(7,1,35,HRV_TEST_REF)],HRV_TEST_REF), 5, 'luteaal'),
+  ];
+  scenarios.forEach(df=>{
+    assert(!isNaN(df.factor),'nooit NaN');
+    assert(df.factor>=0.85 && df.factor<=1.05,'altijd binnen de geclipte band: '+df.factor);
+  });
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

@@ -1,5 +1,26 @@
 # Trainingskompas — Changelog
 
+## v4.24.12 — 7 augustus 2026 (Sprint 5.9.5 — Offline Betrouwbaarheid, kritieke fix)
+*Onderdeel van Sprint 5.9. Uitsluitend een geverifieerde robuustheidsfix in de offline-synchronisatie — geen UX-wijziging, geen nieuwe functionaliteit.*
+
+### Gevonden: één mislukt wachtrij-item blokkeerde de VOLLEDIGE synchronisatie, permanent
+`flushOfflineQueue()` deed bij een serverfout op één item (`!r.ok` — bv. een validatiefout, of een verwijzing naar inmiddels verwijderde data) een `break`, waardoor **alle latere, op zichzelf staande wachtrij-items nooit meer geprobeerd werden** — ook niet bij een volgende sync-poging, want ze bleven achter hetzelfde blokkerende item staan. Dit raakt precies wat Werkpakket 5.9.5 expliciet vraagt te controleren: "dat trainingen nooit verloren gaan" en "dat synchronisatie robuust verloopt". Trainingen gingen niet *verloren* (ze bleven in de wachtrij staan), maar konden voor onbepaalde tijd onzichtbaar vast blijven zitten zonder ooit daadwerkelijk te synchroniseren.
+
+### Fix
+Onderscheid gemaakt tussen twee situaties die voorheen hetzelfde werden behandeld:
+- **Serverfout op één item** (`!r.ok`) → dat ene item wordt overgeslagen (blijft in de wachtrij staan, zichtbaar/beheerbaar via het bestaande wachtrij-scherm), de rest van de wachtrij wordt gewoon geprobeerd.
+- **Echte netwerkfout** (`catch`, daadwerkelijk weer offline) → de lus stopt terecht nog steeds meteen; verder proberen heeft dan sowieso geen zin.
+- Nieuwe toast-melding als er items zijn overgeslagen, zodat de gebruiker weet dat er iets aandacht nodig heeft i.p.v. stille inactiviteit.
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- `logic_tests.js`: 188/188 (uit Sprint 5.9.4) + 4 nieuwe tests (alles-succesvol, serverfout-blokkeert-niet-meer, netwerkfout-stopt-terecht-wel, lege wachtrij) = **192/192 geslaagd**. De kern-regressietest bevestigt expliciet: bij een serverfout op item 2 van 3 worden items 1 én 3 alsnog gesynchroniseerd (was voorheen onmogelijk).
+
+### Gewijzigd
+- `APP_VER` v4.24.11 → **v4.24.12**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v42412`.
+
+---
+
 ## v4.24.11 — 7 augustus 2026 (Sprint 5.9.4 — Single-file Architectuur: analyse + adviesrapport)
 *Onderdeel van Sprint 5.9. Expliciet géén grote architectuurrefactor deze sprint — uitsluitend één veilige, additieve optimalisatie geïmplementeerd; de rest is een objectief onderbouwd adviesrapport voor Sprint 6.x.*
 

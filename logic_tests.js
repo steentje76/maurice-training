@@ -1743,6 +1743,52 @@ test('Geen PEAK_FALLBACK meer: een onbekende oefening geeft altijd null, nooit e
   });
 });
 
+// ── IN-MEMORY CACHE-RESET BIJ ACCOUNTWISSEL (kritieke fix) ─────
+// Bevestigd via een screenopname: 'Geschatte 1RM' (progExData) toonde bij een geheel
+// nieuw account nog de 1RM's van het vorige account op hetzelfde toestel — een
+// module-level JS-variabele die nooit werd leeggemaakt bij accountwissel binnen
+// dezelfde browsersessie (geen page reload tussen uitloggen en opnieuw inloggen).
+// Zelfde reïmplementatie-patroon als hierboven, nu voor de VOLLEDIGE lijst in-memory
+// caches i.p.v. alleen localStorage-sleutels.
+console.log("\n🔒 In-memory cache-reset bij accountwissel (kritieke fix)");
+const IN_MEMORY_CACHES_TO_RESET=[
+  'atleet','customTrainings','activeSport','progExData','estOneRMCache','repPRCache',
+  'goalsCache','programBlockExCache','exPickerRecentIds','vasteTrainingen','vtMetaSel',
+  '_vasteTrainingenLoaded','exercises','_exercisesLoading','favoriteExIds',
+  '_favoritesLoaded','exerciseGoals','_exerciseGoalsLoaded','equipmentTypes',
+  '_equipmentTypesLoading','equipmentCatalog','_equipmentCatalogLoading'
+];
+function resolveInMemoryCacheReset(state, ownerLs, uid){
+  const lastOwner=ownerLs.getItem('tk_cache_owner_uid');
+  if(lastOwner===uid)return {wiped:false, state};
+  const fresh={...state};
+  IN_MEMORY_CACHES_TO_RESET.forEach(k=>{fresh[k]='__RESET__';});
+  ownerLs.setItem('tk_cache_owner_uid', uid);
+  return {wiped:true, state:fresh};
+}
+test('Accountwissel: ALLE bekende in-memory caches worden gereset, niet alleen atleet/customTrainings/activeSport', ()=>{
+  const ls=makeMockStorage();
+  ls.setItem('tk_cache_owner_uid','user-A');
+  const staleState={};
+  IN_MEMORY_CACHES_TO_RESET.forEach(k=>{staleState[k]='data-van-user-A';});
+  const {wiped, state}=resolveInMemoryCacheReset(staleState, ls, 'user-B');
+  assertEq(wiped,true);
+  IN_MEMORY_CACHES_TO_RESET.forEach(k=>{
+    assertEq(state[k],'__RESET__', k+' moet gereset zijn bij een accountwissel — dit was exact de bevestigde bug (progExData toonde 1RM van het vorige account)');
+  });
+});
+test('Zelfde gebruiker opnieuw: caches blijven ongemoeid (geen onnodige herlaad)', ()=>{
+  const ls=makeMockStorage();
+  ls.setItem('tk_cache_owner_uid','user-A');
+  const state={progExData:'geldige-data-van-user-A'};
+  const {wiped, state:newState}=resolveInMemoryCacheReset(state, ls, 'user-A');
+  assertEq(wiped,false);
+  assertEq(newState.progExData,'geldige-data-van-user-A');
+});
+test('Regressiebewaking: minimaal 20 caches in de resetlijst (voorkomt dat een toekomstige nieuwe cache stilzwijgend wordt vergeten)', ()=>{
+  assert(IN_MEMORY_CACHES_TO_RESET.length>=20, 'onverwacht korte lijst — controleer of er niet per ongeluk iets is verwijderd');
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

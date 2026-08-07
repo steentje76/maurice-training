@@ -4245,7 +4245,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.7';
+const APP_VER = 'v4.24.8';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -7064,6 +7064,27 @@ function v48FmtDatum(d){
 // v4.8.0 (Fase 2) — premium herontwerp Programma. Uitsluitend echte velden
 // (programs/program_blocks + computeProgramProgress). Alle bestaande functies
 // behouden: openProgramBlockDetail (week tik), deleteProgramma, heergenereer.
+// v5.9.1 (Database Performance) — pure herberekening, identiek aan computeProgramProgress()
+// maar op vooraf opgehaalde/gegroepeerde data i.p.v. eigen live queries per blok. Gebruikt
+// door de bulk-geoptimaliseerde renderProgrammaList() hieronder. computeProgramProgress()
+// zelf blijft ongewijzigd bestaan voor het single-programma-pad (heergenereerResterendeWeken,
+// een zeldzame, gebruiker-geïnitieerde actie — geen hot path, dus geen prioriteit).
+function computeProgramProgressPure(blocks,exByBlock,sessByBlock){
+  const completed=blocks.filter(b=>b.completed_at);
+  if(!completed.length)return {adherencePct:0,avgRpeDelta:null,doneCount:0,total:blocks.length};
+  const rpeDeltas=[];
+  for(const b of completed){
+    const rows=exByBlock[b.id]||[];
+    const presRpe=rows.map(r=>parseFloat(r.rpe_target)).filter(v=>!isNaN(v));
+    const avgPres=presRpe.length?presRpe.reduce((a,c)=>a+c,0)/presRpe.length:null;
+    const sess=sessByBlock[b.id]||[];
+    const loggedRpe=sess.map(s=>parseFloat(s.rpe)).filter(v=>!isNaN(v));
+    const avgLogged=loggedRpe.length?loggedRpe.reduce((a,c)=>a+c,0)/loggedRpe.length:null;
+    if(avgPres!=null&&avgLogged!=null)rpeDeltas.push(avgLogged-avgPres);
+  }
+  const avgRpeDelta=rpeDeltas.length?Math.round((rpeDeltas.reduce((a,c)=>a+c,0)/rpeDeltas.length)*10)/10:null;
+  return {adherencePct:Math.round(completed.length/blocks.length*100),avgRpeDelta,doneCount:completed.length,total:blocks.length};
+}
 async function renderProgrammaList(){
   const el=document.getElementById('programma-list');
   if(!el)return;
@@ -7077,10 +7098,32 @@ async function renderProgrammaList(){
     </div>`;
     return;
   }
+  // v5.9.1: was 1 + P (blocks per programma) + 2×completedBlocks (exercises+sessions per
+  // afgerond blok) queries — bij bv. 3 programma's × 8 weken, 12 afgeronde blokken: 1+3+24
+  // = 28 queries. Nu: 1 (programs, hierboven) + 1 (alle blocks) + max. 2 (alle exercises/
+  // sessions van afgeronde blokken, alleen als die er zijn) = max. 4 queries totaal,
+  // ongeacht aantal programma's of blokken.
+  const progIds=progs.map(p=>p.id);
+  const allBlocks=await sbGet('program_blocks','&program_id=in.('+progIds.join(',')+')&order=program_id.asc,week_nr.asc');
+  const blocksByProgram={};
+  allBlocks.forEach(b=>{(blocksByProgram[b.program_id]=blocksByProgram[b.program_id]||[]).push(b);});
+  const completedBlocks=allBlocks.filter(b=>b.completed_at);
+  const exByBlock={}, sessByBlock={};
+  if(completedBlocks.length){
+    const blockIds=completedBlocks.map(b=>b.id);
+    const allEx=await sbGet('program_block_exercises','&program_block_id=in.('+blockIds.join(',')+')');
+    allEx.forEach(r=>{(exByBlock[r.program_block_id]=exByBlock[r.program_block_id]||[]).push(r);});
+    const trainingTypes=completedBlocks.map(b=>'prog_'+b.id);
+    const allSess=await sbGet('sessions','&training_type=in.('+trainingTypes.join(',')+')');
+    allSess.forEach(s=>{
+      const blockId=String(s.training_type||'').replace(/^prog_/,'');
+      (sessByBlock[blockId]=sessByBlock[blockId]||[]).push(s);
+    });
+  }
   let h='';
   for(const p of progs){
-    const blocks=await sbGet('program_blocks','&program_id=eq.'+p.id+'&order=week_nr.asc');
-    const prog=await computeProgramProgress(blocks);
+    const blocks=blocksByProgram[p.id]||[];
+    const prog=computeProgramProgressPure(blocks,exByBlock,sessByBlock);
     const hasIncomplete=blocks.some(b=>!b.completed_at);
     const pct=prog.total?Math.round(prog.doneCount/prog.total*100):0;
     const rpe=(prog.avgRpeDelta!=null)?`${prog.avgRpeDelta>0?'+':''}${prog.avgRpeDelta}`:'—';

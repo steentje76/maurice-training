@@ -1316,6 +1316,58 @@ test('Validatiematrix — alle scenario\'s samen: dagfactor blijft ALTIJD binnen
   });
 });
 
+// ── AI COACH PRIVACY (Sprint 5.8.1) ─────────────────────────
+// Zelfde implementatie als de tekstopbouw in buildCtx() (index.html) — pure
+// functies, los getest. Vervangt het eerder hardcoded, universeel-verstuurde
+// persoonlijke medische protocol.
+console.log("\n🔒 AI Coach privacy — dataminimalisatie");
+
+function formatActiveConditionsSummary(conditions){
+  if(!conditions.length)return '';
+  const labels=conditions.map(c=>c.label).join(', ');
+  return `Vastgelegde aandachtspunten/condities (door de gebruiker zelf ingesteld): ${labels}. Houd hier expliciet rekening mee bij trainingsadvies en programmering — vermijd of pas belasting aan waar relevant voor deze condities.`;
+}
+function formatHrvGuide(hrvComponent){
+  if(hrvComponent.st==='ref'){
+    return 'HRV-referentiefase: nog onvoldoende eigen data voor een persoonlijke baseline (minimaal 14 dagen nodig). Baseer trainingsadvies op RPE en subjectief gevoel, niet op een HRV-drempel.';
+  }
+  const faseTxt=hrvComponent.baseline.fase==='volledig'?'volledige':'voorlopige';
+  const statusTxt=hrvComponent.st==='g'?'binnen/boven eigen baseline (goed)':hrvComponent.st==='o'?'onder eigen baseline (verlaagd)':'sterk onder eigen baseline (≥15% daling, sterk verlaagd)';
+  return `HRV wordt beoordeeld t.o.v. de ${faseTxt} eigen baseline van deze gebruiker (nooit een vaste norm). Huidige status: ${statusTxt}.`;
+}
+
+test('Gebruiker zonder vastgelegde condities: lege string, geen fallback-protocol', ()=>{
+  assertEq(formatActiveConditionsSummary([]), '');
+});
+test('Gebruiker met zelf vastgelegde conditie (bv. lymfoedeem): alleen DIE conditie in de tekst', ()=>{
+  const txt=formatActiveConditionsSummary([{label:'Lymfoedeem'}]);
+  assert(txt.includes('Lymfoedeem'), 'moet de eigen conditie noemen');
+  assert(!txt.toLowerCase().includes('rughol') , 'mag geen ongerelateerd universeel protocol bevatten');
+});
+test('Gebruiker met meerdere condities: allemaal opgenomen, kommagescheiden', ()=>{
+  const txt=formatActiveConditionsSummary([{label:'Rugklachten'},{label:'Knieblessure'}]);
+  assert(txt.includes('Rugklachten') && txt.includes('Knieblessure'));
+});
+test('Geen enkele test-conditie noemt het oude hardcoded RHR/lymfedrainage-protocol', ()=>{
+  const txt=formatActiveConditionsSummary([{label:'Lymfoedeem'}]);
+  assert(!txt.includes('58 bpm') && !txt.toLowerCase().includes('lymfedrainage altijd'));
+});
+test('HRV-gids referentiefase: geen absolute drempel-tekst, verwijst naar RPE', ()=>{
+  const txt=formatHrvGuide({st:'ref'});
+  assert(txt.includes('referentiefase'));
+  assert(!/\\d+\\s*ms/.test(txt), 'geen absolute ms-drempel meer in de referentiefase-tekst');
+});
+test('HRV-gids met volledige baseline en status goed: noemt eigen baseline, geen vaste norm', ()=>{
+  const txt=formatHrvGuide({st:'g', baseline:{fase:'volledig'}});
+  assert(txt.includes('volledige eigen baseline'));
+  assert(txt.includes('goed'));
+});
+test('HRV-gids met voorlopige baseline en status sterk verlaagd', ()=>{
+  const txt=formatHrvGuide({st:'r', baseline:{fase:'voorlopig'}});
+  assert(txt.includes('voorlopige eigen baseline'));
+  assert(txt.includes('sterk verlaagd'));
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

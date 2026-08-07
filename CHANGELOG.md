@@ -1,5 +1,30 @@
 # Trainingskompas — Changelog
 
+## v4.24.7 — 7 augustus 2026 (Sprint 5.9.1 — Database Performance, eerste fix)
+*Onderdeel van Sprint 5.9, Enterprise Performance, Scalability & Production Readiness. Uitsluitend een geverifieerde N+1-fix — geen UX-wijziging, geen nieuwe functionaliteit, geen schemawijziging.*
+
+### Gevonden: N+1-query in computeLastDoneMap()
+Deed vóór deze fix N losse `sbGet`-aanroepen — één per vaste training — om te bepalen wanneer elke training voor het laatst gedaan is. Aangeroepen vanuit **3 plekken**, waarvan twee hot paths: `refreshHome()` (elke keer dat het Home-scherm ververst) en `buildCtx()` (elk AI-coach-bericht).
+
+### Fix
+Eén query (`training_type=in.(...)`), client-side gegroepeerd op de meest recente datum per training — zelfde patroon als de oefeningsgeschiedenis-fix uit Sprint 5.8.1. Identieke output (`map[trainingId] = laatste datum of null`), dus geen enkele aanroeper hoefde aangepast te worden.
+
+### Gemeten (queryaantal, statisch tegen de code geverifieerd)
+- Vóór: N queries per aanroep (N = aantal vaste trainingen van de gebruiker, doorgaans 2–6).
+- Ná: **1 query** per aanroep, ongeacht N.
+- Over 3 aanroeplocaties, waarvan 2 bij elke Home-load/AI-bericht: een aantoonbare, structurele reductie.
+
+**Kanttekening bij metingen:** dit is een statische, code-geverifieerde queryaantal-reductie — geen live gemeten responstijd/CPU/geheugen (zie het bredere Sprint 5.9-analyserapport voor de volledige toelichting op wat wel en niet meetbaar is vanuit deze omgeving).
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- `logic_tests.js`: 179/179 (uit Sprint 5.8) + 3 nieuwe tests (correcte groepering, lege historie, lege trainingslijst) = **182/182 geslaagd**. Test bevestigt identieke output-semantiek t.o.v. de oude per-training-loop.
+
+### Gewijzigd
+- `APP_VER` v4.24.6 → **v4.24.7**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v4247`.
+
+---
+
 ## Sprint 5.8.6 — 7 augustus 2026 (Security Audit, Privacy & AVG) — geen codewijziging
 *Onderdeel van Sprint 5.8. Volledige audit van authenticatie, autorisatie, secrets, tokens en logging over alle server-side functies (`coach.js`, `gym-team.js`, `wearable-sync.js`, `delete-account.js`) en de client. Uitkomst: al goed beveiligd, geen wijziging nodig — hier gedocumenteerd voor traceerbaarheid.*
 

@@ -1,5 +1,31 @@
 # Trainingskompas — Changelog
 
+## v4.24.2 — 7 augustus 2026 (Sprint 5.8.1 — AI Coach Privacy: dataminimalisatie, Privacy & AVG)
+*Onderdeel van Sprint 5.8. Uitsluitend de AI-coach-systeemprompt (buildCtx) — geen UX-herontwerp, geen nieuwe AI-functionaliteit, geen databasewijziging.*
+
+### Kritieke bevinding en fix: hardcoded persoonlijk medisch protocol verwijderd
+Bij de privacy-inventarisatie (Werkpakket 5.8.1: "welke gegevens gaan naar Anthropic") bleek de AI-systeemprompt een **hardcoded, universeel-verstuurd persoonlijk medisch protocol** te bevatten — voor élke gebruiker van élke gym, niet alleen de oorspronkelijke ontwikkelaar:
+> *"RHR ≤58 bpm = goed herstel... Post-sessie: 8-min lymfedrainage altijd. Lymphedema voeten: dagelijks variabel."*
+
+Dit was zowel feitelijk onjuist voor alle andere gebruikers als een blootstelling van de gezondheidsgegevens van de ontwikkelaar in gedeelde productiecode (RB1-achtige single-user-hardcoding, gemist bij Sprint 5.6 omdat het verstopt zat in een grote tekstblob i.p.v. een losse variabele).
+
+**Fix (op instructie van de Product Owner):** de app had al een volledig bestaande, per-gebruiker functionaliteit hiervoor die de AI-coach alleen nooit raadpleegde — de `athlete_conditions`-tabel (RLS-gescoped, met een eigen beheerscherm "Condities" in Instellingen). Nieuwe functie `getActiveConditionsSummary()` haalt nu bij elk chatbericht **uitsluitend de door de ingelogde gebruiker zelf vastgelegde condities** op en stuurt die (en niets anders) mee. Een gebruiker zonder vastgelegde condities krijgt geen enkel conditie-specifiek protocol meegestuurd — geen aannames, geen fallback.
+
+### Extra: HRV-tekst in de AI-prompt afgestemd op Sprint 5.7.1
+De vaste, verouderde absolute HRV-drempeltekst (24/18/14 ms) in de prompt was **niet meegenomen** toen Sprint 5.7.1 de HRV-engine zelf al naar een persoonlijke-baseline-methode omzette — de AI kreeg dus nog steeds de oude, wetenschappelijk achterhaalde instructie. Nu vervangen door een dynamische `hrvGuide`-tekst die de daadwerkelijke `hrvDagFactorPersonal()`-classificatie van de gebruiker beschrijft (referentiefase / voorlopige of volledige eigen baseline), inclusief een correcte 7-daagse rollend-gemiddelde-berekening (hergebruik van `hrvRollingRecent()` i.p.v. een ad-hoc gemiddelde over de nu bredere data-fetch).
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- `logic_tests.js`: 162/162 (uit Sprint 5.7) + 7 nieuwe tests voor de conditie-samenvatting en HRV-gids-tekst = **169/169 geslaagd**. Expliciete test bevestigt: geen enkele testcase van het oude protocol (RHR/lymfedrainage) meer aanwezig in de nieuwe tekst.
+
+### Gewijzigd
+- `APP_VER` v4.24.1 → **v4.24.2**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v4242`.
+
+### Nog open binnen Werkpakket 5.8.1
+Trainingsgeschiedenis in `buildCtx()` itereert nog over de **volledige oefeningencatalogus** (een sbGet-call per oefening, elk bericht) i.p.v. beperkt te blijven tot wat relevant is — dit is zowel een resterend dataminimalisatie-punt als een performance-issue. Apart op te pakken binnen 5.8.1, nog niet in deze deelstap gedaan.
+
+---
+
 ## Sprint 5.7.3–5.7.6 — 7 augustus 2026 (Personalisatie-consistentie, terminologie, validatie) — geen versiebump
 *Afronding van Sprint 5.7, Scientific Integrity & Personalisation Engine. 5.7.3-5.7.5 leverden geen codewijziging op (verificatie bevestigde bestaande consistentie); 5.7.6 voegt permanente testdekking toe.*
 

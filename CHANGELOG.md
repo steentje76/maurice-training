@@ -1,5 +1,21 @@
 # Trainingskompas — Changelog
 
+## v4.24.23 — 7 augustus 2026 (Nieuw: onboarding opnieuw doorlopen vanuit Instellingen)
+*Praktische aanleiding: het testen van de onboarding-fixes liep vast op Supabase's e-mail-rate-limit bij het aanmaken van een nieuw testaccount, en het handmatig wissen van een localStorage-sleutel via de browserconsole is op mobiel niet haalbaar zonder USB-debugging.*
+
+### Toegevoegd
+Nieuwe knop "Onboarding opnieuw doorlopen" in Instellingen → App-informatie, direct onder Debuginformatie. Met bevestigingsvraag ("bestaande gegevens blijven behouden") om per ongeluk indrukken te voorkomen. Reset uitsluitend de lokale `tk_onboarding_done`-vlag en toont het onboardingscherm — raakt geen enkele trainingsdata, profielgegevens of instellingen.
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- HTML div-balans vóór/na: consistent (3 nieuwe divs, gelijk aantal open/sluit).
+- `logic_tests.js`: 211/211 geslaagd, geen regressie.
+
+### Gewijzigd
+- `APP_VER` v4.24.22 → **v4.24.23**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v42423`.
+
+---
+
 ## v4.24.22 — 7 augustus 2026 (Correctie op v4.24.21 — echte oorzaak: horizontaal, niet verticaal)
 *De vorige fix (dvh-fallback + sticky) loste het verkeerde probleem op — een meegestuurde schermopname liet zien dat de "Volgende"-knop grotendeels RECHTS buiten beeld viel, niet onderaan.*
 

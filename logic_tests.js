@@ -1451,6 +1451,38 @@ test('Later gewijzigd via Instellingen: nieuwe keuze wordt gerespecteerd zonder 
   assertEq(r,true);
 });
 
+// ── LOCAL STORAGE AUDIT (Sprint 5.8.5) ─────────────────────
+// Controleert de VOLLEDIGE, actuele PERSONAL_CACHE_KEYS-lijst uit index.html (incl. de
+// datasets die sinds de oorspronkelijke DEC-032-fix zijn bijgekomen: guided workouts,
+// workout builder, vaste-training-meta, favorieten, uitrusting-voorkeuren, en
+// tk_ai_consent — toestemming mag nooit overerven naar de volgende gebruiker op een
+// gedeeld toestel). Zelfde mock-localStorage-patroon als hierboven.
+console.log("\n🔒 Local Storage Audit — volledige persoonlijke-cache-lijst (Sprint 5.8.5)");
+const CURRENT_PERSONAL_CACHE_KEYS=[
+  'tk_atleet','tk_trainings','tk_active_sport','tk_draft_training','tk_last_training',
+  'tk_ai_consent','tk_gw_active','tk_gw_hist','tk_gw_log',
+  'tk_wb_draft','tk_wb_saved','tk_vt_meta',
+  'tk_lib_favs','tk_lib_recent','tk_lib_recentq',
+  'tk_plates','tk_rower','tk_rowers','tk_rest_default'
+];
+test('Accountwissel op gedeeld toestel: ALLE huidige persoonlijke datasets worden gewist, niet alleen de oorspronkelijke 5', ()=>{
+  const ls=makeMockStorage();
+  ls.setItem('tk_cache_owner_uid','user-A');
+  CURRENT_PERSONAL_CACHE_KEYS.forEach(k=>ls.setItem(k, JSON.stringify({van:'user-A'})));
+  const r=resolveDeviceOwnerReset(ls,'user-B',CURRENT_PERSONAL_CACHE_KEYS);
+  assertEq(r.wiped,true);
+  CURRENT_PERSONAL_CACHE_KEYS.forEach(k=>{
+    assertEq(ls.getItem(k), null, k+' moet gewist zijn bij accountwissel');
+  });
+});
+test('AI-consent-toestemming wordt NIET overgeërfd door de volgende gebruiker op hetzelfde toestel', ()=>{
+  const ls=makeMockStorage();
+  ls.setItem('tk_cache_owner_uid','user-A');
+  ls.setItem('tk_ai_consent','1'); // user-A had toegestaan
+  resolveDeviceOwnerReset(ls,'user-B',CURRENT_PERSONAL_CACHE_KEYS);
+  assertEq(ls.getItem('tk_ai_consent'), null, 'user-B moet zelf opnieuw expliciet gevraagd worden, niet automatisch toegestaan krijgen');
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

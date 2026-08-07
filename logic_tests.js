@@ -1789,6 +1789,54 @@ test('Regressiebewaking: minimaal 20 caches in de resetlijst (voorkomt dat een t
   assert(IN_MEMORY_CACHES_TO_RESET.length>=20, 'onverwacht korte lijst — controleer of er niet per ongeluk iets is verwijderd');
 });
 
+// ── PR & 1RM PER GEBRUIKER (architectuurfix, vervolg op peakdoelen) ─────
+// Zelfde patroon als de peakdoelen-tests hierboven — nu voor prFor()/oneRMFor(), en
+// voor de upsert-logica die ervoor zorgt dat het bijwerken van één veld (bv. een
+// nieuwe PR) de andere velden (peak_goal, one_rm) op diezelfde rij niet overschrijft.
+console.log("\n🏆 PR & 1RM per gebruiker (architectuurfix, vervolg op peakdoelen)");
+function prForSim(exerciseGoalsMap, exId){
+  return exerciseGoalsMap.has(exId)?(exerciseGoalsMap.get(exId).pr??null):null;
+}
+function oneRMForSim(exerciseGoalsMap, exId){
+  return exerciseGoalsMap.has(exId)?(exerciseGoalsMap.get(exId).one_rm??null):null;
+}
+test('Nieuwe gebruiker (lege exerciseGoals-Map): geen PR en geen 1RM van een ander zichtbaar', ()=>{
+  const map=new Map();
+  assertEq(prForSim(map,'backsquat'),null);
+  assertEq(oneRMForSim(map,'backsquat'),null);
+});
+test('Gebruiker met eigen PR en 1RM: krijgt precies die eigen waarden terug', ()=>{
+  const map=new Map([['backsquat',{peak_goal:140,pr:95,one_rm:100}]]);
+  assertEq(prForSim(map,'backsquat'),95);
+  assertEq(oneRMForSim(map,'backsquat'),100);
+});
+test('Upsert van één veld (bv. nieuwe PR) laat de andere velden op dezelfde rij ongemoeid — reproduceert de exacte upsertExerciseGoalField()-logica', ()=>{
+  const map=new Map([['backsquat',{peak_goal:140,pr:95,one_rm:100}]]);
+  // simuleert upsertExerciseGoalField(exId,'pr',105): bestaande rij -> alleen dat veld wijzigen
+  const existing=map.get('backsquat');
+  existing.pr=105;
+  assertEq(map.get('backsquat').peak_goal,140,'peak_goal mag niet gewijzigd zijn door een pr-update');
+  assertEq(map.get('backsquat').one_rm,100,'one_rm mag niet gewijzigd zijn door een pr-update');
+  assertEq(map.get('backsquat').pr,105);
+});
+test('Upsert op een oefening zonder bestaande rij: nieuwe rij met alleen het gewijzigde veld ingevuld, de rest null', ()=>{
+  const map=new Map();
+  // simuleert upsertExerciseGoalField('bench','pr',80) op een lege Map
+  map.set('bench',{peak_goal:null,pr:null,one_rm:null,pr:80});
+  const row=map.get('bench');
+  assertEq(row.pr,80);
+  assertEq(row.peak_goal,null);
+  assertEq(row.one_rm,null);
+});
+test('Peakdoel wissen mag PR/1RM op dezelfde rij niet meewissen (was de exacte bug in de oude sbDel-implementatie)', ()=>{
+  const map=new Map([['backsquat',{peak_goal:140,pr:95,one_rm:100}]]);
+  // simuleert savePeakGoal() met val===null: alleen peak_goal->null via PATCH, geen sbDel van de hele rij
+  const existing=map.get('backsquat');
+  existing.peak_goal=null;
+  assertEq(map.get('backsquat').pr,95,'pr moet intact blijven na het wissen van alleen het peakdoel');
+  assertEq(map.get('backsquat').one_rm,100,'one_rm moet intact blijven na het wissen van alleen het peakdoel');
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

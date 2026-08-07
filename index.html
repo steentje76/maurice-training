@@ -3260,25 +3260,6 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 </div>
 
 <!-- ═══ SCHEMA (vaste trainingen — N stuks, eigen namen) ═══ -->
-<div class="scr" id="s-train-schema">
-  <div class="hdr">
-    <div class="hdr-row">
-      <div><div class="hdr-title" role="heading" aria-level="1">Schema</div><div class="hdr-sub">Je vaste trainingsprogramma's</div></div>
-      <button class="ibtn" onclick="go('s-train-mgr')" aria-label="Sluiten, terug naar trainingsbeheer">✕</button>
-    </div>
-  </div>
-  <div class="scroll" style="padding-top:8px">
-    <div class="card"><div class="card-body"><p style="font-size:13px;color:var(--g4);margin-bottom:10px">Schema&#8217;s staan nu samen met je eigen workouts onder <b>Mijn trainingen</b>.</p><button class="btn btn-r btn-sm" style="width:100%" onclick="go('s-train-mine')">Naar Mijn trainingen</button></div></div>
-  </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
-</div>
-
 <!-- ═══ VASTE TRAINING TOEVOEGEN/HERNOEMEN ═══ -->
 <div class="modal-bg" id="m-vt-naam" onclick="bgClose(event,'m-vt-naam')">
   <div class="modal">
@@ -3299,26 +3280,6 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <button class="btn btn-r" style="flex:2" onclick="saveVasteTrainingName(this)">Opslaan</button>
     </div>
   </div>
-</div>
-
-<!-- ═══ WORKOUTS (eigen samengestelde trainingen) ═══ -->
-<div class="scr" id="s-train-workouts">
-  <div class="hdr">
-    <div class="hdr-row">
-      <div><div class="hdr-title" role="heading" aria-level="1">Workouts</div><div class="hdr-sub">Beheer je eigen trainingen</div></div>
-      <button class="ibtn" onclick="openNewTrainingModal()" aria-label="Nieuwe training toevoegen">＋</button>
-    </div>
-  </div>
-  <div class="scroll" style="padding-top:8px">
-    <div class="card"><div class="card-body"><p style="font-size:13px;color:var(--g4);margin-bottom:10px">Eigen workouts staan nu samen met je schema&#8217;s onder <b>Mijn trainingen</b>.</p><button class="btn btn-r btn-sm" style="width:100%" onclick="go('s-train-mine')">Naar Mijn trainingen</button></div></div>
-  </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
 </div>
 
 <!-- ═══ MIJN TRAININGEN (Sprint 5.1 — Schema + Workouts als één familie) ═══ -->
@@ -4245,7 +4206,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.16';
+const APP_VER = 'v4.24.17';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';

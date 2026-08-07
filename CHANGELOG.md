@@ -1,5 +1,32 @@
 # Trainingskompas — Changelog
 
+## v4.24.10 — 7 augustus 2026 (Sprint 5.9.3 — Browser Cache & Opslag)
+*Onderdeel van Sprint 5.9. Uitsluitend geverifieerd dode opslag verwijderd — geen UX-wijziging, geen nieuwe functionaliteit.*
+
+### Gecontroleerd: localStorage, sessionStorage, IndexedDB, Service Worker Cache
+- **Cache-invalidering (Service Worker):** al correct — de `activate`-handler verwijdert bij elke nieuwe versie automatisch alle oude cache-namen (behalve de bewust stabiele video-cache). Geen wijziging nodig.
+- **Onnodige polling/synchronisaties:** de drie `setInterval`-aanroepen in de app bleken uitsluitend lokale UI-klokken (trainingstimer, resttimer, guided-workout-resttimer) — geen enkele doet een netwerkverzoek. Geen polling-probleem gevonden.
+- **Dode opslag, gevonden en opgeruimd:**
+  - `tk_last_training` werd bij **elke afgeronde training** weggeschreven, maar wordt nergens in de codebase meer gelezen (de "volgende training"-logica leest sinds Sprint 5.9.1 uit Supabase). Write verwijderd.
+  - `tk_rower` (enkelvoud) werd nergens ooit geschreven — de `getItem`-lookup gaf dus altijd `null` en viel altijd terug op `rowers[0]`. Vereenvoudigd naar direct `rowers[0]`, functioneel identiek, één overbodige lookup minder per app-load.
+
+### Gevonden, bewust NIET aangepast: dubbele, losstaande favorieten-opslag
+Er blijken **twee volledig gescheiden, nooit-gesynchroniseerde** favorieten-systemen te bestaan: `toggleFavorite()`/`exercise_favorites` (Supabase, gebruikt in de oefeningkiezer en de 1RM-statistieklijst) en `ExerciseCatalogService.toggleFavorite()`/`tk_lib_favs` (uitsluitend localStorage, gebruikt in het Bibliotheek-scherm). Een oefening favorieten vanuit de Bibliotheek toont dus niet als favoriet in de oefeningkiezer, en omgekeerd — en de Bibliotheek-favorieten zijn bovendien niet cross-device (alleen lokaal, verloren bij een nieuw toestel of cache-wissing).
+
+Dit is een reële bevinding, maar **geen pure performance-optimalisatie**: de twee systemen samenvoegen betekent een keuze maken (welke set is leidend, hoe worden bestaande lokale Bibliotheek-favorieten gemigreerd) die zichtbaar gedrag verandert — dat valt buiten "geen UX-wijzigingen" voor déze sprint. Aanbevolen als een aparte bugfix-sprint (vergelijkbaar met Sprint 5.6), niet hier opgelost.
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- `logic_tests.js`: 188/188 geslaagd, geen regressie (uitsluitend dode code verwijderd, geen enkele functionele wijziging).
+
+### Gewijzigd
+- `APP_VER` v4.24.9 → **v4.24.10**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v42410`.
+
+### Kleine aanvullende observatie (geen actie ondernomen)
+`skierg_machines`/`assault_machines` localStorage-sleutels gebruiken nog geen `tk_`-prefix (gemist bij de Sprint 5.6.3-naamgevingsmigratie). Geen performance-impact, puur een naamgevingsinconsistentie — genoteerd voor een toekomstige opschoonronde, niet meegenomen in deze performance-sprint.
+
+---
+
 ## v4.24.9 — 7 augustus 2026 (Sprint 5.9.2 — Rendering Performance, debounce zoekvelden)
 *Onderdeel van Sprint 5.9. Expliciet voorgelegd en bevestigd vóór implementatie vanwege de "geen UX-wijzigingen"-grens — zie toelichting hieronder.*
 

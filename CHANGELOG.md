@@ -1,5 +1,31 @@
 # Trainingskompas — Changelog
 
+## v4.24.9 — 7 augustus 2026 (Sprint 5.9.2 — Rendering Performance, debounce zoekvelden)
+*Onderdeel van Sprint 5.9. Expliciet voorgelegd en bevestigd vóór implementatie vanwege de "geen UX-wijzigingen"-grens — zie toelichting hieronder.*
+
+### Gevonden
+Beide zoekvelden van de oefeningenbibliotheek (hoofd-zoekveld én het "vergelijk oefeningen"-zoekveld) deden bij **elke toetsaanslag** een volledige her-render: de complete catalogus (~200+ oefeningen) doorzoeken, de hele resultatenlijst opnieuw als HTML opbouwen, en alle event-listeners herbinden — zonder debounce. Een al aanwezige cursor-positie-herstel-workaround in de code wees erop dat dit al eerder een bijwerking veroorzaakte.
+
+### Afweging (expliciet voorgelegd, akkoord gekregen)
+De voor de hand liggende fix — debouncen — introduceert strikt genomen een nieuwe, meetbare vertraging die er voorheen niet was. Voorgelegd met twee opties (debounce toevoegen, of niet aanpassen); gekozen voor **optie 1: debounce toevoegen**, met een vertraging (120ms) ruim onder de menselijke waarneembaarheidsgrens.
+
+### Fix
+Nieuwe gedeelde helper `_libDebouncedSearch()`: de cursor-positie wordt nog steeds **synchroon bij elke toetsaanslag** vastgelegd (geen enkel gedragsverschil daar), maar de dure her-render zelf wacht 120ms op typestilte. Bij snel typen (bv. 5 toetsaanslagen binnen 300ms) gaat dit van 5 volledige her-renders naar 1. Toegepast op beide zoekvelden (`lib-q` en `lib-cmp-q`).
+
+### Gemeten (aantoonbaar, code-gebaseerd)
+- Vóór: 1 volledige her-render per toetsaanslag (N toetsaanslagen = N her-renders).
+- Ná: maximaal 1 her-render per 120ms-typepauze, ongeacht hoe snel getypt wordt.
+- **Kanttekening:** dit is een structurele reductie in het AANTAL her-renders, geen live gemeten CPU-tijd (zie de kanttekening over meetbaarheid in het Sprint 5.9-analyserapport).
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- `logic_tests.js`: 185/185 (uit Sprint 5.9.1) + 3 nieuwe tests voor het debounce-kerngedrag (alleen de laatste aanroep wint, geen opstapeling, normale trage interactie blijft ongewijzigd werken) = **188/188 geslaagd**.
+
+### Gewijzigd
+- `APP_VER` v4.24.8 → **v4.24.9**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v4249`.
+
+---
+
 ## v4.24.8 — 7 augustus 2026 (Sprint 5.9.1 — Database Performance, Programma/Voortgang)
 *Onderdeel van Sprint 5.9. Uitsluitend een geverifieerde geneste N+1-fix — geen UX-wijziging, geen nieuwe functionaliteit, geen schemawijziging.*
 

@@ -2706,6 +2706,10 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
         <div class="set-row">
           <div class="set-row-txt"><div class="set-row-lbl">Debuginformatie</div><div class="set-row-sub" id="settings-debug-info" style="font-family:monospace;font-size:11px">&mdash;</div></div>
         </div>
+        <button class="set-nav-row" onclick="debugRestartOnboarding()">
+          <div><div class="set-row-lbl">Onboarding opnieuw doorlopen</div><div class="set-row-sub">Handig om het introductiescherm te controleren</div></div>
+          <span class="set-chevron" aria-hidden="true">&#8250;</span>
+        </button>
       </div>
     </div>
 
@@ -4206,7 +4210,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.22';
+const APP_VER = 'v4.24.23';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -5707,6 +5711,13 @@ let obStep=1;
 function initOnboarding(){
   obStep=1;
   renderObStep();
+}
+async function debugRestartOnboarding(){
+  if(!await confirmModal('Onboarding opnieuw doorlopen? Je bestaande gegevens blijven behouden.',{title:'Onboarding herstarten',okLabel:'Start opnieuw'}))return;
+  localStorage.removeItem('tk_onboarding_done');
+  document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
+  initOnboarding();
+  document.getElementById('s-onboarding').classList.add('active');
 }
 function renderObStep(){
   document.querySelectorAll('.ob-step').forEach(s=>{

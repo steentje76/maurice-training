@@ -1,5 +1,20 @@
 # Trainingskompas — Changelog
 
+## Sprint 5.8.6 — 7 augustus 2026 (Security Audit, Privacy & AVG) — geen codewijziging
+*Onderdeel van Sprint 5.8. Volledige audit van authenticatie, autorisatie, secrets, tokens en logging over alle server-side functies (`coach.js`, `gym-team.js`, `wearable-sync.js`, `delete-account.js`) en de client. Uitkomst: al goed beveiligd, geen wijziging nodig — hier gedocumenteerd voor traceerbaarheid.*
+
+### Bevindingen
+- **Authenticatie/autorisatie:** alle vier Netlify Functions verifiëren de JWT server-side bij Supabase Auth (nooit een client-aangeleverd user-id vertrouwd). `gym-team.js` controleert daarnaast `gym_role_level` server-side per actie én verifieert de coach-pincode server-side (SHA-256 tegen de database), niet alleen client-side.
+- **Secrets/tokens:** geen hardcoded service-role-keys, API-keys of wachtwoorden. Alles uit `process.env`. De enige client-side sleutel is de Supabase publishable/anon key — per ontwerp veilig (RLS, niet geheimhouding, is de beveiligingslaag).
+- **Logging:** geen enkele plek logt tokens, wachtwoorden of pincodes — uitsluitend generieke foutmeldingen (tabelnaam, HTTP-status).
+- **`PIN_HASH`-observatie (Sprint 5.6.4), herbevestigd vanuit beveiligingsoogpunt:** de echte Team-acties lopen via `gym-team.js` met server-side rol- én pincode-verificatie; de client-side `PIN_HASH` geeft alleen toegang tot oefeningen-/uitrustingsbeheer (gedeelde catalogus, geen persoonlijke gezondheidsgegevens van andere leden). Geen kwetsbaarheid.
+- **Ontwikkelaarsspecifieke informatie:** laatste volledige controle — niets resterend buiten de bewust-behouden migratiecode (die de oude `maurice_`-sleutelnamen nog even nodig heeft om te kunnen migreren).
+
+### Conclusie
+Geen codewijziging vereist. Geen `APP_VER`-bump.
+
+---
+
 ## v4.24.6 — 7 augustus 2026 (Sprint 5.8.5 — Local Storage Audit, Privacy & AVG)
 *Onderdeel van Sprint 5.8. Uitsluitend de cross-account cache-bescherming (DEC-032) — geen UX-herontwerp, geen nieuwe functionaliteit.*
 

@@ -54,7 +54,7 @@ exports.handler = async function(event) {
       // overige, op zichzelf staande gebruikersdata
       'athlete_conditions', 'atleet_profiel', 'body_comp', 'chat_history',
       'checkin_conditions', 'exercise_favorites', 'hrv_log', 'sessions', 'weight_log',
-      'goals', 'equipment_types'
+      'goals', 'equipment_types', 'exercise_goals'
     ];
     const failedTables = [];
     for (const table of USER_DATA_TABLES) {

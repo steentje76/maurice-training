@@ -1,5 +1,34 @@
 # Trainingskompas — Changelog
 
+## v4.24.5 — 7 augustus 2026 (Sprint 5.8.3 — Privacyverklaring, Privacy & AVG)
+*Onderdeel van Sprint 5.8. Uitsluitend tekst op de bestaande Privacy- en Help-schermen — geen UX-herontwerp, geen nieuwe schermen, geen nieuwe functionaliteit.*
+
+### Belangrijke kanttekening
+Claude is geen jurist. Deze deelstap maakt de bestaande Privacy-pagina feitelijk volledig en tegen de code geverifieerd, en vervangt losse placeholders — het levert geen door een jurist opgestelde, AVG-gecertificeerde privacyverklaring. Dat blijft expliciet zo vermeld op de pagina zelf.
+
+### Bevindingen
+- Privacy-pagina bevatte een expliciete `[PLACEHOLDER — juridische privacyverklaring]`.
+- Help-pagina bevatte twee placeholders: een licentie-/dienstenoverzicht en een contact-/feedbackkanaal.
+- Geen van beide pagina's noemde de daadwerkelijk gebruikte derde partijen, de afwezigheid van een automatische bewaartermijn, of de al bestaande gebruikersrechten (export, rectificatie) expliciet.
+
+### Fix
+- **Privacy-pagina:** twee nieuwe kaarten toegevoegd — **"Derde partijen"** (Supabase, Netlify, Anthropic, Google/Fitbit, elk met een concrete, geverifieerde beschrijving) en **"Jouw rechten"** (inzage &amp; dataportabiliteit via het al bestaande exportmenu — CSV en volledige JSON-backup, ontdekt tijdens verificatie —, rectificatie, verwijdering, toestemming intrekken). "Bewaartermijn" eerlijk gemaakt: er is geen automatische bewaartermijn, data blijft bestaan tot handmatige accountverwijdering (geen verzonnen bewaartermijn). De placeholder-disclaimer vervangen door een preciezere, minder alarmerende maar nog steeds eerlijke "geen juridisch advies"-tekst.
+- **Help-pagina:** het licentie-/dienstenoverzicht ingevuld met de daadwerkelijk gebruikte diensten (dezelfde vier als op de Privacy-pagina).
+- **Bewust NIET ingevuld:** het contact-/feedbackkanaal. Er is geen echt e-mailadres of formulier bekend in de projectdocumentatie — een placeholder verzinnen zou gebruikers een niet-werkend of onjuist kanaal voorspiegelen. Dit blijft open staan voor de Product Owner.
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- Div-balans van het gewijzigde Privacy-scherm gecontroleerd (36/36).
+- `logic_tests.js`: 177/177 geslaagd (geen regressie — uitsluitend tekstwijzigingen, geen nieuwe rekenlogica).
+
+### Gewijzigd
+- `APP_VER` v4.24.4 → **v4.24.5**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v4245`.
+
+### Resterend compliance-risico
+Zoals op de pagina zelf vermeld: dit is geen juridisch gecertificeerde privacyverklaring. Vereist alsnog daadwerkelijke juridische beoordeling vóór een publieke/Store-release.
+
+---
+
 ## v4.24.4 — 7 augustus 2026 (Sprint 5.8.2 — Toestemmingsflow AI Coach, Privacy & AVG)
 *Onderdeel van Sprint 5.8. Uitsluitend een privacy-gate om bestaande functionaliteit — geen nieuwe AI-functionaliteit, geen UX-herontwerp, geen nieuwe schermen (hergebruikt bestaande modal- en toggle-mechanismen).*
 

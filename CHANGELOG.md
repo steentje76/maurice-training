@@ -1,5 +1,35 @@
 # Trainingskompas — Changelog
 
+## v4.24.0 — 7 augustus 2026 (Sprint 5.7.1 — HRV-baseline normaliseren, Scientific Integrity & Personalisation Engine)
+*Onderdeel van Sprint 5.7, n.a.v. Enterprise Audit & Scientific Integrity Review v1.0 (KRITIEK #3: "HRV op absolute drempels zonder persoonlijke baseline"). Uitsluitend de HRV-/dagfactor-rekenmotor — geen UX-herontwerp, geen nieuwe schermen, geen databasewijziging, geen AI Coach-uitbreiding.*
+
+### Wetenschappelijke onderbouwing
+HRV-classificatie gebruikte vaste absolute ms-drempels (24/18/14 ms), ongeacht wie de gebruiker is. Vervangen door de **Plews/Buchheit "Smallest Worthwhile Change" (SWC)-methode**, gangbaar in de sportwetenschappelijke HRV-literatuur:
+- Ln-RMSSD-transformatie voor statistische stabiliteit (Frontiers in Sports & Active Living, 2025, DOI 10.3389/fspor.2025.1578478).
+- 7-daags rollend gemiddelde t.o.v. een persoonlijke SWC (gemiddelde ± 0,5×SD), berekend uit de eigen historische HRV-data van de gebruiker.
+- Baselineperiode: **<14 dagen = referentiefase** (geen persoonlijke claim mogelijk), **≥14 dagen = voorlopige baseline**, **≥28 dagen = volledige/stabiele baseline** — drie onafhankelijke, convergerende bronnen (PMC9518028; TrainingPeaks/Kiviniemi-cyclistenstudie; athletedata.health 2026).
+- Apart ernst-signaal bij **≥15% daling** t.o.v. het eigen rollend gemiddelde (athletedata.health, 2026).
+- **Leeftijd is bewust géén aparte correctiefactor**: de literatuur (o.a. PMC11746954, masters- vs. jonge wielrenners) bevestigt dat absolute HRV weliswaar met leeftijd daalt, maar dat een persoonlijke-baseline-methode dit al automatisch opvangt — een aparte leeftijdscorrectie zou dubbel corrigeren. Losstaand van de bestaande `mastersFactor()` (IPF-krachtstandaarden), die een andere wetenschappelijke context betreft en hier niet is hergebruikt/vermengd.
+
+### Gewijzigd
+- Nieuwe functies: `hrvBaseline()`, `hrvRollingRecent()`, `hrvStPersonal()`, `hrvDagFactorPersonal()`.
+- `dagfactor()` ontvangt nu een HRV-classificatie-object i.p.v. de losse hrv-ms-waarde (kernformule — slaap-/cyclusfactor, clip 0,85–1,05 — ongewijzigd). Alle 6 aanroeplocaties in de app bijgewerkt (bredere historie-fetch i.p.v. de vorige `limit=1`).
+- "Waarom vandaag?"-paneel (bestaand, geen nieuw scherm) toont nu expliciet of de HRV-beoordeling in de referentiefase zit, op een voorlopige, of op een volledige eigen baseline berust (Werkpakket 5.7.4/5.7.5 — nooit meer een gemeten claim suggereren zonder genoeg eigen data).
+- Kleine RB1-nazorg (buiten Sprint 5.7, onderweg tegengekomen): laatste resterende "Maurice"-verwijzingen in `logic_tests.js` (bestandsheader, twee testlabels) geneutraliseerd — geen testlogica gewijzigd.
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- `logic_tests.js`: twee verouderde testblokken (absolute HRV-drempels, oude `dagfactor()`-signatuur) volledig herschreven; 11 nieuwe HRV-baseline-tests + 6 herschreven dagfactor-tests, met vooraf numeriek doorgerekende verwachtingswaarden (geen giswerk). **154/154 geslaagd.**
+- Getest: referentiefase (n<4 of <14 dagen), voorlopige baseline (≥14 dagen), volledige baseline (≥28 dagen), stabiele HRV, milde daling (binnen SWC-marge), sterke daling (≥15%), volledig lege historie (geen crash).
+
+### Gewijzigd (versienummers)
+- `APP_VER` v4.23.3 → **v4.24.0** (minor i.p.v. patch — kernrekenmotor, niet louter een bugfix); `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v4240`.
+
+### Resterende aandachtspunten voor Sprint 5.7 (5.7.2 t/m 5.7.6)
+Nog niet uitgevoerd: herstelmodel-transparantie (5.7.2 — voorstel: geen algoritmewijziging aan de 48/60/72u-basiswaarden zelf, wel bron-/disclaimertekst, ter bevestiging), personalisatie-consistentie fase1→2→3 buiten HRV (5.7.3), terminologie-consistentie referentie/persoonlijk/gemeten op resterende schermen (5.7.4), bredere transparantie-toelichtingen (5.7.5), volledige validatiematrix (5.7.6).
+
+---
+
 ## Sprint 5.6.4 — 7 augustus 2026 (Controle op verborgen ontwikkelaarsdata, Release Blocker 6) — geen versiebump
 *Onderdeel van Sprint 5.6, n.a.v. Enterprise Audit & Scientific Integrity Review v1.0. Uitsluitend onderzoek — geen codewijziging in deze deelstap.*
 

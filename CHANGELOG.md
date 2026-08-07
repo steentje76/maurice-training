@@ -1,5 +1,31 @@
 # Trainingskompas — Changelog
 
+## v4.24.20 — 7 augustus 2026 (Kritieke fix — PR & 1RM: gedeelde kolommen → per-gebruiker tabel)
+*Vervolg op de peakdoelen-fix: na volledig uit-/inloggen bleek 'Geschatte 1RM' nog steeds harde waardes te tonen (Backsquat 95kg, Benchpress 80kg, etc.) op een account dat nog nooit had getraind. Grondoorzaak: exercises.pr en exercises.one_rm hadden exact hetzelfde architectuurprobleem als exercises.peak_goal.*
+
+### Het probleem
+`exercises.pr` (personal record) werd bij **elke nieuwe PR automatisch bijgewerkt op de gedeelde oefeningen-rij** — dus niet alleen een eenmalig ingesteld getal zoals bij peakdoelen, maar continu overschreven bij normaal gebruik, zichtbaar voor iedereen. `exercises.one_rm` (handmatig ingevoerde 1RM) had hetzelfde probleem. Gevonden op 12+ plekken: badges bij het loggen van een set, sessie-samenvattingen na een training, de Doelen-module (inclusief een Home-scherm-doelenkaart die niet eerder was gezien), AI-coach-context, en het Voortgang-scherm.
+
+### Architectuurkeuze
+In plaats van weer een nieuwe tabel: de bestaande `exercise_goals`-tabel (Sprint 6.0.1-vervolg, peakdoelen) uitgebreid met twee kolommen (`pr`, `one_rm`) — zelfde RLS, zelfde structuur, minder migratie-overhead. `peak_goal` moest daarvoor nullable gemaakt worden (niet elke rij heeft meer per se een peakdoel).
+
+### App-code aangepast
+- `exerciseGoals` (Map) uitgebreid van `exercise_id -> peak_goal` naar `exercise_id -> {peak_goal, pr, one_rm}`.
+- Nieuwe `prFor(exId)`/`oneRMFor(exId)`, analoog aan `peakGoalFor()`.
+- Nieuwe `upsertExerciseGoalField(exId, field, value)`-helper: bepaalt zelf patch (rij bestaat al) vs. post (nieuwe rij) op basis van de al-geladen Map, en werkt zowel online als offline (queue-aware) — nodig omdat PR-detectie een kernonderdeel is van het offline kunnen loggen van een training.
+- **Belangrijke correctie tijdens het werk:** `savePeakGoal()` deed bij het wissen van een peakdoel voorheen `sbDel` op de **hele rij** — dat zou nu ook iemands PR/1RM voor diezelfde oefening hebben meegewist. Aangepast naar een gerichte PATCH die alleen `peak_goal` naar `null` zet.
+- Alle 12+ vindplaatsen (`refreshStats`, `refreshStatsScreen`, `renderDoelenScreen`, `refreshHomeGoalsCard`, `computeGoalProgressPr`, `getCurrentValueForGoal`, `askCoachAboutGoal`, `getOneRM`, `estimatedOneRM`, de PR-badge-detectie tijdens het loggen, de daadwerkelijke PR-schrijfactie na een sessie, en `buildCtx()` voor de AI-coach) omgezet naar de nieuwe functies.
+- `ensureExerciseGoalsLoaded()` ook toegevoegd aan `buildCtx()` (ontbrak nog) en `refreshHomeGoalsCard()` (een nieuw gevonden call-site, niet eerder gedekt).
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- `logic_tests.js`: 206/206 (uit de cache-leak-fix) + 5 nieuwe tests (nieuwe gebruiker ziet niets, eigen PR/1RM correct, upsert overschrijft andere velden niet, nieuwe rij bij upsert, peakdoel wissen laat PR/1RM intact) = **211/211 geslaagd**.
+
+### Gewijzigd
+- `APP_VER` v4.24.19 → **v4.24.20**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v42420`.
+
+---
+
 ## v4.24.19 — 7 augustus 2026 (Kritieke fix — cross-account datalek via in-memory cache)
 *Gevonden en bevestigd via een screenopname van de gebruiker: een compleet nieuw, nog nooit gebruikt account (maurice@medscan.nl) toonde bij Voortgang de 1RM-schattingen van het hoofdaccount op hetzelfde toestel.*
 

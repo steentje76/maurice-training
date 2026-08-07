@@ -1,5 +1,19 @@
 # Trainingskompas — Changelog
 
+## Sprint 5.9.8 — 7 augustus 2026 (Schaalbaarheidsanalyse) — geen codewijziging
+*Onderdeel van Sprint 5.9. Zuiver analyserapport, geen implementatie — zie het volledige Sprint 5.9-eindrapport voor details.*
+
+### Grootste bottlenecks bij schaalgroei (gerangschikt)
+1. **Gedeelde `ANTHROPIC_API_KEY` in coach.js** — enige echte gedeelde-resource-bottleneck; wordt eerder een probleem dan de database.
+2. **Ontbrekende paginering op de `gym-team.js`-ledenlijst-query** — geen huidig probleem, wel een onbegrensde resultaatset bij een hypothetisch zeer grote gym.
+3. **Onbevestigde database-indexen** — geen toegang tot het Supabase-schema om dit te verifiëren vanuit deze omgeving.
+4. **1,84 MB base64-posters** (Sprint 5.9.4) — wordt op grotere schaal een reële bandbreedtekostenpost.
+
+### Sprint 5.9 — volledig afgerond
+Zie het uitgebreide eindrapport (los gedeeld met de Product Owner) voor de complete samenvatting van alle 8 werkpakketten, vóór/na-metingen, en aanbevelingen voor Sprint 6.0.
+
+---
+
 ## v4.24.14 — 7 augustus 2026 (Sprint 5.9.7 afronding — buildCtx() geparallelliseerd)
 *Onderdeel van Sprint 5.9. Expliciet voorgelegd en akkoord gekregen vóór implementatie, gezien het risico op een subtiele fout in de afhankelijkheidsvolgorde van een kritieke functie. Exact dezelfde queries, dezelfde data, dezelfde prompt-inhoud — uitsluitend de gelijktijdigheid van ophalen is anders.*
 

@@ -41,6 +41,11 @@ exports.handler = async function(event) {
     // gecontroleerd — de enige CASCADE-relaties zitten in Supabase's eigen
     // interne auth.*-tabellen). Zonder deze stap blijft alle trainingsdata
     // van de gebruiker achter als wees-data na het verwijderen van het account.
+    // v5.8.4 (Privacy-audit): 'goals' en 'equipment_types' toegevoegd — zelfde
+    // per-gebruiker-configureerbare patroon als athlete_conditions, maar stonden
+    // hier nog niet in. Zonder deze twee bleven iemands doelen en eigen
+    // uitrustingslabels achter als wees-data, net als het probleem dat
+    // hierboven al voor 'exercises' is opgelost.
     const USER_DATA_TABLES = [
       // eerst tabellen die naar andere tabellen hieronder kunnen verwijzen
       'program_block_exercises', 'custom_training_exercises', 'training_exercises',
@@ -48,7 +53,8 @@ exports.handler = async function(event) {
       'program_blocks', 'custom_trainings', 'vaste_trainingen', 'programs',
       // overige, op zichzelf staande gebruikersdata
       'athlete_conditions', 'atleet_profiel', 'body_comp', 'chat_history',
-      'checkin_conditions', 'exercise_favorites', 'hrv_log', 'sessions', 'weight_log'
+      'checkin_conditions', 'exercise_favorites', 'hrv_log', 'sessions', 'weight_log',
+      'goals', 'equipment_types'
     ];
     const failedTables = [];
     for (const table of USER_DATA_TABLES) {
@@ -58,6 +64,18 @@ exports.handler = async function(event) {
       });
       if (!r.ok) failedTables.push(table);
     }
+
+    // content_shares: verwijdert deze gebruiker als ONTVANGER van gedeelde content
+    // (kolom 'shared_with', bevestigd in de client-code). De kolom die de DELENDE
+    // partij identificeert stond niet expliciet in de client-insert (waarschijnlijk
+    // een server-side DEFAULT auth.uid()-kolom, naam niet met zekerheid vast te
+    // stellen vanuit de front-end code) — v5.8.4 laat dit bewust open i.p.v. te
+    // raden en per ongeluk een verkeerde/no-op query te draaien. Zie eindrapport.
+    const csR = await fetch(`${supabaseUrl}/rest/v1/content_shares?shared_with=eq.${userId}`, {
+      method: 'DELETE',
+      headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, Prefer: 'return=minimal' }
+    });
+    if (!csR.ok) failedTables.push('content_shares (shared_with)');
 
     // exercises: aparte behandeling, want (a) de eigenaarskolom heet created_by, niet
     // user_id zoals de rest, en (b) alleen scope='personal' mag echt weg — gym/global-

@@ -1404,6 +1404,53 @@ test('Geen sessies binnen scope: lege groepering, geen crash', ()=>{
   assertEq(Object.keys(r).length,0);
 });
 
+// ── AI COACH TOESTEMMING (Sprint 5.8.2) ─────────────────────
+// Zelfde tri-state-logica als ensureAiConsent() in index.html — pure functie
+// (met een geïnjecteerde askUser-functie i.p.v. de echte confirmModal-UI),
+// los getest. Hergebruikt makeMockLocalStorage (Sprint 5.6.3). De vertaklogica
+// zelf is niet async-afhankelijk (alleen de echte confirmModal-UI is dat), dus
+// synchroon getest om betrouwbare volgorde in de testrun te garanderen.
+console.log("\n🔒 AI Coach toestemming (consent-gate)");
+
+function resolveAiConsentSync(localStorage, askUserFn){
+  const stored=localStorage.getItem('tk_ai_consent');
+  if(stored==='1')return true;
+  if(stored==='0')return false;
+  const granted=askUserFn();
+  localStorage.setItem('tk_ai_consent', granted?'1':'0');
+  return granted;
+}
+
+test('Al eerder toegestaan: geeft direct true, vraagt niet opnieuw', ()=>{
+  let asked=false;
+  const ls=makeMockLocalStorage({tk_ai_consent:'1'});
+  const r=resolveAiConsentSync(ls, ()=>{asked=true;return true;});
+  assertEq(r,true); assertEq(asked,false);
+});
+test('Al eerder geweigerd: geeft direct false, vraagt niet opnieuw (geen herhaalde pop-up)', ()=>{
+  let asked=false;
+  const ls=makeMockLocalStorage({tk_ai_consent:'0'});
+  const r=resolveAiConsentSync(ls, ()=>{asked=true;return true;});
+  assertEq(r,false); assertEq(asked,false);
+});
+test('Nog nooit gevraagd + gebruiker staat toe: wordt onthouden als toegestaan', ()=>{
+  const ls=makeMockLocalStorage({});
+  const r=resolveAiConsentSync(ls, ()=>true);
+  assertEq(r,true); assertEq(ls.getItem('tk_ai_consent'),'1');
+});
+test('Nog nooit gevraagd + gebruiker weigert: wordt onthouden als geweigerd, AI Coach blijft uit', ()=>{
+  const ls=makeMockLocalStorage({});
+  const r=resolveAiConsentSync(ls, ()=>false);
+  assertEq(r,false); assertEq(ls.getItem('tk_ai_consent'),'0');
+});
+test('Later gewijzigd via Instellingen: nieuwe keuze wordt gerespecteerd zonder opnieuw te vragen', ()=>{
+  const ls=makeMockLocalStorage({});
+  resolveAiConsentSync(ls, ()=>false); // eerste keer: weigert
+  ls.setItem('tk_ai_consent','1'); // gebruiker wijzigt dit later zelf in Instellingen -> Privacy
+  const r=resolveAiConsentSync(ls, ()=>{throw new Error('mag niet opnieuw vragen');});
+  assertEq(r,true);
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

@@ -1,5 +1,32 @@
 # Trainingskompas — Changelog
 
+## Sprint 5.7.3–5.7.6 — 7 augustus 2026 (Personalisatie-consistentie, terminologie, validatie) — geen versiebump
+*Afronding van Sprint 5.7, Scientific Integrity & Personalisation Engine. 5.7.3-5.7.5 leverden geen codewijziging op (verificatie bevestigde bestaande consistentie); 5.7.6 voegt permanente testdekking toe.*
+
+### 5.7.3 — Personalisatie Fase1→2→3, onderzocht
+Kracht (1RM-ratiomotor) bleek al vóór Sprint 5.7 volledig conform (`RATIO_MIN_OBS`, betrouwbaarheid Laag/Middel/Hoog, bron eigen data/algemene richtlijn). HRV/dagfactor (nieuw in 5.7.1) volgt hetzelfde patroon met eigen, domein-passende terminologie. Herstel blijft bewust Fase1-only (5.7.2-besluit). Trainingsadvies erft de fase automatisch via de bestaande datastroom. Geen wijziging nodig.
+
+### 5.7.4 + 5.7.5 — Referentie/persoonlijk/gemeten & transparantie, onderzocht
+Cold-start-predictor ("Startschatting: ~X kg"), 1RM-ratiovergelijking (werkelijk vs. verwacht + bron + betrouwbaarheid) en de HRV/herstel-transparantie uit 5.7.1/5.7.2 bleken de belangrijkste cijferweergaven al correct te labelen. Geen medische claims of absolute gezondheidsuitspraken aangetroffen. De compacte "Gereedheid"-tegel in de hero blijft bewust een kaal cijfer (toelichting zit al één tik verderop in "Waarom vandaag?") — dat aanpassen zou de vaste stat-tegel-layout breken (UX-herontwerp, niet toegestaan). Geen wijziging nodig.
+
+### 5.7.6 — Validatiematrix
+Nieuw permanent testblok: volledige keten (HRV-baseline → dagfactor → clip) doorlopen voor alle door de sprint gevraagde persona's — nieuwe gebruiker, weinig historie, ervaren gebruiker met volledige baseline, veel trainingsdata (60 metingen), ontbrekende HRV, ontbrekende slaap, ontbrekend lichaamsgewicht, en een gecombineerd scenario dat bevestigt dat de dagfactor in élke combinatie binnen de 0,85–1,05-band blijft en nooit NaN oplevert.
+
+### Getest
+`logic_tests.js`: 154/154 (uit 5.7.1/5.7.2) + 8 nieuwe validatiematrix-tests = **162/162 geslaagd**. `index.html` ongewijzigd deze deelstap (9/9 scriptblokken syntax-OK, ter bevestiging opnieuw gecontroleerd).
+
+### Sprint 5.7 — volledig afgerond
+| Werkpakket | Resultaat |
+|---|---|
+| 5.7.1 HRV-baseline | Geïmplementeerd, live (v4.24.0) |
+| 5.7.2 Herstelmodel-transparantie | Geïmplementeerd, live (v4.24.1) |
+| 5.7.3 Personalisatie-consistentie | Onderzocht, al consistent — geen wijziging |
+| 5.7.4 Referentie/persoonlijk/gemeten | Onderzocht, al consistent — geen wijziging |
+| 5.7.5 Transparantie | Onderzocht, al gedekt door 5.7.1/5.7.2 |
+| 5.7.6 Validatie | 8 nieuwe tests, 162/162 geslaagd |
+
+---
+
 ## v4.24.1 — 7 augustus 2026 (Sprint 5.7.2 — Herstelmodel-transparantie, Scientific Integrity & Personalisation Engine)
 *Onderdeel van Sprint 5.7. Uitsluitend transparantie/bronvermelding — geen wijziging aan de herstel-rekenlogica zelf, geen UX-herontwerp, geen nieuwe schermen.*
 

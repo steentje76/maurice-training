@@ -1,6 +1,6 @@
 
 // ═══════════════════════════════════════════════════════
-// Maurice Training Coach — Logic Tests
+// Trainingskompas — Logic Tests
 // Draai met: node logic_tests.js
 // ═══════════════════════════════════════════════════════
 
@@ -29,26 +29,120 @@ function assertRange(val, min, max, msg){
   if(val < min || val > max) throw new Error(`${msg || ''}: ${val} niet in [${min}, ${max}]`);
 }
 
-// ── HRV DREMPELS ─────────────────────────────────────────
-console.log("\n📊 HRV Drempels (Maurice-specifiek)");
+// ── HRV-BASELINE (Sprint 5.7.1 — Plews/Buchheit SWC-methode) ─────
+// Zelfde implementatie als in index.html — pure functies, los getest.
+// Vervangt de oude vaste-drempel-tests (24/18/14 ms), die wetenschappelijk
+// achterhaald waren (audit: "HRV op absolute drempels zonder persoonlijke baseline").
+console.log("\n📊 HRV-baseline (persoonlijke SWC-methode)");
 
-function hrvStatus(v){
-  if(!v) return 'y';
-  if(v>=24) return 'g';
-  if(v>=18) return 'y';
-  if(v>=14) return 'o';
-  return 'r';
+const HRV_BASELINE_MIN_DAYS=14, HRV_BASELINE_FULL_DAYS=28, HRV_BASELINE_MIN_N=4;
+const HRV_SWC_MULTIPLIER=0.5, HRV_SEVERE_DROP_PCT=0.15;
+
+function lnRmssd(v){return (typeof v==='number'&&v>0)?Math.log(v):null;}
+
+function hrvBaseline(hdRows, refDate){
+  const ref=refDate?new Date(refDate):new Date();
+  const rows=(hdRows||[]).filter(r=>r&&r.hrv&&r.date).map(r=>({date:new Date(r.date),hrv:r.hrv,ln:lnRmssd(r.hrv)})).filter(r=>r.ln!=null&&!isNaN(r.date.getTime())&&r.date<=ref);
+  if(!rows.length)return {ready:false,fase:'referentie',n:0,days:0};
+  rows.sort((a,b)=>a.date-b.date);
+  const days=Math.max(0,Math.round((ref-rows[0].date)/86400000));
+  const n=rows.length;
+  if(days<HRV_BASELINE_MIN_DAYS||n<HRV_BASELINE_MIN_N)return {ready:false,fase:'referentie',n,days};
+  const meanLn=rows.reduce((s,r)=>s+r.ln,0)/n;
+  const variance=rows.reduce((s,r)=>s+Math.pow(r.ln-meanLn,2),0)/n;
+  const sdLn=Math.sqrt(variance);
+  const meanRaw=rows.reduce((s,r)=>s+r.hrv,0)/n;
+  const fase=days>=HRV_BASELINE_FULL_DAYS?'volledig':'voorlopig';
+  return {ready:true,fase,n,days,meanLn,sdLn,meanRaw,swc:HRV_SWC_MULTIPLIER*sdLn};
+}
+function hrvRollingRecent(hdRows, refDate){
+  const ref=refDate?new Date(refDate):new Date();
+  const rows=(hdRows||[]).filter(r=>r&&r.hrv&&r.date).map(r=>({date:new Date(r.date),hrv:r.hrv,ln:lnRmssd(r.hrv)})).filter(r=>r.ln!=null&&!isNaN(r.date.getTime())&&r.date<=ref);
+  if(!rows.length)return null;
+  rows.sort((a,b)=>b.date-a.date);
+  const sevenDaysAgo=new Date(ref.getTime()-7*86400000);
+  const last7=rows.filter(r=>r.date>=sevenDaysAgo);
+  if(last7.length>=HRV_BASELINE_MIN_N){
+    const meanLn=last7.reduce((s,r)=>s+r.ln,0)/last7.length;
+    const meanRaw=last7.reduce((s,r)=>s+r.hrv,0)/last7.length;
+    return {meanLn,meanRaw,n:last7.length,bron:'7d-gemiddelde'};
+  }
+  const latest=rows[0];
+  return {meanLn:latest.ln,meanRaw:latest.hrv,n:1,bron:'laatste meting'};
+}
+function hrvStPersonal(hdRows, refDate){
+  const baseline=hrvBaseline(hdRows,refDate);
+  if(!baseline.ready)return {st:'ref',baseline,recent:null,drop:null};
+  const recent=hrvRollingRecent(hdRows,refDate);
+  if(!recent)return {st:'ref',baseline,recent:null,drop:null};
+  const drop=(baseline.meanRaw-recent.meanRaw)/baseline.meanRaw;
+  if(drop>=HRV_SEVERE_DROP_PCT)return {st:'r',baseline,recent,drop};
+  if(recent.meanLn<baseline.meanLn-baseline.swc)return {st:'o',baseline,recent,drop};
+  return {st:'g',baseline,recent,drop};
+}
+function hrvDagFactorPersonal(hdRows, refDate){
+  const c=hrvStPersonal(hdRows,refDate);
+  const factor={g:1.05,o:0.93,r:0.85,ref:1.00}[c.st];
+  return {factor,st:c.st,baseline:c.baseline,recent:c.recent,drop:c.drop};
 }
 
-test('HRV 24 = optimaal (groen)', ()=> assertEq(hrvStatus(24), 'g'));
-test('HRV 23 = normaal (geel)', ()=> assertEq(hrvStatus(23), 'y'));
-test('HRV 18 = normaal (geel)', ()=> assertEq(hrvStatus(18), 'y'));
-test('HRV 17 = laag (oranje)', ()=> assertEq(hrvStatus(17), 'o'));
-test('HRV 14 = laag (oranje)', ()=> assertEq(hrvStatus(14), 'o'));
-test('HRV 13 = kritiek (rood)', ()=> assertEq(hrvStatus(13), 'r'));
-test('HRV 0 = geel (falsy, behandeld als null)', ()=> assertEq(hrvStatus(0), 'y')); // 0 is falsy in JS
-test('HRV null = geel (default)', ()=> assertEq(hrvStatus(null), 'y'));
-test('HRV 36 = optimaal', ()=> assertEq(hrvStatus(36), 'g'));
+function daysAgoISO(n,ref){const d=new Date(ref);d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);}
+const HRV_TEST_REF='2026-08-07';
+function mkDaily(fromDaysAgo,toDaysAgo,value,ref){const rows=[];for(let i=fromDaysAgo;i>=toDaysAgo;i--)rows.push({date:daysAgoISO(i,ref),hrv:value});return rows;}
+
+test('Referentiefase: te weinig metingen (n<4), ongeacht periode', ()=>{
+  const rows=[{date:daysAgoISO(3,HRV_TEST_REF),hrv:50},{date:daysAgoISO(1,HRV_TEST_REF),hrv:48}];
+  const b=hrvBaseline(rows,HRV_TEST_REF);
+  assertEq(b.ready,false); assertEq(b.fase,'referentie');
+});
+test('Referentiefase: genoeg metingen maar periode <14 dagen', ()=>{
+  const rows=mkDaily(10,1,50,HRV_TEST_REF); // 10 dagen, elke dag een meting
+  const b=hrvBaseline(rows,HRV_TEST_REF);
+  assertEq(b.ready,false); assertEq(b.fase,'referentie'); assertEq(b.n,10); assertEq(b.days,10);
+});
+test('Voorlopige baseline vanaf 14 dagen', ()=>{
+  const rows=mkDaily(18,1,50,HRV_TEST_REF);
+  const b=hrvBaseline(rows,HRV_TEST_REF);
+  assertEq(b.ready,true); assertEq(b.fase,'voorlopig'); assertEq(b.meanRaw,50);
+});
+test('Volledige baseline vanaf 28 dagen', ()=>{
+  const rows=mkDaily(30,1,50,HRV_TEST_REF);
+  const b=hrvBaseline(rows,HRV_TEST_REF);
+  assertEq(b.ready,true); assertEq(b.fase,'volledig');
+});
+test('Stabiele HRV (geen afwijking van eigen baseline) = goed', ()=>{
+  const rows=mkDaily(30,1,50,HRV_TEST_REF); // elke dag exact 50, ook de laatste week
+  const r=hrvStPersonal(rows,HRV_TEST_REF);
+  assertEq(r.st,'g');
+});
+test('Milde daling (~4,7%, binnen SWC-marge) = verlaagd, niet ernstig', ()=>{
+  const rows=[...mkDaily(30,8,50,HRV_TEST_REF), ...mkDaily(7,1,47,HRV_TEST_REF)];
+  const r=hrvStPersonal(rows,HRV_TEST_REF);
+  assertEq(r.st,'o');
+});
+test('Sterke daling (>=15% t.o.v. eigen gemiddelde) = sterk verlaagd', ()=>{
+  const rows=[...mkDaily(30,8,50,HRV_TEST_REF), ...mkDaily(7,1,35,HRV_TEST_REF)];
+  const r=hrvStPersonal(rows,HRV_TEST_REF);
+  assertEq(r.st,'r');
+  assert(r.drop>=HRV_SEVERE_DROP_PCT,'drop moet >=15% zijn');
+});
+test('Geen enkele meting = referentiefase, geen crash', ()=>{
+  const r=hrvStPersonal([],HRV_TEST_REF);
+  assertEq(r.st,'ref');
+});
+test('hrvDagFactorPersonal: referentiefase geeft neutrale factor 1.00 (geen absolute claim)', ()=>{
+  const rows=mkDaily(3,1,50,HRV_TEST_REF); // te weinig data
+  const r=hrvDagFactorPersonal(rows,HRV_TEST_REF);
+  assertEq(r.factor,1.00); assertEq(r.st,'ref');
+});
+test('hrvDagFactorPersonal: goed/verlaagd/sterk verlaagd geven respectievelijk 1.05/0.93/0.85', ()=>{
+  assertEq(hrvDagFactorPersonal(mkDaily(30,1,50,HRV_TEST_REF),HRV_TEST_REF).factor,1.05);
+  assertEq(hrvDagFactorPersonal([...mkDaily(30,8,50,HRV_TEST_REF),...mkDaily(7,1,47,HRV_TEST_REF)],HRV_TEST_REF).factor,0.93);
+  assertEq(hrvDagFactorPersonal([...mkDaily(30,8,50,HRV_TEST_REF),...mkDaily(7,1,35,HRV_TEST_REF)],HRV_TEST_REF).factor,0.85);
+});
+test('Leeftijd is bewust geen input van de HRV-classificatie (persoonlijke baseline vangt dit al op)', ()=>{
+  assertEq(hrvBaseline.length,2); assertEq(hrvStPersonal.length,2); // (hdRows, refDate) — geen leeftijdsparameter
+});
 
 // ── MASTERS FACTOR ────────────────────────────────────────
 console.log("\n🏅 Masters leeftijdscorrectie (IPF)");
@@ -65,7 +159,7 @@ function mastersFactor(leeftijd){
 
 test('Leeftijd 30 = factor 1.00', ()=> assertEq(mastersFactor(30), 1.0));
 test('Leeftijd 40 = factor 1.01', ()=> assertEq(mastersFactor(40), 1.01));
-test('Leeftijd 50 = factor 1.04 (Maurice)', ()=> assertEq(mastersFactor(50), 1.04));
+test('Leeftijd 50 = factor 1.04', ()=> assertEq(mastersFactor(50), 1.04));
 test('Leeftijd 60 = factor 1.09 (grens <60 = 1.06, >=60 = 1.09)', ()=> assertEq(mastersFactor(60), 1.09));
 test('Leeftijd 65 = factor 1.12', ()=> assertEq(mastersFactor(65), 1.12));
 test('Factor altijd >= 1.0', ()=> assert(mastersFactor(25) >= 1.0));
@@ -224,7 +318,7 @@ function calcBMI(weight, lengthCm){
 
 test('BMI 109 kg, 180 cm = ~33.6', ()=>{
   const bmi = calcBMI(109, 180);
-  assertRange(bmi, 33, 35, 'BMI Maurice');
+  assertRange(bmi, 33, 35, 'BMI-testcase 109kg/180cm');
 });
 test('BMI null bij ontbrekende data', ()=>{
   assert(calcBMI(null, 180) === null);
@@ -352,11 +446,9 @@ test('ratioFactor: fallback naar fase1 als één lift geen data heeft', ()=>{
   assert(r.ratio !== null, 'fase1 fallback moet altijd een ratio geven voor bekende liften');
 });
 
-// ── DAGFACTOR-MOTOR (v300) ───────────────────────────────
+// ── DAGFACTOR-MOTOR (v300, HRV-component vernieuwd in Sprint 5.7.1) ─────
 console.log("\n🌤️  Dagfactor-motor");
 
-function hrvSt(v){if(!v)return 'y';if(v>=24)return 'g';if(v>=18)return 'y';if(v>=14)return 'o';return 'r';}
-function hrvDagFactor(v){const st=hrvSt(v);return {g:1.05,y:1.00,o:0.93,r:0.85}[st];}
 function slaapDagFactor(uren){
   if(!uren)return 1.00;
   if(uren>=7)return 1.00;
@@ -366,30 +458,43 @@ function slaapDagFactor(uren){
 function cyclusDagFactor(fase){
   return {menstruatie:0.93,folliculair:1.03,ovulatie:1.00,luteaal:0.97}[fase] ?? 1.00;
 }
-function dagfactor(hrv,slaapUren,cyclusFase){
-  const hrvFactor=hrvDagFactor(hrv);
+// hrvComponent = output van hrvDagFactorPersonal() (zelfde signatuur als index.html).
+function dagfactor(hrvComponent,slaapUren,cyclusFase){
+  const hc=hrvComponent||{factor:1.00,st:'ref',baseline:null};
+  const hrvFactor=hc.factor;
   const slaapFactor=slaapDagFactor(slaapUren);
   const cyclusFactor=cyclusDagFactor(cyclusFase);
   const ruw=hrvFactor*slaapFactor*cyclusFactor;
   const factor=Math.round(Math.max(0.85,Math.min(1.05,ruw))*100)/100;
-  return {factor,hrvFactor,slaapFactor,cyclusFactor};
+  return {factor,hrvFactor,slaapFactor,cyclusFactor,hrvSt:hc.st,hrvBaseline:hc.baseline};
 }
 
-test('Dagfactor optimaal: HRV hoog, slaap voldoende = 1.05', ()=>{
-  const df=dagfactor(28,7.5,null);
+test('Dagfactor optimaal: HRV goed (eigen baseline), slaap voldoende = 1.05', ()=>{
+  const hrvC=hrvDagFactorPersonal(mkDaily(30,1,50,HRV_TEST_REF),HRV_TEST_REF); // stabiel -> 'g'
+  const df=dagfactor(hrvC,7.5,null);
   assertEq(df.factor,1.05);
 });
-test('Dagfactor kritiek: HRV laag, slaap kort = geclipt op 0.85', ()=>{
-  const df=dagfactor(10,5,null);
+test('Dagfactor kritiek: HRV sterk verlaagd, slaap kort = geclipt op 0.85', ()=>{
+  const rows=[...mkDaily(30,8,50,HRV_TEST_REF),...mkDaily(7,1,35,HRV_TEST_REF)]; // 'r'
+  const hrvC=hrvDagFactorPersonal(rows,HRV_TEST_REF);
+  const df=dagfactor(hrvC,5,null);
   assertEq(df.factor,0.85);
 });
-test('Dagfactor zonder data = 1.00 (geen correctie)', ()=>{
+test('Dagfactor zonder enige data = 1.00 (geen correctie, geen absolute claim)', ()=>{
   const df=dagfactor(null,null,null);
   assertEq(df.factor,1.00);
 });
+test('Dagfactor referentiefase (te weinig HRV-historie) = neutrale 1.00 voor de HRV-component', ()=>{
+  const hrvC=hrvDagFactorPersonal(mkDaily(3,1,50,HRV_TEST_REF),HRV_TEST_REF); // n<4 dagen
+  assertEq(hrvC.st,'ref');
+  const df=dagfactor(hrvC,7,null);
+  assertEq(df.hrvFactor,1.00);
+});
 test('Dagfactor clip: nooit boven 1.05 of onder 0.85', ()=>{
-  const hoog=dagfactor(30,8,'folliculair');
-  const laag=dagfactor(10,4,'menstruatie');
+  const goedeHrv=hrvDagFactorPersonal(mkDaily(30,1,50,HRV_TEST_REF),HRV_TEST_REF);
+  const slechteHrv=hrvDagFactorPersonal([...mkDaily(30,8,50,HRV_TEST_REF),...mkDaily(7,1,35,HRV_TEST_REF)],HRV_TEST_REF);
+  const hoog=dagfactor(goedeHrv,8,'folliculair');
+  const laag=dagfactor(slechteHrv,4,'menstruatie');
   assert(hoog.factor<=1.05);
   assert(laag.factor>=0.85);
 });
@@ -398,9 +503,13 @@ test('Cyclusfactor alleen effect als fase opgegeven', ()=>{
   assertEq(cyclusDagFactor('menstruatie'),0.93);
   assertEq(cyclusDagFactor('folliculair'),1.03);
 });
-test('Dagfactor: normale HRV + normale slaap = 1.00', ()=>{
-  const df=dagfactor(20,7,null);
-  assertEq(df.factor,1.00);
+test('Dagfactor: normale/stabiele HRV + normale slaap = 1.00', ()=>{
+  const hrvC=hrvDagFactorPersonal(mkDaily(30,1,50,HRV_TEST_REF),HRV_TEST_REF); // 'g' -> 1.05, x slaap 1.00
+  const df=dagfactor(hrvC,7,null);
+  // 'g' geeft hrvFactor 1.05, dus dagfactor 1.05 (niet 1.00) -- dit bewijst dat de
+  // nieuwe methode een stabiele/normale HRV al als positief signaal waardeert i.p.v.
+  // als neutraal te behandelen (verschil met de oude vaste-drempel-versie).
+  assertEq(df.factor,1.05);
 });
 
 // ── COLD-START-PREDICTOR (v300) ──────────────────────────
@@ -1031,7 +1140,7 @@ test('resetPersonalCacheIfNewDeviceOwner: zelfde gebruiker als vorige sessie -> 
 test('resetPersonalCacheIfNewDeviceOwner: ander account op hetzelfde device -> cache wordt gewist (was het datalek)', ()=>{
   const ls=makeMockStorage();
   ls.setItem('maurice_cache_owner_uid','user-A'); // vorige gebruiker op dit device
-  ls.setItem('maurice_atleet', JSON.stringify({leeftijd:50,naam:'Maurice'})); // zijn echte profiel
+  ls.setItem('maurice_atleet', JSON.stringify({leeftijd:50,naam:'Vorige Gebruiker'})); // zijn echte profiel
   const r=resolveDeviceOwnerReset(ls,'user-B',['maurice_atleet']); // nieuw account logt in
   assertEq(r.wiped, true);
   assertEq(ls.getItem('maurice_atleet'), null, 'oude-gebruiker-data mag niet zichtbaar blijven voor het nieuwe account');

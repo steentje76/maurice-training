@@ -3190,6 +3190,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
     <div class="v43-lbl" style="margin:18px 0 10px">Herstel per spiergroep</div>
     <div id="v43-lich-list" class="lich-mus"></div>
+    <div class="v43-lich-cap" style="margin-top:-4px">Vuistregel (48–72u, RPE-afhankelijk) — geen gemeten fysiologische waarde</div>
 
     <div class="v43-lbl" style="margin:18px 0 10px">Belasting &middot; laatste 7 dagen</div>
     <div id="lich-belasting"></div>
@@ -4228,7 +4229,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.0';
+const APP_VER = 'v4.24.1';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -10766,7 +10767,11 @@ function renderDagfactorDetail(){
     if(!bl.ready)hrvBronTxt=` HRV-beoordeling: referentiefase (${bl.n} meting${bl.n===1?'':'en'}, nog geen persoonlijke baseline — pas vanaf 14 dagen eigen data).`;
     else hrvBronTxt=` HRV-beoordeling t.o.v. je ${bl.fase==='volledig'?'volledige':'voorlopige'} eigen baseline (${bl.n} metingen over ${bl.days} dagen).`;
   }
-  html+=`<div class="dfd-note">${d.factor} = HRV ${d.hrvF.toFixed(2)} × slaap ${d.slaapF.toFixed(2)}${d.cycTxt||''}, geclipt 0.85–1.05. Informatief — past nooit automatisch je gewicht aan. Confidence: ${d.conf} (${d.sig}/3 signalen).${hrvBronTxt}</div>`;
+  // Sprint 5.7.2/5.7.5 — herstelmodel is een vuistregel (48-72u, RPE-afhankelijk),
+  // geen gemeten fysiologische waarde. Alleen tonen als er daadwerkelijk spiergroepen
+  // met data in dit paneel staan.
+  const spierBronTxt = rec.length ? ' Spierherstel: vuistregel (48-72u, RPE-afhankelijk), geen gemeten fysiologische waarde.' : '';
+  html+=`<div class="dfd-note">${d.factor} = HRV ${d.hrvF.toFixed(2)} × slaap ${d.slaapF.toFixed(2)}${d.cycTxt||''}, geclipt 0.85–1.05. Informatief — past nooit automatisch je gewicht aan. Confidence: ${d.conf} (${d.sig}/3 signalen).${hrvBronTxt}${spierBronTxt}</div>`;
   el.innerHTML=html;
 }
 function toggleDagfactorDetail(){
@@ -13515,7 +13520,8 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
       (wReady.length?wRow('Volledig hersteld',wReady.slice(0,3).join(', ')):'')+
       (wLow.length?wRow('Nog herstellend',wLow.slice(0,2).map(r=>r.muscle+' '+r.pct+'%').join(', ')):'')+
       (factor!=null?wRow('Dagfactor',dfVal+(wUit?' · '+wUit:'')):'')+
-      (wTxt?`<div class="v43-why-p">${escHtml(wTxt)}</div>`:'')
+      (wTxt?`<div class="v43-why-p">${escHtml(wTxt)}</div>`:'')+
+      ((wReady.length||wLow.length)?`<div class="v43-why-p" style="opacity:.7;font-size:11px">Spierherstel: vuistregel (48–72u, RPE-afhankelijk), geen gemeten fysiologische waarde.</div>`:'')
     ):'<div class="v43-why-p">Doe je check-in (HRV + slaap) om je dagfactor en herstelbeeld te zien.</div>';
     heroEl.innerHTML=`<div class="v43-hero" onclick="v43ToggleWhy()" style="cursor:pointer" role="button" aria-expanded="false" aria-label="Herstelstatus — tik voor waarom vandaag">
       <div class="v43-hero-top">

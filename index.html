@@ -2383,6 +2383,26 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-lichaam .lich-adv ul{list-style:none;display:flex;flex-direction:column;gap:9px;margin:0;padding:0}
 #s-lichaam .lich-adv li{display:flex;gap:10px;align-items:center;font-size:14px;color:rgba(255,255,255,.92);font-weight:600}
 #s-lichaam .lich-adv li .ck{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#0b2a35;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+/* ══════════════════════════════════════════════════════════════════
+   v4.23.0 — Sprint 5.5 App-brede UX-polish: premium empty states,
+   micro-interacties (press/hover), feedback. Presentatie-only, geen logica.
+   ══════════════════════════════════════════════════════════════════ */
+/* Premium empty state — upgrade gedeeld component (overal waar .tk-empty gebruikt wordt) */
+.tk-empty{text-align:center;color:var(--g4);padding:30px 20px;font-size:13.5px;line-height:1.55;font-weight:500}
+.tk-empty-emo{display:inline-flex;align-items:center;justify-content:center;width:60px;height:60px;border-radius:18px;background:var(--v43-mint);font-size:28px;opacity:1;margin:0 auto 12px}
+.tk-empty--error .tk-empty-emo{background:rgba(229,83,61,.12)}
+/* Feedback toast — premium (donkere kaart, subtiele schaduw, accent-rand) */
+.toast{background:var(--dark);color:#fff;padding:12px 18px;border-radius:16px;box-shadow:0 12px 30px rgba(0,0,0,.34);border-left:3px solid var(--accent);font-weight:700}
+/* Micro-interacties: press-feedback + desktop hover — reduced-motion-safe */
+@media (prefers-reduced-motion: no-preference){
+  .btn,.ni,.ibtn,.row,.set-nav-row,.srow,.trow,.pf-row,.v47-bigc,.filter-chip,.seg-opt,.mine-seg-opt,.lib-card,.pk-gcard{transition:transform .12s ease, box-shadow .18s ease, background-color .18s ease}
+  .btn:active,.v47-bigc:active,.row:active,.set-nav-row:active,.srow:active,.trow:active,.pf-row:active,.lib-card:active,.pk-gcard:active,.filter-chip:active,.seg-opt:active,.mine-seg-opt:active{transform:scale(.975)}
+  .ni:active,.ibtn:active{transform:scale(.9)}
+}
+@media (hover:hover) and (pointer:fine){
+  .v47-bigc:hover,.row:hover,.set-nav-row:hover,.srow:hover,.trow:hover,.pf-row:hover,.lib-card:hover,.pk-gcard:hover{box-shadow:0 10px 24px rgba(11,29,42,.12)}
+  .btn:hover{filter:brightness(1.03)}
+}
 </style>
 </head>
 <body>
@@ -3140,11 +3160,11 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="v43-lbl" style="margin:18px 0 10px">Metingen</div>
     <div class="card">
       <div class="card-hd"><div class="card-title">Lichaamscompositie</div><div class="card-sub" id="profiel-bc-date">—</div></div>
-      <div class="card-body" id="profiel-bc-card"><p style="color:var(--g4);font-size:13px">Geen metingen</p></div>
+      <div class="card-body" id="profiel-bc-card"><div class="tk-empty"><div class="tk-empty-emo">📏</div>Nog geen metingen — voeg er één toe met +.</div></div>
     </div>
     <div class="card">
       <div class="card-hd"><div class="card-title">Afmetingen</div></div>
-      <div class="card-body" id="profiel-afmetingen-card"><p style="color:var(--g4);font-size:13px">Geen metingen</p></div>
+      <div class="card-body" id="profiel-afmetingen-card"><div class="tk-empty"><div class="tk-empty-emo">📏</div>Nog geen metingen — voeg er één toe met +.</div></div>
     </div>
     <div class="card">
       <div class="card-hd"><div class="card-title">Taille trend</div><div class="card-sub" id="profiel-waist-lbl">—</div></div>
@@ -4159,7 +4179,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.22.0';
+const APP_VER = 'v4.23.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -10660,7 +10680,7 @@ async function loadHistory(append=false){
   });
   const el=document.getElementById('hist-list');
   if(append)el.insertAdjacentHTML('beforeend',html);
-  else el.innerHTML=recentHtml+(html||'<p style="color:var(--g4);font-size:13px">Geen sessies gevonden</p>');
+  else el.innerHTML=recentHtml+(html||'<div class="tk-empty"><div class="tk-empty-emo">📋</div>Nog geen trainingen gelogd — je sessies verschijnen hier.</div>');
   document.getElementById('hist-more').style.display=syncedCount<20?'none':'block';
   histOff+=20;
 }
@@ -10921,7 +10941,7 @@ async function refreshStatsScreen(){
 
   // Roeien
   const rd=await sbGet('sessions','&exercise_id=eq.roeien&order=date.desc,created_at.desc&limit=8');
-  let rh=rd.length?'':'<p style="color:var(--g4);font-size:13px">Nog geen roeisessies</p>';
+  let rh=rd.length?'':'<div class="tk-empty"><div class="tk-empty-emo">🚣</div>Nog geen roeisessies gelogd.</div>';
   rd.forEach(s=>{
     let split='';
     if(s.distance&&s.time_str&&s.time_str!=='—'){
@@ -12066,7 +12086,7 @@ async function renderBodyMeasurements(){
       </div>
     </div>`;
   });
-  document.getElementById('profiel-history').innerHTML = hist || '<p style="color:var(--g4);font-size:13px">Nog geen metingen</p>';
+  document.getElementById('profiel-history').innerHTML = hist || '<div class="tk-empty"><div class="tk-empty-emo">📏</div>Nog geen metingen toegevoegd.</div>';
 }
 
 async function askCoachProfiel(){
@@ -12143,7 +12163,7 @@ function renderCustomTrainBtns(){
 function renderCustomTrainList(){
   const el=document.getElementById('custom-train-list');
   if(!el) return;
-  if(!customTrainings.length){el.innerHTML='<p style="color:var(--g4);font-size:13px">Nog geen eigen trainingen</p>';return;}
+  if(!customTrainings.length){el.innerHTML='<div class="tk-empty"><div class="tk-empty-emo">🏋️</div>Nog geen eigen workouts — maak er één aan om te beginnen.</div>';return;}
   let h='';
   customTrainings.forEach((t,i)=>{
     h+=`<div class="card" style="margin-bottom:8px">

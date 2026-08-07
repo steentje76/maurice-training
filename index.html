@@ -4245,7 +4245,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.6';
+const APP_VER = 'v4.24.7';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -4800,12 +4800,22 @@ function computeNextVasteTraining(list,lastDoneMap){
   }
   return best;
 }
+// v5.9.1 (Database Performance): was N losse sbGet-aanroepen (één per vaste training)
+// — bij elke Home-refresh én elk AI-coach-bericht (3 aanroeplocaties, waarvan 2 hot
+// paths). Nu: één query met training_type=in.(...), client-side gegroepeerd op de
+// meest recente datum per type. Zelfde patroon als de buildCtx-oefeningsgeschiedenis-
+// fix uit Sprint 5.8.1. Identieke output-vorm (map[trainingId] = laatste datum of
+// null) — geen enkele aanroeper hoeft aangepast te worden.
 async function computeLastDoneMap(list){
   const map={};
-  for(const v of list){
-    const rows=await sbGet('sessions','&training_type=eq.'+v.id+'&order=date.desc&limit=1');
-    map[v.id]=rows[0]?.date||null;
-  }
+  if(!list||!list.length)return map;
+  list.forEach(v=>{map[v.id]=null;});
+  const ids=list.map(v=>v.id);
+  const rows=await sbGet('sessions','&training_type=in.('+ids.join(',')+')&order=training_type.asc,date.desc,created_at.desc');
+  const seen=new Set();
+  rows.forEach(r=>{
+    if(!seen.has(r.training_type)){map[r.training_type]=r.date;seen.add(r.training_type);}
+  });
   return map;
 }
 async function renderVasteTrainingBtns(){

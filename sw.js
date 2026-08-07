@@ -1,8 +1,8 @@
 // Trainingskompas — Service Worker
 // Play Store ready — offline first
 
-const CACHE_NAME = 'trainingskompas-v42412';
-const CACHE_STATIC = 'trainingskompas-static-v42412';
+const CACHE_NAME = 'trainingskompas-v42413';
+const CACHE_STATIC = 'trainingskompas-static-v42413';
 // Video-cache: STABIEL en LOSGEKOPPELD van de app-versie. App-updates verwijderen video's NIET.
 const CACHE_VIDEOS = 'tk-videos-v1';
 const VIDEO_LIMIT_BYTES = 250 * 1024 * 1024; // 250 MB LRU-plafond
@@ -45,7 +45,10 @@ self.addEventListener('activate', e => {
       Promise.all(
         keys
           .filter(k => k !== CACHE_NAME && k !== CACHE_STATIC && k !== CACHE_VIDEOS)
-          .map(k => caches.delete(k))
+          .map(k => {
+            console.log('SW: deleting old cache', k);
+            return caches.delete(k);
+          })
       )
     ).then(() => self.clients.claim())
   );
@@ -180,6 +183,7 @@ self.addEventListener('fetch', e => {
 // ── BACKGROUND SYNC: voor als Supabase offline was ────────
 self.addEventListener('sync', e => {
   if (e.tag === 'sync-sessions') {
+    console.log('SW: background sync sessions');
     // Toekomstig: sync pending sessions van IndexedDB
   }
 });

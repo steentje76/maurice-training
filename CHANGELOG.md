@@ -1,5 +1,32 @@
 # Trainingskompas — Changelog
 
+## v4.24.19 — 7 augustus 2026 (Kritieke fix — cross-account datalek via in-memory cache)
+*Gevonden en bevestigd via een screenopname van de gebruiker: een compleet nieuw, nog nooit gebruikt account (maurice@medscan.nl) toonde bij Voortgang de 1RM-schattingen van het hoofdaccount op hetzelfde toestel.*
+
+### Onderzoek (frame-voor-frame analyse van de meegestuurde schermopname)
+Bevestigd: correct e-mailadres in Profiel, verse app-versie (v4.24.18, expliciet "Cache verversen" gedrukt), "Nog geen doelen" en "0/100 trainingen" correct leeg voor Doelen/Challenges. Maar op hetzelfde Voortgang-scherm: **"PR per herhaling" zei correct "Log sets om PR's te zien" (leeg), terwijl "Geschatte 1RM" direct eronder wél 95kg/80kg/80kg/85kg toonde** — exact de cijfers van het hoofdaccount. Dit contrast (twee componenten op één scherm, tegengestelde uitkomst) bewees dat het **geen RLS-/databaseprobleem** was — anders waren beide fout geweest — maar een client-side cache die niet werd geleegd.
+
+### Grondoorzaak
+`progExData` (de 1RM-cache achter "Geschatte 1RM") is een module-level JavaScript-variabele die **nooit werd gereset bij een accountwissel binnen dezelfde browsersessie** (deze app is een SPA — uitloggen/inloggen doet geen volledige page reload, dus in-memory variabelen blijven gewoon bestaan). De bestaande cross-account-bescherming (`resetPersonalCacheIfNewDeviceOwner`, sinds DEC-032) reset alleen `atleet`/`customTrainings`/`activeSport` — nooit uitgebreid toen er nieuwe caches bijkwamen.
+
+### Onderzoek naar de volledige omvang
+Bij het doorzoeken van alle vergelijkbare module-level caches bleken **minstens 10 andere** hetzelfde risico te lopen, waaronder recent toegevoegde: `estOneRMCache`, `repPRCache`, `goalsCache`, `programBlockExCache`, `exPickerRecentIds`, `vasteTrainingen` (+ laadvlag), `exercises` (+ laadvlag), **`favoriteExIds`/`exerciseGoals`** (de net gebouwde per-gebruiker favorieten/peakdoelen-caches uit Sprint 6.0.1 en de vorige fix — zelfde kwetsbaarheid, al bleek dit in de geteste sessie toevallig niet zichtbaar), `equipmentTypes`, `equipmentCatalog`.
+
+### Fix
+`resetPersonalCacheIfNewDeviceOwner()` reset nu alle 19 gevonden caches (10 databronnen + hun bijbehorende "al geladen"-vlaggen), zodat de eerstvolgende `ensureXLoaded()`-aanroep na een accountwissel gegarandeerd vers ophaalt in plaats van stale data te vertrouwen.
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- `logic_tests.js`: 203/203 (uit de peakdoel-fix) + 3 nieuwe tests (volledige resetlijst bevestigd, zelfde-gebruiker-geen-onnodige-reset, regressiebewaking tegen toekomstig vergeten caches) = **206/206 geslaagd**.
+
+### Gewijzigd
+- `APP_VER` v4.24.18 → **v4.24.19**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v42419`.
+
+### Resterend aandachtspunt
+Dit patroon (nieuwe cache-variabele toegevoegd, vergeten aan de resetlijst toe te voegen) is nu twee keer voorgekomen (eerder ook al voor localStorage-sleutels, Sprint 5.9.3). Aanbeveling: bij het toevoegen van een nieuwe module-level cache in de toekomst, altijd expliciet controleren of deze ook hier moet worden opgenomen.
+
+---
+
 ## v4.24.18 — 7 augustus 2026 (Kritieke fix — peakdoelen: gedeelde kolom → per-gebruiker tabel)
 *Buiten het lopende sprintverband, op basis van een screenshot van de gebruiker die zijn eigen peakdoelen zag verschijnen en vroeg wat nodig was om te voorkomen dat nieuwe gebruikers dit zouden zien.*
 

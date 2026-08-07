@@ -4206,7 +4206,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.18';
+const APP_VER = 'v4.24.19';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -14440,10 +14440,38 @@ function resetPersonalCacheIfNewDeviceOwner(uid){
   wipePersonalCache();
   localStorage.setItem(CACHE_OWNER_KEY, uid);
   // in-memory state ook resetten, anders blijft de zojuist gewiste data nog even
-  // in het geheugen hangen tot een herlaad
+  // in het geheugen hangen tot een herlaad.
+  // Kritieke fix — bevestigd via een screenopname: 'Geschatte 1RM' (progExData) toonde
+  // bij een geheel nieuw account nog de 1RM's van het vorige account op hetzelfde
+  // toestel. Geen RLS-/databaseprobleem (andere onderdelen op hetzelfde scherm waren
+  // wél correct leeg) — een module-level JS-variabele die nooit werd leeggemaakt bij
+  // een accountwissel binnen dezelfde browsersessie (SPA, geen page reload tussen
+  // uitloggen en opnieuw inloggen). Bij onderzoek bleken minstens 10 vergelijkbare
+  // caches hetzelfde risico te lopen — allemaal hieronder toegevoegd, inclusief de
+  // bijbehorende 'al geladen'-vlaggen, zodat de eerstvolgende ensureXLoaded()-aanroep
+  // daadwerkelijk opnieuw ophaalt i.p.v. de stale cache te vertrouwen.
   atleet={naam:'',leeftijd:null,geslacht:null,lengte:null,niveau:'beginner',klasse:'',sport:'crossfit'};
   customTrainings=[];
   activeSport=null;
+  progExData={};
+  estOneRMCache={};
+  repPRCache={};
+  goalsCache=[];
+  programBlockExCache={};
+  exPickerRecentIds=[];
+  vasteTrainingen=[];
+  vtMetaSel={};
+  _vasteTrainingenLoaded=false;
+  exercises=[];
+  _exercisesLoading=null;
+  favoriteExIds=new Set();
+  _favoritesLoaded=false;
+  exerciseGoals=new Map();
+  _exerciseGoalsLoaded=false;
+  equipmentTypes=[];
+  _equipmentTypesLoading=null;
+  equipmentCatalog=[];
+  _equipmentCatalogLoading=null;
 }
 async function startAppAfterAuth(){
   resetPersonalCacheIfNewDeviceOwner(authSession?.user?.id);

@@ -4245,7 +4245,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.12';
+const APP_VER = 'v4.24.13';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -11948,7 +11948,6 @@ async function buildCtx(ctx){
     const lastRaw=lastSessions[0]?.training_type;
     lastT=vasteTrainingen.find(v=>v.id===lastRaw)?.naam||lastRaw||'?';
   }
-  const mf = mastersFactor(atleet?.leeftijd);
   const blessureContext=await getRecentPainSummary();
   const conditionsContext=await getActiveConditionsSummary();
   const sportBlock=resolveSportBlock(getActiveSport(),SPORT_BLOCKS,SPORT_LABELS);

@@ -1557,6 +1557,52 @@ test('Programmavoortgang: afgerond blok zonder gelogde RPE-data -> geen delta, g
   assertEq(r.doneCount,1); assertEq(r.avgRpeDelta,null,'geen data om te vergelijken -> null, niet NaN of crash');
 });
 
+// ── RENDERING PERFORMANCE (Sprint 5.9.2) ─────────────────────
+// Test het kern-gedrag van de debounce achter _libDebouncedSearch() in index.html
+// (clearTimeout+setTimeout-patroon) met een gemockte timer — synchroon controleerbaar,
+// geen echte 120ms-vertraging nodig in de testrun.
+console.log("\n⚡ Rendering Performance — zoekveld-debounce (Sprint 5.9.2)");
+function makeMockTimer(){
+  let idCounter=0; const scheduled={};
+  return {
+    set:(fn)=>{const id=++idCounter;scheduled[id]=fn;return id;},
+    clear:(id)=>{delete scheduled[id];},
+    fireAll:()=>{Object.keys(scheduled).forEach(id=>{scheduled[id]();delete scheduled[id];});},
+    pendingCount:()=>Object.keys(scheduled).length,
+  };
+}
+function makeDebouncer(timer){
+  let pending=null;
+  return function(fn){
+    if(pending!==null)timer.clear(pending);
+    pending=timer.set(fn);
+  };
+}
+test('Snel typen (meerdere aanroepen vóór de vertraging afloopt): slechts 1 render gepland, niet N', ()=>{
+  const timer=makeMockTimer();
+  const debounced=makeDebouncer(timer);
+  debounced(()=>{});debounced(()=>{});debounced(()=>{});
+  assertEq(timer.pendingCount(),1,'oudere geplande renders moeten geannuleerd zijn, niet opgestapeld');
+});
+test('Bij het uiteindelijk afgaan wint de LAATSTE aanroep (meest recente zoekterm/cursorpositie)', ()=>{
+  const timer=makeMockTimer();
+  const debounced=makeDebouncer(timer);
+  let result=null;
+  debounced(()=>{result='eerste (verouderd)';});
+  debounced(()=>{result='tweede (verouderd)';});
+  debounced(()=>{result='derde (actueel)';});
+  timer.fireAll();
+  assertEq(result,'derde (actueel)','de render moet de laatste, actuele staat gebruiken, niet een tussentijdse');
+});
+test('Losse, trage toetsaanslagen (elk na afloop van de vorige vertraging): elke render vuurt gewoon af', ()=>{
+  const timer=makeMockTimer();
+  const debounced=makeDebouncer(timer);
+  let count=0;
+  debounced(()=>{count++;}); timer.fireAll();
+  debounced(()=>{count++;}); timer.fireAll();
+  assertEq(count,2,'normaal, rustig zoeken blijft gewoon elke render tonen');
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

@@ -4245,7 +4245,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.11';
+const APP_VER = 'v4.24.12';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -5192,7 +5192,7 @@ async function flushOfflineQueue(){
   const items=await offlineQueueAll();
   if(!items.length)return;
   items.sort((a,b)=>a.id-b.id);
-  let syncedAny=false;
+  let syncedAny=false, skippedAny=false;
   for(const item of items){
     try{
       const url=item.method==='POST'?`${SB_URL}/rest/v1/${item.table}`:`${SB_URL}/rest/v1/${item.table}?${item.filter}`;
@@ -5200,7 +5200,16 @@ async function flushOfflineQueue(){
         ?{method:'DELETE',headers:SB_H}
         :{method:item.method,headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(item.body)};
       const r=await fetch(url,opts);
-      if(!r.ok){console.error('flushOfflineQueue failed, stop',item.table,r.status,await r.text());break;}
+      if(!r.ok){
+        // v5.9.5: serverfout op dit ene item (bv. validatie, verwijzing naar inmiddels
+        // verwijderde data) mag niet alle latere, op zichzelf staande items blokkeren —
+        // die blijven anders voor altijd achter dit item hangen, ook bij de volgende
+        // sync-poging. Item blijft in de wachtrij staan (zichtbaar/beheerbaar via het
+        // bestaande wachtrij-scherm), maar de rest wordt gewoon geprobeerd.
+        console.error('flushOfflineQueue: item mislukt, wordt overgeslagen (blijft in wachtrij)',item.table,r.status,await r.text());
+        skippedAny=true;
+        continue;
+      }
       await offlineQueueRemove(item.id);
       syncedAny=true;
     }catch(e){console.warn('flushOfflineQueue offline again, stop',e);break;}
@@ -5208,6 +5217,7 @@ async function flushOfflineQueue(){
   updateOfflineBadge();
   if(document.getElementById('m-offline-queue')?.classList.contains('open'))renderOfflineQueueModal();
   if(syncedAny&&!(await offlineQueueAll()).length)toast('Offline sessies gesynchroniseerd');
+  else if(skippedAny)toast('Sommige offline items konden niet synchroniseren — bekijk de wachtrij voor details');
 }
 function updateOfflineBadge(){
   offlineQueueAll().then(items=>{

@@ -4191,7 +4191,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.23.1';
+const APP_VER = 'v4.23.2';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -10300,8 +10300,13 @@ async function buildCoachAdvice(dfInfo,nextT,recRows){
     if(!rec&&nextT&&Array.isArray(nextT._muscles)&&nextT._muscles.length)rec=await getRelevantMuscleRecovery(nextT._muscles);
     if(Array.isArray(rec)){
       const low=s=>String(s).charAt(0).toLowerCase()+String(s).slice(1);
-      loaded=rec.filter(r=>r.pct<70).sort((a,b)=>a.pct-b.pct).map(r=>low(r.muscle));
-      ready=rec.filter(r=>r.pct>=90).map(r=>low(r.muscle));
+      // v5.6.2 (Sprint 5.6.2 — RB4): rijen zonder lastHit (hours===null, altijd pct:100)
+      // betekenen 'geen trainingsdata', geen gemeten 'volledig hersteld'. Zelfde filter
+      // als elders al toegepast (renderV43Home: wReady/wLow/attn) — hier ontbrak hij nog,
+      // waardoor een nieuwe gebruiker zonder sessies alsnog 'volledig hersteld' te horen
+      // kreeg. Geen nieuwe copy/UI — uitsluitend de bestaande, elders al gebruikte guard.
+      loaded=rec.filter(r=>r.hours!==null&&r.pct<70).sort((a,b)=>a.pct-b.pct).map(r=>low(r.muscle));
+      ready=rec.filter(r=>r.hours!==null&&r.pct>=90).map(r=>low(r.muscle));
     }
   }catch(e){}
   if(f>=1){
@@ -15112,8 +15117,11 @@ var DASH=(function(){
   }
   function recovery(){
     var rows=Array.isArray(window.homeMuscleRec)?window.homeMuscleRec:[];
-    var loaded=rows.filter(function(r){return r&&typeof r.pct==='number'&&r.pct<70;}).sort(function(a,b){return a.pct-b.pct;});
-    var ready=rows.filter(function(r){return r&&typeof r.pct==='number'&&r.pct>=90;});
+    // v5.6.2 (Sprint 5.6.2 — RB4): zelfde guard als DASHUI.statusCard()'s tegenhanger in
+    // buildCoachAdvice() — rijen zonder hours (geen lastHit, altijd pct:100) zijn geen
+    // gemeten 'volledig hersteld', maar 'geen trainingsdata'.
+    var loaded=rows.filter(function(r){return r&&r.hours!==null&&typeof r.pct==='number'&&r.pct<70;}).sort(function(a,b){return a.pct-b.pct;});
+    var ready=rows.filter(function(r){return r&&r.hours!==null&&typeof r.pct==='number'&&r.pct>=90;});
     return {rows:rows,loaded:loaded,ready:ready,has:rows.length>0};
   }
   function coachLine(){

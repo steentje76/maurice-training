@@ -288,7 +288,7 @@ html[data-theme="light"]{
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:var(--bg);font-family:var(--f);font-size:15px;color:var(--dark)}
 body{display:flex;justify-content:center}
-#app{width:100%;max-width:430px;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow:hidden}
+#app{width:100%;max-width:430px;min-height:100vh;min-height:100dvh;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow:hidden}
 .scr{display:none;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
 .scr.active{display:flex}
 
@@ -2998,7 +2998,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
 
   </div>
-  <div style="padding:14px 18px calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;flex-shrink:0">
+  <div style="position:sticky;bottom:0;background:var(--bg);padding:14px 18px calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;flex-shrink:0">
     <button class="btn btn-o" id="ob-back-btn" onclick="obBack()" style="flex:0 0 auto;padding-left:20px;padding-right:20px">Terug</button>
     <button class="btn btn-r" id="ob-next-btn" onclick="obNext()" style="flex:1">Volgende</button>
   </div>
@@ -4206,7 +4206,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.20';
+const APP_VER = 'v4.24.21';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';

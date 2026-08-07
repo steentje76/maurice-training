@@ -1,5 +1,28 @@
 # Trainingskompas — Changelog
 
+## Sprint 5.8.4 — 7 augustus 2026 (Account verwijderen geverifieerd, Privacy & AVG) — geen APP_VER-bump
+*Onderdeel van Sprint 5.8. Uitsluitend `netlify/functions/delete-account.js` — index.html ongewijzigd deze deelstap.*
+
+### Uitgangspunt
+De bestaande verwijderprocedure bleek bij eerste analyse (zie Sprint 5.8-analyse) al goed gebouwd: server-side JWT-verificatie, expliciete tabellenlijst met correcte volgorde, aparte zorgvuldige behandeling van `exercises` (alleen personal-scope) en `users` (gym-lidmaatschap), en een `failedTables`-rapportage i.p.v. stil falen. Deze deelstap kruiste de tabellenlijst tegen alle daadwerkelijk in de app gebruikte Supabase-tabellen.
+
+### Gevonden en opgelost
+- **`goals`** en **`equipment_types`** ontbraken — beide zijn hetzelfde per-gebruiker-configureerbare patroon als het al wél behandelde `athlete_conditions` (user_id-scoped, geen shared/gym-content). Toegevoegd aan de standaard verwijderlijst.
+- **`content_shares`**: gebruiker als *ontvanger* (kolom `shared_with`, bevestigd in de client-code) wordt nu meegenomen.
+
+### Bewust NIET aangepast (onvoldoende zekerheid vanuit de front-end code)
+- **`content_shares`, de delende partij**: de kolomnaam die de oorspronkelijke deler identificeert staat niet expliciet in de client-insert (waarschijnlijk een server-side `DEFAULT auth.uid()`-kolom). Een gok hier zou een verkeerde/no-op query kunnen opleveren die ten onrechte succes suggereert — bewust niet geraden.
+- **`equipment_catalog`**: kan zowel persoonlijke als gym-gedeelde content bevatten (zelfde ambiguïteit als `exercises`, dat daarom al een aparte personal-scope-behandeling heeft). Zonder zicht op het exacte schema/de RLS-policies kan ik niet garanderen dat een blanket-delete niet ook gedeelde gym-content van andere leden zou raken.
+- **`exercise_equipment`**: koppeltabel aan `exercise_id`; onduidelijk of er een `ON DELETE CASCADE` vanuit `exercises` bestaat.
+
+Deze drie zijn een reëel, nog openstaand compliance-risico (mogelijk wees-data na accountverwijdering) — expliciet voor de Product Owner, niet stilzwijgend genegeerd.
+
+### Getest
+- `node --check` op `delete-account.js`: OK.
+- **Beperking:** dit is een server-side Netlify Function; ik kan geen end-to-end verwijdertest tegen de live Supabase-database uitvoeren vanuit deze sandbox. Verificatie is beperkt tot syntaxcontrole en logische inspectie (kolomnamen gecontroleerd tegen daadwerkelijk client-side gebruik).
+
+---
+
 ## v4.24.5 — 7 augustus 2026 (Sprint 5.8.3 — Privacyverklaring, Privacy & AVG)
 *Onderdeel van Sprint 5.8. Uitsluitend tekst op de bestaande Privacy- en Help-schermen — geen UX-herontwerp, geen nieuwe schermen, geen nieuwe functionaliteit.*
 

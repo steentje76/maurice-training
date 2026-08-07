@@ -4245,7 +4245,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.5';
+const APP_VER = 'v4.24.6';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -14318,7 +14318,20 @@ window.addEventListener('load',async()=>{
 // Fix: bij elke login/sessie-herstel checken of het device van "eigenaar" wisselde;
 // zo ja, eerst alle bekende persoonlijke caches wissen vóórdat er iets geladen wordt.
 const CACHE_OWNER_KEY='tk_cache_owner_uid';
-const PERSONAL_CACHE_KEYS=['tk_atleet','tk_trainings','tk_active_sport','tk_draft_training','tk_last_training'];
+// v5.8.5 (Local Storage Audit): uitgebreid — sinds de oorspronkelijke DEC-032-fix zijn
+// er nieuwe persoonlijke datasets bijgekomen (guided workouts, workout builder, vaste-
+// training-voortgang, favorieten, uitrusting-voorkeuren) die niet in deze lijst stonden.
+// Zonder deze aanvulling bleven ze zichtbaar/bewerkbaar voor de volgende gebruiker op
+// een gedeeld toestel — exact het lek dat DEC-032 had moeten voorkomen. tk_ai_consent
+// staat er nu ook bij: toestemming voor de AI Coach moet per gebruiker gelden, een
+// nieuwe gebruiker mag nooit de 'toestaan'-keuze van de vorige gebruiker erven.
+const PERSONAL_CACHE_KEYS=[
+  'tk_atleet','tk_trainings','tk_active_sport','tk_draft_training','tk_last_training',
+  'tk_ai_consent','tk_gw_active','tk_gw_hist','tk_gw_log',
+  'tk_wb_draft','tk_wb_saved','tk_vt_meta',
+  'tk_lib_favs','tk_lib_recent','tk_lib_recentq',
+  'tk_plates','tk_rower','tk_rowers','tk_rest_default'
+];
 function wipePersonalCache(){
   PERSONAL_CACHE_KEYS.forEach(k=>localStorage.removeItem(k));
   Object.keys(localStorage).filter(k=>k.startsWith('tk_1rm_')).forEach(k=>localStorage.removeItem(k));

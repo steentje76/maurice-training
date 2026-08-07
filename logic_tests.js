@@ -1713,6 +1713,36 @@ test('epley1RM (afgeronde variant): hergebruikt epley1RMRaw correct, met null-gu
   assertEq(epley1RMShared(100,5),Math.round(100*(1+5/30)));
 });
 
+// ── PEAKDOELEN PER GEBRUIKER (architectuurfix) ─────────────────
+// Zelfde logica als peakGoalFor() in index.html — pure functie op een
+// vooraf-geladen Map (exerciseGoals), los getest.
+console.log("\n🎯 Peakdoelen: per gebruiker i.p.v. gedeelde kolom");
+function peakGoalForSim(exerciseGoalsMap, exId){
+  return exerciseGoalsMap.has(exId)?exerciseGoalsMap.get(exId):null;
+}
+test('Nieuwe gebruiker (lege exerciseGoals-Map): geen enkel peakdoel van een ander zichtbaar', ()=>{
+  const map=new Map();
+  assertEq(peakGoalForSim(map,'backsquat'),null);
+  assertEq(peakGoalForSim(map,'bench'),null);
+});
+test('Gebruiker met een eigen ingesteld peakdoel: krijgt precies dat doel terug', ()=>{
+  const map=new Map([['backsquat',140]]);
+  assertEq(peakGoalForSim(map,'backsquat'),140);
+  assertEq(peakGoalForSim(map,'bench'),null,'een oefening zonder eigen doel blijft null, geen fallback meer');
+});
+test('Twee gebruikers, elk hun eigen doel (RLS-gescoped in het echt): geen enkele overlap in de simulatie', ()=>{
+  const userA=new Map([['backsquat',140]]);
+  const userB=new Map([['backsquat',180]]);
+  assertEq(peakGoalForSim(userA,'backsquat'),140);
+  assertEq(peakGoalForSim(userB,'backsquat'),180);
+});
+test('Geen PEAK_FALLBACK meer: een onbekende oefening geeft altijd null, nooit een hardcoded waarde', ()=>{
+  const map=new Map();
+  ['backsquat','bench','frontsquat','shoulderpress','hexabar','hpc','hps','cablerow','bentoverrow'].forEach(id=>{
+    assertEq(peakGoalForSim(map,id),null,id+' mag geen hardcoded fallback-waarde meer teruggeven');
+  });
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

@@ -2777,7 +2777,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </div>
   <div class="scroll" style="padding-top:8px">
     <div class="card"><div class="card-hd"><div class="card-title">Welke data</div></div><div class="card-body" style="font-size:13px;line-height:1.5">
-      Trainingskompas slaat trainingsdata (sessies, sets, gewicht), lichaamsmetingen, HRV/dagfactor-invoer en (indien gekoppeld) wearable-data op in je persoonlijke account. Toegang tot je gegevens is technisch afgeschermd per gebruiker (Row Level Security in de database) — andere gebruikers, inclusief gym-leden, kunnen jouw persoonlijke data niet inzien tenzij je die zelf expliciet deelt (zie 'Delen' bij een training/oefening).
+      Trainingskompas slaat trainingsdata (sessies, sets, gewicht), lichaamsmetingen, HRV/dagfactor-invoer, eventueel door jou vastgelegde aandachtspunten/condities en (indien gekoppeld) wearable-data op in je persoonlijke account. Toegang tot je gegevens is technisch afgeschermd per gebruiker (Row Level Security in de database) — andere gebruikers, inclusief gym-leden, kunnen jouw persoonlijke data niet inzien tenzij je die zelf expliciet deelt (zie 'Delen' bij een training/oefening).
     </div></div>
     <div class="card"><div class="card-hd"><div class="card-title">AI-coach</div></div><div class="card-body" style="font-size:13px;line-height:1.5;padding-bottom:0">
       Als je toestemming geeft, gebruikt de AI-coach je HRV, slaap, gewicht, lichaamssamenstelling, trainingsgeschiedenis en (indien je die zelf hebt vastgelegd) je aandachtspunten/condities om persoonlijk advies te geven. Deze gegevens bereiken de AI-leverancier (Anthropic) via een server-side koppeling — nooit rechtstreeks vanuit je browser. Zonder toestemming wordt de AI-coach niet gebruikt.
@@ -2786,11 +2786,23 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
         <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">AI Coach toestaan</div><div class="set-row-sub">Deelt bovenstaande gegevens met de AI-leverancier voor persoonlijk advies</div></div><button class="switch" role="switch" id="sw-ai-consent" aria-checked="false" aria-label="AI Coach toestaan"></button></div>
       </div>
     </div>
-    <div class="card"><div class="card-hd"><div class="card-title">Bewaartermijn &amp; verwijdering</div></div><div class="card-body" style="font-size:13px;line-height:1.5">
-      Je kunt je account en alle bijbehorende data volledig verwijderen via Profiel → Account verwijderen. Dit verwijdert ook alles wat ooit voor AI-context is gebruikt.
+    <div class="card"><div class="card-hd"><div class="card-title">Derde partijen</div></div><div class="card-body" style="font-size:13px;line-height:1.6">
+      <strong>Supabase</strong> — database, authenticatie en opslag. Al je gegevens staan hier, technisch afgeschermd per gebruiker.<br>
+      <strong>Netlify</strong> — hosting van de app en de server-side functies (o.a. de koppeling naar de AI-coach en accountverwijdering).<br>
+      <strong>Anthropic</strong> — de AI-leverancier achter de AI-coach. Ontvangt alleen gegevens als je daar toestemming voor geeft (zie hierboven).<br>
+      <strong>Google/Fitbit</strong> — uitsluitend als je zelf een wearable koppelt (Profiel → Wearable), voor het automatisch aanvullen van HRV/rusthartslag/slaap.
     </div></div>
-    <div class="card" style="border:1.5px dashed var(--g3)"><div class="card-hd"><div class="card-title" style="color:var(--y)">⚠ Nog niet definitief</div></div><div class="card-body" style="font-size:13px;line-height:1.5;color:var(--g4)">
-      <strong>[PLACEHOLDER — juridische privacyverklaring]</strong> Deze pagina bevat nog geen door een jurist opgestelde privacyverklaring of AVG-grondslagenoverzicht. De tekst hierboven beschrijft feitelijk hoe het systeem werkt (geverifieerd tegen de code), maar vervangt geen juridisch document. Vereist vóór een publieke/Store-release (zie Sprint 0.5-rapport, §12 Google Play Readiness).
+    <div class="card"><div class="card-hd"><div class="card-title">Bewaartermijn &amp; verwijdering</div></div><div class="card-body" style="font-size:13px;line-height:1.5">
+      Er geldt geen automatische bewaartermijn — je gegevens blijven bestaan zolang je account bestaat. Je kunt je account en alle bijbehorende data volledig verwijderen via Profiel → Account verwijderen. Dit is onomkeerbaar en verwijdert je gegevens uit alle bovengenoemde tabellen (trainingen, sessies, HRV, gewicht, lichaamssamenstelling, chatgeschiedenis, condities en profiel), inclusief alles wat ooit voor AI-context is gebruikt.
+    </div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">Jouw rechten</div></div><div class="card-body" style="font-size:13px;line-height:1.6">
+      <strong>Inzage &amp; dataportabiliteit</strong> — al je eigen data is zichtbaar in de app zelf, en volledig te downloaden via het exportmenu (CSV per gegevenstype, of één volledige JSON-backup).<br>
+      <strong>Rectificatie</strong> — je kunt vrijwel alle gegevens (profiel, condities, gelogde metingen) zelf direct in de app aanpassen.<br>
+      <strong>Verwijdering</strong> — via Profiel → Account verwijderen (zie hierboven).<br>
+      <strong>Toestemming intrekken</strong> — de AI-coach-toestemming hierboven kun je op elk moment aan- of uitzetten.
+    </div></div>
+    <div class="card" style="border:1.5px dashed var(--g3)"><div class="card-hd"><div class="card-title" style="color:var(--y)">Over deze pagina</div></div><div class="card-body" style="font-size:13px;line-height:1.5;color:var(--g4)">
+      De tekst hierboven beschrijft feitelijk hoe het systeem werkt, geverifieerd tegen de broncode. Het is geen door een jurist opgestelde privacyverklaring of formeel AVG-grondslagenoverzicht — dat is nog niet gebeurd en is nodig vóór een publieke/Store-release (zie Sprint 0.5-rapport, §12 Google Play Readiness).
     </div></div>
   </div>
 </div>
@@ -2816,9 +2828,9 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Versie</div><div class="set-row-sub" id="help-app-ver">—</div></div></div>
       <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Ontwikkelaar</div><div class="set-row-sub">SteenSoft</div></div></div>
     </div></div>
-    <div class="card"><div class="card-hd"><div class="card-title">Licenties</div></div><div class="card-body" style="font-size:12px;line-height:1.6;color:var(--g4)">
+    <div class="card"><div class="card-hd"><div class="card-title">Licenties &amp; gebruikte diensten</div></div><div class="card-body" style="font-size:12px;line-height:1.6;color:var(--g4)">
       Lettertype: Poppins (Google Fonts, Open Font License).<br>
-      <strong>[PLACEHOLDER]</strong> Volledig licentieoverzicht van gebruikte bibliotheken/diensten (Supabase, Netlify, Anthropic API e.a.) nog niet samengesteld.
+      Diensten van derden: Supabase (database/authenticatie), Netlify (hosting), Anthropic (AI-coach, alleen met toestemming), Google/Fitbit (optionele wearable-koppeling) — zie Privacy voor details per dienst.
     </div></div>
   </div>
 </div>
@@ -4233,7 +4245,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.4';
+const APP_VER = 'v4.24.5';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';

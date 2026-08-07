@@ -4206,7 +4206,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.17';
+const APP_VER = 'v4.24.18';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -4428,13 +4428,24 @@ async function submitNewPassword(){
   }catch(e){statusEl.textContent='Verbindingsfout. Check internet.';}
 }
 
-// Legacy fallback-waarden, alleen gebruikt zolang een oefening nog geen eigen
-// peak_goal heeft ingesteld (zie exercises.peak_goal, beheerbaar per gebruiker).
-const PEAK_FALLBACK = {backsquat:140,bench:105,frontsquat:110,shoulderpress:75,hexabar:300,hpc:100,hps:70,cablerow:110,bentoverrow:100};
+// Peakdoelen zijn een PERSOONLIJK streefgewicht per oefening — vanaf nu opgeslagen in
+// de eigen exercise_goals-tabel (user_id + exercise_id + peak_goal, RLS-gescoped),
+// niet langer als kolom op de gedeelde exercises-tabel. Zonder deze scheiding zag elke
+// gebruiker (ook een gloednieuwe) het peakdoel dat één specifieke gebruiker ooit voor
+// een gedeelde/standaardoefening had ingesteld. De vroegere PEAK_FALLBACK (hardcoded
+// streefgewichten van één specifieke gebruiker, gebruikt als fallback zolang er geen
+// peak_goal was ingesteld) is om dezelfde reden volledig verwijderd.
+let exerciseGoals=new Map();
+let _exerciseGoalsLoaded=false;
+async function ensureExerciseGoalsLoaded(){
+  if(_exerciseGoalsLoaded)return exerciseGoals;
+  const rows=await sbGet('exercise_goals','');
+  exerciseGoals=new Map(rows.map(r=>[r.exercise_id,r.peak_goal]));
+  _exerciseGoalsLoaded=true;
+  return exerciseGoals;
+}
 function peakGoalFor(exId){
-  const ex=exercises.find(e=>e.id===exId);
-  if(ex&&ex.peak_goal!=null&&ex.peak_goal!=='')return ex.peak_goal;
-  return PEAK_FALLBACK[exId]||null;
+  return exerciseGoals.has(exId)?exerciseGoals.get(exId):null;
 }
 
 // Cardio type definities — RPE overal aanwezig (nodig voor spierherstel-weging,
@@ -5802,9 +5813,10 @@ function computeGoalProgress(g, currentVal){
   return Math.max(0,Math.min(100,pct));
 }
 function computeGoalProgressPr(g, ex){
-  if(!ex||ex.peak_goal==null)return null;
+  const peak=ex?peakGoalFor(ex.id):null;
+  if(!ex||peak==null)return null;
   const cur=ex.pr||0;
-  return Math.max(0,Math.min(100,Math.round(cur/ex.peak_goal*100)));
+  return Math.max(0,Math.min(100,Math.round(cur/peak*100)));
 }
 
 // SMART-check (Handbook-vereiste): puur informatief, blokkeert niets.
@@ -5870,6 +5882,7 @@ async function renderDoelenScreen(){
   const chEl=document.getElementById('challenges-list');
   listEl.innerHTML='<p style="color:var(--g4);font-size:13px;text-align:center;padding:24px 0">Doelen laden...</p>';
   await ensureExercisesLoaded();
+  await ensureExerciseGoalsLoaded();
   const goals=await loadGoals();
   if(!goals.length){
     listEl.innerHTML='<div class="card" style="text-align:center;padding:28px 16px"><div style="font-size:32px;margin-bottom:8px">🎯</div><div style="font-weight:700;color:var(--dark);margin-bottom:4px">Nog geen doelen</div><div style="font-size:13px;color:var(--g4)">Tik op ＋ rechtsboven om je eerste doel toe te voegen.</div></div>';
@@ -5879,7 +5892,7 @@ async function renderDoelenScreen(){
       const ex = g.type==='pr' ? exercises.find(e=>e.id===g.exercise_id) : null;
       const cur = g.type==='pr' ? (ex?.pr??null) : await getCurrentValueForGoal(g);
       const pct = g.type==='pr' ? computeGoalProgressPr(g,ex) : computeGoalProgress(g,cur);
-      const target = g.type==='pr' ? ex?.peak_goal : g.doelwaarde;
+      const target = g.type==='pr' ? peakGoalFor(g.exercise_id) : g.doelwaarde;
       const unit = g.type==='pr' ? 'kg' : (GOAL_TYPE_UNITS[g.type]||g.eenheid||'');
       const sm=smartCheck(g);
       const smartOk=Object.values(sm).every(Boolean);
@@ -5973,11 +5986,13 @@ async function deleteGoalPrompt(id){
 async function askCoachAboutGoal(goalId){
   const g=goalsCache.find(x=>x.id===goalId);
   if(!g)return;
+  await ensureExerciseGoalsLoaded();
   const label=g.naam||GOAL_TYPE_LABELS[g.type];
   let msg=`Analyseer mijn voortgang op dit doel: "${label}" (${GOAL_TYPE_LABELS[g.type]}).\n`;
   if(g.type==='pr'){
     const ex=exercises.find(e=>e.id===g.exercise_id);
-    msg+=`Oefening: ${ex?.name||'onbekend'} | Huidige PR: ${ex?.pr??'onbekend'} kg | Peakdoel: ${ex?.peak_goal??'niet ingesteld'} kg\n`;
+    const peak=peakGoalFor(g.exercise_id);
+    msg+=`Oefening: ${ex?.name||'onbekend'} | Huidige PR: ${ex?.pr??'onbekend'} kg | Peakdoel: ${peak??'niet ingesteld'} kg\n`;
   }else{
     const cur=await getCurrentValueForGoal(g);
     msg+=`Huidige waarde: ${cur??'onbekend'} | Streefwaarde: ${g.doelwaarde??'—'} ${g.eenheid||GOAL_TYPE_UNITS[g.type]||''}\n`;
@@ -11214,6 +11229,7 @@ function renderProgList(){
 
 async function refreshStatsScreen(){
   await ensureFavoritesLoaded();
+  await ensureExerciseGoalsLoaded();
   // 1RM data ophalen (één keer per refresh) — nieuwe oefeningen komen hier automatisch in
   // zodra ze een sessie hebben, geen aparte registratiestap nodig.
   const strExs=exercises.filter(e=>e.type==='strength'||!e.type);
@@ -11342,6 +11358,7 @@ async function refreshRatioFactors(){
 // STATS (in admin)
 // ══════════════════════════════════════════════════════════
 async function refreshStats(){
+  await ensureExerciseGoalsLoaded();
   const strExs=exercises.filter(e=>e.type==='strength'||!e.type);
   let h='';
   for(const ex of strExs){
@@ -11367,6 +11384,7 @@ async function refreshStats(){
 // ══════════════════════════════════════════════════════════
 async function refreshAdmin(){
   await ensureExercisesLoaded();
+  await ensureExerciseGoalsLoaded();
   await loadTrainCfg();
   renderAdminEqTypes();
   renderAdminEqCat();
@@ -11378,7 +11396,7 @@ async function refreshAdmin(){
     const exs=exercises.filter(e=>e.active!==false&&e.category===cat);
     if(!exs.length)return;
     h+=`<div style="font-size:10px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;padding:10px 0 4px;margin-top:4px">${catL[cat]}</div>`;
-    exs.forEach(ex=>{h+=`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)"><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${escHtml(ex.name)}</div><div style="font-size:11px;color:var(--g4)">${ex.type||'strength'}${ex.rest_seconds?' · rust '+ex.rest_seconds+'s':''}${ex.peak_goal?' · doel '+ex.peak_goal+'kg':''}${ex.ratio_anchor?' · anker '+escHtml(ex.ratio_anchor)+' ×'+ex.ratio_factor:''}${(ex.muscle_primary&&ex.muscle_primary.length)?' · '+escHtml(ex.muscle_primary.join(', ')):' · geen spieren'}</div></div><button onclick='openEditMuscles(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${JSON.stringify(ex.muscle_primary||[])},${JSON.stringify(ex.muscle_secondary||[])})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">💪</button><button onclick='openEditRest(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${ex.rest_seconds||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.rest_seconds?'⏱ '+ex.rest_seconds+'s':'⏱ Rust'}</button><button onclick='openEditPeak(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${ex.peak_goal||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.peak_goal?'🎯 '+ex.peak_goal+'kg':'🎯 Doel'}</button><button onclick='openEditAnchor(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${JSON.stringify(ex.ratio_anchor||null)},${ex.ratio_factor||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.ratio_anchor?'🔗 '+escHtml(ex.ratio_anchor):'🔗 Anker'}</button><button onclick='openEditYT(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${JSON.stringify(ex.yt||'')},${JSON.stringify(ex.category)})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.yt?'▶ YT':'+ YT'}</button><button data-id="${ex.id}" onclick="delEx(this.dataset.id)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button></div>`;});
+    exs.forEach(ex=>{const exPeak=peakGoalFor(ex.id);h+=`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)"><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${escHtml(ex.name)}</div><div style="font-size:11px;color:var(--g4)">${ex.type||'strength'}${ex.rest_seconds?' · rust '+ex.rest_seconds+'s':''}${exPeak?' · jouw doel '+exPeak+'kg':''}${ex.ratio_anchor?' · anker '+escHtml(ex.ratio_anchor)+' ×'+ex.ratio_factor:''}${(ex.muscle_primary&&ex.muscle_primary.length)?' · '+escHtml(ex.muscle_primary.join(', ')):' · geen spieren'}</div></div><button onclick='openEditMuscles(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${JSON.stringify(ex.muscle_primary||[])},${JSON.stringify(ex.muscle_secondary||[])})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">💪</button><button onclick='openEditRest(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${ex.rest_seconds||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.rest_seconds?'⏱ '+ex.rest_seconds+'s':'⏱ Rust'}</button><button onclick='openEditPeak(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${exPeak||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${exPeak?'🎯 '+exPeak+'kg':'🎯 Doel'}</button><button onclick='openEditAnchor(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${JSON.stringify(ex.ratio_anchor||null)},${ex.ratio_factor||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.ratio_anchor?'🔗 '+escHtml(ex.ratio_anchor):'🔗 Anker'}</button><button onclick='openEditYT(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${JSON.stringify(ex.yt||'')},${JSON.stringify(ex.category)})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.yt?'▶ YT':'+ YT'}</button><button data-id="${ex.id}" onclick="delEx(this.dataset.id)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button></div>`;});
   });
   document.getElementById('admin-exlist').innerHTML=h;
   await refreshStats();
@@ -11524,10 +11542,15 @@ async function savePeakGoal(btnEl){
   try{
   const raw=document.getElementById('edit-peak-inp').value.trim();
   const val=raw===''?null:Math.max(0,parseFloat(raw)||0);
-  const ok=await sbPatch('exercises','id=eq.'+curEditPeakId,{peak_goal:val});
+  let ok;
+  if(val===null){
+    ok=await sbDel('exercise_goals','exercise_id=eq.'+curEditPeakId);
+  }else{
+    ok=await sbUpsert('exercise_goals',{user_id:authSession?.user?.id,exercise_id:curEditPeakId,peak_goal:val});
+  }
   if(ok){
-    const ex=exercises.find(e=>e.id===curEditPeakId);
-    if(ex) ex.peak_goal=val;
+    if(val===null)exerciseGoals.delete(curEditPeakId);
+    else exerciseGoals.set(curEditPeakId,val);
     closeModal('m-edit-peak');
     toast(val?'Peakdoel '+val+'kg opgeslagen':'Peakdoel gewist');
     refreshAdmin();
@@ -14445,6 +14468,7 @@ async function startAppAfterAuth(){
   ensureExercisesLoaded().then(()=>loadTrainCfg());
   ensureEquipmentTypesLoaded();
   migrateLibraryFavoritesToSupabase(); // Sprint 6.0.1 — eenmalig, laadt ook favoriteExIds vroeg
+  ensureExerciseGoalsLoaded(); // peakdoelen vroeg laden — voorkomt lege 'jouw doel'-weergave bij eerste render
   checkTeamAccess(); // v331: teamRoleLevel meteen beschikbaar, niet pas na bezoek aan Profiel
   syncAtleetFromSupabase();
   syncCustomTrainingsFromSupabase();

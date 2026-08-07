@@ -4245,7 +4245,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.8';
+const APP_VER = 'v4.24.9';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -8578,6 +8578,25 @@ function _suggestBox(q){q=q.toLowerCase().trim();if(q.length<1)return '';
   if(!sug.length)return '';
   return '<div class="lib-sug">'+sug.map(function(s){return '<button class="lib-sug-i" data-q="'+escHtml(s.q)+'">'+s.i+' '+escHtml(s.l)+'</button>';}).join('')+'</div>';}
 
+// v5.9.2 (Rendering Performance) — was: bij elke toetsaanslag een volledige her-render
+// (catalogus doorzoeken, hele resultatenlijst opnieuw opbouwen, alle listeners herbinden).
+// Nu: cursor-positie wordt nog steeds synchroon bij elke toetsaanslag vastgelegd (geen
+// enkel gedragsverschil daar), maar de dure render zelf wacht 120ms op typestilte —
+// ruim onder de menselijke waarneembaarheidsgrens (~150ms), dus voelt als instant. Bij
+// een korte zoekterm (bv. 5 toetsaanslagen binnen 300ms) gaat dit van 5 volledige
+// her-renders naar 1.
+var _libSearchDebounceT=null;
+function _libDebouncedSearch(inputId){
+  var q=document.getElementById(inputId);
+  if(!q)return;
+  var p=q.selectionStart;
+  clearTimeout(_libSearchDebounceT);
+  _libSearchDebounceT=setTimeout(function(){
+    renderLibBody();
+    var n=document.getElementById(inputId);
+    if(n){n.focus();try{n.setSelectionRange(p,p);}catch(e){}}
+  },120);
+}
 function renderLibBody(){
   var host=document.getElementById('lib-body');if(!host)return;var E=ExerciseCatalogService;
   // v4.12.0 — in detail/vergelijk-weergave de bibliotheek-kop verbergen (eigen top-bar).
@@ -8602,7 +8621,7 @@ function renderLibBody(){
 
 function _libBindBody(host){
   var q=document.getElementById('lib-q');
-  if(q){q.oninput=function(){_libState.q=q.value;var p=q.selectionStart;renderLibBody();var n=document.getElementById('lib-q');if(n){n.focus();try{n.setSelectionRange(p,p);}catch(e){}}};
+  if(q){q.oninput=function(){_libState.q=q.value;_libDebouncedSearch('lib-q');};
     q.onkeydown=function(e){if(e.key==='Enter'&&q.value.trim().length>=2)_libPushQ(q.value);};}
   var cl=document.getElementById('lib-clear');if(cl)cl.onclick=function(){_libState.q='';renderLibBody();var n=document.getElementById('lib-q');if(n)n.focus();};
   var vo=document.getElementById('lib-voice');if(vo)vo.onclick=function(){_libToast('Spraakzoeken komt binnenkort');};
@@ -8851,7 +8870,7 @@ function _libBindDetail(){
 }
 function _libBindCmpPick(){
   var back=document.getElementById('lib-cmp-back');if(back)back.onclick=function(){_libState.view='detail';_libState.detail=_libState.cmpA;renderLibBody();};
-  var q=document.getElementById('lib-cmp-q');if(q)q.oninput=function(){_libState.q=q.value;var p=q.selectionStart;renderLibBody();var n=document.getElementById('lib-cmp-q');if(n){n.focus();try{n.setSelectionRange(p,p);}catch(e){}}};
+  var q=document.getElementById('lib-cmp-q');if(q)q.oninput=function(){_libState.q=q.value;_libDebouncedSearch('lib-cmp-q');};
   document.querySelectorAll('#s-library .lib-item').forEach(function(b){b.addEventListener('pointerdown',_libRipple);b.onclick=function(){_libState.cmpB=b.dataset.id;_libState.view='compare';renderLibBody();var sc=document.querySelector('#s-library .scroll');if(sc)sc.scrollTop=0;};});
 }
 function _libBindCmp(){

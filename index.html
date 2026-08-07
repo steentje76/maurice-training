@@ -4245,7 +4245,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.15';
+const APP_VER = 'v4.24.16';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -5889,7 +5889,7 @@ async function computePersonalChallenges(){
   Object.values(byExercise).forEach(list=>{
     let best=0;
     list.forEach(s=>{
-      const est=s.reps===1?s.weight:s.weight*(1+s.reps/30);
+      const est=epley1RMRaw(s.weight,s.reps);
       if(est>best){best=est;prCount++;}
     });
   });
@@ -8929,10 +8929,17 @@ function getOneRM(exId){
   if(stored)return parseFloat(stored);
   return exObj?.pr||null;
 }
+// Sprint 6.0.3 (Businesslogica) — de ruwe Epley-1RM-formule stond letterlijk 7× los in
+// de code (één plek had het zelf al herkend: "zelfde formule/afronding als Stats-
+// scherm"). Dit is de ene, centrale bron; elke aanroeplocatie behoudt zijn EIGEN
+// afrondingskeuze (sommige ronden meteen, sommige pas een uiteindelijke 'best'-waarde,
+// sommige helemaal niet) — dat verschilt bewust per context en is dus geen duplicatie
+// op zich. Geen enkele wijziging in uitkomst op de 6 vervangen plekken.
+function epley1RMRaw(kg,reps){return reps===1?kg:kg*(1+reps/30);}
 function epley1RM(kg,reps){
   if(!kg||!reps||reps<1)return null;
   if(reps===1)return kg;
-  return Math.round(kg*(1+reps/30)); // zelfde formule/afronding als Stats-scherm (geschatte 1RM)
+  return Math.round(epley1RMRaw(kg,reps)); // zelfde formule/afronding als Stats-scherm (geschatte 1RM)
 }
 // v306: centrale afrondingsregel (0.5 kg increments) — hergebruikt door alle nieuwe rekenfuncties
 function roundKg(v){ return Math.round(v*2)/2; }
@@ -9339,7 +9346,7 @@ function estimatedOneRM(exId){
 async function loadEstOneRM(exId){
   const ss=await sbGet('sessions','&exercise_id=eq.'+exId+'&weight=not.is.null&reps=not.is.null&order=created_at.desc&limit=30');
   let best=null;
-  ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=s.reps===1?s.weight:s.weight*(1+s.reps/30);if(!best||est>best)best=est;});
+  ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=epley1RMRaw(s.weight,s.reps);if(!best||est>best)best=est;});
   estOneRMCache[exId]=best?Math.round(best):null;
   return estOneRMCache[exId];
 }
@@ -11253,7 +11260,7 @@ async function refreshStatsScreen(){
   for(const ex of strExs){
     const ss=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=30');
     let best=null;
-    ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=s.reps===1?s.weight:s.weight*(1+s.reps/30);if(!best||est>best)best=est;});
+    ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=epley1RMRaw(s.weight,s.reps);if(!best||est>best)best=est;});
     const disp=best?Math.round(best):ex.pr;
     if(!disp)continue;
     const tgt=peakGoalFor(ex.id);const pct=tgt?Math.round(disp/tgt*100):null;
@@ -11379,7 +11386,7 @@ async function refreshStats(){
   for(const ex of strExs){
     const ss=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=created_at.desc&limit=30');
     let best=null;
-    ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=s.reps===1?s.weight:s.weight*(1+s.reps/30);if(!best||est>best)best=est;});
+    ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=epley1RMRaw(s.weight,s.reps);if(!best||est>best)best=est;});
     const disp=best?Math.round(best):ex.pr;if(!disp)continue;
     const tgt=peakGoalFor(ex.id);const pct=tgt?Math.round(disp/tgt*100):null;
     const fc=pct?(pct>=100?'var(--green)':pct>=85?'var(--y)':'var(--red)'):'var(--red)';
@@ -12341,7 +12348,7 @@ function weightedEst1RM(sessions, refDate){
   let sumW=0, sumWV=0, n=0;
   (sessions||[]).forEach(s=>{
     if(!s.weight||!s.reps)return;
-    const est = s.reps===1 ? s.weight : s.weight*(1+s.reps/30);
+    const est = epley1RMRaw(s.weight,s.reps);
     const days = Math.max(0,(ref - new Date(s.date))/86400000);
     const weken = days/7;
     const w = Math.pow(RATIO_DECAY, weken);
@@ -13269,7 +13276,7 @@ async function show1RMChart(exId, exName){
   const ss = await sbGet('sessions','&exercise_id=eq.'+exId+'&weight=not.is.null&reps=not.is.null&order=date.asc&limit=50');
   if(!ss.length){toast('Geen data voor '+exName);return;}
   const points = ss.map(s=>{
-    const est = s.reps===1?s.weight:s.weight*(1+s.reps/30);
+    const est = epley1RMRaw(s.weight,s.reps);
     return {date:s.date, est:Math.round(est), w:s.weight, r:s.reps};
   });
   const modal = document.createElement('div');

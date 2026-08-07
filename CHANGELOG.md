@@ -1,5 +1,26 @@
 # Trainingskompas — Changelog
 
+## v4.24.16 — 7 augustus 2026 (Sprint 6.0.2/6.0.3 — Domeinmodellen-bevinding + gedeelde Epley-formule)
+*Onderdeel van Sprint 6.0, Enterprise Architecture & Data Foundation.*
+
+### Werkpakket 6.0.2 — Domeinmodellen: bevinding, niet gefixt (te risicovol voor deze pas)
+Het globale `exercises`-array (Supabase) gebruikt `.name` (Engels) voor de oefeningnaam; objecten uit de sessie-/trainingscontext (`TRAIN_CFG`, sessielog-samenvattingen) gebruiken `.naam` (Nederlands) voor hetzelfde concept — 28 vs. 9 vindplaatsen. Al minstens één plek in de code moest dit al defensief opvangen (`ex.naam||ex.name`). **Bewust niet aangepast:** een brede hernoeming raakt potentieel honderden regels zonder dat het volledige Supabase-schema hier inzichtelijk is — te groot regressierisico voor een losse stap. Opgenomen als hoofdbevinding voor het 6.0.8-adviesrapport.
+
+### Werkpakket 6.0.3 — Businesslogica: gedeelde Epley-1RM-formule
+De Epley-1RM-formule (`gewicht × (1 + reps/30)`) stond **letterlijk 7 keer los** in de code — één plek had dit zelf al erkend met de comment "zelfde formule/afronding als Stats-scherm". Nieuwe centrale functie `epley1RMRaw(kg,reps)`; de bestaande, afgeronde `epley1RM()` (met null-guards, al aanwezig maar nauwelijks gebruikt) hergebruikt 'm nu intern. Elke aanroeplocatie behield zijn **eigen afrondingskeuze** (sommige ronden meteen, sommige pas een uiteindelijke 'best'-waarde, sommige helemaal niet) — dat verschilt bewust per context en is dus geen duplicatie op zich; alleen de kale formule zelf is samengevoegd.
+
+### Verificatie
+Een losstaande simulatie bevestigde vooraf dat `epley1RMRaw()` voor 6 representatieve gevallen (incl. rand- en decimale gevallen) exact dezelfde uitkomst geeft als de oude inline-formule — 100% gedragsbehoud.
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- `logic_tests.js`: 196/196 (uit Sprint 6.0.1) + 3 nieuwe tests = **199/199 geslaagd**.
+
+### Gewijzigd
+- `APP_VER` v4.24.15 → **v4.24.16**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v42416`.
+
+---
+
 ## v4.24.15 — 7 augustus 2026 (Sprint 6.0.1 — Data Architectuur: favorieten samengevoegd)
 *Onderdeel van Sprint 6.0, Enterprise Architecture & Data Foundation. Lost een sinds Sprint 5.9.3 bekende, tweemaal bewust uitgestelde bevinding op — nu wél in scope, want dit werkpakket vraagt letterlijk om "één duidelijke bron van waarheid" per gegevenssoort.*
 

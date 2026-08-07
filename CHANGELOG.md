@@ -1,5 +1,26 @@
 # Trainingskompas — Changelog
 
+## v4.24.4 — 7 augustus 2026 (Sprint 5.8.2 — Toestemmingsflow AI Coach, Privacy & AVG)
+*Onderdeel van Sprint 5.8. Uitsluitend een privacy-gate om bestaande functionaliteit — geen nieuwe AI-functionaliteit, geen UX-herontwerp, geen nieuwe schermen (hergebruikt bestaande modal- en toggle-mechanismen).*
+
+### Bevinding
+Er bestond geen enkele toestemmingsflow voor de AI Coach: deze was standaard actief zodra iemand inlogde, zonder ja/nee-keuze, zonder mogelijkheid te weigeren of later te wijzigen.
+
+### Fix
+- **`ensureAiConsent()`** (nieuw): tri-state opgeslagen in `tk_ai_consent` (nooit gevraagd / toegestaan / geweigerd). Bij het allereerste gebruik van de AI Coach verschijnt eenmalig een duidelijke vraag — hergebruikt de al bestaande `confirmModal()` (hetzelfde mechanisme als bijvoorbeeld bij accountverwijdering) — die expliciet benoemt wélke gegevens gedeeld worden (HRV, slaap, gewicht, lichaamssamenstelling, trainingsgeschiedenis, eventueel vastgelegde condities) en dat dit naar Anthropic gaat.
+- **`sendMsg()`** aangepast: roept eerst `ensureAiConsent()` aan. Bij weigering wordt `buildCtx()` — en dus de hele Anthropic-aanroep — helemaal niet uitgevoerd; de gebruiker krijgt een duidelijke melding met verwijzing naar Instellingen → Privacy.
+- **Privacy-scherm** (bestaand scherm, geen nieuw scherm): AI-coach-kaart uitgebreid met een toggle (`sw-ai-consent`, zelfde toggle-component als de bestaande meldingeninstellingen) waarmee de keuze op elk moment gewijzigd kan worden. Tekst iets preciezer gemaakt: de gegevens bereiken de AI-leverancier wél (via een server-side koppeling), niet "nooit" zoals de eerdere formulering suggereerde.
+- Privacy-by-default: vóór een expliciete keuze staat de toggle uit en wordt de AI Coach niet gebruikt.
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK. HTML div-balans van het gewijzigde Privacy-scherm gecontroleerd (28/28).
+- `logic_tests.js`: 172/172 (uit Sprint 5.8.1) + 5 nieuwe tests voor de consent-gate-logica (eenmalig vragen, nooit opnieuw vragen na een keuze, wijziging via Instellingen wordt gerespecteerd) = **177/177 geslaagd**.
+
+### Gewijzigd
+- `APP_VER` v4.24.3 → **v4.24.4**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v4244`.
+
+---
+
 ## v4.24.3 — 7 augustus 2026 (Sprint 5.8.1 afronding — trainingsgeschiedenis geminimaliseerd)
 *Onderdeel van Sprint 5.8. Uitsluitend buildCtx() — geen UX-herontwerp, geen nieuwe AI-functionaliteit.*
 

@@ -1,5 +1,28 @@
 # Trainingskompas — Changelog
 
+## v4.23.3 — 7 augustus 2026 (Sprint 5.6.3 — Namespace-migratie & ontwikkelaarscomments, Release Blocker 1+5)
+*Onderdeel van Sprint 5.6, n.a.v. Enterprise Audit & Scientific Integrity Review v1.0. Uitsluitend namespace/comments — geen UX-herontwerp, geen nieuwe functionaliteit, geen databasewijziging.*
+
+### Opgelost — Release Blocker 1: single-user-erfenis in de kern
+- Drie ontwikkelaars-specifieke comments geneutraliseerd (technische inhoud behouden, persoonlijke naamsverwijzing verwijderd): `mastersFactor()`-leeftijdscomment, de sport-blueprint-toelichting, en de DEC-032-bug-postmortem.
+- Gedownload backupbestand heette `maurice_backup_....json` (zichtbaar voor élke gebruiker in hun eigen downloadmap) → `trainingskompas_backup_....json`.
+
+### Opgelost — Release Blocker 5: localStorage-namespace opgeschoond
+- Alle 20 vaste `maurice_*`-localStorage-sleutels + de dynamische `maurice_1rm_<oefening>`-sleutel hernoemd naar de **al bestaande** `tk_*`-conventie (dezelfde die `tk_wb_*`, `tk_gw_*`, `tk_lib_*` en `tk_vt_meta` al gebruiken — geen nieuwe naamgevingsstijl geïntroduceerd).
+- **Automatische, eenmalige migratie** toegevoegd als allereerste code in het document (vóór alle overige scripts, incl. de thema-toepassing): elke oude sleutel wordt gelezen, onder de nieuwe naam teruggeschreven, en pas dán verwijderd. Draait precies één keer per device (`tk_ns_migrated`-vlag), faalt stil bij afwezige localStorage (privémodus) i.p.v. te crashen.
+- **Bewust buiten scope:** de IndexedDB-databasenaam van de offline-sync-queue (`OFFLINE_DB_NAME`) blijft `maurice_offline`. Een live IndexedDB-rename vereist het asynchroon overzetten van alle records i.p.v. een synchrone key-copy, en raakt in het slechtste geval nog niet-gesynchroniseerde trainingssessies. Dat risico weegt niet op tegen de cosmetische winst — kandidaat voor een aparte, specifiek geteste migratie-sprint.
+
+### Getest
+- `node --check` op alle 9 scriptblokken (was 8 — de migratie is een nieuw, vroeg script): OK.
+- `logic_tests.js`: 147/147 (uit 5.6.1+5.6.2) + 4 nieuwe tests = **151/151 geslaagd**.
+- Losse, uitgebreide migratiesimulatie (19 scenario's, buiten de reguliere suite gedraaid ter extra zekerheid vóór opname): realistisch bestaand profiel (atleetgegevens, 1RM's, thema, onboarding-status, roeier-instellingen, meldingsvoorkeuren) volledig en correct gemigreerd; nieuwe gebruiker zonder oude data blijft schoon; migratie is idempotent (een tweede load overschrijft nooit opnieuw); niet-gerelateerde bestaande `tk_*`-sleutels (andere features) blijven ongemoeid; privémodus/localStorage-uitval crasht niet.
+- Expliciet gecontroleerd: **geen enkele resterende `maurice_`-verwijzing** buiten de migratiecode zelf (die de oude namen bewust nog even nodig heeft) en de bewust uitgezonderde `OFFLINE_DB_NAME`.
+
+### Gewijzigd
+- `APP_VER` v4.23.2 → **v4.23.3**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v4233` / `trainingskompas-static-v4233`.
+
+---
+
 ## v4.23.2 — 7 augustus 2026 (Sprint 5.6.2 — Nieuwe-gebruiker-eerlijkheid, Release Blocker 4)
 *Onderdeel van Sprint 5.6, n.a.v. Enterprise Audit & Scientific Integrity Review v1.0. Uitsluitend bestaande tekst-/filterlogica gecorrigeerd — geen UX-herontwerp, geen nieuwe functionaliteit, geen databasewijziging.*
 

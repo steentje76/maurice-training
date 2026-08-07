@@ -1,5 +1,35 @@
 # Trainingskompas — Changelog
 
+## v4.24.18 — 7 augustus 2026 (Kritieke fix — peakdoelen: gedeelde kolom → per-gebruiker tabel)
+*Buiten het lopende sprintverband, op basis van een screenshot van de gebruiker die zijn eigen peakdoelen zag verschijnen en vroeg wat nodig was om te voorkomen dat nieuwe gebruikers dit zouden zien.*
+
+### Het probleem (bevestigd, twee lagen)
+1. **Hardcoded fallback:** `PEAK_FALLBACK` bevatte de exacte, persoonlijke streefgewichten van de ontwikkelaar voor 9 oefeningen, hardcoded in de broncode — hetzelfde patroon als de eerder opgeruimde RB1/RB2-bevindingen uit Sprint 5.6, maar toen gemist.
+2. **Architectuur:** `peak_goal` stond als kolom op de **gedeelde** `exercises`-tabel. Omdat standaardoefeningen (Backsquat, Benchpress, etc.) voor iedereen dezelfde, gedeelde rij zijn, zag élke gebruiker — ook een gloednieuwe — het peakdoel dat één specifieke gebruiker er ooit op had ingesteld.
+
+### Migratie (SQL, door de gebruiker zelf uitgevoerd na review — niet door Claude)
+Nieuwe tabel `exercise_goals` (`user_id` + `exercise_id` + `peak_goal`, `UNIQUE(user_id, exercise_id)`, RLS met vier policies voor select/insert/update/delete op eigen rijen). 12 bestaande peakdoelen zijn eenmalig overgezet naar de eigen gebruiker-rij. De oude `exercises.peak_goal`-kolom blijft **bewust nog staan** (pas verwijderen in een latere, aparte stap, ná bevestiging dat alles werkt) — geen onomkeerbare stap in dezelfde migratie.
+
+### App-code aangepast
+- `PEAK_FALLBACK` volledig verwijderd.
+- Nieuwe `exerciseGoals`-Map + `ensureExerciseGoalsLoaded()`, zelfde per-gebruiker-cache-patroon als `favoriteExIds` (Sprint 6.0.1). `peakGoalFor(exId)` leest nu hieruit i.p.v. de gedeelde kolom.
+- `savePeakGoal()` schrijft nu naar `exercise_goals` (upsert bij een waarde, delete bij wissen) i.p.v. naar `exercises`.
+- **Verder gevonden tijdens het doorzoeken op resterende `.peak_goal`-verwijzingen:** de Doelen-module (`computeGoalProgressPr`, de Doelen-renderlijst, en de AI-coach-samenvatting bij "vraag de coach over dit doel") gebruikte óók nog de gedeelde kolom voor PR-type doelen — dit was een breder lek dan aanvankelijk gezien (raakte ook Doelen, niet alleen Voortgang/Admin). Alle drie bijgewerkt naar `peakGoalFor()`.
+- `ensureExerciseGoalsLoaded()` ingehaakt op app-start (fire-and-forget, zelfde patroon als favorieten) én expliciet in `refreshStatsScreen()`, `refreshStats()`, `refreshAdmin()` en `renderDoelenScreen()`, zodat elk render-pad de data heeft vóór het nodig is.
+- `netlify/functions/delete-account.js`: `exercise_goals` toegevoegd aan de verwijderlijst.
+
+### Getest
+- `node --check` op alle 9 scriptblokken en op `delete-account.js`: OK.
+- `logic_tests.js`: 199/199 (uit Sprint 6.0) + 4 nieuwe tests (nieuwe gebruiker ziet niets, eigen doel komt correct terug, twee gebruikers geen overlap, geen hardcoded fallback meer) = **203/203 geslaagd**.
+
+### Gewijzigd
+- `APP_VER` v4.24.17 → **v4.24.18**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v42418`; `netlify/functions/delete-account.js`.
+
+### Resterend punt
+`exercises.peak_goal`-kolom staat nog in de database (bewust, zie boven) — kan in een volgende stap verwijderd worden zodra bevestigd is dat de nieuwe tabel overal correct werkt.
+
+---
+
 ## v4.24.17 — 7 augustus 2026 (Sprint 6.0.5 — Navigatie Architectuur: dode routes opgeruimd)
 *Onderdeel van Sprint 6.0. Uitsluitend 100% onbereikbare, zelf-gedocumenteerde legacy-schermen verwijderd — geen enkele actieve functionaliteit geraakt.*
 

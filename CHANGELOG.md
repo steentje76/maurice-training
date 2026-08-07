@@ -1,5 +1,30 @@
 # Trainingskompas — Changelog
 
+## v4.24.11 — 7 augustus 2026 (Sprint 5.9.4 — Single-file Architectuur: analyse + adviesrapport)
+*Onderdeel van Sprint 5.9. Expliciet géén grote architectuurrefactor deze sprint — uitsluitend één veilige, additieve optimalisatie geïmplementeerd; de rest is een objectief onderbouwd adviesrapport voor Sprint 6.x.*
+
+### Gemeten: waar zit de 3,5 MB?
+- `index.html` totaal: **3.561.114 bytes**.
+- Ingebedde base64-posterafbeeldingen (206 stuks, MoveKit-bibliotheek): **1.928.538 bytes = 1,84 MB = 54,6% van het hele bestand.**
+- Dit zijn dezelfde 206 posters die al eerder zijn geïdentificeerd voor migratie naar Supabase Storage (voorbereide SQL-migratie + importscript, wachtend op het aanmaken van de storage-bucket) — dit sprint-onderzoek bevestigt cijfermatig hoe groot de winst van die al geplande migratie zou zijn.
+
+### Wél geïmplementeerd — veilige, additieve optimalisatie
+`loading="lazy"` toegevoegd aan de YouTube-techniekvideo-thumbnails die per oefening in een trainingslijst verschijnen (`buildVideoMuscle` — kan meerdere keren per trainingsdag voorkomen). Puur browser-native, additief HTML-attribuut: geen gedragswijziging, geen refactor, alleen thumbnails die buiten beeld staan worden door de browser zelf uitgesteld geladen. (De oefeningenbibliotheek zelf had al een eigen, verfijnder IntersectionObserver-gebaseerd lazy-load-mechanisme — geen wijziging nodig.)
+
+### Adviesrapport voor Sprint 6.x — NIET deze sprint geïmplementeerd (grote refactor)
+1. **Base64-posters → Supabase Storage** (1,84 MB, 54,6% van het bestand). De grootste, reeds voorbereide winst. Vereist het daadwerkelijk aanmaken van de storage-bucket + uitvoeren van de bestaande migratie (Maurice's eigen actiepunt, los van deze sprint) — buiten scope van "geen grote architectuurherschrijving."
+2. **`EXERCISE_ASSETS` wordt onvoorwaardelijk geparsed bij elke app-load**, ook voor gebruikers die de oefeningenbibliotheek nooit openen. Een echte lazy-load (pas ophalen bij eerste gebruik van de Bibliotheek) vereist dat de data als apart netwerk-resource beschikbaar is (dus dezelfde Storage-migratie als punt 1) — kan niet los daarvan.
+3. **Single-file-architectuur zelf** (15.577 regels, 9 scriptblokken): modulair maken (aparte bestanden, dynamic imports) is een bewuste, nog niet genomen beslissing die aan een build-stap-keuze hangt (zie eerdere projectbeslissingen) — expliciet niet in deze sprint aan te raken.
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- `logic_tests.js`: 188/188 geslaagd, geen regressie.
+
+### Gewijzigd
+- `APP_VER` v4.24.10 → **v4.24.11**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v42411`.
+
+---
+
 ## v4.24.10 — 7 augustus 2026 (Sprint 5.9.3 — Browser Cache & Opslag)
 *Onderdeel van Sprint 5.9. Uitsluitend geverifieerd dode opslag verwijderd — geen UX-wijziging, geen nieuwe functionaliteit.*
 

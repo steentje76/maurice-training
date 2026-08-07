@@ -1517,6 +1517,46 @@ test('Lege trainingslijst: lege map, geen query nodig (guard in de echte functie
   assertEq(Object.keys(map).length,0);
 });
 
+// Zelfde berekening als computeProgramProgressPure() in index.html (het bulk-
+// geoptimaliseerde pad voor renderProgrammaList) — pure functie, los getest.
+function computeProgramProgressPure(blocks,exByBlock,sessByBlock){
+  const completed=blocks.filter(b=>b.completed_at);
+  if(!completed.length)return {adherencePct:0,avgRpeDelta:null,doneCount:0,total:blocks.length};
+  const rpeDeltas=[];
+  for(const b of completed){
+    const rows=exByBlock[b.id]||[];
+    const presRpe=rows.map(r=>parseFloat(r.rpe_target)).filter(v=>!isNaN(v));
+    const avgPres=presRpe.length?presRpe.reduce((a,c)=>a+c,0)/presRpe.length:null;
+    const sess=sessByBlock[b.id]||[];
+    const loggedRpe=sess.map(s=>parseFloat(s.rpe)).filter(v=>!isNaN(v));
+    const avgLogged=loggedRpe.length?loggedRpe.reduce((a,c)=>a+c,0)/loggedRpe.length:null;
+    if(avgPres!=null&&avgLogged!=null)rpeDeltas.push(avgLogged-avgPres);
+  }
+  const avgRpeDelta=rpeDeltas.length?Math.round((rpeDeltas.reduce((a,c)=>a+c,0)/rpeDeltas.length)*10)/10:null;
+  return {adherencePct:Math.round(completed.length/blocks.length*100),avgRpeDelta,doneCount:completed.length,total:blocks.length};
+}
+test('Programmavoortgang (bulk-pad): identieke uitkomst als de oude per-blok-queries-versie zou geven', ()=>{
+  const blocks=[
+    {id:'b1',completed_at:'2026-07-01'},{id:'b2',completed_at:'2026-07-08'},
+    {id:'b3',completed_at:null}, // nog niet afgerond
+  ];
+  const exByBlock={b1:[{rpe_target:'8'},{rpe_target:'9'}], b2:[{rpe_target:'7'}]};
+  const sessByBlock={b1:[{rpe:'8.5'}], b2:[{rpe:'8'}]};
+  const r=computeProgramProgressPure(blocks,exByBlock,sessByBlock);
+  assertEq(r.doneCount,2); assertEq(r.total,3);
+  assertEq(r.adherencePct,Math.round(2/3*100));
+  // avgPres b1=(8+9)/2=8.5, avgLogged b1=8.5 -> delta 0. avgPres b2=7, avgLogged b2=8 -> delta +1.
+  assertEq(r.avgRpeDelta, Math.round(((0+1)/2)*10)/10);
+});
+test('Programmavoortgang: geen afgeronde blokken -> nul-staat, geen queries/lookups nodig', ()=>{
+  const r=computeProgramProgressPure([{id:'b1',completed_at:null}],{},{});
+  assertEq(r.adherencePct,0); assertEq(r.avgRpeDelta,null); assertEq(r.doneCount,0);
+});
+test('Programmavoortgang: afgerond blok zonder gelogde RPE-data -> geen delta, geen crash', ()=>{
+  const r=computeProgramProgressPure([{id:'b1',completed_at:'2026-07-01'}],{},{});
+  assertEq(r.doneCount,1); assertEq(r.avgRpeDelta,null,'geen data om te vergelijken -> null, niet NaN of crash');
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

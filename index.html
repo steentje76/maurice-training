@@ -13,13 +13,50 @@
 <title>Trainingskompas</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script>
+// Sprint 5.6.3 (RB1/RB5) — eenmalige migratie van de oude maurice_*-localStorage-
+// namespace naar de al bestaande tk_*-conventie (zie tk_wb_*/tk_gw_*/tk_lib_*/tk_vt_meta
+// elders in dit bestand). Draait als allereerste script in het document, vóór alle
+// overige code (incl. de thema-toepassing hieronder) — zodat iedere latere
+// localStorage.getItem('tk_...') de gemigreerde waarde al vindt.
+// Backward compatible: elke oude sleutel wordt gelezen, onder de nieuwe naam
+// teruggeschreven, en pas dán verwijderd. Bestaande gebruikers verliezen niets.
+// Draait maximaal één keer per device (tk_ns_migrated-vlag).
+(function(){
+  try{
+    if(localStorage.getItem('tk_ns_migrated')==='1')return;
+    var FIXED_KEYS=['theme','onboarding_done','rest_default','auth_session','trainings',
+      'active_sport','rowers','rower','sound_enabled','haptics_enabled','notif_training',
+      'notif_herstel','notif_coach','notif_updates','notif_systeem','atleet',
+      'draft_training','last_training','plates','cache_owner_uid'];
+    FIXED_KEYS.forEach(function(k){
+      var oldKey='maurice_'+k, newKey='tk_'+k;
+      if(localStorage.getItem(newKey)===null){
+        var v=localStorage.getItem(oldKey);
+        if(v!==null)localStorage.setItem(newKey,v);
+      }
+      localStorage.removeItem(oldKey);
+    });
+    // Dynamische sleutel met suffix per oefening (1RM-cache).
+    Object.keys(localStorage).filter(function(k){return k.indexOf('maurice_1rm_')===0;}).forEach(function(k){
+      var newKey='tk_1rm_'+k.slice('maurice_1rm_'.length);
+      if(localStorage.getItem(newKey)===null){
+        var v=localStorage.getItem(k);
+        if(v!==null)localStorage.setItem(newKey,v);
+      }
+      localStorage.removeItem(k);
+    });
+    localStorage.setItem('tk_ns_migrated','1');
+  }catch(e){/* localStorage niet beschikbaar (bv. privémodus) - migratie slaat over, geen crash */}
+})();
+</script>
+<script>
 // Sprint 2 — vroege thema-toepassing (vóór CSS-parse) om een flits van het verkeerde
 // thema te voorkomen wanneer de gebruiker handmatig Light/Dark heeft gekozen in
 // Instellingen (8.3). 'auto' (of geen keuze) laat de prefers-color-scheme-media-query
 // gewoon zijn werk doen — hier gebeurt dan bewust niets.
 (function(){
   try{
-    var t=localStorage.getItem('maurice_theme');
+    var t=localStorage.getItem('tk_theme');
     if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);
   }catch(e){/* localStorage niet beschikbaar (bv. privémodus) - val terug op systeeminstelling */}
 })();
@@ -2833,7 +2870,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
 <!-- ═══ ONBOARDING — Sprint 2 (Hoofdstuk 6, Scherm 1.2) ═══
      Verschijnt eenmalig ná succesvolle login, vóór het Dashboard (zie startAppAfterAuth()).
-     Gate: localStorage 'maurice_onboarding_done'. Device-gescoped (bekende, gedocumenteerde
+     Gate: localStorage 'tk_onboarding_done'. Device-gescoped (bekende, gedocumenteerde
      vereenvoudiging - zie Sprint2-rapport §Risico's). -->
 <div class="scr" id="s-onboarding">
   <div class="hdr">
@@ -3948,7 +3985,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="modal-handle"></div>
     <div class="modal-title">⚙️ Training instellingen</div>
     <div class="irow"><label class="ilbl">Standaard rusttimer</label>
-      <select class="inp" id="ts-rest-default" onchange="localStorage.setItem('maurice_rest_default',this.value)">
+      <select class="inp" id="ts-rest-default" onchange="localStorage.setItem('tk_rest_default',this.value)">
         <option value="0">Uit</option>
         <option value="30">30 sec</option>
         <option value="60">1 min</option>
@@ -4191,7 +4228,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.23.2';
+const APP_VER = 'v4.23.3';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -4207,7 +4244,7 @@ const SB_H = {apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'appli
 // SB_H.Authorization om naar de user-JWT, en alle sb*-functies hierboven pakken dat
 // automatisch op omdat ze SB_H via closure lezen, niet als kopie.
 // ══════════════════════════════════════════════════════════
-const AUTH_SESSION_KEY='maurice_auth_session';
+const AUTH_SESSION_KEY='tk_auth_session';
 let authSession=null; // {access_token, refresh_token, expires_at (ms epoch), user:{id,email}}
 let authRefreshTimer=null;
 let authMode='login'; // 'login' | 'signup'
@@ -4913,7 +4950,7 @@ function fmtSleep(h){
   return sh+'u'+(sm?sm+'m':'');
 }
 let equipmentTypes=[], _equipmentTypesLoading=null;
-let customTrainings=JSON.parse(localStorage.getItem('maurice_trainings')||'[]');
+let customTrainings=JSON.parse(localStorage.getItem('tk_trainings')||'[]');
 // v322: net als atleet-profiel — localStorage blijft snelle cache, Supabase wordt de
 // bron van waarheid voor multi-device. Bestaande gebruikers (vóór v322) hebben hun
 // Workouts nog alleen lokaal staan; die worden bij de eerste sync eenmalig omhoog
@@ -4927,7 +4964,7 @@ async function syncCustomTrainingsFromSupabase(){
         id:r.id, name:r.naam, color:r.kleur||'#111111', note:r.notitie||'',
         exercises: exRows.filter(e=>e.custom_training_id===r.id).map(e=>e.exercise_id)
       }));
-      localStorage.setItem('maurice_trainings',JSON.stringify(customTrainings));
+      localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
       renderCustomTrainBtns(); renderCustomTrainList();
     } else if(customTrainings.length){
       for(let i=0;i<customTrainings.length;i++){
@@ -4951,9 +4988,9 @@ async function pushCustomTrainingExercises(t){
 const SPORT_LABELS={kracht:'Krachttraining',powerlifting:'Powerlifting',crossfit:'CrossFit/Functioneel',hyrox:'HYROX',bodybuilding:'Bodybuilding',kettlebell:'Kettlebell',swimming:'Zwemmen',atletiek:'Atletiek',triathlon:'Triathlon',hardlopen:'Hardlopen',stairmaster:'Stairmaster',wielrennen:'Wielrennen',roeien:'Roeien',calisthenics:'Calisthenics',strongman:'Strongman',weightlifting:'Olympic Weightlifting',algemeen:'Algemene Fitness',functioneel:'Functionele Fitness'};
 const TYPE_LABELS={strength:'Kracht',wod:'WOD',kettlebell:'Kettlebell',carry:'Carry',cardio:'Cardio',rowing:'Roeien'};
 const PCT_1RM_OPTIONS=[60,70,80,90,100];
-let activeSport=localStorage.getItem('maurice_active_sport')||null;
+let activeSport=localStorage.getItem('tk_active_sport')||null;
 function getActiveSport(){return activeSport||atleet?.sport||'crossfit';}
-function setActiveSport(sport){activeSport=sport;localStorage.setItem('maurice_active_sport',sport);renderSportSwitcher();}
+function setActiveSport(sport){activeSport=sport;localStorage.setItem('tk_active_sport',sport);renderSportSwitcher();}
 function renderSportSwitcher(){
   const el=document.getElementById('sport-switcher');
   if(!el)return;
@@ -4965,8 +5002,8 @@ let skiergMachines=JSON.parse(localStorage.getItem('skierg_machines')||'["Ski 1"
 let assaultMachines=JSON.parse(localStorage.getItem('assault_machines')||'["Assault 1","Assault 2"]');
 let curT=null, sessionLog={}, sessionExtra=[], chatHist=[], sending=false;
 let pinBuf='', adminPinBuf='';
-let rowers=JSON.parse(localStorage.getItem('maurice_rowers')||'["PM5 1","PM5 2","PM5 3","PM5 4","PM5 5","PM5 6","PM5 7","PM5 8","PM5 9","PM5 10"]');
-let selRower=localStorage.getItem('maurice_rower')||rowers[0];
+let rowers=JSON.parse(localStorage.getItem('tk_rowers')||'["PM5 1","PM5 2","PM5 3","PM5 4","PM5 5","PM5 6","PM5 7","PM5 8","PM5 9","PM5 10"]');
+let selRower=localStorage.getItem('tk_rower')||rowers[0];
 let trainStart=null, trainInterval=null, histFilter='all', histOff=0;
 let curEditSess=null;
 
@@ -5028,6 +5065,11 @@ async function sbUpsert(t,d){try{const r=await fetch(`${SB_URL}/rest/v1/${t}`,{m
 // project moet ook als iOS-PWA draaien. Sync gebeurt daarom vanuit de pagina zelf, bij
 // 'online'-event, bij terugkeer naar de app (visibilitychange) en bij opstart.
 // ══════════════════════════════════════════════════════════
+// v5.6.3 (Sprint 5.6.3 — RB1): bewust NIET meegenomen in de tk_*-namespace-migratie.
+// Een IndexedDB-databasenaam hernoemen vereist het kopiëren van alle records naar een
+// nieuwe database (i.t.t. een synchrone localStorage-key-copy) — bij een offline-
+// sync-queue (nog niet-gesynchroniseerde trainingssessies) weegt dat risico niet op
+// tegen de cosmetische winst. Losse, apart geteste migratie-sprint indien gewenst.
 const OFFLINE_DB_NAME='maurice_offline', OFFLINE_STORE='queue';
 function offlineDb(){
   return new Promise((resolve,reject)=>{
@@ -5520,11 +5562,11 @@ function setTheme(mode){
   // mode: 'light' | 'dark' | 'auto'
   if(mode==='auto'){document.documentElement.removeAttribute('data-theme');}
   else{document.documentElement.setAttribute('data-theme', mode);}
-  localStorage.setItem('maurice_theme', mode);
+  localStorage.setItem('tk_theme', mode);
   updateThemeSegUI();
 }
 function updateThemeSegUI(){
-  const current=localStorage.getItem('maurice_theme')||'auto';
+  const current=localStorage.getItem('tk_theme')||'auto';
   ['light','dark','auto'].forEach(m=>{
     const el=document.getElementById('theme-opt-'+m);
     if(el)el.setAttribute('aria-checked', m===current?'true':'false');
@@ -5574,8 +5616,8 @@ function updateNotifPermissionUI(perm){
 
 // -- Schermrefreshers -------------------------------------------------------
 function refreshSettingsScreen(){
-  initSwitch('sw-sound','maurice_sound_enabled',false);
-  initSwitch('sw-haptics','maurice_haptics_enabled',true);
+  initSwitch('sw-sound','tk_sound_enabled',false);
+  initSwitch('sw-haptics','tk_haptics_enabled',true);
   updateThemeSegUI();
   const verEl=document.getElementById('settings-app-ver');if(verEl)verEl.textContent=APP_VER;
   const rmEl=document.getElementById('reduced-motion-status');
@@ -5589,11 +5631,11 @@ function refreshSettingsScreen(){
   if(dbgEl)dbgEl.textContent = `${APP_VER} · ${navigator.userAgent.slice(0,60)}`;
 }
 function refreshMeldingenScreen(){
-  initSwitch('sw-notif-training','maurice_notif_training',true);
-  initSwitch('sw-notif-herstel','maurice_notif_herstel',true);
-  initSwitch('sw-notif-coach','maurice_notif_coach',true);
-  initSwitch('sw-notif-updates','maurice_notif_updates',false);
-  initSwitch('sw-notif-systeem','maurice_notif_systeem',true);
+  initSwitch('sw-notif-training','tk_notif_training',true);
+  initSwitch('sw-notif-herstel','tk_notif_herstel',true);
+  initSwitch('sw-notif-coach','tk_notif_coach',true);
+  initSwitch('sw-notif-updates','tk_notif_updates',false);
+  initSwitch('sw-notif-systeem','tk_notif_systeem',true);
   if('Notification' in window)updateNotifPermissionUI(Notification.permission);
   else updateNotifPermissionUI(null);
 }
@@ -5665,8 +5707,8 @@ async function obRequestNotif(){
   obNext();
 }
 function obFinish(){
-  localStorage.setItem('maurice_atleet', JSON.stringify(atleet));
-  localStorage.setItem('maurice_onboarding_done','1');
+  localStorage.setItem('tk_atleet', JSON.stringify(atleet));
+  localStorage.setItem('tk_onboarding_done','1');
   if(authSession?.user?.id){
     sbUpsert('atleet_profiel', {...atleet, user_id: authSession.user.id}).catch(()=>{/* device-lokaal blijft leidend als sync nu faalt; volgende syncAtleetFromSupabase() probeert opnieuw */});
   }
@@ -7416,7 +7458,7 @@ function pauseTraining(){
 }
 function showSettings(){
   document.getElementById('ts-plates-link').onclick=()=>{closeModal('m-train-settings');openPlateCalc(0);};
-  document.getElementById('ts-rest-default').value=localStorage.getItem('maurice_rest_default')||'0';
+  document.getElementById('ts-rest-default').value=localStorage.getItem('tk_rest_default')||'0';
   openModal('m-train-settings');
 }
 
@@ -8741,7 +8783,7 @@ function buildVideoMuscle(ex){
 function getOneRM(exId){
   const exObj=exercises.find(e=>e.id===exId);
   if(exObj?.one_rm!=null)return parseFloat(exObj.one_rm);
-  const stored=localStorage.getItem('maurice_1rm_'+exId); // offline-fallback tot sync gelukt is
+  const stored=localStorage.getItem('tk_1rm_'+exId); // offline-fallback tot sync gelukt is
   if(stored)return parseFloat(stored);
   return exObj?.pr||null;
 }
@@ -8779,13 +8821,13 @@ function buildRmPanel(ex){
 async function saveOneRM(exId,val){
   const exObj=exercises.find(e=>e.id===exId);
   if(val===''){
-    localStorage.removeItem('maurice_1rm_'+exId);
+    localStorage.removeItem('tk_1rm_'+exId);
     if(exObj)exObj.one_rm=null;
     await sbPatch('exercises','id=eq.'+exId,{one_rm:null});
     return;
   }
   const v=parseFloat(val);
-  localStorage.setItem('maurice_1rm_'+exId,v); // meteen lokaal, ook als sync faalt
+  localStorage.setItem('tk_1rm_'+exId,v); // meteen lokaal, ook als sync faalt
   if(exObj)exObj.one_rm=v;
   await sbPatch('exercises','id=eq.'+exId,{one_rm:v}); // faalt stil als kolom nog niet bestaat
   // v306.1: bij een nieuwe 1RM automatisch herberekenen voor alle nog niet handmatig
@@ -9706,7 +9748,7 @@ function persistTrainingDraft(silent){
   if(!curT)return;
   saveState='saving';updateSaveIndicator();
   try{
-    localStorage.setItem('maurice_draft_training',JSON.stringify({t:curT,sessionLog,sessionExtra,ts:Date.now()}));
+    localStorage.setItem('tk_draft_training',JSON.stringify({t:curT,sessionLog,sessionExtra,ts:Date.now()}));
     lastSaveTs=Date.now();saveState='saved';
   }catch(e){saveState='dirty';}
   updateSaveIndicator();
@@ -9721,11 +9763,11 @@ function updateSaveIndicator(){
   ['a','b'].forEach(sfx=>{const el=document.getElementById('train-save-status-'+sfx);if(el)el.textContent=txt;});
 }
 function restoreTrainingDraft(){
-  const raw=localStorage.getItem('maurice_draft_training');
+  const raw=localStorage.getItem('tk_draft_training');
   if(!raw)return null;
   try{return JSON.parse(raw);}catch(e){return null;}
 }
-function clearTrainingDraft(){localStorage.removeItem('maurice_draft_training');lastSaveTs=null;saveState='saved';}
+function clearTrainingDraft(){localStorage.removeItem('tk_draft_training');lastSaveTs=null;saveState='saved';}
 // Zet eerder gelogde waarden (bij hervatten van een concept-training) terug in de DOM-velden.
 function restoreSessionLogToDom(t){
   const list=getSessionExs(t);
@@ -10111,7 +10153,7 @@ async function finishSession(){
       if(prevBest!=null&&bestKg(best)!=null&&bestKg(best)!==prevBest)sessStats.compare.push({naam:ex.naam,prev:prevBest,now:bestKg(best)});
     }
   }
-  localStorage.setItem('maurice_last_training',t);
+  localStorage.setItem('tk_last_training',t);
   closeModal('m-session-end');stopTrainTimer();
   clearTrainingDraft();
   curT=null;sessionLog={};sessionExtra=[];pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};
@@ -11122,7 +11164,7 @@ async function refreshAdmin(){
 
 function renderRowerAdmin(){const el=document.getElementById('rower-admin-list');if(!el)return;el.innerHTML=rowers.map((r,i)=>`<div class="irow"><label class="ilbl">PM5 ${i+1}</label><input class="inp" type="text" value="${r}" id="rwr-${i}" placeholder="PM5 430921286"></div>`).join('');}
 function addRowerInput(){rowers.push('');renderRowerAdmin();}
-function saveRowers(){const ins=document.querySelectorAll('[id^="rwr-"]');rowers=Array.from(ins).map(i=>i.value.trim()).filter(v=>v);localStorage.setItem('maurice_rowers',JSON.stringify(rowers));closeModal('m-rowers');toast('Roeiers opgeslagen');}
+function saveRowers(){const ins=document.querySelectorAll('[id^="rwr-"]');rowers=Array.from(ins).map(i=>i.value.trim()).filter(v=>v);localStorage.setItem('tk_rowers',JSON.stringify(rowers));closeModal('m-rowers');toast('Roeiers opgeslagen');}
 let curEditYTId=null, curEditYTCat=null;
 
 function updateNxType(val){
@@ -11515,7 +11557,7 @@ async function focusCoach(){
 // sport, gekozen via getActiveSport(). v327: uitgebreid van 7 naar alle 15 sport-
 // blueprints (kracht en powerlifting bewust gesplitst — zijn verschillende dingen: kracht
 // is generieke krachttraining, powerlifting draait om Squat/Bench/Deadlift-Total en
-// peaking; Maurice's eigen Training A/B-programma verhuisde daarom van 'kracht' naar
+// peaking; een specifiek Training A/B-programma verhuisde daarom van 'kracht' naar
 // 'powerlifting', zie SPORT_LABELS). Overige sporten zonder blueprint (kettlebell,
 // atletiek, stairmaster) vallen terug op een generieke tekst via resolveSportBlock()
 // i.p.v. onterecht sport-vreemde instructies te krijgen — dat was de oorspronkelijke bug.
@@ -11885,7 +11927,7 @@ async function importFromFile(input){
 // vóór het eerste gebruik; berekeningen die leeftijd/lengte nodig hebben (expected1RM)
 // slaan expliciet over i.p.v. te rekenen met een verzonnen waarde. Bestaande accounts
 // zijn niet geraakt: hun localStorage bevat al hun eigen (of voorheen geërfde) waarde.
-let atleet = JSON.parse(localStorage.getItem('maurice_atleet') || JSON.stringify({
+let atleet = JSON.parse(localStorage.getItem('tk_atleet') || JSON.stringify({
   naam: '', leeftijd: null, geslacht: null, lengte: null,
   niveau: 'ervaren', klasse: '', sport: 'crossfit'
 }));
@@ -11900,7 +11942,7 @@ async function syncAtleetFromSupabase(){
     if(rows.length){
       atleet={...atleet, ...rows[0]};
       delete atleet.user_id; delete atleet.updated_at;
-      localStorage.setItem('maurice_atleet', JSON.stringify(atleet));
+      localStorage.setItem('tk_atleet', JSON.stringify(atleet));
       if(document.getElementById('s-profiel')?.classList.contains('active'))refreshProfiel();
     } else if(atleet && Object.values(atleet).some(v=>v)){
       // user_id is verplicht (NOT NULL, geen default) — zonder deze regel faalde
@@ -11922,7 +11964,7 @@ async function saveAtleet(btnEl){
     klasse: document.getElementById('atl-klasse').value,
     sport: document.getElementById('atl-sport').value,
   };
-  localStorage.setItem('maurice_atleet', JSON.stringify(atleet));
+  localStorage.setItem('tk_atleet', JSON.stringify(atleet));
   // user_id is verplicht (NOT NULL, geen default) — zonder deze regel faalde
   // dit altijd stil (constraint violation, gevangen in de catch in sbUpsert).
   if(authSession?.user?.id) await sbUpsert('atleet_profiel', {...atleet, user_id: authSession.user.id});
@@ -11948,7 +11990,7 @@ function mastersFactor(leeftijd){
   if(leeftijd < 40) return 1.0;
   if(leeftijd < 45) return 1.01;
   if(leeftijd < 50) return 1.02;
-  if(leeftijd < 55) return 1.04;  // Maurice: 50 jaar
+  if(leeftijd < 55) return 1.04;
   if(leeftijd < 60) return 1.06;
   if(leeftijd < 65) return 1.09;
   return 1.12;
@@ -12176,7 +12218,7 @@ function saveNewTraining(btnEl){
   const id='custom_'+Date.now();
   const t={id,name,color,note,exercises:[]};
   customTrainings.push(t);
-  localStorage.setItem('maurice_trainings',JSON.stringify(customTrainings));
+  localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
   sbPost('custom_trainings',{id,naam:name,kleur:color,notitie:note||null,sort_order:customTrainings.length-1,scope:scopeVal});
   closeModal('m-new-training');
   document.getElementById('nt-name').value='';
@@ -12262,7 +12304,7 @@ async function submitShare(btnEl){
 async function deleteCustomTraining(id){
   if(!await confirmModal('Deze training verwijderen?',{title:'Training verwijderen',okLabel:'Verwijderen',danger:true})) return;
   customTrainings=customTrainings.filter(t=>t.id!==id);
-  localStorage.setItem('maurice_trainings',JSON.stringify(customTrainings));
+  localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
   sbDel('custom_trainings','id=eq.'+id); // cascade ruimt custom_training_exercises vanzelf op
   renderCustomTrainList();
   renderCustomTrainBtns();
@@ -12634,7 +12676,7 @@ async function permanentlyAddExtras(){
     if(ct){
       if(!ct.exercises)ct.exercises=[];
       extras.forEach(e=>{if(!ct.exercises.includes(e.id))ct.exercises.push(e.id);});
-      localStorage.setItem('maurice_trainings',JSON.stringify(customTrainings));
+      localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
       await pushCustomTrainingExercises(ct);
     }
   } else if(t.startsWith('prog_')){
@@ -12658,7 +12700,7 @@ function saveAsTrainingAndFinish(btnEl){
   if(!name){toast('Vul een naam in');return;}
   const t={id:'saved_'+Date.now(),name,color:'#111111',note:'Opgeslagen na sessie '+td(),exercises:sessionExtra.filter(e=>e._t===curT).map(e=>e.id)};
   customTrainings.push(t);
-  localStorage.setItem('maurice_trainings',JSON.stringify(customTrainings));
+  localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
   sbPost('custom_trainings',{id:t.id,naam:t.name,kleur:t.color,notitie:t.note,sort_order:customTrainings.length-1}).then(()=>pushCustomTrainingExercises(t));
   renderCustomTrainBtns();
   closeModal('m-save-as-training');
@@ -12687,7 +12729,7 @@ function openRestTimer(exId,setNum){
   const exObj=exercises.find(e=>e.id===exId);
   const perEx=exObj?.rest_seconds;
   if(perEx!=null&&perEx>0){startRestTimer(perEx);return;} // per-oefening rusttijd heeft voorrang
-  const def=parseInt(localStorage.getItem('maurice_rest_default'))||0;
+  const def=parseInt(localStorage.getItem('tk_rest_default'))||0;
   if(def>0){startRestTimer(def);return;} // anders app-brede standaardwaarde
   openModal('m-rest-timer');
 }
@@ -12707,7 +12749,7 @@ function startRestTimer(seconds){
     if(fill&&seconds>0)fill.style.width=Math.max(0,Math.min(100,(rem/seconds)*100))+'%';
     if(rem<=0){
       clearInterval(restInterval);restInterval=null;
-      if(navigator.vibrate&&isSettingOn('maurice_haptics_enabled',true))navigator.vibrate([200,100,200]);
+      if(navigator.vibrate&&isSettingOn('tk_haptics_enabled',true))navigator.vibrate([200,100,200]);
       toast('Rust voorbij');
       bar.style.display='none';
     }
@@ -12724,7 +12766,7 @@ function cancelRestTimer(){
 // PLATE CALCULATOR
 // ══════════════════════════════════════════════════════════
 const PLATE_COLORS = {'25':{bg:'#E53935',c:'#fff'},'20':{bg:'#1565C0',c:'#fff'},'15':{bg:'#F9A825',c:'#111'},'10':{bg:'#2E7D32',c:'#fff'},'5':{bg:'#eee',c:'#111'},'2.5':{bg:'#9E9E9E',c:'#fff'},'1.25':{bg:'#9C27B0',c:'#fff'},'1':{bg:'#00838F',c:'#fff'},'0.5':{bg:'#FF8F00',c:'#fff'}};
-let availPlates=JSON.parse(localStorage.getItem('maurice_plates')||'[25,20,15,10,5,2.5,1.25,1,0.5]');
+let availPlates=JSON.parse(localStorage.getItem('tk_plates')||'[25,20,15,10,5,2.5,1.25,1,0.5]');
 
 function openPlateCalc(w){
   const el=document.getElementById('pc-target');
@@ -12745,7 +12787,7 @@ function renderPlateAvail(){
 function togglePlate(p){
   if(availPlates.includes(p)) availPlates=availPlates.filter(x=>x!==p);
   else{availPlates.push(p);availPlates.sort((a,b)=>b-a);}
-  localStorage.setItem('maurice_plates',JSON.stringify(availPlates));
+  localStorage.setItem('tk_plates',JSON.stringify(availPlates));
   renderPlateAvail();calcPlates();
 }
 
@@ -13806,7 +13848,7 @@ async function exportJSON(){
   }
   backup.atleet = atleet;
   backup.customTrainings = customTrainings;
-  downloadFile(JSON.stringify(backup,null,2), 'maurice_backup_'+td()+'.json', 'application/json');
+  downloadFile(JSON.stringify(backup,null,2), 'trainingskompas_backup_'+td()+'.json', 'application/json');
   toast('Volledige backup gedownload');
 }
 
@@ -14061,15 +14103,16 @@ window.addEventListener('load',async()=>{
 // v332: BUGFIX — persoonlijke localStorage-caches (atleet-profiel, custom trainings,
 // PR's, etc.) gebruikten vaste sleutels zonder user-scoping. Op een gedeeld/hergebruikt
 // device toonde en pushte een nieuw account daardoor de data van de vorige gebruiker
-// (bevestigd: test-account kreeg Maurice's eigen atleet-profiel te zien, en zou dat
-// bij de volgende save zelfs naar het nieuwe account in Supabase geüpload hebben).
+// (bevestigd: test-account kreeg het atleet-profiel van het eerder ingelogde account
+// te zien, en zou dat bij de volgende save zelfs naar het nieuwe account in Supabase
+// geüpload hebben).
 // Fix: bij elke login/sessie-herstel checken of het device van "eigenaar" wisselde;
 // zo ja, eerst alle bekende persoonlijke caches wissen vóórdat er iets geladen wordt.
-const CACHE_OWNER_KEY='maurice_cache_owner_uid';
-const PERSONAL_CACHE_KEYS=['maurice_atleet','maurice_trainings','maurice_active_sport','maurice_draft_training','maurice_last_training'];
+const CACHE_OWNER_KEY='tk_cache_owner_uid';
+const PERSONAL_CACHE_KEYS=['tk_atleet','tk_trainings','tk_active_sport','tk_draft_training','tk_last_training'];
 function wipePersonalCache(){
   PERSONAL_CACHE_KEYS.forEach(k=>localStorage.removeItem(k));
-  Object.keys(localStorage).filter(k=>k.startsWith('maurice_1rm_')).forEach(k=>localStorage.removeItem(k));
+  Object.keys(localStorage).filter(k=>k.startsWith('tk_1rm_')).forEach(k=>localStorage.removeItem(k));
   localStorage.removeItem(CACHE_OWNER_KEY);
 }
 function resetPersonalCacheIfNewDeviceOwner(uid){
@@ -14087,7 +14130,7 @@ function resetPersonalCacheIfNewDeviceOwner(uid){
 async function startAppAfterAuth(){
   resetPersonalCacheIfNewDeviceOwner(authSession?.user?.id);
   document.querySelectorAll('.scr').forEach(s=>s.classList.remove('active'));
-  const onboardingDone = localStorage.getItem('maurice_onboarding_done')==='1';
+  const onboardingDone = localStorage.getItem('tk_onboarding_done')==='1';
   if(onboardingDone){
     document.getElementById('s-home').classList.add('active');
   }else{

@@ -1,5 +1,36 @@
 # Trainingskompas — Changelog
 
+## v4.24.14 — 7 augustus 2026 (Sprint 5.9.7 afronding — buildCtx() geparallelliseerd)
+*Onderdeel van Sprint 5.9. Expliciet voorgelegd en akkoord gekregen vóór implementatie, gezien het risico op een subtiele fout in de afhankelijkheidsvolgorde van een kritieke functie. Exact dezelfde queries, dezelfde data, dezelfde prompt-inhoud — uitsluitend de gelijktijdigheid van ophalen is anders.*
+
+### Probleem (in eigen woorden bevestigd: "de wachttijd is lang waardoor het geen vloeiend gesprek wordt")
+`buildCtx()` deed 8-10 databasequery's **sequentieel** — elk wachtend op de vorige voordat de volgende begon — terwijl de meeste onderling onafhankelijk zijn (HRV, gewicht, lichaamscompositie en sessiegeschiedenis hebben geen relatie met elkaar).
+
+### Fix
+Hergestructureerd in twee parallelle rondes via `Promise.all()`:
+- **Fase 1** (8 volledig onderlinge-onafhankelijke queries tegelijk): oefeningen laden, HRV, gewicht, lichaamscompositie, sessiegeschiedenis, vaste trainingen laden, pijn-samenvatting, condities-samenvatting.
+- **Fase 2** (2 queries tegelijk, terecht wachtend op `vasteTrainingen` uit fase 1): "laatst gedane training per vaste training" en "meest recente sessie van een vaste training".
+- Alle overige berekeningen (groepering, HRV-tekst, gewichtstekst, sportblok, sessiecontext) blijven pure, synchrone verwerking van de nu al beschikbare data — ongewijzigd.
+
+### Verificatie (vóór livegang, gezien het risico)
+Een losstaande simulatie (niet onderdeel van de reguliere testsuite — zie toelichting) met gemockte vertragingen per query bevestigde **twee dingen apart**:
+1. **Functionele gelijkwaardigheid:** de oude sequentiële en de nieuwe parallelle orchestratie leverden, gevoed met identieke mock-data, byte-voor-byte identieke output (`exCtx`, `nextT`, `lastT`, HRV/gewicht/context-velden).
+2. **Daadwerkelijke gelijktijdigheid:** alle 8 fase-1-queries startten binnen 0ms van elkaar (echt gelijktijdig, niet na elkaar). In het gesimuleerde scenario: 220ms (som van alle vertragingen, wat de oude versie minimaal zou kosten) → 60ms (nieuwe, parallelle versie) — een aanzienlijke, aantoonbare reductie in wachttijd vóór het AI-verzoek zelfs maar verstuurd wordt. Reële winst hangt af van daadwerkelijke netwerk-/Supabase-responstijden, niet gegarandeerd identiek aan dit gesimuleerde cijfer.
+
+**Waarom geen nieuwe permanente test in `logic_tests.js`:** de berekeningslogica die deze orchestratie gebruikt (groepering per oefening, laatst-gedaan-bepaling) heeft al testdekking uit Sprint 5.8.1/5.9.1 — deze wijziging verandert alleen wannéér de queries lopen, niet wát er berekend wordt. Een genuine concurrency-test zou async/setTimeout-gebaseerde tests in het testbestand vereisen, wat de bestaande, bewust synchrone testvolgorde-conventie van dat bestand zou doorbreken (zie de les uit Sprint 5.8.2).
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- `logic_tests.js`: 192/192 geslaagd, geen regressie.
+- Losstaande simulatie (zie boven): functionele gelijkwaardigheid + daadwerkelijke gelijktijdigheid bevestigd.
+
+### Gewijzigd
+- `APP_VER` v4.24.13 → **v4.24.14**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v42414`.
+
+### Werkpakket 5.9.7 — volledig afgerond
+
+---
+
 ## v4.24.13 — 7 augustus 2026 (Sprint 5.9.7 — AI Coach Performance, dode berekening)
 *Onderdeel van Sprint 5.9. Uitsluitend prestaties/snelheid/kosten — de inhoud van de AI-coach-prompt is niet gewijzigd.*
 

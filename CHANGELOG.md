@@ -1,5 +1,28 @@
 # Trainingskompas — Changelog
 
+## v4.24.3 — 7 augustus 2026 (Sprint 5.8.1 afronding — trainingsgeschiedenis geminimaliseerd)
+*Onderdeel van Sprint 5.8. Uitsluitend buildCtx() — geen UX-herontwerp, geen nieuwe AI-functionaliteit.*
+
+### Opgelost: trainingsgeschiedenis in de AI-prompt was de volledige catalogus, elk bericht
+`buildCtx()` deed voorheen een `sbGet`-aanroep **per oefening in de volledige catalogus** (potentieel honderden aanroepen per chatbericht) en stuurde zo bij elk bericht de complete trainingsgeschiedenis van élke ooit gelogde oefening naar Anthropic — ongeacht relevantie voor het huidige gesprek. Dit was zowel een resterend dataminimalisatie-punt (Werkpakket 5.8.1) als een performance-issue (N+1-patroon, al eerder gesignaleerd in het auditrapport).
+
+**Fix:**
+- **Actieve training loopt:** één query, gescoped op precies de oefeningen van díe training (`exercise_id=in.(...)`) — geen tijd-cutoff hierop, om te voorkomen dat net-iets-oudere geschiedenis van exact wat je nu doet wegvalt.
+- **Geen actieve training (algemeen gesprek):** één query over een 30-dagen-venster (zelfde conventie als de bestaande `getRecentPainSummary()`), i.p.v. de volledige historie van alle oefeningen ooit.
+- In beide gevallen: één databaseverzoek in plaats van honderden, en uitsluitend gegevens die daadwerkelijk relevant zijn voor het gesprek.
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- `logic_tests.js`: 169/169 (uit eerdere 5.8.1-deelstap) + 3 nieuwe tests voor de groepeer-/scope-logica = **172/172 geslaagd**. Expliciet getest: oefeningen buiten de actieve training worden niet meegestuurd; max. 2 sessies per oefening; lege scope geeft geen crash.
+
+### Gewijzigd
+- `APP_VER` v4.24.2 → **v4.24.3**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v4243`.
+
+### Werkpakket 5.8.1 — volledig afgerond
+Beide onderdelen (persoonlijk medisch protocol verwijderd + trainingsgeschiedenis geminimaliseerd) zijn nu live.
+
+---
+
 ## v4.24.2 — 7 augustus 2026 (Sprint 5.8.1 — AI Coach Privacy: dataminimalisatie, Privacy & AVG)
 *Onderdeel van Sprint 5.8. Uitsluitend de AI-coach-systeemprompt (buildCtx) — geen UX-herontwerp, geen nieuwe AI-functionaliteit, geen databasewijziging.*
 

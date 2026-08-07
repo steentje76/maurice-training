@@ -2779,9 +2779,13 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="card"><div class="card-hd"><div class="card-title">Welke data</div></div><div class="card-body" style="font-size:13px;line-height:1.5">
       Trainingskompas slaat trainingsdata (sessies, sets, gewicht), lichaamsmetingen, HRV/dagfactor-invoer en (indien gekoppeld) wearable-data op in je persoonlijke account. Toegang tot je gegevens is technisch afgeschermd per gebruiker (Row Level Security in de database) — andere gebruikers, inclusief gym-leden, kunnen jouw persoonlijke data niet inzien tenzij je die zelf expliciet deelt (zie 'Delen' bij een training/oefening).
     </div></div>
-    <div class="card"><div class="card-hd"><div class="card-title">AI-coach</div></div><div class="card-body" style="font-size:13px;line-height:1.5">
-      Je trainingsgeschiedenis en profielgegevens worden gebruikt om de AI-coach persoonlijk advies te laten geven. Dit gebeurt via een server-side koppeling (jouw gegevens gaan nooit rechtstreeks vanuit de app naar de AI-leverancier).
-    </div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">AI-coach</div></div><div class="card-body" style="font-size:13px;line-height:1.5;padding-bottom:0">
+      Als je toestemming geeft, gebruikt de AI-coach je HRV, slaap, gewicht, lichaamssamenstelling, trainingsgeschiedenis en (indien je die zelf hebt vastgelegd) je aandachtspunten/condities om persoonlijk advies te geven. Deze gegevens bereiken de AI-leverancier (Anthropic) via een server-side koppeling — nooit rechtstreeks vanuit je browser. Zonder toestemming wordt de AI-coach niet gebruikt.
+    </div>
+      <div class="card-body" style="padding:0 14px 14px">
+        <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">AI Coach toestaan</div><div class="set-row-sub">Deelt bovenstaande gegevens met de AI-leverancier voor persoonlijk advies</div></div><button class="switch" role="switch" id="sw-ai-consent" aria-checked="false" aria-label="AI Coach toestaan"></button></div>
+      </div>
+    </div>
     <div class="card"><div class="card-hd"><div class="card-title">Bewaartermijn &amp; verwijdering</div></div><div class="card-body" style="font-size:13px;line-height:1.5">
       Je kunt je account en alle bijbehorende data volledig verwijderen via Profiel → Account verwijderen. Dit verwijdert ook alles wat ooit voor AI-context is gebruikt.
     </div></div>
@@ -4229,7 +4233,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.3';
+const APP_VER = 'v4.24.4';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -5640,6 +5644,11 @@ function refreshMeldingenScreen(){
   if('Notification' in window)updateNotifPermissionUI(Notification.permission);
   else updateNotifPermissionUI(null);
 }
+// Sprint 5.8.2 — AI-consent-toggle: privacy-by-default (uit totdat de gebruiker expliciet
+// toestemming geeft, hier of via de eenmalige vraag bij eerste gebruik van de AI Coach).
+function refreshPrivacyScreen(){
+  initSwitch('sw-ai-consent','tk_ai_consent',false);
+}
 window.addEventListener('online',()=>{const el=document.getElementById('settings-online-status');if(el)el.textContent='Online';});
 window.addEventListener('offline',()=>{const el=document.getElementById('settings-online-status');if(el)el.textContent='Offline';});
 
@@ -5993,6 +6002,7 @@ function go(id){
   if(id==='s-coach')focusCoach();
   if(id==='s-settings')refreshSettingsScreen();
   if(id==='s-meldingen')refreshMeldingenScreen();
+  if(id==='s-privacy')refreshPrivacyScreen();
   if(id==='s-doelen')renderDoelenScreen();
   if(id==='s-help'){const v=document.getElementById('help-app-ver');if(v)v.textContent=APP_VER;}
 }
@@ -11896,10 +11906,32 @@ Bij training → per oefening: doelgewicht, vergelijking vorige sessie, RPE-targ
 Nooit aannames over gewichten of RPE — altijd vragen als ontbreekt.`;
 }
 
+// Sprint 5.8.2 (Privacy & AVG) — expliciete toestemming AI Coach. tk_ai_consent:
+// null = nog niet gevraagd, '1' = toegestaan, '0' = geweigerd. Privacy-by-default:
+// vóór een expliciete keuze wordt de AI Coach NIET gebruikt. Wijzigbaar op elk moment
+// via Instellingen -> Privacy (zelfde toggle-mechanisme als de meldingen-instellingen).
+async function ensureAiConsent(){
+  const stored=localStorage.getItem('tk_ai_consent');
+  if(stored==='1')return true;
+  if(stored==='0')return false;
+  const granted=await confirmModal(
+    'De AI Coach gebruikt je HRV, slaap, gewicht, lichaamssamenstelling, trainingsgeschiedenis en (als je dat zelf hebt vastgelegd) je aandachtspunten/condities om trainingsadvies te geven. Deze gegevens worden gestuurd naar Anthropic (de AI-leverancier) om je vraag te beantwoorden. Je kunt dit op elk moment wijzigen via Instellingen → Privacy.',
+    {title:'AI Coach — toestemming', okLabel:'Toestaan', cancelLabel:'Niet toestaan'}
+  );
+  localStorage.setItem('tk_ai_consent', granted?'1':'0');
+  return granted;
+}
 async function sendChat(){const inp=document.getElementById('chat-inp');const txt=inp.value.trim();if(!txt||sending)return;inp.value='';inp.style.height='';sendMsg(txt);}
 async function sendMsg(txt){
   if(sending)return;
   sending=true;document.getElementById('send-btn').disabled=true;document.getElementById('coach-st').textContent='Coach denkt mee…';
+  const consent=await ensureAiConsent();
+  if(!consent){
+    addMsg('user',txt);
+    addMsg('coach','De AI Coach is uitgeschakeld omdat je geen toestemming hebt gegeven voor het delen van je gegevens. Je kunt dit aanzetten via Instellingen → Privacy.');
+    sending=false;document.getElementById('send-btn').disabled=false;document.getElementById('coach-st').textContent='Klaar';
+    return;
+  }
   addMsg('user',txt);chatHist.push({role:'user',content:txt});
   await sbPost('chat_history',{role:'user',content:txt,session_id:activeSessionId,session_label:activeSessionCtx?.exNaam||null});
   const tid=addMsg('coach','<span class="tk-typing"><span></span><span></span><span></span></span>',true,true);

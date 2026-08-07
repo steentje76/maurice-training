@@ -1,5 +1,29 @@
 # Trainingskompas — Changelog
 
+## v4.24.6 — 7 augustus 2026 (Sprint 5.8.5 — Local Storage Audit, Privacy & AVG)
+*Onderdeel van Sprint 5.8. Uitsluitend de cross-account cache-bescherming (DEC-032) — geen UX-herontwerp, geen nieuwe functionaliteit.*
+
+### Gecontroleerd: localStorage, sessionStorage, IndexedDB, Service Worker Cache
+- **sessionStorage:** geen enkel gebruik gevonden — niets te controleren.
+- **Service Worker Cache:** al correct — `NO_CACHE_PATTERNS` sluit `supabase.co` en `api.anthropic.com` expliciet uit van caching; alleen statische app-shell-bestanden worden gecachet, nooit API-responses met persoonsgegevens. Geen wijziging nodig.
+- **localStorage — kritieke bevinding:** de cross-account cache-bescherming (DEC-032, bedoeld om te voorkomen dat een volgende gebruiker op een gedeeld toestel de data van de vorige gebruiker ziet) wiste nog maar 5 sleutels + de dynamische 1RM-cache. Sinds die oorspronkelijke fix zijn er meerdere nieuwe persoonlijke datasets bijgekomen (guided workouts, workout builder, vaste-training-voortgang, favorieten, uitrusting-voorkeuren) die niet aan de lijst waren toegevoegd — exact hetzelfde lek als DEC-032 ooit oploste, nu weer deels open voor deze nieuwere features.
+- **Extra bevinding:** `tk_ai_consent` (Sprint 5.8.2) stond ook niet in de lijst — een nieuwe gebruiker op hetzelfde toestel zou de AI-Coach-toestemming van de vorige gebruiker kunnen "erven" zonder zelf ooit gevraagd te zijn. Toestemming moet per gebruiker gelden.
+
+### Fix
+`PERSONAL_CACHE_KEYS` uitgebreid met alle huidige persoonlijke datasets: `tk_ai_consent`, `tk_gw_active/hist/log`, `tk_wb_draft/saved`, `tk_vt_meta`, `tk_lib_favs/recent/recentq`, `tk_plates`, `tk_rower(s)`, `tk_rest_default`.
+
+### IndexedDB — reëel, bewust NIET automatisch opgelost risico
+Bij onderzoek bleek `flushOfflineQueue()` elk item in de offline-queue te synchroniseren met de **huidige** sessie-token (`SB_H`), ongeacht wie het item oorspronkelijk queuede. Op een gedeeld toestel waar gebruiker A offline traint en vóór synchronisatie gebruiker B inlogt, zou A's trainingsdata bij synchronisatie onder B's account terecht kunnen komen (of, afhankelijk van RLS, de hele wachtrij blokkeren op de eerste mislukte match). Ik heb dit **niet** automatisch opgelost: de wachtrij simpelweg wissen bij een accountwissel voorkomt de privacy/integriteitskwestie, maar veroorzaakt gegarandeerd dataverlies van nog niet-gesynchroniseerde trainingen van gebruiker A — en "geen dataverlies" staat hoger in de productprioriteiten dan deze privacy-sprint. De juiste oplossing (bv. eerst proberen te synchroniseren onder de oude sessie vóórdat een nieuwe login wordt toegestaan) vereist een architectuurkeuze die buiten deze sprint valt. Expliciet voorgelegd, niet genegeerd.
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- `logic_tests.js`: 177/177 (uit Sprint 5.8.4) + 2 nieuwe tests (volledige sleutellijst wordt gewist; AI-consent erft niet over) = **179/179 geslaagd**.
+
+### Gewijzigd
+- `APP_VER` v4.24.5 → **v4.24.6**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v4246`.
+
+---
+
 ## Sprint 5.8.4 — 7 augustus 2026 (Account verwijderen geverifieerd, Privacy & AVG) — geen APP_VER-bump
 *Onderdeel van Sprint 5.8. Uitsluitend `netlify/functions/delete-account.js` — index.html ongewijzigd deze deelstap.*
 

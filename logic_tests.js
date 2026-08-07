@@ -1483,6 +1483,40 @@ test('AI-consent-toestemming wordt NIET overgeërfd door de volgende gebruiker o
   assertEq(ls.getItem('tk_ai_consent'), null, 'user-B moet zelf opnieuw expliciet gevraagd worden, niet automatisch toegestaan krijgen');
 });
 
+// ── DATABASE PERFORMANCE (Sprint 5.9.1) ─────────────────────
+// Zelfde groepeerlogica als de geoptimaliseerde computeLastDoneMap() in index.html
+// (1 query i.p.v. N) — pure functie (sessies al opgehaald meegegeven), los getest.
+console.log("\n⚡ Database Performance — computeLastDoneMap (N+1-fix)");
+function computeLastDoneMapFromRows(list, rows){
+  const map={};
+  list.forEach(v=>{map[v.id]=null;});
+  const seen=new Set();
+  rows.forEach(r=>{
+    if(!seen.has(r.training_type)){map[r.training_type]=r.date;seen.add(r.training_type);}
+  });
+  return map;
+}
+test('Meerdere vaste trainingen: elk krijgt zijn eigen meest recente datum (rows al gesorteerd op date.desc)', ()=>{
+  const list=[{id:'vt_a'},{id:'vt_b'},{id:'vt_c'}];
+  const rows=[
+    {training_type:'vt_a',date:'2026-08-05'},{training_type:'vt_a',date:'2026-07-29'},
+    {training_type:'vt_b',date:'2026-08-01'},
+  ];
+  const map=computeLastDoneMapFromRows(list, rows);
+  assertEq(map.vt_a,'2026-08-05','pakt de meest recente, niet de oudere sessie');
+  assertEq(map.vt_b,'2026-08-01');
+  assertEq(map.vt_c,null,'nog nooit gedaan -> null, exact zelfde gedrag als de oude N-losse-queries-versie');
+});
+test('Geen enkele sessie voor geen enkele training: alles null, geen crash', ()=>{
+  const list=[{id:'vt_a'},{id:'vt_b'}];
+  const map=computeLastDoneMapFromRows(list, []);
+  assertEq(map.vt_a,null); assertEq(map.vt_b,null);
+});
+test('Lege trainingslijst: lege map, geen query nodig (guard in de echte functie)', ()=>{
+  const map=computeLastDoneMapFromRows([], []);
+  assertEq(Object.keys(map).length,0);
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

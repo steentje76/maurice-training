@@ -1,5 +1,28 @@
 # Trainingskompas — Changelog
 
+## v4.24.21 — 7 augustus 2026 (UI-fix — onboarding-navigatieknoppen buiten beeld)
+*Gemeld: de Terug/Volgende-knoppen op het onboardingscherm vielen buiten het zichtbare scherm op een mobiel toestel. Niet live te reproduceren (onboarding is al doorlopen op de beschikbare test-accounts), dus opgelost op basis van grondige CSS-analyse.*
+
+### Gevonden
+`#app` (de buitenste wrapper van de hele app) gebruikte `min-height:100vh` **zonder** de `100dvh`-fallback die `.scr` (elk individueel scherm) zelf al wél had. Op mobiele browsers is `100vh` vaak groter dan de daadwerkelijk zichtbare hoogte (rekent soms mee met ruimte die door de systeem-navigatiebalk in beslag wordt genomen), wat content onderaan het scherm buiten beeld kan duwen.
+
+### Fix
+- `#app`: dezelfde `100dvh`-fallback toegevoegd als `.scr` al had.
+- De onboarding-navigatiebalk zelf (Terug/Volgende) extra geborgd met `position:sticky;bottom:0` — garandeert dat de knoppen altijd binnen het zichtbare gebied blijven plakken, ongeacht eventuele resterende hoogteberekeningsverschillen tussen browsers/toestellen. Achtergrondkleur toegevoegd zodat scrollende inhoud er niet doorheen zichtbaar wordt.
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- HTML div-balans vóór/na: 0 verschil (pure CSS-wijziging, geen structuurwijziging).
+- `logic_tests.js`: 211/211 geslaagd, geen regressie (geen logicawijziging).
+
+### Gewijzigd
+- `APP_VER` v4.24.20 → **v4.24.21**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v42421`.
+
+### Ter verificatie
+Niet live getest door Claude (geen reproductie mogelijk). Om zelf te controleren: onboarding is opnieuw te zien door in de browserconsole `localStorage.removeItem('tk_onboarding_done')` uit te voeren en de pagina te verversen.
+
+---
+
 ## v4.24.20 — 7 augustus 2026 (Kritieke fix — PR & 1RM: gedeelde kolommen → per-gebruiker tabel)
 *Vervolg op de peakdoelen-fix: na volledig uit-/inloggen bleek 'Geschatte 1RM' nog steeds harde waardes te tonen (Backsquat 95kg, Benchpress 80kg, etc.) op een account dat nog nooit had getraind. Grondoorzaak: exercises.pr en exercises.one_rm hadden exact hetzelfde architectuurprobleem als exercises.peak_goal.*
 

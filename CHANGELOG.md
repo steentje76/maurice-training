@@ -1,5 +1,34 @@
 # Trainingskompas — Changelog
 
+## v4.23.1 — 7 augustus 2026 (Sprint 5.6.1 — Onboarding & Defaults, Release Blocker 2+3)
+*Onderdeel van Sprint 5.6 "Scientific & New-User Integrity", n.a.v. Enterprise Audit & Scientific Integrity Review v1.0. Uitsluitend data/defaults/onboarding — geen UX-herontwerp, geen nieuwe functionaliteit, geen databasewijziging.*
+
+### Opgelost — Release Blocker 2: single-user-defaults verwijderd
+- Default-atleetprofiel gebruikte de ontwikkelaars-eigen waarden (leeftijd 50, geslacht man, lengte 180, gewichtsklasse 120+) als impliciete fallback voor élke nieuwe gebruiker. Nu neutraal (`null`/leeg) totdat de gebruiker dit zelf invult.
+- `expected1RM()` (cold-start-predictor) rekende voorheen door met de default-leeftijd als een gebruiker zijn profiel nog niet had ingevuld, wat een misleidende 1RM-schatting opleverde. Geeft nu expliciet `null` terug zonder volledig profiel (leeftijd + lichaamsgewicht).
+- Profiel-bewerkmodal en Profiel-/Coach-schermen toonden `50`/`Man`/`180`/"1.00×ˣ Masters factor" als vooraf ingevulde/berekende waarde i.p.v. een lege staat — gecorrigeerd naar "—"/leeg.
+- Tweede, eerder gemiste vindplaats: de cross-account cache-resetfunctie (DEC-032) reset het profiel bij accountwissel op een gedeeld toestel nog naar `geslacht:'man'` — nu ook neutraal.
+
+### Opgelost — Release Blocker 3: onboarding verplicht vóór berekening
+- Nieuwe verplichte onboardingstap "Jouw gegevens" (leeftijd, lengte, geslacht) toegevoegd vóór de bestaande doel/niveau/sport-stappen. "Volgende" blijft uitgeschakeld tot alle drie ingevuld zijn — zelfde patroon als de bestaande privacy-akkoordstap.
+- Alleen van toepassing op **nieuwe** onboardingsessies; de bestaande onboarding-gate (`maurice_onboarding_done`) is ongewijzigd, dus bestaande accounts zien deze stap nooit en ondervinden geen blokkade.
+
+### Backward compatibility
+- Geen wijziging aan de `maurice_atleet`-localStorage-structuur of aan Supabase-schema. Bestaande gebruikers hebben altijd al een opgeslagen waarde (eigen invoer of de oude default); de nieuwe `null`-defaults worden uitsluitend gebruikt wanneer er nog géén opgeslagen profiel bestaat (nieuwe accounts/toestellen).
+
+### Getest
+- `node --check` op alle 8 scriptblokken: OK, 0 syntaxfouten.
+- `logic_tests.js`: 141/141 (bestaand) + 3 nieuwe tests voor de `expected1RM`-guard = **144/144 geslaagd**.
+- Code-trace bevestigt: onboarding-gate-logica (`startAppAfterAuth`) niet aangeraakt → geen regressie voor bestaande accounts.
+
+### Gewijzigd
+- `APP_VER` v4.23.0 → **v4.23.1**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v4231` (app-shell only, `tk-videos-v1` ongewijzigd conform bestaande conventie).
+
+### Bekend openstaand punt
+- `CURRENT_STATE.md` en `DECISION_LOG.md` zijn niet gevonden op de verwachte locaties in de repo (root, `docs/`) — dit changelog-bestand zelf liep al ~80 versies achter (laatste entry v3.3.45 vs. huidige v4.23.0). Kan niet bijwerken wat ik niet kan lokaliseren; zie voortgangsrapport voor navraag bij Product Owner.
+
+---
+
 ## v3.3.45 — 2 augustus 2026 (Home Dashboard 2.0 — Premium Morning Experience, deel 1)
 *Home van "kaarten onder elkaar" naar een coachend dashboard. Geen nieuwe DB/AI/architectuur; uitsluitend bestaande data (DEC-027).*
 

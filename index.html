@@ -2861,7 +2861,19 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       </div>
     </div>
 
+    <!-- v5.6.1 (Sprint 5.6.1) — nieuwe verplichte stap: leeftijd/lengte/geslacht.
+         RB2/RB3: deze velden hadden voorheen géén onboardingvraag en erfden stil de
+         ontwikkelaars-default (leeftijd 50, lengte 180, geslacht man). Nu verplicht
+         vóór de eerste berekening. Zelfde stijl/patroon als de bestaande stappen. -->
     <div class="ob-step" data-step="3" style="display:none">
+      <div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:10px">Jouw gegevens</div>
+      <div style="font-size:13px;color:var(--g4);margin-bottom:14px">Nodig voor een correcte 1RM-schatting en leeftijdscorrectie — nooit gedeeld buiten je account.</div>
+      <div class="irow"><label class="ilbl">Leeftijd</label><input class="inp" type="number" id="ob-leeftijd" placeholder="jaar" min="10" max="100" oninput="obValidateBodyStep()"></div>
+      <div class="irow"><label class="ilbl">Lengte</label><input class="inp" type="number" id="ob-lengte" placeholder="cm" min="100" max="250" oninput="obValidateBodyStep()"></div>
+      <div class="irow"><label class="ilbl">Geslacht</label><select class="inp" id="ob-geslacht" onchange="obValidateBodyStep()"><option value="" selected disabled>Kies...</option><option value="man">Man</option><option value="vrouw">Vrouw</option></select></div>
+    </div>
+
+    <div class="ob-step" data-step="4" style="display:none">
       <div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:10px">Wat is je belangrijkste doel?</div>
       <select class="inp" id="ob-doel" style="width:100%">
         <option value="kracht">Kracht opbouwen</option>
@@ -2873,7 +2885,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <div style="font-size:11px;color:var(--g4);margin-top:8px">Dit helpt de AI-coach je advies beter af te stemmen. Een volledig Doelen-scherm met voortgangstracking volgt in een latere sprint.</div>
     </div>
 
-    <div class="ob-step" data-step="4" style="display:none">
+    <div class="ob-step" data-step="5" style="display:none">
       <div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:10px">Wat is je trainingsniveau?</div>
       <select class="inp" id="ob-niveau" style="width:100%">
         <option value="beginner">Beginner (&lt;1 jaar)</option>
@@ -2883,7 +2895,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       </select>
     </div>
 
-    <div class="ob-step" data-step="5" style="display:none">
+    <div class="ob-step" data-step="6" style="display:none">
       <div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:10px">Welke sport(en) train je vooral?</div>
       <select class="inp" id="ob-sport" style="width:100%">
         <option value="crossfit" selected>CrossFit</option>
@@ -2905,19 +2917,19 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <div style="font-size:11px;color:var(--g4);margin-top:8px">Bepaalt de AI-context van je coach — later aanpasbaar via Profiel.</div>
     </div>
 
-    <div class="ob-step" data-step="6" style="display:none">
+    <div class="ob-step" data-step="7" style="display:none">
       <div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:10px">Meldingen</div>
       <div style="font-size:13px;color:var(--g4);line-height:1.5;margin-bottom:14px">Wil je herinneringen ontvangen voor trainingen en belangrijke herstelmeldingen?</div>
       <button class="btn btn-r" style="width:100%;margin-bottom:8px" onclick="obRequestNotif()">Ja, meldingen toestaan</button>
       <button class="btn btn-o" style="width:100%" onclick="obNext()">Niet nu</button>
     </div>
 
-    <div class="ob-step" data-step="7" style="display:none">
+    <div class="ob-step" data-step="8" style="display:none">
       <div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:10px">Offline gebruik</div>
       <div style="font-size:13px;color:var(--g4);line-height:1.5">Trainingskompas werkt ook zonder internet: je kunt sets loggen tijdens je training, alles synchroniseert automatisch zodra je weer verbinding hebt. Hier is geen actie van je nodig.</div>
     </div>
 
-    <div class="ob-step" data-step="8" style="display:none">
+    <div class="ob-step" data-step="9" style="display:none">
       <div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:10px">Privacy</div>
       <div style="font-size:13px;color:var(--g4);line-height:1.5;margin-bottom:14px">Je trainingsdata is persoonlijk en technisch afgeschermd per account. Lees de volledige toelichting in Instellingen → Privacy.</div>
       <label style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--dark);cursor:pointer">
@@ -2926,7 +2938,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       </label>
     </div>
 
-    <div class="ob-step" data-step="9" style="display:none">
+    <div class="ob-step" data-step="10" style="display:none">
       <div style="font-size:40px;margin-bottom:12px">🚀</div>
       <div style="font-size:20px;font-weight:800;color:var(--dark);margin-bottom:8px">Je bent klaar</div>
       <div style="font-size:14px;color:var(--g4);line-height:1.5">Alles staat ingesteld. Tijd voor je eerste stap.</div>
@@ -3492,9 +3504,9 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="modal-handle"></div>
     <div class="modal-title">Atleet profiel</div>
     <div class="irow"><label class="ilbl">Naam</label><input class="inp" type="text" id="atl-naam" placeholder="Voornaam"></div>
-    <div class="irow"><label class="ilbl">Leeftijd</label><input class="inp" type="number" id="atl-leeftijd" placeholder="jaar" value="50"></div>
-    <div class="irow"><label class="ilbl">Geslacht</label><select class="inp" id="atl-geslacht"><option value="man">Man</option><option value="vrouw">Vrouw</option></select></div>
-    <div class="irow"><label class="ilbl">Lengte</label><input class="inp" type="number" id="atl-lengte" placeholder="cm" value="180"></div>
+    <div class="irow"><label class="ilbl">Leeftijd</label><input class="inp" type="number" id="atl-leeftijd" placeholder="jaar"></div>
+    <div class="irow"><label class="ilbl">Geslacht</label><select class="inp" id="atl-geslacht"><option value="" disabled>Kies...</option><option value="man">Man</option><option value="vrouw">Vrouw</option></select></div>
+    <div class="irow"><label class="ilbl">Lengte</label><input class="inp" type="number" id="atl-lengte" placeholder="cm"></div>
     <div class="irow"><label class="ilbl">Erv. niveau</label><select class="inp" id="atl-niveau">
       <option value="beginner">Beginner (&lt;1 jaar)</option>
       <option value="gevorderd">Gevorderd (1-3 jaar)</option>
@@ -4179,7 +4191,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.23.0';
+const APP_VER = 'v4.23.1';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -5589,8 +5601,8 @@ window.addEventListener('online',()=>{const el=document.getElementById('settings
 window.addEventListener('offline',()=>{const el=document.getElementById('settings-online-status');if(el)el.textContent='Offline';});
 
 // -- Onboarding-wizard (Sprint 2, Hoofdstuk 6 Scherm 1.2) ------------------
-const OB_TOTAL_STEPS=9;
-const OB_STEP_TITLES={1:'Welkom',2:'Hoe het werkt',3:'Je doel',4:'Trainingsniveau',5:'Sport',6:'Meldingen',7:'Offline',8:'Privacy',9:'Klaar'};
+const OB_TOTAL_STEPS=10;
+const OB_STEP_TITLES={1:'Welkom',2:'Hoe het werkt',3:'Jouw gegevens',4:'Je doel',5:'Trainingsniveau',6:'Sport',7:'Meldingen',8:'Offline',9:'Privacy',10:'Klaar'};
 let obStep=1;
 function initOnboarding(){
   obStep=1;
@@ -5609,16 +5621,36 @@ function renderObStep(){
   const nextBtn=document.getElementById('ob-next-btn');
   if(nextBtn){
     nextBtn.textContent = obStep===OB_TOTAL_STEPS ? 'Aan de slag' : 'Volgende';
-    nextBtn.disabled = obStep===8 ? !document.getElementById('ob-privacy-akkoord')?.checked : false;
+    if(obStep===3) nextBtn.disabled = !obBodyStepComplete();
+    else if(obStep===9) nextBtn.disabled = !document.getElementById('ob-privacy-akkoord')?.checked;
+    else nextBtn.disabled = false;
   }
-  // Stap 6 (meldingen) heeft eigen knoppen i.p.v. de vaste 'Volgende'-knop, maar Terug blijft werken
-  if(nextBtn)nextBtn.style.display = obStep===6 ? 'none' : 'block';
+  // Stap 7 (meldingen) heeft eigen knoppen i.p.v. de vaste 'Volgende'-knop, maar Terug blijft werken
+  if(nextBtn)nextBtn.style.display = obStep===7 ? 'none' : 'block';
   focusScreenForA11y(document.getElementById('s-onboarding'));
 }
+// v5.6.1 — RB3: stap 3 (leeftijd/lengte/geslacht) mag pas verder als alle drie ingevuld zijn.
+// Geen enkele berekening (expected1RM/mastersFactor) mag draaien vóór deze gegevens bekend zijn.
+function obBodyStepComplete(){
+  const l=document.getElementById('ob-leeftijd')?.value;
+  const h=document.getElementById('ob-lengte')?.value;
+  const g=document.getElementById('ob-geslacht')?.value;
+  return !!(l && h && g);
+}
+function obValidateBodyStep(){
+  const nextBtn=document.getElementById('ob-next-btn');
+  if(nextBtn && obStep===3) nextBtn.disabled = !obBodyStepComplete();
+}
 function obNext(){
-  if(obStep===3){const v=document.getElementById('ob-doel');if(v)atleet.doel=v.value;}
-  if(obStep===4){const v=document.getElementById('ob-niveau');if(v)atleet.niveau=v.value;}
-  if(obStep===5){const v=document.getElementById('ob-sport');if(v)atleet.sport=v.value;}
+  if(obStep===3){
+    if(!obBodyStepComplete())return; // extra guard naast de disabled-knop
+    atleet.leeftijd=parseInt(document.getElementById('ob-leeftijd').value)||null;
+    atleet.lengte=parseInt(document.getElementById('ob-lengte').value)||null;
+    atleet.geslacht=document.getElementById('ob-geslacht').value||null;
+  }
+  if(obStep===4){const v=document.getElementById('ob-doel');if(v)atleet.doel=v.value;}
+  if(obStep===5){const v=document.getElementById('ob-niveau');if(v)atleet.niveau=v.value;}
+  if(obStep===6){const v=document.getElementById('ob-sport');if(v)atleet.sport=v.value;}
   if(obStep===OB_TOTAL_STEPS){obFinish();return;}
   obStep++;
   renderObStep();
@@ -8814,6 +8846,7 @@ async function coldStartEstimate(exId){
     const bw=await latestBodyweight();
     if(!bw)return null;
     const waarde=expected1RM(exId,bw,atleet.leeftijd,atleet.niveau);
+    if(!waarde)return null;
     return {waarde,bron:'lichaamsgewicht + niveau'};
   }
   const exObj=exercises.find(e=>e.id===exId);
@@ -11596,7 +11629,7 @@ async function buildCtx(ctx){
     const lastRaw=lastSessions[0]?.training_type;
     lastT=vasteTrainingen.find(v=>v.id===lastRaw)?.naam||lastRaw||'?';
   }
-  const mf = mastersFactor(atleet?.leeftijd||50);
+  const mf = mastersFactor(atleet?.leeftijd);
   const blessureContext=await getRecentPainSummary();
   const sportBlock=resolveSportBlock(getActiveSport(),SPORT_BLOCKS,SPORT_LABELS);
   // v306 #6/#8: sessie-specifieke context — huidige oefening, schema, doel-RPE, reeds gelogde sets
@@ -11840,9 +11873,16 @@ async function importFromFile(input){
 // ══════════════════════════════════════════════════════════
 // ATLEET PROFIEL
 // ══════════════════════════════════════════════════════════
+// v5.6.1 (Sprint 5.6.1 — Onboarding & Defaults): leeftijd/geslacht/lengte/klasse waren
+// vaste ontwikkelaarswaarden (leeftijd 50, geslacht man, lengte 180, gewichtsklasse 120+)
+// die elke nieuwe gebruiker impliciet erfde totdat deze het Profiel-scherm handmatig
+// bewerkte. Nu neutraal (null/leeg): de onboarding (obStep 3) verplicht deze velden
+// vóór het eerste gebruik; berekeningen die leeftijd/lengte nodig hebben (expected1RM)
+// slaan expliciet over i.p.v. te rekenen met een verzonnen waarde. Bestaande accounts
+// zijn niet geraakt: hun localStorage bevat al hun eigen (of voorheen geërfde) waarde.
 let atleet = JSON.parse(localStorage.getItem('maurice_atleet') || JSON.stringify({
-  naam: '', leeftijd: 50, geslacht: 'man', lengte: 180,
-  niveau: 'ervaren', klasse: '120+', sport: 'crossfit'
+  naam: '', leeftijd: null, geslacht: null, lengte: null,
+  niveau: 'ervaren', klasse: '', sport: 'crossfit'
 }));
 // v322: atleet-profiel wordt nu ook in Supabase bewaard (multi-device), localStorage
 // blijft ernaast bestaan als snelle cache zodat het scherm nooit hoeft te wachten op
@@ -11889,9 +11929,9 @@ async function saveAtleet(btnEl){
 
 function openAtleetModal(){
   document.getElementById('atl-naam').value = atleet.naam || '';
-  document.getElementById('atl-leeftijd').value = atleet.leeftijd || 50;
-  document.getElementById('atl-geslacht').value = atleet.geslacht || 'man';
-  document.getElementById('atl-lengte').value = atleet.lengte || 180;
+  document.getElementById('atl-leeftijd').value = atleet.leeftijd || '';
+  document.getElementById('atl-geslacht').value = atleet.geslacht || '';
+  document.getElementById('atl-lengte').value = atleet.lengte || '';
   document.getElementById('atl-niveau').value = atleet.niveau || 'ervaren';
   document.getElementById('atl-klasse').value = atleet.klasse || '';
   document.getElementById('atl-sport').value = atleet.sport || 'crossfit';
@@ -11915,7 +11955,10 @@ const LIFT_NORMS = {
   hexabar: 1.75, hpc: 0.75, hps: 0.55
 };
 // Verwachte 1RM op basis van niveau en leeftijd
+// v5.6.1: geen schatting meer zonder leeftijd/gewicht (voorheen viel dit stil terug op de
+// ontwikkelaars-default leeftijd 50 via de aanroeper) — RB2/RB3, geen berekening zonder profiel.
 function expected1RM(lift, gewicht, leeftijd, niveau){
+  if(!leeftijd || !gewicht) return null;
   const niveauFactor = {beginner:0.5, gevorderd:0.75, ervaren:1.0, expert:1.2}[niveau] || 1.0;
   const mf = mastersFactor(leeftijd);
   const norm = LIFT_NORMS[lift] || 1.0;
@@ -11996,12 +12039,12 @@ async function refreshProfiel(){
   // Atleet kaart
   const el = document.getElementById('profiel-atleet-card');
   if(el){
-    const mf = mastersFactor(atleet.leeftijd);
+    const mf = atleet.leeftijd ? mastersFactor(atleet.leeftijd) : null;
     el.innerHTML = `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
         <div class="stat-box"><div class="stat-val">${atleet.leeftijd||'—'}</div><div class="stat-unit">jaar</div></div>
         <div class="stat-box"><div class="stat-val">${atleet.lengte||'—'}</div><div class="stat-unit">cm</div></div>
-        <div class="stat-box"><div class="stat-val">${mf.toFixed(2)}×</div><div class="stat-unit">Masters factor</div></div>
+        <div class="stat-box"><div class="stat-val">${mf?mf.toFixed(2)+'×':'—'}</div><div class="stat-unit">Masters factor</div></div>
         <div class="stat-box"><div class="stat-val" style="font-size:14px">${atleet.niveau||'—'}</div><div class="stat-unit">niveau</div></div>
       </div>
       <div style="font-size:12px;color:var(--g4)">
@@ -12093,12 +12136,12 @@ async function askCoachProfiel(){
   const bc = await sbGet('body_comp','&order=date.desc,created_at.desc&limit=2');
   const wd = await sbGet('weight_log','&order=date.desc,created_at.desc&limit=3');
   const l = bc[0];
-  const mf = mastersFactor(atleet.leeftijd);
+  const mf = atleet.leeftijd ? mastersFactor(atleet.leeftijd) : null;
   let msg = `Analyseer mijn lichaamssamenstelling en profiel:
 `;
-  msg += `Leeftijd: ${atleet.leeftijd} jaar | Lengte: ${atleet.lengte} cm | Niveau: ${atleet.niveau}
+  msg += `Leeftijd: ${atleet.leeftijd||'onbekend'} jaar | Lengte: ${atleet.lengte||'onbekend'} cm | Niveau: ${atleet.niveau}
 `;
-  msg += `Masters factor: ${mf.toFixed(2)}× (IPF leeftijdscorrectie)
+  if(mf) msg += `Masters factor: ${mf.toFixed(2)}× (IPF leeftijdscorrectie)
 `;
   if(l) msg += `Tanita (${l.date}): vet% ${l.fat_pct}% | spier ${l.muscle_mass} kg | BMR ${l.bmr} kcal | visceraal ${l.visceral_fat}${l.edema?' | oedeem: '+l.edema:''}
 `;
@@ -14032,7 +14075,7 @@ function resetPersonalCacheIfNewDeviceOwner(uid){
   localStorage.setItem(CACHE_OWNER_KEY, uid);
   // in-memory state ook resetten, anders blijft de zojuist gewiste data nog even
   // in het geheugen hangen tot een herlaad
-  atleet={naam:'',leeftijd:null,geslacht:'man',lengte:null,niveau:'beginner',klasse:'',sport:'crossfit'};
+  atleet={naam:'',leeftijd:null,geslacht:null,lengte:null,niveau:'beginner',klasse:'',sport:'crossfit'};
   customTrainings=[];
   activeSport=null;
 }

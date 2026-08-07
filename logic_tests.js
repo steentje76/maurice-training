@@ -415,7 +415,11 @@ function mastersFactorCS(leeftijd){
   if(leeftijd < 65) return 1.09;
   return 1.12;
 }
+// v5.6.1 (Sprint 5.6.1 — RB2/RB3): geen schatting meer zonder leeftijd/gewicht.
+// Voorheen viel dit stil terug op de ontwikkelaars-default leeftijd 50 via de aanroeper
+// (atleet.leeftijd || 50); nu expliciet null zonder volledig profiel.
 function expected1RMCS(lift,gewicht,leeftijd,niveau){
+  if(!leeftijd||!gewicht) return null;
   const niveauFactor={beginner:0.5,gevorderd:0.75,ervaren:1.0,expert:1.2}[niveau]||1.0;
   const mf=mastersFactorCS(leeftijd);
   const norm=LIFT_NORMS[lift]||1.0;
@@ -439,6 +443,15 @@ test('Cold-start kernlift: beginner scoort lager dan ervaren bij zelfde gewicht'
 test('Cold-start via anker: nieuwe oefening op 85% van backsquat-1RM', ()=>{
   const est=coldStartViaAnchor(120,0.85);
   assertEq(est,102);
+});
+test('Sprint 5.6.1 (RB2/RB3): geen schatting zonder leeftijd (was voorheen default 50)', ()=>{
+  assertEq(expected1RMCS('backsquat',110,null,'ervaren'), null);
+});
+test('Sprint 5.6.1 (RB2/RB3): geen schatting zonder lichaamsgewicht', ()=>{
+  assertEq(expected1RMCS('backsquat',null,50,'ervaren'), null);
+});
+test('Sprint 5.6.1 (RB2/RB3): schatting werkt gewoon door zodra profiel compleet is', ()=>{
+  assertEq(expected1RMCS('backsquat',110,45,'ervaren'), Math.round(110*1.5*1.0*1.02));
 });
 test('Cold-start via anker: geen schatting zonder ankerdata', ()=>{
   assertEq(coldStartViaAnchor(null,0.85), null);

@@ -1368,6 +1368,42 @@ test('HRV-gids met voorlopige baseline en status sterk verlaagd', ()=>{
   assert(txt.includes('sterk verlaagd'));
 });
 
+// Zelfde groepeer-/scope-logica als in buildCtx() (index.html) — pure functie
+// (sessies al opgehaald meegegeven i.p.v. een live sbGet-call), los getest.
+function groupSessionsByExercise(sessions, relevantExIds){
+  const byEx={};
+  sessions.forEach(s=>{
+    if(relevantExIds && !relevantExIds.has(s.exercise_id))return;
+    (byEx[s.exercise_id]=byEx[s.exercise_id]||[]).push(s);
+  });
+  const result={};
+  for(const exId in byEx)result[exId]=byEx[exId].slice(0,2);
+  return result;
+}
+test('Zonder actieve training: alle recente oefeningen (binnen het venster) worden gegroepeerd', ()=>{
+  const sessions=[
+    {exercise_id:'squat',date:'2026-08-01'},{exercise_id:'squat',date:'2026-07-25'},{exercise_id:'squat',date:'2026-07-18'},
+    {exercise_id:'bench',date:'2026-08-02'},
+  ];
+  const r=groupSessionsByExercise(sessions, null);
+  assertEq(r.squat.length,2,'max 2 per oefening, ook al zijn er 3 sessies binnen het venster');
+  assertEq(r.bench.length,1);
+});
+test('Met actieve training: alleen de oefeningen van díe training komen mee, andere niet', ()=>{
+  const sessions=[
+    {exercise_id:'squat',date:'2026-08-01'},
+    {exercise_id:'deadlift',date:'2026-08-01'}, // niet onderdeel van de actieve training
+  ];
+  const relevant=new Set(['squat']);
+  const r=groupSessionsByExercise(sessions, relevant);
+  assert('squat' in r);
+  assert(!('deadlift' in r), 'oefeningen buiten de actieve training mogen niet meekomen');
+});
+test('Geen sessies binnen scope: lege groepering, geen crash', ()=>{
+  const r=groupSessionsByExercise([], new Set(['squat']));
+  assertEq(Object.keys(r).length,0);
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

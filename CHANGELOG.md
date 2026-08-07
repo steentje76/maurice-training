@@ -1,5 +1,21 @@
 # Trainingskompas — Changelog
 
+## Sprint 5.9.6 — 7 augustus 2026 (Logging & Monitoring) — geen APP_VER-bump
+*Onderdeel van Sprint 5.9. Uitsluitend `sw.js` — index.html bevatte al geen enkele `console.log`. Geen externe monitoringoplossing geïntegreerd (expliciet niet toegestaan deze sprint) — wel een adviesnotitie over hoe de bestaande foutafhandeling zich daarvoor leent.*
+
+### Gecontroleerd
+- **`index.html`**: 0 `console.log`-aanroepen. De ~30 bestaande `console.error`/`console.warn`-aanroepen loggen uitsluitend generieke informatie (tabelnaam, HTTP-status, foutmelding) — geen tokens, wachtwoorden of pincodes (al bevestigd in de Sprint 5.8.6-security-audit). Geen wijziging nodig.
+- **`sw.js`**: 2 pure ontwikkelaars-debuglogs gevonden en verwijderd — `'SW: deleting old cache'` (activate-handler) en `'SW: background sync sessions'` (sync-handler). De onderliggende functionaliteit (cache-opschoning, sync-event-afhandeling) blijft volledig ongewijzigd; alleen de console-uitvoer is weg. De enige overgebleven `console.*`-aanroep in `sw.js` is een legitieme `console.warn` bij een mislukte install-cache — bewust behouden, dat is echte foutafhandeling, geen debug-ruis.
+
+### Voorbereiding op monitoring (advies, niet geïmplementeerd)
+De bestaande `console.error`-aanroepen in `index.html` zijn al consistent gestructureerd (functienaam, tabel/context, statuscode, foutdetail) — dat leent zich goed voor een toekomstige monitoringkoppeling (bv. Sentry) via een **override van `console.error` zelf**, of `window.addEventListener('unhandledrejection'/'error', ...)`. Beide technieken vereisen **geen enkele wijziging** aan de ~30 bestaande aanroeplocaties — precies het soort lichtgewicht, niet-risicovolle aansluitpunt dat bij een latere sprint (met Sentry of vergelijkbaar) gebruikt kan worden. Bewust niet nu geïmplementeerd: een nieuwe hook-functie toevoegen zonder enige aanroeper zou zelf weer "nieuwe functionaliteit" zijn voor iets dat nog niet gebruikt wordt.
+
+### Getest
+- `node --check` op `sw.js`: OK. Alle 9 scriptblokken van `index.html`: OK (ongewijzigd).
+- `logic_tests.js`: 192/192 geslaagd, geen regressie (geen logica gewijzigd, alleen console-uitvoer verwijderd).
+
+---
+
 ## v4.24.12 — 7 augustus 2026 (Sprint 5.9.5 — Offline Betrouwbaarheid, kritieke fix)
 *Onderdeel van Sprint 5.9. Uitsluitend een geverifieerde robuustheidsfix in de offline-synchronisatie — geen UX-wijziging, geen nieuwe functionaliteit.*
 

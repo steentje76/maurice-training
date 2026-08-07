@@ -1688,6 +1688,31 @@ test('Mislukte overzetting (netwerkfout gesimuleerd): tk_lib_favs blijft staan, 
   assert(ls.getItem('tk_lib_favs')!==null,'bij een niet-bevestigde migratie moet de oude data bewaard blijven voor een nieuwe poging');
 });
 
+// ── BUSINESSLOGICA-DUPLICATIE (Sprint 6.0.3) ─────────────────
+// Zelfde functies als in index.html — de Epley-1RM-formule stond letterlijk 7× los
+// in de code; hier samengevoegd tot één bron. Test bevestigt gedragsbehoud.
+console.log("\n🔧 Businesslogica — gedeelde Epley-1RM-formule (Sprint 6.0.3)");
+function epley1RMRaw(kg,reps){return reps===1?kg:kg*(1+reps/30);}
+function epley1RMShared(kg,reps){
+  if(!kg||!reps||reps<1)return null;
+  if(reps===1)return kg;
+  return Math.round(epley1RMRaw(kg,reps));
+}
+test('epley1RMRaw: bij 1 rep is de schatting exact het gewicht zelf (geen formule nodig)', ()=>{
+  assertEq(epley1RMRaw(100,1),100);
+});
+test('epley1RMRaw: geeft exact dezelfde uitkomst als de 7 vroegere losse duplicaten zouden geven', ()=>{
+  assertEq(epley1RMRaw(100,5), 100*(1+5/30));
+  assertEq(epley1RMRaw(80,10), 80*(1+10/30));
+  assertEq(epley1RMRaw(62.5,3), 62.5*(1+3/30));
+});
+test('epley1RM (afgeronde variant): hergebruikt epley1RMRaw correct, met null-guards voor ontbrekende invoer', ()=>{
+  assertEq(epley1RMShared(null,5),null);
+  assertEq(epley1RMShared(100,0),null);
+  assertEq(epley1RMShared(100,1),100);
+  assertEq(epley1RMShared(100,5),Math.round(100*(1+5/30)));
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

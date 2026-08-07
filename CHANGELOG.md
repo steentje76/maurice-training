@@ -1,5 +1,24 @@
 # Trainingskompas — Changelog
 
+## v4.24.17 — 7 augustus 2026 (Sprint 6.0.5 — Navigatie Architectuur: dode routes opgeruimd)
+*Onderdeel van Sprint 6.0. Uitsluitend 100% onbereikbare, zelf-gedocumenteerde legacy-schermen verwijderd — geen enkele actieve functionaliteit geraakt.*
+
+### Gevonden en bevestigd
+Van de 25 schermen in de app werden er (na uitsluiting van schermen die legitiem buiten `go()` om worden geactiveerd, zoals `s-auth`/`s-onboarding` vóór inloggen) twee gevonden die door **geen enkele code path** ooit bereikt worden: `s-train-schema` en `s-train-workouts`. Bevestigd via drie onafhankelijke checks: (1) geen letterlijke `go('s-train-schema')`/`go('s-train-workouts')`-aanroep in de hele codebase, (2) de enige dynamische route (`go('s-train-'+curT.toLowerCase())`) kan deze nooit produceren — `curT` neemt alleen 'A'/'B'/vaste-training-ID's/`custom_`-ID's aan, nooit 'schema' of 'workouts', (3) beide schermen documenteerden zelf al hun eigen overbodigheid: hun enige inhoud was een tekst die verwijst naar hun Sprint 5.1-opvolger "Mijn trainingen" (`s-train-mine`).
+
+### Fix
+Beide dode schermen volledig verwijderd. De modal ertussenin (`m-vt-naam`, nog actief gebruikt voor het toevoegen/hernoemen van een vaste training) en het opvolger-scherm `s-train-mine` zijn ongewijzigd gebleven.
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- HTML div-balans van het hele bestand vóór/na vergeleken: exact 20 open- en 20 sluit-tags verwijderd (evenwichtig, geen structuur verstoord).
+- `logic_tests.js`: 199/199 geslaagd, geen regressie.
+
+### Gewijzigd
+- `APP_VER` v4.24.16 → **v4.24.17**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v42417`.
+
+---
+
 ## v4.24.16 — 7 augustus 2026 (Sprint 6.0.2/6.0.3 — Domeinmodellen-bevinding + gedeelde Epley-formule)
 *Onderdeel van Sprint 6.0, Enterprise Architecture & Data Foundation.*
 

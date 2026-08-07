@@ -4245,7 +4245,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.13';
+const APP_VER = 'v4.24.14';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -11886,30 +11886,34 @@ function huidigeDatumTijdNL(){
   return `${d.getDate()} ${maanden[d.getMonth()]} ${d.getFullYear()} ${uu}:${mm}`;
 }
 async function buildCtx(ctx){
-  await ensureExercisesLoaded();
-  const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35');
-  const wd=await sbGet('weight_log','&order=date.desc,created_at.desc&limit=3');
-  const bc=await sbGet('body_comp','&order=date.desc,created_at.desc&limit=1');
-  // v5.8.1 (dataminimalisatie): was een sbGet-call per oefening uit de VOLLEDIGE
-  // catalogus (N+1-patroon, stuurde bij elk bericht de complete trainingsgeschiedenis
-  // van elke ooit gelogde oefening mee naar Anthropic, ongeacht relevantie). Nu: als er
-  // een actieve training loopt, uitsluitend díe oefeningen; anders een enkele query
-  // over een recent venster (30 dagen — zelfde conventie als getRecentPainSummary),
-  // gegroepeerd per oefening. Eén databaseverzoek i.p.v. honderden, en uitsluitend
-  // gegevens die daadwerkelijk relevant zijn voor het huidige gesprek.
+  // v5.9.7 (AI Coach Performance) — was 8-10 sequentiële awaits (elk wachtend op de
+  // vorige voordat de volgende begint), terwijl de meeste onderling onafhankelijk zijn.
+  // Nu in twee parallelle rondes opgehaald via Promise.all(): fase 1 bevat alles zonder
+  // onderlinge afhankelijkheid; fase 2 (alleen de twee 'laatst gedane training'-queries)
+  // wacht terecht op vasteTrainingen uit fase 1. Zelfde queries, zelfde data, zelfde
+  // prompt-inhoud — uitsluitend de wachttijd vóór het AI-verzoek verzonden wordt is
+  // korter (was: som van alle queries na elkaar; nu: ~langzaamste query per fase).
   const relevantExIds = curT ? new Set((TRAIN_CFG[curT]||[]).map(e=>e.id)) : null;
-  let recentSessions;
-  if(relevantExIds && relevantExIds.size){
-    // Actieve training: scope op relevantie (déze oefeningen), geen extra tijd-cutoff —
-    // anders zou net-iets-oudere geschiedenis van precies wat je nu doet wegvallen.
-    recentSessions=await sbGet('sessions','&exercise_id=in.('+[...relevantExIds].join(',')+')&order=exercise_id.asc,date.desc,created_at.desc');
-  }else{
-    // Geen actieve training (algemeen gesprek): 30-dagen-venster als minimalisatie,
-    // zelfde conventie als getRecentPainSummary elders in dit bestand.
-    const since=new Date();since.setDate(since.getDate()-30);
-    const sinceStr=since.toISOString().split('T')[0];
-    recentSessions=await sbGet('sessions','&date=gte.'+sinceStr+'&order=exercise_id.asc,date.desc,created_at.desc');
-  }
+  const since=new Date();since.setDate(since.getDate()-30);
+  const sinceStr=since.toISOString().split('T')[0];
+  // v5.8.1 (dataminimalisatie): was een sbGet-call per oefening uit de VOLLEDIGE
+  // catalogus (N+1-patroon). Nu: als er een actieve training loopt, uitsluitend díe
+  // oefeningen; anders een 30-dagen-venster, gegroepeerd per oefening.
+  const recentSessionsQuery = (relevantExIds && relevantExIds.size)
+    ? sbGet('sessions','&exercise_id=in.('+[...relevantExIds].join(',')+')&order=exercise_id.asc,date.desc,created_at.desc')
+    : sbGet('sessions','&date=gte.'+sinceStr+'&order=exercise_id.asc,date.desc,created_at.desc');
+
+  const [,hd,wd,bc,recentSessions,,blessureContext,conditionsContext] = await Promise.all([
+    ensureExercisesLoaded(),
+    sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'),
+    sbGet('weight_log','&order=date.desc,created_at.desc&limit=3'),
+    sbGet('body_comp','&order=date.desc,created_at.desc&limit=1'),
+    recentSessionsQuery,
+    ensureVasteTrainingenLoaded(),
+    getRecentPainSummary(),
+    getActiveConditionsSummary()
+  ]);
+
   const byEx={};
   recentSessions.forEach(s=>{
     if(relevantExIds && !relevantExIds.has(s.exercise_id))return;
@@ -11938,18 +11942,19 @@ async function buildCtx(ctx){
   const wLast=wd[0],wPrev=wd[1];
   const wStr=wLast?`\nGewicht: ${wLast.weight} kg (${wLast.date})`+(wPrev?` | vorige: ${wPrev.weight} kg`:''): '';
   const bcStr=bc[0]?`\nTanita (${bc[0].date}): vet% ${bc[0].fat_pct}% | spier ${bc[0].muscle_mass} kg | BMR ${bc[0].bmr} | visceraal ${bc[0].visceral_fat}`+(bc[0].edema?` | oedeem: ${bc[0].edema}`:''): '';
-  // nextT/lastT: welke vaste training het langst geleden (of nog nooit) gedaan is
-  await ensureVasteTrainingenLoaded();
+  // nextT/lastT: welke vaste training het langst geleden (of nog nooit) gedaan is.
+  // Beide queries hierbinnen zijn onderling onafhankelijk (alleen afhankelijk van
+  // vasteTrainingen, dat al geladen is via de Promise.all hierboven) — ook parallel.
   let nextT='?', lastT='?';
   if(vasteTrainingen.length){
-    const lastDoneMap=await computeLastDoneMap(vasteTrainingen);
+    const [lastDoneMap,lastSessions]=await Promise.all([
+      computeLastDoneMap(vasteTrainingen),
+      sbGet('sessions','&training_type=in.('+vasteTrainingen.map(v=>v.id).join(',')+')&order=date.desc,created_at.desc&limit=1')
+    ]);
     nextT=computeNextVasteTraining(vasteTrainingen,lastDoneMap)?.naam||'?';
-    const lastSessions=await sbGet('sessions','&training_type=in.('+vasteTrainingen.map(v=>v.id).join(',')+')&order=date.desc,created_at.desc&limit=1');
     const lastRaw=lastSessions[0]?.training_type;
     lastT=vasteTrainingen.find(v=>v.id===lastRaw)?.naam||lastRaw||'?';
   }
-  const blessureContext=await getRecentPainSummary();
-  const conditionsContext=await getActiveConditionsSummary();
   const sportBlock=resolveSportBlock(getActiveSport(),SPORT_BLOCKS,SPORT_LABELS);
   // v306 #6/#8: sessie-specifieke context — huidige oefening, schema, doel-RPE, reeds gelogde sets
   let sessionCtx='';

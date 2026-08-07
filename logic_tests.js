@@ -1071,6 +1071,82 @@ test('Gemengd: spieren zonder data tellen niet mee, spieren mét data wel', ()=>
   assertEq(ready.length,1); assertEq(ready[0].muscle,'Schouders');
 });
 
+// ── NAMESPACE-MIGRATIE maurice_* -> tk_* (Sprint 5.6.3 — RB1/RB5) ─────
+// Zelfde implementatie als de migratie-IIFE bovenaan index.html — pure functie
+// (met een geïnjecteerde mock-localStorage i.p.v. de browser-API), los getest.
+console.log("\n🔀 Namespace-migratie maurice_* -> tk_*");
+function makeMockLocalStorage(initial){
+  const store=Object.assign({},initial);
+  return {
+    getItem:k=>(k in store?store[k]:null),
+    setItem:(k,v)=>{store[k]=String(v);},
+    removeItem:k=>{delete store[k];},
+    keys:()=>Object.keys(store),
+    _dump:()=>Object.assign({},store),
+  };
+}
+function runNamespaceMigration(localStorage){
+  if(localStorage.getItem('tk_ns_migrated')==='1')return;
+  var FIXED_KEYS=['theme','onboarding_done','rest_default','auth_session','trainings',
+    'active_sport','rowers','rower','sound_enabled','haptics_enabled','notif_training',
+    'notif_herstel','notif_coach','notif_updates','notif_systeem','atleet',
+    'draft_training','last_training','plates','cache_owner_uid'];
+  FIXED_KEYS.forEach(function(k){
+    var oldKey='maurice_'+k, newKey='tk_'+k;
+    if(localStorage.getItem(newKey)===null){
+      var v=localStorage.getItem(oldKey);
+      if(v!==null)localStorage.setItem(newKey,v);
+    }
+    localStorage.removeItem(oldKey);
+  });
+  localStorage.keys().filter(function(k){return k.indexOf('maurice_1rm_')===0;}).forEach(function(k){
+    var newKey='tk_1rm_'+k.slice('maurice_1rm_'.length);
+    if(localStorage.getItem(newKey)===null){
+      var v=localStorage.getItem(k);
+      if(v!==null)localStorage.setItem(newKey,v);
+    }
+    localStorage.removeItem(k);
+  });
+  localStorage.setItem('tk_ns_migrated','1');
+}
+test('Bestaande gebruiker: volledig profiel + 1RMs + onboarding-status correct gemigreerd, geen maurice_-sleutel resteert', ()=>{
+  const ls=makeMockLocalStorage({
+    maurice_atleet: JSON.stringify({naam:'Testgebruiker',leeftijd:34}),
+    maurice_onboarding_done:'1',
+    maurice_1rm_backsquat:'110',
+    tk_wb_draft: JSON.stringify({sel:['ex1']}), // niet-gerelateerde bestaande tk_-sleutel
+  });
+  runNamespaceMigration(ls);
+  const d=ls._dump();
+  assertEq(JSON.parse(d.tk_atleet).naam,'Testgebruiker');
+  assertEq(d.tk_onboarding_done,'1','geen ongewenste her-onboarding na migratie');
+  assertEq(d.tk_1rm_backsquat,'110');
+  assertEq('maurice_atleet' in d, false);
+  assert(!Object.keys(d).some(k=>k.startsWith('maurice_')), 'geen enkele maurice_-sleutel resteert');
+  assertEq(d.tk_wb_draft, JSON.stringify({sel:['ex1']}), 'andere bestaande tk_-feature blijft ongemoeid');
+});
+test('Nieuwe gebruiker zonder oude data: geen crash, alleen migratie-vlag gezet', ()=>{
+  const ls=makeMockLocalStorage({});
+  runNamespaceMigration(ls);
+  const d=ls._dump();
+  assertEq(Object.keys(d).length,1);
+  assertEq(d.tk_ns_migrated,'1');
+});
+test('Migratie is idempotent: draait niet opnieuw over reeds-aangepaste data heen', ()=>{
+  const ls=makeMockLocalStorage({maurice_atleet:JSON.stringify({naam:'Origineel'})});
+  runNamespaceMigration(ls);
+  ls.setItem('tk_atleet',JSON.stringify({naam:'AangepastNaMigratie'}));
+  ls.setItem('maurice_atleet',JSON.stringify({naam:'Spookdata'})); // simuleert oude cache/tab
+  runNamespaceMigration(ls);
+  assertEq(JSON.parse(ls.getItem('tk_atleet')).naam,'AangepastNaMigratie');
+});
+test('localStorage-uitval (privémodus) crasht de migratie niet', ()=>{
+  const broken={getItem:()=>{throw new Error('SecurityError');},setItem(){},removeItem(){},keys:()=>[]};
+  let threw=false;
+  try{ try{runNamespaceMigration(broken);}catch(e){/* verwacht opgevangen */} }catch(e){threw=true;}
+  assertEq(threw,false);
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

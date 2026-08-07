@@ -4206,7 +4206,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.19';
+const APP_VER = 'v4.24.20';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -4428,24 +4428,48 @@ async function submitNewPassword(){
   }catch(e){statusEl.textContent='Verbindingsfout. Check internet.';}
 }
 
-// Peakdoelen zijn een PERSOONLIJK streefgewicht per oefening — vanaf nu opgeslagen in
-// de eigen exercise_goals-tabel (user_id + exercise_id + peak_goal, RLS-gescoped),
-// niet langer als kolom op de gedeelde exercises-tabel. Zonder deze scheiding zag elke
-// gebruiker (ook een gloednieuwe) het peakdoel dat één specifieke gebruiker ooit voor
-// een gedeelde/standaardoefening had ingesteld. De vroegere PEAK_FALLBACK (hardcoded
-// streefgewichten van één specifieke gebruiker, gebruikt als fallback zolang er geen
-// peak_goal was ingesteld) is om dezelfde reden volledig verwijderd.
-let exerciseGoals=new Map();
+// Peakdoel, PR (personal record) en handmatige 1RM zijn alle drie PERSOONLIJKE
+// gegevens per oefening — vanaf nu opgeslagen in de eigen exercise_goals-tabel
+// (user_id + exercise_id + peak_goal/pr/one_rm, RLS-gescoped), niet langer als kolom
+// op de gedeelde exercises-tabel. peak_goal was al gefixt; bij nader onderzoek (een
+// gebruiker zag op een geheel nieuw account nog steeds de 1RM-schattingen van een
+// ander account) bleken .pr en .one_rm exact hetzelfde probleem te hebben —
+// exercises.pr werd zelfs bij ELKE nieuwe PR automatisch bijgewerkt op de gedeelde
+// rij, dus elke gebruiker zag daadwerkelijk elkaars persoonlijke records. De vroegere
+// PEAK_FALLBACK (hardcoded streefgewichten van één specifieke gebruiker) is om
+// dezelfde reden al eerder volledig verwijderd.
+let exerciseGoals=new Map(); // exercise_id -> {peak_goal, pr, one_rm}
 let _exerciseGoalsLoaded=false;
 async function ensureExerciseGoalsLoaded(){
   if(_exerciseGoalsLoaded)return exerciseGoals;
   const rows=await sbGet('exercise_goals','');
-  exerciseGoals=new Map(rows.map(r=>[r.exercise_id,r.peak_goal]));
+  exerciseGoals=new Map(rows.map(r=>[r.exercise_id,{peak_goal:r.peak_goal,pr:r.pr,one_rm:r.one_rm}]));
   _exerciseGoalsLoaded=true;
   return exerciseGoals;
 }
 function peakGoalFor(exId){
-  return exerciseGoals.has(exId)?exerciseGoals.get(exId):null;
+  return exerciseGoals.has(exId)?exerciseGoals.get(exId).peak_goal:null;
+}
+function prFor(exId){
+  return exerciseGoals.has(exId)?(exerciseGoals.get(exId).pr??null):null;
+}
+function oneRMFor(exId){
+  return exerciseGoals.has(exId)?(exerciseGoals.get(exId).one_rm??null):null;
+}
+// Upsert-helper: exercise_goals heeft geen server-side upsert-endpoint voor de
+// offline-queue (sbPatchQ/sbPostQ kennen geen 'merge'-variant), dus hier client-side
+// bepaald op basis van de al-geladen Map: bestaat de rij al -> PATCH, anders POST.
+// Werkt zowel online als offline (beide onderliggende functies zijn queue-aware).
+async function upsertExerciseGoalField(exId,field,value){
+  const existing=exerciseGoals.get(exId);
+  if(existing){
+    await sbPatchQ('exercise_goals','exercise_id=eq.'+exId,{[field]:value});
+    existing[field]=value;
+  }else{
+    const row={user_id:authSession?.user?.id,exercise_id:exId,[field]:value};
+    await sbPostQ('exercise_goals',row);
+    exerciseGoals.set(exId,{peak_goal:null,pr:null,one_rm:null,[field]:value});
+  }
 }
 
 // Cardio type definities — RPE overal aanwezig (nodig voor spierherstel-weging,
@@ -5778,8 +5802,7 @@ async function getCurrentValueForGoal(g){
       return b[0]?.muscle_mass ?? null;
     }
     case 'pr':{
-      const ex=exercises.find(e=>e.id===g.exercise_id);
-      return ex?.pr ?? null;
+      return prFor(g.exercise_id) ?? null;
     }
     case 'frequentie':{
       // aantal sessies in de laatste 7 dagen
@@ -5815,7 +5838,7 @@ function computeGoalProgress(g, currentVal){
 function computeGoalProgressPr(g, ex){
   const peak=ex?peakGoalFor(ex.id):null;
   if(!ex||peak==null)return null;
-  const cur=ex.pr||0;
+  const cur=prFor(ex.id)||0;
   return Math.max(0,Math.min(100,Math.round(cur/peak*100)));
 }
 
@@ -5890,7 +5913,7 @@ async function renderDoelenScreen(){
     let h='';
     for(const g of goals){
       const ex = g.type==='pr' ? exercises.find(e=>e.id===g.exercise_id) : null;
-      const cur = g.type==='pr' ? (ex?.pr??null) : await getCurrentValueForGoal(g);
+      const cur = g.type==='pr' ? prFor(g.exercise_id) : await getCurrentValueForGoal(g);
       const pct = g.type==='pr' ? computeGoalProgressPr(g,ex) : computeGoalProgress(g,cur);
       const target = g.type==='pr' ? peakGoalFor(g.exercise_id) : g.doelwaarde;
       const unit = g.type==='pr' ? 'kg' : (GOAL_TYPE_UNITS[g.type]||g.eenheid||'');
@@ -5992,7 +6015,8 @@ async function askCoachAboutGoal(goalId){
   if(g.type==='pr'){
     const ex=exercises.find(e=>e.id===g.exercise_id);
     const peak=peakGoalFor(g.exercise_id);
-    msg+=`Oefening: ${ex?.name||'onbekend'} | Huidige PR: ${ex?.pr??'onbekend'} kg | Peakdoel: ${peak??'niet ingesteld'} kg\n`;
+    const pr=prFor(g.exercise_id);
+    msg+=`Oefening: ${ex?.name||'onbekend'} | Huidige PR: ${pr??'onbekend'} kg | Peakdoel: ${peak??'niet ingesteld'} kg\n`;
   }else{
     const cur=await getCurrentValueForGoal(g);
     msg+=`Huidige waarde: ${cur??'onbekend'} | Streefwaarde: ${g.doelwaarde??'—'} ${g.eenheid||GOAL_TYPE_UNITS[g.type]||''}\n`;
@@ -8899,11 +8923,11 @@ function buildVideoMuscle(ex){
 }
 
 function getOneRM(exId){
-  const exObj=exercises.find(e=>e.id===exId);
-  if(exObj?.one_rm!=null)return parseFloat(exObj.one_rm);
+  const stored1rm=oneRMFor(exId);
+  if(stored1rm!=null)return parseFloat(stored1rm);
   const stored=localStorage.getItem('tk_1rm_'+exId); // offline-fallback tot sync gelukt is
   if(stored)return parseFloat(stored);
-  return exObj?.pr||null;
+  return prFor(exId)||null;
 }
 // Sprint 6.0.3 (Businesslogica) — de ruwe Epley-1RM-formule stond letterlijk 7× los in
 // de code (één plek had het zelf al herkend: "zelfde formule/afronding als Stats-
@@ -8944,17 +8968,14 @@ function buildRmPanel(ex){
   </div>`;
 }
 async function saveOneRM(exId,val){
-  const exObj=exercises.find(e=>e.id===exId);
   if(val===''){
     localStorage.removeItem('tk_1rm_'+exId);
-    if(exObj)exObj.one_rm=null;
-    await sbPatch('exercises','id=eq.'+exId,{one_rm:null});
+    await upsertExerciseGoalField(exId,'one_rm',null);
     return;
   }
   const v=parseFloat(val);
   localStorage.setItem('tk_1rm_'+exId,v); // meteen lokaal, ook als sync faalt
-  if(exObj)exObj.one_rm=v;
-  await sbPatch('exercises','id=eq.'+exId,{one_rm:v}); // faalt stil als kolom nog niet bestaat
+  await upsertExerciseGoalField(exId,'one_rm',v);
   // v306.1: bij een nieuwe 1RM automatisch herberekenen voor alle nog niet handmatig
   // aangepaste werksets (applyPct respecteert manualKgSets per set zelf).
   const sel=pctSelection[exId];
@@ -9316,8 +9337,7 @@ function clampDeltaInput(el){
 let estOneRMCache={};
 function estimatedOneRM(exId){
   if(estOneRMCache[exId]!=null)return estOneRMCache[exId];
-  const ex=exercises.find(e=>e.id===exId);
-  return ex?.pr||null;
+  return prFor(exId)||null;
 }
 async function loadEstOneRM(exId){
   const ss=await sbGet('sessions','&exercise_id=eq.'+exId+'&weight=not.is.null&reps=not.is.null&order=created_at.desc&limit=30');
@@ -10041,11 +10061,13 @@ function logSet(exId,type,setNum,isWork){
         repPRCache[exId][bucket]={weight:effKg,date:td()};
       }
     }
-    const pr=exObj?.pr||0;
+    const pr=prFor(exId)||0;
     if(effKg>pr){
       // Werk de lokale referentie direct bij zodat een volgende set op hetzelfde gewicht
       // binnen dezelfde sessie niet opnieuw als PR wordt gemarkeerd.
-      if(exObj)exObj.pr=effKg;
+      const existing=exerciseGoals.get(exId);
+      if(existing)existing.pr=effKg;
+      else exerciseGoals.set(exId,{peak_goal:null,pr:effKg,one_rm:null});
     }
   }
   if(isWork&&effKg&&reps&&BARBELL_EXERCISES.has(exId)){
@@ -10264,7 +10286,7 @@ async function finishSession(){
       const setsDetail=ws.map(s=>({kg:s.kg,effKg:bestKg(s),reps:s.reps,rpe:s.rpe}));
       await sbPostQ('sessions',{date:today,exercise_id:ex.id,sets:ws.length,reps:parseInt(best?.reps)||null,weight:bestKg(best)||null,rpe:parseFloat(best?.rpe)||null,training_type:t,note:wuNote?'Opwarm: '+wuNote:'',sets_detail:setsDetail});
       let isPr=false;
-      if(bestKg(best)){const exObj=exercises.find(e=>e.id===ex.id);if(exObj&&bestKg(best)>(exObj.pr||0)){await sbPatchQ('exercises','id=eq.'+ex.id,{pr:bestKg(best)});exObj.pr=bestKg(best);isPr=true;}}
+      if(bestKg(best)){const curPr=prFor(ex.id)||0;if(bestKg(best)>curPr){await upsertExerciseGoalField(ex.id,'pr',bestKg(best));isPr=true;}}
       saved++;
       const avgRpe=ws.filter(s=>s.rpe).length?(ws.reduce((sum,s)=>sum+(parseFloat(s.rpe)||0),0)/ws.filter(s=>s.rpe).length).toFixed(1):null;
       summaryData.push({naam:ex.naam,sets:setsDetail,isPr,zwaarste:bestKg(best),avgRpe});
@@ -10638,11 +10660,12 @@ function renderQuickActions(){
 async function refreshHomeGoalsCard(){
   const el=document.getElementById('home-goals-card');
   if(!el)return;
+  await ensureExerciseGoalsLoaded();
   const goals=await loadGoals();
   if(!goals.length){el.innerHTML='';return;}
   const g=goals[0];
   const ex=g.type==='pr'?exercises.find(e=>e.id===g.exercise_id):null;
-  const cur=g.type==='pr'?(ex?.pr??null):await getCurrentValueForGoal(g);
+  const cur=g.type==='pr'?prFor(g.exercise_id):await getCurrentValueForGoal(g);
   const pct=g.type==='pr'?computeGoalProgressPr(g,ex):computeGoalProgress(g,cur);
   const label=g.naam||GOAL_TYPE_LABELS[g.type];
   el.innerHTML=`<div class="card" style="cursor:pointer" onclick="go('s-doelen')">
@@ -11238,7 +11261,7 @@ async function refreshStatsScreen(){
     const ss=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=30');
     let best=null;
     ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=epley1RMRaw(s.weight,s.reps);if(!best||est>best)best=est;});
-    const disp=best?Math.round(best):ex.pr;
+    const disp=best?Math.round(best):prFor(ex.id);
     if(!disp)continue;
     const tgt=peakGoalFor(ex.id);const pct=tgt?Math.round(disp/tgt*100):null;
     progExData[ex.id]={disp,tgt,pct,lastDate:ss[0]?ss[0].date:null};
@@ -11365,7 +11388,7 @@ async function refreshStats(){
     const ss=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=created_at.desc&limit=30');
     let best=null;
     ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=epley1RMRaw(s.weight,s.reps);if(!best||est>best)best=est;});
-    const disp=best?Math.round(best):ex.pr;if(!disp)continue;
+    const disp=best?Math.round(best):prFor(ex.id);if(!disp)continue;
     const tgt=peakGoalFor(ex.id);const pct=tgt?Math.round(disp/tgt*100):null;
     const fc=pct?(pct>=100?'var(--green)':pct>=85?'var(--y)':'var(--red)'):'var(--red)';
     h+=`<div class="stat-1rm-item">
@@ -11543,14 +11566,21 @@ async function savePeakGoal(btnEl){
   const raw=document.getElementById('edit-peak-inp').value.trim();
   const val=raw===''?null:Math.max(0,parseFloat(raw)||0);
   let ok;
+  const existing=exerciseGoals.get(curEditPeakId);
   if(val===null){
-    ok=await sbDel('exercise_goals','exercise_id=eq.'+curEditPeakId);
+    // Alleen peak_goal wissen — NIET de hele rij verwijderen, anders verdwijnen ook
+    // iemands pr/one_rm voor deze oefening als die er al waren.
+    if(existing){ok=await sbPatchQ('exercise_goals','exercise_id=eq.'+curEditPeakId,{peak_goal:null});}
+    else ok=true; // er was toch al geen rij, niets te wissen
+  }else if(existing){
+    ok=await sbPatchQ('exercise_goals','exercise_id=eq.'+curEditPeakId,{peak_goal:val});
   }else{
-    ok=await sbUpsert('exercise_goals',{user_id:authSession?.user?.id,exercise_id:curEditPeakId,peak_goal:val});
+    ok=await sbPostQ('exercise_goals',{user_id:authSession?.user?.id,exercise_id:curEditPeakId,peak_goal:val});
   }
   if(ok){
-    if(val===null)exerciseGoals.delete(curEditPeakId);
-    else exerciseGoals.set(curEditPeakId,val);
+    if(val===null){if(existing)existing.peak_goal=null;}
+    else if(existing)existing.peak_goal=val;
+    else exerciseGoals.set(curEditPeakId,{peak_goal:val,pr:null,one_rm:null});
     closeModal('m-edit-peak');
     toast(val?'Peakdoel '+val+'kg opgeslagen':'Peakdoel gewist');
     refreshAdmin();
@@ -11914,7 +11944,7 @@ async function buildCtx(ctx){
     ? sbGet('sessions','&exercise_id=in.('+[...relevantExIds].join(',')+')&order=exercise_id.asc,date.desc,created_at.desc')
     : sbGet('sessions','&date=gte.'+sinceStr+'&order=exercise_id.asc,date.desc,created_at.desc');
 
-  const [,hd,wd,bc,recentSessions,,blessureContext,conditionsContext] = await Promise.all([
+  const [,hd,wd,bc,recentSessions,,blessureContext,conditionsContext,] = await Promise.all([
     ensureExercisesLoaded(),
     sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'),
     sbGet('weight_log','&order=date.desc,created_at.desc&limit=3'),
@@ -11922,7 +11952,8 @@ async function buildCtx(ctx){
     recentSessionsQuery,
     ensureVasteTrainingenLoaded(),
     getRecentPainSummary(),
-    getActiveConditionsSummary()
+    getActiveConditionsSummary(),
+    ensureExerciseGoalsLoaded()
   ]);
 
   const byEx={};
@@ -11970,13 +12001,12 @@ async function buildCtx(ctx){
   // v306 #6/#8: sessie-specifieke context — huidige oefening, schema, doel-RPE, reeds gelogde sets
   let sessionCtx='';
   if(ctx?.exId){
-    const exObj=exercises.find(e=>e.id===ctx.exId);
     const cfgEx=curT?(TRAIN_CFG[curT]||[]).find(e=>e.id===ctx.exId):null;
     const loggedSets=sessionLog[ctx.exId]?.sets?.filter(s=>s&&(s.kg||s.reps))||[];
     sessionCtx=`\n\nHUIDIGE OEFENING IN DE APP:
 Naam: ${ctx.exNaam} [id:${ctx.exId}]${ctx.trainingType?' · Training '+ctx.trainingType:''}
 Target: ${cfgEx?cfgEx.sets+'×'+cfgEx.reps+(cfgEx.rpe?' · RPE '+cfgEx.rpe:''):'onbekend'}
-Huidige 1RM: ${exObj?.one_rm||exObj?.pr||'onbekend'} kg
+Huidige 1RM: ${oneRMFor(ctx.exId)||prFor(ctx.exId)||'onbekend'} kg
 Reeds gelogde sets deze sessie: ${loggedSets.length?loggedSets.map((s,i)=>(i+1)+') '+s.kg+'kg×'+s.reps+(s.rpe?' RPE'+s.rpe:'')).join(', '):'nog geen'}`;
   }
   return `Je bent de persoonlijke trainingscoach en data-analist van ${atleet?.naam||'de atleet'}.

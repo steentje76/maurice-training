@@ -1,5 +1,31 @@
 # Trainingskompas — Changelog
 
+## v4.24.8 — 7 augustus 2026 (Sprint 5.9.1 — Database Performance, Programma/Voortgang)
+*Onderdeel van Sprint 5.9. Uitsluitend een geverifieerde geneste N+1-fix — geen UX-wijziging, geen nieuwe functionaliteit, geen schemawijziging.*
+
+### Gevonden: geneste N+1 in renderProgrammaList() / computeProgramProgress()
+Precies het Voortgang/Programma-scherm dat de sprint expliciet noemt. Voor elk programma in de lijst: 1 query voor de blokken, en per **afgerond** blok daarbinnen nog eens 2 losse queries (oefeningen + sessies) om de RPE-afwijking te berekenen. Bij bv. 3 programma's van elk 8 weken met 12 afgeronde blokken totaal: 1 (programs) + 3 (blocks per programma) + 24 (2× per afgerond blok) = **28 queries** voor één scherm-load.
+
+### Fix
+- Alle programmablokken van alle programma's in **1 query** (`program_id=in.(...)`), client-side gegroepeerd per programma.
+- Alle oefeningen en sessies van alle afgeronde blokken (over alle programma's heen) in **maximaal 2 query's** (`program_block_id=in.(...)` / `training_type=in.(...)`), client-side gegroepeerd per blok.
+- Nieuwe pure functie `computeProgramProgressPure()` doet exact dezelfde berekening als de bestaande `computeProgramProgress()`, nu op de vooraf gegroepeerde data i.p.v. eigen live queries.
+- `computeProgramProgress()` zelf blijft **ongewijzigd** en in gebruik voor het single-programma-pad (`heergenereerResterendeWeken` — een zeldzame, gebruiker-geïnitieerde actie, geen hot path, dus bewust niet meegenomen in deze fix).
+
+### Gemeten (queryaantal, statisch tegen de code geverifieerd)
+- Vóór: `1 + P + 2×(totaal afgeronde blokken over alle programma's)` — schaalt mee met zowel het aantal programma's als de voortgang daarbinnen. Voorbeeld hierboven: 28 queries.
+- Ná: **maximaal 4 queries totaal**, ongeacht het aantal programma's of afgeronde blokken.
+- Zelfde voorbeeld (3 programma's, 12 afgeronde blokken): 28 → 4 queries.
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- `logic_tests.js`: 182/182 (uit de vorige 5.9.1-fix) + 3 nieuwe tests (identieke uitkomst als het oude per-blok-pad, nul-staat zonder afgeronde blokken, geen crash bij ontbrekende RPE-data) = **185/185 geslaagd**.
+
+### Gewijzigd
+- `APP_VER` v4.24.7 → **v4.24.8**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v4248`.
+
+---
+
 ## v4.24.7 — 7 augustus 2026 (Sprint 5.9.1 — Database Performance, eerste fix)
 *Onderdeel van Sprint 5.9, Enterprise Performance, Scalability & Production Readiness. Uitsluitend een geverifieerde N+1-fix — geen UX-wijziging, geen nieuwe functionaliteit, geen schemawijziging.*
 

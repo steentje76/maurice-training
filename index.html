@@ -4229,7 +4229,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.2';
+const APP_VER = 'v4.24.3';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -11787,10 +11787,37 @@ async function buildCtx(ctx){
   const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35');
   const wd=await sbGet('weight_log','&order=date.desc,created_at.desc&limit=3');
   const bc=await sbGet('body_comp','&order=date.desc,created_at.desc&limit=1');
+  // v5.8.1 (dataminimalisatie): was een sbGet-call per oefening uit de VOLLEDIGE
+  // catalogus (N+1-patroon, stuurde bij elk bericht de complete trainingsgeschiedenis
+  // van elke ooit gelogde oefening mee naar Anthropic, ongeacht relevantie). Nu: als er
+  // een actieve training loopt, uitsluitend díe oefeningen; anders een enkele query
+  // over een recent venster (30 dagen — zelfde conventie als getRecentPainSummary),
+  // gegroepeerd per oefening. Eén databaseverzoek i.p.v. honderden, en uitsluitend
+  // gegevens die daadwerkelijk relevant zijn voor het huidige gesprek.
+  const relevantExIds = curT ? new Set((TRAIN_CFG[curT]||[]).map(e=>e.id)) : null;
+  let recentSessions;
+  if(relevantExIds && relevantExIds.size){
+    // Actieve training: scope op relevantie (déze oefeningen), geen extra tijd-cutoff —
+    // anders zou net-iets-oudere geschiedenis van precies wat je nu doet wegvallen.
+    recentSessions=await sbGet('sessions','&exercise_id=in.('+[...relevantExIds].join(',')+')&order=exercise_id.asc,date.desc,created_at.desc');
+  }else{
+    // Geen actieve training (algemeen gesprek): 30-dagen-venster als minimalisatie,
+    // zelfde conventie als getRecentPainSummary elders in dit bestand.
+    const since=new Date();since.setDate(since.getDate()-30);
+    const sinceStr=since.toISOString().split('T')[0];
+    recentSessions=await sbGet('sessions','&date=gte.'+sinceStr+'&order=exercise_id.asc,date.desc,created_at.desc');
+  }
+  const byEx={};
+  recentSessions.forEach(s=>{
+    if(relevantExIds && !relevantExIds.has(s.exercise_id))return;
+    (byEx[s.exercise_id]=byEx[s.exercise_id]||[]).push(s);
+  });
   let exCtx='';
-  for(const ex of exercises){
-    const ls=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc,created_at.desc&limit=2');
-    if(ls.length){const s=ls[0];let str=s.date;if(s.weight&&s.reps)str+=' '+(s.sets||'?')+'×'+s.reps+' @ '+s.weight+'kg'+(s.rpe?' RPE'+s.rpe:'');else if(s.time_str)str+=' '+s.time_str+(s.watt?' @ '+s.watt+'W':'');if(ls[1]){const p=ls[1];str+=' | vorige: '+p.date+(p.weight?' '+p.weight+'kg':p.time_str?' '+p.time_str:'');}exCtx+='\n- '+ex.name+' [id:'+ex.id+']: '+str;}
+  for(const exId in byEx){
+    const ex=exercises.find(e=>e.id===exId);
+    if(!ex)continue;
+    const ls=byEx[exId].slice(0,2);
+    const s=ls[0];let str=s.date;if(s.weight&&s.reps)str+=' '+(s.sets||'?')+'×'+s.reps+' @ '+s.weight+'kg'+(s.rpe?' RPE'+s.rpe:'');else if(s.time_str)str+=' '+s.time_str+(s.watt?' @ '+s.watt+'W':'');if(ls[1]){const p=ls[1];str+=' | vorige: '+p.date+(p.weight?' '+p.weight+'kg':p.time_str?' '+p.time_str:'');}exCtx+='\n- '+ex.name+' [id:'+ex.id+']: '+str;
   }
   const lh=hd[0];
   const recent7=hrvRollingRecent(hd);

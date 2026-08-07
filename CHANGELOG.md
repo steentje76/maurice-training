@@ -1,5 +1,25 @@
 # Trainingskompas — Changelog
 
+## v4.23.2 — 7 augustus 2026 (Sprint 5.6.2 — Nieuwe-gebruiker-eerlijkheid, Release Blocker 4)
+*Onderdeel van Sprint 5.6, n.a.v. Enterprise Audit & Scientific Integrity Review v1.0. Uitsluitend bestaande tekst-/filterlogica gecorrigeerd — geen UX-herontwerp, geen nieuwe functionaliteit, geen databasewijziging.*
+
+### Opgelost — Release Blocker 4: geen 'volledig hersteld' zonder trainingsdata
+- **Bevinding:** een deel van de app (Lichaam-tab, hero-kaart, "Waarom vandaag?") filterde al correct op `hours!==null` (bestaand DEC-027-patroon "geen verzonnen data"), maar twee andere plekken deden dit niet:
+  - `buildCoachAdvice()` — de centrale coachtekst-bron achter `window.homeCoachText`, hergebruikt op 9 plekken (Home, trainingdetail, begeleide training, dashboarddetail) — claimde "Je lichaam is klaar voor belasting... volledig hersteld" voor spieren zonder enige lastHit-data (altijd pct:100 bij afwezigheid van sessies).
+  - `DASHUI.recovery()` (oudere, nog actieve dashboardmodule) had exact dezelfde omissie.
+- **Fix:** beide functies filteren nu ook op `r.hours!==null`, identiek aan het patroon dat elders al bestond. Een gebruiker zonder trainingshistorie krijgt nu de neutrale/generieke coachtekst ("grootste kans op progressie") i.p.v. een specifieke, ongefundeerde "volledig hersteld"-claim per spiergroep.
+- **Bewust niet aangepast:** de rauwe percentage-weergave per spier in "Waarom vandaag?" (`renderDagfactorDetail`) en de Lichaam-tab-kaarten tonen al langer losse cijfers (bv. "Borst 100%") zonder headline-claim; dit is een bestaand, consistent patroon door de hele app en valt buiten de scope van deze sprint (geen nieuwe UI/copy per Design Freeze).
+
+### Getest
+- `node --check` op alle 8 scriptblokken: OK.
+- `logic_tests.js`: 144/144 (uit 5.6.1) + 3 nieuwe tests voor de RB4-guard = **147/147 geslaagd**.
+- Test bevestigt expliciet: bestaande gebruikers met echte trainingsdata zien geen gedragsverandering (dezelfde "volledig hersteld"-claim blijft correct werken zodra er wél lastHit-data is).
+
+### Gewijzigd
+- `APP_VER` v4.23.1 → **v4.23.2**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v4232`.
+
+---
+
 ## v4.23.1 — 7 augustus 2026 (Sprint 5.6.1 — Onboarding & Defaults, Release Blocker 2+3)
 *Onderdeel van Sprint 5.6 "Scientific & New-User Integrity", n.a.v. Enterprise Audit & Scientific Integrity Review v1.0. Uitsluitend data/defaults/onboarding — geen UX-herontwerp, geen nieuwe functionaliteit, geen databasewijziging.*
 

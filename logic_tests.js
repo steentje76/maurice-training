@@ -1643,6 +1643,51 @@ test('Lege wachtrij: geen crash, niets te doen', ()=>{
   assertEq(r.removed.length,0); assertEq(r.syncedAny,false); assertEq(r.skippedAny,false);
 });
 
+// ── FAVORIETEN-MIGRATIE (Sprint 6.0.1 — Data Architectuur) ─────
+// Zelfde beslislogica als migrateLibraryFavoritesToSupabase() in index.html — pure,
+// synchrone reïmplementatie (de echte functie is async i.v.m. echte Supabase-calls;
+// hier gemockt als synchrone operaties, want de DECISIE-logica is wat getest wordt,
+// niet de netwerktiming). Hergebruikt makeMockLocalStorage (Sprint 5.6.3).
+console.log("\n🔀 Favorieten-migratie: Bibliotheek (localStorage) -> Supabase (Sprint 6.0.1)");
+function simulateFavoritesMigration(ls, supabaseFavSet, toggleFn){
+  let localFavs;
+  try{localFavs=JSON.parse(ls.getItem('tk_lib_favs')||'{}');}catch(e){localFavs={};}
+  const ids=Object.keys(localFavs).filter(id=>localFavs[id]);
+  if(!ids.length){ls.removeItem('tk_lib_favs');return;}
+  ids.forEach(id=>{
+    if(!supabaseFavSet.has(id))toggleFn(id);
+  });
+  if(ids.every(id=>supabaseFavSet.has(id)))ls.removeItem('tk_lib_favs');
+}
+test('Geen lokale Bibliotheek-favorieten: tk_lib_favs wordt gewoon opgeruimd, niets te migreren', ()=>{
+  const ls=makeMockLocalStorage({});
+  const supaSet=new Set();
+  let toggled=[];
+  simulateFavoritesMigration(ls,supaSet,id=>toggled.push(id));
+  assertEq(toggled.length,0);
+  assertEq(ls.getItem('tk_lib_favs'),null);
+});
+test('Lokale favorieten die nog niet in Supabase staan: allemaal overgezet, daarna opgeruimd', ()=>{
+  const ls=makeMockLocalStorage({tk_lib_favs:JSON.stringify({squat:true,bench:true})});
+  const supaSet=new Set();
+  simulateFavoritesMigration(ls,supaSet,id=>supaSet.add(id));
+  assert(supaSet.has('squat')&&supaSet.has('bench'),'beide moeten gemigreerd zijn');
+  assertEq(ls.getItem('tk_lib_favs'),null,'oude sleutel opgeruimd na bevestigde migratie');
+});
+test('Favoriet die al in Supabase staat (overlap): wordt niet nogmaals getoggeld', ()=>{
+  const ls=makeMockLocalStorage({tk_lib_favs:JSON.stringify({squat:true,bench:true})});
+  const supaSet=new Set(['squat']); // al gesynchroniseerd via een ander scherm
+  const toggled=[];
+  simulateFavoritesMigration(ls,supaSet,id=>{toggled.push(id);supaSet.add(id);});
+  assertEq(JSON.stringify(toggled),JSON.stringify(['bench']),'alleen de ontbrekende favoriet wordt gemigreerd, squat niet dubbel');
+});
+test('Mislukte overzetting (netwerkfout gesimuleerd): tk_lib_favs blijft staan, geen dataverlies', ()=>{
+  const ls=makeMockLocalStorage({tk_lib_favs:JSON.stringify({squat:true})});
+  const supaSet=new Set();
+  simulateFavoritesMigration(ls,supaSet,id=>{/* simuleert een mislukte toggle: niets toegevoegd aan supaSet */});
+  assert(ls.getItem('tk_lib_favs')!==null,'bij een niet-bevestigde migratie moet de oude data bewaard blijven voor een nieuwe poging');
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

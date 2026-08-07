@@ -45,10 +45,7 @@ self.addEventListener('activate', e => {
       Promise.all(
         keys
           .filter(k => k !== CACHE_NAME && k !== CACHE_STATIC && k !== CACHE_VIDEOS)
-          .map(k => {
-            console.log('SW: deleting old cache', k);
-            return caches.delete(k);
-          })
+          .map(k => caches.delete(k))
       )
     ).then(() => self.clients.claim())
   );
@@ -183,7 +180,6 @@ self.addEventListener('fetch', e => {
 // ── BACKGROUND SYNC: voor als Supabase offline was ────────
 self.addEventListener('sync', e => {
   if (e.tag === 'sync-sessions') {
-    console.log('SW: background sync sessions');
     // Toekomstig: sync pending sessions van IndexedDB
   }
 });

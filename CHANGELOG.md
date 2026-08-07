@@ -1,18 +1,24 @@
 # Trainingskompas — Changelog
 
-## Sprint 5.9.6 — 7 augustus 2026 (Logging & Monitoring) — geen APP_VER-bump
-*Onderdeel van Sprint 5.9. Uitsluitend `sw.js` — index.html bevatte al geen enkele `console.log`. Geen externe monitoringoplossing geïntegreerd (expliciet niet toegestaan deze sprint) — wel een adviesnotitie over hoe de bestaande foutafhandeling zich daarvoor leent.*
+## v4.24.13 — 7 augustus 2026 (Sprint 5.9.7 — AI Coach Performance, dode berekening)
+*Onderdeel van Sprint 5.9. Uitsluitend prestaties/snelheid/kosten — de inhoud van de AI-coach-prompt is niet gewijzigd.*
 
-### Gecontroleerd
-- **`index.html`**: 0 `console.log`-aanroepen. De ~30 bestaande `console.error`/`console.warn`-aanroepen loggen uitsluitend generieke informatie (tabelnaam, HTTP-status, foutmelding) — geen tokens, wachtwoorden of pincodes (al bevestigd in de Sprint 5.8.6-security-audit). Geen wijziging nodig.
-- **`sw.js`**: 2 pure ontwikkelaars-debuglogs gevonden en verwijderd — `'SW: deleting old cache'` (activate-handler) en `'SW: background sync sessions'` (sync-handler). De onderliggende functionaliteit (cache-opschoning, sync-event-afhandeling) blijft volledig ongewijzigd; alleen de console-uitvoer is weg. De enige overgebleven `console.*`-aanroep in `sw.js` is een legitieme `console.warn` bij een mislukte install-cache — bewust behouden, dat is echte foutafhandeling, geen debug-ruis.
+### Gemeten: promptgrootte na Sprint 5.8.1's dataminimalisatie
+- `SPORT_BLOCKS`: 15 sporten, 10.039 bytes totaal, maar `buildCtx()` stuurt al uitsluitend het blok van de **actieve** sport mee (~669 bytes gemiddeld) — al correct scoped, geen wijziging nodig.
+- `hrvStr`/`hrvGuide`/blessure-/conditie-context: elk een eigen, niet-overlappende functie (ruwe data vs. interpretatie vs. gemelde pijn vs. vastgelegde condities) — geen inhoudelijke duplicatie gevonden.
 
-### Voorbereiding op monitoring (advies, niet geïmplementeerd)
-De bestaande `console.error`-aanroepen in `index.html` zijn al consistent gestructureerd (functienaam, tabel/context, statuscode, foutdetail) — dat leent zich goed voor een toekomstige monitoringkoppeling (bv. Sentry) via een **override van `console.error` zelf**, of `window.addEventListener('unhandledrejection'/'error', ...)`. Beide technieken vereisen **geen enkele wijziging** aan de ~30 bestaande aanroeplocaties — precies het soort lichtgewicht, niet-risicovolle aansluitpunt dat bij een latere sprint (met Sentry of vergelijkbaar) gebruikt kan worden. Bewust niet nu geïmplementeerd: een nieuwe hook-functie toevoegen zonder enige aanroeper zou zelf weer "nieuwe functionaliteit" zijn voor iets dat nog niet gebruikt wordt.
+### Gevonden en opgelost: dode berekening in buildCtx()
+`const mf = mastersFactor(atleet?.leeftijd);` werd op elk AI-coach-bericht berekend, maar **nooit gebruikt** in de teruggegeven prompt-tekst — een overbodige functie-aanroep zonder enig effect op wat naar Anthropic gestuurd wordt. Verwijderd. Geen enkele wijziging aan de daadwerkelijke prompt-inhoud (de variabele deed toch al niets).
 
 ### Getest
-- `node --check` op `sw.js`: OK. Alle 9 scriptblokken van `index.html`: OK (ongewijzigd).
-- `logic_tests.js`: 192/192 geslaagd, geen regressie (geen logica gewijzigd, alleen console-uitvoer verwijderd).
+- `node --check` op alle 9 scriptblokken: OK.
+- `logic_tests.js`: 192/192 geslaagd, geen regressie.
+
+### Gewijzigd
+- `APP_VER` v4.24.12 → **v4.24.13**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v42413`.
+
+### Nog te voltooien binnen 5.9.7
+Een grotere, waardevollere kansen: `buildCtx()` doet momenteel ~8-10 databasequery's **sequentieel** (elk wachtend op de vorige), terwijl de meeste onderling onafhankelijk zijn (HRV/gewicht/lichaamscompositie/sessiegeschiedenis hebben geen relatie met elkaar). Parallelliseren via `Promise.all()` zou de wachttijd vóórdat het AI-verzoek zelfs maar verstuurd wordt aanzienlijk kunnen verkorten — zelfde queries, zelfde data, zelfde prompt-inhoud, alleen sneller opgehaald. Dit raakt de kernstructuur van een kritieke functie; ik leg dit specifiek voor voordat ik het implementeer, gezien het risico op een subtiele fout in de afhankelijkheidsvolgorde.
 
 ---
 

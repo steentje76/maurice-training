@@ -1,5 +1,29 @@
 # Trainingskompas — Changelog
 
+## v4.24.22 — 7 augustus 2026 (Correctie op v4.24.21 — echte oorzaak: horizontaal, niet verticaal)
+*De vorige fix (dvh-fallback + sticky) loste het verkeerde probleem op — een meegestuurde schermopname liet zien dat de "Volgende"-knop grotendeels RECHTS buiten beeld viel, niet onderaan.*
+
+### Echte oorzaak, gevonden via vergelijking met werkende patronen
+De hoofdnavigatie (`.ni`-knoppen, altijd correct werkend) gebruikt `flex:1` **zonder** `width:100%`. De onboarding-knoppen gebruiken de `.btn`-klasse, die wél `width:100%` heeft — in combinatie met de inline `flex:1` op de "Volgende"-knop leidde dat tot een verkeerde breedteberekening die de knop over de rand van het scherm duwde.
+
+### Fix
+- De `position:sticky`-toevoeging uit v4.24.21 teruggedraaid — loste het echte probleem niet op en week af van het bewezen-werkende patroon dat `.bnav` en modals elders al gebruiken (gewone flex-child, geen sticky).
+- `width:auto` toegevoegd aan de inline-style van beide onboarding-knoppen (Terug én Volgende), zodat deze de conflicterende `width:100%` van `.btn` expliciet overschrijft en de breedteverdeling volledig aan `flex` wordt overgelaten — exact zoals `.ni` dat al zonder problemen doet.
+- De `100dvh`-fallback op `#app` uit v4.24.21 blijft staan (onschadelijke, correcte verbetering, ook al was het niet de oorzaak van dít probleem).
+
+### Getest
+- `node --check` op alle 9 scriptblokken: OK.
+- HTML div-balans vóór/na: 0 verschil.
+- `logic_tests.js`: 211/211 geslaagd, geen regressie.
+
+### Gewijzigd
+- `APP_VER` v4.24.21 → **v4.24.22**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v42422`.
+
+### Aandachtspunt voor een volgende sprint
+Dezelfde `.btn`(`width:100%`) + `flex:1`-combinatie komt ook voor in meerdere modals (bv. `m-pass-reset`, `m-goal-add`, `m-vt-naam`). Daar niet zichtbaar als probleem in de beschikbare screenshots, maar de moeite waard om te controleren of hetzelfde patroon zich daar ook (subtieler) voordoet.
+
+---
+
 ## v4.24.21 — 7 augustus 2026 (UI-fix — onboarding-navigatieknoppen buiten beeld)
 *Gemeld: de Terug/Volgende-knoppen op het onboardingscherm vielen buiten het zichtbare scherm op een mobiel toestel. Niet live te reproduceren (onboarding is al doorlopen op de beschikbare test-accounts), dus opgelost op basis van grondige CSS-analyse.*
 

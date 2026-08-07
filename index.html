@@ -4245,7 +4245,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.14';
+const APP_VER = 'v4.24.15';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -4967,6 +4967,26 @@ async function toggleFavorite(exId){
     await sbPost('exercise_favorites',{exercise_id:exId});
     favoriteExIds.add(exId);
   }
+}
+// Sprint 6.0.1 (Data Architectuur) — eenmalige migratie: de Bibliotheek gebruikte tot nu
+// toe een eigen, losstaande, localStorage-only favorietenlijst (tk_lib_favs) náást de
+// echte, Supabase-gebackte favorieten (exercise_favorites) die de rest van de app al
+// gebruikte (oefeningkiezer, 1RM-statistieklijst) — twee bronnen van waarheid voor
+// hetzelfde concept, nooit met elkaar gesynchroniseerd. Vanaf nu is Supabase de enige
+// bron. Deze functie zet bestaande lokale Bibliotheek-favorieten eenmalig over, zodat
+// niemand favorieten kwijtraakt, en ruimt de oude sleutel pas op als dat bevestigd is
+// gelukt — bij een netwerkfout onderweg blijft tk_lib_favs staan voor een nieuwe poging
+// bij de volgende app-load (geen dataverlies).
+async function migrateLibraryFavoritesToSupabase(){
+  let localFavs;
+  try{localFavs=JSON.parse(localStorage.getItem('tk_lib_favs')||'{}');}catch(e){localFavs={};}
+  const ids=Object.keys(localFavs).filter(id=>localFavs[id]);
+  if(!ids.length){localStorage.removeItem('tk_lib_favs');return;}
+  await ensureFavoritesLoaded();
+  for(const id of ids){
+    if(!favoriteExIds.has(id))await toggleFavorite(id);
+  }
+  if(ids.every(id=>favoriteExIds.has(id)))localStorage.removeItem('tk_lib_favs');
 }
 let repPRCache={};
 // Decimale slaapuren (bv. 6.87) naar leesbaar formaat (bv. "6u52m")
@@ -8033,9 +8053,9 @@ const EX_CATALOG = {"_schema":"trainingskompas-exercise-catalog v1","_architectu
 var ExerciseCatalogService=(function(){
   var C=(typeof EX_CATALOG!=='undefined'&&EX_CATALOG.catalog)?EX_CATALOG.catalog:[];
   var byIdIx={};C.forEach(function(c){byIdIx[c.catalog_id]=c;});
-  var _fav={},_recent=[];
-  try{var f=JSON.parse(localStorage.getItem('tk_lib_favs')||'{}');if(f&&typeof f==='object')_fav=f;var r=JSON.parse(localStorage.getItem('tk_lib_recent')||'[]');if(r&&r.length)_recent=r;}catch(e){}
-  function _persist(){try{localStorage.setItem('tk_lib_favs',JSON.stringify(_fav));localStorage.setItem('tk_lib_recent',JSON.stringify(_recent));}catch(e){}}
+  var _recent=[];
+  try{var r=JSON.parse(localStorage.getItem('tk_lib_recent')||'[]');if(r&&r.length)_recent=r;}catch(e){}
+  function _persist(){try{localStorage.setItem('tk_lib_recent',JSON.stringify(_recent));}catch(e){}}
 
   /* ── CENTRALE ALIAS-INDEX ──────────────────────────────────────────────────
      Eén tabel: concept-id → alle gelijkwaardige oppervlaktevormen (NL, EN, meervoud,
@@ -8195,7 +8215,7 @@ var ExerciseCatalogService=(function(){
     if(f.goal&&c.identity.goals.indexOf(f.goal)<0)return false;
     if(f.home&&!c.flags.home_gym_ready)return false;
     if(f.travel&&!c.flags.travel_ready)return false;
-    if(f.favorite&&!_fav[c.catalog_id])return false;
+    if(f.favorite&&!favoriteExIds.has(c.catalog_id))return false;
     return true;}
 
   /* Ongecachte kern (ook door benchmark gebruikt): filter + rank, geen analytics/cache-bijwerking. */
@@ -8291,9 +8311,9 @@ var ExerciseCatalogService=(function(){
         if(type==='poster'&&a.embedded&&typeof EXERCISE_ASSETS!=='undefined'){for(var j=0;j<EXERCISE_ASSETS.length;j++){if(EXERCISE_ASSETS[j].movekit_slug===a.ref&&EXERCISE_ASSETS[j].poster)return {type:type,src:EXERCISE_ASSETS[j].poster,embedded:true};}}}
       return null;},
     hasAsset:function(item,type){return !!(item.assets||[]).filter(function(a){return a.type===(type||'poster');}).length;},
-    isFavorite:function(id){return !!_fav[id];},
-    toggleFavorite:function(id){_fav[id]=!_fav[id];if(!_fav[id])delete _fav[id];_persist();_cacheClear();return !!_fav[id];},
-    favorites:function(){return Object.keys(_fav).map(function(id){return byIdIx[id];}).filter(Boolean);},
+    isFavorite:function(id){return favoriteExIds.has(id);},
+    toggleFavorite:async function(id){await toggleFavorite(id);_cacheClear();return favoriteExIds.has(id);},
+    favorites:function(){return [...favoriteExIds].map(function(id){return byIdIx[id];}).filter(Boolean);},
     pushRecent:function(id){_recent=[id].concat(_recent.filter(function(x){return x!==id;})).slice(0,20);_persist();},
     recent:function(){return _recent.map(function(id){return byIdIx[id];}).filter(Boolean);},
     /* Coachadvies (uit Intelligence/flags; geen confidence-cijfer naar buiten) */
@@ -8862,7 +8882,7 @@ function _cmpPickerHtml(aId){var E=ExerciseCatalogService;var A=E.byId(aId);
 
 function _libBindDetail(){
   var back=document.getElementById('lib-back');if(back){back.addEventListener('pointerdown',_libRipple);back.onclick=function(){_libState.view=(_libState.q||Object.keys(_libState.f).length)?'list':'home';_libState.detail=null;renderLibBody();};}
-  var fb=document.getElementById('lib-fav');if(fb)fb.onclick=function(){var on=ExerciseCatalogService.toggleFavorite(_libState.detail);fb.classList.toggle('on',on);fb.textContent=on?'★':'☆';fb.setAttribute('aria-pressed',on?'true':'false');fb.classList.remove('pop');void fb.offsetWidth;fb.classList.add('pop');};
+  var fb=document.getElementById('lib-fav');if(fb)fb.onclick=async function(){var on=await ExerciseCatalogService.toggleFavorite(_libState.detail);fb.classList.toggle('on',on);fb.textContent=on?'★':'☆';fb.setAttribute('aria-pressed',on?'true':'false');fb.classList.remove('pop');void fb.offsetWidth;fb.classList.add('pop');};
   var cmp=document.getElementById('lib-cmp');if(cmp){cmp.addEventListener('pointerdown',_libRipple);cmp.onclick=function(){_libState.cmpA=_libState.detail;_libState.cmpB=null;_libState.q='';_libState.view='cmppick';renderLibBody();var sc=document.querySelector('#s-library .scroll');if(sc)sc.scrollTop=0;};}
   // Accordions (gedelegeerd, toetsenbord-toegankelijk, aria-controls)
   document.querySelectorAll('#s-library .lib-acc').forEach(function(acc,ix){var h=acc.querySelector('.lib-acc-h'),body=acc.querySelector('.lib-acc-b');if(!h||!body)return;
@@ -14456,6 +14476,7 @@ async function startAppAfterAuth(){
   refreshHome();
   ensureExercisesLoaded().then(()=>loadTrainCfg());
   ensureEquipmentTypesLoaded();
+  migrateLibraryFavoritesToSupabase(); // Sprint 6.0.1 — eenmalig, laadt ook favoriteExIds vroeg
   checkTeamAccess(); // v331: teamRoleLevel meteen beschikbaar, niet pas na bezoek aan Profiel
   syncAtleetFromSupabase();
   syncCustomTrainingsFromSupabase();

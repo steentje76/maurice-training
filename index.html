@@ -4228,7 +4228,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.23.3';
+const APP_VER = 'v4.24.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6068,7 +6068,9 @@ async function saveHRV(btnEl){
   await Promise.all(ops);
   closeModal('m-hrv');
   if(hrv||slp){
-    const df=dagfactor(hrv,slp,cyclus);
+    let hrvComponent={factor:1.00,st:'ref',baseline:null};
+    if(hrv){try{const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35');hrvComponent=hrvDagFactorPersonal(hd);}catch(e){}}
+    const df=dagfactor(hrvComponent,slp,cyclus);
     toast('Dagfactor '+df.factor+' — '+dagfactorUitleg(hrv,slp,cyclus,df));
   }
   const parts=[];
@@ -7473,7 +7475,7 @@ async function buildTrainIntro(t,list){
   const muscles=[...mset];
   const n=(list||[]).length;
   let key='goed';
-  try{const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=1');if(hd&&hd[0]){const df=dagfactor(hd[0].hrv,hd[0].sleep,hd[0].cyclus_fase);key=dayState(df.factor).key;}}catch(_){}
+  try{const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35');if(hd&&hd[0]){const df=dagfactor(hrvDagFactorPersonal(hd),hd[0].sleep,hd[0].cyclus_fase);key=dayState(df.factor).key;}}catch(_){}
   const focus={goed:'Je herstel is goed — focus op sterke, gecontroleerde sets.',
     normaal:'Prima dag — train op gevoel en houd je techniek scherp.',
     vermoeid:'Rustig opbouwen vandaag. Kwaliteit boven gewicht.',
@@ -10216,13 +10218,13 @@ Sessiedata (JSON): ${JSON.stringify(summaryData)}`;
 // HOME
 // ══════════════════════════════════════════════════════════
 async function refreshHome(){
-  const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=1');
+  const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35');
   const lh=hd[0];
   let dfInfo=null,nextT=null;
   if(lh){
-    const st=hrvSt(lh.hrv);
-    const pill={g:'hrv-pill g',y:'hrv-pill y',o:'hrv-pill o',r:'hrv-pill r'};
-    const df=dagfactor(lh.hrv,lh.sleep,lh.cyclus_fase);
+    const hrvComponent=hrvDagFactorPersonal(hd);
+    const st=hrvComponent.st;
+    const df=dagfactor(hrvComponent,lh.sleep,lh.cyclus_fase);
     // v3.3.36 Batch 2 #1: dagfactor gepromoveerd tot dominant, tikbaar dag-element (H8 explainable AI).
     const heroKleur='var(--day)'; // v3.3.50 P6 — dagfactor-ring volgt het dag-thema (dayState)
     const dfStat=dagfactorStatus(df.factor);
@@ -10235,7 +10237,7 @@ async function refreshHome(){
     const dc=dagfactorCoach(df.factor);
     // v3.3.48 — betekenis-eerst + premium "Waarom?": rauwe cijfers/pills verhuizen naar de
     // uitklap (renderDagfactorDetail), zodat de kaart als coach voelt i.p.v. dashboard.
-    window.homeDfDetail={factor:df.factor,uitleg,hrv:lh.hrv,rhr:lh.rhr,sleep:lh.sleep,cyclus:lh.cyclus_fase,hrvF:df.hrvFactor,slaapF:df.slaapFactor,cycTxt:cyc,conf,sig,st,date:lh.date,statusTxt:dfStat.txt};
+    window.homeDfDetail={factor:df.factor,uitleg,hrv:lh.hrv,rhr:lh.rhr,sleep:lh.sleep,cyclus:lh.cyclus_fase,hrvF:df.hrvFactor,slaapF:df.slaapFactor,cycTxt:cyc,conf,sig,st,date:lh.date,statusTxt:dfStat.txt,hrvBaseline:df.hrvBaseline};
     document.getElementById('home-hrv-card').innerHTML=`<div class="card"><div class="card-body" style="padding-top:14px">
       <button onclick="toggleDagfactorDetail()" aria-expanded="false" aria-controls="dagfactor-detail" class="df-head">
         <div class="df-ring">
@@ -10576,19 +10578,105 @@ async function renderHomeProgramCard(){
   el.innerHTML='';
 }
 
-function hrvSt(v){if(!v)return 'y';if(v>=24)return 'g';if(v>=18)return 'y';if(v>=14)return 'o';return 'r';}
+// ══════════════════════════════════════════════════════════
+// HRV-BASELINE — Sprint 5.7.1 (RB: HRV op absolute drempels -> persoonlijke baseline)
+// Vervangt de vaste ms-drempels (24/18/14) door de Plews/Buchheit SWC-methode:
+// Ln-RMSSD-transformatie, 7-daags rollend gemiddelde t.o.v. een persoonlijke
+// baseline (Smallest Worthwhile Change = gemiddelde ± 0,5×SD).
+// Bronnen: Frontiers in Sports & Active Living 2025 (10.3389/fspor.2025.1578478) —
+// SWC=mean±0.5SD van Ln-RMSSD 7d-rollend-gemiddelde; TrainingPeaks/Kiviniemi-
+// cyclistenstudie — 2-4 weken baselineperiode, SD van HRV-metingen als bron voor de
+// SWC; athletedata.health (2026) — minimaal 2 weken baseline (4 beter), ≥15% daling
+// t.o.v. rollend gemiddelde als apart ernst-signaal, ≥4-5 metingen/week nodig voor
+// een betrouwbaar weekgemiddelde. Leeftijd is bewust GEEN aparte factor: de
+// literatuur bevestigt dat een persoonlijke baseline leeftijdsverschillen in
+// absolute HRV al zelf opvangt (zie sprint-overleg) — een aparte leeftijdscorrectie
+// zou dubbel corrigeren. Puur informatief, past nooit automatisch iets aan.
+// ══════════════════════════════════════════════════════════
+const HRV_BASELINE_MIN_DAYS = 14;   // ondergrens voorlopige baseline (referentiefase eronder)
+const HRV_BASELINE_FULL_DAYS = 28;  // grens voor een volledige/stabiele baseline
+const HRV_BASELINE_MIN_N = 4;       // minimum aantal metingen, ongeacht dagen verstreken
+const HRV_SWC_MULTIPLIER = 0.5;     // Plews et al. — smallest worthwhile change
+const HRV_SEVERE_DROP_PCT = 0.15;   // athletedata.health — apart ernst-signaal
+
+function lnRmssd(v){return (typeof v==='number' && v>0) ? Math.log(v) : null;}
+
+// Bouwt de persoonlijke baseline uit historische hrv_log-rijen ({date,hrv}-vorm).
+// fase: 'referentie' (<14 dagen of <4 metingen — geen claim mogelijk), 'voorlopig'
+// (>=14 dagen), 'volledig' (>=28 dagen).
+function hrvBaseline(hdRows, refDate){
+  const ref = refDate ? new Date(refDate) : new Date();
+  const rows = (hdRows||[])
+    .filter(r=>r && r.hrv && r.date)
+    .map(r=>({date:new Date(r.date), hrv:r.hrv, ln:lnRmssd(r.hrv)}))
+    .filter(r=>r.ln!=null && !isNaN(r.date.getTime()) && r.date<=ref);
+  if(!rows.length) return {ready:false, fase:'referentie', n:0, days:0};
+  rows.sort((a,b)=>a.date-b.date);
+  const days = Math.max(0, Math.round((ref-rows[0].date)/86400000));
+  const n = rows.length;
+  if(days < HRV_BASELINE_MIN_DAYS || n < HRV_BASELINE_MIN_N){
+    return {ready:false, fase:'referentie', n, days};
+  }
+  const meanLn = rows.reduce((s,r)=>s+r.ln,0)/n;
+  const variance = rows.reduce((s,r)=>s+Math.pow(r.ln-meanLn,2),0)/n;
+  const sdLn = Math.sqrt(variance);
+  const meanRaw = rows.reduce((s,r)=>s+r.hrv,0)/n;
+  const fase = days>=HRV_BASELINE_FULL_DAYS ? 'volledig' : 'voorlopig';
+  return {ready:true, fase, n, days, meanLn, sdLn, meanRaw, swc:HRV_SWC_MULTIPLIER*sdLn};
+}
+
+// 7-daags rollend gemiddelde t.o.v. refDate. Bij <4 metingen in de afgelopen 7 dagen
+// (te weinig voor een betrouwbaar weekgemiddelde) valt terug op de laatste losse
+// meting — nooit een crash, wel lagere n/bron-transparantie in de output.
+function hrvRollingRecent(hdRows, refDate){
+  const ref = refDate ? new Date(refDate) : new Date();
+  const rows = (hdRows||[])
+    .filter(r=>r && r.hrv && r.date)
+    .map(r=>({date:new Date(r.date), hrv:r.hrv, ln:lnRmssd(r.hrv)}))
+    .filter(r=>r.ln!=null && !isNaN(r.date.getTime()) && r.date<=ref);
+  if(!rows.length) return null;
+  rows.sort((a,b)=>b.date-a.date);
+  const sevenDaysAgo=new Date(ref.getTime()-7*86400000);
+  const last7=rows.filter(r=>r.date>=sevenDaysAgo);
+  if(last7.length>=HRV_BASELINE_MIN_N){
+    const meanLn=last7.reduce((s,r)=>s+r.ln,0)/last7.length;
+    const meanRaw=last7.reduce((s,r)=>s+r.hrv,0)/last7.length;
+    return {meanLn, meanRaw, n:last7.length, bron:'7d-gemiddelde'};
+  }
+  const latest=rows[0];
+  return {meanLn:latest.ln, meanRaw:latest.hrv, n:1, bron:'laatste meting'};
+}
+
+// Classificeert vandaag t.o.v. de eigen baseline. st: 'g' (binnen/boven SWC),
+// 'o' (onder SWC — smallest worthwhile change), 'r' (>=15% daling, apart ernst-
+// signaal), 'ref' (referentiefase, geen persoonlijke claim mogelijk).
+function hrvStPersonal(hdRows, refDate){
+  const baseline=hrvBaseline(hdRows, refDate);
+  if(!baseline.ready)return {st:'ref', baseline, recent:null, drop:null};
+  const recent=hrvRollingRecent(hdRows, refDate);
+  if(!recent)return {st:'ref', baseline, recent:null, drop:null};
+  const drop=(baseline.meanRaw-recent.meanRaw)/baseline.meanRaw;
+  if(drop>=HRV_SEVERE_DROP_PCT)return {st:'r', baseline, recent, drop};
+  if(recent.meanLn < baseline.meanLn-baseline.swc)return {st:'o', baseline, recent, drop};
+  return {st:'g', baseline, recent, drop};
+}
+
+// HRV-dagfactor-component o.b.v. de persoonlijke classificatie. 'ref' (referentiefase)
+// krijgt bewust factor 1.00 (neutraal, geen correctie) — nooit een absolute uitspraak
+// zonder eigen data, conform de fase1/2/3-personalisatie elders in de app.
+function hrvDagFactorPersonal(hdRows, refDate){
+  const c=hrvStPersonal(hdRows, refDate);
+  const factor={g:1.05, o:0.93, r:0.85, ref:1.00}[c.st];
+  return {factor, st:c.st, baseline:c.baseline, recent:c.recent, drop:c.drop};
+}
 
 // ══════════════════════════════════════════════════════════
-// DAGFACTOR-MOTOR (v300)
+// DAGFACTOR-MOTOR (v300, HRV-component vernieuwd in Sprint 5.7.1)
 // Correctie op basis van HRV, slaap en (bij vrouwen) cyclusfase.
 // Puur informatief — past nergens automatisch een ingevuld gewicht aan.
 // Clip-principe zelfde als rekenmotor.py (MMP): dempt extreme uitschieters
 // als de drie factoren met elkaar vermenigvuldigd worden.
 // ══════════════════════════════════════════════════════════
-function hrvDagFactor(v){
-  const st=hrvSt(v);
-  return {g:1.05,y:1.00,o:0.93,r:0.85}[st];
-}
 function slaapDagFactor(uren){
   if(!uren)return 1.00;
   if(uren>=7)return 1.00;
@@ -10598,13 +10686,17 @@ function slaapDagFactor(uren){
 function cyclusDagFactor(fase){
   return {menstruatie:0.93,folliculair:1.03,ovulatie:1.00,luteaal:0.97}[fase] ?? 1.00;
 }
-function dagfactor(hrv,slaapUren,cyclusFase){
-  const hrvFactor=hrvDagFactor(hrv);
+// hrvComponent = output van hrvDagFactorPersonal(hdRows, refDate) — vervangt de oude
+// losse hrv-ms-waarde als eerste argument (Sprint 5.7.1, breaking change binnen dit
+// bestand; alle aanroepen in dezelfde sprint bijgewerkt).
+function dagfactor(hrvComponent,slaapUren,cyclusFase){
+  const hc = hrvComponent || {factor:1.00, st:'ref', baseline:null};
+  const hrvFactor=hc.factor;
   const slaapFactor=slaapDagFactor(slaapUren);
   const cyclusFactor=cyclusDagFactor(cyclusFase);
   const ruw=hrvFactor*slaapFactor*cyclusFactor;
   const factor=Math.round(Math.max(0.85,Math.min(1.05,ruw))*100)/100;
-  return {factor,hrvFactor,slaapFactor,cyclusFactor};
+  return {factor,hrvFactor,slaapFactor,cyclusFactor,hrvSt:hc.st,hrvBaseline:hc.baseline};
 }
 // v3.3.47 P3 — begrijpelijke dagfactor-status uit de bestaande dagfactor-waarde.
 // Vier niveaus, kleuren consistent met de heroKleur-banden. Geen nieuwe data.
@@ -10629,9 +10721,21 @@ function dagfactorCoach(f){
   const s=dayState(f);
   return {headline:s.headline,meaning:s.meaning,cls:s.key};
 }
+// Sprint 5.7.1/5.7.4/5.7.5: expliciet onderscheid referentiefase vs. persoonlijke
+// baseline vs. (impliciet) gemeten waarde — nooit meer "HRV goed/laag/kritiek" tonen
+// zonder te vermelden of dat op eigen data berust.
 function dagfactorUitleg(hrv,slaapUren,cyclusFase,df){
   const parts=[];
-  if(hrv)parts.push(df.hrvFactor>=1?'HRV goed':df.hrvFactor>=0.93?'HRV laag':'HRV kritiek');
+  if(hrv){
+    const st=df.hrvSt, bl=df.hrvBaseline;
+    if(st==='ref'){
+      const dagenTeGaan=bl?Math.max(0,HRV_BASELINE_MIN_DAYS-bl.days):HRV_BASELINE_MIN_DAYS;
+      parts.push(bl&&bl.n>0?`HRV: referentiefase (nog ${dagenTeGaan} dagen tot je eigen baseline)`:'HRV: referentiefase (baseline wordt opgebouwd)');
+    }else{
+      const bron=bl.fase==='volledig'?'eigen baseline':'voorlopige eigen baseline';
+      parts.push(st==='g'?`HRV goed t.o.v. je ${bron}`:st==='o'?`HRV verlaagd t.o.v. je ${bron}`:`HRV sterk verlaagd t.o.v. je ${bron}`);
+    }
+  }
   if(slaapUren)parts.push(df.slaapFactor>=1?'slaap voldoende':df.slaapFactor>=0.97?'slaap kort':'slaap te kort');
   if(cyclusFase)parts.push('cyclus: '+cyclusFase);
   return parts.join(', ')||'onvoldoende data';
@@ -10653,7 +10757,16 @@ function renderDagfactorDetail(){
   if(rec.length)html+=row('Spiergroepen',rec.slice(0,4).map(r=>`${escHtml(r.muscle)} ${r.pct}%`).join(' · '));
   if(wk&&wk.volKg)html+=row('Weekvolume',`${wk.volKg} kg · ${wk.pctStr} vs vorige week`);
   if(window.homeCoachText)html+=`<div class="dfd-concl">${escHtml(window.homeCoachText)}</div>`;
-  html+=`<div class="dfd-note">${d.factor} = HRV ${d.hrvF.toFixed(2)} × slaap ${d.slaapF.toFixed(2)}${d.cycTxt||''}, geclipt 0.85–1.05. Informatief — past nooit automatisch je gewicht aan. Confidence: ${d.conf} (${d.sig}/3 signalen).</div>`;
+  // Sprint 5.7.4/5.7.5 — expliciete bron-transparantie voor de HRV-component: nooit
+  // suggereren dat de HRV-beoordeling gemeten/vergeleken is als er nog geen (volledige)
+  // persoonlijke baseline is.
+  let hrvBronTxt='';
+  const bl=d.hrvBaseline;
+  if(d.hrv && bl){
+    if(!bl.ready)hrvBronTxt=` HRV-beoordeling: referentiefase (${bl.n} meting${bl.n===1?'':'en'}, nog geen persoonlijke baseline — pas vanaf 14 dagen eigen data).`;
+    else hrvBronTxt=` HRV-beoordeling t.o.v. je ${bl.fase==='volledig'?'volledige':'voorlopige'} eigen baseline (${bl.n} metingen over ${bl.days} dagen).`;
+  }
+  html+=`<div class="dfd-note">${d.factor} = HRV ${d.hrvF.toFixed(2)} × slaap ${d.slaapF.toFixed(2)}${d.cycTxt||''}, geclipt 0.85–1.05. Informatief — past nooit automatisch je gewicht aan. Confidence: ${d.conf} (${d.sig}/3 signalen).${hrvBronTxt}</div>`;
   el.innerHTML=html;
 }
 function toggleDagfactorDetail(){
@@ -12453,9 +12566,9 @@ async function pchkSubmit(){
 // training raakt. Pure beslislogica zit in computeProgAdjustment (los testbaar).
 async function evaluateProgAdjustment(){
   const {rows,block,prog}=progCheckinCtx;
-  const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=1');
+  const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35');
   const lh=hd[0];
-  const df=lh?dagfactor(lh.hrv,lh.sleep,lh.cyclus_fase):{factor:1};
+  const df=lh?dagfactor(hrvDagFactorPersonal(hd),lh.sleep,lh.cyclus_fase):{factor:1};
   const muscleSet=new Set();
   rows.forEach(r=>getExerciseMuscles(r.exercise_id).forEach(m=>muscleSet.add(m)));
   const muscleRows=await getRelevantMuscleRecovery([...muscleSet]);
@@ -13614,9 +13727,9 @@ async function renderLichaam(){
 async function renderLichaamPremium(){
   const rec=window.v43LichRec||{overall:100,rows:[],hasData:false};
   const rows=rec.rows||[];
-  let lh=null; try{const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=1'); lh=(hd&&hd[0])?hd[0]:null;}catch(_){}
+  let hd=[]; let lh=null; try{hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'); lh=(hd&&hd[0])?hd[0]:null;}catch(_){}
   let df=null,ger=null,ds=null;
-  if(lh){ try{ df=dagfactor(lh.hrv,lh.sleep,lh.cyclus_fase).factor; ger=v43GereedheidScore(df); ds=dayState(df); }catch(_){} }
+  if(lh){ try{ df=dagfactor(hrvDagFactorPersonal(hd),lh.sleep,lh.cyclus_fase).factor; ger=v43GereedheidScore(df); ds=dayState(df); }catch(_){} }
   const SPK='<svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2l1.6 4.8L18 8l-4.4 1.2L12 14l-1.6-4.8L6 8l4.4-1.2z"/></svg>';
   const hero=document.getElementById('lich-hero');
   if(hero){

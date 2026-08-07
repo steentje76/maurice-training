@@ -4245,7 +4245,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.9';
+const APP_VER = 'v4.24.10';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -5030,7 +5030,7 @@ let assaultMachines=JSON.parse(localStorage.getItem('assault_machines')||'["Assa
 let curT=null, sessionLog={}, sessionExtra=[], chatHist=[], sending=false;
 let pinBuf='', adminPinBuf='';
 let rowers=JSON.parse(localStorage.getItem('tk_rowers')||'["PM5 1","PM5 2","PM5 3","PM5 4","PM5 5","PM5 6","PM5 7","PM5 8","PM5 9","PM5 10"]');
-let selRower=localStorage.getItem('tk_rower')||rowers[0];
+let selRower=rowers[0];
 let trainStart=null, trainInterval=null, histFilter='all', histOff=0;
 let curEditSess=null;
 
@@ -10265,7 +10265,6 @@ async function finishSession(){
       if(prevBest!=null&&bestKg(best)!=null&&bestKg(best)!==prevBest)sessStats.compare.push({naam:ex.naam,prev:prevBest,now:bestKg(best)});
     }
   }
-  localStorage.setItem('tk_last_training',t);
   closeModal('m-session-end');stopTrainTimer();
   clearTrainingDraft();
   curT=null;sessionLog={};sessionExtra=[];pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};

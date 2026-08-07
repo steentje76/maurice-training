@@ -4245,7 +4245,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.10';
+const APP_VER = 'v4.24.11';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -8881,7 +8881,7 @@ function _libBindCmp(){
 function buildVideoMuscle(ex){
   let h='';
   if(ex.yt){
-    h+=`<div class="vid-wrap" onclick="loadVid(this,'${ex.yt}')"><img src="https://img.youtube.com/vi/${ex.yt}/mqdefault.jpg" alt="${escHtml(ex.naam)}" onerror="this.parentElement.style.display='none'"><div class="vid-play">▶</div><div class="vid-label">▶ ${escHtml(ex.naam)} — techniek video</div></div>`;
+    h+=`<div class="vid-wrap" onclick="loadVid(this,'${ex.yt}')"><img src="https://img.youtube.com/vi/${ex.yt}/mqdefault.jpg" alt="${escHtml(ex.naam)}" loading="lazy" onerror="this.parentElement.style.display='none'"><div class="vid-play">▶</div><div class="vid-label">▶ ${escHtml(ex.naam)} — techniek video</div></div>`;
   }
   if(ex.muscles){
     h+='<div class="muscle-pills">';

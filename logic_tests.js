@@ -1603,6 +1603,46 @@ test('Losse, trage toetsaanslagen (elk na afloop van de vorige vertraging): elke
   assertEq(count,2,'normaal, rustig zoeken blijft gewoon elke render tonen');
 });
 
+// ── OFFLINE BETROUWBAARHEID (Sprint 5.9.5) ─────────────────────
+// Zelfde beslislogica als de lus in flushOfflineQueue() (index.html) — pure functie
+// (fetch-uitkomst per item als parameter meegegeven i.p.v. een echte netwerkaanroep),
+// los getest.
+console.log("\n📡 Offline betrouwbaarheid — flushOfflineQueue (Sprint 5.9.5)");
+function simulateFlushQueue(items,outcomeFn){
+  const removed=[],skipped=[];
+  let syncedAny=false,skippedAny=false,stoppedEarly=false;
+  for(const item of items){
+    const outcome=outcomeFn(item);
+    if(outcome==='networkError'){stoppedEarly=true;break;}
+    if(outcome==='httpError'){skipped.push(item.id);skippedAny=true;continue;}
+    removed.push(item.id);syncedAny=true;
+  }
+  return {removed,skipped,syncedAny,skippedAny,stoppedEarly};
+}
+test('Alle items synchroniseren succesvol: alles verwijderd uit de wachtrij, niets overgeslagen', ()=>{
+  const items=[{id:1},{id:2},{id:3}];
+  const r=simulateFlushQueue(items,()=>'ok');
+  assertEq(r.removed.length,3); assertEq(r.skipped.length,0); assertEq(r.stoppedEarly,false);
+});
+test('Serverfout op één item blokkeert de REST niet meer (was de bug) — latere items worden gewoon geprobeerd', ()=>{
+  const items=[{id:1},{id:2},{id:3}];
+  const r=simulateFlushQueue(items,item=>item.id===2?'httpError':'ok');
+  assertEq(JSON.stringify(r.removed.sort()),JSON.stringify([1,3]),'item 1 en 3 moeten alsnog gesynchroniseerd zijn');
+  assertEq(JSON.stringify(r.skipped),JSON.stringify([2]),'alleen het foutieve item blijft in de wachtrij staan');
+  assertEq(r.stoppedEarly,false,'de lus mag niet vroegtijdig stoppen op een serverfout');
+});
+test('Echte netwerkfout (weer offline) stopt de lus terecht wél — latere items worden niet geprobeerd', ()=>{
+  const items=[{id:1},{id:2},{id:3}];
+  const r=simulateFlushQueue(items,item=>item.id===2?'networkError':'ok');
+  assertEq(JSON.stringify(r.removed),JSON.stringify([1]),'item 1 was al gelukt vóór de netwerkfout');
+  assertEq(r.stoppedEarly,true);
+  assert(!r.removed.includes(3),'item 3 mag niet geprobeerd zijn ná een netwerkfout — zinloos zolang je offline bent');
+});
+test('Lege wachtrij: geen crash, niets te doen', ()=>{
+  const r=simulateFlushQueue([],()=>'ok');
+  assertEq(r.removed.length,0); assertEq(r.syncedAny,false); assertEq(r.skippedAny,false);
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

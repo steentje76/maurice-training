@@ -1,5 +1,19 @@
 # Trainingskompas — Changelog
 
+## Sprint 5.6.4 — 7 augustus 2026 (Controle op verborgen ontwikkelaarsdata, Release Blocker 6) — geen versiebump
+*Onderdeel van Sprint 5.6, n.a.v. Enterprise Audit & Scientific Integrity Review v1.0. Uitsluitend onderzoek — geen codewijziging in deze deelstap.*
+
+### Onderzocht (RB6): testaccounts, testdata, debugwaarden, verborgen demo's, feature flags, oude comments
+- Geen testaccounts, hardcoded testdata, feature-flags, `TODO`/`FIXME`/`HACK`-markers, hardcoded credentials of `console.log`-statements aangetroffen.
+- Twee bevindingen onderzocht en **bewust ongewijzigd gelaten**, met reden:
+  1. **Debug-informatie-scherm** (Instellingen → toont app-versie + eerste 60 tekens van de user-agent van het eigen toestel). Audit classificeert dit al als LAAG. Dit is een expliciet gelabeld ("Debuginformatie"), gebruikersgerichte troubleshooting-functie die alléén het eigen toestel van de gebruiker aan zichzelf toont — geen verborgen ontwikkelaarsfunctie, geen data die het toestel verlaat. Niet verwijderd.
+  2. **`PIN_HASH`-constante** (app-lock-pincode + admin-scherm-fallback wanneer de rol-check offline/onbekend is). Bij nader onderzoek: dit is **gedocumenteerde, opzettelijke functionaliteit** (zie bestaande comment: "Team gebruikt bewust nog steeds altijd de gedeelde pincode — extra beveiligingslaag boven op de rol-check"), geen verborgen backdoor. De daadwerkelijke Beheer-acties lopen apart via een server-side rolcheck (`/.netlify/functions/gym-team`). **Observatie voor de Product Owner** (geen wijziging uitgevoerd, buiten scope van een opschoon-sprint): dezelfde PIN-hash bedient zowel de persoonlijke app-lock als de Beheer-scherm-fallback; een 4-cijferige pincode-hash is met browser-devtools binnen milliseconden te brute-forcen. Dit is een architectuurkeuze, geen ontwikkelaars-hardcoding — een eventuele aanscherping (bv. losse geheimen, of alléén server-side gate) is een bewuste beveiligingsbeslissing die apart gepland moet worden, niet iets om terloops in een cleanup-sprint aan te passen.
+
+### Conclusie
+Geen codewijziging nodig — de codebase bevatte geen onveilig-te-laten verborgen ontwikkelaarsartefacten binnen RB6's scope. Geen `APP_VER`-bump.
+
+---
+
 ## v4.23.3 — 7 augustus 2026 (Sprint 5.6.3 — Namespace-migratie & ontwikkelaarscomments, Release Blocker 1+5)
 *Onderdeel van Sprint 5.6, n.a.v. Enterprise Audit & Scientific Integrity Review v1.0. Uitsluitend namespace/comments — geen UX-herontwerp, geen nieuwe functionaliteit, geen databasewijziging.*
 

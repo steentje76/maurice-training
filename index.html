@@ -2440,6 +2440,46 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   .v47-bigc:hover,.row:hover,.set-nav-row:hover,.srow:hover,.trow:hover,.pf-row:hover,.lib-card:hover,.pk-gcard:hover{box-shadow:0 10px 24px rgba(11,29,42,.12)}
   .btn:hover{filter:brightness(1.03)}
 }
+/* ── F0.7D Training Preview (3-staps) ─────────────────────────────── */
+.tpv2-head{display:flex;align-items:center;gap:10px;margin:-2px 0 12px}
+.tpv2-back{width:34px;height:34px;flex-shrink:0;border:none;background:var(--g1);color:var(--dark);border-radius:11px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--f)}
+.tpv2-htitle{font-size:16px;font-weight:800;color:var(--dark);flex:1;min-width:0;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tpv2-hspace{width:34px;flex-shrink:0}
+.tpv2-hero{background:var(--dark);color:#fff;border-radius:18px;padding:16px 16px 18px;margin-bottom:14px}
+.tpv2-hero-nm{font-size:22px;font-weight:800;letter-spacing:.3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tpv2-chip{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;background:var(--teal,var(--accent));color:var(--dark);padding:3px 8px;border-radius:999px}
+.tpv2-hero-sub{font-size:12.5px;color:rgba(255,255,255,.72);font-weight:600;margin-top:6px}
+.tpv2-hero-say{font-size:13px;line-height:1.5;color:rgba(255,255,255,.92);margin-top:10px}
+.tpv2-sec{font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--g4);margin:16px 2px 8px}
+.tpv2-why{background:var(--card,#fff);border:1px solid var(--g1);border-radius:14px;overflow:hidden}
+.tpv2-why-row{display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--g1);font-size:13px}
+.tpv2-why-row:first-child{border-top:none}
+.tpv2-why-nm{flex:1;font-weight:700;color:var(--dark)}
+.tpv2-why-st{font-size:12px;color:var(--g4);display:flex;align-items:center;gap:5px}
+.tpv2-why-pct{font-weight:800;color:var(--dark);min-width:38px;text-align:right}
+.tpv2-ov{display:flex;gap:10px}
+.tpv2-ovc{flex:1;background:var(--card,#fff);border:1px solid var(--g1);border-radius:14px;padding:12px;text-align:center}
+.tpv2-ovc .v{font-size:20px;font-weight:800;color:var(--dark)}
+.tpv2-ovc .k{font-size:11px;color:var(--g4);font-weight:600;margin-top:2px}
+.tpv2-excard{display:flex;gap:11px;align-items:flex-start;background:var(--card,#fff);border:1px solid var(--g1);border-radius:14px;padding:11px;margin-bottom:9px;cursor:pointer;text-align:left;width:100%;font-family:var(--f)}
+.tpv2-excard.cur{border-color:var(--teal,var(--accent));box-shadow:0 0 0 1px var(--teal,var(--accent)) inset}
+.tpv2-exthumb{width:52px;height:52px;flex-shrink:0;border-radius:11px;background:var(--g1);object-fit:cover;display:flex;align-items:center;justify-content:center;color:var(--g3);font-size:20px}
+.tpv2-exb{flex:1;min-width:0}
+.tpv2-exrole{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--teal,var(--accent))}
+.tpv2-exnm{font-size:14px;font-weight:800;color:var(--dark);margin:1px 0 4px}
+.tpv2-extags{display:flex;gap:5px;flex-wrap:wrap}
+.tpv2-tag{font-size:10px;font-weight:700;color:var(--g4);background:var(--g1);padding:2px 7px;border-radius:999px}
+.tpv2-exmeta{font-size:12px;font-weight:800;color:var(--dark);flex-shrink:0;text-align:right}
+.tpv2-exwhy{font-size:11.5px;color:var(--g4);margin-top:6px;line-height:1.4}
+.tpv2-d-hero{width:100%;height:170px;border-radius:16px;background:var(--g1);object-fit:contain;display:flex;align-items:center;justify-content:center;color:var(--g3);font-size:46px;margin-bottom:12px}
+.tpv2-d-nm{font-size:20px;font-weight:800;color:var(--dark)}
+.tpv2-d-tags{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px}
+.tpv2-d-h{font-size:13px;font-weight:800;color:var(--dark);margin:15px 0 6px}
+.tpv2-d-h.warn{color:#c0392b}
+.tpv2-li{display:flex;gap:8px;font-size:13px;color:var(--dark);line-height:1.5;margin:5px 0}
+.tpv2-li .ic{flex-shrink:0}
+.tpv2-d-say{background:var(--g1);border-radius:12px;padding:11px 13px;font-size:13px;line-height:1.5;color:var(--dark)}
+.tpv2-cta{display:flex;gap:8px;margin-top:8px}
 </style>
 </head>
 <body>
@@ -5531,9 +5571,19 @@ async function openTrainingPreview(source,id){
     swaps:{},                       // origineel exercise_id → vervangend exercise_id
     order:def.exercises.map(e=>e.exercise_id),
     swapPickerFor:null,
-    adjustOpen:false
+    adjustOpen:false,
+    view:'overview',                // F0.7D: 3-staps preview — 'overview' | 'plan' | 'exercise'
+    focusEx:null,                   // origineel exercise_id van de geopende oefening (scherm 3)
+    recovery:null                   // echte herstel-data per spiergroep (async geladen)
   };
   openModal('m-training-preview');
+  // "Waarom vandaag?" — echte herstel-data via de bestaande getRelevantMuscleRecovery()
+  // (geen nieuw algoritme). Async; bij falen of geen data gewoon weglaten.
+  try{
+    const muscles=previewTrainingMuscles();
+    previewCtx.recovery=await getRelevantMuscleRecovery(muscles);
+  }catch(e){ if(previewCtx)previewCtx.recovery=[]; }
+  if(previewCtx&&previewCtx.view==='overview')renderTrainingPreview();
 }
 
 function previewExerciseName(exId){
@@ -5627,77 +5677,202 @@ function previewFormatTarget(it){
   return parts.join(' · ');
 }
 
+// ── F0.7D — Preview data-helpers (hergebruiken bestaande catalogus/exercises/assets) ──
+// Genormaliseerde metadata per oefening: catalogus-first (TK), val terug op de
+// exercises-tabel (legacy). Verzint niets — lege velden blijven leeg.
+function previewExMeta(exId){
+  try{
+    const c=(typeof ExerciseCatalogService!=='undefined')?ExerciseCatalogService.byId(exId):null;
+    if(c&&c.identity){
+      const intel=c.intelligence||{};
+      let video=null;
+      try{if(typeof ExerciseAssetProvider!=='undefined'&&ExerciseAssetProvider.hasVideo&&ExerciseAssetProvider.hasVideo(exId))video={movekit:true};}catch(_){}
+      return {exId,name:c.identity.name||exId,primary:c.identity.primary||[],secondary:c.identity.secondary||[],
+        equipment:c.identity.equipment||[],type:c.identity.type||null,cues:intel.cues||[],mistakes:intel.mistakes||[],
+        why:(intel.why&&intel.why.coach)?intel.why.coach:null,fatigue:intel.fatigue||null,recovery:intel.recovery||null,
+        alternatives:(c.relations&&c.relations.alternatives)||[],video,canonical:true};
+    }
+  }catch(e){}
+  let name=exId,primary=[],secondary=[],type=null,video=null;
+  try{
+    const ex=(typeof exercises!=='undefined')?exercises.find(e=>e.id===exId):null;
+    if(ex){name=ex.name||exId;primary=ex.muscle_primary||[];secondary=ex.muscle_secondary||[];type=ex.type||null;if(ex.yt)video={yt:ex.yt};}
+  }catch(e){}
+  if(!primary.length){try{primary=getExerciseMuscles(exId)||[];}catch(_){}}
+  return {exId,name,primary,secondary,equipment:[],type,cues:[],mistakes:[],why:null,fatigue:null,recovery:null,alternatives:[],video,canonical:false};
+}
+function previewExPoster(exId){
+  try{if(typeof ExerciseAssetProvider!=='undefined')return ExerciseAssetProvider.poster(exId)||null;}catch(e){}
+  return null;
+}
+function previewTrainingMuscles(){
+  if(!previewCtx)return [];
+  const set=new Set();
+  previewWorkingList().forEach(it=>previewExMeta(it.exercise_id).primary.forEach(m=>m&&set.add(m)));
+  return [...set];
+}
+function previewEstMinutes(totalSets){
+  if(totalSets==null||!totalSets)return null;
+  return Math.max(5,Math.round(totalSets*3/5)*5); // ~3 min/set, afgerond op 5 — grove ± schatting
+}
+function previewRecoStatus(pct){
+  if(pct>=80)return {txt:'Goed hersteld',ic:'✓',col:'var(--teal,var(--accent))'};
+  if(pct>=60)return {txt:'Lichte vermoeidheid',ic:'!',col:'var(--y)'};
+  return {txt:'Nog aan het herstellen',ic:'•',col:'#c0392b'};
+}
+function previewCounts(){
+  const list=previewWorkingList();
+  const knownSets=list.filter(it=>it.sets!=null);
+  const totalSets=knownSets.length?knownSets.reduce((s,it)=>s+(parseInt(it.sets)||0),0):null;
+  return {list,n:list.length,totalSets,minutes:previewEstMinutes(totalSets)};
+}
+
+// ── F0.7D — 3-staps dispatcher + navigatie ──
 function renderTrainingPreview(){
   const el=document.getElementById('tp-body');
   if(!el||!previewCtx)return;
-  const def=previewCtx.def;
-  const list=previewWorkingList();
-  const total=def.exercises.length;
+  const v=previewCtx.view||'overview';
+  if(v==='exercise')return renderTPExercise(el);
+  if(v==='plan')return renderTPPlan(el);
+  return renderTPOverview(el);
+}
+function previewGoto(view){ if(!previewCtx)return; previewCtx.view=view; previewCtx.swapPickerFor=null; renderTrainingPreview(); }
+function previewAdjustFromOverview(){ if(!previewCtx)return; previewCtx.view='plan'; previewCtx.adjustOpen=true; previewCtx.swapPickerFor=null; renderTrainingPreview(); }
+function previewOpenExercise(origId){ if(!previewCtx)return; previewCtx.focusEx=origId; previewCtx.view='exercise'; renderTrainingPreview(); }
+function previewBackToPlan(){ if(!previewCtx)return; previewCtx.view='plan'; previewCtx.swapPickerFor=null; renderTrainingPreview(); }
+function previewCloseModal(){ closeModal('m-training-preview'); }
+function previewSwapFromDetail(origId){ if(!previewCtx)return; previewCtx.view='plan'; previewCtx.adjustOpen=true; previewOpenSwapPicker(origId); }
+function tpHeader(title,backFn){
+  return `<div class="tpv2-head">
+    <button class="tpv2-back" onclick="${backFn}" aria-label="Terug">←</button>
+    <div class="tpv2-htitle">${escHtml(title)}</div><div class="tpv2-hspace"></div></div>`;
+}
 
-  // Omvang: alleen tonen wat betrouwbaar telbaar is — geen verzonnen/geschatte duur
-  // (WB.totalTime() vereist een per-item "dur"-veld dat niet in de Definition-adapter
-  // bewaard wordt; zie eindrapport Deel R). Sets alleen optellen als er ÜBERHAUPT
-  // ergens een sets-waarde bekend is, anders weglaten i.p.v. "0 sets" te tonen.
-  const knownSets=list.filter(it=>it.sets!=null);
-  const totalSets=knownSets.length?knownSets.reduce((s,it)=>s+(parseInt(it.sets)||0),0):null;
-  const metaParts=[list.length+' oefening'+(list.length===1?'':'en')];
-  if(totalSets!=null)metaParts.push(totalSets+' sets');
-
-  // Herstel: uitsluitend de al bestaande, elders berekende dagfactor-status
-  // (trainReadiness/window.homeDfDetail) — geen nieuw algoritme, en weggelaten
-  // wanneer die data er niet is (geen HRV-checkin vandaag bijvoorbeeld).
-  let readyHtml='';
-  try{
-    if(window.homeDfDetail){
-      const rd=trainReadiness({factor:window.homeDfDetail.factor});
-      if(rd)readyHtml=`<div class="today-ready" style="margin:8px 0 4px"><span class="today-dot"></span>${escHtml(rd.txt)}</div>`;
-    }
-  }catch(e){/* recovery-data niet beschikbaar — gewoon weglaten, geen foutmelding nodig */}
-
+// ── SCHERM 1 — OVERZICHT & CONTEXT ──
+function renderTPOverview(el){
+  const def=previewCtx.def, c=previewCounts();
+  const muscles=previewTrainingMuscles();
   const goalLbl=def.goal?escHtml(String(def.goal)):'';
+  const focusSay=muscles.length?`Focus vandaag op ${escHtml(musclePhrase(muscles))}.`:'';
+  let readySay='';
+  try{ if(window.homeDfDetail){ const rd=trainReadiness({factor:window.homeDfDetail.factor}); if(rd)readySay=' '+escHtml(rd.txt)+'.'; } }catch(e){}
+  const say=(focusSay||readySay)?`<div class="tpv2-hero-say">${focusSay}${readySay}</div>`:'';
+  // "Waarom vandaag?" — echte herstel-data (previewCtx.recovery)
+  let whyHtml='';
+  const rec=previewCtx.recovery;
+  if(rec===null){ whyHtml=`<div class="tpv2-why"><div class="tpv2-why-row"><span class="tpv2-why-nm" style="color:var(--g4);font-weight:600">Herstel laden…</span></div></div>`; }
+  else if(Array.isArray(rec)&&rec.length){
+    const rows=rec.slice(0,6).map(r=>{ const st=previewRecoStatus(r.pct);
+      return `<div class="tpv2-why-row"><span class="tpv2-why-nm">${escHtml(r.muscle)}</span>
+        <span class="tpv2-why-st" style="color:${st.col}">${st.ic} ${st.txt}</span>
+        <span class="tpv2-why-pct">${Math.round(r.pct)}%</span></div>`;}).join('');
+    whyHtml=`<div class="tpv2-sec">Waarom vandaag?</div><div class="tpv2-why">${rows}</div>
+      <div style="font-size:11px;color:var(--g4);margin:6px 2px 0">Gebaseerd op je laatste trainingen en herstel.</div>`;
+  }
+  const ov=`<div class="tpv2-sec">Training overzicht</div><div class="tpv2-ov">
+    <div class="tpv2-ovc"><div class="v">${c.n}</div><div class="k">Oefening${c.n===1?'':'en'}</div></div>
+    ${c.totalSets!=null?`<div class="tpv2-ovc"><div class="v">${c.totalSets}</div><div class="k">Sets</div></div>`:''}
+    ${c.minutes!=null?`<div class="tpv2-ovc"><div class="v">±${c.minutes}</div><div class="k">Minuten</div></div>`:''}
+  </div>`;
+  el.innerHTML=`${tpHeader('Training Preview','previewCloseModal()')}
+    <div class="tpv2-hero">
+      <div class="tpv2-hero-nm">${escHtml(def.name)}${goalLbl?`<span class="tpv2-chip">${goalLbl}</span>`:''}</div>
+      <div class="tpv2-hero-sub">${c.n} oefening${c.n===1?'':'en'}${c.totalSets!=null?` · ${c.totalSets} sets`:''}${c.minutes!=null?` · ±${c.minutes} min`:''}</div>
+      ${say}
+    </div>
+    ${whyHtml}
+    ${ov}
+    <div class="tpv2-cta" style="margin-top:18px;flex-direction:column">
+      <button class="btn btn-r" style="width:100%" onclick="previewGoto('plan')">Bekijk wat je gaat doen →</button>
+      <button class="btn btn-o" style="width:100%;margin-top:8px" onclick="previewAdjustFromOverview()">Training aanpassen</button>
+    </div>`;
+}
 
-  const rows=list.map((it,i)=>{
-    const nm=escHtml(previewExerciseName(it.exercise_id));
+// ── SCHERM 2 — WAT GA JE DOEN? ──
+function renderTPPlan(el){
+  const def=previewCtx.def, c=previewCounts(), list=c.list;
+  const adj=previewCtx.adjustOpen;
+  const cards=list.map((it,i)=>{
+    const m=previewExMeta(it.exercise_id);
+    const nm=escHtml(m.name);
+    const poster=previewExPoster(it.exercise_id);
+    const thumb=poster?`<img class="tpv2-exthumb" src="${poster}" alt="">`:`<div class="tpv2-exthumb">🏋️</div>`;
     const tgt=previewFormatTarget(it);
+    const role=m.type?`<div class="tpv2-exrole">${escHtml(m.type)}</div>`:'';
+    const tags=[...(m.equipment||[]),...(m.primary||[]).slice(0,2)].slice(0,3)
+      .map(t=>`<span class="tpv2-tag">${escHtml(t)}</span>`).join('');
     const swapped=previewCtx.swaps[it.original_exercise_id];
-    return `<div class="lrow" style="align-items:center;gap:8px" data-tp-ex="${escHtml(it.original_exercise_id)}">
-      <div style="width:22px;height:22px;border-radius:7px;background:var(--g1);color:var(--g4);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${i+1}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:700${swapped?';color:var(--accent)':''}">${nm}${swapped?' <span style="font-size:10px;color:var(--g4);font-weight:600">(vervangen)</span>':''}</div>
-        ${tgt?`<div style="font-size:11px;color:var(--g4)">${escHtml(tgt)}</div>`:''}
-      </div>
-      ${previewCtx.adjustOpen?`<div style="display:flex;gap:4px">
-        <button onclick="previewOpenSwapPicker('${escHtml(it.original_exercise_id)}')" title="Vervangen" aria-label="${nm} vervangen" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px">⇄</button>
-        <button onclick="previewRemoveExercise('${escHtml(it.original_exercise_id)}')" title="Overslaan" aria-label="${nm} overslaan" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px">✕</button>
-        <button onclick="previewMoveExercise('${escHtml(it.original_exercise_id)}',-1)" ${i===0?'disabled':''} title="Omhoog" aria-label="${nm} omhoog" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px${i===0?';opacity:.35':''}">↑</button>
-        <button onclick="previewMoveExercise('${escHtml(it.original_exercise_id)}',1)" ${i===list.length-1?'disabled':''} title="Omlaag" aria-label="${nm} omlaag" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px${i===list.length-1?';opacity:.35':''}">↓</button>
-      </div>`:''}
+    const why=m.why?`<div class="tpv2-exwhy">${escHtml(m.why)}</div>`:'';
+    const adjHtml=adj?`<div style="display:flex;gap:4px;margin-left:auto" onclick="event.stopPropagation()">
+        <button onclick="previewOpenSwapPicker('${escHtml(it.original_exercise_id)}')" title="Vervangen" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px">⇄</button>
+        <button onclick="previewRemoveExercise('${escHtml(it.original_exercise_id)}')" title="Overslaan" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px">✕</button>
+        <button onclick="previewMoveExercise('${escHtml(it.original_exercise_id)}',-1)" ${i===0?'disabled':''} title="Omhoog" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px${i===0?';opacity:.35':''}">↑</button>
+        <button onclick="previewMoveExercise('${escHtml(it.original_exercise_id)}',1)" ${i===list.length-1?'disabled':''} title="Omlaag" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px${i===list.length-1?';opacity:.35':''}">↓</button>
+      </div>`:'';
+    return `<div class="tpv2-excard" role="button" tabindex="0" onclick="previewOpenExercise('${escHtml(it.original_exercise_id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();previewOpenExercise('${escHtml(it.original_exercise_id)}')}">
+      ${thumb}
+      <div class="tpv2-exb">${role}<div class="tpv2-exnm">${nm}${swapped?' <span style="font-size:10px;color:var(--g4);font-weight:600">(vervangen)</span>':''}</div>
+        <div class="tpv2-extags">${tags}</div>${why}</div>
+      ${tgt?`<div class="tpv2-exmeta">${escHtml(tgt)}</div>`:''}
+      ${adjHtml}
     </div>`;
   }).join('');
-
-  const removedRows=[...previewCtx.removedIds].map(id=>`<div class="lrow" style="align-items:center;gap:8px;opacity:.5;text-decoration:line-through">
-      <div style="flex:1;font-size:13px">${escHtml(previewExerciseName(id))}</div>
+  const removedRows=[...previewCtx.removedIds].map(id=>`<div class="lrow" style="align-items:center;gap:8px;opacity:.55;text-decoration:line-through">
+      <div style="flex:1;font-size:13px">${escHtml(previewExMeta(id).name)}</div>
       <button onclick="previewUndoRemove('${escHtml(id)}')" class="btn btn-o btn-sm" style="text-decoration:none">Terug</button>
     </div>`).join('');
-
   const swapPickerHtml=previewCtx.swapPickerFor?previewRenderSwapPicker():'';
-
-  el.innerHTML=`
-    <div class="modal-title" style="margin-bottom:2px">${escHtml(def.name)}</div>
-    ${goalLbl?`<div style="font-size:12px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">${goalLbl}</div>`:''}
-    <div style="font-size:12px;color:var(--g4);font-weight:600;margin-bottom:4px">${metaParts.join(' · ')}</div>
-    ${readyHtml}
-    <div style="margin-top:10px">${rows||'<div style="font-size:12px;color:var(--g4)">Geen oefeningen beschikbaar</div>'}</div>
-    ${removedRows?`<div style="margin-top:10px;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--g4)">Overgeslagen voor vandaag</div>${removedRows}`:''}
+  el.innerHTML=`${tpHeader('Wat ga je doen?',"previewGoto('overview')")}
+    <div class="tpv2-ov" style="margin-bottom:14px">
+      <div class="tpv2-ovc"><div class="v">${c.n}</div><div class="k">Oefening${c.n===1?'':'en'}</div></div>
+      ${c.totalSets!=null?`<div class="tpv2-ovc"><div class="v">${c.totalSets}</div><div class="k">Sets</div></div>`:''}
+      ${c.minutes!=null?`<div class="tpv2-ovc"><div class="v">±${c.minutes}</div><div class="k">Minuten</div></div>`:''}
+    </div>
+    ${cards||'<div style="font-size:12px;color:var(--g4)">Geen oefeningen beschikbaar</div>'}
+    ${removedRows?`<div class="tpv2-sec">Overgeslagen voor vandaag</div>${removedRows}`:''}
     ${swapPickerHtml}
     <div style="margin-top:16px">
-      <button class="btn btn-r" style="width:100%" onclick="previewStartTraining()">Start training</button>
-      <button class="btn btn-o" style="width:100%;margin-top:8px" onclick="previewToggleAdjust()">${previewCtx.adjustOpen?'Klaar met aanpassen':'Vandaag aanpassen'}</button>
+      <button class="btn btn-o" style="width:100%" onclick="previewToggleAdjust()">${adj?'Klaar met aanpassen':'Training aanpassen'}</button>
+      <button class="btn btn-r" style="width:100%;margin-top:8px" onclick="previewStartTraining()">START TRAINING</button>
       ${previewCtx.source==='custom'?`<div style="text-align:center;margin-top:10px">
         <a href="javascript:void(0)" onclick="previewOpenBuilder()" style="font-size:10.5px;color:var(--g2);font-weight:600;text-decoration:underline">Training structureel wijzigen</a>
       </div>`:''}
-    </div>
-  `;
+    </div>`;
+}
+
+// ── SCHERM 3 — OEFENING DETAILS ──
+function renderTPExercise(el){
+  const origId=previewCtx.focusEx;
+  const effId=previewCtx.swaps[origId]||origId;
+  const m=previewExMeta(effId);
+  const poster=previewExPoster(effId);
+  const hero=poster?`<img class="tpv2-d-hero" src="${poster}" alt="">`:`<div class="tpv2-d-hero">🏋️</div>`;
+  const tags=[...(m.primary||[]),...(m.secondary||[]),...(m.equipment||[]),...(m.type?[m.type]:[])]
+    .filter((t,i,a)=>t&&a.indexOf(t)===i).map(t=>`<span class="tpv2-tag">${escHtml(t)}</span>`).join('');
+  const whyBlock=m.why?`<div class="tpv2-d-h">Waarom deze oefening?</div><div class="tpv2-d-say">${escHtml(m.why)}</div>`:'';
+  const fr=[]; if(m.fatigue)fr.push('Fatigue: '+escHtml(m.fatigue)); if(m.recovery)fr.push('Herstel: '+escHtml(m.recovery));
+  const frBlock=fr.length?`<div style="display:flex;gap:6px;margin-top:8px">${fr.map(x=>`<span class="tpv2-tag">${x}</span>`).join('')}</div>`:'';
+  const cues=(m.cues||[]).map(x=>`<div class="tpv2-li"><span class="ic" style="color:var(--teal,var(--accent))">✓</span><span>${escHtml(x)}</span></div>`).join('');
+  const mistakes=(m.mistakes||[]).map(x=>`<div class="tpv2-li"><span class="ic" style="color:#c0392b">✗</span><span>${escHtml(x)}</span></div>`).join('');
+  let videoBlock='';
+  if(m.video&&m.video.yt)videoBlock=`<div class="tpv2-d-h">Video</div><a class="btn btn-o" style="width:100%;text-decoration:none;display:block;text-align:center" href="https://www.youtube.com/watch?v=${encodeURIComponent(m.video.yt)}" target="_blank" rel="noopener">▶ Bekijk video</a>`;
+  else if(m.video&&m.video.movekit)videoBlock=`<div class="tpv2-d-h">Video</div><div style="font-size:12px;color:var(--g4)">Video beschikbaar in de oefeningbibliotheek.</div>`;
+  const altNames=(m.alternatives||[]).slice(0,4).map(a=>{const am=previewExMeta(a);return am.name;}).filter(Boolean);
+  const altBlock=altNames.length?`<div class="tpv2-d-h">Alternatieven</div><div class="tpv2-d-tags">${altNames.map(a=>`<span class="tpv2-tag">${escHtml(a)}</span>`).join('')}</div>`:'';
+  el.innerHTML=`${tpHeader(m.name,'previewBackToPlan()')}
+    ${hero}
+    <div class="tpv2-d-nm">${escHtml(m.name)}</div>
+    ${tags?`<div class="tpv2-d-tags">${tags}</div>`:''}
+    ${whyBlock}
+    ${frBlock}
+    ${cues?`<div class="tpv2-d-h">Techniek</div>${cues}`:''}
+    ${mistakes?`<div class="tpv2-d-h warn">Veelgemaakte fouten</div>${mistakes}`:''}
+    ${videoBlock}
+    ${altBlock}
+    <div class="tpv2-cta" style="margin-top:16px">
+      <button class="btn btn-o" style="flex:1" onclick="previewSwapFromDetail('${escHtml(origId)}')">⇄ Vervang</button>
+      <button class="btn btn-r" style="flex:1" onclick="previewBackToPlan()">Terug naar overzicht</button>
+    </div>`;
 }
 
 function previewToggleAdjust(){

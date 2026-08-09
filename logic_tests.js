@@ -1937,6 +1937,136 @@ test('newTrainingInstanceId levert unieke, niet-lege id\'s (nodig voor offline-v
   assertEq(ids.size,200,'200 aanroepen moeten 200 unieke id\'s geven');
 });
 
+// ── TRAINING DEFINITION-ADAPTER — Werkblok B ──────────────────────────────
+// Reïmplementaties van de kernlogica van saveWorkout/savedList/duplicateWorkout/
+// resumeWorkout en de Definition-adapter, zonder Supabase/DOM — zelfde patroon
+// als de rest van dit bestand.
+console.log("\n🧩 Training Definition — Werkblok B (Builder ↔ custom_trainings)");
+
+function targetsFromPlanItems_T(items){
+  return (items||[]).map(it=>({exercise_id:it.id,sets:it.sets,reps:it.reps,rest:it.rest,rpe:it.rpe||null,pick:it.pick||null}));
+}
+function planItemsFromTargets_T(targets){
+  return (targets||[]).map(et=>({id:et.exercise_id,pick:et.pick||'compound',sets:et.sets,reps:et.reps,rest:et.rest}));
+}
+// Reimplementatie van WB.saveWorkout()'s rij-opbouw (zonder de sbPostQ-call zelf)
+function buildSavedCustomTrainingRow_T(name,plan,sel,quality,idFn){
+  const id=idFn?idFn():('custom_'+Date.now());
+  return {
+    id, name:name||'Workout', color:'#0E3B4A', note:'',
+    exercises:(plan.items||[]).map(it=>it.id),
+    source:'builder',
+    metadata:{sel:JSON.parse(JSON.stringify(sel)),quality,created:Date.now()},
+    exercise_targets:targetsFromPlanItems_T(plan.items)
+  };
+}
+function savedListFrom_T(customTrainingsArr,wbFavs){
+  return (customTrainingsArr||[]).filter(t=>t.source==='builder').map(t=>({
+    id:t.id, name:t.name,
+    sel:(t.metadata&&t.metadata.sel)?JSON.parse(JSON.stringify(t.metadata.sel)):null,
+    plan:{items:planItemsFromTargets_T(t.exercise_targets)},
+    fav:!!(wbFavs&&wbFavs[t.id]),
+    q:(t.metadata&&t.metadata.quality&&t.metadata.quality.score)||0,
+    created:(t.metadata&&t.metadata.created)||0
+  }));
+}
+
+test('saveWorkout-reïmplementatie: bouwt een custom_trainings-rij met source=builder + volledige targets', ()=>{
+  const plan={items:[{id:'bench',pick:'compound',sets:4,reps:'6-8',rest:90},{id:'ohp',pick:'compound',sets:3,reps:'8',rest:75}]};
+  const sel={goal:'hypertrofie',time:45};
+  const row=buildSavedCustomTrainingRow_T('Push Focus',plan,sel,{score:82});
+  assertEq(row.source,'builder');
+  assertEq(row.exercises.length,2,'platte exercises-lijst blijft bestaan voor bestaande lezers (startCustomTraining, renderCustomTrainList)');
+  assertEq(row.exercises[0],'bench');
+  assertEq(row.exercise_targets.length,2);
+  assertEq(row.exercise_targets[0].sets,4);
+  assertEq(row.exercise_targets[0].rest,90);
+  assertEq(row.metadata.sel.goal,'hypertrofie');
+  assertEq(row.metadata.quality.score,82);
+});
+
+test('savedList-reïmplementatie: geeft precies dezelfde vorm terug als de oude tk_wb_saved-gebaseerde versie ({id,name,sel,plan,fav,q,created})', ()=>{
+  const plan={items:[{id:'squat',pick:'compound',sets:5,reps:'5',rest:180}]};
+  const row=buildSavedCustomTrainingRow_T('Legday',plan,{goal:'kracht'},{score:70},()=>'custom_1');
+  const list=savedListFrom_T([row],{});
+  assertEq(list.length,1);
+  const item=list[0];
+  assert('id' in item && 'name' in item && 'sel' in item && 'plan' in item && 'fav' in item && 'q' in item && 'created' in item,'vorm moet exact matchen — WBUI mag niet hoeven te wijzigen');
+  assertEq(item.plan.items[0].id,'squat');
+  assertEq(item.plan.items[0].sets,5);
+  assertEq(item.q,70);
+});
+
+test('savedList-reïmplementatie: negeert handmatig aangemaakte custom trainingen (source!=builder)', ()=>{
+  const manual={id:'custom_2',name:'Handmatig',source:null,exercises:['bench'],exercise_targets:[]};
+  const builder=buildSavedCustomTrainingRow_T('Builder-training',{items:[{id:'bench',sets:3,reps:'10'}]},{goal:'x'},{score:50},()=>'custom_3');
+  const list=savedListFrom_T([manual,builder],{});
+  assertEq(list.length,1,'alleen de Builder-afkomstige training hoort in WB.savedList()');
+  assertEq(list[0].id,'custom_3');
+});
+
+test('favWorkout blijft lokaal-only en beïnvloedt geen andere rij', ()=>{
+  const favs={};
+  favs['custom_9']=!favs['custom_9'];
+  assertEq(favs['custom_9'],true);
+  assertEq(favs['custom_8'],undefined,'togglen van één id mag geen andere id aanraken');
+});
+
+test('resumeWorkout-reïmplementatie: reconstrueert st.plan/st.sel 1-op-1 uit metadata+exercise_targets', ()=>{
+  const original={items:[{id:'deadlift',pick:'compound',sets:1,reps:'5',rest:240}]};
+  const row=buildSavedCustomTrainingRow_T('DL dag',original,{goal:'kracht',time:30},{score:60},()=>'custom_4');
+  // simuleer resumeWorkout()
+  const resumedSel=JSON.parse(JSON.stringify(row.metadata.sel));
+  const resumedPlan={items:planItemsFromTargets_T(row.exercise_targets)};
+  assertEq(resumedSel.goal,'kracht');
+  assertEq(resumedPlan.items[0].id,'deadlift');
+  assertEq(resumedPlan.items[0].sets,1);
+  assertEq(resumedPlan.items[0].rest,240);
+});
+
+test('Backward compatibility: handmatig aangemaakte custom training zonder exercise_targets levert nog steeds bruikbare Definition op (nulls, geen crash)', ()=>{
+  function getCustomDefinitionLocal_T(t){
+    return {
+      id:t.id, source:'custom', name:t.name,
+      exercises:(t.exercise_targets&&t.exercise_targets.length?t.exercise_targets:
+        (t.exercises||[]).map(exId=>({exercise_id:exId,sort_order:null,sets:null,reps:null,rpe:null,rest:null})))
+    };
+  }
+  const manual={id:'custom_5',name:'Oude training',exercises:['ohp','row'],exercise_targets:[]};
+  const def=getCustomDefinitionLocal_T(manual);
+  assertEq(def.exercises.length,2);
+  assertEq(def.exercises[0].exercise_id,'ohp');
+  assertEq(def.exercises[0].sets,null,'geen targets beschikbaar → null, geen crash, geen verzonnen waarde');
+});
+
+test('migrateLegacyWbSaved-reïmplementatie: bestaand tk_wb_saved-item wordt correct omgezet, is idempotent (geen dubbele rij bij herhaalde aanroep)', ()=>{
+  const legacyItem={id:'w1700000000',name:'Oude builder workout',sel:{goal:'hypertrofie'},plan:{items:[{id:'lunge',sets:3,reps:'12',rest:60}]},q:65,created:1700000000,fav:true};
+  function migrateOne_T(w,customTrainingsArr){
+    if(customTrainingsArr.some(t=>t.id===w.id))return customTrainingsArr; // idempotent-check
+    const items=(w.plan&&w.plan.items)||[];
+    const t={id:w.id,name:w.name,source:'builder',metadata:{sel:w.sel,quality:{score:w.q},created:w.created},exercise_targets:targetsFromPlanItems_T(items),exercises:items.map(it=>it.id)};
+    return customTrainingsArr.concat([t]);
+  }
+  let arr=[];
+  arr=migrateOne_T(legacyItem,arr);
+  assertEq(arr.length,1);
+  assertEq(arr[0].source,'builder');
+  arr=migrateOne_T(legacyItem,arr); // nogmaals aanroepen — moet niets dupliceren
+  assertEq(arr.length,1,'idempotentie: hetzelfde legacy-item mag nooit een tweede rij opleveren');
+});
+
+test('snapshotFromCustomTraining draagt nu ook sets/reps/rpe/rest/pick door indien aanwezig, met null-fallback anders', ()=>{
+  function snapshotFromCustomTraining_T(def,texs,modifications=[]){
+    return {source:'custom_training',definition_id:def?.id??null,
+      items:(texs||[]).map(t=>({exercise_id:t.exercise_id,sort_order:t.sort_order,sets:t.sets??null,reps:t.reps??null,rpe:t.rpe??null,rest:t.rest??null,pick:t.pick??null})),
+      modifications};
+  }
+  const rich=snapshotFromCustomTraining_T({id:'c1'},[{exercise_id:'bench',sort_order:1,sets:4,reps:'8',rpe:8,rest:90,pick:'compound'}]);
+  assertEq(rich.items[0].sets,4);
+  const bare=snapshotFromCustomTraining_T({id:'c2'},[{exercise_id:'ohp',sort_order:1}]);
+  assertEq(bare.items[0].sets,null,'oude/handmatige rijen zonder targets geven null, geen crash');
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

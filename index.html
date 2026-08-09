@@ -4210,7 +4210,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.23';
+const APP_VER = 'v4.24.25';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -5009,7 +5009,12 @@ async function syncCustomTrainingsFromSupabase(){
       const exRows=await sbGet('custom_training_exercises','&order=sort_order.asc');
       customTrainings=rows.map(r=>({
         id:r.id, name:r.naam, color:r.kleur||'#111111', note:r.notitie||'',
-        exercises: exRows.filter(e=>e.custom_training_id===r.id).map(e=>e.exercise_id)
+        exercises: exRows.filter(e=>e.custom_training_id===r.id).map(e=>e.exercise_id),
+        // Werkblok B — additief, bestaande "exercises"-vorm hierboven blijft ongewijzigd
+        // voor alle bestaande lezers (startCustomTraining, renderCustomTrainList, etc.):
+        source:r.source||null,
+        metadata:r.metadata||null,
+        exercise_targets: exRows.filter(e=>e.custom_training_id===r.id).map(e=>({exercise_id:e.exercise_id,sets:e.sets,reps:e.reps,rpe:e.rpe,rest:e.rest,pick:e.pick}))
       }));
       localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
       renderCustomTrainBtns(); renderCustomTrainList();
@@ -5023,6 +5028,7 @@ async function syncCustomTrainingsFromSupabase(){
         }
       }
     }
+    await migrateLegacyWbSaved();
   }catch(e){/* offline — lokale waarde blijft leidend */}
 }
 async function pushCustomTrainingExercises(t){
@@ -5031,6 +5037,52 @@ async function pushCustomTrainingExercises(t){
   for(const exId of (t.exercises||[])){
     await sbPost('custom_training_exercises',{custom_training_id:t.id, exercise_id:exId, sort_order:so++});
   }
+}
+// pushCustomTrainingExercisesRich — Werkblok B, alleen gebruikt door Builder-afkomstige
+// custom trainingen (t.source==='builder'): schrijft óók sets/reps/rpe/rest/pick per
+// oefening (nieuwe, nullable kolommen), via de offline-veilige sbDelQ/sbPostQ-wrappers
+// i.p.v. de niet-wachtrij-veilige sbDel/sbPost die pushCustomTrainingExercises gebruikt.
+// pushCustomTrainingExercises zelf blijft ONGEWIJZIGD — handmatig aangemaakte custom
+// trainingen (zonder Builder-targets) blijven exact zo werken als voorheen.
+async function pushCustomTrainingExercisesRich(t){
+  await sbDelQ('custom_training_exercises','custom_training_id=eq.'+t.id);
+  let so=0;
+  for(const et of (t.exercise_targets||[])){
+    await sbPostQ('custom_training_exercises',{custom_training_id:t.id,exercise_id:et.exercise_id,sort_order:so++,sets:et.sets??null,reps:et.reps??null,rpe:et.rpe??null,rest:et.rest??null,pick:et.pick??null});
+  }
+}
+// migrateLegacyWbSaved — Werkblok B, eenmalige overzet van bestaande "tk_wb_saved"-items
+// (Builder-trainingen die vóór Werkblok B alleen lokaal bestonden) naar customTrainings/
+// custom_trainings, zodat ze ook zichtbaar worden buiten het Builder-scherm (Mijn
+// trainingen e.d.) — conform Werkblok A's Deferred-punt 4. "tk_wb_saved" zelf wordt NIET
+// verwijderd (geen destructieve migratie); dit is puur additief en idempotent (een
+// "tk_wb_migrated_v1"-vlag voorkomt dat dezelfde items twee keer worden aangemaakt).
+async function migrateLegacyWbSaved(){
+  try{
+    if(localStorage.getItem('tk_wb_migrated_v1'))return;
+    const legacy=JSON.parse(localStorage.getItem('tk_wb_saved')||'[]');
+    if(legacy.length){
+      const favs=JSON.parse(localStorage.getItem('tk_wb_favs')||'{}');
+      for(const w of legacy){
+        if(customTrainings.some(t=>t.id===w.id))continue;
+        const items=(w.plan&&w.plan.items)||[];
+        const t={
+          id:w.id, name:w.name||'Workout', color:'#0E3B4A', note:'',
+          exercises:items.map(it=>it.id),
+          source:'builder',
+          metadata:{sel:w.sel||null,quality:{score:w.q||0},created:w.created||Date.now()},
+          exercise_targets:items.map(it=>({exercise_id:it.id,sets:it.sets,reps:it.reps,rest:it.rest,rpe:it.rpe||null,pick:it.pick||null}))
+        };
+        customTrainings.push(t);
+        await sbPostQ('custom_trainings',{id:t.id,naam:t.name,kleur:t.color,notitie:null,sort_order:customTrainings.length-1,scope:'personal',source:'builder',metadata:t.metadata});
+        await pushCustomTrainingExercisesRich(t);
+        if(w.fav)favs[w.id]=true;
+      }
+      localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
+      localStorage.setItem('tk_wb_favs',JSON.stringify(favs));
+    }
+    localStorage.setItem('tk_wb_migrated_v1','1');
+  }catch(e){console.warn('migrateLegacyWbSaved',e);/* volgende sync-poging probeert opnieuw, want de vlag is dan nog niet gezet */}
 }
 const SPORT_LABELS={kracht:'Krachttraining',powerlifting:'Powerlifting',crossfit:'CrossFit/Functioneel',hyrox:'HYROX',bodybuilding:'Bodybuilding',kettlebell:'Kettlebell',swimming:'Zwemmen',atletiek:'Atletiek',triathlon:'Triathlon',hardlopen:'Hardlopen',stairmaster:'Stairmaster',wielrennen:'Wielrennen',roeien:'Roeien',calisthenics:'Calisthenics',strongman:'Strongman',weightlifting:'Olympic Weightlifting',algemeen:'Algemene Fitness',functioneel:'Functionele Fitness'};
 const TYPE_LABELS={strength:'Kracht',wod:'WOD',kettlebell:'Kettlebell',carry:'Carry',cardio:'Cardio',rowing:'Roeien'};
@@ -5257,8 +5309,181 @@ function describeOfflineQueueItem(item){
   if(item.table==='exercises'&&item.body)return `${methodLbl} oefening: ${item.body.name||item.body.id}`;
   if(item.table==='exercises'&&item.filter)return `PR-update oefening`;
   if(item.table==='program_blocks')return `Programma-blok afgerond`;
+  if(item.table==='training_instances')return `${methodLbl}: trainingssessie (${item.body?.status||'update'})`;
   return `${methodLbl}: ${item.table}`;
 }
+
+// ══════════════════════════════════════════════════════════
+// TRAINING INSTANCE — Werkblok A (fundering Definition → Instance → Sessions)
+// ── Alleen de datalaag/service. GEEN UI, GEEN aanroepen vanuit Builder/Guided
+//    Workout/Training A/B in dit werkblok — dat is nadrukkelijk Werkblok C/E.
+//
+// Waarom "Definition" hier NIET één nieuwe tabel is: "vaste_trainingen" en
+// "custom_trainings" zijn vandaag twee aparte, bestaande definitie-bronnen met
+// hun eigen id-ruimte. Een training_instances-rij verwijst daarom naar hooguit
+// één van beide via twee losse, nullable FK's (vaste_training_id/custom_training_id)
+// i.p.v. een nieuwe, samenvoegende "training_definitions"-tabel te introduceren —
+// dat zou een grotere migratie zijn dan dit werkblok noodzakelijk maakt. Zie het
+// eindrapport, sectie "Deferred", voor de open vraag of die samenvoeging later
+// alsnog gewenst is (Werkblok B-materiaal, geen Werkblok A-beslissing).
+//
+// Waarom "id" hier WEL client-gegenereerd is (afwijkend van de rest van de app,
+// waar Postgres altijd het id genereert): sbPostQ/sbPatchQ queuen bij offline
+// een POST/PATCH, maar geven nooit het server-gegenereerde id terug (dat doet
+// alleen het niet-offline-veilige sbPostReturning). Een training kan offline
+// starten (net als iedere andere actie in dit offline-first ontwerp) en de
+// eerste gelogde set moet dan al naar hetzelfde instance-id kunnen verwijzen,
+// vóórdat er ooit een server-round-trip is geweest. Client-side UUID (via
+// crypto.randomUUID(), overal beschikbaar in de ondersteunde browsers) lost dit
+// op zonder de offline-queue zelf te hoeven aanpassen.
+function newTrainingInstanceId(){
+  return (typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():('ti-'+Date.now()+'-'+Math.random().toString(16).slice(2));
+}
+
+// createTrainingInstance({vasteTrainingId, customTrainingId, snapshot}) → instance-id of null
+// Precies één van vasteTrainingId/customTrainingId mag gezet zijn (of geen van
+// beide, voor een volledig ad-hoc training zonder opgeslagen definitie — bv. een
+// toekomstige rechtstreekse Builder-start, zoals bestaand gedrag bij GW.start()).
+async function createTrainingInstance({vasteTrainingId=null,customTrainingId=null,snapshot=null}={}){
+  if(vasteTrainingId&&customTrainingId){console.error('createTrainingInstance: niet beide vasteTrainingId en customTrainingId tegelijk');return null;}
+  if(!authSession?.user?.id){console.error('createTrainingInstance: geen ingelogde gebruiker');return null;}
+  const id=newTrainingInstanceId();
+  const row={
+    id,
+    user_id:authSession.user.id,
+    vaste_training_id:vasteTrainingId,
+    custom_training_id:customTrainingId,
+    status:'active',
+    started_at:new Date().toISOString(),
+    completed_at:null,
+    snapshot:snapshot||null
+  };
+  const ok=await sbPostQ('training_instances',row);
+  return ok?id:null;
+}
+
+// completeTrainingInstance(instanceId) → true/false (queuet offline zoals alle sb*Q-writes)
+async function completeTrainingInstance(instanceId){
+  if(!instanceId)return false;
+  return await sbPatchQ('training_instances','id=eq.'+encodeURIComponent(instanceId),{status:'completed',completed_at:new Date().toISOString()});
+}
+
+// getTrainingInstance(instanceId) → rij of null. Let op: dit is een directe sbGet
+// (geen offline-cache) — geschikt voor Werkblok A-verificatie/tests, een eventuele
+// toekomstige UI die een instance direct na aanmaak moet tonen doet er goed aan
+// zelf de net-aangemaakte rij te onthouden i.p.v. hierop te vertrouwen vlak na een
+// offline (nog niet gesyncte) create.
+async function getTrainingInstance(instanceId){
+  if(!instanceId)return null;
+  const rows=await sbGet('training_instances','&id=eq.'+encodeURIComponent(instanceId)+'&limit=1');
+  return rows[0]||null;
+}
+
+// snapshotFromVasteTraining(def, texs, modifications) → snapshot-object voor een
+// vaste_trainingen-afkomstige instance. "modifications" is een vrije-vorm lijst
+// (bv. [{type:'remove',exercise_id:...}]) — bewust ongetypeerd, want de precieze
+// vorm van "vandaag aanpassen" wordt pas in Werkblok C ontworpen; dit werkblok
+// hoeft alleen te garanderen dát een snapshot het onderscheid plan/uitvoering kan
+// dragen (Definition of Done A3/A4), niet hoe de UI die vult.
+function snapshotFromVasteTraining(def,texs,modifications=[]){
+  return {
+    source:'vaste_training',
+    definition_id:def?.id??null,
+    items:(texs||[]).map(t=>({exercise_id:t.exercise_id,sets:t.sets,reps:t.reps,rpe:t.rpe,sort_order:t.sort_order})),
+    modifications
+  };
+}
+function snapshotFromCustomTraining(def,texs,modifications=[]){
+  return {
+    source:'custom_training',
+    definition_id:def?.id??null,
+    // Werkblok B: sets/reps/rpe/rest/pick zijn nieuwe, nullable kolommen — voor
+    // handmatig aangemaakte custom trainingen (zonder Builder-oorsprong) zijn dit
+    // gewoon null-waarden, functioneel identiek aan de oude, kalere snapshot-vorm.
+    items:(texs||[]).map(t=>({exercise_id:t.exercise_id,sort_order:t.sort_order,sets:t.sets??null,reps:t.reps??null,rpe:t.rpe??null,rest:t.rest??null,pick:t.pick??null})),
+    modifications
+  };
+}
+
+// ══════════════════════════════════════════════════════════
+// TRAINING DEFINITION — ADAPTER (Werkblok B)
+// ── Eén conceptuele leeslaag bovenop de twee bestaande, fysieke definitiebronnen
+//    ("vaste_trainingen"+"training_exercises" en "custom_trainings"+
+//    "custom_training_exercises"). GEEN nieuwe tabel, GEEN migratie van bestaande
+//    rijen — zie eindrapport voor de volledige onderbouwing van deze keuze.
+//    Alleen leesfuncties; niets hieronder wordt vanuit bestaande UI aangeroepen.
+
+// getTrainingDefinition('vast'|'custom', id) → genormaliseerde definitie of null
+async function getTrainingDefinition(source,id){
+  if(source==='vast'){
+    const defs=await sbGet('vaste_trainingen','&id=eq.'+encodeURIComponent(id)+'&limit=1');
+    const def=defs[0];
+    if(!def)return null;
+    const texs=await sbGet('training_exercises','&training_ref=eq.'+encodeURIComponent(id)+'&order=sort_order.asc');
+    return {
+      id:def.id, source:'vast', name:def.naam, sport:null, goal:null,
+      exercises:texs.map(t=>({exercise_id:t.exercise_id,sort_order:t.sort_order,sets:t.sets??null,reps:t.reps??null,rpe:t.rpe??null,rest:null,wu:t.wu??null,tip:t.tip??null}))
+    };
+  }
+  if(source==='custom'){
+    if(typeof customTrainings!=='undefined'){
+      const local=customTrainings.find(t=>t.id===id);
+      if(local){
+        return {
+          id:local.id, source:'custom', name:local.name,
+          sport:(local.metadata&&local.metadata.sel&&local.metadata.sel.sport)||null,
+          goal:(local.metadata&&local.metadata.sel&&local.metadata.sel.goal)||null,
+          exercises:(local.exercise_targets&&local.exercise_targets.length?local.exercise_targets:
+            (local.exercises||[]).map(exId=>({exercise_id:exId,sort_order:null,sets:null,reps:null,rpe:null,rest:null})))
+        };
+      }
+    }
+    const defs=await sbGet('custom_trainings','&id=eq.'+encodeURIComponent(id)+'&limit=1');
+    const def=defs[0];
+    if(!def)return null;
+    const texs=await sbGet('custom_training_exercises','&custom_training_id=eq.'+encodeURIComponent(id)+'&order=sort_order.asc');
+    return {
+      id:def.id, source:'custom', name:def.naam,
+      sport:(def.metadata&&def.metadata.sel&&def.metadata.sel.sport)||null,
+      goal:(def.metadata&&def.metadata.sel&&def.metadata.sel.goal)||null,
+      exercises:texs.map(t=>({exercise_id:t.exercise_id,sort_order:t.sort_order,sets:t.sets??null,reps:t.reps??null,rpe:t.rpe??null,rest:t.rest??null}))
+    };
+  }
+  return null;
+}
+
+// listTrainingDefinitions() → combineert vaste + custom trainingen tot één lijst met
+// bronvermelding — bedoeld voor een toekomstige Preview-lijst (Werkblok C), nu nog
+// door niets aangeroepen. Gebruikt uitsluitend al-geladen, in-memory data (geen
+// nieuwe netwerkcalls), dus synchroon bruikbaar zoals WB.savedList() dat ook is.
+function listTrainingDefinitions(){
+  const out=[];
+  if(typeof vasteTrainingen!=='undefined'&&Array.isArray(vasteTrainingen)){
+    vasteTrainingen.forEach(v=>out.push({id:v.id,source:'vast',name:v.naam}));
+  }
+  if(typeof customTrainings!=='undefined'){
+    customTrainings.forEach(t=>out.push({id:t.id,source:'custom',name:t.name,builderOrigin:t.source==='builder'}));
+  }
+  return out;
+}
+
+// startInstanceFromDefinition(def, modifications) → instance-id of null.
+// Dunne brug tussen de Definition-adapter hierboven en Werkblok A's
+// createTrainingInstance()/snapshotFromVasteTraining()/snapshotFromCustomTraining() —
+// hergebruikt die drie functies letterlijk, voegt niets nieuws toe aan de
+// Instance/Snapshot-laag zelf. Nog door niets aangeroepen (Werkblok C-materiaal).
+async function startInstanceFromDefinition(def,modifications=[]){
+  if(!def)return null;
+  const snapshot=def.source==='vast'
+    ?snapshotFromVasteTraining({id:def.id,naam:def.name},def.exercises,modifications)
+    :snapshotFromCustomTraining({id:def.id,naam:def.name},def.exercises,modifications);
+  return await createTrainingInstance({
+    vasteTrainingId:def.source==='vast'?def.id:null,
+    customTrainingId:def.source==='custom'?def.id:null,
+    snapshot
+  });
+}
+
 async function openOfflineQueueModal(){
   await renderOfflineQueueModal();
   openModal('m-offline-queue');
@@ -14825,20 +15050,89 @@ var WB=(function(){
     alts.sort(function(a,b){return goalScore(b,st.sel.goal)-goalScore(a,st.sel.goal);});
     st.plan.items[idx].id=alts[0].catalog_id;saveDraft();return alts[0].catalog_id;}
 
-  /* ── Persistentie ── */
+  /* ── Persistentie — Werkblok B: schrijft naar custom_trainings/custom_training_exercises
+     i.p.v. tk_wb_saved (localStorage-only), zodat een Builder-training dezelfde
+     Training Definition-bron wordt als een handmatig aangemaakte custom training en
+     dus automatisch verschijnt in Mijn trainingen/eigen workouts-lijst. tk_wb_draft
+     (de actieve kladversie) en de generatie-/kwaliteitslogica hierboven blijven
+     volledig ongewijzigd — alleen deze zes functies zijn herschreven, met exact
+     dezelfde return-vorm als voorheen zodat WBUI hieronder geen enkele wijziging
+     nodig heeft. */
   function clone(o){return JSON.parse(JSON.stringify(o));}
   function lsGet(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
   function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
   function saveDraft(){lsSet('tk_wb_draft',{sel:st.sel,plan:st.plan});}
   function loadDraft(){var d=lsGet('tk_wb_draft',null);if(d&&d.sel){st.sel=d.sel;st.plan=d.plan;return true;}return false;}
-  function savedList(){return lsGet('tk_wb_saved',[]);}
-  function saveWorkout(name){var arr=savedList();var q=quality(st.plan,st.sel);
-    arr.unshift({id:'w'+Date.now(),name:name||autoName(),sel:clone(st.sel),plan:clone(st.plan),fav:false,q:q.score,created:Date.now()});
-    lsSet('tk_wb_saved',arr.slice(0,60));return arr[0].id;}
-  function duplicateWorkout(wid){var arr=savedList();var w=arr.filter(function(x){return x.id===wid;})[0];if(!w)return;var c=clone(w);c.id='w'+Date.now();c.name=w.name+' (kopie)';c.created=Date.now();c.fav=false;arr.unshift(c);lsSet('tk_wb_saved',arr.slice(0,60));return c.id;}
-  function favWorkout(wid){var arr=savedList();arr.forEach(function(w){if(w.id===wid)w.fav=!w.fav;});lsSet('tk_wb_saved',arr);}
-  function deleteWorkout(wid){var arr=savedList().filter(function(w){return w.id!==wid;});lsSet('tk_wb_saved',arr);}
-  function resumeWorkout(wid){var w=savedList().filter(function(x){return x.id===wid;})[0];if(!w)return false;st.sel=clone(w.sel);st.plan=clone(w.plan);st.dirty=false;saveDraft();return true;}
+  // wbFavs: favoriet-markering blijft bewust lokaal-only (geen kolom op custom_trainings) —
+  // dit is een Builder-lijst-gemak, geen onderdeel van de Definition/Instance/Sessions-keten.
+  var wbFavs=lsGet('tk_wb_favs',{});
+  function planItemsFromTargets(targets){
+    return (targets||[]).map(function(et){return {id:et.exercise_id,pick:et.pick||'compound',sets:et.sets,reps:et.reps,rest:et.rest};});
+  }
+  function targetsFromPlanItems(items){
+    return (items||[]).map(function(it){return {exercise_id:it.id,sets:it.sets,reps:it.reps,rest:it.rest,rpe:it.rpe||null,pick:it.pick||null};});
+  }
+  function savedList(){
+    if(typeof customTrainings==='undefined')return [];
+    return customTrainings.filter(function(t){return t.source==='builder';}).map(function(t){
+      return {
+        id:t.id, name:t.name,
+        sel:(t.metadata&&t.metadata.sel)?clone(t.metadata.sel):defaultSel(),
+        plan:{items:planItemsFromTargets(t.exercise_targets)},
+        fav:!!wbFavs[t.id],
+        q:(t.metadata&&t.metadata.quality&&t.metadata.quality.score)||0,
+        created:(t.metadata&&t.metadata.created)||0
+      };
+    });
+  }
+  function saveWorkout(name){
+    var q=quality(st.plan,st.sel);
+    var id='custom_'+Date.now();
+    var t={
+      id:id, name:name||autoName(), color:'#0E3B4A', note:'',
+      exercises:(st.plan.items||[]).map(function(it){return it.id;}), // platte lijst, zelfde vorm als bestaande custom trainingen
+      source:'builder',
+      metadata:{sel:clone(st.sel),quality:q,created:Date.now()},
+      exercise_targets:targetsFromPlanItems(st.plan.items)
+    };
+    if(typeof customTrainings!=='undefined'){
+      customTrainings.unshift(t);
+      lsSet('tk_trainings',customTrainings);
+    }
+    sbPostQ('custom_trainings',{id:id,naam:t.name,kleur:t.color,notitie:null,sort_order:(typeof customTrainings!=='undefined'?customTrainings.length:1)-1,scope:'personal',source:'builder',metadata:t.metadata});
+    pushCustomTrainingExercisesRich(t);
+    return id;
+  }
+  function duplicateWorkout(wid){
+    if(typeof customTrainings==='undefined')return;
+    var src=customTrainings.filter(function(x){return x.id===wid&&x.source==='builder';})[0];
+    if(!src)return;
+    var id='custom_'+Date.now();
+    var t=clone(src);t.id=id;t.name=src.name+' (kopie)';
+    t.metadata=clone(src.metadata||{});t.metadata.created=Date.now();
+    customTrainings.unshift(t);
+    lsSet('tk_trainings',customTrainings);
+    sbPostQ('custom_trainings',{id:id,naam:t.name,kleur:t.color,notitie:null,sort_order:customTrainings.length-1,scope:'personal',source:'builder',metadata:t.metadata});
+    pushCustomTrainingExercisesRich(t);
+    return id;
+  }
+  function favWorkout(wid){wbFavs[wid]=!wbFavs[wid];lsSet('tk_wb_favs',wbFavs);}
+  function deleteWorkout(wid){
+    if(typeof customTrainings==='undefined')return;
+    customTrainings=customTrainings.filter(function(t){return t.id!==wid;});
+    lsSet('tk_trainings',customTrainings);
+    sbDelQ('custom_trainings','id=eq.'+wid);
+  }
+  function resumeWorkout(wid){
+    if(typeof customTrainings==='undefined')return false;
+    var t=customTrainings.filter(function(x){return x.id===wid&&x.source==='builder';})[0];
+    if(!t||!t.metadata||!t.metadata.sel)return false;
+    st.sel=clone(t.metadata.sel);
+    st.plan={items:planItemsFromTargets(t.exercise_targets)};
+    st.dirty=false;
+    saveDraft();
+    return true;
+  }
   function autoName(){var gc=goalCfg(st.sel.goal),f=formCfg(st.sel.form);return f.label+' · '+gc.label+' · '+st.sel.time+'m';}
 
   function avg(a){return a.reduce(function(x,y){return x+y;},0)/a.length;}

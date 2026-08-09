@@ -16232,10 +16232,36 @@ var GW=(function(){
     return s;
   }
 
+  // H2 (F0.7H): schrijf de WERKELIJK vastgelegde Guided-resultaten naar de centrale
+  // Supabase sessions-laag via de H1-helpers. Uitsluitend actuele data:
+  //   sets   = aantal daadwerkelijk voltooide sets (setsDone.length)
+  //   weight = het (live aangepaste) werkgewicht (item.weight); null indien onbekend
+  //   rpe    = werkelijke per-set RPE uit setsDone (bewaard in sets_detail)
+  //   reps   = NULL — GW registreert geen werkelijke reps; de doel-reps zijn PLANNED en
+  //            worden NOOIT als actual weggeschreven (data-integriteit).
+  // Warm-up/cooldown-items tellen niet als werksets (worden niet gelogd). Idempotent via
+  // sessionsLogged-guard, zodat finish/resume/dubbele aanroep nooit dubbel logt.
+  async function persistToSessions(){
+    var a=st.active;
+    if(!a||a.sessionsLogged)return {written:0,skipped:true};
+    a.sessionsLogged=true;
+    var today=(typeof td==='function')?td():new Date().toISOString().slice(0,10);
+    var instId=a.instanceId||null, tt=a.trainingType||'guided', written=0;
+    if(typeof buildStrengthSessionRow!=='function'||typeof writeSessionRow!=='function')return {written:0,skipped:'no-helper'};
+    for(var i=0;i<a.items.length;i++){
+      var it=a.items[i];
+      if(!it.setsDone||!it.setsDone.length)continue;             // alleen werkelijk uitgevoerde sets
+      if(it.pick==='warmup'||it.pick==='cooldown')continue;      // geen warm-up/cooldown als werkset
+      var ws=it.setsDone.map(function(sd){return {kg:(it.weight!=null?it.weight:null),reps:null,rpe:sd.rpe};});
+      try{ var built=buildStrengthSessionRow(it.id,ws,{date:today,training_type:tt,note:'',instanceId:instId}); await writeSessionRow(built.row); written++; }catch(e){}
+    }
+    return {written:written};
+  }
   function finish(){
     if(!st.active)return;
     st.active.phase='done';st.active.endedAt=Date.now();
     var log=lsGet('tk_gw_log',[]);log.unshift(summaryData());lsSet('tk_gw_log',log.slice(0,50));
+    try{persistToSessions();}catch(e){}   // H2: centrale sessions-logging (idempotent, fire-and-forget)
     clearActive();
   }
 
@@ -16245,7 +16271,7 @@ var GW=(function(){
     start:start, resume:resume, hasActive:hasActive, abort:abort,
     begin:begin, finishSet:finishSet, rateSet:rateSet, continueAfter:continueAfter,
     startRest:startRest, skipRest:skipRest, restTick:restTick, adjustRest:adjustRest,
-    nextExercise:nextExercise, finish:finish,
+    nextExercise:nextExercise, finish:finish, persistToSessions:persistToSessions,
     adjustWeight:adjustWeight, setWeight:setWeight, adjustSets:adjustSets,
     altList:altList, replaceEx:replaceEx, prevOf:prevOf, fatW:fatW,
     setAdvice:setAdvice, coachText:coachText, restTip:restTip, estRPE:estRPE,

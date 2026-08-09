@@ -2471,6 +2471,18 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .tpv2-tag{font-size:10px;font-weight:700;color:var(--g4);background:var(--g1);padding:2px 7px;border-radius:999px}
 .tpv2-exmeta{font-size:12px;font-weight:800;color:var(--dark);flex-shrink:0;text-align:right}
 .tpv2-exwhy{font-size:11.5px;color:var(--g4);margin-top:6px;line-height:1.4}
+.tpv2-exwu{font-size:11px;font-weight:700;color:var(--teal,var(--accent));margin-top:5px}
+.tpv2-excard--prep{border-color:var(--teal,var(--accent));box-shadow:0 0 0 1px var(--teal,var(--accent)) inset;background:linear-gradient(0deg,var(--card,#fff),var(--card,#fff)) padding-box}
+.tpv2-excard--prep .tpv2-exrole{color:var(--teal,var(--accent))}
+/* F0.7J — Builder: rol- en sets-editor per oefening */
+.wb4-edit{margin-top:10px;border-top:1px solid var(--g1);padding-top:10px}
+.wb4-edit-lbl{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--g4);margin:0 0 5px}
+.wb4-roles{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.wb4-role{font-size:11px;font-weight:700;color:var(--g4);background:var(--g1);border:1px solid var(--g1);border-radius:999px;padding:5px 10px;cursor:pointer;font-family:var(--f)}
+.wb4-role.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.wb4-setstep{display:inline-flex;align-items:center;gap:12px}
+.wb4-setstep button{width:32px;height:32px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--dark);font-size:18px;font-weight:800;cursor:pointer;font-family:var(--f)}
+.wb4-setstep b{font-size:15px;min-width:18px;text-align:center}
 .tpv2-d-hero{width:100%;height:170px;border-radius:16px;background:var(--g1);object-fit:contain;display:flex;align-items:center;justify-content:center;color:var(--g3);font-size:46px;margin-bottom:12px}
 .tpv2-d-nm{font-size:20px;font-weight:800;color:var(--dark)}
 .tpv2-d-tags{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px}
@@ -5739,9 +5751,11 @@ function renderTrainingPreview(){
   const el=document.getElementById('tp-body');
   if(!el||!previewCtx)return;
   const v=previewCtx.view||'overview';
-  if(v==='exercise')return renderTPExercise(el);
-  if(v==='plan')return renderTPPlan(el);
-  return renderTPOverview(el);
+  if(v==='exercise')renderTPExercise(el);
+  else if(v==='plan')renderTPPlan(el);
+  else renderTPOverview(el);
+  // F0.7J: elke Preview-view (S1/S2/S3) opent logisch bovenaan (geen oude scrollpositie).
+  const mc=document.querySelector('#m-training-preview .modal'); if(mc)mc.scrollTop=0;
 }
 function previewGoto(view){ if(!previewCtx)return; previewCtx.view=view; previewCtx.swapPickerFor=null; renderTrainingPreview(); }
 function previewAdjustFromOverview(){ if(!previewCtx)return; previewCtx.view='plan'; previewCtx.adjustOpen=true; previewCtx.swapPickerFor=null; renderTrainingPreview(); }
@@ -5807,6 +5821,9 @@ function renderTPPlan(el){
     const tgt=previewFormatTarget(it);
     const roleTxt=previewRoleLabel(it.pick)||(m.type||'');
     const role=roleTxt?`<div class="tpv2-exrole">${escHtml(roleTxt)}</div>`:'';
+    const isPrep=(it.pick==='warmup'||it.pick==='activation'||it.pick==='cooldown');
+    // Warm-up SETS binnen de oefening (wu) — zichtbaar maken, los van warm-up/activation-oefeningen.
+    const wuLine=(it.wu&&it.wu>0)?`<div class="tpv2-exwu">+ ${it.wu} opwarmset${it.wu===1?'':'s'}</div>`:'';
     const tags=[...(m.equipment||[]),...(m.primary||[]).slice(0,2)].slice(0,3)
       .map(t=>`<span class="tpv2-tag">${escHtml(t)}</span>`).join('');
     const swapped=previewCtx.swaps[it.original_exercise_id];
@@ -5817,10 +5834,10 @@ function renderTPPlan(el){
         <button onclick="previewMoveExercise('${escHtml(it.original_exercise_id)}',-1)" ${i===0?'disabled':''} title="Omhoog" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px${i===0?';opacity:.35':''}">↑</button>
         <button onclick="previewMoveExercise('${escHtml(it.original_exercise_id)}',1)" ${i===list.length-1?'disabled':''} title="Omlaag" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px${i===list.length-1?';opacity:.35':''}">↓</button>
       </div>`:'';
-    return `<div class="tpv2-excard" role="button" tabindex="0" onclick="previewOpenExercise('${escHtml(it.original_exercise_id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();previewOpenExercise('${escHtml(it.original_exercise_id)}')}">
+    return `<div class="tpv2-excard${isPrep?' tpv2-excard--prep':''}" role="button" tabindex="0" onclick="previewOpenExercise('${escHtml(it.original_exercise_id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();previewOpenExercise('${escHtml(it.original_exercise_id)}')}">
       ${thumb}
       <div class="tpv2-exb">${role}<div class="tpv2-exnm">${nm}${swapped?' <span style="font-size:10px;color:var(--g4);font-weight:600">(vervangen)</span>':''}</div>
-        <div class="tpv2-extags">${tags}</div>${why}</div>
+        <div class="tpv2-extags">${tags}</div>${wuLine}${why}</div>
       ${tgt?`<div class="tpv2-exmeta">${escHtml(tgt)}</div>`:''}
       ${adjHtml}
     </div>`;
@@ -15953,6 +15970,12 @@ var WBUI=(function(){
            '<button class="wb4-act" onclick="WBUI.move('+idx+',1)">↓</button>'+
            '<button class="wb4-act" onclick="WBUI.open(\''+it.id+'\')">Video · coach</button>'+
            '<button class="wb4-act del" onclick="WBUI.remove('+idx+')">✕</button>'+
+         '</div>'+
+         '<div class="wb4-edit">'+
+           '<div class="wb4-edit-lbl">Rol</div>'+
+           '<div class="wb4-roles">'+['warmup','activation','compound','secondary','accessory','conditioning','cooldown'].map(function(pk){var NL={warmup:'Warm-up',activation:'Activatie',compound:'Compound',secondary:'Secondary',accessory:'Accessoire',conditioning:'Conditie',cooldown:'Cooldown'};return '<button class="wb4-role'+(it.pick===pk?' on':'')+'" onclick="WBUI.setPick('+idx+',\''+pk+'\')">'+NL[pk]+'</button>';}).join('')+'</div>'+
+           '<div class="wb4-edit-lbl">Sets</div>'+
+           '<div class="wb4-setstep"><button onclick="WBUI.setSets('+idx+',-1)" aria-label="Minder sets">−</button><b>'+(it.sets||3)+'</b><button onclick="WBUI.setSets('+idx+',1)" aria-label="Meer sets">+</button></div>'+
          '</div></div>';
     }
     h+='</div>';
@@ -15996,6 +16019,10 @@ var WBUI=(function(){
   function alt(idx){var nid=WB.swapAlternative(idx);if(nid){render();if(window.toast)toast('Alternatief gekozen');}else if(window.toast)toast('Geen geschikt alternatief');}
   function move(idx,dir){WB.moveItem(idx,dir);_open={};render();}
   function remove(idx){WB.removeItem(idx);_open={};render();}
+  // F0.7J: sporter kan zelf de rol (warm-up/activation/…) en het aantal sets per oefening bepalen.
+  // Schrijft naar het bestaande plan-item (pick/sets) → exercise_targets/custom_training_exercises.pick.
+  function setPick(idx,pk){var p=WB.st.plan;if(!p||!p.items[idx])return;p.items[idx].pick=pk;WB.st.dirty=false;if(WB.saveDraft)WB.saveDraft();render();}
+  function setSets(idx,d){var p=WB.st.plan;if(!p||!p.items[idx])return;var it=p.items[idx];it.sets=Math.max(1,Math.min(8,(it.sets||3)+d));WB.st.dirty=false;if(WB.saveDraft)WB.saveDraft();render();}
   function open(id){go('s-library');if(window.renderLibrary)renderLibrary();if(window._libOpen)_libOpen(id);}
   function regen(){WB.st.dirty=true;_open={};render();if(window.toast)toast('Training opnieuw gegenereerd');}
   function save(){
@@ -16019,7 +16046,7 @@ var WBUI=(function(){
   function resume(wid){if(WB.resumeWorkout(wid)){_open={};render();var sc=document.getElementById('wb-scroll');if(sc)sc.scrollTop=0;if(window.toast)toast('Training hervat');}}
 
   return {render:render,rebuild:rebuild,toggleSetup:toggleSetup,toggleEx:toggleEx,setGoal:setGoal,toggleMuscle:toggleMuscle,toggleEq:toggleEq,setTime:setTime,setLevel:setLevel,setForm:setForm,
-    alt:alt,move:move,remove:remove,open:open,regen:regen,save:save,dupe:dupe,dupeSaved:dupeSaved,fav:fav,del:del,resume:resume};
+    alt:alt,move:move,remove:remove,setPick:setPick,setSets:setSets,open:open,regen:regen,save:save,dupe:dupe,dupeSaved:dupeSaved,fav:fav,del:del,resume:resume};
 })();
 /* Draft herstellen bij load (stil, geen render) */
 try{WB.loadDraft();}catch(e){}
@@ -16278,7 +16305,15 @@ var GW=(function(){
       if(!it.setsDone||!it.setsDone.length)continue;             // alleen werkelijk uitgevoerde sets
       if(it.pick==='warmup'||it.pick==='cooldown')continue;      // geen warm-up/cooldown als werkset
       var ws=it.setsDone.map(function(sd){return {kg:(it.weight!=null?it.weight:null),reps:null,rpe:sd.rpe};});
-      try{ var built=buildStrengthSessionRow(it.id,ws,{date:today,training_type:tt,note:'',instanceId:instId}); await writeSessionRow(built.row); written++; }catch(e){}
+      try{
+        var built=buildStrengthSessionRow(it.id,ws,{date:today,training_type:tt,note:'',instanceId:instId});
+        await writeSessionRow(built.row); written++;
+        // F0.7J: PR-cache consistent bijwerken (zelfde regel als finishSession) — geen nieuwe berekening.
+        var w=built.row.weight;
+        if(w!=null&&typeof prFor==='function'&&typeof upsertExerciseGoalField==='function'){
+          var curPr=prFor(it.id)||0; if(w>curPr){ await upsertExerciseGoalField(it.id,'pr',w); }
+        }
+      }catch(e){}
     }
     return {written:written};
   }

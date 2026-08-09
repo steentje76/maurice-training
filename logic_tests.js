@@ -2067,6 +2067,89 @@ test('snapshotFromCustomTraining draagt nu ook sets/reps/rpe/rest/pick door indi
   assertEq(bare.items[0].sets,null,'oude/handmatige rijen zonder targets geven null, geen crash');
 });
 
+// ── F0.6 — Canonical Gym Execution Bridge (gerichte, minimale dekking) ────
+// Pure reïmplementaties van de canonical-first tak in buildResolvedExecutionItems()
+// en getExerciseAsset(), plus een controle dat het bestaande legacy-pad ongewijzigd
+// blijft werken (additiviteit — kernvereiste van F0.6).
+console.log("\n🔗 F0.6 — Canonical Gym Execution Bridge");
+
+test('buildResolvedExecutionItems: canonical TK-ID resolvet naam/spiergroep via ExerciseCatalogService, geen "Exercise not found"', ()=>{
+  const mockCatalog={
+    'TK-000030':{catalog_id:'TK-000030',identity:{name:'Barbell Overhead Press',primary:['Schouders'],secondary:['Triceps']}}
+  };
+  const mockAssets={
+    poster:(id)=>id==='TK-000030'?'data:image/webp;base64,XYZ':null,
+    hasVideo:(id)=>id==='TK-000030',
+    video:(id)=>id==='TK-000030'?{file:'videos/barbell-overhead-press.mp4'}:null
+  };
+  function buildResolvedExecutionItems_T(list,exercises){
+    return (list||[]).map(it=>{
+      const exId=it.exercise_id;
+      const isCanonical=typeof exId==='string'&&exId.indexOf('TK-')===0;
+      const canon=isCanonical?(mockCatalog[exId]||null):null;
+      if(canon&&canon.identity){
+        const Id=canon.identity;
+        const posterUrl=mockAssets.poster(exId)||null;
+        const v=mockAssets.hasVideo(exId)?mockAssets.video(exId):null;
+        return {id:exId,naam:Id.name||exId,type:'strength',
+          sets:it.sets??null,reps:it.reps??null,rpe:it.rpe??null,wu:it.wu||0,tip:it.tip??null,
+          yt:null,poster:posterUrl,video:v?v.file:null,canonicalId:exId,
+          muscles:{p:Id.primary||[],s:Id.secondary||[]}};
+      }
+      const exObj=(exercises||[]).find(e=>e.id===exId)||null;
+      return {id:exId,naam:exObj?exObj.name:exId,type:(exObj&&exObj.type)||'strength',
+        sets:it.sets??null,reps:it.reps??null,rpe:it.rpe??null,wu:it.wu||0,tip:it.tip??null,
+        yt:exObj?exObj.yt:null,muscles:{p:(exObj&&exObj.muscle_primary)||[],s:(exObj&&exObj.muscle_secondary)||[]}};
+    });
+  }
+  const result=buildResolvedExecutionItems_T([{exercise_id:'TK-000030',sets:5,reps:'3-5',rpe:8}],[]);
+  assertEq(result[0].naam,'Barbell Overhead Press','canonical naam moet resolven, niet de kale TK-ID tonen');
+  assert(result[0].naam!=='TK-000030','mag nooit terugvallen op de kale ID als naam');
+  assertEq(result[0].canonicalId,'TK-000030');
+  assertEq(result[0].poster,'data:image/webp;base64,XYZ');
+  assertEq(result[0].video,'videos/barbell-overhead-press.mp4');
+  assertEq(result[0].muscles.p[0],'Schouders');
+});
+
+test('getExerciseAsset: canonical TK-ID gebruikt EX_CATALOG.intelligence (cues/mistakes/poster), geen legacy EXERCISE_ASSETS-lookup nodig', ()=>{
+  const mockCatalog={
+    'TK-000030':{catalog_id:'TK-000030',intelligence:{cues:['Romp en billen aanspannen','Recht boven het hoofd drukken'],mistakes:['Overmatige rugholte']}}
+  };
+  const mockPoster=(id)=>id==='TK-000030'?'data:image/webp;base64,XYZ':null;
+  function getExerciseAsset_T(ex,legacyIntelById){
+    if(typeof ex.id==='string'&&ex.id.indexOf('TK-')===0){
+      const c=mockCatalog[ex.id];
+      if(c&&c.intelligence){
+        return {technique:c.intelligence.cues||[],mistakes:c.intelligence.mistakes||[],poster:mockPoster(ex.id)};
+      }
+    }
+    return legacyIntelById[ex.id]||null;
+  }
+  const legacyIntelById={}; // bewust leeg — TK-000030 zit NIET in de 13-entry legacy-set
+  const a=getExerciseAsset_T({id:'TK-000030'},legacyIntelById);
+  assert(!!a,'canonical exercise moet een resultaat opleveren zonder legacy-lookup');
+  assertEq(a.technique[0],'Romp en billen aanspannen');
+  assertEq(a.mistakes[0],'Overmatige rugholte');
+  assertEq(a.poster,'data:image/webp;base64,XYZ');
+});
+
+test('buildResolvedExecutionItems: legacy ID (bijv. "bench") blijft via het bestaande, ongewijzigde exercises[]-pad lopen', ()=>{
+  function buildResolvedExecutionItems_T(list,exercises){
+    return (list||[]).map(it=>{
+      const exId=it.exercise_id;
+      const exObj=(exercises||[]).find(e=>e.id===exId)||null;
+      return {id:exId,naam:exObj?exObj.name:exId,type:(exObj&&exObj.type)||'strength',
+        sets:it.sets??null,reps:it.reps??null,rpe:it.rpe??null,wu:it.wu||0,tip:it.tip??null,
+        yt:exObj?exObj.yt:null,muscles:{p:(exObj&&exObj.muscle_primary)||[],s:(exObj&&exObj.muscle_secondary)||[]}};
+    });
+  }
+  const legacyExercises=[{id:'bench',name:'Benchpress',type:'strength',yt:'vcBig73ojpE',muscle_primary:['Borst'],muscle_secondary:['Triceps','Schouders']}];
+  const result=buildResolvedExecutionItems_T([{exercise_id:'bench',sets:4,reps:'4-6',rpe:8}],legacyExercises);
+  assertEq(result[0].naam,'Benchpress','bestaand legacy-gedrag moet exact hetzelfde blijven na F0.6');
+  assertEq(result[0].yt,'vcBig73ojpE');
+  assertEq(result[0].muscles.p[0],'Borst');
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

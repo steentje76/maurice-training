@@ -11099,6 +11099,24 @@ function renderSessionSummaryContent(t){
 // awaited sbPostQ-calls per oefening, zonder beveiliging tegen dubbel indrukken.
 // Dit is de meest gebruikte save-actie in de app (na élke training), dus het hoogste
 // risico op dubbele sessie-logs bij een dubbele tap op trage gym-wifi.
+// ── H1 (F0.7H) — CENTRALE SESSIONS-SCHRIJFLAAG ────────────────────────────────
+// Eén herbruikbare plek die een sessions-rij naar Supabase wegschrijft, plus een
+// bouwer voor de strength-rij (sets/reps/weight/rpe/sets_detail) met exact dezelfde
+// afronding/logica als finishSession() altijd al had. Bedoeld om óók vanuit Guided
+// Training (H2) te gebruiken zodat er één centrale trainingshistorie is. Geen
+// gedragswijziging voor de normale Execution: finishSession() bouwt/schrijft via deze
+// helpers en levert byte-equivalente rijen.
+async function writeSessionRow(row){ return await sbPostQ('sessions', row); }
+function buildStrengthSessionRow(exId, ws, opts){
+  opts=opts||{};
+  const bestKg=s=>s.effKg!=null?s.effKg:parseFloat(s.kg||0);
+  const best=ws.reduce((b,s)=>(!b||bestKg(s)>bestKg(b))?s:b,null);
+  const setsDetail=ws.map(s=>({kg:s.kg,effKg:bestKg(s),reps:s.reps,rpe:s.rpe}));
+  const row={date:opts.date,exercise_id:exId,sets:ws.length,reps:parseInt(best?.reps)||null,
+    weight:bestKg(best)||null,rpe:parseFloat(best?.rpe)||null,training_type:opts.training_type,
+    note:opts.note||'',sets_detail:setsDetail,training_instance_id:opts.instanceId||null};
+  return {row,best,setsDetail,bestKg};
+}
 let finishSessionBezig=false;
 async function finishSession(){
   if(finishSessionBezig)return;
@@ -11116,16 +11134,14 @@ async function finishSession(){
     if(l.cardio && CARDIO_TYPES[l.cardio.type] && (l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals)){
       const cRow=cardioDataToRow(l.cardio.type,l.cardio);
       const extraNote=cRow.extraNote;delete cRow.extraNote;
-      await sbPostQ('sessions',{date:today,exercise_id:ex.id,training_type:t,note:extraNote||'',training_instance_id:activeInstanceId||null,...cRow});saved++;
+      await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:extraNote||'',training_instance_id:activeInstanceId||null,...cRow});saved++;
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
       const ws=l.sets.filter(s=>s&&(s.kg||s.reps));if(!ws.length)continue;
-      const bestKg=s=>s.effKg!=null?s.effKg:parseFloat(s.kg||0);
-      const best=ws.reduce((b,s)=>(!b||bestKg(s)>bestKg(b))?s:b,null);
       const wuNote=l.wu?.filter(s=>s&&s.kg).map(s=>s.kg+'×'+s.reps).join(',');
-      // sets_detail: volledige per-set data (incl. gewicht-modus-resultaat), voor Logboek-editor.
-      const setsDetail=ws.map(s=>({kg:s.kg,effKg:bestKg(s),reps:s.reps,rpe:s.rpe}));
-      await sbPostQ('sessions',{date:today,exercise_id:ex.id,sets:ws.length,reps:parseInt(best?.reps)||null,weight:bestKg(best)||null,rpe:parseFloat(best?.rpe)||null,training_type:t,note:wuNote?'Opwarm: '+wuNote:'',sets_detail:setsDetail,training_instance_id:activeInstanceId||null});
+      // H1: centrale schrijflaag — zelfde rij/afronding, nu via buildStrengthSessionRow()/writeSessionRow().
+      const {row,best,setsDetail,bestKg}=buildStrengthSessionRow(ex.id,ws,{date:today,training_type:t,note:wuNote?'Opwarm: '+wuNote:'',instanceId:activeInstanceId});
+      await writeSessionRow(row);
       let isPr=false;
       if(bestKg(best)){const curPr=prFor(ex.id)||0;if(bestKg(best)>curPr){await upsertExerciseGoalField(ex.id,'pr',bestKg(best));isPr=true;}}
       saved++;

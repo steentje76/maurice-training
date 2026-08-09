@@ -14592,7 +14592,7 @@ async function renderTrainDetail(t){
       <div class="v47d-name">${escHtml(naam)}</div>
       <div class="v47d-meta">${n?`${n} oefening${n===1?'':'en'}`:''}${muscles.length?`${n?' · ':''}${escHtml(musclePhrase(muscles))}`:''}</div>
       ${say}
-      <button class="v43-start" onclick="startT('${t}')">${V43I.play} Start training</button>
+      <button class="v43-start" onclick="openTrainingPreview('vast','${t}')">${V43I.play} Start training</button>
     </div>${why}${ov}${exHtml}`;
 }
 function v47dToggleWhy(btn){
@@ -15199,8 +15199,8 @@ async function startAppAfterAuth(){
   // Handle PWA shortcuts
   const params = new URLSearchParams(window.location.search);
   if(onboardingDone){
-    if(params.get('start')==='A') setTimeout(()=>startT('A'),500);
-    if(params.get('start')==='B') setTimeout(()=>startT('B'),500);
+    if(params.get('start')==='A') setTimeout(()=>openTrainingPreview('vast','A'),500);
+    if(params.get('start')==='B') setTimeout(()=>openTrainingPreview('vast','B'),500);
     if(params.get('checkin')==='1') setTimeout(()=>openModal('m-hrv'),500);
   }
   refreshHome();

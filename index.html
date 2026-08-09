@@ -4960,7 +4960,10 @@ async function deleteVasteTraining(id){
 }
 
 // Oefeningen die met een langhalter/barbell worden uitgevoerd — tonen plate calculator + 1RM-paneel
-const BARBELL_EXERCISES = new Set(['backsquat','bench','frontsquat','shoulderpress','hexabar','hpc','hps','bentoverrow','rdl']);
+const BARBELL_EXERCISES = new Set(['backsquat','bench','frontsquat','shoulderpress','hexabar','hpc','hps','bentoverrow','rdl',
+  // F0.7D-STAP12: canonical TK-aliassen voor de gemigreerde barbell-lifts (zelfde betekenis als de legacy-entry).
+  // Legacy-IDs blijven staan voor de nog niet gemigreerde/uitgestelde oefeningen.
+  'TK-000038','TK-000019','TK-000030','TK-000020','TK-000024']); // backsquat, bench, shoulderpress, bentoverrow, deadlift
 
 // ══════════════════════════════════════════════════════════
 // STATE
@@ -12989,7 +12992,9 @@ function mastersFactor(leeftijd){
 // Bodyweight-relatieve literatuurnormen per lift — bron voor fase1-standaardratio's
 const LIFT_NORMS = {
   backsquat: 1.5, bench: 1.0, frontsquat: 1.2, shoulderpress: 0.65,
-  hexabar: 1.75, hpc: 0.75, hps: 0.55
+  hexabar: 1.75, hpc: 0.75, hps: 0.55,
+  // F0.7D-STAP12: canonical TK-alias voor de gemigreerde anker-lift backsquat (identieke normwaarde).
+  'TK-000038': 1.5
 };
 // Verwachte 1RM op basis van niveau en leeftijd
 // v5.6.1: geen schatting meer zonder leeftijd/gewicht (voorheen viel dit stil terug op de

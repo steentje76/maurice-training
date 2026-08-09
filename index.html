@@ -4220,7 +4220,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.26';
+const APP_VER = 'v4.24.27';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -5543,12 +5543,34 @@ function previewWorkingList(){
     .filter(id=>!previewCtx.removedIds.has(id))
     .map(id=>{
       const swapTo=previewCtx.swaps[id];
-      const src=swapTo?(byId[id]):byId[id]; // targets (sets/reps/rpe) blijven van de oorspronkelijke slot komen — een vervangen oefening neemt het doel van de plek over, niet een verzonnen eigen doel
+      const src=byId[id]; // targets (sets/reps/rpe/wu/tip) blijven van de oorspronkelijke slot komen — een vervangen oefening neemt het doel van de plek over, niet een verzonnen eigen doel
       return {
         exercise_id:swapTo||id, original_exercise_id:id,
-        sets:src?src.sets:null, reps:src?src.reps:null, rpe:src?src.rpe:null
+        sets:src?src.sets:null, reps:src?src.reps:null, rpe:src?src.rpe:null,
+        wu:src?src.wu:null, tip:src?src.tip:null
       };
     });
+}
+// Werkblok D: zet de door Preview opgebouwde, ná-modificatie oefeningenlijst om naar
+// exact de item-vorm die de bestaande executie-UI al verwacht (zelfde velden als
+// TRAIN_CFG-items / de bestaande sessionExtra-items in startCustomTraining) — geen
+// nieuwe datastructuur, alleen hergebruik van bestaande globals (exercises,
+// resolveCardioType).
+function buildResolvedExecutionItems(list){
+  return (list||[]).map(it=>{
+    const exObj=(typeof exercises!=='undefined')?exercises.find(e=>e.id===it.exercise_id):null;
+    const cardioType=exObj?resolveCardioType(exObj):null;
+    const exType=cardioType||(exObj&&exObj.type)||'strength';
+    return {
+      id:it.exercise_id,
+      naam:exObj?exObj.name:it.exercise_id,
+      type:exType,
+      sets:it.sets??null, reps:it.reps??null, rpe:it.rpe??null,
+      wu:it.wu||0, tip:it.tip??null,
+      yt:exObj?exObj.yt:null,
+      muscles:{p:(exObj&&exObj.muscle_primary)||[], s:(exObj&&exObj.muscle_secondary)||[]}
+    };
+  });
 }
 
 function previewFormatTarget(it){
@@ -5707,20 +5729,32 @@ function previewBuildModifications(){
 }
 
 // previewStartTraining() — legt Instance+Snapshot vast (Werkblok A/B, ongewijzigd) en
-// start daarna de BESTAANDE executie (startT/startCustomTraining, GEEN wijziging).
-// Instance-vastlegging is best-effort/non-blocking: een trage of gequeuede
-// bookkeeping-schrijfactie mag de sporter nooit tegenhouden om te beginnen —
-// zelfde offline-first-principe als de rest van de app (zie ook Werkblok A/B).
+// start daarna de BESTAANDE executie (startT/startCustomTraining, structuur ongewijzigd,
+// Werkblok D voegt alleen een optioneel "resolved items"-argument toe) met de ná-Preview-
+// modificatie oefeningenlijst — dit is de daadwerkelijke Instance→Execution-koppeling.
+// previewStarting: eenvoudige dubbele-tap-guard (opdracht-eis "Double Start"), zelfde
+// patroon als finishSessionBezig elders in de app.
+let previewStarting=false;
 async function previewStartTraining(){
-  if(!previewCtx)return;
+  if(!previewCtx||previewStarting)return;
+  previewStarting=true;
   const {def,source,id}=previewCtx;
   const modifications=previewBuildModifications();
-  try{await startInstanceFromDefinition(def,modifications);}
+  const resolvedItems=buildResolvedExecutionItems(previewWorkingList());
+  let instanceId=null;
+  try{instanceId=await startInstanceFromDefinition(def,modifications);}
   catch(e){console.warn('previewStartTraining: instance-vastlegging mislukt, training start gewoon door',e);}
   closeModal('m-training-preview');
-  if(source==='vast')startT(id);
-  else startCustomTraining(id);
+  activeInstanceId=instanceId||null;
+  if(source==='vast'){
+    resolvedWorkout={t:id,items:resolvedItems,instanceId};
+    startT(id);
+  }else{
+    resolvedWorkout=null; // niet van toepassing voor custom — startCustomTraining krijgt resolvedItems direct mee
+    startCustomTraining(id,resolvedItems);
+  }
   previewCtx=null;
+  previewStarting=false;
 }
 function previewOpenBuilder(){
   closeModal('m-training-preview');
@@ -7959,6 +7993,10 @@ function isSameLocalDay(ts){
   return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
 }
 async function startT(t){
+  // Werkblok D: als dit startpad NIET het zojuist door Preview klaargezette
+  // resolvedWorkout voor déze training is, is elke bestaande activeInstanceId
+  // sowieso niet van toepassing — nooit een verouderd/ander instance-id meenemen.
+  if(!(resolvedWorkout&&resolvedWorkout.t===t))activeInstanceId=null;
   cleanupOtherTrainScreens('s-train-'+t.toLowerCase());
   await ensureVasteTrainingScreenExists(t);
   if(curT===t){
@@ -8065,7 +8103,17 @@ function showSettings(){
   openModal('m-train-settings');
 }
 
-function getSessionExs(t){return [...(TRAIN_CFG[t]||[]),...sessionExtra.filter(e=>e._t===t)];}
+// Werkblok D — "resolved workout"-override: door Preview vastgelegde, ná-modificatie
+// oefeningenlijst voor de training die nu start. Wordt uitsluitend door
+// previewStartTraining() gezet, vlak vóór startT()/startCustomTraining(); elk ander
+// (bestaand, ongewijzigd) startpad laat deze op null en krijgt dus exact het oude
+// gedrag (volledige Definition, geen modificaties mogelijk vanaf die knop).
+let resolvedWorkout=null;   // {t, items, instanceId} — alleen relevant voor vaste trainingen (TRAIN_CFG-pad)
+let activeInstanceId=null;  // training_instances.id van de actieve, via Preview gestarte sessie, of null
+function getSessionExs(t){
+  if(resolvedWorkout&&resolvedWorkout.t===t)return [...resolvedWorkout.items,...sessionExtra.filter(e=>e._t===t)];
+  return [...(TRAIN_CFG[t]||[]),...sessionExtra.filter(e=>e._t===t)];
+}
 
 // v3.3.52 P1 — Premium Training Intro: coach-banner boven het oefeningenoverzicht.
 // Gebruikt uitsluitend bestaande data: spiergroepen van vandaag (getExerciseMuscles) +
@@ -10755,7 +10803,7 @@ async function finishSession(){
     if(l.cardio && CARDIO_TYPES[l.cardio.type] && (l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals)){
       const cRow=cardioDataToRow(l.cardio.type,l.cardio);
       const extraNote=cRow.extraNote;delete cRow.extraNote;
-      await sbPostQ('sessions',{date:today,exercise_id:ex.id,training_type:t,note:extraNote||'',...cRow});saved++;
+      await sbPostQ('sessions',{date:today,exercise_id:ex.id,training_type:t,note:extraNote||'',training_instance_id:activeInstanceId||null,...cRow});saved++;
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
       const ws=l.sets.filter(s=>s&&(s.kg||s.reps));if(!ws.length)continue;
@@ -10764,7 +10812,7 @@ async function finishSession(){
       const wuNote=l.wu?.filter(s=>s&&s.kg).map(s=>s.kg+'×'+s.reps).join(',');
       // sets_detail: volledige per-set data (incl. gewicht-modus-resultaat), voor Logboek-editor.
       const setsDetail=ws.map(s=>({kg:s.kg,effKg:bestKg(s),reps:s.reps,rpe:s.rpe}));
-      await sbPostQ('sessions',{date:today,exercise_id:ex.id,sets:ws.length,reps:parseInt(best?.reps)||null,weight:bestKg(best)||null,rpe:parseFloat(best?.rpe)||null,training_type:t,note:wuNote?'Opwarm: '+wuNote:'',sets_detail:setsDetail});
+      await sbPostQ('sessions',{date:today,exercise_id:ex.id,sets:ws.length,reps:parseInt(best?.reps)||null,weight:bestKg(best)||null,rpe:parseFloat(best?.rpe)||null,training_type:t,note:wuNote?'Opwarm: '+wuNote:'',sets_detail:setsDetail,training_instance_id:activeInstanceId||null});
       let isPr=false;
       if(bestKg(best)){const curPr=prFor(ex.id)||0;if(bestKg(best)>curPr){await upsertExerciseGoalField(ex.id,'pr',bestKg(best));isPr=true;}}
       saved++;
@@ -10783,6 +10831,7 @@ async function finishSession(){
   closeModal('m-session-end');stopTrainTimer();
   clearTrainingDraft();
   curT=null;sessionLog={};sessionExtra=[];pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};
+  resolvedWorkout=null;activeInstanceId=null; // Werkblok D: training afgerond — geen enkele volgende, niet-via-Preview-gestarte training mag dit nog meekrijgen
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.remove('show'));
   if(saved===0){toast('Niets om op te slaan');go('s-home');refreshStats();return;}
   if(t.startsWith('prog_')){
@@ -13129,7 +13178,12 @@ async function deleteCustomTraining(id){
 // dezelfde render-/log-/cascade-/gewicht-modus-/RPE-picker-logica als Training A/B en
 // Losse oefening, via renderTrainScreen()+getSessionExs()+addExToSession()+showSessionSummary().
 // De losse buildExItemHTML-duplicaat is vervallen.
-async function startCustomTraining(id){
+// Werkblok D: optioneel tweede argument "resolvedItems" — de ná-Preview-modificatie
+// lijst (met échte sets/reps/rpe uit de Definition/Builder-targets i.p.v. de vaste
+// 4×6-8@8-standaardwaarden hieronder). Wordt uitsluitend door previewStartTraining()
+// meegegeven; elk ander (bestaand) aanroeppad werkt exact zoals voorheen.
+async function startCustomTraining(id,resolvedItems){
+  if(!resolvedItems)activeInstanceId=null; // idem als bij startT: geen instance-id meenemen buiten het Preview-pad
   const t=customTrainings.find(x=>x.id===id);
   if(!t) return;
   curT='custom_'+id;
@@ -13138,13 +13192,19 @@ async function startCustomTraining(id){
   // bij Training A/B — direct zichtbaar zijn bij het starten, i.p.v. pas na handmatig toevoegen.
   await ensureExercisesLoaded();
   await ensureEquipmentTypesLoaded();
-  for(const exId of (t.exercises||[])){
-    const ex=exercises.find(e=>e.id===exId);
-    if(!ex) continue;
-    const cardioType=resolveCardioType(ex);
-    const exType=cardioType||ex.type||'strength';
-    const extra=cardioType?{id:ex.id,naam:ex.name,type:exType,_t:curT,_preloaded:true}:{id:ex.id,naam:ex.name,type:exType,sets:4,reps:'6-8',rpe:'8',_t:curT,_preloaded:true};
-    sessionExtra.push(extra);
+  if(resolvedItems&&resolvedItems.length){
+    for(const item of resolvedItems){
+      sessionExtra.push({...item,_t:curT,_preloaded:true});
+    }
+  }else{
+    for(const exId of (t.exercises||[])){
+      const ex=exercises.find(e=>e.id===exId);
+      if(!ex) continue;
+      const cardioType=resolveCardioType(ex);
+      const exType=cardioType||ex.type||'strength';
+      const extra=cardioType?{id:ex.id,naam:ex.name,type:exType,_t:curT,_preloaded:true}:{id:ex.id,naam:ex.name,type:exType,sets:4,reps:'6-8',rpe:'8',_t:curT,_preloaded:true};
+      sessionExtra.push(extra);
+    }
   }
   buildCustomTrainScreen(t);
   cleanupOtherTrainScreens('s-train-custom-'+t.id);

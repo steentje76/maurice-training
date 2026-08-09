@@ -4220,7 +4220,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.27';
+const APP_VER = 'v4.24.28';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -13202,7 +13202,16 @@ async function startCustomTraining(id,resolvedItems){
       if(!ex) continue;
       const cardioType=resolveCardioType(ex);
       const exType=cardioType||ex.type||'strength';
-      const extra=cardioType?{id:ex.id,naam:ex.name,type:exType,_t:curT,_preloaded:true}:{id:ex.id,naam:ex.name,type:exType,sets:4,reps:'6-8',rpe:'8',_t:curT,_preloaded:true};
+      // Werkblok E: yt/muscles toegevoegd — deze ontbraken hier volledig, waardoor een
+      // rechtstreeks (niet via Preview) gestarte custom training geen video/spiergroep-pills
+      // toonde, terwijl vaste trainingen (via TRAIN_CFG) dit altijd al hadden. Geen "tip" hier:
+      // dat veld bestaat alleen op "training_exercises" (vaste trainingen), niet op de globale
+      // "exercises"-catalogus of "custom_training_exercises" — toevoegen zou een niet-bestaande
+      // databron suggereren. sets/reps/rpe blijven bewust de bestaande 4×6-8@8-standaardwaarden
+      // (Werkblok B/C-Deferred, ongewijzigd) — alleen weergave-only velden aangevuld.
+      const extra=cardioType
+        ?{id:ex.id,naam:ex.name,type:exType,_t:curT,_preloaded:true,yt:ex.yt||null,muscles:{p:ex.muscle_primary||[],s:ex.muscle_secondary||[]}}
+        :{id:ex.id,naam:ex.name,type:exType,sets:4,reps:'6-8',rpe:'8',_t:curT,_preloaded:true,yt:ex.yt||null,muscles:{p:ex.muscle_primary||[],s:ex.muscle_secondary||[]}};
       sessionExtra.push(extra);
     }
   }

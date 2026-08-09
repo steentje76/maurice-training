@@ -5449,7 +5449,9 @@ function snapshotFromVasteTraining(def,texs,modifications=[]){
   return {
     source:'vaste_training',
     definition_id:def?.id??null,
-    items:(texs||[]).map(t=>({exercise_id:t.exercise_id,sets:t.sets,reps:t.reps,rpe:t.rpe,sort_order:t.sort_order})),
+    // F0.7E: wu (warming-up) + tip meenemen zodat de Training Instance de oorspronkelijke
+    // training volledig weerspiegelt (warm-up/activation gaat niet verloren bij definition->instance).
+    items:(texs||[]).map(t=>({exercise_id:t.exercise_id,sets:t.sets,reps:t.reps,rpe:t.rpe,sort_order:t.sort_order,wu:t.wu??null,tip:t.tip??null})),
     modifications
   };
 }
@@ -5460,7 +5462,7 @@ function snapshotFromCustomTraining(def,texs,modifications=[]){
     // Werkblok B: sets/reps/rpe/rest/pick zijn nieuwe, nullable kolommen — voor
     // handmatig aangemaakte custom trainingen (zonder Builder-oorsprong) zijn dit
     // gewoon null-waarden, functioneel identiek aan de oude, kalere snapshot-vorm.
-    items:(texs||[]).map(t=>({exercise_id:t.exercise_id,sort_order:t.sort_order,sets:t.sets??null,reps:t.reps??null,rpe:t.rpe??null,rest:t.rest??null,pick:t.pick??null})),
+    items:(texs||[]).map(t=>({exercise_id:t.exercise_id,sort_order:t.sort_order,sets:t.sets??null,reps:t.reps??null,rpe:t.rpe??null,rest:t.rest??null,pick:t.pick??null,wu:t.wu??null})),
     modifications
   };
 }
@@ -5513,7 +5515,7 @@ async function getTrainingDefinition(source,id){
       id:def.id, source:'custom', name:def.naam,
       sport:(def.metadata&&def.metadata.sel&&def.metadata.sel.sport)||null,
       goal:(def.metadata&&def.metadata.sel&&def.metadata.sel.goal)||null,
-      exercises:texs.map(t=>({exercise_id:t.exercise_id,sort_order:t.sort_order,sets:t.sets??null,reps:t.reps??null,rpe:t.rpe??null,rest:t.rest??null}))
+      exercises:texs.map(t=>({exercise_id:t.exercise_id,sort_order:t.sort_order,sets:t.sets??null,reps:t.reps??null,rpe:t.rpe??null,rest:t.rest??null,wu:t.wu??null}))
     };
   }
   return null;

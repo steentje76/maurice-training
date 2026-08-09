@@ -2474,6 +2474,23 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .tpv2-exwu{font-size:11px;font-weight:700;color:var(--teal,var(--accent));margin-top:5px}
 .tpv2-excard--prep{border-color:var(--teal,var(--accent));box-shadow:0 0 0 1px var(--teal,var(--accent)) inset;background:linear-gradient(0deg,var(--card,#fff),var(--card,#fff)) padding-box}
 .tpv2-excard--prep .tpv2-exrole{color:var(--teal,var(--accent))}
+/* F0.7K — S2 secties + gewicht */
+.tpv2-plansec{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--g4);margin:16px 2px 8px}
+.tpv2-plansec:first-child{margin-top:2px}
+.tpv2-exwt{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:5px}
+.tpv2-exwt-sug{font-size:11.5px;font-weight:800;color:var(--dark)}
+.tpv2-exwt-prev{font-size:11px;font-weight:600;color:var(--g4)}
+/* F0.7K — S3 "Vandaag doen" blok */
+.tpv2-today{border:1px solid var(--g1);border-radius:14px;padding:12px 14px;margin:12px 0 4px;background:var(--g1-soft,rgba(0,0,0,.02))}
+.tpv2-today-h{font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--g4);margin-bottom:8px}
+.tpv2-today-row{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline}
+.tpv2-today-big{font-size:22px;font-weight:800;color:var(--dark)}
+.tpv2-today-tgt{font-size:13px;font-weight:700;color:var(--dark)}
+.tpv2-today-prev{font-size:12px;color:var(--g4);margin-top:6px}
+.tpv2-today-todo{font-size:12px;color:var(--y,#b8860b);font-weight:700;margin-top:6px}
+.tpv2-wu-list{margin-top:8px;border-top:1px dashed var(--g1);padding-top:8px}
+.tpv2-wu-item{display:flex;justify-content:space-between;font-size:12px;color:var(--g4);padding:2px 0}
+.tpv2-wu-item b{color:var(--dark);font-weight:700}
 /* F0.7J — Builder: rol- en sets-editor per oefening */
 .wb4-edit{margin-top:10px;border-top:1px solid var(--g1);padding-top:10px}
 .wb4-edit-lbl{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--g4);margin:0 0 5px}
@@ -2483,6 +2500,13 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .wb4-setstep{display:inline-flex;align-items:center;gap:12px}
 .wb4-setstep button{width:32px;height:32px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--dark);font-size:18px;font-weight:800;cursor:pointer;font-family:var(--f)}
 .wb4-setstep b{font-size:15px;min-width:18px;text-align:center}
+.wb4-schema{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.wb4-chip2{font-size:11px;font-weight:700;color:var(--g4);background:var(--g1);border-radius:8px;padding:4px 9px}
+/* F0.7K — Guided: optioneel reps-invoerveld op het RPE-scherm */
+.gw-reps{display:flex;flex-direction:column;align-items:center;gap:6px;margin:4px 0 14px}
+.gw-reps-l{font-size:12px;font-weight:700;color:var(--g4)}
+.gw-reps-l span{font-weight:600;opacity:.7}
+.gw-reps-in{width:120px;text-align:center;font-size:20px;font-weight:800;font-family:var(--f);color:var(--dark);background:var(--g1);border:1px solid var(--g1);border-radius:12px;padding:8px 10px}
 .tpv2-d-hero{width:100%;height:170px;border-radius:16px;background:var(--g1);object-fit:contain;display:flex;align-items:center;justify-content:center;color:var(--g3);font-size:46px;margin-bottom:12px}
 .tpv2-d-nm{font-size:20px;font-weight:800;color:var(--dark)}
 .tpv2-d-tags{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px}
@@ -5588,7 +5612,8 @@ async function openTrainingPreview(source,id){
     adjustOpen:false,
     view:'overview',                // F0.7D: 3-staps preview — 'overview' | 'plan' | 'exercise'
     focusEx:null,                   // origineel exercise_id van de geopende oefening (scherm 3)
-    recovery:null                   // echte herstel-data per spiergroep (async geladen)
+    recovery:null,                  // echte herstel-data per spiergroep (async geladen)
+    prevMap:null                    // F0.7K: vorige sessie + 1RM-schatting per oefening (async)
   };
   openModal('m-training-preview');
   // "Waarom vandaag?" — echte herstel-data via de bestaande getRelevantMuscleRecovery()
@@ -5598,6 +5623,32 @@ async function openTrainingPreview(source,id){
     previewCtx.recovery=await getRelevantMuscleRecovery(muscles);
   }catch(e){ if(previewCtx)previewCtx.recovery=[]; }
   if(previewCtx&&previewCtx.view==='overview')renderTrainingPreview();
+  // F0.7K — deterministische vorige-sessie + geschatte 1RM per oefening, voor de
+  // gewichtssuggestie in Preview. Eén query per oefening; vult de bestaande
+  // estOneRMCache zodat previewOneRM()/estimatedOneRM() consistent zijn met Execution.
+  // Verzint niets: zonder historie blijven suggested/prev gewoon null.
+  try{
+    const ids=[];
+    previewWorkingList().forEach(it=>{ if(ids.indexOf(it.exercise_id)<0)ids.push(it.exercise_id); });
+    const pmap={};
+    for(const eid of ids){
+      try{
+        const rows=await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(eid)+'&order=date.desc,created_at.desc&limit=30');
+        let best=null,prev=null;
+        (rows||[]).forEach(s=>{
+          if(s.weight&&s.reps){
+            if(!prev)prev={weight:s.weight,reps:s.reps,rpe:s.rpe,date:s.date};
+            const est=epley1RMRaw(parseFloat(s.weight),parseInt(s.reps));
+            if(!best||est>best)best=est;
+          }
+        });
+        if(best!=null)estOneRMCache[eid]=Math.round(best);
+        if(prev)pmap[eid]=prev;
+      }catch(_){}
+    }
+    if(previewCtx)previewCtx.prevMap=pmap;
+  }catch(e){ if(previewCtx)previewCtx.prevMap={}; }
+  if(previewCtx)renderTrainingPreview();
 }
 
 function previewExerciseName(exId){
@@ -5689,6 +5740,64 @@ function previewFormatTarget(it){
   else if(it.reps!=null)parts.push(it.reps);
   if(it.rpe!=null)parts.push('RPE '+it.rpe);
   return parts.join(' · ');
+}
+
+// ── F0.7K — GEWICHT (deterministisch, alleen bestaande resolvers) ──
+// Geen nieuwe trainingsregel: 1RM-schatting (getOneRM/estimatedOneRM) → Brzycki
+// (suggestWeightForRepsRpe) voor het geprogrammeerde reps/RPE-doel + vorige sessie
+// (previewCtx.prevMap). Zonder historie/1RM blijft alles null (nooit verzonnen).
+function previewOneRM(exId){
+  try{ const v=getOneRM(exId); if(v!=null)return parseFloat(v); }catch(e){}
+  try{ const e2=estimatedOneRM(exId); if(e2!=null)return parseFloat(e2); }catch(e){}
+  return null;
+}
+function previewRepsMid(it){
+  const r=(it&&it.reps!=null)?repsPrefillFromRange(it.reps):'';
+  if(r)return parseFloat(r);
+  try{
+    if(previewCtx&&previewCtx.def&&previewCtx.def.goal&&window.WB&&WB.goalCfg){
+      const g=WB.goalCfg(previewCtx.def.goal); const gm=repsPrefillFromRange(g.reps);
+      if(gm)return parseFloat(gm);
+    }
+  }catch(e){}
+  return null;
+}
+function previewWeightInfo(it){
+  const out={suggested:null,prev:null};
+  if(!it)return out;
+  const id=it.exercise_id;
+  const prevMap=(previewCtx&&previewCtx.prevMap)||null;
+  if(prevMap&&prevMap[id])out.prev=prevMap[id];
+  const oneRM=previewOneRM(id);
+  const reps=previewRepsMid(it);
+  const rpe=(it.rpe!=null)?it.rpe:8;
+  if(oneRM&&reps){ try{ out.suggested=suggestWeightForRepsRpe(oneRM,reps,rpe); }catch(e){} }
+  return out;
+}
+function previewWarmupRamp(workKg){
+  if(!workKg||workKg<=0)return null;
+  try{ return suggestWarmupScheme(workKg); }catch(e){ return null; }
+}
+// "80 kg × 8 @ 8" — compacte weergave van een vorige sessie (alleen bestaande cijfers).
+function previewPrevLabel(prev){
+  if(!prev||prev.weight==null)return '';
+  let s=prev.weight+' kg';
+  if(prev.reps!=null)s+=' × '+prev.reps;
+  if(prev.rpe!=null&&prev.rpe!=='')s+=' @ '+prev.rpe;
+  return s;
+}
+// F0.7K — sectie-indeling voor S2 (rol → zichtbare sectie). Behoudt de plan-volgorde;
+// een sectiekop verschijnt zodra de sectie van de vorige oefening verandert.
+function previewSectionOf(pick){
+  switch(pick){
+    case 'warmup':return {k:'warmup',label:'Warming-up'};
+    case 'activation':return {k:'activation',label:'Activatie'};
+    case 'accessory':case 'isolation':return {k:'accessory',label:'Accessoires'};
+    case 'conditioning':return {k:'conditioning',label:'Conditioning'};
+    case 'cooldown':return {k:'cooldown',label:'Cooldown'};
+    case 'compound':case 'secondary':return {k:'main',label:'Hoofdwerk'};
+    default:return {k:'main',label:'Hoofdwerk'};
+  }
 }
 
 // ── F0.7D — Preview data-helpers (hergebruiken bestaande catalogus/exercises/assets) ──
@@ -5813,6 +5922,7 @@ function renderTPOverview(el){
 function renderTPPlan(el){
   const def=previewCtx.def, c=previewCounts(), list=c.list;
   const adj=previewCtx.adjustOpen;
+  let lastSection=null;
   const cards=list.map((it,i)=>{
     const m=previewExMeta(it.exercise_id);
     const nm=escHtml(m.name);
@@ -5822,8 +5932,19 @@ function renderTPPlan(el){
     const roleTxt=previewRoleLabel(it.pick)||(m.type||'');
     const role=roleTxt?`<div class="tpv2-exrole">${escHtml(roleTxt)}</div>`:'';
     const isPrep=(it.pick==='warmup'||it.pick==='activation'||it.pick==='cooldown');
+    // F0.7K — echte, scanbare secties (WARMING-UP/ACTIVATIE/HOOFDWERK/…): kop verschijnt
+    // zodra de rol-sectie wisselt. Plan-volgorde blijft intact (geen herordening).
+    const sec=previewSectionOf(it.pick);
+    const secHead=(sec.k!==lastSection)?`<div class="tpv2-plansec">${escHtml(sec.label)}</div>`:'';
+    lastSection=sec.k;
     // Warm-up SETS binnen de oefening (wu) — zichtbaar maken, los van warm-up/activation-oefeningen.
     const wuLine=(it.wu&&it.wu>0)?`<div class="tpv2-exwu">+ ${it.wu} opwarmset${it.wu===1?'':'s'}</div>`:'';
+    // F0.7K — gewicht (deterministisch): voorgesteld werkgewicht + vorige keer.
+    const wi=(!isPrep)?previewWeightInfo(it):{suggested:null,prev:null};
+    const wParts=[];
+    if(wi.suggested!=null)wParts.push(`<span class="tpv2-exwt-sug">Voorgesteld ${escHtml(String(wi.suggested).replace('.',','))} kg</span>`);
+    if(wi.prev)wParts.push(`<span class="tpv2-exwt-prev">Vorige keer ${escHtml(previewPrevLabel(wi.prev))}</span>`);
+    const wtLine=wParts.length?`<div class="tpv2-exwt">${wParts.join('')}</div>`:'';
     const tags=[...(m.equipment||[]),...(m.primary||[]).slice(0,2)].slice(0,3)
       .map(t=>`<span class="tpv2-tag">${escHtml(t)}</span>`).join('');
     const swapped=previewCtx.swaps[it.original_exercise_id];
@@ -5834,10 +5955,10 @@ function renderTPPlan(el){
         <button onclick="previewMoveExercise('${escHtml(it.original_exercise_id)}',-1)" ${i===0?'disabled':''} title="Omhoog" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px${i===0?';opacity:.35':''}">↑</button>
         <button onclick="previewMoveExercise('${escHtml(it.original_exercise_id)}',1)" ${i===list.length-1?'disabled':''} title="Omlaag" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px${i===list.length-1?';opacity:.35':''}">↓</button>
       </div>`:'';
-    return `<div class="tpv2-excard${isPrep?' tpv2-excard--prep':''}" role="button" tabindex="0" onclick="previewOpenExercise('${escHtml(it.original_exercise_id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();previewOpenExercise('${escHtml(it.original_exercise_id)}')}">
+    return `${secHead}<div class="tpv2-excard${isPrep?' tpv2-excard--prep':''}" role="button" tabindex="0" onclick="previewOpenExercise('${escHtml(it.original_exercise_id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();previewOpenExercise('${escHtml(it.original_exercise_id)}')}">
       ${thumb}
       <div class="tpv2-exb">${role}<div class="tpv2-exnm">${nm}${swapped?' <span style="font-size:10px;color:var(--g4);font-weight:600">(vervangen)</span>':''}</div>
-        <div class="tpv2-extags">${tags}</div>${wuLine}${why}</div>
+        <div class="tpv2-extags">${tags}</div>${wuLine}${wtLine}${why}</div>
       ${tgt?`<div class="tpv2-exmeta">${escHtml(tgt)}</div>`:''}
       ${adjHtml}
     </div>`;
@@ -5885,10 +6006,39 @@ function renderTPExercise(el){
   else if(m.video&&m.video.movekit)videoBlock=`<div class="tpv2-d-h">Video</div><div style="font-size:12px;color:var(--g4)">Video beschikbaar in de oefeningbibliotheek.</div>`;
   const altNames=(m.alternatives||[]).slice(0,4).map(a=>{const am=previewExMeta(a);return am.name;}).filter(Boolean);
   const altBlock=altNames.length?`<div class="tpv2-d-h">Alternatieven</div><div class="tpv2-d-tags">${altNames.map(a=>`<span class="tpv2-tag">${escHtml(a)}</span>`).join('')}</div>`:'';
+  // ── F0.7K — "Wat moet ik vandaag doen?" bovenaan (vóór techniek/waarom) ──
+  const wlItem=previewWorkingList().find(x=>x.original_exercise_id===origId)||null;
+  let todayBlock='';
+  if(wlItem){
+    const isPrep=(wlItem.pick==='warmup'||wlItem.pick==='activation'||wlItem.pick==='cooldown');
+    const tgt=previewFormatTarget(wlItem);
+    const wi=(!isPrep)?previewWeightInfo(wlItem):{suggested:null,prev:null};
+    const big=(wi.suggested!=null)?`<span class="tpv2-today-big">${escHtml(String(wi.suggested).replace('.',','))} kg</span>`:'';
+    const tgtEl=tgt?`<span class="tpv2-today-tgt">${escHtml(tgt)}</span>`:'';
+    const prevEl=wi.prev?`<div class="tpv2-today-prev">Vorige keer: ${escHtml(previewPrevLabel(wi.prev))}</div>`:'';
+    // Warm-up SETS binnen deze oefening: deterministisch ramp-schema o.b.v. het voorgestelde
+    // werkgewicht. Zonder werkgewicht: sets tonen, gewicht expliciet "nog te bepalen".
+    let wuBlock='';
+    if(wlItem.wu&&wlItem.wu>0){
+      const ramp=(wi.suggested!=null)?previewWarmupRamp(wi.suggested):null;
+      if(ramp&&ramp.length){
+        const rows=ramp.slice(0,Math.max(wlItem.wu,ramp.length)).map(s=>`<div class="tpv2-wu-item"><span>Opwarmset</span><span><b>${escHtml(String(s.kg).replace('.',','))} kg</b> × ${s.reps}</span></div>`).join('');
+        wuBlock=`<div class="tpv2-wu-list"><div class="tpv2-today-h">Opwarming</div>${rows}</div>`;
+      }else{
+        wuBlock=`<div class="tpv2-wu-list"><div class="tpv2-today-h">Opwarming</div><div class="tpv2-wu-item"><span>${wlItem.wu} opwarmset${wlItem.wu===1?'':'s'}</span><span style="color:var(--y,#b8860b);font-weight:700">gewicht nog te bepalen</span></div></div>`;
+      }
+    }
+    const todoNote=(!isPrep&&wi.suggested==null)?`<div class="tpv2-today-todo">Werkgewicht nog te bepalen — log deze oefening om een suggestie te krijgen.</div>`:'';
+    if(big||tgtEl||prevEl||wuBlock||todoNote){
+      todayBlock=`<div class="tpv2-today"><div class="tpv2-today-h">Vandaag doen</div>
+        <div class="tpv2-today-row">${big}${tgtEl}</div>${prevEl}${todoNote}${wuBlock}</div>`;
+    }
+  }
   el.innerHTML=`${tpHeader(m.name,'previewBackToPlan()')}
     ${hero}
     <div class="tpv2-d-nm">${escHtml(m.name)}</div>
     ${tags?`<div class="tpv2-d-tags">${tags}</div>`:''}
+    ${todayBlock}
     ${whyBlock}
     ${frBlock}
     ${cues?`<div class="tpv2-d-h">Techniek</div>${cues}`:''}
@@ -15939,6 +16089,19 @@ var WBUI=(function(){
     return map[it.pick]||'';
   }
   var _cap=function(x){return (window._libCap?_libCap(x):String(x||''));};
+  // F0.7K — reps/RPE/rust-chips per oefening, afgeleid van rol (pick) + doel (bestaande
+  // GOALS-config). Geen nieuwe trainingsregel; alleen presentatie van bestaande waarden.
+  function wbSchemaChips(it,gc,sel){
+    var GR={hypertrofie:'7-8',kracht:'8-9',power:'8',conditie:'6-7',mobiliteit:'5-6',stabiliteit:'6-7',herstel:'5-6'};
+    var pk=it.pick;
+    var reps=(pk==='warmup')?'5-8':(pk==='cooldown')?'30-45s':(pk==='activation')?'10-12':(it.reps||gc.reps);
+    var rest=(pk==='warmup')?25:(pk==='cooldown')?0:(pk==='activation')?40:(it.rest||gc.rest||75);
+    var rpe=(pk==='warmup'||pk==='cooldown')?null:(GR[sel.goal]||null);
+    var out='<span class="wb4-chip2">Reps '+esc(String(reps))+'</span>';
+    if(rpe)out+='<span class="wb4-chip2">RPE '+esc(rpe)+'</span>';
+    out+='<span class="wb4-chip2">Rust '+rest+'s</span>';
+    return out;
+  }
   function exRow(it,idx){
     var e=ex(it.id),sel=s();if(!e)return '';
     var gc=WB.goalCfg(sel.goal);var open=!!_open[idx];
@@ -15976,6 +16139,9 @@ var WBUI=(function(){
            '<div class="wb4-roles">'+['warmup','activation','compound','secondary','accessory','conditioning','cooldown'].map(function(pk){var NL={warmup:'Warm-up',activation:'Activatie',compound:'Compound',secondary:'Secondary',accessory:'Accessoire',conditioning:'Conditie',cooldown:'Cooldown'};return '<button class="wb4-role'+(it.pick===pk?' on':'')+'" onclick="WBUI.setPick('+idx+',\''+pk+'\')">'+NL[pk]+'</button>';}).join('')+'</div>'+
            '<div class="wb4-edit-lbl">Sets</div>'+
            '<div class="wb4-setstep"><button onclick="WBUI.setSets('+idx+',-1)" aria-label="Minder sets">−</button><b>'+(it.sets||3)+'</b><button onclick="WBUI.setSets('+idx+',1)" aria-label="Meer sets">+</button></div>'+
+           // F0.7K — schema (reps/RPE/rust) per oefening, afgeleid van rol + doel (bestaande GOALS-config). Read-only info.
+           '<div class="wb4-edit-lbl">Schema</div>'+
+           '<div class="wb4-schema">'+wbSchemaChips(it,gc,sel)+'</div>'+
          '</div></div>';
     }
     h+='</div>';
@@ -16138,11 +16304,16 @@ var GW=(function(){
   /* ── Faseovergangen ── */
   function begin(){if(!st.active)return;st.active.phase='exercise';persist();}
   function finishSet(){if(!st.active)return;st.active.phase='rpe';persist();}
-  function rateSet(feelKey){
+  // F0.7K — actualReps (optioneel): het WERKELIJK uitgevoerde aantal reps voor deze set.
+  // Wordt NOOIT afgeleid van planned reps (c.reps blijft de doel-string); is de sporter
+  // niets invult, blijft reps null en gaat er niets verzonnen naar sessions.
+  function rateSet(feelKey,actualReps){
     var c=cur();if(!c)return;
     var f=null;for(var i=0;i<FEELS.length;i++)if(FEELS[i].k===feelKey)f=FEELS[i];
     if(!f)f=FEELS[2];
-    c.setsDone.push({feel:f.k,rpe:f.rpe,at:Date.now()});
+    var reps=null;
+    if(actualReps!=null&&actualReps!==''){ var rp=parseInt(actualReps,10); if(!isNaN(rp)&&rp>0)reps=rp; }
+    c.setsDone.push({feel:f.k,rpe:f.rpe,reps:reps,at:Date.now()});
     var h=hist();h[c.id]={weight:c.weight,reps:c.reps,feel:f.k,rpe:f.rpe,at:Date.now()};lsSet('tk_gw_hist',h);
     st.active.lastFeel=f.k;
     st.active.phase='advice';
@@ -16289,8 +16460,9 @@ var GW=(function(){
   //   sets   = aantal daadwerkelijk voltooide sets (setsDone.length)
   //   weight = het (live aangepaste) werkgewicht (item.weight); null indien onbekend
   //   rpe    = werkelijke per-set RPE uit setsDone (bewaard in sets_detail)
-  //   reps   = NULL — GW registreert geen werkelijke reps; de doel-reps zijn PLANNED en
-  //            worden NOOIT als actual weggeschreven (data-integriteit).
+  //   reps   = F0.7K — werkelijke reps uit setsDone.reps ALS de sporter die per set heeft
+  //            ingevuld; anders NULL. Doel-reps (PLANNED) worden NOOIT als actual
+  //            weggeschreven (data-integriteit).
   // Warm-up/cooldown-items tellen niet als werksets (worden niet gelogd). Idempotent via
   // sessionsLogged-guard, zodat finish/resume/dubbele aanroep nooit dubbel logt.
   async function persistToSessions(){
@@ -16304,7 +16476,7 @@ var GW=(function(){
       var it=a.items[i];
       if(!it.setsDone||!it.setsDone.length)continue;             // alleen werkelijk uitgevoerde sets
       if(it.pick==='warmup'||it.pick==='cooldown')continue;      // geen warm-up/cooldown als werkset
-      var ws=it.setsDone.map(function(sd){return {kg:(it.weight!=null?it.weight:null),reps:null,rpe:sd.rpe};});
+      var ws=it.setsDone.map(function(sd){return {kg:(it.weight!=null?it.weight:null),reps:(sd.reps!=null?sd.reps:null),rpe:sd.rpe};});
       try{
         var built=buildStrengthSessionRow(it.id,ws,{date:today,training_type:tt,note:'',instanceId:instId});
         await writeSessionRow(built.row); written++;
@@ -16418,7 +16590,12 @@ var GWUI=(function(){
   /* ── RPE: eigen rustig scherm ── */
   function rpeView(){
     var it=GW.cur();var setNo=Math.min(it.setsDone.length+1,it.setsTarget);
-    var h='<div class="g2-ask"><div class="g2-ask-q">Hoe voelde set '+setNo+'?</div><div class="g2-feels">';
+    var h='<div class="g2-ask"><div class="g2-ask-q">Hoe voelde set '+setNo+'?</div>';
+    // F0.7K — optioneel: werkelijk aantal reps van deze set. Leeg laten = niet geregistreerd
+    // (blijft null in sessions; doel-reps worden nooit als actual weggeschreven).
+    h+='<div class="gw-reps"><label class="gw-reps-l" for="gw-reps-in">Herhalingen gehaald <span>(optioneel)</span></label>'+
+       '<input class="gw-reps-in" id="gw-reps-in" type="number" inputmode="numeric" min="1" max="100" placeholder="'+esc(String(it.reps))+'"></div>';
+    h+='<div class="g2-feels">';
     GW.FEELS.forEach(function(f){h+='<button class="gw-feel" onclick="GWUI.rate(\''+f.k+'\')"><span class="gw-feel-o">○</span>'+esc(f.l)+'</button>';});
     h+='</div></div>';
     return h;
@@ -16538,15 +16715,17 @@ var GWUI=(function(){
   function stopTimer(){if(_tid){clearInterval(_tid);_tid=null;}}
 
   /* ── Interacties (ongewijzigd t.o.v. engine-API) ── */
+  // F0.7K — launch() is UITSLUITEND resume (Preview-first: een nieuwe begeleide sessie
+  // start altijd via previewStartTraining('guided'), nooit hier). Zonder openstaande sessie
+  // stuurt launch() de sporter naar de reguliere start-route i.p.v. GW buiten Preview te starten.
   function launch(){
     if(!window.GW)return;
-    if(GW.hasActive()){GW.resume();}
-    else{if(!(window.WB&&WB.st&&WB.st.plan))WB.generate(WB.st.sel);GW.start(WB.st.plan,WB.st.sel);}
-    go('s-guided');_lastKey='';_detail=false;render();
+    if(GW.hasActive()){GW.resume();go('s-guided');_lastKey='';_detail=false;render();return;}
+    go('s-builder');if(window.WBUI)WBUI.render();
   }
   function begin(){GW.begin();render();}
   function setDone(){GW.finishSet();render();}
-  function rate(k){GW.rateSet(k);render();}
+  function rate(k){var el=document.getElementById('gw-reps-in');var reps=el?el.value:null;GW.rateSet(k,reps);render();}
   function next(){GW.continueAfter();render();}
   function skipRest(){GW.skipRest();render();}
   function rest(d){GW.adjustRest(d);var n=document.getElementById('gw-rest-num');if(n)n.textContent=fmt(GW.active().restLeft);}

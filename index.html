@@ -3466,6 +3466,13 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </div>
 </div>
 
+<div class="modal-bg" id="m-lib-add-training" onclick="bgClose(event,'m-lib-add-training')">
+  <div class="modal" style="max-height:80vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div id="lib-add-training-body">Laden…</div>
+  </div>
+</div>
+
 <div class="modal-bg" id="m-team-pin" onclick="bgClose(event,'m-team-pin')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -4220,7 +4227,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.29';
+const APP_VER = 'v4.24.30';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -4834,7 +4841,7 @@ async function renderVasteTrainingBtns(){
   await ensureVasteTrainingenLoaded();
   if(!vasteTrainingen.length){el.innerHTML='';return;}
   el.innerHTML=vasteTrainingen.map((v,i)=>`
-    <button onclick="startT('${v.id}')" style="flex:1;min-width:120px;padding:14px;border-radius:14px;border:none;background:${i%2===0?'var(--dark)':'var(--accent)'};color:${i%2===0?'#fff':'var(--dark)'};font-family:var(--f);font-size:14px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:6px;justify-content:center">
+    <button onclick="openTrainingPreview('vast','${v.id}')" style="flex:1;min-width:120px;padding:14px;border-radius:14px;border:none;background:${i%2===0?'var(--dark)':'var(--accent)'};color:${i%2===0?'#fff':'var(--dark)'};font-family:var(--f);font-size:14px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:6px;justify-content:center">
       <div class="ni-dot" id="home-dot-${v.id.toLowerCase()}" style="position:static;background:${i%2===0?'#fff':'var(--dark)'}"></div>${escHtml(v.naam)}
     </button>`).join('');
 }
@@ -4880,7 +4887,7 @@ async function renderSchemaTrainingList(){
       ${tags?`<div class="sc-tags">${tags}</div>`:''}
       <div class="sc-meta"><span>${V48I.list} ${n} oefening${n===1?'':'en'}</span><span>${V48I.clock} ${escHtml(v48RelDate(lastMap[v.id]))}</span></div>
       <div class="sc-actions">
-        <button class="sc-start" onclick="startT('${v.id}')">${V48I.play} Start</button>
+        <button class="sc-start" onclick="openTrainingPreview('vast','${v.id}')">${V48I.play} Start</button>
         <button class="sc-ic" onclick='openRenameVasteTraining(${JSON.stringify(v.id)},${JSON.stringify(v.naam)})' aria-label="Hernoemen">${V48I.edit}</button>
         <button class="sc-ic del" onclick="deleteVasteTraining('${v.id}')" aria-label="Verwijderen">${V48I.trash}</button>
       </div>
@@ -5683,9 +5690,9 @@ function renderTrainingPreview(){
     <div style="margin-top:16px">
       <button class="btn btn-r" style="width:100%" onclick="previewStartTraining()">Start training</button>
       <button class="btn btn-o" style="width:100%;margin-top:8px" onclick="previewToggleAdjust()">${previewCtx.adjustOpen?'Klaar met aanpassen':'Vandaag aanpassen'}</button>
-      <div style="text-align:center;margin-top:10px">
+      ${previewCtx.source==='custom'?`<div style="text-align:center;margin-top:10px">
         <a href="javascript:void(0)" onclick="previewOpenBuilder()" style="font-size:10.5px;color:var(--g2);font-weight:600;text-decoration:underline">Training structureel wijzigen</a>
-      </div>
+      </div>`:''}
     </div>
   `;
 }
@@ -5792,8 +5799,76 @@ async function previewStartTraining(){
   previewStarting=false;
 }
 function previewOpenBuilder(){
+  // F0.7C: klein, tijdelijk geheugenpunt (geen nieuwe state-machine) zodat we na het opslaan
+  // in de Builder terug kunnen naar dezelfde Preview met verse data. Alleen voor custom
+  // trainingen — vaste trainingen tonen deze knop sowieso niet (zie renderTrainingPreview()).
+  window.wbReturnCtx=(previewCtx&&previewCtx.source==='custom')?{source:previewCtx.source,id:previewCtx.id}:null;
   closeModal('m-training-preview');
   go('s-builder');
+  if(window.wbReturnCtx&&window.WBUI)WBUI.resume(window.wbReturnCtx.id);
+}
+
+/* ═══ F0.7C follow-up — Library → Training ═══
+   Hergebruikt uitsluitend bestaande mechanismen: WB.st (al publiek), WB.resumeWorkout(),
+   WB.saveDraft(), WBUI.render(), en het wbReturnCtx-mechanisme uit de F0.7C-core hierboven
+   (ongewijzigd). Geen nieuwe database, geen nieuw ID-systeem, geen tweede editor. */
+function libOpenAddToTraining(catalogId){
+  openModal('m-lib-add-training');
+  libRenderAddToTrainingChoice(catalogId);
+}
+function libRenderAddToTrainingChoice(catalogId){
+  const el=document.getElementById('lib-add-training-body');
+  if(!el)return;
+  const ex=(typeof ExerciseCatalogService!=='undefined')?ExerciseCatalogService.byId(catalogId):null;
+  const naam=(ex&&ex.identity)?ex.identity.name:catalogId;
+  el.innerHTML=`
+    <div class="modal-title">Toevoegen aan training</div>
+    <div style="font-size:13px;color:var(--g4);margin-bottom:14px">${escHtml(naam)}</div>
+    <button class="btn btn-r" style="width:100%;margin-bottom:8px" onclick="libStartNewTrainingWithExercise('${catalogId}')">Nieuwe training</button>
+    <button class="btn btn-o" style="width:100%" onclick="libShowExistingTrainingPicker('${catalogId}')">Bestaande training</button>
+  `;
+}
+function libStartNewTrainingWithExercise(catalogId){
+  // Vult WB.st (dezelfde staat die ook resumeWorkout() vult) met precies 1 catalog_id.
+  // Geen existingId → WBUI.save() volgt straks automatisch het bestaande, ongewijzigde
+  // nieuwe-training-pad van WB.saveWorkout().
+  if(typeof WB!=='undefined'){
+    WB.st.sel=WB.st.sel||WB.defaultSel();
+    WB.st.plan={items:[{id:catalogId,pick:'compound',sets:4,reps:'6-8',rest:90}]};
+    WB.st.dirty=false;
+    try{WB.saveDraft();}catch(e){}
+  }
+  window.wbReturnCtx={source:'custom',id:null};
+  closeModal('m-lib-add-training');
+  go('s-builder');
+  if(window.WBUI)WBUI.render();
+}
+function libShowExistingTrainingPicker(catalogId){
+  const el=document.getElementById('lib-add-training-body');
+  if(!el)return;
+  const list=(typeof customTrainings!=='undefined')?customTrainings:[];
+  const rows=list.length?list.map(t=>`<div class="lrow" style="align-items:center"><div style="flex:1;font-size:13px">${escHtml(t.name)}</div><button class="btn btn-o btn-sm" onclick="libAddToExistingTraining('${catalogId}','${t.id}')">Kies</button></div>`).join(''):'<div style="font-size:12px;color:var(--g4)">Nog geen eigen trainingen — kies "Nieuwe training".</div>';
+  el.innerHTML=`
+    <div class="modal-title">Kies een bestaande training</div>
+    <div style="margin-top:6px">${rows}</div>
+    <button class="btn btn-o btn-sm" style="margin-top:12px" onclick="libRenderAddToTrainingChoice('${catalogId}')">← Terug</button>
+  `;
+}
+function libAddToExistingTraining(catalogId,trainingId){
+  // Hergebruikt WB.resumeWorkout() (F0.7C-core, ongewijzigd) om de bestaande training volledig
+  // te laden, voegt daarna één item toe aan st.plan.items — zelfde patroon als de bestaande
+  // removeItem()/moveItem() die ook rechtstreeks op st.plan.items werken.
+  if(typeof WB==='undefined'||!WB.resumeWorkout(trainingId)){
+    if(window.toast)toast('Kon deze training niet laden');
+    return;
+  }
+  WB.st.plan.items.push({id:catalogId,pick:'compound',sets:4,reps:'6-8',rest:90});
+  WB.st.dirty=false;
+  try{WB.saveDraft();}catch(e){}
+  window.wbReturnCtx={source:'custom',id:trainingId};
+  closeModal('m-lib-add-training');
+  go('s-builder');
+  if(window.WBUI)WBUI.render();
 }
 
 async function openOfflineQueueModal(){
@@ -9409,6 +9484,9 @@ function _libDetailHtml(id){var E=ExerciseCatalogService;var c=E.byId(id);if(!c)
   // 3 Exercise Intelligence Dashboard (+ spieren & equipment + statistieken)
   var muscHtml='<div class="lib-sub-h">Spieren &amp; equipment</div><div class="lib-musc"><div><span class="lib-musc-lbl">Primair</span>'+(Id.primary.map(function(x){return '<span class="lib-mchip on">'+escHtml(x)+'</span>';}).join('')||'<span class="lib-muted">—</span>')+'</div><div><span class="lib-musc-lbl">Secundair</span>'+(Id.secondary.map(function(x){return '<span class="lib-mchip">'+escHtml(x)+'</span>';}).join('')||'<span class="lib-muted">—</span>')+'</div><div><span class="lib-musc-lbl">Equipment</span>'+(Id.equipment.map(function(e){return '<span class="lib-mchip">'+escHtml(_libCap(e))+'</span>';}).join('')||'<span class="lib-muted">—</span>')+'</div></div>';
   out+=_acc('intel','Exercise Intelligence',_intelDashboard(c)+muscHtml+'<div class="lib-sub-h">Statistieken &amp; richtlijnen</div>'+_statList(c),false);
+  // F0.7C follow-up — Library → Training: geeft toegang tot de bestaande Builder/composition-
+  // keten (zie libOpenAddToTraining). Zelfde visuele taal als de bestaande vergelijk-knop.
+  out+='<button class="lib-cmp-btn" id="lib-add-training" onclick="libOpenAddToTraining(\''+id+'\')" aria-label="Toevoegen aan training"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Toevoegen aan training</button>';
   // 4 Vergelijkingen (CTA)
   out+='<button class="lib-cmp-btn lib5d-cmp" id="lib-cmp" aria-label="Vergelijk met andere oefening"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v18M5 7h14M7 7l-3 6a3 3 0 006 0zM17 7l-3 6a3 3 0 006 0z"/></svg> Vergelijk met andere oefening</button>';
   // 5 Gerelateerde oefeningen (contextueel)
@@ -14441,14 +14519,14 @@ function v43RenderPlan(elId,nextT){
   const n=nextT._exCount||0;
   const pi=window.v43ProgInfo;
   const chip=pi?`<div class="v43-prog-chip">${escHtml(pi.naam)}${pi.week?' · Week '+pi.week:''}${pi.fase?' · '+escHtml(pi.fase):''}</div>`:'';
-  el.innerHTML=`<div class="v43-plan" role="button" tabindex="0" onclick="openTrainDetail('${nextT.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openTrainDetail('${nextT.id}')}">
+  el.innerHTML=`<div class="v43-plan" role="button" tabindex="0" onclick="openTrainingPreview('vast','${nextT.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openTrainingPreview('vast','${nextT.id}')}">
     <div class="v43-lbl">Vandaag gepland</div>
     <div class="v43-plan-top">
       <div class="v43-plan-ic">${V43I.dumbbell}</div>
       <div class="v43-plan-l"><div class="v43-plan-name">${escHtml(nextT.naam)}</div>
       <div class="v43-plan-meta">${n?`<span>${V43I.list} ${n} oefening${n===1?'':'en'}</span>`:''}</div>${chip}</div>
     </div>
-    <button class="v43-start" onclick="event.stopPropagation();startT('${nextT.id}')">${V43I.play} Start training</button>
+    <button class="v43-start" onclick="event.stopPropagation();openTrainingPreview('vast','${nextT.id}')">${V43I.play} Start training</button>
   </div>`;
 }
 function renderV43Train(){
@@ -15447,22 +15525,35 @@ var WB=(function(){
       };
     });
   }
-  function saveWorkout(name){
+  function saveWorkout(name,existingId){
     var q=quality(st.plan,st.sel);
-    var id='custom_'+Date.now();
+    // F0.7C: existingId optioneel — zonder existingId is dit gedrag 100% ongewijzigd (nieuwe training).
+    var isUpdate=!!existingId;
+    var id=existingId||('custom_'+Date.now());
+    var existing=(isUpdate&&typeof customTrainings!=='undefined')?customTrainings.find(function(x){return x.id===id;}):null;
     var t={
-      id:id, name:name||autoName(), color:'#0E3B4A', note:'',
+      id:id, name:name||(existing?existing.name:autoName()), color:(existing?existing.color:'#0E3B4A'), note:(existing?existing.note:''),
       exercises:(st.plan.items||[]).map(function(it){return it.id;}), // platte lijst, zelfde vorm als bestaande custom trainingen
-      source:'builder',
-      metadata:{sel:clone(st.sel),quality:q,created:Date.now()},
+      source:(existing?existing.source:'builder'),
+      metadata:{sel:clone(st.sel),quality:q,created:(existing&&existing.metadata?existing.metadata.created:Date.now())},
       exercise_targets:targetsFromPlanItems(st.plan.items)
     };
     if(typeof customTrainings!=='undefined'){
-      customTrainings.unshift(t);
+      if(isUpdate&&existing){
+        var idx=customTrainings.indexOf(existing);
+        if(idx>=0)customTrainings[idx]=t;else customTrainings.unshift(t); // val terug op unshift als niet gevonden (defensief, geen dubbele state)
+      }else{
+        customTrainings.unshift(t);
+      }
       lsSet('tk_trainings',customTrainings);
     }
-    sbPostQ('custom_trainings',{id:id,naam:t.name,kleur:t.color,notitie:null,sort_order:(typeof customTrainings!=='undefined'?customTrainings.length:1)-1,scope:'personal',source:'builder',metadata:t.metadata});
-    pushCustomTrainingExercisesRich(t);
+    if(isUpdate){
+      // F0.7C: bestaand sbPatchQ-patroon (al 5x elders gebruikt) — update in plaats van insert, geen dubbele rij.
+      sbPatchQ('custom_trainings','id=eq.'+id,{naam:t.name,kleur:t.color,notitie:t.note||null,metadata:t.metadata});
+    }else{
+      sbPostQ('custom_trainings',{id:id,naam:t.name,kleur:t.color,notitie:null,sort_order:(typeof customTrainings!=='undefined'?customTrainings.length:1)-1,scope:'personal',source:'builder',metadata:t.metadata});
+    }
+    pushCustomTrainingExercisesRich(t); // ongewijzigd — al update-safe (delete+reinsert op custom_training_id)
     return id;
   }
   function duplicateWorkout(wid){
@@ -15487,9 +15578,13 @@ var WB=(function(){
   }
   function resumeWorkout(wid){
     if(typeof customTrainings==='undefined')return false;
-    var t=customTrainings.filter(function(x){return x.id===wid&&x.source==='builder';})[0];
-    if(!t||!t.metadata||!t.metadata.sel)return false;
-    st.sel=clone(t.metadata.sel);
+    var t=customTrainings.filter(function(x){return x.id===wid;})[0];
+    if(!t)return false;
+    // F0.7C: zelfde bewezen fallback-patroon als savedList() (regel hierboven) — metadata.sel
+    // indien aanwezig, anders defaultSel(). Niet langer afhankelijk van source==='builder':
+    // exercise_targets wordt universeel geladen voor elke custom training (ensureCustomTrainingsLoaded),
+    // dus elke custom training is hervatbaar, ook zonder metadata.sel.
+    st.sel=(t.metadata&&t.metadata.sel)?clone(t.metadata.sel):defaultSel();
     st.plan={items:planItemsFromTargets(t.exercise_targets)};
     st.dirty=false;
     saveDraft();
@@ -15675,7 +15770,18 @@ var WBUI=(function(){
   function remove(idx){WB.removeItem(idx);_open={};render();}
   function open(id){go('s-library');if(window.renderLibrary)renderLibrary();if(window._libOpen)_libOpen(id);}
   function regen(){WB.st.dirty=true;_open={};render();if(window.toast)toast('Training opnieuw gegenereerd');}
-  function save(){WB.saveWorkout(null);render();if(window.toast)toast('Training opgeslagen');}
+  function save(){
+    // F0.7C: als we via previewOpenBuilder() hier kwamen (wbReturnCtx gezet), is dit een
+    // UPDATE van een bestaande custom training — geen nieuwe kopie, en na opslaan terug
+    // naar dezelfde Preview met verse data.
+    var rc=window.wbReturnCtx;
+    var existingId=(rc&&rc.source==='custom')?rc.id:null;
+    var savedId=WB.saveWorkout(null,existingId);
+    window.wbReturnCtx=null;
+    if(window.toast)toast('Training opgeslagen');
+    if(rc&&typeof openTrainingPreview==='function'){openTrainingPreview(rc.source,savedId||rc.id);return;}
+    render();
+  }
   function dupe(){WB.saveWorkout(WB.autoName()+' (kopie)');render();if(window.toast)toast('Gedupliceerd');}
   function dupeSaved(wid){WB.duplicateWorkout(wid);render();if(window.toast)toast('Gedupliceerd');}
   function fav(wid){WB.favWorkout(wid);render();}
@@ -16307,7 +16413,7 @@ var DASHUI=(function(){
       return '<div class="dash-today"><div class="dash-today-k">Training van vandaag</div>'+
         '<div class="dash-today-h">'+esc(t.naam)+'</div>'+
         (human?'<div class="dash-today-s">'+esc(human)+(meta?' · '+meta:'')+'</div>':(meta?'<div class="dash-today-s">'+meta+'</div>':''))+
-        '<button class="dash-today-btn" onclick="startT(\''+esc(t.id)+'\')">Start training</button></div>';
+        '<button class="dash-today-btn" onclick="openTrainingPreview(\'vast\',\''+esc(t.id)+'\')">Start training</button></div>';
     }
     return '<div class="dash-today"><div class="dash-today-k">Klaar om te trainen?</div>'+
       '<div class="dash-today-h">Bouw je training van vandaag</div>'+

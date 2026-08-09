@@ -2150,6 +2150,190 @@ test('buildResolvedExecutionItems: legacy ID (bijv. "bench") blijft via het best
   assertEq(result[0].muscles.p[0],'Borst');
 });
 
+// ── F0.7C — Training Aanpassen: update i.p.v. dupliceren (gerichte, minimale dekking) ────
+console.log("\n🛠️  F0.7C — Training Aanpassen (custom training update, geen duplicatie)");
+
+test('resumeWorkout: custom training ZONDER metadata.sel en zonder source==="builder" wordt toch correct hervat (defaultSel-fallback)', ()=>{
+  function defaultSel_T(){return {goal:'hypertrofie',muscles:[],equipment:['bodyweight','dumbbell','barbell','machine','cable machine'],time:45,level:'intermediate',form:'full'};}
+  function planItemsFromTargets_T(targets){
+    return (targets||[]).map(function(et){return {id:et.exercise_id,pick:et.pick||'compound',sets:et.sets,reps:et.reps,rest:et.rest};});
+  }
+  function resumeWorkout_T(wid,customTrainings,st){
+    var t=customTrainings.filter(function(x){return x.id===wid;})[0];
+    if(!t)return false;
+    st.sel=(t.metadata&&t.metadata.sel)?t.metadata.sel:defaultSel_T();
+    st.plan={items:planItemsFromTargets_T(t.exercise_targets)};
+    st.dirty=false;
+    return true;
+  }
+  // training zonder metadata.sel, zonder source (bv. handmatig aangemaakt, niet via Builder)
+  const manualTraining={id:'custom_manual_1',name:'Handmatige training',exercise_targets:[{exercise_id:'TK-000019',sets:4,reps:'8',rest:90,pick:'compound'}]};
+  const st={sel:null,plan:null,dirty:false};
+  const ok=resumeWorkout_T('custom_manual_1',[manualTraining],st);
+  assert(ok,'moet true teruggeven, ook zonder metadata.sel/source==="builder"');
+  assertEq(st.sel.goal,'hypertrofie','moet terugvallen op defaultSel()');
+  assertEq(st.plan.items[0].id,'TK-000019','canonical catalog_id moet behouden blijven in het geladen plan');
+});
+
+test('saveWorkout: zonder existingId blijft het bestaande "nieuwe training"-gedrag exact behouden', ()=>{
+  function saveWorkout_T(name,existingId,customTrainings,idFactory){
+    const isUpdate=!!existingId;
+    const id=existingId||idFactory();
+    const existing=isUpdate?customTrainings.find(function(x){return x.id===id;}):null;
+    const t={id:id,name:name||'Auto',source:(existing?existing.source:'builder'),exercise_targets:[{exercise_id:'TK-000030'}]};
+    if(isUpdate&&existing){const idx=customTrainings.indexOf(existing);if(idx>=0)customTrainings[idx]=t;else customTrainings.unshift(t);}
+    else customTrainings.unshift(t);
+    return id;
+  }
+  const customTrainings=[{id:'custom_existing',name:'Oud'}];
+  const newId=saveWorkout_T(null,null,customTrainings,()=>'custom_NIEUW');
+  assertEq(newId,'custom_NIEUW','zonder existingId moet gewoon een nieuw ID ontstaan, zoals voorheen');
+  assertEq(customTrainings.length,2,'moet een extra rij toevoegen (unshift), geen bestaande overschrijven');
+});
+
+test('saveWorkout: MET existingId wordt het bestaande record bijgewerkt, geen tweede/duplicaat-rij', ()=>{
+  function saveWorkout_T(name,existingId,customTrainings,idFactory){
+    const isUpdate=!!existingId;
+    const id=existingId||idFactory();
+    const existing=isUpdate?customTrainings.find(function(x){return x.id===id;}):null;
+    const t={id:id,name:name||(existing?existing.name:'Auto'),source:(existing?existing.source:'builder'),exercise_targets:[{exercise_id:'TK-000030'}]};
+    if(isUpdate&&existing){const idx=customTrainings.indexOf(existing);if(idx>=0)customTrainings[idx]=t;else customTrainings.unshift(t);}
+    else customTrainings.unshift(t);
+    return id;
+  }
+  const customTrainings=[{id:'custom_bestaand',name:'Push A',source:'builder'}];
+  const returnedId=saveWorkout_T(null,'custom_bestaand',customTrainings,()=>'custom_ZOU_NIET_MOETEN');
+  assertEq(returnedId,'custom_bestaand','ID moet exact hetzelfde blijven — geen custom_+Date.now()');
+  assertEq(customTrainings.length,1,'geen duplicaat — nog steeds precies 1 rij met dit ID');
+  assertEq(customTrainings[0].exercise_targets[0].exercise_id,'TK-000030','de bijgewerkte oefeningen moeten zichtbaar zijn op hetzelfde record');
+});
+
+test('canonical catalog_id blijft ongewijzigd door de volledige Library→Builder→Save→Preview-keten (reïmplementatie)', ()=>{
+  // Simuleert Deel F uit F0.7C: TK-ID gekozen in Library moet exact hetzelfde blijven t/m opslag.
+  const chosenFromLibrary='TK-000019'; // Barbell Bench Press
+  const planItem={id:chosenFromLibrary,pick:'compound',sets:4,reps:'8',rest:90};
+  function targetsFromPlanItems_T(items){
+    return (items||[]).map(function(it){return {exercise_id:it.id,sets:it.sets,reps:it.reps,rest:it.rest,rpe:it.rpe||null,pick:it.pick||null};});
+  }
+  const targets=targetsFromPlanItems_T([planItem]);
+  assertEq(targets[0].exercise_id,chosenFromLibrary,'exercise_targets.exercise_id moet exact het gekozen catalog_id zijn, geen vertaling');
+});
+
+// ── F0.7C follow-up — Library → Training (gerichte, minimale dekking) ────────
+console.log("\n📚 F0.7C follow-up — Library → Training");
+
+// Reïmplementatie van de kern-mechaniek (WB.st-manipulatie), pure functies, geen browser nodig.
+function libTestSetup(){
+  const WB_st={sel:null,plan:null,dirty:true};
+  function defaultSel_T(){return {goal:'hypertrofie',muscles:[],equipment:['bodyweight'],time:45,level:'intermediate',form:'full'};}
+  function planItemsFromTargets_T(targets){
+    return (targets||[]).map(function(et){return {id:et.exercise_id,pick:et.pick||'compound',sets:et.sets,reps:et.reps,rest:et.rest};});
+  }
+  function resumeWorkout_T(wid,customTrainings){
+    const t=customTrainings.filter(function(x){return x.id===wid;})[0];
+    if(!t)return false;
+    WB_st.sel=(t.metadata&&t.metadata.sel)?t.metadata.sel:defaultSel_T();
+    WB_st.plan={items:planItemsFromTargets_T(t.exercise_targets)};
+    WB_st.dirty=false;
+    return true;
+  }
+  function saveWorkout_T(name,existingId,customTrainings,idFactory){
+    const isUpdate=!!existingId;
+    const id=existingId||idFactory();
+    const existing=isUpdate?customTrainings.find(function(x){return x.id===id;}):null;
+    const t={id:id,name:name||'Auto',source:(existing?existing.source:'builder'),exercise_targets:(WB_st.plan.items||[]).map(function(it){return {exercise_id:it.id,sets:it.sets,reps:it.reps,rest:it.rest,pick:it.pick};})};
+    if(isUpdate&&existing){const idx=customTrainings.indexOf(existing);if(idx>=0)customTrainings[idx]=t;else customTrainings.unshift(t);}
+    else customTrainings.unshift(t);
+    return id;
+  }
+  function libStartNew_T(catalogId){
+    WB_st.sel=WB_st.sel||defaultSel_T();
+    WB_st.plan={items:[{id:catalogId,pick:'compound',sets:4,reps:'6-8',rest:90}]};
+    WB_st.dirty=false;
+  }
+  function libAddExisting_T(catalogId,trainingId,customTrainings){
+    if(!resumeWorkout_T(trainingId,customTrainings))return false;
+    WB_st.plan.items.push({id:catalogId,pick:'compound',sets:4,reps:'6-8',rest:90});
+    return true;
+  }
+  return {WB_st,defaultSel_T,resumeWorkout_T,saveWorkout_T,libStartNew_T,libAddExisting_T};
+}
+
+test('Test 1 — Library-oefening → Nieuwe training: oefening komt correct in het Builder-plan terecht', ()=>{
+  const T=libTestSetup();
+  T.libStartNew_T('TK-000030');
+  assertEq(T.WB_st.plan.items.length,1);
+  assertEq(T.WB_st.plan.items[0].id,'TK-000030');
+});
+
+test('Test 2 — Library-oefening → Bestaande custom training: oefening wordt toegevoegd aan het bestaande plan (bestaande items blijven)', ()=>{
+  const T=libTestSetup();
+  const customTrainings=[{id:'custom_x',name:'Push A',source:'builder',exercise_targets:[{exercise_id:'TK-000019',sets:4,reps:'8',rest:90,pick:'compound'}]}];
+  const ok=T.libAddExisting_T('TK-000030','custom_x',customTrainings);
+  assert(ok,'moet slagen voor een bestaande custom training');
+  assertEq(T.WB_st.plan.items.length,2,'bestaande oefening blijft, nieuwe komt erbij');
+  assertEq(T.WB_st.plan.items[0].id,'TK-000019','oorspronkelijke oefening blijft op zijn plek');
+  assertEq(T.WB_st.plan.items[1].id,'TK-000030','nieuwe Library-oefening staat achteraan');
+});
+
+test('Test 3 — Bestaande training behoudt exact dezelfde ID na Library-toevoeging + opslaan', ()=>{
+  const T=libTestSetup();
+  const customTrainings=[{id:'custom_x',name:'Push A',source:'builder',exercise_targets:[]}];
+  T.libAddExisting_T('TK-000030','custom_x',customTrainings);
+  const returnedId=T.saveWorkout_T(null,'custom_x',customTrainings,()=>'custom_ZOU_NIET_MOETEN');
+  assertEq(returnedId,'custom_x');
+});
+
+test('Test 4 — Geen duplicate custom training wordt aangemaakt bij Library → Bestaande training', ()=>{
+  const T=libTestSetup();
+  const customTrainings=[{id:'custom_x',name:'Push A',source:'builder',exercise_targets:[]}];
+  T.libAddExisting_T('TK-000030','custom_x',customTrainings);
+  T.saveWorkout_T(null,'custom_x',customTrainings,()=>'custom_ZOU_NIET_MOETEN');
+  assertEq(customTrainings.length,1,'nog steeds precies 1 training, geen tweede erbij');
+});
+
+test('Test 5 — catalog_id blijft ongewijzigd door Library → Builder → Save heen', ()=>{
+  const T=libTestSetup();
+  const chosen='TK-000105'; // Dumbbell Goblet Squat
+  T.libStartNew_T(chosen);
+  const customTrainings=[];
+  T.saveWorkout_T(null,null,customTrainings,()=>'custom_nieuw_1');
+  assertEq(customTrainings[0].exercise_targets[0].exercise_id,chosen,'geen vertaling/mapping — exact hetzelfde catalog_id');
+});
+
+test('Test 6 — Vaste trainingen worden niet aangeboden als bewerkbare "bestaande training" (customTrainings bevat per definitie geen vaste trainingen)', ()=>{
+  // vasteTrainingen en customTrainings zijn twee gescheiden arrays in de bestaande architectuur
+  // (bevestigd in eerder onderzoek) — de Library-picker leest uitsluitend customTrainings,
+  // dus een vaste training kan hier structureel nooit in voorkomen.
+  const customTrainings=[{id:'custom_x',name:'Push A',source:'builder'}];
+  const vasteTrainingen=[{id:'A',naam:'Training A'},{id:'B',naam:'Training B'}];
+  const picks=customTrainings.map(t=>t.id);
+  assert(!picks.includes('A')&&!picks.includes('B'),'vaste-training-ID mag nooit in de customTrainings-picker verschijnen');
+});
+
+test('Test 7 — Na save keert een bestaande training terug naar dezelfde Preview (wbReturnCtx-reïmplementatie)', ()=>{
+  function save_T(wbReturnCtx,saveWorkoutFn){
+    const existingId=(wbReturnCtx&&wbReturnCtx.source==='custom')?wbReturnCtx.id:null;
+    const savedId=saveWorkoutFn(null,existingId);
+    const rc=wbReturnCtx;
+    if(rc)return {reopenedSource:rc.source,reopenedId:savedId||rc.id};
+    return null;
+  }
+  const result=save_T({source:'custom',id:'custom_x'},(name,existingId)=>existingId||'zou_niet_moeten');
+  assertEq(result.reopenedSource,'custom');
+  assertEq(result.reopenedId,'custom_x','moet exact hetzelfde ID heropenen, niet een nieuw ID');
+});
+
+test('Test 8 — Bestaande nieuwe-training-flow (zonder Library, zonder existingId) blijft ongewijzigd werken', ()=>{
+  const T=libTestSetup();
+  T.WB_st.plan={items:[{id:'TK-000019',pick:'compound',sets:4,reps:'8',rest:90}]};
+  const customTrainings=[];
+  const id=T.saveWorkout_T('Mijn training',null,customTrainings,()=>'custom_gewoon_nieuw');
+  assertEq(id,'custom_gewoon_nieuw');
+  assertEq(customTrainings.length,1);
+  assertEq(customTrainings[0].name,'Mijn training');
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

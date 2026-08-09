@@ -2491,6 +2491,14 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .tpv2-wu-list{margin-top:8px;border-top:1px dashed var(--g1);padding-top:8px}
 .tpv2-wu-item{display:flex;justify-content:space-between;font-size:12px;color:var(--g4);padding:2px 0}
 .tpv2-wu-item b{color:var(--dark);font-weight:700}
+/* F0.7L — detraining-uitleg + gewicht-override */
+.tpv2-today-detrain{font-size:12px;color:var(--teal,var(--accent));font-weight:700;margin-top:6px;line-height:1.35}
+.tpv2-wt-ctrl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
+.tpv2-wt-lbl{font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--g4)}
+.tpv2-wt-step{display:inline-flex;align-items:center;gap:12px}
+.tpv2-wt-step button{width:34px;height:34px;border-radius:10px;border:1px solid var(--g1);background:var(--g1);color:var(--dark);font-size:19px;font-weight:800;cursor:pointer;font-family:var(--f)}
+.tpv2-wt-step b{font-size:16px;min-width:64px;text-align:center;color:var(--dark)}
+.tpv2-wt-reset{font-size:11px;font-weight:700;color:var(--g4);background:none;border:none;text-decoration:underline;cursor:pointer;font-family:var(--f)}
 /* F0.7J — Builder: rol- en sets-editor per oefening */
 .wb4-edit{margin-top:10px;border-top:1px solid var(--g1);padding-top:10px}
 .wb4-edit-lbl{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--g4);margin:0 0 5px}
@@ -5613,7 +5621,8 @@ async function openTrainingPreview(source,id){
     view:'overview',                // F0.7D: 3-staps preview — 'overview' | 'plan' | 'exercise'
     focusEx:null,                   // origineel exercise_id van de geopende oefening (scherm 3)
     recovery:null,                  // echte herstel-data per spiergroep (async geladen)
-    prevMap:null                    // F0.7K: vorige sessie + 1RM-schatting per oefening (async)
+    prevMap:null,                   // F0.7K: vorige sessie + 1RM-schatting per oefening (async)
+    overrides:{}                    // F0.7L: sporter-gewichtsoverride per exercise_id (instance-level, vóór start)
   };
   openModal('m-training-preview');
   // "Waarom vandaag?" — echte herstel-data via de bestaande getRelevantMuscleRecovery()
@@ -5678,11 +5687,27 @@ function previewWorkingList(){
       };
     });
 }
+// F0.7L — resolveed werkgewicht voor één werklijst-item via de canonical resolver.
+// Voorbereidingsrollen (warmup/activation/cooldown) krijgen geen werkgewicht.
+function previewResolveItemWeight(it){
+  if(!it)return null;
+  const id=it.exercise_id;
+  if(it.pick==='warmup'||it.pick==='activation'||it.pick==='cooldown')return null;
+  const prevMap=(previewCtx&&previewCtx.prevMap)||null;
+  const prev=(prevMap&&prevMap[id])||null;
+  const override=(previewCtx&&previewCtx.overrides&&previewCtx.overrides[id]!=null)?previewCtx.overrides[id]:null;
+  try{
+    const r=resolveWorkingWeight(id,{reps:previewRepsMid(it),rpe:(it.rpe!=null?it.rpe:8),prev:prev,override:override});
+    return r.suggested;
+  }catch(e){return null;}
+}
 // Werkblok D: zet de door Preview opgebouwde, ná-modificatie oefeningenlijst om naar
 // exact de item-vorm die de bestaande executie-UI al verwacht (zelfde velden als
 // TRAIN_CFG-items / de bestaande sessionExtra-items in startCustomTraining) — geen
 // nieuwe datastructuur, alleen hergebruik van bestaande globals (exercises,
 // resolveCardioType).
+// F0.7L: elk item krijgt suggestedWeight = canonical resolver-uitkomst (base × detraining
+// × evt. override), zodat Preview = Normal = Guided exact hetzelfde startgewicht gebruiken.
 function buildResolvedExecutionItems(list){
   // F0.6 Fase 2 — Execution Bridge: Builder/Preview werken met canonical Gym-identity
   // (TK-XXXXXX, ExerciseCatalogService/EX_CATALOG), maar Execution las tot nu toe UITSLUITEND
@@ -5714,6 +5739,7 @@ function buildResolvedExecutionItems(list){
         wu:it.wu||0, tip:it.tip??null, pick:it.pick??null,
         yt:null,                 // geen YouTube-ID voor canonical Gym; poster/video lopen apart
         poster:posterUrl, video:videoFile, canonicalId:exId,
+        suggestedWeight:previewResolveItemWeight(it),   // F0.7L: canonical resolver-gewicht
         muscles:{p:Id.primary||[], s:Id.secondary||[]}
       };
     }
@@ -5728,6 +5754,7 @@ function buildResolvedExecutionItems(list){
       sets:it.sets??null, reps:it.reps??null, rpe:it.rpe??null,
       wu:it.wu||0, tip:it.tip??null, pick:it.pick??null,
       yt:exObj?exObj.yt:null,
+      suggestedWeight:previewResolveItemWeight(it),   // F0.7L: canonical resolver-gewicht
       muscles:{p:(exObj&&exObj.muscle_primary)||[], s:(exObj&&exObj.muscle_secondary)||[]}
     };
   });
@@ -5763,15 +5790,17 @@ function previewRepsMid(it){
   return null;
 }
 function previewWeightInfo(it){
-  const out={suggested:null,prev:null};
+  // F0.7L: alles via de canonical resolver (base 1RM→Brzycki × detraining-factor).
+  const out={suggested:null,prev:null,base:null,factor:1.00,days:null,reason:null,oneRM:null,override:null};
   if(!it)return out;
   const id=it.exercise_id;
   const prevMap=(previewCtx&&previewCtx.prevMap)||null;
-  if(prevMap&&prevMap[id])out.prev=prevMap[id];
-  const oneRM=previewOneRM(id);
-  const reps=previewRepsMid(it);
-  const rpe=(it.rpe!=null)?it.rpe:8;
-  if(oneRM&&reps){ try{ out.suggested=suggestWeightForRepsRpe(oneRM,reps,rpe); }catch(e){} }
+  const prev=(prevMap&&prevMap[id])||null;
+  out.prev=prev;
+  const override=(previewCtx&&previewCtx.overrides&&previewCtx.overrides[id]!=null)?previewCtx.overrides[id]:null;
+  const r=resolveWorkingWeight(id,{reps:previewRepsMid(it),rpe:(it.rpe!=null?it.rpe:8),prev:prev,override:override});
+  out.suggested=r.suggested; out.base=r.base; out.factor=r.factor; out.days=r.days;
+  out.reason=r.reason; out.oneRM=r.oneRM; out.override=r.override;
   return out;
 }
 function previewWarmupRamp(workKg){
@@ -6012,11 +6041,29 @@ function renderTPExercise(el){
   if(wlItem){
     const isPrep=(wlItem.pick==='warmup'||wlItem.pick==='activation'||wlItem.pick==='cooldown');
     const tgt=previewFormatTarget(wlItem);
-    const wi=(!isPrep)?previewWeightInfo(wlItem):{suggested:null,prev:null};
+    const wi=(!isPrep)?previewWeightInfo(wlItem):{suggested:null,prev:null,factor:1,days:null,override:null};
     const big=(wi.suggested!=null)?`<span class="tpv2-today-big">${escHtml(String(wi.suggested).replace('.',','))} kg</span>`:'';
     const tgtEl=tgt?`<span class="tpv2-today-tgt">${escHtml(tgt)}</span>`:'';
     const prevEl=wi.prev?`<div class="tpv2-today-prev">Vorige keer: ${escHtml(previewPrevLabel(wi.prev))}</div>`:'';
-    // Warm-up SETS binnen deze oefening: deterministisch ramp-schema o.b.v. het voorgestelde
+    // F0.7L — sportergerichte detraining-uitleg (geen technische factor tonen).
+    let detrainEl='';
+    if(!isPrep&&wi.override==null&&wi.factor!=null&&wi.factor<1&&wi.days!=null){
+      detrainEl=`<div class="tpv2-today-detrain">Je deed deze oefening ${wi.days} dagen niet — daarom starten we vandaag iets conservatiever.</div>`;
+    }
+    // F0.7L — gewicht-override (± 2,5 kg): bewuste sporterkeuze vóór start; wordt de instance-planned load.
+    let overrideEl='';
+    if(!isPrep&&(wi.suggested!=null||wi.override!=null)){
+      const eff=wlItem.exercise_id;
+      const isOv=wi.override!=null;
+      overrideEl=`<div class="tpv2-wt-ctrl"><span class="tpv2-wt-lbl">Gewicht vandaag</span>
+        <div class="tpv2-wt-step">
+          <button onclick="event.stopPropagation();previewAdjustWeight('${escHtml(eff)}',-2.5)" aria-label="Minder gewicht">−</button>
+          <b>${wi.suggested!=null?escHtml(String(wi.suggested).replace('.',',')):'–'} kg</b>
+          <button onclick="event.stopPropagation();previewAdjustWeight('${escHtml(eff)}',2.5)" aria-label="Meer gewicht">+</button>
+        </div>
+        ${isOv?`<button class="tpv2-wt-reset" onclick="event.stopPropagation();previewResetWeight('${escHtml(eff)}')">Herstel voorstel</button>`:''}</div>`;
+    }
+    // Warm-up SETS binnen deze oefening: deterministisch ramp-schema o.b.v. het (evt. aangepaste)
     // werkgewicht. Zonder werkgewicht: sets tonen, gewicht expliciet "nog te bepalen".
     let wuBlock='';
     if(wlItem.wu&&wlItem.wu>0){
@@ -6029,9 +6076,9 @@ function renderTPExercise(el){
       }
     }
     const todoNote=(!isPrep&&wi.suggested==null)?`<div class="tpv2-today-todo">Werkgewicht nog te bepalen — log deze oefening om een suggestie te krijgen.</div>`:'';
-    if(big||tgtEl||prevEl||wuBlock||todoNote){
+    if(big||tgtEl||prevEl||wuBlock||todoNote||overrideEl){
       todayBlock=`<div class="tpv2-today"><div class="tpv2-today-h">Vandaag doen</div>
-        <div class="tpv2-today-row">${big}${tgtEl}</div>${prevEl}${todoNote}${wuBlock}</div>`;
+        <div class="tpv2-today-row">${big}${tgtEl}</div>${detrainEl}${prevEl}${todoNote}${overrideEl}${wuBlock}</div>`;
     }
   }
   el.innerHTML=`${tpHeader(m.name,'previewBackToPlan()')}
@@ -6055,6 +6102,26 @@ function previewToggleAdjust(){
   if(!previewCtx)return;
   previewCtx.adjustOpen=!previewCtx.adjustOpen;
   previewCtx.swapPickerFor=null;
+  renderTrainingPreview();
+}
+// F0.7L — gewicht-override per oefening (instance-level planned load). Start vanaf de
+// huidige resolver-suggestie en past ±delta toe; nooit onder 0. Muteert geen historie.
+function previewAdjustWeight(exId,delta){
+  if(!previewCtx)return;
+  if(!previewCtx.overrides)previewCtx.overrides={};
+  let cur=previewCtx.overrides[exId];
+  if(cur==null){
+    const it=previewWorkingList().find(x=>x.exercise_id===exId);
+    const wi=it?previewWeightInfo(it):null;
+    cur=(wi&&wi.suggested!=null)?wi.suggested:0;
+  }
+  let nv=Math.max(0,Math.round((parseFloat(cur)+delta)*2)/2);
+  previewCtx.overrides[exId]=nv;
+  renderTrainingPreview();
+}
+function previewResetWeight(exId){
+  if(!previewCtx||!previewCtx.overrides)return;
+  delete previewCtx.overrides[exId];
   renderTrainingPreview();
 }
 function previewRemoveExercise(exId){
@@ -6137,7 +6204,9 @@ function buildGuidedWorkoutPlan(list){
   return {items:(list||[]).map(function(it){
     return {id:it.exercise_id, pick:it.pick||null, block:it.pick||null,
       label:(typeof previewRoleLabel==='function'?previewRoleLabel(it.pick):'')||'',
-      sets:(it.sets!=null?it.sets:null), wu:it.wu??null};
+      sets:(it.sets!=null?it.sets:null), wu:it.wu??null,
+      // F0.7L: canonical resolver-gewicht meegeven zodat Guided-baseline = Preview = Normal.
+      weight:previewResolveItemWeight(it)};
   })};
 }
 // mode: 'normal' (standaard Execution) | 'guided' (begeleide execution-mode) — beide op
@@ -7831,6 +7900,85 @@ function suggestWeightForRepsRpe(oneRM,reps,rpe){
   const w=oneRM*(37-repsToFailure)/36;
   return w>0?roundKg(w):null;
 }
+
+// ══════════════════════════════════════════════════════════
+// F0.7L — DECISION ENGINE: DETRAINING / RETURN-TO-TRAINING (V1)
+// ── Deterministisch, versioneerbaar, NIET-AI. Verlaagt UITSLUITEND het voorgestelde
+//    werkgewicht (today's load). Muteert NOOIT historie/PR/1RM/sessions. Herstelt
+//    automatisch naar factor 1.00 zodra de oefening weer wordt uitgevoerd (days=0).
+//    De getallen zijn een EXPLICIETE PRODUCTKEUZE (F0.7L, gebruiker "Conservatief
+//    geleidelijk"), niet door AI verzonnen. Wijzigen = nieuwe versie (V2) toevoegen.
+// ══════════════════════════════════════════════════════════
+const DETRAINING_RULES_V1={
+  id:'detraining_conservative', version:1,
+  // days t/m maxDays → factor. Laatste band (Infinity) dekt >90.
+  bands:[
+    {maxDays:7,        factor:1.00},   // 0–7   volledig hersteld / recent
+    {maxDays:14,       factor:0.97},   // 8–14
+    {maxDays:28,       factor:0.94},   // 15–28
+    {maxDays:56,       factor:0.90},   // 29–56
+    {maxDays:90,       factor:0.85},   // 57–90
+    {maxDays:Infinity, factor:0.80}    // >90
+  ]
+};
+const DETRAINING_RULES=DETRAINING_RULES_V1; // actieve regel (versioneerbaar)
+// detrainingFactor(days) → {factor,version,ruleId,band,days,applicable}
+// days=null (geen historie) → factor 1.00, applicable:false (GEEN detraining fabriceren).
+function detrainingFactor(daysSinceLastExecution,rules){
+  rules=rules||DETRAINING_RULES;
+  if(daysSinceLastExecution==null||isNaN(daysSinceLastExecution)){
+    return {factor:1.00,version:rules.version,ruleId:rules.id,band:null,days:null,applicable:false};
+  }
+  const d=Math.max(0,Math.floor(daysSinceLastExecution));
+  let band=rules.bands[rules.bands.length-1];
+  for(let i=0;i<rules.bands.length;i++){ if(d<=rules.bands[i].maxDays){ band=rules.bands[i]; break; } }
+  return {factor:band.factor,version:rules.version,ruleId:rules.id,band:band.maxDays,days:d,applicable:band.factor<1.00};
+}
+// Puur dag-verschil tussen twee 'YYYY-MM-DD'-datums (UTC-anker, geen timezone-drift).
+// Toekomstige laatste-datum → 0 (nooit negatief). Ongeldig → null.
+function daysBetweenDates(fromYmd,toYmd){
+  if(!fromYmd||!toYmd)return null;
+  const a=Date.parse(String(fromYmd).slice(0,10)+'T00:00:00Z');
+  const b=Date.parse(String(toYmd).slice(0,10)+'T00:00:00Z');
+  if(isNaN(a)||isNaN(b))return null;
+  const d=Math.round((b-a)/86400000);
+  return d<0?0:d;
+}
+
+// ── F0.7L — CANONICAL WEIGHT RESOLVER ──
+// Eén bron voor het voorgestelde werkgewicht in Builder/Preview/Normal/Guided.
+//   base   = Calculation Engine: 1RM (previewOneRM) → Brzycki (suggestWeightForRepsRpe)
+//   factor = Decision Engine: detrainingFactor(daysSinceLastExecution)
+//   final  = roundKg(base × factor)
+// Muteert niets; null-safe (geen 1RM/reps → suggested=null, reason 'no-base').
+// Een expliciete instance-override wint en krijgt GEEN detraining (bewuste sporterkeuze).
+function resolveWorkingWeight(exId,opts){
+  opts=opts||{};
+  const out={exId:exId,base:null,suggested:null,oneRM:null,prev:opts.prev||null,
+    days:(opts.days!=null?opts.days:null),factor:1.00,ruleVersion:DETRAINING_RULES.version,
+    ruleId:DETRAINING_RULES.id,reason:null,override:(opts.override!=null?opts.override:null)};
+  // Dagen sinds laatste DAADWERKELIJKE uitvoering (uit meegegeven prev.date of expliciete days).
+  let days=opts.days;
+  if(days==null&&opts.prev&&opts.prev.date&&typeof td==='function')days=daysBetweenDates(opts.prev.date,td());
+  out.days=(days!=null?days:null);
+  // Expliciete override (instance-level planned): wint, geen detraining erop.
+  if(opts.override!=null&&!isNaN(parseFloat(opts.override))){
+    out.suggested=roundKg(parseFloat(opts.override));out.reason='override';return out;
+  }
+  const oneRM=(opts.oneRM!=null)?opts.oneRM:(typeof previewOneRM==='function'?previewOneRM(exId):null);
+  out.oneRM=(oneRM!=null)?oneRM:null;
+  const reps=(opts.reps!=null)?opts.reps:null;
+  const rpe=(opts.rpe!=null)?opts.rpe:8;
+  let base=null;
+  if(oneRM&&reps){ try{ base=suggestWeightForRepsRpe(oneRM,reps,rpe); }catch(e){} }
+  out.base=base;
+  if(base==null){ out.suggested=null; out.reason='no-base'; return out; }
+  const df=detrainingFactor(out.days);
+  out.factor=df.factor;out.ruleVersion=df.version;out.ruleId=df.ruleId;
+  out.suggested=roundKg(base*df.factor);
+  out.reason=df.applicable?('detraining:'+df.days+'d'):'baseline';
+  return out;
+}
 function repsPrefillFromRange(repsStr){
   if(!repsStr)return '';
   const m=String(repsStr).match(/(\d+)/);
@@ -8658,6 +8806,10 @@ async function renderTrainScreen(t){
     if(t.startsWith('prog_')){
       const oneRM=getOneRM(ex.id)||estimatedOneRM(ex.id);
       prefillData=computeProgPrefill(ex,prevS,oneRM);
+    } else if(ex.suggestedWeight!=null){
+      // F0.7L: Normal Execution start op exact hetzelfde canonical resolver-gewicht als
+      // Preview toonde (base × detraining × evt. override). Reps/RPE als hint uit vorige sessie.
+      prefillData={kg:ex.suggestedWeight, reps:(prevS&&prevS.reps)||null, rpe:(prevS&&prevS.rpe)||null, sets:(prevS&&prevS.sets)||ex.sets||4};
     } else if(prevS&&prevS.weight&&prevS.reps){
       prefillData={kg:prevS.weight, reps:prevS.reps, rpe:prevS.rpe, sets:prevS.sets||4};
     }
@@ -12898,7 +13050,7 @@ Training B: Roeien warmup → Hexabar (ALTIJD EERSTE, fris) → Bent Over Row/Ca
 CrossFit: apart loggen, zwaar meewegen. Paused squat 3×3@95 ≡ eigen programma 4×3@110.
 
 PROGRESSIEREGELS:
-RPE ≤7.5 → +2.5 kg | RPE 8-8.5 → herhaal | RPE ≥9 → deload -5 tot -10 kg
+Het concrete werkgewicht, de progressie/deload én de detraining-correctie na een trainingspauze worden door de app zelf deterministisch berekend (Calculation + Decision Engine). Bereken deze getallen NIET zelf — leg het door de app voorgestelde gewicht uit en coach op techniek/uitvoering. Vuistrichting voor uitleg: lage RPE = ruimte om te verhogen, RPE rond doel = aanhouden, hoge RPE = terugschakelen.
 Shoulder Press VOOR bench in A. Bench: 2 accessoire sets 70-75 kg toevoegen aan B.
 HPC: singles/doubles (techniek breekt bij triples). Hexabar: nooit dag na zware A.
 Peak target: 15 augustus 2026. Detraining ~21 aug - 9 sep.
@@ -16282,9 +16434,13 @@ var GW=(function(){
     var h=hist();
     var items=plan.items.map(function(it){
       var p=h[it.id]||null;
+      // F0.7L: canonical resolver-gewicht (it.weight, uit Preview) is de baseline en wint
+      // boven de losse guided-historie; alleen als de resolver niets geeft valt het terug
+      // op het laatste guided-gewicht. Zo is Guided-start = Preview = Normal.
+      var startW=(it.weight!=null)?it.weight:((p&&p.weight!=null)?p.weight:null);
       return {id:it.id,block:it.block,label:it.label,pick:it.pick,
         setsTarget:it.sets||3,reps:repsFor(it.pick,sel),rest:restFor(it.pick,sel),
-        weight:(p&&p.weight!=null)?p.weight:null,prev:p,setsDone:[]};
+        weight:startW,prev:p,setsDone:[]};
     });
     st.active={sel:clone(sel),items:items,gi:0,phase:'intro',restLeft:0,lastFeel:null,
       instanceId:(opts&&opts.instanceId)||null,trainingType:(opts&&opts.trainingType)||'guided', // H3: dezelfde training-instance als Preview/normale Execution

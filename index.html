@@ -3456,6 +3456,16 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </div>
 </div>
 
+<!-- Werkblok C — Training Preview. Eén generiek scherm voor vaste/custom/Builder-
+     trainingen, gevoed door de Definition-adapter (getTrainingDefinition, Werkblok B).
+     Bewust een modal (bestaand patroon), geen nieuw schermtype/nieuwe navigatie. -->
+<div class="modal-bg" id="m-training-preview" onclick="bgClose(event,'m-training-preview')">
+  <div class="modal" style="max-height:85vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div id="tp-body">Laden…</div>
+  </div>
+</div>
+
 <div class="modal-bg" id="m-team-pin" onclick="bgClose(event,'m-team-pin')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -4210,7 +4220,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.25';
+const APP_VER = 'v4.24.26';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -5416,8 +5426,15 @@ function snapshotFromCustomTraining(def,texs,modifications=[]){
 // getTrainingDefinition('vast'|'custom', id) → genormaliseerde definitie of null
 async function getTrainingDefinition(source,id){
   if(source==='vast'){
-    const defs=await sbGet('vaste_trainingen','&id=eq.'+encodeURIComponent(id)+'&limit=1');
-    const def=defs[0];
+    // Werkblok C-verfijning: hergebruikt de al-geladen "vasteTrainingen"-array (bestaat
+    // sinds refreshHome()) i.p.v. altijd een extra sbGet te doen — minder onnodige
+    // netwerkcalls (opdracht-eis "performance", sectie 35).
+    let def=null;
+    if(typeof vasteTrainingen!=='undefined'&&Array.isArray(vasteTrainingen))def=vasteTrainingen.find(v=>v.id===id)||null;
+    if(!def){
+      const defs=await sbGet('vaste_trainingen','&id=eq.'+encodeURIComponent(id)+'&limit=1');
+      def=defs[0]||null;
+    }
     if(!def)return null;
     const texs=await sbGet('training_exercises','&training_ref=eq.'+encodeURIComponent(id)+'&order=sort_order.asc');
     return {
@@ -5482,6 +5499,232 @@ async function startInstanceFromDefinition(def,modifications=[]){
     customTrainingId:def.source==='custom'?def.id:null,
     snapshot
   });
+}
+
+// ══════════════════════════════════════════════════════════
+// TRAINING PREVIEW — Werkblok C
+// ── Dunne UI/orchestratie-laag: Definition Adapter → Preview → modifications[] →
+//    startInstanceFromDefinition() (Werkblok A/B, ongewijzigd) → bestaande executie-
+//    start (startT/startCustomTraining, BEIDE ONGEWIJZIGD). Geen eigen trainings-,
+//    target- of recovery-logica — zie eindrapport Deel R voor de expliciete
+//    afhankelijkheid die dit voor Werkblok D/E openlaat (skip/swap zijn nog niet
+//    zichtbaar in de daadwerkelijke uitvoering, alleen correct vastgelegd in de
+//    Instance/Snapshot).
+let previewCtx=null;
+
+async function openTrainingPreview(source,id){
+  const def=await getTrainingDefinition(source,id);
+  if(!def){toast('Training niet gevonden');return;}
+  previewCtx={
+    def, source, id,
+    removedIds:new Set(),
+    swaps:{},                       // origineel exercise_id → vervangend exercise_id
+    order:def.exercises.map(e=>e.exercise_id),
+    swapPickerFor:null,
+    adjustOpen:false
+  };
+  openModal('m-training-preview');
+}
+
+function previewExerciseName(exId){
+  try{
+    const ex=(typeof ExerciseCatalogService!=='undefined')?ExerciseCatalogService.byId(exId):null;
+    return ex?ex.name:exId;
+  }catch(e){return exId;}
+}
+
+// previewWorkingList() → huidige, ná lokale aanpassingen, geordende oefeningenlijst
+// (uitsluitend in-memory — raakt op geen enkel moment def/vaste_trainingen/
+// custom_trainings/Builder-data zelf aan).
+function previewWorkingList(){
+  if(!previewCtx)return [];
+  const byId={};previewCtx.def.exercises.forEach(e=>byId[e.exercise_id]=e);
+  return previewCtx.order
+    .filter(id=>!previewCtx.removedIds.has(id))
+    .map(id=>{
+      const swapTo=previewCtx.swaps[id];
+      const src=swapTo?(byId[id]):byId[id]; // targets (sets/reps/rpe) blijven van de oorspronkelijke slot komen — een vervangen oefening neemt het doel van de plek over, niet een verzonnen eigen doel
+      return {
+        exercise_id:swapTo||id, original_exercise_id:id,
+        sets:src?src.sets:null, reps:src?src.reps:null, rpe:src?src.rpe:null
+      };
+    });
+}
+
+function previewFormatTarget(it){
+  const parts=[];
+  if(it.sets!=null&&it.reps!=null)parts.push(it.sets+' × '+it.reps);
+  else if(it.sets!=null)parts.push(it.sets+' sets');
+  else if(it.reps!=null)parts.push(it.reps);
+  if(it.rpe!=null)parts.push('RPE '+it.rpe);
+  return parts.join(' · ');
+}
+
+function renderTrainingPreview(){
+  const el=document.getElementById('tp-body');
+  if(!el||!previewCtx)return;
+  const def=previewCtx.def;
+  const list=previewWorkingList();
+  const total=def.exercises.length;
+
+  // Omvang: alleen tonen wat betrouwbaar telbaar is — geen verzonnen/geschatte duur
+  // (WB.totalTime() vereist een per-item "dur"-veld dat niet in de Definition-adapter
+  // bewaard wordt; zie eindrapport Deel R). Sets alleen optellen als er ÜBERHAUPT
+  // ergens een sets-waarde bekend is, anders weglaten i.p.v. "0 sets" te tonen.
+  const knownSets=list.filter(it=>it.sets!=null);
+  const totalSets=knownSets.length?knownSets.reduce((s,it)=>s+(parseInt(it.sets)||0),0):null;
+  const metaParts=[list.length+' oefening'+(list.length===1?'':'en')];
+  if(totalSets!=null)metaParts.push(totalSets+' sets');
+
+  // Herstel: uitsluitend de al bestaande, elders berekende dagfactor-status
+  // (trainReadiness/window.homeDfDetail) — geen nieuw algoritme, en weggelaten
+  // wanneer die data er niet is (geen HRV-checkin vandaag bijvoorbeeld).
+  let readyHtml='';
+  try{
+    if(window.homeDfDetail){
+      const rd=trainReadiness({factor:window.homeDfDetail.factor});
+      if(rd)readyHtml=`<div class="today-ready" style="margin:8px 0 4px"><span class="today-dot"></span>${escHtml(rd.txt)}</div>`;
+    }
+  }catch(e){/* recovery-data niet beschikbaar — gewoon weglaten, geen foutmelding nodig */}
+
+  const goalLbl=def.goal?escHtml(String(def.goal)):'';
+
+  const rows=list.map((it,i)=>{
+    const nm=escHtml(previewExerciseName(it.exercise_id));
+    const tgt=previewFormatTarget(it);
+    const swapped=previewCtx.swaps[it.original_exercise_id];
+    return `<div class="lrow" style="align-items:center;gap:8px" data-tp-ex="${escHtml(it.original_exercise_id)}">
+      <div style="width:22px;height:22px;border-radius:7px;background:var(--g1);color:var(--g4);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${i+1}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700${swapped?';color:var(--accent)':''}">${nm}${swapped?' <span style="font-size:10px;color:var(--g4);font-weight:600">(vervangen)</span>':''}</div>
+        ${tgt?`<div style="font-size:11px;color:var(--g4)">${escHtml(tgt)}</div>`:''}
+      </div>
+      ${previewCtx.adjustOpen?`<div style="display:flex;gap:4px">
+        <button onclick="previewOpenSwapPicker('${escHtml(it.original_exercise_id)}')" title="Vervangen" aria-label="${nm} vervangen" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px">⇄</button>
+        <button onclick="previewRemoveExercise('${escHtml(it.original_exercise_id)}')" title="Overslaan" aria-label="${nm} overslaan" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px">✕</button>
+        <button onclick="previewMoveExercise('${escHtml(it.original_exercise_id)}',-1)" ${i===0?'disabled':''} title="Omhoog" aria-label="${nm} omhoog" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px${i===0?';opacity:.35':''}">↑</button>
+        <button onclick="previewMoveExercise('${escHtml(it.original_exercise_id)}',1)" ${i===list.length-1?'disabled':''} title="Omlaag" aria-label="${nm} omlaag" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px${i===list.length-1?';opacity:.35':''}">↓</button>
+      </div>`:''}
+    </div>`;
+  }).join('');
+
+  const removedRows=[...previewCtx.removedIds].map(id=>`<div class="lrow" style="align-items:center;gap:8px;opacity:.5;text-decoration:line-through">
+      <div style="flex:1;font-size:13px">${escHtml(previewExerciseName(id))}</div>
+      <button onclick="previewUndoRemove('${escHtml(id)}')" class="btn btn-o btn-sm" style="text-decoration:none">Terug</button>
+    </div>`).join('');
+
+  const swapPickerHtml=previewCtx.swapPickerFor?previewRenderSwapPicker():'';
+
+  el.innerHTML=`
+    <div class="modal-title" style="margin-bottom:2px">${escHtml(def.name)}</div>
+    ${goalLbl?`<div style="font-size:12px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">${goalLbl}</div>`:''}
+    <div style="font-size:12px;color:var(--g4);font-weight:600;margin-bottom:4px">${metaParts.join(' · ')}</div>
+    ${readyHtml}
+    <div style="margin-top:10px">${rows||'<div style="font-size:12px;color:var(--g4)">Geen oefeningen beschikbaar</div>'}</div>
+    ${removedRows?`<div style="margin-top:10px;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--g4)">Overgeslagen voor vandaag</div>${removedRows}`:''}
+    ${swapPickerHtml}
+    <div style="margin-top:16px">
+      <button class="btn btn-r" style="width:100%" onclick="previewStartTraining()">Start training</button>
+      <button class="btn btn-o" style="width:100%;margin-top:8px" onclick="previewToggleAdjust()">${previewCtx.adjustOpen?'Klaar met aanpassen':'Vandaag aanpassen'}</button>
+      <div style="text-align:center;margin-top:10px">
+        <a href="javascript:void(0)" onclick="previewOpenBuilder()" style="font-size:10.5px;color:var(--g2);font-weight:600;text-decoration:underline">Training structureel wijzigen</a>
+      </div>
+    </div>
+  `;
+}
+
+function previewToggleAdjust(){
+  if(!previewCtx)return;
+  previewCtx.adjustOpen=!previewCtx.adjustOpen;
+  previewCtx.swapPickerFor=null;
+  renderTrainingPreview();
+}
+function previewRemoveExercise(exId){
+  if(!previewCtx)return;
+  previewCtx.removedIds.add(exId);
+  renderTrainingPreview();
+}
+function previewUndoRemove(exId){
+  if(!previewCtx)return;
+  previewCtx.removedIds.delete(exId);
+  renderTrainingPreview();
+}
+function previewMoveExercise(exId,dir){
+  if(!previewCtx)return;
+  const visible=previewCtx.order.filter(id=>!previewCtx.removedIds.has(id));
+  const idx=visible.indexOf(exId);
+  const j=idx+dir;
+  if(idx<0||j<0||j>=visible.length)return;
+  const a=visible[idx];visible[idx]=visible[j];visible[j]=a;
+  // visible-volgorde terugschrijven in previewCtx.order (overgeslagen items behouden hun plek ertussen niet — ze doen niet mee aan de zichtbare volgorde)
+  let vi=0;
+  previewCtx.order=previewCtx.order.map(id=>previewCtx.removedIds.has(id)?id:visible[vi++]);
+  renderTrainingPreview();
+}
+// previewOpenSwapPicker/previewRenderSwapPicker/previewApplySwap — hergebruikt
+// WB.altList(exerciseId), dat uitsluitend op ExerciseCatalogService-relaties werkt
+// (geen afhankelijkheid van WB.st), voor het vinden van kandidaat-alternatieven.
+// Geen tweede oefening-selectiesysteem gebouwd.
+function previewOpenSwapPicker(exId){
+  if(!previewCtx)return;
+  previewCtx.swapPickerFor=exId;
+  renderTrainingPreview();
+}
+function previewRenderSwapPicker(){
+  const exId=previewCtx.swapPickerFor;
+  let alts=[];
+  try{alts=(typeof WB!=='undefined'&&WB.altList)?WB.altList(exId):[];}catch(e){alts=[];}
+  const currentIds=new Set(previewWorkingList().map(it=>it.exercise_id));
+  alts=alts.filter(a=>a&&!currentIds.has(a.catalog_id));
+  const opts=alts.length?alts.map(a=>`<div class="lrow" style="align-items:center"><div style="flex:1;font-size:13px">${escHtml(a.name)}</div><button class="btn btn-o btn-sm" onclick="previewApplySwap('${escHtml(exId)}','${escHtml(a.catalog_id)}')">Kies</button></div>`).join('')
+    :'<div style="font-size:12px;color:var(--g4)">Geen alternatieven gevonden</div>';
+  return `<div style="margin-top:10px;border-top:1px solid var(--g1);padding-top:10px">
+    <div style="font-size:11px;font-weight:800;color:var(--g4);text-transform:uppercase;margin-bottom:6px">Vervangen: ${escHtml(previewExerciseName(exId))}</div>
+    ${opts}
+    <button class="btn btn-o btn-sm" style="margin-top:6px" onclick="previewCtx.swapPickerFor=null;renderTrainingPreview()">Annuleren</button>
+  </div>`;
+}
+function previewApplySwap(origExId,newExId){
+  if(!previewCtx)return;
+  previewCtx.swaps[origExId]=newExId;
+  previewCtx.swapPickerFor=null;
+  renderTrainingPreview();
+}
+
+// previewBuildModifications() → het modifications[]-array in de vorm die
+// startInstanceFromDefinition()/snapshotFromVasteTraining()/snapshotFromCustomTraining()
+// (Werkblok A/B) al verwachten als vrije-vorm JSON — geen nieuwe opslagvorm.
+function previewBuildModifications(){
+  const mods=[];
+  previewCtx.removedIds.forEach(id=>mods.push({type:'remove',exercise_id:id}));
+  Object.entries(previewCtx.swaps).forEach(([origId,newId])=>mods.push({type:'swap',exercise_id:origId,replacement_exercise_id:newId}));
+  const originalVisible=previewCtx.def.exercises.map(e=>e.exercise_id).filter(id=>!previewCtx.removedIds.has(id));
+  const currentVisible=previewCtx.order.filter(id=>!previewCtx.removedIds.has(id));
+  if(JSON.stringify(originalVisible)!==JSON.stringify(currentVisible)){
+    currentVisible.forEach((id,i)=>{if(originalVisible.indexOf(id)!==i)mods.push({type:'move',exercise_id:id,new_order:i});});
+  }
+  return mods;
+}
+
+// previewStartTraining() — legt Instance+Snapshot vast (Werkblok A/B, ongewijzigd) en
+// start daarna de BESTAANDE executie (startT/startCustomTraining, GEEN wijziging).
+// Instance-vastlegging is best-effort/non-blocking: een trage of gequeuede
+// bookkeeping-schrijfactie mag de sporter nooit tegenhouden om te beginnen —
+// zelfde offline-first-principe als de rest van de app (zie ook Werkblok A/B).
+async function previewStartTraining(){
+  if(!previewCtx)return;
+  const {def,source,id}=previewCtx;
+  const modifications=previewBuildModifications();
+  try{await startInstanceFromDefinition(def,modifications);}
+  catch(e){console.warn('previewStartTraining: instance-vastlegging mislukt, training start gewoon door',e);}
+  closeModal('m-training-preview');
+  if(source==='vast')startT(id);
+  else startCustomTraining(id);
+  previewCtx=null;
+}
+function previewOpenBuilder(){
+  closeModal('m-training-preview');
+  go('s-builder');
 }
 
 async function openOfflineQueueModal(){
@@ -6310,6 +6553,7 @@ function openModal(id){
     document.getElementById('goal-motivatie').value='';
     renderGoalAddFields();
   }
+  if(id==='m-training-preview')renderTrainingPreview();
   const m=document.getElementById(id);
   lastFocusedBeforeModal=document.activeElement;
   m.setAttribute('role','dialog');
@@ -10824,7 +11068,7 @@ function renderTodayCta(nextT,dfInfo){
     ${human?`<div class="today-human">${escHtml(human)}</div>`:''}
     ${meta?`<div class="today-meta">${meta}</div>`:''}
     ${ready}
-    <button onclick="startT('${nextT.id}')" class="today-start" aria-label="Start ${escHtml(nextT.naam)}">Start training</button>
+    <button onclick="openTrainingPreview('vast','${nextT.id}')" class="today-start" aria-label="Bekijk ${escHtml(nextT.naam)}">Training bekijken</button>
   </div>`;
 }
 // v3.3.45 Dashboard 2.0 — weekvolume + actieve dagen, uitsluitend uit bestaande sessies.
@@ -12830,7 +13074,7 @@ function renderCustomTrainList(){
       <div class="card-body" style="padding:12px;display:flex;align-items:center;gap:10px">
         <div style="width:14px;height:14px;border-radius:50%;background:${t.color};flex-shrink:0"></div>
         <div style="flex:1"><div style="font-size:15px;font-weight:700">${escHtml(t.name)}</div>${t.note?`<div style="font-size:12px;color:var(--g4)">${escHtml(t.note)}</div>`:''}</div>
-        <button onclick="startCustomTraining('${t.id}')" class="btn btn-o btn-sm">Start</button>
+        <button onclick="openTrainingPreview('custom','${t.id}')" class="btn btn-o btn-sm">Bekijken</button>
         <button onclick="openShareModal('training','${t.id}')" title="Delen met persoon" style="background:none;border:none;color:var(--g4);font-size:16px;cursor:pointer;padding:4px">🔗</button>
         <button onclick="deleteCustomTraining('${t.id}')" aria-label="Training verwijderen" style="background:none;border:none;color:var(--g4);cursor:pointer;padding:6px;display:flex;align-items:center"><svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M6.5 7l1 13h9l1-13"/><path d="M10 11v6M14 11v6"/></svg></button>
       </div>

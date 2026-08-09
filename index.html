@@ -5515,7 +5515,7 @@ async function getTrainingDefinition(source,id){
       id:def.id, source:'custom', name:def.naam,
       sport:(def.metadata&&def.metadata.sel&&def.metadata.sel.sport)||null,
       goal:(def.metadata&&def.metadata.sel&&def.metadata.sel.goal)||null,
-      exercises:texs.map(t=>({exercise_id:t.exercise_id,sort_order:t.sort_order,sets:t.sets??null,reps:t.reps??null,rpe:t.rpe??null,rest:t.rest??null,wu:t.wu??null}))
+      exercises:texs.map(t=>({exercise_id:t.exercise_id,sort_order:t.sort_order,sets:t.sets??null,reps:t.reps??null,rpe:t.rpe??null,rest:t.rest??null,wu:t.wu??null,pick:t.pick??null}))
     };
   }
   return null;
@@ -5611,7 +5611,7 @@ function previewWorkingList(){
       return {
         exercise_id:swapTo||id, original_exercise_id:id,
         sets:src?src.sets:null, reps:src?src.reps:null, rpe:src?src.rpe:null,
-        wu:src?src.wu:null, tip:src?src.tip:null
+        wu:src?src.wu:null, tip:src?src.tip:null, pick:src?src.pick:null
       };
     });
 }
@@ -5648,7 +5648,7 @@ function buildResolvedExecutionItems(list){
         naam:Id.name||exId,
         type:'strength',
         sets:it.sets??null, reps:it.reps??null, rpe:it.rpe??null,
-        wu:it.wu||0, tip:it.tip??null,
+        wu:it.wu||0, tip:it.tip??null, pick:it.pick??null,
         yt:null,                 // geen YouTube-ID voor canonical Gym; poster/video lopen apart
         poster:posterUrl, video:videoFile, canonicalId:exId,
         muscles:{p:Id.primary||[], s:Id.secondary||[]}
@@ -5663,7 +5663,7 @@ function buildResolvedExecutionItems(list){
       naam:exObj?exObj.name:exId,
       type:exType,
       sets:it.sets??null, reps:it.reps??null, rpe:it.rpe??null,
-      wu:it.wu||0, tip:it.tip??null,
+      wu:it.wu||0, tip:it.tip??null, pick:it.pick??null,
       yt:exObj?exObj.yt:null,
       muscles:{p:(exObj&&exObj.muscle_primary)||[], s:(exObj&&exObj.muscle_secondary)||[]}
     };
@@ -5721,6 +5721,11 @@ function previewRecoStatus(pct){
   if(pct>=80)return {txt:'Goed hersteld',ic:'✓',col:'var(--teal,var(--accent))'};
   if(pct>=60)return {txt:'Lichte vermoeidheid',ic:'!',col:'var(--y)'};
   return {txt:'Nog aan het herstellen',ic:'•',col:'#c0392b'};
+}
+function previewRoleLabel(pick){
+  if(!pick)return '';
+  const map={warmup:'Warming-up',activation:'Activatie',compound:'Compound',secondary:'Secondary compound',accessory:'Accessoire',isolation:'Isolatie',conditioning:'Conditie',cooldown:'Cooldown'};
+  return map[pick]||'';
 }
 function previewCounts(){
   const list=previewWorkingList();
@@ -5800,7 +5805,8 @@ function renderTPPlan(el){
     const poster=previewExPoster(it.exercise_id);
     const thumb=poster?`<img class="tpv2-exthumb" src="${poster}" alt="">`:`<div class="tpv2-exthumb">🏋️</div>`;
     const tgt=previewFormatTarget(it);
-    const role=m.type?`<div class="tpv2-exrole">${escHtml(m.type)}</div>`:'';
+    const roleTxt=previewRoleLabel(it.pick)||(m.type||'');
+    const role=roleTxt?`<div class="tpv2-exrole">${escHtml(roleTxt)}</div>`:'';
     const tags=[...(m.equipment||[]),...(m.primary||[]).slice(0,2)].slice(0,3)
       .map(t=>`<span class="tpv2-tag">${escHtml(t)}</span>`).join('');
     const swapped=previewCtx.swaps[it.original_exercise_id];
@@ -13416,7 +13422,7 @@ function renderCustomTrainBtns(){
   if(!customTrainings.length){el.innerHTML='';return;}
   let h='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px">';
   customTrainings.forEach(t=>{
-    h+=`<button onclick="go('s-train-custom-${t.id}')" style="padding:12px 16px;border-radius:14px;border:none;background:${t.color};color:#fff;font-family:var(--f);font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer">${escHtml(t.name)}</button>`;
+    h+=`<button onclick="openTrainingPreview('custom','${t.id}')" style="padding:12px 16px;border-radius:14px;border:none;background:${t.color};color:#fff;font-family:var(--f);font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer">${escHtml(t.name)}</button>`;
   });
   h+='</div>';
   el.innerHTML=h;
@@ -15961,7 +15967,9 @@ var WBUI=(function(){
     var savedId=WB.saveWorkout(null,existingId);
     window.wbReturnCtx=null;
     if(window.toast)toast('Training opgeslagen');
-    if(rc&&typeof openTrainingPreview==='function'){openTrainingPreview(rc.source,savedId||rc.id);return;}
+    // F0.7F: Workout Builder -> altijd de 3-staps Training Preview (nooit direct naar Execution).
+    // Zowel een verse eigen workout als een update via previewOpenBuilder landt in dezelfde Preview.
+    if(typeof openTrainingPreview==='function'){openTrainingPreview('custom',savedId||(rc&&rc.id));return;}
     render();
   }
   function dupe(){WB.saveWorkout(WB.autoName()+' (kopie)');render();if(window.toast)toast('Gedupliceerd');}

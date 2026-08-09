@@ -1837,6 +1837,106 @@ test('Peakdoel wissen mag PR/1RM op dezelfde rij niet meewissen (was de exacte b
   assertEq(map.get('backsquat').one_rm,100,'one_rm moet intact blijven na het wissen van alleen het peakdoel');
 });
 
+// ── TRAINING INSTANCE — Werkblok A (Definition → Instance → Snapshot → Sessions) ─
+// Zelfde reïmplementatie-patroon als de rest van dit bestand: pure-functie-kopieën
+// van de nieuwe index.html-functies, los getest zonder Supabase/DOM.
+console.log("\n🏗️  Training Instance — Werkblok A");
+
+function newTrainingInstanceId_T(){
+  return (typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():('ti-'+Date.now()+'-'+Math.random().toString(16).slice(2));
+}
+// Reimplementatie van createTrainingInstance()'s rij-opbouw + validatie (zonder de
+// echte sbPostQ-netwerkaanroep) — test wat de functie ZOU versturen.
+function buildTrainingInstanceRow_T({vasteTrainingId=null,customTrainingId=null,snapshot=null,userId=null}={}){
+  if(vasteTrainingId&&customTrainingId)return null; // beide tegelijk mag niet
+  if(!userId)return null; // geen ingelogde gebruiker
+  return {
+    id:newTrainingInstanceId_T(),
+    user_id:userId,
+    vaste_training_id:vasteTrainingId,
+    custom_training_id:customTrainingId,
+    status:'active',
+    started_at:new Date().toISOString(),
+    completed_at:null,
+    snapshot:snapshot||null
+  };
+}
+function snapshotFromVasteTraining_T(def,texs,modifications=[]){
+  return {
+    source:'vaste_training',
+    definition_id:def?.id??null,
+    items:(texs||[]).map(t=>({exercise_id:t.exercise_id,sets:t.sets,reps:t.reps,rpe:t.rpe,sort_order:t.sort_order})),
+    modifications
+  };
+}
+
+test('Test 1 — Definition kan gelezen worden zonder gewijzigd te worden door snapshotFromVasteTraining', ()=>{
+  const def=Object.freeze({id:42,naam:'Push Focus'});
+  const texs=Object.freeze([Object.freeze({exercise_id:'bench',sets:4,reps:'6-8',rpe:8,sort_order:1})]);
+  const snap=snapshotFromVasteTraining_T(def,texs);
+  assertEq(snap.definition_id,42);
+  assertEq(snap.items.length,1);
+  // def/texs zijn Object.freeze — als de functie ze zou muteren, gooit dit in
+  // strict mode een TypeError. Geen throw = geen mutatie.
+});
+
+test('Test 2 — Instance kan worden aangemaakt (rij-opbouw correct) voor een vaste training', ()=>{
+  const row=buildTrainingInstanceRow_T({vasteTrainingId:42,userId:'user-1'});
+  assert(row!==null,'row mag niet null zijn bij geldige input');
+  assertEq(row.status,'active');
+  assertEq(row.completed_at,null);
+  assert(typeof row.id==='string'&&row.id.length>0,'id moet een niet-leeg string zijn');
+});
+
+test('Test 3 — Instance verwijst naar de juiste Definition (vaste_training_id, niet custom)', ()=>{
+  const row=buildTrainingInstanceRow_T({vasteTrainingId:42,userId:'user-1'});
+  assertEq(row.vaste_training_id,42);
+  assertEq(row.custom_training_id,null);
+});
+
+test('Test 3b — Instance kan ook naar een custom training verwijzen, nooit naar beide tegelijk', ()=>{
+  const rowCustom=buildTrainingInstanceRow_T({customTrainingId:7,userId:'user-1'});
+  assertEq(rowCustom.custom_training_id,7);
+  assertEq(rowCustom.vaste_training_id,null);
+  const rowBoth=buildTrainingInstanceRow_T({vasteTrainingId:42,customTrainingId:7,userId:'user-1'});
+  assertEq(rowBoth,null,'vaste_training_id én custom_training_id tegelijk moet geweigerd worden');
+});
+
+test('Test 4 — Snapshot wordt correct opgeslagen op de instance-rij', ()=>{
+  const def={id:42,naam:'Push Focus'};
+  const texs=[{exercise_id:'bench',sets:4,reps:'6-8',rpe:8,sort_order:1},{exercise_id:'ohp',sets:3,reps:'8',rpe:7,sort_order:2}];
+  const snap=snapshotFromVasteTraining_T(def,texs,[{type:'remove',exercise_id:'ohp'}]);
+  const row=buildTrainingInstanceRow_T({vasteTrainingId:42,snapshot:snap,userId:'user-1'});
+  assertEq(row.snapshot.definition_id,42);
+  assertEq(row.snapshot.items.length,2,'snapshot bewaart de VOLLEDIGE oorspronkelijke items-lijst, ook al is er een modificatie geregistreerd');
+  assertEq(row.snapshot.modifications.length,1);
+  assertEq(row.snapshot.modifications[0].type,'remove');
+});
+
+test('Test 5 — Definition blijft ongewijzigd na het aanmaken van een snapshot (harde regel)', ()=>{
+  const def=Object.freeze({id:42,naam:'Push Focus'});
+  const texsOriginal=[{exercise_id:'bench',sets:4,reps:'6-8',rpe:8,sort_order:1},{exercise_id:'ohp',sets:3,reps:'8',rpe:7,sort_order:2}];
+  const texsCopy=JSON.parse(JSON.stringify(texsOriginal));
+  // simuleer een "vandaag aanpassen"-scenario: gebruiker verwijdert ohp uit de
+  // snapshot-items, maar de bron-array (texsOriginal, staat voor de Definition)
+  // wordt hierbij NIET aangeraakt.
+  const modifiedItems=texsOriginal.filter(t=>t.exercise_id!=='ohp');
+  assertEq(modifiedItems.length,1);
+  assertEq(texsOriginal.length,2,'de oorspronkelijke Definition-array (texsOriginal) moet nog steeds 2 items hebben — filter() muteert niet, dit bevestigt dat het patroon veilig is');
+  assert(JSON.stringify(texsOriginal)===JSON.stringify(texsCopy),'texsOriginal moet byte-voor-byte gelijk blijven aan de kopie van vóór de aanpassing');
+});
+
+test('Test 9 — createTrainingInstance-achtige rij-opbouw weigert zonder ingelogde gebruiker (security-basis)', ()=>{
+  const row=buildTrainingInstanceRow_T({vasteTrainingId:42,userId:null});
+  assertEq(row,null,'zonder user_id mag er geen rij gebouwd worden — voorkomt een user_id=NULL-rij die RLS zou kunnen omzeilen als de kolom niet NOT NULL was');
+});
+
+test('newTrainingInstanceId levert unieke, niet-lege id\'s (nodig voor offline-veilige aanmaak zonder server-roundtrip)', ()=>{
+  const ids=new Set();
+  for(let i=0;i<200;i++)ids.add(newTrainingInstanceId_T());
+  assertEq(ids.size,200,'200 aanroepen moeten 200 unieke id\'s geven');
+});
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

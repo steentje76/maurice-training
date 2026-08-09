@@ -5841,7 +5841,8 @@ function renderTPPlan(el){
     ${swapPickerHtml}
     <div style="margin-top:16px">
       <button class="btn btn-o" style="width:100%" onclick="previewToggleAdjust()">${adj?'Klaar met aanpassen':'Training aanpassen'}</button>
-      <button class="btn btn-r" style="width:100%;margin-top:8px" onclick="previewStartTraining()">START TRAINING</button>
+      <button class="btn btn-r" style="width:100%;margin-top:8px;line-height:1.2" onclick="previewStartTraining('normal')">START TRAINING<span style="display:block;font-size:10.5px;font-weight:600;opacity:.85;margin-top:2px">Ik train zelf</span></button>
+      <button class="btn btn-o" style="width:100%;margin-top:8px;line-height:1.2" onclick="previewStartTraining('guided')">BEGELEID TRAINEN<span style="display:block;font-size:10.5px;font-weight:600;opacity:.75;margin-top:2px">De app begeleidt mij tijdens de training</span></button>
       ${previewCtx.source==='custom'?`<div style="text-align:center;margin-top:10px">
         <a href="javascript:void(0)" onclick="previewOpenBuilder()" style="font-size:10.5px;color:var(--g2);font-weight:600;text-decoration:underline">Training structureel wijzigen</a>
       </div>`:''}
@@ -5963,16 +5964,39 @@ function previewBuildModifications(){
 // previewStarting: eenvoudige dubbele-tap-guard (opdracht-eis "Double Start"), zelfde
 // patroon als finishSessionBezig elders in de app.
 let previewStarting=false;
-async function previewStartTraining(){
+// H3: adapter Preview-werklijst → GW-plan. Mapt uitsluitend bestaande data
+// (canonical exercise_id, pick/rol, volgorde, sets, wu). Verzint niets.
+function buildGuidedWorkoutPlan(list){
+  return {items:(list||[]).map(function(it){
+    return {id:it.exercise_id, pick:it.pick||null, block:it.pick||null,
+      label:(typeof previewRoleLabel==='function'?previewRoleLabel(it.pick):'')||'',
+      sets:(it.sets!=null?it.sets:null), wu:it.wu??null};
+  })};
+}
+// mode: 'normal' (standaard Execution) | 'guided' (begeleide execution-mode) — beide op
+// dezelfde training-instance/snapshot; alleen de execution-ervaring verschilt (H3).
+async function previewStartTraining(mode){
   if(!previewCtx||previewStarting)return;
+  mode=mode||'normal';
   previewStarting=true;
   const {def,source,id}=previewCtx;
+  const workingList=previewWorkingList();
   const modifications=previewBuildModifications();
-  const resolvedItems=buildResolvedExecutionItems(previewWorkingList());
+  const resolvedItems=buildResolvedExecutionItems(workingList);
   let instanceId=null;
   try{instanceId=await startInstanceFromDefinition(def,modifications);}
   catch(e){console.warn('previewStartTraining: instance-vastlegging mislukt, training start gewoon door',e);}
   closeModal('m-training-preview');
+  if(mode==='guided'&&window.GW&&window.GWUI){
+    // Begeleide execution-mode op dezelfde instance; GW behoudt zijn eigen rijke UX,
+    // en logt bij afronden centraal naar sessions (H2) met dit training_instance_id.
+    activeInstanceId=null;
+    resolvedWorkout=null;
+    GW.start(buildGuidedWorkoutPlan(workingList),{goal:(def&&def.goal)||null},{instanceId:instanceId||null,trainingType:'guided'});
+    previewCtx=null;previewStarting=false;
+    go('s-guided'); if(window.GWUI)GWUI.render();
+    return;
+  }
   activeInstanceId=instanceId||null;
   if(source==='vast'){
     resolvedWorkout={t:id,items:resolvedItems,instanceId};
@@ -15871,7 +15895,7 @@ var WBUI=(function(){
         '<div class="m"><div class="mv">~'+t.time+'</div><div class="mk">Minuten</div></div>'+
         '<div class="m"><div class="mv">'+t.sets+'</div><div class="mk">Sets</div></div>'+
       '</div>'+
-      '<button class="wb4-cta" onclick="GWUI.launch()">'+ICO.play+' Start begeleide training</button></div>';
+      '<button class="wb4-cta" onclick="WBUI.save()">'+ICO.play+' Opslaan &amp; bekijken</button></div>';
   }
   function setupBar(){
     var sel=s(),gc=WB.goalCfg(sel.goal),fc=WB.formCfg(sel.form);
@@ -16060,7 +16084,7 @@ var GW=(function(){
   function prevOf(id){var h=hist();return h[id]||null;}
 
   /* ── Start / levensduur ── */
-  function start(plan,sel){
+  function start(plan,sel,opts){
     if(!plan||!plan.items||!plan.items.length)return false;
     var h=hist();
     var items=plan.items.map(function(it){
@@ -16070,6 +16094,7 @@ var GW=(function(){
         weight:(p&&p.weight!=null)?p.weight:null,prev:p,setsDone:[]};
     });
     st.active={sel:clone(sel),items:items,gi:0,phase:'intro',restLeft:0,lastFeel:null,
+      instanceId:(opts&&opts.instanceId)||null,trainingType:(opts&&opts.trainingType)||'guided', // H3: dezelfde training-instance als Preview/normale Execution
       startedAt:Date.now(),endedAt:null};
     persist();
     return true;

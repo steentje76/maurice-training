@@ -4220,7 +4220,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.28';
+const APP_VER = 'v4.24.29';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -5527,9 +5527,11 @@ async function openTrainingPreview(source,id){
 }
 
 function previewExerciseName(exId){
+  // F0.6 Fase 4 (bugfix): ExerciseCatalogService.byId() geeft het ruwe catalogusobject terug
+  // (identity.name), geen top-level .name — dat veld bestaat niet en gaf altijd undefined.
   try{
     const ex=(typeof ExerciseCatalogService!=='undefined')?ExerciseCatalogService.byId(exId):null;
-    return ex?ex.name:exId;
+    return (ex&&ex.identity&&ex.identity.name)?ex.identity.name:exId;
   }catch(e){return exId;}
 }
 
@@ -5557,13 +5559,46 @@ function previewWorkingList(){
 // nieuwe datastructuur, alleen hergebruik van bestaande globals (exercises,
 // resolveCardioType).
 function buildResolvedExecutionItems(list){
+  // F0.6 Fase 2 — Execution Bridge: Builder/Preview werken met canonical Gym-identity
+  // (TK-XXXXXX, ExerciseCatalogService/EX_CATALOG), maar Execution las tot nu toe UITSLUITEND
+  // uit de legacy Supabase-array `exercises` (oude slug-IDs zoals 'bench'/'squat') — bevestigd
+  // in F0.3/F0.4/F0.4B: 0/73 overlap, dus elke TK-XXXXXX viel hier altijd terug op de kale ID
+  // als naam. Vaste, canonical-first volgorde, geen wijziging aan het legacy-pad zelf:
+  //   1) TK-XXXXXX → ExerciseCatalogService (naam/spiergroep/video via bestaande services)
+  //   2) anders/niet gevonden → ongewijzigd legacy-pad (exercises-array)
   return (list||[]).map(it=>{
-    const exObj=(typeof exercises!=='undefined')?exercises.find(e=>e.id===it.exercise_id):null;
+    const exId=it.exercise_id;
+    const isCanonical=typeof exId==='string'&&exId.indexOf('TK-')===0;
+    let canon=null;
+    if(isCanonical&&typeof ExerciseCatalogService!=='undefined'){
+      try{canon=ExerciseCatalogService.byId(exId);}catch(e){canon=null;}
+    }
+    if(canon&&canon.identity){
+      const Id=canon.identity;
+      let posterUrl=null,videoFile=null;
+      try{if(typeof ExerciseAssetProvider!=='undefined'){
+        posterUrl=ExerciseAssetProvider.poster(exId)||null;
+        const v=ExerciseAssetProvider.hasVideo&&ExerciseAssetProvider.hasVideo(exId)?ExerciseAssetProvider.video(exId):null;
+        videoFile=v?v.file:null;
+      }}catch(e){}
+      return {
+        id:exId,
+        naam:Id.name||exId,
+        type:'strength',
+        sets:it.sets??null, reps:it.reps??null, rpe:it.rpe??null,
+        wu:it.wu||0, tip:it.tip??null,
+        yt:null,                 // geen YouTube-ID voor canonical Gym; poster/video lopen apart
+        poster:posterUrl, video:videoFile, canonicalId:exId,
+        muscles:{p:Id.primary||[], s:Id.secondary||[]}
+      };
+    }
+    // Ongewijzigd legacy-pad (bestond al, exact zoals vóór F0.6)
+    const exObj=(typeof exercises!=='undefined')?exercises.find(e=>e.id===exId):null;
     const cardioType=exObj?resolveCardioType(exObj):null;
     const exType=cardioType||(exObj&&exObj.type)||'strength';
     return {
-      id:it.exercise_id,
-      naam:exObj?exObj.name:it.exercise_id,
+      id:exId,
+      naam:exObj?exObj.name:exId,
       type:exType,
       sets:it.sets??null, reps:it.reps??null, rpe:it.rpe??null,
       wu:it.wu||0, tip:it.tip??null,
@@ -8260,6 +8295,20 @@ function _intelBuildIndex(){
 }
 function getExerciseAsset(ex){
   if(!ex)return null;
+  // F0.6 Fase 6: voor canonical Gym-oefeningen (TK-XXXXXX) EX_CATALOG.intelligence gebruiken
+  // (206/206 gevuld, bevestigd F0.3) i.p.v. alleen de bestaande, losstaande 13-entry
+  // EXERCISE_ASSETS-set. Vorm hier aangepast aan wat buildIntelligenceCard() al verwacht
+  // (.technique[], .mistakes[], .poster) — geen wijziging aan buildIntelligenceCard() nodig.
+  if(typeof ex.id==='string'&&ex.id.indexOf('TK-')===0&&typeof ExerciseCatalogService!=='undefined'){
+    try{
+      const c=ExerciseCatalogService.byId(ex.id);
+      if(c&&c.intelligence){
+        let posterUrl=null;
+        try{if(typeof ExerciseAssetProvider!=='undefined')posterUrl=ExerciseAssetProvider.poster(ex.id)||null;}catch(e){}
+        return {technique:c.intelligence.cues||[], mistakes:c.intelligence.mistakes||[], poster:posterUrl};
+      }
+    }catch(e){}
+  }
   if(_intelById===null)_intelBuildIndex();
   return _intelById[ex.id]||_intelByName[_intelNorm(ex.naam||ex.name)]||null;
 }

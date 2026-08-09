@@ -1,7 +1,7 @@
 // Trainingskompas — Service Worker
 // Play Store ready — offline first
 
-const CACHE_NAME = 'trainingskompas-v42428';
+const CACHE_NAME = 'trainingskompas-v42429';
 const CACHE_STATIC = 'trainingskompas-static-v42423';
 // Video-cache: STABIEL en LOSGEKOPPELD van de app-versie. App-updates verwijderen video's NIET.
 const CACHE_VIDEOS = 'tk-videos-v1';

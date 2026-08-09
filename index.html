@@ -2510,6 +2510,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .wb4-setstep b{font-size:15px;min-width:18px;text-align:center}
 .wb4-schema{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
 .wb4-chip2{font-size:11px;font-weight:700;color:var(--g4);background:var(--g1);border-radius:8px;padding:4px 9px}
+.wb4-wtnote{font-size:11px;font-weight:600;color:var(--g4);margin-top:8px;font-style:italic}
 /* F0.7K — Guided: optioneel reps-invoerveld op het RPE-scherm */
 .gw-reps{display:flex;flex-direction:column;align-items:center;gap:6px;margin:4px 0 14px}
 .gw-reps-l{font-size:12px;font-weight:700;color:var(--g4)}
@@ -5496,6 +5497,9 @@ function snapshotFromVasteTraining(def,texs,modifications=[]){
     // F0.7E: wu (warming-up) + tip meenemen zodat de Training Instance de oorspronkelijke
     // training volledig weerspiegelt (warm-up/activation gaat niet verloren bij definition->instance).
     items:(texs||[]).map(t=>({exercise_id:t.exercise_id,sets:t.sets,reps:t.reps,rpe:t.rpe,sort_order:t.sort_order,wu:t.wu??null,tip:t.tip??null})),
+    // F0.7M (M1): welke Decision-Engine-regel gold bij het plannen — reconstrueerbaar
+    // waarom een gewicht destijds zo werd voorgesteld. Additief JSON, geen migratie.
+    decision_rules:(typeof DETRAINING_RULES!=='undefined')?{detraining:{id:DETRAINING_RULES.id,version:DETRAINING_RULES.version}}:null,
     modifications
   };
 }
@@ -5507,6 +5511,8 @@ function snapshotFromCustomTraining(def,texs,modifications=[]){
     // handmatig aangemaakte custom trainingen (zonder Builder-oorsprong) zijn dit
     // gewoon null-waarden, functioneel identiek aan de oude, kalere snapshot-vorm.
     items:(texs||[]).map(t=>({exercise_id:t.exercise_id,sort_order:t.sort_order,sets:t.sets??null,reps:t.reps??null,rpe:t.rpe??null,rest:t.rest??null,pick:t.pick??null,wu:t.wu??null})),
+    // F0.7M (M1): actieve Decision-Engine-regel bij plannen (traceability). Additief JSON.
+    decision_rules:(typeof DETRAINING_RULES!=='undefined')?{detraining:{id:DETRAINING_RULES.id,version:DETRAINING_RULES.version}}:null,
     modifications
   };
 }
@@ -6183,6 +6189,11 @@ function previewBuildModifications(){
   const mods=[];
   previewCtx.removedIds.forEach(id=>mods.push({type:'remove',exercise_id:id}));
   Object.entries(previewCtx.swaps).forEach(([origId,newId])=>mods.push({type:'swap',exercise_id:origId,replacement_exercise_id:newId}));
+  // F0.7M (M1): bewuste gewicht-override per oefening als expliciete instance-modificatie
+  // vastleggen — traceability van de geplande load (planned ≠ actual). Muteert niets.
+  if(previewCtx.overrides){
+    Object.entries(previewCtx.overrides).forEach(([exId,w])=>{ if(w!=null)mods.push({type:'weight_override',exercise_id:exId,weight:w}); });
+  }
   const originalVisible=previewCtx.def.exercises.map(e=>e.exercise_id).filter(id=>!previewCtx.removedIds.has(id));
   const currentVisible=previewCtx.order.filter(id=>!previewCtx.removedIds.has(id));
   if(JSON.stringify(originalVisible)!==JSON.stringify(currentVisible)){
@@ -16294,6 +16305,10 @@ var WBUI=(function(){
            // F0.7K — schema (reps/RPE/rust) per oefening, afgeleid van rol + doel (bestaande GOALS-config). Read-only info.
            '<div class="wb4-edit-lbl">Schema</div>'+
            '<div class="wb4-schema">'+wbSchemaChips(it,gc,sel)+'</div>'+
+           // F0.7M (FASE 6): Builder = plan-laag. Het definitieve werkgewicht (incl. historie/
+           // detraining) wordt in Preview bepaald via de canonical resolver — geen 2e logica,
+           // geen getal dat later afwijkt. Alleen voor werkoefeningen (geen warm-up/cooldown).
+           ((it.pick==='warmup'||it.pick==='cooldown')?'':'<div class="wb4-wtnote">Gewicht wordt in Preview bepaald</div>')+
          '</div></div>';
     }
     h+='</div>';
@@ -16501,7 +16516,13 @@ var GW=(function(){
   function setWeight(v){var c=cur();if(!c)return;v=parseFloat(v);c.weight=isNaN(v)?null:Math.max(0,v);persist();}
   function adjustSets(d){var c=cur();if(!c)return;var min=Math.max(1,c.setsDone.length);c.setsTarget=Math.max(min,Math.min(8,c.setsTarget+d));persist();}
   function altList(id){return (window.WB&&WB.altList)?WB.altList(id):[];}
-  function replaceEx(newId){var c=cur();if(!c||!ex(newId))return false;c.id=newId;c.label=c.label;c.setsDone=[];c.prev=prevOf(newId);c.weight=(c.prev&&c.prev.weight!=null)?c.prev.weight:null;persist();return true;}
+  function replaceEx(newId){var c=cur();if(!c||!ex(newId))return false;c.id=newId;c.label=c.label;c.setsDone=[];c.prev=prevOf(newId);
+    // F0.7M (M2): startgewicht voor de vervangende oefening via de canonical resolver
+    // (base×detraining), consistent met Preview/Normal; val terug op guided-historie.
+    var resolved=null;
+    try{ if(typeof resolveWorkingWeight==='function'){ var reps=(typeof repsPrefillFromRange==='function')?parseFloat(repsPrefillFromRange(c.reps)):null; resolved=resolveWorkingWeight(newId,{reps:(reps&&!isNaN(reps))?reps:null,rpe:8}).suggested; } }catch(e){}
+    c.weight=(resolved!=null)?resolved:((c.prev&&c.prev.weight!=null)?c.prev.weight:null);
+    persist();return true;}
 
   /* ── Coachadvies na een set (motiverend, professioneel, geen confidence) ── */
   var SET_ADVICE={

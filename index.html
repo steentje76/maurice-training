@@ -2556,7 +2556,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .exec-sum-c:last-child{border-right:none}
 .exec-sum-k{font-size:11px;font-weight:700;color:var(--g4);margin-bottom:4px}
 .exec-sum-v{font-size:17px;font-weight:800;color:var(--dark)}
-.exfocus-today{background:var(--g1);border-radius:14px;padding:12px 14px;margin:0 0 12px}
+.exfocus-today{background:var(--card,#fff);border:1px solid var(--g1);border-radius:16px;padding:14px;margin:0 0 12px}
 .exfocus-today-k{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
 .exfocus-today-row{display:flex;gap:8px}
 .exfocus-today-c{flex:1;text-align:center}
@@ -2577,40 +2577,41 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .exfocus-set-dot{width:7px;height:7px;border-radius:50%;background:var(--g3)}
 .exfocus-set-dot.done{background:var(--accent)}
 .exfocus-set-dot.active{width:9px;height:9px;background:transparent;box-shadow:inset 0 0 0 2px var(--accent)}
-/* ===== F0.8D — Premium workout execution: WERKSET set-cards (alleen presentatie; ids/handlers intact) ===== */
-.tks-setcard{padding:6px 8px 10px}
+/* ===== F0.8E — Premium execution: horizontale WERKSET set-cards conform mock-up ===== */
+.tks-setcard{padding:4px 6px 8px}
 .tks-setcard-hd{padding:12px 10px 8px}
 .tks-setcard-t{font-size:12px;letter-spacing:.7px}
-/* elke werkset als eigen premium card-rij */
-.tks-setcard .set-row.setr{position:relative;padding:14px 12px;margin:6px 4px;border:1px solid var(--g1);border-radius:14px;background:var(--card,#fff);transition:background .15s,box-shadow .15s,border-color .15s}
+/* elke werkset: horizontale card-rij [nr] [kg][reps][RPE] [✓-ring] */
+.tks-setcard .set-row.setr{display:flex;align-items:center;gap:7px;padding:10px 9px;margin:8px 5px;border:1px solid var(--g1);border-radius:14px;background:var(--card,#fff);transition:background .15s,box-shadow .15s,border-color .15s}
 .tks-setcard .set-row.setr:last-child{border-bottom:1px solid var(--g1)}
-.setr-top{gap:12px;margin-bottom:12px}
-.setr-circle{width:40px;height:40px;font-size:15px}
-.setr-num{font-size:12px;letter-spacing:.6px}
-/* VOLTOOIDE set: mint-tint + accent-vinkje; ingevoerde waarden blijven volledig zichtbaar */
+.setr-no{width:26px;height:26px;flex-shrink:0;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.setr-cells{flex:1;display:flex;align-items:flex-start;gap:6px;min-width:0}
+.setr-cell{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:stretch}
+.setr-cell-rpe{flex:0 0 auto;align-items:center}
+.setr-cell .set-field{width:100%;box-sizing:border-box;min-width:0;height:44px;font-size:19px;font-weight:800;text-align:center;border:1.5px solid var(--g2);border-radius:11px;background:var(--g1);color:var(--dark);padding:4px 2px;font-family:var(--f);letter-spacing:-.5px}
+.setr-cell .set-field:focus{border-color:var(--accent);background:#fff;outline:none}
+.setr-u{font-size:9.5px;font-weight:700;color:var(--g4);text-align:center;margin-top:3px;text-transform:uppercase;letter-spacing:.4px}
+/* gewicht-modus blijft functioneel maar verschijnt alleen bij focus (schone mock-up look) */
+.setr .wmode-sel{display:none;margin-top:5px;opacity:.8;font-size:8px}
+.setr-cell-kg:focus-within .wmode-sel{display:block}
+.setr-param{width:100%}
+.setr-param:empty{display:none}
+/* RPE-cel: bestaande stepper compact, niet ruimte-vretend */
+.setr-cell-rpe .rpe-stepper-v{flex:0 0 auto!important}
+.setr-cell-rpe .rpe-display{font-weight:800}
+.setr-cell-rpe .set-field-lbl{font-size:9px;letter-spacing:.5px;color:var(--g4);margin-top:3px}
+/* rechterzijde: ✓-ring (voltooien) + meer-menu */
+.setr-side{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0}
+.setr-ring{width:34px;height:34px;border:2px solid var(--g2);border-radius:50%;color:transparent;position:relative}
+.setr-ring.done{background:var(--accent);border-color:var(--accent)}
+.setr-ring.done::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:800}
+.setr-toolbtn{width:30px;height:24px;border:none;background:none;color:var(--g3);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.setr-toolbtn svg{width:18px;height:18px}
+/* VOLTOOIDE set: mint-tint; ingevoerde waarden blijven zichtbaar */
 .tks-setcard .set-row.setr.done{background:var(--v43-mint);border-color:transparent}
-.tks-setcard .set-row.setr.done .setr-num{color:var(--accent)}
-.tks-setcard .set-row.setr.done .setr-circle{border-color:var(--accent)}
-/* ACTIEVE set: duidelijk dominant — accent-rand + linkerbalk + lichte lift */
+.tks-setcard .set-row.setr.done .setr-cell .set-field{background:rgba(255,255,255,.55)}
+/* ACTIEVE set: accentrand + linkerbalk + lichte lift */
 .tks-setcard .set-row.setr.setr-active{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent),0 4px 14px rgba(0,0,0,.06)}
-.tks-setcard .set-row.setr.setr-active .setr-num{color:var(--accent)}
-.tks-setcard .set-row.setr.setr-active .setr-circle{border-color:var(--accent);color:var(--accent)}
-/* steppers ondergeschikt maken zodat de WAARDE domineert */
-.setr .set-step{width:40px;height:52px;font-size:20px;background:transparent;border-color:var(--g2);color:var(--g4);border-radius:12px}
-.setr .set-step:active{background:var(--accent);border-color:var(--accent);color:#fff}
-/* dominante primaire gewichtswaarde (grote waarde, kleine eenheid) */
-.setr .setr-group-kg .set-field{height:56px;font-size:28px;letter-spacing:-.6px;font-weight:800;border:1.5px solid transparent;background:var(--g1)}
-.setr .setr-group-kg .set-field:focus{border-color:var(--accent);background:#fff}
-.setr-fieldcol .set-field{height:50px;font-size:22px}
-.setr .set-field-lbl{font-size:9px;letter-spacing:.5px;color:var(--g4);margin-top:5px}
-/* gewicht-modus subtiel (blijft functioneel: id/handler ongewijzigd) */
-.setr .wmode-sel{opacity:.7;border-color:var(--g1)}
-/* RPE-stepper op maat van de set-card + reps krijgt gegarandeerde leesbare breedte (mobile-first) */
-.setr .rpe-stepper-v{flex:0 0 auto!important}
-.setr .rpe-stepper-v .rpe-btn{border-color:var(--g2)}
-.setr .rpe-display{font-weight:800}
-.setr-row2 .setr-group-reps{flex:1 1 auto;min-width:0}
-.setr-row2 .setr-fieldcol{min-width:60px}
 /* F0.7S — werkset-/warm-up-kaarten (mock-up-pariteit; inputs/ids ongewijzigd) */
 .tks-card{background:var(--card,#fff);border:1px solid var(--g1);border-radius:16px;margin:10px 14px;padding:6px 4px 8px;overflow:hidden}
 .tks-wu-card{padding-top:2px}
@@ -2620,7 +2621,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .tks-setcard .set-row.setr{border-bottom:1px solid var(--g1)}
 .tks-setcard .set-row.setr:last-child{border-bottom:none}
 /* F0.7S — read-only Warm-up Ramp Card */
-.exfocus-wu{background:var(--g1);border-radius:14px;padding:12px 14px;margin:0 0 12px}
+.exfocus-wu{background:var(--card,#fff);border:1px solid var(--g1);border-radius:16px;padding:14px;margin:0 0 12px}
 .exfocus-wu-hd{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
 .exfocus-wu-hd>span:first-child{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
 .exfocus-wu-base{font-size:11px;font-weight:600;color:var(--g4)}
@@ -11048,41 +11049,35 @@ function cascadeRpe(exId,fromSet,val){
   }
 }
 
-// v3.3.53 — Premium set-experience: ± steppers + groter afvink-element, 2-regelige kaart.
-// LET OP: exact dezelfde element-id's en handlers als voorheen (s-…-kg/-reps/-rpe, sc-…,
-// logSet, toggleSetDone, gewicht-modus, warmup). Alleen de layout is premium; geen logica.
+// F0.8E — Premium horizontale set-card conform mock-up: [nr] [kg][reps][RPE] [✓-ring].
+// LET OP: exact dezelfde element-id's en handlers als voorheen (s-…-kg/-reps/-rpe, sc-…, sr-…,
+// s-…-wmode/-param, kgwrap-…, paramwrap-…, logSet, toggleSetDone, showSetMenu). Alleen de
+// presentatie/layout is herbouwd; geen logica, geen nieuwe inputs. (± steppers vervallen visueel;
+// stepField blijft gedefinieerd — de velden zijn direct bewerkbaar, conform de mock-up.)
 function buildWorkSetRow(exId,i,prefill=null){
   const mode='vast';
   return `<div class="set-row setr" id="sr-${exId}-${i}">
-    <div class="setr-top">
-      <div class="set-circle setr-circle" id="sc-${exId}-${i}" onclick="toggleSetDone('${exId}',${i})" role="button" tabindex="0" aria-label="Set ${i} afronden">${i}</div>
-      <div class="setr-num">Set ${i}</div>
-      <div class="setr-actions">
-        <button class="set-rest" onclick="openRestTimer('${exId}',${i})" title="Rusttimer" aria-label="Rusttimer"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8.2V12l2.6 1.6"/></svg></button>
-        <button class="set-more" onclick="showSetMenu('${exId}',${i},'work')" aria-label="Meer opties"><svg viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
+    <div class="setr-no">${i}</div>
+    <div class="setr-cells">
+      <div class="setr-cell setr-cell-kg" id="kgwrap-${exId}-${i}">
+        ${kgFieldHtml(exId,i,mode,prefill?prefill.kg:'')}
+        <div class="setr-u">kg</div>
+        ${buildWeightModeSelect(exId,i,mode)}
+        <div class="setr-param" id="paramwrap-${exId}-${i}">${paramFieldHtml(exId,i,mode,'')}</div>
       </div>
-    </div>
-    <div class="setr-inputs">
-      <div class="setr-group setr-group-kg">
-        <button type="button" class="set-step" tabindex="-1" aria-label="Gewicht omlaag" onclick="stepField('s-${exId}-${i}-kg',-2.5)">−</button>
-        <div class="set-field-wrap setr-fieldcol" style="flex:1" id="kgwrap-${exId}-${i}">
-          ${kgFieldHtml(exId,i,mode,prefill?prefill.kg:'')}
-          ${buildWeightModeSelect(exId,i,mode)}
-          <div id="paramwrap-${exId}-${i}">${paramFieldHtml(exId,i,mode,'')}</div>
-          <div class="set-field-lbl">kg</div>
-        </div>
-        <button type="button" class="set-step" tabindex="-1" aria-label="Gewicht omhoog" onclick="stepField('s-${exId}-${i}-kg',2.5)">+</button>
+      <div class="setr-cell setr-cell-reps">
+        <input class="set-field" type="number" inputmode="numeric" aria-label="Herhalingen" placeholder="–" id="s-${exId}-${i}-reps" value="${prefill?prefill.reps:''}" min="1" max="100" step="1"
+          oninput="logSet('${exId}','work',${i},true)"
+          onchange="clampNumInput(this,1,100);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'reps',this.value)">
+        <div class="setr-u">reps</div>
       </div>
-      <div class="setr-row2">
-        <div class="setr-group setr-group-reps">
-          <button type="button" class="set-step" tabindex="-1" aria-label="Herhalingen omlaag" onclick="stepField('s-${exId}-${i}-reps',-1)">−</button>
-          <div class="set-field-wrap setr-fieldcol" style="flex:1"><input class="set-field" type="number" inputmode="numeric" aria-label="Herhalingen" placeholder="reps" id="s-${exId}-${i}-reps" value="${prefill?prefill.reps:''}" min="1" max="100" step="1"
-            oninput="logSet('${exId}','work',${i},true)"
-            onchange="clampNumInput(this,1,100);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'reps',this.value)"><div class="set-field-lbl">reps</div></div>
-          <button type="button" class="set-step" tabindex="-1" aria-label="Herhalingen omhoog" onclick="stepField('s-${exId}-${i}-reps',1)">+</button>
-        </div>
+      <div class="setr-cell setr-cell-rpe">
         ${buildRpeStepper(exId,i,prefill&&i===1?prefill.rpe:'',prefill?prefill.rpe:'')}
       </div>
+    </div>
+    <div class="setr-side">
+      <div class="set-circle setr-ring" id="sc-${exId}-${i}" onclick="toggleSetDone('${exId}',${i})" role="button" tabindex="0" aria-label="Set ${i} afronden"></div>
+      <button class="set-more setr-toolbtn" onclick="showSetMenu('${exId}',${i},'work')" aria-label="Meer opties"><svg viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
     </div>
   </div>`;
 }

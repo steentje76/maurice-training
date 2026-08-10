@@ -11440,8 +11440,28 @@ function restoreSessionLogToDom(t){
       const repsEl=document.getElementById('s-'+ex.id+'-'+i+'-reps');if(repsEl&&s.reps)repsEl.value=s.reps;
       const rpeEl=document.getElementById('s-'+ex.id+'-'+i+'-rpe');if(rpeEl&&s.rpe)rpeEl.value=s.rpe;
     });
+    // F0.8C — zichtbare '.done'-status van reeds uitgevoerde werksets meeherstellen.
+    restoreCompletedSetVisualState(ex.id);
   }
   updateProgress(t);updateSummary(t);
+}
+// ── F0.8C — Session Resume State Synchronization ──
+// Herstelt bij hervatten de zichtbare afgerond-status van werksets, zodat "wat opgeslagen is =
+// wat zichtbaar is". Bewijs van uitvoering = een bestaande sessionLog-set met kg of reps — exact
+// het predikaat dat updateProgress/updateSummary al hanteren. Zet exact dezelfde classes als
+// toggleSetDone (sc + sr → .done), dus resume en normaal trainen geven identieke UI. Geen nieuwe
+// status, geen nieuwe opslag, geen logging-write, geen geplande set als uitgevoerd gemarkeerd.
+function restoreCompletedSetVisualState(exId){
+  const l=(typeof sessionLog!=='undefined')?sessionLog[exId]:null;
+  if(!l||!l.sets)return;
+  l.sets.forEach((s,idx)=>{
+    if(!(s&&(s.kg||s.reps)))return; // geen uitvoeringsdata → niet als afgerond markeren
+    const i=idx+1;
+    const c=document.getElementById('sc-'+exId+'-'+i); if(c)c.classList.add('done');
+    const r=document.getElementById('sr-'+exId+'-'+i); if(r)r.classList.add('done');
+  });
+  // F0.8B Active Set Focus spiegelt '.done' → na herstel de banner verversen (indien zichtbaar).
+  if(typeof refreshActiveSetBanner==='function')refreshActiveSetBanner(exId);
 }
 
 // ══════════════════════════════════════════════════════════

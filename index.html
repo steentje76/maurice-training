@@ -9299,7 +9299,7 @@ function openExecPause(t){
       '<button class="exec-x" onclick="execPauseResume(\''+t+'\')" aria-label="Sluiten">✕</button></div>'+
     '<div class="exec-pausecard"><div class="exec-pausecard-k">Training pauze</div>'+
       '<div class="exec-pausecard-s">Je training staat gepauzeerd. Timer staat stil.</div>'+
-      '<button class="btn btn-r" style="width:100%" onclick="execPauseResume(\''+t+'\')">▶ Verder gaan</button>'+
+      '<button class="btn" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-family:var(--f);cursor:pointer" onclick="execPauseResume(\''+t+'\')">▶ Verder gaan</button>'+
       '<button class="btn btn-o" style="width:100%;margin-top:8px" onclick="closeExecOverlay(\'exec-pause\');openExecStopConfirm(\''+t+'\')">Stop training</button></div>'+
     '<div class="exec-opt-k">Oefening opties</div>'+
       optRow('⚙','Instellingen aanpassen','execPauseResume(\''+t+'\')')+

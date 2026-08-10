@@ -2539,6 +2539,29 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .exec-pause-t{font-size:20px;font-weight:800;color:var(--dark);margin-bottom:6px}
 .exec-pause-s{font-size:13px;color:var(--g4);margin-bottom:18px;line-height:1.4}
 .exec-sheet--center .btn{width:100%}
+/* F0.7R — pauze + opties + samenvatting + VANDAAG (mock-up-pariteit) */
+.exec-pausecard{background:var(--g1);border-radius:14px;padding:14px;margin:6px 0 16px}
+.exec-pausecard-k{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--g4);margin-bottom:4px}
+.exec-pausecard-s{font-size:13px;color:var(--g4);line-height:1.4;margin-bottom:12px}
+.exec-opt-k{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--g4);margin:6px 2px 8px}
+.exec-opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card,#fff);border:1px solid var(--g1);border-radius:12px;padding:13px 14px;margin-bottom:8px;cursor:pointer;font-family:var(--f)}
+.exec-opt-ic{font-size:16px;width:22px;text-align:center;flex-shrink:0}
+.exec-opt-l{flex:1;font-size:14px;font-weight:700;color:var(--dark)}
+.exec-opt-ar{color:var(--g3);font-size:18px;font-weight:700}
+.exec-coach{display:flex;flex-direction:column;gap:3px;background:var(--g1);border-radius:14px;padding:14px;margin-top:8px}
+.exec-coach-t{font-size:13px;font-weight:800;color:var(--dark)}
+.exec-coach-s{font-size:13px;color:var(--g4);line-height:1.45}
+.exec-sum{display:flex;gap:10px;background:var(--g1);border-radius:14px;padding:14px 8px;margin:6px 0 14px}
+.exec-sum-c{flex:1;text-align:center;border-right:1px solid var(--g2)}
+.exec-sum-c:last-child{border-right:none}
+.exec-sum-k{font-size:11px;font-weight:700;color:var(--g4);margin-bottom:4px}
+.exec-sum-v{font-size:17px;font-weight:800;color:var(--dark)}
+.exfocus-today{background:var(--g1);border-radius:14px;padding:12px 14px;margin:0 0 12px}
+.exfocus-today-k{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.exfocus-today-row{display:flex;gap:8px}
+.exfocus-today-c{flex:1;text-align:center}
+.exfocus-today-c .v{font-size:16px;font-weight:800;color:var(--dark)}
+.exfocus-today-c .k{font-size:10.5px;color:var(--g4);margin-top:2px;line-height:1.2}
 /* F0.7J — Builder: rol- en sets-editor per oefening */
 .wb4-edit{margin-top:10px;border-top:1px solid var(--g1);padding-top:10px}
 .wb4-edit-lbl{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--g4);margin:0 0 5px}
@@ -8946,7 +8969,7 @@ function applyExecutionFocus(t){
   let idx=execFocus[t]; if(idx==null||idx<0||idx>=n)idx=0; execFocus[t]=idx;
   // Verberg alles behalve de actieve kaart + de focus-chrome (intro/summary/overige kaarten weg).
   [...container.children].forEach(ch=>{
-    if(ch.classList.contains('exfocus-head')||ch.classList.contains('exfocus-next')||ch.classList.contains('exfocus-nav'))return;
+    if(ch.classList.contains('exfocus-head')||ch.classList.contains('exfocus-next')||ch.classList.contains('exfocus-nav')||ch.classList.contains('exfocus-today'))return;
     if(ch.classList.contains('ex-card'))return; // hieronder per index geregeld
     ch.classList.add('exfocus-hidden');
   });
@@ -8964,6 +8987,23 @@ function applyExecutionFocus(t){
   const skipped=execSkipSet(t).has(list[idx]&&list[idx].id);
   head.innerHTML='<span class="k">Oefening '+(idx+1)+' / '+n+(skipped?' · overgeslagen':'')+'</span>'+
     '<button class="exfocus-ov" onclick="openExecOverview(\''+t+'\')">Overzicht</button>';
+  // F0.7R — "VANDAAG"-kaart (mock-up): gewicht / sets×reps@RPE / rust, uit bestaande resolved data.
+  let today=container.querySelector('.exfocus-today'); if(today)today.remove();
+  const cur=list[idx]||{};
+  const curPrep=(cur.pick==='warmup'||cur.pick==='activation'||cur.pick==='cooldown');
+  if(!curPrep && (cur.suggestedWeight!=null||cur.sets!=null||cur.reps!=null)){
+    const w=(cur.suggestedWeight!=null)?(String(cur.suggestedWeight).replace('.',',')+' kg'):'nog te bepalen';
+    const sr=(cur.sets!=null&&cur.reps!=null)?(cur.sets+' × '+cur.reps):(cur.sets!=null?(cur.sets+' sets'):'—');
+    const rpe=(cur.rpe!=null&&cur.rpe!=='')?('@ RPE '+cur.rpe):'';
+    const rest=(cur.rest!=null&&cur.rest!=='')?(cur.rest+'s'):'—';
+    today=document.createElement('div'); today.className='exfocus-today';
+    today.innerHTML='<div class="exfocus-today-k">◎ Vandaag</div><div class="exfocus-today-row">'+
+      '<div class="exfocus-today-c"><div class="v">'+escHtml(w)+'</div><div class="k">Gewicht</div></div>'+
+      '<div class="exfocus-today-c"><div class="v">'+escHtml(sr)+'</div><div class="k">Sets × reps '+escHtml(rpe)+'</div></div>'+
+      '<div class="exfocus-today-c"><div class="v">'+escHtml(rest)+'</div><div class="k">Rust</div></div>'+
+      '</div>';
+    head.insertAdjacentElement('afterend',today);
+  }
   // Volgende-oefening preview + navigatie onderaan.
   const isLast=idx>=n-1;
   const nextNm=(!isLast&&list[idx+1])?list[idx+1].naam:null;
@@ -9030,10 +9070,23 @@ function openExecOverview(t){
       '<span class="exov-b"><span class="exov-nm">'+escHtml(ex.naam||ex.id)+'</span>'+
       '<span class="exov-meta">'+escHtml(meta||LBL[st])+'</span></span></button>';
   }).join('');
+  // F0.7R — samenvattingskaart (Tijd/Volume/Sets) uit bestaande execution-state.
+  let tijd='—'; try{ const te=document.getElementById('elapsed-'+String(t).toLowerCase()); if(te&&te.textContent)tijd=te.textContent.trim(); }catch(e){}
+  let vol=0, setsDone=0, setsTot=0;
+  list.forEach(ex=>{
+    const l=(typeof sessionLog!=='undefined')?sessionLog[ex.id]:null;
+    if(l&&l.sets){ l.sets.forEach(s=>{ if(s&&(s.kg||s.reps)){ setsDone++; const k=(s.effKg!=null?s.effKg:parseFloat(s.kg))||0,r=parseInt(s.reps)||0; vol+=k*r; } }); }
+    setsTot+=(ex.sets!=null?parseInt(ex.sets)||0:0);
+  });
+  const volStr=Math.round(vol).toLocaleString('nl-NL');
+  const summary='<div class="exec-sum"><div class="exec-sum-c"><div class="exec-sum-k">⏱ Tijd</div><div class="exec-sum-v">'+escHtml(tijd)+'</div></div>'+
+    '<div class="exec-sum-c"><div class="exec-sum-k">🔥 Volume</div><div class="exec-sum-v">'+volStr+' kg</div></div>'+
+    '<div class="exec-sum-c"><div class="exec-sum-k">✓ Sets</div><div class="exec-sum-v">'+setsDone+' / '+(setsTot||'—')+'</div></div></div>';
   const el=ensureExecOverlay('exec-overview');
   el.innerHTML='<div class="exec-sheet"><div class="exec-sheet-hd"><div class="exec-sheet-t">Training overzicht</div>'+
     '<button class="exec-x" onclick="closeExecOverlay(\'exec-overview\')" aria-label="Sluiten">✕</button></div>'+
-    '<div class="exec-prg">'+doneN+' / '+list.length+' uitgevoerd'+(skipN?(' · '+skipN+' overgeslagen'):'')+'</div>'+
+    summary+
+    '<div class="exec-opt-k">Oefeningen · '+doneN+' / '+list.length+' uitgevoerd'+(skipN?(' · '+skipN+' overgeslagen'):'')+'</div>'+
     '<div class="exov-list">'+rows+'</div>'+
     '<button class="btn btn-r exec-finish" onclick="closeExecOverlay(\'exec-overview\');showSessionSummary(\''+t+'\')">Training afronden</button></div>';
   el.classList.add('open');
@@ -9041,18 +9094,51 @@ function openExecOverview(t){
 function execOverviewGo(t,i){ execFocus[t]=i; closeExecOverlay('exec-overview'); applyExecutionFocus(t); }
 function closeExecOverlay(id){ const el=document.getElementById(id); if(el)el.classList.remove('open'); }
 // ── F0.7Q — Pauze-scherm (wrapt bestaande pauze/afrond-flow) ──
+// F0.7R — Pauze + opties (mock-up "Pauzeren & opties"). Wrapt de bestaande pauze/replace/
+// finish-flow; voegt geen logging/engine-logica toe. Coach-tip alleen bij echte tip-data.
 function openExecPause(t){
   try{ if(typeof trainPaused!=='undefined'&&!trainPaused&&typeof pauseTraining==='function')pauseTraining(); }catch(e){}
+  const list=(typeof getSessionExs==='function')?getSessionExs(t):[];
+  const idx=execFocus[t]||0; const ex=list[idx]||{};
+  const nm=escHtml(ex.naam||'Training');
+  const tip=ex.tip?escHtml(ex.tip):null;
+  const optRow=(ic,label,onclick)=>'<button class="exec-opt" onclick="'+onclick+'"><span class="exec-opt-ic">'+ic+'</span><span class="exec-opt-l">'+label+'</span><span class="exec-opt-ar">›</span></button>';
   const el=ensureExecOverlay('exec-pause');
-  el.innerHTML='<div class="exec-sheet exec-sheet--center"><div class="exec-pause-t">Training gepauzeerd</div>'+
-    '<div class="exec-pause-s">Je training is gepauzeerd. De timer staat stil.</div>'+
-    '<button class="btn btn-r" onclick="execPauseResume(\''+t+'\')">▶ Verder trainen</button>'+
-    '<button class="btn btn-o" style="margin-top:8px" onclick="closeExecOverlay(\'exec-pause\');showSessionSummary(\''+t+'\')">Training stoppen</button></div>';
+  el.innerHTML='<div class="exec-sheet"><div class="exec-sheet-hd"><div class="exec-sheet-t">'+nm+'</div>'+
+      '<button class="exec-x" onclick="execPauseResume(\''+t+'\')" aria-label="Sluiten">✕</button></div>'+
+    '<div class="exec-pausecard"><div class="exec-pausecard-k">Training pauze</div>'+
+      '<div class="exec-pausecard-s">Je training staat gepauzeerd. Timer staat stil.</div>'+
+      '<button class="btn btn-r" style="width:100%" onclick="execPauseResume(\''+t+'\')">▶ Verder gaan</button>'+
+      '<button class="btn btn-o" style="width:100%;margin-top:8px" onclick="closeExecOverlay(\'exec-pause\');showSessionSummary(\''+t+'\')">Stop training</button></div>'+
+    '<div class="exec-opt-k">Oefening opties</div>'+
+      optRow('⚙','Instellingen aanpassen','execPauseResume(\''+t+'\')')+
+      optRow('⇄','Oefening vervangen','execReplaceCurrent(\''+t+'\')')+
+      optRow('📝','Notitie toevoegen','execAddNote(\''+t+'\')')+
+    (tip?('<div class="exec-coach"><div class="exec-coach-t">Tip van je coach</div><div class="exec-coach-s">'+tip+'</div></div>'):'')+
+    '</div>';
   el.classList.add('open');
 }
 function execPauseResume(t){
   try{ if(typeof trainPaused!=='undefined'&&trainPaused&&typeof pauseTraining==='function')pauseTraining(); }catch(e){}
   closeExecOverlay('exec-pause');
+}
+// Oefening vervangen — best-effort via bestaande swap; anders nette melding (geen fake).
+function execReplaceCurrent(t){
+  const list=(typeof getSessionExs==='function')?getSessionExs(t):[]; const ex=list[execFocus[t]||0];
+  closeExecOverlay('exec-pause');
+  try{
+    if(ex&&typeof openSwapExercise==='function'&&String(t).indexOf('prog_')===0){ openSwapExercise(ex.id,t); return; }
+  }catch(e){}
+  if(window.toast)toast('Vervangen kan via Training aanpassen of de Preview.');
+}
+// Notitie — transient per-oefening notitie (geen wijziging aan sessions/logging).
+let execNotes={};
+function execAddNote(t){
+  const list=(typeof getSessionExs==='function')?getSessionExs(t):[]; const ex=list[execFocus[t]||0]; if(!ex)return;
+  let v=null; try{ v=window.prompt('Notitie bij '+(ex.naam||'oefening'),(execNotes[t]&&execNotes[t][ex.id])||''); }catch(e){ v=null; }
+  if(v==null){ closeExecOverlay('exec-pause'); return; }
+  if(!execNotes[t])execNotes[t]={}; execNotes[t][ex.id]=v;
+  closeExecOverlay('exec-pause'); if(window.toast)toast('Notitie opgeslagen voor deze sessie');
 }
 
 

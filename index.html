@@ -2562,6 +2562,14 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .exfocus-today-c{flex:1;text-align:center}
 .exfocus-today-c .v{font-size:16px;font-weight:800;color:var(--dark)}
 .exfocus-today-c .k{font-size:10.5px;color:var(--g4);margin-top:2px;line-height:1.2}
+/* F0.7S — werkset-/warm-up-kaarten (mock-up-pariteit; inputs/ids ongewijzigd) */
+.tks-card{background:var(--card,#fff);border:1px solid var(--g1);border-radius:16px;margin:10px 14px;padding:6px 4px 8px;overflow:hidden}
+.tks-wu-card{padding-top:2px}
+.tks-setcard-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 8px}
+.tks-setcard-t{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.tks-setcard-cnt{font-size:11px;font-weight:700;color:var(--g4);background:var(--g1);border-radius:999px;padding:3px 10px}
+.tks-setcard .set-row.setr{border-bottom:1px solid var(--g1)}
+.tks-setcard .set-row.setr:last-child{border-bottom:none}
 /* F0.7J — Builder: rol- en sets-editor per oefening */
 .wb4-edit{margin-top:10px;border-top:1px solid var(--g1);padding-top:10px}
 .wb4-edit-lbl{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--g4);margin:0 0 5px}
@@ -10717,12 +10725,15 @@ function regenerateWarmup(exId){autoGenerateWarmup(exId,true);toast('Opwarmsets 
 function buildStrengthBody(exId,wuCount,workCount,prefill=null){
   let h='';
   if(!warmupState[exId])warmupState[exId]={count:wuCount||0,manual:{},values:{}};
-  h+=buildWarmupSection(exId,warmupState[exId].count);
+  // F0.7S — warm-up in een eigen kaart (mock-up "WARM-UP SETS"); bestaande wu-rijen/ids intact.
+  h+='<div class="tks-card tks-wu-card">'+buildWarmupSection(exId,warmupState[exId].count)+'</div>';
   if(prefill) h+=`<div style="background:#e8f5e9;border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:6px 12px;font-size:11px;color:#2e7d32;margin:4px 14px 8px">📋 Vorige sessie: ${prefill.kg} kg × ${prefill.reps} reps${prefill.rpe?' · RPE '+prefill.rpe:''} — pre-ingevuld</div>`;
-  h+=`<div class="add-row" style="padding:8px 14px;cursor:default"><span style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Werksets</span></div>`;
+  // F0.7S — werksets in een eigen kaart met kop (mock-up "WERKSETS"); rijen/ids ongewijzigd.
+  h+=`<div class="tks-card tks-setcard"><div class="tks-setcard-hd"><span class="tks-setcard-t">Werksets</span><span class="tks-setcard-cnt">${workCount} set${workCount===1?'':'s'}</span></div>`;
   for(let i=1;i<=workCount;i++){
     h+=buildWorkSetRow(exId,i,prefill);
   }
+  h+=`</div>`;
   return h;
 }
 
@@ -10979,8 +10990,8 @@ function buildWorkSetRow(exId,i,prefill=null){
         <div class="setr-group setr-group-reps">
           <button type="button" class="set-step" tabindex="-1" aria-label="Herhalingen omlaag" onclick="stepField('s-${exId}-${i}-reps',-1)">−</button>
           <div class="set-field-wrap setr-fieldcol" style="flex:1"><input class="set-field" type="number" inputmode="numeric" aria-label="Herhalingen" placeholder="reps" id="s-${exId}-${i}-reps" value="${prefill?prefill.reps:''}" min="1" max="100" step="1"
-            oninput="clampNumInput(this,1,100);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'reps',this.value)"
-            onchange="logSet('${exId}','work',${i},true)"><div class="set-field-lbl">reps</div></div>
+            oninput="logSet('${exId}','work',${i},true)"
+            onchange="clampNumInput(this,1,100);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'reps',this.value)"><div class="set-field-lbl">reps</div></div>
           <button type="button" class="set-step" tabindex="-1" aria-label="Herhalingen omhoog" onclick="stepField('s-${exId}-${i}-reps',1)">+</button>
         </div>
         ${buildRpeStepper(exId,i,prefill&&i===1?prefill.rpe:'',prefill?prefill.rpe:'')}

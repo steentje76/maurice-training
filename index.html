@@ -374,10 +374,10 @@ body{display:flex;justify-content:center}
 
 /* EXERCISE ITEMS */
 .ex-card{background:var(--card);border-radius:14px;margin-bottom:10px;overflow:hidden;box-shadow:0 3px 12px rgba(0,0,0,.05),0 0 0 1px var(--g2)}
-.ex-card-hd{padding:14px 15px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.ex-card-hd{padding:16px 15px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
 .ex-card-hd:active{background:var(--g1)}
-.ex-card-name{font-size:15.5px;font-weight:800;color:var(--dark);letter-spacing:-.2px}
-.ex-card-meta{font-size:12px;color:var(--g4);margin-top:3px;font-weight:600}
+.ex-card-name{font-size:18px;font-weight:800;color:var(--dark);letter-spacing:-.3px;line-height:1.15}
+.ex-card-meta{font-size:12.5px;color:var(--g4);margin-top:4px;font-weight:600}
 .ex-prev{font-size:11px;color:var(--g4);padding:6px 14px;background:var(--g1);border-bottom:1px solid var(--g2)}
 .ex-prev strong{color:var(--dark)}
 .ex-body{display:none;padding:4px 0}
@@ -2513,6 +2513,11 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .exfocus-nav button:disabled{opacity:.4;cursor:default}
 .exfocus-nav2{margin-top:2px}
 .exfocus-nav button.ghost{background:transparent;border-color:var(--g1);color:var(--g4);font-weight:700}
+/* F0.8G — primaire actie dominant, secundaire rij ondergeschikt */
+.exfocus-nav .primary{padding:17px 14px;font-size:15px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.12)}
+.exfocus-nav2{margin-top:8px;gap:8px}
+.exfocus-nav2 button.ghost{padding:11px 6px;font-size:12px;border-radius:12px;background:var(--card,#fff);border-color:var(--g2)}
+.exfocus-nav2 button.ghost:disabled{opacity:.4}
 .exfocus-head .exfocus-ov{background:none;border:none;color:var(--accent);font-size:12px;font-weight:800;cursor:pointer;font-family:var(--f)}
 /* F0.7Q — execution overlays (overzicht + pauze) */
 .exec-overlay{position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,.42);display:none;align-items:flex-end;justify-content:center}
@@ -9117,11 +9122,12 @@ function applyExecutionFocus(t){
   let nav=container.querySelector('.exfocus-nav'); if(!nav){ nav=document.createElement('div'); nav.className='exfocus-nav'; container.appendChild(nav); }
   let nav2=container.querySelector('.exfocus-nav2'); if(!nav2){ nav2=document.createElement('div'); nav2.className='exfocus-nav exfocus-nav2'; container.appendChild(nav2); }
   if(nextNm){ np=document.createElement('div'); np.className='exfocus-next'; np.innerHTML='<div class="k">Volgende oefening</div><div class="nm">'+escHtml(nextNm)+'</div>'; container.insertBefore(np,nav); }
-  nav.innerHTML='<button onclick="execFocusGo(\''+t+'\',-1)"'+(idx===0?' disabled':'')+'>← Vorige</button>'+
-    (isLast?'<button class="primary" onclick="showSessionSummary(\''+t+'\')">Training afronden</button>'
+  // F0.8G — duidelijke actiehiërarchie: primaire actie dominant (volle breedte), secundaire
+  // acties (Vorige/Overslaan/Pauze) visueel ondergeschikt. Zelfde handlers/functionaliteit.
+  nav.innerHTML=(isLast?'<button class="primary" onclick="showSessionSummary(\''+t+'\')">Training afronden ✓</button>'
            :'<button class="primary" onclick="execFocusGo(\''+t+'\',1)">Oefening afronden →</button>');
-  // F0.7Q — secundaire acties: overslaan (geen fake session) + pauze. Visueel ondergeschikt.
-  nav2.innerHTML='<button class="ghost" onclick="execFocusSkip(\''+t+'\')">Overslaan</button>'+
+  nav2.innerHTML='<button class="ghost" onclick="execFocusGo(\''+t+'\',-1)"'+(idx===0?' disabled':'')+'>← Vorige</button>'+
+    '<button class="ghost" onclick="execFocusSkip(\''+t+'\')">Overslaan</button>'+
     '<button class="ghost" onclick="openExecPause(\''+t+'\')">⏸ Pauze</button>';
   // Nieuwe oefening opent logisch bovenaan (F0.7J scroll-reset-patroon).
   container.scrollTop=0; try{const scr=container.closest('.scr'); if(scr)scr.scrollTop=0;}catch(e){}

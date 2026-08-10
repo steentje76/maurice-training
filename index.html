@@ -2570,6 +2570,17 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .tks-setcard-cnt{font-size:11px;font-weight:700;color:var(--g4);background:var(--g1);border-radius:999px;padding:3px 10px}
 .tks-setcard .set-row.setr{border-bottom:1px solid var(--g1)}
 .tks-setcard .set-row.setr:last-child{border-bottom:none}
+/* F0.7S — read-only Warm-up Ramp Card */
+.exfocus-wu{background:var(--g1);border-radius:14px;padding:12px 14px;margin:0 0 12px}
+.exfocus-wu-hd{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+.exfocus-wu-hd>span:first-child{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.exfocus-wu-base{font-size:11px;font-weight:600;color:var(--g4)}
+.exfocus-wu-row{display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0;border-top:1px dashed var(--g2)}
+.exfocus-wu-row:first-of-type{border-top:none}
+.exfocus-wu-pct{font-weight:800;color:var(--dark);min-width:44px}
+.exfocus-wu-x{color:var(--g4);flex:1}
+.exfocus-wu-arrow{color:var(--g3)}
+.exfocus-wu-kg{font-weight:800;color:var(--dark);min-width:64px;text-align:right}
 /* F0.7J — Builder: rol- en sets-editor per oefening */
 .wb4-edit{margin-top:10px;border-top:1px solid var(--g1);padding-top:10px}
 .wb4-edit-lbl{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--g4);margin:0 0 5px}
@@ -8977,7 +8988,7 @@ function applyExecutionFocus(t){
   let idx=execFocus[t]; if(idx==null||idx<0||idx>=n)idx=0; execFocus[t]=idx;
   // Verberg alles behalve de actieve kaart + de focus-chrome (intro/summary/overige kaarten weg).
   [...container.children].forEach(ch=>{
-    if(ch.classList.contains('exfocus-head')||ch.classList.contains('exfocus-next')||ch.classList.contains('exfocus-nav')||ch.classList.contains('exfocus-today'))return;
+    if(ch.classList.contains('exfocus-head')||ch.classList.contains('exfocus-next')||ch.classList.contains('exfocus-nav')||ch.classList.contains('exfocus-today')||ch.classList.contains('exfocus-wu'))return;
     if(ch.classList.contains('ex-card'))return; // hieronder per index geregeld
     ch.classList.add('exfocus-hidden');
   });
@@ -9011,6 +9022,31 @@ function applyExecutionFocus(t){
       '<div class="exfocus-today-c"><div class="v">'+escHtml(rest)+'</div><div class="k">Rust</div></div>'+
       '</div>';
     head.insertAdjacentElement('afterend',today);
+  }
+  // F0.7S — read-only Warm-up Ramp Card (coach-weergave). Bron: cur.suggestedWeight →
+  // bestaande suggestWarmupScheme(); fallback: bestaande warmupState-waarden. Percentage is
+  // afgeleid (kg/werkgewicht) — puur presentatie, geen nieuwe berekening, geen inputs/ids.
+  let ramp=container.querySelector('.exfocus-wu'); if(ramp)ramp.remove();
+  if(!curPrep){
+    const wkg=(cur.suggestedWeight!=null)?parseFloat(cur.suggestedWeight):null;
+    let steps=null;
+    if(wkg&&wkg>0&&typeof suggestWarmupScheme==='function'){ try{ steps=suggestWarmupScheme(wkg); }catch(e){} }
+    if((!steps||!steps.length)&&typeof warmupState!=='undefined'&&warmupState[cur.id]&&warmupState[cur.id].values){
+      const vals=warmupState[cur.id].values;
+      steps=Object.keys(vals).sort((a,b)=>a-b).map(k=>({kg:parseFloat(vals[k].kg),reps:vals[k].reps})).filter(s=>!isNaN(s.kg)&&s.kg>0);
+    }
+    if(steps&&steps.length){
+      const rows=steps.map(s=>{
+        const pct=(wkg&&wkg>0)?Math.round(s.kg/wkg*100):null;
+        return '<div class="exfocus-wu-row"><span class="exfocus-wu-pct">'+(pct!=null?(pct+'%'):'—')+'</span>'+
+          '<span class="exfocus-wu-x">× '+(s.reps!=null&&s.reps!==''?s.reps:'—')+' reps</span>'+
+          '<span class="exfocus-wu-arrow">→</span>'+
+          '<span class="exfocus-wu-kg">'+String(s.kg).replace('.',',')+' kg</span></div>';
+      }).join('');
+      ramp=document.createElement('div'); ramp.className='exfocus-wu';
+      ramp.innerHTML='<div class="exfocus-wu-hd"><span>Warm-up</span>'+(wkg&&wkg>0?'<span class="exfocus-wu-base">o.b.v. '+String(wkg).replace('.',',')+' kg</span>':'')+'</div>'+rows;
+      (container.querySelector('.exfocus-today')||head).insertAdjacentElement('afterend',ramp);
+    }
   }
   // Volgende-oefening preview + navigatie onderaan.
   const isLast=idx>=n-1;

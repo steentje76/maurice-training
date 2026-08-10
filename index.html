@@ -9121,7 +9121,7 @@ function applyExecutionFocus(t){
   let np=container.querySelector('.exfocus-next'); if(np)np.remove();
   let nav=container.querySelector('.exfocus-nav'); if(!nav){ nav=document.createElement('div'); nav.className='exfocus-nav'; container.appendChild(nav); }
   let nav2=container.querySelector('.exfocus-nav2'); if(!nav2){ nav2=document.createElement('div'); nav2.className='exfocus-nav exfocus-nav2'; container.appendChild(nav2); }
-  if(nextNm){ np=document.createElement('div'); np.className='exfocus-next'; np.innerHTML='<div class="k">Volgende oefening</div><div class="nm">'+escHtml(nextNm)+'</div>'; container.insertBefore(np,nav); }
+  if(nextNm){ np=document.createElement('div'); np.className='exfocus-next'; np.setAttribute('onclick','openExecNext(\''+t+'\')'); np.style.cursor='pointer'; np.innerHTML='<div class="k">Volgende oefening ›</div><div class="nm">'+escHtml(nextNm)+'</div>'; container.insertBefore(np,nav); }
   // F0.8G — duidelijke actiehiërarchie: primaire actie dominant (volle breedte), secundaire
   // acties (Vorige/Overslaan/Pauze) visueel ondergeschikt. Zelfde handlers/functionaliteit.
   nav.innerHTML=(isLast?'<button class="primary" onclick="showSessionSummary(\''+t+'\')">Training afronden ✓</button>'
@@ -9205,6 +9205,29 @@ function openExecOverview(t){
 }
 function execOverviewGo(t,i){ execFocus[t]=i; closeExecOverlay('exec-overview'); applyExecutionFocus(t); }
 function closeExecOverlay(id){ const el=document.getElementById(id); if(el)el.classList.remove('open'); }
+// ── F0.8G — "Volgende oefening" als aparte state (mock-up 3): Huidige → Volgende → Daarna.
+// Leest uitsluitend bestaande trainingsvolgorde + status; geen nieuwe logica/bron van waarheid.
+function openExecNext(t){
+  const list=(typeof getSessionExs==='function')?getSessionExs(t):[];
+  const idx=execFocus[t]||0;
+  const meta=ex=>(ex.sets!=null&&ex.reps!=null)?(ex.sets+' × '+ex.reps+(ex.rpe?' @ RPE '+ex.rpe:'')):'';
+  const badge=ex=>{ try{ const info=activeSetInfo(ex.id); if(info&&info.total>0)return info.activeIdx===null?'Alle sets voltooid':('Set '+info.activeIdx+' / '+info.total); }catch(e){} return ''; };
+  const row=(ex,i,cur)=>'<button class="exov-row'+(cur?' exov-current':'')+'" onclick="execNextGo(\''+t+'\','+i+')">'+
+    '<span class="exov-b"><span class="exov-nm">'+escHtml(ex.naam||ex.id)+'</span>'+
+    '<span class="exov-meta">'+escHtml(cur?[meta(ex),badge(ex)].filter(Boolean).join(' · '):meta(ex))+'</span></span>'+
+    '<span class="exov-ic">'+(cur?'●':'›')+'</span></button>';
+  const cur=list[idx], next=list[idx+1], after=list.slice(idx+2);
+  let html='<div class="exec-opt-k">Huidige oefening</div>'+(cur?row(cur,idx,true):'');
+  html+='<div class="exec-opt-k">Volgende oefening</div>'+(next?row(next,idx+1,false):'<div class="exec-pausecard-s" style="padding:0 2px 10px">Dit is de laatste oefening.</div>');
+  if(after.length)html+='<div class="exec-opt-k">Daarna</div>'+after.map((ex,k)=>row(ex,idx+2+k,false)).join('');
+  const el=ensureExecOverlay('exec-next');
+  el.innerHTML='<div class="exec-sheet"><div class="exec-sheet-hd"><div class="exec-sheet-t">Trainingsvolgorde</div>'+
+    '<button class="exec-x" onclick="closeExecOverlay(\'exec-next\')" aria-label="Sluiten">✕</button></div>'+
+    html+
+    '<button class="btn btn-o exec-finish" style="margin-top:8px" onclick="closeExecOverlay(\'exec-next\');openExecOverview(\''+t+'\')">Training overzicht</button></div>';
+  el.classList.add('open');
+}
+function execNextGo(t,i){ execFocus[t]=i; closeExecOverlay('exec-next'); applyExecutionFocus(t); }
 // ── F0.7Q — Pauze-scherm (wrapt bestaande pauze/afrond-flow) ──
 // F0.7R — Pauze + opties (mock-up "Pauzeren & opties"). Wrapt de bestaande pauze/replace/
 // finish-flow; voegt geen logging/engine-logica toe. Coach-tip alleen bij echte tip-data.

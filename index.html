@@ -10504,8 +10504,8 @@ function kgFieldHtml(exId,i,mode,val){
   }
   const ph=weightModePlaceholder(mode);
   return `<input class="set-field" type="text" inputmode="decimal" aria-label="Gewicht in kg" placeholder="${ph}" id="${id}" value="${val||''}" min="0" max="500"
-    oninput="clampNumInput(this,0,500);onManualKgEdit('${exId}',${i});logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'kg',this.value);recomputeAllComputedSets('${exId}')"
-    onchange="logSet('${exId}','work',${i},true);${i===1?`autoGenerateWarmup('${exId}',false);`:''}recomputeAllComputedSets('${exId}')">`;
+    oninput="onManualKgEdit('${exId}',${i});logSet('${exId}','work',${i},true);recomputeAllComputedSets('${exId}')"
+    onchange="clampNumInput(this,0,500);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'kg',this.value);${i===1?`autoGenerateWarmup('${exId}',false);`:''}recomputeAllComputedSets('${exId}')">`;
 }
 // v306.1: apart parameterveld — verschijnt onder de gewicht/modus-rij zodra een berekende
 // modus gekozen is. Presets als dropdown voor %-modi, vrij invoerveld voor +kg vorige.

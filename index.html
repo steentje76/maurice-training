@@ -2562,6 +2562,11 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .exfocus-today-c{flex:1;text-align:center}
 .exfocus-today-c .v{font-size:16px;font-weight:800;color:var(--dark)}
 .exfocus-today-c .k{font-size:10.5px;color:var(--g4);margin-top:2px;line-height:1.2}
+/* F0.8 — Coach feel: dominant werkgewicht in VANDAAG-kaart (grote getallen, mobiel eerst) */
+.exfocus-today-c:first-child .v{font-size:26px;letter-spacing:-.5px;line-height:1.05}
+/* F0.8 — Set Completion Feedback (aria-live pil; presentatie, geen logging/state) */
+.set-confirm{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%) translateY(-8px);z-index:260;background:linear-gradient(150deg,#0f5132,#0a3d27);color:#fff;border-radius:999px;padding:11px 18px;font-family:var(--f);font-size:14px;font-weight:800;letter-spacing:-.2px;box-shadow:0 10px 28px rgba(0,0,0,.35);opacity:0;pointer-events:none;white-space:nowrap;font-variant-numeric:tabular-nums;transition:opacity .18s ease,transform .18s ease}
+.set-confirm.show{opacity:1;transform:translateX(-50%) translateY(0)}
 /* F0.7S — werkset-/warm-up-kaarten (mock-up-pariteit; inputs/ids ongewijzigd) */
 .tks-card{background:var(--card,#fff);border:1px solid var(--g1);border-radius:16px;margin:10px 14px;padding:6px 4px 8px;overflow:hidden}
 .tks-wu-card{padding-top:2px}
@@ -11583,7 +11588,38 @@ function toggleSetDone(exId,setNum){
   updateProgress(curT);
   updateSummary(curT);
   scheduleAutosave();
-  if(nowDone)showPostSetAdvice(exId,setNum); // v306 #13: instant advies na afronden werkset
+  if(nowDone){showPostSetAdvice(exId,setNum);showSetCompletionFeedback(exId,setNum);autoRestAfterSet(exId,setNum);} // v306 #13 + F0.8: advies, set-bevestiging & rust-surface (presentatie, geen logging)
+}
+
+// ── F0.8 — Set Completion Feedback (presentatie; leest de zojuist gelogde set, schrijft niets) ──
+// Toont een korte aria-live bevestiging "✓ {kg} kg × {reps} geregistreerd". De "Volgende:"-
+// beslissing komt uit de bestaande decision-engine via showPostSetAdvice — niet hier herberekend.
+function showSetCompletionFeedback(exId,setNum){
+  try{
+    const kg=(typeof getEffectiveKg==='function')?getEffectiveKg(exId,setNum):null;
+    const reps=document.getElementById('s-'+exId+'-'+setNum+'-reps')?.value;
+    if(kg==null&&!reps)return; // niets gelogd → geen bevestiging verzinnen (planned ≠ actual)
+    let core;
+    if(kg!=null&&reps)core=String(kg).replace('.',',')+' kg × '+reps;
+    else if(kg!=null)core=String(kg).replace('.',',')+' kg';
+    else core=reps+' reps';
+    let el=document.getElementById('set-confirm');
+    if(!el){ el=document.createElement('div'); el.id='set-confirm'; el.className='set-confirm'; el.setAttribute('role','status'); el.setAttribute('aria-live','polite'); document.body.appendChild(el); }
+    el.textContent='✓ '+core+' geregistreerd';
+    el.classList.add('show');
+    clearTimeout(el._hideT); el._hideT=setTimeout(()=>el.classList.remove('show'),1800);
+  }catch(e){}
+}
+// ── F0.8 — Rusttimer surface na afronden set (hergebruikt bestaande openRestTimer; nooit modal) ──
+// Start de bestaande rustbalk alleen wanneer er al een rusttijd is ingesteld (per-oefening of
+// app-standaard). Zonder ingestelde rust gebeurt er niets — geen modal, gebruiker houdt controle.
+function autoRestAfterSet(exId,setNum){
+  try{
+    const exObj=(typeof exercises!=='undefined')?exercises.find(e=>e.id===exId):null;
+    const perEx=exObj&&exObj.rest_seconds;
+    const def=parseInt(localStorage.getItem('tk_rest_default'))||0;
+    if((perEx!=null&&perEx>0)||def>0){ if(typeof openRestTimer==='function')openRestTimer(exId,setNum); }
+  }catch(e){}
 }
 
 function addWorkSet(exId,type){

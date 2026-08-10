@@ -2499,6 +2499,18 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .tpv2-wt-step button{width:34px;height:34px;border-radius:10px;border:1px solid var(--g1);background:var(--g1);color:var(--dark);font-size:19px;font-weight:800;cursor:pointer;font-family:var(--f)}
 .tpv2-wt-step b{font-size:16px;min-width:64px;text-align:center;color:var(--dark)}
 .tpv2-wt-reset{font-size:11px;font-weight:700;color:var(--g4);background:none;border:none;text-decoration:underline;cursor:pointer;font-family:var(--f)}
+/* F0.7P — execution single-exercise focus-view (kaarten blijven in DOM → logging intact) */
+.exfocus-hidden{display:none!important}
+.exfocus-head{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;margin:0 0 12px;background:var(--g1);border-radius:12px}
+.exfocus-head .k{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--g4)}
+.exfocus-head .prg{font-size:13px;font-weight:800;color:var(--dark)}
+.exfocus-next{margin:14px 0 0;padding:12px 14px;background:var(--g1);border-radius:12px}
+.exfocus-next .k{font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--g4)}
+.exfocus-next .nm{font-size:14px;font-weight:800;color:var(--dark);margin-top:3px}
+.exfocus-nav{display:flex;gap:10px;margin:14px 0 4px}
+.exfocus-nav button{flex:1;padding:14px 10px;border-radius:12px;border:1px solid var(--g1);background:var(--g1);color:var(--dark);font-size:13px;font-weight:800;font-family:var(--f);cursor:pointer;line-height:1.2}
+.exfocus-nav button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.exfocus-nav button:disabled{opacity:.4;cursor:default}
 /* F0.7J — Builder: rol- en sets-editor per oefening */
 .wb4-edit{margin-top:10px;border-top:1px solid var(--g1);padding-top:10px}
 .wb4-edit-lbl{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--g4);margin:0 0 5px}
@@ -8639,6 +8651,7 @@ function isSameLocalDay(ts){
   return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
 }
 async function startT(t){
+  execFocus[t]=0; // F0.7P: verse start opent bij de eerste oefening
   // Werkblok D: als dit startpad NIET het zojuist door Preview klaargezette
   // resolvedWorkout voor déze training is, is elke bestaande activeInstanceId
   // sowieso niet van toepassing — nooit een verouderd/ander instance-id meenemen.
@@ -8887,6 +8900,57 @@ async function renderTrainScreen(t){
     <div style="height:16px"></div>`;
   container.appendChild(addDiv);
   updateProgress(t);
+  // F0.7P — single-exercise focus-view over de bestaande kaarten. Alle kaarten blijven in de
+  // DOM (zelfde set-inputs/ids → logSet/finishSession ongewijzigd en bewezen), maar er wordt
+  // één oefening tegelijk getoond, met voortgang, volgende-oefening en navigatie (mock-up).
+  try{ applyExecutionFocus(t); }catch(e){ console.warn('execFocus',e); }
+}
+
+// F0.7P — execution focus-view. Toont één oefening tegelijk; muteert geen data/logging.
+let execFocus={};
+function applyExecutionFocus(t){
+  const container=document.getElementById('train-'+t.toLowerCase()+'-list');
+  if(!container)return;
+  const cards=[...container.querySelectorAll('.ex-card')];
+  if(cards.length<2)return; // 0/1 oefening: bestaande layout laten staan
+  const list=(typeof getSessionExs==='function')?getSessionExs(t):[];
+  const n=cards.length;
+  let idx=execFocus[t]; if(idx==null||idx<0||idx>=n)idx=0; execFocus[t]=idx;
+  // Verberg alles behalve de actieve kaart + de focus-chrome (intro/summary/overige kaarten weg).
+  [...container.children].forEach(ch=>{
+    if(ch.classList.contains('exfocus-head')||ch.classList.contains('exfocus-next')||ch.classList.contains('exfocus-nav'))return;
+    if(ch.classList.contains('ex-card'))return; // hieronder per index geregeld
+    ch.classList.add('exfocus-hidden');
+  });
+  cards.forEach((c,i)=>c.classList.toggle('exfocus-hidden',i!==idx));
+  // Actieve oefening deterministisch open: body + techniek/coaching (intel) zichtbaar.
+  const a=cards[idx];
+  const body=a.querySelector('.ex-body'); if(body)body.classList.add('open');
+  const arr=a.querySelector('[id^="arr-"]'); if(arr)arr.textContent='▼';
+  const intel=a.querySelector('.intel-card'); if(intel)intel.classList.add('open');
+  // Poster lui injecteren (bestaande helper), zodat de actieve oefening altijd zijn beeld toont.
+  try{ const exId=(list[idx]&&list[idx].id); if(exId&&typeof _intelInjectPoster==='function')_intelInjectPoster(exId); }catch(e){}
+  // Chrome: voortgang-header bovenaan.
+  let head=container.querySelector('.exfocus-head');
+  if(!head){ head=document.createElement('div'); head.className='exfocus-head'; container.insertBefore(head,container.firstChild); }
+  head.innerHTML='<span class="k">Oefening</span><span class="prg">'+(idx+1)+' / '+n+'</span>';
+  // Volgende-oefening preview + navigatie onderaan.
+  const isLast=idx>=n-1;
+  const nextNm=(!isLast&&list[idx+1])?list[idx+1].naam:null;
+  let np=container.querySelector('.exfocus-next'); if(np)np.remove();
+  let nav=container.querySelector('.exfocus-nav'); if(!nav){ nav=document.createElement('div'); nav.className='exfocus-nav'; container.appendChild(nav); }
+  if(nextNm){ np=document.createElement('div'); np.className='exfocus-next'; np.innerHTML='<div class="k">Volgende oefening</div><div class="nm">'+escHtml(nextNm)+'</div>'; container.insertBefore(np,nav); }
+  nav.innerHTML='<button onclick="execFocusGo(\''+t+'\',-1)"'+(idx===0?' disabled':'')+'>← Vorige</button>'+
+    (isLast?'<button class="primary" onclick="showSessionSummary(\''+t+'\')">Training afronden</button>'
+           :'<button class="primary" onclick="execFocusGo(\''+t+'\',1)">Oefening afronden →</button>');
+  // Nieuwe oefening opent logisch bovenaan (F0.7J scroll-reset-patroon).
+  container.scrollTop=0; try{const scr=container.closest('.scr'); if(scr)scr.scrollTop=0;}catch(e){}
+}
+function execFocusGo(t,dir){
+  const cards=document.querySelectorAll('#train-'+t.toLowerCase()+'-list .ex-card');
+  const n=cards.length; let idx=(execFocus[t]||0)+dir;
+  idx=Math.max(0,Math.min(n-1,idx)); execFocus[t]=idx;
+  applyExecutionFocus(t);
 }
 
 
@@ -13889,6 +13953,7 @@ async function startCustomTraining(id,resolvedItems){
   const t=customTrainings.find(x=>x.id===id);
   if(!t) return;
   curT='custom_'+id;
+  execFocus[curT]=0; // F0.7P: verse start opent bij de eerste oefening
   sessionLog={};sessionExtra=[];
   // Bestaande oefeningen van deze training vooraf laden in sessionExtra, zodat ze — net als
   // bij Training A/B — direct zichtbaar zijn bij het starten, i.p.v. pas na handmatig toevoegen.

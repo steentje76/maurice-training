@@ -2577,6 +2577,40 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .exfocus-set-dot{width:7px;height:7px;border-radius:50%;background:var(--g3)}
 .exfocus-set-dot.done{background:var(--accent)}
 .exfocus-set-dot.active{width:9px;height:9px;background:transparent;box-shadow:inset 0 0 0 2px var(--accent)}
+/* ===== F0.8D — Premium workout execution: WERKSET set-cards (alleen presentatie; ids/handlers intact) ===== */
+.tks-setcard{padding:6px 8px 10px}
+.tks-setcard-hd{padding:12px 10px 8px}
+.tks-setcard-t{font-size:12px;letter-spacing:.7px}
+/* elke werkset als eigen premium card-rij */
+.tks-setcard .set-row.setr{position:relative;padding:14px 12px;margin:6px 4px;border:1px solid var(--g1);border-radius:14px;background:var(--card,#fff);transition:background .15s,box-shadow .15s,border-color .15s}
+.tks-setcard .set-row.setr:last-child{border-bottom:1px solid var(--g1)}
+.setr-top{gap:12px;margin-bottom:12px}
+.setr-circle{width:40px;height:40px;font-size:15px}
+.setr-num{font-size:12px;letter-spacing:.6px}
+/* VOLTOOIDE set: mint-tint + accent-vinkje; ingevoerde waarden blijven volledig zichtbaar */
+.tks-setcard .set-row.setr.done{background:var(--v43-mint);border-color:transparent}
+.tks-setcard .set-row.setr.done .setr-num{color:var(--accent)}
+.tks-setcard .set-row.setr.done .setr-circle{border-color:var(--accent)}
+/* ACTIEVE set: duidelijk dominant — accent-rand + linkerbalk + lichte lift */
+.tks-setcard .set-row.setr.setr-active{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent),0 4px 14px rgba(0,0,0,.06)}
+.tks-setcard .set-row.setr.setr-active .setr-num{color:var(--accent)}
+.tks-setcard .set-row.setr.setr-active .setr-circle{border-color:var(--accent);color:var(--accent)}
+/* steppers ondergeschikt maken zodat de WAARDE domineert */
+.setr .set-step{width:40px;height:52px;font-size:20px;background:transparent;border-color:var(--g2);color:var(--g4);border-radius:12px}
+.setr .set-step:active{background:var(--accent);border-color:var(--accent);color:#fff}
+/* dominante primaire gewichtswaarde (grote waarde, kleine eenheid) */
+.setr .setr-group-kg .set-field{height:56px;font-size:28px;letter-spacing:-.6px;font-weight:800;border:1.5px solid transparent;background:var(--g1)}
+.setr .setr-group-kg .set-field:focus{border-color:var(--accent);background:#fff}
+.setr-fieldcol .set-field{height:50px;font-size:22px}
+.setr .set-field-lbl{font-size:9px;letter-spacing:.5px;color:var(--g4);margin-top:5px}
+/* gewicht-modus subtiel (blijft functioneel: id/handler ongewijzigd) */
+.setr .wmode-sel{opacity:.7;border-color:var(--g1)}
+/* RPE-stepper op maat van de set-card + reps krijgt gegarandeerde leesbare breedte (mobile-first) */
+.setr .rpe-stepper-v{flex:0 0 auto!important}
+.setr .rpe-stepper-v .rpe-btn{border-color:var(--g2)}
+.setr .rpe-display{font-weight:800}
+.setr-row2 .setr-group-reps{flex:1 1 auto;min-width:0}
+.setr-row2 .setr-fieldcol{min-width:60px}
 /* F0.7S — werkset-/warm-up-kaarten (mock-up-pariteit; inputs/ids ongewijzigd) */
 .tks-card{background:var(--card,#fff);border:1px solid var(--g1);border-radius:16px;margin:10px 14px;padding:6px 4px 8px;overflow:hidden}
 .tks-wu-card{padding-top:2px}
@@ -9038,7 +9072,7 @@ function applyExecutionFocus(t){
       '</div>';
     head.insertAdjacentElement('afterend',today);
     // F0.8B — Active Set Focus in de VANDAAG-kaart (read-only spiegel van #sc-<ex>-<i>).
-    if(cur.id){ const asb=document.createElement('div'); asb.id='exfocus-set-'+cur.id; asb.className='exfocus-setwrap'; asb.innerHTML=activeSetBannerHtml(cur.id); today.appendChild(asb); }
+    if(cur.id){ const asb=document.createElement('div'); asb.id='exfocus-set-'+cur.id; asb.className='exfocus-setwrap'; asb.innerHTML=activeSetBannerHtml(cur.id); today.appendChild(asb); if(typeof applyActiveSetRowClass==='function')applyActiveSetRowClass(cur.id); }
   }
   // F0.7S — read-only Warm-up Ramp Card (coach-weergave). Bron: cur.suggestedWeight →
   // bestaande suggestWarmupScheme(); fallback: bestaande warmupState-waarden. Percentage is
@@ -11685,10 +11719,18 @@ function activeSetBannerHtml(exId){
 }
 function refreshActiveSetBanner(exId){
   try{
+    applyActiveSetRowClass(exId); // F0.8D: actieve set-card visueel dominant (afgeleid uit .done)
     const el=document.getElementById('exfocus-set-'+exId);
     if(!el)return; // banner niet aanwezig (geen focus-view / andere oefening actief)
     el.innerHTML=activeSetBannerHtml(exId);
   }catch(e){}
+}
+// ── F0.8D — markeert de actieve werkset-rij (.setr-active) als pure afgeleide van .done ──
+// Geen nieuwe state: eerste werkset-rij zonder .done is de actieve. Zelfde bron als de F0.8B-banner.
+function applyActiveSetRowClass(exId){
+  let activeIdx=null;
+  for(let i=1;;i++){ const c=document.getElementById('sc-'+exId+'-'+i); if(!c)break; if(activeIdx===null&&!c.classList.contains('done'))activeIdx=i; }
+  for(let i=1;;i++){ const r=document.getElementById('sr-'+exId+'-'+i); if(!r)break; r.classList.toggle('setr-active',i===activeIdx); }
 }
 
 function addWorkSet(exId,type){

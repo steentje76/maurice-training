@@ -2537,6 +2537,17 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .exov-todo .exov-ic{background:var(--card,#fff);border:1px solid var(--g2);color:var(--g3)}
 .exov-current{border-color:var(--dark)}
 .exov-b{display:flex;flex-direction:column;min-width:0}
+/* F0.8H — header-acties (Uitleg/Overzicht), overzicht-tabs + statistiek-balken */
+.exfocus-headacts{display:flex;gap:8px;align-items:center}
+.exec-tabs{display:flex;gap:6px;margin:2px 0 14px;border-bottom:1px solid var(--g1)}
+.exec-tab{flex:1;background:none;border:none;border-bottom:2px solid transparent;padding:8px 4px 10px;font-family:var(--f);font-size:13px;font-weight:800;color:var(--g4);cursor:pointer}
+.exec-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.exstat-row{margin:0 2px 12px}
+.exstat-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:5px}
+.exstat-nm{font-size:13px;font-weight:800;color:var(--dark)}
+.exstat-v{font-size:11px;font-weight:700;color:var(--g4);flex-shrink:0}
+.exstat-bar{height:8px;border-radius:999px;background:var(--g1);overflow:hidden}
+.exstat-bar>span{display:block;height:100%;background:var(--accent);border-radius:999px}
 .exov-nm{font-size:14px;font-weight:800;color:var(--dark)}
 .exov-skip .exov-nm{color:var(--g4)}
 .exov-meta{font-size:12px;color:var(--g4);margin-top:1px}
@@ -9070,7 +9081,8 @@ function applyExecutionFocus(t){
   if(!head){ head=document.createElement('div'); head.className='exfocus-head'; container.insertBefore(head,container.firstChild); }
   const skipped=execSkipSet(t).has(list[idx]&&list[idx].id);
   head.innerHTML='<span class="k">Oefening '+(idx+1)+' / '+n+(skipped?' · overgeslagen':'')+'</span>'+
-    '<button class="exfocus-ov" onclick="openExecOverview(\''+t+'\')">Overzicht</button>';
+    '<span class="exfocus-headacts"><button class="exfocus-ov" onclick="openExecExplain(\''+t+'\')">Uitleg</button>'+
+    '<button class="exfocus-ov" onclick="openExecOverview(\''+t+'\')">Overzicht</button></span>';
   // F0.7R — "VANDAAG"-kaart (mock-up): gewicht / sets×reps@RPE / rust, uit bestaande resolved data.
   let today=container.querySelector('.exfocus-today'); if(today)today.remove();
   const cur=list[idx]||{};
@@ -9194,14 +9206,30 @@ function openExecOverview(t){
   const summary='<div class="exec-sum"><div class="exec-sum-c"><div class="exec-sum-k">⏱ Tijd</div><div class="exec-sum-v">'+escHtml(tijd)+'</div></div>'+
     '<div class="exec-sum-c"><div class="exec-sum-k">🔥 Volume</div><div class="exec-sum-v">'+volStr+' kg</div></div>'+
     '<div class="exec-sum-c"><div class="exec-sum-k">✓ Sets</div><div class="exec-sum-v">'+setsDone+' / '+(setsTot||'—')+'</div></div></div>';
+  // F0.8H — Statistieken-tab: volume per oefening uit ECHTE gelogde data (geen verzonnen cijfers).
+  const exStats=list.map(ex=>{ const l=(typeof sessionLog!=='undefined')?sessionLog[ex.id]:null; let v=0,sd=0; if(l&&l.sets)l.sets.forEach(s=>{ if(s&&(s.kg||s.reps)){ sd++; const k=(s.effKg!=null?s.effKg:parseFloat(s.kg))||0,r=parseInt(s.reps)||0; v+=k*r; } }); return {naam:ex.naam||ex.id,vol:v,sets:sd}; });
+  const maxVol=Math.max(1,...exStats.map(s=>s.vol));
+  const statsRows=exStats.map(s=>'<div class="exstat-row"><div class="exstat-top"><span class="exstat-nm">'+escHtml(s.naam)+'</span><span class="exstat-v">'+Math.round(s.vol).toLocaleString('nl-NL')+' kg · '+s.sets+' sets</span></div><div class="exstat-bar"><span style="width:'+Math.round(s.vol/maxVol*100)+'%"></span></div></div>').join('');
   const el=ensureExecOverlay('exec-overview');
   el.innerHTML='<div class="exec-sheet"><div class="exec-sheet-hd"><div class="exec-sheet-t">Training overzicht</div>'+
     '<button class="exec-x" onclick="closeExecOverlay(\'exec-overview\')" aria-label="Sluiten">✕</button></div>'+
-    summary+
-    '<div class="exec-opt-k">Oefeningen · '+doneN+' / '+list.length+' uitgevoerd'+(skipN?(' · '+skipN+' overgeslagen'):'')+'</div>'+
-    '<div class="exov-list">'+rows+'</div>'+
-    '<button class="btn btn-r exec-finish" onclick="closeExecOverlay(\'exec-overview\');showSessionSummary(\''+t+'\')">Training afronden</button></div>';
+    '<div class="exec-tabs"><button class="exec-tab active" id="exovtab-o" onclick="execOvTab(\'o\')">Overzicht</button><button class="exec-tab" id="exovtab-s" onclick="execOvTab(\'s\')">Statistieken</button></div>'+
+    '<div id="exov-panel-o">'+summary+
+      '<div class="exec-opt-k">Oefeningen · '+doneN+' / '+list.length+' uitgevoerd'+(skipN?(' · '+skipN+' overgeslagen'):'')+'</div>'+
+      '<div class="exov-list">'+rows+'</div>'+
+      '<button class="btn btn-r exec-finish" onclick="closeExecOverlay(\'exec-overview\');showSessionSummary(\''+t+'\')">Training afronden</button></div>'+
+    '<div id="exov-panel-s" style="display:none">'+summary+
+      '<div class="exec-opt-k">Volume per oefening</div>'+(statsRows||'<div class="exec-pausecard-s" style="padding:0 2px 8px">Nog geen volume gelogd.</div>')+'</div>'+
+    '</div>';
   el.classList.add('open');
+}
+function execOvTab(which){
+  const po=document.getElementById('exov-panel-o'),ps=document.getElementById('exov-panel-s');
+  const to=document.getElementById('exovtab-o'),ts=document.getElementById('exovtab-s');
+  if(!po||!ps)return;
+  const o=which==='o';
+  po.style.display=o?'':'none'; ps.style.display=o?'none':'';
+  if(to)to.classList.toggle('active',o); if(ts)ts.classList.toggle('active',!o);
 }
 function execOverviewGo(t,i){ execFocus[t]=i; closeExecOverlay('exec-overview'); applyExecutionFocus(t); }
 function closeExecOverlay(id){ const el=document.getElementById(id); if(el)el.classList.remove('open'); }
@@ -9228,6 +9256,34 @@ function openExecNext(t){
   el.classList.add('open');
 }
 function execNextGo(t,i){ execFocus[t]=i; closeExecOverlay('exec-next'); applyExecutionFocus(t); }
+// ── F0.8H — Stop-training bevestiging als eigen state (mock-up: "Weet je zeker?") ──
+function openExecStopConfirm(t){
+  const el=ensureExecOverlay('exec-stop');
+  el.innerHTML='<div class="exec-sheet exec-sheet--center">'+
+    '<div class="exec-pause-t">Training stoppen?</div>'+
+    '<div class="exec-pause-s">Weet je zeker dat je de training wilt stoppen? Je voortgang wordt bewaard in de samenvatting.</div>'+
+    '<button class="btn exec-stop-yes" style="width:100%;background:#e53935;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-family:var(--f);cursor:pointer" onclick="closeExecOverlay(\'exec-stop\');showSessionSummary(\''+t+'\')">Ja, stop training</button>'+
+    '<button class="btn btn-o" style="width:100%;margin-top:8px" onclick="closeExecOverlay(\'exec-stop\')">Annuleren</button></div>';
+  el.classList.add('open');
+}
+// ── F0.8H — Video & Techniek als eigen state. Uitsluitend bestaande oefening-data (yt/muscles/tip). ──
+function openExecExplain(t){
+  const list=(typeof getSessionExs==='function')?getSessionExs(t):[];
+  const cur=list[execFocus[t]||0]||{};
+  const ex=(typeof exercises!=='undefined'&&exercises.find)?(exercises.find(e=>e.id===cur.id)||cur):cur;
+  const nm=escHtml(ex.naam||cur.naam||'Oefening');
+  let body='';
+  if(ex.yt){ body+='<div class="vid-wrap" onclick="loadVid(this,\''+ex.yt+'\')"><img src="https://img.youtube.com/vi/'+ex.yt+'/mqdefault.jpg" alt="'+nm+'" loading="lazy" onerror="this.parentElement.style.display=\'none\'"><div class="vid-play">▶</div><div class="vid-label">▶ '+nm+' — techniek video</div></div>'; }
+  else { body+='<div class="exec-pausecard-s" style="padding:0 2px 10px">Geen video beschikbaar voor deze oefening.</div>'; }
+  if(ex.muscles){ body+='<div class="exec-opt-k">Spiergroepen</div><div class="muscle-pills" style="margin:0 0 8px">'; (ex.muscles.p||[]).forEach(m=>body+='<span class="muscle-pill primary">'+escHtml(m)+'</span>'); (ex.muscles.s||[]).forEach(m=>body+='<span class="muscle-pill secondary">'+escHtml(m)+'</span>'); body+='</div>'; }
+  if(ex.tip){ body+='<div class="exec-coach"><div class="exec-coach-t">Techniek &amp; coaching</div><div class="exec-coach-s">'+escHtml(ex.tip)+'</div></div>'; }
+  const el=ensureExecOverlay('exec-explain');
+  el.innerHTML='<div class="exec-sheet"><div class="exec-sheet-hd"><div class="exec-sheet-t">'+nm+'</div>'+
+    '<button class="exec-x" onclick="closeExecOverlay(\'exec-explain\')" aria-label="Sluiten">✕</button></div>'+
+    body+
+    '<button class="btn btn-o exec-finish" style="margin-top:8px" onclick="closeExecOverlay(\'exec-explain\')">Terug naar training</button></div>';
+  el.classList.add('open');
+}
 // ── F0.7Q — Pauze-scherm (wrapt bestaande pauze/afrond-flow) ──
 // F0.7R — Pauze + opties (mock-up "Pauzeren & opties"). Wrapt de bestaande pauze/replace/
 // finish-flow; voegt geen logging/engine-logica toe. Coach-tip alleen bij echte tip-data.
@@ -9244,7 +9300,7 @@ function openExecPause(t){
     '<div class="exec-pausecard"><div class="exec-pausecard-k">Training pauze</div>'+
       '<div class="exec-pausecard-s">Je training staat gepauzeerd. Timer staat stil.</div>'+
       '<button class="btn btn-r" style="width:100%" onclick="execPauseResume(\''+t+'\')">▶ Verder gaan</button>'+
-      '<button class="btn btn-o" style="width:100%;margin-top:8px" onclick="closeExecOverlay(\'exec-pause\');showSessionSummary(\''+t+'\')">Stop training</button></div>'+
+      '<button class="btn btn-o" style="width:100%;margin-top:8px" onclick="closeExecOverlay(\'exec-pause\');openExecStopConfirm(\''+t+'\')">Stop training</button></div>'+
     '<div class="exec-opt-k">Oefening opties</div>'+
       optRow('⚙','Instellingen aanpassen','execPauseResume(\''+t+'\')')+
       optRow('⇄','Oefening vervangen','execReplaceCurrent(\''+t+'\')')+

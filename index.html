@@ -2511,6 +2511,34 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .exfocus-nav button{flex:1;padding:14px 10px;border-radius:12px;border:1px solid var(--g1);background:var(--g1);color:var(--dark);font-size:13px;font-weight:800;font-family:var(--f);cursor:pointer;line-height:1.2}
 .exfocus-nav button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 .exfocus-nav button:disabled{opacity:.4;cursor:default}
+.exfocus-nav2{margin-top:2px}
+.exfocus-nav button.ghost{background:transparent;border-color:var(--g1);color:var(--g4);font-weight:700}
+.exfocus-head .exfocus-ov{background:none;border:none;color:var(--accent);font-size:12px;font-weight:800;cursor:pointer;font-family:var(--f)}
+/* F0.7Q — execution overlays (overzicht + pauze) */
+.exec-overlay{position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,.42);display:none;align-items:flex-end;justify-content:center}
+.exec-overlay.open{display:flex}
+.exec-sheet{width:100%;max-width:520px;max-height:88vh;overflow:auto;background:var(--card,#fff);border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+.exec-sheet--center{border-radius:20px;margin:auto;text-align:center;max-width:360px;padding:26px 20px}
+.exec-sheet-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.exec-sheet-t{font-size:18px;font-weight:800;color:var(--dark)}
+.exec-x{background:none;border:none;font-size:18px;color:var(--g4);cursor:pointer;font-family:var(--f)}
+.exec-prg{font-size:12px;font-weight:700;color:var(--g4);margin-bottom:12px}
+.exov-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.exov-row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--g1);border:1px solid var(--g1);border-radius:12px;padding:11px 13px;cursor:pointer;font-family:var(--f)}
+.exov-ic{width:24px;height:24px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:999px;font-size:13px;font-weight:800}
+.exov-done .exov-ic{background:var(--accent);color:#fff}
+.exov-current .exov-ic{background:var(--dark);color:#fff}
+.exov-skip .exov-ic{background:var(--g2);color:var(--g4)}
+.exov-todo .exov-ic{background:var(--card,#fff);border:1px solid var(--g2);color:var(--g3)}
+.exov-current{border-color:var(--dark)}
+.exov-b{display:flex;flex-direction:column;min-width:0}
+.exov-nm{font-size:14px;font-weight:800;color:var(--dark)}
+.exov-skip .exov-nm{color:var(--g4)}
+.exov-meta{font-size:12px;color:var(--g4);margin-top:1px}
+.exec-finish{width:100%}
+.exec-pause-t{font-size:20px;font-weight:800;color:var(--dark);margin-bottom:6px}
+.exec-pause-s{font-size:13px;color:var(--g4);margin-bottom:18px;line-height:1.4}
+.exec-sheet--center .btn{width:100%}
 /* F0.7J — Builder: rol- en sets-editor per oefening */
 .wb4-edit{margin-top:10px;border-top:1px solid var(--g1);padding-top:10px}
 .wb4-edit-lbl{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--g4);margin:0 0 5px}
@@ -8651,7 +8679,7 @@ function isSameLocalDay(ts){
   return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
 }
 async function startT(t){
-  execFocus[t]=0; // F0.7P: verse start opent bij de eerste oefening
+  execFocus[t]=0; if(typeof execSkipped!=='undefined')execSkipped[t]=new Set(); // F0.7P/Q: verse start bij eerste oefening, geen skips
   // Werkblok D: als dit startpad NIET het zojuist door Preview klaargezette
   // resolvedWorkout voor déze training is, is elke bestaande activeInstanceId
   // sowieso niet van toepassing — nooit een verouderd/ander instance-id meenemen.
@@ -8933,16 +8961,22 @@ function applyExecutionFocus(t){
   // Chrome: voortgang-header bovenaan.
   let head=container.querySelector('.exfocus-head');
   if(!head){ head=document.createElement('div'); head.className='exfocus-head'; container.insertBefore(head,container.firstChild); }
-  head.innerHTML='<span class="k">Oefening</span><span class="prg">'+(idx+1)+' / '+n+'</span>';
+  const skipped=execSkipSet(t).has(list[idx]&&list[idx].id);
+  head.innerHTML='<span class="k">Oefening '+(idx+1)+' / '+n+(skipped?' · overgeslagen':'')+'</span>'+
+    '<button class="exfocus-ov" onclick="openExecOverview(\''+t+'\')">Overzicht</button>';
   // Volgende-oefening preview + navigatie onderaan.
   const isLast=idx>=n-1;
   const nextNm=(!isLast&&list[idx+1])?list[idx+1].naam:null;
   let np=container.querySelector('.exfocus-next'); if(np)np.remove();
   let nav=container.querySelector('.exfocus-nav'); if(!nav){ nav=document.createElement('div'); nav.className='exfocus-nav'; container.appendChild(nav); }
+  let nav2=container.querySelector('.exfocus-nav2'); if(!nav2){ nav2=document.createElement('div'); nav2.className='exfocus-nav exfocus-nav2'; container.appendChild(nav2); }
   if(nextNm){ np=document.createElement('div'); np.className='exfocus-next'; np.innerHTML='<div class="k">Volgende oefening</div><div class="nm">'+escHtml(nextNm)+'</div>'; container.insertBefore(np,nav); }
   nav.innerHTML='<button onclick="execFocusGo(\''+t+'\',-1)"'+(idx===0?' disabled':'')+'>← Vorige</button>'+
     (isLast?'<button class="primary" onclick="showSessionSummary(\''+t+'\')">Training afronden</button>'
            :'<button class="primary" onclick="execFocusGo(\''+t+'\',1)">Oefening afronden →</button>');
+  // F0.7Q — secundaire acties: overslaan (geen fake session) + pauze. Visueel ondergeschikt.
+  nav2.innerHTML='<button class="ghost" onclick="execFocusSkip(\''+t+'\')">Overslaan</button>'+
+    '<button class="ghost" onclick="openExecPause(\''+t+'\')">⏸ Pauze</button>';
   // Nieuwe oefening opent logisch bovenaan (F0.7J scroll-reset-patroon).
   container.scrollTop=0; try{const scr=container.closest('.scr'); if(scr)scr.scrollTop=0;}catch(e){}
 }
@@ -8951,6 +8985,74 @@ function execFocusGo(t,dir){
   const n=cards.length; let idx=(execFocus[t]||0)+dir;
   idx=Math.max(0,Math.min(n-1,idx)); execFocus[t]=idx;
   applyExecutionFocus(t);
+}
+// ── F0.7Q — Overslaan (transient state, geen fake session, geen PR/volume) ──
+let execSkipped={};
+function execSkipSet(t){ return execSkipped[t]||(execSkipped[t]=new Set()); }
+function execFocusSkip(t){
+  const list=(typeof getSessionExs==='function')?getSessionExs(t):[];
+  const n=list.length; const idx=execFocus[t]||0;
+  const id=list[idx]&&list[idx].id; if(id)execSkipSet(t).add(id);
+  // ga naar de volgende nog niet-overgeslagen oefening; is die er niet → overzicht.
+  let ni=-1; for(let i=idx+1;i<n;i++){ if(!execSkipSet(t).has(list[i].id)){ ni=i; break; } }
+  if(ni<0){ applyExecutionFocus(t); openExecOverview(t); return; }
+  execFocus[t]=ni; applyExecutionFocus(t);
+}
+function execExStatus(t,id,i){
+  // Uitgevoerd (echte gelogde data) wint altijd van skip — skip ≠ executed, maar
+  // wie echte sets heeft is uitgevoerd, ook al is er ooit op skip getikt.
+  const l=(typeof sessionLog!=='undefined')?sessionLog[id]:null;
+  const done=l&&((l.sets&&l.sets.some(s=>s&&(s.kg||s.reps)))||(l.cardio&&(l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals)));
+  if(done)return 'done';
+  if(execSkipSet(t).has(id))return 'skip';
+  if(i===(execFocus[t]||0))return 'current';
+  return 'todo';
+}
+// ── F0.7Q — Trainingsoverzicht (leest bestaande state; geen nieuwe bron van waarheid) ──
+function ensureExecOverlay(id){
+  let el=document.getElementById(id);
+  if(!el){ el=document.createElement('div'); el.id=id; el.className='exec-overlay'; document.body.appendChild(el); }
+  return el;
+}
+function openExecOverview(t){
+  const list=(typeof getSessionExs==='function')?getSessionExs(t):[];
+  const ICON={done:'✓',current:'→',skip:'—',todo:'○'};
+  const LBL={done:'Uitgevoerd',current:'Huidig',skip:'Overgeslagen',todo:'Nog te doen'};
+  let doneN=0,skipN=0;
+  const rows=list.map((ex,i)=>{
+    const st=execExStatus(t,ex.id,i); if(st==='done')doneN++; if(st==='skip')skipN++;
+    const l=(typeof sessionLog!=='undefined')?sessionLog[ex.id]:null;
+    const setsDone=l&&l.sets?l.sets.filter(s=>s&&(s.kg||s.reps)).length:0;
+    const setsTot=(ex.sets!=null)?ex.sets:(l&&l.sets?l.sets.length:'');
+    const meta=(st==='skip')?'Overgeslagen':(setsTot!==''?(setsDone+'/'+setsTot+' sets'):'');
+    return '<button class="exov-row exov-'+st+'" onclick="execOverviewGo(\''+t+'\','+i+')">'+
+      '<span class="exov-ic">'+ICON[st]+'</span>'+
+      '<span class="exov-b"><span class="exov-nm">'+escHtml(ex.naam||ex.id)+'</span>'+
+      '<span class="exov-meta">'+escHtml(meta||LBL[st])+'</span></span></button>';
+  }).join('');
+  const el=ensureExecOverlay('exec-overview');
+  el.innerHTML='<div class="exec-sheet"><div class="exec-sheet-hd"><div class="exec-sheet-t">Training overzicht</div>'+
+    '<button class="exec-x" onclick="closeExecOverlay(\'exec-overview\')" aria-label="Sluiten">✕</button></div>'+
+    '<div class="exec-prg">'+doneN+' / '+list.length+' uitgevoerd'+(skipN?(' · '+skipN+' overgeslagen'):'')+'</div>'+
+    '<div class="exov-list">'+rows+'</div>'+
+    '<button class="btn btn-r exec-finish" onclick="closeExecOverlay(\'exec-overview\');showSessionSummary(\''+t+'\')">Training afronden</button></div>';
+  el.classList.add('open');
+}
+function execOverviewGo(t,i){ execFocus[t]=i; closeExecOverlay('exec-overview'); applyExecutionFocus(t); }
+function closeExecOverlay(id){ const el=document.getElementById(id); if(el)el.classList.remove('open'); }
+// ── F0.7Q — Pauze-scherm (wrapt bestaande pauze/afrond-flow) ──
+function openExecPause(t){
+  try{ if(typeof trainPaused!=='undefined'&&!trainPaused&&typeof pauseTraining==='function')pauseTraining(); }catch(e){}
+  const el=ensureExecOverlay('exec-pause');
+  el.innerHTML='<div class="exec-sheet exec-sheet--center"><div class="exec-pause-t">Training gepauzeerd</div>'+
+    '<div class="exec-pause-s">Je training is gepauzeerd. De timer staat stil.</div>'+
+    '<button class="btn btn-r" onclick="execPauseResume(\''+t+'\')">▶ Verder trainen</button>'+
+    '<button class="btn btn-o" style="margin-top:8px" onclick="closeExecOverlay(\'exec-pause\');showSessionSummary(\''+t+'\')">Training stoppen</button></div>';
+  el.classList.add('open');
+}
+function execPauseResume(t){
+  try{ if(typeof trainPaused!=='undefined'&&trainPaused&&typeof pauseTraining==='function')pauseTraining(); }catch(e){}
+  closeExecOverlay('exec-pause');
 }
 
 
@@ -13953,7 +14055,7 @@ async function startCustomTraining(id,resolvedItems){
   const t=customTrainings.find(x=>x.id===id);
   if(!t) return;
   curT='custom_'+id;
-  execFocus[curT]=0; // F0.7P: verse start opent bij de eerste oefening
+  execFocus[curT]=0; if(typeof execSkipped!=='undefined')execSkipped[curT]=new Set(); // F0.7P/Q: verse start, geen skips
   sessionLog={};sessionExtra=[];
   // Bestaande oefeningen van deze training vooraf laden in sessionExtra, zodat ze — net als
   // bij Training A/B — direct zichtbaar zijn bij het starten, i.p.v. pas na handmatig toevoegen.

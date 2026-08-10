@@ -11552,6 +11552,12 @@ async function finishSession(){
   openModal('m-ai-summary');
   const aiText=await generateSessionSummaryAI(t,summaryData);
   document.getElementById('ai-summary-body').textContent=aiText||'Samenvatting kon niet worden opgehaald — je training is wel opgeslagen.';
+  }catch(err){
+    // F0.7N (FASE 41): geen fake success. Bij een schrijffout wordt de sessie NIET gewist
+    // (sessionLog blijft intact, modal blijft open) en krijgt de sporter een expliciete
+    // waarschuwing i.p.v. stilzwijgend te denken dat alles is opgeslagen.
+    console.warn('finishSession: opslaan mislukt',err);
+    if(window.toast)toast('Opslaan mislukt — je training is nog niet opgeslagen. Probeer opnieuw.');
   }finally{
     finishSessionBezig=false;
     if(btn){btn.disabled=false;btn.textContent='Opslaan & Afsluiten';}

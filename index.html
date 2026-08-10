@@ -11478,13 +11478,17 @@ async function finishSession(){
   const btn=document.getElementById('finish-session-btn');
   if(btn){btn.disabled=true;btn.textContent='Opslaan...';}
   try{
-  const t=curT,list=getSessionExs(t),today=td();let saved=0;
+  const t=curT,list=getSessionExs(t),today=td();let saved=0,failed=0;
   const summaryData=[]; // v306 #10: input voor AI-samenvatting
   // v3.3.52 P7 — premium afronding: aggregeer bestaande cijfers voor de samenvatting-kaart.
   const sessStats={vol:0,sets:0,reps:0,pr:0,heavy:0,muscles:new Set(),compare:[]};
   for(const ex of list){
     const l=sessionLog[ex.id];if(!l)continue;
     try{(getExerciseMuscles(ex.id)||[]).forEach(m=>m&&sessStats.muscles.add(m));}catch(_){}
+    // F0.7O (P0): schrijf elke oefening onafhankelijk weg. Eén mislukte write (bv. trage
+    // gym-wifi) mag NOOIT de resterende oefeningen blokkeren — anders "niet alle oefeningen
+    // gelogd". Mislukte oefeningen worden geteld; de sessie blijft dan behouden voor retry.
+    try{
     if(l.cardio && CARDIO_TYPES[l.cardio.type] && (l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals)){
       const cRow=cardioDataToRow(l.cardio.type,l.cardio);
       const extraNote=cRow.extraNote;delete cRow.extraNote;
@@ -11510,6 +11514,13 @@ async function finishSession(){
       const prevBest=window._prevBestMap?.[ex.id];
       if(prevBest!=null&&bestKg(best)!=null&&bestKg(best)!==prevBest)sessStats.compare.push({naam:ex.naam,prev:prevBest,now:bestKg(best)});
     }
+    }catch(exErr){ failed++; console.warn('finishSession: oefening niet opgeslagen',ex.id,exErr); }
+  }
+  // F0.7O (P0): gedeeltelijke fout — niet alle oefeningen konden worden opgeslagen. Sessie
+  // NIET wissen (sessionLog/modal blijven intact) zodat de sporter opnieuw kan proberen.
+  if(failed>0){
+    if(window.toast)toast(saved>0?(saved+' opgeslagen, '+failed+' mislukt — controleer je verbinding en probeer opnieuw'):('Opslaan mislukt ('+failed+') — probeer opnieuw'));
+    return;
   }
   closeModal('m-session-end');stopTrainTimer();
   clearTrainingDraft();

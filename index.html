@@ -2567,6 +2567,16 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 /* F0.8 — Set Completion Feedback (aria-live pil; presentatie, geen logging/state) */
 .set-confirm{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%) translateY(-8px);z-index:260;background:linear-gradient(150deg,#0f5132,#0a3d27);color:#fff;border-radius:999px;padding:11px 18px;font-family:var(--f);font-size:14px;font-weight:800;letter-spacing:-.2px;box-shadow:0 10px 28px rgba(0,0,0,.35);opacity:0;pointer-events:none;white-space:nowrap;font-variant-numeric:tabular-nums;transition:opacity .18s ease,transform .18s ease}
 .set-confirm.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* F0.8B — Active Set Focus (in VANDAAG-kaart; subtiel, onder het primaire gewicht — bestaande tokens) */
+.exfocus-setwrap{margin-top:10px;padding-top:10px;border-top:1px solid var(--g2)}
+.exfocus-set-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.exfocus-set-lbl{font-size:12px;font-weight:700;color:var(--g4);letter-spacing:.3px;text-transform:uppercase}
+.exfocus-set-lbl b{color:var(--accent);font-weight:800}
+.exfocus-set-done{font-size:12px;font-weight:800;color:var(--accent);letter-spacing:.3px;text-transform:uppercase}
+.exfocus-set-dots{display:flex;gap:5px;align-items:center;flex-shrink:0}
+.exfocus-set-dot{width:7px;height:7px;border-radius:50%;background:var(--g3)}
+.exfocus-set-dot.done{background:var(--accent)}
+.exfocus-set-dot.active{width:9px;height:9px;background:transparent;box-shadow:inset 0 0 0 2px var(--accent)}
 /* F0.7S — werkset-/warm-up-kaarten (mock-up-pariteit; inputs/ids ongewijzigd) */
 .tks-card{background:var(--card,#fff);border:1px solid var(--g1);border-radius:16px;margin:10px 14px;padding:6px 4px 8px;overflow:hidden}
 .tks-wu-card{padding-top:2px}
@@ -9027,6 +9037,8 @@ function applyExecutionFocus(t){
       '<div class="exfocus-today-c"><div class="v">'+escHtml(rest)+'</div><div class="k">Rust</div></div>'+
       '</div>';
     head.insertAdjacentElement('afterend',today);
+    // F0.8B — Active Set Focus in de VANDAAG-kaart (read-only spiegel van #sc-<ex>-<i>).
+    if(cur.id){ const asb=document.createElement('div'); asb.id='exfocus-set-'+cur.id; asb.className='exfocus-setwrap'; asb.innerHTML=activeSetBannerHtml(cur.id); today.appendChild(asb); }
   }
   // F0.7S — read-only Warm-up Ramp Card (coach-weergave). Bron: cur.suggestedWeight →
   // bestaande suggestWarmupScheme(); fallback: bestaande warmupState-waarden. Percentage is
@@ -11588,6 +11600,7 @@ function toggleSetDone(exId,setNum){
   updateProgress(curT);
   updateSummary(curT);
   scheduleAutosave();
+  refreshActiveSetBanner(exId); // F0.8B: presentatie-spiegel van set-status verversen (ook bij un-toggle)
   if(nowDone){showPostSetAdvice(exId,setNum);showSetCompletionFeedback(exId,setNum);autoRestAfterSet(exId,setNum);} // v306 #13 + F0.8: advies, set-bevestiging & rust-surface (presentatie, geen logging)
 }
 
@@ -11619,6 +11632,42 @@ function autoRestAfterSet(exId,setNum){
     const perEx=exObj&&exObj.rest_seconds;
     const def=parseInt(localStorage.getItem('tk_rest_default'))||0;
     if((perEx!=null&&perEx>0)||def>0){ if(typeof openRestTimer==='function')openRestTimer(exId,setNum); }
+  }catch(e){}
+}
+// ── F0.8B — Active Set Focus (read-only spiegel van de zichtbare werkset-cirkels) ──
+// Bron van waarheid: de '.done'-status op #sc-<ex>-<i> (gezet door toggleSetDone), exact wat de
+// sporter ziet. Totaal = de bestaande werkset-cirkels (warm-up 'wr-'/'w-' heeft géén sc-cirkel en
+// telt niet mee). Geen nieuwe status, geen berekening, geen logging — de banner leest en spiegelt.
+function activeSetInfo(exId){
+  let total=0,done=0,activeIdx=null;
+  for(let i=1;;i++){
+    const c=document.getElementById('sc-'+exId+'-'+i);
+    if(!c)break;
+    total++;
+    if(c.classList.contains('done'))done++;
+    else if(activeIdx===null)activeIdx=i;
+  }
+  return {total,done,activeIdx}; // activeIdx===null ⇒ alle werksets voltooid
+}
+function activeSetBannerHtml(exId){
+  const info=activeSetInfo(exId);
+  if(info.total<=0)return ''; // geen werksets (bv. cardio/voorbereiding) → geen banner
+  let dots='';
+  for(let i=1;i<=info.total;i++){
+    const c=document.getElementById('sc-'+exId+'-'+i);
+    const st=(c&&c.classList.contains('done'))?'done':(i===info.activeIdx?'active':'todo');
+    dots+='<span class="exfocus-set-dot '+st+'"></span>';
+  }
+  const label=(info.activeIdx===null)
+    ? '<span class="exfocus-set-done">✓ Alle werksets voltooid</span>'
+    : '<span class="exfocus-set-lbl">Werkset <b>'+info.activeIdx+'</b> van '+info.total+'</span>';
+  return '<div class="exfocus-set-row">'+label+'<span class="exfocus-set-dots">'+dots+'</span></div>';
+}
+function refreshActiveSetBanner(exId){
+  try{
+    const el=document.getElementById('exfocus-set-'+exId);
+    if(!el)return; // banner niet aanwezig (geen focus-view / andere oefening actief)
+    el.innerHTML=activeSetBannerHtml(exId);
   }catch(e){}
 }
 

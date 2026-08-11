@@ -88,6 +88,22 @@ T('core gebruikt window alleen als global-export (geen DOM)', () => {
 });
 T('offline: pure functie werkt zonder enige runtime-context', () => { eq(CalcCore.roundKg(112.4),112.5); eq(CalcCore.calculate1RM(100,8),127); });
 
+// ================= E. AI-BOUNDARY GUARD (ai_guard.v1) — security/integriteit =================
+console.log('\n[E] validateProposedWeight (ai_guard.v1) — AI mag geen numerieke waarheid injecteren');
+const V = CalcCore.validateProposedWeight;
+T('geldig voorstel -> ok + engine-afgerond (82.3 -> 82.5)', () => { const r=V(82.3,200); ok(r.ok===true); eq(r.value,82.5); eq(r.source,'ai_suggested'); eq(r.calculationVersion,'ai_guard.v1'); });
+T('TEST7: NaN -> rejected', () => ok(V(NaN,200).ok===false));
+T('TEST8: string-injectie "abc" -> rejected', () => ok(V('abc',200).ok===false));
+T('string-getal "82.5" -> ok (defensief geparsed)', () => { const r=V('82.5',200); ok(r.ok===true); eq(r.value,82.5); });
+T('TEST10: negatief -> rejected', () => ok(V(-50,200).ok===false));
+T('nul -> rejected', () => ok(V(0,200).ok===false));
+T('Infinity -> rejected', () => ok(V(Infinity,200).ok===false));
+T('TEST9: extreem hoog met 1RM -> rejected (>1.2x1RM)', () => ok(V(9999,200).ok===false));
+T('extreem hoog zonder 1RM -> rejected (>500 cap)', () => ok(V(9999,null).ok===false));
+T('op de 1RM-grens (1.2x) -> ok, net erboven -> rejected', () => { ok(V(240,200).ok===true); ok(V(240.5,200).ok===false); });
+T('zonder 1RM binnen cap -> ok, boven cap -> rejected', () => { ok(V(400,null).ok===true); ok(V(600,null).ok===false); });
+T('deterministisch', () => { const a=V(100,200),b=V(100,200); ok(JSON.stringify(a)===JSON.stringify(b)); });
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail > 0) { console.log('⚠ STOP: old !== new of guard faalt.'); process.exit(1); }

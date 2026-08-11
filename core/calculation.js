@@ -18,7 +18,7 @@
 (function (global) {
   'use strict';
 
-  var VERSIONS = { rounding: 'rounding.v1', e1rm: 'e1rm.v1', working_weight: 'working_weight.v1' };
+  var VERSIONS = { rounding: 'rounding.v1', e1rm: 'e1rm.v1', working_weight: 'working_weight.v1', ai_guard: 'ai_guard.v1' };
 
   // --- rounding.v1 --- exact gelijk aan legacy index.html r.10668
   function roundKg(v) { return Math.round(v * 2) / 2; }
@@ -45,6 +45,22 @@
     return w > 0 ? roundKg(w) : null;
   }
 
+  // --- ai_guard.v1 --- AI-BOUNDARY: valideert een AI-VOORGESTELD gewicht vóór het als suggestie
+  // gebruikt mag worden. Pure/deterministisch: geen DOM/DB/AI/network. AI is nooit de bron van
+  // numerieke waarheid — een voorstel wordt hier getypeerd, engine-afgerond (roundKg) en op
+  // plausibiliteit begrensd. Ongeldig -> {ok:false}. Geldig -> {ok:true, value} (engine-rounded).
+  //   kg    : het door de AI voorgestelde gewicht (number of parseable string)
+  //   oneRM : bekend (geschat) 1RM voor plausibiliteitsgrens; null/onbekend -> absolute cap 500 kg
+  function validateProposedWeight(kg, oneRM) {
+    var n = (typeof kg === 'number') ? kg : parseFloat(kg);
+    if (typeof n !== 'number' || !isFinite(n)) return { ok: false, reason: 'geen geldig getal', source: 'ai_suggested', calculationVersion: VERSIONS.ai_guard };
+    if (n <= 0) return { ok: false, reason: 'niet-positief', source: 'ai_suggested', calculationVersion: VERSIONS.ai_guard };
+    var rounded = roundKg(n);
+    var cap = (typeof oneRM === 'number' && isFinite(oneRM) && oneRM > 0) ? oneRM * 1.2 : 500;
+    if (rounded > cap) return { ok: false, reason: 'boven plausibele grens', source: 'ai_suggested', calculationVersion: VERSIONS.ai_guard };
+    return { ok: true, value: rounded, unit: 'kg', source: 'ai_suggested', calculationVersion: VERSIONS.ai_guard };
+  }
+
   // Optionele, kleine result-contracten (versioneerbaar; geen metadata-explosie).
   // De frontend mag de primitives gebruiken; Evidence/Decision kan later de *Result-vorm nemen.
   function roundKgResult(v) {
@@ -62,6 +78,7 @@
     oneRMRaw: oneRMRaw,
     calculate1RM: calculate1RM,
     calculateWorkingWeight: calculateWorkingWeight,
+    validateProposedWeight: validateProposedWeight,
     roundKgResult: roundKgResult,
     oneRMResult: oneRMResult,
     workingWeightResult: workingWeightResult,

@@ -13961,14 +13961,21 @@ function renderCoachReply(raw){
 }
 function applyCoachSuggestion(exId,kg,btn){
   if(!document.getElementById('s-'+exId+'-1-kg')){toast('Oefening niet actief in de huidige training');return;}
+  // F1.3 AI-boundary: AI mag geen numerieke trainingswaarheid schrijven. Valideer via de
+  // deterministische Calculation Core (ai_guard.v1): getypeerd, engine-afgerond, plausibel.
+  // Ongeldig -> afgewezen. Geldig -> bewerkbare suggestie voorgevuld; gebruiker voltooit de set zelf.
+  var _oneRM=null; try{ _oneRM=(typeof previewOneRM==='function')?previewOneRM(exId):null; }catch(e){}
+  var _chk=(window.CalcCore&&CalcCore.validateProposedWeight)?CalcCore.validateProposedWeight(kg,_oneRM):null;
+  if(!_chk||!_chk.ok){ toast('AI-voorstel afgewezen'+(_chk&&_chk.reason?(': '+_chk.reason):'')+' — niet toegepast'); if(btn){btn.textContent='✗ Afgewezen';btn.disabled=true;} return; }
+  var _safeKg=_chk.value;
   const modeSel=document.getElementById('s-'+exId+'-1-wmode');
   if(modeSel&&modeSel.value!=='vast'){modeSel.value='vast';onWeightModeChange(exId,1);}
-  const kgInp=document.getElementById('s-'+exId+'-1-kg'); // opnieuw ophalen: modus-wissel vervangt het element
+  const kgInp=document.getElementById('s-'+exId+'-1-kg');
   settingViaPct=true;
-  kgInp.value=kg;kgInp.dispatchEvent(new Event('input'));kgInp.dispatchEvent(new Event('change'));
+  kgInp.value=_safeKg;kgInp.dispatchEvent(new Event('input'));kgInp.dispatchEvent(new Event('change'));
   settingViaPct=false;
   btn.textContent='✓ Toegepast';btn.disabled=true;btn.classList.add('apply-ok');
-  toast('Gewicht aangepast naar '+kg+' kg');
+  toast('Voorstel toegepast: '+_safeKg+' kg — pas aan of voltooi de set zelf');
 }
 // Wist alleen het HUIDIGE gesprek (algemeen óf de actieve sessie) — niet alle geschiedenis.
 async function clearChat(){

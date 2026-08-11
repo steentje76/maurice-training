@@ -14,7 +14,7 @@ const T = (name, fn) => { try { fn(); console.log('  ✓ ' + name); pass++; } ca
 const ok = (c, m) => { if (!c) throw new Error(m || 'assert'); };
 
 const ROOT = path.join(__dirname, '..');
-const CORE_FILES = ['core/calculation.js', 'core/decision.js'];
+const CORE_FILES = ['core/calculation.js', 'core/decision.js', 'core/cardio.js'];
 function norm(p) { return fs.readFileSync(path.join(ROOT, p), 'utf8').replace(/\r/g, ''); }
 const combined = CORE_FILES.map(norm).join('\n');
 const sig = crypto.createHash('sha256').update(combined).digest('hex').slice(0, 16);

@@ -4496,6 +4496,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
 <script src="core/calculation.js"></script>
 <script src="core/decision.js"></script>
+<script src="core/cardio.js"></script>
 <script>
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
@@ -4887,55 +4888,16 @@ function isCardioEx(ex){return !!resolveCardioType(ex);}
 // v306.2: CENTRALE Cardio Calculation Engine. Alle tijd/afstand/split/pace/watt-berekeningen
 // voor ELK cardio-apparaat verlopen via deze ene set functies — geen aparte logica per type,
 // alleen configuratie via CARDIO_TYPES.calc (distField/basis/type). Zuivere functies, geen DOM.
-const CardioEngine = {
-  parseTime(str){ return parseTimeToSec(str); },
-  formatTime(sec){
-    if(sec==null||isNaN(sec)||sec<0)return '';
-    sec=Math.round(sec);
-    const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60;
-    const mm=h>0?String(m).padStart(2,'0'):String(m);
-    const ss=String(s).padStart(2,'0');
-    return h>0?`${h}:${mm}:${ss}`:`${mm}:${ss}`;
-  },
-  // Split/pace = tijd per 'basis'-eenheid afstand (bv. seconden per 500m, of per km).
-  splitFromDistTime(dist,timeSec,basis){
-    if(!dist||!timeSec)return null;
-    return (timeSec/dist)*basis;
-  },
-  timeFromDistSplit(dist,splitSec,basis){
-    if(!dist||!splitSec)return null;
-    return (splitSec/basis)*dist;
-  },
-  distFromTimeSplit(timeSec,splitSec,basis){
-    if(!timeSec||!splitSec)return null;
-    return (timeSec/splitSec)*basis;
-  },
-  // Concept2-formule (geldt voor roei-/ski-/bike-ergs met split-basis 500m):
-  // watt = 2.80 / (split_per_500m_in_sec)^3, en de omgekeerde afleiding.
-  wattFromSplit500(splitSec){
-    if(!splitSec)return null;
-    return 2.80/Math.pow(splitSec/500,3);
-  },
-  splitFromWatt500(watt){
-    if(!watt)return null;
-    return Math.cbrt(2.80/watt)*500;
-  },
-  // Gelijkmatige (automatische) splits over de hele afstand — elk interval krijgt dezelfde tijd.
-  autoSplits(totalTimeSec,totalDist,splitDist){
-    if(!totalTimeSec||!totalDist||!splitDist)return [];
-    const n=Math.max(1,Math.round(totalDist/splitDist));
-    const per=totalTimeSec/n;
-    const splits={};
-    for(let i=1;i<=n;i++)splits[i]=per;
-    return splits;
-  },
-  // Uit handmatig ingevulde per-interval-tijden: totaal + gemiddelde.
-  fromManualSplits(splitSecMap){
-    const vals=Object.values(splitSecMap).filter(v=>v!=null&&!isNaN(v)&&v>0);
-    if(!vals.length)return null;
-    const total=vals.reduce((a,b)=>a+b,0);
-    return {total, avg:total/vals.length, count:vals.length};
-  }
+const CardioEngine = { /* F1.12: canonical shared CardioCore (cardio_time/split/power .v1) */
+  parseTime(str){ return CardioCore.parseTime(str); },
+  formatTime(sec){ return CardioCore.formatTime(sec); },
+  splitFromDistTime(dist,timeSec,basis){ return CardioCore.splitFromDistTime(dist,timeSec,basis); },
+  timeFromDistSplit(dist,splitSec,basis){ return CardioCore.timeFromDistSplit(dist,splitSec,basis); },
+  distFromTimeSplit(timeSec,splitSec,basis){ return CardioCore.distFromTimeSplit(timeSec,splitSec,basis); },
+  wattFromSplit500(splitSec){ return CardioCore.wattFromSplit500(splitSec); },
+  splitFromWatt500(watt){ return CardioCore.splitFromWatt500(watt); },
+  autoSplits(totalTimeSec,totalDist,splitDist){ return CardioCore.autoSplits(totalTimeSec,totalDist,splitDist); },
+  fromManualSplits(splitSecMap){ return CardioCore.fromManualSplits(splitSecMap); }
 };
 
 // Eén centrale, data-driven mapper van cardio-invoer naar een 'sessions'-rij.
@@ -7471,15 +7433,7 @@ async function renderCheckinConditions(){
 // ══════════════════════════════════════════════════════════
 // Tijd-string (mm:ss of h:mm:ss) omzetten naar seconden — gedeelde helper,
 // ook gebruikt door de cardio-splitberekening en getest in logic_tests.js.
-function parseTimeToSec(str){
-  if(!str)return null;
-  const p=String(str).trim().split(':');
-  let sec;
-  if(p.length===2)sec=parseFloat(p[0])*60+parseFloat(p[1]);
-  else if(p.length===3)sec=parseFloat(p[0])*3600+parseFloat(p[1])*60+parseFloat(p[2]);
-  else sec=parseFloat(str);
-  return isNaN(sec)?null:sec;
-}
+function parseTimeToSec(str){ return CardioCore.parseTime(str); } /* F1.12: canonical CardioCore (cardio_time.v1) */
 
 // Verzamelt alle ingevulde werksets (kg/reps/rpe) voor een gerenderde oefening-body,
 // ongeacht of dit de trainingsscreen of de Losse oefening modal is (zelfde DOM-ids).

@@ -2,7 +2,7 @@
 // Play Store ready — offline first
 
 const CACHE_NAME = 'trainingskompas-v42430';
-const CACHE_STATIC = 'trainingskompas-static-v42423';
+const CACHE_STATIC = 'trainingskompas-static-v42424';
 // Video-cache: STABIEL en LOSGEKOPPELD van de app-versie. App-updates verwijderen video's NIET.
 const CACHE_VIDEOS = 'tk-videos-v1';
 const VIDEO_LIMIT_BYTES = 250 * 1024 * 1024; // 250 MB LRU-plafond
@@ -11,6 +11,7 @@ const VIDEO_META_KEY = '/__tkvideometa__';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
+  '/core/calculation.js',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',

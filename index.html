@@ -4494,6 +4494,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </div>
 </div>
 
+<script src="core/calculation.js"></script>
 <script>
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
@@ -8090,13 +8091,7 @@ const SPORT_FOCUS_LABELS={kracht:'Kracht/Powerlifting',crossfit:'CrossFit/Functi
 // RPE9=1, RPE6.5=3.5 enz.) wordt bij de reps opgeteld tot een geschat "reps-tot-falen",
 // waarna Brzycki wordt omgekeerd naar gewicht. Voorkomt dat een oud, zwaar 1-rep-gewicht
 // (bv. voor een 1RM-test) wordt aangeboden als startgewicht voor een licht 12-reps-blok.
-function suggestWeightForRepsRpe(oneRM,reps,rpe){
-  if(!oneRM||!reps)return null;
-  const rir=Math.max(0,10-(parseFloat(rpe)||8));
-  const repsToFailure=Math.min(20,reps+rir);
-  const w=oneRM*(37-repsToFailure)/36;
-  return w>0?roundKg(w):null;
-}
+function suggestWeightForRepsRpe(oneRM,reps,rpe){ return CalcCore.calculateWorkingWeight(oneRM,reps,rpe); } /* F1.2C: canonical shared core (working_weight.v1) */
 
 // ══════════════════════════════════════════════════════════
 // F0.7L — DECISION ENGINE: DETRAINING / RETURN-TO-TRAINING (V1)
@@ -10658,14 +10653,10 @@ function getOneRM(exId){
 // afrondingskeuze (sommige ronden meteen, sommige pas een uiteindelijke 'best'-waarde,
 // sommige helemaal niet) — dat verschilt bewust per context en is dus geen duplicatie
 // op zich. Geen enkele wijziging in uitkomst op de 6 vervangen plekken.
-function epley1RMRaw(kg,reps){return reps===1?kg:kg*(1+reps/30);}
-function epley1RM(kg,reps){
-  if(!kg||!reps||reps<1)return null;
-  if(reps===1)return kg;
-  return Math.round(epley1RMRaw(kg,reps)); // zelfde formule/afronding als Stats-scherm (geschatte 1RM)
-}
+function epley1RMRaw(kg,reps){ return CalcCore.oneRMRaw(kg,reps); } /* F1.2: canonical shared core (e1rm.v1) */
+function epley1RM(kg,reps){ return CalcCore.calculate1RM(kg,reps); } /* F1.2: canonical shared core (e1rm.v1) */
 // v306: centrale afrondingsregel (0.5 kg increments) — hergebruikt door alle nieuwe rekenfuncties
-function roundKg(v){ return Math.round(v*2)/2; }
+function roundKg(v){ return CalcCore.roundKg(v); } /* F1.2: canonical shared core (rounding.v1) */
 // v306: welk %1RM-knop actief staat per oefening (instelling voor de HELE oefening).
 let pctSelection={};
 let settingViaPct=false; // onderdrukt de "handmatig"-markering terwijl een script zelf het veld vult

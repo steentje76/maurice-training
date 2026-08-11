@@ -21,10 +21,14 @@ function extractFn(name) {
   return IDX.slice(m.index, j);
 }
 const legacy = new Function(
-  extractFn('roundKg') + '\n' + extractFn('epley1RMRaw') + '\n' + extractFn('epley1RM') + '\n' +
-  extractFn('suggestWeightForRepsRpe') +
-  '\n return { roundKg, epley1RMRaw, epley1RM, suggestWeightForRepsRpe };'
+  [extractFn('roundKg'), extractFn('epley1RMRaw'), extractFn('epley1RM'),
+   extractFn('suggestWeightForRepsRpe'), extractFn('suggestWarmupScheme'),
+   extractFn('rpeMultiplier'), extractFn('computeMuscleRecoveryPct'),
+   extractFn('slaapDagFactor'), extractFn('cyclusDagFactor'), extractFn('dagfactor')].join('\n') +
+  '\n return { roundKg, epley1RMRaw, epley1RM, suggestWeightForRepsRpe, suggestWarmupScheme,' +
+  ' rpeMultiplier, computeMuscleRecoveryPct, slaapDagFactor, cyclusDagFactor, dagfactor };'
 )();
+const J = a => JSON.stringify(a);
 
 // ================= A. roundKg golden (42) =================
 console.log('\n[A] roundKg golden (rounding.v1)');
@@ -103,6 +107,112 @@ T('extreem hoog zonder 1RM -> rejected (>500 cap)', () => ok(V(9999,null).ok===f
 T('op de 1RM-grens (1.2x) -> ok, net erboven -> rejected', () => { ok(V(240,200).ok===true); ok(V(240.5,200).ok===false); });
 T('zonder 1RM binnen cap -> ok, boven cap -> rejected', () => { ok(V(400,null).ok===true); ok(V(600,null).ok===false); });
 T('deterministisch', () => { const a=V(100,200),b=V(100,200); ok(JSON.stringify(a)===JSON.stringify(b)); });
+
+// ================= F. calculateVolume (volume.v1) — old===new vs inline legacy =================
+console.log('\n[F] calculateVolume (volume.v1)');
+const CV = CalcCore.calculateVolume;
+T('golden: 1x10x100=1000, 3x8x100=2400, 5x5x150=3750, 10x10x20=2000', () => {
+  eq(CV({sets:1,reps:10,weight:100}),1000); eq(CV({sets:3,reps:8,weight:100}),2400);
+  eq(CV({sets:5,reps:5,weight:150}),3750); eq(CV({sets:10,reps:10,weight:20}),2000);
+});
+T('decimal weight: 3x8x100.5 = 2412', () => eq(CV({sets:3,reps:8,weight:100.5}),2412));
+T('zero sets/reps/weight -> 0', () => { eq(CV({sets:0,reps:8,weight:100}),0); eq(CV({sets:3,reps:0,weight:100}),0); eq(CV({sets:3,reps:8,weight:0}),0); });
+T('null input -> null', () => eq(CV(null),null));
+T('string-numeric coercie: {"3","8","100"} = 2400 (JS *)', () => eq(CV({sets:'3',reps:'8',weight:'100'}),2400));
+T('invalid string -> NaN (legacy JS *)', () => ok(Number.isNaN(CV({sets:'x',reps:8,weight:100}))));
+T('negative -> negatief product behouden', () => eq(CV({sets:-3,reps:8,weight:100}),-2400));
+T('legacy quirk: null-veld -> 0 (null*x), undefined-veld -> NaN', () => { eq(CV({sets:null,reps:8,weight:100}),0); ok(Number.isNaN(CV({sets:undefined,reps:8,weight:100}))); });
+// old===new tegen de 3 echte inline legacy-varianten (r.7144 strict, r.12451 variant A, r.13175 variant B)
+const volSessions = [
+  {sets:3,reps:8,weight:100},{sets:5,reps:5,weight:150},{sets:1,reps:10,weight:100.5},
+  {sets:null,reps:8,weight:100},{sets:undefined,reps:10,weight:80},{weight:'90',reps:'6',sets:'4'},
+  {sets:0,reps:0,weight:0},{sets:2,reps:12,weight:60},{reps:8,weight:100}/*geen sets*/,{sets:4,weight:40}/*geen reps*/
+];
+T('old===new: strict inline (r.7144) s.sets*s.reps*s.weight', () => {
+  volSessions.forEach(s => eq(CV({sets:s.sets,reps:s.reps,weight:s.weight}), s.sets*s.reps*s.weight, 'strict '+J(s)));
+});
+T('old===new: variant A (r.12451) parseFloat(w)||0 * parseInt(r)||0 * parseInt(sets)||1', () => {
+  volSessions.forEach(s => {
+    const legacyV = (parseFloat(s.weight)||0)*(parseInt(s.reps)||0)*(parseInt(s.sets)||1);
+    const coreV = CV({weight:parseFloat(s.weight)||0, reps:parseInt(s.reps)||0, sets:parseInt(s.sets)||1});
+    eq(coreV, legacyV, 'variantA '+J(s));
+  });
+});
+T('old===new: variant B (r.13175) (sets||1)*(reps||1)*(weight||0)', () => {
+  volSessions.forEach(s => {
+    const legacyV = (s.sets||1)*(s.reps||1)*(s.weight||0);
+    const coreV = CV({sets:s.sets||1, reps:s.reps||1, weight:s.weight||0});
+    eq(coreV, legacyV, 'variantB '+J(s));
+  });
+});
+T('deterministisch', () => eq(CV({sets:3,reps:8,weight:100}),CV({sets:3,reps:8,weight:100})));
+
+// ================= G. applyPercentage (percentage.v1) — old===new vs inline base*pct/100 =================
+console.log('\n[G] applyPercentage (percentage.v1)');
+const AP = CalcCore.applyPercentage;
+T('golden: 100@90=90, 150@80=120, 200@50=100', () => { eq(AP(100,90),90); eq(AP(150,80),120); eq(AP(200,50),100); });
+T('old===new: applyPercentage(base,pct) === base*pct/100', () => {
+  [[100,90],[150,80],[200,50],[137.5,85],[100,0],[0,90],[100,150],[100,33.333],[240,100],[100.5,70]].forEach(([b,p]) =>
+    eq(AP(b,p), b*p/100, 'ap('+b+','+p+')'));
+});
+T('getEffectiveKg-patroon: roundKg(applyPercentage) === roundKg(base*pct/100)', () => {
+  [[150,90],[137.5,85],[200,72.5],[100.5,70]].forEach(([b,p]) =>
+    eq(CalcCore.roundKg(AP(b,p)), CalcCore.roundKg(b*p/100), 'roundKg ap('+b+','+p+')'));
+});
+T('deterministisch', () => eq(AP(150,90),AP(150,90)));
+
+// ================= H. calculateWarmup (warmup.v1) — old===new vs suggestWarmupScheme =================
+console.log('\n[H] calculateWarmup (warmup.v1)');
+const CW = CalcCore.calculateWarmup;
+T('golden anker: 150kg -> [60/8, 82.5/5, 105/3, 120/2, 135/1]', () => {
+  eq(J(CW(150)), J([{kg:60,reps:8},{kg:82.5,reps:5},{kg:105,reps:3},{kg:120,reps:2},{kg:135,reps:1}]));
+});
+T('old===new vs legacy suggestWarmupScheme (alle drempels + edge)', () => {
+  [200,150,120,119.5,100,80,79.9,50,40,39.9,20,1,0,-5,0.5,137.3,119,121].forEach(w =>
+    eq(J(CW(w)), J(legacy.suggestWarmupScheme(w)), 'warmup('+w+')'));
+});
+T('drempels kloppen: >=120 => 5 sets, >=80 => 4, >=40 => 3, else 2', () => {
+  eq(CW(120).length,5); eq(CW(80).length,4); eq(CW(40).length,3); eq(CW(39).length,2);
+});
+T('deterministisch', () => eq(J(CW(150)),J(CW(150))));
+
+// ================= I. recovery (recovery.v1) — old===new vs rpeMultiplier + computeMuscleRecoveryPct =====
+console.log('\n[I] rpeMultiplier + calculateMuscleRecoveryPct (recovery.v1)');
+const RM = CalcCore.rpeMultiplier, MR = CalcCore.calculateMuscleRecoveryPct;
+T('old===new: rpeMultiplier (incl. quirks 0/leeg/NaN -> 1)', () => {
+  [null,undefined,0,'',NaN,'x',5,7,7.9,8,8.5,9,10,'8','9',-3,9.5].forEach(r =>
+    eq(RM(r), legacy.rpeMultiplier(r), 'rpeMult('+String(r)+')'));
+});
+T('rpeMultiplier ankers: rpe9->1.3, rpe8->1.0, rpe5->0.85, leeg->1', () => { eq(RM(9),1.3); eq(RM(8),1.0); eq(RM(5),0.85); eq(RM(''),1); });
+T('old===new: calculateMuscleRecoveryPct (matrix uren×base×rpe)', () => {
+  [0,1,12,24,48,72,0.5,36.7].forEach(h => [24,48,72].forEach(base => [null,5,7,8,9,10,''].forEach(rpe =>
+    eq(MR(h,base,rpe), legacy.computeMuscleRecoveryPct(h,base,rpe), 'recov('+h+','+base+','+String(rpe)+')'))));
+});
+T('cap 100: volledig hersteld -> 100 (nooit hoger)', () => { eq(MR(999,48,8),100); eq(MR(48,48,8),100); });
+T('0 uur -> 0%', () => eq(MR(0,48,8),0));
+T('hogere RPE => lager herstel bij gelijke tijd', () => ok(MR(24,48,9) < MR(24,48,5)));
+T('deterministisch', () => eq(MR(24,48,8),MR(24,48,8)));
+
+// ================= J. dayfactor (dayfactor.v1) — old===new vs slaap/cyclus/dagfactor =================
+console.log('\n[J] slaapDagFactor + cyclusDagFactor + calculateDayFactor (dayfactor.v1)');
+const SD = CalcCore.slaapDagFactor, CD = CalcCore.cyclusDagFactor, DF = CalcCore.calculateDayFactor;
+T('old===new: slaapDagFactor', () => {
+  [null,0,undefined,5,5.9,6,6.5,7,8,10,'x',-2].forEach(u => eq(SD(u), legacy.slaapDagFactor(u), 'slaap('+String(u)+')'));
+});
+T('old===new: cyclusDagFactor (incl. onbekende fase -> 1.00)', () => {
+  ['menstruatie','folliculair','ovulatie','luteaal','onbekend',null,undefined,''].forEach(f => eq(CD(f), legacy.cyclusDagFactor(f), 'cyclus('+String(f)+')'));
+});
+T('ankers: slaap>=7=1.00, 6=0.97, <6=0.92; folliculair=1.03, menstruatie=0.93', () => {
+  eq(SD(8),1.00); eq(SD(6),0.97); eq(SD(5),0.92); eq(CD('folliculair'),1.03); eq(CD('menstruatie'),0.93);
+});
+T('old===new: calculateDayFactor(.factor) === legacy dagfactor(hc,slaap,fase).factor', () => {
+  [0.85,0.9,0.95,1.0,1.02,1.05,1.1,0.8].forEach(hf => [4,5,6,7,8].forEach(sl => ['menstruatie','folliculair','ovulatie','luteaal','onbekend',null].forEach(fase => {
+    const hc = {factor:hf, st:'ref', baseline:null};
+    eq(DF({hrvFactor:hf, sleepHours:sl, cyclePhase:fase}), legacy.dagfactor(hc,sl,fase).factor, 'dayfactor('+hf+','+sl+','+String(fase)+')');
+  })));
+});
+T('clamp [0.85,1.05] + 2 decimalen', () => { eq(DF({hrvFactor:2.0,sleepHours:8,cyclePhase:'folliculair'}),1.05); eq(DF({hrvFactor:0.1,sleepHours:5,cyclePhase:'menstruatie'}),0.85); });
+T('deterministisch', () => eq(DF({hrvFactor:1.0,sleepHours:7,cyclePhase:'ovulatie'}),DF({hrvFactor:1.0,sleepHours:7,cyclePhase:'ovulatie'})));
 
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');

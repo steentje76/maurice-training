@@ -18,7 +18,10 @@
 (function (global) {
   'use strict';
 
-  var VERSIONS = { rounding: 'rounding.v1', e1rm: 'e1rm.v1', working_weight: 'working_weight.v1', ai_guard: 'ai_guard.v1' };
+  var VERSIONS = {
+    rounding: 'rounding.v1', e1rm: 'e1rm.v1', working_weight: 'working_weight.v1', ai_guard: 'ai_guard.v1',
+    volume: 'volume.v1', percentage: 'percentage.v1', warmup: 'warmup.v1', recovery: 'recovery.v1', dayfactor: 'dayfactor.v1'
+  };
 
   // --- rounding.v1 --- exact gelijk aan legacy index.html r.10668
   function roundKg(v) { return Math.round(v * 2) / 2; }
@@ -61,6 +64,74 @@
     return { ok: true, value: rounded, unit: 'kg', source: 'ai_suggested', calculationVersion: VERSIONS.ai_guard };
   }
 
+  // --- volume.v1 --- RAW tonnage-product (kg). Exact gelijk aan de inline legacy-product-sites
+  // (index.html r.7144 `s.sets*s.reps*s.weight`, r.12451/13175 idem na caller-coercion).
+  // BEWUST puur product met JS-`*`-semantiek: de callers coercen zelf (||0/||1/parseFloat) —
+  // dat is data-extractie/boundary, GEEN calculation. Core rekent één geval. Geen afronding hier;
+  // Math.round + ton/"k"-conversie zijn UI-formatters en verschillen per site (niet unificeren).
+  //   input: { sets, reps, weight }  ->  sets*reps*weight (kg)   |  ontbrekende input -> null
+  // Legacy-quirks bewust behouden: null*x===0, undefined*x===NaN, '3'*'8'*'100'===2400 (string-coercie).
+  function calculateVolume(input) {
+    if (!input) return null;
+    return input.sets * input.reps * input.weight;
+  }
+
+  // --- percentage.v1 --- base * pct / 100 (RAW, geen afronding). Exact gelijk aan de inline legacy
+  // `base*param/100` in getEffectiveKg (index.html r.11109/11113/11118). De caller past roundKg toe
+  // (roundKg blijft de afrondingsbron). Puur/deterministisch.
+  function applyPercentage(base, pct) {
+    return base * pct / 100;
+  }
+
+  // --- warmup.v1 --- exact gelijk aan legacy suggestWarmupScheme (index.html r.10957-10964).
+  // Puur; gebruikt roundKg (rounding.v1). Legacy-semantiek 1-op-1: dezelfde drempels/percentages/reps.
+  function calculateWarmup(workKg) {
+    var pcts;
+    if (workKg >= 120) pcts = [[0.4, 8], [0.55, 5], [0.7, 3], [0.8, 2], [0.9, 1]];
+    else if (workKg >= 80) pcts = [[0.4, 8], [0.6, 5], [0.75, 3], [0.9, 1]];
+    else if (workKg >= 40) pcts = [[0.5, 6], [0.7, 4], [0.85, 2]];
+    else pcts = [[0.5, 8], [0.75, 4]];
+    return pcts.map(function (pr) { return { kg: roundKg(workKg * pr[0]), reps: pr[1] }; });
+  }
+
+  // --- recovery.v1 --- exact gelijk aan legacy rpeMultiplier (r.15318-15324) + computeMuscleRecoveryPct
+  // (r.15326-15329). Puur/deterministisch. Legacy-quirks bewust behouden:
+  //   rpeMultiplier: !r||isNaN(r) -> 1 (dus rpe 0/leeg/NaN -> 1); r>=9 -> 1.3; r>=8 -> 1.0; anders 0.85.
+  //   calculateMuscleRecoveryPct: effHours = baseHours*rpeMultiplier(rpe); min(100, round(hoursSince/effHours*100)).
+  function rpeMultiplier(rpe) {
+    var r = parseFloat(rpe);
+    if (!r || isNaN(r)) return 1;
+    if (r >= 9) return 1.3;
+    if (r >= 8) return 1.0;
+    return 0.85;
+  }
+  function calculateMuscleRecoveryPct(hoursSince, baseHours, rpe) {
+    var effHours = baseHours * rpeMultiplier(rpe);
+    return Math.min(100, Math.round(hoursSince / effHours * 100));
+  }
+
+  // --- dayfactor.v1 --- pure numerieke dagfactor. Exact gelijk aan de rekenkern van legacy
+  // slaapDagFactor (r.12673-12678) + cyclusDagFactor (r.12679-12681) + de combinatie in dagfactor
+  // (r.12690-12691). De object-assembly (hrvSt/hrvBaseline-passthrough) blijft ORCHESTRATIE in de app.
+  // Puur/deterministisch. Legacy-quirks bewust behouden: slaap !uren -> 1.00; onbekende fase -> 1.00;
+  // clamp [0.85,1.05]; afronding op 2 decimalen.
+  function slaapDagFactor(uren) {
+    if (!uren) return 1.00;
+    if (uren >= 7) return 1.00;
+    if (uren >= 6) return 0.97;
+    return 0.92;
+  }
+  function cyclusDagFactor(fase) {
+    return ({ menstruatie: 0.93, folliculair: 1.03, ovulatie: 1.00, luteaal: 0.97 })[fase] ?? 1.00;
+  }
+  // hrvFactor is de reeds-geresolveerde HRV-factor (app-side houdt de hrvComponent||{factor:1.00}
+  // default als orchestratie/context). Kern = exact legacy: hrvFactor*slaap*cyclus, clamp, 2 decimalen.
+  function calculateDayFactor(input) {
+    var i = input || {};
+    var ruw = i.hrvFactor * slaapDagFactor(i.sleepHours) * cyclusDagFactor(i.cyclePhase);
+    return Math.round(Math.max(0.85, Math.min(1.05, ruw)) * 100) / 100;
+  }
+
   // Optionele, kleine result-contracten (versioneerbaar; geen metadata-explosie).
   // De frontend mag de primitives gebruiken; Evidence/Decision kan later de *Result-vorm nemen.
   function roundKgResult(v) {
@@ -79,6 +150,14 @@
     calculate1RM: calculate1RM,
     calculateWorkingWeight: calculateWorkingWeight,
     validateProposedWeight: validateProposedWeight,
+    calculateVolume: calculateVolume,
+    applyPercentage: applyPercentage,
+    calculateWarmup: calculateWarmup,
+    rpeMultiplier: rpeMultiplier,
+    calculateMuscleRecoveryPct: calculateMuscleRecoveryPct,
+    slaapDagFactor: slaapDagFactor,
+    cyclusDagFactor: cyclusDagFactor,
+    calculateDayFactor: calculateDayFactor,
     roundKgResult: roundKgResult,
     oneRMResult: oneRMResult,
     workingWeightResult: workingWeightResult,

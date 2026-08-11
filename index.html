@@ -7141,7 +7141,7 @@ async function computePersonalChallenges(){
   }).reduce((sum,s)=>sum+(s.distance||0),0);
   const roeiKm = Math.round(roeiDist/100)/10;
 
-  const volumeKg = allSessions.filter(s=>s.weight&&s.sets&&s.reps).reduce((sum,s)=>sum+(s.sets*s.reps*s.weight),0);
+  const volumeKg = allSessions.filter(s=>s.weight&&s.sets&&s.reps).reduce((sum,s)=>sum+CalcCore.calculateVolume({sets:s.sets,reps:s.reps,weight:s.weight}),0);
   const volumeTon = Math.round(volumeKg/100)/10;
 
   // PR-telling: loopt chronologisch per oefening door de sessiehistorie en telt elk
@@ -10954,14 +10954,7 @@ function removeWarmupSet(exId,i){
   if(rows)rows.innerHTML=vals.map((v,idx)=>buildWarmupRow(exId,idx+1)).join('');
 }
 // v306: slim opwarmschema o.b.v. het werkgewicht — zwaarder = meer opwarmsets, lichter = minder.
-function suggestWarmupScheme(workKg){
-  let pcts;
-  if(workKg>=120)pcts=[[0.4,8],[0.55,5],[0.7,3],[0.8,2],[0.9,1]];
-  else if(workKg>=80)pcts=[[0.4,8],[0.6,5],[0.75,3],[0.9,1]];
-  else if(workKg>=40)pcts=[[0.5,6],[0.7,4],[0.85,2]];
-  else pcts=[[0.5,8],[0.75,4]];
-  return pcts.map(([p,reps])=>({kg:roundKg(workKg*p),reps}));
-}
+function suggestWarmupScheme(workKg){ return CalcCore.calculateWarmup(workKg); } /* F1.5A: canonical shared core (warmup.v1) */
 // Genereert automatisch als werkgewicht 1 bekend is (anders 1RM als terugval). Overschrijft
 // nooit sets die de gebruiker handmatig heeft aangepast, tenzij forceRegen=true.
 function autoGenerateWarmup(exId,forceRegen){
@@ -11106,16 +11099,16 @@ function getEffectiveKg(exId,i){
   if(isNaN(param))return null;
   if(mode==='1rm'){
     const oneRM=estimatedOneRM(exId);
-    return oneRM?roundKg(oneRM*param/100):null;
+    return oneRM?roundKg(CalcCore.applyPercentage(oneRM,param)):null;
   }
   if(mode==='backoff'){
     const top=sessionTopSetKg(exId,i);
-    return top!=null?roundKg(top*param/100):null;
+    return top!=null?roundKg(CalcCore.applyPercentage(top,param)):null;
   }
   const prevKg=getEffectiveKg(exId,i-1);
   if(prevKg==null)return null; // geen referentie beschikbaar: nog niet berekenbaar
   if(mode==='plus')return roundKg(prevKg+param);
-  if(mode==='pct')return roundKg(prevKg*param/100);
+  if(mode==='pct')return roundKg(CalcCore.applyPercentage(prevKg,param));
   return null;
 }
 // v306.1: schrijft de berekende waarde direct in het (read-only) kg-veld van één set.
@@ -12448,7 +12441,7 @@ async function renderWeekStats(){
   if(!rows||!rows.length){el.innerHTML='';return;}
   const d7=d(7),d14=d(14);
   let volThis=0,volPrev=0;const days=new Set();
-  rows.forEach(s=>{days.add(s.date);const v=(parseFloat(s.weight)||0)*(parseInt(s.reps)||0)*(parseInt(s.sets)||1);if(s.date>=d7)volThis+=v;else if(s.date>=d14)volPrev+=v;});
+  rows.forEach(s=>{days.add(s.date);const v=CalcCore.calculateVolume({weight:parseFloat(s.weight)||0,reps:parseInt(s.reps)||0,sets:parseInt(s.sets)||1});if(s.date>=d7)volThis+=v;else if(s.date>=d14)volPrev+=v;});
   const activeDays=days.size;
   const pct=volPrev>0?Math.round((volThis-volPrev)/volPrev*100):null;
   const volKg=Math.round(volThis).toLocaleString('nl-NL');
@@ -12670,15 +12663,8 @@ function hrvDagFactorPersonal(hdRows, refDate){
 // Clip-principe zelfde als rekenmotor.py (MMP): dempt extreme uitschieters
 // als de drie factoren met elkaar vermenigvuldigd worden.
 // ══════════════════════════════════════════════════════════
-function slaapDagFactor(uren){
-  if(!uren)return 1.00;
-  if(uren>=7)return 1.00;
-  if(uren>=6)return 0.97;
-  return 0.92;
-}
-function cyclusDagFactor(fase){
-  return {menstruatie:0.93,folliculair:1.03,ovulatie:1.00,luteaal:0.97}[fase] ?? 1.00;
-}
+function slaapDagFactor(uren){ return CalcCore.slaapDagFactor(uren); } /* F1.5C: canonical shared core (dayfactor.v1) */
+function cyclusDagFactor(fase){ return CalcCore.cyclusDagFactor(fase); } /* F1.5C: canonical shared core (dayfactor.v1) */
 // hrvComponent = output van hrvDagFactorPersonal(hdRows, refDate) — vervangt de oude
 // losse hrv-ms-waarde als eerste argument (Sprint 5.7.1, breaking change binnen dit
 // bestand; alle aanroepen in dezelfde sprint bijgewerkt).
@@ -12687,8 +12673,8 @@ function dagfactor(hrvComponent,slaapUren,cyclusFase){
   const hrvFactor=hc.factor;
   const slaapFactor=slaapDagFactor(slaapUren);
   const cyclusFactor=cyclusDagFactor(cyclusFase);
-  const ruw=hrvFactor*slaapFactor*cyclusFactor;
-  const factor=Math.round(Math.max(0.85,Math.min(1.05,ruw))*100)/100;
+  /* F1.5C: product/clamp/round -> CalcCore.calculateDayFactor (dayfactor.v1) */
+  const factor=CalcCore.calculateDayFactor({hrvFactor,sleepHours:slaapUren,cyclePhase:cyclusFase});
   return {factor,hrvFactor,slaapFactor,cyclusFactor,hrvSt:hc.st,hrvBaseline:hc.baseline};
 }
 // v3.3.47 P3 — begrijpelijke dagfactor-status uit de bestaande dagfactor-waarde.
@@ -13172,7 +13158,7 @@ async function renderStatsHero(){
   let rows=[];
   try{ rows=await sbGet('sessions','&date=gte.'+iso(d14)+'&weight=not.is.null&reps=not.is.null&sets=not.is.null'); }catch(_){ rows=[]; }
   let volThis=0, volPrev=0; const daysThis=new Set();
-  rows.forEach(s=>{ const v=(s.sets||1)*(s.reps||1)*(s.weight||0); if(s.date>=iso(d7)){volThis+=v; if(s.date)daysThis.add(s.date);} else volPrev+=v; });
+  rows.forEach(s=>{ const v=CalcCore.calculateVolume({sets:s.sets||1,reps:s.reps||1,weight:s.weight||0}); if(s.date>=iso(d7)){volThis+=v; if(s.date)daysThis.add(s.date);} else volPrev+=v; });
   let herstel=null;
   try{ const rec=window.v43LichRec||(typeof v43OverallRecovery==='function'?await v43OverallRecovery():null); if(rec&&rec.hasData)herstel=rec.overall; }catch(_){}
   const trendPct = volPrev>0 ? Math.round((volThis-volPrev)/volPrev*100) : null;
@@ -15315,18 +15301,9 @@ const MUSCLE_RECOVERY_HOURS = {
   Biceps:48, Triceps:48, Core:48, Grip:48, Traps:48, 'Achterste schouder':48, Armen:48
 };
 
-function rpeMultiplier(rpe){
-  const r = parseFloat(rpe);
-  if(!r || isNaN(r)) return 1;
-  if(r>=9) return 1.3;
-  if(r>=8) return 1.0;
-  return 0.85;
-}
+function rpeMultiplier(rpe){ return CalcCore.rpeMultiplier(rpe); } /* F1.5B: canonical shared core (recovery.v1) */
 
-function computeMuscleRecoveryPct(hoursSince, baseHours, rpe){
-  const effHours = baseHours * rpeMultiplier(rpe);
-  return Math.min(100, Math.round(hoursSince/effHours*100));
-}
+function computeMuscleRecoveryPct(hoursSince, baseHours, rpe){ return CalcCore.calculateMuscleRecoveryPct(hoursSince, baseHours, rpe); } /* F1.5B: canonical shared core (recovery.v1) */
 
 // Zelfde herstel-berekening als refreshMuscleRecovery, maar geschaald naar alleen de
 // spieren die vandaag's programmatraining raakt — voor de coach-check-in (v311).
@@ -15870,7 +15847,7 @@ async function renderLichaamPremium(){
     try{
       const wk=new Date();wk.setDate(wk.getDate()-7);const dstr=wk.toISOString().split('T')[0];
       const ss=await sbGet('sessions','&date=gte.'+dstr+'&weight=not.is.null&sets=not.is.null&reps=not.is.null');
-      (ss||[]).forEach(s=>{const ms=getExerciseMuscles(s.exercise_id)||[];const v=(s.sets||1)*(s.reps||1)*(s.weight||0);ms.forEach(m=>{load[m]=(load[m]||0)+v;(dayset[m]=dayset[m]||new Set()).add(s.date);});});
+      (ss||[]).forEach(s=>{const ms=getExerciseMuscles(s.exercise_id)||[];const v=CalcCore.calculateVolume({sets:s.sets||1,reps:s.reps||1,weight:s.weight||0});ms.forEach(m=>{load[m]=(load[m]||0)+v;(dayset[m]=dayset[m]||new Set()).add(s.date);});});
     }catch(_){}
     const sorted=Object.entries(load).sort((a,b)=>b[1]-a[1]);
     const card=(cls,icon,k,val,sub)=>`<div class="lich-loadcard"><div class="ic ${cls}">${icon}</div><div class="b"><div class="k ${cls}">${k}</div><div class="v">${escHtml(val)}</div><div class="s">${escHtml(sub)}</div></div></div>`;
@@ -15893,7 +15870,7 @@ async function renderLichaamPremium(){
     try{
       const ss=await sbGet('sessions','&weight=not.is.null&order=date.desc,created_at.desc&limit=80');
       const byDate={},rpeByDate={};
-      (ss||[]).forEach(s=>{const v=(s.sets||1)*(s.reps||1)*(s.weight||0);byDate[s.date]=(byDate[s.date]||0)+v;if(s.rpe)rpeByDate[s.date]=Math.max(rpeByDate[s.date]||0,s.rpe);});
+      (ss||[]).forEach(s=>{const v=CalcCore.calculateVolume({sets:s.sets||1,reps:s.reps||1,weight:s.weight||0});byDate[s.date]=(byDate[s.date]||0)+v;if(s.rpe)rpeByDate[s.date]=Math.max(rpeByDate[s.date]||0,s.rpe);});
       const dates=Object.keys(byDate).sort().reverse().slice(0,6);
       if(!dates.length){hist.innerHTML='<div class="tk-empty"><div class="tk-empty-emo">🗓️</div>Nog geen trainingsgeschiedenis.</div>';}
       else{

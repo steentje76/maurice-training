@@ -2458,11 +2458,12 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .tpv2-back{width:34px;height:34px;flex-shrink:0;border:none;background:var(--g1);color:var(--dark);border-radius:11px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--f)}
 .tpv2-htitle{font-size:16px;font-weight:800;color:var(--dark);flex:1;min-width:0;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tpv2-hspace{width:34px;flex-shrink:0}
-.tpv2-hero{background:var(--dark);color:#fff;border-radius:18px;padding:16px 16px 18px;margin-bottom:14px}
-.tpv2-hero-nm{font-size:22px;font-weight:800;letter-spacing:.3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.tpv2-chip{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;background:var(--teal,var(--accent));color:var(--dark);padding:3px 8px;border-radius:999px}
-.tpv2-hero-sub{font-size:12.5px;color:rgba(255,255,255,.72);font-weight:600;margin-top:6px}
-.tpv2-hero-say{font-size:13px;line-height:1.5;color:rgba(255,255,255,.92);margin-top:10px}
+/* F0.8N — Preview-hero licht (mock-up): witte kaart, donkere tekst, groene badge, teal CTA */
+.tpv2-hero{background:var(--card,#fff);color:var(--dark);border:1px solid var(--g1);border-radius:18px;padding:16px 16px 18px;margin-bottom:14px;box-shadow:0 3px 12px rgba(0,0,0,.05)}
+.tpv2-hero-nm{font-size:22px;font-weight:800;letter-spacing:-.3px;color:var(--dark);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tpv2-chip{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;background:var(--v43-mint,#e9f7f1);color:var(--accent);padding:3px 9px;border-radius:999px}
+.tpv2-hero-sub{font-size:12.5px;color:var(--g4);font-weight:600;margin-top:6px}
+.tpv2-hero-say{font-size:13px;line-height:1.5;color:var(--g4);margin-top:10px}
 .tpv2-sec{font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--g4);margin:16px 2px 8px}
 .tpv2-why{background:var(--card,#fff);border:1px solid var(--g1);border-radius:14px;overflow:hidden}
 .tpv2-why-row{display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--g1);font-size:13px}
@@ -6133,7 +6134,7 @@ function renderTPOverview(el){
     ${whyHtml}
     ${ov}
     <div class="tpv2-cta" style="margin-top:18px;flex-direction:column">
-      <button class="btn btn-r" style="width:100%" onclick="previewGoto('plan')">Bekijk wat je gaat doen →</button>
+      <button class="btn" style="width:100%;background:var(--accent);color:#fff" onclick="previewGoto('plan')">Bekijk wat je gaat doen →</button>
       <button class="btn btn-o" style="width:100%;margin-top:8px" onclick="previewAdjustFromOverview()">Training aanpassen</button>
     </div>`;
 }
@@ -9262,6 +9263,17 @@ function openExecOverview(t){
   const exStats=list.map(ex=>{ const l=(typeof sessionLog!=='undefined')?sessionLog[ex.id]:null; let v=0,sd=0; if(l&&l.sets)l.sets.forEach(s=>{ if(s&&(s.kg||s.reps)){ sd++; const k=(s.effKg!=null?s.effKg:parseFloat(s.kg))||0,r=parseInt(s.reps)||0; v+=k*r; } }); return {naam:ex.naam||ex.id,vol:v,sets:sd}; });
   const maxVol=Math.max(1,...exStats.map(s=>s.vol));
   const statsRows=exStats.map(s=>'<div class="exstat-row"><div class="exstat-top"><span class="exstat-nm">'+escHtml(s.naam)+'</span><span class="exstat-v">'+Math.round(s.vol).toLocaleString('nl-NL')+' kg · '+s.sets+' sets</span></div><div class="exstat-bar"><span style="width:'+Math.round(s.vol/maxVol*100)+'%"></span></div></div>').join('');
+  // F0.8O — Volume per SPIERGROEP: echt gelogd volume toegerekend aan de primaire spiergroepen
+  // (ex.muscles.p). Geen verzonnen percentages; leeg als er geen muscle-mapping/volume is.
+  const muscleVol={};
+  list.forEach((ex,i)=>{ const v=exStats[i]?exStats[i].vol:0; if(!(v>0))return;
+    const cx=(typeof exercises!=='undefined'&&exercises.find)?exercises.find(e=>e.id===ex.id):null;
+    const mp=(ex.muscles&&ex.muscles.p)||(cx&&cx.muscles&&cx.muscles.p)||[];
+    mp.forEach(m=>{ muscleVol[m]=(muscleVol[m]||0)+v; });
+  });
+  const mArr=Object.keys(muscleVol).map(m=>({m,vol:muscleVol[m]})).sort((a,b)=>b.vol-a.vol);
+  const maxM=Math.max(1,...mArr.map(x=>x.vol));
+  const muscleRows=mArr.map(x=>'<div class="exstat-row"><div class="exstat-top"><span class="exstat-nm">'+escHtml(x.m)+'</span><span class="exstat-v">'+Math.round(x.vol).toLocaleString('nl-NL')+' kg</span></div><div class="exstat-bar"><span style="width:'+Math.round(x.vol/maxM*100)+'%"></span></div></div>').join('');
   const el=ensureExecOverlay('exec-overview');
   el.innerHTML='<div class="exec-sheet"><div class="exec-sheet-hd"><div class="exec-sheet-t">Training overzicht</div>'+
     '<button class="exec-x" onclick="closeExecOverlay(\'exec-overview\')" aria-label="Sluiten">✕</button></div>'+
@@ -9271,6 +9283,7 @@ function openExecOverview(t){
       '<div class="exov-list">'+rows+'</div>'+
       '<button class="btn btn-r exec-finish" onclick="closeExecOverlay(\'exec-overview\');showSessionSummary(\''+t+'\')">Training afronden</button></div>'+
     '<div id="exov-panel-s" style="display:none">'+summary+
+      (muscleRows?('<div class="exec-opt-k">Volume per spiergroep</div>'+muscleRows):'')+
       '<div class="exec-opt-k">Volume per oefening</div>'+(statsRows||'<div class="exec-pausecard-s" style="padding:0 2px 8px">Nog geen volume gelogd.</div>')+'</div>'+
     '</div>';
   el.classList.add('open');
@@ -9369,10 +9382,14 @@ function execPauseResume(t){
 function execReplaceCurrent(t){
   const list=(typeof getSessionExs==='function')?getSessionExs(t):[]; const ex=list[execFocus[t]||0];
   closeExecOverlay('exec-pause');
+  if(!ex)return;
   try{
-    if(ex&&typeof openSwapExercise==='function'&&String(t).indexOf('prog_')===0){ openSwapExercise(ex.id,t); return; }
+    // F0.8O — open de bestaande swap-picker overal waar de oefening daadwerkelijk wisselbaar is
+    // (programma óf een oefening in sessionExtra). confirmSwapExercise/sessionLog-logica ongewijzigd.
+    const inExtra=(typeof sessionExtra!=='undefined')&&Array.isArray(sessionExtra)&&sessionExtra.some(e=>e.id===ex.id);
+    if(typeof openSwapExercise==='function'&&(String(t).indexOf('prog_')===0||inExtra)){ openSwapExercise(ex.id,t); return; }
   }catch(e){}
-  if(window.toast)toast('Vervangen kan via Training aanpassen of de Preview.');
+  if(window.toast)toast('Deze oefening wissel je via Training aanpassen in de Preview.');
 }
 // Notitie — transient per-oefening notitie (geen wijziging aan sessions/logging).
 let execNotes={};

@@ -4876,9 +4876,13 @@ const CARDIO_TYPES = {
 // Eén centrale plek — voorheen stond deze mapping (incl. de legacy generieke waarde "cardio")
 // los in 3 verschillende functies, wat ertoe leidde dat sommige plekken cardio-oefeningen niet
 // herkenden en per ongeluk de krachttraining-interface toonden.
+// F1.13: id-gebaseerde correctie voor cardio-oefeningen met een verkeerd/generiek `type` in de data
+// (bike_erg staat als 'rowing' → moet 'bikeerg'). Geen Supabase-mutatie; deterministisch, reversibel.
+const CARDIO_TYPE_BY_ID = { bike_erg:'bikeerg', ski_erg:'skierg', roeien:'rowing' };
 function resolveCardioType(ex){
   if(!ex)return null;
   if(ex.cardioType && CARDIO_TYPES[ex.cardioType])return ex.cardioType;
+  if(ex.id && CARDIO_TYPE_BY_ID[ex.id] && CARDIO_TYPES[CARDIO_TYPE_BY_ID[ex.id]])return CARDIO_TYPE_BY_ID[ex.id]; // F1.13 id-correctie
   if(CARDIO_TYPES[ex.type])return ex.type;
   if(ex.type==='cardio')return 'rowing'; // legacy generieke waarde uit oudere data — default naar roeien
   return null;

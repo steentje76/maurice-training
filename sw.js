@@ -2,7 +2,7 @@
 // Play Store ready — offline first
 
 const CACHE_NAME = 'trainingskompas-v42430';
-const CACHE_STATIC = 'trainingskompas-static-v42435';
+const CACHE_STATIC = 'trainingskompas-static-v42436';
 // F1.9 SW-GUARD: hash (CRLF-agnostisch) van core/calculation.js + core/decision.js.
 // core/sw-guard.test.js faalt als de core wijzigt zonder dat deze CORE_SIG + CACHE_STATIC gebumpt zijn.
 // Bij een core-wijziging: draai `node core/sw-guard.test.js` -> die print de nieuwe CORE_SIG; werk hem

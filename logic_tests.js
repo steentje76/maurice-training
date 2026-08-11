@@ -2334,6 +2334,30 @@ test('Test 8 — Bestaande nieuwe-training-flow (zonder Library, zonder existing
   assertEq(customTrainings[0].name,'Mijn training');
 });
 
+// ── F1.13 — Cardio exercise-type resolutie (resolveCardioType) ──────────
+// Zelfde logica als in index.html (incl. F1.13 id-correctie) — pure functie, los getest.
+// Bewijst: bike_erg (data type=rowing) wordt correct als bikeerg herkend; overige onveranderd.
+(function(){
+  const CT={rowing:1,bikeerg:1,skierg:1,assaultbike:1,running:1,swimming:1,cycling:1,stairmaster:1};
+  const BYID={bike_erg:'bikeerg',ski_erg:'skierg',roeien:'rowing'};
+  function resolveCardioType(ex){
+    if(!ex)return null;
+    if(ex.cardioType && CT[ex.cardioType])return ex.cardioType;
+    if(ex.id && BYID[ex.id] && CT[BYID[ex.id]])return BYID[ex.id];
+    if(CT[ex.type])return ex.type;
+    if(ex.type==='cardio')return 'rowing';
+    return null;
+  }
+  test('F1.13 — bike_erg (data type=rowing) → bikeerg (id-correctie)',()=>{ assertEq(resolveCardioType({id:'bike_erg',type:'rowing'}),'bikeerg'); });
+  test('F1.13 — ski_erg → skierg',()=>{ assertEq(resolveCardioType({id:'ski_erg',type:'skierg'}),'skierg'); });
+  test('F1.13 — roeien (type=cardio) → rowing',()=>{ assertEq(resolveCardioType({id:'roeien',type:'cardio'}),'rowing'); });
+  test('F1.13 — expliciete cardioType-override wint',()=>{ assertEq(resolveCardioType({id:'x',cardioType:'skierg',type:'rowing'}),'skierg'); });
+  test('F1.13 — assaultbike type → assaultbike (geen split/distance)',()=>{ assertEq(resolveCardioType({id:'ab',type:'assaultbike'}),'assaultbike'); });
+  test('F1.13 — krachtoefening blijft null (onveranderd)',()=>{ assertEq(resolveCardioType({id:'bench',type:'strength'}),null); });
+  test('F1.13 — null/undefined → null',()=>{ assertEq(resolveCardioType(null),null); assertEq(resolveCardioType(undefined),null); });
+  test('F1.13 — onbekende cardio-id valt terug op type',()=>{ assertEq(resolveCardioType({id:'onbekend',type:'bikeerg'}),'bikeerg'); });
+})();
+
 // ── SAMENVATTING ─────────────────────────────────────────
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`Resultaat: ${passed} geslaagd, ${failed} mislukt`);

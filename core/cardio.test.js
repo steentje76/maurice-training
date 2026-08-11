@@ -168,11 +168,10 @@ T('strength-metrics en cardio-metrics zijn disjunct (kunnen elkaar niet overschr
   STRENGTH_COLS.forEach(c => ok(!(c in cardioRow), 'kruisbesmetting: ' + c));
 });
 
-// ================= H. INVALID INPUT SAFE-HANDLING (F2.5B) =================
+// ================= H. INVALID INPUT SAFE-HANDLING (F2.5B → F3.6) =================
 // Bewijst dat cardioDataToRow ongeldige invoer VEILIG overslaat i.p.v. corrupte kolommen op te slaan.
-// (Negatieve waarden passeren nu nog wél — bewust gedocumenteerd als minor debt; fix = UI/validator,
-//  raakt het actual-write-pad → apart voorstel, niet in deze test afgedwongen.)
-console.log('\n[H] Invalid cardio input safe-handling (F2.5B)');
+// F3.6: negatieve én niet-eindige (Infinity) waarden worden nu ook geweigerd vóór actual-write.
+console.log('\n[H] Invalid cardio input safe-handling (F2.5B → F3.6)');
 T('lege invoer -> kolom afwezig (geen 0/null-spook)', () => {
   const r = C2R('rowing', { dist: '', time: '8:00', watt: '' });
   ok(!('distance' in r), 'lege dist mag geen distance-kolom zetten'); ok(!('watt' in r));
@@ -188,6 +187,59 @@ T('NaN-numeriek veld -> overgeslagen, geen NaN opgeslagen', () => {
 T('geldige invoer -> correcte numerieke kolommen (integer/parse)', () => {
   const r = C2R('rowing', { dist: '2000', time: '8:12', watt: '185', stroke: '28' });
   ok(r.distance === 2000 && r.watt === 185 && r.stroke_rate === 28, 'geldige parse faalt');
+});
+// F3.6 — P: negatieve waarden mogen NOOIT naar de actual-write.
+T('P: negatieve afstand -> distance-kolom afwezig (geen corrupte row)', () => {
+  const r = C2R('rowing', { dist: '-2000', time: '8:00', watt: '185' });
+  ok(!('distance' in r), 'negatieve dist mag niet opgeslagen worden'); ok(r.watt === 185, 'geldige watt blijft');
+});
+T('P: negatieve watt/stroke -> kolommen afwezig, rest blijft', () => {
+  const r = C2R('rowing', { dist: '2000', time: '8:00', watt: '-50', stroke: '-3' });
+  ok(r.distance === 2000); ok(!('watt' in r), 'negatieve watt geweigerd'); ok(!('stroke_rate' in r), 'negatieve stroke geweigerd');
+});
+T('P: negatieve calorieën (assaultbike) -> calories-kolom afwezig', () => {
+  const r = C2R('assaultbike', { cals: '-98', time: '10:00', watt: '150' });
+  ok(!('calories' in r), 'negatieve cals geweigerd'); ok(r.watt === 150);
+});
+// F3.6 — R: Infinity mag NOOIT naar de actual-write.
+T('R: Infinity-waarde -> kolom afwezig (niet-eindig geweigerd)', () => {
+  const r = C2R('rowing', { dist: 'Infinity', time: '8:00', watt: '185' });
+  ok(!('distance' in r), 'Infinity dist geweigerd'); ok(r.watt === 185);
+});
+
+// ================= I. CardioCore input-classificatie (F3.6 pure validator) =================
+// EMPTY vs INVALID vs VALID — de bron van waarheid voor sporter-feedback, puur en testbaar.
+console.log('\n[I] CardioCore.classifyNumericInput / classifyTimeInput (F3.6)');
+T('S: lege/whitespace invoer -> empty', () => {
+  eq(CardioCore.classifyNumericInput('').status, 'empty');
+  eq(CardioCore.classifyNumericInput('   ').status, 'empty');
+  eq(CardioCore.classifyNumericInput(null).status, 'empty');
+  eq(CardioCore.classifyNumericInput(undefined).status, 'empty');
+});
+T('P: negatief getal -> invalid (reason negatief)', () => {
+  const c = CardioCore.classifyNumericInput('-5'); eq(c.status, 'invalid'); eq(c.reason, 'negatief'); eq(c.value, null);
+});
+T('Q: NaN/garbage -> invalid (niet-eindig)', () => {
+  eq(CardioCore.classifyNumericInput('abc').status, 'invalid');
+  eq(CardioCore.classifyNumericInput('NaN').status, 'invalid');
+});
+T('R: Infinity -> invalid (niet-eindig)', () => {
+  const c = CardioCore.classifyNumericInput('Infinity'); eq(c.status, 'invalid'); eq(c.reason, 'niet-eindig');
+});
+T('geldig getal -> valid met numerieke waarde', () => {
+  const c = CardioCore.classifyNumericInput('185'); eq(c.status, 'valid'); eq(c.value, 185);
+  eq(CardioCore.classifyNumericInput('0').status, 'valid'); // 0 is geldig (bv. 0 weerstand)
+});
+T('tijd: geldige mm:ss -> valid seconden', () => {
+  const c = CardioCore.classifyTimeInput('8:12'); eq(c.status, 'valid'); eq(c.value, 492);
+});
+T('tijd: leeg -> empty; negatief -> invalid; onleesbaar -> invalid', () => {
+  eq(CardioCore.classifyTimeInput('').status, 'empty');
+  eq(CardioCore.classifyTimeInput('-1:30').status, 'invalid'); // -90s
+  eq(CardioCore.classifyTimeInput('zomaar').status, 'invalid');
+});
+T('classificatie is deterministisch', () => {
+  eq(JSON.stringify(CardioCore.classifyNumericInput('42')), JSON.stringify(CardioCore.classifyNumericInput('42')));
 });
 
 console.log('\n' + '='.repeat(56));

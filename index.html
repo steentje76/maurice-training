@@ -4922,7 +4922,9 @@ function cardioDataToRow(cardioType, d){
       return;
     }
     let v = spec.parse==='int'?parseInt(raw):spec.parse==='float'?parseFloat(raw):raw;
-    if(spec.parse!=='string'&&isNaN(v))return;
+    // F3.6: weiger niet-eindige (NaN/Infinity) én negatieve cardio-waarden vóór actual-write.
+    // Zo belandt er nooit een corrupte/onmogelijke waarde in een sessions-row (CardioCore blijft bron van waarheid).
+    if(spec.parse!=='string'&&(!isFinite(v)||v<0))return;
     if(spec.transform)v=spec.transform(v);
     row[spec.col]=v;
   });
@@ -11983,8 +11985,30 @@ function cardioProgressionMetrics(cardioType){
   if(cardioType==='assaultbike') return [ {field:'calPerMin',dir:'max'}, {field:'watts',dir:'max'} ];
   return [ {field:'durationSec',dir:'min'}, {field:'splitSec',dir:'min'}, {field:'watts',dir:'max'} ];
 }
-// Guarded, fire-and-forget: verrijkt de reeds-getoonde summary met een vergelijkingszin per cardio-oefening.
-// Faalt stil -> de basis-summary blijft altijd exact staan.
+// F3.3/F3.4/F3.9 — presentatie-helpers (GEEN berekening; getallen via CardioCore, vergelijking via ProgressionCore).
+function tkFmtSplit(sec, splitUnit){ var t=CardioCore.formatTime(sec); return t?(t+(splitUnit||'')):''; }
+function cardioPerfLine(perf, type){
+  var cfg=CARDIO_TYPES[type]||{}, parts=[];
+  if(perf.durationSec!=null){ var t=CardioCore.formatTime(perf.durationSec); if(t) parts.push(t); }
+  if(type!=='assaultbike'){
+    if(perf.splitSec!=null){ var sp=tkFmtSplit(perf.splitSec, cfg.splitUnit); if(sp) parts.push(sp); }
+  } else if(perf.calPerMin!=null && isFinite(perf.calPerMin)){
+    parts.push((Math.round(perf.calPerMin*10)/10)+' cal/min');
+  }
+  if(perf.watts!=null && isFinite(perf.watts)) parts.push(Math.round(perf.watts)+' W');
+  return parts.join(' · ');
+}
+// Beste-metric per apparaat (expliciete semantiek): distance-ergs -> snelste tijd (min);
+// assaultbike -> hoogste watt indien aanwezig, anders hoogste cal/min (max).
+function cardioBestMetric(type, curPerf){
+  if(type==='assaultbike'){
+    if(curPerf && isFinite(curPerf.watts) && curPerf.watts>0) return {field:'watts', dir:'max', label:'wattage', fmt:function(p){return Math.round(p.watts)+' W';}};
+    return {field:'calPerMin', dir:'max', label:'cal/min', fmt:function(p){return (Math.round(p.calPerMin*10)/10)+' cal/min';}};
+  }
+  return {field:'durationSec', dir:'min', label:'tijd', fmt:function(p){return CardioCore.formatTime(p.durationSec);}};
+}
+// Guarded, fire-and-forget: verrijkt de reeds-getoonde summary met vergelijking + best + trend per cardio-oefening.
+// Faalt stil -> de basis-summary blijft altijd exact staan. Presentatie-only, nooit actual-write.
 async function enhanceSummaryProgression(list){
   try{
     if(typeof ProgressionCore==='undefined' || typeof sbGet!=='function' || typeof CardioCore==='undefined' || typeof cardioDataToRow!=='function') return;
@@ -12001,30 +12025,55 @@ async function enhanceSummaryProgression(list){
         var histPerfs=(hist||[]).filter(function(s){return s.exercise_id===ex.id;}).map(function(s){return cardioPerfFromSession(s,type);}).filter(Boolean);
         var comp=ProgressionCore.comparableHistory(histPerfs, curPerf.key);
         var el=document.getElementById('sumex-'+ex.id); if(!el) return;
-        var line=null;
-        if(!comp.length){ line='Eerste registratie — vanaf nu volgen we je progressie.'; }
-        else {
+        var suff=ProgressionCore.sufficiency(comp.length);
+        var rows=[]; // {text, color, strong}
+        if(!comp.length){
+          rows.push({text:'Eerste registratie \u2014 vanaf nu volgen we je progressie.', color:'var(--g4)'});
+        } else {
           var prev=ProgressionCore.comparablePrevious(histPerfs, curPerf.key);
           if(prev){
             var rep=ProgressionCore.deltaReport(curPerf, prev, cardioProgressionMetrics(type));
             var primary=(type==='assaultbike')?rep.calPerMin:rep.splitSec;
-            if(primary && primary.better===true) line='↑ Sterker dan je vorige vergelijkbare training.';
-            else if(primary && primary.better===false) line='Iets rustiger dan vorige keer — ook prima.';
-            else if(primary && primary.better===null && primary.delta===0) line='Gelijk aan vorige keer.';
+            var prevStr=cardioPerfLine(prev, type);
+            if(prevStr) rows.push({text:'Vorige vergelijkbare: '+prevStr, color:'var(--g4)'});
+            var verdict=null, vColor='var(--g4)';
+            if(primary && primary.better===true){ verdict=(type==='assaultbike')?'\u2191 Sterker dan vorige keer':'\u2191 Sneller dan vorige keer'; vColor='#2e7d32'; }
+            else if(primary && primary.better===false){ verdict='Iets rustiger dan vorige keer \u2014 ook prima'; }
+            else if(primary && primary.better===null && primary.delta===0){ verdict='Gelijk aan vorige keer'; }
+            var extra=[];
+            if(rep.watts && rep.watts.delta!=null && rep.watts.delta!==0) extra.push((rep.watts.delta>0?'+':'')+Math.round(rep.watts.delta)+' W');
+            if(verdict) rows.push({text:verdict+(extra.length?(' \u00b7 '+extra.join(' \u00b7 ')):''), color:vColor});
+          }
+          var bm=cardioBestMetric(type, curPerf);
+          if(ProgressionCore.isNewBest(histPerfs, curPerf.key, curPerf, bm.field, bm.dir)){
+            var bv=bm.fmt(curPerf);
+            if(bv) rows.push({text:'\ud83c\udfc6 Nieuwe beste '+bm.label+': '+bv, color:'#b8860b', strong:true});
+          }
+          if(suff.canTrend){
+            var tr=ProgressionCore.trendBy(histPerfs, curPerf.key, bm.field, bm.dir, 3);
+            if(tr && tr.status==='trend'){
+              if(tr.improving===true) rows.push({text:'\ud83d\udcc8 Stijgende lijn over je laatste vergelijkbare trainingen.', color:'#2e7d32'});
+              else if(tr.improving===false) rows.push({text:'Licht dalend \u2014 herstel telt ook mee.', color:'var(--g4)'});
+              else rows.push({text:'Stabiel over je laatste vergelijkbare trainingen.', color:'var(--g4)'});
+            }
           }
         }
-        if(line){ var c=(line.charAt(0)==='\u2191')?'#2e7d32':'var(--g4)'; el.insertAdjacentHTML('beforeend', '<div style="font-size:11px;margin-top:3px;color:'+c+'">'+line+'</div>'); }
+        if(rows.length){
+          var html=rows.map(function(r){return '<div style="font-size:11px;margin-top:3px;color:'+r.color+(r.strong?';font-weight:700':'')+'">'+r.text+'</div>';}).join('');
+          el.insertAdjacentHTML('beforeend', html);
+        }
       }catch(e){}
     });
   }catch(e){}
 }
 function renderSessionSummaryContent(t){
   const list=getSessionExs(t);
-  let html='';
+  const strengthCards=[], cardioCards=[];
   list.forEach(ex=>{
     const l=sessionLog[ex.id];if(!l)return;
-    let det='';
+    let det='', group=null;
     if(l.cardio && CARDIO_TYPES[l.cardio.type]){
+      group='cardio';
       const cfg=CARDIO_TYPES[l.cardio.type],c=l.cardio,parts=[];
       if(c.dist)parts.push(c.dist+cfg.unit);
       if(c.dist_km)parts.push(c.dist_km+'km');
@@ -12038,12 +12087,24 @@ function renderSessionSummaryContent(t){
       det=parts.join(' · ');
     }
     else if(l.sets){
+      group='strength';
       const ws=l.sets.filter(s=>s&&(s.kg||s.reps));
       if(l.wu?.length){const wsd=l.wu.filter(s=>s&&s.kg);if(wsd.length)det+=`<span style="color:#3b82f6">W: ${wsd.map(s=>(s.kg||'?')+'×'+(s.reps||'?')).join(', ')}</span><br>`;}
       det+=ws.map(s=>(s.kg||'?')+'kg×'+(s.reps||'?')+(s.rpe?' @'+s.rpe:'')).join(' · ');
     }
-    if(det)html+=`<div id="sumex-${ex.id}" style="padding:8px 0;border-bottom:1px solid var(--g2)"><div style="font-size:13px;font-weight:700;color:var(--dark)">${ex.naam}</div><div style="font-size:12px;color:var(--g4);margin-top:3px">${det}</div></div>`;
+    if(det){
+      const card=`<div id="sumex-${ex.id}" style="padding:8px 0;border-bottom:1px solid var(--g2)"><div style="font-size:13px;font-weight:700;color:var(--dark)">${ex.naam}</div><div style="font-size:12px;color:var(--g4);margin-top:3px">${det}</div></div>`;
+      (group==='cardio'?cardioCards:strengthCards).push(card);
+    }
   });
+  const secHdr=(txt)=>`<div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--g4);margin:10px 0 2px">${txt}</div>`;
+  let html='';
+  if(strengthCards.length && cardioCards.length){
+    // F3.5 mixed workout: expliciete secties zodat cardio niet als kracht-blok leest.
+    html=secHdr('Kracht')+strengthCards.join('')+secHdr('Cardio')+cardioCards.join('');
+  } else {
+    html=strengthCards.join('')+cardioCards.join('');
+  }
   if(!html)html='<p style="color:var(--g4);font-size:13px">Nog geen sets gelogd.</p>';
   document.getElementById('session-end-content').innerHTML=html;
   openModal('m-session-end');

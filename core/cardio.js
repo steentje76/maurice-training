@@ -85,6 +85,28 @@
     return { total: total, avg: total / vals.length, count: vals.length };
   }
 
+  // --- cardio_validate.v1 --- PURE input-classificatie (F3.6). Beschermt de actual-write:
+  // een negatieve/niet-eindige/onmogelijke cardio-waarde mag NOOIT in een sessions-row belanden.
+  // Onderscheid: 'empty' (leeg/whitespace) · 'invalid' (NaN/Infinity/negatief) · 'valid'.
+  // Puur presentatie/validatie: geen DOM, geen clamping van geldige invoer.
+  function classifyNumericInput(raw) {
+    if (raw === undefined || raw === null) return { status: 'empty', value: null, reason: null };
+    var s = String(raw).trim();
+    if (s === '') return { status: 'empty', value: null, reason: null };
+    var v = Number(s);
+    if (!isFinite(v)) return { status: 'invalid', value: null, reason: 'niet-eindig' };
+    if (v < 0) return { status: 'invalid', value: null, reason: 'negatief' };
+    return { status: 'valid', value: v, reason: null };
+  }
+  // Tijd-invoer ("mm:ss"/"h:mm:ss"/getal) via parseTime; negatief of onleesbaar -> invalid.
+  function classifyTimeInput(raw) {
+    if (raw === undefined || raw === null || String(raw).trim() === '') return { status: 'empty', value: null, reason: null };
+    var sec = parseTime(raw);
+    if (sec === null || !isFinite(sec)) return { status: 'invalid', value: null, reason: 'onleesbaar' };
+    if (sec < 0) return { status: 'invalid', value: null, reason: 'negatief' };
+    return { status: 'valid', value: sec, reason: null };
+  }
+
   var CardioCore = {
     parseTime: parseTime,
     formatTime: formatTime,
@@ -95,6 +117,8 @@
     splitFromWatt500: splitFromWatt500,
     autoSplits: autoSplits,
     fromManualSplits: fromManualSplits,
+    classifyNumericInput: classifyNumericInput,
+    classifyTimeInput: classifyTimeInput,
     VERSIONS: VERSIONS
   };
 

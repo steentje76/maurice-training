@@ -75,6 +75,16 @@
     return out;
   }
 
+  // Is de HUIDIGE prestatie een nieuwe beste t.o.v. alle EERDERE vergelijkbare prestaties?
+  // history bevat uitsluitend eerdere prestaties (excl. current). Zonder eerdere prestatie -> false
+  // (dat is een 'eerste registratie', geen 'nieuwe beste'). Metric-semantiek expliciet via dir.
+  function isNewBest(history, key, current, field, dir) {
+    if (!current || !isNum(current[field])) return false;
+    var best = bestBy(history, key, field, dir);
+    if (!best) return false;
+    return dir === 'min' ? current[field] < best[field] : current[field] > best[field];
+  }
+
   // Eenvoudige trend over >=minN vergelijkbare prestaties: gemiddelde verandering per stap
   // (laatste - eerste)/(n-1) op één veld, met richting. Onder de drempel -> insufficient.
   function trendBy(history, key, field, dir, minN) {
@@ -92,6 +102,7 @@
     comparableHistory: comparableHistory,
     comparablePrevious: comparablePrevious,
     bestBy: bestBy,
+    isNewBest: isNewBest,
     deltaReport: deltaReport,
     trendBy: trendBy,
     VERSIONS: VERSIONS

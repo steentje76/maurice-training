@@ -2,12 +2,12 @@
 // Play Store ready — offline first
 
 const CACHE_NAME = 'trainingskompas-v42430';
-const CACHE_STATIC = 'trainingskompas-static-v42437';
+const CACHE_STATIC = 'trainingskompas-static-v42438';
 // F1.9 SW-GUARD: hash (CRLF-agnostisch) van core/calculation.js + core/decision.js.
 // core/sw-guard.test.js faalt als de core wijzigt zonder dat deze CORE_SIG + CACHE_STATIC gebumpt zijn.
 // Bij een core-wijziging: draai `node core/sw-guard.test.js` -> die print de nieuwe CORE_SIG; werk hem
 // hier bij ÉN bump CACHE_STATIC, zodat bestaande browsers de nieuwe core daadwerkelijk laden.
-const CORE_SIG = '96fe7d2b29e2af2e';
+const CORE_SIG = '381938363683b7a7';
 // Video-cache: STABIEL en LOSGEKOPPELD van de app-versie. App-updates verwijderen video's NIET.
 const CACHE_VIDEOS = 'tk-videos-v1';
 const VIDEO_LIMIT_BYTES = 250 * 1024 * 1024; // 250 MB LRU-plafond

@@ -55,6 +55,29 @@ T('AssaultBike: hoogste cal/min = beste (dir max)', () => {
   eq(P.bestBy(ab, 'ab', 'calPerMin', 'max').calPerMin, 10.5);
 });
 
+// ================= C2. isNewBest (nieuwe-beste-detectie, F3.3) =================
+console.log('\n[C2] isNewBest (nieuwe beste vs eerdere vergelijkbare)');
+T('L: snellere split dan eerdere beste -> nieuwe beste (dir min)', () => {
+  // eerdere beste split = 123.5; current 123 is sneller
+  ok(P.isNewBest(row2k, 'roeien@2000', current2k, 'splitSec', 'min'), 'moet nieuwe beste zijn');
+});
+T('L: hoger watt dan eerdere beste -> nieuwe beste (dir max)', () => {
+  ok(P.isNewBest(row2k, 'roeien@2000', current2k, 'watts', 'max'));
+});
+T('M: gelijk aan eerdere beste -> geen nieuwe beste', () => {
+  eq(P.isNewBest(row2k, 'roeien@2000', { key: 'roeien@2000', splitSec: 123.5 }, 'splitSec', 'min'), false);
+});
+T('M: langzamer dan eerdere beste -> geen nieuwe beste', () => {
+  eq(P.isNewBest(row2k, 'roeien@2000', { key: 'roeien@2000', splitSec: 130 }, 'splitSec', 'min'), false);
+});
+T('geen eerdere vergelijkbare -> geen nieuwe beste (eerste registratie apart)', () => {
+  eq(P.isNewBest([], 'roeien@2000', current2k, 'splitSec', 'min'), false);
+  eq(P.isNewBest(row5k, 'roeien@2000', current2k, 'splitSec', 'min'), false); // andere afstand telt niet mee
+});
+T('ontbrekende current-waarde -> geen valse beste', () => {
+  eq(P.isNewBest(row2k, 'roeien@2000', { key: 'roeien@2000', splitSec: null }, 'splitSec', 'min'), false);
+});
+
 // ================= D. deltaReport (deterministisch verschil) =================
 console.log('\n[D] deltaReport (verschil huidige vs vorige)');
 T('split sneller -> better=true (dir min, negatieve delta)', () => {

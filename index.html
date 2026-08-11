@@ -479,6 +479,19 @@ body{display:flex;justify-content:center}
 .set-step{width:40px;height:46px;flex-shrink:0;border:1.5px solid var(--g2);background:var(--g1);color:var(--dark);border-radius:12px;font-size:22px;font-weight:700;line-height:1;cursor:pointer;font-family:var(--f);display:flex;align-items:center;justify-content:center;transition:transform var(--motion-fast) var(--motion-ease),background var(--motion-fast) var(--motion-ease)}
 .set-step:active{background:var(--accent);border-color:var(--accent);color:#fff;transform:scale(.94)}
 .rest-bar-next-lbl{display:block;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:1px}
+/* F0.8K — lichte cirkel-rusttimer (vervangt de donkere balk; zelfde timerlogica) */
+.rest-bar2{position:fixed;left:12px;right:12px;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:200;display:flex;align-items:center;gap:12px;background:var(--card,#fff);border:1px solid var(--g2);border-radius:16px;padding:10px 14px;box-shadow:0 12px 30px rgba(0,0,0,.14);font-family:var(--f)}
+.rest-ring-wrap{flex-shrink:0;width:44px;height:44px}
+.rest-ring{width:44px;height:44px;transform:rotate(-90deg)}
+.rest-ring-bg{fill:none;stroke:var(--g2);stroke-width:4}
+.rest-ring-fg{fill:none;stroke:var(--accent);stroke-width:4;stroke-linecap:round;stroke-dasharray:119.38;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear}
+.rest-bar2-mid{flex:1;min-width:0}
+.rest-bar2-lbl{font-size:15px;font-weight:800;color:var(--dark);font-variant-numeric:tabular-nums}
+.rest-bar2-tot{color:var(--g4);font-weight:700;font-size:13px}
+.rest-bar2-next{font-size:11px;font-weight:600;color:var(--g4);line-height:1.3;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rest-bar2 .rest-bar-next-lbl{display:inline;color:var(--g3);margin-right:4px}
+.rest-bar2-skip{flex-shrink:0;background:var(--g1);border:1px solid var(--g2);color:var(--dark);border-radius:10px;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:var(--f);min-height:40px}
+.rest-bar2-skip:active{transform:scale(.97)}
 /* v3.3.56 — Exercise Intelligence Card (presentatielaag; zelfde design tokens, dark/light-safe) */
 .intel-card{margin:8px 14px 6px;border:1px solid var(--g2);border-radius:12px;overflow:hidden;background:var(--card)}
 .intel-toggle{width:100%;display:flex;align-items:center;gap:10px;padding:11px 12px;border:none;background:var(--g1);cursor:pointer;font-family:var(--f);min-height:46px}
@@ -2582,6 +2595,17 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .exfocus-today-c:first-child .v{font-size:26px;letter-spacing:-.5px;line-height:1.05}
 /* F0.8F — VANDAAG: kolomlabel boven, waarde, sublabel eronder (mock-up) + kolomscheiding */
 .exfocus-today-c .kk{font-size:9.5px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+/* F0.8L — Exercise HERO-kaart bovenaan de actieve set (mock-up): poster + tags + naam + video */
+.exfocus-herocard{display:flex;gap:12px;background:var(--card,#fff);border:1px solid var(--g1);border-radius:16px;padding:12px;margin:0 0 12px}
+.exfocus-hero-img{position:relative;flex-shrink:0;width:96px;height:96px;border-radius:12px;overflow:hidden;background:var(--g1);cursor:pointer}
+.exfocus-hero-img img{width:100%;height:100%;object-fit:cover;display:block}
+.exfocus-hero-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+.exfocus-hero-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:6px}
+.exfocus-hero-tags{display:flex;flex-wrap:wrap;gap:6px}
+.exfocus-hero-tag{font-size:10.5px;font-weight:800;color:var(--accent);background:var(--v43-mint,#e9f7f1);border-radius:999px;padding:3px 9px}
+.exfocus-hero-nm{font-size:18px;font-weight:800;color:var(--dark);letter-spacing:-.3px;line-height:1.15}
+.exfocus-hero-desc{font-size:12px;color:var(--g4);line-height:1.35}
+.exfocus-hero-vid{align-self:flex-start;background:none;border:none;color:var(--accent);font-size:13px;font-weight:800;font-family:var(--f);cursor:pointer;padding:2px 0}
 .exfocus-today-c:not(:last-child){border-right:1px solid var(--g1)}
 /* F0.8 — Set Completion Feedback (aria-live pil; presentatie, geen logging/state) */
 .set-confirm{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%) translateY(-8px);z-index:260;background:linear-gradient(150deg,#0f5132,#0a3d27);color:#fff;border-radius:999px;padding:11px 18px;font-family:var(--f);font-size:14px;font-weight:800;letter-spacing:-.2px;box-shadow:0 10px 28px rgba(0,0,0,.35);opacity:0;pointer-events:none;white-space:nowrap;font-variant-numeric:tabular-nums;transition:opacity .18s ease,transform .18s ease}
@@ -4210,16 +4234,16 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
   </div>
 </div>
-<div id="rest-timer-bar" class="rest-bar" style="display:none">
-  <div class="rest-bar-fill" id="rt-fill"></div>
-  <div class="rest-bar-row">
-    <div class="rest-bar-info">
-      <div class="rest-bar-lbl">Rust</div>
-      <div class="rest-bar-time"><span id="rt-remaining">00:00</span></div>
-    </div>
-    <div class="rest-bar-hint"><span class="rest-bar-next-lbl">Volgende</span><span id="rt-next">Klaar voor je volgende set</span></div>
-    <button onclick="cancelRestTimer()" class="rest-bar-stop">Overslaan</button>
+<!-- F0.8K — lichte cirkel-rusttimer (mock-up). Zelfde ids/logica; alleen presentatie. -->
+<div id="rest-timer-bar" class="rest-bar2" style="display:none">
+  <div class="rest-ring-wrap">
+    <svg class="rest-ring" viewBox="0 0 44 44" aria-hidden="true"><circle class="rest-ring-bg" cx="22" cy="22" r="19"/><circle class="rest-ring-fg" id="rt-ring" cx="22" cy="22" r="19"/></svg>
   </div>
+  <div class="rest-bar2-mid">
+    <div class="rest-bar2-lbl">Rust · <span id="rt-remaining">00:00</span><span class="rest-bar2-tot"> / <span id="rt-total">00:00</span></span></div>
+    <div class="rest-bar2-next"><span class="rest-bar-next-lbl">Volgende</span> <span id="rt-next">Klaar voor je volgende set</span></div>
+  </div>
+  <button onclick="cancelRestTimer()" class="rest-bar2-skip">Overslaan</button>
 </div>
 
 <div class="modal-bg" id="m-train-settings" onclick="bgClose(event,'m-train-settings')">
@@ -9064,7 +9088,7 @@ function applyExecutionFocus(t){
   let idx=execFocus[t]; if(idx==null||idx<0||idx>=n)idx=0; execFocus[t]=idx;
   // Verberg alles behalve de actieve kaart + de focus-chrome (intro/summary/overige kaarten weg).
   [...container.children].forEach(ch=>{
-    if(ch.classList.contains('exfocus-head')||ch.classList.contains('exfocus-next')||ch.classList.contains('exfocus-nav')||ch.classList.contains('exfocus-today')||ch.classList.contains('exfocus-wu'))return;
+    if(ch.classList.contains('exfocus-head')||ch.classList.contains('exfocus-next')||ch.classList.contains('exfocus-nav')||ch.classList.contains('exfocus-today')||ch.classList.contains('exfocus-wu')||ch.classList.contains('exfocus-herocard'))return;
     if(ch.classList.contains('ex-card'))return; // hieronder per index geregeld
     ch.classList.add('exfocus-hidden');
   });
@@ -9076,6 +9100,9 @@ function applyExecutionFocus(t){
   const intel=a.querySelector('.intel-card'); if(intel)intel.classList.add('open');
   // Poster lui injecteren (bestaande helper), zodat de actieve oefening altijd zijn beeld toont.
   try{ const exId=(list[idx]&&list[idx].id); if(exId&&typeof _intelInjectPoster==='function')_intelInjectPoster(exId); }catch(e){}
+  // F0.8L — de oefening-identiteit verhuist naar een hero-kaart bovenaan (mock-up); de kaart-
+  // eigen header (naam/collapse) is in de focus-view overbodig en wordt verborgen.
+  try{ const hd=a.querySelector('.ex-card-hd'); if(hd)hd.classList.add('exfocus-hidden'); }catch(e){}
   // Chrome: voortgang-header bovenaan.
   let head=container.querySelector('.exfocus-head');
   if(!head){ head=document.createElement('div'); head.className='exfocus-head'; container.insertBefore(head,container.firstChild); }
@@ -9083,6 +9110,28 @@ function applyExecutionFocus(t){
   head.innerHTML='<span class="k">Oefening '+(idx+1)+' / '+n+(skipped?' · overgeslagen':'')+'</span>'+
     '<span class="exfocus-headacts"><button class="exfocus-ov" onclick="openExecExplain(\''+t+'\')">Uitleg</button>'+
     '<button class="exfocus-ov" onclick="openExecOverview(\''+t+'\')">Overzicht</button></span>';
+  // F0.8L — Exercise HERO-kaart bovenaan (mock-up): poster + spiergroep-tags + naam + video-CTA.
+  // Uitsluitend echte data (ex.naam / ex.muscles / ex.yt / ex.tip). Geen verzonnen tags/tekst.
+  let heroC=container.querySelector('.exfocus-herocard'); if(heroC)heroC.remove();
+  try{
+    const curId=list[idx]&&list[idx].id;
+    const cx=(curId&&typeof exercises!=='undefined'&&exercises.find)?exercises.find(e=>e.id===curId):null;
+    const exd=(list[idx]&&list[idx].muscles)?list[idx]:(cx||list[idx]||{});
+    const yt=(list[idx]&&list[idx].yt)||(cx&&cx.yt)||null;
+    const tags=(exd.muscles&&exd.muscles.p)?exd.muscles.p.slice(0,3):[];
+    const tip=(list[idx]&&list[idx].tip)||(cx&&cx.tip)||null;
+    const nm=(list[idx]&&list[idx].naam)||(cx&&cx.naam)||'Oefening';
+    heroC=document.createElement('div'); heroC.className='exfocus-herocard';
+    let hc='';
+    if(yt) hc+='<div class="exfocus-hero-img" onclick="openExecExplain(\''+t+'\')"><img src="https://img.youtube.com/vi/'+yt+'/mqdefault.jpg" alt="'+escHtml(nm)+'" loading="lazy" onerror="this.closest(\'.exfocus-hero-img\').style.display=\'none\'"><span class="exfocus-hero-play">▶</span></div>';
+    hc+='<div class="exfocus-hero-body">'+
+        (tags.length?('<div class="exfocus-hero-tags">'+tags.map(x=>'<span class="exfocus-hero-tag">'+escHtml(x)+'</span>').join('')+'</div>'):'')+
+        '<div class="exfocus-hero-nm">'+escHtml(nm)+'</div>'+
+        (tip?'<div class="exfocus-hero-desc">'+escHtml(tip)+'</div>':'')+
+        '<button class="exfocus-hero-vid" onclick="openExecExplain(\''+t+'\')">▶ '+(yt?'Bekijk video &amp; uitleg':'Techniek &amp; uitleg')+'</button>'+
+      '</div>';
+    heroC.innerHTML=hc; head.insertAdjacentElement('afterend',heroC);
+  }catch(e){}
   // F0.7R — "VANDAAG"-kaart (mock-up): gewicht / sets×reps@RPE / rust, uit bestaande resolved data.
   let today=container.querySelector('.exfocus-today'); if(today)today.remove();
   const cur=list[idx]||{};
@@ -9099,7 +9148,7 @@ function applyExecutionFocus(t){
       '<div class="exfocus-today-c"><div class="kk">Sets × reps</div><div class="v">'+escHtml(sr)+'</div><div class="k">'+escHtml(rpe)+'</div></div>'+
       '<div class="exfocus-today-c"><div class="kk">Rust</div><div class="v">'+escHtml(restDisp)+'</div><div class="k">Tussen sets</div></div>'+
       '</div>';
-    head.insertAdjacentElement('afterend',today);
+    (container.querySelector('.exfocus-herocard')||head).insertAdjacentElement('afterend',today);
     // F0.8B — Active Set Focus in de VANDAAG-kaart (read-only spiegel van #sc-<ex>-<i>).
     if(cur.id){ const asb=document.createElement('div'); asb.id='exfocus-set-'+cur.id; asb.className='exfocus-setwrap'; asb.innerHTML=activeSetBannerHtml(cur.id); today.appendChild(asb); if(typeof applyActiveSetRowClass==='function')applyActiveSetRowClass(cur.id); }
   }
@@ -9124,7 +9173,7 @@ function applyExecutionFocus(t){
       }).join('');
       ramp=document.createElement('div'); ramp.className='exfocus-wu';
       ramp.innerHTML='<div class="exfocus-wu-hd"><span>Warm-up</span>'+(wkg&&wkg>0?'<span class="exfocus-wu-base">o.b.v. '+String(wkg).replace('.',',')+' kg</span>':'')+'</div>'+rows;
-      (container.querySelector('.exfocus-today')||head).insertAdjacentElement('afterend',ramp);
+      (container.querySelector('.exfocus-today')||container.querySelector('.exfocus-herocard')||head).insertAdjacentElement('afterend',ramp);
     }
   }
   // Volgende-oefening preview + navigatie onderaan.
@@ -14869,13 +14918,17 @@ function startRestTimer(seconds){
   const bar=document.getElementById('rest-timer-bar');
   bar.style.display='block';
   const nx=document.getElementById('rt-next');if(nx)nx.textContent=restNextLabel||'Klaar voor je volgende set';restNextLabel='';
+  // F0.8K — totaal-rusttijd tonen (mm:ss) naast de afteller; presentatie.
+  const tot=document.getElementById('rt-total'); if(tot){const tm=Math.floor(seconds/60),ts=seconds%60; tot.textContent=(tm<10?'0':'')+tm+':'+(ts<10?'0':'')+ts;}
   const tick=()=>{
     const rem=Math.max(0,Math.round((restEndAt-Date.now())/1000));
     const m=Math.floor(rem/60),s=rem%60;
     document.getElementById('rt-remaining').textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
-    // v3.3.52 P5 — premium voortgangsbalk (gebruikt de in-scope 'seconds', geen nieuwe state)
+    // F0.8K — cirkel-progressie (SVG ring) i.p.v. donkere balk; zelfde 'seconds', geen nieuwe state.
     const fill=document.getElementById('rt-fill');
     if(fill&&seconds>0)fill.style.width=Math.max(0,Math.min(100,(rem/seconds)*100))+'%';
+    const ring=document.getElementById('rt-ring');
+    if(ring&&seconds>0){ const C=119.38; ring.style.strokeDashoffset=(C*(1-Math.max(0,Math.min(1,rem/seconds)))).toFixed(1); }
     if(rem<=0){
       clearInterval(restInterval);restInterval=null;
       if(navigator.vibrate&&isSettingOn('tk_haptics_enabled',true))navigator.vibrate([200,100,200]);

@@ -2561,6 +2561,9 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .exstat-v{font-size:11px;font-weight:700;color:var(--g4);flex-shrink:0}
 .exstat-bar{height:8px;border-radius:999px;background:var(--g1);overflow:hidden}
 .exstat-bar>span{display:block;height:100%;background:var(--accent);border-radius:999px}
+/* F0.8M — lichte notitie-sheet (vervangt native prompt) */
+.exec-note-ta{width:100%;box-sizing:border-box;border:1px solid var(--g2);border-radius:12px;padding:12px;font-family:var(--f);font-size:14px;color:var(--dark);background:var(--g1);resize:vertical;margin-bottom:10px;min-height:96px;line-height:1.4}
+.exec-note-ta:focus{outline:none;border-color:var(--accent);background:#fff}
 .exov-nm{font-size:14px;font-weight:800;color:var(--dark)}
 .exov-skip .exov-nm{color:var(--g4)}
 .exov-meta{font-size:12px;color:var(--g4);margin-top:1px}
@@ -9373,12 +9376,28 @@ function execReplaceCurrent(t){
 }
 // Notitie — transient per-oefening notitie (geen wijziging aan sessions/logging).
 let execNotes={};
+// F0.8M — Notitie via een lichte sheet i.p.v. een native browser-prompt (mock-up: geen technische
+// popups). Transiente sessie-notitie (execNotes); raakt sessionLog/DB/logging niet aan.
 function execAddNote(t){
   const list=(typeof getSessionExs==='function')?getSessionExs(t):[]; const ex=list[execFocus[t]||0]; if(!ex)return;
-  let v=null; try{ v=window.prompt('Notitie bij '+(ex.naam||'oefening'),(execNotes[t]&&execNotes[t][ex.id])||''); }catch(e){ v=null; }
-  if(v==null){ closeExecOverlay('exec-pause'); return; }
+  const cur=(execNotes[t]&&execNotes[t][ex.id])||'';
+  closeExecOverlay('exec-pause');
+  const el=ensureExecOverlay('exec-note');
+  el.innerHTML='<div class="exec-sheet"><div class="exec-sheet-hd"><div class="exec-sheet-t">Notitie</div>'+
+    '<button class="exec-x" onclick="closeExecOverlay(\'exec-note\')" aria-label="Sluiten">✕</button></div>'+
+    '<div class="exec-opt-k">'+escHtml(ex.naam||'Oefening')+'</div>'+
+    '<textarea id="exec-note-input" class="exec-note-ta" rows="4" placeholder="Notitie voor deze sessie…">'+escHtml(cur)+'</textarea>'+
+    '<button class="btn btn-r exec-finish" onclick="execSaveNote(\''+t+'\')">Opslaan</button>'+
+    '<button class="btn btn-o" style="width:100%;margin-top:8px" onclick="closeExecOverlay(\'exec-note\')">Annuleren</button></div>';
+  el.classList.add('open');
+  setTimeout(()=>{const ta=document.getElementById('exec-note-input');if(ta)ta.focus();},60);
+}
+function execSaveNote(t){
+  const list=(typeof getSessionExs==='function')?getSessionExs(t):[]; const ex=list[execFocus[t]||0];
+  if(!ex){ closeExecOverlay('exec-note'); return; }
+  const ta=document.getElementById('exec-note-input'); const v=ta?ta.value:'';
   if(!execNotes[t])execNotes[t]={}; execNotes[t][ex.id]=v;
-  closeExecOverlay('exec-pause'); if(window.toast)toast('Notitie opgeslagen voor deze sessie');
+  closeExecOverlay('exec-note'); if(window.toast)toast('Notitie opgeslagen voor deze sessie');
 }
 
 

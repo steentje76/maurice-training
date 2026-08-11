@@ -27,11 +27,19 @@ function extractCardioEngine() {
   for (; j < IDX.length; j++) { const c = IDX[j]; if (c === '{') d++; else if (c === '}') { d--; if (d === 0) { j++; break; } } }
   return 'const CardioEngine = ' + IDX.slice(i, j) + ';';
 }
+function extractConstObj(name) {
+  const m = new RegExp('const\\s+' + name + '\\s*=\\s*\\{').exec(IDX);
+  if (!m) throw new Error('legacy const ' + name + ' niet gevonden');
+  let i = IDX.indexOf('{', m.index), d = 0, j = i;
+  for (; j < IDX.length; j++) { const c = IDX[j]; if (c === '{') d++; else if (c === '}') { d--; if (d === 0) { j++; break; } } }
+  return 'const ' + name + ' = ' + IDX.slice(i, j) + ';';
+}
 const legacy = new Function(
-  extractFn('parseTimeToSec') + '\n' + extractCardioEngine() +
-  '\n return { parseTimeToSec, CardioEngine };'
+  extractFn('parseTimeToSec') + '\n' + extractCardioEngine() + '\n' + extractConstObj('CARDIO_TYPES') +
+  '\n return { parseTimeToSec, CardioEngine, CARDIO_TYPES };'
 )();
 const LE = legacy.CardioEngine;
+const CT = legacy.CARDIO_TYPES;
 const J = a => JSON.stringify(a);
 
 // ================= A. cardio_time.v1 — parse/format =================
@@ -87,6 +95,78 @@ T('cardio-core bevat geen DOM/DB/AI/network-afhankelijkheid', () => forbidden.fo
 T('VERSIONS compleet (time/split/power)', () => { eq(CardioCore.VERSIONS.time,'cardio_time.v1'); eq(CardioCore.VERSIONS.split,'cardio_split.v1'); eq(CardioCore.VERSIONS.power,'cardio_power.v1'); });
 T('offline: pure functie zonder runtime-context', () => { eq(CardioCore.parseTime('2:03'),123); near(CardioCore.wattFromSplit500(120), 2.80/Math.pow(120/500,3)); });
 T('device-agnostisch: geen concept2/assault/device-referentie in code', () => { ['concept2','assault','bluetooth','ble','pm5'].forEach(t => ok(SRC.toLowerCase().indexOf(t)===-1, 'device-token in core: '+t)); });
+
+// ================= F. CARDIO_TYPES device-contract (F1.14 productlock) =================
+// Legt de sporter-gerichte device-modellen vast: juiste units, juiste metrics, juiste split-semantiek.
+// Voorkomt dat een toekomstige wijziging RowErg/BikeErg/SkiErg/AssaultBike stil verkeerd maakt.
+console.log('\n[F] CARDIO_TYPES device-contract (RowErg/BikeErg/SkiErg/AssaultBike)');
+T('rowing (Concept2 RowErg): m · /500m · split+watt+stroke · basis 500', () => {
+  const r = CT.rowing; eq(r.unit, 'm'); eq(r.splitUnit, '/500m'); ok(r.splits === true);
+  ['dist','time','split','watt','stroke'].forEach(f => ok(r.fields.includes(f), 'rowing mist ' + f));
+  eq(r.calc.basis, 500);
+});
+T('bikeerg (Concept2 BikeErg): m · /500m · watt+rpm+resistance · GEEN stroke/drag', () => {
+  const b = CT.bikeerg; eq(b.unit, 'm'); eq(b.splitUnit, '/500m'); eq(b.calc.basis, 500);
+  ['dist','time','split','watt','rpm','resistance'].forEach(f => ok(b.fields.includes(f), 'bikeerg mist ' + f));
+  ok(!b.fields.includes('stroke'), 'bikeerg mag geen roeislag hebben'); ok(!b.fields.includes('drag'));
+});
+T('skierg (Concept2 SkiErg): m · /500m · split+watt+stroke · basis 500', () => {
+  const s = CT.skierg; eq(s.unit, 'm'); eq(s.splitUnit, '/500m'); eq(s.calc.basis, 500);
+  ['dist','time','split','watt','stroke'].forEach(f => ok(s.fields.includes(f), 'skierg mist ' + f));
+});
+T('assaultbike: cal · /min · GEEN split/distance/Concept2-calc (bewust ander meetmodel)', () => {
+  const a = CT.assaultbike; eq(a.unit, 'cal'); eq(a.splitUnit, '/min'); ok(a.splits === false); eq(a.calc, null);
+  ['cals','time','watt','rpm'].forEach(f => ok(a.fields.includes(f), 'assaultbike mist ' + f));
+  ok(!a.fields.includes('split'), 'assaultbike mag GEEN split hebben'); ok(!a.fields.includes('dist'), 'assaultbike mag GEEN distance hebben');
+});
+T('UNIT-safety: rowing/bikeerg/skierg in meter, assaultbike in calorieën (niet verwisselbaar)', () => {
+  eq(CT.rowing.unit, 'm'); eq(CT.bikeerg.unit, 'm'); eq(CT.skierg.unit, 'm'); eq(CT.assaultbike.unit, 'cal');
+  ok(CT.rowing.unit !== CT.assaultbike.unit, 'm ≠ cal');
+});
+T('Concept2-devices delen split-basis 500m; running/swimming NIET', () => {
+  eq(CT.rowing.calc.basis, 500); eq(CT.bikeerg.calc.basis, 500); eq(CT.skierg.calc.basis, 500);
+  if (CT.running && CT.running.calc) ok(CT.running.calc.basis !== 500, 'running basis ≠ 500');
+  if (CT.swimming && CT.swimming.calc) ok(CT.swimming.calc.basis !== 500, 'swimming basis ≠ 500');
+});
+
+// ================= G. MIXED STRENGTH+CARDIO WORKOUT-SAFETY (F2.4/F2.5) =================
+// Bewijst dat één workout strength én cardio kan bevatten zonder dat de metrics elkaar corrumperen:
+// (1) resolveCardioType routeert per oefening (cardio -> type, strength -> null);
+// (2) een cardio-rij (cardioDataToRow) bevat UITSLUITEND cardio-kolommen, nooit strength-kolommen.
+console.log('\n[G] Mixed strength+cardio workout-safety (F2.4/F2.5)');
+const mixLegacy = new Function(
+  extractFn('parseTimeToSec') + '\n' + extractConstObj('CARDIO_TYPES') + '\n' +
+  extractConstObj('CARDIO_TYPE_BY_ID') + '\n' + extractFn('resolveCardioType') + '\n' + extractFn('cardioDataToRow') +
+  '\n return { resolveCardioType, cardioDataToRow };'
+)();
+const RCT = mixLegacy.resolveCardioType, C2R = mixLegacy.cardioDataToRow;
+const STRENGTH_COLS = ['sets', 'reps', 'weight', 'sets_detail', 'rpe_target'];
+T('per-oefening routing: cardio -> type, strength -> null (mixed workout dispatcht correct)', () => {
+  eq(RCT({ id: 'roeien', type: 'cardio' }), 'rowing');
+  eq(RCT({ id: 'bike_erg', type: 'rowing' }), 'bikeerg');
+  eq(RCT({ id: 'assault_bike', type: 'assaultbike' }), 'assaultbike');
+  eq(RCT({ id: 'backsquat', type: 'strength' }), null);
+  eq(RCT({ id: 'bench', type: 'strength' }), null);
+});
+T('cardio-rij (rowing) bevat cardio-kolommen, GEEN strength-kolommen', () => {
+  const row = C2R('rowing', { dist: '2000', time: '8:12', watt: '185', stroke: '28', rpe: '7' });
+  ok(row.distance === 2000, 'distance ontbreekt'); ok(row.watt === 185); ok(row.stroke_rate === 28);
+  STRENGTH_COLS.forEach(c => ok(!(c in row), 'cardio-rij mag geen strength-kolom ' + c + ' bevatten'));
+});
+T('cardio-rij (assaultbike) = calorieën, GEEN distance/split/strength', () => {
+  const row = C2R('assaultbike', { cals: '98', time: '10:00', watt: '150', rpm: '65', rpe: '8' });
+  ok(row.calories === 98, 'calories ontbreekt'); ok(!('distance' in row), 'assault mag geen distance-rij hebben');
+  STRENGTH_COLS.forEach(c => ok(!(c in row), 'assault-rij mag geen strength-kolom ' + c + ' bevatten'));
+});
+T('lege cardio-invoer -> geen spookkolommen (alleen ingevulde velden mappen)', () => {
+  const row = C2R('rowing', { dist: '', time: '', watt: '', stroke: '', rpe: '' });
+  ok(!('distance' in row), 'lege dist mag geen distance-kolom zetten'); ok(!('watt' in row));
+});
+T('strength-metrics en cardio-metrics zijn disjunct (kunnen elkaar niet overschrijven)', () => {
+  const cardioRow = C2R('bikeerg', { dist: '4000', time: '12:32', watt: '245', rpm: '72', rpe: '6' });
+  ['distance', 'watt', 'stroke_rate'].forEach(c => ok(c in cardioRow, 'cardio mist ' + c));
+  STRENGTH_COLS.forEach(c => ok(!(c in cardioRow), 'kruisbesmetting: ' + c));
+});
 
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');

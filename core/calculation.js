@@ -20,7 +20,8 @@
 
   var VERSIONS = {
     rounding: 'rounding.v1', e1rm: 'e1rm.v1', working_weight: 'working_weight.v1', ai_guard: 'ai_guard.v1',
-    volume: 'volume.v1', percentage: 'percentage.v1', warmup: 'warmup.v1', recovery: 'recovery.v1', dayfactor: 'dayfactor.v1'
+    volume: 'volume.v1', percentage: 'percentage.v1', warmup: 'warmup.v1', recovery: 'recovery.v1', dayfactor: 'dayfactor.v1',
+    goal: 'goal.v1', e1rm_weighted: 'e1rm_weighted.v1'
   };
 
   // --- rounding.v1 --- exact gelijk aan legacy index.html r.10668
@@ -132,6 +133,40 @@
     return Math.round(Math.max(0.85, Math.min(1.05, ruw)) * 100) / 100;
   }
 
+  // --- goal.v1 --- exact gelijk aan legacy computeGoalProgress (index.html r.7097-7104).
+  // PURE DataAccess-boundary: de caller haalt currentVal op (DB/DOM); de core rekent alleen.
+  // Legacy-semantiek 1-op-1: null-guard; start = startwaarde ?? currentVal; span 0 -> 100/0;
+  // pct = round((cur-start)/span*100), geplafonneerd op [0,100].
+  //   goal: { startwaarde, doelwaarde }  ·  currentVal
+  function calculateGoalProgress(goal, currentVal) {
+    var g = goal || {};
+    if (currentVal == null || g.doelwaarde == null) return null;
+    var start = g.startwaarde != null ? g.startwaarde : currentVal;
+    var span = g.doelwaarde - start;
+    if (span === 0) return currentVal >= g.doelwaarde ? 100 : 0;
+    var pct = Math.round(((currentVal - start) / span) * 100);
+    return Math.max(0, Math.min(100, pct));
+  }
+
+  // --- e1rm_weighted.v1 --- exact gelijk aan legacy weightedEst1RM (index.html r.14203-14216).
+  // DataAccess-split: de caller haalt `sessions` op (DataAccess) én bepaalt `ref` (de app-wrapper
+  // houdt de `new Date()`-default = context/orchestratie); de core rekent zuiver decay-gewogen.
+  //   sessions: [{date, weight, reps}]  ·  ref: Date (verplicht, deterministisch)  ·  decay: per-week factor
+  // Gebruikt oneRMRaw (e1rm.v1) intern. Legacy-quirk: sessies zonder weight/reps worden overgeslagen.
+  function weightedOneRM(sessions, ref, decay) {
+    var sumW = 0, sumWV = 0, n = 0;
+    (sessions || []).forEach(function (s) {
+      if (!s.weight || !s.reps) return;
+      var est = oneRMRaw(s.weight, s.reps);
+      var days = Math.max(0, (ref - new Date(s.date)) / 86400000);
+      var weken = days / 7;
+      var w = Math.pow(decay, weken);
+      sumW += w; sumWV += w * est; n++;
+    });
+    if (!n) return { est: null, n: 0 };
+    return { est: sumWV / sumW, n: n };
+  }
+
   // Optionele, kleine result-contracten (versioneerbaar; geen metadata-explosie).
   // De frontend mag de primitives gebruiken; Evidence/Decision kan later de *Result-vorm nemen.
   function roundKgResult(v) {
@@ -158,6 +193,8 @@
     slaapDagFactor: slaapDagFactor,
     cyclusDagFactor: cyclusDagFactor,
     calculateDayFactor: calculateDayFactor,
+    calculateGoalProgress: calculateGoalProgress,
+    weightedOneRM: weightedOneRM,
     roundKgResult: roundKgResult,
     oneRMResult: oneRMResult,
     workingWeightResult: workingWeightResult,

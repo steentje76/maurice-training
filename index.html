@@ -7095,14 +7095,7 @@ async function getCurrentValueForGoal(g){
   }
 }
 
-function computeGoalProgress(g, currentVal){
-  if(currentVal==null||g.doelwaarde==null)return null;
-  const start = g.startwaarde!=null ? g.startwaarde : currentVal;
-  const span = g.doelwaarde - start;
-  if(span===0)return currentVal>=g.doelwaarde?100:0;
-  const pct = Math.round(((currentVal-start)/span)*100);
-  return Math.max(0,Math.min(100,pct));
-}
+function computeGoalProgress(g, currentVal){ return CalcCore.calculateGoalProgress(g, currentVal); } /* F1.6/DataAccess: canonical core (goal.v1) */
 function computeGoalProgressPr(g, ex){
   const peak=ex?peakGoalFor(ex.id):null;
   if(!ex||peak==null)return null;
@@ -14176,20 +14169,7 @@ const RATIO_MIN_OBS = 5;    // drempel: vanaf hier telt fase2 (eigen data) mee p
 const RATIO_DECAY = 0.95;   // decay per week oud, zelfde principe als revisiefactor.py
 
 // Decay-gewogen 1RM-schatting uit een lijst sessies van 1 lift ({date,weight,reps})
-function weightedEst1RM(sessions, refDate){
-  const ref = refDate ? new Date(refDate) : new Date();
-  let sumW=0, sumWV=0, n=0;
-  (sessions||[]).forEach(s=>{
-    if(!s.weight||!s.reps)return;
-    const est = epley1RMRaw(s.weight,s.reps);
-    const days = Math.max(0,(ref - new Date(s.date))/86400000);
-    const weken = days/7;
-    const w = Math.pow(RATIO_DECAY, weken);
-    sumW += w; sumWV += w*est; n++;
-  });
-  if(!n) return {est:null, n:0};
-  return {est: sumWV/sumW, n};
-}
+function weightedEst1RM(sessions, refDate){ return CalcCore.weightedOneRM(sessions, refDate?new Date(refDate):new Date(), RATIO_DECAY); } /* F1.6/DataAccess: canonical core (e1rm_weighted.v1) */
 
 function ratioConfidence(nA,nB){
   const n = Math.min(nA,nB);

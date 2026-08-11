@@ -20,13 +20,21 @@ function extractFn(name) {
   for (; j < IDX.length; j++) { const c = IDX[j]; if (c === '{') d++; else if (c === '}') { d--; if (d === 0) { j++; break; } } }
   return IDX.slice(m.index, j);
 }
+function extractConst(name) {
+  const m = new RegExp('const\\s+' + name + '\\s*=\\s*([^;]+);').exec(IDX);
+  if (!m) throw new Error('legacy const ' + name + ' niet gevonden');
+  return 'const ' + name + ' = ' + m[1] + ';';
+}
 const legacy = new Function(
+  extractConst('RATIO_DECAY') + '\n' +
   [extractFn('roundKg'), extractFn('epley1RMRaw'), extractFn('epley1RM'),
    extractFn('suggestWeightForRepsRpe'), extractFn('suggestWarmupScheme'),
    extractFn('rpeMultiplier'), extractFn('computeMuscleRecoveryPct'),
-   extractFn('slaapDagFactor'), extractFn('cyclusDagFactor'), extractFn('dagfactor')].join('\n') +
+   extractFn('slaapDagFactor'), extractFn('cyclusDagFactor'), extractFn('dagfactor'),
+   extractFn('computeGoalProgress'), extractFn('weightedEst1RM')].join('\n') +
   '\n return { roundKg, epley1RMRaw, epley1RM, suggestWeightForRepsRpe, suggestWarmupScheme,' +
-  ' rpeMultiplier, computeMuscleRecoveryPct, slaapDagFactor, cyclusDagFactor, dagfactor };'
+  ' rpeMultiplier, computeMuscleRecoveryPct, slaapDagFactor, cyclusDagFactor, dagfactor,' +
+  ' computeGoalProgress, weightedEst1RM, RATIO_DECAY };'
 )();
 const J = a => JSON.stringify(a);
 
@@ -213,6 +221,49 @@ T('old===new: calculateDayFactor(.factor) === legacy dagfactor(hc,slaap,fase).fa
 });
 T('clamp [0.85,1.05] + 2 decimalen', () => { eq(DF({hrvFactor:2.0,sleepHours:8,cyclePhase:'folliculair'}),1.05); eq(DF({hrvFactor:0.1,sleepHours:5,cyclePhase:'menstruatie'}),0.85); });
 T('deterministisch', () => eq(DF({hrvFactor:1.0,sleepHours:7,cyclePhase:'ovulatie'}),DF({hrvFactor:1.0,sleepHours:7,cyclePhase:'ovulatie'})));
+
+// ================= K. calculateGoalProgress (goal.v1) — DataAccess-boundary, old===new =============
+console.log('\n[K] calculateGoalProgress (goal.v1)');
+const GP = CalcCore.calculateGoalProgress;
+const goalCases = [
+  [{startwaarde:0,doelwaarde:100},50], [{startwaarde:50,doelwaarde:100},75], [{startwaarde:100,doelwaarde:200},150],
+  [{startwaarde:null,doelwaarde:100},40], [{startwaarde:100,doelwaarde:100},100], [{startwaarde:100,doelwaarde:100},50],
+  [{startwaarde:0,doelwaarde:100},-10], [{startwaarde:0,doelwaarde:100},150], [{startwaarde:80,doelwaarde:60},70],
+  [{doelwaarde:null},50], [{startwaarde:0,doelwaarde:100},null], [{startwaarde:20,doelwaarde:100},60]
+];
+T('old===new: canonical === legacy computeGoalProgress', () => {
+  goalCases.forEach(([g,c]) => eq(GP(g,c), legacy.computeGoalProgress(g,c), 'goal('+J(g)+','+String(c)+')'));
+});
+T('ankers: 0->100 @50 = 50%; geplafonneerd [0,100]', () => {
+  eq(GP({startwaarde:0,doelwaarde:100},50),50); eq(GP({startwaarde:0,doelwaarde:100},150),100); eq(GP({startwaarde:0,doelwaarde:100},-10),0);
+});
+T('null-guard: geen currentVal of doelwaarde -> null', () => { eq(GP({doelwaarde:100},null),null); eq(GP({startwaarde:0,doelwaarde:null},50),null); });
+T('span 0: cur>=doel -> 100, anders 0', () => { eq(GP({startwaarde:100,doelwaarde:100},100),100); eq(GP({startwaarde:100,doelwaarde:100},50),0); });
+
+// ================= L. weightedOneRM (e1rm_weighted.v1) — DataAccess-split, old===new ================
+console.log('\n[L] weightedOneRM (e1rm_weighted.v1)');
+const WO = CalcCore.weightedOneRM;
+const DECAY = legacy.RATIO_DECAY;
+const REF = '2026-08-01';
+const woSessions = [
+  [], [{date:'2026-07-31',weight:100,reps:5}], [{date:'2026-07-01',weight:120,reps:3},{date:'2026-07-25',weight:110,reps:5}],
+  [{date:'2026-06-01',weight:100,reps:1},{date:'2026-07-30',weight:140,reps:2}],
+  [{date:'2026-07-15',weight:0,reps:5},{date:'2026-07-20',weight:90,reps:8}], // 0-weight overgeslagen
+  [{date:'2026-07-10',weight:80,reps:null},{date:'2026-07-20',weight:95,reps:6}] // null-reps overgeslagen
+];
+T('old===new: weightedOneRM(sessions,new Date(REF),DECAY) === legacy weightedEst1RM(sessions,REF)', () => {
+  woSessions.forEach(ss => eq(J(WO(ss, new Date(REF), DECAY)), J(legacy.weightedEst1RM(ss, REF)), 'wo('+J(ss)+')'));
+});
+T('lege/ongeldige input -> {est:null,n:0}', () => { eq(J(WO([], new Date(REF), DECAY)), J({est:null,n:0})); eq(J(WO(null, new Date(REF), DECAY)), J({est:null,n:0})); });
+T('sessies zonder weight/reps overgeslagen (n telt alleen geldige)', () => {
+  eq(WO([{date:'2026-07-20',weight:0,reps:5},{date:'2026-07-20',weight:90,reps:8}], new Date(REF), DECAY).n, 1);
+});
+T('recentere sessie weegt zwaarder (decay)', () => {
+  const recent = WO([{date:'2026-07-31',weight:100,reps:5}], new Date(REF), DECAY).est;
+  const oud    = WO([{date:'2026-01-01',weight:100,reps:5}], new Date(REF), DECAY).est;
+  ok(Math.abs(recent-oud) < 1e-9, 'zelfde single-sessie est ongeacht ouderdom'); // 1 sessie: gewicht valt weg in de deling
+});
+T('deterministisch bij vaste ref', () => eq(J(WO(woSessions[2], new Date(REF), DECAY)), J(WO(woSessions[2], new Date(REF), DECAY))));
 
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');

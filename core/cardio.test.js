@@ -168,6 +168,28 @@ T('strength-metrics en cardio-metrics zijn disjunct (kunnen elkaar niet overschr
   STRENGTH_COLS.forEach(c => ok(!(c in cardioRow), 'kruisbesmetting: ' + c));
 });
 
+// ================= H. INVALID INPUT SAFE-HANDLING (F2.5B) =================
+// Bewijst dat cardioDataToRow ongeldige invoer VEILIG overslaat i.p.v. corrupte kolommen op te slaan.
+// (Negatieve waarden passeren nu nog wél — bewust gedocumenteerd als minor debt; fix = UI/validator,
+//  raakt het actual-write-pad → apart voorstel, niet in deze test afgedwongen.)
+console.log('\n[H] Invalid cardio input safe-handling (F2.5B)');
+T('lege invoer -> kolom afwezig (geen 0/null-spook)', () => {
+  const r = C2R('rowing', { dist: '', time: '8:00', watt: '' });
+  ok(!('distance' in r), 'lege dist mag geen distance-kolom zetten'); ok(!('watt' in r));
+});
+T('garbage-string ("abc") -> kolom afwezig (parseInt NaN -> skip)', () => {
+  const r = C2R('rowing', { dist: 'abc', time: '8:00' });
+  ok(!('distance' in r), 'garbage dist mag geen distance-kolom zetten');
+});
+T('NaN-numeriek veld -> overgeslagen, geen NaN opgeslagen', () => {
+  const r = C2R('rowing', { dist: '2000', time: '8:00', watt: 'xx' });
+  ok(!('watt' in r), 'NaN watt mag niet opgeslagen worden'); ok(r.distance === 2000);
+});
+T('geldige invoer -> correcte numerieke kolommen (integer/parse)', () => {
+  const r = C2R('rowing', { dist: '2000', time: '8:12', watt: '185', stroke: '28' });
+  ok(r.distance === 2000 && r.watt === 185 && r.stroke_rate === 28, 'geldige parse faalt');
+});
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail > 0) { console.log('⚠ STOP: old !== new of guard faalt.'); process.exit(1); }

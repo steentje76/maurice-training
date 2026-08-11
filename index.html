@@ -4495,6 +4495,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 </div>
 
 <script src="core/calculation.js"></script>
+<script src="core/decision.js"></script>
 <script>
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
@@ -5686,7 +5687,7 @@ function snapshotFromVasteTraining(def,texs,modifications=[]){
     items:(texs||[]).map(t=>({exercise_id:t.exercise_id,sets:t.sets,reps:t.reps,rpe:t.rpe,sort_order:t.sort_order,wu:t.wu??null,tip:t.tip??null})),
     // F0.7M (M1): welke Decision-Engine-regel gold bij het plannen — reconstrueerbaar
     // waarom een gewicht destijds zo werd voorgesteld. Additief JSON, geen migratie.
-    decision_rules:(typeof DETRAINING_RULES!=='undefined')?{detraining:{id:DETRAINING_RULES.id,version:DETRAINING_RULES.version}}:null,
+    decision_rules:DecisionCore.Evidence.decisionRulesSnapshot((typeof DETRAINING_RULES!=='undefined')?DETRAINING_RULES:null),
     modifications
   };
 }
@@ -5699,7 +5700,7 @@ function snapshotFromCustomTraining(def,texs,modifications=[]){
     // gewoon null-waarden, functioneel identiek aan de oude, kalere snapshot-vorm.
     items:(texs||[]).map(t=>({exercise_id:t.exercise_id,sort_order:t.sort_order,sets:t.sets??null,reps:t.reps??null,rpe:t.rpe??null,rest:t.rest??null,pick:t.pick??null,wu:t.wu??null})),
     // F0.7M (M1): actieve Decision-Engine-regel bij plannen (traceability). Additief JSON.
-    decision_rules:(typeof DETRAINING_RULES!=='undefined')?{detraining:{id:DETRAINING_RULES.id,version:DETRAINING_RULES.version}}:null,
+    decision_rules:DecisionCore.Evidence.decisionRulesSnapshot((typeof DETRAINING_RULES!=='undefined')?DETRAINING_RULES:null),
     modifications
   };
 }
@@ -8116,16 +8117,7 @@ const DETRAINING_RULES_V1={
 const DETRAINING_RULES=DETRAINING_RULES_V1; // actieve regel (versioneerbaar)
 // detrainingFactor(days) → {factor,version,ruleId,band,days,applicable}
 // days=null (geen historie) → factor 1.00, applicable:false (GEEN detraining fabriceren).
-function detrainingFactor(daysSinceLastExecution,rules){
-  rules=rules||DETRAINING_RULES;
-  if(daysSinceLastExecution==null||isNaN(daysSinceLastExecution)){
-    return {factor:1.00,version:rules.version,ruleId:rules.id,band:null,days:null,applicable:false};
-  }
-  const d=Math.max(0,Math.floor(daysSinceLastExecution));
-  let band=rules.bands[rules.bands.length-1];
-  for(let i=0;i<rules.bands.length;i++){ if(d<=rules.bands[i].maxDays){ band=rules.bands[i]; break; } }
-  return {factor:band.factor,version:rules.version,ruleId:rules.id,band:band.maxDays,days:d,applicable:band.factor<1.00};
-}
+function detrainingFactor(daysSinceLastExecution,rules){ rules=rules||DETRAINING_RULES; return DecisionCore.detrainingFactor(daysSinceLastExecution,rules); } /* F1.7: canonical Decision Core (detraining.v1) */
 // Puur dag-verschil tussen twee 'YYYY-MM-DD'-datums (UTC-anker, geen timezone-drift).
 // Toekomstige laatste-datum → 0 (nooit negatief). Ongeldig → null.
 function daysBetweenDates(fromYmd,toYmd){
@@ -8206,18 +8198,7 @@ function exercisesTargetForDuration(minutes){
 // Pure functie: bepaalt de periodiserings-fase voor een gegeven week, geschaald naar de
 // totale programmaduur (opbouw → hypertrofie → kracht → deload/peak in de laatste week bij
 // programma's van 4+ weken).
-function phaseForWeek(wk,weken){
-  if(weken<=1)return 'Opbouw';
-  if(weken<=3)return wk===1?'Anatomische Aanpassing':'Kracht';
-  const adaptWeeks=Math.max(1,Math.round(weken*0.2));
-  const deloadWeeks=1;
-  const hyperWeeks=Math.max(1,Math.round((weken-adaptWeeks-deloadWeeks)*0.55));
-  const strengthWeeks=Math.max(0,weken-adaptWeeks-deloadWeeks-hyperWeeks);
-  if(wk<=adaptWeeks)return 'Anatomische Aanpassing';
-  if(wk<=adaptWeeks+hyperWeeks)return 'Hypertrofie';
-  if(wk<=adaptWeeks+hyperWeeks+strengthWeeks)return 'Kracht';
-  return 'Deload / Peak';
-}
+function phaseForWeek(wk,weken){ return DecisionCore.phaseForWeek(wk,weken); } /* F1.7: canonical Decision Core (phase.v1 / context) */
 // Pure functie: formatteert bekende 1RM's tot een compacte promptregel.
 function buildPRTekst(prList){
   if(!prList||!prList.length)return '';
@@ -11084,16 +11065,22 @@ function sessionTopSetKg(exId,excludeIdx){
 // 'plus'/'pct': parameterveld t.o.v. de vorige set (recursief terug tot een vaste referentie).
 // '1rm': parameterveld = percentage van de geschatte 1RM (Epley).
 // 'backoff': parameterveld = percentage van de zwaarste set in dezelfde sessie/oefening.
+function readEffectiveKgInput(exId,i){ /* F1.6: DOM data-extraction — geen calculation/decision */
+  return { mode:document.getElementById('s-'+exId+'-'+i+'-wmode')?.value||'vast',
+    rawKg:document.getElementById('s-'+exId+'-'+i+'-kg')?.value,
+    param:document.getElementById('s-'+exId+'-'+i+'-param')?.value };
+}
 function getEffectiveKg(exId,i){
   if(i<1)return null;
-  const mode=document.getElementById('s-'+exId+'-'+i+'-wmode')?.value||'vast';
+  const _in=readEffectiveKgInput(exId,i); /* F1.6: DOM gescheiden van orchestration+calculation */
+  const mode=_in.mode;
   if(mode==='vast'||mode==='topset'){
-    const raw=document.getElementById('s-'+exId+'-'+i+'-kg')?.value;
+    const raw=_in.rawKg;
     if(raw===undefined||raw===''||raw==='–')return null;
     const val=parseFloat(raw);
     return isNaN(val)?null:val;
   }
-  const paramRaw=document.getElementById('s-'+exId+'-'+i+'-param')?.value;
+  const paramRaw=_in.param;
   if(paramRaw===undefined||paramRaw==='')return null;
   const param=parseFloat(paramRaw);
   if(isNaN(param))return null;
@@ -11106,7 +11093,7 @@ function getEffectiveKg(exId,i){
     return top!=null?roundKg(CalcCore.applyPercentage(top,param)):null;
   }
   const prevKg=getEffectiveKg(exId,i-1);
-  if(prevKg==null)return null; // geen referentie beschikbaar: nog niet berekenbaar
+  if(prevKg==null)return null;
   if(mode==='plus')return roundKg(prevKg+param);
   if(mode==='pct')return roundKg(CalcCore.applyPercentage(prevKg,param));
   return null;
@@ -11669,12 +11656,7 @@ function restoreCompletedSetVisualState(exId){
 // Regelgebaseerd (geen API-call per set, i.v.m. snelheid/kosten) — gebruikt dezelfde
 // PROGRESSIEREGELS als de coach-systeemprompt, zodat advies altijd consistent is.
 // ══════════════════════════════════════════════════════════
-function computeProgression(rpe,curKg){
-  if(rpe==null||isNaN(rpe)||!curKg)return null;
-  if(rpe<=7.5)return{delta:2.5,label:'Verhogen'};
-  if(rpe<=8.5)return{delta:0,label:'Gelijk houden'};
-  return{delta:-7.5,label:'Deload'};
-}
+function computeProgression(rpe,curKg){ return DecisionCore.computeProgression(rpe,curKg); } /* F1.7: canonical Decision Core (progression.v1) */
 // v3.3.54 — betekenis van een RPE-waarde (duiding, geen nieuwe berekening; zelfde banden).
 function rpeMeaning(rpe){
   if(rpe==null||isNaN(rpe))return '';
@@ -12399,13 +12381,7 @@ function renderCoachAdvies(dfInfo,recRows){
 // v3.3.45/46/47 — HERO: het zwaarste element van Home. Leest de één keer voorgeladen
 // data (nextT._exCount/_muscles), geen dubbele query. Gereed-status uit de bestaande
 // dagfactor (dfInfo). Alleen echte data (geen verzonnen duur/calorieën, DEC-027).
-function trainReadiness(dfInfo){
-  if(!dfInfo)return null;
-  const f=dfInfo.factor;
-  if(f>=1)return {cls:'g',txt:'Klaar om te trainen'};
-  if(f>=0.93)return {cls:'y',txt:'Train op gevoel'};
-  return {cls:'r',txt:'Houd het licht vandaag'};
-}
+function trainReadiness(dfInfo){ return DecisionCore.trainReadiness(dfInfo); } /* F1.7: canonical Decision Core (readiness.v1) */
 // v3.3.50 P2 — emotionele, dynamische hero-zin uit de spiergroepen van vandaag. Varieert
 // stabiel per dag (geen Math.random) zodat het niet als standaardtekst voelt.
 function buildHeroFocus(muscles){
@@ -15326,23 +15302,7 @@ async function getRelevantMuscleRecovery(muscleNames){
 }
 // Pure beslislogica — los testbaar. Bepaalt OF en welke aanpassing wordt voorgesteld
 // (nooit stilzwijgend toegepast — de checkin-flow legt dit altijd eerst voor).
-function computeProgAdjustment(factor,muscleRecoveryRows,voelt,painMuscle){
-  const laag=(muscleRecoveryRows||[]).filter(r=>r.pct<70);
-  const slecht=voelt==='slecht';
-  const matig=voelt==='matig';
-  const nodig=factor<0.97||laag.length>0||slecht||matig||!!painMuscle;
-  if(!nodig)return null;
-  let rpeDelta=0,setsDelta=0;
-  if(factor<0.90||slecht){rpeDelta=-1.5;setsDelta=-1;}
-  else if(factor<0.97||matig||laag.length){rpeDelta=-0.5;}
-  const redenen=[];
-  if(factor<0.97)redenen.push('herstel-dagfactor '+factor);
-  if(laag.length)redenen.push('laag spierherstel: '+laag.map(r=>r.muscle+' '+r.pct+'%').join(', '));
-  if(slecht)redenen.push('je gaf aan je slecht te voelen');
-  if(matig)redenen.push('je gaf aan je matig te voelen');
-  if(painMuscle)redenen.push('pijn/ongemak gemeld: '+painMuscle);
-  return {rpeDelta,setsDelta,redenen,painMuscle};
-}
+function computeProgAdjustment(factor,muscleRecoveryRows,voelt,painMuscle){ return DecisionCore.computeProgAdjustment(factor,muscleRecoveryRows,voelt,painMuscle); } /* F1.7: canonical Decision Core (progression_adjust.v1) */
 
 async function refreshMuscleRecovery(){
   const el = document.getElementById('stats-recovery-content');

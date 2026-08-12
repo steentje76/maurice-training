@@ -15,7 +15,7 @@
 (function (global) {
   'use strict';
 
-  var VERSIONS = { signals: 'coaching_signals.v1', context: 'coaching_context.v1' };
+  var VERSIONS = { signals: 'coaching_signals.v1', context: 'coaching_context.v1', conclusion: 'coaching_conclusion.v1' };
 
   // Prioriteit bepaalt welk signaal het "belangrijkste" is (voor ordening/uitlichting).
   // Hoger = belangrijker. Bewust expliciet zodat de UI/AI nooit hoeft te raden.
@@ -147,11 +147,103 @@
     };
   }
 
+  // F9.5 POST-WORKOUT COACH CONCLUSION — aggregeert de per-oefening coaching-context (reeds
+  // deterministisch bepaald door de rekenkernen + DecisionCore) tot ÉÉN workout-niveau conclusie.
+  // BEREKENT NIETS zelf: telt, selecteert het meest saillante signaal en kiest de reeds-bepaalde
+  // nextAction. De AI mag deze conclusie later verwoorden; hij bepaalt hem NIET.
+  // entries = array (of map) van { domain, exercise, status, signals[], priority, current, previous, best, nextAction, metric }
+  function _entriesArray(entries) {
+    if (!entries || typeof entries !== 'object') return [];
+    var arr = Array.isArray(entries) ? entries : Object.keys(entries).map(function (k) { return entries[k]; });
+    return arr.filter(function (e) { return e && typeof e === 'object'; });
+  }
+  function buildCoachConclusion(entries) {
+    var arr = _entriesArray(entries);
+    var counts = { exercises: 0, newBests: 0, improved: 0, declined: 0, stable: 0, first: 0, trendUps: 0, trendDowns: 0 };
+    var domains = { strength: false, cardio: false };
+    var lead = null, next = null, nextEx = null;
+    for (var i = 0; i < arr.length; i++) {
+      var e = arr[i];
+      var sig = Array.isArray(e.signals) ? e.signals : [];
+      counts.exercises++;
+      if (e.domain === 'strength') domains.strength = true;
+      else if (e.domain === 'cardio') domains.cardio = true;
+      if (sig.indexOf('new_best') !== -1) counts.newBests++;
+      if (e.status === 'improved') counts.improved++;
+      else if (e.status === 'declined') counts.declined++;
+      else if (e.status === 'stable') counts.stable++;
+      else if (e.status === 'first') counts.first++;
+      if (sig.indexOf('trend_up') !== -1) counts.trendUps++;
+      if (sig.indexOf('trend_down') !== -1) counts.trendDowns++;
+      // meest saillante oefening = hoogste priority (new_best=100 > trend_up=80 > improved=70 ...)
+      var p = (typeof e.priority === 'number') ? e.priority : priorityFor(sig);
+      if (!lead || p > lead._p) lead = { exercise: e.exercise != null ? e.exercise : null, domain: e.domain != null ? e.domain : null, status: e.status != null ? e.status : null, metric: e.metric != null ? e.metric : null, current: e.current != null ? e.current : null, previous: e.previous != null ? e.previous : null, best: e.best != null ? e.best : null, _p: p };
+      // nextAction: eerste (op priority) oefening die er een heeft; DecisionCore is de enige bron.
+      if (next == null && e.nextAction != null && e.nextAction !== '') { next = e.nextAction; nextEx = e.exercise != null ? e.exercise : null; }
+    }
+    if (lead) delete lead._p;
+
+    var overall;
+    if (!counts.exercises) overall = 'unknown';
+    else if (counts.newBests > 0) overall = 'new_best';
+    else if (counts.improved > 0 && counts.declined > 0) overall = 'mixed';
+    else if (counts.improved > 0) overall = 'improved';
+    else if (counts.declined > 0) overall = 'declined';
+    else if (counts.stable > 0) overall = 'stable';
+    else if (counts.first > 0) overall = 'first';
+    else overall = 'unknown';
+
+    var tone = (overall === 'new_best' || overall === 'improved') ? 'positive'
+      : (overall === 'declined' || overall === 'mixed') ? 'encouraging' : 'neutral';
+
+    return {
+      hasData: counts.exercises > 0,
+      overall: overall,
+      tone: tone,
+      counts: counts,
+      domains: domains,
+      lead: lead,
+      nextAction: next,
+      nextActionExercise: nextEx,
+      version: VERSIONS.conclusion
+    };
+  }
+
+  // Deterministische Nederlandse verwoording van de conclusie — PUUR string-samenstelling.
+  // Dient als (a) offline/AI-uitval fallback en (b) leidende "seed" voor de AI-terugblik.
+  // Gebruikt UITSLUITEND reeds-geformatteerde waarden (current/previous/best zijn al presentatie-strings).
+  function conclusionText(c) {
+    if (!c || !c.hasData) return '';
+    var L = c.lead || {};
+    var name = L.exercise || 'je oefening';
+    var lines = [];
+    if (c.overall === 'new_best') {
+      lines.push('Nieuw persoonlijk record: ' + name + (L.best ? (' — ' + L.best) : '') + '.');
+      if (L.previous && L.current) lines.push('Je ging van ' + L.previous + ' naar ' + L.current + '.');
+    } else if (c.overall === 'improved') {
+      lines.push(name + ' was beter dan je vorige vergelijkbare training' + (L.previous && L.current ? (' (' + L.previous + ' → ' + L.current + ')') : '') + '.');
+    } else if (c.overall === 'declined') {
+      lines.push(name + ' lag iets lager dan vorige keer' + (L.previous && L.current ? (' (' + L.previous + ' → ' + L.current + ')') : '') + '. Dat hoeft geen probleem te zijn; je training telt gewoon mee.');
+    } else if (c.overall === 'mixed') {
+      lines.push('Wisselend beeld: ' + c.counts.improved + ' oefening' + (c.counts.improved === 1 ? '' : 'en') + ' beter, ' + c.counts.declined + ' iets lager.');
+      if (name && L.current) lines.push('Sterkste punt: ' + name + (L.current ? (' (' + L.current + ')') : '') + '.');
+    } else if (c.overall === 'stable') {
+      lines.push('Je prestatie was vergelijkbaar met vorige keer — stabiel vasthouden is ook progressie.');
+    } else if (c.overall === 'first') {
+      lines.push('Eerste registratie van deze oefening' + (c.counts.exercises === 1 ? '' : 'en') + ' — vanaf nu kun je je vooruitgang vergelijken.');
+    }
+    if (c.counts.newBests > 1) lines.push('In totaal ' + c.counts.newBests + ' nieuwe records deze training.');
+    if (c.nextAction) lines.push('Volgens je huidige trainingsregel is de volgende stap: ' + c.nextAction + (c.nextActionExercise ? (' (' + c.nextActionExercise + ')') : '') + '.');
+    return lines.join(' ');
+  }
+
   var CoachingCore = {
     deriveSignals: deriveSignals,
     buildContext: buildContext,
     aiPayload: aiPayload,
     improvementsDigest: improvementsDigest,
+    buildCoachConclusion: buildCoachConclusion,
+    conclusionText: conclusionText,
     has: has,
     AI_FIELDS: AI_FIELDS,
     PRIORITY: PRIORITY,

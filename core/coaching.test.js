@@ -127,6 +127,147 @@ T('lege/ongeldige input -> veilige lege digest', () => {
 });
 T('deterministisch', () => eq(JSON.stringify(C.improvementsDigest(IT)), JSON.stringify(C.improvementsDigest(IT))));
 
+// ================= J. AI-boundary CONTRACT (F8.5/F9.3) =================
+// Bewijst PERMANENT dat de AI de reken-INPUTS nooit ziet (kan dus zelf niets herberekenen),
+// en dat de reeds-berekende nextAction uit DecisionCore ONGEWIJZIGD door aiPayload loopt.
+console.log('\n[J] AI-boundary contract — reken-inputs nooit naar AI, DecisionCore.nextAction blijft intact');
+const DecisionCore = require('./decision.js');
+T('aiPayload stript ELKE reken-input, ook als per ongeluk meegegeven in de stash', () => {
+  // Simuleer een "vervuilde" per-oefening stash met álle gevoelige/reken-velden erin.
+  const dirty = {
+    bench: {
+      exercise: 'Bench', domain: 'strength', status: 'improved',
+      signals: ['improved', 'new_best'], priority: 100,
+      metric: 'e1RM', current: 105, previous: 99, best: 105,
+      nextAction: 'Verhogen (+2,5 kg)',
+      // ── verboden: alles waarmee een AI zelf zou kunnen rekenen of authenticeren ──
+      rpe: 7, weight: 100, kg: 100, sets_detail: [{ kg: 100, reps: 5, rpe: 7 }],
+      reps: 5, e1rm_raw: 116.7, token: 'geheim', authorization: 'Bearer x',
+      sbToken: 'geheim2', rawSessionLog: { sets: [1, 2, 3] }, calc: function () { return 1; }
+    }
+  };
+  const out = C.aiPayload(dirty);
+  eq(out.length, 1);
+  const e = out[0];
+  // GEEN enkele reken-input of credential mag de boundary passeren.
+  ['rpe', 'weight', 'kg', 'sets_detail', 'reps', 'e1rm_raw', 'token', 'authorization', 'sbToken', 'rawSessionLog', 'calc']
+    .forEach(function (k) { ok(!(k in e), 'reken-input/credential LEKTE naar AI: ' + k); });
+  // Alleen reeds-berekende presentatievelden blijven over.
+  eq(e.exercise, 'Bench'); eq(e.current, 105); eq(e.previous, 99); eq(e.best, 105); eq(e.metric, 'e1RM');
+});
+T('nextAction uit DecisionCore.computeProgression loopt ONGEWIJZIGD door aiPayload', () => {
+  // De ENIGE bron voor de volgende-actie is DecisionCore (deterministisch), niet de AI.
+  const decUp = DecisionCore.computeProgression(7, 100);   // rpe laag  -> Verhogen +2,5
+  const decHold = DecisionCore.computeProgression(8, 100);  // rpe mid   -> Gelijk houden
+  const decDe = DecisionCore.computeProgression(9, 100);   // rpe hoog  -> Deload
+  eq(decUp.label, 'Verhogen'); eq(decHold.label, 'Gelijk houden'); eq(decDe.label, 'Deload');
+  const map = {
+    a: { exercise: 'A', nextAction: decUp.label, current: 1 },
+    b: { exercise: 'B', nextAction: decHold.label, current: 1 },
+    c: { exercise: 'C', nextAction: decDe.label, current: 1 }
+  };
+  const out = C.aiPayload(map);
+  eq(out[0].nextAction, 'Verhogen');       // exact wat DecisionCore besliste
+  eq(out[1].nextAction, 'Gelijk houden');
+  eq(out[2].nextAction, 'Deload');
+  // De AI krijgt dus een KANT-EN-KLARE beslissing te verwoorden, niet de rpe/gewicht om zelf te beslissen.
+  ok(!('rpe' in out[0]) && !('weight' in out[0]), 'beslis-inputs mogen niet mee met de nextAction');
+});
+T('lege signals-array breekt de boundary niet (nextAction blijft behouden)', () => {
+  const out = C.aiPayload({ x: { exercise: 'X', signals: [], current: 10, nextAction: 'Gelijk houden' } });
+  eq(out.length, 1); eq(out[0].nextAction, 'Gelijk houden'); eq(out[0].current, 10);
+});
+
+// ================= K. buildCoachConclusion / conclusionText (F9.5) =================
+console.log('\n[K] buildCoachConclusion — deterministische post-workout conclusie (AI verwoordt, core bepaalt)');
+const E = function (o) { // helper: bouwt een _coachSignals-achtige entry
+  return Object.assign({ domain: 'strength', exercise: 'Ex', status: 'unknown', signals: [], priority: 0, metric: 'geschat 1RM', current: null, previous: null, best: null, nextAction: null }, o);
+};
+T('geen data -> hasData false, overall unknown, lege tekst', () => {
+  const c = C.buildCoachConclusion([]);
+  eq(c.hasData, false); eq(c.overall, 'unknown'); eq(C.conclusionText(c), '');
+  eq(C.buildCoachConclusion(null).hasData, false); eq(C.buildCoachConclusion(undefined).hasData, false);
+});
+T('accepteert map (window._coachSignals-vorm) én array', () => {
+  const map = { a: E({ exercise: 'Bench', status: 'improved', signals: ['improved'], priority: 70, previous: '100 kg', current: '105 kg' }) };
+  const c1 = C.buildCoachConclusion(map);
+  const c2 = C.buildCoachConclusion([map.a]);
+  eq(JSON.stringify(c1), JSON.stringify(c2)); eq(c1.overall, 'improved');
+});
+T('first session -> overall first, neutrale toon, geen vergelijkingsclaim', () => {
+  const c = C.buildCoachConclusion([E({ status: 'first', signals: ['first_session'], priority: 35, exercise: 'Squat' })]);
+  eq(c.overall, 'first'); eq(c.tone, 'neutral'); ok(C.conclusionText(c).indexOf('Eerste registratie') !== -1);
+});
+T('improved -> overall improved, positieve toon, previous->current benoemd', () => {
+  const c = C.buildCoachConclusion([E({ exercise: 'Bench', status: 'improved', signals: ['improved'], priority: 70, previous: '100 kg', current: '105 kg' })]);
+  eq(c.overall, 'improved'); eq(c.tone, 'positive'); eq(c.counts.improved, 1);
+  const t = C.conclusionText(c); ok(t.indexOf('100 kg') !== -1 && t.indexOf('105 kg') !== -1);
+});
+T('declined -> overall declined, niet-veroordelende toon', () => {
+  const c = C.buildCoachConclusion([E({ exercise: 'Row', domain: 'cardio', status: 'declined', signals: ['declined'], priority: 60, previous: '2:04/500m', current: '2:08/500m' })]);
+  eq(c.overall, 'declined'); eq(c.tone, 'encouraging');
+  ok(C.conclusionText(c).indexOf('hoeft geen probleem') !== -1);
+});
+T('stable -> overall stable, repeated_performance', () => {
+  const c = C.buildCoachConclusion([E({ status: 'stable', signals: ['stable', 'repeated_performance'], priority: 40 })]);
+  eq(c.overall, 'stable'); ok(C.conclusionText(c).indexOf('vergelijkbaar') !== -1);
+});
+T('new_best domineert improved (overall new_best) + best benoemd', () => {
+  const c = C.buildCoachConclusion([
+    E({ exercise: 'Bench', status: 'improved', signals: ['improved', 'new_best'], priority: 100, previous: '100 kg', current: '105 kg', best: '105 kg' }),
+    E({ exercise: 'Row', domain: 'cardio', status: 'improved', signals: ['improved'], priority: 70 })
+  ]);
+  eq(c.overall, 'new_best'); eq(c.counts.newBests, 1); eq(c.lead.exercise, 'Bench');
+  ok(C.conclusionText(c).indexOf('Nieuw persoonlijk record') !== -1);
+});
+T('trend_up / trend_down geteld', () => {
+  const c = C.buildCoachConclusion([
+    E({ signals: ['improved', 'trend_up'], status: 'improved', priority: 80 }),
+    E({ signals: ['declined', 'trend_down'], status: 'declined', priority: 60 })
+  ]);
+  eq(c.counts.trendUps, 1); eq(c.counts.trendDowns, 1); eq(c.overall, 'mixed');
+});
+T('mixed workout (improved + declined) -> overall mixed, encouraging', () => {
+  const c = C.buildCoachConclusion([
+    E({ exercise: 'Bench', status: 'improved', signals: ['improved'], priority: 70, current: '105 kg' }),
+    E({ exercise: 'Squat', status: 'declined', signals: ['declined'], priority: 60 })
+  ]);
+  eq(c.overall, 'mixed'); eq(c.tone, 'encouraging'); ok(C.conclusionText(c).indexOf('Wisselend') !== -1);
+});
+T('lead = hoogste priority oefening', () => {
+  const c = C.buildCoachConclusion([
+    E({ exercise: 'Laag', status: 'improved', signals: ['improved'], priority: 70 }),
+    E({ exercise: 'Hoog', status: 'improved', signals: ['improved', 'new_best'], priority: 100, best: '120 kg' })
+  ]);
+  eq(c.lead.exercise, 'Hoog');
+});
+T('nextAction aanwezig -> overgenomen uit DecisionCore-label, in tekst', () => {
+  const c = C.buildCoachConclusion([E({ exercise: 'Bench', status: 'improved', signals: ['improved'], priority: 70, nextAction: 'Verhogen (+2,5 kg)' })]);
+  eq(c.nextAction, 'Verhogen (+2,5 kg)'); eq(c.nextActionExercise, 'Bench');
+  ok(C.conclusionText(c).indexOf('volgende stap: Verhogen (+2,5 kg)') !== -1);
+});
+T('nextAction null (bv. cardio zonder RPE-regel) -> geen volgende-stap-zin', () => {
+  const c = C.buildCoachConclusion([E({ exercise: 'Row', domain: 'cardio', status: 'improved', signals: ['improved'], priority: 70, nextAction: null })]);
+  eq(c.nextAction, null); ok(C.conclusionText(c).indexOf('volgende stap') === -1);
+});
+T('domeinen correct gedetecteerd (strength + cardio)', () => {
+  const c = C.buildCoachConclusion([E({ domain: 'strength', status: 'improved', signals: ['improved'], priority: 70 }), E({ domain: 'cardio', status: 'stable', signals: ['stable'], priority: 40 })]);
+  eq(c.domains.strength, true); eq(c.domains.cardio, true);
+});
+T('conclusie is deterministisch', () => {
+  const arr = [E({ exercise: 'Bench', status: 'improved', signals: ['improved', 'new_best'], priority: 100, best: '105 kg', nextAction: 'Verhogen (+2,5 kg)' })];
+  eq(JSON.stringify(C.buildCoachConclusion(arr)), JSON.stringify(C.buildCoachConclusion(arr)));
+  eq(C.conclusionText(C.buildCoachConclusion(arr)), C.conclusionText(C.buildCoachConclusion(arr)));
+});
+T('conclusie bevat GEEN reken-inputs (rpe/kg) — puur presentatie', () => {
+  // Zelfs als een entry vervuild is, mag de conclusie-tekst nooit rauwe reken-inputs verwoorden
+  // (die zitten niet in de gebruikte velden). We controleren dat de tekst alleen presentatiewaarden gebruikt.
+  const c = C.buildCoachConclusion([E({ exercise: 'Bench', status: 'improved', signals: ['improved'], priority: 70, previous: '100 kg', current: '105 kg', rpe: 7, kg: 100 })]);
+  const t = C.conclusionText(c);
+  ok(t.indexOf('RPE') === -1 && t.indexOf('@') === -1, 'geen rauwe rpe/@ in conclusie');
+});
+T('VERSIONS.conclusion aanwezig', () => eq(C.VERSIONS.conclusion, 'coaching_conclusion.v1'));
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail > 0) { console.log('⚠ STOP: coaching-core faalt.'); process.exit(1); }

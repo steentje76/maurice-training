@@ -37,7 +37,7 @@ function checkSyntax() {
 }
 function checkPurity() {
   const forbidden = ['document', 'supabase', 'fetch(', 'localStorage', 'sessionStorage', 'querySelector', '.from(', 'XMLHttpRequest'];
-  const files = ['core/calculation.js', 'core/decision.js', 'core/cardio.js', 'core/progression.js'];
+  const files = ['core/calculation.js', 'core/decision.js', 'core/cardio.js', 'core/progression.js', 'core/coaching.js', 'core/movement.js'];
   let bad = [];
   files.forEach(f => {
     const raw = fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
@@ -52,6 +52,8 @@ const results = [
   run('core/decision.test', 'core/decision.test.js'),
   run('core/cardio.test', 'core/cardio.test.js'),
   run('core/progression.test', 'core/progression.test.js'),
+  run('core/coaching.test', 'core/coaching.test.js'),
+  run('core/movement.test', 'core/movement.test.js'),
   run('core/sw-guard.test', 'core/sw-guard.test.js'),
   checkSyntax(),
   checkPurity()

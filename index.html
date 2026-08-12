@@ -4531,6 +4531,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/cardio.js"></script>
 <script src="core/progression.js"></script>
 <script src="core/coaching.js"></script>
+<script src="core/movement.js"></script>
 <script>
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
@@ -9670,7 +9671,20 @@ var EXERCISE_POSTERS={
    de provider bepaalt welke assets erbij horen (via de MoveKit-slug uit de Catalog).
    Uitbreidbaar: registreer later extra media-typen zonder architectuurwijziging. */
 var ExerciseAssetProvider=(function(){
-  function _slug(id){var c=(typeof ExerciseCatalogService!=='undefined')?ExerciseCatalogService.byId(id):null;return (c&&c.source)?c.source.provider_id:null;}
+  function _slug(id){
+    var c=(typeof ExerciseCatalogService!=='undefined')?ExerciseCatalogService.byId(id):null;
+    if(c&&c.source&&c.source.provider_id) return c.source.provider_id;
+    // F19 — naam-fallback: koppel een oefening zonder catalog_id via de centrale MovementCore-mapping
+    // aan de juiste MoveKit provider_id. resolve() controleert daarna of de slug echt een poster is
+    // (onbekende slug -> null, dus geen verkeerd beeld). Uitsluitend bewegingsBEELD, geen sportlogica.
+    try{
+      if(typeof MovementCore!=='undefined' && MovementCore.slugForName && typeof exercises!=='undefined' && exercises.find){
+        var ex=exercises.find(function(e){return e.id===id;});
+        if(ex) return MovementCore.slugForName(ex.name||ex.naam);
+      }
+    }catch(e){}
+    return null;
+  }
   var _manifest={};   // 13 posters uit de bestaande EXERCISE_ASSETS (training-scherm) — geen duplicatie
   try{if(typeof EXERCISE_ASSETS!=='undefined')EXERCISE_ASSETS.forEach(function(a){if(a&&a.movekit_slug&&a.poster)_manifest[a.movekit_slug]=a.poster;});}catch(e){}
   var _cache={};      // resolve-cache per id|type (memory-efficiënt: elke data-URI één keer)

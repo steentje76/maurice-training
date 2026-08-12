@@ -11336,6 +11336,7 @@ function buildCardioBody(exId, cardioType){
   cardioSplitMode[exId]='auto';
   cardioSplits[exId]={};
   let h='';
+  h+=`<div id="cardioprev-${exId}"></div>`; // F8.1 — async "vorige keer" (fail-safe; gevuld na render)
 
   if(machines.length>0){
     const selM=localStorage.getItem('sel_'+cardioType)||machines[0];
@@ -11359,7 +11360,26 @@ function buildCardioBody(exId, cardioType){
   h+='</div>';
 
   h+=buildSplitsSection(exId,cardioType);
+  if(typeof enhanceCardioPrev==='function'){ setTimeout(function(){ enhanceCardioPrev(exId,cardioType); },0); }
   return h;
+}
+
+// F8.1 — "Vorige keer" tijdens de actieve cardio-workout. Machine-aware, async, FAIL-SAFE:
+// bij geen vorige sessie / fout -> leeg blok (net als strength buildPrevBlock). Presentatie-only,
+// geen actual-write, geen nieuwe rekenlogica (getallen via CardioCore, formatting via cardioPerfLine).
+async function enhanceCardioPrev(exId, cardioType){
+  try{
+    if(typeof sbGet!=='function' || typeof cardioPerfFromSession!=='function' || typeof CardioCore==='undefined' || typeof cardioPerfLine!=='function') return;
+    var el=document.getElementById('cardioprev-'+exId); if(!el) return;
+    var ss=await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(exId)+'&order=date.desc,created_at.desc&limit=1');
+    if(!ss || !ss.length){ el.innerHTML=''; return; }
+    var perf=cardioPerfFromSession(ss[0], cardioType); if(!perf){ el.innerHTML=''; return; }
+    var line=cardioPerfLine(perf, cardioType); if(!line){ el.innerHTML=''; return; }
+    var cfg=(typeof CARDIO_TYPES!=='undefined')?CARDIO_TYPES[cardioType]:null;
+    var distPart='';
+    if(cardioType!=='assaultbike' && perf.key){ var d=String(perf.key).split('@')[1]; if(d && d!=='' && d!=='cal') distPart=d+((cfg&&cfg.unit)||'')+' · '; }
+    el.innerHTML='<div class="ex-prev prev2"><div class="prev2-lbl">Vorige keer</div><div class="prev2-main">'+distPart+line+'</div></div>';
+  }catch(e){ var el2=document.getElementById('cardioprev-'+exId); if(el2) el2.innerHTML=''; }
 }
 
 function selMachine_fn(m, type, exId){

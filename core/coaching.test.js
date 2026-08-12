@@ -267,6 +267,49 @@ T('conclusie bevat GEEN reken-inputs (rpe/kg) — puur presentatie', () => {
   ok(t.indexOf('RPE') === -1 && t.indexOf('@') === -1, 'geen rauwe rpe/@ in conclusie');
 });
 T('VERSIONS.conclusion aanwezig', () => eq(C.VERSIONS.conclusion, 'coaching_conclusion.v1'));
+T('headline: deterministisch kort kop-label per overall (F14)', () => {
+  eq(C.buildCoachConclusion([E({ status: 'improved', signals: ['improved', 'new_best'], priority: 100 })]).headline, 'Nieuw persoonlijk record');
+  eq(C.buildCoachConclusion([E({ status: 'improved', signals: ['improved'], priority: 70 })]).headline, 'Sterker dan vorige keer');
+  eq(C.buildCoachConclusion([E({ status: 'declined', signals: ['declined'], priority: 60 })]).headline, 'Rustiger dan vorige keer');
+  eq(C.buildCoachConclusion([E({ status: 'stable', signals: ['stable'], priority: 40 })]).headline, 'Niveau vastgehouden');
+  eq(C.buildCoachConclusion([E({ status: 'first', signals: ['first_session'], priority: 35 })]).headline, 'Eerste registratie');
+  eq(C.buildCoachConclusion([E({ status: 'improved', signals: ['improved'], priority: 70 }), E({ status: 'declined', signals: ['declined'], priority: 60 })]).headline, 'Wisselend beeld');
+  eq(C.buildCoachConclusion([]).headline, ''); // geen data -> geen kop
+});
+
+// ================= L. KEY-INSIGHT-semantiek (F10.9) + neutraliteit (F10.3) =================
+// Borgt PERMANENT dat de sporter het JUISTE onthoudt: een record leidt boven een daling,
+// en een daling wordt nooit beschuldigend gepresenteerd. Pure lock-tests, geen runtime.
+console.log('\n[L] F10.9 key-insight + F10.3 neutrale daling (locks)');
+T('record + daling in dezelfde sessie -> conclusie LEIDT met het record (niet met de daling)', () => {
+  const c = C.buildCoachConclusion([
+    E({ exercise: 'Deadlift', status: 'improved', signals: ['improved', 'new_best'], priority: 100, best: '180 kg', current: '180 kg', previous: '175 kg' }),
+    E({ exercise: 'Bench', domain: 'strength', status: 'declined', signals: ['declined'], priority: 60, current: '95 kg', previous: '100 kg' })
+  ]);
+  eq(c.overall, 'new_best'); eq(c.tone, 'positive'); eq(c.lead.exercise, 'Deadlift');
+  const t = C.conclusionText(c);
+  ok(t.indexOf('Nieuw persoonlijk record') === 0, 'record moet vooropstaan'); ok(t.indexOf('lager') === -1, 'daling niet uitlichten bij een PR-sessie');
+});
+T('alleen daling -> neutraal/aanmoedigend, GEEN beschuldigende taal', () => {
+  const c = C.buildCoachConclusion([E({ exercise: 'Squat', status: 'declined', signals: ['declined'], priority: 60, current: '130 kg', previous: '140 kg' })]);
+  eq(c.overall, 'declined'); eq(c.tone, 'encouraging');
+  const t = C.conclusionText(c).toLowerCase();
+  ['slechter', 'gefaald', 'faalde', 'teleurstellend', 'zwak'].forEach(function (w) { ok(t.indexOf(w) === -1, 'verboden beschuldigend woord: ' + w); });
+  ok(t.indexOf('hoeft geen probleem') !== -1, 'daling moet neutraal geframed worden');
+});
+T('key-insight prioriteit new_best > trend_up > improved (lead volgt priority)', () => {
+  const c = C.buildCoachConclusion([
+    E({ exercise: 'A', status: 'improved', signals: ['improved'], priority: 70 }),
+    E({ exercise: 'B', status: 'improved', signals: ['improved', 'trend_up'], priority: 80 }),
+    E({ exercise: 'C', status: 'improved', signals: ['improved', 'new_best'], priority: 100 })
+  ]);
+  eq(c.lead.exercise, 'C');
+});
+T('nextAction wordt NOOIT gesynthetiseerd als geen enkele oefening er een heeft', () => {
+  const c = C.buildCoachConclusion([E({ exercise: 'Row', domain: 'cardio', status: 'improved', signals: ['improved'], priority: 70, nextAction: null })]);
+  eq(c.nextAction, null); eq(c.nextActionExercise, null);
+  ok(C.conclusionText(c).indexOf('volgende stap') === -1, 'geen verzonnen volgende stap');
+});
 
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');

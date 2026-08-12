@@ -196,9 +196,22 @@
     var tone = (overall === 'new_best' || overall === 'improved') ? 'positive'
       : (overall === 'declined' || overall === 'mixed') ? 'encouraging' : 'neutral';
 
+    // Deterministisch KORT kop-label per uitkomst — één bron van waarheid voor UI-kaart én AI.
+    // Presentatie-mapping (geen berekening); AI/UI hoeven zelf geen kop te verzinnen.
+    var HEADLINES = {
+      new_best: 'Nieuw persoonlijk record',
+      improved: 'Sterker dan vorige keer',
+      mixed: 'Wisselend beeld',
+      declined: 'Rustiger dan vorige keer',
+      stable: 'Niveau vastgehouden',
+      first: 'Eerste registratie',
+      unknown: ''
+    };
+
     return {
       hasData: counts.exercises > 0,
       overall: overall,
+      headline: HEADLINES[overall] || '',
       tone: tone,
       counts: counts,
       domains: domains,

@@ -460,6 +460,16 @@ body{display:flex;justify-content:center}
 .sess-muscles{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
 .sess-muscle{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;background:var(--accent2);color:#fff;padding:4px 10px;border-radius:8px}
 .sess-coach-lbl{font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--g4);margin-bottom:6px}
+/* F14 P0 — deterministische kernconclusie (uit CoachingCore.buildCoachConclusion), visueel dominant boven de AI-terugblik */
+.sess-concl{border-radius:14px;padding:14px 16px;margin-bottom:16px;border:1px solid var(--g2);background:var(--card,#fff)}
+.sess-concl.tone-positive{border-color:#bfe3c6;background:linear-gradient(135deg,#f2fbf4,#ffffff)}
+.sess-concl.tone-encouraging{border-color:#ece4c9;background:linear-gradient(135deg,#fbfaf2,#ffffff)}
+.sess-concl-top{display:flex;align-items:center;gap:9px;margin-bottom:5px}
+.sess-concl-ic{font-size:19px;line-height:1}
+.sess-concl-head{font-size:16px;font-weight:800;color:var(--dark);letter-spacing:-.2px}
+.sess-concl-detail{font-size:13px;color:var(--g6);line-height:1.5}
+.sess-concl-next{margin-top:11px;display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#fff;font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:999px}
+.sess-concl-next .l{font-weight:600;opacity:.85}
 /* ═══ v3.3.53 — Premium set-experience (± steppers, groter afvink-element, 2-regelig) ═══ */
 .setr{display:block;padding:14px 14px 16px}
 .setr-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
@@ -4161,6 +4171,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
     <div id="ai-summary-stats" class="sess-stats"></div>
     <div id="ai-summary-compare"></div>
+    <div id="ai-summary-conclusion"></div>
     <div class="sess-coach-lbl">Coach terugblik</div>
     <div id="ai-summary-body" style="font-size:13px;color:var(--g6);line-height:1.6;white-space:pre-wrap">Samenvatting laden...</div>
     <button class="btn btn-r" style="width:100%;margin-top:16px" onclick="closeModal('m-ai-summary');go('s-home');refreshStats()">Naar Home</button>
@@ -12379,6 +12390,8 @@ async function finishSession(){
       }).join('');
       cmpEl.innerHTML=rows?`<div class="sess-cmp"><div class="sess-cmp-lbl">Vergeleken met vorige keer</div>${rows}</div>`:'';
     }
+    // F14 P0 — deterministische kernconclusie dominant tonen (instant, vóór de AI-terugblik).
+    renderCoachConclusionCard();
   }catch(_){}
   openModal('m-ai-summary');
   const aiText=await generateSessionSummaryAI(t,summaryData);
@@ -12396,6 +12409,32 @@ async function finishSession(){
 }
 // v306 #10: eenmalige AI-call na afronden training — géén advies per set (dat gebeurt al
 // lokaal/regelgebaseerd via showPostSetAdvice), dit is de overkoepelende terugblik.
+// F14 P0 — rendert de deterministische kernconclusie als visueel dominante kaart boven de AI-terugblik.
+// Bron: CoachingCore.buildCoachConclusion (reeds berekend uit _coachSignals). Berekent zelf niets;
+// componeert alleen kop (uit core) + reeds-berekende presentatiewaarden + de door DecisionCore bepaalde nextAction.
+function renderCoachConclusionCard(){
+  var el=document.getElementById('ai-summary-conclusion'); if(!el) return;
+  try{
+    if(typeof CoachingCore==='undefined' || !CoachingCore.buildCoachConclusion || !window._coachSignals){ el.innerHTML=''; return; }
+    var c=CoachingCore.buildCoachConclusion(window._coachSignals);
+    if(!c || !c.hasData || !c.headline){ el.innerHTML=''; return; }
+    var L=c.lead||{};
+    var icon=c.overall==='new_best'?'🏆':c.overall==='improved'?'📈':c.overall==='mixed'?'⚖️':c.overall==='declined'?'🌿':c.overall==='stable'?'✓':'•';
+    var detail='';
+    if(c.overall==='new_best'){ detail=(L.exercise?L.exercise+': ':'')+(L.best||L.current||''); if(L.previous&&L.current&&L.previous!==L.current) detail+=' (was '+L.previous+')'; }
+    else if(c.overall==='improved'){ detail=(L.exercise?L.exercise+': ':'')+((L.previous&&L.current)?(L.previous+' → '+L.current):(L.current||'')); }
+    else if(c.overall==='declined'){ detail=(L.exercise?L.exercise+': ':'')+((L.previous&&L.current)?(L.previous+' → '+L.current+' · '):'')+'je training telt gewoon mee.'; }
+    else if(c.overall==='mixed'){ detail=c.counts.improved+' beter, '+c.counts.declined+' iets lager'+(L.exercise?(' · sterkste: '+L.exercise+(L.current?(' ('+L.current+')'):'')):''); }
+    else if(c.overall==='stable'){ detail='Je hield je niveau vast — consistent vasthouden telt ook mee.'; }
+    else if(c.overall==='first'){ detail='Vanaf je volgende vergelijkbare training zie je hier je vooruitgang.'; }
+    var next=c.nextAction?('<div class="sess-concl-next"><span class="l">Volgende stap</span> '+escHtml(c.nextAction)+'</div>'):'';
+    el.innerHTML='<div class="sess-concl tone-'+(c.tone||'neutral')+'">'+
+      '<div class="sess-concl-top"><span class="sess-concl-ic">'+icon+'</span><span class="sess-concl-head">'+escHtml(c.headline)+'</span></div>'+
+      (detail?('<div class="sess-concl-detail">'+escHtml(detail)+'</div>'):'')+
+      next+
+    '</div>';
+  }catch(_e){ if(el) el.innerHTML=''; }
+}
 async function generateSessionSummaryAI(t,summaryData){
   // F6.4 — deterministische coaching-context (AL door de cores berekend) meegeven zodat de AI de
   // getallen/signalen alleen VERWOORDT en niets zelf berekent. Guarded: ontbreekt de context, dan

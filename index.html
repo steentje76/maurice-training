@@ -11701,9 +11701,12 @@ function buildPrevBlock(prevS){
   let today='';
   const prog=(rpe!=null)?computeProgression(rpe,parseFloat(w)):null;
   if(prog){
-    if(prog.delta>0)today=`<div class="prev2-today up">Vandaag: ${roundKg(parseFloat(w)+prog.delta)} kg mogelijk ↑</div>`;
-    else if(prog.delta===0)today=`<div class="prev2-today keep">Vandaag: ${w} kg aanhouden</div>`;
-    else today=`<div class="prev2-today down">Vandaag: focus op techniek</div>`;
+    // F17 — koppel deze hint expliciet aan "vorige keer" (staat onder de "Vorige keer"-kop) i.p.v.
+    // het woord "Vandaag" te herhalen; dat botste met de autoritatieve "◎ Vandaag / Voorgesteld"-doelkaart.
+    // Getal/kleur/richting blijven ONGEWIJZIGD uit DecisionCore.computeProgression — alleen presentatie.
+    if(prog.delta>0)today=`<div class="prev2-today up">↑ Je had nog marge · richting ${roundKg(parseFloat(w)+prog.delta)} kg</div>`;
+    else if(prog.delta===0)today=`<div class="prev2-today keep">→ Je zat goed op niveau · houd ${w} kg aan</div>`;
+    else today=`<div class="prev2-today down">↓ Was zwaar · focus op techniek</div>`;
   }
   return `<div class="ex-prev prev2">
     <div class="prev2-lbl">Vorige keer</div>

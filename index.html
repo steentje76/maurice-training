@@ -3323,6 +3323,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="scroll" style="padding-top:8px">
     <div id="stats-hero"></div>
 
+    <div class="card"><div class="card-hd"><div class="card-title">Waar ben ik beter geworden?</div><div class="card-sub">Deterministisch &middot; op basis van je vergelijkbare trainingen</div></div><div class="card-body" id="stats-improve-list"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div></div>
+
     <div class="v43-lbl" style="margin:18px 0 9px">Doelen</div>
     <div class="card">
       <div class="card-hd"><div class="card-title">Actieve doelen</div><button class="ibtn" onclick="openModal('m-goal-add')" style="width:auto;height:auto;padding:6px 12px;border-radius:12px;font-size:12px;font-weight:800;font-family:var(--f);background:var(--v43-mint);color:var(--accent)">+ Doel</button></div>
@@ -13298,6 +13300,57 @@ async function refreshCardioProgress(){
     renderCardioProgress(el, perfsByEx);
   }catch(err){ /* stil: het stats-scherm blijft altijd werken */ }
 }
+// F7.9 — "Waar ben ik beter geworden?": per-oefening verbeter-feiten via ProgressionCore (geen eigen rekenlogica),
+// geaggregeerd door CoachingCore.improvementsDigest. Presentatie-only.
+function buildImprovementItems(allSessions){
+  if(typeof ProgressionCore==='undefined') return [];
+  var byEx={};
+  (allSessions||[]).forEach(function(s){ if(s&&s.exercise_id){ (byEx[s.exercise_id]=byEx[s.exercise_id]||[]).push(s); } });
+  var items=[];
+  (exercises||[]).forEach(function(ex){
+    var ss=byEx[ex.id]; if(!ss||ss.length<2) return;
+    var type=(typeof resolveCardioType==='function')?resolveCardioType(ex):null;
+    var isCardio=!!type;
+    var perfs=isCardio
+      ? ss.map(function(s){return cardioPerfFromSession(s,type);}).filter(Boolean)
+      : ss.map(strengthPerfFromRow).filter(Boolean);
+    if(perfs.length<2) return;
+    perfs.sort(function(a,b){return a.date<b.date?1:(a.date>b.date?-1:0);}); // meest recent eerst
+    var current=perfs[0], hist=perfs.slice(1);
+    var comp=ProgressionCore.comparableHistory(hist, current.key);
+    if(!comp.length) return;
+    var suff=ProgressionCore.sufficiency(comp.length);
+    var bm=isCardio?cardioBestMetric(type,current):{field:'e1rm',dir:'max'};
+    var newBest=ProgressionCore.isNewBest(hist, current.key, current, bm.field, bm.dir);
+    var prev=ProgressionCore.comparablePrevious(hist, current.key), improved=false;
+    if(prev){ var mets=isCardio?cardioProgressionMetrics(type):[{field:'e1rm',dir:'max'}]; var rep=ProgressionCore.deltaReport(current, prev, mets); var pr=isCardio?(type==='assaultbike'?rep.calPerMin:rep.splitSec):rep.e1rm; improved=!!(pr&&pr.better===true); }
+    var trendUp=false;
+    if(suff.canTrend){ var tr=ProgressionCore.trendBy(hist, current.key, bm.field, bm.dir, 3); trendUp=!!(tr&&tr.status==='trend'&&tr.improving===true); }
+    if(newBest||improved||trendUp){
+      var reason=isCardio?(type==='assaultbike'?'hoger vermogen':'sneller'):'hogere geschatte 1RM';
+      items.push({exercise:(ex.name||ex.naam||ex.id), domain:isCardio?'cardio':'strength', newBest:newBest, improved:improved, trendUp:trendUp, reason:reason});
+    }
+  });
+  return items;
+}
+function renderImprovements(el, digest){
+  if(!el) return;
+  if(!digest || !digest.hasAny){ el.innerHTML='<div style="font-size:13px;color:var(--g4);padding:6px 0">Nog niet genoeg vergelijkbare trainingen om je ontwikkeling te tonen. Vanaf een tweede vergelijkbare training verschijnt hier je vooruitgang.</div>'; return; }
+  var c=digest.counts, head=[];
+  if(c.newBests) head.push('<span style="color:#b8860b;font-weight:700">🏆 '+c.newBests+' nieuwe record'+(c.newBests===1?'':'s')+'</span>');
+  if(c.improved) head.push('<span style="color:#2e7d32;font-weight:700">↑ '+c.improved+' verbeterd</span>');
+  if(c.trendUps) head.push('<span style="color:#2e7d32;font-weight:700">📈 '+c.trendUps+' stijgende trend'+(c.trendUps===1?'':'s')+'</span>');
+  var lines=digest.highlights.map(function(h){ var icon=h.newBest?'🏆':'↑'; return '<div style="font-size:12px;color:var(--dark);margin-top:4px">'+icon+' '+escHtml(h.exercise)+(h.reason?' <span style="color:var(--g4)">— '+escHtml(h.reason)+'</span>':'')+'</div>'; }).join('');
+  el.innerHTML='<div style="font-size:13px;margin-bottom:2px">'+head.join(' · ')+'</div>'+lines;
+}
+async function refreshImprovements(){
+  var el=document.getElementById('stats-improve-list'); if(!el) return;
+  try{
+    if(typeof CoachingCore==='undefined'){ el.innerHTML=''; return; }
+    var all=await sbGet('sessions','&order=date.desc,created_at.desc&limit=500');
+    renderImprovements(el, CoachingCore.improvementsDigest(buildImprovementItems(all)));
+  }catch(err){ /* stil: stats-scherm blijft werken */ }
+}
 async function refreshStatsScreen(){
   await ensureFavoritesLoaded();
   await ensureExerciseGoalsLoaded();
@@ -13359,6 +13412,7 @@ async function refreshStatsScreen(){
   await refreshRepPRs();
   await refreshRatioFactors();
   try{ await refreshCardioProgress(); }catch(_e){} // F7.3 cardio records (guarded)
+  try{ await refreshImprovements(); }catch(_e){} // F7.9 "waar ben ik beter geworden?" (guarded)
   // v4.21.0 (Sprint 5.2) — Doelen geïntegreerd in Voortgang; herstel/belasting-heatmaps leven op Lichaam.
   renderStatsHero();
   renderDoelenScreen();

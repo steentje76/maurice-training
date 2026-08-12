@@ -73,6 +73,60 @@ T('geen Date-nondeterminisme + geen eigen rekenkern (geen 1RM/split-formules)', 
 });
 T('VERSIONS compleet', () => { eq(C.VERSIONS.signals, 'coaching_signals.v1'); eq(C.VERSIONS.context, 'coaching_context.v1'); });
 
+// ================= H. aiPayload — AI-boundary (F6.4/F6.3) =================
+console.log('\n[H] aiPayload — alleen reeds-berekende velden bereiken de AI');
+T('stript niet-toegestane velden (geen rauwe data naar AI)', () => {
+  const map = { bench: { exercise: 'Bench', domain: 'strength', signals: ['improved', 'new_best'], current: 105, previous: 99, best: 105, nextAction: 'Verhogen (+2,5 kg)',
+    rawSessionLog: { sets: [1, 2, 3] }, sbToken: 'geheim', calc: () => 1 } };
+  const out = C.aiPayload(map);
+  eq(out.length, 1);
+  const e = out[0];
+  ok(!('rawSessionLog' in e), 'rauwe sessiedata mag NIET naar AI'); ok(!('sbToken' in e), 'token mag NIET naar AI'); ok(!('calc' in e));
+  eq(e.exercise, 'Bench'); eq(e.current, 105); eq(e.previous, 99); eq(e.nextAction, 'Verhogen (+2,5 kg)');
+  ok(Array.isArray(e.signals) && e.signals.indexOf('new_best') !== -1);
+});
+T('lege/ongeldige map -> lege array (fail-soft)', () => {
+  eq(JSON.stringify(C.aiPayload(null)), '[]'); eq(JSON.stringify(C.aiPayload({})), '[]'); eq(JSON.stringify(C.aiPayload(undefined)), '[]');
+});
+T('null/undefined velden worden weggelaten (geen lege ruis naar AI)', () => {
+  const out = C.aiPayload({ x: { exercise: 'X', previous: null, best: undefined, current: 80 } });
+  ok(!('previous' in out[0]) && !('best' in out[0]), 'null/undefined velden weglaten'); eq(out[0].current, 80);
+});
+T('AI_FIELDS bevat geen rekenbare/gevoelige sleutels', () => {
+  ['rpe', 'kg', 'sets_detail', 'token', 'authorization'].forEach(k => ok(C.AI_FIELDS.indexOf(k) === -1, 'verboden AI-veld: ' + k));
+});
+T('aiPayload is deterministisch', () => {
+  const m = { a: { exercise: 'A', signals: ['improved'], current: 1 } };
+  eq(JSON.stringify(C.aiPayload(m)), JSON.stringify(C.aiPayload(m)));
+});
+
+// ================= I. improvementsDigest (F7.9) =================
+console.log('\n[I] improvementsDigest — "waar ben ik beter geworden?"');
+const IT = [
+  { exercise: 'Bench Press', domain: 'strength', newBest: true, improved: true, trendUp: false, reason: 'hogere geschatte 1RM' },
+  { exercise: 'Squat', domain: 'strength', newBest: false, improved: true, trendUp: true, reason: 'hogere geschatte 1RM' },
+  { exercise: 'Roeien', domain: 'cardio', newBest: true, improved: true, trendUp: true, reason: 'sneller' },
+  { exercise: 'Rust', domain: 'strength', newBest: false, improved: false, trendUp: false },
+];
+T('telt records/verbeterd/trends correct', () => {
+  const d = C.improvementsDigest(IT);
+  eq(d.counts.newBests, 2); eq(d.counts.improved, 3); eq(d.counts.trendUps, 2); eq(d.hasAny, true);
+});
+T('highlights gesorteerd op prioriteit (nieuwe beste eerst) en negeert niet-verbeterde', () => {
+  const d = C.improvementsDigest(IT);
+  ok(d.highlights.length === 3, 'alleen 3 met verbetering'); ok(d.highlights[0].newBest === true, 'newBest eerst');
+  ok(!d.highlights.some(h => h.exercise === 'Rust'), 'niet-verbeterde niet in highlights');
+});
+T('maxHighlights gerespecteerd', () => eq(C.improvementsDigest(IT, 2).highlights.length, 2));
+T('geen verbeteringen -> hasAny false, lege highlights', () => {
+  const d = C.improvementsDigest([{ exercise: 'X', newBest: false, improved: false, trendUp: false }]);
+  eq(d.hasAny, false); eq(d.highlights.length, 0); eq(d.counts.newBests, 0);
+});
+T('lege/ongeldige input -> veilige lege digest', () => {
+  eq(C.improvementsDigest(null).hasAny, false); eq(C.improvementsDigest([]).hasAny, false);
+});
+T('deterministisch', () => eq(JSON.stringify(C.improvementsDigest(IT)), JSON.stringify(C.improvementsDigest(IT))));
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail > 0) { console.log('⚠ STOP: coaching-core faalt.'); process.exit(1); }

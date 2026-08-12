@@ -527,6 +527,9 @@ body{display:flex;justify-content:center}
 .prev2-rpe{font-weight:600;color:var(--g4);font-size:13px}
 .prev2-today{font-size:12px;font-weight:700;margin-top:5px}
 .prev2-today.up{color:var(--df-g,#00a082)}.prev2-today.keep{color:var(--g6)}.prev2-today.down{color:var(--df-a,#b9702a)}
+/* F16 — neutrale first-session/geen-historie state; visueel duidelijk anders dan een echte waarde (geen vet, gedempt) */
+.prev2-empty .prev2-lbl{color:var(--g3)}
+.prev2-empty-msg{font-size:12.5px;color:var(--g4);margin-top:3px;line-height:1.4}
 /* v3.3.54 — gestructureerde coach-reactie per set */
 .coach-advice-body{flex:1;min-width:0}
 .coach-advice-head{font-size:14px;font-weight:800;line-height:1.2}
@@ -8980,7 +8983,7 @@ async function renderTrainScreen(t){
         </div>
         <span style="color:var(--g3);font-size:20px" id="arr-${ex.id}">›</span>
       </div>
-      ${prevBlockHtml||(prevStr?`<div class="ex-prev"><strong>${prevStr}</strong></div>`:'')}
+      ${prevBlockHtml||(prevStr?`<div class="ex-prev"><strong>${prevStr}</strong></div>`:'')||(resolveCardioType(ex)?'':prevEmptyBlock())}
       <div class="ex-body" id="body-${ex.id}">
         ${ex.tip?`<div style="background:#fffbea;border-left:3px solid var(--y);padding:8px 12px;font-size:12px;color:#666;margin:8px 14px;border-radius:0 8px 8px 0">💡 ${ex.tip}</div>`:''}
         ${buildVideoMuscle(ex)}
@@ -11387,7 +11390,7 @@ async function enhanceCardioPrev(exId, cardioType){
     if(typeof sbGet!=='function' || typeof cardioPerfFromSession!=='function' || typeof CardioCore==='undefined' || typeof cardioPerfLine!=='function') return;
     var el=document.getElementById('cardioprev-'+exId); if(!el) return;
     var ss=await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(exId)+'&order=date.desc,created_at.desc&limit=1');
-    if(!ss || !ss.length){ el.innerHTML=''; return; }
+    if(!ss || !ss.length){ el.innerHTML=(typeof prevEmptyBlock==='function'?prevEmptyBlock():''); return; } // F16: echt geen historie -> neutrale first-time state
     var perf=cardioPerfFromSession(ss[0], cardioType); if(!perf){ el.innerHTML=''; return; }
     var line=cardioPerfLine(perf, cardioType); if(!line){ el.innerHTML=''; return; }
     var cfg=(typeof CARDIO_TYPES!=='undefined')?CARDIO_TYPES[cardioType]:null;
@@ -11683,6 +11686,15 @@ function rpeMeaning(rpe){
   return 'Zware set';
 }
 // v3.3.54 Deel 1 — premium "vorige keer"-blok uit bestaande sessiedata + computeProgression.
+// F16 — neutrale first-session/geen-historie state voor het "Vorige keer"-blok (strength + cardio).
+// PRESENTATIE-ONLY: geen berekening, geen advies, geen verzonnen waarde, geen nextAction, geen AI.
+// Legt uitsluitend uit WAAROM er geen "Vorige keer" is. Hergebruikt de bestaande .ex-prev.prev2 component.
+function prevEmptyBlock(){
+  return '<div class="ex-prev prev2 prev2-empty">'+
+    '<div class="prev2-lbl">Vorige keer</div>'+
+    '<div class="prev2-empty-msg">Nog geen vorige training voor deze oefening — je eerste resultaat wordt vanaf nu je referentie.</div>'+
+  '</div>';
+}
 function buildPrevBlock(prevS){
   if(!(prevS&&prevS.weight&&prevS.reps))return '';
   const w=prevS.weight,r=prevS.reps,rpe=(prevS.rpe!=null&&prevS.rpe!=='')?parseFloat(prevS.rpe):null;

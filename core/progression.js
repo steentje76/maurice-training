@@ -60,6 +60,14 @@
     }, null);
   }
 
+  // Beste perf per veld voor één key, over meerdere metrics tegelijk (F7.3 cardio-records).
+  // metrics = [{ field, dir }]. Retour: { <field>: bestPerf|null }. Puur bovenop bestBy; geen nieuwe rekenregel.
+  function recordsBy(history, key, metrics) {
+    var out = {};
+    (metrics || []).forEach(function (m) { out[m.field] = bestBy(history, key, m.field, m.dir); });
+    return out;
+  }
+
   // Deterministisch verschil-rapport tussen huidige en vorige prestatie voor opgegeven metrics.
   // metrics = [{ field, dir, unit, label }]. Retour per metric: {delta, better, dir, current, previous}.
   // better: true=verbeterd, false=slechter, null=gelijk of onvergelijkbaar.
@@ -102,6 +110,7 @@
     comparableHistory: comparableHistory,
     comparablePrevious: comparablePrevious,
     bestBy: bestBy,
+    recordsBy: recordsBy,
     isNewBest: isNewBest,
     deltaReport: deltaReport,
     trendBy: trendBy,

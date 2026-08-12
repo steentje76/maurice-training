@@ -78,6 +78,21 @@ T('ontbrekende current-waarde -> geen valse beste', () => {
   eq(P.isNewBest(row2k, 'roeien@2000', { key: 'roeien@2000', splitSec: null }, 'splitSec', 'min'), false);
 });
 
+// ================= C3. recordsBy (meerdere records per key, F7.3) =================
+console.log('\n[C3] recordsBy (cardio-records: best per metric)');
+T('RowErg 2000m: beste tijd (min) + hoogste watt (max) samen', () => {
+  const r = P.recordsBy(row2k, 'roeien@2000', [{ field: 'durationSec', dir: 'min' }, { field: 'watts', dir: 'max' }]);
+  eq(r.durationSec.durationSec, 494); eq(r.watts.watts, 185);
+});
+T('geen data voor metric -> null (geen fake record)', () => {
+  const r = P.recordsBy(row2k, 'roeien@2000', [{ field: 'calPerMin', dir: 'max' }]);
+  eq(r.calPerMin, null);
+});
+T('respecteert key (2000m mengt niet met 5000m)', () => {
+  const all = row2k.concat(row5k);
+  eq(P.recordsBy(all, 'roeien@5000', [{ field: 'durationSec', dir: 'min' }]).durationSec.durationSec, 1300);
+});
+
 // ================= D. deltaReport (deterministisch verschil) =================
 console.log('\n[D] deltaReport (verschil huidige vs vorige)');
 T('split sneller -> better=true (dir min, negatieve delta)', () => {

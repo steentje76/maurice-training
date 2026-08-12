@@ -3359,6 +3359,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
     <div class="card"><div class="card-hd"><div class="card-title">HRV trend</div></div><div class="card-body"><div class="chart-wrap"><canvas id="stats-hrv-chart"></canvas></div></div></div>
     <div class="card"><div class="card-hd"><div class="card-title">Roei progressie</div></div><div class="card-body" id="stats-row-list"></div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">Cardio records</div><div class="card-sub">Beste prestatie per apparaat &middot; machine-aware</div></div><div class="card-body" id="stats-cardio-list"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div></div>
 
     <button class="btn btn-o" onclick="go('s-hist')" style="margin-bottom:10px">&#128203; Volledig trainingslogboek</button>
   </div>
@@ -13250,6 +13251,53 @@ function renderProgList(){
   if(el1) el1.innerHTML=h||'<p style="color:var(--g4);font-size:13px;padding:4px 0">Log sets om schattingen te berekenen, of pas de filters aan</p>';
 }
 
+// F7.3 — Cardio records (machine-aware). Presentatie-only; getallen via CardioCore, records via ProgressionCore.
+// Metric-semantiek expliciet: tijd/split lager=beter, watt/cal-per-min hoger=beter. Nooit RowErg≠BikeErg of 2k≠5k mengen.
+function cardioRecordMetrics(type){
+  if(type==='assaultbike') return [ {field:'calPerMin',dir:'max',label:'cal/min',fmt:function(v){return (Math.round(v*10)/10)+' cal/min';}}, {field:'watts',dir:'max',label:'watt',fmt:function(v){return Math.round(v)+' W';}} ];
+  return [ {field:'durationSec',dir:'min',label:'tijd',fmt:function(v){return CardioCore.formatTime(v);}},
+           {field:'splitSec',dir:'min',label:'split',fmt:function(v,cfg){return CardioCore.formatTime(v)+((cfg&&cfg.splitUnit)||'');}},
+           {field:'watts',dir:'max',label:'watt',fmt:function(v){return Math.round(v)+' W';}} ];
+}
+// perfsByEx = [{ id, naam, type, perfs:[cardioPerf...] }] — reeds gefetcht/berekend door de caller (data-injecteerbaar & testbaar).
+function renderCardioProgress(el, perfsByEx){
+  if(!el) return;
+  if(typeof ProgressionCore==='undefined' || typeof CardioCore==='undefined'){ el.innerHTML=''; return; }
+  var groups=(perfsByEx||[]).filter(function(g){ return g && g.perfs && g.perfs.length; });
+  if(!groups.length){ el.innerHTML='<div class="tk-empty"><div class="tk-empty-emo">🚣</div>Nog geen cardio-sessies gelogd.</div>'; return; }
+  var html='';
+  groups.forEach(function(g){
+    var cfg=(typeof CARDIO_TYPES!=='undefined')?CARDIO_TYPES[g.type]:null;
+    var mets=cardioRecordMetrics(g.type);
+    var byKey={}; g.perfs.forEach(function(p){ if(p&&p.key){ (byKey[p.key]=byKey[p.key]||[]).push(p); } });
+    var keys=Object.keys(byKey); if(!keys.length) return;
+    keys.sort(function(a,b){ return byKey[b].length-byKey[a].length; });
+    var topKey=keys[0];
+    var rec=ProgressionCore.recordsBy(byKey[topKey], topKey, mets);
+    var parts=[];
+    mets.forEach(function(m){ var best=rec[m.field]; if(best && best[m.field]!=null){ parts.push('<span style="color:var(--g4)">beste '+m.label+':</span> '+m.fmt(best[m.field], cfg)); } });
+    if(!parts.length) return;
+    var distPart = (topKey.indexOf('@cal')>=0 || topKey.indexOf('@')<0) ? '' : (' · '+topKey.split('@')[1]+((cfg&&cfg.unit)||''));
+    var sessN = byKey[topKey].length;
+    html+='<div class="stat-1rm-item"><div class="stat-1rm-row"><span class="stat-1rm-name">'+escHtml(g.naam)+distPart+'</span><span style="color:var(--g3);font-size:11px;margin-left:auto">'+sessN+' sessie'+(sessN===1?'':'s')+'</span></div><div style="font-size:12px;color:var(--dark);margin-top:3px">'+parts.join(' · ')+'</div></div>';
+  });
+  el.innerHTML=html||'<div class="tk-empty">Nog geen vergelijkbare cardio-prestaties.</div>';
+}
+async function refreshCardioProgress(){
+  var el=document.getElementById('stats-cardio-list'); if(!el) return;
+  try{
+    if(typeof resolveCardioType!=='function' || typeof cardioPerfFromSession!=='function'){ el.innerHTML=''; return; }
+    var cardioExs=(exercises||[]).filter(function(e){ return !!resolveCardioType(e); });
+    var perfsByEx=[];
+    for(var i=0;i<cardioExs.length;i++){
+      var e=cardioExs[i], type=resolveCardioType(e);
+      var ss=await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(e.id)+'&order=date.desc,created_at.desc&limit=50');
+      var perfs=(ss||[]).map(function(s){ return cardioPerfFromSession(s,type); }).filter(Boolean);
+      if(perfs.length) perfsByEx.push({id:e.id, naam:(e.name||e.naam||(CARDIO_TYPES[type]&&CARDIO_TYPES[type].naam)||type), type:type, perfs:perfs});
+    }
+    renderCardioProgress(el, perfsByEx);
+  }catch(err){ /* stil: het stats-scherm blijft altijd werken */ }
+}
 async function refreshStatsScreen(){
   await ensureFavoritesLoaded();
   await ensureExerciseGoalsLoaded();
@@ -13310,6 +13358,7 @@ async function refreshStatsScreen(){
   await refreshVolumeSpiergroep();
   await refreshRepPRs();
   await refreshRatioFactors();
+  try{ await refreshCardioProgress(); }catch(_e){} // F7.3 cardio records (guarded)
   // v4.21.0 (Sprint 5.2) — Doelen geïntegreerd in Voortgang; herstel/belasting-heatmaps leven op Lichaam.
   renderStatsHero();
   renderDoelenScreen();

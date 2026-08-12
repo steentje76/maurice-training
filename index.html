@@ -591,6 +591,7 @@ body{display:flex;justify-content:center}
 .row-item{display:flex;flex-direction:column;align-items:center}
 .row-inp{width:100%;padding:10px;border:1.5px solid var(--g2);border-radius:10px;font-size:16px;font-weight:700;text-align:center;color:var(--dark);background:var(--g1);font-family:var(--f);outline:none;-webkit-appearance:none}
 .row-inp:focus{border-color:var(--red);background:#fff}
+.row-inp.cardio-inp-invalid{border-color:#e53935;background:#fff5f5}
 .row-inp-lbl{font-size:10px;font-weight:600;color:var(--g4);margin-top:4px}
 .row-inp.computed{color:var(--red);background:var(--g1)}
 .rower-scroll{display:flex;gap:6px;overflow-x:auto;padding:8px 14px;-webkit-overflow-scrolling:touch}
@@ -11537,6 +11538,31 @@ function onCardioFieldInput(exId,cardioType,field){
     updateSplitSummary(exId,cardioType);
   }
   logCardio(exId,cardioType);
+  try{ validateCardioField(exId,cardioType,field); }catch(e){} // F8.2 (guarded, mag de invoerflow nooit breken)
+}
+// F8.2 — cardio input-validatie via bestaande CardioCore-validators (enige bron van waarheid).
+// Config-gestuurd: alleen numerieke (int/float) en tijd-velden; tekstvelden (bv. zwem-slagtype) worden NIET gevalideerd.
+// Presentatie-only: rode rand + aria-invalid + tooltip; invoer blijft behouden/corrigeerbaar, geen actual-write.
+function cardioFieldKind(cardioType, field){
+  if(field==='time'||field==='split'||field==='pace') return 'time';
+  var cfg=(typeof CARDIO_TYPES!=='undefined')?CARDIO_TYPES[cardioType]:null;
+  var spec=(cfg&&cfg.rowMap)?cfg.rowMap[field]:null;
+  if(spec && (spec.parse==='int'||spec.parse==='float')) return 'numeric';
+  return 'skip';
+}
+function validateCardioField(exId, cardioType, field){
+  try{
+    if(typeof CardioCore==='undefined' || typeof CardioCore.classifyNumericInput!=='function') return;
+    var kind=cardioFieldKind(cardioType, field);
+    if(kind==='skip') return;
+    var el=document.getElementById(exId+'-'+field); if(!el) return;
+    var res=(kind==='time')?CardioCore.classifyTimeInput(el.value):CardioCore.classifyNumericInput(el.value);
+    var invalid=!!(res && res.status==='invalid');
+    el.classList.toggle('cardio-inp-invalid', invalid);
+    el.setAttribute('aria-invalid', invalid?'true':'false');
+    if(invalid){ el.title=(res.reason==='negatief')?'Kan niet negatief zijn':(kind==='time'?'Voer een geldige tijd in':'Voer een geldige waarde in'); }
+    else if(el.title){ el.title=''; }
+  }catch(e){}
 }
 
 function logCardio(exId, cardioType){

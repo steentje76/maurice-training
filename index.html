@@ -3325,6 +3325,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="stats-hero"></div>
 
     <div class="card"><div class="card-hd"><div class="card-title">Waar ben ik beter geworden?</div><div class="card-sub">Deterministisch &middot; op basis van je vergelijkbare trainingen</div></div><div class="card-body" id="stats-improve-list"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">Consistentie</div><div class="card-sub">Unieke trainingsdagen &middot; alleen echte sessies</div></div><div class="card-body" id="stats-consistency-list"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div></div>
 
     <div class="v43-lbl" style="margin:18px 0 9px">Doelen</div>
     <div class="card">
@@ -13397,6 +13398,33 @@ async function refreshImprovements(){
     renderImprovements(el, CoachingCore.improvementsDigest(buildImprovementItems(all)));
   }catch(err){ /* stil: stats-scherm blijft werken */ }
 }
+// F8.4 — PURE consistency-telling uit sessiedatums. `now` wordt geïnjecteerd (determinisme/testbaarheid).
+// Telt UNIEKE trainingsdagen in rollende vensters. Geen fake streak, geen verzonnen score.
+function tkConsistencyCounts(dateStrings, now){
+  var ref=(now instanceof Date)?now:new Date(now);
+  var refMs=ref.getTime(), DAY=86400000, uniq={};
+  (dateStrings||[]).forEach(function(d){ if(d) uniq[String(d).slice(0,10)]=true; });
+  var dates=Object.keys(uniq);
+  function within(days){ var cut=refMs-days*DAY,n=0; dates.forEach(function(d){ var t=new Date(d+'T00:00:00').getTime(); if(!isNaN(t)&&t>=cut&&t<=refMs) n++; }); return n; }
+  var last7=within(7), last30=within(30), last56=within(56);
+  return { last7:last7, last30:last30, avgPerWeek:Math.round((last56/8)*10)/10 };
+}
+function renderConsistency(el, c){
+  if(!el) return;
+  if(!c || (c.last30===0 && c.last7===0)){ el.innerHTML='<div style="font-size:13px;color:var(--g4);padding:6px 0">Nog geen trainingen gelogd. Zodra je traint, verschijnt hier je ritme.</div>'; return; }
+  el.innerHTML=
+    '<div style="font-size:13px;color:var(--dark)"><strong>'+c.last7+'</strong> <span style="color:var(--g4)">trainingsdagen · afgelopen 7 dagen</span></div>'+
+    '<div style="font-size:13px;color:var(--dark);margin-top:4px"><strong>'+c.last30+'</strong> <span style="color:var(--g4)">trainingsdagen · afgelopen 30 dagen</span></div>'+
+    '<div style="font-size:12px;color:var(--g4);margin-top:5px">Gemiddeld '+c.avgPerWeek+' /week (laatste 8 weken)</div>';
+}
+async function refreshConsistency(){
+  var el=document.getElementById('stats-consistency-list'); if(!el) return;
+  try{
+    var ss=await sbGet('sessions','&select=date&order=date.desc,created_at.desc&limit=400');
+    var dates=(ss||[]).map(function(s){return s.date;}).filter(Boolean);
+    renderConsistency(el, tkConsistencyCounts(dates, new Date()));
+  }catch(err){ /* stil: stats-scherm blijft werken */ }
+}
 async function refreshStatsScreen(){
   await ensureFavoritesLoaded();
   await ensureExerciseGoalsLoaded();
@@ -13459,6 +13487,7 @@ async function refreshStatsScreen(){
   await refreshRatioFactors();
   try{ await refreshCardioProgress(); }catch(_e){} // F7.3 cardio records (guarded)
   try{ await refreshImprovements(); }catch(_e){} // F7.9 "waar ben ik beter geworden?" (guarded)
+  try{ await refreshConsistency(); }catch(_e){} // F8.4 consistency (guarded)
   // v4.21.0 (Sprint 5.2) — Doelen geïntegreerd in Voortgang; herstel/belasting-heatmaps leven op Lichaam.
   renderStatsHero();
   renderDoelenScreen();

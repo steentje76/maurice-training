@@ -4498,6 +4498,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/decision.js"></script>
 <script src="core/cardio.js"></script>
 <script src="core/progression.js"></script>
+<script src="core/coaching.js"></script>
 <script>
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
@@ -12125,6 +12126,26 @@ async function enhanceSummaryProgression(list){
           }
         }
         tkRenderProgRows(el, rows);
+        // F6.1/F6.2 — deterministische coaching-signalen afleiden (CoachingCore) en stashen voor de
+        // AI-terugblik/toekomst. GEEN weergave-wijziging; volledig geïsoleerd zodat het de summary nooit raakt.
+        try{
+          if(typeof CoachingCore!=='undefined'){
+            var _bm = isCardio ? cardioBestMetric(l.cardio.type, curPerf) : {field:'e1rm',dir:'max'};
+            var _prev = ProgressionCore.comparablePrevious(histPerfs, curPerf.key);
+            var _better;
+            if(_prev){
+              var _mets = isCardio ? cardioProgressionMetrics(l.cardio.type) : [{field:'e1rm',dir:'max'}];
+              var _rep = ProgressionCore.deltaReport(curPerf, _prev, _mets);
+              var _pr = isCardio ? (l.cardio.type==='assaultbike'?_rep.calPerMin:_rep.splitSec) : _rep.e1rm;
+              _better = _pr ? _pr.better : undefined;
+            }
+            var _isBest = ProgressionCore.isNewBest(histPerfs, curPerf.key, curPerf, _bm.field, _bm.dir);
+            var _trImp; if(suff.canTrend){ var _tr=ProgressionCore.trendBy(histPerfs, curPerf.key, _bm.field, _bm.dir, 3); _trImp=(_tr&&_tr.status==='trend')?_tr.improving:undefined; }
+            var _sig = CoachingCore.deriveSignals({comparableCount:comp.length, better:_better, isBest:_isBest, canTrend:suff.canTrend, trendImproving:_trImp});
+            window._coachSignals = window._coachSignals || {};
+            window._coachSignals[ex.id] = {domain:isCardio?'cardio':'strength', status:_sig.status, signals:_sig.signals, priority:_sig.priority};
+          }
+        }catch(_e){}
       }catch(e){}
     });
   }catch(e){}

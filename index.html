@@ -12401,24 +12401,36 @@ async function generateSessionSummaryAI(t,summaryData){
   // getallen/signalen alleen VERWOORDT en niets zelf berekent. Guarded: ontbreekt de context, dan
   // valt de terugblik terug op het oorspronkelijke gedrag (basis-summary blijft altijd werken).
   let coachBlock='';
+  // F9.5: deterministische workout-conclusie (door CoachingCore bepaald) als fallback bij AI-uitval/offline.
+  let detConclusion='';
   try{
     if(typeof CoachingCore!=='undefined' && window._coachSignals){
       const _ctx=CoachingCore.aiPayload(window._coachSignals);
       if(_ctx && _ctx.length){
+        // F9.5: één leidende, reeds-berekende conclusie zodat de terugblik consistent is met de cijfers.
+        let _concLine='';
+        try{
+          if(CoachingCore.buildCoachConclusion){
+            const _conc=CoachingCore.buildCoachConclusion(window._coachSignals);
+            detConclusion=(CoachingCore.conclusionText?CoachingCore.conclusionText(_conc):'')||'';
+            if(detConclusion) _concLine=`
+LEIDENDE CONCLUSIE (door de app bepaald, feitelijk — verwoord dit als kern van je terugblik, wijk niet af van de richting): ${detConclusion}`;
+          }
+        }catch(_c){ _concLine=''; detConclusion=''; }
         coachBlock=`
-DETERMINISTISCHE PRESTATIE-CONTEXT — deze waarden en signalen zijn AL door de app (CalcCore/CardioCore/ProgressionCore/DecisionCore) berekend. Verwoord ze feitelijk; bereken NIETS zelf, verzin geen percentages en geen gewichten. Per oefening: signal=wat er gebeurde (bv. new_best/improved/first_session), current/previous=reeds berekende prestatie, best=nieuwe beste indien aanwezig, nextAction=de door de app bepaalde volgende stap. Voor een volgende-stap-suggestie: gebruik UITSLUITEND nextAction indien aanwezig; verzin zelf nooit een gewicht. Bij first_session of ontbrekende historie: geen trend/vergelijkingsclaim. Bij achteruitgang: neutraal en niet veroordelend.
+DETERMINISTISCHE PRESTATIE-CONTEXT — deze waarden en signalen zijn AL door de app (CalcCore/CardioCore/ProgressionCore/DecisionCore) berekend. Verwoord ze feitelijk; bereken NIETS zelf, verzin geen percentages en geen gewichten. Per oefening: signal=wat er gebeurde (bv. new_best/improved/first_session), current/previous=reeds berekende prestatie, best=nieuwe beste indien aanwezig, nextAction=de door de app bepaalde volgende stap. Voor een volgende-stap-suggestie: gebruik UITSLUITEND nextAction indien aanwezig; verzin zelf nooit een gewicht. Bij first_session of ontbrekende historie: geen trend/vergelijkingsclaim. Bij achteruitgang: neutraal en niet veroordelend.${_concLine}
 Coaching-context (JSON): ${JSON.stringify(_ctx)}`;
       }
     }
-  }catch(_e){ coachBlock=''; }
+  }catch(_e){ coachBlock=''; detConclusion=''; }
   const sys=`Je bent de persoonlijke krachtcoach van deze sporter. Geef een korte, persoonlijke terugblik op de zojuist afgeronde Training ${t}, in het Nederlands, alsof je naast hem staat. Spreek de sporter direct aan ("je"). Max 3-4 zinnen. Verbind de cijfers aan betekenis: benoem concrete progressie (bv. "je verhoogde je bankdrukken met 2,5 kg terwijl je RPE beheerst bleef"), koppel het volume en de gemiddelde RPE aan hoe gecontroleerd de sessie was, en sluit af met één concrete focus voor de volgende keer (meestal techniek of een kleine progressie-stap). Geen opsomming van elke set, geen bulletlijst, geen opvulling, geen bevestigingszinnen zoals "Goed gedaan!". Warm en concreet.${coachBlock}
 Sessiedata (JSON): ${JSON.stringify(summaryData)}`;
   try{
     const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:500,system:sys,messages:[{role:'user',content:'Geef de samenvatting.'}]})});
     const d=await res.json();
-    if(d.error)return null;
-    return d.content[0].text;
-  }catch(e){return null;}
+    if(d.error)return detConclusion||null;
+    return (d.content&&d.content[0]&&d.content[0].text)||detConclusion||null;
+  }catch(e){return detConclusion||null;}
 }
 
 // ══════════════════════════════════════════════════════════

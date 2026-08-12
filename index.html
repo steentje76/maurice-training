@@ -13328,9 +13328,48 @@ function renderCardioProgress(el, perfsByEx){
     if(!parts.length) return;
     var distPart = (topKey.indexOf('@cal')>=0 || topKey.indexOf('@')<0) ? '' : (' · '+topKey.split('@')[1]+((cfg&&cfg.unit)||''));
     var sessN = byKey[topKey].length;
-    html+='<div class="stat-1rm-item"><div class="stat-1rm-row"><span class="stat-1rm-name">'+escHtml(g.naam)+distPart+'</span><span style="color:var(--g3);font-size:11px;margin-left:auto">'+sessN+' sessie'+(sessN===1?'':'s')+'</span></div><div style="font-size:12px;color:var(--dark);margin-top:3px">'+parts.join(' · ')+'</div></div>';
+    html+='<div class="stat-1rm-item" style="cursor:pointer" onclick=\'showCardioDetail('+JSON.stringify(g.id)+','+JSON.stringify(g.naam)+','+JSON.stringify(g.type)+')\'><div class="stat-1rm-row"><span class="stat-1rm-name">'+escHtml(g.naam)+distPart+'</span><span style="color:var(--g3);font-size:11px;margin-left:auto">'+sessN+' sessie'+(sessN===1?'':'s')+' &rsaquo;</span></div><div style="font-size:12px;color:var(--dark);margin-top:3px">'+parts.join(' · ')+'</div></div>';
   });
   el.innerHTML=html||'<div class="tk-empty">Nog geen vergelijkbare cardio-prestaties.</div>';
+}
+// F8.3 — Cardio exercise-detail/trend. Spiegel van show1RMChart (dynamische modal + drawChart + .lrow).
+// Machine-aware; records via ProgressionCore.recordsBy, trend via trendBy; dominante afstand-key (geen 2k≠5k).
+async function showCardioDetail(exId, naam, type){
+  try{
+    if(typeof cardioPerfFromSession!=='function' || typeof ProgressionCore==='undefined' || typeof CardioCore==='undefined' || typeof drawChart!=='function') return;
+    var ss=await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(exId)+'&order=date.asc,created_at.asc&limit=100');
+    var perfs=(ss||[]).map(function(s){return cardioPerfFromSession(s,type);}).filter(Boolean);
+    if(!perfs.length){ if(window.toast)toast('Geen cardio-data voor '+naam); return; }
+    var cfg=(typeof CARDIO_TYPES!=='undefined')?CARDIO_TYPES[type]:null;
+    var byKey={}; perfs.forEach(function(p){ if(p.key)(byKey[p.key]=byKey[p.key]||[]).push(p); });
+    var keys=Object.keys(byKey).sort(function(a,b){return byKey[b].length-byKey[a].length;});
+    var topKey=keys[0], group=byKey[topKey]||[];
+    var mets=cardioRecordMetrics(type);
+    var rec=ProgressionCore.recordsBy(group, topKey, mets);
+    var recLines=mets.map(function(m){ var b=rec[m.field]; return (b&&b[m.field]!=null)?('<div class="lrow"><div class="ldate">beste '+m.label+'</div><div class="lval"><strong>'+m.fmt(b[m.field],cfg)+'</strong></div><div class="lnote">'+(b.date||'')+'</div></div>'):''; }).filter(Boolean).join('');
+    var primaryField=(type==='assaultbike')?(group.some(function(p){return isFinite(p.watts);})?'watts':'calPerMin'):'watts';
+    var trTxt='Nog onvoldoende metingen voor een trend.';
+    var tr=ProgressionCore.trendBy(group, topKey, primaryField, 'max', 3);
+    if(tr && tr.status==='trend'){ trTxt=(tr.improving===true)?'📈 Stijgende lijn':(tr.improving===false?'📉 Licht dalend — herstel telt ook mee':'Stabiel'); }
+    var chartVals=[], chartLabels=[];
+    group.forEach(function(p){ if(isFinite(p[primaryField])){ chartVals.push(Math.round(p[primaryField]*10)/10); chartLabels.push(p.date); } });
+    var recent=group.slice(-8).reverse().map(function(p){ return '<div class="lrow"><div class="ldate">'+p.date+'</div><div class="lval">'+(cardioPerfLine(p,type)||'')+'</div></div>'; }).join('');
+    var distLabel=(topKey.indexOf('@cal')>=0||topKey.indexOf('@')<0)?'':(' · '+topKey.split('@')[1]+((cfg&&cfg.unit)||''));
+    var modal=document.createElement('div');
+    modal.className='modal-bg open'; modal.style.zIndex='200';
+    modal.innerHTML='<div class="modal"><div class="modal-handle"></div>'+
+      '<div class="modal-title">'+escHtml(naam)+distLabel+'</div>'+
+      '<div style="font-size:12px;color:var(--g4);margin-bottom:10px">Beste prestaties &middot; '+trTxt+'</div>'+
+      (recLines?('<div style="margin-bottom:10px">'+recLines+'</div>'):'')+
+      (chartVals.length>=2?('<div style="font-size:11px;color:var(--g4);margin-bottom:2px">'+(primaryField==='calPerMin'?'cal/min':'watt')+' over tijd</div><div style="height:120px;margin-bottom:12px"><canvas id="chart-cardio-modal"></canvas></div>'):'')+
+      '<div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Recente sessies</div>'+
+      '<div style="max-height:150px;overflow-y:auto">'+recent+'</div>'+
+      '<button class="btn btn-o" onclick="this.closest(\'.modal-bg\').remove()" style="margin-top:14px">Sluiten</button>'+
+    '</div>';
+    document.getElementById('app').appendChild(modal);
+    modal.onclick=function(e){ if(e.target===modal)modal.remove(); };
+    if(chartVals.length>=2){ setTimeout(function(){ try{ drawChart('chart-cardio-modal', chartVals, chartLabels); }catch(e){} },100); }
+  }catch(e){ if(window.toast)toast('Detail kon niet worden geladen'); }
 }
 async function refreshCardioProgress(){
   var el=document.getElementById('stats-cardio-list'); if(!el) return;

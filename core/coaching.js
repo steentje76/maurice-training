@@ -101,10 +101,34 @@
     };
   }
 
+  // F6.4 AI-BOUNDARY CONTRACT — saniteert de per-oefening coaching-context tot UITSLUITEND
+  // toegestane, reeds-DETERMINISTISCH-berekende velden. Alles wat de AI ontvangt loopt hier langs;
+  // niet-toegestane velden (rauwe sessiedata, interne objecten) worden gestript zodat de AI nooit
+  // iets krijgt om zelf mee te rekenen — hij mag de gegeven waarden alleen verwoorden.
+  var AI_FIELDS = ['exercise', 'domain', 'status', 'signals', 'priority', 'metric', 'current', 'previous', 'best', 'nextAction'];
+  function aiPayload(map) {
+    var out = [];
+    if (!map || typeof map !== 'object') return out;
+    var keys = Object.keys(map);
+    for (var i = 0; i < keys.length; i++) {
+      var e = map[keys[i]];
+      if (!e || typeof e !== 'object') continue;
+      var clean = {};
+      for (var j = 0; j < AI_FIELDS.length; j++) {
+        var f = AI_FIELDS[j];
+        if (e[f] !== undefined && e[f] !== null) clean[f] = e[f];
+      }
+      if (Object.keys(clean).length) out.push(clean);
+    }
+    return out;
+  }
+
   var CoachingCore = {
     deriveSignals: deriveSignals,
     buildContext: buildContext,
+    aiPayload: aiPayload,
     has: has,
+    AI_FIELDS: AI_FIELDS,
     PRIORITY: PRIORITY,
     VERSIONS: VERSIONS
   };

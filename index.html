@@ -12042,6 +12042,7 @@ function tkRenderProgRows(el, rows){
 async function enhanceSummaryProgression(list){
   try{
     if(typeof ProgressionCore==='undefined' || typeof sbGet!=='function') return;
+    window._coachSignals = {}; // F6.4: per review-sessie verse coaching-context voor de AI-terugblik
     var exs = (list||[]).filter(function(ex){ var l=sessionLog[ex.id]; if(!l) return false;
       if(l.cardio && typeof CARDIO_TYPES!=='undefined' && CARDIO_TYPES[l.cardio.type]) return true;
       if(l.sets && l.sets.some(function(s){return s&&(s.kg||s.reps);})) return true;
@@ -12142,8 +12143,24 @@ async function enhanceSummaryProgression(list){
             var _isBest = ProgressionCore.isNewBest(histPerfs, curPerf.key, curPerf, _bm.field, _bm.dir);
             var _trImp; if(suff.canTrend){ var _tr=ProgressionCore.trendBy(histPerfs, curPerf.key, _bm.field, _bm.dir, 3); _trImp=(_tr&&_tr.status==='trend')?_tr.improving:undefined; }
             var _sig = CoachingCore.deriveSignals({comparableCount:comp.length, better:_better, isBest:_isBest, canTrend:suff.canTrend, trendImproving:_trImp});
+            // F6.5 next-action: UITSLUITEND via bestaande DecisionCore.computeProgression (rpe-regel).
+            // Geen nieuwe trainingslogica; geen actie als er geen RPE is (computeProgression -> null).
+            var _next=null;
+            if(!isCardio && typeof DecisionCore!=='undefined' && DecisionCore.computeProgression){
+              var _ws=(l.sets||[]).filter(function(s){return s&&(s.kg||s.reps);});
+              var _bset=_ws.reduce(function(b,s){var k=(s.effKg!=null?Number(s.effKg):parseFloat(s.kg)); var bk=b?(b.effKg!=null?Number(b.effKg):parseFloat(b.kg)):-1; return (isFinite(k)&&k>bk)?s:b;},null);
+              if(_bset){ var _bkg=(_bset.effKg!=null?Number(_bset.effKg):parseFloat(_bset.kg)); var _pg=DecisionCore.computeProgression(parseFloat(_bset.rpe), _bkg); if(_pg){ _next=_pg.label+(_pg.delta?(' ('+(_pg.delta>0?'+':'')+String(_pg.delta).replace('.',',')+' kg)'):''); } }
+            }
             window._coachSignals = window._coachSignals || {};
-            window._coachSignals[ex.id] = {domain:isCardio?'cardio':'strength', status:_sig.status, signals:_sig.signals, priority:_sig.priority};
+            window._coachSignals[ex.id] = {
+              domain:isCardio?'cardio':'strength', exercise:ex.naam,
+              status:_sig.status, signals:_sig.signals, priority:_sig.priority,
+              metric: isCardio ? l.cardio.type : 'geschat 1RM',
+              current: isCardio ? cardioPerfLine(curPerf, l.cardio.type) : strengthPerfLine(curPerf),
+              previous: _prev ? (isCardio ? cardioPerfLine(_prev, l.cardio.type) : strengthPerfLine(_prev)) : null,
+              best: _isBest ? (isCardio ? _bm.fmt(curPerf) : (Math.round(curPerf.e1rm)+' kg')) : null,
+              nextAction: _next
+            };
           }
         }catch(_e){}
       }catch(e){}
@@ -12330,7 +12347,21 @@ async function finishSession(){
 // v306 #10: eenmalige AI-call na afronden training — géén advies per set (dat gebeurt al
 // lokaal/regelgebaseerd via showPostSetAdvice), dit is de overkoepelende terugblik.
 async function generateSessionSummaryAI(t,summaryData){
-  const sys=`Je bent de persoonlijke krachtcoach van deze sporter. Geef een korte, persoonlijke terugblik op de zojuist afgeronde Training ${t}, in het Nederlands, alsof je naast hem staat. Spreek de sporter direct aan ("je"). Max 3-4 zinnen. Verbind de cijfers aan betekenis: benoem concrete progressie (bv. "je verhoogde je bankdrukken met 2,5 kg terwijl je RPE beheerst bleef"), koppel het volume en de gemiddelde RPE aan hoe gecontroleerd de sessie was, en sluit af met één concrete focus voor de volgende keer (meestal techniek of een kleine progressie-stap). Geen opsomming van elke set, geen bulletlijst, geen opvulling, geen bevestigingszinnen zoals "Goed gedaan!". Warm en concreet.
+  // F6.4 — deterministische coaching-context (AL door de cores berekend) meegeven zodat de AI de
+  // getallen/signalen alleen VERWOORDT en niets zelf berekent. Guarded: ontbreekt de context, dan
+  // valt de terugblik terug op het oorspronkelijke gedrag (basis-summary blijft altijd werken).
+  let coachBlock='';
+  try{
+    if(typeof CoachingCore!=='undefined' && window._coachSignals){
+      const _ctx=CoachingCore.aiPayload(window._coachSignals);
+      if(_ctx && _ctx.length){
+        coachBlock=`
+DETERMINISTISCHE PRESTATIE-CONTEXT — deze waarden en signalen zijn AL door de app (CalcCore/CardioCore/ProgressionCore/DecisionCore) berekend. Verwoord ze feitelijk; bereken NIETS zelf, verzin geen percentages en geen gewichten. Per oefening: signal=wat er gebeurde (bv. new_best/improved/first_session), current/previous=reeds berekende prestatie, best=nieuwe beste indien aanwezig, nextAction=de door de app bepaalde volgende stap. Voor een volgende-stap-suggestie: gebruik UITSLUITEND nextAction indien aanwezig; verzin zelf nooit een gewicht. Bij first_session of ontbrekende historie: geen trend/vergelijkingsclaim. Bij achteruitgang: neutraal en niet veroordelend.
+Coaching-context (JSON): ${JSON.stringify(_ctx)}`;
+      }
+    }
+  }catch(_e){ coachBlock=''; }
+  const sys=`Je bent de persoonlijke krachtcoach van deze sporter. Geef een korte, persoonlijke terugblik op de zojuist afgeronde Training ${t}, in het Nederlands, alsof je naast hem staat. Spreek de sporter direct aan ("je"). Max 3-4 zinnen. Verbind de cijfers aan betekenis: benoem concrete progressie (bv. "je verhoogde je bankdrukken met 2,5 kg terwijl je RPE beheerst bleef"), koppel het volume en de gemiddelde RPE aan hoe gecontroleerd de sessie was, en sluit af met één concrete focus voor de volgende keer (meestal techniek of een kleine progressie-stap). Geen opsomming van elke set, geen bulletlijst, geen opvulling, geen bevestigingszinnen zoals "Goed gedaan!". Warm en concreet.${coachBlock}
 Sessiedata (JSON): ${JSON.stringify(summaryData)}`;
   try{
     const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:500,system:sys,messages:[{role:'user',content:'Geef de samenvatting.'}]})});

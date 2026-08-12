@@ -100,6 +100,33 @@ T('aiPayload is deterministisch', () => {
   eq(JSON.stringify(C.aiPayload(m)), JSON.stringify(C.aiPayload(m)));
 });
 
+// ================= I. improvementsDigest (F7.9) =================
+console.log('\n[I] improvementsDigest — "waar ben ik beter geworden?"');
+const IT = [
+  { exercise: 'Bench Press', domain: 'strength', newBest: true, improved: true, trendUp: false, reason: 'hogere geschatte 1RM' },
+  { exercise: 'Squat', domain: 'strength', newBest: false, improved: true, trendUp: true, reason: 'hogere geschatte 1RM' },
+  { exercise: 'Roeien', domain: 'cardio', newBest: true, improved: true, trendUp: true, reason: 'sneller' },
+  { exercise: 'Rust', domain: 'strength', newBest: false, improved: false, trendUp: false },
+];
+T('telt records/verbeterd/trends correct', () => {
+  const d = C.improvementsDigest(IT);
+  eq(d.counts.newBests, 2); eq(d.counts.improved, 3); eq(d.counts.trendUps, 2); eq(d.hasAny, true);
+});
+T('highlights gesorteerd op prioriteit (nieuwe beste eerst) en negeert niet-verbeterde', () => {
+  const d = C.improvementsDigest(IT);
+  ok(d.highlights.length === 3, 'alleen 3 met verbetering'); ok(d.highlights[0].newBest === true, 'newBest eerst');
+  ok(!d.highlights.some(h => h.exercise === 'Rust'), 'niet-verbeterde niet in highlights');
+});
+T('maxHighlights gerespecteerd', () => eq(C.improvementsDigest(IT, 2).highlights.length, 2));
+T('geen verbeteringen -> hasAny false, lege highlights', () => {
+  const d = C.improvementsDigest([{ exercise: 'X', newBest: false, improved: false, trendUp: false }]);
+  eq(d.hasAny, false); eq(d.highlights.length, 0); eq(d.counts.newBests, 0);
+});
+T('lege/ongeldige input -> veilige lege digest', () => {
+  eq(C.improvementsDigest(null).hasAny, false); eq(C.improvementsDigest([]).hasAny, false);
+});
+T('deterministisch', () => eq(JSON.stringify(C.improvementsDigest(IT)), JSON.stringify(C.improvementsDigest(IT))));
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail > 0) { console.log('⚠ STOP: coaching-core faalt.'); process.exit(1); }

@@ -4597,6 +4597,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/coaching.js"></script>
 <script src="core/movement.js"></script>
 <script src="core/onboarding.js"></script>
+<script src="core/athleteConstraints.js"></script>
 <script>
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
@@ -6438,6 +6439,9 @@ function previewRenderSwapPicker(){
   try{alts=(typeof WB!=='undefined'&&WB.altList)?WB.altList(exId):[];}catch(e){alts=[];}
   const currentIds=new Set(previewWorkingList().map(it=>it.exercise_id));
   alts=alts.filter(a=>a&&!currentIds.has(a.catalog_id));
+  // F23: bied alleen alternatieven aan die passen bij het beschikbare materiaal en niet vermeden zijn.
+  // Veilige laag (AthleteConstraints): onbekende equipment blijft beschikbaar, valt nooit terug op leeg.
+  try{ if(typeof applyAthleteConstraints==='function'){ const wrapped=alts.map(a=>({id:a.catalog_id,naam:a.name,_a:a})); alts=applyAthleteConstraints(wrapped).map(w=>w._a); } }catch(e){}
   const opts=alts.length?alts.map(a=>`<div class="lrow" style="align-items:center"><div style="flex:1;font-size:13px">${escHtml(a.name)}</div><button class="btn btn-o btn-sm" onclick="previewApplySwap('${escHtml(exId)}','${escHtml(a.catalog_id)}')">Kies</button></div>`).join('')
     :'<div style="font-size:12px;color:var(--g4)">Geen alternatieven gevonden</div>';
   return `<div style="margin-top:10px;border-top:1px solid var(--g1);padding-top:10px">
@@ -11030,6 +11034,49 @@ function movekitPosterFor(ex){
     }
   }catch(e){}
   return null;
+}
+// ══════════════════════════════════════════════════════════
+// F23 — ATHLETE CONSTRAINTS (equipment/avoid) app-laag. Read-only, ge-guard.
+// De veilige beslissing zit in de pure core (AthleteConstraints); hier resolven we alleen
+// equipment via de catalogus en passen we toe. Geen context → exact oud gedrag.
+// ══════════════════════════════════════════════════════════
+function athleteEquipmentSet(){
+  try{
+    const tc=(tkTrainingCtx&&typeof tkTrainingCtx==='object')?tkTrainingCtx:null;
+    if(!tc) return null;
+    if(tc.location!=='thuis'&&tc.location!=='hybride') return null; // gym/onbekend → geen equipment-filter
+    if(!tc.equipment||!tc.equipment.length) return null;
+    return (window.AthleteConstraints)?AthleteConstraints.normalizeEquipment(tc.equipment):null;
+  }catch(e){ return null; }
+}
+function athleteAvoidTerms(){
+  try{ const tc=(tkTrainingCtx&&typeof tkTrainingCtx==='object')?tkTrainingCtx:null; return (tc&&Array.isArray(tc.avoid_exercises))?tc.avoid_exercises:[]; }catch(e){ return []; }
+}
+// Canonieke equipment van een oefening via de catalogus (id of naam→slug). null = onbekend → niet filteren.
+function resolveExerciseEquipment(ex){
+  try{
+    if(!ex||typeof ExerciseCatalogService==='undefined') return null;
+    let ent=null;
+    if(ex.id && ExerciseCatalogService.byId){ try{ ent=ExerciseCatalogService.byId(ex.id); }catch(e){} }
+    if((!ent||!ent.identity) && (ex.naam||ex.name) && typeof MovementCore!=='undefined'){
+      const slug=MovementCore.slugForName(ex.naam||ex.name);
+      if(slug){ const hit=ExerciseCatalogService.all().find(c=>(c.assets||[]).some(a=>a.ref===slug)); if(hit) ent=hit; }
+    }
+    if(!ent||!ent.identity||!Array.isArray(ent.identity.equipment)||!ent.identity.equipment.length) return null;
+    return ent.identity.equipment.slice();
+  }catch(e){ return null; }
+}
+// Pas de veilige equipment/avoid-constraints toe op een kandidatenlijst; geeft de gefilterde originele items.
+// Zonder context (of AthleteConstraints ontbreekt) → exact de originele lijst (oud gedrag). Nooit leeg.
+function applyAthleteConstraints(list){
+  try{
+    if(!window.AthleteConstraints || !Array.isArray(list) || !list.length) return list;
+    const set=athleteEquipmentSet(); const avoid=athleteAvoidTerms();
+    if(!set && (!avoid||!avoid.length)) return list;
+    const cands=list.map(it=>({ name:(it.naam||it.name||''), equipment:resolveExerciseEquipment(it), _ref:it }));
+    const r=AthleteConstraints.applyConstraints(cands,{availableSet:set,avoidTerms:avoid});
+    return r.kept.map(c=>c._ref);
+  }catch(e){ return list; }
 }
 // F22-E: resolve MoveKit technische intelligentie (cues + veelgemaakte fouten) voor een oefening.
 // Read-only, ge-guard; geeft alleen bestaande catalogus-data terug (geen fake content).

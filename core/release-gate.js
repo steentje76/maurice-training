@@ -37,7 +37,7 @@ function checkSyntax() {
 }
 function checkPurity() {
   const forbidden = ['document', 'supabase', 'fetch(', 'localStorage', 'sessionStorage', 'querySelector', '.from(', 'XMLHttpRequest'];
-  const files = ['core/calculation.js', 'core/decision.js', 'core/cardio.js', 'core/progression.js', 'core/coaching.js', 'core/movement.js', 'core/onboarding.js', 'core/athleteConstraints.js'];
+  const files = ['core/calculation.js', 'core/decision.js', 'core/cardio.js', 'core/progression.js', 'core/coaching.js', 'core/movement.js', 'core/onboarding.js', 'core/athleteConstraints.js', 'core/commonData.js', 'core/sportDefinition.js', 'core/contextEngine.js'];
   let bad = [];
   files.forEach(f => {
     const raw = fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
@@ -56,6 +56,9 @@ const results = [
   run('core/movement.test', 'core/movement.test.js'),
   run('core/onboarding.test', 'core/onboarding.test.js'),
   run('core/athleteConstraints.test', 'core/athleteConstraints.test.js'),
+  run('core/commonData.test', 'core/commonData.test.js'),
+  run('core/sportDefinition.test', 'core/sportDefinition.test.js'),
+  run('core/contextEngine.test', 'core/contextEngine.test.js'),
   run('core/sw-guard.test', 'core/sw-guard.test.js'),
   checkSyntax(),
   checkPurity()

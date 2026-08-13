@@ -9435,8 +9435,11 @@ function buildVasteTrainingScreen(vt){
       <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
       <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-      
+
     </nav>`;
+  // F120-fix: dit scherm wordt dynamisch gebouwd ná de initiële applyNavIcons() — daarom de
+  // emoji-nav hier alsnog vervangen door de consistente lijn-iconen (zoals alle andere schermen).
+  try{ if(typeof applyNavIcons==='function')applyNavIcons(); }catch(_){}
 }
 
 let trainPaused=false, pausedAt=0, pausedAccumMs=0;
@@ -9623,6 +9626,9 @@ async function renderTrainScreen(t){
   // DOM (zelfde set-inputs/ids → logSet/finishSession ongewijzigd en bewezen), maar er wordt
   // één oefening tegelijk getoond, met voortgang, volgende-oefening en navigatie (mock-up).
   try{ applyExecutionFocus(t); }catch(e){ console.warn('execFocus',e); }
+  // F120-fix: consistente lijn-nav-iconen op elk actief-trainingsscherm (Vaste/Programma/Workout),
+  // die dynamisch ná de initiële applyNavIcons() gebouwd worden.
+  try{ if(typeof applyNavIcons==='function')applyNavIcons(); }catch(_){}
 }
 
 // F0.7P — execution focus-view. Toont één oefening tegelijk; muteert geen data/logging.
@@ -12712,39 +12718,15 @@ function updateSummary(t){
 }
 
 function addExToSession(t){
-  const cur=getSessionExs(t).map(e=>e.id);
-  const avail=exPickerPool().filter(e=>!cur.includes(e.id)&&e.active!==false); // F41: legacy + 206 catalogus
-  const cats=[...vasteTrainingen.map(v=>v.id),'CrossFit','Overig'];
-  const catLbls={};
-  vasteTrainingen.forEach(v=>catLbls[v.id]=v.naam);
-  catLbls.CrossFit='CrossFit';catLbls.Overig='Overig';
-  // v4.16.0 (Sprint 4.8 P7) — premium Explorer-secties: groepeer op spiergroep,
-  // horizontale rijen met poster-kaarten. Zelfde bron (oefeningen-pool); poster
-  // uit ExerciseAssetProvider waar beschikbaar, anders een nette icoon-tegel.
-  const A=window.ExerciseAssetProvider;
-  const DB='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6M7 6v12M17 6v12M20 9v6M7 12h10"/></svg>';
-  const groups={},order=[];
-  avail.forEach(e=>{
-    const m=(e.muscle_primary&&e.muscle_primary[0])||catLbls[e.category]||'Overig';
-    if(!groups[m]){groups[m]=[];order.push(m);}
-    groups[m].push(e);
+  // F120 — "+ Oefening" tijdens een actieve training gebruikt nu de UNIFIED picker (277,
+  // zoeken/spiergroep/materiaal-filters/posters) i.p.v. de aparte gegroepeerde grid — consistent
+  // met add-set en superset. Selectie via addExConfirm (resolvePickerEx → catalog_id behouden).
+  openExPicker(function(ex){
+    if(!ex||!ex.id)return;
+    const cur=getSessionExs(t).map(e=>e.id);
+    if(cur.includes(ex.id)){ toast((ex.name||'Deze oefening')+' zit al in deze training'); return; }
+    addExConfirm(ex.id, t);
   });
-  let html='';
-  order.forEach(m=>{
-    html+=`<div class="oa-seclbl">${escHtml(m)}</div><div class="oa-row">`;
-    groups[m].forEach(e=>{
-      let poster=null;try{poster=(A&&A.poster)?A.poster(e.id):null;}catch(_){}
-      const thumb=poster?`<img src="${poster}" alt="" loading="lazy">`:DB;
-      const mus=(e.muscle_primary&&e.muscle_primary[0])||'';
-      html+=`<button class="oa-card" onclick="addExConfirm('${e.id}','${t}');closeModal('m-add-ex')" aria-label="${escHtml(e.name)} toevoegen">
-        <span class="oa-poster${poster?' has':''}">${thumb}<span class="oa-add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span></span>
-        <span class="oa-nm">${escHtml(e.name)}</span>${mus?`<span class="oa-mus">${escHtml(mus)}</span>`:''}</button>`;
-    });
-    html+=`</div>`;
-  });
-  if(!html)html='<div class="oa-empty">Alle oefeningen zijn al toegevoegd.</div>';
-  document.getElementById('add-ex-list').innerHTML=html;
-  openModal('m-add-ex');
 }
 
 function addExConfirm(exId,t){
@@ -17689,9 +17671,11 @@ function applyNavIcons(){
   const I={
     home:'<svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V19a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-8.5"/><path d="M9.5 20v-5.5h5V20"/></svg>',
     training:'<svg viewBox="0 0 24 24"><path d="M4 10v4M7 8v8M17 8v8M20 10v4M7 12h10"/></svg>',
+    // F120-fix: labels zijn "Lichaam" en "Voortgang" — voorheen stonden hier de keys 'profiel'/'stats',
+    // waardoor die twee nooit vervangen werden (bleven emoji 🧍/📈 op ALLE schermen).
+    lichaam:'<svg viewBox="0 0 24 24"><path d="M20.8 8.6a4.6 4.6 0 0 0-7.8-2.5L12 7l-1-.9A4.6 4.6 0 0 0 3.2 8.6c0 3.9 5.2 7.9 8.8 10.9 3.6-3 8.8-7 8.8-10.9Z"/></svg>',
     coach:'<svg viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4 19.5l1.3-4.1A7.5 7.5 0 1 1 20 11.5Z"/></svg>',
-    profiel:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>',
-    stats:'<svg viewBox="0 0 24 24"><path d="M4 4v16h16"/><path d="M7.5 14.5 11 11l2.5 2.5L19 8"/></svg>'
+    voortgang:'<svg viewBox="0 0 24 24"><path d="M4 4v16h16"/><path d="M7.5 14.5 11 11l2.5 2.5L19 8"/></svg>'
   };
   document.querySelectorAll('.bnav .ni').forEach(btn=>{
     const lbl=(btn.querySelector('.ni-label')?.textContent||'').trim().toLowerCase();

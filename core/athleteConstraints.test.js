@@ -32,6 +32,18 @@ console.log('\n[C] avoidMatch — EXACT vs AMBIGUOUS vs UNKNOWN');
 T('exacte naam → exact', () => eq(A.avoidMatch('Sumo Deadlift', 'Sumo Deadlift'), 'exact'));
 T('"deadlift" bij "Sumo Deadlift" → ambiguous (substring)', () => eq(A.avoidMatch('deadlift', 'Sumo Deadlift'), 'ambiguous'));
 T('geen relatie → unknown', () => eq(A.avoidMatch('Bench Press', 'Barbell Squat'), 'unknown'));
+T('F24 alias "sumo dl" → Sumo Deadlift exact', () => eq(A.avoidMatch('sumo dl', 'Sumo Deadlift'), 'exact'));
+T('F24 alias "rdl" → Romanian Deadlift exact', () => eq(A.avoidMatch('rdl', 'Romanian Deadlift'), 'exact'));
+T('F24 "deadlift" blijft ambiguous bij varianten (geen alias)', () => {
+  eq(A.avoidMatch('deadlift', 'Sumo Deadlift'), 'ambiguous');
+  eq(A.avoidMatch('deadlift', 'Romanian Deadlift'), 'ambiguous');
+});
+T('F24 alias sluit alleen de juiste variant uit (applyConstraints)', () => {
+  var c = [{ name: 'Sumo Deadlift' }, { name: 'Romanian Deadlift' }, { name: 'Barbell Deadlift' }];
+  var r = A.applyConstraints(c, { avoidTerms: ['sumo dl'] });
+  ok(r.kept.map(x => x.name).indexOf('Sumo Deadlift') === -1, 'sumo eruit');
+  eq(r.kept.length, 2, 'andere varianten blijven');
+});
 
 console.log('\n[D] applyConstraints — equipment-filter');
 var GYMSET = null; // geen availableSet = geen filter

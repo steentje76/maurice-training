@@ -17596,6 +17596,18 @@ var WB=(function(){
   /* ── Generator ── */
   function generate(sel){
     var g=goalCfg(sel.goal), pool=buildPool(sel), slots=slotPlan(sel);
+    // F24 — equipment/avoid-constraints VÓÓR scoring (zelfde AthleteConstraints-core als de swap-picker).
+    // Bepaalt alleen beschikbaarheid, niet welke oefening beter is. Onbekend blijft; nooit lege pool.
+    try{
+      if(window.AthleteConstraints && typeof athleteEquipmentSet==='function'){
+        var _set=athleteEquipmentSet(), _avoid=(typeof athleteAvoidTerms==='function')?athleteAvoidTerms():[];
+        if(_set || (_avoid&&_avoid.length)){
+          var _cands=pool.map(function(ex){return {name:(ex.identity&&ex.identity.name)||'', equipment:(ex.identity&&ex.identity.equipment)||null, _ref:ex};});
+          var _r=AthleteConstraints.applyConstraints(_cands,{availableSet:_set,avoidTerms:_avoid});
+          pool=_r.kept.map(function(w){return w._ref;});
+        }
+      }
+    }catch(e){}
     var usedIds={}, usedFam={}, chosen=[], heavyStreak=0, muscleCount={};
     var warmMin=4, coolMin=4;
     var mainBudget=Math.max(6, sel.time - warmMin - coolMin);

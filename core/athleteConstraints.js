@@ -78,12 +78,27 @@
     return { allowed: false, reason: 'equipment', missing: nonBody };
   }
 
+  // EXPLICIETE avoid-aliassen (F24). Alleen ondubbelzinnige afkortingen/schrijfwijzen → volledige naam.
+  // GEEN variantfamilies, GEEN fuzzy: "deadlift" staat hier bewust NIET (ambigu). Sleutel = normSlug.
+  var AVOID_ALIAS = {
+    'sumo-dl': 'sumo deadlift', 'sumo-deadlift': 'sumo deadlift',
+    'rdl': 'romanian deadlift', 'romanian-dl': 'romanian deadlift',
+    'conv-deadlift': 'deadlift', 'conventional-deadlift': 'deadlift',
+    'ohp': 'overhead press', 'bb-bench': 'barbell bench press', 'bench-press': 'bench press',
+    'back-squat': 'barbell squat', 'front-squat': 'front squat',
+    'db-press': 'dumbbell press', 'kb-swing': 'kettlebell swing'
+  };
+  function canonAvoid(term) {
+    var s = normSlug(term);
+    return Object.prototype.hasOwnProperty.call(AVOID_ALIAS, s) ? AVOID_ALIAS[s] : term;
+  }
+
   // Avoid-match tussen een (vrije-tekst) avoid-term en een oefeningnaam.
-  //   'exact'     → normSlug gelijk (veilig uitsluiten)
+  //   'exact'     → normSlug gelijk (of via geverifieerde alias) → veilig uitsluiten
   //   'ambiguous' → substring-relatie maar niet gelijk (NIET uitsluiten)
   //   'unknown'   → geen relatie
   function avoidMatch(avoidTerm, exerciseName) {
-    var a = normSlug(avoidTerm), n = normSlug(exerciseName);
+    var a = normSlug(canonAvoid(avoidTerm)), n = normSlug(exerciseName);
     if (!a || !n) return 'unknown';
     if (a === n) return 'exact';
     if (n.indexOf(a) >= 0 || a.indexOf(n) >= 0) return 'ambiguous';

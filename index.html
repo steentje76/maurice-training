@@ -4049,7 +4049,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="modal">
     <div class="ex-pick-sticky-top">
       <div class="modal-handle"></div>
-      <div class="modal-title">Oefening kiezen</div>
+      <div class="modal-title">📚 Kies een oefening<span id="ex-pick-count" style="font-weight:600;font-size:12.5px;color:var(--g4);margin-left:7px"></span></div>
       <input type="text" class="ex-pick-search" id="ex-pick-search" placeholder="Zoek op naam…" oninput="renderExPickerList()">
       <div class="ex-pick-quickfilters" id="ex-pick-quickfilters"></div>
       <div class="pk-catlbl">Categorieën</div>
@@ -4058,7 +4058,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="ex-pick-list" id="ex-pick-list"></div>
     <div class="ex-pick-sticky-bottom" style="display:flex;gap:8px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-ex-picker')">Annuleer</button>
-      <button class="btn btn-r" id="ex-picker-new-btn" style="flex:2" onclick="selectExPickerNew()">+ Eigen oefening…</button>
+      <button class="btn btn-r" id="ex-picker-new-btn" style="flex:2" onclick="selectExPickerNew()">➕ Eigen oefening maken</button>
     </div>
   </div>
 </div>
@@ -8066,6 +8066,66 @@ let exPickerFilterState={sport:'all',type:'all',muscle:'all'};
 let exPickerQuickFilter='all'; // 'all' | 'favoriet' | 'recent'
 let exPickerRecentIds=[];
 
+// ── F41 — UNIFIED EXERCISE POOL (legacy exercises-tabel + 206 MoveKit-catalogus) ──
+// De in-training picker toonde tot nu toe UITSLUITEND de legacy `exercises`-array (~80).
+// De 206 canonieke MoveKit-oefeningen (ExerciseCatalogService) waren alleen via de
+// Bibliotheek → "+ Toevoegen aan training" bereikbaar. F41 maakt ze óók in de picker
+// beschikbaar, met behoud van de canonieke identiteit: id = catalog_id (exact zoals de
+// live-bewezen Library-route). Geen tweede source of truth: de catalogus blijft de bron,
+// hij wordt alleen naar de bestaande exercise-vorm gemapt voor weergave/selectie.
+//
+// type:'strength' volgt bewust de bestaande canonical-conventie (buildResolvedExecutionItems),
+// zodat de downstream body/dispatcher (buildExerciseBody), logging en finishSession IDENTIEK
+// werken als bij een via de Library toegevoegde catalogus-oefening.
+//
+// DEDUP: UITSLUITEND op id (=catalog_id). NOOIT fuzzy op naam. Een legacy-slug ('bench') en
+// een catalogus-entry ('TK-000019 Barbell Bench Press') hebben verschillende id's → beide
+// blijven staan (F41-regel: bij twijfel beide behouden, nooit gokken). Dat beschermt ook de
+// historie: bestaande sessies staan onder hun eigen id en blijven herkenbaar.
+function catalogToPickerEx(c){
+  if(!c||!c.identity)return null;
+  const Id=c.identity;
+  return {
+    id:c.catalog_id,
+    name:Id.name||c.catalog_id,
+    type:'strength',                 // canonical-conventie (zie buildResolvedExecutionItems)
+    category:Id.category||'Overig',
+    muscle_primary:Array.isArray(Id.primary)?Id.primary.slice():[],
+    muscle_secondary:Array.isArray(Id.secondary)?Id.secondary.slice():[],
+    sports:[],
+    active:true,
+    _catalog:true,
+    catalog_id:c.catalog_id
+  };
+}
+// Samengevoegde, gededupliceerde pool voor de picker/filters. Legacy eerst (behoudt hun
+// eigen id en historie), daarna elke nog niet aanwezige catalogus-entry.
+function exPickerPool(){
+  const out=(typeof exercises!=='undefined'&&Array.isArray(exercises))?exercises.slice():[];
+  const seen=new Set(out.map(e=>e.id));
+  try{
+    const C=(typeof ExerciseCatalogService!=='undefined')?ExerciseCatalogService.all():[];
+    C.forEach(c=>{
+      if(!c||!c.catalog_id||seen.has(c.catalog_id))return; // dedup op id — nooit naam-fuzzy
+      seen.add(c.catalog_id);
+      const px=catalogToPickerEx(c);
+      if(px)out.push(px);
+    });
+  }catch(_){}
+  return out;
+}
+// Resolve een gekozen picker-id naar het exercise-object: eerst legacy (met historie/velden),
+// anders de catalogus-fallback. Retourneert null als het id nergens bestaat.
+function resolvePickerEx(id){
+  let ex=(typeof exercises!=='undefined'&&Array.isArray(exercises))?exercises.find(e=>e.id===id):null;
+  if(ex)return ex;
+  try{
+    const c=(typeof ExerciseCatalogService!=='undefined')?ExerciseCatalogService.byId(id):null;
+    if(c)return catalogToPickerEx(c);
+  }catch(_){}
+  return null;
+}
+
 async function getRecentExerciseIds(){
   const rows=await sbGet('sessions','&exercise_id=not.is.null&order=date.desc,created_at.desc&limit=60');
   const seen=[];
@@ -8076,12 +8136,15 @@ async function getRecentExerciseIds(){
 async function openExPicker(onSelect=null){
   await ensureExercisesLoaded();
   await ensureFavoritesLoaded();
-  // v331: alleen coach/manager/owner mag oefeningen toevoegen aan de gym-bibliotheek.
-  // teamRoleLevel wordt bij app-start gevuld (checkTeamAccess() in startAppAfterAuth),
-  // dus dit is ook correct als de gebruiker nog nooit op Profiel is geweest.
-  const newBtn=document.getElementById('ex-picker-new-btn');
-  if(newBtn)newBtn.style.display=teamRoleLevel>=1?'':'none';
   exPickerCallback=onSelect;
+  // F42: heldere scheiding "📚 kies uit de catalogus (206)" vs "➕ eigen oefening maken".
+  // De "+ Eigen oefening"-knop maakt een PERSOONLIJKE oefening (scope:'personal') en hoort
+  // dus bij de solo-sporter (teamRoleLevel===-1) én coaches (>=1) — exact dezelfde regel als
+  // canEditEquipmentCatalog(). Vóór F42 stond hij op >=1 en was hij voor solo-gebruikers
+  // volledig verborgen (de gap: geen eigen-oefening-route). Alleen tonen in de losse-logger
+  // (geen callback): in callback-modus (bv. Programma) doet 'nieuw' toch niets nuttigs.
+  const newBtn=document.getElementById('ex-picker-new-btn');
+  if(newBtn)newBtn.style.display=(!onSelect && canCreatePersonalExercise())?'':'none';
   exPickerFilterState={sport:'all',type:'all',muscle:'all'};
   exPickerQuickFilter='all';
   exPickerRecentIds=await getRecentExerciseIds();
@@ -8114,7 +8177,7 @@ function setExPickerFilter(type,val){
 }
 function renderExPickerList(){
   const q=(document.getElementById('ex-pick-search').value||'').trim().toLowerCase();
-  let list=exercises.slice();
+  let list=exPickerPool(); // F41: legacy + 206 catalogus (dedup op id)
   if(exPickerFilterState.sport!=='all')list=list.filter(e=>(e.sports||[]).includes(exPickerFilterState.sport));
   if(exPickerFilterState.type!=='all')list=list.filter(e=>e.type===exPickerFilterState.type);
   if(exPickerFilterState.muscle!=='all')list=list.filter(e=>(e.muscle_primary||[]).includes(exPickerFilterState.muscle));
@@ -8127,6 +8190,8 @@ function renderExPickerList(){
     list.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   }
   const el=document.getElementById('ex-pick-list');
+  const cnt=document.getElementById('ex-pick-count'); // F42: live teller (bv. "206 oefeningen")
+  if(cnt)cnt.textContent=list.length?('· '+list.length+' oefening'+(list.length===1?'':'en')):'';
   // v4.18.0 (Sprint 4.8 P4) — premium 2-koloms posterkaarten i.p.v. tekstlijst.
   // Poster UITSLUITEND via ExerciseAssetProvider (DEC-027: geen verzonnen media);
   // ontbreekt de poster, dan een premium fallback-tegel met spiergroep-label + icoon.
@@ -8180,7 +8245,7 @@ function initExPickerKeyboardFix(){
   _exPickerVVHandler();
 }
 function selectExPickerItem(id){
-  const ex=exercises.find(e=>e.id===id);
+  const ex=resolvePickerEx(id); // F41: legacy of catalogus-fallback (behoudt catalog_id)
   if(!ex)return;
   if(exPickerCallback){
     closeModal('m-ex-picker');
@@ -8286,7 +8351,7 @@ async function saveLosOefening(btnEl){
       exId=id;
     }
   } else {
-    ex=exercises.find(e=>e.id===exId);
+    ex=resolvePickerEx(exId); // F41: legacy of catalogus-fallback (behoudt catalog_id)
     if(!ex){toast('Kies een oefening');return;}
   }
 
@@ -12529,7 +12594,7 @@ function updateSummary(t){
 
 function addExToSession(t){
   const cur=getSessionExs(t).map(e=>e.id);
-  const avail=exercises.filter(e=>!cur.includes(e.id)&&e.active!==false);
+  const avail=exPickerPool().filter(e=>!cur.includes(e.id)&&e.active!==false); // F41: legacy + 206 catalogus
   const cats=[...vasteTrainingen.map(v=>v.id),'CrossFit','Overig'];
   const catLbls={};
   vasteTrainingen.forEach(v=>catLbls[v.id]=v.naam);
@@ -12564,7 +12629,7 @@ function addExToSession(t){
 }
 
 function addExConfirm(exId,t){
-  const ex=exercises.find(e=>e.id===exId);if(!ex)return;
+  const ex=resolvePickerEx(exId);if(!ex)return; // F41: legacy of catalogus-fallback (behoudt catalog_id)
   const cardioType=resolveCardioType(ex);
   const exType=cardioType||ex.type||'strength';
   const extra=cardioType?{id:ex.id,naam:ex.name,type:exType,_t:t}:{id:ex.id,naam:ex.name,type:exType,sets:4,reps:'6-8',rpe:'8',_t:t};
@@ -15315,6 +15380,58 @@ function ratioFactor(liftA, liftB, estA, estB){
   return {ratio: fase1Ratio, bron:'algemene richtlijn', nA:estA?estA.n:0, nB:estB?estB.n:0, betrouwbaarheid:'Laag'};
 }
 
+// ══════════════════════════════════════════════════════════
+// F43 — STARTING STRENGTH (deterministisch, geen AI-berekening)
+// ══════════════════════════════════════════════════════════
+// Doel: uit 1–3 opgegeven referentielifts deterministisch een geschat 1RM afleiden voor
+// de canonieke hoofdliften, zodat de EERSTE training slimme startgewichten heeft i.p.v.
+// een leeg vertrekpunt. Dit is exact het idee dat de sporter opperde ("ik kan 100 kg
+// squatten → leid daaruit af…", "handig om gewichten voor de eerste keer in te schatten").
+//
+// ARCHITECTUUR / BOUNDARY:
+//  • 1RM per opgegeven lift → CalcCore (epley1RMRaw). GEEN eigen formule.
+//  • Cross-lift-afleiding → LIFT_NORMS-ratio (dezelfde 'algemene richtlijn' als ratioFactor).
+//  • AI rekent NIETS: de coach formuleert hooguit de vraag en de uitleg-zin.
+//  • Persistentie (optioneel, GEEN schemawijziging): de opgegeven 1RM's kunnen via de
+//    BESTAANDE setter upsertExerciseGoalField(exId,'one_rm',v) in exercise_goals worden
+//    opgeslagen — een door de sporter zélf verklaard 1RM is echte data (geen verzonnen
+//    sessie), en getOneRM()/resolveWorkingWeight pikken het daarna vanzelf op. Afgeleide
+//    (ratio-)schattingen worden NIET stil weggeschreven — alleen getoond als richtlijn.
+//
+// Input : refs = [{lift, weight, reps}]   (lift = canoniek id uit LIFT_NORMS, bv 'bench')
+// Output: { provided:{lift:{est1RM,weight,reps,source:'opgegeven',confidence:'Hoog'}},
+//           derived :{lift:{est1RM,fromLift,ratio,source:'richtlijn',confidence:'Laag'}} }
+// Zuiver: leest alleen LIFT_NORMS + CalcCore; geen DOM/DB/side-effects.
+function estimateStartingStrength(refs){
+  const provided={}, derived={};
+  (refs||[]).forEach(r=>{
+    if(!r||r.lift==null||LIFT_NORMS[r.lift]==null)return;
+    const w=parseFloat(r.weight), reps=parseInt(r.reps,10);
+    if(!(w>0)||!(reps>0)||reps>30)return;            // onrealistische reps → overslaan (geen gok)
+    let e1rm=null;
+    try{ e1rm=Math.round(epley1RMRaw(w,reps)); }catch(_){ e1rm=null; }
+    if(!(e1rm>0))return;
+    provided[r.lift]={est1RM:e1rm, weight:w, reps:reps, source:'opgegeven', confidence:'Hoog'};
+  });
+  const anchors=Object.keys(provided);
+  if(anchors.length){
+    Object.keys(LIFT_NORMS).forEach(lift=>{
+      if(provided[lift])return;                       // eigen opgave heeft altijd voorrang
+      let best=null;
+      anchors.forEach(a=>{
+        const ratio=LIFT_NORMS[lift]/LIFT_NORMS[a];
+        const est=Math.round(provided[a].est1RM*ratio);
+        // kies het meest 'compound' anker (hoogste norm) voor de stabielste afleiding
+        if(est>0 && (best===null || LIFT_NORMS[a]>LIFT_NORMS[best.fromLift])){
+          best={est1RM:est, fromLift:a, ratio:Math.round(ratio*100)/100, source:'richtlijn', confidence:'Laag'};
+        }
+      });
+      if(best)derived[lift]=best;
+    });
+  }
+  return {provided, derived};
+}
+
 async function refreshProfiel(){
   const accEl=document.getElementById('account-email-lbl');
   if(accEl)accEl.textContent=authSession?.user?.email||'—';
@@ -17191,6 +17308,9 @@ async function removeEquipmentType(id){
 // of de "+ Nieuw"/bewerk-knoppen getoond worden.
 let equipmentCatalog=[], _equipmentCatalogLoading=null;
 function canEditEquipmentCatalog(){ return teamRoleLevel>=3 || teamRoleLevel===-1; }
+// F42: mag deze gebruiker een PERSOONLIJKE eigen oefening aanmaken? Solo-atleet (geen gym,
+// -1) of coach/manager (>=1). Gewone gym-leden (0) niet — die kiezen uit de catalogus.
+function canCreatePersonalExercise(){ return teamRoleLevel===-1 || teamRoleLevel>=1; }
 // v3.3.23 BUGFIX: de basislijst was een pure client-side illusie (nooit in de database) —
 // bewerken/verwijderen van zo'n item probeerde een rij te patchen/deactiveren die nooit
 // bestond, en faalde stil (PATCH op 0 matches "slaagt" zonder effect). Nu wordt de

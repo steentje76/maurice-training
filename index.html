@@ -7344,6 +7344,11 @@ async function intakeConfirm(btn){
     localStorage.setItem('tk_atleet',JSON.stringify(atleet));
     if(uid)await sbUpsert('atleet_profiel',{...atleet,user_id:uid});
     if(uid)await sbUpsert('training_context',ocore().toTrainingContextRow(cand,uid));
+    // Coach-voorkeuren (presentatie-only) device-lokaal bewaren — geen schemawijziging, geen tweede source of truth.
+    const prefs=ocore().toCoachPrefs(cand);
+    localStorage.setItem('tk_coach_style',prefs.coach_style);
+    localStorage.setItem('tk_coach_voice',prefs.coach_voice);
+    localStorage.setItem('tk_coach_detail',prefs.coach_detail);
     const goals=ocore().toSecondaryGoals(cand,uid);
     for(const g of goals){await sbPostQ('goals',g);}
     const conds=ocore().toConditions(cand);
@@ -12113,8 +12118,13 @@ function showPostSetAdvice(exId,setNum){
   // S2 "Waarom dit advies?" — verwoordt de reeds-genomen DecisionCore-beslissing (geen nieuwe berekening, geen AI).
   let whyLine='';
   try{
-    if(typeof DecisionCore!=='undefined'&&DecisionCore.progressionDecision&&typeof CoachingCore!=='undefined'&&CoachingCore.explainProgression){
-      const _why=CoachingCore.explainProgression(DecisionCore.progressionDecision(rpe,kgVal));
+    if(typeof DecisionCore!=='undefined'&&DecisionCore.progressionDecision&&typeof CoachingCore!=='undefined'){
+      const _dec=DecisionCore.progressionDecision(rpe,kgVal);
+      // Coachstijl (presentatie-only) uit de onboarding; DecisionCore-beslissing blijft leidend.
+      const _style=localStorage.getItem('tk_coach_style')||'balanced';
+      let _why='';
+      if(CoachingCore.styleProgression) _why=CoachingCore.styleProgression(_dec,_style);
+      if(!_why&&CoachingCore.explainProgression) _why=CoachingCore.explainProgression(_dec);
       if(_why) whyLine=`<div class="coach-why"><span class="coach-why-q">Waarom?</span> ${escHtml(_why)}</div>`;
     }
   }catch(_e){}

@@ -87,7 +87,20 @@
     'chin-ups': 'chin-ups',
     'chinups': 'chin-ups',
     // Machine (naam impliceert machine)
-    'leg-press': 'machine-leg-press'
+    'leg-press': 'machine-leg-press',
+    // Uitbreiding (206-inventarisatie): alleen koppelingen waar de EXACTE MoveKit-slug bestaat
+    // én de beweging biomechanisch 1-op-1 klopt. Bij twijfel geen entry (F19-regel).
+    'leg-extension': 'machine-leg-extension',
+    'lat-pulldown': 'machine-pulldown',
+    'lateral-raise': 'dumbbell-lateral-raise',       // laterale raise = default dumbbell
+    'goblet-squat': 'dumbbell-goblet-squat',         // goblet (db/kb) — zelfde beweging
+    'thruster': 'barbell-thruster',                  // thruster = barbell (kracht/CrossFit)
+    'snatch': 'barbell-snatch',                      // olympische snatch = barbell
+    'windmill': 'kettlebell-windmill',
+    'incline-dumbbell-press': 'dumbbell-incline-bench-press',
+    'bicep-curl-barbell': 'barbell-curl',
+    'bicep-curl-dumbbell': 'dumbbell-curl',
+    'tricep-overhead-extension': 'dumbbell-seated-overhead-tricep-extension'
   };
 
   // Naam -> MoveKit provider_id kandidaat. Alias heeft voorrang; anders de genormaliseerde naam

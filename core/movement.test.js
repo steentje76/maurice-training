@@ -27,6 +27,26 @@ T('Deadlift (conventioneel) -> barbell-deadlift', () => { eq(M.slugForName('Dead
 T('Good Morning -> good-mornings', () => eq(M.slugForName('Good Morning'), 'good-mornings'));
 T('Pull-ups / Chin-ups (bodyweight)', () => { eq(M.slugForName('Pull-ups'), 'pull-ups'); eq(M.slugForName('Chin Up'), 'chin-ups'); });
 T('Leg Press -> machine-leg-press', () => eq(M.slugForName('Leg Press'), 'machine-leg-press'));
+T('206-uitbreiding: geverifieerde extra koppelingen (exacte slug bestaat)', () => {
+  eq(M.slugForName('Leg Extension'), 'machine-leg-extension');
+  eq(M.slugForName('Lat Pulldown'), 'machine-pulldown');
+  eq(M.slugForName('Lateral Raise'), 'dumbbell-lateral-raise');
+  eq(M.slugForName('Goblet Squat'), 'dumbbell-goblet-squat');
+  eq(M.slugForName('Thruster'), 'barbell-thruster');
+  eq(M.slugForName('Snatch'), 'barbell-snatch');
+  eq(M.slugForName('Windmill'), 'kettlebell-windmill');
+  eq(M.slugForName('Incline Dumbbell Press'), 'dumbbell-incline-bench-press');
+  eq(M.slugForName('Bicep Curl (barbell)'), 'barbell-curl');
+  eq(M.slugForName('Bicep Curl (dumbbell)'), 'dumbbell-curl');
+  eq(M.slugForName('Tricep Overhead Extension'), 'dumbbell-seated-overhead-tricep-extension');
+});
+T('206-uitbreiding: bewust NIET gekoppeld (geen betrouwbaar 1-op-1 asset)', () => {
+  // Front squat/RDL/sumo/hexbar/generieke cable row/tricep pushdown: geen entry -> passthrough (geen verkeerd beeld)
+  eq(M.slugForName('Frontsquat'), 'frontsquat');
+  eq(M.slugForName('RDL'), 'rdl');
+  eq(M.slugForName('Cable Row'), 'cable-row');
+  eq(M.slugForName('Tricep Pushdown'), 'tricep-pushdown');
+});
 
 console.log('\n[C] passthrough — exacte provider_id-namen zonder alias');
 T('Box Jump / Burpee -> ongewijzigde slug (bestaat als provider_id)', () => { eq(M.slugForName('Box Jump'), 'box-jump'); eq(M.slugForName('Burpee'), 'burpee'); });

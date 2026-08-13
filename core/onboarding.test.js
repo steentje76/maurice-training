@@ -49,7 +49,7 @@ T('alles beantwoord -> null (geen vraag meer)', () => {
 
 console.log('\n[C] canFinish / requiredRemaining — verplichte velden');
 T('optionele velden blokkeren afronden niet', () => {
-  var answered = { naam: 1, primary_goal: 1, leeftijd: 1, lengte: 1, geslacht: 1, frequency: 1, duration_min: 1, location: 1, niveau: 1, sport: 1 };
+  var answered = { naam: 1, primary_goal: 1, leeftijd: 1, lengte: 1, geslacht: 1, frequency: 1, duration_min: 1, location: 1, niveau: 1, sport: 1, coach_style: 1, coach_voice: 1 };
   ok(O.canFinish({ values: { location: 'gym' }, answered: answered }), 'gym+verplicht ingevuld = kan afronden');
 });
 T('ontbrekend verplicht veld blokkeert afronden', () => {
@@ -58,7 +58,7 @@ T('ontbrekend verplicht veld blokkeert afronden', () => {
   ok(O.requiredRemaining({ values: {}, answered: answered }).indexOf('frequency') !== -1);
 });
 T('thuis zonder apparatuur kan tóch afronden (apparatuur is optioneel)', () => {
-  var answered = { naam: 1, primary_goal: 1, leeftijd: 1, lengte: 1, geslacht: 1, frequency: 1, duration_min: 1, location: 1, niveau: 1, sport: 1 };
+  var answered = { naam: 1, primary_goal: 1, leeftijd: 1, lengte: 1, geslacht: 1, frequency: 1, duration_min: 1, location: 1, niveau: 1, sport: 1, coach_style: 1, coach_voice: 1 };
   ok(O.canFinish({ values: { location: 'thuis' }, answered: answered }));
 });
 
@@ -139,11 +139,46 @@ T('geen nevendoelen/condities -> lege arrays', () => { deq(O.toSecondaryGoals({}
 console.log('\n[I] summaryLines — "Dit heb ik van je begrepen" (bewerkbaar)');
 T('samenvatting dekt alle velden met labels', () => {
   var s = O.summaryLines(cand);
-  eq(s.length, 15);
+  eq(s.length, 18);
   var byField = {}; s.forEach(x => byField[x.field] = x.value);
   eq(byField.naam, 'Max'); ok(/Kracht/.test(byField.primary_goal)); ok(/4x/.test(byField.frequency));
 });
 T('lege waarden -> streepje, geen crash', () => { var s = O.summaryLines({}); s.forEach(x => ok(typeof x.value === 'string')); });
+
+console.log('\n[COACH] coach-voorkeuren — vragen, validatie, mapping (presentatie-only)');
+T('coach-vragen aanwezig in fase 3', () => {
+  ['coach_style', 'coach_voice', 'coach_detail'].forEach(f => {
+    var q = null; O.QUESTIONS.forEach(x => { if (x.field === f) q = x; });
+    ok(q, 'ontbreekt: ' + f); eq(q.phase, 3, f + ' moet fase 3');
+  });
+});
+T('coach_style/voice enum-validatie (op enum-waarden)', () => {
+  eq(O.validateField('coach_style', 'Direct').value, 'direct'); ok(!O.validateField('coach_style', 'onzin').ok);
+  eq(O.validateField('coach_voice', 'female').value, 'female'); eq(O.validateField('coach_voice', 'MALE').value, 'male');
+  ok(!O.validateField('coach_voice', 'x').ok);
+});
+T('coach_detail optioneel blokkeert afronden niet', () => {
+  var answered = { naam: 1, primary_goal: 1, leeftijd: 1, lengte: 1, geslacht: 1, frequency: 1, duration_min: 1, location: 1, niveau: 1, sport: 1, coach_style: 1, coach_voice: 1 };
+  ok(O.canFinish({ values: { location: 'gym' }, answered: answered }), 'coach_detail is optioneel');
+});
+T('coach_style/voice zijn WEL verplicht', () => {
+  var answered = { naam: 1, primary_goal: 1, leeftijd: 1, lengte: 1, geslacht: 1, frequency: 1, duration_min: 1, location: 1, niveau: 1, sport: 1 };
+  var rem = O.requiredRemaining({ values: { location: 'gym' }, answered: answered });
+  ok(rem.indexOf('coach_style') !== -1 && rem.indexOf('coach_voice') !== -1);
+});
+T('parseAnswerLocally coach_style/voice uit vrije tekst', () => {
+  eq(O.parseAnswerLocally('coach_style', 'wees maar lekker direct').value, 'direct');
+  eq(O.parseAnswerLocally('coach_style', 'motiveer me vooral').value, 'motivating');
+  eq(O.parseAnswerLocally('coach_voice', 'liever een vrouw').value, 'female');
+  eq(O.parseAnswerLocally('coach_voice', 'zeg ik liever niet').value, 'undisclosed');
+});
+T('toCoachPrefs -> plat object met veilige defaults (coach_voice, NIET geslacht sporter)', () => {
+  var p = O.toCoachPrefs({ coach_style: 'direct', coach_voice: 'female' });
+  eq(p.coach_style, 'direct'); eq(p.coach_voice, 'female'); eq(p.coach_detail, 'normaal');
+  var d = O.toCoachPrefs({});
+  eq(d.coach_style, 'balanced'); eq(d.coach_voice, 'neutral'); eq(d.coach_detail, 'normaal');
+  ok(!('geslacht' in p), 'coach_voice is geen sporter-geslacht');
+});
 
 console.log('\n[K] contextSummary — training_context voor de AI-coachcontext');
 T('lege/afwezige context -> lege string', () => { eq(O.contextSummary(null), ''); eq(O.contextSummary({}), ''); });

@@ -339,6 +339,37 @@ T('explainProgression rekent niets zelf uit (leest alleen het beslissing-object)
 });
 T('deterministisch', () => { const d = DC.progressionDecision(7, 100); eq(C.explainProgression(d), C.explainProgression(d)); });
 
+// ================= N. styleProgression (coachstijl — presentatie-only) =================
+console.log('\n[N] styleProgression — coachstijl presenteert dezelfde beslissing anders');
+T('increase: elke stijl noemt +2.5 kg en richting +', () => {
+  const d = DC.progressionDecision(7, 100);
+  C.COACH_STYLES.forEach(st => { const t = C.styleProgression(d, st); ok(t.indexOf('2.5 kg') !== -1, st + ': ' + t); ok(t.indexOf('+') !== -1, 'richting + ontbreekt bij ' + st); });
+});
+T('deload: elke stijl noemt 7.5 kg en richting −', () => {
+  const d = DC.progressionDecision(9, 100);
+  C.COACH_STYLES.forEach(st => { const t = C.styleProgression(d, st); ok(t.indexOf('7.5 kg') !== -1, st + ': ' + t); ok(t.indexOf('−') !== -1, 'richting − ontbreekt bij ' + st); });
+});
+T('hold: elke stijl zegt gelijk/zelfde houden', () => {
+  const d = DC.progressionDecision(8, 100);
+  C.COACH_STYLES.forEach(st => { const t = C.styleProgression(d, st).toLowerCase(); ok(/gelijk|zelfde|vast/.test(t), st + ': ' + t); });
+});
+T('CONTRACT: stijl wijzigt outcome/deltaKg NIET (DecisionCore leidend)', () => {
+  const d = DC.progressionDecision(7, 100);
+  const before = { outcome: d.outcome, deltaKg: d.deltaKg };
+  C.COACH_STYLES.forEach(st => C.styleProgression(d, st));
+  eq(d.outcome, before.outcome); eq(d.deltaKg, before.deltaKg);
+});
+T('onbekende stijl -> terugval op balanced', () => {
+  const d = DC.progressionDecision(7, 100);
+  eq(C.styleProgression(d, 'onzin'), C.styleProgression(d, 'balanced'));
+});
+T('geen beslissing -> lege string', () => { eq(C.styleProgression(null, 'direct'), ''); eq(C.styleProgression({}, 'direct'), ''); });
+T('leest deltaKg uit het object (rekent niet zelf)', () => {
+  const t = C.styleProgression({ outcome: 'increase', deltaKg: 5, inputs: { rpe: 6, curKg: 80 } }, 'direct');
+  ok(t.indexOf('5 kg') !== -1, t);
+});
+T('deterministisch per stijl', () => { const d = DC.progressionDecision(7, 100); eq(C.styleProgression(d, 'motivating'), C.styleProgression(d, 'motivating')); });
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail > 0) { console.log('⚠ STOP: coaching-core faalt.'); process.exit(1); }

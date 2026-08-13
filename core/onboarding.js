@@ -30,6 +30,10 @@
     'strongman', 'functioneel', 'algemeen'];
   var LOCATIONS = ['thuis', 'gym', 'hybride'];
   var DAYS = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
+  // Coach-presentatievoorkeuren (GEEN sportlogica, GEEN genderidentiteit van de sporter).
+  var COACH_STYLES = ['balanced', 'direct', 'motivating', 'analytical', 'calm', 'energetic'];
+  var COACH_VOICES = ['female', 'male', 'neutral', 'undisclosed']; // aanspreekvorm van de COACH
+  var COACH_DETAILS = ['kort', 'normaal', 'uitgebreid'];
 
   var GOAL_LABEL = {
     kracht: 'Kracht opbouwen', conditie: 'Conditie verbeteren',
@@ -40,6 +44,12 @@
     beginner: 'Beginner (<1 jaar)', gevorderd: 'Gevorderd (1-3 jaar)',
     ervaren: 'Ervaren (3-5 jaar)', expert: 'Expert (5+ jaar)'
   };
+  var COACH_STYLE_LABEL = {
+    balanced: 'Gebalanceerd', direct: 'Direct & doelgericht', motivating: 'Coachend & motiverend',
+    analytical: 'Analytisch & inhoudelijk', calm: 'Rustig & ondersteunend', energetic: 'Energiek & uitdagend'
+  };
+  var COACH_VOICE_LABEL = { female: 'Vrouw', male: 'Man', neutral: 'Neutraal', undisclosed: 'Zeg ik liever niet' };
+  var COACH_DETAIL_LABEL = { kort: 'Kort', normaal: 'Normaal', uitgebreid: 'Uitgebreid' };
 
   function normStr(v) { return String(v == null ? '' : v).trim(); }
   function lc(v) { return normStr(v).toLowerCase(); }
@@ -130,6 +140,27 @@
         { label: 'Powerlifting', value: 'powerlifting' }, { label: 'Bodybuilding', value: 'bodybuilding' },
         { label: 'HYROX', value: 'hyrox' }, { label: 'Hardlopen', value: 'hardlopen' },
         { label: 'Functioneel', value: 'functioneel' }, { label: 'Algemeen', value: 'algemeen' }
+      ] },
+    { id: 'q_coach_style', phase: 3, field: 'coach_style', kind: 'enum', options: COACH_STYLES, optional: false,
+      prompt: 'Iedereen vindt een andere manier van coachen prettig. Hoe wil je dat ik met je praat?',
+      why: 'Bepaalt alleen de TOON waarin ik advies breng — niet het advies zelf. Dat blijft altijd op je data gebaseerd.',
+      chips: [
+        { label: 'Gebalanceerd', value: 'balanced' }, { label: 'Direct & doelgericht', value: 'direct' },
+        { label: 'Coachend & motiverend', value: 'motivating' }, { label: 'Analytisch & inhoudelijk', value: 'analytical' },
+        { label: 'Rustig & ondersteunend', value: 'calm' }, { label: 'Energiek & uitdagend', value: 'energetic' }
+      ] },
+    { id: 'q_coach_voice', phase: 3, field: 'coach_voice', kind: 'enum', options: COACH_VOICES, optional: false,
+      prompt: 'En hoe wil je je coach voor je zien?',
+      why: 'Puur een presentatievoorkeur voor je coach — dit gaat niet over jou, alleen over hoe je coach overkomt.',
+      chips: [
+        { label: 'Vrouw', value: 'female' }, { label: 'Man', value: 'male' },
+        { label: 'Neutraal', value: 'neutral' }, { label: 'Zeg ik liever niet', value: 'undisclosed' }
+      ] },
+    { id: 'q_coach_detail', phase: 3, field: 'coach_detail', kind: 'enum', options: COACH_DETAILS, optional: true,
+      prompt: 'Hoeveel uitleg wil je bij mijn advies? (mag je overslaan)',
+      why: 'Bepaalt hoe uitgebreid ik dingen toelicht. Puur presentatie.',
+      chips: [
+        { label: 'Kort', value: 'kort' }, { label: 'Normaal', value: 'normaal' }, { label: 'Uitgebreid', value: 'uitgebreid' }
       ] },
     { id: 'q_secondary', phase: 3, field: 'secondary_goals', kind: 'list', optional: true,
       prompt: 'Heb je nog nevendoelen naast je hoofddoel? (bijv. "eerste pull-up", "mobiliteit heupen" — mag je overslaan)',
@@ -249,6 +280,21 @@
         if (SPORTS.indexOf(sp) === -1) return { ok: false, error: 'Onbekende sport.' };
         return { ok: true, value: sp };
       }
+      case 'coach_style': {
+        var cs = lc(value);
+        if (COACH_STYLES.indexOf(cs) === -1) return { ok: false, error: 'Onbekende coachstijl.' };
+        return { ok: true, value: cs };
+      }
+      case 'coach_voice': {
+        var cv = lc(value);
+        if (COACH_VOICES.indexOf(cv) === -1) return { ok: false, error: 'Onbekende keuze.' };
+        return { ok: true, value: cv };
+      }
+      case 'coach_detail': {
+        var cd = lc(value);
+        if (COACH_DETAILS.indexOf(cd) === -1) return { ok: false, error: 'Kies kort, normaal of uitgebreid.' };
+        return { ok: true, value: cd };
+      }
       case 'days': {
         var arr = normList(value).map(lc).filter(function (x) { return DAYS.indexOf(x) !== -1; });
         return { ok: true, value: uniq(arr) };
@@ -281,6 +327,7 @@
     var errors = {}, normalized = {};
     var fields = ['naam', 'primary_goal', 'leeftijd', 'lengte', 'geslacht', 'frequency',
       'days', 'duration_min', 'location', 'equipment', 'niveau', 'sport',
+      'coach_style', 'coach_voice', 'coach_detail',
       'secondary_goals', 'limitations', 'avoid_exercises'];
     fields.forEach(function (f) {
       if (!(f in cand) || cand[f] == null || cand[f] === '') { normalized[f] = defaultFor(f); return; }
@@ -352,6 +399,28 @@
         s = s.split(/\s+/)[0]; // voornaam
         return s ? { value: s.charAt(0).toUpperCase() + s.slice(1), confidence: 0.7 } : { value: null, confidence: 0 };
       }
+      case 'coach_style': {
+        if (/direct|to the point|kort door de bocht|geen omhaal/.test(t)) return { value: 'direct', confidence: 0.8 };
+        if (/motiv|coachend|aanmoedig|peptalk|pep/.test(t)) return { value: 'motivating', confidence: 0.8 };
+        if (/analyt|inhoudelijk|cijfers|data|uitleg/.test(t)) return { value: 'analytical', confidence: 0.75 };
+        if (/rustig|kalm|ondersteun|zacht/.test(t)) return { value: 'calm', confidence: 0.8 };
+        if (/energiek|uitdag|pittig|streng|push/.test(t)) return { value: 'energetic', confidence: 0.8 };
+        if (/gebalanceerd|balans|neutraal|normaal|maakt niet uit/.test(t)) return { value: 'balanced', confidence: 0.7 };
+        return { value: null, confidence: 0 };
+      }
+      case 'coach_voice': {
+        if (/vrouw|female|dame|zij/.test(t)) return { value: 'female', confidence: 0.85 };
+        if (/man|male|heer|hij/.test(t)) return { value: 'male', confidence: 0.85 };
+        if (/neutraal|genderneutraal|maakt niet uit|geen voorkeur/.test(t)) return { value: 'neutral', confidence: 0.8 };
+        if (/liever niet|zeg ik niet|prive|privé|geen antwoord/.test(t)) return { value: 'undisclosed', confidence: 0.8 };
+        return { value: null, confidence: 0 };
+      }
+      case 'coach_detail': {
+        if (/kort|beknopt|weinig|snel/.test(t)) return { value: 'kort', confidence: 0.8 };
+        if (/uitgebreid|veel|diepgaand|gedetailleerd/.test(t)) return { value: 'uitgebreid', confidence: 0.8 };
+        if (/normaal|gemiddeld|standaard/.test(t)) return { value: 'normaal', confidence: 0.75 };
+        return { value: null, confidence: 0 };
+      }
       case 'equipment':
       case 'secondary_goals':
       case 'limitations':
@@ -422,6 +491,16 @@
       return { type: 'eigen', naam: naam, status: 'actief', user_id: userId };
     });
   }
+  // Coach-presentatievoorkeuren -> plat object (UI bewaart dit device-lokaal; geen schemawijziging,
+  // geen tweede source of truth voor sportdata). GEEN genderidentiteit: coach_voice = coach-aanspreekvorm.
+  function toCoachPrefs(cand) {
+    return {
+      coach_style: (cand.coach_style != null) ? cand.coach_style : 'balanced',
+      coach_voice: (cand.coach_voice != null) ? cand.coach_voice : 'neutral',
+      coach_detail: (cand.coach_detail != null) ? cand.coach_detail : 'normaal'
+    };
+  }
+
   // Beperkingen -> records in de bestaande 'athlete_conditions'-tabel (user_id via DB-trigger).
   function toConditions(cand) {
     var list = (cand.limitations || []);
@@ -447,6 +526,9 @@
       { field: 'equipment', label: 'Apparatuur', value: j(cand.equipment) },
       { field: 'niveau', label: 'Niveau', value: LEVEL_LABEL[cand.niveau] || cand.niveau || '—' },
       { field: 'sport', label: 'Sport', value: cand.sport || '—' },
+      { field: 'coach_style', label: 'Coachstijl', value: COACH_STYLE_LABEL[cand.coach_style] || '—' },
+      { field: 'coach_voice', label: 'Coach', value: COACH_VOICE_LABEL[cand.coach_voice] || '—' },
+      { field: 'coach_detail', label: 'Uitleg', value: COACH_DETAIL_LABEL[cand.coach_detail] || '—' },
       { field: 'secondary_goals', label: 'Nevendoelen', value: j(cand.secondary_goals) },
       { field: 'limitations', label: 'Aandachtspunten', value: j(cand.limitations) },
       { field: 'avoid_exercises', label: 'Te vermijden', value: j(cand.avoid_exercises) }
@@ -472,7 +554,10 @@
     VERSION: VERSION,
     contextSummary: contextSummary,
     PRIMARY_GOALS: PRIMARY_GOALS, LEVELS: LEVELS, SPORTS: SPORTS, LOCATIONS: LOCATIONS, DAYS: DAYS,
+    COACH_STYLES: COACH_STYLES, COACH_VOICES: COACH_VOICES, COACH_DETAILS: COACH_DETAILS,
     GOAL_LABEL: GOAL_LABEL, LEVEL_LABEL: LEVEL_LABEL,
+    COACH_STYLE_LABEL: COACH_STYLE_LABEL, COACH_VOICE_LABEL: COACH_VOICE_LABEL, COACH_DETAIL_LABEL: COACH_DETAIL_LABEL,
+    toCoachPrefs: toCoachPrefs,
     QUESTIONS: QUESTIONS,
     questionById: questionById,
     phaseOf: phaseOf,

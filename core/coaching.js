@@ -272,8 +272,60 @@
     return '';
   }
 
+  // ── Coach-stijl (presentatie-only) ────────────────────────────────────────
+  // Presenteert EXACT dezelfde DecisionCore-beslissing (outcome + deltaKg) in de door de
+  // sporter gekozen coachtoon. Wijzigt NOOIT de beslissing, het getal of de richting — die
+  // komen 1-op-1 uit `decision`. Geen berekening, geen AI. Puur tekst.
+  var COACH_STYLES = ['balanced', 'direct', 'motivating', 'analytical', 'calm', 'energetic'];
+
+  function styleProgression(decision, style) {
+    if (!decision || !decision.outcome) return '';
+    if (COACH_STYLES.indexOf(style) === -1) style = 'balanced';
+    var inp = decision.inputs || {};
+    var rpe = inp.rpe;
+    var kg = (inp.curKg != null) ? inp.curKg : inp.kg;
+    var absd = (decision.deltaKg != null) ? Math.abs(decision.deltaKg) : null;
+    var amt = (absd != null && absd !== 0) ? (absd + ' kg') : null;
+    var rpeTxt = (rpe != null && rpe !== '') ? ('RPE ' + rpe) : null;
+    var kgTxt = (kg != null && kg !== '') ? (kg + ' kg') : null;
+    var o = decision.outcome;
+    if (o === 'increase') {
+      switch (style) {
+        case 'direct': return 'Volgende keer +' + (amt || 'iets') + '.';
+        case 'motivating': return 'Sterke set' + (rpeTxt ? (' op ' + rpeTxt) : '') + ' — die zat er licht in. Volgende keer mag er +' + (amt || 'wat') + ' bij.';
+        case 'analytical': return (rpeTxt ? rpeTxt + ' ' : 'De inspanning ') + 'valt binnen de verhogingszone; daarom +' + (amt || 'een stap') + ' de volgende keer.';
+        case 'calm': return 'Deze voelde relatief licht' + (rpeTxt ? (' (' + rpeTxt + ')') : '') + '. Rustig opbouwen: volgende keer +' + (amt || 'een klein beetje') + '.';
+        case 'energetic': return 'Lekker bezig! Dat mag zwaarder — pak volgende keer +' + (amt || 'wat') + '!';
+        default: return 'Je set' + (kgTxt ? (' op ' + kgTxt) : '') + ' voelde relatief licht' + (rpeTxt ? (' (' + rpeTxt + ')') : '') + '. Volgende keer kun je +' + (amt || 'een stap') + '.';
+      }
+    }
+    if (o === 'deload') {
+      switch (style) {
+        case 'direct': return 'Volgende keer −' + (amt || 'iets') + '.';
+        case 'motivating': return 'Zware set' + (rpeTxt ? (' op ' + rpeTxt) : '') + ' — knap volgehouden. Volgende keer even −' + (amt || 'wat') + ' zodat je scherp blijft.';
+        case 'analytical': return (rpeTxt ? rpeTxt + ' ' : 'De inspanning ') + 'ligt boven de streefzone; daarom −' + (amt || 'een stap') + ' de volgende keer.';
+        case 'calm': return 'Deze was zwaar' + (rpeTxt ? (' (' + rpeTxt + ')') : '') + '. Geen zorgen — bouw volgende keer −' + (amt || 'iets') + ' terug.';
+        case 'energetic': return 'Pittig! Volgende keer −' + (amt || 'wat') + ' en dan knallen we weer.';
+        default: return 'Je set' + (kgTxt ? (' op ' + kgTxt) : '') + ' was zwaar' + (rpeTxt ? (' (' + rpeTxt + ')') : '') + '. Volgende keer bouw je −' + (amt || 'iets') + ' terug.';
+      }
+    }
+    if (o === 'hold') {
+      switch (style) {
+        case 'direct': return 'Volgende keer zelfde gewicht.';
+        case 'motivating': return 'Goede set' + (rpeTxt ? (' op ' + rpeTxt) : '') + ' — precies goed. Houd dit gewicht vast.';
+        case 'analytical': return (rpeTxt ? rpeTxt + ' ' : 'De inspanning ') + 'zit rond de streefzone; daarom blijft het gewicht gelijk.';
+        case 'calm': return 'Deze zat prima' + (rpeTxt ? (' (' + rpeTxt + ')') : '') + '. Houd het rustig op hetzelfde gewicht.';
+        case 'energetic': return 'Strak! Zelfde gewicht vasthouden en volgende keer nóg scherper.';
+        default: return 'Je set' + (kgTxt ? (' op ' + kgTxt) : '') + ' zat rond de gewenste inspanning' + (rpeTxt ? (' (' + rpeTxt + ')') : '') + '. Daarom houd je het gewicht gelijk.';
+      }
+    }
+    return '';
+  }
+
   var CoachingCore = {
     deriveSignals: deriveSignals,
+    styleProgression: styleProgression,
+    COACH_STYLES: COACH_STYLES,
     buildContext: buildContext,
     aiPayload: aiPayload,
     improvementsDigest: improvementsDigest,

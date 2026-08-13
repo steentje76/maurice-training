@@ -4063,6 +4063,21 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </div>
 </div>
 
+<!-- ═══ STARTING STRENGTH — referentielifts → startgewichten (F44/Phase 1) ═══ -->
+<div class="modal-bg" id="m-starting-strength" onclick="bgClose(event,'m-starting-strength')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💪 Referentielifts</div>
+    <p style="font-size:13px;color:var(--g4);margin:2px 0 12px;line-height:1.45">Heb je een paar gewichten waarmee je al traint? Vul in wat je weet — laat de rest gerust leeg. Hiermee schatten we slimme startgewichten voor je eerste trainingen. Helemaal optioneel.</p>
+    <div id="ss-rows"></div>
+    <div id="ss-preview" style="margin-top:6px"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-starting-strength')">Overslaan</button>
+      <button class="btn btn-r" style="flex:2" id="ss-save-btn" onclick="saveStartingStrength(this)">Opslaan</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ PROGRAMMA GENEREREN (AI) ═══ -->
 <div class="modal-bg" id="m-programma-gen" onclick="bgClose(event,'m-programma-gen')">
   <div class="modal">
@@ -8062,7 +8077,7 @@ function sortExerciseList(list, mode, context={}){
 // aangeroepen i.p.v. het standaard los-oefening-gedrag. Zo blijft de picker herbruikbaar
 // zonder de logica te dupliceren.
 let exPickerCallback=null;
-let exPickerFilterState={sport:'all',type:'all',muscle:'all'};
+let exPickerFilterState={sport:'all',type:'all',muscle:'all',equipment:'all'};
 let exPickerQuickFilter='all'; // 'all' | 'favoriet' | 'recent'
 let exPickerRecentIds=[];
 
@@ -8092,16 +8107,35 @@ function catalogToPickerEx(c){
     category:Id.category||'Overig',
     muscle_primary:Array.isArray(Id.primary)?Id.primary.slice():[],
     muscle_secondary:Array.isArray(Id.secondary)?Id.secondary.slice():[],
+    equipment:Array.isArray(Id.equipment)?Id.equipment.slice():[], // F44/Phase3: catalogus-equipment voor filter
     sports:[],
     active:true,
     _catalog:true,
     catalog_id:c.catalog_id
   };
 }
+// F44/Phase3 — canonieke equipment van een picker-item (catalogus-array of naam→catalogus-resolve).
+// null = ONBEKEND → filter sluit nooit uit (UNKNOWN ≠ FALSE, zelfde principe als AthleteConstraints).
+const EQUIP_LABELS={band:'Band',barbell:'Barbell',bodyweight:'Lichaamsgewicht','cable machine':'Kabel',dumbbell:'Dumbbell',kettlebell:'Kettlebell',machine:'Machine'};
+function pickerExEquipment(e){
+  if(e&&Array.isArray(e.equipment)&&e.equipment.length)return e.equipment;
+  try{ const r=(typeof resolveExerciseEquipment==='function')?resolveExerciseEquipment(e):null; return (r&&r.length)?r:null; }catch(_){ return null; }
+}
 // Samengevoegde, gededupliceerde pool voor de picker/filters. Legacy eerst (behoudt hun
 // eigen id en historie), daarna elke nog niet aanwezige catalogus-entry.
+// F44/Phase10 — gecachet: renderExPickerList draait per toetsaanslag; zonder cache werd de
+// 206-catalogus elke render opnieuw doorlopen. Cache-sleutel = #legacy + #catalogus + laatste
+// legacy-id, zodat toevoegen/verwijderen van een custom oefening de cache vanzelf verse maakt.
+// invalidateExPickerPool() forceert een rebuild bij in-place mutaties (bv. hernoemen).
+let _exPickerPoolCache=null, _exPickerPoolKey='';
+function invalidateExPickerPool(){ _exPickerPoolCache=null; _exPickerPoolKey=''; }
 function exPickerPool(){
-  const out=(typeof exercises!=='undefined'&&Array.isArray(exercises))?exercises.slice():[];
+  const hasEx=(typeof exercises!=='undefined'&&Array.isArray(exercises));
+  const exLen=hasEx?exercises.length:0;
+  let catLen=0; try{ catLen=(typeof ExerciseCatalogService!=='undefined'&&ExerciseCatalogService.count)?ExerciseCatalogService.count():0; }catch(_){}
+  const key=exLen+':'+catLen+':'+(exLen?exercises[exLen-1].id:'');
+  if(_exPickerPoolCache&&_exPickerPoolKey===key)return _exPickerPoolCache;
+  const out=hasEx?exercises.slice():[];
   const seen=new Set(out.map(e=>e.id));
   try{
     const C=(typeof ExerciseCatalogService!=='undefined')?ExerciseCatalogService.all():[];
@@ -8112,6 +8146,7 @@ function exPickerPool(){
       if(px)out.push(px);
     });
   }catch(_){}
+  _exPickerPoolCache=out; _exPickerPoolKey=key;
   return out;
 }
 // Resolve een gekozen picker-id naar het exercise-object: eerst legacy (met historie/velden),
@@ -8145,16 +8180,20 @@ async function openExPicker(onSelect=null){
   // (geen callback): in callback-modus (bv. Programma) doet 'nieuw' toch niets nuttigs.
   const newBtn=document.getElementById('ex-picker-new-btn');
   if(newBtn)newBtn.style.display=(!onSelect && canCreatePersonalExercise())?'':'none';
-  exPickerFilterState={sport:'all',type:'all',muscle:'all'};
+  exPickerFilterState={sport:'all',type:'all',muscle:'all',equipment:'all'};
   exPickerQuickFilter='all';
   exPickerRecentIds=await getRecentExerciseIds();
   document.getElementById('ex-pick-search').value='';
-  const sports=new Set(), types=new Set(), muscles=new Set();
-  exercises.forEach(e=>{ (e.sports||[]).forEach(s=>sports.add(s)); if(e.type)types.add(e.type); (e.muscle_primary||[]).forEach(m=>muscles.add(m)); });
+  // F44/Phase3 — filteropties uit de volledige pool (catalogus-aware). Spiergroep-taxonomie is
+  // consistent (Dutch) tussen legacy en catalogus; equipment is de canonieke 7-term-set.
+  const pool=exPickerPool();
+  const sports=new Set(), types=new Set(), muscles=new Set(), equips=new Set();
+  pool.forEach(e=>{ (e.sports||[]).forEach(s=>sports.add(s)); if(e.type)types.add(e.type); (e.muscle_primary||[]).forEach(m=>m&&muscles.add(m)); const eq=pickerExEquipment(e); if(eq)eq.forEach(x=>equips.add(x)); });
   renderFilterChips('ex-pick-filters',[
-    {key:'sport',label:'Alle sporten',options:[...sports].sort().map(s=>({val:s,label:SPORT_LABELS[s]||s}))},
+    {key:'muscle',label:'Alle spiergroepen',options:[...muscles].sort().map(m=>({val:m,label:m}))},
+    {key:'equipment',label:'Alle materialen',options:[...equips].sort().map(x=>({val:x,label:EQUIP_LABELS[x]||x}))},
     {key:'type',label:'Alle types',options:[...types].sort().map(t=>({val:t,label:TYPE_LABELS[t]||t}))},
-    {key:'muscle',label:'Alle spiergroepen',options:[...muscles].sort().map(m=>({val:m,label:m}))}
+    {key:'sport',label:'Alle sporten',options:[...sports].sort().map(s=>({val:s,label:SPORT_LABELS[s]||s}))}
   ], exPickerFilterState, setExPickerFilter);
   const qf=document.getElementById('ex-pick-quickfilters');
   if(qf){
@@ -8181,6 +8220,10 @@ function renderExPickerList(){
   if(exPickerFilterState.sport!=='all')list=list.filter(e=>(e.sports||[]).includes(exPickerFilterState.sport));
   if(exPickerFilterState.type!=='all')list=list.filter(e=>e.type===exPickerFilterState.type);
   if(exPickerFilterState.muscle!=='all')list=list.filter(e=>(e.muscle_primary||[]).includes(exPickerFilterState.muscle));
+  if(exPickerFilterState.equipment&&exPickerFilterState.equipment!=='all'){
+    // F44/Phase3 — UNKNOWN blijft beschikbaar: alleen uitsluiten als equipment BEKEND is én niet matcht.
+    list=list.filter(e=>{ const eq=pickerExEquipment(e); return !eq || eq.includes(exPickerFilterState.equipment); });
+  }
   if(exPickerQuickFilter==='favoriet')list=list.filter(e=>isExerciseFavorite(e.id));
   if(exPickerQuickFilter==='recent')list=list.filter(e=>exPickerRecentIds.includes(e.id));
   if(q)list=list.filter(e=>(e.name||'').toLowerCase().includes(q));
@@ -8196,7 +8239,13 @@ function renderExPickerList(){
   // Poster UITSLUITEND via ExerciseAssetProvider (DEC-027: geen verzonnen media);
   // ontbreekt de poster, dan een premium fallback-tegel met spiergroep-label + icoon.
   // Selectie/favoriet/callback/'Eigen oefening' blijven identiek → geen functieverlies.
-  if(!list.length){el.innerHTML='<div class="pk-grid"><div class="pk-empty">Geen oefeningen gevonden</div></div>';return;}
+  if(!list.length){
+    // F44/Phase5 — heldere custom-uitweg: "niet gevonden? maak je eigen oefening" (alleen in de
+    // losse-logger waar custom-aanmaken werkt, en alleen als de sporter dat mag).
+    const canNew=!exPickerCallback && (typeof canCreatePersonalExercise!=='function'||canCreatePersonalExercise());
+    el.innerHTML='<div class="pk-grid"><div class="pk-empty">Geen oefening gevonden'+(q?' voor “'+escHtml(q)+'”':'')+(canNew?'<br><button class="btn btn-r btn-sm" style="margin-top:12px" onclick="selectExPickerNew()">➕ Eigen oefening maken</button>':'')+'</div></div>';
+    return;
+  }
   const A=window.ExerciseAssetProvider;
   el.innerHTML='<div class="pk-grid">'+list.map(e=>{
     let poster=null;try{poster=(A&&A.poster)?(A.poster(e.id)||A.poster(e.catalog_id||'')):null;}catch(_){poster=null;}
@@ -14343,8 +14392,9 @@ async function refreshRatioFactors(){
     data[lift]=weightedEst1RM(ss);
   }
   const anchorEst=data[anchor];
+  const ssBtn='<button class="btn btn-o btn-sm" style="margin-top:8px" onclick="openStartingStrength()">💪 Referentielifts instellen</button>';
   if(!anchorEst.est){
-    el.innerHTML='<p style="color:var(--g4);font-size:13px;padding:4px 0">Log backsquat-sets om verhoudingen te berekenen</p>';
+    el.innerHTML='<p style="color:var(--g4);font-size:13px;padding:4px 0 2px;line-height:1.45">Log je hoofdliften of geef je referentiegewichten op — dan schatten we je verhoudingen en slimme startgewichten.</p>'+ssBtn;
     return;
   }
   let h='';
@@ -14362,7 +14412,7 @@ async function refreshRatioFactors(){
       <div class="stat-1rm-pct" style="color:${kleur}">${rf.bron} · betrouwbaarheid ${rf.betrouwbaarheid} (n=${rf.nA}/${rf.nB})${afwijking!=null?' · '+(afwijking>0?'+':'')+afwijking+'% t.o.v. verwacht':''}</div>
     </div>`;
   });
-  el.innerHTML=h||'<p style="color:var(--g4);font-size:13px;padding:4px 0">Onvoldoende data voor overige liften</p>';
+  el.innerHTML=(h||'<p style="color:var(--g4);font-size:13px;padding:4px 0">Onvoldoende data voor overige liften</p>')+ssBtn;
 }
 
 // ══════════════════════════════════════════════════════════
@@ -15432,6 +15482,136 @@ function estimateStartingStrength(refs){
   return {provided, derived};
 }
 
+// ── F44/F1 — STARTING STRENGTH UI-laag (deterministisch, geen AI) ──────────
+// Config: welke referentielift → welke norm (voor afleiding) + onder welke exercise_id's
+// het door de sporter opgegeven 1RM wordt bewaard. Meerdere store-id's omdat dezelfde lift
+// bij deze sporter zowel onder een legacy-slug ('bench') als een canonical TK-id
+// ('TK-000019') kan worden gelogd — getOneRM() vindt het dan hoe dan ook terug. Deadlift
+// heeft (bewust) geen LIFT_NORM → wel opslaan als VERSTREKT, niet afleiden.
+const REFERENCE_LIFTS = [
+  {key:'bench',    label:'Bench press',    syn:['bench','benchpress','bankdruk','bankdrukken','bp'],                 normKey:'bench',         storeIds:['bench','TK-000019']},
+  {key:'squat',    label:'Squat',          syn:['squat','backsquat','back squat','kniebuig','kniebuiging'],          normKey:'backsquat',     storeIds:['backsquat','TK-000038']},
+  {key:'deadlift', label:'Deadlift',       syn:['deadlift','dl','dead lift','trekken'],                              normKey:null,            storeIds:['deadlift','TK-000024']},
+  {key:'ohp',      label:'Overhead press', syn:['overhead press','overhead','ohp','shoulder press','schouderdruk','schouderdrukken','press'], normKey:'shoulderpress', storeIds:['shoulderpress','TK-000030']}
+];
+// Deterministische vrije-tekst-parser: "Bench 80 voor 5", "Squat 100 x 5", "Deadlift 140x3",
+// "bankdrukken 80 kg 5 reps". Eerste getal = gewicht, tweede = reps; alleen gewicht → 1RM (reps=1).
+// Geen AI. Geen fuzzy identity — alleen expliciete synoniemen uit REFERENCE_LIFTS.
+function parseReferenceLifts(text){
+  const out=[];
+  if(!text||typeof text!=='string')return out;
+  // Bescherm decimaal-komma's (82,5) vóór het splitsen, zodat komma óók als scheidingsteken
+  // tussen liften kan dienen ("Bench 80, Squat 100") zonder 82,5 te breken.
+  text=text.replace(/(\d),(\d)/g,'$1.$2');
+  // splits op nieuwe regels, komma's en puntkomma's
+  const segs=text.split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean);
+  const seen=new Set();
+  segs.forEach(seg=>{
+    const low=' '+seg.toLowerCase()+' ';
+    // langste synoniem eerst zodat 'overhead press' vóór 'press' matcht
+    let hit=null, hitLen=-1;
+    REFERENCE_LIFTS.forEach(cfg=>{
+      cfg.syn.forEach(s=>{
+        if(low.indexOf(' '+s+' ')>=0 || low.indexOf(' '+s)>=0 && low.indexOf(s+' ')>=0){
+          if(s.length>hitLen && new RegExp('(^|[^a-z])'+s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'([^a-z]|$)').test(low)){ hit=cfg; hitLen=s.length; }
+        }
+      });
+    });
+    if(!hit||seen.has(hit.key))return;
+    const nums=(seg.match(/\d+(?:[.,]\d+)?/g)||[]).map(n=>parseFloat(n.replace(',','.')));
+    if(!nums.length)return;
+    const weight=nums[0];
+    const reps=nums.length>=2?Math.round(nums[1]):1;   // alleen gewicht → 1RM (reps=1)
+    if(!(weight>0)||!(reps>0)||reps>30)return;
+    seen.add(hit.key);
+    out.push({key:hit.key,weight:weight,reps:reps});
+  });
+  return out;
+}
+// Combineer VERSTREKT (opgegeven) en GESCHAT (afgeleid) voor de 4 referentieliften.
+// Pure: hergebruikt estimateStartingStrength (norm-liften) + epley1RMRaw (deadlift zonder norm).
+function computeStartingStrength(entries){
+  const refs=[], noNorm=[];
+  (entries||[]).forEach(en=>{
+    const cfg=REFERENCE_LIFTS.find(l=>l.key===en.key); if(!cfg)return;
+    const w=parseFloat(en.weight), reps=parseInt(en.reps,10);
+    if(!(w>0)||!(reps>0)||reps>30)return;
+    if(cfg.normKey)refs.push({lift:cfg.normKey,weight:w,reps:reps});
+    else noNorm.push({key:cfg.key,weight:w,reps:reps});
+  });
+  const est=estimateStartingStrength(refs);
+  const provided=[], derived=[];
+  refs.forEach(r=>{
+    const cfg=REFERENCE_LIFTS.find(l=>l.normKey===r.lift); const p=est.provided[r.lift];
+    if(cfg&&p)provided.push({key:cfg.key,label:cfg.label,est1RM:p.est1RM,weight:p.weight,reps:p.reps,storeIds:cfg.storeIds});
+  });
+  noNorm.forEach(n=>{
+    const cfg=REFERENCE_LIFTS.find(l=>l.key===n.key); let e1rm=null;
+    try{e1rm=Math.round(epley1RMRaw(n.weight,n.reps));}catch(_){}
+    if(cfg&&e1rm>0)provided.push({key:cfg.key,label:cfg.label,est1RM:e1rm,weight:n.weight,reps:n.reps,storeIds:cfg.storeIds});
+  });
+  REFERENCE_LIFTS.forEach(cfg=>{
+    if(!cfg.normKey)return;
+    if(provided.some(p=>p.key===cfg.key))return;
+    const d=est.derived[cfg.normKey];
+    if(d){ const fromCfg=REFERENCE_LIFTS.find(l=>l.normKey===d.fromLift);
+      derived.push({key:cfg.key,label:cfg.label,est1RM:d.est1RM,fromLabel:fromCfg?fromCfg.label:d.fromLift}); }
+  });
+  return {provided,derived};
+}
+// ── Starting Strength modal-handlers (UI only; alle cijfers via de zuivere laag hierboven) ──
+function openStartingStrength(){
+  const rows=REFERENCE_LIFTS.map(cfg=>`
+    <div class="irow" style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <label class="ilbl" style="flex:0 0 116px;margin:0">${escHtml(cfg.label)}</label>
+      <input class="inp" style="flex:1;min-width:0" type="number" inputmode="decimal" id="ss-w-${cfg.key}" placeholder="kg" oninput="renderStartingStrengthPreview()">
+      <span style="color:var(--g4);font-size:12px">×</span>
+      <input class="inp" style="flex:0 0 62px" type="number" inputmode="numeric" id="ss-r-${cfg.key}" placeholder="reps" oninput="renderStartingStrengthPreview()">
+    </div>`).join('');
+  document.getElementById('ss-rows').innerHTML=rows;
+  document.getElementById('ss-preview').innerHTML='';
+  try{ if(typeof ensureExerciseGoalsLoaded==='function')ensureExerciseGoalsLoaded(); }catch(_){}
+  openModal('m-starting-strength');
+}
+function ssReadEntries(){
+  return REFERENCE_LIFTS
+    .map(cfg=>({key:cfg.key, weight:(document.getElementById('ss-w-'+cfg.key)||{}).value||'', reps:(document.getElementById('ss-r-'+cfg.key)||{}).value||''}))
+    .filter(e=>e.weight!=='')
+    .map(e=>({key:e.key, weight:e.weight, reps:e.reps!==''?e.reps:1})); // alleen gewicht → 1RM
+}
+function renderStartingStrengthPreview(){
+  const el=document.getElementById('ss-preview'); if(!el)return;
+  const {provided,derived}=computeStartingStrength(ssReadEntries());
+  if(!provided.length){el.innerHTML='';return;}
+  let h='<div style="border-top:1px solid var(--g2);margin-top:10px;padding-top:10px">';
+  h+='<div style="font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--green);margin-bottom:6px">Verstrekt · hoge zekerheid</div>';
+  provided.forEach(p=>{ h+=`<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0"><span>${escHtml(p.label)}</span><span style="font-weight:700">~${p.est1RM} kg <span style="color:var(--g4);font-weight:500;font-size:11px">1RM · uit ${p.weight}×${p.reps}</span></span></div>`; });
+  if(derived.length){
+    h+='<div style="font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--g4);margin:10px 0 6px">Geschat · richtlijn</div>';
+    derived.forEach(d=>{ h+=`<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:var(--g4)"><span>${escHtml(d.label)}</span><span>~${d.est1RM} kg <span style="font-size:11px">via ${escHtml(d.fromLabel)}</span></span></div>`; });
+    h+='<div style="font-size:11px;color:var(--g4);margin-top:6px;line-height:1.4">Geschatte waarden zijn een richtlijn en worden <b>niet</b> opgeslagen — alleen wat je zelf invult.</div>';
+  }
+  h+='</div>';
+  el.innerHTML=h;
+}
+async function saveStartingStrength(btnEl){
+  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+  try{
+    const {provided}=computeStartingStrength(ssReadEntries());
+    if(!provided.length){toast('Vul minimaal één lift in (of sla over)');return;}
+    try{ if(typeof ensureExerciseGoalsLoaded==='function')await ensureExerciseGoalsLoaded(); }catch(_){}
+    let n=0;
+    for(const p of provided){
+      for(const id of p.storeIds){
+        if(resolvePickerEx(id)){ try{ await upsertExerciseGoalField(id,'one_rm',p.est1RM); n++; }catch(_){}}
+      }
+    }
+    closeModal('m-starting-strength');
+    toast(provided.length+' referentielift'+(provided.length===1?'':'s')+' opgeslagen');
+    try{ if(typeof refreshRatioFactors==='function')await refreshRatioFactors(); }catch(_){}
+  }finally{ if(btnEl)btnEl.disabled=false; }
+}
+
 async function refreshProfiel(){
   const accEl=document.getElementById('account-email-lbl');
   if(accEl)accEl.textContent=authSession?.user?.email||'—';
@@ -15751,10 +15931,11 @@ function filterSwapCandidates(allExercises,currentMusclesPrimary,excludeIds){
 }
 let swapCtx=null;
 function openSwapExercise(exId,t){
-  const ex=exercises.find(e=>e.id===exId);
+  const ex=resolvePickerEx(exId); // F44/Phase2C: legacy of catalogus
   if(!ex){toast('Oefening niet gevonden');return;}
   const excludeIds=[exId,...sessionExtra.map(e=>e.id)];
-  const candidates=filterSwapCandidates(exercises,ex.muscle_primary,excludeIds);
+  let candidates=filterSwapCandidates(exPickerPool(),ex.muscle_primary,excludeIds); // F44/Phase2C: catalogus-aware pool
+  candidates=applyAthleteConstraints(candidates); // F44/Phase8: equipment/avoid (nooit leeg → veilige fallback)
   if(!candidates.length){toast('Geen alternatief gevonden voor dezelfde spiergroep');return;}
   swapCtx={fromId:exId,t};
   document.getElementById('swap-ex-list').innerHTML=candidates.slice(0,10).map(c=>
@@ -15765,7 +15946,7 @@ async function confirmSwapExercise(newId){
   const {fromId,t}=swapCtx;
   const idx=sessionExtra.findIndex(e=>e.id===fromId);
   if(idx===-1){closeModal('m-swap-exercise');return;}
-  const newEx=exercises.find(e=>e.id===newId);
+  const newEx=resolvePickerEx(newId); // F44/Phase2C: legacy of catalogus
   if(!newEx)return;
   sessionExtra[idx]={...sessionExtra[idx],id:newId,naam:newEx.name,type:newEx.type||sessionExtra[idx].type};
   delete sessionLog[fromId];delete pctSelection[fromId];delete rpeManual[fromId];delete warmupState[fromId];

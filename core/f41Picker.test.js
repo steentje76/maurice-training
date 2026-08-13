@@ -30,6 +30,8 @@ function extract(name){
 // Stubs (module-scope zodat de geëxtraheerde functies ze zien)
 let exercises = [];
 let ExerciseCatalogService = null;
+let _exPickerPoolCache = null, _exPickerPoolKey = ''; // F44/Phase10 pool-cache state
+function invalidateExPickerPool(){ _exPickerPoolCache = null; _exPickerPoolKey = ''; }
 
 const src = [ 'catalogToPickerEx', 'exPickerPool', 'resolvePickerEx' ].map(extract).join('\n');
 // eval in deze scope: de functies binden aan de lokale `exercises`/`ExerciseCatalogService`
@@ -49,7 +51,8 @@ const CAT = [
 ];
 ExerciseCatalogService = {
   all: () => CAT.slice(),
-  byId: (id) => CAT.find(c => c.catalog_id === id) || null
+  byId: (id) => CAT.find(c => c.catalog_id === id) || null,
+  count: () => CAT.length
 };
 
 // ── 1. catalogToPickerEx: pure mapping ──

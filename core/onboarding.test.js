@@ -180,6 +180,53 @@ T('toCoachPrefs -> plat object met veilige defaults (coach_voice, NIET geslacht 
   ok(!('geslacht' in p), 'coach_voice is geen sporter-geslacht');
 });
 
+console.log('\n[HARVEST] true conversational — multi-field uit één vrije tekst');
+T('killer-zin: frequentie+dagen+duur+locatie in één keer', () => {
+  var h = O.harvest('Ik train 3 keer per week, maandag woensdag vrijdag, ongeveer een uur bij Basic-Fit', { answered: {} });
+  eq(h.frequency, 3); deq(h.days, ['ma', 'wo', 'vr']); eq(h.duration_min, 60); eq(h.location, 'gym');
+});
+T('duur contextueel: "60 minuten" niet verwarren met frequentie', () => {
+  var c = O.extractContext('sessies van 60 minuten, 4x per week');
+  eq(c.duration_min, 60); eq(c.frequency, 4);
+});
+T('uur-notaties', () => {
+  eq(O.extractContext('anderhalf uur').duration_min, 90);
+  eq(O.extractContext('een half uur').duration_min, 30);
+  eq(O.extractContext('2 uur').duration_min, 120);
+});
+T('dag-afkortingen als cluster ("ma wo vr") wél; losse "zo" niet', () => {
+  deq(O.extractContext('3x per week op ma wo vr').days, ['ma', 'wo', 'vr']);
+  deq(O.extractContext('ma, wo en vr').days, ['ma', 'wo', 'vr']);
+  ok(!('days' in O.extractContext('weet ik niet zo goed')));
+});
+T('harvest slaat reeds-beantwoorde velden over', () => {
+  var h = O.harvest('3x per week thuis', { answered: { frequency: true } });
+  ok(!('frequency' in h)); eq(h.location, 'thuis');
+});
+T('meerdere doelen: primary + secondary', () => {
+  var g = O.extractGoals('ik wil sterker worden, spiermassa opbouwen en mijn conditie verbeteren');
+  eq(g.primary_goal, 'kracht');
+  ok(g.secondary_goals.indexOf('Conditie verbeteren') !== -1);
+  ok(g.secondary_goals.some(x => /spiermassa/i.test(x)));
+});
+T('harvest levert primary+secondary goals', () => {
+  var h = O.harvest('sterker worden en afvallen', { answered: {} });
+  eq(h.primary_goal, 'kracht'); ok(h.secondary_goals.indexOf('Afvallen / lichaamscompositie') !== -1);
+});
+T('geen betrouwbare match -> niets (geen gok)', () => {
+  var h = O.harvest('weet ik niet zo goed', { answered: {} });
+  eq(Object.keys(h).length, 0);
+});
+T('ackText: natuurlijk + stijl-bewust, geen "Genoteerd: 60"', () => {
+  ok(O.ackText('duration_min', 60, 'direct') === '60 min per sessie.');
+  ok(/top!/.test(O.ackText('frequency', 3, 'motivating')));
+  ok(/helder/.test(O.ackText('location', 'gym', 'calm')));
+  eq(O.ackText('naam', 'Maurice', 'balanced'), 'Maurice — genoteerd.');
+});
+T('ackText lege/overslaan -> nette skip-zin', () => {
+  ok(/overgeslagen|over/.test(O.ackText('avoid_exercises', [], 'direct')));
+});
+
 console.log('\n[K] contextSummary — training_context voor de AI-coachcontext');
 T('lege/afwezige context -> lege string', () => { eq(O.contextSummary(null), ''); eq(O.contextSummary({}), ''); });
 T('samenvatting bevat frequentie/locatie/vermijden', () => {

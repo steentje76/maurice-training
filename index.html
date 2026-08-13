@@ -3346,9 +3346,9 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr">
     <div class="hdr-row">
       <div><div class="hdr-title" role="heading" aria-level="1" id="intk-title">Even kennismaken</div><div class="hdr-sub" id="intk-phase">TrainingKompas leert je kennen</div></div>
-      <button class="ibtn" onclick="intakeSwitchToForm()" title="Liever een kort formulier invullen" aria-label="Naar formulier">
-        <svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h10"/></svg>
-      </button>
+      <!-- F21-C: de conversational intake is de enige NORMALE route. De klassieke wizard blijft
+           uitsluitend een technische fallback (startAppAfterAuth als OnboardingCore ontbreekt);
+           intakeSwitchToForm() blijft bestaan voor herstelbaarheid maar is niet meer als knop zichtbaar. -->
     </div>
     <div style="height:4px;background:var(--g2);border-radius:2px;margin-top:10px;overflow:hidden">
       <div id="intk-progress" style="height:100%;background:var(--accent);width:0%;transition:width var(--motion-standard) var(--motion-ease)"></div>
@@ -7248,17 +7248,17 @@ function intakeAcceptValue(q,rawValue,viaChip){
   if(viaChip)intakeAddUser(intakeChipLabel(q,r.value));
   intakeCommitField(q,r.value);
 }
-function intakeConfirmNote(value){
-  let shown;
-  if(Array.isArray(value))shown=value.length?value.join(', '):'niets';
-  else shown=(value==null||value==='')?'niets':String(value);
-  intakeAddNote('Genoteerd: '+shown);
+function intakeStyle(){ try{ return localStorage.getItem('tk_coach_style')||'balanced'; }catch(e){ return 'balanced'; } }
+function intakeSetField(field,value){
+  intakeState.values[field]=value;
+  intakeState.cand[field]=value;
+  intakeState.answered[field]=true;
 }
+function intakeJoinNatural(arr){ if(arr.length<=1)return arr.join(''); return arr.slice(0,-1).join(', ')+' en '+arr[arr.length-1]; }
 function intakeCommitField(q,value){
-  intakeState.values[q.field]=value;
-  intakeState.cand[q.field]=value;
-  intakeState.answered[q.field]=true;
-  intakeConfirmNote(value);
+  intakeSetField(q.field,value);
+  // Natuurlijke, stijl-bewuste bevestiging (geen "Genoteerd: 60").
+  intakeAddNote(ocore().ackText(q.field,value,intakeStyle()));
   intakeClearChips();
   intakeUpdateProgress();
   if(intakeState.editing){intakeState.editing=false; setTimeout(intakeShowSummary,200); return;}
@@ -7286,6 +7286,8 @@ async function intakeAiExtract(q,txt){
   }catch(e){return null;}
 }
 async function intakeInterpret(q,txt){
+  const isList=(q.kind==='multiselect'||q.kind==='list');
+  // 1) Huidig veld: AI-extractie (indien consent) met lokale fallback.
   let parsed=null;
   if(intakeState.aiConsent&&navigator.onLine){
     intakeAddNote('Coach leest mee…');
@@ -7293,17 +7295,29 @@ async function intakeInterpret(q,txt){
   }
   if(!parsed||parsed.value==null||(typeof parsed.confidence==='number'&&parsed.confidence<0.5)){
     const local=ocore().parseAnswerLocally(q.field,txt);
-    if(local.value!=null||q.optional)parsed=local;
+    if(local.value!=null)parsed=local;
   }
-  const isList=(q.kind==='multiselect'||q.kind==='list');
-  if(!parsed||(parsed.value==null&&!q.optional)){
+  // 2) TRUE CONVERSATIONAL: deterministische multi-field harvest uit dezelfde tekst.
+  const harvested=ocore().harvest?ocore().harvest(txt,intakeState):{};
+  const toApply={};
+  if(parsed&&parsed.value!=null){ const r=ocore().validateField(q.field,parsed.value); if(r.ok)toApply[q.field]=r.value; }
+  else if(harvested[q.field]!=null){ toApply[q.field]=harvested[q.field]; }
+  Object.keys(harvested).forEach(f=>{ if(f!==q.field && !(f in toApply) && !intakeState.answered[f]) toApply[f]=harvested[f]; });
+  const fields=Object.keys(toApply);
+  if(!fields.length){
+    if(q.optional){ intakeCommitField(q,isList?[]:null); return; }
     intakeAddCoach('Sorry, dat begreep ik niet helemaal. '+(q.chips?'Je kunt ook op een knop tikken.':'Kun je het korter of anders zeggen?'));
     return;
   }
-  const rawVal=(parsed.value==null)?(isList?[]:null):parsed.value;
-  const r=(rawVal==null)?{ok:true,value:null}:ocore().validateField(q.field,rawVal);
-  if(!r.ok){intakeAddCoach(r.error+' Probeer het nog eens.'); return;}
-  intakeCommitField(q,r.value);
+  // 3) Pas alle herkende velden toe (dynamisch: reeds bekende vragen worden zo overgeslagen).
+  const style=intakeStyle();
+  fields.forEach(f=>intakeSetField(f,toApply[f]));
+  if(fields.length===1){ intakeAddNote(ocore().ackText(fields[0],toApply[fields[0]],style)); }
+  else { intakeAddNote('Duidelijk — ik noteer '+intakeJoinNatural(fields.map(f=>ocore().valuePhrase(f,toApply[f])))+'.'); }
+  intakeClearChips();
+  intakeUpdateProgress();
+  if(intakeState.editing){intakeState.editing=false; setTimeout(intakeShowSummary,200); return;}
+  setTimeout(intakeNextQuestion,220);
 }
 
 // -- Samenvatting "Dit heb ik van je begrepen" (bewerkbaar) -------------------
@@ -9647,11 +9661,17 @@ function openExecExplain(t){
   const ex=(typeof exercises!=='undefined'&&exercises.find)?(exercises.find(e=>e.id===cur.id)||cur):cur;
   const nm=escHtml(ex.naam||cur.naam||'Oefening');
   let body='';
-  if(ex.yt){ body+='<div class="vid-wrap" onclick="loadVid(this,\''+ex.yt+'\')"><img src="https://img.youtube.com/vi/'+ex.yt+'/mqdefault.jpg" alt="'+nm+'" loading="lazy" onerror="this.parentElement.style.display=\'none\'"><div class="vid-play">▶</div><div class="vid-label">▶ '+nm+' — techniek video</div></div>'; }
-  else { // F18 — geen video: bestaande poster als bewegingsbeeld, anders nette "nog niet beschikbaar"-tekst
-    var _ep=(ex.id&&typeof ExerciseAssetProvider!=='undefined'&&ExerciseAssetProvider.poster)?ExerciseAssetProvider.poster(ex.id):null;
-    if(_ep) body+='<div class="vid-wrap vid-poster"><img src="'+_ep+'" alt="'+nm+'" loading="lazy" onerror="this.parentElement.style.display=\'none\'"><div class="vid-label">'+nm+' — bewegingsbeeld</div></div>';
-    else body+='<div class="exec-pausecard-s" style="padding:0 2px 10px">Video voor deze oefening is nog niet beschikbaar.</div>';
+  // F21-E: exercise-coach-card met MoveKit als PRIMAIRE bron. Hiërarchie: poster → spiergroepen →
+  // techniek/cues → (optionele) video. Geen fake play-knop op de statische poster; ontbrekende data tonen we niet.
+  var _ep=(typeof movekitPosterFor==='function')?movekitPosterFor(ex):null;
+  if(_ep){
+    body+='<div class="vid-wrap vid-poster" id="exec-poster-vid"><img src="'+_ep+'" alt="'+nm+'" loading="lazy" onerror="this.parentElement.style.display=\'none\'"><div class="vid-label">'+nm+' — bewegingsbeeld</div></div>';
+    if(ex.yt) body+='<button class="vid-optional" type="button" onclick="var w=document.getElementById(\'exec-poster-vid\'); if(w) loadVid(w,\''+ex.yt+'\')">▶ Bekijk techniekvideo</button>';
+  } else if(ex.yt){
+    // Geen poster beschikbaar: YouTube-thumb als aanvullende bron (echte video → play-knop terecht).
+    body+='<div class="vid-wrap" onclick="loadVid(this,\''+ex.yt+'\')"><img src="https://img.youtube.com/vi/'+ex.yt+'/mqdefault.jpg" alt="'+nm+'" loading="lazy" onerror="this.parentElement.style.display=\'none\'"><div class="vid-play">▶</div><div class="vid-label">▶ '+nm+' — techniek video</div></div>';
+  } else {
+    body+='<div class="exec-pausecard-s" style="padding:0 2px 10px">Bewegingsbeeld voor deze oefening is nog niet beschikbaar.</div>';
   }
   if(ex.muscles){ body+='<div class="exec-opt-k">Spiergroepen</div><div class="muscle-pills" style="margin:0 0 8px">'; (ex.muscles.p||[]).forEach(m=>body+='<span class="muscle-pill primary">'+escHtml(m)+'</span>'); (ex.muscles.s||[]).forEach(m=>body+='<span class="muscle-pill secondary">'+escHtml(m)+'</span>'); body+='</div>'; }
   if(ex.tip){ body+='<div class="exec-coach"><div class="exec-coach-t">Techniek &amp; coaching</div><div class="exec-coach-s">'+escHtml(ex.tip)+'</div></div>'; }
@@ -12924,6 +12944,17 @@ Sessiedata (JSON): ${JSON.stringify(summaryData)}`;
 // ══════════════════════════════════════════════════════════
 // Sprint 2 — Home 'Jouw ritme'-kaart uit training_context. Puur presentatie: leest de
 // door de onboarding verzamelde context en toont die persoonlijk. Geen berekening, geen fake data.
+// F21-F: korte, stijl-bewuste opener voor de Home-coachtekst (presentatie-only, feiten identiek).
+function homeCoachStyleOpener(){
+  let s='balanced'; try{ s=localStorage.getItem('tk_coach_style')||'balanced'; }catch(e){}
+  switch(s){
+    case 'motivating': return 'Sterk bezig — ';
+    case 'analytical': return 'Analyse: ';
+    case 'calm': return 'Rustig aan — ';
+    case 'energetic': return "Let's go — ";
+    default: return ''; // balanced & direct: geen opener
+  }
+}
 let tkTrainingCtx=null; // globale cache van training_context (row | false=geen | null=nog niet geladen)
 function renderHomeContextCard(tc){
   tkTrainingCtx = tc || false;
@@ -16546,6 +16577,9 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
   if(coachEl){
     let txt=window.homeCoachText||'';
     if(!txt){try{txt=await buildCoachAdvice(dfInfo,nextT,recRows);}catch(e){txt='';}}
+    // F21-F: coachstijl licht doortrekken naar Home. Presentatie-only: alleen een korte opener
+    // volgens tk_coach_style; de feiten in de tekst blijven identiek. Geen nieuwe coachinglogica.
+    if(txt) txt=homeCoachStyleOpener()+txt;
     coachEl.innerHTML=txt?`<button class="v43-coach" onclick="go('s-coach')">
       <span class="v43-coach-ic">${V43I.spark}</span>
       <span class="v43-coach-body"><span class="k">Coach vandaag</span><span class="t">${escHtml(txt)}</span></span>

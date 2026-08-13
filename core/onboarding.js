@@ -434,6 +434,127 @@
     }
   }
 
+  // ---- TRUE CONVERSATIONAL: multi-field harvest uit één vrije tekst ----------
+  // Deterministisch (geen AI). Herkent frequentie/dagen/duur/locatie mét context, plus meerdere
+  // doelen. Zo hoeft de coach niet opnieuw te vragen wat de sporter al in één zin vertelde.
+  function extractContext(text) {
+    var t = lc(text); var o = {};
+    // frequentie: "3x", "3 keer", "3x per week", "3 per week"
+    var mf = t.match(/(\d+)\s*(?:x|keer|maal)\s*(?:per\s*week|\/\s*week|pw|per\s*wk)?/) || t.match(/(\d+)\s*(?:per\s*week|\/\s*week|pw)/);
+    if (mf) { var fn = parseInt(mf[1], 10); if (fn >= 1 && fn <= 14) o.frequency = fn; }
+    // dagen: in vrije tekst UITSLUITEND volledige dagnamen (afkortingen als 'zo'/'ma' zijn
+    // te dubbelzinnig — die blijven werken bij de directe dagen-vraag via parseAnswerLocally/chips).
+    var dayFull = { ma: /maandag/, di: /dinsdag/, wo: /woensdag/, do: /donderdag/, vr: /vrijdag/, za: /zaterdag/, zo: /zondag/ };
+    var days = []; DAYS.forEach(function (k) { if (dayFull[k].test(t)) days.push(k); });
+    // Afkortings-CLUSTER: ≥2 opeenvolgende dag-afkortingen ("ma wo vr", "ma, wo, vr", "ma en wo").
+    // Een losse afkorting (bv. 'zo' in "zo goed") wordt bewust NIET herkend.
+    var clusterRe = /\b(?:ma|di|wo|do|vr|za|zo)\b(?:\s*(?:,|\/|&|en)?\s*\b(?:ma|di|wo|do|vr|za|zo)\b)+/g;
+    var cm; while ((cm = clusterRe.exec(t))) { (cm[0].match(/\b(?:ma|di|wo|do|vr|za|zo)\b/g) || []).forEach(function (x) { if (days.indexOf(x) < 0) days.push(x); }); }
+    if (days.length) o.days = DAYS.filter(function (k) { return days.indexOf(k) >= 0; }); // canonieke volgorde
+    // duur: minuten of uren (contextueel, niet "eerste getal")
+    var md = t.match(/(\d+)\s*(?:min\b|minuten|minuut)/);
+    if (md) { o.duration_min = parseInt(md[1], 10); }
+    else {
+      var mh = t.match(/(\d+(?:[.,]5)?)\s*uur/);
+      if (mh) { o.duration_min = Math.round(parseFloat(mh[1].replace(',', '.')) * 60); }
+      else if (/anderhalf\s*uur/.test(t)) o.duration_min = 90;
+      else if (/half\s*uur|halfuur/.test(t)) o.duration_min = 30;
+      else if (/\been\s*uur|\b1\s*uur|uurtje/.test(t)) o.duration_min = 60;
+    }
+    // locatie incl. bekende gym-namen
+    var loc = parseAnswerLocally('location', text);
+    if (loc.value) o.location = loc.value;
+    else if (/basic[- ]?fit|fit\s?for\s?free|sportschool|health\s?city|anytime\s?fitness|snap\s?fitness|clubfit|fitland|david\s?lloyd/.test(t)) o.location = 'gym';
+    return o;
+  }
+
+  // Meerdere doelen uit één zin. primary = eerste enum-match; secondary = overige enum-matches
+  // (leesbaar) + expliciete niet-enum-doelen zoals "spiermassa". Geen duplicaat-bron: secondary
+  // wordt later als losse goals-records opgeslagen.
+  function extractGoals(text) {
+    var t = lc(text);
+    var order = [
+      ['kracht', /kracht|sterker|sterk worden|zwaarder|1rm|powerlift/],
+      ['afvallen', /afval|vet\b|slank|cut\b|gewicht kwijt|droog/],
+      ['conditie', /conditie|cardio|uithoud|fit blijv|fitter|adem/],
+      ['prestatie', /prestat|wedstrijd|competit|sneller|beter presteren/],
+      ['algemeen', /algemeen|gezond|balans|onderhoud/]
+    ];
+    var matched = [];
+    order.forEach(function (p) { if (p[1].test(t)) matched.push(p[0]); });
+    var out = { primary_goal: null, secondary_goals: [] };
+    if (matched.length) {
+      out.primary_goal = matched[0];
+      for (var i = 1; i < matched.length; i++) out.secondary_goals.push(GOAL_LABEL[matched[i]] || matched[i]);
+    }
+    // expliciete hypertrofie/spiermassa is geen primary-enum -> als nevendoel
+    if (/spiermassa|spieren opbouw|hypertrof|massa opbouw/.test(t)) out.secondary_goals.push('Spiermassa opbouwen');
+    out.secondary_goals = uniqByLower(out.secondary_goals);
+    return out;
+  }
+
+  // Verzamel ALLE nog-niet-beantwoorde velden die deze tekst betrouwbaar oplevert.
+  // Geeft {field: value} met gevalideerde waarden. Respecteert branching (apparatuur alleen
+  // relevant bij thuis/hybride — daarom niet auto-geharvest). Numerieke ambiguïteit is
+  // afgevangen door contextuele regexes + validatie.
+  function harvest(text, state) {
+    var answered = (state && state.answered) || {};
+    var out = {};
+    var ctx = extractContext(text);
+    ['frequency', 'days', 'duration_min', 'location'].forEach(function (f) {
+      if (answered[f]) return;
+      if (ctx[f] == null) return;
+      var r = validateField(f, ctx[f]);
+      if (r.ok && !(Object.prototype.toString.call(r.value) === '[object Array]' && r.value.length === 0)) out[f] = r.value;
+    });
+    if (!answered.primary_goal || !answered.secondary_goals) {
+      var g = extractGoals(text);
+      if (!answered.primary_goal && g.primary_goal) out.primary_goal = g.primary_goal;
+      if (!answered.secondary_goals && g.secondary_goals.length) out.secondary_goals = g.secondary_goals;
+    }
+    return out;
+  }
+
+  // ---- Natuurlijke, stijl-bewuste bevestiging (geen "Genoteerd: 60") ---------
+  function valuePhrase(field, value) {
+    switch (field) {
+      case 'naam': return String(value);
+      case 'primary_goal': return (GOAL_LABEL[value] || value);
+      case 'leeftijd': return value + ' jaar';
+      case 'lengte': return value + ' cm';
+      case 'geslacht': return String(value);
+      case 'frequency': return value + 'x per week';
+      case 'days': return (value && value.length) ? value.join('/') : 'geen vaste dagen';
+      case 'duration_min': return value + ' min per sessie';
+      case 'location': return String(value);
+      case 'niveau': return (LEVEL_LABEL[value] || value);
+      case 'sport': return String(value);
+      case 'equipment': case 'secondary_goals': case 'limitations': case 'avoid_exercises':
+        return (value && value.length) ? value.join(', ') : 'niets';
+      default: return (value == null ? '' : String(value));
+    }
+  }
+  function ackText(field, value, style) {
+    if (COACH_STYLES.indexOf(style) === -1) style = 'balanced';
+    var isEmptyList = (Object.prototype.toString.call(value) === '[object Array]' && value.length === 0);
+    if (value == null || value === '' || isEmptyList) {
+      switch (style) {
+        case 'direct': return 'Oké, overgeslagen.';
+        case 'energetic': return 'Prima, slaan we over!';
+        default: return 'Prima, dat slaan we over.';
+      }
+    }
+    var ph = valuePhrase(field, value);
+    switch (style) {
+      case 'direct': return ph + '.';
+      case 'motivating': return ph + ' — top!';
+      case 'analytical': return ph + ' — genoteerd.';
+      case 'calm': return ph + ' — helder.';
+      case 'energetic': return ph + ' — mooi!';
+      default: return ph + ' — genoteerd.';
+    }
+  }
+
   // ---- AI-extractie: prompt + verwacht schema (AI structureert, rekent niet) -
   function buildExtractionPrompt(question) {
     var q = typeof question === 'string' ? questionById(question) : question;
@@ -568,6 +689,11 @@
     validateField: validateField,
     validateCandidate: validateCandidate,
     parseAnswerLocally: parseAnswerLocally,
+    extractContext: extractContext,
+    extractGoals: extractGoals,
+    harvest: harvest,
+    valuePhrase: valuePhrase,
+    ackText: ackText,
     buildExtractionPrompt: buildExtractionPrompt,
     extractionSchemaHint: extractionSchemaHint,
     toAtleet: toAtleet,

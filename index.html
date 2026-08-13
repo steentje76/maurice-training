@@ -711,6 +711,7 @@ canvas{width:100%;height:100%}
 .vid-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:48px;height:48px;background:rgba(61,214,214,0.95);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--dark)}
 .vid-label{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.8));padding:18px 10px 8px;font-size:11px;color:#fff;font-weight:700;letter-spacing:.3px}
 .vid-wrap.vid-poster{cursor:default;background:var(--g1)} /* F18 — statisch bewegingsbeeld (geen video/play) */
+.vid-optional{display:inline-block;margin:6px 0 2px;background:none;border:none;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;padding:2px 0} /* F20-C — optionele techniekvideo naast de primaire MoveKit-poster */
 .vid-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
 .muscle-pills{display:flex;flex-wrap:wrap;gap:5px;padding:6px 14px 10px}
 .muscle-pill{padding:3px 9px;border-radius:12px;font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
@@ -9432,8 +9433,10 @@ function applyExecutionFocus(t){
     const nm=(list[idx]&&list[idx].naam)||(cx&&cx.naam)||'Oefening';
     heroC=document.createElement('div'); heroC.className='exfocus-herocard';
     let hc='';
-    if(yt) hc+='<div class="exfocus-hero-img" onclick="openExecExplain(\''+t+'\')"><img src="https://img.youtube.com/vi/'+yt+'/mqdefault.jpg" alt="'+escHtml(nm)+'" loading="lazy" onerror="this.closest(\'.exfocus-hero-img\').style.display=\'none\'"><span class="exfocus-hero-play">▶</span></div>';
-    else { var _hp=(curId&&typeof ExerciseAssetProvider!=='undefined'&&ExerciseAssetProvider.poster)?ExerciseAssetProvider.poster(curId):null; if(_hp) hc+='<div class="exfocus-hero-img" onclick="openExecExplain(\''+t+'\')"><img src="'+_hp+'" alt="'+escHtml(nm)+'" loading="lazy" onerror="this.closest(\'.exfocus-hero-img\').style.display=\'none\'"></div>'; } // F18 — poster-fallback als bewegingsbeeld (geen video)
+    // F20-C: MoveKit-poster PRIMAIR (statisch bewegingsbeeld, geen play-knop). YouTube-thumb alleen als er géén poster is.
+    var _hp=movekitPosterFor({id:curId,naam:nm});
+    if(_hp) hc+='<div class="exfocus-hero-img" onclick="openExecExplain(\''+t+'\')"><img src="'+_hp+'" alt="'+escHtml(nm)+'" loading="lazy" onerror="this.closest(\'.exfocus-hero-img\').style.display=\'none\'"></div>';
+    else if(yt) hc+='<div class="exfocus-hero-img" onclick="openExecExplain(\''+t+'\')"><img src="https://img.youtube.com/vi/'+yt+'/mqdefault.jpg" alt="'+escHtml(nm)+'" loading="lazy" onerror="this.closest(\'.exfocus-hero-img\').style.display=\'none\'"><span class="exfocus-hero-play">▶</span></div>';
     hc+='<div class="exfocus-hero-body">'+
         (tags.length?('<div class="exfocus-hero-tags">'+tags.map(x=>'<span class="exfocus-hero-tag">'+escHtml(x)+'</span>').join('')+'</div>'):'')+
         '<div class="exfocus-hero-nm">'+escHtml(nm)+'</div>'+
@@ -10954,15 +10957,31 @@ function _libBindCmp(){
   var sw=document.getElementById('lib-cmp-swap');if(sw)sw.onclick=function(){_libState.q='';_libState.view='cmppick';renderLibBody();var sc=document.querySelector('#s-library .scroll');if(sc)sc.scrollTop=0;};
 }
 
+// F20-C/E: resolve de MoveKit-poster maximaal — eerst op id (bestaand pad), anders via
+// naam → MovementCore-slug → catalog_id. Read-only, ge-guard; geeft alleen een echte poster
+// terug (nooit fake). Zo tonen ook TK-id/naam-oefeningen hun bewegingsbeeld.
+function movekitPosterFor(ex){
+  try{
+    if(!ex || typeof ExerciseAssetProvider==='undefined' || !ExerciseAssetProvider.poster) return null;
+    if(ex.id){ const p=ExerciseAssetProvider.poster(ex.id); if(p) return p; }
+    if(ex.naam && typeof MovementCore!=='undefined' && typeof ExerciseCatalogService!=='undefined'){
+      const slug=MovementCore.slugForName(ex.naam);
+      if(slug){ const ent=ExerciseCatalogService.all().find(c=>(c.assets||[]).some(a=>a.ref===slug)); if(ent) return ExerciseAssetProvider.poster(ent.catalog_id); }
+    }
+  }catch(e){}
+  return null;
+}
 function buildVideoMuscle(ex){
   let h='';
-  if(ex.yt){
+  // F20-C: MoveKit-poster is de PRIMAIRE bewegingsbron. YouTube is optioneel/aanvullend.
+  const _p=movekitPosterFor(ex);
+  if(_p){
+    // Statisch bewegingsbeeld: geen fake play-knop. Bestaat er ook een geldige video, dan een expliciete optionele knop.
+    h+=`<div class="vid-wrap vid-poster"><img src="${_p}" alt="${escHtml(ex.naam)}" loading="lazy" onerror="this.parentElement.style.display='none'"><div class="vid-label">${escHtml(ex.naam)} — bewegingsbeeld</div></div>`;
+    if(ex.yt) h+=`<button class="vid-optional" type="button" onclick="var w=this.parentElement.querySelector('.vid-wrap'); if(w) loadVid(w,'${ex.yt}')">▶ Bekijk techniekvideo</button>`;
+  } else if(ex.yt){
+    // Geen poster beschikbaar: YouTube-thumb als aanvullende bron (echte video → play-knop is hier terecht).
     h+=`<div class="vid-wrap" onclick="loadVid(this,'${ex.yt}')"><img src="https://img.youtube.com/vi/${ex.yt}/mqdefault.jpg" alt="${escHtml(ex.naam)}" loading="lazy" onerror="this.parentElement.style.display='none'"><div class="vid-play">▶</div><div class="vid-label">▶ ${escHtml(ex.naam)} — techniek video</div></div>`;
-  } else {
-    // F18 — geen video: toon de bestaande MoveKit-poster als bewegingsbeeld (statisch, geen play, geen fake).
-    // Bron: bestaande ExerciseAssetProvider (100% catalog-dekking); onerror-fail-safe; niets als er ook geen poster is.
-    const _p=(ex.id&&typeof ExerciseAssetProvider!=='undefined'&&ExerciseAssetProvider.poster)?ExerciseAssetProvider.poster(ex.id):null;
-    if(_p) h+=`<div class="vid-wrap vid-poster"><img src="${_p}" alt="${escHtml(ex.naam)}" loading="lazy" onerror="this.parentElement.style.display='none'"><div class="vid-label">${escHtml(ex.naam)} — bewegingsbeeld</div></div>`;
   }
   if(ex.muscles){
     h+='<div class="muscle-pills">';
@@ -12876,7 +12895,10 @@ async function generateSessionSummaryAI(t,summaryData){
         try{
           if(CoachingCore.buildCoachConclusion){
             const _conc=CoachingCore.buildCoachConclusion(window._coachSignals);
-            detConclusion=(CoachingCore.conclusionText?CoachingCore.conclusionText(_conc):'')||'';
+            // F20-A: coachstijl (presentatie-only) op de deterministische conclusie. Zelfde feiten +
+            // zelfde nextAction-label; alleen de toon verschilt. Seed voor de AI én de offline-fallback.
+            const _cstyle=localStorage.getItem('tk_coach_style')||'balanced';
+            detConclusion=(CoachingCore.conclusionText?CoachingCore.conclusionText(_conc,_cstyle):'')||'';
             if(detConclusion) _concLine=`
 LEIDENDE CONCLUSIE (door de app bepaald, feitelijk — verwoord dit als kern van je terugblik, wijk niet af van de richting): ${detConclusion}`;
           }

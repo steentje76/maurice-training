@@ -370,6 +370,35 @@ T('leest deltaKg uit het object (rekent niet zelf)', () => {
 });
 T('deterministisch per stijl', () => { const d = DC.progressionDecision(7, 100); eq(C.styleProgression(d, 'motivating'), C.styleProgression(d, 'motivating')); });
 
+// ================= O. conclusionText gestyled (post-workout, presentatie-only) =================
+console.log('\n[O] conclusionText(c, style) — coachstijl in de post-workout conclusie');
+const _concStyled = C.buildCoachConclusion([E({ exercise: 'Bench', status: 'improved', signals: ['improved', 'new_best'], priority: 100, previous: '100 kg', current: '105 kg', best: '105 kg', nextAction: 'Verhogen (+2,5 kg)' })]);
+T('zonder style == balanced == huidig gedrag (backward compatible)', () => {
+  eq(C.conclusionText(_concStyled), C.conclusionText(_concStyled, 'balanced'));
+  ok(C.conclusionText(_concStyled).indexOf('Volgens je huidige trainingsregel is de volgende stap: Verhogen (+2,5 kg)') !== -1);
+});
+T('CONTRACT: nextAction-LABEL identiek in élke stijl (DecisionCore leidend)', () => {
+  C.COACH_STYLES.forEach(st => { ok(C.conclusionText(_concStyled, st).indexOf('Verhogen (+2,5 kg)') !== -1, st + ' mist nextAction-label'); });
+});
+T('CONTRACT: feiten (record, 100 kg → 105 kg) blijven in élke stijl', () => {
+  C.COACH_STYLES.forEach(st => { const t = C.conclusionText(_concStyled, st); ok(t.indexOf('105 kg') !== -1, st + ' mist current'); ok(t.indexOf('Nieuw persoonlijk record') !== -1, st + ' mist record'); });
+});
+T('toon verschilt: direct vs motivating vs analytical zijn niet identiek', () => {
+  const d = C.conclusionText(_concStyled, 'direct'), m = C.conclusionText(_concStyled, 'motivating'), a = C.conclusionText(_concStyled, 'analytical');
+  ok(d !== m && m !== a && d !== a, 'stijlen moeten verschillen');
+  ok(a.indexOf('Analyse:') === 0, 'analytical opener'); ok(d.indexOf('Volgende stap: Verhogen (+2,5 kg)') !== -1, 'direct next');
+});
+T('style verandert de conclusie-DATA niet (c blijft ongewijzigd)', () => {
+  const before = JSON.stringify(_concStyled);
+  C.COACH_STYLES.forEach(st => C.conclusionText(_concStyled, st));
+  eq(JSON.stringify(_concStyled), before);
+});
+T('onbekende style -> balanced', () => { eq(C.conclusionText(_concStyled, 'onzin'), C.conclusionText(_concStyled, 'balanced')); });
+T('declined blijft niet-veroordelend in élke stijl', () => {
+  const cd = C.buildCoachConclusion([E({ exercise: 'Squat', status: 'declined', signals: ['declined'], priority: 60, previous: '140 kg', current: '130 kg' })]);
+  C.COACH_STYLES.forEach(st => { const t = C.conclusionText(cd, st).toLowerCase(); ['slechter', 'gefaald', 'zwak', 'teleurstellend'].forEach(w => ok(t.indexOf(w) === -1, st + ' bevat verboden woord ' + w)); });
+});
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail > 0) { console.log('⚠ STOP: coaching-core faalt.'); process.exit(1); }

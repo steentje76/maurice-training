@@ -225,29 +225,69 @@
   // Deterministische Nederlandse verwoording van de conclusie — PUUR string-samenstelling.
   // Dient als (a) offline/AI-uitval fallback en (b) leidende "seed" voor de AI-terugblik.
   // Gebruikt UITSLUITEND reeds-geformatteerde waarden (current/previous/best zijn al presentatie-strings).
-  function conclusionText(c) {
+  // Gestylede "volgende stap"-zin. De nextAction-LABEL (uit DecisionCore) blijft identiek;
+  // alleen de omringende formulering verschilt per coachstijl. Geen herberekening.
+  function _styleNextAction(nextAction, exercise, style) {
+    var ex = exercise ? (' (' + exercise + ')') : '';
+    var na = nextAction + ex;
+    switch (style) {
+      case 'direct': return 'Volgende stap: ' + na + '.';
+      case 'motivating': return 'Volgende keer ga je voor ' + na + '.';
+      case 'analytical': return 'Volgens je trainingsregel is de volgende stap ' + na + '.';
+      case 'calm': return 'Rustig door — volgende stap: ' + na + '.';
+      case 'energetic': return 'Volgende keer knallen: ' + na + '!';
+      default: return 'Volgens je huidige trainingsregel is de volgende stap: ' + na + '.';
+    }
+  }
+  // Korte, feitloze opener die alleen TOON toevoegt (geen cijfers/feiten — die staan in de factlines).
+  function _styleOpener(tone, style) {
+    switch (style) {
+      case 'direct': return '';
+      case 'motivating': return (tone === 'encouraging') ? 'Kop op — ' : 'Sterk werk — ';
+      case 'analytical': return 'Analyse: ';
+      case 'calm': return 'Even rustig teruggekeken: ';
+      case 'energetic': return (tone === 'encouraging') ? 'Kom op — ' : 'Yes! ';
+      default: return '';
+    }
+  }
+
+  // style is optioneel. Zonder style (of 'balanced') is de uitvoer IDENTIEK aan voorheen.
+  // Andere stijlen: exact dezelfde FEITEN, andere toon + gestylede "volgende stap"-zin.
+  function conclusionText(c, style) {
     if (!c || !c.hasData) return '';
+    if (COACH_STYLES.indexOf(style) === -1) style = 'balanced';
     var L = c.lead || {};
     var name = L.exercise || 'je oefening';
-    var lines = [];
+    var factLines = [];
     if (c.overall === 'new_best') {
-      lines.push('Nieuw persoonlijk record: ' + name + (L.best ? (' — ' + L.best) : '') + '.');
-      if (L.previous && L.current) lines.push('Je ging van ' + L.previous + ' naar ' + L.current + '.');
+      factLines.push('Nieuw persoonlijk record: ' + name + (L.best ? (' — ' + L.best) : '') + '.');
+      if (L.previous && L.current) factLines.push('Je ging van ' + L.previous + ' naar ' + L.current + '.');
     } else if (c.overall === 'improved') {
-      lines.push(name + ' was beter dan je vorige vergelijkbare training' + (L.previous && L.current ? (' (' + L.previous + ' → ' + L.current + ')') : '') + '.');
+      factLines.push(name + ' was beter dan je vorige vergelijkbare training' + (L.previous && L.current ? (' (' + L.previous + ' → ' + L.current + ')') : '') + '.');
     } else if (c.overall === 'declined') {
-      lines.push(name + ' lag iets lager dan vorige keer' + (L.previous && L.current ? (' (' + L.previous + ' → ' + L.current + ')') : '') + '. Dat hoeft geen probleem te zijn; je training telt gewoon mee.');
+      factLines.push(name + ' lag iets lager dan vorige keer' + (L.previous && L.current ? (' (' + L.previous + ' → ' + L.current + ')') : '') + '. Dat hoeft geen probleem te zijn; je training telt gewoon mee.');
     } else if (c.overall === 'mixed') {
-      lines.push('Wisselend beeld: ' + c.counts.improved + ' oefening' + (c.counts.improved === 1 ? '' : 'en') + ' beter, ' + c.counts.declined + ' iets lager.');
-      if (name && L.current) lines.push('Sterkste punt: ' + name + (L.current ? (' (' + L.current + ')') : '') + '.');
+      factLines.push('Wisselend beeld: ' + c.counts.improved + ' oefening' + (c.counts.improved === 1 ? '' : 'en') + ' beter, ' + c.counts.declined + ' iets lager.');
+      if (name && L.current) factLines.push('Sterkste punt: ' + name + (L.current ? (' (' + L.current + ')') : '') + '.');
     } else if (c.overall === 'stable') {
-      lines.push('Je prestatie was vergelijkbaar met vorige keer — stabiel vasthouden is ook progressie.');
+      factLines.push('Je prestatie was vergelijkbaar met vorige keer — stabiel vasthouden is ook progressie.');
     } else if (c.overall === 'first') {
-      lines.push('Eerste registratie van deze oefening' + (c.counts.exercises === 1 ? '' : 'en') + ' — vanaf nu kun je je vooruitgang vergelijken.');
+      factLines.push('Eerste registratie van deze oefening' + (c.counts.exercises === 1 ? '' : 'en') + ' — vanaf nu kun je je vooruitgang vergelijken.');
     }
-    if (c.counts.newBests > 1) lines.push('In totaal ' + c.counts.newBests + ' nieuwe records deze training.');
-    if (c.nextAction) lines.push('Volgens je huidige trainingsregel is de volgende stap: ' + c.nextAction + (c.nextActionExercise ? (' (' + c.nextActionExercise + ')') : '') + '.');
-    return lines.join(' ');
+    if (c.counts.newBests > 1) factLines.push('In totaal ' + c.counts.newBests + ' nieuwe records deze training.');
+
+    if (style === 'balanced') {
+      var lines = factLines.slice();
+      if (c.nextAction) lines.push('Volgens je huidige trainingsregel is de volgende stap: ' + c.nextAction + (c.nextActionExercise ? (' (' + c.nextActionExercise + ')') : '') + '.');
+      return lines.join(' ');
+    }
+    // Gestyled: opener (toon) + identieke feiten + gestylede volgende-stap-zin.
+    var out = [];
+    var opener = _styleOpener(c.tone, style);
+    if (opener && factLines.length) { factLines[0] = opener + factLines[0]; }
+    out = factLines.slice();
+    if (c.nextAction) out.push(_styleNextAction(c.nextAction, c.nextActionExercise, style));
+    return out.join(' ');
   }
 
   // S2 "Waarom dit advies?" — verwoordt de REEDS GENOMEN DecisionCore-beslissing (progressionDecision)

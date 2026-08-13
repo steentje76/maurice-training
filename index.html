@@ -8176,6 +8176,50 @@ function resolvePickerEx(id){
   return null;
 }
 
+// ── F91 / Optie B — FK-COMPAT SHADOW-RIJ ────────────────────────────────────
+// sessions.exercise_id heeft een foreign key naar exercises.id. Een catalogus-only oefening
+// (id=catalog_id, niet in de exercises-tabel) is daardoor NIET loggbaar (Postgres 23503). Deze
+// helper maakt éénmalig een minimale exercises-rij (id=catalog_id + naam/spiergroepen uit de
+// catalogus) zodat de FK klopt. GEEN tweede source of truth: de MoveKit-catalogus blijft leidend
+// voor poster/cues/equipment/intelligence; deze rij draagt enkel id + basisvelden voor de FK en
+// legacy-joins. Idempotent (doet niets als het id al bestaat of geen catalogus-id is) en
+// in-flight-gededupliceerd. scope:'personal' = de bewezen client-schrijfbare zichtbaarheid (zoals
+// saveLosOefening); 'global' is owner-only. exPickerPool dedupliceert op id → geen dubbele weergave.
+let _ensureRowInflight={};
+async function ensureExerciseRow(exId){
+  try{
+    if(!exId) return true;
+    if(typeof exercises!=='undefined' && Array.isArray(exercises) && exercises.some(e=>e.id===exId)) return true;
+    const c=(typeof ExerciseCatalogService!=='undefined')?ExerciseCatalogService.byId(exId):null;
+    if(!c||!c.identity) return true; // geen catalogus-id → legacy/custom hoort al te bestaan
+    if(_ensureRowInflight[exId]) return _ensureRowInflight[exId];
+    const Id=c.identity;
+    const row={ id:exId, name:Id.name||exId, category:'Overig', type:'strength', wod_format:null,
+      sort_order:99, active:true, pr:null, yt:null, rest_seconds:null,
+      muscle_primary:Array.isArray(Id.primary)?Id.primary.slice():[],
+      muscle_secondary:Array.isArray(Id.secondary)?Id.secondary.slice():[], scope:'personal' };
+    _ensureRowInflight[exId]=(async()=>{
+      let ok=false;
+      try{ ok=await sbPost('exercises',row); }catch(_){ ok=false; }
+      if(ok && typeof exercises!=='undefined' && Array.isArray(exercises) && !exercises.some(e=>e.id===exId)){
+        exercises.push(row);
+        if(typeof invalidateExPickerPool==='function')invalidateExPickerPool();
+      }
+      delete _ensureRowInflight[exId];
+      return ok;
+    })();
+    return _ensureRowInflight[exId];
+  }catch(e){ return false; }
+}
+// Zorg dat alle daadwerkelijk gelogde catalogus-only oefeningen een FK-compat rij hebben, vóór
+// de (frozen) sessions-writes. Alleen oefeningen met een sessionLog-entry (die geschreven worden).
+async function ensureSessionExerciseRows(list){
+  try{
+    const ids=[...new Set((list||[]).filter(ex=>ex&&ex.id&&(typeof sessionLog!=='undefined')&&sessionLog[ex.id]).map(ex=>ex.id))];
+    if(ids.length) await Promise.all(ids.map(id=>ensureExerciseRow(id)));
+  }catch(_){}
+}
+
 async function getRecentExerciseIds(){
   const rows=await sbGet('sessions','&exercise_id=not.is.null&order=date.desc,created_at.desc&limit=60');
   const seen=[];
@@ -8465,6 +8509,7 @@ async function saveLosOefening(btnEl){
     }
   }
 
+  await ensureExerciseRow(exId); // F91/Optie B — FK-compat vóór de losse-oefening-write
   const ok=await sbPostQ('sessions',row);
   if(!ok){toast('Fout bij opslaan');return;}
   closeModal('m-los-oefening');
@@ -13001,6 +13046,10 @@ async function finishSession(){
   if(btn){btn.disabled=true;btn.textContent='Opslaan...';}
   try{
   const t=curT,list=getSessionExs(t),today=td();let saved=0,failed=0;
+  // F91/Optie B — FK-compat: garandeer dat elke gelogde catalogus-only oefening een exercises-rij
+  // heeft VÓÓR de writes (anders faalt sessions_exercise_id_fkey). Raakt de write-semantiek niet aan
+  // (buildStrengthSessionRow/writeSessionRow ongewijzigd) — alleen een veilige pre-conditie.
+  await ensureSessionExerciseRows(list);
   const summaryData=[]; // v306 #10: input voor AI-samenvatting
   // v3.3.52 P7 — premium afronding: aggregeer bestaande cijfers voor de samenvatting-kaart.
   const sessStats={vol:0,sets:0,reps:0,pr:0,heavy:0,muscles:new Set(),compare:[]};
@@ -14072,6 +14121,7 @@ async function saveEditSession(btnEl){
   if(!curEditSess){
     row.exercise_id=curAddExId;
     row.training_type=curAddTT;
+    await ensureExerciseRow(curAddExId); // F91/Optie B — FK-compat vóór add-set-write
     const clean={};Object.entries(row).forEach(([k,v])=>{if(v!==null&&v!==undefined)clean[k]=v;});
     const ok=await sbPostQ('sessions',clean);
     if(ok){

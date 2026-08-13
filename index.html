@@ -8370,7 +8370,7 @@ async function renderLosBody(existingEx=null){
     await ensureEquipmentTypesLoaded();
     if(ex.type==='strength'||!ex.type){await loadRepPRs(ex.id);await loadEstOneRM(ex.id);}
     const eqList=await loadEquipment(ex.id);
-    panels=`${ex.tip?`<div style="background:#fffbea;border-left:3px solid var(--y);padding:8px 12px;font-size:12px;color:#666;margin:8px 0;border-radius:0 8px 8px 0">💡 ${ex.tip}</div>`:''}
+    panels=`${ex.tip?`<div style="background:var(--g1);border-left:3px solid var(--y);padding:8px 12px;font-size:12px;color:var(--g4);margin:8px 0;border-radius:0 8px 8px 0">💡 ${ex.tip}</div>`:''}
       ${buildVideoMuscle(ex)}
       ${BARBELL_EXERCISES.has(ex.id)?buildRmPanel(ex):''}
       ${buildEquipmentPanel(ex.id,eqList)}`;
@@ -9519,7 +9519,7 @@ async function renderTrainScreen(t){
       </div>
       ${prevBlockHtml||(prevStr?`<div class="ex-prev"><strong>${prevStr}</strong></div>`:'')||(resolveCardioType(ex)?'':prevEmptyBlock())}
       <div class="ex-body" id="body-${ex.id}">
-        ${ex.tip?`<div style="background:#fffbea;border-left:3px solid var(--y);padding:8px 12px;font-size:12px;color:#666;margin:8px 14px;border-radius:0 8px 8px 0">💡 ${ex.tip}</div>`:''}
+        ${ex.tip?`<div style="background:var(--g1);border-left:3px solid var(--y);padding:8px 12px;font-size:12px;color:var(--g4);margin:8px 14px;border-radius:0 8px 8px 0">💡 ${ex.tip}</div>`:''}
         ${buildVideoMuscle(ex)}
         ${buildIntelligenceCard(ex,prevS)}
         ${BARBELL_EXERCISES.has(ex.id)?buildRmPanel(ex):''}

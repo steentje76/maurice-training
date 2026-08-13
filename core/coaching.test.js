@@ -311,6 +311,34 @@ T('nextAction wordt NOOIT gesynthetiseerd als geen enkele oefening er een heeft'
   ok(C.conclusionText(c).indexOf('volgende stap') === -1, 'geen verzonnen volgende stap');
 });
 
+// ================= M. explainProgression (S2 "Waarom dit advies?") =================
+console.log('\n[M] explainProgression — verwoordt de reeds-genomen DecisionCore-beslissing');
+const DC = require('./decision.js');
+T('increase -> uitleg noemt "verhogen"-zone, met kg + RPE uit de beslissing', () => {
+  const d = DC.progressionDecision(7, 100); // rpe laag -> increase
+  const t = C.explainProgression(d);
+  ok(t.indexOf('100 kg') !== -1 && t.indexOf('RPE 7') !== -1, 'kg/RPE uit inputs');
+  ok(t.toLowerCase().indexOf('verhogen') !== -1, 'noemt verhogen-zone');
+});
+T('hold -> uitleg "gelijk houden"', () => {
+  const d = DC.progressionDecision(8, 100);
+  ok(C.explainProgression(d).toLowerCase().indexOf('gelijk') !== -1);
+});
+T('deload -> uitleg "terugbouwen", niet-veroordelend', () => {
+  const d = DC.progressionDecision(9, 100);
+  const t = C.explainProgression(d).toLowerCase();
+  ok(t.indexOf('terug') !== -1); ok(t.indexOf('zwaar') !== -1);
+});
+T('geen/ongeldige beslissing -> lege string (geen verzonnen uitleg)', () => {
+  eq(C.explainProgression(null), ''); eq(C.explainProgression({}), ''); eq(C.explainProgression(DC.progressionDecision(null, 100)), '');
+});
+T('explainProgression rekent niets zelf uit (leest alleen het beslissing-object)', () => {
+  // een handmatig object met afwijkende inputs wordt letterlijk verwoord, niet herberekend
+  const t = C.explainProgression({ outcome: 'increase', inputs: { rpe: 6, curKg: 82.5 } });
+  ok(t.indexOf('82.5 kg') !== -1 && t.indexOf('RPE 6') !== -1);
+});
+T('deterministisch', () => { const d = DC.progressionDecision(7, 100); eq(C.explainProgression(d), C.explainProgression(d)); });
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail > 0) { console.log('⚠ STOP: coaching-core faalt.'); process.exit(1); }

@@ -539,6 +539,9 @@ body{display:flex;justify-content:center}
 .coach-advice-dot.up{background:var(--accent)}.coach-advice-dot.keep{background:var(--g4)}.coach-advice-dot.down{background:#E0704A}
 .coach-next{font-size:12px;font-weight:600;color:var(--g6);margin-top:6px}
 .coach-next strong{color:var(--dark)}
+/* S2 "Waarom dit advies?" — subtiele deterministische uitleg onder het set-advies */
+.coach-why{font-size:11.5px;color:var(--g4);margin-top:6px;line-height:1.45}
+.coach-why-q{font-weight:800;color:var(--g6)}
 .coach-advice-card .coach-apply-btn{margin-top:8px}
 /* v3.3.54 Deel 6 — vergelijking met vorige keer op de afrondingskaart */
 /* S2 — "Voor de volgende keer": per-oefening nextAction-lijst */
@@ -3302,6 +3305,61 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </div>
 </div>
 
+<!-- ═══ AI CONVERSATIONAL INTAKE (Onboarding-herontwerp) ═══
+     Primaire onboarding: een gesprek met de coach dat gestructureerde trainingscontext
+     verzamelt via OnboardingCore (deterministische vertakking + validatie). De AI structureert
+     vrije tekst maar is nooit bron van waarheid; chips + lokale parser werken ook zonder AI.
+     De klassieke wizard (#s-onboarding) blijft als fallback (offline/AI onbereikbaar/skip). -->
+<style>
+#s-intake .intk-log{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 4px;display:flex;flex-direction:column;gap:10px;background:var(--bg)}
+.intk-msg{max-width:86%;padding:11px 13px;border-radius:16px;font-size:14px;line-height:1.5;white-space:pre-wrap;word-break:break-word;animation:intkIn var(--motion-standard,.24s) var(--motion-ease,ease)}
+@keyframes intkIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.intk-msg.coach{align-self:flex-start;background:var(--card);color:var(--dark);border:1px solid var(--g2);border-bottom-left-radius:5px}
+.intk-msg.user{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:5px}
+.intk-msg.note{align-self:center;background:transparent;color:var(--g4);font-size:12px;padding:2px 8px;text-align:center}
+.intk-why{margin-top:7px}
+.intk-why-btn{background:none;border:none;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;padding:0;text-decoration:underline}
+.intk-why-body{margin-top:6px;font-size:12px;color:var(--g4);line-height:1.45;border-left:2px solid var(--g2);padding-left:8px}
+.intk-chips{display:flex;flex-wrap:wrap;gap:7px;padding:8px 14px;background:var(--bg)}
+.intk-chip{border:1px solid var(--g3);background:var(--card);color:var(--dark);border-radius:18px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;transition:all var(--motion-quick,.15s) ease}
+.intk-chip:hover{border-color:var(--accent)}
+.intk-chip.sel{background:var(--accent);color:#fff;border-color:var(--accent)}
+.intk-chip.go{background:var(--dark);color:var(--card);border-color:var(--dark)}
+.intk-chip.skip{color:var(--g4);font-weight:500}
+.intk-inputbar{background:var(--card);border-top:1px solid var(--g2);padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;align-items:flex-end;flex-shrink:0}
+.intk-inputbar textarea{flex:1;resize:none;border:1px solid var(--g2);border-radius:20px;padding:10px 14px;font:inherit;font-size:14px;max-height:110px;background:var(--bg);color:var(--dark)}
+.intk-send{flex:0 0 auto;width:42px;height:42px;border-radius:50%;border:none;background:var(--accent);color:#fff;font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.intk-send:disabled{opacity:.5;cursor:default}
+.intk-summary{align-self:stretch;max-width:100%;background:var(--card);border:1px solid var(--g2);border-radius:16px;padding:14px}
+.intk-summary h4{margin:0 0 4px;font-size:15px;color:var(--dark)}
+.intk-summary .sub{font-size:12px;color:var(--g4);margin-bottom:10px}
+.intk-srow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--g1,var(--g2))}
+.intk-srow .lbl{font-size:12px;color:var(--g4);flex:0 0 40%}
+.intk-srow .val{font-size:13px;color:var(--dark);font-weight:600;flex:1;text-align:right}
+.intk-srow .edit{flex:0 0 auto;background:none;border:none;color:var(--accent);cursor:pointer;font-size:12px;font-weight:600}
+.intk-summary .cta{width:100%;margin-top:12px}
+.intk-privacy{display:flex;align-items:flex-start;gap:9px;font-size:12px;color:var(--dark);cursor:pointer;margin-top:10px}
+</style>
+<div class="scr" id="s-intake">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title" role="heading" aria-level="1" id="intk-title">Even kennismaken</div><div class="hdr-sub" id="intk-phase">TrainingKompas leert je kennen</div></div>
+      <button class="ibtn" onclick="intakeSwitchToForm()" title="Liever een kort formulier invullen" aria-label="Naar formulier">
+        <svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h10"/></svg>
+      </button>
+    </div>
+    <div style="height:4px;background:var(--g2);border-radius:2px;margin-top:10px;overflow:hidden">
+      <div id="intk-progress" style="height:100%;background:var(--accent);width:0%;transition:width var(--motion-standard) var(--motion-ease)"></div>
+    </div>
+  </div>
+  <div class="intk-log" id="intk-log" aria-live="polite"></div>
+  <div class="intk-chips" id="intk-chips"></div>
+  <div class="intk-inputbar">
+    <textarea id="intk-inp" rows="1" placeholder="Typ je antwoord…" oninput="intakeAutoGrow(this)" onkeydown="intakeKey(event)" aria-label="Je antwoord"></textarea>
+    <button class="intk-send" id="intk-send" onclick="intakeSend()" aria-label="Versturen">→</button>
+  </div>
+</div>
+
 <!-- ═══ COACH ═══ -->
 <div class="scr" id="s-coach">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Coach</div><div class="hdr-sub"><span id="coach-session-label">Algemeen gesprek</span> · <span id="coach-st">Klaar</span></div></div><div style="display:flex;gap:2px"><button class="ibtn" onclick="openCoachHistory()" title="Gespreksgeschiedenis" aria-label="Gespreksgeschiedenis"><svg viewBox="0 0 24 24"><path d="M3.5 9A9 9 0 1 1 4 15"/><path d="M3 5v4h4"/><path d="M12 8.5V12l2.8 1.6"/></svg></button><button class="ibtn" onclick="clearChat()" aria-label="Gesprek wissen"><svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M6.5 7l1 13h9l1-13"/><path d="M10 11v6M14 11v6"/></svg></button></div></div></div>
@@ -4532,6 +4590,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/progression.js"></script>
 <script src="core/coaching.js"></script>
 <script src="core/movement.js"></script>
+<script src="core/onboarding.js"></script>
 <script>
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
@@ -7042,6 +7101,267 @@ function obFinish(){
     sbUpsert('atleet_profiel', {...atleet, user_id: authSession.user.id}).catch(()=>{/* device-lokaal blijft leidend als sync nu faalt; volgende syncAtleetFromSupabase() probeert opnieuw */});
   }
   go('s-train-mgr');
+}
+
+// ══════════════════════════════════════════════════════════
+// AI CONVERSATIONAL INTAKE (onboarding-herontwerp)
+// Gespreksgestuurde onboarding op basis van OnboardingCore (pure, deterministische
+// vertakking + validatie). De AI STRUCTUREERT vrije tekst maar is nooit bron van waarheid;
+// chips + de lokale parser werken ook zonder AI (privacy-by-default / offline). Persistentie
+// gaat naar de BESTAANDE tabellen (atleet_profiel/training_context/goals/athlete_conditions).
+// ══════════════════════════════════════════════════════════
+function ocore(){return window.OnboardingCore;}
+const INTK_PHASE={1:'Kennismaken',2:'Trainingscontext',3:'Verfijning',4:'Veiligheid'};
+let intakeState=null;
+
+function intakeStart(){
+  intakeState={values:{},answered:{},cand:{},curQ:null,selected:[],aiConsent:null,editing:false};
+  const log=document.getElementById('intk-log'); if(log)log.innerHTML='';
+  intakeUpdateProgress();
+  intakeAddCoach('Hoi! Ik ben je TrainingKompas-coach. In een kort gesprek leer ik je doelen en trainingscontext kennen, zodat mijn advies écht op jou is afgestemd. Je kunt op de knoppen tikken of gewoon typen.');
+  intakeAskConsent();
+}
+function intakeScroll(){const l=document.getElementById('intk-log'); if(l)l.scrollTop=l.scrollHeight;}
+function intakeAddCoach(text,whyText){
+  const log=document.getElementById('intk-log'); if(!log)return null;
+  const d=document.createElement('div'); d.className='intk-msg coach';
+  d.innerHTML=escHtml(text).replace(/\n/g,'<br>');
+  if(whyText){
+    const w=document.createElement('div'); w.className='intk-why';
+    const btn=document.createElement('button'); btn.className='intk-why-btn'; btn.type='button'; btn.textContent='Waarom vraag ik dit?';
+    const body=document.createElement('div'); body.className='intk-why-body'; body.style.display='none'; body.textContent=whyText;
+    btn.onclick=function(){const open=body.style.display!=='none'; body.style.display=open?'none':'block'; btn.textContent=open?'Waarom vraag ik dit?':'Verbergen';};
+    w.appendChild(btn); w.appendChild(body); d.appendChild(w);
+  }
+  log.appendChild(d); intakeScroll(); return d;
+}
+function intakeAddUser(text){
+  const log=document.getElementById('intk-log'); if(!log)return;
+  const d=document.createElement('div'); d.className='intk-msg user'; d.textContent=text;
+  log.appendChild(d); intakeScroll();
+}
+function intakeAddNote(text){
+  const log=document.getElementById('intk-log'); if(!log)return;
+  const d=document.createElement('div'); d.className='intk-msg note'; d.textContent=text;
+  log.appendChild(d); intakeScroll();
+}
+function intakeRenderChips(chips){
+  const c=document.getElementById('intk-chips'); if(!c)return; c.innerHTML='';
+  chips.forEach(function(ch){
+    const b=document.createElement('button'); b.type='button'; b.className='intk-chip'+(ch.cls?(' '+ch.cls):'');
+    b.textContent=ch.label; b.onclick=ch.onclick; c.appendChild(b);
+  });
+}
+function intakeClearChips(){const c=document.getElementById('intk-chips'); if(c)c.innerHTML='';}
+function intakeAutoGrow(el){el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,110)+'px';}
+function intakeKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault(); intakeSend();}}
+function intakeSetPhase(p){const el=document.getElementById('intk-phase'); if(el)el.textContent='Fase '+p+' van 4 · '+(INTK_PHASE[p]||'');}
+function intakeUpdateProgress(){if(!ocore())return; const pr=ocore().progress(intakeState); const el=document.getElementById('intk-progress'); if(el)el.style.width=pr.pct+'%';}
+
+// -- Consent (privacy-by-default): AI alleen na expliciete keuze --------------
+function intakeAskConsent(){
+  const stored=localStorage.getItem('tk_ai_consent');
+  if(stored==='1'){intakeState.aiConsent=true; intakeAfterConsent(); return;}
+  if(stored==='0'){intakeState.aiConsent=false; intakeAfterConsent(); return;}
+  intakeAddCoach('Mag ik AI gebruiken om je antwoorden goed te begrijpen? Je tekst gaat dan naar onze AI-leverancier (Anthropic) om te verwerken. Wijzigbaar via Instellingen → Privacy. Zonder AI werkt het ook — dan gebruik je vooral de knoppen.');
+  intakeRenderChips([
+    {label:'Ja, gebruik AI',cls:'go',onclick:function(){intakeSetConsent(true);}},
+    {label:'Liever zonder AI',cls:'',onclick:function(){intakeSetConsent(false);}}
+  ]);
+}
+function intakeSetConsent(granted){
+  localStorage.setItem('tk_ai_consent',granted?'1':'0');
+  intakeState.aiConsent=granted;
+  intakeAddUser(granted?'Ja, gebruik AI':'Liever zonder AI');
+  intakeClearChips();
+  intakeAfterConsent();
+}
+function intakeAfterConsent(){
+  intakeAddNote(intakeState.aiConsent?'AI-ondersteuning aan':'Zonder AI — tik op de knoppen of typ kort');
+  setTimeout(intakeNextQuestion,250);
+}
+
+// -- Vraag-loop ---------------------------------------------------------------
+function intakeNextQuestion(){
+  if(!ocore())return;
+  intakeState.selected=[];
+  const q=ocore().nextQuestion(intakeState);
+  if(!q){intakeShowSummary(); return;}
+  intakeState.curQ=q;
+  intakeSetPhase(q.phase);
+  intakeAddCoach(q.prompt,q.why);
+  intakeRenderQuestionChips(q);
+  intakeUpdateProgress();
+}
+function intakeChipLabel(q,value){if(q&&q.chips){for(var i=0;i<q.chips.length;i++)if(q.chips[i].value===value)return q.chips[i].label;} return String(value);}
+function intakeRenderQuestionChips(q){
+  const chips=[];
+  if(q.kind==='multiselect'&&q.chips){
+    q.chips.forEach(function(ch){chips.push({label:ch.label,onclick:function(){intakeToggleMulti(this,ch.value);}});});
+    chips.push({label:'Klaar',cls:'go',onclick:function(){intakeSubmitMulti(q);}});
+    if(q.optional)chips.push({label:'Overslaan',cls:'skip',onclick:function(){intakeSkip(q);}});
+  }else if(q.chips){
+    q.chips.forEach(function(ch){chips.push({label:ch.label,onclick:function(){intakeAcceptValue(q,ch.value,true);}});});
+    if(q.optional)chips.push({label:'Overslaan',cls:'skip',onclick:function(){intakeSkip(q);}});
+  }else if(q.optional){
+    const lbl=q.field==='secondary_goals'?'Geen nevendoelen':(q.field==='limitations'?'Geen, alles oké':(q.field==='avoid_exercises'?'Nee, geen':'Overslaan'));
+    chips.push({label:lbl,cls:'skip',onclick:function(){intakeSkip(q);}});
+  }
+  intakeRenderChips(chips);
+}
+function intakeToggleMulti(btn,value){
+  const i=intakeState.selected.indexOf(value);
+  if(i>=0){intakeState.selected.splice(i,1); btn.classList.remove('sel');}
+  else{intakeState.selected.push(value); btn.classList.add('sel');}
+}
+function intakeSubmitMulti(q){
+  const r=ocore().validateField(q.field,intakeState.selected.slice());
+  const val=r.ok?r.value:[];
+  intakeState.selected=[];
+  intakeAddUser(val.length?val.join(', '):'(geen)');
+  intakeCommitField(q,val);
+}
+function intakeSkip(q){
+  intakeAddUser('Overslaan');
+  intakeCommitField(q,(q.kind==='multiselect'||q.kind==='list')?[]:null);
+}
+function intakeAcceptValue(q,rawValue,viaChip){
+  const r=ocore().validateField(q.field,rawValue);
+  if(!r.ok){intakeAddCoach(r.error+' Kun je het anders formuleren?'); return;}
+  if(viaChip)intakeAddUser(intakeChipLabel(q,r.value));
+  intakeCommitField(q,r.value);
+}
+function intakeConfirmNote(value){
+  let shown;
+  if(Array.isArray(value))shown=value.length?value.join(', '):'niets';
+  else shown=(value==null||value==='')?'niets':String(value);
+  intakeAddNote('Genoteerd: '+shown);
+}
+function intakeCommitField(q,value){
+  intakeState.values[q.field]=value;
+  intakeState.cand[q.field]=value;
+  intakeState.answered[q.field]=true;
+  intakeConfirmNote(value);
+  intakeClearChips();
+  intakeUpdateProgress();
+  if(intakeState.editing){intakeState.editing=false; setTimeout(intakeShowSummary,200); return;}
+  setTimeout(intakeNextQuestion,200);
+}
+
+// -- Vrije-tekst antwoord: AI-extractie (indien consent) met lokale fallback --
+async function intakeSend(){
+  const inp=document.getElementById('intk-inp'); if(!inp||!intakeState||!intakeState.curQ)return;
+  const txt=(inp.value||'').trim(); if(!txt)return;
+  inp.value=''; intakeAutoGrow(inp);
+  intakeAddUser(txt);
+  await intakeInterpret(intakeState.curQ,txt);
+}
+async function intakeAiExtract(q,txt){
+  try{
+    const sys=ocore().buildExtractionPrompt(q);
+    const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:200,system:sys,messages:[{role:'user',content:txt}]})});
+    const d=await res.json();
+    if(d.error||!d.content||!d.content[0])return null;
+    const m=String(d.content[0].text||'').match(/\{[\s\S]*\}/);
+    if(!m)return null;
+    const obj=JSON.parse(m[0]);
+    return {value:obj.value,confidence:typeof obj.confidence==='number'?obj.confidence:0.5};
+  }catch(e){return null;}
+}
+async function intakeInterpret(q,txt){
+  let parsed=null;
+  if(intakeState.aiConsent&&navigator.onLine){
+    intakeAddNote('Coach leest mee…');
+    parsed=await intakeAiExtract(q,txt);
+  }
+  if(!parsed||parsed.value==null||(typeof parsed.confidence==='number'&&parsed.confidence<0.5)){
+    const local=ocore().parseAnswerLocally(q.field,txt);
+    if(local.value!=null||q.optional)parsed=local;
+  }
+  const isList=(q.kind==='multiselect'||q.kind==='list');
+  if(!parsed||(parsed.value==null&&!q.optional)){
+    intakeAddCoach('Sorry, dat begreep ik niet helemaal. '+(q.chips?'Je kunt ook op een knop tikken.':'Kun je het korter of anders zeggen?'));
+    return;
+  }
+  const rawVal=(parsed.value==null)?(isList?[]:null):parsed.value;
+  const r=(rawVal==null)?{ok:true,value:null}:ocore().validateField(q.field,rawVal);
+  if(!r.ok){intakeAddCoach(r.error+' Probeer het nog eens.'); return;}
+  intakeCommitField(q,r.value);
+}
+
+// -- Samenvatting "Dit heb ik van je begrepen" (bewerkbaar) -------------------
+function intakeShowSummary(){
+  intakeClearChips();
+  const val=ocore().validateCandidate(intakeState.cand);
+  intakeState.cand=val.normalized;
+  const lines=ocore().summaryLines(intakeState.cand);
+  const wrap=document.createElement('div'); wrap.className='intk-msg coach intk-summary';
+  let h='<h4>Dit heb ik van je begrepen</h4><div class="sub">Klopt dit? Tik op “wijzig” om iets aan te passen.</div>';
+  lines.forEach(function(l){
+    h+='<div class="intk-srow"><span class="lbl">'+escHtml(l.label)+'</span><span class="val">'+escHtml(l.value)+'</span><button class="edit" type="button" onclick="intakeEditField(\''+l.field+'\')">wijzig</button></div>';
+  });
+  h+='<label class="intk-privacy"><input type="checkbox" id="intk-privacy-chk" onchange="var b=document.getElementById(\'intk-confirm\');if(b)b.disabled=!this.checked"><span>Ik ga akkoord dat mijn gegevens per account worden opgeslagen en verwerkt (Privacy).</span></label>';
+  h+='<button class="btn btn-r cta" id="intk-confirm" type="button" disabled onclick="intakeConfirm(this)">Bevestigen & starten</button>';
+  wrap.innerHTML=h;
+  document.getElementById('intk-log').appendChild(wrap);
+  intakeSetPhase(4);
+  intakeScroll();
+}
+function intakeEditField(field){
+  if(!ocore())return;
+  let q=null; ocore().QUESTIONS.forEach(function(x){if(x.field===field)q=x;});
+  if(!q)return;
+  delete intakeState.answered[field];
+  intakeState.curQ=q; intakeState.editing=true;
+  intakeAddCoach('Prima, laten we dit aanpassen.',q.why);
+  intakeAddCoach(q.prompt);
+  intakeRenderQuestionChips(q);
+}
+
+// -- Bevestigen & persistente opslag naar BESTAANDE tabellen ------------------
+async function intakeConfirm(btn){
+  if(btn){if(btn.disabled)return; btn.disabled=true; btn.textContent='Bezig…';}
+  const cand=intakeState.cand;
+  const uid=authSession?.user?.id||null;
+  try{
+    atleet=ocore().toAtleet(cand,atleet);
+    localStorage.setItem('tk_atleet',JSON.stringify(atleet));
+    if(uid)await sbUpsert('atleet_profiel',{...atleet,user_id:uid});
+    if(uid)await sbUpsert('training_context',ocore().toTrainingContextRow(cand,uid));
+    const goals=ocore().toSecondaryGoals(cand,uid);
+    for(const g of goals){await sbPostQ('goals',g);}
+    const conds=ocore().toConditions(cand);
+    for(const c of conds){await sbPost('athlete_conditions',c);}
+    localStorage.setItem('tk_onboarding_done','1');
+    intakeValueCTA(cand);
+  }catch(e){
+    console.error('intakeConfirm',e);
+    if(btn){btn.disabled=false; btn.textContent='Bevestigen & starten';}
+    toast('Opslaan liep vast — probeer opnieuw');
+  }
+}
+function intakeValueCTA(cand){
+  intakeClearChips();
+  const naam=cand.naam?(' '+cand.naam):'';
+  const goalTxt=(ocore().GOAL_LABEL[cand.primary_goal]||'je doel').toLowerCase();
+  const freq=(cand.frequency!=null)?(cand.frequency+'x per week'):'jouw ritme';
+  const loc=cand.location?(' ('+cand.location+')'):'';
+  intakeAddCoach('Top'+naam+'! Je profiel staat. Vanaf nu stem ik mijn advies af op '+goalTxt+', '+freq+loc+'. Klaar om te beginnen?');
+  intakeRenderChips([
+    {label:'Naar mijn start',cls:'go',onclick:function(){intakeGoHome();}},
+    {label:'Bekijk mijn trainingen',onclick:function(){document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('active');}); go('s-train-mgr');}}
+  ]);
+}
+function intakeGoHome(){
+  document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('active');});
+  const home=document.getElementById('s-home'); if(home)home.classList.add('active');
+  if(typeof refreshHome==='function')refreshHome();
+}
+// Terugval naar de klassieke wizard (offline/AI onbereikbaar/voorkeur).
+function intakeSwitchToForm(){
+  document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('active');});
+  initOnboarding();
+  document.getElementById('s-onboarding').classList.add('active');
 }
 
 // ══════════════════════════════════════════════════════════
@@ -11774,10 +12094,18 @@ function showPostSetAdvice(exId,setNum){
     nextLine=`<div class="coach-next">Volgende: <strong>Set ${nextIdx}</strong>${nkg?` · ${nkg} kg${nextReps?` × ${nextReps}`:''}`:''}</div>`;
   }
   const applyBtn=(nextInp&&prog.delta!==0)?`<button class="coach-apply-btn" onclick="applyAdviceToSet('${exId}',${nextIdx},${target})">Gebruik ${target} kg volgende set</button>`:'';
+  // S2 "Waarom dit advies?" — verwoordt de reeds-genomen DecisionCore-beslissing (geen nieuwe berekening, geen AI).
+  let whyLine='';
+  try{
+    if(typeof DecisionCore!=='undefined'&&DecisionCore.progressionDecision&&typeof CoachingCore!=='undefined'&&CoachingCore.explainProgression){
+      const _why=CoachingCore.explainProgression(DecisionCore.progressionDecision(rpe,kgVal));
+      if(_why) whyLine=`<div class="coach-why"><span class="coach-why-q">Waarom?</span> ${escHtml(_why)}</div>`;
+    }
+  }catch(_e){}
   const html=`<span class="coach-advice-dot ${dir}"></span><div class="coach-advice-body">
     <div class="coach-advice-head ${dir}">${heading}</div>
     <div class="coach-advice-sub">Hoe zwaar was deze set? <strong>RPE ${rpe}</strong> · ${meaning}</div>
-    ${nextLine}${applyBtn}
+    ${whyLine}${nextLine}${applyBtn}
   </div>`;
   const existing=document.getElementById('advice-'+exId);
   if(existing){existing.innerHTML=html;}
@@ -16876,6 +17204,10 @@ async function startAppAfterAuth(){
   const onboardingDone = localStorage.getItem('tk_onboarding_done')==='1';
   if(onboardingDone){
     document.getElementById('s-home').classList.add('active');
+  }else if(window.OnboardingCore){
+    // Primaire onboarding: AI Conversational Intake. Bij ontbrekende core -> klassieke wizard.
+    intakeStart();
+    document.getElementById('s-intake').classList.add('active');
   }else{
     initOnboarding();
     document.getElementById('s-onboarding').classList.add('active');

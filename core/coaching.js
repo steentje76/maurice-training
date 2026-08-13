@@ -250,6 +250,28 @@
     return lines.join(' ');
   }
 
+  // S2 "Waarom dit advies?" — verwoordt de REEDS GENOMEN DecisionCore-beslissing (progressionDecision)
+  // deterministisch. Berekent NIETS: leest outcome + inputs (rpe/curKg) uit het decision-object en
+  // formatteert een korte uitleg. Geen nieuwe regel, geen AI. Toont de sporter zijn eigen data (geen AI-boundary).
+  function explainProgression(decision) {
+    if (!decision || !decision.outcome) return '';
+    var inp = decision.inputs || {};
+    var rpe = inp.rpe;
+    var kg = (inp.curKg != null) ? inp.curKg : inp.kg;
+    var kgTxt = (kg != null && kg !== '') ? (' op ' + kg + ' kg') : '';
+    var rpeTxt = (rpe != null && rpe !== '') ? (' (RPE ' + rpe + ')') : '';
+    if (decision.outcome === 'increase') {
+      return 'Je vorige set' + kgTxt + ' voelde relatief licht' + rpeTxt + '. Binnen je huidige trainingsregel is dat de zone om te verhogen.';
+    }
+    if (decision.outcome === 'deload') {
+      return 'Je vorige set' + kgTxt + ' was zwaar' + rpeTxt + '. Daarom bouw je de belasting de volgende keer even terug.';
+    }
+    if (decision.outcome === 'hold') {
+      return 'Je vorige set' + kgTxt + ' zat rond de gewenste inspanning' + rpeTxt + '. Daarom houd je het gewicht gelijk.';
+    }
+    return '';
+  }
+
   var CoachingCore = {
     deriveSignals: deriveSignals,
     buildContext: buildContext,
@@ -257,6 +279,7 @@
     improvementsDigest: improvementsDigest,
     buildCoachConclusion: buildCoachConclusion,
     conclusionText: conclusionText,
+    explainProgression: explainProgression,
     has: has,
     AI_FIELDS: AI_FIELDS,
     PRIORITY: PRIORITY,

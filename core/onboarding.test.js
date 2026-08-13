@@ -145,6 +145,14 @@ T('samenvatting dekt alle velden met labels', () => {
 });
 T('lege waarden -> streepje, geen crash', () => { var s = O.summaryLines({}); s.forEach(x => ok(typeof x.value === 'string')); });
 
+console.log('\n[K] contextSummary — training_context voor de AI-coachcontext');
+T('lege/afwezige context -> lege string', () => { eq(O.contextSummary(null), ''); eq(O.contextSummary({}), ''); });
+T('samenvatting bevat frequentie/locatie/vermijden', () => {
+  var s = O.contextSummary({ frequency: 4, days: ['ma', 'wo'], duration_min: 60, location: 'gym', equipment: [], avoid_exercises: ['Sumo Deadlift'] });
+  ok(/4x per week/.test(s)); ok(/locatie: gym/.test(s)); ok(/te vermijden: Sumo Deadlift/.test(s));
+  ok(s.indexOf('materiaal') === -1, 'lege equipment niet tonen');
+});
+
 console.log('\n[J] Purity — geen DOM/DB/AI/Date in de core');
 T('geen verboden tokens in onboarding.js', () => {
   var raw = fs.readFileSync(path.join(__dirname, 'onboarding.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');

@@ -2832,6 +2832,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="home-hero"></div>
     <div id="home-hrv-card" class="hcoach-item" style="display:none;margin-bottom:14px"></div>
     <div id="home-coach-vandaag"></div>
+    <div id="home-context" class="hcoach-item" style="display:none;margin-bottom:14px"></div>
     <div id="home-plan"></div>
     <div id="home-weekstats" class="hcoach-item" style="margin-bottom:14px"></div>
     <!-- S1 — "Recente vooruitgang": bestaande improvementsDigest (tot nu alleen op Stats) nu ook op Home. Presentatie-only, verschijnt alleen bij echte vooruitgang. -->
@@ -5881,6 +5882,8 @@ async function openTrainingPreview(source,id){
     overrides:{}                    // F0.7L: sporter-gewichtsoverride per exercise_id (instance-level, vóór start)
   };
   openModal('m-training-preview');
+  // Sprint 3 — trainingscontext (duur/locatie) beschikbaar maken voor de preview.
+  try{ if(tkTrainingCtx===null){ const r=await sbGet('training_context','&limit=1'); tkTrainingCtx=(r&&r[0])||false; } }catch(e){}
   // "Waarom vandaag?" — echte herstel-data via de bestaande getRelevantMuscleRecovery()
   // (geen nieuw algoritme). Async; bij falen of geen data gewoon weglaten.
   try{
@@ -6172,6 +6175,19 @@ function renderTPOverview(el){
   let readySay='';
   try{ if(window.homeDfDetail){ const rd=trainReadiness({factor:window.homeDfDetail.factor}); if(rd)readySay=' '+escHtml(rd.txt)+'.'; } }catch(e){}
   const say=(focusSay||readySay)?`<div class="tpv2-hero-say">${focusSay}${readySay}</div>`:'';
+  // Sprint 3 — deterministische context-fit uit training_context (duur/locatie). Geen berekening/aanname.
+  let fitSay='';
+  try{
+    const tc=(tkTrainingCtx&&typeof tkTrainingCtx==='object')?tkTrainingCtx:null;
+    if(tc){
+      const parts=[];
+      if(tc.duration_min!=null && c.minutes!=null){
+        parts.push(c.minutes<=tc.duration_min+5 ? `±${c.minutes} min past binnen jouw ${tc.duration_min} min` : `±${c.minutes} min — iets langer dan jouw ${tc.duration_min} min`);
+      }
+      if(tc.location) parts.push(`locatie ${escHtml(String(tc.location))}`);
+      if(parts.length) fitSay=`<div class="tpv2-hero-say" style="opacity:.85">${parts.join(' · ')}.</div>`;
+    }
+  }catch(e){}
   // "Waarom vandaag?" — echte herstel-data (previewCtx.recovery)
   let whyHtml='';
   const rec=previewCtx.recovery;
@@ -6193,7 +6209,7 @@ function renderTPOverview(el){
     <div class="tpv2-hero">
       <div class="tpv2-hero-nm">${escHtml(def.name)}${goalLbl?`<span class="tpv2-chip">${goalLbl}</span>`:''}</div>
       <div class="tpv2-hero-sub">${c.n} oefening${c.n===1?'':'en'}${c.totalSets!=null?` · ${c.totalSets} sets`:''}${c.minutes!=null?` · ±${c.minutes} min`:''}</div>
-      ${say}
+      ${say}${fitSay}
     </div>
     ${whyHtml}
     ${ov}
@@ -12874,9 +12890,38 @@ Sessiedata (JSON): ${JSON.stringify(summaryData)}`;
 // ══════════════════════════════════════════════════════════
 // HOME
 // ══════════════════════════════════════════════════════════
+// Sprint 2 — Home 'Jouw ritme'-kaart uit training_context. Puur presentatie: leest de
+// door de onboarding verzamelde context en toont die persoonlijk. Geen berekening, geen fake data.
+let tkTrainingCtx=null; // globale cache van training_context (row | false=geen | null=nog niet geladen)
+function renderHomeContextCard(tc){
+  tkTrainingCtx = tc || false;
+  const el=document.getElementById('home-context'); if(!el)return;
+  if(!tc){el.style.display='none'; el.innerHTML=''; return;}
+  const bits=[];
+  if(tc.frequency!=null) bits.push('Je traint meestal <b>'+tc.frequency+'× per week</b>');
+  if(tc.duration_min!=null) bits.push('sessies van <b>'+tc.duration_min+' min</b>');
+  if(tc.location) bits.push('locatie <b>'+escHtml(String(tc.location))+'</b>');
+  const line1=bits.join(' · ');
+  const daysTxt=(tc.days&&tc.days.length)?tc.days.join(' · '):'';
+  const equip=(tc.equipment&&tc.equipment.length)?tc.equipment.join(', '):'';
+  const avoid=(tc.avoid_exercises&&tc.avoid_exercises.length)?tc.avoid_exercises.join(', '):'';
+  if(!line1 && !daysTxt && !equip && !avoid){el.style.display='none'; el.innerHTML=''; return;}
+  let h='<div class="card"><div class="card-body" style="padding-top:14px">';
+  h+='<div style="font-size:12px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Jouw ritme</div>';
+  if(line1) h+='<div style="font-size:14px;color:var(--dark);line-height:1.5">'+line1+'.</div>';
+  if(daysTxt) h+='<div style="font-size:13px;color:var(--g4);margin-top:6px">Trainingsdagen: '+escHtml(daysTxt)+'</div>';
+  if(equip) h+='<div style="font-size:13px;color:var(--g4);margin-top:2px">Materiaal: '+escHtml(equip)+'</div>';
+  if(avoid) h+='<div style="font-size:13px;color:var(--g4);margin-top:2px">Vermijdt: '+escHtml(avoid)+'</div>';
+  h+='</div></div>';
+  el.innerHTML=h; el.style.display='block';
+}
 async function refreshHome(){
   const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35');
   const lh=hd[0];
+  // Sprint 2 — Home-personalisatie: 'Jouw ritme' uit training_context (onboarding).
+  // Alleen tonen wanneer de data echt bestaat; geen fake planning.
+  try{ const tcRows=await sbGet('training_context','&limit=1'); renderHomeContextCard(tcRows&&tcRows[0]); }
+  catch(e){ renderHomeContextCard(null); }
   let dfInfo=null,nextT=null;
   if(lh){
     const hrvComponent=hrvDagFactorPersonal(hd);
@@ -14643,7 +14688,7 @@ async function buildCtx(ctx){
     ? sbGet('sessions','&exercise_id=in.('+[...relevantExIds].join(',')+')&order=exercise_id.asc,date.desc,created_at.desc')
     : sbGet('sessions','&date=gte.'+sinceStr+'&order=exercise_id.asc,date.desc,created_at.desc');
 
-  const [,hd,wd,bc,recentSessions,,blessureContext,conditionsContext,] = await Promise.all([
+  const [,hd,wd,bc,recentSessions,,blessureContext,conditionsContext,,trainingContextRows] = await Promise.all([
     ensureExercisesLoaded(),
     sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'),
     sbGet('weight_log','&order=date.desc,created_at.desc&limit=3'),
@@ -14652,8 +14697,13 @@ async function buildCtx(ctx){
     ensureVasteTrainingenLoaded(),
     getRecentPainSummary(),
     getActiveConditionsSummary(),
-    ensureExerciseGoalsLoaded()
+    ensureExerciseGoalsLoaded(),
+    sbGet('training_context','&limit=1')
   ]);
+  // Onboarding-intake: trainingscontext (frequentie/dagen/duur/locatie/materiaal/te-vermijden)
+  // als feitelijke context voor de coach. De AI leest dit, rekent er niet mee (geen bron van waarheid).
+  const tcSummary = (window.OnboardingCore && trainingContextRows && trainingContextRows[0])
+    ? OnboardingCore.contextSummary(trainingContextRows[0]) : '';
 
   const byEx={};
   recentSessions.forEach(s=>{
@@ -14718,7 +14768,7 @@ reeds uitgevoerde sets) niet zelf te herhalen — die staat hieronder al voor je
 HUIDIGE STATUS:
 ${hrvStr}${wStr}${bcStr}
 Volgende training: ${nextT} (laatste was ${lastT})
-${sessionCtx}
+${tcSummary?'\nTRAININGSCONTEXT (uit onboarding — houd hier rekening mee bij advies, plan en oefeningkeuze; niet mee rekenen):\n'+tcSummary+'\n':''}${sessionCtx}
 
 ${hrvGuide}
 ${conditionsContext?conditionsContext+'\n':''}${blessureContext?blessureContext+'\n':''}

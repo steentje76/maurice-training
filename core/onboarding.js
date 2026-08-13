@@ -453,8 +453,24 @@
     ];
   }
 
+  // Compacte, feitelijke samenvatting van training_context voor de AI-coachcontext.
+  // Puur tekst: de AI LEEST dit als context (frequentie/dagen/duur/locatie/materiaal/vermijden),
+  // maar rekent er niet mee en het is geen bron van waarheid voor berekeningen.
+  function contextSummary(tc) {
+    if (!tc) return '';
+    var parts = [];
+    if (tc.frequency != null) parts.push(tc.frequency + 'x per week');
+    if (tc.days && tc.days.length) parts.push('dagen: ' + tc.days.join('/'));
+    if (tc.duration_min != null) parts.push(tc.duration_min + ' min per sessie');
+    if (tc.location) parts.push('locatie: ' + tc.location);
+    if (tc.equipment && tc.equipment.length) parts.push('materiaal: ' + tc.equipment.join(', '));
+    if (tc.avoid_exercises && tc.avoid_exercises.length) parts.push('te vermijden: ' + tc.avoid_exercises.join(', '));
+    return parts.join(' · ');
+  }
+
   var OnboardingCore = {
     VERSION: VERSION,
+    contextSummary: contextSummary,
     PRIMARY_GOALS: PRIMARY_GOALS, LEVELS: LEVELS, SPORTS: SPORTS, LOCATIONS: LOCATIONS, DAYS: DAYS,
     GOAL_LABEL: GOAL_LABEL, LEVEL_LABEL: LEVEL_LABEL,
     QUESTIONS: QUESTIONS,

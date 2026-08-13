@@ -30,7 +30,7 @@
   var CANONICAL_METRICS = [
     'heart_rate', 'hrv', 'sleep', 'resting_heart_rate', 'calories', 'power',
     'cadence', 'pace', 'distance', 'duration', 'reps', 'sets', 'load', 'rpe',
-    'strokes', 'split'
+    'strokes', 'split', 'vo2max'
   ];
 
   // Canonieke eenheid per metric — elke provider-adapter converteert hiernaartoe
@@ -39,7 +39,8 @@
     heart_rate: 'bpm', hrv: 'ms', sleep: 'hours', resting_heart_rate: 'bpm',
     calories: 'kcal', power: 'watt', cadence: 'rpm', pace: 'sec_per_km',
     distance: 'meters', duration: 'seconds', reps: 'count', sets: 'count',
-    load: 'kg', rpe: 'scale_1_10', strokes: 'count', split: 'sec_per_500m'
+    load: 'kg', rpe: 'scale_1_10', strokes: 'count', split: 'sec_per_500m',
+    vo2max: 'ml_per_kg_per_min'
   };
 
   function canonicalUnitFor(metric) {

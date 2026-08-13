@@ -325,6 +325,41 @@ T('kleine getallen ("3 of 4 keer") tellen niet als duur-ambiguïteit', () => {
   ok(c.duration_min === 60, 'duur blijft 60');
 });
 
+console.log('\n[L] F62 — equipment/avoid uit vrije tekst + "in plaats van"-correctie');
+T('extractEquipment: dumbbells en kettlebell, maar geen barbell', () => {
+  var e = O.extractEquipment('Ik heb dumbbells en een kettlebell thuis maar geen barbell');
+  ok(e.indexOf('dumbbells') >= 0, 'dumbbells herkend');
+  ok(e.indexOf('kettlebell') >= 0, 'kettlebell herkend');
+  ok(e.indexOf('barbell') === -1, 'ontkende barbell NIET als aanwezig');
+});
+T('extractEquipment: niets genoemd → leeg (vraag door)', () => {
+  ok(O.extractEquipment('ik wil sterker worden').length === 0, 'geen equipment → leeg');
+});
+T('harvest vult equipment + location uit één zin', () => {
+  var h = O.harvest('Ik train thuis met dumbbells en een kettlebell', {});
+  ok(h.location === 'thuis', 'location thuis');
+  ok(h.equipment && h.equipment.indexOf('dumbbells') >= 0 && h.equipment.indexOf('kettlebell') >= 0, 'equipment dumbbells+kettlebell');
+});
+T('extractAvoid: "wil geen burpees" → burpees; equipment telt niet als avoid', () => {
+  var a = O.extractAvoid('Ik heb geen kettlebell en wil geen burpees');
+  ok(a.some(function (x) { return /burpee/.test(x); }), 'burpees als avoid');
+  ok(!a.some(function (x) { return /kettlebell/.test(x); }), 'kettlebell NIET als avoid (is equipment)');
+});
+T('extractAvoid conservatief: los "geen" zonder vermijd-werkwoord → geen avoid', () => {
+  ok(O.extractAvoid('ik heb geen tijd en geen barbell').length === 0, 'geen valse avoid uit "geen tijd/barbell"');
+});
+T('correctie "toch dinsdag in plaats van maandag" → add di, remove ma', () => {
+  var r = O.parseCorrection('toch dinsdag in plaats van maandag', { days: ['ma', 'wo', 'vr'] });
+  ok(r && r.mutations && r.mutations.some(function (m) { return m.field === 'days' && m.op === 'add' && m.value === 'di'; }), 'voeg dinsdag toe');
+  ok(r.mutations.some(function (m) { return m.field === 'days' && m.op === 'remove' && m.value === 'ma'; }), 'verwijder maandag');
+});
+T('correctie-preservatie: bestaande dagen blijven behouden na mutatie', () => {
+  var r = O.parseCorrection('toch dinsdag in plaats van maandag', { days: ['ma', 'wo', 'vr'] });
+  var after = O.applyMutations({ days: ['ma', 'wo', 'vr'] }, r.mutations);
+  ok(after.days.indexOf('wo') >= 0 && after.days.indexOf('vr') >= 0, 'wo/vr blijven');
+  ok(after.days.indexOf('di') >= 0 && after.days.indexOf('ma') === -1, 'di erbij, ma weg');
+});
+
 console.log('\n[J] Purity — geen DOM/DB/AI/Date in de core');
 T('geen verboden tokens in onboarding.js', () => {
   var raw = fs.readFileSync(path.join(__dirname, 'onboarding.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');

@@ -13937,23 +13937,11 @@ async function deleteSessionDirect(id){
 }
 
 function addSetToDate(date, tt){
-  // Open add exercise modal with date preset
+  // F62/Fase5 — History "set toevoegen" gebruikt nu de UNIFIED picker (catalogus+legacy+custom,
+  // zoeken/filters/posters, dedup op id) i.p.v. een aparte categorie-gegroepeerde legacy-lijst.
+  // Zo is er één oefeningbron overal; catalogus-oefeningen loggen onder hun catalog_id.
   curAddDate=date; curAddTT=tt;
-  const cur=[];
-  const avail=exercises.filter(e=>e.active!==false);
-  const cats=['A','B','CrossFit','Overig'];
-  const catL={A:'Training A',B:'Training B',CrossFit:'CrossFit',Overig:'Overig'};
-  let html='';
-  cats.forEach(cat=>{
-    const exs=avail.filter(e=>e.category===cat);
-    if(!exs.length) return;
-    html+=`<div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">${catL[cat]}</div>`;
-    exs.forEach(e=>{
-      html+=`<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--g2);cursor:pointer" onclick='openAddSetModal(${JSON.stringify(e.id)},${JSON.stringify(e.name)},${JSON.stringify(date)},${JSON.stringify(tt)});closeModal("m-add-ex")'><div style="flex:1;font-size:14px;font-weight:600;color:var(--dark)">${escHtml(e.name)}</div><span style="color:var(--red);font-size:20px;font-weight:700">+</span></div>`;
-    });
-  });
-  document.getElementById('add-ex-list').innerHTML=html;
-  openModal('m-add-ex');
+  openExPicker(function(ex){ if(ex&&ex.id)openAddSetModal(ex.id, ex.name, date, tt); });
 }
 
 let curAddDate=null, curAddTT=null, curAddExId=null, curAddExName=null;
@@ -16497,31 +16485,21 @@ function renderSupersetList(){
     return;
   }
   el.innerHTML = supersetExIds.map((id,i)=>{
-    const ex = exercises.find(e=>e.id===id);
+    const ex = (typeof resolvePickerEx==='function')?resolvePickerEx(id):exercises.find(e=>e.id===id); // F62/Fase5: catalogus-aware naam
     return `<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)">
-      <div style="font-size:14px;font-weight:600;color:var(--dark);flex:1">${ex?.name||id}</div>
+      <div style="font-size:14px;font-weight:600;color:var(--dark);flex:1">${escHtml(ex?.name||id)}</div>
       <button onclick="supersetExIds.splice(${i},1);renderSupersetList()" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">✕</button>
     </div>`;
   }).join('');
 }
 
 function addSupersetEx(){
-  const avail = exercises.filter(e=>e.active!==false&&!supersetExIds.includes(e.id));
-  const cats = [...vasteTrainingen.map(v=>v.id),'CrossFit','Overig'];
-  const catL = {};
-  vasteTrainingen.forEach(v=>catL[v.id]=v.naam);
-  catL.CrossFit='CrossFit';catL.Overig='Overig';
-  let html = '';
-  cats.forEach(cat=>{
-    const exs = avail.filter(e=>e.category===cat);
-    if(!exs.length) return;
-    html += `<div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">${escHtml(catL[cat])}</div>`;
-    exs.forEach(e=>{
-      html += `<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--g2);cursor:pointer" onclick="supersetExIds.push('${e.id}');renderSupersetList();closeModal('m-add-ex')"><div style="flex:1;font-size:14px;font-weight:600;color:var(--dark)">${escHtml(e.name)}</div><span style="color:#9C27B0;font-size:20px;font-weight:700">+</span></div>`;
-    });
+  // F62/Fase5 — Superset-picker gebruikt nu de UNIFIED picker (catalogus+legacy+custom,
+  // zoeken/filters/posters). Dedup op id via de callback; identity (catalog_id) behouden.
+  openExPicker(function(ex){
+    if(!ex||!ex.id)return;
+    if(supersetExIds.indexOf(ex.id)<0){ supersetExIds.push(ex.id); renderSupersetList(); }
   });
-  document.getElementById('add-ex-list').innerHTML = html;
-  openModal('m-add-ex');
 }
 
 async function saveSupersetToSession(btnEl){
@@ -16531,8 +16509,8 @@ async function saveSupersetToSession(btnEl){
   const t = supersetCurT;
   const ssId = 'ss_'+Date.now();
   const supersetExs = supersetExIds.map(id=>{
-    const ex = exercises.find(e=>e.id===id)||{id,name:id,type:'strength'};
-    return {...ex,naam:ex.name,type:ex.type||'strength',sets:3,reps:'8-12',rpe:'8',_t:t,_superset:ssId};
+    const ex = (typeof resolvePickerEx==='function'?resolvePickerEx(id):null)||{id,name:id,type:'strength'}; // F62/Fase5: catalogus/legacy/custom
+    return {...ex,id:id,naam:ex.name||id,type:ex.type||'strength',sets:3,reps:'8-12',rpe:'8',_t:t,_superset:ssId};
   });
   sessionExtra.push(...supersetExs);
   closeModal('m-superset');

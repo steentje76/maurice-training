@@ -523,6 +523,16 @@
       if (!answered.primary_goal && g.primary_goal) out.primary_goal = g.primary_goal;
       if (!answered.secondary_goals && g.secondary_goals.length) out.secondary_goals = g.secondary_goals;
     }
+    // F62/2B — equipment uit vrije tekst (bv. "dumbbells en een kettlebell thuis maar geen barbell").
+    if (!answered.equipment) {
+      var eqp = extractEquipment(text);
+      if (eqp.length) { var re1 = validateField('equipment', eqp); if (re1.ok && re1.value.length) out.equipment = re1.value; }
+    }
+    // F62/2C — te vermijden oefeningen uit vrije tekst (bv. "wil geen burpees").
+    if (!answered.avoid_exercises) {
+      var av = extractAvoid(text);
+      if (av.length) { var re2 = validateField('avoid_exercises', av); if (re2.ok && re2.value.length) out.avoid_exercises = re2.value; }
+    }
     // F56: geef ambigue duur door zodat de intake een verduidelijkingsvraag kan stellen i.p.v. gokken.
     if (!answered.duration_min && ctx.duration_ambiguous) out.duration_ambiguous = ctx.duration_ambiguous;
     return out;
@@ -550,6 +560,39 @@
     ['bodyweight', /lichaamsgewicht|bodyweight|eigen gewicht/]
   ];
   function equipFromText(t) { for (var i = 0; i < EQUIP_TERMS.length; i++) if (EQUIP_TERMS[i][1].test(t)) return EQUIP_TERMS[i][0]; return null; }
+  // F62/2B — deterministische equipment-extractie uit vrije tekst. ALLE bekende termen
+  // (EQUIP_TERMS = dezelfde vocab als de chips), maar een ONTKENDE term ("geen barbell",
+  // "zonder kettlebell") telt NIET als aanwezig. Geen fuzzy: onbekende woorden → niets.
+  function extractEquipment(text) {
+    var t = lc(text); var have = [];
+    EQUIP_TERMS.forEach(function (pair) {
+      var slug = pair[0], re = pair[1];
+      if (!re.test(t)) return;
+      var neg = new RegExp('(?:geen|zonder|niet)\\s+(?:een\\s+|meer\\s+)?(?:' + re.source + ')');
+      if (neg.test(t)) return; // ontkend → niet 'aanwezig'
+      if (have.indexOf(slug) < 0) have.push(slug);
+    });
+    return have;
+  }
+  // F62/2C — deterministische avoid-extractie (te vermijden OEFENINGEN) uit vrije tekst.
+  // Conservatief: UITSLUITEND bij een expliciet vermijd-werkwoord ("wil geen", "vermijd", …),
+  // NIET bij het losse "geen" (dat is te dubbelzinnig — dat pad is voor equipment). Equipment-
+  // termen en stopwoorden tellen niet mee. Ruwe termen; AthleteConstraints doet later de
+  // exact/alias/ambigu-match (GEEN fuzzy identity hier).
+  var AVOID_STOP = /^(tijd|zin|idee|geld|vaste|dag|dagen|barbell|dumbbell|dumbbells|kettlebell|kettle|rack|rek|bank|bench|band|banden|machine|machines|apparaten|halters|last|pijn|blessure|blessures|probleem|zin|haast)$/;
+  function extractAvoid(text) {
+    var t = lc(text); var out = [];
+    var re = /(?:vermijd|liever geen|wil geen|kan geen|mag geen|doe geen|nooit|haat)\s+([a-z][a-z\- ]{2,30}?)(?=[.,;!]|\s+(?:en|maar|omdat|want|meer|graag|thuis|op|in|bij)\b|$)/g;
+    var m;
+    while ((m = re.exec(t))) {
+      var term = m[1].trim().replace(/\s+/g, ' ');
+      var first = term.split(' ')[0];
+      if (AVOID_STOP.test(first)) continue;   // stopwoord/equipment → geen oefening-avoid
+      if (equipFromText(term)) continue;       // matcht equipment → geen oefening
+      out.push(term);
+    }
+    return uniqByLower(out).slice(0, 10);
+  }
   function goalKeyFromText(t) {
     if (/kracht|sterker|sterk worden|zwaarder|1rm|powerlift/.test(t)) return 'kracht';
     if (/afval|vet\b|slank|cut\b|gewicht kwijt|droog/.test(t)) return 'afvallen';
@@ -567,8 +610,12 @@
     var muts = [];
 
     // DAGEN
-    var mNiet = t.match(/niet\s+(maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)\s+maar\s+(maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)/);
+    var DY = '(maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)';
+    var mNiet = t.match(new RegExp('niet\\s+' + DY + '\\s+maar\\s+' + DY));
+    // F62/2D — "(toch) X in plaats van Y" / "X ipv Y" → voeg X toe, verwijder Y.
+    var mIPV = t.match(new RegExp('(?:toch\\s+)?' + DY + '\\s+(?:in\\s*plaats\\s*van|i\\.?p\\.?v\\.?)\\s+' + DY));
     if (mNiet) { muts.push({ field: 'days', op: 'remove', value: DAY_FULL[mNiet[1]] }); muts.push({ field: 'days', op: 'add', value: DAY_FULL[mNiet[2]] }); }
+    else if (mIPV) { muts.push({ field: 'days', op: 'add', value: DAY_FULL[mIPV[1]] }); muts.push({ field: 'days', op: 'remove', value: DAY_FULL[mIPV[2]] }); }
     else {
       var dl = fullDaysIn(t);
       if (dl.length) {
@@ -798,6 +845,8 @@
     parseAnswerLocally: parseAnswerLocally,
     extractContext: extractContext,
     extractGoals: extractGoals,
+    extractEquipment: extractEquipment,
+    extractAvoid: extractAvoid,
     harvest: harvest,
     durationClarifyText: durationClarifyText,
     parseCorrection: parseCorrection,

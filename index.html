@@ -7398,6 +7398,10 @@ function intakeShowSummary(){
   lines.forEach(function(l){
     h+='<div class="intk-srow"><span class="lbl">'+escHtml(l.label)+'</span><span class="val">'+escHtml(l.value)+'</span><button class="edit" type="button" onclick="intakeEditField(\''+l.field+'\')">wijzig</button></div>';
   });
+  // F91/Fase5 — optionele koppeling naar Starting Strength: verstoort de deterministische
+  // intake-flow niet (staat ná de samenvatting, volledig overslaanbaar). Provided-1RM's worden
+  // via de bestaande modal opgeslagen (exercise_goals); afgeleide waarden nooit als feit.
+  h+='<button class="btn btn-o" type="button" style="width:100%;margin:8px 0 2px" onclick="openStartingStrength()">💪 Optioneel: geef je referentiegewichten voor slimmere startgewichten</button>';
   h+='<label class="intk-privacy"><input type="checkbox" id="intk-privacy-chk" onchange="var b=document.getElementById(\'intk-confirm\');if(b)b.disabled=!this.checked"><span>Ik ga akkoord dat mijn gegevens per account worden opgeslagen en verwerkt (Privacy).</span></label>';
   h+='<button class="btn btn-r cta" id="intk-confirm" type="button" disabled onclick="intakeConfirm(this)">Bevestigen & starten</button>';
   wrap.innerHTML=h;
@@ -9468,12 +9472,22 @@ async function renderTrainScreen(t){
   container.innerHTML='';
   try{const _intro=await buildTrainIntro(t,list);if(_intro){const _d=document.createElement('div');_d.innerHTML=_intro;if(_d.firstElementChild)container.appendChild(_d.firstElementChild);}}catch(_){}
 
-  for(const ex of list){
-    // Load previous session data
+  // F91/Fase3 — parallelle prefetch van ONAFHANKELIJKE reads per oefening (previous session,
+  // rep-PRs, 1RM-schatting, equipment). Voorheen sequentieel (N × ~700ms) → nu één parallelle
+  // ronde. GEEN wijziging aan semantiek/volgorde van Calculation/DecisionCore of logging; alleen
+  // de I/O-timing. Per oefening exact dezelfde bronnen/keys → identieke uitkomst per kaart.
+  const _pref=await Promise.all(list.map(async (ex)=>{
     const prev=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc,created_at.desc&limit=1');
-    const prevS=prev[0];
     if(ex.type==='strength'||!ex.type){await loadRepPRs(ex.id);await loadEstOneRM(ex.id);}
     const eqList=await loadEquipment(ex.id);
+    return {prevS:prev[0],eqList};
+  }));
+  let _pi=0;
+  for(const ex of list){
+    // Load previous session data (voorgeladen in _pref — zelfde waarden, parallel opgehaald)
+    const prevS=_pref[_pi].prevS;
+    const eqList=_pref[_pi].eqList;
+    _pi++;
     let prevStr='',prevBlockHtml='';
     let prefillData=window._prefillMap?.[ex.id]||null;
     if(prevS){

@@ -515,6 +515,95 @@
     return out;
   }
 
+  // ---- CONVERSATIONAL CORRECTION ENGINE (deterministisch, geen AI-waarheid) --
+  // Herkent natuurlijke correcties en geeft veld-mutaties terug (set/add/remove). Wijzigt NOOIT
+  // zelf state; de UI past `applyMutations` toe. Bij een correctie-intentie zonder herkenbaar veld
+  // → `clarify` (nooit gokken). Geen data verwijderen zonder duidelijke intentie.
+  var DAY_FULL = { maandag: 'ma', dinsdag: 'di', woensdag: 'wo', donderdag: 'do', vrijdag: 'vr', zaterdag: 'za', zondag: 'zo' };
+  var EQUIP_TERMS = [
+    ['barbell', /barbell|halterstang|lange halter/],
+    ['dumbbells', /dumbbell|dumbbells|halters\b/],
+    ['kettlebell', /kettlebell|kettle/],
+    ['rack', /\brack\b|\brek\b|squat\s?rack/],
+    ['pullup_bar', /pull-?up\s?bar|optrekstang/],
+    ['bench', /\bbank\b|\bbench\b/],
+    ['bands', /weerstandsband|weerstandsbanden|\bbanden\b|\bband\b/],
+    ['machines', /\bmachine\b|\bmachines\b|apparaten/],
+    ['bodyweight', /lichaamsgewicht|bodyweight|eigen gewicht/]
+  ];
+  function equipFromText(t) { for (var i = 0; i < EQUIP_TERMS.length; i++) if (EQUIP_TERMS[i][1].test(t)) return EQUIP_TERMS[i][0]; return null; }
+  function goalKeyFromText(t) {
+    if (/kracht|sterker|sterk worden|zwaarder|1rm|powerlift/.test(t)) return 'kracht';
+    if (/afval|vet\b|slank|cut\b|gewicht kwijt|droog/.test(t)) return 'afvallen';
+    if (/conditie|cardio|uithoud|fit blijv|fitter|adem/.test(t)) return 'conditie';
+    if (/prestat|wedstrijd|competit|sneller|beter presteren/.test(t)) return 'prestatie';
+    if (/algemeen|gezond|balans|onderhoud/.test(t)) return 'algemeen';
+    return null;
+  }
+  function fullDaysIn(t) { var o = []; for (var name in DAY_FULL) if (Object.prototype.hasOwnProperty.call(DAY_FULL, name) && new RegExp(name).test(t)) o.push(DAY_FULL[name]); return o; }
+
+  function parseCorrection(text, state) {
+    var t = lc(text);
+    var CORR = /(klopt niet|niet meer|eigenlijk|\btoch\b|verander|wijzig|\bvoeg\b|erbij|\bweg\b|\bgeen\b|\bwel\b|\bniet\b|\book\b|verwijder|schrap|haal)/;
+    if (!CORR.test(t)) return null; // geen correctie-intentie
+    var muts = [];
+
+    // DAGEN
+    var mNiet = t.match(/niet\s+(maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)\s+maar\s+(maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)/);
+    if (mNiet) { muts.push({ field: 'days', op: 'remove', value: DAY_FULL[mNiet[1]] }); muts.push({ field: 'days', op: 'add', value: DAY_FULL[mNiet[2]] }); }
+    else {
+      var dl = fullDaysIn(t);
+      if (dl.length) {
+        if (/voeg|erbij|\book\b/.test(t) && !/niet|weg|geen|verwijder|schrap|haal/.test(t)) dl.forEach(function (d) { muts.push({ field: 'days', op: 'add', value: d }); });
+        else if (/niet meer|\bniet\b|\bweg\b|zonder|verwijder|schrap|haal/.test(t)) dl.forEach(function (d) { muts.push({ field: 'days', op: 'remove', value: d }); });
+      }
+    }
+
+    // Binnen correctie-context: hergebruik de geteste contextuele extractor voor de scalaire velden.
+    var ctx = extractContext(t);
+    if (ctx.frequency != null) muts.push({ field: 'frequency', op: 'set', value: ctx.frequency });
+    if (ctx.duration_min != null && ctx.duration_min >= 5 && ctx.duration_min <= 240) muts.push({ field: 'duration_min', op: 'set', value: ctx.duration_min });
+    if (ctx.location) muts.push({ field: 'location', op: 'set', value: ctx.location });
+    // "verander mijn trainingsdagen naar di do" -> set (alleen bij expliciet verander/wijzig zonder add/remove)
+    if (/verander|wijzig/.test(t) && ctx.days && ctx.days.length && !muts.some(function (m) { return m.field === 'days'; })) muts.push({ field: 'days', op: 'set', value: ctx.days });
+
+    // DOELEN
+    if (/(?:hoofddoel|mijn doel|doel is)\D{0,12}/.test(t)) { var pg = goalKeyFromText(t); if (pg) muts.push({ field: 'primary_goal', op: 'set', value: pg }); }
+    if (/\book\b|erbij|daarnaast|secundair|nevendoel/.test(t)) {
+      var sg = goalKeyFromText(t);
+      if (sg && !(muts.some(function (m) { return m.field === 'primary_goal' && m.value === sg; }))) muts.push({ field: 'secondary_goals', op: 'add', value: GOAL_LABEL[sg] || sg });
+    }
+
+    // EQUIPMENT ("geen barbell" -> remove ; "toch wel een rack"/"ik heb een rack" -> add)
+    var eq = equipFromText(t);
+    if (eq) {
+      if (/\bgeen\b|niet meer|verwijder|zonder|weg\b/.test(t)) muts.push({ field: 'equipment', op: 'remove', value: eq });
+      else if (/\bwel\b|\btoch\b|\bheb\b|erbij|\bvoeg\b/.test(t)) muts.push({ field: 'equipment', op: 'add', value: eq });
+    }
+
+    if (!muts.length) {
+      // Correctie-intentie herkend maar geen concreet veld → verduidelijking, geen gok.
+      return { mutations: [], clarify: 'Ik pas het graag aan — wat precies? Bijvoorbeeld: "niet maandag maar dinsdag", "ik train toch 4x", of "ik heb geen barbell".' };
+    }
+    return { mutations: muts };
+  }
+
+  function applyMutations(cand, mutations) {
+    var out = {}; for (var k in cand) if (Object.prototype.hasOwnProperty.call(cand, k)) out[k] = cand[k];
+    (mutations || []).forEach(function (m) {
+      if (m.op === 'set') { out[m.field] = m.value; return; }
+      var arr = (Object.prototype.toString.call(out[m.field]) === '[object Array]') ? out[m.field].slice() : [];
+      if (m.op === 'add') {
+        if (m.field === 'secondary_goals') { if (!arr.some(function (x) { return String(x).toLowerCase() === String(m.value).toLowerCase(); })) arr.push(m.value); }
+        else if (arr.indexOf(m.value) < 0) arr.push(m.value);
+        out[m.field] = (m.field === 'days') ? DAYS.filter(function (k) { return arr.indexOf(k) >= 0; }) : arr;
+      } else if (m.op === 'remove') {
+        out[m.field] = arr.filter(function (x) { return x !== m.value; });
+      }
+    });
+    return out;
+  }
+
   // ---- Natuurlijke, stijl-bewuste bevestiging (geen "Genoteerd: 60") ---------
   function valuePhrase(field, value) {
     switch (field) {
@@ -692,6 +781,8 @@
     extractContext: extractContext,
     extractGoals: extractGoals,
     harvest: harvest,
+    parseCorrection: parseCorrection,
+    applyMutations: applyMutations,
     valuePhrase: valuePhrase,
     ackText: ackText,
     buildExtractionPrompt: buildExtractionPrompt,

@@ -227,6 +227,71 @@ T('ackText lege/overslaan -> nette skip-zin', () => {
   ok(/overgeslagen|over/.test(O.ackText('avoid_exercises', [], 'direct')));
 });
 
+console.log('\n[CORR] conversational correction engine (deterministisch)');
+function applyCorr(text, cand) { var c = O.parseCorrection(text, { values: cand || {}, answered: {} }); if (!c || !c.mutations) return { corr: c, cand: cand }; return { corr: c, cand: O.applyMutations(cand || {}, c.mutations) }; }
+T('"niet maandag maar dinsdag" -> verwijder ma, voeg di toe (behoud rest)', () => {
+  var r = applyCorr('niet maandag maar dinsdag', { days: ['ma', 'wo', 'vr'] });
+  deq(r.cand.days, ['di', 'wo', 'vr']);
+});
+T('"ik wil woensdag niet meer" -> verwijder wo', () => {
+  var r = applyCorr('ik wil woensdag niet meer', { days: ['ma', 'wo', 'vr'] });
+  deq(r.cand.days, ['ma', 'vr']);
+});
+T('"voeg vrijdag toe" -> add vr', () => {
+  var r = applyCorr('voeg vrijdag toe', { days: ['ma', 'wo'] });
+  deq(r.cand.days, ['ma', 'wo', 'vr']);
+});
+T('"ik train toch 4 keer" -> frequency 4', () => {
+  var r = applyCorr('ik train toch 4 keer', { frequency: 3 });
+  eq(r.cand.frequency, 4);
+});
+T('"ik train thuis, niet in de gym" -> location thuis', () => {
+  var r = applyCorr('ik train thuis, niet in de gym', { location: 'gym' });
+  eq(r.cand.location, 'thuis');
+});
+T('"niet bij Basic-Fit maar thuis" -> location thuis', () => {
+  var r = applyCorr('niet bij Basic-Fit maar thuis', { location: 'gym' });
+  eq(r.cand.location, 'thuis');
+});
+T('"mijn doel is eigenlijk sterker worden" -> primary_goal kracht', () => {
+  var r = applyCorr('mijn doel is eigenlijk sterker worden', { primary_goal: 'algemeen' });
+  eq(r.cand.primary_goal, 'kracht');
+});
+T('"ik wil ook afvallen" -> secondary goal toegevoegd (geen dubbele)', () => {
+  var r = applyCorr('ik wil ook afvallen', { primary_goal: 'kracht', secondary_goals: [] });
+  ok(r.cand.secondary_goals.indexOf('Afvallen / lichaamscompositie') !== -1);
+  // niet nog een keer
+  var r2 = applyCorr('ik wil ook afvallen', r.cand);
+  eq(r2.cand.secondary_goals.length, 1);
+});
+T('"ik heb geen barbell" -> equipment barbell verwijderd', () => {
+  var r = applyCorr('ik heb geen barbell', { equipment: ['barbell', 'rack'] });
+  deq(r.cand.equipment, ['rack']);
+});
+T('"ik heb toch wel een rack" -> equipment rack toegevoegd', () => {
+  var r = applyCorr('ik heb toch wel een rack', { equipment: ['dumbbells'] });
+  ok(r.cand.equipment.indexOf('rack') !== -1);
+});
+T('"eigenlijk 60 minuten" (met marker) -> duration 60', () => {
+  var r = applyCorr('eigenlijk train ik 60 minuten', { duration_min: 90 });
+  eq(r.cand.duration_min, 60);
+});
+T('ambigue correctie -> clarify, geen mutatie', () => {
+  var c = O.parseCorrection('dat klopt niet', { values: {}, answered: {} });
+  ok(c && c.clarify && (!c.mutations || !c.mutations.length));
+  var c2 = O.parseCorrection('laat dat maar weg', { values: {}, answered: {} });
+  ok(c2 && c2.clarify);
+});
+T('geen correctie-intentie -> null (normale flow)', () => {
+  eq(O.parseCorrection('maandag woensdag vrijdag', { values: {}, answered: {} }), null);
+  eq(O.parseCorrection('60 minuten', { values: {}, answered: {} }), null);
+});
+T('false-positive guard: "zo goed als altijd" wordt geen zondag-correctie', () => {
+  var c = O.parseCorrection('zo goed als altijd', { values: { days: ['ma'] }, answered: {} });
+  // geen day-mutatie (zo is geen volledige dagnaam)
+  ok(!c || !c.mutations || !c.mutations.some(m => m.field === 'days'));
+});
+
 console.log('\n[K] contextSummary — training_context voor de AI-coachcontext');
 T('lege/afwezige context -> lege string', () => { eq(O.contextSummary(null), ''); eq(O.contextSummary({}), ''); });
 T('samenvatting bevat frequentie/locatie/vermijden', () => {

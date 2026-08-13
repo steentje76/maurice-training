@@ -712,6 +712,10 @@ canvas{width:100%;height:100%}
 .vid-label{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.8));padding:18px 10px 8px;font-size:11px;color:#fff;font-weight:700;letter-spacing:.3px}
 .vid-wrap.vid-poster{cursor:default;background:var(--g1)} /* F18 — statisch bewegingsbeeld (geen video/play) */
 .vid-optional{display:inline-block;margin:6px 0 2px;background:none;border:none;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;padding:2px 0} /* F20-C — optionele techniekvideo naast de primaire MoveKit-poster */
+.exec-cues{margin:2px 0 10px;padding-left:18px;list-style:disc} /* F22-E — MoveKit coach-cues */
+.exec-cues li{font-size:12.5px;color:var(--g4);line-height:1.45;margin:2px 0}
+.exec-cues--warn li{color:var(--g5,#8a6d3b)}
+.exec-cues--warn{list-style:'⚠ ';}
 .vid-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
 .muscle-pills{display:flex;flex-wrap:wrap;gap:5px;padding:6px 14px 10px}
 .muscle-pill{padding:3px 9px;border-radius:12px;font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
@@ -7205,6 +7209,7 @@ function intakeNextQuestion(){
   const q=ocore().nextQuestion(intakeState);
   if(!q){intakeShowSummary(); return;}
   intakeState.curQ=q;
+  intakeState.phase='question';
   intakeSetPhase(q.phase);
   intakeAddCoach(q.prompt,q.why);
   intakeRenderQuestionChips(q);
@@ -7267,11 +7272,38 @@ function intakeCommitField(q,value){
 
 // -- Vrije-tekst antwoord: AI-extractie (indien consent) met lokale fallback --
 async function intakeSend(){
-  const inp=document.getElementById('intk-inp'); if(!inp||!intakeState||!intakeState.curQ)return;
+  const inp=document.getElementById('intk-inp'); if(!inp||!intakeState)return;
   const txt=(inp.value||'').trim(); if(!txt)return;
   inp.value=''; intakeAutoGrow(inp);
   intakeAddUser(txt);
+  // F22-A: conversational correction — detecteer correcties overal (ook op de samenvatting).
+  const corr=ocore().parseCorrection?ocore().parseCorrection(txt,intakeState):null;
+  if(corr){
+    if(!corr.mutations||!corr.mutations.length){ intakeAddCoach(corr.clarify||'Wat wil je precies aanpassen?'); return; }
+    intakeApplyCorrection(corr.mutations); return;
+  }
+  if(intakeState.phase==='summary'){
+    intakeAddCoach('Alles klopt? Tik op "Bevestigen & starten". Wil je iets wijzigen, zeg het gewoon — bijvoorbeeld "niet maandag maar dinsdag" of "ik train toch 4x".');
+    return;
+  }
+  if(!intakeState.curQ)return;
   await intakeInterpret(intakeState.curQ,txt);
+}
+// F22-A: pas herkende correcties toe (deterministisch), bevestig natuurlijk, herrender waar nodig.
+function intakeApplyCorrection(mutations){
+  intakeState.cand=ocore().applyMutations(intakeState.cand,mutations);
+  const changed=[]; mutations.forEach(m=>{ if(changed.indexOf(m.field)<0)changed.push(m.field); });
+  changed.forEach(f=>{ intakeState.values[f]=intakeState.cand[f]; intakeState.answered[f]=true; });
+  // Locatie → thuis/hybride heractiveert de apparatuur-vraag als die nog leeg is (geen fake equipment).
+  if(changed.indexOf('location')>=0){
+    const loc=intakeState.cand.location;
+    if((loc==='thuis'||loc==='hybride') && (!intakeState.cand.equipment||!intakeState.cand.equipment.length)) delete intakeState.answered['equipment'];
+  }
+  intakeAddNote('Aangepast — '+intakeJoinNatural(changed.map(f=>ocore().valuePhrase(f,intakeState.cand[f])))+'.');
+  intakeClearChips();
+  intakeUpdateProgress();
+  if(intakeState.phase==='summary'){ setTimeout(intakeShowSummary,220); }
+  else { setTimeout(intakeNextQuestion,220); }
 }
 async function intakeAiExtract(q,txt){
   try{
@@ -7323,11 +7355,12 @@ async function intakeInterpret(q,txt){
 // -- Samenvatting "Dit heb ik van je begrepen" (bewerkbaar) -------------------
 function intakeShowSummary(){
   intakeClearChips();
+  intakeState.phase='summary';
   const val=ocore().validateCandidate(intakeState.cand);
   intakeState.cand=val.normalized;
   const lines=ocore().summaryLines(intakeState.cand);
   const wrap=document.createElement('div'); wrap.className='intk-msg coach intk-summary';
-  let h='<h4>Dit heb ik van je begrepen</h4><div class="sub">Klopt dit? Tik op “wijzig” om iets aan te passen.</div>';
+  let h='<h4>Dit heb ik van je begrepen</h4><div class="sub">Klopt dit? Tik op “wijzig”, of typ je aanpassing (bijv. “niet maandag maar dinsdag”).</div>';
   lines.forEach(function(l){
     h+='<div class="intk-srow"><span class="lbl">'+escHtml(l.label)+'</span><span class="val">'+escHtml(l.value)+'</span><button class="edit" type="button" onclick="intakeEditField(\''+l.field+'\')">wijzig</button></div>';
   });
@@ -9664,17 +9697,24 @@ function openExecExplain(t){
   // F21-E: exercise-coach-card met MoveKit als PRIMAIRE bron. Hiërarchie: poster → spiergroepen →
   // techniek/cues → (optionele) video. Geen fake play-knop op de statische poster; ontbrekende data tonen we niet.
   var _ep=(typeof movekitPosterFor==='function')?movekitPosterFor(ex):null;
+  var _yt=ex.yt;
   if(_ep){
     body+='<div class="vid-wrap vid-poster" id="exec-poster-vid"><img src="'+_ep+'" alt="'+nm+'" loading="lazy" onerror="this.parentElement.style.display=\'none\'"><div class="vid-label">'+nm+' — bewegingsbeeld</div></div>';
-    if(ex.yt) body+='<button class="vid-optional" type="button" onclick="var w=document.getElementById(\'exec-poster-vid\'); if(w) loadVid(w,\''+ex.yt+'\')">▶ Bekijk techniekvideo</button>';
-  } else if(ex.yt){
+  } else if(_yt){
     // Geen poster beschikbaar: YouTube-thumb als aanvullende bron (echte video → play-knop terecht).
-    body+='<div class="vid-wrap" onclick="loadVid(this,\''+ex.yt+'\')"><img src="https://img.youtube.com/vi/'+ex.yt+'/mqdefault.jpg" alt="'+nm+'" loading="lazy" onerror="this.parentElement.style.display=\'none\'"><div class="vid-play">▶</div><div class="vid-label">▶ '+nm+' — techniek video</div></div>';
+    body+='<div class="vid-wrap" onclick="loadVid(this,\''+_yt+'\')"><img src="https://img.youtube.com/vi/'+_yt+'/mqdefault.jpg" alt="'+nm+'" loading="lazy" onerror="this.parentElement.style.display=\'none\'"><div class="vid-play">▶</div><div class="vid-label">▶ '+nm+' — techniek video</div></div>';
+    _yt=null; // video is hier al de primaire media
   } else {
     body+='<div class="exec-pausecard-s" style="padding:0 2px 10px">Bewegingsbeeld voor deze oefening is nog niet beschikbaar.</div>';
   }
   if(ex.muscles){ body+='<div class="exec-opt-k">Spiergroepen</div><div class="muscle-pills" style="margin:0 0 8px">'; (ex.muscles.p||[]).forEach(m=>body+='<span class="muscle-pill primary">'+escHtml(m)+'</span>'); (ex.muscles.s||[]).forEach(m=>body+='<span class="muscle-pill secondary">'+escHtml(m)+'</span>'); body+='</div>'; }
   if(ex.tip){ body+='<div class="exec-coach"><div class="exec-coach-t">Techniek &amp; coaching</div><div class="exec-coach-s">'+escHtml(ex.tip)+'</div></div>'; }
+  // F22-E: MoveKit coach-cues + veelgemaakte fouten (bestaande catalogus-intelligence; alleen tonen wat bestaat).
+  var _intel=(typeof movekitIntelFor==='function')?movekitIntelFor(ex):null;
+  if(_intel && _intel.cues && _intel.cues.length){ body+='<div class="exec-opt-k">Coach cues</div><ul class="exec-cues">'+_intel.cues.slice(0,4).map(c=>'<li>'+escHtml(c)+'</li>').join('')+'</ul>'; }
+  if(_intel && _intel.mistakes && _intel.mistakes.length){ body+='<div class="exec-opt-k">Veelgemaakte fouten</div><ul class="exec-cues exec-cues--warn">'+_intel.mistakes.slice(0,4).map(c=>'<li>'+escHtml(c)+'</li>').join('')+'</ul>'; }
+  // Optionele echte video onderaan (alleen als er een poster primair stond én een geldige video bestaat).
+  if(_ep && _yt) body+='<button class="vid-optional" type="button" onclick="var w=document.getElementById(\'exec-poster-vid\'); if(w) loadVid(w,\''+_yt+'\')">▶ Bekijk techniekvideo</button>';
   const el=ensureExecOverlay('exec-explain');
   el.innerHTML='<div class="exec-sheet"><div class="exec-sheet-hd"><div class="exec-sheet-t">'+nm+'</div>'+
     '<button class="exec-x" onclick="closeExecOverlay(\'exec-explain\')" aria-label="Sluiten">✕</button></div>'+
@@ -10990,6 +11030,22 @@ function movekitPosterFor(ex){
     }
   }catch(e){}
   return null;
+}
+// F22-E: resolve MoveKit technische intelligentie (cues + veelgemaakte fouten) voor een oefening.
+// Read-only, ge-guard; geeft alleen bestaande catalogus-data terug (geen fake content).
+function movekitIntelFor(ex){
+  try{
+    if(!ex || typeof ExerciseCatalogService==='undefined') return null;
+    let ent=null;
+    if(ex.id && ExerciseCatalogService.byId){ try{ ent=ExerciseCatalogService.byId(ex.id); }catch(e){} }
+    if((!ent||!ent.intelligence) && ex.naam && typeof MovementCore!=='undefined'){
+      const slug=MovementCore.slugForName(ex.naam);
+      if(slug){ const hit=ExerciseCatalogService.all().find(c=>(c.assets||[]).some(a=>a.ref===slug)); if(hit) ent=hit; }
+    }
+    if(!ent) return null;
+    const intel=ent.intelligence||{};
+    return { cues:Array.isArray(intel.cues)?intel.cues:[], mistakes:Array.isArray(intel.mistakes)?intel.mistakes:[] };
+  }catch(e){ return null; }
 }
 function buildVideoMuscle(ex){
   let h='';

@@ -300,6 +300,31 @@ T('samenvatting bevat frequentie/locatie/vermijden', () => {
   ok(s.indexOf('materiaal') === -1, 'lege equipment niet tonen');
 });
 
+console.log('\n[K] F56 — ambigue duur ("60 of soms 90") niet stil vastleggen');
+T('extractContext markeert 60 of soms 90 als ambigu, zet duration_min niet', () => {
+  var c = O.extractContext('meestal 60 of soms 90 minuten');
+  ok(c.duration_min == null, 'duration_min blijft leeg bij ambiguïteit');
+  ok(c.duration_ambiguous && c.duration_ambiguous.a === 60 && c.duration_ambiguous.b === 90, 'duration_ambiguous {a:60,b:90}');
+});
+T('harvest geeft duration_ambiguous door en geen duration_min', () => {
+  var h = O.harvest('meestal 60 of soms 90 minuten', {});
+  ok(h.duration_min == null, 'harvest zet geen duration_min bij ambiguïteit');
+  ok(h.duration_ambiguous && h.duration_ambiguous.a === 60, 'harvest geeft duration_ambiguous door');
+});
+T('durationClarifyText stelt nette verduidelijkingsvraag', () => {
+  var q = O.durationClarifyText({ a: 60, b: 90 });
+  ok(/60/.test(q) && /90/.test(q) && /minuten/.test(q), 'vraag noemt 60, 90 en minuten');
+});
+T('eenduidige duur blijft gewoon werken (geen valse ambiguïteit)', () => {
+  ok(O.extractContext('ongeveer 60 minuten').duration_min === 60, 'enkel getal → 60');
+  ok(O.extractContext('60 minuten').duration_ambiguous == null, 'geen valse ambiguïteit bij één getal');
+});
+T('kleine getallen ("3 of 4 keer") tellen niet als duur-ambiguïteit', () => {
+  var c = O.extractContext('3 of 4 keer per week, 60 minuten');
+  ok(!c.duration_ambiguous, 'frequentie-getallen niet als duur-ambiguïteit');
+  ok(c.duration_min === 60, 'duur blijft 60');
+});
+
 console.log('\n[J] Purity — geen DOM/DB/AI/Date in de core');
 T('geen verboden tokens in onboarding.js', () => {
   var raw = fs.readFileSync(path.join(__dirname, 'onboarding.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');

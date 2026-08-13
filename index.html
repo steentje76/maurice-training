@@ -7234,7 +7234,14 @@ function intakeNextQuestion(){
   intakeState.curQ=q;
   intakeState.phase='question';
   intakeSetPhase(q.phase);
-  intakeAddCoach(q.prompt,q.why);
+  // F56: als eerder een ambigue duur is genoemd, verduidelijk bij de duurvraag i.p.v. gokken.
+  let promptText=q.prompt;
+  if(q.field==='duration_min' && intakeState.durationAmbig && ocore().durationClarifyText){
+    const ct=ocore().durationClarifyText(intakeState.durationAmbig);
+    if(ct)promptText=ct;
+    intakeState.durationAmbig=null;
+  }
+  intakeAddCoach(promptText,q.why);
   intakeRenderQuestionChips(q);
   intakeUpdateProgress();
 }
@@ -7358,6 +7365,10 @@ async function intakeInterpret(q,txt){
   if(parsed&&parsed.value!=null){ const r=ocore().validateField(q.field,parsed.value); if(r.ok)toApply[q.field]=r.value; }
   else if(harvested[q.field]!=null){ toApply[q.field]=harvested[q.field]; }
   Object.keys(harvested).forEach(f=>{ if(f!==q.field && !(f in toApply) && !intakeState.answered[f]) toApply[f]=harvested[f]; });
+  // F56: onthoud een ambigue duur ("60 of soms 90") zodat de duurvraag straks verduidelijkt
+  // i.p.v. stil te gokken. duration_ambiguous is geen veld → wordt niet toegepast.
+  if(harvested.duration_ambiguous && !intakeState.answered['duration_min']) intakeState.durationAmbig=harvested.duration_ambiguous;
+  delete toApply.duration_ambiguous;
   const fields=Object.keys(toApply);
   if(!fields.length){
     if(q.optional){ intakeCommitField(q,isList?[]:null); return; }

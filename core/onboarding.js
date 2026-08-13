@@ -452,14 +452,25 @@
     var cm; while ((cm = clusterRe.exec(t))) { (cm[0].match(/\b(?:ma|di|wo|do|vr|za|zo)\b/g) || []).forEach(function (x) { if (days.indexOf(x) < 0) days.push(x); }); }
     if (days.length) o.days = DAYS.filter(function (k) { return days.indexOf(k) >= 0; }); // canonieke volgorde
     // duur: minuten of uren (contextueel, niet "eerste getal")
-    var md = t.match(/(\d+)\s*(?:min\b|minuten|minuut)/);
-    if (md) { o.duration_min = parseInt(md[1], 10); }
-    else {
-      var mh = t.match(/(\d+(?:[.,]5)?)\s*uur/);
-      if (mh) { o.duration_min = Math.round(parseFloat(mh[1].replace(',', '.')) * 60); }
-      else if (/anderhalf\s*uur/.test(t)) o.duration_min = 90;
-      else if (/half\s*uur|halfuur/.test(t)) o.duration_min = 30;
-      else if (/\been\s*uur|\b1\s*uur|uurtje/.test(t)) o.duration_min = 60;
+    // F55/F56: ambigue duur ("60 of soms 90 minuten", "60/90 min") NIET stil vastleggen —
+    // anders pakte de regex het laatste getal (90). Markeer duration_ambiguous zodat de coach
+    // kan verduidelijken i.p.v. te gokken. Alleen bij twee plausibele duur-getallen (20–240)
+    // met een min/uur-context, zodat "3 of 4 keer" e.d. niet meetellen.
+    var amb = t.match(/(\d{2,3})\s*(?:of|\/|à|tot)\s*(?:soms\s*|ongeveer\s*|zo'?n\s*)?(\d{2,3})/);
+    var ambA = amb ? parseInt(amb[1], 10) : 0, ambB = amb ? parseInt(amb[2], 10) : 0;
+    var ambDur = !!amb && ambA >= 20 && ambB >= 20 && ambA <= 240 && ambB <= 240 && ambA !== ambB && /(min\b|minuten|minuut|uur)/.test(t);
+    if (ambDur) {
+      o.duration_ambiguous = { a: Math.min(ambA, ambB), b: Math.max(ambA, ambB) };
+    } else {
+      var md = t.match(/(\d+)\s*(?:min\b|minuten|minuut)/);
+      if (md) { o.duration_min = parseInt(md[1], 10); }
+      else {
+        var mh = t.match(/(\d+(?:[.,]5)?)\s*uur/);
+        if (mh) { o.duration_min = Math.round(parseFloat(mh[1].replace(',', '.')) * 60); }
+        else if (/anderhalf\s*uur/.test(t)) o.duration_min = 90;
+        else if (/half\s*uur|halfuur/.test(t)) o.duration_min = 30;
+        else if (/\been\s*uur|\b1\s*uur|uurtje/.test(t)) o.duration_min = 60;
+      }
     }
     // locatie incl. bekende gym-namen
     var loc = parseAnswerLocally('location', text);
@@ -512,7 +523,14 @@
       if (!answered.primary_goal && g.primary_goal) out.primary_goal = g.primary_goal;
       if (!answered.secondary_goals && g.secondary_goals.length) out.secondary_goals = g.secondary_goals;
     }
+    // F56: geef ambigue duur door zodat de intake een verduidelijkingsvraag kan stellen i.p.v. gokken.
+    if (!answered.duration_min && ctx.duration_ambiguous) out.duration_ambiguous = ctx.duration_ambiguous;
     return out;
+  }
+  // F56: nette verduidelijkingsvraag bij een ambigue duur (coach verwoordt; geen berekening).
+  function durationClarifyText(amb) {
+    if (!amb || amb.a == null || amb.b == null) return null;
+    return 'Wat is meestal je normale trainingstijd: ongeveer ' + amb.a + ' of ' + amb.b + ' minuten?';
   }
 
   // ---- CONVERSATIONAL CORRECTION ENGINE (deterministisch, geen AI-waarheid) --
@@ -781,6 +799,7 @@
     extractContext: extractContext,
     extractGoals: extractGoals,
     harvest: harvest,
+    durationClarifyText: durationClarifyText,
     parseCorrection: parseCorrection,
     applyMutations: applyMutations,
     valuePhrase: valuePhrase,

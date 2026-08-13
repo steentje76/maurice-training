@@ -2113,6 +2113,10 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 /* Vergelijk-knop */
 #s-library .lib5d-cmp{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:13px;padding:14px;font-weight:800;font-size:13.5px;background:var(--v43-mint);color:var(--accent);margin:4px 0 8px;cursor:pointer}
 #s-library .lib5d-cmp svg{width:16px;height:16px;stroke:var(--accent);fill:none}
+/* Primaire CTA "Toevoegen aan training" — solide accent, past bij de rest (was: losse paarse reuze-plus). */
+#s-library .lib5d-add{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:13px;padding:14px;font-weight:800;font-size:13.5px;font-family:var(--f);background:var(--accent);color:#04231c;margin:6px 0 8px;cursor:pointer;min-height:44px}
+#s-library .lib5d-add svg{width:16px;height:16px;stroke:currentColor;fill:none;flex:0 0 auto}
+#s-library .lib5d-add:active{transform:scale(.98)}
 /* ══════════════════════════════════════════════════════════════════
    v4.13.0 — Sprint 4.7 Fase 7: Live Training (begeleide sessie).
    Presentatie-only; GW/GWUI-engine ongemoeid. Gefocust donker live-scherm,
@@ -3613,7 +3617,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
     <div class="v43-lbl" style="margin:18px 0 10px">Coachadvies vandaag</div>
     <div id="lich-advies"></div>
-    <button class="btn btn-d" onclick="askCoachProfiel()" style="margin-bottom:12px">🤖 Coach: analyseer mijn metingen</button>
+    <button class="btn btn-d" onclick="askCoachProfiel()" style="margin-top:12px;margin-bottom:12px">🤖 Coach: analyseer mijn metingen</button>
     <div style="height:8px"></div>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
@@ -10944,7 +10948,7 @@ function _libDetailHtml(id){var E=ExerciseCatalogService;var c=E.byId(id);if(!c)
   out+=_acc('intel','Exercise Intelligence',_intelDashboard(c)+muscHtml+'<div class="lib-sub-h">Statistieken &amp; richtlijnen</div>'+_statList(c),false);
   // F0.7C follow-up — Library → Training: geeft toegang tot de bestaande Builder/composition-
   // keten (zie libOpenAddToTraining). Zelfde visuele taal als de bestaande vergelijk-knop.
-  out+='<button class="lib-cmp-btn" id="lib-add-training" onclick="libOpenAddToTraining(\''+id+'\')" aria-label="Toevoegen aan training"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Toevoegen aan training</button>';
+  out+='<button class="lib5d-add" id="lib-add-training" onclick="libOpenAddToTraining(\''+id+'\')" aria-label="Toevoegen aan training"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Toevoegen aan training</button>';
   // 4 Vergelijkingen (CTA)
   out+='<button class="lib-cmp-btn lib5d-cmp" id="lib-cmp" aria-label="Vergelijk met andere oefening"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v18M5 7h14M7 7l-3 6a3 3 0 006 0zM17 7l-3 6a3 3 0 006 0z"/></svg> Vergelijk met andere oefening</button>';
   // 5 Gerelateerde oefeningen (contextueel)
@@ -14164,15 +14168,20 @@ async function refreshStatsScreen(){
   // zodra ze een sessie hebben, geen aparte registratiestap nodig.
   const strExs=exercises.filter(e=>e.type==='strength'||!e.type);
   progExData={};
-  for(const ex of strExs){
-    const ss=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=30');
+  // Perf-fix: was een N+1-lus (één sequentiële sbGet per oefening → ~80 rondjes na elkaar).
+  // Nu parallel via Promise.all — exact dezelfde queries/data, alleen gelijktijdig opgehaald.
+  const _perEx=await Promise.all(strExs.map(ex=>
+    sbGet('sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=30')
+      .then(ss=>({ex,ss:ss||[]})).catch(()=>({ex,ss:[]}))
+  ));
+  _perEx.forEach(({ex,ss})=>{
     let best=null;
     ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=epley1RMRaw(s.weight,s.reps);if(!best||est>best)best=est;});
     const disp=best?Math.round(best):prFor(ex.id);
-    if(!disp)continue;
+    if(!disp)return;
     const tgt=peakGoalFor(ex.id);const pct=tgt?Math.round(disp/tgt*100):null;
     progExData[ex.id]={disp,tgt,pct,lastDate:ss[0]?ss[0].date:null};
-  }
+  });
   // filters opbouwen o.b.v. oefeningen die daadwerkelijk data hebben
   const dataExs=strExs.filter(e=>progExData[e.id]);
   const psports=new Set(), ptypes=new Set(), pmuscles=new Set();
@@ -14214,12 +14223,16 @@ async function refreshStatsScreen(){
     bc.forEach(r=>{bh+=`<div class="lrow"><div class="ldate">${r.date}</div><div class="lval">${r.weight||'—'} kg</div><div class="lnote">${r.fat_pct||'—'}% · ${r.muscle_mass||'—'} kg</div></div>`;});
   }
   const elb=document.getElementById('stats-bc-list');if(elb)elb.innerHTML=bh;
-  await refreshVolumeSpiergroep();
-  await refreshRepPRs();
-  await refreshRatioFactors();
-  try{ await refreshCardioProgress(); }catch(_e){} // F7.3 cardio records (guarded)
-  try{ await refreshImprovements(); }catch(_e){} // F7.9 "waar ben ik beter geworden?" (guarded)
-  try{ await refreshConsistency(); }catch(_e){} // F8.4 consistency (guarded)
+  // Perf-fix: deze secties zijn onderling onafhankelijk (renderen elk in hun eigen element) →
+  // parallel i.p.v. na elkaar. Elk guarded, zodat één falende sectie de rest niet blokkeert.
+  await Promise.all([
+    refreshVolumeSpiergroep().catch(()=>{}),
+    refreshRepPRs().catch(()=>{}),
+    refreshRatioFactors().catch(()=>{}),
+    refreshCardioProgress().catch(()=>{}), // F7.3 cardio records
+    refreshImprovements().catch(()=>{}),   // F7.9 "waar ben ik beter geworden?"
+    refreshConsistency().catch(()=>{})     // F8.4 consistency
+  ]);
   // v4.21.0 (Sprint 5.2) — Doelen geïntegreerd in Voortgang; herstel/belasting-heatmaps leven op Lichaam.
   renderStatsHero();
   renderDoelenScreen();

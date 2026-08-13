@@ -13912,7 +13912,7 @@ async function loadHistory(append=false){
   let recentHtml='';
   if(!append){
     const rc=dayEntries.slice(0,4).map(([date,sess])=>{
-      const tt=ttName(sess[0]?.training_type);
+      const _ttr=sess[0]?.training_type;const tt=_ttr?ttName(_ttr):'Losse oefening'; // F120: nette label i.p.v. '—'/'?'
       const vol=sess.reduce((a,x)=>a+((x.weight&&x.reps&&x.sets)?x.weight*x.reps*x.sets:0),0);
       return `<button class="lg-rcard" onclick="histOpenDay('${date}')"><span class="lg-rbadge">${escHtml(tt)}</span><span class="lg-rd">${escHtml(fmtDate(date))}</span><span class="lg-rst">${sess.length} oef${vol>0?' · '+Math.round(vol)+' kg':''}</span></button>`;
     }).join('');
@@ -13920,7 +13920,7 @@ async function loadHistory(append=false){
   }
   let html='';
   dayEntries.forEach(([date,sess])=>{
-    const ttRaw=sess[0]?.training_type||'?';const tt=ttName(ttRaw);
+    const ttRaw=sess[0]?.training_type||null;const tt=ttRaw?ttName(ttRaw):'Losse oefening'; // F120: losse oefening netjes gelabeld i.p.v. '?'
     const totalVol=sess.reduce((s,x)=>{if(x.weight&&x.reps&&x.sets)s+=x.weight*x.reps*x.sets;return s;},0);
     html+=`<div class="lg-day" data-date="${date}">
       <div class="hist-day-hd lg-day-hd" onclick="toggleHistDay(this)">

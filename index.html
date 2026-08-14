@@ -14100,6 +14100,33 @@ function renderEditSessFields(ex,session){
   f+=`<div class="irow"><label class="ilbl">Datum</label><input class="inp" type="date" id="es-date" value="${session?.date||curAddDate||td()}"></div>`;
   f+=`<div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="es-note" value="${session?.note||''}"></div>`;
   document.getElementById('edit-sess-fields').innerHTML=f;
+  // Cardio-edit: vul de gestructureerde velden (afstand/tijd/watt/split/…) terug uit de
+  // opgeslagen sessie-kolommen — generiek via rowMap (reverse). Zonder dit bleef alleen de
+  // notitie gevuld. extraNote-velden (bv. split) worden uit de notitie geëxtraheerd; het
+  // notitieveld toont daarna alleen de vrije gebruikersnotitie zodat hersave niet dubbelt.
+  if(cardioType && session){
+    const cfg=CARDIO_TYPES[cardioType]; const rawNote=String(session.note||''); let extractedAny=false;
+    (cfg.fields||[]).forEach(fld=>{
+      const el=document.getElementById(ES_DOMID+'-'+fld); const m=cfg.rowMap&&cfg.rowMap[fld];
+      if(!el||!m) return;
+      if(m.col==='extraNote'){
+        if(typeof m.template!=='function') return;
+        let probe; try{ probe=String(m.template('',{machine:''})); }catch(_){ return; }
+        const parts=probe.split(''); if(parts.length!==2) return;
+        const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+        const re=new RegExp(esc(parts[0].trim())+'\\s*([^·|]*?)\\s*'+esc(parts[1].trim())+'(?=\\s*(?:·|\\||$))','i');
+        const mm=rawNote.match(re);
+        if(mm && mm[1]!=null && mm[1].trim()!==''){ el.value=mm[1].trim(); extractedAny=true; }
+      } else {
+        let v=session[m.col];
+        if(v==null||v==='') return;
+        if(typeof m.transform==='function' && m.col==='distance' && /_km$/.test(fld)) v=Math.round((Number(v)/1000)*1000)/1000;
+        el.value=v;
+      }
+    });
+    const noteEl=document.getElementById('es-note');
+    if(noteEl && extractedAny){ const idx=rawNote.lastIndexOf(' · '); noteEl.value = idx>=0 ? rawNote.slice(0,idx).trim() : ''; }
+  }
 }
 
 function addEditSessSet(){

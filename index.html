@@ -5047,6 +5047,13 @@ function cardioDataToRow(cardioType, d){
     if(spec.transform)v=spec.transform(v);
     row[spec.col]=v;
   });
+  // Handmatige per-interval splits zijn ECHTE invoer (niet herleidbaar uit tijd+afstand zoals
+  // auto-splits) → compact meebewaren in de note (geen schemakolom). Formaat: splits:q=sec,...
+  // Auto-splits worden NIET bewaard: ze zijn deterministisch herberekenbaar uit tijd+afstand.
+  if(d.splitMode==='handmatig' && d.splits && typeof d.splits==='object'){
+    const sp=Object.keys(d.splits).filter(q=>d.splits[q]!=null&&d.splits[q]!=='').sort((a,b)=>a-b).map(q=>q+'='+d.splits[q]);
+    if(sp.length)notes.push('splits:'+sp.join(','));
+  }
   if(notes.length)row.extraNote=notes.join(' | ');
   // Zwemmen: pace_sec is een afgeleide kolom (geen los invoerveld), vandaar los van rowMap.
   if(cfg.derivePaceSec&&row.distance&&row.time_str){
@@ -12402,6 +12409,9 @@ function restoreSessionLogToDom(t){
         });
         if(l.cardio.splitMode && typeof cardioSplitMode!=='undefined') cardioSplitMode[ex.id]=l.cardio.splitMode;
         if(l.cardio.splits && typeof cardioSplits!=='undefined') cardioSplits[ex.id]=l.cardio.splits;
+        // P0 — split-rijen ook zichtbaar herstellen (waarden stonden wél in sessionLog, maar de
+        // DOM-rijen werden niet opnieuw gerenderd → leken leeg bij hervatten).
+        if(cfg.splits){ if(typeof renderSplitRows==='function')renderSplitRows(ex.id,l.cardio.type); if(typeof updateSplitSummary==='function')updateSplitSummary(ex.id,l.cardio.type); }
       }
     }catch(_){}
     // F0.8C — zichtbare '.done'-status van reeds uitgevoerde werksets meeherstellen.
@@ -14124,6 +14134,22 @@ function renderEditSessFields(ex,session){
         el.value=v;
       }
     });
+    // Splits terugzetten: handmatige splits uit de note (splits:q=sec,…); anders auto herberekenen
+    // uit de nu-gevulde afstand+tijd zodat de split-rijen zichtbaar zijn i.p.v. leeg.
+    if(cfg.splits){
+      const spTok=rawNote.match(/splits:([0-9=.,]+)/i);
+      if(spTok){
+        const obj={};
+        spTok[1].split(',').forEach(pair=>{const kv=pair.split('=');const qi=parseInt(kv[0]);const sv=Number(kv[1]);if(qi&&isFinite(sv))obj[qi]=sv;});
+        if(Object.keys(obj).length){ cardioSplitMode[ES_DOMID]='handmatig'; cardioSplits[ES_DOMID]=obj; extractedAny=true; }
+      } else if(typeof computeAutoSplits==='function'){
+        cardioSplitMode[ES_DOMID]='auto'; computeAutoSplits(ES_DOMID,cardioType);
+      }
+      const wrap=document.getElementById('splitmode-'+ES_DOMID);
+      if(wrap)wrap.querySelectorAll('.rower-chip').forEach(b=>b.classList.toggle('sel',(b.textContent==='Automatisch')===((cardioSplitMode[ES_DOMID]||'auto')==='auto')));
+      if(typeof renderSplitRows==='function') renderSplitRows(ES_DOMID,cardioType);
+      if(typeof updateSplitSummary==='function') updateSplitSummary(ES_DOMID,cardioType);
+    }
     const noteEl=document.getElementById('es-note');
     if(noteEl && extractedAny){ const idx=rawNote.lastIndexOf(' · '); noteEl.value = idx>=0 ? rawNote.slice(0,idx).trim() : ''; }
   }
@@ -14151,6 +14177,7 @@ async function saveEditSession(btnEl){
     const cfg=CARDIO_TYPES[cardioType];
     const d={machine:localStorage.getItem('sel_'+cardioType)||''};
     cfg.fields.forEach(fld=>{d[fld]=document.getElementById(ES_DOMID+'-'+fld)?.value||'';});
+    if(cfg.splits){ d.splitMode=cardioSplitMode[ES_DOMID]||'auto'; d.splits=cardioSplits[ES_DOMID]?{...cardioSplits[ES_DOMID]}:{}; }
     const cRow=cardioDataToRow(cardioType,d);
     const extraNote=cRow.extraNote;delete cRow.extraNote;
     Object.assign(row,cRow);

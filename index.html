@@ -7912,9 +7912,9 @@ function collectWorkSets(domId){
     const kgEl=document.getElementById('s-'+domId+'-'+i+'-kg');
     const repsEl=document.getElementById('s-'+domId+'-'+i+'-reps');
     if(!kgEl&&!repsEl)break;
-    const kg=kgEl?.value||'', reps=repsEl?.value||'';
+    const kg=normNumStr(kgEl?.value||''), reps=normNumStr(repsEl?.value||''); // P0: NL-komma
     const rpeEl=document.getElementById('s-'+domId+'-'+i+'-rpe');
-    if(kg||reps)rows.push({kg,reps,rpe:rpeEl?.value||'',effKg:getEffectiveKg(domId,i)});
+    if(kg||reps)rows.push({kg,reps,rpe:normNumStr(rpeEl?.value||''),effKg:getEffectiveKg(domId,i)});
     i++;
   }
   return rows;
@@ -7926,7 +7926,7 @@ function collectWuSets(domId){
     const kgEl=document.getElementById('w-'+domId+'-'+i+'-kg');
     const repsEl=document.getElementById('w-'+domId+'-'+i+'-reps');
     if(!kgEl&&!repsEl)break;
-    const kg=kgEl?.value||'', reps=repsEl?.value||'';
+    const kg=normNumStr(kgEl?.value||''), reps=normNumStr(repsEl?.value||''); // P0: NL-komma
     if(kg||reps)rows.push({kg,reps});
     i++;
   }
@@ -9376,8 +9376,10 @@ async function startT(t){
   const draft=restoreTrainingDraft();
   const resumeDraft=(draft&&draft.t===t&&isSameLocalDay(draft.ts)) ? await confirmModal('Niet-afgeronde training gevonden (laatst opgeslagen om '+new Date(draft.ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+'). Wil je die hervatten?',{title:'Training hervatten',okLabel:'Hervatten',cancelLabel:'Nieuw starten'}) : false;
   pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};
+  let _resumeElapsedMs=0; // P0: verstreken tijd bij hervatten (0 = verse start)
   if(resumeDraft){
     curT=t;sessionLog=draft.sessionLog||{};sessionExtra=draft.sessionExtra||[];trainPaused=false;pausedAccumMs=0;
+    _resumeElapsedMs=Number(draft.elapsedMs)||0;
     await renderTrainScreen(t);
     restoreSessionLogToDom(t);
     lastSaveTs=draft.ts;saveState='saved';updateSaveIndicator();
@@ -9389,7 +9391,8 @@ async function startT(t){
   }
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('s-train-'+t.toLowerCase()).classList.add('active');
-  trainStart=Date.now();startTrainTimer(t);
+  // P0: bij hervatten start de klok op de eerder verstreken tijd (NIET op 0).
+  trainStart=Date.now()-_resumeElapsedMs;startTrainTimer(t);
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.add('show'));
 }
 // Bouwt het trainingsscherm voor een vaste training (Training A/B of een nieuwe) dynamisch
@@ -11326,6 +11329,24 @@ function epley1RMRaw(kg,reps){ return CalcCore.oneRMRaw(kg,reps); } /* F1.2: can
 function epley1RM(kg,reps){ return CalcCore.calculate1RM(kg,reps); } /* F1.2: canonical shared core (e1rm.v1) */
 // v306: centrale afrondingsregel (0.5 kg increments) — hergebruikt door alle nieuwe rekenfuncties
 function roundKg(v){ return CalcCore.roundKg(v); } /* F1.2: canonical shared core (rounding.v1) */
+// ── P0 (14-08) — NL-DECIMAAL VEILIG PARSEN ──────────────────────────────────
+// "73,5" én "73.5" → 73.5. Voorkomt de dataverlies-bug waarbij een komma-invoer stil
+// verkeerd werd geïnterpreteerd (73,5 → 73 of erger). Ongeldige invoer → NaN, zodat de
+// aanroeper het als 'geen waarde' behandelt en NOOIT een foutief getal opslaat.
+function numNL(v){
+  if(v==null)return NaN;
+  const s=String(v).trim().replace(',', '.');
+  if(s===''|| !/^-?\d*\.?\d+$/.test(s))return NaN;
+  return parseFloat(s);
+}
+// Genormaliseerde numerieke STRING voor opslag (komma→punt), zodat elke downstream parseFloat
+// klopt. Lege invoer blijft leeg; niet-numerieke invoer wordt niet als getal opgeslagen.
+function normNumStr(v){
+  if(v==null)return '';
+  const s=String(v).trim();
+  if(s==='')return '';
+  return isNaN(numNL(s)) ? '' : s.replace(',', '.');
+}
 // v306: welk %1RM-knop actief staat per oefening (instelling voor de HELE oefening).
 let pctSelection={};
 let settingViaPct=false; // onderdrukt de "handmatig"-markering terwijl een script zelf het veld vult
@@ -11765,12 +11786,12 @@ function getEffectiveKg(exId,i){
   if(mode==='vast'||mode==='topset'){
     const raw=_in.rawKg;
     if(raw===undefined||raw===''||raw==='–')return null;
-    const val=parseFloat(raw);
+    const val=numNL(raw); // P0: NL-komma veilig ("73,5"→73.5)
     return isNaN(val)?null:val;
   }
   const paramRaw=_in.param;
   if(paramRaw===undefined||paramRaw==='')return null;
-  const param=parseFloat(paramRaw);
+  const param=numNL(paramRaw); // P0: NL-komma veilig
   if(isNaN(param))return null;
   if(mode==='1rm'){
     const oneRM=estimatedOneRM(exId);
@@ -12320,11 +12341,20 @@ function scheduleAutosave(){
   clearTimeout(autosaveTimer);
   autosaveTimer=setTimeout(()=>persistTrainingDraft(true),1200);
 }
+// P0 (14-08) — huidige verstreken workout-tijd (ms), pauze-veilig. Bron voor de persistente
+// timer zodat hervatten NIET op 0 begint.
+function currentWorkoutElapsedMs(){
+  if(!trainStart)return 0;
+  let e=Date.now()-trainStart-(pausedAccumMs||0);
+  if(trainPaused&&pausedAt)e-=(Date.now()-pausedAt);
+  return Math.max(0,e);
+}
 function persistTrainingDraft(silent){
   if(!curT)return;
   saveState='saving';updateSaveIndicator();
   try{
-    localStorage.setItem('tk_draft_training',JSON.stringify({t:curT,sessionLog,sessionExtra,ts:Date.now()}));
+    // P0: elapsedMs meebewaren → bij hervatten loopt de totale trainingstijd verder i.p.v. 0.
+    localStorage.setItem('tk_draft_training',JSON.stringify({t:curT,sessionLog,sessionExtra,ts:Date.now(),elapsedMs:currentWorkoutElapsedMs()}));
     lastSaveTs=Date.now();saveState='saved';
   }catch(e){saveState='dirty';}
   updateSaveIndicator();
@@ -12360,6 +12390,20 @@ function restoreSessionLogToDom(t){
       const repsEl=document.getElementById('s-'+ex.id+'-'+i+'-reps');if(repsEl&&s.reps)repsEl.value=s.reps;
       const rpeEl=document.getElementById('s-'+ex.id+'-'+i+'-rpe');if(rpeEl&&s.rpe)rpeEl.value=s.rpe;
     });
+    // P0 (14-08) — ROEI/CARDIO herstellen: voorheen werd l.cardio NIET terug in de DOM gezet,
+    // waardoor roeidata bij hervatten "verdween" (stond wél nog in sessionLog). Nu wél. De data
+    // blijft leidend uit sessionLog; dit synchroniseert alleen de zichtbare invoervelden + splits.
+    try{
+      if(l.cardio && l.cardio.type && typeof CARDIO_TYPES!=='undefined' && CARDIO_TYPES[l.cardio.type]){
+        const cfg=CARDIO_TYPES[l.cardio.type];
+        (cfg.fields||[]).forEach(f=>{
+          const el=document.getElementById(ex.id+'-'+f);
+          if(el && l.cardio[f]!=null && l.cardio[f]!=='') el.value=l.cardio[f];
+        });
+        if(l.cardio.splitMode && typeof cardioSplitMode!=='undefined') cardioSplitMode[ex.id]=l.cardio.splitMode;
+        if(l.cardio.splits && typeof cardioSplits!=='undefined') cardioSplits[ex.id]=l.cardio.splits;
+      }
+    }catch(_){}
     // F0.8C — zichtbare '.done'-status van reeds uitgevoerde werksets meeherstellen.
     restoreCompletedSetVisualState(ex.id);
   }
@@ -12512,11 +12556,12 @@ function copyToSets(exId, fromSet, field, val){
 function logSet(exId,type,setNum,isWork){
   if(!sessionLog[exId])sessionLog[exId]={wu:[],sets:[]};
   const pfx=type==='wu'?'w':'s';
-  const kg=document.getElementById(pfx+'-'+exId+'-'+setNum+'-kg')?.value;
-  const reps=document.getElementById(pfx+'-'+exId+'-'+setNum+'-reps')?.value;
-  const rpe=isWork?document.getElementById('s-'+exId+'-'+setNum+'-rpe')?.value:null;
+  // P0 (14-08): sla NL-komma genormaliseerd op ("73,5"→"73.5") zodat elke downstream-parse klopt.
+  const kg=normNumStr(document.getElementById(pfx+'-'+exId+'-'+setNum+'-kg')?.value);
+  const reps=normNumStr(document.getElementById(pfx+'-'+exId+'-'+setNum+'-reps')?.value);
+  const rpe=isWork?normNumStr(document.getElementById('s-'+exId+'-'+setNum+'-rpe')?.value):null;
   // Effectief gewicht: houdt rekening met de gewicht-modus (vast/+kg/% vorige set).
-  const effKg=isWork?getEffectiveKg(exId,setNum):(parseFloat(kg)||null);
+  const effKg=isWork?getEffectiveKg(exId,setNum):(numNL(kg)||null);
   if(type==='wu'){if(!sessionLog[exId].wu)sessionLog[exId].wu=[];sessionLog[exId].wu[setNum-1]={kg,reps};}
   else{if(!sessionLog[exId].sets)sessionLog[exId].sets=[];sessionLog[exId].sets[setNum-1]={kg,reps,rpe,effKg};}
   // Check PR (per rep-bucket 1/3/5/10, plus absolute-PR fallback voor niet-rep oefeningen)

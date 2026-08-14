@@ -2927,12 +2927,16 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
           <span class="set-chevron" aria-hidden="true">&#8250;</span>
         </button>
         <div class="set-row">
-          <div class="set-row-txt"><div class="set-row-lbl">Geluid</div><div class="set-row-sub">De app heeft momenteel geen geluidseffecten &mdash; deze instelling wordt vast opgeslagen voor toekomstig gebruik.</div></div>
+          <div class="set-row-txt"><div class="set-row-lbl">Geluid</div><div class="set-row-sub">Speelt een toon af als de rusttimer afloopt.</div></div>
           <button class="switch" role="switch" id="sw-sound" aria-checked="false" aria-label="Geluid"></button>
         </div>
         <div class="set-row">
           <div class="set-row-txt"><div class="set-row-lbl">Trillingen</div><div class="set-row-sub">Bijv. bij het aflopen van de rusttimer</div></div>
           <button class="switch" role="switch" id="sw-haptics" aria-checked="true" aria-label="Trillingen"></button>
+        </div>
+        <div class="set-row">
+          <div class="set-row-txt"><div class="set-row-lbl">Scherm aan tijdens training</div><div class="set-row-sub">Houdt je scherm aan zolang een training loopt (kost extra batterij).</div></div>
+          <button class="switch" role="switch" id="sw-wakelock" aria-checked="true" aria-label="Scherm aan tijdens training"></button>
         </div>
       </div>
     </div>
@@ -7043,8 +7047,9 @@ function updateNotifPermissionUI(perm){
 
 // -- Schermrefreshers -------------------------------------------------------
 function refreshSettingsScreen(){
-  initSwitch('sw-sound','tk_sound_enabled',false);
+  initSwitch('sw-sound','tk_sound_enabled',false,on=>{ if(on)unlockAudio(); });
   initSwitch('sw-haptics','tk_haptics_enabled',true);
+  initSwitch('sw-wakelock','tk_wakelock_enabled',true,on=>{ if(on){ if(typeof curT!=='undefined'&&curT)requestWakeLock(); } else releaseWakeLock(); });
   updateThemeSegUI();
   const verEl=document.getElementById('settings-app-ver');if(verEl)verEl.textContent=APP_VER;
   const rmEl=document.getElementById('reduced-motion-status');
@@ -9462,8 +9467,34 @@ function startTrainTimer(t){
     const el=document.getElementById('elapsed-'+t.toLowerCase());
     if(el)el.textContent=str;
   },1000);
+  requestWakeLock(); // scherm aan houden tijdens actieve training (indien ingeschakeld)
 }
-function stopTrainTimer(){if(trainInterval){clearInterval(trainInterval);trainInterval=null;}}
+function stopTrainTimer(){if(trainInterval){clearInterval(trainInterval);trainInterval=null;}releaseWakeLock();}
+
+// ── P1 — Rusttimer-standaard, geluid & scherm-wakelock (sporterkeuze) ──
+// Rusttimer: afwezige instelling = 2 min (zodat de timer per set verschijnt); expliciet "Uit"(0) blijft uit.
+function restDefaultSec(){ const s=localStorage.getItem('tk_rest_default'); return s==null?120:(parseInt(s)||0); }
+// Geluid: Web Audio. Voorgrond betrouwbaar; achtergrond/vergrendeld is op mobiel onbetrouwbaar (context pauzeert).
+let _tkAudioCtx=null;
+function tkAudioCtx(){ try{ const AC=window.AudioContext||window.webkitAudioContext; if(!AC)return null; if(!_tkAudioCtx)_tkAudioCtx=new AC(); if(_tkAudioCtx.state==='suspended')_tkAudioCtx.resume(); return _tkAudioCtx; }catch(_){ return null; } }
+function unlockAudio(){ if(isSettingOn('tk_sound_enabled',false))tkAudioCtx(); } // op user-gesture aanroepen (mobiel vereist eerdere tik)
+function restBeepSequence(){ return [{t:0,d:0.12,f:880},{t:0.18,d:0.12,f:880},{t:0.36,d:0.12,f:880},{t:0.54,d:0.45,f:1175}]; } // 3 korte + 1 lange
+function playRestBeep(){
+  if(!isSettingOn('tk_sound_enabled',false))return;
+  const ctx=tkAudioCtx(); if(!ctx)return;
+  try{ const t0=ctx.currentTime; restBeepSequence().forEach(n=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.type='sine'; o.frequency.value=n.f; g.gain.setValueAtTime(0.0001,t0+n.t); g.gain.exponentialRampToValueAtTime(0.35,t0+n.t+0.012); g.gain.exponentialRampToValueAtTime(0.0001,t0+n.t+n.d); o.connect(g); g.connect(ctx.destination); o.start(t0+n.t); o.stop(t0+n.t+n.d+0.03); }); }catch(_){}
+}
+// Wake lock: houdt het scherm aan tijdens de training als de sporter dat kiest (standaard aan). Alleen actief
+// zolang de training loopt; wordt vrijgegeven bij stoppen/pauzeren/afronden. Systeem geeft de lock vrij bij
+// tab-verbergen → heraanvragen bij terugkeer (mits training actief).
+let _tkWakeLock=null;
+async function requestWakeLock(){
+  try{ if(!isSettingOn('tk_wakelock_enabled',true))return; if(!('wakeLock'in navigator))return; if(_tkWakeLock)return;
+    const w=await navigator.wakeLock.request('screen'); _tkWakeLock=w; w.addEventListener('release',()=>{ if(_tkWakeLock===w)_tkWakeLock=null; });
+  }catch(_){ _tkWakeLock=null; }
+}
+async function releaseWakeLock(){ try{ const w=_tkWakeLock; if(w){ _tkWakeLock=null; await w.release(); } }catch(_){ _tkWakeLock=null; } }
+if(typeof document!=='undefined'){ document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && typeof curT!=='undefined' && curT) requestWakeLock(); }); }
 function pauseTraining(){
   const btns=document.querySelectorAll('.tact[onclick="pauseTraining()"]');
   if(!trainPaused){
@@ -9480,7 +9511,7 @@ function pauseTraining(){
 }
 function showSettings(){
   document.getElementById('ts-plates-link').onclick=()=>{closeModal('m-train-settings');openPlateCalc(0);};
-  document.getElementById('ts-rest-default').value=localStorage.getItem('tk_rest_default')||'0';
+  {const _rd=localStorage.getItem('tk_rest_default');document.getElementById('ts-rest-default').value=_rd==null?'120':_rd;} // afwezig = effectieve standaard 2 min
   openModal('m-train-settings');
 }
 
@@ -12616,7 +12647,7 @@ function toggleSetDone(exId,setNum){
   updateSummary(curT);
   scheduleAutosave();
   refreshActiveSetBanner(exId); // F0.8B: presentatie-spiegel van set-status verversen (ook bij un-toggle)
-  if(nowDone){showPostSetAdvice(exId,setNum);showSetCompletionFeedback(exId,setNum);autoRestAfterSet(exId,setNum);} // v306 #13 + F0.8: advies, set-bevestiging & rust-surface (presentatie, geen logging)
+  if(nowDone){unlockAudio();showPostSetAdvice(exId,setNum);showSetCompletionFeedback(exId,setNum);autoRestAfterSet(exId,setNum);} // v306 #13 + F0.8: advies, set-bevestiging & rust-surface (presentatie, geen logging); unlockAudio = audio activeren op user-gesture
 }
 
 // ── F0.8 — Set Completion Feedback (presentatie; leest de zojuist gelogde set, schrijft niets) ──
@@ -12645,7 +12676,7 @@ function autoRestAfterSet(exId,setNum){
   try{
     const exObj=(typeof exercises!=='undefined')?exercises.find(e=>e.id===exId):null;
     const perEx=exObj&&exObj.rest_seconds;
-    const def=parseInt(localStorage.getItem('tk_rest_default'))||0;
+    const def=restDefaultSec();
     if((perEx!=null&&perEx>0)||def>0){ if(typeof openRestTimer==='function')openRestTimer(exId,setNum); }
   }catch(e){}
 }
@@ -16450,7 +16481,7 @@ function openRestTimer(exId,setNum){
   const exObj=exercises.find(e=>e.id===exId);
   const perEx=exObj?.rest_seconds;
   if(perEx!=null&&perEx>0){startRestTimer(perEx);return;} // per-oefening rusttijd heeft voorrang
-  const def=parseInt(localStorage.getItem('tk_rest_default'))||0;
+  const def=restDefaultSec();
   if(def>0){startRestTimer(def);return;} // anders app-brede standaardwaarde
   openModal('m-rest-timer');
 }
@@ -16474,6 +16505,7 @@ function startRestTimer(seconds){
     if(ring&&seconds>0){ const C=119.38; ring.style.strokeDashoffset=(C*(1-Math.max(0,Math.min(1,rem/seconds)))).toFixed(1); }
     if(rem<=0){
       clearInterval(restInterval);restInterval=null;
+      playRestBeep(); // geluid bij rust-einde (indien ingeschakeld)
       if(navigator.vibrate&&isSettingOn('tk_haptics_enabled',true))navigator.vibrate([200,100,200]);
       toast('Rust voorbij');
       bar.style.display='none';

@@ -2938,6 +2938,10 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
           <div class="set-row-txt"><div class="set-row-lbl">Scherm aan tijdens training</div><div class="set-row-sub">Houdt je scherm aan zolang een training loopt (kost extra batterij).</div></div>
           <button class="switch" role="switch" id="sw-wakelock" aria-checked="true" aria-label="Scherm aan tijdens training"></button>
         </div>
+        <div class="set-row">
+          <div class="set-row-txt"><div class="set-row-lbl">Dynamische rusttijd</div><div class="set-row-sub">Past de rusttijd aan op hoe zwaar de set was (RPE): zwaarder = langere rust, lichter = korter.</div></div>
+          <button class="switch" role="switch" id="sw-dynrest" aria-checked="false" aria-label="Dynamische rusttijd"></button>
+        </div>
       </div>
     </div>
 
@@ -7050,6 +7054,7 @@ function refreshSettingsScreen(){
   initSwitch('sw-sound','tk_sound_enabled',false,on=>{ if(on)unlockAudio(); });
   initSwitch('sw-haptics','tk_haptics_enabled',true);
   initSwitch('sw-wakelock','tk_wakelock_enabled',true,on=>{ if(on){ if(typeof curT!=='undefined'&&curT)requestWakeLock(); } else releaseWakeLock(); });
+  initSwitch('sw-dynrest','tk_dynrest_enabled',false);
   updateThemeSegUI();
   const verEl=document.getElementById('settings-app-ver');if(verEl)verEl.textContent=APP_VER;
   const rmEl=document.getElementById('reduced-motion-status');
@@ -9475,7 +9480,7 @@ function stopTrainTimer(){if(trainInterval){clearInterval(trainInterval);trainIn
 // Rusttimer: afwezige instelling = 2 min (zodat de timer per set verschijnt); expliciet "Uit"(0) blijft uit.
 function restDefaultSec(){ const s=localStorage.getItem('tk_rest_default'); return s==null?120:(parseInt(s)||0); }
 // Geluid: Web Audio. Voorgrond betrouwbaar; achtergrond/vergrendeld is op mobiel onbetrouwbaar (context pauzeert).
-let _tkAudioCtx=null;
+let _tkAudioCtx=null, _lastCountdownSec=0;
 function tkAudioCtx(){ try{ const AC=window.AudioContext||window.webkitAudioContext; if(!AC)return null; if(!_tkAudioCtx)_tkAudioCtx=new AC(); if(_tkAudioCtx.state==='suspended')_tkAudioCtx.resume(); return _tkAudioCtx; }catch(_){ return null; } }
 function unlockAudio(){ if(isSettingOn('tk_sound_enabled',false))tkAudioCtx(); } // op user-gesture aanroepen (mobiel vereist eerdere tik)
 function restBeepSequence(){ return [{t:0,d:0.12,f:880},{t:0.18,d:0.12,f:880},{t:0.36,d:0.12,f:880},{t:0.54,d:0.45,f:1175}]; } // 3 korte + 1 lange
@@ -9483,6 +9488,22 @@ function playRestBeep(){
   if(!isSettingOn('tk_sound_enabled',false))return;
   const ctx=tkAudioCtx(); if(!ctx)return;
   try{ const t0=ctx.currentTime; restBeepSequence().forEach(n=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.type='sine'; o.frequency.value=n.f; g.gain.setValueAtTime(0.0001,t0+n.t); g.gain.exponentialRampToValueAtTime(0.35,t0+n.t+0.012); g.gain.exponentialRampToValueAtTime(0.0001,t0+n.t+n.d); o.connect(g); g.connect(ctx.destination); o.start(t0+n.t); o.stop(t0+n.t+n.d+0.03); }); }catch(_){}
+}
+// Aftel-piepjes: één korte toon in elk van de laatste seconden vóór het eindsignaal.
+function countdownSeconds(){ return [5,4,3,2,1]; }
+function playCountdownBeep(){
+  if(!isSettingOn('tk_sound_enabled',false))return;
+  const ctx=tkAudioCtx(); if(!ctx)return;
+  try{ const t0=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain(); o.type='sine'; o.frequency.value=660; g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(0.28,t0+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t0+0.09); o.connect(g); g.connect(ctx.destination); o.start(t0); o.stop(t0+0.11); }catch(_){}
+}
+// Dynamische rust (sporterkeuze): zwaardere set (hogere RPE) → langere rust; lichte set → korter.
+// Begrensd 0.75–1.5×, minimaal 30s, afgerond op 5s. Deterministisch (geen AI, geen verzonnen data).
+function dynamicRestSec(baseSec, rpe){
+  if(!(baseSec>0))return baseSec;
+  const r=(rpe==null||isNaN(rpe))?null:Number(rpe);
+  if(r==null)return baseSec; // geen RPE gelogd → basisrust ongewijzigd
+  let f; if(r<=6)f=0.75; else if(r<=7)f=0.9; else if(r<=8)f=1.0; else if(r<=9)f=1.25; else f=1.5;
+  return Math.max(30, Math.round(baseSec*f/5)*5);
 }
 // Wake lock: houdt het scherm aan tijdens de training als de sporter dat kiest (standaard aan). Alleen actief
 // zolang de training loopt; wordt vrijgegeven bij stoppen/pauzeren/afronden. Systeem geeft de lock vrij bij
@@ -12647,7 +12668,7 @@ function toggleSetDone(exId,setNum){
   updateSummary(curT);
   scheduleAutosave();
   refreshActiveSetBanner(exId); // F0.8B: presentatie-spiegel van set-status verversen (ook bij un-toggle)
-  if(nowDone){unlockAudio();showPostSetAdvice(exId,setNum);showSetCompletionFeedback(exId,setNum);autoRestAfterSet(exId,setNum);} // v306 #13 + F0.8: advies, set-bevestiging & rust-surface (presentatie, geen logging); unlockAudio = audio activeren op user-gesture
+  if(nowDone){unlockAudio();try{showPostSetAdvice(exId,setNum);}catch(_){}try{showSetCompletionFeedback(exId,setNum);}catch(_){}autoRestAfterSet(exId,setNum);} // v306 #13 + F0.8: advies, set-bevestiging & rust-surface. GUARD: advies/feedback mogen de rusttimer NOOIT blokkeren (bug: bij set 1 met RPE gooide showPostSetAdvice → rust startte pas bij set 2). unlockAudio = audio op user-gesture.
 }
 
 // ── F0.8 — Set Completion Feedback (presentatie; leest de zojuist gelogde set, schrijft niets) ──
@@ -12677,7 +12698,16 @@ function autoRestAfterSet(exId,setNum){
     const exObj=(typeof exercises!=='undefined')?exercises.find(e=>e.id===exId):null;
     const perEx=exObj&&exObj.rest_seconds;
     const def=restDefaultSec();
-    if((perEx!=null&&perEx>0)||def>0){ if(typeof openRestTimer==='function')openRestTimer(exId,setNum); }
+    const base=(perEx!=null&&perEx>0)?perEx:def; // per-oefening rusttijd heeft voorrang, anders app-standaard
+    if(base>0){
+      let sec=base;
+      if(isSettingOn('tk_dynrest_enabled',false)){
+        const rpeEl=document.getElementById('s-'+exId+'-'+setNum+'-rpe');
+        const rpe=rpeEl&&rpeEl.value?parseFloat(rpeEl.value):null;
+        sec=dynamicRestSec(base,rpe); // rust schalen op zwaarte (RPE) van de zojuist gelogde set
+      }
+      if(typeof openRestTimer==='function')openRestTimer(exId,setNum,sec);
+    }
   }catch(e){}
 }
 // ── F0.8B — Active Set Focus (read-only spiegel van de zichtbare werkset-cirkels) ──
@@ -16465,7 +16495,7 @@ function saveAsTrainingAndFinish(btnEl){
 // RUSTTIMER PER SET
 // ══════════════════════════════════════════════════════════
 let restInterval=null, restEndAt=0, restNextLabel='';
-function openRestTimer(exId,setNum){
+function openRestTimer(exId,setNum,overrideSec){
   // v3.3.53/54 Deel 5 — toon de volgende set + (indien beschikbaar) gewicht × reps.
   restNextLabel='';
   if(setNum!=null){
@@ -16478,6 +16508,7 @@ function openRestTimer(exId,setNum){
     }catch(_){}
     restNextLabel=(kg!=null)?`Set ${nextIdx} · ${kg} kg${reps?` × ${reps}`:''}`:`Set ${nextIdx} klaar om te starten`;
   }
+  if(overrideSec>0){startRestTimer(overrideSec);return;} // vooraf bepaalde duur (bv. dynamische rust) heeft voorrang
   const exObj=exercises.find(e=>e.id===exId);
   const perEx=exObj?.rest_seconds;
   if(perEx!=null&&perEx>0){startRestTimer(perEx);return;} // per-oefening rusttijd heeft voorrang
@@ -16489,6 +16520,7 @@ function startRestTimer(seconds){
   closeModal('m-rest-timer');
   if(restInterval)clearInterval(restInterval);
   restEndAt=Date.now()+seconds*1000;
+  _lastCountdownSec=0; // aftel-piepjes opnieuw toestaan voor deze rust
   const bar=document.getElementById('rest-timer-bar');
   bar.style.display='block';
   const nx=document.getElementById('rt-next');if(nx)nx.textContent=restNextLabel||'Klaar voor je volgende set';restNextLabel='';
@@ -16503,9 +16535,11 @@ function startRestTimer(seconds){
     if(fill&&seconds>0)fill.style.width=Math.max(0,Math.min(100,(rem/seconds)*100))+'%';
     const ring=document.getElementById('rt-ring');
     if(ring&&seconds>0){ const C=119.38; ring.style.strokeDashoffset=(C*(1-Math.max(0,Math.min(1,rem/seconds)))).toFixed(1); }
+    // Aftel-piepjes in de laatste seconden (5,4,3,2,1) — één korte toon per seconde, precies één keer.
+    if(rem>0 && countdownSeconds().includes(rem) && rem!==_lastCountdownSec){ _lastCountdownSec=rem; playCountdownBeep(); }
     if(rem<=0){
       clearInterval(restInterval);restInterval=null;
-      playRestBeep(); // geluid bij rust-einde (indien ingeschakeld)
+      playRestBeep(); // eindsignaal (3 kort + 1 lang) bij rust-einde (indien ingeschakeld)
       if(navigator.vibrate&&isSettingOn('tk_haptics_enabled',true))navigator.vibrate([200,100,200]);
       toast('Rust voorbij');
       bar.style.display='none';

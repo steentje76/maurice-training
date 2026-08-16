@@ -6141,7 +6141,8 @@ function previewExMeta(exId){
     if(c&&c.identity){
       const intel=c.intelligence||{};
       let video=null;
-      try{if(typeof ExerciseAssetProvider!=='undefined'&&ExerciseAssetProvider.hasVideo&&ExerciseAssetProvider.hasVideo(exId))video={movekit:true};}catch(_){}
+      // MoveKit-primair: naam/catalog-gebaseerde detectie (dekt ook oefeningen zonder directe manifest-id).
+      try{if(typeof ExerciseAssetProvider!=='undefined'&&((ExerciseAssetProvider.has&&ExerciseAssetProvider.has(exId,'video'))||(ExerciseAssetProvider.hasVideo&&ExerciseAssetProvider.hasVideo(exId))))video={movekit:true};}catch(_){}
       return {exId,name:c.identity.name||exId,primary:c.identity.primary||[],secondary:c.identity.secondary||[],
         equipment:c.identity.equipment||[],type:c.identity.type||null,cues:intel.cues||[],mistakes:intel.mistakes||[],
         why:(intel.why&&intel.why.coach)?intel.why.coach:null,fatigue:intel.fatigue||null,recovery:intel.recovery||null,
@@ -6151,7 +6152,10 @@ function previewExMeta(exId){
   let name=exId,primary=[],secondary=[],type=null,video=null;
   try{
     const ex=(typeof exercises!=='undefined')?exercises.find(e=>e.id===exId):null;
-    if(ex){name=ex.name||exId;primary=ex.muscle_primary||[];secondary=ex.muscle_secondary||[];type=ex.type||null;if(ex.yt)video={yt:ex.yt};}
+    if(ex){name=ex.name||exId;primary=ex.muscle_primary||[];secondary=ex.muscle_secondary||[];type=ex.type||null;
+      // MoveKit-primair ook voor legacy: MoveKit-video (naam-resolutie) wint van YouTube.
+      let _mk=false; try{ if(typeof ExerciseAssetProvider!=='undefined'&&ExerciseAssetProvider.has&&ExerciseAssetProvider.has(exId,'video'))_mk=true; }catch(_){}
+      if(_mk)video={movekit:true}; else if(ex.yt)video={yt:ex.yt};}
   }catch(e){}
   if(!primary.length){try{primary=getExerciseMuscles(exId)||[];}catch(_){}}
   return {exId,name,primary,secondary,equipment:[],type,cues:[],mistakes:[],why:null,fatigue:null,recovery:null,alternatives:[],video,canonical:false};
@@ -11424,15 +11428,15 @@ function movekitIntelFor(ex){
 }
 function buildVideoMuscle(ex){
   let h='';
-  // F20-C: MoveKit-poster is de PRIMAIRE bewegingsbron. YouTube is optioneel/aanvullend.
-  const _p=movekitPosterFor(ex);
-  if(_p){
-    // Statisch bewegingsbeeld: geen fake play-knop. Bestaat er ook een geldige video, dan een expliciete optionele knop.
-    h+=`<div class="vid-wrap vid-poster"><img src="${_p}" alt="${escHtml(ex.naam)}" loading="lazy" onerror="this.parentElement.style.display='none'"><div class="vid-label">${escHtml(ex.naam)} — bewegingsbeeld</div></div>`;
-    if(ex.yt) h+=`<button class="vid-optional" type="button" onclick="var w=this.parentElement.querySelector('.vid-wrap'); if(w) loadVid(w,'${ex.yt}')">▶ Bekijk techniekvideo</button>`;
-  } else if(ex.yt){
-    // Geen poster beschikbaar: YouTube-thumb als aanvullende bron (echte video → play-knop is hier terecht).
-    h+=`<div class="vid-wrap" onclick="loadVid(this,'${ex.yt}')"><img src="https://img.youtube.com/vi/${ex.yt}/mqdefault.jpg" alt="${escHtml(ex.naam)}" loading="lazy" onerror="this.parentElement.style.display='none'"><div class="vid-play">▶</div><div class="vid-label">▶ ${escHtml(ex.naam)} — techniek video</div></div>`;
+  // MOVEKIT PRIMAIR via de centrale media-owner (resolveExerciseMedia): MoveKit-video → YouTube → poster.
+  // MoveKit-.mp4 speelt hier daadwerkelijk af (<video controls>), niet enkel een poster met play-knop.
+  const _m=resolveExerciseMedia(ex);
+  if(_m.kind==='mp4'){
+    h+=`<div class="vid-wrap"><video controls preload="metadata" playsinline${_m.poster?` poster="${_m.poster}"`:''} style="width:100%;display:block;border-radius:12px" src="${_m.src}"></video><div class="vid-label">${escHtml(ex.naam)} — techniek video</div></div>`;
+  } else if(_m.kind==='yt'){
+    h+=`<div class="vid-wrap" onclick="loadVid(this,'${_m.src}')"><img src="https://img.youtube.com/vi/${_m.src}/mqdefault.jpg" alt="${escHtml(ex.naam)}" loading="lazy" onerror="this.parentElement.style.display='none'"><div class="vid-play">▶</div><div class="vid-label">▶ ${escHtml(ex.naam)} — techniek video</div></div>`;
+  } else if(_m.kind==='poster'){
+    h+=`<div class="vid-wrap vid-poster"><img src="${_m.src}" alt="${escHtml(ex.naam)}" loading="lazy" onerror="this.parentElement.style.display='none'"><div class="vid-label">${escHtml(ex.naam)} — bewegingsbeeld</div></div>`;
   }
   if(ex.muscles){
     h+='<div class="muscle-pills">';
@@ -14189,17 +14193,27 @@ function buildPrescriptionContract(ex, prevS, rxWeight){
 // Zo blijft een bestaande MoveKit-video niet onzichtbaar doordat de UI alleen yt las.
 function resolveExerciseMedia(ex){
   ex=ex||{};
+  // MOVEKIT PRIMAIR (gebruikerswens): MoveKit-video wint ALTIJD van YouTube.
+  // Resolutie via de centrale ExerciseAssetProvider — naam/catalog-gebaseerd (_slug), zodat MoveKit
+  // óók resolveert voor legacy/gym-oefeningen zonder expliciet video-veld. YouTube = alleen fallback.
   let mp4=ex.video||null;
-  if(!mp4 && ex.canonicalId){
-    try{ if(typeof ExerciseAssetProvider!=='undefined' && ExerciseAssetProvider.hasVideo && ExerciseAssetProvider.hasVideo(ex.canonicalId)){ const v=ExerciseAssetProvider.video(ex.canonicalId); mp4=v?v.file:null; } }catch(e){}
+  if(!mp4 && typeof ExerciseAssetProvider!=='undefined'){
+    try{
+      const _id=ex.canonicalId||ex.id||null;
+      if(_id){
+        if(ExerciseAssetProvider.has && ExerciseAssetProvider.has(_id,'video')) mp4=ExerciseAssetProvider.resolve(_id,'video');
+        else if(ExerciseAssetProvider.hasVideo && ExerciseAssetProvider.hasVideo(_id)){ const v=ExerciseAssetProvider.video(_id); mp4=v?v.file:null; }
+      }
+    }catch(e){}
   }
   const yt=ex.yt||null;
   let poster=null;
   try{ if(typeof movekitPosterFor==='function') poster=movekitPosterFor(ex)||null; }catch(e){}
-  if(mp4) return { kind:'mp4', src:mp4, poster:poster };
-  if(yt)  return { kind:'yt', src:yt, poster:poster };
-  if(poster) return { kind:'poster', src:poster };
-  return { kind:'none' };
+  // Contract: { type, kind(back-compat), src, source, available, provenance, poster }
+  if(mp4)    return { type:'movekit', kind:'mp4',    src:mp4,    source:'movekit', available:true,  provenance:{provider:'movekit', method:'local'},  poster:poster };
+  if(yt)     return { type:'youtube', kind:'yt',     src:yt,     source:'youtube', available:true,  provenance:{provider:'youtube', method:'embed'},  poster:poster };
+  if(poster) return { type:'poster',  kind:'poster', src:poster, source:'movekit', available:true,  provenance:{provider:'movekit', method:'poster'} };
+  return       { type:'none',    kind:'none',   src:null,   source:null,      available:false, provenance:null };
 }
 // UNIVERSELE RECOVERY voor de Guided prescription: past de DecisionCore-aanpassing toe op het GW-plan
 // (sets + gewicht), op KOPIEËN. Idempotent — één keer bij start; GW bewaart het aangepaste plan in

@@ -83,5 +83,20 @@ eq(resolveExerciseMedia({}).kind, 'poster', 'geen video → poster');
 _posterReturn = null;
 eq(resolveExerciseMedia({}).kind, 'none', 'niets → none (nette fallback)');
 
+// ── PROGRAMMA: één prescription-truth; gewicht volgt de (recovery-aangepaste) RPE (C3 by construction) ──
+const CalcCore = require('./calculation.js');
+const repsPrefillFromRange = eval('(' + extractFn('repsPrefillFromRange') + ')');
+const suggestWeightForRepsRpe = eval('(' + extractFn('suggestWeightForRepsRpe') + ')');
+const computeProgPrefill = eval('(' + extractFn('computeProgPrefill') + ')');
+const p8  = computeProgPrefill({reps:'3-5', rpe:'8',   sets:4}, null, 62);
+const p75 = computeProgPrefill({reps:'3-5', rpe:'7.5', sets:4}, null, 62);
+ok(parseFloat(p75.kg) <  parseFloat(p8.kg), 'Programma: lagere (recovery-)RPE → lichter gewicht (gewicht volgt RPE)');
+eq(p75.rpe, '7.5', 'Programma prefill RPE = item-RPE (aangepast)');
+const sugItem = suggestWeightForRepsRpe(62, parseFloat(repsPrefillFromRange('3-5')), '7.5');
+eq(parseFloat(p75.kg), sugItem, 'Programma: prefill.kg == suggestedWeight (één bron, geen dubbele berekening)');
+const cProg = buildPrescriptionContract({sets:4,reps:'3-5',rpe:'7.5',suggestedWeight:sugItem}, {weight:62,reps:1,rpe:8}, sugItem);
+eq(cProg.prescription.weight, sugItem, 'Programma-contract: prescription = canonical getal');
+ok(cProg.coaching.indexOf('Vorige keer: 62')!==-1 && !/houd 62/i.test(cProg.coaching), 'Programma-coaching: 62 alleen als vorige keer, geen imperatief');
+
 console.log('\nPrescription consistency + media: RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail ? 1 : 0);

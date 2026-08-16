@@ -11886,7 +11886,7 @@ function buildStrengthBody(exId,wuCount,workCount,prefill=null){
   if(!warmupState[exId])warmupState[exId]={count:wuCount||0,manual:{},values:{}};
   // F0.7S — warm-up in een eigen kaart (mock-up "WARM-UP SETS"); bestaande wu-rijen/ids intact.
   h+='<div class="tks-card tks-wu-card">'+buildWarmupSection(exId,warmupState[exId].count)+'</div>';
-  if(prefill) h+=`<div style="background:#e8f5e9;border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:6px 12px;font-size:11px;color:#2e7d32;margin:4px 14px 8px">📋 Vorige sessie: ${prefill.kg} kg × ${prefill.reps} reps${prefill.rpe?' · RPE '+prefill.rpe:''} — pre-ingevuld</div>`;
+  if(prefill) h+=`<div style="background:#e8f5e9;border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:6px 12px;font-size:11px;color:#2e7d32;margin:4px 14px 8px">📋 Voorgevuld: ${prefill.kg} kg × ${prefill.reps} reps${prefill.rpe?' · RPE '+prefill.rpe:''} — pas per set aan indien nodig</div>`;
   // F0.7S — werksets in een eigen kaart met kop (mock-up "WERKSETS"); rijen/ids ongewijzigd.
   h+=`<div class="tks-card tks-setcard"><div class="tks-setcard-hd"><span class="tks-setcard-t">Werksets</span><span class="tks-setcard-cnt">${workCount} set${workCount===1?'':'s'}</span></div>`;
   for(let i=1;i<=workCount;i++){

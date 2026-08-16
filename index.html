@@ -710,7 +710,8 @@ canvas{width:100%;height:100%}
 .vid-wrap img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
 .vid-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:48px;height:48px;background:rgba(61,214,214,0.95);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--dark)}
 .vid-label{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.8));padding:18px 10px 8px;font-size:11px;color:#fff;font-weight:700;letter-spacing:.3px}
-.vid-wrap.vid-poster{cursor:default;background:var(--g1)} /* F18 — statisch bewegingsbeeld (geen video/play) */
+.vid-wrap.vid-poster{cursor:default;background:var(--g1)}
+.vid-wrap.vid-poster img{object-fit:contain} /* poster = primaire bewegingsbron → volledig tonen, nooit boven/onder afsnijden (video-thumbs houden cover) */ /* F18 — statisch bewegingsbeeld (geen video/play) */
 .vid-optional{display:inline-block;margin:6px 0 2px;background:none;border:none;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;padding:2px 0} /* F20-C — optionele techniekvideo naast de primaire MoveKit-poster */
 .exec-cues{margin:2px 0 10px;padding-left:18px;list-style:disc} /* F22-E — MoveKit coach-cues */
 .exec-cues li{font-size:12.5px;color:var(--g4);line-height:1.45;margin:2px 0}

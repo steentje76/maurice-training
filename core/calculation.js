@@ -21,7 +21,7 @@
   var VERSIONS = {
     rounding: 'rounding.v1', e1rm: 'e1rm.v1', working_weight: 'working_weight.v1', ai_guard: 'ai_guard.v1',
     volume: 'volume.v1', percentage: 'percentage.v1', warmup: 'warmup.v1', recovery: 'recovery.v1', dayfactor: 'dayfactor.v1',
-    goal: 'goal.v1', e1rm_weighted: 'e1rm_weighted.v1'
+    goal: 'goal.v1', e1rm_weighted: 'e1rm_weighted.v1', recovery_score: 'recovery_score.v1'
   };
 
   // --- rounding.v1 --- exact gelijk aan legacy index.html r.10668
@@ -133,6 +133,43 @@
     return Math.round(Math.max(0.85, Math.min(1.05, ruw)) * 100) / 100;
   }
 
+  // --- recovery_score.v1 --- ÉÉN deterministische 0-100 herstelscore uit de BESCHIKBARE signalen.
+  // GEEN fabricage: alleen aanwezige componenten tellen mee; ontbrekende worden overgeslagen en de
+  // gewichten herverdeeld. Ontbreken ALLE inputs → score:null ('onbekend'). Puur/deterministisch, geen AI.
+  // input: { dayFactor?(0.85-1.05, uit calculateDayFactor = HRV·slaap·cyclus),
+  //          muscleRecoveryPct?(0-100, gem. relevante spieren), rhrDelta?(bpm boven baseline; ≥0 = slechter),
+  //          voelt?('slecht'|'matig'|'goed'|'top') }
+  // Weging: dayFactor 0.45 · spierherstel 0.30 · RHR 0.15 · gevoel 0.10 (over aanwezige componenten).
+  function recoveryScore(input) {
+    var i = input || {};
+    var comps = [];
+    if (typeof i.dayFactor === 'number' && isFinite(i.dayFactor)) {
+      var df = Math.max(0.85, Math.min(1.05, i.dayFactor)); // 0.85→0, 1.00→75, 1.05→100
+      comps.push({ v: Math.round((df - 0.85) / 0.20 * 100), w: 0.45 });
+    }
+    if (typeof i.muscleRecoveryPct === 'number' && isFinite(i.muscleRecoveryPct)) {
+      comps.push({ v: Math.max(0, Math.min(100, Math.round(i.muscleRecoveryPct))), w: 0.30 });
+    }
+    if (typeof i.rhrDelta === 'number' && isFinite(i.rhrDelta)) { // +0→100, +10→40, ≥+17→0
+      comps.push({ v: Math.max(0, Math.min(100, Math.round(100 - Math.max(0, i.rhrDelta) * 6))), w: 0.15 });
+    }
+    if (i.voelt) {
+      var vm = ({ slecht: 30, matig: 60, goed: 85, top: 100 })[i.voelt];
+      if (vm != null) comps.push({ v: vm, w: 0.10 });
+    }
+    if (!comps.length) return { score: null, band: 'onbekend', confidence: 'geen', components: 0 };
+    var wsum = comps.reduce(function (a, c) { return a + c.w; }, 0);
+    var score = Math.max(0, Math.min(100, Math.round(comps.reduce(function (a, c) { return a + c.v * c.w; }, 0) / wsum)));
+    return { score: score, band: recoveryBand(score), confidence: (comps.length >= 3 ? 'hoog' : comps.length === 2 ? 'gemiddeld' : 'laag'), components: comps.length };
+  }
+  // Bandindeling (sprint-default): ≥80 hoog, ≥60 gemiddeld, anders laag.
+  function recoveryBand(score) {
+    if (score == null || isNaN(score)) return 'onbekend';
+    if (score >= 80) return 'hoog';
+    if (score >= 60) return 'gemiddeld';
+    return 'laag';
+  }
+
   // --- goal.v1 --- exact gelijk aan legacy computeGoalProgress (index.html r.7097-7104).
   // PURE DataAccess-boundary: de caller haalt currentVal op (DB/DOM); de core rekent alleen.
   // Legacy-semantiek 1-op-1: null-guard; start = startwaarde ?? currentVal; span 0 -> 100/0;
@@ -193,6 +230,8 @@
     slaapDagFactor: slaapDagFactor,
     cyclusDagFactor: cyclusDagFactor,
     calculateDayFactor: calculateDayFactor,
+    recoveryScore: recoveryScore,
+    recoveryBand: recoveryBand,
     calculateGoalProgress: calculateGoalProgress,
     weightedOneRM: weightedOneRM,
     roundKgResult: roundKgResult,

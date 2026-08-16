@@ -8531,6 +8531,9 @@ async function saveLosOefening(btnEl){
   await ensureExerciseRow(exId); // F91/Optie B — FK-compat vóór de losse-oefening-write
   const ok=await sbPostQ('sessions',row);
   if(!ok){toast('Fout bij opslaan');return;}
+  // P1 route-unificatie: PR-cache ook bijwerken bij een losse oefening (was inconsistent — finishSession
+  // en Guided deden dit al). Zelfde deterministische regel: nieuw record → upsert 'pr'.
+  try{ if(row.weight && typeof prFor==='function' && row.weight>(prFor(exId)||0)) await upsertExerciseGoalField(exId,'pr',row.weight); }catch(_){}
   closeModal('m-los-oefening');
   resetLosAllState();
   toast('Opgeslagen');
@@ -13637,10 +13640,21 @@ function renderCoachAdvies(dfInfo,recRows){
   const el=document.getElementById('home-coach-advies');if(!el)return;
   const a=buildCoachTraining(dfInfo,recRows);
   if(!a){el.innerHTML='';return;}
+  // P1 — zichtbare Recovery Score in de coach-kaart (deterministisch, echte data).
+  let recLine='';
+  try{
+    const rs=recoveryScoreFrom(dfInfo,recRows);
+    if(rs && rs.score!=null){
+      const bandTxt={hoog:'Hoog',gemiddeld:'Gemiddeld',laag:'Laag'}[rs.band]||rs.band;
+      const bandCls=rs.band==='hoog'?'g':rs.band==='gemiddeld'?'y':'r';
+      recLine=`<div class="coach-advies-recovery status-${bandCls}" style="font-size:12px;font-weight:700;margin-bottom:4px">Herstel ${rs.score}/100 · ${bandTxt}${rs.confidence==='laag'?' (indicatief)':''}</div>`;
+    }
+  }catch(_){}
   el.innerHTML=`<div class="coach-advies">
     <div class="coach-advies-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4 19.5l1.3-4.1A7.5 7.5 0 1 1 20 11.5Z"/></svg></div>
     <div class="coach-advies-body">
       <div class="coach-advies-lbl">Coach advies</div>
+      ${recLine}
       <div class="coach-advies-title">${escHtml(a.title)}</div>
       <div class="coach-advies-line">${escHtml(a.line)}</div>
       ${a.reden?`<div class="coach-advies-reden">${escHtml(a.reden)}</div>`:''}
@@ -13952,6 +13966,20 @@ function dagfactor(hrvComponent,slaapUren,cyclusFase){
   /* F1.5C: product/clamp/round -> CalcCore.calculateDayFactor (dayfactor.v1) */
   const factor=CalcCore.calculateDayFactor({hrvFactor,sleepHours:slaapUren,cyclePhase:cyclusFase});
   return {factor,hrvFactor,slaapFactor,cyclusFactor,hrvSt:hc.st,hrvBaseline:hc.baseline};
+}
+// P1 — ÉÉN zichtbare Recovery Score 0-100 via de deterministische CalcCore (recovery_score.v1).
+// Voedt uitsluitend met BESCHIKBARE data: dagfactor (HRV·slaap·cyclus) + gemiddeld spierherstel
+// (+ optioneel RHR-delta / gevoel indien aanwezig). Geen fabricage; ontbrekende inputs → lagere confidence.
+function recoveryScoreFrom(dfInfo, recRows, extra){
+  const input={};
+  if(dfInfo && typeof dfInfo.factor==='number') input.dayFactor=dfInfo.factor;
+  if(Array.isArray(recRows) && recRows.length){
+    const pcts=recRows.map(r=>r&&r.pct).filter(v=>typeof v==='number');
+    if(pcts.length) input.muscleRecoveryPct=Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length);
+  }
+  if(extra && typeof extra.rhrDelta==='number') input.rhrDelta=extra.rhrDelta;
+  if(extra && extra.voelt) input.voelt=extra.voelt;
+  return CalcCore.recoveryScore(input);
 }
 // v3.3.47 P3 — begrijpelijke dagfactor-status uit de bestaande dagfactor-waarde.
 // Vier niveaus, kleuren consistent met de heroKleur-banden. Geen nieuwe data.

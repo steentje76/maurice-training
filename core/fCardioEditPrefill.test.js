@@ -133,5 +133,19 @@ eq(rt && rt[1], 58, 'round-trip: interval 1 → 58s');
 eq(rt && rt[3], 60, 'round-trip: interval 3 → 60s');
 eq(rt && Object.keys(rt).length, 4, 'round-trip: 4 intervallen teruggeparsed');
 
+// ── 10. Re-audit fix: cardioDataToRow KOMMA-VEILIG (was parseFloat → "5,5" werd 5) ──
+let cd = cardioDataToRow('running', { dist_km:'5,5', time:'25:00' });
+eq(cd.distance, 5500, 'running dist_km "5,5" → 5500 m (komma-veilig, was 5000)');
+cd = cardioDataToRow('rowing', { dist:'1000', watt:'205,5' });
+eq(cd.watt, 205.5, 'rowing watt "205,5" → 205.5 (komma-veilig, was 205)');
+cd = cardioDataToRow('assaultbike', { cals:'12,5', time:'1:00' });
+eq(cd.calories, 12.5, 'assaultbike cals "12,5" → 12.5 (komma-veilig)');
+
+// ── 11. Re-audit fix: rowing drag / bikeerg resistance NU persistent (via extraNote) ──
+cd = cardioDataToRow('rowing', { dist:'1000', drag:'8' });
+ok(/drag 8/.test(cd.extraNote||''), 'rowing drag → "drag 8" in extraNote (was stil weg)');
+cd = cardioDataToRow('bikeerg', { dist:'1000', resistance:'6' });
+ok(/weerstand 6/.test(cd.extraNote||''), 'bikeerg resistance → "weerstand 6" in extraNote (was stil weg)');
+
 console.log('\nCardio-edit prefill: RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail ? 1 : 0);

@@ -4913,7 +4913,7 @@ const CARDIO_TYPES = {
     labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /500m',watt:'Watt',stroke:'Slag/min',drag:'Drag factor',rpe:'RPE'},
     splits:true, splitDist:250, splitTotal:1000,
     machines:'rowers',
-    rowMap:{dist:{col:'distance',parse:'int'},time:{col:'time_str',parse:'string'},watt:{col:'watt',parse:'float'},stroke:{col:'stroke_rate',parse:'int'},split:{col:'extraNote',template:(v,d)=>(d.machine?d.machine+' ':'')+'split:'+v},rpe:{col:'rpe',parse:'float'}},
+    rowMap:{dist:{col:'distance',parse:'int'},time:{col:'time_str',parse:'string'},watt:{col:'watt',parse:'float'},stroke:{col:'stroke_rate',parse:'int'},drag:{col:'extraNote',template:v=>'drag '+v},split:{col:'extraNote',template:(v,d)=>(d.machine?d.machine+' ':'')+'split:'+v},rpe:{col:'rpe',parse:'float'}},
     calc:{type:'split',distField:'dist',basis:500,defaultDist:1000}
   },
   bikeerg: {
@@ -4922,7 +4922,7 @@ const CARDIO_TYPES = {
     labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /500m',watt:'Watt',rpm:'RPM',resistance:'Weerstand',rpe:'RPE'},
     splits:true, splitDist:250, splitTotal:1000,
     machines:'bikeerg_machines',
-    rowMap:{dist:{col:'distance',parse:'int'},time:{col:'time_str',parse:'string'},watt:{col:'watt',parse:'float'},rpm:{col:'stroke_rate',parse:'int'},split:{col:'extraNote',template:(v,d)=>(d.machine?d.machine+' ':'')+'split:'+v},rpe:{col:'rpe',parse:'float'}},
+    rowMap:{dist:{col:'distance',parse:'int'},time:{col:'time_str',parse:'string'},watt:{col:'watt',parse:'float'},rpm:{col:'stroke_rate',parse:'int'},resistance:{col:'extraNote',template:v=>'weerstand '+v},split:{col:'extraNote',template:(v,d)=>(d.machine?d.machine+' ':'')+'split:'+v},rpe:{col:'rpe',parse:'float'}},
     calc:{type:'split',distField:'dist',basis:500,defaultDist:1000}
   },
   skierg: {
@@ -5048,7 +5048,9 @@ function cardioDataToRow(cardioType, d){
       notes.push(spec.template?spec.template(raw,d):String(raw));
       return;
     }
-    let v = spec.parse==='int'?parseInt(raw):spec.parse==='float'?parseFloat(raw):raw;
+    // KOMMA-VEILIG: rauwe cardio-invoer (type=text) kan NL-komma bevatten. parseFloat("5,5")=5 → dataverlies.
+    // Inline komma→punt-normalisatie (zelf-bevattend, geen externe helper). Tijd/split/pace lopen al via parseTime-wrappers.
+    let v = spec.parse==='int'?parseInt(String(raw).replace(',','.'),10):spec.parse==='float'?parseFloat(String(raw).replace(',','.')):raw;
     // F3.6: weiger niet-eindige (NaN/Infinity) én negatieve cardio-waarden vóór actual-write.
     // Zo belandt er nooit een corrupte/onmogelijke waarde in een sessions-row (CardioCore blijft bron van waarheid).
     if(spec.parse!=='string'&&(!isFinite(v)||v<0))return;
@@ -9397,10 +9399,18 @@ async function startT(t){
   if(resumeDraft){
     curT=t;sessionLog=draft.sessionLog||{};sessionExtra=draft.sessionExtra||[];trainPaused=false;pausedAccumMs=0;
     _resumeElapsedMs=Number(draft.elapsedMs)||0;
+    if(typeof execFocus!=='undefined')execFocus[t]=Number(draft.execFocus)||0; // P1: actieve oefening herstellen (was altijd terug naar 1)
     await renderTrainScreen(t);
     restoreSessionLogToDom(t);
     lastSaveTs=draft.ts;saveState='saved';updateSaveIndicator();
   }else{
+    // P0: een niet-afgeronde, niet-gesynchroniseerde training van een ANDER type/dag mag niet stil
+    // verdwijnen. Bevat de draft echte data → expliciete bevestiging; bij annuleren niet starten (behoud).
+    if(draft && draft.t!==t && draftHasData(draft)){
+      const _when=new Date(draft.ts).toLocaleString('nl-NL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      const ok=await confirmModal('Je hebt een niet-afgeronde training ('+(draft.t||'?')+', laatst opgeslagen '+_when+') die nog niet is opgeslagen. Als je nu '+t+' start, gaat die verloren.',{title:'Niet-afgeronde training',okLabel:'Toch '+t+' starten',cancelLabel:'Annuleren',danger:true});
+      if(!ok) return; // afbreken → draft blijft behouden, geen dataverlies
+    }
     if(draft)clearTrainingDraft();
     curT=t;sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;
     await renderTrainScreen(t);
@@ -9516,6 +9526,14 @@ async function requestWakeLock(){
 }
 async function releaseWakeLock(){ try{ const w=_tkWakeLock; if(w){ _tkWakeLock=null; await w.release(); } }catch(_){ _tkWakeLock=null; } }
 if(typeof document!=='undefined'){ document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && typeof curT!=='undefined' && curT) requestWakeLock(); }); }
+// P0 — persist-flush bij achtergrond/sluiten: zonder dit gaat de verstreken tijd (elapsedMs) én een edit
+// binnen de 1,2s-autosave-debounce verloren bij abrupt sluiten. pagehide dekt app-close/navigatie,
+// visibilitychange 'hidden' dekt tab-wissel/achtergrond op mobiel (waar 'beforeunload' onbetrouwbaar is).
+if(typeof window!=='undefined'){
+  const _flushDraft=()=>{ try{ if(typeof curT!=='undefined' && curT && typeof persistTrainingDraft==='function') persistTrainingDraft(true); }catch(_){} };
+  window.addEventListener('pagehide', _flushDraft);
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') _flushDraft(); });
+}
 function pauseTraining(){
   const btns=document.querySelectorAll('.tact[onclick="pauseTraining()"]');
   if(!trainPaused){
@@ -10030,7 +10048,7 @@ let execNotes={};
 // popups). Transiente sessie-notitie (execNotes); raakt sessionLog/DB/logging niet aan.
 function execAddNote(t){
   const list=(typeof getSessionExs==='function')?getSessionExs(t):[]; const ex=list[execFocus[t]||0]; if(!ex)return;
-  const cur=(execNotes[t]&&execNotes[t][ex.id])||'';
+  const cur=(execNotes[t]&&execNotes[t][ex.id])||(sessionLog[ex.id]&&sessionLog[ex.id].exNote)||''; // P1: val terug op persistente notitie
   closeExecOverlay('exec-pause');
   const el=ensureExecOverlay('exec-note');
   el.innerHTML='<div class="exec-sheet"><div class="exec-sheet-hd"><div class="exec-sheet-t">Notitie</div>'+
@@ -10047,6 +10065,9 @@ function execSaveNote(t){
   if(!ex){ closeExecOverlay('exec-note'); return; }
   const ta=document.getElementById('exec-note-input'); const v=ta?ta.value:'';
   if(!execNotes[t])execNotes[t]={}; execNotes[t][ex.id]=v;
+  // P1-fix: notitie PERSISTENT maken via sessionLog → overleeft autosave/draft/resume (voorheen puur
+  // in-memory en dus verloren bij sluiten). Wordt bij finish in de note-kolom meegeschreven.
+  try{ if(!sessionLog[ex.id])sessionLog[ex.id]={}; sessionLog[ex.id].exNote=v; if(typeof scheduleAutosave==='function')scheduleAutosave(); }catch(_){}
   closeExecOverlay('exec-note'); if(window.toast)toast('Notitie opgeslagen voor deze sessie');
 }
 
@@ -11701,6 +11722,12 @@ function removeWarmupSet(exId,i){
   vals.forEach((v,idx)=>{st.values[idx+1]={kg:v.kg,reps:v.reps};if(v.manual)st.manual[idx+1]=true;});
   const rows=document.getElementById('wu-rows-'+exId);
   if(rows)rows.innerHTML=vals.map((v,idx)=>buildWarmupRow(exId,idx+1)).join('');
+  // P1-fix: sessionLog.wu synchroniseren met de nieuwe (hernummerde) rijen. Zonder dit bleef de
+  // verwijderde opwarmset in sessionLog staan → dook weer op in de note bij finish en bij resume.
+  if(sessionLog[exId]){
+    sessionLog[exId].wu = vals.map(v=>({kg:normNumStr(v.kg),reps:normNumStr(v.reps)}));
+    if(typeof scheduleAutosave==='function')scheduleAutosave();
+  }
 }
 // v306: slim opwarmschema o.b.v. het werkgewicht — zwaarder = meer opwarmsets, lichter = minder.
 function suggestWarmupScheme(workKg){ return CalcCore.calculateWarmup(workKg); } /* F1.5A: canonical shared core (warmup.v1) */
@@ -12005,7 +12032,17 @@ function buildWorkSetRow(exId,i,prefill=null){
       <div class="set-circle setr-ring" id="sc-${exId}-${i}" onclick="toggleSetDone('${exId}',${i})" role="button" tabindex="0" aria-label="Set ${i} afronden"></div>
       <button class="set-more setr-toolbtn" onclick="showSetMenu('${exId}',${i},'work')" aria-label="Meer opties"><svg viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
     </div>
+    <div class="setr-e1rm" id="e1rm-${exId}-${i}" style="grid-column:1/-1;font-size:11px;color:var(--g4);padding:2px 0 0 44px"></div>
   </div>`;
+}
+// P2 — compacte geschatte-1RM-hint onder een werkset ("1RM ≈ x kg"). Deterministisch via de bestaande
+// Epley-core (epley1RM = CalcCore.calculate1RM, e1rm.v1); GEEN AI, geen nieuwe formule. Alleen ≥2 reps
+// (bij 1 rep is e1RM == gewicht → weinig informatief). Puur presentatie, raakt logging/opslag niet.
+function updateSetE1RM(exId,i,effKg,reps){
+  const el=document.getElementById('e1rm-'+exId+'-'+i); if(!el)return;
+  const r=parseInt(reps); const kg=(effKg!=null&&isFinite(effKg))?effKg:null;
+  if(kg&&r&&r>=2&&typeof epley1RM==='function'){ el.textContent='1RM ≈ '+epley1RM(kg,r)+' kg'; }
+  else el.textContent='';
 }
 // v3.3.53 — additieve ± bediening: past het BESTAANDE veld aan en vuurt exact dezelfde
 // input/change-handlers (clamp, logSet, copyToSets, warmup, recompute). Geen aparte logica.
@@ -12213,13 +12250,13 @@ function recomputeCardioFields(exId,cardioType,changedField){
   const outField=cfg.calc.type==='pace'?'pace':'split';
   const hasWatt=cfg.fields.includes('watt') && basis===500; // Concept2-formule geldt alleen bij split/500m
 
-  let distVal=parseFloat(getCardioVal(exId,distF))||null;
+  let distVal=numNL(getCardioVal(exId,distF))||null; // KOMMA-VEILIG (was parseFloat → "5,5" werd 5)
   let timeVal=CardioEngine.parseTime(getCardioVal(exId,'time'));
   let splitVal=CardioEngine.parseTime(getCardioVal(exId,outField));
 
   // Watt ingevuld → eerst vertalen naar een split, die verderop weer tijd/afstand kan voeden.
   if(hasWatt && changedField==='watt'){
-    const w=parseFloat(getCardioVal(exId,'watt'))||null;
+    const w=numNL(getCardioVal(exId,'watt'))||null; // KOMMA-VEILIG
     if(w){
       splitVal=CardioEngine.splitFromWatt500(w);
       setCardioVal(exId,outField,CardioEngine.formatTime(splitVal));
@@ -12255,7 +12292,7 @@ function recomputeCardioFields(exId,cardioType,changedField){
 let cardioSplitMode={};
 let cardioSplits={};
 function numSplitsFor(exId,cfg){
-  const distVal=parseFloat(getCardioVal(exId,cfg.calc?.distField))||cfg.splitTotal;
+  const distVal=numNL(getCardioVal(exId,cfg.calc?.distField))||cfg.splitTotal; // KOMMA-VEILIG
   return Math.max(1,Math.round(distVal/cfg.splitDist));
 }
 function splitRowsHtml(exId,cardioType){
@@ -12301,7 +12338,7 @@ function setCardioSplitMode(exId,cardioType,mode){
 // Automatisch: verdeelt de totale tijd gelijkmatig over alle intervallen.
 function computeAutoSplits(exId,cardioType){
   const cfg=CARDIO_TYPES[cardioType];
-  const distVal=parseFloat(getCardioVal(exId,cfg.calc?.distField))||cfg.splitTotal;
+  const distVal=numNL(getCardioVal(exId,cfg.calc?.distField))||cfg.splitTotal; // KOMMA-VEILIG
   const timeVal=CardioEngine.parseTime(getCardioVal(exId,'time'));
   cardioSplits[exId]=timeVal?CardioEngine.autoSplits(timeVal,distVal,cfg.splitDist):{};
 }
@@ -12413,7 +12450,7 @@ function persistTrainingDraft(silent){
   saveState='saving';updateSaveIndicator();
   try{
     // P0: elapsedMs meebewaren → bij hervatten loopt de totale trainingstijd verder i.p.v. 0.
-    localStorage.setItem('tk_draft_training',JSON.stringify({t:curT,sessionLog,sessionExtra,ts:Date.now(),elapsedMs:currentWorkoutElapsedMs()}));
+    localStorage.setItem('tk_draft_training',JSON.stringify({t:curT,sessionLog,sessionExtra,ts:Date.now(),elapsedMs:currentWorkoutElapsedMs(),execFocus:(typeof execFocus!=='undefined'?execFocus[curT]:0)||0}));
     lastSaveTs=Date.now();saveState='saved';
   }catch(e){saveState='dirty';}
   updateSaveIndicator();
@@ -12433,11 +12470,39 @@ function restoreTrainingDraft(){
   try{return JSON.parse(raw);}catch(e){return null;}
 }
 function clearTrainingDraft(){localStorage.removeItem('tk_draft_training');lastSaveTs=null;saveState='saved';}
+// P0 — bevat een draft daadwerkelijk gelogde (nog niet gesynchroniseerde) trainingsdata? Zo ja, mag hij
+// niet stil gewist worden bij het starten van een ander trainingstype/andere dag.
+function draftHasData(draft){
+  try{
+    const sl=draft&&draft.sessionLog; if(!sl)return false;
+    return Object.keys(sl).some(k=>{ const l=sl[k]; if(!l)return false;
+      return (l.sets&&l.sets.some(s=>s&&(s.kg||s.reps))) ||
+             (l.wu&&l.wu.some(s=>s&&(s.kg||s.reps))) ||
+             (l.cardio&&(l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals||l.cardio.distance)); });
+  }catch(_){ return false; }
+}
+// P0 — centrale draft-guard voor ALLE start-routes (custom/programma/herhalen). Voorkomt dat de ene
+// draft-slot van een lopende, niet-gesynchroniseerde training stil wordt overschreven wanneer een andere
+// training wordt gestart. Retourneert false als de gebruiker annuleert (dan NIET starten → data behouden).
+async function guardExistingDraft(newT){
+  try{
+    const draft=restoreTrainingDraft();
+    if(draft && draft.t!==newT && draftHasData(draft)){
+      const _when=new Date(draft.ts).toLocaleString('nl-NL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      const ok=await confirmModal('Je hebt een niet-afgeronde training ('+(draft.t||'?')+', laatst opgeslagen '+_when+') die nog niet is opgeslagen. Als je nu een andere training start, gaat die verloren.',{title:'Niet-afgeronde training',okLabel:'Toch starten',cancelLabel:'Annuleren',danger:true});
+      if(!ok) return false;
+      clearTrainingDraft();
+    }
+  }catch(_){}
+  return true;
+}
 // Zet eerder gelogde waarden (bij hervatten van een concept-training) terug in de DOM-velden.
 function restoreSessionLogToDom(t){
   const list=getSessionExs(t);
   for(const ex of list){
     const l=sessionLog[ex.id];if(!l)continue;
+    // P1-fix: persistente oefeningsnotitie terug in de in-memory execNotes zodat resume ze toont.
+    if(l.exNote){ if(!execNotes[t])execNotes[t]={}; execNotes[t][ex.id]=l.exNote; }
     (l.wu||[]).forEach((s,idx)=>{
       if(!s)return;const i=idx+1;
       const kgEl=document.getElementById('w-'+ex.id+'-'+i+'-kg');if(kgEl&&s.kg)kgEl.value=s.kg;
@@ -12481,7 +12546,10 @@ function restoreCompletedSetVisualState(exId){
   const l=(typeof sessionLog!=='undefined')?sessionLog[exId]:null;
   if(!l||!l.sets)return;
   l.sets.forEach((s,idx)=>{
-    if(!(s&&(s.kg||s.reps)))return; // geen uitvoeringsdata → niet als afgerond markeren
+    // P1-fix: gebruik de PERSISTENTE done-vlag indien aanwezig; anders terugval op de oude heuristiek
+    // (kg||reps) voor drafts van vóór deze fix. Zo geen false pos/neg meer bij nieuwe sessies.
+    const done = (s && typeof s.done==='boolean') ? s.done : !!(s&&(s.kg||s.reps));
+    if(!done)return;
     const i=idx+1;
     const c=document.getElementById('sc-'+exId+'-'+i); if(c)c.classList.add('done');
     const r=document.getElementById('sr-'+exId+'-'+i); if(r)r.classList.add('done');
@@ -12651,6 +12719,7 @@ function logSet(exId,type,setNum,isWork){
   if(isWork&&effKg&&reps&&BARBELL_EXERCISES.has(exId)){
     showEpleyHint(exId,effKg,parseInt(reps));
   }
+  if(isWork){ try{ updateSetE1RM(exId,setNum,effKg,reps); }catch(_){} } // P2: live "1RM ≈ x kg" onder de set
   updateProgress(curT);
   updateSummary(curT);
   scheduleAutosave();
@@ -12663,6 +12732,9 @@ function toggleSetDone(exId,setNum){
   c.classList.toggle('done');
   // v3.3.53 — kaart weerspiegelt de done-status (presentatie; circle blijft de bron).
   document.getElementById('sr-'+exId+'-'+setNum)?.classList.toggle('done',nowDone);
+  // P1-fix: done-status PERSISTENT maken in sessionLog zodat resume niet op een heuristiek (kg||reps)
+  // hoeft te gokken (false pos/neg bij bodyweight of ingevulde-maar-niet-afgevinkte sets).
+  try{ if(!sessionLog[exId])sessionLog[exId]={}; if(!Array.isArray(sessionLog[exId].sets))sessionLog[exId].sets=[]; if(!sessionLog[exId].sets[setNum-1])sessionLog[exId].sets[setNum-1]={}; sessionLog[exId].sets[setNum-1].done=nowDone; }catch(_){}
   if(nowDone){c.classList.add('just-done');setTimeout(()=>c.classList.remove('just-done'),220);}
   updateProgress(curT);
   updateSummary(curT);
@@ -13161,13 +13233,18 @@ async function finishSession(){
     if(l.cardio && CARDIO_TYPES[l.cardio.type] && (l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals)){
       const cRow=cardioDataToRow(l.cardio.type,l.cardio);
       const extraNote=cRow.extraNote;delete cRow.extraNote;
-      await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:extraNote||'',training_instance_id:activeInstanceId||null,...cRow});saved++;
+      // P1: oefeningsnotitie mee in de note-kolom, als vrije-notitie-deel vóór de afgeleide extraNote
+      // (zodat de bestaande cardio-edit-strip 'm weer als vrije notitie herkent).
+      let _cNote=extraNote||''; if(l.exNote)_cNote=l.exNote+(_cNote?' · '+_cNote:'');
+      await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||null,...cRow});saved++;
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
       const ws=l.sets.filter(s=>s&&(s.kg||s.reps));if(!ws.length)continue;
       const wuNote=l.wu?.filter(s=>s&&s.kg).map(s=>s.kg+'×'+s.reps).join(',');
       // H1: centrale schrijflaag — zelfde rij/afronding, nu via buildStrengthSessionRow()/writeSessionRow().
       const {row,best,setsDetail,bestKg}=buildStrengthSessionRow(ex.id,ws,{date:today,training_type:t,note:wuNote?'Opwarm: '+wuNote:'',instanceId:activeInstanceId});
+      // P1: oefeningsnotitie meeschrijven in de note-kolom (additief; buildStrengthSessionRow ongewijzigd).
+      if(l.exNote)row.note=(row.note?row.note+' · ':'')+'Notitie: '+l.exNote;
       await writeSessionRow(row);
       let isPr=false;
       if(bestKg(best)){const curPr=prFor(ex.id)||0;if(bestKg(best)>curPr){await upsertExerciseGoalField(ex.id,'pr',bestKg(best));isPr=true;}}
@@ -14031,7 +14108,16 @@ async function loadHistory(append=false){
         ${sess.map(s=>{
           const n=exercises.find(e=>e.id===s.exercise_id)?.name||s.exercise_id;
           let v='';
-          if(s.weight&&s.reps) v=`${s.sets||'?'}×${s.reps} @ <strong>${s.weight} kg</strong>${s.rpe?' · RPE '+s.rpe:''}`;
+          // P1-fix: cardio-tak in het logboek. Voorheen toonden running/cycling/swimming/assaultbike een
+          // LEGE regel (geen note-extra) en de rest alleen het note-fragment. Nu gestructureerde weergave
+          // via de bestaande CardioCore-helpers (cardioPerfFromSession/cardioPerfLine) — geen nieuwe rekenlogica.
+          const _exObj=exercises.find(e=>e.id===s.exercise_id);
+          const _ct=(_exObj&&typeof resolveCardioType==='function')?resolveCardioType(_exObj):null;
+          if(_ct&&(s.time_str||s.distance||s.calories)&&typeof cardioPerfFromSession==='function'&&typeof cardioPerfLine==='function'){
+            let _line=''; try{ const _p=cardioPerfFromSession(s,_ct); _line=_p?cardioPerfLine(_p,_ct):''; }catch(_){}
+            v=_line || (s.note?s.note.split('|')[0]:'');
+          }
+          else if(s.weight&&s.reps) v=`${s.sets||'?'}×${s.reps} @ <strong>${s.weight} kg</strong>${s.rpe?' · RPE '+s.rpe:''}`;
           else if(s.note&&s.note.includes('tijd:')) v=s.note.split('|')[0].replace('tijd:','');
           else if(s.note) v=s.note.split('|')[0];
           let prog='';const pv=prevOfSess(s);
@@ -16083,6 +16169,7 @@ async function startCustomTraining(id,resolvedItems){
   if(!resolvedItems)activeInstanceId=null; // idem als bij startT: geen instance-id meenemen buiten het Preview-pad
   const t=customTrainings.find(x=>x.id===id);
   if(!t) return;
+  if(!(await guardExistingDraft('custom_'+id))) return; // P0: bescherm niet-afgeronde andere training
   curT='custom_'+id;
   execFocus[curT]=0; if(typeof execSkipped!=='undefined')execSkipped[curT]=new Set(); // F0.7P/Q: verse start, geen skips
   sessionLog={};sessionExtra=[];
@@ -16306,6 +16393,7 @@ async function padvAccept(){closeModal('m-prog-advies');await launchProgramTrain
 async function launchProgramTrainScreen(adjustment){
   const {blockId,block,prog,rows}=progCheckinCtx;
   const ctxT='prog_'+blockId;
+  if(!(await guardExistingDraft(ctxT))) return; // P0: bescherm niet-afgeronde andere training
   curT=ctxT;sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;
   pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};
   rows.forEach(r=>{
@@ -16655,6 +16743,7 @@ async function startRepeatWorkout(){
   closeModal('m-repeat-workout');
   await ensureVasteTrainingenLoaded();
   const t=vasteTrainingen.some(v=>v.id===repeatT)?repeatT:(vasteTrainingen[0]?.id||'A');
+  if(!(await guardExistingDraft(t))) return; // P0: bescherm niet-afgeronde andere training
   const prefillMap={};
   repeatSessions.forEach(s=>{
     if(!s.weight||!s.reps) return;
@@ -19263,6 +19352,14 @@ var DASHUI=(function(){
         '<div class="dash-today-h">Begeleide training hervatten</div>'+
         '<div class="dash-today-s">Je hebt een begeleide training openstaan — pak hem op waar je was gebleven.</div>'+
         '<button class="dash-today-btn" onclick="GWUI.launch()">▶ Hervatten</button></div>';
+    }
+    // P1-fix: expliciete banner voor een LOPENDE standaardtraining (was er niet → gebruiker kreeg
+    // 'Start training' te zien zonder te weten dat er al één liep). Voorkomt per ongeluk nieuw starten.
+    if(typeof curT!=='undefined' && curT){
+      return '<div class="dash-today"><div class="dash-today-k">Lopende training</div>'+
+        '<div class="dash-today-h">Je hebt een training lopen</div>'+
+        '<div class="dash-today-s">Hervat waar je was gebleven, of rond af.</div>'+
+        '<button class="dash-today-btn" onclick="go(\'s-train-\'+curT.toLowerCase())">▶ Hervatten</button></div>';
     }
     var t=DASH.nextTraining();
     if(t){

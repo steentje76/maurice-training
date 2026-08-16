@@ -9761,10 +9761,12 @@ function applyExecutionFocus(t){
     const nm=(list[idx]&&list[idx].naam)||(cx&&cx.naam)||'Oefening';
     heroC=document.createElement('div'); heroC.className='exfocus-herocard';
     let hc='';
-    // F20-C: MoveKit-poster PRIMAIR (statisch bewegingsbeeld, geen play-knop). YouTube-thumb alleen als er géén poster is.
+    // SPRINT 16-08: VIDEO PRIMAIR op de kaart (gebruikerswens "ik mis de video op de kaart"). Als er een
+    // video (yt) is → video-thumbnail met play-knop als hero-media; anders terugval op de MoveKit-poster
+    // (statisch beeld, geen play). Eén primaire media-zone; geen dubbele poster in de hero.
     var _hp=movekitPosterFor({id:curId,naam:nm});
-    if(_hp) hc+='<div class="exfocus-hero-img" onclick="openExecExplain(\''+t+'\')"><img src="'+_hp+'" alt="'+escHtml(nm)+'" loading="lazy" onerror="this.closest(\'.exfocus-hero-img\').style.display=\'none\'"></div>';
-    else if(yt) hc+='<div class="exfocus-hero-img" onclick="openExecExplain(\''+t+'\')"><img src="https://img.youtube.com/vi/'+yt+'/mqdefault.jpg" alt="'+escHtml(nm)+'" loading="lazy" onerror="this.closest(\'.exfocus-hero-img\').style.display=\'none\'"><span class="exfocus-hero-play">▶</span></div>';
+    if(yt) hc+='<div class="exfocus-hero-img" onclick="openExecExplain(\''+t+'\')"><img src="https://img.youtube.com/vi/'+yt+'/mqdefault.jpg" alt="'+escHtml(nm)+'" loading="lazy" onerror="this.closest(\'.exfocus-hero-img\').style.display=\'none\'"><span class="exfocus-hero-play">▶</span></div>';
+    else if(_hp) hc+='<div class="exfocus-hero-img" onclick="openExecExplain(\''+t+'\')"><img src="'+_hp+'" alt="'+escHtml(nm)+'" loading="lazy" onerror="this.closest(\'.exfocus-hero-img\').style.display=\'none\'"></div>';
     hc+='<div class="exfocus-hero-body">'+
         (tags.length?('<div class="exfocus-hero-tags">'+tags.map(x=>'<span class="exfocus-hero-tag">'+escHtml(x)+'</span>').join('')+'</div>'):'')+
         '<div class="exfocus-hero-nm">'+escHtml(nm)+'</div>'+
@@ -11599,6 +11601,17 @@ function openPlateCalcForEx(exId){
 async function loadEquipment(exId){
   return await sbGet('exercise_equipment','&exercise_id=eq.'+exId+'&order=sort_order.asc');
 }
+// EQUIPMENT MEMORY (persoonlijk, device-niveau) — losstaand van de gym-gedeelde exercise_equipment
+// EN van session-history. Onthoudt JOUW laatste instelling per oefening in localStorage (geen schema).
+// Verdwijnt niet bij het afsluiten van een training. Wordt niet verzonnen: leeg = geen suggestie.
+function eqMemAll(){ try{ return JSON.parse(localStorage.getItem('tk_eqmem')||'{}')||{}; }catch(_){ return {}; } }
+function eqMemGet(exId){ const m=eqMemAll(); return (m[exId]&&m[exId].value)||''; }
+function eqMemSet(exId,val){
+  try{ const m=eqMemAll(); const v=String(val||'').trim();
+    if(v) m[exId]={value:v,ts:Date.now()}; else delete m[exId];
+    localStorage.setItem('tk_eqmem',JSON.stringify(m));
+  }catch(_){}
+}
 function buildEquipmentPanel(exId,eqList){
   const typeOptions=equipmentTypes.map(t=>`<option value="${escHtml(t.label)}">${escHtml(t.label)}</option>`).join('');
   return `<div class="eq-panel" id="eq-panel-${exId}">
@@ -11607,6 +11620,11 @@ function buildEquipmentPanel(exId,eqList){
       <span class="eq-arrow" id="eq-arrow-${exId}">›</span>
     </div>
     <div class="eq-panel-body" id="eq-body-${exId}" style="display:none">
+      <div class="eq-mem" style="margin-bottom:8px">
+        <label class="ilbl" style="font-size:11px;color:var(--g4)">Jouw instelling${eqMemGet(exId)?` · vorige keer: ${escHtml(eqMemGet(exId))}`:''}</label>
+        <input class="inp" id="eq-mem-${exId}" placeholder="bv. Pin 12, Zitting 4" value="${escHtml(eqMemGet(exId))}"
+          onchange="eqMemSet('${exId}',this.value)" style="margin-top:2px">
+      </div>
       ${eqList.map(e=>`<div class="eq-row">
         <span class="eq-label">${escHtml(e.label)}</span>
         <span class="eq-value">${escHtml(e.value)}</span>
@@ -11733,7 +11751,14 @@ function removeWarmupSet(exId,i){
   }
 }
 // v306: slim opwarmschema o.b.v. het werkgewicht — zwaarder = meer opwarmsets, lichter = minder.
-function suggestWarmupScheme(workKg){ return CalcCore.calculateWarmup(workKg); } /* F1.5A: canonical shared core (warmup.v1) */
+// Equipment-aware praktische afronding: barbell → stap 2,5 kg (2× 1,25-schijf) zodat een warm-up
+// niet op 38,75 kg uitkomt maar op 40. Enige betrouwbare materiaalsignaal is BARBELL_EXERCISES;
+// overige oefeningen houden de standaard 0,5-afronding (geen betrouwbare increment-bron → niet verzinnen).
+function suggestWarmupScheme(workKg,exId){
+  var inc=0; // 0 = geen increment → core valt terug op roundKg (huidig gedrag)
+  try{ if(exId && typeof BARBELL_EXERCISES!=='undefined' && BARBELL_EXERCISES.has(exId)) inc=2.5; }catch(_){}
+  return CalcCore.calculateWarmup(workKg, inc);
+} /* F1.5A: canonical shared core (warmup.v1) + equipment-aware increment (barbell 2,5) */
 // Genereert automatisch als werkgewicht 1 bekend is (anders 1RM als terugval). Overschrijft
 // nooit sets die de gebruiker handmatig heeft aangepast, tenzij forceRegen=true.
 function autoGenerateWarmup(exId,forceRegen){
@@ -11742,7 +11767,7 @@ function autoGenerateWarmup(exId,forceRegen){
   let workKg=parseFloat(document.getElementById('s-'+exId+'-1-kg')?.value);
   if(!workKg||isNaN(workKg))workKg=estimatedOneRM(exId)||getOneRM(exId);
   if(!workKg)return;
-  const scheme=suggestWarmupScheme(workKg);
+  const scheme=suggestWarmupScheme(workKg,exId); // equipment-aware afronding (barbell 2,5)
   const manual=forceRegen?{}:st.manual;
   if(forceRegen)st.manual={};
   st.count=Math.max(st.count,scheme.length);
@@ -13981,6 +14006,29 @@ function recoveryScoreFrom(dfInfo, recRows, extra){
   if(extra && extra.voelt) input.voelt=extra.voelt;
   return CalcCore.recoveryScore(input);
 }
+// P1 — UNIVERSELE recovery-aanpassing: bepaalt deterministisch de sets/RPE-delta voor vandaag uit de
+// BESTAANDE data (dagfactor + spierherstel) via DecisionCore.computeProgAdjustment. Hergebruikt exact
+// dezelfde regels als de programmaflow; geen check-in vereist (voelt/pijn = null indien afwezig). Geen AI.
+// Retourneert een neutrale (0,0)-aanpassing als er geen herstel-data is (geen fabricage).
+async function recoveryAdjustmentForToday(muscleNames){
+  try{
+    const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35');
+    const dfInfo=dagfactor(hrvDagFactorPersonal(hd), (hd&&hd[0])?hd[0].sleep:null, (hd&&hd[0])?hd[0].cyclus_fase:null);
+    let recRows=[]; try{ if(Array.isArray(muscleNames)&&muscleNames.length) recRows=await getRelevantMuscleRecovery(muscleNames); }catch(_){}
+    const adj=computeProgAdjustment(dfInfo.factor, recRows, null, null)||{rpeDelta:0,setsDelta:0,redenen:[]}; // null = geen aanpassing nodig
+    const rs=recoveryScoreFrom(dfInfo, recRows);
+    return { rpeDelta:adj.rpeDelta||0, setsDelta:adj.setsDelta||0, redenen:adj.redenen||[], score:(rs&&rs.score!=null?rs.score:null), band:(rs&&rs.band)||'onbekend', factor:dfInfo.factor };
+  }catch(_){ return { rpeDelta:0, setsDelta:0, redenen:[], score:null, band:'onbekend' }; }
+}
+// Korte, deterministische "wat + waarom"-melding bij een recovery-aanpassing (geen AI). Toont niets als er niets aangepast is.
+function recoveryAdjustToast(adj){
+  if(!adj || (!adj.setsDelta && !adj.rpeDelta)) return;
+  const parts=[];
+  if(adj.setsDelta) parts.push((adj.setsDelta>0?'+':'')+adj.setsDelta+' set');
+  if(adj.rpeDelta) parts.push('RPE '+(adj.rpeDelta>0?'+':'')+adj.rpeDelta);
+  const scoreTxt=(adj.score!=null)?('Herstel '+adj.score+'/100 · '):'';
+  if(typeof toast==='function') toast(scoreTxt+'vandaag aangepast: '+parts.join(', '));
+}
 // v3.3.47 P3 — begrijpelijke dagfactor-status uit de bestaande dagfactor-waarde.
 // Vier niveaus, kleuren consistent met de heroKleur-banden. Geen nieuwe data.
 function dagfactorStatus(f){
@@ -16210,11 +16258,21 @@ async function startCustomTraining(id,resolvedItems){
       sessionExtra.push({...item,_t:curT,_preloaded:true});
     }
   }else{
+    // P1 UNIVERSELE recovery-aanpassing (ook buiten de programmaflow): bepaal éénmalig de sets/RPE-delta
+    // uit vandaag's herstel en pas 'm toe op de BASISwaarden (4×6-8@8) — idempotent (nooit compounding,
+    // custom start altijd vers; delta uit config, niet uit een eerder-aangepaste waarde). Deterministisch.
+    let _cAdj={rpeDelta:0,setsDelta:0,score:null};
+    try{
+      const _mus=[]; (t.exercises||[]).forEach(id=>{const e=exercises.find(x=>x.id===id); if(e&&Array.isArray(e.muscle_primary))_mus.push(...e.muscle_primary);});
+      _cAdj=await recoveryAdjustmentForToday([...new Set(_mus)]);
+    }catch(_){}
     for(const exId of (t.exercises||[])){
       const ex=exercises.find(e=>e.id===exId);
       if(!ex) continue;
       const cardioType=resolveCardioType(ex);
       const exType=cardioType||ex.type||'strength';
+      let _bSets=4, _bRpe=8;
+      if(_cAdj.setsDelta||_cAdj.rpeDelta){ _bSets=Math.max(1,4+(_cAdj.setsDelta||0)); _bRpe=Math.max(5,Math.min(10,8+(_cAdj.rpeDelta||0))); }
       // Werkblok E: yt/muscles toegevoegd — deze ontbraken hier volledig, waardoor een
       // rechtstreeks (niet via Preview) gestarte custom training geen video/spiergroep-pills
       // toonde, terwijl vaste trainingen (via TRAIN_CFG) dit altijd al hadden. Geen "tip" hier:
@@ -16224,9 +16282,10 @@ async function startCustomTraining(id,resolvedItems){
       // (Werkblok B/C-Deferred, ongewijzigd) — alleen weergave-only velden aangevuld.
       const extra=cardioType
         ?{id:ex.id,naam:ex.name,type:exType,_t:curT,_preloaded:true,yt:ex.yt||null,muscles:{p:ex.muscle_primary||[],s:ex.muscle_secondary||[]}}
-        :{id:ex.id,naam:ex.name,type:exType,sets:4,reps:'6-8',rpe:'8',_t:curT,_preloaded:true,yt:ex.yt||null,muscles:{p:ex.muscle_primary||[],s:ex.muscle_secondary||[]}};
+        :{id:ex.id,naam:ex.name,type:exType,sets:_bSets,reps:'6-8',rpe:String(_bRpe),_t:curT,_preloaded:true,yt:ex.yt||null,muscles:{p:ex.muscle_primary||[],s:ex.muscle_secondary||[]}};
       sessionExtra.push(extra);
     }
+    recoveryAdjustToast(_cAdj); // toont "wat + waarom" wanneer er echt is aangepast
   }
   buildCustomTrainScreen(t);
   cleanupOtherTrainScreens('s-train-custom-'+t.id);

@@ -84,15 +84,24 @@
     return base * pct / 100;
   }
 
+  // --- rounding_increment.v1 --- praktische afronding op een beschikbare gewichtsstap (increment).
+  // Puur/deterministisch. inc ontbreekt/≤0 → terugval op roundKg (0,5). Voorbeeld: 38,75 kg, inc 2,5 → 40.
+  function roundToIncrement(kg, inc) {
+    if (!(inc > 0)) return roundKg(kg);
+    return Math.round(kg / inc) * inc;
+  }
   // --- warmup.v1 --- exact gelijk aan legacy suggestWarmupScheme (index.html r.10957-10964).
   // Puur; gebruikt roundKg (rounding.v1). Legacy-semantiek 1-op-1: dezelfde drempels/percentages/reps.
-  function calculateWarmup(workKg) {
+  // OPTIONEEL increment (equipment-aware praktische afronding): meegegeven → roundToIncrement, anders roundKg
+  // (achterwaarts compatibel; bestaande callers zonder increment houden exact het oude gedrag).
+  function calculateWarmup(workKg, increment) {
     var pcts;
     if (workKg >= 120) pcts = [[0.4, 8], [0.55, 5], [0.7, 3], [0.8, 2], [0.9, 1]];
     else if (workKg >= 80) pcts = [[0.4, 8], [0.6, 5], [0.75, 3], [0.9, 1]];
     else if (workKg >= 40) pcts = [[0.5, 6], [0.7, 4], [0.85, 2]];
     else pcts = [[0.5, 8], [0.75, 4]];
-    return pcts.map(function (pr) { return { kg: roundKg(workKg * pr[0]), reps: pr[1] }; });
+    var rnd = (increment > 0) ? function (v) { return roundToIncrement(v, increment); } : roundKg;
+    return pcts.map(function (pr) { return { kg: rnd(workKg * pr[0]), reps: pr[1] }; });
   }
 
   // --- recovery.v1 --- exact gelijk aan legacy rpeMultiplier (r.15318-15324) + computeMuscleRecoveryPct
@@ -225,6 +234,7 @@
     calculateVolume: calculateVolume,
     applyPercentage: applyPercentage,
     calculateWarmup: calculateWarmup,
+    roundToIncrement: roundToIncrement,
     rpeMultiplier: rpeMultiplier,
     calculateMuscleRecoveryPct: calculateMuscleRecoveryPct,
     slaapDagFactor: slaapDagFactor,

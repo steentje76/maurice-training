@@ -5021,7 +5021,7 @@ function isCardioEx(ex){return !!resolveCardioType(ex);}
 // voor ELK cardio-apparaat verlopen via deze ene set functies — geen aparte logica per type,
 // alleen configuratie via CARDIO_TYPES.calc (distField/basis/type). Zuivere functies, geen DOM.
 const CardioEngine = { /* F1.12: canonical shared CardioCore (cardio_time/split/power .v1) */
-  parseTime(str){ return CardioCore.parseTime(str); },
+  parseTime(str){ return CardioCore.parseTime(typeof str==='string'?str.replace(/,/g,'.'):str); }, // NL-komma in pace/tijd (bv. 1:52,425) → punt vóór parse; behoudt subseconde-nauwkeurigheid
   formatTime(sec){ return CardioCore.formatTime(sec); },
   splitFromDistTime(dist,timeSec,basis){ return CardioCore.splitFromDistTime(dist,timeSec,basis); },
   timeFromDistSplit(dist,splitSec,basis){ return CardioCore.timeFromDistSplit(dist,splitSec,basis); },
@@ -7918,7 +7918,7 @@ async function renderCheckinConditions(){
 // ══════════════════════════════════════════════════════════
 // Tijd-string (mm:ss of h:mm:ss) omzetten naar seconden — gedeelde helper,
 // ook gebruikt door de cardio-splitberekening en getest in logic_tests.js.
-function parseTimeToSec(str){ return CardioCore.parseTime(str); } /* F1.12: canonical CardioCore (cardio_time.v1) */
+function parseTimeToSec(str){ return CardioCore.parseTime(typeof str==='string'?str.replace(/,/g,'.'):str); } /* F1.12: canonical CardioCore (cardio_time.v1); NL-komma → punt vóór parse (pace-precisie behouden) */
 
 // Verzamelt alle ingevulde werksets (kg/reps/rpe) voor een gerenderde oefening-body,
 // ongeacht of dit de trainingsscreen of de Losse oefening modal is (zelfde DOM-ids).

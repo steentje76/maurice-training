@@ -9598,7 +9598,15 @@ function applySessionRecovery(t,list){
     const baseSets=parseInt(ex.sets), baseRpe=parseFloat(ex.rpe);
     const outSets = isFinite(baseSets) ? Math.max(1, baseSets + (adj.setsDelta||0)) : ex.sets;
     const outRpe  = isFinite(baseRpe)  ? String(Math.max(5, Math.min(10, baseRpe + (adj.rpeDelta||0)))) : ex.rpe;
-    return {...ex, sets:outSets, rpe:outRpe, _rxAdjusted:true};
+    const out={...ex, sets:outSets, rpe:outRpe, _rxAdjusted:true, _rxSetsDelta:(adj.setsDelta||0), _rxRpeDelta:(adj.rpeDelta||0)};
+    // C3-fix: verlaagt recovery de RPE, herbereken het werkgewicht deterministisch op DEZELFDE factor
+    // als Guided (recoveryWeightFactor), zodat getoond gewicht en RPE-label bij elkaar horen. Idempotent:
+    // getSessionExs herbouwt de basis bij elke render, dus de factor compound niet.
+    if(adj.rpeDelta && ex.suggestedWeight!=null && isFinite(parseFloat(ex.suggestedWeight))){
+      out.suggestedWeight = roundKg(parseFloat(ex.suggestedWeight) * recoveryWeightFactor(ex.reps, adj.rpeDelta));
+      out._rxWeightAdjusted = true;
+    }
+    return out;
   });
 }
 function getSessionExs(t){
@@ -9662,8 +9670,8 @@ async function renderTrainScreen(t){
     let prefillData=window._prefillMap?.[ex.id]||null;
     if(prevS){
       if(prevS.weight&&prevS.reps){
-        // v3.3.54 Deel 1 — premium "vorige keer" + "vandaag mogelijk" (uit computeProgression).
-        prevBlockHtml=buildPrevBlock(prevS);
+        // "Vorige keer"-blok wordt NA de prefill-bepaling gebouwd — het heeft de actuele
+        // prescription (rxWeight) nodig en mag geen eigen "vorige+delta"-getal meer tonen.
         if(!window._prevBestMap)window._prevBestMap={};
         window._prevBestMap[ex.id]=parseFloat(prevS.weight)||null; // Deel 6 — vergelijking bij afronden
       } else if(prevS.time_str||prevS.note){
@@ -9681,6 +9689,10 @@ async function renderTrainScreen(t){
     } else if(prevS&&prevS.weight&&prevS.reps){
       prefillData={kg:prevS.weight, reps:prevS.reps, rpe:prevS.rpe, sets:prevS.sets||4};
     }
+    // ÉÉN prescription-waarheid: exact het gewicht dat de gebruiker ook echt ziet (prefill.kg, anders
+    // het canonical resolver-gewicht). Coaching/"Vorige keer" leiden hier ALLEEN van af (geen tweede getal).
+    const rxWeight=(prefillData&&prefillData.kg!=null)?prefillData.kg:(ex.suggestedWeight!=null?ex.suggestedWeight:null);
+    if(prevS&&prevS.weight&&prevS.reps) prevBlockHtml=buildPrevBlock(prevS, ex, rxWeight);
 
     const isDefault=(TRAIN_CFG[t]||[]).some(e=>e.id===ex.id);
     // v3.3.25: deel-knop voor persoonlijke oefeningen — was al mogelijk voor eigen
@@ -9705,7 +9717,7 @@ async function renderTrainScreen(t){
       <div class="ex-body" id="body-${ex.id}">
         ${ex.tip?`<div style="background:var(--g1);border-left:3px solid var(--y);padding:8px 12px;font-size:12px;color:var(--g4);margin:8px 14px;border-radius:0 8px 8px 0">💡 ${ex.tip}</div>`:''}
         ${buildVideoMuscle(ex)}
-        ${buildIntelligenceCard(ex,prevS)}
+        ${buildIntelligenceCard(ex,prevS,rxWeight)}
         ${BARBELL_EXERCISES.has(ex.id)?buildRmPanel(ex):''}
         ${buildEquipmentPanel(ex.id,eqList)}
         ${bodyHTML}
@@ -9800,17 +9812,19 @@ function applyExecutionFocus(t){
     const nm=(list[idx]&&list[idx].naam)||(cx&&cx.naam)||'Oefening';
     heroC=document.createElement('div'); heroC.className='exfocus-herocard';
     let hc='';
-    // SPRINT 16-08: VIDEO PRIMAIR op de kaart (gebruikerswens "ik mis de video op de kaart"). Als er een
-    // video (yt) is → video-thumbnail met play-knop als hero-media; anders terugval op de MoveKit-poster
-    // (statisch beeld, geen play). Eén primaire media-zone; geen dubbele poster in de hero.
-    var _hp=movekitPosterFor({id:curId,naam:nm});
-    if(yt) hc+='<div class="exfocus-hero-img" onclick="openExecExplain(\''+t+'\')"><img src="https://img.youtube.com/vi/'+yt+'/mqdefault.jpg" alt="'+escHtml(nm)+'" loading="lazy" onerror="this.closest(\'.exfocus-hero-img\').style.display=\'none\'"><span class="exfocus-hero-play">▶</span></div>';
-    else if(_hp) hc+='<div class="exfocus-hero-img" onclick="openExecExplain(\''+t+'\')"><img src="'+_hp+'" alt="'+escHtml(nm)+'" loading="lazy" onerror="this.closest(\'.exfocus-hero-img\').style.display=\'none\'"></div>';
+    // VIDEO PRIMAIR op de kaart via één media-owner (resolveExerciseMedia): lokale MoveKit-.mp4 →
+    // YouTube → poster → niets. Thumbnail = poster (of yt-thumb); play-knop alleen als er echt video is.
+    // De modal (openExecExplain) speelt de juiste bron af. Eén primaire media-zone; geen dubbele poster.
+    var _media=resolveExerciseMedia(list[idx]||{id:curId,naam:nm,yt:yt});
+    var _hp=(_media.poster)||movekitPosterFor({id:curId,naam:nm});
+    var _hasVid=(_media.kind==='mp4'||_media.kind==='yt');
+    var _thumb=(_media.kind==='yt')?('https://img.youtube.com/vi/'+_media.src+'/mqdefault.jpg'):(_hp||null);
+    if(_thumb) hc+='<div class="exfocus-hero-img" onclick="openExecExplain(\''+t+'\')"><img src="'+_thumb+'" alt="'+escHtml(nm)+'" loading="lazy" onerror="this.closest(\'.exfocus-hero-img\').style.display=\'none\'">'+(_hasVid?'<span class="exfocus-hero-play">▶</span>':'')+'</div>';
     hc+='<div class="exfocus-hero-body">'+
         (tags.length?('<div class="exfocus-hero-tags">'+tags.map(x=>'<span class="exfocus-hero-tag">'+escHtml(x)+'</span>').join('')+'</div>'):'')+
         '<div class="exfocus-hero-nm">'+escHtml(nm)+'</div>'+
         (tip?'<div class="exfocus-hero-desc">'+escHtml(tip)+'</div>':'')+
-        '<button class="exfocus-hero-vid" onclick="openExecExplain(\''+t+'\')">▶ '+(yt?'Bekijk video &amp; uitleg':'Techniek &amp; uitleg')+'</button>'+
+        '<button class="exfocus-hero-vid" onclick="openExecExplain(\''+t+'\')">▶ '+(_hasVid?'Bekijk video &amp; uitleg':'Techniek &amp; uitleg')+'</button>'+
       '</div>';
     heroC.innerHTML=hc; head.insertAdjacentElement('afterend',heroC);
   }catch(e){}
@@ -10006,16 +10020,15 @@ function openExecExplain(t){
   const ex=(typeof exercises!=='undefined'&&exercises.find)?(exercises.find(e=>e.id===cur.id)||cur):cur;
   const nm=escHtml(ex.naam||cur.naam||'Oefening');
   let body='';
-  // Video-PRIMAIR in de modal (op verzoek): bestaat er een echte video, dan tonen we de klikbare
-  // video-thumb met play-knop i.p.v. de statische poster. Zonder video → poster als terugval;
-  // zonder beide → nette melding. Geen fake play-knop op een statische poster.
-  var _ep=(typeof movekitPosterFor==='function')?movekitPosterFor(ex):null;
-  var _yt=ex.yt;
-  if(_yt){
-    body+='<div class="vid-wrap" onclick="loadVid(this,\''+_yt+'\')"><img src="https://img.youtube.com/vi/'+_yt+'/mqdefault.jpg" alt="'+nm+'" loading="lazy" onerror="this.parentElement.style.display=\'none\'"><div class="vid-play">▶</div><div class="vid-label">▶ '+nm+' — techniek video</div></div>';
-    _yt=null; // video is hier al de primaire media (geen dubbele knop onderaan)
-  } else if(_ep){
-    body+='<div class="vid-wrap vid-poster" id="exec-poster-vid"><img src="'+_ep+'" alt="'+nm+'" loading="lazy" onerror="this.parentElement.style.display=\'none\'"><div class="vid-label">'+nm+' — bewegingsbeeld</div></div>';
+  // VIDEO-PRIMAIR via één media-owner (resolveExerciseMedia): lokale MoveKit-.mp4 speelt nu ook
+  // tijdens de training (was eerder onzichtbaar), anders YouTube, anders poster, anders nette melding.
+  var _media=resolveExerciseMedia(ex);
+  if(_media.kind==='mp4'){
+    body+='<div class="vid-wrap"><video controls preload="metadata" playsinline'+(_media.poster?(' poster="'+_media.poster+'"'):'')+' style="width:100%;display:block;border-radius:12px" src="'+_media.src+'"></video><div class="vid-label">'+nm+' — techniek video</div></div>';
+  } else if(_media.kind==='yt'){
+    body+='<div class="vid-wrap" onclick="loadVid(this,\''+_media.src+'\')"><img src="https://img.youtube.com/vi/'+_media.src+'/mqdefault.jpg" alt="'+nm+'" loading="lazy" onerror="this.parentElement.style.display=\'none\'"><div class="vid-play">▶</div><div class="vid-label">▶ '+nm+' — techniek video</div></div>';
+  } else if(_media.kind==='poster'){
+    body+='<div class="vid-wrap vid-poster" id="exec-poster-vid"><img src="'+_media.src+'" alt="'+nm+'" loading="lazy" onerror="this.parentElement.style.display=\'none\'"><div class="vid-label">'+nm+' — bewegingsbeeld</div></div>';
   } else {
     body+='<div class="exec-pausecard-s" style="padding:0 2px 10px">Bewegingsbeeld voor deze oefening is nog niet beschikbaar.</div>';
   }
@@ -10155,20 +10168,17 @@ function toggleIntelCard(exId){
   if(open)_intelInjectPoster(exId);
 }
 // Bouwt de compacte, inklapbare Intelligence Card. Lege string = geen asset → oude UI blijft.
-function buildIntelligenceCard(ex,prevS){
+function buildIntelligenceCard(ex,prevS,rxWeight){
   const a=getExerciseAsset(ex);
   if(!a)return '';
   const first=!prevS; // Trigger A: eerste keer (geen sessiehistorie) → open
-  // PERSOONLIJKE coaching: UITSLUITEND uit echte data (vorige sessie via DecisionCore/computeProgression).
-  // Geen data → geen persoonlijk blok (geen fake personalisatie). Algemene techniek staat los eronder.
+  // PERSOONLIJKE coaching: READ-ONLY uit de canonieke prescription-truth (buildPrescriptionContract).
+  // Berekent NOOIT zelf een gewicht; toont uitsluitend het actuele voorgestelde gewicht + waarom.
+  // Geen data → geen persoonlijk blok (geen fake personalisatie).
   let personalCoach='';
   try{
-    if(prevS&&prevS.weight&&prevS.reps&&prevS.rpe!=null&&prevS.rpe!==''){
-      const prog=computeProgression(parseFloat(prevS.rpe),parseFloat(prevS.weight));
-      const _prevTxt=`Vorige keer: ${prevS.weight} kg × ${prevS.reps} @RPE ${prevS.rpe}. `;
-      if(prog&&prog.delta>0)personalCoach=_prevTxt+`Vandaag ${roundKg(parseFloat(prevS.weight)+prog.delta)} kg mogelijk — gecontroleerde uitvoering.`;
-      else if(prog&&prog.delta===0)personalCoach=_prevTxt+`Houd ${prevS.weight} kg aan en focus op strakke techniek.`;
-      else personalCoach=_prevTxt+`Houd het gecontroleerd — techniek gaat vandaag boven gewicht.`;
+    if(prevS&&prevS.weight&&prevS.reps){
+      personalCoach=buildPrescriptionContract(ex, prevS, rxWeight).coaching||'';
     }
   }catch(e){}
   const tech=(a.technique||[]).slice(0,3).map(x=>`<li>${escHtml(x)}</li>`).join('');
@@ -12672,18 +12682,18 @@ function prevEmptyBlock(){
     '<div class="prev2-empty-msg">Nog geen vorige training voor deze oefening — je eerste resultaat wordt vanaf nu je referentie.</div>'+
   '</div>';
 }
-function buildPrevBlock(prevS){
+function buildPrevBlock(prevS, ex, rxWeight){
   if(!(prevS&&prevS.weight&&prevS.reps))return '';
   const w=prevS.weight,r=prevS.reps,rpe=(prevS.rpe!=null&&prevS.rpe!=='')?parseFloat(prevS.rpe):null;
   let today='';
-  const prog=(rpe!=null)?computeProgression(rpe,parseFloat(w)):null;
-  if(prog){
-    // F17 — koppel deze hint expliciet aan "vorige keer" (staat onder de "Vorige keer"-kop) i.p.v.
-    // het woord "Vandaag" te herhalen; dat botste met de autoritatieve "◎ Vandaag / Voorgesteld"-doelkaart.
-    // Getal/kleur/richting blijven ONGEWIJZIGD uit DecisionCore.computeProgression — alleen presentatie.
-    if(prog.delta>0)today=`<div class="prev2-today up">↑ Je had nog marge · richting ${roundKg(parseFloat(w)+prog.delta)} kg</div>`;
-    else if(prog.delta===0)today=`<div class="prev2-today keep">→ Je zat goed op niveau · houd ${w} kg aan</div>`;
-    else today=`<div class="prev2-today down">↓ Was zwaar · focus op techniek</div>`;
+  // READ-ONLY: verwijs naar de ACTUELE prescription (rxWeight = zelfde getal als de VANDAAG-kaart),
+  // nooit een eigen "vorige gewicht + delta". Zo kan hier nooit een tweede, afwijkend advies staan.
+  const sug=(rxWeight!=null&&isFinite(parseFloat(rxWeight)))?parseFloat(rxWeight):null;
+  if(sug!=null){
+    const pw=parseFloat(w), _s=String(sug).replace('.',','), _reps=(ex&&ex.reps!=null)?ex.reps:null;
+    if(sug<pw) today=`<div class="prev2-today keep">→ Vandaag ${_s} kg${_reps!=null?(' · doel '+_reps+' reps'):''}</div>`;
+    else if(sug>pw) today=`<div class="prev2-today up">↑ Vandaag ${_s} kg volgens je opbouw</div>`;
+    else today=`<div class="prev2-today keep">→ Vandaag ${_s} kg (gelijk aan vorige keer)</div>`;
   }
   return `<div class="ex-prev prev2">
     <div class="prev2-lbl">Vorige keer</div>
@@ -14116,6 +14126,75 @@ function recoveryWeightFactor(reps, rpeDelta){
   const adj=CalcCore.calculateWorkingWeight(1000, r, Math.max(5,Math.min(10, 8+rpeDelta)));
   if(!base||!adj) return 1;
   return adj/base;
+}
+// ── ÉÉN CANONIEKE PRESCRIPTION-TRUTH ──────────────────────────────────────
+// buildPrescriptionContract: de ENIGE bron voor "wat doe je vandaag" per oefening.
+// PUUR + READ-ONLY: het berekent NOOIT een tweede gewicht. Het leest het reeds
+// autoritatief bepaalde werkgewicht (rxWeight = getoonde prefill.kg, anders ex.suggestedWeight)
+// en formuleert previous/target/prescription/rationale/coaching. Coaching/UI leest hiervan af.
+// previous = ALLEEN historische context (nooit als actueel advies gepresenteerd).
+function buildPrescriptionContract(ex, prevS, rxWeight){
+  ex=ex||{};
+  const prev = (prevS&&prevS.weight&&prevS.reps) ? {
+    weight:parseFloat(prevS.weight), reps:prevS.reps,
+    rpe:(prevS.rpe!=null&&prevS.rpe!=='')?parseFloat(prevS.rpe):null, date:prevS.date||null
+  } : null;
+  let w=null;
+  if(rxWeight!=null && isFinite(parseFloat(rxWeight))) w=parseFloat(rxWeight);
+  else if(ex.suggestedWeight!=null && isFinite(parseFloat(ex.suggestedWeight))) w=parseFloat(ex.suggestedWeight);
+  const rpeOut=(ex.rpe!=null&&ex.rpe!=='')?ex.rpe:null;
+  const prescription={
+    weight:w,                                   // DE enige werkgewicht-waarheid (of null → geen fabricatie)
+    sets:(ex.sets!=null?ex.sets:null),
+    reps:(ex.reps!=null?ex.reps:null),
+    rpe:rpeOut,
+    basis:(w==null)?'none':(ex._rxWeightAdjusted?'recovery':'target'),
+    recoveryApplied:{ setsDelta:(ex._rxSetsDelta||0), rpeDelta:(ex._rxRpeDelta||0), weightAdjusted:!!ex._rxWeightAdjusted }
+  };
+  const via=[];
+  if(prev && w!=null){
+    if(prev.reps!=null && ex.reps!=null && String(prev.reps)!==String(ex.reps)) via.push('rep-range');
+    if(prescription.recoveryApplied.rpeDelta||prescription.recoveryApplied.setsDelta||prescription.recoveryApplied.weightAdjusted) via.push('recovery');
+    if(prev.weight!=null && w>prev.weight) via.push('progressie');
+  }
+  const rationale={ from:prev, via:via, to:prescription };
+  // coaching = ÉÉN zin, uitsluitend afgeleid van previous + prescription (nooit een eigen getal).
+  let coaching='';
+  if(prev){
+    const _pw=String(prev.weight).replace('.',',');
+    const prevTxt='Vorige keer: '+_pw+' kg × '+prev.reps+(prev.rpe!=null?(' @RPE '+prev.rpe):'')+'.';
+    if(w!=null){
+      const _w=String(w).replace('.',',');
+      const todayTxt='Vandaag: '+_w+' kg'+((ex.sets!=null&&ex.reps!=null)?(' × '+ex.sets+' × '+ex.reps):'')+(rpeOut!=null?(' @RPE '+rpeOut):'')+'.';
+      let why='';
+      if(via.indexOf('rep-range')!==-1 && w<prev.weight) why=' Lichter omdat het doel meer herhalingen ('+ex.reps+') is dan vorige keer.';
+      else if(via.indexOf('recovery')!==-1 && (prescription.recoveryApplied.rpeDelta<0||prescription.recoveryApplied.weightAdjusted)) why=' Iets lichter, afgestemd op je herstel vandaag.';
+      else if(via.indexOf('progressie')!==-1) why=' Zwaarder dan vorige keer volgens je opbouw.';
+      else if(w===prev.weight) why=' Gelijk aan vorige keer volgens je schema.';
+      coaching=prevTxt+' '+todayTxt+why;
+    } else {
+      coaching=prevTxt; // geen prescription-gewicht bekend → geen concurrerend "vandaag"-getal
+    }
+  }
+  return { previous:prev, target:{ reps:(ex.reps!=null?ex.reps:null), rpe:rpeOut }, prescription:prescription, rationale:rationale, coaching:coaching };
+}
+// ── ÉÉN MEDIA-OWNER ───────────────────────────────────────────────────────
+// resolveExerciseMedia: één beslissing voor álle renderers. Prioriteit:
+// 1) lokale MoveKit .mp4 (ex.video / ExerciseAssetProvider) 2) YouTube (ex.yt) 3) poster 4) niets.
+// Zo blijft een bestaande MoveKit-video niet onzichtbaar doordat de UI alleen yt las.
+function resolveExerciseMedia(ex){
+  ex=ex||{};
+  let mp4=ex.video||null;
+  if(!mp4 && ex.canonicalId){
+    try{ if(typeof ExerciseAssetProvider!=='undefined' && ExerciseAssetProvider.hasVideo && ExerciseAssetProvider.hasVideo(ex.canonicalId)){ const v=ExerciseAssetProvider.video(ex.canonicalId); mp4=v?v.file:null; } }catch(e){}
+  }
+  const yt=ex.yt||null;
+  let poster=null;
+  try{ if(typeof movekitPosterFor==='function') poster=movekitPosterFor(ex)||null; }catch(e){}
+  if(mp4) return { kind:'mp4', src:mp4, poster:poster };
+  if(yt)  return { kind:'yt', src:yt, poster:poster };
+  if(poster) return { kind:'poster', src:poster };
+  return { kind:'none' };
 }
 // UNIVERSELE RECOVERY voor de Guided prescription: past de DecisionCore-aanpassing toe op het GW-plan
 // (sets + gewicht), op KOPIEËN. Idempotent — één keer bij start; GW bewaart het aangepaste plan in

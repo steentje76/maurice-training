@@ -127,5 +127,18 @@ const g3 = applyRecoveryToGuidedPlan(cloneBase(), {setsDelta:-1, rpeDelta:-0.5})
 eq(g3.items[0].sets, g1.items[0].sets, 'idempotent: sets identiek bij herhaald op basis');
 eq(g3.items[0].weight, g1.items[0].weight, 'idempotent: gewicht identiek bij herhaald op basis');
 
+// ── C3: recovery herberekent OOK het werkgewicht zodat gewicht + RPE-label bij elkaar horen ──
+sessionRxAdj = { W: { setsDelta:0, rpeDelta:-0.5 } };
+const wItem=[{id:'bench',type:'strength',sets:4,rpe:'8',reps:5,suggestedWeight:100}];
+let wOut=applySessionRecovery('W', wItem);
+ok(wOut[0].suggestedWeight < 100, 'C3: lagere RPE → lichter werkgewicht (niet 100)');
+eq(wOut[0]._rxWeightAdjusted, true, 'C3: gewicht gemarkeerd als recovery-aangepast');
+eq(wOut[0].rpe, '7.5', 'C3: RPE-label 8→7.5 hoort bij het lichtere gewicht');
+let wOut2=applySessionRecovery('W', wItem);
+eq(wOut2[0].suggestedWeight, wOut[0].suggestedWeight, 'C3: idempotent (herhaald op basis = zelfde gewicht)');
+eq(wItem[0].suggestedWeight, 100, 'C3: basis-item niet gemuteerd (kopie)');
+sessionRxAdj = { W:{ setsDelta:-1, rpeDelta:0 } };
+eq(applySessionRecovery('W', wItem)[0].suggestedWeight, 100, 'C3: zonder rpeDelta blijft het gewicht ongemoeid');
+
 console.log('\nUniversele recovery: RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail ? 1 : 0);

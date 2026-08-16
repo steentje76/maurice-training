@@ -10169,13 +10169,16 @@ function buildIntelligenceCard(ex,prevS){
   const a=getExerciseAsset(ex);
   if(!a)return '';
   const first=!prevS; // Trigger A: eerste keer (geen sessiehistorie) → open
-  let coach='Focus op techniek en een gecontroleerde uitvoering.';
+  // PERSOONLIJKE coaching: UITSLUITEND uit echte data (vorige sessie via DecisionCore/computeProgression).
+  // Geen data → geen persoonlijk blok (geen fake personalisatie). Algemene techniek staat los eronder.
+  let personalCoach='';
   try{
     if(prevS&&prevS.weight&&prevS.reps&&prevS.rpe!=null&&prevS.rpe!==''){
       const prog=computeProgression(parseFloat(prevS.rpe),parseFloat(prevS.weight));
-      if(prog&&prog.delta>0)coach=`Vandaag ${roundKg(parseFloat(prevS.weight)+prog.delta)} kg mogelijk. Focus op een gecontroleerde uitvoering.`;
-      else if(prog&&prog.delta===0)coach=`Houd ${prevS.weight} kg aan en focus op strakke techniek.`;
-      else coach='Houd het gecontroleerd — techniek gaat vandaag boven gewicht.';
+      const _prevTxt=`Vorige keer: ${prevS.weight} kg × ${prevS.reps} @RPE ${prevS.rpe}. `;
+      if(prog&&prog.delta>0)personalCoach=_prevTxt+`Vandaag ${roundKg(parseFloat(prevS.weight)+prog.delta)} kg mogelijk — gecontroleerde uitvoering.`;
+      else if(prog&&prog.delta===0)personalCoach=_prevTxt+`Houd ${prevS.weight} kg aan en focus op strakke techniek.`;
+      else personalCoach=_prevTxt+`Houd het gecontroleerd — techniek gaat vandaag boven gewicht.`;
     }
   }catch(e){}
   const tech=(a.technique||[]).slice(0,3).map(x=>`<li>${escHtml(x)}</li>`).join('');
@@ -10188,9 +10191,10 @@ function buildIntelligenceCard(ex,prevS){
     </button>
     <div class="intel-body">
       <div class="intel-poster" id="intel-poster-${ex.id}" data-src="${a.poster}"></div>
-      <div class="intel-coach">${escHtml(coach)}</div>
-      ${tech?`<div class="intel-sec"><div class="intel-sec-lbl">Techniek</div><ul class="intel-list">${tech}</ul></div>`:''}
-      ${mist?`<div class="intel-sec"><div class="intel-sec-lbl warn">Let op</div><ul class="intel-list">${mist}</ul></div>`:''}
+      ${personalCoach?`<div class="intel-sec"><div class="intel-sec-lbl accent">Voor jou vandaag</div><div class="intel-coach">${escHtml(personalCoach)}</div></div>`:''}
+      ${(tech||mist)?`<div class="intel-sec-lbl" style="margin-top:2px">Algemene techniek</div>`:''}
+      ${tech?`<div class="intel-sec"><div class="intel-sec-lbl">Uitvoering</div><ul class="intel-list">${tech}</ul></div>`:''}
+      ${mist?`<div class="intel-sec"><div class="intel-sec-lbl warn">Veelgemaakte fouten</div><ul class="intel-list">${mist}</ul></div>`:''}
     </div>
   </div>`;
 }
@@ -11644,8 +11648,19 @@ async function loadEquipment(exId){
 function eqMemAll(){ try{ return JSON.parse(localStorage.getItem('tk_eqmem')||'{}')||{}; }catch(_){ return {}; } }
 function eqMemGet(exId){ const m=eqMemAll(); return (m[exId]&&m[exId].value)||''; }
 function eqMemSet(exId,val){
-  try{ const m=eqMemAll(); const v=String(val||'').trim();
-    if(v) m[exId]={value:v,ts:Date.now()}; else delete m[exId];
+  try{ const m=eqMemAll(); const v=String(val||'').trim(); const e=m[exId]||{};
+    if(v){ e.value=v; e.ts=Date.now(); m[exId]=e; }
+    else { delete e.value; if(e.fields && Object.keys(e.fields).length){ e.ts=Date.now(); m[exId]=e; } else delete m[exId]; }
+    localStorage.setItem('tk_eqmem',JSON.stringify(m));
+  }catch(_){}
+}
+// GESTRUCTUREERDE per-label instelling (bv. Zitting=4, Pin=12) — los van de vrije tekst en van history.
+function eqMemFieldGet(exId,label){ const m=eqMemAll(); const e=m[exId]; return (e&&e.fields&&e.fields[label])||''; }
+function eqMemFieldSet(exId,label,val){
+  try{ const m=eqMemAll(); const e=m[exId]||{}; if(!e.fields)e.fields={}; const v=String(val||'').trim();
+    if(v)e.fields[label]=v; else delete e.fields[label];
+    if(!Object.keys(e.fields).length)delete e.fields;
+    if(e.value||e.fields){ e.ts=Date.now(); m[exId]=e; } else delete m[exId];
     localStorage.setItem('tk_eqmem',JSON.stringify(m));
   }catch(_){}
 }
@@ -11665,6 +11680,7 @@ function buildEquipmentPanel(exId,eqList){
       ${eqList.map(e=>`<div class="eq-row">
         <span class="eq-label">${escHtml(e.label)}</span>
         <span class="eq-value">${escHtml(e.value)}</span>
+        <input class="inp" style="max-width:76px;padding:4px 6px" data-exid="${escHtml(exId)}" data-label="${escHtml(e.label)}" placeholder="jouw" value="${escHtml(eqMemFieldGet(exId,e.label))}" onchange="eqMemFieldSet(this.dataset.exid,this.dataset.label,this.value)" aria-label="Jouw ${escHtml(e.label)}">
         <button onclick="deleteEquipment('${e.id}','${exId}')">✕</button>
       </div>`).join('')}
       <select class="inp" id="eq-new-label-${exId}" onchange="toggleEqCustomLabel('${exId}')" style="margin-top:8px">
@@ -11791,11 +11807,30 @@ function removeWarmupSet(exId,i){
 // Equipment-aware praktische afronding: barbell → stap 2,5 kg (2× 1,25-schijf) zodat een warm-up
 // niet op 38,75 kg uitkomt maar op 40. Enige betrouwbare materiaalsignaal is BARBELL_EXERCISES;
 // overige oefeningen houden de standaard 0,5-afronding (geen betrouwbare increment-bron → niet verzinnen).
+// Praktische gewichtsstap per materiaaltype (uit catalogus-equipment-tags). Onbekend/geen tag → 0
+// (= veilige terugval op roundKg 0,5). PUUR/deterministisch; geen verzonnen precisie.
+function equipmentIncrement(tags){
+  if(!Array.isArray(tags)||!tags.length) return 0;
+  const map={barbell:2.5, dumbbell:2, kettlebell:4, machine:5, 'cable machine':2.5, cable:2.5, band:0, bodyweight:0};
+  for(const t of tags){ const k=String(t).toLowerCase(); if(map[k]>0) return map[k]; }
+  return 0;
+}
+// Increment voor een oefening: catalogus-equipment-tags → increment; anders bekende barbell-set → 2,5; anders 0.
+function getEquipmentIncrement(exId){
+  try{
+    const ex=(typeof exercises!=='undefined')?exercises.find(e=>e.id===exId):null;
+    let tags=null;
+    if(ex){ tags=(typeof pickerExEquipment==='function')?pickerExEquipment(ex):(Array.isArray(ex.equipment)?ex.equipment:null); }
+    let inc=equipmentIncrement(tags||[]);
+    if(!inc && typeof BARBELL_EXERCISES!=='undefined' && BARBELL_EXERCISES.has(exId)) inc=2.5;
+    return inc;
+  }catch(_){ return 0; }
+}
 function suggestWarmupScheme(workKg,exId){
   var inc=0; // 0 = geen increment → core valt terug op roundKg (huidig gedrag)
-  try{ if(exId && typeof BARBELL_EXERCISES!=='undefined' && BARBELL_EXERCISES.has(exId)) inc=2.5; }catch(_){}
+  if(exId){ try{ inc=getEquipmentIncrement(exId); }catch(_){ inc=0; } }
   return CalcCore.calculateWarmup(workKg, inc);
-} /* F1.5A: canonical shared core (warmup.v1) + equipment-aware increment (barbell 2,5) */
+} /* F1.5A: canonical shared core (warmup.v1) + equipment-aware increment (materiaal-specifiek) */
 // Genereert automatisch als werkgewicht 1 bekend is (anders 1RM als terugval). Overschrijft
 // nooit sets die de gebruiker handmatig heeft aangepast, tenzij forceRegen=true.
 function autoGenerateWarmup(exId,forceRegen){
@@ -14047,13 +14082,27 @@ function recoveryScoreFrom(dfInfo, recRows, extra){
 // BESTAANDE data (dagfactor + spierherstel) via DecisionCore.computeProgAdjustment. Hergebruikt exact
 // dezelfde regels als de programmaflow; geen check-in vereist (voelt/pijn = null indien afwezig). Geen AI.
 // Retourneert een neutrale (0,0)-aanpassing als er geen herstel-data is (geen fabricage).
+// RHR-delta t.o.v. eigen baseline (gemiddelde van eerdere metingen). +bpm = slechter herstel.
+// <2 metingen → null (geen fabricage). Deterministisch.
+function rhrBaselineDelta(hd){
+  try{
+    const rows=(hd||[]).map(r=>parseFloat(r&&r.rhr)).filter(v=>isFinite(v)&&v>0);
+    if(rows.length<2) return null;
+    const today=rows[0]; const base=rows.slice(1).reduce((s,v)=>s+v,0)/(rows.length-1);
+    return Math.round((today-base)*10)/10;
+  }catch(_){ return null; }
+}
 async function recoveryAdjustmentForToday(muscleNames){
   try{
     const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35');
     const dfInfo=dagfactor(hrvDagFactorPersonal(hd), (hd&&hd[0])?hd[0].sleep:null, (hd&&hd[0])?hd[0].cyclus_fase:null);
     let recRows=[]; try{ if(Array.isArray(muscleNames)&&muscleNames.length) recRows=await getRelevantMuscleRecovery(muscleNames); }catch(_){}
-    const adj=computeProgAdjustment(dfInfo.factor, recRows, null, null)||{rpeDelta:0,setsDelta:0,redenen:[]}; // null = geen aanpassing nodig
-    const rs=recoveryScoreFrom(dfInfo, recRows);
+    // GEVOEL uit de check-in (indien opgeslagen) → beïnvloedt de DecisionCore-aanpassing (slecht/matig).
+    const voelt=(hd&&hd[0]&&hd[0].voelt)?String(hd[0].voelt):null;
+    const adj=computeProgAdjustment(dfInfo.factor, recRows, voelt, null)||{rpeDelta:0,setsDelta:0,redenen:[]}; // null = geen aanpassing nodig
+    // RHR-delta → alleen in de zichtbare Recovery Score (niet in de sets/RPE-beslissing; DecisionCore neemt geen RHR).
+    const rhrDelta=rhrBaselineDelta(hd);
+    const rs=recoveryScoreFrom(dfInfo, recRows, {rhrDelta:(rhrDelta!=null?rhrDelta:undefined), voelt:voelt||undefined});
     return { rpeDelta:adj.rpeDelta||0, setsDelta:adj.setsDelta||0, redenen:adj.redenen||[], score:(rs&&rs.score!=null?rs.score:null), band:(rs&&rs.band)||'onbekend', factor:dfInfo.factor };
   }catch(_){ return { rpeDelta:0, setsDelta:0, redenen:[], score:null, band:'onbekend' }; }
 }

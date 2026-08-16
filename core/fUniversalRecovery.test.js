@@ -21,6 +21,7 @@ function extractFn(name){
 let sessionRxAdj = {};
 function resolveCardioType(ex){ return (ex && (ex.type==='rowing'||ex.type==='cardio')) ? ex.type : null; }
 const applySessionRecovery = eval('(' + extractFn('applySessionRecovery') + ')');
+const rhrBaselineDelta = eval('(' + extractFn('rhrBaselineDelta') + ')');
 
 let pass = 0, fail = 0;
 function eq(a, b, m){ if (a === b) pass++; else { fail++; console.log('  ✗ ' + m + ' (verwacht ' + JSON.stringify(b) + ', kreeg ' + JSON.stringify(a) + ')'); } }
@@ -66,6 +67,14 @@ eq(out[0].rpe, '5', 'RPE ondergrens 5 (7-5=2 → 5)');
 sessionRxAdj = { A: { setsDelta:0, rpeDelta:+5 } };
 out = applySessionRecovery('A', [{id:'x',type:'strength',sets:3,rpe:'8'}]);
 eq(out[0].rpe, '10', 'RPE bovengrens 10 (8+5 → 10)');
+
+// ── rhrBaselineDelta: vandaag t.o.v. baseline (gem. eerdere metingen); <2 → null (geen fabricage) ──
+eq(rhrBaselineDelta([]), null, 'geen data → null');
+eq(rhrBaselineDelta([{rhr:55}]), null, '1 meting → null (geen baseline)');
+eq(rhrBaselineDelta([{rhr:60},{rhr:50},{rhr:50}]), 10, 'vandaag 60 vs baseline 50 → +10 (slechter)');
+eq(rhrBaselineDelta([{rhr:48},{rhr:50},{rhr:52}]), -3, 'vandaag 48 vs baseline 51 → -3 (beter)');
+eq(rhrBaselineDelta([{rhr:'60'},{rhr:'50'}]), 10, 'string-rhr wordt geparsed');
+ok(rhrBaselineDelta([{rhr:0},{rhr:0}]) === null, 'ongeldige (0) rhr → genegeerd → null');
 
 console.log('\nUniversele recovery: RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail ? 1 : 0);

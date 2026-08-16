@@ -20,7 +20,7 @@ function extractFn(name){
 let _store = {};
 const localStorage = { getItem:k=>(k in _store?_store[k]:null), setItem:(k,v)=>{_store[k]=String(v);}, removeItem:k=>{delete _store[k];} };
 const _origNow = Date.now; Date.now = () => 1700000000000;
-eval(extractFn('eqMemAll') + '\n' + extractFn('eqMemGet') + '\n' + extractFn('eqMemSet'));
+eval(extractFn('eqMemAll') + '\n' + extractFn('eqMemGet') + '\n' + extractFn('eqMemSet') + '\n' + extractFn('eqMemFieldGet') + '\n' + extractFn('eqMemFieldSet'));
 
 let pass = 0, fail = 0;
 function eq(a, b, m){ if (a === b) pass++; else { fail++; console.log('  ✗ ' + m + ' (verwacht ' + JSON.stringify(b) + ', kreeg ' + JSON.stringify(a) + ')'); } }
@@ -50,6 +50,26 @@ eq(eqMemGet('bench'), '', 'lege/whitespace waarde → entry verwijderd');
 eqMemSet('a','X'); eqMemSet('b','Y');
 const all = JSON.parse(_store['tk_eqmem']);
 eq(Object.keys(all).sort().join(','), 'a,b', 'store bevat exact de gezette oefeningen');
+
+// ── GESTRUCTUREERD: per-label instelling, los van de vrije tekst ──
+_store = {};
+eqMemFieldSet('legpress', 'Zitting', '4');
+eqMemFieldSet('legpress', 'Pin', '12');
+eq(eqMemFieldGet('legpress','Zitting'), '4', 'per-label: Zitting=4 teruggelezen');
+eq(eqMemFieldGet('legpress','Pin'), '12', 'per-label: Pin=12 teruggelezen');
+eq(eqMemFieldGet('legpress','Pad'), '', 'onbekend label → leeg (geen fabricage)');
+// vrije tekst + structuur naast elkaar op dezelfde oefening
+eqMemSet('legpress', 'los onthouden');
+eq(eqMemGet('legpress'), 'los onthouden', 'vrije tekst blijft naast de gestructureerde velden');
+eq(eqMemFieldGet('legpress','Zitting'), '4', 'gestructureerde velden overleven het zetten van vrije tekst');
+// leegmaken van een veld verwijdert alleen dat veld
+eqMemFieldSet('legpress','Pin','');
+eq(eqMemFieldGet('legpress','Pin'), '', 'leeg veld verwijderd');
+eq(eqMemFieldGet('legpress','Zitting'), '4', 'ander veld blijft');
+// entry verdwijnt pas als vrije tekst én alle velden weg zijn
+eqMemSet('legpress','');
+eqMemFieldSet('legpress','Zitting','');
+eq(JSON.parse(_store['tk_eqmem']).legpress, undefined, 'entry weg als vrije tekst + alle velden leeg');
 
 Date.now = _origNow;
 console.log('\nEquipment memory: RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');

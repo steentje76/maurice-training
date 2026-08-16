@@ -184,5 +184,34 @@ eq(adT.connect().ok, true, 'met transport: connect ok');
 eq(adT.fetchWorkouts({from:'x'}).called, 'list', 'adapter delegeert naar ingespoten transport (DI)');
 eq(adT.authenticate('AUTHCODE').token, 'X', 'adapter.authenticate delegeert (geen secrets in core)');
 
+// ── HEALTH/WEARABLE DAGMETRIEKEN (Google Health / Fitbit) → CANONIEK ──
+const gh = {
+  dailyHeartRateVariability: { rmssdMillis: 42 },
+  dailyRestingHeartRate: { bpm: 54 },
+  sleep: { totalMinutes: 430 }
+};
+const hd = D.normalizeHealthDaily(gh, D.GOOGLE_HEALTH_MAP, { date:'2026-08-15', receivedAt:1700000000000 });
+function hmet(o,k){ var m=o.metrics.find(x=>x.key===k); return m; }
+eq(hd.provider, 'google-health', 'health: provider');
+eq(hd.date, '2026-08-15', 'health: datum als externalId/timestamp');
+eq(hmet(hd,'hrv_ms').value, 42, 'HRV 42 ms (canoniek ms, GEEN ms→s-conversie)');
+eq(hmet(hd,'hrv_ms').unit, 'ms', 'HRV unit ms');
+eq(hmet(hd,'hrv_ms').sourceMetric, 'rmssd', 'HRV expliciet als RMSSD getagd (nooit samenvoegen met SDNN)');
+eq(hmet(hd,'resting_hr_bpm').value, 54, 'RHR 54 bpm');
+eq(hmet(hd,'sleep_minutes').value, 430, 'slaap 430 min');
+eq(hmet(hd,'hrv_ms').provenance.provider, 'google-health', 'health: metric-provenance provider');
+eq(hmet(hd,'hrv_ms').provenance.method, 'api', 'health: method api');
+// ontbrekend → null, geen fabricatie
+const hd2 = D.normalizeHealthDaily({ dailyRestingHeartRate:{ bpm:60 } }, D.GOOGLE_HEALTH_MAP, { date:'2026-08-15' });
+eq(hmet(hd2,'hrv_ms').value, null, 'ontbrekende HRV → null (geen fabricatie)');
+eq(hmet(hd2,'hrv_ms').quality, 'empty', 'ontbrekende HRV → quality empty');
+eq(hmet(hd2,'resting_hr_bpm').value, 60, 'aanwezige RHR blijft');
+// onwaarschijnlijk → implausible, waarde behouden
+const hd3 = D.normalizeHealthDaily({ dailyHeartRateVariability:{ rmssdMillis:999 } }, D.GOOGLE_HEALTH_MAP, {});
+eq(hmet(hd3,'hrv_ms').quality, 'implausible', 'HRV 999 → implausible (boven 400)');
+eq(hmet(hd3,'hrv_ms').value, 999, 'implausibele HRV behoudt echte waarde');
+// bron niet gemuteerd
+eq(gh.dailyHeartRateVariability.rmssdMillis, 42, 'bron-payload ongewijzigd (geen mutatie)');
+
 console.log('\nDevice-0 integratie: RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail ? 1 : 0);

@@ -380,9 +380,55 @@
     };
   }
 
+  // ── HEALTH / WEARABLE DAGMETRIEKEN → CANONIEK (Google Health API / Fitbit) ────
+  // Fitbit-data komt via de Google Health API binnen (health.googleapis.com). Deze mapping
+  // brengt de dag-rollups naar device_canonical.v1. HRV = RMSSD (Google Health-bron) en wordt
+  // EXPLICIET zo getagd (sourceMetric), zodat het NOOIT met Apple SDNN samengevoegd wordt.
+  // Units zijn al canoniek (ms/bpm/min) → geen conversie (HRV blijft ms, geen ms→s-val).
+  var GOOGLE_HEALTH_MAP = {
+    provider: 'google-health', source: 'fitbit_via_google_health', method: 'api',
+    metrics: [
+      { key: 'hrv_ms',          path: 'dailyHeartRateVariability.rmssdMillis', unit: 'ms',  sourceMetric: 'rmssd', min: 0, max: 400 },
+      { key: 'resting_hr_bpm',  path: 'dailyRestingHeartRate.bpm',             unit: 'bpm', min: 20, max: 120 },
+      { key: 'sleep_minutes',   path: 'sleep.totalMinutes',                    unit: 'min', min: 0, max: 1440 }
+    ]
+  };
+
+  // Normaliseer één dag-payload → { schema, provider, date, metrics:[canonical metric], provenance }.
+  // PUUR. Canonieke unit = bron-unit (geen conversie). Ontbrekend/ongeldig → value null (geen fabricatie).
+  function normalizeHealthDaily(rawDay, spec, ctx){
+    spec = spec || {}; ctx = ctx || {};
+    var provider = ctx.provider || spec.provider || null;
+    var metrics = (spec.metrics || []).map(function (m){
+      var raw = getPath(rawDay, m.path);
+      var cls = classifyValue(raw, {});
+      var value = null, quality = cls.status;
+      if (cls.status === 'valid') {
+        value = cls.value;
+        if (m.min != null && value < m.min) quality = 'implausible';
+        else if (m.max != null && value > m.max) quality = 'implausible';
+      }
+      var prov = buildProvenance({
+        provider: provider, device: ctx.device || null, externalId: (ctx.date != null ? ctx.date : null),
+        metric: m.key, unit: m.unit, method: ctx.method || spec.method || 'api', quality: quality,
+        timestamp: ctx.date != null ? ctx.date : null, receivedAt: ctx.receivedAt != null ? ctx.receivedAt : null
+      });
+      var met = createMetric({ key: m.key, value: value, unit: m.unit, quality: quality, provenance: prov });
+      if (m.sourceMetric) met.sourceMetric = m.sourceMetric; // bv. 'rmssd' — HRV-bron behouden
+      return met;
+    });
+    return {
+      schema: VERSIONS.canonical, provider: provider, source: ctx.source || spec.source || null,
+      date: ctx.date != null ? ctx.date : null, metrics: metrics,
+      provenance: buildProvenance({ provider: provider, method: ctx.method || spec.method || 'api', timestamp: ctx.date != null ? ctx.date : null, receivedAt: ctx.receivedAt != null ? ctx.receivedAt : null })
+    };
+  }
+
   var DeviceCore = {
     VERSIONS: VERSIONS,
     UNIT_CONV: UNIT_CONV,
+    GOOGLE_HEALTH_MAP: GOOGLE_HEALTH_MAP,
+    normalizeHealthDaily: normalizeHealthDaily,
     ADAPTER_METHODS: ADAPTER_METHODS,
     CONCEPT2_MAP: CONCEPT2_MAP,
     CONCEPT2_STROKE_MAP: CONCEPT2_STROKE_MAP,

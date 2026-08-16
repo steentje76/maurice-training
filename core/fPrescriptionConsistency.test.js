@@ -20,7 +20,14 @@ function extractFn(name){
 // stubs voor globals die resolveExerciseMedia kan raken
 let _posterReturn = null;
 function movekitPosterFor(ex){ return _posterReturn; }
-const ExerciseAssetProvider = undefined; // pad valt terug op ex.video/ex.yt
+// MoveKit-video-provider stub: naam/id-gebaseerde resolutie (zoals ExerciseAssetProvider.resolve(id,'video')).
+let _movekitVideo = null; // zet op een .mp4-pad om MoveKit-beschikbaarheid te simuleren
+let ExerciseAssetProvider = {
+  has:    (id,type)=> type==='video' && !!_movekitVideo,
+  resolve:(id,type)=> (type==='video' ? _movekitVideo : null),
+  hasVideo:(id)=> !!_movekitVideo,
+  video:  (id)=> _movekitVideo ? { file:_movekitVideo } : null
+};
 const buildPrescriptionContract = eval('(' + extractFn('buildPrescriptionContract') + ')');
 const buildPrevBlock = eval('(' + extractFn('buildPrevBlock') + ')');
 const resolveExerciseMedia = eval('(' + extractFn('resolveExerciseMedia') + ')');
@@ -71,17 +78,30 @@ eq(buildPrescriptionContract(ex57, null, 57).coaching, '', 'geen previous → le
 // weight null als rxWeight ontbreekt en geen suggestedWeight
 eq(buildPrescriptionContract({sets:3,reps:'5'}, {weight:50,reps:5,rpe:8}, null).prescription.weight, null, 'geen bron → weight null (geen fabricatie)');
 
-// ── MEDIA-OWNER: mp4 → yt → poster → none, met juiste prioriteit ──
+// ── MEDIA-OWNER: MOVEKIT PRIMAIR — MoveKit > YouTube > poster > none ──
+_posterReturn = 'data:poster'; _movekitVideo = null;
+// MoveKit via expliciet ex.video wint van YouTube
+eq(resolveExerciseMedia({video:'videos/squat.mp4', yt:'ABC', canonicalId:'TK-1'}).kind, 'mp4', 'MoveKit (ex.video) wint van YouTube');
+eq(resolveExerciseMedia({video:'videos/squat.mp4', yt:'ABC'}).source, 'movekit', 'source=movekit');
+eq(resolveExerciseMedia({video:'videos/squat.mp4'}).type, 'movekit', 'type=movekit');
+eq(resolveExerciseMedia({video:'videos/squat.mp4'}).poster, 'data:poster', 'MoveKit krijgt poster als preview');
+// MoveKit via naam/id-resolutie (ExerciseAssetProvider) wint OOK van YouTube, zónder ex.video (legacy-oefening)
+_movekitVideo = 'videos/wall-sit.mp4';
+eq(resolveExerciseMedia({id:'legacy-squat', yt:'ABC'}).kind, 'mp4', 'ADVERSARIEEL: MoveKit (naam-resolutie) wint van YouTube ook zonder ex.video');
+eq(resolveExerciseMedia({id:'legacy-squat', yt:'ABC'}).src, 'videos/wall-sit.mp4', 'MoveKit-src uit provider');
+// GEEN MoveKit → YouTube fallback
+_movekitVideo = null;
+eq(resolveExerciseMedia({id:'x', yt:'ABC'}).kind, 'yt', 'geen MoveKit → YouTube fallback');
+eq(resolveExerciseMedia({id:'x', yt:'ABC'}).source, 'youtube', 'source=youtube bij fallback');
+// geen video → poster
 _posterReturn = 'data:poster';
-eq(resolveExerciseMedia({video:'videos/squat.mp4', yt:'ABC', canonicalId:'TK-1'}).kind, 'mp4', 'mp4 wint van yt');
-eq(resolveExerciseMedia({video:'videos/squat.mp4'}).src, 'videos/squat.mp4', 'mp4 src doorgegeven');
-eq(resolveExerciseMedia({video:'videos/squat.mp4'}).poster, 'data:poster', 'mp4 krijgt poster als preview');
-eq(resolveExerciseMedia({yt:'ABC'}).kind, 'yt', 'geen mp4 → yt');
-eq(resolveExerciseMedia({yt:'ABC'}).src, 'ABC', 'yt src doorgegeven');
-_posterReturn = 'data:poster';
-eq(resolveExerciseMedia({}).kind, 'poster', 'geen video → poster');
+eq(resolveExerciseMedia({id:'x'}).kind, 'poster', 'geen video → poster (fallback)');
+eq(resolveExerciseMedia({id:'x'}).type, 'poster', 'type=poster');
+// niets → nette empty state
 _posterReturn = null;
-eq(resolveExerciseMedia({}).kind, 'none', 'niets → none (nette fallback)');
+eq(resolveExerciseMedia({id:'x'}).kind, 'none', 'niets → none');
+eq(resolveExerciseMedia({id:'x'}).available, false, 'none → available:false (nette empty state)');
+_movekitVideo = null; _posterReturn = null;
 
 // ── PROGRAMMA: één prescription-truth; gewicht volgt de (recovery-aangepaste) RPE (C3 by construction) ──
 const CalcCore = require('./calculation.js');

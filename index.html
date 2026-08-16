@@ -4370,6 +4370,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="rest-bar2-lbl">Rust · <span id="rt-remaining">00:00</span><span class="rest-bar2-tot"> / <span id="rt-total">00:00</span></span></div>
     <div class="rest-bar2-next"><span class="rest-bar-next-lbl">Volgende</span> <span id="rt-next">Klaar voor je volgende set</span></div>
   </div>
+  <button onclick="adjustRest(-30)" class="rest-bar2-skip" aria-label="30 seconden korter">−30s</button>
+  <button onclick="adjustRest(30)" class="rest-bar2-skip" aria-label="30 seconden langer">+30s</button>
   <button onclick="cancelRestTimer()" class="rest-bar2-skip">Overslaan</button>
 </div>
 
@@ -9774,6 +9776,13 @@ function applyExecutionFocus(t){
         '<button class="exfocus-hero-vid" onclick="openExecExplain(\''+t+'\')">▶ '+(yt?'Bekijk video &amp; uitleg':'Techniek &amp; uitleg')+'</button>'+
       '</div>';
     heroC.innerHTML=hc; head.insertAdjacentElement('afterend',heroC);
+  }catch(e){}
+  // POSTER/MEDIA-DEDUP (focus-mode): de hero-kaart is nu de ENIGE primaire media-zone. Verberg daarom in
+  // de actieve kaart de dubbele media: de body-poster/video (buildVideoMuscle .vid-wrap/.vid-optional) én
+  // de intel-card-poster (intel-poster-<id>). Techniek/coaching-tekst + sets blijven zichtbaar. Eén media-owner.
+  try{
+    a.querySelectorAll('.vid-wrap, .vid-optional').forEach(el=>el.classList.add('exfocus-hidden'));
+    const _ip=document.getElementById('intel-poster-'+(list[idx]&&list[idx].id)); if(_ip)_ip.classList.add('exfocus-hidden');
   }catch(e){}
   // F0.7R — "VANDAAG"-kaart (mock-up): gewicht / sets×reps@RPE / rust, uit bestaande resolved data.
   let today=container.querySelector('.exfocus-today'); if(today)today.remove();
@@ -16245,15 +16254,29 @@ async function startCustomTraining(id,resolvedItems){
   if(!resolvedItems)activeInstanceId=null; // idem als bij startT: geen instance-id meenemen buiten het Preview-pad
   const t=customTrainings.find(x=>x.id===id);
   if(!t) return;
-  if(!(await guardExistingDraft('custom_'+id))) return; // P0: bescherm niet-afgeronde andere training
-  curT='custom_'+id;
+  const ctxT='custom_'+id;
+  // P0 RESUME — consistent met de vaste training (startT): een niet-afgeronde same-day draft voor DEZE
+  // custom-training kan worden hervat, met álle data (sets/wu/cardio/done/notes/elapsed/actieve oefening).
+  // Op de resume-pad wordt de recovery-aanpassing NIET opnieuw toegepast (zit al in de bewaarde sessionExtra)
+  // → idempotent. Geen resume → guard tegen overschrijven van een ándere training + verse start.
+  const _draft=restoreTrainingDraft();
+  let _resume=false, _resumeElapsedMs=0;
+  if(_draft && _draft.t===ctxT && isSameLocalDay(_draft.ts) && draftHasData(_draft)){
+    _resume = await confirmModal('Niet-afgeronde training gevonden (laatst opgeslagen om '+new Date(_draft.ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+'). Wil je die hervatten?',{title:'Training hervatten',okLabel:'Hervatten',cancelLabel:'Nieuw starten'});
+  }
+  if(!_resume){ if(!(await guardExistingDraft(ctxT))) return; }
+  curT=ctxT;
   execFocus[curT]=0; if(typeof execSkipped!=='undefined')execSkipped[curT]=new Set(); // F0.7P/Q: verse start, geen skips
   sessionLog={};sessionExtra=[];
-  // Bestaande oefeningen van deze training vooraf laden in sessionExtra, zodat ze — net als
-  // bij Training A/B — direct zichtbaar zijn bij het starten, i.p.v. pas na handmatig toevoegen.
   await ensureExercisesLoaded();
   await ensureEquipmentTypesLoaded();
-  if(resolvedItems&&resolvedItems.length){
+  if(_resume){
+    // Herstel de volledige sessie uit de draft (zoals startT): logboek + voorgeschreven oefeningen + tijd.
+    sessionLog=_draft.sessionLog||{};
+    sessionExtra=_draft.sessionExtra||[];
+    _resumeElapsedMs=Number(_draft.elapsedMs)||0;
+    if(typeof execFocus!=='undefined')execFocus[curT]=Number(_draft.execFocus)||0;
+  } else if(resolvedItems&&resolvedItems.length){
     for(const item of resolvedItems){
       sessionExtra.push({...item,_t:curT,_preloaded:true});
     }
@@ -16293,7 +16316,14 @@ async function startCustomTraining(id,resolvedItems){
   const existingEl=document.getElementById('s-train-custom-'+id);
   if(existingEl) existingEl.classList.add('active');
   await renderTrainScreen(curT);
-  trainStart=Date.now();startTrainTimer('A'); // use elapsed-a display
+  if(_resume){
+    restoreSessionLogToDom(curT); // gelogde sets/wu/cardio/split/done terug in de DOM (zoals startT)
+    trainStart=Date.now()-_resumeElapsedMs; // klok loopt verder vanaf de opgeslagen stand, niet 0
+    lastSaveTs=_draft.ts;saveState='saved';if(typeof updateSaveIndicator==='function')updateSaveIndicator();
+  } else {
+    trainStart=Date.now();
+  }
+  startTrainTimer('A'); // use elapsed-a display
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.add('show'));
 }
 
@@ -16726,6 +16756,16 @@ function startRestTimer(seconds){
 function cancelRestTimer(){
   if(restInterval){clearInterval(restInterval);restInterval=null;}
   document.getElementById('rest-timer-bar').style.display='none';
+}
+// ±30s: past de lopende rust aan via de centrale timer (restEndAt is wall-clock). Alleen tijdens een
+// actieve rust; ondergrens 1s zodat -30 de timer niet meteen op 0 dwingt. Geen tweede timer.
+function adjustRest(sec){
+  if(!restInterval) return;
+  restEndAt = Math.max(Date.now()+1000, restEndAt + sec*1000);
+  const rem=Math.max(0,Math.round((restEndAt-Date.now())/1000));
+  const m=Math.floor(rem/60),s=rem%60;
+  const el=document.getElementById('rt-remaining'); if(el)el.textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  if(sec>0)_lastCountdownSec=0; // langer → aftel-piepjes voor de nieuwe laatste seconden weer toestaan
 }
 
 // ══════════════════════════════════════════════════════════

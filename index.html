@@ -9400,6 +9400,15 @@ async function startT(t){
   const draft=restoreTrainingDraft();
   const resumeDraft=(draft&&draft.t===t&&isSameLocalDay(draft.ts)) ? await confirmModal('Niet-afgeronde training gevonden (laatst opgeslagen om '+new Date(draft.ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+'). Wil je die hervatten?',{title:'Training hervatten',okLabel:'Hervatten',cancelLabel:'Nieuw starten'}) : false;
   pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};
+  // P1 UNIVERSELE RECOVERY (vaste training): bepaal éénmalig de deterministische sets/RPE-aanpassing voor
+  // vandaag (DecisionCore) en zet die als sessie-scoped delta. getSessionExs past 'm idempotent op kopieën
+  // toe (nooit op TRAIN_CFG). Op resume opnieuw berekend uit dezelfde dagdata → identiek (geen compounding).
+  try{
+    const _mus=[]; (TRAIN_CFG[t]||[]).forEach(e=>{ try{(getExerciseMuscles(e.id)||[]).forEach(m=>m&&_mus.push(m));}catch(_){}});
+    const _adj=await recoveryAdjustmentForToday([...new Set(_mus)]);
+    sessionRxAdj[t]=_adj;
+    if(!resumeDraft) recoveryAdjustToast(_adj); // "wat + waarom" alleen bij verse start (niet bij hervatten)
+  }catch(_){ sessionRxAdj[t]={rpeDelta:0,setsDelta:0}; }
   let _resumeElapsedMs=0; // P0: verstreken tijd bij hervatten (0 = verse start)
   if(resumeDraft){
     curT=t;sessionLog=draft.sessionLog||{};sessionExtra=draft.sessionExtra||[];trainPaused=false;pausedAccumMs=0;
@@ -9566,9 +9575,28 @@ function showSettings(){
 // gedrag (volledige Definition, geen modificaties mogelijk vanaf die knop).
 let resolvedWorkout=null;   // {t, items, instanceId} — alleen relevant voor vaste trainingen (TRAIN_CFG-pad)
 let activeInstanceId=null;  // training_instances.id van de actieve, via Preview gestarte sessie, of null
+// P1 UNIVERSELE RECOVERY (vaste + overige routes via getSessionExs): sessie-scoped aanpassing die
+// DETERMINISTISCH (DecisionCore) op KOPIEËN van het voorschrift wordt toegepast — nooit op TRAIN_CFG,
+// nooit op gelogde data. Idempotent: getSessionExs mapt altijd vanaf de basis + de vaste delta, dus
+// herhaald renderen/resumen compound NOOIT (100→90, niet 100→90→81). Alleen sets/RPE van krachtoefeningen.
+let sessionRxAdj={};
+function applySessionRecovery(t,list){
+  const adj=sessionRxAdj[t];
+  if(!adj || (!adj.setsDelta && !adj.rpeDelta)) return list;
+  return list.map(ex=>{
+    try{ if(resolveCardioType(ex)) return ex; }catch(_){ } // cardio/roeien: geen sets/RPE-aanpassing
+    if(ex.sets==null && ex.rpe==null) return ex;
+    const baseSets=parseInt(ex.sets), baseRpe=parseFloat(ex.rpe);
+    const outSets = isFinite(baseSets) ? Math.max(1, baseSets + (adj.setsDelta||0)) : ex.sets;
+    const outRpe  = isFinite(baseRpe)  ? String(Math.max(5, Math.min(10, baseRpe + (adj.rpeDelta||0)))) : ex.rpe;
+    return {...ex, sets:outSets, rpe:outRpe, _rxAdjusted:true};
+  });
+}
 function getSessionExs(t){
-  if(resolvedWorkout&&resolvedWorkout.t===t)return [...resolvedWorkout.items,...sessionExtra.filter(e=>e._t===t)];
-  return [...(TRAIN_CFG[t]||[]),...sessionExtra.filter(e=>e._t===t)];
+  const base = (resolvedWorkout&&resolvedWorkout.t===t)
+    ? [...resolvedWorkout.items,...sessionExtra.filter(e=>e._t===t)]
+    : [...(TRAIN_CFG[t]||[]),...sessionExtra.filter(e=>e._t===t)];
+  return applySessionRecovery(t, base);
 }
 
 // v3.3.52 P1 — Premium Training Intro: coach-banner boven het oefeningenoverzicht.
@@ -13307,7 +13335,7 @@ async function finishSession(){
   }
   closeModal('m-session-end');stopTrainTimer();
   clearTrainingDraft();
-  curT=null;sessionLog={};sessionExtra=[];pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};
+  curT=null;sessionLog={};sessionExtra=[];pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};sessionRxAdj={};
   resolvedWorkout=null;activeInstanceId=null; // Werkblok D: training afgerond — geen enkele volgende, niet-via-Preview-gestarte training mag dit nog meekrijgen
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.remove('show'));
   if(saved===0){toast('Niets om op te slaan');go('s-home');refreshStats();return;}

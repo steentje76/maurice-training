@@ -71,6 +71,31 @@ eqMemSet('legpress','');
 eqMemFieldSet('legpress','Zitting','');
 eq(JSON.parse(_store['tk_eqmem']).legpress, undefined, 'entry weg als vrije tekst + alle velden leeg');
 
+// ── P1c-eisen: decimalen (vrije equipment-waarde, ongewijzigd bewaard) ──
+_store = {};
+eqMemFieldSet('leg','Weerstand','7.5');
+eq(eqMemFieldGet('leg','Weerstand'), '7.5', 'decimaal 7.5 bewaard');
+eqMemFieldSet('leg','Weerstand','7,5');
+eq(eqMemFieldGet('leg','Weerstand'), '7,5', 'NL-komma-waarde bewaard zoals ingevoerd (equipment = vrije waarde, geen numerieke parse)');
+
+// ── P1c-eis 8: nooit-eerder-ingesteld → geen fictieve waarde ──
+eq(eqMemFieldGet('nooit','Pin'), '', 'onbekende oefening/veld → leeg (geen verzonnen preset)');
+eq(eqMemGet('nooit'), '', 'onbekende oefening → geen vrije-tekst preset');
+
+// ── P1c-eis 6/7: preset staat volledig los van history — schrijft UITSLUITEND naar tk_eqmem ──
+_store = { 'sessions_cache':'HISTORISCHE_DATA' }; // simuleer bestaande (andere) opslag
+eqMemSet('bench','Pin 29'); eqMemFieldSet('bench','Seat','4');
+eq(_store['sessions_cache'], 'HISTORISCHE_DATA', 'preset raakt andere opslag (history/cache) NIET aan');
+eq(Object.keys(_store).filter(k=>k!=='sessions_cache').join(','), 'tk_eqmem', 'preset schrijft alleen naar tk_eqmem');
+// een latere preset-wijziging verandert niets aan een eerder gemaakte "historische" waarde
+const snapshotBefore = _store['sessions_cache'];
+eqMemFieldSet('bench','Seat','6'); // preset aangepast
+eq(_store['sessions_cache'], snapshotBefore, 'preset-wijziging verandert historische data NIET');
+
+// ── P1c-eis 3/4: laden na "nieuwe workout" (verse getter tegen dezelfde store) toont laatst bekende ──
+const eqMemFieldGet3 = eval('(' + extractFn('eqMemFieldGet') + ')');
+eq(eqMemFieldGet3('bench','Seat'), '6', 'na nieuwe workout: laatst bekende Seat=6 automatisch beschikbaar');
+
 Date.now = _origNow;
 console.log('\nEquipment memory: RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail ? 1 : 0);

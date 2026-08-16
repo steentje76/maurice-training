@@ -11673,16 +11673,17 @@ function buildEquipmentPanel(exId,eqList){
     </div>
     <div class="eq-panel-body" id="eq-body-${exId}" style="display:none">
       <div class="eq-mem" style="margin-bottom:8px">
-        <label class="ilbl" style="font-size:11px;color:var(--g4)">Jouw instelling${eqMemGet(exId)?` · vorige keer: ${escHtml(eqMemGet(exId))}`:''}</label>
-        <input class="inp" id="eq-mem-${exId}" placeholder="bv. Pin 12, Zitting 4" value="${escHtml(eqMemGet(exId))}"
-          onchange="eqMemSet('${exId}',this.value)" style="margin-top:2px">
+        <label class="ilbl" style="font-size:11px;font-weight:700;color:var(--g4)">📌 Apparaatinstelling${eqMemGet(exId)?` · laatst gebruikt`:''}</label>
+        <input class="inp" id="eq-mem-${exId}" placeholder="bv. Pin 29, Seat 4" value="${escHtml(eqMemGet(exId))}"
+          onchange="eqMemSet('${exId}',this.value)" style="margin-top:2px" aria-label="Apparaatinstelling ${escHtml(exId)}">
+        ${eqList.length?`<div style="font-size:10px;color:var(--g4);margin-top:2px">Jouw laatst bekende instelling per veld — pas gerust aan vóór je traint.</div>`:''}
       </div>
-      ${eqList.map(e=>`<div class="eq-row">
+      ${eqList.map(e=>{const _v=eqMemFieldGet(exId,e.label);return `<div class="eq-row">
         <span class="eq-label">${escHtml(e.label)}</span>
         <span class="eq-value">${escHtml(e.value)}</span>
-        <input class="inp" style="max-width:76px;padding:4px 6px" data-exid="${escHtml(exId)}" data-label="${escHtml(e.label)}" placeholder="jouw" value="${escHtml(eqMemFieldGet(exId,e.label))}" onchange="eqMemFieldSet(this.dataset.exid,this.dataset.label,this.value)" aria-label="Jouw ${escHtml(e.label)}">
+        <input class="inp" style="max-width:76px;padding:4px 6px" data-exid="${escHtml(exId)}" data-label="${escHtml(e.label)}" placeholder="jouw" value="${escHtml(_v)}" onchange="eqMemFieldSet(this.dataset.exid,this.dataset.label,this.value)" aria-label="Jouw ${escHtml(e.label)}"${_v?' title="Laatst gebruikt: '+escHtml(_v)+'"':''}>
         <button onclick="deleteEquipment('${e.id}','${exId}')">✕</button>
-      </div>`).join('')}
+      </div>`}).join('')}
       <select class="inp" id="eq-new-label-${exId}" onchange="toggleEqCustomLabel('${exId}')" style="margin-top:8px">
         <option value="">Kies...</option>
         ${typeOptions}

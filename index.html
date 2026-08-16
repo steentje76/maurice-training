@@ -9784,9 +9784,9 @@ function applyExecutionFocus(t){
   let head=container.querySelector('.exfocus-head');
   if(!head){ head=document.createElement('div'); head.className='exfocus-head'; container.insertBefore(head,container.firstChild); }
   const skipped=execSkipSet(t).has(list[idx]&&list[idx].id);
-  head.innerHTML='<span class="k">Oefening '+(idx+1)+' / '+n+(skipped?' · overgeslagen':'')+'</span>'+
-    '<span class="exfocus-headacts"><button class="exfocus-ov" onclick="openExecExplain(\''+t+'\')">Uitleg</button>'+
-    '<button class="exfocus-ov" onclick="openExecOverview(\''+t+'\')">Overzicht</button></span>';
+  // Kop-acties "Uitleg/Overzicht" verwijderd van de kaart op verzoek (alle trainingen).
+  // Uitleg blijft bereikbaar via de hero-kaart ("Bekijk video & uitleg" / "Techniek & uitleg").
+  head.innerHTML='<span class="k">Oefening '+(idx+1)+' / '+n+(skipped?' · overgeslagen':'')+'</span>';
   // F0.8L — Exercise HERO-kaart bovenaan (mock-up): poster + spiergroep-tags + naam + video-CTA.
   // Uitsluitend echte data (ex.naam / ex.muscles / ex.yt / ex.tip). Geen verzonnen tags/tekst.
   let heroC=container.querySelector('.exfocus-herocard'); if(heroC)heroC.remove();
@@ -9844,27 +9844,10 @@ function applyExecutionFocus(t){
   // F0.7S — read-only Warm-up Ramp Card (coach-weergave). Bron: cur.suggestedWeight →
   // bestaande suggestWarmupScheme(); fallback: bestaande warmupState-waarden. Percentage is
   // afgeleid (kg/werkgewicht) — puur presentatie, geen nieuwe berekening, geen inputs/ids.
-  let ramp=container.querySelector('.exfocus-wu'); if(ramp)ramp.remove();
-  if(!curPrep){
-    const wkg=(cur.suggestedWeight!=null)?parseFloat(cur.suggestedWeight):null;
-    let steps=null;
-    if(wkg&&wkg>0&&typeof suggestWarmupScheme==='function'){ try{ steps=suggestWarmupScheme(wkg); }catch(e){} }
-    if((!steps||!steps.length)&&typeof warmupState!=='undefined'&&warmupState[cur.id]&&warmupState[cur.id].values){
-      const vals=warmupState[cur.id].values;
-      steps=Object.keys(vals).sort((a,b)=>a-b).map(k=>({kg:parseFloat(vals[k].kg),reps:vals[k].reps})).filter(s=>!isNaN(s.kg)&&s.kg>0);
-    }
-    if(steps&&steps.length){
-      const rows=steps.map((s,ix)=>{
-        const pct=(wkg&&wkg>0)?Math.round(s.kg/wkg*100):null;
-        return '<div class="exfocus-wu-row"><span class="exfocus-wu-no">'+(ix+1)+'</span>'+
-          '<span class="exfocus-wu-mid">'+(pct!=null?(pct+'%'):'—')+' × '+(s.reps!=null&&s.reps!==''?s.reps:'—')+' reps</span>'+
-          '<span class="exfocus-wu-kg">'+String(s.kg).replace('.',',')+' kg</span></div>';
-      }).join('');
-      ramp=document.createElement('div'); ramp.className='exfocus-wu';
-      ramp.innerHTML='<div class="exfocus-wu-hd"><span>Warm-up</span>'+(wkg&&wkg>0?'<span class="exfocus-wu-base">o.b.v. '+String(wkg).replace('.',',')+' kg</span>':'')+'</div>'+rows;
-      (container.querySelector('.exfocus-today')||container.querySelector('.exfocus-herocard')||head).insertAdjacentElement('afterend',ramp);
-    }
-  }
+  // Read-only Warm-up Ramp-kaart verwijderd van de kaart op verzoek (alle trainingen).
+  // De cleanup blijft staan zodat een eerder gerenderde ramp-kaart bij re-render verdwijnt.
+  // De warm-up-berekening zelf (suggestWarmupScheme) blijft ongewijzigd beschikbaar.
+  { const ramp=container.querySelector('.exfocus-wu'); if(ramp)ramp.remove(); }
   // Volgende-oefening preview + navigatie onderaan.
   const isLast=idx>=n-1;
   const nextNm=(!isLast&&list[idx+1])?list[idx+1].naam:null;
@@ -10023,16 +10006,16 @@ function openExecExplain(t){
   const ex=(typeof exercises!=='undefined'&&exercises.find)?(exercises.find(e=>e.id===cur.id)||cur):cur;
   const nm=escHtml(ex.naam||cur.naam||'Oefening');
   let body='';
-  // F21-E: exercise-coach-card met MoveKit als PRIMAIRE bron. Hiërarchie: poster → spiergroepen →
-  // techniek/cues → (optionele) video. Geen fake play-knop op de statische poster; ontbrekende data tonen we niet.
+  // Video-PRIMAIR in de modal (op verzoek): bestaat er een echte video, dan tonen we de klikbare
+  // video-thumb met play-knop i.p.v. de statische poster. Zonder video → poster als terugval;
+  // zonder beide → nette melding. Geen fake play-knop op een statische poster.
   var _ep=(typeof movekitPosterFor==='function')?movekitPosterFor(ex):null;
   var _yt=ex.yt;
-  if(_ep){
-    body+='<div class="vid-wrap vid-poster" id="exec-poster-vid"><img src="'+_ep+'" alt="'+nm+'" loading="lazy" onerror="this.parentElement.style.display=\'none\'"><div class="vid-label">'+nm+' — bewegingsbeeld</div></div>';
-  } else if(_yt){
-    // Geen poster beschikbaar: YouTube-thumb als aanvullende bron (echte video → play-knop terecht).
+  if(_yt){
     body+='<div class="vid-wrap" onclick="loadVid(this,\''+_yt+'\')"><img src="https://img.youtube.com/vi/'+_yt+'/mqdefault.jpg" alt="'+nm+'" loading="lazy" onerror="this.parentElement.style.display=\'none\'"><div class="vid-play">▶</div><div class="vid-label">▶ '+nm+' — techniek video</div></div>';
-    _yt=null; // video is hier al de primaire media
+    _yt=null; // video is hier al de primaire media (geen dubbele knop onderaan)
+  } else if(_ep){
+    body+='<div class="vid-wrap vid-poster" id="exec-poster-vid"><img src="'+_ep+'" alt="'+nm+'" loading="lazy" onerror="this.parentElement.style.display=\'none\'"><div class="vid-label">'+nm+' — bewegingsbeeld</div></div>';
   } else {
     body+='<div class="exec-pausecard-s" style="padding:0 2px 10px">Bewegingsbeeld voor deze oefening is nog niet beschikbaar.</div>';
   }
@@ -10042,8 +10025,6 @@ function openExecExplain(t){
   var _intel=(typeof movekitIntelFor==='function')?movekitIntelFor(ex):null;
   if(_intel && _intel.cues && _intel.cues.length){ body+='<div class="exec-opt-k">Coach cues</div><ul class="exec-cues">'+_intel.cues.slice(0,4).map(c=>'<li>'+escHtml(c)+'</li>').join('')+'</ul>'; }
   if(_intel && _intel.mistakes && _intel.mistakes.length){ body+='<div class="exec-opt-k">Veelgemaakte fouten</div><ul class="exec-cues exec-cues--warn">'+_intel.mistakes.slice(0,4).map(c=>'<li>'+escHtml(c)+'</li>').join('')+'</ul>'; }
-  // Optionele echte video onderaan (alleen als er een poster primair stond én een geldige video bestaat).
-  if(_ep && _yt) body+='<button class="vid-optional" type="button" onclick="var w=document.getElementById(\'exec-poster-vid\'); if(w) loadVid(w,\''+_yt+'\')">▶ Bekijk techniekvideo</button>';
   const el=ensureExecOverlay('exec-explain');
   el.innerHTML='<div class="exec-sheet"><div class="exec-sheet-hd"><div class="exec-sheet-t">'+nm+'</div>'+
     '<button class="exec-x" onclick="closeExecOverlay(\'exec-explain\')" aria-label="Sluiten">✕</button></div>'+

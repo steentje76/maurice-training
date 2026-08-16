@@ -8765,16 +8765,28 @@ function repsPrefillFromRange(repsStr){
   const m=String(repsStr).match(/(\d+)/);
   return m?m[1]:'';
 }
+// CANONICAL REP-TARGET RESOLVER: bepaalt het VOORGESTELDE aantal reps voor de startset.
+// Regel: een rep-RANGE → het MAXIMUM van de range (3–5 → 5); een EXACT getal → dat getal (5 → 5);
+// ongeldig/ontbrekend → '' (geen fabricatie). Ondersteunt "3-5", en-dash "3–5", spaties "3 – 5" en
+// "3-5 reps". Bepaalt UITSLUITEND reps — berekent GEEN gewicht (gewicht blijft de bestaande
+// prescription-truth via resolveWorkingWeight/repsPrefillFromRange).
+function resolvePrescriptionRepTarget(reps){
+  if(reps==null)return '';
+  if(typeof reps==='number')return (isFinite(reps)&&reps>0)?Math.round(reps):'';
+  const nums=(String(reps).match(/\d+/g)||[]).map(Number).filter(n=>isFinite(n)&&n>0);
+  return nums.length?Math.max.apply(null,nums):'';
+}
 // Pure functie: bepaalt de prefill voor een programma-oefening. Gewicht komt bij voorkeur
 // uit een 1RM-gebaseerde schatting voor het geprogrammeerde reps/RPE-doel (dus altijd
 // passend bij vandaag's — evt. coach-aangepaste — prescriptie); alleen zonder 1RM-data
 // valt het terug op het gewicht van de vorige sessie als ruwe referentie.
 function computeProgPrefill(ex,prevS,oneRM){
   if(!ex.reps&&!ex.rpe)return null;
-  const reps=repsPrefillFromRange(ex.reps);
-  const suggested=oneRM?suggestWeightForRepsRpe(oneRM,parseFloat(reps),ex.rpe):null;
+  const repsForWeight=repsPrefillFromRange(ex.reps);                 // low-end → prescription-gewicht ongewijzigd
+  const repsPrefill=resolvePrescriptionRepTarget(ex.reps)||repsForWeight; // startset → MAXIMUM van de range
+  const suggested=oneRM?suggestWeightForRepsRpe(oneRM,parseFloat(repsForWeight),ex.rpe):null;
   const kg=(suggested!=null)?suggested:((prevS&&prevS.weight)?prevS.weight:'');
-  return {kg,reps,rpe:ex.rpe||'',sets:ex.sets||4};
+  return {kg,reps:repsPrefill,rpe:ex.rpe||'',sets:ex.sets||4};
 }
 // Pure functie — bouwt de prompt voor één week, los testbaar
 // Vuistregel: ±12 minuten per oefening (opwarmen + werksets). Tussen 2 en 8 oefeningen,
@@ -9687,17 +9699,18 @@ async function renderTrainScreen(t){
     if(t.startsWith('prog_')){
       // Programma leest nu hetzelfde canonical prescription-gewicht als de VANDAAG-kaart/coaching.
       if(ex.suggestedWeight!=null){
-        prefillData={kg:ex.suggestedWeight, reps:repsPrefillFromRange(ex.reps), rpe:ex.rpe||'', sets:ex.sets||4};
+        prefillData={kg:ex.suggestedWeight, reps:resolvePrescriptionRepTarget(ex.reps)||repsPrefillFromRange(ex.reps), rpe:ex.rpe||'', sets:ex.sets||4};
       } else {
         const oneRM=getOneRM(ex.id)||estimatedOneRM(ex.id);
         prefillData=computeProgPrefill(ex,prevS,oneRM);
       }
     } else if(ex.suggestedWeight!=null){
-      // F0.7L: Normal Execution start op exact hetzelfde canonical resolver-gewicht als
-      // Preview toonde (base × detraining × evt. override). Reps/RPE als hint uit vorige sessie.
-      prefillData={kg:ex.suggestedWeight, reps:(prevS&&prevS.reps)||null, rpe:(prevS&&prevS.rpe)||null, sets:(prevS&&prevS.sets)||ex.sets||4};
+      // F0.7L: Normal Execution start op exact hetzelfde canonical resolver-gewicht als Preview.
+      // Reps-prefill = MAXIMUM van de voorgeschreven range (canonical), NIET de vorige-sessie-reps —
+      // valt alleen zonder rep-doel terug op de vorige sessie. RPE als hint uit vorige sessie.
+      prefillData={kg:ex.suggestedWeight, reps:resolvePrescriptionRepTarget(ex.reps)||((prevS&&prevS.reps)||null), rpe:(prevS&&prevS.rpe)||null, sets:(prevS&&prevS.sets)||ex.sets||4};
     } else if(prevS&&prevS.weight&&prevS.reps){
-      prefillData={kg:prevS.weight, reps:prevS.reps, rpe:prevS.rpe, sets:prevS.sets||4};
+      prefillData={kg:prevS.weight, reps:resolvePrescriptionRepTarget(ex.reps)||prevS.reps, rpe:prevS.rpe, sets:prevS.sets||4};
     }
     // ÉÉN prescription-waarheid: exact het gewicht dat de gebruiker ook echt ziet (prefill.kg, anders
     // het canonical resolver-gewicht). Coaching/"Vorige keer" leiden hier ALLEEN van af (geen tweede getal).

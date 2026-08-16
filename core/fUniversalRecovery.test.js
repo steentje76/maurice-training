@@ -22,6 +22,11 @@ let sessionRxAdj = {};
 function resolveCardioType(ex){ return (ex && (ex.type==='rowing'||ex.type==='cardio')) ? ex.type : null; }
 const applySessionRecovery = eval('(' + extractFn('applySessionRecovery') + ')');
 const rhrBaselineDelta = eval('(' + extractFn('rhrBaselineDelta') + ')');
+// Guided recovery: gewichtsfactor (working_weight.v1-ratio) + plan-aanpassing
+const CalcCore = require('./calculation.js');
+function roundKg(v){ return Math.round(v*2)/2; }
+const recoveryWeightFactor = eval('(' + extractFn('recoveryWeightFactor') + ')');
+const applyRecoveryToGuidedPlan = eval('(' + extractFn('applyRecoveryToGuidedPlan') + ')');
 
 let pass = 0, fail = 0;
 function eq(a, b, m){ if (a === b) pass++; else { fail++; console.log('  ✗ ' + m + ' (verwacht ' + JSON.stringify(b) + ', kreeg ' + JSON.stringify(a) + ')'); } }
@@ -75,6 +80,52 @@ eq(rhrBaselineDelta([{rhr:60},{rhr:50},{rhr:50}]), 10, 'vandaag 60 vs baseline 5
 eq(rhrBaselineDelta([{rhr:48},{rhr:50},{rhr:52}]), -3, 'vandaag 48 vs baseline 51 → -3 (beter)');
 eq(rhrBaselineDelta([{rhr:'60'},{rhr:'50'}]), 10, 'string-rhr wordt geparsed');
 ok(rhrBaselineDelta([{rhr:0},{rhr:0}]) === null, 'ongeldige (0) rhr → genegeerd → null');
+
+// ── GUIDED recovery: gewichtsfactor (working_weight.v1-ratio, oneRM-onafhankelijk) ──
+eq(recoveryWeightFactor(8, 0), 1, 'rpeDelta 0 → factor exact 1 (geen aanpassing)');
+eq(recoveryWeightFactor(8, undefined), 1, 'geen rpeDelta → factor 1');
+ok(recoveryWeightFactor(8, -1) < 1, 'negatieve rpeDelta (lager herstel) → factor <1 (lichter)');
+ok(recoveryWeightFactor(8, +1) > 1, 'positieve rpeDelta → factor >1 (zwaarder)');
+eq(recoveryWeightFactor(8, -1), recoveryWeightFactor(8, -1), 'deterministisch (zelfde input → zelfde factor)');
+ok(recoveryWeightFactor(8, -1) === recoveryWeightFactor('8', -1), 'reps als string → zelfde factor (geparsed)');
+
+// ── GUIDED recovery: plan-aanpassing op KOPIEËN, idempotent ──
+const gbase = { items:[
+  {id:'a', sets:4, reps:8, weight:100},
+  {id:'b', sets:3, reps:5, weight:80},
+  {id:'c', sets:3, reps:10}, // geen gewicht (bodyweight) → alleen sets
+]};
+function cloneBase(){ return { items: gbase.items.map(x=>({...x})) }; }
+
+// geen aanpassing → plan ongewijzigd teruggegeven
+const gp0 = cloneBase();
+const gr0 = applyRecoveryToGuidedPlan(gp0, {setsDelta:0, rpeDelta:0});
+eq(gr0.items[0].sets, 4, 'geen adj → sets ongewijzigd');
+eq(gr0.items[0].weight, 100, 'geen adj → gewicht ongewijzigd');
+eq(applyRecoveryToGuidedPlan(cloneBase(), null).items[0].sets, 4, 'adj null → plan ongewijzigd');
+
+// laag herstel: -1 set, RPE -0.5 → minder sets + lichter gewicht
+const g1 = applyRecoveryToGuidedPlan(cloneBase(), {setsDelta:-1, rpeDelta:-0.5});
+eq(g1.items[0].sets, 3, 'sets 4→3 (−1)');
+eq(g1.items[1].sets, 2, 'sets 3→2 (−1)');
+ok(g1.items[0].weight < 100, 'gewicht verlaagd bij lager herstel (a)');
+ok(g1.items[1].weight < 80, 'gewicht verlaagd bij lager herstel (b)');
+eq(g1.items[0]._rxAdjusted, true, 'gewicht gemarkeerd als aangepast');
+eq(g1.items[2].sets, 2, 'bodyweight-item: sets 3→2');
+ok(g1.items[2].weight === undefined, 'bodyweight-item krijgt geen verzonnen gewicht');
+
+// sets-ondergrens 1
+const g2 = applyRecoveryToGuidedPlan({items:[{id:'x', sets:2, reps:8, weight:50}]}, {setsDelta:-5, rpeDelta:0});
+eq(g2.items[0].sets, 1, 'sets ondergrens 1 (2−5 → 1)');
+
+// originele base NIET gemuteerd (kopieën)
+eq(gbase.items[0].sets, 4, 'base item.sets ongewijzigd (kopie)');
+eq(gbase.items[0].weight, 100, 'base item.weight ongewijzigd (kopie)');
+
+// IDEMPOTENT: op verse basis-kopie opnieuw → identiek resultaat (geen 4→3→2)
+const g3 = applyRecoveryToGuidedPlan(cloneBase(), {setsDelta:-1, rpeDelta:-0.5});
+eq(g3.items[0].sets, g1.items[0].sets, 'idempotent: sets identiek bij herhaald op basis');
+eq(g3.items[0].weight, g1.items[0].weight, 'idempotent: gewicht identiek bij herhaald op basis');
 
 console.log('\nUniversele recovery: RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail ? 1 : 0);

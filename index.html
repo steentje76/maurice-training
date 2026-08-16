@@ -6552,7 +6552,16 @@ async function previewStartTraining(mode){
     // en logt bij afronden centraal naar sessions (H2) met dit training_instance_id.
     activeInstanceId=null;
     resolvedWorkout=null;
-    GW.start(buildGuidedWorkoutPlan(workingList),{goal:(def&&def.goal)||null},{instanceId:instanceId||null,trainingType:'guided'});
+    // P1 UNIVERSELE RECOVERY (Guided): bepaal de deterministische aanpassing (DecisionCore) en pas 'm
+    // éénmalig toe op de guided-prescription (sets + gewicht). Idempotent: GW bewaart het aangepaste plan.
+    const _gplan=buildGuidedWorkoutPlan(workingList);
+    try{
+      const _gmus=[]; (workingList||[]).forEach(it=>{ try{(getExerciseMuscles(it.exercise_id)||[]).forEach(m=>m&&_gmus.push(m));}catch(_){}});
+      const _gadj=await recoveryAdjustmentForToday([...new Set(_gmus)]);
+      applyRecoveryToGuidedPlan(_gplan, _gadj);
+      recoveryAdjustToast(_gadj);
+    }catch(_){}
+    GW.start(_gplan,{goal:(def&&def.goal)||null},{instanceId:instanceId||null,trainingType:'guided'});
     previewCtx=null;previewStarting=false;
     go('s-guided'); if(window.GWUI)GWUI.render();
     return;
@@ -14115,6 +14124,33 @@ function recoveryAdjustToast(adj){
   if(adj.rpeDelta) parts.push('RPE '+(adj.rpeDelta>0?'+':'')+adj.rpeDelta);
   const scoreTxt=(adj.score!=null)?('Herstel '+adj.score+'/100 · '):'';
   if(typeof toast==='function') toast(scoreTxt+'vandaag aangepast: '+parts.join(', '));
+}
+// Gewichtsfactor bij een recovery-RPE-delta: exact de working_weight.v1-verhouding (Brzycki) die de
+// programmaflow ook gebruikt — een lagere doel-RPE ⇒ lager gewicht. oneRM-onafhankelijk (valt weg in de
+// ratio), dus puur uit reps + rpeDelta. Geen nieuwe sportlogica; hergebruikt CalcCore.calculateWorkingWeight.
+function recoveryWeightFactor(reps, rpeDelta){
+  if(!rpeDelta) return 1;
+  const r=parseInt(reps)||8;
+  const base=CalcCore.calculateWorkingWeight(1000, r, 8);
+  const adj=CalcCore.calculateWorkingWeight(1000, r, Math.max(5,Math.min(10, 8+rpeDelta)));
+  if(!base||!adj) return 1;
+  return adj/base;
+}
+// UNIVERSELE RECOVERY voor de Guided prescription: past de DecisionCore-aanpassing toe op het GW-plan
+// (sets + gewicht), op KOPIEËN. Idempotent — één keer bij start; GW bewaart het aangepaste plan in
+// tk_gw_active en resume herstelt dat (geen her-toepassing). Zelfde beslissingsbron als alle routes.
+function applyRecoveryToGuidedPlan(plan, adj){
+  if(!plan || !Array.isArray(plan.items) || !adj || (!adj.setsDelta && !adj.rpeDelta)) return plan;
+  plan.items=plan.items.map(it=>{
+    const out={...it};
+    if(out.sets!=null && isFinite(parseInt(out.sets))) out.sets=Math.max(1, parseInt(out.sets)+(adj.setsDelta||0));
+    if(out.weight!=null && isFinite(parseFloat(out.weight)) && adj.rpeDelta){
+      out.weight=roundKg(parseFloat(out.weight)*recoveryWeightFactor(out.reps||it.reps, adj.rpeDelta));
+      out._rxAdjusted=true;
+    }
+    return out;
+  });
+  return plan;
 }
 // v3.3.47 P3 — begrijpelijke dagfactor-status uit de bestaande dagfactor-waarde.
 // Vier niveaus, kleuren consistent met de heroKleur-banden. Geen nieuwe data.

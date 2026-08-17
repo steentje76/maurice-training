@@ -5,8 +5,8 @@
 // Reden: de static-fetch is cache-first over ALLE caches; een oude core-entry in de niet-gebumpte
 // dynamische cache kon de nieuwe precache overschaduwen (stale serve na deploy). Door CACHE_NAME mee te
 // bumpen ruimt de activate-handler de oude dynamische cache op. REGEL: core wijzigt -> bump CACHE_NAME + CACHE_STATIC.
-const CACHE_NAME = 'trainingskompas-v42495';
-const CACHE_STATIC = 'trainingskompas-static-v42495';
+const CACHE_NAME = 'trainingskompas-v42496';
+const CACHE_STATIC = 'trainingskompas-static-v42496';
 // F1.9 SW-GUARD: hash (CRLF-agnostisch) van core/calculation.js + core/decision.js.
 // core/sw-guard.test.js faalt als de core wijzigt zonder dat deze CORE_SIG + CACHE_STATIC gebumpt zijn.
 // Bij een core-wijziging: draai `node core/sw-guard.test.js` -> die print de nieuwe CORE_SIG; werk hem
@@ -29,6 +29,7 @@ const STATIC_ASSETS = [
   '/core/onboarding.js',
   '/core/athleteConstraints.js',
   '/core/deviceIntegration.js',
+  '/core/concept2Live.js',
   '/core/weather.js',
   '/manifest.json',
   '/icon-192.png',

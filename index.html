@@ -4635,6 +4635,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/onboarding.js"></script>
 <script src="core/athleteConstraints.js"></script>
 <script src="core/deviceIntegration.js"></script>
+<script src="core/concept2Live.js"></script>
 <script src="core/weather.js"></script>
 <script>
 // ── OPEN-METEO RUNTIME — additive context, NOOIT een blocker voor training ──
@@ -4899,24 +4900,42 @@ function tkRenderErgConnect(exId, cardioType, ergLabel){
     '<div id="c2live-'+exId+'" style="font-size:11.5px;color:var(--g4);margin-top:6px">Niet verbonden</div></div>';
 }
 // Echte koppeling (alleen als er een echt transport is). Nooit fake status; alles komt uit het transport.
-async function tkErgConnect(exId, cardioType){
+// Machine-context uit Concept2Live (row/ski 500m, bike 1000m). Gecontroleerde UI-cadans (max ~4×/s):
+// hoge BLE-frequentie hoeft niet elke packet te renderen. Live = ACTUAL; prescription blijft zichtbaar.
+var _c2liveLast={};
+function tkErgConnect(exId, cardioType){
   var t=tkDeviceTransport(); var el=document.getElementById('c2live-'+exId);
   if(!t){ if(el) el.textContent='Live koppeling niet beschikbaar in deze omgeving.'; return; }
+  var mtMap={rowing:'rowerg',skierg:'skierg',bikeerg:'bikeerg'}, mt=mtMap[cardioType]||'rowerg';
+  var basis=(typeof Concept2Live!=='undefined')?Concept2Live.paceBasisFor(mt):500;
+  var paceLbl=(basis===1000)?'/1000m':'/500m';
+  function paint(cm){
+    if(!el) return;
+    var parts=[];
+    if(cm.distanceM!=null) parts.push('Afstand '+Math.round(cm.distanceM).toLocaleString('nl-NL')+' m');
+    if(cm.elapsedTimeS!=null && typeof DeviceCore!=='undefined') parts.push('Tijd '+DeviceCore.formatDurationStr(cm.elapsedTimeS));
+    var pace=(basis===1000)?cm.pace1000M:cm.pace500M;
+    if(pace!=null && typeof DeviceCore!=='undefined') parts.push('Tempo '+DeviceCore.formatDurationStr(pace)+paceLbl);
+    if(cm.watts!=null) parts.push('Vermogen '+Math.round(cm.watts)+' W'+(cm.wattsSource==='concept2_derived'?' (afgeleid)':''));
+    if(cm.strokeRateSPM!=null) parts.push('SPM '+Math.round(cm.strokeRateSPM));
+    if(cm.heartRateBPM!=null) parts.push('HR '+Math.round(cm.heartRateBPM));
+    el.innerHTML='<span style="color:var(--green)">●</span> '+({rowing:'RowErg',skierg:'SkiErg',bikeerg:'BikeErg'}[cardioType]||'Concept2')+' verbonden<br>'+parts.join(' · ');
+  }
   try{
     if(el) el.textContent='Verbinden…';
-    var dt={rowing:'rowerg',skierg:'skierg',bikeerg:'bikeerg'}[cardioType]||'rowerg';
-    var res=await t.connect(dt);
-    if(!res||res.connected!==true){ if(el) el.textContent='Verbinden mislukt — probeer opnieuw.'; return; }
-    // Echte metrics abonneren → live tonen; ACTUAL-gebruik volgt de bestaande logging (geen overschrijf).
-    t.subscribeMetrics(function(m){
-      if(!el) return;
-      var parts=[];
-      if(m.distance_m!=null) parts.push('Afstand '+Math.round(m.distance_m)+' m');
-      if(m.duration_s!=null && typeof DeviceCore!=='undefined') parts.push('Tijd '+DeviceCore.formatDurationStr(m.duration_s));
-      if(m.pace_s_500m!=null && typeof DeviceCore!=='undefined') parts.push('Tempo '+DeviceCore.formatDurationStr(m.pace_s_500m)+'/500m');
-      if(m.watts!=null) parts.push('Vermogen '+Math.round(m.watts)+' W');
-      if(m.stroke_rate_spm!=null) parts.push('SPM '+Math.round(m.stroke_rate_spm));
-      el.innerHTML='● Concept2 verbonden<br>'+parts.join(' · ');
+    Promise.resolve(t.connect(mt)).then(function(res){
+      if(!res||res.connected!==true){ if(el) el.textContent='Verbinden mislukt — probeer opnieuw.'; return; }
+      if(el) el.innerHTML='<span style="color:var(--green)">●</span> Verbonden — wachten op data…';
+      t.subscribeMetrics(function(evt){
+        // Transport levert al canoniek (Concept2Live-metric) OF raw → normaliseer defensief.
+        var cm=(evt&&evt.metrics&&evt.metrics.schema)?evt.metrics
+             : (typeof Concept2Live!=='undefined'?Concept2Live.normalizeLiveMetric((evt&&evt.metrics)||evt||{}, mt, {}):null);
+        if(!cm) return;
+        // gecontroleerde cadans: sla te snelle updates over voor de UI (calc-engine mag hoger blijven)
+        var now=(typeof performance!=='undefined'&&performance.now)?performance.now():0;
+        if(_c2liveLast[exId] && (now-_c2liveLast[exId])<250){ return; }
+        _c2liveLast[exId]=now; paint(cm);
+      });
     });
   }catch(e){ if(el) el.textContent='Verbinden mislukt — probeer opnieuw.'; }
 }

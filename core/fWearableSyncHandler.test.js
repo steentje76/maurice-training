@@ -91,6 +91,36 @@ const event = { httpMethod: 'POST', headers: { authorization: 'Bearer session' }
   eq(body.status, 'not_connected', 'S4: geen connectie → not_connected');
   eq(body.synced, false, 'S4: synced false');
 
+  // SCENARIO 5: ECHTE PRODUCTIE-SHAPE (nested records, zoals de live diag-log bewees) → parsed>0, imported, [src:fitbit]
+  writtenRows = [];
+  global.fetch = makeFetch({
+    hrv:   [{ dataSource:'d', dailyHeartRateVariability: { date:{year:2026,month:8,day:17}, averageHeartRateVariabilityMilliseconds: 42 } }],
+    rhr:   [{ dataSource:'d', dailyRestingHeartRate: { date:{year:2026,month:8,day:17}, beatsPerMinute: 54 } }],
+    sleep: [{ name:'n', dataSource:'d', sleep: { interval: { startTime:'2026-08-16T23:00:00Z', endTime:'2026-08-17T06:30:00Z' } } }]
+  });
+  res = await handlerMod.handler(event); body = JSON.parse(res.body);
+  eq(body.status, 'success', 'S5: productie-shape → success (parsed:0 is opgelost)');
+  eq(body.imported, 1, 'S5: 1 dag geïmporteerd uit echte nested shape');
+  ok(writtenRows.length === 1, 'S5: exact één write');
+  eq(writtenRows[0].hrv, 42, 'S5: HRV 42 (averageHeartRateVariabilityMilliseconds)');
+  eq(writtenRows[0].rhr, 54, 'S5: RHR 54 (beatsPerMinute)');
+  eq(writtenRows[0].sleep, 450, 'S5: slaap 450 min (interval-berekening)');
+  eq(writtenRows[0].date, '2026-08-17', 'S5: juiste datum uit nested date');
+  ok(/\[src:fitbit\]/.test(writtenRows[0].note), 'S5: provenance [src:fitbit] behouden');
+  // SCENARIO 6: tweede identieke productie-sync → geen duplicaat (upsert per datum)
+  const prior = writtenRows[0]; writtenRows = [];
+  global.fetch = (function(base){ return async function(url, opts){
+    url=String(url); const method=(opts&&opts.method)||'GET';
+    if (url.indexOf('/rest/v1/hrv_log')!==-1 && method==='GET') return { ok:true, status:200, json:async()=>[{ id:99, ...prior }] }; // bestaat al
+    return base(url, opts);
+  }; })(makeFetch({
+    hrv:   [{ dataSource:'d', dailyHeartRateVariability: { date:{year:2026,month:8,day:17}, averageHeartRateVariabilityMilliseconds: 42 } }],
+    rhr:   [], sleep: []
+  }));
+  res = await handlerMod.handler(event); body = JSON.parse(res.body);
+  eq(body.imported, 0, 'S6: tweede sync → 0 nieuw (geen duplicaat)');
+  eq(body.updated, 1, 'S6: bestaande datum → update (upsert per datum, idempotent)');
+
   console.log('\nwearable-sync HANDLER (mocked transport): RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error('HANDLER TEST FAIL:', e); process.exit(2); });

@@ -72,6 +72,52 @@ function sleepMinutesOf(point) {
   return null;
 }
 
+// ── PRODUCTIE-SHAPE PARSERS (echte Google-Health nested records) ──────────────────────
+// De LIVE productie-log bewees dat datum ÉN waarde GENEST zitten in het record-object
+// (dailyHeartRateVariability / dailyRestingHeartRate / sleep), NIET top-level. De oude parser
+// las top-level `point.date` (bestaat niet) → elk punt viel weg vóór de waarde → parsed:0.
+// Primair de OFFICIËLE veldnamen; per veld één gedocumenteerde legacy-fallback (backward-compat) —
+// GEEN "try everything". Ontbrekend/onbruikbaar → value null (→ skipped, nooit gefabriceerd).
+// Officiële velden (Google Health API v4):
+//   HRV  : dailyHeartRateVariability.date + .averageHeartRateVariabilityMilliseconds
+//   RHR  : dailyRestingHeartRate.date + .beatsPerMinute
+//   Sleep: sleep.interval{startTime,endTime} (physical time) + sleep.summary (duur indien aanwezig)
+function _dateFrom(d) {
+  if (d == null) return null;
+  if (typeof d === 'string') return d.split('T')[0];
+  if (d.year && d.month && d.day) return d.year + '-' + String(d.month).padStart(2, '0') + '-' + String(d.day).padStart(2, '0');
+  return null;
+}
+function parseHrvPoint(point) {
+  var rec = point && point.dailyHeartRateVariability; if (!rec) return null;
+  var date = _dateFrom(rec.date) || _dateFrom(point && point.date); // primair genest; legacy top-level
+  var v = (rec.averageHeartRateVariabilityMilliseconds != null) ? rec.averageHeartRateVariabilityMilliseconds
+        : (rec.rmssdMillis != null ? rec.rmssdMillis : null);                    // legacy-fallback
+  return { date: date, value: (typeof v === 'number' && isFinite(v)) ? v : null };
+}
+function parseRhrPoint(point) {
+  var rec = point && point.dailyRestingHeartRate; if (!rec) return null;
+  var date = _dateFrom(rec.date) || _dateFrom(point && point.date);
+  var v = (rec.beatsPerMinute != null) ? rec.beatsPerMinute : (rec.bpm != null ? rec.bpm : null);
+  return { date: date, value: (typeof v === 'number' && isFinite(v)) ? v : null };
+}
+function parseSleepPoint(point) {
+  var s = point && point.sleep; if (!s) return null;
+  var iv = s.interval || (point && point.interval) || null;
+  // slaapnacht hoort bij de OCHTEND → einddatum van het interval
+  var date = _dateFrom(iv && (iv.endTime || iv.civilEndTime)) || _dateFrom(s.date) || _dateFrom(point && point.endTime);
+  var min = null;
+  var sum = s.summary;
+  if (sum && sum.minutesAsleep != null) min = Math.round(sum.minutesAsleep);            // officieel indien aanwezig
+  else if (sum && sum.totalSleepMinutes != null) min = Math.round(sum.totalSleepMinutes);
+  else if (sum && sum.totalDurationMillis != null) min = Math.round(sum.totalDurationMillis / 60000);
+  else if (iv && iv.startTime && iv.endTime) {                                          // deterministisch uit interval
+    var ms = Date.parse(iv.endTime) - Date.parse(iv.startTime);
+    if (isFinite(ms) && ms > 0) min = Math.round(ms / 60000);
+  }
+  return { date: date, value: (typeof min === 'number' && isFinite(min) && min > 0) ? min : null };
+}
+
 // Structurele diagnostiek: top-level keys van een datapoint (GEEN waarden, geen PII, geen
 // gezondheidsgetallen) — onthult welke veldstructuur de echte API teruggeeft, zodat na één
 // live sync de juiste veldpaden bevestigd kunnen worden zonder ooit waarden te loggen.
@@ -96,5 +142,7 @@ function syncResult(counts) {
 module.exports = {
   provenanceNote: provenanceNote, contributed: contributed, buildRow: buildRow,
   classifyWrite: classifyWrite, dailyDateOf: dailyDateOf, sessionDateOf: sessionDateOf,
-  sleepMinutesOf: sleepMinutesOf, pointShape: pointShape, syncResult: syncResult
+  sleepMinutesOf: sleepMinutesOf, pointShape: pointShape, syncResult: syncResult,
+  // productie-shape parsers (nested Google-Health records)
+  parseHrvPoint: parseHrvPoint, parseRhrPoint: parseRhrPoint, parseSleepPoint: parseSleepPoint
 };

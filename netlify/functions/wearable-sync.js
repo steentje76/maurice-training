@@ -100,12 +100,13 @@ exports.handler = async function (event) {
     ]);
     const hrvData = hrvR.points, rhrData = rhrR.points, sleepData = sleepR.points;
 
-    // Per datum samenvoegen. Veldnamen niet officieel gedocumenteerd → meerdere plausibele paden.
+    // Per datum samenvoegen via de PRODUCTIE-SHAPE parsers (nested records; officiële veldnamen).
+    // Datum + waarde komen uit het geneste record — niet top-level (dat was de parsed:0-bug).
     const byDate = {};
     let parsedHrv = 0, parsedRhr = 0, parsedSleep = 0;
-    hrvData.forEach(p => { const d = LIB.dailyDateOf(p); if (d) { const v = p.dailyHeartRateVariability?.rmssdMillis ?? p.dailyHeartRateVariability?.value ?? p.value ?? null; (byDate[d] ||= {}).hrv = v; if (v != null) parsedHrv++; } });
-    rhrData.forEach(p => { const d = LIB.dailyDateOf(p); if (d) { const v = p.dailyRestingHeartRate?.bpm ?? p.dailyRestingHeartRate?.value ?? p.value ?? null; (byDate[d] ||= {}).rhr = v; if (v != null) parsedRhr++; } });
-    sleepData.forEach(p => { const d = LIB.sessionDateOf(p); if (d) { const v = LIB.sleepMinutesOf(p); (byDate[d] ||= {}).sleep = v; if (v != null) parsedSleep++; } });
+    hrvData.forEach(p => { const r = LIB.parseHrvPoint(p); if (r && r.date) { (byDate[r.date] ||= {}).hrv = r.value; if (r.value != null) parsedHrv++; } });
+    rhrData.forEach(p => { const r = LIB.parseRhrPoint(p); if (r && r.date) { (byDate[r.date] ||= {}).rhr = r.value; if (r.value != null) parsedRhr++; } });
+    sleepData.forEach(p => { const r = LIB.parseSleepPoint(p); if (r && r.date) { (byDate[r.date] ||= {}).sleep = r.value; if (r.value != null) parsedSleep++; } });
 
     let imported = 0, updated = 0, skipped = 0;
     for (const [date, vals] of Object.entries(byDate)) {

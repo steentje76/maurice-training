@@ -61,5 +61,32 @@ eq(s3.status, 'success', '3 geschreven → success');
 eq(s3.daysWritten, 3, 'daysWritten = imported+updated = 3');
 eq(s3.provider, 'fitbit', 'provider fitbit');
 
+// ── PRODUCTIE-SHAPE PARSERS (echte Google-Health nested records — live-log bewees parsed:0) ──
+// De live-shape: HRV=[dataSource,dailyHeartRateVariability], RHR=[dataSource,dailyRestingHeartRate],
+// Sleep=[name,dataSource,sleep]. Datum + waarde zitten GENEST, niet top-level.
+const hrvPoint = { dataSource:'x', dailyHeartRateVariability: { date:{year:2026,month:8,day:17}, averageHeartRateVariabilityMilliseconds: 42 } };
+const rHrv = L.parseHrvPoint(hrvPoint);
+eq(rHrv.value, 42, 'PS1: HRV genest averageHeartRateVariabilityMilliseconds=42');
+eq(rHrv.date, '2026-08-17', 'PS1: HRV datum uit genest date-object {year,month,day}');
+const rhrPoint = { dataSource:'x', dailyRestingHeartRate: { date:{year:2026,month:8,day:17}, beatsPerMinute: 54 } };
+const rRhr = L.parseRhrPoint(rhrPoint);
+eq(rRhr.value, 54, 'PS2: RHR genest beatsPerMinute=54');
+eq(rRhr.date, '2026-08-17', 'PS2: RHR datum uit genest date');
+const sleepPoint = { name:'n', dataSource:'x', sleep: { interval: { startTime:'2026-08-16T23:00:00Z', endTime:'2026-08-17T06:30:00Z' } } };
+const rSleep = L.parseSleepPoint(sleepPoint);
+eq(rSleep.value, 450, 'PS3: slaapduur deterministisch uit interval (23:00→06:30 = 450 min)');
+eq(rSleep.date, '2026-08-17', 'PS3: slaapdatum = einddatum interval (ochtend)');
+// officiële summary.minutesAsleep wint indien aanwezig
+eq(L.parseSleepPoint({ sleep:{ interval:{ startTime:'2026-08-16T23:00:00Z', endTime:'2026-08-17T07:00:00Z' }, summary:{ minutesAsleep: 415 } } }).value, 415, 'PS4: summary.minutesAsleep wint van interval-berekening');
+// malformed/missing nested value → value null (skipped, geen fabricatie)
+eq(L.parseHrvPoint({ dataSource:'x', dailyHeartRateVariability: { date:{year:2026,month:8,day:17} } }).value, null, 'PS5: HRV zonder waarde → null (skipped)');
+eq(L.parseHrvPoint({ dataSource:'x', SOMETHING_ELSE:{} }), null, 'PS6: geen HRV-record → null');
+eq(L.parseSleepPoint({ sleep:{} }).value, null, 'PS7: slaap zonder interval/summary → null (geen fabricatie)');
+// ISO-string date (alternatief) blijft werken
+eq(L.parseHrvPoint({ dailyHeartRateVariability:{ date:'2026-08-15T00:00:00Z', averageHeartRateVariabilityMilliseconds:40 } }).date, '2026-08-15', 'PS8: HRV date als ISO-string ook ondersteund');
+// legacy fallback (backward-compat met oude S1-vorm): top-level date + rmssdMillis
+eq(L.parseHrvPoint({ date:'2026-08-14', dailyHeartRateVariability:{ rmssdMillis:38 } }).value, 38, 'PS9: legacy rmssdMillis-fallback behouden');
+eq(L.parseHrvPoint({ date:'2026-08-14', dailyHeartRateVariability:{ rmssdMillis:38 } }).date, '2026-08-14', 'PS9: legacy top-level date-fallback behouden');
+
 console.log('\nwearable-sync PURE helpers: RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail ? 1 : 0);

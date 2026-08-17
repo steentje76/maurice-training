@@ -278,6 +278,15 @@
     if (!isFinite(d) || !isFinite(t) || d <= 0 || t <= 0) return null;
     return (t / d) * 500;
   }
+  // Concept2 vermogen-afgeleide (geen bron-veld in het result-object): de OFFICIËLE Concept2-formule
+  // watts = 2.80 / pace³, met pace = seconden per meter (duur/afstand). Bevestigd via de Concept2-docs.
+  // Ongeldige/niet-positieve invoer → null (nooit fabriceren).
+  function deriveWatts(distanceM, durationS){
+    var d = toNum(distanceM), t = toNum(durationS);
+    if (!isFinite(d) || !isFinite(t) || d <= 0 || t <= 0) return null;
+    var pacePerMeter = t / d;                 // s/m
+    return 2.80 / (pacePerMeter * pacePerMeter * pacePerMeter);
+  }
 
   // ── CONCEPT2 LOGBOOK API — DATA-DRIVEN MAPPING ────────────────────────
   // Bron: officiële Logbook API-docs (results-object). Alleen BEVESTIGDE velden.
@@ -424,10 +433,70 @@
     };
   }
 
+  // ── GENERIEKE CONNECTIE-/SYNC-STATUS (Fitbit én Concept2) ─────────────────────────────
+  // Eén canonieke afleiding van device-connectiestatus voor de UI. PUUR: `now` wordt ingespoten
+  // (geen Date.now). Nooit een fake "synced": de status volgt strikt uit de ingespoten feiten.
+  // input: { connected, connectedAt, lastSyncAt, lastSyncStatus('ok'|'error'|'running'|null),
+  //          tokenExpired, syncing }
+  // opts:  { now (ms|ISO), staleAfterMs (default 26u) }
+  // → { status, connected, connectedAt, lastSyncAt, lastSyncStatus, isStale, staleAfterMs, ageMs }
+  //   status ∈ not_connected | token_expired | syncing | sync_failed | stale | connected
+  var DEVICE_STATUSES = ['not_connected','token_expired','syncing','sync_failed','stale','connected'];
+  function _toMs(t){
+    if (t == null) return null;
+    if (typeof t === 'number') return isFinite(t) ? t : null;
+    var n = Date.parse(String(t));
+    return isFinite(n) ? n : null;
+  }
+  function deviceConnectionState(input, opts){
+    input = input || {}; opts = opts || {};
+    var nowMs = _toMs(opts.now);
+    var staleAfterMs = (typeof opts.staleAfterMs === 'number' && opts.staleAfterMs > 0) ? opts.staleAfterMs : (26 * 3600 * 1000);
+    var lastSyncMs = _toMs(input.lastSyncAt);
+    var ageMs = (nowMs != null && lastSyncMs != null) ? Math.max(0, nowMs - lastSyncMs) : null;
+    var isStale = (ageMs != null) ? (ageMs > staleAfterMs) : false;
+    var status;
+    if (input.connected !== true)            status = 'not_connected';
+    else if (input.tokenExpired === true)    status = 'token_expired';
+    else if (input.syncing === true || input.lastSyncStatus === 'running') status = 'syncing';
+    else if (input.lastSyncStatus === 'error') status = 'sync_failed';
+    else if (isStale)                        status = 'stale';
+    else                                     status = 'connected';
+    return {
+      status: status,
+      connected: input.connected === true,
+      connectedAt: input.connectedAt != null ? input.connectedAt : null,
+      lastSyncAt: input.lastSyncAt != null ? input.lastSyncAt : null,
+      lastSyncStatus: input.lastSyncStatus != null ? input.lastSyncStatus : null,
+      isStale: isStale, staleAfterMs: staleAfterMs, ageMs: ageMs
+    };
+  }
+
+  // ── FITBIT (via Google Health API) — METRIC-STATUS MANIFEST (documentatie-als-data) ───
+  // Eerlijke status per metric, zodat de UI nooit een niet-ondersteunde meting fabriceert.
+  //   SUPPORTED    = nu gemapt in GOOGLE_HEALTH_MAP en getest.
+  //   OPTIONAL     = door de bron leverbaar maar (nog) niet gemapt/gevalideerd → NIET tonen tot gemapt.
+  //   EXTERNAL     = vereist extra scope/toestemming of aparte bron (bv. weegschaal, SpO2-band).
+  //   NOT_AVAILABLE= niet via de huidige dag-rollup-route beschikbaar (bv. intraday HR-stream).
+  var FITBIT_METRIC_STATUS = {
+    hrv_ms:          { status: 'SUPPORTED',     unit: 'ms',    note: 'RMSSD (Google Health) — expliciet als rmssd getagd' },
+    resting_hr_bpm:  { status: 'SUPPORTED',     unit: 'bpm',   note: 'dailyRestingHeartRate.bpm' },
+    sleep_minutes:   { status: 'SUPPORTED',     unit: 'min',   note: 'sleep.totalMinutes' },
+    steps:           { status: 'OPTIONAL',      unit: 'count', note: 'dagstappen — bron levert dit; nog niet gemapt/gevalideerd' },
+    calories:        { status: 'OPTIONAL',      unit: 'kcal',  note: 'dagcalorieën — nog niet gemapt/gevalideerd' },
+    spo2:            { status: 'OPTIONAL',      unit: 'pct',   note: 'SpO2 — apparaat-afhankelijk; nog niet gemapt' },
+    weight_kg:       { status: 'EXTERNAL',      unit: 'kg',    note: 'vereist body/weegschaal-scope of aparte bron' },
+    heart_rate_bpm:  { status: 'NOT_AVAILABLE', unit: 'bpm',   note: 'intraday HR-stream niet via dag-rollup' }
+  };
+
   var DeviceCore = {
     VERSIONS: VERSIONS,
     UNIT_CONV: UNIT_CONV,
     GOOGLE_HEALTH_MAP: GOOGLE_HEALTH_MAP,
+    FITBIT_METRIC_STATUS: FITBIT_METRIC_STATUS,
+    DEVICE_STATUSES: DEVICE_STATUSES,
+    deviceConnectionState: deviceConnectionState,
+    deriveWatts: deriveWatts,
     normalizeHealthDaily: normalizeHealthDaily,
     ADAPTER_METHODS: ADAPTER_METHODS,
     CONCEPT2_MAP: CONCEPT2_MAP,

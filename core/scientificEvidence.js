@@ -105,10 +105,68 @@
     return { backed: r.allValidated, reason: reason, resolved: r.resolved, missing: r.missing, unvalidated: r.unvalidated, versionMismatch: r.versionMismatch };
   }
 
+  // ── GENERIEKE EVIDENCE-GATED ADVISORY (herbruikbaar; NIET weather-specifiek) ──────────
+  // Zet een context (canoniek weer, herstel, wat dan ook) om naar een ADVIES-ALLEEN uitkomst,
+  // maar UITSLUITEND wanneer (a) de conditie van de regel op de context waar is ÉN (b) de regel
+  // wetenschappelijk onderbouwd is (ruleBacking.backed). Zonder gevalideerde evidence-entry → GEEN
+  // advies (emit:false). Dit module VERZINT nooit een claim en past NOOIT training aan; het levert
+  // hooguit {metric, confidence, explanation, evidenceRefs} als context+bewijs beide kloppen.
+  //
+  // rule = { id, metric, when:{path, op, value}, evidenceRefs:[..], confidence?, explanation? }
+  //   when.op ∈ gte|lte|gt|lt|eq|ne ; when.path leest een pad uit de context (a.b.c).
+  //   Zonder `when` → applicable:false (geen stille toepassing). confidence wordt begrensd op [0,1].
+  function _getPath(obj, path){
+    if (obj == null || path == null || path === '') return undefined;
+    var parts = String(path).split('.'), cur = obj;
+    for (var i = 0; i < parts.length; i++){ if (cur == null) return undefined; cur = cur[parts[i]]; }
+    return cur;
+  }
+  function _cmp(a, op, b){
+    if (a == null || b == null) return false;
+    switch (op){
+      case 'gte': return a >= b; case 'lte': return a <= b;
+      case 'gt':  return a >  b; case 'lt':  return a <  b;
+      case 'eq':  return a === b; case 'ne': return a !== b;
+      default: return false;
+    }
+  }
+  function evaluateAdvisory(rule, context, store){
+    rule = rule || {};
+    var when = rule.when || null;
+    var applicable = false;
+    if (when && when.path != null && when.op != null) {
+      var v = _getPath(context, when.path);
+      applicable = (v != null) && _cmp(v, when.op, when.value);
+    }
+    var backing = ruleBacking(rule, store); // backed alleen bij bestaande, versie-correcte, gevalideerde refs
+    var emit = applicable && backing.backed === true;
+    var reason = emit ? null
+      : (!applicable ? 'not-applicable'
+      : (backing.reason || 'not-backed'));
+    var conf = rule.confidence;
+    conf = (typeof conf === 'number' && isFinite(conf)) ? Math.max(0, Math.min(1, conf)) : null;
+    return {
+      id: rule.id != null ? rule.id : null,
+      metric: rule.metric != null ? rule.metric : null,
+      applicable: applicable,
+      backed: backing.backed === true,
+      emit: emit,
+      reason: reason,
+      advisory: emit ? {
+        metric: rule.metric != null ? rule.metric : null,
+        confidence: conf,
+        explanation: rule.explanation != null ? String(rule.explanation) : null,
+        evidenceRefs: backing.resolved
+      } : null,
+      backing: backing
+    };
+  }
+
   var EvidenceCore = {
     VERSIONS: VERSIONS, REQUIRED_META: REQUIRED_META, STUDY_TYPES: STUDY_TYPES,
     validateEntry: validateEntry, evidenceId: evidenceId, parseRef: parseRef,
-    makeStore: makeStore, resolveRefs: resolveRefs, ruleBacking: ruleBacking
+    makeStore: makeStore, resolveRefs: resolveRefs, ruleBacking: ruleBacking,
+    evaluateAdvisory: evaluateAdvisory
   };
 
   if (typeof module !== 'undefined' && module.exports) { module.exports = EvidenceCore; }

@@ -3578,6 +3578,11 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="lich-hero"></div>
     <div id="lich-coach"></div>
 
+    <!-- Body/Health foundation — echte gemeten waarden (alleen indien beschikbaar) + apparaatstatus. -->
+    <div id="lich-bodymetrics" style="margin-top:14px"></div>
+    <div class="v43-lbl" style="margin:18px 0 10px">Apparaten</div>
+    <div id="lich-devices"></div>
+
     <div class="v43-lbl" style="margin:18px 0 10px">Anatomie</div>
     <div class="lich-anat">
       <div class="v43-lich-toggle"><button id="v43-lich-front" class="on" onclick="v43LichView('front')">Voorkant</button><button id="v43-lich-back" onclick="v43LichView('back')">Achterkant</button></div>
@@ -4798,6 +4803,103 @@ function tkWeatherEnable(elId, mode, outdoor, modality){
 function tkWeatherRefresh(){
   try{ if(TKWeather&&TKWeather._cache){ for(var k in TKWeather._cache){ if(TKWeather._cache.hasOwnProperty(k)) delete TKWeather._cache[k]; } }
     var L=window._tkWeatherLast; if(L){ tkWeatherPaint(L.elId, L.mode, L.outdoor, L.modality); } }catch(e){}
+}
+
+// ══════════════════════════════════════════════════════════
+// BODY / HEALTH + DEVICE-STATUS UI (Fitbit = lichaam · Concept2 = trainingsprestatie)
+// Pure render-helpers: canonieke input → HTML. Nooit fake "synced", nooit verzonnen meetwaarde.
+// Semantiek gescheiden: Fitbit beantwoordt "wat gebeurt er met mijn lichaam?",
+// Concept2 "wat heb ik tijdens mijn training gepresteerd?". Beide via DeviceCore-canoniek.
+// ══════════════════════════════════════════════════════════
+function _tkTimeFmt(t){ if(t==null) return ''; try{ var d=new Date(t); if(isNaN(d.getTime())) return ''; return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }catch(e){ return ''; } }
+function tkDeviceStatusMeta(status){
+  switch(status){
+    case 'connected':     return { dot:'var(--green)',        label:'Gekoppeld' };
+    case 'syncing':       return { dot:'var(--accent)',       label:'Synchroniseren…' };
+    case 'sync_failed':   return { dot:'var(--red)',          label:'Synchronisatie mislukt' };
+    case 'token_expired': return { dot:'var(--amber,#c98a00)',label:'Opnieuw koppelen nodig' };
+    case 'stale':         return { dot:'var(--amber,#c98a00)',label:'Gegevens verouderd' };
+    default:              return { dot:'var(--g3)',           label:'Niet gekoppeld' };
+  }
+}
+// state = DeviceCore.deviceConnectionState(...); opts:{ role, actionsHtml }
+function tkRenderDeviceCard(name, icon, state, opts){
+  opts=opts||{}; state=state||{status:'not_connected'};
+  var m=tkDeviceStatusMeta(state.status);
+  var sub;
+  switch(state.status){
+    case 'connected': sub = state.lastSyncAt ? ('Laatste sync '+_tkTimeFmt(state.lastSyncAt)) : 'Gekoppeld'; break;
+    case 'stale':     sub = (state.lastSyncAt ? ('Laatste sync '+_tkTimeFmt(state.lastSyncAt)+' · ') : '')+'verouderd'; break;
+    case 'syncing':   sub = 'Bezig met ophalen…'; break;
+    case 'sync_failed': sub = 'Laatste poging mislukt — probeer opnieuw'; break;
+    case 'token_expired': sub = 'Koppeling verlopen — verbind opnieuw'; break;
+    default:          sub = opts.role || 'Nog niet gekoppeld'; break;
+  }
+  return '<div class="card" style="margin-bottom:10px"><div class="card-hd" style="display:flex;align-items:center;gap:10px">'+
+    '<div style="font-size:20px">'+icon+'</div>'+
+    '<div style="flex:1"><div class="card-title" style="display:flex;align-items:center;gap:7px"><span>'+name+'</span>'+
+      '<span style="width:8px;height:8px;border-radius:50%;background:'+m.dot+';display:inline-block"></span>'+
+      '<span style="font-size:11px;font-weight:700;color:var(--g4)">'+m.label+'</span></div>'+
+      '<div class="card-sub" style="font-size:11.5px;color:var(--g4)">'+sub+'</div></div>'+
+    (opts.actionsHtml||'')+
+    '</div></div>';
+}
+// items: [{icon,label,value,unit,sub}] — alleen echt aanwezige waarden (value!=null) worden getoond.
+function tkRenderBodyMetrics(items, meta){
+  meta=meta||{};
+  var real=(items||[]).filter(function(x){ return x && x.value!=null && x.value!==''; });
+  if(!real.length){
+    return '<div class="card"><div class="card-body" style="font-size:12.5px;color:var(--g4);padding:12px 14px">'+
+      'Nog geen metingen. Koppel een apparaat of vul je check-in in — er worden alleen echt gemeten waarden getoond.</div></div>';
+  }
+  var tiles=real.map(function(x){
+    return '<div style="flex:1;min-width:82px;background:var(--g1,#f4f6f7);border-radius:12px;padding:10px 12px">'+
+      '<div style="font-size:11px;color:var(--g4);font-weight:700;margin-bottom:2px">'+(x.icon||'')+' '+x.label+'</div>'+
+      '<div style="font-size:18px;font-weight:800;color:var(--g5,#1a2b33)">'+x.value+(x.unit?('<span style="font-size:11px;font-weight:600;color:var(--g4)"> '+x.unit+'</span>'):'')+'</div>'+
+      (x.sub?'<div style="font-size:10px;color:var(--g3)">'+x.sub+'</div>':'')+'</div>';
+  }).join('');
+  var foot = (meta.source||meta.date) ? ('<div style="font-size:10px;color:var(--g3);margin-top:7px;padding:0 2px">'+
+      (meta.source?('Bron: '+meta.source):'')+(meta.source&&meta.date?' · ':'')+(meta.date?meta.date:'')+'</div>') : '';
+  return '<div class="v43-lbl" style="margin:0 0 8px">Lichaam vandaag</div>'+
+    '<div style="display:flex;flex-wrap:wrap;gap:8px">'+tiles+'</div>'+foot;
+}
+// Wiring op het Lichaam-scherm: echte hrv_log-metingen + Fitbit-status (server) + Concept2 (nog niet gekoppeld).
+async function renderLichaamDevices(lh){
+  try{
+    // Body-metrics: uitsluitend echt gemeten waarden uit de laatste check-in/sync.
+    var mEl=document.getElementById('lich-bodymetrics');
+    if(mEl){
+      var items=[
+        { icon:'🧠', label:'HRV', value:(lh&&lh.hrv!=null)?lh.hrv:null, unit:'ms', sub:'RMSSD' },
+        { icon:'❤️', label:'Rusthartslag', value:(lh&&lh.rhr!=null)?lh.rhr:null, unit:'bpm' },
+        { icon:'😴', label:'Slaap', value:(lh&&lh.sleep!=null)?(typeof v43SlaapTxt==='function'?v43SlaapTxt(lh.sleep):lh.sleep):null, unit:'' }
+      ];
+      mEl.innerHTML=tkRenderBodyMetrics(items, { source: (lh&&lh.hrv!=null)?'Check-in / wearable':'', date:(lh&&lh.date)?lh.date:'' });
+    }
+    // Apparaten: Fitbit (lichaam) via serverstatus → canonieke connectiestatus. Concept2 (prestatie) voorbereid.
+    var dEl=document.getElementById('lich-devices');
+    if(dEl && typeof DeviceCore!=='undefined'){
+      var now=Date.now();
+      var fitState={status:'not_connected'};
+      try{
+        if(typeof fetchWearableStatus==='function'){
+          var st=await fetchWearableStatus();
+          if(st){ fitState=DeviceCore.deviceConnectionState({
+            connected:!!st.connected, connectedAt:st.connectedAt, lastSyncAt:st.lastSyncAt,
+            lastSyncStatus:(st.lastSyncStatus==='success'?'ok':st.lastSyncStatus)
+          }, { now:now }); }
+        }
+      }catch(_){}
+      var fitAction = (fitState.status==='not_connected')
+        ? '<button class="btn btn-o btn-sm" style="font-size:11px" onclick="try{wearableConnect()}catch(e){}">Koppelen</button>'
+        : '<button class="btn btn-o btn-sm" style="font-size:11px" onclick="try{wearableSyncNow()}catch(e){}">Sync</button>';
+      // Concept2: nog geen client-koppeling (OAuth-import, geen live in browser) → eerlijk niet-gekoppeld.
+      var c2State=DeviceCore.deviceConnectionState({connected:false}, { now:now });
+      dEl.innerHTML =
+        tkRenderDeviceCard('Fitbit', '⌚', fitState, { role:'Lichaam · hartslag, HRV, slaap', actionsHtml:fitAction })+
+        tkRenderDeviceCard('Concept2', '🚣', c2State, { role:'Training · roeien, ski, bike (workout-import)' });
+    }
+  }catch(e){ /* apparaten mogen het scherm nooit breken */ }
 }
 </script>
 <script>
@@ -18012,6 +18114,8 @@ async function renderLichaamPremium(){
       <div class="grid">${tile(df!=null?df.toFixed(2):'—','Dagfactor')}${tile(lh&&lh.sleep!=null?v43SlaapTxt(lh.sleep):'—','Slaap')}${tile(lh&&lh.hrv!=null?lh.hrv:'—','HRV')}${tile(lh&&lh.rhr!=null?lh.rhr:'—','Rust HR')}</div>
     </div>`;
   }
+  // Body/Health foundation + apparaatstatus (echte data only). Fail-safe: eigen try/catch.
+  try{ renderLichaamDevices(lh); }catch(_){}
   const coach=document.getElementById('lich-coach');
   if(coach){
     const recovered=rows.filter(r=>r.pct>=85&&r.hours!==null).map(r=>r.muscle).slice(0,3);

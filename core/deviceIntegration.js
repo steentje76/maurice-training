@@ -389,6 +389,117 @@
     };
   }
 
+  // ── CONCEPT2 IMPORT → BESTAANDE ROWING "ACTUAL" (sessions) ────────────────────────────
+  // Mapt een genormaliseerde Concept2-workout naar EXACT het bestaande rowing-sessions-record
+  // (finishSession-literal): { date, exercise_id, training_type, note, distance, time_str, watt,
+  // stroke_rate, rpe }. GEEN nieuwe kolommen, GEEN schemawijziging. ACTUAL only — nooit prescription
+  // (die leeft in training_exercises). Idempotent via een [c2:<resultId>]-tag in `note` (sessions
+  // heeft geen provider/externalId-kolom). Watts: gemeten indien aanwezig, anders afgeleid — met
+  // expliciete provenance (concept2_measured | concept2_derived); afgeleid nooit als gemeten tonen.
+  var CONCEPT2_MODALITY_EXERCISE = { row: 'roeien', ski: 'skierg', bike: 'bikeerg' };
+  function metricVal(workout, key){
+    if (!workout || !Array.isArray(workout.metrics)) return null;
+    for (var i = 0; i < workout.metrics.length; i++){ if (workout.metrics[i] && workout.metrics[i].key === key) return workout.metrics[i].value; }
+    return null;
+  }
+  // seconden → "m:ss" of "m:ss.t" (tienden), NL-parsebaar door de app (parseTimeToSec).
+  function formatDurationStr(sec){
+    var s = toNum(sec); if (!isFinite(s) || s < 0) return null;
+    var whole = Math.floor(s), tenths = Math.round((s - whole) * 10);
+    if (tenths === 10){ whole += 1; tenths = 0; }
+    var m = Math.floor(whole / 60), ss = whole % 60;
+    var base = m + ':' + ('0' + ss).slice(-2);
+    return tenths > 0 ? (base + '.' + tenths) : base;
+  }
+  // split = seconden per basis (500m row/ski · 1000m bike) → geformatteerd. Ongeldig → null.
+  function splitFromDistTime(distanceM, durationS, basis){
+    var d = toNum(distanceM), t = toNum(durationS), b = toNum(basis);
+    if (!isFinite(d) || !isFinite(t) || !isFinite(b) || d <= 0 || t <= 0 || b <= 0) return null;
+    return formatDurationStr((t / d) * b);
+  }
+  function _ymd(t){
+    if (t == null) return null;
+    var s = String(t); var m = s.match(/^(\d{4}-\d{2}-\d{2})/); if (m) return m[1];
+    var n = Date.parse(s); if (!isFinite(n)) return null;
+    var d = new Date(n); return d.getUTCFullYear() + '-' + ('0'+(d.getUTCMonth()+1)).slice(-2) + '-' + ('0'+d.getUTCDate()).slice(-2);
+  }
+  // Watts: kies GEMETEN (metric watts_w) indien aanwezig, anders afgeleid via de officiële formule.
+  function resolveConcept2Watts(workout){
+    var measured = metricVal(workout, 'watts_w');
+    if (measured != null && isFinite(toNum(measured))) return { value: toNum(measured), source: 'concept2_measured' };
+    var d = metricVal(workout, 'distance_m'), t = metricVal(workout, 'duration_s');
+    var w = deriveWatts(d, t);
+    return { value: w, source: w != null ? 'concept2_derived' : null };
+  }
+  function concept2ExternalTag(resultId){ return (resultId != null && resultId !== '') ? ('[c2:' + resultId + ']') : ''; }
+  function _idsFromSessions(sessions){
+    var set = {};
+    (sessions || []).forEach(function (s){
+      var note = s && s.note != null ? String(s.note) : '';
+      var re = /\[c2:([^\]]+)\]/g, m;
+      while ((m = re.exec(note))) { set[m[1]] = true; }
+    });
+    return set;
+  }
+  function concept2AlreadyImported(resultId, sessions){
+    if (resultId == null || resultId === '') return false;
+    return _idsFromSessions(sessions)[String(resultId)] === true;
+  }
+  // Eén Concept2-workout → { row (sessions-actual), provenance }. Nooit prescription-velden.
+  function concept2ToRowingActual(workout, opts){
+    opts = opts || {}; workout = workout || {};
+    var modality = workout.modality || 'row';
+    var exId = CONCEPT2_MODALITY_EXERCISE[modality] || 'roeien';
+    var dist = metricVal(workout, 'distance_m');
+    var dur  = metricVal(workout, 'duration_s');
+    var spm  = metricVal(workout, 'stroke_rate_spm');
+    var drag = metricVal(workout, 'drag_factor');
+    var basis = (modality === 'bike') ? 1000 : 500;
+    var split = (dist != null && dur != null) ? splitFromDistTime(dist, dur, basis) : null;
+    var w = resolveConcept2Watts(workout);
+    var tag = concept2ExternalTag(workout.externalId);
+    var noteParts = [];
+    if (split) noteParts.push('split:' + split + (basis === 1000 ? '/1000m' : '/500m'));
+    if (drag != null) noteParts.push('drag ' + Math.round(drag));
+    if (tag) noteParts.push(tag);
+    var row = {
+      date: _ymd(workout.startTime) || opts.date || null,
+      exercise_id: exId,
+      training_type: opts.training_type != null ? opts.training_type : null,
+      note: noteParts.join(' · '),
+      distance: dist != null ? Math.round(dist) : null,
+      time_str: dur != null ? formatDurationStr(dur) : null,
+      watt: w.value != null ? Math.round(w.value * 10) / 10 : null,
+      stroke_rate: spm != null ? Math.round(spm) : null,
+      rpe: null // ACTUAL-only; nooit een prescription/target overschrijven
+    };
+    if (opts.training_instance_id != null) row.training_instance_id = opts.training_instance_id;
+    return {
+      row: row,
+      provenance: {
+        provider: 'concept2', source: 'concept2_logbook',
+        externalId: workout.externalId != null ? workout.externalId : null,
+        identity: workout.identity != null ? workout.identity : null,
+        modality: modality, watts_source: w.source
+      }
+    };
+  }
+  // Batch-import (idempotent): filtert dubbels tegen bestaande sessions ÉN binnen de batch.
+  // → { toInsert:[sessions-row], skipped:[externalId], derivedWatts:[externalId] }
+  function importConcept2Workouts(workouts, existingSessions, opts){
+    var seen = _idsFromSessions(existingSessions);
+    var toInsert = [], skipped = [], derivedWatts = [];
+    (workouts || []).forEach(function (w){
+      var id = (w && w.externalId != null) ? String(w.externalId) : null;
+      if (id != null && seen[id] === true) { skipped.push(id); return; } // al geïmporteerd → overslaan
+      if (id != null) seen[id] = true;                                    // binnen batch ook idempotent
+      var mapped = concept2ToRowingActual(w, opts);
+      if (mapped.provenance.watts_source === 'concept2_derived') derivedWatts.push(id);
+      toInsert.push(mapped.row);
+    });
+    return { toInsert: toInsert, skipped: skipped, derivedWatts: derivedWatts };
+  }
+
   // ── HEALTH / WEARABLE DAGMETRIEKEN → CANONIEK (Google Health API / Fitbit) ────
   // Fitbit-data komt via de Google Health API binnen (health.googleapis.com). Deze mapping
   // brengt de dag-rollups naar device_canonical.v1. HRV = RMSSD (Google Health-bron) en wordt
@@ -497,6 +608,12 @@
     DEVICE_STATUSES: DEVICE_STATUSES,
     deviceConnectionState: deviceConnectionState,
     deriveWatts: deriveWatts,
+    // Concept2 import → rowing actual
+    CONCEPT2_MODALITY_EXERCISE: CONCEPT2_MODALITY_EXERCISE,
+    metricVal: metricVal, formatDurationStr: formatDurationStr, splitFromDistTime: splitFromDistTime,
+    resolveConcept2Watts: resolveConcept2Watts, concept2ExternalTag: concept2ExternalTag,
+    concept2AlreadyImported: concept2AlreadyImported, concept2ToRowingActual: concept2ToRowingActual,
+    importConcept2Workouts: importConcept2Workouts,
     normalizeHealthDaily: normalizeHealthDaily,
     ADAPTER_METHODS: ADAPTER_METHODS,
     CONCEPT2_MAP: CONCEPT2_MAP,

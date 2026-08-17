@@ -4844,6 +4844,32 @@ function tkRenderDeviceCard(name, icon, state, opts){
     (opts.actionsHtml||'')+
     '</div></div>';
 }
+// Compacte Concept2 ACTUAL-weergave (progressive disclosure) uit een canonieke workout.
+// Toont alleen echt aanwezige velden. Afgeleide watt expliciet gemarkeerd (nooit als gemeten).
+// workout = DeviceCore-canoniek (metrics[]); wattsSource = 'concept2_measured'|'concept2_derived'.
+function tkRenderConcept2Actual(workout, opts){
+  opts=opts||{};
+  if(typeof DeviceCore==='undefined' || !workout) return '';
+  var mv=function(k){ return DeviceCore.metricVal(workout,k); };
+  var modLbl={row:'RowErg',ski:'SkiErg',bike:'BikeErg'}[workout.modality]||'Concept2';
+  var dist=mv('distance_m'), dur=mv('duration_s'), spm=mv('stroke_rate_spm'), hr=mv('heart_rate_bpm');
+  var w=DeviceCore.resolveConcept2Watts(workout);
+  var basis=(workout.modality==='bike')?1000:500;
+  var split=(dist!=null&&dur!=null)?DeviceCore.splitFromDistTime(dist,dur,basis):null;
+  var rows=[];
+  if(dist!=null) rows.push(['Afstand', Math.round(dist).toLocaleString('nl-NL')+' m']);
+  if(dur!=null) rows.push(['Tijd', DeviceCore.formatDurationStr(dur)]);
+  if(split) rows.push(['Split', split+'/'+(basis===1000?'1000m':'500m')]);
+  if(w.value!=null) rows.push(['Vermogen', Math.round(w.value)+' W'+(w.source==='concept2_derived'?' (afgeleid)':'')]);
+  if(spm!=null) rows.push(['Slagen', Math.round(spm)+' spm']);
+  if(hr!=null) rows.push(['Hartslag', Math.round(hr)+' bpm']);
+  if(!rows.length) return '';
+  return '<div class="card" style="margin-bottom:10px"><div class="card-hd" style="display:flex;align-items:center;gap:8px">'+
+      '<span style="font-size:16px">🚣</span><span class="card-title">Concept2 · '+modLbl+'</span></div>'+
+    '<div class="card-body" style="display:flex;flex-wrap:wrap;gap:6px 14px;padding:8px 14px 12px">'+
+      rows.map(function(r){return '<div style="min-width:70px"><div style="font-size:10px;color:var(--g4);font-weight:700;text-transform:uppercase;letter-spacing:.3px">'+r[0]+'</div><div style="font-size:15px;font-weight:800;color:var(--g5,#1a2b33)">'+r[1]+'</div></div>';}).join('')+
+    '</div></div>';
+}
 // items: [{icon,label,value,unit,sub}] — alleen echt aanwezige waarden (value!=null) worden getoond.
 function tkRenderBodyMetrics(items, meta){
   meta=meta||{};
@@ -4869,12 +4895,13 @@ async function renderLichaamDevices(lh){
     // Body-metrics: uitsluitend echt gemeten waarden uit de laatste check-in/sync.
     var mEl=document.getElementById('lich-bodymetrics');
     if(mEl){
+      var dLbl=(lh&&lh.date)?lh.date:'';
       var items=[
-        { icon:'🧠', label:'HRV', value:(lh&&lh.hrv!=null)?lh.hrv:null, unit:'ms', sub:'RMSSD' },
-        { icon:'❤️', label:'Rusthartslag', value:(lh&&lh.rhr!=null)?lh.rhr:null, unit:'bpm' },
-        { icon:'😴', label:'Slaap', value:(lh&&lh.sleep!=null)?(typeof v43SlaapTxt==='function'?v43SlaapTxt(lh.sleep):lh.sleep):null, unit:'' }
+        { icon:'🧠', label:'HRV', value:(lh&&lh.hrv!=null)?lh.hrv:null, unit:'ms', sub:'RMSSD'+(dLbl?' · '+dLbl:'') },
+        { icon:'❤️', label:'Rusthartslag', value:(lh&&lh.rhr!=null)?lh.rhr:null, unit:'bpm', sub:dLbl },
+        { icon:'😴', label:'Slaap', value:(lh&&lh.sleep!=null)?(typeof v43SlaapTxt==='function'?v43SlaapTxt(lh.sleep):lh.sleep):null, unit:'', sub:'afgelopen nacht' }
       ];
-      mEl.innerHTML=tkRenderBodyMetrics(items, { source: (lh&&lh.hrv!=null)?'Check-in / wearable':'', date:(lh&&lh.date)?lh.date:'' });
+      mEl.innerHTML=tkRenderBodyMetrics(items, { source: (lh&&(lh.hrv!=null||lh.rhr!=null||lh.sleep!=null))?'Check-in / wearable':'', date:dLbl });
     }
     // Apparaten: Fitbit (lichaam) via serverstatus → canonieke connectiestatus. Concept2 (prestatie) voorbereid.
     var dEl=document.getElementById('lich-devices');
@@ -4893,11 +4920,11 @@ async function renderLichaamDevices(lh){
       var fitAction = (fitState.status==='not_connected')
         ? '<button class="btn btn-o btn-sm" style="font-size:11px" onclick="try{wearableConnect()}catch(e){}">Koppelen</button>'
         : '<button class="btn btn-o btn-sm" style="font-size:11px" onclick="try{wearableSyncNow()}catch(e){}">Sync</button>';
-      // Concept2: nog geen client-koppeling (OAuth-import, geen live in browser) → eerlijk niet-gekoppeld.
+      // Concept2 Logbook: import via OAuth (geen live in browser). Eerlijk niet-gekoppeld tot server-koppeling.
       var c2State=DeviceCore.deviceConnectionState({connected:false}, { now:now });
       dEl.innerHTML =
         tkRenderDeviceCard('Fitbit', '⌚', fitState, { role:'Lichaam · hartslag, HRV, slaap', actionsHtml:fitAction })+
-        tkRenderDeviceCard('Concept2', '🚣', c2State, { role:'Training · roeien, ski, bike (workout-import)' });
+        tkRenderDeviceCard('Concept2 Logbook', '🚣', c2State, { role:'Training importeren · roeien, ski, bike' });
     }
   }catch(e){ /* apparaten mogen het scherm nooit breken */ }
 }

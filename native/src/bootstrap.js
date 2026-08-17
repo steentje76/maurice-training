@@ -37,6 +37,10 @@ function registerTransport() {
     // transport.enableCapture()/exportCapture() aanroepen).
     window.TKDeviceCapture = transport;
 
+    // ververs de sync permissie-cache alvast (bluetooth aan/uit + permissie),
+    // zodat getPermissionState() bij [Apparaat koppelen] accuraat is.
+    try { if (typeof transport.refreshPermissionState === 'function') transport.refreshPermissionState(); } catch (e) {}
+
     try { window.dispatchEvent(new Event('tk-transport-ready')); } catch (e) {}
     // eslint-disable-next-line no-console
     if (window.TK_DEBUG) console.log('[TK] NativeConcept2BleTransport geregistreerd (' + transport.VERSION + ')');

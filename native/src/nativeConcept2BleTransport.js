@@ -115,6 +115,10 @@
 
     // -------- interne state --------
     var connState = 'idle';            // uit Concept2Live.CONN_STATES-vocabulaire
+    // gecachete permissie-string zodat getPermissionState() SYNCHROON is (zoals de
+    // MockConcept2PM5-contractvorm die de web-UI verwacht). Async ververst via
+    // refreshPermissionState()/ensureReady(). Default optimistisch 'granted'.
+    var permStateCache = 'granted';
     var deviceId = null;
     var machineType = 'unknown';
     var lastMetrics = null;
@@ -172,24 +176,31 @@
     }
 
     // -------- permissie --------
-    function getPermissionState() {
+    // SYNCHROON (contractvorm): geeft de laatst-bekende gecachete status terug.
+    function getPermissionState() { return permStateCache; }
+
+    // ASYNC: echte query bij de gateway; ververst de cache. Roep dit aan bij
+    // bootstrap-init en vóór discover/connect zodat de sync-status accuraat is.
+    function refreshPermissionState() {
       return Promise.resolve()
         .then(function () { return gateway.isEnabled(); })
         .then(function (on) {
-          if (!on) return 'bluetooth_off';
+          if (!on) { permStateCache = 'bluetooth_off'; return 'bluetooth_off'; }
           return gateway.checkPermission().then(function (p) {
-            return p === 'granted' ? 'granted' : 'denied';
+            permStateCache = (p === 'granted') ? 'granted' : 'denied';
+            return permStateCache;
           });
         })
-        .catch(function () { return 'denied'; });
+        .catch(function () { permStateCache = 'denied'; return 'denied'; });
     }
 
     function ensureReady() {
       // vraag permissie PAS hier (bij koppelen), niet bij app-start.
-      return getPermissionState().then(function (state) {
+      return refreshPermissionState().then(function (state) {
         if (state === 'bluetooth_off') { var e = new Error('bluetooth_off'); e.code = 'bluetooth_off'; throw e; }
         if (state === 'granted') return 'granted';
         return gateway.requestPermission().then(function (p) {
+          permStateCache = (p === 'granted') ? 'granted' : 'denied';
           if (p === 'granted') return 'granted';
           var e2 = new Error('permission_denied'); e2.code = 'permission_denied'; throw e2;
         });
@@ -362,6 +373,7 @@
       available: true,
       VERSION: VERSION,
       getPermissionState: getPermissionState,
+      refreshPermissionState: refreshPermissionState,
       discover: discover,
       connect: connect,
       disconnect: disconnect,

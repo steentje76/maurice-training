@@ -41,22 +41,34 @@ Toegevoegd (allemaal nieuw, additief):
 - `native/src/nativeConcept2BleTransport.js` — de adapter (UMD, platform-onafhankelijk, in node getest)
 - `native/src/capacitorBleGateway.js` — BleClient → BleGateway-binding (ESM)
 - `native/src/bootstrap.js` — native entry; registreert `window.TKDeviceTransport`
-- `native/nativeConcept2BleTransport.test.js` — 48 asserts, node, zonder fysiek PM5
-- `native/android/AndroidManifest.additions.xml` — BLE-permissies (in te plakken na `cap add android`)
+- `native/nativeConcept2BleTransport.test.js` — 51 asserts, node, zonder fysiek PM5
+- `native/android/AndroidManifest.additions.xml` — BLE-permissies (referentie; al toegepast in het meegeleverde `android/`)
+- `android/` — het door Capacitor GEGENEREERDE native project, mét BLE-permissies in `android/app/src/main/AndroidManifest.xml` en de BLE-plugin in de Gradle-config.
 
-Gegenereerd (niet committen): `www/`, `android/`, `node_modules/`.
+## Build-status (deze sprint)
+
+- Android-project: **GEGENEREERD** met `npx cap add android` (Capacitor 6, AGP 8.2.1, Gradle-wrapper 8.2.1). BLE-plugin `@capacitor-community/bluetooth-le@6.1.0` gedetecteerd en in `capacitor.settings.gradle` + `app/capacitor.build.gradle` opgenomen. `native-transport.js` + web-assets staan in `android/app/src/main/assets/public/`.
+- BLE-permissies: **TOEGEPAST** in de gegenereerde manifest.
+- APK: **NOT BUILT in deze cloud-omgeving — EXTERN BLOCKED.** Reden: (1) de netwerk-allowlist blokkeert `services.gradle.org` (proxy `HTTP 403`) én Google Maven (`dl.google.com`/`maven.google.com`) voor AGP/AndroidX; (2) er is geen Android SDK in de container (`ANDROID_HOME` leeg, geen `sdkmanager`). Dit is een omgevingslimiet, geen projectfout.
 
 ## Bouwstappen (lokaal — jij hebt Android SDK/Gradle/JDK)
 
+Het `android/`-project is al gegenereerd en de permissies staan er al in. Lokaal:
+
 ```bash
 npm install
-npx cap add android                 # genereert android/ (Capacitor native project)
-# voeg de permissies uit native/android/AndroidManifest.additions.xml toe aan
-#   android/app/src/main/AndroidManifest.xml
-npm run cap:sync                    # build:www + cap sync android
+npm run cap:sync                    # build:www (vult www/ uit JOUW repo) + cap copy android
 cd android && ./gradlew assembleDebug
 # APK: android/app/build/outputs/apk/debug/app-debug.apk
 ```
+
+`cap:sync` ververst de web-assets in het android-project vanuit je volledige repo
+(inclusief manifest.json/icons/videos die in de cloud-werkkopie ontbraken).
+`cap copy` overschrijft de AndroidManifest.xml NIET → de BLE-permissies blijven staan.
+`npx cap open android` opent Android Studio voor signing/release.
+
+> Let op JDK: de wrapper is Gradle 8.2.1 (ondersteunt JDK ≤ 20). Bouw met JDK 17
+> (aanbevolen voor AGP 8.2), of upgrade de Gradle-wrapper naar 8.5+ voor JDK 21.
 
 `npx cap open android` opent Android Studio voor signing/release. De web-code
 werkt ongewijzigd; alleen `www/native-transport.js` voegt de BLE-transportlaag toe.

@@ -93,11 +93,18 @@ function makeTransport(cfg) {
   var allUnknown = Object.keys(ds).every(function (u) { return ds[u] === 'UNKNOWN'; });
   ok(allUnknown && Object.keys(ds).length > 0, 'alle notify-decoders standaard UNKNOWN');
 
-  // 4. permissie-mapping
+  // 4. permissie-mapping — getPermissionState is SYNCHROON (contractvorm zoals mock)
+  var syncP = makeTransport().t;
+  eq(typeof syncP.getPermissionState(), 'string', 'getPermissionState is synchroon (string)');
+  eq(syncP.getPermissionState(), 'granted', 'getPermissionState default optimistisch granted');
+  // refreshPermissionState is async en ververst de cache
   var offP = makeTransport({ enabled: false });
-  offP.t.getPermissionState().then(function (s) { eq(s, 'bluetooth_off', 'permission: bluetooth uit -> bluetooth_off'); });
+  offP.t.refreshPermissionState().then(function (s) {
+    eq(s, 'bluetooth_off', 'refresh: bluetooth uit -> bluetooth_off');
+    eq(offP.t.getPermissionState(), 'bluetooth_off', 'sync-cache bijgewerkt naar bluetooth_off');
+  });
   var denyP = makeTransport({ permission: 'denied' });
-  denyP.t.getPermissionState().then(function (s) { eq(s, 'denied', 'permission: geweigerd -> denied'); });
+  denyP.t.refreshPermissionState().then(function (s) { eq(s, 'denied', 'refresh: geweigerd -> denied'); });
 
   // 5. discovery mapt scan-resultaten -> {id,name,machineType:'unknown',rssi}
   var dsc = makeTransport({ scanned: [

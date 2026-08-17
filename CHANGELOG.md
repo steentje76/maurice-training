@@ -1,5 +1,49 @@
 # Trainingskompas — Changelog
 
+## v4.25.0 — 17 augustus 2026 (Lichaam UX 2.0 — Fase 0 + Fase 1)
+
+Implementatie van uitsluitend Fase 0 (technische UX-fixes) en Fase 1 (Lichaam-overzicht en navigatiestructuur) uit het goedgekeurde ontwerp `Lichaam_UX_2.0_mockup_DEFINITIEF.html`. Fase 2 t/m 7 zijn bewust **niet** gebouwd.
+
+### Fase 0.1 — statuskleuren dark-mode-proof
+`--red` is `#111111` en werd in dark mode niet overschreven; status- en herstelkleuren renderden daardoor zwart. Nieuw zijn drie semantische aliassen — `--status-good`, `--status-warn`, `--status-bad` — op de al bestaande, per thema overschreven `--df-g/--df-y/--df-r`. Alle veertien stoplicht-kleurbeslissingen (1RM-doel, spierherstel, herstelheatmap, dagfactor, T/H-ratio, RPE-geschiedenis, apparaatstatus, legenda) gebruiken deze aliassen. **`--red` zelf is ongewijzigd** en houdt zijn bestaande rol voor actieknoppen, verwijderen en focus-accenten — die zijn geen status.
+
+### Fase 0.2 — hrv_log-limiet versus de 90-dagenselector
+De periodeknoppen boden 7/14/30/90 dagen aan, maar er werden altijd maar 35 rijen opgehaald: 90 dagen toonde in werkelijkheid hooguit 35. De eerste render houdt de goedkope limiet van 35 aan (dekt de standaardperiode én de HRV-baseline van 28 dagen); kiest de gebruiker een langere periode dan de opgehaalde reeks dekt, dan wordt precies zoveel bijgeladen als die periode nodig heeft en gecachet. Korter kiezen doet nooit een nieuwe query. De limiet is afgeleid van de periode (`_tkHealthLimitFor`), niet willekeurig groot, en begrensd op 400.
+
+### Fase 0.3 — kleursemantiek van de twee anatomische figuren
+De twee figuren gaven tegengestelde betekenis aan dezelfde kleuren: groen betekende "goed hersteld" op het ene figuur en "veel volume" op het andere, rood "vermoeid" én "weinig volume". Herstel blijft een stoplicht (drempels 85/50 ongewijzigd). Belasting is nu één intensiteitsramp laag → hoog (`--load-0` t/m `--load-3`, één tint op de bestaande `--df-b`-kleur, per thema overschreven); de drempels 12/6 sets zijn ongewijzigd. Hoge belasting is geen slechte uitkomst en wordt niet langer rood. Ook de belastingskaarten op Lichaam en de volumelijst op Voortgang volgen deze ramp; alleen "rust aanbevolen" blijft een aandachtsignaal.
+
+### Fase 1 — compact Lichaam-overzicht
+Het overzicht ging van ~4.300 px naar **1.366 px** gemeten scrollhoogte. Behouden: de hero met herstel, status, dagfactor, slaap, HRV en rusthartslag. Nieuw op het overzicht: een check-instrip die de **bestaande** check-in (`m-hrv`) opent — de hero vroeg voorheen om een check-in zonder route ernaartoe; een samenvattingskaart van het herstelmodel met doorstap naar alle spiergroepen; vier aanraakbare metric-kaarten (HRV, rusthartslag, slaap, gewicht); een feitenblok "Wat je lichaam laat zien"; en verwijskaarten naar Coach en Training.
+
+Elke waarde toont nu of hij **gemeten** of **berekend** is.
+
+### Fase 1 — navigatiestructuur
+Drie nieuwe schermen in de bestaande `go()`-router, elk gevuld met de bestaande blokken en dezelfde renderers — geen lege of nagemaakte schermen:
+- `s-lich-spieren` — herstel (figuur + lijst) en belasting (kaarten + figuur) als twee gescheiden secties met elk hun eigen schaal, plus de herstelgeschiedenis.
+- `s-lich-health` — lichaamsmetingen en de historische grafieken met periodeselector.
+- `s-lich-metingen` — de vijf bestaande metingenkaarten.
+
+De metric-kaarten routeren via één tabel (`TK_LICH_METRIC_ROUTE`); een eigen detailscherm per metric komt in een latere fase en vergt dan alleen een wijziging in die tabel.
+
+### Verwijderd
+Het blok "Coachadvies vandaag" op Lichaam. Dat bevatte een eigen RPE-plafond (`df>=1.0?9:df>=0.93?8:7`) en de naam van de training van vandaag — een tweede source of truth naast `DecisionCore.computeProgAdjustment` en Home. Lichaam toont nu feiten en verwijst voor duiding naar Coach en voor planning naar Training. De bijbehorende dode CSS en de onjuiste bijschriftbelofte "tik een spier voor detail" zijn opgeruimd.
+
+### Getest
+- Release gate groen: `logic_tests` 250/250 en alle core-suites.
+- Alle 40 testsuites groen, waaronder de nieuwe `core/fLichaamPhase0.test.js` (95 controles op de kleurtokens, de limiet-/dekkingslogica, de routetabel en de schermstructuur).
+- Headless (Chromium, 390 px): vier Lichaam-schermen renderen in light én dark zonder console-fouten; routing van dertien schermen gecontroleerd, steeds precies één actief scherm.
+- Aanraakvlakken van alle nieuwe knoppen ≥ 44 px.
+- Kleuren geverifieerd op de gerenderde SVG: belasting laag→hoog `#9dc3e2 → #5295c6 → #006095` (light) en `#4b718b → #5d9bc5 → #92caf1` (dark); herstel stoplicht in beide thema's.
+
+### Gewijzigd
+- `APP_VER` v4.24.30 → **v4.25.0**; `sw.js` `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v42499`.
+
+### Niet gewijzigd
+Geen wijziging aan Supabase, schema, migraties, `core/calculation.js`, `core/decision.js`, `core/contextEngine.js`, de anatomie-SVG's, `MUSCLE_RECOVERY_HOURS`, de HRV-baselinelogica, `healthSeries`, de providerintegraties, Home, Coach, authenticatie of de bottom navigation.
+
+---
+
 ## v4.24.23 — 7 augustus 2026 (Nieuw: onboarding opnieuw doorlopen vanuit Instellingen)
 *Praktische aanleiding: het testen van de onboarding-fixes liep vast op Supabase's e-mail-rate-limit bij het aanmaken van een nieuw testaccount, en het handmatig wissen van een localStorage-sleutel via de browserconsole is op mobiel niet haalbaar zonder USB-debugging.*
 

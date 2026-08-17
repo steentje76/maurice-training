@@ -69,6 +69,18 @@
   --f:'Poppins','Arial',sans-serif;--r:8px;--shadow:0 1px 3px rgba(0,0,0,.1);
   --df-g:#00a082;--df-y:#a8842e;--df-r:#B3454C;--df-a:#b9702a;--df-b:#3a7aa8;
 
+  /* Fase 0.1 — semantische statuskleuren (stoplicht: goed / aandacht / kritiek).
+     Aliassen op de bestaande, per thema overschreven --df-*-tokens, zodat status- en
+     herstelkleuren ook in dark mode correct renderen. Geen nieuwe kleurwaarden.
+     --red blijft ongewijzigd en houdt zijn bestaande rol voor acties, verwijderknoppen
+     en focus-accenten; die zijn géén status en veranderen dus niet. */
+  --status-good:var(--df-g);--status-warn:var(--df-y);--status-bad:var(--df-r);
+
+  /* Fase 0.3 — belastingsschaal: één intensiteitsramp laag → hoog op de tint van
+     --df-b. Bewust géén stoplicht: hoge belasting is niet automatisch slecht.
+     --load-0 = geen belasting geregistreerd (neutraal). */
+  --load-0:#DDDDDD;--load-1:#9dc3e2;--load-2:#5295c6;--load-3:#006095;
+
   /* Sprint 1 — Dark Mode Fundament (Handbook H5 Deel 13). Alleen tokens + auto-detectie,
      nog geen restyle: lichte waarden hierboven blijven ongewijzigd de standaard. */
   --focus-ring:#0E3B4A;
@@ -96,6 +108,7 @@
     --shadow:0 1px 3px rgba(0,0,0,.4);
     --focus-ring:#00B894;
     --df-g:#3fd3b6;--df-y:#e0c06a;--df-r:#f08a8f;--df-a:#eba75e;--df-b:#79b6e0;
+    --load-0:#4a545c;--load-1:#4b718b;--load-2:#5d9bc5;--load-3:#92caf1;
   }
 }
 
@@ -108,6 +121,7 @@ html[data-theme="dark"]{
   --shadow:0 1px 3px rgba(0,0,0,.4);
   --focus-ring:#00B894;
   --df-g:#3fd3b6;--df-y:#e0c06a;--df-r:#f08a8f;--df-a:#eba75e;--df-b:#79b6e0;
+  --load-0:#4a545c;--load-1:#4b718b;--load-2:#5d9bc5;--load-3:#92caf1;
 }
 html[data-theme="light"]{
   --bg:#E6EBEF;--card:#fff;--bk:#0B1D2A;--dark:#0B1D2A;
@@ -115,6 +129,7 @@ html[data-theme="light"]{
   --shadow:0 1px 3px rgba(0,0,0,.1);
   --focus-ring:#0E3B4A;
   --df-g:#00a082;--df-y:#a8842e;--df-r:#B3454C;--df-a:#b9702a;--df-b:#3a7aa8;
+  --load-0:#DDDDDD;--load-1:#9dc3e2;--load-2:#5295c6;--load-3:#006095;
 }
 
 /* Reduced motion: alle motion-tokens naar (nagenoeg) nul, conform WCAG 2.2 / H6-vereiste
@@ -2407,69 +2422,103 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-stats .vh-m .k{font-size:9px;color:rgba(230,240,243,.6);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
 #s-stats .scroll>.card{border-radius:18px}
 /* ══ v4.22.0 — Sprint 5.3 Lichaam Premium Recovery Experience ══ */
-#s-lichaam .lich-rhero{background:#0E3B4A;border-radius:24px;padding:20px;box-shadow:0 16px 34px rgba(0,0,0,.3);margin-bottom:6px}
-#s-lichaam .lich-rhero .top{display:flex;align-items:center;gap:16px}
-#s-lichaam .lich-rhero .rring{width:96px;height:96px;flex:0 0 auto;position:relative}
-#s-lichaam .lich-rhero .rring .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-#s-lichaam .lich-rhero .rring .c .n{font-size:26px;font-weight:800;color:#fff;line-height:1}
-#s-lichaam .lich-rhero .rring .c .l{font-size:8px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:rgba(230,240,243,.55);margin-top:2px}
-#s-lichaam .lich-rhero .st{flex:1;min-width:0}
-#s-lichaam .lich-rhero .eye{font-size:10px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:rgba(230,240,243,.5)}
-#s-lichaam .lich-rhero .rd{font-size:19px;font-weight:800;color:#fff;letter-spacing:-.3px;margin-top:3px;line-height:1.1}
-#s-lichaam .lich-rhero .badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:#0b2a35;background:var(--accent);padding:4px 11px;border-radius:20px;margin-top:8px}
-#s-lichaam .lich-rhero .grid{display:flex;gap:8px;margin-top:16px}
-#s-lichaam .lich-rhero .m{flex:1;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 6px;text-align:center}
-#s-lichaam .lich-rhero .m .v{font-size:15px;font-weight:800;color:#fff}
-#s-lichaam .lich-rhero .m .k{font-size:8px;color:rgba(230,240,243,.6);font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
-#s-lichaam .lich-ccard{background:var(--v43-mint);border-radius:18px;padding:15px 16px;margin-bottom:6px}
-#s-lichaam .lich-ccard .h{display:flex;align-items:center;gap:9px;margin-bottom:10px}
-#s-lichaam .lich-ccard .h .ic{width:30px;height:30px;border-radius:50%;background:var(--accent);flex:0 0 auto;display:flex;align-items:center;justify-content:center}
-#s-lichaam .lich-ccard .h .ic svg{width:16px;height:16px}
-#s-lichaam .lich-ccard .h .t{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
-#s-lichaam .lich-ccard ul{list-style:none;display:flex;flex-direction:column;gap:8px;margin:0;padding:0}
-#s-lichaam .lich-ccard li{display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--dark);font-weight:600;line-height:1.4}
-#s-lichaam .lich-ccard li .d{width:8px;height:8px;border-radius:50%;flex:0 0 auto;margin-top:5px}
-#s-lichaam .lich-anat{background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:16px}
-#s-lichaam .lich-anat .v43-lich-toggle{display:flex;justify-content:center;margin-bottom:8px}
-#s-lichaam .lich-anat .v43-lich-fig{min-height:210px;display:flex;align-items:center;justify-content:center}
-#s-lichaam .lich-anat .v43-lich-cap{text-align:center;font-size:11px;color:var(--g4);font-weight:600;margin-top:8px}
-#s-lichaam .lich-mus{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-rhero{background:#0E3B4A;border-radius:24px;padding:20px;box-shadow:0 16px 34px rgba(0,0,0,.3);margin-bottom:6px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-rhero .top{display:flex;align-items:center;gap:16px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-rhero .rring{width:96px;height:96px;flex:0 0 auto;position:relative}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-rhero .rring .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-rhero .rring .c .n{font-size:26px;font-weight:800;color:#fff;line-height:1}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-rhero .rring .c .l{font-size:8px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:rgba(230,240,243,.55);margin-top:2px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-rhero .st{flex:1;min-width:0}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-rhero .eye{font-size:10px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:rgba(230,240,243,.5)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-rhero .rd{font-size:19px;font-weight:800;color:#fff;letter-spacing:-.3px;margin-top:3px;line-height:1.1}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-rhero .badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:#0b2a35;background:var(--accent);padding:4px 11px;border-radius:20px;margin-top:8px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-rhero .grid{display:flex;gap:8px;margin-top:16px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-rhero .m{flex:1;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 6px;text-align:center}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-rhero .m .v{font-size:15px;font-weight:800;color:#fff}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-rhero .m .k{font-size:8px;color:rgba(230,240,243,.6);font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-anat{background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:16px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-anat .v43-lich-toggle{display:flex;justify-content:center;margin-bottom:8px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-anat .v43-lich-fig{min-height:210px;display:flex;align-items:center;justify-content:center}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-anat .v43-lich-cap{text-align:center;font-size:11px;color:var(--g4);font-weight:600;margin-top:8px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-mus{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 /* Gezondheid & herstel-grafieken: mobiel 1 kolom, desktop 2 koloms (responsive, geen overflow). */
-#s-lichaam .lich-charts{display:block}
-@media(min-width:720px){#s-lichaam .lich-charts{display:grid;grid-template-columns:1fr 1fr;gap:10px}#s-lichaam .lich-charts>.card{margin-bottom:0}}
-#s-lichaam .lich-mcard{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:13px}
-#s-lichaam .lich-mcard .top{display:flex;align-items:center;justify-content:space-between}
-#s-lichaam .lich-mcard .nm{font-size:14px;font-weight:800;color:var(--dark)}
-#s-lichaam .lich-mcard .pct{font-size:15px;font-weight:800}
-#s-lichaam .lich-mcard .bar{height:7px;border-radius:5px;background:var(--g1);margin:9px 0 8px;overflow:hidden}
-#s-lichaam .lich-mcard .bar i{display:block;height:100%;border-radius:5px}
-#s-lichaam .lich-mcard .stt{font-size:11px;font-weight:700}
-#s-lichaam .lich-mcard .cm{font-size:11px;color:var(--g4);font-weight:600;margin-top:3px;line-height:1.35}
-#s-lichaam .lich-load{display:flex;flex-direction:column;gap:9px}
-#s-lichaam .lich-loadcard{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:13px 14px}
-#s-lichaam .lich-loadcard .ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
-#s-lichaam .lich-loadcard .ic svg{width:20px;height:20px;stroke-width:2;fill:none}
-#s-lichaam .lich-loadcard .ic.hi{background:rgba(229,83,61,.14)}#s-lichaam .lich-loadcard .ic.hi svg{stroke:var(--red)}
-#s-lichaam .lich-loadcard .ic.lo{background:var(--v43-mint)}#s-lichaam .lich-loadcard .ic.lo svg{stroke:var(--accent)}
-#s-lichaam .lich-loadcard .ic.mid{background:rgba(200,168,75,.16)}#s-lichaam .lich-loadcard .ic.mid svg{stroke:var(--y)}
-#s-lichaam .lich-loadcard .b{flex:1;min-width:0}
-#s-lichaam .lich-loadcard .k{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px}
-#s-lichaam .lich-loadcard .k.hi{color:var(--red)}#s-lichaam .lich-loadcard .k.lo{color:var(--accent)}#s-lichaam .lich-loadcard .k.mid{color:var(--y)}
-#s-lichaam .lich-loadcard .v{font-size:15px;font-weight:800;color:var(--dark);margin-top:2px}
-#s-lichaam .lich-loadcard .s{font-size:11px;color:var(--g4);font-weight:600;margin-top:2px}
-#s-lichaam .lich-tl{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
-#s-lichaam .lich-tlc{flex:0 0 116px;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:13px}
-#s-lichaam .lich-tlc .d{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--g4)}
-#s-lichaam .lich-tlc .rp{font-size:20px;font-weight:800;color:var(--dark);margin-top:6px}
-#s-lichaam .lich-tlc .bar{height:6px;border-radius:4px;background:var(--g1);margin-top:8px;overflow:hidden}
-#s-lichaam .lich-tlc .bar i{display:block;height:100%;border-radius:4px}
-#s-lichaam .lich-tlc .s{font-size:10.5px;color:var(--g4);font-weight:600;margin-top:7px}
-#s-lichaam .lich-adv{background:#0E3B4A;border-radius:20px;padding:18px;box-shadow:0 14px 30px rgba(0,0,0,.28)}
-#s-lichaam .lich-adv .eye{font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:rgba(230,240,243,.5)}
-#s-lichaam .lich-adv h3{font-size:17px;font-weight:800;color:#fff;margin:6px 0 12px}
-#s-lichaam .lich-adv ul{list-style:none;display:flex;flex-direction:column;gap:9px;margin:0;padding:0}
-#s-lichaam .lich-adv li{display:flex;gap:10px;align-items:center;font-size:14px;color:rgba(255,255,255,.92);font-weight:600}
-#s-lichaam .lich-adv li .ck{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#0b2a35;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-charts{display:block}
+@media(min-width:720px){:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-charts{display:grid;grid-template-columns:1fr 1fr;gap:10px}:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-charts>.card{margin-bottom:0}}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-mcard{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:13px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-mcard .top{display:flex;align-items:center;justify-content:space-between}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-mcard .nm{font-size:14px;font-weight:800;color:var(--dark)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-mcard .pct{font-size:15px;font-weight:800}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-mcard .bar{height:7px;border-radius:5px;background:var(--g1);margin:9px 0 8px;overflow:hidden}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-mcard .bar i{display:block;height:100%;border-radius:5px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-mcard .stt{font-size:11px;font-weight:700}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-mcard .cm{font-size:11px;color:var(--g4);font-weight:600;margin-top:3px;line-height:1.35}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-load{display:flex;flex-direction:column;gap:9px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-loadcard{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:13px 14px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-loadcard .ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-loadcard .ic svg{width:20px;height:20px;stroke-width:2;fill:none}
+/* Fase 0.3 — belasting = intensiteitsramp (laag -> hoog), geen stoplicht.
+   Alleen 'rust aanbevolen' is een echt aandachtsignaal en houdt de statuskleur.
+   De eerste background is de fallback voor browsers zonder color-mix(). */
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-loadcard .ic.hi{background:var(--g1);background:color-mix(in srgb,var(--load-3) 14%,var(--card))}:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-loadcard .ic.hi svg{stroke:var(--load-3)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-loadcard .ic.lo{background:var(--g1);background:color-mix(in srgb,var(--load-2) 12%,var(--card))}:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-loadcard .ic.lo svg{stroke:var(--load-2)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-loadcard .ic.mid{background:var(--g1);background:color-mix(in srgb,var(--status-warn) 14%,var(--card))}:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-loadcard .ic.mid svg{stroke:var(--status-warn)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-loadcard .b{flex:1;min-width:0}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-loadcard .k{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-loadcard .k.hi{color:var(--load-3)}:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-loadcard .k.lo{color:var(--load-2)}:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-loadcard .k.mid{color:var(--status-warn)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-loadcard .v{font-size:15px;font-weight:800;color:var(--dark);margin-top:2px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-loadcard .s{font-size:11px;color:var(--g4);font-weight:600;margin-top:2px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-tl{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-tlc{flex:0 0 116px;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:13px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-tlc .d{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--g4)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-tlc .rp{font-size:20px;font-weight:800;color:var(--dark);margin-top:6px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-tlc .bar{height:6px;border-radius:4px;background:var(--g1);margin-top:8px;overflow:hidden}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-tlc .bar i{display:block;height:100%;border-radius:4px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-tlc .s{font-size:10.5px;color:var(--g4);font-weight:600;margin-top:7px}
+
+/* ══════════════════════════════════════════════════════════════════
+   Fase 1 — compact Lichaam-overzicht + navigatiestructuur.
+   Presentatie-only. Alle waarden komen uit bestaande engines/queries.
+   ══════════════════════════════════════════════════════════════════ */
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-src{display:inline-block;font-size:8px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;padding:1px 5px;border-radius:6px;margin-top:4px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-rhero .lich-src{background:rgba(255,255,255,.12);color:rgba(230,240,243,.72)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-src.calc{background:var(--g1);color:var(--g4)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-src.meas{background:var(--v43-mint);color:var(--accent)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-strip{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);border:0;border-radius:16px;box-shadow:var(--shadow);padding:13px 14px;font-family:var(--f);cursor:pointer;margin-top:10px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-strip.todo{background:var(--accent2);box-shadow:0 12px 26px rgba(0,0,0,.24)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-strip .ci{width:34px;height:34px;border-radius:11px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--g1)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-strip.todo .ci{background:var(--accent);color:#0b2a35}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-strip .b{flex:1;min-width:0}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-strip b{display:block;font-size:13.5px;font-weight:800;color:var(--dark);line-height:1.3}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-strip s{display:block;text-decoration:none;font-size:11.5px;font-weight:600;color:var(--g4);margin-top:2px;line-height:1.35}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-strip.todo b{color:#fff}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-strip.todo s{color:rgba(230,240,243,.66)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-strip .chev{font-size:19px;font-weight:700;color:var(--g3);flex:0 0 auto}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-strip.todo .chev{color:rgba(230,240,243,.6)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-sum{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:14px 15px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-sum .row{display:flex;align-items:baseline;gap:8px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-sum .big{font-size:26px;font-weight:800;letter-spacing:-.5px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-sum .cap{font-size:11.5px;color:var(--g4);font-weight:600}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-sum .note{font-size:12px;color:var(--dark);font-weight:600;margin-top:8px;line-height:1.45}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-sum .foot{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--g2);margin-top:11px;padding-top:10px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-sum .foot .lk{background:none;border:0;padding:8px 0;margin:-8px 0;min-height:44px;display:inline-flex;align-items:center;font-family:var(--f);font-size:12.5px;font-weight:800;color:var(--accent);cursor:pointer;text-align:right}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-mstrip{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-metric{position:relative;text-align:left;background:var(--card);border:0;border-radius:16px;box-shadow:var(--shadow);padding:12px 13px;font-family:var(--f);cursor:pointer;min-height:44px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-metric .k{font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--g4)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-metric .v{font-size:21px;font-weight:800;color:var(--dark);letter-spacing:-.4px;margin-top:4px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-metric .v i{font-style:normal;font-size:11px;font-weight:700;color:var(--g4);margin-left:3px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-metric .t{font-size:11px;font-weight:700;color:var(--g4);margin-top:3px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-metric .chev{position:absolute;top:11px;right:11px;font-size:16px;font-weight:700;color:var(--g3)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-facts{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:14px 15px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-facts .f{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--dark);font-weight:600;line-height:1.45;margin-bottom:9px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-facts .f:last-of-type{margin-bottom:0}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-facts .f i{width:8px;height:8px;border-radius:50%;flex:0 0 auto;margin-top:6px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-facts .src{font-size:11px;color:var(--g4);font-weight:600;margin-top:10px;border-top:1px solid var(--g2);padding-top:9px;line-height:1.45}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-goto{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);border:0;border-radius:16px;box-shadow:var(--shadow);padding:13px 14px;font-family:var(--f);cursor:pointer;margin-bottom:8px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-goto .ic{width:34px;height:34px;border-radius:11px;background:var(--g1);flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:16px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-goto .b{flex:1;min-width:0}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-goto b{display:block;font-size:13.5px;font-weight:800;color:var(--dark);line-height:1.3}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-goto s{display:block;text-decoration:none;font-size:11.5px;font-weight:600;color:var(--g4);margin-top:2px;line-height:1.35}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-goto .chev{font-size:19px;font-weight:700;color:var(--g3);flex:0 0 auto}
 /* ══════════════════════════════════════════════════════════════════
    v4.23.0 — Sprint 5.5 App-brede UX-polish: premium empty states,
    micro-interacties (press/hover), feedback. Presentatie-only, geen logica.
@@ -2482,12 +2531,12 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .toast{background:var(--dark);color:#fff;padding:12px 18px;border-radius:16px;box-shadow:0 12px 30px rgba(0,0,0,.34);border-left:3px solid var(--accent);font-weight:700}
 /* Micro-interacties: press-feedback + desktop hover — reduced-motion-safe */
 @media (prefers-reduced-motion: no-preference){
-  .btn,.ni,.ibtn,.row,.set-nav-row,.srow,.trow,.pf-row,.v47-bigc,.filter-chip,.seg-opt,.mine-seg-opt,.lib-card,.pk-gcard{transition:transform .12s ease, box-shadow .18s ease, background-color .18s ease}
-  .btn:active,.v47-bigc:active,.row:active,.set-nav-row:active,.srow:active,.trow:active,.pf-row:active,.lib-card:active,.pk-gcard:active,.filter-chip:active,.seg-opt:active,.mine-seg-opt:active{transform:scale(.975)}
+  .btn,.ni,.ibtn,.row,.set-nav-row,.srow,.trow,.pf-row,.v47-bigc,.filter-chip,.seg-opt,.mine-seg-opt,.lib-card,.pk-gcard,.lich-strip,.lich-goto,.lich-metric{transition:transform .12s ease, box-shadow .18s ease, background-color .18s ease}
+  .btn:active,.v47-bigc:active,.row:active,.set-nav-row:active,.srow:active,.trow:active,.pf-row:active,.lib-card:active,.pk-gcard:active,.filter-chip:active,.seg-opt:active,.mine-seg-opt:active,.lich-strip:active,.lich-goto:active,.lich-metric:active{transform:scale(.975)}
   .ni:active,.ibtn:active{transform:scale(.9)}
 }
 @media (hover:hover) and (pointer:fine){
-  .v47-bigc:hover,.row:hover,.set-nav-row:hover,.srow:hover,.trow:hover,.pf-row:hover,.lib-card:hover,.pk-gcard:hover{box-shadow:0 10px 24px rgba(11,29,42,.12)}
+  .v47-bigc:hover,.row:hover,.set-nav-row:hover,.srow:hover,.trow:hover,.pf-row:hover,.lib-card:hover,.pk-gcard:hover,.lich-strip:hover,.lich-goto:hover,.lich-metric:hover{box-shadow:0 10px 24px rgba(11,29,42,.12)}
   .btn:hover{filter:brightness(1.03)}
 }
 /* ── F0.7D Training Preview (3-staps) ─────────────────────────────── */
@@ -3577,32 +3626,67 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <button class="ibtn" onclick="openModal('m-bc')" aria-label="Lichaamsmeting toevoegen">＋</button>
     </div>
   </div>
+  <!-- Fase 1 — het overzicht toont de stand van vandaag en verwijst door. De verdieping
+       (anatomie, trends, metingen) staat op eigen subschermen met dezelfde renderers. -->
   <div class="scroll" style="padding-top:8px">
     <div id="lich-hero"></div>
-    <div id="lich-coach"></div>
+    <!-- Check-in: route naar de BESTAANDE check-in (m-hrv), dezelfde als op Home. -->
+    <div id="lich-checkin"></div>
 
-    <!-- Body/Health — uitsluitend echte lichaamsmetingen (HRV/RMSSD, rusthartslag, slaap). Geen
-         apparaatkaarten hier: Fitbit → Profiel, Concept2-import/live apparaat → Training. -->
-    <div id="lich-bodymetrics" style="margin-top:14px"></div>
-    <!-- Gezondheid & herstel — historische trends/grafieken (periode-selector, bron per punt). -->
-    <div id="lich-history-health" style="margin-top:16px"></div>
+    <div class="v43-lbl" style="margin:16px 0 10px">Herstel &amp; belasting</div>
+    <div id="lich-summary"></div>
 
-    <div class="v43-lbl" style="margin:18px 0 10px">Anatomie</div>
+    <div class="v43-lbl" style="margin:16px 0 10px">Snel overzicht</div>
+    <div id="lich-metrics" class="lich-mstrip"></div>
+
+    <div class="v43-lbl" style="margin:16px 0 10px">Wat je lichaam laat zien</div>
+    <div id="lich-facts"></div>
+
+    <div class="v43-lbl" style="margin:16px 0 10px">Wat nu?</div>
+    <button class="lich-goto" onclick="go('s-coach')"><span class="ic">🤖</span><span class="b"><b>Wat betekent dit voor vandaag?</b><s>De coach legt uit en adviseert</s></span><span class="chev">›</span></button>
+    <button class="lich-goto" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ic">🏋️</span><span class="b"><b>Welke training past hierbij?</b><s>Je trainingen en de planning van vandaag</s></span><span class="chev">›</span></button>
+
+    <div class="v43-lbl" style="margin:16px 0 10px">Verdiepen</div>
+    <button class="lich-goto" onclick="go('s-lich-health')"><span class="ic">📈</span><span class="b"><b>Gezondheid &amp; herstel</b><s>HRV, rusthartslag en slaap over 7 tot 90 dagen</s></span><span class="chev">›</span></button>
+    <button class="lich-goto" onclick="go('s-lich-metingen')"><span class="ic">⚖️</span><span class="b"><b>Metingen</b><s>Gewicht, samenstelling en afmetingen</s></span><span class="chev">›</span></button>
+    <div style="height:8px"></div>
+  </div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
+  </nav>
+</div>
+
+<!-- ═══ LICHAAM · HERSTEL & BELASTING PER SPIERGROEP (Fase 1 — bestaande blokken, eigen route) ═══ -->
+<div class="scr" id="s-lich-spieren">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title" role="heading" aria-level="1">Herstel &amp; belasting</div><div class="hdr-sub">Per spiergroep</div></div>
+      <button class="ibtn" onclick="go('s-lichaam')" aria-label="Terug naar Lichaam">‹</button>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px">
+    <!-- Herstel: figuur en lijst tonen dezelfde grootheid met dezelfde stoplichtdrempels. -->
+    <div class="v43-lbl" style="margin:2px 0 10px">Herstel &middot; anatomie</div>
     <div class="lich-anat">
       <div class="v43-lich-toggle"><button id="v43-lich-front" class="on" onclick="v43LichView('front')">Voorkant</button><button id="v43-lich-back" onclick="v43LichView('back')">Achterkant</button></div>
       <div class="v43-lich-fig" id="v43-lich-figbox"></div>
-      <div class="v43-lich-cap">Gemiddeld herstel <span id="v43-lich-overall">—</span> &middot; laatste 14 dagen &middot; tik een spier voor detail</div>
+      <div class="v43-lich-cap">Gemiddeld herstel <span id="v43-lich-overall">—</span> &middot; laatste 14 dagen</div>
     </div>
 
     <div class="v43-lbl" style="margin:18px 0 10px">Herstel per spiergroep</div>
     <div id="v43-lich-list" class="lich-mus"></div>
-    <div class="v43-lich-cap" style="margin-top:-4px">Vuistregel (48–72u, RPE-afhankelijk) — geen gemeten fysiologische waarde</div>
+    <div class="v43-lich-cap" style="margin-top:8px">Vuistregel (48–72u, RPE-afhankelijk) — geen gemeten fysiologische waarde</div>
 
+    <!-- Belasting: eigen sectie met een eigen schaal. Hoge belasting is geen slechte uitkomst. -->
     <div class="v43-lbl" style="margin:18px 0 10px">Belasting &middot; laatste 7 dagen</div>
     <div id="lich-belasting"></div>
     <div class="card">
       <div class="card-hd">
-        <div><div class="card-title">Spierbelasting</div><div class="card-sub">Afgelopen 7 dagen &middot; visueel</div></div>
+        <div><div class="card-title">Spierbelasting</div><div class="card-sub">Afgelopen 7 dagen &middot; laag tot hoog</div></div>
         <button class="ibtn" onclick="toggleMuscleHeatmapView()" style="width:auto;height:auto;padding:6px 12px;border-radius:14px;font-size:11px;font-weight:700;font-family:var(--f)" id="muscle-heatmap-toggle-btn">Voorkant</button>
       </div>
       <div class="card-body" style="display:flex;justify-content:center;padding:10px 14px 14px">
@@ -3612,8 +3696,50 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
     <div class="v43-lbl" style="margin:18px 0 10px">Herstelgeschiedenis</div>
     <div id="lich-history"></div>
+    <div style="height:8px"></div>
+  </div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
+  </nav>
+</div>
 
-    <div class="v43-lbl" style="margin:18px 0 10px">Metingen</div>
+<!-- ═══ LICHAAM · GEZONDHEID & HERSTEL (Fase 1 — bestaande grafieken, eigen route) ═══ -->
+<div class="scr" id="s-lich-health">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title" role="heading" aria-level="1">Gezondheid &amp; herstel</div><div class="hdr-sub">HRV, rusthartslag en slaap</div></div>
+      <button class="ibtn" onclick="go('s-lichaam')" aria-label="Terug naar Lichaam">‹</button>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px">
+    <!-- Uitsluitend echte lichaamsmetingen. Geen apparaatkaarten: Fitbit → Profiel, Concept2 → Training. -->
+    <div id="lich-bodymetrics"></div>
+    <!-- Historische trends met periodeselector (7/14/30/90) en bron per punt. -->
+    <div id="lich-history-health" style="margin-top:16px"></div>
+    <div style="height:8px"></div>
+  </div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
+  </nav>
+</div>
+
+<!-- ═══ LICHAAM · METINGEN (Fase 1 — bestaande kaarten, eigen route) ═══ -->
+<div class="scr" id="s-lich-metingen">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title" role="heading" aria-level="1">Metingen</div><div class="hdr-sub">Gewicht, samenstelling en afmetingen</div></div>
+      <button class="ibtn" onclick="go('s-lichaam')" aria-label="Terug naar Lichaam">‹</button>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px">
     <div class="card">
       <div class="card-hd"><div class="card-title">Lichaamscompositie</div><div class="card-sub" id="profiel-bc-date">—</div></div>
       <div class="card-body" id="profiel-bc-card"><div class="tk-empty"><div class="tk-empty-emo">📏</div>Nog geen metingen — voeg er één toe met +.</div></div>
@@ -3634,10 +3760,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <div class="card-hd"><div class="card-title">Geschiedenis metingen</div></div>
       <div class="card-body" id="profiel-history"></div>
     </div>
-
-    <div class="v43-lbl" style="margin:18px 0 10px">Coachadvies vandaag</div>
-    <div id="lich-advies"></div>
-    <button class="btn btn-d" onclick="askCoachProfiel()" style="margin-top:12px;margin-bottom:12px">🤖 Coach: analyseer mijn metingen</button>
+    <button class="btn btn-o" onclick="openModal('m-bc')" style="margin-top:10px;width:100%">Meting toevoegen</button>
+    <button class="btn btn-d" onclick="askCoachProfiel()" style="margin-top:8px;margin-bottom:12px">🤖 Coach: analyseer mijn metingen</button>
     <div style="height:8px"></div>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
@@ -4821,7 +4945,7 @@ function tkDeviceStatusMeta(status){
   switch(status){
     case 'connected':     return { dot:'var(--green)',        label:'Gekoppeld' };
     case 'syncing':       return { dot:'var(--accent)',       label:'Synchroniseren…' };
-    case 'sync_failed':   return { dot:'var(--red)',          label:'Synchronisatie mislukt' };
+    case 'sync_failed':   return { dot:'var(--status-bad)',   label:'Synchronisatie mislukt' };
     case 'token_expired': return { dot:'var(--amber,#c98a00)',label:'Opnieuw koppelen nodig' };
     case 'stale':         return { dot:'var(--amber,#c98a00)',label:'Gegevens verouderd' };
     default:              return { dot:'var(--g3)',           label:'Niet gekoppeld' };
@@ -5011,6 +5135,25 @@ function tkErgDisconnect(exId){
 // Ontbrekende dagen = gap (NOOIT 0). Bron per punt. Mobiel-eerst, geen horizontale overflow. Geen AI.
 // ══════════════════════════════════════════════════════════
 var _tkHealthPeriod = 14, _tkHealthRows = null;
+// Fase 0.2 — periodekeuze en ophaallimiet op elkaar afgestemd.
+// De eerste render haalt bewust een kleine set op (snelle first paint). Kiest de gebruiker
+// een langere periode dan de opgehaalde reeks dekt, dan wordt eenmalig bijgeladen en
+// gecachet in _tkHealthRows; korter kiezen doet nooit een nieuwe query.
+var TK_HEALTH_PERIODS = [7,14,30,90];
+var TK_HEALTH_INIT_LIMIT = 35;                 // dekt de standaardperiode (14d) + HRV-baseline (28d)
+var _tkHealthCoverDays = 0, _tkHealthLoading = false;
+// Limiet afgeleid van de gevraagde periode: één rij per dag + ruimte voor meerdere
+// check-ins op dezelfde dag. Nooit een willekeurig grote limiet.
+function _tkHealthLimitFor(days){ return Math.min(400, Math.max(TK_HEALTH_INIT_LIMIT, Math.round(days*2)+20)); }
+// Hoeveel dagen dekt de opgehaalde reeks werkelijk? Minder rijen dan de limiet betekent
+// dat alles is opgehaald — dan is er nooit meer bij te laden.
+function _tkHealthCoverage(rows, limit){
+  if(!rows || !rows.length) return 0;
+  if(rows.length < limit) return Infinity;
+  var a=new Date(String(rows[0].date).slice(0,10)), b=new Date(String(rows[rows.length-1].date).slice(0,10));
+  var d=Math.round((a-b)/86400000);
+  return (isNaN(d)||d<0) ? 0 : d+1;
+}
 function _tkMonthNL(m){ return ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'][m-1]||''; }
 function _tkDayLabel(ymd){ var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(ymd||'')); return m?(parseInt(m[3],10)+' '+_tkMonthNL(+m[2])):''; }
 function _tkSleepFmt(v){ var h=Math.floor(v/60), m=Math.round(v%60); return h+'u '+('0'+m).slice(-2)+'m'; }
@@ -5051,8 +5194,8 @@ function tkRenderHealthHistoryInner(hd){
   if(!dc||!end) return '<div class="v43-lbl" style="margin:6px 0 8px">Gezondheid & herstel</div><div style="font-size:12.5px;color:var(--g4)">Nog geen metingen om een trend te tonen. Koppel Fitbit (Profiel) of vul je check-in in.</div>';
   var P=_tkHealthPeriod;
   var hrv=dc.healthSeries(hd,'hrv',end,P), rhr=dc.healthSeries(hd,'rhr',end,P), sleep=dc.healthSeries(hd,'sleep',end,P);
-  var periods=[7,14,30,90];
-  var sel=periods.map(function(n){ return '<button onclick="tkSetHealthPeriod('+n+')" class="btn '+(n===P?'btn-r':'btn-o')+' btn-sm" style="font-size:11px;padding:4px 10px">'+n+'d</button>'; }).join(' ');
+  var periods=TK_HEALTH_PERIODS;
+  var sel=periods.map(function(n){ return '<button onclick="tkSetHealthPeriod('+n+')" class="btn '+(n===P?'btn-r':'btn-o')+' btn-sm" style="font-size:11px;padding:4px 10px"'+(_tkHealthLoading?' disabled':'')+'>'+n+'d</button>'; }).join(' ');
   var card=function(title,sub,svg,a11y){ return '<div class="card" style="margin-bottom:10px;padding:12px 14px"><div style="font-weight:800;color:var(--g5,#1a2b33);font-size:13px">'+title+'</div><div style="font-size:11px;color:var(--g4);margin-bottom:4px">'+sub+'</div>'+svg+'<div style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">'+a11y+'</div></div>'; };
   var trendRow=function(label,series,upGood){ var t=dc.healthTrend(series); var col=(t.dir==='flat')?'var(--g4)':(((t.dir==='up')===!!upGood)?'var(--green)':'var(--amber,#c98a00)'); return '<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:2px 0"><span style="color:var(--g4)">'+label+'</span><span style="font-weight:800;color:'+col+'">'+t.symbol+'</span></div>'; };
   return '<div class="v43-lbl" style="margin:6px 0 8px">Gezondheid & herstel</div>'+
@@ -5066,8 +5209,30 @@ function tkRenderHealthHistoryInner(hd){
       trendRow('HRV',hrv,true)+trendRow('Rusthartslag',rhr,false)+trendRow('Slaap',sleep,true)+
       '<div style="font-size:10px;color:var(--g3);margin-top:5px">Feitelijke trend over de gekozen periode — geen medisch oordeel.</div></div>';
 }
-function tkRenderHealthHistory(hd){ _tkHealthRows=hd; return tkRenderHealthHistoryInner(hd); }
-function tkSetHealthPeriod(n){ _tkHealthPeriod=n; var el=document.getElementById('lich-history-health'); if(el&&_tkHealthRows) el.innerHTML=tkRenderHealthHistoryInner(_tkHealthRows); }
+function tkRenderHealthHistory(hd){
+  _tkHealthRows=hd;
+  _tkHealthCoverDays=_tkHealthCoverage(hd, TK_HEALTH_INIT_LIMIT);
+  return tkRenderHealthHistoryInner(hd);
+}
+// Fase 0.2 — de 90-dagenknop toonde eerder hooguit de 35 opgehaalde rijen. Dekt de
+// gecachete reeks de gevraagde periode niet, dan wordt precies zoveel bijgeladen als
+// die periode nodig heeft. De opgehaalde data blijft in _tkHealthRows staan.
+function tkSetHealthPeriod(n){
+  _tkHealthPeriod=n;
+  var el=document.getElementById('lich-history-health');
+  if(!el) return;
+  var render=function(){ if(_tkHealthRows) el.innerHTML=tkRenderHealthHistoryInner(_tkHealthRows); };
+  if(n<=_tkHealthCoverDays || _tkHealthLoading){ render(); return; }
+  var lim=_tkHealthLimitFor(n);
+  _tkHealthLoading=true; render();
+  var done=function(rows){
+    if(rows && rows.length){ _tkHealthRows=rows; _tkHealthCoverDays=_tkHealthCoverage(rows, lim); }
+    _tkHealthLoading=false; render();
+  };
+  try{
+    sbGet('hrv_log','&order=date.desc,created_at.desc&limit='+lim).then(done, function(){ _tkHealthLoading=false; render(); });
+  }catch(e){ _tkHealthLoading=false; render(); }
+}
 // items: [{icon,label,value,unit,sub}] — alleen echt aanwezige waarden (value!=null) worden getoond.
 function tkRenderBodyMetrics(items, meta){
   meta=meta||{};
@@ -5202,7 +5367,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.24.30';
+const APP_VER = 'v4.25.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -8354,7 +8519,9 @@ function go(id){
   if(id==='s-hist'){histOff=0;renderHistFilterTabs();loadHistory();}
   if(id==='s-train-mgr'){renderSportSwitcher();renderV43Train();}
   if(id==='s-train-mine'){renderSchemaTrainingList();renderCustomTrainList();renderCustomTrainBtns();mineSeg(window._minePendingSeg||'schema');window._minePendingSeg=null;}
-  if(id==='s-lichaam')renderLichaam();
+  // Fase 1 — Lichaam en zijn subschermen delen één renderer. De doel-ids staan altijd
+  // in de DOM, ongeacht welk scherm actief is; er is dus geen tweede renderpad.
+  if(id==='s-lichaam'||id==='s-lich-spieren'||id==='s-lich-health'||id==='s-lich-metingen')renderLichaam();
   if(id==='s-programma'){renderProgrammaList();}
   if(id==='s-kalender'){renderKalender();}
   if(id==='s-stats')refreshStatsScreen();
@@ -15614,7 +15781,7 @@ async function refreshStats(){
     ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=epley1RMRaw(s.weight,s.reps);if(!best||est>best)best=est;});
     const disp=best?Math.round(best):prFor(ex.id);if(!disp)continue;
     const tgt=peakGoalFor(ex.id);const pct=tgt?Math.round(disp/tgt*100):null;
-    const fc=pct?(pct>=100?'var(--green)':pct>=85?'var(--y)':'var(--red)'):'var(--red)';
+    const fc=pct?(pct>=100?'var(--status-good)':pct>=85?'var(--status-warn)':'var(--status-bad)'):'var(--status-bad)';
     h+=`<div class="stat-1rm-item">
       <div class="stat-1rm-row"><span class="stat-1rm-name">${escHtml(ex.name)}</span><span class="stat-1rm-val">${disp} kg</span>${tgt?`<span class="stat-1rm-target">/ ${tgt} kg</span>`:''}</div>
       <div class="prog-wrap"><div class="prog-fill" style="width:${Math.min(100,pct||disp/3)}%;background:${fc}"></div></div>
@@ -16881,7 +17048,7 @@ async function renderBodyMeasurements(){
     if(items.length){
       const thr = lat.waist_cm&&afm.hips ? Math.round((lat.waist_cm/afm.hips)*100)/100 : null;
       let afmHtml = items.map(i=>`<div class="lrow"><div class="ldate" style="width:80px">${i.lbl}</div><div class="lval">${i.val} ${i.unit}</div></div>`).join('');
-      if(thr) afmHtml += `<div class="lrow"><div class="ldate" style="width:80px">T/H ratio</div><div class="lval" style="color:${thr<0.9?'var(--green)':'var(--red)'}">${thr}</div><div class="lnote">${thr<0.9?'✓ Goed':'Let op'}</div></div>`;
+      if(thr) afmHtml += `<div class="lrow"><div class="ldate" style="width:80px">T/H ratio</div><div class="lval" style="color:${thr<0.9?'var(--status-good)':'var(--status-bad)'}">${thr}</div><div class="lnote">${thr<0.9?'✓ Goed':'Let op'}</div></div>`;
       document.getElementById('profiel-afmetingen-card').innerHTML = afmHtml;
     }
   }
@@ -16913,7 +17080,7 @@ async function renderBodyMeasurements(){
         ${r.fat_pct||'—'}%
         ${r.muscle_mass?' · '+r.muscle_mass+' kg':''}
         ${r.waist_cm?' · taille '+r.waist_cm+'cm':''}
-        ${diff_fat&&diff_fat!==0?`<span style="color:${diff_fat<0?'var(--green)':'var(--red)'}"> (${diff_fat>0?'+':''}${diff_fat}%)</span>`:''}
+        ${diff_fat&&diff_fat!==0?`<span style="color:${diff_fat<0?'var(--status-good)':'var(--status-bad)'}"> (${diff_fat>0?'+':''}${diff_fat}%)</span>`:''}
       </div>
     </div>`;
   });
@@ -17283,7 +17450,7 @@ function renderMuscleRecoveryMiniList(rows){
   return `<div style="margin-bottom:4px">
     <div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Spierherstel voor deze training</div>
     ${sorted.map(r=>{
-      const color=r.pct>=85?'var(--green)':r.pct>=50?'var(--y)':'var(--red)';
+      const color=r.pct>=85?'var(--status-good)':r.pct>=50?'var(--status-warn)':'var(--status-bad)';
       return `<div style="margin-bottom:6px">
         <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span style="font-weight:600">${r.muscle}</span><span style="color:var(--g4)">${r.pct}%</span></div>
         <div class="prog-wrap" style="height:6px"><div class="prog-fill" style="width:${r.pct}%;background:${color};height:6px"></div></div>
@@ -17635,7 +17802,7 @@ function calcPlates(){
   vis.innerHTML=barH;
   const counts={};plates.forEach(p=>{counts[p]=(counts[p]||0)+1;});
   const summary=Object.entries(counts).sort((a,b)=>b[0]-a[0]).map(([p,n])=>n+'×'+p+' kg').join(' · ');
-  res.innerHTML=`<strong>${achieved} kg</strong>${diff?` <span style="color:${diff>0?'var(--red)':'var(--green)'}"> (${diff>0?'+':'-'}${Math.abs(diff)} kg)</span>`:''}<br><span style="color:var(--g4);font-size:11px">${summary} per kant</span>`;
+  res.innerHTML=`<strong>${achieved} kg</strong>${diff?` <span style="color:${diff>0?'var(--status-bad)':'var(--status-good)'}"> (${diff>0?'+':'-'}${Math.abs(diff)} kg)</span>`:''}<br><span style="color:var(--g4);font-size:11px">${summary} per kant</span>`;
 }
 
 // ══════════════════════════════════════════════════════════
@@ -17667,7 +17834,7 @@ function updateRepeatPreview(){
     if(repeatMode==='plus') nw=Math.round((s.weight+adj)*2)/2;
     else if(repeatMode==='pct') nw=Math.round(s.weight*(1+adj/100)*2)/2;
     const n=exercises.find(e=>e.id===s.exercise_id)?.name||s.exercise_id;
-    html+=`<div class="lrow"><div class="ldate" style="width:110px">${n}</div><div class="lval">${s.sets}×${s.reps} @ <strong>${nw} kg</strong>${nw!==s.weight?` <span style="color:${nw>s.weight?'var(--green)':'var(--red)'}">(was ${s.weight})</span>`:''}</div></div>`;
+    html+=`<div class="lrow"><div class="ldate" style="width:110px">${n}</div><div class="lval">${s.sets}×${s.reps} @ <strong>${nw} kg</strong>${nw!==s.weight?` <span style="color:${nw>s.weight?'var(--status-good)':'var(--status-bad)'}">(was ${s.weight})</span>`:''}</div></div>`;
   });
   el.innerHTML=html||'<p style="color:var(--g4);font-size:13px">Geen krachtsessies gevonden</p>';
 }
@@ -17856,15 +18023,17 @@ function renderMuscleHeatmap(containerId, setsBySvgId){
   if(!svg) return;
   svg.querySelectorAll('#muscles > g').forEach(g=>{
     const path = g.querySelector('path');
-    if(path){ path.style.fill = '#D9D9D9'; path.style.opacity = '1'; }
+    // geen belasting geregistreerd = neutrale basiskleur (niet 'goed' of 'slecht')
+    if(path){ path.style.fill = 'var(--load-0)'; path.style.opacity = '1'; }
   });
   Object.entries(setsBySvgId).forEach(([svgId, sets])=>{
     const g = svg.querySelector('#'+CSS.escape(svgId));
     if(!g) return;
     const path = g.querySelector('path');
     if(!path) return;
-    // zelfde kleurlogica/drempels als de Spierherstel-kaart hierboven (var(--green)/var(--y)/var(--red))
-    const color = sets>=12 ? 'var(--green)' : sets>=6 ? 'var(--y)' : 'var(--red)';
+    // Belasting is GEEN stoplicht: dezelfde drempels (12/6 sets), maar een enkele
+    // intensiteitsramp laag -> hoog. Veel volume is niet automatisch slecht.
+    const color = sets>=12 ? 'var(--load-3)' : sets>=6 ? 'var(--load-2)' : 'var(--load-1)';
     path.style.fill = color;
     path.style.opacity = '1';
   });
@@ -17966,13 +18135,13 @@ async function refreshMuscleRecovery(){
   }).sort((a,b)=>a.pct-b.pct);
   const withData = rows.filter(r=>r.hours!==null);
   const overall = withData.length ? Math.round(withData.reduce((a,r)=>a+r.pct,0)/withData.length) : 100;
-  const overallColor = overall>=85?'var(--green)':overall>=50?'var(--y)':'var(--red)';
+  const overallColor = overall>=85?'var(--status-good)':overall>=50?'var(--status-warn)':'var(--status-bad)';
   let html = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
     <div style="font-size:28px;font-weight:800;color:${overallColor}">${overall}%</div>
     <div style="font-size:12px;color:var(--g4)">Gemiddeld herstel — spiergroepen met trainingsdata laatste 14 dagen</div>
   </div>`;
   html += rows.map(r=>{
-    const color = r.pct>=85?'var(--green)':r.pct>=50?'var(--y)':'var(--red)';
+    const color = r.pct>=85?'var(--status-good)':r.pct>=50?'var(--status-warn)':'var(--status-bad)';
     const label = r.hours===null ? 'Geen recente training' : (r.pct>=100?'Volledig hersteld':r.pct+'% hersteld');
     return `<div style="margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
@@ -18021,15 +18190,15 @@ function renderMuscleRecoveryHeatmap(containerId, pctBySvgId){
   svg.querySelectorAll('#muscles > g').forEach(g=>{
     const path = g.querySelector('path');
     // geen trainingsdata voor deze svg-id = volledig hersteld (zelfde aanname als lijst-kaart)
-    if(path){ path.style.fill = 'var(--green)'; path.style.opacity = '1'; }
+    if(path){ path.style.fill = 'var(--status-good)'; path.style.opacity = '1'; }
   });
   Object.entries(pctBySvgId).forEach(([svgId, pct])=>{
     const g = svg.querySelector('#'+CSS.escape(svgId));
     if(!g) return;
     const path = g.querySelector('path');
     if(!path) return;
-    // zelfde drempels als de Spierherstel-lijst hierboven (var(--green)/var(--y)/var(--red))
-    const color = pct>=85 ? 'var(--green)' : pct>=50 ? 'var(--y)' : 'var(--red)';
+    // zelfde drempels als de Spierherstel-lijst hierboven; herstel = stoplicht
+    const color = pct>=85 ? 'var(--status-good)' : pct>=50 ? 'var(--status-warn)' : 'var(--status-bad)';
     path.style.fill = color;
     path.style.opacity = '1';
   });
@@ -18094,7 +18263,7 @@ function v43GereedheidScore(factor){
   if(factor==null||isNaN(factor))return null;
   return Math.round(Math.max(0,Math.min(1,(factor-0.85)/0.20))*100);
 }
-function v43RecColor(p){return p>=85?'var(--green)':p>=50?'var(--y)':'var(--red)';}
+function v43RecColor(p){return p>=85?'var(--status-good)':p>=50?'var(--status-warn)':'var(--status-bad)';}
 function v43SlaapTxt(u){
   if(!u&&u!==0)return '—';
   const h=Math.floor(u),m=Math.round((u-h)*60);
@@ -18177,7 +18346,7 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
     // v4.6.0 — status-indicator = dagfactor-cirkel (vervangt het losse groene vinkje)
     const factor=dfInfo?dfInfo.factor:null;
     const dfCls=factor==null?'y':(factor>=1?'g':factor>=0.93?'y':'r');
-    const dfCol=dfCls==='g'?'var(--green)':dfCls==='r'?'var(--red)':'var(--y)';
+    const dfCol=dfCls==='g'?'var(--status-good)':dfCls==='r'?'var(--status-bad)':'var(--status-warn)';
     const dfVal=factor==null?'—':String(factor);
     // v4.6.0 — "Waarom vandaag?" inline in de hero (zelfde databron; de losse kaart vervalt)
     const wReady=(rec.rows||[]).filter(r=>r.hours!==null&&r.pct>=90).map(r=>r.muscle);
@@ -18209,9 +18378,9 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
         <div class="v43-stat"><div class="v43-stat-ic">${V43I.moon}</div><div class="v43-stat-v">${slaap}</div><div class="v43-stat-k">Slaap</div></div>
       </div>
       <div class="v43-legend">
-        <div class="d"><span class="dot" style="background:var(--green)"></span>Goed hersteld</div>
-        <div class="d"><span class="dot" style="background:var(--y)"></span>Matig hersteld</div>
-        <div class="d"><span class="dot" style="background:var(--red)"></span>Weinig hersteld</div>
+        <div class="d"><span class="dot" style="background:var(--status-good)"></span>Goed hersteld</div>
+        <div class="d"><span class="dot" style="background:var(--status-warn)"></span>Matig hersteld</div>
+        <div class="d"><span class="dot" style="background:var(--status-bad)"></span>Weinig hersteld</div>
       </div>
       <div class="v43-why" id="v43-why-toggle"><span class="v43-why-chev">▾</span> Waarom vandaag?</div>
       <div class="v43-why-body" id="v43-why-body" hidden>${whyBody}</div>
@@ -18412,7 +18581,6 @@ async function renderLichaamPremium(){
   let hd=[]; let lh=null; try{hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'); lh=(hd&&hd[0])?hd[0]:null;}catch(_){}
   let df=null,ger=null,ds=null;
   if(lh){ try{ df=dagfactor(hrvDagFactorPersonal(hd),lh.sleep,lh.cyclus_fase).factor; ger=v43GereedheidScore(df); ds=dayState(df); }catch(_){} }
-  const SPK='<svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2l1.6 4.8L18 8l-4.4 1.2L12 14l-1.6-4.8L6 8l4.4-1.2z"/></svg>';
   const hero=document.getElementById('lich-hero');
   if(hero){
     const ov=rec.hasData?rec.overall:null;
@@ -18421,30 +18589,66 @@ async function renderLichaamPremium(){
     const badge=ds?ds.headline:'Check-in nodig';
     const R=42,C=2*Math.PI*R,off=C*(1-((ov!=null?ov:0)/100));
     const ringSvg=`<svg width="96" height="96" viewBox="0 0 96 96" style="transform:rotate(-90deg)"><circle cx="48" cy="48" r="${R}" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="7"/><circle cx="48" cy="48" r="${R}" fill="none" stroke="${col}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/></svg>`;
-    const tile=(v,k)=>`<div class="m"><div class="v">${v}</div><div class="k">${k}</div></div>`;
+    // Fase 1 — elke waarde toont of hij gemeten is of afgeleid.
+    const tile=(v,k,src)=>`<div class="m"><div class="v">${v}</div><div class="k">${k}</div><div class="lich-src">${src}</div></div>`;
     hero.innerHTML=`<div class="lich-rhero">
       <div class="top">
         <div class="rring">${ringSvg}<div class="c"><div class="n">${ov!=null?ov+'%':'—'}</div><div class="l">Herstel</div></div></div>
         <div class="st"><div class="eye">Vandaag</div><div class="rd">${escHtml(ready)}</div><div class="badge">${escHtml(badge)}</div></div>
       </div>
-      <div class="grid">${tile(df!=null?df.toFixed(2):'—','Dagfactor')}${tile(lh&&lh.sleep!=null?v43SlaapTxt(lh.sleep):'—','Slaap')}${tile(lh&&lh.hrv!=null?lh.hrv:'—','HRV')}${tile(lh&&lh.rhr!=null?lh.rhr:'—','Rust HR')}</div>
+      <div class="grid">${tile(df!=null?df.toFixed(2):'—','Dagfactor','berekend')}${tile(lh&&lh.sleep!=null?v43SlaapTxt(lh.sleep):'—','Slaap','gemeten')}${tile(lh&&lh.hrv!=null?lh.hrv:'—','HRV','gemeten')}${tile(lh&&lh.rhr!=null?lh.rhr:'—','Rust HR','gemeten')}</div>
     </div>`;
   }
   // Body/Health foundation + apparaatstatus (echte data only). Fail-safe: eigen try/catch.
   // hd = alle hrv_log-rijen → per-metric nieuwste-echte-meting selectie met eigen datum+bron.
   try{ renderLichaamDevices(lh, hd); }catch(_){}
-  const coach=document.getElementById('lich-coach');
-  if(coach){
-    const recovered=rows.filter(r=>r.pct>=85&&r.hours!==null).map(r=>r.muscle).slice(0,3);
-    const fatigued=rows.filter(r=>r.pct<50&&r.hours!==null).map(r=>r.muscle).slice(0,3);
-    const B=[];
-    if(recovered.length)B.push(['var(--green)',escHtml(recovered.join(', '))+' '+(recovered.length>1?'zijn':'is')+' volledig hersteld — klaar voor belasting.']);
-    if(fatigued.length)B.push(['var(--amber)',escHtml(fatigued.join(', '))+' '+(fatigued.length>1?'zijn':'is')+' nog vermoeid — houd het licht.']);
-    const advice=(window.homeCoachText||'').trim();
-    if(advice)B.push(['var(--accent)',escHtml(advice)]);
-    if(!B.length)B.push(['var(--accent)','Log een training zodat de coach je herstel kan volgen.']);
-    coach.innerHTML=`<div class="lich-ccard"><div class="h"><div class="ic">${SPK}</div><div class="t">Coach zegt vandaag</div></div><ul>${B.map(b=>`<li><span class="d" style="background:${b[0]}"></span>${b[1]}</li>`).join('')}</ul></div>`;
+  // Fase 1 — check-instrip. De hero vroeg om een check-in zonder route ernaartoe;
+  // deze strip opent de BESTAANDE check-in (m-hrv), dezelfde als vanaf Home.
+  const ci=document.getElementById('lich-checkin');
+  if(ci){
+    const doneToday=!!(lh&&String(lh.date).slice(0,10)===td());
+    ci.innerHTML=doneToday
+      ? `<button class="lich-strip" onclick="openModal('m-hrv')"><span class="ci">✓</span><span class="b"><b>Check-in van vandaag ingevuld</b><s>Slaap, gevoel en pijn — tik om aan te passen</s></span><span class="chev">›</span></button>`
+      : `<button class="lich-strip todo" onclick="openModal('m-hrv')"><span class="ci">◷</span><span class="b"><b>Check-in van vandaag nog niet ingevuld</b><s>Slaap, gevoel en pijn — vult je dagfactor aan</s></span><span class="chev">›</span></button>`;
   }
+  // Samenvatting van het herstelmodel. Zelfde bron en drempels als de anatomie op
+  // s-lich-spieren; hier alleen samengevat, zonder eigen berekening.
+  const sum=document.getElementById('lich-summary');
+  if(sum){
+    const ov=rec.hasData?rec.overall:null;
+    const col=ov!=null?v43RecColor(ov):'var(--g4)';
+    const known=rows.filter(r=>r.hours!==null);
+    const low=known.slice().sort((a,b)=>a.pct-b.pct)[0];
+    const note=ov==null
+      ? 'Nog geen trainingsgegevens — log een training om je herstel te volgen.'
+      : (low&&low.pct<85
+          ? escHtml(low.muscle)+' is met '+low.pct+'% de laagste groep.'
+          : 'Alle belaste spiergroepen staan op 85% of hoger.');
+    sum.innerHTML=`<div class="lich-sum">
+      <div class="row"><span class="big" style="color:${col}">${ov!=null?ov+'%':'—'}</span><span class="cap">gemiddeld hersteld &middot; laatste 14 dagen</span></div>
+      <div class="note">${note}</div>
+      <div class="foot"><span class="cap">Berekend uit je trainingen — geen meting</span><button class="lk" onclick="go('s-lich-spieren')">Alle spiergroepen &rsaquo;</button></div>
+    </div>`;
+  }
+  // Snel overzicht: vier gemeten waarden, elk met een route naar het scherm waar de
+  // historie van díe waarde staat. Trend komt uit DeviceCore — geen nieuwe rekenlogica.
+  const met=document.getElementById('lich-metrics');
+  if(met){
+    let wl=null; try{ const w=await sbGet('weight_log','&order=date.desc,created_at.desc&limit=1'); wl=(w&&w[0])?w[0]:null; }catch(_){}
+    const dc=(typeof DeviceCore!=='undefined')?DeviceCore:null;
+    const end=(hd&&hd.length)?String(hd[0].date).slice(0,10):null;
+    const trend=function(field){
+      if(!dc||!end) return '';
+      try{ const t=dc.healthTrend(dc.healthSeries(hd,field,end,14)); return t&&t.symbol?(t.symbol+' 14 dagen'):''; }catch(_){ return ''; }
+    };
+    const mcard=(key,k,v,unit,t)=>`<button class="lich-metric" onclick="openLichaamMetric('${key}')"><div class="k">${escHtml(k)}</div><div class="v">${v}${unit?`<i>${unit}</i>`:''}</div><div class="t">${escHtml(t||'—')}</div><div class="lich-src meas">gemeten</div><span class="chev" aria-hidden="true">&rsaquo;</span></button>`;
+    met.innerHTML=
+      mcard('hrv','HRV',(lh&&lh.hrv!=null)?lh.hrv:'—','ms',trend('hrv'))+
+      mcard('rhr','Rust HR',(lh&&lh.rhr!=null)?lh.rhr:'—','bpm',trend('rhr'))+
+      mcard('slaap','Slaap',(lh&&lh.sleep!=null)?v43SlaapTxt(lh.sleep):'—','',trend('sleep'))+
+      mcard('gewicht','Gewicht',(wl&&wl.weight!=null)?(Math.round(wl.weight*10)/10):'—','kg',(wl&&wl.date)?fmtDate(wl.date):'');
+  }
+  let loadSorted=[];
   const bel=document.getElementById('lich-belasting');
   if(bel){
     let load={},dayset={};
@@ -18454,6 +18658,7 @@ async function renderLichaamPremium(){
       (ss||[]).forEach(s=>{const ms=getExerciseMuscles(s.exercise_id)||[];const v=CalcCore.calculateVolume({sets:s.sets||1,reps:s.reps||1,weight:s.weight||0});ms.forEach(m=>{load[m]=(load[m]||0)+v;(dayset[m]=dayset[m]||new Set()).add(s.date);});});
     }catch(_){}
     const sorted=Object.entries(load).sort((a,b)=>b[1]-a[1]);
+    loadSorted=sorted;
     const card=(cls,icon,k,val,sub)=>`<div class="lich-loadcard"><div class="ic ${cls}">${icon}</div><div class="b"><div class="k ${cls}">${k}</div><div class="v">${escHtml(val)}</div><div class="s">${escHtml(sub)}</div></div></div>`;
     const FIRE='<svg viewBox="0 0 24 24"><path d="M12 3c1 3-1 4-1 6a3 3 0 006 0c0 4-2 7-2 7a5 5 0 11-8-4c1 2 3 2 3 0 0-3 2-6 4-9z"/></svg>';
     const LEAF='<svg viewBox="0 0 24 24"><path d="M4 20c8 2 16-4 16-14 0 0-14-2-16 8a4 4 0 000 6z"/></svg>';
@@ -18469,6 +18674,24 @@ async function renderLichaamPremium(){
       bel.innerHTML='<div class="lich-load">'+html+'</div>';
     }
   }
+  // Fase 1 — "Wat je lichaam laat zien": uitsluitend feiten uit de reeds berekende
+  // herstelrijen en de 7-daagse belasting. Geen duiding, geen advies, geen trainingsnaam
+  // en geen RPE-plafond: dat is het domein van Coach en Training (één source of truth).
+  const facts=document.getElementById('lich-facts');
+  if(facts){
+    const recovered=rows.filter(r=>r.pct>=85&&r.hours!==null).map(r=>r.muscle).slice(0,3);
+    const fatigued=rows.filter(r=>r.pct<50&&r.hours!==null).map(r=>r.muscle).slice(0,3);
+    const F=[];
+    if(recovered.length)F.push(['var(--status-good)',escHtml(recovered.join(', '))+' '+(recovered.length>1?'staan':'staat')+' op 85% of hoger.']);
+    if(fatigued.length)F.push(['var(--status-warn)',escHtml(fatigued.join(', '))+' '+(fatigued.length>1?'staan':'staat')+' onder 50%.']);
+    if(loadSorted.length){
+      const top=loadSorted.slice(0,2).map(x=>x[0]);
+      F.push(['var(--load-3)',escHtml(top.join(' en '))+' '+(top.length>1?'kregen':'kreeg')+' het meeste volume in 7 dagen.']);
+    }
+    if(!F.length)F.push(['var(--g3)','Nog te weinig gegevens — log een training of vul je check-in in.']);
+    facts.innerHTML='<div class="lich-facts">'+F.map(f=>`<div class="f"><i style="background:${f[0]}"></i><span>${f[1]}</span></div>`).join('')+
+      '<div class="src">Feiten uit je eigen gegevens. De duiding en het advies staan bij Coach.</div></div>';
+  }
   const hist=document.getElementById('lich-history');
   if(hist){
     try{
@@ -18483,25 +18706,22 @@ async function renderLichaamPremium(){
         const relLbl=(d)=>{const dt=new Date(d);dt.setHours(0,0,0,0);const diff=Math.round((today-dt)/86400000);return diff<=0?'Vandaag':diff===1?'Gisteren':diff===2?'Eergister':diff<7?diff+' dagen':(diff<14?'Vorige week':fmtDate(d));};
         hist.innerHTML='<div class="lich-tl">'+dates.map(d=>{
           const pct=Math.round(byDate[d]/maxv*100);const rpe=rpeByDate[d];
-          const c=rpe>=8?'var(--red)':rpe>=6?'var(--y)':'var(--green)';
+          const c=rpe>=8?'var(--status-bad)':rpe>=6?'var(--status-warn)':'var(--status-good)';
           return `<div class="lich-tlc"><div class="d">${relLbl(d)}</div><div class="rp">${Math.round(byDate[d]/1000*10)/10}k</div><div class="bar"><i style="width:${pct}%;background:${c}"></i></div><div class="s">${rpe?'RPE '+rpe:'volume kg'}</div></div>`;
         }).join('')+'</div>';
       }
     }catch(_){hist.innerHTML='';}
   }
-  const adv=document.getElementById('lich-advies');
-  if(adv){
-    const nextT=window.homeNextT;
-    const rpeCap=df==null?8:(df>=1.0?9:df>=0.93?8:7);
-    const fat=rows.filter(r=>r.pct<50&&r.hours!==null).map(r=>r.muscle)[0];
-    const titel=nextT&&nextT.naam?escHtml(nextT.naam):'Train op gevoel';
-    const items=[];
-    items.push(nextT&&nextT.naam?('Vandaag: '+escHtml(nextT.naam)):'Kies een training die past bij je herstel');
-    items.push('Maximaal RPE '+rpeCap);
-    if(fat)items.push('Vermijd zware '+escHtml(fat.toLowerCase()));
-    adv.innerHTML=`<div class="lich-adv"><div class="eye">Vandaag adviseren wij</div><h3>${titel}</h3><ul>${items.map(t=>`<li><span class="ck">✓</span>${t}</li>`).join('')}</ul></div>`;
-  }
+  // Fase 1 — het blok "Coachadvies vandaag" is van Lichaam verwijderd. Het bevatte een
+  // eigen RPE-plafond en de naam van de training van vandaag, naast DecisionCore en Home:
+  // een tweede source of truth. Lichaam verwijst nu door naar Coach en Training.
 }
+// Fase 1 — routetabel voor de metric-kaarten op Lichaam. Een eigen detailscherm per
+// metric komt in een latere fase; tot die tijd wijst elke kaart naar het bestaande
+// scherm waar díe gegevens staan. Er wordt bewust geen leeg scherm getoond.
+// Bij uitbreiding wijzigt alleen deze tabel, niet de kaarten zelf.
+const TK_LICH_METRIC_ROUTE={hrv:'s-lich-health',rhr:'s-lich-health',slaap:'s-lich-health',gewicht:'s-lich-metingen'};
+function openLichaamMetric(key){ const r=TK_LICH_METRIC_ROUTE[key]; if(r)go(r); }
 function v43LichView(view){
   recoveryHeatmapView=view;
   const f=document.getElementById('v43-lich-front'),b=document.getElementById('v43-lich-back');
@@ -18604,7 +18824,8 @@ async function refreshVolumeSpiergroep(){
   let html = sorted.map(([m,sets])=>{
     const pct = Math.round(sets/max*100);
     const optimal = sets >= 12;
-    const color = sets>=12?'var(--green)':sets>=6?'var(--y)':'var(--red)';
+    // zelfde intensiteitsramp als het figuur hierboven (geen stoplicht)
+    const color = sets>=12?'var(--load-3)':sets>=6?'var(--load-2)':'var(--load-1)';
     return `<div style="margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
         <span style="font-size:13px;font-weight:700;color:var(--dark)">${m}</span>

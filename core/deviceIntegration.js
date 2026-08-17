@@ -582,6 +582,45 @@
     };
   }
 
+  // ── BODY-METRIC SELECTIE + PROVENANCE (hrv_log rows → nieuwste échte meting per metric) ──
+  // Repareert de Body-UI-inconsistentie: kies PER metric (hrv/rhr/sleep) de NIEUWSTE rij met een
+  // echte waarde (niet blind rij[0]), met de EIGEN datum en bron. Bron uit een [src:...]-tag in note
+  // (wearable-sync schrijft [src:fitbit]); ontbrekende tag → handmatige check-in. Geen fake, geen
+  // datumverschuiving, geen invullen van ontbrekende metrics. PUUR.
+  function _parseSrcTag(note){
+    var m = String(note == null ? '' : note).match(/\[src:([a-z0-9_-]+)\]/i);
+    return m ? m[1].toLowerCase() : null;
+  }
+  function _sourceLabel(tag){
+    if (tag === 'fitbit' || tag === 'google-health' || tag === 'google_health') return 'Fitbit';
+    if (tag === 'checkin' || tag === 'check-in' || tag === 'manual') return 'Check-in';
+    return tag ? tag : 'Check-in';       // onbekende tag → toon tag; geen tag → handmatige check-in
+  }
+  // rows: [{date, hrv, rhr, sleep, note}] (volgorde maakt niet uit — defensief gesorteerd desc op date).
+  function pickLatestMetric(rows, field){
+    if (!Array.isArray(rows)) return { value: null, date: null, source: null, sourceTag: null };
+    var sorted = rows.slice().sort(function (a, b){
+      return String((b && b.date) || '').localeCompare(String((a && a.date) || ''));
+    });
+    for (var i = 0; i < sorted.length; i++){
+      var r = sorted[i]; if (!r) continue;
+      var v = r[field];
+      if (v != null && v !== ''){
+        var tag = _parseSrcTag(r.note);
+        return { value: v, date: r.date != null ? r.date : null, source: _sourceLabel(tag), sourceTag: tag };
+      }
+    }
+    return { value: null, date: null, source: null, sourceTag: null };
+  }
+  // Volledig body-metric-beeld: per metric de nieuwste echte waarde + datum + bron.
+  function bodyMetricsFromLog(rows){
+    return {
+      hrv:   pickLatestMetric(rows, 'hrv'),
+      rhr:   pickLatestMetric(rows, 'rhr'),
+      sleep: pickLatestMetric(rows, 'sleep')
+    };
+  }
+
   // ── GENERIEKE CONNECTIE-/SYNC-STATUS (Fitbit én Concept2) ─────────────────────────────
   // Eén canonieke afleiding van device-connectiestatus voor de UI. PUUR: `now` wordt ingespoten
   // (geen Date.now). Nooit een fake "synced": de status volgt strikt uit de ingespoten feiten.
@@ -655,6 +694,8 @@
     // generieke provider-sync boundary
     PROVIDER_SYNC_STATUSES: PROVIDER_SYNC_STATUSES,
     parseSyncResponse: parseSyncResponse, syncStatusToConnectionInput: syncStatusToConnectionInput, isSyncOk: isSyncOk,
+    // body-metric selectie + provenance
+    pickLatestMetric: pickLatestMetric, bodyMetricsFromLog: bodyMetricsFromLog,
     normalizeHealthDaily: normalizeHealthDaily,
     ADAPTER_METHODS: ADAPTER_METHODS,
     CONCEPT2_MAP: CONCEPT2_MAP,

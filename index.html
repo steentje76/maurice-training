@@ -4895,13 +4895,18 @@ async function renderLichaamDevices(lh){
     // Body-metrics: uitsluitend echt gemeten waarden uit de laatste check-in/sync.
     var mEl=document.getElementById('lich-bodymetrics');
     if(mEl){
-      var dLbl=(lh&&lh.date)?lh.date:'';
+      // Per metric de NIEUWSTE échte meting met eigen datum + bron (Fitbit vs handmatige check-in).
+      // Geen geforceerde "vandaag", geen vermenging van bronnen, geen invullen van ontbrekende metrics.
+      var bm=(typeof DeviceCore!=='undefined' && DeviceCore.bodyMetricsFromLog)
+        ? DeviceCore.bodyMetricsFromLog(Array.isArray(hd)?hd:(lh?[lh]:[]))
+        : { hrv:{value:(lh&&lh.hrv),date:(lh&&lh.date),source:'Check-in'}, rhr:{value:(lh&&lh.rhr),date:(lh&&lh.date),source:'Check-in'}, sleep:{value:(lh&&lh.sleep),date:(lh&&lh.date),source:'Check-in'} };
+      var subOf=function(m, pre){ var p=[]; if(pre)p.push(pre); if(m.date)p.push(m.date); if(m.source)p.push(m.source); return p.join(' · '); };
       var items=[
-        { icon:'🧠', label:'HRV', value:(lh&&lh.hrv!=null)?lh.hrv:null, unit:'ms', sub:'RMSSD'+(dLbl?' · '+dLbl:'') },
-        { icon:'❤️', label:'Rusthartslag', value:(lh&&lh.rhr!=null)?lh.rhr:null, unit:'bpm', sub:dLbl },
-        { icon:'😴', label:'Slaap', value:(lh&&lh.sleep!=null)?(typeof v43SlaapTxt==='function'?v43SlaapTxt(lh.sleep):lh.sleep):null, unit:'', sub:'afgelopen nacht' }
+        { icon:'🧠', label:'HRV', value:(bm.hrv.value!=null)?bm.hrv.value:null, unit:'ms', sub:subOf(bm.hrv,'RMSSD') },
+        { icon:'❤️', label:'Rusthartslag', value:(bm.rhr.value!=null)?bm.rhr.value:null, unit:'bpm', sub:subOf(bm.rhr,'') },
+        { icon:'😴', label:'Slaap', value:(bm.sleep.value!=null)?(typeof v43SlaapTxt==='function'?v43SlaapTxt(bm.sleep.value):bm.sleep.value):null, unit:'', sub:subOf(bm.sleep,'') }
       ];
-      mEl.innerHTML=tkRenderBodyMetrics(items, { source: (lh&&(lh.hrv!=null||lh.rhr!=null||lh.sleep!=null))?'Check-in / wearable':'', date:dLbl });
+      mEl.innerHTML=tkRenderBodyMetrics(items, {});
     }
     // Apparaten: Fitbit (lichaam) via serverstatus → canonieke connectiestatus. Concept2 (prestatie) voorbereid.
     var dEl=document.getElementById('lich-devices');
@@ -7133,8 +7138,10 @@ async function wearableSyncNow(){
   try{
     const r=await fetch('/.netlify/functions/wearable-sync',{method:'POST',headers:h});
     const d=await r.json();
-    if(!r.ok||!d.synced){toast('Sync mislukt: '+(d.reason||d.error?.message||r.status));renderWearableCard();return;}
-    toast(d.daysWritten+' dag(en) bijgewerkt');
+    if(!r.ok||!d.synced){toast('Synchronisatie mislukt: '+(d.reason||d.error?.message||r.status));renderWearableCard();return;}
+    // Eerlijke microcopy: OAuth/API-succes ≠ nieuwe data. 0 records → NIET "gelukt".
+    const _days=Number(d.daysWritten)||0;
+    toast(_days>0 ? (_days+' dag'+(_days===1?'':'en')+' bijgewerkt') : 'Verbonden — geen nieuwe metingen gevonden');
     renderWearableCard();
     refreshHome();
   }catch(e){toast('Verbindingsfout bij sync');}
@@ -18226,7 +18233,8 @@ async function renderLichaamPremium(){
     </div>`;
   }
   // Body/Health foundation + apparaatstatus (echte data only). Fail-safe: eigen try/catch.
-  try{ renderLichaamDevices(lh); }catch(_){}
+  // hd = alle hrv_log-rijen → per-metric nieuwste-echte-meting selectie met eigen datum+bron.
+  try{ renderLichaamDevices(lh, hd); }catch(_){}
   const coach=document.getElementById('lich-coach');
   if(coach){
     const recovered=rows.filter(r=>r.pct>=85&&r.hours!==null).map(r=>r.muscle).slice(0,3);

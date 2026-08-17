@@ -3578,10 +3578,9 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="lich-hero"></div>
     <div id="lich-coach"></div>
 
-    <!-- Body/Health foundation — echte gemeten waarden (alleen indien beschikbaar) + apparaatstatus. -->
+    <!-- Body/Health — uitsluitend echte lichaamsmetingen (HRV/RMSSD, rusthartslag, slaap). Geen
+         apparaatkaarten hier: Fitbit → Profiel, Concept2-import/live apparaat → Training. -->
     <div id="lich-bodymetrics" style="margin-top:14px"></div>
-    <div class="v43-lbl" style="margin:18px 0 10px">Apparaten</div>
-    <div id="lich-devices"></div>
 
     <div class="v43-lbl" style="margin:18px 0 10px">Anatomie</div>
     <div class="lich-anat">
@@ -4021,9 +4020,9 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
         <option value="bodyweight">Bodyweight</option>
         <option value="carry">Carry</option>
         <option value="wod">CrossFit WOD</option>
-        <option value="rowing">Roeien</option>
-        <option value="bikeerg">Bike Erg</option>
-        <option value="skierg">Ski Erg</option>
+        <option value="rowing">RowErg</option>
+        <option value="bikeerg">BikeErg</option>
+        <option value="skierg">SkiErg</option>
         <option value="assaultbike">Assault Bike</option>
         <option value="crosstrainer">Crosstrainer</option>
         <option value="assaultrunner">Assault Runner</option>
@@ -4204,9 +4203,9 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <option value="bodyweight">Bodyweight</option>
       <option value="carry">Carry</option>
       <option value="wod">CrossFit WOD</option>
-      <option value="rowing">Roeien (Concept 2)</option>
-      <option value="bikeerg">Bike Erg</option>
-      <option value="skierg">Ski Erg</option>
+      <option value="rowing">RowErg (Concept2)</option>
+      <option value="bikeerg">BikeErg</option>
+      <option value="skierg">SkiErg</option>
       <option value="assaultbike">Assault Bike</option>
       <option value="crosstrainer">Crosstrainer</option>
       <option value="assaultrunner">Assault Runner</option>
@@ -4870,6 +4869,57 @@ function tkRenderConcept2Actual(workout, opts){
       rows.map(function(r){return '<div style="min-width:70px"><div style="font-size:10px;color:var(--g4);font-weight:700;text-transform:uppercase;letter-spacing:.3px">'+r[0]+'</div><div style="font-size:15px;font-weight:800;color:var(--g5,#1a2b33)">'+r[1]+'</div></div>';}).join('')+
     '</div></div>';
 }
+// ── LIVE APPARAATKOPPELING (foundation, geen fake) ──────────────────────────────────
+// Generiek DeviceTransport-contract: een echte transport (native BLE-shell, geïnjecteerde adapter)
+// registreert zich via window.TKDeviceTransport. Ontbreekt die → GEEN live koppeling mogelijk in web.
+// De UI toont dan eerlijk dat live koppeling in de apparaat-app-versie zit; NOOIT "Verbonden" zonder
+// echte verbinding. IMPORT (Concept2 Logbook OAuth) en HISTORICAL (sessions) staan hier los van.
+function tkDeviceTransport(){
+  // Verwacht contract (indien aanwezig): { available:bool, connect(deviceType), disconnect(),
+  //   getStatus(), subscribeMetrics(cb), unsubscribeMetrics() }. Alleen een échte implementatie telt.
+  return (typeof window!=='undefined' && window.TKDeviceTransport && window.TKDeviceTransport.available===true)
+    ? window.TKDeviceTransport : null;
+}
+function tkRenderErgConnect(exId, cardioType, ergLabel){
+  var t=tkDeviceTransport();
+  var head='<div style="display:flex;align-items:center;gap:8px;margin:6px 14px 0">'+
+    '<span style="font-size:15px">🚣</span>'+
+    '<span style="font-weight:800;color:var(--g5,#1a2b33);font-size:13px">'+ergLabel+'</span>'+
+    '<span style="font-size:11px;color:var(--g4)">Concept2</span></div>';
+  if(!t){
+    // Geen echt transport → eerlijke boodschap, geen nep-verbinding, geen nep-knop die "verbindt".
+    return '<div class="card" style="margin:6px 14px 8px;padding:10px 12px">'+head+
+      '<div style="font-size:11.5px;color:var(--g4);margin-top:6px">'+
+      'Live koppeling met je Concept2 is beschikbaar in de app-versie met apparaatondersteuning. '+
+      'Je kunt je training gewoon handmatig invoeren, of achteraf importeren via Training → Importeren.</div></div>';
+  }
+  // Echt transport aanwezig → echte koppel-knop (verbindt daadwerkelijk; status volgt uit transport).
+  return '<div class="card" style="margin:6px 14px 8px;padding:10px 12px">'+head+
+    '<button class="btn btn-o btn-sm" style="font-size:12px;margin-top:8px" onclick="tkErgConnect(\''+exId+'\',\''+cardioType+'\')">Apparaat koppelen</button>'+
+    '<div id="c2live-'+exId+'" style="font-size:11.5px;color:var(--g4);margin-top:6px">Niet verbonden</div></div>';
+}
+// Echte koppeling (alleen als er een echt transport is). Nooit fake status; alles komt uit het transport.
+async function tkErgConnect(exId, cardioType){
+  var t=tkDeviceTransport(); var el=document.getElementById('c2live-'+exId);
+  if(!t){ if(el) el.textContent='Live koppeling niet beschikbaar in deze omgeving.'; return; }
+  try{
+    if(el) el.textContent='Verbinden…';
+    var dt={rowing:'rowerg',skierg:'skierg',bikeerg:'bikeerg'}[cardioType]||'rowerg';
+    var res=await t.connect(dt);
+    if(!res||res.connected!==true){ if(el) el.textContent='Verbinden mislukt — probeer opnieuw.'; return; }
+    // Echte metrics abonneren → live tonen; ACTUAL-gebruik volgt de bestaande logging (geen overschrijf).
+    t.subscribeMetrics(function(m){
+      if(!el) return;
+      var parts=[];
+      if(m.distance_m!=null) parts.push('Afstand '+Math.round(m.distance_m)+' m');
+      if(m.duration_s!=null && typeof DeviceCore!=='undefined') parts.push('Tijd '+DeviceCore.formatDurationStr(m.duration_s));
+      if(m.pace_s_500m!=null && typeof DeviceCore!=='undefined') parts.push('Tempo '+DeviceCore.formatDurationStr(m.pace_s_500m)+'/500m');
+      if(m.watts!=null) parts.push('Vermogen '+Math.round(m.watts)+' W');
+      if(m.stroke_rate_spm!=null) parts.push('SPM '+Math.round(m.stroke_rate_spm));
+      el.innerHTML='● Concept2 verbonden<br>'+parts.join(' · ');
+    });
+  }catch(e){ if(el) el.textContent='Verbinden mislukt — probeer opnieuw.'; }
+}
 // items: [{icon,label,value,unit,sub}] — alleen echt aanwezige waarden (value!=null) worden getoond.
 function tkRenderBodyMetrics(items, meta){
   meta=meta||{};
@@ -4890,9 +4940,10 @@ function tkRenderBodyMetrics(items, meta){
     '<div style="display:flex;flex-wrap:wrap;gap:8px">'+tiles+'</div>'+foot;
 }
 // Wiring op het Lichaam-scherm: echte hrv_log-metingen + Fitbit-status (server) + Concept2 (nog niet gekoppeld).
-async function renderLichaamDevices(lh){
+async function renderLichaamDevices(lh, hd){
   try{
-    // Body-metrics: uitsluitend echt gemeten waarden uit de laatste check-in/sync.
+    // LICHAAM = uitsluitend body/health-metingen. Apparaatkaarten (Fitbit/Concept2) horen NIET hier:
+    // Fitbit-koppeling → Profiel; Concept2-import + live apparaat → Training. Alleen body-metrics tonen.
     var mEl=document.getElementById('lich-bodymetrics');
     if(mEl){
       // Per metric de NIEUWSTE échte meting met eigen datum + bron (Fitbit vs handmatige check-in).
@@ -4908,32 +4959,10 @@ async function renderLichaamDevices(lh){
       ];
       mEl.innerHTML=tkRenderBodyMetrics(items, {});
     }
-    // Apparaten: Fitbit (lichaam) via serverstatus → canonieke connectiestatus. Concept2 (prestatie) voorbereid.
-    var dEl=document.getElementById('lich-devices');
-    if(dEl && typeof DeviceCore!=='undefined'){
-      var now=Date.now();
-      var fitState={status:'not_connected'};
-      try{
-        if(typeof fetchWearableStatus==='function'){
-          var st=await fetchWearableStatus();
-          if(st){ fitState=DeviceCore.deviceConnectionState({
-            connected:!!st.connected, connectedAt:st.connectedAt, lastSyncAt:st.lastSyncAt,
-            lastSyncStatus:(st.lastSyncStatus==='success'?'ok':st.lastSyncStatus)
-          }, { now:now }); }
-        }
-      }catch(_){}
-      var fitAction = (fitState.status==='not_connected')
-        ? '<button class="btn btn-o btn-sm" style="font-size:11px" onclick="try{wearableConnect()}catch(e){}">Koppelen</button>'
-        : '<button class="btn btn-o btn-sm" style="font-size:11px" onclick="try{tkFitbitSync()}catch(e){}">Sync</button>';
-      // Concept2 Logbook: import via authenticated server-boundary (OAuth server-side, geen live in browser).
-      var c2State=DeviceCore.deviceConnectionState({connected:false}, { now:now });
-      var c2Action='<button class="btn btn-o btn-sm" style="font-size:11px" onclick="try{tkConcept2Import()}catch(e){}">Training importeren</button>';
-      dEl.innerHTML =
-        tkRenderDeviceCard('Fitbit', '⌚', fitState, { role:'Lichaam · hartslag, HRV, slaap', actionsHtml:fitAction })+
-        tkRenderDeviceCard('Concept2 Logbook', '🚣', c2State, { role:'Training importeren · roeien, ski, bike', actionsHtml:c2Action })+
-        '<div id="lich-import-msg" style="font-size:12px;color:var(--g4);margin:2px 2px 4px"></div>';
-    }
-  }catch(e){ /* apparaten mogen het scherm nooit breken */ }
+    // Apparaatkaarten VERWIJDERD van Lichaam (Fitbit → Profiel, Concept2/live → Training).
+    // Leeg de oude container defensief voor het geval oude markup nog aanwezig is.
+    var dEl=document.getElementById('lich-devices'); if(dEl) dEl.innerHTML='';
+  }catch(e){ /* body-metrics mogen het scherm nooit breken */ }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -5301,7 +5330,7 @@ async function upsertExerciseGoalField(exId,field,value){
 //   type:'split' → tijd/afstand × `basis` (bv. elke 500m of 250m), met defaultDist als fallback
 const CARDIO_TYPES = {
   rowing: {
-    naam:'Roeien', unit:'m', splitUnit:'/500m',
+    naam:'RowErg', unit:'m', splitUnit:'/500m',
     fields:['dist','time','split','watt','stroke','drag','rpe'],
     labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /500m',watt:'Watt',stroke:'Slag/min',drag:'Drag factor',rpe:'RPE'},
     splits:true, splitDist:250, splitTotal:1000,
@@ -5310,7 +5339,7 @@ const CARDIO_TYPES = {
     calc:{type:'split',distField:'dist',basis:500,defaultDist:1000}
   },
   bikeerg: {
-    naam:'Bike Erg', unit:'m', splitUnit:'/500m',
+    naam:'BikeErg', unit:'m', splitUnit:'/500m',
     fields:['dist','time','split','watt','rpm','resistance','rpe'],
     labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /500m',watt:'Watt',rpm:'RPM',resistance:'Weerstand',rpe:'RPE'},
     splits:true, splitDist:250, splitTotal:1000,
@@ -5319,7 +5348,7 @@ const CARDIO_TYPES = {
     calc:{type:'split',distField:'dist',basis:500,defaultDist:1000}
   },
   skierg: {
-    naam:'Ski Erg', unit:'m', splitUnit:'/500m',
+    naam:'SkiErg', unit:'m', splitUnit:'/500m',
     fields:['dist','time','split','watt','stroke','rpe'],
     labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /500m',watt:'Watt',stroke:'Slag/min',rpe:'RPE'},
     splits:true, splitDist:250, splitTotal:1000,
@@ -5399,7 +5428,10 @@ const CARDIO_TYPES = {
 // herkenden en per ongeluk de krachttraining-interface toonden.
 // F1.13: id-gebaseerde correctie voor cardio-oefeningen met een verkeerd/generiek `type` in de data
 // (bike_erg staat als 'rowing' → moet 'bikeerg'). Geen Supabase-mutatie; deterministisch, reversibel.
-const CARDIO_TYPE_BY_ID = { bike_erg:'bikeerg', ski_erg:'skierg', roeien:'rowing' };
+// F1.13 + ERG-repair: id-correctie voor cardio. BUG was: alleen underscore-varianten (bike_erg/ski_erg),
+// terwijl de echte canonieke ids bikeerg/skierg zijn → BikeErg/SkiErg vielen terug op 'rowing' (Roeien).
+// Nu beide spellingen. rowerg-alias wijst naar rowing (RowErg = canonieke id 'roeien', alleen relabel).
+const CARDIO_TYPE_BY_ID = { bikeerg:'bikeerg', bike_erg:'bikeerg', skierg:'skierg', ski_erg:'skierg', roeien:'rowing', rowerg:'rowing' };
 function resolveCardioType(ex){
   if(!ex)return null;
   if(ex.cardioType && CARDIO_TYPES[ex.cardioType])return ex.cardioType;
@@ -5473,7 +5505,7 @@ function cardioDataToRow(cardioType, d){
 // de koppeling+context (sets/reps/rpe/wu/tip) leeft in 'training_exercises'.
 const TRAIN_CFG_SEED = {
   A:[
-    {id:'roeien',naam:'Roeien (warmup)',type:'rowing',sets:1,reps:'1000m',tip:'PR: 3:37.5 / 272W (31 mei 2026). Rustig opbouwen — warmup, niet maximaal.',yt:'nolphB7VZJU',muscles:{p:['Rug','Benen','Core'],s:['Schouders','Armen']}},
+    {id:'roeien',naam:'RowErg (warmup)',type:'rowing',cardioType:'rowing',sets:1,reps:'1000m',tip:'PR: 3:37.5 / 272W (31 mei 2026). Rustig opbouwen — warmup, niet maximaal.',yt:'nolphB7VZJU',muscles:{p:['Rug','Benen','Core'],s:['Schouders','Armen']}},
     {id:'backsquat',naam:'Backsquat',type:'strength',sets:4,reps:'3-5',rpe:'8',wu:3,tip:'Heupen recht naar beneden. Borstkast omhoog.',yt:'bEv6CCg2BC8',muscles:{p:['Quadriceps','Billen'],s:['Hamstrings','Core','Rug']}},
     {id:'shoulderpress',naam:'Shoulder Press',type:'strength',sets:4,reps:'3-5',rpe:'8',wu:2,tip:'VOOR bench uitvoeren. Kern gespannen.',yt:'2yjwXTZbDtQ',muscles:{p:['Schouders'],s:['Triceps','Core']}},
     {id:'bench',naam:'Benchpress',type:'strength',sets:4,reps:'4-6',rpe:'8',wu:2,tip:'Let op linker triceps — stop bij spanning op 80 kg.',yt:'vcBig73ojpE',muscles:{p:['Borst'],s:['Triceps','Schouders']}},
@@ -5481,7 +5513,7 @@ const TRAIN_CFG_SEED = {
     {id:'farmercarry',naam:'Farmer Carry',type:'carry',sets:3,reps:'40m',tip:'Schouders omlaag en achteruit.',yt:'rt0rmH6WJSY',muscles:{p:['Grip','Core','Traps'],s:['Schouders','Benen']}},
   ],
   B:[
-    {id:'roeien',naam:'Roeien (warmup)',type:'rowing',sets:1,reps:'1000m',tip:'PR: 3:37.5 / 272W (31 mei 2026). Rustig opbouwen.',yt:'nolphB7VZJU',muscles:{p:['Rug','Benen','Core'],s:['Schouders','Armen']}},
+    {id:'roeien',naam:'RowErg (warmup)',type:'rowing',cardioType:'rowing',sets:1,reps:'1000m',tip:'PR: 3:37.5 / 272W (31 mei 2026). Rustig opbouwen.',yt:'nolphB7VZJU',muscles:{p:['Rug','Benen','Core'],s:['Schouders','Armen']}},
     {id:'hexabar',naam:'Hexabar Deadlift',type:'strength',sets:4,reps:'1-3',rpe:'8-9',wu:3,tip:'FRIS na roeien. PR: 240×3 (apr 2026). Nooit dag na zware A.',yt:'1ZXobu7JvvE',muscles:{p:['Rug','Billen','Hamstrings'],s:['Quadriceps','Core','Traps']}},
     {id:'bentoverrow',naam:'Bent Over Row',type:'strength',sets:4,reps:'6',rpe:'7-8',wu:2,tip:'Romp ~45°. Trek naar navel.',yt:'kBWAon7ItDw',muscles:{p:['Rug','Biceps'],s:['Core','Achterste schouder']}},
     {id:'cablerow',naam:'Cable Row',type:'strength',sets:4,reps:'6-8',rpe:'7-8',wu:1,tip:'Rug recht. Geen momentum. Werkgewicht: 90 kg.',yt:'xQNrFHEMhI4',muscles:{p:['Rug','Biceps'],s:['Core','Achterste schouder']}},
@@ -12713,6 +12745,13 @@ function buildCardioBody(exId, cardioType){
   cardioSplits[exId]={};
   let h='';
   h+=`<div id="cardioprev-${exId}"></div>`; // F8.1 — async "vorige keer" (fail-safe; gevuld na render)
+  // Concept2 ERG (RowErg/SkiErg/BikeErg): apparaatkoppeling OP OEFENINGNIVEAU (geen apart dashboard).
+  // Eerlijk: web heeft geen Concept2-BLE-transport → NOOIT "Verbonden" faken; toon dat live koppeling
+  // in de apparaat-app-versie zit. Import via Logbook staat los (Training → Importeren).
+  if(cardioType==='rowing'||cardioType==='skierg'||cardioType==='bikeerg'){
+    const _erg={rowing:'RowErg',skierg:'SkiErg',bikeerg:'BikeErg'}[cardioType];
+    h+=`<div id="c2dev-${exId}">${tkRenderErgConnect(exId, cardioType, _erg)}</div>`;
+  }
 
   if(machines.length>0){
     const selM=localStorage.getItem('sel_'+cardioType)||machines[0];
@@ -18658,7 +18697,9 @@ async function ensureExercisesLoaded(){
         {id:'hpc',name:'Hang Power Clean',category:'B',type:'strength',pr:85,sort_order:4,active:true},
         {id:'hps',name:'Hang Power Snatch',category:'B',type:'strength',pr:57.5,sort_order:5,active:true},
         {id:'rdl',name:'RDL',category:'B',type:'strength',pr:null,sort_order:6,active:true},
-        {id:'roeien',name:'Roeien',category:'B',type:'rowing',pr:null,sort_order:7,active:true},
+        {id:'roeien',name:'RowErg',category:'B',type:'rowing',pr:null,sort_order:7,active:true},
+        {id:'skierg',name:'SkiErg',category:'B',type:'skierg',pr:null,sort_order:8,active:true},
+        {id:'bikeerg',name:'BikeErg',category:'B',type:'bikeerg',pr:null,sort_order:9,active:true},
       ];
       for(const ex of defs)await sbUpsert('exercises',{...ex,scope:'global'});
       exercises=defs;

@@ -21,7 +21,8 @@
   var VERSIONS = {
     rounding: 'rounding.v1', e1rm: 'e1rm.v1', working_weight: 'working_weight.v1', ai_guard: 'ai_guard.v1',
     volume: 'volume.v1', percentage: 'percentage.v1', warmup: 'warmup.v1', recovery: 'recovery.v1', dayfactor: 'dayfactor.v1',
-    goal: 'goal.v1', e1rm_weighted: 'e1rm_weighted.v1', recovery_score: 'recovery_score.v1'
+    goal: 'goal.v1', e1rm_weighted: 'e1rm_weighted.v1', recovery_score: 'recovery_score.v1',
+    sleep_unit: 'sleep_unit.v1'
   };
 
   // --- rounding.v1 --- exact gelijk aan legacy index.html r.10668
@@ -125,6 +126,28 @@
   // (r.12690-12691). De object-assembly (hrvSt/hrvBaseline-passthrough) blijft ORCHESTRATIE in de app.
   // Puur/deterministisch. Legacy-quirks bewust behouden: slaap !uren -> 1.00; onbekende fase -> 1.00;
   // clamp [0.85,1.05]; afronding op 2 decimalen.
+  // --- sleep_unit.v1 --- COMPATIBILITEITSLAAG voor hrv_log.sleep.
+  // Canoniek is DECIMALE UREN. De check-in schrijft dat al zo; de wearable-sync schreef tot
+  // v4.26.0 minuten in dezelfde kolom, waardoor één kolom twee eenheden kon bevatten.
+  // De sync is bij de bron gecorrigeerd; deze shim vangt uitsluitend BESTAANDE rijen op.
+  // Regel, deterministisch en bewust conservatief: een nacht slaap is nooit meer dan
+  // MAX_SLEEP_HOURS uur, dus alles daarboven kan alleen een minutenwaarde zijn.
+  // Geen migratie: de opgeslagen rij blijft ongewijzigd, alleen het LEZEN normaliseert.
+  var MAX_SLEEP_HOURS = 20;
+  function normalizeSleepHours(v) {
+    if (v == null || v === '') return null;
+    var n = typeof v === 'number' ? v : parseFloat(v);
+    if (!isFinite(n) || n <= 0) return null;
+    if (n > MAX_SLEEP_HOURS) return Math.round(n / 60 * 100) / 100;   // legacy: minuten
+    return Math.round(n * 100) / 100;                                  // canoniek: uren
+  }
+  // Uren + minuten → canonieke decimale uren. Eén plek voor de invoerkant.
+  function sleepToHours(uren, minuten) {
+    var u = Number(uren) || 0, m = Number(minuten) || 0;
+    if (!u && !m) return null;
+    return Math.round((u + m / 60) * 100) / 100;
+  }
+
   function slaapDagFactor(uren) {
     if (!uren) return 1.00;
     if (uren >= 7) return 1.00;
@@ -136,9 +159,11 @@
   }
   // hrvFactor is de reeds-geresolveerde HRV-factor (app-side houdt de hrvComponent||{factor:1.00}
   // default als orchestratie/context). Kern = exact legacy: hrvFactor*slaap*cyclus, clamp, 2 decimalen.
+  // sleepHours MOET decimale uren zijn. De normalisatie gebeurt hier één keer, zodat een
+  // legacy-minutenwaarde de dagfactor niet meer kan vervuilen.
   function calculateDayFactor(input) {
     var i = input || {};
-    var ruw = i.hrvFactor * slaapDagFactor(i.sleepHours) * cyclusDagFactor(i.cyclePhase);
+    var ruw = i.hrvFactor * slaapDagFactor(normalizeSleepHours(i.sleepHours)) * cyclusDagFactor(i.cyclePhase);
     return Math.round(Math.max(0.85, Math.min(1.05, ruw)) * 100) / 100;
   }
 
@@ -237,6 +262,9 @@
     roundToIncrement: roundToIncrement,
     rpeMultiplier: rpeMultiplier,
     calculateMuscleRecoveryPct: calculateMuscleRecoveryPct,
+    normalizeSleepHours: normalizeSleepHours,
+    sleepToHours: sleepToHours,
+    MAX_SLEEP_HOURS: MAX_SLEEP_HOURS,
     slaapDagFactor: slaapDagFactor,
     cyclusDagFactor: cyclusDagFactor,
     calculateDayFactor: calculateDayFactor,

@@ -1,5 +1,51 @@
 # Trainingskompas — Changelog
 
+## v4.26.0 — 17 augustus 2026 (Slaapduur: één canonieke eenheid)
+
+`hrv_log.sleep` bevatte twee eenheden. De check-in schreef decimale uren (`saveHRV`), de wearable-sync schreef minuten in dezelfde kolom (`netlify/functions/_wearableSyncLib.js`, `parseSleepPoint`). Op elke wearable-dag las `calculateDayFactor` daardoor een minutenwaarde als uren — een nacht van 432 telde als 432 uur slaap — en de slaapgrafiek deelde diezelfde kolom nog eens door 60.
+
+**Canoniek is vanaf nu decimale uren.**
+
+### Bron gecorrigeerd
+`parseSleepPoint` rekent de minuten van de provider om naar uren vóór het wegschrijven, via de nieuwe, geëxporteerde `minutesToHours`. Er kunnen dus geen twee eenheden meer in één kolom terechtkomen. De diagnostische helper `sleepMinutesOf` blijft ongewijzigd minuten teruggeven.
+
+### Compatibiliteitslaag voor bestaande rijen
+`CalcCore.normalizeSleepHours` (`sleep_unit.v1`) normaliseert bij het **lezen**. Regel, deterministisch en conservatief: een nacht duurt nooit langer dan `MAX_SLEEP_HOURS` (20), dus alles daarboven kan alleen een minutenwaarde zijn en wordt door 60 gedeeld. De opgeslagen rij blijft ongewijzigd — geen migratie, geen schemawijziging.
+
+### Dagfactor unit-consistent
+`calculateDayFactor` normaliseert zijn `sleepHours` één keer en ontvangt daarmee uitsluitend decimale uren. De wrapper `dagfactor()` in `index.html` normaliseert vóór zowel `slaapDagFactor` als `calculateDayFactor`, zodat de getoonde slaapfactor en de berekende dagfactor niet uiteen kunnen lopen.
+
+### Eén formatter
+Er waren drie slaapformatters met twee verschillende eenheid-aannames: `fmtSleep` (uren), `v43SlaapTxt` (uren) en `_tkSleepFmt` (deelde door 60). Alle drie delegeren nu naar `tkFmtSleepHours`, die eerst normaliseert. De invoerkant loopt via `CalcCore.sleepToHours(uren, minuten)`; de check-in rekent niet langer zelf om. De slaapgrafiek normaliseert de reeks vóór weergave.
+
+### Bestaande data gecontroleerd — geen migratie nodig
+Read-only audit op de productiedatabase, uitsluitend aggregaten:
+
+| | |
+|---|---|
+| Rijen in `hrv_log` | 56 |
+| Rijen met een slaapwaarde | 41 |
+| Waarden boven 20 (verdacht minuten) | **0** |
+| Bereik | 4,17 – 7,85 |
+| Periode | 21 april t/m 16 augustus 2026 |
+| Rijen met een wearable-herkomst en slaap | **0** |
+
+Alle bestaande slaapwaarden staan al in uren en zijn afkomstig uit de check-in. De sync heeft nog nooit een slaapwaarde weggeschreven, waardoor de fout in productie nooit is opgetreden. **Er is dus geen migratie nodig en die is ook niet uitgevoerd.** De compatibiliteitslaag blijft staan als vangnet voor rijen die vóór deze release alsnog via een sync binnen zouden komen.
+
+### Getest
+- Nieuw: `core/fSleepUnit.test.js` — 60 controles op invoer (7u48m → 7,8 · 7u12m → 7,2), sync (468/432/450 min → uren), leeslaag (legacy-minuten, grenswaarde 20, null en onzin), dagfactor-consistentie (7,2 uur en 432 minuten geven dezelfde factor; 390 minuten geeft 0,97 en niet 1,00), weergave en schrijfpaden.
+- `core/fWearableSync.test.js` 54/54 en `core/fWearableSyncHandler.test.js` 29/29 — assertions bijgewerkt van minuten naar uren, plus zes nieuwe eenheidstests.
+- Release gate groen; alle 41 suites groen, `logic_tests` 250/250.
+- Headless browsercontrole: formatter en dagfactor geverifieerd op de echte pagina, geen consolefouten.
+
+### Gewijzigd
+- `APP_VER` v4.25.0 → **v4.26.0**; `sw.js` `CORE_SIG` → `fd2ef218783ea67e`, `CACHE_NAME`/`CACHE_STATIC` → `trainingskompas-v42600`. De `CORE_SIG`-bump is afgedwongen door `core/sw-guard.test.js`: `core/calculation.js` is gewijzigd, dus zonder bump serveert de service worker de oude core aan bestaande browsers.
+
+### Niet gewijzigd
+Geen schema, geen migratie, geen data. `core/decision.js`, `core/deviceIntegration.js` en `core/contextEngine.js` zijn byte-identiek. Geen UI-herontwerp: de Lichaam-schermen zijn alleen geraakt waar een slaapwaarde werd omgerekend of geformatteerd.
+
+---
+
 ## v4.25.0 — 17 augustus 2026 (Lichaam UX 2.0 — Fase 0 + Fase 1)
 
 Implementatie van uitsluitend Fase 0 (technische UX-fixes) en Fase 1 (Lichaam-overzicht en navigatiestructuur) uit het goedgekeurde ontwerp `Lichaam_UX_2.0_mockup_DEFINITIEF.html`. Fase 2 t/m 7 zijn bewust **niet** gebouwd.

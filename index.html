@@ -5156,7 +5156,18 @@ function _tkHealthCoverage(rows, limit){
 }
 function _tkMonthNL(m){ return ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'][m-1]||''; }
 function _tkDayLabel(ymd){ var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(ymd||'')); return m?(parseInt(m[3],10)+' '+_tkMonthNL(+m[2])):''; }
-function _tkSleepFmt(v){ var h=Math.floor(v/60), m=Math.round(v%60); return h+'u '+('0'+m).slice(-2)+'m'; }
+// sleep_unit.v1 — ÉÉN slaapformatter voor de hele app. hrv_log.sleep is canoniek DECIMALE
+// UREN; CalcCore.normalizeSleepHours vangt legacy-rijen op die nog minuten bevatten.
+// Er waren drie formatters met twee verschillende eenheid-aannames; die delegeren nu alle
+// drie hierheen, zodat dezelfde opgeslagen waarde nooit meer twee uitkomsten kan geven.
+function tkFmtSleepHours(v){
+  var u = (typeof CalcCore!=='undefined' && CalcCore.normalizeSleepHours) ? CalcCore.normalizeSleepHours(v) : v;
+  if(u==null) return '—';
+  var h=Math.floor(u), m=Math.round((u-h)*60);
+  if(m===60){h++;m=0;}
+  return m ? (h+'u '+('0'+m).slice(-2)+'m') : (h+'u');
+}
+function _tkSleepFmt(v){ return tkFmtSleepHours(v); }
 // SVG-grafiek (line|bar). Uniform schalend (geen distortie), <title> per punt voor tap/hover + a11y.
 function tkRenderHealthChart(series, opts){
   opts=opts||{};
@@ -5193,7 +5204,12 @@ function tkRenderHealthHistoryInner(hd){
   var end=(hd&&hd.length)?String(hd[0].date).slice(0,10):null;
   if(!dc||!end) return '<div class="v43-lbl" style="margin:6px 0 8px">Gezondheid & herstel</div><div style="font-size:12.5px;color:var(--g4)">Nog geen metingen om een trend te tonen. Koppel Fitbit (Profiel) of vul je check-in in.</div>';
   var P=_tkHealthPeriod;
-  var hrv=dc.healthSeries(hd,'hrv',end,P), rhr=dc.healthSeries(hd,'rhr',end,P), sleep=dc.healthSeries(hd,'sleep',end,P);
+  var hrv=dc.healthSeries(hd,'hrv',end,P), rhr=dc.healthSeries(hd,'rhr',end,P);
+  /* sleep_unit.v1: legacy-rijen kunnen nog minuten bevatten; normaliseer vóór de weergave,
+     anders staat één staaf zestig keer zo hoog als de rest. De opgeslagen rij blijft intact. */
+  var sleep=dc.healthSeries(hd,'sleep',end,P).map(function(p){
+    return { date:p.date, value:CalcCore.normalizeSleepHours(p.value), source:p.source };
+  });
   var periods=TK_HEALTH_PERIODS;
   var sel=periods.map(function(n){ return '<button onclick="tkSetHealthPeriod('+n+')" class="btn '+(n===P?'btn-r':'btn-o')+' btn-sm" style="font-size:11px;padding:4px 10px"'+(_tkHealthLoading?' disabled':'')+'>'+n+'d</button>'; }).join(' ');
   var card=function(title,sub,svg,a11y){ return '<div class="card" style="margin-bottom:10px;padding:12px 14px"><div style="font-weight:800;color:var(--g5,#1a2b33);font-size:13px">'+title+'</div><div style="font-size:11px;color:var(--g4);margin-bottom:4px">'+sub+'</div>'+svg+'<div style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">'+a11y+'</div></div>'; };
@@ -5367,7 +5383,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.25.0';
+const APP_VER = 'v4.26.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6129,12 +6145,7 @@ async function migrateLibraryFavoritesToSupabase(){
 }
 let repPRCache={};
 // Decimale slaapuren (bv. 6.87) naar leesbaar formaat (bv. "6u52m")
-function fmtSleep(h){
-  let sh=Math.floor(h);
-  let sm=Math.round((h-sh)*60);
-  if(sm===60){sh++;sm=0;}
-  return sh+'u'+(sm?sm+'m':'');
-}
+function fmtSleep(h){ return tkFmtSleepHours(h); }
 let equipmentTypes=[], _equipmentTypesLoading=null;
 let customTrainings=JSON.parse(localStorage.getItem('tk_trainings')||'[]');
 // v322: net als atleet-profiel — localStorage blijft snelle cache, Supabase wordt de
@@ -8593,7 +8604,7 @@ async function saveHRV(btnEl){
   const rhr=parseInt(document.getElementById('i-rhr').value)||null;
   const slpH=parseInt(document.getElementById('i-sleep-h').value)||0;
   const slpM=parseInt(document.getElementById('i-sleep-m').value)||0;
-  const slp=(slpH||slpM)?Math.round((slpH+slpM/60)*100)/100:null;
+  const slp=CalcCore.sleepToHours(slpH,slpM);   /* sleep_unit.v1 — canoniek decimale uren */
   const wgt=parseFloat(document.getElementById('i-whrv').value)||null;
   const cyclusEl=document.getElementById('i-cyclus');
   const cyclus=(atleet.geslacht==='vrouw'&&cyclusEl&&cyclusEl.value)?cyclusEl.value:null;
@@ -14852,10 +14863,13 @@ function cyclusDagFactor(fase){ return CalcCore.cyclusDagFactor(fase); } /* F1.5
 function dagfactor(hrvComponent,slaapUren,cyclusFase){
   const hc = hrvComponent || {factor:1.00, st:'ref', baseline:null};
   const hrvFactor=hc.factor;
-  const slaapFactor=slaapDagFactor(slaapUren);
+  /* sleep_unit.v1: de dagfactor krijgt uitsluitend canonieke decimale uren. Eén normalisatie
+     hier, zodat de getoonde slaapFactor en de berekende factor niet uiteen kunnen lopen. */
+  const slaapUur=CalcCore.normalizeSleepHours(slaapUren);
+  const slaapFactor=slaapDagFactor(slaapUur);
   const cyclusFactor=cyclusDagFactor(cyclusFase);
   /* F1.5C: product/clamp/round -> CalcCore.calculateDayFactor (dayfactor.v1) */
-  const factor=CalcCore.calculateDayFactor({hrvFactor,sleepHours:slaapUren,cyclePhase:cyclusFase});
+  const factor=CalcCore.calculateDayFactor({hrvFactor,sleepHours:slaapUur,cyclePhase:cyclusFase});
   return {factor,hrvFactor,slaapFactor,cyclusFactor,hrvSt:hc.st,hrvBaseline:hc.baseline};
 }
 // P1 — ÉÉN zichtbare Recovery Score 0-100 via de deterministische CalcCore (recovery_score.v1).
@@ -17389,7 +17403,7 @@ async function pchkSkip(){closeModal('m-prog-checkin');await evaluateProgAdjustm
 async function pchkSubmit(){
   const hrvVal=parseFloat(document.getElementById('pchk-hrv').value)||null;
   const rhrVal=parseInt(document.getElementById('pchk-rhr').value)||null;
-  const slpVal=parseFloat(document.getElementById('pchk-sleep-h').value)||null;
+  const slpVal=CalcCore.normalizeSleepHours(parseFloat(document.getElementById('pchk-sleep-h').value));   /* sleep_unit.v1 */
   const th=progCheckinCtx.todayHrv;
   // Gemerged opslaan (bestaande waarden van vandaag + nieuw ingevulde) zodat de meest
   // recente hrv_log-rij altijd het volledigste beeld heeft — anders verliest de
@@ -18264,11 +18278,7 @@ function v43GereedheidScore(factor){
   return Math.round(Math.max(0,Math.min(1,(factor-0.85)/0.20))*100);
 }
 function v43RecColor(p){return p>=85?'var(--status-good)':p>=50?'var(--status-warn)':'var(--status-bad)';}
-function v43SlaapTxt(u){
-  if(!u&&u!==0)return '—';
-  const h=Math.floor(u),m=Math.round((u-h)*60);
-  return m?h+'u '+m+'m':h+'u';
-}
+function v43SlaapTxt(u){ return tkFmtSleepHours(u); }
 // Gedeelde herstelberekening (zelfde logica als refreshMuscleRecovery + heatmap),
 // levert overall%, lijst-rijen én pct per svg-id voor de anatomiefiguur.
 // Offline-first: begrens elke sbGet zodat de Home nooit blijft hangen; bij time-out

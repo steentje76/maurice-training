@@ -57,7 +57,7 @@ const event = { httpMethod: 'POST', headers: { authorization: 'Bearer session' }
   ok(writtenRows.length === 1, 'S1: exact één hrv_log-write');
   eq(writtenRows[0].hrv, 42, 'S1: HRV 42 geschreven (RMSSD-pad)');
   eq(writtenRows[0].rhr, 54, 'S1: RHR 54 geschreven');
-  eq(writtenRows[0].sleep, 450, 'S1: slaap 450 min geschreven');
+  eq(writtenRows[0].sleep, 7.5, 'S1: slaap weggeschreven als 7,5 uur (canonieke eenheid)');
   ok(/\[src:fitbit\]/.test(writtenRows[0].note), 'S1: [src:fitbit]-provenance geschreven (kernrepair)');
   eq(writtenRows[0].date, '2026-08-17', 'S1: juiste datum (niet vandaag geforceerd)');
 
@@ -105,7 +105,7 @@ const event = { httpMethod: 'POST', headers: { authorization: 'Bearer session' }
   eq(writtenRows[0].hrv, 42, 'S5: HRV 42 (averageHeartRateVariabilityMilliseconds)');
   eq(writtenRows[0].rhr, 54, 'S5: RHR 54 (averageBeatsPerMinute — parsed.rhr=0-fix)');
   eq(body.metrics && body.metrics.rhr, 1, 'S5: per-metric telling rhr=1 (voor per-metric sync-microcopy)');
-  eq(writtenRows[0].sleep, 450, 'S5: slaap 450 min (interval-berekening)');
+  eq(writtenRows[0].sleep, 7.5, 'S5: slaap uit interval → 7,5 uur');
   eq(writtenRows[0].date, '2026-08-17', 'S5: juiste datum uit nested date');
   ok(/\[src:fitbit\]/.test(writtenRows[0].note), 'S5: provenance [src:fitbit] behouden');
   // SCENARIO 6: tweede identieke productie-sync → geen duplicaat (upsert per datum)

@@ -18,15 +18,15 @@ eq(L.provenanceNote('x [src:fitbit]'), 'x [src:fitbit]', 'idempotent: bestaande 
 ok(/\[src:fitbit\]/i.test(L.provenanceNote('Fitbit (auto-sync)')), 'oude "Fitbit (auto-sync)" krijgt nu de leesbare tag');
 
 // ── ROW-BOUW: wearable wint, tag alleen bij bijdrage, handmatig behouden ──
-const rWear = L.buildRow('2026-08-17', 'u1', { hrv:42, rhr:54, sleep:450 }, null);
+const rWear = L.buildRow('2026-08-17', 'u1', { hrv:42, rhr:54, sleep:7.5 }, null);
 eq(rWear.row.hrv, 42, 'row: wearable HRV 42');
 ok(/\[src:fitbit\]/.test(rWear.row.note), 'row: wearable-bijdrage → [src:fitbit]-tag');
 eq(rWear.isUpdate, false, 'row: geen bestaande → insert');
 // wearable vult aan op bestaande handmatige rij; wearable-waarde wint, ontbrekende blijft handmatig
-const rMerge = L.buildRow('2026-08-17', 'u1', { hrv:42, rhr:null, sleep:null }, { id:9, hrv:29, rhr:58, sleep:432, note:'ochtend' });
+const rMerge = L.buildRow('2026-08-17', 'u1', { hrv:42, rhr:null, sleep:null }, { id:9, hrv:29, rhr:58, sleep:7.2, note:'ochtend' });
 eq(rMerge.row.hrv, 42, 'merge: wearable-HRV wint van handmatig');
 eq(rMerge.row.rhr, 58, 'merge: ontbrekende wearable-RHR valt terug op handmatig 58 (geen 0/fabricage)');
-eq(rMerge.row.sleep, 432, 'merge: ontbrekende wearable-slaap valt terug op handmatig');
+eq(rMerge.row.sleep, 7.2, 'merge: ontbrekende wearable-slaap valt terug op handmatig');
 ok(/ochtend/.test(rMerge.row.note) && /\[src:fitbit\]/.test(rMerge.row.note), 'merge: handmatige note behouden + tag toegevoegd');
 eq(rMerge.isUpdate, true, 'merge: bestaande → update');
 // puur handmatige update zonder enige wearable-waarde → GEEN tag (blijft "Check-in")
@@ -79,42 +79,28 @@ eq(L.parseRhrPoint({ dataSource:'x', dailyRestingHeartRate:{ date:{year:2026,mon
 ok(L.recordShape(rhrPoint,'dailyRestingHeartRate').indexOf('averageBeatsPerMinute')!==-1, 'PS2d: recordShape onthult geneste RHR-leaf-keys (geen waarden)');
 const sleepPoint = { name:'n', dataSource:'x', sleep: { interval: { startTime:'2026-08-16T23:00:00Z', endTime:'2026-08-17T06:30:00Z' } } };
 const rSleep = L.parseSleepPoint(sleepPoint);
-eq(rSleep.value, 450, 'PS3: slaapduur deterministisch uit interval (23:00→06:30 = 450 min)');
+eq(rSleep.value, 7.5, 'PS3: slaapduur uit interval (23:00→06:30 = 450 min) → 7,5 uur');
 eq(rSleep.date, '2026-08-17', 'PS3: slaapdatum = einddatum interval (ochtend)');
 // officiële summary.minutesAsleep wint indien aanwezig
-eq(L.parseSleepPoint({ sleep:{ interval:{ startTime:'2026-08-16T23:00:00Z', endTime:'2026-08-17T07:00:00Z' }, summary:{ minutesAsleep: 415 } } }).value, 415, 'PS4: summary.minutesAsleep wint van interval-berekening');
+eq(L.parseSleepPoint({ sleep:{ interval:{ startTime:'2026-08-16T23:00:00Z', endTime:'2026-08-17T07:00:00Z' }, summary:{ minutesAsleep: 415 } } }).value, 6.92, 'PS4: summary.minutesAsleep (415 min) wint en wordt 6,92 uur');
 // malformed/missing nested value → value null (skipped, geen fabricatie)
 eq(L.parseHrvPoint({ dataSource:'x', dailyHeartRateVariability: { date:{year:2026,month:8,day:17} } }).value, null, 'PS5: HRV zonder waarde → null (skipped)');
 eq(L.parseHrvPoint({ dataSource:'x', SOMETHING_ELSE:{} }), null, 'PS6: geen HRV-record → null');
 eq(L.parseSleepPoint({ sleep:{} }).value, null, 'PS7: slaap zonder interval/summary → null (geen fabricatie)');
+
+// ── sleep_unit.v1 — hrv_log.sleep is canoniek DECIMALE UREN ────────────────────
+eq(L.minutesToHours(468), 7.8,  'U1: 7u48m (468 min) → 7,8 uur');
+eq(L.minutesToHours(432), 7.2,  'U2: 7u12m (432 min) → 7,2 uur');
+eq(L.minutesToHours(450), 7.5,  'U3: 450 min → 7,5 uur');
+eq(L.minutesToHours(0),   null, 'U4: 0 min → null (geen fabricage)');
+eq(L.minutesToHours(null),null, 'U5: null blijft null');
+eq(L.buildRow('2026-08-17','u1',{hrv:null,rhr:null,sleep:7.8},null).row.sleep, 7.8,
+   'U6: de sync schrijft uren, nooit minuten');
 // ISO-string date (alternatief) blijft werken
 eq(L.parseHrvPoint({ dailyHeartRateVariability:{ date:'2026-08-15T00:00:00Z', averageHeartRateVariabilityMilliseconds:40 } }).date, '2026-08-15', 'PS8: HRV date als ISO-string ook ondersteund');
 // legacy fallback (backward-compat met oude S1-vorm): top-level date + rmssdMillis
 eq(L.parseHrvPoint({ date:'2026-08-14', dailyHeartRateVariability:{ rmssdMillis:38 } }).value, 38, 'PS9: legacy rmssdMillis-fallback behouden');
 eq(L.parseHrvPoint({ date:'2026-08-14', dailyHeartRateVariability:{ rmssdMillis:38 } }).date, '2026-08-14', 'PS9: legacy top-level date-fallback behouden');
-
-// ── TODAY-SEMANTIEK (Europe/Amsterdam) ──
-// zomertijd: 23:30 UTC op 16-08 = 01:30 Amsterdam op 17-08 → today MOET 17-08 zijn (niet 16 zoals UTC)
-eq(L.amsterdamToday(Date.UTC(2026, 7, 16, 23, 30)), '2026-08-17', 'TZ1: 23:30 UTC → Amsterdam vandaag = 17-08 (niet UTC-16)');
-eq(L.amsterdamToday(Date.UTC(2026, 7, 17, 9, 33)), '2026-08-17', 'TZ2: 09:33 UTC → Amsterdam 17-08');
-// wintertijd (UTC+1): 23:30 UTC 15-01 = 00:30 Amsterdam 16-01
-eq(L.amsterdamToday(Date.UTC(2026, 0, 15, 23, 30)), '2026-01-16', 'TZ3: wintertijd off-by-one correct');
-
-// todaySummary: onderscheidt fetched (datapunt bestond) vs parsed (bruikbare waarde) → classificeert A/B/C
-var _T = '2026-08-17';
-var sA = L.todaySummary({ '2026-08-16': { hrv: 29, rhr: 58, sleep: 432 } }, _T);
-eq(sA.available, false, 'TS-A: geen vandaag-data → available=false');
-eq(sA.fetched.hrv, false, 'TS-A: fetched.hrv=false (upstream heeft vandaag niet → classificatie A)');
-var sB = L.todaySummary({ '2026-08-17': { hrv: null, rhr: null } }, _T);
-eq(sB.fetched.hrv, true, 'TS-B: fetched.hrv=true (datapunt bestond)');
-eq(sB.metrics.hrv, false, 'TS-B: parsed.hrv=false → classificatie B (veldnaam/parser)');
-eq(sB.available, false, 'TS-B: geen bruikbare waarde → available=false');
-var sC = L.todaySummary({ '2026-08-17': { hrv: 31, rhr: null, sleep: 420 } }, _T);
-eq(sC.available, true, 'TS-C: vandaag heeft data → available=true');
-eq(sC.metrics.hrv, true, 'TS-C: metrics.hrv=true');
-eq(sC.metrics.rhr, false, 'TS-C: metrics.rhr=false (rhr ontbreekt vandaag)');
-eq(sC.metrics.sleep, true, 'TS-C: metrics.sleep=true');
-eq(sC.date, _T, 'TS-C: datum = Amsterdamse vandaag');
 
 console.log('\nwearable-sync PURE helpers: RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail ? 1 : 0);

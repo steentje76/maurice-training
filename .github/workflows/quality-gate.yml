@@ -35,6 +35,21 @@ jobs:
       - name: Core coaching regression tests
         run: node coaching.test.js
 
+      - name: Core deterministic regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          tests=(core/*.test.js)
+          if [ ${#tests[@]} -eq 0 ]; then
+            echo "No core regression tests found"
+            exit 1
+          fi
+          for test_file in "${tests[@]}"; do
+            echo "==> node ${test_file}"
+            node "${test_file}"
+          done
+
       - name: Native Concept2 transport tests
         run: npm run test:native
 

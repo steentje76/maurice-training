@@ -621,6 +621,70 @@
     };
   }
 
+  // ── HEALTH-HISTORY TRANSFORMS (provider-agnostisch; grafiek-data uit hrv_log) ──────────
+  // TZ-veilig: hrv_log.date is een kalenderdatum-string (YYYY-MM-DD, lokale dag zoals geschreven).
+  // Datum-rekenkunde puur via Date.UTC op de kalenderdatum → geen UTC-verschuiving van de dag zelf.
+  function _ymdShift(ymd, deltaDays){
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(ymd||'')); if (!m) return null;
+    var t = Date.UTC(+m[1], +m[2]-1, +m[3]) + deltaDays*86400000;
+    var d = new Date(t);
+    return d.getUTCFullYear() + '-' + ('0'+(d.getUTCMonth()+1)).slice(-2) + '-' + ('0'+d.getUTCDate()).slice(-2);
+  }
+  function dateRange(endYmd, days){
+    var out = []; var n = (days>0?days:14);
+    for (var i = n-1; i >= 0; i--){ var d = _ymdShift(endYmd, -i); if (d) out.push(d); }
+    return out;
+  }
+  // Bron per rij: [src:...]-tag → 'Fitbit'|'Google Health'|tag; geen tag → 'Check-in'. Provider-agnostisch.
+  function _sourceLabelHistory(tag){
+    if (tag === 'fitbit') return 'Fitbit';
+    if (tag === 'google_health' || tag === 'google-health') return 'Google Health';
+    if (tag === 'checkin' || tag === 'check-in' || tag === 'manual') return 'Check-in';
+    return tag ? tag : 'Check-in';
+  }
+  // Serie voor één metric over de periode: elke dag → {date, value|null, source|null}. Ontbrekend = null (GAP),
+  // NOOIT 0. Bij meerdere rijen op dezelfde datum wint de wearable-bron (getagd) boven handmatige check-in.
+  function healthSeries(rows, field, endYmd, days){
+    rows = Array.isArray(rows) ? rows : [];
+    var byDate = {};
+    rows.forEach(function(r){
+      if (!r || r.date == null) return;
+      var v = r[field]; if (v == null || v === '') return;
+      var tag = _parseSrcTag(r.note);
+      var key = String(r.date).slice(0,10);
+      var prior = byDate[key];
+      // prioriteit: getagde (wearable) bron > ongetagde (check-in). Geen stille overschrijving binnen bron.
+      if (!prior || (tag && !prior.tag)) byDate[key] = { value: v, tag: tag };
+    });
+    return dateRange(endYmd, days).map(function(d){
+      var e = byDate[d];
+      return { date: d, value: e ? e.value : null, source: e ? _sourceLabelHistory(e.tag) : null };
+    });
+  }
+  // Trend uit de beschikbare (non-null) punten: eerste helft vs tweede helft gemiddelde → ↗ / → / ↘.
+  // improvementUp: is stijgen 'beter' (HRV/slaap) of 'slechter' (RHR)? — puur feitelijk, geen AI-oordeel.
+  function healthTrend(series){
+    var pts = (series||[]).filter(function(s){ return s && s.value != null; }).map(function(s){ return s.value; });
+    if (pts.length < 2) return { dir: 'flat', symbol: '→', delta: 0 };
+    var h = Math.floor(pts.length/2);
+    var a = pts.slice(0, h), b = pts.slice(pts.length - h);
+    var avg = function(x){ return x.reduce(function(s,v){return s+v;},0)/x.length; };
+    var d = avg(b) - avg(a);
+    var base = Math.max(1, Math.abs(avg(a)));
+    var rel = d / base;
+    if (rel > 0.03) return { dir: 'up', symbol: '↗', delta: d };
+    if (rel < -0.03) return { dir: 'down', symbol: '↘', delta: d };
+    return { dir: 'flat', symbol: '→', delta: d };
+  }
+  // Feitelijke samenvatting (voor a11y-tekst) — geen diagnose.
+  function healthSummary(series){
+    var pts = (series||[]).filter(function(s){ return s && s.value != null; });
+    if (!pts.length) return { count: 0, max: null, min: null, latest: null };
+    var max = pts[0], min = pts[0];
+    pts.forEach(function(s){ if (s.value > max.value) max = s; if (s.value < min.value) min = s; });
+    return { count: pts.length, max: { date: max.date, value: max.value }, min: { date: min.date, value: min.value }, latest: { date: pts[pts.length-1].date, value: pts[pts.length-1].value } };
+  }
+
   // ── GENERIEKE CONNECTIE-/SYNC-STATUS (Fitbit én Concept2) ─────────────────────────────
   // Eén canonieke afleiding van device-connectiestatus voor de UI. PUUR: `now` wordt ingespoten
   // (geen Date.now). Nooit een fake "synced": de status volgt strikt uit de ingespoten feiten.
@@ -696,6 +760,8 @@
     parseSyncResponse: parseSyncResponse, syncStatusToConnectionInput: syncStatusToConnectionInput, isSyncOk: isSyncOk,
     // body-metric selectie + provenance
     pickLatestMetric: pickLatestMetric, bodyMetricsFromLog: bodyMetricsFromLog,
+    // health-history (grafiek-data, provider-agnostisch, TZ-veilig)
+    dateRange: dateRange, healthSeries: healthSeries, healthTrend: healthTrend, healthSummary: healthSummary,
     normalizeHealthDaily: normalizeHealthDaily,
     ADAPTER_METHODS: ADAPTER_METHODS,
     CONCEPT2_MAP: CONCEPT2_MAP,

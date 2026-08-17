@@ -98,7 +98,13 @@ function parseHrvPoint(point) {
 function parseRhrPoint(point) {
   var rec = point && point.dailyRestingHeartRate; if (!rec) return null;
   var date = _dateFrom(rec.date) || _dateFrom(point && point.date);
-  var v = (rec.beatsPerMinute != null) ? rec.beatsPerMinute : (rec.bpm != null ? rec.bpm : null);
+  // FIX (parsed.rhr=0): Google Health dag-aggregaat gebruikt de "average<Metric>"-conventie —
+  // net als HRV (averageHeartRateVariabilityMilliseconds). De oude `beatsPerMinute` matchte niet.
+  // Primair `averageBeatsPerMinute`; daarna gedocumenteerde varianten. Geen "try everything".
+  var v = (rec.averageBeatsPerMinute != null) ? rec.averageBeatsPerMinute
+        : (rec.beatsPerMinute != null ? rec.beatsPerMinute
+        : (rec.restingHeartRateBpm != null ? rec.restingHeartRateBpm
+        : (rec.bpm != null ? rec.bpm : null)));
   return { date: date, value: (typeof v === 'number' && isFinite(v)) ? v : null };
 }
 function parseSleepPoint(point) {
@@ -124,6 +130,12 @@ function parseSleepPoint(point) {
 function pointShape(point) {
   return (point && typeof point === 'object') ? Object.keys(point) : [];
 }
+// GENESTE structuur-diagnostiek: keys van het geneste record (bv. dailyRestingHeartRate) — ALLEEN keys,
+// geen waarden. Onthult de exacte leaf-veldnaam zodat een live sync het definitief bevestigt zonder PII.
+function recordShape(point, recordKey) {
+  var rec = point && point[recordKey];
+  return (rec && typeof rec === 'object') ? Object.keys(rec) : [];
+}
 
 // Canoniek sync-resultaat uit tellingen (past 1-op-1 op DeviceCore.parseSyncResponse aan de client).
 // success ALLEEN als er daadwerkelijk iets is geschreven; anders no_new_data. Nooit fake success.
@@ -142,7 +154,7 @@ function syncResult(counts) {
 module.exports = {
   provenanceNote: provenanceNote, contributed: contributed, buildRow: buildRow,
   classifyWrite: classifyWrite, dailyDateOf: dailyDateOf, sessionDateOf: sessionDateOf,
-  sleepMinutesOf: sleepMinutesOf, pointShape: pointShape, syncResult: syncResult,
+  sleepMinutesOf: sleepMinutesOf, pointShape: pointShape, recordShape: recordShape, syncResult: syncResult,
   // productie-shape parsers (nested Google-Health records)
   parseHrvPoint: parseHrvPoint, parseRhrPoint: parseRhrPoint, parseSleepPoint: parseSleepPoint
 };

@@ -125,19 +125,25 @@ exports.handler = async function (event) {
     }
 
     // DIAGNOSTIEK — uitsluitend tellingen/statussen/structuur (nooit tokens/waarden/PII).
+    // `recordShape` toont de GENESTE leaf-keys (bv. van dailyRestingHeartRate) zodat een afwijkend
+    // RHR-veld direct zichtbaar is zonder ooit een waarde te loggen.
     console.log('wearable-sync diag', JSON.stringify({
       provider: 'google_health', dateFrom: sinceDate, dateTo,
       http: { hrv: hrvR.status, rhr: rhrR.status, sleep: sleepR.status },
       fetched: { hrv: hrvData.length, rhr: rhrData.length, sleep: sleepData.length },
       parsed: { hrv: parsedHrv, rhr: parsedRhr, sleep: parsedSleep },
       shape: { hrv: LIB.pointShape(hrvData[0]), rhr: LIB.pointShape(rhrData[0]), sleep: LIB.pointShape(sleepData[0]) },
+      recordShape: { hrv: LIB.recordShape(hrvData[0], 'dailyHeartRateVariability'), rhr: LIB.recordShape(rhrData[0], 'dailyRestingHeartRate'), sleep: LIB.recordShape(sleepData[0], 'sleep') },
       written: { imported, updated, skipped }
     }));
 
     const result = LIB.syncResult({ imported, updated, skipped });
     await markSyncStatus(supabaseUrl, sbHeaders, userId, imported + updated > 0 ? 'ok' : 'no_new_data');
-    // Backward-compat velden (synced, daysWritten) + canoniek contract (status, imported, updated, skipped).
-    return jsonBody({ ...result, syncedAt: new Date().toISOString(), fetched: { hrv: hrvData.length, rhr: rhrData.length, sleep: sleepData.length } });
+    // Backward-compat velden (synced, daysWritten) + canoniek contract + PER-METRIC tellingen
+    // (client maakt hiermee "HRV 8 dagen · slaap 8 dagen · rusthartslag geen nieuwe data").
+    return jsonBody({ ...result, syncedAt: new Date().toISOString(),
+      fetched: { hrv: hrvData.length, rhr: rhrData.length, sleep: sleepData.length },
+      metrics: { hrv: parsedHrv, rhr: parsedRhr, sleep: parsedSleep } });
   } catch (e) {
     console.error('wearable-sync exception', e && e.message);
     try { await markSyncStatus(supabaseUrl, sbHeaders, undefined, 'error: ' + (e && e.message)); } catch (_) {}

@@ -2434,6 +2434,9 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-lichaam .lich-anat .v43-lich-fig{min-height:210px;display:flex;align-items:center;justify-content:center}
 #s-lichaam .lich-anat .v43-lich-cap{text-align:center;font-size:11px;color:var(--g4);font-weight:600;margin-top:8px}
 #s-lichaam .lich-mus{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* Gezondheid & herstel-grafieken: mobiel 1 kolom, desktop 2 koloms (responsive, geen overflow). */
+#s-lichaam .lich-charts{display:block}
+@media(min-width:720px){#s-lichaam .lich-charts{display:grid;grid-template-columns:1fr 1fr;gap:10px}#s-lichaam .lich-charts>.card{margin-bottom:0}}
 #s-lichaam .lich-mcard{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:13px}
 #s-lichaam .lich-mcard .top{display:flex;align-items:center;justify-content:space-between}
 #s-lichaam .lich-mcard .nm{font-size:14px;font-weight:800;color:var(--dark)}
@@ -3581,6 +3584,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <!-- Body/Health — uitsluitend echte lichaamsmetingen (HRV/RMSSD, rusthartslag, slaap). Geen
          apparaatkaarten hier: Fitbit → Profiel, Concept2-import/live apparaat → Training. -->
     <div id="lich-bodymetrics" style="margin-top:14px"></div>
+    <!-- Gezondheid & herstel — historische trends/grafieken (periode-selector, bron per punt). -->
+    <div id="lich-history-health" style="margin-top:16px"></div>
 
     <div class="v43-lbl" style="margin:18px 0 10px">Anatomie</div>
     <div class="lich-anat">
@@ -4939,6 +4944,68 @@ function tkErgConnect(exId, cardioType){
     });
   }catch(e){ if(el) el.textContent='Verbinden mislukt — probeer opnieuw.'; }
 }
+// ══════════════════════════════════════════════════════════
+// GEZONDHEID & HERSTEL — HISTORY CHARTS (Lichaam). Grafieken tonen UITSLUITEND opgeslagen data.
+// Ontbrekende dagen = gap (NOOIT 0). Bron per punt. Mobiel-eerst, geen horizontale overflow. Geen AI.
+// ══════════════════════════════════════════════════════════
+var _tkHealthPeriod = 14, _tkHealthRows = null;
+function _tkMonthNL(m){ return ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'][m-1]||''; }
+function _tkDayLabel(ymd){ var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(ymd||'')); return m?(parseInt(m[3],10)+' '+_tkMonthNL(+m[2])):''; }
+function _tkSleepFmt(v){ var h=Math.floor(v/60), m=Math.round(v%60); return h+'u '+('0'+m).slice(-2)+'m'; }
+// SVG-grafiek (line|bar). Uniform schalend (geen distortie), <title> per punt voor tap/hover + a11y.
+function tkRenderHealthChart(series, opts){
+  opts=opts||{};
+  var W=300,H=90,padL=8,padR=8,padT=10,padB=16;
+  var vals=(series||[]).filter(function(s){return s.value!=null;}).map(function(s){return s.value;});
+  if(!vals.length) return '<div style="font-size:12px;color:var(--g4);padding:12px 2px">Nog geen data in deze periode.</div>';
+  var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals); if(mn===mx){ mn-=1; mx+=1; }
+  var n=series.length;
+  var x=function(i){ return padL+(n<=1?(W-padL-padR)/2:(i*(W-padL-padR)/(n-1))); };
+  var y=function(v){ return padT+(1-(v-mn)/(mx-mn))*(H-padT-padB); };
+  var unit=opts.unit||'', fmt=opts.fmt||function(v){return Math.round(v)+(unit?(' '+unit):'');};
+  var esc=(typeof escHtml==='function')?escHtml:function(s){return s;};
+  var parts=[];
+  if(opts.type==='bar'){
+    var bw=Math.max(3,(W-padL-padR)/n*0.62);
+    series.forEach(function(s,i){ if(s.value==null) return; var yy=y(s.value), xx=x(i)-bw/2;
+      parts.push('<rect x="'+xx.toFixed(1)+'" y="'+yy.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(0.5,(H-padB-yy)).toFixed(1)+'" rx="1.5" fill="var(--accent)"><title>'+esc(_tkDayLabel(s.date)+' — '+fmt(s.value)+(s.source?(' — '+s.source):''))+'</title></rect>'); });
+  } else {
+    var seg=[],segs=[]; series.forEach(function(s,i){ if(s.value==null){ if(seg.length)segs.push(seg); seg=[]; } else seg.push([x(i),y(s.value)]); }); if(seg.length)segs.push(seg);
+    segs.forEach(function(sg){ if(sg.length<2) return; parts.push('<polyline fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="'+sg.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'"/>'); });
+    series.forEach(function(s,i){ if(s.value==null) return; parts.push('<circle cx="'+x(i).toFixed(1)+'" cy="'+y(s.value).toFixed(1)+'" r="2.4" fill="var(--accent)"><title>'+esc(_tkDayLabel(s.date)+' — '+fmt(s.value)+(s.source?(' — '+s.source):''))+'</title></circle>'); });
+  }
+  var idx=[0,Math.floor((n-1)/2),n-1], seen={};
+  var xl=idx.filter(function(i){ if(seen[i])return false; seen[i]=1; return true; }).map(function(i){ return '<text x="'+x(i).toFixed(1)+'" y="'+(H-4)+'" font-size="7" fill="var(--g3)" text-anchor="middle">'+esc(_tkDayLabel(series[i].date))+'</text>'; }).join('');
+  return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;max-height:120px;display:block" role="img" aria-label="'+esc(opts.aria||'')+'">'+parts.join('')+xl+'</svg>';
+}
+function _tkHealthA11y(dc, series, label, unit, fmt){
+  var s=dc.healthSummary(series); if(!s.count) return label+': geen data in deze periode.';
+  var f=function(v){ return fmt?fmt(v):(v+(unit?(' '+unit):'')); };
+  return label+' laatste '+_tkHealthPeriod+' dagen: hoogste '+f(s.max.value)+' op '+_tkDayLabel(s.max.date)+', laagste '+f(s.min.value)+' op '+_tkDayLabel(s.min.date)+', meest recente '+f(s.latest.value)+'.';
+}
+function tkRenderHealthHistoryInner(hd){
+  var dc=(typeof DeviceCore!=='undefined')?DeviceCore:null;
+  var end=(hd&&hd.length)?String(hd[0].date).slice(0,10):null;
+  if(!dc||!end) return '<div class="v43-lbl" style="margin:6px 0 8px">Gezondheid & herstel</div><div style="font-size:12.5px;color:var(--g4)">Nog geen metingen om een trend te tonen. Koppel Fitbit (Profiel) of vul je check-in in.</div>';
+  var P=_tkHealthPeriod;
+  var hrv=dc.healthSeries(hd,'hrv',end,P), rhr=dc.healthSeries(hd,'rhr',end,P), sleep=dc.healthSeries(hd,'sleep',end,P);
+  var periods=[7,14,30,90];
+  var sel=periods.map(function(n){ return '<button onclick="tkSetHealthPeriod('+n+')" class="btn '+(n===P?'btn-r':'btn-o')+' btn-sm" style="font-size:11px;padding:4px 10px">'+n+'d</button>'; }).join(' ');
+  var card=function(title,sub,svg,a11y){ return '<div class="card" style="margin-bottom:10px;padding:12px 14px"><div style="font-weight:800;color:var(--g5,#1a2b33);font-size:13px">'+title+'</div><div style="font-size:11px;color:var(--g4);margin-bottom:4px">'+sub+'</div>'+svg+'<div style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">'+a11y+'</div></div>'; };
+  var trendRow=function(label,series,upGood){ var t=dc.healthTrend(series); var col=(t.dir==='flat')?'var(--g4)':(((t.dir==='up')===!!upGood)?'var(--green)':'var(--amber,#c98a00)'); return '<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:2px 0"><span style="color:var(--g4)">'+label+'</span><span style="font-weight:800;color:'+col+'">'+t.symbol+'</span></div>'; };
+  return '<div class="v43-lbl" style="margin:6px 0 8px">Gezondheid & herstel</div>'+
+    '<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">'+sel+'</div>'+
+    '<div class="lich-charts">'+
+      card('HRV','RMSSD · laatste '+P+' dagen', tkRenderHealthChart(hrv,{type:'line',unit:'ms',aria:_tkHealthA11y(dc,hrv,'HRV','ms')}), _tkHealthA11y(dc,hrv,'HRV','ms'))+
+      card('Rusthartslag','bpm · laatste '+P+' dagen', tkRenderHealthChart(rhr,{type:'line',unit:'bpm',aria:_tkHealthA11y(dc,rhr,'Rusthartslag','bpm')}), _tkHealthA11y(dc,rhr,'Rusthartslag','bpm'))+
+      card('Slaap','per nacht · laatste '+P+' dagen', tkRenderHealthChart(sleep,{type:'bar',fmt:_tkSleepFmt,aria:_tkHealthA11y(dc,sleep,'Slaap','',_tkSleepFmt)}), _tkHealthA11y(dc,sleep,'Slaap','',_tkSleepFmt))+
+    '</div>'+
+    '<div class="card" style="padding:10px 14px"><div style="font-weight:800;color:var(--g5,#1a2b33);font-size:13px;margin-bottom:4px">Hersteltrend</div>'+
+      trendRow('HRV',hrv,true)+trendRow('Rusthartslag',rhr,false)+trendRow('Slaap',sleep,true)+
+      '<div style="font-size:10px;color:var(--g3);margin-top:5px">Feitelijke trend over de gekozen periode — geen medisch oordeel.</div></div>';
+}
+function tkRenderHealthHistory(hd){ _tkHealthRows=hd; return tkRenderHealthHistoryInner(hd); }
+function tkSetHealthPeriod(n){ _tkHealthPeriod=n; var el=document.getElementById('lich-history-health'); if(el&&_tkHealthRows) el.innerHTML=tkRenderHealthHistoryInner(_tkHealthRows); }
 // items: [{icon,label,value,unit,sub}] — alleen echt aanwezige waarden (value!=null) worden getoond.
 function tkRenderBodyMetrics(items, meta){
   meta=meta||{};
@@ -4978,6 +5045,9 @@ async function renderLichaamDevices(lh, hd){
       ];
       mEl.innerHTML=tkRenderBodyMetrics(items, {});
     }
+    // Gezondheid & herstel — historische grafieken uit dezelfde hrv_log-rijen (geen extra query).
+    var hEl=document.getElementById('lich-history-health');
+    if(hEl && typeof tkRenderHealthHistory==='function'){ hEl.innerHTML=tkRenderHealthHistory(Array.isArray(hd)?hd:(lh?[lh]:[])); }
     // Apparaatkaarten VERWIJDERD van Lichaam (Fitbit → Profiel, Concept2/live → Training).
     // Leeg de oude container defensief voor het geval oude markup nog aanwezig is.
     var dEl=document.getElementById('lich-devices'); if(dEl) dEl.innerHTML='';
@@ -7190,11 +7260,19 @@ async function wearableSyncNow(){
     const r=await fetch('/.netlify/functions/wearable-sync',{method:'POST',headers:h});
     const d=await r.json();
     if(!r.ok||!d.synced){toast('Synchronisatie mislukt: '+(d.reason||d.error?.message||r.status));renderWearableCard();return;}
-    // Eerlijke microcopy: OAuth/API-succes ≠ nieuwe data. 0 records → NIET "gelukt".
-    const _days=Number(d.daysWritten)||0;
-    toast(_days>0 ? (_days+' dag'+(_days===1?'':'en')+' bijgewerkt') : 'Verbonden — geen nieuwe metingen gevonden');
+    // Eerlijke, PER-METRIC microcopy: OAuth/API-succes ≠ nieuwe data. RHR=0 → "geen nieuwe data"
+    // (nooit suggereren dat alles gesynct is). d.metrics = parsed dagen per metric.
+    const _days=Number(d.daysWritten)||0, mm=d.metrics||null;
+    if(mm && (mm.hrv!=null||mm.rhr!=null||mm.sleep!=null)){
+      const seg=(lbl,c)=>lbl+' '+((c>0)?(c+' dag'+(c===1?'':'en')):'geen nieuwe data');
+      toast(seg('HRV',mm.hrv||0)+' · '+seg('slaap',mm.sleep||0)+' · '+seg('rusthartslag',mm.rhr||0));
+    } else {
+      toast(_days>0 ? (_days+' dag'+(_days===1?'':'en')+' bijgewerkt') : 'Verbonden — geen nieuwe metingen gevonden');
+    }
     renderWearableCard();
     refreshHome();
+    // Lichaam-history direct verversen als dat scherm actief is (geen volledige page-refresh nodig).
+    try{ if(typeof renderLichaam==='function' && document.getElementById('s-lichaam') && document.getElementById('s-lichaam').classList.contains('active')) renderLichaam(); }catch(_){}
   }catch(e){toast('Verbindingsfout bij sync');}
 }
 // Verwerkt de terugkeer van Google na de koppel-flow (?wearable=connected/denied/...).

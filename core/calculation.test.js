@@ -30,10 +30,10 @@ const legacy = new Function(
   [extractFn('roundKg'), extractFn('epley1RMRaw'), extractFn('epley1RM'),
    extractFn('suggestWeightForRepsRpe'), extractFn('suggestWarmupScheme'),
    extractFn('rpeMultiplier'), extractFn('computeMuscleRecoveryPct'),
-   extractFn('slaapDagFactor'), extractFn('cyclusDagFactor'), extractFn('dagfactor'),
+   extractFn('slaapDagFactor'), extractFn('cyclusDagFactor'), extractFn('tkSleepHours'), extractFn('dagfactor'),
    extractFn('computeGoalProgress'), extractFn('weightedEst1RM')].join('\n') +
   '\n return { roundKg, epley1RMRaw, epley1RM, suggestWeightForRepsRpe, suggestWarmupScheme,' +
-  ' rpeMultiplier, computeMuscleRecoveryPct, slaapDagFactor, cyclusDagFactor, dagfactor,' +
+  ' rpeMultiplier, computeMuscleRecoveryPct, slaapDagFactor, cyclusDagFactor, tkSleepHours, dagfactor,' +
   ' computeGoalProgress, weightedEst1RM, RATIO_DECAY };'
 )();
 const J = a => JSON.stringify(a);

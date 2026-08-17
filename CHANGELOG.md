@@ -1,5 +1,44 @@
 # Trainingskompas — Changelog
 
+## v4.27.0 — 17 augustus 2026 (Visual restore Home & Training + Lichaam-overzicht volgens mock-up)
+
+### Blokkerend opgelost — lege schermsecties
+`index.html` riep `CalcCore.normalizeSleepHours` aan zonder terugval, terwijl `sw.js` `core/*.js` cache-first serveert en `index.html` network-first. Bij de eerste laadbeurt na een deploy draaide de app daardoor met nieuwe `index.html` en oude core: een `TypeError` in `dagfactor()` liet Snelacties, Volume en Consistentie op Home leeg, en een tweede in de slaapgrafiekreeks liet het scherm Gezondheid & herstel zonder grafieken. Nieuw is `tkSleepHours(v)`, één guard-helper die terugvalt op de ruwe waarde wanneer de engine-functie ontbreekt. Headless geverifieerd: met een oude core rendert Home nu identiek aan een nieuwe core.
+
+### Home en Training terug naar de goedgekeurde baseline (27fb416)
+Negen kleurpunten die in v4.25.0 ten onrechte waren omgezet, staan terug op `--green` / `--y` / `--red`: de dagfactor-ring en de drie legendabolletjes in `renderV43Home`, de spierherstel-minilijst bij het starten van een training, de Plate Calculator, de herhaal-preview, `refreshStats` op Voortgang en de apparaatstatus op Profiel.
+
+`renderMuscleRecoveryHeatmap` wordt gedeeld door de Home-hero en Lichaam. In plaats van een tweede implementatie krijgt de functie de kleurfunctie geïnjecteerd: Home geeft `v43HomeRecColor` mee (baseline-kleuren), Lichaam gebruikt de standaard `v43RecColor` (dark-mode-proof statuskleuren).
+
+**Bewijs:** pixelvergelijking van Home en Training tegen `git show 27fb416:index.html`, identieke fixtures, 390 × 844: **0 verschillende pixels van 329.160** op beide schermen.
+
+### Lichaam-overzicht volgens het goedgekeurde mock-upcontract
+- **Beide anatomiefiguren direct zichtbaar** bij het openen van de tab — voorzijde en achterzijde naast elkaar, zonder eerst te klikken. De kaart begint op 530 px, de figuren vallen binnen het eerste scherm.
+- **Herstel/Belasting-schakelaar** die figuur, legenda, spierlijst én voettekst tegelijk omzet. Eén `lichAnatMode`-state, dus "figuur = belasting, lijst = herstel" kan constructief niet meer ontstaan.
+- **Legenda** per modus: Hersteld / Aandacht / Vermoeid respectievelijk Hoog / Gemiddeld / Laag / Rustdag.
+- **Spierlijst** met de vier relevantste groepen — bij herstel de laagste, bij belasting de zwaarst belaste — met doorstap naar alle spiergroepen.
+- **Hersteltrends**: vier kaarten met waarde, trendrichting, sparkline, **datadekking** ("30 van 30 dagen") en status. Geen trend tonen onder zes meetpunten.
+- **Verbanden**: eigen sectie met de Decision-Engine-status. Er staat nergens een drempelgetal — het minimum aantal vergelijkbare waarnemingen is nog een openstaande productbeslissing.
+- Gebieden zonder herstelmodel (hoofd, handen, voeten) zijn neutraal in plaats van "volledig hersteld". Alleen op Lichaam, via `opts.neutralUnknown`; de Home-hero blijft ongewijzigd.
+
+Beide anatomierenderers accepteren nu `opts.side` zodat voor- en achterzijde tegelijk getekend kunnen worden zonder de toggle-state van het detailscherm te verstoren. Zonder `opts` is het gedrag exact als voorheen. `muscleLoadBySvgId()` is één bron voor de belastingsdata van figuur, lijst en overzicht.
+
+Alle waarden komen uit de bestaande engines en queries: `v43OverallRecovery`, `calculateMuscleRecoveryPct`, `DeviceCore.healthSeries`/`healthTrend`, `sessions`, `hrv_log`, `weight_log`. Geen voorbeeldwaarden, geen nieuwe berekening.
+
+### Getest
+- Release gate groen; alle 42 suites groen, `logic_tests` 250/250.
+- `core/fLichaamPhase0.test.js` uitgebreid naar 108 controles, waaronder de harde acceptatie-eis dat beide figuren en de modus-schakelaar in de overzichtsmarkup staan, dat beide zijden tegelijk getekend worden, en dat er nergens een verzonnen verbandsdrempel staat. De assertie die `--red` app-breed verbood is ingeperkt tot de Lichaam-renderers, zodat Home en Training juist wél hun baseline-kleuren houden.
+- `core/calculation.test.js`: de legacy-harness extraheert nu ook `tkSleepHours`, zodat `dagfactor` in de test dezelfde code draait als in de app. 79/79.
+- Routecontrole over dertien schermen: steeds precies één actief scherm, geen consolefouten.
+
+### Gewijzigd
+`APP_VER` v4.26.0 → **v4.27.0**; `sw.js` cache → `trainingskompas-v42700`. `CORE_SIG` **ongewijzigd** (`fd2ef218783ea67e`): `core/*.js` is deze sprint niet aangeraakt.
+
+### Bewust niet gewijzigd
+Calculation Engine, Decision Engine, Context Engine, sleep-unit normalisatie, wearable-sync, Fitbit, Google Health, Concept2, database, schema, data, migraties, bestaande tests, release gates, service-worker-guard, de anatomie-SVG's, `--red`/`--green`/`--y`/`--accent`/`--accent2` en de grijsschaal, alle `#home-*`- en Training-CSS, de bottom navigation.
+
+---
+
 ## v4.26.0 — 17 augustus 2026 (Slaapduur: één canonieke eenheid)
 
 `hrv_log.sleep` bevatte twee eenheden. De check-in schreef decimale uren (`saveHRV`), de wearable-sync schreef minuten in dezelfde kolom (`netlify/functions/_wearableSyncLib.js`, `parseSleepPoint`). Op elke wearable-dag las `calculateDayFactor` daardoor een minutenwaarde als uren — een nacht van 432 telde als 432 uur slaap — en de slaapgrafiek deelde diezelfde kolom nog eens door 60.

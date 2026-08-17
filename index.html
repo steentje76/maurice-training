@@ -2519,6 +2519,38 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-goto b{display:block;font-size:13.5px;font-weight:800;color:var(--dark);line-height:1.3}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-goto s{display:block;text-decoration:none;font-size:11.5px;font-weight:600;color:var(--g4);margin-top:2px;line-height:1.35}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-goto .chev{font-size:19px;font-weight:700;color:var(--g3);flex:0 0 auto}
+/* Anatomiekaart op het overzicht — beide zijden tegelijk, direct zichtbaar. */
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-anatcard{padding:12px 12px 10px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-seg{display:flex;background:var(--g1);border-radius:999px;padding:3px;gap:2px;margin-bottom:10px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-seg button{flex:1;border:0;background:none;font:800 12px var(--f);color:var(--g4);padding:9px 4px;border-radius:999px;cursor:pointer;min-height:38px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-seg button.on{background:var(--card);color:var(--dark);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-figpair{display:flex;gap:6px;justify-content:center;align-items:flex-end}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-figbox{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-figbox .cap{font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--g4)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-figbox svg{width:100%;height:auto;max-height:190px;display:block}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-legend{display:flex;flex-wrap:wrap;gap:5px 11px;margin-top:9px;justify-content:center}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-legend span{display:flex;align-items:center;gap:4px;font-size:9.5px;color:var(--g6);font-weight:600}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-legend i{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-mrow{border:0;background:none;width:100%;padding:9px 0;display:flex;align-items:center;gap:9px;cursor:pointer;font-family:var(--f);border-bottom:1px solid var(--g2);text-align:left;min-height:44px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-mrow:last-of-type{border-bottom:0}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-mrow .nm{font-size:13px;font-weight:700;flex:1;min-width:0;color:var(--dark)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-mrow .bar{width:56px;height:5px;background:var(--g2);border-radius:999px;overflow:hidden;flex:0 0 auto}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-mrow .bar i{display:block;height:100%;border-radius:999px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-mrow .pc{font-size:11.5px;font-weight:800;width:38px;text-align:right;flex:0 0 auto;color:var(--g6)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-mrow .st{font-size:10px;font-weight:800;width:66px;flex:0 0 auto;text-align:right}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-anatfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--g2);margin-top:8px;padding-top:8px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-anatfoot .t{font-size:11px;color:var(--g4);font-weight:600;line-height:1.35}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-anatfoot .lk{background:none;border:0;padding:8px 0;margin:-8px 0;min-height:44px;display:inline-flex;align-items:center;font-family:var(--f);font-size:12px;font-weight:800;color:var(--accent);cursor:pointer;text-align:right}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-lblsub{font-weight:700;letter-spacing:0;text-transform:none;color:var(--g4)}
+/* Trendkaart: waarde, richting, sparkline, datadekking, status. */
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-metric .dl{font-size:10.5px;font-weight:800;margin-top:1px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-metric .spark{display:block;width:100%;height:20px;margin-top:5px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-metric .f{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:5px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-metric .cov{font-size:9.5px;color:var(--g4);font-weight:600}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-metric .stt{font-size:9.5px;font-weight:800}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-empty{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:20px 16px;text-align:center}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-empty .e1{font-size:13px;font-weight:800;color:var(--dark);margin-bottom:4px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-empty .e2{font-size:11.5px;line-height:1.55;color:var(--g4)}
 /* ══════════════════════════════════════════════════════════════════
    v4.23.0 — Sprint 5.5 App-brede UX-polish: premium empty states,
    micro-interacties (press/hover), feedback. Presentatie-only, geen logica.
@@ -3629,26 +3661,42 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <!-- Fase 1 — het overzicht toont de stand van vandaag en verwijst door. De verdieping
        (anatomie, trends, metingen) staat op eigen subschermen met dezelfde renderers. -->
   <div class="scroll" style="padding-top:8px">
+    <div class="v43-lbl" style="margin:2px 0 8px">Vandaag</div>
     <div id="lich-hero"></div>
     <!-- Check-in: route naar de BESTAANDE check-in (m-hrv), dezelfde als op Home. -->
     <div id="lich-checkin"></div>
 
+    <!-- Harde acceptatie-eis: bij het openen van Lichaam zijn voor- en achterzijde met de
+         actuele herstel-/belastingsvisualisatie direct zichtbaar, zonder eerst te klikken. -->
     <div class="v43-lbl" style="margin:16px 0 10px">Herstel &amp; belasting</div>
-    <div id="lich-summary"></div>
+    <div class="card lich-anatcard">
+      <div class="seg lich-seg" role="tablist" aria-label="Weergave">
+        <button id="lich-mode-rec" class="on" role="tab" aria-selected="true" onclick="lichSetMode('rec')">Herstel</button>
+        <button id="lich-mode-load" role="tab" aria-selected="false" onclick="lichSetMode('load')">Belasting</button>
+      </div>
+      <div class="lich-figpair">
+        <div class="lich-figbox"><div id="lich-fig-front"></div><div class="cap">Voorzijde</div></div>
+        <div class="lich-figbox"><div id="lich-fig-back"></div><div class="cap">Achterzijde</div></div>
+      </div>
+      <div id="lich-legend" class="lich-legend"></div>
+      <div id="lich-muslist"></div>
+      <div class="lich-anatfoot"><span class="t" id="lich-anatfoot-t"></span>
+        <button class="lk" onclick="go('s-lich-spieren')">Bekijk alle spiergroepen &rsaquo;</button></div>
+    </div>
 
-    <div class="v43-lbl" style="margin:16px 0 10px">Snel overzicht</div>
+    <div class="v43-lbl" style="margin:16px 0 10px;display:flex;align-items:baseline;justify-content:space-between;gap:8px">Hersteltrends<span class="lich-lblsub" id="lich-trend-sub"></span></div>
     <div id="lich-metrics" class="lich-mstrip"></div>
 
-    <div class="v43-lbl" style="margin:16px 0 10px">Wat je lichaam laat zien</div>
-    <div id="lich-facts"></div>
+    <div class="v43-lbl" style="margin:16px 0 10px">Verbanden</div>
+    <div id="lich-relations"></div>
 
-    <div class="v43-lbl" style="margin:16px 0 10px">Wat nu?</div>
+    <div class="v43-lbl" style="margin:16px 0 10px">Wat betekent dit?</div>
     <button class="lich-goto" onclick="go('s-coach')"><span class="ic">🤖</span><span class="b"><b>Wat betekent dit voor vandaag?</b><s>De coach legt uit en adviseert</s></span><span class="chev">›</span></button>
     <button class="lich-goto" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ic">🏋️</span><span class="b"><b>Welke training past hierbij?</b><s>Je trainingen en de planning van vandaag</s></span><span class="chev">›</span></button>
 
-    <div class="v43-lbl" style="margin:16px 0 10px">Verdiepen</div>
+    <div class="v43-lbl" style="margin:16px 0 10px">Lichaam &amp; gegevens</div>
     <button class="lich-goto" onclick="go('s-lich-health')"><span class="ic">📈</span><span class="b"><b>Gezondheid &amp; herstel</b><s>HRV, rusthartslag en slaap over 7 tot 90 dagen</s></span><span class="chev">›</span></button>
-    <button class="lich-goto" onclick="go('s-lich-metingen')"><span class="ic">⚖️</span><span class="b"><b>Metingen</b><s>Gewicht, samenstelling en afmetingen</s></span><span class="chev">›</span></button>
+    <button class="lich-goto" onclick="go('s-lich-metingen')"><span class="ic">⚖️</span><span class="b"><b>Lichaamsmetingen</b><s>Samenstelling, afmetingen en historie</s></span><span class="chev">›</span></button>
     <div style="height:8px"></div>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
@@ -4945,7 +4993,7 @@ function tkDeviceStatusMeta(status){
   switch(status){
     case 'connected':     return { dot:'var(--green)',        label:'Gekoppeld' };
     case 'syncing':       return { dot:'var(--accent)',       label:'Synchroniseren…' };
-    case 'sync_failed':   return { dot:'var(--status-bad)',   label:'Synchronisatie mislukt' };
+    case 'sync_failed':   return { dot:'var(--red)',          label:'Synchronisatie mislukt' };
     case 'token_expired': return { dot:'var(--amber,#c98a00)',label:'Opnieuw koppelen nodig' };
     case 'stale':         return { dot:'var(--amber,#c98a00)',label:'Gegevens verouderd' };
     default:              return { dot:'var(--g3)',           label:'Niet gekoppeld' };
@@ -5160,8 +5208,14 @@ function _tkDayLabel(ymd){ var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(ymd||'')
 // UREN; CalcCore.normalizeSleepHours vangt legacy-rijen op die nog minuten bevatten.
 // Er waren drie formatters met twee verschillende eenheid-aannames; die delegeren nu alle
 // drie hierheen, zodat dezelfde opgeslagen waarde nooit meer twee uitkomsten kan geven.
+// sleep_unit.v1 — leesguard. De service worker serveert core/*.js cache-first, dus bij de
+// eerste laadbeurt na een deploy kan nog een oude core actief zijn. Zonder deze terugval laat
+// een ontbrekende engine-functie hele schermsecties leeg (Home, Gezondheid & herstel).
+function tkSleepHours(v){
+  return (typeof CalcCore!=='undefined' && CalcCore.normalizeSleepHours) ? CalcCore.normalizeSleepHours(v) : v;
+}
 function tkFmtSleepHours(v){
-  var u = (typeof CalcCore!=='undefined' && CalcCore.normalizeSleepHours) ? CalcCore.normalizeSleepHours(v) : v;
+  var u = tkSleepHours(v);
   if(u==null) return '—';
   var h=Math.floor(u), m=Math.round((u-h)*60);
   if(m===60){h++;m=0;}
@@ -5208,7 +5262,7 @@ function tkRenderHealthHistoryInner(hd){
   /* sleep_unit.v1: legacy-rijen kunnen nog minuten bevatten; normaliseer vóór de weergave,
      anders staat één staaf zestig keer zo hoog als de rest. De opgeslagen rij blijft intact. */
   var sleep=dc.healthSeries(hd,'sleep',end,P).map(function(p){
-    return { date:p.date, value:CalcCore.normalizeSleepHours(p.value), source:p.source };
+    return { date:p.date, value:tkSleepHours(p.value), source:p.source };
   });
   var periods=TK_HEALTH_PERIODS;
   var sel=periods.map(function(n){ return '<button onclick="tkSetHealthPeriod('+n+')" class="btn '+(n===P?'btn-r':'btn-o')+' btn-sm" style="font-size:11px;padding:4px 10px"'+(_tkHealthLoading?' disabled':'')+'>'+n+'d</button>'; }).join(' ');
@@ -5383,7 +5437,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.26.0';
+const APP_VER = 'v4.27.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -8604,7 +8658,8 @@ async function saveHRV(btnEl){
   const rhr=parseInt(document.getElementById('i-rhr').value)||null;
   const slpH=parseInt(document.getElementById('i-sleep-h').value)||0;
   const slpM=parseInt(document.getElementById('i-sleep-m').value)||0;
-  const slp=CalcCore.sleepToHours(slpH,slpM);   /* sleep_unit.v1 — canoniek decimale uren */
+  const slp=CalcCore.sleepToHours?CalcCore.sleepToHours(slpH,slpM)
+            :((slpH||slpM)?Math.round((slpH+slpM/60)*100)/100:null);   /* sleep_unit.v1 */
   const wgt=parseFloat(document.getElementById('i-whrv').value)||null;
   const cyclusEl=document.getElementById('i-cyclus');
   const cyclus=(atleet.geslacht==='vrouw'&&cyclusEl&&cyclusEl.value)?cyclusEl.value:null;
@@ -14865,7 +14920,7 @@ function dagfactor(hrvComponent,slaapUren,cyclusFase){
   const hrvFactor=hc.factor;
   /* sleep_unit.v1: de dagfactor krijgt uitsluitend canonieke decimale uren. Eén normalisatie
      hier, zodat de getoonde slaapFactor en de berekende factor niet uiteen kunnen lopen. */
-  const slaapUur=CalcCore.normalizeSleepHours(slaapUren);
+  const slaapUur=tkSleepHours(slaapUren);
   const slaapFactor=slaapDagFactor(slaapUur);
   const cyclusFactor=cyclusDagFactor(cyclusFase);
   /* F1.5C: product/clamp/round -> CalcCore.calculateDayFactor (dayfactor.v1) */
@@ -15795,7 +15850,7 @@ async function refreshStats(){
     ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=epley1RMRaw(s.weight,s.reps);if(!best||est>best)best=est;});
     const disp=best?Math.round(best):prFor(ex.id);if(!disp)continue;
     const tgt=peakGoalFor(ex.id);const pct=tgt?Math.round(disp/tgt*100):null;
-    const fc=pct?(pct>=100?'var(--status-good)':pct>=85?'var(--status-warn)':'var(--status-bad)'):'var(--status-bad)';
+    const fc=pct?(pct>=100?'var(--green)':pct>=85?'var(--y)':'var(--red)'):'var(--red)';
     h+=`<div class="stat-1rm-item">
       <div class="stat-1rm-row"><span class="stat-1rm-name">${escHtml(ex.name)}</span><span class="stat-1rm-val">${disp} kg</span>${tgt?`<span class="stat-1rm-target">/ ${tgt} kg</span>`:''}</div>
       <div class="prog-wrap"><div class="prog-fill" style="width:${Math.min(100,pct||disp/3)}%;background:${fc}"></div></div>
@@ -17403,7 +17458,7 @@ async function pchkSkip(){closeModal('m-prog-checkin');await evaluateProgAdjustm
 async function pchkSubmit(){
   const hrvVal=parseFloat(document.getElementById('pchk-hrv').value)||null;
   const rhrVal=parseInt(document.getElementById('pchk-rhr').value)||null;
-  const slpVal=CalcCore.normalizeSleepHours(parseFloat(document.getElementById('pchk-sleep-h').value));   /* sleep_unit.v1 */
+  const slpVal=tkSleepHours(parseFloat(document.getElementById('pchk-sleep-h').value));   /* sleep_unit.v1 */
   const th=progCheckinCtx.todayHrv;
   // Gemerged opslaan (bestaande waarden van vandaag + nieuw ingevulde) zodat de meest
   // recente hrv_log-rij altijd het volledigste beeld heeft — anders verliest de
@@ -17464,7 +17519,7 @@ function renderMuscleRecoveryMiniList(rows){
   return `<div style="margin-bottom:4px">
     <div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Spierherstel voor deze training</div>
     ${sorted.map(r=>{
-      const color=r.pct>=85?'var(--status-good)':r.pct>=50?'var(--status-warn)':'var(--status-bad)';
+      const color=r.pct>=85?'var(--green)':r.pct>=50?'var(--y)':'var(--red)';
       return `<div style="margin-bottom:6px">
         <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span style="font-weight:600">${r.muscle}</span><span style="color:var(--g4)">${r.pct}%</span></div>
         <div class="prog-wrap" style="height:6px"><div class="prog-fill" style="width:${r.pct}%;background:${color};height:6px"></div></div>
@@ -17816,7 +17871,7 @@ function calcPlates(){
   vis.innerHTML=barH;
   const counts={};plates.forEach(p=>{counts[p]=(counts[p]||0)+1;});
   const summary=Object.entries(counts).sort((a,b)=>b[0]-a[0]).map(([p,n])=>n+'×'+p+' kg').join(' · ');
-  res.innerHTML=`<strong>${achieved} kg</strong>${diff?` <span style="color:${diff>0?'var(--status-bad)':'var(--status-good)'}"> (${diff>0?'+':'-'}${Math.abs(diff)} kg)</span>`:''}<br><span style="color:var(--g4);font-size:11px">${summary} per kant</span>`;
+  res.innerHTML=`<strong>${achieved} kg</strong>${diff?` <span style="color:${diff>0?'var(--red)':'var(--green)'}"> (${diff>0?'+':'-'}${Math.abs(diff)} kg)</span>`:''}<br><span style="color:var(--g4);font-size:11px">${summary} per kant</span>`;
 }
 
 // ══════════════════════════════════════════════════════════
@@ -17848,7 +17903,7 @@ function updateRepeatPreview(){
     if(repeatMode==='plus') nw=Math.round((s.weight+adj)*2)/2;
     else if(repeatMode==='pct') nw=Math.round(s.weight*(1+adj/100)*2)/2;
     const n=exercises.find(e=>e.id===s.exercise_id)?.name||s.exercise_id;
-    html+=`<div class="lrow"><div class="ldate" style="width:110px">${n}</div><div class="lval">${s.sets}×${s.reps} @ <strong>${nw} kg</strong>${nw!==s.weight?` <span style="color:${nw>s.weight?'var(--status-good)':'var(--status-bad)'}">(was ${s.weight})</span>`:''}</div></div>`;
+    html+=`<div class="lrow"><div class="ldate" style="width:110px">${n}</div><div class="lval">${s.sets}×${s.reps} @ <strong>${nw} kg</strong>${nw!==s.weight?` <span style="color:${nw>s.weight?'var(--green)':'var(--red)'}">(was ${s.weight})</span>`:''}</div></div>`;
   });
   el.innerHTML=html||'<p style="color:var(--g4);font-size:13px">Geen krachtsessies gevonden</p>';
 }
@@ -18023,12 +18078,16 @@ function getMuscleSvgFor(view){
   return isVrouw ? FEMALE_FRONT_SVG : MALE_FRONT_SVG;
 }
 
-function renderMuscleHeatmap(containerId, setsBySvgId){
+// opts.side ('front'|'back') toont een expliciete zijde. Zonder opts blijft het gedrag exact
+// zoals het was: de module-state bepaalt de zijde. Zo kan het overzicht beide figuren naast
+// elkaar tonen zonder de toggle-state van het detailscherm te verstoren.
+function renderMuscleHeatmap(containerId, setsBySvgId, opts){
   const el = document.getElementById(containerId);
   if(!el) return;
-  const svgText = getMuscleSvgFor(muscleHeatmapView);
+  const side = (opts && opts.side) ? opts.side : muscleHeatmapView;
+  const svgText = getMuscleSvgFor(side);
   // altijd herladen bij view- of geslachtswissel (key bijhouden om onnodige re-renders te vermijden)
-  const key = muscleHeatmapView + '_' + (atleet && atleet.geslacht);
+  const key = side + '_' + (atleet && atleet.geslacht);
   if(el.dataset.svgKey !== key){
     el.innerHTML = svgText;
     el.dataset.svgKey = key;
@@ -18065,18 +18124,24 @@ function toggleMuscleHeatmapView(){
   refreshMuscleHeatmap();
 }
 
-async function refreshMuscleHeatmap(){
+// Sets per spier over de laatste 7 dagen — één bron voor het figuur, de lijst en het
+// overzicht. Leest uitsluitend bestaande sessies; geen nieuwe berekening.
+async function muscleLoadBySvgId(){
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate()-7);
   const dateStr = weekAgo.toISOString().split('T')[0];
   const ss = await sbGet('sessions','&date=gte.'+dateStr+'&weight=not.is.null&sets=not.is.null&reps=not.is.null');
-  const setsBySvgId = {};
-  ss.forEach(s=>{
+  const setsBySvgId = {}, setsByMuscle = {};
+  (ss||[]).forEach(s=>{
     const names = getExerciseMuscles(s.exercise_id);
-    const svgIds = muscleNamesToSvgIds(names);
     const setCount = s.sets||1;
-    svgIds.forEach(id=>{ setsBySvgId[id] = (setsBySvgId[id]||0) + setCount; });
+    names.forEach(m=>{ setsByMuscle[m] = (setsByMuscle[m]||0) + setCount; });
+    muscleNamesToSvgIds(names).forEach(id=>{ setsBySvgId[id] = (setsBySvgId[id]||0) + setCount; });
   });
+  return { setsBySvgId, setsByMuscle };
+}
+async function refreshMuscleHeatmap(){
+  const { setsBySvgId } = await muscleLoadBySvgId();
   renderMuscleHeatmap('muscle-heatmap-container', setsBySvgId);
 }
 
@@ -18190,21 +18255,34 @@ const SVG_ID_RECOVERY_HOURS = (()=>{
 
 let recoveryHeatmapView = 'front'; // eigen view-state, los van muscleHeatmapView (Spierbelasting)
 
-function renderMuscleRecoveryHeatmap(containerId, pctBySvgId){
+// Gedeeld door de Home-hero en door Lichaam. Home volgt de goedgekeurde visuele baseline,
+// Lichaam de dark-mode-proof statuskleuren — daarom is de kleurfunctie injecteerbaar in
+// plaats van dat er twee implementaties naast elkaar bestaan.
+function v43HomeRecColor(p){return p>=85?'var(--green)':p>=50?'var(--y)':'var(--red)';}
+function renderMuscleRecoveryHeatmap(containerId, pctBySvgId, opts){
   const el = document.getElementById(containerId);
   if(!el) return;
-  const svgText = getMuscleSvgFor(recoveryHeatmapView);
-  const key = recoveryHeatmapView + '_' + (atleet && atleet.geslacht);
+  const side = (opts && opts.side) ? opts.side : recoveryHeatmapView;
+  const svgText = getMuscleSvgFor(side);
+  const key = side + '_' + (atleet && atleet.geslacht);
   if(el.dataset.svgKey !== key){
     el.innerHTML = svgText;
     el.dataset.svgKey = key;
   }
   const svg = el.querySelector('svg');
   if(!svg) return;
+  const colorFn = (opts && opts.colorFn) ? opts.colorFn : v43RecColor;
+  // opts.neutralUnknown: gebieden zonder herstelmodel (hoofd, handen, voeten) krijgen een
+  // neutrale kleur in plaats van 'volledig hersteld'. Zonder die optie blijft het gedrag
+  // exact zoals het was — de Home-hero rekent daarop.
+  const neutraal = !!(opts && opts.neutralUnknown);
   svg.querySelectorAll('#muscles > g').forEach(g=>{
     const path = g.querySelector('path');
+    if(!path) return;
+    const heeftModel = !neutraal || SVG_ID_RECOVERY_HOURS[g.id] != null;
     // geen trainingsdata voor deze svg-id = volledig hersteld (zelfde aanname als lijst-kaart)
-    if(path){ path.style.fill = 'var(--status-good)'; path.style.opacity = '1'; }
+    path.style.fill = heeftModel ? colorFn(100) : 'var(--load-0)';
+    path.style.opacity = '1';
   });
   Object.entries(pctBySvgId).forEach(([svgId, pct])=>{
     const g = svg.querySelector('#'+CSS.escape(svgId));
@@ -18212,7 +18290,7 @@ function renderMuscleRecoveryHeatmap(containerId, pctBySvgId){
     const path = g.querySelector('path');
     if(!path) return;
     // zelfde drempels als de Spierherstel-lijst hierboven; herstel = stoplicht
-    const color = pct>=85 ? 'var(--status-good)' : pct>=50 ? 'var(--status-warn)' : 'var(--status-bad)';
+    const color = colorFn(pct);
     path.style.fill = color;
     path.style.opacity = '1';
   });
@@ -18356,7 +18434,8 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
     // v4.6.0 — status-indicator = dagfactor-cirkel (vervangt het losse groene vinkje)
     const factor=dfInfo?dfInfo.factor:null;
     const dfCls=factor==null?'y':(factor>=1?'g':factor>=0.93?'y':'r');
-    const dfCol=dfCls==='g'?'var(--status-good)':dfCls==='r'?'var(--status-bad)':'var(--status-warn)';
+    /* Home = goedgekeurde visuele baseline (27fb416): eigen kleuren, niet de Lichaam-tokens. */
+    const dfCol=dfCls==='g'?'var(--green)':dfCls==='r'?'var(--red)':'var(--y)';
     const dfVal=factor==null?'—':String(factor);
     // v4.6.0 — "Waarom vandaag?" inline in de hero (zelfde databron; de losse kaart vervalt)
     const wReady=(rec.rows||[]).filter(r=>r.hours!==null&&r.pct>=90).map(r=>r.muscle);
@@ -18388,14 +18467,14 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
         <div class="v43-stat"><div class="v43-stat-ic">${V43I.moon}</div><div class="v43-stat-v">${slaap}</div><div class="v43-stat-k">Slaap</div></div>
       </div>
       <div class="v43-legend">
-        <div class="d"><span class="dot" style="background:var(--status-good)"></span>Goed hersteld</div>
-        <div class="d"><span class="dot" style="background:var(--status-warn)"></span>Matig hersteld</div>
-        <div class="d"><span class="dot" style="background:var(--status-bad)"></span>Weinig hersteld</div>
+        <div class="d"><span class="dot" style="background:var(--green)"></span>Goed hersteld</div>
+        <div class="d"><span class="dot" style="background:var(--y)"></span>Matig hersteld</div>
+        <div class="d"><span class="dot" style="background:var(--red)"></span>Weinig hersteld</div>
       </div>
       <div class="v43-why" id="v43-why-toggle"><span class="v43-why-chev">▾</span> Waarom vandaag?</div>
       <div class="v43-why-body" id="v43-why-body" hidden>${whyBody}</div>
     </div>`;
-    try{recoveryHeatmapView='front';renderMuscleRecoveryHeatmap('v43-hero-fig',rec.pctBySvgId);}catch(e){}
+    try{recoveryHeatmapView='front';renderMuscleRecoveryHeatmap('v43-hero-fig',rec.pctBySvgId,{colorFn:v43HomeRecColor});}catch(e){}
   }
   // COACH VANDAAG
   const coachEl=document.getElementById('home-coach-vandaag');
@@ -18621,43 +18700,51 @@ async function renderLichaamPremium(){
       ? `<button class="lich-strip" onclick="openModal('m-hrv')"><span class="ci">✓</span><span class="b"><b>Check-in van vandaag ingevuld</b><s>Slaap, gevoel en pijn — tik om aan te passen</s></span><span class="chev">›</span></button>`
       : `<button class="lich-strip todo" onclick="openModal('m-hrv')"><span class="ci">◷</span><span class="b"><b>Check-in van vandaag nog niet ingevuld</b><s>Slaap, gevoel en pijn — vult je dagfactor aan</s></span><span class="chev">›</span></button>`;
   }
-  // Samenvatting van het herstelmodel. Zelfde bron en drempels als de anatomie op
-  // s-lich-spieren; hier alleen samengevat, zonder eigen berekening.
-  const sum=document.getElementById('lich-summary');
-  if(sum){
-    const ov=rec.hasData?rec.overall:null;
-    const col=ov!=null?v43RecColor(ov):'var(--g4)';
-    const known=rows.filter(r=>r.hours!==null);
-    const low=known.slice().sort((a,b)=>a.pct-b.pct)[0];
-    const note=ov==null
-      ? 'Nog geen trainingsgegevens — log een training om je herstel te volgen.'
-      : (low&&low.pct<85
-          ? escHtml(low.muscle)+' is met '+low.pct+'% de laagste groep.'
-          : 'Alle belaste spiergroepen staan op 85% of hoger.');
-    sum.innerHTML=`<div class="lich-sum">
-      <div class="row"><span class="big" style="color:${col}">${ov!=null?ov+'%':'—'}</span><span class="cap">gemiddeld hersteld &middot; laatste 14 dagen</span></div>
-      <div class="note">${note}</div>
-      <div class="foot"><span class="cap">Berekend uit je trainingen — geen meting</span><button class="lk" onclick="go('s-lich-spieren')">Alle spiergroepen &rsaquo;</button></div>
-    </div>`;
-  }
-  // Snel overzicht: vier gemeten waarden, elk met een route naar het scherm waar de
-  // historie van díe waarde staat. Trend komt uit DeviceCore — geen nieuwe rekenlogica.
+  // ── Anatomie op het overzicht ──────────────────────────────────────────────
+  // Beide zijden tegelijk zichtbaar. Figuur, legenda en lijst lezen dezelfde modus, dus
+  // ze kunnen elkaar niet tegenspreken. Alle waarden komen uit de bestaande engines.
+  try{ await renderLichaamAnatomie(rec); }catch(_){}
+
+  // ── Hersteltrends ─────────────────────────────────────────────────────────
   const met=document.getElementById('lich-metrics');
   if(met){
     let wl=null; try{ const w=await sbGet('weight_log','&order=date.desc,created_at.desc&limit=1'); wl=(w&&w[0])?w[0]:null; }catch(_){}
+    let wSeries=[]; try{
+      const ws=await sbGet('weight_log','&order=date.desc,created_at.desc&limit=120');
+      const byDate={}; (ws||[]).forEach(r=>{ if(r&&r.date&&r.weight!=null&&byDate[String(r.date).slice(0,10)]==null) byDate[String(r.date).slice(0,10)]=r.weight; });
+      wSeries=(ws&&ws.length&&typeof DeviceCore!=='undefined')
+        ? DeviceCore.dateRange(String(ws[0].date).slice(0,10),TK_LICH_TREND_DAYS).map(d=>({date:d,value:byDate[d]!=null?byDate[d]:null}))
+        : [];
+    }catch(_){}
     const dc=(typeof DeviceCore!=='undefined')?DeviceCore:null;
     const end=(hd&&hd.length)?String(hd[0].date).slice(0,10):null;
-    const trend=function(field){
-      if(!dc||!end) return '';
-      try{ const t=dc.healthTrend(dc.healthSeries(hd,field,end,14)); return t&&t.symbol?(t.symbol+' 14 dagen'):''; }catch(_){ return ''; }
+    const serieOf=function(field){
+      if(!dc||!end) return [];
+      try{
+        const raw=dc.healthSeries(hd,field,end,TK_LICH_TREND_DAYS);
+        return field==='sleep' ? raw.map(x=>({date:x.date,value:tkSleepHours(x.value),source:x.source})) : raw;
+      }catch(_){ return []; }
     };
-    const mcard=(key,k,v,unit,t)=>`<button class="lich-metric" onclick="openLichaamMetric('${key}')"><div class="k">${escHtml(k)}</div><div class="v">${v}${unit?`<i>${unit}</i>`:''}</div><div class="t">${escHtml(t||'—')}</div><div class="lich-src meas">gemeten</div><span class="chev" aria-hidden="true">&rsaquo;</span></button>`;
+    const S={hrv:serieOf('hrv'), rhr:serieOf('rhr'), sleep:serieOf('sleep'), gewicht:wSeries};
     met.innerHTML=
-      mcard('hrv','HRV',(lh&&lh.hrv!=null)?lh.hrv:'—','ms',trend('hrv'))+
-      mcard('rhr','Rust HR',(lh&&lh.rhr!=null)?lh.rhr:'—','bpm',trend('rhr'))+
-      mcard('slaap','Slaap',(lh&&lh.sleep!=null)?v43SlaapTxt(lh.sleep):'—','',trend('sleep'))+
-      mcard('gewicht','Gewicht',(wl&&wl.weight!=null)?(Math.round(wl.weight*10)/10):'—','kg',(wl&&wl.date)?fmtDate(wl.date):'');
+      lichTrendCard('hrv','HRV','ms',0,S.hrv,true)+
+      lichTrendCard('rhr','Rust HR','bpm',0,S.rhr,false)+
+      lichTrendCard('slaap','Slaap','',1,S.sleep,true)+
+      lichTrendCard('gewicht','Gewicht','kg',1,S.gewicht,false);
+    const sub=document.getElementById('lich-trend-sub');
+    if(sub) sub.textContent='laatste '+TK_LICH_TREND_DAYS+' dagen';
   }
+
+  // ── Verbanden ─────────────────────────────────────────────────────────────
+  // De Decision Engine bepaalt of een verband getoond mag worden. Het minimum aantal
+  // vergelijkbare waarnemingen en de statistische methode zijn nog niet vastgesteld,
+  // dus is er nog niets vrij te geven. De weergave verzint hier bewust geen drempel.
+  const relEl=document.getElementById('lich-relations');
+  if(relEl){
+    relEl.innerHTML='<div class="lich-empty"><div class="e1">Nog geen verbanden vrijgegeven</div>'+
+      '<div class="e2">Er zijn te weinig vergelijkbare waarnemingen. Zodra de Decision Engine er een vrijgeeft, verschijnt hij hier.</div></div>';
+  }
+
   let loadSorted=[];
   const bel=document.getElementById('lich-belasting');
   if(bel){
@@ -18683,24 +18770,6 @@ async function renderLichaamPremium(){
       if(rust.length)html+=card('mid',MOON,'Rust aanbevolen',rust.join(' · '),'3+ dagen achtereen belast');
       bel.innerHTML='<div class="lich-load">'+html+'</div>';
     }
-  }
-  // Fase 1 — "Wat je lichaam laat zien": uitsluitend feiten uit de reeds berekende
-  // herstelrijen en de 7-daagse belasting. Geen duiding, geen advies, geen trainingsnaam
-  // en geen RPE-plafond: dat is het domein van Coach en Training (één source of truth).
-  const facts=document.getElementById('lich-facts');
-  if(facts){
-    const recovered=rows.filter(r=>r.pct>=85&&r.hours!==null).map(r=>r.muscle).slice(0,3);
-    const fatigued=rows.filter(r=>r.pct<50&&r.hours!==null).map(r=>r.muscle).slice(0,3);
-    const F=[];
-    if(recovered.length)F.push(['var(--status-good)',escHtml(recovered.join(', '))+' '+(recovered.length>1?'staan':'staat')+' op 85% of hoger.']);
-    if(fatigued.length)F.push(['var(--status-warn)',escHtml(fatigued.join(', '))+' '+(fatigued.length>1?'staan':'staat')+' onder 50%.']);
-    if(loadSorted.length){
-      const top=loadSorted.slice(0,2).map(x=>x[0]);
-      F.push(['var(--load-3)',escHtml(top.join(' en '))+' '+(top.length>1?'kregen':'kreeg')+' het meeste volume in 7 dagen.']);
-    }
-    if(!F.length)F.push(['var(--g3)','Nog te weinig gegevens — log een training of vul je check-in in.']);
-    facts.innerHTML='<div class="lich-facts">'+F.map(f=>`<div class="f"><i style="background:${f[0]}"></i><span>${f[1]}</span></div>`).join('')+
-      '<div class="src">Feiten uit je eigen gegevens. De duiding en het advies staan bij Coach.</div></div>';
   }
   const hist=document.getElementById('lich-history');
   if(hist){
@@ -18730,6 +18799,122 @@ async function renderLichaamPremium(){
 // metric komt in een latere fase; tot die tijd wijst elke kaart naar het bestaande
 // scherm waar díe gegevens staan. Er wordt bewust geen leeg scherm getoond.
 // Bij uitbreiding wijzigt alleen deze tabel, niet de kaarten zelf.
+// ── Lichaam-overzicht: gedeelde weergavestaat ────────────────────────────────
+// Modus (herstel of belasting) staat één keer in het geheugen. Het figuur, de legenda en
+// de spierlijst lezen er allemaal uit, dus de situatie "figuur = belasting, lijst = herstel"
+// kan constructief niet meer ontstaan.
+let lichAnatMode = 'rec';
+const TK_LICH_TREND_DAYS = 30;
+
+// Statuslabels. De drempels zijn die van de bestaande engines: 85/50 voor herstel
+// (calculateMuscleRecoveryPct) en 12/6 sets voor belasting. Geen nieuwe grenzen.
+function lichRecStatus(p){ return p>=85?['Hersteld','var(--status-good)'] : p>=50?['Aandacht','var(--status-warn)'] : ['Vermoeid','var(--status-bad)']; }
+function lichLoadStatus(sets){ return sets>=12?['Hoog','var(--load-3)'] : sets>=6?['Gemiddeld','var(--load-2)'] : sets>0?['Laag','var(--load-1)'] : ['Rustdag','var(--load-0)']; }
+function lichLoadColor(sets){ return lichLoadStatus(sets)[1]; }
+
+function lichSetMode(m){
+  lichAnatMode=m;
+  const a=document.getElementById('lich-mode-rec'), b=document.getElementById('lich-mode-load');
+  if(a){a.classList.toggle('on',m==='rec');a.setAttribute('aria-selected',String(m==='rec'));}
+  if(b){b.classList.toggle('on',m==='load');b.setAttribute('aria-selected',String(m==='load'));}
+  try{ renderLichaamAnatomie(window.v43LichRec); }catch(_){}
+}
+
+// Tekent beide figuren, de legenda, de spierlijst en de voettekst — allemaal uit dezelfde
+// modus en dezelfde brondata. Hergebruikt de bestaande anatomie-SVG's en renderers.
+async function renderLichaamAnatomie(rec){
+  const front=document.getElementById('lich-fig-front'), back=document.getElementById('lich-fig-back');
+  if(!front||!back) return;
+  rec = rec || window.v43LichRec || {overall:100,rows:[],pctBySvgId:{},hasData:false};
+  const isLoad = lichAnatMode==='load';
+  let load={setsBySvgId:{},setsByMuscle:{}};
+  if(isLoad){ try{ load=await muscleLoadBySvgId(); }catch(_){} }
+
+  if(isLoad){
+    renderMuscleHeatmap('lich-fig-front', load.setsBySvgId, {side:'front'});
+    renderMuscleHeatmap('lich-fig-back',  load.setsBySvgId, {side:'back'});
+  }else{
+    renderMuscleRecoveryHeatmap('lich-fig-front', rec.pctBySvgId||{}, {side:'front',neutralUnknown:true});
+    renderMuscleRecoveryHeatmap('lich-fig-back',  rec.pctBySvgId||{}, {side:'back',neutralUnknown:true});
+  }
+
+  const leg=document.getElementById('lich-legend');
+  if(leg){
+    const items = isLoad
+      ? [['Hoog','var(--load-3)'],['Gemiddeld','var(--load-2)'],['Laag','var(--load-1)'],['Rustdag','var(--load-0)']]
+      : [['Hersteld','var(--status-good)'],['Aandacht','var(--status-warn)'],['Vermoeid','var(--status-bad)']];
+    leg.innerHTML=items.map(x=>'<span><i style="background:'+x[1]+'"></i>'+x[0]+'</span>').join('');
+  }
+
+  // Spierlijst: bij herstel de laagste groepen (daar zit de beslissing), bij belasting de
+  // zwaarst belaste. Vier regels op het overzicht; de rest staat één tik verderop.
+  const list=document.getElementById('lich-muslist');
+  const foot=document.getElementById('lich-anatfoot-t');
+  if(list){
+    let rows=[];
+    if(isLoad){
+      rows=Object.keys(load.setsByMuscle).map(m=>({muscle:m,sets:load.setsByMuscle[m]}))
+        .sort((a,b)=>b.sets-a.sets).slice(0,4)
+        .map(r=>{ const st=lichLoadStatus(r.sets); return {nm:r.muscle,pctBar:Math.min(100,Math.round(r.sets/12*100)),val:r.sets+' sets',st:st[0],col:st[1]}; });
+    }else{
+      rows=(rec.rows||[]).slice().sort((a,b)=>a.pct-b.pct).slice(0,4)
+        .map(r=>{ const st=lichRecStatus(r.pct); return {nm:r.muscle,pctBar:r.pct,val:r.pct+'%',st:st[0],col:st[1]}; });
+    }
+    list.innerHTML=rows.length
+      ? rows.map(r=>'<button class="lich-mrow" onclick="go(\'s-lich-spieren\')">'+
+          '<span class="nm">'+escHtml(r.nm)+'</span>'+
+          '<span class="bar"><i style="width:'+r.pctBar+'%;background:'+r.col+'"></i></span>'+
+          '<span class="pc">'+r.val+'</span>'+
+          '<span class="st" style="color:'+r.col+'">'+r.st+'</span>'+
+          '<span class="chev">›</span></button>').join('')
+      : '<div class="lich-empty" style="box-shadow:none;padding:14px 6px"><div class="e1">Nog geen gegevens</div>'+
+        '<div class="e2">'+(isLoad?'Er is deze week nog geen training gelogd.':'Log een training om je herstel per spiergroep te volgen.')+'</div></div>';
+    if(foot){
+      const totaal=(rec.rows||[]).length||14;
+      foot.textContent = isLoad
+        ? (rows.length? rows.length+' zwaarst belast · laatste 7 dagen' : 'laatste 7 dagen')
+        : (rec.hasData ? rows.length+' van '+totaal+' groepen · gem. '+rec.overall+'% · 14 dagen' : 'nog geen belasting geregistreerd');
+    }
+  }
+}
+
+// Trendkaart: waarde, richting, sparkline, datadekking en status — allemaal uit de
+// bestaande DeviceCore-functies. Geen trend tonen als er te weinig punten zijn.
+function lichSpark(series,color){
+  const vals=(series||[]).filter(x=>x&&x.value!=null).map(x=>x.value);
+  if(vals.length<2) return '<div style="height:25px"></div>';
+  const mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals), rng=(mx-mn)||1;
+  const W=120,H=20,n=series.length;
+  let seg=[],out='';
+  const flush=()=>{ if(seg.length>1) out+='<polyline points="'+seg.join(' ')+'" fill="none" stroke="'+color+'" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>'; seg=[]; };
+  series.forEach((x,i)=>{ if(!x||x.value==null){flush();return;} seg.push((W*i/(n-1||1)).toFixed(1)+','+(2+(H-4)*(1-(x.value-mn)/rng)).toFixed(1)); });
+  flush();
+  return '<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true">'+out+'</svg>';
+}
+function lichTrendCard(key,label,unit,dec,series,upIsGood){
+  const pts=(series||[]).filter(x=>x&&x.value!=null);
+  const n=pts.length, days=(series||[]).length||TK_LICH_TREND_DAYS;
+  if(!n) return '<button class="lich-metric" onclick="openLichaamMetric(\''+key+'\')">'+
+    '<div class="k">'+escHtml(label)+'</div><div class="v" style="color:var(--g4)">—</div>'+
+    '<div class="dl" style="color:var(--g4)">geen meting</div>'+
+    '<div class="f"><span class="cov">0 van '+days+' dagen</span></div><span class="chev" aria-hidden="true">›</span></button>';
+  const last=pts[pts.length-1].value;
+  const dc=(typeof DeviceCore!=='undefined')?DeviceCore:null;
+  let t=null; try{ t=dc?dc.healthTrend(series):null; }catch(_){}
+  const toonTrend = n>=6 && t && t.dir!=='flat';
+  const goed = t ? ((t.dir==='up')===!!upIsGood) : true;
+  const col = toonTrend ? (goed?'var(--status-good)':'var(--status-warn)') : 'var(--g4)';
+  const val = key==='slaap' ? tkFmtSleepHours(last) : (dec?(Math.round(last*10)/10).toString().replace('.',','):Math.round(last));
+  const stat = toonTrend ? (goed?'Gunstig':'Let op') : (n<6?'Te weinig punten':'Stabiel');
+  return '<button class="lich-metric" onclick="openLichaamMetric(\''+key+'\')">'+
+    '<div class="k">'+escHtml(label)+'</div>'+
+    '<div class="v">'+val+(unit?'<i>'+unit+'</i>':'')+'</div>'+
+    '<div class="dl" style="color:'+col+'">'+(toonTrend?(t.dir==='up'?'↑':'↓')+' '+(t.dir==='up'?'stijgend':'dalend'):'geen trend')+'</div>'+
+    lichSpark(series,col)+
+    '<div class="f"><span class="cov">'+n+' van '+days+' dagen</span><span class="stt" style="color:'+col+'">'+stat+'</span></div>'+
+    '<span class="chev" aria-hidden="true">›</span></button>';
+}
+
 const TK_LICH_METRIC_ROUTE={hrv:'s-lich-health',rhr:'s-lich-health',slaap:'s-lich-health',gewicht:'s-lich-metingen'};
 function openLichaamMetric(key){ const r=TK_LICH_METRIC_ROUTE[key]; if(r)go(r); }
 function v43LichView(view){

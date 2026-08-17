@@ -40,13 +40,25 @@ ok(/--status-bad:\s*var\(--df-r\)/.test(html), '--status-bad is een alias op --d
 eq((html.match(/--df-g:#3fd3b6/g) || []).length, 2, '--df-* heeft twee dark-overrides (media query + data-theme)');
 eq((html.match(/--df-g:#00a082/g) || []).length, 2, '--df-* heeft een light-basis en een expliciete light-override');
 
-// De stoplicht-drempels mogen nergens meer op --red/--green/--y staan.
-const stoplichtRest = html.split('\n')
-  .map((l, i) => ({ n: i + 1, l }))
-  .filter(o => /var\(--red\)/.test(o.l) && /var\(--green\)|var\(--y\)/.test(o.l));
+// Binnen de LICHAAM-renderers mag geen enkele stoplicht-beslissing nog op --red/--green/--y
+// staan. Buiten Lichaam geldt het omgekeerde: Home, Training, Voortgang en Profiel volgen de
+// goedgekeurde visuele baseline (27fb416) en houden daar juist wél hun eigen kleuren.
+const LICH_FNS = ['renderMuscleRecoveryMiniListLichaam', 'v43RecColor', 'renderLichaamPremium',
+                  'renderMuscleHeatmap', 'renderMuscleRecoveryHeatmap'];
+const stoplichtRest = LICH_FNS
+  .filter(fn => { try { return /var\(--red\)/.test(extractFn(fn)) && /var\(--green\)|var\(--y\)/.test(extractFn(fn)); }
+                  catch(_) { return false; } });
 ok(stoplichtRest.length === 0,
-  'geen enkele status-ternary gebruikt nog --red/--green/--y' +
-  (stoplichtRest.length ? ' — nog open op regel ' + stoplichtRest.map(o => o.n).join(', ') : ''));
+  'geen Lichaam-renderer gebruikt nog --red/--green/--y' +
+  (stoplichtRest.length ? ' — nog open in ' + stoplichtRest.join(', ') : ''));
+
+// Home houdt aantoonbaar zijn eigen, goedgekeurde kleuren.
+ok(html.indexOf("const dfCol=dfCls==='g'?'var(--green)':dfCls==='r'?'var(--red)':'var(--y)';") >= 0,
+  'de dagfactor-ring op Home staat terug op de baseline-kleuren');
+ok(/function v43HomeRecColor\(p\)\{return p>=85\?'var\(--green\)':p>=50\?'var\(--y\)':'var\(--red\)';\}/.test(html),
+  'Home heeft een eigen kleurfunctie voor het anatomiefiguur');
+ok(html.indexOf("renderMuscleRecoveryHeatmap('v43-hero-fig',rec.pctBySvgId,{colorFn:v43HomeRecColor})") >= 0,
+  'de Home-hero injecteert die kleurfunctie — geen tweede implementatie');
 
 // --red blijft bestaan voor zijn niet-status-rollen (acties, verwijderen, focus).
 ok(/--red:#111111/.test(html), '--red is ongewijzigd (acties/verwijderen/focus)');
@@ -73,10 +85,11 @@ eq((html.match(/sets>=12 \? 'var\(--load-3\)' : sets>=6 \? 'var\(--load-2\)' : '
 eq((html.match(/sets>=12\?'var\(--load-3\)':sets>=6\?'var\(--load-2\)':'var\(--load-1\)'/g) || []).length, 1,
   'volumelijst per spiergroep gebruikt dezelfde intensiteitsramp');
 ok(html.indexOf("path.style.fill = 'var(--load-0)'") >= 0, 'spier zonder belasting krijgt de neutrale basiskleur');
-ok(html.indexOf("path.style.fill = 'var(--status-good)'") >= 0, 'spier zonder herstelbelasting blijft "volledig hersteld" (stoplicht)');
+ok(html.indexOf('path.style.fill = heeftModel ? colorFn(100) : \'var(--load-0)\';') >= 0,
+  'spier zonder herstelbelasting blijft "volledig hersteld"; gebied zonder herstelmodel wordt neutraal');
 
 // De twee figuren mogen nooit dezelfde kleurbetekenis krijgen.
-ok(html.indexOf("pct>=85 ? 'var(--status-good)'") >= 0 && html.indexOf("sets>=12 ? 'var(--load-3)'") >= 0,
+ok(html.indexOf('const color = colorFn(pct);') >= 0 && html.indexOf("sets>=12 ? 'var(--load-3)'") >= 0,
   'herstelfiguur en belastingsfiguur gebruiken aantoonbaar verschillende schalen');
 
 // De belastingskaarten op Lichaam gebruiken de ramp, niet het stoplicht.
@@ -157,7 +170,8 @@ LICH_SCREENS.forEach(id => {
 });
 
 // Verplaatste blokken mogen niet gedupliceerd raken: één element-id, één renderer.
-['lich-hero','lich-checkin','lich-summary','lich-metrics','lich-facts','lich-belasting','lich-history',
+['lich-hero','lich-checkin','lich-metrics','lich-relations','lich-belasting','lich-history',
+ 'lich-fig-front','lich-fig-back','lich-legend','lich-muslist','lich-anatfoot-t',
  'lich-bodymetrics','lich-history-health','v43-lich-figbox','v43-lich-list','v43-lich-overall',
  'muscle-heatmap-container','profiel-bc-card','profiel-w-chart','profiel-history'].forEach(id => {
   eq((html.match(new RegExp('id="' + id + '"', 'g')) || []).length, 1, 'id ' + id + ' komt precies één keer voor');
@@ -189,7 +203,17 @@ ok(html.indexOf('id="m-hrv"') >= 0, 'de check-in-modal m-hrv is ongewijzigd aanw
 ok(/tile\(df!=null\?df\.toFixed\(2\):'—','Dagfactor','berekend'\)/.test(html), 'dagfactor is gelabeld als berekend');
 ok(/'HRV','gemeten'/.test(html) && /'Rust HR','gemeten'/.test(html) && /'Slaap','gemeten'/.test(html),
   'slaap, HRV en rusthartslag zijn gelabeld als gemeten');
-ok(/Berekend uit je trainingen — geen meting/.test(html), 'het herstelpercentage is expliciet als berekend gemarkeerd');
+// Anatomie is direct zichtbaar op het overzicht — harde acceptatie-eis.
+ok(html.indexOf('<div class="lich-figpair">') >= 0, 'beide anatomiefiguren staan in de overzichtsmarkup');
+ok(/id="lich-mode-rec"[\s\S]{0,200}id="lich-mode-load"/.test(html), 'de Herstel/Belasting-schakelaar staat op het overzicht');
+ok(html.indexOf('let lichAnatMode') >= 0, 'figuur, legenda en lijst delen één modus-state');
+ok(/renderMuscleRecoveryHeatmap\('lich-fig-front'[^)]*side:'front'/.test(html) &&
+   /renderMuscleRecoveryHeatmap\('lich-fig-back'[^)]*side:'back'/.test(html),
+   'voor- en achterzijde worden tegelijk getekend, zonder de module-state te wisselen');
+ok(/renderMuscleHeatmap\('lich-fig-front'[^)]*side:'front'/.test(html), 'de belastingsmodus tekent dezelfde twee figuren');
+ok(html.indexOf('Nog geen verbanden vrijgegeven') >= 0, 'de verbandensectie bestaat en toont de Decision-Engine-status');
+ok(html.indexOf("relation: 'undecided'") < 0 && !/minimaal \d+ (vergelijkbare )?waarnemingen/.test(html),
+   'er staat nergens een verzonnen drempel voor verbanden');
 
 // Coach- en trainingsadvies staan niet meer op Lichaam (één source of truth).
 ok(html.indexOf("Maximaal RPE ") < 0, 'het eigen RPE-plafond is van Lichaam verdwenen');

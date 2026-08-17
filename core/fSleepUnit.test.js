@@ -118,13 +118,15 @@ eq(tkFmtSleepHours(null),'—',      'geen meting → streepje, geen 0u');
 
 // ── 6. schrijfpaden gebruiken de canonieke helpers ──────────────────────────
 console.log('  schrijfpaden');
-ok(html.indexOf('const slp=CalcCore.sleepToHours(slpH,slpM);') >= 0,
-   'de check-in schrijft via CalcCore.sleepToHours');
-ok(html.indexOf('Math.round((slpH+slpM/60)*100)/100') < 0,
-   'de eigen omrekening in de check-in is verdwenen');
-ok(/const slaapUur=CalcCore\.normalizeSleepHours\(slaapUren\);/.test(html),
+// De leeskant loopt via één guard-helper: de service worker serveert core/*.js cache-first,
+// dus een oude core mag nooit een scherm kunnen legen.
+ok(/function tkSleepHours\(v\)\{[\s\S]{0,200}CalcCore\.normalizeSleepHours\(v\) : v;/.test(html),
+   'tkSleepHours valt terug op de ruwe waarde als de engine-functie ontbreekt');
+ok(html.indexOf('CalcCore.sleepToHours?CalcCore.sleepToHours(slpH,slpM)') >= 0,
+   'de check-in schrijft via CalcCore.sleepToHours, met terugval');
+ok(html.indexOf('const slaapUur=tkSleepHours(slaapUren);') >= 0,
    'dagfactor normaliseert één keer, vóór slaapDagFactor én calculateDayFactor');
-ok(/value:CalcCore\.normalizeSleepHours\(p\.value\)/.test(html),
+ok(html.indexOf('value:tkSleepHours(p.value)') >= 0,
    'de slaapgrafiek normaliseert de reeks vóór weergave');
 
 console.log('\n  ' + pass + ' geslaagd, ' + fail + ' gefaald');

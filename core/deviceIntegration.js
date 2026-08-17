@@ -500,6 +500,44 @@
     return { toInsert: toInsert, skipped: skipped, derivedWatts: derivedWatts };
   }
 
+  // ── GENERIEKE PROVIDER-SYNC BOUNDARY (Fitbit én Concept2, één conventie) ──────────────
+  // De client roept UITSLUITEND een authenticated serverfunctie aan; deze module levert het
+  // CANONIEKE response-contract + het error-model, zodat provider-secrets/ruwe payloads nooit
+  // in de UI-logica lekken en beide providers exact dezelfde afhandeling delen. PUUR (geen fetch).
+  var PROVIDER_SYNC_STATUSES = ['success','no_new_data','not_connected','authorization_required',
+                                'token_expired','provider_unavailable','rate_limited','invalid_response','sync_failed'];
+  function _n0(v){ var n = Number(v); return isFinite(n) ? n : 0; }
+  // Ruwe serverrespons → canoniek { provider, status, syncedAt, imported, updated, skipped, errors, data }.
+  // Nooit gooien: onbekende/ontbrekende status → 'invalid_response' (fail-closed, geen fake success).
+  function parseSyncResponse(raw){
+    raw = raw || {};
+    var status = (PROVIDER_SYNC_STATUSES.indexOf(raw.status) !== -1)
+      ? raw.status
+      : (raw.error != null ? 'sync_failed' : 'invalid_response');
+    return {
+      provider:  raw.provider != null ? raw.provider : null,
+      status:    status,
+      syncedAt:  raw.syncedAt != null ? raw.syncedAt : null,
+      imported:  _n0(raw.imported),
+      updated:   _n0(raw.updated),
+      skipped:   _n0(raw.skipped),
+      errors:    Array.isArray(raw.errors) ? raw.errors : (raw.error != null ? [String(raw.error)] : []),
+      data:      Array.isArray(raw.data) ? raw.data : []
+    };
+  }
+  var _SYNC_OK = { success:true, no_new_data:true };
+  // Sync-status → input voor deviceConnectionState (één canonieke UI-state, geen nieuw statusmodel).
+  function syncStatusToConnectionInput(resp){
+    resp = resp || {};
+    var s = resp.status;
+    if (s === 'not_connected')                                   return { connected:false };
+    if (s === 'authorization_required' || s === 'token_expired') return { connected:true, tokenExpired:true, lastSyncAt: resp.syncedAt || null };
+    if (_SYNC_OK[s] === true)                                    return { connected:true, lastSyncStatus:'ok', lastSyncAt: resp.syncedAt || null };
+    // provider_unavailable | rate_limited | invalid_response | sync_failed → verbonden maar mislukt
+    return { connected:true, lastSyncStatus:'error', lastSyncAt: resp.syncedAt || null };
+  }
+  function isSyncOk(status){ return _SYNC_OK[status] === true; }
+
   // ── HEALTH / WEARABLE DAGMETRIEKEN → CANONIEK (Google Health API / Fitbit) ────
   // Fitbit-data komt via de Google Health API binnen (health.googleapis.com). Deze mapping
   // brengt de dag-rollups naar device_canonical.v1. HRV = RMSSD (Google Health-bron) en wordt
@@ -614,6 +652,9 @@
     resolveConcept2Watts: resolveConcept2Watts, concept2ExternalTag: concept2ExternalTag,
     concept2AlreadyImported: concept2AlreadyImported, concept2ToRowingActual: concept2ToRowingActual,
     importConcept2Workouts: importConcept2Workouts,
+    // generieke provider-sync boundary
+    PROVIDER_SYNC_STATUSES: PROVIDER_SYNC_STATUSES,
+    parseSyncResponse: parseSyncResponse, syncStatusToConnectionInput: syncStatusToConnectionInput, isSyncOk: isSyncOk,
     normalizeHealthDaily: normalizeHealthDaily,
     ADAPTER_METHODS: ADAPTER_METHODS,
     CONCEPT2_MAP: CONCEPT2_MAP,

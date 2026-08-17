@@ -4919,14 +4919,98 @@ async function renderLichaamDevices(lh){
       }catch(_){}
       var fitAction = (fitState.status==='not_connected')
         ? '<button class="btn btn-o btn-sm" style="font-size:11px" onclick="try{wearableConnect()}catch(e){}">Koppelen</button>'
-        : '<button class="btn btn-o btn-sm" style="font-size:11px" onclick="try{wearableSyncNow()}catch(e){}">Sync</button>';
-      // Concept2 Logbook: import via OAuth (geen live in browser). Eerlijk niet-gekoppeld tot server-koppeling.
+        : '<button class="btn btn-o btn-sm" style="font-size:11px" onclick="try{tkFitbitSync()}catch(e){}">Sync</button>';
+      // Concept2 Logbook: import via authenticated server-boundary (OAuth server-side, geen live in browser).
       var c2State=DeviceCore.deviceConnectionState({connected:false}, { now:now });
+      var c2Action='<button class="btn btn-o btn-sm" style="font-size:11px" onclick="try{tkConcept2Import()}catch(e){}">Training importeren</button>';
       dEl.innerHTML =
         tkRenderDeviceCard('Fitbit', '⌚', fitState, { role:'Lichaam · hartslag, HRV, slaap', actionsHtml:fitAction })+
-        tkRenderDeviceCard('Concept2 Logbook', '🚣', c2State, { role:'Training importeren · roeien, ski, bike' });
+        tkRenderDeviceCard('Concept2 Logbook', '🚣', c2State, { role:'Training importeren · roeien, ski, bike', actionsHtml:c2Action })+
+        '<div id="lich-import-msg" style="font-size:12px;color:var(--g4);margin:2px 2px 4px"></div>';
     }
   }catch(e){ /* apparaten mogen het scherm nooit breken */ }
+}
+
+// ══════════════════════════════════════════════════════════
+// GENERIEKE PROVIDER-SYNC BOUNDARY (client-helft)
+// De UI praat UITSLUITEND met een authenticated serverfunctie; provider-secrets/ruwe payloads
+// blijven server-side. Elk transport-resultaat → DeviceCore.parseSyncResponse (canoniek contract).
+// Netwerk/HTTP-fouten → canonieke error-status (nooit fake success). Fitbit=lichaam, Concept2=prestatie.
+// ══════════════════════════════════════════════════════════
+async function tkProviderRequest(fnPath, body){
+  // → canonieke sync-response (DeviceCore.parseSyncResponse). Nooit gooien.
+  try{
+    var h = (typeof wearableAuthHeaders==='function') ? wearableAuthHeaders() : null;
+    if(!h){ return DeviceCore.parseSyncResponse({ status:'authorization_required' }); }
+    var r;
+    try{
+      r = await fetch('/.netlify/functions/'+fnPath, { method:'POST', headers:Object.assign({'Content-Type':'application/json'},h), body:JSON.stringify(body||{}) });
+    }catch(netErr){ return DeviceCore.parseSyncResponse({ status:'provider_unavailable', error:'network' }); }
+    if(r.status===401||r.status===403){ return DeviceCore.parseSyncResponse({ status:'authorization_required' }); }
+    if(r.status===429){ return DeviceCore.parseSyncResponse({ status:'rate_limited' }); }
+    var d=null; try{ d=await r.json(); }catch(_){ d=null; }
+    if(!r.ok){ return DeviceCore.parseSyncResponse(d && d.status ? d : { status:'sync_failed', error:(d&&d.error)||('http '+r.status) }); }
+    if(!d){ return DeviceCore.parseSyncResponse({ status:'invalid_response' }); }
+    return DeviceCore.parseSyncResponse(d);
+  }catch(e){ return DeviceCore.parseSyncResponse({ status:'sync_failed', error:'client' }); }
+}
+function tkSyncMessage(provider, resp, importedCount){
+  switch(resp.status){
+    case 'success': return provider==='concept2'
+      ? ((importedCount>0) ? (importedCount+' training'+(importedCount===1?'':'en')+' geïmporteerd') : 'Geen nieuwe trainingen')
+      : 'Gegevens bijgewerkt';
+    case 'no_new_data': return provider==='concept2' ? 'Geen nieuwe trainingen' : 'Geen nieuwe gegevens';
+    case 'not_connected': return 'Nog niet gekoppeld';
+    case 'authorization_required':
+    case 'token_expired': return 'Opnieuw koppelen nodig';
+    case 'provider_unavailable': return 'Dienst tijdelijk niet bereikbaar. Probeer het later opnieuw.';
+    case 'rate_limited': return 'Te veel verzoeken — probeer het straks opnieuw.';
+    default: return 'Synchroniseren is niet gelukt. Probeer het opnieuw.';
+  }
+}
+function _tkImportMsg(txt){ var el=document.getElementById('lich-import-msg'); if(el) el.textContent=txt; }
+// Concept2 "Training importeren": server → canonieke workouts → idempotente rowing-actual-import.
+async function tkConcept2Import(){
+  if(typeof DeviceCore==='undefined') return;
+  _tkImportMsg('Synchroniseren…');
+  var resp = await tkProviderRequest('concept2-import', {});
+  if(!DeviceCore.isSyncOk(resp.status)){ _tkImportMsg(tkSyncMessage('concept2', resp)); return; }
+  // server levert canonieke workouts (of ruwe results → client normaliseert defensief)
+  var items = resp.data || [];
+  var workouts = items.map(function(it){
+    if(it && Array.isArray(it.metrics)) return it;                 // al canoniek
+    try{ return DeviceCore.normalizeWorkout(it, DeviceCore.CONCEPT2_MAP, {}); }catch(_){ return null; }
+  }).filter(Boolean);
+  var existing=[];
+  try{ if(typeof sbGet==='function') existing = await sbGet('sessions','&exercise_id=in.(roeien,skierg,bikeerg)&order=date.desc,created_at.desc&limit=300'); }catch(_){}
+  var plan = DeviceCore.importConcept2Workouts(workouts, existing||[], {});
+  var inserted=0;
+  for(var i=0;i<plan.toInsert.length;i++){
+    try{ if(typeof writeSessionRow==='function'){ await writeSessionRow(plan.toInsert[i]); inserted++; } }
+    catch(_){ /* deelfout: gestopt, idempotency dekt retry */ break; }
+  }
+  _tkImportMsg(tkSyncMessage('concept2', {status:'success'}, inserted));
+  try{ if(typeof renderLichaam==='function') renderLichaam(); }catch(_){}
+}
+// Fitbit "Sync": server-boundary → canonieke status → Lichaam-metrics verversen.
+async function tkFitbitSync(){
+  _tkImportMsg('Synchroniseren…');
+  // Hergebruik het bestaande wearable-sync endpoint; normaliseer de respons naar het canonieke model.
+  var raw;
+  try{
+    var h=(typeof wearableAuthHeaders==='function')?wearableAuthHeaders():null;
+    if(!h){ _tkImportMsg('Opnieuw koppelen nodig'); return; }
+    var r=await fetch('/.netlify/functions/wearable-sync',{method:'POST',headers:h});
+    var d=null; try{ d=await r.json(); }catch(_){}
+    // map bestaand {synced,daysWritten,reason} → canoniek contract
+    if(r.status===401||r.status===403) raw={status:'authorization_required'};
+    else if(!r.ok) raw={status:'sync_failed', error:(d&&d.reason)||('http '+r.status)};
+    else if(d&&d.synced) raw={status:(d.daysWritten>0?'success':'no_new_data'), imported:d.daysWritten||0, syncedAt:(d.syncedAt||null)};
+    else raw={status:'sync_failed', error:(d&&d.reason)||'onbekend'};
+  }catch(e){ raw={status:'provider_unavailable', error:'network'}; }
+  var resp=DeviceCore.parseSyncResponse(raw);
+  _tkImportMsg(tkSyncMessage('fitbit', resp));
+  try{ if(typeof renderLichaam==='function') renderLichaam(); }catch(_){}
 }
 </script>
 <script>

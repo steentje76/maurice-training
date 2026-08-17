@@ -2522,12 +2522,12 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 /* Anatomiekaart op het overzicht — beide zijden tegelijk, direct zichtbaar. */
 :is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-anatcard{padding:12px 12px 10px}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-seg{display:flex;background:var(--g1);border-radius:999px;padding:3px;gap:2px;margin-bottom:10px}
-:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-seg button{flex:1;border:0;background:none;font:800 12px var(--f);color:var(--g4);padding:9px 4px;border-radius:999px;cursor:pointer;min-height:38px}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-seg button{flex:1;border:0;background:none;font:800 12px var(--f);color:var(--g4);padding:11px 4px;border-radius:999px;cursor:pointer;min-height:44px}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-seg button.on{background:var(--card);color:var(--dark);box-shadow:0 1px 3px rgba(0,0,0,.1)}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-figpair{display:flex;gap:6px;justify-content:center;align-items:flex-end}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-figbox{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-figbox .cap{font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--g4)}
-:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-figbox svg{width:100%;height:auto;max-height:190px;display:block}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-figbox svg{width:100%;height:auto;max-height:225px;display:block}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-legend{display:flex;flex-wrap:wrap;gap:5px 11px;margin-top:9px;justify-content:center}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-legend span{display:flex;align-items:center;gap:4px;font-size:9.5px;color:var(--g6);font-weight:600}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-legend i{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
@@ -2547,6 +2547,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-metric .spark{display:block;width:100%;height:20px;margin-top:5px}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-metric .f{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:5px}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-metric .cov{font-size:9.5px;color:var(--g4);font-weight:600}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-metric .src{display:inline-block;font-size:8px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;padding:1px 6px;border-radius:6px;background:var(--g1);color:var(--g4);margin-top:5px}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-metric .stt{font-size:9.5px;font-weight:800}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-empty{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:20px 16px;text-align:center}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-health,#s-lich-metingen) .lich-empty .e1{font-size:13px;font-weight:800;color:var(--dark);margin-bottom:4px}
@@ -3661,14 +3662,15 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <!-- Fase 1 — het overzicht toont de stand van vandaag en verwijst door. De verdieping
        (anatomie, trends, metingen) staat op eigen subschermen met dezelfde renderers. -->
   <div class="scroll" style="padding-top:8px">
-    <div class="v43-lbl" style="margin:2px 0 8px">Vandaag</div>
+    <!-- Geen apart 'Vandaag'-label: de hero draagt die eyebrow zelf al. Scheelt een
+         dubbeling én ruimte, zodat de anatomie hoger in beeld komt. -->
     <div id="lich-hero"></div>
     <!-- Check-in: route naar de BESTAANDE check-in (m-hrv), dezelfde als op Home. -->
     <div id="lich-checkin"></div>
 
     <!-- Harde acceptatie-eis: bij het openen van Lichaam zijn voor- en achterzijde met de
          actuele herstel-/belastingsvisualisatie direct zichtbaar, zonder eerst te klikken. -->
-    <div class="v43-lbl" style="margin:16px 0 10px">Herstel &amp; belasting</div>
+    <div class="v43-lbl" style="margin:12px 0 8px">Herstel &amp; belasting</div>
     <div class="card lich-anatcard">
       <div class="seg lich-seg" role="tablist" aria-label="Weergave">
         <button id="lich-mode-rec" class="on" role="tab" aria-selected="true" onclick="lichSetMode('rec')">Herstel</button>
@@ -5437,7 +5439,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.27.0';
+const APP_VER = 'v4.27.1';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -17094,15 +17096,23 @@ async function renderBodyMeasurements(){
     const wd = await sbGet('weight_log','&order=date.desc,created_at.desc&limit=1');
     const wt = wd[0]?.weight;
     const bmiVal = (wt && atleet.lengte) ? Math.round(wt/Math.pow(atleet.lengte/100,2)*10)/10 : null;
+    // Een ontbrekende meting krijgt géén tegel met een streepje: dat leest als een waarde.
+    // Alleen echt gemeten waarden krijgen een tegel; wat ontbreekt staat er als tekst onder.
+    const bcVelden = [
+      {lbl:'Vet%',           val:lat.fat_pct,      unit:'%'},
+      {lbl:'Spiermassa',     val:lat.muscle_mass,  unit:' kg'},
+      {lbl:'BMR kcal',       val:lat.bmr,          unit:''},
+      {lbl:'Visceraal vet',  val:lat.visceral_fat, unit:''},
+      {lbl:'BMI',            val:bmiVal,           unit:''},
+      {lbl:'Gewicht',        val:wt,               unit:' kg'}
+    ];
+    const bcAanwezig = bcVelden.filter(v=>v.val!=null&&v.val!=='');
+    const bcOntbreekt = bcVelden.filter(v=>v.val==null||v.val==='').map(v=>v.lbl.replace(' kcal',''));
     document.getElementById('profiel-bc-card').innerHTML = `
-      <div class="bc-grid">
-        <div class="bc-box"><div class="bc-val">${lat.fat_pct||'—'}${lat.fat_pct?'%':''}</div><div class="bc-lbl">Vet%</div></div>
-        <div class="bc-box"><div class="bc-val">${lat.muscle_mass||'—'}${lat.muscle_mass?' kg':''}</div><div class="bc-lbl">Spiermassa</div></div>
-        <div class="bc-box"><div class="bc-val">${lat.bmr||'—'}</div><div class="bc-lbl">BMR kcal</div></div>
-        <div class="bc-box"><div class="bc-val">${lat.visceral_fat||'—'}</div><div class="bc-lbl">Visceraal vet</div></div>
-        ${bmiVal?`<div class="bc-box"><div class="bc-val">${bmiVal}</div><div class="bc-lbl">BMI</div></div>`:''}
-        ${wt?`<div class="bc-box"><div class="bc-val">${wt} kg</div><div class="bc-lbl">Gewicht</div></div>`:''}
-      </div>
+      ${bcAanwezig.length?`<div class="bc-grid">${bcAanwezig.map(v=>
+        `<div class="bc-box"><div class="bc-val">${v.val}${v.unit}</div><div class="bc-lbl">${v.lbl}</div></div>`).join('')}</div>`
+        :`<div class="tk-empty"><div class="tk-empty-emo">📏</div>Deze meting bevat nog geen samenstellingswaarden.</div>`}
+      ${bcOntbreekt.length?`<div style="font-size:11px;color:var(--g4);font-weight:600;margin-top:8px;line-height:1.45">Niet gemeten: ${bcOntbreekt.join(' · ')}</div>`:''}
       ${lat.edema?`<div style="background:#fff8e1;border-left:3px solid var(--y);border-radius:0 8px 8px 0;padding:8px 10px;font-size:11px;color:#666;margin-top:8px">⚠️ Oedeem: ${lat.edema} — Tanita waarden minder betrouwbaar</div>`:''}`;
     
     // Afmetingen: eigen kolommen, met fallback op legacy note-veld voor oude records
@@ -18730,7 +18740,7 @@ async function renderLichaamPremium(){
       lichTrendCard('hrv','HRV','ms',0,S.hrv,true)+
       lichTrendCard('rhr','Rust HR','bpm',0,S.rhr,false)+
       lichTrendCard('slaap','Slaap','',1,S.sleep,true)+
-      lichTrendCard('gewicht','Gewicht','kg',1,S.gewicht,false);
+      lichTrendCard('gewicht','Gewicht','kg',1,S.gewicht,false,(wl&&wl.scale)?wl.scale:'Ingevoerd');
     const sub=document.getElementById('lich-trend-sub');
     if(sub) sub.textContent='laatste '+TK_LICH_TREND_DAYS+' dagen';
   }
@@ -18891,14 +18901,17 @@ function lichSpark(series,color){
   flush();
   return '<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true">'+out+'</svg>';
 }
-function lichTrendCard(key,label,unit,dec,series,upIsGood){
+function lichTrendCard(key,label,unit,dec,series,upIsGood,bronFallback){
   const pts=(series||[]).filter(x=>x&&x.value!=null);
   const n=pts.length, days=(series||[]).length||TK_LICH_TREND_DAYS;
   if(!n) return '<button class="lich-metric" onclick="openLichaamMetric(\''+key+'\')">'+
-    '<div class="k">'+escHtml(label)+'</div><div class="v" style="color:var(--g4)">—</div>'+
-    '<div class="dl" style="color:var(--g4)">geen meting</div>'+
+    '<div class="k">'+escHtml(label)+'</div><div class="v" style="color:var(--g4)">niet gemeten</div>'+
+    '<div class="dl" style="color:var(--g4)">nog geen gegevens</div>'+
     '<div class="f"><span class="cov">0 van '+days+' dagen</span></div><span class="chev" aria-hidden="true">›</span></button>';
-  const last=pts[pts.length-1].value;
+  const laatste=pts[pts.length-1];
+  const last=laatste.value;
+  // Bron van de meest recente meting — komt uit healthSeries(...).source, niet uit de UI.
+  const bron=laatste.source||bronFallback||'';
   const dc=(typeof DeviceCore!=='undefined')?DeviceCore:null;
   let t=null; try{ t=dc?dc.healthTrend(series):null; }catch(_){}
   const toonTrend = n>=6 && t && t.dir!=='flat';
@@ -18912,6 +18925,7 @@ function lichTrendCard(key,label,unit,dec,series,upIsGood){
     '<div class="dl" style="color:'+col+'">'+(toonTrend?(t.dir==='up'?'↑':'↓')+' '+(t.dir==='up'?'stijgend':'dalend'):'geen trend')+'</div>'+
     lichSpark(series,col)+
     '<div class="f"><span class="cov">'+n+' van '+days+' dagen</span><span class="stt" style="color:'+col+'">'+stat+'</span></div>'+
+    (bron?'<div class="src">'+escHtml(bron)+'</div>':'')+
     '<span class="chev" aria-hidden="true">›</span></button>';
 }
 

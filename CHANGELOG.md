@@ -1,5 +1,53 @@
 # Trainingskompas — Changelog
 
+## v4.27.1 — 17 augustus 2026 (Lichaam polish + UI freeze)
+
+Gerichte polish op de bevroren Lichaam-baseline. Geen redesign, geen mock-up, geen nieuwe kleuren, geen nieuwe architectuur.
+
+### Typografie
+Het label liep aan elkaar vast als "HERSTELTRENDSlaatste 30 dagen". De labelregel is nu een flexregel met ruimte ertussen: **HERSTELTRENDS** links, *laatste 30 dagen* rechts. De rest van de pagina is nagelopen; geen vergelijkbare fouten gevonden.
+
+Het losse label "Vandaag" boven de hero is verwijderd: de hero draagt die eyebrow zelf al. Dat scheelde een dubbeling én 42 px, waardoor de anatomie hoger in beeld komt.
+
+### Anatomische visualisatie
+Figuren van 190 naar **225 px** (+18%, binnen de gevraagde 15–25%). De kaart blijft rustig: toggle, twee figuren, legenda, vier spierregels en voettekst. Labels VOORZIJDE / ACHTERZIJDE, legenda en kleuren ongewijzigd.
+
+Positie op vijf viewports gemeten — de figuren zijn op alle vijf direct zichtbaar bij het openen van Lichaam:
+
+| Viewport | Bovenkant figuur | Zichtbaar |
+|---|---|---|
+| 360 × 640 | 607 px | ja |
+| 360 × 780 | 607 px | ja |
+| 390 × 844 | 569 px | ja |
+| 412 × 915 | 551 px | ja |
+| 430 × 932 | 551 px | ja |
+
+### Hersteltrends — bronstatus toegevoegd
+Elke trendkaart toont nu de bron van de meest recente meting (Check-in, Fitbit, Google Health, of de weegschaalbron bij gewicht). De bron komt uit `DeviceCore.healthSeries(...).source`; de UI leidt hem niet zelf af.
+
+De lege staat zegt nu "niet gemeten · nog geen gegevens" in plaats van een streepje, zodat een ontbrekende meting niet als waarde leest. Onder zes meetpunten wordt geen trend getoond.
+
+### Meetgegevens — ontbrekend is ontbrekend
+`renderBodyMeasurements` gaf elke samenstellingswaarde een tegel, ook zonder meting: een groot "—" naast een gevulde BMI leest als nul. Alleen echt gemeten waarden krijgen nu een tegel; wat ontbreekt staat eronder als "Niet gemeten: Vet% · Spiermassa · BMR · Visceraal vet". De `||`-controles zijn vervangen door `!= null`, zodat een echte 0 niet meer als ontbrekend wordt gelezen.
+
+### Aanraakvlakken
+De Herstel/Belasting-schakelaar van 38 naar 44 px. Enige resterende target onder 44 px op Lichaam is de ronde `＋`-knop in de header (36 × 36) — dat is de app-brede `.ibtn`-klasse die ook op Home en Training staat; die laat ik ongemoeid.
+
+### Getest
+- **Home en Training: 0 verschillende pixels van 329.160** ten opzichte van `git show 27fb416:index.html`, identieke fixtures, 390 × 844.
+- Alle 42 suites groen, `logic_tests` 250/250, release gate groen, `sw-guard` groen.
+- Vijf mobiele viewports: geen horizontale overflow, geen kaart buiten beeld, bottom navigation onderaan verankerd.
+- Routecontrole over dertien schermen, geen consolefouten.
+- Slaap consistent tussen hero en trendkaart (6u 36m op beide) — geen dubbele /60- of ×60-conversie.
+
+### Gewijzigd
+`APP_VER` v4.27.0 → **v4.27.1**; `sw.js` cache → `trainingskompas-v42701`. `CORE_SIG` ongewijzigd — `core/*.js` is niet aangeraakt.
+
+### Bewust niet gewijzigd
+Home, Training, bottom navigation, Calculation Engine, Decision Engine, Context Engine, sleep-unit normalisatie (`sleep_unit.v1`, `normalizeSleepHours`, `sleepToHours`, `minutesToHours`, `MAX_SLEEP_HOURS = 20`), wearable-sync, Fitbit, Google Health, Concept2, database, schema, data, bestaande tests, release gates, service-worker-guard, de anatomie-SVG's, de kleurtokens en de app-brede `.ibtn`.
+
+---
+
 ## v4.27.0 — 17 augustus 2026 (Visual restore Home & Training + Lichaam-overzicht volgens mock-up)
 
 ### Blokkerend opgelost — lege schermsecties

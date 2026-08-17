@@ -106,8 +106,36 @@ _movekitVideo = null; _posterReturn = null;
 // ── PROGRAMMA: één prescription-truth; gewicht volgt de (recovery-aangepaste) RPE (C3 by construction) ──
 const CalcCore = require('./calculation.js');
 const repsPrefillFromRange = eval('(' + extractFn('repsPrefillFromRange') + ')');
+const resolvePrescriptionRepTarget = eval('(' + extractFn('resolvePrescriptionRepTarget') + ')');
 const suggestWeightForRepsRpe = eval('(' + extractFn('suggestWeightForRepsRpe') + ')');
 const computeProgPrefill = eval('(' + extractFn('computeProgPrefill') + ')');
+
+// ── REP-RANGE PREFILL: range → MAXIMUM; exact → exact; ongeldig → '' (geen fabricatie) ──
+eq(resolvePrescriptionRepTarget('3-5'), 5, '"3-5" → 5 (maximum van de range)');
+eq(resolvePrescriptionRepTarget('4-6'), 6, '"4-6" → 6');
+eq(resolvePrescriptionRepTarget('5-8'), 8, '"5-8" → 8');
+eq(resolvePrescriptionRepTarget('6-10'), 10, '"6-10" → 10');
+eq(resolvePrescriptionRepTarget('8-12'), 12, '"8-12" → 12');
+eq(resolvePrescriptionRepTarget('10-15'), 15, '"10-15" → 15');
+eq(resolvePrescriptionRepTarget('3–5'), 5, 'en-dash "3–5" → 5');
+eq(resolvePrescriptionRepTarget('3 – 5'), 5, 'spaties "3 – 5" → 5');
+eq(resolvePrescriptionRepTarget('3-5 reps'), 5, '"3-5 reps" → 5');
+eq(resolvePrescriptionRepTarget('5'), 5, 'exact "5" → 5');
+eq(resolvePrescriptionRepTarget('10'), 10, 'exact "10" → 10');
+eq(resolvePrescriptionRepTarget(5), 5, 'getal 5 → 5');
+eq(resolvePrescriptionRepTarget(10), 10, 'getal 10 → 10');
+eq(resolvePrescriptionRepTarget(null), '', 'null → "" (geen fabricatie)');
+eq(resolvePrescriptionRepTarget(undefined), '', 'undefined → ""');
+eq(resolvePrescriptionRepTarget(''), '', 'leeg → ""');
+eq(resolvePrescriptionRepTarget('abc'), '', 'onleesbaar → ""');
+eq(resolvePrescriptionRepTarget(0), '', '0 → "" (geen 0-reps)');
+// computeProgPrefill: prefill-reps = MAXIMUM, maar gewicht ONGEWIJZIGD (op low-end)
+const pr = computeProgPrefill({reps:'3-5', rpe:'8', sets:4}, {weight:100, reps:1}, 62);
+eq(pr.reps, 5, 'prog-prefill reps = 5 (max), NIET low-end 3 en NIET vorige-reps 1');
+eq(parseFloat(pr.kg), suggestWeightForRepsRpe(62, parseFloat(repsPrefillFromRange('3-5')), '8'), 'prog-prefill gewicht ongewijzigd (berekend op low-end, niet op max)');
+// adversarieel: vorige reps (1 of 12) mag de prescription-prefill NOOIT overschrijven — resolver is bronloos
+eq(resolvePrescriptionRepTarget('3-5'), 5, 'adversarieel: prefill blijft 5 ongeacht vorige reps=1');
+
 const p8  = computeProgPrefill({reps:'3-5', rpe:'8',   sets:4}, null, 62);
 const p75 = computeProgPrefill({reps:'3-5', rpe:'7.5', sets:4}, null, 62);
 ok(parseFloat(p75.kg) <  parseFloat(p8.kg), 'Programma: lagere (recovery-)RPE → lichter gewicht (gewicht volgt RPE)');

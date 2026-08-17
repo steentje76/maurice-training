@@ -103,5 +103,33 @@ eq(E.ruleBacking({}, store).backed, false, 'regel zonder refs → niet backed');
 eq(E.ruleBacking({}, store).reason, 'no-refs', 'reden: no-refs (geen stille onderbouwing)');
 eq(E.ruleBacking({evidenceRefs:['weg']}, store).reason, 'missing-evidence', 'reden: missing-evidence');
 
+// ── OPEN-METEO REQUEST-LAAG (puur; geen fetch/geen key) ──
+const req = W.buildOpenMeteoRequest(52.370216, 4.895168, {});
+ok(req && req.url.indexOf('https://api.open-meteo.com/v1/forecast?') === 0, 'niet-commercieel → publieke open-meteo host');
+ok(/latitude=52\.37\b/.test(req.url), 'privacy: lat afgerond naar 2 decimalen (52.37)');
+ok(/longitude=4\.9\b/.test(req.url) || /longitude=4\.9$/.test(req.url) || req.params.longitude===4.9, 'privacy: lng afgerond naar 2 decimalen');
+ok(/current=/.test(req.url) && req.params.current.indexOf('temperature_2m')!==-1 && req.params.current.indexOf('wind_speed_10m')!==-1, 'current-velden aanwezig (temp + wind)');
+eq(req.params.timezone, 'auto', 'timezone=auto');
+eq(req.params.wind_speed_unit, 'kmh', 'wind default km/h (OPENMETEO_MAP converteert → m/s)');
+eq(req.params.precipitation_unit, 'mm', 'precip unit mm');
+ok(req.url.indexOf('apikey')===-1, 'geen key in niet-commerciële request');
+// consistentie request ↔ OPENMETEO_MAP: elk single-level current-pad zit in de request
+const mapCurrent = W.OPENMETEO_MAP.fields.map(f=>String(f.path).replace(/^current\./,'')).filter(n=>n.indexOf('.')===-1);
+ok(mapCurrent.every(n=>req.params.current.indexOf(n)!==-1), 'alle OPENMETEO_MAP-velden zitten in de current-request (request↔normalisatie consistent)');
+// ongeldige coördinaten → null (geen fabricatie)
+eq(W.buildOpenMeteoRequest(NaN, 5, {}), null, 'NaN-lat → null');
+eq(W.buildOpenMeteoRequest(95, 5, {}), null, 'lat buiten [-90,90] → null');
+eq(W.buildOpenMeteoRequest(50, 200, {}), null, 'lng buiten [-180,180] → null');
+eq(W.buildOpenMeteoRequest(undefined, undefined, {}), null, 'ontbrekende coördinaten → null');
+// commercieel: customer-host + apikey (door app geleverd, niet gehardcodeerd)
+const cReq = W.buildOpenMeteoRequest(52.37, 4.9, {commercial:true, apiKey:'DEMO'});
+ok(cReq.url.indexOf('customer-api.open-meteo.com')!==-1, 'commercieel → customer-host');
+ok(/apikey=DEMO/.test(cReq.url), 'commercieel → apikey uit opties (niet gehardcodeerd)');
+eq(cReq.commercial, true, 'commercial-vlag');
+// end-to-end: request-current → gesimuleerd antwoord → normalizeWeather geldig
+const simResp = { current: { time:'2026-08-16T10:00', temperature_2m:18, apparent_temperature:17, relative_humidity_2m:60, wind_speed_10m:18, wind_gusts_10m:36, precipitation:0, uv_index:3, weather_code:1 } };
+const wc = W.normalizeWeather(simResp, W.OPENMETEO_MAP, {});
+close(wc.wind_ms, 5, 'end-to-end: 18 km/h → 5 m/s canoniek (request↔normalisatie sluit)');
+
 console.log('\nPhase C weather+evidence: RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail ? 1 : 0);

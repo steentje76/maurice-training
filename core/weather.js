@@ -190,6 +190,46 @@
     ]
   };
 
+  // ── OPEN-METEO REQUEST-LAAG (puur; geen fetch, geen key hardcoded) ────────
+  // Bouwt de forecast-request-URL die de app (na locatie-consent + eventueel betaald
+  // commercieel plan) kan fetchen. Velden komen 1-op-1 uit OPENMETEO_MAP zodat request en
+  // normalisatie consistent zijn. Privacy: lat/lng worden standaard afgerond naar ~2 decimalen
+  // (grofste bruikbare resolutie). Ongeldige coördinaten → null (geen fabricatie).
+  // Bron: officiële docs (open-meteo.com/en/docs): api.open-meteo.com/v1/forecast; wind default km/h
+  // (OPENMETEO_MAP converteert km/h→m/s); commercieel = customer-host + apikey (nooit hardcoden).
+  function buildOpenMeteoRequest(lat, lng, opts){
+    opts = opts || {};
+    var la = Number(lat), lo = Number(lng);
+    if (!isFinite(la) || !isFinite(lo) || la < -90 || la > 90 || lo < -180 || lo > 180) return null;
+    var prec = (opts.precisionDecimals != null) ? opts.precisionDecimals : 2; // dataminimalisatie
+    var f = Math.pow(10, prec);
+    la = Math.round(la * f) / f; lo = Math.round(lo * f) / f;
+    // 'current'-velden gekoppeld aan de OPENMETEO_MAP-paden (current.<veld>), zodat het antwoord
+    // exact door normalizeWeather(…, OPENMETEO_MAP) genormaliseerd kan worden.
+    var current = opts.current || OPENMETEO_MAP.fields
+      .map(function (fd){ return String(fd.path).replace(/^current\./, ''); })
+      .filter(function (n){ return n.indexOf('.') === -1; });
+    var params = {
+      latitude: la, longitude: lo,
+      current: current.join(','),
+      timezone: opts.timezone || 'auto',
+      wind_speed_unit: opts.windSpeedUnit || 'kmh',   // OPENMETEO_MAP verwacht km/h → m/s-conversie
+      precipitation_unit: opts.precipitationUnit || 'mm'
+    };
+    var commercial = !!(opts.commercial && opts.apiKey);
+    var host = commercial ? 'https://customer-api.open-meteo.com/v1/forecast'
+                          : 'https://api.open-meteo.com/v1/forecast';
+    if (commercial) params.apikey = opts.apiKey; // door de app geleverd; nooit in deze core opgeslagen
+    var qs = Object.keys(params).map(function (k){
+      return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+    }).join('&');
+    return {
+      provider: 'open-meteo', host: host, url: host + '?' + qs, params: params,
+      commercial: commercial, requiresKeyForCommercial: true,
+      map: 'OPENMETEO_MAP', roundedTo: prec
+    };
+  }
+
   var WeatherCore = {
     VERSIONS: VERSIONS,
     WEATHER_SENSITIVE: WEATHER_SENSITIVE,
@@ -197,7 +237,8 @@
     OPENMETEO_MAP: OPENMETEO_MAP, OPENWEATHER_MAP: OPENWEATHER_MAP,
     toCelsius: toCelsius, toMs: toMs, toMmh: toMmh,
     createWeather: createWeather, normalizeField: normalizeField, normalizeWeather: normalizeWeather,
-    weatherApplies: weatherApplies, isWeatherAdapter: isWeatherAdapter
+    weatherApplies: weatherApplies, isWeatherAdapter: isWeatherAdapter,
+    buildOpenMeteoRequest: buildOpenMeteoRequest
   };
 
   if (typeof module !== 'undefined' && module.exports) { module.exports = WeatherCore; }

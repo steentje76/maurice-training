@@ -137,6 +137,33 @@ function recordShape(point, recordKey) {
   return (rec && typeof rec === 'object') ? Object.keys(rec) : [];
 }
 
+// ── TODAY-SEMANTIEK (Europe/Amsterdam) ────────────────────────────────────────
+// "Vandaag" wordt bepaald in Europe/Amsterdam, NIET blind in UTC. Tussen 00:00–02:00
+// Amsterdam (22:00–24:00 UTC de vorige dag) verschilt de UTC-datum een dag; dat mag
+// nooit tot een verkeerde "vandaag" leiden. Puur + testbaar (timestamp injecteerbaar).
+function amsterdamToday(nowMs) {
+  var d = (nowMs == null) ? new Date() : new Date(nowMs);
+  try {
+    // en-CA levert ISO-vorm YYYY-MM-DD
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Amsterdam', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+  } catch (e) {
+    return d.toISOString().split('T')[0]; // fallback (zou in Node met ICU nooit nodig zijn)
+  }
+}
+
+// Eerlijke vandaag-samenvatting uit de per-datum-merge. Onderscheidt:
+//  fetched  = er bestond een datapunt voor vandaag (key aanwezig in byDate[today]) → GEEN bewijs van waarde
+//  parsed   = er is een bruikbare WAARDE voor vandaag (value != null) → dit is wat de UI toont
+// Zo classificeert één live sync vandaag ondubbelzinnig: fetched:false → A (upstream heeft vandaag niet);
+// fetched:true & parsed:false → B (parser/veldnaam); parsed:true → data is er (schrijf/UI verder controleren).
+function todaySummary(byDate, today) {
+  var v = (byDate && byDate[today]) || {};
+  var has = Object.prototype.hasOwnProperty;
+  var fetched = { hrv: has.call(v, 'hrv'), rhr: has.call(v, 'rhr'), sleep: has.call(v, 'sleep') };
+  var parsed  = { hrv: v.hrv != null, rhr: v.rhr != null, sleep: v.sleep != null };
+  return { date: today, available: !!(parsed.hrv || parsed.rhr || parsed.sleep), metrics: parsed, fetched: fetched };
+}
+
 // Canoniek sync-resultaat uit tellingen (past 1-op-1 op DeviceCore.parseSyncResponse aan de client).
 // success ALLEEN als er daadwerkelijk iets is geschreven; anders no_new_data. Nooit fake success.
 function syncResult(counts) {
@@ -155,6 +182,7 @@ module.exports = {
   provenanceNote: provenanceNote, contributed: contributed, buildRow: buildRow,
   classifyWrite: classifyWrite, dailyDateOf: dailyDateOf, sessionDateOf: sessionDateOf,
   sleepMinutesOf: sleepMinutesOf, pointShape: pointShape, recordShape: recordShape, syncResult: syncResult,
+  amsterdamToday: amsterdamToday, todaySummary: todaySummary,
   // productie-shape parsers (nested Google-Health records)
   parseHrvPoint: parseHrvPoint, parseRhrPoint: parseRhrPoint, parseSleepPoint: parseSleepPoint
 };

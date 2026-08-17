@@ -91,6 +91,8 @@ exports.handler = async function (event) {
     const since = new Date(); since.setDate(since.getDate() - 7);
     const sinceDate = since.toISOString().split('T')[0];
     const dateTo = new Date().toISOString().split('T')[0];
+    // "Vandaag" in Europe/Amsterdam (niet blind UTC) → eerlijke today-semantiek + diagnostiek.
+    const todayAms = LIB.amsterdamToday(Date.now());
     const authFetch = (url) => fetch(url, { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } });
 
     const [hrvR, rhrR, sleepR] = await Promise.all([
@@ -109,29 +111,35 @@ exports.handler = async function (event) {
     sleepData.forEach(p => { const r = LIB.parseSleepPoint(p); if (r && r.date) { (byDate[r.date] ||= {}).sleep = r.value; if (r.value != null) parsedSleep++; } });
 
     let imported = 0, updated = 0, skipped = 0;
+    let todayWrite = 'none'; // 'imported' | 'updated' | 'skipped' | 'none' — wat gebeurde er specifiek met VANDAAG
     for (const [date, vals] of Object.entries(byDate)) {
       const cls = LIB.classifyWrite(vals, false); // voorlopige klasse; existing bepaalt update vs import
-      if (cls === 'skipped') { skipped++; continue; }
+      if (cls === 'skipped') { skipped++; if (date === todayAms) todayWrite = 'skipped'; continue; }
       const existingRes = await fetch(`${supabaseUrl}/rest/v1/hrv_log?user_id=eq.${userId}&date=eq.${date}&limit=1`, { headers: sbHeaders });
       const [existing] = await existingRes.json();
       const built = LIB.buildRow(date, userId, vals, existing);
       if (existing) {
         await fetch(`${supabaseUrl}/rest/v1/hrv_log?id=eq.${existing.id}`, { method: 'PATCH', headers: { ...sbHeaders, Prefer: 'return=minimal' }, body: JSON.stringify(built.row) });
-        updated++;
+        updated++; if (date === todayAms) todayWrite = 'updated';
       } else {
         await fetch(`${supabaseUrl}/rest/v1/hrv_log`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'return=minimal' }, body: JSON.stringify(built.row) });
-        imported++;
+        imported++; if (date === todayAms) todayWrite = 'imported';
       }
     }
+    // Eerlijke vandaag-samenvatting (Amsterdam): fetched vs parsed vs written — bewijst waar de keten VANDAAG stopt.
+    const today = LIB.todaySummary(byDate, todayAms);
+    today.written = todayWrite;
 
     // DIAGNOSTIEK — uitsluitend tellingen/statussen/structuur (nooit tokens/waarden/PII).
     // `recordShape` toont de GENESTE leaf-keys (bv. van dailyRestingHeartRate) zodat een afwijkend
     // RHR-veld direct zichtbaar is zonder ooit een waarde te loggen.
     console.log('wearable-sync diag', JSON.stringify({
-      provider: 'google_health', dateFrom: sinceDate, dateTo,
+      provider: 'google_health', dateFrom: sinceDate, dateTo, today: todayAms,
       http: { hrv: hrvR.status, rhr: rhrR.status, sleep: sleepR.status },
       fetched: { hrv: hrvData.length, rhr: rhrData.length, sleep: sleepData.length },
       parsed: { hrv: parsedHrv, rhr: parsedRhr, sleep: parsedSleep },
+      // VANDAAG apart: onderscheidt A (upstream heeft vandaag niet: fetched=false) van B (veldnaam: fetched=true, parsed=false)
+      todayDiag: { date: todayAms, fetched: today.fetched, parsed: today.metrics, written: today.written, available: today.available },
       shape: { hrv: LIB.pointShape(hrvData[0]), rhr: LIB.pointShape(rhrData[0]), sleep: LIB.pointShape(sleepData[0]) },
       recordShape: { hrv: LIB.recordShape(hrvData[0], 'dailyHeartRateVariability'), rhr: LIB.recordShape(rhrData[0], 'dailyRestingHeartRate'), sleep: LIB.recordShape(sleepData[0], 'sleep') },
       written: { imported, updated, skipped }
@@ -141,9 +149,13 @@ exports.handler = async function (event) {
     await markSyncStatus(supabaseUrl, sbHeaders, userId, imported + updated > 0 ? 'ok' : 'no_new_data');
     // Backward-compat velden (synced, daysWritten) + canoniek contract + PER-METRIC tellingen
     // (client maakt hiermee "HRV 8 dagen · slaap 8 dagen · rusthartslag geen nieuwe data").
+    // `today` maakt EERLIJK expliciet of vandaag beschikbaar is — "success" (er is íéts in 7 dagen
+    // geschreven) mag niet verward worden met "vandaag is binnen". available/metrics komen UITSLUITEND
+    // uit echt geparste Google-Health-data voor de Amsterdamse datum van vandaag.
     return jsonBody({ ...result, syncedAt: new Date().toISOString(),
       fetched: { hrv: hrvData.length, rhr: rhrData.length, sleep: sleepData.length },
-      metrics: { hrv: parsedHrv, rhr: parsedRhr, sleep: parsedSleep } });
+      metrics: { hrv: parsedHrv, rhr: parsedRhr, sleep: parsedSleep },
+      today: today });
   } catch (e) {
     console.error('wearable-sync exception', e && e.message);
     try { await markSyncStatus(supabaseUrl, sbHeaders, undefined, 'error: ' + (e && e.message)); } catch (_) {}

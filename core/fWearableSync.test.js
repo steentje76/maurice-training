@@ -93,5 +93,28 @@ eq(L.parseHrvPoint({ dailyHeartRateVariability:{ date:'2026-08-15T00:00:00Z', av
 eq(L.parseHrvPoint({ date:'2026-08-14', dailyHeartRateVariability:{ rmssdMillis:38 } }).value, 38, 'PS9: legacy rmssdMillis-fallback behouden');
 eq(L.parseHrvPoint({ date:'2026-08-14', dailyHeartRateVariability:{ rmssdMillis:38 } }).date, '2026-08-14', 'PS9: legacy top-level date-fallback behouden');
 
+// ── TODAY-SEMANTIEK (Europe/Amsterdam) ──
+// zomertijd: 23:30 UTC op 16-08 = 01:30 Amsterdam op 17-08 → today MOET 17-08 zijn (niet 16 zoals UTC)
+eq(L.amsterdamToday(Date.UTC(2026, 7, 16, 23, 30)), '2026-08-17', 'TZ1: 23:30 UTC → Amsterdam vandaag = 17-08 (niet UTC-16)');
+eq(L.amsterdamToday(Date.UTC(2026, 7, 17, 9, 33)), '2026-08-17', 'TZ2: 09:33 UTC → Amsterdam 17-08');
+// wintertijd (UTC+1): 23:30 UTC 15-01 = 00:30 Amsterdam 16-01
+eq(L.amsterdamToday(Date.UTC(2026, 0, 15, 23, 30)), '2026-01-16', 'TZ3: wintertijd off-by-one correct');
+
+// todaySummary: onderscheidt fetched (datapunt bestond) vs parsed (bruikbare waarde) → classificeert A/B/C
+var _T = '2026-08-17';
+var sA = L.todaySummary({ '2026-08-16': { hrv: 29, rhr: 58, sleep: 432 } }, _T);
+eq(sA.available, false, 'TS-A: geen vandaag-data → available=false');
+eq(sA.fetched.hrv, false, 'TS-A: fetched.hrv=false (upstream heeft vandaag niet → classificatie A)');
+var sB = L.todaySummary({ '2026-08-17': { hrv: null, rhr: null } }, _T);
+eq(sB.fetched.hrv, true, 'TS-B: fetched.hrv=true (datapunt bestond)');
+eq(sB.metrics.hrv, false, 'TS-B: parsed.hrv=false → classificatie B (veldnaam/parser)');
+eq(sB.available, false, 'TS-B: geen bruikbare waarde → available=false');
+var sC = L.todaySummary({ '2026-08-17': { hrv: 31, rhr: null, sleep: 420 } }, _T);
+eq(sC.available, true, 'TS-C: vandaag heeft data → available=true');
+eq(sC.metrics.hrv, true, 'TS-C: metrics.hrv=true');
+eq(sC.metrics.rhr, false, 'TS-C: metrics.rhr=false (rhr ontbreekt vandaag)');
+eq(sC.metrics.sleep, true, 'TS-C: metrics.sleep=true');
+eq(sC.date, _T, 'TS-C: datum = Amsterdamse vandaag');
+
 console.log('\nwearable-sync PURE helpers: RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail ? 1 : 0);

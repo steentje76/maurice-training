@@ -1,0 +1,23 @@
+<!--
+  Toe te voegen aan android/app/src/main/AndroidManifest.xml
+  (gegenereerd door `npx cap add android`), BINNEN <manifest> maar BUITEN <application>.
+
+  Vraag deze permissies NIET bij app-start; @capacitor-community/bluetooth-le
+  vraagt ze runtime bij de eerste scan (na [Apparaat koppelen]).
+-->
+
+<!-- Android 12+ (API 31+): scannen + verbinden zonder locatie-afleiding -->
+<uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+    android:usesPermissionFlags="neverForLocation" />
+<uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+<!-- Android <= 11 (API <= 30): legacy BLE + verplichte locatie voor BLE-scan -->
+<uses-permission android:name="android.permission.BLUETOOTH"
+    android:maxSdkVersion="30" />
+<uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
+    android:maxSdkVersion="30" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
+    android:maxSdkVersion="30" />
+
+<!-- BLE-hardware vereist -->
+<uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />

@@ -144,5 +144,42 @@ eq(wBadPress.quality.pressure_hpa, 'implausible', 'luchtdruk 500 hPa (< min 850)
 // request bevat surface_pressure zodat de indoor-context luchtdruk kan tonen
 ok(req.params.current.indexOf('surface_pressure')!==-1, 'request-current bevat surface_pressure (indoor luchtdruk-context)');
 
+// ── EVIDENCE-GATED ADVISORY (generiek; weer is slechts een voorbeeld-context) ──
+// HARDE REGEL: zonder gevalideerde evidence-entry → GEEN advies, ook al is de conditie waar.
+const hotCtx = { apparent_temperature: 30, humidity_pct: 60 };
+const heatRule = { id:'heat-hydration', metric:'hydration', when:{path:'apparent_temperature', op:'gte', value:28},
+  evidenceRefs:['acsm:heat-2007'], confidence:0.7, explanation:'Bij hoge gevoelstemperatuur: extra hydratatie overwegen.' };
+// 1) Conditie waar, MAAR geen evidence in de store → emit false (geen beslissing zonder bewijs)
+const emptyStore = E.makeStore([]);
+const a0 = E.evaluateAdvisory(heatRule, hotCtx, emptyStore);
+eq(a0.applicable, true, 'advisory: conditie (gevoelstemp≥28) waar');
+eq(a0.backed, false, 'advisory: geen evidence → niet onderbouwd');
+eq(a0.emit, false, 'advisory: GEEN advies zonder gevalideerde evidence (harde poort)');
+eq(a0.advisory, null, 'advisory: geen advies-payload');
+eq(a0.reason, 'missing-evidence', 'advisory: reden missing-evidence');
+// 2) Volledige, gevalideerde evidence-entry aanwezig → emit true met advies + confidence begrensd
+const heatStore = E.makeStore([{ id:'acsm:heat-2007', source:'ACSM', title:'Exercise and Fluid Replacement',
+  date:'2007', identifier:'10.1249/mss.0b013e31802ca597', study_type:'guideline', confidence:'high', validated_by:'maurice' }]);
+const a1 = E.evaluateAdvisory(heatRule, hotCtx, heatStore);
+eq(a1.emit, true, 'advisory: met gevalideerde evidence → advies toegestaan');
+eq(a1.backed, true, 'advisory: onderbouwd');
+eq(a1.advisory.metric, 'hydration', 'advisory: metric hydration');
+eq(a1.advisory.confidence, 0.7, 'advisory: confidence begrensd/behouden');
+ok(a1.advisory.evidenceRefs.indexOf('acsm:heat-2007')!==-1, 'advisory: resolved evidence-ref meegegeven');
+// 3) Conditie NIET waar (koel) → emit false ongeacht bewijs
+const a2 = E.evaluateAdvisory(heatRule, { apparent_temperature: 12 }, heatStore);
+eq(a2.applicable, false, 'advisory: koele context → niet van toepassing');
+eq(a2.emit, false, 'advisory: niet-toepasselijk → geen advies');
+eq(a2.reason, 'not-applicable', 'advisory: reden not-applicable');
+// 4) Regel zonder conditie → nooit stille toepassing
+const a3 = E.evaluateAdvisory({ id:"x", metric:"y", evidenceRefs:["acsm:heat-2007"] }, hotCtx, heatStore);
+eq(a3.applicable, false, 'advisory: geen when → niet van toepassing (geen stille toepassing)');
+eq(a3.emit, false, 'advisory: geen when → geen advies');
+// 5) Onvolledige evidence-entry (unvalidated) → geen advies
+const badStore = E.makeStore([{ id:'acsm:heat-2007', source:'ACSM', title:'x' }]); // mist meeste meta
+const a4 = E.evaluateAdvisory(heatRule, hotCtx, badStore);
+eq(a4.backed, false, 'advisory: onvolledige evidence → niet onderbouwd');
+eq(a4.emit, false, 'advisory: unvalidated evidence → geen advies');
+
 console.log('\nPhase C weather+evidence: RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail ? 1 : 0);

@@ -68,10 +68,15 @@ const hrvPoint = { dataSource:'x', dailyHeartRateVariability: { date:{year:2026,
 const rHrv = L.parseHrvPoint(hrvPoint);
 eq(rHrv.value, 42, 'PS1: HRV genest averageHeartRateVariabilityMilliseconds=42');
 eq(rHrv.date, '2026-08-17', 'PS1: HRV datum uit genest date-object {year,month,day}');
-const rhrPoint = { dataSource:'x', dailyRestingHeartRate: { date:{year:2026,month:8,day:17}, beatsPerMinute: 54 } };
+// RHR-FIX: dag-aggregaat gebruikt averageBeatsPerMinute (net als HRV averageHeartRateVariabilityMilliseconds)
+const rhrPoint = { dataSource:'x', dailyRestingHeartRate: { date:{year:2026,month:8,day:17}, averageBeatsPerMinute: 54 } };
 const rRhr = L.parseRhrPoint(rhrPoint);
-eq(rRhr.value, 54, 'PS2: RHR genest beatsPerMinute=54');
+eq(rRhr.value, 54, 'PS2: RHR genest averageBeatsPerMinute=54 (parsed.rhr=0-fix)');
 eq(rRhr.date, '2026-08-17', 'PS2: RHR datum uit genest date');
+eq(L.parseRhrPoint({ dailyRestingHeartRate:{ date:'2026-08-16', beatsPerMinute:56 } }).value, 56, 'PS2b: legacy beatsPerMinute-fallback behouden');
+eq(L.parseRhrPoint({ dataSource:'x', dailyRestingHeartRate:{ date:{year:2026,month:8,day:17} } }).value, null, 'PS2c: RHR zonder waarde → null (geen fabricage)');
+// geneste structuur-diagnostiek (alleen keys)
+ok(L.recordShape(rhrPoint,'dailyRestingHeartRate').indexOf('averageBeatsPerMinute')!==-1, 'PS2d: recordShape onthult geneste RHR-leaf-keys (geen waarden)');
 const sleepPoint = { name:'n', dataSource:'x', sleep: { interval: { startTime:'2026-08-16T23:00:00Z', endTime:'2026-08-17T06:30:00Z' } } };
 const rSleep = L.parseSleepPoint(sleepPoint);
 eq(rSleep.value, 450, 'PS3: slaapduur deterministisch uit interval (23:00→06:30 = 450 min)');

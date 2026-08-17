@@ -4628,6 +4628,112 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/movement.js"></script>
 <script src="core/onboarding.js"></script>
 <script src="core/athleteConstraints.js"></script>
+<script src="core/deviceIntegration.js"></script>
+<script src="core/weather.js"></script>
+<script>
+// ── OPEN-METEO RUNTIME — additive context, NOOIT een blocker voor training ──
+// Keten: geolocation-consent → WeatherCore.buildOpenMeteoRequest → fetch →
+// WeatherCore.normalizeWeather(OPENMETEO_MAP) → canoniek → chip. Elke fout → null (weer uit).
+// Geen eigen weer-parsing, geen key hardcoded, geen fabricatie (geen verzonnen 0°C).
+var TKWeather = (function(){
+  var _cache = {}; // key: round2(lat)|round2(lng)|UTC-uur → canoniek weer
+  function _round2(v){ return Math.round(v*100)/100; }
+  function _hourKey(lat,lng){
+    var d=new Date();
+    var hk=d.getUTCFullYear()+'-'+(d.getUTCMonth()+1)+'-'+d.getUTCDate()+'-'+d.getUTCHours();
+    return _round2(lat)+'|'+_round2(lng)+'|'+hk;
+  }
+  function applies(ctx){ try{ return (typeof WeatherCore!=='undefined')?WeatherCore.weatherApplies(ctx):false; }catch(e){ return false; } }
+  function fetchWeather(lat,lng){
+    return new Promise(function(resolve){
+      try{
+        if(typeof WeatherCore==='undefined'){ resolve(null); return; }
+        var key=_hourKey(lat,lng);
+        if(_cache[key]){ resolve({data:_cache[key],cached:true}); return; } // cache-hit binnen het uur
+        var req=WeatherCore.buildOpenMeteoRequest(lat,lng,{});
+        if(!req){ resolve(null); return; }
+        var ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
+        var to=setTimeout(function(){ try{ctrl&&ctrl.abort();}catch(_){} },8000);
+        fetch(req.url, ctrl?{signal:ctrl.signal}:{}).then(function(r){
+          clearTimeout(to);
+          if(!r||!r.ok) return null;
+          return r.json();
+        }).then(function(json){
+          if(!json){ resolve(null); return; }
+          var canon=WeatherCore.normalizeWeather(json, WeatherCore.OPENMETEO_MAP, {receivedAt:Date.now()});
+          // alleen geldig als temperatuur bruikbaar is — anders weer uit (geen verzonnen waarde)
+          if(!canon || canon.temperature_c==null || (canon.quality&&canon.quality.temperature_c==='invalid')){ resolve(null); return; }
+          _cache[key]=canon;
+          resolve({data:canon,cached:false});
+        }).catch(function(){ clearTimeout(to); resolve(null); });
+      }catch(e){ resolve(null); }
+    });
+  }
+  function getCoords(){
+    return new Promise(function(resolve){
+      try{
+        if(!navigator.geolocation){ resolve(null); return; }
+        navigator.geolocation.getCurrentPosition(
+          function(pos){ resolve({lat:pos.coords.latitude,lng:pos.coords.longitude}); },
+          function(){ resolve(null); }, // denied/error → geen weer
+          {timeout:8000,maximumAge:1800000,enableHighAccuracy:false}
+        );
+      }catch(e){ resolve(null); }
+    });
+  }
+  // De indoor/outdoor-regel bepaalt de VARIANT (welke context), niet de zichtbaarheid.
+  function variantFor(ctx){ return applies(ctx) ? 'outdoor' : 'indoor'; }
+  // Weer ophalen voor een sessie (opt-in): INDOOR mag óók (temp/vocht/luchtdruk). Altijd fetchen
+  // na consent; variant volgt uit de indoor/outdoor-regel. Elke fout → null (training blijft werken).
+  function forContext(ctx){
+    return new Promise(function(resolve){
+      getCoords().then(function(c){
+        if(!c){ resolve(null); return; }
+        fetchWeather(c.lat,c.lng).then(function(res){
+          resolve(res ? { data:res.data, variant:variantFor(ctx), cached:res.cached } : null);
+        });
+      });
+    });
+  }
+  function _nl(v,d){ d=d||1; return (v==null)?'—':String(Math.round(v*d)/d).replace('.',','); }
+  // Compacte context-chip. INDOOR: 🌡 temp · 💧 vocht · 🧭 luchtdruk (+ 🌧 neerslag alleen indien >0).
+  // OUTDOOR: 🌡 temp (voelt als) · 💧 vocht · 💨 wind · 🌧 neerslag · 🧭 luchtdruk.
+  function renderChip(w, variant){
+    if(!w || w.temperature_c==null) return ''; // nette afwezigheid, geen verzonnen waarde
+    var outdoor = (variant==='outdoor');
+    var label = outdoor ? '🌤 Weer' : '🏋 Trainingsomgeving';
+    var parts=['🌡 '+_nl(w.temperature_c)+'°C'];
+    if(outdoor && w.feels_like_c!=null) parts.push('voelt als '+_nl(w.feels_like_c)+'°C');
+    if(w.humidity_pct!=null) parts.push('💧 '+_nl(w.humidity_pct)+'%');
+    if(outdoor && w.wind_ms!=null) parts.push('💨 '+_nl(w.wind_ms,10)+' m/s');
+    if((outdoor || (w.precip_mmh!=null && w.precip_mmh>0)) && w.precip_mmh!=null) parts.push('🌧 '+_nl(w.precip_mmh,10)+' mm');
+    if(w.pressure_hpa!=null) parts.push('🧭 '+_nl(w.pressure_hpa)+' hPa');
+    return '<div class="tk-weather-chip" style="background:var(--g1);border-radius:10px;padding:8px 12px;margin:6px 14px;font-size:12px;color:var(--g4);font-weight:600">'+
+      '<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;opacity:.7;margin-bottom:3px">'+label+'</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center">'+
+      parts.map(function(p){return '<span>'+p+'</span>';}).join('<span style="opacity:.35">·</span>')+'</div></div>';
+  }
+  // Outdoor-capabele cardio-typen → modaliteit voor de indoor/outdoor-regel (indoor ergs = indoor-variant).
+  var OUTDOOR_CAPABLE={running:'run',cycling:'cycle',walking:'walk',hardlopen:'run',wandelen:'walk'};
+  return { applies:applies, variantFor:variantFor, fetchWeather:fetchWeather, getCoords:getCoords, forContext:forContext,
+           renderChip:renderChip, OUTDOOR_CAPABLE:OUTDOOR_CAPABLE, _cache:_cache, _hourKey:_hourKey };
+})();
+// Opt-in vanuit een sessie (indoor én outdoor): gebruiker tikt → consent + context tonen.
+// hint = cardioType/trainingtype; outdoor-capabel → outdoor-variant, anders indoor-variant.
+// De indoor/outdoor-regel bepaalt WELKE context (variant), niet OF weer zichtbaar is.
+function tkWeatherOptIn(exId, hint){
+  try{
+    var el=document.getElementById('weatherctx-'+exId); if(!el) return;
+    var mod=TKWeather.OUTDOOR_CAPABLE[hint]||null;
+    var ctx = mod ? {outdoor:true, modality:mod} : {outdoor:false};
+    el.innerHTML='<div class="tk-weather-chip" style="margin:6px 14px;font-size:12px;color:var(--g4)">Context laden…</div>';
+    TKWeather.forContext(ctx).then(function(res){
+      el.innerHTML = (res && res.data) ? TKWeather.renderChip(res.data, res.variant)
+        : '<div class="tk-weather-chip" style="margin:6px 14px;font-size:12px;color:var(--g4)">Context niet beschikbaar (locatie geweigerd of offline) — training gaat gewoon door.</div>';
+    });
+  }catch(e){ /* weer mag nooit de training breken */ }
+}
+</script>
 <script>
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
@@ -11883,6 +11989,11 @@ function regenerateWarmup(exId){autoGenerateWarmup(exId,true);toast('Opwarmsets 
 
 function buildStrengthBody(exId,wuCount,workCount,prefill=null){
   let h='';
+  // Trainingsomgeving-context (opt-in, indoor-variant: temp/vocht/luchtdruk). Additief: standaard
+  // uit, geen locatievraag tenzij de sporter tikt. Weer past NOOIT automatisch de training aan.
+  if(typeof TKWeather!=='undefined'){
+    h+=`<button class="btn btn-o btn-sm" style="margin:2px 14px 0;font-size:12px" onclick="tkWeatherOptIn('${exId}','strength')">🌡 Toon trainingsomgeving</button><div id="weatherctx-${exId}"></div>`;
+  }
   if(!warmupState[exId])warmupState[exId]={count:wuCount||0,manual:{},values:{}};
   // F0.7S — warm-up in een eigen kaart (mock-up "WARM-UP SETS"); bestaande wu-rijen/ids intact.
   h+='<div class="tks-card tks-wu-card">'+buildWarmupSection(exId,warmupState[exId].count)+'</div>';
@@ -12250,7 +12361,11 @@ function renderWodFields(exId){
 }
 function buildWodBody(exId,ex,prefill=null){
   const fmt=ex.wod_format||'for_time';
-  return `<div style="padding:8px 14px 4px;font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Formaat</div>
+  // Trainingsomgeving-context (opt-in, indoor-variant) — WOD is doorgaans indoor. Additief; weer past
+  // NOOIT automatisch de training aan. hint zonder OUTDOOR_CAPABLE-mapping → indoor-variant.
+  const wodCtx = (typeof TKWeather!=='undefined')
+    ? `<button class="btn btn-o btn-sm" style="margin:2px 14px 0;font-size:12px" onclick="tkWeatherOptIn('${exId}','wod')">🌡 Toon trainingsomgeving</button><div id="weatherctx-${exId}"></div>` : '';
+  return wodCtx+`<div style="padding:8px 14px 4px;font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Formaat</div>
   <div class="row-grid" style="grid-template-columns:1fr">
     <select class="inp" id="${exId}-wodfmt" onchange="renderWodFields('${exId}')">
       <option value="for_time"${fmt==='for_time'?' selected':''}>For Time</option>
@@ -12308,6 +12423,13 @@ function buildCardioBody(exId, cardioType){
   cardioSplits[exId]={};
   let h='';
   h+=`<div id="cardioprev-${exId}"></div>`; // F8.1 — async "vorige keer" (fail-safe; gevuld na render)
+  // Context (opt-in) — INDOOR ergs (roeien/ski/bike/assault) tonen trainingsomgeving (temp/vocht/luchtdruk),
+  // OUTDOOR-capabele cardio (run/cycle/walk) toont weer. Additief: standaard uit, geen locatievraag tenzij getikt.
+  if(typeof TKWeather!=='undefined'){
+    const wOut = !!TKWeather.OUTDOOR_CAPABLE[cardioType];
+    const wLbl = wOut ? '🌤 Buiten? Toon weer' : '🌡 Toon trainingsomgeving';
+    h+=`<button class="btn btn-o btn-sm" style="margin:2px 14px 0;font-size:12px" onclick="tkWeatherOptIn('${exId}','${cardioType}')">${wLbl}</button><div id="weatherctx-${exId}"></div>`;
+  }
 
   if(machines.length>0){
     const selM=localStorage.getItem('sel_'+cardioType)||machines[0];

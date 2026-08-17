@@ -77,6 +77,7 @@
       temperature_c: g('temperature_c'),
       feels_like_c: g('feels_like_c'),
       humidity_pct: g('humidity_pct'),
+      pressure_hpa: g('pressure_hpa'),
       wind_ms: g('wind_ms'),
       wind_gust_ms: g('wind_gust_ms'),
       precip_mmh: g('precip_mmh'),
@@ -129,6 +130,7 @@
     });
     return createWeather({
       temperature_c: out.temperature_c, feels_like_c: out.feels_like_c, humidity_pct: out.humidity_pct,
+      pressure_hpa: out.pressure_hpa,
       wind_ms: out.wind_ms, wind_gust_ms: out.wind_gust_ms, precip_mmh: out.precip_mmh,
       condition: out.condition, uv_index: out.uv_index,
       timestamp: ts, location_resolution: ctx.location_resolution || null,
@@ -167,6 +169,7 @@
       { key: 'temperature_c', path: 'current.temperature_2m',      kind: 'temp',  unit: 'c', min: -60, max: 60 },
       { key: 'feels_like_c',  path: 'current.apparent_temperature', kind: 'temp',  unit: 'c', min: -70, max: 70 },
       { key: 'humidity_pct',  path: 'current.relative_humidity_2m', kind: 'passthrough', min: 0, max: 100 },
+      { key: 'pressure_hpa',  path: 'current.surface_pressure',     kind: 'passthrough', min: 850, max: 1100 },
       { key: 'wind_ms',       path: 'current.wind_speed_10m',       kind: 'wind',  unit: 'kmh', min: 0, max: 120 },
       { key: 'wind_gust_ms',  path: 'current.wind_gusts_10m',       kind: 'wind',  unit: 'kmh', min: 0, max: 150 },
       { key: 'precip_mmh',    path: 'current.precipitation',        kind: 'precip', unit: 'mmh', min: 0, max: 200 },
@@ -182,6 +185,7 @@
       { key: 'temperature_c', path: 'current.temp',       kind: 'temp',  unit: 'c', min: -60, max: 60 },
       { key: 'feels_like_c',  path: 'current.feels_like',  kind: 'temp',  unit: 'c', min: -70, max: 70 },
       { key: 'humidity_pct',  path: 'current.humidity',    kind: 'passthrough', min: 0, max: 100 },
+      { key: 'pressure_hpa',  path: 'current.pressure',    kind: 'passthrough', min: 850, max: 1100 },
       { key: 'wind_ms',       path: 'current.wind_speed',  kind: 'wind',  unit: 'ms', min: 0, max: 120 },
       { key: 'wind_gust_ms',  path: 'current.wind_gust',   kind: 'wind',  unit: 'ms', min: 0, max: 150 },
       { key: 'precip_mmh',    path: 'current.rain.1h',     kind: 'precip', unit: 'mmh', min: 0, max: 200 },

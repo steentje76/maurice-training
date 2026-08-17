@@ -131,5 +131,18 @@ const simResp = { current: { time:'2026-08-16T10:00', temperature_2m:18, apparen
 const wc = W.normalizeWeather(simResp, W.OPENMETEO_MAP, {});
 close(wc.wind_ms, 5, 'end-to-end: 18 km/h → 5 m/s canoniek (request↔normalisatie sluit)');
 
+// ── LUCHTDRUK (pressure_hpa) — indoor-context ondersteunt luchtdruk (temp/vocht/luchtdruk) ──
+const wPress = W.normalizeWeather({current:{temperature_2m:19, relative_humidity_2m:55, surface_pressure:1013, wind_speed_10m:0}}, W.OPENMETEO_MAP, {});
+eq(wPress.pressure_hpa, 1013, 'OM surface_pressure 1013 → pressure_hpa (passthrough)');
+eq(wPress.quality.pressure_hpa, 'valid', 'OM pressure 1013 quality valid');
+const wPressOW = W.normalizeWeather({current:{dt:1, temp:19, humidity:55, pressure:1008, wind_speed:0}}, W.OPENWEATHER_MAP, {});
+eq(wPressOW.pressure_hpa, 1008, 'OW pressure 1008 → pressure_hpa (passthrough)');
+const wNoPress = W.normalizeWeather({current:{temperature_2m:19, relative_humidity_2m:55, wind_speed_10m:0}}, W.OPENMETEO_MAP, {});
+eq(wNoPress.pressure_hpa, null, 'ontbrekende luchtdruk → null (geen fabricage)');
+const wBadPress = W.normalizeWeather({current:{temperature_2m:19, relative_humidity_2m:55, surface_pressure:500, wind_speed_10m:0}}, W.OPENMETEO_MAP, {});
+eq(wBadPress.quality.pressure_hpa, 'implausible', 'luchtdruk 500 hPa (< min 850) → implausible');
+// request bevat surface_pressure zodat de indoor-context luchtdruk kan tonen
+ok(req.params.current.indexOf('surface_pressure')!==-1, 'request-current bevat surface_pressure (indoor luchtdruk-context)');
+
 console.log('\nPhase C weather+evidence: RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail ? 1 : 0);

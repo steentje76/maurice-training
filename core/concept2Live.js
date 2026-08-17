@@ -118,6 +118,44 @@
   };
   function failureMessage(code) { return CONCEPT2_FAILURES[code] || 'Er ging iets mis met de apparaatkoppeling.'; }
 
+  // ── PAIRING-FLOW (discover → select → connect) — states + NL-microcopy (§7) ──
+  var PAIRING_STATES = ['disconnected','bluetooth_off','permission_required','scanning','device_found',
+                        'connecting','connected','reconnecting','failed','not_available','unsupported'];
+  var PAIRING_MICROCOPY = {
+    disconnected:       'Meet je training automatisch vanaf je PM5.',
+    bluetooth_off:      'Bluetooth staat uit. Zet Bluetooth aan om je Concept2 te koppelen.',
+    permission_required:'Trainingskompas heeft Bluetooth-toegang nodig om je PM5 te vinden.',
+    scanning:           'Concept2-apparaten zoeken… Bluetooth moet aan staan.',
+    device_found:       'Tik op je apparaat om te verbinden.',
+    connecting:         'Verbinden met Concept2 PM5…',
+    connected:          'Verbonden.',
+    reconnecting:       'Verbinding verbroken — opnieuw verbinden…',
+    failed:             'Verbinden met de PM5 is niet gelukt.',
+    not_available:      'Live koppeling is beschikbaar in de app-versie met apparaatondersteuning.',
+    unsupported:        'Dit apparaat wordt niet ondersteund.'
+  };
+  function pairingMessage(state) { return PAIRING_MICROCOPY[state] || ''; }
+
+  // Signaalsterkte-label uit RSSI (dBm). Geen exacte waarde tonen aan de gebruiker.
+  function signalLabel(rssi) {
+    if (rssi == null || !isFinite(rssi)) return '';
+    if (rssi >= -60) return 'Sterk signaal';
+    if (rssi >= -75) return 'Matig signaal';
+    return 'Zwak signaal';
+  }
+
+  // Machine-context: hoort het ontdekte apparaat bij de huidige oefening? cardioType uit de app
+  // (rowing/skierg/bikeerg) → verwachte machineType. Onbekend machineType → geen mismatch (laat bevestigen).
+  var CARDIO_TO_MACHINE = { rowing: 'rowerg', skierg: 'skierg', bikeerg: 'bikeerg' };
+  function machineMatchesExercise(deviceMachineType, cardioType) {
+    var expected = CARDIO_TO_MACHINE[cardioType] || null;
+    if (!deviceMachineType || deviceMachineType === 'unknown') return { match: true, known: false, message: null };
+    if (!expected || deviceMachineType === expected) return { match: true, known: true, message: null };
+    var lbl = { rowerg: 'RowErg', skierg: 'SkiErg', bikeerg: 'BikeErg' };
+    return { match: false, known: true,
+      message: 'Dit apparaat is een ' + (lbl[deviceMachineType] || deviceMachineType) + '. Deze oefening gebruikt ' + (lbl[expected] || expected) + '.' };
+  }
+
   function _num(v) { if (v == null) return null; var n = Number(v); return isFinite(n) ? n : null; }
 
   // ── CANONICAL LIVE METRIC (§8) — RAW → canonical. Pace-basis per machine; measured≠derived watts ──
@@ -229,8 +267,12 @@
     function emitConn(s) { status = s; if (connCb) connCb({ state: s, machineType: mt, deviceInfo: scenario.deviceInfo || null }); }
     return {
       available: true,
-      discover: function () { return [{ id: scenario.deviceId || 'PM5-MOCK', name: 'PM5', machineType: mt }]; },
-      connect: function () { emitConn('connecting'); emitConn('connected'); return { connected: true, machineType: mt }; },
+      getPermissionState: function () { return scenario.permission || 'granted'; }, // granted|denied|bluetooth_off
+      discover: function () {
+        if (Array.isArray(scenario.devices)) return scenario.devices;
+        return [{ id: scenario.deviceId || 'PM5-MOCK', name: 'Concept2 PM5', machineType: mt, rssi: scenario.rssi != null ? scenario.rssi : -55 }];
+      },
+      connect: function (dt, deviceId) { emitConn('connecting'); emitConn('connected'); return { connected: true, machineType: mt, deviceId: deviceId || (scenario.deviceId || 'PM5-MOCK') }; },
       disconnect: function () { emitConn('disconnecting'); emitConn('disconnected'); metricCb = null; return { ok: true }; },
       getStatus: function () { return { state: status, machineType: mt }; },
       getDeviceInfo: function () { return scenario.deviceInfo || { provider: 'concept2', deviceType: 'pm5', machineType: mt, serialNumber: null, firmwareVersion: null }; },
@@ -257,6 +299,8 @@
     CONN_STATES: CONN_STATES, nextConnState: nextConnState,
     SESSION_STATES: SESSION_STATES, nextSessionState: nextSessionState, WORKOUT_STATES: WORKOUT_STATES,
     CONCEPT2_FAILURES: CONCEPT2_FAILURES, failureMessage: failureMessage,
+    PAIRING_STATES: PAIRING_STATES, PAIRING_MICROCOPY: PAIRING_MICROCOPY, pairingMessage: pairingMessage,
+    signalLabel: signalLabel, CARDIO_TO_MACHINE: CARDIO_TO_MACHINE, machineMatchesExercise: machineMatchesExercise,
     normalizeLiveMetric: normalizeLiveMetric, normalizeInterval: normalizeInterval,
     localWorkoutId: localWorkoutId, localTag: localTag, alreadyLoggedLive: alreadyLoggedLive,
     liveWorkoutToActual: liveWorkoutToActual, makeMockConcept2PM5: makeMockConcept2PM5

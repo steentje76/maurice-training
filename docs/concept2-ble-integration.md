@@ -60,3 +60,14 @@ Geen device-secrets/tokens/PII/health-values/raw-packet-dumps in productie-loggi
 
 ## 17. Evidence-classificatie
 Zie `concept2-ergdata-forensic.md`. UUID's/machinetypes/modellen/CSAFE/`workout_results`-schema = APK_OBSERVED; rol-structuur = CONFIRMED_OFFICIAL (spec); byte-layout per payload = UNKNOWN tot live-capture in de native shell (**EXTERN BLOCKED — NATIVE BLE TEST**).
+
+## 18. One-tap pairing-flow (discover → select → connect) — v2
+Eén gebruikersactie op oefeningniveau: **[🔗 Apparaat koppelen]**. Geen handmatige PM5 1/2/3-selectie, geen BLE-jargon.
+Flow (alle status uit het transport, nooit fake): `disconnected → (permissie/bluetooth-check) → scanning → device_found (echte apparatenlijst met machinetype + signaal + laatste 4 tekens) → connecting → connected (live metrics) → disconnect`. Machine-context: ontdekt apparaat ≠ oefening-machine → waarschuwing + **[Toch gebruiken]**; onbekend machinetype → laten bevestigen. Reconnect: `connected → reconnecting → connected` of `→ "PM5 niet meer bereikbaar" [Opnieuw verbinden]`. States/microcopy: `Concept2Live.PAIRING_STATES` + `pairingMessage()`; `signalLabel(rssi)`; `machineMatchesExercise(machineType, cardioType)`.
+
+## 19. Native adapter-contract (`NativeConcept2BleTransport`) — te implementeren in een shell
+De JS-laag is compleet; een native shell (Android/Capacitor of iOS) registreert `window.TKDeviceTransport` met dit contract:
+`available:true`, `getPermissionState()` → `'granted'|'denied'|'bluetooth_off'`, `discover()` → `[{id, name:'Concept2 PM5', machineType('rowerg'|'skierg'|'bikeerg'|'unknown'), rssi}]` (echte BLE-scan, filter op de CE060-service-UUID), `connect(machineType, deviceId)` → `{connected, machineType, deviceId}`, `disconnect()`, `getStatus()`, `getDeviceInfo()`, `subscribeMetrics(cb)` (ruwe PM5-notificaties → `cb({metrics})`; core normaliseert via `normalizeLiveMetric`), `unsubscribeMetrics()`, `subscribeConnection(cb)` (`{state}`), `getCurrentMetrics()`, `reset()`. De adapter parseert de BLE-payloads; de **byte-layouts per characteristic zijn UNKNOWN** (zie forensic-doc) en moeten met één live PM5-capture bevestigd worden vóór productiegebruik.
+
+## 20. Android BLE-permissies (contract, te bevestigen in de shell)
+- Android 12+ (API 31+): `BLUETOOTH_SCAN` (+ `neverForLocation`), `BLUETOOTH_CONNECT`. Android ≤11: `BLUETOOTH`, `BLUETOOTH_ADMIN` + `ACCESS_FINE_LOCATION` (BLE-scan vereist locatie op oude Android). Aanvragen **pas** bij [Apparaat koppelen], niet bij app-start. Geweigerd → `getPermissionState()='denied'` → microcopy "Trainingskompas heeft Bluetooth-toegang nodig…". Bluetooth uit → `'bluetooth_off'` → "Bluetooth staat uit…". Deze manifest-permissies horen in het native project (NIET in deze PWA-repo); status: **NOT BUILT (geen native shell in repo)**.

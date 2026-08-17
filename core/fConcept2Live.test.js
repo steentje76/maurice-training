@@ -123,5 +123,33 @@ ok(/andere app/.test(C.failureMessage('already_connected')), 'O: already_connect
 ok(/toestemming/.test(C.failureMessage('permission_denied')), 'O: permission_denied microcopy');
 eq(C.CONN_STATES.length, 11, 'device-lifecycle: 11 states');
 
+// ── PAIRING-FLOW helpers (discover → select → connect) ──
+eq(C.pairingMessage('bluetooth_off'), 'Bluetooth staat uit. Zet Bluetooth aan om je Concept2 te koppelen.', 'pairing: bluetooth_off microcopy');
+ok(/Bluetooth-toegang nodig/.test(C.pairingMessage('permission_required')), 'pairing: permission microcopy');
+ok(/zoeken/.test(C.pairingMessage('scanning')), 'pairing: scanning microcopy');
+ok(/app-versie/.test(C.pairingMessage('not_available')), 'pairing: web-fallback microcopy (geen fake)');
+ok(C.PAIRING_STATES.indexOf('device_found')!==-1 && C.PAIRING_STATES.length===11, 'pairing: 11 states');
+// signaal-label
+eq(C.signalLabel(-50), 'Sterk signaal', 'signal: -50 → sterk');
+eq(C.signalLabel(-70), 'Matig signaal', 'signal: -70 → matig');
+eq(C.signalLabel(-85), 'Zwak signaal', 'signal: -85 → zwak');
+eq(C.signalLabel(null), '', 'signal: onbekend → leeg (geen fake)');
+// machine-context match
+eq(C.machineMatchesExercise('rowerg','rowing').match, true, 'machine: RowErg-apparaat past bij rowing-oefening');
+eq(C.machineMatchesExercise('skierg','rowing').match, false, 'machine: SkiErg-apparaat past NIET bij rowing');
+ok(/SkiErg[\s\S]*RowErg/.test(C.machineMatchesExercise('skierg','rowing').message), 'machine: mismatch-melding noemt beide machines');
+eq(C.machineMatchesExercise('unknown','rowing').match, true, 'machine: onbekend type → geen mismatch (laat bevestigen)');
+eq(C.machineMatchesExercise('bikeerg','bikeerg').match, true, 'machine: BikeErg past bij bikeerg');
+// mock discovery: echte device-lijst met machineType + rssi
+var mk = C.makeMockConcept2PM5({ machineType:'rowerg', devices:[
+  { id:'PM5-A1B2', name:'Concept2 PM5', machineType:'rowerg', rssi:-52 },
+  { id:'PM5-C3D4', name:'Concept2 PM5', machineType:'skierg', rssi:-80 }
+]});
+var found = mk.discover();
+eq(found.length, 2, 'discovery: 2 ontdekte apparaten');
+eq(found[0].machineType, 'rowerg', 'discovery: eerste = RowErg');
+eq(C.signalLabel(found[0].rssi), 'Sterk signaal', 'discovery: rssi → signaal-label');
+eq(mk.getPermissionState(), 'granted', 'discovery: permission-state opvraagbaar');
+
 console.log('\nConcept2 LIVE foundation: RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail ? 1 : 0);

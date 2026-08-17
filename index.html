@@ -4886,63 +4886,125 @@ function tkDeviceTransport(){
   return (typeof window!=='undefined' && window.TKDeviceTransport && window.TKDeviceTransport.available===true)
     ? window.TKDeviceTransport : null;
 }
-function tkRenderErgConnect(exId, cardioType, ergLabel){
-  var t=tkDeviceTransport();
-  var head='<div style="display:flex;align-items:center;gap:8px;margin:6px 14px 0">'+
-    '<span style="font-size:15px">🚣</span>'+
-    '<span style="font-weight:800;color:var(--g5,#1a2b33);font-size:13px">'+ergLabel+'</span>'+
-    '<span style="font-size:11px;color:var(--g4)">Concept2</span></div>';
-  if(!t){
-    // Geen echt transport → eerlijke boodschap, geen nep-verbinding, geen nep-knop die "verbindt".
-    return '<div class="card" style="margin:6px 14px 8px;padding:10px 12px">'+head+
-      '<div style="font-size:11.5px;color:var(--g4);margin-top:6px">'+
-      'Live koppeling met je Concept2 is beschikbaar in de app-versie met apparaatondersteuning. '+
-      'Je kunt je training gewoon handmatig invoeren, of achteraf importeren via Training → Importeren.</div></div>';
-  }
-  // Echt transport aanwezig → echte koppel-knop (verbindt daadwerkelijk; status volgt uit transport).
-  return '<div class="card" style="margin:6px 14px 8px;padding:10px 12px">'+head+
-    '<button class="btn btn-o btn-sm" style="font-size:12px;margin-top:8px" onclick="tkErgConnect(\''+exId+'\',\''+cardioType+'\')">Apparaat koppelen</button>'+
-    '<div id="c2live-'+exId+'" style="font-size:11.5px;color:var(--g4);margin-top:6px">Niet verbonden</div></div>';
+// ── ONE-TAP PAIRING-FLOW (discover → select → connect → live) — echte transport-gestuurd ──
+// Eén duidelijke actie: [Apparaat koppelen]. Geen handmatige PM5 1/2/3-selectie, geen BLE-jargon.
+// Alle status komt uit het transport; NOOIT fake device/connected. Machine-context uit Concept2Live.
+var _c2pair={}, _c2liveLast={};
+var _C2ERGLBL={rowing:'RowErg',skierg:'SkiErg',bikeerg:'BikeErg'};
+function _c2mt(cardioType){ return {rowing:'rowerg',skierg:'skierg',bikeerg:'bikeerg'}[cardioType]||'rowerg'; }
+function _c2msg(state){ return (typeof Concept2Live!=='undefined')?Concept2Live.pairingMessage(state):''; }
+function _c2wrap(exId, ergLabel, inner){
+  return '<div class="card" style="margin:6px 14px 8px;padding:12px 14px">'+
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'+
+      '<span style="font-size:16px">🚣</span>'+
+      '<span style="font-weight:800;color:var(--g5,#1a2b33);font-size:13px">'+ergLabel+'</span>'+
+      '<span style="font-size:11px;color:var(--g4);margin-left:auto">Concept2</span></div>'+
+    '<div id="c2body-'+exId+'">'+inner+'</div></div>';
 }
-// Echte koppeling (alleen als er een echt transport is). Nooit fake status; alles komt uit het transport.
-// Machine-context uit Concept2Live (row/ski 500m, bike 1000m). Gecontroleerde UI-cadans (max ~4×/s):
-// hoge BLE-frequentie hoeft niet elke packet te renderen. Live = ACTUAL; prescription blijft zichtbaar.
-var _c2liveLast={};
-function tkErgConnect(exId, cardioType){
-  var t=tkDeviceTransport(); var el=document.getElementById('c2live-'+exId);
-  if(!t){ if(el) el.textContent='Live koppeling niet beschikbaar in deze omgeving.'; return; }
-  var mtMap={rowing:'rowerg',skierg:'skierg',bikeerg:'bikeerg'}, mt=mtMap[cardioType]||'rowerg';
-  var basis=(typeof Concept2Live!=='undefined')?Concept2Live.paceBasisFor(mt):500;
-  var paceLbl=(basis===1000)?'/1000m':'/500m';
-  function paint(cm){
-    if(!el) return;
-    var parts=[];
-    if(cm.distanceM!=null) parts.push('Afstand '+Math.round(cm.distanceM).toLocaleString('nl-NL')+' m');
-    if(cm.elapsedTimeS!=null && typeof DeviceCore!=='undefined') parts.push('Tijd '+DeviceCore.formatDurationStr(cm.elapsedTimeS));
-    var pace=(basis===1000)?cm.pace1000M:cm.pace500M;
-    if(pace!=null && typeof DeviceCore!=='undefined') parts.push('Tempo '+DeviceCore.formatDurationStr(pace)+paceLbl);
-    if(cm.watts!=null) parts.push('Vermogen '+Math.round(cm.watts)+' W'+(cm.wattsSource==='concept2_derived'?' (afgeleid)':''));
-    if(cm.strokeRateSPM!=null) parts.push('SPM '+Math.round(cm.strokeRateSPM));
-    if(cm.heartRateBPM!=null) parts.push('HR '+Math.round(cm.heartRateBPM));
-    el.innerHTML='<span style="color:var(--green)">●</span> '+({rowing:'RowErg',skierg:'SkiErg',bikeerg:'BikeErg'}[cardioType]||'Concept2')+' verbonden<br>'+parts.join(' · ');
+function _c2repaint(exId, inner){ var b=document.getElementById('c2body-'+exId); if(b) b.innerHTML=inner; }
+function _c2btn(exId, label){ return '<button class="btn btn-o btn-sm" style="font-size:12px;margin-top:8px" onclick="tkErgPair(\''+exId+'\')">'+label+'</button>'; }
+function _c2note(txt){ return '<div style="font-size:11.5px;color:var(--g4)">'+txt+'</div>'; }
+function tkRenderErgConnect(exId, cardioType, ergLabel){
+  _c2pair[exId]={ cardioType:cardioType, ergLabel:ergLabel, mt:_c2mt(cardioType), devices:[], connected:false };
+  var t=tkDeviceTransport();
+  if(!t){
+    // Geen echt transport (web/PWA) → eerlijke melding, geen nep-knop die "verbindt".
+    return _c2wrap(exId, ergLabel, _c2note(_c2msg('not_available')+' Je kunt je training gewoon handmatig invoeren, of achteraf importeren via Training → Importeren.'));
   }
+  return _c2wrap(exId, ergLabel, _c2note('Meet je training automatisch vanaf je PM5.')+_c2btn(exId,'🔗 Apparaat koppelen'));
+}
+// Start pairing: permissie/bluetooth → scannen → echte discovery → apparaatlijst.
+function tkErgPair(exId){
   try{
-    if(el) el.textContent='Verbinden…';
-    Promise.resolve(t.connect(mt)).then(function(res){
-      if(!res||res.connected!==true){ if(el) el.textContent='Verbinden mislukt — probeer opnieuw.'; return; }
-      if(el) el.innerHTML='<span style="color:var(--green)">●</span> Verbonden — wachten op data…';
-      t.subscribeMetrics(function(evt){
-        // Transport levert al canoniek (Concept2Live-metric) OF raw → normaliseer defensief.
-        var cm=(evt&&evt.metrics&&evt.metrics.schema)?evt.metrics
-             : (typeof Concept2Live!=='undefined'?Concept2Live.normalizeLiveMetric((evt&&evt.metrics)||evt||{}, mt, {}):null);
-        if(!cm) return;
-        // gecontroleerde cadans: sla te snelle updates over voor de UI (calc-engine mag hoger blijven)
-        var now=(typeof performance!=='undefined'&&performance.now)?performance.now():0;
-        if(_c2liveLast[exId] && (now-_c2liveLast[exId])<250){ return; }
-        _c2liveLast[exId]=now; paint(cm);
+    var st=_c2pair[exId]; var t=tkDeviceTransport();
+    if(!st||!t){ _c2repaint(exId, _c2note(_c2msg('not_available'))); return; }
+    var perm = (typeof t.getPermissionState==='function') ? t.getPermissionState() : 'granted';
+    if(perm==='bluetooth_off'){ _c2repaint(exId, _c2note(_c2msg('bluetooth_off'))+_c2btn(exId,'Opnieuw zoeken')); return; }
+    if(perm==='denied'){ _c2repaint(exId, _c2note(_c2msg('permission_required'))+_c2btn(exId,'Opnieuw proberen')); return; }
+    _c2repaint(exId, '<div style="font-size:12.5px;color:var(--g4)"><span style="opacity:.6">◌</span> '+_c2msg('scanning')+'</div>');
+    Promise.resolve(t.discover()).then(function(devs){
+      devs=devs||[]; st.devices=devs;
+      if(!devs.length){ _c2repaint(exId, _c2note('Geen Concept2 gevonden. Controleer of je PM5 aan staat en houd je telefoon dichtbij.')+_c2btn(exId,'Opnieuw zoeken')); return; }
+      _c2repaint(exId, _c2deviceList(exId, devs));
+    }).catch(function(){ _c2repaint(exId, _c2note(_c2msg('failed'))+_c2btn(exId,'Opnieuw zoeken')); });
+  }catch(e){ _c2repaint(exId, _c2note(_c2msg('failed'))+_c2btn(exId,'Opnieuw zoeken')); }
+}
+function _c2mLabel(mt){ return _C2ERGLBL[({rowerg:'rowing',skierg:'skierg',bikeerg:'bikeerg'}[mt])]||(mt?_C2ERGLBL[mt]:null)||'Concept2 PM5'; }
+function _c2deviceList(exId, devs){
+  var CL=(typeof Concept2Live!=='undefined')?Concept2Live:null;
+  var rows=devs.map(function(d,i){
+    var mt=d.machineType&&d.machineType!=='unknown'? (({rowerg:'RowErg',skierg:'SkiErg',bikeerg:'BikeErg'}[d.machineType])||'Concept2 PM5') : null;
+    var sig=CL?CL.signalLabel(d.rssi):''; var last4=d.id?('#'+String(d.id).slice(-4)):'';
+    var meta=[mt, sig, last4].filter(Boolean).join(' · ');
+    return '<button onclick="tkErgSelect(\''+exId+'\','+i+')" style="display:flex;align-items:center;width:100%;text-align:left;border:1px solid var(--g2,#e3e7e9);background:#fff;border-radius:12px;padding:10px 12px;margin-top:8px;cursor:pointer">'+
+      '<div style="flex:1"><div style="font-weight:700;color:var(--g5,#1a2b33);font-size:13px">Concept2 PM5</div><div style="font-size:11px;color:var(--g4)">'+(meta||'')+'</div></div>'+
+      '<span style="color:var(--g3);font-size:18px">›</span></button>';
+  }).join('');
+  return '<div style="font-size:11.5px;color:var(--g4);margin-bottom:2px">Tik op je apparaat om te verbinden</div>'+rows;
+}
+// Apparaat gekozen: machine-context check → mismatch-waarschuwing of direct verbinden.
+function tkErgSelect(exId, idx){
+  var st=_c2pair[exId]; if(!st) return; var d=st.devices[idx]; if(!d) return;
+  var mm=(typeof Concept2Live!=='undefined')?Concept2Live.machineMatchesExercise(d.machineType, st.cardioType):{match:true};
+  if(!mm.match){
+    _c2repaint(exId, _c2note(mm.message)+
+      '<div style="display:flex;gap:8px;margin-top:8px">'+
+      '<button class="btn btn-o btn-sm" style="font-size:12px" onclick="tkErgConnectDevice(\''+exId+'\','+idx+')">Toch gebruiken</button>'+
+      '<button class="btn btn-o btn-sm" style="font-size:12px" onclick="tkErgPair(\''+exId+'\')">Ander apparaat</button></div>');
+    return;
+  }
+  tkErgConnectDevice(exId, idx);
+}
+function _c2connectedInner(exId, cm){
+  var st=_c2pair[exId]; var basis=(typeof Concept2Live!=='undefined')?Concept2Live.paceBasisFor(st.mt):500;
+  var paceLbl=(basis===1000)?'/1000m':'/500m';
+  var line='Verbonden — wachten op data…';
+  if(cm){
+    var p=[];
+    if(cm.distanceM!=null) p.push('<b>'+Math.round(cm.distanceM).toLocaleString('nl-NL')+'</b> m');
+    if(cm.elapsedTimeS!=null&&typeof DeviceCore!=='undefined') p.push('<b>'+DeviceCore.formatDurationStr(cm.elapsedTimeS)+'</b>');
+    var pace=(basis===1000)?cm.pace1000M:cm.pace500M;
+    if(pace!=null&&typeof DeviceCore!=='undefined') p.push('<b>'+DeviceCore.formatDurationStr(pace)+'</b>'+paceLbl);
+    if(cm.watts!=null) p.push('<b>'+Math.round(cm.watts)+'</b> W'+(cm.wattsSource==='concept2_derived'?' (afgeleid)':''));
+    if(cm.strokeRateSPM!=null) p.push('<b>'+Math.round(cm.strokeRateSPM)+'</b> spm');
+    if(cm.heartRateBPM!=null) p.push('HR <b>'+Math.round(cm.heartRateBPM)+'</b>');
+    line='<div style="display:flex;flex-wrap:wrap;gap:4px 12px;font-size:14px;color:var(--g5,#1a2b33)">'+p.join('<span style="opacity:.3">·</span>')+'</div>';
+  }
+  return '<div style="font-weight:800;color:var(--g5,#1a2b33);font-size:13px;margin-bottom:6px"><span style="color:var(--green)">🟢</span> '+(_C2ERGLBL[st.cardioType]||'Concept2')+' verbonden · <span style="font-weight:600;color:var(--g4);font-size:11px">Concept2 PM5</span></div>'+
+    line+'<button class="btn btn-o btn-sm" style="font-size:12px;margin-top:8px" onclick="tkErgDisconnect(\''+exId+'\')">Verbinding verbreken</button>';
+}
+function tkErgConnectDevice(exId, idx){
+  var st=_c2pair[exId]; var t=tkDeviceTransport(); if(!st||!t) return; var d=st.devices[idx]; if(!d) return;
+  _c2repaint(exId, '<div style="font-size:12.5px;color:var(--g4)">'+_c2msg('connecting')+'</div>');
+  try{
+    Promise.resolve(t.connect(st.mt, d.id)).then(function(res){
+      if(!res||res.connected!==true){ _c2repaint(exId, _c2note(_c2msg('failed'))+_c2btn(exId,'Opnieuw zoeken')); return; }
+      st.connected=true; st.deviceId=d.id;
+      _c2repaint(exId, _c2connectedInner(exId, null));
+      // connectie-events: reconnect/disconnect uit het transport (geen fake).
+      if(typeof t.subscribeConnection==='function') t.subscribeConnection(function(e){
+        if(!st.connected) return;
+        if(e&&e.state==='reconnecting') _c2repaint(exId, _c2note('Verbinding verbroken — opnieuw verbinden…'));
+        else if(e&&e.state==='disconnected' && st.connected){ st.connected=false; _c2repaint(exId, _c2note('PM5 niet meer bereikbaar.')+_c2btn(exId,'Opnieuw verbinden')); }
+        else if(e&&e.state==='connected') _c2repaint(exId, _c2connectedInner(exId, st.lastCm||null));
       });
-    });
-  }catch(e){ if(el) el.textContent='Verbinden mislukt — probeer opnieuw.'; }
+      t.subscribeMetrics(function(evt){
+        var cm=(evt&&evt.metrics&&evt.metrics.schema)?evt.metrics
+             : (typeof Concept2Live!=='undefined'?Concept2Live.normalizeLiveMetric((evt&&evt.metrics)||evt||{}, st.mt, {}):null);
+        if(!cm) return; st.lastCm=cm;
+        var now=(typeof performance!=='undefined'&&performance.now)?performance.now():0;
+        if(_c2liveLast[exId] && (now-_c2liveLast[exId])<250){ return; }  // gecontroleerde UI-cadans
+        _c2liveLast[exId]=now; _c2repaint(exId, _c2connectedInner(exId, cm));
+      });
+    }).catch(function(){ _c2repaint(exId, _c2note(_c2msg('failed'))+_c2btn(exId,'Opnieuw zoeken')); });
+  }catch(e){ _c2repaint(exId, _c2note(_c2msg('failed'))+_c2btn(exId,'Opnieuw zoeken')); }
+}
+function tkErgDisconnect(exId){
+  var st=_c2pair[exId]; var t=tkDeviceTransport();
+  try{ if(t&&typeof t.unsubscribeMetrics==='function') t.unsubscribeMetrics(); }catch(_){}
+  try{ if(t&&typeof t.disconnect==='function') t.disconnect(); }catch(_){}
+  if(st){ st.connected=false; st.lastCm=null; }
+  _c2repaint(exId, _c2note('Meet je training automatisch vanaf je PM5.')+_c2btn(exId,'🔗 Apparaat koppelen'));
 }
 // ══════════════════════════════════════════════════════════
 // GEZONDHEID & HERSTEL — HISTORY CHARTS (Lichaam). Grafieken tonen UITSLUITEND opgeslagen data.

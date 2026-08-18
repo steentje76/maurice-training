@@ -212,17 +212,21 @@
     noteer('gevoel', !!sig.gevoel);
     noteer('trainingsbelasting', typeof sig.trainingsdagen7 === 'number' && isFinite(sig.trainingsdagen7));
 
-    // Datakwaliteit: hoeveel van de zes signalen staan er echt? Een expliciete telling,
-    // geen weging en geen oordeel over de sporter.
-    var kwaliteit = beschikbaar.length >= 5 ? 'volledig' : (beschikbaar.length >= 2 ? 'gedeeltelijk' : 'onvoldoende');
-    // Een signaal dat als onbetrouwbaar is aangemerkt telt niet mee als aanwezig.
+    // Een signaal dat als onbetrouwbaar is aangemerkt telt niet mee als aanwezig. Dit gebeurt
+    // VOORDAT de datakwaliteit wordt bepaald: anders zou een dag waarop drie van de zes
+    // signalen niet gesynchroniseerd zijn zichzelf nog steeds 'volledig' noemen — precies het
+    // tegenovergestelde van wat deze laag hoort te doen. (Sprint 15, gevonden bij de audit.)
+    var ONBETROUWBAAR = ['no_data', 'sync_failed'];
     ['hrv', 'rhr', 'slaap'].forEach(function (k) {
       var v = sig[k];
-      if (v && v.waarde != null && v.kwaliteit && (v.kwaliteit === 'no_data' || v.kwaliteit === 'sync_failed')) {
+      if (v && v.waarde != null && v.kwaliteit && ONBETROUWBAAR.indexOf(v.kwaliteit) >= 0) {
         var idx = beschikbaar.indexOf(k);
         if (idx >= 0) { beschikbaar.splice(idx, 1); ontbreekt.push(k); }
       }
     });
+    // Datakwaliteit: hoeveel van de zes signalen zijn UITEINDELIJK bruikbaar? Een expliciete
+    // telling over de overgebleven signalen, geen weging en geen oordeel over de sporter.
+    var kwaliteit = beschikbaar.length >= 5 ? 'volledig' : (beschikbaar.length >= 2 ? 'gedeeltelijk' : 'onvoldoende');
 
     var herstel = null;
     if (i.herstel && typeof i.herstel.score === 'number' && isFinite(i.herstel.score) && i.herstel.band && i.herstel.band !== 'onbekend') {

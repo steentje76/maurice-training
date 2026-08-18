@@ -5514,7 +5514,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.30.0';
+const APP_VER = 'v4.30.1';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -19366,14 +19366,30 @@ function _tkMetricSeries(cfg, rows, endYmd, days){
 }
 function tkSetMetricPeriod(n){ _tkMetricPeriod=n; renderLichaamMetricDetail(); }
 
+// Foutgrens, net als bij de andere Lichaam-renderers. Reden uit productie: direct na een
+// deploy draait een geopende pagina nog op de core/*.js uit de vorige service-worker-cache.
+// DeviceCore mist dan de nieuwe functies en de renderer stopte halverwege, waardoor het
+// scherm leeg bleef. Nu verschijnt er een eerlijke melding en herstelt één herlaadbeurt het.
 async function renderLichaamMetricDetail(){
   const el=document.getElementById('lich-metric-body'); if(!el) return;
+  try{ await _renderLichaamMetricDetail(el); }
+  catch(e){
+    el.innerHTML='<div class="lich-empty"><div class="e1">Dit scherm kon niet worden geladen</div>'+
+      '<div class="e2">De app is zojuist bijgewerkt. Herlaad de pagina om verder te gaan — je gegevens zijn ongewijzigd.</div></div>';
+    try{ console.warn('renderLichaamMetricDetail: '+(e&&e.message)); }catch(_){}
+  }
+}
+async function _renderLichaamMetricDetail(el){
   const cfg=TK_LICH_METRICS[lichMetricSel]||TK_LICH_METRICS.hrv;
   const naamEl=document.getElementById('lich-metric-naam'), subEl=document.getElementById('lich-metric-sub');
   if(naamEl) naamEl.textContent=cfg.label;
   if(subEl)  subEl.textContent=cfg.sub;
+  // Harde eis vanuit de architectuur: dit scherm rekent zelf niets uit. Ontbreekt een van
+  // de engines, dan is dat een fout — geen reden om de UI iets te laten verzinnen.
   const dc=(typeof DeviceCore!=='undefined')?DeviceCore:null;
-  if(!dc){ el.innerHTML=''; return; }
+  if(!dc||typeof dc.availablePeriods!=='function'||typeof dc.healthStats!=='function'){
+    throw new Error('DeviceCore onvolledig');
+  }
 
   const leeg=function(t1,t2){ return '<div class="lich-empty"><div class="e1">'+escHtml(t1)+'</div><div class="e2">'+escHtml(t2)+'</div></div>'; };
   const rows=await _tkMetricLoad(cfg);

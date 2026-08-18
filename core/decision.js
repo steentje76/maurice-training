@@ -121,6 +121,51 @@
   }
 
   /* ══════════════════════════════════════════════════════════════════════════
+   * PERSOONLIJKE RECORDS (record.v1) — mag dit gewicht als record gelden?
+   *
+   * Dit is een REGEL, geen presentatie. Hij stond tot Sprint 12 op drie plaatsen in
+   * index.html los uitgeschreven: bij het afronden van een training, bij een losse
+   * oefening en bij Guided Execution. Drie kopieën van dezelfde vergelijking, elk met
+   * hun eigen invoer — precies het soort duplicatie waar een verkeerde basislijn zich
+   * ongemerkt in kan nestelen. Nu staat de regel één keer hier.
+   *
+   * PUUR en DETERMINISTISCH: geen Date.now, geen random, geen DOM, geen opslag. Deze
+   * functie beslist alleen; het wegschrijven blijft bij de aanroeper.
+   *
+   * Semantiek exact gelijk aan wat er stond: strikt zwaarder dan de basislijn is een
+   * record, evenaren niet. Een ontbrekende basislijn telt als 0 (eerste record ooit).
+   * Een waarde die geen bruikbaar getal is — leeg, tekst, NaN, 0 of negatief — levert
+   * NOOIT een record op; er wordt niets gefabriceerd en niets overschreven.
+   * ══════════════════════════════════════════════════════════════════════════ */
+  var RECORD_VERSIE = 'record.v1';
+  function _recordNum(v) {
+    if (typeof v === 'number') return isFinite(v) ? v : null;
+    if (typeof v === 'string') {
+      var t = v.trim();
+      if (!t || !/^[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?$/.test(t)) return null;
+      var n = Number(t);
+      return isFinite(n) ? n : null;
+    }
+    return null;
+  }
+  /* releaseRecord(kandidaat, basislijn)
+   * kandidaat : het zwaarste gewicht van deze sessie/oefening (uit de aggregatie)
+   * basislijn : het record zoals dat vóór deze sessie bekend was (null/undefined = nog geen)
+   * → { versie, isRecord, reason, waarde, basislijn }
+   * reason: 'ok' · 'geen_geldige_waarde' · 'evenaart' · 'lager'
+   */
+  function releaseRecord(kandidaat, basislijn) {
+    var k = _recordNum(kandidaat);
+    var b = _recordNum(basislijn);
+    var base = (b == null) ? 0 : b;
+    if (k == null || k <= 0) {
+      return { versie: RECORD_VERSIE, isRecord: false, reason: 'geen_geldige_waarde', waarde: null, basislijn: base };
+    }
+    if (k > base) return { versie: RECORD_VERSIE, isRecord: true, reason: 'ok', waarde: k, basislijn: base };
+    return { versie: RECORD_VERSIE, isRecord: false, reason: (k === base ? 'evenaart' : 'lager'), waarde: k, basislijn: base };
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════
    * VERBANDEN (verband.v1) — vrijgave en verwoording
    *
    * De Decision Engine bepaalt ALS ENIGE of een verband getoond mag worden en hoe het
@@ -326,6 +371,8 @@
   }
 
   var DecisionCore = {
+    releaseRecord: releaseRecord,
+    RECORD_VERSIE: RECORD_VERSIE,
     releaseVerband: releaseVerband,
     verbandUitsluitingZin: verbandUitsluitingZin,
     meetreeksUitsluitingZin: meetreeksUitsluitingZin,

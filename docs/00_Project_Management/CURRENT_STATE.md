@@ -28,7 +28,48 @@ v3.3.34
 
 > Oudere releases (t/m v3.3.25): zie DECISION_LOG.md en CHANGELOG.md voor de volledige geschiedenis — hier bewust ingekort om dit document actueel en leesbaar te houden.
 
-## Actieve sprint
+## Actieve sprint (bijgewerkt 18 augustus 2026 — Night Sprint 19–23, v4.45.0)
+
+**Night Sprint 19–23 — Training Intelligence, Relationship Discovery & Unified Athlete Intelligence: afgerond.**
+
+| Sprint | Versie | Wat er is gebouwd |
+|---|---|---|
+| 19 | v4.41.0 | `core/relationship.js` — Relationship Discovery Engine (`relationship.v1`) |
+| 20 | v4.42.0 | Verbanden-experience: eigen scherm, filters, detailweergave, transparantie |
+| 21 | v4.43.0 | `core/athlete.js` — Unified Athlete Intelligence (`athlete.v1` / `load.v1` / `performance_index.v1`) |
+| 22 | v4.44.0 | Coach Intelligence (`coach_intelligence.v1`) — AI krijgt alleen gevalideerde uitkomsten |
+| 23 | v4.45.0 | Integratie, hardening, documentatie |
+
+Volledige regressie: **60 testbestanden groen, 0 rood.** Zie docs/RELATIONSHIP_ENGINE.md
+voor de architectuur, het datamodel, de drempels en de beperkingen.
+
+**Wat dit concreet verandert:** verbanden zijn geen vaste lijst van drie meer. Wat de
+sporter ziet volgt uit welke meetreeksen er werkelijk zijn. Komt er een databron bij, dan
+verschijnen er vanzelf nieuwe kandidaten zonder dat er code verandert.
+
+**Bewust NIET gebouwd, met reden:**
+- Eén gezamenlijke trainingsbelasting over kracht en cardio heen. Dat vraagt sessie-RPE ×
+  duur, en duur wordt niet opgeslagen (de sessions-tabel heeft geen duurkolom; 13 van de
+  112 sessies hebben alleen `time_str`). Een getal dat kilo's en meters optelt zou een
+  eenheid suggereren die niet bestaat. `AthleteCore.unifiedLoad` levert daarom `null` met
+  `reason:'geen_gemeenschappelijke_eenheid'` en `ontbreekt:['duur_per_sessie']` — de
+  ontbrekende capability staat in de code en in de tests, niet als losse opmerking.
+- Omgevingsdata, rustduur en meervoudige tijdsverschuivingen: staan in het variabelenregister
+  op `beschikbaarheid: 'toekomstig'`. Het model kan ze aan, er is nog geen bron.
+
+**Opgeruimd:** het oude, vaste verbandpad (`tkVerbandBereken`, `tkVerbandData`,
+`TK_VERBAND_VENSTER`) en `openVerband`. De coach-context was de laatste gebruiker en
+draait nu op dezelfde engine als het scherm — twee berekeningspaden zou betekenen dat het
+Lichaam-scherm en de coach iets anders kunnen zeggen over hetzelfde verband.
+Daarnaast: `.gitignore` toegevoegd voor `node_modules/` en `www/` (build-output).
+
+**Belangrijkste openstaande blokkade voor de intelligentielaag:** datadichtheid. De
+correlatiemotor heeft 30 vergelijkbare dagen nodig. Op 18 augustus 2026 zijn er 23 dagen
+met training én HRV en 14 met training, HRV én slaap. Dat is een meettaak, geen bouwtaak.
+
+---
+
+## Vorige actieve sprint
 Sprint 3.1 — "Live Validatie, Release Closure & Quality Gate": **formeel afgesloten voor het functionele deel.** Doelen-module live end-to-end bevestigd (Create/Read/Delete, PR-doel én eigen doel, beide testdoelen weer opgeruimd — geen blijvende wijziging aan echte data). Twee bugs gevonden tijdens live testen, direct gefixt en herbevestigd: `user_id` ontbrak bij opslaan (v3.3.33), modals te breed op desktop (v3.3.34, pre-existing, alle ~50 modals geraakt niet alleen Doelen).
 
 **Nog open:**

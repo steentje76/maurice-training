@@ -172,19 +172,28 @@ ok(!/1rm|one_rm/i.test(releaseBron), 'E8: geen 1RM in deze versie');
 console.log('  F renderpaden en regressie');
 ok(html.indexOf('id="s-lich-verband"') >= 0, 'F1: het verband-detailscherm bestaat');
 ok(html.indexOf("if(id==='s-lich-verband')renderLichaamVerbandDetail();") >= 0, 'F2: route in de bestaande go()-router');
-ok(/function openVerband\(id\)\{ lichVerbandSel=id; go\('s-lich-verband'\); \}/.test(html), 'F3: één ingang naar het detail');
+/* Sprint 20: de ingang heet openRelatie en draagt nu een relationship_id, maar de
+   eis is onveranderd — ER IS ER PRECIES EEN, en hij zet de selectie en navigeert.
+   Twee ingangen zouden betekenen dat het detailscherm twee bronnen van waarheid heeft. */
+ok(/function openRelatie\(id\)\{ tkRelSel=id; lichVerbandSel=id; go\('s-lich-verband'\); \}/.test(html),
+   'F3: één ingang naar het detail');
+ok(html.indexOf('function openVerband(') < 0, 'F3b: de oude ingang is opgeruimd, niet blijven staan');
 ok(html.indexOf('function renderLichaamVerbanden') >= 0, 'F4: de overzichtssectie heeft een renderer');
 ok(html.indexOf('Nog geen verbanden vrijgegeven') >= 0, 'F5: de veilige lege toestand bestaat nog steeds');
-const rend = html.slice(html.indexOf('async function renderLichaamVerbanden'), html.indexOf('function openVerband'));
-ok(rend.indexOf('if(!vrij.length) return;') >= 0, 'F6: zonder vrijgegeven verband blijft de lege toestand staan');
+const rend = html.slice(html.indexOf('async function renderLichaamVerbanden(')).slice(0, 1200);
+ok(rend.indexOf('if(!top.length) return;') >= 0, 'F6: zonder gevonden patroon blijft de lege toestand staan');
 ok(rend.indexOf('releaseVerband') < 0 && rend.indexOf('minimumN') < 0 && rend.indexOf('0.3') < 0,
    'F7: de overzichtsrenderer kent geen drempel en geen sterktegrens');
-const berekenBron = html.slice(html.indexOf('function tkVerbandBereken'), html.indexOf('function tkVerbandPijl'));
-ok(berekenBron.indexOf('cc.spearman(') >= 0 && berekenBron.indexOf('de.releaseVerband(') >= 0 && berekenBron.indexOf('dc.pairQuality(') >= 0,
-   'F8: de UI roept de engines aan en rekent zelf niets (koppeling loopt sinds Sprint 10 via pairQuality)');
-ok(!/Math\.sqrt|reduce\(/.test(berekenBron), 'F9: geen eigen statistiek in de UI');
-ok(berekenBron.indexOf('tkSleepHours(') >= 0, 'F10: slaap gaat door de bestaande normalisatie');
-ok(berekenBron.indexOf('dc.healthSeries(') >= 0, 'F11: de reeksen komen uit de bestaande healthSeries');
+/* Sprint 19-22: het rekenpad is uit de UI verhuisd naar core/relationship.js. De UI
+   levert nog uitsluitend de reeksen aan (tkRelBronnen) en roept de engine aan. De
+   eisen zijn onveranderd, alleen de plek waar ze gelden is verschoven. */
+const relEngineBron = fs.readFileSync(path.join(__dirname, 'relationship.js'), 'utf8');
+ok(relEngineBron.indexOf('d.spearman(') >= 0 && relEngineBron.indexOf('d.releaseVerband(') >= 0 && relEngineBron.indexOf('d.pairQuality(') >= 0,
+   'F8: de engines worden aangeroepen, er wordt niets zelf gerekend');
+const bronnenBron = html.slice(html.indexOf('function tkRelBronnen('), html.indexOf('function tkRelDeps('));
+ok(!/Math\.sqrt|reduce\(/.test(bronnenBron), 'F9: geen eigen statistiek in de UI');
+ok(bronnenBron.indexOf('tkSleepHours(') >= 0, 'F10: slaap gaat door de bestaande normalisatie');
+ok(bronnenBron.indexOf('dc.healthSeries(') >= 0, 'F11: de reeksen komen uit de bestaande healthSeries');
 const scatter = html.slice(html.indexOf('function tkRenderVerbandScatter'), html.indexOf('async function renderLichaamVerbandDetail'));
 ok(scatter.indexOf('trendlijn') < 0 && scatter.indexOf('regress') < 0 && scatter.indexOf('polyline') < 0,
    'F12: het spreidingsdiagram tekent geen trend- of regressielijn');

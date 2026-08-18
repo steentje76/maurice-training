@@ -1,5 +1,52 @@
 # Trainingskompas — Changelog
 
+## v4.30.0 — 18 augustus 2026 (Lichaam 2.0 — metric-detail, statistiek en herkomst)
+
+Roadmap-sprint met strakke scope. Geen redesign, geen nieuwe mock-up, geen wijziging aan Home, Training of de Fitbit-keten.
+
+### Eén detailsjabloon voor vier metrics
+
+HRV, rusthartslag, slaap en gewicht delen vanaf nu één scherm (`s-lich-metric`), één renderer (`renderLichaamMetricDetail`) en één configuratietabel (`TK_LICH_METRICS`). De gekozen metric staat in `lichMetricSel` — exact het patroon van `lichSpierSel` — en de route loopt via de bestaande `go()`-router en de al aanwezige `TK_LICH_METRIC_ROUTE`. Er is dus geen tweede router en er zijn geen vier bijna-identieke schermen bijgekomen.
+
+Het scherm toont de hoofdwaarde met eenheid, versheid en herkomst uit `observation.v1`, de datakwaliteit uit `observationQuality`, de periodekeuze, de grafiek uit de bestaande `tkRenderHealthChart`, de readout met datum en bron, het statistiekblok, de datadekking, een beschrijvende uitleg met doorstap naar Coach, en het verbandenblok in zijn bestaande veilige toestand.
+
+**Periodelogica.** 7 · 14 · 30 · 90 · 1 jaar, gebouwd op de bestaande `TK_HEALTH_PERIODS`. Een periode wordt alleen aangeboden wanneer er minstens twee echte metingen in vallen én wanneer hij méér metingen bevat dan de kortere periode ervoor. Anders is de knop een lege belofte: hetzelfde beeld onder een andere naam. Geen enkele periode geschikt, dan staat er een eerlijke lege toestand in plaats van een grafiek. Gaten blijven gaten: er wordt niet geïnterpoleerd en een dag zonder meting is nooit een nul.
+
+### `healthStats` in de Calculation-laag
+
+Eén nieuwe pure functie in `core/deviceIntegration.js`: gemiddelde, minimum, maximum, standaarddeviatie, aantal geldige metingen, dekking en volledigheid over precies dezelfde serie die de grafiek tekent. `now` wordt nergens gelezen — geen `Date.now()`, geen random, dezelfde invoer geeft altijd dezelfde uitkomst.
+
+Spreiding is de populatie-standaarddeviatie over de aanwezige metingen. Bij minder dan twee metingen is hij `null` en niet `0`: nul zou "geen variatie" beweren waar niets te bepalen valt. Onbruikbare waarden tellen niet mee, zodat er nooit een `NaN` in het gemiddelde belandt.
+
+Daarnaast twee kleine pure toevoegingen: `availablePeriods` (welke perioden mogen worden aangeboden) en `weightSeries` (gewicht uit `weight_log` in dezelfde serievorm als `healthSeries`). Het overzicht gebruikt nu diezelfde `weightSeries` in plaats van een eigen inline-constructie — de uitkomst is bewijsbaar identiek, maar overzicht en detail kunnen nu niet meer uiteenlopen.
+
+### Metingen tonen hun herkomst
+
+Elke waarde op het Metingen-scherm draagt nu bron, meetmoment en of hij is ingevoerd, gemeten of berekend. Gewicht komt uit `weight_log` en kan een andere datum en bron hebben dan de rest van de lichaamssamenstelling uit `body_comp`; dat stond eerder onder één noemer en is nu apart zichtbaar. BMI staat expliciet als berekend, met de invoer erbij. De versheid komt uit de bestaande observatielaag — `tkMetingHerkomst` bevat geen eigen tijdlogica.
+
+Corrigeren en verwijderen zijn bewust **niet** toegevoegd. De datalaag ondersteunt het nog niet en de UI doet niet alsof.
+
+### Bewust niet gebouwd
+
+- **Verbanden.** Het minimum aantal vergelijkbare waarnemingen en de statistische methode zijn niet vastgesteld, dus is er niets vrij te geven. Zowel het overzicht als het nieuwe detailscherm tonen dezelfde veilige toestand. Er is geen correlatiemotor en geen zelfbedachte drempel.
+- **De vierde statusgrens.** De Decision Engine blijft de enige bron van waarheid voor herstel- en belastingslabels. Geen nieuwe UI-drempels.
+- **CRUD op metingen.** Aparte sprint, vereist eerst een veilige datalaag.
+
+### Databaseonderhoud
+
+De vier dubbele `hrv_log`-datums (18-08, 09-08, 08-07, 29-06) zijn onderzocht. Bij 09-08 en 08-07 stond het veld `edema` alleen op de oudste rij en was daardoor onzichtbaar, omdat de app overal de nieuwste rij per datum leest. Die waarde is naar de zichtbare rij gekopieerd — een `UPDATE` op een leeg veld, waarbij niets is overschreven en niets is verwijderd. De dubbele rijen zelf staan er nog: verwijderen is een onomkeerbare ingreep en gebeurt niet zonder aparte opdracht. Sinds v4.29.1 ontstaan er geen nieuwe duplicaten meer.
+
+`.gitignore` is toegevoegd met `node_modules/`, `www/` en `package-lock.json`. Die stond in v4.29.0 beschreven en zat in v4.29.1 in de commit, maar viel weg bij de handmatige GitHub-upload omdat de webinterface bestanden met een punt overslaat.
+
+### Getest
+- Nieuw `core/fLichaamMetricDetail.test.js` — 73 controles: `healthStats` op alle randgevallen (gaten tellen niet als nul, één meting geeft geen spreiding, onbruikbare waarden vallen af, tien identieke aanroepen geven tien identieke uitkomsten), `availablePeriods` (langere perioden zonder extra metingen worden niet aangeboden, één meting levert geen enkele periode op), `weightSeries` (bewijsbaar identiek aan de vervangen inline-constructie), de route en de metricconfiguratie, en regressiecontroles op anatomie, verbanden, spierdetail, herstelberekening en de v4.29.1-Fitbit-fix.
+- `core/fLichaamPhase0.test.js` (108) en `core/fLichaamSpierDetail.test.js` (105) bijgewerkt op de verbrede stijl-scope.
+- Headless browsercontrole met echte renderpaden: alle vier de metrics openen, tekenen een grafiek, tonen statistiek en datadekking, wisselen van periode, tonen geen CRUD en geen verzonnen verbanden; na terugkeer staan beide anatomische figuren direct in beeld. Geen JavaScript-fouten in de console.
+- Volledige Quality Gate lokaal gedraaid zoals de workflow hem draait: `coaching.test.js`, alle `core/*.test.js`, `npm run test:native`, `npm run build:www` en de bestandscontroles. Alles groen.
+
+### Gewijzigd
+`core/deviceIntegration.js`, `index.html`, `sw.js`, `CHANGELOG.md`, nieuw `core/fLichaamMetricDetail.test.js`, bijgewerkt `core/fLichaamPhase0.test.js` en `core/fLichaamSpierDetail.test.js`, nieuw `.gitignore`. `CORE_SIG` is ongewijzigd (`deviceIntegration.js` staat niet in `CORE_FILES`); `CACHE_NAME` en `CACHE_STATIC` zijn gebumpt naar `v43000`, anders blijft de service worker de oude `deviceIntegration.js` cache-first uitserveren.
+
 ## v4.29.1 — 18 augustus 2026 (INCIDENT — Fitbit-synchronisatie hersteld)
 
 Incident-sprint. Geen roadmapwerk, geen redesign, geen wijziging aan Home of Training. Twee onafhankelijke defecten in de wearable-dataketen opgelost, beide met live bewijs uit productie.

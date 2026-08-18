@@ -1,5 +1,37 @@
 # Trainingskompas — Changelog
 
+## v4.38.0 — 18 augustus 2026 (Sprint 15 — hardening & regressiebescherming)
+
+Geen nieuwe functionaliteit. Deze release repareert één echte fout uit Sprint 14 en legt vast wat er is, zodat een volgende sprint niet ongemerkt sportlogica, het AI-contract of bestaande schermen kan wijzigen.
+
+### De fout: readiness noemde zichzelf te vaak "volledig"
+
+In `readinessDay` werd de datakwaliteit bepaald **voordat** onbetrouwbare signalen uit de lijst met beschikbare signalen werden gehaald. Het gevolg: een dag waarop HRV, rusthartslag én slaap alle drie als `no_data` binnenkwamen, hield nog steeds `datakwaliteit: 'volledig'` — terwijl er maar drie van de zes signalen bruikbaar waren. Precies het tegenovergestelde van wat deze laag hoort te doen.
+
+De volgorde is omgedraaid: eerst filteren, dan tellen. Vijf of meer bruikbare signalen is volledig, twee tot vier is gedeeltelijk, minder is onvoldoende — nu gemeten over wat er écht overblijft. Een aanwezig maar onbetrouwbaar signaal telt vanaf nu even zwaar als een ontbrekend signaal, en verschijnt één keer in `ontbreekt`. De labels `current`, `partial` en `stale` blijven gewoon bruikbaar.
+
+De rest van de beslissing is niet aangeraakt: dezelfde zones, dezelfde drempels, dezelfde trainingsaanpassing uit `computeProgAdjustment`.
+
+### Wat er nu bewaakt wordt
+
+`core/fHardening.test.js` legt vier dingen vast die tot nu toe alleen in de code stonden.
+
+**Datakwaliteit.** Zeven combinaties van aanwezige signalen, één en meerdere ongeldige signalen, `no_data`, `sync_failed`, ontbrekende slaap, HRV en RHR, geen dubbele vermeldingen, en determinisme over veertig aanroepen. Plus een controle op de bronvolgorde zelf: filteren staat vóór tellen.
+
+**Live coach.** Zeven RPE-waarden geven exact de delta van `progressionDecision`; zonder RPE geen gewichtsbeslissing en geen kilo in de tekst; zonder voorschrift geen afwijkingsclaim; zonder rustinstelling geen verzonnen rusttijd; geen AI-aanroep en geen engine-aanroep in die laag; deterministisch.
+
+**Het AI-contract.** De drie whitelists staan nu letterlijk in de test. Groeit er ergens een veld bij zonder dat iemand dat bewust doet, dan faalt de test. Daarnaast wordt aangetoond dat een onbekend veld of een ruwe `sessionLog` er niet doorheen lekt.
+
+**Home en Training.** Elf onderdelen van Home, acht van Training, de vijf bestemmingen in de bottom navigation en vijf onderdelen van het actieve trainingsscherm zijn vastgelegd op aanwezigheid. Deze controles ontwerpen niets en zeggen niets over volgorde, styling of opmaak — ze signaleren alleen dat iets verdwijnt of hernoemd wordt.
+
+### Bekende duplicatie, bewust niet verplaatst
+
+Drie grenzen staan zowel in een engine als, als afgeleide tekst of kleur, in `index.html`: de RPE-banden 7,5 en 8,5 achter de duiding "Sterke marge" en "Goede trainingsprikkel", de readinessgrenzen 1,00 en 0,93 achter de kleur van de herstelkaart, en de spierherstelgrens van 70%. Verplaatsen zou de bevroren Home-UI raken, dus dat gebeurt hier niet. In plaats daarvan zijn ze vastgepind: wijzigt de engine, dan faalt de test en moet de UI mee. Daarnaast wordt gecontroleerd dat elke engine-regel precies één implementatie heeft en dat wat in `index.html` op een engine-functie lijkt, altijd een doorgeefwrapper van één regel is.
+
+### Overig
+
+`sw.js`: `CORE_SIG` naar `48a3b1d3fc8def49` en de caches naar `v43800`, omdat `core/decision.js` is gewijzigd. Home en Training zijn ongewijzigd: headless vergelijking met de vorige versie geeft dezelfde secties, dezelfde labels en dezelfde tekst.
+
 ## v4.37.0 — 18 augustus 2026 (Sprint 14 — Recovery & readiness)
 
 De onderdelen bestonden al: een herstelscore, een dagfactor, een readiness-zone, een trainingsaanpassing. Wat ontbrak was het antwoord dat de sporter 's ochtends wil: *hoe sta ik ervoor, en wat betekent dat voor de training die ik van plan was?* Die vier stukken lagen los op het scherm en moesten in het hoofd worden samengevoegd.

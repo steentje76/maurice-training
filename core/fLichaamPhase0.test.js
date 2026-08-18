@@ -182,7 +182,7 @@ const mRoute = html.match(/if\(id==='s-lichaam'\|\|id==='s-lich-spieren'\|\|id==
 ok(!!mRoute, 'go() routeert Lichaam en de drie subschermen naar renderLichaam()');
 
 // De CSS van Lichaam geldt ook op de subschermen (anders vallen verplaatste blokken kaal terug).
-ok(html.indexOf(':is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen) .lich-mus') >= 0,
+ok(html.indexOf(':is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric) .lich-mus') >= 0,
   'de Lichaam-stijlen zijn verbreed naar alle subschermen, inclusief het spierdetail');
 eq((html.match(/^#s-lichaam /gm) || []).length, 0, 'geen enkele Lichaam-stijl staat nog alleen op #s-lichaam');
 

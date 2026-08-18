@@ -685,6 +685,88 @@
     return { count: pts.length, max: { date: max.date, value: max.value }, min: { date: min.date, value: min.value }, latest: { date: pts[pts.length-1].date, value: pts[pts.length-1].value } };
   }
 
+  // ── STATISTIEK OVER ÉÉN VENSTER (healthStats) — Lichaam 2.0 ───────────────────────────
+  // Feitelijke statistiek over precies dezelfde serie die de grafiek tekent. PUUR en
+  // deterministisch: geen Date.now, geen random, geen interpolatie, geen tweede
+  // rekenwaarheid. Gaten (value:null) tellen wél mee in de dekking maar NOOIT als 0 in
+  // het gemiddelde of de spreiding — een dag zonder meting is geen dag met waarde nul.
+  //
+  // Spreiding is de POPULATIE-standaarddeviatie over de aanwezige metingen. Bij minder dan
+  // twee metingen is spreiding niet te bepalen en is hij null, niet 0: 0 zou "geen
+  // variatie" beweren waar niets te bepalen valt.
+  function _round2(n) { return Math.round(n * 100) / 100; }
+  function healthStats(series) {
+    var arr = Array.isArray(series) ? series : [];
+    var days = arr.length;
+    var pts = [];
+    arr.forEach(function (s) {
+      if (!s || s.value == null) return;
+      var v = Number(s.value);
+      if (isFinite(v)) pts.push(v);
+    });
+    var base = { count: 0, days: days, coverage: 0, complete: false,
+                 mean: null, min: null, max: null, sd: null, range: null };
+    if (!pts.length) return base;
+    var sum = 0; pts.forEach(function (v) { sum += v; });
+    var mean = sum / pts.length;
+    var mn = pts[0], mx = pts[0];
+    pts.forEach(function (v) { if (v < mn) mn = v; if (v > mx) mx = v; });
+    var sd = null;
+    if (pts.length >= 2) {
+      var q = 0; pts.forEach(function (v) { q += (v - mean) * (v - mean); });
+      sd = Math.sqrt(q / pts.length);
+    }
+    return {
+      count: pts.length, days: days,
+      coverage: days ? Math.round(pts.length / days * 100) / 100 : 0,
+      complete: days > 0 && pts.length === days,
+      mean: _round2(mean), min: _round2(mn), max: _round2(mx),
+      sd: sd == null ? null : _round2(sd),
+      range: _round2(mx - mn)
+    };
+  }
+
+  // Een grafiek heeft minimaal twee punten nodig om iets te tonen dat geen losse stip is.
+  // Dit is een RENDERVOORWAARDE, geen statistische drempel: het zegt niets over
+  // betrouwbaarheid en wordt nergens gebruikt om een uitspraak vrij te geven.
+  var MIN_POINTS_FOR_PERIOD = 2;
+
+  // Welke perioden mogen worden aangeboden? seriesForPeriod(p) levert de serie voor
+  // periode p. Een periode telt alleen mee als er ten minste twee echte metingen in
+  // vallen ÉN als hij méér metingen bevat dan de kortere periode ervoor — anders is de
+  // knop een lege belofte: exact hetzelfde beeld onder een andere naam.
+  // Geen enkele periode geschikt → lege lijst; de UI toont dan de eerlijke lege toestand.
+  function availablePeriods(seriesForPeriod, periods) {
+    var ps = (Array.isArray(periods) ? periods : []).slice().sort(function (a, b) { return a - b; });
+    var out = [], last = -1;
+    for (var i = 0; i < ps.length; i++) {
+      var n = 0;
+      try {
+        var ser = seriesForPeriod(ps[i]) || [];
+        ser.forEach(function (x) { if (x && x.value != null) n++; });
+      } catch (e) { n = 0; }
+      if (n >= MIN_POINTS_FOR_PERIOD && n > last) { out.push(ps[i]); last = n; }
+    }
+    return out;
+  }
+
+  // Gewicht staat in weight_log, niet in hrv_log. Dezelfde serievorm als healthSeries
+  // zodat grafiek, observatielaag en statistiek er niet van hoeven te weten.
+  // Meerdere rijen op één datum: de eerste in de meegegeven volgorde wint (de app levert
+  // date.desc,created_at.desc → dat is de nieuwste meting van die dag).
+  function weightSeries(rows, endYmd, days) {
+    rows = Array.isArray(rows) ? rows : [];
+    var byDate = {};
+    rows.forEach(function (r) {
+      if (!r || r.date == null || r.weight == null || r.weight === '') return;
+      var key = String(r.date).slice(0, 10);
+      if (byDate[key] == null) byDate[key] = r.weight;
+    });
+    return dateRange(endYmd, days).map(function (d) {
+      return { date: d, value: byDate[d] != null ? byDate[d] : null };
+    });
+  }
+
   // ══════════════════════════════════════════════════════════════════════════════
   // OBSERVATIELAAG (observation.v1) — Lichaam Data Depth 1.0
   //
@@ -869,6 +951,8 @@
     pickLatestMetric: pickLatestMetric, bodyMetricsFromLog: bodyMetricsFromLog,
     // health-history (grafiek-data, provider-agnostisch, TZ-veilig)
     dateRange: dateRange, healthSeries: healthSeries, healthTrend: healthTrend, healthSummary: healthSummary,
+    healthStats: healthStats, availablePeriods: availablePeriods, weightSeries: weightSeries,
+    MIN_POINTS_FOR_PERIOD: MIN_POINTS_FOR_PERIOD,
     observation: observation, observationQuality: observationQuality, sourceKind: sourceKind,
     OBSERVATION_VERSION: OBSERVATION_VERSION, QUALITY_STATES: QUALITY_STATES,
     PARTIAL_COVERAGE_MAX: PARTIAL_COVERAGE_MAX,

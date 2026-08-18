@@ -190,7 +190,7 @@ ok(scatter.indexOf('trendlijn') < 0 && scatter.indexOf('regress') < 0 && scatter
    'F12: het spreidingsdiagram tekent geen trend- of regressielijn');
 ok(scatter.indexOf('isFinite(p.a) && isFinite(p.b)') >= 0, 'F13: alleen echte paren worden getekend');
 ok(html.indexOf('async function _renderLichaamVerbandDetail') >= 0, 'F14: het detailscherm heeft een foutgrens');
-ok(html.indexOf(':is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband)') >= 0,
+ok(html.indexOf(':is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens)') >= 0,
    'F15: het scherm erft de bestaande Lichaam-cascade');
 ok(/<div class="scr" id="s-lich-verband">[\s\S]{0,2400}<nav class="bnav"/.test(html), 'F16: bestaande bottom navigation');
 // geen fictieve data

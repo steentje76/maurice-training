@@ -123,7 +123,7 @@ ok(/if\(id==='s-lich-metric'\)renderLichaamMetricDetail\(\);/.test(html),
 eq((html.match(/function renderLichaamMetricDetail\(/g) || []).length, 1, 'D6: precies één renderer');
 ok(/function openLichaamMetric\(key\)\{[^}]*lichMetricSel=key/.test(html),
    'D7: openLichaamMetric legt de gekozen metric vast (zelfde patroon als lichSpierSel)');
-ok(html.indexOf(':is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband)') >= 0,
+ok(html.indexOf(':is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens)') >= 0,
    'D8: het scherm erft de bestaande Lichaam-cascade i.p.v. eigen stijlen');
 ok(/id="s-lich-metric"[\s\S]{0,2600}class="bnav"/.test(html), 'D9: de bestaande bottom navigation staat op het scherm');
 

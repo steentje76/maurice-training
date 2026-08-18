@@ -117,7 +117,7 @@ ok(oefRender.indexOf('Nog geen oefeningen gelogd') >= 0 && oefRender.indexOf('li
    'D9: zonder data een nette lege toestand, geen leeg scherm');
 ok(oefRender.indexOf('Geen spiergroep gekozen') >= 0, 'D10: zonder selectie ook een nette toestand');
 ok(detail.indexOf('openSpierOefeningen()') >= 0, 'D11: het spierdetail heeft een doorstap naar de oefeningen');
-ok(/:is\(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband\)/.test(html),
+ok(/:is\(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens\)/.test(html),
    'D12: het scherm erft de bestaande Lichaam-cascade');
 ok(/<div class="scr" id="s-lich-oefeningen">[\s\S]{0,2200}<nav class="bnav"/.test(html),
    'D13: het scherm heeft de bestaande bottom navigation');

@@ -15036,12 +15036,15 @@ function buildCoachTraining(dfInfo,recRows){
  * ══════════════════════════════════════════════════════════════════════════ */
 async function tkReadinessVandaag(dfInfo,recRows,nextT){
   if(typeof DecisionCore==='undefined'||typeof DecisionCore.readinessDay!=='function') return null;
-  let hd=[]; try{ hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'); }catch(_){ hd=[]; }
+  /* Offline-first, zoals de rest van Home: begrens elke query zodat Home nooit blijft hangen
+     op een trage verbinding. Zonder deze grens stopt refreshHome halverwege en blijven de
+     secties eronder (Snelacties, laatste sessies) leeg — een bekend faalbeeld op deze pagina. */
+  let hd=[]; try{ hd=await v43SafeGet('hrv_log','&order=date.desc,created_at.desc&limit=35',4000); }catch(_){ hd=[]; }
   const lh=(hd&&hd[0])?hd[0]:null;
   let dagen7=null;
   try{
     const d7=new Date(); d7.setDate(d7.getDate()-6);
-    const ses=await sbGet('sessions','&date=gte.'+d7.toISOString().split('T')[0]+'&order=date.desc');
+    const ses=await v43SafeGet('sessions','&date=gte.'+d7.toISOString().split('T')[0]+'&order=date.desc',4000);
     const uniek={}; (ses||[]).forEach(function(x){ const d=String(x&&x.date||'').slice(0,10); if(d)uniek[d]=1; });
     dagen7=Object.keys(uniek).length;
   }catch(_){ dagen7=null; }

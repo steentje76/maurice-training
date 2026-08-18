@@ -282,9 +282,37 @@ ok(/s-lich-gegevens/.test(html), 'Sprint 9 — scherm Gezondheidsgegevens & kopp
 ok(/s-lich-verband/.test(html) && /s-lich-metric/.test(html), 'verband- en metricdetail staan er nog');
 ok(/Wat betekent dit voor vandaag\?/.test(html), 'bestaande coach-knop is niet vervangen');
 ok(/Welke training past hierbij\?/.test(html), 'bestaande trainingsknop is niet vervangen');
-ok(/const APP_VER = 'v4\.34\.0'/.test(html), 'applicatieversie verhoogd naar v4.34.0');
+/* Deze twee controles toetsen een INVARIANT, geen momentopname. Ze stonden hier eerst als
+ * letterlijke versiestrings ('v4.34.0' en 'v43400'). Dat had twee nadelen: elke volgende
+ * versiebump liet ze onterecht falen, en toen bij een upload sw.js ontbrak, meldde de gate
+ * "cache niet gebumpt" terwijl het werkelijke probleem was dat de service worker niet bij de
+ * core hoorde. De invariant hieronder vangt datzelfde geval, maar blijft ook na een bump geldig. */
+const APP_VER_MIN = [4, 34, 0];                       // Sprint 10 landde in v4.34.0
+const mVer = html.match(/const APP_VER = '(v\d+\.\d+\.\d+)'/);
+ok(!!mVer, 'applicatieversie staat als vX.Y.Z in index.html');
+const verNums = mVer ? mVer[1].slice(1).split('.').map(Number) : [0, 0, 0];
+const verWaarde = verNums[0] * 1e6 + verNums[1] * 1e3 + verNums[2];
+const minWaarde = APP_VER_MIN[0] * 1e6 + APP_VER_MIN[1] * 1e3 + APP_VER_MIN[2];
+ok(verWaarde >= minWaarde, 'applicatieversie is minstens v' + APP_VER_MIN.join('.') + ' (kreeg ' + (mVer ? mVer[1] : '?') + ')');
+
+/* De service worker moet bij de CORE horen. Precies dezelfde regel als core/sw-guard.test.js:
+ * CORE_SIG is de CRLF-agnostische hash van de core-bestanden. Een sw.js die achterblijft bij een
+ * core-wijziging valt hier dus door de mand — ook zonder dat er een versienummer in staat. */
+const crypto = require('crypto');
+const CORE_FILES = ['core/calculation.js', 'core/decision.js', 'core/cardio.js', 'core/progression.js',
+                    'core/coaching.js', 'core/movement.js', 'core/onboarding.js', 'core/athleteConstraints.js'];
 const sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
-ok(/CACHE_STATIC = 'trainingskompas-static-v43400'/.test(sw), 'service-worker-cache gebumpt (core is gewijzigd)');
+const coreGecombineerd = CORE_FILES
+  .map(f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8').replace(/\r/g, ''))
+  .join('\n');
+const coreSig = crypto.createHash('sha256').update(coreGecombineerd).digest('hex').slice(0, 16);
+const mSig = sw.match(/CORE_SIG\s*=\s*'([0-9a-f]+)'/);
+ok(!!mSig && mSig[1] === coreSig,
+   'service worker hoort bij de huidige core (CORE_SIG ' + (mSig ? mSig[1] : 'ontbreekt') + ' moet ' + coreSig + ' zijn)');
+const mNaam = sw.match(/CACHE_NAME\s*=\s*'trainingskompas-(v\d+)'/);
+const mStat = sw.match(/CACHE_STATIC\s*=\s*'trainingskompas-static-(v\d+)'/);
+ok(!!mNaam && !!mStat && mNaam[1] === mStat[1],
+   'CACHE_NAME en CACHE_STATIC dragen dezelfde cacheversie (' + (mNaam ? mNaam[1] : '?') + ' / ' + (mStat ? mStat[1] : '?') + ')');
 
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');

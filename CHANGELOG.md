@@ -1,5 +1,33 @@
 # Trainingskompas — Changelog
 
+## v4.34.1 — 18 augustus 2026 (Sprint 11 — acceptance & forensic closure)
+
+Een verificatiesprint: de volledige keten van Home tot Coach end-to-end doorlopen in een echte browser, met een in-memory database achter de bestaande datalaag. Geen nieuwe functionaliteit, geen refactor. Drie reproduceerbare defecten gevonden en gerepareerd; de rest is bevestigd als PASS en ongewijzigd gelaten.
+
+### Defect 1 — een nieuw persoonlijk record werd niet bewaard
+
+`logSet` werkt de PR-referentie in het geheugen direct bij, zodat een volgende set op hetzelfde gewicht niet nóg een keer als record wordt gemarkeerd. `finishSession` vergeleek het zwaarste gewicht daarna met díe al bijgewerkte waarde. Bij een PR van 100 kg en een set van 115 kg was `115 > 115` onwaar: er werd niets naar `exercise_goals` geschreven, de afrondingskaart meldde geen record, en na herladen stond de oude PR er weer.
+
+Opgelost met een sessie-basislijn (`sessionPrBase`) die de PR vasthoudt zoals die vóór de sessie in de database stond. `finishSession` vergelijkt daarmee. Het badge-gedrag tijdens de set is niet veranderd; de basislijn wordt alleen bij het afronden geleegd, wanneer geheugen en database weer gelijk zijn.
+
+### Defect 2 — het eerste record van een oefening verdween helemaal
+
+Dezelfde oorzaak, andere uitwerking. Had een oefening nog geen rij in `exercise_goals`, dan maakte `logSet` er één aan die alleen in het geheugen bestond. `upsertExerciseGoalField` zag die entry, koos daarom een PATCH, en die PATCH raakte nul rijen. Het allereerste record van élke oefening ging zo verloren — zonder foutmelding, terwijl de afrondingskaart wel "PR" meldde.
+
+Zo'n geheugen-entry draagt nu een markering (`_alleenGeheugen`), en zowel `upsertExerciseGoalField` als het peakdoel-scherm behandelen hem als "nog geen rij": invoegen in plaats van patchen. Beide schrijfwegen bestaan nog; alleen de keuze ertussen is gerepareerd.
+
+### Defect 3 — het trainingsscherm gaf twee antwoorden op dezelfde vraag
+
+De VANDAAG-kaart in Execution las uitsluitend `ex.suggestedWeight`. Bij een vaste training staat dat veld er niet in, dus toonde de kaart "nog te bepalen" terwijl de setvelden en het "Vorige keer"-blok op hetzelfde scherm 95 kg lieten zien. Het scherm had al één prescription-waarheid (`rxWeight`); die werd alleen niet doorgegeven. Dat gebeurt nu — er wordt niets berekend, alleen doorgegeven, en zonder enig prescription-getal blijft er netjes "nog te bepalen" staan in plaats van een verzonnen gewicht.
+
+Meegenomen: de afrondingskaart schreef "Nieuw records!" bij meer dan één record. Dat is nu "Nieuwe records!".
+
+### Wat is geverifieerd en ongewijzigd gebleven
+
+De volledige trainingsflow (start, prefill, sets, NL-komma's, RPE, afvinken, rust, tweede oefening, state na wegnavigeren en terugkeren, afronden, historie), de aggregatie naar `sessions` (zwaarste werkset als kop, alle sets in `sets_detail`), `dataquality.v1` inclusief de uitsluiting van de rusthartslag van 26 juli, `correlation.v1`, `verband.v1`, `verbandtraining.v1`, `recovery_score.v1`, de coach-context, de architectuurscheiding (geen enkele engine-functie is dubbel geïmplementeerd; de UI delegeert), de ingesloten posters en anatomie-SVG's, en de mobiele weergave op 390×844 zonder horizontale overflow.
+
+De deployment is forensisch gecontroleerd: `sw.js` op productie draait `CORE_SIG 7cf9ba1fe4858a03` en cache `v43400`, en `core/decision.js` en `core/deviceIntegration.js` op productie bevatten de Sprint 10-functies met de juiste constanten.
+
 ## v4.34.0 — 18 augustus 2026 (Data Quality → Interpretatie → Coach Context)
 
 De verbanden uit v4.32.0 rekenden over de ruwe rijen uit `hrv_log`. Deze release zet er de ontbrekende schakel voor: een datakwaliteitslaag tussen RAW DATA en de Calculation Engine. Geen redesign, geen nieuwe mock-up. Home, Training, Coach-scherm, Voortgang, de anatomie en de Fitbit-keten zijn niet aangeraakt.

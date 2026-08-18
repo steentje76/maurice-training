@@ -151,15 +151,94 @@
   var VERBAND_VERSIE = 'verband.v1';
   var VERBAND_MIN_N = 30;
   var VERBAND_STERKTE = [
-    { grens: 0.10, key: 'verwaarloosbaar', label: 'Geen duidelijke samenhang' },
-    { grens: 0.30, key: 'zwak',            label: 'Zwakke samenhang' },
-    { grens: 0.50, key: 'matig',           label: 'Matige samenhang' },
-    { grens: Infinity, key: 'sterk',       label: 'Sterke samenhang' }
+    { grens: 0.10, key: 'verwaarloosbaar', label: 'Geen duidelijke samenhang',
+      uitleg: 'Er zit te weinig patroon in je metingen om van samenhang te spreken.' },
+    { grens: 0.30, key: 'zwak',            label: 'Zwakke samenhang',
+      uitleg: 'Het patroon is zichtbaar, maar zwak: veel dagen wijken ervan af.' },
+    { grens: 0.50, key: 'matig',           label: 'Matige samenhang',
+      uitleg: 'Het patroon is duidelijk zichtbaar, maar het geldt lang niet elke dag.' },
+    { grens: Infinity, key: 'sterk',       label: 'Sterke samenhang',
+      uitleg: 'Het patroon is duidelijk en consequent zichtbaar in je metingen.' }
   ];
   var VERBAND_DISCLAIMER = 'Dit is een samenhang, geen oorzaak.';
   // Woorden die een oorzaak-gevolgrelatie suggereren. Uitsluitend voor tests en review;
   // de engine bouwt zijn zinnen zo op dat ze er nooit in kunnen voorkomen.
   var VERBAND_VERBODEN_WOORDEN = ['veroorzaakt', 'zorgt voor', 'leidt tot', 'dankzij', 'waardoor', 'heeft als gevolg', 'door'];
+  /* Sprint 10 — DATAKWALITEIT IN DE VRIJGAVE.
+   * De Decision Engine krijgt van de datakwaliteitslaag te horen hoeveel vergelijkbare
+   * dagen zijn afgevallen. Hij meldt dat neutraal: er wordt NIET beweerd dat een meting
+   * fout was, alleen dat hij niet betrouwbaar vergelijkbaar was. De UI schrijft die zin
+   * niet zelf; hij komt hier vandaan, net als alle andere tekst. */
+  function verbandUitsluitingZin(aantal) {
+    if (!(typeof aantal === 'number' && isFinite(aantal)) || aantal <= 0) return null;
+    return (aantal === 1)
+      ? 'Eén dag is niet meegenomen omdat de gegevens niet betrouwbaar vergelijkbaar waren.'
+      : ('Enkele dagen (' + Math.floor(aantal) + ') zijn niet meegenomen omdat de gegevens niet betrouwbaar vergelijkbaar waren.');
+  }
+
+  /* Sprint 10 — dezelfde neutrale melding voor ÉÉN meetreeks (metric-detail). Ook hier
+   * geen oordeel over de meting zelf: alleen dat hij niet is meegerekend. */
+  function meetreeksUitsluitingZin(aantal) {
+    if (!(typeof aantal === 'number' && isFinite(aantal)) || aantal <= 0) return null;
+    return (aantal === 1)
+      ? 'Eén meting is niet meegerekend omdat de waarde niet betrouwbaar bij deze reeks past.'
+      : (Math.floor(aantal) + ' metingen zijn niet meegerekend omdat de waarden niet betrouwbaar bij deze reeks passen.');
+  }
+
+  /* Sprint 10 — PRAKTISCHE TRAININGSBETEKENIS (verbandtraining.v1).
+   *
+   * Een samenhang tussen twee metingen is op zichzelf geen trainingsadvies. Deze functie
+   * mag daarom alleen iets zeggen wanneer de benodigde, REEDS BEREKENDE context er is:
+   * een vrijgegeven verband met richting, en een herstelstatus uit recovery_score.v1.
+   * Ontbreekt een van beide, dan is de uitkomst expliciet 'niet beschikbaar' met een
+   * reden — er wordt niets aangevuld en niets aangenomen.
+   *
+   * Wat deze functie NOOIT doet: een gereedheidsoordeel vellen. Niet "je bent hersteld",
+   * niet "je lichaam is klaar voor een zware training". Hij verwijst naar de bestaande
+   * herstelstatus en laat de beslissing bij de gebruiker en de bestaande trainingsregels.
+   * De Decision Engine berekent hier niets: score en band komen binnen als feit. */
+  var VERBAND_TRAINING_VERSIE = 'verbandtraining.v1';
+  var VERBAND_TRAINING_ONBRUIKBARE_KWALITEIT = ['no_data', 'source_unavailable', 'sync_failed', 'stale'];
+  /* Uitsluitend voor tests en review: formuleringen die een gereedheidsoordeel zouden zijn. */
+  var VERBAND_TRAINING_VERBODEN_WOORDEN = ['je bent hersteld', 'volledig hersteld', 'klaar voor een zware',
+    'klaar om te presteren', 'ga vol', 'je lichaam is klaar', 'veilig zwaar'];
+
+  function verbandTrainingContext(besluit, context, definition) {
+    var b = besluit || {}, c = context || {}, d = definition || {};
+    var basis = { versie: VERBAND_TRAINING_VERSIE, beschikbaar: false, reason: 'geen_verband', zin: null, actie: null,
+                  herstelScore: null, herstelBand: null };
+    if (!b.vrijgegeven) return basis;
+    if (b.direction !== 'higher' && b.direction !== 'lower') { basis.reason = 'geen_richting'; return basis; }
+
+    var naamA = (d.a && (d.a.zinNaam || d.a.label)) || null;
+    var naamB = (d.b && (d.b.zinNaam || d.b.noemer || d.b.label)) || null;
+    var paar = (naamA && naamB) ? ('je ' + naamA + ' en je ' + naamB) : 'deze twee metingen';
+    var richtingWoord = (b.direction === 'higher') ? 'in dezelfde richting' : 'in tegengestelde richting';
+    var opening = 'In deze periode bewegen ' + paar + ' ' + richtingWoord + '.';
+
+    if (c.dataKwaliteit && VERBAND_TRAINING_ONBRUIKBARE_KWALITEIT.indexOf(c.dataKwaliteit) >= 0) {
+      basis.reason = 'datakwaliteit_onvoldoende';
+      basis.zin = opening + ' Je metingen van vandaag zijn niet actueel genoeg om daar iets over vandaag aan te verbinden.';
+      basis.actie = 'Synchroniseer je wearable of vul je check-in in.';
+      return basis;
+    }
+    var score = (typeof c.herstelScore === 'number' && isFinite(c.herstelScore)) ? Math.round(c.herstelScore) : null;
+    var band = c.herstelBand && c.herstelBand !== 'onbekend' ? c.herstelBand : null;
+    if (score == null || !band) {
+      basis.reason = 'geen_herstelstatus';
+      basis.zin = opening + ' Er is voor vandaag geen herstelstatus berekend, dus hier is geen conclusie voor je training aan te verbinden.';
+      basis.actie = 'Vul je check-in in, dan berekent de app je herstelstatus.';
+      return basis;
+    }
+    var bandTekst = ({ hoog: 'hoog', gemiddeld: 'gemiddeld', laag: 'laag' })[band] || String(band);
+    var zin = opening + ' Je herstelstatus van vandaag is ' + bandTekst + ' (' + score + '/100).';
+    if (c.herstelConfidence === 'laag') zin += ' Die status is indicatief: er zijn weinig signalen beschikbaar.';
+    return {
+      versie: VERBAND_TRAINING_VERSIE, beschikbaar: true, reason: 'ok', zin: zin,
+      actie: 'Kijk naar je actuele herstelstatus voordat je de trainingsbelasting verhoogt.',
+      herstelScore: score, herstelBand: band
+    };
+  }
 
   /* De eerste drie verbanden. UITSLUITEND productconfiguratie — geen logica per verband.
    * Een vierde verband is een extra item in deze lijst; er komt geen tweede correlatie-
@@ -204,8 +283,11 @@
    *     minimumN, zin, onderbouwing, disclaimer, versie }
    * reason: 'ok' · 'circulair' · 'te_weinig_data' · 'niet_bepaalbaar' · 'ongeldige_definitie'
    */
-  function releaseVerband(stat, definition) {
+  function releaseVerband(stat, definition, kwaliteit) {
     var st = stat || {}, d = definition || {};
+    var kw = kwaliteit || {};
+    var uitgesloten = (typeof kw.excludedDays === 'number' && isFinite(kw.excludedDays) && kw.excludedDays > 0)
+      ? Math.floor(kw.excludedDays) : 0;
     var n = (typeof st.n === 'number' && isFinite(st.n) && st.n >= 0) ? Math.floor(st.n) : 0;
     var coefficient = (typeof st.coefficient === 'number' && isFinite(st.coefficient)) ? st.coefficient : null;
     var minimumN = (typeof d.minimumN === 'number' && isFinite(d.minimumN)) ? d.minimumN : VERBAND_MIN_N;
@@ -213,7 +295,8 @@
       id: d.id || null, versie: VERBAND_VERSIE, vrijgegeven: false, reason: 'ongeldige_definitie',
       direction: 'none', strength: null, strengthLabel: null,
       coefficient: coefficient, n: n, minimumN: minimumN,
-      zin: null, onderbouwing: null, disclaimer: VERBAND_DISCLAIMER
+      zin: null, onderbouwing: null, disclaimer: VERBAND_DISCLAIMER,
+      sterkteUitleg: null, uitgesloten: uitgesloten, kwaliteitZin: verbandUitsluitingZin(uitgesloten)
     };
     if (!d.a || !d.b || !d.a.veld || !d.b.veld) return basis;
     if (verbandIsCirculair(d)) { basis.reason = 'circulair'; return basis; }
@@ -235,12 +318,21 @@
       coefficient: coefficient, n: n, minimumN: minimumN,
       zin: zin,
       onderbouwing: 'Gebaseerd op ' + n + ' dagen met beide metingen.',
-      disclaimer: VERBAND_DISCLAIMER
+      disclaimer: VERBAND_DISCLAIMER,
+      sterkteUitleg: band.uitleg || null,
+      uitgesloten: uitgesloten,
+      kwaliteitZin: verbandUitsluitingZin(uitgesloten)
     };
   }
 
   var DecisionCore = {
     releaseVerband: releaseVerband,
+    verbandUitsluitingZin: verbandUitsluitingZin,
+    meetreeksUitsluitingZin: meetreeksUitsluitingZin,
+    verbandTrainingContext: verbandTrainingContext,
+    VERBAND_TRAINING_VERSIE: VERBAND_TRAINING_VERSIE,
+    VERBAND_TRAINING_VERBODEN_WOORDEN: VERBAND_TRAINING_VERBODEN_WOORDEN,
+    VERBAND_TRAINING_ONBRUIKBARE_KWALITEIT: VERBAND_TRAINING_ONBRUIKBARE_KWALITEIT,
     verbandIsCirculair: verbandIsCirculair,
     verbandSterkte: verbandSterkte,
     VERBAND_DEFINITIES: VERBAND_DEFINITIES,

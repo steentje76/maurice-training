@@ -1,5 +1,79 @@
 # Trainingskompas — Changelog
 
+## v4.37.0 — 18 augustus 2026 (Sprint 14 — Recovery & readiness)
+
+De onderdelen bestonden al: een herstelscore, een dagfactor, een readiness-zone, een trainingsaanpassing. Wat ontbrak was het antwoord dat de sporter 's ochtends wil: *hoe sta ik ervoor, en wat betekent dat voor de training die ik van plan was?* Die vier stukken lagen los op het scherm en moesten in het hoofd worden samengevoegd.
+
+### Wat er al was en dus niet opnieuw is gebouwd
+
+`recoveryScore` (`recovery_score.v1`), `trainReadiness` (`readiness.v1`), `computeProgAdjustment` (`progression_adjust.v1`), `calculateDayFactor` (`dayfactor.v1`), `applySessionRecovery`, `recoveryAdjustmentForToday`, beide bestaande check-ins, en de volledige Sprint 13-keten. Alles hergebruikt, niets vervangen.
+
+Twee dingen zijn tijdens de audit expliciet vastgelegd in plaats van gegokt. **De naam `readiness.v1` was al bezet** door `trainReadiness`; die kapen zou stilzwijgend de betekenis van een bestaand contract veranderen. De nieuwe dagbeslissing heet daarom `readiness_day.v1`, in lijn met `progression_adjust.v1` en `recovery_score.v1`. En **een REST/STOP-zone is niet ingevoerd**: daar bestaat in deze applicatie geen expliciete regel voor — `computeProgAdjustment` gaat niet verder dan één set minder en RPE −1,5 — en een zone zonder regel zou een verzonnen oordeel zijn.
+
+### Twee regels die in de UI stonden
+
+`dayState` in `index.html` deelde de dag in vijf zones in, met eigen drempels, náást `trainReadiness` dat er drie kent: twee indelingen voor dezelfde vraag, waarvan één in de UI-laag. En `v43GereedheidScore` rekende `(factor − 0,85) / 0,20 × 100` uit — letterlijk dezelfde formule die al binnen `recoveryScore` stond.
+
+Beide zijn verplaatst: `dayzone.v1` naar de Decision Engine, `readiness_percent.v1` naar de Calculation Engine, met doorgeefwrappers in `index.html` zodat er visueel niets verandert. `recoveryScore` gebruikt de omzetting nu intern, dus het getal bestaat nog maar op één plek. Een test loopt de hele factorrange langs en bewijst dat de uitkomst identiek is aan de oude formule.
+
+### De dagbeslissing — `readiness_day.v1`
+
+`DecisionCore.readinessDay` rekent niets en verzint geen regel. Het zet de reeds berekende waarden naast elkaar en roept uitsluitend bestaande regels aan: `trainReadiness` voor de zone, `dayZone` voor het dagthema, `computeProgAdjustment` voor de aanpassing. De herstelscore komt kant-en-klaar binnen en wordt niet nagerekend.
+
+Beschikbaarheid is een feit, geen aanname. Zes signalen worden geteld — HRV, rusthartslag, slaap, spierherstel, gevoel, recente trainingsbelasting — en wat er niet is, staat in `ontbreekt`. Een signaal dat als `sync_failed` of `no_data` binnenkomt telt niet als aanwezig. Zonder dagfactor is er geen zone en geen advies: dan zegt de app dat ze het niet weet, in plaats van iets te middelen.
+
+Drie zones: `ready` (geplande training normaal uitvoeren), `caution` (beheerst trainen), `reduce` (belasting aanpassen). "Reduce" gaat over de training, niet over de sporter — er wordt geen enkele uitspraak over gezondheid gedaan.
+
+### De verwoording — `readinesscoach.v1`
+
+Zelfde rolverdeling als de live coach uit Sprint 13. `buildReadinessContext` maakt expliciet wat beschikbaar is en wat ontbreekt; `readinessCoachMessage` zegt het in gewone taal en verzint niets bij; `readinessAiPayload` is de whitelist naar de AI. De AI krijgt de zone, de betekenis, de herstelscore, de trainingsaanpassing en de onderbouwing van de Decision Engine — nooit de ruwe signalen waarmee hij een eigen readiness zou kunnen afleiden.
+
+### Op het scherm
+
+Eén kaart op Home, tussen het coachbericht en het trainingsplan, zodat de sporter leest wat vandaag betekent en daarna meteen kan starten. Geen nieuwe hoofdsectie. Bewust géén score in de kop: Home toont al een dagfactor en een gereedheidsgetal, en een derde getal zou eerder verwarren dan helpen — de score staat in de onderbouwing.
+
+*"Voorzichtig vandaag — Train beheerst en houd je inspanning in de gaten. Je geplande training blijft ongewijzigd. Je herstelscore van vandaag is 79/100 (gemiddeld). Nog niet alles is bekend: hoe je je voelt ontbreekt."*
+
+### Doorgegeven aan de live coach
+
+De beslissing wordt bewaard en gaat als feit mee in het live-contract van Sprint 13. De live coach léést de zone; hij berekent readiness nooit opnieuw. Een test controleert dat er in de code van die laag geen enkele aanroep naar `readinessDay`, `dayZone` of `readinessPercent` staat.
+
+### Overig
+
+`core/fReadiness.test.js` toegevoegd met 167 controles, inclusief een architectuurtest die afdwingt dat er precies één plek is die de beslissing opvraagt en dat de UI geen eigen drempels kent. `sw.js`: `CORE_SIG` naar `6c1939b561c292cc` en de caches naar `v43700`, omdat `core/calculation.js`, `core/decision.js` en `core/coaching.js` zijn gewijzigd.
+
+## v4.36.0 — 18 augustus 2026 (Sprint 13 — AI Coach tijdens het trainen)
+
+Tot nu toe kon de sporter tijdens een training alleen "Vraag de coach" gebruiken, en dat haalde hem uit de training: `go('s-coach')`, weg uit het scherm waar hij mee bezig was. Deze release beantwoordt de vraag "wat moet ik nu doen?" ín de training zelf, zonder dat er ergens een tweede rekenwaarheid ontstaat.
+
+### De rustregel stond in de UI — `rest.v1`
+
+`dynamicRestSec` bepaalde in `index.html` hoe de rusttijd met de RPE meeschaalt. Dat is een businessregel, geen presentatie, en die hoort in de Decision Engine. De inhoud is ongewijzigd overgenomen: dezelfde factoren, dezelfde ondergrens van 30 seconden, dezelfde afronding op vijf seconden, en zonder RPE gebeurt er nog steeds niets. `index.html` houdt een pure doorgeefwrapper, dus elke bestaande aanroep en de bestaande test blijven werken.
+
+### Wat er van één set te zeggen valt — `setoutcome.v1`
+
+De sporter logt een set; daarna telt de vraag of dit klopt met wat er stond en wat er nu moet gebeuren. Dat is een regel, geen coachpraatje, dus staat hij in de Decision Engine. `setOutcome` vergelijkt het voorgeschrevene met het uitgevoerde en haalt de gewichtsbeslissing op bij de **bestaande** progressieregel. Er komt geen tweede RPE-regel bij: zegt `computeProgression` niets, dan zegt `setOutcome` niets over gewicht.
+
+Afwijkingen worden benoemd als feit, niet als oordeel: minder of meer herhalingen, lager of hoger gewicht, hogere of lagere RPE, of een set waarvoor niets is ingevuld. "Doel gehaald" wordt alleen ingevuld als beide kanten bekend zijn — anders blijft het onbekend, nooit "nee".
+
+**Er wordt niets ingevuld wat er niet is.** Elk ontbrekend veld komt in `ontbreekt` te staan en de bijbehorende uitspraak vervalt. Zonder RPE geen gewichtsadvies. Zonder ingestelde rust geen rusttijd. Zonder voorschrift geen afwijkingen.
+
+### Het coachcontract — `livecoach.v1`
+
+`CoachingCore.buildLiveContext` maakt expliciet wat er beschikbaar is, wat ontbreekt, en wat gemeten, berekend, besloten of alleen uitgelegd is. `liveCoachMessage` verwoordt uitsluitend wat in het besluit staat: één korte actie, een "Waarom?" met de onderbouwing, en een eerlijke melding als iets mist. Deze laag rekent niet en beslist niet — een test dwingt af dat er in de code van dit blok geen enkele aanroep naar de Decision Engine of een rekenfunctie staat.
+
+`liveAiPayload` is de grens naar de AI: een whitelist, net als het bestaande `aiPayload`. De AI krijgt de reeds genomen beslissing en de reeds bepaalde getallen, plus de herkomst en de lijst met wat ontbreekt — nooit de ruwe sessie om zelf mee te rekenen. In de systeemprompt staat er expliciet bij dat hij het advies en het getal niet mag wijzigen, ontbrekende gegevens niet mag invullen en geen oorzaak-gevolg mag beschrijven.
+
+### Op het scherm
+
+Eén compacte regel in de bestaande VANDAAG-kaart, direct onder de setstatus: de actie in vet, de waarneming eronder, en een "Waarom?" die uitklapt. Wie meer wil, klikt door naar de bestaande coach — die krijgt dan het gesaneerde contract mee. Geen nieuw scherm, geen nieuwe visuele taal: dezelfde accentkleur, grijstinten en typografie als de rest van de kaart.
+
+Voorbeeld van wat er staat na een set van 100 kg × 5 bij RPE 7: *"Ga naar 102,5 kg voor je volgende set. Rust eerst 2 minuten."* met daaronder *"Je gaf RPE 7 op 100 kg. Binnen de progressieregel van de app is dat de zone om te verhogen, met 2,5 kg."* Bij een set zonder RPE: *"Rust 2 minuten en ga dan door."* plus *"Nog niet alles is ingevuld; dit advies gaat over wat er wél staat."* — en geen woord over gewicht.
+
+### Overig
+
+`core/fLiveCoach.test.js` toegevoegd met 148 controles, waaronder de ketenregressie die bewijst dat de coachzin het getal van de Decision Engine draagt en niet andersom, en een taalcontrole over alle gegenereerde zinnen. `fRestTimerSound.test.js` is meeverhuisd met de verplaatste rustregel en toetst nu ook dat de wrapper en de engine hetzelfde antwoord geven. `sw.js`: `CORE_SIG` naar `bbacf56e25a290cf` en de caches naar `v43600`, omdat `core/decision.js` en `core/coaching.js` zijn gewijzigd.
+
 ## v4.35.0 — 18 augustus 2026 (Sprint 12 — databehoud en één recordregel)
 
 Sprint 11 (`a0062fd`) is nooit op main gekomen. De drie defecten die daar gerepareerd waren stonden dus nog onverkort in productie. Deze release brengt die fixes alsnog, voegt de ontbrekende dekking toe rond sessie-aggregatie en records, en haalt één regel uit de UI naar de Decision Engine.

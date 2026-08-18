@@ -22,7 +22,8 @@
     rounding: 'rounding.v1', e1rm: 'e1rm.v1', working_weight: 'working_weight.v1', ai_guard: 'ai_guard.v1',
     volume: 'volume.v1', percentage: 'percentage.v1', warmup: 'warmup.v1', recovery: 'recovery.v1', dayfactor: 'dayfactor.v1',
     goal: 'goal.v1', e1rm_weighted: 'e1rm_weighted.v1', recovery_score: 'recovery_score.v1',
-    sleep_unit: 'sleep_unit.v1', correlation: 'correlation.v1'
+    sleep_unit: 'sleep_unit.v1', correlation: 'correlation.v1',
+    readiness_percent: 'readiness_percent.v1'
   };
 
   // --- rounding.v1 --- exact gelijk aan legacy index.html r.10668
@@ -174,12 +175,22 @@
   //          muscleRecoveryPct?(0-100, gem. relevante spieren), rhrDelta?(bpm boven baseline; ≥0 = slechter),
   //          voelt?('slecht'|'matig'|'goed'|'top') }
   // Weging: dayFactor 0.45 · spierherstel 0.30 · RHR 0.15 · gevoel 0.10 (over aanwezige componenten).
+  // --- readiness_percent.v1 --- de dagfactor als percentage: 0.85 -> 0, 1.00 -> 75, 1.05 -> 100.
+  // Deze omzetting stond op TWEE plaatsen: hier binnen recoveryScore, en als v43GereedheidScore
+  // in index.html — letterlijk dezelfde formule, met het risico dat ze uit elkaar lopen. Sinds
+  // Sprint 14 staat hij één keer hier; beide plekken gebruiken hem. De uitkomst is ongewijzigd.
+  // Buiten het bereik wordt de factor geklemd, nooit geëxtrapoleerd. Geen factor -> null.
+  function readinessPercent(dayFactor) {
+    if (dayFactor == null || isNaN(dayFactor)) return null;
+    var df = Math.max(0.85, Math.min(1.05, Number(dayFactor)));
+    return Math.round((df - 0.85) / 0.20 * 100);
+  }
+
   function recoveryScore(input) {
     var i = input || {};
     var comps = [];
     if (typeof i.dayFactor === 'number' && isFinite(i.dayFactor)) {
-      var df = Math.max(0.85, Math.min(1.05, i.dayFactor)); // 0.85→0, 1.00→75, 1.05→100
-      comps.push({ v: Math.round((df - 0.85) / 0.20 * 100), w: 0.45 });
+      comps.push({ v: readinessPercent(i.dayFactor), w: 0.45 });   // readiness_percent.v1
     }
     if (typeof i.muscleRecoveryPct === 'number' && isFinite(i.muscleRecoveryPct)) {
       comps.push({ v: Math.max(0, Math.min(100, Math.round(i.muscleRecoveryPct))), w: 0.30 });
@@ -353,6 +364,7 @@
     cyclusDagFactor: cyclusDagFactor,
     calculateDayFactor: calculateDayFactor,
     recoveryScore: recoveryScore,
+    readinessPercent: readinessPercent,
     recoveryBand: recoveryBand,
     calculateGoalProgress: calculateGoalProgress,
     spearman: spearman,

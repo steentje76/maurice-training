@@ -146,5 +146,34 @@ const cProg = buildPrescriptionContract({sets:4,reps:'3-5',rpe:'7.5',suggestedWe
 eq(cProg.prescription.weight, sugItem, 'Programma-contract: prescription = canonical getal');
 ok(cProg.coaching.indexOf('Vorige keer: 62')!==-1 && !/houd 62/i.test(cProg.coaching), 'Programma-coaching: 62 alleen als vorige keer, geen imperatief');
 
+/* ── SPRINT 11 — DE VANDAAG-KAART TOONT HETZELFDE GETAL ────────────────────
+ * DEFECT (v4.34.0 en eerder): de VANDAAG-kaart in Execution las uitsluitend
+ * ex.suggestedWeight. Bij een vaste training staat dat veld er niet in, dus toonde de kaart
+ * "nog te bepalen" terwijl de setvelden en het "Vorige keer"-blok op HETZELFDE scherm 95 kg
+ * lieten zien. Eén scherm, twee antwoorden. */
+const rxBron = html.slice(html.indexOf('const rxWeight=(prefillData&&prefillData.kg!=null)'),
+                          html.indexOf('const rxWeight=(prefillData&&prefillData.kg!=null)') + 1400);
+ok(rxBron.indexOf('window._rxWeightMap[ex.id]=rxWeight;') > 0,
+   'Sprint 11: het bepaalde rxWeight wordt beschikbaar gesteld aan de VANDAAG-kaart');
+const todayBron = html.slice(html.indexOf("const w=(_rx!=null)") - 400, html.indexOf("const w=(_rx!=null)") + 200);
+ok(/cur\.suggestedWeight!=null\)\?cur\.suggestedWeight:\(\(window\._rxWeightMap/.test(todayBron),
+   'Sprint 11: de VANDAAG-kaart valt terug op datzelfde rxWeight');
+ok(!/const w=\(cur\.suggestedWeight!=null\)\?\(String\(cur\.suggestedWeight\)/.test(html),
+   'Sprint 11: de oude, alleen-suggestedWeight-versie is weg');
+ok(/'nog te bepalen'/.test(todayBron),
+   'Sprint 11: zonder enig prescription-getal blijft "nog te bepalen" staan (geen verzonnen gewicht)');
+// gedrag: exact de expressie uit index.html
+function vandaagGewicht(suggested, rxMap, id){
+  const cur={suggestedWeight:suggested,id:id};
+  const window_={_rxWeightMap:rxMap};
+  const _rx=(cur.suggestedWeight!=null)?cur.suggestedWeight:((window_._rxWeightMap&&window_._rxWeightMap[cur.id]!=null)?window_._rxWeightMap[cur.id]:null);
+  return (_rx!=null)?(String(_rx).replace('.',',')+' kg'):'nog te bepalen';
+}
+eq(vandaagGewicht(null,{sq:95},'sq'), '95 kg', 'Sprint 11: vaste training toont het prefill-gewicht');
+eq(vandaagGewicht(80,{sq:95},'sq'), '80 kg', 'Sprint 11: een expliciete suggestie wint (programma-pad ongewijzigd)');
+eq(vandaagGewicht(null,{sq:null},'sq'), 'nog te bepalen', 'Sprint 11: geen getal -> geen verzonnen gewicht');
+eq(vandaagGewicht(null,{},'sq'), 'nog te bepalen', 'Sprint 11: onbekende oefening -> geen verzonnen gewicht');
+eq(vandaagGewicht(null,{sq:97.5},'sq'), '97,5 kg', 'Sprint 11: decimaal met NL-komma, zoals elders in de app');
+
 console.log('\nPrescription consistency + media: RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail ? 1 : 0);

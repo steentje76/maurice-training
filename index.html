@@ -5637,7 +5637,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.34.0';
+const APP_VER = 'v4.34.1';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -5893,13 +5893,17 @@ function oneRMFor(exId){
 // Werkt zowel online als offline (beide onderliggende functies zijn queue-aware).
 async function upsertExerciseGoalField(exId,field,value){
   const existing=exerciseGoals.get(exId);
-  if(existing){
+  // Sprint 11 (P0): alleen PATCHen wanneer er ECHT een rij in exercise_goals staat. Een
+  // entry die tijdens de sessie alleen in het geheugen is aangemaakt (_alleenGeheugen)
+  // heeft geen rij om te patchen — dan moet er ingevoegd worden, anders raakt de PATCH
+  // nul rijen en verdwijnt de waarde zonder foutmelding.
+  if(existing && !existing._alleenGeheugen){
     await sbPatchQ('exercise_goals','exercise_id=eq.'+exId,{[field]:value});
     existing[field]=value;
   }else{
     const row={user_id:authSession?.user?.id,exercise_id:exId,[field]:value};
     await sbPostQ('exercise_goals',row);
-    exerciseGoals.set(exId,{peak_goal:null,pr:null,one_rm:null,[field]:value});
+    exerciseGoals.set(exId,Object.assign({peak_goal:null,pr:null,one_rm:null},existing||{},{[field]:value,_alleenGeheugen:false}));
   }
 }
 
@@ -6504,6 +6508,15 @@ let bikeergMachines=JSON.parse(localStorage.getItem('bikeerg_machines')||'["Bike
 let skiergMachines=JSON.parse(localStorage.getItem('skierg_machines')||'["Ski 1","Ski 2"]');
 let assaultMachines=JSON.parse(localStorage.getItem('assault_machines')||'["Assault 1","Assault 2"]');
 let curT=null, sessionLog={}, sessionExtra=[], chatHist=[], sending=false;
+/* Sprint 11 (P0) — PR-BASISLIJN PER SESSIE.
+ * logSet werkt de PR-referentie in het geheugen meteen bij, zodat een volgende set op
+ * hetzelfde gewicht niet nog een keer als record wordt gemarkeerd. Bijeffect: finishSession
+ * vergeleek het zwaarste gewicht daarna met die ál bijgewerkte waarde (115 > 115 is onwaar),
+ * waardoor een nieuw record nooit werd weggeschreven en na herladen verdwenen was.
+ * Deze basislijn onthoudt de PR zoals die vóór deze sessie stond, zodat finishSession het
+ * record wél herkent. Wordt uitsluitend bij het afronden geleegd: dan staat de database
+ * gelijk aan het geheugen. */
+let sessionPrBase={};
 let pinBuf='', adminPinBuf='';
 let rowers=JSON.parse(localStorage.getItem('tk_rowers')||'["PM5 1","PM5 2","PM5 3","PM5 4","PM5 5","PM5 6","PM5 7","PM5 8","PM5 9","PM5 10"]');
 let selRower=rowers[0];
@@ -10808,6 +10821,14 @@ async function renderTrainScreen(t){
     // ÉÉN prescription-waarheid: exact het gewicht dat de gebruiker ook echt ziet (prefill.kg, anders
     // het canonical resolver-gewicht). Coaching/"Vorige keer" leiden hier ALLEEN van af (geen tweede getal).
     const rxWeight=(prefillData&&prefillData.kg!=null)?prefillData.kg:(ex.suggestedWeight!=null?ex.suggestedWeight:null);
+    /* Sprint 11 (P1): dezelfde prescription-waarheid beschikbaar maken voor de VANDAAG-kaart.
+       Die las uitsluitend ex.suggestedWeight — bij een vaste training staat dat er niet in, dus
+       toonde hij "nog te bepalen" terwijl de setvelden en het "Vorige keer"-blok op hetzelfde
+       scherm wél een gewicht lieten zien. Hier wordt niets berekend: alleen het reeds bepaalde
+       rxWeight doorgegeven. Een null overschrijft de vorige waarde, zodat er nooit een oud
+       getal blijft staan. */
+    if(!window._rxWeightMap)window._rxWeightMap={};
+    window._rxWeightMap[ex.id]=rxWeight;
     if(prevS&&prevS.weight&&prevS.reps) prevBlockHtml=buildPrevBlock(prevS, ex, rxWeight);
 
     const isDefault=(TRAIN_CFG[t]||[]).some(e=>e.id===ex.id);
@@ -10956,7 +10977,9 @@ function applyExecutionFocus(t){
   const cur=list[idx]||{};
   const curPrep=(cur.pick==='warmup'||cur.pick==='activation'||cur.pick==='cooldown');
   if(!curPrep && (cur.suggestedWeight!=null||cur.sets!=null||cur.reps!=null)){
-    const w=(cur.suggestedWeight!=null)?(String(cur.suggestedWeight).replace('.',',')+' kg'):'nog te bepalen';
+    /* Sprint 11 (P1): val terug op het prescription-gewicht dat de setvelden ook gebruiken. */
+    const _rx=(cur.suggestedWeight!=null)?cur.suggestedWeight:((window._rxWeightMap&&window._rxWeightMap[cur.id]!=null)?window._rxWeightMap[cur.id]:null);
+    const w=(_rx!=null)?(String(_rx).replace('.',',')+' kg'):'nog te bepalen';
     const sr=(cur.sets!=null&&cur.reps!=null)?(cur.sets+' × '+cur.reps):(cur.sets!=null?(cur.sets+' sets'):'—');
     const rpe=(cur.rpe!=null&&cur.rpe!=='')?('@ RPE '+cur.rpe):'—';
     let restDisp='—';
@@ -13933,11 +13956,18 @@ function logSet(exId,type,setNum,isWork){
     }
     const pr=prFor(exId)||0;
     if(effKg>pr){
+      // Sprint 11: leg de PR van vóór deze sessie eenmalig vast, VOORDAT de referentie
+      // hieronder wordt bijgewerkt. Zonder dit ziet finishSession het record niet meer.
+      if(sessionPrBase[exId]===undefined) sessionPrBase[exId]=pr;
       // Werk de lokale referentie direct bij zodat een volgende set op hetzelfde gewicht
       // binnen dezelfde sessie niet opnieuw als PR wordt gemarkeerd.
       const existing=exerciseGoals.get(exId);
       if(existing)existing.pr=effKg;
-      else exerciseGoals.set(exId,{peak_goal:null,pr:effKg,one_rm:null});
+      // Sprint 11 (P0): deze rij bestaat ALLEEN in het geheugen — er staat nog niets in
+      // exercise_goals. Zonder deze markering denkt upsertExerciseGoalField dat er een rij
+      // is en doet hij een PATCH die nul rijen raakt: het eerste record van een oefening
+      // werd dan stilzwijgend niet bewaard.
+      else exerciseGoals.set(exId,{peak_goal:null,pr:effKg,one_rm:null,_alleenGeheugen:true});
     }
   }
   if(isWork&&effKg&&reps&&BARBELL_EXERCISES.has(exId)){
@@ -14471,7 +14501,9 @@ async function finishSession(){
       if(l.exNote)row.note=(row.note?row.note+' · ':'')+'Notitie: '+l.exNote;
       await writeSessionRow(row);
       let isPr=false;
-      if(bestKg(best)){const curPr=prFor(ex.id)||0;if(bestKg(best)>curPr){await upsertExerciseGoalField(ex.id,'pr',bestKg(best));isPr=true;}}
+      // Sprint 11: vergelijk met de PR van vóór deze sessie (sessionPrBase), niet met de
+      // tussentijds bijgewerkte geheugenreferentie — anders wordt een record nooit bewaard.
+      if(bestKg(best)){const curPr=(sessionPrBase[ex.id]!==undefined?sessionPrBase[ex.id]:(prFor(ex.id)||0));if(bestKg(best)>curPr){await upsertExerciseGoalField(ex.id,'pr',bestKg(best));isPr=true;}}
       saved++;
       const avgRpe=ws.filter(s=>s.rpe).length?(ws.reduce((sum,s)=>sum+(parseFloat(s.rpe)||0),0)/ws.filter(s=>s.rpe).length).toFixed(1):null;
       summaryData.push({naam:ex.naam,sets:setsDetail,isPr,zwaarste:bestKg(best),avgRpe});
@@ -14494,7 +14526,7 @@ async function finishSession(){
   }
   closeModal('m-session-end');stopTrainTimer();
   clearTrainingDraft();
-  curT=null;sessionLog={};sessionExtra=[];pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};sessionRxAdj={};
+  curT=null;sessionLog={};sessionExtra=[];pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};sessionRxAdj={};sessionPrBase={};
   resolvedWorkout=null;activeInstanceId=null; // Werkblok D: training afgerond — geen enkele volgende, niet-via-Preview-gestarte training mag dit nog meekrijgen
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.remove('show'));
   if(saved===0){toast('Niets om op te slaan');go('s-home');refreshStats();return;}
@@ -14506,7 +14538,7 @@ async function finishSession(){
   // v3.3.52 P7 — premium afrondingskaart met bestaande cijfers.
   try{
     const titleEl=document.getElementById('sess-done-title'),subEl=document.getElementById('sess-done-sub'),statsEl=document.getElementById('ai-summary-stats');
-    if(titleEl)titleEl.textContent=sessStats.pr>0?`Nieuw record${sessStats.pr>1?'s':''}! Sterke training.`:'Sterke training afgerond';
+    if(titleEl)titleEl.textContent=sessStats.pr>0?(sessStats.pr>1?'Nieuwe records! Sterke training.':'Nieuw record! Sterke training.'):'Sterke training afgerond';
     if(subEl)subEl.textContent=sessStats.pr>0?`Je zette ${sessStats.pr} nieuwe persoonlijke record${sessStats.pr>1?'s':''} neer. Sterk werk.`:'Goed gewerkt — hier is je terugblik.';
     if(statsEl){
       const volStr=Math.round(sessStats.vol).toLocaleString('nl-NL');
@@ -16290,7 +16322,10 @@ async function savePeakGoal(btnEl){
   const raw=document.getElementById('edit-peak-inp').value.trim();
   const val=raw===''?null:Math.max(0,parseFloat(raw)||0);
   let ok;
-  const existing=exerciseGoals.get(curEditPeakId);
+  const inGeheugen=exerciseGoals.get(curEditPeakId);
+  // Sprint 11 (P0): zelfde onderscheid als in upsertExerciseGoalField — een tijdens de
+  // sessie in het geheugen aangemaakte entry is geen rij in de database.
+  const existing=(inGeheugen && !inGeheugen._alleenGeheugen) ? inGeheugen : null;
   if(val===null){
     // Alleen peak_goal wissen — NIET de hele rij verwijderen, anders verdwijnen ook
     // iemands pr/one_rm voor deze oefening als die er al waren.
@@ -16302,9 +16337,9 @@ async function savePeakGoal(btnEl){
     ok=await sbPostQ('exercise_goals',{user_id:authSession?.user?.id,exercise_id:curEditPeakId,peak_goal:val});
   }
   if(ok){
-    if(val===null){if(existing)existing.peak_goal=null;}
+    if(val===null){if(inGeheugen)inGeheugen.peak_goal=null;}
     else if(existing)existing.peak_goal=val;
-    else exerciseGoals.set(curEditPeakId,{peak_goal:val,pr:null,one_rm:null});
+    else exerciseGoals.set(curEditPeakId,Object.assign({peak_goal:null,pr:null,one_rm:null},inGeheugen||{},{peak_goal:val,_alleenGeheugen:false}));
     closeModal('m-edit-peak');
     toast(val?'Peakdoel '+val+'kg opgeslagen':'Peakdoel gewist');
     refreshAdmin();

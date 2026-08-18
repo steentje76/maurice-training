@@ -27,6 +27,11 @@ const localStorage = { getItem:k=> (k in _store ? _store[k] : null), setItem:(k,
 const restDefaultSec = eval('(' + extractFn('restDefaultSec') + ')');
 const restBeepSequence = eval('(' + extractFn('restBeepSequence') + ')');
 const countdownSeconds = eval('(' + extractFn('countdownSeconds') + ')');
+/* Sprint 13: dynamicRestSec is in index.html een doorgeefwrapper geworden; de regel zelf
+   staat nu in de Decision Engine (rest.v1). De test draait nog steeds de ECHTE wrapper uit
+   index.html — die heeft DecisionCore in scope nodig. Alle onderstaande verwachtingen zijn
+   ongewijzigd: de regel is verplaatst, niet veranderd. */
+const DecisionCore = require('./decision.js');
 const dynamicRestSec = eval('(' + extractFn('dynamicRestSec') + ')');
 
 let pass = 0, fail = 0;
@@ -59,6 +64,14 @@ eq(JSON.stringify(cd), JSON.stringify([5,4,3,2,1]), 'aftel-piepjes op 5,4,3,2,1 
 ok(!cd.includes(0), 'aftel: geen piep op 0 (daar komt het eindsignaal)');
 
 // ── dynamicRestSec — rust schalen op zwaarte (RPE) ──
+ok(typeof DecisionCore.restForSet === 'function', 'de rustregel staat in de Decision Engine (rest.v1)');
+eq(DecisionCore.REST_VERSIE, 'rest.v1', 'versie rest.v1');
+ok(/return DecisionCore\.restForSet\(baseSec, rpe\);/.test(extractFn('dynamicRestSec')),
+   'index.html bevat alleen nog een doorgeefwrapper, geen eigen rustregel');
+[[120,8],[120,10],[120,9],[120,6],[120,5],[120,null],[90,7],[60,10],[0,9]].forEach(function(p){
+  eq(dynamicRestSec(p[0],p[1]), DecisionCore.restForSet(p[0],p[1]),
+     'wrapper en Decision Engine geven hetzelfde voor basis ' + p[0] + ' bij RPE ' + p[1]);
+});
 eq(dynamicRestSec(120, 8), 120, 'RPE 8 (referentie) → basisrust 120s ongewijzigd');
 eq(dynamicRestSec(120, 10), 180, 'RPE 10 (maximaal zwaar) → 1.5× = 180s');
 eq(dynamicRestSec(120, 9), 150, 'RPE 9 (zwaar) → 1.25× = 150s');

@@ -362,7 +362,322 @@
     return '';
   }
 
+  /* ══════════════════════════════════════════════════════════════════════════
+   * LIVE COACH TIJDENS DE TRAINING (livecoach.v1) — Sprint 13
+   *
+   * Tot nu toe kon de sporter tijdens een training alleen "Vraag de coach" gebruiken, wat
+   * hem uit de training haalde. Deze laag maakt het antwoord op "wat moet ik nu doen?"
+   * beschikbaar ZONDER de training te verlaten — en zonder dat er ergens een tweede
+   * rekenwaarheid ontstaat.
+   *
+   * ROLVERDELING, strikt:
+   *   Calculation Engine  rekent (gewicht, 1RM, herstel)
+   *   Decision Engine     beslist (setOutcome -> progressionDecision, restForSet)
+   *   deze laag           verwoordt, en bewaakt WAT er verwoord mag worden
+   *   AI                  legt desgevraagd uitgebreider uit, op basis van exact dit contract
+   *
+   * Deze laag berekent niets en beslist niets. Ze mag ook niets toevoegen: staat een
+   * uitspraak niet in het besluit van de Decision Engine, dan komt hij er niet.
+   *
+   * ONTBREKENDE GEGEVENS. Er wordt nooit gegokt. Elk ontbrekend veld staat in `ontbreekt`
+   * en de bijbehorende uitspraak vervalt; de sporter krijgt dan te horen dát er iets mist,
+   * niet een advies dat op lucht rust.
+   *
+   * TAAL. Geen oorzaak-gevolg, geen medische uitspraak, geen gereedheidsoordeel. De
+   * verboden formuleringen staan hieronder expliciet zodat een test ze kan afdwingen.
+   * ══════════════════════════════════════════════════════════════════════════ */
+  var LIVECOACH_VERSIE = 'livecoach.v1';
+  /* Uitsluitend voor tests en review: taal die deze laag nooit mag produceren. */
+  var LIVE_VERBODEN_WOORDEN = ['veroorzaakt', 'zorgt voor', 'leidt tot', 'dankzij', 'omdat je slecht',
+    'je bent hersteld', 'volledig hersteld', 'klaar voor een zware', 'je lichaam is klaar',
+    'blessure', 'diagnose', 'symptoom', 'overtraind'];
+  /* Herkomst per gegeven — zodat de sporter (en de AI) weet wat gemeten, berekend, besloten
+     of alleen uitgelegd is. Geen van deze woorden is een oordeel. */
+  var LIVE_HERKOMST = ['gemeten', 'berekend', 'besloten', 'instelling', 'uitgelegd'];
+
+  /* buildLiveContext(input) — HET CONTRACT.
+   * input: {
+   *   oefening: {id, naam},
+   *   setNummer, totaalSets,
+   *   voorgeschreven: {kg, reps, rpe},
+   *   uitgevoerd: {kg, reps, rpe},
+   *   besluit: <DecisionCore.setOutcome resultaat>,     // VERPLICHT: deze laag beslist niet zelf
+   *   herstel: {score, band, betrouwbaarheid} | null,
+   *   datakwaliteit: 'current'|'partial'|'stale'|... | null
+   * }
+   * -> gecontroleerde context. `magUitleggen` zegt of er überhaupt iets zinnigs te zeggen is.
+   */
+  function buildLiveContext(input) {
+    var i = input || {};
+    var b = i.besluit || null;
+    var ontbreekt = (b && Array.isArray(b.ontbreekt)) ? b.ontbreekt.slice() : ['besluit'];
+    if (!i.oefening || !i.oefening.naam) ontbreekt.push('oefening');
+    var heeftBesluit = !!(b && b.versie);
+    return {
+      versie: LIVECOACH_VERSIE,
+      oefening: (i.oefening && i.oefening.naam) ? { id: i.oefening.id || null, naam: i.oefening.naam } : null,
+      setNummer: (typeof i.setNummer === 'number' && isFinite(i.setNummer)) ? i.setNummer : null,
+      totaalSets: (typeof i.totaalSets === 'number' && isFinite(i.totaalSets)) ? i.totaalSets : null,
+      voorgeschreven: i.voorgeschreven || null,
+      uitgevoerd: i.uitgevoerd || null,
+      besluit: heeftBesluit ? b : null,
+      herstel: (i.herstel && i.herstel.band && i.herstel.band !== 'onbekend') ? i.herstel : null,
+      /* Sprint 14: de readiness-beslissing van vandaag wordt hier ALLEEN doorgegeven.
+         Deze laag berekent readiness niet en herziet hem niet. */
+      readiness: (i.readiness && i.readiness.zone) ? i.readiness : null,
+      datakwaliteit: i.datakwaliteit || null,
+      ontbreekt: ontbreekt,
+      herkomst: {
+        uitgevoerd: 'gemeten',
+        voorgeschreven: 'berekend',
+        volgendeActie: (heeftBesluit && b.herkomst) ? b.herkomst.actie : null,
+        rust: (heeftBesluit && b.herkomst) ? b.herkomst.rust : null,
+        uitleg: 'uitgelegd'
+      },
+      magUitleggen: !!(heeftBesluit && b.bruikbaar)
+    };
+  }
+
+  /* liveCoachMessage(ctx) — de verwoording. Vertaalt UITSLUITEND wat er in het besluit staat.
+   * -> { actie, waarom, onzekerheid, afwijking }  (elk veld string of null)
+   */
+  function _kg(n) { return (n == null) ? null : String(n).replace('.', ','); }
+  function _sec(n) {
+    if (n == null) return null;
+    if (n < 60) return n + ' seconden';
+    var m = Math.floor(n / 60), r = n % 60;
+    var mTxt = m + (m === 1 ? ' minuut' : ' minuten');
+    return r ? (mTxt + ' en ' + r + ' seconden') : mTxt;
+  }
+  var AFWIJKING_TEKST = {
+    minder_reps:     'Je deed minder herhalingen dan er stond.',
+    meer_reps:       'Je deed meer herhalingen dan er stond.',
+    lager_gewicht:   'Je trainde met minder gewicht dan er stond.',
+    hoger_gewicht:   'Je trainde met meer gewicht dan er stond.',
+    hogere_rpe:      'Deze set voelde zwaarder dan de bedoeling was.',
+    lagere_rpe:      'Deze set voelde lichter dan de bedoeling was.',
+    set_overgeslagen:'Voor deze set is niets ingevuld.'
+  };
+  function liveCoachMessage(ctx) {
+    var c = ctx || {};
+    var b = c.besluit;
+    var uit = { actie: null, waarom: null, onzekerheid: null, afwijking: null };
+
+    if (!b) {
+      uit.onzekerheid = 'Ik heb hiervoor nog niet genoeg gegevens.';
+      return uit;
+    }
+    // Afwijkingen mogen altijd feitelijk gemeld worden — het is een waarneming, geen oordeel.
+    var afw = (b.afwijkingen || []).map(function (a) { return AFWIJKING_TEKST[a.soort]; })
+                                   .filter(function (t) { return !!t; });
+    if (afw.length) uit.afwijking = afw.join(' ');
+
+    if (!b.bruikbaar) {
+      var mist = [];
+      if ((b.ontbreekt || []).indexOf('rpe') >= 0) mist.push('je RPE');
+      if ((b.ontbreekt || []).indexOf('uitgevoerd_gewicht') >= 0) mist.push('het gewicht');
+      if ((b.ontbreekt || []).indexOf('uitgevoerde_reps') >= 0) mist.push('het aantal herhalingen');
+      uit.onzekerheid = mist.length
+        ? ('Ik heb hiervoor ' + _lijst(mist) + ' nodig. Zonder die gegevens geef ik geen advies.')
+        : 'Ik heb hiervoor nog niet genoeg gegevens.';
+      return uit;
+    }
+
+    var a = b.actie || {};
+    if (a.soort === 'verhogen') {
+      uit.actie = 'Ga naar ' + _kg(a.kg) + ' kg voor je volgende set.';
+      uit.waarom = 'Je gaf RPE ' + _kg(b.progressie.inputs.rpe) + ' op ' + _kg(b.progressie.inputs.curKg) +
+        ' kg. Binnen de progressieregel van de app is dat de zone om te verhogen, met ' + _kg(Math.abs(a.deltaKg)) + ' kg.';
+    } else if (a.soort === 'verlagen') {
+      uit.actie = 'Verlaag naar ' + _kg(a.kg) + ' kg voor je volgende set.';
+      uit.waarom = 'Je gaf RPE ' + _kg(b.progressie.inputs.rpe) + ' op ' + _kg(b.progressie.inputs.curKg) +
+        ' kg. Dat ligt boven de streefzone, dus bouwt de app de belasting terug met ' + _kg(Math.abs(a.deltaKg)) + ' kg.';
+    } else if (a.soort === 'gelijk') {
+      uit.actie = 'Blijf bij ' + _kg(b.progressie.inputs.curKg) + ' kg.';
+      uit.waarom = 'Je gaf RPE ' + _kg(b.progressie.inputs.rpe) + '. Dat zit in de streefzone, dus blijft het gewicht gelijk.';
+    } else if (a.soort === 'rust') {
+      uit.actie = 'Rust ' + _sec(a.seconden) + ' en ga dan door.';
+      uit.waarom = 'Dit is de rusttijd die voor deze oefening is ingesteld.';
+    }
+    // Rust erbij wanneer er óók een gewichtsadvies is.
+    if (a.soort !== 'rust' && b.rust && b.rust.seconden != null) {
+      uit.actie += ' Rust eerst ' + _sec(b.rust.seconden) + '.';
+      // Alleen melden dat de rust is aangepast als het getal ook echt afwijkt van de instelling.
+      if (b.rust.geschaald && b.rust.seconden !== b.rust.basis) {
+        uit.waarom += ' De rusttijd is op je RPE aangepast ten opzichte van de ingestelde ' + _sec(b.rust.basis) + '.';
+      }
+    }
+    if (b.doelGehaald === true && !afw.length) {
+      uit.afwijking = 'Je hebt gehaald wat er stond.';
+    }
+    if ((b.ontbreekt || []).length) {
+      uit.onzekerheid = 'Nog niet alles is ingevuld; dit advies gaat over wat er wél staat.';
+    }
+    return uit;
+  }
+  function _lijst(arr) {
+    if (arr.length === 1) return arr[0];
+    return arr.slice(0, -1).join(', ') + ' en ' + arr[arr.length - 1];
+  }
+
+  /* liveAiPayload(ctx) — wat de AI mag zien. Zelfde gedachte als aiPayload: een whitelist,
+   * zodat de AI nooit ruwe sessiedata krijgt om zelf mee te rekenen. De beslissing en het
+   * getal zitten er kant-en-klaar in; de AI mag ze uitleggen, niet herzien. */
+  var LIVE_AI_FIELDS = ['oefening', 'setNummer', 'totaalSets', 'voorgeschreven', 'uitgevoerd',
+                        'afwijkingen', 'doelGehaald', 'actie', 'rust', 'herstel', 'readiness',
+                        'datakwaliteit', 'ontbreekt', 'herkomst'];
+  function liveAiPayload(ctx) {
+    var c = ctx || {};
+    var b = c.besluit || {};
+    var vol = {
+      oefening: c.oefening ? c.oefening.naam : null,
+      setNummer: c.setNummer, totaalSets: c.totaalSets,
+      voorgeschreven: c.voorgeschreven || null,
+      uitgevoerd: c.uitgevoerd || null,
+      afwijkingen: (b.afwijkingen || []).map(function (a) { return a.soort; }),
+      doelGehaald: (b.doelGehaald === undefined) ? null : b.doelGehaald,
+      actie: b.actie || null,
+      rust: b.rust || null,
+      herstel: c.herstel || null,
+      readiness: c.readiness || null,
+      datakwaliteit: c.datakwaliteit || null,
+      ontbreekt: c.ontbreekt || [],
+      herkomst: c.herkomst || null
+    };
+    var out = {};
+    for (var i = 0; i < LIVE_AI_FIELDS.length; i++) {
+      var f = LIVE_AI_FIELDS[i];
+      if (vol[f] !== undefined && vol[f] !== null) out[f] = vol[f];
+    }
+    return out;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════
+   * READINESS VAN DE DAG — VERWOORDING (readinesscoach.v1) — Sprint 14
+   *
+   * Zelfde rolverdeling als de live coach uit Sprint 13: de Decision Engine heeft al
+   * besloten (readiness_day.v1), deze laag zegt het in gewone taal en bewaakt wat er
+   * gezegd mag worden. Er wordt hier niets berekend, niets herzien en niets aangevuld.
+   *
+   * Wat hier NOOIT mag: een medische uitspraak, een oorzaak-gevolgclaim, of de suggestie
+   * dat een lage readiness iets zegt over ziekte of gezondheid. 'Belasting aanpassen' gaat
+   * over de training, niet over de sporter.
+   * ══════════════════════════════════════════════════════════════════════════ */
+  var READINESSCOACH_VERSIE = 'readinesscoach.v1';
+  var READINESS_VERBODEN_WOORDEN = ['veroorzaakt', 'zorgt voor', 'leidt tot', 'dankzij', 'omdat je',
+    'ziek', 'blessure', 'diagnose', 'symptoom', 'overtraind', 'ongezond', 'je bent hersteld',
+    'volledig hersteld', 'klaar voor een zware', 'je lichaam is klaar'];
+  var READINESS_SIGNAAL_NAAM = {
+    hrv: 'je HRV', rhr: 'je rusthartslag', slaap: 'je slaap', spierherstel: 'je spierherstel',
+    gevoel: 'hoe je je voelt', trainingsbelasting: 'je recente trainingsbelasting',
+    herstelscore: 'je herstelscore'
+  };
+
+  /* buildReadinessContext(input) — het contract voor de dag.
+   * input: { besluit: <DecisionCore.readinessDay resultaat>, geplandeTraining: {naam}|null,
+   *          datakwaliteit: string|null }
+   */
+  function buildReadinessContext(input) {
+    var i = input || {};
+    var b = i.besluit || null;
+    var heeft = !!(b && b.versie);
+    return {
+      versie: READINESSCOACH_VERSIE,
+      besluit: heeft ? b : null,
+      geplandeTraining: (i.geplandeTraining && i.geplandeTraining.naam) ? { naam: i.geplandeTraining.naam } : null,
+      datakwaliteit: i.datakwaliteit || (heeft ? b.datakwaliteit : null),
+      ontbreekt: heeft ? (b.ontbreekt || []) : ['besluit'],
+      herkomst: heeft ? b.herkomst : null,
+      magUitleggen: !!(heeft && b.bruikbaar)
+    };
+  }
+
+  /* readinessCoachMessage(ctx) -> { kop, betekenis, aanpassing, waarom, onzekerheid } */
+  function readinessCoachMessage(ctx) {
+    var c = ctx || {};
+    var b = c.besluit;
+    var uit = { kop: null, betekenis: null, aanpassing: null, waarom: null, onzekerheid: null };
+    if (!b || !b.bruikbaar) {
+      uit.onzekerheid = 'Ik heb hiervoor vandaag niet genoeg gegevens.';
+      var mist = ((b && b.ontbreekt) || []).map(function (k) { return READINESS_SIGNAAL_NAAM[k]; })
+                                           .filter(function (t) { return !!t; });
+      if (mist.length) uit.waarom = 'Wat ontbreekt: ' + _somOp(mist) + '. Vul je check-in in, dan kan ik er wel iets over zeggen.';
+      return uit;
+    }
+    uit.kop = b.zoneLabel;
+    uit.betekenis = b.zoneBetekenis;
+    if (b.herstel) {
+      uit.waarom = 'Je herstelscore van vandaag is ' + b.herstel.score + '/100 (' + b.herstel.band + ')';
+      uit.waarom += (b.herstel.betrouwbaarheid === 'laag')
+        ? ', en die is indicatief omdat er weinig signalen beschikbaar zijn.'
+        : '.';
+    }
+    if (b.trainingsadvies && b.trainingsadvies.soort === 'aangepast') {
+      var delen = [];
+      if (b.trainingsadvies.setsDelta) delen.push(Math.abs(b.trainingsadvies.setsDelta) + ' set minder');
+      if (b.trainingsadvies.rpeDelta) delen.push('RPE ' + String(b.trainingsadvies.rpeDelta).replace('.', ',').replace('-', '\u2212'));
+      uit.aanpassing = delen.length ? ('Je training van vandaag wordt aangepast: ' + _somOp(delen) + '.')
+                                    : 'Je training van vandaag wordt lichter ingepland.';
+      if ((b.redenen || []).length) {
+        uit.waarom = (uit.waarom ? uit.waarom + ' ' : '') + 'Meegewogen: ' + _somOp(b.redenen) + '.';
+      }
+    } else if (b.trainingsadvies && b.trainingsadvies.soort === 'ongewijzigd') {
+      uit.aanpassing = 'Je geplande training blijft ongewijzigd.';
+    }
+    if ((b.ontbreekt || []).length) {
+      var m2 = (b.ontbreekt || []).map(function (k) { return READINESS_SIGNAAL_NAAM[k]; })
+                                  .filter(function (t) { return !!t; });
+      if (m2.length) uit.onzekerheid = 'Nog niet alles is bekend: ' + _somOp(m2) + (m2.length === 1 ? ' ontbreekt.' : ' ontbreken.');
+    }
+    return uit;
+  }
+  function _somOp(arr) {
+    if (!arr.length) return '';
+    if (arr.length === 1) return arr[0];
+    return arr.slice(0, -1).join(', ') + ' en ' + arr[arr.length - 1];
+  }
+
+  /* readinessAiPayload(ctx) — de grens naar de AI. Whitelist, net als aiPayload en
+   * liveAiPayload: de beslissing en de reeds berekende waarden gaan mee, nooit de ruwe
+   * signalen waarmee de AI zelf een readiness zou kunnen afleiden. */
+  var READINESS_AI_FIELDS = ['zone', 'zoneLabel', 'zoneBetekenis', 'herstel', 'trainingsadvies',
+                             'redenen', 'datakwaliteit', 'ontbreekt', 'herkomst', 'geplandeTraining', 'dagthema'];
+  function readinessAiPayload(ctx) {
+    var c = ctx || {};
+    var b = c.besluit || {};
+    var vol = {
+      zone: b.zone || null, zoneLabel: b.zoneLabel || null, zoneBetekenis: b.zoneBetekenis || null,
+      herstel: b.herstel || null, trainingsadvies: b.trainingsadvies || null,
+      redenen: b.redenen || null, datakwaliteit: b.datakwaliteit || null,
+      ontbreekt: (b.ontbreekt && b.ontbreekt.length) ? b.ontbreekt : null,
+      herkomst: b.herkomst || null,
+      geplandeTraining: c.geplandeTraining ? c.geplandeTraining.naam : null,
+      dagthema: b.dagthema ? b.dagthema.key : null
+    };
+    var out = {};
+    for (var i = 0; i < READINESS_AI_FIELDS.length; i++) {
+      var f = READINESS_AI_FIELDS[i];
+      if (vol[f] !== undefined && vol[f] !== null) out[f] = vol[f];
+    }
+    return out;
+  }
+
   var CoachingCore = {
+    buildReadinessContext: buildReadinessContext,
+    readinessCoachMessage: readinessCoachMessage,
+    readinessAiPayload: readinessAiPayload,
+    READINESSCOACH_VERSIE: READINESSCOACH_VERSIE,
+    READINESS_VERBODEN_WOORDEN: READINESS_VERBODEN_WOORDEN,
+    READINESS_AI_FIELDS: READINESS_AI_FIELDS,
+    READINESS_SIGNAAL_NAAM: READINESS_SIGNAAL_NAAM,
+    buildLiveContext: buildLiveContext,
+    liveCoachMessage: liveCoachMessage,
+    liveAiPayload: liveAiPayload,
+    LIVECOACH_VERSIE: LIVECOACH_VERSIE,
+    LIVE_VERBODEN_WOORDEN: LIVE_VERBODEN_WOORDEN,
+    LIVE_HERKOMST: LIVE_HERKOMST,
+    LIVE_AI_FIELDS: LIVE_AI_FIELDS,
+    AFWIJKING_TEKST: AFWIJKING_TEKST,
     deriveSignals: deriveSignals,
     styleProgression: styleProgression,
     COACH_STYLES: COACH_STYLES,

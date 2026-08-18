@@ -1,5 +1,51 @@
 # Trainingskompas — Changelog
 
+## v4.40.0 — 18 augustus 2026 (Sprint 18 — Evidence persistence & provenance)
+
+De app kon al een licht bewijsobject samenstellen en legt daarmee vast welke regel gold bij het *plannen* van een training. Wat ontbrak was het bewijs achter een genomen beslissing: welke ruwe waarden lagen eronder, wat is daaruit berekend, welke regel besliste wat, en hoe is dat uitgelegd. Zonder dat is "ga naar 102,5 kg" achteraf niet te controleren.
+
+### Wat er al was en dus niet is herbouwd
+
+`evidence.v1` (`buildEvidence`, `decisionRulesSnapshot`) blijft ongewijzigd bestaan — die vorm wordt door bestaande tests vastgehouden en dient het planningsspoor in `training_instances.snapshot`. `core/scientificEvidence.js` (`evidence_store.v1`) doet iets anders: dat valideert wetenschappelijke bronnen achter regels, niet individuele beslissingen. Beide zijn niet aangeraakt.
+
+Ook hergebruikt: de bestaande DataAccess-laag (`sbPostQ`/`sbPatchQ` met IndexedDB-wachtrij), het client-gegenereerde `training_instance_id`, en de jsonb-kolom `sessions.sets_detail`.
+
+### Beslissingssnapshot — `evidence_snapshot.v1`
+
+Een eigen versie-id, bewust niet `evidence.v1`: twee verschillende vormen onder één versienummer zou het contract juist onbetrouwbaar maken.
+
+Vijf gescheiden secties, zodat later altijd te zien is waar een getal vandaan kwam: **raw** (wat de sporter leverde, inclusief wat er voorgeschreven was), **calculated** (wat daaruit is gerekend), **decision** (wat de Decision Engine besloot), **rule** (welke regel en welke versie dat deden) en **explanation** (de tekst, nooit een bron van waarheid). Daarnaast het tijdstip, de context en `versions` met de reken-, regel- en evidenceversie.
+
+**Ontbrekende gegevens blijven ontbreken.** Een veld dat er niet was komt als `null` in de snapshot en staat met naam in `missing`. Er wordt niets geïnterpoleerd, geschat of door de AI aangevuld. Zonder beslissing of zonder tijdstip is de snapshot expliciet `geldig: false` — een bewijsstuk zonder beslissing bewaren heeft geen betekenis.
+
+**Deterministisch.** Geen `Date.now` in de bouwer: het tijdstip wordt ingespoten. Dezelfde ruwe invoer, dezelfde engineversies en hetzelfde tijdstip geven byte-identiek dezelfde snapshot.
+
+### Persistence zonder tweede opslagarchitectuur
+
+Het spoor reist mee ín `sessions.sets_detail`: dezelfde jsonb-kolom, dezelfde rij, dezelfde offline-veilige schrijfweg, gekoppeld aan het bestaande `training_instance_id` plus oefening, datum en setnummer. Geen nieuwe tabel, geen migratie, geen tweede sleutelruimte. Bestaande lezers van `sets_detail` zien exact dezelfde velden als voorheen; `evidence` komt er additief bij.
+
+Terugleeslaag: `tkEvidenceVanSessie(row, setNummer)` en `tkEvidenceVanSessieAlle(row)`. Beide geven `null` respectievelijk een lege lijst bij alles wat geen herkenbare snapshot is — er wordt nooit een vorm gereconstrueerd.
+
+### Een snapshot verandert niet met terugwerkende kracht
+
+Elke waarde wordt bij het bouwen gekopieerd, niet als referentie bewaard, en de lezer krijgt opnieuw een kopie. Wijzigt de sporter later een voorschrift, dan blijft de oude snapshot staan zoals hij was — getest door de bron ná het bouwen te wijzigen en door via de lezer te proberen te muteren. Twee sessies met een verschillend voorschrift leggen ook aantoonbaar verschillende waarden vast.
+
+### Reproduceerbaarheid
+
+`evidenceReproduceerbaar(snapshot, opnieuw)` vergelijkt de vastgelegde beslissing met een opnieuw genomen beslissing uit dezelfde ruwe waarden. Gelijk is `ok`; verschilt de uitkomst bij dezelfde regel, dan `andere_uitkomst`; is de regel zelf veranderd, dan `andere_regelversie`. Precies wat een bewijsspoor hoort te kunnen aantonen.
+
+### AI-grens
+
+Ongewijzigd en getest: `evidence` staat in geen enkele AI-whitelist, een meegegeven spoor lekt niet in de payload, en de coach gebruikt nog steeds het getal van de engine. De snapshotbouwer roept geen AI-laag aan en bevat geen rekenkunde.
+
+### Offline
+
+Onderzocht, niet herbouwd. Omdat het spoor ín de sessierij zit en niet apart wordt geschreven, kan er per definitie geen los bewijsstuk verdwijnen of dubbel ontstaan: één rij, één schrijfactie, dezelfde wachtrij. Het `training_instance_id` wordt client-side gezet en is dus ook offline beschikbaar. **Openstaand punt voor een volgende sprint:** een sessie die offline gequeued staat en later opnieuw wordt weggeschreven, wordt door de bestaande wachtrij afgehandeld — het gedrag van een volledige sync-conflictafhandeling is niet in deze sprint onderzocht en is bewust niet geïmproviseerd.
+
+### Overig
+
+`core/fEvidence.test.js` toegevoegd met 121 controles (A t/m L uit de opdracht). `core/fDataBehoud.test.js` is meeverhuisd met de uitgebreide schrijfweg en toetst nu ook dat het spoor additief is. Geen UI-wijziging: de diff op `index.html` raakt uitsluitend `buildStrengthSessionRow`, twee nieuwe leesfuncties, de aanroep in `finishSession` en `APP_VER` — nul toegevoegde regels met markup. `sw.js`: `CORE_SIG` naar `bd27a121da26563a` en de caches naar `v44000`.
+
 ## v4.39.0 — 18 augustus 2026 (Sprint 16 — Voortgang)
 
 Het Voortgang-scherm bestond al vrijwel volledig: hero, recente vooruitgang, consistentie, doelen, challenges, persoonlijke records, krachtontwikkeling per oefening, krachtverhoudingen, volume per spiergroep, HRV-grafiek, roei- en cardiorecords en lichaamssamenstelling. Daar is dus niets van herbouwd. Deze release repareert drie dingen die bij de audit boven kwamen en voegt de enige regel toe die echt ontbrak.

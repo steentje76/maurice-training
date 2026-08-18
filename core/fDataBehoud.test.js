@@ -41,7 +41,14 @@ function extractFn(name){
   if (end < 0) throw new Error('einde niet gevonden: ' + name);
   return html.slice(start, end + 1);
 }
-const buildStrengthSessionRow = new Function(extractFn('buildStrengthSessionRow') + '; return buildStrengthSessionRow;')();
+/* Sprint 18: buildStrengthSessionRow hangt nu een bewijsspoor per set in sets_detail. Beide
+   functies worden hier uit index.html gehaald, zodat deze test de ECHTE schrijfweg blijft
+   draaien inclusief die uitbreiding. Alle bestaande verwachtingen hieronder zijn ongewijzigd:
+   het bewijsspoor is additief en raakt geen enkel bestaand veld. */
+const buildStrengthSessionRow = new Function(
+  'DecisionCore', 'CalcCore',
+  extractFn('tkSetEvidence') + '\n' + extractFn('buildStrengthSessionRow') + '; return buildStrengthSessionRow;'
+)(require('./decision.js'), require('./calculation.js'));
 
 console.log('\n[Sprint 12] Databehoud — sessie-aggregatie en persoonlijke records');
 
@@ -297,6 +304,22 @@ eq((html.match(/upsertExerciseGoalField\([^)]*'pr'/g) || []).length, 3,
 const decSrc = fs.readFileSync(path.join(__dirname, 'decision.js'), 'utf8');
 ok(!/Date\.now\(\)|Math\.random\(\)/.test(decSrc.slice(decSrc.indexOf('PERSOONLIJKE RECORDS'), decSrc.indexOf('VERBANDEN (verband.v1)'))),
    'H20: de recordregel bevat geen Date.now of random');
+
+/* ── I. HET BEWIJSSPOOR IS ADDITIEF (Sprint 18) ──────────────────────────── */
+console.log('\nI. Bewijsspoor raakt de bestaande velden niet');
+const metEv = buildStrengthSessionRow('sq', [{ kg: '100', effKg: 100, reps: '5', rpe: '8' }],
+  Object.assign({}, opts, { at: '2026-08-18T18:00:00.000Z', voorschrift: { kg: 100, reps: 5, rpe: 8 } }));
+eq(metEv.row.weight, 100, 'I1: de kop blijft ongewijzigd');
+eq(metEv.setsDetail[0].kg, '100', 'I2: kg blijft ongewijzigd');
+eq(metEv.setsDetail[0].effKg, 100, 'I3: effKg blijft ongewijzigd');
+eq(metEv.setsDetail[0].reps, '5', 'I4: reps blijft ongewijzigd');
+eq(metEv.setsDetail[0].rpe, '8', 'I5: rpe blijft ongewijzigd');
+ok(!!metEv.setsDetail[0].evidence, 'I6: en er komt een bewijsspoor bij');
+eq(metEv.setsDetail[0].evidence.versie, 'evidence_snapshot.v1', 'I7: met een eigen versie');
+const zonderRpe2 = buildStrengthSessionRow('sq', [{ kg: '100', effKg: 100, reps: '5' }],
+  Object.assign({}, opts, { at: '2026-08-18T18:00:00.000Z' }));
+ok(!zonderRpe2.setsDetail[0].evidence, 'I8: zonder RPE geen beslissing en dus geen bewijsspoor');
+eq(zonderRpe2.setsDetail[0].effKg, 100, 'I9: maar de set zelf wordt gewoon bewaard');
 
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');

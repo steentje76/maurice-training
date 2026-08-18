@@ -1,0 +1,593 @@
+From 5f794561c651e3a2b9316114277405b3b4b237a5 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 18 Aug 2026 05:50:58 +0000
+Subject: [PATCH 2/2] =?UTF-8?q?feat(lichaam):=20Data=20Depth=201.0=20?=
+ =?UTF-8?q?=E2=80=94=20herkomst,=20versheid=20en=20datakwaliteit=20(v4.29.?=
+ =?UTF-8?q?0)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Lichaam wordt een betrouwbare observatielaag: elke waarde krijgt zichtbare
+herkomst, ouderdom en dekking. Geen correlatiemotor, geen AI-conclusies,
+geen gefabriceerde data.
+
+core/deviceIntegration.js
+  observation.v1: pure, deterministische observatiefunctie over een bestaande
+  healthSeries. Levert waarde, datum, bron, soort (gemeten/ingevoerd),
+  ouderdom, versheid, dekking en bereik. Gaten blijven null.
+  observationQuality(): 7 expliciete kwaliteitstoestanden
+  (no_data, syncing, sync_failed, source_unavailable, stale, partial, current)
+  op basis van de observatie plus de bestaande sync-status.
+
+index.html
+  Datastatus-kaart boven het Lichaam-overzicht met de strengste kwaliteit over
+  HRV, rusthartslag, slaap en gewicht, inclusief bron, laatste meting en
+  laatste sync in gewone taal. Trendkaarten tonen versheid en herkomst.
+  Geen nieuwe berekening; alle waarden komen uit de bestaande engines.
+
+core/fObservation.test.js
+  77 controles: lege invoer, herkomst, versheidsgrenzen, determinisme,
+  gaten in dekking, alle 7 kwaliteitstoestanden en een zuiverheidscontrole
+  (geen Date.now/random/DOM/fetch en geen correlatielogica).
+
+Geen schemawijziging, geen migratie, geen datamutatie.
+CORE_SIG ongewijzigd: deviceIntegration.js valt buiten de sw-guard-lijst.
+---
+ .gitignore                |   5 ++
+ CHANGELOG.md              |  36 +++++++++
+ core/deviceIntegration.js | 111 +++++++++++++++++++++++++++
+ core/fObservation.test.js | 154 ++++++++++++++++++++++++++++++++++++++
+ index.html                | 122 ++++++++++++++++++++++++++++--
+ sw.js                     |   4 +-
+ 6 files changed, 422 insertions(+), 10 deletions(-)
+ create mode 100644 .gitignore
+ create mode 100644 core/fObservation.test.js
+
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..41f6124
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,5 @@
++# Installatie- en buildartefacten. Beide worden door de Quality Gate zelf opnieuw
++# aangemaakt (npm install / npm run build:www) en horen niet in de repository.
++node_modules/
++www/
++package-lock.json
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 2c6cb0e..3b398a9 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,41 @@
+ # Trainingskompas — Changelog
+ 
++## v4.29.0 — 17 augustus 2026 (Lichaam Data Depth 1.0 — observatielaag)
++
++Van de Lichaam-sectie een betrouwbare **observatielaag** gemaakt: elke getoonde waarde draagt nu zijn herkomst, meetmoment, versheid en dekking met zich mee. Geen redesign, geen nieuwe mock-up, geen correlatie- of verbandenmotor.
++
++### Nieuw: `observation.v1` in de Calculation-laag
++`core/deviceIntegration.js` krijgt twee pure, deterministische functies. `now` wordt ingespoten; er is geen `Date.now()`, geen random, geen DOM en geen query.
++
++`observation(series, {today, unit, kind})` maakt van een `healthSeries`-reeks één observatie met: waarde, meetdatum, bron, soort (gemeten · ingevoerd · berekend), leeftijd in dagen, versheid, aantal metingen, vensterlengte, dekking, volledigheid, en eerste/laagste/hoogste meting mét hun eigen datum. Ontbrekende data levert `value: null` — nooit 0.
++
++Versheid is expliciet en zonder interpretatie: vandaag · gisteren · recent (2 t/m 6 dagen) · verouderd (7 dagen of meer). Een meetdatum in de toekomst telt nooit als vers. Zonder referentiedatum is de versheid `unknown`, niet vers.
++
++`observationQuality(obs, sync)` leidt daar één van zeven datakwaliteit-toestanden uit af: `no_data · syncing · sync_failed · source_unavailable · stale · partial · current`. De vololgorde is bewust: een lopende of mislukte sync weegt zwaarder dan de leeftijd van de meting, en bij twijfel komt er nooit een geruststellende status uit. De grens voor gedeeltelijke data staat expliciet op `PARTIAL_COVERAGE_MAX = 0.5`, zodat de UI die niet zelf kan verschuiven.
++
++### Lichaam-UI verdiept, visueel ongewijzigd
++Een statusregel direct onder de check-in — bestaande kaartstijl, bestaande statuskleuren, geen nieuwe tokens — toont in één zin hoe het met de gegevens staat, plus de bron, de laatste meting en de laatste synchronisatie. De syncstand komt uit de bestaande `fetchWearableStatus()` en wordt door `DeviceCore.deviceConnectionState` canoniek gemaakt.
++
++Staan meerdere metrics er verschillend voor, dan wint de strengste: één mislukte sync of één verouderde reeks verdwijnt niet achter een actuele.
++
++De vier trendkaarten tonen nu naast waarde, trend, sparkline en dekking ook het **meetmoment in gewone taal** ("vandaag gemeten", "12 dagen geleden") en de **herkomst** uit de observatielaag in plaats van uit de UI. Zonder meting staat er "niet gemeten" en geen tijdsaanduiding.
++
++### Getest
++- Nieuw `core/fObservation.test.js` — 77 controles: lege en null-invoer verzinnen niets, gaten tellen mee in dekking en verschuiven de waarde naar de laatste echte meting, versheid op alle grenzen, tien identieke aanroepen geven tien identieke uitkomsten, en geen enkele combinatie levert "actueel" op zonder verse meting. Plus een puurheidscontrole op het codeblok zelf: geen `Date.now`, geen random, geen DOM, geen query, en geen correlatie- of verbandlogica.
++- Alle zeven datakwaliteit-toestanden end-to-end in de browser doorlopen met echte renderpaden: actueel via Fitbit, actueel via check-in, verouderd, sync mislukt, geen data en geen bron gekoppeld.
++- **Home en Training: 0 verschillende pixels van 329.160** ten opzichte van de goedgekeurde baseline.
++- Volledige Quality Gate lokaal gedraaid zoals de workflow hem draait: `coaching.test.js`, alle `core/*.test.js`, `npm run test:native`, `npm run build:www` en de bestandscontroles. Alles groen.
++
++### Gewijzigd
++`core/deviceIntegration.js`, `index.html`, `sw.js`, `CHANGELOG.md`, nieuw `core/fObservation.test.js` en een nieuwe `.gitignore` voor `node_modules/`, `www/` en `package-lock.json` — die worden door de Quality Gate zelf aangemaakt en horen niet in de repository.
++
++`APP_VER` v4.28.0 → **v4.29.0**; cache → `trainingskompas-v42900`. `CORE_SIG` ongewijzigd: `deviceIntegration.js` valt niet onder de door `sw-guard` bewaakte core-bestanden.
++
++### Bewust NIET gebouwd
++Geen correlatie- of verbandenmotor, geen statistische verbanden, geen minimum-waarnemingsregel, geen causaliteitsclaims, geen AI-conclusies. De verbandensectie blijft "Nog geen verbanden vrijgegeven". Geen schema- of datawijziging, geen nieuwe providerintegratie, geen redesign.
++
++---
++
+ ## v4.28.0 — 17 augustus 2026 (Spiergroep-detail — Lichaam functioneel afgerond)
+ 
+ Het laatste ontbrekende niveau in de Lichaam-keten: klikken op een spiergroep opent nu een echt detailscherm. Geen redesign, geen nieuwe mock-up, geen nieuwe visuele stijl — het detail hergebruikt de bestaande kaart-, tegel- en labelstijlen en valt binnen dezelfde `:is()`-scope als de andere Lichaam-schermen.
+diff --git a/core/deviceIntegration.js b/core/deviceIntegration.js
+index 8ce497f..f34ac82 100644
+--- a/core/deviceIntegration.js
++++ b/core/deviceIntegration.js
+@@ -685,6 +685,113 @@
+     return { count: pts.length, max: { date: max.date, value: max.value }, min: { date: min.date, value: min.value }, latest: { date: pts[pts.length-1].date, value: pts[pts.length-1].value } };
+   }
+ 
++  // ══════════════════════════════════════════════════════════════════════════════
++  // OBSERVATIELAAG (observation.v1) — Lichaam Data Depth 1.0
++  //
++  // Doel: van een reeks metingen één controleerbare observatie maken waarin niet alleen
++  // de waarde staat, maar ook waar hij vandaan komt, wanneer hij is gemeten en hoe
++  // betrouwbaar hij op dit moment is. De UI hoeft dan niets meer zelf af te leiden.
++  //
++  // PUUR en DETERMINISTISCH: `now` wordt ingespoten, er is geen Date.now(), geen random.
++  // Zelfde input geeft altijd dezelfde output. Er wordt niets verzonnen: ontbrekende data
++  // levert value:null met kind 'none' — nooit 0.
++  //
++  // Deze laag trekt GEEN conclusies en berekent GEEN verbanden. Dat is bewust: eerst
++  // observaties betrouwbaar zichtbaar maken, daarna pas interpretatie.
++  // ══════════════════════════════════════════════════════════════════════════════
++  var OBSERVATION_VERSION = 'observation.v1';
++
++  // Hoe vers is een meting? Drempels in dagen, expliciet en zonder interpretatie:
++  //   0 dagen  → vandaag
++  //   1 dag    → gisteren
++  //   2-6      → recent
++  //   7 of meer → verouderd
++  var FRESHNESS_RECENT_DAYS = 7;
++
++  function _ymd(v) { return v == null ? null : String(v).slice(0, 10); }
++  function _dayDiff(aYmd, bYmd) {
++    if (!aYmd || !bYmd) return null;
++    var a = Date.parse(aYmd + 'T00:00:00Z'), b = Date.parse(bYmd + 'T00:00:00Z');
++    if (!isFinite(a) || !isFinite(b)) return null;
++    return Math.round((a - b) / 86400000);
++  }
++  // De herkomst van een bronlabel: een wearable-meting is iets anders dan een check-in.
++  function sourceKind(source) {
++    if (!source) return 'unknown';
++    var s = String(source).toLowerCase();
++    if (s.indexOf('check') >= 0 || s.indexOf('handmatig') >= 0 || s.indexOf('manual') >= 0) return 'entered';
++    return 'measured';
++  }
++
++  // series: [{date, value, source}] zoals healthSeries teruggeeft.
++  // opts:   { today: 'YYYY-MM-DD' (verplicht voor versheid), unit, kind }
++  function observation(series, opts) {
++    var o = opts || {};
++    var arr = Array.isArray(series) ? series : [];
++    var pts = arr.filter(function (s) { return s && s.value != null; });
++    var days = arr.length;
++    var today = _ymd(o.today);
++    var base = {
++      version: OBSERVATION_VERSION,
++      value: null, date: null, source: null,
++      kind: o.kind || 'none',
++      unit: o.unit || null,
++      ageDays: null, freshness: 'none',
++      count: 0, days: days, coverage: 0, complete: false,
++      first: null, min: null, max: null
++    };
++    if (!pts.length) return base;
++
++    var last = pts[pts.length - 1];
++    var lo = pts[0], hi = pts[0];
++    pts.forEach(function (s) { if (s.value < lo.value) lo = s; if (s.value > hi.value) hi = s; });
++    var age = today ? _dayDiff(today, _ymd(last.date)) : null;
++    var fresh = 'unknown';
++    if (age != null) {
++      if (age < 0) fresh = 'future';           // meting in de toekomst — nooit als vers tellen
++      else if (age === 0) fresh = 'today';
++      else if (age === 1) fresh = 'yesterday';
++      else if (age < FRESHNESS_RECENT_DAYS) fresh = 'recent';
++      else fresh = 'stale';
++    }
++    return {
++      version: OBSERVATION_VERSION,
++      value: last.value,
++      date: _ymd(last.date),
++      source: last.source || null,
++      kind: o.kind || sourceKind(last.source),
++      unit: o.unit || null,
++      ageDays: age,
++      freshness: fresh,
++      count: pts.length,
++      days: days,
++      coverage: days ? Math.round(pts.length / days * 100) / 100 : 0,
++      complete: days > 0 && pts.length === days,
++      first: { date: _ymd(pts[0].date), value: pts[0].value },
++      min: { date: _ymd(lo.date), value: lo.value },
++      max: { date: _ymd(hi.date), value: hi.value }
++    };
++  }
++
++  // De datakwaliteit van één observatie, gegeven de stand van de bron.
++  // Volgorde is bewust: een lopende of mislukte sync zegt meer over wat de gebruiker ziet
++  // dan de leeftijd van de laatste meting. Nooit een geruststellende status bij twijfel.
++  var QUALITY_STATES = ['no_data', 'syncing', 'sync_failed', 'source_unavailable', 'stale', 'partial', 'current'];
++  // Bij de helft of minder gemeten dagen in het venster is het beeld gedeeltelijk. Expliciet
++  // vastgelegd zodat de UI deze grens niet zelf kan verschuiven.
++  var PARTIAL_COVERAGE_MAX = 0.5;
++  function observationQuality(obs, sync) {
++    var o = obs || {}, s = sync || {};
++    var status = s.status || null;                     // uit deviceConnectionState
++    if (status === 'syncing') return 'syncing';
++    if (status === 'sync_failed' || status === 'token_expired') return 'sync_failed';
++    if (!o.count) return status === 'not_connected' ? 'source_unavailable' : 'no_data';
++    if (o.freshness === 'stale' || o.freshness === 'future') return 'stale';
++    if (status === 'stale') return 'stale';
++    if (o.coverage > 0 && o.coverage <= PARTIAL_COVERAGE_MAX) return 'partial';
++    return 'current';
++  }
++
+   // ── GENERIEKE CONNECTIE-/SYNC-STATUS (Fitbit én Concept2) ─────────────────────────────
+   // Eén canonieke afleiding van device-connectiestatus voor de UI. PUUR: `now` wordt ingespoten
+   // (geen Date.now). Nooit een fake "synced": de status volgt strikt uit de ingespoten feiten.
+@@ -762,6 +869,10 @@
+     pickLatestMetric: pickLatestMetric, bodyMetricsFromLog: bodyMetricsFromLog,
+     // health-history (grafiek-data, provider-agnostisch, TZ-veilig)
+     dateRange: dateRange, healthSeries: healthSeries, healthTrend: healthTrend, healthSummary: healthSummary,
++    observation: observation, observationQuality: observationQuality, sourceKind: sourceKind,
++    OBSERVATION_VERSION: OBSERVATION_VERSION, QUALITY_STATES: QUALITY_STATES,
++    PARTIAL_COVERAGE_MAX: PARTIAL_COVERAGE_MAX,
++    FRESHNESS_RECENT_DAYS: FRESHNESS_RECENT_DAYS,
+     normalizeHealthDaily: normalizeHealthDaily,
+     ADAPTER_METHODS: ADAPTER_METHODS,
+     CONCEPT2_MAP: CONCEPT2_MAP,
+diff --git a/core/fObservation.test.js b/core/fObservation.test.js
+new file mode 100644
+index 0000000..5474dad
+--- /dev/null
++++ b/core/fObservation.test.js
+@@ -0,0 +1,154 @@
++/* observation.v1 — de observatielaag van Lichaam Data Depth 1.0.
++ *
++ * Een observatie is een waarde MET herkomst, meetmoment, versheid en dekking. De UI mag
++ * daar niets meer zelf van afleiden. Deze test bewaakt dat de laag:
++ *   - deterministisch is (zelfde input, zelfde output; geen Date.now, geen random);
++ *   - niets verzint (ontbrekende data blijft null, nooit 0);
++ *   - gaten correct meetelt in dekking en volledigheid;
++ *   - datakwaliteit veilig afleidt: bij twijfel nooit een geruststellende status.
++ *
++ * Draai: node core/fObservation.test.js
++ */
++const D = require('./deviceIntegration.js');
++
++let pass = 0, fail = 0;
++function ok(c, m){ if(c) pass++; else { fail++; console.log('  ✗ ' + m); } }
++function eq(a, b, m){ ok(a === b, m + ' (verwacht ' + JSON.stringify(b) + ', kreeg ' + JSON.stringify(a) + ')'); }
++
++// Hulpje: een reeks van n dagen eindigend op `end`, met waarden uit `vals` (null = gat).
++function serie(end, vals, bron){
++  const out = [];
++  for (let i = 0; i < vals.length; i++){
++    const d = new Date(Date.parse(end + 'T00:00:00Z') - (vals.length - 1 - i) * 86400000);
++    out.push({ date: d.toISOString().slice(0,10), value: vals[i],
++               source: vals[i] == null ? null : (bron || 'Fitbit') });
++  }
++  return out;
++}
++
++console.log('\n[observation.v1] Observatielaag');
++
++// ── 1. lege en ontbrekende input ─────────────────────────────────────────────
++console.log('  lege input verzint niets');
++const leeg = D.observation([], { today: '2026-08-17' });
++eq(leeg.value, null, 'geen reeks → value null, geen 0');
++eq(leeg.count, 0, 'geen metingen geteld');
++eq(leeg.freshness, 'none', 'geen versheid zonder meting');
++eq(leeg.coverage, 0, 'dekking 0');
++eq(leeg.complete, false, 'niet volledig');
++eq(leeg.date, null, 'geen meetmoment');
++eq(leeg.version, 'observation.v1', 'versietag aanwezig');
++eq(D.observation(null, { today: '2026-08-17' }).value, null, 'null-reeks levert geen waarde');
++eq(D.observation(undefined).value, null, 'undefined-reeks levert geen waarde');
++const alleenGaten = D.observation(serie('2026-08-17', [null, null, null]), { today: '2026-08-17' });
++eq(alleenGaten.count, 0, 'een reeks met alleen gaten telt 0 metingen');
++eq(alleenGaten.value, null, 'alleen gaten → geen waarde');
++eq(alleenGaten.days, 3, 'het venster telt wel gewoon drie dagen');
++
++// ── 2. waarde, herkomst en meetmoment ────────────────────────────────────────
++console.log('  waarde, herkomst en meetmoment');
++const vol = D.observation(serie('2026-08-17', [40, 42, 44, 46]), { today: '2026-08-17', unit: 'ms' });
++eq(vol.value, 46, 'de meest recente meting is de waarde');
++eq(vol.date, '2026-08-17', 'het meetmoment is de datum van die meting');
++eq(vol.source, 'Fitbit', 'de bron komt uit het datapunt');
++eq(vol.kind, 'measured', 'een wearable-bron telt als gemeten');
++eq(vol.unit, 'ms', 'de eenheid wordt doorgegeven');
++eq(vol.count, 4, 'vier metingen');
++eq(vol.coverage, 1, 'volledige dekking');
++eq(vol.complete, true, 'volledig');
++eq(vol.first.value, 40, 'de eerste meting is bekend');
++eq(vol.min.value, 40, 'minimum klopt');
++eq(vol.max.value, 46, 'maximum klopt');
++eq(vol.min.date, '2026-08-14', 'het minimum draagt zijn eigen datum');
++
++const checkin = D.observation(serie('2026-08-17', [7.2], 'Check-in'), { today: '2026-08-17' });
++eq(checkin.kind, 'entered', 'een check-in telt als ingevoerd, niet als gemeten');
++eq(D.sourceKind('Fitbit'), 'measured', 'Fitbit is gemeten');
++eq(D.sourceKind('Google Health'), 'measured', 'Google Health is gemeten');
++eq(D.sourceKind('Check-in'), 'entered', 'Check-in is ingevoerd');
++eq(D.sourceKind('handmatig'), 'entered', 'handmatig is ingevoerd');
++eq(D.sourceKind(null), 'unknown', 'zonder bron is de herkomst onbekend, niet gemeten');
++eq(D.observation(serie('2026-08-17', [80]), { today: '2026-08-17', kind: 'calculated' }).kind, 'calculated',
++   'een expliciet meegegeven soort wint — berekende waarden blijven herkenbaar');
++
++// ── 3. versheid is tijdgebonden en deterministisch ───────────────────────────
++console.log('  versheid');
++function vers(dagenOud){
++  const end = new Date(Date.parse('2026-08-17T00:00:00Z') - dagenOud * 86400000).toISOString().slice(0,10);
++  return D.observation([{ date: end, value: 42, source: 'Fitbit' }], { today: '2026-08-17' });
++}
++eq(vers(0).freshness, 'today', 'vandaag gemeten');
++eq(vers(0).ageDays, 0, 'leeftijd 0 dagen');
++eq(vers(1).freshness, 'yesterday', 'gisteren gemeten');
++eq(vers(2).freshness, 'recent', 'twee dagen oud is recent');
++eq(vers(6).freshness, 'recent', 'zes dagen oud is nog recent');
++eq(vers(7).freshness, 'stale', 'zeven dagen oud is verouderd');
++eq(vers(30).freshness, 'stale', 'dertig dagen oud is verouderd');
++eq(vers(30).ageDays, 30, 'de leeftijd wordt exact geteld');
++eq(D.FRESHNESS_RECENT_DAYS, 7, 'de grens tussen recent en verouderd staat op zeven dagen');
++eq(D.observation([{ date: '2026-08-20', value: 42, source: 'Fitbit' }], { today: '2026-08-17' }).freshness, 'future',
++   'een meting in de toekomst telt nooit als vers');
++eq(D.observation([{ date: '2026-08-17', value: 42 }], {}).freshness, 'unknown',
++   'zonder referentiedatum is de versheid onbekend, niet vers');
++
++// determinisme: dezelfde input, tien keer, exact dezelfde uitkomst
++const s1 = serie('2026-08-17', [40, null, 44, 46]);
++const eerste = JSON.stringify(D.observation(s1, { today: '2026-08-17' }));
++let stabiel = true;
++for (let i = 0; i < 10; i++) if (JSON.stringify(D.observation(s1, { today: '2026-08-17' })) !== eerste) stabiel = false;
++ok(stabiel, 'tien keer dezelfde input geeft tien keer dezelfde output');
++
++// ── 4. gaten tellen mee in dekking ───────────────────────────────────────────
++console.log('  gaten en dekking');
++const half = D.observation(serie('2026-08-17', [40, null, 44, null]), { today: '2026-08-17' });
++eq(half.count, 2, 'twee echte metingen');
++eq(half.days, 4, 'venster van vier dagen');
++eq(half.coverage, 0.5, 'dekking 0,5');
++eq(half.complete, false, 'niet volledig');
++eq(half.value, 44, 'een gat op de laatste dag verschuift de waarde naar de laatste echte meting');
++eq(half.date, '2026-08-16', 'en het meetmoment schuift mee');
++ok(half.value !== 0, 'een gat wordt nooit als 0 gepresenteerd');
++
++// ── 5. datakwaliteit — bij twijfel nooit geruststellend ──────────────────────
++console.log('  datakwaliteit');
++const goed = D.observation(serie('2026-08-17', [40, 42, 44, 46]), { today: '2026-08-17' });
++eq(D.observationQuality(goed, { status: 'connected' }), 'current', 'verse volledige data is actueel');
++eq(D.observationQuality(goed, { status: 'syncing' }), 'syncing', 'een lopende sync wint van de waarde');
++eq(D.observationQuality(goed, { status: 'sync_failed' }), 'sync_failed', 'een mislukte sync wint van de waarde');
++eq(D.observationQuality(goed, { status: 'token_expired' }), 'sync_failed', 'een verlopen token telt als mislukte sync');
++eq(D.observationQuality(goed, { status: 'stale' }), 'stale', 'een verouderde bron maakt de observatie verouderd');
++eq(D.observationQuality(leeg, { status: 'not_connected' }), 'source_unavailable', 'geen bron gekoppeld is iets anders dan geen data');
++eq(D.observationQuality(leeg, { status: 'connected' }), 'no_data', 'gekoppeld maar niets gemeten is geen data');
++eq(D.observationQuality(leeg, {}), 'no_data', 'zonder syncinformatie blijft het geen data');
++eq(D.observationQuality(vers(30), { status: 'connected' }), 'stale', 'een oude meting is verouderd, ook bij een gezonde koppeling');
++eq(D.observationQuality(D.observation(serie('2026-08-17', [40, null, null, 46]), { today: '2026-08-17' }), { status: 'connected' }),
++   'partial', 'lage dekking is gedeeltelijke data');
++eq(D.observationQuality(half, { status: 'connected' }), 'partial',
++   'de helft van de dagen gemeten is een gedeeltelijk beeld');
++eq(D.PARTIAL_COVERAGE_MAX, 0.5, 'de grens voor gedeeltelijke data ligt expliciet op de helft');
++eq(D.observationQuality(D.observation(serie('2026-08-17', [40, 42, null, 46]), { today: '2026-08-17' }), { status: 'connected' }),
++   'current', 'driekwart dekking met een verse meting is gewoon actueel');
++ok(D.QUALITY_STATES.indexOf('current') >= 0 && D.QUALITY_STATES.length === 7,
++   'alle zeven datakwaliteit-toestanden zijn benoemd');
++D.QUALITY_STATES.forEach(st => ok(typeof st === 'string' && st.length > 0, 'toestand "' + st + '" is benoemd'));
++
++// geen enkele combinatie mag 'current' opleveren zonder echte, verse meting
++let onterecht = 0;
++[null, {}, {status:'not_connected'}, {status:'syncing'}, {status:'sync_failed'}, {status:'stale'}].forEach(sy => {
++  if (D.observationQuality(leeg, sy) === 'current') onterecht++;
++  if (D.observationQuality(vers(30), sy) === 'current') onterecht++;
++});
++eq(onterecht, 0, 'zonder verse meting is de status nooit "actueel"');
++
++// ── 6. puurheid ──────────────────────────────────────────────────────────────
++console.log('  puurheid');
++const bron = require('fs').readFileSync(require('path').join(__dirname, 'deviceIntegration.js'), 'utf8');
++const blok = bron.slice(bron.indexOf('var OBSERVATION_VERSION'), bron.indexOf('var DEVICE_STATUSES'));
++ok(blok.indexOf('Date.now(') < 0, 'de observatielaag gebruikt geen Date.now()');
++ok(blok.indexOf('Math.random') < 0, 'de observatielaag gebruikt geen random');
++ok(blok.indexOf('document') < 0 && blok.indexOf('window') < 0, 'de observatielaag raakt de DOM niet');
++ok(blok.indexOf('fetch(') < 0 && blok.indexOf('sbGet') < 0, 'de observatielaag doet zelf geen queries');
++ok(!/correlat|pearson|regress|verband/i.test(blok), 'de observatielaag bevat geen correlatie- of verbandlogica');
++
++console.log('\n  ' + pass + ' geslaagd, ' + fail + ' gefaald');
++if (fail) process.exit(1);
+diff --git a/index.html b/index.html
+index 8646d06..c71ed5b 100644
+--- a/index.html
++++ b/index.html
+@@ -2568,6 +2568,13 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
+ :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen) .lich-krow .k{color:var(--g4);font-weight:600}
+ :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen) .lich-krow .v{font-weight:700;color:var(--dark);text-align:right}
+ :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen) .lich-src{display:inline-block;font-size:8px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;padding:1px 6px;border-radius:6px;background:var(--g1);color:var(--g4)}
++/* Datakwaliteit — geen nieuwe kleuren: hergebruikt de bestaande status- en grijstinten. */
++:is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen) .lich-dq{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:var(--card);border:0;border-radius:16px;box-shadow:var(--shadow);padding:11px 13px;font-family:var(--f);margin-top:9px;min-height:44px}
++:is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen) .lich-dq .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
++:is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen) .lich-dq .b{flex:1;min-width:0}
++:is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen) .lich-dq b{display:block;font-size:12.5px;font-weight:800;color:var(--dark);line-height:1.3}
++:is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen) .lich-dq s{display:block;text-decoration:none;font-size:11px;font-weight:600;color:var(--g4);margin-top:2px;line-height:1.4}
++:is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen) .lich-metric .age{font-size:9.5px;color:var(--g4);font-weight:600;margin-top:2px}
+ /* ══════════════════════════════════════════════════════════════════
+    v4.23.0 — Sprint 5.5 App-brede UX-polish: premium empty states,
+    micro-interacties (press/hover), feedback. Presentatie-only, geen logica.
+@@ -3683,6 +3690,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
+     <div id="lich-hero"></div>
+     <!-- Check-in: route naar de BESTAANDE check-in (m-hrv), dezelfde als op Home. -->
+     <div id="lich-checkin"></div>
++    <!-- Data Depth 1.0 — herkomst en actualiteit van de gezondheidsdata, in één regel. -->
++    <div id="lich-datastatus"></div>
+ 
+     <!-- Harde acceptatie-eis: bij het openen van Lichaam zijn voor- en achterzijde met de
+          actuele herstel-/belastingsvisualisatie direct zichtbaar, zonder eerst te klikken. -->
+@@ -5476,7 +5485,7 @@ async function tkFitbitSync(){
+ // ══════════════════════════════════════════════════════════
+ // CONSTANTS & CONFIG
+ // ══════════════════════════════════════════════════════════
+-const APP_VER = 'v4.28.0';
++const APP_VER = 'v4.29.0';
+ const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
+ const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
+ const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
+@@ -18775,11 +18784,22 @@ async function renderLichaamPremium(){
+       }catch(_){ return []; }
+     };
+     const S={hrv:serieOf('hrv'), rhr:serieOf('rhr'), sleep:serieOf('sleep'), gewicht:wSeries};
++    // Elke reeks wordt een observatie: waarde, bron, meetmoment, versheid en dekking.
++    // De UI leidt daar niets meer zelf uit af.
++    const vandaag = td();
++    const OBS = {
++      hrv:    dc?dc.observation(S.hrv,    {today:vandaag, unit:'ms'}):null,
++      rhr:    dc?dc.observation(S.rhr,    {today:vandaag, unit:'bpm'}):null,
++      slaap:  dc?dc.observation(S.sleep,  {today:vandaag, unit:'u'}):null,
++      gewicht:dc?dc.observation(S.gewicht,{today:vandaag, unit:'kg', kind:'entered'}):null
++    };
++    window._tkLichObs = OBS;
+     met.innerHTML=
+-      lichTrendCard('hrv','HRV','ms',0,S.hrv,true)+
+-      lichTrendCard('rhr','Rust HR','bpm',0,S.rhr,false)+
+-      lichTrendCard('slaap','Slaap','',1,S.sleep,true)+
+-      lichTrendCard('gewicht','Gewicht','kg',1,S.gewicht,false,(wl&&wl.scale)?wl.scale:'Ingevoerd');
++      lichTrendCard('hrv','HRV','ms',0,S.hrv,true,null,OBS.hrv)+
++      lichTrendCard('rhr','Rust HR','bpm',0,S.rhr,false,null,OBS.rhr)+
++      lichTrendCard('slaap','Slaap','',1,S.sleep,true,null,OBS.slaap)+
++      lichTrendCard('gewicht','Gewicht','kg',1,S.gewicht,false,(wl&&wl.scale)?wl.scale:'Ingevoerd',OBS.gewicht);
++    try{ await renderLichaamDataStatus(OBS); }catch(_){}
+     const sub=document.getElementById('lich-trend-sub');
+     if(sub) sub.textContent='laatste '+TK_LICH_TREND_DAYS+' dagen';
+   }
+@@ -18927,6 +18947,90 @@ async function renderLichaamAnatomie(rec){
+   }
+ }
+ 
++// Eén regel bovenaan Lichaam die zegt waar de gezondheidsdata vandaan komt en hoe
++// actueel die is. De syncstand komt uit de bestaande wearable-status en wordt door
++// DeviceCore.deviceConnectionState canoniek gemaakt — de UI beslist hier niets zelf.
++async function renderLichaamDataStatus(OBS){
++  const el = document.getElementById('lich-datastatus');
++  if(!el) return;
++  const dc = (typeof DeviceCore!=='undefined') ? DeviceCore : null;
++  if(!dc || !OBS){ el.innerHTML=''; return; }
++
++  // Bronstand ophalen; faalt dat, dan is de bron simpelweg onbekend — geen aanname.
++  let sync = null;
++  try{
++    const st = await fetchWearableStatus();
++    sync = dc.deviceConnectionState({
++      connected: !!st.connected, connectedAt: st.connectedAt || null,
++      lastSyncAt: st.lastSyncAt || null, lastSyncStatus: st.lastSyncStatus || null,
++      tokenExpired: st.lastSyncStatus === 'token_expired_no_refresh', syncing: !!st.syncing
++    }, { now: new Date().toISOString() });
++  }catch(_){ sync = null; }
++
++  const kwaliteiten = ['hrv','rhr','slaap'].map(function(k){
++    return dc.observationQuality(OBS[k], sync || {});
++  });
++  const q = lichStrengsteKwaliteit(kwaliteiten);
++  const t = TK_DQ_TEKST[q] || TK_DQ_TEKST.no_data;
++
++  // Onderregel: waar de data vandaan komt en wanneer er voor het laatst is gesynchroniseerd.
++  const bronnen = [];
++  ['hrv','rhr','slaap'].forEach(function(k){
++    const b = lichHerkomst(OBS[k]);
++    if(b && bronnen.indexOf(b) < 0) bronnen.push(b);
++  });
++  const laatste = ['hrv','rhr','slaap'].map(function(k){ return OBS[k] && OBS[k].date; })
++    .filter(Boolean).sort().pop();
++  const delen = [];
++  if(bronnen.length) delen.push('bron: ' + bronnen.join(', '));
++  if(laatste) delen.push('laatste meting ' + fmtDate(laatste));
++  if(sync && sync.lastSyncAt) delen.push('laatste sync ' + fmtDate(String(sync.lastSyncAt).slice(0,10)));
++  else if(sync && sync.status === 'not_connected') delen.push('geen wearable gekoppeld');
++
++  el.innerHTML = '<div class="lich-dq"><span class="dot" style="background:'+t[1]+'"></span>'+
++    '<span class="b"><b>'+escHtml(t[0])+'</b>'+
++    (delen.length?'<s>'+escHtml(delen.join(' · '))+'</s>':'')+'</span></div>';
++}
++
++// ── Observatielaag — presentatie (Lichaam Data Depth 1.0) ────────────────────
++// De laag zelf zit in DeviceCore (observation.v1). Hier staat alleen hoe een observatie
++// wordt verwoord. Geen drempels, geen berekeningen, geen conclusies.
++const TK_DQ_TEKST = {
++  current:            ['Gegevens zijn actueel',        'var(--status-good)'],
++  partial:            ['Gedeeltelijke gegevens',       'var(--status-warn)'],
++  stale:              ['Gegevens zijn verouderd',      'var(--status-warn)'],
++  syncing:            ['Synchronisatie bezig',         'var(--g3)'],
++  sync_failed:        ['Synchronisatie mislukt',       'var(--status-bad)'],
++  source_unavailable: ['Geen bron gekoppeld',          'var(--g3)'],
++  no_data:            ['Nog geen gegevens',            'var(--g3)']
++};
++// Versheid in gewone taal. Zonder meting geen tijdsaanduiding — geen "0 dagen geleden".
++function lichVersheid(obs){
++  if(!obs || obs.value == null) return 'geen meting';
++  switch(obs.freshness){
++    case 'today':     return 'vandaag gemeten';
++    case 'yesterday': return 'gisteren gemeten';
++    case 'recent':    return obs.ageDays + ' dagen geleden';
++    case 'stale':     return obs.ageDays + ' dagen geleden';
++    case 'future':    return 'meetdatum ligt in de toekomst';
++    default:          return obs.date ? fmtDate(obs.date) : 'meetmoment onbekend';
++  }
++}
++function lichHerkomst(obs){
++  if(!obs || obs.value == null) return '';
++  if(obs.kind === 'calculated') return 'berekend';
++  if(obs.kind === 'entered')    return obs.source || 'ingevoerd';
++  return obs.source || 'gemeten';
++}
++// De strengste kwaliteit over meerdere observaties bepaalt wat er bovenaan staat: één
++// mislukte sync of één verouderde reeks mag niet wegvallen achter een actuele.
++function lichStrengsteKwaliteit(lijst){
++  const volgorde = ['sync_failed','source_unavailable','no_data','syncing','stale','partial','current'];
++  let uitkomst = 'current';
++  (lijst||[]).forEach(function(q){ if(volgorde.indexOf(q) < volgorde.indexOf(uitkomst)) uitkomst = q; });
++  return uitkomst;
++}
++
+ // ── Spiergroep-detail ───────────────────────────────────────────────────────
+ // Volgt het bestaande routerpatroon (zoals _minePendingSeg): de selectie staat in een
+ // module-variabele, de route blijft één id. Alle waarden komen uit bestaande bronnen:
+@@ -19064,7 +19168,7 @@ function lichSpark(series,color){
+   flush();
+   return '<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true">'+out+'</svg>';
+ }
+-function lichTrendCard(key,label,unit,dec,series,upIsGood,bronFallback){
++function lichTrendCard(key,label,unit,dec,series,upIsGood,bronFallback,obs){
+   const pts=(series||[]).filter(x=>x&&x.value!=null);
+   const n=pts.length, days=(series||[]).length||TK_LICH_TREND_DAYS;
+   if(!n) return '<button class="lich-metric" onclick="openLichaamMetric(\''+key+'\')">'+
+@@ -19073,8 +19177,9 @@ function lichTrendCard(key,label,unit,dec,series,upIsGood,bronFallback){
+     '<div class="f"><span class="cov">0 van '+days+' dagen</span></div><span class="chev" aria-hidden="true">›</span></button>';
+   const laatste=pts[pts.length-1];
+   const last=laatste.value;
+-  // Bron van de meest recente meting — komt uit healthSeries(...).source, niet uit de UI.
+-  const bron=laatste.source||bronFallback||'';
++  // Bron en versheid komen uit de observatielaag (observation.v1), niet uit de UI.
++  const bron=(obs?lichHerkomst(obs):null)||laatste.source||bronFallback||'';
++  const wanneer=obs?lichVersheid(obs):'';
+   const dc=(typeof DeviceCore!=='undefined')?DeviceCore:null;
+   let t=null; try{ t=dc?dc.healthTrend(series):null; }catch(_){}
+   const toonTrend = n>=6 && t && t.dir!=='flat';
+@@ -19088,6 +19193,7 @@ function lichTrendCard(key,label,unit,dec,series,upIsGood,bronFallback){
+     '<div class="dl" style="color:'+col+'">'+(toonTrend?(t.dir==='up'?'↑':'↓')+' '+(t.dir==='up'?'stijgend':'dalend'):'geen trend')+'</div>'+
+     lichSpark(series,col)+
+     '<div class="f"><span class="cov">'+n+' van '+days+' dagen</span><span class="stt" style="color:'+col+'">'+stat+'</span></div>'+
++    (wanneer?'<div class="age">'+escHtml(wanneer)+'</div>':'')+
+     (bron?'<div class="src">'+escHtml(bron)+'</div>':'')+
+     '<span class="chev" aria-hidden="true">›</span></button>';
+ }
+diff --git a/sw.js b/sw.js
+index a781562..af704cf 100644
+--- a/sw.js
++++ b/sw.js
+@@ -5,8 +5,8 @@
+ // Reden: de static-fetch is cache-first over ALLE caches; een oude core-entry in de niet-gebumpte
+ // dynamische cache kon de nieuwe precache overschaduwen (stale serve na deploy). Door CACHE_NAME mee te
+ // bumpen ruimt de activate-handler de oude dynamische cache op. REGEL: core wijzigt -> bump CACHE_NAME + CACHE_STATIC.
+-const CACHE_NAME = 'trainingskompas-v42800';
+-const CACHE_STATIC = 'trainingskompas-static-v42800';
++const CACHE_NAME = 'trainingskompas-v42900';
++const CACHE_STATIC = 'trainingskompas-static-v42900';
+ // F1.9 SW-GUARD: hash (CRLF-agnostisch) van core/calculation.js + core/decision.js.
+ // core/sw-guard.test.js faalt als de core wijzigt zonder dat deze CORE_SIG + CACHE_STATIC gebumpt zijn.
+ // Bij een core-wijziging: draai `node core/sw-guard.test.js` -> die print de nieuwe CORE_SIG; werk hem
+-- 
+2.43.0
+

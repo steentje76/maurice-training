@@ -1,5 +1,87 @@
 # Trainingskompas — Changelog
 
+## v4.29.0 — 17 augustus 2026 (Lichaam Data Depth 1.0 — observatielaag)
+
+Van de Lichaam-sectie een betrouwbare **observatielaag** gemaakt: elke getoonde waarde draagt nu zijn herkomst, meetmoment, versheid en dekking met zich mee. Geen redesign, geen nieuwe mock-up, geen correlatie- of verbandenmotor.
+
+### Nieuw: `observation.v1` in de Calculation-laag
+`core/deviceIntegration.js` krijgt twee pure, deterministische functies. `now` wordt ingespoten; er is geen `Date.now()`, geen random, geen DOM en geen query.
+
+`observation(series, {today, unit, kind})` maakt van een `healthSeries`-reeks één observatie met: waarde, meetdatum, bron, soort (gemeten · ingevoerd · berekend), leeftijd in dagen, versheid, aantal metingen, vensterlengte, dekking, volledigheid, en eerste/laagste/hoogste meting mét hun eigen datum. Ontbrekende data levert `value: null` — nooit 0.
+
+Versheid is expliciet en zonder interpretatie: vandaag · gisteren · recent (2 t/m 6 dagen) · verouderd (7 dagen of meer). Een meetdatum in de toekomst telt nooit als vers. Zonder referentiedatum is de versheid `unknown`, niet vers.
+
+`observationQuality(obs, sync)` leidt daar één van zeven datakwaliteit-toestanden uit af: `no_data · syncing · sync_failed · source_unavailable · stale · partial · current`. De vololgorde is bewust: een lopende of mislukte sync weegt zwaarder dan de leeftijd van de meting, en bij twijfel komt er nooit een geruststellende status uit. De grens voor gedeeltelijke data staat expliciet op `PARTIAL_COVERAGE_MAX = 0.5`, zodat de UI die niet zelf kan verschuiven.
+
+### Lichaam-UI verdiept, visueel ongewijzigd
+Een statusregel direct onder de check-in — bestaande kaartstijl, bestaande statuskleuren, geen nieuwe tokens — toont in één zin hoe het met de gegevens staat, plus de bron, de laatste meting en de laatste synchronisatie. De syncstand komt uit de bestaande `fetchWearableStatus()` en wordt door `DeviceCore.deviceConnectionState` canoniek gemaakt.
+
+Staan meerdere metrics er verschillend voor, dan wint de strengste: één mislukte sync of één verouderde reeks verdwijnt niet achter een actuele.
+
+De vier trendkaarten tonen nu naast waarde, trend, sparkline en dekking ook het **meetmoment in gewone taal** ("vandaag gemeten", "12 dagen geleden") en de **herkomst** uit de observatielaag in plaats van uit de UI. Zonder meting staat er "niet gemeten" en geen tijdsaanduiding.
+
+### Getest
+- Nieuw `core/fObservation.test.js` — 77 controles: lege en null-invoer verzinnen niets, gaten tellen mee in dekking en verschuiven de waarde naar de laatste echte meting, versheid op alle grenzen, tien identieke aanroepen geven tien identieke uitkomsten, en geen enkele combinatie levert "actueel" op zonder verse meting. Plus een puurheidscontrole op het codeblok zelf: geen `Date.now`, geen random, geen DOM, geen query, en geen correlatie- of verbandlogica.
+- Alle zeven datakwaliteit-toestanden end-to-end in de browser doorlopen met echte renderpaden: actueel via Fitbit, actueel via check-in, verouderd, sync mislukt, geen data en geen bron gekoppeld.
+- **Home en Training: 0 verschillende pixels van 329.160** ten opzichte van de goedgekeurde baseline.
+- Volledige Quality Gate lokaal gedraaid zoals de workflow hem draait: `coaching.test.js`, alle `core/*.test.js`, `npm run test:native`, `npm run build:www` en de bestandscontroles. Alles groen.
+
+### Gewijzigd
+`core/deviceIntegration.js`, `index.html`, `sw.js`, `CHANGELOG.md`, nieuw `core/fObservation.test.js` en een nieuwe `.gitignore` voor `node_modules/`, `www/` en `package-lock.json` — die worden door de Quality Gate zelf aangemaakt en horen niet in de repository.
+
+`APP_VER` v4.28.0 → **v4.29.0**; cache → `trainingskompas-v42900`. `CORE_SIG` ongewijzigd: `deviceIntegration.js` valt niet onder de door `sw-guard` bewaakte core-bestanden.
+
+### Bewust NIET gebouwd
+Geen correlatie- of verbandenmotor, geen statistische verbanden, geen minimum-waarnemingsregel, geen causaliteitsclaims, geen AI-conclusies. De verbandensectie blijft "Nog geen verbanden vrijgegeven". Geen schema- of datawijziging, geen nieuwe providerintegratie, geen redesign.
+
+---
+
+## v4.28.0 — 17 augustus 2026 (Spiergroep-detail — Lichaam functioneel afgerond)
+
+Het laatste ontbrekende niveau in de Lichaam-keten: klikken op een spiergroep opent nu een echt detailscherm. Geen redesign, geen nieuwe mock-up, geen nieuwe visuele stijl — het detail hergebruikt de bestaande kaart-, tegel- en labelstijlen en valt binnen dezelfde `:is()`-scope als de andere Lichaam-schermen.
+
+### Nieuw scherm `s-lich-spier`
+Hangt in de bestaande `go()`-router. De selectie loopt via een module-variabele (`lichSpierSel`), hetzelfde patroon als `_minePendingSeg` bij Training — geen nieuwe navigatiestructuur, geen tweede router.
+
+Twee ingangen, één functie: de spierregels op het Lichaam-overzicht en de kaarten op "Alle spiergroepen" roepen allebei `openSpierDetail(naam)` aan.
+
+Het detail toont:
+- herstelpercentage, statuslabel en wat dat betekent voor belasting vandaag;
+- het anatomiefiguur van de juiste zijde, met de gekozen groep gemarkeerd;
+- uren sinds belasting, basisherstel, sets over 7 dagen en de belastingsstatus;
+- **hoe het is berekend** — uren sinds belasting, basisuren, RPE van de laatste sessie en de formuleversie `recovery.v1`, met de expliciete melding dat het een vuistregel is en geen gemeten fysiologische waarde;
+- de oefeningen die de groep de afgelopen 14 dagen belastten, met sets, datum en RPE, gelabeld *uit training*;
+- doorstappen naar alle spiergroepen en naar Coach.
+
+### Geen tweede rekenwaarheid
+Elke waarde komt uit een bestaande bron: `v43OverallRecovery` (die `calculateMuscleRecoveryPct` gebruikt), `MUSCLE_RECOVERY_HOURS`, `muscleLoadBySvgId`, `getExerciseMuscles` en de `sessions`-tabel. Status en kleur komen uit dezelfde `lichRecStatus`/`lichLoadStatus`-helpers als het overzicht. Het scherm rekent zelf niets uit — de test bewijst dat er geen herstelberekening in de uitvoerbare code van het detail staat.
+
+`lichSpierZijde(naam)` leidt de zijde af uit de bestaande `MUSCLE_NAME_TO_SVG_IDS`-mapping, zodat er geen tweede lijst met spiernamen ontstaat.
+
+### Nieuwe test — `core/fLichaamSpierDetail.test.js`, 105 controles
+Naast het scherm en de route bewaakt deze test de vraag uit de opdracht of dezelfde spiergroep overal hetzelfde wordt begrepen:
+
+- elke groep in `MUSCLE_RECOVERY_HOURS` bestaat ook in `MUSCLE_NAME_TO_SVG_IDS` en omgekeerd, en beide lijsten zijn even lang (14 groepen);
+- de zijde-afleiding geeft voor alle 14 groepen een geldige waarde, met expliciete controles op quadriceps, borst, hamstrings, billen, triceps en rug, en een veilige terugval bij een onbekende naam;
+- elke gekoppelde svg-id volgt de naamconventie van de anatomie-assets;
+- de drempels zijn ongewijzigd: herstel 85/50, belasting 12/6 sets, en 0 sets is een rustdag en geen lage belasting;
+- de inline-handler mag het HTML-attribuut niet breken — dat ging in de eerste versie mis met een dubbele quote en is gerepareerd.
+
+### Getest
+- **Home en Training: 0 verschillende pixels van 329.160** ten opzichte van `git show 27fb416:index.html`.
+- Alle 43 suites groen, `logic_tests` 250/250, release gate groen, sw-guard groen.
+- Dertien routes gecontroleerd, inclusief het nieuwe scherm: steeds precies één actief scherm, geen consolefouten.
+- Vier mobiele viewports (360×640 t/m 430×932): geen horizontale overflow, geen kaart buiten beeld, bottom navigation verankerd.
+- Volledige klikflow: overzicht → spierrij → detail, en Alle spiergroepen → kaart → detail. Beide leveren dezelfde groep en dezelfde waarden.
+
+### Gewijzigd
+`index.html`, `sw.js`, `CHANGELOG.md`, nieuw `core/fLichaamSpierDetail.test.js`, en één assertie in `core/fLichaamPhase0.test.js` verbreed naar de nieuwe stijl-scope. `APP_VER` v4.27.1 → **v4.28.0**; cache → `trainingskompas-v42800`. `CORE_SIG` ongewijzigd — `core/*.js` is niet aangeraakt.
+
+### Bewust niet gewijzigd
+Home, Training, bottom navigation, alle engines, de sleep-unit normalisatie, wearable-sync, Fitbit, Google Health, Concept2, database, schema, data, bestaande tests, release gates, de sw-guard, de anatomie-SVG's en de kleurtokens.
+
+---
+
 ## v4.27.1 — 17 augustus 2026 (Lichaam polish + UI freeze)
 
 Gerichte polish op de bevroren Lichaam-baseline. Geen redesign, geen mock-up, geen nieuwe kleuren, geen nieuwe architectuur.

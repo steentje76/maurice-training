@@ -685,6 +685,113 @@
     return { count: pts.length, max: { date: max.date, value: max.value }, min: { date: min.date, value: min.value }, latest: { date: pts[pts.length-1].date, value: pts[pts.length-1].value } };
   }
 
+  // ══════════════════════════════════════════════════════════════════════════════
+  // OBSERVATIELAAG (observation.v1) — Lichaam Data Depth 1.0
+  //
+  // Doel: van een reeks metingen één controleerbare observatie maken waarin niet alleen
+  // de waarde staat, maar ook waar hij vandaan komt, wanneer hij is gemeten en hoe
+  // betrouwbaar hij op dit moment is. De UI hoeft dan niets meer zelf af te leiden.
+  //
+  // PUUR en DETERMINISTISCH: `now` wordt ingespoten, er is geen Date.now(), geen random.
+  // Zelfde input geeft altijd dezelfde output. Er wordt niets verzonnen: ontbrekende data
+  // levert value:null met kind 'none' — nooit 0.
+  //
+  // Deze laag trekt GEEN conclusies en berekent GEEN verbanden. Dat is bewust: eerst
+  // observaties betrouwbaar zichtbaar maken, daarna pas interpretatie.
+  // ══════════════════════════════════════════════════════════════════════════════
+  var OBSERVATION_VERSION = 'observation.v1';
+
+  // Hoe vers is een meting? Drempels in dagen, expliciet en zonder interpretatie:
+  //   0 dagen  → vandaag
+  //   1 dag    → gisteren
+  //   2-6      → recent
+  //   7 of meer → verouderd
+  var FRESHNESS_RECENT_DAYS = 7;
+
+  function _ymd(v) { return v == null ? null : String(v).slice(0, 10); }
+  function _dayDiff(aYmd, bYmd) {
+    if (!aYmd || !bYmd) return null;
+    var a = Date.parse(aYmd + 'T00:00:00Z'), b = Date.parse(bYmd + 'T00:00:00Z');
+    if (!isFinite(a) || !isFinite(b)) return null;
+    return Math.round((a - b) / 86400000);
+  }
+  // De herkomst van een bronlabel: een wearable-meting is iets anders dan een check-in.
+  function sourceKind(source) {
+    if (!source) return 'unknown';
+    var s = String(source).toLowerCase();
+    if (s.indexOf('check') >= 0 || s.indexOf('handmatig') >= 0 || s.indexOf('manual') >= 0) return 'entered';
+    return 'measured';
+  }
+
+  // series: [{date, value, source}] zoals healthSeries teruggeeft.
+  // opts:   { today: 'YYYY-MM-DD' (verplicht voor versheid), unit, kind }
+  function observation(series, opts) {
+    var o = opts || {};
+    var arr = Array.isArray(series) ? series : [];
+    var pts = arr.filter(function (s) { return s && s.value != null; });
+    var days = arr.length;
+    var today = _ymd(o.today);
+    var base = {
+      version: OBSERVATION_VERSION,
+      value: null, date: null, source: null,
+      kind: o.kind || 'none',
+      unit: o.unit || null,
+      ageDays: null, freshness: 'none',
+      count: 0, days: days, coverage: 0, complete: false,
+      first: null, min: null, max: null
+    };
+    if (!pts.length) return base;
+
+    var last = pts[pts.length - 1];
+    var lo = pts[0], hi = pts[0];
+    pts.forEach(function (s) { if (s.value < lo.value) lo = s; if (s.value > hi.value) hi = s; });
+    var age = today ? _dayDiff(today, _ymd(last.date)) : null;
+    var fresh = 'unknown';
+    if (age != null) {
+      if (age < 0) fresh = 'future';           // meting in de toekomst — nooit als vers tellen
+      else if (age === 0) fresh = 'today';
+      else if (age === 1) fresh = 'yesterday';
+      else if (age < FRESHNESS_RECENT_DAYS) fresh = 'recent';
+      else fresh = 'stale';
+    }
+    return {
+      version: OBSERVATION_VERSION,
+      value: last.value,
+      date: _ymd(last.date),
+      source: last.source || null,
+      kind: o.kind || sourceKind(last.source),
+      unit: o.unit || null,
+      ageDays: age,
+      freshness: fresh,
+      count: pts.length,
+      days: days,
+      coverage: days ? Math.round(pts.length / days * 100) / 100 : 0,
+      complete: days > 0 && pts.length === days,
+      first: { date: _ymd(pts[0].date), value: pts[0].value },
+      min: { date: _ymd(lo.date), value: lo.value },
+      max: { date: _ymd(hi.date), value: hi.value }
+    };
+  }
+
+  // De datakwaliteit van één observatie, gegeven de stand van de bron.
+  // Volgorde is bewust: een lopende of mislukte sync zegt meer over wat de gebruiker ziet
+  // dan de leeftijd van de laatste meting. Nooit een geruststellende status bij twijfel.
+  var QUALITY_STATES = ['no_data', 'syncing', 'sync_failed', 'source_unavailable', 'stale', 'partial', 'current'];
+  // Bij de helft of minder gemeten dagen in het venster is het beeld gedeeltelijk. Expliciet
+  // vastgelegd zodat de UI deze grens niet zelf kan verschuiven.
+  var PARTIAL_COVERAGE_MAX = 0.5;
+  function observationQuality(obs, sync) {
+    var o = obs || {}, s = sync || {};
+    var status = s.status || null;                     // uit deviceConnectionState
+    if (status === 'syncing') return 'syncing';
+    if (status === 'sync_failed' || status === 'token_expired') return 'sync_failed';
+    if (!o.count) return status === 'not_connected' ? 'source_unavailable' : 'no_data';
+    if (o.freshness === 'stale' || o.freshness === 'future') return 'stale';
+    if (status === 'stale') return 'stale';
+    if (o.coverage > 0 && o.coverage <= PARTIAL_COVERAGE_MAX) return 'partial';
+    return 'current';
+  }
+
   // ── GENERIEKE CONNECTIE-/SYNC-STATUS (Fitbit én Concept2) ─────────────────────────────
   // Eén canonieke afleiding van device-connectiestatus voor de UI. PUUR: `now` wordt ingespoten
   // (geen Date.now). Nooit een fake "synced": de status volgt strikt uit de ingespoten feiten.
@@ -762,6 +869,10 @@
     pickLatestMetric: pickLatestMetric, bodyMetricsFromLog: bodyMetricsFromLog,
     // health-history (grafiek-data, provider-agnostisch, TZ-veilig)
     dateRange: dateRange, healthSeries: healthSeries, healthTrend: healthTrend, healthSummary: healthSummary,
+    observation: observation, observationQuality: observationQuality, sourceKind: sourceKind,
+    OBSERVATION_VERSION: OBSERVATION_VERSION, QUALITY_STATES: QUALITY_STATES,
+    PARTIAL_COVERAGE_MAX: PARTIAL_COVERAGE_MAX,
+    FRESHNESS_RECENT_DAYS: FRESHNESS_RECENT_DAYS,
     normalizeHealthDaily: normalizeHealthDaily,
     ADAPTER_METHODS: ADAPTER_METHODS,
     CONCEPT2_MAP: CONCEPT2_MAP,

@@ -1,5 +1,51 @@
 # Trainingskompas — Changelog
 
+## v4.32.0 — 18 augustus 2026 (Verbanden V1)
+
+De verbandensectie op Lichaam toont nu echte, berekende samenhangen in plaats van de veilige lege toestand. Geen nieuwe mock-up, geen redesign; Home, Training, Coach, Voortgang, de Fitbit-keten en de anatomie zijn niet aangeraakt.
+
+### Calculation Engine — `spearman` (correlation.v1)
+
+Eén pure functie in `core/calculation.js`: Spearman-rangcorrelatie over gekoppelde paren, met `{coefficient, n, direction}` als uitkomst. Deterministisch, geen `Date.now()`, geen random, geen externe bibliotheek.
+
+Geïmplementeerd als Pearson **over de rangen**, niet met de bekende 6·Σd²-formule — die is onjuist zodra er gelijke waarden voorkomen. Ties krijgen de gemiddelde rang, en bij exact gelijke waarden beslist de oorspronkelijke index, zodat de uitkomst niet van de sorteervolgorde afhangt. Ongeldige paren (`null`, `NaN`, `Infinity`, tekst) worden verwijderd, nooit als 0 geteld. Is een van beide reeksen constant, dan is er geen rangvariatie en is de coëfficiënt `null` — niet 0, want 0 zou "geen samenhang" beweren waar niets te bepalen valt.
+
+Spearman is gekozen omdat de gegevens ordinale schalen bevatten en losse uitschieters: er staat één rusthartslag van 28 tussen veertig waarden van 45–60. Onder Pearson zou dat ene punt elk verband met RHR meetrekken.
+
+### Datakoppeling — `pairDaily`
+
+In `core/deviceIntegration.js`, naast `healthSeries` waar hij hoort. Koppelt twee reeksen op kalenderdatum tot `{date, a, b}`. Een paar telt alleen mee als beide waarden die dag echt gemeten zijn; ontbrekende dagen verdwijnen. Geen invulling, geen interpolatie, geen forward of backward fill, nooit 0. Hergebruikt de bestaande datumvorm, dus er komt geen tweede datumlogica bij.
+
+### Decision Engine — `releaseVerband` (verband.v1)
+
+De Decision Engine bepaalt als enige of een verband zichtbaar mag worden en hoe het verwoord wordt. De UI kent de drempel niet, bepaalt geen sterkte en formuleert geen zinnen.
+
+Minimum 30 vergelijkbare dagen (productbesluit). Sterkteclassificatie op |coëfficiënt| volgens de conventie van Cohen, expliciet vastgelegd zodat de UI ze niet kan verschuiven: onder 0,10 verwaarloosbaar · onder 0,30 zwak · onder 0,50 matig · vanaf 0,50 sterk. Bij een verwaarloosbare uitkomst wordt bewust **geen richting geclaimd** en verschijnt een zin zonder richting.
+
+**Circulariteitsbescherming.** Elke definitie noemt haar ruwe invoer. Overlappen die verzamelingen, dan weigert de engine het verband — dagfactor komt uit HRV en slaap, herstel komt uit trainingsbelasting en RPE. Dat gebeurt in de engine, niet in de UI: verbergen is geen weigeren. Een definitie zonder bekende herkomst wordt eveneens geweigerd.
+
+### Taal
+
+De engine levert een kant-en-klare zin; de UI plaatst hem alleen. De zin begint met de conditie en beschrijft uitsluitend een waarneming: *"Op dagen waarop je langer sliep, lag je HRV gemiddeld hoger."* Daaronder het aantal dagen en *"Dit is een samenhang, geen oorzaak."* Geen enkel causaal woord komt voor in welke gegenereerde zin dan ook; een test controleert dat over alle definities en alle tekens van de coëfficiënt.
+
+### Configuratiegedreven
+
+De drie verbanden — slaap ↔ HRV, slaap ↔ rusthartslag, HRV ↔ rusthartslag — staan als configuratie in `VERBAND_DEFINITIES`. `releaseVerband` kent geen enkel verband bij naam; een vierde verband is een extra item in die lijst, geen tweede correlatie-implementatie.
+
+### Op het scherm
+
+De bestaande verbandensectie wordt alleen gevuld als er daadwerkelijk iets is vrijgegeven; anders blijft de bestaande lege toestand ongewijzigd staan. Elke kaart toont beide variabelen, de richting, de sterkte, de zin, het aantal vergelijkbare dagen en de disclaimer.
+
+Nieuw detailscherm `s-lich-verband` met een spreidingsdiagram van de echte paren: één punt per dag, met datum en beide waarden in de tooltip. **Geen trendlijn en geen regressielijn** — die zou een verband suggereren dat niet is berekend. Daaronder coëfficiënt, aantal dagen, richting, sterkte, de gebruikte versies en de disclaimer. Het scherm heeft dezelfde foutgrens als het metric-detail.
+
+### Getest
+- Nieuw `core/fVerbandenV1.test.js` — 109 controles: Spearman op perfecte, monotone en willekeurige reeksen, ties, uitschieters, n=0/1, constante reeksen, vuile invoer, volgorde-onafhankelijkheid en determinisme; `pairDaily` op ontbrekende dagen, ISO-datums, NaN en fill-gedrag; de Decision Engine op n=29/30/31, alle sterktegrenzen, richting, circulariteit (ook bij n=100) en ongeldige definities; de taalcontrole over alle definities; en de renderpaden inclusief de eis dat de UI geen drempel, geen sterktegrens en geen eigen statistiek bevat.
+- Volledige Quality Gate lokaal groen: **2.162 unit-checks over 47 bestanden, 0 mislukt**, plus 250 `logic_tests`, 51 native-tests, build en bestandscontroles.
+- Headless mobiele controle (390×844) met echte productiegegevens: drie kaarten op het overzicht, detailscherm met 38 echte punten en 0 lijnen, foutgrens werkt en herstelt, onbekend id geeft een nette lege toestand, geen horizontale overflow, **0 console-fouten**.
+
+### Gewijzigd
+`core/calculation.js`, `core/decision.js`, `core/deviceIntegration.js`, `index.html`, `sw.js`, `CHANGELOG.md`, nieuw `core/fVerbandenV1.test.js`, plus één regel stijl-scope in vier bestaande testbestanden. `calculation.js` en `decision.js` staan in `CORE_FILES`, dus `CORE_SIG` is bijgewerkt naar `419e06e1ed24f7e8` en `CACHE_NAME`/`CACHE_STATIC` zijn gebumpt naar `v43200`, conform de bestaande sw-guard-regels.
+
 ## v4.31.0 — 18 augustus 2026 (Lichaam 2.1 — tabs, gedeelde zijde en de oefeningenketen)
 
 Structuur- en UX-sprint op Lichaam. Geen redesign, geen nieuwe mock-up. Home, Training, Coach, Voortgang, de Calculation Engine, de Decision Engine en de Fitbit-keten zijn niet aangeraakt.

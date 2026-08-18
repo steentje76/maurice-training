@@ -120,7 +120,134 @@
     return ev;
   }
 
+  /* ══════════════════════════════════════════════════════════════════════════
+   * VERBANDEN (verband.v1) — vrijgave en verwoording
+   *
+   * De Decision Engine bepaalt ALS ENIGE of een verband getoond mag worden en hoe het
+   * verwoord wordt. De UI plaatst alleen tekst; hij kent de drempel niet, bepaalt geen
+   * sterkte en formuleert geen zinnen. PUUR en DETERMINISTISCH: geen Date.now, geen
+   * random, geen DOM.
+   *
+   * Productbesluiten (vastgelegd door de Product Owner, niet hier bedacht):
+   *   - minimum aantal vergelijkbare waarnemingen: 30
+   *   - methode: Spearman rangcorrelatie (CalcCore.spearman)
+   *
+   * STERKTEGRENZEN. De UI heeft een woord nodig waar de engine een getal heeft. De
+   * grenzen volgen de gangbare conventie van Cohen (1988) voor de grootte van een
+   * correlatie, toegepast op |coëfficiënt|:
+   *      |r| <  0.10  verwaarloosbaar   (geen richting claimen)
+   *      |r| <  0.30  zwak
+   *      |r| <  0.50  matig
+   *      |r| >= 0.50  sterk
+   * Ze staan hier expliciet zodat ze op één plek te herzien zijn en de UI ze niet kan
+   * verschuiven. Ze zeggen iets over de GROOTTE van de samenhang, niet over bewijskracht.
+   *
+   * CIRCULARITEIT. Een verband tussen twee grootheden die uit dezelfde ruwe invoer
+   * worden berekend, meet de formule zelf en niet de werkelijkheid — dagfactor komt uit
+   * HRV en slaap, herstel komt uit trainingsbelasting en RPE. Elke definitie noemt
+   * daarom haar ruwe invoer; overlappen die verzamelingen, dan weigert de engine het
+   * verband. Dat gebeurt hier, niet in de UI: verbergen is geen weigeren.
+   * ══════════════════════════════════════════════════════════════════════════ */
+  var VERBAND_VERSIE = 'verband.v1';
+  var VERBAND_MIN_N = 30;
+  var VERBAND_STERKTE = [
+    { grens: 0.10, key: 'verwaarloosbaar', label: 'Geen duidelijke samenhang' },
+    { grens: 0.30, key: 'zwak',            label: 'Zwakke samenhang' },
+    { grens: 0.50, key: 'matig',           label: 'Matige samenhang' },
+    { grens: Infinity, key: 'sterk',       label: 'Sterke samenhang' }
+  ];
+  var VERBAND_DISCLAIMER = 'Dit is een samenhang, geen oorzaak.';
+  // Woorden die een oorzaak-gevolgrelatie suggereren. Uitsluitend voor tests en review;
+  // de engine bouwt zijn zinnen zo op dat ze er nooit in kunnen voorkomen.
+  var VERBAND_VERBODEN_WOORDEN = ['veroorzaakt', 'zorgt voor', 'leidt tot', 'dankzij', 'waardoor', 'heeft als gevolg', 'door'];
+
+  /* De eerste drie verbanden. UITSLUITEND productconfiguratie — geen logica per verband.
+   * Een vierde verband is een extra item in deze lijst; er komt geen tweede correlatie-
+   * implementatie bij.
+   *   veld     : welk veld uit de bronreeks
+   *   inputs   : de RUWE invoer waaruit de grootheid komt (basis van de circulariteitstoets)
+   *   conditie : hoe "meer van A" in gewone taal heet
+   *   noemer   : hoe B in een zin heet
+   *   zinNaam  : hoe de grootheid in lopende tekst heet (HRV blijft HRV, geen 'hrv')
+   */
+  var VERBAND_DEFINITIES = [
+    { id: 'sleep_hrv', label: 'Slaap en HRV', methode: 'spearman', minimumN: VERBAND_MIN_N, vensterDagen: 180,
+      a: { veld: 'sleep', label: 'Slaap', eenheid: 'u',  inputs: ['sleep'], conditie: 'je langer sliep', zinNaam: 'slaap' },
+      b: { veld: 'hrv',   label: 'HRV',    eenheid: 'ms', inputs: ['hrv'],  noemer: 'HRV', zinNaam: 'HRV' } },
+    { id: 'sleep_rhr', label: 'Slaap en rusthartslag', methode: 'spearman', minimumN: VERBAND_MIN_N, vensterDagen: 180,
+      a: { veld: 'sleep', label: 'Slaap',          eenheid: 'u',   inputs: ['sleep'], conditie: 'je langer sliep', zinNaam: 'slaap' },
+      b: { veld: 'rhr',   label: 'Rusthartslag',   eenheid: 'bpm', inputs: ['rhr'],   noemer: 'rusthartslag', zinNaam: 'rusthartslag' } },
+    { id: 'hrv_rhr',   label: 'HRV en rusthartslag', methode: 'spearman', minimumN: VERBAND_MIN_N, vensterDagen: 180,
+      a: { veld: 'hrv',   label: 'HRV',            eenheid: 'ms',  inputs: ['hrv'],   conditie: 'je HRV hoger was', zinNaam: 'HRV' },
+      b: { veld: 'rhr',   label: 'Rusthartslag',   eenheid: 'bpm', inputs: ['rhr'],   noemer: 'rusthartslag', zinNaam: 'rusthartslag' } }
+  ];
+
+  function _inputsVan(zijde) { return (zijde && Array.isArray(zijde.inputs)) ? zijde.inputs : []; }
+  // true zodra beide zijden ten minste één ruwe invoer delen.
+  function verbandIsCirculair(definition) {
+    var d = definition || {};
+    var A = _inputsVan(d.a), B = _inputsVan(d.b);
+    if (!A.length || !B.length) return true;          // onbekende herkomst = niet vrijgeven
+    for (var i = 0; i < A.length; i++) if (B.indexOf(A[i]) >= 0) return true;
+    return false;
+  }
+  function verbandSterkte(coefficient) {
+    if (coefficient == null || !isFinite(coefficient)) return null;
+    var abs = Math.abs(coefficient);
+    for (var i = 0; i < VERBAND_STERKTE.length; i++) if (abs < VERBAND_STERKTE[i].grens) return VERBAND_STERKTE[i];
+    return VERBAND_STERKTE[VERBAND_STERKTE.length - 1];
+  }
+
+  /* releaseVerband(stat, definition)
+   * stat: { coefficient, n, direction } uit CalcCore.spearman
+   * → { vrijgegeven, reason, direction, strength, strengthLabel, coefficient, n,
+   *     minimumN, zin, onderbouwing, disclaimer, versie }
+   * reason: 'ok' · 'circulair' · 'te_weinig_data' · 'niet_bepaalbaar' · 'ongeldige_definitie'
+   */
+  function releaseVerband(stat, definition) {
+    var st = stat || {}, d = definition || {};
+    var n = (typeof st.n === 'number' && isFinite(st.n) && st.n >= 0) ? Math.floor(st.n) : 0;
+    var coefficient = (typeof st.coefficient === 'number' && isFinite(st.coefficient)) ? st.coefficient : null;
+    var minimumN = (typeof d.minimumN === 'number' && isFinite(d.minimumN)) ? d.minimumN : VERBAND_MIN_N;
+    var basis = {
+      id: d.id || null, versie: VERBAND_VERSIE, vrijgegeven: false, reason: 'ongeldige_definitie',
+      direction: 'none', strength: null, strengthLabel: null,
+      coefficient: coefficient, n: n, minimumN: minimumN,
+      zin: null, onderbouwing: null, disclaimer: VERBAND_DISCLAIMER
+    };
+    if (!d.a || !d.b || !d.a.veld || !d.b.veld) return basis;
+    if (verbandIsCirculair(d)) { basis.reason = 'circulair'; return basis; }
+    if (n < minimumN) { basis.reason = 'te_weinig_data'; return basis; }
+    var band = verbandSterkte(coefficient);
+    if (coefficient == null || !band) { basis.reason = 'niet_bepaalbaar'; return basis; }
+
+    // Richting komt UITSLUITEND uit het teken van de berekende coëfficiënt. Bij een
+    // verwaarloosbare samenhang wordt bewust geen richting geclaimd.
+    var richting = band.key === 'verwaarloosbaar' ? 'none' : (coefficient > 0 ? 'higher' : (coefficient < 0 ? 'lower' : 'none'));
+    var zin = (richting === 'none')
+      ? ('Tussen je ' + (d.a.zinNaam || d.a.label) + ' en je ' + (d.b.zinNaam || d.b.noemer || d.b.label) +
+         ' is in deze periode geen duidelijke samenhang te zien.')
+      : ('Op dagen waarop ' + d.a.conditie + ', lag je ' + (d.b.noemer || d.b.label) +
+         ' gemiddeld ' + (richting === 'higher' ? 'hoger' : 'lager') + '.');
+    return {
+      id: d.id || null, versie: VERBAND_VERSIE, vrijgegeven: true, reason: 'ok',
+      direction: richting, strength: band.key, strengthLabel: band.label,
+      coefficient: coefficient, n: n, minimumN: minimumN,
+      zin: zin,
+      onderbouwing: 'Gebaseerd op ' + n + ' dagen met beide metingen.',
+      disclaimer: VERBAND_DISCLAIMER
+    };
+  }
+
   var DecisionCore = {
+    releaseVerband: releaseVerband,
+    verbandIsCirculair: verbandIsCirculair,
+    verbandSterkte: verbandSterkte,
+    VERBAND_DEFINITIES: VERBAND_DEFINITIES,
+    VERBAND_MIN_N: VERBAND_MIN_N,
+    VERBAND_STERKTE: VERBAND_STERKTE,
+    VERBAND_DISCLAIMER: VERBAND_DISCLAIMER,
+    VERBAND_VERBODEN_WOORDEN: VERBAND_VERBODEN_WOORDEN,
     computeProgression: computeProgression,
     computeProgAdjustment: computeProgAdjustment,
     trainReadiness: trainReadiness,

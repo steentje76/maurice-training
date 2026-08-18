@@ -1,5 +1,35 @@
 # Trainingskompas — Changelog
 
+## v4.33.0 — 18 augustus 2026 (Gezondheidsgegevens & koppelingen)
+
+Eén scherm onder Lichaam dat antwoord geeft op de vraag "waar komen mijn gegevens vandaan?". Geen redesign, geen nieuwe mock-up. Home, Training, Coach, Voortgang, de anatomie, de Calculation Engine, de Decision Engine en de Fitbit-keten zijn niet aangeraakt.
+
+### Wat er al was en dus niet opnieuw is gebouwd
+
+De volledige Fitbit/Google Health-keten (`wearable-status`, `wearable-connect`, `wearable-sync`, `wearable-disconnect`), `fetchWearableStatus`, `wearableConnect` / `wearableSyncNow` / `wearableDisconnect`, `deviceConnectionState`, de hele `observation.v1`-laag, `TK_DQ_TEKST`, `bodyMetricsFromLog`, `tkMetingHerkomst` en het bestaande privacyscherm `s-privacy` bestonden al en zijn hergebruikt. Er is geen tweede statusbron, geen tweede versheidsberekening en geen tweede herkomstlogica bijgekomen.
+
+Een instelbare **bronvoorkeur** bestond niet en is bewust ook niet uitgevonden: het scherm legt uit welke voorrangsregel de app feitelijk hanteert (een wearablemeting wint van een handmatige check-in op dezelfde dag) in plaats van een keuzeschakelaar te tonen die nergens wordt gelezen.
+
+### Nieuw scherm `s-lich-gegevens`
+
+Bereikbaar via Lichaam → *Lichaam & gegevens* → **Gezondheidsgegevens & koppelingen**. Eén route, geen concurrerende ingang.
+
+Bovenin een statuskop met de strengste kwaliteit over HRV, rusthartslag en slaap — gewicht telt daar bewust niet in mee, precies zoals `renderLichaamDataStatus` op het overzicht dat al deed. Daaronder per gegevenstype (HRV, rusthartslag, slaap, gewicht, lichaamsmetingen) of het **gemeten** of **ingevoerd** is, uit welke bron het komt, wanneer de laatste meting was en wat de datakwaliteit is. Staat de bron gelijk aan de soort, dan wordt die niet twee keer getoond.
+
+De sectie **Koppelingen** toont Fitbit met de echte verbindingsstatus, de koppel- en synchronisatiedatum, welke gegevens de koppeling op dit moment daadwerkelijk levert, en de knoppen Sync nu / Loskoppelen dan wel Koppelen. Daarna **Databron** met de voorrangsregel, en **Privacy & gegevens** dat doorlinkt naar het bestaande `s-privacy`.
+
+### Koppelacties staan nog op één plek
+
+`renderWearableCard` op Profiel toonde tot nu toe zelf de koppel-, sync- en loskoppelknoppen. Die kaart toont nu alleen de status plus één knop naar het nieuwe scherm, zodat elke koppelactie exact één keer in de app voorkomt. Verwijzingen naar "Profiel → Wearable" in het privacy- en helpscherm zijn meegewijzigd. Na synchroniseren of loskoppelen ververst `tkVerversGegevensScherm` het scherm als het open staat.
+
+### Lege toestanden
+
+Vijf toestanden zijn expliciet uitgewerkt en headless gecontroleerd: geen wearable met alleen handmatige invoer, wel gekoppeld maar nog nooit gesynchroniseerd, gekoppeld en actueel, alleen handmatige gegevens, en helemaal geen gegevens. Een verlopen koppeling meldt "Synchronisatie mislukt" in plaats van stilzwijgend verouderde waarden te tonen.
+
+### Overig
+
+Foutgrens rond het scherm gelijk aan die van het metric- en verbanddetail. `core/fGezondheidsgegevens.test.js` toegevoegd met 74 controles. `sw.js` is niet gewijzigd: er zijn geen bestanden uit `CORE_FILES` aangeraakt, alleen `index.html`.
+
 ## v4.32.0 — 18 augustus 2026 (Verbanden V1)
 
 De verbandensectie op Lichaam toont nu echte, berekende samenhangen in plaats van de veilige lege toestand. Geen nieuwe mock-up, geen redesign; Home, Training, Coach, Voortgang, de Fitbit-keten en de anatomie zijn niet aangeraakt.

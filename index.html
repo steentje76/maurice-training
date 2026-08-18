@@ -5485,7 +5485,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.29.0';
+const APP_VER = 'v4.29.1';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6381,6 +6381,40 @@ async function sbPostReturning(t,d){
   }catch(e){console.error('sbPostReturning catch',t,e);return null;}
 }
 async function sbPatch(t,f,d){try{const r=await fetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)console.error('sbPatch',t,r.status,await r.text());return r.ok;}catch(e){console.error('sbPatch catch',t,e);return false;}}
+/* ── ÉÉN CANONIEKE hrv_log-RIJ PER DAG (v4.29.1 — dataverlies-fix) ─────────────
+ * PROBLEEM: saveHRV()/pchkSubmit() deden een blinde INSERT in hrv_log. Vulde je in
+ * de check-in alléén je rusthartslag in, dan ontstond een TWEEDE rij voor vandaag met
+ * hrv=null en sleep=null. Elk scherm leest `order=date.desc,created_at.desc&limit=1`
+ * en pakte dus die nieuwste, half-lege rij — de al gesynchroniseerde Fitbit-waarden
+ * leken gewist en de dagfactor werd op onvolledige data berekend.
+ * OPLOSSING: dezelfde bewezen upsert-vorm als upsertWeightLog — bestaande rij van
+ * vandaag lezen, mergen, PATCHen; alleen als er nog geen rij is, INSERTen.
+ * REGEL: een leeg check-in-veld betekent "niet ingevuld", NOOIT "wissen" (de velden
+ * worden nooit voorgevuld, dus leeg kan geen bewuste wisactie zijn).
+ * ────────────────────────────────────────────────────────────────────────────*/
+function tkMergeHealthRow(existing,incoming){
+  existing=existing||{}; incoming=incoming||{};
+  const keep=(k)=>(incoming[k]!==null&&incoming[k]!==undefined&&incoming[k]!=='')?incoming[k]
+                  :(existing[k]!==undefined?existing[k]:null);
+  const out={
+    hrv:keep('hrv'), rhr:keep('rhr'), sleep:keep('sleep'),
+    cyclus_fase:keep('cyclus_fase'), edema:keep('edema'), note:keep('note')
+  };
+  // Provenance-tag van de wearable mag nooit verdwijnen door een handmatige notitie.
+  const hadTag=/\[src:fitbit\]/i.test(String(existing.note||''));
+  if(hadTag&&!/\[src:fitbit\]/i.test(String(out.note||''))){
+    out.note=out.note?(String(out.note).trim()+' [src:fitbit]'):'[src:fitbit]';
+  }
+  return out;
+}
+async function upsertHrvLog(fields){
+  const d=td();
+  const existing=await sbGet('hrv_log','&date=eq.'+d+'&order=created_at.desc&limit=1');
+  const cur=existing.length?existing[0]:null;
+  const merged=tkMergeHealthRow(cur,fields);
+  if(cur)return await sbPatch('hrv_log','id=eq.'+cur.id,merged);
+  return await sbPost('hrv_log',Object.assign({date:d},merged));
+}
 // Eén canoniek gewichtsrecord per dag: overschrijft bestaand record i.p.v. dupliceren
 // (voorheen schreven saveHRV/saveWeight/saveBC alle drie los naar weight_log)
 async function upsertWeightLog(weight,scale){
@@ -7592,6 +7626,14 @@ async function wearableDisconnect(){
     renderWearableCard();
   }catch(e){toast('Verbindingsfout bij loskoppelen');}
 }
+// Vertaalt het (canonieke) serverantwoord naar één veilige gebruikerstekst.
+function tkWearableFailMsg(d){
+  const st=d&&(d.status||d.reason);
+  if(st==='not_connected')return 'Fitbit is nog niet gekoppeld';
+  if(st==='token_expired'||st==='authorization_required')return 'Opnieuw koppelen met Fitbit nodig';
+  if((d&&d.code)==='RATE_LIMIT')return 'Te veel verzoeken bij Fitbit — probeer het straks opnieuw';
+  return 'Synchroniseren met Fitbit is momenteel niet gelukt. Probeer het later opnieuw.';
+}
 async function wearableSyncNow(){
   const h=wearableAuthHeaders();
   if(!h){toast('Geen actieve sessie');return;}
@@ -7599,7 +7641,9 @@ async function wearableSyncNow(){
   try{
     const r=await fetch('/.netlify/functions/wearable-sync',{method:'POST',headers:h});
     const d=await r.json();
-    if(!r.ok||!d.synced){toast('Synchronisatie mislukt: '+(d.reason||d.error?.message||r.status));renderWearableCard();return;}
+    // v4.29.1: geen technische foutcode/reason meer in de UI. De server logt de code
+    // (AUTH_ERROR/TOKEN_REFRESH_ERROR/FITBIT_API_ERROR/RATE_LIMIT/...) veilig server-side.
+    if(!r.ok||!d.synced){toast(tkWearableFailMsg(d));renderWearableCard();return;}
     // Eerlijke, PER-METRIC microcopy: OAuth/API-succes ≠ nieuwe data. RHR=0 → "geen nieuwe data"
     // (nooit suggereren dat alles gesynct is). d.metrics = parsed dagen per metric.
     const _days=Number(d.daysWritten)||0, mm=d.metrics||null;
@@ -8717,7 +8761,9 @@ async function saveHRV(btnEl){
   const edm=loggedConditions.length?loggedConditions.map(c=>c.label+': '+c.severity).join(', '):null;
   const note=document.getElementById('i-note').value||null;
   const ops=[];
-  if(hrv||rhr||slp)ops.push(sbPost('hrv_log',{date:td(),hrv,rhr,sleep:slp,cyclus_fase:cyclus,edema:edm,note}));
+  // v4.29.1: upsert i.p.v. insert — voorkomt een tweede, half-lege rij voor vandaag
+  // die de al gesynchroniseerde Fitbit-waarden zou overschaduwen (dataverlies-fix).
+  if(hrv||rhr||slp)ops.push(upsertHrvLog({hrv,rhr,sleep:slp,cyclus_fase:cyclus,edema:edm,note}));
   if(wgt)ops.push(upsertWeightLog(wgt,'Tanita'));
   for(const c of loggedConditions)ops.push(sbPost('checkin_conditions',{date:td(),condition_label:c.label,severity:c.severity}));
   await Promise.all(ops);
@@ -17521,12 +17567,11 @@ async function pchkSubmit(){
   // recente hrv_log-rij altijd het volledigste beeld heeft — anders verliest de
   // dagfactor-berekening bv. de al gelogde slaap zodra alleen HRV wordt aangevuld.
   if(hrvVal||rhrVal||slpVal){
-    await sbPost('hrv_log',{
-      date:td(),
-      hrv:hrvVal||th?.hrv||null,
-      rhr:rhrVal||th?.rhr||null,
-      sleep:slpVal||th?.sleep||null,
-      cyclus_fase:th?.cyclus_fase||null,
+    // v4.29.1: upsertHrvLog leest zelf de nieuwste rij van vandaag en merget — dat
+    // vervangt de oude "lees th + POST nieuwe rij"-constructie die per training een
+    // extra hrv_log-rij voor dezelfde dag aanmaakte.
+    await upsertHrvLog({
+      hrv:hrvVal, rhr:rhrVal, sleep:slpVal,
       note:'Check-in bij programmatraining'
     });
   }

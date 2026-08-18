@@ -15,7 +15,7 @@
 (function (global) {
   'use strict';
 
-  var VERSIONS = { signals: 'coaching_signals.v1', context: 'coaching_context.v1', conclusion: 'coaching_conclusion.v1' };
+  var VERSIONS = { signals: 'coaching_signals.v1', context: 'coaching_context.v1', conclusion: 'coaching_conclusion.v1', intelligence: 'coach_intelligence.v1' };
 
   // Prioriteit bepaalt welk signaal het "belangrijkste" is (voor ordening/uitlichting).
   // Hoger = belangrijker. Bewust expliciet zodat de UI/AI nooit hoeft te raden.
@@ -662,7 +662,196 @@
     return out;
   }
 
+  /* ══════════════════════════════════════════════════════════════════════════
+   * COACH INTELLIGENCE (coach_intelligence.v1) — Sprint 22
+   *
+   * De AI krijgt vanaf nu geen ruwe reeksen meer om zelf verbanden in te zoeken. Hij
+   * krijgt UITKOMSTEN: relaties die de Relationship Engine al heeft vrijgegeven,
+   * belasting die AthleteCore al heeft berekend, een herstelstatus die de Decision
+   * Engine al heeft bepaald. Deze functie zet die uitkomsten om in precies dat wat een
+   * coach mag zeggen, en laat de rest weg.
+   *
+   * DRIE GRENZEN, alle drie hier afgedwongen en niet in de prompt:
+   *   1. Er wordt NIETS berekend. Elke waarde komt binnen als feit; ontbreekt hij,
+   *      dan staat er 'niet beschikbaar' met een reden — nooit een schatting.
+   *   2. Er wordt GEEN oorzaak geclaimd. De zinnen komen uit de Decision Engine en
+   *      dragen de samenhang-disclaimer mee.
+   *   3. Er wordt GEEN trainingsadvies uit een relatie afgeleid. "Je HRV is hoog, dus
+   *      train zwaar" is precies wat hier niet mag ontstaan: trainingsadvies komt
+   *      uitsluitend uit de Decision Engine en wordt apart doorgegeven.
+   *
+   * PRIORITERING. Met twintig kandidaatrelaties zou een coach twintig dingen kunnen
+   * zeggen; dan zegt hij niets. Er gaan er maximaal drie doorheen, gekozen op sterkte,
+   * betrouwbaarheid, actualiteit en of de relatie twee domeinen verbindt — een verband
+   * tussen slaap en prestatie is voor een sporter interessanter dan twee herstelmetingen
+   * die elkaar sowieso volgen.
+   *
+   * PUUR en DETERMINISTISCH: geen Date.now, geen random, geen DOM.
+   * ══════════════════════════════════════════════════════════════════════════ */
+  var INTEL_VERSIE = 'coach_intelligence.v1';
+  var INTEL_MAX_INZICHTEN = 3;
+  /* Alleen deze velden gaan naar de AI. Alles wat hier niet staat bereikt het model
+     niet, ook niet als het per ongeluk in de context terechtkomt. */
+  var INTEL_AI_FIELDS = ['inzichten', 'belasting', 'herstel', 'prestatie', 'dataKwaliteit', 'beschikbaar'];
+  var INTEL_INZICHT_FIELDS = ['zin', 'onderbouwing', 'disclaimer', 'sterkte', 'betrouwbaarheid',
+                              'dagen', 'domein', 'bron', 'doel'];
+  /* Uitsluitend voor tests en review: formuleringen die een oorzaak claimen of een
+     trainingsadvies uit een samenhang afleiden. De engine bouwt zijn context zo op
+     dat ze er niet in kunnen voorkomen. */
+  var INTEL_VERBODEN_WOORDEN = ['veroorzaakt', 'zorgt voor', 'leidt tot', 'dankzij',
+    'heeft als gevolg', 'bewijst', 'omdat je hrv', 'dus train', 'je moet vandaag zwaar'];
+
+  var _INTEL_STERKTE_SCORE = { STRONG_PATTERN: 4, MODERATE_PATTERN: 3, POSSIBLE_PATTERN: 2 };
+  var _INTEL_CONF_SCORE = { hoog: 3, gemiddeld: 2, laag: 1 };
+
+  /* Relevantie van EEN relatie. Deterministisch en zonder tijdsafhankelijkheid: de
+     "actualiteit" komt uit het aantal dagen waarop de relatie berust, niet uit de klok. */
+  function intelRelevance(rel) {
+    var r = rel || {};
+    return (_INTEL_STERKTE_SCORE[r.status] || 0) * 1000
+         + (_INTEL_CONF_SCORE[r.confidence] || 0) * 100
+         + Math.min(99, r.sample_count || 0)
+         + (r.crossDomein ? 0.5 : 0);
+  }
+
+  /* buildIntelligenceContext(input)
+   *   input.relaties      : relationship.v1-records (alleen vrijgegeven patronen tellen)
+   *   input.belasting     : { week, vorigeWeek, eenheid, frequentie7, frequentie28, monotonie, acwr }
+   *   input.herstel       : { score, band, confidence } uit recovery_score.v1
+   *   input.prestatie     : { index, dagen } uit performance_index.v1
+   *   input.dataKwaliteit : kwaliteitsoordeel van de zwakste bron
+   *   input.max           : afwijkend maximum aantal inzichten (standaard 3)
+   */
+  function buildIntelligenceContext(input) {
+    var i = input || {};
+    var relaties = Array.isArray(i.relaties) ? i.relaties : [];
+    var max = (typeof i.max === 'number' && isFinite(i.max) && i.max > 0)
+      ? Math.floor(i.max) : INTEL_MAX_INZICHTEN;
+
+    /* Alleen wat de Relationship Engine als patroon heeft vrijgegeven. Een kandidaat
+       met te weinig data of zonder patroon is geen coachbericht — hooguit een reden
+       om te blijven meten, en dat staat op het Verbanden-scherm, niet hier. */
+    var bruikbaar = relaties.filter(function (r) {
+      return r && r.is_patroon === true && r.zin && r.status !== 'INSUFFICIENT_DATA';
+    });
+    var gesorteerd = bruikbaar.slice().sort(function (a, b) {
+      var d = intelRelevance(b) - intelRelevance(a);
+      if (d !== 0) return d;
+      var ai = String(a.relationship_id || ''), bi = String(b.relationship_id || '');
+      return ai < bi ? -1 : (ai > bi ? 1 : 0);
+    });
+    var gekozen = gesorteerd.slice(0, max);
+
+    var inzichten = gekozen.map(function (r) {
+      return {
+        id: r.relationship_id || null,
+        /* De zin komt ONGEWIJZIGD uit de Decision Engine. Hier wordt niets
+           geherformuleerd: elke herformulering is een kans om een oorzaak te claimen. */
+        zin: r.zin,
+        onderbouwing: r.onderbouwing || null,
+        disclaimer: r.disclaimer || null,
+        sterkte: r.strength_label || null,
+        betrouwbaarheid: r.confidence || null,
+        dagen: r.sample_count || 0,
+        domein: r.domeinLabel || null,
+        bron: r.bronLabel || null,
+        doel: r.doelLabel || null
+      };
+    });
+
+    var b = i.belasting || null;
+    var belasting = b ? {
+      week: (typeof b.week === 'number' && isFinite(b.week)) ? b.week : null,
+      eenheid: b.eenheid || null,
+      frequentie7: (typeof b.frequentie7 === 'number') ? b.frequentie7 : null,
+      frequentie28: (typeof b.frequentie28 === 'number') ? b.frequentie28 : null,
+      monotonie: (b.monotonie && typeof b.monotonie.waarde === 'number') ? b.monotonie.waarde : null,
+      acwr: (b.acwr && typeof b.acwr.waarde === 'number') ? b.acwr.waarde : null,
+      /* Waarom een waarde ontbreekt is voor een coach net zo informatief als de waarde
+         zelf: "nog te weinig dagen" is iets anders dan "geen belasting". */
+      monotonieReden: (b.monotonie && b.monotonie.reden) || null,
+      acwrReden: (b.acwr && b.acwr.reden) || null
+    } : null;
+
+    var h = i.herstel || null;
+    var herstel = (h && typeof h.score === 'number' && isFinite(h.score)) ? {
+      score: Math.round(h.score), band: h.band || null, betrouwbaarheid: h.confidence || null
+    } : null;
+
+    var p = i.prestatie || null;
+    var prestatie = (p && typeof p.index === 'number' && isFinite(p.index)) ? {
+      index: Math.round(p.index * 1000) / 1000, dagen: p.dagen || 0
+    } : null;
+
+    var redenen = [];
+    if (!relaties.length) redenen.push('geen_relaties_onderzocht');
+    else if (!bruikbaar.length) redenen.push('geen_vrijgegeven_patroon');
+    if (!belasting) redenen.push('geen_belasting');
+    if (!herstel) redenen.push('geen_herstelstatus');
+
+    return {
+      versie: INTEL_VERSIE,
+      beschikbaar: !!(inzichten.length || belasting || herstel),
+      inzichten: inzichten,
+      belasting: belasting,
+      herstel: herstel,
+      prestatie: prestatie,
+      dataKwaliteit: i.dataKwaliteit || null,
+      onderzocht: relaties.length,
+      vrijgegeven: bruikbaar.length,
+      getoond: inzichten.length,
+      nietGetoond: Math.max(0, bruikbaar.length - inzichten.length),
+      maximum: max,
+      redenen: redenen
+    };
+  }
+
+  /* De AI-payload. Twee filters: eerst de contextvelden, dan per inzicht de toegestane
+     velden. Interne sleutels als relationship_id, coefficient of data_quality bereiken
+     het model dus niet — die zou hij kunnen gaan herinterpreteren. */
+  function intelligenceAiPayload(context) {
+    var c = context || {};
+    var uit = {};
+    INTEL_AI_FIELDS.forEach(function (veld) {
+      if (veld === 'inzichten') {
+        uit.inzichten = (c.inzichten || []).map(function (z) {
+          var o = {};
+          INTEL_INZICHT_FIELDS.forEach(function (k) { if (z[k] != null) o[k] = z[k]; });
+          return o;
+        });
+        return;
+      }
+      if (c[veld] !== undefined) uit[veld] = c[veld];
+    });
+    return uit;
+  }
+
+  /* De instructieregels die bij deze context horen. Ze staan hier en niet in de UI,
+     zodat context en regels niet uit elkaar kunnen lopen: wie de context ophaalt,
+     krijgt de bijbehorende grenzen er automatisch bij. */
+  function intelligenceRegels() {
+    return [
+      'De verbanden, de belasting en de herstelstatus hieronder zijn al berekend door de engines.',
+      'Bereken ze niet opnieuw, spreek ze niet tegen en leid er geen nieuwe verbanden uit af.',
+      'Een verband is een samenhang, nooit een oorzaak. Zeg dus niet dat het een door het ander komt.',
+      'Leid uit een verband GEEN trainingsadvies af. Advies over zwaarder of lichter trainen komt',
+      'uitsluitend uit de Decision Engine en staat, als het er is, apart vermeld.',
+      'Noem bij een verband altijd waarop het gebaseerd is (aantal vergelijkbare dagen).',
+      'Ontbreekt een waarde, benoem dat als onbekend. Vul niets in en schat niets.'
+    ].join(' ');
+  }
+
   var CoachingCore = {
+    buildIntelligenceContext: buildIntelligenceContext,
+    intelligenceAiPayload: intelligenceAiPayload,
+    intelligenceRegels: intelligenceRegels,
+    intelRelevance: intelRelevance,
+    INTEL_VERSIE: INTEL_VERSIE,
+    INTEL_MAX_INZICHTEN: INTEL_MAX_INZICHTEN,
+    INTEL_AI_FIELDS: INTEL_AI_FIELDS,
+    INTEL_INZICHT_FIELDS: INTEL_INZICHT_FIELDS,
+    INTEL_VERBODEN_WOORDEN: INTEL_VERBODEN_WOORDEN,
+
     buildReadinessContext: buildReadinessContext,
     readinessCoachMessage: readinessCoachMessage,
     readinessAiPayload: readinessAiPayload,

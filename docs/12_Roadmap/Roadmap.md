@@ -28,6 +28,20 @@
 - [ ] Gebruikersbeheerinterface — Team-scherm (ledenlijst, rollen, wijzigingslog) al gebouwd; her-beoordelen of dit punt hiermee afgerond is.
 - [ ] Gym-breed leespad via exercises.gym_id — al gerealiseerd via v331/v333; dit vinkje kan waarschijnlijk af, ter bevestiging bij volgende CURRENT_STATE-update.
 
+## Intelligentielaag (Sprint 19–23, augustus 2026 — gebouwd)
+- [x] **Relationship Discovery Engine** (`relationship.v1`, v4.41.0) — verbanden zijn geen vaste lijst meer. De engine inventariseert welke dagreeksen er werkelijk zijn, vormt daaruit kandidaatparen, toetst spreiding en datakwaliteit, classificeert en rangschikt. Zie docs/RELATIONSHIP_ENGINE.md.
+- [x] **Verbanden-experience** (v4.42.0) — eigen scherm onder Lichaam met filters per domein, drie secties (gevonden patronen / onderzocht-geen-patroon / nog te weinig data), periodekeuze en een transparantieblok "Hoe is dit bepaald?".
+- [x] **Unified Athlete Intelligence** (`athlete.v1`, `load.v1`, `performance_index.v1`, v4.43.0) — dagbeeld per modaliteit, weekbelasting, frequentie, monotonie, acuut/chronisch en een prestatie-index ten opzichte van het eigen niveau per oefening. Multi-sport architectonisch voorbereid via het bestaande SportDefinitionCore.
+- [x] **Coach Intelligence** (`coach_intelligence.v1`, v4.44.0) — de AI krijgt uitsluitend gevalideerde uitkomsten, maximaal drie geprioriteerde inzichten, en kan geen relatie zelf berekenen of er advies uit afleiden.
+- [x] **ACWR (acuut:chronisch)** — stond sinds Blueprint v6 op de wensenlijst; nu berekend in AthleteCore, bewust zonder grenswaarde of oordeel (dat hoort in de Decision Engine).
+- [x] **Confidence scoring** — stond sinds Blueprint v6 op de wensenlijst; betrouwbaarheid staat nu apart van sterkte in elk relationship.v1-record.
+
+**Geblokkeerd op data, niet op code:**
+- [ ] **Duur per sessie opslaan** — zonder duur is er geen gezamenlijke trainingsbelasting over kracht en cardio heen (sessie-RPE × duur). `AthleteCore.unifiedLoad` levert daarom bewust `null` met `ontbreekt:['duur_per_sessie']`. Dit is de kleinste wijziging met de grootste opbrengst voor de intelligentielaag.
+- [ ] **Omgevingsdata (Open-Meteo)** — temperatuur, luchtvochtigheid en wind staan al in het variabelenregister op `beschikbaarheid: 'toekomstig'`. Zodra er een bron is, verschijnen de kandidaten vanzelf.
+- [ ] **Rustduur tussen sets opslaan** — idem; staat in het register, heeft nog geen bron.
+- [ ] **Meer dagen met training én HRV én slaap** — de correlatiemotor heeft 30 vergelijkbare dagen nodig. Dit is geen bouwtaak maar een meettaak.
+
 ## Branding (nieuw, DEC-010 — loopt parallel aan Fase 1/2/3, niet pas Fase 4)
 - [ ] **Dynamische gym-branding** — Trainingskompas blijft de basis-experience; gym-huisstijl is een skin bovenop, geen vervanging. Volledige naam "Trainingskompas" moet altijd zichtbaar blijven (zie docs/Brand/BRAND_IDENTITY.md). *KOMPAS-afkorting op login-/dashboardscherm al gecorrigeerd in Sprint 2 (2 aug 2026) — de per-gym-skin-architectuur zelf (Fase 4) is nog niet gebouwd.*
 - [x] Merkidentiteit vastgesteld: logo, kleurenpalet (`#0B1D2A`/`#0E3B4A`/`#00B894`), Poppins-typografie — zie docs/Brand/BRAND_IDENTITY.md. Vervangt de placeholder-stijl (Barlow Condensed/cyaan) uit Blueprint.md. **Doorgevoerd in Sprint 2 (2 augustus 2026, v3.3.27)** — kleuren/font app-breed via bestaande design-tokens; semantische kleuren (waarschuwing/foutmelding/grafiek) bewust ongewijzigd gelaten.
@@ -53,7 +67,7 @@ Quota-handhaving, feature-blocking, Mollie-betalingen (individueel + gym), credi
 - AFAS-koppeling, meertaligheid — backlog
 
 ## Uit Blueprint v6 — losse ideeën die nog bruikbaar zijn (rest v6 afgewezen, zie DECISION_LOG DEC-003)
-- ACWR (Acute:Chronic Workload Ratio)
+- [x] ACWR (Acute:Chronic Workload Ratio) — gebouwd in Sprint 21 (v4.43.0), zonder grenswaarde
 - PR-categorisatie
-- Confidence scoring
+- [x] Confidence scoring — gebouwd in Sprint 19 (v4.41.0), apart van sterkte
 - Plateau-detectie

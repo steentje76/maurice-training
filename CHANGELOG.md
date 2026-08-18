@@ -1,5 +1,24 @@
 # Trainingskompas — Changelog
 
+## v4.45.0 — Night Sprint 19–23: Training Intelligence (18 augustus 2026)
+
+Verbanden zijn geen vaste lijst meer. Wat de sporter ziet volgt uit welke meetreeksen er werkelijk zijn.
+
+**Sprint 19 (v4.41.0) — Relationship Discovery Engine (`relationship.v1`).** Nieuw `core/relationship.js`: inventariseert beschikbare dagreeksen, vormt kandidaatparen, toetst spreiding en datakwaliteit, classificeert en rangschikt. Correleren blijft `CalcCore.spearman`, keuren blijft `DeviceCore.pairQuality`, vrijgeven en formuleren blijft `DecisionCore.releaseVerband` — de engine krijgt die ingespoten en weigert te draaien als ze ontbreken. 20 variabelen in vier domeinen. Vijf toestanden waarvan `NO_PATTERN` expliciet iets anders is dan `INSUFFICIENT_DATA`. Drempel voor een patroon blijft 30 dagen, gelijk aan de bestaande `VERBAND_MIN_N`.
+
+**Sprint 20 (v4.42.0) — Verbanden-experience.** Nieuw scherm `s-lich-verbanden` met filters per domein, drie secties (gevonden patronen / onderzocht-geen-patroon / nog te weinig data) en een afsluitende zin die duidelijk maakt dat dit geen vaste lijst is. Detailscherm met periodekeuze 7/30/90 dagen/1 jaar en een blok "Hoe is dit bepaald?" met alle bepalende getallen en contractversies. Bij te weinig data nooit een conclusie, wel hoeveel dagen er nog nodig zijn.
+
+**Sprint 21 (v4.43.0) — Unified Athlete Intelligence.** Nieuw `core/athlete.js`: dagbeeld per modaliteit, weekbelasting, frequentie, monotonie (Foster), acuut/chronisch en een prestatie-index ten opzichte van het eigen mediane niveau per oefening. Er komt bewust GEEN getal dat kracht en cardio optelt: dat vraagt sessie-RPE × duur en duur wordt niet opgeslagen. `unifiedLoad` levert daarom `null` met `ontbreekt:['duur_per_sessie']`. Multi-sport voorbereid via het bestaande `SportDefinitionCore`.
+
+**Sprint 22 (v4.44.0) — Coach Intelligence (`coach_intelligence.v1`).** De AI krijgt geen ruwe reeksen meer maar uitkomsten: maximaal drie geprioriteerde, vrijgegeven patronen plus belasting en herstelstatus. `intelligenceAiPayload` houdt coëfficiënt, id en datakwaliteit tegen. Expliciet verboden: trainingsadvies afleiden uit een verband — dat komt uitsluitend uit de Decision Engine. Opgeruimd: `tkVerbandBereken`, `tkVerbandData`, `TK_VERBAND_VENSTER`, `openVerband`.
+
+**v4.45.1 — schijnverband weggehaald.** Bij de eindanalyse op de echte data kwam `weekbelasting` als *sterk patroon* naar boven tegenover volume, sets en trainingsbelasting (r tussen 0,62 en 0,71, hoge betrouwbaarheid) — en twee daarvan haalden de coach. Dat was geen bevinding maar een fout in het variabelenregister: de weekbelasting is de rollende som van diezelfde dagwaarden, dus er werd een som met een van zijn eigen termen vergeleken. De invoerlijst van `weekbelasting` is gecorrigeerd naar de ruwe invoer die hij werkelijk gebruikt (inclusief die van gisteren, want het venster bevat gisteren), waardoor de circulariteitstoets deze paren nu weigert. Weekbelasting tegenover HRV, slaap of rusthartslag blijft wél een geldige kandidaat. Vier regressietests bewaken de hele klasse, niet alleen dit geval.
+
+**Sprint 23 (v4.45.0) — Integratie en hardening.** 14 datascenario's (geen data, weinig data, dubbele dagen, ontbrekende en onmogelijke waarden, stilstaande reeksen, gaten in de tijd, meerdere sporten, vertraagde sync) door de hele keten. Architectuurgrenzen, prestatie, privacy en service worker vastgelegd in tests. Nieuw: `docs/RELATIONSHIP_ENGINE.md`.
+
+Volledige regressie: 60 testbestanden groen, 0 rood, ~3470 asserts. Home, Training, de Workout Builder, de live coach uit Sprint 13 en de navigatie zijn ongewijzigd.
+
+
 ## v4.40.0 — 18 augustus 2026 (Sprint 18 — Evidence persistence & provenance)
 
 De app kon al een licht bewijsobject samenstellen en legt daarmee vast welke regel gold bij het *plannen* van een training. Wat ontbrak was het bewijs achter een genomen beslissing: welke ruwe waarden lagen eronder, wat is daaruit berekend, welke regel besliste wat, en hoe is dat uitgelegd. Zonder dat is "ga naar 102,5 kg" achteraf niet te controleren.

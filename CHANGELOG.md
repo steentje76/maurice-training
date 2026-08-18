@@ -1,5 +1,46 @@
 # Trainingskompas — Changelog
 
+## v4.31.0 — 18 augustus 2026 (Lichaam 2.1 — tabs, gedeelde zijde en de oefeningenketen)
+
+Structuur- en UX-sprint op Lichaam. Geen redesign, geen nieuwe mock-up. Home, Training, Coach, Voortgang, de Calculation Engine, de Decision Engine en de Fitbit-keten zijn niet aangeraakt.
+
+### P0 — eerst gecontroleerd, daarna pas gebouwd
+
+**De datastatusregel sprak zichzelf schijnbaar tegen.** Er stond "bron: Fitbit · laatste meting 18 augustus 2026 · geen wearable gekoppeld". Beide feiten waren waar, maar het zijn twee verschillende dingen: de herkomst van de *meetwaarde* (de `[src:...]`-tag op de rij, historisch) en de stand van de *koppeling* (uit `deviceConnectionState`, nu). De bewoording maakt dat tijdsverschil expliciet: "gemeten met Fitbit · laatste meting … · nu geen wearable gekoppeld". Dezelfde twee velden, geen nieuwe bronlogica.
+
+**"Geen trend" betekende twee verschillende dingen.** De trendkaart toonde die tekst zowel bij een echt vlakke reeks als bij te weinig metingen; alleen het statuslabel eronder maakte onderscheid. Bij minder dan zes punten staat er nu "te weinig metingen". De drempel van zes is de bestaande drempel uit `toonTrend` — er is geen nieuwe trendberekening.
+
+**De grafieken bevatten geen fictieve data.** `healthSeries` en `weightSeries` lezen uitsluitend rijen; ontbrekende dagen blijven `null`. `lichSpark` breekt de lijn bij een gat en `tkRenderHealthChart` slaat lege punten over. Het opvallend regelmatige patroon in de eerdere voorbeeldrender kwam uit de testdata van de headless controle, niet uit de app.
+
+**De top-4 was niet deterministisch.** Bij gelijke waarden bepaalde de invoervolgorde de uitkomst. Beide lijsten hebben nu een vaste tie-breaker op spiernaam. De herstelweergave toont bovendien conform de mock-up de best herstelde plus de drie laagste in plaats van vier keer de laagste — vier keer "100% hersteld" zegt niets, het contrast wel.
+
+### Gebouwd
+
+**Spiergroepen met vier tabs en één gedeelde zijde.** Overzicht · Per groep · Voorzijde · Achterzijde. De twee onafhankelijke voor/achter-schakelaars zijn verdwenen: het herstelfiguur en het belastingfiguur volgden elk hun eigen state en konden elkaar tegenspreken. Nu volgt alles één `lichSpierenSide`. De panelen worden getoond of verborgen — alle doel-ids blijven in de DOM, zodat `renderLichaam()` één renderpad houdt.
+
+**Spierdetail met twee tabs.** Visueel (figuur, herstelstatus, kerncijfers, doorstappen) en Details (uren sinds belasting, basisherstelduur, RPE laatste sessie, formuleversie, recente sessies). Uitsluitend herstructurering: elke waarde komt uit dezelfde bron als voorheen.
+
+**De keten is compleet: Lichaam → spiergroep → spier → oefeningen.** Nieuw scherm `s-lich-oefeningen` toont welke oefeningen deze groep in jouw logboek hebben belast, met sets, aantal keer en de laatste datum. Het leest `sessions` en de bestaande `getExerciseMuscles`-mapping via één gedeelde helper die ook het spierdetail gebruikt. Er is geen theoretische oefeningenlijst: staat een oefening niet in je logboek, dan staat hij hier niet. Zonder data een nette lege toestand, nooit een leeg scherm.
+
+**Metingen met twee tabs.** Lichaamscompositie en Afmetingen. Alleen presentatie: dezelfde kaarten, dezelfde doel-ids, dezelfde renderer, dezelfde opslaglogica. Geen CRUD, geen nieuwe invoerflow.
+
+**Mobiele pasvorm.** Vier tabs pasten op 390 px alleen in een compacte variant van hetzelfde segmented control; de oefeningregel is gestapeld (naam boven, meta eronder) omdat de meta anders buiten beeld liep.
+
+### Bewust niet gebouwd
+Verbandenmotor, minimum aantal waarnemingen, CRUD op `weight_log`/`body_comp`/`hrv_log`, één centrale meetinvoerflow, en het verplaatsen van de wearable-koppelingen. Allemaal buiten scope.
+
+### Technische hygiëne
+`.gitignore` met `node_modules/` en `www/`. `package-lock.json` wordt nu wél getrackt: `package.json` gebruikt caret-ranges op esbuild en de Capacitor-pakketten, en juist esbuild bouwt de native `www/`-bundle — zonder lockfile kan elke CI-run een andere versie pakken. De Quality Gate draait daarom `npm ci` met `cache-dependency-path: package-lock.json` in plaats van `npm install`.
+
+### Getest
+- Nieuw `core/fLichaam21Tabs.test.js` — 73 controles over zeven groepen: de deterministische top-4 (best plus drie laagste, vaste tie-breaker, tien identieke aanroepen geven tien identieke uitkomsten, groepen zonder percentage vallen af), de vier tabs met gedeelde zijde, het verdwijnen van beide oude schakelaars, de twee tabs op spierdetail en metingen, de oefeningenketen (alleen uit `sessions`, geen catalogus, nette lege toestand), de twee P0-bewoordingen en regressie op overzicht, anatomie, verbanden, Fitbit en het metric-detail.
+- `core/fLichaamSpierDetail.test.js` volgt de verplaatste helper; drie testbestanden volgen de verbrede stijl-scope.
+- Headless mobiele controle (390×844) van alle routes: tabs wisselen, beide figuren volgen dezelfde zijde, spierdetail wisselt van tab, het oefeningenscherm toont zowel de gevulde als de lege toestand, metingen wisselt van tab, het metric-detail werkt nog en beide anatomiefiguren staan er na terugkeer. **0 console-fouten.**
+- Volledige Quality Gate lokaal groen, inclusief `logic_tests.js` en `npm ci`.
+
+### Gewijzigd
+`index.html`, `.github/workflows/quality-gate.yml`, `CHANGELOG.md`, nieuw `core/fLichaam21Tabs.test.js`, bijgewerkt `core/fLichaamPhase0.test.js`, `core/fLichaamSpierDetail.test.js` en `core/fLichaamMetricDetail.test.js`, nieuw `.gitignore` en `package-lock.json`. `core/*.js` is niet gewijzigd, dus `CORE_SIG` en de cachenamen in `sw.js` blijven ongemoeid.
+
 ## v4.30.1 — 18 augustus 2026 (Lichaam 2.0 — faalveilig metric-detail)
 
 Productiebevinding na de uitrol van v4.30.0, direct na de deploy vastgesteld op de live app.

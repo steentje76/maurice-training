@@ -58,7 +58,7 @@ ok(html.indexOf('id="lich-spier-body"') >= 0 && html.indexOf('id="lich-spier-naa
    'het detail heeft zijn eigen containers');
 ok(/<div class="scr" id="s-lich-spier">[\s\S]{0,1600}<nav class="bnav"/.test(html),
    'het detailscherm heeft dezelfde bottom navigation');
-ok(/:is\(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric\)/.test(html),
+ok(/:is\(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen\)/.test(html),
    'het detail valt binnen dezelfde stijl-scope — geen aparte stijlen');
 
 // De inline handlers moeten geldige HTML opleveren: een dubbele quote in het attribuut
@@ -72,7 +72,12 @@ const detail = extractFn('renderLichaamSpierDetail');
 ok(detail.indexOf('v43OverallRecovery') >= 0, 'herstel komt uit v43OverallRecovery');
 ok(detail.indexOf('muscleLoadBySvgId') >= 0, 'belasting komt uit muscleLoadBySvgId');
 ok(detail.indexOf('MUSCLE_RECOVERY_HOURS[naam]') >= 0, 'basisuren komen uit MUSCLE_RECOVERY_HOURS');
-ok(detail.indexOf('getExerciseMuscles') >= 0, 'de oefening→spier-koppeling is de bestaande');
+// De oefening→spier-koppeling is in Lichaam 2.1 verplaatst naar de gedeelde helper
+// lichOefeningenVoorSpier, zodat spierdetail en oefeningenscherm dezelfde bron delen.
+const oefHelper = extractFn('lichOefeningenVoorSpier');
+ok(oefHelper.indexOf('getExerciseMuscles') >= 0, 'de oefening→spier-koppeling is de bestaande');
+ok(oefHelper.indexOf("sbGet('sessions'") >= 0, 'de oefeningen komen uit het bestaande sessions-logboek');
+ok(detail.indexOf('lichOefeningenVoorSpier') >= 0, 'het spierdetail gebruikt diezelfde helper');
 ok(detail.indexOf('lichRecStatus') >= 0 && detail.indexOf('lichLoadStatus') >= 0,
    'status en kleur komen uit dezelfde helpers als het overzicht');
 // Alleen de UITVOERBARE code telt: een verwijzing in de uitlegtekst is juist gewenst.

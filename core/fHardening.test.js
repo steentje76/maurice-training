@@ -232,8 +232,17 @@ ok(/r\.pct < 70/.test(decSrc) || /pct < 70/.test(decSrc), 'E12: en die grens sta
 /* ── F. SERVICE WORKER ───────────────────────────────────────────────────── */
 console.log('\nF. Service worker en cache');
 const crypto = require('crypto');
-const CORE_FILES = ['core/calculation.js','core/decision.js','core/cardio.js','core/progression.js',
-                    'core/coaching.js','core/movement.js','core/onboarding.js','core/athleteConstraints.js'];
+/* CORE_FILES komt uit EEN bron: core/sw-guard.test.js. Deze test hield tot v4.40.0 een
+ * eigen kopie van die lijst bij, en dat is precies hoe de twee uit elkaar liepen zodra er
+ * een core-bestand bijkwam. Door de lijst hier uit te lezen kan dat niet meer gebeuren:
+ * een nieuw core-bestand wordt automatisch meegenomen in de handtekening. */
+function tkCoreFiles() {
+  const guard = fs.readFileSync(path.join(__dirname, 'sw-guard.test.js'), 'utf8');
+  const m = guard.match(/const CORE_FILES\s*=\s*\[([\s\S]*?)\];/);
+  if (!m) throw new Error('CORE_FILES niet gevonden in sw-guard.test.js');
+  return m[1].split(',').map(s => s.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
+}
+const CORE_FILES = tkCoreFiles();
 const sig = crypto.createHash('sha256').update(
   CORE_FILES.map(function(f){ return fs.readFileSync(path.join(__dirname, '..', f), 'utf8').replace(/\r/g, ''); }).join('\n')
 ).digest('hex').slice(0, 16);

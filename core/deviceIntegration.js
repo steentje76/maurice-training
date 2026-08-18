@@ -808,6 +808,218 @@
   }
 
   // ══════════════════════════════════════════════════════════════════════════════
+  // DATAKWALITEIT (dataquality.v1) — Sprint 10
+  //
+  // De laag tussen RAW DATA en de Calculation Engine. Ruwe rijen uit hrv_log/weight_log
+  // zijn niet per definitie bruikbaar: er staan lege dagen in, dubbele rijen per dag,
+  // tekstwaarden, en incidenteel een waarde die technisch onmogelijk bij de grootheid
+  // hoort. Zonder deze laag rekent Spearman daar gewoon overheen.
+  //
+  // Deze laag GEEFT GEEN MEDISCH OORDEEL. Hij stelt niet vast dat een meting "fout" is
+  // en trekt geen conclusie over de gezondheid van de gebruiker. Hij bepaalt uitsluitend
+  // of een getal technisch bruikbaar is als invoer voor een berekening. Er wordt niets
+  // uit de database verwijderd en niets overschreven: uitsluiten gebeurt in het geheugen,
+  // per berekening, en is altijd herleidbaar via de reden.
+  //
+  // Drie statussen per dag — meer niet:
+  //   valid              bruikbaar als invoer
+  //   excluded           aanwezig maar technisch niet bruikbaar (reden verplicht)
+  //   insufficient_data  er is die dag geen meting
+  //
+  // GRENZEN. De harde grenzen komen NIET uit deze laag maar uit het bestaande
+  // brondata-contract (GOOGLE_HEALTH_MAP), zodat er geen tweede waarheid ontstaat en
+  // hier geen medische norm wordt bedacht. Slaap wordt in de app in uren gerekend; de
+  // contractgrens staat in minuten en wordt daarom gedeeld door 60.
+  //
+  // UITSCHIETERS. Een waarde kan binnen het contract vallen en toch onmogelijk bij de
+  // reeks horen. Daarvoor geldt een ROBUUSTE, niet-medische toets: de modified z-score
+  // van Iglewicz & Hoaglin (mediaan + MAD). De gangbare labelgrens daarvoor is 3,5; hier
+  // staat hij bewust op 10 — ruim drie keer zo streng — omdat uitsluiten gevolgen heeft
+  // en echte fysiologische variatie nooit mag sneuvelen. Daar bovenop moet de waarde ook
+  // nog minimaal 25% van de mediaan afwijken, zodat een strak verdeelde reeks (waarin de
+  // MAD bijna nul is) geen normale schommeling kan uitsluiten. Beide voorwaarden moeten
+  // gelden, en pas vanaf 20 metingen; daaronder is er geen betrouwbare mediaan en wordt
+  // er niet uitgesloten.
+  // ══════════════════════════════════════════════════════════════════════════════
+  var DQ_VERSION = 'dataquality.v1';
+  var DQ_STATUSES = ['valid', 'excluded', 'insufficient_data'];
+  var DQ_OUTLIER_MIN_N = 20;        // minder metingen -> geen statistische uitsluiting
+  var DQ_OUTLIER_Z = 10;            // modified z-score (conventie 3,5 — hier bewust strenger)
+  var DQ_OUTLIER_MIN_REL_DEV = 0.25; // en minimaal 25% afwijking van de mediaan
+  var DQ_MAD_K = 0.6745;            // Iglewicz & Hoaglin
+  var DQ_MEANAD_K = 0.7979;         // meanAD-variant wanneer de MAD nul is
+
+  // Contract per UI-veld, AFGELEID van het bestaande brondata-contract. Geen tweede lijst
+  // met grenzen: verandert GOOGLE_HEALTH_MAP, dan verandert dit mee.
+  function _contractVan(metricKey, deler) {
+    var lijst = (GOOGLE_HEALTH_MAP && GOOGLE_HEALTH_MAP.metrics) || [];
+    for (var i = 0; i < lijst.length; i++) {
+      if (lijst[i] && lijst[i].key === metricKey) {
+        var d = (typeof deler === 'number' && deler > 0) ? deler : 1;
+        return {
+          min: lijst[i].min != null ? lijst[i].min / d : null,
+          max: lijst[i].max != null ? lijst[i].max / d : null,
+          bron: metricKey
+        };
+      }
+    }
+    return null;
+  }
+  var DQ_CONTRACT = {
+    hrv:    _contractVan('hrv_ms'),
+    rhr:    _contractVan('resting_hr_bpm'),
+    sleep:  _contractVan('sleep_minutes', 60),   // contract in minuten -> app rekent in uren
+    weight: null                                  // geen brondata-contract: gewicht is ingevoerd
+  };
+
+  function _dqNum(v) {
+    if (typeof v === 'number') return isFinite(v) ? v : null;
+    if (typeof v === 'string') {
+      var t = v.trim();
+      if (!t || !/^[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?$/.test(t)) return null;
+      var n = Number(t);
+      return isFinite(n) ? n : null;
+    }
+    return null;
+  }
+  function _mediaan(getallen) {
+    if (!getallen.length) return null;
+    var s = getallen.slice().sort(function (a, b) { return a - b; });
+    var m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  }
+  // Robuuste schaal: MAD, en als die nul is (meer dan de helft identieke waarden) de
+  // gemiddelde absolute afwijking. Zijn beide nul, dan is er geen spreiding en wordt er
+  // niet uitgesloten.
+  function _robuusteSchaal(getallen, mediaan) {
+    var afw = getallen.map(function (v) { return Math.abs(v - mediaan); });
+    var mad = _mediaan(afw);
+    if (mad != null && mad > 0) return { schaal: mad, k: DQ_MAD_K, soort: 'mad' };
+    var som = 0; afw.forEach(function (v) { som += v; });
+    var meanAD = afw.length ? som / afw.length : 0;
+    if (meanAD > 0) return { schaal: meanAD, k: DQ_MEANAD_K, soort: 'meanad' };
+    return null;
+  }
+
+  // Dagen waarop meer dan één rij een waarde voor dit veld bevat. healthSeries kiest er
+  // al deterministisch één (wearable boven check-in); deze functie maakt dat zichtbaar
+  // in plaats van het stil te laten gebeuren.
+  function duplicateDays(rows, field) {
+    var per = {};
+    (Array.isArray(rows) ? rows : []).forEach(function (r) {
+      if (!r || r.date == null) return;
+      var v = r[field]; if (v == null || v === '') return;
+      var d = String(r.date).slice(0, 10);
+      per[d] = (per[d] || 0) + 1;
+    });
+    var uit = [];
+    Object.keys(per).forEach(function (d) { if (per[d] > 1) uit.push(d); });
+    uit.sort();
+    return uit;
+  }
+
+  // qualifySeries(series, opts)
+  //   series: [{date, value, source}] zoals healthSeries teruggeeft
+  //   opts:   { field: 'hrv'|'rhr'|'sleep'|'weight', contract: {min,max} (optioneel, overschrijft) }
+  // -> { version, field, contract, points:[{date,value,source,status,reason}],
+  //      valid:[{date,value,source}]  (zelfde vorm en lengte als de invoer; niet-valide -> value null),
+  //      counts:{days,valid,excluded,insufficient_data}, excluded:[{date,value,reason}], statistiek }
+  // PUUR: geen Date, geen random, geen mutatie van de invoer.
+  function qualifySeries(series, opts) {
+    var o = opts || {};
+    var arr = Array.isArray(series) ? series : [];
+    var veld = o.field || null;
+    var contract = (o.contract !== undefined) ? o.contract : (veld ? DQ_CONTRACT[veld] : null);
+
+    // Ronde 1: numeriek en binnen contract. Alleen wat deze ronde overleeft telt mee bij
+    // het bepalen van de mediaan — een tekstwaarde of onmogelijke waarde mag de
+    // uitschietertoets niet zelf beinvloeden.
+    var voorlopig = arr.map(function (p) {
+      var datum = (p && p.date != null) ? String(p.date).slice(0, 10) : null;
+      var bron = (p && p.source != null) ? p.source : null;
+      if (!p || p.value == null || p.value === '') {
+        return { date: datum, value: null, source: bron, status: 'insufficient_data', reason: 'geen_meting' };
+      }
+      var n = _dqNum(p.value);
+      if (n == null) return { date: datum, value: null, source: bron, status: 'excluded', reason: 'niet_numeriek' };
+      if (contract && contract.min != null && n < contract.min) {
+        return { date: datum, value: n, source: bron, status: 'excluded', reason: 'buiten_contract' };
+      }
+      if (contract && contract.max != null && n > contract.max) {
+        return { date: datum, value: n, source: bron, status: 'excluded', reason: 'buiten_contract' };
+      }
+      return { date: datum, value: n, source: bron, status: 'valid', reason: null };
+    });
+
+    // Ronde 2: robuuste uitschietertoets over de overgebleven waarden.
+    var kandidaten = [];
+    voorlopig.forEach(function (p) { if (p.status === 'valid') kandidaten.push(p.value); });
+    var stat = { n: kandidaten.length, mediaan: null, schaal: null, schaalSoort: null, drempelZ: DQ_OUTLIER_Z, toegepast: false };
+    if (kandidaten.length >= DQ_OUTLIER_MIN_N) {
+      var med = _mediaan(kandidaten);
+      var sc = (med != null) ? _robuusteSchaal(kandidaten, med) : null;
+      stat.mediaan = med;
+      if (sc && med != null) {
+        stat.schaal = sc.schaal; stat.schaalSoort = sc.soort; stat.toegepast = true;
+        voorlopig.forEach(function (p) {
+          if (p.status !== 'valid') return;
+          var z = Math.abs(sc.k * (p.value - med) / sc.schaal);
+          var rel = (med !== 0) ? Math.abs(p.value - med) / Math.abs(med) : Infinity;
+          if (z > DQ_OUTLIER_Z && rel >= DQ_OUTLIER_MIN_REL_DEV) {
+            p.status = 'excluded'; p.reason = 'extreme_uitschieter';
+          }
+        });
+      }
+    }
+
+    var counts = { days: voorlopig.length, valid: 0, excluded: 0, insufficient_data: 0 };
+    var uitgesloten = [];
+    voorlopig.forEach(function (p) {
+      counts[p.status] = (counts[p.status] || 0) + 1;
+      if (p.status === 'excluded') uitgesloten.push({ date: p.date, value: p.value, reason: p.reason });
+    });
+    return {
+      version: DQ_VERSION,
+      field: veld,
+      contract: contract || null,
+      points: voorlopig,
+      valid: voorlopig.map(function (p) {
+        return { date: p.date, value: p.status === 'valid' ? p.value : null, source: p.source };
+      }),
+      counts: counts,
+      excluded: uitgesloten,
+      statistiek: stat
+    };
+  }
+
+  // pairQuality(seriesA, seriesB, optsA, optsB)
+  // Keurt beide reeksen en koppelt UITSLUITEND dagen waarop beide waarden valide zijn.
+  // 'excludedDays' telt de dagen waarop beide een waarde hadden maar er minstens één is
+  // uitgesloten — precies de dagen die zonder deze laag stilzwijgend meegerekend zouden zijn.
+  function pairQuality(seriesA, seriesB, optsA, optsB) {
+    var qa = qualifySeries(seriesA, optsA);
+    var qb = qualifySeries(seriesB, optsB);
+    var paren = pairDaily(qa.valid, qb.valid);
+    var bIndex = {};
+    qb.points.forEach(function (p) { if (p.date) bIndex[p.date] = p; });
+    var verloren = 0;
+    qa.points.forEach(function (p) {
+      if (!p.date) return;
+      var q = bIndex[p.date]; if (!q) return;
+      var aHad = p.status !== 'insufficient_data', bHad = q.status !== 'insufficient_data';
+      if (!aHad || !bHad) return;
+      if (p.status === 'excluded' || q.status === 'excluded') verloren++;
+    });
+    return {
+      version: DQ_VERSION,
+      pairs: paren,
+      comparableDays: paren.length,
+      excludedDays: verloren,
+      a: qa, b: qb
+    };
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════════
   // OBSERVATIELAAG (observation.v1) — Lichaam Data Depth 1.0
   //
   // Doel: van een reeks metingen één controleerbare observatie maken waarin niet alleen
@@ -994,6 +1206,11 @@
     healthStats: healthStats, availablePeriods: availablePeriods, weightSeries: weightSeries,
     pairDaily: pairDaily,
     MIN_POINTS_FOR_PERIOD: MIN_POINTS_FOR_PERIOD,
+    // datakwaliteit (dataquality.v1) — laag tussen RAW DATA en de Calculation Engine
+    qualifySeries: qualifySeries, pairQuality: pairQuality, duplicateDays: duplicateDays,
+    DQ_VERSION: DQ_VERSION, DQ_STATUSES: DQ_STATUSES, DQ_CONTRACT: DQ_CONTRACT,
+    DQ_OUTLIER_MIN_N: DQ_OUTLIER_MIN_N, DQ_OUTLIER_Z: DQ_OUTLIER_Z,
+    DQ_OUTLIER_MIN_REL_DEV: DQ_OUTLIER_MIN_REL_DEV,
     observation: observation, observationQuality: observationQuality, sourceKind: sourceKind,
     OBSERVATION_VERSION: OBSERVATION_VERSION, QUALITY_STATES: QUALITY_STATES,
     PARTIAL_COVERAGE_MAX: PARTIAL_COVERAGE_MAX,

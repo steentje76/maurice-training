@@ -180,8 +180,8 @@ ok(rend.indexOf('if(!vrij.length) return;') >= 0, 'F6: zonder vrijgegeven verban
 ok(rend.indexOf('releaseVerband') < 0 && rend.indexOf('minimumN') < 0 && rend.indexOf('0.3') < 0,
    'F7: de overzichtsrenderer kent geen drempel en geen sterktegrens');
 const berekenBron = html.slice(html.indexOf('function tkVerbandBereken'), html.indexOf('function tkVerbandPijl'));
-ok(berekenBron.indexOf('cc.spearman(') >= 0 && berekenBron.indexOf('de.releaseVerband(') >= 0 && berekenBron.indexOf('dc.pairDaily(') >= 0,
-   'F8: de UI roept de engines aan en rekent zelf niets');
+ok(berekenBron.indexOf('cc.spearman(') >= 0 && berekenBron.indexOf('de.releaseVerband(') >= 0 && berekenBron.indexOf('dc.pairQuality(') >= 0,
+   'F8: de UI roept de engines aan en rekent zelf niets (koppeling loopt sinds Sprint 10 via pairQuality)');
 ok(!/Math\.sqrt|reduce\(/.test(berekenBron), 'F9: geen eigen statistiek in de UI');
 ok(berekenBron.indexOf('tkSleepHours(') >= 0, 'F10: slaap gaat door de bestaande normalisatie');
 ok(berekenBron.indexOf('dc.healthSeries(') >= 0, 'F11: de reeksen komen uit de bestaande healthSeries');

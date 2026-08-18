@@ -1,5 +1,61 @@
 # Trainingskompas — Changelog
 
+## v4.34.0 — 18 augustus 2026 (Data Quality → Interpretatie → Coach Context)
+
+De verbanden uit v4.32.0 rekenden over de ruwe rijen uit `hrv_log`. Deze release zet er de ontbrekende schakel voor: een datakwaliteitslaag tussen RAW DATA en de Calculation Engine. Geen redesign, geen nieuwe mock-up. Home, Training, Coach-scherm, Voortgang, de anatomie en de Fitbit-keten zijn niet aangeraakt.
+
+### Wat er al was en dus niet opnieuw is gebouwd
+
+Spearman (`correlation.v1`), `pairDaily`, `releaseVerband` (`verband.v1`) met de drempel van 30 dagen, de sterkteclassificatie, de circulariteitstoets, de niet-causale zin en de disclaimer, het verbandenoverzicht en het verbanddetail, `observation.v1` en `observationQuality`, `recoveryScore` (`recovery_score.v1`), en de knoppen *Wat betekent dit voor vandaag?* en *Welke training past hierbij?*. Allemaal ongewijzigd overgenomen.
+
+### Datakwaliteit — `dataquality.v1`
+
+Nieuw in `core/deviceIntegration.js`, direct naast `healthSeries` en `pairDaily` waar de data binnenkomt. Drie statussen per dag, meer niet: `valid`, `excluded`, `insufficient_data`. Een ontbrekende dag is `insufficient_data` en blijft `null` — nooit 0. Een aanwezige waarde die technisch niet bruikbaar is, wordt `excluded` mét reden: `niet_numeriek`, `buiten_contract` of `extreme_uitschieter`.
+
+De laag geeft **geen medisch oordeel**. Hij stelt niet vast dat een meting fout is en zegt niets over gezondheid; hij bepaalt alleen of een getal bruikbaar is als invoer voor een berekening. Er wordt niets uit de database verwijderd en niets overschreven: uitsluiten gebeurt in het geheugen, per berekening, en is altijd herleidbaar.
+
+**De grenzen komen niet uit deze laag.** Ze worden afgeleid uit het bestaande brondata-contract `GOOGLE_HEALTH_MAP` — HRV 0–400 ms, rusthartslag 20–120 bpm, slaap 0–1440 minuten (gedeeld door 60, want de app rekent in uren). Verandert dat contract, dan verandert dit mee. Er is dus geen tweede lijst met grenswaarden en geen zelfbedachte norm.
+
+**Uitschieters** worden robuust en bewust conservatief herkend: de modified z-score van Iglewicz & Hoaglin over mediaan en MAD. De gangbare labelgrens daarvoor is 3,5; hier staat hij op 10 — ruim drie keer zo streng — omdat uitsluiten gevolgen heeft en echte fysiologische variatie nooit mag sneuvelen. Daar bovenop moet de waarde minstens 25% van de mediaan afwijken, zodat een strak verdeelde reeks (waarin de MAD bijna nul is) geen normale schommeling kan uitsluiten. Beide voorwaarden moeten gelden, en pas vanaf 20 metingen. Is de MAD nul, dan valt de schaal terug op de gemiddelde absolute afwijking; is ook die nul, dan wordt er niets uitgesloten in plaats van gedeeld door nul.
+
+`pairQuality` keurt beide reeksen en koppelt uitsluitend dagen waarop **beide** waarden valide zijn. Het telt apart hoeveel dagen wél twee metingen hadden maar zijn afgevallen — precies de dagen die eerder stilzwijgend meerekenden. `duplicateDays` maakt zichtbaar welke datums meer dan één rij hebben; de keuze tussen die rijen (wearable boven check-in) blijft de bestaande, ongewijzigde regel in `healthSeries`.
+
+### De keten klopt nu
+
+RAW DATA → DATA QUALITY → CALCULATION ENGINE → DECISION ENGINE → UI → COACH. `tkVerbandBereken` koppelt via `pairQuality` in plaats van rechtstreeks via `pairDaily`. Ontbreekt de datakwaliteitslaag (oude, nog gecachte core), dan verschijnt er **geen** correlatie in plaats van een correlatie over ongekeurde data.
+
+Het metric-detail keurt zijn reeks op één plek, zodat grafiek, trend, statistiek en observatie exact dezelfde punten zien: wat niet wordt meegerekend, wordt ook niet getekend. De ruwe waarde blijft ongewijzigd in de database en zichtbaar bij Metingen.
+
+### De opvallende meting van 26 juli
+
+Op 26 juli 2026 staat een rusthartslag van 28 bpm, terwijl de overige 43 metingen tussen 54 en 60 liggen (mediaan 57). Onderzocht en vastgesteld: de rij heeft geen `[src:...]`-tag en dateert van vóór de eerste Fitbit-synchronisatie (11 augustus), dus hij komt uit een handmatige check-in en niet uit de koppeling. Er is dus **geen** mapping- of conversiefout in de synchronisatieketen — die is niet aangepast. De waarde valt binnen de contractgrens van 20 bpm en werd daarom nergens tegengehouden; de robuuste uitschietertoets vangt hem nu wel (modified z ≈ 19,6). Hij is **niet verwijderd** uit de database en wordt alleen niet meegerekend.
+
+Effect op de vrijgegeven verbanden: HRV ↔ rusthartslag gaat van r = −0,521 (n=38) naar r = −0,531 (n=37), slaap ↔ rusthartslag van r = −0,020 naar r = −0,092 (n=36). De uitkomst verschuift dus nauwelijks — het spreidingsdiagram wordt wel bruikbaar, omdat de verticale as niet langer wordt opgerekt tot 28.
+
+### Uitsluitingstransparantie
+
+De Decision Engine levert de melding, niet de UI: *"Eén dag is niet meegenomen omdat de gegevens niet betrouwbaar vergelijkbaar waren."* en voor één reeks *"Eén meting is niet meegerekend omdat de waarde niet betrouwbaar bij deze reeks past."* Nergens staat dat een meting fout is, en er wordt geen uitroepteken of waarschuwing gebruikt. Een test controleert dat over alle definities en alle tekens van de coëfficiënt.
+
+### Interpretatie
+
+`releaseVerband` levert naast de bestaande zin nu ook een uitleg per sterkteband, zodat "Coëfficiënt −0,53 · sterke samenhang" niet langer zonder duiding op het scherm staat: *"Het patroon is duidelijk en consequent zichtbaar in je metingen."* De volgorde op het detailscherm volgt de vragen die de gebruiker stelt: wat zie ik, wat betekent het, is het betrouwbaar, wat betekent dit voor mijn training. Geen nieuwe componenten, geen nieuwe kleuren.
+
+### Trainingsbetekenis — `verbandtraining.v1`
+
+Een samenhang is op zichzelf geen trainingsadvies. `verbandTrainingContext` spreekt daarom alleen wanneer de benodigde, reeds berekende context er is: een vrijgegeven verband mét richting én een herstelstatus uit `recovery_score.v1`. Ontbreekt er iets, dan is de uitkomst expliciet "niet beschikbaar" met een reden (`geen_verband`, `geen_richting`, `geen_herstelstatus`, `datakwaliteit_onvoldoende`) en wordt er niets aangevuld.
+
+Wat de functie nooit doet is een gereedheidsoordeel vellen. Niet "je bent hersteld", niet "je lichaam is klaar voor een zware training". Ze verwijst naar de bestaande herstelstatus: *"In deze periode bewegen je HRV en je rusthartslag in tegengestelde richting. Je herstelstatus van vandaag is gemiddeld (70/100). Kijk naar je actuele herstelstatus voordat je de trainingsbelasting verhoogt."* Een lijst verboden formuleringen staat in de engine en wordt in de tests afgedwongen.
+
+### Coach-context
+
+De coach kreeg tot nu toe de laatste HRV/RHR/slaap-rij en de HRV-baselineduiding. Hij krijgt nu ook: datakwaliteit en trend per gegevenstype over 30 dagen inclusief het aantal uitgesloten metingen, alle verbanden met coëfficiënt, aantal dagen en sterkte plus de zin van de Decision Engine, de herstelstatus van vandaag met betrouwbaarheid en de sets/RPE-aanpassing, en het aantal trainingsdagen in de laatste 7 en 28 dagen.
+
+Alles is al berekend voordat het in de prompt komt; de coach-contextbouwer roept zelf geen enkele rekenfunctie aan. De instructie erbij is expliciet: correlaties, herstelscores, dagfactoren en trends nooit zelf berekenen of tegenspreken, ontbrekende data als onzekerheid benoemen in plaats van opvullen, een samenhang nooit als oorzaak-gevolg beschrijven en niemand hersteld of trainingsklaar verklaren op basis van een verband. Mislukt het blok, dan valt het stil terug op leeg — de coach blijft altijd bruikbaar.
+
+### Overig
+
+`core/fDataQuality.test.js` toegevoegd met 175 controles. Twee bestaande assertions zijn meeverhuisd met een hernoeming (`_tkMetricRuweSerie`, `pairQuality`); er is geen enkele test verwijderd of versoepeld. `sw.js`: `CORE_SIG` naar `7cf9ba1fe4858a03` en de caches naar `v43400`, omdat `core/decision.js` is gewijzigd.
+
 ## v4.33.0 — 18 augustus 2026 (Gezondheidsgegevens & koppelingen)
 
 Eén scherm onder Lichaam dat antwoord geeft op de vraag "waar komen mijn gegevens vandaan?". Geen redesign, geen nieuwe mock-up. Home, Training, Coach, Voortgang, de anatomie, de Calculation Engine, de Decision Engine en de Fitbit-keten zijn niet aangeraakt.

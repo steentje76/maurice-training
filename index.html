@@ -5637,7 +5637,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.33.0';
+const APP_VER = 'v4.34.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -15230,8 +15230,8 @@ async function recoveryAdjustmentForToday(muscleNames){
     // RHR-delta → alleen in de zichtbare Recovery Score (niet in de sets/RPE-beslissing; DecisionCore neemt geen RHR).
     const rhrDelta=rhrBaselineDelta(hd);
     const rs=recoveryScoreFrom(dfInfo, recRows, {rhrDelta:(rhrDelta!=null?rhrDelta:undefined), voelt:voelt||undefined});
-    return { rpeDelta:adj.rpeDelta||0, setsDelta:adj.setsDelta||0, redenen:adj.redenen||[], score:(rs&&rs.score!=null?rs.score:null), band:(rs&&rs.band)||'onbekend', factor:dfInfo.factor };
-  }catch(_){ return { rpeDelta:0, setsDelta:0, redenen:[], score:null, band:'onbekend' }; }
+    return { rpeDelta:adj.rpeDelta||0, setsDelta:adj.setsDelta||0, redenen:adj.redenen||[], score:(rs&&rs.score!=null?rs.score:null), band:(rs&&rs.band)||'onbekend', confidence:(rs&&rs.confidence)||'geen', factor:dfInfo.factor };
+  }catch(_){ return { rpeDelta:0, setsDelta:0, redenen:[], score:null, band:'onbekend', confidence:'geen' }; }
 }
 // Korte, deterministische "wat + waarom"-melding bij een recovery-aanpassing (geen AI). Toont niets als er niets aangepast is.
 function recoveryAdjustToast(adj){
@@ -16650,6 +16650,113 @@ function huidigeDatumTijdNL(){
   const uu=String(d.getHours()).padStart(2,'0'), mm=String(d.getMinutes()).padStart(2,'0');
   return `${d.getDate()} ${maanden[d.getMonth()]} ${d.getFullYear()} ${uu}:${mm}`;
 }
+/* ══════════════════════════════════════════════════════════════════════════
+ * COACH-CONTEXT: DATAKWALITEIT, VERBANDEN, HERSTEL EN BELASTING (Sprint 10)
+ *
+ * De Coach kreeg tot nu toe de laatste HRV/RHR/slaap-rij en de HRV-baselineduiding.
+ * Wat hij NIET kreeg: hoe betrouwbaar die gegevens zijn, welke verbanden de Decision
+ * Engine heeft vrijgegeven, wat de herstelstatus van vandaag is en hoeveel er recent
+ * getraind is. Daardoor kon hij daar alleen naar raden — of het zelf gaan afleiden.
+ *
+ * Alles hieronder is REEDS BEREKEND door de bestaande engines:
+ *   datakwaliteit  DeviceCore.qualifySeries        (dataquality.v1)
+ *   trend/statistiek DeviceCore.healthTrend/healthStats
+ *   correlatie     CalcCore.spearman               (correlation.v1)
+ *   vrijgave+taal  DecisionCore.releaseVerband     (verband.v1)
+ *   herstelstatus  CalcCore.recoveryScore          (recovery_score.v1)
+ * De AI leest ze en legt ze uit. Hij berekent ze niet opnieuw en mag ze niet overrulen;
+ * dat staat expliciet in de instructie onderaan dit blok.
+ * ══════════════════════════════════════════════════════════════════════════ */
+async function tkCoachDataBlok(){
+  const dc=(typeof DeviceCore!=='undefined')?DeviceCore:null;
+  const de=(typeof DecisionCore!=='undefined')?DecisionCore:null;
+  if(!dc||!de||typeof dc.qualifySeries!=='function') return '';
+  let rows=[];
+  try{ rows=await tkVerbandData(); }catch(_){ rows=[]; }
+  if(!rows.length) return '';
+  const eind=String(rows[0].date).slice(0,10);
+
+  // 1. Datakwaliteit + trend per gegevenstype, over hetzelfde venster van 30 dagen.
+  const regels=[];
+  [{k:'hrv',lbl:'HRV',eh:'ms'},{k:'rhr',lbl:'Rusthartslag',eh:'bpm'},{k:'sleep',lbl:'Slaap',eh:'u'}].forEach(function(v){
+    const ruw=dc.healthSeries(rows,v.k,eind,30);
+    const ser=(v.k==='sleep')?ruw.map(function(p){return {date:p.date,value:tkSleepHours(p.value),source:p.source};}):ruw;
+    const q=dc.qualifySeries(ser,{field:v.k});
+    const st=dc.healthStats(q.valid), tr=dc.healthTrend(q.valid);
+    regels.push('- '+v.lbl+': '+st.count+' van 30 dagen gemeten'+
+      (st.mean!=null?(' | gemiddeld '+st.mean+' '+v.eh):'')+
+      ' | trend '+(tr.dir==='up'?'stijgend':tr.dir==='down'?'dalend':'vlak')+
+      (q.counts&&q.counts.excluded?(' | '+q.counts.excluded+' meting(en) uitgesloten door de datakwaliteitslaag'):''));
+  });
+
+  // 2. Verbanden — exact dezelfde uitkomst als op het Lichaam-scherm (één waarheid).
+  const verb=[];
+  try{
+    (tkVerbandBereken(rows)||[]).forEach(function(r){
+      const b=r.besluit; if(!b) return;
+      if(b.vrijgegeven){
+        verb.push('- '+r.def.label+': Spearman r='+String(b.coefficient).replace('.',',')+
+          ', n='+b.n+' dagen, '+b.strengthLabel.toLowerCase()+
+          (b.uitgesloten?(', '+b.uitgesloten+' dag(en) uitgesloten'):'')+
+          ' -> "'+b.zin+'"');
+      }else{
+        verb.push('- '+r.def.label+': niet vrijgegeven ('+b.reason+', '+b.n+' van '+b.minimumN+' dagen)');
+      }
+    });
+  }catch(_){}
+
+  // 3. Herstelstatus van vandaag — uit de bestaande wrapper, niet opnieuw berekend.
+  let herstelRegel='Herstelstatus vandaag: niet berekend.';
+  let herstel=null;
+  try{
+    herstel=await recoveryAdjustmentForToday();
+    if(herstel && herstel.score!=null){
+      herstelRegel='Herstelstatus vandaag: '+herstel.score+'/100 ('+herstel.band+
+        (herstel.confidence?(', betrouwbaarheid '+herstel.confidence):'')+').'+
+        ((herstel.setsDelta||herstel.rpeDelta)?(' Aanpassing uit de Decision Engine: sets '+
+          (herstel.setsDelta>0?'+':'')+herstel.setsDelta+', RPE '+(herstel.rpeDelta>0?'+':'')+herstel.rpeDelta+'.'):'');
+    }
+  }catch(_){}
+
+  // 4. Recente trainingsbelasting — feitelijk aantal trainingsdagen, geen score.
+  let belastingRegel='Recente trainingsbelasting: niet opgehaald.';
+  try{
+    const d28=new Date(); d28.setDate(d28.getDate()-27);
+    const vanaf=d28.toISOString().split('T')[0];
+    const ses=await sbGet('sessions','&date=gte.'+vanaf+'&order=date.desc');
+    const d7=new Date(); d7.setDate(d7.getDate()-6);
+    const grens7=d7.toISOString().split('T')[0];
+    const dag28={}, dag7={};
+    (ses||[]).forEach(function(x){
+      const dd=String(x&&x.date||'').slice(0,10); if(!dd) return;
+      dag28[dd]=1; if(dd>=grens7) dag7[dd]=1;
+    });
+    belastingRegel='Recente trainingsbelasting: '+Object.keys(dag7).length+' trainingsdagen in de laatste 7 dagen, '+
+      Object.keys(dag28).length+' in de laatste 28 dagen.';
+  }catch(_){}
+
+  // 5. Trainingsbetekenis van het sterkste vrijgegeven verband — uit de Decision Engine.
+  let betekenis='';
+  try{
+    const rijen=(tkVerbandBereken(rows)||[]).filter(function(r){ return r.besluit&&r.besluit.vrijgegeven; })
+      .sort(function(a,b){ return Math.abs(b.besluit.coefficient)-Math.abs(a.besluit.coefficient); });
+    if(rijen.length && typeof de.verbandTrainingContext==='function'){
+      const t=de.verbandTrainingContext(rijen[0].besluit,
+        {herstelScore:herstel?herstel.score:null, herstelBand:herstel?herstel.band:null,
+         herstelConfidence:herstel?herstel.confidence:null}, rijen[0].def);
+      if(t&&t.zin) betekenis='\nDecision Engine over dit verband: '+t.zin+(t.actie?(' '+t.actie):'');
+    }
+  }catch(_){}
+
+  return '\n\nDATAKWALITEIT, VERBANDEN EN HERSTEL (reeds berekend door de engines — niet zelf herberekenen):\n'+
+    regels.join('\n')+
+    (verb.length?('\nVerbanden (Spearman, vrijgegeven door de Decision Engine vanaf 30 vergelijkbare dagen):\n'+verb.join('\n')):'')+
+    '\n'+herstelRegel+'\n'+belastingRegel+betekenis+
+    '\n\nREGELS BIJ DEZE GEGEVENS: bereken correlaties, herstelscores, dagfactoren of trends NOOIT zelf en spreek ze niet tegen — ' +
+    'ze komen uit de Calculation Engine en de Decision Engine. Zijn metingen uitgesloten of ontbreken ze, benoem dat als onzekerheid ' +
+    'in plaats van het gat op te vullen. Beschrijf een samenhang nooit als oorzaak-gevolg. Verklaar iemand niet hersteld of ' +
+    'trainingsklaar op basis van een verband; verwijs naar de herstelstatus hierboven.';
+}
 async function buildCtx(ctx){
   // v5.9.7 (AI Coach Performance) — was 8-10 sequentiële awaits (elk wachtend op de
   // vorige voordat de volgende begint), terwijl de meeste onderling onafhankelijk zijn.
@@ -16668,7 +16775,7 @@ async function buildCtx(ctx){
     ? sbGet('sessions','&exercise_id=in.('+[...relevantExIds].join(',')+')&order=exercise_id.asc,date.desc,created_at.desc')
     : sbGet('sessions','&date=gte.'+sinceStr+'&order=exercise_id.asc,date.desc,created_at.desc');
 
-  const [,hd,wd,bc,recentSessions,,blessureContext,conditionsContext,,trainingContextRows] = await Promise.all([
+  const [,hd,wd,bc,recentSessions,,blessureContext,conditionsContext,,trainingContextRows,dataBlok] = await Promise.all([
     ensureExercisesLoaded(),
     sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'),
     sbGet('weight_log','&order=date.desc,created_at.desc&limit=3'),
@@ -16678,7 +16785,9 @@ async function buildCtx(ctx){
     getRecentPainSummary(),
     getActiveConditionsSummary(),
     ensureExerciseGoalsLoaded(),
-    sbGet('training_context','&limit=1')
+    sbGet('training_context','&limit=1'),
+    // Sprint 10 — datakwaliteit, verbanden, herstel en belasting (reeds berekend).
+    tkCoachDataBlok().catch(function(){ return ''; })
   ]);
   // Onboarding-intake: trainingscontext (frequentie/dagen/duur/locatie/materiaal/te-vermijden)
   // als feitelijke context voor de coach. De AI leest dit, rekent er niet mee (geen bron van waarheid).
@@ -16750,7 +16859,7 @@ ${hrvStr}${wStr}${bcStr}
 Volgende training: ${nextT} (laatste was ${lastT})
 ${tcSummary?'\nTRAININGSCONTEXT (uit onboarding — houd hier rekening mee bij advies, plan en oefeningkeuze; niet mee rekenen):\n'+tcSummary+'\n':''}${sessionCtx}
 
-${hrvGuide}
+${hrvGuide}${dataBlok||''}
 ${conditionsContext?conditionsContext+'\n':''}${blessureContext?blessureContext+'\n':''}
 RECENTE SESSIES (app, [id:...] = exercise_id):${exCtx}
 
@@ -19779,7 +19888,10 @@ function tkVerbandBereken(rows){
   const dc=(typeof DeviceCore!=='undefined')?DeviceCore:null;
   const cc=(typeof CalcCore!=='undefined')?CalcCore:null;
   const de=(typeof DecisionCore!=='undefined')?DecisionCore:null;
-  if(!dc||!cc||!de||typeof cc.spearman!=='function'||typeof de.releaseVerband!=='function') return [];
+  /* Sprint 10 — de datakwaliteitslaag is VERPLICHT. Ontbreekt hij (oude, nog gecachte
+     core), dan wordt er GEEN correlatie getoond in plaats van een correlatie over
+     ongekeurde data. De keten is RAW -> DATA QUALITY -> CALCULATION -> DECISION -> UI. */
+  if(!dc||!cc||!de||typeof cc.spearman!=='function'||typeof de.releaseVerband!=='function'||typeof dc.pairQuality!=='function') return [];
   const eind = (rows&&rows.length)?String(rows[0].date).slice(0,10):null;
   if(!eind) return [];
   const serieVan=function(veld,dagen){
@@ -19789,9 +19901,12 @@ function tkVerbandBereken(rows){
   };
   return (de.VERBAND_DEFINITIES||[]).map(function(def){
     const dagen = def.vensterDagen || TK_VERBAND_VENSTER;
-    const paren = dc.pairDaily(serieVan(def.a.veld,dagen), serieVan(def.b.veld,dagen));
-    const stat  = cc.spearman(paren);
-    return { def:def, paren:paren, stat:stat, besluit: de.releaseVerband(stat, def), eind:eind, dagen:dagen };
+    /* Keuren en koppelen in één stap: uitsluitend dagen waarop BEIDE waarden valide zijn. */
+    const kw    = dc.pairQuality(serieVan(def.a.veld,dagen), serieVan(def.b.veld,dagen),
+                                 {field:def.a.veld}, {field:def.b.veld});
+    const stat  = cc.spearman(kw.pairs);
+    const besluit = de.releaseVerband(stat, def, {excludedDays:kw.excludedDays, comparableDays:kw.comparableDays});
+    return { def:def, paren:kw.pairs, kwaliteit:kw, stat:stat, besluit:besluit, eind:eind, dagen:dagen };
   });
 }
 function tkVerbandPijl(richting){ return richting==='higher' ? '↗' : (richting==='lower' ? '↘' : '↔'); }
@@ -19814,7 +19929,8 @@ async function renderLichaamVerbanden(){
         '<span class="var">'+escHtml(d.b.label)+'</span>'+
         '<span class="sterk">'+escHtml(b.strengthLabel||'')+'</span></div>'+
       '<div class="zin">'+escHtml(b.zin)+'</div>'+
-      '<div class="meta">'+b.n+' vergelijkbare dagen · '+escHtml(b.disclaimer)+'</div>'+
+      '<div class="meta">'+b.n+' vergelijkbare dagen · '+escHtml(b.disclaimer)+
+        (b.kwaliteitZin?'<br>'+escHtml(b.kwaliteitZin):'')+'</div>'+
       '<span class="chev" aria-hidden="true">›</span></button>';
   }).join('');
 }
@@ -19864,7 +19980,9 @@ async function renderLichaamVerbandDetail(){
 async function _renderLichaamVerbandDetail(el){
   const naamEl=document.getElementById('lich-verband-naam'), subEl=document.getElementById('lich-verband-sub');
   const de=(typeof DecisionCore!=='undefined')?DecisionCore:null;
+  const dcx=(typeof DeviceCore!=='undefined')?DeviceCore:null;
   if(!de||typeof de.releaseVerband!=='function') throw new Error('DecisionCore onvolledig');
+  if(!dcx||typeof dcx.pairQuality!=='function') throw new Error('DeviceCore onvolledig (datakwaliteit)');
   el.innerHTML='<div class="lich-empty"><div class="e2">Gegevens laden…</div></div>';
   let rijen=_tkVerbandUitkomst;
   if(!rijen||!rijen.length){ rijen=tkVerbandBereken(await tkVerbandData()); _tkVerbandUitkomst=rijen; }
@@ -19890,6 +20008,32 @@ async function _renderLichaamVerbandDetail(el){
       '<div style="font-size:15px;font-weight:800;color:var(--g5,#1a2b33);margin-top:1px;line-height:1.25">'+escHtml(val)+'</div></div>';
   };
   const richtingWoord = b.direction==='higher' ? 'samen omhoog' : (b.direction==='lower' ? 'omgekeerd' : 'geen richting');
+  /* Sprint 10 — trainingsbetekenis. De Decision Engine bepaalt of hier iets over te
+     zeggen valt; deze functie levert alleen de REEDS BEREKENDE context aan. Herstelstatus
+     komt uit recovery_score.v1 via de bestaande wrapper, datakwaliteit uit observation.v1.
+     Er wordt hier niets gerekend en niets aangenomen. */
+  let herstel=null;
+  try{ herstel = await recoveryAdjustmentForToday(); }catch(_){ herstel=null; }
+  let dataKwaliteit=null;
+  try{
+    const vandaag=(typeof td==='function')?td():null;
+    const kwal=[r.kwaliteit&&r.kwaliteit.a, r.kwaliteit&&r.kwaliteit.b].map(function(q){
+      if(!q) return null;
+      return dcx.observationQuality(dcx.observation(q.valid,{today:vandaag}), null);
+    }).filter(Boolean);
+    dataKwaliteit = kwal.length ? lichStrengsteKwaliteit(kwal) : null;
+  }catch(_){ dataKwaliteit=null; }
+  const training = (typeof de.verbandTrainingContext==='function')
+    ? de.verbandTrainingContext(b, {herstelScore:herstel?herstel.score:null, herstelBand:herstel?herstel.band:null,
+        herstelConfidence:herstel?herstel.confidence:null, dataKwaliteit:dataKwaliteit}, d)
+    : null;
+  const trainingKaart = (training && training.zin)
+    ? ('<div class="card" style="padding:12px 14px;margin-top:10px">'+
+        '<div style="font-weight:800;color:var(--g5,#1a2b33);font-size:13px;margin-bottom:5px">Wat betekent dit voor je training?</div>'+
+        '<div style="font-size:12.5px;line-height:1.55;color:var(--g4);font-weight:600">'+escHtml(training.zin)+'</div>'+
+        (training.actie?'<div style="font-size:12px;line-height:1.5;color:var(--g4);font-weight:700;margin-top:6px">'+escHtml(training.actie)+'</div>':'')+
+      '</div>')
+    : '';
   el.innerHTML=
     '<div class="card" style="padding:14px">'+
       '<div class="kop" style="display:flex;align-items:center;gap:6px;margin-bottom:6px">'+
@@ -19897,8 +20041,11 @@ async function _renderLichaamVerbandDetail(el){
         '<span style="font-size:16px;font-weight:800;color:'+(b.direction==='none'?'var(--g4)':'var(--accent)')+'">'+tkVerbandPijl(b.direction)+'</span>'+
         '<span style="font-size:15px;font-weight:800;color:var(--dark)">'+escHtml(d.b.label)+'</span></div>'+
       '<div style="font-size:13px;line-height:1.55;color:var(--g4);font-weight:600">'+escHtml(b.zin)+'</div>'+
-      '<div style="font-size:11.5px;color:var(--g3);font-weight:600;margin-top:7px">'+escHtml(b.onderbouwing)+'</div>'+
+      (b.sterkteUitleg?'<div style="font-size:12.5px;line-height:1.5;color:var(--g4);font-weight:600;margin-top:6px">'+escHtml(b.sterkteUitleg)+'</div>':'')+
+      '<div style="font-size:11.5px;color:var(--g3);font-weight:600;margin-top:7px">'+escHtml(b.onderbouwing)+
+        (b.kwaliteitZin?' '+escHtml(b.kwaliteitZin):'')+'</div>'+
     '</div>'+
+    trainingKaart+
     '<div class="card" style="padding:12px 14px;margin-top:10px">'+
       '<div style="font-weight:800;color:var(--g5,#1a2b33);font-size:13px">Spreidingsdiagram</div>'+
       '<div style="font-size:11px;color:var(--g4);margin-bottom:4px">'+escHtml(eersteDatum)+' t/m '+escHtml(laatsteDatum)+' · '+b.n+' dagen met beide metingen</div>'+
@@ -19970,12 +20117,25 @@ function _tkMetricEnd(cfg, rows){
   }
   return null;
 }
-function _tkMetricSeries(cfg, rows, endYmd, days){
+// Sprint 10 — de ruwe reeks, ONGEKEURD. Uitsluitend als invoer voor de keuring hieronder.
+function _tkMetricRuweSerie(cfg, rows, endYmd, days){
   const dc=DeviceCore;
   if(cfg.src==='weight_log') return dc.weightSeries(rows, endYmd, days);
   const ser=dc.healthSeries(rows, cfg.field, endYmd, days);
   /* sleep_unit.v1 — legacy-rijen kunnen minuten bevatten; normaliseren vóór weergave. */
   return (cfg.field==='sleep') ? ser.map(function(p){ return {date:p.date, value:tkSleepHours(p.value), source:p.source}; }) : ser;
+}
+// Sprint 10 — de gekeurde reeks. ÉÉN plek, zodat grafiek, trend, statistiek en observatie
+// allemaal exact dezelfde punten zien: wat niet is meegerekend, wordt ook niet getekend.
+// Er wordt niets uit de database verwijderd; de ruwe waarde blijft zichtbaar bij Metingen.
+function _tkMetricKeuring(cfg, rows, endYmd, days){
+  const dc=DeviceCore;
+  const ruw=_tkMetricRuweSerie(cfg, rows, endYmd, days);
+  if(typeof dc.qualifySeries!=='function') return { valid: ruw, counts:{excluded:0}, excluded:[] };
+  return dc.qualifySeries(ruw, {field: cfg.field});
+}
+function _tkMetricSeries(cfg, rows, endYmd, days){
+  return _tkMetricKeuring(cfg, rows, endYmd, days).valid;
 }
 function tkSetMetricPeriod(n){ _tkMetricPeriod=n; renderLichaamMetricDetail(); }
 
@@ -20052,6 +20212,10 @@ async function _renderLichaamMetricDetail(el){
       '<div style="font-size:15px;font-weight:800;color:var(--g5,#1a2b33);margin-top:1px">'+val+'</div></div>';
   };
   const dekkingPct=Math.round((stats.coverage||0)*100);
+  /* Sprint 10 — uitsluitingstransparantie. De zin komt uit de Decision Engine, niet uit de UI. */
+  const keuring=_tkMetricKeuring(cfg, rows, end, P);
+  const uitsluitZin=(typeof DecisionCore!=='undefined' && typeof DecisionCore.meetreeksUitsluitingZin==='function')
+    ? DecisionCore.meetreeksUitsluitingZin(keuring.counts?keuring.counts.excluded:0) : null;
   const dqTekst=(typeof TK_DQ_TEKST!=='undefined' && TK_DQ_TEKST[kwaliteit])?TK_DQ_TEKST[kwaliteit]:null;
 
   el.innerHTML=
@@ -20090,7 +20254,8 @@ async function _renderLichaamMetricDetail(el){
       '<div style="font-size:10.5px;color:var(--g3);margin-top:8px;line-height:1.5">'+
         'Datadekking: '+stats.count+' van '+stats.days+' dagen gemeten ('+dekkingPct+'%). '+
         (stats.sd==null?'Spreiding is pas te bepalen vanaf twee metingen.':'Spreiding is de standaarddeviatie over de gemeten dagen.')+
-        ' Dagen zonder meting tellen niet als nul mee.</div>'+
+        ' Dagen zonder meting tellen niet als nul mee.'+
+        (uitsluitZin?('<br>'+escHtml(uitsluitZin)):'')+'</div>'+
     '</div>'+
     // Wat betekent dit? — uitleg is beschrijvend; de duiding blijft bij Coach
     '<div class="v43-lbl" style="margin:16px 0 10px">Wat betekent dit?</div>'+

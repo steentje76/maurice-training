@@ -138,7 +138,7 @@ ok(/chart:'bar'/.test(cfgBlok), 'E4: slaap wordt als staafdiagram getoond');
 ok(/kind:'entered'/.test(cfgBlok), 'E5: gewicht is expliciet ingevoerd, niet gemeten');
 ok(html.indexOf('const TK_LICH_METRIC_PERIODS = TK_HEALTH_PERIODS.concat([365])') >= 0,
    'E6: de periodelijst bouwt voort op de bestaande TK_HEALTH_PERIODS (7/14/30/90 + 1j)');
-ok(/tkSleepHours\(p\.value\)/.test(html.slice(html.indexOf('function _tkMetricSeries'), html.indexOf('function tkSetMetricPeriod'))),
+ok(/tkSleepHours\(p\.value\)/.test(html.slice(html.indexOf('function _tkMetricRuweSerie'), html.indexOf('function tkSetMetricPeriod'))),
    'E7: slaap wordt via de bestaande sleep_unit-normalisatie naar decimale uren gebracht');
 ok(html.indexOf('dc.availablePeriods(function(p)') >= 0, 'E8: het scherm biedt alleen beschikbare perioden aan');
 // De renderer mag geen eigen grafiek- of statistiekmotor bevatten.

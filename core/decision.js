@@ -22,7 +22,8 @@
     phase: 'phase.v1',
     evidence: 'evidence.v1',
     dayzone: 'dayzone.v1',
-    readiness_day: 'readiness_day.v1'
+    readiness_day: 'readiness_day.v1',
+    evidence_snapshot: 'evidence_snapshot.v1'
   };
 
   // --- progression.v1 --- exact gelijk aan legacy computeProgression(rpe,curKg).
@@ -120,6 +121,127 @@
     if (o.override != null) ev.override = o.override;
     if (o.ai != null) ev.ai = o.ai;
     return ev;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════
+   * BESLISSINGSSNAPSHOT (evidence_snapshot.v1) — Sprint 18
+   *
+   * De app kon al een licht bewijsobject samenstellen (buildEvidence, evidence.v1) en legt
+   * daarmee vast welke regel gold bij het PLANNEN van een training. Wat ontbrak was het
+   * bewijs achter een genomen beslissing: welke ruwe waarden lagen eronder, wat is daaruit
+   * berekend, welke regel besliste wat, en hoe is dat aan de sporter uitgelegd.
+   *
+   * Dit contract legt dat vast als SNAPSHOT. Vijf gescheiden secties, zodat later altijd te
+   * zien is waar een getal vandaan kwam:
+   *     raw          wat de sporter of de sensor leverde
+   *     calculated   wat daar deterministisch uit is gerekend
+   *     decision     wat de Decision Engine besloot
+   *     rule         welke regel en welke versie dat deden
+   *     explanation  hoe het is uitgelegd (tekst, nooit een bron van waarheid)
+   *
+   * ONTBREKENDE GEGEVENS BLIJVEN ONTBREKEN. Een veld dat er niet was komt als null in de
+   * snapshot en wordt genoemd in `missing`. Er wordt niets geïnterpoleerd, geschat of door
+   * de AI aangevuld — een snapshot die iets suggereert wat niet gemeten is, is geen bewijs.
+   *
+   * DETERMINISTISCH. Geen Date.now hier: het tijdstip wordt ingespoten (`at`). Dezelfde ruwe
+   * invoer, dezelfde engineversies en hetzelfde tijdstip geven byte-identiek dezelfde snapshot.
+   *
+   * EEN SNAPSHOT IS ONVERANDERLIJK. Hij wordt bij het afronden één keer geschreven en daarna
+   * alleen gelezen. Wijzigt de sporter later een voorschrift of een instelling, dan verandert
+   * de historische snapshot niet mee — anders zou hij niet vastleggen wat er destijds gold.
+   * Daarom wordt elke waarde bij het bouwen gekopieerd en niet als referentie bewaard.
+   * ══════════════════════════════════════════════════════════════════════════ */
+  var EVIDENCE_SNAPSHOT_VERSIE = 'evidence_snapshot.v1';
+  var EVIDENCE_SECTIES = ['raw', 'calculated', 'decision', 'rule', 'explanation'];
+
+  function _evKopie(v) {
+    if (v == null) return null;
+    if (Array.isArray(v)) return v.map(_evKopie);
+    if (typeof v === 'object') {
+      var uit = {}, k;
+      for (k in v) if (Object.prototype.hasOwnProperty.call(v, k)) uit[k] = _evKopie(v[k]);
+      return uit;
+    }
+    return v;                                   // getal, string, boolean
+  }
+  function _evVeld(bron, sleutels, ontbreekt, prefix) {
+    var uit = {};
+    sleutels.forEach(function (k) {
+      var v = (bron && bron[k] !== undefined) ? bron[k] : null;
+      if (v == null || v === '') { uit[k] = null; ontbreekt.push(prefix + '.' + k); }
+      else uit[k] = _evKopie(v);
+    });
+    return uit;
+  }
+
+  /* buildDecisionEvidence(input)
+   * input: {
+   *   at:        ISO-tijdstip (INGESPOTEN, verplicht voor een geldige snapshot),
+   *   context:   {trainingInstanceId, exerciseId, setNummer, date},
+   *   raw:       {kg, reps, rpe, voorgeschrevenKg, voorgeschrevenReps, voorgeschrevenRpe},
+   *   calculated:{...}   reeds berekende waarden (bv. effKg, e1rm) — hier NIET herberekend,
+   *   decision:  <resultaat van een DecisionCore-regel>,
+   *   rule:      {id, version} (optioneel; wordt anders uit `decision` gehaald),
+   *   explanation: string|null
+   * }
+   * -> onveranderlijke snapshot, of {geldig:false} wanneer er te weinig is om iets vast te leggen
+   */
+  function buildDecisionEvidence(input) {
+    var i = input || {};
+    var ontbreekt = [];
+    var ctx = i.context || {};
+    var raw = _evVeld(i.raw, ['kg', 'reps', 'rpe', 'voorgeschrevenKg', 'voorgeschrevenReps', 'voorgeschrevenRpe'], ontbreekt, 'raw');
+    var berekend = _evKopie(i.calculated) || {};
+    var besluit = _evKopie(i.decision);
+    var regel = i.rule ? _evKopie(i.rule)
+      : (besluit && besluit.ruleId ? { id: besluit.ruleId, version: besluit.ruleVersion || null } : null);
+    var at = (typeof i.at === 'string' && i.at) ? i.at : null;
+    if (!at) ontbreekt.push('at');
+
+    var geldig = !!(besluit && at);
+    return {
+      versie: EVIDENCE_SNAPSHOT_VERSIE,
+      geldig: geldig,
+      at: at,
+      context: {
+        trainingInstanceId: ctx.trainingInstanceId != null ? String(ctx.trainingInstanceId) : null,
+        exerciseId: ctx.exerciseId != null ? String(ctx.exerciseId) : null,
+        setNummer: (typeof ctx.setNummer === 'number' && isFinite(ctx.setNummer)) ? ctx.setNummer : null,
+        date: ctx.date != null ? String(ctx.date) : null
+      },
+      raw: raw,
+      calculated: berekend,
+      decision: besluit,
+      rule: regel,
+      explanation: (typeof i.explanation === 'string' && i.explanation) ? i.explanation : null,
+      versions: {
+        calculation: (i.versions && i.versions.calculation) || null,
+        decision: (regel && regel.version) || null,
+        evidence: EVIDENCE_SNAPSHOT_VERSIE
+      },
+      missing: ontbreekt
+    };
+  }
+
+  /* readDecisionEvidence(snapshot) — leest een opgeslagen snapshot terug.
+   * Geeft null bij alles wat geen herkenbare snapshot is; verzint nooit een vorm. */
+  function readDecisionEvidence(snapshot) {
+    if (!snapshot || typeof snapshot !== 'object') return null;
+    if (snapshot.versie !== EVIDENCE_SNAPSHOT_VERSIE) return null;
+    return _evKopie(snapshot);                   // kopie: de aanroeper kan de historie niet muteren
+  }
+
+  /* evidenceReproduceerbaar(snapshot, opnieuw) — is een snapshot te reproduceren?
+   * Vergelijkt de vastgelegde beslissing met een OPNIEUW GENOMEN beslissing uit dezelfde ruwe
+   * invoer. Verschilt de uitkomst, dan is er iets aan de regel of de invoer veranderd — precies
+   * wat een bewijsspoor hoort te kunnen aantonen. */
+  function evidenceReproduceerbaar(snapshot, opnieuw) {
+    var s = readDecisionEvidence(snapshot);
+    if (!s || !s.decision || !opnieuw) return { reproduceerbaar: false, reden: 'geen_snapshot' };
+    var a = JSON.stringify(s.decision), b = JSON.stringify(_evKopie(opnieuw));
+    if (a === b) return { reproduceerbaar: true, reden: 'ok' };
+    var zelfdeRegel = !!(s.rule && opnieuw.ruleId === s.rule.id && (opnieuw.ruleVersion || null) === (s.rule.version || null));
+    return { reproduceerbaar: false, reden: zelfdeRegel ? 'andere_uitkomst' : 'andere_regelversie' };
   }
 
   /* ══════════════════════════════════════════════════════════════════════════
@@ -673,6 +795,11 @@
   }
 
   var DecisionCore = {
+    buildDecisionEvidence: buildDecisionEvidence,
+    readDecisionEvidence: readDecisionEvidence,
+    evidenceReproduceerbaar: evidenceReproduceerbaar,
+    EVIDENCE_SNAPSHOT_VERSIE: EVIDENCE_SNAPSHOT_VERSIE,
+    EVIDENCE_SECTIES: EVIDENCE_SECTIES,
     dayZone: dayZone,
     DAYZONES: DAYZONES,
     DAYZONE_VERSIE: DAYZONE_VERSIE,

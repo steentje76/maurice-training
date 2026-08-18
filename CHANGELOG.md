@@ -1,5 +1,37 @@
 # Trainingskompas — Changelog
 
+## v4.36.0 — 18 augustus 2026 (Sprint 13 — AI Coach tijdens het trainen)
+
+Tot nu toe kon de sporter tijdens een training alleen "Vraag de coach" gebruiken, en dat haalde hem uit de training: `go('s-coach')`, weg uit het scherm waar hij mee bezig was. Deze release beantwoordt de vraag "wat moet ik nu doen?" ín de training zelf, zonder dat er ergens een tweede rekenwaarheid ontstaat.
+
+### De rustregel stond in de UI — `rest.v1`
+
+`dynamicRestSec` bepaalde in `index.html` hoe de rusttijd met de RPE meeschaalt. Dat is een businessregel, geen presentatie, en die hoort in de Decision Engine. De inhoud is ongewijzigd overgenomen: dezelfde factoren, dezelfde ondergrens van 30 seconden, dezelfde afronding op vijf seconden, en zonder RPE gebeurt er nog steeds niets. `index.html` houdt een pure doorgeefwrapper, dus elke bestaande aanroep en de bestaande test blijven werken.
+
+### Wat er van één set te zeggen valt — `setoutcome.v1`
+
+De sporter logt een set; daarna telt de vraag of dit klopt met wat er stond en wat er nu moet gebeuren. Dat is een regel, geen coachpraatje, dus staat hij in de Decision Engine. `setOutcome` vergelijkt het voorgeschrevene met het uitgevoerde en haalt de gewichtsbeslissing op bij de **bestaande** progressieregel. Er komt geen tweede RPE-regel bij: zegt `computeProgression` niets, dan zegt `setOutcome` niets over gewicht.
+
+Afwijkingen worden benoemd als feit, niet als oordeel: minder of meer herhalingen, lager of hoger gewicht, hogere of lagere RPE, of een set waarvoor niets is ingevuld. "Doel gehaald" wordt alleen ingevuld als beide kanten bekend zijn — anders blijft het onbekend, nooit "nee".
+
+**Er wordt niets ingevuld wat er niet is.** Elk ontbrekend veld komt in `ontbreekt` te staan en de bijbehorende uitspraak vervalt. Zonder RPE geen gewichtsadvies. Zonder ingestelde rust geen rusttijd. Zonder voorschrift geen afwijkingen.
+
+### Het coachcontract — `livecoach.v1`
+
+`CoachingCore.buildLiveContext` maakt expliciet wat er beschikbaar is, wat ontbreekt, en wat gemeten, berekend, besloten of alleen uitgelegd is. `liveCoachMessage` verwoordt uitsluitend wat in het besluit staat: één korte actie, een "Waarom?" met de onderbouwing, en een eerlijke melding als iets mist. Deze laag rekent niet en beslist niet — een test dwingt af dat er in de code van dit blok geen enkele aanroep naar de Decision Engine of een rekenfunctie staat.
+
+`liveAiPayload` is de grens naar de AI: een whitelist, net als het bestaande `aiPayload`. De AI krijgt de reeds genomen beslissing en de reeds bepaalde getallen, plus de herkomst en de lijst met wat ontbreekt — nooit de ruwe sessie om zelf mee te rekenen. In de systeemprompt staat er expliciet bij dat hij het advies en het getal niet mag wijzigen, ontbrekende gegevens niet mag invullen en geen oorzaak-gevolg mag beschrijven.
+
+### Op het scherm
+
+Eén compacte regel in de bestaande VANDAAG-kaart, direct onder de setstatus: de actie in vet, de waarneming eronder, en een "Waarom?" die uitklapt. Wie meer wil, klikt door naar de bestaande coach — die krijgt dan het gesaneerde contract mee. Geen nieuw scherm, geen nieuwe visuele taal: dezelfde accentkleur, grijstinten en typografie als de rest van de kaart.
+
+Voorbeeld van wat er staat na een set van 100 kg × 5 bij RPE 7: *"Ga naar 102,5 kg voor je volgende set. Rust eerst 2 minuten."* met daaronder *"Je gaf RPE 7 op 100 kg. Binnen de progressieregel van de app is dat de zone om te verhogen, met 2,5 kg."* Bij een set zonder RPE: *"Rust 2 minuten en ga dan door."* plus *"Nog niet alles is ingevuld; dit advies gaat over wat er wél staat."* — en geen woord over gewicht.
+
+### Overig
+
+`core/fLiveCoach.test.js` toegevoegd met 148 controles, waaronder de ketenregressie die bewijst dat de coachzin het getal van de Decision Engine draagt en niet andersom, en een taalcontrole over alle gegenereerde zinnen. `fRestTimerSound.test.js` is meeverhuisd met de verplaatste rustregel en toetst nu ook dat de wrapper en de engine hetzelfde antwoord geven. `sw.js`: `CORE_SIG` naar `bbacf56e25a290cf` en de caches naar `v43600`, omdat `core/decision.js` en `core/coaching.js` zijn gewijzigd.
+
 ## v4.35.0 — 18 augustus 2026 (Sprint 12 — databehoud en één recordregel)
 
 Sprint 11 (`a0062fd`) is nooit op main gekomen. De drie defecten die daar gerepareerd waren stonden dus nog onverkort in productie. Deze release brengt die fixes alsnog, voegt de ontbrekende dekking toe rond sessie-aggregatie en records, en haalt één regel uit de UI naar de Decision Engine.

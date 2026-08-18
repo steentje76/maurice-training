@@ -2780,6 +2780,17 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .set-confirm.show{opacity:1;transform:translateX(-50%) translateY(0)}
 /* F0.8B — Active Set Focus (in VANDAAG-kaart; subtiel, onder het primaire gewicht — bestaande tokens) */
 .exfocus-setwrap{margin-top:10px;padding-top:10px;border-top:1px solid var(--g2)}
+/* Sprint 13 — live coach binnen de training. Hergebruikt de bestaande tokens: accentkleur,
+   grijstinten, radius en typografie van de kaarten. Geen nieuwe visuele taal. */
+.livecoach{margin-top:10px;padding-top:10px;border-top:1px solid var(--g2)}
+.livecoach-row{display:flex;align-items:flex-start;gap:8px}
+.livecoach-ic{font-size:14px;line-height:1.35;flex:0 0 auto}
+.livecoach-txt{flex:1;min-width:0;font-size:12.5px;line-height:1.45;color:var(--g5,#1a2b33)}
+.livecoach-txt b{display:block;font-weight:800}
+.livecoach-txt s{display:block;text-decoration:none;font-weight:600;color:var(--g4);font-size:11.5px;margin-top:2px}
+.livecoach-why{flex:0 0 auto;background:none;border:none;padding:0 0 0 6px;color:var(--accent);font-family:var(--f);font-size:11.5px;font-weight:800;cursor:pointer}
+.livecoach-uitleg{margin-top:7px;font-size:12px;line-height:1.5;color:var(--g4);font-weight:600}
+.livecoach-ai{display:block;margin-top:7px;background:var(--dark);color:#fff;border:none;border-radius:10px;padding:7px 12px;font-family:var(--f);font-size:11.5px;font-weight:700;cursor:pointer}
 .exfocus-set-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .exfocus-set-lbl{font-size:12px;font-weight:700;color:var(--g4);letter-spacing:.3px;text-transform:uppercase}
 .exfocus-set-lbl b{color:var(--accent);font-weight:800}
@@ -5637,7 +5648,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.35.0';
+const APP_VER = 'v4.36.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -10642,13 +10653,10 @@ function playCountdownBeep(){
 }
 // Dynamische rust (sporterkeuze): zwaardere set (hogere RPE) → langere rust; lichte set → korter.
 // Begrensd 0.75–1.5×, minimaal 30s, afgerond op 5s. Deterministisch (geen AI, geen verzonnen data).
-function dynamicRestSec(baseSec, rpe){
-  if(!(baseSec>0))return baseSec;
-  const r=(rpe==null||isNaN(rpe))?null:Number(rpe);
-  if(r==null)return baseSec; // geen RPE gelogd → basisrust ongewijzigd
-  let f; if(r<=6)f=0.75; else if(r<=7)f=0.9; else if(r<=8)f=1.0; else if(r<=9)f=1.25; else f=1.5;
-  return Math.max(30, Math.round(baseSec*f/5)*5);
-}
+/* Sprint 13: de rustregel is een businessregel en staat sinds deze sprint in de Decision
+   Engine (rest.v1). Dit is een pure doorgeefwrapper, zodat elke bestaande aanroep en de
+   bestaande test ongewijzigd blijven werken. Zelfde in- en uitvoer, geen tweede regel. */
+function dynamicRestSec(baseSec, rpe){ return DecisionCore.restForSet(baseSec, rpe); }
 // Wake lock: houdt het scherm aan tijdens de training als de sporter dat kiest (standaard aan). Alleen actief
 // zolang de training loopt; wordt vrijgegeven bij stoppen/pauzeren/afronden. Systeem geeft de lock vrij bij
 // tab-verbergen → heraanvragen bij terugkeer (mits training actief).
@@ -10993,7 +11001,9 @@ function applyExecutionFocus(t){
       '</div>';
     (container.querySelector('.exfocus-herocard')||head).insertAdjacentElement('afterend',today);
     // F0.8B — Active Set Focus in de VANDAAG-kaart (read-only spiegel van #sc-<ex>-<i>).
-    if(cur.id){ const asb=document.createElement('div'); asb.id='exfocus-set-'+cur.id; asb.className='exfocus-setwrap'; asb.innerHTML=activeSetBannerHtml(cur.id); today.appendChild(asb); if(typeof applyActiveSetRowClass==='function')applyActiveSetRowClass(cur.id); }
+    if(cur.id){ const asb=document.createElement('div'); asb.id='exfocus-set-'+cur.id; asb.className='exfocus-setwrap'; asb.innerHTML=activeSetBannerHtml(cur.id); today.appendChild(asb); if(typeof applyActiveSetRowClass==='function')applyActiveSetRowClass(cur.id);
+      /* Sprint 13: coachregel direct onder de setstatus — binnen de training, geen nieuw scherm. */
+      const lc=document.createElement('div'); lc.id='livecoach-'+cur.id; today.appendChild(lc); }
   }
   // F0.7S — read-only Warm-up Ramp Card (coach-weergave). Bron: cur.suggestedWeight →
   // bestaande suggestWarmupScheme(); fallback: bestaande warmupState-waarden. Percentage is
@@ -13975,6 +13985,7 @@ function logSet(exId,type,setNum,isWork){
     showEpleyHint(exId,effKg,parseInt(reps));
   }
   if(isWork){ try{ updateSetE1RM(exId,setNum,effKg,reps); }catch(_){} } // P2: live "1RM ≈ x kg" onder de set
+  if(isWork){ try{ tkLiveCoachUpdate(exId,setNum); }catch(_){} }          // Sprint 13: coachregel bijwerken
   updateProgress(curT);
   updateSummary(curT);
   scheduleAutosave();
@@ -14037,6 +14048,98 @@ function autoRestAfterSet(exId,setNum){
     }
   }catch(e){}
 }
+/* ══════════════════════════════════════════════════════════════════════════
+ * LIVE COACH TIJDENS DE TRAINING (Sprint 13)
+ *
+ * Eén compacte regel in het trainingsscherm die antwoord geeft op "wat moet ik nu doen?",
+ * met een uitklapbare "Waarom?". De sporter hoeft de training niet te verlaten.
+ *
+ * Hier wordt NIETS berekend en NIETS besloten. De keten is:
+ *   DOM (gelogde set) -> DecisionCore.setOutcome -> CoachingCore.buildLiveContext
+ *                     -> CoachingCore.liveCoachMessage -> deze functie plaatst tekst.
+ * De AI komt hier niet aan te pas; die is er pas als de sporter zelf doorklikt, en krijgt
+ * dan exact hetzelfde gecontroleerde contract via liveAiPayload.
+ * ══════════════════════════════════════════════════════════════════════════ */
+let _tkLiveCoach = {};          // per oefening: laatste context (voor "Waarom?" en voor de AI)
+let _tkLiveCoachOpen = {};      // per oefening: staat de uitleg open?
+
+// De voorgeschreven waarden van deze oefening, uit de BESTAANDE prescription-bron.
+function tkVoorschriftVoor(exId){
+  const lijst=(typeof curT!=='undefined'&&curT)?getSessionExs(curT):[];
+  const ex=(lijst||[]).filter(function(e){return e&&e.id===exId;})[0]||null;
+  const kg=(window._rxWeightMap&&window._rxWeightMap[exId]!=null)?window._rxWeightMap[exId]:null;
+  if(!ex&&kg==null) return null;
+  return { kg: kg,
+           reps: ex?(resolvePrescriptionRepTarget(ex.reps)||repsPrefillFromRange(ex.reps)):null,
+           rpe: ex?ex.rpe:null };
+}
+// De zojuist gelogde set uit sessionLog — de gemeten waarden, niet uit de DOM opnieuw gelezen.
+function tkUitgevoerdVoor(exId,setNum){
+  const l=(typeof sessionLog!=='undefined')?sessionLog[exId]:null;
+  const s=(l&&l.sets)?l.sets[setNum-1]:null;
+  if(!s) return null;
+  return { kg:(s.effKg!=null?s.effKg:numNL(s.kg)), reps:s.reps, rpe:s.rpe };
+}
+function tkLiveCoachUpdate(exId,setNum){
+  try{
+    const el=document.getElementById('livecoach-'+exId);
+    if(!el) return;
+    if(typeof DecisionCore==='undefined'||typeof CoachingCore==='undefined'
+       ||typeof DecisionCore.setOutcome!=='function'||typeof CoachingCore.buildLiveContext!=='function'){
+      el.innerHTML=''; return;                     // oude, nog gecachte core: liever niets dan iets verzonnens
+    }
+    const uitgevoerd=tkUitgevoerdVoor(exId,setNum);
+    if(!uitgevoerd||(uitgevoerd.kg==null&&!uitgevoerd.reps)){ el.innerHTML=''; return; }
+    const exObj=(typeof exercises!=='undefined')?exercises.find(function(e){return e.id===exId;}):null;
+    const rustBasis=(exObj&&exObj.rest_seconds>0)?exObj.rest_seconds:restDefaultSec();
+    const besluit=DecisionCore.setOutcome({
+      voorgeschreven: tkVoorschriftVoor(exId)||{},
+      uitgevoerd: uitgevoerd,
+      restBasisSec: rustBasis,
+      dynamischeRust: isSettingOn('tk_dynrest_enabled',false)
+    });
+    const info=(typeof activeSetInfo==='function')?activeSetInfo(exId):{total:null};
+    const ctx=CoachingCore.buildLiveContext({
+      oefening:{id:exId, naam:(exObj&&exObj.name)||exId},
+      setNummer:setNum, totaalSets:info.total,
+      voorgeschreven: tkVoorschriftVoor(exId),
+      uitgevoerd: uitgevoerd,
+      besluit: besluit,
+      herstel: (typeof sessionRxAdj!=='undefined'&&curT&&sessionRxAdj[curT]&&sessionRxAdj[curT].score!=null)
+        ? {score:sessionRxAdj[curT].score, band:sessionRxAdj[curT].band, betrouwbaarheid:sessionRxAdj[curT].confidence}
+        : null
+    });
+    _tkLiveCoach[exId]=ctx;
+    el.innerHTML=tkLiveCoachHtml(exId, CoachingCore.liveCoachMessage(ctx));
+  }catch(e){ try{ const el=document.getElementById('livecoach-'+exId); if(el)el.innerHTML=''; }catch(_){} }
+}
+function tkLiveCoachHtml(exId,m){
+  if(!m||(!m.actie&&!m.onzekerheid)) return '';
+  const open=!!_tkLiveCoachOpen[exId];
+  const kop=m.actie?escHtml(m.actie):escHtml(m.onzekerheid);
+  const sub=[m.afwijking, (m.actie&&m.onzekerheid)?m.onzekerheid:null].filter(Boolean).map(escHtml).join(' ');
+  return '<div class="livecoach">'+
+    '<div class="livecoach-row"><span class="livecoach-ic" aria-hidden="true">🤖</span>'+
+      '<span class="livecoach-txt"><b>'+kop+'</b>'+(sub?'<s>'+sub+'</s>':'')+'</span>'+
+      (m.waarom?'<button class="livecoach-why" onclick="tkLiveCoachToggle(\''+exId+'\')" aria-expanded="'+(open?'true':'false')+'">'+(open?'Sluiten':'Waarom?')+'</button>':'')+
+    '</div>'+
+    (open&&m.waarom?'<div class="livecoach-uitleg">'+escHtml(m.waarom)+
+      '<button class="livecoach-ai" onclick="tkLiveCoachVraagAi(\''+exId+'\')">Vraag de coach om meer uitleg</button></div>':'')+
+  '</div>';
+}
+function tkLiveCoachToggle(exId){
+  _tkLiveCoachOpen[exId]=!_tkLiveCoachOpen[exId];
+  const ctx=_tkLiveCoach[exId]; const el=document.getElementById('livecoach-'+exId);
+  if(ctx&&el) el.innerHTML=tkLiveCoachHtml(exId, CoachingCore.liveCoachMessage(ctx));
+}
+// Doorklikken naar de AI: die krijgt het GESANEERDE contract, niet de ruwe sessie.
+function tkLiveCoachVraagAi(exId){
+  const ctx=_tkLiveCoach[exId];
+  window._tkLiveAi=(ctx&&typeof CoachingCore.liveAiPayload==='function')?CoachingCore.liveAiPayload(ctx):null;
+  const naam=(ctx&&ctx.oefening&&ctx.oefening.naam)||exId;
+  askCoachEx(naam,(typeof curT!=='undefined'?curT:null),exId);
+}
+
 // ── F0.8B — Active Set Focus (read-only spiegel van de zichtbare werkset-cirkels) ──
 // Bron van waarheid: de '.done'-status op #sc-<ex>-<i> (gezet door toggleSetDone), exact wat de
 // sporter ziet. Totaal = de bestaande werkset-cirkels (warm-up 'wr-'/'w-' heeft géén sc-cirkel en
@@ -16886,6 +16989,20 @@ Naam: ${ctx.exNaam} [id:${ctx.exId}]${ctx.trainingType?' · Training '+ctx.train
 Target: ${cfgEx?cfgEx.sets+'×'+cfgEx.reps+(cfgEx.rpe?' · RPE '+cfgEx.rpe:''):'onbekend'}
 Huidige 1RM: ${oneRMFor(ctx.exId)||prFor(ctx.exId)||'onbekend'} kg
 Reeds gelogde sets deze sessie: ${loggedSets.length?loggedSets.map((s,i)=>(i+1)+') '+s.kg+'kg×'+s.reps+(s.rpe?' RPE'+s.rpe:'')).join(', '):'nog geen'}`;
+    /* Sprint 13 — het GESANEERDE live-contract. De coach krijgt de reeds genomen beslissing
+       en de reeds bepaalde getallen; nooit de ruwe sessie om zelf mee te rekenen. Ontbrekende
+       velden staan er expliciet in, zodat hij ze niet kan invullen. */
+    try{
+      const _live=window._tkLiveAi;
+      if(_live){
+        sessionCtx+=`\n\nLIVE COACH-CONTEXT (reeds besloten door de Decision Engine — niet herberekenen):
+${JSON.stringify(_live)}
+Toelichting bij dit blok: 'uitgevoerd' is gemeten, 'voorgeschreven' is berekend, 'actie' en 'rust' zijn
+besloten door de Decision Engine, en 'ontbreekt' somt op wat NIET beschikbaar is. Leg de actie uit in
+gewone taal, wijzig het advies of het getal niet, vul ontbrekende gegevens niet in en beschrijf geen
+oorzaak-gevolg. Ontbreekt wat de sporter vraagt, zeg dan dat je daar vandaag niet genoeg gegevens voor hebt.`;
+      }
+    }catch(_){}
   }
   return `Je bent de persoonlijke trainingscoach en data-analist van ${atleet?.naam||'de atleet'}.
 Communiceer in het Nederlands. Vandaag is ${huidigeDatumTijdNL()}. Datumnotatie: "26 april 2026 08:00".

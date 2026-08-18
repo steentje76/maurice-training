@@ -121,6 +121,152 @@
   }
 
   /* ══════════════════════════════════════════════════════════════════════════
+   * RUST NA EEN SET (rest.v1)
+   *
+   * Deze regel stond in index.html en was daarmee een businessregel in de UI-laag. De
+   * inhoud is ONGEWIJZIGD overgenomen (zelfde factoren, zelfde ondergrens van 30s,
+   * zelfde afronding op 5s); alleen de plaats klopt nu. index.html houdt een
+   * doorgeefwrapper, zodat elke bestaande aanroep blijft werken.
+   *
+   * Zonder RPE gebeurt er niets: de basisrust blijft staan. Er wordt nooit een rusttijd
+   * verzonnen op grond van gegevens die er niet zijn.
+   * ══════════════════════════════════════════════════════════════════════════ */
+  var REST_VERSIE = 'rest.v1';
+  function restForSet(baseSec, rpe) {
+    if (!(baseSec > 0)) return baseSec;
+    var r = (rpe == null || isNaN(rpe)) ? null : Number(rpe);
+    if (r == null) return baseSec;                 // geen RPE gelogd -> basisrust ongewijzigd
+    var f;
+    if (r <= 6) f = 0.75; else if (r <= 7) f = 0.9; else if (r <= 8) f = 1.0; else if (r <= 9) f = 1.25; else f = 1.5;
+    return Math.max(30, Math.round(baseSec * f / 5) * 5);
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════
+   * UITKOMST VAN ÉÉN SET (setoutcome.v1) — Sprint 13
+   *
+   * De sporter logt een set. De vraag die daarna telt is: klopt dit met wat er stond, en
+   * wat moet ik nu doen? Dat is een REGEL, geen coachpraatje, en hij hoort dus hier.
+   *
+   * Deze functie rekent NIETS nieuws uit. Ze vergelijkt wat er stond met wat er gebeurd
+   * is, en haalt de gewichtsbeslissing op bij de BESTAANDE progressieregel
+   * (progressionDecision -> computeProgression). Er komt geen tweede RPE-regel bij; als
+   * de progressieregel niets zegt, zegt deze functie ook niets over gewicht.
+   *
+   * ONTBREKENDE GEGEVENS WORDEN NIET INGEVULD. Elk veld dat mist komt in `ontbreekt` te
+   * staan en de bijbehorende uitspraak vervalt. Zonder RPE is er geen gewichtsadvies;
+   * zonder voorgeschreven waarden zijn er geen afwijkingen vast te stellen.
+   *
+   * De uitkomst bevat geen zinnen — alleen feiten en sleutels. De verwoording gebeurt in
+   * CoachingCore, precies zoals bij de verbanden.
+   * ══════════════════════════════════════════════════════════════════════════ */
+  var SETOUTCOME_VERSIE = 'setoutcome.v1';
+  var SETOUTCOME_AFWIJKINGEN = ['minder_reps', 'meer_reps', 'lager_gewicht', 'hoger_gewicht',
+                                'hogere_rpe', 'lagere_rpe', 'set_overgeslagen'];
+  var SETOUTCOME_ACTIES = ['verhogen', 'gelijk', 'verlagen', 'rust', 'geen_advies'];
+
+  function _soNum(v) {
+    if (typeof v === 'number') return isFinite(v) ? v : null;
+    if (typeof v === 'string') {
+      var t = v.trim();
+      if (!t || !/^[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?$/.test(t)) return null;
+      var n = Number(t);
+      return isFinite(n) ? n : null;
+    }
+    return null;
+  }
+  function _rond1(n) { return Math.round(n * 10) / 10; }
+
+  /* setOutcome(input)
+   * input: {
+   *   voorgeschreven: {kg, reps, rpe},   // de prescription (rxWeight / sets x reps @ RPE)
+   *   uitgevoerd:     {kg, reps, rpe},   // wat de sporter logde
+   *   restBasisSec:   number|null,       // ingestelde rust vóór schaling
+   *   dynamischeRust: bool               // staat rustschaling aan?
+   * }
+   * -> { versie, bruikbaar, ontbreekt[], afwijkingen[], doelGehaald, actie{...}, rust{...}, herkomst{...}, reden }
+   */
+  function setOutcome(input) {
+    var i = input || {};
+    var v = i.voorgeschreven || {}, u = i.uitgevoerd || {};
+    var vKg = _soNum(v.kg), vReps = _soNum(v.reps), vRpe = _soNum(v.rpe);
+    var uKg = _soNum(u.kg), uReps = _soNum(u.reps), uRpe = _soNum(u.rpe);
+
+    var ontbreekt = [];
+    if (uKg == null) ontbreekt.push('uitgevoerd_gewicht');
+    if (uReps == null) ontbreekt.push('uitgevoerde_reps');
+    if (uRpe == null) ontbreekt.push('rpe');
+    if (vKg == null) ontbreekt.push('voorgeschreven_gewicht');
+    if (vReps == null) ontbreekt.push('voorgeschreven_reps');
+
+    var basis = {
+      versie: SETOUTCOME_VERSIE, bruikbaar: false, ontbreekt: ontbreekt,
+      afwijkingen: [], doelGehaald: null,
+      actie: { soort: 'geen_advies', kg: null, deltaKg: null, seconden: null },
+      rust: { seconden: null, basis: null, geschaald: false },
+      herkomst: { uitgevoerd: 'gemeten', voorgeschreven: (vKg != null ? 'berekend' : null),
+                  actie: null, rust: null },
+      reden: 'onvoldoende_gegevens'
+    };
+
+    // Een set zonder enige uitgevoerde waarde is een overgeslagen set: dat mag gemeld worden,
+    // maar levert geen advies op.
+    if (uKg == null && uReps == null) {
+      basis.afwijkingen = [{ soort: 'set_overgeslagen', verschil: null }];
+      return basis;
+    }
+
+    // Afwijkingen: alleen vaststelbaar als er iets was voorgeschreven om mee te vergelijken.
+    var afw = [];
+    if (vReps != null && uReps != null && uReps !== vReps) {
+      afw.push({ soort: uReps < vReps ? 'minder_reps' : 'meer_reps', verschil: uReps - vReps });
+    }
+    if (vKg != null && uKg != null && uKg !== vKg) {
+      afw.push({ soort: uKg < vKg ? 'lager_gewicht' : 'hoger_gewicht', verschil: _rond1(uKg - vKg) });
+    }
+    if (vRpe != null && uRpe != null && uRpe !== vRpe) {
+      afw.push({ soort: uRpe > vRpe ? 'hogere_rpe' : 'lagere_rpe', verschil: _rond1(uRpe - vRpe) });
+    }
+    basis.afwijkingen = afw;
+
+    // Doel gehaald: uitsluitend als beide kanten bekend zijn. Anders null, nooit 'nee'.
+    if (vReps != null && uReps != null && vKg != null && uKg != null) {
+      basis.doelGehaald = (uReps >= vReps && uKg >= vKg);
+    }
+
+    // Rust: de BESTAANDE regel, hier alleen aangeroepen.
+    var rustBasis = _soNum(i.restBasisSec);
+    if (rustBasis != null && rustBasis > 0) {
+      var geschaald = (i.dynamischeRust === true) && (uRpe != null);
+      var sec = geschaald ? restForSet(rustBasis, uRpe) : rustBasis;
+      basis.rust = { seconden: sec, basis: rustBasis, geschaald: geschaald };
+      basis.herkomst.rust = geschaald ? 'besloten' : 'instelling';
+    }
+
+    // Gewichtsadvies: UITSLUITEND uit de bestaande progressieregel. Geen RPE, geen advies.
+    if (uRpe != null && uKg != null) {
+      var besluit = progressionDecision(uRpe, uKg);
+      if (besluit) {
+        var soort = besluit.outcome === 'increase' ? 'verhogen' : (besluit.outcome === 'deload' ? 'verlagen' : 'gelijk');
+        basis.actie = { soort: soort, kg: _rond1(uKg + besluit.deltaKg), deltaKg: besluit.deltaKg,
+                        seconden: basis.rust.seconden };
+        basis.herkomst.actie = 'besloten';
+        basis.progressie = besluit;
+        basis.bruikbaar = true;
+        basis.reden = 'ok';
+        return basis;
+      }
+    }
+    // Geen gewichtsadvies mogelijk, maar rust wél: dan is dát de volgende actie.
+    if (basis.rust.seconden != null) {
+      basis.actie = { soort: 'rust', kg: null, deltaKg: null, seconden: basis.rust.seconden };
+      basis.herkomst.actie = basis.herkomst.rust;
+      basis.bruikbaar = true;
+      basis.reden = 'ok_zonder_gewichtsadvies';
+    }
+    return basis;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════
    * PERSOONLIJKE RECORDS (record.v1) — mag dit gewicht als record gelden?
    *
    * Dit is een REGEL, geen presentatie. Hij stond tot Sprint 12 op drie plaatsen in
@@ -371,6 +517,12 @@
   }
 
   var DecisionCore = {
+    restForSet: restForSet,
+    REST_VERSIE: REST_VERSIE,
+    setOutcome: setOutcome,
+    SETOUTCOME_VERSIE: SETOUTCOME_VERSIE,
+    SETOUTCOME_AFWIJKINGEN: SETOUTCOME_AFWIJKINGEN,
+    SETOUTCOME_ACTIES: SETOUTCOME_ACTIES,
     releaseRecord: releaseRecord,
     RECORD_VERSIE: RECORD_VERSIE,
     releaseVerband: releaseVerband,

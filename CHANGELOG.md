@@ -1,5 +1,23 @@
 # Trainingskompas — Changelog
 
+## v4.30.1 — 18 augustus 2026 (Lichaam 2.0 — faalveilig metric-detail)
+
+Productiebevinding na de uitrol van v4.30.0, direct na de deploy vastgesteld op de live app.
+
+Een pagina die al openstond tijdens de deploy draaide nog op de `core/*.js` uit de vorige service-worker-cache. `DeviceCore` miste daardoor `availablePeriods` en `healthStats`, de renderer stopte halverwege op `dc.availablePeriods is not a function` en het metric-detailscherm bleef **leeg** — kop en titel wel, inhoud niet. Eén herlaadbeurt loste het op (`skipWaiting` + `clients.claim` doen hun werk), maar tot dat moment stond de gebruiker voor een leeg scherm zonder uitleg.
+
+`renderLichaamMetricDetail` heeft nu dezelfde foutgrens als elke andere Lichaam-renderer: de opbouw zit in `_renderLichaamMetricDetail` en een fout levert de bestaande lege-toestandcomponent op met de tekst *"Dit scherm kon niet worden geladen — de app is zojuist bijgewerkt. Herlaad de pagina om verder te gaan; je gegevens zijn ongewijzigd."* Daarnaast wordt een onvolledige `DeviceCore` expliciet herkend in plaats van stilzwijgend omzeild: dit scherm rekent zelf niets uit, dus ontbrekende engines zijn een fout en geen reden om de UI iets te laten verzinnen.
+
+Alleen `index.html` is gewijzigd; `core/*.js` niet, dus `CORE_SIG` en de cachenamen blijven ongemoeid (`index.html` wordt network-first geserveerd).
+
+### Getest
+- `core/fLichaamMetricDetail.test.js` uitgebreid van 73 naar 78 controles: de renderer heeft een foutgrens, de melding is bruikbaar, een onvolledige `DeviceCore` wordt herkend, de opbouw blijft één renderer, en de foutafhandeling laat het scherm nooit leeg achter.
+- Headless browsercontrole met drie scenario's: normale weergave met data, `DeviceCore.availablePeriods` weggehaald (de melding verschijnt, het scherm is niet leeg), en herstel daarna. Geen pagina- of consolefouten.
+- Volledige Quality Gate lokaal groen, inclusief `logic_tests.js`.
+
+### Gewijzigd
+`index.html` (foutgrens + `APP_VER` v4.30.1), `core/fLichaamMetricDetail.test.js`, `CHANGELOG.md`.
+
 ## v4.30.0 — 18 augustus 2026 (Lichaam 2.0 — metric-detail, statistiek en herkomst)
 
 Roadmap-sprint met strakke scope. Geen redesign, geen nieuwe mock-up, geen wijziging aan Home, Training of de Fitbit-keten.

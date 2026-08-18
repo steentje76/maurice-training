@@ -174,6 +174,24 @@ const herk = html.slice(html.indexOf('function tkMetingHerkomst'), html.indexOf(
 ok(herk.indexOf('Date.now') < 0, 'F13: geen eigen tijdlogica in de herkomstregel');
 ok(herk.indexOf('dc.observation(') >= 0, 'F14: versheid komt uit de bestaande observatielaag');
 
+// ── G. faalveiligheid (productiebevinding 18-08) ─────────────────────────────
+// Direct na een deploy draait een geopende pagina nog op de core/*.js uit de vorige
+// service-worker-cache. DeviceCore miste dan de nieuwe functies, de renderer stopte
+// halverwege en het scherm bleef leeg. De renderer moet dat opvangen zoals elke andere
+// Lichaam-renderer dat doet.
+console.log('  G faalveiligheid');
+ok(/async function renderLichaamMetricDetail\(\)\{[\s\S]{0,400}catch\(e\)\{/.test(html),
+   'G1: de renderer heeft een foutgrens');
+ok(/Herlaad de pagina om verder te gaan/.test(html),
+   'G2: bij een fout verschijnt een bruikbare melding in plaats van een leeg scherm');
+ok(/typeof dc\.availablePeriods!=='function'\|\|typeof dc\.healthStats!=='function'/.test(html),
+   'G3: een onvolledige DeviceCore wordt herkend en niet stilzwijgend omzeild');
+ok(html.indexOf('async function _renderLichaamMetricDetail(el)') >= 0,
+   'G4: de opbouw zit in één functie achter de foutgrens — nog steeds één renderer per metric');
+const grens = html.slice(html.indexOf('async function renderLichaamMetricDetail'), html.indexOf('async function _renderLichaamMetricDetail'));
+ok(grens.indexOf("innerHTML=''") < 0 && grens.indexOf('lich-empty') >= 0,
+   'G5: de foutafhandeling vult het scherm met de bestaande lege-toestandcomponent, nooit met niets');
+
 console.log('\n========================================================');
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) process.exit(1);

@@ -22,7 +22,7 @@
     rounding: 'rounding.v1', e1rm: 'e1rm.v1', working_weight: 'working_weight.v1', ai_guard: 'ai_guard.v1',
     volume: 'volume.v1', percentage: 'percentage.v1', warmup: 'warmup.v1', recovery: 'recovery.v1', dayfactor: 'dayfactor.v1',
     goal: 'goal.v1', e1rm_weighted: 'e1rm_weighted.v1', recovery_score: 'recovery_score.v1',
-    sleep_unit: 'sleep_unit.v1'
+    sleep_unit: 'sleep_unit.v1', correlation: 'correlation.v1'
   };
 
   // --- rounding.v1 --- exact gelijk aan legacy index.html r.10668
@@ -250,6 +250,90 @@
     return { value: calculateWorkingWeight(oneRM, reps, rpe), unit: 'kg', calculationType: 'working_weight', calculationVersion: VERSIONS.working_weight };
   }
 
+  /* ══════════════════════════════════════════════════════════════════════════
+   * SPEARMAN RANGCORRELATIE (correlation.v1) — Verbanden V1
+   *
+   * PUUR en DETERMINISTISCH. Geen Date.now, geen random, geen database, geen DOM,
+   * geen externe bibliotheek. Dezelfde invoer geeft altijd exact dezelfde uitkomst.
+   *
+   * Spearman meet of de RANGORDE van twee reeksen meebeweegt, niet of er een rechte
+   * lijn door de punten past. Gekozen omdat de gegevens ordinale schalen bevatten
+   * (RPE) en losse uitschieters (één rusthartslag van 28 tussen veertig waarden van
+   * 45-60); onder Pearson zou dat ene punt elk verband met RHR meetrekken.
+   *
+   * Implementatie: Pearson OVER DE RANGEN. Dat is de correcte vorm zodra er gelijke
+   * waarden (ties) voorkomen — de bekende 6*sum(d^2)-formule is dan onjuist. Ties
+   * krijgen de GEMIDDELDE rang (1, 2.5, 2.5, 4), wat deterministisch is en niet van
+   * de invoervolgorde afhangt.
+   *
+   * Ongeldige paren (null, undefined, NaN, Infinity, niet-numeriek) worden VERWIJDERD,
+   * nooit als 0 geteld. Is een van beide reeksen constant, dan bestaat er geen rang-
+   * variatie en is de coëfficiënt niet te bepalen: dan null, niet 0 — 0 zou "geen
+   * samenhang" beweren waar niets te bepalen valt.
+   *
+   * Geen zekerheids- of sterktescore hier: dat is een beslissing, geen berekening.
+   * ══════════════════════════════════════════════════════════════════════════ */
+  function _corrNum(v) {
+    if (typeof v === 'number') return isFinite(v) ? v : null;
+    if (typeof v === 'string') {
+      var t = v.trim();
+      if (!t || !/^[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?$/.test(t)) return null;
+      var n = Number(t);
+      return isFinite(n) ? n : null;
+    }
+    return null;
+  }
+  // Rangen met gemiddelde rang bij gelijke waarden. Stabiel: bij exact gelijke waarden
+  // beslist de oorspronkelijke index, zodat de uitkomst niet van de sorteervolgorde afhangt.
+  function _ranks(values) {
+    var idx = values.map(function (v, i) { return { v: v, i: i }; });
+    idx.sort(function (x, y) { return (x.v - y.v) || (x.i - y.i); });
+    var out = new Array(values.length);
+    var k = 0;
+    while (k < idx.length) {
+      var j = k;
+      while (j + 1 < idx.length && idx[j + 1].v === idx[k].v) j++;
+      var gemiddeldeRang = (k + j) / 2 + 1;          // rangen zijn 1-based
+      for (var m = k; m <= j; m++) out[idx[m].i] = gemiddeldeRang;
+      k = j + 1;
+    }
+    return out;
+  }
+  // pairs: [{a,b}] of [[a,b]]. → { coefficient, n, direction }
+  // direction: 'higher' (positief) · 'lower' (negatief) · 'none' (nul of onbepaalbaar)
+  function spearman(pairs) {
+    var arr = Array.isArray(pairs) ? pairs : [];
+    var A = [], B = [];
+    arr.forEach(function (p) {
+      if (!p) return;
+      var a = _corrNum(Array.isArray(p) ? p[0] : p.a);
+      var b = _corrNum(Array.isArray(p) ? p[1] : p.b);
+      if (a == null || b == null) return;
+      A.push(a); B.push(b);
+    });
+    var n = A.length;
+    if (n < 2) return { coefficient: null, n: n, direction: 'none' };
+    var ra = _ranks(A), rb = _ranks(B);
+    var ma = 0, mb = 0, i;
+    for (i = 0; i < n; i++) { ma += ra[i]; mb += rb[i]; }
+    ma /= n; mb /= n;
+    var num = 0, da = 0, db = 0;
+    for (i = 0; i < n; i++) {
+      var xa = ra[i] - ma, xb = rb[i] - mb;
+      num += xa * xb; da += xa * xa; db += xb * xb;
+    }
+    if (da === 0 || db === 0) return { coefficient: null, n: n, direction: 'none' };
+    var r = num / Math.sqrt(da * db);
+    if (!isFinite(r)) return { coefficient: null, n: n, direction: 'none' };
+    if (r > 1) r = 1; if (r < -1) r = -1;            // numerieke afronding afvangen
+    var coefficient = Math.round(r * 1000) / 1000;
+    return {
+      coefficient: coefficient,
+      n: n,
+      direction: coefficient > 0 ? 'higher' : (coefficient < 0 ? 'lower' : 'none')
+    };
+  }
+
   var CalcCore = {
     roundKg: roundKg,
     oneRMRaw: oneRMRaw,
@@ -271,6 +355,7 @@
     recoveryScore: recoveryScore,
     recoveryBand: recoveryBand,
     calculateGoalProgress: calculateGoalProgress,
+    spearman: spearman,
     weightedOneRM: weightedOneRM,
     roundKgResult: roundKgResult,
     oneRMResult: oneRMResult,

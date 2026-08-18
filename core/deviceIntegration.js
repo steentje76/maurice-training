@@ -767,6 +767,46 @@
     });
   }
 
+  // ── DAGELIJKSE KOPPELING (pairDaily) — Verbanden V1 ───────────────────────────────
+  // Koppelt twee healthSeries-reeksen op KALENDERDATUM tot bruikbare paren. Puur en
+  // deterministisch; hergebruikt dezelfde datumvorm als healthSeries/dateRange, dus er
+  // komt geen tweede datumlogica bij.
+  //
+  // Een paar telt alleen mee als BEIDE waarden op die dag echt gemeten zijn. Ontbrekende
+  // dagen verdwijnen: niet opvullen, niet interpoleren, geen forward of backward fill,
+  // en nooit als 0 tellen. Niet-numerieke waarden (null, NaN, Infinity, tekst) vallen af.
+  // De volgorde volgt de datum, zodat dezelfde invoer altijd dezelfde uitvoer geeft.
+  function _pairNum(v) {
+    if (typeof v === 'number') return isFinite(v) ? v : null;
+    if (typeof v === 'string') {
+      var t = v.trim();
+      if (!t || !/^[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?$/.test(t)) return null;
+      var n = Number(t);
+      return isFinite(n) ? n : null;
+    }
+    return null;
+  }
+  function pairDaily(seriesA, seriesB) {
+    var A = Array.isArray(seriesA) ? seriesA : [];
+    var B = Array.isArray(seriesB) ? seriesB : [];
+    var byDate = {};
+    B.forEach(function (p) {
+      if (!p || p.date == null) return;
+      var v = _pairNum(p.value); if (v == null) return;
+      byDate[_ymd(p.date)] = v;
+    });
+    var out = [];
+    A.forEach(function (p) {
+      if (!p || p.date == null) return;
+      var a = _pairNum(p.value); if (a == null) return;
+      var d = _ymd(p.date);
+      if (!Object.prototype.hasOwnProperty.call(byDate, d)) return;
+      out.push({ date: d, a: a, b: byDate[d] });
+    });
+    out.sort(function (x, y) { return x.date < y.date ? -1 : (x.date > y.date ? 1 : 0); });
+    return out;
+  }
+
   // ══════════════════════════════════════════════════════════════════════════════
   // OBSERVATIELAAG (observation.v1) — Lichaam Data Depth 1.0
   //
@@ -952,6 +992,7 @@
     // health-history (grafiek-data, provider-agnostisch, TZ-veilig)
     dateRange: dateRange, healthSeries: healthSeries, healthTrend: healthTrend, healthSummary: healthSummary,
     healthStats: healthStats, availablePeriods: availablePeriods, weightSeries: weightSeries,
+    pairDaily: pairDaily,
     MIN_POINTS_FOR_PERIOD: MIN_POINTS_FOR_PERIOD,
     observation: observation, observationQuality: observationQuality, sourceKind: sourceKind,
     OBSERVATION_VERSION: OBSERVATION_VERSION, QUALITY_STATES: QUALITY_STATES,

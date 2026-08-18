@@ -58,7 +58,7 @@ ok(html.indexOf('id="lich-spier-body"') >= 0 && html.indexOf('id="lich-spier-naa
    'het detail heeft zijn eigen containers');
 ok(/<div class="scr" id="s-lich-spier">[\s\S]{0,1600}<nav class="bnav"/.test(html),
    'het detailscherm heeft dezelfde bottom navigation');
-ok(/:is\(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen\)/.test(html),
+ok(/:is\(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband\)/.test(html),
    'het detail valt binnen dezelfde stijl-scope — geen aparte stijlen');
 
 // De inline handlers moeten geldige HTML opleveren: een dubbele quote in het attribuut

@@ -1,5 +1,39 @@
 # Trainingskompas — Changelog
 
+## v4.39.0 — 18 augustus 2026 (Sprint 16 — Voortgang)
+
+Het Voortgang-scherm bestond al vrijwel volledig: hero, recente vooruitgang, consistentie, doelen, challenges, persoonlijke records, krachtontwikkeling per oefening, krachtverhoudingen, volume per spiergroep, HRV-grafiek, roei- en cardiorecords en lichaamssamenstelling. Daar is dus niets van herbouwd. Deze release repareert drie dingen die bij de audit boven kwamen en voegt de enige regel toe die echt ontbrak.
+
+### Een ontbrekende meting werd als nul getekend
+
+De HRV-grafiek deed `r.hrv || 0`. Een dag zonder meting werd daardoor als 0 ms getekend en de lijn dook naar de bodem — een instorting die nooit gemeten is. Dat is precies wat `healthSeries` en `dataquality.v1` elders juist voorkomen door gaten op `null` te houden.
+
+Dagen zonder meting worden nu overgeslagen. De grafiek verbindt alleen echt gemeten punten, en eronder staat wat er werkelijk aan de hand is: *"HRV: onvoldoende gegevens — 3 metingen, vanaf 4 is er een trend te zien."*
+
+### Trend als expliciete uitkomst — `trend.v1`
+
+Er was geen trendclassificatie. Een reeks van twee punten werd net zo stellig getoond als een reeks van dertig, en "onvoldoende gegevens" bestond niet als antwoord.
+
+`CalcCore.trendClassify` levert nu `stijgend`, `stabiel`, `dalend` of `onvoldoende_data`. De richtingsregel is **niet nieuw**: hij is exact dezelfde als die van `DeviceCore.healthTrend`, die de Lichaam-schermen al gebruiken — eerste helft tegen tweede helft, pas een richting bij meer dan 3% verschil. Wat erbij komt is uitsluitend een expliciete ondergrens van vier meetpunten. Een test vergelijkt beide functies over 300 reeksen en eist nul verschil, zodat ze niet uit elkaar kunnen lopen.
+
+Ontbrekende punten worden overgeslagen, nooit als nul geteld. Een echte 0 is wél een meting — het verschil tussen die twee is precies waar deze functie voor bestaat.
+
+### Volume kwam uit een zesde, losse formule
+
+`refreshVolumeSpiergroep` rekende het tonnage per spiergroep met de hand uit — `(sets||1)*(reps||1)*(weight||0)` — terwijl `CalcCore.calculateVolume` (`volume.v1`) al bestond en elders vijf keer gebruikt werd. Dat is nu de zesde plek die via de engine loopt; de uitkomst is identiek, alleen de bron is er nog maar één.
+
+Datzelfde tonnage werd overigens al berekend maar nergens getoond: dode rekencode. Het staat nu naast het aantal sets, zodat "3 sets" ook laat zien hoeveel kilo daar onder zat.
+
+### Bewust niet aangeraakt
+
+Twee dingen zijn gevonden en gerapporteerd, maar niet gewijzigd omdat ze buiten Voortgang liggen en de bevroren schermen zouden raken: de trainingsdrempels van 12 en 6 sets per week staan vier keer hardgecodeerd in `index.html` (ook op de Lichaam-heatmaps), en de roeisplit wordt inline berekend terwijl `DeviceCore.splitFromDistTime` bestaat. Beide zijn pre-existent.
+
+Home, Training, Lichaam, Coach, de navigatie en de actieve trainingsflow zijn ongewijzigd: een headless vergelijking geeft voor Home en Training exact dezelfde secties, labels en tekst als v4.38.0.
+
+### Overig
+
+`core/fVoortgang.test.js` toegevoegd met 100 controles, waaronder de gelijkloop met `healthTrend`, het onderscheid tussen een nul en een gat, en zestien onderdelen van het Voortgang-scherm die niet mogen verdwijnen. `sw.js`: `CORE_SIG` naar `cd5fd731542840de` en de caches naar `v43900`, omdat `core/calculation.js` is gewijzigd.
+
 ## v4.38.0 — 18 augustus 2026 (Sprint 15 — hardening & regressiebescherming)
 
 Geen nieuwe functionaliteit. Deze release repareert één echte fout uit Sprint 14 en legt vast wat er is, zodat een volgende sprint niet ongemerkt sportlogica, het AI-contract of bestaande schermen kan wijzigen.

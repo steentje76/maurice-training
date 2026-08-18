@@ -23,7 +23,7 @@
     volume: 'volume.v1', percentage: 'percentage.v1', warmup: 'warmup.v1', recovery: 'recovery.v1', dayfactor: 'dayfactor.v1',
     goal: 'goal.v1', e1rm_weighted: 'e1rm_weighted.v1', recovery_score: 'recovery_score.v1',
     sleep_unit: 'sleep_unit.v1', correlation: 'correlation.v1',
-    readiness_percent: 'readiness_percent.v1'
+    readiness_percent: 'readiness_percent.v1', trend: 'trend.v1'
   };
 
   // --- rounding.v1 --- exact gelijk aan legacy index.html r.10668
@@ -65,6 +65,69 @@
     var cap = (typeof oneRM === 'number' && isFinite(oneRM) && oneRM > 0) ? oneRM * 1.2 : 500;
     if (rounded > cap) return { ok: false, reason: 'boven plausibele grens', source: 'ai_suggested', calculationVersion: VERSIONS.ai_guard };
     return { ok: true, value: rounded, unit: 'kg', source: 'ai_suggested', calculationVersion: VERSIONS.ai_guard };
+  }
+
+  /* --- trend.v1 --- Sprint 16: gaat een reeks omhoog, blijft hij gelijk, of gaat hij omlaag?
+   *
+   * Voortgang tekende tot nu toe elke reeks even stellig: twee meetpunten leverden net zo'n
+   * uitgesproken beeld op als dertig. "Onvoldoende gegevens" bestond niet als uitkomst, en dat
+   * is precies de uitkomst die een sporter nodig heeft om een grafiek niet te overinterpreteren.
+   *
+   * DE RICHTINGSREGEL IS NIET NIEUW. Hij is exact dezelfde als die van DeviceCore.healthTrend,
+   * die de Lichaam-schermen al gebruikt: vergelijk het gemiddelde van de eerste helft met dat
+   * van de tweede helft, en noem het pas stijgend of dalend bij meer dan 3% verschil ten
+   * opzichte van de eerste helft. Wat hier bijkomt is uitsluitend een expliciete ondergrens:
+   * onder `minimum` punten wordt er geen richting geclaimd. Een test pint af dat beide functies
+   * voor dezelfde reeks dezelfde richting geven, zodat ze niet uit elkaar kunnen lopen.
+   *
+   * `healthTrend` blijft bestaan zoals hij is: hij levert ook een symbool en een delta, wordt
+   * door bestaande tests vastgehouden en hoort bij de health-reeksen. Hem omschrijven zou een
+   * refactor zijn die buiten deze sprint valt.
+   *
+   * ONTBREKENDE PUNTEN WORDEN OVERGESLAGEN, NOOIT ALS 0 GETELD. Een dag zonder meting is geen
+   * dag met waarde nul; dat verschil is het halve punt van deze functie.
+   *
+   *   values: [number|null|'12.5']   ·   opts: { minimum (default 4), drempel (default 0.03) }
+   *   -> { versie, richting: 'stijgend'|'stabiel'|'dalend'|'onvoldoende_data',
+   *        n, gebruikt, delta, eerste, tweede, minimum }
+   */
+  var TREND_MINIMUM = 4;          // onder vier meetpunten claimen we geen richting
+  var TREND_DREMPEL = 0.03;       // zelfde 3% als healthTrend
+  var TREND_RICHTINGEN = ['stijgend', 'stabiel', 'dalend', 'onvoldoende_data'];
+  function _trendNum(v) {
+    if (typeof v === 'number') return isFinite(v) ? v : null;
+    if (typeof v === 'string') {
+      var t = v.trim();
+      if (!t || !/^[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?$/.test(t)) return null;
+      var n = Number(t);
+      return isFinite(n) ? n : null;
+    }
+    return null;
+  }
+  function trendClassify(values, opts) {
+    var o = opts || {};
+    var minimum = (typeof o.minimum === 'number' && isFinite(o.minimum) && o.minimum >= 2) ? Math.floor(o.minimum) : TREND_MINIMUM;
+    var drempel = (typeof o.drempel === 'number' && isFinite(o.drempel) && o.drempel >= 0) ? o.drempel : TREND_DREMPEL;
+    var pts = [];
+    (Array.isArray(values) ? values : []).forEach(function (v) {
+      var n = _trendNum(v);
+      if (n != null) pts.push(n);                 // ontbrekend punt overslaan, niet als 0 tellen
+    });
+    var basis = { versie: VERSIONS.trend, richting: 'onvoldoende_data', n: pts.length, gebruikt: 0,
+                  delta: null, eerste: null, tweede: null, minimum: minimum };
+    if (pts.length < minimum) return basis;
+    var h = Math.floor(pts.length / 2);
+    var eersteHelft = pts.slice(0, h);
+    var tweedeHelft = pts.slice(pts.length - h);
+    var gem = function (a) { var s = 0; a.forEach(function (v) { s += v; }); return s / a.length; };
+    var a = gem(eersteHelft), b = gem(tweedeHelft);
+    var d = b - a;
+    var noemer = Math.max(1, Math.abs(a));        // zelfde noemer als healthTrend
+    var rel = d / noemer;
+    var richting = (rel > drempel) ? 'stijgend' : (rel < -drempel ? 'dalend' : 'stabiel');
+    return { versie: VERSIONS.trend, richting: richting, n: pts.length, gebruikt: h * 2,
+             delta: Math.round(d * 100) / 100, eerste: Math.round(a * 100) / 100,
+             tweede: Math.round(b * 100) / 100, minimum: minimum };
   }
 
   // --- volume.v1 --- RAW tonnage-product (kg). Exact gelijk aan de inline legacy-product-sites
@@ -352,6 +415,10 @@
     calculateWorkingWeight: calculateWorkingWeight,
     validateProposedWeight: validateProposedWeight,
     calculateVolume: calculateVolume,
+    trendClassify: trendClassify,
+    TREND_MINIMUM: TREND_MINIMUM,
+    TREND_DREMPEL: TREND_DREMPEL,
+    TREND_RICHTINGEN: TREND_RICHTINGEN,
     applyPercentage: applyPercentage,
     calculateWarmup: calculateWarmup,
     roundToIncrement: roundToIncrement,

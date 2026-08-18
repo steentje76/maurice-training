@@ -2784,6 +2784,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
    grijstinten, radius en typografie van de kaarten. Geen nieuwe visuele taal. */
 /* Sprint 14 — readiness van de dag, binnen de bestaande coachkaart op Home. Hergebruikt de
    bestaande statuskleuren en radius; geen nieuwe visuele taal, geen nieuwe hoofdsectie. */
+/* Sprint 16 — trendregel onder een grafiek. Zelfde grijstinten en typografie als de rest. */
+.tk-trend{font-size:11.5px;line-height:1.45;color:var(--g4);font-weight:600;margin-top:6px}
 .tk-ready{border-radius:14px;padding:12px 14px;margin-bottom:14px;background:#fff;border-left:3px solid var(--g3);box-shadow:0 1px 3px rgba(16,32,39,.06)}
 .tk-ready.status-g{border-left-color:var(--status-good)}
 .tk-ready.status-y{border-left-color:var(--status-warn)}
@@ -3617,7 +3619,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <div class="card-hd"><div class="card-title">Volume per spiergroep</div><div class="card-sub">Afgelopen 7 dagen</div></div>
       <div class="card-body" id="stats-volume-content"><span id="stats-volume-chart" hidden></span><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div>
     </div>
-    <div class="card"><div class="card-hd"><div class="card-title">HRV trend</div></div><div class="card-body"><div class="chart-wrap"><canvas id="stats-hrv-chart"></canvas></div></div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">HRV trend</div></div><div class="card-body"><div class="chart-wrap"><canvas id="stats-hrv-chart"></canvas></div><div id="stats-hrv-trend"></div></div></div>
     <div class="card"><div class="card-hd"><div class="card-title">Roei progressie</div></div><div class="card-body" id="stats-row-list"></div></div>
     <div class="card"><div class="card-hd"><div class="card-title">Cardio records</div><div class="card-sub">Beste prestatie per apparaat &middot; machine-aware</div></div><div class="card-body" id="stats-cardio-list"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div></div>
 
@@ -5662,7 +5664,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.38.0';
+const APP_VER = 'v4.39.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -16223,8 +16225,16 @@ async function refreshStatsScreen(){
   renderProgList();
 
   // HRV chart
+  // Sprint 16: een dag zonder meting werd hier als 0 getekend (r.hrv||0). De lijn dook dan naar
+  // nul en suggereerde een instorting die nooit gemeten is. Dagen zonder meting worden nu
+  // overgeslagen — een gat blijft een gat, precies zoals healthSeries en dataquality.v1 het
+  // elders al doen. De trend eronder komt uit trend.v1 en claimt niets bij te weinig punten.
   const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=14');
-  if(hd.length>1){const rev=hd.slice().reverse();drawChart('stats-hrv-chart',rev.map(r=>r.hrv||0),rev.map(r=>r.date));}
+  const hrvPunten=hd.slice().reverse().filter(function(r){ return r && r.hrv!=null && r.hrv!==''; });
+  if(hrvPunten.length>1){
+    drawChart('stats-hrv-chart', hrvPunten.map(function(r){ return parseFloat(r.hrv); }), hrvPunten.map(function(r){ return r.date; }));
+  }
+  try{ tkTrendRegel('stats-hrv-trend', hrvPunten.map(function(r){ return r.hrv; }), hd.length, 'HRV'); }catch(_){}
 
   // Roeien
   const rd=await sbGet('sessions','&exercise_id=eq.roeien&order=date.desc,created_at.desc&limit=8');
@@ -20606,6 +20616,30 @@ async function refreshRepPRs(){
   el.innerHTML = html || '<p style="color:var(--g4);font-size:13px">Log sets om PR\'s per herhaling te zien</p>';
 }
 
+/* Sprint 16 — presentatiehulpjes voor Voortgang. Beide rekenen NIETS uit: de eerste maakt een
+   getal leesbaar, de tweede plaatst de uitkomst van CalcCore.trendClassify (trend.v1). */
+function tkFmtTonnage(kg){
+  const n=Number(kg);
+  if(!isFinite(n)||n<=0) return '';
+  return n>=1000 ? (Math.round(n/100)/10).toString().replace('.',',')+'k kg' : Math.round(n)+' kg';
+}
+const TK_TREND_TEKST={
+  stijgend:'stijgend', stabiel:'stabiel', dalend:'dalend', onvoldoende_data:'onvoldoende gegevens'
+};
+function tkTrendRegel(elId, waarden, totaalDagen, naam){
+  const el=document.getElementById(elId); if(!el) return;
+  if(typeof CalcCore==='undefined'||typeof CalcCore.trendClassify!=='function'){ el.innerHTML=''; return; }
+  const t=CalcCore.trendClassify(waarden);
+  const gemeten=t.n, dagen=(typeof totaalDagen==='number'&&totaalDagen>0)?totaalDagen:null;
+  if(t.richting==='onvoldoende_data'){
+    el.innerHTML='<div class="tk-trend">'+escHtml(naam)+': onvoldoende gegevens — '+gemeten+
+      ' meting'+(gemeten===1?'':'en')+', vanaf '+t.minimum+' is er een trend te zien.</div>';
+    return;
+  }
+  el.innerHTML='<div class="tk-trend">'+escHtml(naam)+': '+TK_TREND_TEKST[t.richting]+
+    ' over '+gemeten+' meting'+(gemeten===1?'':'en')+
+    (dagen&&dagen>gemeten?(' (van '+dagen+' dagen)'):'')+'.</div>';
+}
 async function refreshVolumeSpiergroep(){
   const el = document.getElementById('stats-volume-chart');
   if(!el) return;
@@ -20614,10 +20648,14 @@ async function refreshVolumeSpiergroep(){
   weekAgo.setDate(weekAgo.getDate()-7);
   const dateStr = weekAgo.toISOString().split('T')[0];
   const ss = await sbGet('sessions','&date=gte.'+dateStr+'&weight=not.is.null&sets=not.is.null&reps=not.is.null');
+  /* Sprint 16: het tonnage per spiergroep werd hier met de hand uitgerekend
+     ((sets||1)*(reps||1)*(weight||0)) terwijl CalcCore.calculateVolume (volume.v1) bestaat en
+     elders al vijf keer gebruikt wordt — een zesde losse kopie van dezelfde formule. Loopt nu
+     via de Calculation Engine. De uitkomst is identiek; alleen de bron is er nog maar één. */
   const muscleVol = {};
   ss.forEach(s=>{
     const muscles = getExerciseMuscles(s.exercise_id);
-    const vol = (s.sets||1)*(s.reps||1)*(s.weight||0);
+    const vol = CalcCore.calculateVolume({sets:s.sets||1, reps:s.reps||1, weight:s.weight||0});
     muscles.forEach(m=>{
       muscleVol[m] = (muscleVol[m]||0) + vol;
     });
@@ -20645,7 +20683,7 @@ async function refreshVolumeSpiergroep(){
     return `<div style="margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
         <span style="font-size:13px;font-weight:700;color:var(--dark)">${m}</span>
-        <span style="font-size:12px;color:var(--g4)">${sets} sets${optimal?' ✓':' (doel: 12+)'}</span>
+        <span style="font-size:12px;color:var(--g4)">${sets} sets${optimal?' ✓':' (doel: 12+)'}${muscleVol[m]?' · '+tkFmtTonnage(muscleVol[m]):''}</span>
       </div>
       <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%;background:${color}"></div></div>
     </div>`;

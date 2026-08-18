@@ -102,5 +102,47 @@ eq(L.parseHrvPoint({ dailyHeartRateVariability:{ date:'2026-08-15T00:00:00Z', av
 eq(L.parseHrvPoint({ date:'2026-08-14', dailyHeartRateVariability:{ rmssdMillis:38 } }).value, 38, 'PS9: legacy rmssdMillis-fallback behouden');
 eq(L.parseHrvPoint({ date:'2026-08-14', dailyHeartRateVariability:{ rmssdMillis:38 } }).date, '2026-08-14', 'PS9: legacy top-level date-fallback behouden');
 
+
+// ── INCIDENT 18-08-2026 — int64-als-JSON-string (proto3-mapping) ──────────────
+// De Google Health API gaf 8 daily-resting-heart-rate-datapunten (http 200,
+// fetched.rhr=8) maar parsed.rhr bleef 0. Oorzaak: `beatsPerMinute` is int64 en
+// wordt volgens de proto3-JSON-mapping als STRING geserialiseerd ("57"); de oude
+// `typeof v === 'number'`-guard gooide die waarde weg. HRV (double) en slaap
+// (afgeleid uit tijdstempels) waren wél getallen — vandaar dat alléén RHR faalde.
+eq(L.toNum(57), 57, 'N1: getal blijft getal');
+eq(L.toNum('57'), 57, 'N2: int64-als-string wordt getal');
+eq(L.toNum(' 57 '), 57, 'N3: spaties rond de string');
+eq(L.toNum('28.5'), 28.5, 'N4: decimale string');
+eq(L.toNum('abc'), null, 'N5: niet-numerieke string → null (nooit fabriceren)');
+eq(L.toNum('12px'), null, 'N6: half-numerieke string → null');
+eq(L.toNum(''), null, 'N7: lege string → null');
+eq(L.toNum(null), null, 'N8: null blijft null');
+eq(L.toNum(NaN), null, 'N9: NaN → null');
+eq(L.toNum(Infinity), null, 'N10: Infinity → null');
+eq(L.toNum({}), null, 'N11: object → null');
+
+// EXACTE productie-shape uit de live diag: ["date","beatsPerMinute","dailyRestingHeartRateMetadata"]
+const rhrLive = L.parseRhrPoint({ dataSource:'d', dailyRestingHeartRate:{ date:{year:2026,month:8,day:18}, beatsPerMinute:'57', dailyRestingHeartRateMetadata:{ calculationMethod:'WITH_SLEEP' } } });
+eq(rhrLive.value, 57, 'R1: RHR uit int64-string "57" wordt 57 (dit was de parsed.rhr=0-bug)');
+eq(rhrLive.date, '2026-08-18', 'R1: RHR-datum uit het geneste date-object');
+eq(L.parseRhrPoint({ dailyRestingHeartRate:{ date:'2026-08-18', beatsPerMinute:57 } }).value, 57, 'R2: numerieke vorm blijft werken');
+eq(L.parseRhrPoint({ dailyRestingHeartRate:{ date:'2026-08-18', beatsPerMinute:56.6 } }).value, 57, 'R3: hrv_log.rhr is integer → afgerond');
+eq(L.parseRhrPoint({ dailyRestingHeartRate:{ date:'2026-08-18', beatsPerMinute:'onzin' } }).value, null, 'R4: onbruikbare waarde → null (skipped, niet 0)');
+eq(L.parseRhrPoint({ dailyRestingHeartRate:{ date:'2026-08-18' } }).value, null, 'R5: geen waarde → null');
+
+// HRV en slaap moeten dezelfde coercie krijgen (dezelfde klasse fout kan daar ontstaan)
+eq(L.parseHrvPoint({ dailyHeartRateVariability:{ date:'2026-08-18', averageHeartRateVariabilityMilliseconds:'28.5' } }).value, 28.5, 'H1: HRV als string wordt getal');
+eq(L.parseSleepPoint({ sleep:{ interval:{ endTime:'2026-08-18T06:30:00Z' }, summary:{ minutesAsleep:'415' } } }).value, 6.92, 'S1: minutesAsleep als string → 6,92 uur');
+eq(L.parseSleepPoint({ sleep:{ interval:{ endTime:'2026-08-18T06:30:00Z' }, summary:{ totalSleepDurationMillis:'27000000' } } }).value, 7.5, 'S2: totalSleepDurationMillis (int64-string) → 7,5 uur');
+
+// Structurele diagnostiek: alleen KEYS, nooit waarden
+eq(L.sleepSummaryShape({ sleep:{ summary:{ minutesAsleep:415, stages:{} } } }), ['minutesAsleep','stages'], 'D1: sleepSummaryShape geeft uitsluitend keys');
+eq(L.sleepSummaryShape({ sleep:{} }), [], 'D2: geen summary → lege lijst');
+
+// asArray: PostgREST-foutobject mag geen TypeError (→ generieke 500 "Serverfout") geven
+eq(L.asArray([{a:1}]).length, 1, 'A1: array blijft array');
+eq(L.asArray({ code:'PGRST301', message:'x' }), [], 'A2: PostgREST-foutobject → lege array i.p.v. crash');
+eq(L.asArray(null), [], 'A3: null → lege array');
+
 console.log('\nwearable-sync PURE helpers: RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail ? 1 : 0);

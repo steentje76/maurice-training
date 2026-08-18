@@ -122,6 +122,57 @@ const event = { httpMethod: 'POST', headers: { authorization: 'Bearer session' }
   eq(body.imported, 0, 'S6: tweede sync → 0 nieuw (geen duplicaat)');
   eq(body.updated, 1, 'S6: bestaande datum → update (upsert per datum, idempotent)');
 
+
+  // ── SCENARIO 7: INCIDENT 18-08-2026 — EXACTE live productie-shape ───────────
+  // Live diag bewees: http 200, fetched {hrv:8,rhr:8,sleep:8}, parsed {hrv:8,rhr:0,sleep:8}
+  // met recordShape.rhr = ["date","beatsPerMinute","dailyRestingHeartRateMetadata"].
+  // `beatsPerMinute` is int64 → JSON-string. Deze test faalt op de oude parser.
+  writtenRows = []; let seenHrvLogQuery = null;
+  global.fetch = (function(base){ return async function(url, opts){
+    if (String(url).indexOf('/rest/v1/hrv_log') !== -1 && !(opts && opts.method && opts.method !== 'GET')) seenHrvLogQuery = String(url);
+    return base(url, opts);
+  }; })(makeFetch({
+    hrv:   [{ dataSource:'d', dailyHeartRateVariability:{ date:{year:2026,month:8,day:17}, averageHeartRateVariabilityMilliseconds: 28.5, nonRemHeartRateBeatsPerMinute:'52', entropy: 3.1 } }],
+    rhr:   [{ dataSource:'d', dailyRestingHeartRate:{ date:{year:2026,month:8,day:17}, beatsPerMinute: '57', dailyRestingHeartRateMetadata:{ calculationMethod:'WITH_SLEEP' } } }],
+    sleep: [{ name:'n', dataSource:'d', sleep:{ interval:{ startTime:'2026-08-16T23:12:00Z', endTime:'2026-08-17T06:16:00Z' }, type:'x', stages:[], metadata:{}, summary:{}, shortAwakenings:[] } }]
+  }));
+  res = await handlerMod.handler(event); body = JSON.parse(res.body);
+  eq(body.metrics && body.metrics.rhr, 1, 'S7: RHR wordt nu WEL geparsed uit int64-string (was parsed.rhr=0)');
+  eq(writtenRows.length, 1, 'S7: exact één write');
+  eq(writtenRows[0].rhr, 57, 'S7: rusthartslag 57 komt in hrv_log terecht');
+  eq(writtenRows[0].hrv, 28.5, 'S7: HRV blijft correct');
+  ok(writtenRows[0].sleep > 7 && writtenRows[0].sleep < 7.2, 'S7: slaap uit interval (~7,07 uur)');
+  eq(body.http && body.http.rhr, 200, 'S7: HTTP-status per datatype in het antwoord (diagnose zonder logtoegang)');
+  ok(seenHrvLogQuery && seenHrvLogQuery.indexOf('order=created_at.desc') !== -1,
+     'S7: bestaande-rij-lookup is deterministisch (order=created_at.desc) — patcht de rij die de app toont');
+
+  // ── SCENARIO 8: PostgREST-foutobject → getypeerde SUPABASE_ERROR, geen lek ───
+  // Voorheen gaf `const [conn] = <object>` een TypeError → generieke 500 "Serverfout".
+  writtenRows = [];
+  global.fetch = async function(url, opts){
+    url = String(url);
+    if (url.indexOf('/auth/v1/user') !== -1) return { ok:true, status:200, json: async()=>({ id:'u1' }) };
+    if (url.indexOf('wearable_connections') !== -1 && (!opts || !opts.method || opts.method === 'GET'))
+      return { ok:false, status:500, json: async()=>({ code:'PGRST301', message:'db down' }), text: async()=>'x' };
+    return { ok:true, status:200, json: async()=>({}), text: async()=>'{}' };
+  };
+  res = await handlerMod.handler(event); body = JSON.parse(res.body);
+  eq(res.statusCode, 500, 'S8: Supabase-fout → 500');
+  ok(body.code && body.code.length > 0, 'S8: machineleesbare foutcode aanwezig');
+  ok(!/db down|PGRST301/.test(JSON.stringify(body)), 'S8: geen technische/DB-details richting client');
+  ok(/Probeer het later opnieuw/.test(body.error.message), 'S8: veilige gebruikersmelding i.p.v. "Serverfout"');
+
+  // ── SCENARIO 9: provider rate limit (429) → RATE_LIMIT in het antwoord ───────
+  writtenRows = [];
+  global.fetch = (function(base){ return async function(url, opts){
+    if (String(url).indexOf('health.googleapis.com') !== -1) return { ok:false, status:429, json: async()=>({}), text: async()=>'' };
+    return base(url, opts);
+  }; })(makeFetch({ hrv:[], rhr:[], sleep:[] }));
+  res = await handlerMod.handler(event); body = JSON.parse(res.body);
+  eq(res.statusCode, 200, 'S9: rate limit is geen serverfout');
+  eq(body.code, 'RATE_LIMIT', 'S9: RATE_LIMIT expliciet gerapporteerd');
+  eq(body.status, 'no_new_data', 'S9: geen valse "success" bij een geblokkeerde provider');
+
   console.log('\nwearable-sync HANDLER (mocked transport): RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error('HANDLER TEST FAIL:', e); process.exit(2); });

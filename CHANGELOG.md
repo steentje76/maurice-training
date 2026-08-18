@@ -1,5 +1,49 @@
 # Trainingskompas — Changelog
 
+## v4.29.1 — 18 augustus 2026 (INCIDENT — Fitbit-synchronisatie hersteld)
+
+Incident-sprint. Geen roadmapwerk, geen redesign, geen wijziging aan Home of Training. Twee onafhankelijke defecten in de wearable-dataketen opgelost, beide met live bewijs uit productie.
+
+### Defect 1 — rusthartslag synchroniseerde nooit (`parsed.rhr = 0`)
+
+Live diagnostiek uit de productie-function (18-08-2026, 09:39): `http {hrv:200, rhr:200, sleep:200}` · `fetched {hrv:8, rhr:8, sleep:8}` · `parsed {hrv:8, rhr:0, sleep:8}` · `recordShape.rhr ["date","beatsPerMinute","dailyRestingHeartRateMetadata"]`.
+
+Google Health léverde de rusthartslag dus wel — de parser gooide hem weg. `beatsPerMinute` is in de Google Health API een **int64**, en de proto3-JSON-mapping serialiseert int64 als **string** (`"57"`). De guard `typeof v === 'number'` verwierp die waarde. HRV (`averageHeartRateVariabilityMilliseconds`, een double) en slaap (afgeleid uit tijdstempels) zijn wél getallen — daarom faalde uitsluitend RHR.
+
+`_wearableSyncLib.js` krijgt een pure `toNum`/`firstNum` die getal én numerieke string accepteert en bij alles wat geen eindig getal is `null` teruggeeft — nooit 0, nooit een verzonnen waarde. Toegepast op HRV, RHR en alle slaapduurvelden, want daar kan dezelfde klasse fout ontstaan. `hrv_log.rhr` is een integer-kolom, dus RHR wordt afgerond vóór opslag.
+
+### Defect 2 — check-in overschaduwde gesynchroniseerde wearable-data
+
+`saveHRV()` en `pchkSubmit()` deden een blinde `INSERT` in `hrv_log`. Vulde je in de check-in alléén je rusthartslag in, dan ontstond een **tweede rij voor dezelfde dag** met `hrv = null` en `sleep = null`. Elk scherm leest `order=date.desc,created_at.desc&limit=1` en pakte dus die nieuwste, half-lege rij: de al gesynchroniseerde HRV en slaap leken gewist en de dagfactor werd op onvolledige data berekend. Er ging geen data verloren, maar ze werd onbereikbaar.
+
+Beide schrijfpaden gebruiken nu `upsertHrvLog()` — dezelfde bewezen vorm als `upsertWeightLog()`: rij van vandaag lezen, mergen via de pure `tkMergeHealthRow()`, PATCHen; alleen zonder bestaande rij nog een INSERT. Een leeg check-inveld betekent "niet ingevuld", nooit "wissen" (de velden worden nooit voorgevuld). De `[src:fitbit]`-provenance blijft behouden als je er een notitie bij typt.
+
+Server-kant: de bestaande-rij-lookup in `wearable-sync.js` had geen `order` en kreeg van PostgREST dus een willekeurige rij terug. Zolang `hrv_log` geen `UNIQUE(user_id, date)` heeft, kon de sync daardoor een rij bijwerken die de app niet toont. Nu expliciet `order=created_at.desc` — de sync raakt exact de rij die de gebruiker ziet.
+
+### Bruikbare foutafhandeling
+
+`wearable-sync` gaf bij elke uitzondering dezelfde `500 "Serverfout"` terug, en legde de mislukking niet vast (`markSyncStatus` werd met `undefined` aangeroepen, waardoor `last_sync_status` op de vorige `ok` bleef staan — een storing was nergens zichtbaar).
+
+Nu: interne foutcodes `AUTH_ERROR · TOKEN_REFRESH_ERROR · FITBIT_API_ERROR · RATE_LIMIT · NETWORK_ERROR · SUPABASE_ERROR · INVALID_RESPONSE · NOT_CONNECTED`, vastgelegd op de connectie én in de serverlog. De gebruiker ziet altijd dezelfde veilige tekst: "Synchroniseren met Fitbit is momenteel niet gelukt. Probeer het later opnieuw." Geen foutcodes, reasons of HTTP-statussen meer in de UI.
+
+Een PostgREST-foutobject werd voorheen met `const [x] = obj` uitgepakt en gaf een `TypeError` → generieke 500. `sbRows()` maakt daar een getypeerde `SUPABASE_ERROR` van, en een storing wordt niet langer als "niet gekoppeld" getoond. Het antwoord bevat nu ook de HTTP-status per datatype, zodat een volgend incident te plaatsen is zónder toegang tot de Netlify-logs: `200 + fetched>0 + metrics=0` = parserfout, `4xx` = provider/permissie, `429` = rate limit.
+
+Diagnostiek blijft strikt structureel — tellingen, statussen en veldnamen. Nooit tokens, secrets, payloads of gezondheidswaarden.
+
+### Getest
+- Nieuw `core/fHrvUpsertMerge.test.js` — extraheert `tkMergeHealthRow` uit `index.html` en meet dus de echte productiecode: het incidentscenario (RHR-only check-in na een sync) mag HRV en slaap niet verliezen, `0` blijft een geldige meting, lege invoer wist niets, provenance blijft staan.
+- `core/fWearableSync.test.js` uitgebreid van 54 naar 79 controles: `toNum` op alle randgevallen, de exacte live RHR-shape met int64-string, afronding naar de integer-kolom, `sleepSummaryShape` (alleen keys) en `asArray`.
+- `core/fWearableSyncHandler.test.js` uitgebreid van 29 naar 43 controles: de exacte live productie-shape end-to-end, de deterministische `order=created_at.desc`-lookup, een Supabase-fout die geen technische details lekt, en een 429 die geen valse "success" oplevert.
+- Volledige Quality Gate lokaal gedraaid zoals de workflow hem draait: `coaching.test.js`, alle `core/*.test.js`, `npm run test:native`, `npm run build:www` en de bestandscontroles. Alles groen.
+
+### Bekende beperkingen
+- `hrv_log` heeft nog geen `UNIQUE(user_id, date)`. De code maakt geen nieuwe duplicaten meer, maar bestaande dubbele rijen (18-08 en 09-08) blijven staan tot ze expliciet worden opgeschoond — dat is een datawijziging en gebeurt niet zonder opdracht.
+- Gewicht wordt (nog) niet uit Google Health gesynchroniseerd; alleen HRV, rusthartslag en slaap. De scope `health_metrics_and_measurements.readonly` dekt gewicht wel — bewust buiten deze incident-sprint gehouden.
+- Of de slaapduur "werkelijk geslapen" of "tijd in bed" is, is nog niet hard bewezen: `sleep.summary` was in de live diagnostiek leeg, dus de sync valt terug op het interval. De nieuwe `sleepSummaryShape`-diagnostiek maakt dit na deze deploy zichtbaar.
+
+### Gewijzigd
+`netlify/functions/_wearableSyncLib.js`, `netlify/functions/wearable-sync.js`, `index.html`, `sw.js`, `CHANGELOG.md`, nieuw `core/fHrvUpsertMerge.test.js`, uitgebreid `core/fWearableSync.test.js` en `core/fWearableSyncHandler.test.js`, plus de `.gitignore` die in v4.29.0 wel beschreven maar niet meegeleverd was.
+
 ## v4.29.0 — 17 augustus 2026 (Lichaam Data Depth 1.0 — observatielaag)
 
 Van de Lichaam-sectie een betrouwbare **observatielaag** gemaakt: elke getoonde waarde draagt nu zijn herkomst, meetmoment, versheid en dekking met zich mee. Geen redesign, geen nieuwe mock-up, geen correlatie- of verbandenmotor.

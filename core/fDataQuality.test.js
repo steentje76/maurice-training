@@ -232,20 +232,31 @@ ok(/2 metingen/.test(D.meetreeksUitsluitingZin(2)), 'meervoud bij twee uitsluiti
 /* ── I. KETEN EN RENDERPADEN ─────────────────────────────────────────────── */
 console.log('\nI. Keten RAW -> DATA QUALITY -> CALCULATION -> DECISION -> UI');
 ok(/dc\.pairQuality\(/.test(html), 'de UI koppelt via pairQuality, niet rechtstreeks via pairDaily');
-const berekenBlok = html.slice(html.indexOf('function tkVerbandBereken'), html.indexOf('function tkVerbandPijl'));
-ok(berekenBlok.indexOf('pairQuality') > 0, 'tkVerbandBereken gebruikt de datakwaliteitslaag');
-ok(berekenBlok.indexOf('cc.spearman(kw.pairs)') > berekenBlok.indexOf('dc.pairQuality('), 'keuren gebeurt vóór berekenen');
-ok(berekenBlok.indexOf('de.releaseVerband(stat') > berekenBlok.indexOf('cc.spearman(kw.pairs)'), 'berekenen gebeurt vóór vrijgeven');
-ok(/typeof dc\.pairQuality!=='function'\) return \[\]/.test(berekenBlok),
+/* Sprint 19-22: de keten stond in de UI (tkVerbandBereken) en staat nu in
+   core/relationship.js. De eis is ONVERANDERD en wordt hier gecontroleerd op de
+   plek waar hij nu leeft — keuren vóór berekenen, berekenen vóór vrijgeven, en
+   zonder datakwaliteitslaag geen correlatie. Dat de keten uit de UI is verhuisd
+   maakt hem sterker, niet zwakker: hij is nu ook los te testen. */
+const relBron = fs.readFileSync(path.join(__dirname, 'relationship.js'), 'utf8');
+const discoverBlok = relBron.slice(relBron.indexOf('function discover('));
+ok(discoverBlok.indexOf('pairQuality') > 0, 'de discovery-engine gebruikt de datakwaliteitslaag');
+ok(discoverBlok.indexOf('d.spearman(kw.pairs)') > discoverBlok.indexOf('d.pairQuality('), 'keuren gebeurt vóór berekenen');
+ok(discoverBlok.indexOf('d.releaseVerband(stat') > discoverBlok.indexOf('d.spearman(kw.pairs)'), 'berekenen gebeurt vóór vrijgeven');
+ok(/ontbreekt\.push\(naam\)/.test(discoverBlok) && /'engines_ontbreken'/.test(discoverBlok),
    'zonder datakwaliteitslaag wordt er geen correlatie getoond');
-ok(!/Math\.abs\([^)]*coefficient[^)]*\)\s*[<>]=?\s*0\.[0-9]/.test(berekenBlok), 'de UI kent geen eigen sterktegrens');
+ok(!/Math\.abs\([^)]*coefficient[^)]*\)\s*[<>]=?\s*0\.[0-9]/.test(html), 'de UI kent geen eigen sterktegrens');
+ok(html.indexOf('function tkVerbandBereken') < 0, 'het oude, tweede berekeningspad is opgeruimd');
 ok(html.indexOf('_tkMetricKeuring') > 0, 'metric-detail keurt zijn reeks');
 const metricBlok = html.slice(html.indexOf('function _tkMetricSeries'), html.indexOf('function tkSetMetricPeriod'));
 ok(/_tkMetricKeuring\(cfg, rows, endYmd, days\)\.valid/.test(metricBlok),
    'grafiek, trend en statistiek werken op exact dezelfde gekeurde reeks');
 ok(/DecisionCore\.meetreeksUitsluitingZin/.test(html), 'de uitsluitingszin komt uit de Decision Engine, niet uit de UI');
-ok(/b\.kwaliteitZin/.test(html), 'de verbandkaarten tonen de uitsluitingsmelding');
-ok(/b\.sterkteUitleg/.test(html), 'het verbanddetail toont de sterkte-uitleg');
+/* Sprint 20: het verbandenscherm draait op relationship.v1-records, waarin dezelfde
+   twee teksten kwaliteit_zin en sterkte_uitleg heten. De eis is onveranderd — beide
+   MOETEN in de UI terechtkomen — dus wordt hier op de tekst gecontroleerd via beide
+   contractnamen in plaats van op één variabelenaam die per contract kan verschillen. */
+ok(/b\.kwaliteitZin|kwaliteit_zin/.test(html), 'de verbandkaarten tonen de uitsluitingsmelding');
+ok(/b\.sterkteUitleg|sterkte_uitleg/.test(html), 'het verbanddetail toont de sterkte-uitleg');
 ok(/verbandTrainingContext/.test(html), 'het verbanddetail vraagt de trainingsbetekenis op');
 ok(/Wat betekent dit voor je training\?/.test(html), 'de trainingsbetekenis heeft een eigen kop');
 ok(!/is niet betrouwbaar|meting is fout|ongeldige meting/i.test(html), 'nergens een oordeel over een individuele meting');
@@ -254,7 +265,11 @@ ok(!/is niet betrouwbaar|meting is fout|ongeldige meting/i.test(html), 'nergens 
 console.log('\nJ. Coach-context — leest berekende waarden, rekent niets');
 const coachBlok = html.slice(html.indexOf('async function tkCoachDataBlok'), html.indexOf('async function buildCtx'));
 ok(coachBlok.length > 500, 'de coach-contextbouwer bestaat');
-['qualifySeries','healthTrend','healthStats','tkVerbandBereken','recoveryAdjustmentForToday','verbandTrainingContext']
+/* tkVerbandBereken is met Sprint 22 vervangen door de discovery-engine plus de
+   prioriteringslaag in CoachingCore. De eis blijft: de coach-context REKENT NIETS
+   maar hergebruikt bestaande uitkomsten. */
+['qualifySeries','healthTrend','healthStats','tkRelDiscover','buildIntelligenceContext',
+ 'recoveryAdjustmentForToday','verbandTrainingContext']
   .forEach(f => ok(coachBlok.indexOf(f) > 0, 'coach-context hergebruikt ' + f));
 ok(!/spearman|recoveryScore\(|calculateDayFactor/.test(coachBlok), 'de coach-context roept zelf geen rekenfunctie aan');
 ok(/niet zelf herberekenen|NOOIT zelf/.test(coachBlok), 'de instructie verbiedt de AI expliciet zelf te rekenen');
@@ -299,8 +314,17 @@ ok(verWaarde >= minWaarde, 'applicatieversie is minstens v' + APP_VER_MIN.join('
  * CORE_SIG is de CRLF-agnostische hash van de core-bestanden. Een sw.js die achterblijft bij een
  * core-wijziging valt hier dus door de mand — ook zonder dat er een versienummer in staat. */
 const crypto = require('crypto');
-const CORE_FILES = ['core/calculation.js', 'core/decision.js', 'core/cardio.js', 'core/progression.js',
-                    'core/coaching.js', 'core/movement.js', 'core/onboarding.js', 'core/athleteConstraints.js'];
+/* CORE_FILES komt uit EEN bron: core/sw-guard.test.js. Deze test hield tot v4.40.0 een
+ * eigen kopie van die lijst bij, en dat is precies hoe de twee uit elkaar liepen zodra er
+ * een core-bestand bijkwam. Door de lijst hier uit te lezen kan dat niet meer gebeuren:
+ * een nieuw core-bestand wordt automatisch meegenomen in de handtekening. */
+function tkCoreFiles() {
+  const guard = fs.readFileSync(path.join(__dirname, 'sw-guard.test.js'), 'utf8');
+  const m = guard.match(/const CORE_FILES\s*=\s*\[([\s\S]*?)\];/);
+  if (!m) throw new Error('CORE_FILES niet gevonden in sw-guard.test.js');
+  return m[1].split(',').map(s => s.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
+}
+const CORE_FILES = tkCoreFiles();
 const sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
 const coreGecombineerd = CORE_FILES
   .map(f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8').replace(/\r/g, ''))

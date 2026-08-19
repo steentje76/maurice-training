@@ -139,7 +139,7 @@ function relVoorbeeld(over) {
 }
 
 t('een sterk patroon toont zin, aantal dagen en betrouwbaarheid', function () {
-  var ctx = zandbak(['tkVerbandPijl', 'tkRelBadge', 'tkRelStatusTekst', 'tkRelConfTekst', 'tkRelKaartHtml']);
+  var ctx = zandbak(['tkVerbandPijl', 'tkRelBadge', 'tkRelOnvoldoendeReden', 'tkRelOnvoldoendeZin', 'tkRelStatusTekst', 'tkRelConfTekst', 'tkRelKaartHtml']);
   var html = ctx.tkRelKaartHtml(relVoorbeeld());
   assert.ok(html.indexOf('Sterk patroon') > 0);
   assert.ok(html.indexOf('42 vergelijkbare dagen') > 0);
@@ -149,7 +149,7 @@ t('een sterk patroon toont zin, aantal dagen en betrouwbaarheid', function () {
 });
 
 t('onvoldoende data toont NOOIT een conclusie', function () {
-  var ctx = zandbak(['tkVerbandPijl', 'tkRelBadge', 'tkRelStatusTekst', 'tkRelConfTekst', 'tkRelKaartHtml']);
+  var ctx = zandbak(['tkVerbandPijl', 'tkRelBadge', 'tkRelOnvoldoendeReden', 'tkRelOnvoldoendeZin', 'tkRelStatusTekst', 'tkRelConfTekst', 'tkRelKaartHtml']);
   var html = ctx.tkRelKaartHtml(relVoorbeeld({
     status: 'INSUFFICIENT_DATA', is_patroon: false, effect: null, effect_direction: 'none',
     sample_count: 12, nog_nodig: 18, confidence: 'laag',
@@ -166,7 +166,7 @@ t('onvoldoende data toont NOOIT een conclusie', function () {
 });
 
 t('geen patroon is een eigen uitkomst, geen lege kaart', function () {
-  var ctx = zandbak(['tkVerbandPijl', 'tkRelBadge', 'tkRelStatusTekst', 'tkRelConfTekst', 'tkRelKaartHtml']);
+  var ctx = zandbak(['tkVerbandPijl', 'tkRelBadge', 'tkRelOnvoldoendeReden', 'tkRelOnvoldoendeZin', 'tkRelStatusTekst', 'tkRelConfTekst', 'tkRelKaartHtml']);
   var html = ctx.tkRelKaartHtml(relVoorbeeld({
     status: 'NO_PATTERN', is_patroon: false, effect: 0, effect_direction: 'none',
     zin: 'Tussen je slaap en je HRV is in deze periode geen duidelijke samenhang te zien.'
@@ -177,7 +177,7 @@ t('geen patroon is een eigen uitkomst, geen lege kaart', function () {
 });
 
 t('elke classificatie uit de engine heeft een woord in de UI', function () {
-  var ctx = zandbak(['tkRelStatusTekst']);
+  var ctx = zandbak(['tkRelOnvoldoendeReden', 'tkRelStatusTekst']);
   Object.keys(RC.CLASSIFICATIES).forEach(function (k) {
     var tekst = ctx.tkRelStatusTekst({ status: k });
     assert.ok(tekst && tekst.length > 0, 'geen UI-woord voor classificatie ' + k);
@@ -200,7 +200,7 @@ t('elk betrouwbaarheidsniveau heeft een woord', function () {
 });
 
 t('de kaart ontsnapt gebruikersinhoud', function () {
-  var ctx = zandbak(['tkVerbandPijl', 'tkRelBadge', 'tkRelStatusTekst', 'tkRelConfTekst', 'tkRelKaartHtml']);
+  var ctx = zandbak(['tkVerbandPijl', 'tkRelBadge', 'tkRelOnvoldoendeReden', 'tkRelOnvoldoendeZin', 'tkRelStatusTekst', 'tkRelConfTekst', 'tkRelKaartHtml']);
   var html = ctx.tkRelKaartHtml(relVoorbeeld({ bronLabel: '<img src=x onerror=alert(1)>' }));
   assert.ok(html.indexOf('<img') < 0, 'HTML uit data komt ongefilterd in de kaart');
   assert.ok(html.indexOf('&lt;img') > 0);

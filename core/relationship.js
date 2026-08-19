@@ -535,7 +535,16 @@
       return ai < bi ? -1 : (ai > bi ? 1 : 0);
     });
     var max = (typeof o.max === 'number' && isFinite(o.max) && o.max > 0) ? Math.floor(o.max) : REL_TOON_MAX;
-    var zichtbaar = lijst.filter(function (r) {
+    /* inAanmerking = alles wat de sporter MAG zien, gerangschikt en NIET afgekapt.
+     * zichtbaar    = de eerste schermvulling daarvan.
+     *
+     * Sprint 26: tot v4.45.1 leverde deze functie alleen de afgekapte lijst, waardoor de
+     * UI 29 van de 43 doorgerekende kandidaten stil liet verdwijnen — de engine wist
+     * ervan, de sporter niet. De afkapping blijft bestaan (een scherm met 43 kaarten
+     * leest niemand), maar de volledige lijst reist nu mee zodat de UI kan uitklappen
+     * in plaats van weggooien. Dit verandert GEEN drempel en GEEN rangschikking:
+     * zichtbaar is exact het eerste stuk van inAanmerking. */
+    var inAanmerking = lijst.filter(function (r) {
       // Kandidaten met te weinig data mogen zichtbaar zijn (dat is informatie),
       // maar alleen boven de ondergrens: 3 dagen tonen als "nog te weinig" is ruis.
       return (r.sample_count || 0) >= REL_MIN_KANDIDAAT;
@@ -543,8 +552,10 @@
     return {
       versie: RELATIONSHIP_VERSIE,
       alle: lijst,
-      zichtbaar: zichtbaar.slice(0, max),
-      verborgen: Math.max(0, zichtbaar.length - max),
+      inAanmerking: inAanmerking,
+      zichtbaar: inAanmerking.slice(0, max),
+      verborgen: Math.max(0, inAanmerking.length - max),
+      maximum: max,
       patronen: lijst.filter(function (r) { return r.is_patroon; }).length,
       onvoldoende: lijst.filter(function (r) { return r.status === CLASSIFICATIES.INSUFFICIENT_DATA; }).length
     };

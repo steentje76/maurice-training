@@ -1,5 +1,21 @@
 # Trainingskompas — Changelog
 
+## v4.46.0 — Sprint 26: Relationship Visibility & Evidence (19 augustus 2026)
+
+Geen nieuwe intelligentie. Deze sprint zorgt dat wat de engines al weten de sporter ook bereikt.
+
+**Niets verdwijnt meer stilzwijgend.** `RelationshipCore.rank()` leverde alleen de afgekapte lijst; de UI liet daardoor 29 van de 43 doorgerekende kandidaten verdwijnen zonder melding. De functie levert nu ook `inAanmerking` (volledig, gerangschikt, ongekapt) en `maximum`. De afkapping blijft — een scherm met 68 kaarten leest niemand — maar het overzicht meldt hoeveel er niet getoond worden en de sporter kan ze uitklappen. Drempels en rangschikking ongewijzigd; `zichtbaar` is exact het eerste stuk van `inAanmerking`.
+
+**"Meer data nodig" en "te weinig variatie" zijn niet langer hetzelfde.** Bij lichaamsgewicht stonden 35 vergelijkbare dagen (ruim boven de drempel van 30) onder de kop "Meer data nodig · nog 0 te gaan" — onwaar en verwarrend. Het onderscheid bestond al in de engine (`data_quality.bruikbaar` + `redenen`); de UI leest het nu en noemt bovendien wélke meting te weinig verandert. De zinloze teller verdwijnt bij een kwaliteits- of variatieweigering.
+
+**Drie van de vier ontbrekende inputs aangesloten**, alle drie via bestaande functies: dagfactor en gereedheid via `hrvDagFactorPersonal` → `dagfactor` → `readinessPercent` (met de baseline van díe dag, niet die van vandaag), topgewicht als dagmaximum in AthleteCore. Cardio-split is bewust NIET aangesloten: een dagreeks eroverheen mengt machines (58 s/500 m op een bike-erg naast 108 op een roeier), wat in tegenspraak is met de bestaande machine-bewuste cardio-recordregel. Welke sleutel de reeks moet dragen is een productbeslissing.
+
+**Evidence-aansluiting hersteld.** Het Guided-pad riep `buildStrengthSessionRow` aan zonder `at` en zonder `voorschrift`; `buildDecisionEvidence` markeert een snapshot zonder tijdstempel als ongeldig, waarna het bewijsspoor stil wegviel. Beide schrijfpaden geven nu dezelfde velden mee. De sessierij zelf is byte-identiek — evidence blijft additief in `sets_detail`.
+
+Effect op de huidige dataset: doorgerekende relaties 43 → 70, patronen 2 → 3, kandidaten in aanmerking 43 → 68. Home, Training, Workout Builder, Coach en de Fitbit-keten zijn byte-identiek geverifieerd.
+
+Tests: `core/fZichtbaarheid.test.js` (68 asserts). Regressie 61/61 groen, release gate 12/12.
+
 ## v4.45.0 — Night Sprint 19–23: Training Intelligence (18 augustus 2026)
 
 Verbanden zijn geen vaste lijst meer. Wat de sporter ziet volgt uit welke meetreeksen er werkelijk zijn.

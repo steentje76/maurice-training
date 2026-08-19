@@ -95,6 +95,9 @@
    * Cardio: afstand in meters. Geen omrekening naar kilo's, geen "equivalent volume".
    * ──────────────────────────────────────────────────────────────────────── */
   var RPE_MAX = 10;
+  /* Basis waarop een cardio-split wordt uitgedrukt: seconden per 500 meter, de conventie
+     die de app overal al gebruikt (roeien/skierg/bikeerg). Geen nieuwe eenheid. */
+  var SPLIT_BASIS_M = 500;
   function sessionLoad(sessie, deps) {
     var s = sessie || {}, d = deps || {};
     var mod = modaliteitVan(s);
@@ -112,14 +115,32 @@
       var waarde = (rpe != null) ? (volume * rpe / RPE_MAX) : volume;
       return { versie: LOAD_VERSIE, modaliteit: 'strength', eenheid: 'kg',
                waarde: Math.round(waarde * 10) / 10, gewogen: rpe != null, rpe: rpe,
-               sets: sets, volume: Math.round(volume * 10) / 10, reden: 'ok' };
+               sets: sets, volume: Math.round(volume * 10) / 10,
+               /* Sprint 26: het gewicht van de zwaarste set van deze sessie. Geen
+                  berekening, geen regel — de ruwe ingevoerde waarde, doorgegeven zodat
+                  het dagbeeld er een maximum van kan nemen. */
+               topgewicht: kg, reden: 'ok' };
     }
     if (mod === 'cardio') {
       var afstand = _num(s.distance);
       if (afstand == null || afstand <= 0) { basis.reden = 'geen_afstand'; return basis; }
+      /* Sprint 26 — SPLIT. De sessies-tabel heeft een pace_sec-kolom die in de praktijk
+         leeg is; de duur staat als tekst in time_str. De omrekening naar een split gebeurt
+         NIET hier maar in de bestaande CardioCore (cardio_time.v1 + split), die wordt
+         ingespoten. Ontbreekt die functie of de tijd, dan blijft de split null — er wordt
+         niets geschat. */
+      var split = null;
+      if (typeof d.parseTime === 'function' && typeof d.splitFromDistTime === 'function') {
+        var sec = _num(s.pace_sec) != null ? null : d.parseTime(s.time_str);
+        var secNum = _num(sec);
+        if (secNum != null && secNum > 0) {
+          var sp = d.splitFromDistTime(afstand, secNum, SPLIT_BASIS_M);
+          if (typeof sp === 'number' && isFinite(sp) && sp > 0) split = Math.round(sp * 10) / 10;
+        }
+      }
       return { versie: LOAD_VERSIE, modaliteit: 'cardio', eenheid: 'm',
                waarde: Math.round(afstand), gewogen: false, rpe: rpe, sets: null,
-               volume: Math.round(afstand), reden: 'ok' };
+               volume: Math.round(afstand), split: split, reden: 'ok' };
     }
     return basis;
   }
@@ -148,7 +169,8 @@
       if (!m) {
         m = dag.modaliteiten[l.modaliteit] = {
           modaliteit: l.modaliteit, eenheid: l.eenheid, belasting: 0, volume: 0,
-          sets: 0, sessies: 0, rpeSom: 0, rpeGewicht: 0, gewogen: 0
+          sets: 0, sessies: 0, rpeSom: 0, rpeGewicht: 0, gewogen: 0,
+          topgewicht: null, split: null
         };
       }
       m.belasting += l.waarde;
@@ -160,6 +182,15 @@
          zwaarder dan een RPE 6 over een enkele set. Een sessie zonder RPE telt
          niet mee in de noemer — hij wordt niet als "gemiddeld" meegerekend. */
       if (l.rpe != null) { var w = (l.sets || 1); m.rpeSom += l.rpe * w; m.rpeGewicht += w; }
+      /* Zwaarste set van de dag: een maximum, geen gemiddelde — twee lichte sessies naast
+         een zware maken de dag niet lichter. */
+      if (typeof l.topgewicht === 'number' && isFinite(l.topgewicht)) {
+        if (m.topgewicht == null || l.topgewicht > m.topgewicht) m.topgewicht = l.topgewicht;
+      }
+      /* Beste split van de dag: bij een split is LAGER beter (seconden per 500 m). */
+      if (typeof l.split === 'number' && isFinite(l.split)) {
+        if (m.split == null || l.split < m.split) m.split = l.split;
+      }
     });
 
     var dagen = Object.keys(perDag).sort().map(function (k) {
@@ -172,7 +203,8 @@
           volume: Math.round(m.volume * 10) / 10,
           sets: m.sets, sessies: m.sessies,
           rpe: m.rpeGewicht > 0 ? Math.round(m.rpeSom / m.rpeGewicht * 10) / 10 : null,
-          rpeDekking: m.sessies > 0 ? Math.round(m.gewogen / m.sessies * 100) / 100 : 0
+          rpeDekking: m.sessies > 0 ? Math.round(m.gewogen / m.sessies * 100) / 100 : 0,
+          topgewicht: m.topgewicht, split: m.split
         };
       }).sort(function (a, b) { return a.modaliteit < b.modaliteit ? -1 : 1; });
       return {
@@ -497,6 +529,26 @@
       var vorige = previousDaySeries(belasting, 3);
       if (vorige.length) uit.load_vorige_dag = vorige;
     }
+    /* Sprint 26 — TOPGEWICHT. Het register kende deze grootheid al maar kreeg hem nooit
+       aangeleverd. Het is een AGGREGATIE van bestaande waarden (het maximum van de dag),
+       geen nieuwe berekening en geen nieuwe regel. */
+    var top = serie(model, 'strength', 'topgewicht');
+    if (top.length) uit.topgewicht = top;
+
+    /* Sprint 26 — CARDIO-SPLIT: bewust NIET aangeleverd, en dat is een besluit met reden.
+     *
+     * De split per sessie wordt hier wél correct berekend (zie sessionLoad, via de
+     * bestaande CardioCore) en staat in het dagmodel. Maar hem als ÉÉN dagreeks aan de
+     * Relationship Engine geven zou splits van verschillende machines door elkaar husselen:
+     * op deze dataset staat 58,7 s/500 m (bike-erg) naast 108 s/500 m (roeien). Het
+     * "beste" van die twee is geen prestatie maar een meetfout.
+     *
+     * De app kent die regel al: de cardio-records werken machine- én afstand-bewust
+     * ("dominante afstand-key, geen 2k≠5k", ProgressionCore.recordsBy). Een dagminimum
+     * over alle machines heen zou daarmee in tegenspraak zijn. Welke machine of afstand
+     * de reeks moet dragen is een PRODUCTBESLISSING, geen technische keuze — en die wordt
+     * hier niet zelf genomen. Zolang die er niet is blijft cardio_split afwezig in plaats
+     * van misleidend aanwezig. Zie het sprintrapport. */
     var pi = performanceIndex(sessies, d);
     if (pi.reeks && pi.reeks.length) uit.e1rm = pi.reeks;
     return { versie: ATHLETE_VERSIE, bronnen: uit, model: model, prestatieIndex: pi };
@@ -508,6 +560,7 @@
     PERFINDEX_VERSIE: PERFINDEX_VERSIE,
     MODALITEITEN: MODALITEITEN,
     RPE_MAX: RPE_MAX,
+    SPLIT_BASIS_M: SPLIT_BASIS_M,
     MONOTONIE_MIN_DAGEN: MONOTONIE_MIN_DAGEN,
     ACWR_MIN_DAGEN: ACWR_MIN_DAGEN,
     PERFINDEX_MIN_HISTORIE: PERFINDEX_MIN_HISTORIE,

@@ -166,6 +166,36 @@ zegt de uitkomst iets over afrondingsruis. Er wordt geteld hoeveel *verschillend
 er zijn, bewust geen standaarddeviatie — die is niet vergelijkbaar tussen ms, uren en kg
 zonder per grootheid een drempel te verzinnen.
 
+## Zichtbaarheid en afkapping
+
+`rank()` levert drie dingen naast elkaar:
+
+| veld | betekenis |
+|---|---|
+| `alle` | elke geëvalueerde kandidaat, ook onder de toondrempel |
+| `inAanmerking` | alles boven `REL_MIN_KANDIDAAT`, gerangschikt, **niet afgekapt** |
+| `zichtbaar` | de eerste `REL_TOON_MAX` daarvan — exact het eerste stuk van `inAanmerking` |
+| `verborgen` | hoeveel er buiten `zichtbaar` vallen |
+
+Tot v4.45.1 las de UI alleen `zichtbaar` en verdwenen de rest zonder melding. De afkapping
+blijft bestaan — een scherm met tientallen kaarten leest niemand — maar het overzicht meldt
+nu hoeveel er niet getoond worden en de sporter kan ze uitklappen. De engine gooit niets weg.
+
+## Twee toestanden achter INSUFFICIENT_DATA
+
+`INSUFFICIENT_DATA` dekt situaties die voor de sporter verschillend zijn, en die door elkaar
+halen is misleidend:
+
+| reden (uit `data_quality.redenen`) | betekenis | teller "nog X te gaan"? |
+|---|---|---|
+| leeg, `bruikbaar: true` | simpelweg nog te weinig vergelijkbare dagen | ja |
+| `te_weinig_variatie_bron/_doel` | genoeg dagen, maar een meting staat vrijwel stil | nee — betekenisloos |
+| `te_veel_uitgesloten` | te veel dagen vielen af bij de kwaliteitscontrole | nee |
+
+Voorbeeld uit de praktijk: lichaamsgewicht heeft 35 vergelijkbare dagen met HRV — ruim boven
+de drempel van 30 — en levert tóch geen oordeel, omdat de reeks vrijwel constant 106,0 kg is.
+"Meer data nodig" zou daar onwaar zijn.
+
 ## Geen correlatiespam
 
 Bij twintig beschikbare grootheden zijn er 190 mogelijke paren. Er wordt daarom vroeg
@@ -266,3 +296,19 @@ Wat het model nu al aankan zodra de data er is:
 
 Wat een architectuurwijziging zou vragen: partiële correlatie, niet-monotone verbanden,
 en correctie voor meervoudig testen.
+
+## Openstaande productbeslissingen
+
+Deze zijn bewust NIET zelf ingevuld:
+
+1. **Sleutel voor de cardio-split.** De split per sessie wordt correct berekend, maar een
+   dagreeks eroverheen mengt machines (bike-erg naast roeier). De app kent al een machine- en
+   afstand-bewuste regel voor cardio-records; welke sleutel de relatiereeks moet dragen is een
+   productkeuze. Tot die er is blijft `cardio_split` afwezig in plaats van misleidend aanwezig.
+2. **Minimum-N en statistische methode formeel vastleggen.** De code noemt 30 en Spearman
+   "vastgelegd door de Product Owner"; er is geen DEC-entry die dat bevestigt. Hetzelfde geldt
+   voor de bewuste keuze géén significantietoets te gebruiken.
+3. **Grofkorrelige afgeleiden.** Dagfactor en gereedheid zijn stapfuncties met weinig
+   verschillende waarden; ze vallen daardoor vaak af op de spreidingstoets. Dat is de
+   spreidingstoets die correct werkt, maar of zulke afgeleiden überhaupt als relatiebron
+   moeten meedoen is een productvraag.

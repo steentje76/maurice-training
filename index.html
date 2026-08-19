@@ -5713,7 +5713,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.45.1';
+const APP_VER = 'v4.46.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -20315,6 +20315,7 @@ const TK_REL_VENSTER  = 365;                 // langste periode: één query bed
 let _tkRelRows = null, _tkRelWeight = null, _tkRelSessies = null;  // ruwe rijen, één keer per sessie
 let _tkRelCache = {};                        // per periode: de uitkomst van discover
 let tkRelFilter = 'alle';
+let tkRelToonAlles = false;                  // false = alleen de eerste schermvulling
 let tkRelSel = null;                         // relationship_id van het detailscherm
 let tkRelPeriode = 90;                       // standaardvenster van het detailscherm
 
@@ -20345,7 +20346,12 @@ function tkAthleteBronnen(dagen){
   const alle=_tkRelSessies||[];
   if(!alle.length) return {};
   const sessies = tkAthleteVenster(alle, dagen);
-  const uit=AC.relationshipSources(sessies,{calculateVolume:CC.calculateVolume, oneRMRaw:CC.oneRMRaw});
+  /* CardioCore wordt ingespoten zodat AthleteCore de split kan afleiden met de BESTAANDE
+     cardio_time.v1-parser en splitformule — er komt geen tweede tijdparser bij. */
+  const CD=(typeof CardioCore!=='undefined')?CardioCore:null;
+  const uit=AC.relationshipSources(sessies,{
+    calculateVolume:CC.calculateVolume, oneRMRaw:CC.oneRMRaw,
+    parseTime:(CD&&CD.parseTime)||null, splitFromDistTime:(CD&&CD.splitFromDistTime)||null});
   return (uit&&uit.bronnen)||{};
 }
 
@@ -20387,6 +20393,12 @@ function tkRelBronnen(data, dagen){
   if(eindW && typeof dc.weightSeries==='function'){
     const w=dc.weightSeries(wRows,eindW,dagen);
     if(w.length) bronnen.gewicht=w;
+  }
+  /* Sprint 26 — dagfactor en gereedheid, uit dezelfde keten als het Home-scherm. */
+  if(hrvRows.length){
+    const dfR=tkDagfactorReeksen(hrvRows,dagen);
+    if(dfR.dagfactor.length) bronnen.dagfactor=dfR.dagfactor;
+    if(dfR.readiness.length) bronnen.readiness=dfR.readiness;
   }
   /* Sprint 21 — trainings- en prestatiereeksen uit AthleteCore. Wat er niet berekend
      kan worden komt er niet in; de engine meldt dat als 'niet aanwezig' en verzint
@@ -20438,6 +20450,58 @@ function tkCoachPrestatie(uit){
     if(!pi.reeks.length) return null;
     return {index: pi.reeks[pi.reeks.length-1].value, dagen: pi.reeks.length};
   }catch(_){ return null; }
+}
+
+/* Sprint 26 — DAGFACTOR- EN GEREEDHEIDSREEKS.
+ *
+ * Beide grootheden stonden al in het variabelenregister op beschikbaarheid 'nu', maar
+ * werden nergens aangeleverd: de engine meldde ze als "niet aanwezig" terwijl de app ze
+ * elke dag op Home laat zien. Dat was een ontbrekende aansluiting, geen ontwerpkeuze.
+ *
+ * Er wordt hier NIETS nieuws berekend. Per dag wordt exact dezelfde keten gebruikt als
+ * het Home-scherm: hrvDagFactorPersonal -> dagfactor -> CalcCore.readinessPercent.
+ * De referentiedatum schuift mee per dag, zodat de baseline van die dag wordt gebruikt
+ * en niet die van vandaag — anders zou een reeks van vorige maand met het huidige
+ * kennisniveau worden beoordeeld.
+ *
+ * Let op: dagfactor en gereedheid komen uit HRV en slaap. De circulariteitstoets in de
+ * Decision Engine weigert ze daarom tegen HRV en slaap — dat is correct en gewenst.
+ * Tegenover training en prestatie zijn het wel geldige kandidaten. */
+function tkDagfactorReeksen(hrvRows, dagen){
+  const uit={dagfactor:[], readiness:[]};
+  if(!Array.isArray(hrvRows)||!hrvRows.length) return uit;
+  if(typeof hrvDagFactorPersonal!=='function'||typeof dagfactor!=='function') return uit;
+  const CC=(typeof CalcCore!=='undefined')?CalcCore:null;
+  /* Eén rij per dag: de nieuwste meting van die dag wint, dezelfde regel als elders. */
+  const perDag={};
+  hrvRows.forEach(function(r){
+    if(!r||!r.date) return;
+    const d=String(r.date).slice(0,10);
+    if(!perDag[d]) perDag[d]=r;
+  });
+  const datums=Object.keys(perDag).sort();
+  if(!datums.length) return uit;
+  const n=(typeof dagen==='number'&&dagen>0)?Math.floor(dagen):365;
+  const eind=datums[datums.length-1];
+  const grens=new Date(eind+'T00:00:00Z').getTime()-(n-1)*86400000;
+  datums.forEach(function(d){
+    const t=new Date(d+'T00:00:00Z').getTime();
+    if(!isFinite(t)||t<grens) return;
+    const rij=perDag[d];
+    if(rij.hrv==null&&rij.sleep==null) return;      // geen invoer -> geen dagfactor
+    try{
+      const hc=hrvDagFactorPersonal(hrvRows, d);
+      const df=dagfactor(hc, rij.sleep, rij.cyclus_fase);
+      if(df&&typeof df.factor==='number'&&isFinite(df.factor)){
+        uit.dagfactor.push({date:d, value:df.factor});
+        if(CC&&typeof CC.readinessPercent==='function'){
+          const pct=CC.readinessPercent(df.factor);
+          if(pct!=null) uit.readiness.push({date:d, value:pct});
+        }
+      }
+    }catch(_){ /* één slechte dag mag de hele reeks niet slopen */ }
+  });
+  return uit;
 }
 
 function tkRelDeps(){
@@ -20492,12 +20556,42 @@ function tkRelBadge(status){
    verschillende woorden voor dezelfde toestand gebruiken. */
 function tkRelStatusTekst(rel){
   if(!rel) return '';
-  if(rel.status==='INSUFFICIENT_DATA') return 'Meer data nodig';
+  /* Sprint 26 — INSUFFICIENT_DATA dekt twee verschillende situaties, en die door elkaar
+     halen is misleidend. Bij lichaamsgewicht bijvoorbeeld: 35 vergelijkbare dagen (ruim
+     boven de drempel van 30) en tóch geen oordeel, omdat de reeks vrijwel stilstaat.
+     "Meer data nodig" is daar simpelweg onwaar. Het onderscheid komt UIT DE ENGINE
+     (data_quality.bruikbaar + redenen); hier wordt niets zelf bepaald. */
+  if(rel.status==='INSUFFICIENT_DATA') return tkRelOnvoldoendeReden(rel)==='variatie'
+    ? 'Te weinig variatie' : 'Meer data nodig';
   if(rel.status==='NO_PATTERN')        return 'Geen patroon';
   if(rel.status==='POSSIBLE_PATTERN')  return 'Mogelijk patroon';
   if(rel.status==='MODERATE_PATTERN')  return 'Duidelijk patroon';
   if(rel.status==='STRONG_PATTERN')    return 'Sterk patroon';
   return '';
+}
+/* Waarom is er geen oordeel? Uitsluitend afgeleid uit het bestaande relationship.v1-record:
+ *   'variatie'  — de datakwaliteitslaag keurde de kandidaat af op te weinig spreiding
+ *   'kwaliteit' — te veel dagen vielen af bij de kwaliteitscontrole
+ *   'aantal'    — gewoon nog te weinig vergelijkbare dagen
+ * Er wordt hier geen nieuwe regel toegepast en geen drempel bepaald. */
+function tkRelOnvoldoendeReden(rel){
+  const r=(rel&&rel.data_quality&&rel.data_quality.redenen)||[];
+  if(r.indexOf('te_weinig_variatie_bron')>=0||r.indexOf('te_weinig_variatie_doel')>=0) return 'variatie';
+  if(r.indexOf('te_veel_uitgesloten')>=0) return 'kwaliteit';
+  return 'aantal';
+}
+/* De zin op de kaart, passend bij die reden. Bij te weinig variatie wordt ook gezegd
+   WELKE meting te weinig varieert — anders blijft het voor de sporter een raadsel. */
+function tkRelOnvoldoendeZin(rel){
+  const reden=tkRelOnvoldoendeReden(rel);
+  if(reden==='variatie'){
+    const r=(rel.data_quality&&rel.data_quality.redenen)||[];
+    const welke=(r.indexOf('te_weinig_variatie_bron')>=0)?(rel.bronLabel||'de eerste meting')
+                                                        :(rel.doelLabel||'de tweede meting');
+    return 'Er zijn genoeg dagen, maar '+welke+' verandert te weinig om een patroon te kunnen beoordelen.';
+  }
+  if(reden==='kwaliteit') return 'Te veel dagen vielen af bij de datakwaliteitscontrole om dit betrouwbaar te beoordelen.';
+  return 'Nog onvoldoende data om een betrouwbaar patroon te beoordelen.';
 }
 function tkRelConfTekst(c){
   return c==='hoog' ? 'hoge betrouwbaarheid' : (c==='gemiddeld' ? 'gemiddelde betrouwbaarheid' : 'lage betrouwbaarheid');
@@ -20509,11 +20603,13 @@ function tkRelConfTekst(c){
 function tkRelKaartHtml(rel){
   const onvoldoende = rel.status==='INSUFFICIENT_DATA';
   const kleur = (!rel.effect_direction || rel.effect_direction==='none') ? 'var(--g4)' : 'var(--accent)';
-  const zin = onvoldoende
-    ? 'Nog onvoldoende data om een betrouwbaar patroon te beoordelen.'
-    : (rel.zin || '');
+  const zin = onvoldoende ? tkRelOnvoldoendeZin(rel) : (rel.zin || '');
+  /* "nog X te gaan" hoort alleen bij een tekort aan dagen. Bij een kwaliteits- of
+     variatieweigering is dat getal betekenisloos (en bij gewicht zelfs 0 terwijl er
+     35 dagen zijn), dus dan blijft het weg. */
+  const telt = onvoldoende && tkRelOnvoldoendeReden(rel)==='aantal' && rel.nog_nodig>0;
   const meta = onvoldoende
-    ? (rel.sample_count + ' vergelijkbare dagen' + (rel.nog_nodig>0 ? (' · nog ' + rel.nog_nodig + ' te gaan') : ''))
+    ? (rel.sample_count + ' vergelijkbare dagen' + (telt ? (' · nog ' + rel.nog_nodig + ' te gaan') : ''))
     : (rel.sample_count + ' vergelijkbare dagen · ' + tkRelConfTekst(rel.confidence));
   return '<button class="lich-vrow'+(onvoldoende?' dun':'')+'" onclick="openRelatie(\''+escHtml(rel.relationship_id)+'\')">'+
     '<div class="kop"><span class="var">'+escHtml(rel.bronLabel||'')+'</span>'+
@@ -20528,6 +20624,7 @@ function tkRelKaartHtml(rel){
 }
 
 function tkRelFilterZet(k){ tkRelFilter=k; renderLichaamVerbandenOverzicht(); }
+function tkRelToonAllesZet(v){ tkRelToonAlles=!!v; renderLichaamVerbandenOverzicht(); }
 
 /* ── OVERZICHTSSCHERM ─────────────────────────────────────────────────────── */
 async function renderLichaamVerbandenOverzicht(){
@@ -20546,11 +20643,17 @@ async function renderLichaamVerbandenOverzicht(){
     return;
   }
   const RC=RelationshipCore;
-  const alle=uit.overzicht.zichtbaar||[];
+  /* Sprint 26 — de engine levert nu twee lijsten: 'zichtbaar' (de eerste schermvulling)
+     en 'inAanmerking' (alles wat de sporter mág zien, ongekapt). Tot v4.45.1 las de UI
+     alleen de eerste en verdwenen de rest zonder melding. Nu bepaalt de sporter zelf of
+     hij alles wil zien; de rangschikking en de drempels blijven van de engine. */
+  const volledig=uit.overzicht.inAanmerking||uit.overzicht.zichtbaar||[];
+  const alle=tkRelToonAlles ? volledig : (uit.overzicht.zichtbaar||[]);
+  const weggelaten=Math.max(0, volledig.length-alle.length);
 
   // Filters tonen alleen categorieën waar ook werkelijk iets in zit.
   if(filtEl){
-    const aanwezig={}; alle.forEach(function(r){ aanwezig[r.domein]=true; });
+    const aanwezig={}; volledig.forEach(function(r){ aanwezig[r.domein]=true; });
     let f='<button class="lich-vfilter'+(tkRelFilter==='alle'?' on':'')+'" role="tab" aria-selected="'+(tkRelFilter==='alle')+'" onclick="tkRelFilterZet(\'alle\')">Alle</button>';
     RC.DOMEINEN.forEach(function(d){
       if(!aanwezig[d.key]) return;
@@ -20583,6 +20686,17 @@ async function renderLichaamVerbandenOverzicht(){
   if(teWeinig.length){ html+='<div class="lich-vsec">Nog te weinig data</div>'+teWeinig.map(tkRelKaartHtml).join(''); }
   /* Deze zin is het hart van het productbesluit: dit is GEEN vaste lijst en het is
      geen uitspraak over de werkelijkheid — het is wat er nu in deze gegevens te zien is. */
+  /* Niets verdwijnt stilzwijgend: als de engine meer kandidaten heeft doorgerekend dan
+     er getoond worden, staat dat er, met een knop om ze alsnog te zien. */
+  if(weggelaten>0){
+    html+='<button class="lich-goto" onclick="tkRelToonAllesZet(true)"><span class="ic">＋</span>'+
+      '<span class="b"><b>Nog '+weggelaten+' verband'+(weggelaten===1?'':'en')+' onderzocht</b>'+
+      '<s>Deze hebben nog te weinig gegevens voor een oordeel</s></span><span class="chev">›</span></button>';
+  }else if(tkRelToonAlles && volledig.length>(uit.overzicht.maximum||0)){
+    html+='<button class="lich-goto" onclick="tkRelToonAllesZet(false)"><span class="ic">－</span>'+
+      '<span class="b"><b>Toon alleen de belangrijkste</b><s>Je ziet nu alle '+volledig.length+' onderzochte verbanden</s></span>'+
+      '<span class="chev">›</span></button>';
+  }
   html+='<div class="lich-vnote">Dit zijn de verbanden die we op dit moment in jouw gegevens zien. '+
         'Het is geen vaste lijst: hoe meer je meet en logt, hoe meer er onderzocht kan worden. '+
         'Een samenhang is nooit een bewijs van oorzaak en gevolg.</div>';
@@ -20686,9 +20800,7 @@ async function _renderLichaamVerbandDetail(el){
         '<span style="font-size:15px;font-weight:800;color:var(--dark)">'+escHtml(rel.doelLabel||'')+'</span>'+
         '<span class="cls '+tkRelBadge(rel.status)+'" style="margin-left:auto;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;padding:3px 8px;border-radius:20px">'+escHtml(tkRelStatusTekst(rel))+'</span></div>'+
       '<div style="font-size:13px;line-height:1.55;color:var(--g4);font-weight:600">'+
-        escHtml(rel.status==='INSUFFICIENT_DATA'
-          ? 'Er is nog onvoldoende data om over deze periode een betrouwbaar patroon te beoordelen.'
-          : (rel.zin||''))+'</div>'+
+        escHtml(rel.status==='INSUFFICIENT_DATA' ? tkRelOnvoldoendeZin(rel) : (rel.zin||''))+'</div>'+
       (rel.sterkte_uitleg?'<div style="font-size:12.5px;line-height:1.5;color:var(--g4);font-weight:600;margin-top:6px">'+escHtml(rel.sterkte_uitleg)+'</div>':'')+
       periodeKnoppen+
     '</div>';
@@ -20709,7 +20821,7 @@ async function _renderLichaamVerbandDetail(el){
       '<div class="card" style="padding:12px 14px;margin-top:10px">'+
         '<div style="font-weight:800;color:var(--g5,#1a2b33);font-size:13px;margin-bottom:5px">Waarom nog geen oordeel?</div>'+
         '<div style="font-size:12.5px;line-height:1.55;color:var(--g4);font-weight:600">'+escHtml(waarom)+'.</div>'+
-        (rel.nog_nodig>0?'<div style="font-size:12.5px;line-height:1.55;color:var(--g4);font-weight:700;margin-top:6px">Nog '+rel.nog_nodig+' vergelijkbare dagen te gaan.</div>':'')+
+        ((rel.nog_nodig>0&&tkRelOnvoldoendeReden(rel)==='aantal')?'<div style="font-size:12.5px;line-height:1.55;color:var(--g4);font-weight:700;margin-top:6px">Nog '+rel.nog_nodig+' vergelijkbare dagen te gaan.</div>':'')+
       '</div>'+
       tkRelTransparantieHtml(rel);
     return;
@@ -22456,7 +22568,15 @@ var GW=(function(){
       if(it.pick==='warmup'||it.pick==='cooldown')continue;      // geen warm-up/cooldown als werkset
       var ws=it.setsDone.map(function(sd){return {kg:(it.weight!=null?it.weight:null),reps:(sd.reps!=null?sd.reps:null),rpe:sd.rpe};});
       try{
-        var built=buildStrengthSessionRow(it.id,ws,{date:today,training_type:tt,note:'',instanceId:instId});
+        /* Sprint 26 — EVIDENCE-AANSLUITING. Dit Guided-pad gaf geen `at` en geen
+           `voorschrift` mee. buildDecisionEvidence markeert een snapshot zonder tijdstempel
+           als ongeldig, waarna tkSetEvidence null teruggeeft en het bewijsspoor stil
+           verdween. Zichtbaar effect: nul rijen met evidence in productie, terwijl het
+           finishSession-pad ze wél schrijft. Dezelfde velden als daar, uit de al aanwezige
+           item-gegevens — geen nieuwe berekening. */
+        var built=buildStrengthSessionRow(it.id,ws,{date:today,training_type:tt,note:'',instanceId:instId,
+          at:new Date().toISOString(),
+          voorschrift:{kg:(it.weight!=null?it.weight:null), reps:(it.reps!=null?it.reps:null), rpe:(it.rpe!=null?it.rpe:null)}});
         await writeSessionRow(built.row); written++;
         // F0.7J: PR-cache consistent bijwerken (zelfde regel als finishSession) — geen nieuwe berekening.
         var w=built.row.weight;

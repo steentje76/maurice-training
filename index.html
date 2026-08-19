@@ -2,7 +2,12 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<!-- RC0: viewport-fit=cover toegevoegd. Zonder deze waarde leveren de env(safe-area-inset-*)-
+     regels in de CSS altijd 0 op. Op Android 15+ wordt edge-to-edge afgedwongen voor apps die
+     API 35 of hoger targeten (verplicht voor Play), waardoor de WebView achter de statusbalk en
+     de navigatiebalk door loopt. Zonder insets zouden de koptekst en de onderbalk daar dan
+     onder verdwijnen. -->
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Kompas">
@@ -308,7 +313,11 @@ body{display:flex;justify-content:center}
 .scr.active{display:flex}
 
 /* HEADER */
-.hdr{background:var(--bg);padding:52px 18px 12px;flex-shrink:0}
+/* RC0: de bovenmarge was vast 52px, precies genoeg voor een gemiddelde statusbalk. Met
+   edge-to-edge (Android 15+, verplicht bij targetSdk 35+) en op toestellen met een grote
+   uitsparing is dat te weinig. max() houdt de bestaande 52px als ondergrens — de weergave
+   op alles wat nu goed staat verandert dus niet — en groeit alleen mee waar dat nodig is. */
+.hdr{background:var(--bg);padding:max(52px,calc(12px + env(safe-area-inset-top,0px))) 18px 12px;flex-shrink:0}
 .hdr-title{font-size:28px;font-weight:800;color:var(--dark);letter-spacing:-.5px}
 .hdr-sub{font-size:13px;color:var(--g4);margin-top:2px}
 .hdr-row{display:flex;justify-content:space-between;align-items:flex-start}
@@ -1123,6 +1132,23 @@ html[data-theme="dark"] .lib-cmp-r{color:#ffce7a}
 .lib-cmp-chg{margin-top:16px}
 .lib-cmp-swap{width:100%;padding:11px;border-radius:12px;border:1px solid var(--border,rgba(0,0,0,.1));background:var(--card);color:var(--g6);font-size:13px;font-weight:700;font-family:var(--f);cursor:pointer}
 .lib-cmp-pick-h{font-size:13px;color:var(--g6);margin:4px 0 12px}
+/* RC0 — bewijsspoor. Bewust dezelfde kaart-/rijtaal als de rest van de app; geen nieuw
+   visueel systeem. De vijf secties zijn visueel gescheiden zodat altijd zichtbaar blijft
+   waar een getal vandaan komt: gemeten, berekend, of besloten. */
+.ev-sec{margin-bottom:12px}
+.ev-sec-hd{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--g4);margin-bottom:5px}
+.ev-row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:4px 0;border-bottom:1px solid var(--g2)}
+.ev-row:last-child{border-bottom:0}
+.ev-row s{text-decoration:none;color:var(--g4)}
+.ev-row b{font-weight:700}
+.ev-set{border:1px solid var(--g2);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.ev-set-hd{font-size:12px;font-weight:800;margin-bottom:6px}
+.ev-uitkomst{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;margin-left:6px}
+.ev-uitkomst.increase{background:var(--g1);color:var(--accent)}
+.ev-uitkomst.deload{background:var(--g1);color:var(--y,#b8860b)}
+.ev-uitkomst.hold{background:var(--g1);color:var(--g4)}
+.ev-mis{font-size:11px;color:var(--g4);margin-top:4px}
+.lg-ev{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--accent);background:var(--g1);border:0;border-radius:999px;padding:3px 9px;margin-top:4px;cursor:pointer}
 /* ── Video placeholder ── */
 .lib-video-ph{position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;background:linear-gradient(135deg,#0e2733,#15384a);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;overflow:hidden}
 .lib-video-ph::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,rgba(0,184,148,.18),transparent 60%)}
@@ -3322,10 +3348,11 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <strong>Hoe koppel ik mijn wearable?</strong><br>Via Lichaam → Gezondheidsgegevens &amp; koppelingen.
     </div></div>
     <div class="card"><div class="card-hd"><div class="card-title">Contact &amp; feedback</div></div><div class="card-body" style="font-size:13px;line-height:1.5;color:var(--g4)">
-      <strong>[PLACEHOLDER]</strong> Er is nog geen vastgesteld contact-/feedbackkanaal (bv. e-mailadres of in-app formulier) gedocumenteerd in de projectdocumentatie. Toevoegen zodra bekend.
+      <div id="help-contact-body"></div>
     </div></div>
     <div class="card"><div class="card-hd"><div class="card-title">Over de app</div></div><div class="card-body" style="font-size:13px;line-height:1.5">
       <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Versie</div><div class="set-row-sub" id="help-app-ver">—</div></div></div>
+      <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Privacyverklaring</div><div class="set-row-sub"><a href="/privacy.html" target="_blank" rel="noopener">Openen</a></div></div></div>
       <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Ontwikkelaar</div><div class="set-row-sub">SteenSoft</div></div></div>
     </div></div>
     <div class="card"><div class="card-hd"><div class="card-title">Licenties &amp; gebruikte diensten</div></div><div class="card-body" style="font-size:12px;line-height:1.6;color:var(--g4)">
@@ -4276,6 +4303,22 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </div>
 </div>
 
+<!-- RC0 — BEWIJSSPOOR ZICHTBAAR. Het bewijsspoor per set (evidence_snapshot.v1) werd
+     al bij elke afgeronde training weggeschreven in sessions.sets_detail, maar nergens
+     getoond. Daarmee was de kernbelofte van Trainingskompas — niet alleen WAT er wordt
+     geadviseerd, maar ook WAAROM — technisch aanwezig en voor de sporter onzichtbaar.
+     Deze modal toont de opgeslagen snapshot in exact de vijf secties van het contract
+     en voegt niets toe: wat niet is vastgelegd blijft leeg. -->
+<div class="modal-bg" id="m-evidence" onclick="bgClose(event,'m-evidence')">
+  <div class="modal" style="max-height:85vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="ev-title">Waarom dit advies</div>
+    <div id="ev-body"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-evidence')">Sluiten</button>
+    </div>
+  </div>
+</div>
 <div class="modal-bg" id="m-offline-queue" onclick="bgClose(event,'m-offline-queue')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -5713,7 +5756,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.47.0';
+const APP_VER = 'v4.48.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6604,10 +6647,75 @@ let curEditSess=null;
 // ══════════════════════════════════════════════════════════
 // Fout-logging toegevoegd (i.p.v. stille catch) — nodig zodra RLS actief is, anders
 // zijn 401/403-afwijzingen straks onzichtbaar en lijkt de app alleen "leeg" data te tonen.
-async function sbGet(t,p=''){try{const r=await fetch(`${SB_URL}/rest/v1/${t}?select=*${p}`,{headers:SB_H});if(!r.ok){console.error('sbGet',t,r.status,await r.text());return[];}return await r.json();}catch(e){console.error('sbGet catch',t,e);return[];}}
+// ══════════════════════════════════════════════════════════
+// SESSIE-VEILIGE FETCH-LAAG (release-hardening, RC0)
+// ══════════════════════════════════════════════════════════
+// AANLEIDING (Android-levenscyclus). scheduleAuthRefresh() vernieuwt het access-token
+// via setTimeout. Zodra Android de app naar de achtergrond zet worden die timers
+// bevroren; komt de gebruiker uren later terug, dan is het token verlopen. Elke
+// REST-aanroep gaf dan 401 en de app loog daarover:
+//   sbGet  -> [] ............ elk scherm rende 'geen data' -> lijkt op dataverlies
+//   sbPost -> false ......... zojuist ingevoerde sets verdwenen met 'Fout bij opslaan'
+//   sbPostQ -> false ........ NIET gequeued, dus de invoer was echt weg
+// REGEL NU: alle REST-verkeer loopt via sbFetch. Eén 401 -> één gedeelde refresh ->
+// één retry met een VERS opgebouwde header (nooit een gesnapshot oud token).
+// Lukt de refresh niet, dan wordt dat expliciet gemeld en verschijnt het loginscherm —
+// nooit een stil leeg scherm. Schrijfacties met een tijdelijke serverfout gaan naar
+// dezelfde offline-wachtrij als een netwerkfout, zodat invoer nooit stilzwijgend
+// verdwijnt. Een echte validatiefout (400/409/422) wordt NIET gequeued — die zou
+// eeuwig blijven falen — en levert net als voorheen false op.
+const SB_RETRY_STATUS=[401,408,425,429,500,502,503,504];
+function sbRetryable(status){
+  return SB_RETRY_STATUS.indexOf(status)>=0;
+}
+let _sbRefreshInFlight=null;
+// Eén gedeelde refresh: tien parallelle 401's mogen niet tien refresh-calls doen
+// (Supabase roteert refresh-tokens — parallelle refreshes verliezen elkaars token).
+function sbRefreshOnce(){
+  if(_sbRefreshInFlight)return _sbRefreshInFlight;
+  _sbRefreshInFlight=Promise.resolve().then(function(){ return refreshAuthToken(); })
+    .then(function(ok){ _sbRefreshInFlight=null; return ok; },
+          function(){ _sbRefreshInFlight=null; return false; });
+  return _sbRefreshInFlight;
+}
+let _sbSessieVerlopenGemeld=false;
+// Sessie definitief verlopen: één keer melden, loginscherm tonen, wachtrij intact laten.
+// De offline-wachtrij wordt NIET geleegd — die data hoort bij de gebruiker en wordt
+// gesynchroniseerd zodra hij opnieuw inlogt.
+function sbSessieVerlopen(){
+  if(_sbSessieVerlopenGemeld)return;
+  _sbSessieVerlopenGemeld=true;
+  try{ clearAuthSession(); }catch(_){ }
+  try{ toast('Je sessie is verlopen — log opnieuw in'); }catch(_){ }
+  try{
+    document.querySelectorAll('.scr,.pin-screen').forEach(function(x){x.classList.remove('active');});
+    var el=document.getElementById('s-auth');
+    if(el)el.classList.add('active');
+  }catch(_){ }
+}
+// Alle sb*-functies gaan hier doorheen. Headers worden PER POGING opgebouwd uit SB_H,
+// zodat een retry na refresh gegarandeerd het nieuwe token gebruikt.
+async function sbFetch(url,o){
+  o=o||{};
+  var maak=function(){
+    var h={}; for(var k in SB_H) if(Object.prototype.hasOwnProperty.call(SB_H,k)) h[k]=SB_H[k];
+    if(o.prefer)h['Prefer']=o.prefer;
+    var init={method:o.method||'GET',headers:h};
+    if(o.body!==undefined)init.body=JSON.stringify(o.body);
+    return init;
+  };
+  var r=await fetch(url,maak());
+  if(r.status===401&&authSession&&authSession.refresh_token){
+    var ok=await sbRefreshOnce();
+    if(ok){ _sbSessieVerlopenGemeld=false; r=await fetch(url,maak()); }
+    else { sbSessieVerlopen(); }
+  }
+  return r;
+}
+async function sbGet(t,p=''){try{const r=await sbFetch(`${SB_URL}/rest/v1/${t}?select=*${p}`,{});if(!r.ok){console.error('sbGet',t,r.status,await r.text());return[];}return await r.json();}catch(e){console.error('sbGet catch',t,e);return[];}}
 async function sbPost(t,d){
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(d)});
+    const r=await sbFetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',prefer:'return=representation',body:d});
     if(!r.ok){const err=await r.text();console.error('sbPost',t,r.status,err);}
     return r.ok;
   }catch(e){console.error('sbPost catch',t,e);return false;}
@@ -6616,12 +6724,12 @@ async function sbPost(t,d){
 }
 async function sbPostReturning(t,d){
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(d)});
+    const r=await sbFetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',prefer:'return=representation',body:d});
     if(!r.ok){const err=await r.text();console.error('sbPostReturning',t,r.status,err);return null;}
     return await r.json();
   }catch(e){console.error('sbPostReturning catch',t,e);return null;}
 }
-async function sbPatch(t,f,d){try{const r=await fetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)console.error('sbPatch',t,r.status,await r.text());return r.ok;}catch(e){console.error('sbPatch catch',t,e);return false;}}
+async function sbPatch(t,f,d){try{const r=await sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',prefer:'return=representation',body:d});if(!r.ok)console.error('sbPatch',t,r.status,await r.text());return r.ok;}catch(e){console.error('sbPatch catch',t,e);return false;}}
 /* ── ÉÉN CANONIEKE hrv_log-RIJ PER DAG (v4.29.1 — dataverlies-fix) ─────────────
  * PROBLEEM: saveHRV()/pchkSubmit() deden een blinde INSERT in hrv_log. Vulde je in
  * de check-in alléén je rusthartslag in, dan ontstond een TWEEDE rij voor vandaag met
@@ -6744,8 +6852,14 @@ async function offlineQueueRemove(id){
 async function sbPostQ(t,d){
   if(!navigator.onLine){await offlineQueueAdd({table:t,method:'POST',body:d});updateOfflineBadge();return true;}
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(d)});
-    if(!r.ok){const err=await r.text();console.error('sbPostQ',t,r.status,err);return false;}
+    const r=await sbFetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',prefer:'return=representation',body:d});
+    if(!r.ok){
+      const err=await r.text();console.error('sbPostQ',t,r.status,err);
+      // Tijdelijke serverfout (401 na mislukte refresh, 429, 5xx): NIET verliezen — dezelfde
+      // wachtrij als bij een netwerkfout. Validatiefouten (400/409/422) blijven false.
+      if(sbRetryable(r.status)){await offlineQueueAdd({table:t,method:'POST',body:d});updateOfflineBadge();return true;}
+      return false;
+    }
     return true;
   }catch(e){
     console.warn('sbPostQ offline, queued',t,e);
@@ -6757,8 +6871,12 @@ async function sbPostQ(t,d){
 async function sbPatchQ(t,f,d){
   if(!navigator.onLine){await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d});updateOfflineBadge();return true;}
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(d)});
-    if(!r.ok){console.error('sbPatchQ',t,r.status,await r.text());return false;}
+    const r=await sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',prefer:'return=representation',body:d});
+    if(!r.ok){
+      console.error('sbPatchQ',t,r.status,await r.text());
+      if(sbRetryable(r.status)){await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d});updateOfflineBadge();return true;}
+      return false;
+    }
     return true;
   }catch(e){
     console.warn('sbPatchQ offline, queued',t,e);
@@ -6774,8 +6892,12 @@ async function sbPatchQ(t,f,d){
 async function sbDelQ(t,f){
   if(!navigator.onLine){await offlineQueueAdd({table:t,method:'DELETE',filter:f});updateOfflineBadge();return true;}
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'DELETE',headers:SB_H});
-    if(!r.ok){console.error('sbDelQ',t,r.status,await r.text());return false;}
+    const r=await sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'DELETE'});
+    if(!r.ok){
+      console.error('sbDelQ',t,r.status,await r.text());
+      if(sbRetryable(r.status)){await offlineQueueAdd({table:t,method:'DELETE',filter:f});updateOfflineBadge();return true;}
+      return false;
+    }
     return true;
   }catch(e){
     console.warn('sbDelQ offline, queued',t,e);
@@ -6786,8 +6908,20 @@ async function sbDelQ(t,f){
 }
 // Speelt de queue in volgorde af; stopt bij de eerste fout zodat de volgorde behouden
 // blijft.
+let _flushBezig=false;
 async function flushOfflineQueue(){
   if(!navigator.onLine)return;
+  // Her-entree-slot. flushOfflineQueue() wordt door DRIE onafhankelijke bronnen aangeroepen
+  // (window 'online', visibilitychange, startAppAfterAuth). Zonder slot konden twee
+  // gelijktijdige doorlopen hetzelfde wachtrij-item versturen vóór de eerste het had
+  // verwijderd — dat gaf een DUBBELE sessierij in de database. Precies het scenario dat
+  // ontstaat wanneer Android de app terugbrengt op het moment dat het netwerk terugkomt.
+  if(_flushBezig)return;
+  // Zonder geldige sessie zou elke write op RLS stuklopen; de wachtrij blijft dan intact
+  // en wordt na opnieuw inloggen alsnog verstuurd. Nooit weggooien.
+  if(!authSession)return;
+  _flushBezig=true;
+  try{
   const items=await offlineQueueAll();
   if(!items.length)return;
   items.sort((a,b)=>a.id-b.id);
@@ -6796,9 +6930,9 @@ async function flushOfflineQueue(){
     try{
       const url=item.method==='POST'?`${SB_URL}/rest/v1/${item.table}`:`${SB_URL}/rest/v1/${item.table}?${item.filter}`;
       const opts=item.method==='DELETE'
-        ?{method:'DELETE',headers:SB_H}
-        :{method:item.method,headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(item.body)};
-      const r=await fetch(url,opts);
+        ?{method:'DELETE'}
+        :{method:item.method,prefer:'return=representation',body:item.body};
+      const r=await sbFetch(url,opts);
       if(!r.ok){
         // v5.9.5: serverfout op dit ene item (bv. validatie, verwijzing naar inmiddels
         // verwijderde data) mag niet alle latere, op zichzelf staande items blokkeren —
@@ -6817,6 +6951,7 @@ async function flushOfflineQueue(){
   if(document.getElementById('m-offline-queue')?.classList.contains('open'))renderOfflineQueueModal();
   if(syncedAny&&!(await offlineQueueAll()).length)toast('Offline sessies gesynchroniseerd');
   else if(skippedAny)toast('Sommige offline items konden niet synchroniseren — bekijk de wachtrij voor details');
+  }finally{ _flushBezig=false; }
 }
 function updateOfflineBadge(){
   offlineQueueAll().then(items=>{
@@ -7932,6 +8067,11 @@ function handleWearableRedirect(){
 // (service-role, valideert rol + pincode zelf — nooit op de client vertrouwen).
 // ══════════════════════════════════════════════════════════
 let teamRoleLevel=-1, teamPin='';
+// RC0: -1 betekende twee verschillende dingen — 'nog niet opgehaald' én 'deze sporter
+// heeft geen gym'. Daardoor kwam een solo-sporter op de gedeelde PIN-muur terecht en kon
+// hij zijn EIGEN apparatuur-catalogus en oefeningen niet beheren, terwijl
+// canEditEquipmentCatalog() hem dat recht wel geeft. Deze vlag scheidt de twee.
+let teamAccessResolved=false;
 async function checkTeamAccess(){
   const h=wearableAuthHeaders();
   const cardEl=document.getElementById('profiel-team-card');
@@ -7941,6 +8081,7 @@ async function checkTeamAccess(){
     if(!r.ok){cardEl.style.display='none';return;}
     const d=await r.json();
     teamRoleLevel=d.gymRoleLevel ?? -1;
+    teamAccessResolved=true;
     cardEl.style.display=teamRoleLevel>=1?'block':'none'; // 1 = coach
   }catch(e){cardEl.style.display='none';}
 }
@@ -8085,7 +8226,18 @@ async function getPendingSessionRows(){
     .map(it=>({...it.body,id:'pending_'+it.id,_pending:true,_queueId:it.id}));
 }
 window.addEventListener('online',flushOfflineQueue);
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')flushOfflineQueue();});
+// Terugkeer uit de achtergrond (Android-levenscyclus). Eerst de sessie valideren — anders
+// vuurt de flush met een verlopen token en lopen alle items op 401 stuk. ensureValidSession()
+// ververst proactief wanneer het token bijna/al verlopen is.
+document.addEventListener('visibilitychange',async()=>{
+  if(document.visibilityState!=='visible')return;
+  if(authSession){
+    const ok=await ensureValidSession();
+    if(!ok){ sbSessieVerlopen(); return; }
+    _sbSessieVerlopenGemeld=false;
+  }
+  flushOfflineQueue();
+});
 
 // ══════════════════════════════════════════════════════════
 // PIN
@@ -8109,10 +8261,32 @@ async function vAPin(){const h=await sha256(adminPinBuf);if(h===PIN_HASH){adminP
 // schrijfacties daarna alsnog terecht weigeren. Nu gate op gym_role_level>=3 (owner) waar
 // bekend; PIN blijft de fallback voor situaties waar de rol nog niet vastgesteld kan
 // worden (bv. solo-gebruiker zonder gym-koppeling, whoami() nog niet teruggekomen).
+
+// RC0 — Contact & feedback. Er stond hier letterlijk "[PLACEHOLDER]" in de uitgeleverde
+// app: een ontwikkelnotitie die de sporter te zien kreeg. Google Play vereist bovendien
+// een supportkanaal bij de listing. Het adres zelf is een producteigenaar-keuze en wordt
+// daarom NIET verzonnen: staat SUPPORT_EMAIL leeg, dan toont de app een eerlijke tekst in
+// plaats van een niet-werkende link. Zodra het adres bekend is, is dit de enige plek die
+// hoeft te wijzigen.
+const SUPPORT_EMAIL='';   // OWNER INPUT REQUIRED — zie PLAY_STORE_READINESS.md
+function renderHelpContact(){
+  const el=document.getElementById('help-contact-body');
+  if(!el)return;
+  if(SUPPORT_EMAIL){
+    const onderwerp=encodeURIComponent('Trainingskompas '+APP_VER);
+    el.innerHTML='Vragen, problemen of ideeën? Mail naar <a href="mailto:'+escHtml(SUPPORT_EMAIL)+'?subject='+onderwerp+'">'+escHtml(SUPPORT_EMAIL)+'</a>. Vermeld je versienummer ('+escHtml(APP_VER)+') — dat scheelt uitzoekwerk.';
+  }else{
+    el.textContent='Er is voor deze versie nog geen openbaar supportadres ingesteld. Neem contact op via het kanaal waarlangs je toegang tot de test hebt gekregen.';
+  }
+}
 function openBeheer(){
   if(teamRoleLevel>=3){go('s-admin');return;}
   if(teamRoleLevel>=0){toast('Beheer is alleen voor gym-owners');return;}
-  go('s-admin-pin'); // teamRoleLevel onbekend (-1) — PIN-fallback
+  // RC0: geen gym-koppeling (bevestigd door whoami) = solo-sporter. Die beheert zijn eigen
+  // oefeningen en apparatuur; de gedeelde PIN hoort daar niet tussen te staan. Schrijfrechten
+  // blijven server-side door RLS afgedwongen — dit opent alleen het scherm.
+  if(teamAccessResolved){go('s-admin');return;}
+  go('s-admin-pin'); // rol nog onbekend (whoami nog niet terug) — PIN-fallback
 }
 // ══════════════════════════════════════════════════════════
 // SPRINT 1 — ACCESSIBILITY FUNDAMENT (WCAG 2.2 AA, Handbook H4/H6)
@@ -8949,8 +9123,107 @@ function go(id){
   if(id==='s-meldingen')refreshMeldingenScreen();
   if(id==='s-privacy')refreshPrivacyScreen();
   if(id==='s-doelen')renderDoelenScreen();
-  if(id==='s-help'){const v=document.getElementById('help-app-ver');if(v)v.textContent=APP_VER;}
+  if(id==='s-help'){const v=document.getElementById('help-app-ver');if(v)v.textContent=APP_VER;renderHelpContact();}
 }
+// ══════════════════════════════════════════════════════════
+// TERUG-NAVIGATIE (Android hardware/gesture + browser) — RC0
+// ══════════════════════════════════════════════════════════
+// AANLEIDING. Trainingskompas wordt als Android-app uitgeleverd (Capacitor). De
+// standaard BridgeActivity vertaalt de terugknop/terugveeg naar webView.goBack()
+// zolang de WebView geschiedenis heeft, en sluit anders de activiteit af. De app
+// bouwde geen enkele history-entry op — go() wisselt alleen een .active-klasse — dus
+// ELKE terugveeg sloot de app af, ook vanuit een diep scherm als Lichaam → Verbanden
+// → detail. Voor een Play Store-release is dat een van de eerste dingen die een
+// tester tegenkomt.
+//
+// AANPAK. Eén ondiepe schermstapel bovenop de bestaande navigatie. go() blijft
+// ongewijzigd; er komt een omhulsel omheen dat bij een ECHTE schermwissel het vorige
+// scherm op de stapel legt en één history-entry neerzet. popstate zet die stap terug.
+// Geen router, geen URL-schema, geen wijziging aan schermen of aan de honderden
+// bestaande go()-aanroepen.
+let tkNavStack=[];
+let tkNavPoppend=false;   // tijdens het terugzetten mag het omhulsel niet opnieuw pushen
+let tkNavAfsluitArm=0;    // tijdstip van de eerste 'terug' op het beginscherm
+const TK_NAV_MAX=60;      // plafond: een lange sessie mag de stapel niet laten groeien
+const TK_NAV_AFSLUIT_MS=2500;
+function tkNavHuidig(){
+  const el=document.querySelector('.scr.active,.pin-screen.active');
+  return el?el.id:null;
+}
+function tkNavModaalOpen(){
+  return document.querySelector('.modal-bg.open');
+}
+// Draait de app als geïnstalleerde app (Capacitor of PWA) of als gewone browsertab?
+// Alleen in het eerste geval is 'terug op het beginscherm' een afsluitactie die om
+// bevestiging vraagt. In een gewone tab hoort de terugknop de gebruiker gewoon naar de
+// vorige site te brengen — die vasthouden zou onbeleefd zijn.
+function tkNavIsApp(){
+  try{
+    if(window.Capacitor)return true;
+    return !!(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches);
+  }catch(_){ return false; }
+}
+function tkNavPush(vorige){
+  if(!vorige)return;
+  tkNavStack.push(vorige);
+  if(tkNavStack.length>TK_NAV_MAX)tkNavStack.shift();
+  try{ history.pushState({tkNav:tkNavStack.length},''); }catch(_){ }
+}
+// Omhulsel om go(). In een klassiek script is een top-level functiedeclaratie een
+// eigenschap van het globale object, dus deze herbinding geldt ook voor alle bestaande
+// aanroepen (inclusief de onclick-attributen in de HTML).
+(function(){
+  const origineel=go;
+  window.go=function(id){
+    const vorige=tkNavHuidig();
+    const r=origineel.apply(this,arguments);
+    const nu=tkNavHuidig();
+    // Alleen bij een daadwerkelijke wissel. Een go() naar het scherm waar je al staat,
+    // of naar een scherm dat niet bestaat, levert geen stap op.
+    if(!tkNavPoppend&&vorige&&nu&&vorige!==nu)tkNavPush(vorige);
+    return r;
+  };
+})();
+// Eén handler voor alles wat 'terug' betekent. Vervangt de losse coach-handler; die
+// regel (v306 #7: terug vanuit de coach keert terug naar de lopende training) is
+// hieronder ongewijzigd overgenomen als eerste schermregel.
+window.addEventListener('popstate',function(){
+  // 1) Staat er een modal open, dan sluit 'terug' die — en niet het scherm eronder.
+  //    De verbruikte history-entry wordt teruggelegd zodat de stapeldiepte klopt.
+  const modaal=tkNavModaalOpen();
+  if(modaal){
+    try{ closeModal(modaal.id); }catch(_){ }
+    try{ history.pushState({tkNav:'modal'},''); }catch(_){ }
+    return;
+  }
+  // 2) Coach geopend vanuit een lopende training -> terug naar die training.
+  const actief=document.querySelector('.scr.active');
+  if(actief&&actief.id==='s-coach'&&coachReturn){ returnToTraining(); return; }
+  // 3) Normale stap terug.
+  if(tkNavStack.length){
+    const vorige=tkNavStack.pop();
+    tkNavPoppend=true;
+    try{ go(vorige); }finally{ tkNavPoppend=false; }
+    return;
+  }
+  // 4) Stapel leeg: we staan op het beginscherm. In een gewone browsertab is dat het
+  //    einde — de gebruiker gaat terug naar waar hij vandaan kwam. In de geïnstalleerde
+  //    app zou de app afsluiten; een sporter die midden in een training per ongeluk
+  //    terugveegt verliest dan zijn scherm. Daar geldt dus: tweemaal binnen 2,5 seconde
+  //    sluit wél af (bekend Android-patroon).
+  if(!tkNavIsApp())return;
+  const nu=Date.now();
+  if(tkNavAfsluitArm&&(nu-tkNavAfsluitArm)<TK_NAV_AFSLUIT_MS){ tkNavAfsluitArm=0; return; }
+  tkNavAfsluitArm=nu;
+  try{ history.pushState({tkNav:'root'},''); }catch(_){ }
+  try{ toast('Nog een keer terug om te sluiten'); }catch(_){ }
+});
+// Eén startanker. Zonder deze entry is er op het beginscherm niets om terug te gaan en
+// sluit de allereerste terugveeg de app af zónder waarschuwing — precies wat regel 4
+// hierboven wil voorkomen. Alleen in de geïnstalleerde app; in een browsertab zou het
+// de gebruiker onnodig vasthouden.
+if(tkNavIsApp()){ try{ history.pushState({tkNav:'anker'},''); }catch(_){ } }
+
 function openModal(id){
   if(id==='m-hrv'){
     renderCheckinConditions();
@@ -10609,6 +10882,9 @@ async function startT(t){
   let _resumeElapsedMs=0; // P0: verstreken tijd bij hervatten (0 = verse start)
   if(resumeDraft){
     curT=t;sessionLog=draft.sessionLog||{};sessionExtra=draft.sessionExtra||[];trainPaused=false;pausedAccumMs=0;
+    // RC0: de koppeling met training_instances terug uit de draft, zodat het afronden na
+    // een herstart de instance alsnog op 'completed' zet i.p.v. hem als wees achter te laten.
+    activeInstanceId=draft.instanceId||null;
     _resumeElapsedMs=Number(draft.elapsedMs)||0;
     if(typeof execFocus!=='undefined')execFocus[t]=Number(draft.execFocus)||0; // P1: actieve oefening herstellen (was altijd terug naar 1)
     await renderTrainScreen(t);
@@ -13774,7 +14050,11 @@ function persistTrainingDraft(silent){
   saveState='saving';updateSaveIndicator();
   try{
     // P0: elapsedMs meebewaren → bij hervatten loopt de totale trainingstijd verder i.p.v. 0.
-    localStorage.setItem('tk_draft_training',JSON.stringify({t:curT,sessionLog,sessionExtra,ts:Date.now(),elapsedMs:currentWorkoutElapsedMs(),execFocus:(typeof execFocus!=='undefined'?execFocus[curT]:0)||0}));
+    // RC0: instanceId meebewaren. Zonder dit ging de koppeling met training_instances
+    // verloren zodra Android de app afsloot: bij hervatten was activeInstanceId weer null,
+    // completeTrainingInstance() werd nooit aangeroepen en de instance bleef eeuwig
+    // 'active'. Precies de weesrijen die migratie v446 achteraf moest opruimen.
+    localStorage.setItem('tk_draft_training',JSON.stringify({t:curT,sessionLog,sessionExtra,ts:Date.now(),elapsedMs:currentWorkoutElapsedMs(),execFocus:(typeof execFocus!=='undefined'?execFocus[curT]:0)||0,instanceId:(typeof activeInstanceId!=='undefined'?activeInstanceId:null)||null}));
     lastSaveTs=Date.now();saveState='saved';
   }catch(e){saveState='dirty';}
   updateSaveIndicator();
@@ -14696,6 +14976,74 @@ function tkEvidenceVanSessieAlle(row){
       ? DecisionCore.readDecisionEvidence(s&&s.evidence) : null;
     return {setNummer:i+1, evidence:ev};
   }).filter(function(x){ return !!x.evidence; });
+}
+
+/* ── RC0: BEWIJSSPOOR TONEN ────────────────────────────────────────────────
+ * Leest uitsluitend wat bij het afronden is vastgelegd (readDecisionEvidence) en
+ * presenteert dat in de vijf secties van evidence_snapshot.v1. Er wordt hier niets
+ * berekend, niets afgeleid en niets aangevuld: een veld dat destijds ontbrak blijft
+ * leeg en staat bovendien onder "niet vastgelegd". Zo kan het scherm nooit meer
+ * beweren dan het bewijs draagt.                                                   */
+let _evRijen={};   // sessie-id -> de rij zoals geladen in het logboek
+function tkEvBewaarRij(row){
+  if(row&&row.id!=null)_evRijen[String(row.id)]=row;
+}
+const EV_UITKOMST_LABEL={increase:"verhogen",deload:"verlagen",hold:"gelijk houden"};
+function evGetal(v,eenheid){
+  if(v===null||v===undefined||v==="")return "<s>niet vastgelegd</s>";
+  return "<b>"+escHtml(String(v))+(eenheid?(" "+eenheid):"")+"</b>";
+}
+function evRij(label,waarde){
+  return '<div class="ev-row"><s>'+escHtml(label)+'</s><span>'+waarde+'</span></div>';
+}
+function tkEvidenceSetHtml(setNummer,ev){
+  const d=ev.decision||{}, r=ev.rule||{}, raw=ev.raw||{}, calc=ev.calculated||{};
+  const uit=d.outcome||null;
+  const badge=uit?('<span class="ev-uitkomst '+escHtml(uit)+'">'+escHtml(EV_UITKOMST_LABEL[uit]||uit)+'</span>'):'';
+  let h='<div class="ev-set"><div class="ev-set-hd">Set '+setNummer+badge+'</div>';
+  h+='<div class="ev-sec"><div class="ev-sec-hd">Gemeten</div>';
+  h+=evRij("Gewicht",evGetal(raw.kg,"kg"));
+  h+=evRij("Herhalingen",evGetal(raw.reps));
+  h+=evRij("RPE",evGetal(raw.rpe));
+  if(raw.voorgeschrevenKg!=null||raw.voorgeschrevenReps!=null||raw.voorgeschrevenRpe!=null){
+    h+=evRij("Voorgeschreven",evGetal(raw.voorgeschrevenKg,"kg")+" · "+evGetal(raw.voorgeschrevenReps)+" · RPE "+evGetal(raw.voorgeschrevenRpe));
+  }
+  h+='</div>';
+  h+='<div class="ev-sec"><div class="ev-sec-hd">Berekend</div>';
+  h+=evRij("Effectief gewicht",evGetal(calc.effKg,"kg"));
+  if(ev.versions&&ev.versions.calculation)h+=evRij("Rekencontract",'<b>'+escHtml(String(ev.versions.calculation))+'</b>');
+  h+='</div>';
+  h+='<div class="ev-sec"><div class="ev-sec-hd">Besloten</div>';
+  h+=evRij("Uitkomst",uit?('<b>'+escHtml(EV_UITKOMST_LABEL[uit]||uit)+'</b>'):"<s>niet vastgelegd</s>");
+  h+=evRij("Aanpassing",d.deltaKg!=null?evGetal(d.deltaKg,"kg"):"<s>niet vastgelegd</s>");
+  if(d.label)h+=evRij("Advies",'<b>'+escHtml(String(d.label))+'</b>');
+  h+='</div>';
+  h+='<div class="ev-sec"><div class="ev-sec-hd">Regel</div>';
+  h+=evRij("Regel",r.id?('<b>'+escHtml(String(r.id))+'</b>'):"<s>niet vastgelegd</s>");
+  h+=evRij("Versie",r.version?('<b>'+escHtml(String(r.version))+'</b>'):"<s>niet vastgelegd</s>");
+  h+='</div>';
+  if(ev.explanation){
+    h+='<div class="ev-sec"><div class="ev-sec-hd">Uitleg</div><div style="font-size:13px;line-height:1.5">'+escHtml(String(ev.explanation))+'</div></div>';
+  }
+  if(Array.isArray(ev.missing)&&ev.missing.length){
+    h+='<div class="ev-mis">Niet vastgelegd: '+escHtml(ev.missing.join(", "))+'</div>';
+  }
+  return h+'</div>';
+}
+function openEvidence(sessieId){
+  const row=_evRijen[String(sessieId)];
+  const lijst=row?tkEvidenceVanSessieAlle(row):[];
+  const naam=row?((exercises.find(e=>e.id===row.exercise_id)||{}).name||row.exercise_id):null;
+  const titel=document.getElementById("ev-title");
+  if(titel)titel.textContent=naam?("Waarom — "+naam):"Waarom dit advies";
+  const body=document.getElementById("ev-body");
+  if(body){
+    body.innerHTML=lijst.length
+      ? '<div style="font-size:12px;color:var(--g4);margin-bottom:10px">Vastgelegd op het moment van afronden. Deze weergave leest uitsluitend het bewaarde bewijsspoor — er wordt niets opnieuw berekend en niets aangevuld.</div>'
+        +lijst.map(x=>tkEvidenceSetHtml(x.setNummer,x.evidence)).join("")
+      : '<div style="font-size:13px;color:var(--g4)">Voor deze oefening is geen bewijsspoor vastgelegd. Dat gebeurt vanaf het moment dat je een set mét RPE afrondt — zonder RPE is er geen beslissing om te onderbouwen.</div>';
+  }
+  openModal("m-evidence");
 }
 let finishSessionBezig=false;
 async function finishSession(){
@@ -15878,10 +16226,14 @@ async function loadHistory(append=false){
           let poster=null;try{poster=(A&&A.poster)?A.poster(s.exercise_id):null;}catch(_){}
           const thumb=poster?`<img src="${poster}" alt="">`:LI.dumbbell;
           const pendingTag=s._pending?'<span title="Wachtend op sync" style="margin-right:4px">⏳</span>':'';
+          // RC0 — bewijsspoor: alleen tonen wanneer er daadwerkelijk een snapshot in de rij zit.
+          tkEvBewaarRij(s);
+          const _evN=(typeof tkEvidenceVanSessieAlle==='function')?tkEvidenceVanSessieAlle(s).length:0;
+          const evBtn=_evN?`<button class="lg-ev" onclick='event.stopPropagation();openEvidence(${JSON.stringify(String(s.id))})' aria-label="Waarom dit advies">ⓘ Waarom</button>`:'';
           const clickAttr=s._pending?`onclick='toast("Wachtend op sync — bewerken kan zodra online")'`:`onclick='openEditSess(${JSON.stringify(s.id)},${JSON.stringify(n)},${JSON.stringify(s)})'`;
           return `<div class="lg-ex" ${clickAttr}>
             <span class="lg-ex-th${poster?' has':''}">${thumb}</span>
-            <div class="lg-ex-b"><div class="lg-ex-nm">${pendingTag}${escHtml(n)}</div><div class="lg-ex-did">${v}</div>${prog}</div>
+            <div class="lg-ex-b"><div class="lg-ex-nm">${pendingTag}${escHtml(n)}</div><div class="lg-ex-did">${v}</div>${prog}${evBtn}</div>
             <div class="lg-ex-a">${s._pending?'':`<span class="lg-ex-i">${LI.edit}</span>`}<button class="del" onclick="event.stopPropagation();deleteSessionDirect(${JSON.stringify(s.id)})" aria-label="Verwijderen">${LI.trash}</button></div>
           </div>`;
         }).join('')}
@@ -16852,11 +17204,8 @@ async function saveNewEx(btnEl){
 // ══════════════════════════════════════════════════════════
 let activeSessionId=null, activeSessionCtx=null, coachReturn=null, _openingCoachViaSession=false;
 
-// v306 #7: Android-back sluit niet langer de coach maar keert terug naar de actieve training.
-window.addEventListener('popstate',()=>{
-  const active=document.querySelector('.scr.active');
-  if(active&&active.id==='s-coach'&&coachReturn){returnToTraining();}
-});
+// v306 #7 (Android-back keert vanuit de coach terug naar de actieve training) is sinds
+// RC0 onderdeel van de ene centrale popstate-handler bij de terug-navigatie hierboven.
 function returnToTraining(){
   const ret=coachReturn;coachReturn=null;
   if(!ret){go('s-home');return;}
@@ -18172,6 +18521,7 @@ async function startCustomTraining(id,resolvedItems){
     // Herstel de volledige sessie uit de draft (zoals startT): logboek + voorgeschreven oefeningen + tijd.
     sessionLog=_draft.sessionLog||{};
     sessionExtra=_draft.sessionExtra||[];
+    activeInstanceId=_draft.instanceId||null; // RC0: zie startT — anders blijft de instance 'active'
     _resumeElapsedMs=Number(_draft.elapsedMs)||0;
     if(typeof execFocus!=='undefined')execFocus[curT]=Number(_draft.execFocus)||0;
   } else if(resolvedItems&&resolvedItems.length){
@@ -21603,16 +21953,28 @@ const CACHE_OWNER_KEY='tk_cache_owner_uid';
 // een gedeeld toestel — exact het lek dat DEC-032 had moeten voorkomen. tk_ai_consent
 // staat er nu ook bij: toestemming voor de AI Coach moet per gebruiker gelden, een
 // nieuwe gebruiker mag nooit de 'toestaan'-keuze van de vorige gebruiker erven.
+// RC0 (release-audit): opnieuw volledig vergeleken met ELKE localStorage-sleutel die de
+// app daadwerkelijk schrijft. Er ontbraken er tien, met als zwaarste 'tk_onboarding_done':
+// die vlag bepaalt of de intake wordt getoond, dus een TWEEDE sporter op hetzelfde toestel
+// sloeg zijn hele profielopbouw over en kreeg meteen het dashboard van de vorige. Ook de
+// coachvoorkeuren, de apparatuur-geheugens en de machinelijsten erfde hij over.
+// Bewust NIET in deze lijst: 'tk_theme' (weergavevoorkeur van het toestel, geen
+// persoonsgegeven) en 'tk_ns_migrated' (eenmalige namespace-migratie van het toestel zelf).
 const PERSONAL_CACHE_KEYS=[
   'tk_atleet','tk_trainings','tk_active_sport','tk_draft_training','tk_last_training',
   'tk_ai_consent','tk_gw_active','tk_gw_hist','tk_gw_log',
-  'tk_wb_draft','tk_wb_saved','tk_vt_meta',
+  'tk_wb_draft','tk_wb_saved','tk_wb_favs','tk_wb_migrated_v1','tk_vt_meta',
   'tk_lib_favs','tk_lib_recent','tk_lib_recentq',
-  'tk_plates','tk_rower','tk_rowers','tk_rest_default'
+  'tk_plates','tk_rower','tk_rowers','tk_rest_default',
+  'tk_onboarding_done','tk_coach_style','tk_coach_voice','tk_coach_detail',
+  'tk_eqmem','bikeerg_machines','skierg_machines','assault_machines'
 ];
 function wipePersonalCache(){
   PERSONAL_CACHE_KEYS.forEach(k=>localStorage.removeItem(k));
   Object.keys(localStorage).filter(k=>k.startsWith('tk_1rm_')).forEach(k=>localStorage.removeItem(k));
+  // RC0: 'sel_<cardiotype>' bewaart welke machine de sporter als laatste koos (bv.
+  // sel_rowing='PM5 3'). Dat is een persoonlijke voorkeur en hoorde bij de rest.
+  Object.keys(localStorage).filter(k=>k.startsWith('sel_')).forEach(k=>localStorage.removeItem(k));
   localStorage.removeItem(CACHE_OWNER_KEY);
 }
 function resetPersonalCacheIfNewDeviceOwner(uid){
@@ -21655,10 +22017,32 @@ function resetPersonalCacheIfNewDeviceOwner(uid){
   equipmentCatalog=[];
   _equipmentCatalogLoading=null;
 }
+/* RC0 — is de onboarding voor DEZE sporter al afgerond?
+ * 'tk_onboarding_done' staat in localStorage en is dus toestel-gescoped. Dat gaf twee
+ * problemen zodra er meer dan één account bestaat:
+ *   1. een tweede sporter op hetzelfde toestel sloeg de intake over en had daardoor
+ *      geen profiel, geen doel en geen sport — terwijl juist dat de coach voedt;
+ *   2. dezelfde sporter op een NIEUW toestel moest de intake opnieuw doorlopen,
+ *      terwijl zijn profiel gewoon in de database staat.
+ * Punt 1 is opgelost doordat de vlag nu in PERSONAL_CACHE_KEYS staat en bij een
+ * eigenaarswissel wordt gewist. Punt 2 wordt hier opgelost: is de vlag er niet, dan is
+ * een bestaand atleet_profiel de tweede bron van waarheid. Er wordt niets verzonnen — een
+ * rij zonder enige ingevulde kern (naam/sport/niveau) telt niet als afgerond.
+ * Offline of bij een trage server valt v43SafeGet terug op [] en verschijnt de intake:
+ * het bestaande, veilige gedrag. */
+async function tkOnboardingAfgerond(){
+  if(localStorage.getItem('tk_onboarding_done')==='1')return true;
+  if(!authSession?.user?.id)return false;
+  const rows=await v43SafeGet('atleet_profiel','&limit=1',4000);
+  const r=(Array.isArray(rows)&&rows.length)?rows[0]:null;
+  const klaar=!!(r&&(r.naam||r.sport||r.niveau||r.doel));
+  if(klaar)localStorage.setItem('tk_onboarding_done','1');
+  return klaar;
+}
 async function startAppAfterAuth(){
   resetPersonalCacheIfNewDeviceOwner(authSession?.user?.id);
   document.querySelectorAll('.scr').forEach(s=>s.classList.remove('active'));
-  const onboardingDone = localStorage.getItem('tk_onboarding_done')==='1';
+  const onboardingDone = await tkOnboardingAfgerond();
   if(onboardingDone){
     document.getElementById('s-home').classList.add('active');
   }else if(window.OnboardingCore){

@@ -1,5 +1,45 @@
 # Trainingskompas — Changelog
 
+## v4.48.0 — RC0: release candidate voor Google Play Internal Testing (19 augustus 2026)
+
+Geen nieuwe functionaliteit. Deze release maakt bestaande functionaliteit betrouwbaar, zichtbaar en uitleverbaar. Volledige verantwoording in `docs/RELEASE_READINESS.md`, `docs/PLAY_STORE_READINESS.md` en `docs/RELEASE_CHANGELOG.md`.
+
+**Verlopen sessie gaf stil dataverlies (P0).** Android bevriest achtergrondtimers, dus `scheduleAuthRefresh()` liep niet door zolang de app in de achtergrond stond. Bij terugkeer was het token verlopen en loog de app daarover: `sbGet` gaf `[]` (elk scherm toonde "geen data", niet te onderscheiden van dataverlies) en `sbPostQ` gaf `false` zónder te queuen — zojuist ingevoerde sets waren echt weg. Alle REST loopt nu via `sbFetch`: één 401 → één gedeelde refresh (single-flight, want Supabase roteert refresh-tokens) → één retry met een per poging opnieuw opgebouwde header. Mislukt de refresh, dan volgt een expliciete melding en het loginscherm. Schrijfacties met een herstelbare status (401/408/425/429/5xx) gaan naar de offline-wachtrij; 400/409/422 niet, want die zouden eeuwig herhalen.
+
+**Dubbele sessierijen bij gelijktijdige sync (P0).** `flushOfflineQueue()` heeft drie aanroepbronnen (online-event, visibilitychange, opstart) en geen slot; twee doorlopen konden hetzelfde item versturen vóór de eerste het had verwijderd. Her-entree-slot toegevoegd; zonder sessie wordt er niets verstuurd en blijft de wachtrij intact. Terugkeer uit de achtergrond valideert nu eerst de sessie en synchroniseert daarna.
+
+**Tweede sporter op één toestel sloeg de intake over (P1).** Tien geschreven `localStorage`-sleutels stonden niet in `PERSONAL_CACHE_KEYS`, met als zwaarste `tk_onboarding_done`: de tweede sporter kreeg meteen het dashboard, zonder profiel, doel of sport. Ook coachvoorkeuren, apparatuurgeheugen, machinelijsten en de gekozen cardio-machine (`sel_*`) erfde hij over. Aangevuld, plus een tweede bron van waarheid: een bestaand `atleet_profiel` telt als afgeronde onboarding, zodat dezelfde sporter op een nieuw toestel de intake niet opnieuw hoeft te doen. `fFase2.test.js` bevat nu een generiek net dat elke geschreven sleutel dwingt te classificeren als persoonlijk of toestelgebonden.
+
+**Trainingskoppeling overleefde geen herstart (P1).** `activeInstanceId` zat niet in de draft. Sloot Android de app tijdens een training, dan was de koppeling bij hervatten weg en werd `completeTrainingInstance()` nooit aangeroepen — precies de 128 weesrijen die migratie v446 achteraf moest opruimen. De instance-id reist nu mee.
+
+**Terugknop sloot de app af vanaf elk scherm (P1).** De app bouwde geen history-entries op, dus de standaard Capacitor-BridgeActivity sloot de activiteit bij elke terugveeg. Eén ondiepe schermstapel als omhulsel om `go()` (geen router, geen wijziging aan schermen of aan de honderden bestaande aanroepen) en één centrale popstate-handler die eerst een open modal sluit, de coach-regel uit v306 behoudt, en op het beginscherm pas bij de tweede terugveeg binnen 2,5 s laat afsluiten.
+
+**Het bewijsspoor is zichtbaar geworden (P1).** `evidence_snapshot.v1` werd sinds Sprint 18 bij elke afronding weggeschreven in `sessions.sets_detail`, maar `tkEvidenceVanSessie` en `tkEvidenceVanSessieAlle` hadden nul aanroepers buiten de tests. Daarmee was de kernbelofte technisch aanwezig en voor de sporter onzichtbaar. Het logboek toont nu per oefening een knop 'ⓘ Waarom' — alleen wanneer er echt een snapshot in de rij zit — met exact de vijf secties van het contract. De weergavelaag roept geen enkele rekenfunctie aan, zodat het scherm nooit iets anders kan tonen dan wat destijds is besloten.
+
+**Accountverwijdering was onvolledig (P1).** Elf tabellen met gebruikersgegevens bleven achter, waaronder `wearable_connections` — met het access- én refresh-token in leesbare vorm. In strijd met de eigen privacytekst en met de Play-eis. Aangevuld met `training_instances`, `training_context`, `common_data_points`, `external_records`, `external_connections`, `wearable_connections`, `wearable_oauth_state`, `memberships`, `usage_log` en `user_credit_purchases`, plus beide richtingen van `content_shares` en de persoonlijke rijen (gym_id leeg) van `equipment_catalog` en `exercise_equipment` — zodat gedeelde gym-inrichting van andere leden blijft bestaan.
+
+**Beheer onbereikbaar voor een solo-sporter (P1).** `teamRoleLevel === -1` betekende zowel "geen gym" als "nog niet opgehaald", dus de solo-sporter kwam op de gedeelde pincode-muur terecht en kon zijn eigen apparatuur en oefeningen niet beheren — terwijl `canEditEquipmentCatalog()` hem dat recht wél geeft. Een aparte `teamAccessResolved`-vlag scheidt de twee.
+
+**`[PLACEHOLDER]` stond zichtbaar in het scherm Help (P1).** Vervangen door een echt contactblok dat op één constante draait (`SUPPORT_EMAIL`). Het adres wordt niet verzonnen: staat de constante leeg, dan verschijnt een eerlijke tekst in plaats van een kapotte link.
+
+**Privacyverklaring (Play-vereiste).** `privacy.html` toegevoegd: losstaand, scriptloos, opgesteld uit wat code en database feitelijk doen — verwerkers en hun regio's, de rol van de AI-coach, de RLS-scheiding, accountverwijdering, export, en een expliciete vermelding dat de app geen medisch hulpmiddel is. De app linkt ernaar vanuit Help.
+
+**Android: van gegenereerde standaardconfiguratie naar een uploadbare release.**
+- *targetSdk 34 → 36.* Google Play eist sinds 31-08-2025 minimaal API 35 en vanaf 31-08-2026 API 36. AGP 8.2.1 → 8.9.1, Gradle-wrapper 8.2.1 → 8.11.1.
+- *Artefact van ~450 MB → 14 MB.* `videos/` (437 MB) werd integraal meegebundeld, ver boven het Play-plafond van 200 MB voor de basismodule. De service worker haalde video's al on-demand op en cachet ze met een LRU-plafond van 250 MB, dus bundelen was dubbelop; `MEDIA_ORIGIN` in `sw.js` regelt van welke oorsprong de native app ze haalt. Ook de 62 `*.test.js` gingen mee het artefact in; die worden nu gefilterd.
+- *Ondertekening.* De release-buildtype had geen `signingConfig` en leverde een ongetekend artefact. Toegevoegd, lezend uit `android/keystore.properties` (gitignored) of uit omgevingsvariabelen, met een expliciet verbod op terugvallen op de debug-sleutel.
+- *Back-up.* `android:allowBackup` stond op `true`; de WebView-opslag bevat het sessietoken. Uitgezet, met `data_extraction_rules.xml` en `backup_rules.xml` die alle domeinen uitsluiten voor zowel cloud-backup als toesteloverdracht.
+- *Merkbeeld.* Launcher-iconen en splash waren nog het standaard Capacitor-logo. Alle resources afgeleid uit `icon-512.png` en `logo-wordmark.png`; generatiescript staat als `scripts/android-icons.py` in de repository.
+- *Edge-to-edge.* `viewport-fit=cover` ontbrak, waardoor elke `env(safe-area-inset-*)`-regel 0 opleverde. De vaste bovenmarge van `.hdr` is een `max()` geworden: 52px blijft de ondergrens en groeit alleen mee bij een grote uitsparing.
+- *Toestelbereik.* `bluetooth_le` staat op `required="false"`.
+- *Versie.* `versionCode 1` / `versionName "1.0"` liepen uit de pas met de app zelf; nu 44800 / 4.48.0.
+
+**Relationship-audit, tweede ronde.** Geen nieuwe relatie toegevoegd — het register telt onveranderd 21 variabelen, want geen van de zes ontbrekende variabelen kan worden ontsloten zonder eerst nieuwe data vast te leggen. Wel een correctie: de audits van sprint 25, 26 en de Fase-2-verificatie zijn gedraaid op een service-role-dump die de rijen van twee accounts bevatte. Dat kan in de app niet gebeuren (RLS), maar het maakte die cijfers wel onjuist. Opnieuw gedraaid op één gebruiker: 23 circulair uitgesloten (was 24), 187 kenbare relaties (was 186), 82 doorgerekend, **7** gevalideerde patronen (was 6) — het extra patroon is *Aantal sets ↔ Topgewicht*. Zie `docs/RELATIONSHIP_AUDIT.md`.
+
+**Tests.** 66 bestanden groen, 0 rood. Release gate 12/12. Vier nieuwe suites: `fSessieIntegriteit` (38), `fAndroidRelease` (27), `fRC0` (26), `fNavigatie` (14). Geen test verwijderd of verzwakt; één aangescherpt (`fFase2` C2 keek naar tekenafstand in de bron en eist nu de juiste volgorde: sessie valideren vóór synchroniseren).
+
+**Database.** Geen wijzigingen. 11/11 migraties geverifieerd tegen het productieschema; 65 tabellen, 85 policies, 0 tabellen zonder RLS.
+
 ## v4.47.0 — Fase 2 afronding: levenscyclus, robuustheid en bevestigde offline sync (19 augustus 2026)
 
 Fase 2 is gedefinieerd als login, RLS, offline sync en multi-user (Product_Book.md). De kern daarvan stond er al; wat ontbrak waren de bevestiging, twee gaten en de opruiming.

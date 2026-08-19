@@ -1,3 +1,8 @@
+> **VEROUDERD — 19 augustus 2026.** Dit document blijft bewaard als historisch archief
+> en wordt niet herschreven. De actuele roadmap is `docs/CURRENT_ROADMAP.md`; voor
+> releasegereedheid geldt `docs/RELEASE_READINESS.md`. Waar deze tekst afwijkt van die
+> twee documenten, gelden die.
+
 # Roadmap — Trainingskompas
 
 > Herzien 1 augustus 2026 (DEC-010) — zie DECISION_LOG.md voor de volledige redenering achter deze herprioritering.

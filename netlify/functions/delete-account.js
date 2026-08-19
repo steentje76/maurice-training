@@ -46,15 +46,33 @@ exports.handler = async function(event) {
     // hier nog niet in. Zonder deze twee bleven iemands doelen en eigen
     // uitrustingslabels achter als wees-data, net als het probleem dat
     // hierboven al voor 'exercises' is opgelost.
+    // RC0 (release-audit): de lijst is opnieuw vergeleken met ELKE tabel in de database die
+    // een user_id draagt. Er ontbraken er elf. De zwaarste was wearable_connections: die
+    // tabel bewaart het access- en refresh-token van de Fitbit-/Google Health-koppeling in
+    // leesbare vorm. Die tokens bleven na het verwijderen van een account gewoon staan —
+    // in strijd met de privacyverklaring van de app en met de Google Play-eis dat
+    // accountverwijdering ALLE gegevens verwijdert. Ook common_data_points (ruwe
+    // gezondheidsmetingen) en external_records (onbewerkte wearable-payloads) bleven achter.
     const USER_DATA_TABLES = [
       // eerst tabellen die naar andere tabellen hieronder kunnen verwijzen
       'program_block_exercises', 'custom_training_exercises', 'training_exercises',
+      'external_records',                       // verwijst naar external_connections
       // dan de tabellen waar die mogelijk naar verwijzen
       'program_blocks', 'custom_trainings', 'vaste_trainingen', 'programs',
+      'external_connections',
       // overige, op zichzelf staande gebruikersdata
       'athlete_conditions', 'atleet_profiel', 'body_comp', 'chat_history',
       'checkin_conditions', 'exercise_favorites', 'hrv_log', 'sessions', 'weight_log',
-      'goals', 'equipment_types', 'exercise_goals'
+      'goals', 'equipment_types', 'exercise_goals',
+      // RC0-aanvulling
+      'training_instances',      // uitgevoerde sessies met hun voorschrift-snapshot
+      'training_context',        // frequentie, locatie, uitrusting, te vermijden oefeningen
+      'common_data_points',      // ruwe gezondheids- en prestatiemetingen
+      'wearable_connections',    // OAuth access- EN refresh-token van de koppeling
+      'wearable_oauth_state',    // lopende koppelpogingen
+      'memberships',             // lidmaatschap van gym/team/trainingsgroep
+      'usage_log',               // gebruik per functie
+      'user_credit_purchases'    // aangekochte credits
     ];
     const failedTables = [];
     for (const table of USER_DATA_TABLES) {
@@ -65,17 +83,30 @@ exports.handler = async function(event) {
       if (!r.ok) failedTables.push(table);
     }
 
-    // content_shares: verwijdert deze gebruiker als ONTVANGER van gedeelde content
-    // (kolom 'shared_with', bevestigd in de client-code). De kolom die de DELENDE
-    // partij identificeert stond niet expliciet in de client-insert (waarschijnlijk
-    // een server-side DEFAULT auth.uid()-kolom, naam niet met zekerheid vast te
-    // stellen vanuit de front-end code) — v5.8.4 laat dit bewust open i.p.v. te
-    // raden en per ongeluk een verkeerde/no-op query te draaien. Zie eindrapport.
-    const csR = await fetch(`${supabaseUrl}/rest/v1/content_shares?shared_with=eq.${userId}`, {
-      method: 'DELETE',
-      headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, Prefer: 'return=minimal' }
-    });
-    if (!csR.ok) failedTables.push('content_shares (shared_with)');
+    // content_shares: beide richtingen. v5.8.4 liet de DELENDE kant bewust open omdat de
+    // kolomnaam toen niet met zekerheid uit de front-end af te leiden was. RC0 heeft het
+    // schema rechtstreeks opgevraagd: de kolommen heten shared_by en shared_with. Zonder de
+    // shared_by-tak bleven de deelrecords van een verwijderde gebruiker als wees achter en
+    // bleef gedeelde content bij anderen naar een niet-bestaand account verwijzen.
+    for (const kolom of ['shared_with', 'shared_by']) {
+      const csR = await fetch(`${supabaseUrl}/rest/v1/content_shares?${kolom}=eq.${userId}`, {
+        method: 'DELETE',
+        headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, Prefer: 'return=minimal' }
+      });
+      if (!csR.ok) failedTables.push('content_shares (' + kolom + ')');
+    }
+
+    // equipment_catalog en exercise_equipment dragen zowel gym_id als user_id. Alleen de
+    // PERSOONLIJKE rijen (gym_id leeg) horen bij deze gebruiker; rijen met een gym_id zijn
+    // gedeelde gym-inrichting die voor de overige leden moet blijven bestaan. Daarom hier
+    // expliciet met een gym_id-filter en niet in de tabellenlijst hierboven.
+    for (const tabel of ['equipment_catalog', 'exercise_equipment']) {
+      const eqR = await fetch(`${supabaseUrl}/rest/v1/${tabel}?user_id=eq.${userId}&gym_id=is.null`, {
+        method: 'DELETE',
+        headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, Prefer: 'return=minimal' }
+      });
+      if (!eqR.ok) failedTables.push(tabel + ' (persoonlijk)');
+    }
 
     // exercises: aparte behandeling, want (a) de eigenaarskolom heet created_by, niet
     // user_id zoals de rest, en (b) alleen scope='personal' mag echt weg — gym/global-

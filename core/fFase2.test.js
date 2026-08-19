@@ -15,6 +15,9 @@ var vm = require('vm');
 var HTML = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 var n = 0;
 function t(naam, fn) { fn(); n++; }
+/* Sommige tests zijn async; die wachten elk op hun eigen keten en draaien onderaan. */
+var wachtend = [];
+function tAsync(naam, fn) { wachtend.push({ naam: naam, fn: fn }); }
 
 function pak(naam) {
   var m = HTML.match(new RegExp('(?:^|\\n)(?:async )?function ' + naam + '\\s*\\([\\s\\S]*?\\n\\}', 'm'));
@@ -176,6 +179,105 @@ t('A9: elke schrijfactie naar een persoonlijke tabel draagt user_id of leunt op 
   assert.ok(/auth\.uid\(\)|user_id:/.test(HTML), 'geen enkel spoor van user-scoping meer');
 });
 
+/* RC0 — generiek net. De lijst met persoonlijke sleutels is twee keer eerder
+   achtergelopen op de code (DEC-032 en v5.8.5). Deze test vergelijkt daarom niet een
+   handgeschreven opsomming, maar ELKE sleutel die de app daadwerkelijk wegschrijft met
+   de lijst, en dwingt af dat een nieuwe sleutel bewust wordt geclassificeerd. */
+var DEVICE_SLEUTELS = [
+  'tk_theme',        /* weergavevoorkeur van het toestel, geen persoonsgegeven */
+  'tk_ns_migrated',  /* eenmalige namespace-migratie van dit toestel */
+  'tk_auth_session', /* de sessie zelf; wordt door clearAuthSession beheerd */
+  'tk_cache_owner_uid'
+];
+function geschrevenSleutels() {
+  var uit = {}, re = /localStorage\.setItem\(\s*'([^']+)'/g, m;
+  while ((m = re.exec(HTML))) uit[m[1]] = true;
+  return Object.keys(uit);
+}
+
+t('A10: elke geschreven localStorage-sleutel is bewust geclassificeerd', function () {
+  var ctx = cacheZandbak();
+  var lijst = ctx.PERSONAL_CACHE_KEYS;
+  var onbekend = geschrevenSleutels().filter(function (k) {
+    if (lijst.indexOf(k) >= 0) return false;
+    if (DEVICE_SLEUTELS.indexOf(k) >= 0) return false;
+    if (k === 'tk_1rm_' || k === 'sel_' || k === 'tk_...') return false; /* prefixen/documentatie */
+    return true;
+  });
+  assert.deepStrictEqual(onbekend, [],
+    'niet geclassificeerd (persoonlijk of toestel?): ' + onbekend.join(', '));
+});
+
+t('A11: de onboarding-vlag hoort bij de gebruiker, niet bij het toestel', function () {
+  /* Dit was de zwaarste: een tweede sporter op hetzelfde toestel sloeg de hele intake
+     over en had daardoor geen profiel, doel of sport — de coach had niets om op te
+     staan en de kernlus begon met een leeg atleetmodel. */
+  var ctx = cacheZandbak();
+  assert.ok(ctx.PERSONAL_CACHE_KEYS.indexOf('tk_onboarding_done') >= 0,
+    'tk_onboarding_done staat niet in de persoonlijke sleutels');
+  ctx.localStorage.setItem(ctx.CACHE_OWNER_KEY, 'gebruiker-A');
+  ctx.localStorage.setItem('tk_onboarding_done', '1');
+  ctx.resetPersonalCacheIfNewDeviceOwner('gebruiker-B');
+  assert.strictEqual(ctx.localStorage.getItem('tk_onboarding_done'), null,
+    'de nieuwe sporter erft de afgeronde onboarding van de vorige');
+});
+
+t('A12: coachvoorkeuren en apparatuurgeheugen gaan mee bij een eigenaarswissel', function () {
+  var ctx = cacheZandbak();
+  ctx.localStorage.setItem(ctx.CACHE_OWNER_KEY, 'gebruiker-A');
+  ['tk_coach_style', 'tk_coach_voice', 'tk_coach_detail', 'tk_eqmem', 'tk_wb_favs',
+   'bikeerg_machines', 'skierg_machines', 'assault_machines'].forEach(function (k) {
+    ctx.localStorage.setItem(k, 'van-A');
+  });
+  ctx.localStorage.setItem('sel_rowing', 'PM5 3');
+  ctx.resetPersonalCacheIfNewDeviceOwner('gebruiker-B');
+  ['tk_coach_style', 'tk_coach_voice', 'tk_coach_detail', 'tk_eqmem', 'tk_wb_favs',
+   'bikeerg_machines', 'skierg_machines', 'assault_machines', 'sel_rowing'].forEach(function (k) {
+    assert.strictEqual(ctx.localStorage.getItem(k), null, k + ' blijft van de vorige gebruiker');
+  });
+});
+
+/* ── tkOnboardingAfgerond: het profiel in de database als tweede bron ─────── */
+function onboardingZandbak(rijen) {
+  var ls = nepLocalStorage();
+  var ctx = {
+    localStorage: ls, Object: Object, Promise: Promise, Array: Array, console: console,
+    authSession: { user: { id: 'u1' } },
+    v43SafeGet: function () { return Promise.resolve(rijen); }
+  };
+  vm.createContext(ctx);
+  vm.runInContext(pak('tkOnboardingAfgerond'), ctx);
+  return ctx;
+}
+
+tAsync('A13: een bestaand profiel telt als afgeronde onboarding (nieuw toestel)', function () {
+  var ctx = onboardingZandbak([{ naam: 'Maurice', sport: 'crossfit' }]);
+  return ctx.tkOnboardingAfgerond().then(function (klaar) {
+    assert.strictEqual(klaar, true, 'dezelfde sporter moet op een nieuw toestel opnieuw door de intake');
+    assert.strictEqual(ctx.localStorage.getItem('tk_onboarding_done'), '1',
+      'de vlag wordt niet lokaal hersteld — dan gebeurt dit bij elke start opnieuw');
+  });
+});
+
+tAsync('A14: een lege profielrij telt NIET als afgerond — er wordt niets verzonnen', function () {
+  var ctx = onboardingZandbak([{ naam: null, sport: null, niveau: null, doel: null }]);
+  return ctx.tkOnboardingAfgerond().then(function (klaar) {
+    assert.strictEqual(klaar, false);
+    assert.strictEqual(ctx.localStorage.getItem('tk_onboarding_done'), null);
+  });
+});
+
+tAsync('A15: geen profiel en geen vlag -> de intake, zoals altijd', function () {
+  var ctx = onboardingZandbak([]);
+  return ctx.tkOnboardingAfgerond().then(function (klaar) { assert.strictEqual(klaar, false); });
+});
+
+tAsync('A16: de lokale vlag wint en bespaart een netwerkrondje', function () {
+  var ctx = onboardingZandbak(null); /* zou crashen als er tóch gelezen wordt */
+  ctx.localStorage.setItem('tk_onboarding_done', '1');
+  return ctx.tkOnboardingAfgerond().then(function (klaar) { assert.strictEqual(klaar, true); });
+});
+
 /* ══ B. OFFLINE SYNC QUEUE ═════════════════════════════════════════════════
  * De roadmap: "gebouwd, nog niet functioneel bevestigd". Hieronder de bevestiging.
  * ══════════════════════════════════════════════════════════════════════════ */
@@ -223,6 +325,12 @@ function queueZandbak(opts) {
     toast: function (m) { (ctx._toasts = ctx._toasts || []).push(m); },
     document: { getElementById: function () { return null; } },
     _verzoeken: verzoeken,
+    /* RC0: sbPostQ/sbPatchQ/sbDelQ/flushOfflineQueue lopen sinds de sessie-veilige
+       fetch-laag via sbFetch. De zandbak laadt die laag daarom mee, inclusief een
+       instelbare refresh, zodat 401-gedrag echt getest wordt en niet per ongeluk in
+       de catch-tak belandt. */
+    authSession: opts.sessie === undefined ? { access_token: 't', refresh_token: 'r', user: { id: 'u1' } } : opts.sessie,
+    refreshAuthToken: function () { ctx._refreshes = (ctx._refreshes || 0) + 1; return Promise.resolve(!!opts.refreshLukt); },
     fetch: function (url, o) {
       verzoeken.push({ url: url, method: (o && o.method) || 'GET', body: o && o.body });
       var res = opts.antwoord ? opts.antwoord(url, o, verzoeken.length) : { ok: true };
@@ -232,16 +340,17 @@ function queueZandbak(opts) {
     }
   };
   vm.createContext(ctx);
-  vm.runInContext([konstVar('OFFLINE_DB_NAME'), pak('offlineDb'), pak('offlineQueueAdd'),
+  vm.runInContext([konstVar('OFFLINE_DB_NAME'), konstVar('SB_RETRY_STATUS'),
+                   konstVar('_sbRefreshInFlight'), konstVar('_sbSessieVerlopenGemeld'),
+                   konstVar('_flushBezig'),
+                   pak('sbRetryable'), pak('sbRefreshOnce'), pak('sbSessieVerlopen'),
+                   pak('sbFetch'), pak('offlineDb'), pak('offlineQueueAdd'),
                    pak('offlineQueueAll'), pak('offlineQueueRemove'), pak('sbPostQ'),
                    pak('sbPatchQ'), pak('sbDelQ'), pak('flushOfflineQueue')].join('\n'), ctx);
   ctx._idb = idb;
   return ctx;
 }
 
-/* De queue-functies zijn async; elke test wacht op zijn eigen keten. */
-var wachtend = [];
-function tAsync(naam, fn) { wachtend.push({ naam: naam, fn: fn }); }
 
 tAsync('B1: offline schrijven verliest geen data maar queuet', function () {
   var ctx = queueZandbak({ online: false });
@@ -399,9 +508,20 @@ t('C1: er wordt gesynchroniseerd bij online komen', function () {
     'geen sync bij het online-event');
 });
 
-t('C2: er wordt gesynchroniseerd bij terugkeer naar de app', function () {
-  assert.ok(/visibilitychange[\s\S]{0,120}flushOfflineQueue\(\)/.test(HTML),
-    'geen sync bij visibilitychange');
+t('C2: terugkeer naar de app valideert eerst de sessie en synchroniseert daarna', function () {
+  /* Aangescherpt in RC0. De oude vorm keek alleen of flushOfflineQueue() binnen 120
+     tekens na 'visibilitychange' stond — een afstandsmaat, geen gedrag. Op Android is
+     juist de VOLGORDE bepalend: komt de app na uren terug, dan is het access-token
+     verlopen en loopt een directe flush op 401 stuk. De sessie moet dus eerst worden
+     gevalideerd. Deze test leest het volledige handlerblok en eist beide stappen. */
+  var i = HTML.indexOf("addEventListener('visibilitychange'");
+  assert.ok(i > 0, 'geen visibilitychange-handler');
+  var blok = HTML.slice(i, HTML.indexOf('});', i) + 3);
+  assert.ok(/flushOfflineQueue\(\)/.test(blok), 'geen sync bij visibilitychange');
+  assert.ok(/ensureValidSession\(\)/.test(blok),
+    'de sessie wordt niet gevalideerd voordat er gesynchroniseerd wordt');
+  assert.ok(blok.indexOf('ensureValidSession') < blok.indexOf('flushOfflineQueue'),
+    'flush gebeurt vóór de sessiecontrole — dan loopt elk item op 401 stuk');
 });
 
 t('C3: er wordt gesynchroniseerd bij opstart', function () {

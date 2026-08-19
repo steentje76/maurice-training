@@ -21,7 +21,14 @@ const COPY_FILES = [
   'icon-192.png', 'icon-512.png', 'logo-wordmark.png',
   'exercise-catalog.json', 'exercise-intelligence_6.json'
 ];
-const COPY_DIRS = ['core', 'videos'];
+// RC0 — VIDEO'S WORDEN NIET MEEGEBUNDELD.
+// videos/ is 437 MB. Meegebundeld levert dat een AAB van ruim 450 MB op, ver boven het
+// Play-plafond van 200 MB voor de basismodule; de upload zou domweg worden geweigerd.
+// De service worker haalt video's al on-demand op en cachet ze met een LRU-plafond van
+// 250 MB (CACHE_VIDEOS), dus het gedrag is op Android identiek aan het web: eerste keer
+// streamen, daarna offline beschikbaar. sw.js bepaalt in de native app zelf van welke
+// oorsprong hij ze haalt (zie MEDIA_ORIGIN daar).
+const COPY_DIRS = ['core'];
 
 async function exists(p) { try { await fs.access(p); return true; } catch { return false; } }
 
@@ -29,10 +36,17 @@ async function rimraf(p) {
   if (await exists(p)) await fs.rm(p, { recursive: true, force: true });
 }
 
+// RC0: testcode hoort niet in een release-artefact. core/ bevat 60+ *.test.js
+// (ruim 300 kB) die anders integraal in de APK/AAB meegingen — onnodige omvang en
+// onnodig veel interne details in een publiek gedistribueerd bestand.
+function overslaan(naam) {
+  return naam.endsWith('.test.js');
+}
 async function copyDir(src, dst) {
   await fs.mkdir(dst, { recursive: true });
   const entries = await fs.readdir(src, { withFileTypes: true });
   for (const e of entries) {
+    if (overslaan(e.name)) continue;
     const s = path.join(src, e.name);
     const d = path.join(dst, e.name);
     if (e.isDirectory()) await copyDir(s, d);

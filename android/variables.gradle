@@ -1,7 +1,13 @@
 ext {
+    // RC0 — Google Play-eis. Sinds 31 augustus 2025 moeten nieuwe apps en updates
+    // minimaal API 35 targeten; vanaf 31 augustus 2026 is dat API 36 (Android 16).
+    // De uitgeleverde configuratie stond nog op 34 en zou dus zonder meer worden
+    // geweigerd. LET OP: deze bump kon in de bouwomgeving van deze sprint niet worden
+    // gecompileerd (geen Android SDK, geen toegang tot dl.google.com). Er is één lokale
+    // verificatiebuild nodig; zie PLAY_STORE_READINESS.md, sectie 'Verificatie vereist'.
     minSdkVersion = 22
-    compileSdkVersion = 34
-    targetSdkVersion = 34
+    compileSdkVersion = 36
+    targetSdkVersion = 36
     androidxActivityVersion = '1.8.0'
     androidxAppCompatVersion = '1.6.1'
     androidxCoordinatorLayoutVersion = '1.2.0'

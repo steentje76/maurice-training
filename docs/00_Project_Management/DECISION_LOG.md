@@ -190,3 +190,35 @@
 - Alternatieven: cijfers schatten of verzinnen om het rapport "compleet" te laten lijken — expliciet afgewezen.
 - Impact: Sprint 3.1-rapport bevat expliciete "niet vastgesteld"-secties i.p.v. ingevulde placeholders. Wel: twee echte bugs gevonden en gefixt tijdens live testen (user_id ontbrak bij goals-insert; modals te breed op desktop) — beide al gepusht vóór dit rapport (v3.3.31–v3.3.34). Doelen-CRUD is voor 3 van de 4 operaties (Create/Read/Delete) live bevestigd; Update ontbreekt nog als functionaliteit.
 - Verantwoordelijke: Maurice
+
+## DEC-024
+- Datum: 19 augustus 2026
+- Beslissing: `targetSdkVersion`/`compileSdkVersion` naar 36 gebracht en AGP naar 8.9.1 / Gradle-wrapper naar 8.11.1, zonder dat die combinatie in deze omgeving kon worden gecompileerd.
+- Reden: Google Play eist sinds 31-08-2025 minimaal API 35 voor nieuwe apps en updates, en vanaf 31-08-2026 API 36 (geverifieerd bij de bron, Play Console Help). De configuratie stond op 34 en zou dus zonder meer worden geweigerd. Niet bumpen betekent dat de eigenaar dat pas bij de upload ontdekt; wél bumpen betekent één lokale verificatiebuild. Dat tweede is omkeerbaar in één regel, het eerste kost een hele releasecyclus.
+- Alternatieven: (a) op 34 laten en alleen rapporteren — afgewezen, dat verplaatst een bekende blokkade naar de eigenaar; (b) ook Capacitor naar een nieuwere major brengen — afgewezen, dat is een dependency-upgrade met API-wijzigingen die zonder compiler en zonder toestel niet te verifiëren is, en `@capacitor-community/bluetooth-le` moet in hetzelfde tempo mee.
+- Impact: `docs/PLAY_STORE_READINESS.md` §6 benoemt exact wat er bij die eerste build gecontroleerd moet worden (compilatie tegen API 36, terugveeg, edge-to-edge, video's, ondertekening). `core/fAndroidRelease.test.js` legt de ondergrens vast en beweegt mee met de Play-datums.
+- Verantwoordelijke: Maurice
+
+## DEC-025
+- Datum: 19 augustus 2026
+- Beslissing: de videobibliotheek (437 MB, 206 bestanden) wordt niet meer in het Android-artefact gebundeld. `sw.js` bepaalt via `MEDIA_ORIGIN` van welke oorsprong de native app ze ophaalt.
+- Reden: het artefact zou ~450 MB worden tegen een Play-plafond van 200 MB voor de basismodule — de upload zou domweg worden geweigerd. Bundelen was bovendien dubbelop: de service worker haalde video's al on-demand op en cachet ze met een LRU-plafond van 250 MB. Het gedrag op Android wordt daarmee identiek aan het web: eerste keer streamen, daarna offline beschikbaar.
+- Alternatieven: (a) Play Asset Delivery — afgewezen voor V1, vereist een asset pack en een aparte uitleverketen voor een functie die niet in de kernlus zit; (b) video's uitdunnen — afgewezen, dat verwijdert inhoud om een verpakkingsprobleem op te lossen.
+- Impact: `www/` van 450 MB naar 14 MB. Techniekvideo's vereisen bij eerste weergave verbinding; opgenomen in `docs/KNOWN_LIMITATIONS.md`.
+- Verantwoordelijke: Maurice
+
+## DEC-026
+- Datum: 19 augustus 2026
+- Beslissing: het bewijsspoor per set wordt getoond in het logboek (Historie), niet in Training of Home.
+- Reden: Training en Home zijn in alle voorgaande sprints als beschermd gebied aangemerkt, en het logboek is precies de plek waar de vraag "waarom stond dit advies er" ontstaat — bij het terugkijken, niet tijdens het tillen. De toevoeging is additief: een knop verschijnt uitsluitend bij een rij die daadwerkelijk een snapshot bevat.
+- Alternatieven: (a) in de sessiesamenvatting direct na afronden — afgewezen, dat is Training-gebied; (b) een eigen scherm — afgewezen, dat voegt navigatie toe voor iets dat bij een bestaande rij hoort.
+- Impact: de kernbelofte ("niet alleen WAT, maar ook WAAROM") is voor het eerst zichtbaar voor de sporter. `core/fRC0.test.js` sectie A controleert dat de weergavelaag geen enkele rekenfunctie aanroept, zodat het scherm nooit iets anders kan tonen dan wat destijds is besloten.
+- Verantwoordelijke: Maurice
+
+## DEC-027
+- Datum: 19 augustus 2026
+- Beslissing: `netlify/functions/delete-account.js` uitgebreid van 22 naar 34 tabellen, en de relationship-audits van sprint 25/26 en de Fase-2-verificatie zijn gecorrigeerd.
+- Reden: twee bevindingen uit de release-audit. (1) Elf tabellen met gebruikersgegevens bleven na accountverwijdering achter, waaronder `wearable_connections` met het access- én refresh-token in leesbare vorm — in strijd met de privacyverklaring van de app en met de Google Play-eis. (2) De eerdere relationship-audits zijn uitgevoerd op een datadump die met een service-role-sleutel was gemaakt en dus de rijen van twee accounts door elkaar bevatte; die situatie kan in de app niet bestaan (RLS), maar maakte de gerapporteerde aantallen wel onjuist.
+- Alternatieven: bij (2) de oude cijfers laten staan — afgewezen, een audit die zijn eigen methodefout verzwijgt is geen audit.
+- Impact: (1) `core/fRC0.test.js` sectie E vergelijkt de verwijderlijst voortaan met elke tabel in het schema die een gebruikerskolom draagt, en controleert dat er nooit zonder gebruikersfilter wordt verwijderd en dat gedeelde gym-inrichting van andere leden blijft bestaan. (2) `docs/RELATIONSHIP_AUDIT.md` §0 corrigeert de cijfers: 23 circulair (was 24), 187 kenbaar (was 186), 7 patronen (was 6).
+- Verantwoordelijke: Maurice

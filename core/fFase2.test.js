@@ -414,6 +414,67 @@ t('C4: er is een zichtbare wachtrij voor de sporter', function () {
   assert.ok(HTML.indexOf('function updateOfflineBadge') > 0, 'geen offline-badge');
 });
 
+/* ══ D. STATUSWAARDEN VAN TRAINING_INSTANCES ═══════════════════════════════
+ * Aanleiding: de eerste versie van migratie_v446.sql gebruikte 'abandoned'. Die waarde
+ * bestaat niet — training_instances_status_check staat alleen 'active', 'completed' en
+ * 'aborted' toe — waarop de migratie afbrak met 23514. De fout was te voorkomen door
+ * bij het schrijven niet alleen de kolommen maar ook de constraints op te vragen.
+ * Deze tests leggen het toegestane vocabulaire vast en controleren dat zowel de app als
+ * de migraties zich eraan houden, zodat dit niet stilzwijgend opnieuw kan gebeuren.
+ * ══════════════════════════════════════════════════════════════════════════ */
+console.log('\nD. Statuswaarden training_instances');
+
+/* Exact de waarden uit training_instances_status_check in Supabase. Wijzigt de
+   constraint, dan hoort deze lijst in dezelfde wijziging mee te veranderen. */
+var INSTANCE_STATUS = ['active', 'completed', 'aborted'];
+
+t('D1: de app schrijft alleen toegestane statuswaarden', function () {
+  var blok = HTML.slice(HTML.indexOf('async function completeTrainingInstance'),
+                        HTML.indexOf('async function completeTrainingInstance') + 600);
+  var gevonden = (blok.match(/status\s*:\s*'([a-z_]+)'/g) || [])
+    .map(function (m) { return m.replace(/.*'([a-z_]+)'.*/, '$1'); });
+  assert.ok(gevonden.length > 0, 'completeTrainingInstance zet geen status');
+  gevonden.forEach(function (v) {
+    assert.ok(INSTANCE_STATUS.indexOf(v) >= 0,
+      'de app schrijft status "' + v + '", die de databaseconstraint niet toestaat');
+  });
+});
+
+t('D2: geen enkele migratie gebruikt een niet-toegestane statuswaarde', function () {
+  var dir = path.join(__dirname, '..');
+  var migraties = fs.readdirSync(dir).filter(function (f) { return /^migratie_v\d+\.sql$/.test(f); });
+  assert.ok(migraties.length > 0, 'geen migratiebestanden gevonden');
+  migraties.forEach(function (f) {
+    var sql = fs.readFileSync(path.join(dir, f), 'utf8');
+    if (sql.indexOf('training_instances') < 0) return;
+    /* Alleen echte SQL-regels; commentaarregels mogen de fout juist beschrijven. */
+    sql.split('\n').forEach(function (regel, i) {
+      if (regel.replace(/^\s+/, '').indexOf('--') === 0) return;
+      var m = regel.match(/status\s*=\s*'([a-z_]+)'/);
+      if (!m) return;
+      assert.ok(INSTANCE_STATUS.indexOf(m[1]) >= 0,
+        f + ' regel ' + (i + 1) + ' zet status "' + m[1] + '", niet toegestaan door de constraint');
+    });
+  });
+});
+
+t('D3: de migratie controleert zelf eerst welke waarden zijn toegestaan', function () {
+  var sql = fs.readFileSync(path.join(__dirname, '..', 'migratie_v446.sql'), 'utf8');
+  assert.ok(sql.indexOf('training_instances_status_check') > 0,
+    'de migratie leest de constraint niet uit vóór het wijzigen');
+  assert.ok(/\bbegin;[\s\S]*\bcommit;/.test(sql),
+    'de migratie draait niet als één alles-of-niets-transactie');
+});
+
+t('D4: de migratie verwijdert niets', function () {
+  var sql = fs.readFileSync(path.join(__dirname, '..', 'migratie_v446.sql'), 'utf8');
+  sql.split('\n').forEach(function (regel, i) {
+    if (regel.replace(/^\s+/, '').indexOf('--') === 0) return;
+    assert.ok(!/\b(delete\s+from|drop\s+table|truncate)\b/i.test(regel),
+      'destructieve opdracht op regel ' + (i + 1) + ': ' + regel.trim());
+  });
+});
+
 /* ── uitvoeren en afronden ─────────────────────────────────────────────────── */
 (function volgende(i) {
   if (i >= wachtend.length) {

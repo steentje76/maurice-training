@@ -28,7 +28,33 @@ v3.3.34
 
 > Oudere releases (t/m v3.3.25): zie DECISION_LOG.md en CHANGELOG.md voor de volledige geschiedenis — hier bewust ingekort om dit document actueel en leesbaar te houden.
 
-## Actieve sprint (bijgewerkt 18 augustus 2026 — Night Sprint 19–23, v4.45.0)
+## Actieve sprint (bijgewerkt 19 augustus 2026 — Fase 2 afronding, v4.47.0)
+
+**Fase 2 (login, RLS, offline sync, multi-user) is afgerond en getest.** Zie Roadmap.md
+voor de eindstatustabel per onderdeel.
+
+Wat er in v4.47.0 is gebeurd:
+- levenscyclus van `training_instances` hersteld (`completeTrainingInstance()` werd nooit
+  aangeroepen — 139 rijen `active`, 128 verweesd). Code gefixt; `migratie_v446.sql`
+  ruimt de historie niet-destructief op en moet nog handmatig gedraaid worden.
+- 43 queries in 25 render/refresh-functies achter een timeout (`v43SafeGet`).
+- twee open Fase-2-vinkjes functioneel bevestigd met `core/fFase2.test.js`.
+- relatie-audit: `rustdagen` toegevoegd; `weekbelasting` en `load_vorige_dag` noemen nu
+  `kalender` als invoer, waarmee twee tautologische paren correct worden geweigerd.
+
+**Nog open binnen Fase 2, met reden:**
+- wearables-uitbreiding (HealthKit/Health Connect/Garmin/Whoop/Oura): geblokkeerd op
+  per-provider OAuth-credentials. Niet autonoom uitvoerbaar.
+- HYROX race-splits en triathlon-brick: sport-opties bestaan, logica niet gebouwd.
+- menstruatiecyclus: `cyclus_fase` telt mee in de dagfactor, tracking-UI ontbreekt.
+- gym-/team-challenges en "perfecte trainingsweek": geblokkeerd door DEC-018.
+
+**Handmatige actie voor de Product Owner:** `migratie_v446.sql` uitvoeren in de Supabase
+SQL-editor (stap 0 eerst, uitkomst bewaren).
+
+---
+
+## Vorige actieve sprint (bijgewerkt 18 augustus 2026 — Night Sprint 19–23, v4.45.0)
 
 **Night Sprint 19–23 — Training Intelligence, Relationship Discovery & Unified Athlete Intelligence: afgerond.**
 

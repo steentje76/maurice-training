@@ -11,8 +11,8 @@
 - [x] Apparatuur-catalogus (los van equipment_types)
 - [x] AI-programmagenerator: periodisering afgedwongen in code, sport-context/PR's/trainingshistorie in de prompt
 - [x] sw.js network-first-navigatie verifiëren (Sprint 1, 2 augustus 2026 — bevestigd via code-inspectie, geen wijziging nodig)
-- [ ] Per-user profielscheiding testen
-- [ ] Offline sync queue (IndexedDB) — gebouwd, nog niet functioneel bevestigd
+- [x] **Per-user profielscheiding getest** — `core/fFase2.test.js` sectie A (9 asserts): cachesleutels, per-oefening-1RM's, de eigenaarswissel op één toestel én het legen van de module-variabelen die ooit de 1RM's van het vorige account lieten staan. Draait op de verzonden implementatie uit index.html, niet op een kopie. (v4.47.0)
+- [x] **Offline sync queue (IndexedDB) functioneel bevestigd** — `core/fFase2.test.js` sectie B/C (16 asserts) met een nagebouwde IndexedDB en fetch: queuen bij offline én bij netwerkfout, NIET queuen bij een serverfout, filters op PATCH/DELETE, volgorde bij afspelen, één mislukt item blokkeert de rest niet, wegvallend netwerk verliest niets, badge en meldingen, en de drie synctriggers. (v4.47.0)
 - [x] Accessibility-fundament (aria/focus-management/skip-link) — Sprint 1, toegepast op bestaande kernschermen
 - [x] Motion-tokenfundament + `prefers-reduced-motion` — Sprint 1
 - [x] Dark mode-tokenfundament + automatische detectie — Sprint 1 (nog geen volledige restyle, zie Branding hieronder)
@@ -25,8 +25,32 @@
 - [ ] **Wearables-uitbreiding** — Apple HealthKit, Google Health Connect, Garmin/Whoop/Oura, naast de bestaande Fitbit/Google Health-koppeling.
 - [ ] **HYROX race-splits en triathlon-brick** — was expliciet uitgesteld, nu geprioriteerd.
 - [ ] **Menstruatiecyclus-tracking** — was uitgesteld; `cyclus_fase`-veld bestaat al in hrv_log, uitbreiding tot volwaardige tracking nog te bouwen.
-- [ ] Gebruikersbeheerinterface — Team-scherm (ledenlijst, rollen, wijzigingslog) al gebouwd; her-beoordelen of dit punt hiermee afgerond is.
-- [ ] Gym-breed leespad via exercises.gym_id — al gerealiseerd via v331/v333; dit vinkje kan waarschijnlijk af, ter bevestiging bij volgende CURRENT_STATE-update.
+- [x] **Gebruikersbeheerinterface** — her-beoordeeld augustus 2026: het Team-scherm bestaat met ledenlijst, rolbeheer (TEAM_ROLE_LABELS + ROLE_LEVEL_CLIENT), wijzigingslog en een owner-gate op gym_role_level ≥ 3, ondersteund door `netlify/functions/gym-team.js` en `gym-team-set-pin.js`. Voor Fase 2 afgerond; verdere uitbreiding hoort bij Fase 3/4.
+- [x] **Gym-breed leespad via exercises.gym_id** — bevestigd afgerond: het 3-laags zichtbaarheidsmodel (personal/gym/global) is actief in schema, RLS én UI, inclusief de GYM-markering in de oefeningkiezer. De nullable gym_id-placeholders in equipment/rest_seconds zijn bewuste Fase-4-voorbereiding, geen openstaand Fase-2-werk.
+
+## Fase 2 — eindstatus (augustus 2026, v4.47.0)
+
+Fase 2 is gedefinieerd als **login, RLS, offline sync, multi-user** (Product_Book.md).
+
+| Onderdeel | Status | Bewijs |
+|---|---|---|
+| Supabase Auth + RLS op alle tabellen | ✅ | actief sinds 12 juli 2026, RLS-audit 31 juli |
+| Per-user profielscheiding | ✅ | `fFase2.test.js` A1–A9 |
+| Offline sync queue (IndexedDB) | ✅ | `fFase2.test.js` B1–B12, C1–C4 |
+| Gebruikersbeheer (Team-scherm) | ✅ | ledenlijst, rollen, wijzigingslog, owner-gate |
+| Gym-breed leespad (3-laags zichtbaarheid) | ✅ | schema + RLS + UI |
+| Levenscyclus training_instances | ✅ | v4.47.0 — `completeTrainingInstance()` wordt nu aangeroepen; migratie_v446.sql ruimt de historie op |
+| Robuustheid renderpaden (timeouts) | ✅ | v4.47.0 — 43 queries in 25 render/refresh-functies via `v43SafeGet` |
+| Wearables-uitbreiding (HealthKit/Health Connect/Garmin/Whoop/Oura) | ⏸ | **geblokkeerd**: vereist per provider een geregistreerde OAuth-app met client-id en -secret. Niet autonoom uitvoerbaar. Fitbit via Google Health werkt. |
+| HYROX race-splits / triathlon-brick | 🔴 | sport-opties bestaan in de keuzelijsten; race-splits en brick-logica niet gebouwd |
+| Menstruatiecyclus-tracking | 🟡 | `cyclus_fase` bestaat en telt mee in de dagfactor; volwaardige tracking-UI ontbreekt |
+| Gym-/Team-challenges | ⏸ | DEC-018: vereist cross-user aggregatie-infrastructuur |
+| "Perfecte trainingsweek"-challenge | ⏸ | DEC-018: definitie ontbreekt, wacht op Product Owner |
+
+**Conclusie:** de kern van Fase 2 (login, RLS, offline sync, multi-user) is afgerond en
+getest. Wat openstaat is óf geblokkeerd op externe credentials (wearables), óf op een
+productbeslissing (challenges), óf betreft sportspecifieke uitbreidingen die later
+onder Fase 1/2 zijn geschoven (HYROX, cyclus).
 
 ## Intelligentielaag (Sprint 19–23, augustus 2026 — gebouwd)
 - [x] **Relationship Discovery Engine** (`relationship.v1`, v4.41.0) — verbanden zijn geen vaste lijst meer. De engine inventariseert welke dagreeksen er werkelijk zijn, vormt daaruit kandidaatparen, toetst spreiding en datakwaliteit, classificeert en rangschikt. Zie docs/RELATIONSHIP_ENGINE.md.

@@ -306,6 +306,34 @@
     });
   }
 
+  /* RUSTDAGEN VÓÓR EEN TRAINING (Fase 2).
+   *
+   * Het aantal kalenderdagen tussen de vorige trainingsdag en deze. Twee dagen rust
+   * betekent hier: gisteren niet, eergisteren wel getraind.
+   *
+   * Waarom dit een geldige relatiebron is waar bijvoorbeeld spierbelasting dat niet is:
+   * de ruwe invoer is de KALENDER, niet de sets/reps/gewichten. Hij deelt daarmee met
+   * geen enkele andere grootheid zijn invoer, en de circulariteitstoets laat hem dus
+   * terecht door. Rustduur tegenover prestatie, HRV of RPE is bovendien een van de
+   * best onderbouwde vragen in de krachtsport — en volledig deterministisch te
+   * beantwoorden uit data die er al is.
+   *
+   * De eerste trainingsdag heeft per definitie geen voorganger en komt niet in de
+   * reeks; die zou anders een verzonnen nulwaarde krijgen. */
+  function restDaysSeries(dagModel) {
+    var dagen = (dagModel && dagModel.dagen) || [];
+    var datums = dagen.map(function (d) { return d.date; }).filter(Boolean).sort();
+    var uit = [];
+    for (var i = 1; i < datums.length; i++) {
+      var vorige = _dagNr(datums[i - 1]), nu = _dagNr(datums[i]);
+      if (vorige == null || nu == null) continue;
+      var gat = nu - vorige;
+      if (!(gat > 0)) continue;
+      uit.push({ date: datums[i], value: gat - 1 });   // 1 dag ertussen = 0 rustdagen
+    }
+    return uit;
+  }
+
   /* MONOTONIE (Foster): gemiddelde belasting gedeeld door de spreiding ervan, over
    * een venster. Hoog betekent: elke dag hetzelfde, weinig afwisseling tussen zwaar
    * en licht. Het is een BESCHRIJVING van je week, geen waarschuwing en geen advies —
@@ -534,6 +562,10 @@
        geen nieuwe berekening en geen nieuwe regel. */
     var top = serie(model, 'strength', 'topgewicht');
     if (top.length) uit.topgewicht = top;
+    /* Fase 2 — rustdagen vóór elke training. Deterministisch, met de kalender als
+       enige ruwe invoer, dus niet-circulair tegenover alle andere grootheden. */
+    var rust = restDaysSeries(model);
+    if (rust.length) uit.rustdagen = rust;
 
     /* Sprint 26 — CARDIO-SPLIT: bewust NIET aangeleverd, en dat is een besluit met reden.
      *
@@ -571,6 +603,7 @@
     rollingSum: rollingSum,
     previousDaySeries: previousDaySeries,
     frequencySeries: frequencySeries,
+    restDaysSeries: restDaysSeries,
     monotony: monotony,
     acuteChronic: acuteChronic,
     performanceIndex: performanceIndex,

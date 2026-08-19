@@ -122,7 +122,11 @@
       afgeleid: true, beschikbaarheid: 'nu' },
     { key: 'load_vorige_dag', label: 'Belasting vorige dag', zinNaam: 'trainingsbelasting van de dag ervoor',
       conditie: 'je de dag ervoor zwaarder had getraind', noemer: 'trainingsbelasting van de dag ervoor',
-      eenheid: '', domein: 'training', inputs: ['sets_prev', 'reps_prev', 'weight_kg_prev', 'rpe_prev'],
+      /* 'kalender' hoort er expliciet bij: deze grootheid BESTAAT alleen wanneer er de
+         dag(en) ervoor getraind is (maxGat), dus zijn aanwezigheid hangt af van de
+         trainingsspreiding. Zonder die invoer zou hij tegen rustdagen gezet mogen worden
+         en dat paar meet de spreiding tegen zichzelf. */
+      eenheid: '', domein: 'training', inputs: ['sets_prev', 'reps_prev', 'weight_kg_prev', 'rpe_prev', 'kalender'],
       veld: null, afgeleid: true, beschikbaarheid: 'nu' },
     /* De weekbelasting is de rollende som van de belasting van de afgelopen zeven
        dagen — INCLUSIEF vandaag. Zijn ruwe invoer is daarom exact dezelfde als die
@@ -138,13 +142,30 @@
        kandidaat: die delen geen enkele ruwe invoer. */
     { key: 'weekbelasting', label: 'Weekbelasting', zinNaam: 'weekbelasting',
       conditie: 'je weekbelasting hoger was', noemer: 'weekbelasting', eenheid: '', domein: 'training',
+      /* En 'kalender', want een rollende zevendaagse som is per definitie een
+         kalenderconstructie: hij daalt zodra er minder vaak getraind wordt. Zonder deze
+         invoer levert weekbelasting tegen rustdagen een sterk ogend verband op dat niets
+         anders meet dan de definitie van het venster zelf. Zelfde klasse fout als het
+         weekbelasting/volume-schijnverband uit v4.45.1. */
       inputs: ['sets', 'reps', 'weight_kg', 'rpe',
-               'sets_prev', 'reps_prev', 'weight_kg_prev', 'rpe_prev'], veld: null,
+               'sets_prev', 'reps_prev', 'weight_kg_prev', 'rpe_prev', 'kalender'], veld: null,
       afgeleid: true, beschikbaarheid: 'nu' },
     /* Duur per sessie wordt vandaag NIET opgeslagen (de sessions-tabel heeft geen
        duurkolom). Daarom 'toekomstig': het register kent de grootheid, er is alleen
        nog geen bron voor. Zie AthleteCore.unifiedLoad, dat om dezelfde reden geen
        gezamenlijke belasting kan leveren. */
+    /* Fase 2 — RUSTDAGEN. De enige van de nog niet aangesloten berekende grootheden die
+       alle vijf de criteria haalt: technisch afleidbaar, sportinhoudelijk verdedigbaar,
+       reproduceerbaar, deterministisch, en zonder AI. Zijn ruwe invoer is de kalender —
+       gedeeld met niets anders — dus de circulariteitstoets laat hem terecht door.
+       Spierbelasting, dagzone en het progressiebesluit zijn bewust NIET toegevoegd:
+       die delen hun invoer met volume, dagfactor respectievelijk RPE en zouden een
+       schijnverband opleveren. Trainingsfase, -doel, niveau en cyclusfase zijn
+       categorisch; een RANGcorrelatie is daarop niet van toepassing. */
+    { key: 'rustdagen', label: 'Rustdagen ervoor', zinNaam: 'aantal rustdagen ervoor',
+      conditie: 'je langer had gerust', noemer: 'aantal rustdagen ervoor', eenheid: 'd',
+      domein: 'training', inputs: ['kalender'], veld: null, afgeleid: true, beschikbaarheid: 'nu' },
+
     { key: 'duur', label: 'Trainingsduur', zinNaam: 'trainingsduur', conditie: 'je langer trainde',
       noemer: 'trainingsduur', eenheid: 'min', domein: 'training', inputs: ['duration'], veld: null,
       afgeleid: false, beschikbaarheid: 'toekomstig' },

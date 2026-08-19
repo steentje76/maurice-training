@@ -199,6 +199,45 @@ t('frequentie telt trainingsdagen als geheel getal', function () {
   assert.deepStrictEqual(f.map(function (p) { return p.value; }), [1, 2, 3]);
 });
 
+t('rustdagen telt de kalenderdagen tussen twee trainingen', function () {
+  var ss = [0, 1, 4, 11].map(function (i) {
+    return { date: dag(i), exercise_id: 'a', sets: 3, reps: 10, weight: 60 };
+  });
+  var r = AC.restDaysSeries(AC.dailyModel(ss, DEPS));
+  assert.deepStrictEqual(r.map(function (p) { return p.value; }), [0, 2, 6],
+    'twee opeenvolgende dagen = 0 rustdagen ertussen');
+});
+
+t('de eerste trainingsdag komt niet in de rustdagenreeks', function () {
+  var ss = [0, 3].map(function (i) {
+    return { date: dag(i), exercise_id: 'a', sets: 3, reps: 10, weight: 60 };
+  });
+  var r = AC.restDaysSeries(AC.dailyModel(ss, DEPS));
+  assert.strictEqual(r.length, 1, 'de eerste dag krijgt een verzonnen nulwaarde');
+  assert.strictEqual(r[0].date, dag(3));
+});
+
+t('twee sessies op dezelfde dag tellen als één trainingsdag', function () {
+  var ss = [{ date: dag(0), exercise_id: 'a', sets: 3, reps: 10, weight: 60 },
+            { date: dag(0), exercise_id: 'b', sets: 3, reps: 10, weight: 70 },
+            { date: dag(2), exercise_id: 'a', sets: 3, reps: 10, weight: 60 }];
+  var r = AC.restDaysSeries(AC.dailyModel(ss, DEPS));
+  assert.deepStrictEqual(r.map(function (p) { return p.value; }), [1]);
+});
+
+t('rustdagen wordt als bron aangeboden', function () {
+  var ss = [];
+  for (var i = 0; i < 10; i++) ss.push({ date: dag(i * 2), exercise_id: 'a', sets: 3, reps: 10, weight: 60 });
+  var uit = AC.relationshipSources(ss, DEPS);
+  assert.ok(uit.bronnen.rustdagen && uit.bronnen.rustdagen.length === 9);
+  assert.ok(RC.variableByKey('rustdagen'), 'rustdagen staat niet in het register');
+});
+
+t('zonder trainingen is er geen rustdagenreeks', function () {
+  assert.deepStrictEqual(AC.restDaysSeries(AC.dailyModel([], DEPS)), []);
+  assert.deepStrictEqual(AC.restDaysSeries(null), []);
+});
+
 /* ── 7. Monotonie en acuut/chronisch ──────────────────────────────────────── */
 t('monotonie weigert een oordeel bij te weinig dagen', function () {
   var m = AC.monotony([{ date: dag(0), value: 100 }, { date: dag(1), value: 200 }], 7);

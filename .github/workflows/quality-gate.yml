@@ -32,6 +32,12 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
+      # Android web-assets are generated artifacts and are intentionally not committed.
+      # Generate them before the deterministic tests because fAndroidRelease verifies
+      # that a locally generated Android copy matches the source version.
+      - name: Build and sync web assets
+        run: npm run cap:copy
+
       - name: Core coaching regression tests
         run: node coaching.test.js
 
@@ -52,9 +58,6 @@ jobs:
 
       - name: Native Concept2 transport tests
         run: npm run test:native
-
-      - name: Build web assets
-        run: npm run build:www
 
       - name: Verify generated web bundle exists
         run: test -f www/index.html

@@ -1,0 +1,45 @@
+FIX VOOR DE QUALITY GATE VAN PR #26
+commit 4714eef18cdc25417f2663fddee0e92a1944455a
+===================================================
+
+DRIE BESTANDEN:
+  .gitignore                     ontbreekt in PR #26 — dit is de oorzaak
+  core/fAndroidRelease.test.js   leesbare fout i.p.v. ENOENT + sectie 0 (volledigheid)
+  core/fRC0.test.js              idem voor privacy.html en delete-account.js
+
+
+BELANGRIJK — .gitignore IS EEN DOTFILE
+Precies dáárom is hij weggevallen tussen de vorige ZIP en PR #26: de Finder van macOS
+en de bestandsupload van GitHub laten bestanden die met een punt beginnen standaard
+buiten beschouwing. Hij zat wél in beide eerder geleverde ZIPs.
+
+Doe het daarom NIET via een upload. Gebruik in plaats daarvan:
+
+  GitHub → jouw branch → Add file → Create new file
+  → typ als bestandsnaam:  .gitignore
+  → plak de inhoud van gitignore-INHOUD-VOOR-GITHUB.txt (staat hiernaast)
+  → Commit
+
+Dat pad werkt wél met dotfiles.
+
+De twee testbestanden zijn gewone bestanden en kunnen normaal worden geüpload.
+
+
+CONTROLE ACHTERAF
+Na het toevoegen draait de Quality Gate opnieuw. Ontbreekt er nóg iets uit de release,
+dan meldt de suite dat nu als eerste regel en bij naam, bijvoorbeeld:
+
+  0. Volledigheid van de release
+  AssertionError: onvolledige overdracht — ontbreekt:
+    privacy.html  (Google Play eist een publiek bereikbare privacyverklaring)
+
+in plaats van een ENOENT-stacktrace. Stuur die melding door als het gebeurt.
+
+
+LOKAAL VERIFIEREN (optioneel, exact de stappen van de workflow)
+  npm install --no-audit --no-fund
+  node coaching.test.js
+  for f in core/*.test.js; do node "$f" || break; done
+  npm run test:native
+  npm run build:www
+  test -f www/index.html

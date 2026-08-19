@@ -1,5 +1,25 @@
 # Trainingskompas — Changelog
 
+## v4.47.0 — Fase 2 afronding: levenscyclus, robuustheid en bevestigde offline sync (19 augustus 2026)
+
+Fase 2 is gedefinieerd als login, RLS, offline sync en multi-user (Product_Book.md). De kern daarvan stond er al; wat ontbrak waren de bevestiging, twee gaten en de opruiming.
+
+**Levenscyclus van training_instances hersteld.** `completeTrainingInstance()` bestond sinds Werkblok A maar werd nergens aangeroepen. Elke via Preview of Guided gestarte training bleef daardoor voor altijd op status `active` staan: 139 rijen, waarvan 128 zonder ook maar één sessie. De aanroep zit nu in beide afrondingspaden, vóór `activeInstanceId` wordt gewist, via de offline-veilige `sbPatchQ` — een verbroken verbinding queuet de afronding in plaats van hem te verliezen. Een Guided-sessie zonder gelogde sets blijft bewust `active`. `migratie_v446.sql` ruimt de historische rijen op: rijen mét sessies worden `completed` met een afgeleide `completed_at`, rijen zonder sessies worden `abandoned`. Er wordt niets verwijderd; de snapshots blijven volledig bewaard.
+
+**Robuustheid: 43 queries in 25 render- en refresh-functies lopen nu via `v43SafeGet`.** `sbGet` gooit nooit — bij een fout geeft hij al `[]` terug. Het enige wat ontbrak was een bovengrens op de wachttijd, waardoor een niet-antwoordende Supabase elk renderpad oneindig liet hangen. Het gedrag bij falen is identiek gebleven; alleen de oneindige wachttijd is weg. Home, Voortgang, Kalender, Lichaam, Programma's en de beheer-schermen zijn hiermee gedekt.
+
+**Twee open Fase-2-vinkjes functioneel bevestigd.** Nieuw `core/fFase2.test.js` (25 asserts) draait de verzonden implementaties uit index.html in een zandbak met een nagebouwde localStorage, IndexedDB en fetch:
+- per-user profielscheiding: cachesleutels, per-oefening-1RM's, de eigenaarswissel op één toestel, en het legen van de module-variabelen die ooit de 1RM's van het vorige account lieten staan;
+- offline sync: queuen bij offline én bij netwerkfout, NIET queuen bij een serverfout, filters op PATCH/DELETE, volgorde bij afspelen, één mislukt item blokkeert de rest niet, wegvallend netwerk verliest niets, badge, meldingen en de drie synctriggers.
+
+**Relatie-audit: één nieuwe grootheid, twee correcties.** Van elf berekende grootheden die nog niet in het variabelenregister stonden haalt er één alle vijf de criteria: **rustdagen vóór een training**. Deterministisch, met de kalender als enige ruwe invoer. Spierbelasting, dagzone en het progressiebesluit zijn bewust NIET toegevoegd (delen invoer met volume, dagfactor respectievelijk RPE); trainingsfase, -doel, niveau en cyclusfase zijn categorisch en dus ongeschikt voor een rangcorrelatie.
+
+Daarbij bleek weekbelasting tegen rustdagen r = −0,41 op te leveren — puur omdat een rollende zevendaagse som daalt zodra je minder vaak traint. Dezelfde klasse fout als het weekbelasting/volume-schijnverband uit v4.45.1. `weekbelasting` en `load_vorige_dag` noemen daarom nu `kalender` als ruwe invoer, waarmee die tautologische paren correct worden geweigerd.
+
+Effect op de huidige dataset: doorgerekende relaties 70 → 82, patronen 3 → 6. Nieuw gevonden: **rustdagen vóór een training ↔ zwaarste set, r = +0,455 over 32 dagen (matige samenhang)**.
+
+Tests: 62 bestanden groen, 0 rood. Release gate 12/12. Home, Training, Coach, Lichaam, Voortgang, Historie en Kalender byte-identiek geverifieerd tegen origin/main.
+
 ## v4.46.0 — Sprint 26: Relationship Visibility & Evidence (19 augustus 2026)
 
 Geen nieuwe intelligentie. Deze sprint zorgt dat wat de engines al weten de sporter ook bereikt.

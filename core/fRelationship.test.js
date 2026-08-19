@@ -346,10 +346,15 @@ t('weekbelasting tegen een herstelmeting blijft wel een geldige kandidaat', func
   assert.strictEqual(k.kandidaten[0].crossDomein, true);
 });
 
-t('elke afgeleide grootheid deelt invoer met de grootheid waaruit hij volgt', function () {
+t('elke afgeleide grootheid deelt invoer, tenzij hij aantoonbaar onafhankelijk is', function () {
   /* Generieke vangnet: een afgeleide grootheid die met NIEMAND invoer deelt, is
      verdacht — dan is zijn inputs-lijst waarschijnlijk verzonnen in plaats van
-     afgeleid, en glipt hij overal langs de circulariteitstoets. */
+     afgeleid, en glipt hij overal langs de circulariteitstoets. Zo ontstond het
+     weekbelasting-schijnverband.
+     Er is één legitieme uitzondering: een grootheid die uit een bron komt die geen
+     enkele andere grootheid gebruikt (rustdagen komt uit de kalender). Die moet dat
+     dan WEL expliciet verklaren via het veld `onafhankelijk` — een stilzwijgende
+     uitzondering is precies wat dit vangnet moet voorkomen. */
   var afgeleid = RC.VARIABLE_REGISTRY.filter(function (v) {
     return v.afgeleid && v.beschikbaarheid === 'nu';
   });
@@ -357,8 +362,53 @@ t('elke afgeleide grootheid deelt invoer met de grootheid waaruit hij volgt', fu
     var deelt = RC.VARIABLE_REGISTRY.some(function (w) {
       return w.key !== v.key && w.inputs.some(function (i) { return v.inputs.indexOf(i) >= 0; });
     });
-    assert.ok(deelt, v.key + ' is afgeleid maar deelt met niemand ruwe invoer');
+    if (deelt) return;
+    assert.ok(typeof v.onafhankelijk === 'string' && v.onafhankelijk.length > 10,
+      v.key + ' is afgeleid, deelt met niemand invoer, en verklaart dat niet');
   });
+});
+
+t('een onafhankelijke grootheid gebruikt een bron die verder niemand gebruikt', function () {
+  RC.VARIABLE_REGISTRY.filter(function (v) { return v.onafhankelijk; }).forEach(function (v) {
+    RC.VARIABLE_REGISTRY.forEach(function (w) {
+      if (w.key === v.key) return;
+      w.inputs.forEach(function (i) {
+        assert.ok(v.inputs.indexOf(i) < 0,
+          v.key + ' claimt onafhankelijk te zijn maar deelt "' + i + '" met ' + w.key);
+      });
+    });
+  });
+});
+
+/* Fase 2: rustdagen erbij. Een grootheid waarvan het VENSTER of het BESTAAN afhangt van
+ * de trainingsspreiding deelt daarmee zijn ruwe invoer — anders levert het paar een sterk
+ * ogend verband op dat niets anders meet dan de definitie ervan. Gevonden op echte data:
+ * weekbelasting tegen rustdagen gaf r = -0,41 puur omdat een zevendaagse som daalt zodra
+ * je minder vaak traint. */
+t('een venstergrootheid wordt niet tegen rustdagen gezet', function () {
+  var bronnen = {
+    rustdagen: reeks(40, function (i) { return i % 4; }),
+    weekbelasting: reeks(40, function (i) { return 1000 + i * 10; }),
+    load_vorige_dag: reeks(40, function (i) { return 100 + i; })
+  };
+  var k = RC.candidates(RC.inventory(bronnen), DEPS);
+  assert.strictEqual(k.kandidaten.length, 0,
+    'venstergrootheid tegen rustdagen toegestaan: ' + k.kandidaten.map(function (c) { return c.id; }));
+  assert.ok(k.overgeslagen.length >= 2, 'de weigering is niet zichtbaar');
+});
+
+t('rustdagen tegen een dagwaarde is wel een geldige kandidaat', function () {
+  var bronnen = { rustdagen: reeks(40, function (i) { return i % 4; }),
+                  topgewicht: reeks(40, function (i) { return 90 + (i % 15); }) };
+  var k = RC.candidates(RC.inventory(bronnen), DEPS);
+  assert.strictEqual(k.kandidaten.length, 1, 'geldig paar geweigerd');
+  assert.strictEqual(k.kandidaten[0].crossDomein, true);
+});
+
+t('rustdagen tegen een herstelmeting blijft geldig', function () {
+  var bronnen = { rustdagen: reeks(40, function (i) { return i % 4; }),
+                  hrv: reeks(40, function (i) { return 40 + (i % 15); }) };
+  assert.strictEqual(RC.candidates(RC.inventory(bronnen), DEPS).kandidaten.length, 1);
 });
 
 t('de bestaande drie verbanden blijven kandidaat', function () {

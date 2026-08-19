@@ -50,13 +50,20 @@ function zandbak(namen, extra) {
 /* ══ A. BESTAANDE RELATIONSHIP-IDs BLIJVEN BESTAAN ═══════════════════════ */
 console.log('\nA. Bestaande relationship-IDs');
 
-t('A1: alle 20 registersleutels bestaan nog', function () {
+t('A1: geen enkele registersleutel is verdwenen', function () {
+  /* De eis is dat er niets WEGVALT — een sleutel die verdwijnt neemt stilzwijgend
+     tientallen kandidaatrelaties mee. Erbij komen mag wel; dat is precies hoe de
+     engine hoort te groeien. Nieuwe sleutels worden hier bijgehouden zodat de lijst
+     bewust wordt bijgewerkt in plaats van ongemerkt te verlopen. */
   var verwacht = ['hrv', 'rhr', 'sleep', 'dagfactor', 'readiness', 'gewicht', 'volume', 'rpe',
     'sets', 'load', 'load_vorige_dag', 'weekbelasting', 'duur', 'rust', 'e1rm', 'topgewicht',
-    'cardio_split', 'temperatuur', 'luchtvochtigheid', 'wind'];
+    'cardio_split', 'temperatuur', 'luchtvochtigheid', 'wind',
+    'rustdagen'];                                   // Fase 2 (v4.47.0)
   var aanwezig = RC.VARIABLE_REGISTRY.map(function (v) { return v.key; });
   verwacht.forEach(function (k) { assert.ok(aanwezig.indexOf(k) >= 0, 'registersleutel verdwenen: ' + k); });
-  assert.strictEqual(aanwezig.length, verwacht.length, 'registeromvang gewijzigd');
+  assert.ok(aanwezig.length >= verwacht.length, 'registeromvang gekrompen');
+  var onbekend = aanwezig.filter(function (k) { return verwacht.indexOf(k) < 0; });
+  assert.deepStrictEqual(onbekend, [], 'nieuwe registersleutel niet in deze lijst opgenomen: ' + onbekend);
 });
 
 t('A2: de drie oorspronkelijke verbanden blijven vormbaar', function () {

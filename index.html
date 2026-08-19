@@ -5713,7 +5713,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.46.0';
+const APP_VER = 'v4.47.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -9068,7 +9068,7 @@ async function saveBC(btnEl){
 async function renderConditionsList(){
   const el=document.getElementById('conditions-list');
   if(!el)return;
-  const conditions=await sbGet('athlete_conditions','&active=eq.true&order=sort_order.asc');
+  const conditions=await v43SafeGet('athlete_conditions','&active=eq.true&order=sort_order.asc');
   if(!conditions.length){el.innerHTML='<p style="color:var(--g4);font-size:13px;margin-bottom:8px">Nog geen condities</p>';return;}
   el.innerHTML=conditions.map(c=>`<div class="eq-row"><span class="eq-label">${escHtml(c.label)}</span><button onclick="removeCondition(${c.id})">✕</button></div>`).join('');
 }
@@ -9088,7 +9088,7 @@ async function removeCondition(id){
 async function renderCheckinConditions(){
   const el=document.getElementById('checkin-conditions-list');
   if(!el)return;
-  const conditions=await sbGet('athlete_conditions','&active=eq.true&order=sort_order.asc');
+  const conditions=await v43SafeGet('athlete_conditions','&active=eq.true&order=sort_order.asc');
   el.innerHTML=conditions.map(c=>`
     <div class="irow"><label class="ilbl">${escHtml(c.label)}</label>
       <select class="inp" data-condition="${escHtml(c.label)}" id="checkin-cond-${c.id}">
@@ -10220,7 +10220,7 @@ function computeProgramProgressPure(blocks,exByBlock,sessByBlock){
 async function renderProgrammaList(){
   const el=document.getElementById('programma-list');
   if(!el)return;
-  const progs=await sbGet('programs','&order=start_date.desc');
+  const progs=await v43SafeGet('programs','&order=start_date.desc');
   if(!progs.length){
     el.innerHTML=`<div class="v48-pempty">
       <div class="ic">${V43I.list}</div>
@@ -10236,17 +10236,17 @@ async function renderProgrammaList(){
   // sessions van afgeronde blokken, alleen als die er zijn) = max. 4 queries totaal,
   // ongeacht aantal programma's of blokken.
   const progIds=progs.map(p=>p.id);
-  const allBlocks=await sbGet('program_blocks','&program_id=in.('+progIds.join(',')+')&order=program_id.asc,week_nr.asc');
+  const allBlocks=await v43SafeGet('program_blocks','&program_id=in.('+progIds.join(',')+')&order=program_id.asc,week_nr.asc');
   const blocksByProgram={};
   allBlocks.forEach(b=>{(blocksByProgram[b.program_id]=blocksByProgram[b.program_id]||[]).push(b);});
   const completedBlocks=allBlocks.filter(b=>b.completed_at);
   const exByBlock={}, sessByBlock={};
   if(completedBlocks.length){
     const blockIds=completedBlocks.map(b=>b.id);
-    const allEx=await sbGet('program_block_exercises','&program_block_id=in.('+blockIds.join(',')+')');
+    const allEx=await v43SafeGet('program_block_exercises','&program_block_id=in.('+blockIds.join(',')+')');
     allEx.forEach(r=>{(exByBlock[r.program_block_id]=exByBlock[r.program_block_id]||[]).push(r);});
     const trainingTypes=completedBlocks.map(b=>'prog_'+b.id);
-    const allSess=await sbGet('sessions','&training_type=in.('+trainingTypes.join(',')+')');
+    const allSess=await v43SafeGet('sessions','&training_type=in.('+trainingTypes.join(',')+')');
     allSess.forEach(s=>{
       const blockId=String(s.training_type||'').replace(/^prog_/,'');
       (sessByBlock[blockId]=sessByBlock[blockId]||[]).push(s);
@@ -10313,10 +10313,10 @@ async function renderKalender(){
   const todayStr=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
   // Gedaan: unieke datums uit sessions binnen de maand.
   const doneSet=new Set();
-  try{const ss=await sbGet('sessions',`&date=gte.${start}&date=lte.${end}`);(ss||[]).forEach(s=>{if(s.date)doneSet.add(String(s.date).slice(0,10));});}catch(e){}
+  try{const ss=await v43SafeGet('sessions',`&date=gte.${start}&date=lte.${end}`);(ss||[]).forEach(s=>{if(s.date)doneSet.add(String(s.date).slice(0,10));});}catch(e){}
   // Gepland/deload: alle program_blocks met planned_date.
   const planMap={};const allBlocks=[];
-  try{const blk=await sbGet('program_blocks','&order=week_nr.asc');(blk||[]).forEach(b=>{allBlocks.push(b);if(b.planned_date){const d=String(b.planned_date).slice(0,10);planMap[d]={id:b.id,deload:/deload/i.test(b.fase_naam||''),fase:b.fase_naam||'',done:!!b.completed_at};}});}catch(e){}
+  try{const blk=await v43SafeGet('program_blocks','&order=week_nr.asc');(blk||[]).forEach(b=>{allBlocks.push(b);if(b.planned_date){const d=String(b.planned_date).slice(0,10);planMap[d]={id:b.id,deload:/deload/i.test(b.fase_naam||''),fase:b.fase_naam||'',done:!!b.completed_at};}});}catch(e){}
   // Maandtitel
   let titel=new Date(Y,M,1).toLocaleDateString('nl-NL',{month:'long',year:'numeric'});
   titel=titel.charAt(0).toUpperCase()+titel.slice(1);
@@ -10495,7 +10495,7 @@ async function openProgramBlockDetail(blockId){
 async function renderProgramBlockDetail(){
   const el=document.getElementById('pbd-ex-list');
   if(!el||!curProgramBlockId)return;
-  const rows=await sbGet('program_block_exercises','&program_block_id=eq.'+curProgramBlockId+'&order=sort_order.asc');
+  const rows=await v43SafeGet('program_block_exercises','&program_block_id=eq.'+curProgramBlockId+'&order=sort_order.asc');
   programBlockExCache[curProgramBlockId]=rows;
   if(!rows.length){el.innerHTML='<div style="text-align:center;color:var(--g4);font-size:13px;padding:20px 0">Nog geen oefeningen in deze training.</div>';return;}
   el.innerHTML=rows.map(r=>{
@@ -10853,7 +10853,7 @@ async function renderTrainScreen(t){
   // ronde. GEEN wijziging aan semantiek/volgorde van Calculation/DecisionCore of logging; alleen
   // de I/O-timing. Per oefening exact dezelfde bronnen/keys → identieke uitkomst per kaart.
   const _pref=await Promise.all(list.map(async (ex)=>{
-    const prev=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc,created_at.desc&limit=1');
+    const prev=await v43SafeGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc,created_at.desc&limit=1');
     if(ex.type==='strength'||!ex.type){await loadRepPRs(ex.id);await loadEstOneRM(ex.id);}
     const eqList=await loadEquipment(ex.id);
     return {prevS:prev[0],eqList};
@@ -14770,6 +14770,20 @@ async function finishSession(){
   }
   closeModal('m-session-end');stopTrainTimer();
   clearTrainingDraft();
+  /* Fase 2 — LEVENSCYCLUS VAN EEN TRAINING-INSTANCE.
+     completeTrainingInstance() bestond sinds Werkblok A maar werd nergens aangeroepen.
+     Gevolg: elke via Preview gestarte training bleef voor altijd op status 'active'
+     staan — 139 rijen, waarvan 128 zonder ook maar één sessie. Daarmee was de lus
+     advies -> uitvoering -> uitkomst wel geopend maar nooit gesloten, en was
+     plan-versus-uitvoering (de rijkste ongebruikte dataset van de app) onbruikbaar.
+     De aanroep hoort HIER, vóór activeInstanceId wordt gewist, en loopt via de
+     bestaande offline-veilige sbPatchQ: bij een verbroken verbinding wordt hij
+     gequeued in plaats van verloren. Een mislukte afronding mag de sessie nooit
+     ongedaan maken — de trainingen zijn op dit punt al weggeschreven. */
+  if(activeInstanceId){
+    try{ await completeTrainingInstance(activeInstanceId); }
+    catch(e){ try{ console.warn('completeTrainingInstance mislukt (sessie is wel opgeslagen)',e&&e.message); }catch(_){ } }
+  }
   curT=null;sessionLog={};sessionExtra=[];pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};sessionRxAdj={};sessionPrBase={};
   resolvedWorkout=null;activeInstanceId=null; // Werkblok D: training afgerond — geen enkele volgende, niet-via-Preview-gestarte training mag dit nog meekrijgen
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.remove('show'));
@@ -14949,11 +14963,11 @@ function renderHomeContextCard(tc){
   el.innerHTML=h; el.style.display='block';
 }
 async function refreshHome(){
-  const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35');
+  const hd=await v43SafeGet('hrv_log','&order=date.desc,created_at.desc&limit=35');
   const lh=hd[0];
   // Sprint 2 — Home-personalisatie: 'Jouw ritme' uit training_context (onboarding).
   // Alleen tonen wanneer de data echt bestaat; geen fake planning.
-  try{ const tcRows=await sbGet('training_context','&limit=1'); renderHomeContextCard(tcRows&&tcRows[0]); }
+  try{ const tcRows=await v43SafeGet('training_context','&limit=1'); renderHomeContextCard(tcRows&&tcRows[0]); }
   catch(e){ renderHomeContextCard(null); }
   let dfInfo=null,nextT=null;
   if(lh){
@@ -15008,7 +15022,7 @@ async function refreshHome(){
   }
   if(nextT){
     try{
-      const texs=await sbGet('training_exercises','&training_ref=eq.'+encodeURIComponent(nextT.id)+'&order=sort_order.asc');
+      const texs=await v43SafeGet('training_exercises','&training_ref=eq.'+encodeURIComponent(nextT.id)+'&order=sort_order.asc');
       const mset=new Set();
       texs.forEach(te=>{const ex=exercises.find(e=>e.id===te.exercise_id);if(ex&&Array.isArray(ex.muscle_primary))ex.muscle_primary.forEach(m=>m&&mset.add(m));});
       nextT._exCount=texs.length;nextT._muscles=[...mset];
@@ -15038,7 +15052,7 @@ async function refreshHome(){
   refreshHomeImprove(); // S1 — guarded, niet-blokkerend: vult de "Recente vooruitgang"-kaart async
   renderQuickActions();
   if(curT){document.getElementById('home-dot-'+curT.toLowerCase())?.classList.add('show');}
-  const rsSynced=await sbGet('sessions','&order=created_at.desc&limit=6');
+  const rsSynced=await v43SafeGet('sessions','&order=created_at.desc&limit=6');
   const rsPending=await getPendingSessionRows();
   const rs=[...rsPending,...rsSynced].slice(0,6);
   let rh='';
@@ -15263,7 +15277,7 @@ async function renderWeekStats(){
   const el=document.getElementById('home-weekstats');if(!el)return;
   const d=n=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
   let rows=[];
-  try{rows=await sbGet('sessions','&date=gte.'+d(30));}catch(e){}
+  try{rows=await v43SafeGet('sessions','&date=gte.'+d(30));}catch(e){}
   if(!rows||!rows.length){el.innerHTML='';return;}
   const d7=d(7),d14=d(14);
   let volThis=0,volPrev=0;const days=new Set();
@@ -15334,7 +15348,7 @@ async function refreshHomeImprove(){
   var el=document.getElementById('home-improve'); if(!el) return;
   try{
     if(typeof CoachingCore==='undefined'){ el.innerHTML=''; return; }
-    var all=await sbGet('sessions','&order=date.desc,created_at.desc&limit=500');
+    var all=await v43SafeGet('sessions','&order=date.desc,created_at.desc&limit=500');
     renderHomeImprove(el, CoachingCore.improvementsDigest(buildImprovementItems(all)));
   }catch(_e){ if(el) el.innerHTML=''; }
 }
@@ -15398,9 +15412,9 @@ function formatProgDate(dateStr){
 async function renderHomeProgramCard(){
   const el=document.getElementById('home-program-card');
   if(!el)return;
-  const progs=await sbGet('programs','&status=eq.actief&order=start_date.desc');
+  const progs=await v43SafeGet('programs','&status=eq.actief&order=start_date.desc');
   for(const p of progs){
-    const blocks=await sbGet('program_blocks','&program_id=eq.'+p.id+'&completed_at=is.null&order=week_nr.asc&limit=1');
+    const blocks=await v43SafeGet('program_blocks','&program_id=eq.'+p.id+'&completed_at=is.null&order=week_nr.asc&limit=1');
     if(blocks.length){
       const b=blocks[0];
       const dateLbl=formatProgDate(b.planned_date);
@@ -16220,7 +16234,7 @@ async function refreshCardioProgress(){
     var perfsByEx=[];
     for(var i=0;i<cardioExs.length;i++){
       var e=cardioExs[i], type=resolveCardioType(e);
-      var ss=await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(e.id)+'&order=date.desc,created_at.desc&limit=50');
+      var ss=await v43SafeGet('sessions','&exercise_id=eq.'+encodeURIComponent(e.id)+'&order=date.desc,created_at.desc&limit=50');
       var perfs=(ss||[]).map(function(s){ return cardioPerfFromSession(s,type); }).filter(Boolean);
       if(perfs.length) perfsByEx.push({id:e.id, naam:(e.name||e.naam||(CARDIO_TYPES[type]&&CARDIO_TYPES[type].naam)||type), type:type, perfs:perfs});
     }
@@ -16274,7 +16288,7 @@ async function refreshImprovements(){
   var el=document.getElementById('stats-improve-list'); if(!el) return;
   try{
     if(typeof CoachingCore==='undefined'){ el.innerHTML=''; return; }
-    var all=await sbGet('sessions','&order=date.desc,created_at.desc&limit=500');
+    var all=await v43SafeGet('sessions','&order=date.desc,created_at.desc&limit=500');
     renderImprovements(el, CoachingCore.improvementsDigest(buildImprovementItems(all)));
   }catch(err){ /* stil: stats-scherm blijft werken */ }
 }
@@ -16300,7 +16314,7 @@ function renderConsistency(el, c){
 async function refreshConsistency(){
   var el=document.getElementById('stats-consistency-list'); if(!el) return;
   try{
-    var ss=await sbGet('sessions','&select=date&order=date.desc,created_at.desc&limit=400');
+    var ss=await v43SafeGet('sessions','&select=date&order=date.desc,created_at.desc&limit=400');
     var dates=(ss||[]).map(function(s){return s.date;}).filter(Boolean);
     renderConsistency(el, tkConsistencyCounts(dates, new Date()));
   }catch(err){ /* stil: stats-scherm blijft werken */ }
@@ -16343,7 +16357,7 @@ async function refreshStatsScreen(){
   // nul en suggereerde een instorting die nooit gemeten is. Dagen zonder meting worden nu
   // overgeslagen — een gat blijft een gat, precies zoals healthSeries en dataquality.v1 het
   // elders al doen. De trend eronder komt uit trend.v1 en claimt niets bij te weinig punten.
-  const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=14');
+  const hd=await v43SafeGet('hrv_log','&order=date.desc,created_at.desc&limit=14');
   const hrvPunten=hd.slice().reverse().filter(function(r){ return r && r.hrv!=null && r.hrv!==''; });
   if(hrvPunten.length>1){
     drawChart('stats-hrv-chart', hrvPunten.map(function(r){ return parseFloat(r.hrv); }), hrvPunten.map(function(r){ return r.date; }));
@@ -16351,7 +16365,7 @@ async function refreshStatsScreen(){
   try{ tkTrendRegel('stats-hrv-trend', hrvPunten.map(function(r){ return r.hrv; }), hd.length, 'HRV'); }catch(_){}
 
   // Roeien
-  const rd=await sbGet('sessions','&exercise_id=eq.roeien&order=date.desc,created_at.desc&limit=8');
+  const rd=await v43SafeGet('sessions','&exercise_id=eq.roeien&order=date.desc,created_at.desc&limit=8');
   let rh=rd.length?'':'<div class="tk-empty"><div class="tk-empty-emo">🚣</div>Nog geen roeisessies gelogd.</div>';
   rd.forEach(s=>{
     let split='';
@@ -16365,7 +16379,7 @@ async function refreshStatsScreen(){
   const elr=document.getElementById('stats-row-list');if(elr)elr.innerHTML=rh;
 
   // Body comp
-  const bc=await sbGet('body_comp','&order=date.desc,created_at.desc&limit=4');
+  const bc=await v43SafeGet('body_comp','&order=date.desc,created_at.desc&limit=4');
   let bh='';
   if(!bc.length)bh='<p style="color:var(--g4);font-size:13px">Nog geen metingen — invoer via Beheer</p>';
   else{
@@ -16397,7 +16411,7 @@ async function renderStatsHero(){
   const d14=new Date(now); d14.setDate(d14.getDate()-14);
   const iso=x=>x.toISOString().split('T')[0];
   let rows=[];
-  try{ rows=await sbGet('sessions','&date=gte.'+iso(d14)+'&weight=not.is.null&reps=not.is.null&sets=not.is.null'); }catch(_){ rows=[]; }
+  try{ rows=await v43SafeGet('sessions','&date=gte.'+iso(d14)+'&weight=not.is.null&reps=not.is.null&sets=not.is.null'); }catch(_){ rows=[]; }
   let volThis=0, volPrev=0; const daysThis=new Set();
   rows.forEach(s=>{ const v=CalcCore.calculateVolume({sets:s.sets||1,reps:s.reps||1,weight:s.weight||0}); if(s.date>=iso(d7)){volThis+=v; if(s.date)daysThis.add(s.date);} else volPrev+=v; });
   let herstel=null;
@@ -16426,7 +16440,7 @@ async function refreshRatioFactors(){
 
   const data={};
   for(const lift of lifts){
-    const ss=await sbGet('sessions','&exercise_id=eq.'+lift+'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=30');
+    const ss=await v43SafeGet('sessions','&exercise_id=eq.'+lift+'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=30');
     data[lift]=weightedEst1RM(ss);
   }
   const anchorEst=data[anchor];
@@ -16461,7 +16475,7 @@ async function refreshStats(){
   const strExs=exercises.filter(e=>e.type==='strength'||!e.type);
   let h='';
   for(const ex of strExs){
-    const ss=await sbGet('sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=created_at.desc&limit=30');
+    const ss=await v43SafeGet('sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=created_at.desc&limit=30');
     let best=null;
     ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=epley1RMRaw(s.weight,s.reps);if(!best||est>best)best=est;});
     const disp=best?Math.round(best):prFor(ex.id);if(!disp)continue;
@@ -16713,7 +16727,7 @@ async function renderTrainExAdmin(){
     const t=v.id;
     const el=document.getElementById('admin-taex-'+t.toLowerCase());
     if(!el) continue;
-    const rows=await sbGet('training_exercises','&training_ref=eq.'+t+'&order=sort_order.asc');
+    const rows=await v43SafeGet('training_exercises','&training_ref=eq.'+t+'&order=sort_order.asc');
     if(!rows.length){el.innerHTML='<p style="color:var(--g4);font-size:13px">Nog geen oefeningen gekoppeld</p>';continue;}
     el.innerHTML=rows.map((r,i)=>{
       const ex=exercises.find(x=>x.id===r.exercise_id);
@@ -17881,11 +17895,11 @@ async function refreshProfiel(){
 // vanuit Profiel naar Lichaam). Zelfde data/logica; alleen locatie gewijzigd.
 async function renderBodyMeasurements(){
   // Lichaamscompositie
-  const bc = await sbGet('body_comp','&order=date.desc,created_at.desc&limit=1');
+  const bc = await v43SafeGet('body_comp','&order=date.desc,created_at.desc&limit=1');
   const lat = bc[0];
   if(lat){
     const bcDateEl=document.getElementById('profiel-bc-date'); if(bcDateEl) bcDateEl.textContent = lat.date;
-    const wd = await sbGet('weight_log','&order=date.desc,created_at.desc&limit=1');
+    const wd = await v43SafeGet('weight_log','&order=date.desc,created_at.desc&limit=1');
     const wt = wd[0]?.weight;
     const bmiVal = (wt && atleet.lengte) ? Math.round(wt/Math.pow(atleet.lengte/100,2)*10)/10 : null;
     // Een ontbrekende meting krijgt géén tegel met een streepje: dat leest als een waarde.
@@ -17933,7 +17947,7 @@ async function renderBodyMeasurements(){
   }
 
   // Gewicht grafiek
-  const wd2 = await sbGet('weight_log','&order=date.asc&limit=20');
+  const wd2 = await v43SafeGet('weight_log','&order=date.asc&limit=20');
   if(wd2.length){
     const wLaatst=wd2[wd2.length-1];
     document.getElementById('profiel-weight-lbl').textContent = wLaatst.weight+' kg · '+((typeof fmtDate==='function')?fmtDate(String(wLaatst.date).slice(0,10)):wLaatst.date)+(wLaatst.scale?(' · '+wLaatst.scale):'');
@@ -17941,7 +17955,7 @@ async function renderBodyMeasurements(){
   }
 
   // Taille trend (afmetingen-progressie, los van gewicht)
-  const bcTrend = await sbGet('body_comp','&order=date.asc&limit=30');
+  const bcTrend = await v43SafeGet('body_comp','&order=date.asc&limit=30');
   const waistPts = bcTrend.filter(r=>r.waist_cm!=null);
   if(waistPts.length>=2){
     const tLaatst=waistPts[waistPts.length-1];
@@ -17950,7 +17964,7 @@ async function renderBodyMeasurements(){
   }
 
   // Geschiedenis
-  const bcs = await sbGet('body_comp','&order=date.desc,created_at.desc&limit=6');
+  const bcs = await v43SafeGet('body_comp','&order=date.desc,created_at.desc&limit=6');
   let hist = '';
   bcs.forEach(r=>{
     const diff_fat = bcs.indexOf(r)<bcs.length-1 ? Math.round((r.fat_pct - bcs[bcs.indexOf(r)+1]?.fat_pct)*10)/10 : null;
@@ -19027,7 +19041,7 @@ async function refreshMuscleRecovery(){
   // Geen weight/sets/reps-filter meer: dat sloot alle cardio-sessies (tijd/afstand-based)
   // structureel uit van spierherstel, ook als ze getagd zijn. Herstel kijkt naar tijd
   // sinds laatste sessie + RPE, niet naar setvolume — dus alle sessietypen tellen mee.
-  const ss = await sbGet('sessions','&date=gte.'+dateStr+'&order=date.desc,created_at.desc');
+  const ss = await v43SafeGet('sessions','&date=gte.'+dateStr+'&order=date.desc,created_at.desc');
   const lastHit = {};
   ss.forEach(s=>{
     const muscles = getExerciseMuscles(s.exercise_id);
@@ -19139,7 +19153,7 @@ async function refreshMuscleRecoveryHeatmap(){
   const twoWeeksAgo = new Date();
   twoWeeksAgo.setDate(twoWeeksAgo.getDate()-14);
   const dateStr = twoWeeksAgo.toISOString().split('T')[0];
-  const ss = await sbGet('sessions','&date=gte.'+dateStr+'&order=date.desc,created_at.desc');
+  const ss = await v43SafeGet('sessions','&date=gte.'+dateStr+'&order=date.desc,created_at.desc');
   const lastHitBySvgId = {};
   ss.forEach(s=>{
     const names = getExerciseMuscles(s.exercise_id);
@@ -19191,6 +19205,13 @@ function v43SlaapTxt(u){ return tkFmtSleepHours(u); }
 // levert overall%, lijst-rijen én pct per svg-id voor de anatomiefiguur.
 // Offline-first: begrens elke sbGet zodat de Home nooit blijft hangen; bij time-out
 // of fout tonen we placeholders i.p.v. een leeg scherm.
+/* Fase 2 (robuustheid) — sbGet MET een tijdslimiet.
+ * sbGet gooit nooit: bij een fout geeft hij al [] terug. Het enige wat ontbrak was een
+ * bovengrens op de wachttijd. Een Supabase die niet antwoordt liet daardoor elk
+ * renderpad dat erop wachtte oneindig hangen — precies het lege-Home-scherm dat in
+ * Sprint 15 op onveranderde main reproduceerbaar bleek. Deze wrapper geeft na `ms`
+ * milliseconden [] terug, exact hetzelfde als sbGet bij een serverfout doet, zodat het
+ * gedrag van de aanroeper verder ongewijzigd blijft. */
 function v43SafeGet(table,q,ms){
   ms=ms||4000;
   return Promise.race([
@@ -19498,7 +19519,7 @@ async function renderLichaam(){
 async function renderLichaamPremium(){
   const rec=window.v43LichRec||{overall:100,rows:[],hasData:false};
   const rows=rec.rows||[];
-  let hd=[]; let lh=null; try{hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'); lh=(hd&&hd[0])?hd[0]:null;}catch(_){}
+  let hd=[]; let lh=null; try{hd=await v43SafeGet('hrv_log','&order=date.desc,created_at.desc&limit=35'); lh=(hd&&hd[0])?hd[0]:null;}catch(_){}
   let df=null,ger=null,ds=null;
   if(lh){ try{ df=dagfactor(hrvDagFactorPersonal(hd),lh.sleep,lh.cyclus_fase).factor; ger=v43GereedheidScore(df); ds=dayState(df); }catch(_){} }
   const hero=document.getElementById('lich-hero');
@@ -19539,12 +19560,12 @@ async function renderLichaamPremium(){
   // ── Hersteltrends ─────────────────────────────────────────────────────────
   const met=document.getElementById('lich-metrics');
   if(met){
-    let wl=null; try{ const w=await sbGet('weight_log','&order=date.desc,created_at.desc&limit=1'); wl=(w&&w[0])?w[0]:null; }catch(_){}
+    let wl=null; try{ const w=await v43SafeGet('weight_log','&order=date.desc,created_at.desc&limit=1'); wl=(w&&w[0])?w[0]:null; }catch(_){}
     // Gewichtserie via DeviceCore.weightSeries — dezelfde functie die het metric-detail
     // gebruikt, zodat overzicht en detail nooit uiteen kunnen lopen. Uitkomst is identiek
     // aan de eerdere inline-constructie (nieuwste rij per datum, gaten blijven null).
     let wSeries=[]; try{
-      const ws=await sbGet('weight_log','&order=date.desc,created_at.desc&limit=120');
+      const ws=await v43SafeGet('weight_log','&order=date.desc,created_at.desc&limit=120');
       wSeries=(ws&&ws.length&&typeof DeviceCore!=='undefined')
         ? DeviceCore.weightSeries(ws,String(ws[0].date).slice(0,10),TK_LICH_TREND_DAYS)
         : [];
@@ -19598,7 +19619,7 @@ async function renderLichaamPremium(){
     let load={},dayset={};
     try{
       const wk=new Date();wk.setDate(wk.getDate()-7);const dstr=wk.toISOString().split('T')[0];
-      const ss=await sbGet('sessions','&date=gte.'+dstr+'&weight=not.is.null&sets=not.is.null&reps=not.is.null');
+      const ss=await v43SafeGet('sessions','&date=gte.'+dstr+'&weight=not.is.null&sets=not.is.null&reps=not.is.null');
       (ss||[]).forEach(s=>{const ms=getExerciseMuscles(s.exercise_id)||[];const v=CalcCore.calculateVolume({sets:s.sets||1,reps:s.reps||1,weight:s.weight||0});ms.forEach(m=>{load[m]=(load[m]||0)+v;(dayset[m]=dayset[m]||new Set()).add(s.date);});});
     }catch(_){}
     const sorted=Object.entries(load).sort((a,b)=>b[1]-a[1]);
@@ -19621,7 +19642,7 @@ async function renderLichaamPremium(){
   const hist=document.getElementById('lich-history');
   if(hist){
     try{
-      const ss=await sbGet('sessions','&weight=not.is.null&order=date.desc,created_at.desc&limit=80');
+      const ss=await v43SafeGet('sessions','&weight=not.is.null&order=date.desc,created_at.desc&limit=80');
       const byDate={},rpeByDate={};
       (ss||[]).forEach(s=>{const v=CalcCore.calculateVolume({sets:s.sets||1,reps:s.reps||1,weight:s.weight||0});byDate[s.date]=(byDate[s.date]||0)+v;if(s.rpe)rpeByDate[s.date]=Math.max(rpeByDate[s.date]||0,s.rpe);});
       const dates=Object.keys(byDate).sort().reverse().slice(0,6);
@@ -21233,7 +21254,7 @@ async function refreshVolumeSpiergroep(){
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate()-7);
   const dateStr = weekAgo.toISOString().split('T')[0];
-  const ss = await sbGet('sessions','&date=gte.'+dateStr+'&weight=not.is.null&sets=not.is.null&reps=not.is.null');
+  const ss = await v43SafeGet('sessions','&date=gte.'+dateStr+'&weight=not.is.null&sets=not.is.null&reps=not.is.null');
   /* Sprint 16: het tonnage per spiergroep werd hier met de hand uitgerekend
      ((sets||1)*(reps||1)*(weight||0)) terwijl CalcCore.calculateVolume (volume.v1) bestaat en
      elders al vijf keer gebruikt wordt — een zesde losse kopie van dezelfde formule. Loopt nu
@@ -21355,7 +21376,7 @@ async function renderAdminEqTypes(){
   const el=document.getElementById('admin-eqtypes-list');
   if(!el)return;
   await ensureEquipmentTypesLoaded();
-  const list=await sbGet('equipment_types','&active=eq.true&order=sort_order.asc');
+  const list=await v43SafeGet('equipment_types','&active=eq.true&order=sort_order.asc');
   const types=list.length?list:equipmentTypes;
   el.innerHTML=types.map(t=>`<div class="eq-row"><span class="eq-label">${escHtml(t.label)}</span><button onclick="removeEquipmentType('${t.id}')">✕</button></div>`).join('');
 }
@@ -21433,7 +21454,7 @@ async function renderAdminEqCat(){
   if(newBtn)newBtn.style.display=editable?'':'none';
   if(titleEl)titleEl.textContent=teamRoleLevel>=3?'Apparaten (gym)':'Apparaten (persoonlijk)';
   await ensureEquipmentCatalogLoaded();
-  const list=await sbGet('equipment_catalog','&active=eq.true&order=sort_order.asc');
+  const list=await v43SafeGet('equipment_catalog','&active=eq.true&order=sort_order.asc');
   const items=list.length?list:equipmentCatalog;
   if(!items.length){el.innerHTML='<p style="color:var(--g4);font-size:13px">Nog geen apparaten</p>';return;}
   el.innerHTML=items.map(it=>{
@@ -22586,6 +22607,14 @@ var GW=(function(){
           if(_gr.isRecord){ await upsertExerciseGoalField(it.id,'pr',_gr.waarde); }
         }
       }catch(e){}
+    }
+    /* Fase 2 — dezelfde afronding als in finishSession. Een via Guided uitgevoerde
+       training moet net zo goed zijn instance sluiten; anders blijft precies dit pad
+       verweesde 'active'-rijen produceren. Alleen afronden als er ook werkelijk iets
+       is gelogd: een afgebroken Guided-sessie hoort 'active' te blijven. */
+    if(instId && written>0 && typeof completeTrainingInstance==='function'){
+      try{ await completeTrainingInstance(instId); }
+      catch(e){ try{ console.warn('completeTrainingInstance (guided) mislukt',e&&e.message); }catch(_){ } }
     }
     return {written:written};
   }

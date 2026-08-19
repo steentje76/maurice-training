@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+android/app/build/
+android/.gradle/
+
+# Capacitor generated/native output
+android/capacitor-cordova-android-plugins/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Android signing material
+*.jks
+*.keystore
+android/key.properties
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Test / coverage output
+coverage/
+playwright-report/
+test-results/
+
+# Local logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp

@@ -10,6 +10,9 @@
     "cap:copy": "npm run build:www && cap copy android",
     "open:android": "cap open android",
     "test:native": "node native/nativeConcept2BleTransport.test.js",
+    "test": "node core/release-gate.js",
+    "test:smoke": "node scripts/smoke-rc0.mjs",
+    "build:aab": "npm run cap:sync && cd android && ./gradlew clean bundleRelease",
     "build:apk:debug": "npm run cap:sync && cd android && ./gradlew assembleDebug"
   },
   "dependencies": {

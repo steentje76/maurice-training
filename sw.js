@@ -5,8 +5,8 @@
 // Reden: de static-fetch is cache-first over ALLE caches; een oude core-entry in de niet-gebumpte
 // dynamische cache kon de nieuwe precache overschaduwen (stale serve na deploy). Door CACHE_NAME mee te
 // bumpen ruimt de activate-handler de oude dynamische cache op. REGEL: core wijzigt -> bump CACHE_NAME + CACHE_STATIC.
-const CACHE_NAME = 'trainingskompas-v44700';
-const CACHE_STATIC = 'trainingskompas-static-v44700';
+const CACHE_NAME = 'trainingskompas-v44800';
+const CACHE_STATIC = 'trainingskompas-static-v44800';
 // F1.9 SW-GUARD: hash (CRLF-agnostisch) van core/calculation.js + core/decision.js.
 // core/sw-guard.test.js faalt als de core wijzigt zonder dat deze CORE_SIG + CACHE_STATIC gebumpt zijn.
 // Bij een core-wijziging: draai `node core/sw-guard.test.js` -> die print de nieuwe CORE_SIG; werk hem
@@ -79,6 +79,17 @@ self.addEventListener('activate', e => {
 });
 
 // ── VIDEO CACHE: Cache-First + on-demand + LRU (250 MB) + netwerk-fallback ──
+// RC0 — waar komen de video's vandaan?
+// Op het web staan ze op dezelfde oorsprong. In de Capacitor-app draait alles op
+// https://localhost en zijn de video's bewust NIET meegebundeld (437 MB; zie
+// scripts/build-www.mjs). Daar worden ze dus van de productie-webomgeving gehaald en
+// daarna precies zo lokaal gecachet als op het web. Eén constante, geen tweede codepad.
+const MEDIA_ORIGIN = (self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1')
+  ? 'https://maurice-art.netlify.app'
+  : '';
+function mediaUrl(pathname) {
+  return MEDIA_ORIGIN ? (MEDIA_ORIGIN + pathname) : pathname;
+}
 function isVideoRequest(url) {
   return /\/videos\/[^?#]+\.(mp4|webm|mov)$/i.test(url);
 }
@@ -131,7 +142,7 @@ async function handleVideo(request) {
   }
   try {
     // Volledige respons ophalen (geen Range) zodat de video offline compleet beschikbaar is.
-    const resp = await fetch(key, { cache: 'no-store' });
+    const resp = await fetch(mediaUrl(key), { cache: 'no-store' });
     if (resp && resp.status === 200) {
       await cache.put(key, resp.clone());
       const meta = await videoMeta(cache);

@@ -6,9 +6,15 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en docs/Brand/BRAND_IDENTITY.md)
 
 ## Huidige versie
-v3.3.34
+v4.48.0 (RC0)
 
 ## Laatste release
+- Versie: v4.48.0 — RC0, release candidate voor Google Play Internal Testing
+- Datum: 19 augustus 2026
+- Inhoud: geen nieuwe functionaliteit. Vijf P0's en elf P1's uit de release-audit opgelost: herstel na een verlopen sessie (Android bevriest achtergrondtimers — leesacties gaven een lege lijst, schrijfacties verdwenen), her-entree-slot op de offline-wachtrij, tien ontbrekende persoonlijke opslagsleutels waaronder de onboarding-vlag, de trainingskoppeling die een app-herstart niet overleefde, terug-navigatie op Android, het bewijsspoor dat wel werd geschreven maar nergens getoond, accountverwijdering die elf tabellen oversloeg (waaronder de wearable-tokens), Beheer dat voor een solo-sporter achter een gedeelde pincode zat, een zichtbare `[PLACEHOLDER]` in Help, en de volledige Android-releaseconfiguratie (API 36, ondertekening, merkbeeld, back-up uit, artefact van 450 MB naar 14 MB). Privacyverklaring toegevoegd. Zie `docs/RELEASE_READINESS.md`, `docs/PLAY_STORE_READINESS.md`, `docs/CURRENT_ROADMAP.md` en `docs/RELATIONSHIP_AUDIT.md`.
+- **Openstaand:** één lokale verificatiebuild van de Android-configuratie (deze omgeving heeft geen Android SDK) en de eigenaarsinvoer uit `docs/PLAY_STORE_READINESS.md` §10.
+
+## Laatste release (vorig)
 - Versie: v3.3.34
 - Datum: 2 augustus 2026
 - Inhoud: Sprint 3.1 — Live Validatie, Release Closure & Quality Gate. Doelen-module (Sprint 3, v3.3.30) live end-to-end getest en bevestigd werkend: PR-doel en eigen doel beide aangemaakt/weergegeven/verwijderd, Challenges tonen correcte live cijfers, 0 console-fouten over de volledige schermdoorloop. Tijdens het testen 2 echte bugs gevonden en direct gefixt: `user_id` ontbrak bij het opslaan van een doel (RLS blokkeerde terecht alles, v3.3.33, DEC-021) en alle modals (~50 stuks, pre-existing, niet Sprint-3-specifiek) waren te breed op desktop-browsers (v3.3.34, DEC-022). Daartussenin ook nog een eerder gevonden, tot dan toe niet-gepushte fix meegenomen: zichtbare HTML-commentaartekst onder Instellingen (v3.3.32, DEC-020). **Bekend gat:** Doelen-CRUD mist nog een Update-functie (alleen aanmaken/verwijderen). Lighthouse/axe-core/schaalbaarheidsbenchmarks/screenshot-pack expliciet niet geleverd — geen tooling beschikbaar resp. zou aannames vereisen (DEC-023). Zie `Sprintrapporten/Sprint3.1_Rapport.md`.

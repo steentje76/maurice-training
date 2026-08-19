@@ -50,7 +50,17 @@ Wat er in v4.47.0 is gebeurd:
 - gym-/team-challenges en "perfecte trainingsweek": geblokkeerd door DEC-018.
 
 **Handmatige actie voor de Product Owner:** `migratie_v446.sql` uitvoeren in de Supabase
-SQL-editor (stap 0 eerst, uitkomst bewaren).
+SQL-editor (stap 0 eerst en apart draaien, uitkomst bewaren; daarna het transactieblok).
+
+> **Correctie 19 augustus 2026.** De eerste versie van `migratie_v446.sql` gebruikte de
+> statuswaarde `abandoned`. Die bestaat niet: `training_instances_status_check` staat
+> alleen `active`, `completed` en `aborted` toe. Stap 2 faalde daardoor met fout 23514,
+> waarna de hele migratie terugrolde — er is niets half uitgevoerd, de 139 rijen stonden
+> daarna nog gewoon op `active`. Oorzaak: bij het schrijven zijn wel de kolomdefinities
+> opgevraagd maar niet de constraints. De migratie gebruikt nu `aborted`, controleert in
+> stap 0 eerst zelf welke waarden zijn toegestaan, en draait als één transactie.
+> `core/fFase2.test.js` sectie D bewaakt voortaan dat app én migraties uitsluitend
+> statuswaarden gebruiken die de constraint kent.
 
 ---
 

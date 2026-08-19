@@ -18,6 +18,8 @@ Daarbij bleek weekbelasting tegen rustdagen r = −0,41 op te leveren — puur o
 
 Effect op de huidige dataset: doorgerekende relaties 70 → 82, patronen 3 → 6. Nieuw gevonden: **rustdagen vóór een training ↔ zwaarste set, r = +0,455 over 32 dagen (matige samenhang)**.
 
+**Correctie tijdens uitvoering.** De eerste versie van `migratie_v446.sql` gebruikte de statuswaarde `abandoned`. Die bestaat niet — `training_instances_status_check` staat alleen `active`, `completed` en `aborted` toe — waardoor stap 2 afbrak met fout 23514 en de hele migratie terugrolde (geen half uitgevoerde staat). De migratie gebruikt nu `aborted`, leest in stap 0 eerst zelf de constraint uit en draait als één alles-of-niets-transactie. `core/fFase2.test.js` sectie D (4 asserts) bewaakt voortaan dat zowel de app als elke migratie uitsluitend toegestane statuswaarden gebruikt, en dat geen migratie een destructieve opdracht bevat.
+
 Tests: 62 bestanden groen, 0 rood. Release gate 12/12. Home, Training, Coach, Lichaam, Voortgang, Historie en Kalender byte-identiek geverifieerd tegen origin/main.
 
 ## v4.46.0 — Sprint 26: Relationship Visibility & Evidence (19 augustus 2026)

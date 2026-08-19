@@ -1,0 +1,54 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Trainingskompas — .gitignore
+#
+# Twee doelen: (1) sleutelmateriaal en secrets kunnen NOOIT per ongeluk in Git
+# belanden, en (2) gegenereerde build-uitvoer vervuilt de geschiedenis niet.
+#
+# Elk patroon hieronder is vóór opname vergeleken met `git ls-files`: geen enkel
+# bestaand, getrackt bronbestand valt eronder. Voeg hier dus niets toe zonder die
+# controle — een te breed patroon sluit stilzwijgend projectbestanden uit.
+#
+# LET OP: .gitignore is een dotfile. Bij overdracht via een ZIP of een upload in de
+# GitHub-webinterface kan hij ongemerkt wegvallen; dan bestaat deze bescherming
+# niet meer. core/fAndroidRelease.test.js sectie D bewaakt daarom in CI dat dit
+# bestand aanwezig is én dat er geen sleutelmateriaal in de Git-index staat.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Sleutelmateriaal en secrets — nooit committen ────────────────────────────
+# De upload-keystore van Google Play en zijn wachtwoorden. Raakt de sleutel in
+# handen van derden, dan kan iemand anders een update van de app ondertekenen.
+android/keystore.properties
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+
+# Lokale omgevingsvariabelen (Supabase service-role, OAuth client secrets,
+# Anthropic-sleutel). Die horen uitsluitend in de Netlify-omgeving thuis.
+.env
+.env.*
+
+# ── Afhankelijkheden ─────────────────────────────────────────────────────────
+node_modules/
+
+# ── Gegenereerde web-uitvoer ─────────────────────────────────────────────────
+# www/ wordt gebouwd door `npm run build:www` (scripts/build-www.mjs).
+www/
+.netlify/
+
+# ── Android-buildoutput ──────────────────────────────────────────────────────
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+android/app/release/
+
+# Getekende releaseartefacten horen in Google Play, niet in Git.
+*.aab
+*.apk
+
+# ── Rommel van het besturingssysteem en logbestanden ─────────────────────────
+.DS_Store
+Thumbs.db
+*.log

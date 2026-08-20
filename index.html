@@ -5298,6 +5298,19 @@ var TKWeather = (function(){
 // mode: 'home' | 'training'. outdoor/modality bepalen de variant. Alle states: enable-prompt,
 // laden, normaal, locatie-geweigerd, niet-beschikbaar, gecachet/verouderd. Nooit verzonnen data.
 function tkWeatherCtx(outdoor, modality){ return outdoor ? {outdoor:true, modality:modality||'run'} : {outdoor:false}; }
+// v4.52.0 — WEER PER SESSIE: dezelfde outdoor/modaliteit-detectie als renderTrainScreen()
+// (hieronder, ongewijzigd overgenomen), nu ook herbruikbaar voor de eind-fetch in
+// finishSession(). Geen nieuwe regel, alleen niet meer dupliceren.
+function tkWeatherCtxForList(list){
+  try{
+    if(typeof TKWeather==='undefined') return {outdoor:false};
+    for(const ex of (list||[])){
+      const ct=resolveCardioType(ex);
+      if(ct && TKWeather.OUTDOOR_CAPABLE[ct]) return {outdoor:true, modality:TKWeather.OUTDOOR_CAPABLE[ct]};
+    }
+    return {outdoor:false};
+  }catch(_){ return {outdoor:false}; }
+}
 function _tkMsg(txt){ return '<div style="background:var(--g1,#f4f6f7);border-radius:12px;padding:10px 14px;font-size:12px;color:var(--g4)">'+txt+'</div>'; }
 function _tkEnablePrompt(elId, mode, outdoor, modality){
   var line = (mode==='home') ? 'Het weer kan helpen bij je keuze voor vandaag.' : 'Toon de omgevingscontext bij deze training.';
@@ -5315,6 +5328,14 @@ function tkWeatherPaint(elId, mode, outdoor, modality){
     el.innerHTML=_tkMsg('Weer laden…');
     TKWeather.forContext(tkWeatherCtx(outdoor, modality)).then(function(res){
       if(res && res.data){
+        // v4.52.0 — WEER PER SESSIE: onthoud dit bij-sessie-start succesvol opgehaalde
+        // snapshot, gesleuteld op de huidige training (curT). Dient uitsluitend als fallback
+        // als de eind-fetch in finishSession() mislukt — overschrijft nooit iets, wordt
+        // alleen gelezen als de eindpoging niets opleverde. Alleen voor 'training' (niet
+        // 'home' — dat is een ander moment/andere context, geen sessiedata).
+        if(mode==='training'){
+          try{ window._tkSessionWeatherStart={key:(typeof curT!=='undefined'?curT:null), data:res.data, capturedAt:Date.now()}; }catch(_){}
+        }
         el.innerHTML = (mode==='home') ? TKWeather.renderHomeCard(res) : TKWeather.renderChip(res.data, res.variant);
       } else if(res && res.reason==='denied'){
         el.innerHTML=_tkMsg('Locatie niet beschikbaar — je kunt gewoon trainen.');
@@ -11422,8 +11443,8 @@ async function renderTrainScreen(t){
   // Additief (opt-in), past NOOIT de training aan. Eén balk per sessie (niet per oefening).
   try{
     if(typeof TKWeather!=='undefined'){
-      let _sOut=false,_sMod='run';
-      for(const ex of list){ const ct=resolveCardioType(ex); if(ct && TKWeather.OUTDOOR_CAPABLE[ct]){ _sOut=true; _sMod=TKWeather.OUTDOOR_CAPABLE[ct]; break; } }
+      const _wctx=tkWeatherCtxForList(list);
+      const _sOut=_wctx.outdoor, _sMod=_wctx.modality||'run';
       const _wd=document.createElement('div'); _wd.id='train-weather-ctx'; _wd.style.margin='0 0 6px';
       container.appendChild(_wd);
       setTimeout(function(){ tkWeatherPaint('train-weather-ctx','training',_sOut,_sMod); },0);
@@ -15380,6 +15401,65 @@ function tkSessieDuurS(){
     return s;
   }catch(_){ return null; }
 }
+/* v4.52.0 — WEER PER SESSIE: kolom-probes, exact hetzelfde patroon als
+ * tkDurationKolomBeschikbaar (migratie mogelijk nog niet gedraaid → veld gewoon weglaten,
+ * nooit de hele sessie laten mislukken). Twee aparte kolommen/tabellen: training_instances
+ * (primair) en sessions (fallback zonder instance-id) — zie DECISION_LOG v4.52.0. */
+let _tkWeatherTiCol = null;
+const TK_WEATHER_TI_CAP_KEY = 'tk_schema_weather_training_instances';
+async function tkWeatherInstancesKolomBeschikbaar(){
+  if(_tkWeatherTiCol!==null) return _tkWeatherTiCol;
+  try{ if(localStorage.getItem(TK_WEATHER_TI_CAP_KEY)==='1'){ _tkWeatherTiCol=true; return true; } }catch(_){}
+  if(!navigator.onLine) return false;
+  try{
+    const r=await sbFetch(`${SB_URL}/rest/v1/training_instances?select=weather&limit=1`,{});
+    _tkWeatherTiCol=!!(r&&r.ok);
+    if(_tkWeatherTiCol){ try{ localStorage.setItem(TK_WEATHER_TI_CAP_KEY,'1'); }catch(_){} }
+    else { try{ console.warn('training_instances.weather ontbreekt — migratie_v452.sql is nog niet gedraaid; weer wordt niet vastgelegd (instance-pad)'); }catch(_){} }
+    return _tkWeatherTiCol;
+  }catch(_){ _tkWeatherTiCol=false; return false; }
+}
+let _tkWeatherSessCol = null;
+const TK_WEATHER_SESS_CAP_KEY = 'tk_schema_weather_sessions';
+async function tkWeatherSessionsKolomBeschikbaar(){
+  if(_tkWeatherSessCol!==null) return _tkWeatherSessCol;
+  try{ if(localStorage.getItem(TK_WEATHER_SESS_CAP_KEY)==='1'){ _tkWeatherSessCol=true; return true; } }catch(_){}
+  if(!navigator.onLine) return false;
+  try{
+    const r=await sbFetch(`${SB_URL}/rest/v1/sessions?select=weather&limit=1`,{});
+    _tkWeatherSessCol=!!(r&&r.ok);
+    if(_tkWeatherSessCol){ try{ localStorage.setItem(TK_WEATHER_SESS_CAP_KEY,'1'); }catch(_){} }
+    else { try{ console.warn('sessions.weather ontbreekt — migratie_v452.sql is nog niet gedraaid; weer wordt niet vastgelegd (fallback-pad)'); }catch(_){} }
+    return _tkWeatherSessCol;
+  }catch(_){ _tkWeatherSessCol=false; return false; }
+}
+/* v4.52.0 — WEER PER SESSIE: de definitieve, op te slaan snapshot voor déze sessie.
+ * Volgorde (per productbesluit): 1) opnieuw fetchen bij afronden (dichtst bij het einde van
+ * de sessie); 2) mislukt die fetch (geen consent, geweigerd/geen locatie, netwerk, geen
+ * bruikbare temperatuur) → terugvallen op de eerder TIJDENS DEZE SESSIE succesvol opgehaalde
+ * snapshot (window._tkSessionWeatherStart, vastgelegd door tkWeatherPaint() bij het openen
+ * van het trainingsscherm — zie daar). "key" moet overeenkomen (zelfde training) anders is
+ * het een snapshot van een ANDERE, eerdere sessie en dus niet bruikbaar. Lukt geen van
+ * beide → null, nooit een verzonnen waarde. Geeft altijd het MINIMALE, opslagklare object
+ * terug (WeatherCore.minimalSnapshot: alleen temp/vocht/wind + provenance — geen coördinaten). */
+async function tkCaptureFinishWeather(list, key){
+  try{
+    if(typeof TKWeather==='undefined' || !TKWeather.isEnabled()) return null;
+    const ctx=tkWeatherCtxForList(list);
+    let canon=null;
+    try{
+      const res=await TKWeather.forContext(ctx);
+      if(res && res.data) canon=res.data;
+    }catch(_){}
+    if(!canon){
+      const start=window._tkSessionWeatherStart;
+      if(start && start.key===key && start.data) canon=start.data;
+    }
+    if(!canon) return null;
+    return (typeof WeatherCore!=='undefined' && typeof WeatherCore.minimalSnapshot==='function')
+      ? WeatherCore.minimalSnapshot(canon) : null;
+  }catch(_){ return null; }
+}
 /* Sprint 18 — BEWIJSSPOOR PER SET.
  * Bouwt de snapshot voor één uitgevoerde set: de ruwe waarden, het reeds berekende effectieve
  * gewicht, de beslissing van de BESTAANDE progressieregel, en de regelversie die dat deed.
@@ -15572,6 +15652,23 @@ async function finishSession(){
   const _sessDurS=tkSessieDuurS();
   const _durOk=(_sessDurS!=null) && await tkDurationKolomBeschikbaar();
   const _durVeld=_durOk?{duration_s:_sessDurS}:{};
+  /* v4.52.0 — WEER PER SESSIE. Eenmalig bepalen, VÓÓR de schrijflus (net als _durVeld
+     hierboven), zodat alle rijen van deze sessie op hetzelfde moment worden geëvalueerd.
+     Architectuurregel (DECISION_LOG v4.52.0):
+       1) activeInstanceId aanwezig  → schrijf ÉÉN keer naar training_instances.weather
+          (buiten de lus, hieronder), NIET naar sessions — geen dubbele opslag.
+       2) activeInstanceId ontbreekt → schrijf ÉÉNMALIG naar sessions.weather, op de EERSTE
+          rij die deze lus daadwerkelijk opslaat (saved===0-check verderop) — nooit op elke
+          rij (in tegenstelling tot duration_s, dat bewust wél per rij dupliceert).
+     _weerGeschreven bewaakt dat "éénmalig": zodra één van beide paden is gelukt, wordt er
+     verder niets meer weggeschreven, ook niet als er nog meer oefeningen volgen. */
+  const _weerSnap=await tkCaptureFinishWeather(list, t);
+  let _weerGeschreven=false;
+  if(_weerSnap && activeInstanceId && await tkWeatherInstancesKolomBeschikbaar()){
+    try{
+      if(await sbPatchQ('training_instances','id=eq.'+encodeURIComponent(activeInstanceId),{weather:_weerSnap})) _weerGeschreven=true;
+    }catch(_){}
+  }
   const summaryData=[]; // v306 #10: input voor AI-samenvatting
   /* v4.49.0 P1 — welke oefeningen zijn AL weggeschreven. Bij een gedeeltelijke fout keert
      finishSession terug zonder sessionLog op te schonen, zodat de sporter opnieuw kan
@@ -15594,12 +15691,19 @@ async function finishSession(){
       // P1: oefeningsnotitie mee in de note-kolom, als vrije-notitie-deel vóór de afgeleide extraNote
       // (zodat de bestaande cardio-edit-strip 'm weer als vrije notitie herkent).
       let _cNote=extraNote||''; if(l.exNote)_cNote=l.exNote+(_cNote?' · '+_cNote:'');
+      // v4.52.0 — WEER PER SESSIE (fallback zonder instance-id): alleen op de EERSTE rij van
+      // deze schrijflus, en alleen als het instance-pad hierboven niet al is gelukt.
+      let _weerVeldCardio={};
+      if(!_weerGeschreven && _weerSnap && saved===0 && await tkWeatherSessionsKolomBeschikbaar()){
+        _weerVeldCardio={weather:_weerSnap};
+      }
       // v4.49.0 P1 — een geweigerde write is GEEN succes. sbPostQ levert false bij een
       // niet-herhaalbare fout (400/409/422); die rij is dan NIET opgeslagen. Zonder deze
       // controle telde hij toch mee in `saved` en zag de sporter "opgeslagen" terwijl de
       // oefening weg was. De throw belandt in de bestaande per-oefening-catch, die hem
       // als `failed` telt en de sessie intact laat voor een nieuwe poging.
-      if(!await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||null,..._durVeld,...cRow})) throw new Error('sessions-write geweigerd (cardio)');
+      if(!await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||null,..._durVeld,..._weerVeldCardio,...cRow})) throw new Error('sessions-write geweigerd (cardio)');
+      if(_weerVeldCardio.weather)_weerGeschreven=true;
       saved++; _opgeslagenIds.push(ex.id);
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
@@ -15616,8 +15720,14 @@ async function finishSession(){
       if(l.exNote)row.note=(row.note?row.note+' · ':'')+'Notitie: '+l.exNote;
       // v4.49.0 — duur van de hele sessie meeschrijven (zie _durVeld hierboven).
       if(_durOk)row.duration_s=_sessDurS;
+      // v4.52.0 — WEER PER SESSIE (fallback zonder instance-id): alleen op de EERSTE rij.
+      let _weerGeschrevenHier=false;
+      if(!_weerGeschreven && _weerSnap && saved===0 && await tkWeatherSessionsKolomBeschikbaar()){
+        row.weather=_weerSnap; _weerGeschrevenHier=true;
+      }
       // v4.49.0 P1 — zie de toelichting bij de cardio-write: false betekent NIET opgeslagen.
       if(!await writeSessionRow(row)) throw new Error('sessions-write geweigerd (kracht)');
+      if(_weerGeschrevenHier)_weerGeschreven=true;
       let isPr=false;
       // Sprint 11: vergelijk met de PR van vóór deze sessie (sessionPrBase), niet met de
       // tussentijds bijgewerkte geheugenreferentie — anders wordt een record nooit bewaard.
@@ -23763,6 +23873,20 @@ var GW=(function(){
     var today=(typeof td==='function')?td():new Date().toISOString().slice(0,10);
     var instId=a.instanceId||null, tt=a.trainingType||'guided', written=0;
     if(typeof buildStrengthSessionRow!=='function'||typeof writeSessionRow!=='function')return {written:0,skipped:'no-helper'};
+    /* v4.52.0 — WEER PER SESSIE. Zelfde architectuurregel als finishSession() (normale
+       Execution): 1) instId aanwezig → één keer naar training_instances.weather; 2) anders
+       éénmalig op de eerste geschreven sessions-rij. Guided Workout heeft geen trainingsscherm
+       met een weer-chip (geen tkWeatherPaint-aanroep in dit pad), dus er is hier geen
+       sessie-start-snapshot om op terug te vallen — alleen de eind-fetch telt; mislukt die,
+       dan blijft weer null (geen fabricatie). Outdoor/modaliteit-detectie is hier bewust
+       simpel gehouden (altijd 'indoor'): Guided Workout-items hebben niet dezelfde vorm als
+       de oefeningsobjecten die tkWeatherCtxForList() verwacht (resolveCardioType), en dit pad
+       is ontworpen voor geleide krachttraining, niet voor outdoor cardio. */
+    var _weerSnapGW=(typeof tkCaptureFinishWeather==='function')?await tkCaptureFinishWeather([], 'gw-'+(instId||'geen-instance')):null;
+    var _weerGeschrevenGW=false;
+    if(_weerSnapGW && instId && typeof tkWeatherInstancesKolomBeschikbaar==='function' && await tkWeatherInstancesKolomBeschikbaar()){
+      try{ if(await sbPatchQ('training_instances','id=eq.'+encodeURIComponent(instId),{weather:_weerSnapGW})) _weerGeschrevenGW=true; }catch(_){}
+    }
     for(var i=0;i<a.items.length;i++){
       var it=a.items[i];
       if(!it.setsDone||!it.setsDone.length)continue;             // alleen werkelijk uitgevoerde sets
@@ -23788,6 +23912,10 @@ var GW=(function(){
         var built=buildStrengthSessionRow(it.id,ws,{date:today,training_type:tt,note:'',instanceId:instId,
           at:new Date().toISOString(),
           voorschrift:{kg:(it.weight!=null?it.weight:null), reps:(it.reps!=null?it.reps:null), rpe:(it.rpe!=null?it.rpe:null)}});
+        // v4.52.0 — WEER PER SESSIE (fallback zonder instance-id): alleen op de eerste rij.
+        if(!_weerGeschrevenGW && _weerSnapGW && written===0 && typeof tkWeatherSessionsKolomBeschikbaar==='function' && await tkWeatherSessionsKolomBeschikbaar()){
+          built.row.weather=_weerSnapGW; _weerGeschrevenGW=true;
+        }
         await writeSessionRow(built.row); written++;
         // F0.7J: PR-cache consistent bijwerken (zelfde regel als finishSession) — geen nieuwe berekening.
         var w=built.row.weight;

@@ -4340,6 +4340,19 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="irow"><label class="ilbl">RHR</label><input class="inp" type="number" id="i-rhr" placeholder="bpm"></div>
     <div class="irow"><label class="ilbl">Slaap</label><input class="inp" type="number" id="i-sleep-h" placeholder="uren" style="flex:1"><span style="color:var(--g4);padding:0 6px;font-weight:600">u</span><input class="inp" type="number" id="i-sleep-m" placeholder="min" style="flex:1"><span style="color:var(--g4);padding:0 6px;font-weight:600">m</span></div>
     <div class="irow"><label class="ilbl">Gewicht</label><input class="inp" type="number" id="i-whrv" placeholder="kg" step="0.1"></div>
+    <div class="irow" id="i-cyclus-consent-row" style="display:none;flex-direction:column;align-items:stretch;gap:8px">
+      <!-- v4.54.0 — MENSTRUATIECYCUS/TRAINING: apart, expliciet consentmoment, los van de
+           geslacht=vrouw-poort die alleen bepaalt of dit veld ÜBERHAUPT relevant kan zijn.
+           Zonder een JA hier wordt er nooit een cyclus_fase weggeschreven — de dropdown
+           hieronder blijft verborgen. "Nee" wordt onthouden (geen herhaalde vraag elke
+           check-in); wijzigen kan later bij Lichaam → Gezondheidsgegevens → Cyclus. -->
+      <div style="font-size:12.5px;font-weight:700;color:var(--dark)">Cyclus bijhouden?</div>
+      <div style="font-size:11.5px;color:var(--g4);line-height:1.4">Optioneel. Helpt de dagelijkse gereedheidsscore. Geen diagnose, geen claims over vruchtbaarheid — alleen wat jij zelf invult. Je kunt dit altijd wijzigen of alle gegevens verwijderen bij Lichaam.</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-o" style="flex:1;padding:8px" onclick="setCyclusConsent(false)">Nee, liever niet</button>
+        <button class="btn btn-r" style="flex:1;padding:8px" onclick="setCyclusConsent(true)">Ja, bijhouden</button>
+      </div>
+    </div>
     <div class="irow" id="i-cyclus-row" style="display:none">
       <label class="ilbl">Cyclus</label>
       <select class="inp" id="i-cyclus">
@@ -8753,7 +8766,7 @@ function obFinish(){
   localStorage.setItem('tk_atleet', JSON.stringify(atleet));
   localStorage.setItem('tk_onboarding_done','1');
   if(authSession?.user?.id){
-    sbUpsert('atleet_profiel', {...atleet, user_id: authSession.user.id}).catch(()=>{/* device-lokaal blijft leidend als sync nu faalt; volgende syncAtleetFromSupabase() probeert opnieuw */});
+    sbUpsert('atleet_profiel', {...tkAtleetSyncVeld(atleet), user_id: authSession.user.id}).catch(()=>{/* device-lokaal blijft leidend als sync nu faalt; volgende syncAtleetFromSupabase() probeert opnieuw */});
   }
   go('s-train-mgr');
 }
@@ -9046,7 +9059,7 @@ async function intakeConfirm(btn){
        voor altijd true terug terwijl er geen atleet_profiel-rij bestond: het hele
        kennismakingsgesprek was weg en werd nooit opnieuw aangeboden — en de coach had
        geen profiel om op te staan. */
-    if(uid&&!await sbUpsert('atleet_profiel',{...atleet,user_id:uid})) throw new Error('atleet_profiel niet opgeslagen');
+    if(uid&&!await sbUpsert('atleet_profiel',{...tkAtleetSyncVeld(atleet),user_id:uid})) throw new Error('atleet_profiel niet opgeslagen');
     if(uid&&!await sbUpsert('training_context',ocore().toTrainingContextRow(cand,uid))) throw new Error('training_context niet opgeslagen');
     // Coach-voorkeuren (presentatie-only) device-lokaal bewaren — geen schemawijziging, geen tweede source of truth.
     const prefs=ocore().toCoachPrefs(cand);
@@ -9478,8 +9491,17 @@ if(tkNavIsApp()){ try{ history.pushState({tkNav:'anker'},''); }catch(_){ } }
 function openModal(id){
   if(id==='m-hrv'){
     renderCheckinConditions();
+    // v4.54.0 — MENSTRUATIECYCUS/TRAINING: drie standen i.p.v. één aan/uit.
+    // vrouw + consent=true  -> dropdown tonen (bestaand gedrag)
+    // vrouw + consent=null  -> apart consentmoment tonen, dropdown blijft verborgen
+    // vrouw + consent=false -> beide verborgen (nee is nee, geen herhaalde vraag)
+    // niet-vrouw            -> beide verborgen (ongewijzigd)
     const cr=document.getElementById('i-cyclus-row');
-    if(cr)cr.style.display=(atleet.geslacht==='vrouw')?'flex':'none';
+    const ccr=document.getElementById('i-cyclus-consent-row');
+    const isVrouw=(atleet.geslacht==='vrouw');
+    const consent=atleet.cyclus_consent;
+    if(cr)cr.style.display=(isVrouw&&consent===true)?'flex':'none';
+    if(ccr)ccr.style.display=(isVrouw&&consent!==true&&consent!==false)?'flex':'none';
   }
   if(id==='m-newex'){
     renderMuscleChecks('nx-muscles-primary', [], 'primary');
@@ -9588,6 +9610,47 @@ function toast(m){const t=document.getElementById('toast');t.textContent=m;t.cla
 // ══════════════════════════════════════════════════════════
 // HRV / WEIGHT
 // ══════════════════════════════════════════════════════════
+// v4.54.0 — MENSTRUATIECYCUS/TRAINING: eenmalig, expliciet consentmoment (los van de
+// geslacht=vrouw-poort). Persisteert lokaal (bestaand tk_atleet-patroon, al onderdeel
+// van de per-user cache-key-isolatielijst — geen nieuwe sleutel nodig) én naar Supabase
+// via de bestaande atleet_profiel-upsert, MAAR alleen als de kolom bestaat (kolom-probe,
+// zelfde patroon als tkDurationKolomBeschikbaar/tkWeatherSessionsKolomBeschikbaar) —
+// migratie is optioneel/niet-blokkerend, nooit een crash op een ontbrekende kolom.
+let _tkCyclusConsentCol = null;
+const TK_CYCLUS_CONSENT_CAP_KEY = 'tk_schema_cyclus_consent';
+async function tkCyclusConsentKolomBeschikbaar(){
+  if(_tkCyclusConsentCol!==null) return _tkCyclusConsentCol;
+  try{ if(localStorage.getItem(TK_CYCLUS_CONSENT_CAP_KEY)==='1'){ _tkCyclusConsentCol=true; return true; } }catch(_){}
+  if(!navigator.onLine) return false;
+  try{
+    const r=await sbFetch(`${SB_URL}/rest/v1/atleet_profiel?select=cyclus_consent&limit=1`,{});
+    _tkCyclusConsentCol=!!(r&&r.ok);
+    if(_tkCyclusConsentCol){ try{ localStorage.setItem(TK_CYCLUS_CONSENT_CAP_KEY,'1'); }catch(_){} }
+    else { try{ console.warn('atleet_profiel.cyclus_consent ontbreekt — migratie_v454.sql is nog niet gedraaid; consent blijft alleen lokaal bewaard'); }catch(_){} }
+    return _tkCyclusConsentCol;
+  }catch(_){ _tkCyclusConsentCol=false; return false; }
+}
+async function setCyclusConsent(akkoord){
+  atleet.cyclus_consent=!!akkoord;
+  try{ localStorage.setItem('tk_atleet', JSON.stringify(atleet)); }catch(_){}
+  try{
+    if(authSession?.user?.id && await tkCyclusConsentKolomBeschikbaar()){
+      await sbUpsert('atleet_profiel',{user_id:authSession.user.id, cyclus_consent:atleet.cyclus_consent});
+    }
+  }catch(_){ /* lokaal blijft leidend; volgende gelegenheid probeert opnieuw via de kolom-probe */ }
+  const cr=document.getElementById('i-cyclus-row');
+  const ccr=document.getElementById('i-cyclus-consent-row');
+  if(cr)cr.style.display=akkoord?'flex':'none';
+  if(ccr)ccr.style.display='none';
+  toast(akkoord?'Cyclus wordt vanaf nu bijgehouden':'Oké, cyclus wordt niet bijgehouden');
+}
+// v4.54.0 — MENSTRUATIECYCUS/TRAINING: de generieke atleet_profiel-syncs hieronder (bij
+// onboarding/profiel opslaan) kennen geen kolom-probe en zijn niet allemaal async-bereikbaar
+// op de plek waar ze de payload samenstellen. Om te voorkomen dat cyclus_consent per ongeluk
+// meegaat naar Supabase vóórdat migratie_v454.sql gedraaid is (wat de HELE upsert zou laten
+// falen — PostgREST wijst een onbekende kolom af), strippen we het hier onvoorwaardelijk.
+// Alleen setCyclusConsent() (met een eigen, geverifieerde kolom-probe) schrijft dit veld weg.
+function tkAtleetSyncVeld(obj){ const o={...obj}; delete o.cyclus_consent; return o; }
 async function saveHRV(btnEl){
   if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
   try{
@@ -18685,7 +18748,7 @@ async function importFromFile(input){
 // zijn niet geraakt: hun localStorage bevat al hun eigen (of voorheen geërfde) waarde.
 let atleet = JSON.parse(localStorage.getItem('tk_atleet') || JSON.stringify({
   naam: '', leeftijd: null, geslacht: null, lengte: null,
-  niveau: 'ervaren', klasse: '', sport: 'crossfit'
+  niveau: 'ervaren', klasse: '', sport: 'crossfit', cyclus_consent: null
 }));
 // v322: atleet-profiel wordt nu ook in Supabase bewaard (multi-device), localStorage
 // blijft ernaast bestaan als snelle cache zodat het scherm nooit hoeft te wachten op
@@ -18703,7 +18766,7 @@ async function syncAtleetFromSupabase(){
     } else if(atleet && Object.values(atleet).some(v=>v)){
       // user_id is verplicht (NOT NULL, geen default) — zonder deze regel faalde
       // dit altijd stil (constraint violation, gevangen in de catch hieronder).
-      if(authSession?.user?.id) await sbUpsert('atleet_profiel', {...atleet, user_id: authSession.user.id});
+      if(authSession?.user?.id) await sbUpsert('atleet_profiel', {...tkAtleetSyncVeld(atleet), user_id: authSession.user.id});
     }
   }catch(e){/* offline of eerste keer — lokale waarde blijft gewoon leidend */}
 }
@@ -18719,11 +18782,15 @@ async function saveAtleet(btnEl){
     niveau: document.getElementById('atl-niveau').value,
     klasse: document.getElementById('atl-klasse').value,
     sport: document.getElementById('atl-sport').value,
+    // v4.54.0 — MENSTRUATIECYCUS/TRAINING: dit profielformulier heeft geen veld voor
+    // cyclus_consent (dat loopt via de aparte consent-prompt in de check-in). Zonder
+    // deze regel zou elke profielwijziging het consent stil terugzetten naar 'onbeslist'.
+    cyclus_consent: atleet.cyclus_consent,
   };
   localStorage.setItem('tk_atleet', JSON.stringify(atleet));
   // user_id is verplicht (NOT NULL, geen default) — zonder deze regel faalde
   // dit altijd stil (constraint violation, gevangen in de catch in sbUpsert).
-  if(authSession?.user?.id) await sbUpsert('atleet_profiel', {...atleet, user_id: authSession.user.id});
+  if(authSession?.user?.id) await sbUpsert('atleet_profiel', {...tkAtleetSyncVeld(atleet), user_id: authSession.user.id});
   closeModal('m-atleet');
   toast('Profiel opgeslagen');
   refreshProfiel();
@@ -21465,6 +21532,10 @@ async function _renderLichaamGegevens(el){
     const o=OBS[k]; return o && o.value!=null && dc.sourceKind(o.source)==='measured';
   }).map(function(k){ return {hrv:'HRV', rhr:'rusthartslag', slaap:'slaap'}[k]; });
 
+  // v4.54.0 — MENSTRUATIECYCUS/TRAINING: dezelfde reeds opgehaalde hd (hrv_log), geen
+  // nieuwe fetch. Alleen relevant/zichtbaar bij geslacht==='vrouw'; leeg bij de rest.
+  const cyclusHtml=(typeof renderCyclusSectie==='function')?renderCyclusSectie(hd):'';
+
   el.innerHTML=
     // ── Kop: is het actueel? ──
     '<div class="card" style="padding:13px 14px">'+
@@ -21494,6 +21565,8 @@ async function _renderLichaamGegevens(el){
         '</div>'
       : '<div class="lich-empty"><div class="e1">Nog geen gezondheidsgegevens</div>'+
         '<div class="e2">Vul een check-in in of koppel een wearable. Er wordt niets getoond wat niet gemeten is.</div></div>')+
+
+    cyclusHtml+
 
     // ── Koppelingen ──
     '<div class="v43-lbl" style="margin:16px 0 10px">Koppelingen</div>'+
@@ -21532,6 +21605,98 @@ async function _renderLichaamGegevens(el){
       'Wat er precies wordt opgeslagen, met welke diensten dat gebeurt en hoe je alles verwijdert, staat op de privacypagina.'+
     '</div></div>'+
     '<button class="lich-goto" style="margin-top:10px" onclick="go(\'s-privacy\')"><span class="ic">🔒</span><span class="b"><b>Privacy</b><s>Wat we opslaan, met wie we delen en hoe je het verwijdert</s></span><span class="chev">›</span></button>';
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * MENSTRUATIECYCUS/TRAINING — v4.54.0
+ * Bouwt uitsluitend op reeds bestaande infrastructuur: hrv_log.cyclus_fase (data,
+ * ongewijzigd), CalcCore.predictNextCycleStart (cycle_prediction.v1, puur/determin-
+ * istisch), en de bestaande sbGet/sbPatch-helpers. Geen nieuwe tabel. Nooit een
+ * medische claim — uitsluitend een statistische samenvatting van wat de sporter zelf
+ * al invulde. AI raakt dit nergens aan (geen enkele functie hier voedt de coach-prompt).
+ * ══════════════════════════════════════════════════════════════════════════ */
+const TK_CYCLUS_FASE_LABEL={menstruatie:'Menstruatie',folliculair:'Folliculair',ovulatie:'Ovulatie',luteaal:'Luteaal'};
+function renderCyclusSectie(hd){
+  if(!atleet || atleet.geslacht!=='vrouw') return '';
+  // Consent niet (nog) gegeven: zelfde vraag als bij de check-in, ook hier — een sporter
+  // die dit scherm bezoekt zonder ooit eerder een check-in gedaan te hebben, ziet nooit
+  // stilzwijgend cyclusfunctionaliteit zonder eerst expliciet ja te hebben gezegd.
+  if(atleet.cyclus_consent!==true){
+    return '<div class="v43-lbl" style="margin:16px 0 10px">Cyclus</div>'+
+      '<div class="card" style="padding:13px 14px">'+
+        '<div style="font-size:12.5px;font-weight:700;color:var(--dark);margin-bottom:6px">Cyclus bijhouden?</div>'+
+        '<div style="font-size:11.5px;color:var(--g4);line-height:1.4;margin-bottom:10px">Optioneel. Helpt de dagelijkse gereedheidsscore. Geen diagnose, geen claims over vruchtbaarheid — alleen wat jij zelf invult. Je kunt dit altijd wijzigen of verwijderen.</div>'+
+        '<div style="display:flex;gap:8px">'+
+          '<button class="btn btn-o" style="flex:1;padding:8px" onclick="setCyclusConsent(false).then(renderLichaamGegevens)">Nee, liever niet</button>'+
+          '<button class="btn btn-r" style="flex:1;padding:8px" onclick="setCyclusConsent(true).then(renderLichaamGegevens)">Ja, bijhouden</button>'+
+        '</div>'+
+      '</div>';
+  }
+  const entries=(hd||[]).filter(function(r){ return r && r.cyclus_fase; })
+    .map(function(r){ return {date:String(r.date).slice(0,10), cyclus_fase:r.cyclus_fase}; })
+    .sort(function(a,b){ return a.date<b.date?1:(a.date>b.date?-1:0); }); // nieuwste eerst
+  let voorspHtml='';
+  try{
+    if(typeof CalcCore!=='undefined' && typeof CalcCore.predictNextCycleStart==='function'){
+      const v=CalcCore.predictNextCycleStart(entries);
+      voorspHtml = v.beschikbaar
+        ? '<div class="lich-krow"><span class="k" style="color:var(--dark);font-weight:700">📅 Volgende cyclus (schatting)</span>'+
+          '<span class="v">'+escHtml(fmtDate(v.voorspeldeDatum))+'</span></div>'+
+          '<div style="font-size:10.5px;color:var(--g4);margin:-2px 0 4px">Gemiddeld '+v.gemiddeldeLengteDagen+' dagen, op basis van '+v.aantalCycliGebruikt+' eerder gelogde cyclus'+(v.aantalCycliGebruikt===1?'':'sen')+' — een statistische schatting uit je eigen gegevens, geen medische voorspelling.</div>'
+        : '<div style="font-size:11px;color:var(--g4);padding:2px 0 4px">Nog onvoldoende gelogde cycli voor een schatting (minstens 2× "Menstruatie" nodig).</div>';
+    }
+  }catch(_){ voorspHtml=''; }
+  const rijenHtml=entries.length
+    ? entries.slice(0,20).map(function(e){
+        return '<div class="lich-krow" style="align-items:center">'+
+          '<span class="k" style="color:var(--dark);font-weight:600">'+escHtml(fmtDate(e.date))+'</span>'+
+          '<span style="display:flex;align-items:center;gap:8px">'+
+            '<select class="inp" style="padding:4px 8px;font-size:11.5px;width:auto" onchange="tkCyclusEntryUpdate(\''+e.date+'\',this.value)">'+
+              Object.keys(TK_CYCLUS_FASE_LABEL).map(function(f){ return '<option value="'+f+'"'+(f===e.cyclus_fase?' selected':'')+'>'+TK_CYCLUS_FASE_LABEL[f]+'</option>'; }).join('')+
+            '</select>'+
+            '<button class="ibtn" style="width:32px;height:32px;font-size:14px" title="Verwijderen" onclick="tkCyclusEntryDelete(\''+e.date+'\')">🗑</button>'+
+          '</span>'+
+        '</div>';
+      }).join('')
+    : '<div style="font-size:11px;color:var(--g4);padding:4px 0">Nog geen cyclusgegevens gelogd — vul dit in bij de ochtend check-in.</div>';
+  return '<div class="v43-lbl" style="margin:16px 0 10px">Cyclus</div>'+
+    '<div class="card" style="padding:13px 14px">'+
+      voorspHtml+
+      rijenHtml+
+      (entries.length ? '<div style="border-top:1px solid var(--g2);margin-top:10px;padding-top:10px">'+
+        '<button class="ibtn" style="width:auto;height:auto;padding:8px 0;color:var(--red);font-size:11.5px;font-weight:700" onclick="tkCyclusVerwijderAlles()">Alle cyclusgegevens verwijderen</button></div>' : '')+
+    '</div>';
+}
+// Wijzig de fase voor één dag. Zoekt de bestaande hrv_log-rij op (upsert-per-dag-patroon,
+// zelfde als saveHRV), past uitsluitend cyclus_fase aan — HRV/RHR/slaap van die dag blijven
+// intact.
+async function tkCyclusEntryUpdate(datum, nieuweFase){
+  try{
+    const rows=await sbGet('hrv_log','&date=eq.'+encodeURIComponent(datum)+'&order=created_at.desc&limit=1');
+    const cur=(rows&&rows[0])?rows[0]:null;
+    if(cur){ await sbPatch('hrv_log','id=eq.'+cur.id,{cyclus_fase:nieuweFase}); toast('Bijgewerkt'); }
+  }catch(_){ toast('Kon niet bijwerken'); }
+  try{ renderLichaamGegevens(); }catch(_){}
+}
+// Verwijdert uitsluitend het cyclusveld van die dag (niet de hele check-in-rij — die kan
+// nog HRV/RHR/slaap van dezelfde dag bevatten). "Verwijderen" geldt hier voor de
+// cyclusgegevens specifiek, zoals de privacy-vereisten van deze sprint vragen.
+async function tkCyclusEntryDelete(datum){
+  try{
+    const rows=await sbGet('hrv_log','&date=eq.'+encodeURIComponent(datum)+'&order=created_at.desc&limit=1');
+    const cur=(rows&&rows[0])?rows[0]:null;
+    if(cur){ await sbPatch('hrv_log','id=eq.'+cur.id,{cyclus_fase:null}); toast('Verwijderd'); }
+  }catch(_){ toast('Kon niet verwijderen'); }
+  try{ renderLichaamGegevens(); }catch(_){}
+}
+async function tkCyclusVerwijderAlles(){
+  if(!confirm('Alle cyclusgegevens verwijderen? Dit kan niet ongedaan worden gemaakt.')) return;
+  try{
+    const rows=await sbGet('hrv_log','&cyclus_fase=not.is.null&limit=500');
+    for(const r of (rows||[])){ try{ await sbPatch('hrv_log','id=eq.'+r.id,{cyclus_fase:null}); }catch(_){} }
+    toast('Cyclusgegevens verwijderd');
+  }catch(_){ toast('Kon niet verwijderen'); }
+  try{ renderLichaamGegevens(); }catch(_){}
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -22907,7 +23072,7 @@ function resetPersonalCacheIfNewDeviceOwner(uid){
   // caches hetzelfde risico te lopen — allemaal hieronder toegevoegd, inclusief de
   // bijbehorende 'al geladen'-vlaggen, zodat de eerstvolgende ensureXLoaded()-aanroep
   // daadwerkelijk opnieuw ophaalt i.p.v. de stale cache te vertrouwen.
-  atleet={naam:'',leeftijd:null,geslacht:null,lengte:null,niveau:'beginner',klasse:'',sport:'crossfit'};
+  atleet={naam:'',leeftijd:null,geslacht:null,lengte:null,niveau:'beginner',klasse:'',sport:'crossfit',cyclus_consent:null};
   customTrainings=[];
   activeSport=null;
   progExData={};

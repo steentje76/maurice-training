@@ -24,7 +24,7 @@
     goal: 'goal.v1', e1rm_weighted: 'e1rm_weighted.v1', recovery_score: 'recovery_score.v1',
     sleep_unit: 'sleep_unit.v1', correlation: 'correlation.v1',
     readiness_percent: 'readiness_percent.v1', trend: 'trend.v1',
-    srpe: 'srpe.v1', rest_duration: 'rest_duration.v1'
+    srpe: 'srpe.v1', rest_duration: 'rest_duration.v1', cycle_prediction: 'cycle_prediction.v1'
   };
 
   // --- rounding.v1 --- exact gelijk aan legacy index.html r.10668
@@ -344,6 +344,93 @@
   function cyclusDagFactor(fase) {
     return ({ menstruatie: 0.93, folliculair: 1.03, ovulatie: 1.00, luteaal: 0.97 })[fase] ?? 1.00;
   }
+
+  // --- cycle_prediction.v1 --- MASTER SPRINT v4.54.0 — MENSTRUATIECYCUS/TRAINING.
+  //
+  // Puur/deterministisch, geen AI, geen medische claim. Werkt UITSLUITEND met wat de
+  // sporter zelf al invulde (hrv_log.cyclus_fase per dag) — nooit een aanname over
+  // fysiologie, hormonen, vruchtbaarheid of zwangerschap.
+  //
+  // "Cyclusstart" = de EERSTE dag in een aaneengesloten reeks met fase 'menstruatie'
+  // (een reeks van meerdere menstruatie-dagen achter elkaar telt als ÉÉN start, niet
+  // als meerdere). Cycluslengte = aantal dagen tussen twee opeenvolgende starts.
+  //
+  // Voorspelling van de eerstvolgende start = laatste start + gemiddelde lengte van de
+  // eerder VOLTOOIDE cycli (dus met minstens 2 starts, oftewel minstens 1 volledige
+  // cyclus, kan er een gemiddelde berekend worden over 1 interval; met slechts 1 start
+  // ooit gelogd is er nog geen enkel interval en dus geen voorspelling — dat is
+  // onvoldoende data, geen educated guess). Geen voorspelling van individuele fases
+  // binnen de cyclus: fase-duur varieert te veel tussen mensen om uit alleen de
+  // startdata te schatten zonder een aanname te verzinnen — dat doet deze functie
+  // daarom bewust NIET.
+  //
+  // input: entries = [{date:'YYYY-MM-DD', cyclus_fase:'menstruatie'|'folliculair'|
+  //        'ovulatie'|'luteaal'|null}], willekeurige volgorde toegestaan (wordt intern
+  //        gesorteerd). Ongeldige/onbekende fase-waarden en null worden genegeerd (niet
+  //        als 'menstruatie' geteld, nooit een gok).
+  var CYCLUS_FASES = ['menstruatie', 'folliculair', 'ovulatie', 'luteaal'];
+  var CYCLUS_MIN_LENGTE_D = 14;   // korter dan dit -> waarschijnlijk logfout/dubbele start, genegeerd
+  var CYCLUS_MAX_LENGTE_D = 60;   // langer dan dit -> onwaarschijnlijk als één cyclus, genegeerd
+
+  function cycleStarts(entries) {
+    var geldig = (entries || [])
+      .filter(function (e) { return e && e.date && CYCLUS_FASES.indexOf(e.cyclus_fase) !== -1; })
+      .slice()
+      .sort(function (a, b) { return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0); });
+    var starts = [];
+    var vorigeFase = null, vorigeDatum = null;
+    for (var i = 0; i < geldig.length; i++) {
+      var e = geldig[i];
+      // "Nog dezelfde menstruatie-streak" vereist zowel de vorige fase = menstruatie ALS
+      // een kleine datumafstand (<=2 dagen) tot de vorige gelogde dag. Zonder die tweede
+      // voorwaarde zou een nieuwe menstruatie-periode weken later — met een groot,
+      // ongelogd gat ertussen — ten onrechte als voortzetting van de vorige worden gezien
+      // in plaats van als een nieuwe cyclusstart.
+      var zelfdeStreak = e.cyclus_fase === 'menstruatie' && vorigeFase === 'menstruatie'
+        && vorigeDatum != null && daysBetween(vorigeDatum, e.date) != null && daysBetween(vorigeDatum, e.date) <= 2;
+      if (e.cyclus_fase === 'menstruatie' && !zelfdeStreak) starts.push(e.date);
+      vorigeFase = e.cyclus_fase; vorigeDatum = e.date;
+    }
+    return starts;
+  }
+  function daysBetween(dateA, dateB) {
+    var a = new Date(dateA + 'T00:00:00Z').getTime();
+    var b = new Date(dateB + 'T00:00:00Z').getTime();
+    if (!isFinite(a) || !isFinite(b)) return null;
+    return Math.round((b - a) / 86400000);
+  }
+  // Alle voltooide cycli (start -> volgende start), met een plausibiliteitsfilter.
+  // Buiten [14,60] dagen wordt genegeerd voor de GEMIDDELDE-berekening (waarschijnlijk
+  // een logfout, geen medische uitspraak) maar blijft wél zichtbaar in de ruwe lijst
+  // die de UI toont — de filtering geldt alleen voor de voorspelling.
+  function completedCycles(entries) {
+    var starts = cycleStarts(entries);
+    var cycli = [];
+    for (var i = 0; i < starts.length - 1; i++) {
+      var lengte = daysBetween(starts[i], starts[i + 1]);
+      cycli.push({ start: starts[i], volgendeStart: starts[i + 1], lengteDagen: lengte,
+                   plausibel: (lengte != null && lengte >= CYCLUS_MIN_LENGTE_D && lengte <= CYCLUS_MAX_LENGTE_D) });
+    }
+    return cycli;
+  }
+  // Voorspelling: null tenzij er minstens 1 plausibele voltooide cyclus is (dus minstens
+  // 2 gelogde starts in totaal). Nooit een schatting op basis van 1 losse startdatum.
+  function predictNextCycleStart(entries) {
+    var starts = cycleStarts(entries);
+    var cycli = completedCycles(entries).filter(function (c) { return c.plausibel; });
+    if (!cycli.length || !starts.length) {
+      return { versie: VERSIONS.cycle_prediction, beschikbaar: false, reden: cycli.length ? 'geen_starts' : 'onvoldoende_cycli',
+               aantalCycliGebruikt: 0, gemiddeldeLengteDagen: null, voorspeldeDatum: null };
+    }
+    var som = cycli.reduce(function (acc, c) { return acc + c.lengteDagen; }, 0);
+    var gemiddelde = Math.round(som / cycli.length);
+    var laatsteStart = starts[starts.length - 1];
+    var t = new Date(laatsteStart + 'T00:00:00Z').getTime() + gemiddelde * 86400000;
+    var voorspeldeDatum = new Date(t).toISOString().slice(0, 10);
+    return { versie: VERSIONS.cycle_prediction, beschikbaar: true, reden: 'ok',
+             aantalCycliGebruikt: cycli.length, gemiddeldeLengteDagen: gemiddelde, voorspeldeDatum: voorspeldeDatum,
+             laatsteStart: laatsteStart };
+  }
   // hrvFactor is de reeds-geresolveerde HRV-factor (app-side houdt de hrvComponent||{factor:1.00}
   // default als orchestratie/context). Kern = exact legacy: hrvFactor*slaap*cyclus, clamp, 2 decimalen.
   // sleepHours MOET decimale uren zijn. De normalisatie gebeurt hier één keer, zodat een
@@ -559,6 +646,8 @@
     MAX_SLEEP_HOURS: MAX_SLEEP_HOURS,
     slaapDagFactor: slaapDagFactor,
     cyclusDagFactor: cyclusDagFactor,
+    cycleStarts: cycleStarts, completedCycles: completedCycles, predictNextCycleStart: predictNextCycleStart,
+    CYCLUS_FASES: CYCLUS_FASES, CYCLUS_MIN_LENGTE_D: CYCLUS_MIN_LENGTE_D, CYCLUS_MAX_LENGTE_D: CYCLUS_MAX_LENGTE_D,
     calculateDayFactor: calculateDayFactor,
     recoveryScore: recoveryScore,
     readinessPercent: readinessPercent,

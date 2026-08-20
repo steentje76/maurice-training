@@ -1,0 +1,27 @@
+{
+  "name": "trainingskompas-native",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Native Capacitor Android shell voor Trainingskompas — echte Concept2 PM5 BLE-integratie via NativeConcept2BleTransport. De web/PWA-app blijft ongewijzigd; dit project wrapt de bestaande web-assets in www/.",
+  "scripts": {
+    "build:www": "node scripts/build-www.mjs",
+    "cap:add:android": "cap add android",
+    "cap:sync": "npm run build:www && cap sync android",
+    "cap:copy": "npm run build:www && cap copy android",
+    "open:android": "cap open android",
+    "test:native": "node native/nativeConcept2BleTransport.test.js",
+    "test": "node core/release-gate.js",
+    "test:smoke": "node scripts/smoke-rc0.mjs",
+    "build:aab": "npm run cap:sync && cd android && ./gradlew clean bundleRelease",
+    "build:apk:debug": "npm run cap:sync && cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.0",
+    "@capacitor/core": "^6.1.0",
+    "@capacitor-community/bluetooth-le": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.0",
+    "esbuild": "^0.23.0"
+  }
+}

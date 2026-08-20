@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 en ouder (API <= 30). Zelfde regel als data_extraction_rules.xml:
+     geen enkele app-opslag in de cloudback-up. Zie die file voor de toelichting. -->
+<full-backup-content>
+    <exclude domain="root" path="." />
+    <exclude domain="database" path="." />
+    <exclude domain="sharedpref" path="." />
+    <exclude domain="file" path="." />
+    <exclude domain="external" path="." />
+</full-backup-content>

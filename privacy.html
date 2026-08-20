@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="index,follow">
+<title>Privacyverklaring — Trainingskompas</title>
+<style>
+:root{--tekst:#122430;--zacht:#5a6b78;--lijn:#dde4e9;--accent:#0E7C86;--vlak:#f5f8fa}
+*{box-sizing:border-box}
+body{margin:0;padding:0;background:var(--vlak);color:var(--tekst);
+     font:16px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:760px;margin:0 auto;padding:32px 20px 80px}
+h1{font-size:28px;line-height:1.25;margin:0 0 6px}
+h2{font-size:19px;margin:34px 0 8px;padding-top:20px;border-top:1px solid var(--lijn)}
+h2:first-of-type{border-top:0;padding-top:0}
+h3{font-size:15px;margin:18px 0 4px}
+p,li{color:var(--tekst)}
+.meta{color:var(--zacht);font-size:14px;margin:0 0 24px}
+.let-op{background:#fff;border:1px solid var(--lijn);border-left:3px solid var(--accent);
+        border-radius:8px;padding:14px 16px;margin:22px 0;font-size:14px;color:var(--zacht)}
+table{border-collapse:collapse;width:100%;margin:10px 0 4px;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--lijn)}
+th{color:var(--zacht);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.4px}
+a{color:var(--accent)}
+footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--lijn);color:var(--zacht);font-size:13px}
+</style>
+</head>
+<body>
+<main>
+
+<h1>Privacyverklaring Trainingskompas</h1>
+<p class="meta">Versie 1.0 &middot; laatst bijgewerkt 19 augustus 2026 &middot; app-versie v4.48.0</p>
+
+<div class="let-op">
+Deze verklaring beschrijft feitelijk hoe Trainingskompas met gegevens omgaat, geverifieerd
+tegen de broncode en de database van de app. Zij is niet door een jurist opgesteld en is nog
+geen volledig AVG-grondslagenoverzicht. Voor een publieke release hoort een juridische toets
+plaats te vinden; zie <em>PLAY_STORE_READINESS.md</em> in het project.
+</div>
+
+<h2>1. Wie is verantwoordelijk</h2>
+<p>
+Trainingskompas wordt ontwikkeld en beheerd door <strong>SteenSoft</strong>. De ontwikkelaar is
+verwerkingsverantwoordelijke voor de gegevens die je in de app vastlegt. Contactgegevens voor
+privacyvragen staan in de app onder <em>Instellingen &rarr; Help &amp; over de app &rarr; Contact
+&amp; feedback</em>.
+</p>
+
+<h2>2. Welke gegevens verwerken we</h2>
+<p>Alle gegevens hieronder leg je zelf vast, of ze komen van een koppeling die je zelf activeert.</p>
+
+<table>
+<tr><th>Categorie</th><th>Voorbeelden</th><th>Herkomst</th></tr>
+<tr><td>Accountgegevens</td><td>E-mailadres, wachtwoord (versleuteld opgeslagen door de authenticatiedienst)</td><td>Jij, bij registratie</td></tr>
+<tr><td>Profiel</td><td>Naam, leeftijd, geslacht, lengte, trainingsniveau, sport, doel</td><td>Jij, bij de intake</td></tr>
+<tr><td>Trainingsdata</td><td>Sessies, oefeningen, sets, gewicht, herhalingen, RPE, rusttijden, cardio-afstanden en -tijden</td><td>Jij, tijdens het trainen</td></tr>
+<tr><td>Gezondheidsgegevens</td><td>HRV, rusthartslag, slaap, gewicht, lichaamssamenstelling, lichaamsmaten</td><td>Jij, of een wearable die je koppelt</td></tr>
+<tr><td>Aandachtspunten</td><td>Blessures, klachten of condities die je zelf noteert</td><td>Jij, vrijwillig</td></tr>
+<tr><td>Coachgesprekken</td><td>Je vragen aan de AI-coach en de gegeven antwoorden</td><td>Jij, bij gebruik van de coach</td></tr>
+</table>
+
+<p>
+Gezondheidsgegevens zijn <strong>bijzondere persoonsgegevens</strong>. Ze worden uitsluitend
+verwerkt op basis van jouw uitdrukkelijke toestemming, die je op elk moment kunt intrekken door
+de betreffende koppeling te verbreken of de AI-coach uit te zetten.
+</p>
+
+<h2>3. Waarvoor gebruiken we ze</h2>
+<ul>
+<li><strong>Je trainingslogboek bijhouden</strong> — sessies opslaan, terugkijken en herhalen.</li>
+<li><strong>Deterministische berekeningen</strong> — geschatte 1RM, werkgewicht, volume, herstel, dagfactor. Deze rekenen uitsluitend met jouw eigen gegevens.</li>
+<li><strong>Trainingsadvies</strong> — vaste, expliciete regels bepalen progressie, deload en rust. Er wordt niets met andere gebruikers vergeleken.</li>
+<li><strong>Verbanden in je eigen data</strong> — de app zoekt statistische samenhang binnen jouw eigen metingen (bijvoorbeeld rustdagen en topgewicht). Er worden geen uitspraken over oorzaak en gevolg gedaan en nooit gegevens van andere gebruikers gebruikt.</li>
+<li><strong>AI-coach</strong> — alleen als je daar toestemming voor geeft; zie hieronder.</li>
+</ul>
+
+<h2>4. De AI-coach</h2>
+<p>
+De AI-coach is standaard <strong>uit</strong>. Zet je hem aan, dan worden je HRV, slaap, gewicht,
+lichaamssamenstelling, trainingsgeschiedenis en eventueel vastgelegde aandachtspunten naar de
+AI-leverancier (<strong>Anthropic</strong>) gestuurd om persoonlijk advies te formuleren. Dat
+gebeurt via een server-side koppeling, nooit rechtstreeks vanuit je browser of telefoon.
+</p>
+<p>
+De AI rekent niet zelf en verzint geen cijfers: alle getallen, drempels en beslissingen komen uit
+de rekenlaag en de regels van de app. De AI mag die uitsluitend uitleggen en prioriteren. Zet je
+de toestemming uit, dan wordt er niets meer naar de AI-leverancier gestuurd.
+</p>
+
+<h2>5. Wearables en externe koppelingen</h2>
+<p>
+Koppel je zelf een wearable (Fitbit via Google Health, of een Concept2-roeier), dan haalt de app
+uitsluitend de gegevens op die nodig zijn: HRV, rusthartslag, slaap en trainingsresultaten. De
+toegangssleutels van die koppeling worden server-side bewaard en komen nooit in de app zelf
+terecht. Je kunt de koppeling op elk moment verbreken in de app.
+</p>
+
+<h2>6. Wie kan je gegevens zien</h2>
+<p>
+Je gegevens zijn per gebruiker technisch afgeschermd in de database (<em>Row Level Security</em>).
+Andere gebruikers, ook leden van dezelfde gym, kunnen je persoonlijke gegevens niet opvragen.
+Er is één uitzondering: content die je zelf <em>expliciet</em> deelt (een training of oefening
+delen met je gym) wordt zichtbaar voor de groep waarmee je deelt. Je trainingslogboek, je
+metingen en je coachgesprekken worden nooit gedeeld.
+</p>
+
+<h2>7. Verwerkers</h2>
+<table>
+<tr><th>Dienst</th><th>Rol</th><th>Locatie</th></tr>
+<tr><td>Supabase</td><td>Database, authenticatie en opslag</td><td>EU (eu-west-1, Ierland)</td></tr>
+<tr><td>Netlify</td><td>Hosting van de app en de server-side functies</td><td>Wereldwijd CDN</td></tr>
+<tr><td>Anthropic</td><td>AI-coach — alleen met jouw toestemming</td><td>Verenigde Staten</td></tr>
+<tr><td>Google / Fitbit</td><td>Wearable-koppeling — alleen als je die zelf activeert</td><td>Verenigde Staten</td></tr>
+</table>
+
+<h2>8. Bewaartermijn</h2>
+<p>
+Er geldt geen automatische bewaartermijn: je gegevens blijven bestaan zolang je account bestaat.
+Accounts die na registratie nooit zijn bevestigd, worden automatisch opgeruimd.
+</p>
+
+<h2>9. Je rechten</h2>
+<h3>Inzage en dataportabiliteit</h3>
+<p>Al je gegevens zijn in de app zelf zichtbaar en volledig te downloaden via het exportmenu: per gegevenstype als CSV, of als één volledige JSON-back-up.</p>
+<h3>Rectificatie</h3>
+<p>Vrijwel alle gegevens — profiel, aandachtspunten, gelogde metingen en sessies — kun je direct in de app aanpassen.</p>
+<h3>Verwijdering</h3>
+<p>
+Via <em>Profiel &rarr; Account verwijderen</em> verwijder je je account en alle bijbehorende
+gegevens: trainingen, sessies, HRV, gewicht, lichaamssamenstelling, coachgesprekken,
+aandachtspunten en profiel — inclusief alles wat ooit als context aan de AI-coach is
+meegegeven. Dit is onomkeerbaar en wordt onmiddellijk uitgevoerd.
+</p>
+<h3>Toestemming intrekken</h3>
+<p>De AI-coach-toestemming en elke wearable-koppeling kun je op elk moment uitzetten, zonder gevolgen voor de rest van de app.</p>
+<h3>Klacht indienen</h3>
+<p>Je kunt een klacht indienen bij de Autoriteit Persoonsgegevens (<a href="https://autoriteitpersoonsgegevens.nl" rel="noopener">autoriteitpersoonsgegevens.nl</a>).</p>
+
+<h2>10. Beveiliging</h2>
+<ul>
+<li>Al het verkeer verloopt versleuteld (HTTPS).</li>
+<li>Toegang tot gegevens is per gebruiker afgedwongen in de database zelf, niet alleen in de app.</li>
+<li>Wachtwoorden worden door de authenticatiedienst gehasht opgeslagen en zijn voor de ontwikkelaar niet zichtbaar.</li>
+<li>Toegangssleutels van externe koppelingen staan uitsluitend server-side.</li>
+<li>Persoonsgegevens worden niet gelogd.</li>
+</ul>
+
+<h2>11. Kinderen</h2>
+<p>Trainingskompas is niet bedoeld voor gebruikers jonger dan 16 jaar en er wordt niet bewust gebruik door minderjarigen verwerkt.</p>
+
+<h2>12. Geen medisch hulpmiddel</h2>
+<p>
+Trainingskompas geeft trainingsadvies, geen medisch advies. De app stelt geen diagnoses en
+vervangt geen arts, fysiotherapeut of andere zorgverlener. Raadpleeg bij klachten of twijfel
+altijd een professional.
+</p>
+
+<h2>13. Wijzigingen</h2>
+<p>Wijzigingen in deze verklaring worden op deze pagina gepubliceerd, met een nieuwe versiedatum bovenaan.</p>
+
+<footer>
+Trainingskompas &middot; SteenSoft &middot; deze pagina is de privacyverklaring waarnaar de
+Google&nbsp;Play-vermelding en de app zelf verwijzen.
+</footer>
+
+</main>
+</body>
+</html>

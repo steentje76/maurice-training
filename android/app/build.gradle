@@ -1,0 +1,93 @@
+apply plugin: 'com.android.application'
+
+// RC0 — ONDERTEKENING VOOR DE RELEASE.
+// De release-buildtype had geen signingConfig, dus `bundleRelease` leverde een
+// ONGETEKEND artefact op dat Google Play niet accepteert. De sleutel zelf hoort niet in
+// Git: deze configuratie leest hem uit android/keystore.properties (staat in .gitignore)
+// of, voor een CI-omgeving, uit omgevingsvariabelen. Ontbreken beide, dan blijft de
+// release-build gewoon werken zonder ondertekening — zo blijft een debug- of
+// controlebuild mogelijk zonder sleutel, terwijl een echte release er wel om vraagt.
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+def ksStore = keystoreProperties['storeFile'] ?: System.getenv('TK_KEYSTORE_FILE')
+def ksStorePass = keystoreProperties['storePassword'] ?: System.getenv('TK_KEYSTORE_PASSWORD')
+def ksAlias = keystoreProperties['keyAlias'] ?: System.getenv('TK_KEY_ALIAS')
+def ksKeyPass = keystoreProperties['keyPassword'] ?: System.getenv('TK_KEY_PASSWORD')
+def heeftSleutel = ksStore != null && ksStorePass != null && ksAlias != null && ksKeyPass != null
+
+
+android {
+    namespace "com.trainingskompas.app"
+    compileSdk rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "com.trainingskompas.app"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        // RC0: liep uit de pas met de app zelf (die meldde v4.47.0 in het scherm 'Over').
+        // Schema: versionCode = major*10000 + minor*100 + patch, zodat elke release
+        // aantoonbaar oploopt en één op één te herleiden is tot versionName.
+        versionCode 45000
+        versionName "4.50.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    signingConfigs {
+        release {
+            if (heeftSleutel) {
+                storeFile file(ksStore)
+                storePassword ksStorePass
+                keyAlias ksAlias
+                keyPassword ksKeyPass
+            }
+        }
+    }
+    buildTypes {
+        release {
+            // Bewust GEEN debug-ondertekening als terugval: een debug-getekend artefact
+            // mag nooit per ongeluk als release de deur uit.
+            if (heeftSleutel) {
+                signingConfig signingConfigs.release
+            } else {
+                logger.lifecycle('[Trainingskompas] Geen keystore gevonden — de release-build wordt NIET ondertekend en is niet uploadbaar naar Google Play. Zie PLAY_STORE_READINESS.md.')
+            }
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

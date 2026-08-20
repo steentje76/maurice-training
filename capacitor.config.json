@@ -1,0 +1,18 @@
+{
+  "appId": "com.trainingskompas.app",
+  "appName": "Trainingskompas",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "BluetoothLe": {
+      "displayStrings": {
+        "scanning": "Concept2 zoeken…",
+        "cancel": "Annuleren",
+        "availableDevices": "Beschikbare apparaten",
+        "noDeviceFound": "Geen Concept2 gevonden"
+      }
+    }
+  }
+}

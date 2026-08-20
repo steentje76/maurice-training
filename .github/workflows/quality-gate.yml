@@ -1,0 +1,76 @@
+name: Trainingskompas Quality Gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-gate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package.json
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      # Android web-assets are generated artifacts and are intentionally not committed.
+      # Generate them before the deterministic tests because fAndroidRelease verifies
+      # that a locally generated Android copy matches the source version.
+      - name: Build and sync web assets
+        run: npm run cap:copy
+
+      - name: Core coaching regression tests
+        run: node coaching.test.js
+
+      - name: Core deterministic regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          tests=(core/*.test.js)
+          if [ ${#tests[@]} -eq 0 ]; then
+            echo "No core regression tests found"
+            exit 1
+          fi
+          for test_file in "${tests[@]}"; do
+            echo "==> node ${test_file}"
+            node "${test_file}"
+          done
+
+      - name: Native Concept2 transport tests
+        run: npm run test:native
+
+      - name: Verify generated web bundle exists
+        run: test -f www/index.html
+
+      - name: Verify critical repository files
+        run: |
+          test -f docs/DEVELOPMENT_CONTRACT.md
+          test -f netlify.toml
+          test -f index.html
+          test -f coaching.js
+          test -f coaching.test.js
+
+      - name: Quality gate summary
+        run: |
+          echo "Trainingskompas Quality Gate: PASS"
+          echo "Commit: $GITHUB_SHA"

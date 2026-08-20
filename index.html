@@ -14666,7 +14666,25 @@ function logSet(exId,type,setNum,isWork){
   // Effectief gewicht: houdt rekening met de gewicht-modus (vast/+kg/% vorige set).
   const effKg=isWork?getEffectiveKg(exId,setNum):(numNL(kg)||null);
   if(type==='wu'){if(!sessionLog[exId].wu)sessionLog[exId].wu=[];sessionLog[exId].wu[setNum-1]={kg,reps};}
-  else{if(!sessionLog[exId].sets)sessionLog[exId].sets=[];sessionLog[exId].sets[setNum-1]={kg,reps,rpe,effKg};}
+  else{
+    if(!sessionLog[exId].sets)sessionLog[exId].sets=[];
+    /* v4.51.0 CORRECTIE — RUSTDUUR PER SET: het daadwerkelijke begin van deze set.
+       AUDIT (vóór deze correctie werd het rusttimer-eind gebruikt — dat is een UI-hulpmiddel,
+       geen bron van waarheid, en is hier verwijderd): het kg/reps-invoerveld van een werkset
+       heeft al sinds vóór deze sprint een oninput-handler die logSet() bij ELKE toetsaanslag
+       aanroept (buildWorkSetRow/kgFieldHtml, r.13704/13921). De EERSTE keer dat dat voor een
+       specifieke set gebeurt is het vroegst beschikbare, niet-fictieve signaal dat de sporter
+       met die set is begonnen — geen nieuwe listener, geen geschatte tijd. Vastgelegd als
+       startAt/startPausedMs en NOOIT overschreven door latere toetsaanslagen (vandaar de
+       merge i.p.v. de vroegere volledige overwrite van het set-object).
+       Ontbreekt deze aanraking (bv. gewicht/reps blijven ongewijzigd overgenomen van de vorige
+       set en de sporter vinkt alleen het vinkje af) dan blijft startAt leeg — rest_duration_s
+       voor die set is dan terecht null, nooit geschat. */
+    const _prevEntry=sessionLog[exId].sets[setNum-1];
+    const _entry=Object.assign({},_prevEntry,{kg,reps,rpe,effKg});
+    if(_entry.startAt==null){ _entry.startAt=Date.now(); _entry.startPausedMs=tkPausedMsNu(); }
+    sessionLog[exId].sets[setNum-1]=_entry;
+  }
   // Check PR (per rep-bucket 1/3/5/10, plus absolute-PR fallback voor niet-rep oefeningen)
   if(isWork&&effKg){
     const exObj=exercises.find(e=>e.id===exId);
@@ -14715,16 +14733,15 @@ function toggleSetDone(exId,setNum){
   document.getElementById('sr-'+exId+'-'+setNum)?.classList.toggle('done',nowDone);
   // P1-fix: done-status PERSISTENT maken in sessionLog zodat resume niet op een heuristiek (kg||reps)
   // hoeft te gokken (false pos/neg bij bodyweight of ingevulde-maar-niet-afgevinkte sets).
-  // v4.51.0 — RUSTDUUR PER SET: ruwe tijdstempels op de setrij zelf.
+  // v4.51.0 CORRECTIE — RUSTDUUR PER SET: alleen nog het "einde van deze set"-tijdstempel.
   // doneAt/donePausedMs = moment (en pauze-stand) waarop DEZE set als klaar werd afgevinkt;
-  // dient als "einde vorige set" voor de rust vóór de VOLGENDE set (zie buildStrengthSessionRow).
-  // restEndAt/restEndPausedMs = wordt hier overgenomen uit een eventueel wachtend rust-eind
-  // (sessionLog[exId]._restPending, gezet door de rusttimer bij natuurlijk aflopen of
-  // expliciet overslaan — zie startRestTimer/cancelRestTimer) MITS dat rust-eind precies
-  // aan DEZE set voorafging. Sluit het niet aan (andere set, geen rust gehad, uit volgorde
-  // afgevinkt) dan blijft restEndAt leeg en is rest_duration_s voor deze set null — nooit
-  // fictief gekoppeld. Bij het UN-afvinken van een set worden alle vier de velden gewist:
-  // een teruggedraaide set mag geen (voormalige) rustmeting achterlaten.
+  // dient als "einde vorige set" voor de rust vóór de VOLGENDE set. Het "begin volgende
+  // set"-deel komt sinds deze correctie NIET meer van de rusttimer (was een UI-hulpmiddel,
+  // geen brondata) maar van startAt op de setrij zelf, vastgelegd in logSet() bij de eerste
+  // invoer-aanraking van die set — zie de audit-toelichting daar. Bij het UN-afvinken wordt
+  // alleen doneAt/donePausedMs gewist: een teruggedraaide set mag geen (voormalige)
+  // afrondingsmeting achterlaten, maar startAt (wanneer de sporter met de INVOER begon) blijft
+  // terecht staan — dat is een apart, nog steeds waar feit.
   try{
     if(!sessionLog[exId])sessionLog[exId]={};
     if(!Array.isArray(sessionLog[exId].sets))sessionLog[exId].sets=[];
@@ -14734,15 +14751,8 @@ function toggleSetDone(exId,setNum){
     if(nowDone){
       _entry.doneAt=Date.now();
       _entry.donePausedMs=tkPausedMsNu();
-      const _pend=sessionLog[exId]._restPending;
-      if(_pend&&_pend.afterSet===setNum-1){
-        _entry.restEndAt=_pend.at;
-        _entry.restEndPausedMs=_pend.pausedMs;
-        delete sessionLog[exId]._restPending;
-      }
     } else {
       delete _entry.doneAt; delete _entry.donePausedMs;
-      delete _entry.restEndAt; delete _entry.restEndPausedMs;
     }
   }catch(_){}
   if(nowDone){c.classList.add('just-done');setTimeout(()=>c.classList.remove('just-done'),220);}
@@ -15427,20 +15437,23 @@ function buildStrengthSessionRow(exId, ws, opts){
     const d={kg:s.kg,effKg:bestKg(s),reps:s.reps,rpe:s.rpe};
     const ev=(typeof tkSetEvidence==='function')?tkSetEvidence(exId,s,i,opts):null;
     if(ev) d.evidence=ev;
-    /* v4.51.0 — RUSTDUUR PER SET (rest_duration.v1, DATA FOUNDATION).
-       Puur additief: leest uitsluitend de ruwe tijdstempels die de aanroeper (normale
-       Execution / Guided Workout) al op elke workset meegeeft (s.doneAt/donePausedMs
-       op de VORIGE set, s.restEndAt/restEndPausedMs op DEZE set) en past er de bestaande,
-       zuivere regel op toe. Geen nieuwe meting hier, geen AI, geen schatting. Set 1 heeft
-       per definitie geen voorafgaande rust. Ontbreken de tijdstempels (bv. oude client,
-       sets buiten volgorde gelogd) dan is de waarde null — nooit fictief ingevuld. */
+    /* v4.51.0 CORRECTIE — RUSTDUUR PER SET (rest_duration.v1, DATA FOUNDATION).
+       AUDIT-CORRECTIE: de eerdere versie gebruikte het rusttimer-eind (s.restEndAt) als
+       "begin volgende set" — dat is een UI-hulpmiddel, geen brondata, en is verwijderd.
+       Nieuwe bron: s.startAt/startPausedMs — het moment van de EERSTE invoer-aanraking van
+       DEZE set (logSet(), bestaand oninput-event op het kg/reps-veld — zie de audit-
+       toelichting daar). Puur additief: leest uitsluitend ruwe tijdstempels die de aanroeper
+       al meegeeft en past er de bestaande, zuivere regel op toe. Geen nieuwe meting hier,
+       geen AI, geen schatting. Set 1 heeft per definitie geen voorafgaande rust. Ontbreken de
+       tijdstempels (bv. sporter vinkt af zonder de velden aan te raken, sets buiten volgorde
+       gelogd) dan is de waarde null — nooit fictief ingevuld. */
     const prev=(i>0)?ws[i-1]:null;
     d.rest_duration_s=(prev&&typeof CalcCore!=='undefined'&&typeof CalcCore.restDurationS==='function')
       ? CalcCore.restDurationS(
           prev.doneAt!=null?prev.doneAt:null,
-          (s&&s.restEndAt!=null)?s.restEndAt:null,
+          (s&&s.startAt!=null)?s.startAt:null,
           prev.donePausedMs!=null?prev.donePausedMs:0,
-          (s&&s.restEndPausedMs!=null)?s.restEndPausedMs:0)
+          (s&&s.startPausedMs!=null)?s.startPausedMs:0)
       : null;
     return d;
   });
@@ -19612,23 +19625,7 @@ function saveAsTrainingAndFinish(btnEl){
 // RUSTTIMER PER SET
 // ══════════════════════════════════════════════════════════
 let restInterval=null, restEndAt=0, restNextLabel='';
-// v4.51.0 — welke oefening/set deze rustperiode voorafgaat, zodat het rust-eind (natuurlijk
-// aflopen of overslaan) teruggekoppeld kan worden naar de juiste sessionLog-rij. Puur context,
-// geen nieuwe berekening.
-let restCtxExId=null, restCtxSetNum=null;
-// v4.51.0 — legt vast dat de rust die op restCtxExId/restCtxSetNum volgde nu voorbij is.
-// Wordt afgehaald door toggleSetDone() zodra de VOLGENDE set wordt afgevinkt; als dat nooit
-// gebeurt (sporter stopt, wisselt oefening) blijft het gewoon liggen tot het overschreven
-// wordt — geen dataverlies elders, want zonder afname blijft rest_duration_s simpelweg null.
-function tkRecordRestEnd(){
-  try{
-    if(restCtxExId==null||restCtxSetNum==null)return;
-    if(!sessionLog[restCtxExId])sessionLog[restCtxExId]={};
-    sessionLog[restCtxExId]._restPending={afterSet:restCtxSetNum,at:Date.now(),pausedMs:tkPausedMsNu()};
-  }catch(_){}
-}
 function openRestTimer(exId,setNum,overrideSec){
-  restCtxExId=exId; restCtxSetNum=setNum;
   // v3.3.53/54 Deel 5 — toon de volgende set + (indien beschikbaar) gewicht × reps.
   restNextLabel='';
   if(setNum!=null){
@@ -19676,17 +19673,16 @@ function startRestTimer(seconds){
       if(navigator.vibrate&&isSettingOn('tk_haptics_enabled',true))navigator.vibrate([200,100,200]);
       toast('Rust voorbij');
       bar.style.display='none';
-      tkRecordRestEnd(); // v4.51.0 — natuurlijk aflopen is een geldig, gemeten rust-eind
     }
   };
   tick();
   restInterval=setInterval(tick,1000);
 }
 function cancelRestTimer(){
-  // v4.51.0 — "Overslaan" is een expliciete, betrouwbare sporter-actie: de rust is voorbij
-  // op dit moment. Alleen vastleggen als er ook echt een rust liep (restInterval actief) —
-  // anders is er niets om te meten.
-  if(restInterval){clearInterval(restInterval);restInterval=null;tkRecordRestEnd();}
+  // v4.51.0 CORRECTIE — de rusttimer is uitsluitend UI. Vóór deze correctie werd hier een
+  // "rust voorbij"-gebeurtenis vastgelegd als bron voor rest_duration_s; dat is verwijderd
+  // (zie audit bij logSet()). Overslaan/annuleren wijzigt geen enkele meting meer.
+  if(restInterval){clearInterval(restInterval);restInterval=null;}
   document.getElementById('rest-timer-bar').style.display='none';
 }
 // ±30s: past de lopende rust aan via de centrale timer (restEndAt is wall-clock). Alleen tijdens een
@@ -23602,16 +23598,7 @@ var GW=(function(){
     if(!f)f=FEELS[2];
     var reps=null;
     if(actualReps!=null&&actualReps!==''){ var rp=parseInt(actualReps,10); if(!isNaN(rp)&&rp>0)reps=rp; }
-    // v4.51.0 — RUSTDUUR PER SET: neemt een wachtend rust-eind (c.restPending, gezet door
-    // restTick()/skipRest() zodra de rust vóór DEZE set voorbij was) over op de nieuwe
-    // setsDone-rij, MITS het aantal reeds gelogde sets sindsdien niet is veranderd (dus dit
-    // is écht de eerstvolgende set na die rust). Sluit het niet aan, dan blijft restEndAt
-    // leeg — nooit fictief gekoppeld. Guided Workout kent geen sessie-pauzeknop, dus
-    // restEndPausedMs is hier altijd 0 (bekende beperking, zie datacontract).
-    var _rp=(c.restPending&&c.restPending.afterSet===c.setsDone.length)?c.restPending:null;
-    c.setsDone.push({feel:f.k,rpe:f.rpe,reps:reps,at:Date.now(),
-      restEndAt:_rp?_rp.at:null, restEndPausedMs:_rp?_rp.pausedMs:0});
-    if(_rp)delete c.restPending;
+    c.setsDone.push({feel:f.k,rpe:f.rpe,reps:reps,at:Date.now()});
     var h=hist();h[c.id]={weight:c.weight,reps:c.reps,feel:f.k,rpe:f.rpe,at:Date.now()};lsSet('tk_gw_hist',h);
     st.active.lastFeel=f.k;
     st.active.phase='advice';
@@ -23623,17 +23610,11 @@ var GW=(function(){
     else nextExercise();
   }
   function startRest(){if(!st.active)return;var c=cur();st.active.restLeft=c?c.rest:60;st.active.phase='rest';persist();}
-  // v4.51.0 — expliciet overslaan is, net als in de normale Execution, een betrouwbaar
-  // gemeten rust-eind: leg het vast vóórdat de fase omslaat.
-  function skipRest(){if(!st.active)return;var c=cur();if(c)c.restPending={afterSet:c.setsDone.length,at:Date.now(),pausedMs:0};st.active.restLeft=0;st.active.phase='exercise';persist();}
+  function skipRest(){if(!st.active)return;st.active.restLeft=0;st.active.phase='exercise';persist();}
   function restTick(){
     if(!st.active||st.active.phase!=='rest')return 0;
     st.active.restLeft=Math.max(0,st.active.restLeft-1);
-    if(st.active.restLeft<=0){
-      st.active.phase='exercise';
-      // v4.51.0 — natuurlijk aflopen van de rust is eveneens een geldig gemeten rust-eind.
-      var c=cur();if(c)c.restPending={afterSet:c.setsDone.length,at:Date.now(),pausedMs:0};
-    }
+    if(st.active.restLeft<=0)st.active.phase='exercise';
     persist();return st.active.restLeft;
   }
   function adjustRest(d){if(!st.active)return;st.active.restLeft=Math.max(0,st.active.restLeft+d);persist();}
@@ -23786,13 +23767,17 @@ var GW=(function(){
       var it=a.items[i];
       if(!it.setsDone||!it.setsDone.length)continue;             // alleen werkelijk uitgevoerde sets
       if(it.pick==='warmup'||it.pick==='cooldown')continue;      // geen warm-up/cooldown als werkset
-      // v4.51.0 — RUSTDUUR PER SET: doneAt/restEndAt(+PausedMs) meegeven zodat
-      // buildStrengthSessionRow() dezelfde bestaande, zuivere regel (CalcCore.restDurationS)
-      // kan toepassen als in de normale Execution. Geen nieuwe berekening hier, alleen
-      // doorgeven van wat setsDone al bijhield (zie rateSet/restTick/skipRest).
+      // v4.51.0 CORRECTIE — RUSTDUUR PER SET: doneAt (het bestaande setsDone[].at, ongewijzigd
+      // sinds vóór deze sprint) blijft meegaan als "einde van deze set". startAt (begin van de
+      // VOLGENDE set) wordt HIER NIET meegegeven: de audit vond geen bestaand, betrouwbaar
+      // user-event in Guided Workout dat het daadwerkelijke begin van een set markeert (het
+      // rusttimer-eind is dat niet — zie de audit-toelichting bij logSet() in de normale
+      // Execution, en is om die reden verwijderd uit rateSet/restTick/skipRest). Zonder een
+      // betrouwbare starttijd is rest_duration_s voor Guided Workout-sets dus NULL — nooit
+      // geschat, nooit op het timer-eind gebaseerd. Vervolgstap (buiten deze correctie-sprint,
+      // vereist UI-uitbreiding): een expliciete "set gestart"-registratie toevoegen.
       var ws=it.setsDone.map(function(sd){return {kg:(it.weight!=null?it.weight:null),reps:(sd.reps!=null?sd.reps:null),rpe:sd.rpe,
-        doneAt:(sd.at!=null?sd.at:null),donePausedMs:0,
-        restEndAt:(sd.restEndAt!=null?sd.restEndAt:null),restEndPausedMs:(sd.restEndPausedMs!=null?sd.restEndPausedMs:0)};});
+        doneAt:(sd.at!=null?sd.at:null),donePausedMs:0};});
       try{
         /* Sprint 26 — EVIDENCE-AANSLUITING. Dit Guided-pad gaf geen `at` en geen
            `voorschrift` mee. buildDecisionEvidence markeert een snapshot zonder tijdstempel

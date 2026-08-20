@@ -7,7 +7,10 @@
      API 35 of hoger targeten (verplicht voor Play), waardoor de WebView achter de statusbalk en
      de navigatiebalk door loopt. Zonder insets zouden de koptekst en de onderbalk daar dan
      onder verdwijnen. -->
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<!-- v4.53.0 — Accessibility-sprint: maximum-scale=1/user-scalable=no verwijderd (WCAG 1.4.4).
+     Sporters die moeten kunnen inzoomen konden dat niet; viewport-fit=cover (safe-area-inset)
+     blijft ongewijzigd, dat staat los van de zoom-restrictie. -->
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Kompas">
@@ -70,7 +73,25 @@
 :root{
   --bg:#E6EBEF;--card:#fff;--bk:#0B1D2A;--red:#111111;--green:#4caf50;
   --accent:#00B894;--accent2:#0E3B4A;
-  --y:#c8a84b;--g1:#f5f5f5;--g2:#e5e5e5;--g3:#bbbbbb;--g4:#888888;--g6:#444444;--dark:#0B1D2A;
+  /* v4.53.0 — Accessibility-sprint: --accent (#00B894) heeft als TEKSTKLEUR op --bg/--card
+     onvoldoende WCAG AA-contrast (2,11–2,54 : 1, vereist 4,5 : 1). --accent zelf blijft
+     ONGEWIJZIGD voor knoppen/achtergronden/randen/iconen (merkidentiteit, al voldoende
+     contrast in die toepassingen). --accent-text is uitsluitend voor tekst die eerder de
+     accent-kleur gebruikte tegen een lichte achtergrond: #007861 haalt 4,53:1 (--bg)
+     en 5,44:1 (--card) — zelfde kleurfamilie (donkerder mintgroen), geverifieerd tegen alle
+     daadwerkelijk voorkomende achtergrondvarianten (--bg, --card, --g1, --v43-mint op 8%/10%
+     dekking): telkens ruim boven 4,5:1. Eén uitzondering blijft bewust op --accent: tekst/
+     icoon op een --accent2-achtergrond (donkere navy) heeft daar al 4,75:1 met het bestaande
+     --accent en zou met --accent-text juist verslechteren (2,21:1) — zie .v43-plan-ic. */
+  --accent-text:#007861;
+  --y:#c8a84b;--g1:#f5f5f5;--g2:#e5e5e5;--g3:#bbbbbb;
+  /* v4.53.0 — Accessibility-sprint: --g4 (voorheen #888888) is de meestgebruikte
+     tekstkleur voor secundaire/onderschrift-tekst (450 toepassingen als color:var(--g4)) en
+     haalde op --bg/--card slechts 2,95–3,54:1 (vereist 4,5:1 voor normale tekst). #6A6A6A
+     haalt 4,51:1 (--bg) en 5,41:1 (--card) — zelfde neutrale grijstint, alleen donkerder.
+     Eén tokenwijziging fixt alle 450 toepassingen consistent; geen losse edits nodig, geen
+     visuele-identiteitswijziging (dit is geen merkkleur). */
+  --g4:#6A6A6A;--g6:#444444;--dark:#0B1D2A;
   --f:'Poppins','Arial',sans-serif;--r:8px;--shadow:0 1px 3px rgba(0,0,0,.1);
   --df-g:#00a082;--df-y:#a8842e;--df-r:#B3454C;--df-a:#b9702a;--df-b:#3a7aa8;
 
@@ -192,7 +213,7 @@ html[data-theme="light"]{
 .today-cta{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;min-height:66px;border:none;border-radius:16px;background:var(--dark);color:#fff;font-family:var(--f);cursor:pointer;box-shadow:var(--shadow);text-align:left}
 .today-cta-lbl{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;opacity:.72}
 .today-cta-name{font-size:19px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-top:2px;line-height:1.1}
-.today-cta-go{font-size:15px;font-weight:800;color:var(--accent);flex-shrink:0}
+.today-cta-go{font-size:15px;font-weight:800;color:var(--accent-text);flex-shrink:0}
 .today-cta:active{transform:scale(.99)}
 /* v3.3.50 P6 — ÉÉN dag-thema over het hele coachverhaal. dayState() zet data-day op de
    Home-container; alle statuskaarten volgen dezelfde --day/--day-soft/--day-head. --day-head
@@ -247,7 +268,7 @@ html[data-theme="light"]{
 .df-headline{font-size:20px;font-weight:800;letter-spacing:-.3px;line-height:1.1;color:var(--day-head,var(--dark))}
 .df-meaning{font-size:14px;font-weight:600;color:var(--dark);line-height:1.35;margin-top:5px}
 .df-tech{font-size:11.5px;font-weight:500;color:var(--g4);margin-top:6px}
-.df-why{font-size:11.5px;color:var(--accent);font-weight:700;margin-top:8px}
+.df-why{font-size:11.5px;color:var(--accent-text);font-weight:700;margin-top:8px}
 /* v3.3.49/50/51 P4 — Coach Advies-kaart: grotere icoon, day-soft wash, coachtekst = blikvanger */
 .coach-advies{display:flex;gap:14px;align-items:flex-start;background:linear-gradient(180deg,var(--day-soft,var(--g1)),var(--card) 62%);border:1px solid var(--g2);border-left:3px solid var(--day,var(--accent));border-radius:16px;padding:16px 16px 16px 17px;box-shadow:0 4px 16px rgba(0,0,0,.05)}
 .coach-advies-ic{width:44px;height:44px;border-radius:13px;background:var(--day-soft,rgba(0,184,148,.12));display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -361,11 +382,11 @@ body{display:flex;justify-content:center}
 .bnav{background:var(--card);display:flex;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px));flex-shrink:0;border-top:1px solid var(--g2)}
 .ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;background:none;border:none;padding:4px 0;position:relative}
 .ni{color:var(--g4)}
-.ni.active{color:var(--accent)}
+.ni.active{color:var(--accent-text)}
 .ni-icon{font-size:22px;line-height:1;height:23px;display:flex;align-items:center;justify-content:center}
 .ni-icon svg{width:23px;height:23px;display:block;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .ni-label{font-size:9px;font-weight:600;color:var(--g4);text-transform:uppercase;letter-spacing:.3px}
-.ni.active .ni-label{color:var(--accent)}
+.ni.active .ni-label{color:var(--accent-text)}
 .ni-dot{position:absolute;top:2px;right:calc(50% - 18px);width:8px;height:8px;background:var(--accent);border-radius:50%;display:none}
 .ni-dot.show{display:block}
 
@@ -386,7 +407,7 @@ body{display:flex;justify-content:center}
 .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
 .stat-box{background:var(--card);border-radius:12px;padding:10px 8px;text-align:center;box-shadow:var(--shadow)}
 .stat-val{font-size:20px;font-weight:800;color:var(--dark)}
-.stat-val.red{color:var(--accent)}
+.stat-val.red{color:var(--accent-text)}
 .stat-unit{font-size:10px;font-weight:600;color:var(--g4);margin-top:2px}
 
 /* HRV */
@@ -424,7 +445,7 @@ body{display:flex;justify-content:center}
 .set-field-lbl{font-size:9px;font-weight:600;color:var(--g4);margin-top:3px;text-transform:uppercase}
 .set-sep{font-size:14px;color:var(--g3);padding:0 2px}
 .set-more{background:none;border:none;color:var(--g4);font-size:18px;cursor:pointer;padding:4px;flex-shrink:0;min-width:36px;min-height:42px;display:flex;align-items:center;justify-content:center}
-.set-rest{background:none;border:none;color:var(--accent);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0;min-width:36px;min-height:42px;display:flex;align-items:center;justify-content:center}
+.set-rest{background:none;border:none;color:var(--accent-text);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0;min-width:36px;min-height:42px;display:flex;align-items:center;justify-content:center}
 .set-rest svg,.set-more svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .wmode-sel{width:100%;margin-top:3px;padding:2px 1px;border:1px solid var(--g2);border-radius:6px;font-size:8px;font-weight:600;color:var(--g4);background:var(--g1);font-family:var(--f);text-align:center}
 .wmode-param{width:100%;margin-top:3px;padding:2px 1px;border:1px solid var(--accent);border-radius:6px;font-size:10px;font-weight:700;color:var(--dark);background:#fff;font-family:var(--f);text-align:center}
@@ -579,7 +600,7 @@ body{display:flex;justify-content:center}
 .sess-next-lbl{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--g4);margin-bottom:8px}
 .sess-next-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:4px 0}
 .sess-next-ex{font-size:13px;font-weight:700;color:var(--dark)}
-.sess-next-act{font-size:13px;color:var(--accent);font-weight:700;white-space:nowrap}
+.sess-next-act{font-size:13px;color:var(--accent-text);font-weight:700;white-space:nowrap}
 /* v4.49.0 — de onderbouwing onder de opdracht: "waarom zegt de app dit?" */
 .sess-next-why{font-size:11.5px;line-height:1.5;color:var(--g4);padding:0 0 8px;border-bottom:1px solid var(--g2);margin-bottom:4px}
 .sess-next-row:last-of-type+.sess-next-why{border-bottom:none;margin-bottom:0;padding-bottom:0}
@@ -749,7 +770,7 @@ canvas{width:100%;height:100%}
 .vid-label{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.8));padding:18px 10px 8px;font-size:11px;color:#fff;font-weight:700;letter-spacing:.3px}
 .vid-wrap.vid-poster{cursor:default;background:var(--g1)}
 .vid-wrap.vid-poster img{object-fit:contain} /* poster = primaire bewegingsbron → volledig tonen, nooit boven/onder afsnijden (video-thumbs houden cover) */ /* F18 — statisch bewegingsbeeld (geen video/play) */
-.vid-optional{display:inline-block;margin:6px 0 2px;background:none;border:none;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;padding:2px 0} /* F20-C — optionele techniekvideo naast de primaire MoveKit-poster */
+.vid-optional{display:inline-block;margin:6px 0 2px;background:none;border:none;color:var(--accent-text);font-size:12px;font-weight:600;cursor:pointer;padding:2px 0} /* F20-C — optionele techniekvideo naast de primaire MoveKit-poster */
 .exec-cues{margin:2px 0 10px;padding-left:18px;list-style:disc} /* F22-E — MoveKit coach-cues */
 .exec-cues li{font-size:12.5px;color:var(--g4);line-height:1.45;margin:2px 0}
 .exec-cues--warn li{color:var(--g5,#8a6d3b)}
@@ -825,9 +846,9 @@ canvas{width:100%;height:100%}
 .lib-it-main{flex:1;display:flex;flex-direction:column;min-width:0}
 .lib-it-name{font-size:13px;font-weight:700;color:var(--g6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lib-it-sub{font-size:11px;color:var(--g4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lib-it-badge{font-size:10px;font-weight:700;color:var(--accent);flex:none}
+.lib-it-badge{font-size:10px;font-weight:700;color:var(--accent-text);flex:none}
 .lib-empty{color:var(--g4);text-align:center;padding:30px 0;font-size:13px}
-.lib-back{background:none;border:none;color:var(--accent);font-weight:700;font-size:13px;cursor:pointer;padding:6px 0;font-family:var(--f)}
+.lib-back{background:none;border:none;color:var(--accent-text);font-weight:700;font-size:13px;cursor:pointer;padding:6px 0;font-family:var(--f)}
 .lib-hero{width:100%;height:200px;border-radius:14px;overflow:hidden;background:var(--g1);margin:6px 0 12px;display:flex;align-items:center;justify-content:center}
 .lib-hero img{width:100%;height:100%;object-fit:contain}
 .lib-hero-ph{color:var(--g3);font-weight:800;font-size:16px;text-transform:uppercase}
@@ -842,7 +863,7 @@ canvas{width:100%;height:100%}
 .lib-rel{background:var(--g1);border:none;border-radius:8px;padding:5px 9px;font-size:12px;color:var(--g6);cursor:pointer;font-family:var(--f)}
 .lib-rel:active{transform:scale(.97)}.lib-muted{color:var(--g4);font-size:12px}
 .lib-why-btn{background:var(--g1);border:none;border-radius:9px;padding:9px 12px;font-size:12px;font-weight:600;color:var(--g6);cursor:pointer;font-family:var(--f);width:100%}
-.lib-why{margin-top:8px}.lib-why-lvl{background:var(--card2,var(--g1));border-radius:9px;padding:9px 11px;margin:6px 0}.lib-why-lvl b{font-size:11px;text-transform:uppercase;color:var(--accent)}.lib-why-lvl p{margin:4px 0 0;font-size:13px;color:var(--g6)}
+.lib-why{margin-top:8px}.lib-why-lvl{background:var(--card2,var(--g1));border-radius:9px;padding:9px 11px;margin:6px 0}.lib-why-lvl b{font-size:11px;text-transform:uppercase;color:var(--accent-text)}.lib-why-lvl p{margin:4px 0 0;font-size:13px;color:var(--g6)}
 
 /* ═══ Sprint 8 — Premium Exercise Experience ═══ */
 #s-library .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 2px}
@@ -951,7 +972,7 @@ html[data-theme="dark"] .lib-imgbox .lib-skel{background:linear-gradient(100deg,
 .lib-it-name{font-size:13.5px;font-weight:700;color:var(--g6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lib-it-sub{font-size:11px;color:var(--g4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lib-it-fav{color:#f5a623;font-size:14px;flex:none}
-.lib-it-badge{font-size:10px;font-weight:800;color:var(--accent);flex:none}
+.lib-it-badge{font-size:10px;font-weight:800;color:var(--accent-text);flex:none}
 .lib-count{font-size:12px;color:var(--g4);margin:2px 0 10px}
 .lib-empty{color:var(--g4);text-align:center;padding:34px 0;font-size:13px}
 /* Ripple */
@@ -989,7 +1010,7 @@ html[data-theme="dark"] .lib-imgbox .lib-skel{background:linear-gradient(100deg,
 .lib-ul.warn li::marker{content:"⚠ "}
 .lib-ul.check{list-style:none;padding-left:0}.lib-ul.check li{position:relative;padding-left:24px}.lib-ul.check li::before{content:"✅";position:absolute;left:0;font-size:12px}
 .lib-steps{margin:0;padding-left:22px}.lib-steps li{font-size:13.5px;color:var(--g6);margin:8px 0;line-height:1.4;padding-left:4px}
-.lib-steps li::marker{color:var(--accent);font-weight:800}
+.lib-steps li::marker{color:var(--accent-text);font-weight:800}
 .lib-why-cards{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .lib-why-c{background:var(--g1);border-radius:12px;padding:11px 12px}
 .lib-why-c b{font-size:11.5px;font-weight:700;color:var(--g6);display:block;margin-bottom:5px}
@@ -1085,7 +1106,7 @@ html[data-theme="dark"] .lib-it-r{color:#ffce7a}
 /* Exercise Intelligence — score grid */
 .lib-scores{display:grid;grid-template-columns:1fr 1fr;gap:9px 14px}
 .lib-score-l{display:flex;justify-content:space-between;font-size:11.5px;font-weight:600;color:var(--g6);margin-bottom:4px}
-.lib-score-l b{color:var(--accent);font-weight:800}
+.lib-score-l b{color:var(--accent-text);font-weight:800}
 .lib-scorebar{height:6px;border-radius:5px;background:var(--g1);overflow:hidden}
 .lib-scorebar span{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,#00b894,#00cec9);animation:lib10grow .6s ease both}
 /* KV grid (statistieken) */
@@ -1116,7 +1137,7 @@ html[data-theme="dark"] .lib-dash-rating{color:#ffce7a}
 .lib-idx-v.lvl-hoog{color:#00795f}.lib-idx-v.lvl-mid{color:#b07d13}.lib-idx-v.lvl-laag{color:#c0432a}
 html[data-theme="dark"] .lib-idx-v.lvl-hoog{color:#4fe3c4}html[data-theme="dark"] .lib-idx-v.lvl-mid{color:#ffce7a}html[data-theme="dark"] .lib-idx-v.lvl-laag{color:#ff9b82}
 .lib-idx-why{font-size:11px;color:var(--g4);margin-top:3px;line-height:1.35}
-.lib-cmp-btn{width:100%;margin-top:16px;padding:12px;border-radius:13px;border:1px solid var(--accent);background:rgba(0,184,148,.08);color:var(--accent);font-size:13.5px;font-weight:800;font-family:var(--f);cursor:pointer;position:relative;overflow:hidden}
+.lib-cmp-btn{width:100%;margin-top:16px;padding:12px;border-radius:13px;border:1px solid var(--accent);background:rgba(0,184,148,.08);color:var(--accent-text);font-size:13.5px;font-weight:800;font-family:var(--f);cursor:pointer;position:relative;overflow:hidden}
 .lib-cmp-btn:active{transform:scale(.98)}
 /* ── Vergelijken ── */
 .lib-cmp-title{font-size:16px;font-weight:800;color:var(--g6);flex:1;text-align:center}
@@ -1137,7 +1158,7 @@ html[data-theme="dark"] .lib-cmp-r{color:#ffce7a}
 .lib-cmp-side:first-child{flex-direction:row}
 .lib-cmp-side:first-child .lib-scorebar span{background:#0984e3;float:right}
 .lib-cmp-side:last-child .lib-scorebar span{background:#6c5ce7}
-.lib-cmp-side.win b{color:var(--accent)}
+.lib-cmp-side.win b{color:var(--accent-text)}
 .lib-cmp-chg{margin-top:16px}
 .lib-cmp-swap{width:100%;padding:11px;border-radius:12px;border:1px solid var(--border,rgba(0,0,0,.1));background:var(--card);color:var(--g6);font-size:13px;font-weight:700;font-family:var(--f);cursor:pointer}
 .lib-cmp-pick-h{font-size:13px;color:var(--g6);margin:4px 0 12px}
@@ -1153,11 +1174,11 @@ html[data-theme="dark"] .lib-cmp-r{color:#ffce7a}
 .ev-set{border:1px solid var(--g2);border-radius:12px;padding:10px 12px;margin-bottom:10px}
 .ev-set-hd{font-size:12px;font-weight:800;margin-bottom:6px}
 .ev-uitkomst{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;margin-left:6px}
-.ev-uitkomst.increase{background:var(--g1);color:var(--accent)}
+.ev-uitkomst.increase{background:var(--g1);color:var(--accent-text)}
 .ev-uitkomst.deload{background:var(--g1);color:var(--y,#b8860b)}
 .ev-uitkomst.hold{background:var(--g1);color:var(--g4)}
 .ev-mis{font-size:11px;color:var(--g4);margin-top:4px}
-.lg-ev{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--accent);background:var(--g1);border:0;border-radius:999px;padding:3px 9px;margin-top:4px;cursor:pointer}
+.lg-ev{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--accent-text);background:var(--g1);border:0;border-radius:999px;padding:3px 9px;margin-top:4px;cursor:pointer}
 /* ── Video placeholder ── */
 .lib-video-ph{position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;background:linear-gradient(135deg,#0e2733,#15384a);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;overflow:hidden}
 .lib-video-ph::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,rgba(0,184,148,.18),transparent 60%)}
@@ -1220,7 +1241,7 @@ html[data-theme="dark"] .lib-concl-chip.good{color:#4fe3c4}html[data-theme="dark
 /* Coach compact chips (in accordion header) */
 .lib-cs-chip{white-space:nowrap}
 /* Meer analyses */
-.lib-more{width:100%;margin:6px 0 4px;padding:9px;border-radius:11px;border:1px dashed var(--border,rgba(0,0,0,.15));background:none;color:var(--accent);font-size:12.5px;font-weight:700;font-family:var(--f);cursor:pointer;min-height:40px}
+.lib-more{width:100%;margin:6px 0 4px;padding:9px;border-radius:11px;border:1px dashed var(--border,rgba(0,0,0,.15));background:none;color:var(--accent-text);font-size:12.5px;font-weight:700;font-family:var(--f);cursor:pointer;min-height:40px}
 #lib-idx-rest{animation:lib105acc .2s ease both}
 #lib-idx-rest[hidden]{display:none}
 /* Compare conclusie */
@@ -1562,7 +1583,7 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 .g2-topline{font-size:12px;color:var(--g4);font-weight:600;margin-top:8px;text-align:center;letter-spacing:.3px}
 .g2-trans{font-size:13px;line-height:1.5;color:var(--g4);text-align:center;margin-bottom:20px;max-width:34ch;margin-left:auto;margin-right:auto}
 .g2-stage{text-align:center;padding:14px 0 8px}
-.g2-slot{font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+.g2-slot{font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--accent-text);margin-bottom:14px}
 .g2-name{font-size:30px;font-weight:800;line-height:1.15;color:var(--dark);margin:0 0 6px;letter-spacing:-.5px}
 .g2-setline{font-size:13px;color:var(--g4);font-weight:600;margin-bottom:30px}
 .g2-nums{display:flex;justify-content:center;gap:14px;margin-bottom:14px}
@@ -1573,7 +1594,7 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 .g2-wt:active{transform:scale(.9)}
 .g2-primary{width:100%;background:var(--accent);color:#0B1D2A;border:none;border-radius:16px;padding:18px;font-size:16px;font-weight:800;font-family:var(--f);cursor:pointer;margin-top:20px;box-shadow:0 4px 16px rgba(0,184,148,.28);transition:transform .1s}
 .g2-primary:active{transform:scale(.98)}
-.g2-more{width:100%;background:transparent;color:var(--accent);border:none;padding:14px;font-size:13.5px;font-weight:700;font-family:var(--f);cursor:pointer;margin-top:6px}
+.g2-more{width:100%;background:transparent;color:var(--accent-text);border:none;padding:14px;font-size:13.5px;font-weight:700;font-family:var(--f);cursor:pointer;margin-top:6px}
 .g2-quit{width:100%;background:transparent;color:var(--g4);border:none;padding:10px;font-size:12.5px;font-weight:600;font-family:var(--f);cursor:pointer}
 .g2-detail{margin-top:6px;animation:g2fade .28s ease both}
 .g2-badges{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:12px 0}
@@ -1587,7 +1608,7 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 .g2-ask-q{font-size:22px;font-weight:800;color:var(--dark);text-align:center;margin-bottom:26px;letter-spacing:-.3px}
 .g2-feels{display:flex;flex-direction:column;gap:10px}
 .g2-advice{padding:34px 0 6px;text-align:center}
-.g2-advice .gw-advice-h{color:var(--accent)}
+.g2-advice .gw-advice-h{color:var(--accent-text)}
 .g2-advice p{font-size:16px;line-height:1.6;color:var(--dark);max-width:36ch;margin:10px auto 0}
 
 .g2-rest{text-align:center;padding:40px 0 8px}
@@ -1598,7 +1619,7 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 .g2-rest-next{font-size:13px;color:var(--g4);margin-bottom:20px}
 
 .g2-intro{text-align:center;padding:40px 6px 8px}
-.g2-intro-k{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:16px}
+.g2-intro-k{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--accent-text);margin-bottom:16px}
 .g2-intro-h{font-size:34px;font-weight:800;color:var(--dark);margin:0 0 8px;letter-spacing:-1px}
 .g2-intro-s{font-size:14px;color:var(--g4);margin-bottom:40px;line-height:1.5}
 .g2-intro-first{font-size:14px;color:var(--g6);line-height:1.7;margin-bottom:40px}
@@ -1626,7 +1647,7 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 .wb2-step-h small{font-weight:500;color:var(--g4)}
 .wb2-summary{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:0 2px}
 .wb2-sum-main{font-size:15px;font-weight:800;color:var(--dark)}
-.wb2-stars{font-size:14px;color:var(--accent);letter-spacing:1px}
+.wb2-stars{font-size:14px;color:var(--accent-text);letter-spacing:1px}
 .wb2-plan{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
 .wb2-row{background:var(--card);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
 .wb2-row-head{width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;padding:14px 15px;cursor:pointer;font-family:var(--f);text-align:left}
@@ -1761,7 +1782,7 @@ html[data-theme="dark"] .v43-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
 .v43-coach-ic{width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .v43-coach-ic svg{width:22px;height:22px;fill:#fff}
 .v43-coach-body{flex:1;min-width:0;display:flex;flex-direction:column}
-.v43-coach-body .k{font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent);margin-bottom:5px;display:block}
+.v43-coach-body .k{font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent-text);margin-bottom:5px;display:block}
 .v43-coach-body .t{font-size:14px;font-weight:600;color:var(--dark);line-height:1.4;display:block}
 .v43-coach-ar{color:var(--g4);font-size:22px;flex:0 0 auto;line-height:1}
 /* Vandaag gepland + Laatste training gedeelde kaart */
@@ -1774,7 +1795,7 @@ html[data-theme="dark"] .v43-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
 .v43-plan-meta{display:flex;gap:16px;margin-top:6px;font-size:12.5px;color:var(--g4);font-weight:600}
 .v43-plan-meta span{display:inline-flex;align-items:center;gap:5px}
 .v43-plan-meta svg{width:14px;height:14px;stroke:var(--g4);fill:none;stroke-width:2}
-.v43-prog-chip{display:inline-block;margin-top:9px;font-size:11.5px;font-weight:700;color:var(--accent);background:var(--v43-mint);border-radius:8px;padding:4px 10px}
+.v43-prog-chip{display:inline-block;margin-top:9px;font-size:11.5px;font-weight:700;color:var(--accent-text);background:var(--v43-mint);border-radius:8px;padding:4px 10px}
 .v43-start{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;border:0;border-radius:14px;padding:16px;font-weight:800;font-size:16px;background:var(--accent);color:#fff;margin-top:16px;cursor:pointer;box-shadow:0 10px 22px rgba(0,184,148,.32)}
 .v43-start svg{width:15px;height:15px;fill:#fff}
 /* v4.50.0 — hervat-kaart voor een gepauzeerde begeleide training. Zelfde vorm als de
@@ -1807,13 +1828,13 @@ html[data-theme="dark"] .v43-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
 /* Training-tab: snelle acties + mijn trainingen */
 .v43-tqa{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:4px}
 .v43-tqa .q{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:16px 8px;display:flex;flex-direction:column;align-items:center;gap:9px;cursor:pointer;text-align:center;border:0;min-width:0}
-.v43-tqa .q .ic{width:42px;height:42px;border-radius:12px;background:var(--v43-mint);color:var(--accent);display:flex;align-items:center;justify-content:center}
+.v43-tqa .q .ic{width:42px;height:42px;border-radius:12px;background:var(--v43-mint);color:var(--accent-text);display:flex;align-items:center;justify-content:center}
 .v43-tqa .q .ic svg{width:21px;height:21px;stroke:var(--accent);fill:none;stroke-width:2}
 .v43-tqa .q .t{font-size:12px;font-weight:800;color:var(--dark);line-height:1.15}
 .v43-tmt{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:2px 16px;margin-top:4px}
 .v43-tmt .row{display:flex;align-items:center;gap:13px;padding:15px 0;border-bottom:1px solid var(--g2);cursor:pointer;width:100%;background:0;border-left:0;border-right:0;border-top:0;text-align:left}
 .v43-tmt .row:last-child{border-bottom:0}
-.v43-tmt .ic{width:40px;height:40px;border-radius:12px;background:var(--v43-mint);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.v43-tmt .ic{width:40px;height:40px;border-radius:12px;background:var(--v43-mint);color:var(--accent-text);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .v43-tmt .ic svg{width:20px;height:20px;stroke:var(--accent);fill:none;stroke-width:2}
 .v43-tmt .b{flex:1;min-width:0;display:flex;flex-direction:column}
 .v43-tmt .b .t{font-size:14.5px;font-weight:800;color:var(--dark);display:block}
@@ -1876,7 +1897,7 @@ html[data-theme="dark"]{--v45-slate:#9db4c0}
 .v43-df-circle{width:38px;height:38px;border-radius:50%;border:2.5px solid;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:800;margin-bottom:10px;background:rgba(0,184,148,.06)}
 html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 /* Hero — inline "Waarom vandaag?" */
-.v43-why{display:flex;align-items:center;gap:7px;border-top:1px solid var(--g2);margin-top:12px;padding-top:11px;font-size:12.5px;font-weight:700;color:var(--accent)}
+.v43-why{display:flex;align-items:center;gap:7px;border-top:1px solid var(--g2);margin-top:12px;padding-top:11px;font-size:12.5px;font-weight:700;color:var(--accent-text)}
 .v43-why-chev{display:inline-block;transition:transform .22s ease;font-size:12px}
 .v43-why.open .v43-why-chev{transform:rotate(180deg)}
 .v43-why-body{font-size:12.5px;color:var(--g4);line-height:1.45;margin-top:11px;border-top:1px dashed var(--g2);padding-top:11px}
@@ -1920,7 +1941,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .v47-bigc{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:15px;border:0;width:100%;text-align:left;cursor:pointer;transition:box-shadow .22s ease,transform .1s ease}
 .v47-bigc:hover{box-shadow:0 14px 30px rgba(11,29,42,.14)}
 .v47-bigc:active{transform:scale(.994)}
-.v47-bigc .ic{width:46px;height:46px;border-radius:12px;background:var(--v43-mint);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.v47-bigc .ic{width:46px;height:46px;border-radius:12px;background:var(--v43-mint);color:var(--accent-text);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .v47-bigc .ic svg{width:22px;height:22px;stroke:var(--accent);fill:none;stroke-width:2}
 .v47-bigc .b{flex:1;min-width:0}
 .v47-bigc .b .t{display:block;font-size:15.5px;font-weight:800;color:var(--dark);line-height:1.15}
@@ -1949,7 +1970,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 /* Overzicht mini-cards (echte tellingen, geen verzonnen duur/calorieën) */
 .v47d-ov{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
 .v47d-ovc{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:12px 13px;display:flex;align-items:center;gap:10px}
-.v47d-ovc .ic{width:34px;height:34px;border-radius:10px;background:var(--v43-mint);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.v47d-ovc .ic{width:34px;height:34px;border-radius:10px;background:var(--v43-mint);color:var(--accent-text);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .v47d-ovc .ic svg{width:18px;height:18px;stroke:var(--accent);fill:none;stroke-width:2}
 .v47d-ovc .v{font-size:15px;font-weight:800;color:var(--dark);line-height:1}
 .v47d-ovc .k{font-size:10px;color:var(--g4);font-weight:600;margin-top:3px}
@@ -1961,7 +1982,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .v47d-ex-b{flex:1;min-width:0}
 .v47d-ex-nm{font-size:14px;font-weight:800;color:var(--dark);line-height:1.15}
 .v47d-ex-mus{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
-.v47d-ex-mus .tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;background:var(--v43-mint);color:var(--accent)}
+.v47d-ex-mus .tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;background:var(--v43-mint);color:var(--accent-text)}
 .v47d-ex-meta{font-size:12px;color:var(--g4);font-weight:700;text-align:right;flex:0 0 auto}
 .v47d-ex-meta b{color:var(--dark);font-size:13.5px}
 .v47d-empty{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:16px;text-align:center;color:var(--g4);font-size:12.5px;font-weight:600;margin-bottom:12px}
@@ -1988,7 +2009,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .v48-wk{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:12px 13px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;width:100%;text-align:left;border:0;transition:box-shadow .22s ease,transform .1s ease}
 .v48-wk:active{transform:scale(.994)}
 .v48-wk.next{outline:2px solid var(--accent)}
-.v48-wk-d{width:40px;height:40px;border-radius:11px;background:var(--v43-mint);color:var(--accent);display:flex;flex-direction:column;align-items:center;justify-content:center;flex:0 0 auto;line-height:1}
+.v48-wk-d{width:40px;height:40px;border-radius:11px;background:var(--v43-mint);color:var(--accent-text);display:flex;flex-direction:column;align-items:center;justify-content:center;flex:0 0 auto;line-height:1}
 .v48-wk-d small{font-size:8px;font-weight:800;letter-spacing:.5px}
 .v48-wk-d b{font-size:15px;font-weight:800}
 .v48-wk.deload .v48-wk-d{background:rgba(200,168,75,.18);color:#B08900}
@@ -1996,14 +2017,14 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .v48-wk-nm{font-size:14px;font-weight:800;color:var(--dark);line-height:1.1}
 .v48-wk-sub{font-size:11.5px;color:var(--g4);margin-top:2px}
 .v48-wk-st{font-size:10px;font-weight:800;padding:4px 9px;border-radius:8px;flex:0 0 auto;white-space:nowrap}
-.v48-wk-st.done{background:var(--v43-mint);color:var(--accent)}
+.v48-wk-st.done{background:var(--v43-mint);color:var(--accent-text)}
 .v48-wk-st.next{background:var(--accent);color:#fff}
 .v48-wk-st.todo{background:var(--g1);color:var(--g4)}
 .v48-wk-st.deload{background:rgba(200,168,75,.18);color:#B08900}
 .v48-regen{width:100%;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:7px}
 .v48-regen svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
 .v48-pempty{text-align:center;padding:34px 16px}
-.v48-pempty .ic{width:64px;height:64px;border-radius:18px;background:var(--v43-mint);color:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.v48-pempty .ic{width:64px;height:64px;border-radius:18px;background:var(--v43-mint);color:var(--accent-text);display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
 .v48-pempty .ic svg{width:30px;height:30px;stroke:var(--accent);fill:none;stroke-width:2}
 .v48-pempty .t{font-size:16px;font-weight:800;color:var(--dark)}
 .v48-pempty .s{font-size:12.5px;color:var(--g4);font-weight:600;margin-top:6px;line-height:1.4;max-width:28ch;margin:6px auto 0}
@@ -2013,7 +2034,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
    (gepland/deload). Additief; leest bestaande tabellen, geen nieuwe data.
    ══════════════════════════════════════════════════════════════════ */
 .v49-mnav{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:10px 12px;margin-bottom:11px}
-.v49-mnav button{background:none;border:0;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--accent)}
+.v49-mnav button{background:none;border:0;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--accent-text)}
 .v49-mnav button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2}
 .v49-mnav .t{font-size:14px;font-weight:800;color:var(--dark)}
 .v49-wd{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:6px}
@@ -2038,7 +2059,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .v49-ev{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:12px 13px;margin-bottom:8px;display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;cursor:pointer;transition:box-shadow .22s ease,transform .1s ease}
 .v49-ev:active{transform:scale(.994)}
 .v49-ev.next{outline:2px solid var(--accent)}
-.v49-ev .ic{width:40px;height:40px;border-radius:11px;background:var(--v43-mint);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.v49-ev .ic{width:40px;height:40px;border-radius:11px;background:var(--v43-mint);color:var(--accent-text);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .v49-ev.deload .ic{background:rgba(225,161,0,.16);color:#B08900}
 .v49-ev .ic svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2}
 .v49-ev .b{flex:1;min-width:0}
@@ -2066,7 +2087,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .wb4-cta{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:14px;padding:15px;font-weight:800;font-size:15px;background:var(--accent);color:#fff;margin-top:13px;cursor:pointer;box-shadow:0 10px 22px rgba(0,184,148,.32)}
 .wb4-cta svg{width:16px;height:16px;fill:#fff;stroke:none}
 .wb4-set{display:flex;align-items:center;gap:11px;width:100%;background:var(--card);border:0;border-radius:14px;box-shadow:var(--shadow);padding:12px 14px;margin-bottom:12px;text-align:left;cursor:pointer}
-.wb4-set .ic{width:34px;height:34px;border-radius:10px;background:var(--v43-mint);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.wb4-set .ic{width:34px;height:34px;border-radius:10px;background:var(--v43-mint);color:var(--accent-text);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .wb4-set .ic svg{width:18px;height:18px;stroke:var(--accent);fill:none;stroke-width:2}
 .wb4-set .b{flex:1;min-width:0}
 .wb4-set .k{display:block;font-size:9.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--g4)}
@@ -2087,10 +2108,10 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .wb4-ex-th{width:42px;height:42px;border-radius:11px;background:#0E3B4A;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .wb4-ex-th svg{width:20px;height:20px;stroke:var(--accent);fill:none;stroke-width:2}
 .wb4-ex-b{flex:1;min-width:0}
-.wb4-ex-slot{display:block;font-size:9px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
+.wb4-ex-slot{display:block;font-size:9px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--accent-text)}
 .wb4-ex-nm{display:block;font-size:14px;font-weight:800;color:var(--dark);margin-top:1px;line-height:1.15}
 .wb4-ex-tags{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
-.wb4-ex-tags .tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;background:var(--v43-mint);color:var(--accent)}
+.wb4-ex-tags .tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;background:var(--v43-mint);color:var(--accent-text)}
 .wb4-ex-sr{display:flex;align-items:center;gap:8px;flex:0 0 auto;color:var(--dark);font-weight:700;font-size:13.5px}
 .wb4-ex-ar{color:var(--g4);font-size:12px}
 .wb4-exb{padding:0 13px 13px;border-top:1px dashed var(--g2);margin-top:2px;padding-top:11px}
@@ -2128,7 +2149,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-library .lib5-card .lib-rib{top:8px;left:8px;background:var(--accent);color:#04231c;font-size:9px;font-weight:800;border-radius:7px;padding:3px 8px;letter-spacing:.2px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 #s-library .lib5-card .lib-card-b{padding:9px 11px 12px}
 #s-library .lib5-card .lib-card-name{font-size:13.5px;font-weight:800;color:var(--dark);min-height:0}
-#s-library .lib5-card .lib5-tag{display:block;font-size:10.5px;font-weight:700;color:var(--accent);margin-top:4px}
+#s-library .lib5-card .lib5-tag{display:block;font-size:10.5px;font-weight:700;color:var(--accent-text);margin-top:4px}
 #s-library .lib5-card .lib-card-meta{display:block;font-size:10.5px;color:var(--g4);font-weight:600;margin-top:7px}
 #s-library .lib5-card .lib5-rt{color:var(--dark);font-weight:800}
 /* Lijstrijen premium */
@@ -2176,10 +2197,10 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 /* Uitvoering-stappen: teal genummerd */
 #s-library .lib-steps{counter-reset:step;list-style:none;display:flex;flex-direction:column;gap:11px;padding:0}
 #s-library .lib-steps li{counter-increment:step;display:flex;gap:11px;align-items:flex-start;font-size:13.5px;color:var(--dark);font-weight:500;line-height:1.35}
-#s-library .lib-steps li::before{content:counter(step);width:24px;height:24px;border-radius:8px;background:var(--v43-mint);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:0 0 auto}
+#s-library .lib-steps li::before{content:counter(step);width:24px;height:24px;border-radius:8px;background:var(--v43-mint);color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:0 0 auto}
 #s-library .lib-sub-h{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--y);margin:15px 0 8px}
 /* Vergelijk-knop */
-#s-library .lib5d-cmp{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:13px;padding:14px;font-weight:800;font-size:13.5px;background:var(--v43-mint);color:var(--accent);margin:4px 0 8px;cursor:pointer}
+#s-library .lib5d-cmp{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:13px;padding:14px;font-weight:800;font-size:13.5px;background:var(--v43-mint);color:var(--accent-text);margin:4px 0 8px;cursor:pointer}
 #s-library .lib5d-cmp svg{width:16px;height:16px;stroke:var(--accent);fill:none}
 /* Primaire CTA "Toevoegen aan training" — solide accent, past bij de rest (was: losse paarse reuze-plus). */
 #s-library .lib5d-add{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:13px;padding:14px;font-weight:800;font-size:13.5px;font-family:var(--f);background:var(--accent);color:#04231c;margin:6px 0 8px;cursor:pointer;min-height:44px}
@@ -2197,7 +2218,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-guided .g2-trans{background:var(--v43-mint);color:var(--g6);border-radius:13px;padding:11px 14px;font-size:12px;font-weight:500;line-height:1.4;margin-bottom:12px}
 /* Live-set hero (donker, gefocust) */
 #s-guided .g2-stage{background:#0E3B4A;border-radius:22px;padding:20px 18px;box-shadow:0 16px 34px rgba(0,0,0,.30);text-align:left}
-#s-guided .g2-stage .g2-slot{color:var(--accent);margin-bottom:0}
+#s-guided .g2-stage .g2-slot{color:var(--accent-text);margin-bottom:0}
 #s-guided .g2-stage .g2-name{font-size:24px;font-weight:800;color:#fff;line-height:1.08;margin-top:8px;letter-spacing:-.4px;text-align:left}
 #s-guided .g2-stage .g2-setline{font-size:12.5px;color:rgba(230,240,243,.6);font-weight:700;margin-top:7px}
 #s-guided .g2-nums{display:flex;gap:10px;margin-top:16px}
@@ -2208,11 +2229,11 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
    een set) en was 32x28px: onder de WCAG-ondergrens, met zweethanden op een telefoon. */
 #s-guided .g2-wt{width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.14);color:#fff;border:0;font-size:18px;font-weight:700;line-height:1}
 #s-guided .g2-stage .g2-primary{width:100%;background:var(--accent);color:#fff;border:0;border-radius:15px;padding:16px;font-size:16px;font-weight:800;margin-top:16px;box-shadow:0 10px 22px rgba(0,196,143,.32)}
-#s-guided .g2-more{display:block;width:100%;background:0;border:0;color:var(--accent);font-weight:800;font-size:13.5px;padding:12px;margin-top:14px;cursor:pointer;text-align:center}
+#s-guided .g2-more{display:block;width:100%;background:0;border:0;color:var(--accent-text);font-weight:800;font-size:13.5px;padding:12px;margin-top:14px;cursor:pointer;text-align:center}
 #s-guided .g2-quit{display:block;width:100%;background:0;border:0;color:var(--g4);font-weight:700;font-size:12.5px;padding:6px;cursor:pointer;text-align:center}
 /* Rust (donkere hero, grote timer) */
 #s-guided .g2-rest{background:#0E3B4A;border-radius:22px;padding:22px 18px;box-shadow:0 16px 34px rgba(0,0,0,.30);text-align:center}
-#s-guided .g2-rest-lbl{font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--accent)}
+#s-guided .g2-rest-lbl{font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--accent-text)}
 #s-guided .g2-rest-num{font-size:58px;font-weight:800;color:#fff;letter-spacing:1px;margin:6px 0 2px;font-variant-numeric:tabular-nums}
 #s-guided .g2-rest-adj{display:flex;gap:10px;justify-content:center;margin:8px 0 4px}
 #s-guided .g2-rest-adj .g2-wt{width:auto;height:auto;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:800}
@@ -2225,10 +2246,10 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-guided .g2-feels{display:flex;flex-direction:column;gap:9px}
 #s-guided .gw-feel{display:flex;align-items:center;gap:12px;background:var(--card);border:1.5px solid var(--g2);border-radius:14px;padding:15px 16px;font-size:14.5px;font-weight:700;color:var(--dark);box-shadow:var(--shadow)}
 #s-guided .gw-feel:hover{border-color:var(--accent)}
-#s-guided .gw-feel-o{font-size:17px;color:var(--accent)}
+#s-guided .gw-feel-o{font-size:17px;color:var(--accent-text)}
 /* Coachadvies / intro / eind — premium kaarten */
 #s-guided .g2-advice{background:var(--card);border-radius:18px;box-shadow:var(--shadow);border-left:4px solid var(--accent);padding:16px;margin-bottom:4px}
-#s-guided .g2-advice .gw-advice-h{font-size:10.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+#s-guided .g2-advice .gw-advice-h{font-size:10.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--accent-text);margin-bottom:6px}
 #s-guided .g2-advice p{font-size:14px;color:var(--dark);line-height:1.45;font-weight:500}
 #s-guided .g2-advice+.g2-primary,#s-guided .g2-intro .g2-primary,#s-guided .g2-done .g2-primary{width:100%;background:var(--accent);color:#fff;border:0;border-radius:15px;padding:16px;font-size:15px;font-weight:800;margin-top:14px;box-shadow:0 10px 22px rgba(0,196,143,.32)}
 /* ══════════════════════════════════════════════════════════════════
@@ -2242,7 +2263,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #wb-scroll .wb4-poster img{width:100%;height:100%;object-fit:cover;display:block}
 #wb-scroll .wb4-poster:not(.has){background:#0E3B4A;display:flex;align-items:center;justify-content:center}
 #wb-scroll .wb4-poster:not(.has) svg{width:26px;height:26px;stroke:var(--accent);fill:none;stroke-width:2}
-#wb-scroll .wb4-ai{display:flex;gap:5px;align-items:flex-start;margin-top:6px;font-size:10.5px;color:var(--accent);font-weight:600;line-height:1.3}
+#wb-scroll .wb4-ai{display:flex;gap:5px;align-items:flex-start;margin-top:6px;font-size:10.5px;color:var(--accent-text);font-weight:600;line-height:1.3}
 #wb-scroll .wb4-ai svg{width:12px;height:12px;fill:var(--accent);flex:0 0 auto;margin-top:1px}
 #wb-scroll .wb4-mini{display:flex;gap:11px;align-items:flex-start;margin-bottom:10px}
 #wb-scroll .wb4-mini-th{width:56px;height:56px;border-radius:12px;overflow:hidden;flex:0 0 auto;background:#0E3B4A;display:flex;align-items:center;justify-content:center}
@@ -2255,7 +2276,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-guided .gw-ih-poster.has{background:var(--g1)}
 #s-guided .gw-ih-poster img{width:100%;height:100%;object-fit:cover;display:block}
 #s-guided .gw-ih-poster:not(.has) svg{width:56px;height:56px;stroke:var(--accent);fill:none;stroke-width:2;opacity:.85}
-#s-guided .gw-ih-eye{font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--accent);padding:16px 18px 0}
+#s-guided .gw-ih-eye{font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--accent-text);padding:16px 18px 0}
 #s-guided .gw-ih-h{font-size:27px;font-weight:800;color:#fff;padding:0 18px;margin-top:4px;letter-spacing:-.5px}
 #s-guided .gw-ih-say{display:flex;gap:10px;align-items:flex-start;margin:13px 18px 0;background:rgba(255,255,255,.06);border-radius:13px;padding:12px}
 #s-guided .gw-ih-say-i{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
@@ -2274,7 +2295,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
    Presentatie-only; echte data. Onderscheid Schema vs Workouts.
    ══════════════════════════════════════════════════════════════════ */
 #s-train-schema .sc-intro{display:flex;gap:10px;align-items:flex-start;background:var(--v43-mint);border-radius:14px;padding:12px 13px;margin-bottom:14px}
-#s-train-schema .sc-intro-i{flex:0 0 auto;color:var(--accent)}#s-train-schema .sc-intro-i svg{width:18px;height:18px;stroke:var(--accent)}
+#s-train-schema .sc-intro-i{flex:0 0 auto;color:var(--accent-text)}#s-train-schema .sc-intro-i svg{width:18px;height:18px;stroke:var(--accent)}
 #s-train-schema .sc-intro p{font-size:12px;color:var(--dark);line-height:1.45;font-weight:500}#s-train-schema .sc-intro b{font-weight:800}
 #s-train-schema .sc-card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:16px;margin-bottom:11px}
 #s-train-schema .sc-card.next{border-left:4px solid var(--accent)}
@@ -2283,7 +2304,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-train-schema .sc-st{font-size:10px;font-weight:800;padding:4px 10px;border-radius:8px;background:var(--g1);color:var(--g4);white-space:nowrap}
 #s-train-schema .sc-st.next{background:var(--accent);color:#04231c}
 #s-train-schema .sc-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
-#s-train-schema .sc-tag{font-size:10px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--v43-mint);color:var(--accent)}
+#s-train-schema .sc-tag{font-size:10px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--v43-mint);color:var(--accent-text)}
 #s-train-schema .sc-meta{display:flex;gap:16px;margin-top:12px;font-size:11.5px;color:var(--g4);font-weight:600;flex-wrap:wrap}
 #s-train-schema .sc-meta span{display:inline-flex;align-items:center;gap:5px}#s-train-schema .sc-meta svg{width:13px;height:13px;stroke:var(--g4);fill:none;stroke-width:2}
 #s-train-schema .sc-actions{display:flex;gap:8px;margin-top:14px}
@@ -2295,7 +2316,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-train-schema .sc-empty{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:20px;text-align:center;color:var(--g4);font-size:13px;font-weight:600;margin-bottom:11px}
 /* premium "Nieuwe vaste training"-CTA (bestaande knop restylen) */
 #s-train-schema .scroll>.btn-o{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--card)!important;border:1.5px dashed var(--g2)!important;border-radius:14px!important;padding:15px!important;font-weight:800!important;font-size:13.5px!important;color:var(--dark)!important;box-shadow:none!important}
-#s-train-schema .sc-sub{font-size:11.5px;color:var(--accent);font-weight:700;margin-top:6px}
+#s-train-schema .sc-sub{font-size:11.5px;color:var(--accent-text);font-weight:700;margin-top:6px}
 /* ══════════════════════════════════════════════════════════════════
    v4.16.0 — Sprint 4.8 Fase C: Nieuwe-vaste-training-velden (P6) +
    Oefening toevoegen als Explorer-secties (P7). Presentatie-only.
@@ -2307,7 +2328,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #m-vt-naam .vt-chip{font-size:12px;font-weight:700;padding:9px 14px;border-radius:11px;background:var(--g1);color:var(--dark);border:0;cursor:pointer}
 #m-vt-naam .vt-chip.on{background:var(--accent);color:#04231c}
 #m-vt-naam .vt-note{display:flex;gap:9px;align-items:flex-start;background:var(--v43-mint);border-radius:12px;padding:11px 12px;font-size:11.5px;color:var(--dark);line-height:1.4;font-weight:500;margin-top:16px}
-#m-vt-naam .vt-note-i{flex:0 0 auto;color:var(--accent)}#m-vt-naam .vt-note-i svg{width:16px;height:16px;stroke:var(--accent)}
+#m-vt-naam .vt-note-i{flex:0 0 auto;color:var(--accent-text)}#m-vt-naam .vt-note-i svg{width:16px;height:16px;stroke:var(--accent)}
 /* P7 — oefening toevoegen: Explorer-secties */
 #m-add-ex .oa-seclbl{font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--g4);margin:14px 0 9px}
 #m-add-ex .oa-row{display:flex;gap:11px;overflow-x:auto;padding:0 0 6px;margin:0 -4px;scroll-snap-type:x proximity}
@@ -2321,7 +2342,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #m-add-ex .oa-add{position:absolute;bottom:7px;right:7px;width:28px;height:28px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,196,143,.4)}
 #m-add-ex .oa-add svg{width:16px;height:16px;stroke:#fff}
 #m-add-ex .oa-nm{display:block;font-size:12.5px;font-weight:800;color:var(--dark);line-height:1.15}
-#m-add-ex .oa-mus{display:block;font-size:10.5px;color:var(--accent);font-weight:700;margin-top:3px}
+#m-add-ex .oa-mus{display:block;font-size:10.5px;color:var(--accent-text);font-weight:700;margin-top:3px}
 #m-add-ex .oa-empty{color:var(--g4);font-size:13px;font-weight:600;padding:20px 0;text-align:center}
 /* ══════════════════════════════════════════════════════════════════
    v4.17.0 — Sprint 4.8 Fase D: Logboek premium kaarten (P10) +
@@ -2340,7 +2361,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-hist .lg-day-hd{display:flex;align-items:flex-start;padding:14px;cursor:pointer}
 #s-hist .lg-day-date{font-size:15px;font-weight:800;color:var(--dark)}
 #s-hist .lg-day-meta{font-size:11.5px;color:var(--g4);font-weight:600;margin-top:2px}
-#s-hist .lg-badge{font-size:10px;font-weight:800;background:var(--v43-mint);color:var(--accent);border-radius:8px;padding:5px 11px;white-space:nowrap}
+#s-hist .lg-badge{font-size:10px;font-weight:800;background:var(--v43-mint);color:var(--accent-text);border-radius:8px;padding:5px 11px;white-space:nowrap}
 #s-hist .hist-day-body{padding:0 14px 12px}
 #s-hist .lg-ex{display:flex;gap:11px;align-items:center;padding:10px 0;border-top:1px solid var(--g2);cursor:pointer;text-align:left}
 #s-hist .lg-ex-th{width:42px;height:42px;border-radius:11px;background:#0E3B4A;display:flex;align-items:center;justify-content:center;flex:0 0 auto;overflow:hidden}
@@ -2350,14 +2371,14 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-hist .lg-ex-nm{font-size:14px;font-weight:800;color:var(--dark)}
 #s-hist .lg-ex-did{font-size:12px;color:var(--g4);font-weight:600;margin-top:2px}
 #s-hist .lg-ex-did strong{color:var(--dark)}
-#s-hist .lg-ex-prog{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;color:var(--accent);font-weight:800;margin-top:4px}
+#s-hist .lg-ex-prog{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;color:var(--accent-text);font-weight:800;margin-top:4px}
 #s-hist .lg-ex-prog svg{width:12px;height:12px;stroke:var(--accent)}
 #s-hist .lg-ex-a{display:flex;gap:5px;align-items:center;flex:0 0 auto}
 #s-hist .lg-ex-i{color:var(--g4);display:flex}#s-hist .lg-ex-i svg{width:16px;height:16px;stroke:var(--g4)}
 #s-hist .lg-ex-a .del{width:32px;height:32px;border-radius:9px;background:var(--g1);border:0;color:var(--red);display:flex;align-items:center;justify-content:center;cursor:pointer}
 #s-hist .lg-ex-a .del svg{width:16px;height:16px;stroke:var(--red)}
 #s-hist .lg-day-act{display:flex;gap:8px;border-top:1px dashed var(--g2);margin-top:6px;padding-top:11px}
-#s-hist .lg-day-act button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:800;color:var(--accent);background:var(--v43-mint);border:0;border-radius:11px;padding:11px;cursor:pointer}
+#s-hist .lg-day-act button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:800;color:var(--accent-text);background:var(--v43-mint);border:0;border-radius:11px;padding:11px;cursor:pointer}
 #s-hist .lg-day-act button svg{width:14px;height:14px;stroke:var(--accent)}
 
 /* ══════════════════════════════════════════════════════════════════
@@ -2378,7 +2399,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .los-coach .h{display:flex;align-items:center;gap:9px;margin-bottom:9px}
 .los-coach .h .ic{width:28px;height:28px;border-radius:50%;background:var(--accent);flex:0 0 auto;display:flex;align-items:center;justify-content:center}
 .los-coach .h .ic svg{width:15px;height:15px;fill:#fff}
-.los-coach .h .t{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.los-coach .h .t{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent-text)}
 .los-coach ul{list-style:none;display:flex;flex-direction:column;gap:8px;margin:0;padding:0}
 .los-coach li{display:flex;gap:9px;align-items:flex-start;font-size:12px;color:var(--dark);font-weight:600;line-height:1.35}
 .los-coach li .ck{width:17px;height:17px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;margin-top:1px}
@@ -2427,7 +2448,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-profiel .pf-card{padding:0;overflow:hidden}
 #s-profiel .pf-row{display:flex;align-items:center;gap:13px;padding:13px 14px;border-top:1px solid var(--g2);width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0;cursor:pointer;font-family:var(--f)}
 #s-profiel .pf-card>.pf-row:first-child{border-top:0}
-#s-profiel .pf-ic{width:34px;height:34px;border-radius:10px;background:var(--v43-mint);display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:var(--accent)}
+#s-profiel .pf-ic{width:34px;height:34px;border-radius:10px;background:var(--v43-mint);display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:var(--accent-text)}
 #s-profiel .pf-ic svg{width:18px;height:18px}
 #s-profiel .pf-tx{flex:1;min-width:0}
 #s-profiel .pf-lb{font-size:14px;font-weight:700;color:var(--dark)}
@@ -2438,7 +2459,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
 /* Sprint 5.1 — Mijn trainingen: schema-kaartstijl hergebruikt onder #s-train-mine */
 #s-train-mine .sc-intro{display:flex;gap:10px;align-items:flex-start;background:var(--v43-mint);border-radius:14px;padding:12px 13px;margin-bottom:14px}
-#s-train-mine .sc-intro-i{flex:0 0 auto;color:var(--accent)}#s-train-schema .sc-intro-i svg{width:18px;height:18px;stroke:var(--accent)}
+#s-train-mine .sc-intro-i{flex:0 0 auto;color:var(--accent-text)}#s-train-schema .sc-intro-i svg{width:18px;height:18px;stroke:var(--accent)}
 #s-train-mine .sc-intro p{font-size:12px;color:var(--dark);line-height:1.45;font-weight:500}#s-train-schema .sc-intro b{font-weight:800}
 #s-train-mine .sc-card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:16px;margin-bottom:11px}
 #s-train-mine .sc-card.next{border-left:4px solid var(--accent)}
@@ -2447,7 +2468,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-train-mine .sc-st{font-size:10px;font-weight:800;padding:4px 10px;border-radius:8px;background:var(--g1);color:var(--g4);white-space:nowrap}
 #s-train-mine .sc-st.next{background:var(--accent);color:#04231c}
 #s-train-mine .sc-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
-#s-train-mine .sc-tag{font-size:10px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--v43-mint);color:var(--accent)}
+#s-train-mine .sc-tag{font-size:10px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--v43-mint);color:var(--accent-text)}
 #s-train-mine .sc-meta{display:flex;gap:16px;margin-top:12px;font-size:11.5px;color:var(--g4);font-weight:600;flex-wrap:wrap}
 #s-train-mine .sc-meta span{display:inline-flex;align-items:center;gap:5px}#s-train-schema .sc-meta svg{width:13px;height:13px;stroke:var(--g4);fill:none;stroke-width:2}
 #s-train-mine .sc-actions{display:flex;gap:8px;margin-top:14px}
@@ -2458,7 +2479,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-train-mine .sc-ic.del{color:var(--red)}#s-train-schema .sc-ic.del svg{stroke:var(--red)}
 #s-train-mine .sc-empty{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:20px;text-align:center;color:var(--g4);font-size:13px;font-weight:600;margin-bottom:11px}
 #s-train-mine .scroll>.btn-o{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--card)!important;border:1.5px dashed var(--g2)!important;border-radius:14px!important;padding:15px!important;font-weight:800!important;font-size:13.5px!important;color:var(--dark)!important;box-shadow:none!important}
-#s-train-mine .sc-sub{font-size:11.5px;color:var(--accent);font-weight:700;margin-top:6px}
+#s-train-mine .sc-sub{font-size:11.5px;color:var(--accent-text);font-weight:700;margin-top:6px}
 #s-train-mine .mine-seg{display:flex;background:var(--g1);border-radius:12px;padding:4px;margin-bottom:14px}
 #s-train-mine .mine-seg-opt{flex:1;text-align:center;font-size:13px;font-weight:800;color:var(--g4);padding:9px;border-radius:9px;background:none;border:0;cursor:pointer;font-family:var(--f)}
 #s-train-mine .mine-seg-opt.on{background:var(--card);color:var(--dark);box-shadow:var(--shadow)}
@@ -2536,7 +2557,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-src{display:inline-block;font-size:8px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;padding:1px 5px;border-radius:6px;margin-top:4px}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .lich-src{background:rgba(255,255,255,.12);color:rgba(230,240,243,.72)}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-src.calc{background:var(--g1);color:var(--g4)}
-:is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-src.meas{background:var(--v43-mint);color:var(--accent)}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-src.meas{background:var(--v43-mint);color:var(--accent-text)}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-strip{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);border:0;border-radius:16px;box-shadow:var(--shadow);padding:13px 14px;font-family:var(--f);cursor:pointer;margin-top:10px}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-strip.todo{background:var(--accent2);box-shadow:0 12px 26px rgba(0,0,0,.24)}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-strip .ci{width:34px;height:34px;border-radius:11px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--g1)}
@@ -2554,7 +2575,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-sum .cap{font-size:11.5px;color:var(--g4);font-weight:600}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-sum .note{font-size:12px;color:var(--dark);font-weight:600;margin-top:8px;line-height:1.45}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-sum .foot{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--g2);margin-top:11px;padding-top:10px}
-:is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-sum .foot .lk{background:none;border:0;padding:8px 0;margin:-8px 0;min-height:44px;display:inline-flex;align-items:center;font-family:var(--f);font-size:12.5px;font-weight:800;color:var(--accent);cursor:pointer;text-align:right}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-sum .foot .lk{background:none;border:0;padding:8px 0;margin:-8px 0;min-height:44px;display:inline-flex;align-items:center;font-family:var(--f);font-size:12.5px;font-weight:800;color:var(--accent-text);cursor:pointer;text-align:right}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-mstrip{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-metric{position:relative;text-align:left;background:var(--card);border:0;border-radius:16px;box-shadow:var(--shadow);padding:12px 13px;font-family:var(--f);cursor:pointer;min-height:44px}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-metric .k{font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--g4)}
@@ -2602,7 +2623,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-mrow .st{font-size:10px;font-weight:800;width:66px;flex:0 0 auto;text-align:right}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-anatfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--g2);margin-top:8px;padding-top:8px}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-anatfoot .t{font-size:11px;color:var(--g4);font-weight:600;line-height:1.35}
-:is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-anatfoot .lk{background:none;border:0;padding:8px 0;margin:-8px 0;min-height:44px;display:inline-flex;align-items:center;font-family:var(--f);font-size:12px;font-weight:800;color:var(--accent);cursor:pointer;text-align:right}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-anatfoot .lk{background:none;border:0;padding:8px 0;margin:-8px 0;min-height:44px;display:inline-flex;align-items:center;font-family:var(--f);font-size:12px;font-weight:800;color:var(--accent-text);cursor:pointer;text-align:right}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-lblsub{font-weight:700;letter-spacing:0;text-transform:none;color:var(--g4)}
 /* Trendkaart: waarde, richting, sparkline, datadekking, status. */
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-metric .dl{font-size:10.5px;font-weight:800;margin-top:1px}
@@ -2696,7 +2717,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 /* F0.8N — Preview-hero licht (mock-up): witte kaart, donkere tekst, groene badge, teal CTA */
 .tpv2-hero{background:var(--card,#fff);color:var(--dark);border:1px solid var(--g1);border-radius:18px;padding:16px 16px 18px;margin-bottom:14px;box-shadow:0 3px 12px rgba(0,0,0,.05)}
 .tpv2-hero-nm{font-size:22px;font-weight:800;letter-spacing:-.3px;color:var(--dark);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.tpv2-chip{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;background:var(--v43-mint,#e9f7f1);color:var(--accent);padding:3px 9px;border-radius:999px}
+.tpv2-chip{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;background:var(--v43-mint,#e9f7f1);color:var(--accent-text);padding:3px 9px;border-radius:999px}
 .tpv2-hero-sub{font-size:12.5px;color:var(--g4);font-weight:600;margin-top:6px}
 .tpv2-hero-say{font-size:13px;line-height:1.5;color:var(--g4);margin-top:10px}
 .tpv2-sec{font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--g4);margin:16px 2px 8px}
@@ -2767,7 +2788,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .exfocus-nav2{margin-top:8px;gap:8px}
 .exfocus-nav2 button.ghost{padding:11px 6px;font-size:12px;border-radius:12px;background:var(--card,#fff);border-color:var(--g2)}
 .exfocus-nav2 button.ghost:disabled{opacity:.4}
-.exfocus-head .exfocus-ov{background:none;border:none;color:var(--accent);font-size:12px;font-weight:800;cursor:pointer;font-family:var(--f)}
+.exfocus-head .exfocus-ov{background:none;border:none;color:var(--accent-text);font-size:12px;font-weight:800;cursor:pointer;font-family:var(--f)}
 /* F0.7Q — execution overlays (overzicht + pauze) */
 .exec-overlay{position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,.42);display:none;align-items:flex-end;justify-content:center}
 .exec-overlay.open{display:flex}
@@ -2790,7 +2811,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .exfocus-headacts{display:flex;gap:8px;align-items:center}
 .exec-tabs{display:flex;gap:6px;margin:2px 0 14px;border-bottom:1px solid var(--g1)}
 .exec-tab{flex:1;background:none;border:none;border-bottom:2px solid transparent;padding:8px 4px 10px;font-family:var(--f);font-size:13px;font-weight:800;color:var(--g4);cursor:pointer}
-.exec-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.exec-tab.active{color:var(--accent-text);border-bottom-color:var(--accent)}
 .exstat-row{margin:0 2px 12px}
 .exstat-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:5px}
 .exstat-nm{font-size:13px;font-weight:800;color:var(--dark)}
@@ -2825,7 +2846,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .exec-sum-k{font-size:11px;font-weight:700;color:var(--g4);margin-bottom:4px}
 .exec-sum-v{font-size:17px;font-weight:800;color:var(--dark)}
 .exfocus-today{background:var(--card,#fff);border:1px solid var(--g1);border-radius:16px;padding:14px;margin:0 0 12px}
-.exfocus-today-k{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.exfocus-today-k{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent-text);margin-bottom:8px}
 .exfocus-today-row{display:flex;gap:8px}
 .exfocus-today-c{flex:1;text-align:center}
 .exfocus-today-c .v{font-size:16px;font-weight:800;color:var(--dark)}
@@ -2841,10 +2862,10 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .exfocus-hero-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;text-shadow:0 1px 6px rgba(0,0,0,.5)}
 .exfocus-hero-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:6px}
 .exfocus-hero-tags{display:flex;flex-wrap:wrap;gap:6px}
-.exfocus-hero-tag{font-size:10.5px;font-weight:800;color:var(--accent);background:var(--v43-mint,#e9f7f1);border-radius:999px;padding:3px 9px}
+.exfocus-hero-tag{font-size:10.5px;font-weight:800;color:var(--accent-text);background:var(--v43-mint,#e9f7f1);border-radius:999px;padding:3px 9px}
 .exfocus-hero-nm{font-size:18px;font-weight:800;color:var(--dark);letter-spacing:-.3px;line-height:1.15}
 .exfocus-hero-desc{font-size:12px;color:var(--g4);line-height:1.35}
-.exfocus-hero-vid{align-self:flex-start;background:none;border:none;color:var(--accent);font-size:13px;font-weight:800;font-family:var(--f);cursor:pointer;padding:2px 0}
+.exfocus-hero-vid{align-self:flex-start;background:none;border:none;color:var(--accent-text);font-size:13px;font-weight:800;font-family:var(--f);cursor:pointer;padding:2px 0}
 .exfocus-today-c:not(:last-child){border-right:1px solid var(--g1)}
 /* F0.8 — Set Completion Feedback (aria-live pil; presentatie, geen logging/state) */
 .set-confirm{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%) translateY(-8px);z-index:260;background:linear-gradient(150deg,#0f5132,#0a3d27);color:#fff;border-radius:999px;padding:11px 18px;font-family:var(--f);font-size:14px;font-weight:800;letter-spacing:-.2px;box-shadow:0 10px 28px rgba(0,0,0,.35);opacity:0;pointer-events:none;white-space:nowrap;font-variant-numeric:tabular-nums;transition:opacity .18s ease,transform .18s ease}
@@ -2872,13 +2893,13 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .livecoach-txt{flex:1;min-width:0;font-size:12.5px;line-height:1.45;color:var(--g5,#1a2b33)}
 .livecoach-txt b{display:block;font-weight:800}
 .livecoach-txt s{display:block;text-decoration:none;font-weight:600;color:var(--g4);font-size:11.5px;margin-top:2px}
-.livecoach-why{flex:0 0 auto;background:none;border:none;padding:0 0 0 6px;color:var(--accent);font-family:var(--f);font-size:11.5px;font-weight:800;cursor:pointer}
+.livecoach-why{flex:0 0 auto;background:none;border:none;padding:0 0 0 6px;color:var(--accent-text);font-family:var(--f);font-size:11.5px;font-weight:800;cursor:pointer}
 .livecoach-uitleg{margin-top:7px;font-size:12px;line-height:1.5;color:var(--g4);font-weight:600}
 .livecoach-ai{display:block;margin-top:7px;background:var(--dark);color:#fff;border:none;border-radius:10px;padding:7px 12px;font-family:var(--f);font-size:11.5px;font-weight:700;cursor:pointer}
 .exfocus-set-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .exfocus-set-lbl{font-size:12px;font-weight:700;color:var(--g4);letter-spacing:.3px;text-transform:uppercase}
-.exfocus-set-lbl b{color:var(--accent);font-weight:800}
-.exfocus-set-done{font-size:12px;font-weight:800;color:var(--accent);letter-spacing:.3px;text-transform:uppercase}
+.exfocus-set-lbl b{color:var(--accent-text);font-weight:800}
+.exfocus-set-done{font-size:12px;font-weight:800;color:var(--accent-text);letter-spacing:.3px;text-transform:uppercase}
 .exfocus-set-dots{display:flex;gap:5px;align-items:center;flex-shrink:0}
 .exfocus-set-dot{width:7px;height:7px;border-radius:50%;background:var(--g3)}
 .exfocus-set-dot.done{background:var(--accent)}
@@ -2927,14 +2948,14 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .tks-card{background:var(--card,#fff);border:1px solid var(--g1);border-radius:16px;margin:10px 14px;padding:6px 4px 8px;overflow:hidden}
 .tks-wu-card{padding-top:2px}
 .tks-setcard-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 8px}
-.tks-setcard-t{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.tks-setcard-t{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent-text)}
 .tks-setcard-cnt{font-size:11px;font-weight:700;color:var(--g4);background:var(--g1);border-radius:999px;padding:3px 10px}
 .tks-setcard .set-row.setr{border-bottom:1px solid var(--g1)}
 .tks-setcard .set-row.setr:last-child{border-bottom:none}
 /* F0.7S — read-only Warm-up Ramp Card */
 .exfocus-wu{background:var(--card,#fff);border:1px solid var(--g1);border-radius:16px;padding:14px;margin:0 0 12px}
 .exfocus-wu-hd{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
-.exfocus-wu-hd>span:first-child{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.exfocus-wu-hd>span:first-child{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent-text)}
 .exfocus-wu-base{font-size:11px;font-weight:600;color:var(--g4)}
 .exfocus-wu-row{display:flex;align-items:center;gap:10px;font-size:13px;padding:7px 0;border-top:1px solid var(--g1)}
 .exfocus-wu-row:first-of-type{border-top:none}
@@ -3577,7 +3598,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .intk-msg.user{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:5px}
 .intk-msg.note{align-self:center;background:transparent;color:var(--g4);font-size:12px;padding:2px 8px;text-align:center}
 .intk-why{margin-top:7px}
-.intk-why-btn{background:none;border:none;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;padding:0;text-decoration:underline}
+.intk-why-btn{background:none;border:none;color:var(--accent-text);font-size:12px;font-weight:600;cursor:pointer;padding:0;text-decoration:underline}
 .intk-why-body{margin-top:6px;font-size:12px;color:var(--g4);line-height:1.45;border-left:2px solid var(--g2);padding-left:8px}
 .intk-chips{display:flex;flex-wrap:wrap;gap:7px;padding:8px 14px;background:var(--bg)}
 .intk-chip{border:1px solid var(--g3);background:var(--card);color:var(--dark);border-radius:18px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;transition:all var(--motion-quick,.15s) ease}
@@ -3595,7 +3616,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .intk-srow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--g1,var(--g2))}
 .intk-srow .lbl{font-size:12px;color:var(--g4);flex:0 0 40%}
 .intk-srow .val{font-size:13px;color:var(--dark);font-weight:600;flex:1;text-align:right}
-.intk-srow .edit{flex:0 0 auto;background:none;border:none;color:var(--accent);cursor:pointer;font-size:12px;font-weight:600}
+.intk-srow .edit{flex:0 0 auto;background:none;border:none;color:var(--accent-text);cursor:pointer;font-size:12px;font-weight:600}
 .intk-summary .cta{width:100%;margin-top:12px}
 .intk-privacy{display:flex;align-items:flex-start;gap:9px;font-size:12px;color:var(--dark);cursor:pointer;margin-top:10px}
 </style>
@@ -3670,7 +3691,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
     <div class="v43-lbl" style="margin:18px 0 9px">Doelen</div>
     <div class="card">
-      <div class="card-hd"><div class="card-title">Actieve doelen</div><button class="ibtn" onclick="openModal('m-goal-add')" style="width:auto;height:auto;padding:6px 12px;border-radius:12px;font-size:12px;font-weight:800;font-family:var(--f);background:var(--v43-mint);color:var(--accent)">+ Doel</button></div>
+      <div class="card-hd"><div class="card-title">Actieve doelen</div><button class="ibtn" onclick="openModal('m-goal-add')" style="width:auto;height:auto;padding:6px 12px;border-radius:12px;font-size:12px;font-weight:800;font-family:var(--f);background:var(--v43-mint);color:var(--accent-text)">+ Doel</button></div>
       <div class="card-body" id="doelen-list"><p style="color:var(--g4);font-size:13px;text-align:center;padding:20px 0">Doelen laden...</p></div>
     </div>
     <div class="card">
@@ -11523,7 +11544,7 @@ async function renderTrainScreen(t){
     div.innerHTML=`
       <div class="ex-card-hd" onclick="toggleExCard('${ex.id}')">
         <div style="flex:1">
-          <div class="ex-card-name">${escHtml(ex.naam)}${t.startsWith('prog_')?` <button onclick="event.stopPropagation();openSwapExercise('${ex.id}','${t}')" title="Wissel voor alternatief" style="background:none;border:none;color:var(--accent);font-size:13px;cursor:pointer;margin-left:4px">⇄</button>`:''}${isPersonalEx?` <button onclick="event.stopPropagation();openShareModal('exercise','${ex.id}')" title="Delen met persoon" style="background:none;border:none;color:var(--g4);font-size:13px;cursor:pointer;margin-left:4px">🔗</button>`:''}${!isDefault?` <button onclick="event.stopPropagation();removeExSession('${ex.id}')" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;margin-left:4px">✕</button>`:''}</div>
+          <div class="ex-card-name">${escHtml(ex.naam)}${t.startsWith('prog_')?` <button onclick="event.stopPropagation();openSwapExercise('${ex.id}','${t}')" title="Wissel voor alternatief" style="background:none;border:none;color:var(--accent-text);font-size:13px;cursor:pointer;margin-left:4px">⇄</button>`:''}${isPersonalEx?` <button onclick="event.stopPropagation();openShareModal('exercise','${ex.id}')" title="Delen met persoon" style="background:none;border:none;color:var(--g4);font-size:13px;cursor:pointer;margin-left:4px">🔗</button>`:''}${!isDefault?` <button onclick="event.stopPropagation();removeExSession('${ex.id}')" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;margin-left:4px">✕</button>`:''}</div>
           <div class="ex-card-meta">${resolveCardioType(ex)?(CARDIO_TYPES[resolveCardioType(ex)]?.naam||'Cardio'):ex.sets+'×'+ex.reps+(ex.rpe?' · RPE '+ex.rpe:'')}</div>
         </div>
         <span style="color:var(--g3);font-size:20px" id="arr-${ex.id}">›</span>
@@ -13582,7 +13603,7 @@ function buildWarmupRow(exId,i){
 function buildWarmupSection(exId,count){
   let h=`<div class="add-row" style="padding:8px 14px;cursor:default;display:flex;justify-content:space-between;align-items:center">
     <span style="font-size:11px;font-weight:700;color:var(--g3);text-transform:uppercase;letter-spacing:.5px">Opwarmsets</span>
-    <button onclick="regenerateWarmup('${exId}')" title="Opwarmsets opnieuw genereren" style="font-size:10px;background:none;border:none;color:var(--accent);font-weight:700;cursor:pointer;font-family:var(--f)">↻ genereren</button>
+    <button onclick="regenerateWarmup('${exId}')" title="Opwarmsets opnieuw genereren" style="font-size:10px;background:none;border:none;color:var(--accent-text);font-weight:700;cursor:pointer;font-family:var(--f)">↻ genereren</button>
   </div><div id="wu-rows-${exId}">`;
   for(let i=1;i<=count;i++)h+=buildWarmupRow(exId,i);
   h+=`</div><div class="add-row" onclick="addWarmupSet('${exId}')" style="padding:6px 14px 10px">
@@ -16382,7 +16403,7 @@ function renderHomeImprove(el, digest){
   el.innerHTML='<div class="card" style="cursor:pointer" onclick="go(\'s-stats\')"><div class="card-body" style="padding-top:10px">'+
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
       '<div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:5px"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8"><path d="M4 19V5M4 19h16M8 19v-6M12 19v-9M16 19v-4"/></svg>Recente vooruitgang</div>'+
-      '<span style="font-size:11px;color:var(--accent)">Bekijk voortgang ›</span>'+
+      '<span style="font-size:11px;color:var(--accent-text)">Bekijk voortgang ›</span>'+
     '</div>'+
     (headline?'<div style="font-weight:700;color:var(--dark);font-size:14px">'+headline+'</div>':'')+
     (parts.length?'<div style="font-size:12px;margin-top:5px">'+parts.join(' · ')+'</div>':'')+
@@ -16428,7 +16449,7 @@ async function refreshHomeGoalsCard(){
     <div class="card-body" style="padding-top:10px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:5px"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2"/></svg>Doel</div>
-        <span style="font-size:11px;color:var(--accent)">Alle doelen ›</span>
+        <span style="font-size:11px;color:var(--accent-text)">Alle doelen ›</span>
       </div>
       <div style="font-weight:700;color:var(--dark);font-size:14px;margin-bottom:6px">${escHtml(label)}</div>
       ${pct!=null?`<div class="prog-wrap"><div class="prog-fill" style="width:${pct}%;background:${pct>=100?'var(--green)':'var(--accent)'}"></div></div><div style="font-size:11px;color:var(--g4);margin-top:4px">${pct}%</div>`
@@ -16468,9 +16489,9 @@ async function renderHomeProgramCard(){
           <div style="flex:1">
             <div style="font-size:11px;color:var(--g4);font-weight:700;text-transform:uppercase">Verder met ${escHtml(p.naam)}</div>
             <div style="font-size:15px;font-weight:800">${escHtml(b.fase_naam||'Training')} · Wk ${b.week_nr}</div>
-            ${dateLbl?`<div style="font-size:12px;color:var(--accent);font-weight:700;margin-top:2px">Gepland: ${dateLbl}</div>`:''}
+            ${dateLbl?`<div style="font-size:12px;color:var(--accent-text);font-weight:700;margin-top:2px">Gepland: ${dateLbl}</div>`:''}
           </div>
-          <div style="font-size:20px;color:var(--accent)">›</div>
+          <div style="font-size:20px;color:var(--accent-text)">›</div>
         </div>
       </div>`;
       return;
@@ -19596,7 +19617,7 @@ function buildProgramTrainScreen(block,prog){
           <button class="tact green" onclick="showSessionSummary('${ctxT}')">✓</button>
         </div>
       </div>
-      ${prog?`<div style="font-size:10px;color:var(--accent);font-weight:700;letter-spacing:.3px;text-transform:uppercase">${escHtml(prog.naam)}</div>`:''}
+      ${prog?`<div style="font-size:10px;color:var(--accent-text);font-weight:700;letter-spacing:.3px;text-transform:uppercase">${escHtml(prog.naam)}</div>`:''}
       <div style="font-size:13px;font-weight:700;color:var(--g4);letter-spacing:.3px;text-transform:uppercase;margin-bottom:4px">${escHtml(block.fase_naam||'Programma')} · Wk ${block.week_nr}</div>
       <div style="font-size:11px;color:var(--g4);margin-bottom:8px" id="prog-${ctxT.toLowerCase()}-lbl">0 oefeningen</div>
       <div class="prog-wrap"><div class="prog-fill" id="prog-${ctxT.toLowerCase()}" style="width:0%"></div></div>

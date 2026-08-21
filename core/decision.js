@@ -1183,6 +1183,51 @@
     return { geldig: true, reden: 'ok' };
   }
 
+  // --- hyrox_sportregels.v1 (uitbreiding) --- MASTER SPRINT v4.61.0 — DECISION/RULES ENGINE.
+  //
+  // isValidHyroxVolgorde()/isValidBrickVolgorde() zijn en blijven ZUIVER INFORMATIEF: ze
+  // geven {geldig, reden} terug en voeren zelf nooit een actie uit — geen verwijdering, geen
+  // blokkade. Een ongeldige volgorde is een datakwaliteitssignaal (bv. tijdelijk tijdens
+  // offline logging, vóór synchronisatie compleet is), geen reden om automatisch in te
+  // grijpen. Dat principe was al waar in v4.59.0 (puur informatieve return-waarde, geen
+  // side effects) en wordt hier expliciet herbevestigd, niet opnieuw gebouwd.
+  //
+  // isComparableRaceContext(a, b): de ontbrekende regel uit v4.58.0 Besluit 6/13 — official
+  // race en trainingssimulatie mogen NOOIT automatisch als dezelfde vergelijkingscontext
+  // worden behandeld, en verschillende divisies evenmin (andere sportregels/gewichten).
+  // Dit is uitsluitend het Decision/Rules-CONTRACT (de regel zelf); geen Relationship
+  // Engine-correlatie, geen daadwerkelijke vergelijking van twee races met elkaar — dat
+  // blijft toekomstig werk (v4.63.0). a/b: {race_is_official, race_division} (beide mogen
+  // null zijn — "onbekend" is nooit hetzelfde als "gelijk").
+  function isComparableRaceContext(a, b) {
+    if (!a || !b) return { vergelijkbaar: false, reden: 'ontbrekende_context' };
+    if (a.race_is_official == null || b.race_is_official == null) {
+      return { vergelijkbaar: false, reden: 'official_status_onbekend' };
+    }
+    if (a.race_is_official !== b.race_is_official) {
+      return { vergelijkbaar: false, reden: 'official_vs_simulation' };
+    }
+    if (a.race_division !== b.race_division) {
+      return { vergelijkbaar: false, reden: 'verschillende_divisie' };
+    }
+    return { vergelijkbaar: true, reden: 'ok' };
+  }
+
+  // hyroxDivisieWaarde(stationId, divisie, veldnaam): generiek, veilig contract voor de
+  // toekomstige divisiegebonden sportregels (sledgewicht, wall-ball-gewicht/-hoogte, enz.).
+  // HYROX_DIVISIE_WAARDEN blijft leeg (v4.58.0/v4.59.0-besluit, hier NIET gewijzigd) — deze
+  // functie geeft altijd expliciet {bekend:false} terug zolang dat zo is. Nooit een gegokte
+  // waarde; "onbekend" is een eerste-klas uitkomst, geen foutpad.
+  function hyroxDivisieWaarde(stationId, divisie, veldnaam) {
+    var perDivisie = HYROX_DIVISIE_WAARDEN[divisie];
+    if (!perDivisie) return { waarde: null, bekend: false, reden: 'divisie_niet_geconfigureerd' };
+    var perStation = perDivisie[stationId];
+    if (!perStation || !(veldnaam in perStation)) {
+      return { waarde: null, bekend: false, reden: 'waarde_niet_geconfigureerd' };
+    }
+    return { waarde: perStation[veldnaam], bekend: true, reden: 'ok' };
+  }
+
   var DecisionCore = {
     buildDecisionEvidence: buildDecisionEvidence,
     readDecisionEvidence: readDecisionEvidence,
@@ -1192,6 +1237,7 @@
     HYROX_DIVISIES: HYROX_DIVISIES, HYROX_DIVISIE_WAARDEN: HYROX_DIVISIE_WAARDEN,
     isValidHyroxVolgorde: isValidHyroxVolgorde, isValidHyroxDivisie: isValidHyroxDivisie,
     isValidBrickVolgorde: isValidBrickVolgorde,
+    isComparableRaceContext: isComparableRaceContext, hyroxDivisieWaarde: hyroxDivisieWaarde,
     validatePrescription: validatePrescription,
     PRESCRIPTION_GUARD_VERSIE: PRESCRIPTION_GUARD_VERSIE,
     PRESCRIPTION_GRENZEN: PRESCRIPTION_GRENZEN,

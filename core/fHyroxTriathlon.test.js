@@ -461,7 +461,69 @@ ok(!/CREATE TABLE/i.test(diffV64), 'AD4: geen nieuwe tabel');
 
 
 
+/* ══════════════════════════════════════════════════════════════════════════════════
+ * MASTER SPRINT v4.65.0 — HYROX/TRIATHLON RESULTATENSCHERM + COMPLETION UX
+ * ══════════════════════════════════════════════════════════════════════════════════ */
+console.log('\nAE. Totale racetijd — zelfde contract (station_duration.v1), geen nieuwe berekening');
+const T0ae = 1_755_000_000_000;
+// Simuleer exact de v4.65.0-formule: totaalS = stationDurationS(eersteStartAt, vorigeEindAt)
+eq(CardioCore.stationDurationS(T0ae, T0ae + 3661_000), 3661, 'AE1: 1u1min1s correct berekend, dezelfde puur functie als station-duur');
+eq(CardioCore.stationDurationS(null, T0ae), null, 'AE2: ontbrekende eersteStartAt -> null ("niet beschikbaar"), nooit geschat');
+eq(CardioCore.stationDurationS(T0ae, null), null, 'AE3: ontbrekende vorigeEindAt -> null');
+eq(CardioCore.stationDurationS(T0ae + 1000, T0ae), null, 'AE4: negatieve/corrupte volgorde -> null, nooit clampen');
+
+console.log('\nAF. Broncode-audit: renderHyroxResultaat() — geen nieuwe berekening, geen fictieve fallback');
+const resultaatSrc = extractFn('renderHyroxResultaat');
+ok(/CardioCore\.stationDurationS\(a\.eersteStartAt,\s*a\.vorigeEindAt\)/.test(resultaatSrc),
+  'AF1: totale tijd komt uitsluitend uit station_duration.v1 op de twee echte tijdstempels');
+ok(/niet beschikbaar/.test(resultaatSrc), 'AF2: expliciete "niet beschikbaar"-tekst aanwezig voor ontbrekende data');
+ok(!/setInterval|Math\.random|new Date\(\)\.get/.test(resultaatSrc), 'AF3: geen timer/randomness/klok-aflezing in de weergavelaag zelf');
+ok(!/fetch\(|sbGet\(|sbPost/.test(resultaatSrc), 'AF4 (Fase 6, offline): geen netwerkcall — resultaat komt uitsluitend uit het al-in-geheugen hyroxActive, dus offline-safe');
+ok(/hyroxActive\.voltooid|a\.voltooid/.test(resultaatSrc) || /a\s*=\s*hyroxActive/.test(resultaatSrc),
+  'AF5: segmentenlijst komt uit hyroxActive.voltooid — dezelfde volgorde als waarin ze zijn opgeslagen (segment_index-volgorde, geen herordening)');
+ok(!/coach|anthropic|claude/i.test(resultaatSrc), 'AF6: geen AI-aanroep in de resultatenweergave');
+ok(/isOfficial\s*\?\s*'Officiële race'\s*:\s*'Trainingssimulatie'/.test(resultaatSrc),
+  'AF7: officiële race/simulatie expliciet en correct getoond, direct uit de opgeslagen context');
+ok(/a\.division/.test(resultaatSrc), 'AF8: divisie getoond wanneer aanwezig (in de subtitel)');
+
+console.log('\nAG. Broncode-audit: geen dubbele completion');
+const afrondenSrc = extractFn('hyroxAfronden');
+ok(!/hyroxActive\s*=\s*null/.test(afrondenSrc), 'AG1: hyroxAfronden() wist hyroxActive NIET meer direct — pas via de expliciete "Terug naar Training"-actie');
+ok(/fase\s*=\s*'resultaat'/.test(afrondenSrc), 'AG2: schakelt naar de resultaat-fase i.p.v. te wissen/weg te navigeren');
+const terugSrc = extractFn('hyroxTerugNaarTraining');
+ok(/hyroxActive\s*=\s*null/.test(terugSrc), 'AG3: pas hyroxTerugNaarTraining() wist hyroxActive — de enige plek waar dat gebeurt ná afronden');
+const finishSrcAg = extractFn('hyroxFinishSegment');
+ok(/hyroxSegmentBezig/.test(finishSrcAg), 'AG4: busy-guard aanwezig, voorkomt dubbele completion bij snel dubbeltikken op "Klaar"');
+
+console.log('\nAH. Onafgemaakte race wordt niet als voltooid getoond');
+const screenSrc = extractFn('renderHyroxScreen');
+ok(/fase===['"]resultaat['"]/.test(screenSrc), "AH1: renderHyroxScreen() schakelt UITSLUITEND naar de resultaatweergave bij fase==='resultaat'");
+// fase wordt alleen op 'resultaat' gezet binnen hyroxAfronden(), en die wordt alleen
+// aangeroepen wanneer huidigeIndex >= segments.length (elders in hyroxFinishSegment) —
+// een onafgemaakte race (fase blijft 'bezig') komt hier dus nooit in terecht.
+eq(afrondenSrc.includes("fase = 'resultaat'"), true, 'AH2: bevestigd — de fase-overgang zit uitsluitend in hyroxAfronden()');
+ok(/huidigeIndex\s*>=\s*hyroxActive\.segments\.length/.test(finishSrcAg), 'AH3: hyroxAfronden() wordt alleen aangeroepen als ECHT alle segmenten voltooid zijn');
+
+console.log('\nAI. hyroxAfbreken() is fase-bewust (geen "afbreken?"-vraag over een al voltooide race)');
+const afbrekenSrc = extractFn('hyroxAfbreken');
+ok(/fase===['"]resultaat['"]/.test(afbrekenSrc) && /hyroxTerugNaarTraining/.test(afbrekenSrc),
+  "AI1: op het resultatenscherm gedraagt de terugknop zich als 'Terug naar Training', niet als 'afbreken'");
+
+console.log('\nAJ. Backwards compatibility — bestaande HYROX/triathlon-functies ongewijzigd van signatuur');
+ok(/async function hyroxStart\(type, division, isOfficial\)/.test(html), 'AJ1: hyroxStart() signatuur ongewijzigd');
+ok(/async function hyroxFinishSegment\(invoer\)/.test(html), 'AJ2: hyroxFinishSegment() signatuur ongewijzigd');
+ok(/function hyroxBeginSegment\(\)/.test(html), 'AJ3: hyroxBeginSegment() signatuur ongewijzigd');
+
+console.log('\nAK. Forensische scope-controle (v4.65.0)');
+const diffV65 = resultaatSrc + afrondenSrc + terugSrc + finishSrcAg + screenSrc;
+ok(!/leaderboard|ranking|gamificat|social|badge/i.test(diffV65), 'AK1: geen leaderboard/ranking/gamificatie/social/badges');
+ok(!/VARIABLE_REGISTRY|discover\(/.test(diffV65), 'AK2: geen Relationship Engine-uitbreiding');
+ok(!/target_height/.test(diffV65), 'AK3: geen target_height-kolom');
+ok(!/CREATE TABLE/i.test(diffV65), 'AK4: geen nieuwe tabel');
+eq(DecisionCore.HYROX_DIVISIE_WAARDEN, {}, 'AK5: HYROX_DIVISIE_WAARDEN onaangeroerd, blijft leeg');
+
+
 console.log('\n========================================================');
 console.log(`RESULTAAT: ${pass} geslaagd, ${fail} mislukt`);
-console.log(fail === 0 ? '✅ HYROX/Triathlon datamodel + calculation engine + UI + classificatie: puur, deterministisch, additief.' : '❌ NIET groen.');
+console.log(fail === 0 ? '✅ HYROX/Triathlon: datamodel + calc + UI + classificatie + resultatenscherm: puur, deterministisch, additief.' : '❌ NIET groen.');
 process.exitCode = fail === 0 ? 0 : 1;

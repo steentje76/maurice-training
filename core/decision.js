@@ -27,7 +27,8 @@
     evidence_preserve: 'evidence_preserve.v1',
     prescription_guard: 'prescription_guard.v1',
     conflict: 'conflict.v1',
-    coaching_loop: 'coaching_loop.v1'
+    coaching_loop: 'coaching_loop.v1',
+    hyrox_sportregels: 'hyrox_sportregels.v1'
   };
 
   // --- progression.v1 --- exact gelijk aan legacy computeProgression(rpe,curKg).
@@ -1122,11 +1123,75 @@
     return uit;
   }
 
+  // --- hyrox_sportregels.v1 --- MASTER SPRINT v4.58.0/v4.59.0 — HYROX/TRIATHLON.
+  //
+  // Uitsluitend STRUCTURELE sportregels (volgorde, geldige stations, geldige divisies) —
+  // GEEN daadwerkelijke divisiegebonden waarden (sledgewicht, sandbagsgewicht, wall-ball-
+  // gewicht/reps/hoogte). Die officiële HYROX-reglementswaarden staan nergens in deze
+  // repository en zijn niet door de assistent geverifieerd tegen een actuele, gezaghebbende
+  // bron — ze hardcoderen op basis van trainingskennis zou een ongeverifieerde aanname zijn
+  // die als sportregel gepresenteerd wordt. Dat is bewust NIET gedaan (zie sprintrapport
+  // v4.59.0, "resterende punten"). De structuur hieronder is klaar om die waarden later op
+  // te nemen zodra ze geverifieerd zijn (bv. via HYROX_DIVISIE_WAARDEN, nu leeg).
+  var HYROX_STATIONS = [
+    'hyrox_skierg','hyrox_sled_push','hyrox_sled_pull','hyrox_burpee_broad_jump',
+    'hyrox_row','hyrox_farmers_carry','hyrox_sandbag_lunges','hyrox_wall_balls'
+  ];
+  var HYROX_RUN_ID = 'hyrox_run';
+  // Canonieke 16-segment-volgorde: RUN, STATION 1, RUN, STATION 2, ... RUN, STATION 8.
+  // Zelfde run-exercise_id acht keer (segment_index onderscheidt welke van de acht).
+  var HYROX_VOLGORDE = (function () {
+    var v = [];
+    for (var i = 0; i < HYROX_STATIONS.length; i++) { v.push(HYROX_RUN_ID); v.push(HYROX_STATIONS[i]); }
+    return v;
+  })();
+  var HYROX_DIVISIES = ['open', 'pro', 'doubles', 'relay'];
+  // Divisiegebonden vaste waarden (sledgewicht, wall-ball-gewicht/hoogte, enz.) — BEWUST LEEG.
+  // Vul dit uitsluitend met waarden die geverifieerd zijn tegen het actuele, officiële
+  // HYROX-reglement (dat wijzigt periodiek); nooit uit trainingskennis invullen.
+  var HYROX_DIVISIE_WAARDEN = {};
+
+  // isValidHyroxVolgorde(segments): segments = [{exercise_id, segment_index}, ...]
+  // Puur structurele validatie: alterneert run/station correct volgens HYROX_VOLGORDE, geen
+  // gaten, geen duplicaten in segment_index. Zegt niets over gewichten/afstanden (die
+  // wachten op HYROX_DIVISIE_WAARDEN hierboven). Retourneert {geldig, reden}.
+  function isValidHyroxVolgorde(segments) {
+    if (!Array.isArray(segments) || segments.length === 0) return { geldig: false, reden: 'leeg' };
+    var sorted = segments.slice().sort(function (a, b) { return (a.segment_index || 0) - (b.segment_index || 0); });
+    if (sorted.length !== HYROX_VOLGORDE.length) return { geldig: false, reden: 'onvolledig' };
+    for (var i = 0; i < sorted.length; i++) {
+      if ((sorted[i].segment_index || 0) !== i + 1) return { geldig: false, reden: 'segment_index_gat_of_duplicaat' };
+      if (sorted[i].exercise_id !== HYROX_VOLGORDE[i]) return { geldig: false, reden: 'verkeerde_volgorde_op_segment_' + (i + 1) };
+    }
+    return { geldig: true, reden: 'ok' };
+  }
+  function isValidHyroxDivisie(divisie) {
+    return HYROX_DIVISIES.indexOf(divisie) !== -1;
+  }
+  // Triathlon-brick: SWIM, T1(transitie), BIKE, T2(transitie), RUN — segment_index 1-5.
+  // Transities zelf zijn GEEN exercise-rij; alleen swim/bike/run zijn dat (bestaande
+  // CARDIO_TYPES-sleutels: swimming/cycling/running). isValidBrickVolgorde controleert
+  // uitsluitend die drie disciplinerijen, in die volgorde, op segment_index 1, 3, 5.
+  function isValidBrickVolgorde(segments) {
+    if (!Array.isArray(segments) || segments.length !== 3) return { geldig: false, reden: 'onvolledig' };
+    var sorted = segments.slice().sort(function (a, b) { return (a.segment_index || 0) - (b.segment_index || 0); });
+    var verwacht = [{ idx: 1, cardioType: 'swimming' }, { idx: 3, cardioType: 'cycling' }, { idx: 5, cardioType: 'running' }];
+    for (var i = 0; i < 3; i++) {
+      if ((sorted[i].segment_index || 0) !== verwacht[i].idx) return { geldig: false, reden: 'segment_index_klopt_niet_op_positie_' + (i + 1) };
+      if (sorted[i].cardio_type !== verwacht[i].cardioType) return { geldig: false, reden: 'verkeerde_discipline_op_positie_' + (i + 1) };
+    }
+    return { geldig: true, reden: 'ok' };
+  }
+
   var DecisionCore = {
     buildDecisionEvidence: buildDecisionEvidence,
     readDecisionEvidence: readDecisionEvidence,
     preserveEvidence: preserveEvidence,
     EVIDENCE_PRESERVE_VERSIE: EVIDENCE_PRESERVE_VERSIE,
+    HYROX_STATIONS: HYROX_STATIONS, HYROX_RUN_ID: HYROX_RUN_ID, HYROX_VOLGORDE: HYROX_VOLGORDE,
+    HYROX_DIVISIES: HYROX_DIVISIES, HYROX_DIVISIE_WAARDEN: HYROX_DIVISIE_WAARDEN,
+    isValidHyroxVolgorde: isValidHyroxVolgorde, isValidHyroxDivisie: isValidHyroxDivisie,
+    isValidBrickVolgorde: isValidBrickVolgorde,
     validatePrescription: validatePrescription,
     PRESCRIPTION_GUARD_VERSIE: PRESCRIPTION_GUARD_VERSIE,
     PRESCRIPTION_GRENZEN: PRESCRIPTION_GRENZEN,

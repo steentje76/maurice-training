@@ -24,7 +24,8 @@
     goal: 'goal.v1', e1rm_weighted: 'e1rm_weighted.v1', recovery_score: 'recovery_score.v1',
     sleep_unit: 'sleep_unit.v1', correlation: 'correlation.v1',
     readiness_percent: 'readiness_percent.v1', trend: 'trend.v1',
-    srpe: 'srpe.v1', rest_duration: 'rest_duration.v1', cycle_prediction: 'cycle_prediction.v1'
+    srpe: 'srpe.v1', rest_duration: 'rest_duration.v1', cycle_prediction: 'cycle_prediction.v1',
+    segment_transition: 'segment_transition.v1'
   };
 
   // --- rounding.v1 --- exact gelijk aan legacy index.html r.10668
@@ -262,6 +263,36 @@
     if (rawMs < 0) return null;              // negatief -> unavailable, NOOIT clampen naar 0
     var s = Math.round(rawMs / 1000);
     if (s > REST_MAX_DUUR_S) return null;    // onwaarschijnlijk lang -> unavailable
+    return s;
+  }
+
+  // --- segment_transition.v1 --- MASTER SPRINT v4.58.0/v4.59.0 — HYROX/TRIATHLON.
+  //
+  // Sport-neutrale generalisatie van rest_duration.v1: "einde vorig segment (wall-clock)
+  // -> daadwerkelijke start volgend segment (wall-clock)". Bewust EEN generieke functie,
+  // geen aparte hyrox_transition.v1/triathlon_transition.v1 — de regel is identiek,
+  // ongeacht of het segmentpaar "station -> run" (HYROX) of "swim -> bike" (triathlon) is.
+  // Zelfde grenzen als rest_duration.v1: geen UI-timer als bron, negatieve/ontbrekende
+  // tijd -> null (nooit clampen), pauzecorrectie optioneel via dezelfde monotone-teller-
+  // aanpak. Puur, geen sportkennis, geen AI.
+  //
+  // LET OP (zie sprintrapport v4.59.0): op het moment van schrijven bestaat er nog GEEN
+  // schrijfpad dat deze functie voedt met echte tijdstempels — de huidige cardio-invoer
+  // (CARDIO_TYPES 'time'-veld) is een puur handmatig getypte duur, geen wall-clock-timer.
+  // Deze functie is dus voorbereid maar nog niet bedraad; dat vereist een live-race-
+  // registratie-UI (v4.58.0 §18: v4.62.0), niet deze datamodelsprint.
+  function segmentTransitionS(prevSegmentEndMs, nextSegmentStartMs, pausedMsPrev, pausedMsThis) {
+    var a = (typeof prevSegmentEndMs === 'number') ? prevSegmentEndMs : parseFloat(prevSegmentEndMs);
+    var b = (typeof nextSegmentStartMs === 'number') ? nextSegmentStartMs : parseFloat(nextSegmentStartMs);
+    if (a == null || b == null || !isFinite(a) || !isFinite(b)) return null;
+    var pa = (pausedMsPrev == null || !isFinite(pausedMsPrev)) ? 0 : pausedMsPrev;
+    var pb = (pausedMsThis == null || !isFinite(pausedMsThis)) ? 0 : pausedMsThis;
+    var pausedDelta = pb - pa;
+    if (!(pausedDelta > 0)) pausedDelta = 0;
+    var rawMs = b - a - pausedDelta;
+    if (rawMs < 0) return null;
+    var s = Math.round(rawMs / 1000);
+    if (s > REST_MAX_DUUR_S) return null;   // zelfde plafond (1u) als onwaarschijnlijk voor een transitie
     return s;
   }
 
@@ -631,6 +662,7 @@
     SRPE_SCHAAL_MAX: SRPE_SCHAAL_MAX,
     SRPE_MAX_DUUR_S: SRPE_MAX_DUUR_S,
     restDurationS: restDurationS,
+    segmentTransitionS: segmentTransitionS,
     REST_MAX_DUUR_S: REST_MAX_DUUR_S,
     trendClassify: trendClassify,
     TREND_MINIMUM: TREND_MINIMUM,

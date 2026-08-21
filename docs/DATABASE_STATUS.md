@@ -24,6 +24,21 @@ uitgevoerd, zie onderaan).
 | v337 | `goals` + 4 policies | ✅ |
 | v446 | levenscyclus `training_instances` | ✅ uitgevoerd 19 aug |
 
+### Migraties ná dit auditmoment (v4.51.0–v4.54.0)
+
+Onderstaande twee zijn **niet** onderdeel van de 19-augustus-controle hierboven — apart
+bevestigd via een door de eigenaar aangeleverde schema-export (niet een live query van de
+assistent zelf; deze omgeving heeft geen netwerktoegang tot Supabase).
+
+| Migratie | Levert | Status |
+|---|---|---|
+| v452 | `training_instances.weather` (jsonb), `sessions.weather` (jsonb) | ✅ bevestigd door de eigenaar (schema-export, na 19 aug) |
+| v454 | `atleet_profiel.cyclus_consent` (boolean) | ✅ bevestigd door de eigenaar (schema-export, na 19 aug) |
+
+`migratie_v451.sql` bestaat niet als apart bestand: `rest_duration_s` (v4.51.0) landt in de
+al bestaande JSONB-kolom `sessions.sets_detail` — geen schemawijziging nodig, dus geen
+migratie om te bevestigen.
+
 ### Twee schijnbare gaten die geen gaten zijn
 
 `set_exercise_gym_context()` en `trg_set_exercise_gym_context` bestaan niet meer, en de

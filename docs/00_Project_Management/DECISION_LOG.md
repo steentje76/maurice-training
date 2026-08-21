@@ -222,3 +222,39 @@
 - Alternatieven: bij (2) de oude cijfers laten staan — afgewezen, een audit die zijn eigen methodefout verzwijgt is geen audit.
 - Impact: (1) `core/fRC0.test.js` sectie E vergelijkt de verwijderlijst voortaan met elke tabel in het schema die een gebruikerskolom draagt, en controleert dat er nooit zonder gebruikersfilter wordt verwijderd en dat gedeelde gym-inrichting van andere leden blijft bestaan. (2) `docs/RELATIONSHIP_AUDIT.md` §0 corrigeert de cijfers: 23 circulair (was 24), 187 kenbaar (was 186), 7 patronen (was 6).
 - Verantwoordelijke: Maurice
+
+## DEC-028
+- Datum: 20 augustus 2026
+- Beslissing: rustduur per set vastgelegd (`rest_duration_s` in `sessions.sets_detail`), gebaseerd op wall-clock-tijdstempels (einde vorige set → daadwerkelijke start volgende set) — niet op het rusttimer-eind.
+- Reden: het rusttimer-eind is UI, geen brondata; een correctieronde binnen dezelfde sprint verwierp de eerste implementatie (die wél op het timer-eind steunde) om precies die reden, nadat de Product Owner dat expliciet aanwees.
+- Alternatieven: het rusttimer-eind als bron gebruiken — afgewezen na de correctie, exact de reden hierboven.
+- Impact: `core/calculation.js` (`rest_duration.v1`), toegepast op zowel de normale Execution- als de Guided Workout-flow. 43 tests in `core/fRestDuration.test.js`. Geen schemawijziging (bestaande JSONB-kolom).
+- Sprint/commit: `mastersprint/v4.51.0`, `7952a9483c75e88bc2c57849bdcaec7fecd762e0`.
+- Verantwoordelijke: Maurice
+
+## DEC-029
+- Datum: 20 augustus 2026
+- Beslissing: weer per sessie vastgelegd via `training_instances.weather` (primair) met fallback op `sessions.weather` wanneer een sessie geen `training_instance_id` heeft — nooit dubbel opgeslagen. Alleen temperatuur/luchtvochtigheid/wind + herkomst; nooit GPS-coördinaten.
+- Reden: bestaande weerinfrastructuur (`core/weather.js`, Open-Meteo) leverde al live data op het scherm, maar sloeg nooit iets op — er was dus geen historische reeks mogelijk. Niet dubbel gebouwd: alleen de opslaglaag is toegevoegd.
+- Alternatieven: weer alleen op `sessions` opslaan (zoals `duration_s`, gedupliceerd per oefening-rij) — afgewezen, `training_instances` is de correcte 1:1-relatie voor een sessiebreed gegeven en voorkomt onnodige duplicatie.
+- Impact: `core/weather.js` (`WeatherCore.minimalSnapshot()`, `weather_session_snapshot.v1`). 36 tests in `core/fWeatherSession.test.js`. Migratie `migratie_v452.sql` (twee jsonb-kolommen) — door de eigenaar uitgevoerd en live bevestigd.
+- Sprint/commit: `mastersprint/v4.52.0`, `474999f6fbd0ad164a61becb28219280e1d2bf3b`.
+- Verantwoordelijke: Maurice
+
+## DEC-030
+- Datum: 20 augustus 2026
+- Beslissing: viewport-zoom hersteld (WCAG 1.4.4) en contrast gecorrigeerd via twee CSS-tokens — `--g4` (secundaire tekst) direct aangepast, en een nieuw token `--accent-text` toegevoegd voor de 87 toepassingen van de merkkleur als tekst, met de merkkleur zelf (`--accent`) ongewijzigd voor knoppen/branding.
+- Reden: zoomen was uitgeschakeld (`user-scalable=no`); `--g4` (450 toepassingen) en `--accent` als tekst (87 toepassingen) haalden WCAG AA (4,5:1) niet. Eén tokenwijziging voorkomt honderden losse edits en behoudt visuele consistentie.
+- Alternatieven: `--accent` zelf verlagen naar een AA-veilige waarde — afgewezen, dat zou ook alle knoppen/branding/iconen raken; expliciet gekozen voor een apart tekst-specifiek token.
+- Impact: `core/fAccessibilityContrast.test.js`, 21 tests (WCAG-berekening, geen hardgecodeerde aannames). Tekstgroottes (7,5–9,5px) bewust niet herontworpen — dat is een redesign, geen contrastcorrectie. Geen databasewijziging.
+- Sprint/commit: `mastersprint/v4.53.0`, `6dbcca474594c2b3030260cba6189fa884652781`.
+- Verantwoordelijke: Maurice
+
+## DEC-031
+- Datum: 20 augustus 2026
+- Beslissing: menstruatiecyclus/training uitgebreid tot een volwaardige functie — cyclusvoorspelling (`cycle_prediction.v1`, puur/deterministisch, vereist minimaal 1 volledige gelogde cyclus), een apart privacy-consentmoment los van het geslacht-veld, en volledige gebruikerscontrole (bewerken/verwijderen) in een nieuwe sectie bij Lichaam → Gezondheidsgegevens.
+- Reden: audit wees uit dat de kernberekening (`cyclusDagFactor`/`calculateDayFactor`, `dayfactor.v1`) en de basisinvoer al bestonden — alleen voorspelling, consent en een geschiedenis-/CRUD-UI ontbraken. Niet dubbel gebouwd.
+- Alternatieven: fase-voorspelling binnen de cyclus toevoegen — afgewezen, fase-duur varieert te veel tussen mensen om uit alleen startdata te schatten zonder een aanname te verzinnen.
+- Impact: tijdens deze sprint gevonden en gefixt: vier bestaande, generieke `atleet_profiel`-syncs zouden het nieuwe consentveld automatisch zijn gaan meesturen vóór de migratie bestond, wat de hele profielsync had laten falen — opgelost met `tkAtleetSyncVeld()`. 30 tests in `core/fMenstruatieCyclus.test.js`. Migratie `migratie_v454.sql` (`atleet_profiel.cyclus_consent`) — door de eigenaar uitgevoerd en live bevestigd. Geen medische diagnose, geen claims over hormonen/vruchtbaarheid/zwangerschap; AI-coach krijgt cyclusdata nergens rechtstreeks aangeleverd.
+- Sprint/commit: `mastersprint/v4.54.0`, `34a97f0d83f01415111ea974fede3cbe6fd376c2`.
+- Verantwoordelijke: Maurice

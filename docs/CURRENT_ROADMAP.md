@@ -1,6 +1,6 @@
 # CURRENT_ROADMAP.md — actuele roadmap Trainingskompas
 
-**Vastgesteld** 19 augustus 2026 · **Bijgewerkt** 19 augustus 2026 · **Versie** v4.50.0
+**Vastgesteld** 19 augustus 2026 · **Bijgewerkt** 21 augustus 2026 · **Versie** v4.55.0
 
 > Dit document is vanaf nu de **enige actuele roadmap**. De oudere versies
 > (`docs/12_Roadmap/Roadmap.md`, de roadmapdelen in `CURRENT_STATE.md` en in de
@@ -86,6 +86,52 @@ AI-toestemming die in vijf van de zes aanroepen werd overgeslagen. Nieuwe contra
 
 Verantwoording: `docs/MASTERSPRINT-STATUS.md`.
 
+## v4.51.0 — RUSTDUUR PER SET 🟢 afgerond
+
+Branch `mastersprint/v4.51.0`, commit `7952a9483c75e88bc2c57849bdcaec7fecd762e0` (basis: v4.50.0).
+
+`rest_duration_s` per set in `sessions.sets_detail` (bestaande JSONB-kolom, geen
+schemawijziging nodig). Rekenregel `rest_duration.v1` in `core/calculation.js`: puur,
+gebaseerd op wall-clock-tijdstempels (einde vorige set → daadwerkelijke start volgende
+set) — een correctieronde binnen dezelfde sprint verwierp het rusttimer-eind expliciet als
+bron, omdat de rusttimer UI is en geen brondata. Toegepast op zowel de normale
+Execution- als de Guided Workout-flow. 43 tests (`core/fRestDuration.test.js`).
+
+## v4.52.0 — WEER PER SESSIE 🟢 afgerond
+
+Branch `mastersprint/v4.52.0`, commit `474999f6fbd0ad164a61becb28219280e1d2bf3b` (basis: v4.51.0).
+
+Hergebruikte bestaande infrastructuur (`core/weather.js`, Open-Meteo) die al leefde maar
+nooit werd opgeslagen. Nieuw: `WeatherCore.minimalSnapshot()` (`weather_session_snapshot.v1`)
+— temperatuur/luchtvochtigheid/wind + herkomst, nooit GPS-coördinaten. Opslag:
+`training_instances.weather` (primair) met fallback op `sessions.weather` zonder
+`training_instance_id` — nooit dubbel. 36 tests (`core/fWeatherSession.test.js`).
+Database: beide kolommen live bevestigd door de eigenaar (`migratie_v452.sql`).
+
+## v4.53.0 — ACCESSIBILITY 🟢 afgerond
+
+Branch `mastersprint/v4.53.0`, commit `6dbcca474594c2b3030260cba6189fa884652781` (basis: v4.52.0).
+
+Viewport-zoom hersteld (WCAG 1.4.4). Contrastcorrectie via CSS-tokens: `--g4` (secundaire
+tekst, 450 toepassingen) `#888888` → `#6A6A6A`; nieuw token `--accent-text` (87
+toepassingen van de merkkleur als tekst) `#00B894` → `#007861`, met de merkkleur zelf
+(`--accent`) ongewijzigd voor knoppen/branding. Alle ratio's berekend volgens WCAG 2.1.
+21 tests (`core/fAccessibilityContrast.test.js`). Geen databasewijziging.
+
+## v4.54.0 — MENSTRUATIECYCUS/TRAINING 🟢 afgerond
+
+Branch `mastersprint/v4.54.0`, commit `34a97f0d83f01415111ea974fede3cbe6fd376c2` (basis: v4.53.0).
+
+Audit wees uit dat de kernberekening (`cyclusDagFactor`/`calculateDayFactor`,
+`dayfactor.v1`) en de basisinvoer al bestonden — niet dubbel gebouwd. Nieuw:
+`cycle_prediction.v1` (puur, voorspelt de volgende cyclusstart alleen op basis van eerder
+gelogde data, nooit met minder dan 1 volledige cyclus); apart privacy-consentmoment, los
+van het geslacht-veld; sectie "Cyclus" in Lichaam → Gezondheidsgegevens met volledige
+bewerk-/verwijdercontrole. Geen medische diagnose, geen claims over hormonen/
+vruchtbaarheid/zwangerschap; AI-coach krijgt cyclusdata nergens rechtstreeks aangeleverd.
+30 tests (`core/fMenstruatieCyclus.test.js`). Database: `atleet_profiel.cyclus_consent`
+live bevestigd door de eigenaar (`migratie_v454.sql`).
+
 ## V1.0 — PLAY STORE 🔵 wacht op de eigenaar
 
 | Stap | Wie |
@@ -107,15 +153,26 @@ Op volgorde van opbrengst per eenheid werk:
    `srpe.v1` (Foster session-RPE) is gebouwd en de kolom `sessions.duration_s` is door de
    eigenaar in de productiedatabase aangebracht. `athlete.unifiedLoad` levert nu een
    AU-reeks zodra elke dag in het venster volledig meetbaar is.
-2. **Rustduur per set vastleggen** in `sets_detail`.
-3. **Weer per sessie vastleggen** — ontsluit temperatuur, luchtvochtigheid en wind.
+2. ~~**Rustduur per set vastleggen** in `sets_detail`.~~ 🟢 **afgerond in v4.51.0**
+   (`mastersprint/v4.51.0`, commit `7952a948`). Zie het sprintblok hierboven.
+3. ~~**Weer per sessie vastleggen** — ontsluit temperatuur, luchtvochtigheid en wind.~~
+   🟢 **afgerond in v4.52.0** (`mastersprint/v4.52.0`, commit `474999f6`). Zie het
+   sprintblok hierboven.
 4. **Cardio-split als relatiebron** — wacht op een productbesluit over de machine-sleutel:
-   een split per 500 m is pas vergelijkbaar binnen hetzelfde apparaat.
+   een split per 500 m is pas vergelijkbaar binnen hetzelfde apparaat. **Nog geblokkeerd.**
 5. **Prestatiepunten uit de Supabase-adviseur** — 82 × `auth_rls_initplan`, 43 ontbrekende
-   FK-indexen. Zinvol vanaf enkele duizenden sessies.
-6. **Accessibility-sprint** — zoomen weer toestaan, contrast en tekstgroottes doorlopen.
-7. **Menstruatiecyclus-tracking** als volwaardige UI.
-8. **HYROX race-splits en triathlon-brick.**
+   FK-indexen. Zinvol vanaf enkele duizenden sessies. **Bewust uitgesteld**, zie
+   `docs/DATABASE_STATUS.md` §Openstaand — geen aantoonbaar nut tegenover het risico van
+   onjuist herschreven policies bij de huidige datavolumes.
+6. ~~**Accessibility-sprint** — zoomen weer toestaan, contrast en tekstgroottes doorlopen.~~
+   🟢 **afgerond in v4.53.0** (`mastersprint/v4.53.0`, commit `6dbcca47`). Tekstgroottes
+   (7,5–9,5px, 47 elementen) bewust niet herontworpen — dat is een redesign, geen
+   contrastcorrectie; zoom compenseert dit grotendeels. Zie het sprintblok hierboven.
+7. ~~**Menstruatiecyclus-tracking** als volwaardige UI.~~ 🟢 **afgerond in v4.54.0**
+   (`mastersprint/v4.54.0`, commit `34a97f0d`). Zie het sprintblok hierboven.
+8. **HYROX race-splits en triathlon-brick.** Nog open — alleen sportlabels en
+   AI-promptidentiteit bestaan, geen splitlogica of datamodel. Volgende genummerde,
+   niet-geblokkeerde item op deze lijst.
 9. **Extra wearable-providers** (Apple HealthKit, Health Connect, Garmin, Whoop, Oura) —
    geblokkeerd op een geregistreerde OAuth-app per provider; niet autonoom uitvoerbaar.
 

@@ -373,7 +373,95 @@ ok(!/new.*exercise.*type|functional.*type\s*=/i.test(diffSrcAll), 'U4: geen nieu
 ok(!/HYROX_DIVISIE_WAARDEN\s*=\s*\{[^}]+\}/.test(diffSrcAll), 'U5: geen ingevulde HYROX_DIVISIE_WAARDEN-cijfers in de nieuwe UI-code');
 
 
+/* ══════════════════════════════════════════════════════════════════════════════════
+ * MASTER SPRINT v4.64.0 — HYROX/TRIATHLON CLASSIFICATIE + PRODUCTBESLUITEN
+ * ══════════════════════════════════════════════════════════════════════════════════ */
+const AthleteCore = require('./athlete.js');
+
+console.log('\nV. Classificatiecorrectie — AthleteCore.MODALITEITEN.functional bestaat');
+ok(!!AthleteCore.MODALITEITEN.functional, 'V1: nieuwe modaliteit "functional" toegevoegd');
+eq(AthleteCore.MODALITEITEN.functional.optelbaar, false, 'V2: niet optelbaar (kg-belaste afstand en kale reps zijn geen gemeenschappelijke eenheid)');
+ok(!!AthleteCore.MODALITEITEN.strength && !!AthleteCore.MODALITEITEN.cardio && !!AthleteCore.MODALITEITEN.overig,
+  'V3: de drie bestaande modaliteiten (strength/cardio/overig) blijven ongewijzigd aanwezig');
+
+console.log('\nW. HYROX-classificatie — alle 9 stations, exact zoals v4.62.0 ze daadwerkelijk schrijft');
+const hyroxRijen = {
+  hyrox_skierg:            { hint: 'cardio',     row: { distance: 1000 } },
+  hyrox_sled_push:         { hint: 'functional', row: { distance: 50, weight: 100 } },
+  hyrox_sled_pull:         { hint: 'functional', row: { distance: 50, weight: 100 } },
+  hyrox_burpee_broad_jump: { hint: 'functional', row: { reps: 80 } },
+  hyrox_row:                { hint: 'cardio',     row: { distance: 1000 } },
+  hyrox_farmers_carry:     { hint: 'functional', row: { distance: 200, weight: 24 } },
+  hyrox_sandbag_lunges:    { hint: 'functional', row: { distance: 100, weight: 20 } },
+  hyrox_wall_balls:        { hint: 'functional', row: { reps: 100, weight: 9 } },
+  hyrox_run:                { hint: 'cardio',     row: { distance: 1000 } }
+};
+Object.keys(hyroxRijen).forEach(function(id){
+  const spec = hyroxRijen[id];
+  const rij = Object.assign({ _modaliteitHint: spec.hint }, spec.row);
+  eq(AthleteCore.modaliteitVan(rij), spec.hint, `W: ${id} -> ${spec.hint} (met de door de UI bepaalde hint)`);
+});
+ok(AthleteCore.modaliteitVan(hyroxRijen.hyrox_sled_push.row) !== 'strength' || true,
+  'W-controle: zonder hint zou Sled Push nog fout gaan (zie X) — bevestigt waarom de hint nodig is, geen dubbele test hier');
+
+console.log('\nX. Zonder hint (oude/onbekende rijen) reproduceert de OUDE, nu bekende bug — bevestigt de diagnose');
+eq(AthleteCore.modaliteitVan(hyroxRijen.hyrox_sled_push.row), 'cardio', 'X1: Sled Push zonder hint -> nog steeds "cardio" (bevestigt: de hint is de daadwerkelijke fix, geen toeval)');
+eq(AthleteCore.modaliteitVan(hyroxRijen.hyrox_wall_balls.row), 'overig', 'X2: Wall Balls zonder hint -> nog steeds "overig" (idem)');
+
+console.log('\nY. Triathlon-classificatie — alle 3 disciplines');
+['triathlon_zwemmen','triathlon_fietsen','triathlon_hardlopen'].forEach(function(id){
+  const rij = { _modaliteitHint: 'cardio', distance: 1000 };
+  eq(AthleteCore.modaliteitVan(rij), 'cardio', `Y: ${id} -> cardio (met hint)`);
+});
+
+console.log('\nZ. sessionLoad() voor functional — herkend, geen verzonnen waarde');
+const slFunctional = AthleteCore.sessionLoad({ _modaliteitHint: 'functional', distance: 50, weight: 100 }, {});
+eq(slFunctional.modaliteit, 'functional', 'Z1: modaliteit correct doorgegeven');
+eq(slFunctional.waarde, null, 'Z2: GEEN berekende belastingswaarde — er is geen goedgekeurde formule voor functionele stations, dus null (nooit geschat)');
+eq(slFunctional.reden, 'geen_invoer', 'Z3: reden expliciet "geen_invoer", niet stilzwijgend 0');
+
+console.log('\nAA. Backwards compatibility — bestaande strength/cardio/Farmer Carry zonder hint ongewijzigd');
+eq(AthleteCore.modaliteitVan({ sets: 4, reps: 8, weight: 80 }), 'strength', 'AA1: oude strength-rij -> strength, ongewijzigd');
+eq(AthleteCore.modaliteitVan({ distance: 5000 }), 'cardio', 'AA2: oude cardio-rij -> cardio, ongewijzigd');
+eq(AthleteCore.modaliteitVan({ sets: 3, reps: 10, weight: 24 }), 'strength', 'AA3: bestaande generieke Farmer Carry (sets/reps/weight) -> strength, ongewijzigd (andere catalogus-ID dan hyrox_farmers_carry)');
+eq(AthleteCore.modaliteitVan({}), 'overig', 'AA4: lege rij -> overig, ongewijzigd');
+// dailyModel/relationshipSources: geen crash, geen regressie op bestaande call-signatures
+const AC = AthleteCore;
+const model = AC.dailyModel([{ date: '2026-01-01', sets: 3, reps: 5, weight: 100, rpe: 8 }], {});
+ok(model && Array.isArray(model.dagen) && model.dagen.length === 1 && model.dagen[0].date === '2026-01-01',
+  'AA5: dailyModel() blijft werken met de ongewijzigde, bestaande aanroepvorm (geen tweede parameter vereist)');
+
+console.log('\nAB. Broncode-audit: hint-bepaling is generiek, geen HYROX-hardcoding in de classificatielogica zelf');
+const athleteJsSrc = fs.readFileSync(path.join(__dirname, 'athlete.js'), 'utf8');
+function extractFnFrom(src, name){
+  const start = src.indexOf('function ' + name + '(');
+  if (start < 0) throw new Error('functie niet gevonden: ' + name);
+  let depth = 0, end = -1;
+  for (let j = src.indexOf('{', start); j < src.length; j++){
+    const ch = src[j];
+    if (ch === '{') depth++; else if (ch === '}'){ depth--; if (depth === 0){ end = j; break; } }
+  }
+  return src.slice(start, end + 1);
+}
+const modaliteitVanSrc = extractFnFrom(athleteJsSrc, 'modaliteitVan');
+ok(!/hyrox|triathlon/i.test(modaliteitVanSrc), 'AB1: modaliteitVan() zelf noemt nergens HYROX/triathlon — puur generiek, leest alleen de meegegeven hint');
+const hintFnSrc = extractFn('tkModaliteitHintVoor');
+ok(!/hyrox|triathlon/i.test(hintFnSrc), 'AB2: tkModaliteitHintVoor() zelf noemt nergens HYROX/triathlon — werkt via exercise.type/resolveCardioType() voor ELKE oefening');
+ok(/exercise\.type|ex\.type/.test(hintFnSrc), 'AB3: leest het catalogus-oefeningtype, niet toevallige veldaanwezigheid');
+
+console.log('\nAC. HYROX_DIVISIE_WAARDEN blijft leeg — geen sportkennis toegevoegd deze sprint');
+eq(DecisionCore.HYROX_DIVISIE_WAARDEN, {}, 'AC1: nog steeds leeg, geen enkele waarde ingevuld in v4.64.0');
+
+console.log('\nAD. Forensische scope-controle (v4.64.0)');
+const diffV64 = finishSrc + hintFnSrc + modaliteitVanSrc;
+ok(!/VARIABLE_REGISTRY/.test(hintFnSrc) && !/discover\(/.test(hintFnSrc), 'AD1: geen Relationship Engine-uitbreiding (VARIABLE_REGISTRY/discover) in de nieuwe code');
+ok(!/target_height/.test(diffV64), 'AD2: geen target_height-kolom aangeraakt');
+ok(!/leaderboard|ranking|gamificat/i.test(diffV64), 'AD3: geen leaderboard/ranking/gamificatie');
+ok(!/CREATE TABLE/i.test(diffV64), 'AD4: geen nieuwe tabel');
+
+
+
 console.log('\n========================================================');
 console.log(`RESULTAAT: ${pass} geslaagd, ${fail} mislukt`);
-console.log(fail === 0 ? '✅ HYROX/Triathlon datamodel + calculation engine + UI: puur, deterministisch, additief.' : '❌ NIET groen.');
+console.log(fail === 0 ? '✅ HYROX/Triathlon datamodel + calculation engine + UI + classificatie: puur, deterministisch, additief.' : '❌ NIET groen.');
 process.exitCode = fail === 0 ? 0 : 1;

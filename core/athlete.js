@@ -59,9 +59,18 @@
    * met verschillende eenheden niet. Dat is de hele regel.
    * ──────────────────────────────────────────────────────────────────────── */
   var MODALITEITEN = {
-    strength: { key: 'strength', label: 'Kracht',      eenheid: 'kg',  optelbaar: true },
-    cardio:   { key: 'cardio',   label: 'Cardio',      eenheid: 'm',   optelbaar: true },
-    overig:   { key: 'overig',   label: 'Overig',      eenheid: null,  optelbaar: false }
+    strength:   { key: 'strength',   label: 'Kracht',      eenheid: 'kg',  optelbaar: true },
+    cardio:     { key: 'cardio',     label: 'Cardio',      eenheid: 'm',   optelbaar: true },
+    /* v4.64.0 — FUNCTIONEEL. Vierde, generieke modaliteit voor bewegingen die met
+       lading gaan (sled/carry/lunge) of reps-gebaseerd zijn (broad jump/wall ball) maar
+       geen kracht- of cardio-sessie in de bestaande zin zijn: geen (sets,reps,gewicht)
+       drietal, en een afstand/gewicht-combinatie is geen cardio-afstand. Niet optelbaar
+       (kg-belaste afstand en kale reps zijn geen gemeenschappelijke eenheid) — zelfde
+       voorzichtige aanpak als 'overig', maar WEL herkenbaar als eigen categorie i.p.v.
+       onzichtbaar te worden. Generiek: niets hierin is HYROX-specifiek, bruikbaar voor
+       elke toekomstige functionele oefening of andere sport. */
+    functional: { key: 'functional', label: 'Functioneel', eenheid: null,  optelbaar: false },
+    overig:     { key: 'overig',     label: 'Overig',      eenheid: null,  optelbaar: false }
   };
 
   function _num(v) {
@@ -87,12 +96,30 @@
     return Math.round(d);
   }
 
-  /* Modaliteit van EEN sessie. Volgorde is bewust: eerst kijken of er kracht-invoer
-   * is (sets/reps/gewicht), dan of er cardio-invoer is (afstand/tijd). Een sessie
-   * zonder beide is 'overig' en telt nergens in mee — hij verdwijnt niet, hij wordt
-   * alleen niet bij iets opgeteld waar hij niet bij hoort. */
+  /* Modaliteit van EEN sessie.
+   *
+   * v4.64.0 — CLASSIFICATIEGAT GEVONDEN EN GEDICHT (zie sprintrapport v4.63.0/v4.64.0):
+   * deze functie classificeerde tot nu toe UITSLUITEND op toevallige veldaanwezigheid
+   * (sets/reps/gewicht -> strength; afstand/tijd/calorieën -> cardio), zonder ooit naar
+   * het catalogus-oefeningtype te kijken. Dat werkte zolang elke oefening netjes in één
+   * van die twee vormen paste, maar HYROX-functionele stations (Sled Push/Pull, Farmers
+   * Carry, Sandbag Lunges: afstand+gewicht; Burpee Broad Jumps/Wall Balls: reps) vielen
+   * daardoor verkeerd — de eerste groep werd als 'cardio' vermomd (toevallig ook een
+   * afstandveld), de tweede groep werd onzichtbaar als 'overig'.
+   *
+   * Oplossing (kleinst mogelijk, generiek, geen HYROX-hardcoding hier): een OPTIONELE,
+   * vooraf door de caller bepaalde modaliteit-hint (`sessie._modaliteitHint`), die de
+   * caller vult op basis van het EXERCISE.TYPE/CARDIO_TYPES-catalogusveld — kennis die
+   * uitsluitend in de UI-laag hoort (die de catalogus al kent) en hier bewust NIET
+   * gedupliceerd wordt. Deze functie hoeft dus nooit te weten wélke exercise-types
+   * "cardio" of "functioneel" betekenen — hij vertrouwt uitsluitend op wat is meegegeven.
+   * Zonder hint (elke bestaande aanroep, exact dezelfde ene parameter als vóór v4.64.0)
+   * is het gedrag woord-voor-woord ongewijzigd — volledig backwards compatible. */
   function modaliteitVan(sessie) {
     var s = sessie || {};
+    if (s._modaliteitHint === 'cardio' || s._modaliteitHint === 'strength' || s._modaliteitHint === 'functional') {
+      return s._modaliteitHint;
+    }
     var sets = _num(s.sets), reps = _num(s.reps), kg = _num(s.weight);
     if (sets != null && sets > 0 && reps != null && reps > 0 && kg != null && kg > 0) return 'strength';
     var afstand = _num(s.distance), tijd = _num(s.pace_sec), cal = _num(s.calories);

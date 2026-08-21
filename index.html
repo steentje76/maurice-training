@@ -22107,6 +22107,22 @@ async function tkRelData(){
   return {hrv:hrv, weight:wl, sessies:ss};
 }
 
+/* v4.64.0 — MODALITEIT-HINT PER SESSIE-RIJ (classificatiecorrectie).
+   Geeft 'cardio'/'functional' terug op basis van het catalogus-oefeningtype
+   (exercise.type / CARDIO_TYPES, via de al bestaande resolveCardioType()) — nooit op
+   toevallige veldaanwezigheid. Puur een lookup, geen nieuwe berekening. Onbekend
+   exercise_id of geen match -> null: AthleteCore valt dan terug op zijn bestaande
+   heuristiek (ongewijzigd gedrag voor elke oefening die vóór v4.64.0 al bestond).
+   Generiek: leest uitsluitend exercise.type — geen HYROX-specifieke naam of ID hier. */
+function tkModaliteitHintVoor(exId){
+  if(!exId || !Array.isArray(exercises)) return null;
+  const ex=exercises.find(function(e){ return e && e.id===exId; });
+  if(!ex) return null;
+  if(ex.type==='functional') return 'functional';
+  if(typeof resolveCardioType==='function' && resolveCardioType(ex)) return 'cardio';
+  return null;
+}
+
 /* Trainings- en prestatiereeksen uit AthleteCore. Synchroon: de sessies zijn op dit
    punt al geladen door tkRelData. Ontbreekt de engine of zijn er geen sessies, dan
    komt er een leeg object terug — geen nulreeksen, want "niet getraind" en "getraind
@@ -22117,7 +22133,13 @@ function tkAthleteBronnen(dagen){
   if(!AC||!CC||typeof AC.relationshipSources!=='function') return {};
   const alle=_tkRelSessies||[];
   if(!alle.length) return {};
-  const sessies = tkAthleteVenster(alle, dagen);
+  // v4.64.0 — modaliteit-hint toevoegen (in-memory, niet gepersisteerd) vóór doorgifte
+  // aan AthleteCore. Niet-muterend: alleen rijen met een bepaalbare hint krijgen een
+  // (ondiepe) kopie; alle andere rijen blijven letterlijk hetzelfde object.
+  const sessies = tkAthleteVenster(alle, dagen).map(function(s){
+    const hint=tkModaliteitHintVoor(s&&s.exercise_id);
+    return hint ? Object.assign({},s,{_modaliteitHint:hint}) : s;
+  });
   /* CardioCore wordt ingespoten zodat AthleteCore de split kan afleiden met de BESTAANDE
      cardio_time.v1-parser en splitformule — er komt geen tweede tijdparser bij. */
   const CD=(typeof CardioCore!=='undefined')?CardioCore:null;

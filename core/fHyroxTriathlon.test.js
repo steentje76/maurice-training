@@ -264,8 +264,110 @@ ok(!/hyrox_divisie_waarden\s*=\s*\{[^}]+\}/i.test(fs.readFileSync(path.join(__di
   'O5: HYROX_DIVISIE_WAARDEN bevat geen ingevulde cijfers (blijft een leeg object)');
 ok(!/CREATE TABLE/i.test(migratie), 'O6: geen nieuwe tabel toegevoegd in deze sprintketen');
 
+/* ══════════════════════════════════════════════════════════════════════════════════
+ * MASTER SPRINT v4.62.0 — HYROX/TRIATHLON INPUT/UI
+ * ══════════════════════════════════════════════════════════════════════════════════ */
+function extractFn(name){
+  const start = html.indexOf('function ' + name + '(');
+  if (start < 0) throw new Error('functie niet gevonden: ' + name);
+  let depth = 0, end = -1;
+  for (let j = html.indexOf('{', start); j < html.length; j++){
+    const ch = html[j];
+    if (ch === '{') depth++; else if (ch === '}'){ depth--; if (depth === 0){ end = j; break; } }
+  }
+  if (end < 0) throw new Error('einde niet gevonden: ' + name);
+  return html.slice(start, end + 1);
+}
+function extractConst(name){
+  const start = html.indexOf('const ' + name + ' ') !== -1 ? html.indexOf('const ' + name + ' ') : html.indexOf('const ' + name + '=');
+  if (start < 0) throw new Error('const niet gevonden: ' + name);
+  const semi = html.indexOf(';', start);
+  // objecten kunnen over meerdere regels lopen — zoek het echte einde via brace-balans als er een { volgt
+  const braceStart = html.indexOf('{', start);
+  if (braceStart !== -1 && braceStart < semi) {
+    let depth = 0, end = -1;
+    for (let j = braceStart; j < html.length; j++) {
+      const ch = html[j];
+      if (ch === '{') depth++; else if (ch === '}') { depth--; if (depth === 0) { end = j; break; } }
+    }
+    const afterBrace = html.indexOf(';', end);
+    return html.slice(start, afterBrace + 1);
+  }
+  return html.slice(start, semi + 1);
+}
+
+const hyroxUiSrc = [
+  extractConst('TK_HYROX_TS_PREFIX'),
+  extractFn('tkHyroxTsNote'),
+  extractFn('tkHyroxTsParse'),
+  extractConst('TK_HYROX_STATION_LABEL'),
+  extractConst('TK_TRIATHLON_EXERCISE_ID'),
+  extractConst('TK_HYROX_STATION_VELDEN'),
+  extractFn('tkHyroxSegmentenVoorType')
+].join('\n');
+const hyroxUiModule = new Function('DecisionCore', hyroxUiSrc + '\nreturn { tkHyroxSegmentenVoorType, tkHyroxTsNote, tkHyroxTsParse };')(DecisionCore);
+
+console.log('\nP. tkHyroxSegmentenVoorType — de UI haalt de volgorde UITSLUITEND uit de Decision Engine');
+const hyroxSegs = hyroxUiModule.tkHyroxSegmentenVoorType('hyrox');
+eq(hyroxSegs.length, 16, 'P1: 16 segmenten voor een HYROX-race');
+eq(hyroxSegs.map(s => s.exercise_id), DecisionCore.HYROX_VOLGORDE, 'P2: exercise_id-volgorde is LETTERLIJK DecisionCore.HYROX_VOLGORDE — geen eigen UI-volgorde verzonnen');
+eq(hyroxSegs.map(s => s.segment_index), [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], 'P3: segment_index loopt 1..16, aaneengesloten');
+ok(hyroxSegs.every(s => Array.isArray(s.velden) && s.velden.length > 0), 'P4: elk station heeft minstens één invoerveld gedefinieerd');
+ok(hyroxSegs[0].velden.includes('distance') && !hyroxSegs[0].velden.includes('weight'), 'P5: Run (segment 1) vraagt alleen afstand, geen gewicht');
+ok(hyroxSegs[3].velden.includes('distance') && hyroxSegs[3].velden.includes('weight'), 'P6: Sled Push (segment 4) vraagt afstand + gewicht');
+ok(hyroxSegs[7].velden.includes('reps') && !hyroxSegs[7].velden.includes('distance'), 'P7: Burpee Broad Jumps (segment 8) vraagt reps, geen afstand');
+
+const brickSegs = hyroxUiModule.tkHyroxSegmentenVoorType('brick');
+eq(brickSegs.length, 3, 'P8: triathlon-brick heeft 3 loggbare disciplines (T1/T2 zijn geen eigen rij)');
+eq(brickSegs.map(s => s.segment_index), [1,3,5], 'P9: segment_index 1,3,5 — exact wat isValidBrickVolgorde() verwacht');
+eq(brickSegs.map(s => s.cardio_type), ['swimming','cycling','running'], 'P10: swim->bike->run, uit CARDIO_TYPES, geen eigen volgorde');
+ok(brickSegs.every(s => s.exercise_id === null), 'P11: brick-segmenten hebben geen HYROX-catalogus-exercise_id (die komt pas bij het schrijven via TK_TRIATHLON_EXERCISE_ID)');
+
+console.log('\nQ. tkHyroxTsNote/tkHyroxTsParse — ruwe tijdstempels blijven herleidbaar (round-trip)');
+const T0q = 1_755_000_000_000;
+const noteQ = hyroxUiModule.tkHyroxTsNote(T0q, T0q + 45_000);
+ok(noteQ.startsWith('hyrox_ts:'), 'Q1: herkenbaar prefix, botst niet met bestaande extraNote-annotaties (split:/drag )');
+const parsedQ = hyroxUiModule.tkHyroxTsParse(noteQ);
+eq(parsedQ, { startMs: T0q, endMs: T0q + 45_000 }, 'Q2: round-trip geeft exact dezelfde tijdstempels terug');
+eq(hyroxUiModule.tkHyroxTsParse(null), null, 'Q3: ontbrekende extraNote -> null, geen crash');
+eq(hyroxUiModule.tkHyroxTsParse('split:1:52'), null, 'Q4: een ANDERE bestaande extraNote-annotatie (split:) wordt niet per ongeluk als hyrox_ts geïnterpreteerd');
+
+console.log('\nR. Broncode-audit: timing komt UITSLUITEND uit echte wall-clock-tijdstempels');
+const finishSrc = extractFn('hyroxFinishSegment');
+ok(/CardioCore\.stationDurationS\(startAt,\s*endAt\)/.test(finishSrc), 'R1: duur komt uit station_duration.v1 op de twee echte tijdstempels, niets anders');
+ok(/CalcCore\.segmentTransitionS\(/.test(finishSrc), 'R2: transitietijd komt uit segment_transition.v1 (hergebruikt, niet opnieuw gebouwd)');
+ok(!/setInterval|countdown/i.test(finishSrc), 'R3: geen countdown/timer-gebaseerde logica in het schrijfpad');
+ok(/duurS==null/.test(finishSrc), 'R4: een ongeldige/negatieve duur (station_duration.v1 -> null) wordt afgewezen, niet stilzwijgend een fallback');
+const beginSrc = extractFn('hyroxBeginSegment');
+ok(/Date\.now\(\)/.test(beginSrc), 'R5: start wordt vastgelegd op het echte moment van de gebruikersactie (wall-clock)');
+
+console.log('\nS. Broncode-audit: geen dubbele Calculation/Decision-functies, geen AI');
+ok(!/function\s+stationDurationS/.test(finishSrc) && !/function\s+segmentTransitionS/.test(finishSrc),
+  'S1: geen eigen kopie van station_duration.v1/segment_transition.v1 binnen de UI-laag — uitsluitend aangeroepen');
+ok(!/coach|anthropic|claude/i.test(finishSrc), 'S2: geen AI-aanroep in het segment-schrijfpad');
+const startFnSrc = extractFn('hyroxStart');
+ok(!/isValidHyroxVolgorde|isValidBrickVolgorde/.test(startFnSrc) || /DecisionCore\./.test(startFnSrc),
+  'S3: als volgordevalidatie wordt aangeroepen, gebeurt dat via DecisionCore — geen eigen herimplementatie');
+
+console.log('\nT. Database-impact: geen nieuwe kolommen, hergebruik van v4.59.0-schema + bestaande cardio-velden');
+ok(/training_instance_id:\s*hyroxActive\.instanceId/.test(finishSrc), 'T1: hergebruikt training_instance_id (v4.59.0), geen nieuwe race-tabel');
+ok(/segment_index:\s*seg\.segment_index/.test(finishSrc), 'T2: schrijft segment_index (v4.59.0/v4.61.0), geen race_id verzonnen');
+ok(/time_str:\s*CardioCore\.formatTime\(duurS\)/.test(finishSrc), 'T3: duur gaat in de AL BESTAANDE sessions.time_str-kolom, geen nieuwe kolom');
+ok(!/target_height/.test(finishSrc), 'T4: geen target_height-kolom aangeraakt (blijft een openstaand eigenaarbesluit)');
+const migratie462 = fs.readFileSync(path.join(__dirname, '..', 'migratie_v462.sql'), 'utf8');
+ok(!/create table/i.test(migratie462), 'T5: migratie_v462.sql voegt geen nieuwe tabel toe — uitsluitend 3 catalogus-rijen (zelfde patroon als v459)');
+ok(/on conflict \(id\) do nothing/i.test(migratie462), 'T6: catalogus-insert is idempotent');
+
+console.log('\nU. Forensische scope-controle (v4.62.0-specifiek)');
+const diffSrcAll = finishSrc + startFnSrc + extractFn('renderHyroxScreen') + extractFn('hyroxAfronden');
+ok(!/leaderboard|ranking|gamificat|social/i.test(diffSrcAll), 'U1: geen leaderboard/ranking/gamificatie/social in de nieuwe functies');
+ok(!/machine.?key/i.test(diffSrcAll), 'U2: geen machine-key-architectuur');
+ok(!/relationship.*correlat/i.test(diffSrcAll), 'U3: geen Relationship Engine-correlaties');
+ok(!/new.*exercise.*type|functional.*type\s*=/i.test(diffSrcAll), 'U4: geen nieuw exercise-type — Variant A (bestaande strength/cardio-structuur) blijft definitief');
+ok(!/HYROX_DIVISIE_WAARDEN\s*=\s*\{[^}]+\}/.test(diffSrcAll), 'U5: geen ingevulde HYROX_DIVISIE_WAARDEN-cijfers in de nieuwe UI-code');
+
+
 console.log('\n========================================================');
 console.log(`RESULTAAT: ${pass} geslaagd, ${fail} mislukt`);
-console.log(fail === 0 ? '✅ HYROX/Triathlon datamodel + calculation engine: puur, deterministisch, additief.' : '❌ NIET groen.');
+console.log(fail === 0 ? '✅ HYROX/Triathlon datamodel + calculation engine + UI: puur, deterministisch, additief.' : '❌ NIET groen.');
 process.exitCode = fail === 0 ? 0 : 1;
-

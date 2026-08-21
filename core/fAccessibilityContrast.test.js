@@ -97,7 +97,13 @@ const exceptionLine = html.split('\n').find(l => l.includes('background:var(--ac
 ok(!!exceptionLine && exceptionLine.includes('.v43-plan-ic'), 'E2: de resterende uitzondering is exact de accent2-achtergrond-regel (.v43-plan-ic/.v43-last-ic)');
 
 const accentTextMatches = html.match(/color:var\(--accent-text\)/g) || [];
-ok(accentTextMatches.length === 87, `F1: 87 toepassingen gemigreerd naar --accent-text (gevonden: ${accentTextMatches.length})`);
+// v4.62.0 — twee nieuwe, correct getokende toepassingen toegevoegd door de HYROX/
+// triathlon-UI ("Vorige segment corrigeren" en de "race starten"-knop) — beide gebruiken
+// bewust --accent-text (het toegankelijke token), niet het losse --accent. Het exacte
+// aantal groeit dus legitiem mee met nieuwe schermen; deze test blijft zijn doel dienen
+// (bevestigen dat NIEUWE accent-tekst altijd het AA-veilige token gebruikt) zolang het
+// hier expliciet wordt bijgewerkt bij elke bewuste, geverifieerde toevoeging.
+ok(accentTextMatches.length === 89, `F1: 89 toepassingen gemigreerd/toegevoegd naar --accent-text (gevonden: ${accentTextMatches.length}) — 87 uit v4.53.0 + 2 nieuwe, correct getokende toepassingen uit v4.62.0 (HYROX/triathlon-UI)`);
 
 // Geen enkele overgebleven border-/outline-color:var(--accent) is per ongeluk mee veranderd —
 // die vallen buiten deze sprint (niet-tekst-contrast is een andere WCAG-eis, 1.4.11) en moeten

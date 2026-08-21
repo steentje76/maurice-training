@@ -240,19 +240,25 @@ ok(typeof CalcCore.VERSIONS.rest_duration === 'string' && typeof CalcCore.VERSIO
 ok(typeof CalcCore.segmentTransitionS === 'function' && typeof CardioCore.stationDurationS === 'function',
   'N4: v4.59.0-Calculation-contracten hergebruikt, niet opnieuw gebouwd (geen duplicaat-functies)');
 
-/* ── O. Forensische scope-controle (v4.61.0-specifiek) ────────────────────────────────── */
+/* ── O. Forensische scope-controle (v4.61.0/v4.62.0) ──────────────────────────────────── */
 console.log('\nO. Forensische scope-controle — geen ongewenste toevoegingen');
-// index.html is in deze sprintketen (v4.59.0 + v4.61.0) NIET aangeraakt — scannen op
-// generieke woorden zoals 'badge'/'ranking' in het HELE, ongewijzigde bestand geeft
-// valse treffers (bv. bestaande CSS-klasse '.badge' voor UI-pilletjes, niets met
-// gamificatie te maken). De juiste controle is: bevat index.html ÜBERHAUPT een diff?
+// CORRECTIE (v4.62.0): tot en met v4.61.0 was index.html volledig onaangeraakt, dus "0 regels
+// diff" was toen een geldige, sluitende proxy voor "geen ongewenste toevoeging". Sinds v4.62.0
+// wijzigt index.html DOELBEWUST (de hele UI-sprint) — die aanname klopt dus niet meer en gaf
+// hier terecht een falende test op een fout in de test zelf, niet in de sprintcode. De juiste
+// controle is nu: bevatten de daadwerkelijk TOEGEVOEGDE regels (t.o.v. v4.55.0, de laatste
+// stand vóór al het HYROX/triathlon-werk) een verboden term? Zoeken in het hele bestand zou
+// valse treffers geven op oude, ongerelateerde content (bv. de CSS-klasse '.badge').
 const { execSync } = require('child_process');
-let indexHtmlDiffRegels = null;
+let indexHtmlAddedLines = null;
 try {
-  indexHtmlDiffRegels = execSync('git diff origin/mastersprint/v4.55.0 HEAD -- index.html | wc -l', { cwd: path.join(__dirname, '..'), encoding: 'utf8' }).trim();
-} catch (_) { /* geen git-toegang in deze omgeving; sla deze specifieke check dan over */ }
-if (indexHtmlDiffRegels !== null) {
-  eq(indexHtmlDiffRegels, '0', 'O1: index.html heeft nog steeds nul regels diff t.o.v. v4.55.0 — dus per definitie geen leaderboard/ranking/gamificatie toegevoegd');
+  indexHtmlAddedLines = execSync(
+    "git diff origin/mastersprint/v4.55.0 HEAD -- index.html | grep '^+' | grep -v '^+++'",
+    { cwd: path.join(__dirname, '..'), encoding: 'utf8' }
+  );
+} catch (e) { indexHtmlAddedLines = (e.stdout || ''); /* grep geeft exit 1 bij 0 matches, geen echte fout */ }
+if (indexHtmlAddedLines) {
+  ok(!/leaderboard|ranking|gamificat|social/i.test(indexHtmlAddedLines), 'O1: geen leaderboard/ranking/gamificatie/social in de daadwerkelijk toegevoegde regels van index.html');
 } else {
   ok(true, 'O1: (git niet beschikbaar in deze testomgeving, overgeslagen — handmatig al bevestigd tijdens de sprintaudit)');
 }

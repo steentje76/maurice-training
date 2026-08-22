@@ -8018,6 +8018,91 @@ async function hyroxLaadAllePerformances(){
   }).sort(function(a,b){ return (b.datum||'').localeCompare(a.datum||''); });
 }
 
+/* ══════════════════════════════════════════════════════════════════════════════
+ * MASTER SPRINT v4.72.0 — TREND OVER MEERDERE VERGELIJKBARE RACES
+ *
+ * Een trend is nooit "alle HYROX-races" maar "alle onderling vergelijkbare races
+ * binnen dezelfde context" (Fase 2/4). Clustering gebeurt UITSLUITEND via de al
+ * bestaande performanceContextMatch() (v4.71.0) — geen tweede vergelijkingsmechanisme.
+ * Een race wordt bij het cluster van zijn eerst-gevonden referentie gevoegd zodra
+ * performanceContextMatch(referentie, kandidaat).comparable===true; races uit een
+ * andere context "onderbreken" de trend niet — ze belanden gewoon in hun eigen
+ * cluster en later opnieuw-vergelijkbare races sluiten weer aan bij het OORSPRONKELIJKE
+ * cluster (Fase 2's Race 1→2, breekt bij Race 3, Race 4 sluit weer aan bij 1/2 — niet
+ * via Race 3). Triathlon matcht per performanceContextMatch() nooit met een andere
+ * triathlon-race (Fase 5-audit: geen betrouwbare afstand/type-data) — elke triathlon-
+ * race belandt daarom automatisch in zijn eigen cluster van grootte 1, wat vanzelf
+ * "geen trend" oplevert zonder een aparte triathlon-uitzondering te hoeven coderen.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+// buildPerformanceTrend(performances): performances = output van hyroxLaadAllePerformances()
+// ([{instanceId, perf, datum}]). Puur, deterministisch, wijzigt geen racegegevens, vult
+// nooit ontbrekende races/tijden aan.
+function buildPerformanceTrend(performances){
+  const geldig = (Array.isArray(performances)?performances:[]).filter(function(p){ return p && p.perf; });
+  const chronologisch = geldig.slice().sort(function(a,b){ return (a.datum||'').localeCompare(b.datum||''); });
+
+  const clusters = [];
+  chronologisch.forEach(function(item){
+    for(let i=0;i<clusters.length;i++){
+      if(performanceContextMatch(clusters[i].referentie.perf, item.perf).comparable){
+        clusters[i].races.push(item); return;
+      }
+    }
+    clusters.push({ referentie:item, races:[item] });
+  });
+
+  return clusters.map(function(cluster){
+    const races = cluster.races; // al chronologisch (oudste eerst)
+    const punten = races.map(function(item,i){
+      const vorige = i>0 ? races[i-1] : null;
+      const status = vorige ? performanceVerschilStatus(item.perf.totalTime, vorige.perf.totalTime) : 'niet_beschikbaar';
+      const verschil = (vorige && item.perf.totalTime!=null && vorige.perf.totalTime!=null) ? (item.perf.totalTime - vorige.perf.totalTime) : null;
+      return { instanceId:item.instanceId, datum:item.datum, totalTime:item.perf.totalTime,
+               verschilMetVorige:verschil, status:status, segments:item.perf.segments };
+    });
+    const betrouwbareTijden = races.filter(function(r){ return r.perf.totalTime!=null; }).map(function(r){ return r.perf.totalTime; });
+    return {
+      sport: cluster.referentie.perf.sport,
+      context: cluster.referentie.perf.raceContext,
+      punten: punten,
+      aantal: races.length,
+      besteTijd: betrouwbareTijden.length ? Math.min.apply(null, betrouwbareTijden) : null
+    };
+  }).sort(function(a,b){
+    const laatsteA=a.punten[a.punten.length-1], laatsteB=b.punten[b.punten.length-1];
+    return (laatsteB.datum||'').localeCompare(laatsteA.datum||'');
+  });
+}
+
+// buildSegmentTrend(cluster): segmentontwikkeling BINNEN één cluster (Fase 9/10) —
+// uitsluitend segmenten die daadwerkelijk in de betreffende races voorkomen, geen
+// interpolatie van ontbrekende segmenten.
+function buildSegmentTrend(cluster){
+  const perSegment = {};
+  (cluster&&cluster.punten||[]).forEach(function(p){
+    (p.segments||[]).forEach(function(s){
+      if(s.segment_index==null) return;
+      if(!perSegment[s.segment_index]) perSegment[s.segment_index] = { segment_index:s.segment_index, label:s.label, reeks:[] };
+      perSegment[s.segment_index].reeks.push({ datum:p.datum, duration:s.duration });
+    });
+  });
+  return Object.keys(perSegment).map(function(k){ return perSegment[k]; }).sort(function(a,b){ return a.segment_index-b.segment_index; });
+}
+
+// performanceConclusie(cluster): "word ik beter?" (Fase 12) — uitsluitend met minimaal
+// 2 vergelijkbare races EN betrouwbare tijden. Anders altijd de neutrale, expliciete tekst.
+function performanceConclusie(cluster){
+  if(!cluster || cluster.aantal<2) return 'Nog onvoldoende vergelijkbare racegegevens.';
+  const laatste = cluster.punten[cluster.punten.length-1];
+  if(laatste.status==='sneller' && laatste.verschilMetVorige!=null) return 'Je bent '+CardioCore.formatTime(Math.abs(laatste.verschilMetVorige))+' sneller dan je vorige vergelijkbare race.';
+  if(laatste.status==='langzamer' && laatste.verschilMetVorige!=null) return 'Je bent '+CardioCore.formatTime(Math.abs(laatste.verschilMetVorige))+' langzamer dan je vorige vergelijkbare race.';
+  if(laatste.status==='gelijk') return 'Je laatste vergelijkbare race was exact even snel als de vorige.';
+  if(cluster.besteTijd!=null) return 'Je beste vergelijkbare tijd is '+CardioCore.formatTime(cluster.besteTijd)+'.';
+  return 'Nog onvoldoende vergelijkbare racegegevens.';
+}
+
+
 async function renderHyroxPerformanceOverzicht(){
   const el = document.getElementById('hyrox-perf-scroll');
   if(!el) return;
@@ -8077,7 +8162,53 @@ async function renderHyroxPerformanceOverzicht(){
       '<div style="font-size:34px;font-weight:800;color:var(--dark)">'+escHtml(tijdTxt)+'</div>'+
       '<button class="ibtn" style="width:auto;height:auto;padding:8px 0;font-size:12px;color:var(--accent-text)" onclick="hyroxOpenGeschiedenisRace(\''+laatste.instanceId+'\')">Bekijk race</button>'+
     '</div>'+
-    vergelijkHtml;
+    vergelijkHtml +
+    renderHyroxTrendSectie(alle);
+}
+
+/* v4.72.0 — TRENDWEERGAVE. Elk cluster (context-groep, zie buildPerformanceTrend()) krijgt
+   een EIGEN kaart — bewust geen doorlopende grafieklijn tussen verschillende contexten
+   (Fase 11: "geen verbindingslijn tussen verschillende contexten"). Een cluster van
+   grootte 1 (incl. elke triathlon-race, die per performanceContextMatch() nooit met een
+   andere triathlon-race matcht) toont expliciet "Trend niet beschikbaar" met reden, geen
+   race wordt overgeslagen — hij is gewoon al zichtbaar via de bovenstaande kaarten. */
+function renderHyroxTrendSectie(alle){
+  const clusters = buildPerformanceTrend(alle);
+  const trendbareClusters = clusters.filter(function(c){ return c.aantal>=2; });
+  const enkeleClusters = clusters.filter(function(c){ return c.aantal<2; });
+
+  let html = '<div class="v43-lbl" style="margin:18px 0 10px">Voortgang</div>';
+
+  if(!trendbareClusters.length){
+    const redenTriathlon = enkeleClusters.some(function(c){ return c.sport==='triathlon'; });
+    html += '<div class="card" style="padding:16px"><div style="font-size:13px;color:var(--g4)">Trend niet beschikbaar</div>'+
+      '<div style="font-size:11.5px;color:var(--g4);margin-top:4px">'+
+      (redenTriathlon
+        ? 'Er is onvoldoende racecontext om triathlon-races eerlijk te vergelijken.'
+        : 'Nog onvoldoende vergelijkbare racegegevens — log minimaal twee races binnen dezelfde context (sport, official/simulatie, divisie).')+
+      '</div></div>';
+    return html;
+  }
+
+  html += trendbareClusters.map(function(cluster){
+    const ctx = cluster.context||{};
+    const ctxTxt = [cluster.sport==='hyrox'?'HYROX':'Triathlon', ctx.division, (ctx.isOfficial===true?'Officieel':ctx.isOfficial===false?'Simulatie':null)].filter(Boolean).join(' · ');
+    const conclusie = performanceConclusie(cluster);
+    const puntenHtml = cluster.punten.map(function(p){
+      const tijdTxt2 = p.totalTime!=null ? CardioCore.formatTime(p.totalTime) : 'Niet beschikbaar';
+      const isBest = (p.totalTime!=null && cluster.besteTijd!=null && p.totalTime===cluster.besteTijd);
+      return '<div class="lich-krow"><span class="k">'+escHtml(fmtDate(p.datum))+(isBest?' ★':'')+'</span><span style="font-weight:700">'+escHtml(tijdTxt2)+'</span></div>';
+    }).join('');
+    return '<div class="card" style="padding:16px;margin-bottom:10px">'+
+      '<div class="v43-lbl" style="margin-bottom:6px">'+escHtml(ctxTxt)+' · '+cluster.aantal+' vergelijkbare races</div>'+
+      '<div style="font-size:14px;font-weight:700;color:var(--dark);margin-bottom:8px">'+escHtml(conclusie)+'</div>'+
+      (cluster.besteTijd!=null ? '<div style="font-size:11.5px;color:var(--g4);margin-bottom:8px">Beste vergelijkbare tijd: '+CardioCore.formatTime(cluster.besteTijd)+' (★)</div>' : '')+
+      puntenHtml+
+    '</div>';
+  }).join('') +
+  (enkeleClusters.length ? '<div style="font-size:11px;color:var(--g4);margin-top:4px">'+enkeleClusters.length+' race(s) staan nog los — nog geen vergelijkbare eerdere race in dezelfde context.</div>' : '');
+
+  return html;
 }
 
 

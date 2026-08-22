@@ -796,7 +796,110 @@ ok(!/trend.*meerdere|3\+.*races|meerjarige/i.test(diffV71), 'BK5: geen trendweer
 ok(!/waarschijnlijk sneller|geschatte verbetering|bijna sneller/i.test(diffV71), 'BK6: geen vage/geschatte prestatietaal (Fase 11-verbod)');
 
 
+/* ══════════════════════════════════════════════════════════════════════════════════
+ * MASTER SPRINT v4.72.0 — TREND OVER MEERDERE VERGELIJKBARE RACES
+ * ══════════════════════════════════════════════════════════════════════════════════ */
+const trendSrc = [
+  extractFn('buildPerformanceTrend'),
+  extractFn('buildSegmentTrend'),
+  extractFn('performanceConclusie')
+].join('\n');
+const Trend = new Function(matchSrc + '\n' + trendSrc + '\nreturn { buildPerformanceTrend, buildSegmentTrend, performanceConclusie };')();
+
+function perfItem(instanceId, datum, sport, division, isOfficial, totalTime, segments){
+  return { instanceId, datum, perf: perf(sport, division, isOfficial, totalTime, segments) };
+}
+
+console.log('\nBL. buildPerformanceTrend — clustering UITSLUITEND via performance_context_match.v1');
+const reeksMetBreuk = [
+  perfItem('r1','2026-01-01','hyrox','open',true,3700),
+  perfItem('r2','2026-02-01','hyrox','open',true,3650),
+  perfItem('r3','2026-03-01','hyrox','pro',true,3400),   // breuk: andere divisie
+  perfItem('r4','2026-04-01','hyrox','open',true,3600)   // moet weer aansluiten bij r1/r2, NIET via r3
+];
+const clustersBreuk = Trend.buildPerformanceTrend(reeksMetBreuk);
+eq(clustersBreuk.length, 2, 'BL1: 2 clusters — Open (r1,r2,r4) en Pro (r3) apart, exact Fase 2s voorbeeld');
+const openCluster = clustersBreuk.find(c => c.context.division==='open');
+eq(openCluster.aantal, 3, 'BL2: Race 4 sluit weer aan bij het Open-cluster (r1,r2,r4), Race 3 (Pro) zit er niet tussen');
+eq(openCluster.punten.map(p=>p.instanceId), ['r1','r2','r4'], 'BL3: chronologische volgorde binnen het cluster correct, r3 volledig afwezig in dit cluster');
+const proCluster = clustersBreuk.find(c => c.context.division==='pro');
+eq(proCluster.aantal, 1, 'BL4: Pro-cluster bevat uitsluitend r3');
+
+console.log('\nBM. Triathlon — elke race automatisch een eigen cluster (Fase 5, geen categorie verzonnen)');
+const triathlonReeks = [perfItem('t1','2026-01-01','triathlon',null,true,7200), perfItem('t2','2026-02-01','triathlon',null,true,7100)];
+const clustersTriathlon = Trend.buildPerformanceTrend(triathlonReeks);
+eq(clustersTriathlon.length, 2, 'BM1: 2 losse clusters van elk 1 race — triathlon-races matchen elkaar nooit (bevestigt v4.71.0s Fase-7-bevinding blijft gerespecteerd)');
+ok(clustersTriathlon.every(c => c.aantal===1), 'BM2: geen enkel triathlon-cluster bereikt grootte 2 — dus nooit een (onterechte) trend');
+
+console.log('\nBN. Beste vergelijkbare prestatie — nooit een andere context ertussen (Fase 8)');
+const openTijden = [
+  perfItem('b1','2026-01-01','hyrox','open',true,3730),
+  perfItem('b2','2026-02-01','hyrox','open',true,3644), // beste
+  perfItem('b3','2026-03-01','hyrox','open',true,3680)
+];
+const clusterBest = Trend.buildPerformanceTrend(openTijden)[0];
+eq(clusterBest.besteTijd, 3644, 'BN1: beste tijd correct berekend binnen het cluster');
+const metPro = openTijden.concat([perfItem('bx','2026-01-15','hyrox','pro',true,3000)]);
+const clusterBestMetPro = Trend.buildPerformanceTrend(metPro).find(c=>c.context.division==='open');
+eq(clusterBestMetPro.besteTijd, 3644, 'BN2: een snellere Pro-tijd (3000) mag de Open-beste-tijd NIET beïnvloeden — andere context');
+
+console.log('\nBO. Ontbrekende totale tijd telt niet mee als meetpunt (Fase 6)');
+const metOntbrekendeTijd = [
+  perfItem('m1','2026-01-01','hyrox','open',true,3700),
+  perfItem('m2','2026-02-01','hyrox','open',true,null), // geen betrouwbare tijd
+  perfItem('m3','2026-03-01','hyrox','open',true,3600)
+];
+const clusterOntbrekend = Trend.buildPerformanceTrend(metOntbrekendeTijd)[0];
+eq(clusterOntbrekend.besteTijd, 3600, 'BO1: race zonder totalTime wordt overgeslagen bij het bepalen van de beste tijd, niet als 0 geteld');
+eq(clusterOntbrekend.aantal, 3, 'BO2: de race blijft wel gewoon onderdeel van het cluster (voor segmentweergave), alleen niet als tijd-meetpunt');
+eq(clusterOntbrekend.punten[1].status, 'niet_beschikbaar', 'BO3: status voor het punt zonder tijd is niet_beschikbaar, nooit geraden');
+
+console.log('\nBP. buildSegmentTrend — geen interpolatie van ontbrekende segmenten (Fase 9)');
+const segReeks = [
+  perfItem('s1','2026-01-01','hyrox','open',true,3700,[{segment_index:4,label:'Sled Push',duration:134}]),
+  perfItem('s2','2026-02-01','hyrox','open',true,3650,[{segment_index:4,label:'Sled Push',duration:125}]),
+  perfItem('s3','2026-03-01','hyrox','open',true,3600,[]) // Sled Push ontbreekt deze race
+];
+const clusterSeg = Trend.buildPerformanceTrend(segReeks)[0];
+const segTrend = Trend.buildSegmentTrend(clusterSeg);
+eq(segTrend.length, 1, 'BP1: exact 1 segmenttype gevonden (Sled Push)');
+eq(segTrend[0].reeks.length, 2, 'BP2: reeks bevat alleen de 2 races waar dit segment daadwerkelijk aanwezig was — race 3 wordt niet aangevuld met een geschatte waarde');
+
+console.log('\nBQ. performanceConclusie — "word ik beter?" (Fase 12)');
+eq(Trend.performanceConclusie(null), 'Nog onvoldoende vergelijkbare racegegevens.', 'BQ1: geen cluster -> neutrale tekst');
+eq(Trend.performanceConclusie({ aantal:1 }), 'Nog onvoldoende vergelijkbare racegegevens.', 'BQ2: slechts 1 race -> neutrale tekst, geen conclusie');
+const sneller = Trend.buildPerformanceTrend([perfItem('c1','2026-01-01','hyrox','open',true,3700), perfItem('c2','2026-02-01','hyrox','open',true,3598)])[0];
+ok(/sneller/.test(Trend.performanceConclusie(sneller)), 'BQ3: correcte "sneller"-conclusie met exact tijdsverschil');
+const langzamer = Trend.buildPerformanceTrend([perfItem('d1','2026-01-01','hyrox','open',true,3600), perfItem('d2','2026-02-01','hyrox','open',true,3700)])[0];
+ok(/langzamer/.test(Trend.performanceConclusie(langzamer)), 'BQ4: correcte "langzamer"-conclusie');
+ok(!/waarschijnlijk|voorspeld|geschat/i.test(Trend.performanceConclusie(sneller)), 'BQ5: geen vage/geschatte taal in de conclusie (Fase 7-verbod)');
+
+console.log('\nBR. Broncode-audit: geen tweede vergelijkingsmechanisme, geen Relationship Engine, geen AI');
+ok(trendSrc.includes('performanceContextMatch('), 'BR1: buildPerformanceTrend() roept uitsluitend de bestaande performanceContextMatch() aan voor clustering');
+ok(!/VARIABLE_REGISTRY|discover\(|pairDaily|pairQuality/.test(trendSrc), 'BR2: geen Relationship Engine/DeviceCore-aanraking');
+ok(!/coach|anthropic|claude/i.test(trendSrc), 'BR3: geen AI-aanroep');
+ok(!/Date\.now\(\)|Math\.random/.test(trendSrc), 'BR4: geen Date.now()/randomness — puur op de meegegeven Performance-objecten');
+ok(!/fetch\(|sbGet\(|sbPost/.test(trendSrc), 'BR5: geen netwerk-/database-aanroep in de trendfuncties zelf');
+
+console.log('\nBS. Broncode-audit: Training Progress / Relationship Engine blijven gescheiden (Fase 13)');
+ok(!/tkAthleteBronnen|relationshipSources|dailyModel/.test(trendSrc), 'BS1: geen aanraking van de bestaande Training-Progress/Relationship-Engine-voedingslaag');
+
+console.log('\nBT. Broncode-audit: renderHyroxTrendSectie() — geen verbindingslijn tussen contexten, geen gamification');
+const trendSectieSrc = extractFn('renderHyroxTrendSectie');
+ok(/Trend niet beschikbaar/.test(trendSectieSrc), 'BT1: expliciete "Trend niet beschikbaar" met reden wanneer geen enkel cluster groot genoeg is');
+ok(!/leaderboard|ranking|gamificat|badge/i.test(trendSectieSrc), 'BT2: geen leaderboard/ranking/gamificatie/badges');
+ok(trendSectieSrc.includes('map(function(cluster)'), 'BT3: elk cluster krijgt een eigen, losse kaart — geen doorlopende grafieklijn tussen contexten');
+
+console.log('\nBU. Forensische scope-controle (v4.72.0)');
+const diffV72 = trendSrc + trendSectieSrc;
+ok(!/VARIABLE_REGISTRY|pairDaily|pairQuality/.test(diffV72), 'BU1: geen Relationship Engine/DeviceCore-aanraking');
+ok(!/leaderboard|ranking|gamificat|social/i.test(diffV72), 'BU2: geen leaderboard/ranking/gamificatie/social');
+ok(!/CREATE TABLE|create table/i.test(diffV72), 'BU3: geen nieuwe tabel');
+ok(!/target_height|HYROX_DIVISIE_WAARDEN\s*=\s*\{[^}]+\}/.test(diffV72), 'BU4: geen target_height, geen ingevulde HYROX_DIVISIE_WAARDEN');
+ok(!/sprint.*olympic|olympic.*half|half.*full/i.test(diffV72), 'BU5: geen triathlon-afstandscategorieën verzonnen');
+
+
 console.log('\n========================================================');
 console.log(`RESULTAAT: ${pass} geslaagd, ${fail} mislukt`);
-console.log(fail === 0 ? '✅ HYROX/Triathlon: volledige keten t/m Performance-overzicht + racevergelijking: puur, deterministisch, additief.' : '❌ NIET groen.');
+console.log(fail === 0 ? '✅ HYROX/Triathlon: volledige keten t/m trend over meerdere vergelijkbare races: puur, deterministisch, additief.' : '❌ NIET groen.');
 process.exitCode = fail === 0 ? 0 : 1;

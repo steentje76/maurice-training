@@ -20,10 +20,12 @@
 
   var VERSIONS = {
     rounding: 'rounding.v1', e1rm: 'e1rm.v1', working_weight: 'working_weight.v1', ai_guard: 'ai_guard.v1',
-    volume: 'volume.v1', percentage: 'percentage.v1', warmup: 'warmup.v1', recovery: 'recovery.v1', dayfactor: 'dayfactor.v1',
+    volume: 'volume.v1', session_volume: 'session_volume.v1', percentage: 'percentage.v1', warmup: 'warmup.v1', recovery: 'recovery.v1', dayfactor: 'dayfactor.v1',
     goal: 'goal.v1', e1rm_weighted: 'e1rm_weighted.v1', recovery_score: 'recovery_score.v1',
     sleep_unit: 'sleep_unit.v1', correlation: 'correlation.v1',
-    readiness_percent: 'readiness_percent.v1', trend: 'trend.v1'
+    readiness_percent: 'readiness_percent.v1', trend: 'trend.v1',
+    srpe: 'srpe.v1', rest_duration: 'rest_duration.v1', cycle_prediction: 'cycle_prediction.v1',
+    segment_transition: 'segment_transition.v1'
   };
 
   // --- rounding.v1 --- exact gelijk aan legacy index.html r.10668
@@ -142,6 +144,158 @@
     return input.sets * input.reps * input.weight;
   }
 
+  // --- session_volume.v1 --- HET VOLUME VAN ÉÉN GELOGDE SESSIERIJ.
+  //
+  // WAAROM DIT BESTAAT. Een sessions-rij bewaart een SAMENVATTING: `weight` is het gewicht
+  // van de zwaarste set, `reps` zijn de herhalingen van díé set, en `sets` is het aantal
+  // sets. `sets * reps * weight` doet daarmee alsof elke set even zwaar was als de
+  // zwaarste, en overschat het volume structureel. Toch rekenden zeven schermen zo, terwijl
+  // het afrondscherm ná de training wél per set optelde. Dezelfde training leverde daardoor
+  // op vier plekken een ander getal op — en de sporter kon nergens zien welk getal klopte.
+  //
+  // De echte sets staan al in `sets_detail` (sinds Sprint 18, met effectief gewicht per
+  // set). Die is dus de bron; de samenvatting blijft de terugval voor oudere rijen die
+  // geen sets_detail hebben. Puur en deterministisch; geen DOM, geen DB.
+  //
+  // Geeft null wanneer er niets te berekenen valt — nooit 0, want "geen gegevens" en
+  // "nul volume" zijn niet hetzelfde.
+  function sessionVolume(row) {
+    if (!row) return null;
+    var sd = row.sets_detail;
+    if (typeof sd === 'string') { try { sd = JSON.parse(sd); } catch (e) { sd = null; } }
+    if (Array.isArray(sd) && sd.length) {
+      var som = 0, gezien = false;
+      for (var i = 0; i < sd.length; i++) {
+        var s = sd[i]; if (!s) continue;
+        var kg = (s.effKg != null) ? parseFloat(s.effKg) : parseFloat(s.kg);
+        var reps = parseInt(s.reps, 10);
+        if (isFinite(kg) && kg > 0 && isFinite(reps) && reps > 0) { som += kg * reps; gezien = true; }
+      }
+      if (gezien) return Math.round(som * 10) / 10;
+    }
+    var w = parseFloat(row.weight), r = parseInt(row.reps, 10), n = parseInt(row.sets, 10);
+    if (!isFinite(w) || w <= 0 || !isFinite(r) || r <= 0) return null;
+    if (!isFinite(n) || n <= 0) n = 1;
+    return Math.round(calculateVolume({ sets: n, reps: r, weight: w }) * 10) / 10;
+  }
+  // Waar kwam dat volume vandaan? Zodat een scherm de herkomst kan tonen in plaats van
+  // een getal zonder uitleg.
+  function sessionVolumeBron(row) {
+    if (!row) return 'geen';
+    var sd = row.sets_detail;
+    if (typeof sd === 'string') { try { sd = JSON.parse(sd); } catch (e) { sd = null; } }
+    if (Array.isArray(sd) && sd.some(function (s) {
+      var kg = s ? ((s.effKg != null) ? parseFloat(s.effKg) : parseFloat(s.kg)) : NaN;
+      var reps = s ? parseInt(s.reps, 10) : NaN;
+      return isFinite(kg) && kg > 0 && isFinite(reps) && reps > 0;
+    })) return 'sets_detail';
+    return sessionVolume(row) == null ? 'geen' : 'samenvatting';
+  }
+
+  // --- srpe.v1 --- FOSTER SESSION-RPE. De enige eenheid waarin kracht en cardio wél in
+  // één reeks mogen staan: arbitrary units (AU) = sessie-RPE (CR-10) × duur in minuten.
+  // PUUR en DETERMINISTISCH: geen DOM, geen DB, geen AI, geen schatting.
+  //
+  // Waarom dit hier hoort en niet in de Decision Engine of bij de AI: het is een
+  // rekenregel, geen sportbeslissing. De beslissing "is deze belasting te hoog" gebeurt
+  // elders, op basis van deze uitkomst.
+  //
+  // Grenzen zijn expliciet en weigeren liever dan te gokken:
+  //   - geen numerieke invoer            -> {ok:false, reden:'geen_invoer'}
+  //   - duur ontbreekt / <= 0            -> {ok:false, reden:'duur_ontbreekt'}
+  //   - duur > 24 uur                    -> {ok:false, reden:'duur_onwaarschijnlijk'}
+  //   - rpe buiten (0..SRPE_SCHAAL_MAX]  -> {ok:false, reden:'rpe_buiten_schaal'}
+  // Er wordt NOOIT een duur of RPE geschat wanneer die ontbreekt; dan is er geen getal.
+  var SRPE_SCHAAL_MAX = 10;
+  var SRPE_MAX_DUUR_S = 86400;   // 24 uur — gelijk aan de check-constraint op sessions.duration_s
+  function sessionRpeLoad(rpe, durationSeconds) {
+    var r = (typeof rpe === 'number') ? rpe : parseFloat(rpe);
+    var d = (typeof durationSeconds === 'number') ? durationSeconds : parseFloat(durationSeconds);
+    var leeg = { versie: VERSIONS.srpe, ok: false, waarde: null, eenheid: 'AU',
+                 rpe: null, duur_s: null, duur_min: null, reden: 'geen_invoer' };
+    if (r == null || !isFinite(r)) return leeg;
+    if (d == null || !isFinite(d)) { leeg.rpe = r; leeg.reden = 'duur_ontbreekt'; return leeg; }
+    if (r <= 0 || r > SRPE_SCHAAL_MAX) { leeg.rpe = r; leeg.duur_s = d; leeg.reden = 'rpe_buiten_schaal'; return leeg; }
+    if (d <= 0) { leeg.rpe = r; leeg.duur_s = d; leeg.reden = 'duur_ontbreekt'; return leeg; }
+    if (d > SRPE_MAX_DUUR_S) { leeg.rpe = r; leeg.duur_s = d; leeg.reden = 'duur_onwaarschijnlijk'; return leeg; }
+    var min = d / 60;
+    return { versie: VERSIONS.srpe, ok: true, waarde: Math.round(r * min * 10) / 10, eenheid: 'AU',
+             rpe: r, duur_s: d, duur_min: Math.round(min * 100) / 100, reden: 'ok' };
+  }
+
+  // --- rest_duration.v1 --- MASTER SPRINT v4.51.0
+  //
+  // rest_duration_s = tijd tussen het einde van de vorige geldige set en het begin van de
+  // volgende geldige set, in hele seconden. Puur/deterministisch: krijgt uitsluitend reeds
+  // gemeten wall-clock tijdstempels (epoch ms) en een pauze-correctie aangereikt door de
+  // aanroeper — berekent zelf niets over tijd/klok/state, schat niets bij.
+  //
+  // "Begin van de volgende set" = het moment waarop de rust volgens de app zelf eindigde
+  // (natuurlijk aftellen naar 0, of expliciet overslaan door de sporter). Er bestaat in de
+  // app geen aparte "start set"-handeling; dit is de vroegst beschikbare, niet-fictieve
+  // marker. Gedocumenteerd in het datacontract (rest_duration_s) als bewuste afwijking van
+  // de letterlijke "eerste rep van de volgende set".
+  //
+  // Grenzen, expliciet en zonder gokken:
+  //   - ontbrekende tijdstempel (prevDoneAtMs of restEndAtMs is null/niet-eindig) -> null
+  //   - restEndAtMs vóór prevDoneAtMs (negatieve tijd, corrupte/onvergelijkbare klok) -> null
+  //   - langer dan REST_MAX_DUUR_S (1 uur) -> null ("duur_onwaarschijnlijk", zelfde
+  //     beschermingsgedachte als SRPE_MAX_DUUR_S bij sessions.duration_s)
+  //   - een gemeten rust van 0s (direct overgeslagen) is WEL een geldige waarde — geen
+  //     stille fallback, want dit is een gemeten uitkomst, geen ontbrekende data
+  // pausedMsPrev/pausedMsThis: cumulatieve gepauzeerde ms van de sessie op elk van beide
+  // momenten (dezelfde monotone teller als sessions.duration_s gebruikt). Het verschil
+  // daartussen wordt van de ruwe tijdsspanne afgetrokken zodat een op de achtergrond gezette
+  // of gepauzeerde app geen valse rustduur oplevert. Ontbreekt deze info (bv. Guided
+  // Workout heeft geen pauzeregistratie) dan is de default 0 — geen aftrek, dus in dat pad
+  // kan onopgemerkte pauzetijd de gemeten rust verlengen; dit is een bekende beperking, geen
+  // stille aanname van een positieve waarde.
+  var REST_MAX_DUUR_S = 3600;
+  function restDurationS(prevDoneAtMs, restEndAtMs, pausedMsPrev, pausedMsThis) {
+    var a = (typeof prevDoneAtMs === 'number') ? prevDoneAtMs : parseFloat(prevDoneAtMs);
+    var b = (typeof restEndAtMs === 'number') ? restEndAtMs : parseFloat(restEndAtMs);
+    if (a == null || b == null || !isFinite(a) || !isFinite(b)) return null;
+    var pa = (pausedMsPrev == null || !isFinite(pausedMsPrev)) ? 0 : pausedMsPrev;
+    var pb = (pausedMsThis == null || !isFinite(pausedMsThis)) ? 0 : pausedMsThis;
+    var pausedDelta = pb - pa;
+    if (!(pausedDelta > 0)) pausedDelta = 0; // monotone teller; alleen aftrekken bij een echte toename
+    var rawMs = b - a - pausedDelta;
+    if (rawMs < 0) return null;              // negatief -> unavailable, NOOIT clampen naar 0
+    var s = Math.round(rawMs / 1000);
+    if (s > REST_MAX_DUUR_S) return null;    // onwaarschijnlijk lang -> unavailable
+    return s;
+  }
+
+  // --- segment_transition.v1 --- MASTER SPRINT v4.58.0/v4.59.0 — HYROX/TRIATHLON.
+  //
+  // Sport-neutrale generalisatie van rest_duration.v1: "einde vorig segment (wall-clock)
+  // -> daadwerkelijke start volgend segment (wall-clock)". Bewust EEN generieke functie,
+  // geen aparte hyrox_transition.v1/triathlon_transition.v1 — de regel is identiek,
+  // ongeacht of het segmentpaar "station -> run" (HYROX) of "swim -> bike" (triathlon) is.
+  // Zelfde grenzen als rest_duration.v1: geen UI-timer als bron, negatieve/ontbrekende
+  // tijd -> null (nooit clampen), pauzecorrectie optioneel via dezelfde monotone-teller-
+  // aanpak. Puur, geen sportkennis, geen AI.
+  //
+  // LET OP (zie sprintrapport v4.59.0): op het moment van schrijven bestaat er nog GEEN
+  // schrijfpad dat deze functie voedt met echte tijdstempels — de huidige cardio-invoer
+  // (CARDIO_TYPES 'time'-veld) is een puur handmatig getypte duur, geen wall-clock-timer.
+  // Deze functie is dus voorbereid maar nog niet bedraad; dat vereist een live-race-
+  // registratie-UI (v4.58.0 §18: v4.62.0), niet deze datamodelsprint.
+  function segmentTransitionS(prevSegmentEndMs, nextSegmentStartMs, pausedMsPrev, pausedMsThis) {
+    var a = (typeof prevSegmentEndMs === 'number') ? prevSegmentEndMs : parseFloat(prevSegmentEndMs);
+    var b = (typeof nextSegmentStartMs === 'number') ? nextSegmentStartMs : parseFloat(nextSegmentStartMs);
+    if (a == null || b == null || !isFinite(a) || !isFinite(b)) return null;
+    var pa = (pausedMsPrev == null || !isFinite(pausedMsPrev)) ? 0 : pausedMsPrev;
+    var pb = (pausedMsThis == null || !isFinite(pausedMsThis)) ? 0 : pausedMsThis;
+    var pausedDelta = pb - pa;
+    if (!(pausedDelta > 0)) pausedDelta = 0;
+    var rawMs = b - a - pausedDelta;
+    if (rawMs < 0) return null;
+    var s = Math.round(rawMs / 1000);
+    if (s > REST_MAX_DUUR_S) return null;   // zelfde plafond (1u) als onwaarschijnlijk voor een transitie
+    return s;
+  }
+
   // --- percentage.v1 --- base * pct / 100 (RAW, geen afronding). Exact gelijk aan de inline legacy
   // `base*param/100` in getEffectiveKg (index.html r.11109/11113/11118). De caller past roundKg toe
   // (roundKg blijft de afrondingsbron). Puur/deterministisch.
@@ -220,6 +374,93 @@
   }
   function cyclusDagFactor(fase) {
     return ({ menstruatie: 0.93, folliculair: 1.03, ovulatie: 1.00, luteaal: 0.97 })[fase] ?? 1.00;
+  }
+
+  // --- cycle_prediction.v1 --- MASTER SPRINT v4.54.0 — MENSTRUATIECYCUS/TRAINING.
+  //
+  // Puur/deterministisch, geen AI, geen medische claim. Werkt UITSLUITEND met wat de
+  // sporter zelf al invulde (hrv_log.cyclus_fase per dag) — nooit een aanname over
+  // fysiologie, hormonen, vruchtbaarheid of zwangerschap.
+  //
+  // "Cyclusstart" = de EERSTE dag in een aaneengesloten reeks met fase 'menstruatie'
+  // (een reeks van meerdere menstruatie-dagen achter elkaar telt als ÉÉN start, niet
+  // als meerdere). Cycluslengte = aantal dagen tussen twee opeenvolgende starts.
+  //
+  // Voorspelling van de eerstvolgende start = laatste start + gemiddelde lengte van de
+  // eerder VOLTOOIDE cycli (dus met minstens 2 starts, oftewel minstens 1 volledige
+  // cyclus, kan er een gemiddelde berekend worden over 1 interval; met slechts 1 start
+  // ooit gelogd is er nog geen enkel interval en dus geen voorspelling — dat is
+  // onvoldoende data, geen educated guess). Geen voorspelling van individuele fases
+  // binnen de cyclus: fase-duur varieert te veel tussen mensen om uit alleen de
+  // startdata te schatten zonder een aanname te verzinnen — dat doet deze functie
+  // daarom bewust NIET.
+  //
+  // input: entries = [{date:'YYYY-MM-DD', cyclus_fase:'menstruatie'|'folliculair'|
+  //        'ovulatie'|'luteaal'|null}], willekeurige volgorde toegestaan (wordt intern
+  //        gesorteerd). Ongeldige/onbekende fase-waarden en null worden genegeerd (niet
+  //        als 'menstruatie' geteld, nooit een gok).
+  var CYCLUS_FASES = ['menstruatie', 'folliculair', 'ovulatie', 'luteaal'];
+  var CYCLUS_MIN_LENGTE_D = 14;   // korter dan dit -> waarschijnlijk logfout/dubbele start, genegeerd
+  var CYCLUS_MAX_LENGTE_D = 60;   // langer dan dit -> onwaarschijnlijk als één cyclus, genegeerd
+
+  function cycleStarts(entries) {
+    var geldig = (entries || [])
+      .filter(function (e) { return e && e.date && CYCLUS_FASES.indexOf(e.cyclus_fase) !== -1; })
+      .slice()
+      .sort(function (a, b) { return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0); });
+    var starts = [];
+    var vorigeFase = null, vorigeDatum = null;
+    for (var i = 0; i < geldig.length; i++) {
+      var e = geldig[i];
+      // "Nog dezelfde menstruatie-streak" vereist zowel de vorige fase = menstruatie ALS
+      // een kleine datumafstand (<=2 dagen) tot de vorige gelogde dag. Zonder die tweede
+      // voorwaarde zou een nieuwe menstruatie-periode weken later — met een groot,
+      // ongelogd gat ertussen — ten onrechte als voortzetting van de vorige worden gezien
+      // in plaats van als een nieuwe cyclusstart.
+      var zelfdeStreak = e.cyclus_fase === 'menstruatie' && vorigeFase === 'menstruatie'
+        && vorigeDatum != null && daysBetween(vorigeDatum, e.date) != null && daysBetween(vorigeDatum, e.date) <= 2;
+      if (e.cyclus_fase === 'menstruatie' && !zelfdeStreak) starts.push(e.date);
+      vorigeFase = e.cyclus_fase; vorigeDatum = e.date;
+    }
+    return starts;
+  }
+  function daysBetween(dateA, dateB) {
+    var a = new Date(dateA + 'T00:00:00Z').getTime();
+    var b = new Date(dateB + 'T00:00:00Z').getTime();
+    if (!isFinite(a) || !isFinite(b)) return null;
+    return Math.round((b - a) / 86400000);
+  }
+  // Alle voltooide cycli (start -> volgende start), met een plausibiliteitsfilter.
+  // Buiten [14,60] dagen wordt genegeerd voor de GEMIDDELDE-berekening (waarschijnlijk
+  // een logfout, geen medische uitspraak) maar blijft wél zichtbaar in de ruwe lijst
+  // die de UI toont — de filtering geldt alleen voor de voorspelling.
+  function completedCycles(entries) {
+    var starts = cycleStarts(entries);
+    var cycli = [];
+    for (var i = 0; i < starts.length - 1; i++) {
+      var lengte = daysBetween(starts[i], starts[i + 1]);
+      cycli.push({ start: starts[i], volgendeStart: starts[i + 1], lengteDagen: lengte,
+                   plausibel: (lengte != null && lengte >= CYCLUS_MIN_LENGTE_D && lengte <= CYCLUS_MAX_LENGTE_D) });
+    }
+    return cycli;
+  }
+  // Voorspelling: null tenzij er minstens 1 plausibele voltooide cyclus is (dus minstens
+  // 2 gelogde starts in totaal). Nooit een schatting op basis van 1 losse startdatum.
+  function predictNextCycleStart(entries) {
+    var starts = cycleStarts(entries);
+    var cycli = completedCycles(entries).filter(function (c) { return c.plausibel; });
+    if (!cycli.length || !starts.length) {
+      return { versie: VERSIONS.cycle_prediction, beschikbaar: false, reden: cycli.length ? 'geen_starts' : 'onvoldoende_cycli',
+               aantalCycliGebruikt: 0, gemiddeldeLengteDagen: null, voorspeldeDatum: null };
+    }
+    var som = cycli.reduce(function (acc, c) { return acc + c.lengteDagen; }, 0);
+    var gemiddelde = Math.round(som / cycli.length);
+    var laatsteStart = starts[starts.length - 1];
+    var t = new Date(laatsteStart + 'T00:00:00Z').getTime() + gemiddelde * 86400000;
+    var voorspeldeDatum = new Date(t).toISOString().slice(0, 10);
+    return { versie: VERSIONS.cycle_prediction, beschikbaar: true, reden: 'ok',
+             aantalCycliGebruikt: cycli.length, gemiddeldeLengteDagen: gemiddelde, voorspeldeDatum: voorspeldeDatum,
+             laatsteStart: laatsteStart };
   }
   // hrvFactor is de reeds-geresolveerde HRV-factor (app-side houdt de hrvComponent||{factor:1.00}
   // default als orchestratie/context). Kern = exact legacy: hrvFactor*slaap*cyclus, clamp, 2 decimalen.
@@ -415,6 +656,14 @@
     calculateWorkingWeight: calculateWorkingWeight,
     validateProposedWeight: validateProposedWeight,
     calculateVolume: calculateVolume,
+    sessionVolume: sessionVolume,
+    sessionVolumeBron: sessionVolumeBron,
+    sessionRpeLoad: sessionRpeLoad,
+    SRPE_SCHAAL_MAX: SRPE_SCHAAL_MAX,
+    SRPE_MAX_DUUR_S: SRPE_MAX_DUUR_S,
+    restDurationS: restDurationS,
+    segmentTransitionS: segmentTransitionS,
+    REST_MAX_DUUR_S: REST_MAX_DUUR_S,
     trendClassify: trendClassify,
     TREND_MINIMUM: TREND_MINIMUM,
     TREND_DREMPEL: TREND_DREMPEL,
@@ -429,6 +678,8 @@
     MAX_SLEEP_HOURS: MAX_SLEEP_HOURS,
     slaapDagFactor: slaapDagFactor,
     cyclusDagFactor: cyclusDagFactor,
+    cycleStarts: cycleStarts, completedCycles: completedCycles, predictNextCycleStart: predictNextCycleStart,
+    CYCLUS_FASES: CYCLUS_FASES, CYCLUS_MIN_LENGTE_D: CYCLUS_MIN_LENGTE_D, CYCLUS_MAX_LENGTE_D: CYCLUS_MAX_LENGTE_D,
     calculateDayFactor: calculateDayFactor,
     recoveryScore: recoveryScore,
     readinessPercent: readinessPercent,

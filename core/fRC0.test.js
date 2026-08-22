@@ -131,7 +131,12 @@ t('A6: de knop verschijnt alleen bij een rij die echt bewijs bevat', function ()
     'het logboek telt het bewijsspoor niet per rij');
   assert.ok(/const evBtn=_evN\?/.test(HTML),
     'de knop wordt onvoorwaardelijk getoond — ook bij rijen zonder bewijs');
-  assert.ok(/openEvidence\(\$\{JSON\.stringify\(String\(s\.id\)\)\}\)/.test(HTML),
+  /* v4.49.0 — de veilige doorgifte gebeurt nu via attrArg() = escHtml(JSON.stringify(x)).
+     JSON.stringify alleen was niet genoeg: het attribuut stond tussen ENKELE
+     aanhalingstekens en JSON.stringify ontsnapt die niet, dus een waarde met een
+     apostrof brak alsnog uit het attribuut. attrArg maakt eerst een geldig JS-literal en
+     escapet dat daarna voor de HTML-parser. */
+  assert.ok(/openEvidence\(\$\{attrArg\(String\(s\.id\)\)\}\)/.test(HTML),
     'de sessie-id wordt niet veilig doorgegeven aan openEvidence');
 });
 
@@ -266,6 +271,12 @@ t('D4: de app verwijst naar de verklaring', function () {
 console.log('\nE. Accountverwijdering');
 
 var DELETE_FN = fs.readFileSync(path.join(ROOT, 'netlify', 'functions', 'delete-account.js'), 'utf8');
+/* v4.50.0 — de tabellenlijst en de opruimroutine zijn verhuisd naar de gedeelde module
+   _userData.js, zodat delete-account.js en cleanup-unverified-accounts.js niet langer twee
+   kopieen kunnen laten uiteenlopen (cleanup stond op 16 van de 30 tabellen). De eisen
+   hieronder blijven ongewijzigd; alleen het bestand waarin ze staan is verplaatst. */
+var USERDATA_FN = fs.readFileSync(path.join(ROOT, 'netlify', 'functions', '_userData.js'), 'utf8');
+var VERWIJDER_BRON = DELETE_FN + '\n' + USERDATA_FN;
 
 /* Elke tabel in het productieschema met een gebruikerskolom, opgevraagd op 2026-08-19 uit
    information_schema. Backup-tabellen (bak_p_*) staan er niet in: die zijn niet via de app
@@ -288,41 +299,51 @@ t('E1: elke tabel met gebruikersgegevens wordt bij verwijdering geraakt', functi
      waaronder wearable_connections — die de OAuth access- en refresh-tokens in leesbare
      vorm bewaart. Die bleven na verwijdering van het account gewoon bestaan. */
   var gemist = TABELLEN_MET_GEBRUIKER.filter(function (tabel) {
-    return DELETE_FN.indexOf("'" + tabel + "'") < 0 && DELETE_FN.indexOf('/' + tabel + '?') < 0;
+    /* de tabel telt mee als lijst-item ('naam') of als REST-pad (naam?filter=...) */
+    return VERWIJDER_BRON.indexOf("'" + tabel + "'") < 0 &&
+           VERWIJDER_BRON.indexOf('/' + tabel + '?') < 0 &&
+           VERWIJDER_BRON.indexOf('`' + tabel + '?') < 0;
   });
   assert.deepStrictEqual(gemist, [],
     'blijft achter na accountverwijdering: ' + gemist.join(', '));
 });
 
 t('E2: de tokens van de wearable-koppeling worden expliciet verwijderd', function () {
-  assert.ok(/'wearable_connections'/.test(DELETE_FN),
+  assert.ok(/'wearable_connections'/.test(VERWIJDER_BRON),
     'access_token en refresh_token van de Fitbit-/Google Health-koppeling blijven bestaan');
-  assert.ok(/'wearable_oauth_state'/.test(DELETE_FN));
+  assert.ok(/'wearable_oauth_state'/.test(VERWIJDER_BRON));
 });
 
 t('E3: gedeelde content wordt in beide richtingen opgeruimd', function () {
-  assert.ok(/shared_with/.test(DELETE_FN) && /shared_by/.test(DELETE_FN),
+  assert.ok(/shared_with/.test(VERWIJDER_BRON) && /shared_by/.test(VERWIJDER_BRON),
     'alleen één richting van content_shares wordt opgeruimd');
 });
 
 t('E4: gym-inrichting van andere leden blijft bestaan', function () {
   /* equipment_catalog en exercise_equipment dragen zowel gym_id als user_id. Een blinde
      verwijdering op user_id zou de gym-inrichting van de overige leden meenemen. */
-  assert.ok(/equipment_catalog', 'exercise_equipment'/.test(DELETE_FN),
+  assert.ok(/equipment_catalog', 'exercise_equipment'/.test(VERWIJDER_BRON),
     'de twee gedeelde tabellen worden niet apart behandeld');
-  assert.ok(/gym_id=is\.null/.test(DELETE_FN),
+  assert.ok(/gym_id=is\.null/.test(VERWIJDER_BRON),
     'er wordt zonder gym_id-filter verwijderd — dat raakt gedeelde inrichting van anderen');
 });
 
 t('E5: er wordt nooit zonder gebruikersfilter verwijderd', function () {
   /* Elke DELETE-URL in deze functie moet op de gebruiker begrensd zijn. Eén ongefilterde
      DELETE zou de tabel voor iedereen legen. */
-  var urls = DELETE_FN.match(/rest\/v1\/[^`]*`/g) || [];
-  assert.ok(urls.length > 0, 'geen enkele REST-aanroep gevonden — is de functie gewijzigd?');
-  urls.forEach(function (u) {
-    assert.ok(/\$\{userId\}/.test(u) || /\$\{table\}\?user_id=eq\.\$\{userId\}/.test(u),
-      'DELETE zonder gebruikersfilter: ' + u);
+  /* v4.50.0 — de DELETE's lopen via del(pad) in _userData.js. Er is precies EEN plek waar
+     de fetch gebeurt; elk pad dat daaraan wordt meegegeven moet de gebruiker noemen. */
+  var fetches = USERDATA_FN.match(/rest\/v1\/[^`]*`/g) || [];
+  assert.deepStrictEqual(fetches, ['rest/v1/${pad}`'],
+    'er is een tweede DELETE-pad bijgekomen buiten del() om: ' + fetches.join(' | '));
+  var paden = USERDATA_FN.match(/del\(`[^`]*`/g) || [];
+  assert.ok(paden.length >= 4, 'geen del()-aanroepen gevonden — is de module gewijzigd?');
+  paden.forEach(function (u) {
+    assert.ok(/\$\{encodeURIComponent\(userId\)\}/.test(u), 'DELETE zonder gebruikersfilter: ' + u);
   });
+  /* en de lus over de tabellenlijst zelf */
+  assert.ok(/\$\{tabel\}\?user_id=eq\.\$\{encodeURIComponent\(userId\)\}/.test(USERDATA_FN),
+    'de tabellenlus verwijdert zonder user_id-filter');
 });
 
 t('E6: het user-id komt van de server, nooit van de client', function () {

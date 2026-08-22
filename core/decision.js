@@ -23,7 +23,12 @@
     evidence: 'evidence.v1',
     dayzone: 'dayzone.v1',
     readiness_day: 'readiness_day.v1',
-    evidence_snapshot: 'evidence_snapshot.v1'
+    evidence_snapshot: 'evidence_snapshot.v1',
+    evidence_preserve: 'evidence_preserve.v1',
+    prescription_guard: 'prescription_guard.v1',
+    conflict: 'conflict.v1',
+    coaching_loop: 'coaching_loop.v1',
+    hyrox_sportregels: 'hyrox_sportregels.v1'
   };
 
   // --- progression.v1 --- exact gelijk aan legacy computeProgression(rpe,curKg).
@@ -197,6 +202,7 @@
       : (besluit && besluit.ruleId ? { id: besluit.ruleId, version: besluit.ruleVersion || null } : null);
     var at = (typeof i.at === 'string' && i.at) ? i.at : null;
     if (!at) ontbreekt.push('at');
+    if (i.confidence == null) ontbreekt.push('confidence');
 
     var geldig = !!(besluit && at);
     return {
@@ -212,6 +218,15 @@
       raw: raw,
       calculated: berekend,
       decision: besluit,
+      /* v4.49.0 — BETROUWBAARHEID HOORT IN HET BEWIJS.
+         De snapshot legde vast WAT er besloten is en op grond van welke regel, maar niet
+         hoe stevig dat besluit stond. Die informatie bestond wel — readinessDay levert
+         `datakwaliteit`, recoveryScore levert `confidence`, en het aantal vergelijkbare
+         sessies is bekend — maar werd bij het opslaan weggegooid. Zonder dat veld kan
+         achteraf niemand het verschil zien tussen een besluit op één signaal en een
+         besluit op zes. Het wordt INGESPOTEN, nooit hier afgeleid; ontbreekt het, dan
+         staat er null en wordt dat als ontbrekend gemeld. */
+      confidence: _evKopie(i.confidence) || null,
       rule: regel,
       explanation: (typeof i.explanation === 'string' && i.explanation) ? i.explanation : null,
       versions: {
@@ -242,6 +257,106 @@
     if (a === b) return { reproduceerbaar: true, reden: 'ok' };
     var zelfdeRegel = !!(s.rule && opnieuw.ruleId === s.rule.id && (opnieuw.ruleVersion || null) === (s.rule.version || null));
     return { reproduceerbaar: false, reden: zelfdeRegel ? 'andere_uitkomst' : 'andere_regelversie' };
+  }
+
+  /* preserveEvidence(nieuweSets, oudeSets) — v4.49.0, evidence_preserve.v1
+   *
+   * WAAROM DIT BESTAAT. Een snapshot is onveranderlijk (zie de kop hierboven), maar dat
+   * gold tot nu toe alleen in het geheugen. Op het schrijfpad werd bij het BEWERKEN van
+   * een sessie `sets_detail` compleet opnieuw opgebouwd uit de invoervelden — en die
+   * velden kennen geen `evidence`. Eén correctie in de historie wiste daarmee het
+   * bewijsspoor van álle sets van die sessie. Dat is dataverlies, niet een detail: zonder
+   * snapshot is achteraf niet meer aan te tonen welke regel destijds welk advies gaf.
+   *
+   * DE REGEL. Het bewijsspoor van een set blijft staan zolang die set feitelijk niet is
+   * veranderd. Wijzigt de sporter kg, reps of RPE, dan beschrijft de oude snapshot een
+   * beslissing die niet meer bij deze set hoort — die wordt dan NIET meegenomen. Een
+   * bewaard-gebleven snapshot bij gewijzigde invoer zou erger zijn dan geen snapshot:
+   * hij zou vals bewijs opleveren.
+   *
+   * Puur en deterministisch. Vergelijkt op waarde, niet op referentie, en muteert niets.
+   */
+  var EVIDENCE_PRESERVE_VERSIE = 'evidence_preserve.v1';
+  function _evGelijk(a, b) {
+    var v = function (x) { return (x == null || x === '') ? null : String(x); };
+    return v(a && a.kg) === v(b && b.kg)
+        && v(a && a.reps) === v(b && b.reps)
+        && v(a && a.rpe) === v(b && b.rpe);
+  }
+  function preserveEvidence(nieuweSets, oudeSets) {
+    if (!Array.isArray(nieuweSets)) return nieuweSets;
+    if (!Array.isArray(oudeSets) || !oudeSets.length) return nieuweSets;
+    return nieuweSets.map(function (s, i) {
+      var o = oudeSets[i];
+      if (!o || !o.evidence || !_evGelijk(s, o)) return s;
+      var uit = {}, k;
+      for (k in s) if (Object.prototype.hasOwnProperty.call(s, k)) uit[k] = s[k];
+      uit.evidence = _evKopie(o.evidence);
+      return uit;
+    });
+  }
+
+  /* validatePrescription(voorstel) — v4.49.0, prescription_guard.v1
+   *
+   * WAAROM DIT BESTAAT. De programmagenerator laat een taalmodel oefeningen, sets, reps en
+   * RPE kiezen. Het antwoord ging tot nu toe ongecontroleerd de database in: er werd alleen
+   * gekeken ÓF er een getal stond, niet of het een mogelijk getal was. Een afwijkend of
+   * hallucinerend antwoord kon zo "12 sets × 40 reps op RPE 15" in het programma van de
+   * sporter zetten. Dat is precies het geval waarin de AI de bron van waarheid wordt.
+   *
+   * Deze poort is het tegendeel: een deterministische, versioneerde grens die de AI niet
+   * kan verleggen. Hij bepaalt NIET wat een goed voorschrift is — dat blijft aan de
+   * generator — hij weigert alleen wat aantoonbaar geen voorschrift kán zijn.
+   *
+   * SEMANTIEK, bewust verschillend per veld:
+   *   sets / reps  — structureel. Buiten bereik of geen geheel getal => het hele blok
+   *                  wordt geweigerd (ok:false). Een onmogelijk volume stilzwijgend
+   *                  bijknippen zou een voorschrift verzinnen dat niemand heeft bedoeld.
+   *   rpe          — optioneel en aanvullend. Buiten de CR-10-schaal => alleen de RPE
+   *                  vervalt (null), het blok blijft staan. Een oefening zonder
+   *                  streef-RPE is normaal; een oefening met RPE 15 is onzin.
+   *
+   * Puur en deterministisch. Geen DOM, geen netwerk, geen AI.
+   */
+  var PRESCRIPTION_GUARD_VERSIE = 'prescription_guard.v1';
+  var PRESCRIPTION_GRENZEN = {
+    sets: { min: 1, max: 10 },
+    reps: { min: 1, max: 50 },
+    rpe:  { min: 1, max: 10 }
+  };
+  function _pgGeheel(v, grens) {
+    var n = (typeof v === 'number') ? v : parseFloat(v);
+    if (n == null || !isFinite(n)) return null;
+    if (Math.floor(n) !== n) return null;
+    if (n < grens.min || n > grens.max) return null;
+    return n;
+  }
+  function validatePrescription(voorstel) {
+    var v = voorstel || {};
+    var geweigerd = [], aangepast = [];
+    var sets = _pgGeheel(v.sets, PRESCRIPTION_GRENZEN.sets);
+    var reps = _pgGeheel(v.reps, PRESCRIPTION_GRENZEN.reps);
+    if (sets == null) geweigerd.push('sets');
+    if (reps == null) geweigerd.push('reps');
+
+    var rpe = null;
+    if (v.rpe != null && v.rpe !== '') {
+      var r = (typeof v.rpe === 'number') ? v.rpe : parseFloat(v.rpe);
+      if (r != null && isFinite(r) && r >= PRESCRIPTION_GRENZEN.rpe.min && r <= PRESCRIPTION_GRENZEN.rpe.max) rpe = r;
+      else aangepast.push('rpe');
+    }
+
+    var ok = geweigerd.length === 0;
+    return {
+      versie: PRESCRIPTION_GUARD_VERSIE,
+      ruleId: PRESCRIPTION_GUARD_VERSIE, ruleVersion: PRESCRIPTION_GUARD_VERSIE,
+      ok: ok,
+      waarden: { sets: sets, reps: reps, rpe: rpe },
+      geweigerd: geweigerd,
+      aangepast: aangepast,
+      grenzen: PRESCRIPTION_GRENZEN,
+      reden: ok ? (aangepast.length ? 'ok_met_correctie' : 'ok') : 'buiten_grenzen'
+    };
   }
 
   /* ══════════════════════════════════════════════════════════════════════════
@@ -379,6 +494,7 @@
     var tekst = READINESS_ZONE_TEKST[zone];
 
     var aanpassing = computeProgAdjustment(factor, sig.spierherstel || [], sig.gevoel || null, sig.pijn || null);
+    var conflicten = detectConflicten({ zone: zone, dagfactor: factor, signalen: sig, herstel: herstel });
 
     return {
       versie: READINESS_DAY_VERSIE, bruikbaar: true,
@@ -393,8 +509,93 @@
         ? { soort: 'aangepast', setsDelta: aanpassing.setsDelta || 0, rpeDelta: aanpassing.rpeDelta || 0 }
         : { soort: 'ongewijzigd', setsDelta: 0, rpeDelta: 0 },
       redenen: aanpassing ? (aanpassing.redenen || []) : [],
+      /* v4.49.0 — tegenstrijdige signalen, expliciet benoemd. Zie detectConflicten. */
+      conflicten: conflicten.conflicten,
+      zekerheid: conflicten.zekerheid,
       herkomst: { signalen: 'gemeten', dagfactor: 'berekend', herstel: 'berekend',
-                  zone: 'besloten', aanpassing: 'besloten' }
+                  zone: 'besloten', aanpassing: 'besloten', conflicten: 'besloten' }
+    };
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════
+   * TEGENSTRIJDIGE SIGNALEN (conflict.v1) — v4.49.0
+   *
+   * WAAROM DIT BESTAAT. De app kende drie safeguards tegen te stellige uitspraken: geen
+   * bewijs, lage betrouwbaarheid en ontbrekende gegevens. De vierde ontbrak volledig:
+   * gegevens die elkaar TEGENSPREKEN. Een groene dagfactor naast "ik voel me slecht", of
+   * een uitstekende HRV naast een rusthartslag die tien slagen te hoog ligt, leverde
+   * gewoon een groen advies op — met dezelfde stelligheid als een dag waarop alles wees
+   * dezelfde kant op. Dat is precies het geval waarin een coach juist voorzichtiger wordt.
+   *
+   * WAT DEZE REGEL WEL EN NIET DOET. Hij verandert de zone niet, verandert de aanpassing
+   * niet en verzint geen nieuwe drempel: hij benoemt alleen dat twee bestaande signalen
+   * niet met elkaar rijmen, en verlaagt de ZEKERHEID waarmee de uitkomst gepresenteerd
+   * mag worden. De beslissing blijft van computeProgAdjustment; de toon is aan de laag
+   * erboven.
+   *
+   * De drempels zijn bewust dezelfde die elders in de engines al gelden:
+   *   - spierherstel < 70 % is 'laag'          (computeProgAdjustment)
+   *   - RPE >= 9 is 'zwaar'                    (progression.v1: > 8,5 is deload)
+   *   - dagfactor >= 1,00 is 'groen'           (readiness.v1)
+   * Er komt dus geen zesde definitie van "zwaar" bij.
+   * ══════════════════════════════════════════════════════════════════════════ */
+  var CONFLICT_VERSIE = 'conflict.v1';
+  var CONFLICT_RPE_ZWAAR = 9;
+  var CONFLICT_HERSTEL_LAAG = 70;
+  function detectConflicten(input) {
+    var i = input || {}, sig = i.signalen || {};
+    var uit = [];
+    function meld(id, uitleg) { uit.push({ id: id, uitleg: uitleg }); }
+
+    var groen = (i.zone === 'ready') || (typeof i.dagfactor === 'number' && i.dagfactor >= 1);
+
+    /* 1. Het lichaam zegt groen, de sporter zegt iets anders. Het eigen gevoel is de enige
+          directe waarneming die er is; hem wegstrepen tegen een berekende dagfactor is
+          precies wat een coach niet zou doen. */
+    if (groen && (sig.gevoel === 'slecht' || sig.gevoel === 'matig')) {
+      meld('gevoel_vs_dagfactor',
+        'de metingen wijzen op een goede dag, maar je gaf zelf aan je ' +
+        (sig.gevoel === 'slecht' ? 'slecht' : 'matig') + ' te voelen');
+    }
+
+    /* 2. Groene dag, maar een spiergroep is aantoonbaar nog niet hersteld. */
+    var laag = (sig.spierherstel || []).filter(function (r) { return r && typeof r.pct === 'number' && r.pct < CONFLICT_HERSTEL_LAAG; });
+    if (groen && laag.length) {
+      meld('herstel_vs_dagfactor',
+        'de dagfactor is goed, maar ' + laag.length + ' spiergroep' + (laag.length === 1 ? '' : 'en') +
+        ' staat nog onder de ' + CONFLICT_HERSTEL_LAAG + '% hersteld');
+    }
+
+    /* 3. HRV en rusthartslag wijzen tegengesteld. Beide meten hetzelfde onderliggende
+          herstel; wijzen ze verschillende kanten op, dan is geen van beide een
+          betrouwbare basis voor een stellige uitspraak. */
+    var hrvRicht = sig.hrv && sig.hrv.richting, rhrRicht = sig.rhr && sig.rhr.richting;
+    if (hrvRicht === 'omhoog' && rhrRicht === 'omhoog') {
+      meld('hrv_vs_rhr', 'je HRV is gestegen terwijl je rusthartslag óók steeg — die twee horen normaal tegengesteld te bewegen');
+    }
+    if (hrvRicht === 'omlaag' && rhrRicht === 'omlaag') {
+      meld('hrv_vs_rhr', 'je HRV is gedaald terwijl je rusthartslag óók daalde — die twee horen normaal tegengesteld te bewegen');
+    }
+
+    /* 4. Groene dag naast een zware RPE-trend uit de training zelf. */
+    var rpeTrend = (typeof sig.rpeGemiddeld7 === 'number' && isFinite(sig.rpeGemiddeld7)) ? sig.rpeGemiddeld7 : null;
+    if (groen && rpeTrend != null && rpeTrend >= CONFLICT_RPE_ZWAAR) {
+      meld('rpe_vs_dagfactor',
+        'de dagfactor is goed, maar je trainingen voelden de afgelopen dagen gemiddeld zwaar (RPE ' +
+        (Math.round(rpeTrend * 10) / 10) + ')');
+    }
+
+    /* 5. Het herstelcijfer en de zone spreken elkaar tegen. */
+    if (groen && i.herstel && i.herstel.band === 'laag') {
+      meld('herstelscore_vs_zone', 'de zone is groen, maar je herstelscore staat op laag');
+    }
+
+    return {
+      versie: CONFLICT_VERSIE,
+      conflicten: uit,
+      /* Eén tegenstrijdigheid maakt een uitspraak onzeker, twee of meer maken hem
+         onbetrouwbaar. Geen weging, geen score — een expliciete telling. */
+      zekerheid: uit.length === 0 ? 'consistent' : (uit.length === 1 ? 'onzeker' : 'tegenstrijdig')
     };
   }
 
@@ -794,9 +995,206 @@
     };
   }
 
+  /* ══════════════════════════════════════════════════════════════════════════
+   * DE GESLOTEN COACHINGLUS (coaching_loop.v1) — v4.50.0
+   *
+   * WAAROM DIT BESTAAT.
+   * De app gaf na iedere training een opdracht mee voor de volgende keer ("Verhogen
+   * (+2,5 kg)"). Die opdracht stond in window._coachSignals en verdween bij het herladen
+   * van het scherm. De volgende training werd daarna volledig opnieuw afgeleid uit de
+   * vorige sessie, het schema en het herstel van vandaag. Het gevolg: de lus
+   * advies → uitvoering → resultaat → volgend advies was nergens gesloten. De sporter kon
+   * niet zien of het advies van vorige keer was opgevolgd, en als het voorschrift van
+   * vandaag ervan afweek (rep-range, herstel), kreeg hij daar geen woord over.
+   *
+   * WAT HIER NIET GEBEURT.
+   * Er wordt niets nieuws besloten, niets herberekend en niets extra opgeslagen. Het
+   * advies van de vorige keer ligt al vast: sinds Sprint 18 reist per set een
+   * evidence_snapshot.v1 mee in sessions.sets_detail, mét de genomen beslissing en de
+   * regel-id. Deze twee functies LEZEN dat terug en vergelijken het met het voorschrift
+   * dat de app vandaag toch al toont. Geen migratie, geen tweede waarheid, geen AI.
+   *
+   * GRENS. Zonder snapshot (sessies van vóór Sprint 18, of een set zonder RPE) is er geen
+   * advies vastgelegd. Dan zegt de lus dat eerlijk — hij reconstrueert nooit een advies
+   * dat destijds niet gegeven is.
+   * ══════════════════════════════════════════════════════════════════════════ */
+  var COACHING_LOOP_VERSIE = VERSIONS.coaching_loop;
+  /* Speling bij het vergelijken van gewichten. Het voorschrift van vandaag gaat door
+     roundKg() = Math.round(v*2)/2, dus een raster van 0,5 kg; het teruggelezen advies is
+     ongerond (uitgevoerd gewicht + delta). Een halve rasterstap is daarmee representatieruis
+     en geen afwijking — bij 1,25-schijven levert 41,25 + 2,5 = 43,75 een voorschrift van
+     43,5 op, en dat "afgeweken" noemen zou onzin zijn. */
+  var LUS_KG_SPELING = 0.25;
+  /* Welke afwijkingsredenen VERKLAREN werkelijk een lichter voorschrift? `via` uit
+     buildPrescriptionContract beschrijft het verschil met de VORIGE SESSIE, niet met het
+     advies. 'progressie' (vandaag zwaarder dan vorige keer) verklaart daarom niets over een
+     afwijking van het advies — dat advies bevatte de progressie al. Zou de app die reden toch
+     gebruiken, dan onderbouwt hij "10 kg boven je eigen deload-advies" met "volgens je
+     opbouw". */
+  var LUS_VERKLARINGEN = ['recovery', 'rep-range'];
+
+  /* vorigAdvies(sessieRij) — welk advies gaf de app na de vorige sessie van deze oefening?
+   * Leest de opgeslagen snapshots uit sets_detail en kiest DEZELFDE set als het
+   * afrondscherm destijds: die met het hoogste berekende gewicht. Puur; muteert niets. */
+  function vorigAdvies(sessieRij) {
+    var leeg = function (reden) {
+      return { versie: COACHING_LOOP_VERSIE, bruikbaar: false, reden: reden, besluit: null,
+               uitgevoerd: null, verwachtKg: null, datum: null, exerciseId: null };
+    };
+    if (!sessieRij || typeof sessieRij !== 'object') return leeg('geen_sessie');
+    var det = sessieRij.sets_detail;
+    if (!Array.isArray(det) || !det.length) return leeg('geen_sets');
+    /* DEZELFDE setkeuze als het afrondscherm: de zwaarste set over ÁLLE sets, niet de
+       zwaarste set die toevallig bewijs draagt. Dat onderscheid is geen detail. Logt de
+       sporter zijn eerste set met RPE en zijn topset zonder, dan stond er destijds géén
+       opdracht op het afrondscherm (zonder RPE volgt er geen beslissing). Zou deze functie
+       terugvallen op de lichtere set mét bewijs, dan toont de app achteraf een advies dat
+       nooit gegeven is — precies wat hier niet mag gebeuren. */
+    var beste = null, besteKg = null;
+    for (var i = 0; i < det.length; i++) {
+      var d = det[i];
+      if (!d) continue;
+      var k = (d.effKg != null) ? Number(d.effKg) : parseFloat(d.kg);
+      if (k == null || !isFinite(k)) continue;
+      if (besteKg == null || k > besteKg) { besteKg = k; beste = d; }
+    }
+    if (!beste) return leeg('geen_sets');
+    var besteEv = readDecisionEvidence(beste.evidence);
+    if (!besteEv || !besteEv.decision) return leeg('geen_bewijs');
+    var evKg = (besteEv.calculated && besteEv.calculated.effKg != null) ? Number(besteEv.calculated.effKg) : null;
+    if (evKg != null && isFinite(evKg)) besteKg = evKg;
+    var delta = (besteEv.decision.deltaKg != null && isFinite(besteEv.decision.deltaKg))
+      ? Number(besteEv.decision.deltaKg) : null;
+    return {
+      versie: COACHING_LOOP_VERSIE,
+      bruikbaar: true,
+      reden: 'ok',
+      datum: (besteEv.context && besteEv.context.date) || sessieRij.date || null,
+      exerciseId: (besteEv.context && besteEv.context.exerciseId) || sessieRij.exercise_id || null,
+      besluit: {
+        outcome: besteEv.decision.outcome || null,
+        label: besteEv.decision.label || null,
+        deltaKg: delta,
+        ruleId: (besteEv.rule && besteEv.rule.id) || besteEv.decision.ruleId || null,
+        ruleVersion: (besteEv.rule && besteEv.rule.version) || besteEv.decision.ruleVersion || null
+      },
+      uitgevoerd: {
+        kg: besteKg,
+        reps: (besteEv.raw && besteEv.raw.reps != null) ? besteEv.raw.reps : null,
+        rpe: (besteEv.raw && besteEv.raw.rpe != null) ? besteEv.raw.rpe : null
+      },
+      /* het gewicht dat destijds is meegegeven voor de volgende keer */
+      verwachtKg: (delta == null) ? null : Math.round((besteKg + delta) * 100) / 100
+    };
+  }
+
+  /* coachingLus(advies, voorgeschrevenKg, redenen) — is het advies van vorige keer terug te
+   * zien in het voorschrift van vandaag?
+   *   'gevolgd'    het voorschrift komt overeen met wat destijds is meegegeven
+   *   'afgeweken'  het wijkt af; `redenen` (uit de bestaande rationale.via) zegt waardoor
+   *   'onbekend'   er is geen advies vastgelegd, of er staat vandaag geen gewicht
+   * Puur; beslist niets — het stelt alleen vast wat er is. */
+  function coachingLus(advies, voorgeschrevenKg, redenen) {
+    var uit = { versie: COACHING_LOOP_VERSIE, status: 'onbekend', reden: null,
+                verwacht: null, voorgeschreven: null, verschil: null, redenen: [] };
+    if (!advies || !advies.bruikbaar) { uit.reden = (advies && advies.reden) || 'geen_advies'; return uit; }
+    if (advies.verwachtKg == null) { uit.reden = 'geen_verwachting'; return uit; }
+    uit.verwacht = advies.verwachtKg;
+    /* '' wordt door Number() een 0 — een leeg invoerveld mag nooit als "0 kg voorgeschreven"
+       gelezen worden, want dan zou de lus een afwijking melden die er niet is. */
+    var vk = (voorgeschrevenKg == null || voorgeschrevenKg === '') ? NaN : Number(voorgeschrevenKg);
+    if (!isFinite(vk)) { uit.reden = 'geen_voorschrift'; return uit; }
+    uit.voorgeschreven = vk;
+    /* Vergelijk op het ONAFGERONDE verschil: eerst afronden en dan toetsen zou een verschil
+       precies op de speling over de grens tillen. */
+    var ruw = vk - advies.verwachtKg;
+    uit.verschil = Math.round(ruw * 100) / 100;
+    uit.status = (Math.abs(ruw) <= LUS_KG_SPELING) ? 'gevolgd' : 'afgeweken';
+    if (uit.status === 'gevolgd') { uit.redenen = []; uit.reden = 'ok'; return uit; }
+    /* Alleen redenen die de RICHTING van de afwijking kunnen verklaren tellen mee. Herstel en
+       een andere rep-range maken het voorschrift lichter; is het vandaag ZWAARDER dan wat er
+       geadviseerd was, dan verklaart geen van beide dat. Dan zegt de lus eerlijk dat hij het
+       verschil niet kan verklaren, in plaats van er een onderbouwing bij te verzinnen. */
+    var lichter = ruw < 0;
+    uit.redenen = (Array.isArray(redenen) ? redenen : []).filter(function (r) {
+      return lichter && LUS_VERKLARINGEN.indexOf(r) >= 0;
+    });
+    uit.reden = uit.redenen.length ? uit.redenen[0] : 'onverklaard';
+    return uit;
+  }
+
+  // --- hyrox_sportregels.v1 --- MASTER SPRINT v4.58.0/v4.59.0 — HYROX/TRIATHLON.
+  //
+  // Uitsluitend STRUCTURELE sportregels (volgorde, geldige stations, geldige divisies) —
+  // GEEN daadwerkelijke divisiegebonden waarden (sledgewicht, sandbagsgewicht, wall-ball-
+  // gewicht/reps/hoogte). Die officiële HYROX-reglementswaarden staan nergens in deze
+  // repository en zijn niet door de assistent geverifieerd tegen een actuele, gezaghebbende
+  // bron — ze hardcoderen op basis van trainingskennis zou een ongeverifieerde aanname zijn
+  // die als sportregel gepresenteerd wordt. Dat is bewust NIET gedaan (zie sprintrapport
+  // v4.59.0, "resterende punten"). De structuur hieronder is klaar om die waarden later op
+  // te nemen zodra ze geverifieerd zijn (bv. via HYROX_DIVISIE_WAARDEN, nu leeg).
+  var HYROX_STATIONS = [
+    'hyrox_skierg','hyrox_sled_push','hyrox_sled_pull','hyrox_burpee_broad_jump',
+    'hyrox_row','hyrox_farmers_carry','hyrox_sandbag_lunges','hyrox_wall_balls'
+  ];
+  var HYROX_RUN_ID = 'hyrox_run';
+  // Canonieke 16-segment-volgorde: RUN, STATION 1, RUN, STATION 2, ... RUN, STATION 8.
+  // Zelfde run-exercise_id acht keer (segment_index onderscheidt welke van de acht).
+  var HYROX_VOLGORDE = (function () {
+    var v = [];
+    for (var i = 0; i < HYROX_STATIONS.length; i++) { v.push(HYROX_RUN_ID); v.push(HYROX_STATIONS[i]); }
+    return v;
+  })();
+  var HYROX_DIVISIES = ['open', 'pro', 'doubles', 'relay'];
+  // Divisiegebonden vaste waarden (sledgewicht, wall-ball-gewicht/hoogte, enz.) — BEWUST LEEG.
+  // Vul dit uitsluitend met waarden die geverifieerd zijn tegen het actuele, officiële
+  // HYROX-reglement (dat wijzigt periodiek); nooit uit trainingskennis invullen.
+  var HYROX_DIVISIE_WAARDEN = {};
+
+  // isValidHyroxVolgorde(segments): segments = [{exercise_id, segment_index}, ...]
+  // Puur structurele validatie: alterneert run/station correct volgens HYROX_VOLGORDE, geen
+  // gaten, geen duplicaten in segment_index. Zegt niets over gewichten/afstanden (die
+  // wachten op HYROX_DIVISIE_WAARDEN hierboven). Retourneert {geldig, reden}.
+  function isValidHyroxVolgorde(segments) {
+    if (!Array.isArray(segments) || segments.length === 0) return { geldig: false, reden: 'leeg' };
+    var sorted = segments.slice().sort(function (a, b) { return (a.segment_index || 0) - (b.segment_index || 0); });
+    if (sorted.length !== HYROX_VOLGORDE.length) return { geldig: false, reden: 'onvolledig' };
+    for (var i = 0; i < sorted.length; i++) {
+      if ((sorted[i].segment_index || 0) !== i + 1) return { geldig: false, reden: 'segment_index_gat_of_duplicaat' };
+      if (sorted[i].exercise_id !== HYROX_VOLGORDE[i]) return { geldig: false, reden: 'verkeerde_volgorde_op_segment_' + (i + 1) };
+    }
+    return { geldig: true, reden: 'ok' };
+  }
+  function isValidHyroxDivisie(divisie) {
+    return HYROX_DIVISIES.indexOf(divisie) !== -1;
+  }
+  // Triathlon-brick: SWIM, T1(transitie), BIKE, T2(transitie), RUN — segment_index 1-5.
+  // Transities zelf zijn GEEN exercise-rij; alleen swim/bike/run zijn dat (bestaande
+  // CARDIO_TYPES-sleutels: swimming/cycling/running). isValidBrickVolgorde controleert
+  // uitsluitend die drie disciplinerijen, in die volgorde, op segment_index 1, 3, 5.
+  function isValidBrickVolgorde(segments) {
+    if (!Array.isArray(segments) || segments.length !== 3) return { geldig: false, reden: 'onvolledig' };
+    var sorted = segments.slice().sort(function (a, b) { return (a.segment_index || 0) - (b.segment_index || 0); });
+    var verwacht = [{ idx: 1, cardioType: 'swimming' }, { idx: 3, cardioType: 'cycling' }, { idx: 5, cardioType: 'running' }];
+    for (var i = 0; i < 3; i++) {
+      if ((sorted[i].segment_index || 0) !== verwacht[i].idx) return { geldig: false, reden: 'segment_index_klopt_niet_op_positie_' + (i + 1) };
+      if (sorted[i].cardio_type !== verwacht[i].cardioType) return { geldig: false, reden: 'verkeerde_discipline_op_positie_' + (i + 1) };
+    }
+    return { geldig: true, reden: 'ok' };
+  }
+
   var DecisionCore = {
     buildDecisionEvidence: buildDecisionEvidence,
     readDecisionEvidence: readDecisionEvidence,
+    preserveEvidence: preserveEvidence,
+    EVIDENCE_PRESERVE_VERSIE: EVIDENCE_PRESERVE_VERSIE,
+    HYROX_STATIONS: HYROX_STATIONS, HYROX_RUN_ID: HYROX_RUN_ID, HYROX_VOLGORDE: HYROX_VOLGORDE,
+    HYROX_DIVISIES: HYROX_DIVISIES, HYROX_DIVISIE_WAARDEN: HYROX_DIVISIE_WAARDEN,
+    isValidHyroxVolgorde: isValidHyroxVolgorde, isValidHyroxDivisie: isValidHyroxDivisie,
+    isValidBrickVolgorde: isValidBrickVolgorde,
+    validatePrescription: validatePrescription,
+    PRESCRIPTION_GUARD_VERSIE: PRESCRIPTION_GUARD_VERSIE,
+    PRESCRIPTION_GRENZEN: PRESCRIPTION_GRENZEN,
     evidenceReproduceerbaar: evidenceReproduceerbaar,
     EVIDENCE_SNAPSHOT_VERSIE: EVIDENCE_SNAPSHOT_VERSIE,
     EVIDENCE_SECTIES: EVIDENCE_SECTIES,
@@ -805,6 +1203,10 @@
     DAYZONE_VERSIE: DAYZONE_VERSIE,
     readinessDay: readinessDay,
     READINESS_DAY_VERSIE: READINESS_DAY_VERSIE,
+    detectConflicten: detectConflicten,
+    CONFLICT_VERSIE: CONFLICT_VERSIE,
+    CONFLICT_RPE_ZWAAR: CONFLICT_RPE_ZWAAR,
+    CONFLICT_HERSTEL_LAAG: CONFLICT_HERSTEL_LAAG,
     READINESS_ZONES: READINESS_ZONES,
     READINESS_SIGNALEN: READINESS_SIGNALEN,
     READINESS_ZONE_TEKST: READINESS_ZONE_TEKST,
@@ -837,6 +1239,11 @@
     detrainingFactor: detrainingFactor,
     phaseForWeek: phaseForWeek,
     progressionDecision: progressionDecision,
+    vorigAdvies: vorigAdvies,
+    coachingLus: coachingLus,
+    COACHING_LOOP_VERSIE: COACHING_LOOP_VERSIE,
+    LUS_KG_SPELING: LUS_KG_SPELING,
+    LUS_VERKLARINGEN: LUS_VERKLARINGEN,
     Evidence: {
       decisionRulesSnapshot: decisionRulesSnapshot,
       buildEvidence: buildEvidence

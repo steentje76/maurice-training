@@ -206,7 +206,7 @@ ok(/<div class="scr" id="s-lich-verband">[\s\S]{0,2400}<nav class="bnav"/.test(h
 ok(!/const\s+VOORBEELD|demoVerband|sampleCorrel/i.test(html), 'F17: geen voorbeeld- of demodata in de app');
 // regressie op wat niet mocht wijzigen
 ok(html.indexOf('<div class="lich-figpair">') >= 0, 'F18: anatomie op het overzicht ongewijzigd');
-ok(html.indexOf("fetch('/.netlify/functions/wearable-sync'") >= 0, 'F19: Fitbit-sync ongewijzigd');
+ok(html.indexOf("fetch(FN_BASE+'wearable-sync'") >= 0, 'F19: Fitbit-sync ongewijzigd');
 ok(html.indexOf('function renderLichaamMetricDetail') >= 0, 'F20: metric-detail ongewijzigd aanwezig');
 ok(html.indexOf('function renderLichaamSpierOefeningen') >= 0, 'F21: oefeningenscherm ongewijzigd aanwezig');
 ok(html.indexOf('calculateMuscleRecoveryPct') >= 0, 'F22: herstelberekening ongemoeid');

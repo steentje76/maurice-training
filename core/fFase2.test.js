@@ -187,7 +187,10 @@ var DEVICE_SLEUTELS = [
   'tk_theme',        /* weergavevoorkeur van het toestel, geen persoonsgegeven */
   'tk_ns_migrated',  /* eenmalige namespace-migratie van dit toestel */
   'tk_auth_session', /* de sessie zelf; wordt door clearAuthSession beheerd */
-  'tk_cache_owner_uid'
+  'tk_cache_owner_uid',
+  'tk_schema_duration_s' /* v4.49.0 — vastgestelde schema-capabiliteit van de BACKEND (bestaat
+                            sessions.duration_s?), geen persoonsgegeven en niet gebruikersgebonden.
+                            Wordt uitsluitend positief onthouden; zie tkDurationKolomBeschikbaar. */
 ];
 function geschrevenSleutels() {
   var uit = {}, re = /localStorage\.setItem\(\s*'([^']+)'/g, m;
@@ -330,7 +333,8 @@ function queueZandbak(opts) {
        instelbare refresh, zodat 401-gedrag echt getest wordt en niet per ongeluk in
        de catch-tak belandt. */
     authSession: opts.sessie === undefined ? { access_token: 't', refresh_token: 'r', user: { id: 'u1' } } : opts.sessie,
-    refreshAuthToken: function () { ctx._refreshes = (ctx._refreshes || 0) + 1; return Promise.resolve(!!opts.refreshLukt); },
+    /* v4.49.0 — status-contract i.p.v. booleaanse waarde, zie fSessieIntegriteit. */
+    refreshAuthToken: function () { ctx._refreshes = (ctx._refreshes || 0) + 1; return Promise.resolve(opts.refreshLukt ? 'ok' : 'verlopen'); },
     fetch: function (url, o) {
       verzoeken.push({ url: url, method: (o && o.method) || 'GET', body: o && o.body });
       var res = opts.antwoord ? opts.antwoord(url, o, verzoeken.length) : { ok: true };
@@ -344,7 +348,8 @@ function queueZandbak(opts) {
                    konstVar('_sbRefreshInFlight'), konstVar('_sbSessieVerlopenGemeld'),
                    konstVar('_flushBezig'),
                    pak('sbRetryable'), pak('sbRefreshOnce'), pak('sbSessieVerlopen'),
-                   pak('sbFetch'), pak('offlineDb'), pak('offlineQueueAdd'),
+                   pak('sbFetch'), pak('_tkHuidigeUid'), pak('offlineDb'), pak('offlineQueueAdd'),
+                   pak('offlineQueueVanHuidigeGebruiker'),
                    pak('offlineQueueAll'), pak('offlineQueueRemove'), pak('sbPostQ'),
                    pak('sbPatchQ'), pak('sbDelQ'), pak('flushOfflineQueue')].join('\n'), ctx);
   ctx._idb = idb;

@@ -159,7 +159,7 @@ ok(html.indexOf('Nog geen verbanden vrijgegeven') >= 0, 'G2: de veilige verbande
 ok(!/minimaal \d+ (vergelijkbare )?waarnemingen/.test(html), 'G3: nog steeds geen verzonnen drempel');
 ok(html.indexOf('id="s-lich-metric"') >= 0 && html.indexOf('function renderLichaamMetricDetail') >= 0,
    'G4: het metric-detail uit v4.30.0 is ongemoeid');
-ok(html.indexOf("fetch('/.netlify/functions/wearable-sync'") >= 0, 'G5: de Fitbit-sync is ongewijzigd');
+ok(html.indexOf("fetch(FN_BASE+'wearable-sync'") >= 0, 'G5: de Fitbit-sync is ongewijzigd');
 ok(html.indexOf('function upsertHrvLog') >= 0, 'G6: de v4.29.1-dataverliesfix is intact');
 ok(html.indexOf('calculateMuscleRecoveryPct') >= 0, 'G7: de bestaande herstelberekening bestaat nog');
 ok(html.indexOf('id="lich-hero"') >= 0 && html.indexOf('id="lich-checkin"') >= 0,

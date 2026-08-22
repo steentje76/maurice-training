@@ -146,7 +146,11 @@ eq(K.LIVE_AI_FIELDS, ['oefening','setNummer','totaalSets','voorgeschreven','uitg
                       'actie','rust','herstel','readiness','datakwaliteit','ontbreekt','herkomst'],
    'C2: de live-whitelist is exact vastgelegd');
 eq(K.READINESS_AI_FIELDS, ['zone','zoneLabel','zoneBetekenis','herstel','trainingsadvies','redenen','datakwaliteit',
-                           'ontbreekt','herkomst','geplandeTraining','dagthema'],
+                           'ontbreekt','herkomst','geplandeTraining','dagthema',
+                           /* v4.49.0 — tegenstrijdige signalen (conflict.v1): de AI moet kunnen
+                              weten dat de gegevens elkaar tegenspreken, anders formuleert hij
+                              even stellig als op een dag waarop alles klopt. */
+                           'conflicten','zekerheid'],
    'C3: de readiness-whitelist is exact vastgelegd');
 // een payload kan nooit meer velden bevatten dan de whitelist
 const liveCtx = K.buildLiveContext({ oefening: { id: 'sq', naam: 'Squat' }, besluit: set(9.5),

@@ -1,3 +1,4 @@
+const { withCors } = require('./_cors.js');   // v4.49.0 — CORS voor de Capacitor-app (https://localhost)
 // netlify/functions/wearable-sync.js
 // Haalt HRV (RMSSD), rusthartslag en slaap van de laatste 7 dagen op uit de Google Health API
 // en zet ze in hrv_log — als AANVULLING op de handmatige check-in, niet als vervanging (bestaande
@@ -77,7 +78,7 @@ async function sbRows(res, what) {
   return body;
 }
 
-exports.handler = async function (event) {
+const _handler = async function (event) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: { message: 'Method not allowed' } }) };
   }
@@ -261,3 +262,7 @@ async function markSyncStatus(supabaseUrl, sbHeaders, userId, status) {
     body: JSON.stringify({ last_sync_at: new Date().toISOString(), last_sync_status: status })
   });
 }
+
+// v4.49.0 — de handler blijft ongewijzigd; withCors voegt alleen de CORS-headers toe en
+// beantwoordt de preflight, zodat de Capacitor-app (https://localhost) deze functie kan bereiken.
+exports.handler = withCors(_handler);

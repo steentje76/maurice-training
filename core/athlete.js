@@ -45,6 +45,12 @@
   var ATHLETE_VERSIE = 'athlete.v1';
   var LOAD_VERSIE = 'load.v1';
   var PERFINDEX_VERSIE = 'performance_index.v1';
+  /* v4.49.0 — Foster session-RPE. Eigen contract, want het is een ANDERE grootheid dan
+     load.v1: load.v1 is de belasting binnen één modaliteit in haar eigen eenheid,
+     srpe.v1 is een modaliteit-onafhankelijke belasting in AU. De semantiek van load.v1
+     verandert niet, dus die versie blijft staan. */
+  var SRPE_VERSIE = 'srpe.v1';
+  var SRPE_MAX_DUUR_S = 86400;   // gelijk aan de check-constraint op sessions.duration_s
 
   /* ────────────────────────────────────────────────────────────────────────
    * MODALITEITEN
@@ -69,6 +75,17 @@
     return null;
   }
   function _ymd(v) { return (v == null) ? null : String(v).slice(0, 10); }
+
+  /* v4.49.0 — DUUR VAN DE SESSIE WAAR DEZE RIJ TOE BEHOORT.
+   * `sessions` bevat één rij per oefening; alle rijen van dezelfde training dragen
+   * dezelfde duration_s (zie migratie_v449.sql). Hier wordt hij alleen gelezen en op
+   * plausibiliteit gecontroleerd — nooit geschat, nooit afgeleid uit iets anders.
+   * Buiten (0 .. 24 uur] telt hij als afwezig; een onmogelijke duur is geen duur. */
+  function _duurS(sessie) {
+    var d = _num(sessie && sessie.duration_s);
+    if (d == null || d <= 0 || d > SRPE_MAX_DUUR_S) return null;
+    return Math.round(d);
+  }
 
   /* Modaliteit van EEN sessie. Volgorde is bewust: eerst kijken of er kracht-invoer
    * is (sets/reps/gewicht), dan of er cardio-invoer is (afstand/tijd). Een sessie
@@ -159,11 +176,31 @@
     arr.forEach(function (s) {
       var datum = _ymd(s && s.date);
       if (!datum) return;
-      if (!perDag[datum]) perDag[datum] = { date: datum, sessies: 0, modaliteiten: {}, sporten: {} };
+      if (!perDag[datum]) perDag[datum] = { date: datum, sessies: 0, modaliteiten: {}, sporten: {}, types: {} };
       var dag = perDag[datum];
       dag.sessies++;
       var l = sessionLoad(s, d);
       if (s && s.training_type) dag.sporten[String(s.training_type)] = true;
+
+      /* v4.49.0 — SESSIEBOEKHOUDING PER TRAININGSTYPE.
+         Een dag kan meer dan één training bevatten. Duur en sessie-RPE horen bij de
+         TRAINING, niet bij de losse oefeningrij, dus wordt hier per training_type
+         geboekt en niet per modaliteit. De duur is per definitie gelijk op alle rijen
+         van dezelfde training; er wordt toch het MAXIMUM genomen zodat een gedeeltelijk
+         geslaagde write (bijvoorbeeld één rij geschreven vóór en één ná een herstart)
+         nooit een te lage duur oplevert. */
+      var typeKey = (s && s.training_type != null && String(s.training_type) !== '')
+        ? String(s.training_type) : '_onbekend';
+      var tRec = dag.types[typeKey];
+      if (!tRec) tRec = dag.types[typeKey] = { type: typeKey, duur_s: null, rpeSom: 0, rpeGewicht: 0, rijen: 0 };
+      tRec.rijen++;
+      var dS = _duurS(s);
+      if (dS != null && (tRec.duur_s == null || dS > tRec.duur_s)) tRec.duur_s = dS;
+      /* Sessie-RPE: hetzelfde weegprincipe als bij de modaliteiten (aantal sets als
+         gewicht, een rij zonder sets telt als één). Rijen zonder RPE tellen niet mee in
+         de noemer — ze worden niet stilzwijgend als "gemiddeld" meegerekend. */
+      if (l.rpe != null) { var wT = (l.sets || 1); tRec.rpeSom += l.rpe * wT; tRec.rpeGewicht += wT; }
+
       if (l.reden !== 'ok') return;
       var m = dag.modaliteiten[l.modaliteit];
       if (!m) {
@@ -207,9 +244,37 @@
           topgewicht: m.topgewicht, split: m.split
         };
       }).sort(function (a, b) { return a.modaliteit < b.modaliteit ? -1 : 1; });
+      /* v4.49.0 — FOSTER SESSION-RPE PER DAG (srpe.v1).
+         Per training_type: RPE × duur in minuten. De dagwaarde is de SOM over de
+         trainingen van die dag — twee trainingen belasten samen meer dan één.
+         `volledig` zegt of ELKE training van die dag zowel een duur als een RPE had.
+         Alleen bij `volledig` mag deze waarde als dagbelasting gebruikt worden; anders
+         zou een dag met een niet-gemeten tweede training te licht lijken. */
+      var typeLijst = Object.keys(dag.types).sort();
+      var srpeSom = 0, srpeTypes = [], compleet = 0, meetbaar = 0, duurSom = 0, duurGezien = false;
+      typeLijst.forEach(function (tk) {
+        var tr = dag.types[tk];
+        var tRpe = tr.rpeGewicht > 0 ? Math.round(tr.rpeSom / tr.rpeGewicht * 10) / 10 : null;
+        var res = (typeof d.sessionRpeLoad === 'function') ? d.sessionRpeLoad(tRpe, tr.duur_s) : null;
+        var waarde = (res && res.ok) ? res.waarde : null;
+        if (tr.duur_s != null) { duurSom += tr.duur_s; duurGezien = true; }
+        meetbaar++;
+        if (waarde != null) { srpeSom += waarde; compleet++; }
+        srpeTypes.push({ type: tr.type, duur_s: tr.duur_s, rpe: tRpe, waarde: waarde,
+                         reden: res ? res.reden : 'geen_rekenregel' });
+      });
+      var volledig = meetbaar > 0 && compleet === meetbaar;
       return {
         date: dag.date, sessies: dag.sessies, modaliteiten: mods,
-        sporten: Object.keys(dag.sporten).sort()
+        sporten: Object.keys(dag.sporten).sort(),
+        duur_s: duurGezien ? duurSom : null,
+        duur_min: duurGezien ? Math.round(duurSom / 60 * 10) / 10 : null,
+        srpe: {
+          versie: SRPE_VERSIE, eenheid: 'AU',
+          waarde: volledig ? Math.round(srpeSom * 10) / 10 : null,
+          volledig: volledig, gemeten: compleet, trainingen: meetbaar,
+          perType: srpeTypes
+        }
       };
     });
     return { versie: ATHLETE_VERSIE, dagen: dagen, aantalDagen: dagen.length };
@@ -226,6 +291,21 @@
       var mod = (dag.modaliteiten || []).filter(function (x) { return x.modaliteit === modaliteit; })[0];
       if (!mod) return;
       var v = mod[veld];
+      if (typeof v !== 'number' || !isFinite(v)) return;
+      uit.push({ date: dag.date, value: v });
+    });
+    return uit;
+  }
+
+  /* v4.49.0 — Dagreeks van een DAGveld (dus niet per modaliteit). Zelfde regel: een dag
+   * zonder waarde ontbreekt in de reeks in plaats van als 0 mee te tellen. Gebruikt voor
+   * trainingsduur en sessie-RPE-belasting, die bij de training horen en niet bij één
+   * modaliteit. */
+  function dagSerie(model, veld) {
+    var m = model || {};
+    var uit = [];
+    (m.dagen || []).forEach(function (dag) {
+      var v = (veld === 'srpe') ? (dag.srpe && dag.srpe.volledig ? dag.srpe.waarde : null) : dag[veld];
       if (typeof v !== 'number' || !isFinite(v)) return;
       uit.push({ date: dag.date, value: v });
     });
@@ -489,13 +569,41 @@
       return { versie: LOAD_VERSIE, beschikbaar: true, reden: 'ok',
                eenheid: lijst[0] || null, reeks: reeks, eenheden: lijst, ontbreekt: [] };
     }
+    /* v4.49.0 — MEER DAN ÉÉN EENHEID. Kilo's en meters mogen nooit worden opgeteld.
+       Er is precies één uitweg en die is niet nieuw bedacht: Foster's session-RPE
+       (srpe.v1) drukt elke training uit in AU = sessie-RPE × duur in minuten. Die
+       eenheid is modaliteit-onafhankelijk en dus wél optelbaar.
+       Voorwaarde is streng: ELKE dag in het model moet volledig meetbaar zijn (elke
+       training van die dag heeft zowel een duur als een RPE). Bij één onvolledige dag
+       blijft de uitkomst onbeschikbaar — een reeks waarin sommige dagen te licht zijn
+       is misleidender dan geen reeks. De dekkingsgraad komt wél mee, zodat zichtbaar is
+       hoe dichtbij het is. */
+    var metSrpe = 0, zonderSrpe = 0;
+    dagen.forEach(function (dag) {
+      var heeftBelasting = (dag.modaliteiten || []).some(function (m) { return !!m.eenheid; });
+      if (!heeftBelasting) return;
+      if (dag.srpe && dag.srpe.volledig && dag.srpe.waarde != null) metSrpe++; else zonderSrpe++;
+    });
+    if (metSrpe > 0 && zonderSrpe === 0) {
+      var auReeks = dagen.map(function (dag) {
+        var heeftBelasting = (dag.modaliteiten || []).some(function (m) { return !!m.eenheid; });
+        if (!heeftBelasting) return null;
+        return { date: dag.date, value: dag.srpe.waarde };
+      }).filter(Boolean);
+      return { versie: LOAD_VERSIE, beschikbaar: true, reden: 'ok',
+               eenheid: 'AU', reeks: auReeks, eenheden: lijst, ontbreekt: [],
+               bron: 'srpe', belastingVersie: SRPE_VERSIE, dekking: 1 };
+    }
     return {
       versie: LOAD_VERSIE, beschikbaar: false, reden: 'geen_gemeenschappelijke_eenheid',
       eenheid: null, reeks: [], eenheden: lijst,
-      /* Wat er nodig zou zijn om dit wel te kunnen: een duur per sessie, waarmee
-         sessie-RPE maal duur (Foster) een eenheid oplevert die over modaliteiten
-         heen geldig is. Die kolom bestaat vandaag niet. */
-      ontbreekt: ['duur_per_sessie']
+      /* Wat er nodig is om dit wel te kunnen: een duur per sessie, waarmee sessie-RPE
+         maal duur (Foster) een eenheid oplevert die over modaliteiten heen geldig is.
+         Sinds migratie_v449 bestaat de kolom; zolang er dagen zijn zonder gemeten duur
+         of zonder RPE blijft de gezamenlijke reeks bewust leeg. */
+      ontbreekt: ['duur_per_sessie'],
+      bron: 'srpe', belastingVersie: SRPE_VERSIE,
+      dekking: (metSrpe + zonderSrpe) > 0 ? Math.round(metSrpe / (metSrpe + zonderSrpe) * 100) / 100 : 0
     };
   }
 
@@ -567,6 +675,15 @@
     var rust = restDaysSeries(model);
     if (rust.length) uit.rustdagen = rust;
 
+    /* v4.49.0 — TRAININGSDUUR en SESSIE-RPE-BELASTING. Twee grootheden die het register
+       al kende maar nooit geleverd kreeg omdat de duur nergens werd opgeslagen. Sinds
+       migratie_v449 wél. Beide worden uitsluitend geleverd als ze er ECHT zijn: een dag
+       zonder gemeten duur ontbreekt in de reeks in plaats van als 0 mee te tellen. */
+    var duurMin = dagSerie(model, 'duur_min');
+    if (duurMin.length) uit.duur = duurMin;
+    var srpeReeks = dagSerie(model, 'srpe');
+    if (srpeReeks.length) uit.srpe = srpeReeks;
+
     /* Sprint 26 — CARDIO-SPLIT: bewust NIET aangeleverd, en dat is een besluit met reden.
      *
      * De split per sessie wordt hier wél correct berekend (zie sessionLoad, via de
@@ -590,6 +707,8 @@
     ATHLETE_VERSIE: ATHLETE_VERSIE,
     LOAD_VERSIE: LOAD_VERSIE,
     PERFINDEX_VERSIE: PERFINDEX_VERSIE,
+    SRPE_VERSIE: SRPE_VERSIE,
+    SRPE_MAX_DUUR_S: SRPE_MAX_DUUR_S,
     MODALITEITEN: MODALITEITEN,
     RPE_MAX: RPE_MAX,
     SPLIT_BASIS_M: SPLIT_BASIS_M,
@@ -600,6 +719,7 @@
     sessionLoad: sessionLoad,
     dailyModel: dailyModel,
     serie: serie,
+    dagSerie: dagSerie,
     rollingSum: rollingSum,
     previousDaySeries: previousDaySeries,
     frequencySeries: frequencySeries,
@@ -610,7 +730,8 @@
     unifiedLoad: unifiedLoad,
     sportContext: sportContext,
     relationshipSources: relationshipSources,
-    VERSIONS: { athlete: ATHLETE_VERSIE, load: LOAD_VERSIE, performanceIndex: PERFINDEX_VERSIE }
+    VERSIONS: { athlete: ATHLETE_VERSIE, load: LOAD_VERSIE, performanceIndex: PERFINDEX_VERSIE,
+                srpe: SRPE_VERSIE }
   };
 
   if (typeof module !== 'undefined' && module.exports) { module.exports = AthleteCore; }

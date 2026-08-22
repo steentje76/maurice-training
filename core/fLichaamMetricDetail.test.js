@@ -161,7 +161,7 @@ ok(html.indexOf('id="lich-hero"') >= 0 && html.indexOf('id="lich-checkin"') >= 0
 ok(html.indexOf("go('s-lich-spier')") >= 0 && html.indexOf('function renderLichaamSpierDetail') >= 0,
    'F6: het spiergroep-detail uit v4.28 is ongemoeid');
 ok(html.indexOf('calculateMuscleRecoveryPct') >= 0, 'F7: de bestaande herstelberekening is niet vervangen');
-ok(html.indexOf("fetch('/.netlify/functions/wearable-sync'") >= 0, 'F8: de Fitbit-sync-aanroep is ongewijzigd aanwezig');
+ok(html.indexOf("fetch(FN_BASE+'wearable-sync'") >= 0, 'F8: de Fitbit-sync-aanroep is ongewijzigd aanwezig');
 ok(html.indexOf('function upsertHrvLog') >= 0 && html.indexOf('function tkMergeHealthRow') >= 0,
    'F9: de v4.29.1-dataverliesfix is intact');
 // Geen CRUD-belofte op het detail- of metingenscherm.

@@ -268,17 +268,22 @@ Drie daarvan verdienen toelichting, omdat ze eerder wél zijn doorgeglipt:
 
 ---
 
-## 7. Wacht op invoer die nog niet bestaat — 105 relaties
+## 7. Wacht op invoer die nog niet bestaat — 105 relaties (stand 19-08-2026)
 
-Zes variabelen leveren op dit moment geen enkele reeks. Zij blokkeren samen 105 van de 187
-kenbare relaties.
+Zes variabelen leverden op dat moment geen enkele reeks en blokkeerden samen 105 van de 187
+kenbare relaties. **Van de vier bronnen in de tabel hieronder zijn er sindsdien drie
+opgelost** (v4.49.0, v4.51.0, v4.52.0) — alleen cardio-split blijft bewust buiten de engine.
+Het exacte aantal nu-nog-geblokkeerde relaties is niet opnieuw herberekend in deze
+documentatiesynchronisatie (dat vereist het daadwerkelijk draaien van de relationship-audit
+tegen actuele productiedata, niet alleen een documentcorrectie) — vermoedelijk is dat aantal
+fors gedaald, maar het concrete cijfer staat hier bewust niet totdat dat is geverifieerd.
 
-| Variabele | Waarom leeg | Wat is ervoor nodig | Oordeel |
-|---|---|---|---|
-| **Trainingsduur** | `sessions` heeft geen duurkolom; de trainingstijd loopt wel in de app maar wordt niet weggeschreven | Één kolom `duration_s` plus het wegschrijven bij afronden | **Grootste opbrengst per eenheid werk.** Ontsluit ook `athlete.unifiedLoad`, dat nu bewust `{beschikbaar:false, ontbreekt:['duur_per_sessie']}` teruggeeft |
-| **Rustduur tussen sets** | De rusttimer bewaart zijn uitkomst niet | Rustduur per set meenemen in `sets_detail` | Waardevol, geen releaseblokkade |
-| **Cardio-split** | Berekend maar bewust niet als bron afgegeven | Productbesluit over de machine-sleutel: een split per 500 m is pas vergelijkbaar binnen hetzelfde apparaat | **Blijft uit tot dat besluit is genomen** |
-| **Temperatuur / Luchtvochtigheid / Wind** | De weerkoppeling levert data, maar er is geen historische reeks per trainingsdag opgeslagen | Weer per sessie vastleggen bij het afronden | Alleen zinvol voor buitentraining; laag op de lijst |
+| Variabele | Waarom leeg (19-08-2026) | Status nu |
+|---|---|---|
+| **Trainingsduur** | `sessions` had geen duurkolom | 🟢 **opgelost, v4.49.0.** `sessions.duration_s` + `srpe.v1` |
+| **Rustduur tussen sets** | De rusttimer bewaarde zijn uitkomst niet | 🟢 **opgelost, v4.51.0** (`mastersprint/v4.51.0`, `7952a948`). `rest_duration_s` in `sets_detail`, `rest_duration.v1` |
+| **Cardio-split** | Berekend maar bewust niet als bron afgegeven | ⚪ **ongewijzigd, blijft geblokkeerd.** Productbesluit over de machine-sleutel ontbreekt nog steeds: een split per 500 m is pas vergelijkbaar binnen hetzelfde apparaat |
+| **Temperatuur / Luchtvochtigheid / Wind** | Geen historische reeks per trainingsdag opgeslagen | 🟢 **opgelost, v4.52.0** (`mastersprint/v4.52.0`, `474999f6`). `training_instances.weather` / `sessions.weather`, `weather_session_snapshot.v1` |
 
 ---
 

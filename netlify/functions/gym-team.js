@@ -1,10 +1,11 @@
+const { withCors } = require('./_cors.js');   // v4.49.0 — CORS voor de Capacitor-app (https://localhost)
 // Eén endpoint voor alle Team-acties (list/update_role/audit_log). Alle drie vereisen:
 // (1) een geldige sessie, (2) een gym_role_level die hoog genoeg is voor de actie, en
 // (3) de juiste coach-pincode van de eigen gym. Rolwijzigingen worden altijd gelogd in
 // gym_audit_log — nooit atleet-/trainingsdata, uitsluitend lidmaatschap/rol-gebeurtenissen.
 const ROLE_LEVEL = { lid: 0, coach: 1, manager: 2, owner: 3 };
 
-exports.handler = async function (event) {
+const _handler = async function (event) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: { message: 'Method not allowed' } }) };
   }
@@ -125,3 +126,7 @@ async function sha256Hex(str) {
   const crypto = require('crypto');
   return crypto.createHash('sha256').update(str, 'utf8').digest('hex');
 }
+
+// v4.49.0 — de handler blijft ongewijzigd; withCors voegt alleen de CORS-headers toe en
+// beantwoordt de preflight, zodat de Capacitor-app (https://localhost) deze functie kan bereiken.
+exports.handler = withCors(_handler);

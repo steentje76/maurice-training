@@ -18,9 +18,21 @@ const WWW = path.join(ROOT, 'www');
 // Web-assets die de app runtime nodig heeft (allowlist; geen node_modules/android/docs/etc.)
 const COPY_FILES = [
   'index.html', 'sw.js', 'manifest.json',
-  'icon-192.png', 'icon-512.png', 'logo-wordmark.png',
-  'exercise-catalog.json', 'exercise-intelligence_6.json'
+  'icon-192.png', 'icon-512.png', 'logo-wordmark.png'
 ];
+// v4.49.0 — exercise-catalog.json (296 kB) en exercise-intelligence_6.json (8,3 MB) zijn
+// hier WEGGEHAALD, op grond van een meting en niet op gevoel.
+//
+// Beide werden meegekopieerd naar www/ en daarmee naar het Android-artefact, maar er is
+// geen enkele verwijzing naar: niet in index.html, niet in sw.js, niet in core/*.js, niet
+// in de service-worker-precache. De catalogus zit als constante EX_CATALOG ín index.html;
+// de intelligentie-bestanden worden nergens opgehaald. Netto was 8,6 MB van de 14 MB
+// artefact-omvang dood gewicht — ruim 60 procent.
+//
+// De bestanden blijven gewoon in de repository staan: ze zijn de bron waaruit EX_CATALOG
+// wordt gegenereerd en horen daar. Ze horen alleen niet in wat de gebruiker downloadt.
+// Gaat de app ze op enig moment WEL runtime ophalen, dan hoort de betreffende naam hier
+// terug — core/fPlatformGrens.test.js bewaakt beide kanten van die afspraak.
 // RC0 — VIDEO'S WORDEN NIET MEEGEBUNDELD.
 // videos/ is 437 MB. Meegebundeld levert dat een AAB van ruim 450 MB op, ver boven het
 // Play-plafond van 200 MB voor de basismodule; de upload zou domweg worden geweigerd.

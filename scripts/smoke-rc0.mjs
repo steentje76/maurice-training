@@ -74,7 +74,7 @@ check('geen JavaScript-uitzondering bij het laden', pageerrors.length === 0,
 check('APP_VER is gezet', await page.evaluate(() => typeof APP_VER !== 'undefined' && APP_VER),
   await page.evaluate(() => (typeof APP_VER !== 'undefined') ? APP_VER : 'ontbreekt'));
 const ver = await page.evaluate(() => APP_VER);
-check('versie is v4.48.0', ver === 'v4.48.0', ver);
+check('versie is v4.50.0', ver === 'v4.50.0', ver);
 
 console.log('\nB. Schermen');
 const schermen = await page.evaluate(() => Array.from(document.querySelectorAll('.scr')).map(s => s.id));
@@ -149,7 +149,7 @@ const help = await page.evaluate(() => ({
   privacy: !!document.querySelector('a[href="/privacy.html"]'),
   placeholder: document.body.innerText.indexOf('[PLACEHOLDER]') >= 0
 }));
-check('het versienummer staat in Help', help.ver === 'v4.48.0', help.ver);
+check('het versienummer staat in Help', help.ver === 'v4.50.0', help.ver);
 check('het contactblok is gevuld', (help.contact || '').length > 20, help.contact);
 check('er staat een link naar de privacyverklaring', help.privacy);
 check('nergens staat nog [PLACEHOLDER]', help.placeholder === false);

@@ -111,10 +111,17 @@ console.log('\nD. Volume komt uit de Calculation Engine');
 eq(C.calculateVolume({ sets: 3, reps: 5, weight: 100 }), 1500, 'D1: volume.v1 rekent het tonnage');
 eq(C.calculateVolume(null), null, 'D2: geen invoer -> null');
 const volBlok = html.slice(html.indexOf('async function refreshVolumeSpiergroep'), html.indexOf('// CSV / JSON EXPORT'));
-ok(/CalcCore\.calculateVolume\(/.test(volBlok), 'D3: de spiergroep-sectie gebruikt volume.v1');
+/* v4.49.0 — de schermen rekenen niet langer met volume.v1 op de SAMENVATTING van een
+   sessierij (weight = zwaarste set, reps = reps van díé set, sets = aantal sets), want dat
+   doet alsof elke set even zwaar was en overschat structureel. Ze gebruiken nu
+   session_volume.v1, dat per set uit sets_detail telt en alleen terugvalt op de
+   samenvatting bij oudere rijen die geen sets_detail hebben. volume.v1 zelf is
+   ongewijzigd en blijft de rekenregel áchter die terugval. */
+ok(/CalcCore\.sessionVolume\(/.test(volBlok), 'D3: de spiergroep-sectie gebruikt session_volume.v1');
 ok(!/\(s\.sets\|\|1\)\*\(s\.reps\|\|1\)\*\(s\.weight\|\|0\)/.test(volBlok), 'D4: de handgeschreven formule is weg');
 ok(!/\*\s*\(s\.weight/.test(volBlok), 'D5: er staat geen los tonnage-product meer in dit blok');
-eq((html.match(/CalcCore\.calculateVolume\(/g) || []).length, 6, 'D6: alle zes volumeplekken lopen via de engine');
+eq((html.match(/CalcCore\.calculateVolume\(/g) || []).length, 0, 'D6: geen enkel scherm rekent nog rechtstreeks op de samenvatting');
+ok((html.match(/CalcCore\.sessionVolume\(/g) || []).length >= 8, 'D6b: alle volumeplekken lopen via session_volume.v1');
 ok(/muscleVol\[m\]/.test(volBlok) && /tkFmtTonnage/.test(volBlok),
    'D7: het berekende tonnage wordt nu ook getoond (was dode code)');
 ok(!/function calculateVolume/.test(html), 'D8: de UI heeft geen eigen volumefunctie');

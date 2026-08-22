@@ -70,7 +70,7 @@ D.EVIDENCE_SECTIES.forEach(function(s){ ok(Object.prototype.hasOwnProperty.call(
 ['versie','geldig','at','context','versions','missing'].forEach(function(f){
   ok(Object.prototype.hasOwnProperty.call(ev, f), 'A6: snapshot bevat ' + f); });
 eq(ev.geldig, true, 'A7: een volledige snapshot is geldig');
-eq(ev.missing, [], 'A8: en mist niets');
+eq(ev.missing, ['confidence'], 'A8: en mist alleen de betrouwbaarheid, die hier bewust niet is ingespoten (v4.49.0)');
 // het bestaande, lichte contract blijft werken zoals het was
 const oud = D.Evidence.buildEvidence({ source: 'calculation', calculationVersion: 'working_weight.v1',
   decision: { ruleId: 'progression_rpe', ruleVersion: 'progression.v1' }, inputs: { rpe: 8 } });

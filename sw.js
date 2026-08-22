@@ -5,13 +5,13 @@
 // Reden: de static-fetch is cache-first over ALLE caches; een oude core-entry in de niet-gebumpte
 // dynamische cache kon de nieuwe precache overschaduwen (stale serve na deploy). Door CACHE_NAME mee te
 // bumpen ruimt de activate-handler de oude dynamische cache op. REGEL: core wijzigt -> bump CACHE_NAME + CACHE_STATIC.
-const CACHE_NAME = 'trainingskompas-v44800';
-const CACHE_STATIC = 'trainingskompas-static-v44800';
+const CACHE_NAME = 'trainingskompas-v4590';
+const CACHE_STATIC = 'trainingskompas-static-v4590';
 // F1.9 SW-GUARD: hash (CRLF-agnostisch) van core/calculation.js + core/decision.js.
 // core/sw-guard.test.js faalt als de core wijzigt zonder dat deze CORE_SIG + CACHE_STATIC gebumpt zijn.
 // Bij een core-wijziging: draai `node core/sw-guard.test.js` -> die print de nieuwe CORE_SIG; werk hem
 // hier bij ÉN bump CACHE_STATIC, zodat bestaande browsers de nieuwe core daadwerkelijk laden.
-const CORE_SIG = '851dde575bf152c0';
+const CORE_SIG = '38c096a3304e0767';
 // Video-cache: STABIEL en LOSGEKOPPELD van de app-versie. App-updates verwijderen video's NIET.
 const CACHE_VIDEOS = 'tk-videos-v1';
 const VIDEO_LIMIT_BYTES = 250 * 1024 * 1024; // 250 MB LRU-plafond
@@ -52,12 +52,18 @@ const NO_CACHE_PATTERNS = [
 ];
 
 // ── INSTALL: cache static assets ──────────────────────────
+// v4.49.0 P0 — cache.addAll() is ATOMAIR: faalt één van de twintig assets, dan wordt er
+// NIETS gecachet. De cross-origin font-URL faalt bijvoorbeeld op een captive-portal-wifi.
+// De .catch() slikte dat en skipWaiting() ging door; omdat CACHE_STATIC bij elke
+// core-wijziging verplicht wordt gebumpt, verwijderde activate daarna de oude, wél gevulde
+// cache. Netto: de app was offline volledig dood, zonder enige melding.
+// Nu wordt elk asset apart geplaatst. Eén mislukt asset kost precies dat ene asset.
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_STATIC)
-      .then(cache => cache.addAll(STATIC_ASSETS).catch(err => {
-        console.warn('SW install cache partial fail:', err);
-      }))
+      .then(cache => Promise.all(STATIC_ASSETS.map(url =>
+        cache.add(url).catch(err => { console.warn('SW install: asset overgeslagen', url, err && err.message); })
+      )))
       .then(() => self.skipWaiting())
   );
 });
@@ -182,8 +188,14 @@ self.addEventListener('fetch', e => {
     e.respondWith(
       fetch(e.request)
         .then(response => {
-          const clone = response.clone();
-          caches.open(CACHE_STATIC).then(cache => cache.put('/index.html', clone));
+          // v4.49.0 P1 — alleen een ECHTE app-respons mag de offline-shell worden.
+          // Zonder deze controle werd de inlogpagina van een hotel- of gym-wifi (die met
+          // status 200 antwoordt op elk verzoek) permanent als /index.html gecachet, en
+          // startte de app daarna offline op met die portalpagina.
+          if (response && response.ok && response.type === 'basic') {
+            const clone = response.clone();
+            caches.open(CACHE_STATIC).then(cache => cache.put('/index.html', clone));
+          }
           return response;
         })
         .catch(() => caches.match('/index.html'))
@@ -207,9 +219,13 @@ self.addEventListener('fetch', e => {
             return response;
           })
           .catch(() => {
-            // Offline fallback
-            if (e.request.destination === 'image') return;
-            return caches.match('/index.html');
+            // v4.49.0 P1 — de /index.html-fallback is alleen zinvol voor een DOCUMENT.
+            // Voorheen kreeg ook een mislukte /core/decision.js HTML terug met status 200:
+            // de browser gaf een parse-fout, DecisionCore bleef undefined en de app draaide
+            // half-kapot door in plaats van netjes te falen. Nu geeft alles wat geen
+            // document is een expliciete 504, zodat de aanroeper het merkt.
+            if (e.request.destination === 'document') return caches.match('/index.html');
+            return new Response('', { status: 504, statusText: 'Offline en niet in cache' });
           });
       })
   );

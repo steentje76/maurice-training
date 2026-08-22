@@ -1,6 +1,7 @@
+const { withCors } = require('./_cors.js');   // v4.49.0 — CORS voor de Capacitor-app (https://localhost)
 // Loskoppelen: verwijdert de opgeslagen tokens en probeert (best-effort) de toegang ook
 // bij Google zelf in te trekken. Zelfde JWT-verificatiepatroon als delete-account.js.
-exports.handler = async function (event) {
+const _handler = async function (event) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: { message: 'Method not allowed' } }) };
   }
@@ -42,3 +43,7 @@ exports.handler = async function (event) {
     return { statusCode: 500, body: JSON.stringify({ error: { message: 'Serverfout: ' + e.message } }) };
   }
 };
+
+// v4.49.0 — de handler blijft ongewijzigd; withCors voegt alleen de CORS-headers toe en
+// beantwoordt de preflight, zodat de Capacitor-app (https://localhost) deze functie kan bereiken.
+exports.handler = withCors(_handler);

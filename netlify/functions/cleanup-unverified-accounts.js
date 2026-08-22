@@ -9,14 +9,55 @@
 // niet gedeeld via een module — dit project heeft geen build-stap voor Netlify
 // Functions, dus geen gedeelde imports tussen functiebestanden). Bij wijzigingen aan
 // de een, ook de ander nalopen.
-const USER_DATA_TABLES = [
-  'program_block_exercises', 'custom_training_exercises', 'training_exercises',
-  'program_blocks', 'custom_trainings', 'vaste_trainingen', 'programs',
-  'athlete_conditions', 'atleet_profiel', 'body_comp', 'chat_history',
-  'checkin_conditions', 'exercise_favorites', 'hrv_log', 'sessions', 'weight_log'
-];
+const { verwijderGebruikersdata } = require('./_userData.js');
 
-exports.handler = async function () {
+exports.handler = async function (event) {
+  /* ═══════════════════════════════════════════════════════════════════════════
+   * v4.50.0 — WIE MAG DEZE OPRUIMING STARTEN?
+   *
+   * Dit is een achtergrondtaak zonder ingelogde gebruiker, dus een JWT-check zoals in
+   * delete-account.js past hier niet. De functie stond volledig open: elke POST startte een
+   * verwijderronde. De query bepaalt weliswaar zelf wie in aanmerking komt (nooit invoer van
+   * buitenaf), dus er valt niets ánders te verwijderen dan wat de dagelijkse taak toch al zou
+   * doen — maar het versnelt wel een onomkeerbare actie en kost de eigenaar resources.
+   *
+   * TWEE TOEGESTANE BRONNEN:
+   *   1. de geplande aanroep van Netlify zelf. Die is te herkennen aan de payload die het
+   *      platform meestuurt: {"next_run":"<ISO-8601>"}. Netlify laat een functie mét een
+   *      schedule in netlify.toml NIET rechtstreeks via zijn URL aanroepen ("You can't invoke
+   *      scheduled functions directly with a URL", docs.netlify.com/build/functions/
+   *      scheduled-functions), dus in de praktijk kan alleen het platform dit pad bereiken.
+   *      Deze controle is daarmee vooral een tweede slot: verdwijnt de schedule ooit uit
+   *      netlify.toml, dan gaat de deur niet vanzelf open.
+   *   2. een handmatige aanroep mét de gedeelde sleutel uit CLEANUP_SECRET.
+   *
+   * WAT HIER BEWUST NIET STAAT: een x-nf-event-header als toegangsbewijs. Die is door een
+   * client zelf mee te sturen en staat niet in de documentatie van scheduled functions — als
+   * toegangscontrole is dat geen slot maar een sticker. En de payload wordt echt geparseerd:
+   * "bevat ergens de tekst next_run" zou betekenen dat elke body met dat woord erin volstaat.
+   *
+   * Is CLEANUP_SECRET NIET ingesteld, dan blijft het gedrag zoals het was en wordt er
+   * gewaarschuwd in de log. Anders zou het zetten van deze code de dagelijkse opruiming
+   * stilzwijgend uitschakelen — een beveiliging die een werkende taak breekt is geen
+   * verbetering. Zodra de eigenaar de variabele zet, is de handmatige weg dicht.
+   * ═══════════════════════════════════════════════════════════════════════════ */
+  const h = (event && event.headers) || {};
+  let gepland = false;
+  try {
+    const body = (event && typeof event.body === 'string' && event.body) ? JSON.parse(event.body) : null;
+    const nr = body && body.next_run;
+    gepland = typeof nr === 'string' && !isNaN(Date.parse(nr));
+  } catch (_) { gepland = false; }
+  const geheim = process.env.CLEANUP_SECRET;
+  const meegegeven = h['x-cleanup-secret'] || h['X-Cleanup-Secret'] || null;
+  if (!gepland) {
+    if (!geheim) {
+      console.warn('cleanup-unverified-accounts: CLEANUP_SECRET niet ingesteld — de functie staat open voor handmatige aanroepen');
+    } else if (meegegeven !== geheim) {
+      return { statusCode: 401, body: JSON.stringify({ error: { message: 'Niet toegestaan' } }) };
+    }
+  }
+
   const supabaseUrl = process.env.SUPABASE_URL || 'https://mhfxhzkdmgkaplicdszg.supabase.co';
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceKey) {
@@ -43,23 +84,11 @@ exports.handler = async function () {
 
     const results = [];
     for (const u of stale) {
-      const failedTables = [];
-      for (const table of USER_DATA_TABLES) {
-        const r = await fetch(`${supabaseUrl}/rest/v1/${table}?user_id=eq.${u.id}`, {
-          method: 'DELETE',
-          headers: { ...sbHeaders, Prefer: 'return=minimal' }
-        });
-        if (!r.ok) failedTables.push(table);
-      }
-      const exR = await fetch(`${supabaseUrl}/rest/v1/exercises?created_by=eq.${u.id}&scope=eq.personal`, {
-        method: 'DELETE', headers: { ...sbHeaders, Prefer: 'return=minimal' }
-      });
-      if (!exR.ok) failedTables.push('exercises (personal)');
-
-      const usersR = await fetch(`${supabaseUrl}/rest/v1/users?id=eq.${u.id}`, {
-        method: 'DELETE', headers: { ...sbHeaders, Prefer: 'return=minimal' }
-      });
-      if (!usersR.ok) failedTables.push('users');
+      // v4.50.0 — ÉÉN gedeelde opruimroutine met delete-account.js. Deze functie had zijn
+      // eigen kopie van de tabellenlijst en was achtergebleven op 16 van de 30 tabellen;
+      // onder de veertien die ontbraken zat wearable_connections, met het OAuth access- én
+      // refresh-token erin. Een niet-bevestigd account werd dus opgeruimd mét zijn tokens.
+      const failedTables = await verwijderGebruikersdata(supabaseUrl, serviceKey, u.id);
 
       const delRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${u.id}`, {
         method: 'DELETE',

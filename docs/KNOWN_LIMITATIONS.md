@@ -1,6 +1,6 @@
 # KNOWN_LIMITATIONS.md
 
-**Versie** v4.48.0 (RC0) · **Datum** 19 augustus 2026
+**Versie** v4.54.0 · **Datum** 21 augustus 2026 (bijgewerkt na v4.51.0–v4.54.0)
 
 Wat de app bewust niet doet, nog niet kan, of waar hij afhankelijk is van iets buiten zichzelf.
 Alles hieronder is bekend en geaccepteerd voor de eerste release; niets hiervan is een
@@ -21,13 +21,16 @@ onopgelost defect.
 
 ---
 
-## Wachten op gegevens die nog niet worden vastgelegd
+## Data die eerder ontbrak — inmiddels opgelost
 
-| Ontbreekt | Gevolg |
-|---|---|
-| **Trainingsduur per sessie** | 105 van de 187 kenbare relaties kunnen niet worden berekend, en `athlete.unifiedLoad` geeft bewust `{beschikbaar:false, ontbreekt:['duur_per_sessie']}` terug. De timer loopt al in de app; alleen het wegschrijven ontbreekt |
-| **Rustduur tussen sets** | De relatie *Rustduur* blijft leeg |
-| **Weer per trainingsdag** | Temperatuur, luchtvochtigheid en wind leveren geen reeks; alleen relevant voor buitentraining |
+Onderstaande drie punten stonden hier als "wachten op gegevens die nog niet worden
+vastgelegd". Alle drie zijn sindsdien opgelost; behouden als historische context.
+
+| Ontbrak | Opgelost in | Hoe |
+|---|---|---|
+| **Trainingsduur per sessie** | v4.49.0 | `sessions.duration_s` + `srpe.v1`. `athlete.unifiedLoad` levert nu een AU-reeks |
+| **Rustduur tussen sets** | v4.51.0 (`mastersprint/v4.51.0`, `7952a948`) | `rest_duration_s` in `sets_detail`, `rest_duration.v1` |
+| **Weer per trainingsdag** | v4.52.0 (`mastersprint/v4.52.0`, `474999f6`) | `training_instances.weather` / `sessions.weather`, `weather_session_snapshot.v1` |
 
 ---
 
@@ -55,7 +58,7 @@ géén getal te tonen.
 | **Android-build niet geverifieerd** | De configuratie is naar API 36 gebracht (Play-eis vanaf 31-08-2026), maar deze omgeving heeft geen Android SDK en kan `dl.google.com` niet bereiken. Eén lokale build is nodig. Blijkt Capacitor 6 niet met compileSdk 36 te werken, dan is een Capacitor-upgrade de volgende stap; die is bewust niet blind doorgevoerd |
 | **Video's vereisen internet bij eerste weergave** | Ze worden niet meegebundeld (437 MB tegen een Play-plafond van 200 MB) maar on-demand opgehaald en daarna gecachet met een LRU-plafond van 250 MB — hetzelfde gedrag als op het web |
 | **Onboarding-vlag is toestel-gescoped** | `tk_onboarding_done` staat in localStorage. Sinds RC0 wordt hij bij een eigenaarswissel gewist en is een bestaand profiel in de database de tweede bron van waarheid. Ben je offline op een nieuw toestel, dan verschijnt de intake alsnog |
-| **Zoomen is uitgeschakeld** | `maximum-scale=1, user-scalable=no` in de viewport. Dit beperkt WCAG 1.4.4; wijzigen raakt de lay-out van elk scherm en hoort in een aparte accessibility-sprint |
+| **Zoomen was uitgeschakeld** | Opgelost in v4.53.0 (`mastersprint/v4.53.0`, `6dbcca47`): `maximum-scale=1, user-scalable=no` verwijderd uit de viewport. Contrast van `--g4` en de merkkleur-als-tekst (nieuw token `--accent-text`) in dezelfde sprint gecorrigeerd naar WCAG AA. Tekstgroottes (7,5–9,5px, 47 elementen) bewust niet herontworpen — dat is een redesign, geen contrastcorrectie |
 | **Beheer-pincode is client-side** | Een 4-cijferige pincode waarvan de SHA-256 in de app staat, is triviaal te brute-forcen. Sinds RC0 is hij alleen nog het vangnet zolang de rol nog niet is opgehaald; schrijfrechten worden hoe dan ook server-side door RLS afgedwongen |
 | **Wearable-tokens staan leesbaar in de database** | `wearable_connections.access_token` en `.refresh_token`. De tabel is voor `anon` en `authenticated` volledig geblokkeerd (RLS zonder policy) en alleen via `service_role` bereikbaar. Versleuteling op kolomniveau is een verbetering voor later |
 | **Bij accountverwijdering wordt de koppeling niet bij de provider ingetrokken** | De tokens worden verwijderd, maar er gaat geen revoke-aanroep naar Fitbit/Google. De gebruiker kan de toegang zelf intrekken in zijn Google-account |

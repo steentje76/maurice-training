@@ -19,7 +19,7 @@
 (function (global) {
   'use strict';
 
-  var VERSIONS = { time: 'cardio_time.v1', split: 'cardio_split.v1', power: 'cardio_power.v1' };
+  var VERSIONS = { time: 'cardio_time.v1', split: 'cardio_split.v1', power: 'cardio_power.v1', duration: 'station_duration.v1' };
 
   // --- cardio_time.v1 (parse) --- exact gelijk aan legacy parseTimeToSec.
   // "mm:ss" of "h:mm:ss" of los getal -> seconden. Legacy-quirk behouden: leeg/ongeldig -> null.
@@ -49,6 +49,28 @@
     if (!dist || !timeSec) return null;
     return (timeSec / dist) * basis;
   }
+
+  // --- station_duration.v1 --- MASTER SPRINT v4.58.0/v4.59.0 — HYROX/TRIATHLON.
+  //
+  // Duur van ÉÉN segment (bv. één HYROX-station, één run, één swim-leg): eind (wall-clock)
+  // minus start (wall-clock), in seconden. Géén sportkennis, géén AI — puur rekenwerk op
+  // twee tijdstempels, zelfde grenzen als cardio_time.v1/rest_duration.v1: ontbrekende of
+  // niet-eindige input -> null, negatieve duur -> null (nooit clampen naar 0), geen
+  // bovengrens-plafond hier (in tegenstelling tot rest/transitie-duur kan een enkel HYROX-
+  // station of een swim-leg legitiem langer dan een uur duren bij een trage sporter).
+  //
+  // LET OP (zie sprintrapport v4.59.0): zoals bij segment_transition.v1 bestaat er nog geen
+  // schrijfpad dat deze functie met echte tijdstempels voedt — de huidige cardio-'time'-
+  // invoer is handmatig getypt. Voorbereid, nog niet bedraad.
+  function stationDurationS(startMs, endMs) {
+    var a = (typeof startMs === 'number') ? startMs : parseFloat(startMs);
+    var b = (typeof endMs === 'number') ? endMs : parseFloat(endMs);
+    if (a == null || b == null || !isFinite(a) || !isFinite(b)) return null;
+    var rawMs = b - a;
+    if (rawMs < 0) return null;
+    return Math.round(rawMs / 1000);
+  }
+
   function timeFromDistSplit(dist, splitSec, basis) {
     if (!dist || !splitSec) return null;
     return (splitSec / basis) * dist;
@@ -111,6 +133,7 @@
     parseTime: parseTime,
     formatTime: formatTime,
     splitFromDistTime: splitFromDistTime,
+    stationDurationS: stationDurationS,
     timeFromDistSplit: timeFromDistSplit,
     distFromTimeSplit: distFromTimeSplit,
     wattFromSplit500: wattFromSplit500,

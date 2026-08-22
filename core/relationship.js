@@ -150,10 +150,10 @@
       inputs: ['sets', 'reps', 'weight_kg', 'rpe',
                'sets_prev', 'reps_prev', 'weight_kg_prev', 'rpe_prev', 'kalender'], veld: null,
       afgeleid: true, beschikbaarheid: 'nu' },
-    /* Duur per sessie wordt vandaag NIET opgeslagen (de sessions-tabel heeft geen
-       duurkolom). Daarom 'toekomstig': het register kent de grootheid, er is alleen
-       nog geen bron voor. Zie AthleteCore.unifiedLoad, dat om dezelfde reden geen
-       gezamenlijke belasting kan leveren. */
+    /* v4.49.0 — Duur per sessie WORDT nu opgeslagen (migratie_v449: sessions.duration_s,
+       weggeschreven bij het afronden van een training). Daarmee gaat 'duur' van
+       'toekomstig' naar 'nu' en levert AthleteCore.relationshipSources de reeks. Dagen
+       zonder gemeten duur ontbreken in die reeks; ze worden niet op 0 gezet. */
     /* Fase 2 — RUSTDAGEN. De enige van de nog niet aangesloten berekende grootheden die
        alle vijf de criteria haalt: technisch afleidbaar, sportinhoudelijk verdedigbaar,
        reproduceerbaar, deterministisch, en zonder AI. Zijn ruwe invoer is de kalender —
@@ -168,7 +168,16 @@
 
     { key: 'duur', label: 'Trainingsduur', zinNaam: 'trainingsduur', conditie: 'je langer trainde',
       noemer: 'trainingsduur', eenheid: 'min', domein: 'training', inputs: ['duration'], veld: null,
-      afgeleid: false, beschikbaarheid: 'toekomstig' },
+      afgeleid: false, beschikbaarheid: 'nu' },
+    /* v4.49.0 — SESSIEBELASTING (Foster session-RPE, srpe.v1): RPE × duur in minuten, in AU.
+       De enige grootheid die kracht en cardio in één reeks mag uitdrukken. Zijn invoer is
+       expliciet ['rpe','duration'] — daardoor sluit de circulariteitstoets hem vanzelf uit
+       tegenover RPE, trainingsduur en belasting (die RPE delen), en laat hem alleen door
+       tegenover herstel- en prestatiegrootheden. Precies waar hij sportinhoudelijk over gaat. */
+    { key: 'srpe', label: 'Sessiebelasting', zinNaam: 'sessiebelasting',
+      conditie: 'je sessiebelasting hoger was', noemer: 'sessiebelasting (RPE × duur)',
+      eenheid: 'AU', domein: 'training', inputs: ['rpe', 'duration'], veld: null,
+      afgeleid: true, beschikbaarheid: 'nu' },
     { key: 'rust', label: 'Rustduur', zinNaam: 'rustduur tussen sets', conditie: 'je langer rustte',
       noemer: 'rustduur tussen sets', eenheid: 's', domein: 'training', inputs: ['rest_sec'], veld: null,
       afgeleid: false, beschikbaarheid: 'toekomstig' },

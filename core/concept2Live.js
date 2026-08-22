@@ -303,8 +303,20 @@
     signalLabel: signalLabel, CARDIO_TO_MACHINE: CARDIO_TO_MACHINE, machineMatchesExercise: machineMatchesExercise,
     normalizeLiveMetric: normalizeLiveMetric, normalizeInterval: normalizeInterval,
     localWorkoutId: localWorkoutId, localTag: localTag, alreadyLoggedLive: alreadyLoggedLive,
-    liveWorkoutToActual: liveWorkoutToActual, makeMockConcept2PM5: makeMockConcept2PM5
+    liveWorkoutToActual: liveWorkoutToActual
   };
-  if (typeof module !== 'undefined' && module.exports) module.exports = Concept2Live;
-  else global.Concept2Live = Concept2Live;
+  /* v4.49.0 — DE SIMULATOR VERLAAT DE BROWSER NIET.
+   * makeMockConcept2PM5 voldoet aan exact hetzelfde transportcontract als de echte
+   * BLE-adapter en zet `provenance.source = 'concept2_live_ble'` op zijn verzonnen
+   * metingen. Stond hij op de browser-global, dan volstond één regel in de console om een
+   * groene "verbonden"-kaart met verzonnen afstand, pace en watts te krijgen, gelabeld als
+   * echt gemeten en klaar om weggeschreven te worden. Simulatiedata die niet van echte
+   * data te onderscheiden is, hoort niet in een uitgeleverde app.
+   * Hij blijft volledig beschikbaar onder CommonJS, dus de tests veranderen niet. */
+  if (typeof module !== 'undefined' && module.exports) {
+    Concept2Live.makeMockConcept2PM5 = makeMockConcept2PM5;
+    module.exports = Concept2Live;
+  } else {
+    global.Concept2Live = Concept2Live;
+  }
 })(typeof self !== 'undefined' ? self : this);

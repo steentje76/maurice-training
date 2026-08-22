@@ -112,7 +112,7 @@ ok(!/verkopen|delen met adverteerders|derden verkopen/i.test(R), 'E7: geen verzo
 
 // ── F. regressie ─────────────────────────────────────────────────────────────
 console.log('  F regressie');
-ok(html.indexOf("fetch('/.netlify/functions/wearable-sync'") >= 0, 'F1: de Fitbit-sync-aanroep is ongewijzigd');
+ok(html.indexOf("fetch(FN_BASE+'wearable-sync'") >= 0, 'F1: de Fitbit-sync-aanroep is ongewijzigd');
 ['wearableConnect','wearableDisconnect','wearableSyncNow','wearableSyncSilent','handleWearableRedirect','fetchWearableStatus','fmtWearableSyncStatus']
   .forEach(f => ok(html.indexOf('function ' + f) >= 0, 'F2: bestaande functie ' + f + ' bestaat nog'));
 ok(html.indexOf('function upsertHrvLog') >= 0, 'F3: de v4.29.1-dataverliesfix is intact');

@@ -21,7 +21,7 @@
     ? require('./deviceIntegration.js')
     : (global && global.DeviceCore);
 
-  var VERSIONS = { canonical: 'weather_canonical.v1', normalize: 'weather_normalize.v1' };
+  var VERSIONS = { canonical: 'weather_canonical.v1', normalize: 'weather_normalize.v1', session_snapshot: 'weather_session_snapshot.v1' };
 
   // Weersensitieve modaliteiten (alleen buiten relevant).
   var WEATHER_SENSITIVE = { run: true, running: true, cycle: true, cycling: true, bike_outdoor: true, walk: true, walking: true, hike: true, hiking: true };
@@ -234,6 +234,32 @@
     };
   }
 
+  // ── MINIMAL SESSION SNAPSHOT (v4.52.0 — WEER PER SESSIE, DATA FOUNDATION) ──────────
+  // Productbeslissing: alleen temperatuur, luchtvochtigheid en wind worden persistent aan
+  // een trainingssessie gekoppeld (expliciet NIET windrichting/neerslag/luchtdruk/UV/conditie
+  // — die blijven wel in het canonieke object voor de live UI-chip, maar gaan niet mee de
+  // opslag in). Puur: geen fetch, geen tijd/ID hier, alleen het al genormaliseerde canonieke
+  // object trimmen. Geen coördinaten hierin (die zaten al nooit in het canonieke object of de
+  // provenance — zie DeviceCore.buildProvenance). Geen temperatuur beschikbaar → null (geen
+  // fabricatie; "geen data" blijft "geen data", consistent met de rest van deze core).
+  function minimalSnapshot(canon){
+    if (!canon || canon.temperature_c == null) return null;
+    return {
+      schema: VERSIONS.session_snapshot,
+      temperature_c: canon.temperature_c,
+      humidity_pct: canon.humidity_pct != null ? canon.humidity_pct : null,
+      wind_ms: canon.wind_ms != null ? canon.wind_ms : null,
+      quality: {
+        temperature_c: (canon.quality && canon.quality.temperature_c) || null,
+        humidity_pct: (canon.quality && canon.quality.humidity_pct) || null,
+        wind_ms: (canon.quality && canon.quality.wind_ms) || null
+      },
+      timestamp: canon.timestamp != null ? canon.timestamp : null,
+      observed_or_forecast: canon.observed_or_forecast != null ? canon.observed_or_forecast : null,
+      provenance: canon.provenance != null ? canon.provenance : null
+    };
+  }
+
   var WeatherCore = {
     VERSIONS: VERSIONS,
     WEATHER_SENSITIVE: WEATHER_SENSITIVE,
@@ -242,7 +268,7 @@
     toCelsius: toCelsius, toMs: toMs, toMmh: toMmh,
     createWeather: createWeather, normalizeField: normalizeField, normalizeWeather: normalizeWeather,
     weatherApplies: weatherApplies, isWeatherAdapter: isWeatherAdapter,
-    buildOpenMeteoRequest: buildOpenMeteoRequest
+    buildOpenMeteoRequest: buildOpenMeteoRequest, minimalSnapshot: minimalSnapshot
   };
 
   if (typeof module !== 'undefined' && module.exports) { module.exports = WeatherCore; }

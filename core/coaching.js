@@ -629,6 +629,17 @@
                                   .filter(function (t) { return !!t; });
       if (m2.length) uit.onzekerheid = 'Nog niet alles is bekend: ' + _somOp(m2) + (m2.length === 1 ? ' ontbreekt.' : ' ontbreken.');
     }
+    /* v4.49.0 — TEGENSTRIJDIGE SIGNALEN GAAN VÓÓR ONTBREKENDE.
+       Ontbrekende gegevens maken een uitspraak onvolledig; tegenstrijdige gegevens maken
+       hem onbetrouwbaar. Dat laatste weegt zwaarder en overschrijft daarom de tekst
+       hierboven. De uitleg komt letterlijk uit de regel (conflict.v1) — hier wordt niets
+       bijbedacht en niets afgezwakt. */
+    if (b.conflicten && b.conflicten.length) {
+      var teksten = b.conflicten.map(function (c) { return c.uitleg; }).filter(Boolean);
+      uit.onzekerheid = (b.zekerheid === 'tegenstrijdig'
+        ? 'Je signalen spreken elkaar tegen, dus hier valt niets met zekerheid over te zeggen: '
+        : 'Let op één tegenstrijdigheid in je gegevens: ') + _somOp(teksten) + '.';
+    }
     return uit;
   }
   function _somOp(arr) {
@@ -641,7 +652,10 @@
    * liveAiPayload: de beslissing en de reeds berekende waarden gaan mee, nooit de ruwe
    * signalen waarmee de AI zelf een readiness zou kunnen afleiden. */
   var READINESS_AI_FIELDS = ['zone', 'zoneLabel', 'zoneBetekenis', 'herstel', 'trainingsadvies',
-                             'redenen', 'datakwaliteit', 'ontbreekt', 'herkomst', 'geplandeTraining', 'dagthema'];
+                             'redenen', 'datakwaliteit', 'ontbreekt', 'herkomst', 'geplandeTraining', 'dagthema',
+                             /* v4.49.0 — de AI moet kunnen weten dát de gegevens elkaar tegenspreken,
+                                anders formuleert hij even stellig als op een dag waarop alles klopt. */
+                             'conflicten', 'zekerheid'];
   function readinessAiPayload(ctx) {
     var c = ctx || {};
     var b = c.besluit || {};
@@ -652,7 +666,9 @@
       ontbreekt: (b.ontbreekt && b.ontbreekt.length) ? b.ontbreekt : null,
       herkomst: b.herkomst || null,
       geplandeTraining: c.geplandeTraining ? c.geplandeTraining.naam : null,
-      dagthema: b.dagthema ? b.dagthema.key : null
+      dagthema: b.dagthema ? b.dagthema.key : null,
+      conflicten: (b.conflicten && b.conflicten.length) ? b.conflicten.map(function (x) { return x.id; }) : null,
+      zekerheid: (b.zekerheid && b.zekerheid !== 'consistent') ? b.zekerheid : null
     };
     var out = {};
     for (var i = 0; i < READINESS_AI_FIELDS.length; i++) {
@@ -837,7 +853,13 @@
       'Leid uit een verband GEEN trainingsadvies af. Advies over zwaarder of lichter trainen komt',
       'uitsluitend uit de Decision Engine en staat, als het er is, apart vermeld.',
       'Noem bij een verband altijd waarop het gebaseerd is (aantal vergelijkbare dagen).',
-      'Ontbreekt een waarde, benoem dat als onbekend. Vul niets in en schat niets.'
+      'Ontbreekt een waarde, benoem dat als onbekend. Vul niets in en schat niets.',
+      /* v4.49.0 — de vierde safeguard: tegenstrijdige gegevens. Ontbrekende gegevens maakten
+         een uitspraak al onvolledig; gegevens die elkaar tegenspreken maken hem onbetrouwbaar,
+         en dat stond nergens. */
+      'Staat er bij de herstelstatus een tegenstrijdigheid of een zekerheid anders dan',
+      '"consistent", benoem die tegenstrijdigheid dan expliciet en spreek je NIET stellig uit.',
+      'Kies in dat geval niet zelf welk signaal het zwaarst weegt.'
     ].join(' ');
   }
 

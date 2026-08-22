@@ -58,7 +58,8 @@ t('A1: geen enkele registersleutel is verdwenen', function () {
   var verwacht = ['hrv', 'rhr', 'sleep', 'dagfactor', 'readiness', 'gewicht', 'volume', 'rpe',
     'sets', 'load', 'load_vorige_dag', 'weekbelasting', 'duur', 'rust', 'e1rm', 'topgewicht',
     'cardio_split', 'temperatuur', 'luchtvochtigheid', 'wind',
-    'rustdagen'];                                   // Fase 2 (v4.47.0)
+    'rustdagen',                                    // Fase 2 (v4.47.0)
+    'srpe'];                                        // v4.49.0 — Foster session-RPE (srpe.v1)
   var aanwezig = RC.VARIABLE_REGISTRY.map(function (v) { return v.key; });
   verwacht.forEach(function (k) { assert.ok(aanwezig.indexOf(k) >= 0, 'registersleutel verdwenen: ' + k); });
   assert.ok(aanwezig.length >= verwacht.length, 'registeromvang gekrompen');
@@ -161,11 +162,15 @@ t('C2: met tijdstempel en besluit ontstaat een geldig snapshot', function () {
     context: { trainingInstanceId: 'i1', exerciseId: 'ex1', setNummer: 1, date: '2026-08-19' },
     raw: { kg: 100, reps: 5, rpe: 8, voorgeschrevenKg: 100, voorgeschrevenReps: 5, voorgeschrevenRpe: 8 },
     calculated: { effKg: 100 },
-    decision: DecisionCore.progressionDecision(8, 100)
+    decision: DecisionCore.progressionDecision(8, 100),
+    /* v4.49.0 — de betrouwbaarheid hoort sinds deze versie bij het bewijs. Wordt hij niet
+       ingespoten, dan meldt de snapshot hem terecht als ontbrekend. */
+    confidence: { datakwaliteit: 'volledig', bron: 'readiness_day.v1' }
   });
   assert.strictEqual(ev.geldig, true);
   assert.strictEqual(ev.versie, 'evidence_snapshot.v1');
   assert.deepStrictEqual(ev.missing, []);
+  assert.strictEqual(ev.confidence.datakwaliteit, 'volledig', 'de betrouwbaarheid komt niet mee in het bewijsspoor');
 });
 
 t('D1: zonder tijdstempel blijft evidence expliciet ontbrekend', function () {

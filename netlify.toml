@@ -12,3 +12,14 @@
 
 [functions."cleanup-unverified-accounts"]
   schedule = "@daily"
+
+# v4.49.0 — de Capacitor-app draait op https://localhost en haalt de video's cross-origin
+# op bij deze productieomgeving (zie MEDIA_ORIGIN in sw.js). Zonder deze header weigert de
+# browser het antwoord en blijft elke techniekvideo in de Android-app leeg. Video's zijn
+# publieke, niet-persoonlijke bestanden; een open Access-Control-Allow-Origin is hier
+# passend. De Netlify Functions doen het NIET zo: die geven per verzoek alleen headers
+# terug voor een expliciete lijst oorsprongen (netlify/functions/_cors.js).
+[[headers]]
+  for = "/videos/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"

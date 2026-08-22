@@ -1,10 +1,11 @@
+const { withCors } = require('./_cors.js');   // v4.49.0 — CORS voor de Capacitor-app (https://localhost)
 // Start van de OAuth-koppeling met Google Health API (Fitbit-opvolger). Bouwt de
 // autorisatie-URL en geeft die terug aan de client, die de gebruiker daar naartoe
 // stuurt. De user_id wordt NU al vastgelegd (via de meegestuurde sessie) in
 // wearable_oauth_state, zodat wearable-auth-callback.js straks — als Google terugstuurt
 // zonder Authorization-header — weet welke gebruiker dit was. Zelfde JWT-verificatiepatroon
 // als delete-account.js: nooit een user_id van de client zelf vertrouwen.
-exports.handler = async function (event) {
+const _handler = async function (event) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: { message: 'Method not allowed' } }) };
   }
@@ -73,3 +74,7 @@ exports.handler = async function (event) {
     return { statusCode: 500, body: JSON.stringify({ error: { message: 'Serverfout: ' + e.message } }) };
   }
 };
+
+// v4.49.0 — de handler blijft ongewijzigd; withCors voegt alleen de CORS-headers toe en
+// beantwoordt de preflight, zodat de Capacitor-app (https://localhost) deze functie kan bereiken.
+exports.handler = withCors(_handler);

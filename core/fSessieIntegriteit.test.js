@@ -87,13 +87,18 @@ function zandbak(opts) {
       querySelectorAll: function () { return { forEach: function () {} }; }
     },
     clearAuthSession: function () { ctx._gewist = (ctx._gewist || 0) + 1; ctx.authSession = null; ctx.SB_H.Authorization = 'Bearer publishable'; },
+    /* v4.49.0 — refreshAuthToken geeft sinds deze versie een STATUS terug in plaats van
+       een booleaanse waarde: 'ok' | 'verlopen' | 'tijdelijk'. Alleen 'verlopen'
+       rechtvaardigt uitloggen; een netwerkfout of 5xx mag de sessie niet wissen.
+       De zandbak volgt dat contract, met opts.refreshStatus om ook 'tijdelijk' te testen. */
     refreshAuthToken: function () {
       ctx._refreshes = (ctx._refreshes || 0) + 1;
-      if (!opts.refreshLukt) return Promise.resolve(false);
+      if (opts.refreshStatus) return Promise.resolve(opts.refreshStatus);
+      if (!opts.refreshLukt) return Promise.resolve('verlopen');
       /* een geslaagde refresh roteert het token — precies wat de retry moet oppakken */
       ctx.SB_H.Authorization = 'Bearer NIEUW';
       ctx.authSession = { access_token: 'NIEUW', refresh_token: 'r2', user: { id: 'u1' } };
-      return Promise.resolve(true);
+      return Promise.resolve('ok');
     },
     _verzoeken: verzoeken,
     fetch: function (url, init) {
@@ -115,8 +120,14 @@ function zandbak(opts) {
   vm.runInContext([
     konstVar('OFFLINE_DB_NAME'), konstVar('SB_RETRY_STATUS'),
     konstVar('_sbRefreshInFlight'), konstVar('_sbSessieVerlopenGemeld'), konstVar('_flushBezig'),
+    konstVar('TK_STATUS_VELD'),
     pak('sbRetryable'), pak('sbRefreshOnce'), pak('sbSessieVerlopen'), pak('sbFetch'),
-    pak('offlineDb'), pak('offlineQueueAdd'), pak('offlineQueueAll'), pak('offlineQueueRemove'),
+    pak('_tkHuidigeUid'), pak('offlineDb'), pak('offlineQueueAdd'),
+    pak('offlineQueueVanHuidigeGebruiker'),
+    pak('offlineQueueAll'), pak('offlineQueueRemove'),
+    /* v4.50.0 — sbGet markeert zijn uitkomst met een datastatus, zodat een fout niet
+       langer als "geen gegevens" doorgaat. De zandbak laadt die helpers mee. */
+    pak('tkMarkeerStatus'), pak('tkDataStatus'), pak('tkStatusReden'),
     pak('sbGet'), pak('sbPostQ'), pak('sbPatchQ'), pak('sbDelQ'), pak('flushOfflineQueue')
   ].join('\n'), ctx);
   return ctx;
@@ -317,7 +328,10 @@ console.log('\nD. Architectuurgrens');
 
 t('D1: geen enkele sb*-functie doet nog een kale fetch naar de REST-API', function () {
   /* Eén ontsnapping is genoeg om de 401-afhandeling weer te verliezen. */
-  ['sbGet', 'sbPost', 'sbPostReturning', 'sbPatch', 'sbPostQ', 'sbPatchQ', 'sbDelQ', 'flushOfflineQueue'].forEach(function (fn) {
+  /* v4.49.0 — sbDel en sbUpsert ontbraken in deze lijst, en dat waren nu juist de twee
+     functies die het wél deden. De lijst bewaakte dus niet de regel die hij beschrijft. */
+  ['sbGet', 'sbPost', 'sbPostReturning', 'sbPatch', 'sbDel', 'sbUpsert',
+   'sbPostQ', 'sbPatchQ', 'sbDelQ', 'flushOfflineQueue'].forEach(function (fn) {
     var src = pak(fn);
     assert.ok(!/await fetch\(/.test(src) && !/=\s*fetch\(/.test(src),
       fn + ' omzeilt sbFetch met een directe fetch — dan is 401-herstel daar weg');

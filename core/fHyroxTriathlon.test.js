@@ -474,17 +474,23 @@ eq(CardioCore.stationDurationS(T0ae + 1000, T0ae), null, 'AE4: negatieve/corrupt
 
 console.log('\nAF. Broncode-audit: renderHyroxResultaat() — geen nieuwe berekening, geen fictieve fallback');
 const resultaatSrc = extractFn('renderHyroxResultaat');
-ok(/CardioCore\.stationDurationS\(a\.eersteStartAt,\s*a\.vorigeEindAt\)/.test(resultaatSrc),
-  'AF1: totale tijd komt uitsluitend uit station_duration.v1 op de twee echte tijdstempels');
+// v4.69.0-update: renderHyroxResultaat() berekent zelf NIET meer (dat gebeurt nu vóóraf in
+// hyroxLiveAlsPerformance()/hyroxReconstructPerformance()) — de functie leest uitsluitend
+// het al-berekende perf.totalTime. Dezelfde bescherming (geen eigen station_duration.v1-
+// aanroep in de renderlaag) geldt dus nog steeds, alleen nu een laag hoger.
+ok(!/CardioCore\.stationDurationS\(/.test(resultaatSrc),
+  'AF1: renderHyroxResultaat() zelf roept station_duration.v1 niet meer aan — totale tijd komt kant-en-klaar uit het meegegeven Performance-object');
 ok(/niet beschikbaar/.test(resultaatSrc), 'AF2: expliciete "niet beschikbaar"-tekst aanwezig voor ontbrekende data');
 ok(!/setInterval|Math\.random|new Date\(\)\.get/.test(resultaatSrc), 'AF3: geen timer/randomness/klok-aflezing in de weergavelaag zelf');
-ok(!/fetch\(|sbGet\(|sbPost/.test(resultaatSrc), 'AF4 (Fase 6, offline): geen netwerkcall — resultaat komt uitsluitend uit het al-in-geheugen hyroxActive, dus offline-safe');
-ok(/hyroxActive\.voltooid|a\.voltooid/.test(resultaatSrc) || /a\s*=\s*hyroxActive/.test(resultaatSrc),
-  'AF5: segmentenlijst komt uit hyroxActive.voltooid — dezelfde volgorde als waarin ze zijn opgeslagen (segment_index-volgorde, geen herordening)');
+ok(!/fetch\(|sbGet\(|sbPost/.test(resultaatSrc), 'AF4 (Fase 6, offline): geen netwerkcall in de renderfunctie zelf — offline-safe (live via hyroxActive, gereconstrueerd via reeds-opgehaalde data)');
+ok(/perf\.segments/.test(resultaatSrc),
+  'AF5: segmentenlijst komt uit het meegegeven Performance-object (perf.segments) — dezelfde segment_index-volgorde als opgeslagen, geen herordening');
 ok(!/coach|anthropic|claude/i.test(resultaatSrc), 'AF6: geen AI-aanroep in de resultatenweergave');
 ok(/isOfficial\s*\?\s*'Officiële race'\s*:\s*'Trainingssimulatie'/.test(resultaatSrc),
   'AF7: officiële race/simulatie expliciet en correct getoond, direct uit de opgeslagen context');
-ok(/a\.division/.test(resultaatSrc), 'AF8: divisie getoond wanneer aanwezig (in de subtitel)');
+ok(/perf\.raceContext\.division/.test(resultaatSrc), 'AF8: divisie getoond wanneer aanwezig (in de subtitel), nu via perf.raceContext.division');
+ok(/performance \|\| hyroxLiveAlsPerformance\(\)/.test(resultaatSrc),
+  'AF9 (nieuw, v4.69.0): backwards compatible — zonder argument valt de functie terug op de levende hyroxActive-state, exact het v4.65.0-gedrag');
 
 console.log('\nAG. Broncode-audit: geen dubbele completion');
 const afrondenSrc = extractFn('hyroxAfronden');
@@ -523,7 +529,113 @@ ok(!/CREATE TABLE/i.test(diffV65), 'AK4: geen nieuwe tabel');
 eq(DecisionCore.HYROX_DIVISIE_WAARDEN, {}, 'AK5: HYROX_DIVISIE_WAARDEN onaangeroerd, blijft leeg');
 
 
+/* ══════════════════════════════════════════════════════════════════════════════════
+ * MASTER SPRINT v4.69.0 — PERFORMANCE OBJECT RECONSTRUCTIE
+ * ══════════════════════════════════════════════════════════════════════════════════ */
+const reconstructSrc = [
+  extractConst('TK_HYROX_TS_PREFIX'),
+  extractFn('tkHyroxTsNote'),
+  extractFn('tkHyroxTsParse'),
+  extractConst('TK_HYROX_STATION_LABEL'),
+  extractFn('hyroxSegmentLabel'),
+  extractFn('hyroxReconstructPerformance')
+].join('\n');
+const Reconstruct = new Function('CardioCore', 'CalcCore',
+  reconstructSrc + '\nreturn { hyroxReconstructPerformance, hyroxSegmentLabel, tkHyroxTsNote, tkHyroxTsParse };'
+)(CardioCore, CalcCore);
+
+function segRij(idx, exId, extra) {
+  return Object.assign({ segment_index: idx, exercise_id: exId, training_type: 'HYROX' }, extra || {});
+}
+const T0ae2 = 1_755_000_000_000;
+function tsNote(startMs, endMs) { return Reconstruct.tkHyroxTsNote(startMs, endMs); }
+
+console.log('\nAL. hyroxReconstructPerformance — A: complete HYROX-race');
+const volledigeRijen = [];
+for (let i = 1; i <= 16; i++) {
+  const id = i % 2 === 1 ? 'hyrox_run' : DecisionCore.HYROX_STATIONS[(i / 2) - 1];
+  const start = T0ae2 + (i - 1) * 100_000;
+  volledigeRijen.push(segRij(i, id, { extraNote: tsNote(start, start + 60_000), distance: id === 'hyrox_run' ? 1000 : null }));
+}
+const perfCompleet = Reconstruct.hyroxReconstructPerformance({ race_division: 'open', race_is_official: true }, volledigeRijen);
+eq(perfCompleet.provenance, 'stored', 'AL1: provenance = stored');
+eq(perfCompleet.sport, 'hyrox', 'AL2: sport correct herkend uit training_type');
+eq(perfCompleet.raceContext, { division: 'open', isOfficial: true }, 'AL3: raceContext correct uit training_instances-rij');
+eq(perfCompleet.segments.length, 16, 'AL4: alle 16 opgeslagen segmenten aanwezig');
+ok(perfCompleet.segments.every(s => s.duration === 60), 'AL5: elke segmentduur correct berekend (station_duration.v1)');
+ok(perfCompleet.totalTime != null && perfCompleet.totalTime > 0, 'AL6: totale tijd berekend uit eerste start/laatste eind');
+eq(perfCompleet.segments.map(s => s.segment_index), [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], 'AL7: segmenten in correcte, gesorteerde volgorde');
+
+console.log('\nAM. B: HYROX gedeeltelijke/ontbrekende segmentdata — GEEN aanvulling');
+const gedeeltelijkeRijen = [
+  segRij(1, 'hyrox_run', { extraNote: tsNote(T0ae2, T0ae2 + 60_000) }),
+  segRij(3, 'hyrox_run', { extraNote: tsNote(T0ae2 + 200_000, T0ae2 + 260_000) }) // segment 2 ontbreekt, NIET aanvullen
+];
+const perfGedeeltelijk = Reconstruct.hyroxReconstructPerformance(null, gedeeltelijkeRijen);
+eq(perfGedeeltelijk.segments.length, 2, 'AM1: uitsluitend de 2 daadwerkelijk opgeslagen segmenten — segment 2 wordt NIET verzonnen');
+eq(perfGedeeltelijk.raceContext, { division: null, isOfficial: null }, 'AM2: geen training_instances-rij -> raceContext volledig null, niet geraden');
+
+console.log('\nAN. C: triathlon complete race (3 loggbare disciplines)');
+const brickRijen = [
+  { segment_index: 1, exercise_id: 'triathlon_zwemmen', training_type: 'Triathlon', extraNote: tsNote(T0ae2, T0ae2 + 900_000), distance: 1500 },
+  { segment_index: 3, exercise_id: 'triathlon_fietsen', training_type: 'Triathlon', extraNote: tsNote(T0ae2 + 1_000_000, T0ae2 + 5_000_000), distance: 40000 },
+  { segment_index: 5, exercise_id: 'triathlon_hardlopen', training_type: 'Triathlon', extraNote: tsNote(T0ae2 + 5_100_000, T0ae2 + 7_600_000), distance: 10000 }
+];
+const perfBrick = Reconstruct.hyroxReconstructPerformance({ race_division: null, race_is_official: false }, brickRijen);
+eq(perfBrick.sport, 'triathlon', 'AN1: sport correct herkend voor triathlon');
+eq(perfBrick.segments.map(s => s.label), ['Zwemmen', 'Fietsen', 'Hardlopen'], 'AN2: labels correct herkend (zonder eigen HYROX-catalogus-ID)');
+ok(perfBrick.segments[1].transition != null, 'AN3: transitie (T1) berekend tussen swim-eind en bike-start');
+ok(perfBrick.segments[2].transition != null, 'AN4: transitie (T2) berekend tussen bike-eind en run-start');
+eq(perfBrick.raceContext.isOfficial, false, 'AN5: isOfficial=false correct doorgegeven (simulatie), niet verward met null');
+
+console.log('\nAO. D/E: ontbrekende/negatieve/ongeldige timestamp -> null, nooit geschat');
+const kapotteNote = [segRij(1, 'hyrox_run', { extraNote: null })];
+eq(Reconstruct.hyroxReconstructPerformance(null, kapotteNote).segments[0].duration, null, 'AO1: ontbrekende extraNote -> duration null');
+const negatieveNote = [segRij(1, 'hyrox_run', { extraNote: tsNote(T0ae2 + 5000, T0ae2) })]; // eind vóór start
+eq(Reconstruct.hyroxReconstructPerformance(null, negatieveNote).segments[0].duration, null, 'AO2: negatieve/omgekeerde tijdstempels -> duration null (nooit clampen)');
+
+console.log('\nAP. F/G/H: ontbrekende distance/weight/reps -> null, nooit 0');
+const legeMetrics = [segRij(2, 'hyrox_sled_push', { extraNote: tsNote(T0ae2, T0ae2 + 60_000) })];
+const perfLeeg = Reconstruct.hyroxReconstructPerformance(null, legeMetrics).segments[0];
+eq(perfLeeg.distance, null, 'AP1: ontbrekende distance -> null, niet 0');
+eq(perfLeeg.weight, null, 'AP2: ontbrekende weight -> null, niet 0');
+eq(perfLeeg.reps, null, 'AP3: ontbrekende reps -> null, niet 0');
+
+console.log('\nAQ. I/J: ontbrekende division/official-status -> null, geen gok');
+const perfGeenContext = Reconstruct.hyroxReconstructPerformance({}, volledigeRijen);
+eq(perfGeenContext.raceContext, { division: null, isOfficial: null }, 'AQ1: lege training_instances-rij -> beide velden null');
+const perfDeelsGeenContext = Reconstruct.hyroxReconstructPerformance({ race_division: 'pro' }, volledigeRijen);
+eq(perfDeelsGeenContext.raceContext, { division: 'pro', isOfficial: null }, 'AQ2: alleen divisie bekend -> official blijft null, niet geraden op basis van divisie');
+
+console.log('\nAR. K/L/M: provenance, geen afhankelijkheid van hyroxActive, deterministisch');
+eq(Reconstruct.hyroxReconstructPerformance(null, []).provenance, 'stored', 'AR1: provenance altijd stored voor deze functie');
+ok(!reconstructSrc.includes('hyroxActive'), 'AR2: hyroxReconstructPerformance() noemt nergens hyroxActive — volledig onafhankelijk van live state');
+const uitkomst1 = JSON.stringify(Reconstruct.hyroxReconstructPerformance({ race_division: 'open', race_is_official: true }, volledigeRijen));
+const uitkomst2 = JSON.stringify(Reconstruct.hyroxReconstructPerformance({ race_division: 'open', race_is_official: true }, volledigeRijen));
+eq(uitkomst1, uitkomst2, 'AR3: dezelfde input geeft exact dezelfde output (deterministisch)');
+
+console.log('\nAS. N/O/P: geen database-write, geen netwerkcall, geen AI-call');
+ok(!/sbPost|sbPatch|sbGet|fetch\(/.test(reconstructSrc), 'AS1: geen enkele database- of netwerkaanroep in de reconstructiefunctie');
+ok(!/coach|anthropic|claude/i.test(reconstructSrc), 'AS2: geen AI-aanroep');
+ok(!/Date\.now\(\)|Math\.random/.test(reconstructSrc), 'AS3: geen Date.now()/randomness — puur op de meegegeven data');
+
+console.log('\nAT. Q/R: bestaande v4.65.0 live-resultaatflow blijft werken, renderfunctie rekent zelf niets meer');
+const renderSrc = extractFn('renderHyroxResultaat');
+ok(/performance \|\| hyroxLiveAlsPerformance\(\)/.test(renderSrc), 'AT1: backwards compatible — zonder argument wordt de live-state gebruikt, exact als v4.65.0');
+ok(!/CardioCore\.stationDurationS\(a\.eersteStartAt/.test(renderSrc), 'AT2: renderHyroxResultaat() berekent zelf geen station_duration.v1 meer (verplaatst naar hyroxLiveAlsPerformance/hyroxReconstructPerformance)');
+ok(!/CalcCore\.segmentTransitionS/.test(renderSrc), 'AT3: renderHyroxResultaat() berekent zelf geen segment_transition.v1 meer');
+const liveAlsPerfSrc = extractFn('hyroxLiveAlsPerformance');
+ok(/provenance:\s*'live'/.test(liveAlsPerfSrc), 'AT4: hyroxLiveAlsPerformance() markeert zichzelf expliciet als provenance:"live"');
+
+console.log('\nAU. Forensische scope-controle (v4.69.0)');
+const diffV69 = reconstructSrc + renderSrc + liveAlsPerfSrc;
+ok(!/VARIABLE_REGISTRY|pairDaily|pairQuality/.test(diffV69), 'AU1: geen Relationship Engine/DeviceCore-aanraking');
+ok(!/performance_context_match|previousComparable|bestComparable|improvement/i.test(diffV69), 'AU2: geen vergelijkings-/trendlogica gebouwd (bewust uitgesteld, Fase 12)');
+ok(!/leaderboard|ranking|gamificat/i.test(diffV69), 'AU3: geen leaderboard/ranking/gamificatie');
+ok(!/target_height|HYROX_DIVISIE_WAARDEN\s*=\s*\{[^}]+\}/.test(diffV69), 'AU4: geen target_height, geen ingevulde HYROX_DIVISIE_WAARDEN');
+
+
 console.log('\n========================================================');
 console.log(`RESULTAAT: ${pass} geslaagd, ${fail} mislukt`);
-console.log(fail === 0 ? '✅ HYROX/Triathlon: datamodel + calc + UI + classificatie + resultatenscherm: puur, deterministisch, additief.' : '❌ NIET groen.');
+console.log(fail === 0 ? '✅ HYROX/Triathlon: datamodel + calc + UI + classificatie + resultatenscherm + reconstructie: puur, deterministisch, additief.' : '❌ NIET groen.');
 process.exitCode = fail === 0 ? 0 : 1;

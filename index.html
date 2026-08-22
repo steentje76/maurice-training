@@ -7550,6 +7550,11 @@ async function hyroxAfronden(){
   // keer, hier, en dit pad wordt alleen bereikt vanuit hyroxFinishSegment() bij het
   // ECHTE laatste segment (huidigeIndex >= segments.length, elders al gecontroleerd).
   hyroxActive.fase = 'resultaat';
+  // v4.70.0 — een ECHTE, zojuist voltooide race is per definitie nooit een
+  // geschiedenis-weergave; reset dit hier expliciet zodat een eerder bekeken
+  // geschiedenis-race nooit een later live-voltooide race kan laten denken dat hij
+  // "geschiedenis" is (wat anders hyroxActive zou laten lekken bij "Terug").
+  hyroxGeschiedenisWeergave = false;
   tkHyroxPersist();
   renderHyroxScreen();
 }
@@ -7562,6 +7567,10 @@ function hyroxTerugNaarTraining(){
 }
 
 function hyroxAfbreken(){
+  // v4.70.0 — een geschiedenis-race heeft geen hyroxActive erbij betrokken; de
+  // headerknop moet dan uitsluitend terugnavigeren naar Historie, nooit een (mogelijk
+  // elders lopende) actieve race aanraken.
+  if(hyroxGeschiedenisWeergave){ hyroxTerugVanuitResultaat(); return; }
   // v4.65.0 — op het resultatenscherm is de race al voltooid; "afbreken" is dan geen
   // zinnige actie meer (en zou een verwarrende "race afbreken?"-vraag tonen over een
   // race die al klaar is). Zelfde knop, andere betekenis afhankelijk van de fase.
@@ -7674,7 +7683,7 @@ function renderHyroxResultaat(performance){
     '</div>'+
     '<div class="v43-lbl" style="margin:16px 0 10px">Segmenten</div>'+
     '<div class="card" style="padding:13px 14px">'+segmentenHtml+'</div>'+
-    '<button class="btn btn-r" style="width:100%;padding:16px;margin-top:16px" onclick="hyroxTerugNaarTraining()">Terug naar Training</button>';
+    '<button class="btn btn-r" style="width:100%;padding:16px;margin-top:16px" onclick="hyroxTerugVanuitResultaat()">'+(hyroxGeschiedenisWeergave?'Terug naar Historie':'Terug naar Training')+'</button>';
 }
 
 async function hyroxTikKlaar(){
@@ -7858,6 +7867,56 @@ function hyroxLiveAlsPerformance(){
   };
 }
 
+/* ══════════════════════════════════════════════════════════════════════════════
+ * MASTER SPRINT v4.70.0 — RACEHISTORIE + RACE DETAIL VANUIT HISTORIE
+ *
+ * hyroxGroepeerRaceSessies(): puur, deterministisch. Herkenning van een race gebeurt
+ * UITSLUITEND via het al bestaande, betrouwbare sessions.training_type ('HYROX'/
+ * 'Triathlon', sinds v4.62.0 op elke geschreven segment-rij aanwezig) — geen nieuwe
+ * heuristiek op exercise_id-prefixen. Een gewone training (training_type is iets
+ * anders, of afwezig) wordt hier nooit als race herkend.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+function hyroxGroepeerRaceSessies(sess){
+  const groepen = {};
+  (Array.isArray(sess)?sess:[]).forEach(function(s){
+    if(!s || !s.training_instance_id) return;
+    if(s.training_type!=='HYROX' && s.training_type!=='Triathlon') return;
+    const key = s.training_instance_id;
+    if(!groepen[key]) groepen[key] = { instanceId:key, sport:(s.training_type==='HYROX'?'hyrox':'triathlon'), rows:[] };
+    groepen[key].rows.push(s);
+  });
+  return Object.keys(groepen).map(function(k){ return groepen[k]; });
+}
+
+// v4.70.0 — houdt bij of het resultatenscherm momenteel een GESCHIEDENIS-race toont
+// (geen levende hyroxActive-sessie erbij betrokken), zodat "Terug" een eventuele
+// actieve, nog niet voltooide race nooit per ongeluk kan wissen.
+let hyroxGeschiedenisWeergave = false;
+
+async function hyroxOpenGeschiedenisRace(instanceId){
+  if(!instanceId) return;
+  try{
+    const [instanceRow, sessieRijen] = await Promise.all([
+      getTrainingInstance(instanceId),
+      sbGet('sessions', '&training_instance_id=eq.'+encodeURIComponent(instanceId)+'&order=segment_index.asc')
+    ]);
+    if(!sessieRijen || !sessieRijen.length){ toast('Kon deze race niet meer terugvinden'); return; }
+    const performance = hyroxReconstructPerformance(instanceRow, sessieRijen);
+    hyroxGeschiedenisWeergave = true;
+    go('s-hyrox');
+    renderHyroxResultaat(performance);
+  }catch(_){
+    toast('Kon deze race niet openen — probeer opnieuw');
+  }
+}
+
+// Vervangt hyroxTerugNaarTraining() als handler op de "Terug"-knop van het resultaat-
+// scherm zodra dat scherm een geschiedenis-race toont — navigeert terug naar Historie
+// zonder ooit hyroxActive aan te raken (die kan intussen een échte, lopende race zijn).
+function hyroxTerugVanuitResultaat(){
+  if(hyroxGeschiedenisWeergave){ hyroxGeschiedenisWeergave = false; go('s-hist'); return; }
+  hyroxTerugNaarTraining();
+}
 
 
 // snapshotFromVasteTraining(def, texs, modifications) → snapshot-object voor een
@@ -17518,6 +17577,22 @@ async function loadHistory(append=false){
   }
   const byDate={};
   ss.forEach(s=>{if(!byDate[s.date])byDate[s.date]=[];byDate[s.date].push(s);});
+  // v4.70.0 — RACEHISTORIE. Racegroepen (HYROX/triathlon) worden herkend via de al
+  // bestaande, betrouwbare sessions.training_type — geen nieuwe heuristiek. Race-
+  // context (divisie/officieel) wordt in ÉÉN bulk-call opgehaald via de al bestaande
+  // sbGet-mechaniek (geen nieuwe querylaag) — alleen wanneer er daadwerkelijk
+  // racegroepen op deze pagina staan, om normale dagen niet onnodig te belasten.
+  const hyroxRaceGroepen = hyroxGroepeerRaceSessies(ss);
+  const hyroxRaceSessieIds = new Set();
+  hyroxRaceGroepen.forEach(g=>g.rows.forEach(r=>hyroxRaceSessieIds.add(r.id)));
+  let hyroxInstanceContext = {};
+  if(hyroxRaceGroepen.length){
+    try{
+      const ids = hyroxRaceGroepen.map(g=>g.instanceId).join(',');
+      const rows = await sbGet('training_instances', '&id=in.('+ids+')&select=id,race_division,race_is_official');
+      (rows||[]).forEach(r=>{ hyroxInstanceContext[r.id]=r; });
+    }catch(_){ /* race-context niet beschikbaar -> kaart toont divisie/officieel als "Niet beschikbaar", geen crash */ }
+  }
   // v4.17.0 (Sprint 4.8 P10) — progressie per oefening: vorige keer (oudere sessie zelfde oefening).
   const exSeq={};ss.forEach(s=>{const k=s.exercise_id;(exSeq[k]=exSeq[k]||[]).push(s);});
   function prevOfSess(s){const arr=exSeq[s.exercise_id]||[];const i=arr.indexOf(s);for(let j=i+1;j<arr.length;j++){if(arr[j].weight)return arr[j];}return null;}
@@ -17552,7 +17627,30 @@ async function loadHistory(append=false){
         <span class="hist-arr" style="color:var(--g3);font-size:15px;margin-left:8px">›</span>
       </div>
       <div class="hist-day-body">
-        ${sess.map(s=>{
+        ${(function(){
+          // v4.70.0 — racekaarten: één kaart per race die deze dag (mede) plaatsvond,
+          // vóór de gewone oefeningregels. De losse segment-rijen van een race worden
+          // hieronder uit de normale per-oefening-lijst gefilterd (raceSessieIds), zodat
+          // een HYROX-race niet ALSNOG als 16 losse regels verschijnt.
+          const idsVandaag=new Set();
+          hyroxRaceGroepen.forEach(g=>{ if(g.rows.some(r=>r.date===date)) idsVandaag.add(g.instanceId); });
+          return Array.from(idsVandaag).map(function(instanceId){
+            const groep=hyroxRaceGroepen.find(g=>g.instanceId===instanceId);
+            const ctx=hyroxInstanceContext[instanceId]||null;
+            const perf=hyroxReconstructPerformance(ctx, groep.rows);
+            const sportLbl = perf.sport==='hyrox' ? 'HYROX-race' : 'Triathlon-brick';
+            const divisieTxt = perf.raceContext.division!=null ? perf.raceContext.division : 'Niet beschikbaar';
+            const officieelTxt = perf.raceContext.isOfficial===true ? 'Officieel' : (perf.raceContext.isOfficial===false ? 'Simulatie' : 'Niet beschikbaar');
+            const tijdTxt = perf.totalTime!=null ? CardioCore.formatTime(perf.totalTime) : 'Niet beschikbaar';
+            const subLbl = perf.sport==='hyrox' ? (escHtml(divisieTxt)+' · '+escHtml(officieelTxt)) : escHtml(officieelTxt);
+            return `<div class="lg-ex" onclick="hyroxOpenGeschiedenisRace('${instanceId}')">
+              <span class="lg-ex-th">🏁</span>
+              <div class="lg-ex-b"><div class="lg-ex-nm">${escHtml(sportLbl)} · ${subLbl}</div><div class="lg-ex-did">Totale tijd: ${escHtml(tijdTxt)}</div></div>
+              <div class="lg-ex-a"><span class="lg-ex-i">›</span></div>
+            </div>`;
+          }).join('');
+        })()}
+        ${sess.filter(s=>!hyroxRaceSessieIds.has(s.id)).map(s=>{
           const n=exercises.find(e=>e.id===s.exercise_id)?.name||s.exercise_id;
           let v='';
           // P1-fix: cardio-tak in het logboek. Voorheen toonden running/cycling/swimming/assaultbike een

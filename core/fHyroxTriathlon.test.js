@@ -635,7 +635,74 @@ ok(!/leaderboard|ranking|gamificat/i.test(diffV69), 'AU3: geen leaderboard/ranki
 ok(!/target_height|HYROX_DIVISIE_WAARDEN\s*=\s*\{[^}]+\}/.test(diffV69), 'AU4: geen target_height, geen ingevulde HYROX_DIVISIE_WAARDEN');
 
 
+/* ══════════════════════════════════════════════════════════════════════════════════
+ * MASTER SPRINT v4.70.0 — RACEHISTORIE + RACE DETAIL VANUIT HISTORIE
+ * ══════════════════════════════════════════════════════════════════════════════════ */
+const groepeerSrc = extractFn('hyroxGroepeerRaceSessies');
+const Groepeer = new Function(groepeerSrc + '\nreturn hyroxGroepeerRaceSessies;')();
+
+console.log('\nAV. hyroxGroepeerRaceSessies — raceherkenning UITSLUITEND via training_type');
+const gemengdeSessies = [
+  { id: 's1', training_instance_id: 'inst-1', training_type: 'HYROX', segment_index: 1 },
+  { id: 's2', training_instance_id: 'inst-1', training_type: 'HYROX', segment_index: 2 },
+  { id: 's3', training_instance_id: 'inst-2', training_type: 'Triathlon', segment_index: 1 },
+  { id: 's4', training_instance_id: null, training_type: 'Kracht', exercise_id: 'squat' }, // gewone training
+  { id: 's5', training_instance_id: 'toevallig-ook-een-id', training_type: 'Cardio' } // heeft wel een instance_id maar GEEN race-type
+];
+const groepen = Groepeer(gemengdeSessies);
+eq(groepen.length, 2, 'AV1: exact 2 racegroepen herkend (inst-1, inst-2) — de gewone training en de niet-race-cardio-rij NIET meegenomen');
+ok(groepen.some(g => g.instanceId === 'inst-1' && g.sport === 'hyrox' && g.rows.length === 2), 'AV2: HYROX-groep correct (2 rijen, sport=hyrox)');
+ok(groepen.some(g => g.instanceId === 'inst-2' && g.sport === 'triathlon' && g.rows.length === 1), 'AV3: triathlon-groep correct');
+eq(Groepeer([]).length, 0, 'AV4: lege invoer -> geen groepen, geen crash');
+eq(Groepeer(null).length, 0, 'AV5: null-invoer -> geen groepen, geen crash');
+ok(!groepeerSrc.includes('hyrox_') , 'AV6: geen exercise_id-prefixheuristiek — uitsluitend training_type gebruikt, exact zoals de opdracht vereist');
+
+console.log('\nAW. Broncode-audit: hyroxOpenGeschiedenisRace() — reconstructie, geen eigen berekening');
+const openGeschSrc = extractFn('hyroxOpenGeschiedenisRace');
+ok(/hyroxReconstructPerformance\(/.test(openGeschSrc), 'AW1: gebruikt de v4.69.0-reconstructiefunctie, geen eigen logica');
+ok(/getTrainingInstance\(/.test(openGeschSrc), 'AW2: haalt de training_instances-rij op via de al bestaande functie, geen nieuwe querylaag');
+ok(/renderHyroxResultaat\(performance\)/.test(openGeschSrc), 'AW3: geeft het Performance-object door aan de bestaande resultaatweergave');
+ok(!/CardioCore\.stationDurationS|CalcCore\.segmentTransitionS/.test(openGeschSrc), 'AW4: geen eigen tijdsberekening — die zit uitsluitend in de reconstructiefunctie');
+ok(!/coach|anthropic|claude/i.test(openGeschSrc), 'AW5: geen AI-aanroep');
+
+console.log('\nAX. Broncode-audit: geen dubbele/gevaarlijke state tussen live en geschiedenis');
+const terugVanuitSrc = extractFn('hyroxTerugVanuitResultaat');
+ok(/hyroxGeschiedenisWeergave/.test(terugVanuitSrc), 'AX1: onderscheidt geschiedenis- van live-weergave vóór een actie te kiezen');
+ok(/go\(\'s-hist\'\)/.test(terugVanuitSrc) || /go\("s-hist"\)/.test(terugVanuitSrc), 'AX2: geschiedenis-weergave navigeert terug naar Historie zonder hyroxActive aan te raken');
+const afrondenSrcV70 = extractFn('hyroxAfronden');
+ok(/hyroxGeschiedenisWeergave\s*=\s*false/.test(afrondenSrcV70), 'AX3: een ECHTE, zojuist voltooide race reset expliciet de geschiedenis-vlag (voorkomt state-lek naar een latere live-completion)');
+const afbrekenSrcV70 = extractFn('hyroxAfbreken');
+ok(/hyroxGeschiedenisWeergave/.test(afbrekenSrcV70), 'AX4: de headerknop is ook geschiedenis-bewust, niet alleen live-fase-bewust');
+
+console.log('\nAY. Race-detail via geschiedenis levert hetzelfde Performance-contract als v4.69.0');
+const historieRijen = [];
+const T0av = 1_755_100_000_000;
+for (let i = 1; i <= 16; i++) {
+  const id = i % 2 === 1 ? 'hyrox_run' : DecisionCore.HYROX_STATIONS[(i / 2) - 1];
+  const start = T0av + (i - 1) * 90_000;
+  historieRijen.push({ id: 'row'+i, segment_index: i, exercise_id: id, training_type: 'HYROX', training_instance_id: 'hist-race-1', extraNote: 'hyrox_ts:start='+start+',end='+(start+60000), date: '2026-08-01' });
+}
+const perfViaHistorie = Reconstruct.hyroxReconstructPerformance({ race_division: 'pro', race_is_official: true }, historieRijen);
+eq(perfViaHistorie.provenance, 'stored', 'AY1: provenance = stored (Fase 6, acceptatiecriterium 4)');
+eq(perfViaHistorie.segments.length, 16, 'AY2: alle 16 gereconstrueerde segmenten aanwezig');
+eq(perfViaHistorie.raceContext, { division: 'pro', isOfficial: true }, 'AY3: race-context correct meegenomen');
+
+console.log('\nAZ. Onvolledige/defecte race breekt niets — race blijft individueel weergeefbaar');
+const defecteRij = [{ id: 'x1', segment_index: 1, exercise_id: 'hyrox_run', training_type: 'HYROX', training_instance_id: 'defect-1', extraNote: 'corrupte-tekst-geen-geldig-formaat', date: '2026-08-01' }];
+const perfDefect = Reconstruct.hyroxReconstructPerformance(null, defecteRij);
+eq(perfDefect.segments[0].duration, null, 'AZ1: onherkenbare extraNote -> duration null, geen crash, geen geschatte waarde');
+ok(perfDefect.segments.length === 1, 'AZ2: de rij zelf blijft gewoon aanwezig in het object — een defect segment verdwijnt niet, toont alleen "niet beschikbaar"');
+
+console.log('\nBA. Forensische scope-controle (v4.70.0)');
+const diffV70 = groepeerSrc + openGeschSrc + terugVanuitSrc + afrondenSrcV70 + afbrekenSrcV70;
+ok(!/performance_context_match|previousComparable|bestComparable|trend|verbetering|sneller.*geworden/i.test(diffV70),
+  'BA1: geen vergelijking, geen trend, geen "sneller/beter"-claim gebouwd (bewust uitgesteld)');
+ok(!/VARIABLE_REGISTRY|pairDaily|pairQuality/.test(diffV70), 'BA2: geen Relationship Engine/DeviceCore-aanraking');
+ok(!/leaderboard|ranking|gamificat/i.test(diffV70), 'BA3: geen leaderboard/ranking/gamificatie');
+ok(!/CREATE TABLE|create table/i.test(diffV70), 'BA4: geen nieuwe tabel');
+
+
 console.log('\n========================================================');
 console.log(`RESULTAAT: ${pass} geslaagd, ${fail} mislukt`);
-console.log(fail === 0 ? '✅ HYROX/Triathlon: datamodel + calc + UI + classificatie + resultatenscherm + reconstructie: puur, deterministisch, additief.' : '❌ NIET groen.');
+console.log(fail === 0 ? '✅ HYROX/Triathlon: datamodel + calc + UI + classificatie + resultatenscherm + reconstructie + racehistorie: puur, deterministisch, additief.' : '❌ NIET groen.');
 process.exitCode = fail === 0 ? 0 : 1;

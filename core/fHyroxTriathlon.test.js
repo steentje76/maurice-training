@@ -702,7 +702,101 @@ ok(!/leaderboard|ranking|gamificat/i.test(diffV70), 'BA3: geen leaderboard/ranki
 ok(!/CREATE TABLE|create table/i.test(diffV70), 'BA4: geen nieuwe tabel');
 
 
+/* ══════════════════════════════════════════════════════════════════════════════════
+ * MASTER SPRINT v4.71.0 — PERFORMANCE-OVERZICHT + RACEVERGELIJKING
+ * ══════════════════════════════════════════════════════════════════════════════════ */
+const matchSrc = [
+  extractConst('PERFORMANCE_CONTEXT_MATCH_VERSIE'),
+  extractFn('performanceContextMatch'),
+  extractFn('vindVorigeVergelijkbareRace'),
+  extractFn('performanceVerschilStatus'),
+  extractFn('vergelijkSegmenten')
+].join('\n');
+const Match = new Function(matchSrc + '\nreturn { performanceContextMatch, vindVorigeVergelijkbareRace, performanceVerschilStatus, vergelijkSegmenten, PERFORMANCE_CONTEXT_MATCH_VERSIE };')();
+
+function perf(sport, division, isOfficial, totalTime, segments) {
+  return { provenance: 'stored', sport, raceContext: { division: division!=null?division:null, isOfficial: isOfficial!=null?isOfficial:null }, totalTime: totalTime!=null?totalTime:null, segments: segments||[], comparisonContext: {} };
+}
+
+console.log('\nBB. performance_context_match.v1 — HYROX-vergelijkbaarheid (Fase 6, volledige matrix)');
+eq(Match.performanceContextMatch(perf('hyrox','open',true), perf('hyrox','open',true)).comparable, true, 'BB1: Official Open <-> Official Open = MATCH');
+eq(Match.performanceContextMatch(perf('hyrox','open',true), perf('hyrox','pro',true)).comparable, false, 'BB2: Official Open <-> Official Pro = GEEN MATCH');
+eq(Match.performanceContextMatch(perf('hyrox','open',true), perf('hyrox','open',false)).comparable, false, 'BB3: Official <-> Simulation = GEEN MATCH');
+eq(Match.performanceContextMatch(perf('hyrox','open',false), perf('hyrox','open',false)).comparable, true, 'BB4: Simulation <-> Simulation, zelfde context = MATCH');
+eq(Match.performanceContextMatch(perf('hyrox','doubles',true), perf('hyrox','open',true)).comparable, false, 'BB5: Doubles <-> Singles(open) = GEEN MATCH');
+eq(Match.performanceContextMatch(perf('hyrox','relay',true), perf('hyrox','open',true)).comparable, false, 'BB6: Relay <-> Singles(open) = GEEN MATCH');
+eq(Match.performanceContextMatch(perf('hyrox',null,true), perf('hyrox','open',true)).comparable, false, 'BB7: ontbrekende divisie -> NIET VERGELIJKBAAR, geen positieve gok');
+eq(Match.performanceContextMatch(perf('hyrox','open',null), perf('hyrox','open',true)).comparable, false, 'BB8: ontbrekende official-status -> NIET VERGELIJKBAAR');
+eq(Match.performanceContextMatch(perf('hyrox','open',true), perf('triathlon',null,true)).comparable, false, 'BB9: verschillende sport (raceformat) -> GEEN MATCH');
+ok(Match.performanceContextMatch(perf('hyrox','open',true), perf('hyrox','pro',true)).reason.length > 10, 'BB10: elke ongeldige match heeft een leesbare, niet-lege reden (RULE-PERF-009)');
+eq(Match.performanceContextMatch(perf('hyrox','open',true), perf('hyrox','open',true)).rule, 'performance_context_match.v1', 'BB11: elk oordeel draagt het versienummer');
+
+console.log('\nBC. Triathlon-vergelijkbaarheid — Fase 7: structureel NIET VERGELIJKBAAR (geen categorie verzonnen)');
+eq(Match.performanceContextMatch(perf('triathlon',null,true), perf('triathlon',null,true)).comparable, false, 'BC1: zelfde official-status is NIET genoeg — triathlon-afstand/type ontbreekt structureel, dus altijd geen match');
+ok(/afstand|type/i.test(Match.performanceContextMatch(perf('triathlon',null,true), perf('triathlon',null,true)).reason), 'BC2: de reden legt expliciet uit WAAROM (ontbrekend product-/datacontract), geen stille "false"');
+
+console.log('\nBD. Ontbrekende context algemeen');
+eq(Match.performanceContextMatch(null, perf('hyrox','open',true)).comparable, false, 'BD1: ontbrekende race A -> GEEN MATCH, geen crash');
+eq(Match.performanceContextMatch(perf('hyrox','open',true), undefined).comparable, false, 'BD2: ontbrekende race B -> GEEN MATCH, geen crash');
+
+console.log('\nBE. vindVorigeVergelijkbareRace — meest recente match wint (RULE-PERF-006)');
+const huidige = perf('hyrox','open',true,3600);
+const kandidaten = [
+  { instanceId:'oud-pro', datum:'2026-01-01', perf: perf('hyrox','pro',true,3500) },       // niet vergelijkbaar (andere divisie)
+  { instanceId:'midden-open', datum:'2026-03-01', perf: perf('hyrox','open',true,3700) },   // WEL vergelijkbaar
+  { instanceId:'nieuwste-open', datum:'2026-06-01', perf: perf('hyrox','open',true,3650) }  // WEL vergelijkbaar, meest recent
+];
+const gevondenTest = Match.vindVorigeVergelijkbareRace(huidige, kandidaten);
+eq(gevondenTest.race.instanceId, 'nieuwste-open', 'BE1: de MEEST RECENTE vergelijkbare race wint, niet zomaar de eerste in de array');
+eq(Match.vindVorigeVergelijkbareRace(huidige, [kandidaten[0]]), null, 'BE2: geen enkele vergelijkbare kandidaat -> null ("geen vergelijkbare eerdere race")');
+eq(Match.vindVorigeVergelijkbareRace(huidige, []), null, 'BE3: lege lijst -> null, geen crash');
+
+console.log('\nBF. performanceVerschilStatus — sneller/langzamer/gelijk/niet_beschikbaar (Fase 11)');
+eq(Match.performanceVerschilStatus(3500, 3600), 'sneller', 'BF1: A < B -> sneller');
+eq(Match.performanceVerschilStatus(3700, 3600), 'langzamer', 'BF2: A > B -> langzamer');
+eq(Match.performanceVerschilStatus(3600, 3600), 'gelijk', 'BF3: A = B -> gelijk');
+eq(Match.performanceVerschilStatus(null, 3600), 'niet_beschikbaar', 'BF4: ontbrekende A -> niet_beschikbaar, nooit geraden');
+eq(Match.performanceVerschilStatus(3600, null), 'niet_beschikbaar', 'BF5: ontbrekende B -> niet_beschikbaar');
+
+console.log('\nBG. vergelijkSegmenten — alleen segmenten die in BEIDE races bestaan (Fase 12/13)');
+const segA = [{ segment_index:1, label:'Run', duration:60 }, { segment_index:2, label:'SkiErg', duration:90 }, { segment_index:3, label:'Sled Push', duration:120 }];
+const segB = [{ segment_index:1, label:'Run', duration:65 }, { segment_index:2, label:'SkiErg', duration:85 }];
+const vgl = Match.vergelijkSegmenten({ segments: segA }, { segments: segB });
+eq(vgl.length, 2, 'BG1: alleen segment_index 1 en 2 (in beide aanwezig) — segment 3 (alleen in A) wordt NIET verzonnen voor B');
+eq(vgl[0].difference, -5, 'BG2: verschil correct berekend (60-65=-5)');
+const vglOntbrekend = Match.vergelijkSegmenten({ segments: [{ segment_index:1, label:'Run', duration:null }] }, { segments: [{ segment_index:1, label:'Run', duration:60 }] });
+eq(vglOntbrekend[0].difference, null, 'BG3: ontbrekende duration -> difference null, nooit geschat');
+
+console.log('\nBH. Broncode-audit: geen Relationship Engine, geen AI, puur');
+ok(!/VARIABLE_REGISTRY|discover\(|pairDaily|pairQuality/.test(matchSrc), 'BH1: performance_context_match.v1 is GEEN Relationship Engine-contract — geen enkele aanraking');
+ok(!/coach|anthropic|claude/i.test(matchSrc), 'BH2: geen AI-aanroep in de vergelijkingslogica');
+ok(!/Date\.now\(\)|Math\.random/.test(matchSrc), 'BH3: geen Date.now()/randomness — puur op de meegegeven Performance-objecten');
+ok(!/fetch\(|sbGet\(|sbPost/.test(matchSrc), 'BH4: geen netwerk-/database-aanroep in de vergelijkingsfuncties zelf');
+
+console.log('\nBI. Broncode-audit: renderHyroxPerformanceOverzicht() gebruikt uitsluitend bestaande reconstructie, geen eigen berekening');
+const overzichtSrc = extractFn('renderHyroxPerformanceOverzicht');
+ok(/hyroxLaadAllePerformances\(\)/.test(overzichtSrc), 'BI1: laadt data via de nieuwe, maar volledig op bestaande functies gebaseerde laadfunctie');
+ok(/vindVorigeVergelijkbareRace\(/.test(overzichtSrc) && /performanceVerschilStatus\(/.test(overzichtSrc), 'BI2: gebruikt de deterministische vergelijkingsfuncties, geen eigen ad-hoc logica');
+ok(!/CardioCore\.stationDurationS\(|CalcCore\.segmentTransitionS\(/.test(overzichtSrc), 'BI3: geen eigen tijdsberekening in de renderlaag — alles komt kant-en-klaar uit reeds gereconstrueerde Performance-objecten');
+ok(/Niet beschikbaar|niet_beschikbaar/.test(overzichtSrc), 'BI4: expliciete "Niet beschikbaar"-afhandeling aanwezig');
+
+console.log('\nBJ. Broncode-audit: hyroxLaadAllePerformances() hergebruikt v4.69.0/v4.70.0 volledig');
+const laadSrc = extractFn('hyroxLaadAllePerformances');
+ok(/hyroxGroepeerRaceSessies\(/.test(laadSrc), 'BJ1: hergebruikt de bestaande v4.70.0-groepeerfunctie');
+ok(/hyroxReconstructPerformance\(/.test(laadSrc), 'BJ2: hergebruikt de bestaande v4.69.0-reconstructiefunctie');
+ok(!/CREATE TABLE|create table/i.test(laadSrc), 'BJ3: geen nieuwe tabel/query-architectuur');
+
+console.log('\nBK. Forensische scope-controle (v4.71.0)');
+const diffV71 = matchSrc + overzichtSrc + laadSrc;
+ok(!/VARIABLE_REGISTRY|pairDaily|pairQuality/.test(diffV71), 'BK1: geen Relationship Engine/DeviceCore-aanraking');
+ok(!/leaderboard|ranking|gamificat|social/i.test(diffV71), 'BK2: geen leaderboard/ranking/gamificatie/social');
+ok(!/CREATE TABLE|create table/i.test(diffV71), 'BK3: geen nieuwe tabel');
+ok(!/target_height|HYROX_DIVISIE_WAARDEN\s*=\s*\{[^}]+\}/.test(diffV71), 'BK4: geen target_height, geen ingevulde HYROX_DIVISIE_WAARDEN');
+ok(!/trend.*meerdere|3\+.*races|meerjarige/i.test(diffV71), 'BK5: geen trendweergave over meerdere races (bewust uitgesteld naar een latere sprint)');
+ok(!/waarschijnlijk sneller|geschatte verbetering|bijna sneller/i.test(diffV71), 'BK6: geen vage/geschatte prestatietaal (Fase 11-verbod)');
+
+
 console.log('\n========================================================');
 console.log(`RESULTAAT: ${pass} geslaagd, ${fail} mislukt`);
-console.log(fail === 0 ? '✅ HYROX/Triathlon: datamodel + calc + UI + classificatie + resultatenscherm + reconstructie + racehistorie: puur, deterministisch, additief.' : '❌ NIET groen.');
+console.log(fail === 0 ? '✅ HYROX/Triathlon: volledige keten t/m Performance-overzicht + racevergelijking: puur, deterministisch, additief.' : '❌ NIET groen.');
 process.exitCode = fail === 0 ? 0 : 1;

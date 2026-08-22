@@ -3666,7 +3666,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
 <!-- ═══ LOGBOEK ═══ -->
 <div class="scr" id="s-hist">
-  <div class="hdr"><div class="hdr-title" role="heading" aria-level="1">Logboek</div><div class="hdr-sub">Trainingsgeschiedenis</div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Logboek</div><div class="hdr-sub">Trainingsgeschiedenis</div></div><button class="ibtn" onclick="go('s-hyrox-perf')" aria-label="Mijn prestaties" title="Mijn prestaties">🏁</button></div></div>
   <div class="scroll" style="padding-top:8px">
     <div class="filter-tabs" id="hist-filter-tabs">
       <button class="filter-tab active" onclick="setHistFilter('all',this)">Alles</button>
@@ -3681,6 +3681,10 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
   </nav>
+</div>
+<div class="scr" id="s-hyrox-perf">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Mijn prestaties</div><div class="hdr-sub">HYROX &amp; triathlon</div></div><button class="ibtn" onclick="go('s-hist')" aria-label="Terug naar Historie">←</button></div></div>
+  <div class="scroll" id="hyrox-perf-scroll" style="padding-top:8px"></div>
 </div>
 
 <!-- ═══ STATS ═══ -->
@@ -7683,7 +7687,8 @@ function renderHyroxResultaat(performance){
     '</div>'+
     '<div class="v43-lbl" style="margin:16px 0 10px">Segmenten</div>'+
     '<div class="card" style="padding:13px 14px">'+segmentenHtml+'</div>'+
-    '<button class="btn btn-r" style="width:100%;padding:16px;margin-top:16px" onclick="hyroxTerugVanuitResultaat()">'+(hyroxGeschiedenisWeergave?'Terug naar Historie':'Terug naar Training')+'</button>';
+    '<button class="btn btn-r" style="width:100%;padding:16px;margin-top:16px" onclick="hyroxTerugVanuitResultaat()">'+(hyroxGeschiedenisWeergave?'Terug naar Historie':'Terug naar Training')+'</button>'+
+    '<button class="ibtn" style="width:100%;height:auto;padding:10px 0;font-size:12.5px;font-weight:700;color:var(--accent-text)" onclick="go(\'s-hyrox-perf\')">Mijn prestaties bekijken</button>';
 }
 
 async function hyroxTikKlaar(){
@@ -7916,6 +7921,163 @@ async function hyroxOpenGeschiedenisRace(instanceId){
 function hyroxTerugVanuitResultaat(){
   if(hyroxGeschiedenisWeergave){ hyroxGeschiedenisWeergave = false; go('s-hist'); return; }
   hyroxTerugNaarTraining();
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * MASTER SPRINT v4.71.0 — PERFORMANCE-OVERZICHT + RACEVERGELIJKING
+ *
+ * performance_context_match.v1 — GEEN Relationship Engine-contract. Uitsluitend een
+ * lokale, deterministische race-tot-race-vergelijkingsregel binnen de Performance-laag.
+ * Puur, geen netwerk, geen AI, geen Date.now(). "Niet vast te stellen" geeft NOOIT een
+ * positieve match (fail-closed) — exact het principe van isComparableRaceContext()
+ * (v4.61.0), hier toegepast op twee Performance-objecten i.p.v. twee ruwe rijen.
+ *
+ * FASE-7-AUDITBEVINDING (zie sprintrapport): er bestaat GEEN enkel opgeslagen veld voor
+ * triathlon-afstand/type (Sprint/Olympic/Half/Full) — hyroxStart() zet race_division
+ * uitsluitend voor HYROX, nooit voor triathlon. Zonder die data zou elke triathlon-
+ * vergelijking een ongeverifieerde aanname zijn. Daarom: triathlon-vergelijking geeft
+ * hier STRUCTUREEL comparable:false met een expliciete reden, totdat een toekomstig
+ * product-/datacontract dat veld toevoegt — geen categorie wordt hier verzonnen.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+const PERFORMANCE_CONTEXT_MATCH_VERSIE = 'performance_context_match.v1';
+
+function performanceContextMatch(perfA, perfB){
+  const RULE = PERFORMANCE_CONTEXT_MATCH_VERSIE;
+  if(!perfA || !perfB) return { comparable:false, reason:'Een van beide races ontbreekt.', rule:RULE };
+  if(perfA.sport==null || perfB.sport==null) return { comparable:false, reason:'De sport van een van beide races is niet vastgesteld.', rule:RULE };
+  if(perfA.sport!==perfB.sport) return { comparable:false, reason:'Verschillende sport: '+perfA.sport+' en '+perfB.sport+'.', rule:RULE };
+
+  const ctxA = perfA.raceContext||{}, ctxB = perfB.raceContext||{};
+  if(ctxA.isOfficial==null || ctxB.isOfficial==null) return { comparable:false, reason:'De official/simulatie-status van een van beide races is niet bekend.', rule:RULE };
+  if(ctxA.isOfficial!==ctxB.isOfficial) return { comparable:false, reason:(ctxA.isOfficial?'Een officiële race':'Een trainingssimulatie')+' kan niet worden vergeleken met '+(ctxB.isOfficial?'een officiële race':'een trainingssimulatie')+'.', rule:RULE };
+
+  if(perfA.sport==='hyrox'){
+    if(ctxA.division==null || ctxB.division==null) return { comparable:false, reason:'De divisie van een van beide races is niet bekend.', rule:RULE };
+    if(ctxA.division!==ctxB.division) return { comparable:false, reason:ctxA.division+' en '+ctxB.division+' zijn verschillende divisies.', rule:RULE };
+    return { comparable:true, reason:'Zelfde sport (HYROX), '+(ctxA.isOfficial?'officiële race':'trainingssimulatie')+' en dezelfde divisie ('+ctxA.division+').', rule:RULE };
+  }
+  if(perfA.sport==='triathlon'){
+    return { comparable:false, reason:'Triathlon-afstand/type wordt nog niet vastgelegd — vergelijking nog niet mogelijk (ontbrekend productbesluit).', rule:RULE };
+  }
+  return { comparable:false, reason:'Onbekende sport — vergelijkbaarheid kan niet worden vastgesteld.', rule:RULE };
+}
+
+// vindVorigeVergelijkbareRace: meest recente eerdere race die matcht (RULE-PERF-006).
+// eerdereRaces: [{instanceId, perf, datum}]. Sorteert zelf op datum (nieuwste eerst).
+function vindVorigeVergelijkbareRace(huidigePerf, eerdereRaces){
+  const kandidaten = (Array.isArray(eerdereRaces)?eerdereRaces:[]).slice()
+    .sort(function(a,b){ return (b.datum||'').localeCompare(a.datum||''); });
+  for(let i=0;i<kandidaten.length;i++){
+    const match = performanceContextMatch(huidigePerf, kandidaten[i].perf);
+    if(match.comparable) return { race:kandidaten[i], match:match };
+  }
+  return null;
+}
+
+// performanceVerschilStatus: 'sneller'|'langzamer'|'gelijk'|'niet_beschikbaar' — nooit
+// een tussenvorm ("waarschijnlijk sneller"), nooit gebaseerd op iets anders dan twee
+// daadwerkelijk bekende tijden (Fase 11).
+function performanceVerschilStatus(tijdA, tijdB){
+  if(tijdA==null || tijdB==null) return 'niet_beschikbaar';
+  if(tijdA < tijdB) return 'sneller';
+  if(tijdA > tijdB) return 'langzamer';
+  return 'gelijk';
+}
+
+// vergelijkSegmenten: matcht uitsluitend op segment_index die in BEIDE races daadwerkelijk
+// aanwezig is — nooit een ontbrekend segment verzinnen (Fase 12/13).
+function vergelijkSegmenten(perfA, perfB){
+  const bMap = {};
+  (perfB&&perfB.segments||[]).forEach(function(s){ if(s.segment_index!=null) bMap[s.segment_index]=s; });
+  return (perfA&&perfA.segments||[]).filter(function(sa){ return sa.segment_index!=null && bMap[sa.segment_index]; }).map(function(sa){
+    const sb = bMap[sa.segment_index];
+    const verschil = (sa.duration!=null && sb.duration!=null) ? (sa.duration - sb.duration) : null;
+    return { segment_index:sa.segment_index, label:sa.label, durationA:sa.duration, durationB:sb.duration, difference:verschil };
+  });
+}
+
+// hyroxLaadAllePerformances(): haalt ALLE HYROX/triathlon-races van de gebruiker op en
+// reconstrueert ze elk tot een Performance-object. Zuiver hergebruik van bestaande
+// functies (hyroxGroepeerRaceSessies uit v4.70.0, hyroxReconstructPerformance uit
+// v4.69.0) — geen nieuwe query-architectuur, één extra bulk-sbGet voor race-context
+// (zelfde patroon als loadHistory() al gebruikt).
+async function hyroxLaadAllePerformances(){
+  const ss = await sbGet('sessions', '&training_type=in.(HYROX,Triathlon)&order=date.desc');
+  const groepen = hyroxGroepeerRaceSessies(ss);
+  if(!groepen.length) return [];
+  let context = {};
+  try{
+    const ids = groepen.map(function(g){ return g.instanceId; }).join(',');
+    const rows = await sbGet('training_instances', '&id=in.('+ids+')&select=id,race_division,race_is_official');
+    (rows||[]).forEach(function(r){ context[r.id]=r; });
+  }catch(_){ /* context niet beschikbaar -> reconstructie valt terug op null-velden, geen crash */ }
+  return groepen.map(function(g){
+    const perf = hyroxReconstructPerformance(context[g.instanceId]||null, g.rows);
+    const datum = g.rows.map(function(r){ return r.date; }).sort()[0] || null;
+    return { instanceId:g.instanceId, perf:perf, datum:datum };
+  }).sort(function(a,b){ return (b.datum||'').localeCompare(a.datum||''); });
+}
+
+async function renderHyroxPerformanceOverzicht(){
+  const el = document.getElementById('hyrox-perf-scroll');
+  if(!el) return;
+  el.innerHTML = '<div class="lich-empty"><div class="e1">Laden…</div></div>';
+  let alle;
+  try{ alle = await hyroxLaadAllePerformances(); }
+  catch(_){ el.innerHTML = '<div class="lich-empty"><div class="e1">Kon prestaties niet laden</div><div class="e2">Probeer het later opnieuw.</div></div>'; return; }
+
+  if(!alle.length){
+    el.innerHTML = '<div class="lich-empty"><div class="e1">Nog geen races gelogd</div><div class="e2">Start een HYROX-race of triathlon-brick vanuit Training maken om hier je prestaties te zien.</div></div>';
+    return;
+  }
+
+  const laatste = alle[0];
+  const eerdereRaces = alle.slice(1);
+  const gevonden = vindVorigeVergelijkbareRace(laatste.perf, eerdereRaces);
+
+  const sportLbl = laatste.perf.sport==='hyrox' ? 'HYROX' : (laatste.perf.sport==='triathlon' ? 'Triathlon' : 'Onbekend');
+  const ctx = laatste.perf.raceContext||{};
+  const ctxTxt = [ctx.division, (ctx.isOfficial===true?'Officieel':ctx.isOfficial===false?'Simulatie':null)].filter(Boolean).join(' · ') || 'Niet beschikbaar';
+  const tijdTxt = laatste.perf.totalTime!=null ? CardioCore.formatTime(laatste.perf.totalTime) : 'Niet beschikbaar';
+
+  let vergelijkHtml;
+  if(!gevonden){
+    vergelijkHtml = '<div class="card" style="padding:16px">'+
+      '<div class="v43-lbl" style="margin-bottom:8px">Vorige vergelijkbare race</div>'+
+      '<div style="font-size:13px;color:var(--g4)">Geen vergelijkbare eerdere race</div>'+
+      (eerdereRaces.length ? '<div style="font-size:11.5px;color:var(--g4);margin-top:4px">'+escHtml(performanceContextMatch(laatste.perf, eerdereRaces[0].perf).reason)+'</div>' : '')+
+    '</div>';
+  } else {
+    const vorige = gevonden.race;
+    const status = performanceVerschilStatus(laatste.perf.totalTime, vorige.perf.totalTime);
+    const verschilS = (laatste.perf.totalTime!=null && vorige.perf.totalTime!=null) ? Math.abs(laatste.perf.totalTime - vorige.perf.totalTime) : null;
+    const statusTxt = status==='sneller' ? ('Sneller dan vorige vergelijkbare race: '+CardioCore.formatTime(verschilS))
+      : status==='langzamer' ? ('Langzamer dan vorige vergelijkbare race: '+CardioCore.formatTime(verschilS))
+      : status==='gelijk' ? 'Exact gelijk aan vorige vergelijkbare race'
+      : 'Niet beschikbaar';
+    const segmentRijen = vergelijkSegmenten(laatste.perf, vorige.perf).map(function(sd){
+      const verschilTxt = sd.difference!=null ? (sd.difference<0?'−':'+')+CardioCore.formatTime(Math.abs(sd.difference)) : 'Niet beschikbaar';
+      return '<div class="lich-krow"><span class="k">'+escHtml(sd.label)+'</span><span>'+
+        (sd.durationA!=null?CardioCore.formatTime(sd.durationA):'Niet beschikbaar')+' vs '+(sd.durationB!=null?CardioCore.formatTime(sd.durationB):'Niet beschikbaar')+
+        ' · '+escHtml(verschilTxt)+'</span></div>';
+    }).join('');
+    vergelijkHtml = '<div class="card" style="padding:16px">'+
+      '<div class="v43-lbl" style="margin-bottom:8px">Vorige vergelijkbare race — '+escHtml(fmtDate(vorige.datum))+'</div>'+
+      '<div style="font-size:13px;color:var(--g4);margin-bottom:4px">'+escHtml(gevonden.match.reason)+'</div>'+
+      '<div style="font-size:18px;font-weight:800;color:var(--dark);margin-bottom:10px">'+escHtml(statusTxt)+'</div>'+
+      (segmentRijen ? '<div class="v43-lbl" style="margin:10px 0 6px;font-size:11px">Segmenten</div>'+segmentRijen : '')+
+    '</div>';
+  }
+
+  el.innerHTML =
+    '<div class="card" style="padding:20px;text-align:center;margin-bottom:12px">'+
+      '<div style="font-size:11px;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Laatste race · '+escHtml(fmtDate(laatste.datum))+'</div>'+
+      '<div style="font-size:20px;font-weight:800;color:var(--dark);margin-bottom:2px">'+escHtml(sportLbl)+'</div>'+
+      '<div style="font-size:12px;color:var(--g4);margin-bottom:10px">'+escHtml(ctxTxt)+'</div>'+
+      '<div style="font-size:34px;font-weight:800;color:var(--dark)">'+escHtml(tijdTxt)+'</div>'+
+      '<button class="ibtn" style="width:auto;height:auto;padding:8px 0;font-size:12px;color:var(--accent-text)" onclick="hyroxOpenGeschiedenisRace(\''+laatste.instanceId+'\')">Bekijk race</button>'+
+    '</div>'+
+    vergelijkHtml;
 }
 
 
@@ -10013,6 +10175,7 @@ function go(id){
   if(id==='s-doelen')renderDoelenScreen();
   if(id==='s-help'){const v=document.getElementById('help-app-ver');if(v)v.textContent=APP_VER;renderHelpContact();}
   if(id==='s-hyrox')renderHyroxScreen();
+  if(id==='s-hyrox-perf')renderHyroxPerformanceOverzicht();
 }
 // ══════════════════════════════════════════════════════════
 // TERUG-NAVIGATIE (Android hardware/gesture + browser) — RC0

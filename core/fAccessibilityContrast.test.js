@@ -103,7 +103,10 @@ const accentTextMatches = html.match(/color:var\(--accent-text\)/g) || [];
 // aantal groeit dus legitiem mee met nieuwe schermen; deze test blijft zijn doel dienen
 // (bevestigen dat NIEUWE accent-tekst altijd het AA-veilige token gebruikt) zolang het
 // hier expliciet wordt bijgewerkt bij elke bewuste, geverifieerde toevoeging.
-ok(accentTextMatches.length === 89, `F1: 89 toepassingen gemigreerd/toegevoegd naar --accent-text (gevonden: ${accentTextMatches.length}) — 87 uit v4.53.0 + 2 nieuwe, correct getokende toepassingen uit v4.62.0 (HYROX/triathlon-UI)`);
+// v4.71.0 — twee nieuwe, correct getokende toepassingen toegevoegd door de Performance-
+// overzicht/racevergelijking-UI ("Bekijk race" en "Mijn prestaties bekijken") — beide
+// bewust --accent-text, niet het losse --accent. Aantal groeit dus opnieuw legitiem mee.
+ok(accentTextMatches.length === 91, `F1: 91 toepassingen gemigreerd/toegevoegd naar --accent-text (gevonden: ${accentTextMatches.length}) — 87 uit v4.53.0 + 2 uit v4.62.0 + 2 nieuwe uit v4.71.0 (Performance-overzicht/racevergelijking-UI)`);
 
 // Geen enkele overgebleven border-/outline-color:var(--accent) is per ongeluk mee veranderd —
 // die vallen buiten deze sprint (niet-tekst-contrast is een andere WCAG-eis, 1.4.11) en moeten

@@ -1,5 +1,8 @@
 -- ============================================================================
 -- MASTER SPRINT v4.76.0 — RACE CONTEXT MIGRATIE (HYROX)
+-- (v4.77.0-update: Adaptive CHECK-constraint + 13 canonieke waarden toegevoegd
+-- aan het einde van dit bestand, zie sectie "v4.77.0 — ADAPTIVE CHECK-CONSTRAINT"
+-- hieronder. Deze migratie is nog steeds NIET op Supabase uitgevoerd.)
 -- ============================================================================
 -- Additief. Geen enkele bestaande kolom gewijzigd of verwijderd.
 -- training_instances.race_division en .race_is_official (v4.59.0) blijven
@@ -8,21 +11,20 @@
 -- Bronverificatie: v4.73.0 (initiële audit), v4.74.0 (contractontwerp), v4.74.1 en
 -- v4.74.2 (dedicated bronverificatie, uitsluitend hyrox.com-rulebooks — geen blogs).
 --
--- STOP-PUNT (expliciet, conform opdracht — niet gegokt):
--- race_adaptive_class krijgt BEWUST GEEN CHECK-constraint. De bronverificatie
--- leverde 9 met zekerheid bevestigde classificatienamen op (Lower Limb, Upper Limb,
--- Short Stature, Visual/Hearing Impairment, Neurological Major, Neurological Minor,
--- Seated With Hip Function, Seated Without Hip Function, Seated Without Core
--- Function), terwijl de officiële rulebook zelf spreekt van "13 Adaptive divisions"
--- (vermoedelijk classificatie x gender, niet 13 losse classificatiewaarden). Deze
--- 9-versus-13-relatie kon niet met volledige zekerheid worden gereconstrueerd uit de
--- beschikbare bronfragmenten. Conform expliciete instructie: NIET gegokt op de
--- exacte constraint-waarden. De kolom bestaat (additief, vrij tekstveld, geen
--- CHECK), maar wordt deze sprint NIET aangeboden in de UI/write-path — Adaptive
--- blijft dus, net als vandaag, niet selecteerbaar. Een vervolgsprint met een
--- dedicated Adaptive-classificatie-bronverificatie kan de CHECK-constraint alsnog
--- toevoegen zonder deze kolom opnieuw te hoeven aanmaken.
+-- v4.76.0 STOP-PUNT — INMIDDELS OPGELOST IN v4.77.0:
+-- race_adaptive_class kreeg in v4.76.0 bewust GEEN CHECK-constraint. De toen
+-- beschikbare bronfragmenten leverden 9 classificatienamen op, terwijl de
+-- rulebook zelf spreekt van "13 Adaptive divisions" — die 9-versus-13-relatie
+-- kon niet worden gereconstrueerd uit fragmenten alleen. In v4.77.0 is het
+-- VOLLEDIGE officiële Adaptive Rulebook 26/27 rechtstreeks geraadpleegd
+-- (hyrox.com/maintain.hyrox.com, het complete PDF-document, niet slechts
+-- zoekfragmenten). Sectie 5.1 "HYROX Adaptive Divisions" somt exact 13 namen
+-- op: de eerdere lijst van 9 was zelf onvolledig (Lower Limb/Upper Limb waren
+-- niet gesplitst in Major/Minor, Neurological miste "Moderate", Vision en
+-- D/deaf waren ten onrechte samengevoegd). Zie de CHECK-constraint onderaan
+-- dit bestand voor de exacte, nu bronbevestigde 13 waarden.
 -- ============================================================================
+
 
 alter table public.training_instances
   add column if not exists race_format text;
@@ -118,4 +120,39 @@ comment on column public.training_instances.race_relay_division is
   'v4.76.0 -- men/women/mixed, uitsluitend bij format=relay (HYROX noemt dit zelf "division" voor Relay; bronbevestigd hyrox.com Relay Rulebook 26/27, secties 4.1 en 5.1). NULL = UNKNOWN.';
 
 comment on column public.training_instances.race_adaptive_class is
-  'v4.76.0 -- BEWUST GEEN CHECK-constraint (zie uitleg bovenaan dit bestand). Niet gebruikt door de huidige UI/write-path. Vrij tekstveld in afwachting van een dedicated Adaptive-classificatie-bronverificatie.';
+  'v4.77.0 -- 13 bronbevestigde HYROX Adaptive-classificaties (hyrox.com Adaptive Rulebook 26/27, sectie 5.1, volledig PDF-brondocument geraadpleegd, niet slechts fragmenten). Uitsluitend relevant bij format=adaptive. NULL = UNKNOWN bij dat format, NOT_APPLICABLE bij elk ander format (bepaald op leesniveau).';
+
+-- ============================================================================
+-- v4.77.0 — ADAPTIVE CHECK-CONSTRAINT (aanvulling op deze zelfde, nog niet
+-- uitgevoerde migratie). De 9-versus-13-onduidelijkheid uit v4.74.1/v4.74.2/
+-- v4.76.0 is opgelost door het VOLLEDIGE officiële Adaptive Rulebook 26/27
+-- rechtstreeks te raadplegen (hyrox.com/maintain.hyrox.com), niet slechts
+-- zoekfragmenten. Sectie 5.1 "HYROX Adaptive Divisions" somt exact 13 namen op:
+-- Lower Limb Major/Minor (2), Upper Limb Major/Minor (2), Short Stature (1),
+-- Vision Impairment (1), D/deaf or Hard of Hearing (1), Neurological Major/
+-- Moderate/Minor (3), Seated With/Without Hip Function/Without Core Function
+-- (3) = 13. De eerdere lijst van 9 was zelf onvolledig (Lower Limb en Upper
+-- Limb waren niet gesplitst in Major/Minor, Neurological miste "Moderate",
+-- Vision en D/deaf waren ten onrechte samengevoegd).
+-- ============================================================================
+
+do $$
+begin
+  if exists (
+    select 1 from pg_constraint where conname = 'training_instances_race_adaptive_class_check'
+  ) then
+    alter table public.training_instances drop constraint training_instances_race_adaptive_class_check;
+  end if;
+  alter table public.training_instances
+    add constraint training_instances_race_adaptive_class_check
+    check (race_adaptive_class is null or race_adaptive_class in (
+      'lower_limb_major','lower_limb_minor',
+      'upper_limb_major','upper_limb_minor',
+      'short_stature_impairment',
+      'vision_impairment',
+      'deaf_or_hard_of_hearing',
+      'neurological_major','neurological_moderate','neurological_minor',
+      'seated_with_hip_function','seated_without_hip_function','seated_without_core_function'
+    ));
+end $$;
+

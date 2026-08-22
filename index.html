@@ -5195,16 +5195,17 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
         <option value="brick">Triathlon-brick (swim → bike → run)</option>
       </select>
     </div>
-    <!-- v4.76.0 — RACE CONTEXT MIGRATIE: "Divisie" vervangen door Format + conditionele
-         velden, exact conform het bevroren HYROX-contract (v4.74.2). Adaptive is bewust
-         NIET aangeboden — de exacte adaptiveClass-waardenset kon niet met volledige
-         zekerheid worden vastgesteld (zie migratie_v476.sql). -->
+    <!-- v4.76.0/v4.77.0 — RACE CONTEXT MIGRATIE: "Divisie" vervangen door Format + conditionele
+         velden, exact conform het bevroren HYROX-contract (v4.74.2/v4.77.0). Adaptive nu
+         aangeboden — 13 canonieke classificaties bronbevestigd (hyrox.com Adaptive Rulebook
+         26/27, volledig PDF-document geraadpleegd). -->
     <div class="irow" id="hyrox-setup-format-row">
       <label class="ilbl">Format</label>
       <select class="inp" id="hyrox-setup-format" onchange="hyroxSetupToggleDivisie()">
         <option value="single">Single</option>
         <option value="doubles">Doubles</option>
         <option value="relay">Relay</option>
+        <option value="adaptive">Adaptive</option>
       </select>
     </div>
     <div class="irow" id="hyrox-setup-tier-row">
@@ -5234,6 +5235,24 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <select class="inp" id="hyrox-setup-relayage">
         <option value="under_40">Under 40</option>
         <option value="40_plus">40+</option>
+      </select>
+    </div>
+    <div class="irow" id="hyrox-setup-adaptiveclass-row">
+      <label class="ilbl">Adaptive-classificatie</label>
+      <select class="inp" id="hyrox-setup-adaptiveclass">
+        <option value="lower_limb_major">Lower Limb Major</option>
+        <option value="lower_limb_minor">Lower Limb Minor</option>
+        <option value="upper_limb_major">Upper Limb Major</option>
+        <option value="upper_limb_minor">Upper Limb Minor</option>
+        <option value="short_stature_impairment">Short Stature Impairment</option>
+        <option value="vision_impairment">Vision Impairment</option>
+        <option value="deaf_or_hard_of_hearing">D/deaf or Hard of Hearing</option>
+        <option value="neurological_major">Neurological Major</option>
+        <option value="neurological_moderate">Neurological Moderate</option>
+        <option value="neurological_minor">Neurological Minor</option>
+        <option value="seated_with_hip_function">Seated With Hip Function (SWHF)</option>
+        <option value="seated_without_hip_function">Seated Without Hip Function (SWOHF)</option>
+        <option value="seated_without_core_function">Seated Without Core Function (SWOC)</option>
       </select>
     </div>
     <div class="irow"><label class="ilbl">Type sessie</label>
@@ -7335,7 +7354,7 @@ function newTrainingInstanceId(){
 // Precies één van vasteTrainingId/customTrainingId mag gezet zijn (of geen van
 // beide, voor een volledig ad-hoc training zonder opgeslagen definitie — bv. een
 // toekomstige rechtstreekse Builder-start, zoals bestaand gedrag bij GW.start()).
-async function createTrainingInstance({vasteTrainingId=null,customTrainingId=null,snapshot=null,raceDivision=null,raceIsOfficial=null,raceFormat=null,raceTier=null,raceGender=null,raceRelayDivision=null,raceRelayAgeCategory=null}={}){
+async function createTrainingInstance({vasteTrainingId=null,customTrainingId=null,snapshot=null,raceDivision=null,raceIsOfficial=null,raceFormat=null,raceTier=null,raceGender=null,raceRelayDivision=null,raceRelayAgeCategory=null,raceAdaptiveClass=null}={}){
   if(vasteTrainingId&&customTrainingId){console.error('createTrainingInstance: niet beide vasteTrainingId en customTrainingId tegelijk');return null;}
   if(!authSession?.user?.id){console.error('createTrainingInstance: geen ingelogde gebruiker');return null;}
   const id=newTrainingInstanceId();
@@ -7364,6 +7383,9 @@ async function createTrainingInstance({vasteTrainingId=null,customTrainingId=nul
   if(raceGender!=null)row.race_gender=raceGender;
   if(raceRelayDivision!=null)row.race_relay_division=raceRelayDivision;
   if(raceRelayAgeCategory!=null)row.race_relay_age_category=raceRelayAgeCategory;
+  // v4.77.0 — race_adaptive_class: zelfde "alleen meesturen indien expliciet
+  // gevraagd"-patroon als de overige v4.76.0-velden.
+  if(raceAdaptiveClass!=null)row.race_adaptive_class=raceAdaptiveClass;
   const ok=await sbPostQ('training_instances',row);
   return ok?id:null;
 }
@@ -7462,16 +7484,28 @@ function tkHyroxPersist(){
   try{ if(hyroxActive) localStorage.setItem('tk_hyrox_active', JSON.stringify(hyroxActive)); else localStorage.removeItem('tk_hyrox_active'); }catch(_){}
 }
 
-/* v4.76.0 — hyroxValideerRaceContext(): puur, deterministisch, uitsluitend in
+/* v4.76.0/v4.77.0 — hyroxValideerRaceContext(): puur, deterministisch, uitsluitend in
  * index.html (bewust NIET in core/decision.js — "Decision Engine niet aanraken").
  * Valideert het volledige, nieuwe racecontext-object vóórdat een race start. */
 function hyroxValideerRaceContext(type, context){
   if(type!=='hyrox') return true; // triathlon heeft geen format-context om te valideren
   const ctx = context||{};
-  if(['single','doubles','relay'].indexOf(ctx.format)===-1) return false;
+  if(['single','doubles','relay','adaptive'].indexOf(ctx.format)===-1) return false;
   if(ctx.format==='relay'){
     return ['men','women','mixed'].indexOf(ctx.relayDivision)!==-1
       && ['under_40','40_plus'].indexOf(ctx.relayAgeCategory)!==-1;
+  }
+  if(ctx.format==='adaptive'){
+    // v4.77.0 — 13 bronbevestigde classificaties (hyrox.com Adaptive Rulebook 26/27,
+    // sectie 5.1, volledig PDF-document geraadpleegd). Gender blijft een aparte,
+    // verplichte dimensie (bronbevestigd: "Participants start in waves based on
+    // their gender"), nooit samengevoegd met adaptiveClass.
+    return ['male','female'].indexOf(ctx.gender)!==-1
+      && ['lower_limb_major','lower_limb_minor','upper_limb_major','upper_limb_minor',
+          'short_stature_impairment','vision_impairment','deaf_or_hard_of_hearing',
+          'neurological_major','neurological_moderate','neurological_minor',
+          'seated_with_hip_function','seated_without_hip_function','seated_without_core_function'
+         ].indexOf(ctx.adaptiveClass)!==-1;
   }
   if(['open','pro'].indexOf(ctx.tier)===-1) return false;
   if(ctx.format==='single') return ['male','female'].indexOf(ctx.gender)!==-1;
@@ -7487,17 +7521,24 @@ async function hyroxStart(type, context, isOfficial){
   // hyroxLaadAllePerformances()/loadHistory() vóór ze zijn uitgebreid). Voor single wordt
   // dit de tier ('open'/'pro', exact zoals altijd), voor doubles/relay de format-naam
   // zelf — precies zoals de bestaande vier-waarden-enum dat altijd al deed.
+  // v4.77.0 — KRITIEKE CORRECTIE: voor Adaptive mag legacyDivision NOOIT 'adaptive'
+  // worden — de BESTAANDE race_division-CHECK-constraint (v4.59.0, ongewijzigd,
+  // "bestaande race_division-semantiek niet aanraken") staat uitsluitend
+  // 'open'/'pro'/'doubles'/'relay' toe. Adaptive bestond niet in dat oorspronkelijke
+  // vier-waarden-model, dus is er geen zinnige legacy-waarde — null is hier het
+  // enige eerlijke antwoord (exact zoals bij triathlon, dat ook nooit race_division zet).
   const legacyDivision = type==='hyrox'
-    ? (ctx.format==='single' ? ctx.tier : ctx.format)
+    ? (ctx.format==='single' ? ctx.tier : (ctx.format==='adaptive' ? null : ctx.format))
     : null;
   const instanceExtra = type==='hyrox'
     ? {
         raceDivision: legacyDivision, raceIsOfficial: !!isOfficial,
         raceFormat: ctx.format,
-        raceTier: ctx.format==='relay' ? null : ctx.tier,
+        raceTier: (ctx.format==='relay'||ctx.format==='adaptive') ? null : ctx.tier,
         raceGender: ctx.format==='relay' ? null : ctx.gender,
         raceRelayDivision: ctx.format==='relay' ? ctx.relayDivision : null,
-        raceRelayAgeCategory: ctx.format==='relay' ? ctx.relayAgeCategory : null
+        raceRelayAgeCategory: ctx.format==='relay' ? ctx.relayAgeCategory : null,
+        raceAdaptiveClass: ctx.format==='adaptive' ? ctx.adaptiveClass : null
       }
     : { raceIsOfficial: !!isOfficial };
   const instanceId = await createTrainingInstance(instanceExtra);
@@ -7510,6 +7551,7 @@ async function hyroxStart(type, context, isOfficial){
     gender: type==='hyrox' ? instanceExtra.raceGender : null,
     relayDivision: type==='hyrox' ? instanceExtra.raceRelayDivision : null,
     relayAgeCategory: type==='hyrox' ? instanceExtra.raceRelayAgeCategory : null,
+    adaptiveClass: type==='hyrox' ? instanceExtra.raceAdaptiveClass : null,
     isOfficial: !!isOfficial,
     segments: tkHyroxSegmentenVoorType(type),
     huidigeIndex: 0,          // wijst in .segments, niet segment_index zelf (die kan bij brick 1/3/5 zijn)
@@ -7791,6 +7833,7 @@ function hyroxSetupToggleDivisie(){
   const genderRow = document.getElementById('hyrox-setup-gender-row');
   const relayDivisionRow = document.getElementById('hyrox-setup-relaydivision-row');
   const relayAgeRow = document.getElementById('hyrox-setup-relayage-row');
+  const adaptiveClassRow = document.getElementById('hyrox-setup-adaptiveclass-row');
   const genderSel = document.getElementById('hyrox-setup-gender');
   if(!formatRow) return;
   const isHyrox = type==='hyrox';
@@ -7800,14 +7843,21 @@ function hyroxSetupToggleDivisie(){
     if(genderRow)genderRow.style.display='none';
     if(relayDivisionRow)relayDivisionRow.style.display='none';
     if(relayAgeRow)relayAgeRow.style.display='none';
+    if(adaptiveClassRow)adaptiveClassRow.style.display='none';
     return;
   }
   const format = document.getElementById('hyrox-setup-format')?.value || 'single';
   const isRelay = format==='relay';
-  if(tierRow)tierRow.style.display = isRelay ? 'none' : 'flex';
+  // v4.77.0 — Adaptive: geen tier (net als relay), WEL gender (male/female, net als
+  // single — hergebruikt de bestaande gender-rij i.p.v. een nieuwe, parallelle),
+  // plus de nieuwe classificatie-rij. Geen nieuwe classificatielogica: hetzelfde
+  // show/hide-patroon als de al bestaande relay-velden.
+  const isAdaptive = format==='adaptive';
+  if(tierRow)tierRow.style.display = (isRelay||isAdaptive) ? 'none' : 'flex';
   if(genderRow)genderRow.style.display = isRelay ? 'none' : 'flex';
   if(relayDivisionRow)relayDivisionRow.style.display = isRelay ? 'flex' : 'none';
   if(relayAgeRow)relayAgeRow.style.display = isRelay ? 'flex' : 'none';
+  if(adaptiveClassRow)adaptiveClassRow.style.display = isAdaptive ? 'flex' : 'none';
   if(!isRelay && genderSel){
     const huidige = genderSel.value;
     genderSel.innerHTML = format==='doubles'
@@ -7826,6 +7876,11 @@ async function hyroxSetupStart(){
     if(format==='relay'){
       context.relayDivision = document.getElementById('hyrox-setup-relaydivision')?.value||'men';
       context.relayAgeCategory = document.getElementById('hyrox-setup-relayage')?.value||'under_40';
+    } else if(format==='adaptive'){
+      // v4.77.0 — hergebruikt de bestaande gender-select (male/female, zoals bij
+      // single), geen nieuwe parallelle gender-invoer. Geen tier bij adaptive.
+      context.gender = document.getElementById('hyrox-setup-gender')?.value||'male';
+      context.adaptiveClass = document.getElementById('hyrox-setup-adaptiveclass')?.value||'lower_limb_major';
     } else {
       context.tier = document.getElementById('hyrox-setup-tier')?.value||'open';
       context.gender = document.getElementById('hyrox-setup-gender')?.value||'male';
@@ -7960,6 +8015,27 @@ function triathlonAfgeleideRaceContext(segments){
   return { swimDistance: bij(1), bikeDistance: bij(3), runDistance: bij(5), format: 'individual' };
 }
 
+/* v4.77.0 — TRIATHLON CATEGORIELABEL. Presentatie-only, analoog aan hyroxContextLabel().
+ * Exacte gelijkheid tegen de vier bekende canonieke afstandsdrietallen — GEEN afronding,
+ * GEEN tolerantie, GEEN opslag. Bij geen exacte match: null (de UI toont dan gewoon de
+ * ruwe afstanden, zoals nu al gebeurt — nooit een opvallend "custom"-label). Roept
+ * uitsluitend uit presentatiefuncties, wordt NOOIT door performanceContextMatch() of
+ * buildPerformanceTrend() gebruikt (die blijven exact op de ruwe afstanden vergelijken). */
+const TRIATHLON_CANONIEKE_AFSTANDEN = [
+  { key:'sprint',  label:'Sprint',   swim:750,  bike:20000,  run:5000 },
+  { key:'olympic', label:'Olympic',  swim:1500, bike:40000,  run:10000 },
+  { key:'half',    label:'Half',     swim:1900, bike:90000,  run:21100 },
+  { key:'full',    label:'Full',     swim:3800, bike:180000, run:42200 }
+];
+function triathlonAfstandCategorie(swimDistance, bikeDistance, runDistance){
+  if(swimDistance==null || bikeDistance==null || runDistance==null) return null;
+  for(let i=0;i<TRIATHLON_CANONIEKE_AFSTANDEN.length;i++){
+    const c = TRIATHLON_CANONIEKE_AFSTANDEN[i];
+    if(c.swim===swimDistance && c.bike===bikeDistance && c.run===runDistance) return c.label;
+  }
+  return null; // geen exacte match -> UI toont de ruwe afstanden, geen "custom"-label
+}
+
 // hyroxReconstructPerformance(instanceRow, sessieRijen) -> Performance-object.
 // instanceRow: een training_instances-rij (mag null zijn -> raceContext wordt {division:null,isOfficial:null}).
 // sessieRijen: array van sessions-rijen voor DEZE training_instance_id, in WILLEKEURIGE
@@ -8070,12 +8146,18 @@ function hyroxLiveAlsPerformance(){
   // wél goed. Zelfde mapping hier toegepast, geen nieuw gedrag t.o.v. wat overal elders al
   // gold.
   const sport = a.type==='hyrox' ? 'hyrox' : 'triathlon';
+  // v4.77.0 — CORRECTIE: tier moet ook bij format='adaptive' NOT_APPLICABLE zijn
+  // (exact zoals de opgeslagen route, hyroxAfgeleideRaceContext(), dat al deed) —
+  // de live-route controleerde hiervoor alleen op 'relay', wat Adaptive-races zonder
+  // deze correctie een onterecht UNKNOWN-tier zou geven i.p.v. NOT_APPLICABLE.
+  // adaptiveClass toegevoegd, analoog aan relayDivision/relayAgeCategory hierboven.
   const hyroxCtx = a.type==='hyrox' ? {
     format: a.format!=null ? a.format : RACE_CTX_UNKNOWN,
-    tier: a.format==='relay' ? RACE_CTX_NOT_APPLICABLE : (a.tier!=null ? a.tier : RACE_CTX_UNKNOWN),
+    tier: (a.format==='relay'||a.format==='adaptive') ? RACE_CTX_NOT_APPLICABLE : (a.tier!=null ? a.tier : RACE_CTX_UNKNOWN),
     gender: a.format==='relay' ? RACE_CTX_NOT_APPLICABLE : (a.gender!=null ? a.gender : RACE_CTX_UNKNOWN),
     relayDivision: a.format==='relay' ? (a.relayDivision!=null ? a.relayDivision : RACE_CTX_UNKNOWN) : RACE_CTX_NOT_APPLICABLE,
-    relayAgeCategory: a.format==='relay' ? (a.relayAgeCategory!=null ? a.relayAgeCategory : RACE_CTX_UNKNOWN) : RACE_CTX_NOT_APPLICABLE
+    relayAgeCategory: a.format==='relay' ? (a.relayAgeCategory!=null ? a.relayAgeCategory : RACE_CTX_UNKNOWN) : RACE_CTX_NOT_APPLICABLE,
+    adaptiveClass: a.format==='adaptive' ? (a.adaptiveClass!=null ? a.adaptiveClass : RACE_CTX_UNKNOWN) : RACE_CTX_NOT_APPLICABLE
   } : null;
   const triathlonCtx = a.type==='brick' ? triathlonAfgeleideRaceContext(segments) : null;
   return {
@@ -8267,7 +8349,7 @@ async function hyroxLaadAllePerformances(){
   let context = {};
   try{
     const ids = groepen.map(function(g){ return g.instanceId; }).join(',');
-    const rows = await sbGet('training_instances', '&id=in.('+ids+')&select=id,race_division,race_is_official,race_format,race_tier,race_gender,race_relay_division,race_relay_age_category');
+    const rows = await sbGet('training_instances', '&id=in.('+ids+')&select=id,race_division,race_is_official,race_format,race_tier,race_gender,race_relay_division,race_relay_age_category,race_adaptive_class');
     (rows||[]).forEach(function(r){ context[r.id]=r; });
   }catch(_){ /* context niet beschikbaar -> reconstructie valt terug op null-velden, geen crash */ }
   return groepen.map(function(g){
@@ -8378,11 +8460,25 @@ function hyroxContextLabel(sport, raceContext){
     if(h.format==='relay'){
       if(h.relayDivision!=null && h.relayDivision!==U && h.relayDivision!==N) delen.push(kap(h.relayDivision));
       if(h.relayAgeCategory!=null && h.relayAgeCategory!==U && h.relayAgeCategory!==N) delen.push(h.relayAgeCategory==='under_40'?'Under 40':'40+');
+    } else if(h.format==='adaptive'){
+      // v4.77.0 — toont de adaptiveClass-naam (bv. "Lower_limb_major" -> "Lower limb major"),
+      // plus gender (bestaande gedrag hieronder in de else-tak blijft ook voor adaptive gelden).
+      if(h.adaptiveClass!=null && h.adaptiveClass!==U && h.adaptiveClass!==N) delen.push(h.adaptiveClass.split('_').join(' '));
+      if(h.gender!=null && h.gender!==U && h.gender!==N) delen.push(kap(h.gender));
     } else {
       if(h.tier!=null && h.tier!==U && h.tier!==N) delen.push(kap(h.tier));
       if(h.gender!=null && h.gender!==U && h.gender!==N) delen.push(kap(h.gender));
     }
     if(delen.length) return delen.join(' · ');
+  }
+  // v4.77.0 — TRIATHLON: puur presentatie, uitsluitend een herkenbaar label wanneer de
+  // afstanden EXACT overeenkomen met een canonieke categorie (geen afronding/tolerantie,
+  // zie triathlonAfstandCategorie()). Geen match -> null, UI valt dan terug op de
+  // bestaande weergave van de ruwe afstanden — nooit een opvallend "custom"-label.
+  if(sport==='triathlon' && ctx.triathlon){
+    const t = ctx.triathlon;
+    const categorie = triathlonAfstandCategorie(t.swimDistance, t.bikeDistance, t.runDistance);
+    if(categorie) return categorie;
   }
   return ctx.division || null;
 }
@@ -18162,7 +18258,7 @@ async function loadHistory(append=false){
   if(hyroxRaceGroepen.length){
     try{
       const ids = hyroxRaceGroepen.map(g=>g.instanceId).join(',');
-      const rows = await sbGet('training_instances', '&id=in.('+ids+')&select=id,race_division,race_is_official,race_format,race_tier,race_gender,race_relay_division,race_relay_age_category');
+      const rows = await sbGet('training_instances', '&id=in.('+ids+')&select=id,race_division,race_is_official,race_format,race_tier,race_gender,race_relay_division,race_relay_age_category,race_adaptive_class');
       (rows||[]).forEach(r=>{ hyroxInstanceContext[r.id]=r; });
     }catch(_){ /* race-context niet beschikbaar -> kaart toont divisie/officieel als "Niet beschikbaar", geen crash */ }
   }

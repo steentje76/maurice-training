@@ -1138,7 +1138,107 @@ ok(!/DELETE FROM|DROP TABLE|drop column/i.test(diffV76), 'BZ5: geen destructieve
 ok(diffV76.includes('race_division'), 'BZ6: legacy race_division blijft aantoonbaar aanwezig/gelezen, niet verwijderd');
 
 
+/* ══════════════════════════════════════════════════════════════════════════════════
+ * MASTER SPRINT v4.77.0 — ADAPTIVE + TRIATHLON CONTEXT
+ * ══════════════════════════════════════════════════════════════════════════════════ */
+const ADAPTIEVE_13 = [
+  'lower_limb_major','lower_limb_minor','upper_limb_major','upper_limb_minor',
+  'short_stature_impairment','vision_impairment','deaf_or_hard_of_hearing',
+  'neurological_major','neurological_moderate','neurological_minor',
+  'seated_with_hip_function','seated_without_hip_function','seated_without_core_function'
+];
+
+console.log('\nDA. Adaptive-validatie (Fase 6, punt A/B): alle 13 classificaties geaccepteerd, onbekende geweigerd');
+const ValideerV77 = new Function(extractFn('hyroxValideerRaceContext') + '\nreturn hyroxValideerRaceContext;')();
+ADAPTIEVE_13.forEach(function(klasse){
+  ok(ValideerV77('hyrox', {format:'adaptive', gender:'male', adaptiveClass:klasse})===true, 'A: adaptive+male+'+klasse+' = VALID');
+});
+ok(ValideerV77('hyrox', {format:'adaptive', gender:'male', adaptiveClass:'onbekende_klasse'})===false, 'B: onbekende adaptive-classificatie wordt geweigerd');
+ok(ValideerV77('hyrox', {format:'adaptive', gender:'mixed', adaptiveClass:'lower_limb_major'})===false, 'B2: Adaptive kent geen Mixed-gender (bronbevestigd: alleen wave-start male/female)');
+ok(ValideerV77('hyrox', {format:'adaptive', adaptiveClass:'lower_limb_major'})===false, 'B3: adaptive zonder gender = INVALID');
+ok(ValideerV77('hyrox', {format:'adaptive', gender:'male'})===false, 'B4: adaptive zonder adaptiveClass = INVALID');
+
+console.log('\nDB. Gender blijft onafhankelijk van adaptiveClass (Fase 6, punt C)');
+const adaptive_seated_male = perfHyrox({format:'adaptive', gender:'male', adaptiveClass:'seated_with_hip_function'}, true);
+const adaptive_seated_female = perfHyrox({format:'adaptive', gender:'female', adaptiveClass:'seated_with_hip_function'}, true);
+eq(Match.performanceContextMatch(adaptive_seated_male, adaptive_seated_female).comparable, false, 'C1: zelfde adaptiveClass, ander gender -> GEEN MATCH — gender blijft een eigen, onafhankelijke dimensie');
+const adaptive_lower_male = perfHyrox({format:'adaptive', gender:'male', adaptiveClass:'lower_limb_major'}, true);
+eq(Match.performanceContextMatch(adaptive_seated_male, adaptive_lower_male).comparable, false, 'C2: zelfde gender, andere adaptiveClass -> GEEN MATCH — beide dimensies moeten onafhankelijk kloppen');
+
+console.log('\nDC. Adaptive + gender correct opgeslagen/doorgegeven (Fase 6, punt D)');
+const startSrcV77 = extractFn('hyroxStart');
+ok(/raceAdaptiveClass:\s*ctx\.format==='adaptive'\s*\?\s*ctx\.adaptiveClass/.test(startSrcV77), 'D1: hyroxStart() geeft adaptiveClass door aan createTrainingInstance() wanneer format=adaptive');
+ok(/adaptiveClass:\s*type==='hyrox'\s*\?\s*instanceExtra\.raceAdaptiveClass/.test(startSrcV77), 'D2: hyroxStart() bewaart adaptiveClass ook in de live hyroxActive-state');
+const createSrcV77Check = /raceAdaptiveClass\s*=\s*null/.test(html) && /row\.race_adaptive_class\s*=\s*raceAdaptiveClass/.test(html);
+ok(createSrcV77Check, 'D3: createTrainingInstance() accepteert en schrijft raceAdaptiveClass additief');
+
+console.log('\nDD. KRITIEKE REGRESSIETOETS: legacy race_division-constraint niet geschonden door Adaptive (Fase 1-bevinding)');
+ok(/ctx\.format==='adaptive'\s*\?\s*null\s*:\s*ctx\.format/.test(startSrcV77), 'D4: legacyDivision wordt NOOIT "adaptive" — zou de bestaande race_division-CHECK-constraint (open/pro/doubles/relay) schenden. Expliciet null voor Adaptive, exact zoals triathlon dat ook al deed.');
+
+console.log('\nDE. Single/Doubles/Relay blijven exact werken zoals voorheen (Fase 6, punt E) — regressietoets v4.76.0-matrix');
+eq(Match.performanceContextMatch(single_open_male, single_open_male2).comparable, true, 'E1: Single Open Male <-> Single Open Male blijft MATCH (regressie t.o.v. v4.76.0)');
+eq(Match.performanceContextMatch(doubles_open_male, doubles_open_male2).comparable, true, 'E2: Doubles Open Male <-> Doubles Open Male blijft MATCH');
+eq(Match.performanceContextMatch(relay_men_u40, relay_men_u40b).comparable, true, 'E3: Relay Men Under40 <-> Relay Men Under40 blijft MATCH');
+eq(ValideerV77('hyrox', {format:'single', tier:'open', gender:'male'}), true, 'E4: hyroxValideerRaceContext() blijft single correct valideren');
+eq(ValideerV77('hyrox', {format:'relay', relayDivision:'men', relayAgeCategory:'under_40'}), true, 'E5: hyroxValideerRaceContext() blijft relay correct valideren');
+
+console.log('\nDF. Oude historische HYROX-records blijven geldig (Fase 6, punt F/G/H)');
+eq(Reconstruct.hyroxAfgeleideRaceContext({ race_division:'open' }).format, 'single', 'F1: oude race_division=open blijft correct afgeleid naar format=single');
+ok(/row\.race_division=raceDivision/.test(html), 'G1: legacy race_division blijft aantoonbaar geschreven (backward compatibility)');
+ok(/row\.race_is_official=raceIsOfficial/.test(html), 'H1: legacy race_is_official blijft aantoonbaar geschreven');
+
+console.log('\nDG. performanceContextMatch() blijft fail-closed waar vereist (Fase 6, punt I)');
+const adaptive_unknown_class = perfHyrox({format:'adaptive', gender:'male'}, true); // adaptiveClass niet meegegeven -> UNKNOWN
+eq(Match.performanceContextMatch(adaptive_unknown_class, adaptive_lower_male).comparable, false, 'I1: UNKNOWN adaptiveClass = NOT_DETERMINABLE, nooit een positieve gok');
+eq(Match.performanceContextMatch(adaptive_lower_male, adaptive_lower_male).comparable, true, 'I2: Adaptive class A <-> dezelfde class A blijft MATCH (bevestigt v4.76.0-test 11 blijft kloppen)');
+
+console.log('\nDH. Geen Adaptive-classificatie lekt naar niet-Adaptive formats (Fase 6, punt J)');
+eq(single_open_male.raceContext.hyrox.adaptiveClass, 'NOT_APPLICABLE', 'J1: Single heeft adaptiveClass=NOT_APPLICABLE, nooit een lekkende waarde');
+eq(relay_men_u40.raceContext.hyrox.adaptiveClass, 'NOT_APPLICABLE', 'J2: Relay heeft adaptiveClass=NOT_APPLICABLE');
+eq(doubles_open_male.raceContext.hyrox.adaptiveClass, 'NOT_APPLICABLE', 'J3: Doubles heeft adaptiveClass=NOT_APPLICABLE');
+
+console.log('\nDI. UI toont Adaptive-classificatie alleen wanneer format Adaptive is (Fase 6, punt K)');
+const toggleSrcV77 = extractFn('hyroxSetupToggleDivisie');
+ok(/adaptiveClassRow\.style\.display\s*=\s*isAdaptive\s*\?\s*'flex'\s*:\s*'none'/.test(toggleSrcV77), 'K1: adaptiveclass-rij toont uitsluitend bij format=adaptive');
+ok(/option value="adaptive">Adaptive</.test(html), 'K2: Adaptive is nu daadwerkelijk selecteerbaar in de Format-dropdown');
+
+console.log('\nDJ. De bestaande Calculation/Decision/Relationship Engine blijft onaangeraakt (Fase 6, punt L / Fase 9)');
+const diffV77Adaptive = valideerSrc + startSrcV77 + toggleSrcV77;
+ok(!/core\/relationship\.js|VARIABLE_REGISTRY|pairDaily|pairQuality/.test(diffV77Adaptive), 'L1: geen Relationship Engine/pairDaily/pairQuality-aanraking');
+ok(!/coach|anthropic|claude/i.test(diffV77Adaptive), 'L2: geen AI-aanroep — AI berekent niets, bepaalt geen racecontext');
+
+console.log('\nDK. Triathlon-categorielabel — Fase 8, tests 1-10');
+const TriLabel = new Function(extractConst('TRIATHLON_CANONIEKE_AFSTANDEN') + extractFn('triathlonAfstandCategorie') + '\nreturn triathlonAfstandCategorie;')();
+eq(TriLabel(750,20000,5000), 'Sprint', '1. Sprint exact herkend (750/20.000/5.000 m)');
+eq(TriLabel(1500,40000,10000), 'Olympic', '2. Olympic exact herkend (1.500/40.000/10.000 m)');
+eq(TriLabel(1900,90000,21100), 'Half', '3. Half exact herkend (1.900/90.000/21.100 m)');
+eq(TriLabel(3800,180000,42200), 'Full', '4. Full exact herkend (3.800/180.000/42.200 m)');
+eq(TriLabel(1490,40000,10000), null, '5. Niet-canonieke afstand (1490 i.p.v. 1500) -> GEEN foutieve categorie, geen afronding');
+eq(TriLabel(null,40000,10000), null, '6. Ontbrekende zwemafstand -> geen verzonnen categorie');
+eq(TriLabel(1500,null,10000), null, '6b. Ontbrekende fietsafstand -> geen verzonnen categorie');
+
+console.log('\nDL. Triathlon-label heeft GEEN invloed op performanceContextMatch()/buildPerformanceTrend() (Fase 8, tests 7-8)');
+const triAfstandSrc = extractFn('triathlonAfstandCategorie');
+ok(!triAfstandSrc.includes('performanceContextMatch') && !triAfstandSrc.includes('buildPerformanceTrend'), '7/8a: triathlonAfstandCategorie() roept geen vergelijkings-/trendfunctie aan');
+ok(!matchSrc.includes('triathlonAfstandCategorie') && !trendSrc.includes('triathlonAfstandCategorie'), '7/8b: performanceContextMatch()/buildPerformanceTrend() roepen op hun beurt NOOIT het nieuwe labelcontract aan — volledig gescheiden, presentatie-only');
+
+console.log('\nDM. Bestaande triathlon-matching en HYROX-labeling blijven exact gelijk (Fase 8, tests 9-10)');
+eq(Match.performanceContextMatch(tri_1500_40000_10000_off, tri_1500_40000_10000_off2).comparable, true, '9: bestaande triathlon-matching (identieke afstanden) blijft exact MATCH, ongewijzigd t.o.v. v4.76.0');
+eq(Match.performanceContextMatch(tri_1500_40000_10000_off, tri_750_40000_10000).comparable, false, '9b: bestaande triathlon-matching (verschillende afstand) blijft exact GEEN MATCH');
+const relayLabelNog = Reconstruct.hyroxSegmentLabel ? true : true; // triviale placeholder-check verwijderd; directe HYROX-labelregressietoets hieronder
+eq(contextLabelSrc.includes("h.relayDivision"), true, '10: hyroxContextLabel() se bestaande HYROX-relay-logica blijft ongewijzigd aanwezig (geen regressie)');
+
+console.log('\nDN. Forensische scope-controle (v4.77.0) — Fase 11 van de opdracht');
+const migratie476Inhoud = fs.readFileSync(path.join(__dirname, '..', 'migratie_v476.sql'), 'utf8');
+const diffV77 = diffV77Adaptive + triAfstandSrc + contextLabelSrc;
+ok(!/target_height/.test(diffV77), 'DN1: geen target_height');
+ok(!/leaderboard|ranking|gamificat/i.test(diffV77), 'DN2: geen leaderboard/ranking/gamificatie');
+ok(!/DROP TABLE|DELETE FROM|TRUNCATE/i.test(migratie476Inhoud), 'DN3: migratie_v476.sql bevat geen destructieve statements na de v4.77.0-aanvulling');
+ok(migratie476Inhoud.includes('add constraint training_instances_race_adaptive_class_check'), 'DN4: de nieuwe CHECK-constraint is daadwerkelijk toegevoegd aan het bestand');
+ok(!/update\s+public\.training_instances/i.test(migratie476Inhoud), 'DN5: geen UPDATE van historische data in de migratie');
+
+
 console.log('\n========================================================');
 console.log(`RESULTAAT: ${pass} geslaagd, ${fail} mislukt`);
-console.log(fail === 0 ? '✅ HYROX/Triathlon: volledige keten t/m Race Context migratie + write-path (v4.76.0): puur, deterministisch, additief.' : '❌ NIET groen.');
+console.log(fail === 0 ? '✅ HYROX/Triathlon: volledige keten t/m Adaptive + triathlon-categorielabel (v4.77.0): puur, deterministisch, additief.' : '❌ NIET groen.');
 process.exitCode = fail === 0 ? 0 : 1;

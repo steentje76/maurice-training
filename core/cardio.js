@@ -107,6 +107,39 @@
     return { status: 'valid', value: sec, reason: null };
   }
 
+  // PRE-MERGE REMEDIATION (PR #31, Calculation Architecture-audit) — station_duration.v1 /
+  // segment_transition.v1. Deze twee functies bestonden tot deze fix uitsluitend als lokale,
+  // functioneel identieke duplicaten in index.html (tkHyroxStationDurationS/
+  // tkHyroxSegmentTransitionS), gebouwd om de destijds beschermde core/calculation.js niet
+  // te hoeven aanraken tijdens de v4.77.0-integratie. core/cardio.js staat NIET op de
+  // beschermde-bestandenlijst, dus dit is de correcte, veilige, enige bron van waarheid:
+  // index.html roept nu uitsluitend CardioCore.stationDurationS()/segmentTransitionS() aan,
+  // geen eigen kopie meer.
+  function stationDurationS(startMs, endMs) {
+    var a = (typeof startMs === 'number') ? startMs : parseFloat(startMs);
+    var b = (typeof endMs === 'number') ? endMs : parseFloat(endMs);
+    if (a == null || b == null || !isFinite(a) || !isFinite(b)) return null;
+    var rawMs = b - a;
+    if (rawMs < 0) return null;
+    return Math.round(rawMs / 1000);
+  }
+
+  var SEGMENT_TRANSITIE_MAX_DUUR_S = 3600;
+  function segmentTransitionS(prevSegmentEndMs, nextSegmentStartMs, pausedMsPrev, pausedMsThis) {
+    var a = (typeof prevSegmentEndMs === 'number') ? prevSegmentEndMs : parseFloat(prevSegmentEndMs);
+    var b = (typeof nextSegmentStartMs === 'number') ? nextSegmentStartMs : parseFloat(nextSegmentStartMs);
+    if (a == null || b == null || !isFinite(a) || !isFinite(b)) return null;
+    var pa = (pausedMsPrev == null || !isFinite(pausedMsPrev)) ? 0 : pausedMsPrev;
+    var pb = (pausedMsThis == null || !isFinite(pausedMsThis)) ? 0 : pausedMsThis;
+    var pausedDelta = pb - pa;
+    if (!(pausedDelta > 0)) pausedDelta = 0;
+    var rawMs = b - a - pausedDelta;
+    if (rawMs < 0) return null;
+    var s = Math.round(rawMs / 1000);
+    if (s > SEGMENT_TRANSITIE_MAX_DUUR_S) return null;
+    return s;
+  }
+
   var CardioCore = {
     parseTime: parseTime,
     formatTime: formatTime,
@@ -119,6 +152,8 @@
     fromManualSplits: fromManualSplits,
     classifyNumericInput: classifyNumericInput,
     classifyTimeInput: classifyTimeInput,
+    stationDurationS: stationDurationS,
+    segmentTransitionS: segmentTransitionS,
     VERSIONS: VERSIONS
   };
 

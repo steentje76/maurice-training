@@ -2960,6 +2960,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <!-- ═══ SPRINT 12 · ADAPTIVE WORKOUT BUILDER ═══ -->
 <div class="scr" id="s-builder">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Workout Builder</div><div class="hdr-sub">Automatisch complete trainingen</div></div><button class="ibtn" onclick="go('s-home')" aria-label="Terug naar home">←</button></div></div>
+  <div id="hyrox-entry" style="padding:0 16px 8px"></div>
   <div class="scroll" id="wb-scroll"></div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
@@ -4274,6 +4275,14 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni active" aria-current="page" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
   </nav>
 </div>
+<div class="scr" id="s-hyrox">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1" id="hyrox-titel">HYROX</div><div class="hdr-sub" id="hyrox-sub"></div></div><button class="ibtn" onclick="hyroxAfbreken()" aria-label="Race/brick afbreken">←</button></div></div>
+  <div class="scroll" id="hyrox-scroll"></div>
+</div>
+<div class="scr" id="s-hyrox-perf">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Mijn prestaties</div><div class="hdr-sub">HYROX &amp; triathlon</div></div><button class="ibtn" onclick="go('s-hist')" aria-label="Terug naar Historie">←</button></div></div>
+  <div class="scroll" id="hyrox-perf-scroll" style="padding-top:8px"></div>
+</div>
 
 <!-- ═══ MODALS ═══ -->
 <div class="modal-bg" id="m-hrv" onclick="bgClose(event,'m-hrv')">
@@ -4733,6 +4742,90 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-rowers')">Annuleer</button>
       <button class="btn btn-r" style="flex:2" onclick="saveRowers()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-hyrox-setup" onclick="bgClose(event,'m-hyrox-setup')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">HYROX-race of triathlon-brick starten</div>
+    <div class="irow"><label class="ilbl">Type</label>
+      <select class="inp" id="hyrox-setup-type" onchange="hyroxSetupToggleDivisie()">
+        <option value="hyrox">HYROX-race (16 segmenten)</option>
+        <option value="brick">Triathlon-brick (swim → bike → run)</option>
+      </select>
+    </div>
+    <!-- v4.76.0/v4.77.0 — RACE CONTEXT MIGRATIE: "Divisie" vervangen door Format + conditionele
+         velden, exact conform het bevroren HYROX-contract (v4.74.2/v4.77.0). Adaptive nu
+         aangeboden — 13 canonieke classificaties bronbevestigd (hyrox.com Adaptive Rulebook
+         26/27, volledig PDF-document geraadpleegd). -->
+    <div class="irow" id="hyrox-setup-format-row">
+      <label class="ilbl">Format</label>
+      <select class="inp" id="hyrox-setup-format" onchange="hyroxSetupToggleDivisie()">
+        <option value="single">Single</option>
+        <option value="doubles">Doubles</option>
+        <option value="relay">Relay</option>
+        <option value="adaptive">Adaptive</option>
+      </select>
+    </div>
+    <div class="irow" id="hyrox-setup-tier-row">
+      <label class="ilbl">Tier</label>
+      <select class="inp" id="hyrox-setup-tier">
+        <option value="open">Open</option>
+        <option value="pro">Pro</option>
+      </select>
+    </div>
+    <div class="irow" id="hyrox-setup-gender-row">
+      <label class="ilbl">Gender</label>
+      <select class="inp" id="hyrox-setup-gender">
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+      </select>
+    </div>
+    <div class="irow" id="hyrox-setup-relaydivision-row">
+      <label class="ilbl">Relay-divisie</label>
+      <select class="inp" id="hyrox-setup-relaydivision">
+        <option value="men">Men</option>
+        <option value="women">Women</option>
+        <option value="mixed">Mixed</option>
+      </select>
+    </div>
+    <div class="irow" id="hyrox-setup-relayage-row">
+      <label class="ilbl">Leeftijdscategorie</label>
+      <select class="inp" id="hyrox-setup-relayage">
+        <option value="under_40">Under 40</option>
+        <option value="40_plus">40+</option>
+      </select>
+    </div>
+    <div class="irow" id="hyrox-setup-adaptiveclass-row">
+      <label class="ilbl">Adaptive-classificatie</label>
+      <select class="inp" id="hyrox-setup-adaptiveclass">
+        <option value="lower_limb_major">Lower Limb Major</option>
+        <option value="lower_limb_minor">Lower Limb Minor</option>
+        <option value="upper_limb_major">Upper Limb Major</option>
+        <option value="upper_limb_minor">Upper Limb Minor</option>
+        <option value="short_stature_impairment">Short Stature Impairment</option>
+        <option value="vision_impairment">Vision Impairment</option>
+        <option value="deaf_or_hard_of_hearing">D/deaf or Hard of Hearing</option>
+        <option value="neurological_major">Neurological Major</option>
+        <option value="neurological_moderate">Neurological Moderate</option>
+        <option value="neurological_minor">Neurological Minor</option>
+        <option value="seated_with_hip_function">Seated With Hip Function (SWHF)</option>
+        <option value="seated_without_hip_function">Seated Without Hip Function (SWOHF)</option>
+        <option value="seated_without_core_function">Seated Without Core Function (SWOC)</option>
+      </select>
+    </div>
+    <div class="irow"><label class="ilbl">Type sessie</label>
+      <select class="inp" id="hyrox-setup-official">
+        <option value="0">Trainingssimulatie</option>
+        <option value="1">Officiële race</option>
+      </select>
+    </div>
+    <div style="font-size:11px;color:var(--g4);margin:-2px 0 12px">Officiële divisiegewichten/-reps zijn nog niet beschikbaar in de app — vul waarden zelf in per segment.</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal('m-hyrox-setup')">Annuleer</button>
+      <button class="btn btn-r" style="flex:2" onclick="hyroxSetupStart()">Starten</button>
     </div>
   </div>
 </div>
@@ -7006,7 +7099,7 @@ function newTrainingInstanceId(){
 // Precies één van vasteTrainingId/customTrainingId mag gezet zijn (of geen van
 // beide, voor een volledig ad-hoc training zonder opgeslagen definitie — bv. een
 // toekomstige rechtstreekse Builder-start, zoals bestaand gedrag bij GW.start()).
-async function createTrainingInstance({vasteTrainingId=null,customTrainingId=null,snapshot=null}={}){
+async function createTrainingInstance({vasteTrainingId=null,customTrainingId=null,snapshot=null,raceDivision=null,raceIsOfficial=null,raceFormat=null,raceTier=null,raceGender=null,raceRelayDivision=null,raceRelayAgeCategory=null,raceAdaptiveClass=null}={}){
   if(vasteTrainingId&&customTrainingId){console.error('createTrainingInstance: niet beide vasteTrainingId en customTrainingId tegelijk');return null;}
   if(!authSession?.user?.id){console.error('createTrainingInstance: geen ingelogde gebruiker');return null;}
   const id=newTrainingInstanceId();
@@ -7020,6 +7113,17 @@ async function createTrainingInstance({vasteTrainingId=null,customTrainingId=nul
     completed_at:null,
     snapshot:snapshot||null
   };
+  // FASE 4-INTEGRATIE (v4.77.0 → main) — HYROX/Triathlon/Adaptive racecontextvelden,
+  // additief en optioneel. Elke bestaande aanroep zonder deze parameters verandert
+  // niets: de velden blijven dan domweg leeg (NULL) in het insert-statement.
+  if(raceDivision!=null)row.race_division=raceDivision;
+  if(raceIsOfficial!=null)row.race_is_official=raceIsOfficial;
+  if(raceFormat!=null)row.race_format=raceFormat;
+  if(raceTier!=null)row.race_tier=raceTier;
+  if(raceGender!=null)row.race_gender=raceGender;
+  if(raceRelayDivision!=null)row.race_relay_division=raceRelayDivision;
+  if(raceRelayAgeCategory!=null)row.race_relay_age_category=raceRelayAgeCategory;
+  if(raceAdaptiveClass!=null)row.race_adaptive_class=raceAdaptiveClass;
   const ok=await sbPostQ('training_instances',row);
   return ok?id:null;
 }
@@ -9099,6 +9203,7 @@ function go(id){
   if(id==='s-home')refreshHome();
   if(id==='s-home'&&window.DASHUI)DASHUI.render();
   if(id==='s-builder'&&window.WBUI)WBUI.render();
+  if(id==='s-builder')renderHyroxEntry();
   if(id==='s-guided'&&window.GWUI)GWUI.render();
   if(id==='s-hist'){histOff=0;renderHistFilterTabs();loadHistory();}
   if(id==='s-train-mgr'){renderSportSwitcher();renderV43Train();}
@@ -9124,6 +9229,8 @@ function go(id){
   if(id==='s-privacy')refreshPrivacyScreen();
   if(id==='s-doelen')renderDoelenScreen();
   if(id==='s-help'){const v=document.getElementById('help-app-ver');if(v)v.textContent=APP_VER;renderHelpContact();}
+  if(id==='s-hyrox')renderHyroxScreen();
+  if(id==='s-hyrox-perf')renderHyroxPerformanceOverzicht();
 }
 // ══════════════════════════════════════════════════════════
 // TERUG-NAVIGATIE (Android hardware/gesture + browser) — RC0
@@ -16175,6 +16282,22 @@ async function loadHistory(append=false){
   // v4.17.0 (Sprint 4.8 P10) — progressie per oefening: vorige keer (oudere sessie zelfde oefening).
   const exSeq={};ss.forEach(s=>{const k=s.exercise_id;(exSeq[k]=exSeq[k]||[]).push(s);});
   function prevOfSess(s){const arr=exSeq[s.exercise_id]||[];const i=arr.indexOf(s);for(let j=i+1;j<arr.length;j++){if(arr[j].weight)return arr[j];}return null;}
+  // FASE 4-INTEGRATIE (v4.77.0 → main) — RACEHISTORIE. Racegroepen (HYROX/triathlon)
+  // worden herkend via de al bestaande, betrouwbare sessions.training_type — geen
+  // nieuwe heuristiek. Race-context wordt in ÉÉN bulk-call opgehaald via de al
+  // bestaande sbGet-mechaniek, alleen wanneer er daadwerkelijk racegroepen op deze
+  // pagina staan.
+  const hyroxRaceGroepen = hyroxGroepeerRaceSessies(ss);
+  const hyroxRaceSessieIds = new Set();
+  hyroxRaceGroepen.forEach(g=>g.rows.forEach(r=>hyroxRaceSessieIds.add(r.id)));
+  let hyroxInstanceContext = {};
+  if(hyroxRaceGroepen.length){
+    try{
+      const ids = hyroxRaceGroepen.map(g=>g.instanceId).join(',');
+      const rows = await sbGet('training_instances', '&id=in.('+ids+')&select=id,race_division,race_is_official,race_format,race_tier,race_gender,race_relay_division,race_relay_age_category,race_adaptive_class');
+      (rows||[]).forEach(r=>{ hyroxInstanceContext[r.id]=r; });
+    }catch(_){ /* race-context niet beschikbaar -> kaart toont divisie/officieel als "Niet beschikbaar", geen crash */ }
+  }
   const A=window.ExerciseAssetProvider;
   const LI={dumbbell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6M7 6v12M17 6v12M20 9v6M7 12h10"/></svg>',
     edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>',
@@ -16206,7 +16329,31 @@ async function loadHistory(append=false){
         <span class="hist-arr" style="color:var(--g3);font-size:15px;margin-left:8px">›</span>
       </div>
       <div class="hist-day-body">
-        ${sess.map(s=>{
+        ${(function(){
+          // FASE 4-INTEGRATIE — racekaarten: één kaart per race die deze dag (mede)
+          // plaatsvond, vóór de gewone oefeningregels. De losse segment-rijen van een
+          // race worden hieronder uit de normale per-oefening-lijst gefilterd
+          // (hyroxRaceSessieIds), zodat een HYROX-race niet ALSNOG als 16 losse
+          // regels verschijnt.
+          const idsVandaag=new Set();
+          hyroxRaceGroepen.forEach(g=>{ if(g.rows.some(r=>r.date===date)) idsVandaag.add(g.instanceId); });
+          return Array.from(idsVandaag).map(function(instanceId){
+            const groep=hyroxRaceGroepen.find(g=>g.instanceId===instanceId);
+            const ctx=hyroxInstanceContext[instanceId]||null;
+            const perf=hyroxReconstructPerformance(ctx, groep.rows);
+            const sportLbl = perf.sport==='hyrox' ? 'HYROX-race' : 'Triathlon-brick';
+            const divisieTxt = perf.raceContext.division!=null ? perf.raceContext.division : 'Niet beschikbaar';
+            const officieelTxt = perf.raceContext.isOfficial===true ? 'Officieel' : (perf.raceContext.isOfficial===false ? 'Simulatie' : 'Niet beschikbaar');
+            const tijdTxt = perf.totalTime!=null ? CardioCore.formatTime(perf.totalTime) : 'Niet beschikbaar';
+            const subLbl = perf.sport==='hyrox' ? (escHtml(divisieTxt)+' · '+escHtml(officieelTxt)) : escHtml(officieelTxt);
+            return `<div class="lg-ex" onclick="hyroxOpenGeschiedenisRace('${instanceId}')">
+              <span class="lg-ex-th">🏁</span>
+              <div class="lg-ex-b"><div class="lg-ex-nm">${escHtml(sportLbl)} · ${subLbl}</div><div class="lg-ex-did">Totale tijd: ${escHtml(tijdTxt)}</div></div>
+              <div class="lg-ex-a"><span class="lg-ex-i">›</span></div>
+            </div>`;
+          }).join('');
+        })()}
+        ${sess.filter(s=>!hyroxRaceSessieIds.has(s.id)).map(s=>{
           const n=exercises.find(e=>e.id===s.exercise_id)?.name||s.exercise_id;
           let v='';
           // P1-fix: cardio-tak in het logboek. Voorheen toonden running/cycling/swimming/assaultbike een
@@ -21967,7 +22114,8 @@ const PERSONAL_CACHE_KEYS=[
   'tk_lib_favs','tk_lib_recent','tk_lib_recentq',
   'tk_plates','tk_rower','tk_rowers','tk_rest_default',
   'tk_onboarding_done','tk_coach_style','tk_coach_voice','tk_coach_detail',
-  'tk_eqmem','bikeerg_machines','skierg_machines','assault_machines'
+  'tk_eqmem','bikeerg_machines','skierg_machines','assault_machines',
+  'tk_hyrox_active' // FASE 4-INTEGRATIE — lopende HYROX/triathlon-race is persoonsgebonden, moet bij eigenaarwissel op een gedeeld toestel gewist worden
 ];
 function wipePersonalCache(){
   PERSONAL_CACHE_KEYS.forEach(k=>localStorage.removeItem(k));
@@ -22085,6 +22233,1222 @@ async function wearableSyncSilent(){
     if(r.ok){const d=await r.json();if(d.synced)refreshHome();}
   }catch(e){/* stil falen, zie last_sync_status in beheerscherm */}
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * MASTER SPRINT v4.62.0 — HYROX/TRIATHLON INPUT/UI
+ *
+ * Fase-1-audit (zie sprintrapport): cardio-'tijd' is uitsluitend handmatig getypt
+ * (getCardioVal() leest een DOM-input-value), er bestaat GEEN wall-clock-timer voor
+ * cardio. Strength-sets hebben dat sinds v4.51.0 wel (startAt/doneAt), maar alleen
+ * voor de "sets van dezelfde oefening"-vorm — niet toepasbaar op een reeks van 16
+ * verschillende segmenten.
+ *
+ * Ontwerpkeuze (expliciet toegestaan door de opdracht: "bouw niet stiekem een tweede
+ * timingarchitectuur, ontwerp de minimale noodzakelijke timinglaag binnen de bestaande
+ * sessieflow"): één uniforme Start/Klaar-actie per segment, wall-clock (Date.now()),
+ * voor ALLE 16 HYROX-segmenten en alle 3 triathlon-disciplines — hetzelfde patroon als
+ * v4.51.0 (eerste aanraking = start, expliciete actie = einde), nu toegepast op een
+ * segment i.p.v. een set. Geen countdown, geen rusttimer, geen AI-schatting.
+ *
+ * Opslag: GEEN nieuwe kolommen. station_duration.v1 wordt in-memory berekend uit de
+ * twee echte tijdstempels en het resultaat (in seconden) gaat in de AL BESTAANDE
+ * sessions.time_str-kolom (via CardioCore.formatTime — exact hetzelfde veld/formaat als
+ * een handmatig getypte cardio-tijd). De ruwe start/eind-tijdstempels zelf worden NIET
+ * weggegooid: ze gaan, naar het bestaande precedent van 'split:'/'drag '-annotaties in
+ * sessions.extraNote (zie CARDIO_TYPES rowMap hierboven), als geparseerbare tekst mee —
+ * zodat segment_transition.v1 achteraf herleidbaar blijft uit twee opeenvolgende rijen,
+ * i.p.v. onherleidbaar verloren te gaan na het opslaan van alleen de duur.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+// FASE 4-INTEGRATIE (v4.77.0 → main) — lokale, pure hulpfuncties/constanten.
+// Deze bestaan al langer in mastersprint's CardioCore (core/cardio.js) resp.
+// DecisionCore (core/decision.js), maar die twee bestanden zijn expliciet
+// onaangeraakt gelaten (main blijft daar leidend, geen enkele wijziging).
+// In plaats van core/cardio.js / core/decision.js uit te breiden, staan deze
+// kleine, pure, zelfstandige stukken hier lokaal — functioneel identiek,
+// nul regels gewijzigd in enig core/*.js-bestand.
+
+const TK_HYROX_STATIONS = [
+  'hyrox_skierg','hyrox_sled_push','hyrox_sled_pull','hyrox_burpee_broad_jump',
+  'hyrox_row','hyrox_farmers_carry','hyrox_sandbag_lunges','hyrox_wall_balls'
+];
+const TK_HYROX_RUN_ID = 'hyrox_run';
+// Canonieke 16-segment-volgorde: RUN, STATION 1, RUN, STATION 2, ... RUN, STATION 8.
+const TK_HYROX_VOLGORDE = (function () {
+  const v = [];
+  for (let i = 0; i < TK_HYROX_STATIONS.length; i++) { v.push(TK_HYROX_RUN_ID); v.push(TK_HYROX_STATIONS[i]); }
+  return v;
+})();
+
+const TK_HYROX_TS_PREFIX = 'hyrox_ts:';
+function tkHyroxTsNote(startMs, endMs){ return TK_HYROX_TS_PREFIX + 'start=' + startMs + ',end=' + endMs; }
+function tkHyroxTsParse(extraNote){
+  if(!extraNote) return null;
+  const m = String(extraNote).match(/hyrox_ts:start=(\d+),end=(\d+)/);
+  if(!m) return null;
+  return { startMs: parseInt(m[1],10), endMs: parseInt(m[2],10) };
+}
+
+// Canonieke segmentlijst — UITSLUITEND uit de Decision Engine, de UI verzint zelf geen
+// volgorde (expliciete eis). Voor HYROX: 16 items uit TK_HYROX_VOLGORDE, elk
+// met de bijbehorende catalogus-metadata (naam/type) om het invoerscherm te bepalen.
+// Voor triathlon-brick: 3 loggbare disciplines (swim/bike/run) — T1/T2 zijn GEEN eigen
+// rij (isValidBrickVolgorde() verwacht ook alleen segment_index 1,3,5), uitsluitend de
+// wachttijd ertussen, berekend met segment_transition.v1.
+const TK_HYROX_STATION_LABEL={
+  hyrox_run:'Run', hyrox_skierg:'SkiErg', hyrox_sled_push:'Sled Push', hyrox_sled_pull:'Sled Pull',
+  hyrox_burpee_broad_jump:'Burpee Broad Jumps', hyrox_row:'Row', hyrox_farmers_carry:'Farmers Carry',
+  hyrox_sandbag_lunges:'Sandbag Lunges', hyrox_wall_balls:'Wall Balls'
+};
+// migratie_v462.sql (ter review) — ontbrekend catalogus-gat gevonden tijdens deze sprint.
+const TK_TRIATHLON_EXERCISE_ID={ swimming:'triathlon_zwemmen', cycling:'triathlon_fietsen', running:'triathlon_hardlopen' };
+// invoertype per station: welke bestaande sessions-velden dit segment nodig heeft.
+const TK_HYROX_STATION_VELDEN={
+  hyrox_run:['distance'], hyrox_skierg:['distance'], hyrox_row:['distance'],
+  hyrox_sled_push:['distance','weight'], hyrox_sled_pull:['distance','weight'],
+  hyrox_farmers_carry:['distance','weight'], hyrox_sandbag_lunges:['distance','weight'],
+  hyrox_burpee_broad_jump:['reps'], hyrox_wall_balls:['reps','weight']
+};
+function tkHyroxSegmentenVoorType(type){
+  if(type==='brick'){
+    return [
+      { segment_index:1, exercise_id:null, cardio_type:'swimming', label:'Zwemmen', velden:['distance'] },
+      { segment_index:3, exercise_id:null, cardio_type:'cycling', label:'Fietsen', velden:['distance'] },
+      { segment_index:5, exercise_id:null, cardio_type:'running', label:'Hardlopen', velden:['distance'] }
+    ];
+  }
+  return TK_HYROX_VOLGORDE.map(function(exId,i){
+    return { segment_index:i+1, exercise_id:exId, cardio_type:null,
+             label:TK_HYROX_STATION_LABEL[exId]||exId, velden:TK_HYROX_STATION_VELDEN[exId]||[] };
+  });
+}
+
+// hyroxActive: de enige, lokale, hervatbare toestand van een lopende race/brick.
+// Gepersisteerd naar localStorage (tk_hyrox_active), al onderdeel van de per-gebruiker
+// cache-isolatielijst — zelfde patroon als Guided Workout (st.active/tk_gw_active).
+let hyroxActive = JSON.parse(localStorage.getItem('tk_hyrox_active') || 'null');
+function tkHyroxPersist(){
+  try{ if(hyroxActive) localStorage.setItem('tk_hyrox_active', JSON.stringify(hyroxActive)); else localStorage.removeItem('tk_hyrox_active'); }catch(_){}
+}
+
+/* v4.76.0/v4.77.0 — hyroxValideerRaceContext(): puur, deterministisch, uitsluitend in
+ * index.html (bewust NIET in core/decision.js — "Decision Engine niet aanraken").
+ * Valideert het volledige, nieuwe racecontext-object vóórdat een race start. */
+function hyroxValideerRaceContext(type, context){
+  if(type!=='hyrox') return true; // triathlon heeft geen format-context om te valideren
+  const ctx = context||{};
+  if(['single','doubles','relay','adaptive'].indexOf(ctx.format)===-1) return false;
+  if(ctx.format==='relay'){
+    return ['men','women','mixed'].indexOf(ctx.relayDivision)!==-1
+      && ['under_40','40_plus'].indexOf(ctx.relayAgeCategory)!==-1;
+  }
+  if(ctx.format==='adaptive'){
+    // v4.77.0 — 13 bronbevestigde classificaties (hyrox.com Adaptive Rulebook 26/27,
+    // sectie 5.1, volledig PDF-document geraadpleegd). Gender blijft een aparte,
+    // verplichte dimensie (bronbevestigd: "Participants start in waves based on
+    // their gender"), nooit samengevoegd met adaptiveClass.
+    return ['male','female'].indexOf(ctx.gender)!==-1
+      && ['lower_limb_major','lower_limb_minor','upper_limb_major','upper_limb_minor',
+          'short_stature_impairment','vision_impairment','deaf_or_hard_of_hearing',
+          'neurological_major','neurological_moderate','neurological_minor',
+          'seated_with_hip_function','seated_without_hip_function','seated_without_core_function'
+         ].indexOf(ctx.adaptiveClass)!==-1;
+  }
+  if(['open','pro'].indexOf(ctx.tier)===-1) return false;
+  if(ctx.format==='single') return ['male','female'].indexOf(ctx.gender)!==-1;
+  return ['male','female','mixed'].indexOf(ctx.gender)!==-1; // doubles
+}
+
+async function hyroxStart(type, context, isOfficial){
+  if(type!=='hyrox' && type!=='brick'){ toast('Onbekend type'); return; }
+  if(type==='hyrox' && !hyroxValideerRaceContext(type, context)){ toast('Kies een geldige racecontext'); return; }
+  const ctx = (type==='hyrox') ? (context||{}) : {};
+  // v4.76.0 — legacy race_division blijft gevuld voor backward compatibility (bestaande
+  // queries/rapportage die uitsluitend dit veld lezen, zoals de bulk-sbGet-aanroepen in
+  // hyroxLaadAllePerformances()/loadHistory() vóór ze zijn uitgebreid). Voor single wordt
+  // dit de tier ('open'/'pro', exact zoals altijd), voor doubles/relay de format-naam
+  // zelf — precies zoals de bestaande vier-waarden-enum dat altijd al deed.
+  // v4.77.0 — KRITIEKE CORRECTIE: voor Adaptive mag legacyDivision NOOIT 'adaptive'
+  // worden — de BESTAANDE race_division-CHECK-constraint (v4.59.0, ongewijzigd,
+  // "bestaande race_division-semantiek niet aanraken") staat uitsluitend
+  // 'open'/'pro'/'doubles'/'relay' toe. Adaptive bestond niet in dat oorspronkelijke
+  // vier-waarden-model, dus is er geen zinnige legacy-waarde — null is hier het
+  // enige eerlijke antwoord (exact zoals bij triathlon, dat ook nooit race_division zet).
+  const legacyDivision = type==='hyrox'
+    ? (ctx.format==='single' ? ctx.tier : (ctx.format==='adaptive' ? null : ctx.format))
+    : null;
+  const instanceExtra = type==='hyrox'
+    ? {
+        raceDivision: legacyDivision, raceIsOfficial: !!isOfficial,
+        raceFormat: ctx.format,
+        raceTier: (ctx.format==='relay'||ctx.format==='adaptive') ? null : ctx.tier,
+        raceGender: ctx.format==='relay' ? null : ctx.gender,
+        raceRelayDivision: ctx.format==='relay' ? ctx.relayDivision : null,
+        raceRelayAgeCategory: ctx.format==='relay' ? ctx.relayAgeCategory : null,
+        raceAdaptiveClass: ctx.format==='adaptive' ? ctx.adaptiveClass : null
+      }
+    : { raceIsOfficial: !!isOfficial };
+  const instanceId = await createTrainingInstance(instanceExtra);
+  if(!instanceId){ toast('Kon niet starten (offline of niet ingelogd)'); return; }
+  hyroxActive = {
+    type: type, instanceId: instanceId,
+    division: type==='hyrox' ? legacyDivision : null, // legacy, voor de bestaande live-weergave
+    format: type==='hyrox' ? ctx.format : null,
+    tier: type==='hyrox' ? instanceExtra.raceTier : null,
+    gender: type==='hyrox' ? instanceExtra.raceGender : null,
+    relayDivision: type==='hyrox' ? instanceExtra.raceRelayDivision : null,
+    relayAgeCategory: type==='hyrox' ? instanceExtra.raceRelayAgeCategory : null,
+    adaptiveClass: type==='hyrox' ? instanceExtra.raceAdaptiveClass : null,
+    isOfficial: !!isOfficial,
+    segments: tkHyroxSegmentenVoorType(type),
+    huidigeIndex: 0,          // wijst in .segments, niet segment_index zelf (die kan bij brick 1/3/5 zijn)
+    segmentStartAt: null,     // wall-clock, gezet zodra de sporter op "Start" tikt
+    eersteStartAt: null,      // v4.65.0 — wall-clock van het ALLEREERSTE segment, voor de totale racetijd
+    vorigeEindAt: null,       // wall-clock van het einde van het vorige segment (voor segment_transition.v1)
+    voltooid: [],             // [{segment_index,label,duurS,transitieS}], puur voor de UI-samenvatting
+    fase: 'bezig'             // v4.65.0 — 'bezig' (live segmentflow) | 'resultaat' (na afronden)
+  };
+  tkHyroxPersist();
+  go('s-hyrox');
+}
+
+function hyroxHuidigSegment(){
+  if(!hyroxActive) return null;
+  return hyroxActive.segments[hyroxActive.huidigeIndex] || null;
+}
+
+function hyroxBeginSegment(){
+  if(!hyroxActive) return;
+  hyroxActive.segmentStartAt = Date.now();
+  if(hyroxActive.eersteStartAt==null) hyroxActive.eersteStartAt = hyroxActive.segmentStartAt; // v4.65.0
+  tkHyroxPersist();
+  renderHyroxScreen();
+}
+
+// hyroxFinishSegment(invoer): invoer = {distance, weight, reps} — alleen de velden die
+// dit segment nodig heeft worden gebruikt (zie TK_HYROX_STATION_VELDEN). Schrijft één
+// sessions-rij via de al bestaande writeSessionRow()/sbPostQ-offline-wachtrij — geen
+// nieuwe schrijfroute. Duur komt UITSLUITEND uit CardioCore.stationDurationS() op de
+// twee echte tijdstempels; nooit een getypte/geschatte waarde.
+// v4.65.0 — voorkomt dubbele completion bij snel dubbeltikken op "Klaar" (zelfde
+// bestaande patroon als finishSessionBezig in de normale Execution-flow).
+let hyroxSegmentBezig = false;
+async function hyroxFinishSegment(invoer){
+  if(hyroxSegmentBezig) return false;
+  hyroxSegmentBezig = true;
+  try{
+  const seg = hyroxHuidigSegment();
+  if(!hyroxActive || !seg || hyroxActive.segmentStartAt==null){ toast('Nog niet gestart'); return false; }
+  const startAt = hyroxActive.segmentStartAt;
+  const endAt = Date.now();
+  const duurS = CardioCore.stationDurationS(startAt, endAt);
+  if(duurS==null){ toast('Ongeldige tijdmeting — probeer opnieuw'); return false; }
+
+  // v4.58.0/v4.59.0-patroon: segment_transition.v1 berekent de tijd tussen het einde van
+  // het VORIGE segment en de start van DIT segment — puur informatief hier (UI-weergave),
+  // nooit een blokkerende regel. Eerste segment heeft nooit een voorafgaande transitie.
+  const transitieS = (hyroxActive.vorigeEindAt!=null)
+    ? CardioCore.segmentTransitionS(hyroxActive.vorigeEindAt, startAt, 0, 0) : null;
+
+  const today = td();
+  const row = {
+    date: today,
+    training_type: hyroxActive.type==='hyrox' ? 'HYROX' : 'Triathlon',
+    training_instance_id: hyroxActive.instanceId,
+    segment_index: seg.segment_index,
+    note: '',
+    extraNote: tkHyroxTsNote(startAt, endAt),
+    time_str: CardioCore.formatTime(duurS)
+  };
+  if(seg.exercise_id) row.exercise_id = seg.exercise_id;
+  // triathlon-disciplines (swim/bike/run) hebben geen eigen HYROX-catalogus-ID; ze
+  // gebruiken de drie generieke catalogus-oefeningen uit migratie_v462.sql (ontbrekend
+  // gat gevonden tijdens deze sprint — CARDIO_TYPES.swimming/.cycling/.running bestond
+  // al, een loggbare exercises-rij met dat type niet).
+  else if(seg.cardio_type) row.exercise_id = TK_TRIATHLON_EXERCISE_ID[seg.cardio_type] || null;
+
+  if(seg.velden.indexOf('distance')!==-1 && invoer.distance!=null && invoer.distance!=='') row.distance = parseInt(invoer.distance,10)||null;
+  if(seg.velden.indexOf('weight')!==-1 && invoer.weight!=null && invoer.weight!=='') row.weight = parseFloat(invoer.weight)||null;
+  if(seg.velden.indexOf('reps')!==-1 && invoer.reps!=null && invoer.reps!=='') row.reps = parseInt(invoer.reps,10)||null;
+
+  const ok = await writeSessionRow(row);
+  if(!ok){ toast('Kon segment niet opslaan — probeer opnieuw'); return false; }
+
+  hyroxActive.voltooid.push({
+    segment_index: seg.segment_index, label: seg.label, duurS: duurS, transitieS: transitieS,
+    distance: row.distance!=null?row.distance:null, weight: row.weight!=null?row.weight:null, reps: row.reps!=null?row.reps:null
+  });
+  hyroxActive.vorigeEindAt = endAt;
+  hyroxActive.segmentStartAt = null;
+  hyroxActive.huidigeIndex++;
+  tkHyroxPersist();
+
+  if(hyroxActive.huidigeIndex >= hyroxActive.segments.length){
+    await hyroxAfronden();
+  } else {
+    renderHyroxScreen();
+  }
+  return true;
+  } finally { hyroxSegmentBezig = false; }
+}
+
+// Correctie van het zojuist voltooide segment (eis: "mogelijkheid om een foutieve
+// invoer te corrigeren"). Bewust beperkt tot het LAATST voltooide segment — verder
+// terug corrigeren zou de trainingsinstantie-brede volgorde-integriteit onnodig
+// riskant maken binnen de scope van deze sprint.
+async function hyroxCorrigeerLaatste(invoer){
+  if(!hyroxActive || !hyroxActive.voltooid.length) return false;
+  const laatste = hyroxActive.voltooid[hyroxActive.voltooid.length-1];
+  const rows = await sbGet('sessions', '&training_instance_id=eq.'+encodeURIComponent(hyroxActive.instanceId)+'&segment_index=eq.'+laatste.segment_index+'&order=created_at.desc&limit=1');
+  const cur = (rows&&rows[0]) ? rows[0] : null;
+  if(!cur){ toast('Kon de rij niet terugvinden'); return false; }
+  const patch = {};
+  if(invoer.distance!=null && invoer.distance!=='') patch.distance = parseInt(invoer.distance,10)||null;
+  if(invoer.weight!=null && invoer.weight!=='') patch.weight = parseFloat(invoer.weight)||null;
+  if(invoer.reps!=null && invoer.reps!=='') patch.reps = parseInt(invoer.reps,10)||null;
+  const ok = await sbPatch('sessions','id=eq.'+cur.id,patch);
+  if(ok){
+    // PRE-MERGE REMEDIATION (correction-state-audit) — zonder deze synchronisatie bleef
+    // hyroxActive.voltooid (het live in-memory-object, gebruikt door zowel de live-
+    // weergave als door hyroxLiveAlsPerformance() voor het resultatenscherm, én
+    // gepersisteerd naar tk_hyrox_active in localStorage) de OUDE waarde tonen, terwijl
+    // de database al de gecorrigeerde waarde had — deterministisch gereproduceerd en
+    // bevestigd vóór deze fix. De correctie moet nu exact hetzelfde patch-object
+    // toepassen op het live-object als wat zojuist succesvol naar de database is
+    // geschreven, en dat direct opnieuw persisteren.
+    if(patch.distance!==undefined) laatste.distance = patch.distance;
+    if(patch.weight!==undefined) laatste.weight = patch.weight;
+    if(patch.reps!==undefined) laatste.reps = patch.reps;
+    tkHyroxPersist();
+    if(typeof renderHyroxScreen==='function') renderHyroxScreen();
+    toast('Segment '+laatste.segment_index+' bijgewerkt');
+  } else {
+    toast('Kon niet bijwerken');
+  }
+  return ok;
+}
+
+async function hyroxAfronden(){
+  if(!hyroxActive) return;
+  await completeTrainingInstance(hyroxActive.instanceId);
+  // v4.65.0 — NIET meer direct wissen/wegnavigeren: eerst het resultatenscherm tonen.
+  // Alle data staat al in hyroxActive (in-memory, dus offline-safe — geen netwerkcall
+  // nodig om het resultaat te tonen). hyroxActive blijft bestaan tot de sporter expliciet
+  // "Terug naar Training" tikt (hyroxTerugNaarTraining) — dat voorkomt ook dubbele
+  // completion: completeTrainingInstance()/de laatste segment-write gebeuren maar één
+  // keer, hier, en dit pad wordt alleen bereikt vanuit hyroxFinishSegment() bij het
+  // ECHTE laatste segment (huidigeIndex >= segments.length, elders al gecontroleerd).
+  hyroxActive.fase = 'resultaat';
+  // v4.70.0 — een ECHTE, zojuist voltooide race is per definitie nooit een
+  // geschiedenis-weergave; reset dit hier expliciet zodat een eerder bekeken
+  // geschiedenis-race nooit een later live-voltooide race kan laten denken dat hij
+  // "geschiedenis" is (wat anders hyroxActive zou laten lekken bij "Terug").
+  hyroxGeschiedenisWeergave = false;
+  tkHyroxPersist();
+  renderHyroxScreen();
+}
+
+// Expliciete actie vanaf het resultatenscherm — pas hier wordt hyroxActive gewist.
+function hyroxTerugNaarTraining(){
+  hyroxActive = null;
+  tkHyroxPersist();
+  go('s-train-mgr');
+}
+
+function hyroxAfbreken(){
+  // v4.70.0 — een geschiedenis-race heeft geen hyroxActive erbij betrokken; de
+  // headerknop moet dan uitsluitend terugnavigeren naar Historie, nooit een (mogelijk
+  // elders lopende) actieve race aanraken.
+  if(hyroxGeschiedenisWeergave){ hyroxTerugVanuitResultaat(); return; }
+  // v4.65.0 — op het resultatenscherm is de race al voltooid; "afbreken" is dan geen
+  // zinnige actie meer (en zou een verwarrende "race afbreken?"-vraag tonen over een
+  // race die al klaar is). Zelfde knop, andere betekenis afhankelijk van de fase.
+  if(hyroxActive && hyroxActive.fase==='resultaat'){ hyroxTerugNaarTraining(); return; }
+  if(!confirm('Race/brick afbreken? Al opgeslagen segmenten blijven staan, de rest wordt niet gelogd.')) return;
+  hyroxActive = null;
+  tkHyroxPersist();
+  go('s-train-mgr');
+}
+
+// renderHyroxScreen(): UX-prioriteiten uit de sprintopdracht — groot en duidelijk welk
+// segment actief is, voortgang N/totaal, minimale invoer, grote raakvlakken, weinig
+// typen, duidelijke start/stop, corrigeren mogelijk, nooit data verliezen (elk segment
+// wordt direct weggeschreven zodra "Klaar" wordt getikt, niet pas aan het eind van de
+// race), duidelijke bevestiging na elk segment, veilig hervatbaar (hyroxActive leeft in
+// localStorage, dus een herstart van de app/browser verliest niets).
+function renderHyroxScreen(){
+  const el = document.getElementById('hyrox-scroll');
+  const titelEl = document.getElementById('hyrox-titel');
+  const subEl = document.getElementById('hyrox-sub');
+  if(!el) return;
+  if(!hyroxActive){
+    titelEl.textContent = 'Geen actieve race';
+    subEl.textContent = '';
+    el.innerHTML = '<div class="lich-empty"><div class="e1">Geen actieve race of brick</div><div class="e2">Start een nieuwe HYROX-race of triathlon-brick vanuit Training maken.</div></div>';
+    return;
+  }
+  // v4.65.0 — na afronden schakelt het scherm om naar de resultatenweergave. Zelfde
+  // scherm/router (geen nieuwe architectuur), andere renderfunctie.
+  if(hyroxActive.fase==='resultaat'){ renderHyroxResultaat(); return; }
+  const seg = hyroxHuidigSegment();
+  const totaal = hyroxActive.segments.length;
+  titelEl.textContent = hyroxActive.type==='hyrox' ? 'HYROX' : 'Triathlon-brick';
+  subEl.textContent = 'Segment ' + (hyroxActive.huidigeIndex+1) + '/' + totaal + (hyroxActive.division ? ' · ' + hyroxActive.division : '');
+
+  if(!seg){ el.innerHTML=''; return; }
+
+  const gestart = hyroxActive.segmentStartAt!=null;
+  const voorlaatste = hyroxActive.voltooid[hyroxActive.voltooid.length-1];
+
+  let velden = '';
+  if(gestart){
+    if(seg.velden.indexOf('distance')!==-1) velden += '<div class="irow"><label class="ilbl">Afstand (m)</label><input class="inp" type="number" inputmode="numeric" id="hyrox-in-distance" placeholder="bv. 1000"></div>';
+    if(seg.velden.indexOf('weight')!==-1) velden += '<div class="irow"><label class="ilbl">Gewicht (kg)</label><input class="inp" type="number" inputmode="decimal" id="hyrox-in-weight" placeholder="officiële waarde nog niet beschikbaar — vul zelf in"></div>';
+    if(seg.velden.indexOf('reps')!==-1) velden += '<div class="irow"><label class="ilbl">Reps</label><input class="inp" type="number" inputmode="numeric" id="hyrox-in-reps" placeholder="bv. 75"></div>';
+  }
+
+  el.innerHTML =
+    '<div class="card" style="padding:20px;text-align:center">' +
+      '<div style="font-size:11px;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">' + (hyroxActive.isOfficial ? 'Officiële race' : 'Trainingssimulatie') + '</div>' +
+      '<div style="font-size:26px;font-weight:800;color:var(--dark);margin-bottom:4px">' + escHtml(seg.label) + '</div>' +
+      '<div style="font-size:13px;color:var(--g4);margin-bottom:16px">Segment ' + (hyroxActive.huidigeIndex+1) + ' van ' + totaal + '</div>' +
+      (!gestart
+        ? '<button class="btn btn-r" style="width:100%;padding:18px;font-size:17px" onclick="hyroxBeginSegment()">Start</button>'
+        : ('<div id="hyrox-velden">' + velden + '</div>' +
+           '<button class="btn btn-r" style="width:100%;padding:18px;font-size:17px;margin-top:8px" onclick="hyroxTikKlaar()">Klaar</button>')
+      ) +
+    '</div>' +
+    (voorlaatste
+      ? '<div class="card" style="padding:13px 14px;margin-top:12px">' +
+          '<div style="font-size:12px;color:var(--g4);margin-bottom:4px">✓ Segment ' + voorlaatste.segment_index + ' (' + escHtml(voorlaatste.label) + ') opgeslagen — ' + CardioCore.formatTime(voorlaatste.duurS) +
+          (voorlaatste.transitieS!=null ? ', transitie ' + CardioCore.formatTime(voorlaatste.transitieS) : '') + '</div>' +
+          '<button class="ibtn" style="width:auto;height:auto;padding:4px 0;font-size:11.5px;color:var(--accent-text)" onclick="hyroxOpenCorrigeer()">Vorige segment corrigeren</button>' +
+        '</div>'
+      : '');
+}
+
+/* v4.65.0 — RESULTATENSCHERM. Bouwt de weergave UITSLUITEND uit hyroxActive (in-memory,
+   dus offline-safe — geen netwerkcall nodig) en uitsluitend uit reeds bestaande
+   Calculation-uitkomsten (station_duration.v1/segment_transition.v1, al berekend in
+   hyroxFinishSegment()). Geen nieuwe berekening hier, geen schatting. Ontbrekende data
+   ("niet beschikbaar") wordt expliciet getoond, nooit stilzwijgend weggelaten of geraden. */
+function renderHyroxResultaat(performance){
+  const el = document.getElementById('hyrox-scroll');
+  const titelEl = document.getElementById('hyrox-titel');
+  const subEl = document.getElementById('hyrox-sub');
+  // v4.69.0 — accepteert nu optioneel een reeds gebouwd Performance-object (provenance
+  // 'stored', voor een toekomstig Historie-scherm). Zonder argument (elke bestaande
+  // aanroep sinds v4.65.0, ongewijzigd) wordt hetzelfde vorm-object opgebouwd uit de
+  // levende hyroxActive-state via hyroxLiveAlsPerformance(). Deze functie berekent zelf
+  // NIETS meer (geen station_duration.v1/segment_transition.v1-aanroep hier) — uitsluitend
+  // presentatie van een al-klaar Performance-object.
+  const perf = performance || hyroxLiveAlsPerformance();
+  if(!perf) return;
+  titelEl.textContent = 'Resultaat';
+  subEl.textContent = (perf.sport==='hyrox' ? 'HYROX' : 'Triathlon-brick') + (perf.raceContext.division ? ' · ' + perf.raceContext.division : '');
+
+  const segmentenHtml = perf.segments.map(function(v){
+    const details = [];
+    if(v.distance!=null) details.push(v.distance+' m');
+    if(v.weight!=null) details.push(v.weight+' kg');
+    if(v.reps!=null) details.push(v.reps+' reps');
+    return '<div class="lich-krow" style="align-items:center">'+
+      '<span class="k" style="color:var(--dark);font-weight:600">'+escHtml(v.label)+'</span>'+
+      '<span style="text-align:right">'+
+        '<span style="font-weight:700;color:var(--dark)">'+(v.duration!=null?CardioCore.formatTime(v.duration):'niet beschikbaar')+'</span>'+
+        (details.length?'<br><span style="font-size:10.5px;color:var(--g4)">'+escHtml(details.join(' · '))+'</span>':'')+
+        (v.transition!=null?'<br><span style="font-size:10.5px;color:var(--g4)">transitie '+CardioCore.formatTime(v.transition)+'</span>':'')+
+      '</span>'+
+    '</div>';
+  }).join('');
+
+  el.innerHTML =
+    '<div class="card" style="padding:20px;text-align:center">'+
+      '<div style="font-size:11px;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">'+
+        (perf.raceContext.isOfficial?'Officiële race':'Trainingssimulatie')+'</div>'+
+      '<div style="font-size:15px;font-weight:700;color:var(--g4);margin-bottom:2px">Totale tijd</div>'+
+      '<div style="font-size:34px;font-weight:800;color:var(--dark)">'+
+        (perf.totalTime!=null?CardioCore.formatTime(perf.totalTime):'niet beschikbaar')+'</div>'+
+    '</div>'+
+    '<div class="v43-lbl" style="margin:16px 0 10px">Segmenten</div>'+
+    '<div class="card" style="padding:13px 14px">'+segmentenHtml+'</div>'+
+    '<button class="btn btn-r" style="width:100%;padding:16px;margin-top:16px" onclick="hyroxTerugVanuitResultaat()">'+(hyroxGeschiedenisWeergave?'Terug naar Historie':'Terug naar Training')+'</button>'+
+    '<button class="ibtn" style="width:100%;height:auto;padding:10px 0;font-size:12.5px;font-weight:700;color:var(--accent-text)" onclick="go(\'s-hyrox-perf\')">Mijn prestaties bekijken</button>';
+}
+
+async function hyroxTikKlaar(){
+  const invoer = {
+    distance: document.getElementById('hyrox-in-distance')?.value,
+    weight: document.getElementById('hyrox-in-weight')?.value,
+    reps: document.getElementById('hyrox-in-reps')?.value
+  };
+  await hyroxFinishSegment(invoer);
+}
+
+// v4.76.0 — RACE CONTEXT MIGRATIE: toont/verbergt de juiste velden per format,
+// en herbouwt de Gender-opties (Single: alleen Male/Female; Doubles: ook Mixed —
+// bronbevestigd, v4.74.0). Relay toont zijn eigen relay-divisie/leeftijdscategorie
+// i.p.v. Tier/Gender (bronbevestigd: Relay kent geen Open/Pro-tier, v4.74.2).
+function hyroxSetupToggleDivisie(){
+  const type = document.getElementById('hyrox-setup-type')?.value;
+  const formatRow = document.getElementById('hyrox-setup-format-row');
+  const tierRow = document.getElementById('hyrox-setup-tier-row');
+  const genderRow = document.getElementById('hyrox-setup-gender-row');
+  const relayDivisionRow = document.getElementById('hyrox-setup-relaydivision-row');
+  const relayAgeRow = document.getElementById('hyrox-setup-relayage-row');
+  const adaptiveClassRow = document.getElementById('hyrox-setup-adaptiveclass-row');
+  const genderSel = document.getElementById('hyrox-setup-gender');
+  if(!formatRow) return;
+  const isHyrox = type==='hyrox';
+  formatRow.style.display = isHyrox ? 'flex' : 'none';
+  if(!isHyrox){
+    if(tierRow)tierRow.style.display='none';
+    if(genderRow)genderRow.style.display='none';
+    if(relayDivisionRow)relayDivisionRow.style.display='none';
+    if(relayAgeRow)relayAgeRow.style.display='none';
+    if(adaptiveClassRow)adaptiveClassRow.style.display='none';
+    return;
+  }
+  const format = document.getElementById('hyrox-setup-format')?.value || 'single';
+  const isRelay = format==='relay';
+  // v4.77.0 — Adaptive: geen tier (net als relay), WEL gender (male/female, net als
+  // single — hergebruikt de bestaande gender-rij i.p.v. een nieuwe, parallelle),
+  // plus de nieuwe classificatie-rij. Geen nieuwe classificatielogica: hetzelfde
+  // show/hide-patroon als de al bestaande relay-velden.
+  const isAdaptive = format==='adaptive';
+  if(tierRow)tierRow.style.display = (isRelay||isAdaptive) ? 'none' : 'flex';
+  if(genderRow)genderRow.style.display = isRelay ? 'none' : 'flex';
+  if(relayDivisionRow)relayDivisionRow.style.display = isRelay ? 'flex' : 'none';
+  if(relayAgeRow)relayAgeRow.style.display = isRelay ? 'flex' : 'none';
+  if(adaptiveClassRow)adaptiveClassRow.style.display = isAdaptive ? 'flex' : 'none';
+  if(!isRelay && genderSel){
+    const huidige = genderSel.value;
+    genderSel.innerHTML = format==='doubles'
+      ? '<option value="male">Male</option><option value="female">Female</option><option value="mixed">Mixed</option>'
+      : '<option value="male">Male</option><option value="female">Female</option>';
+    if(Array.prototype.some.call(genderSel.options, function(o){ return o.value===huidige; })) genderSel.value = huidige;
+  }
+}
+async function hyroxSetupStart(){
+  const type=document.getElementById('hyrox-setup-type')?.value||'hyrox';
+  const official=document.getElementById('hyrox-setup-official')?.value==='1';
+  let context = null;
+  if(type==='hyrox'){
+    const format=document.getElementById('hyrox-setup-format')?.value||'single';
+    context = { format: format };
+    if(format==='relay'){
+      context.relayDivision = document.getElementById('hyrox-setup-relaydivision')?.value||'men';
+      context.relayAgeCategory = document.getElementById('hyrox-setup-relayage')?.value||'under_40';
+    } else if(format==='adaptive'){
+      // v4.77.0 — hergebruikt de bestaande gender-select (male/female, zoals bij
+      // single), geen nieuwe parallelle gender-invoer. Geen tier bij adaptive.
+      context.gender = document.getElementById('hyrox-setup-gender')?.value||'male';
+      context.adaptiveClass = document.getElementById('hyrox-setup-adaptiveclass')?.value||'lower_limb_major';
+    } else {
+      context.tier = document.getElementById('hyrox-setup-tier')?.value||'open';
+      context.gender = document.getElementById('hyrox-setup-gender')?.value||'male';
+    }
+  }
+  closeModal('m-hyrox-setup');
+  await hyroxStart(type, context, official);
+}
+
+// Toont ofwel een "hervatten"-banner (als er al een lopende race/brick is — resumable,
+// eis 10 uit de UX-prioriteitenlijst) ofwel de knop om een nieuwe te starten.
+function renderHyroxEntry(){
+  const el = document.getElementById('hyrox-entry');
+  if(!el) return;
+  if(hyroxActive){
+    const totaal = hyroxActive.segments.length;
+    // v4.65.0 — een race in de resultaat-fase is klaar, niet "te hervatten": het label
+    // en de subtekst wijzigen mee, de navigatie (naar s-hyrox) blijft hetzelfde omdat
+    // renderHyroxScreen() zelf al fase-bewust doorschakelt naar het resultatenscherm.
+    const isResultaat = hyroxActive.fase==='resultaat';
+    const label = (hyroxActive.type==='hyrox'?'HYROX-race':'Triathlon-brick') + (isResultaat?' — resultaat bekijken':' hervatten');
+    const sub = isResultaat ? 'Voltooid' : ('Segment '+(hyroxActive.huidigeIndex+1)+'/'+totaal);
+    el.innerHTML = '<button class="card" style="width:100%;text-align:left;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border:none" onclick="go(\'s-hyrox\')">'+
+      '<span><b>'+escHtml(label)+'</b><br><span style="font-size:11.5px;color:var(--g4)">'+escHtml(sub)+'</span></span>'+
+      '<span class="chev">›</span></button>';
+  } else {
+    el.innerHTML = '<button class="ibtn" style="width:auto;height:auto;padding:8px 0;font-size:12.5px;font-weight:700;color:var(--accent-text)" onclick="openModal(\'m-hyrox-setup\')">🏁 HYROX-race of triathlon-brick starten</button>';
+  }
+}
+
+function hyroxOpenCorrigeer(){
+  const voorlaatste = hyroxActive && hyroxActive.voltooid[hyroxActive.voltooid.length-1];
+  if(!voorlaatste) return;
+  const nieuweDistance = prompt('Nieuwe afstand (leeg = ongewijzigd):');
+  const nieuweWeight = prompt('Nieuw gewicht (leeg = ongewijzigd):');
+  const nieuweReps = prompt('Nieuw aantal reps (leeg = ongewijzigd):');
+  hyroxCorrigeerLaatste({ distance: nieuweDistance, weight: nieuweWeight, reps: nieuweReps });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * MASTER SPRINT v4.69.0 — PERFORMANCE OBJECT RECONSTRUCTIE
+ *
+ * Puur, deterministisch, geen netwerk, geen Date.now(), geen mutatie, geen DB-schrijf.
+ * Bouwt UITSLUITEND uit reeds opgeslagen data (training_instances-rij + sessions-rijen)
+ * hetzelfde generieke Performance-object dat v4.68.0 ontwierp. Gebruikt UITSLUITEND
+ * bestaande Calculation Engine-contracten (station_duration.v1/segment_transition.v1) —
+ * geen nieuwe berekening, geen schatting, geen interpolatie. Ontbrekende/onbetrouwbare
+ * data wordt overal expliciet null, nooit 0 of geraden.
+ *
+ * GEEN vergelijking, GEEN trend hier — uitsluitend het Performance-object zelf
+ * (comparisonContext bevat alleen de context, geen oordeel over vergelijkbaarheid).
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+// hyroxSegmentLabel(exerciseId): dezelfde herkenning als de live race-flow, nu ook
+// bruikbaar zonder een lopende hyroxActive-sessie (voor gereconstrueerde data).
+function hyroxSegmentLabel(exerciseId){
+  if(!exerciseId) return null;
+  if(TK_HYROX_STATION_LABEL[exerciseId]) return TK_HYROX_STATION_LABEL[exerciseId];
+  if(exerciseId==='triathlon_zwemmen') return 'Zwemmen';
+  if(exerciseId==='triathlon_fietsen') return 'Fietsen';
+  if(exerciseId==='triathlon_hardlopen') return 'Hardlopen';
+  return exerciseId; // onbekend catalogus-ID: toon het ID zelf, verzin geen naam
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * MASTER SPRINT v4.76.0 — RACE CONTEXT: KNOWN / UNKNOWN / NOT_APPLICABLE
+ *
+ * Database-NULL betekent OP ZICHZELF niets — de betekenis (UNKNOWN of NOT_APPLICABLE)
+ * hangt af van race_format (Fase 14 van de opdracht). Deze twee expliciete string-
+ * markers voorkomen dat de businesslogica NULL blind als één betekenis behandelt.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+const RACE_CTX_UNKNOWN = 'UNKNOWN';
+const RACE_CTX_NOT_APPLICABLE = 'NOT_APPLICABLE';
+
+// hyroxAfgeleideRaceContext(instanceRow) — puur leesfunctie, GEEN databaseschrijfactie.
+// Voor nieuwe records (race_format aanwezig): rechtstreeks de nieuwe kolommen, met
+// NOT_APPLICABLE voor dimensies die voor dat format structureel niet bestaan.
+// Voor oude records (race_format ontbreekt, alleen legacy race_division bekend):
+// exacte, deterministische afleidingsregel uit v4.74.2 Fase 6 — nooit een gok, nooit
+// teruggeschreven naar de database.
+function hyroxAfgeleideRaceContext(instanceRow){
+  const row = instanceRow || {};
+  let format = row.race_format!=null ? row.race_format : null;
+  let tier = row.race_tier!=null ? row.race_tier : null;
+  let gender = row.race_gender!=null ? row.race_gender : null;
+  let relayDivision = row.race_relay_division!=null ? row.race_relay_division : null;
+  let relayAgeCategory = row.race_relay_age_category!=null ? row.race_relay_age_category : null;
+  let adaptiveClass = row.race_adaptive_class!=null ? row.race_adaptive_class : null;
+
+  if(format==null && row.race_division!=null){
+    // Legacy-afleiding (v4.74.2, Fase 6) — uitsluitend voor oude records zonder
+    // race_format. Puur op leesniveau; schrijft nooit iets terug naar de database.
+    if(row.race_division==='open'){ format='single'; tier='open'; }
+    else if(row.race_division==='pro'){ format='single'; tier='pro'; }
+    else if(row.race_division==='doubles'){ format='doubles'; }
+    else if(row.race_division==='relay'){ format='relay'; }
+  }
+
+  if(format==null){
+    return { format:RACE_CTX_UNKNOWN, tier:RACE_CTX_UNKNOWN, gender:RACE_CTX_UNKNOWN,
+             relayDivision:RACE_CTX_UNKNOWN, relayAgeCategory:RACE_CTX_UNKNOWN, adaptiveClass:RACE_CTX_UNKNOWN };
+  }
+
+  const tierNvt = (format==='relay' || format==='adaptive');
+  const genderNvt = (format==='relay'); // Relay heeft zijn eigen relayDivision i.p.v. gender
+  const relayNvt = (format!=='relay');
+  const adaptiveNvt = (format!=='adaptive');
+
+  return {
+    format: format,
+    tier: tierNvt ? RACE_CTX_NOT_APPLICABLE : (tier!=null ? tier : RACE_CTX_UNKNOWN),
+    gender: genderNvt ? RACE_CTX_NOT_APPLICABLE : (gender!=null ? gender : RACE_CTX_UNKNOWN),
+    relayDivision: relayNvt ? RACE_CTX_NOT_APPLICABLE : (relayDivision!=null ? relayDivision : RACE_CTX_UNKNOWN),
+    relayAgeCategory: relayNvt ? RACE_CTX_NOT_APPLICABLE : (relayAgeCategory!=null ? relayAgeCategory : RACE_CTX_UNKNOWN),
+    // v4.76.0 — adaptiveClass: GEEN CHECK-constraint op de exacte waardenset (STOP-punt,
+    // zie migratie_v476.sql), maar de gelijkheidsvergelijking zelf IS wel veilig te
+    // implementeren (puur op gelijkheid van wat ooit wordt opgeslagen) — geen gok op de
+    // exacte enum-waarden nodig om te bepalen of twee waarden AAN ELKAAR gelijk zijn.
+    adaptiveClass: adaptiveNvt ? RACE_CTX_NOT_APPLICABLE : (adaptiveClass!=null ? adaptiveClass : RACE_CTX_UNKNOWN)
+  };
+}
+
+// triathlonAfgeleideRaceContext(segments) — GEEN nieuwe raceType-kolom (v4.75.0-
+// productbesluit). Zwem-/fiets-/loopafstand komen rechtstreeks uit de al bestaande
+// sessions.distance, via de al bestaande, vaste segment_index-toewijzing 1/3/5
+// (tkHyroxSegmentenVoorType('brick'), ongewijzigd sinds v4.62.0).
+function triathlonAfgeleideRaceContext(segments){
+  const bij = function(idx){
+    const s = (segments||[]).find(function(x){ return x.segment_index===idx; });
+    return (s && s.distance!=null) ? s.distance : null;
+  };
+  return { swimDistance: bij(1), bikeDistance: bij(3), runDistance: bij(5), format: 'individual' };
+}
+
+/* v4.77.0 — TRIATHLON CATEGORIELABEL. Presentatie-only, analoog aan hyroxContextLabel().
+ * Exacte gelijkheid tegen de vier bekende canonieke afstandsdrietallen — GEEN afronding,
+ * GEEN tolerantie, GEEN opslag. Bij geen exacte match: null (de UI toont dan gewoon de
+ * ruwe afstanden, zoals nu al gebeurt — nooit een opvallend "custom"-label). Roept
+ * uitsluitend uit presentatiefuncties, wordt NOOIT door performanceContextMatch() of
+ * buildPerformanceTrend() gebruikt (die blijven exact op de ruwe afstanden vergelijken). */
+const TRIATHLON_CANONIEKE_AFSTANDEN = [
+  { key:'sprint',  label:'Sprint',   swim:750,  bike:20000,  run:5000 },
+  { key:'olympic', label:'Olympic',  swim:1500, bike:40000,  run:10000 },
+  { key:'half',    label:'Half',     swim:1900, bike:90000,  run:21100 },
+  { key:'full',    label:'Full',     swim:3800, bike:180000, run:42200 }
+];
+function triathlonAfstandCategorie(swimDistance, bikeDistance, runDistance){
+  if(swimDistance==null || bikeDistance==null || runDistance==null) return null;
+  for(let i=0;i<TRIATHLON_CANONIEKE_AFSTANDEN.length;i++){
+    const c = TRIATHLON_CANONIEKE_AFSTANDEN[i];
+    if(c.swim===swimDistance && c.bike===bikeDistance && c.run===runDistance) return c.label;
+  }
+  return null; // geen exacte match -> UI toont de ruwe afstanden, geen "custom"-label
+}
+
+// hyroxReconstructPerformance(instanceRow, sessieRijen) -> Performance-object.
+// instanceRow: een training_instances-rij (mag null zijn -> raceContext wordt {division:null,isOfficial:null}).
+// sessieRijen: array van sessions-rijen voor DEZE training_instance_id, in WILLEKEURIGE
+// volgorde toegestaan — de functie sorteert zelf op segment_index (nooit op
+// insertie-/created_at-volgorde vertrouwen, exact het v4.62.0-principe).
+// Ontbrekende segmenten worden NIET aangevuld: alleen wat daadwerkelijk is opgeslagen
+// wordt gebruikt. Dezelfde input geeft altijd exact dezelfde output.
+function hyroxReconstructPerformance(instanceRow, sessieRijen){
+  const rijen = (Array.isArray(sessieRijen) ? sessieRijen.slice() : [])
+    .filter(function(r){ return r && r.segment_index!=null; })
+    .sort(function(a,b){ return a.segment_index - b.segment_index; });
+
+  // sport: uit training_type OP DE RIJEN ZELF — nooit gegokt, nooit uit exercise_id afgeleid
+  // (dat zou een aanname zijn over welke catalogus-ID's bij welke sport horen).
+  let sport = null;
+  if(rijen.length){
+    if(rijen[0].training_type==='HYROX') sport='hyrox';
+    else if(rijen[0].training_type==='Triathlon') sport='triathlon';
+  }
+
+  const raceContext = {
+    division: (instanceRow && instanceRow.race_division!=null) ? instanceRow.race_division : null,
+    isOfficial: (instanceRow && instanceRow.race_is_official!=null) ? instanceRow.race_is_official : null,
+    // v4.76.0 — RACE CONTEXT MIGRATIE: genest per sport, alleen gevuld voor de sport
+    // die daadwerkelijk van toepassing is. division/isOfficial hierboven blijven
+    // ongewijzigd bestaan (legacy/display) — de vergelijkingslogica gebruikt vanaf nu
+    // uitsluitend hyrox/triathlon hieronder.
+    hyrox: sport==='hyrox' ? hyroxAfgeleideRaceContext(instanceRow) : null,
+    triathlon: sport==='triathlon' ? triathlonAfgeleideRaceContext(rijen.map(function(r){ return { segment_index:r.segment_index, distance:r.distance }; })) : null
+  };
+
+  // per rij: eigen tijdstempels parsen (extraNote), duur berekenen met station_duration.v1.
+  // _startMs/_endMs zijn intern (nodig voor de transitieberekening hieronder) en worden
+  // vóór het retourneren weer verwijderd — geen onderdeel van het publieke contract.
+  const segments = rijen.map(function(r){
+    const ts = tkHyroxTsParse(r.extraNote);
+    const duurS = ts ? CardioCore.stationDurationS(ts.startMs, ts.endMs) : null;
+    return {
+      segment_index: r.segment_index,
+      exercise_id: r.exercise_id || null,
+      label: hyroxSegmentLabel(r.exercise_id),
+      duration: duurS,
+      distance: (r.distance!=null) ? r.distance : null,
+      weight: (r.weight!=null) ? r.weight : null,
+      reps: (r.reps!=null) ? r.reps : null,
+      transition: null,
+      _startMs: ts ? ts.startMs : null,
+      _endMs: ts ? ts.endMs : null
+    };
+  });
+
+  // transitietijd: uitsluitend tussen twee daadwerkelijk AANWEZIGE, opeenvolgende
+  // segmenten met beide tijdstempels bekend — nooit een gat overbruggen met een schatting.
+  for(let i=1;i<segments.length;i++){
+    const prev=segments[i-1], cur=segments[i];
+    if(prev._endMs!=null && cur._startMs!=null){
+      cur.transition = CardioCore.segmentTransitionS(prev._endMs, cur._startMs, 0, 0);
+    }
+  }
+  segments.forEach(function(s){ delete s._startMs; delete s._endMs; });
+
+  // totale tijd: eerste opgeslagen segment se start -> laatste opgeslagen segment se eind.
+  // Let op — dit is de tijd over WAT IS OPGESLAGEN, geen garantie dat alle 16 HYROX-
+  // segmenten (of alle 3 triathlon-disciplines) aanwezig zijn; bij een onvolledige race
+  // is dit dus de tijd tussen het eerste en laatste WEL gelogde segment, niet de
+  // 'officiële' race-tijd. Alleen null als een van beide tijdstempels ontbreekt.
+  let totalTime = null;
+  if(rijen.length){
+    const eersteTs = tkHyroxTsParse(rijen[0].extraNote);
+    const laatsteTs = tkHyroxTsParse(rijen[rijen.length-1].extraNote);
+    if(eersteTs && laatsteTs) totalTime = CardioCore.stationDurationS(eersteTs.startMs, laatsteTs.endMs);
+  }
+
+  return {
+    provenance: 'stored',
+    sport: sport,
+    raceContext: raceContext,
+    totalTime: totalTime,
+    segments: segments,
+    // comparisonContext: uitsluitend de context zelf — GEEN oordeel of dit vergelijkbaar
+    // is met iets anders. Dat blijft bewust een latere sprint (Fase 12 van deze opdracht).
+    comparisonContext: { division: raceContext.division, isOfficial: raceContext.isOfficial, sport: sport }
+  };
+}
+
+/* --- renderHyroxResultaat() REFACTOR (v4.69.0, Fase 9) ---
+ * Accepteert nu optioneel een reeds gebouwd Performance-object. Zonder argument (elke
+ * bestaande aanroep sinds v4.65.0, ongewijzigd) wordt hetzelfde vorm-object opgebouwd uit
+ * de levende hyroxActive-state via hyroxLiveAlsPerformance() — de renderfunctie zelf
+ * berekent hierna NIETS meer (geen station_duration.v1/segment_transition.v1-aanroep meer
+ * in deze functie), uitsluitend presentatie van een al-klaar Performance-object. */
+function hyroxLiveAlsPerformance(){
+  if(!hyroxActive) return null;
+  const a = hyroxActive;
+  const totalTime = (a.eersteStartAt!=null && a.vorigeEindAt!=null)
+    ? CardioCore.stationDurationS(a.eersteStartAt, a.vorigeEindAt) : null;
+  const segments = a.voltooid.map(function(v){
+    return { segment_index: v.segment_index, exercise_id: null, label: v.label,
+             duration: v.duurS, distance: v.distance, weight: v.weight, reps: v.reps,
+             transition: v.transitieS };
+  });
+  // v4.76.0-bugfix (gevonden tijdens deze sprint, niet aangenomen): a.type is letterlijk
+  // 'hyrox' of 'brick' (zie hyroxStart()), maar performanceContextMatch() en de opgeslagen
+  // reconstructie (hyroxReconstructPerformance()) verwachten sport==='triathlon' voor
+  // triathlon. Zonder deze correctie viel een LEVENDE, net-voltooide triathlon-race altijd
+  // in de "onbekende sport"-tak van performanceContextMatch() — nooit vergelijkbaar, zelfs
+  // niet met zichzelf. De opgeslagen/gereconstrueerde route (via training_type) had dit al
+  // wél goed. Zelfde mapping hier toegepast, geen nieuw gedrag t.o.v. wat overal elders al
+  // gold.
+  const sport = a.type==='hyrox' ? 'hyrox' : 'triathlon';
+  // v4.77.0 — CORRECTIE: tier moet ook bij format='adaptive' NOT_APPLICABLE zijn
+  // (exact zoals de opgeslagen route, hyroxAfgeleideRaceContext(), dat al deed) —
+  // de live-route controleerde hiervoor alleen op 'relay', wat Adaptive-races zonder
+  // deze correctie een onterecht UNKNOWN-tier zou geven i.p.v. NOT_APPLICABLE.
+  // adaptiveClass toegevoegd, analoog aan relayDivision/relayAgeCategory hierboven.
+  const hyroxCtx = a.type==='hyrox' ? {
+    format: a.format!=null ? a.format : RACE_CTX_UNKNOWN,
+    tier: (a.format==='relay'||a.format==='adaptive') ? RACE_CTX_NOT_APPLICABLE : (a.tier!=null ? a.tier : RACE_CTX_UNKNOWN),
+    gender: a.format==='relay' ? RACE_CTX_NOT_APPLICABLE : (a.gender!=null ? a.gender : RACE_CTX_UNKNOWN),
+    relayDivision: a.format==='relay' ? (a.relayDivision!=null ? a.relayDivision : RACE_CTX_UNKNOWN) : RACE_CTX_NOT_APPLICABLE,
+    relayAgeCategory: a.format==='relay' ? (a.relayAgeCategory!=null ? a.relayAgeCategory : RACE_CTX_UNKNOWN) : RACE_CTX_NOT_APPLICABLE,
+    adaptiveClass: a.format==='adaptive' ? (a.adaptiveClass!=null ? a.adaptiveClass : RACE_CTX_UNKNOWN) : RACE_CTX_NOT_APPLICABLE
+  } : null;
+  const triathlonCtx = a.type==='brick' ? triathlonAfgeleideRaceContext(segments) : null;
+  return {
+    provenance: 'live',
+    sport: sport,
+    raceContext: { division: a.division, isOfficial: a.isOfficial, hyrox: hyroxCtx, triathlon: triathlonCtx },
+    totalTime: totalTime,
+    segments: segments,
+    comparisonContext: { division: a.division, isOfficial: a.isOfficial, sport: sport }
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * MASTER SPRINT v4.70.0 — RACEHISTORIE + RACE DETAIL VANUIT HISTORIE
+ *
+ * hyroxGroepeerRaceSessies(): puur, deterministisch. Herkenning van een race gebeurt
+ * UITSLUITEND via het al bestaande, betrouwbare sessions.training_type ('HYROX'/
+ * 'Triathlon', sinds v4.62.0 op elke geschreven segment-rij aanwezig) — geen nieuwe
+ * heuristiek op exercise_id-prefixen. Een gewone training (training_type is iets
+ * anders, of afwezig) wordt hier nooit als race herkend.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+function hyroxGroepeerRaceSessies(sess){
+  const groepen = {};
+  (Array.isArray(sess)?sess:[]).forEach(function(s){
+    if(!s || !s.training_instance_id) return;
+    if(s.training_type!=='HYROX' && s.training_type!=='Triathlon') return;
+    const key = s.training_instance_id;
+    if(!groepen[key]) groepen[key] = { instanceId:key, sport:(s.training_type==='HYROX'?'hyrox':'triathlon'), rows:[] };
+    groepen[key].rows.push(s);
+  });
+  return Object.keys(groepen).map(function(k){ return groepen[k]; });
+}
+
+// v4.70.0 — houdt bij of het resultatenscherm momenteel een GESCHIEDENIS-race toont
+// (geen levende hyroxActive-sessie erbij betrokken), zodat "Terug" een eventuele
+// actieve, nog niet voltooide race nooit per ongeluk kan wissen.
+let hyroxGeschiedenisWeergave = false;
+
+async function hyroxOpenGeschiedenisRace(instanceId){
+  if(!instanceId) return;
+  try{
+    const [instanceRow, sessieRijen] = await Promise.all([
+      getTrainingInstance(instanceId),
+      sbGet('sessions', '&training_instance_id=eq.'+encodeURIComponent(instanceId)+'&order=segment_index.asc')
+    ]);
+    if(!sessieRijen || !sessieRijen.length){ toast('Kon deze race niet meer terugvinden'); return; }
+    const performance = hyroxReconstructPerformance(instanceRow, sessieRijen);
+    hyroxGeschiedenisWeergave = true;
+    go('s-hyrox');
+    renderHyroxResultaat(performance);
+  }catch(_){
+    toast('Kon deze race niet openen — probeer opnieuw');
+  }
+}
+
+// Vervangt hyroxTerugNaarTraining() als handler op de "Terug"-knop van het resultaat-
+// scherm zodra dat scherm een geschiedenis-race toont — navigeert terug naar Historie
+// zonder ooit hyroxActive aan te raken (die kan intussen een échte, lopende race zijn).
+function hyroxTerugVanuitResultaat(){
+  if(hyroxGeschiedenisWeergave){ hyroxGeschiedenisWeergave = false; go('s-hist'); return; }
+  hyroxTerugNaarTraining();
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * MASTER SPRINT v4.71.0 — PERFORMANCE-OVERZICHT + RACEVERGELIJKING
+ *
+ * performance_context_match.v1 — GEEN Relationship Engine-contract. Uitsluitend een
+ * lokale, deterministische race-tot-race-vergelijkingsregel binnen de Performance-laag.
+ * Puur, geen netwerk, geen AI, geen Date.now(). "Niet vast te stellen" geeft NOOIT een
+ * positieve match (fail-closed) — exact het principe van isComparableRaceContext()
+ * (v4.61.0), hier toegepast op twee Performance-objecten i.p.v. twee ruwe rijen.
+ *
+ * FASE-7-AUDITBEVINDING (zie sprintrapport): er bestaat GEEN enkel opgeslagen veld voor
+ * triathlon-afstand/type (Sprint/Olympic/Half/Full) — hyroxStart() zet race_division
+ * uitsluitend voor HYROX, nooit voor triathlon. Zonder die data zou elke triathlon-
+ * vergelijking een ongeverifieerde aanname zijn. Daarom: triathlon-vergelijking geeft
+ * hier STRUCTUREEL comparable:false met een expliciete reden, totdat een toekomstig
+ * product-/datacontract dat veld toevoegt — geen categorie wordt hier verzonnen.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+const PERFORMANCE_CONTEXT_MATCH_VERSIE = 'performance_context_match.v1';
+
+function performanceContextMatch(perfA, perfB){
+  const RULE = PERFORMANCE_CONTEXT_MATCH_VERSIE;
+  if(!perfA || !perfB) return { comparable:false, reason:'Een van beide races ontbreekt.', rule:RULE };
+  if(perfA.sport==null || perfB.sport==null) return { comparable:false, reason:'De sport van een van beide races is niet vastgesteld.', rule:RULE };
+  if(perfA.sport!==perfB.sport) return { comparable:false, reason:'Verschillende sport: '+perfA.sport+' en '+perfB.sport+'.', rule:RULE };
+
+  const ctxA = perfA.raceContext||{}, ctxB = perfB.raceContext||{};
+  if(ctxA.isOfficial==null || ctxB.isOfficial==null) return { comparable:false, reason:'De official/simulatie-status van een van beide races is niet bekend.', rule:RULE };
+  if(ctxA.isOfficial!==ctxB.isOfficial) return { comparable:false, reason:(ctxA.isOfficial?'Een officiële race':'Een trainingssimulatie')+' kan niet worden vergeleken met '+(ctxB.isOfficial?'een officiële race':'een trainingssimulatie')+'.', rule:RULE };
+
+  // v4.76.0 — RACE CONTEXT MIGRATIE. Zelfde return-vorm ({comparable,reason,rule}) als
+  // voorheen — vindVorigeVergelijkbareRace()/buildPerformanceTrend()/etc. lezen
+  // uitsluitend .comparable en blijven ongewijzigd werken. Geen tweede vergelijkings-
+  // mechanisme: dit blijft de ENIGE plek waar HYROX/triathlon-context wordt beoordeeld.
+  if(perfA.sport==='hyrox'){
+    const hA = ctxA.hyrox||{}, hB = ctxB.hyrox||{};
+    if(hA.format==null || hB.format==null || hA.format===RACE_CTX_UNKNOWN || hB.format===RACE_CTX_UNKNOWN){
+      return { comparable:false, reason:'Het race-format van een van beide races is niet bekend.', rule:RULE };
+    }
+    if(hA.format!==hB.format) return { comparable:false, reason:hA.format+' en '+hB.format+' zijn verschillende race-formats.', rule:RULE };
+
+    if(hA.format==='relay'){
+      if(hA.relayDivision===RACE_CTX_UNKNOWN || hB.relayDivision===RACE_CTX_UNKNOWN) return { comparable:false, reason:'De relay-divisie van een van beide races is niet bekend.', rule:RULE };
+      if(hA.relayDivision!==hB.relayDivision) return { comparable:false, reason:hA.relayDivision+' en '+hB.relayDivision+' zijn verschillende relay-divisies.', rule:RULE };
+      if(hA.relayAgeCategory===RACE_CTX_UNKNOWN || hB.relayAgeCategory===RACE_CTX_UNKNOWN) return { comparable:false, reason:'De leeftijdscategorie van een van beide races is niet bekend.', rule:RULE };
+      if(hA.relayAgeCategory!==hB.relayAgeCategory) return { comparable:false, reason:hA.relayAgeCategory+' en '+hB.relayAgeCategory+' zijn verschillende leeftijdscategorieën.', rule:RULE };
+      return { comparable:true, reason:'Zelfde sport (HYROX Relay), '+(ctxA.isOfficial?'officiële race':'trainingssimulatie')+', dezelfde relay-divisie ('+hA.relayDivision+') en leeftijdscategorie ('+hA.relayAgeCategory+').', rule:RULE };
+    }
+
+    if(hA.format==='adaptive'){
+      // v4.76.0 — adaptiveClass heeft geen CHECK-constraint op de exacte waardenset
+      // (STOP-punt, geen bronmatige zekerheid over de exacte 9-vs-13-verhouding), maar
+      // een pure gelijkheidsvergelijking op wat ooit wordt opgeslagen is wél veilig en
+      // voorkomt dat twee verschillende, ongecontroleerde impairment-classes ten
+      // onrechte zouden matchen. Geen enum-gok — uitsluitend gelijkheid.
+      if(hA.gender===RACE_CTX_UNKNOWN || hB.gender===RACE_CTX_UNKNOWN) return { comparable:false, reason:'Het geslacht van een van beide races is niet bekend.', rule:RULE };
+      if(hA.gender!==hB.gender) return { comparable:false, reason:hA.gender+' en '+hB.gender+' zijn verschillende geslachtscategorieën.', rule:RULE };
+      if(hA.adaptiveClass===RACE_CTX_UNKNOWN || hB.adaptiveClass===RACE_CTX_UNKNOWN) return { comparable:false, reason:'De adaptive-classificatie van een van beide races is niet bekend.', rule:RULE };
+      if(hA.adaptiveClass!==hB.adaptiveClass) return { comparable:false, reason:hA.adaptiveClass+' en '+hB.adaptiveClass+' zijn verschillende adaptive-classificaties.', rule:RULE };
+      return { comparable:true, reason:'Zelfde sport (HYROX Adaptive), '+(ctxA.isOfficial?'officiële race':'trainingssimulatie')+', hetzelfde geslacht en dezelfde adaptive-classificatie ('+hA.adaptiveClass+').', rule:RULE };
+    }
+
+    // format === 'single' of 'doubles'
+    if(hA.tier===RACE_CTX_UNKNOWN || hB.tier===RACE_CTX_UNKNOWN) return { comparable:false, reason:'De tier (Open/Pro) van een van beide races is niet bekend.', rule:RULE };
+    if(hA.tier!==hB.tier) return { comparable:false, reason:hA.tier+' en '+hB.tier+' zijn verschillende tiers.', rule:RULE };
+    if(hA.gender===RACE_CTX_UNKNOWN || hB.gender===RACE_CTX_UNKNOWN) return { comparable:false, reason:'Het geslacht van een van beide races is niet bekend.', rule:RULE };
+    if(hA.gender!==hB.gender) return { comparable:false, reason:hA.gender+' en '+hB.gender+' zijn verschillende geslachtscategorieën.', rule:RULE };
+    return { comparable:true, reason:'Zelfde sport (HYROX '+hA.format+'), '+(ctxA.isOfficial?'officiële race':'trainingssimulatie')+', dezelfde tier ('+hA.tier+') en hetzelfde geslacht ('+hA.gender+').', rule:RULE };
+  }
+
+  if(perfA.sport==='triathlon'){
+    const tA = ctxA.triathlon||{}, tB = ctxB.triathlon||{};
+    if(tA.format!=='individual' || tB.format!=='individual') return { comparable:false, reason:'Triathlon-format is niet individueel of niet bekend — TrainingKompas ondersteunt vandaag alleen individuele triathlon.', rule:RULE };
+    if(tA.swimDistance==null || tB.swimDistance==null) return { comparable:false, reason:'De zwemafstand van een van beide races is niet bekend.', rule:RULE };
+    if(tA.swimDistance!==tB.swimDistance) return { comparable:false, reason:'Verschillende zwemafstand: '+tA.swimDistance+' m en '+tB.swimDistance+' m.', rule:RULE };
+    if(tA.bikeDistance==null || tB.bikeDistance==null) return { comparable:false, reason:'De fietsafstand van een van beide races is niet bekend.', rule:RULE };
+    if(tA.bikeDistance!==tB.bikeDistance) return { comparable:false, reason:'Verschillende fietsafstand: '+tA.bikeDistance+' m en '+tB.bikeDistance+' m.', rule:RULE };
+    if(tA.runDistance==null || tB.runDistance==null) return { comparable:false, reason:'De loopafstand van een van beide races is niet bekend.', rule:RULE };
+    if(tA.runDistance!==tB.runDistance) return { comparable:false, reason:'Verschillende loopafstand: '+tA.runDistance+' m en '+tB.runDistance+' m.', rule:RULE };
+    return { comparable:true, reason:'Zelfde sport (Triathlon), '+(ctxA.isOfficial?'officiële race':'trainingssimulatie')+', identieke zwem- ('+tA.swimDistance+' m), fiets- ('+tA.bikeDistance+' m) en loopafstand ('+tA.runDistance+' m).', rule:RULE };
+  }
+  return { comparable:false, reason:'Onbekende sport — vergelijkbaarheid kan niet worden vastgesteld.', rule:RULE };
+}
+
+// vindVorigeVergelijkbareRace: meest recente eerdere race die matcht (RULE-PERF-006).
+// eerdereRaces: [{instanceId, perf, datum}]. Sorteert zelf op datum (nieuwste eerst).
+function vindVorigeVergelijkbareRace(huidigePerf, eerdereRaces){
+  const kandidaten = (Array.isArray(eerdereRaces)?eerdereRaces:[]).slice()
+    .sort(function(a,b){ return (b.datum||'').localeCompare(a.datum||''); });
+  for(let i=0;i<kandidaten.length;i++){
+    const match = performanceContextMatch(huidigePerf, kandidaten[i].perf);
+    if(match.comparable) return { race:kandidaten[i], match:match };
+  }
+  return null;
+}
+
+// performanceVerschilStatus: 'sneller'|'langzamer'|'gelijk'|'niet_beschikbaar' — nooit
+// een tussenvorm ("waarschijnlijk sneller"), nooit gebaseerd op iets anders dan twee
+// daadwerkelijk bekende tijden (Fase 11).
+function performanceVerschilStatus(tijdA, tijdB){
+  if(tijdA==null || tijdB==null) return 'niet_beschikbaar';
+  if(tijdA < tijdB) return 'sneller';
+  if(tijdA > tijdB) return 'langzamer';
+  return 'gelijk';
+}
+
+// vergelijkSegmenten: matcht uitsluitend op segment_index die in BEIDE races daadwerkelijk
+// aanwezig is — nooit een ontbrekend segment verzinnen (Fase 12/13).
+function vergelijkSegmenten(perfA, perfB){
+  const bMap = {};
+  (perfB&&perfB.segments||[]).forEach(function(s){ if(s.segment_index!=null) bMap[s.segment_index]=s; });
+  return (perfA&&perfA.segments||[]).filter(function(sa){ return sa.segment_index!=null && bMap[sa.segment_index]; }).map(function(sa){
+    const sb = bMap[sa.segment_index];
+    const verschil = (sa.duration!=null && sb.duration!=null) ? (sa.duration - sb.duration) : null;
+    return { segment_index:sa.segment_index, label:sa.label, durationA:sa.duration, durationB:sb.duration, difference:verschil };
+  });
+}
+
+// hyroxLaadAllePerformances(): haalt ALLE HYROX/triathlon-races van de gebruiker op en
+// reconstrueert ze elk tot een Performance-object. Zuiver hergebruik van bestaande
+// functies (hyroxGroepeerRaceSessies uit v4.70.0, hyroxReconstructPerformance uit
+// v4.69.0) — geen nieuwe query-architectuur, één extra bulk-sbGet voor race-context
+// (zelfde patroon als loadHistory() al gebruikt).
+async function hyroxLaadAllePerformances(){
+  const ss = await sbGet('sessions', '&training_type=in.(HYROX,Triathlon)&order=date.desc');
+  const groepen = hyroxGroepeerRaceSessies(ss);
+  if(!groepen.length) return [];
+  let context = {};
+  try{
+    const ids = groepen.map(function(g){ return g.instanceId; }).join(',');
+    const rows = await sbGet('training_instances', '&id=in.('+ids+')&select=id,race_division,race_is_official,race_format,race_tier,race_gender,race_relay_division,race_relay_age_category,race_adaptive_class');
+    (rows||[]).forEach(function(r){ context[r.id]=r; });
+  }catch(_){ /* context niet beschikbaar -> reconstructie valt terug op null-velden, geen crash */ }
+  return groepen.map(function(g){
+    const perf = hyroxReconstructPerformance(context[g.instanceId]||null, g.rows);
+    const datum = g.rows.map(function(r){ return r.date; }).sort()[0] || null;
+    return { instanceId:g.instanceId, perf:perf, datum:datum };
+  }).sort(function(a,b){ return (b.datum||'').localeCompare(a.datum||''); });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * MASTER SPRINT v4.72.0 — TREND OVER MEERDERE VERGELIJKBARE RACES
+ *
+ * Een trend is nooit "alle HYROX-races" maar "alle onderling vergelijkbare races
+ * binnen dezelfde context" (Fase 2/4). Clustering gebeurt UITSLUITEND via de al
+ * bestaande performanceContextMatch() (v4.71.0) — geen tweede vergelijkingsmechanisme.
+ * Een race wordt bij het cluster van zijn eerst-gevonden referentie gevoegd zodra
+ * performanceContextMatch(referentie, kandidaat).comparable===true; races uit een
+ * andere context "onderbreken" de trend niet — ze belanden gewoon in hun eigen
+ * cluster en later opnieuw-vergelijkbare races sluiten weer aan bij het OORSPRONKELIJKE
+ * cluster (Fase 2's Race 1→2, breekt bij Race 3, Race 4 sluit weer aan bij 1/2 — niet
+ * via Race 3). Triathlon matcht per performanceContextMatch() nooit met een andere
+ * triathlon-race (Fase 5-audit: geen betrouwbare afstand/type-data) — elke triathlon-
+ * race belandt daarom automatisch in zijn eigen cluster van grootte 1, wat vanzelf
+ * "geen trend" oplevert zonder een aparte triathlon-uitzondering te hoeven coderen.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+// buildPerformanceTrend(performances): performances = output van hyroxLaadAllePerformances()
+// ([{instanceId, perf, datum}]). Puur, deterministisch, wijzigt geen racegegevens, vult
+// nooit ontbrekende races/tijden aan.
+function buildPerformanceTrend(performances){
+  const geldig = (Array.isArray(performances)?performances:[]).filter(function(p){ return p && p.perf; });
+  const chronologisch = geldig.slice().sort(function(a,b){ return (a.datum||'').localeCompare(b.datum||''); });
+
+  const clusters = [];
+  chronologisch.forEach(function(item){
+    for(let i=0;i<clusters.length;i++){
+      if(performanceContextMatch(clusters[i].referentie.perf, item.perf).comparable){
+        clusters[i].races.push(item); return;
+      }
+    }
+    clusters.push({ referentie:item, races:[item] });
+  });
+
+  return clusters.map(function(cluster){
+    const races = cluster.races; // al chronologisch (oudste eerst)
+    const punten = races.map(function(item,i){
+      const vorige = i>0 ? races[i-1] : null;
+      const status = vorige ? performanceVerschilStatus(item.perf.totalTime, vorige.perf.totalTime) : 'niet_beschikbaar';
+      const verschil = (vorige && item.perf.totalTime!=null && vorige.perf.totalTime!=null) ? (item.perf.totalTime - vorige.perf.totalTime) : null;
+      return { instanceId:item.instanceId, datum:item.datum, totalTime:item.perf.totalTime,
+               verschilMetVorige:verschil, status:status, segments:item.perf.segments };
+    });
+    const betrouwbareTijden = races.filter(function(r){ return r.perf.totalTime!=null; }).map(function(r){ return r.perf.totalTime; });
+    return {
+      sport: cluster.referentie.perf.sport,
+      context: cluster.referentie.perf.raceContext,
+      punten: punten,
+      aantal: races.length,
+      besteTijd: betrouwbareTijden.length ? Math.min.apply(null, betrouwbareTijden) : null
+    };
+  }).sort(function(a,b){
+    const laatsteA=a.punten[a.punten.length-1], laatsteB=b.punten[b.punten.length-1];
+    return (laatsteB.datum||'').localeCompare(laatsteA.datum||'');
+  });
+}
+
+// buildSegmentTrend(cluster): segmentontwikkeling BINNEN één cluster (Fase 9/10) —
+// uitsluitend segmenten die daadwerkelijk in de betreffende races voorkomen, geen
+// interpolatie van ontbrekende segmenten.
+function buildSegmentTrend(cluster){
+  const perSegment = {};
+  (cluster&&cluster.punten||[]).forEach(function(p){
+    (p.segments||[]).forEach(function(s){
+      if(s.segment_index==null) return;
+      if(!perSegment[s.segment_index]) perSegment[s.segment_index] = { segment_index:s.segment_index, label:s.label, reeks:[] };
+      perSegment[s.segment_index].reeks.push({ datum:p.datum, duration:s.duration });
+    });
+  });
+  return Object.keys(perSegment).map(function(k){ return perSegment[k]; }).sort(function(a,b){ return a.segment_index-b.segment_index; });
+}
+
+// performanceConclusie(cluster): "word ik beter?" (Fase 12) — uitsluitend met minimaal
+// 2 vergelijkbare races EN betrouwbare tijden. Anders altijd de neutrale, expliciete tekst.
+function performanceConclusie(cluster){
+  if(!cluster || cluster.aantal<2) return 'Nog onvoldoende vergelijkbare racegegevens.';
+  const laatste = cluster.punten[cluster.punten.length-1];
+  if(laatste.status==='sneller' && laatste.verschilMetVorige!=null) return 'Je bent '+CardioCore.formatTime(Math.abs(laatste.verschilMetVorige))+' sneller dan je vorige vergelijkbare race.';
+  if(laatste.status==='langzamer' && laatste.verschilMetVorige!=null) return 'Je bent '+CardioCore.formatTime(Math.abs(laatste.verschilMetVorige))+' langzamer dan je vorige vergelijkbare race.';
+  if(laatste.status==='gelijk') return 'Je laatste vergelijkbare race was exact even snel als de vorige.';
+  if(cluster.besteTijd!=null) return 'Je beste vergelijkbare tijd is '+CardioCore.formatTime(cluster.besteTijd)+'.';
+  return 'Nog onvoldoende vergelijkbare racegegevens.';
+}
+
+
+// v4.76.0 — bouwt een rijke, leesbare labelstring uit het VOLLEDIGE racecontext
+// (format/tier/gender, of relay-divisie/leeftijdscategorie) i.p.v. uitsluitend het
+// grovere legacy division-veld — zodat de gebruiker in de UI daadwerkelijk ziet WELKE
+// dimensie een niet-vergelijkbaar oordeel verklaart (bv. "Doubles · Open · Mixed" i.p.v.
+// simpelweg "doubles"). Valt terug op division voor oude/onbekende gevallen.
+function hyroxContextLabel(sport, raceContext){
+  const ctx = raceContext || {};
+  const U = 'UNKNOWN', N = 'NOT_APPLICABLE';
+  const kap = function(s){ return s.charAt(0).toUpperCase()+s.slice(1); };
+  if(sport==='hyrox' && ctx.hyrox){
+    const h = ctx.hyrox;
+    const delen = [];
+    if(h.format!=null && h.format!==U) delen.push(kap(h.format));
+    if(h.format==='relay'){
+      if(h.relayDivision!=null && h.relayDivision!==U && h.relayDivision!==N) delen.push(kap(h.relayDivision));
+      if(h.relayAgeCategory!=null && h.relayAgeCategory!==U && h.relayAgeCategory!==N) delen.push(h.relayAgeCategory==='under_40'?'Under 40':'40+');
+    } else if(h.format==='adaptive'){
+      // v4.77.0 — toont de adaptiveClass-naam (bv. "Lower_limb_major" -> "Lower limb major"),
+      // plus gender (bestaande gedrag hieronder in de else-tak blijft ook voor adaptive gelden).
+      if(h.adaptiveClass!=null && h.adaptiveClass!==U && h.adaptiveClass!==N) delen.push(h.adaptiveClass.split('_').join(' '));
+      if(h.gender!=null && h.gender!==U && h.gender!==N) delen.push(kap(h.gender));
+    } else {
+      if(h.tier!=null && h.tier!==U && h.tier!==N) delen.push(kap(h.tier));
+      if(h.gender!=null && h.gender!==U && h.gender!==N) delen.push(kap(h.gender));
+    }
+    if(delen.length) return delen.join(' · ');
+  }
+  // v4.77.0 — TRIATHLON: puur presentatie, uitsluitend een herkenbaar label wanneer de
+  // afstanden EXACT overeenkomen met een canonieke categorie (geen afronding/tolerantie,
+  // zie triathlonAfstandCategorie()). Geen match -> null, UI valt dan terug op de
+  // bestaande weergave van de ruwe afstanden — nooit een opvallend "custom"-label.
+  if(sport==='triathlon' && ctx.triathlon){
+    const t = ctx.triathlon;
+    const categorie = triathlonAfstandCategorie(t.swimDistance, t.bikeDistance, t.runDistance);
+    if(categorie) return categorie;
+  }
+  return ctx.division || null;
+}
+
+async function renderHyroxPerformanceOverzicht(){
+  const el = document.getElementById('hyrox-perf-scroll');
+  if(!el) return;
+  el.innerHTML = '<div class="lich-empty"><div class="e1">Laden…</div></div>';
+  let alle;
+  try{ alle = await hyroxLaadAllePerformances(); }
+  catch(_){ el.innerHTML = '<div class="lich-empty"><div class="e1">Kon prestaties niet laden</div><div class="e2">Probeer het later opnieuw.</div></div>'; return; }
+
+  if(!alle.length){
+    el.innerHTML = '<div class="lich-empty"><div class="e1">Nog geen races gelogd</div><div class="e2">Start een HYROX-race of triathlon-brick vanuit Training maken om hier je prestaties te zien.</div></div>';
+    return;
+  }
+
+  const laatste = alle[0];
+  const eerdereRaces = alle.slice(1);
+  const gevonden = vindVorigeVergelijkbareRace(laatste.perf, eerdereRaces);
+
+  const sportLbl = laatste.perf.sport==='hyrox' ? 'HYROX' : (laatste.perf.sport==='triathlon' ? 'Triathlon' : 'Onbekend');
+  const ctx = laatste.perf.raceContext||{};
+  const ctxTxt = [hyroxContextLabel(laatste.perf.sport, ctx), (ctx.isOfficial===true?'Officieel':ctx.isOfficial===false?'Simulatie':null)].filter(Boolean).join(' · ') || 'Niet beschikbaar';
+  const tijdTxt = laatste.perf.totalTime!=null ? CardioCore.formatTime(laatste.perf.totalTime) : 'Niet beschikbaar';
+
+  let vergelijkHtml;
+  if(!gevonden){
+    vergelijkHtml = '<div class="card" style="padding:16px">'+
+      '<div class="v43-lbl" style="margin-bottom:8px">Vorige vergelijkbare race</div>'+
+      '<div style="font-size:13px;color:var(--g4)">Geen vergelijkbare eerdere race</div>'+
+      (eerdereRaces.length ? '<div style="font-size:11.5px;color:var(--g4);margin-top:4px">'+escHtml(performanceContextMatch(laatste.perf, eerdereRaces[0].perf).reason)+'</div>' : '')+
+    '</div>';
+  } else {
+    const vorige = gevonden.race;
+    const status = performanceVerschilStatus(laatste.perf.totalTime, vorige.perf.totalTime);
+    const verschilS = (laatste.perf.totalTime!=null && vorige.perf.totalTime!=null) ? Math.abs(laatste.perf.totalTime - vorige.perf.totalTime) : null;
+    const statusTxt = status==='sneller' ? ('Sneller dan vorige vergelijkbare race: '+CardioCore.formatTime(verschilS))
+      : status==='langzamer' ? ('Langzamer dan vorige vergelijkbare race: '+CardioCore.formatTime(verschilS))
+      : status==='gelijk' ? 'Exact gelijk aan vorige vergelijkbare race'
+      : 'Niet beschikbaar';
+    const segmentRijen = vergelijkSegmenten(laatste.perf, vorige.perf).map(function(sd){
+      const verschilTxt = sd.difference!=null ? (sd.difference<0?'−':'+')+CardioCore.formatTime(Math.abs(sd.difference)) : 'Niet beschikbaar';
+      return '<div class="lich-krow"><span class="k">'+escHtml(sd.label)+'</span><span>'+
+        (sd.durationA!=null?CardioCore.formatTime(sd.durationA):'Niet beschikbaar')+' vs '+(sd.durationB!=null?CardioCore.formatTime(sd.durationB):'Niet beschikbaar')+
+        ' · '+escHtml(verschilTxt)+'</span></div>';
+    }).join('');
+    vergelijkHtml = '<div class="card" style="padding:16px">'+
+      '<div class="v43-lbl" style="margin-bottom:8px">Vorige vergelijkbare race — '+escHtml(fmtDate(vorige.datum))+'</div>'+
+      '<div style="font-size:13px;color:var(--g4);margin-bottom:4px">'+escHtml(gevonden.match.reason)+'</div>'+
+      '<div style="font-size:18px;font-weight:800;color:var(--dark);margin-bottom:10px">'+escHtml(statusTxt)+'</div>'+
+      (segmentRijen ? '<div class="v43-lbl" style="margin:10px 0 6px;font-size:11px">Segmenten</div>'+segmentRijen : '')+
+    '</div>';
+  }
+
+  el.innerHTML =
+    '<div class="card" style="padding:20px;text-align:center;margin-bottom:12px">'+
+      '<div style="font-size:11px;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Laatste race · '+escHtml(fmtDate(laatste.datum))+'</div>'+
+      '<div style="font-size:20px;font-weight:800;color:var(--dark);margin-bottom:2px">'+escHtml(sportLbl)+'</div>'+
+      '<div style="font-size:12px;color:var(--g4);margin-bottom:10px">'+escHtml(ctxTxt)+'</div>'+
+      '<div style="font-size:34px;font-weight:800;color:var(--dark)">'+escHtml(tijdTxt)+'</div>'+
+      '<button class="ibtn" style="width:auto;height:auto;padding:8px 0;font-size:12px;color:var(--accent-text)" onclick="hyroxOpenGeschiedenisRace(\''+laatste.instanceId+'\')">Bekijk race</button>'+
+    '</div>'+
+    vergelijkHtml +
+    renderHyroxTrendSectie(alle);
+}
+
+/* v4.72.0 — TRENDWEERGAVE. Elk cluster (context-groep, zie buildPerformanceTrend()) krijgt
+   een EIGEN kaart — bewust geen doorlopende grafieklijn tussen verschillende contexten
+   (Fase 11: "geen verbindingslijn tussen verschillende contexten"). Een cluster van
+   grootte 1 (incl. elke triathlon-race, die per performanceContextMatch() nooit met een
+   andere triathlon-race matcht) toont expliciet "Trend niet beschikbaar" met reden, geen
+   race wordt overgeslagen — hij is gewoon al zichtbaar via de bovenstaande kaarten. */
+function renderHyroxTrendSectie(alle){
+  const clusters = buildPerformanceTrend(alle);
+  const trendbareClusters = clusters.filter(function(c){ return c.aantal>=2; });
+  const enkeleClusters = clusters.filter(function(c){ return c.aantal<2; });
+
+  let html = '<div class="v43-lbl" style="margin:18px 0 10px">Voortgang</div>';
+
+  if(!trendbareClusters.length){
+    html += '<div class="card" style="padding:16px"><div style="font-size:13px;color:var(--g4)">Trend niet beschikbaar</div>'+
+      '<div style="font-size:11.5px;color:var(--g4);margin-top:4px">Nog onvoldoende vergelijkbare racegegevens — log minimaal twee races binnen dezelfde context (sport, official/simulatie, en voor HYROX ook format/tier/geslacht of relay-divisie/leeftijdscategorie; voor triathlon exact dezelfde zwem-, fiets- en loopafstand).</div></div>';
+    return html;
+  }
+
+  html += trendbareClusters.map(function(cluster){
+    const ctx = cluster.context||{};
+    const ctxTxt = [cluster.sport==='hyrox'?'HYROX':'Triathlon', hyroxContextLabel(cluster.sport, ctx), (ctx.isOfficial===true?'Officieel':ctx.isOfficial===false?'Simulatie':null)].filter(Boolean).join(' · ');
+    const conclusie = performanceConclusie(cluster);
+    const puntenHtml = cluster.punten.map(function(p){
+      const tijdTxt2 = p.totalTime!=null ? CardioCore.formatTime(p.totalTime) : 'Niet beschikbaar';
+      const isBest = (p.totalTime!=null && cluster.besteTijd!=null && p.totalTime===cluster.besteTijd);
+      return '<div class="lich-krow"><span class="k">'+escHtml(fmtDate(p.datum))+(isBest?' ★':'')+'</span><span style="font-weight:700">'+escHtml(tijdTxt2)+'</span></div>';
+    }).join('');
+    return '<div class="card" style="padding:16px;margin-bottom:10px">'+
+      '<div class="v43-lbl" style="margin-bottom:6px">'+escHtml(ctxTxt)+' · '+cluster.aantal+' vergelijkbare races</div>'+
+      '<div style="font-size:14px;font-weight:700;color:var(--dark);margin-bottom:8px">'+escHtml(conclusie)+'</div>'+
+      (cluster.besteTijd!=null ? '<div style="font-size:11.5px;color:var(--g4);margin-bottom:8px">Beste vergelijkbare tijd: '+CardioCore.formatTime(cluster.besteTijd)+' (★)</div>' : '')+
+      puntenHtml+
+    '</div>';
+  }).join('') +
+  (enkeleClusters.length ? '<div style="font-size:11px;color:var(--g4);margin-top:4px">'+enkeleClusters.length+' race(s) staan nog los — nog geen vergelijkbare eerdere race in dezelfde context.</div>' : '');
+
+  return html;
+}
+
 </script>
 
 <script>

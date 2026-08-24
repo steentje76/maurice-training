@@ -1228,6 +1228,47 @@ function _buildCorrigeerHarness(startVoltooid, startDb){
   const liveResultaat = liveMod();
   eq(liveResultaat.segments[0].distance, 7500, 'DO8: de correctie stroomt door tot in hyroxLiveAlsPerformance() -> het resultatenscherm toont direct de juiste waarde, niet pas na een reload');
 
+  /* ══════════════════════════════════════════════════════════════════════════════════
+   * P0-REMEDIATION (FUNCTIONAL USER AUDIT PR #31) — HYROX-entrypoint daadwerkelijk
+   * bereikbaar vanuit de echte DOM, niet alleen als losse, ongekoppelde JS-functie.
+   * ══════════════════════════════════════════════════════════════════════════════════ */
+  console.log('\nDP. P0-regressie: #hyrox-entry bestaat daadwerkelijk in de DOM en levert een klikbare, correct gekoppelde knop op');
+  let JSDOMlib;
+  try { JSDOMlib = require('jsdom').JSDOM; } catch (_) { JSDOMlib = null; }
+  if (JSDOMlib) {
+    function extractDivBlock(bron, startMarker){
+      const s = bron.indexOf(startMarker);
+      let depth = 0, end = -1;
+      const tagRe = /<(\/?)div\b[^>]*?(\/?)>/g;
+      tagRe.lastIndex = s;
+      let m;
+      while ((m = tagRe.exec(bron))) {
+        if (m[2] === '/') continue;
+        if (m[1] !== '/') depth++;
+        else { depth--; if (depth === 0) { end = m.index + m[0].length; break; } }
+      }
+      return bron.slice(s, end);
+    }
+    const sBuilderBlock = extractDivBlock(html, '<div class="scr" id="s-builder">');
+    ok(/<div id="hyrox-entry"/.test(sBuilderBlock), 'DP1: het s-builder-scherm bevat daadwerkelijk <div id="hyrox-entry"> in de HTML-markup (niet alleen als JS-opzoekactie)');
+
+    const dom = new JSDOMlib('<!DOCTYPE html><html><body>' + sBuilderBlock + '</body></html>', { runScripts: 'outside-only' });
+    const savedDoc = global.document, savedActive = global.hyroxActive, savedEsc = global.escHtml;
+    global.document = dom.window.document;
+    global.hyroxActive = null;
+    global.escHtml = function(s){ return String(s); };
+    const renderEntryFn = new Function(extractFn('renderHyroxEntry') + '\nreturn renderHyroxEntry;')();
+    renderEntryFn();
+    const entryEl = dom.window.document.getElementById('hyrox-entry');
+    ok(!!entryEl, 'DP2: document.getElementById(\'hyrox-entry\') levert een echt DOM-element op (was voorheen null -- P0-blocker uit de functionele gebruikersaudit)');
+    const knopEl = entryEl ? entryEl.querySelector('button') : null;
+    ok(!!knopEl, 'DP3: renderHyroxEntry() schrijft een daadwerkelijk klikbaar <button>-element in dat element');
+    eq(knopEl ? knopEl.getAttribute('onclick') : null, "openModal('m-hyrox-setup')", 'DP4: de knop is correct gekoppeld aan openModal(\'m-hyrox-setup\') -- het startmodal is nu daadwerkelijk bereikbaar');
+    global.document = savedDoc; global.hyroxActive = savedActive; global.escHtml = savedEsc;
+  } else {
+    console.log('   DP: jsdom niet beschikbaar in deze omgeving -- DOM-regressietest overgeslagen (niet dezelfde garantie als STAP 4-audit, die jsdom wel gebruikte)');
+  }
+
   console.log('\n========================================================');
   console.log(`RESULTAAT: ${pass} geslaagd, ${fail} mislukt`);
   console.log(fail === 0 ? '✅ HYROX/Triathlon: volledige keten t/m Adaptive + triathlon-categorielabel + correction-state-consistentie (PR #31-remediation): puur, deterministisch, additief.' : '❌ NIET groen.');

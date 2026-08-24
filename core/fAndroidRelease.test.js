@@ -294,5 +294,31 @@ t('G3: de onderbalk houdt rekening met de navigatiebalk', function () {
     'de hoofdnavigatie houdt geen rekening met de systeemnavigatie');
 });
 
+/* ══ H. RELEASEDOCUMENTATIE — VERSIEBUMP AFDWINGEN (VERSION/RELEASE REPAIR v4.49.0) ══
+ * Aanleiding: Wet 84 ("versiebump is verplicht bij elke release, zonder uitzondering")
+ * is bij PR #31 (HYROX/Adaptive) niet nageleefd -- APP_VER/versionName/versionCode bleven
+ * dagenlang op v4.48.0 staan terwijl de functionaliteit al naar main was gemerged, puur
+ * omdat niets dit automatisch afdwong. Sectie A/E4 hierboven controleren al INTERNE
+ * consistentie (index.html <-> build.gradle <-> gebouwd artefact) -- deze sectie
+ * controleert of de RELEASEDOCUMENTATIE (CHANGELOG.md, CURRENT_STATE.md) daadwerkelijk
+ * over de huidige APP_VER gaat, niet over een oudere. */
+console.log('\nH. Releasedocumentatie volgt de huidige APP_VER');
+t('H1: CHANGELOG.md se meest recente entry gaat over de huidige APP_VER, niet over een oudere versie', function () {
+  var v = appVer();
+  var changelog = lees('CHANGELOG.md');
+  var eersteKop = changelog.match(/^## v([\d.]+)/m);
+  assert.ok(eersteKop, 'CHANGELOG.md bevat geen enkele versie-kop (## v...)');
+  assert.strictEqual(eersteKop[1], v,
+    'CHANGELOG.md se bovenste entry (v' + eersteKop[1] + ') komt niet overeen met APP_VER (v' + v + ') -- versiebump vergeten in CHANGELOG.md?');
+});
+t('H2: CURRENT_STATE.md se "Huidige versie" komt overeen met APP_VER', function () {
+  var v = appVer();
+  var currentState = lees('docs/00_Project_Management/CURRENT_STATE.md');
+  var m = currentState.match(/## Huidige versie\s*\n(v[\d.]+)/);
+  assert.ok(m, 'CURRENT_STATE.md bevat geen "## Huidige versie"-sectie in het verwachte formaat');
+  assert.strictEqual(m[1].replace(/^v/, ''), v,
+    'CURRENT_STATE.md se "Huidige versie" (' + m[1] + ') komt niet overeen met APP_VER (v' + v + ') -- versiebump vergeten in CURRENT_STATE.md?');
+});
+
 console.log('\n========================================================');
 console.log('fAndroidRelease.test.js — ' + n + ' tests geslaagd');

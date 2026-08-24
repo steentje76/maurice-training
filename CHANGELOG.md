@@ -1,5 +1,13 @@
 # Trainingskompas — Changelog
 
+## v4.49.0 — HYROX, Adaptive Triathlon en correction-state remediation (24 augustus 2026)
+
+HYROX-race-tracking (Single/Doubles/Relay/Adaptive) en triathlon-brick geïntegreerd, met de volledig bronbevestigde HYROX Adaptive-classificaties (13 waarden, rulebook 26/27). Race-context wordt vastgelegd via zes nieuwe, additieve kolommen op `training_instances` (`race_format`, `race_tier`, `race_gender`, `race_relay_age_category`, `race_relay_division`, `race_adaptive_class`), met een CHECK-constraint die uitsluitend de 13 canonieke Adaptive-waarden toestaat (live op Supabase geverifieerd). Bestaande HYROX-tijdrekenlogica (stationduur, transitietijd) is geconsolideerd in `core/cardio.js` (`CardioCore.stationDurationS`/`segmentTransitionS`) als enige bron van waarheid, in plaats van een los duplicaat in `index.html`.
+
+**Correctie op een voltooid stationresultaat toonde de oude waarde (P1).** `hyroxCorrigeerLaatste()` patchte de database correct, maar werkte het live `hyroxActive.voltooid`-object nooit bij — het resultatenscherm en de lokaal opgeslagen racestatus (`tk_hyrox_active`) bleven daardoor de oude, ongecorrigeerde waarde tonen totdat de app opnieuw werd geladen. Gereproduceerd met een deterministische test vóór de fix; nu synchroniseert de correctie direct de live state, de lokale opslag én het scherm.
+
+**HYROX/Adaptive Triathlon was voor een gebruiker onbereikbaar (P0).** Het startpunt in de Workout Builder (`#hyrox-entry`) ontbrak in de daadwerkelijke schermopbouw, waardoor de bijbehorende knop nergens verscheen en niemand het HYROX-opzetscherm kon openen. Hersteld; bevestigd met een echte DOM-test die zowel de knop als de koppeling naar het opzetscherm controleert.
+
 ## v4.48.0 — RC0: release candidate voor Google Play Internal Testing (19 augustus 2026)
 
 Geen nieuwe functionaliteit. Deze release maakt bestaande functionaliteit betrouwbaar, zichtbaar en uitleverbaar. Volledige verantwoording in `docs/RELEASE_READINESS.md`, `docs/PLAY_STORE_READINESS.md` en `docs/RELEASE_CHANGELOG.md`.

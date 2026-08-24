@@ -1261,12 +1261,72 @@ function _buildCorrigeerHarness(startVoltooid, startDb){
     renderEntryFn();
     const entryEl = dom.window.document.getElementById('hyrox-entry');
     ok(!!entryEl, 'DP2: document.getElementById(\'hyrox-entry\') levert een echt DOM-element op (was voorheen null -- P0-blocker uit de functionele gebruikersaudit)');
-    const knopEl = entryEl ? entryEl.querySelector('button') : null;
-    ok(!!knopEl, 'DP3: renderHyroxEntry() schrijft een daadwerkelijk klikbaar <button>-element in dat element');
-    eq(knopEl ? knopEl.getAttribute('onclick') : null, "openModal('m-hyrox-setup')", 'DP4: de knop is correct gekoppeld aan openModal(\'m-hyrox-setup\') -- het startmodal is nu daadwerkelijk bereikbaar');
+    ok(entryEl.innerHTML === '', 'DP3: UX-REFACTOR (HYROX first-class) -- zonder actieve race toont #hyrox-entry bewust NIETS meer (geen dubbele startknop naast de nieuwe first-class kaarten in Training -> Bouwen)');
+    global.hyroxActive = { type:'hyrox', fase:'bezig', huidigeIndex:2, segments:new Array(16) };
+    const renderEntryFn2 = new Function(extractFn('renderHyroxEntry') + '\nreturn renderHyroxEntry;')();
+    renderEntryFn2();
+    const hervatKnop = dom.window.document.getElementById('hyrox-entry').querySelector('button');
+    ok(!!hervatKnop, 'DP4: met een BEZIGE race toont #hyrox-entry nog steeds een hervatknop -- dit is geen duplicaat-entrypoint maar de enige weg om een onderbroken race te hervatten, en blijft daarom terecht behouden');
+    eq(hervatKnop ? hervatKnop.getAttribute('onclick') : null, "go('s-hyrox')", 'DP5: de hervatknop navigeert naar het lopende race-scherm, niet naar het setup-modal');
     global.document = savedDoc; global.hyroxActive = savedActive; global.escHtml = savedEsc;
   } else {
     console.log('   DP: jsdom niet beschikbaar in deze omgeving -- DOM-regressietest overgeslagen (niet dezelfde garantie als STAP 4-audit, die jsdom wel gebruikte)');
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════════════
+   * UX-REFACTOR — HYROX en Triathlon-brick als first-class training type,
+   * bereikbaar via Training -> Bouwen, gelijkwaardig aan Workout Builder.
+   * ══════════════════════════════════════════════════════════════════════════════════ */
+  console.log('\nDQ. HYROX/Triathlon-brick zijn first-class bereikbaar via Training -> Bouwen');
+  if (JSDOMlib) {
+    function extractDivBlock2(bron, startMarker){
+      const s = bron.indexOf(startMarker);
+      let depth = 0, end = -1;
+      const tagRe = /<(\/?)div\b[^>]*?(\/?)>/g;
+      tagRe.lastIndex = s;
+      let m;
+      while ((m = tagRe.exec(bron))) {
+        if (m[2] === '/') continue;
+        if (m[1] !== '/') depth++;
+        else { depth--; if (depth === 0) { end = m.index + m[0].length; break; } }
+      }
+      return bron.slice(s, end);
+    }
+    const sTrainMgrBlock = extractDivBlock2(html, '<div class="scr" id="s-train-mgr">');
+    const mSetupBlock = extractDivBlock2(html, '<div class="modal-bg" id="m-hyrox-setup"');
+    const dom2 = new JSDOMlib('<!DOCTYPE html><html><body>' + sTrainMgrBlock + mSetupBlock + '</body></html>', { runScripts: 'outside-only' });
+    const savedDoc2 = global.document;
+    global.document = dom2.window.document;
+    let modalGeopend = null;
+    const origOpenModal = global.openModal;
+    global.openModal = function(id){ modalGeopend = id; };
+    const toggleFn = new Function(extractFn('hyroxSetupToggleDivisie') + '\nreturn hyroxSetupToggleDivisie;')();
+    global.hyroxSetupToggleDivisie = toggleFn;
+    const openDirectFn = new Function('openModal','hyroxSetupToggleDivisie', extractFn('hyroxOpenSetupDirect').replace('function hyroxOpenSetupDirect', 'return function hyroxOpenSetupDirect'))(global.openModal, toggleFn);
+
+    const rows = Array.from(dom2.window.document.querySelectorAll('.row'));
+    const hyroxRow = rows.find(function(r){ return r.textContent.indexOf('HYROX') !== -1; });
+    const brickRow = rows.find(function(r){ return r.textContent.indexOf('Triathlon-brick') !== -1; });
+    ok(!!hyroxRow, 'DQ1: Training -> Bouwen bevat een zelfstandige "HYROX"-kaart, op hetzelfde niveau als Workout Builder');
+    ok(!!brickRow, 'DQ2: Training -> Bouwen bevat een zelfstandige "Triathlon-brick"-kaart');
+    eq(hyroxRow ? hyroxRow.getAttribute('onclick') : null, "hyroxOpenSetupDirect('hyrox')", 'DQ3: de HYROX-kaart roept de nieuwe, dunne koppelfunctie aan -- geen tweede HYROX-implementatie');
+    eq(brickRow ? brickRow.getAttribute('onclick') : null, "hyroxOpenSetupDirect('brick')", 'DQ4: de Triathlon-brick-kaart roept dezelfde koppelfunctie aan, met het andere type');
+
+    openDirectFn('hyrox');
+    eq(modalGeopend, 'm-hyrox-setup', 'DQ5: klikken op de HYROX-kaart opent hetzelfde, bestaande setup-modal');
+    eq(dom2.window.document.getElementById('hyrox-setup-type').value, 'hyrox', 'DQ6: het type-veld staat na de klik correct op "hyrox"');
+    eq(dom2.window.document.getElementById('hyrox-setup-format-row').style.display, 'flex', 'DQ7: de HYROX-specifieke format-rij is zichtbaar na het openen via de nieuwe HYROX-kaart');
+
+    modalGeopend = null;
+    openDirectFn('brick');
+    eq(modalGeopend, 'm-hyrox-setup', 'DQ8: klikken op de Triathlon-brick-kaart opent hetzelfde setup-modal');
+    eq(dom2.window.document.getElementById('hyrox-setup-type').value, 'brick', 'DQ9: het type-veld staat na de klik correct op "brick"');
+    eq(dom2.window.document.getElementById('hyrox-setup-format-row').style.display, 'none', 'DQ10: de HYROX-specifieke format-rij is verborgen bij Triathlon-brick');
+
+    global.document = savedDoc2;
+    global.openModal = origOpenModal;
+  } else {
+    console.log('   DQ: jsdom niet beschikbaar -- overgeslagen');
   }
 
   console.log('\n========================================================');

@@ -3717,6 +3717,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="v43-lbl" style="margin:20px 0 8px">Bouwen &amp; verkennen</div>
     <div class="v43-tmt">
       <button class="row" onclick="go('s-builder');if(window.WBUI)WBUI.render()"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span class="b"><span class="t">Workout Builder</span><span class="s">AI stelt een training samen op je herstel</span></span><span class="ar">›</span></button>
+      <button class="row" onclick="hyroxOpenSetupDirect('hyrox')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 21l4-4M8 17l3-3M15 10l3-3M18 6l2-2M6 19l1 1M10 15l1 1M13 12l1 1M17 8l1 1"/><circle cx="12" cy="12" r="9"/></svg></span><span class="b"><span class="t">HYROX</span><span class="s">Single, Doubles, Relay of Adaptive — 8 stations, 8 runs</span></span><span class="ar">›</span></button>
+      <button class="row" onclick="hyroxOpenSetupDirect('brick')"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="3"/><circle cx="18" cy="6" r="3"/><path d="M9 18h6a3 3 0 003-3V9"/></svg></span><span class="b"><span class="t">Triathlon-brick</span><span class="s">Zwemmen → fietsen → hardlopen, aaneengesloten</span></span><span class="ar">›</span></button>
       <button class="row" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></span><span class="b"><span class="t">Oefeningen</span><span class="s">206 oefeningen &#183; video&#8217;s &#183; alternatieven</span></span><span class="ar">›</span></button>
       <button class="row" onclick="openLosOefening()"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 9v6M7 6v12M17 6v12M20 9v6M7 12h10"/></svg></span><span class="b"><span class="t">Losse oefening</span><span class="s">E&#233;n oefening loggen, zonder training</span></span><span class="ar">›</span></button>
     </div>
@@ -22689,6 +22691,19 @@ async function hyroxTikKlaar(){
 // en herbouwt de Gender-opties (Single: alleen Male/Female; Doubles: ook Mixed —
 // bronbevestigd, v4.74.0). Relay toont zijn eigen relay-divisie/leeftijdscategorie
 // i.p.v. Tier/Gender (bronbevestigd: Relay kent geen Open/Pro-tier, v4.74.2).
+// UX-REFACTOR (HYROX first-class training type) — dunne, nieuwe koppelfunctie die
+// uitsluitend bestaande logica hergebruikt: zet het type-veld in het al bestaande
+// m-hyrox-setup-modal vooraf op de gewenste waarde, roept de al bestaande
+// hyroxSetupToggleDivisie() aan zodat de conditionele velden meteen correct staan,
+// en opent daarna hetzelfde, ongewijzigde modal. Geen nieuwe HYROX-engine, geen
+// nieuwe validatie, geen nieuw databasecontract — uitsluitend een alternatieve,
+// directe ingang naar exact dezelfde bestaande setup.
+function hyroxOpenSetupDirect(type){
+  const typeSel = document.getElementById('hyrox-setup-type');
+  if(typeSel) typeSel.value = type;
+  hyroxSetupToggleDivisie();
+  openModal('m-hyrox-setup');
+}
 function hyroxSetupToggleDivisie(){
   const type = document.getElementById('hyrox-setup-type')?.value;
   const formatRow = document.getElementById('hyrox-setup-format-row');
@@ -22770,7 +22785,11 @@ function renderHyroxEntry(){
       '<span><b>'+escHtml(label)+'</b><br><span style="font-size:11.5px;color:var(--g4)">'+escHtml(sub)+'</span></span>'+
       '<span class="chev">›</span></button>';
   } else {
-    el.innerHTML = '<button class="ibtn" style="width:auto;height:auto;padding:8px 0;font-size:12.5px;font-weight:700;color:var(--accent-text)" onclick="openModal(\'m-hyrox-setup\')">🏁 HYROX-race of triathlon-brick starten</button>';
+    // UX-REFACTOR (HYROX first-class training type): het starten van een nieuwe race
+    // gaat voortaan uitsluitend via de first-class kaarten in Training → Bouwen
+    // (hyroxOpenSetupDirect()) — dit voorkomt een verwarrende, dubbele startknop.
+    // Zonder actieve race toont dit element daarom bewust niets.
+    el.innerHTML = '';
   }
 }
 

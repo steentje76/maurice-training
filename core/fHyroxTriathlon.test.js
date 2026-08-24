@@ -494,7 +494,7 @@ const volledigeRijen = [];
 for (let i = 1; i <= 16; i++) {
   const id = i % 2 === 1 ? 'hyrox_run' : TK_HYROX_STATIONS_TEST[(i / 2) - 1];
   const start = T0ae2 + (i - 1) * 100_000;
-  volledigeRijen.push(segRij(i, id, { extraNote: tsNote(start, start + 60_000), distance: id === 'hyrox_run' ? 1000 : null }));
+  volledigeRijen.push(segRij(i, id, { note: tsNote(start, start + 60_000), distance: id === 'hyrox_run' ? 1000 : null }));
 }
 const perfCompleet = Reconstruct.hyroxReconstructPerformance({ race_division: 'open', race_is_official: true }, volledigeRijen);
 eq(perfCompleet.provenance, 'stored', 'AL1: provenance = stored');
@@ -511,8 +511,8 @@ eq(perfCompleet.segments.map(s => s.segment_index), [1,2,3,4,5,6,7,8,9,10,11,12,
 
 console.log('\nAM. B: HYROX gedeeltelijke/ontbrekende segmentdata — GEEN aanvulling');
 const gedeeltelijkeRijen = [
-  segRij(1, 'hyrox_run', { extraNote: tsNote(T0ae2, T0ae2 + 60_000) }),
-  segRij(3, 'hyrox_run', { extraNote: tsNote(T0ae2 + 200_000, T0ae2 + 260_000) }) // segment 2 ontbreekt, NIET aanvullen
+  segRij(1, 'hyrox_run', { note: tsNote(T0ae2, T0ae2 + 60_000) }),
+  segRij(3, 'hyrox_run', { note: tsNote(T0ae2 + 200_000, T0ae2 + 260_000) }) // segment 2 ontbreekt, NIET aanvullen
 ];
 const perfGedeeltelijk = Reconstruct.hyroxReconstructPerformance(null, gedeeltelijkeRijen);
 eq(perfGedeeltelijk.segments.length, 2, 'AM1: uitsluitend de 2 daadwerkelijk opgeslagen segmenten — segment 2 wordt NIET verzonnen');
@@ -524,9 +524,9 @@ eq(perfGedeeltelijk.raceContext, {
 
 console.log('\nAN. C: triathlon complete race (3 loggbare disciplines)');
 const brickRijen = [
-  { segment_index: 1, exercise_id: 'triathlon_zwemmen', training_type: 'Triathlon', extraNote: tsNote(T0ae2, T0ae2 + 900_000), distance: 1500 },
-  { segment_index: 3, exercise_id: 'triathlon_fietsen', training_type: 'Triathlon', extraNote: tsNote(T0ae2 + 1_000_000, T0ae2 + 5_000_000), distance: 40000 },
-  { segment_index: 5, exercise_id: 'triathlon_hardlopen', training_type: 'Triathlon', extraNote: tsNote(T0ae2 + 5_100_000, T0ae2 + 7_600_000), distance: 10000 }
+  { segment_index: 1, exercise_id: 'triathlon_zwemmen', training_type: 'Triathlon', note: tsNote(T0ae2, T0ae2 + 900_000), distance: 1500 },
+  { segment_index: 3, exercise_id: 'triathlon_fietsen', training_type: 'Triathlon', note: tsNote(T0ae2 + 1_000_000, T0ae2 + 5_000_000), distance: 40000 },
+  { segment_index: 5, exercise_id: 'triathlon_hardlopen', training_type: 'Triathlon', note: tsNote(T0ae2 + 5_100_000, T0ae2 + 7_600_000), distance: 10000 }
 ];
 const perfBrick = Reconstruct.hyroxReconstructPerformance({ race_division: null, race_is_official: false }, brickRijen);
 eq(perfBrick.sport, 'triathlon', 'AN1: sport correct herkend voor triathlon');
@@ -536,13 +536,13 @@ ok(perfBrick.segments[2].transition != null, 'AN4: transitie (T2) berekend tusse
 eq(perfBrick.raceContext.isOfficial, false, 'AN5: isOfficial=false correct doorgegeven (simulatie), niet verward met null');
 
 console.log('\nAO. D/E: ontbrekende/negatieve/ongeldige timestamp -> null, nooit geschat');
-const kapotteNote = [segRij(1, 'hyrox_run', { extraNote: null })];
+const kapotteNote = [segRij(1, 'hyrox_run', { note: null })];
 eq(Reconstruct.hyroxReconstructPerformance(null, kapotteNote).segments[0].duration, null, 'AO1: ontbrekende extraNote -> duration null');
-const negatieveNote = [segRij(1, 'hyrox_run', { extraNote: tsNote(T0ae2 + 5000, T0ae2) })]; // eind vóór start
+const negatieveNote = [segRij(1, 'hyrox_run', { note: tsNote(T0ae2 + 5000, T0ae2) })]; // eind vóór start
 eq(Reconstruct.hyroxReconstructPerformance(null, negatieveNote).segments[0].duration, null, 'AO2: negatieve/omgekeerde tijdstempels -> duration null (nooit clampen)');
 
 console.log('\nAP. F/G/H: ontbrekende distance/weight/reps -> null, nooit 0');
-const legeMetrics = [segRij(2, 'hyrox_sled_push', { extraNote: tsNote(T0ae2, T0ae2 + 60_000) })];
+const legeMetrics = [segRij(2, 'hyrox_sled_push', { note: tsNote(T0ae2, T0ae2 + 60_000) })];
 const perfLeeg = Reconstruct.hyroxReconstructPerformance(null, legeMetrics).segments[0];
 eq(perfLeeg.distance, null, 'AP1: ontbrekende distance -> null, niet 0');
 eq(perfLeeg.weight, null, 'AP2: ontbrekende weight -> null, niet 0');
@@ -635,7 +635,7 @@ const T0av = 1_755_100_000_000;
 for (let i = 1; i <= 16; i++) {
   const id = i % 2 === 1 ? 'hyrox_run' : TK_HYROX_STATIONS_TEST[(i / 2) - 1];
   const start = T0av + (i - 1) * 90_000;
-  historieRijen.push({ id: 'row'+i, segment_index: i, exercise_id: id, training_type: 'HYROX', training_instance_id: 'hist-race-1', extraNote: 'hyrox_ts:start='+start+',end='+(start+60000), date: '2026-08-01' });
+  historieRijen.push({ id: 'row'+i, segment_index: i, exercise_id: id, training_type: 'HYROX', training_instance_id: 'hist-race-1', note: 'hyrox_ts:start='+start+',end='+(start+60000), date: '2026-08-01' });
 }
 const perfViaHistorie = Reconstruct.hyroxReconstructPerformance({ race_division: 'pro', race_is_official: true }, historieRijen);
 eq(perfViaHistorie.provenance, 'stored', 'AY1: provenance = stored (Fase 6, acceptatiecriterium 4)');
@@ -647,7 +647,7 @@ eq(perfViaHistorie.raceContext, {
 }, 'AY3: race-context correct meegenomen, inclusief afgeleide hyrox-subcontext (v4.76.0)');
 
 console.log('\nAZ. Onvolledige/defecte race breekt niets — race blijft individueel weergeefbaar');
-const defecteRij = [{ id: 'x1', segment_index: 1, exercise_id: 'hyrox_run', training_type: 'HYROX', training_instance_id: 'defect-1', extraNote: 'corrupte-tekst-geen-geldig-formaat', date: '2026-08-01' }];
+const defecteRij = [{ id: 'x1', segment_index: 1, exercise_id: 'hyrox_run', training_type: 'HYROX', training_instance_id: 'defect-1', note: 'corrupte-tekst-geen-geldig-formaat', date: '2026-08-01' }];
 const perfDefect = Reconstruct.hyroxReconstructPerformance(null, defecteRij);
 eq(perfDefect.segments[0].duration, null, 'AZ1: onherkenbare extraNote -> duration null, geen crash, geen geschatte waarde');
 ok(perfDefect.segments.length === 1, 'AZ2: de rij zelf blijft gewoon aanwezig in het object — een defect segment verdwijnt niet, toont alleen "niet beschikbaar"');
@@ -778,9 +778,9 @@ eq(Match.performanceContextMatch(tri_1500_40000_10000_off, single_open_male).com
 
 console.log('\nBC2. Historische triathlon met bestaande, al opgeslagen afstanden is vergelijkbaar zodra alle drie bekend zijn (test 26)');
 const historieTriRijen = [
-  { id:'ht1', segment_index:1, exercise_id:'triathlon_zwemmen', training_type:'Triathlon', distance:1500, extraNote:'hyrox_ts:start=1000,end=61000', date:'2026-01-01' },
-  { id:'ht2', segment_index:3, exercise_id:'triathlon_fietsen', training_type:'Triathlon', distance:40000, extraNote:'hyrox_ts:start=70000,end=5070000', date:'2026-01-01' },
-  { id:'ht3', segment_index:5, exercise_id:'triathlon_hardlopen', training_type:'Triathlon', distance:10000, extraNote:'hyrox_ts:start=5100000,end=7600000', date:'2026-01-01' }
+  { id:'ht1', segment_index:1, exercise_id:'triathlon_zwemmen', training_type:'Triathlon', distance:1500, note:'hyrox_ts:start=1000,end=61000', date:'2026-01-01' },
+  { id:'ht2', segment_index:3, exercise_id:'triathlon_fietsen', training_type:'Triathlon', distance:40000, note:'hyrox_ts:start=70000,end=5070000', date:'2026-01-01' },
+  { id:'ht3', segment_index:5, exercise_id:'triathlon_hardlopen', training_type:'Triathlon', distance:10000, note:'hyrox_ts:start=5100000,end=7600000', date:'2026-01-01' }
 ];
 const perfHistorieTri = Reconstruct.hyroxReconstructPerformance({ race_is_official:true }, historieTriRijen);
 eq(perfHistorieTri.raceContext.triathlon, { swimDistance:1500, bikeDistance:40000, runDistance:10000, format:'individual' }, '26a: gereconstrueerde triathlon-context correct uit bestaande sessions.distance, geen nieuwe kolom nodig');
@@ -1329,8 +1329,56 @@ function _buildCorrigeerHarness(startVoltooid, startDb){
     console.log('   DQ: jsdom niet beschikbaar -- overgeslagen');
   }
 
-  console.log('\n========================================================');
-  console.log(`RESULTAAT: ${pass} geslaagd, ${fail} mislukt`);
-  console.log(fail === 0 ? '✅ HYROX/Triathlon: volledige keten t/m Adaptive + triathlon-categorielabel + correction-state-consistentie (PR #31-remediation): puur, deterministisch, additief.' : '❌ NIET groen.');
-  process.exitCode = fail === 0 ? 0 : 1;
+  /* ══════════════════════════════════════════════════════════════════════════════════
+   * ROOT-CAUSE REGRESSIE — "Kon segment niet opslaan" (live gebruikersmelding, PR #33-
+   * vervolg). De sessions-tabel heeft GEEN kolom "extraNote" (nooit gemigreerd);
+   * hyroxFinishSegment() schreef die kolom toch, waardoor PostgREST ELKE segment-opslag
+   * met een niet-herstelbare 400 weigerde -- voor zowel HYROX als Triathlon-brick, want
+   * beide delen dezelfde writeSessionRow()/hyroxFinishSegment(). Deze test simuleert het
+   * ECHTE, live Supabase-schema (rechtstreeks opgehaald via information_schema.columns)
+   * en faalt hard zodra een niet-bestaande kolom in de insert-payload zou belanden.
+   * ══════════════════════════════════════════════════════════════════════════════════ */
+  console.log('\nDR. ROOT-CAUSE: segment-opslag gebruikt uitsluitend daadwerkelijk bestaande sessions-kolommen');
+  const ECHTE_SESSIONS_KOLOMMEN = new Set(['id','date','exercise_id','sets','reps','weight','rpe','distance',
+    'time_str','watt','stroke_rate','stops','wod_name','wod_type','score','note','training_type','created_at',
+    'user_id','calories','rounds','extra_reps','completed','hr_avg','pace_sec','stroke_type','gym_id',
+    'sets_detail','training_instance_id','duration_s','weather','segment_index']);
+
+  async function testSegmentSave(type, label){
+    const toasts = [];
+    const hyroxActiveH = { type: type, instanceId:'test', segmentStartAt: Date.now()-45000, vorigeEindAt:null,
+      huidigeIndex:0, voltooid:[], segments:[{segment_index:1,label:label,exercise_id: type==='hyrox'?'hyrox_run':null, cardio_type: type==='brick'?'swimming':null, velden:['distance']}] };
+    const geziene_kolommen = new Set();
+    async function sbPostQSim(tabel, row){
+      Object.keys(row).forEach(k => geziene_kolommen.add(k));
+      const onbekend = Object.keys(row).filter(k => !ECHTE_SESSIONS_KOLOMMEN.has(k));
+      if (onbekend.length) return false;
+      return true;
+    }
+    const finishSrc = 'async ' + extractFn('hyroxFinishSegment');
+    const tsNoteSrc = "const TK_HYROX_TS_PREFIX = 'hyrox_ts:';\n" + extractFn('tkHyroxTsNote');
+    const CardioCoreStub = { stationDurationS:(a,b)=>b>=a?Math.round((b-a)/1000):null, segmentTransitionS:()=>null, formatTime:s=>s+'s' };
+    const finishFn = new Function('CardioCore','TK_TRIATHLON_EXERCISE_ID','hyroxActive','hyroxSegmentBezig','hyroxHuidigSegment','td','toast','sbPostQ','hyroxAfronden','renderHyroxScreen','tkHyroxPersist',
+      tsNoteSrc + '\nasync function writeSessionRow(row){ return await sbPostQ("sessions", row); }\n' + finishSrc + '\nreturn hyroxFinishSegment;'
+    )(CardioCoreStub, {}, hyroxActiveH, false, function(){ return hyroxActiveH.segments[hyroxActiveH.huidigeIndex]; }, function(){ return '2026-01-01'; }, function(m){ toasts.push(m); }, sbPostQSim, async()=>{}, ()=>{}, ()=>{});
+    const ok = await finishFn({ distance:'1000', weight:null, reps:null });
+    return { ok, toasts, geziene_kolommen };
+  }
+
+  (async () => {
+    const hyroxRes = await testSegmentSave('hyrox', 'Run');
+    ok(hyroxRes.ok === true, 'DR1: HYROX-segmentopslag slaagt met alleen echte kolommen (reproduceert en bevestigt de fix voor de live "Kon segment niet opslaan"-melding)');
+    ok(!hyroxRes.toasts.includes('Kon segment niet opslaan — probeer opnieuw'), 'DR2: geen foutmelding bij een geldige HYROX-segmentopslag');
+    ok(hyroxRes.geziene_kolommen.has('note') && !hyroxRes.geziene_kolommen.has('extraNote'), 'DR3: de tijdstempel-annotatie gaat naar de bestaande note-kolom, niet naar een niet-bestaande extraNote-kolom');
+
+    const brickRes = await testSegmentSave('brick', 'Zwemmen');
+    ok(brickRes.ok === true, 'DR4: Triathlon-brick-segmentopslag slaagt eveneens (dezelfde gedeelde functie, dezelfde fix)');
+    ok(!brickRes.toasts.includes('Kon segment niet opslaan — probeer opnieuw'), 'DR5: geen foutmelding bij een geldige Triathlon-brick-segmentopslag');
+    eq(Array.from(brickRes.geziene_kolommen).sort().indexOf('extraNote'), -1, 'DR6: ook bij Triathlon-brick wordt nergens naar de niet-bestaande extraNote-kolom geschreven');
+
+    console.log('\n========================================================');
+    console.log(`RESULTAAT: ${pass} geslaagd, ${fail} mislukt`);
+    console.log(fail === 0 ? '✅ HYROX/Triathlon: volledige keten t/m Adaptive + triathlon-categorielabel + correction-state-consistentie (PR #31-remediation): puur, deterministisch, additief.' : '❌ NIET groen.');
+    process.exitCode = fail === 0 ? 0 : 1;
+  })();
 })();

@@ -22256,8 +22256,10 @@ async function wearableSyncSilent(){
  * twee echte tijdstempels en het resultaat (in seconden) gaat in de AL BESTAANDE
  * sessions.time_str-kolom (via CardioCore.formatTime — exact hetzelfde veld/formaat als
  * een handmatig getypte cardio-tijd). De ruwe start/eind-tijdstempels zelf worden NIET
- * weggegooid: ze gaan, naar het bestaande precedent van 'split:'/'drag '-annotaties in
- * sessions.extraNote (zie CARDIO_TYPES rowMap hierboven), als geparseerbare tekst mee —
+ * weggegooid: ze gaan, naar het bestaande precedent van 'split:'/'drag '-annotaties bij
+ * CARDIO_TYPES hierboven, in de AL BESTAANDE sessions.note-kolom (niet een aparte
+ * "extraNote"-kolom — die bestaat niet in het schema; dat was de root cause van "Kon
+ * segment niet opslaan" bij elke HYROX/triathlon-segment-poging) —
  * zodat segment_transition.v1 achteraf herleidbaar blijft uit twee opeenvolgende rijen,
  * i.p.v. onherleidbaar verloren te gaan na het opslaan van alleen de duur.
  * ══════════════════════════════════════════════════════════════════════════════ */
@@ -22458,8 +22460,14 @@ async function hyroxFinishSegment(invoer){
     training_type: hyroxActive.type==='hyrox' ? 'HYROX' : 'Triathlon',
     training_instance_id: hyroxActive.instanceId,
     segment_index: seg.segment_index,
-    note: '',
-    extraNote: tkHyroxTsNote(startAt, endAt),
+    // ROOT-CAUSE FIX — de sessions-tabel heeft geen kolom "extraNote" (nooit
+    // gemigreerd, bevestigd via het live schema). De wall-clock-tijdstempel-
+    // annotatie (nodig voor tkHyroxTsParse() bij het reconstrueren van de
+    // performance) hoort in de al bestaande, voor HYROX-rijen verder ongebruikte
+    // "note"-kolom. Elke insert met "extraNote" werd door PostgREST met een
+    // niet-herstelbare 400 geweigerd — vandaar "Kon segment niet opslaan" bij
+    // ELKE poging, ongeacht format/type.
+    note: tkHyroxTsNote(startAt, endAt),
     time_str: CardioCore.formatTime(duurS)
   };
   if(seg.exercise_id) row.exercise_id = seg.exercise_id;
@@ -22953,7 +22961,7 @@ function hyroxReconstructPerformance(instanceRow, sessieRijen){
   // _startMs/_endMs zijn intern (nodig voor de transitieberekening hieronder) en worden
   // vóór het retourneren weer verwijderd — geen onderdeel van het publieke contract.
   const segments = rijen.map(function(r){
-    const ts = tkHyroxTsParse(r.extraNote);
+    const ts = tkHyroxTsParse(r.note);
     const duurS = ts ? CardioCore.stationDurationS(ts.startMs, ts.endMs) : null;
     return {
       segment_index: r.segment_index,
@@ -22986,8 +22994,8 @@ function hyroxReconstructPerformance(instanceRow, sessieRijen){
   // 'officiële' race-tijd. Alleen null als een van beide tijdstempels ontbreekt.
   let totalTime = null;
   if(rijen.length){
-    const eersteTs = tkHyroxTsParse(rijen[0].extraNote);
-    const laatsteTs = tkHyroxTsParse(rijen[rijen.length-1].extraNote);
+    const eersteTs = tkHyroxTsParse(rijen[0].note);
+    const laatsteTs = tkHyroxTsParse(rijen[rijen.length-1].note);
     if(eersteTs && laatsteTs) totalTime = CardioCore.stationDurationS(eersteTs.startMs, laatsteTs.endMs);
   }
 

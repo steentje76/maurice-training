@@ -22266,33 +22266,7 @@ async function wearableSyncSilent(){
 // In plaats van core/cardio.js / core/decision.js uit te breiden, staan deze
 // kleine, pure, zelfstandige stukken hier lokaal — functioneel identiek,
 // nul regels gewijzigd in enig core/*.js-bestand.
-function tkHyroxStationDurationS(startMs, endMs) {
-  const a = (typeof startMs === 'number') ? startMs : parseFloat(startMs);
-  const b = (typeof endMs === 'number') ? endMs : parseFloat(endMs);
-  if (a == null || b == null || !isFinite(a) || !isFinite(b)) return null;
-  const rawMs = b - a;
-  if (rawMs < 0) return null;
-  return Math.round(rawMs / 1000);
-}
-// FASE 4-INTEGRATIE — segment_transition.v1, lokaal, functioneel identiek aan
-// mastersprint's segmentTransitionS() in core/calculation.js — niet naar
-// main's beschermde core/calculation.js overgebracht. Zelfde plafond (1u, REST_MAX_DUUR_S)
-// als onwaarschijnlijk voor een transitie tussen twee HYROX-segmenten.
-const TK_HYROX_TRANSITIE_MAX_DUUR_S = 3600;
-function tkHyroxSegmentTransitionS(prevSegmentEndMs, nextSegmentStartMs, pausedMsPrev, pausedMsThis) {
-  const a = (typeof prevSegmentEndMs === 'number') ? prevSegmentEndMs : parseFloat(prevSegmentEndMs);
-  const b = (typeof nextSegmentStartMs === 'number') ? nextSegmentStartMs : parseFloat(nextSegmentStartMs);
-  if (a == null || b == null || !isFinite(a) || !isFinite(b)) return null;
-  const pa = (pausedMsPrev == null || !isFinite(pausedMsPrev)) ? 0 : pausedMsPrev;
-  const pb = (pausedMsThis == null || !isFinite(pausedMsThis)) ? 0 : pausedMsThis;
-  let pausedDelta = pb - pa;
-  if (!(pausedDelta > 0)) pausedDelta = 0;
-  const rawMs = b - a - pausedDelta;
-  if (rawMs < 0) return null;
-  const s = Math.round(rawMs / 1000);
-  if (s > TK_HYROX_TRANSITIE_MAX_DUUR_S) return null;
-  return s;
-}
+
 const TK_HYROX_STATIONS = [
   'hyrox_skierg','hyrox_sled_push','hyrox_sled_pull','hyrox_burpee_broad_jump',
   'hyrox_row','hyrox_farmers_carry','hyrox_sandbag_lunges','hyrox_wall_balls'
@@ -22453,7 +22427,7 @@ function hyroxBeginSegment(){
 // hyroxFinishSegment(invoer): invoer = {distance, weight, reps} — alleen de velden die
 // dit segment nodig heeft worden gebruikt (zie TK_HYROX_STATION_VELDEN). Schrijft één
 // sessions-rij via de al bestaande writeSessionRow()/sbPostQ-offline-wachtrij — geen
-// nieuwe schrijfroute. Duur komt UITSLUITEND uit tkHyroxStationDurationS() op de
+// nieuwe schrijfroute. Duur komt UITSLUITEND uit CardioCore.stationDurationS() op de
 // twee echte tijdstempels; nooit een getypte/geschatte waarde.
 // v4.65.0 — voorkomt dubbele completion bij snel dubbeltikken op "Klaar" (zelfde
 // bestaande patroon als finishSessionBezig in de normale Execution-flow).
@@ -22466,14 +22440,14 @@ async function hyroxFinishSegment(invoer){
   if(!hyroxActive || !seg || hyroxActive.segmentStartAt==null){ toast('Nog niet gestart'); return false; }
   const startAt = hyroxActive.segmentStartAt;
   const endAt = Date.now();
-  const duurS = tkHyroxStationDurationS(startAt, endAt);
+  const duurS = CardioCore.stationDurationS(startAt, endAt);
   if(duurS==null){ toast('Ongeldige tijdmeting — probeer opnieuw'); return false; }
 
   // v4.58.0/v4.59.0-patroon: segment_transition.v1 berekent de tijd tussen het einde van
   // het VORIGE segment en de start van DIT segment — puur informatief hier (UI-weergave),
   // nooit een blokkerende regel. Eerste segment heeft nooit een voorafgaande transitie.
   const transitieS = (hyroxActive.vorigeEindAt!=null)
-    ? tkHyroxSegmentTransitionS(hyroxActive.vorigeEindAt, startAt, 0, 0) : null;
+    ? CardioCore.segmentTransitionS(hyroxActive.vorigeEindAt, startAt, 0, 0) : null;
 
   const today = td();
   const row = {
@@ -22532,8 +22506,24 @@ async function hyroxCorrigeerLaatste(invoer){
   if(invoer.weight!=null && invoer.weight!=='') patch.weight = parseFloat(invoer.weight)||null;
   if(invoer.reps!=null && invoer.reps!=='') patch.reps = parseInt(invoer.reps,10)||null;
   const ok = await sbPatch('sessions','id=eq.'+cur.id,patch);
-  if(ok) toast('Segment '+laatste.segment_index+' bijgewerkt');
-  else toast('Kon niet bijwerken');
+  if(ok){
+    // PRE-MERGE REMEDIATION (correction-state-audit) — zonder deze synchronisatie bleef
+    // hyroxActive.voltooid (het live in-memory-object, gebruikt door zowel de live-
+    // weergave als door hyroxLiveAlsPerformance() voor het resultatenscherm, én
+    // gepersisteerd naar tk_hyrox_active in localStorage) de OUDE waarde tonen, terwijl
+    // de database al de gecorrigeerde waarde had — deterministisch gereproduceerd en
+    // bevestigd vóór deze fix. De correctie moet nu exact hetzelfde patch-object
+    // toepassen op het live-object als wat zojuist succesvol naar de database is
+    // geschreven, en dat direct opnieuw persisteren.
+    if(patch.distance!==undefined) laatste.distance = patch.distance;
+    if(patch.weight!==undefined) laatste.weight = patch.weight;
+    if(patch.reps!==undefined) laatste.reps = patch.reps;
+    tkHyroxPersist();
+    if(typeof renderHyroxScreen==='function') renderHyroxScreen();
+    toast('Segment '+laatste.segment_index+' bijgewerkt');
+  } else {
+    toast('Kon niet bijwerken');
+  }
   return ok;
 }
 
@@ -22944,7 +22934,7 @@ function hyroxReconstructPerformance(instanceRow, sessieRijen){
   // vóór het retourneren weer verwijderd — geen onderdeel van het publieke contract.
   const segments = rijen.map(function(r){
     const ts = tkHyroxTsParse(r.extraNote);
-    const duurS = ts ? tkHyroxStationDurationS(ts.startMs, ts.endMs) : null;
+    const duurS = ts ? CardioCore.stationDurationS(ts.startMs, ts.endMs) : null;
     return {
       segment_index: r.segment_index,
       exercise_id: r.exercise_id || null,
@@ -22964,7 +22954,7 @@ function hyroxReconstructPerformance(instanceRow, sessieRijen){
   for(let i=1;i<segments.length;i++){
     const prev=segments[i-1], cur=segments[i];
     if(prev._endMs!=null && cur._startMs!=null){
-      cur.transition = tkHyroxSegmentTransitionS(prev._endMs, cur._startMs, 0, 0);
+      cur.transition = CardioCore.segmentTransitionS(prev._endMs, cur._startMs, 0, 0);
     }
   }
   segments.forEach(function(s){ delete s._startMs; delete s._endMs; });
@@ -22978,7 +22968,7 @@ function hyroxReconstructPerformance(instanceRow, sessieRijen){
   if(rijen.length){
     const eersteTs = tkHyroxTsParse(rijen[0].extraNote);
     const laatsteTs = tkHyroxTsParse(rijen[rijen.length-1].extraNote);
-    if(eersteTs && laatsteTs) totalTime = tkHyroxStationDurationS(eersteTs.startMs, laatsteTs.endMs);
+    if(eersteTs && laatsteTs) totalTime = CardioCore.stationDurationS(eersteTs.startMs, laatsteTs.endMs);
   }
 
   return {
@@ -23003,7 +22993,7 @@ function hyroxLiveAlsPerformance(){
   if(!hyroxActive) return null;
   const a = hyroxActive;
   const totalTime = (a.eersteStartAt!=null && a.vorigeEindAt!=null)
-    ? tkHyroxStationDurationS(a.eersteStartAt, a.vorigeEindAt) : null;
+    ? CardioCore.stationDurationS(a.eersteStartAt, a.vorigeEindAt) : null;
   const segments = a.voltooid.map(function(v){
     return { segment_index: v.segment_index, exercise_id: null, label: v.label,
              duration: v.duurS, distance: v.distance, weight: v.weight, reps: v.reps,

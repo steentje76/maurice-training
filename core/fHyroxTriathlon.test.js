@@ -30,12 +30,13 @@ function eq(a, b, m){ ok(JSON.stringify(a) === JSON.stringify(b), m + ' (verwach
 console.log('\n[MASTER SPRINT v4.59.0] HYROX/Triathlon — datamodel + calculation engine');
 
 /* ── A. station_duration.v1 ───────────────────────────────────────────────────────── */
-// FASE 4-INTEGRATIE (v4.77.0 → main): CardioCore.stationDurationS()/CalcCore.segment
-// TransitionS() bestaan bewust NIET in main's core/cardio.js/core/calculation.js (die
-// blijven onaangeraakt) — functioneel identieke lokale equivalenten leven nu in
-// index.html: tkHyroxStationDurationS()/tkHyroxSegmentTransitionS(). Vroege, minimale
-// extractie (extractFn/extractConst zelf worden pas verderop in dit bestand
-// gedefinieerd, dus hier een kleine, zelfstandige kopie van dezelfde brace-matching-logica).
+// PRE-MERGE REMEDIATION (PR #31, Calculation Architecture-audit): tkHyroxStationDurationS()/
+// tkHyroxSegmentTransitionS() zijn niet langer lokale duplicaten in index.html — ze zijn
+// geconsolideerd naar core/cardio.js (CardioCore.stationDurationS/segmentTransitionS), de
+// enige bron van waarheid. core/cardio.js staat NIET op de beschermde-bestandenlijst
+// (alleen calculation.js/decision.js/relationship.js/athlete.js/coaching.js), dus dit was
+// veilig zonder governance-uitzondering. De tests hieronder gebruiken nu rechtstreeks de
+// echte CardioCore-module (al bovenaan dit bestand gerequired), geen extractie meer nodig.
 function _vroegeExtractFn(name){
   const start = html.indexOf('function ' + name + '(');
   if (start < 0) throw new Error('functie niet gevonden: ' + name);
@@ -47,10 +48,7 @@ function _vroegeExtractFn(name){
   if (end < 0) throw new Error('einde niet gevonden: ' + name);
   return html.slice(start, end + 1);
 }
-const HyroxLocalTiming = new Function(
-  _vroegeExtractFn('tkHyroxStationDurationS') + '\nconst TK_HYROX_TRANSITIE_MAX_DUUR_S = 3600;\n' + _vroegeExtractFn('tkHyroxSegmentTransitionS') +
-  '\nreturn { tkHyroxStationDurationS, tkHyroxSegmentTransitionS };'
-)();
+const HyroxLocalTiming = { tkHyroxStationDurationS: CardioCore.stationDurationS, tkHyroxSegmentTransitionS: CardioCore.segmentTransitionS };
 // TK_HYROX_STATIONS_TEST — voor testfixtures (opbouwen van 16-segment-rijen), rechtstreeks
 // uit de lokale index.html-constante, exact dezelfde 8 stations als productie gebruikt.
 function _vroegeExtractConstArray(name){
@@ -68,7 +66,7 @@ eq(HyroxLocalTiming.tkHyroxStationDurationS(T0, T0 - 1000), null, 'A3 (eis: nega
 eq(HyroxLocalTiming.tkHyroxStationDurationS(null, T0), null, 'A4 (eis: ontbrekende tijdstempel): null start -> null');
 eq(HyroxLocalTiming.tkHyroxStationDurationS(T0, undefined), null, 'A5: ontbrekend eind -> null');
 eq(HyroxLocalTiming.tkHyroxStationDurationS(T0, T0 + 3700_000), 3700, 'A6: geen bovengrens-plafond (een langzaam station mag >1u duren)');
-ok(!/function\s+stationDurationS/.test(fs.readFileSync(path.join(__dirname,'cardio.js'),'utf8')), 'A7: core/cardio.js bevat GEEN stationDurationS -- bevestigt dat main daar onaangeraakt is gebleven');
+ok(/function\s+stationDurationS/.test(fs.readFileSync(path.join(__dirname,'cardio.js'),'utf8')), 'A7: PRE-MERGE REMEDIATION — core/cardio.js bevat nu WEL stationDurationS, als de enige bron van waarheid (core/cardio.js staat niet op de beschermde-bestandenlijst)');
 
 /* ── B. segment_transition.v1 ─────────────────────────────────────────────────────── */
 console.log('\nB. tkHyroxSegmentTransitionS (lokaal, index.html — functioneel identiek aan de vroegere CalcCore.segmentTransitionS)');
@@ -160,8 +158,8 @@ ok(/race_format/.test(migratie) && /race_tier/.test(migratie) && /race_adaptive_
 
 /* ── H. Architectuurcontrole ───────────────────────────────────────────────────────── */
 console.log('\nH. Architectuurcontrole (Fase-architectuurregel)');
-ok(/function tkHyroxSegmentTransitionS/.test(html) && /function tkHyroxStationDurationS/.test(html),
-  'H1: FASE 4-INTEGRATIE — deze rekenfuncties leven bewust lokaal in index.html, NIET in core/calculation.js/core/cardio.js (die blijven onaangeraakt vanuit main)');
+ok(/CardioCore\.segmentTransitionS\(/.test(html) && /CardioCore\.stationDurationS\(/.test(html) && /function\s+stationDurationS/.test(fs.readFileSync(path.join(__dirname,'cardio.js'),'utf8')),
+  'H1: PRE-MERGE REMEDIATION — deze rekenfuncties zijn geconsolideerd naar core/cardio.js (CardioCore), niet langer als lokaal duplicaat in index.html; core/calculation.js/core/decision.js blijven onaangeraakt vanuit main');
 ok(!/function isValidHyroxVolgorde/.test(html), 'H2: FASE 4-INTEGRATIE — geen aanroep naar een Decision-Engine-functie die niet op main bestaat; segmentvolgorde komt uitsluitend uit de lokale TK_HYROX_VOLGORDE-constante');
 ok(!/coach.*hyrox_sportregels|hyrox_sportregels.*prompt/i.test(html), 'H3: geen directe koppeling AI-coach <-> ruwe HYROX-sportregels gevonden');
 
@@ -195,8 +193,8 @@ console.log('\nN. Regressie — v4.59.0-contracten en bestaande Decision Engine 
 // geïntegreerde HYROX-functionaliteit gebruikt (bevestigd sectie H/I-L hierboven).
 ok(typeof DecisionCore.VERSIONS === 'object' && DecisionCore.VERSIONS !== null, 'N1: DecisionCore.VERSIONS bestaat nog steeds (main se eigen, andere contractenset) — geen regressie aan main zelf aangebracht');
 ok(typeof CalcCore.VERSIONS === 'object' && CalcCore.VERSIONS !== null, 'N2: CalcCore.VERSIONS bestaat nog steeds (main se eigen, andere contractenset) — geen regressie aan main zelf aangebracht');
-ok(/function tkHyroxSegmentTransitionS/.test(html) && /function tkHyroxStationDurationS/.test(html),
-  'N4: FASE 4-INTEGRATIE — HYROX-tijdrekenfuncties lokaal hergebruikt/opnieuw gedefinieerd in index.html, main se core/calculation.js/core/cardio.js blijven onaangeraakt');
+ok(/CardioCore\.segmentTransitionS\(/.test(html) && /CardioCore\.stationDurationS\(/.test(html),
+  'N4: PRE-MERGE REMEDIATION — HYROX-tijdrekenfuncties nu geconsolideerd in core/cardio.js (CardioCore), geen lokaal duplicaat meer in index.html; main se core/calculation.js/core/decision.js blijven onaangeraakt');
 
 /* ── O. Forensische scope-controle (v4.61.0/v4.62.0) ──────────────────────────────────── */
 console.log('\nO. Forensische scope-controle — geen ongewenste toevoegingen');
@@ -327,8 +325,8 @@ eq(hyroxUiModule.tkHyroxTsParse('split:1:52'), null, 'Q4: een ANDERE bestaande e
 
 console.log('\nR. Broncode-audit: timing komt UITSLUITEND uit echte wall-clock-tijdstempels');
 const finishSrc = extractFn('hyroxFinishSegment');
-ok(/tkHyroxStationDurationS\(startAt,\s*endAt\)/.test(finishSrc), 'R1: duur komt uit de lokale station_duration.v1-equivalent op de twee echte tijdstempels, niets anders');
-ok(/tkHyroxSegmentTransitionS\(/.test(finishSrc), 'R2: transitietijd komt uit de lokale segment_transition.v1-equivalent (hergebruikt, niet opnieuw gebouwd)');
+ok(/CardioCore\.stationDurationS\(startAt,\s*endAt\)/.test(finishSrc), 'R1: PRE-MERGE REMEDIATION — duur komt uit CardioCore.stationDurationS() (core/cardio.js, de nu geconsolideerde bron van waarheid) op de twee echte tijdstempels, niets anders');
+ok(/CardioCore\.segmentTransitionS\(/.test(finishSrc), 'R2: PRE-MERGE REMEDIATION — transitietijd komt uit CardioCore.segmentTransitionS() (core/cardio.js), niet langer een lokaal duplicaat');
 ok(!/setInterval|countdown/i.test(finishSrc), 'R3: geen countdown/timer-gebaseerde logica in het schrijfpad');
 ok(/duurS==null/.test(finishSrc), 'R4: een ongeldige/negatieve duur (station_duration.v1 -> null) wordt afgewezen, niet stilzwijgend een fallback');
 const beginSrc = extractFn('hyroxBeginSegment');
@@ -472,9 +470,6 @@ ok(!/HYROX_DIVISIE_WAARDEN\s*=\s*\{[^}]+\}/.test(fs.readFileSync(path.join(__dir
 const reconstructSrc = [
   extractConst('RACE_CTX_UNKNOWN'),
   extractConst('RACE_CTX_NOT_APPLICABLE'),
-  _vroegeExtractFn('tkHyroxStationDurationS'),
-  'const TK_HYROX_TRANSITIE_MAX_DUUR_S = 3600;',
-  _vroegeExtractFn('tkHyroxSegmentTransitionS'),
   extractConst('TK_HYROX_TS_PREFIX'),
   extractFn('tkHyroxTsNote'),
   extractFn('tkHyroxTsParse'),
@@ -1178,7 +1173,63 @@ ok(migratie476Inhoud.includes('add constraint training_instances_race_adaptive_c
 ok(!/update\s+public\.training_instances/i.test(migratie476Inhoud), 'DN5: geen UPDATE van historische data in de migratie');
 
 
-console.log('\n========================================================');
-console.log(`RESULTAAT: ${pass} geslaagd, ${fail} mislukt`);
-console.log(fail === 0 ? '✅ HYROX/Triathlon: volledige keten t/m Adaptive + triathlon-categorielabel (v4.77.0): puur, deterministisch, additief.' : '❌ NIET groen.');
-process.exitCode = fail === 0 ? 0 : 1;
+/* ══════════════════════════════════════════════════════════════════════════════════
+ * PRE-MERGE REMEDIATION AUDIT (PR #31) — correction-state-consistentie
+ * ══════════════════════════════════════════════════════════════════════════════════ */
+console.log('\nDO. hyroxCorrigeerLaatste() — state (hyroxActive) en database moeten na correctie consistent zijn');
+const corrigeerSrc = 'async ' + extractFn('hyroxCorrigeerLaatste');
+function _buildCorrigeerHarness(startVoltooid, startDb){
+  let hyroxActiveH = { instanceId:'test-instance', voltooid:[startVoltooid] };
+  let dbRowH = Object.assign({ id:'row-1' }, startDb);
+  const calls = { persist:0, render:0, toasts:[] };
+  const sbGetH = async function(){ return [dbRowH]; };
+  const sbPatchH = async function(table, filter, patch){ Object.assign(dbRowH, patch); return true; };
+  const toastH = function(m){ calls.toasts.push(m); };
+  const persistH = function(){ calls.persist++; };
+  const renderH = function(){ calls.render++; };
+  const fn = new Function('sbGet','sbPatch','toast','hyroxActive','tkHyroxPersist','renderHyroxScreen',
+    corrigeerSrc + '\nreturn hyroxCorrigeerLaatste;'
+  )(sbGetH, sbPatchH, toastH, hyroxActiveH, persistH, renderH);
+  return { fn, hyroxActive: hyroxActiveH, dbRow: dbRowH, calls };
+}
+
+(async () => {
+  const h1 = _buildCorrigeerHarness(
+    { segment_index:1, label:'Run', distance:5000, weight:null, reps:null },
+    { segment_index:1, distance:5000, weight:null, reps:null }
+  );
+  await h1.fn({ distance:'9999', weight:null, reps:null });
+  eq(h1.hyroxActive.voltooid[0].distance, 9999, 'DO1: hyroxActive.voltooid wordt bijgewerkt met de gecorrigeerde afstand (was voorheen NOOIT bijgewerkt — state/database liepen uit elkaar)');
+  eq(h1.hyroxActive.voltooid[0].distance, h1.dbRow.distance, 'DO2: hyroxActive en database zijn na de correctie exact gelijk');
+  eq(h1.calls.persist, 1, 'DO3: tkHyroxPersist() wordt aangeroepen, zodat tk_hyrox_active in localStorage ook direct de nieuwe waarde bevat');
+  eq(h1.calls.render, 1, 'DO4: renderHyroxScreen() wordt aangeroepen, zodat het resultatenscherm de correctie direct toont (niet pas na reload)');
+
+  const h2 = _buildCorrigeerHarness(
+    { segment_index:1, label:'Run', distance:9999, weight:20, reps:10 },
+    { segment_index:1, distance:9999, weight:20, reps:10 }
+  );
+  await h2.fn({ distance:'', weight:'25.5', reps:'' });
+  eq(h2.hyroxActive.voltooid[0].distance, 9999, 'DO5: partiële correctie (alleen weight) laat distance ongewijzigd in hyroxActive');
+  eq(h2.hyroxActive.voltooid[0].weight, 25.5, 'DO6: partiële correctie werkt uitsluitend het aangeleverde veld (weight) bij');
+  eq(h2.hyroxActive.voltooid[0].reps, 10, 'DO7: partiële correctie laat reps ongewijzigd in hyroxActive');
+
+  const h3 = _buildCorrigeerHarness(
+    { segment_index:1, label:'Run', distance:5000, weight:null, reps:null },
+    { segment_index:1, distance:5000, weight:null, reps:null }
+  );
+  await h3.fn({ distance:'7500', weight:null, reps:null });
+  // Bevestig de volledige keten: hyroxLiveAlsPerformance() leest a.voltooid rechtstreeks,
+  // dus dezelfde referentie die hierboven is bijgewerkt moet ook daar de nieuwe waarde geven.
+  const liveSrc = extractFn('hyroxLiveAlsPerformance');
+  const liveMod = new Function('RACE_CTX_UNKNOWN','RACE_CTX_NOT_APPLICABLE','tkHyroxStationDurationS','tkHyroxTriathlonAfgeleideRaceContext',
+    'hyroxActive',
+    'const triathlonAfgeleideRaceContext = function(){return null;};\n' + liveSrc + '\nreturn hyroxLiveAlsPerformance;'
+  )('UNKNOWN','NOT_APPLICABLE', HyroxLocalTiming.tkHyroxStationDurationS, null, h3.hyroxActive);
+  const liveResultaat = liveMod();
+  eq(liveResultaat.segments[0].distance, 7500, 'DO8: de correctie stroomt door tot in hyroxLiveAlsPerformance() -> het resultatenscherm toont direct de juiste waarde, niet pas na een reload');
+
+  console.log('\n========================================================');
+  console.log(`RESULTAAT: ${pass} geslaagd, ${fail} mislukt`);
+  console.log(fail === 0 ? '✅ HYROX/Triathlon: volledige keten t/m Adaptive + triathlon-categorielabel + correction-state-consistentie (PR #31-remediation): puur, deterministisch, additief.' : '❌ NIET groen.');
+  process.exitCode = fail === 0 ? 0 : 1;
+})();

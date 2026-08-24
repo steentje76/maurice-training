@@ -6,9 +6,14 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en docs/Brand/BRAND_IDENTITY.md)
 
 ## Huidige versie
-v4.48.0 (RC0)
+v4.49.0
 
 ## Laatste release
+- Versie: v4.49.0 — HYROX, Adaptive Triathlon en correction-state remediation
+- Datum: 24 augustus 2026
+- Inhoud: HYROX-race-tracking (Single/Doubles/Relay/Adaptive) en triathlon-brick geïntegreerd, met de volledig bronbevestigde HYROX Adaptive-classificaties (13 waarden, rulebook 26/27). Race-context via zes nieuwe, additieve kolommen op `training_instances`, CHECK-constraint live op Supabase geverifieerd. HYROX-tijdrekenlogica geconsolideerd in `core/cardio.js` als enige bron van waarheid. Twee bugs gevonden en opgelost: een correctie op een voltooid stationresultaat toonde de oude waarde totdat de app herlaadde (P1, hyroxCorrigeerLaatste() werkte de live state niet bij); het HYROX-startpunt in de Workout Builder ontbrak in de daadwerkelijke schermopbouw, waardoor niemand er ooit bij kon (P0). Zie `CHANGELOG.md`.
+
+## Laatste release (vorig)
 - Versie: v4.48.0 — RC0, release candidate voor Google Play Internal Testing
 - Datum: 19 augustus 2026
 - Inhoud: geen nieuwe functionaliteit. Vijf P0's en elf P1's uit de release-audit opgelost: herstel na een verlopen sessie (Android bevriest achtergrondtimers — leesacties gaven een lege lijst, schrijfacties verdwenen), her-entree-slot op de offline-wachtrij, tien ontbrekende persoonlijke opslagsleutels waaronder de onboarding-vlag, de trainingskoppeling die een app-herstart niet overleefde, terug-navigatie op Android, het bewijsspoor dat wel werd geschreven maar nergens getoond, accountverwijdering die elf tabellen oversloeg (waaronder de wearable-tokens), Beheer dat voor een solo-sporter achter een gedeelde pincode zat, een zichtbare `[PLACEHOLDER]` in Help, en de volledige Android-releaseconfiguratie (API 36, ondertekening, merkbeeld, back-up uit, artefact van 450 MB naar 14 MB). Privacyverklaring toegevoegd. Zie `docs/RELEASE_READINESS.md`, `docs/PLAY_STORE_READINESS.md`, `docs/CURRENT_ROADMAP.md` en `docs/RELATIONSHIP_AUDIT.md`.

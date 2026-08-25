@@ -278,6 +278,30 @@ ok(/k\s*!==\s*CACHE_STATIC/.test(sw), 'F5: oude caches worden bij activatie opge
 const mVer = html.match(/const APP_VER = '(v\d+\.\d+\.\d+)'/);
 ok(!!mVer, 'F6: de applicatieversie heeft de vorm vX.Y.Z');
 
+/* ── G. ROADMAP POST-V1 #1 — duration_s per sessie (RAW DATA) ──────────────
+ * "duration_s per sessie vastleggen" ontsluit 105 van de 187 kenbare relaties
+ * (VARIABLE_REGISTRY 'duur'/'cardio_split', beide beschikbaarheid:'toekomstig')
+ * en is de voorwaarde voor athlete.unifiedLoad(), dat vandaag bewust
+ * {beschikbaar:false} teruggeeft. Deze milestone levert UITSLUITEND de raw-
+ * datavastlegging (de kolom bestond al, ongevuld); het activeren van de
+ * registry-vlaggen in relationship.js/athlete.js is een aparte, apart te
+ * rechtvaardigen protected-core-wijziging (nog niet in deze milestone). ── */
+console.log('\nG. duration_s wordt vastgelegd bij het afronden van een sessie');
+const finishSrc = html.slice(html.indexOf('async function finishSession('), html.indexOf('async function finishSession(') + 4000);
+ok(/const _duurS = trainStart \? Math\.max\(0, Math\.round\(\(Date\.now\(\)-trainStart-\(pausedAccumMs\|\|0\)\)\/1000\)\) : null;/.test(finishSrc),
+  'G1: duration_s hergebruikt EXACT dezelfde formule als de al bestaande live-klok (startTrainTimer) -- geen tweede, losse tijdsberekening');
+ok(/duration_s:_duurS/.test(finishSrc), 'G2: het cardio-schrijfpad geeft duration_s mee');
+ok(/row\.duration_s=_duurS/.test(finishSrc), 'G3: het krachtschrijfpad geeft duration_s mee');
+(function(){
+  function berekenDuurS(trainStart, pausedAccumMs, now){
+    return trainStart ? Math.max(0, Math.round((now-trainStart-(pausedAccumMs||0))/1000)) : null;
+  }
+  const t0 = 1_800_000_000_000;
+  eq(berekenDuurS(t0, 0, t0+45*60*1000), 2700, 'G4: 45 minuten zonder pauze -> 2700 seconden');
+  eq(berekenDuurS(t0, 5*60*1000, t0+45*60*1000), 2400, 'G5: 45 minuten wall-clock met 5 minuten pauze -> 2400 seconden (pauze telt niet mee)');
+  eq(berekenDuurS(null, 0, t0), null, 'G6: geen trainStart -> null, geen crash, geen verzonnen waarde');
+})();
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { console.log('❌ Hardening niet groen.'); process.exit(1); }

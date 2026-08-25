@@ -7101,7 +7101,7 @@ function newTrainingInstanceId(){
 // Precies één van vasteTrainingId/customTrainingId mag gezet zijn (of geen van
 // beide, voor een volledig ad-hoc training zonder opgeslagen definitie — bv. een
 // toekomstige rechtstreekse Builder-start, zoals bestaand gedrag bij GW.start()).
-async function createTrainingInstance({vasteTrainingId=null,customTrainingId=null,snapshot=null,raceDivision=null,raceIsOfficial=null,raceFormat=null,raceTier=null,raceGender=null,raceRelayDivision=null,raceRelayAgeCategory=null,raceAdaptiveClass=null}={}){
+async function createTrainingInstance({vasteTrainingId=null,customTrainingId=null,snapshot=null,raceDivision=null,raceIsOfficial=null,raceFormat=null,raceTier=null,raceGender=null,raceRelayDivision=null,raceRelayAgeCategory=null,raceAdaptiveClass=null,raceType=null}={}){
   if(vasteTrainingId&&customTrainingId){console.error('createTrainingInstance: niet beide vasteTrainingId en customTrainingId tegelijk');return null;}
   if(!authSession?.user?.id){console.error('createTrainingInstance: geen ingelogde gebruiker');return null;}
   const id=newTrainingInstanceId();
@@ -7126,6 +7126,10 @@ async function createTrainingInstance({vasteTrainingId=null,customTrainingId=nul
   if(raceRelayDivision!=null)row.race_relay_division=raceRelayDivision;
   if(raceRelayAgeCategory!=null)row.race_relay_age_category=raceRelayAgeCategory;
   if(raceAdaptiveClass!=null)row.race_adaptive_class=raceAdaptiveClass;
+  // ARCHITECTUUR-HARDENING (v4.91.0) — expliciet, eerste-klas onderscheid HYROX vs
+  // Triathlon-brick op instance-niveau (race_type), i.p.v. impliciet afgeleid uit
+  // welke race_*-velden toevallig wel/niet gevuld zijn.
+  if(raceType!=null)row.race_type=raceType;
   const ok=await sbPostQ('training_instances',row);
   return ok?id:null;
 }
@@ -15017,6 +15021,9 @@ function renderSessionSummaryContent(t){
 // gedragswijziging voor de normale Execution: finishSession() bouwt/schrijft via deze
 // helpers en levert byte-equivalente rijen.
 async function writeSessionRow(row){ return await sbPostQ('sessions', row); }
+// ARCHITECTUUR-HARDENING (v4.91.0) — dedicated schrijfpad voor race_segments
+// (HYROX/Triathlon-brick), i.p.v. de gedeelde sessions-tabel.
+async function writeRaceSegmentRow(row){ return await sbPostQ('race_segments', row); }
 /* Sprint 18 — BEWIJSSPOOR PER SET.
  * Bouwt de snapshot voor één uitgevoerde set: de ruwe waarden, het reeds berekende effectieve
  * gewicht, de beslissing van de BESTAANDE progressieregel, en de regelversie die dat deed.
@@ -22382,7 +22389,7 @@ async function hyroxStart(type, context, isOfficial){
     : null;
   const instanceExtra = type==='hyrox'
     ? {
-        raceDivision: legacyDivision, raceIsOfficial: !!isOfficial,
+        raceDivision: legacyDivision, raceIsOfficial: !!isOfficial, raceType: 'hyrox',
         raceFormat: ctx.format,
         raceTier: (ctx.format==='relay'||ctx.format==='adaptive') ? null : ctx.tier,
         raceGender: ctx.format==='relay' ? null : ctx.gender,
@@ -22390,7 +22397,7 @@ async function hyroxStart(type, context, isOfficial){
         raceRelayAgeCategory: ctx.format==='relay' ? ctx.relayAgeCategory : null,
         raceAdaptiveClass: ctx.format==='adaptive' ? ctx.adaptiveClass : null
       }
-    : { raceIsOfficial: !!isOfficial };
+    : { raceIsOfficial: !!isOfficial, raceType: 'brick' };
   const instanceId = await createTrainingInstance(instanceExtra);
   if(!instanceId){ toast('Kon niet starten (offline of niet ingelogd)'); return; }
   hyroxActive = {
@@ -22454,20 +22461,17 @@ async function hyroxFinishSegment(invoer){
     ? CardioCore.segmentTransitionS(hyroxActive.vorigeEindAt, startAt, 0, 0) : null;
 
   const today = td();
+  // ARCHITECTUUR-HARDENING (v4.91.0) — schrijft nu naar de dedicated race_segments-
+  // tabel (migratie_v491.sql) i.p.v. de gedeelde sessions-tabel. Geen date/training_type/
+  // time_str meer nodig: training_instance_id (NOT NULL FK) + join naar
+  // training_instances.race_type geven al ondubbelzinnig context; time_str was een
+  // gecachet weergavestring die hier vervalt (duurS wordt, exact als voorheen, altijd
+  // opnieuw uit start_at/finish_at berekend, nooit hier gematerialiseerd).
   const row = {
-    date: today,
-    training_type: hyroxActive.type==='hyrox' ? 'HYROX' : 'Triathlon',
     training_instance_id: hyroxActive.instanceId,
     segment_index: seg.segment_index,
-    // ARCHITECTUUR-HARDENING (v4.90.0) — RAW DATA: de wall-clock start/eind-
-    // tijdstempels gaan nu naar echte kolommen (start_at/finish_at, migratie_v490.sql)
-    // in plaats van de note-tekstannotatie-workaround. Duur/transitie blijven
-    // Calculation Engine-output, gededuceerd uit deze twee tijdstempels — nooit
-    // apart gematerialiseerd, net als voorheen, nu alleen met een correct
-    // RAW-DATA-fundament.
     start_at: new Date(startAt).toISOString(),
-    finish_at: new Date(endAt).toISOString(),
-    time_str: CardioCore.formatTime(duurS)
+    finish_at: new Date(endAt).toISOString()
   };
   if(seg.exercise_id) row.exercise_id = seg.exercise_id;
   // triathlon-disciplines (swim/bike/run) hebben geen eigen HYROX-catalogus-ID; ze
@@ -22479,12 +22483,12 @@ async function hyroxFinishSegment(invoer){
   if(seg.velden.indexOf('distance')!==-1 && invoer.distance!=null && invoer.distance!=='') row.distance = parseInt(invoer.distance,10)||null;
   if(seg.velden.indexOf('weight')!==-1 && invoer.weight!=null && invoer.weight!=='') row.weight = parseFloat(invoer.weight)||null;
   if(seg.velden.indexOf('reps')!==-1 && invoer.reps!=null && invoer.reps!=='') row.reps = parseInt(invoer.reps,10)||null;
-  // ARCHITECTUUR-HARDENING (v4.90.0) — RPE als RAW DATA-veld, hergebruikt de al
-  // bestaande sessions.rpe-kolom (voorheen nooit gevuld voor HYROX/Triathlon-brick).
-  // Optioneel: ontbrekende RPE is een geldige, veelvoorkomende situatie, geen fout.
+  // ARCHITECTUUR-HARDENING (v4.90.0/v4.91.0) — RPE als RAW DATA-veld, de dedicated
+  // race_segments.rpe-kolom. Optioneel: ontbrekende RPE is een geldige, veelvoorkomende
+  // situatie, geen fout.
   if(invoer.rpe!=null && invoer.rpe!=='') row.rpe = parseFloat(invoer.rpe)||null;
 
-  const ok = await writeSessionRow(row);
+  const ok = await writeRaceSegmentRow(row);
   if(!ok){ toast('Kon segment niet opslaan — probeer opnieuw'); return false; }
 
   hyroxActive.voltooid.push({
@@ -22513,7 +22517,8 @@ async function hyroxFinishSegment(invoer){
 async function hyroxCorrigeerLaatste(invoer){
   if(!hyroxActive || !hyroxActive.voltooid.length) return false;
   const laatste = hyroxActive.voltooid[hyroxActive.voltooid.length-1];
-  const rows = await sbGet('sessions', '&training_instance_id=eq.'+encodeURIComponent(hyroxActive.instanceId)+'&segment_index=eq.'+laatste.segment_index+'&order=created_at.desc&limit=1');
+  // ARCHITECTUUR-HARDENING (v4.91.0) — leest/patcht nu race_segments i.p.v. sessions.
+  const rows = await sbGet('race_segments', '&training_instance_id=eq.'+encodeURIComponent(hyroxActive.instanceId)+'&segment_index=eq.'+laatste.segment_index+'&order=created_at.desc&limit=1');
   const cur = (rows&&rows[0]) ? rows[0] : null;
   if(!cur){ toast('Kon de rij niet terugvinden'); return false; }
   const patch = {};
@@ -22521,7 +22526,7 @@ async function hyroxCorrigeerLaatste(invoer){
   if(invoer.weight!=null && invoer.weight!=='') patch.weight = parseFloat(invoer.weight)||null;
   if(invoer.reps!=null && invoer.reps!=='') patch.reps = parseInt(invoer.reps,10)||null;
   if(invoer.rpe!=null && invoer.rpe!=='') patch.rpe = parseFloat(invoer.rpe)||null;
-  const ok = await sbPatch('sessions','id=eq.'+cur.id,patch);
+  const ok = await sbPatch('race_segments','id=eq.'+cur.id,patch);
   if(ok){
     // PRE-MERGE REMEDIATION (correction-state-audit) — zonder deze synchronisatie bleef
     // hyroxActive.voltooid (het live in-memory-object, gebruikt door zowel de live-
@@ -22950,10 +22955,16 @@ function hyroxReconstructPerformance(instanceRow, sessieRijen){
     .filter(function(r){ return r && r.segment_index!=null; })
     .sort(function(a,b){ return a.segment_index - b.segment_index; });
 
-  // sport: uit training_type OP DE RIJEN ZELF — nooit gegokt, nooit uit exercise_id afgeleid
-  // (dat zou een aanname zijn over welke catalogus-ID's bij welke sport horen).
+  // sport: ARCHITECTUUR-HARDENING (v4.91.0) — uit het expliciete, eerste-klas
+  // race_type-veld op de training_instance (nooit meer impliciet afgeleid uit welke
+  // race_*-velden toevallig gevuld zijn -- dat was de bron van een eerder gerepareerde
+  // Context Engine-bug). Backward-compatible fallback op het oudere, rij-niveau
+  // training_type-veld voor legacy sessions-rijen (vóór v4.91.0), zodat bestaande
+  // historische data leesbaar blijft zonder een aparte migratiepad.
   let sport = null;
-  if(rijen.length){
+  if(instanceRow && instanceRow.race_type==='hyrox') sport='hyrox';
+  else if(instanceRow && instanceRow.race_type==='brick') sport='triathlon';
+  else if(rijen.length){
     if(rijen[0].training_type==='HYROX') sport='hyrox';
     else if(rijen[0].training_type==='Triathlon') sport='triathlon';
   }
@@ -23106,7 +23117,10 @@ async function hyroxOpenGeschiedenisRace(instanceId){
   try{
     const [instanceRow, sessieRijen] = await Promise.all([
       getTrainingInstance(instanceId),
-      sbGet('sessions', '&training_instance_id=eq.'+encodeURIComponent(instanceId)+'&order=segment_index.asc')
+      // ARCHITECTUUR-HARDENING (v4.91.0) — race_segments i.p.v. sessions; de ene
+      // legacy-race van vóór deze migratie is via migratie_v491.sql al gebackfilled,
+      // dus dit dekt de volledige historie zonder een dubbele leesroute.
+      sbGet('race_segments', '&training_instance_id=eq.'+encodeURIComponent(instanceId)+'&order=segment_index.asc')
     ]);
     if(!sessieRijen || !sessieRijen.length){ toast('Kon deze race niet meer terugvinden'); return; }
     const performance = hyroxReconstructPerformance(instanceRow, sessieRijen);
@@ -23243,25 +23257,30 @@ function vergelijkSegmenten(perfA, perfB){
 }
 
 // hyroxLaadAllePerformances(): haalt ALLE HYROX/triathlon-races van de gebruiker op en
-// reconstrueert ze elk tot een Performance-object. Zuiver hergebruik van bestaande
-// functies (hyroxGroepeerRaceSessies uit v4.70.0, hyroxReconstructPerformance uit
-// v4.69.0) — geen nieuwe query-architectuur, één extra bulk-sbGet voor race-context
-// (zelfde patroon als loadHistory() al gebruikt).
+// reconstrueert ze elk tot een Performance-object.
+// ARCHITECTUUR-HARDENING (v4.91.0) — races zijn nu training_instances met een expliciet
+// race_type-veld, met hun segmenten in de dedicated race_segments-tabel (i.p.v. sessions
+// met training_type-detectie). Twee bulk-queries (instances, dan alle segmenten in één
+// keer via IN(...)), client-side gegroepeerd -- zelfde queryefficiëntie als voorheen,
+// geen N+1-patroon.
 async function hyroxLaadAllePerformances(){
-  const ss = await sbGet('sessions', '&training_type=in.(HYROX,Triathlon)&order=date.desc');
-  const groepen = hyroxGroepeerRaceSessies(ss);
-  if(!groepen.length) return [];
-  let context = {};
-  try{
-    const ids = groepen.map(function(g){ return g.instanceId; }).join(',');
-    const rows = await sbGet('training_instances', '&id=in.('+ids+')&select=id,race_division,race_is_official,race_format,race_tier,race_gender,race_relay_division,race_relay_age_category,race_adaptive_class');
-    (rows||[]).forEach(function(r){ context[r.id]=r; });
-  }catch(_){ /* context niet beschikbaar -> reconstructie valt terug op null-velden, geen crash */ }
-  return groepen.map(function(g){
-    const perf = hyroxReconstructPerformance(context[g.instanceId]||null, g.rows);
-    const datum = g.rows.map(function(r){ return r.date; }).sort()[0] || null;
-    return { instanceId:g.instanceId, perf:perf, datum:datum };
-  }).sort(function(a,b){ return (b.datum||'').localeCompare(a.datum||''); });
+  const instRows = await sbGet('training_instances', '&race_type=not.is.null&order=completed_at.desc,started_at.desc');
+  if(!instRows || !instRows.length) return [];
+  const ids = instRows.map(function(r){ return r.id; }).join(',');
+  const segRows = await sbGet('race_segments', '&training_instance_id=in.('+ids+')&order=segment_index.asc');
+  const segmentenPerInstance = {};
+  (segRows||[]).forEach(function(s){
+    if(!segmentenPerInstance[s.training_instance_id]) segmentenPerInstance[s.training_instance_id] = [];
+    segmentenPerInstance[s.training_instance_id].push(s);
+  });
+  return instRows
+    .filter(function(inst){ return segmentenPerInstance[inst.id] && segmentenPerInstance[inst.id].length; })
+    .map(function(inst){
+      const perf = hyroxReconstructPerformance(inst, segmentenPerInstance[inst.id]);
+      const datum = (inst.completed_at || inst.started_at || '').slice(0,10) || null;
+      return { instanceId: inst.id, perf: perf, datum: datum };
+    })
+    .sort(function(a,b){ return (b.datum||'').localeCompare(a.datum||''); });
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -23364,20 +23383,16 @@ function performanceConclusie(cluster){
 // dit vervangt dat niet, het VULT AAN met een echte race-samenvatting.
 async function tkHyroxCoachContext(){
   try{
-    // ARCHITECTUUR-CORRECTIE: race_format is ALLEEN gezet voor HYROX (Triathlon-brick
-    // heeft altijd race_format=null, bevestigd in hyroxStart()'s instanceExtra-opbouw).
-    // Filteren op race_format zou Triathlon-brick-races volledig uitsluiten van de AI-
-    // context. race_is_official wordt daarentegen door hyroxStart() ALTIJD gezet, voor
-    // beide typen — dit is het enige betrouwbare, universele HYROX/brick-onderscheidingsveld
-    // op training_instances-niveau (reguliere trainingen hebben altijd vaste_training_id of
-    // custom_training_id, HYROX/brick geen van beide).
-    const instRows = await sbGet('training_instances', '&race_is_official=not.is.null&status=eq.completed&order=completed_at.desc&limit=3');
+    // ARCHITECTUUR-HARDENING (v4.91.0) — race_type is nu het expliciete, eerste-klas
+    // onderscheidingsveld (vervangt de eerdere race_is_official-noodgreep, die zelf al
+    // een correctie was op het oorspronkelijke, te beperkte race_format-filter).
+    const instRows = await sbGet('training_instances', '&race_type=not.is.null&status=eq.completed&order=completed_at.desc&limit=3');
     if(!instRows || !instRows.length) return '';
     let tekst = '';
     for(const inst of instRows){
-      const sessRows = await sbGet('sessions', '&training_instance_id=eq.'+encodeURIComponent(inst.id)+'&order=segment_index.asc');
-      if(!sessRows || !sessRows.length) continue;
-      const perf = hyroxReconstructPerformance(inst, sessRows);
+      const segRows = await sbGet('race_segments', '&training_instance_id=eq.'+encodeURIComponent(inst.id)+'&order=segment_index.asc');
+      if(!segRows || !segRows.length) continue;
+      const perf = hyroxReconstructPerformance(inst, segRows);
       if(!perf.sport) continue;
       const sportLbl = perf.sport==='hyrox' ? 'HYROX' : 'Triathlon-brick';
       const datum = (inst.completed_at||'').slice(0,10);

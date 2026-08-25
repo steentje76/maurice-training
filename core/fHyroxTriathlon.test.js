@@ -334,10 +334,10 @@ const startFnSrc = extractFn('hyroxStart');
 ok(!/isValidHyroxVolgorde|isValidBrickVolgorde/.test(startFnSrc) || /DecisionCore\./.test(startFnSrc),
   'S3: als volgordevalidatie wordt aangeroepen, gebeurt dat via DecisionCore — geen eigen herimplementatie');
 
-console.log('\nT. Database-impact: geen nieuwe kolommen, hergebruik van v4.59.0-schema + bestaande cardio-velden');
-ok(/training_instance_id:\s*hyroxActive\.instanceId/.test(finishSrc), 'T1: hergebruikt training_instance_id (v4.59.0), geen nieuwe race-tabel');
-ok(/segment_index:\s*seg\.segment_index/.test(finishSrc), 'T2: schrijft segment_index (v4.59.0/v4.61.0), geen race_id verzonnen');
-ok(/time_str:\s*CardioCore\.formatTime\(duurS\)/.test(finishSrc), 'T3: duur gaat in de AL BESTAANDE sessions.time_str-kolom, geen nieuwe kolom');
+console.log('\nT. Database-impact: race_segments-tabel (v4.91.0), geen sportlogica-duplicatie');
+ok(/training_instance_id:\s*hyroxActive\.instanceId/.test(finishSrc), 'T1: hergebruikt training_instance_id, NOT NULL FK naar training_instances (v4.91.0: nu op de dedicated race_segments-tabel)');
+ok(/segment_index:\s*seg\.segment_index/.test(finishSrc), 'T2: schrijft segment_index, geen race_id verzonnen');
+ok(/start_at:\s*new Date\(startAt\)\.toISOString\(\)/.test(finishSrc), 'T3: ARCHITECTUUR-HARDENING (v4.91.0) — duur wordt niet meer als geformatteerde time_str opgeslagen; de raw start_at-tijdstempel gaat naar race_segments, duur blijft altijd een herberekende Calculation Engine-output');
 ok(!/target_height/.test(finishSrc), 'T4: geen target_height-kolom aangeraakt (blijft een openstaand eigenaarbesluit)');
 // FASE 4-INTEGRATIE: migratie_v462.sql (3 catalogus-rijen) bestaat niet in main se eigen
 // git-geschiedenis, net als migratie_v459.sql eerder (zie sectie G) — beide kwamen via de
@@ -834,12 +834,12 @@ ok(/vindVorigeVergelijkbareRace\(/.test(overzichtSrc) && /performanceVerschilSta
 ok(!/CardioCore\.stationDurationS\(|CalcCore\.segmentTransitionS\(/.test(overzichtSrc), 'BI3: geen eigen tijdsberekening in de renderlaag — alles komt kant-en-klaar uit reeds gereconstrueerde Performance-objecten');
 ok(/Niet beschikbaar|niet_beschikbaar/.test(overzichtSrc), 'BI4: expliciete "Niet beschikbaar"-afhandeling aanwezig');
 
-console.log('\nBJ. Broncode-audit: hyroxLaadAllePerformances() hergebruikt v4.69.0/v4.70.0 volledig');
+console.log('\nBJ. Broncode-audit: hyroxLaadAllePerformances() gebruikt de dedicated race_segments-architectuur (v4.91.0)');
 const laadSrc = extractFn('hyroxLaadAllePerformances');
-ok(/hyroxGroepeerRaceSessies\(/.test(laadSrc), 'BJ1: hergebruikt de bestaande v4.70.0-groepeerfunctie');
+ok(/sbGet\('race_segments'/.test(laadSrc), 'BJ1: ARCHITECTUUR-HARDENING (v4.91.0) — leest segmenten uit de dedicated race_segments-tabel, niet meer via de sessions-training_type-groepeerfunctie (die inherent geen scheiding tussen races en reguliere training_instance_id-gebruik kon afdwingen)');
 ok(/hyroxReconstructPerformance\(/.test(laadSrc), 'BJ2: hergebruikt de bestaande v4.69.0-reconstructiefunctie');
-ok(!/CREATE TABLE|create table/i.test(laadSrc), 'BJ3: geen nieuwe tabel/query-architectuur');
-ok(/race_format/.test(laadSrc), 'BJ4 (v4.76.0): bulk-select-clausule uitgebreid met de nieuwe race-contextkolommen');
+ok(!/CREATE TABLE|create table/i.test(laadSrc), 'BJ3: geen nieuwe tabel/query-architectuur IN DEZE FUNCTIE (de tabel zelf is via een aparte, expliciete migratie aangemaakt, niet inline in applicatiecode)');
+ok(/race_type=not\.is\.null/.test(laadSrc), 'BJ4 (v4.91.0): bulk-query filtert op het expliciete race_type-veld, geen indirecte afleiding meer');
 
 console.log('\nBK. Forensische scope-controle (v4.71.0)');
 const diffV71 = matchSrc + overzichtSrc + laadSrc;
@@ -1333,10 +1333,8 @@ function _buildCorrigeerHarness(startVoltooid, startDb){
    * en faalt hard zodra een niet-bestaande kolom in de insert-payload zou belanden.
    * ══════════════════════════════════════════════════════════════════════════════════ */
   console.log('\nDR. ROOT-CAUSE: segment-opslag gebruikt uitsluitend daadwerkelijk bestaande sessions-kolommen');
-  const ECHTE_SESSIONS_KOLOMMEN = new Set(['id','date','exercise_id','sets','reps','weight','rpe','distance',
-    'time_str','watt','stroke_rate','stops','wod_name','wod_type','score','note','training_type','created_at',
-    'user_id','calories','rounds','extra_reps','completed','hr_avg','pace_sec','stroke_type','gym_id',
-    'sets_detail','training_instance_id','duration_s','weather','segment_index','start_at','finish_at']);
+  const ECHTE_RACE_SEGMENTS_KOLOMMEN = new Set(['id','training_instance_id','segment_index','exercise_id',
+    'start_at','finish_at','distance','weight','reps','rpe','user_id','created_at']);
 
   async function testSegmentSave(type, label){
     const toasts = [];
@@ -1345,14 +1343,14 @@ function _buildCorrigeerHarness(startVoltooid, startDb){
     const geziene_kolommen = new Set();
     async function sbPostQSim(tabel, row){
       Object.keys(row).forEach(k => geziene_kolommen.add(k));
-      const onbekend = Object.keys(row).filter(k => !ECHTE_SESSIONS_KOLOMMEN.has(k));
+      const onbekend = Object.keys(row).filter(k => !ECHTE_RACE_SEGMENTS_KOLOMMEN.has(k));
       if (onbekend.length) return false;
       return true;
     }
     const finishSrc = 'async ' + extractFn('hyroxFinishSegment');
     const CardioCoreStub = { stationDurationS:(a,b)=>b>=a?Math.round((b-a)/1000):null, segmentTransitionS:()=>null, formatTime:s=>s+'s' };
     const finishFn = new Function('CardioCore','TK_TRIATHLON_EXERCISE_ID','hyroxActive','hyroxSegmentBezig','hyroxHuidigSegment','td','toast','sbPostQ','hyroxAfronden','renderHyroxScreen','tkHyroxPersist',
-      'async function writeSessionRow(row){ return await sbPostQ("sessions", row); }\n' + finishSrc + '\nreturn hyroxFinishSegment;'
+      'async function writeRaceSegmentRow(row){ return await sbPostQ("race_segments", row); }\n' + finishSrc + '\nreturn hyroxFinishSegment;'
     )(CardioCoreStub, {}, hyroxActiveH, false, function(){ return hyroxActiveH.segments[hyroxActiveH.huidigeIndex]; }, function(){ return '2026-01-01'; }, function(m){ toasts.push(m); }, sbPostQSim, async()=>{}, ()=>{}, ()=>{});
     const ok = await finishFn({ distance:'1000', weight:null, reps:null });
     return { ok, toasts, geziene_kolommen };
@@ -1360,9 +1358,9 @@ function _buildCorrigeerHarness(startVoltooid, startDb){
 
   (async () => {
     const hyroxRes = await testSegmentSave('hyrox', 'Run');
-    ok(hyroxRes.ok === true, 'DR1: HYROX-segmentopslag slaagt met alleen echte kolommen (reproduceert en bevestigt de fix voor de live "Kon segment niet opslaan"-melding)');
+    ok(hyroxRes.ok === true, 'DR1: HYROX-segmentopslag slaagt met alleen echte race_segments-kolommen (reproduceert en bevestigt de fix voor de live "Kon segment niet opslaan"-melding)');
     ok(!hyroxRes.toasts.includes('Kon segment niet opslaan — probeer opnieuw'), 'DR2: geen foutmelding bij een geldige HYROX-segmentopslag');
-    ok(hyroxRes.geziene_kolommen.has('start_at') && hyroxRes.geziene_kolommen.has('finish_at') && !hyroxRes.geziene_kolommen.has('extraNote') && !hyroxRes.geziene_kolommen.has('note'), 'DR3: ARCHITECTUUR-HARDENING (v4.90.0) — de tijdstempels gaan naar echte start_at/finish_at-kolommen, niet naar note of de niet-bestaande extraNote-kolom');
+    ok(hyroxRes.geziene_kolommen.has('start_at') && hyroxRes.geziene_kolommen.has('finish_at') && !hyroxRes.geziene_kolommen.has('extraNote') && !hyroxRes.geziene_kolommen.has('note') && !hyroxRes.geziene_kolommen.has('date') && !hyroxRes.geziene_kolommen.has('training_type'), 'DR3: ARCHITECTUUR-HARDENING (v4.91.0) — de rij bevat uitsluitend echte race_segments-kolommen (start_at/finish_at), geen sessions-specifieke velden (date/training_type/note) meer');
 
     const brickRes = await testSegmentSave('brick', 'Zwemmen');
     ok(brickRes.ok === true, 'DR4: Triathlon-brick-segmentopslag slaagt eveneens (dezelfde gedeelde functie, dezelfde fix)');
@@ -1377,28 +1375,26 @@ function _buildCorrigeerHarness(startVoltooid, startDb){
      * ══════════════════════════════════════════════════════════════════════════════════ */
     console.log('\nDS. Context Engine: HYROX en Triathlon-brick bereiken beide de AI Coach');
     const ctxFnSrc = 'async ' + extractFn('tkHyroxCoachContext');
-    ok(/race_is_official=not\.is\.null/.test(ctxFnSrc), 'DS1: het queryfilter gebruikt race_is_official (universeel voor HYROX+brick), niet race_format (alleen HYROX)');
-    ok(!/race_format=not\.is\.null/.test(ctxFnSrc), 'DS2: het oude, te beperkte race_format-filter is niet meer aanwezig');
+    ok(/race_type=not\.is\.null/.test(ctxFnSrc), 'DS1: het queryfilter gebruikt het expliciete race_type-veld (v4.91.0), niet meer de race_is_official-noodgreep');
+    ok(!/race_format=not\.is\.null/.test(ctxFnSrc) && !/race_is_official=not\.is\.null/.test(ctxFnSrc), 'DS2: de oudere, indirecte filters (race_format/race_is_official) zijn niet meer aanwezig');
 
     async function sbGetDS(tabel, query){
       if(tabel==='training_instances'){
-        // Simuleer ECHTE PostgREST-filtering: als de query op race_format filtert
-        // (het oude, foutieve filter), levert dit correct GEEN Triathlon-brick-rij
-        // op (want race_format is bij brick altijd null) — een genuine gedragstest,
-        // geen hardcoded fixture die de query-string negeert.
+        // Simuleer ECHTE PostgREST-filtering: race_type is nu het enige, altijd-
+        // expliciete onderscheidingsveld -- geen enkele ambiguïteit meer tussen
+        // HYROX/brick op basis van welke andere velden toevallig gevuld zijn.
         const alle = [
-          {id:'inst-h', completed_at:'2026-01-05T10:00:00Z', race_format:'single', race_tier:'open', race_gender:'male', race_adaptive_class:null, race_is_official:true},
-          {id:'inst-b', completed_at:'2026-01-03T10:00:00Z', race_format:null, race_tier:null, race_gender:null, race_adaptive_class:null, race_is_official:false}
+          {id:'inst-h', completed_at:'2026-01-05T10:00:00Z', race_type:'hyrox', race_format:'single', race_tier:'open', race_gender:'male', race_adaptive_class:null},
+          {id:'inst-b', completed_at:'2026-01-03T10:00:00Z', race_type:'brick', race_format:null, race_tier:null, race_gender:null, race_adaptive_class:null}
         ];
-        if (/race_format=not\.is\.null/.test(query)) return alle.filter(r => r.race_format != null);
-        if (/race_is_official=not\.is\.null/.test(query)) return alle.filter(r => r.race_is_official != null);
+        if (/race_type=not\.is\.null/.test(query)) return alle.filter(r => r.race_type != null);
         return [];
       }
       if(query.includes('inst-h')) return [
-        {segment_index:1, exercise_id:'hyrox_run', training_type:'HYROX', start_at:'2026-01-05T10:00:00Z', finish_at:'2026-01-05T10:04:00Z', training_instance_id:'inst-h'}
+        {segment_index:1, exercise_id:'hyrox_run', start_at:'2026-01-05T10:00:00Z', finish_at:'2026-01-05T10:04:00Z', training_instance_id:'inst-h'}
       ];
       if(query.includes('inst-b')) return [
-        {segment_index:1, exercise_id:'triathlon_zwemmen', training_type:'Triathlon', start_at:'2026-01-03T09:00:00Z', finish_at:'2026-01-03T09:20:00Z', training_instance_id:'inst-b'}
+        {segment_index:1, exercise_id:'triathlon_zwemmen', start_at:'2026-01-03T09:00:00Z', finish_at:'2026-01-03T09:20:00Z', training_instance_id:'inst-b'}
       ];
       return [];
     }
@@ -1411,6 +1407,7 @@ function _buildCorrigeerHarness(startVoltooid, startDb){
     ok(ctxTekst.includes('Triathlon-brick'), 'DS4: een voltooide Triathlon-brick verschijnt EVENEENS in de AI-contexttekst (bewijs voor de filterfix)');
     ok(/hyroxReconstructPerformance\(/.test(ctxFnSrc), 'DS5: tkHyroxCoachContext() hergebruikt de bestaande Calculation-functie hyroxReconstructPerformance() -- berekent zelf niets nieuws');
     ok(!/Math\.(round|floor|ceil|min|max)\(/.test(ctxFnSrc.replace(/CardioCore\.formatTime\([^)]*\)/g,'')), 'DS6: tkHyroxCoachContext() zelf bevat geen eigen numerieke berekening buiten CardioCore-aanroepen (puur presentatie/aggregatie van reeds-berekende waarden)');
+    ok(/sbGet\('race_segments'/.test(ctxFnSrc), 'DS7: ARCHITECTUUR-HARDENING (v4.91.0) — tkHyroxCoachContext() leest segmenten uit de dedicated race_segments-tabel, niet meer uit de gedeelde sessions-tabel');
 
     console.log('\n========================================================');
     console.log(`RESULTAAT: ${pass} geslaagd, ${fail} mislukt`);

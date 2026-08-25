@@ -15174,6 +15174,13 @@ async function finishSession(){
   if(btn){btn.disabled=true;btn.textContent='Opslaan...';}
   try{
   const t=curT,list=getSessionExs(t),today=td();let saved=0,failed=0;
+  // ROADMAP POST-V1 #1 — duration_s per sessie vastleggen (RAW DATA). Hergebruikt
+  // exact dezelfde formule als de al bestaande live-klok (startTrainTimer()): wall-
+  // clock verstreken tijd minus geaccumuleerde pauzetijd. trainStart/pausedAccumMs
+  // worden universeel gezet bij elk trainingsstartpad (startT() en de resume-varianten),
+  // niet uitsluitend bij een via-Preview-gestarte training (in tegenstelling tot
+  // activeInstanceId) -- dus geen bevooroordeelde deelverzameling sessies.
+  const _duurS = trainStart ? Math.max(0, Math.round((Date.now()-trainStart-(pausedAccumMs||0))/1000)) : null;
   // F91/Optie B — FK-compat: garandeer dat elke gelogde catalogus-only oefening een exercises-rij
   // heeft VÓÓR de writes (anders faalt sessions_exercise_id_fkey). Raakt de write-semantiek niet aan
   // (buildStrengthSessionRow/writeSessionRow ongewijzigd) — alleen een veilige pre-conditie.
@@ -15194,7 +15201,7 @@ async function finishSession(){
       // P1: oefeningsnotitie mee in de note-kolom, als vrije-notitie-deel vóór de afgeleide extraNote
       // (zodat de bestaande cardio-edit-strip 'm weer als vrije notitie herkent).
       let _cNote=extraNote||''; if(l.exNote)_cNote=l.exNote+(_cNote?' · '+_cNote:'');
-      await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||null,...cRow});saved++;
+      await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||null,duration_s:_duurS,...cRow});saved++;
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
       const ws=l.sets.filter(s=>s&&(s.kg||s.reps));if(!ws.length)continue;
@@ -15206,6 +15213,7 @@ async function finishSession(){
       const {row,best,setsDetail,bestKg}=buildStrengthSessionRow(ex.id,ws,{date:today,training_type:t,note:wuNote?'Opwarm: '+wuNote:'',instanceId:activeInstanceId,
         at:new Date().toISOString(),
         voorschrift:{kg:_rx, reps:(ex.reps!=null?ex.reps:null), rpe:(ex.rpe!=null?ex.rpe:null)}});
+      row.duration_s=_duurS; // ROADMAP POST-V1 #1 — zie de berekening bovenaan finishSession()
       // P1: oefeningsnotitie meeschrijven in de note-kolom (additief; buildStrengthSessionRow ongewijzigd).
       if(l.exNote)row.note=(row.note?row.note+' · ':'')+'Notitie: '+l.exNote;
       await writeSessionRow(row);

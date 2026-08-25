@@ -229,6 +229,26 @@ ok(/r\.pct < 70/.test(decSrc) || /pct < 70/.test(decSrc), 'E12: en die grens sta
        'E14: ' + f + ' in de UI is een doorgeefwrapper, geen tweede implementatie');
   });
 
+/* ── E-vervolg. VOLLEDIGE-ARCHITECTUURAUDIT (master sprint) — resterende
+ * tonnage-/percentage-formuleduplicaten buiten de Calculation Engine gevonden en
+ * geconsolideerd. "Er mag maar één calculation source of truth zijn" (Fase 2).
+ * Deze tests bewijzen dat de vier gevonden plekken nu CalcCore hergebruiken i.p.v.
+ * de rekenformule zelf te herhalen. ──────────────────────────────────────────── */
+ok(!/\(s\.sets\|\|1\)\*\(s\.reps\|\|1\)\*\(s\.weight\|\|0\)/.test(html),
+  'E15: de losse tonnage-kopie in de doelvoortgangsfunctie (case \'volume\') is verwijderd');
+ok(/CalcCore\.calculateVolume\(\{sets:s\.sets\|\|1,reps:s\.reps\|\|1,weight:s\.weight\|\|0\}\)/.test(html),
+  'E16: die functie gebruikt nu CalcCore.calculateVolume() (volume.v1), niet een eigen kopie');
+ok(!/a\+\(\(x\.weight&&x\.reps&&x\.sets\)\?x\.weight\*x\.reps\*x\.sets:0\)/.test(html),
+  'E17: de losse tonnage-kopie in de recente-sessies-strip (loadHistory) is verwijderd');
+ok(!/if\(x\.weight&&x\.reps&&x\.sets\)s\+=x\.weight\*x\.reps\*x\.sets/.test(html),
+  'E18: de losse tonnage-kopie in de dag-totalen (loadHistory) is verwijderd');
+ok((html.match(/CalcCore\.calculateVolume\(\{sets:x\.sets,reps:x\.reps,weight:x\.weight\}\)/g) || []).length === 2,
+  'E19: beide loadHistory-tonnageplekken gebruiken nu CalcCore.calculateVolume(), niet elk hun eigen kopie');
+ok(!/const target=roundKg\(rm\*pct\/100\)/.test(html),
+  'E20: de losse percentage-kopie in applyPct() is verwijderd');
+ok(/const target=roundKg\(CalcCore\.applyPercentage\(rm,pct\)\)/.test(html),
+  'E21: applyPct() gebruikt nu CalcCore.applyPercentage() (percentage.v1), niet een eigen kopie');
+
 /* ── F. SERVICE WORKER ───────────────────────────────────────────────────── */
 console.log('\nF. Service worker en cache');
 const crypto = require('crypto');

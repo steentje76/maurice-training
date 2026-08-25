@@ -8989,7 +8989,10 @@ async function getCurrentValueForGoal(g){
     case 'volume':{
       // totaal volume (ton) sinds startdatum van het doel
       const ss=await sbGet('sessions','&date=gte.'+g.startdatum+'&weight=not.is.null&sets=not.is.null&reps=not.is.null');
-      const kg=ss.reduce((sum,s)=>sum+(s.sets||1)*(s.reps||1)*(s.weight||0),0);
+      // ARCHITECTUUR-HARDENING — was een losse kopie van dezelfde tonnage-formule als
+      // CalcCore.calculateVolume() (volume.v1); nu via de Calculation Engine, één bron
+      // van waarheid (zelfde patroon als refreshVolumeSpiergroep() al gebruikte).
+      const kg=ss.reduce((sum,s)=>sum+CalcCore.calculateVolume({sets:s.sets||1,reps:s.reps||1,weight:s.weight||0}),0);
       return Math.round(kg/100)/10; // ton, 1 decimaal
     }
     case 'conditie':case 'uithoudingsvermogen':{
@@ -13212,7 +13215,9 @@ function acceptColdStart(exId,est){
 function applyPct(exId,pct,silent){
   const rm=getOneRM(exId);
   if(!rm){if(!silent)toast('Vul eerst een 1RM in');return;}
-  const target=roundKg(rm*pct/100);
+  // ARCHITECTUUR-HARDENING — was een losse kopie van CalcCore.applyPercentage() (base*pct/100);
+  // nu via de Calculation Engine, één bron van waarheid.
+  const target=roundKg(CalcCore.applyPercentage(rm,pct));
   const idxs=getWorkSetIndices(exId);
   let filled=0;
   idxs.forEach(i=>{
@@ -16321,7 +16326,7 @@ async function loadHistory(append=false){
   if(!append){
     const rc=dayEntries.slice(0,4).map(([date,sess])=>{
       const _ttr=sess[0]?.training_type;const tt=_ttr?ttName(_ttr):'Losse oefening'; // F120: nette label i.p.v. '—'/'?'
-      const vol=sess.reduce((a,x)=>a+((x.weight&&x.reps&&x.sets)?x.weight*x.reps*x.sets:0),0);
+      const vol=sess.reduce((a,x)=>a+((x.weight&&x.reps&&x.sets)?CalcCore.calculateVolume({sets:x.sets,reps:x.reps,weight:x.weight}):0),0);
       return `<button class="lg-rcard" onclick="histOpenDay('${date}')"><span class="lg-rbadge">${escHtml(tt)}</span><span class="lg-rd">${escHtml(fmtDate(date))}</span><span class="lg-rst">${sess.length} oef${vol>0?' · '+Math.round(vol)+' kg':''}</span></button>`;
     }).join('');
     if(rc)recentHtml=`<div class="lg-seclbl">Recente sessies</div><div class="lg-recent">${rc}</div><div class="lg-seclbl">Geschiedenis</div>`;
@@ -16329,7 +16334,7 @@ async function loadHistory(append=false){
   let html='';
   dayEntries.forEach(([date,sess])=>{
     const ttRaw=sess[0]?.training_type||null;const tt=ttRaw?ttName(ttRaw):'Losse oefening'; // F120: losse oefening netjes gelabeld i.p.v. '?'
-    const totalVol=sess.reduce((s,x)=>{if(x.weight&&x.reps&&x.sets)s+=x.weight*x.reps*x.sets;return s;},0);
+    const totalVol=sess.reduce((s,x)=>{if(x.weight&&x.reps&&x.sets)s+=CalcCore.calculateVolume({sets:x.sets,reps:x.reps,weight:x.weight});return s;},0);
     html+=`<div class="lg-day" data-date="${date}">
       <div class="hist-day-hd lg-day-hd" onclick="toggleHistDay(this)">
         <div style="flex:1"><div class="lg-day-date">${fmtDate(date)}</div>

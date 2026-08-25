@@ -114,7 +114,14 @@ const volBlok = html.slice(html.indexOf('async function refreshVolumeSpiergroep'
 ok(/CalcCore\.calculateVolume\(/.test(volBlok), 'D3: de spiergroep-sectie gebruikt volume.v1');
 ok(!/\(s\.sets\|\|1\)\*\(s\.reps\|\|1\)\*\(s\.weight\|\|0\)/.test(volBlok), 'D4: de handgeschreven formule is weg');
 ok(!/\*\s*\(s\.weight/.test(volBlok), 'D5: er staat geen los tonnage-product meer in dit blok');
-eq((html.match(/CalcCore\.calculateVolume\(/g) || []).length, 6, 'D6: alle zes volumeplekken lopen via de engine');
+// D6: dit aantal is met opzet een hard invariant, geen toevallige teller. Groeide van 6
+// naar 10 tijdens de volledige-architectuurauditsprint: drie voorheen losse tonnage-
+// kopieën (doelvoortgang case 'volume', loadHistory-recente-strip, loadHistory-dagtotalen)
+// zijn geconsolideerd naar CalcCore.calculateVolume() -- zie core/fHardening.test.js E15-E19
+// voor de gedetailleerde, plek-specifieke bewijzen. Bij een volgende wijziging: als dit
+// aantal daalt is een delegatie per ongeluk teruggedraaid naar een eigen kopie; als het
+// stijgt, is dat verwacht bij een nieuwe, terechte consolidatie -- werk dan dit getal bij.
+eq((html.match(/CalcCore\.calculateVolume\(/g) || []).length, 10, 'D6: alle tien volumeplekken lopen via de engine');
 ok(/muscleVol\[m\]/.test(volBlok) && /tkFmtTonnage/.test(volBlok),
    'D7: het berekende tonnage wordt nu ook getoond (was dode code)');
 ok(!/function calculateVolume/.test(html), 'D8: de UI heeft geen eigen volumefunctie');

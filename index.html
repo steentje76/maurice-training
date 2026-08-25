@@ -22437,9 +22437,10 @@ function hyroxBeginSegment(){
 
 // hyroxFinishSegment(invoer): invoer = {distance, weight, reps} — alleen de velden die
 // dit segment nodig heeft worden gebruikt (zie TK_HYROX_STATION_VELDEN). Schrijft één
-// sessions-rij via de al bestaande writeSessionRow()/sbPostQ-offline-wachtrij — geen
-// nieuwe schrijfroute. Duur komt UITSLUITEND uit CardioCore.stationDurationS() op de
-// twee echte tijdstempels; nooit een getypte/geschatte waarde.
+// race_segments-rij via writeRaceSegmentRow()/sbPostQ-offline-wachtrij (v4.91.0: dedicated
+// tabel i.p.v. de gedeelde sessions-tabel). Duur komt UITSLUITEND uit
+// CardioCore.stationDurationS() op de twee echte tijdstempels; nooit een getypte/geschatte
+// waarde.
 // v4.65.0 — voorkomt dubbele completion bij snel dubbeltikken op "Klaar" (zelfde
 // bestaande patroon als finishSessionBezig in de normale Execution-flow).
 let hyroxSegmentBezig = false;

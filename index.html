@@ -15200,6 +15200,22 @@ async function finishSession(){
   // niet uitsluitend bij een via-Preview-gestarte training (in tegenstelling tot
   // activeInstanceId) -- dus geen bevooroordeelde deelverzameling sessies.
   const _duurS = trainStart ? Math.max(0, Math.round((Date.now()-trainStart-(pausedAccumMs||0))/1000)) : null;
+  // ROADMAP POST-V1 #3 — weer per sessie vastleggen (RAW DATA). Hergebruikt de al
+  // bestaande weerinfrastructuur (WeatherCore/TKWeather) volledig ongewijzigd: dezelfde
+  // outdoor/modaliteit-bepaling als de bestaande weer-context-balk (regel ~11241),
+  // dezelfde opt-in-gate (TKWeather.isEnabled()), en hetzelfde per-uur-cachemechanisme
+  // (fetchWeather()) — dus doorgaans GEEN extra netwerkverzoek, want het weer is al
+  // opgehaald toen de trainingsscherm werd getoond. Geen fetch, geen gok, geen
+  // verzonnen waarde: bij opt-out/geen locatie/mislukte fetch blijft dit gewoon null.
+  let _weerData = null;
+  try{
+    if(typeof TKWeather!=='undefined' && TKWeather.isEnabled()){
+      let _fOut=false,_fMod='run';
+      for(const ex of list){ const ct=resolveCardioType(ex); if(ct && TKWeather.OUTDOOR_CAPABLE[ct]){ _fOut=true; _fMod=TKWeather.OUTDOOR_CAPABLE[ct]; break; } }
+      const _wres = await TKWeather.forContext(tkWeatherCtx(_fOut,_fMod));
+      if(_wres && _wres.data) _weerData = _wres.data;
+    }
+  }catch(_){ /* weer mag nooit het afronden van een sessie blokkeren */ }
   // F91/Optie B — FK-compat: garandeer dat elke gelogde catalogus-only oefening een exercises-rij
   // heeft VÓÓR de writes (anders faalt sessions_exercise_id_fkey). Raakt de write-semantiek niet aan
   // (buildStrengthSessionRow/writeSessionRow ongewijzigd) — alleen een veilige pre-conditie.
@@ -15220,7 +15236,7 @@ async function finishSession(){
       // P1: oefeningsnotitie mee in de note-kolom, als vrije-notitie-deel vóór de afgeleide extraNote
       // (zodat de bestaande cardio-edit-strip 'm weer als vrije notitie herkent).
       let _cNote=extraNote||''; if(l.exNote)_cNote=l.exNote+(_cNote?' · '+_cNote:'');
-      await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||null,duration_s:_duurS,...cRow});saved++;
+      await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||null,duration_s:_duurS,weather:_weerData,...cRow});saved++;
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
       const ws=l.sets.filter(s=>s&&(s.kg||s.reps));if(!ws.length)continue;
@@ -15233,6 +15249,7 @@ async function finishSession(){
         at:new Date().toISOString(),
         voorschrift:{kg:_rx, reps:(ex.reps!=null?ex.reps:null), rpe:(ex.rpe!=null?ex.rpe:null)}});
       row.duration_s=_duurS; // ROADMAP POST-V1 #1 — zie de berekening bovenaan finishSession()
+      row.weather=_weerData; // ROADMAP POST-V1 #3 — zie de berekening bovenaan finishSession()
       // P1: oefeningsnotitie meeschrijven in de note-kolom (additief; buildStrengthSessionRow ongewijzigd).
       if(l.exNote)row.note=(row.note?row.note+' · ':'')+'Notitie: '+l.exNote;
       await writeSessionRow(row);

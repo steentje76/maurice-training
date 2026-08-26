@@ -10997,7 +10997,7 @@ async function startT(t){
   }catch(_){ sessionRxAdj[t]={rpeDelta:0,setsDelta:0}; }
   let _resumeElapsedMs=0; // P0: verstreken tijd bij hervatten (0 = verse start)
   if(resumeDraft){
-    curT=t;sessionLog=draft.sessionLog||{};sessionExtra=draft.sessionExtra||[];trainPaused=false;pausedAccumMs=0;
+    curT=t;sessionLog=draft.sessionLog||{};sessionExtra=draft.sessionExtra||[];trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
     // RC0: de koppeling met training_instances terug uit de draft, zodat het afronden na
     // een herstart de instance alsnog op 'completed' zet i.p.v. hem als wees achter te laten.
     activeInstanceId=draft.instanceId||null;
@@ -11015,7 +11015,7 @@ async function startT(t){
       if(!ok) return; // afbreken → draft blijft behouden, geen dataverlies
     }
     if(draft)clearTrainingDraft();
-    curT=t;sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;
+    curT=t;sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
     await renderTrainScreen(t);
     saveState='saved';lastSaveTs=null;updateSaveIndicator();
   }
@@ -11076,6 +11076,12 @@ function buildVasteTrainingScreen(vt){
 }
 
 let trainPaused=false, pausedAt=0, pausedAccumMs=0;
+// ROADMAP POST-V1 #2 — rustduur per set (RAW DATA). Houdt, per oefening binnen de
+// actieve sessie, het wall-clock-moment bij waarop de vorige set van DIE oefening
+// werd afgevinkt. Uitsluitend gebruikt om de daadwerkelijk verstreken rust tot de
+// volgende set te meten -- geen relatie met de bestaande, VOORGESCHREVEN
+// rest_seconds-aftelklok (autoRestAfterSet/openRestTimer), die ongewijzigd blijft.
+let lastSetDoneAt={};
 function startTrainTimer(t){
   stopTrainTimer();
   trainInterval=setInterval(()=>{
@@ -14465,6 +14471,19 @@ function toggleSetDone(exId,setNum){
   // P1-fix: done-status PERSISTENT maken in sessionLog zodat resume niet op een heuristiek (kg||reps)
   // hoeft te gokken (false pos/neg bij bodyweight of ingevulde-maar-niet-afgevinkte sets).
   try{ if(!sessionLog[exId])sessionLog[exId]={}; if(!Array.isArray(sessionLog[exId].sets))sessionLog[exId].sets=[]; if(!sessionLog[exId].sets[setNum-1])sessionLog[exId].sets[setNum-1]={}; sessionLog[exId].sets[setNum-1].done=nowDone; }catch(_){}
+  // ROADMAP POST-V1 #2 — rustduur per set (RAW DATA). Uitsluitend bij het daadwerkelijk
+  // afvinken (niet bij ongedaan maken): de rust vóór DEZE set is de wall-clock-tijd sinds
+  // de vorige afgevinkte set van DEZELFDE oefening. Eerste set van een oefening in de
+  // sessie heeft geen zinvolle referentie (geen "rust ervoor" binnen deze sessie) -> null,
+  // nooit een verzonnen waarde.
+  try{
+    if(nowDone){
+      const _vorige=lastSetDoneAt[exId];
+      const _rustSec=_vorige!=null?Math.max(0,Math.round((Date.now()-_vorige)/1000)):null;
+      if(sessionLog[exId]&&Array.isArray(sessionLog[exId].sets)&&sessionLog[exId].sets[setNum-1]) sessionLog[exId].sets[setNum-1].rest_sec=_rustSec;
+      lastSetDoneAt[exId]=Date.now();
+    }
+  }catch(_){}
   if(nowDone){c.classList.add('just-done');setTimeout(()=>c.classList.remove('just-done'),220);}
   updateProgress(curT);
   updateSummary(curT);
@@ -15067,7 +15086,7 @@ function buildStrengthSessionRow(exId, ws, opts){
      dezelfde offline-veilige schrijfweg, gekoppeld aan het bestaande training_instance_id.
      Additief: bestaande lezers van sets_detail zien exact dezelfde velden als voorheen. */
   const setsDetail=ws.map(function(s,i){
-    const d={kg:s.kg,effKg:bestKg(s),reps:s.reps,rpe:s.rpe};
+    const d={kg:s.kg,effKg:bestKg(s),reps:s.reps,rpe:s.rpe,rest_sec:s.rest_sec};
     const ev=(typeof tkSetEvidence==='function')?tkSetEvidence(exId,s,i,opts):null;
     if(ev) d.evidence=ev;
     return d;
@@ -18930,7 +18949,7 @@ async function launchProgramTrainScreen(adjustment){
   const {blockId,block,prog,rows}=progCheckinCtx;
   const ctxT='prog_'+blockId;
   if(!(await guardExistingDraft(ctxT))) return; // P0: bescherm niet-afgeronde andere training
-  curT=ctxT;sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;
+  curT=ctxT;sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
   pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};
   rows.forEach(r=>{
     const ex=exercises.find(e=>e.id===r.exercise_id);
@@ -19306,7 +19325,7 @@ async function startRepeatWorkout(){
   });
   window._prefillMap=prefillMap;
   await ensureVasteTrainingScreenExists(t);
-  curT=t;sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;
+  curT=t;sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
   await renderTrainScreen(t);
   window._prefillMap=null;
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));

@@ -302,6 +302,47 @@ ok(/row\.duration_s=_duurS/.test(finishSrc), 'G3: het krachtschrijfpad geeft dur
   eq(berekenDuurS(null, 0, t0), null, 'G6: geen trainStart -> null, geen crash, geen verzonnen waarde');
 })();
 
+/* ── H. ROADMAP POST-V1 #2 — rustduur per set (RAW DATA) ────────────────────
+ * "Rustduur per set vastleggen in sets_detail" -- de VARIABLE_REGISTRY-variabele
+ * 'rust' (inputs:['rest_sec'], beschikbaarheid:'toekomstig') wacht op precies
+ * deze data. Geen relatie met de bestaande, VOORGESCHREVEN rest_seconds-aftel-
+ * klok (autoRestAfterSet/openRestTimer) -- dat blijft ongewijzigd. ─────────── */
+console.log('\nH. Rustduur per set wordt gemeten en meegegeven aan sets_detail');
+ok(/lastSetDoneAt\[exId\]/.test(html), 'H1: toggleSetDone() houdt per oefening het laatst-afgevinkte-set-moment bij');
+ok(/sessionLog\[exId\]\.sets\[setNum-1\]\.rest_sec=_rustSec/.test(html), 'H2: de gemeten rust wordt in sessionLog opgeslagen, direct op de set zelf');
+ok(/rest_sec:s\.rest_sec/.test(html), 'H3: buildStrengthSessionRow() geeft rest_sec door aan setsDetail (de jsonb-kolom die de Relationship Engine leest)');
+(function(){
+  const html2 = html;
+  function extractFn(name){
+    const s = html2.indexOf('async function '+name+'(') >= 0 ? html2.indexOf('async function '+name+'(') : html2.indexOf('function '+name+'(');
+    const parenStart = html2.indexOf('(', s);
+    let pd=0, parenEnd=-1;
+    for(let j=parenStart; j<html2.length; j++){ if(html2[j]==='(') pd++; else if(html2[j]===')'){ pd--; if(pd===0){ parenEnd=j; break; } } }
+    const bodyStart = html2.indexOf('{', parenEnd);
+    let d=0,e=-1;
+    for(let j=bodyStart; j<html2.length; j++){ if(html2[j]==='{')d++; else if(html2[j]==='}'){d--; if(d===0){e=j;break;}} }
+    return html2.slice(s,e+1);
+  }
+  let sessionLog = {}, lastSetDoneAt = {};
+  const toggleSrc = extractFn('toggleSetDone');
+  const mod = new Function('sessionLog','lastSetDoneAt','document','updateProgress','updateSummary','scheduleAutosave','refreshActiveSetBanner','unlockAudio','showPostSetAdvice','showSetCompletionFeedback','autoRestAfterSet','curT',
+    toggleSrc + '\nreturn toggleSetDone;'
+  )(sessionLog, lastSetDoneAt,
+    { getElementById: () => ({ classList: { contains:()=>false, toggle:()=>{}, add:()=>{}, remove:()=>{} } }) },
+    ()=>{}, ()=>{}, ()=>{}, ()=>{}, ()=>{}, ()=>{}, ()=>{}, ()=>{}, 'Kracht');
+
+  mod('bankdrukken', 1);
+  eq(sessionLog['bankdrukken'].sets[0].rest_sec, null, 'H4: eerste set van een oefening in de sessie heeft geen zinvolle referentie -> null');
+  const origNow = Date.now;
+  let fakeNow = Date.now()+90000;
+  Date.now = () => fakeNow;
+  mod('bankdrukken', 2);
+  eq(sessionLog['bankdrukken'].sets[1].rest_sec, 90, 'H5: 90 seconden wall-clock tussen twee afgevinkte sets van dezelfde oefening -> rest_sec=90');
+  mod('squat', 1);
+  eq(sessionLog['squat'].sets[0].rest_sec, null, 'H6: een andere oefening deelt NIET de rust-referentie -> null, geen vermenging tussen oefeningen');
+  Date.now = origNow;
+})();
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { console.log('❌ Hardening niet groen.'); process.exit(1); }

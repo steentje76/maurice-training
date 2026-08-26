@@ -380,7 +380,7 @@ ok(/sbGet\('cycle_symptom_logs'/.test(html), 'K2: leest uit de dedicated cycle_s
 ok(/sbPostQ\('cycle_symptom_logs'/.test(html) || /sbPatch\('cycle_symptom_logs'/.test(html), 'K3: schrijft naar de dedicated cycle_symptom_logs-tabel');
 ok(/CycleCore\.symptomPatternSummary\(/.test(html), 'K4: de patroonweergave in de UI gebruikt UITSLUITEND CycleCore (Calculation Engine), berekent niets zelf in de UI-laag');
 const cyclusUiVanaf = html.indexOf('async function renderCyclusScreen(');
-const cyclusUiSrc = html.slice(cyclusUiVanaf, cyclusUiVanaf + 9000);
+const cyclusUiSrc = html.slice(cyclusUiVanaf, cyclusUiVanaf + 12000);
 ok(!/hormo|diagnos|oorzaak|veroorzaak|zeker(?!heid, geen)/i.test(cyclusUiSrc.replace(/schatting, geen zekerheid/gi,'')), 'K5: de gerenderde cyclusscherm-tekst bevat geen causale/hormonale/diagnostische taal');
 ok(/feitelijke telling, geen medische verklaring/.test(html), 'K6: het patroonkaartje bevat expliciet het voorbehoud "feitelijke telling, geen medische verklaring"');
 
@@ -391,6 +391,15 @@ ok(/if\(!samenvatting\.voldoendeCycliVoorFaseVergelijking\)/.test(html), 'L2: re
 ok(/feitelijke tellingen, geen medische verklaring of advies/.test(html), 'L3: het dashboard bevat een expliciet voorbehoud, consistent met het patroonkaartje');
 ok(!/hormo|diagnos|oorzaak|veroorzaak|zwanger|anticoncep|vruchtbaar/i.test(cyclusUiSrc), 'L4: ook de dashboard-tekst bevat geen medische/causale/DECISION-REQUIRED-grensoverschrijdende taal');
 ok(/sbGet\('sessions', '&order=date\.desc&limit=90'\)/.test(html), 'L5: haalt trainingssessies op via de bestaande, generieke sbGet -- geen nieuwe, parallelle datatoegang');
+
+/* ── M. ADVANCED WOMEN'S PERFORMANCE INSIGHTS (v4.54.0, Fase 3) ──────────── */
+console.log('\nM. Fase 3: transparantieregel, trend per cyclus, symptomen x training — UI-bedrading en taalveiligheid');
+ok(/CycleTrainingCore\.trainingTrendPerCycle\(/.test(html), 'M1: de trend-per-cyclus-UI gebruikt UITSLUITEND CycleTrainingCore, berekent niets zelf');
+ok(/CycleTrainingCore\.symptomTrainingOverlap\(/.test(html), 'M2: de symptomen-x-training-UI gebruikt UITSLUITEND CycleTrainingCore, berekent niets zelf');
+ok(/Gebaseerd op '\+samenvatting\.aantalGebruikteTrainingen\+' geregistreerde trainingen en '\+samenvatting\.aantalGeregistreerdeCycli/.test(html), 'M3: de exacte, voorgeschreven transparantieregel ("Gebaseerd op X trainingen en Y cycli") wordt getoond');
+ok(/Uitsluitend geregistreerde, afgeronde cycli — geen voorspelling\./.test(html), 'M4: de trend-per-cyclus toont expliciet dat dit geregistreerde geschiedenis is, geen voorspelling');
+ok(/Feitelijke telling, geen oorzakelijk verband\./.test(html), 'M5: symptomen-x-training toont expliciet het causaliteitsvoorbehoud');
+ok(!/hormo|diagnos|oorzaak(?!elijk verband)|veroorzaak|zwanger|anticoncep|vruchtbaar|beinvloed/i.test(cyclusUiSrc.replace(/geen oorzakelijk verband/gi,'')), 'M6: ook de nieuwe Fase-3-tekst bevat geen medische/causale/DECISION-REQUIRED-grensoverschrijdende taal');
 
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');

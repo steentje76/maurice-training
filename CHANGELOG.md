@@ -1,5 +1,40 @@
 # Trainingskompas — Changelog
 
+## v4.54.0 — Advanced Women's Performance Insights: trend per cyclus, symptomen × training (26 augustus 2026)
+
+Women's Performance Blueprint Fase 3. Autonome implementatiebeslissing door
+Claude tijdens een onbeheerde master-sprint (zie DECISION_LOG.md).
+
+Gap-analyse: Fase 7-A/B/C (cyclus × training overview, data sufficiency) bleken
+al grotendeels gebouwd in PR #47 (v4.53.0). Nieuw toegevoegd:
+
+**core/cycleTraining.js (uitgebreid, geen nieuwe module)**:
+- `cycleTrainingSummary()`: nieuwe transparantievelden (`aantalGebruikteTrainingen`,
+  `aantalGeregistreerdeCycli`, `datumbereik`) — verplichte, expliciete
+  "gebaseerd op X trainingen en Y cycli"-herkomstvermelding.
+- `trainingTrendPerCycle()`: HISTORISCHE trend per afgeronde, individuele
+  cyclus (aantal trainingen/gemiddelde RPE/duur) — uitsluitend voltooide
+  cycli, nooit de huidige, nog lopende cyclus (geen extrapolatie/
+  voorspelling).
+- `symptomTrainingOverlap()`: feitelijke telling van hoeveel geregistreerde
+  symptoomdagen samenvielen met een trainingsdag — drempel van minimaal 3
+  symptoomdagen, geen causale taal.
+
+**UI**: transparantieregel, trend-per-cyclus-kaart en symptomen-x-training-
+kaart toegevoegd aan het bestaande cyclusscherm (Lichaam → Cyclus). Bestaande
+designtaal, geen nieuwe visuele stijl.
+
+**Bewust niet gebouwd** (conform de vier bestaande DECISION REQUIRED-
+documenten): geen enkele zwangerschaps-, postpartum-, menopauze- of
+anticonceptie-gerelateerde logica. Geen nieuwe trainingsbelastingformule
+(bestaande RPE/duur-gemiddelden waren al voldoende betrouwbaar).
+
+Geen databasewijziging — uitsluitend nieuwe, pure berekeningen op reeds
+bestaande RAW DATA (`cycle_periods`, `cycle_symptom_logs`, `sessions`).
+
+Protected core (`calculation.js`/`decision.js`/`relationship.js`/`athlete.js`/
+`coaching.js`): SHA256-bevestigd byte-identiek, onaangetast.
+
 ## v4.53.0 — Cyclus-training-correlatie + Women's Performance-dashboard + cycleContext()-bugfix (26 augustus 2026)
 
 Women's Performance Blueprint Fase 2. Autonome implementatiebeslissing door

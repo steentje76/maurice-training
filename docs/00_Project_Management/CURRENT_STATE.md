@@ -6,7 +6,7 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en docs/Brand/BRAND_IDENTITY.md)
 
 ## Huidige versie
-v4.51.0
+v4.52.0
 
 ## Laatste release
 - Versie: v4.49.0 — HYROX, Adaptive Triathlon en correction-state remediation

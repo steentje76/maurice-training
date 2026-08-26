@@ -4071,6 +4071,9 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="cyclus-optin"></div>
     <div id="cyclus-status" style="display:none"></div>
     <div id="cyclus-acties" style="display:none;margin-top:12px"></div>
+    <div id="cyclus-symptomen-lbl" class="v43-lbl" style="margin:16px 0 10px;display:none">Hoe voel je je vandaag? (optioneel)</div>
+    <div id="cyclus-symptomen"></div>
+    <div id="cyclus-patroon" style="display:none"></div>
     <div class="v43-lbl" style="margin:16px 0 10px;display:none" id="cyclus-historie-lbl">Historie</div>
     <div id="cyclus-historie"></div>
     <div style="height:8px"></div>
@@ -5891,7 +5894,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.51.0';
+const APP_VER = 'v4.52.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -8118,6 +8121,13 @@ async function cyclusLaadPeriodes(){
   catch(e){ console.warn('cyclusLaadPeriodes fout', e); return []; }
 }
 async function cyclusStartMenstruatie(){
+  // AUDIT-BEVINDING (v4.52.0) — voorheen géén controle op een reeds actieve periode;
+  // de UI-knop was de ENIGE bescherming tegen overlap (verdween pas na herrendering).
+  // Bij een race condition/dubbele tik kon dit twee overlappende periodes opleveren,
+  // wat averageCycleLength() aantoonbaar corrumpeert (zie core/fCycle.test.js I-sectie).
+  // Nu een expliciete, server-bevraagde check vóór het schrijven.
+  const bestaande = await cyclusLaadPeriodes();
+  if(bestaande.some(p=>p.end_date==null)){ toast('Er loopt al een geregistreerde menstruatie — rond die eerst af'); renderCyclusScreen(); return; }
   const vandaag = td();
   const ok = await sbPostQ('cycle_periods', { start_date: vandaag, end_date: null });
   if(!ok){ toast('Kon niet opslaan — probeer opnieuw'); return; }
@@ -8147,6 +8157,35 @@ async function cyclusVerwijderAlleData(){
   toast('Alle cyclusdata verwijderd');
   renderCyclusScreen();
 }
+// SYMPTOOMREGISTRATIE (v4.52.0) — optioneel, dagelijks, neutrale 0-10-schalen.
+// Geen enkel veld verplicht. Patroonweergave uitsluitend via CycleCore.
+// symptomPatternSummary() (puur/deterministisch, minimumdrempel >=3 cycli) —
+// nooit een conclusie op 1-2 datapunten, nooit causale/medische taal.
+var CYCLUS_SYMPTOMEN = [
+  {key:'cramps',label:'Krampen'},
+  {key:'headache',label:'Hoofdpijn'},
+  {key:'energy',label:'Energie'},
+  {key:'mood',label:'Stemming'},
+  {key:'sleep_quality',label:'Slaapkwaliteit'}
+];
+async function cyclusLaadSymptomen(){
+  try{ return await sbGet('cycle_symptom_logs', '&order=log_date.desc&limit=120') || []; }
+  catch(e){ console.warn('cyclusLaadSymptomen fout', e); return []; }
+}
+async function cyclusSlaSymptoomOp(key, waarde){
+  const vandaag = td();
+  const bestaande = await sbGet('cycle_symptom_logs', '&log_date=eq.'+vandaag+'&limit=1');
+  const huidig = (bestaande&&bestaande[0]&&bestaande[0].symptoms) ? bestaande[0].symptoms : {};
+  huidig[key] = waarde;
+  let ok;
+  if(bestaande&&bestaande[0]){
+    ok = await sbPatch('cycle_symptom_logs', 'id=eq.'+encodeURIComponent(bestaande[0].id), { symptoms: huidig, updated_at: new Date().toISOString() });
+  } else {
+    ok = await sbPostQ('cycle_symptom_logs', { log_date: vandaag, symptoms: huidig });
+  }
+  if(!ok){ toast('Kon niet opslaan — probeer opnieuw'); return; }
+  renderCyclusScreen();
+}
 function cyclusFaseLabel(fase){
   return ({menstruatie:'Menstruatie',folliculair:'Folliculaire fase',ovulatie:'Rond de geschatte eisprong',luteaal:'Luteale fase'})[fase] || null;
 }
@@ -8154,6 +8193,9 @@ async function renderCyclusScreen(){
   const optinEl=document.getElementById('cyclus-optin');
   const statusEl=document.getElementById('cyclus-status');
   const actiesEl=document.getElementById('cyclus-acties');
+  const symLblEl=document.getElementById('cyclus-symptomen-lbl');
+  const symEl=document.getElementById('cyclus-symptomen');
+  const patroonEl=document.getElementById('cyclus-patroon');
   const histLblEl=document.getElementById('cyclus-historie-lbl');
   const histEl=document.getElementById('cyclus-historie');
   if(!optinEl)return;
@@ -8161,11 +8203,11 @@ async function renderCyclusScreen(){
     optinEl.innerHTML='<div class="card"><div style="font-weight:700;margin-bottom:6px">Cyclustracking inschakelen</div>'+
       '<div style="font-size:13px;color:var(--g4);margin-bottom:10px">Optioneel. Alleen jij kunt je eigen registraties zien.</div>'+
       '<button class="btn-primary" onclick="cyclusEnable()">Inschakelen</button></div>';
-    statusEl.style.display='none'; actiesEl.style.display='none'; histLblEl.style.display='none'; histEl.innerHTML='';
+    statusEl.style.display='none'; actiesEl.style.display='none'; symLblEl.style.display='none'; symEl.innerHTML=''; patroonEl.style.display='none'; histLblEl.style.display='none'; histEl.innerHTML='';
     return;
   }
   optinEl.innerHTML='<button class="lich-goto" onclick="cyclusDisable()"><span class="ic">⏻</span><span class="b"><b>Uitschakelen</b><s>Je data blijft bewaard tot je die zelf verwijdert</s></span></button>';
-  statusEl.style.display=''; actiesEl.style.display=''; histLblEl.style.display='';
+  statusEl.style.display=''; actiesEl.style.display=''; symLblEl.style.display=''; histLblEl.style.display='';
 
   const periodes = await cyclusLaadPeriodes();
   const ctx = CycleCore.cycleContext(periodes, td());
@@ -8195,6 +8237,32 @@ async function renderCyclusScreen(){
     actiesHtml += '<button class="btn-primary" style="width:100%" onclick="cyclusStartMenstruatie()">Start menstruatie registreren</button>';
   }
   actiesEl.innerHTML = actiesHtml;
+
+  // Symptoomregistratie (optioneel, 0-10, geen veld verplicht)
+  const symptomenVandaag = await sbGet('cycle_symptom_logs', '&log_date=eq.'+td()+'&limit=1');
+  const huidigeSymptomen = (symptomenVandaag&&symptomenVandaag[0]&&symptomenVandaag[0].symptoms)||{};
+  symEl.innerHTML = '<div class="card">' + CYCLUS_SYMPTOMEN.map(function(s){
+    const w = huidigeSymptomen[s.key];
+    return '<div style="margin-bottom:10px"><div style="font-size:13px;margin-bottom:4px">'+s.label+(w!=null?' — '+w:'')+'</div>'+
+      '<input type="range" min="0" max="10" step="1" value="'+(w!=null?w:5)+'" style="width:100%" '+
+      'onchange="cyclusSlaSymptoomOp(\''+s.key+'\', parseInt(this.value,10))" aria-label="'+s.label+'"></div>';
+  }).join('') + '</div>';
+
+  // Neutrale patroonweergave — uitsluitend via CycleCore, nooit causale taal
+  const alleSymptoomLogs = await cyclusLaadSymptomen();
+  const patroon = CycleCore.symptomPatternSummary(alleSymptoomLogs, periodes);
+  if(patroon.voldoendeData && patroon.patronen.length){
+    const labelVoor=function(k){ const s=CYCLUS_SYMPTOMEN.find(x=>x.key===k); return s?s.label:k; };
+    patroonEl.style.display='';
+    patroonEl.innerHTML = '<div class="card"><div style="font-weight:700;margin-bottom:6px">Wat opvalt</div>'+
+      patroon.patronen.map(function(p){
+        return '<div style="font-size:13px;color:var(--g4);margin-bottom:4px">Je registreerde "'+labelVoor(p.symptoom)+'" op '+p.aantalRegistraties+' van je laatste '+p.aantalCycliMetData+' geregistreerde cycli.</div>';
+      }).join('') +
+      '<div style="font-size:12px;color:var(--g4);margin-top:4px">Dit is een feitelijke telling, geen medische verklaring.</div></div>';
+  } else {
+    patroonEl.style.display='';
+    patroonEl.innerHTML = '<div class="card" style="font-size:12.5px;color:var(--g4)">Nog onvoldoende data voor een betrouwbaar patroon (minimaal 3 geregistreerde cycli met symptomen nodig).</div>';
+  }
 
   if(!periodes.length){
     histEl.innerHTML = '<div class="lich-empty"><div class="e2">Nog geen historie</div></div>';

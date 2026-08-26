@@ -65,6 +65,7 @@ exports.handler = async function(event) {
       'checkin_conditions', 'exercise_favorites', 'hrv_log', 'sessions', 'weight_log',
       'goals', 'equipment_types', 'exercise_goals',
       'cycle_periods',            // v4.51.0 — cyclustracking-MVP (RAW DATA, geen FK-cascade)
+      'cycle_symptom_logs',       // v4.52.0 — PMS/symptoomregistratie (RAW DATA, geen FK-cascade)
       // RC0-aanvulling
       'training_instances',      // uitgevoerde sessies met hun voorschrift-snapshot
       'training_context',        // frequentie, locatie, uitrusting, te vermijden oefeningen

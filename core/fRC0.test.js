@@ -268,14 +268,14 @@ console.log('\nE. Accountverwijdering');
 var DELETE_FN = fs.readFileSync(path.join(ROOT, 'netlify', 'functions', 'delete-account.js'), 'utf8');
 
 /* Elke tabel in het productieschema met een gebruikerskolom, opgevraagd op 2026-08-19 uit
-   information_schema, bijgewerkt op 2026-08-26 met cycle_periods (v4.51.0) en race_segments
-   (v4.91.0). Backup-tabellen (bak_p_*) staan er niet in: die zijn niet via de app
-   bereikbaar en bevatten geen levende gebruikersgegevens. Komt er een tabel bij, dan hoort
+   information_schema, bijgewerkt op 2026-08-26 met cycle_periods (v4.51.0), race_segments
+   (v4.91.0) en cycle_symptom_logs (v4.52.0). Backup-tabellen (bak_p_*) staan er niet in: die zijn
+   niet via de app bereikbaar en bevatten geen levende gebruikersgegevens. Komt er een tabel bij, dan hoort
    die in DEZE lijst én in delete-account.js — anders faalt E1. */
 var TABELLEN_MET_GEBRUIKER = [
   'athlete_conditions', 'atleet_profiel', 'body_comp', 'chat_history', 'checkin_conditions',
   'common_data_points', 'content_shares', 'custom_training_exercises', 'custom_trainings',
-  'cycle_periods', 'equipment_catalog', 'exercise_equipment', 'exercise_favorites', 'exercise_goals',
+  'cycle_periods', 'cycle_symptom_logs', 'equipment_catalog', 'exercise_equipment', 'exercise_favorites', 'exercise_goals',
   'exercises', 'external_connections', 'external_records', 'goals', 'hrv_log', 'memberships',
   'program_block_exercises', 'program_blocks', 'programs', 'race_segments', 'sessions', 'training_context',
   'training_exercises', 'training_instances', 'usage_log', 'user_credit_purchases',

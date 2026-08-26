@@ -364,6 +364,26 @@ ok(/weather:_weerData/.test(finishSrc), 'I4: het cardio-schrijfpad geeft weather
 ok(/row\.weather=_weerData/.test(finishSrc), 'I5: het krachtschrijfpad geeft weather mee');
 ok(/let _weerData = null;/.test(finishSrc), 'I6: begint met null -- geen verzonnen standaardwaarde als het weer niet beschikbaar is');
 
+/* ── J. CYCLUSTRACKING-AUDIT (v4.52.0) — overlap-preventie ─────────────────
+ * Bevinding tijdens de vervolgsprint-audit van PR #44: cyclusStartMenstruatie()
+ * had geen server-bevraagde controle op een reeds actieve periode, uitsluitend
+ * UI-knopzichtbaarheid. Gerepareerd met een expliciete check vóór het schrijven. */
+console.log('\nJ. Cyclustracking: overlap-preventie bij het starten van een nieuwe periode');
+const startSrc = html.slice(html.indexOf('async function cyclusStartMenstruatie('), html.indexOf('async function cyclusStartMenstruatie(') + 700);
+ok(/bestaande\.some\(p=>p\.end_date==null\)/.test(startSrc), 'J1: controleert op een reeds actieve (niet-afgeronde) periode vóór het schrijven van een nieuwe');
+ok(/toast\('Er loopt al een geregistreerde menstruatie/.test(startSrc), 'J2: geeft een duidelijke melding i.p.v. stilzwijgend een overlappende rij te maken');
+
+/* ── K. SYMPTOOMREGISTRATIE (v4.52.0) — UI-bedrading en taalveiligheid ──── */
+console.log('\nK. Symptoomregistratie: UI-bedrading en neutrale taal');
+ok(/async function cyclusSlaSymptoomOp\(/.test(html), 'K1: de opslagfunctie voor symptomen bestaat');
+ok(/sbGet\('cycle_symptom_logs'/.test(html), 'K2: leest uit de dedicated cycle_symptom_logs-tabel, niet uit een generieke tabel');
+ok(/sbPostQ\('cycle_symptom_logs'/.test(html) || /sbPatch\('cycle_symptom_logs'/.test(html), 'K3: schrijft naar de dedicated cycle_symptom_logs-tabel');
+ok(/CycleCore\.symptomPatternSummary\(/.test(html), 'K4: de patroonweergave in de UI gebruikt UITSLUITEND CycleCore (Calculation Engine), berekent niets zelf in de UI-laag');
+const cyclusUiVanaf = html.indexOf('async function renderCyclusScreen(');
+const cyclusUiSrc = html.slice(cyclusUiVanaf, cyclusUiVanaf + 6000);
+ok(!/hormo|diagnos|oorzaak|veroorzaak|zeker(?!heid, geen)/i.test(cyclusUiSrc.replace(/schatting, geen zekerheid/gi,'')), 'K5: de gerenderde cyclusscherm-tekst bevat geen causale/hormonale/diagnostische taal');
+ok(/feitelijke telling, geen medische verklaring/.test(html), 'K6: het patroonkaartje bevat expliciet het voorbehoud "feitelijke telling, geen medische verklaring"');
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { console.log('❌ Hardening niet groen.'); process.exit(1); }

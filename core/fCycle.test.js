@@ -98,6 +98,47 @@ const ctxNaAfloop = CycleCore.cycleContext(
 );
 eq(ctxNaAfloop.menstruatieActief, false, 'H2: dag 7, na de expliciete einddatum -> niet meer actief');
 
+console.log('\nI. ACTIEVE PERIODE ZONDER EXPLICIETE EINDDATUM — grens van het typische venster (audit-bevinding v4.52.0)');
+const ctxLangLopend = CycleCore.cycleContext([{ start_date: '2026-08-01', end_date: null }], '2026-08-11');
+eq(ctxLangLopend.menstruatieActief, false, 'I1: dag 10 zonder expliciete einddatum -> NIET meer als actief beschouwd (voorkomt oneindig "actief" bij een vergeten afronding)');
+const ctxNogWel = CycleCore.cycleContext([{ start_date: '2026-08-01', end_date: null }], '2026-08-04');
+eq(ctxNogWel.menstruatieActief, true, 'I2: dag 3 zonder expliciete einddatum -> nog wel als actief beschouwd');
+
+console.log('\nJ. OVERLAPPENDE PERIODES — audit-bevinding v4.52.0, gerepareerd op de RAW-DATA-schrijflaag');
+// De Calculation-module zelf blijft PUUR en verwerkt wat haar gegeven wordt (garbage-in/
+// garbage-out is hier verwacht) -- de reparatie hoort op applicatieniveau (voorkomen dat
+// overlappende rijen ooit geschreven worden), niet in deze module. Deze test documenteert
+// EXPLICIET wat er fout zou gaan als overlap toch zou optreden, als bewijs waarom de
+// schrijflaag-fix (index.html, cyclusStartMenstruatie()) noodzakelijk is.
+const overlapPeriodes = [{ start_date: '2026-08-01', end_date: null }, { start_date: '2026-08-03', end_date: null }];
+const ctxOverlap = CycleCore.cycleContext(overlapPeriodes, '2026-08-10');
+eq(ctxOverlap.gemiddeldeCyclusLengte, 2, 'J1: (documentatie) overlappende periodes corrumperen averageCycleLength() tot een onzinnige waarde -- vandaar de preventie op schrijfniveau, niet hier');
+
+console.log('\nK. symptomPatternSummary() — NEUTRALE patroondetectie, geen diagnose, geen causaliteit');
+const drieCycli = [
+  { start_date: '2026-06-01' }, { start_date: '2026-06-29' }, { start_date: '2026-07-27' }, { start_date: '2026-08-24' }
+];
+eq(CycleCore.symptomPatternSummary([], drieCycli).voldoendeData, false, 'K1: geen symptoomregistraties -> voldoendeData=false');
+eq(CycleCore.symptomPatternSummary([{ log_date: '2026-06-02', symptoms: { cramps: 6 } }], []).voldoendeData, false, 'K2: geen cycli gelogd -> voldoendeData=false');
+eq(CycleCore.symptomPatternSummary(
+  [{ log_date: '2026-06-02', symptoms: { cramps: 6 } }],
+  [{ start_date: '2026-06-01' }, { start_date: '2026-06-29' }]
+).voldoendeData, false, 'K3: slechts 2 cycli gelogd (< MIN_CYCLI_VOOR_PATROON=3) -> nog steeds voldoendeData=false, ongeacht symptomen');
+
+const symptoomLogsMetPatroon = [
+  { log_date: '2026-06-02', symptoms: { cramps: 6, energy: 3 } },
+  { log_date: '2026-06-30', symptoms: { cramps: 7 } },
+  { log_date: '2026-07-28', symptoms: { cramps: 5 } }
+];
+const patroonResultaat = CycleCore.symptomPatternSummary(symptoomLogsMetPatroon, drieCycli);
+eq(patroonResultaat.voldoendeData, true, 'K4: >=3 cycli EN symptoomdata -> voldoendeData=true');
+const crampsPatroon = patroonResultaat.patronen.find(function (p) { return p.symptoom === 'cramps'; });
+ok(!!crampsPatroon, 'K5: cramps (3x geregistreerd, over 3 verschillende cycli) wordt als patroon herkend');
+eq(crampsPatroon ? crampsPatroon.aantalRegistraties : null, 3, 'K6: telt het EXACTE aantal registraties, verzint niets');
+const energiePatroon = patroonResultaat.patronen.find(function (p) { return p.symptoom === 'energy'; });
+eq(energiePatroon, undefined, 'K7: energy (slechts 1x gelogd) wordt NIET als patroon getoond -- voorkomt een conclusie op één datapunt');
+ok(!JSON.stringify(patroonResultaat).toLowerCase().match(/hormo|diagnos|oorzaak|veroorzaak/), 'K8: de output bevat GEEN causale/hormonale/diagnostische taal -- uitsluitend feitelijke tellingen (symptoom+aantal)');
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { console.log('❌ Cyclustracking-Calculation niet groen.'); process.exitCode = 1; }

@@ -1,5 +1,32 @@
 # Trainingskompas — Changelog
 
+## v4.52.0 — Cyclustracking-audit + PMS/symptoomregistratie (26 augustus 2026)
+
+Vervolg op v4.51.0's cyclustracking-MVP, uitgevoerd tijdens een onbeheerde
+master-sprint (autonome implementatiebeslissing door Claude — zie DECISION_LOG.md).
+
+**Audit-bevinding en fix**: `cyclusStartMenstruatie()` had geen server-bevraagde
+controle op een reeds actieve (niet-afgeronde) periode — uitsluitend de UI-
+knopzichtbaarheid voorkwam overlap. Concreet gereproduceerd (corrumpeerde
+`averageCycleLength()` tot een onzinnige waarde); gerepareerd met een expliciete
+check vóór het schrijven, bewezen effectief via bug-terugzet-simulatie.
+
+**Nieuwe feature — PMS/symptoomregistratie**:
+- Nieuwe tabel `cycle_symptom_logs` (RAW DATA: optionele, dagelijkse 0-10-
+  schalen), RLS-trigger/policy identiek aan het gevestigde patroon.
+- Nieuwe, pure `CycleCore.symptomPatternSummary()`: uitsluitend feitelijke
+  tellingen ("je registreerde X op Y van Z cycli"), nooit causale/hormonale
+  taal, harde drempel van ≥3 cycli vóór iets getoond wordt.
+- UI: vijf symptoomsliders in het bestaande cyclusscherm, plus een neutraal
+  patroonkaartje met expliciet voorbehoud.
+
+**Privacy/AVG-fix**: `cycle_symptom_logs` ontbrak in de accountverwijderlijst
+(`netlify/functions/delete-account.js`) en in de referentielijst van
+`core/fRC0.test.js` — beide gerepareerd, bewezen effectief.
+
+Protected core (`calculation.js`/`decision.js`/`relationship.js`/`athlete.js`/
+`coaching.js`): SHA256-bevestigd byte-identiek, onaangetast.
+
 ## v4.51.0 — Cyclustracking-MVP (26 augustus 2026)
 
 Nieuwe, optionele feature: menstruatiecyclus als trainingscontext (roadmap POST-V1

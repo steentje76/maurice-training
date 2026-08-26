@@ -7,7 +7,12 @@
      API 35 of hoger targeten (verplicht voor Play), waardoor de WebView achter de statusbalk en
      de navigatiebalk door loopt. Zonder insets zouden de koptekst en de onderbalk daar dan
      onder verdwijnen. -->
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<!-- ROADMAP POST-V1 #6 (accessibility) — maximum-scale=1,user-scalable=no verwijderd:
+     dat schakelde pinch-zoom volledig uit, een WCAG 2.1-toegankelijkheidsovertreding
+     (1.4.4 Resize Text / 1.4.10 Reflow) voor gebruikers met een visuele beperking.
+     Geen gedocumenteerde reden gevonden voor de eerdere restrictie. viewport-fit=cover
+     blijft ongewijzigd (zie de uitleg hierboven, edge-to-edge/safe-area). -->
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Kompas">

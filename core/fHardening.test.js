@@ -277,6 +277,11 @@ CORE_FILES.forEach(function(f){ ok(sw.indexOf("'/" + f + "'") >= 0, 'F3: ' + f +
 ok(/k\s*!==\s*CACHE_STATIC/.test(sw), 'F5: oude caches worden bij activatie opgeruimd — geen stale engine');
 const mVer = html.match(/const APP_VER = '(v\d+\.\d+\.\d+)'/);
 ok(!!mVer, 'F6: de applicatieversie heeft de vorm vX.Y.Z');
+// ROADMAP POST-V1 #6 (accessibility) — pinch-zoom mag niet uitgeschakeld zijn
+// (WCAG 2.1, 1.4.4/1.4.10). viewport-fit=cover blijft behouden (edge-to-edge).
+const viewportTag = (html.match(/<meta name="viewport"[^>]*>/) || [''])[0];
+ok(!/user-scalable=no/.test(viewportTag) && !/maximum-scale=1/.test(viewportTag), 'F7: pinch-zoom is niet uitgeschakeld (geen user-scalable=no/maximum-scale=1 in de DAADWERKELIJKE viewport-meta-tag, niet alleen in een verklarend commentaar)');
+ok(/viewport-fit=cover/.test(viewportTag), 'F8: viewport-fit=cover blijft behouden (edge-to-edge/safe-area, ongerelateerd aan de zoom-restrictie)');
 
 /* ── G. ROADMAP POST-V1 #1 — duration_s per sessie (RAW DATA) ──────────────
  * "duration_s per sessie vastleggen" ontsluit 105 van de 187 kenbare relaties

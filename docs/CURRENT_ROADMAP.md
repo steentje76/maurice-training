@@ -1,6 +1,9 @@
 # CURRENT_ROADMAP.md — actuele roadmap Trainingskompas
 
 **Vastgesteld** 19 augustus 2026 · **Versie** v4.48.0 (RC0)
+**Bijgewerkt** 26 augustus 2026 — POST-V1-status ververst (punten 1/2/3/5/6 deels
+afgerond, punt 8 afgerond). Zie de bijgewerkte regels hieronder voor exacte PR's/
+main-SHA's; de rest van dit document is ongewijzigd.
 
 > Dit document is vanaf nu de **enige actuele roadmap**. De oudere versies
 > (`docs/12_Roadmap/Roadmap.md`, de roadmapdelen in `CURRENT_STATE.md` en in de
@@ -80,18 +83,42 @@ Volledige verantwoording in `docs/RELEASE_READINESS.md`.
 
 Op volgorde van opbrengst per eenheid werk:
 
-1. **`duration_s` per sessie vastleggen.** Ontsluit 105 van de 187 kenbare relaties en
-   activeert `athlete.unifiedLoad`, dat nu bewust `{beschikbaar:false}` teruggeeft. De timer
-   loopt al in de app; alleen het wegschrijven ontbreekt.
-2. **Rustduur per set vastleggen** in `sets_detail`.
+1. **`duration_s` per sessie vastleggen.** 🟡 raw data vastgelegd (PR #37, main
+   `d777b4a`) — de bestaande live-klok (`trainStart`/`pausedAccumMs`) wordt nu bij elke
+   sessieafronding weggeschreven naar de al bestaande `sessions.duration_s`-kolom.
+   **Nog niet gedaan:** de registry-vlag (`core/relationship.js`, variabele `duur`,
+   `beschikbaarheid:'toekomstig'`) en `athlete.unifiedLoad()`'s eigen gate blijven
+   bewust op hun huidige stand. Activeren zonder echte, gevulde productiedata om de
+   nieuwe relaties tegen te verifiëren zou ongeverifieerde uitkomsten opleveren.
+   Stand 26-08-2026: 116 sessies totaal, 0 met een gevulde `duration_s` (de fix is
+   te recent gemerged; nog geen enkele training sindsdien afgerond).
+2. **Rustduur per set vastleggen** in `sets_detail`. 🟡 raw data vastgelegd (PR #38,
+   main `1dc1e13`) — zelfde patroon en dezelfde reden om de registry-vlag (`rust`)
+   nog niet te activeren.
 3. **Weer per sessie vastleggen** — ontsluit temperatuur, luchtvochtigheid en wind.
+   🟡 raw data vastgelegd (PR #39, main `516f93a`) — hergebruikt de bestaande
+   weerinfrastructuur volledig. Zelfde reden om de drie registry-vlagen
+   (temperatuur/luchtvochtigheid/wind) nog niet te activeren.
 4. **Cardio-split als relatiebron** — wacht op een productbesluit over de machine-sleutel:
    een split per 500 m is pas vergelijkbaar binnen hetzelfde apparaat.
 5. **Prestatiepunten uit de Supabase-adviseur** — 82 × `auth_rls_initplan`, 43 ontbrekende
-   FK-indexen. Zinvol vanaf enkele duizenden sessies.
+   FK-indexen. 🟡 deel 1 afgerond (PR #40, main `83db456`): alle 43 (feitelijk 44)
+   ontbrekende FK-indexen aangemaakt, puur additief. **Deel 2 (RLS-herschrijving)
+   bewust aangehouden:** raakt toegangscontrole op vrijwel elke tabel; bij het huidige
+   datavolume (enkele honderden rijen) geen meetbare winst tegenover een reëel risico
+   zonder de eigenaar direct beschikbaar voor verificatie. Zinvol vanaf enkele
+   duizenden sessies, zoals hieronder al stond.
 6. **Accessibility-sprint** — zoomen weer toestaan, contrast en tekstgroottes doorlopen.
+   🟡 deel 1 afgerond (PR #41, main `bab9ead`): pinch-zoom terug toegestaan
+   (`user-scalable=no`/`maximum-scale=1` verwijderd uit de viewport-meta, geen
+   gedocumenteerde reden gevonden voor de eerdere restrictie). **Deel 2 (contrast/
+   tekstgroottes) vereist een echte, visuele browsercontrole** — honderden losse,
+   vaste px-font-sizes door de hele app; niet blind/zonder visuele verificatie
+   uit te voeren.
 7. **Menstruatiecyclus-tracking** als volwaardige UI.
-8. **HYROX race-splits en triathlon-brick.**
+8. **HYROX race-splits en triathlon-brick.** 🟢 afgerond (PR #31/#33/#34/#35/PR #36
+   architectuuraudit) — dedicated `race_segments`-tabel met expliciete `race_type`,
+   Context Engine-koppeling. Zie `migratie_v490.sql`/`migratie_v491.sql`.
 9. **Extra wearable-providers** (Apple HealthKit, Health Connect, Garmin, Whoop, Oura) —
    geblokkeerd op een geregistreerde OAuth-app per provider; niet autonoom uitvoerbaar.
 

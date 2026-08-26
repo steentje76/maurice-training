@@ -3830,6 +3830,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="v43-lbl" style="margin:16px 0 10px">Lichaam &amp; gegevens</div>
     <button class="lich-goto" onclick="go('s-lich-health')"><span class="ic">📈</span><span class="b"><b>Gezondheid &amp; herstel</b><s>HRV, rusthartslag en slaap over 7 tot 90 dagen</s></span><span class="chev">›</span></button>
     <button class="lich-goto" onclick="go('s-lich-metingen')"><span class="ic">⚖️</span><span class="b"><b>Lichaamsmetingen</b><s>Samenstelling, afmetingen en historie</s></span><span class="chev">›</span></button>
+    <button class="lich-goto" onclick="go('s-lich-cyclus')"><span class="ic">🌙</span><span class="b"><b>Cyclus</b><s>Optioneel: menstruatie registreren als trainingscontext</s></span><span class="chev">›</span></button>
     <button class="lich-goto" onclick="go('s-lich-gegevens')"><span class="ic">🔗</span><span class="b"><b>Gezondheidsgegevens &amp; koppelingen</b><s>Waar je gegevens vandaan komen en wat er gekoppeld is</s></span><span class="chev">›</span></button>
     <div style="height:8px"></div>
   </div>
@@ -4049,7 +4050,40 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </nav>
 </div>
 
-<!-- ═══ LICHAAM · METINGEN (Fase 1 — bestaande kaarten, eigen route) ═══ -->
+<!-- ═══ LICHAAM · CYCLUS (v4.95.0 — MVP, optioneel, trainingscontext) ═══
+     Geen medisch hulpmiddel. Geen anticonceptie-, zwangerschaps- of
+     diagnoseclaims. "Geschat" wordt altijd expliciet vermeld; voorspellingen
+     tonen zich pas na >=2 gelogde cycli (CycleCore.cycleContext()). -->
+<div class="scr" id="s-lich-cyclus">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title" role="heading" aria-level="1">Cyclus</div><div class="hdr-sub">Optioneel — als trainingscontext</div></div>
+      <button class="ibtn" onclick="go('s-lichaam')" aria-label="Terug naar Lichaam">‹</button>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px">
+    <div id="cyclus-uitleg" class="card" style="font-size:13px;color:var(--g4);margin-bottom:12px">
+      Trainingskompas is geen medisch hulpmiddel. Cyclusregistratie is optioneel en uitsluitend bedoeld als
+      context bij je training en herstel — niet voor anticonceptie, het vaststellen van zwangerschap of het
+      stellen van een medische diagnose. Geschatte cyclusdag/fase en een geschatte volgende menstruatie zijn
+      altijd schattingen op basis van je eigen geregistreerde data, nooit een medische zekerheid.
+    </div>
+    <div id="cyclus-optin"></div>
+    <div id="cyclus-status" style="display:none"></div>
+    <div id="cyclus-acties" style="display:none;margin-top:12px"></div>
+    <div class="v43-lbl" style="margin:16px 0 10px;display:none" id="cyclus-historie-lbl">Historie</div>
+    <div id="cyclus-historie"></div>
+    <div style="height:8px"></div>
+  </div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
+  </nav>
+</div>
+
 <div class="scr" id="s-lich-metingen">
   <div class="hdr">
     <div class="hdr-row">
@@ -5233,6 +5267,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/deviceIntegration.js"></script>
 <script src="core/concept2Live.js"></script>
 <script src="core/weather.js"></script>
+<script src="core/cycle.js"></script>
 <script>
 // ── OPEN-METEO RUNTIME — additive context, NOOIT een blocker voor training ──
 // Keten: geolocation-consent → WeatherCore.buildOpenMeteoRequest → fetch →
@@ -5856,7 +5891,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.50.0';
+const APP_VER = 'v4.51.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -8060,6 +8095,119 @@ async function removeOfflineQueueItem(id){
 }
 
 // ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+// CYCLUSTRACKING (v4.95.0 — MVP) — RAW DATA: uitsluitend periode-start/
+// einddatum. Geen medisch hulpmiddel, geen anticonceptie-/zwangerschaps-/
+// diagnoseclaims. Geschatte cyclusdag/fase komt UITSLUITEND uit CycleCore
+// (core/cycle.js, puur/deterministisch) — nooit hier zelf berekend, nooit
+// door de AI. Opt-in-patroon EXACT gelijk aan het bestaande weer-opt-in
+// (tk_weather_optin), voor consistentie.
+// ══════════════════════════════════════════════════════════
+var CYCLUS_OPTIN_KEY='tk_cyclus_optin';
+function cyclusIsEnabled(){ try{ return localStorage.getItem(CYCLUS_OPTIN_KEY)==='1'; }catch(e){ return false; } }
+function cyclusEnable(){ try{ localStorage.setItem(CYCLUS_OPTIN_KEY,'1'); }catch(e){} renderCyclusScreen(); }
+function cyclusDisable(){
+  confirmModal('Cyclustracking uitschakelen? Je geregistreerde data blijft bewaard tot je die zelf verwijdert (zie hieronder).',{title:'Uitschakelen',okLabel:'Uitschakelen',cancelLabel:'Annuleren'}).then(function(bevestigd){
+    if(!bevestigd)return;
+    try{ localStorage.removeItem(CYCLUS_OPTIN_KEY); }catch(e){}
+    renderCyclusScreen();
+  });
+}
+async function cyclusLaadPeriodes(){
+  try{ return await sbGet('cycle_periods', '&order=start_date.desc&limit=60') || []; }
+  catch(e){ console.warn('cyclusLaadPeriodes fout', e); return []; }
+}
+async function cyclusStartMenstruatie(){
+  const vandaag = td();
+  const ok = await sbPostQ('cycle_periods', { start_date: vandaag, end_date: null });
+  if(!ok){ toast('Kon niet opslaan — probeer opnieuw'); return; }
+  toast('Menstruatie geregistreerd');
+  renderCyclusScreen();
+}
+async function cyclusEindeMenstruatie(periodeId){
+  const vandaag = td();
+  const ok = await sbPatch('cycle_periods', 'id=eq.'+encodeURIComponent(periodeId), { end_date: vandaag, updated_at: new Date().toISOString() });
+  if(!ok){ toast('Kon niet opslaan — probeer opnieuw'); return; }
+  toast('Einde geregistreerd');
+  renderCyclusScreen();
+}
+async function cyclusVerwijderPeriode(periodeId){
+  const bevestigd = await confirmModal('Deze registratie verwijderen?',{title:'Verwijderen',okLabel:'Verwijderen',cancelLabel:'Annuleren'});
+  if(!bevestigd)return;
+  const ok = await sbDel('cycle_periods', 'id=eq.'+encodeURIComponent(periodeId));
+  if(!ok){ toast('Kon niet verwijderen — probeer opnieuw'); return; }
+  toast('Verwijderd');
+  renderCyclusScreen();
+}
+async function cyclusVerwijderAlleData(){
+  const bevestigd = await confirmModal('Alle cyclusregistraties permanent verwijderen? Dit kan niet ongedaan worden gemaakt.',{title:'Alle data verwijderen',okLabel:'Verwijder alles',cancelLabel:'Annuleren'});
+  if(!bevestigd)return;
+  const ok = await sbDel('cycle_periods', 'user_id=eq.'+encodeURIComponent(authSession?.user?.id||''));
+  if(!ok){ toast('Kon niet verwijderen — probeer opnieuw'); return; }
+  toast('Alle cyclusdata verwijderd');
+  renderCyclusScreen();
+}
+function cyclusFaseLabel(fase){
+  return ({menstruatie:'Menstruatie',folliculair:'Folliculaire fase',ovulatie:'Rond de geschatte eisprong',luteaal:'Luteale fase'})[fase] || null;
+}
+async function renderCyclusScreen(){
+  const optinEl=document.getElementById('cyclus-optin');
+  const statusEl=document.getElementById('cyclus-status');
+  const actiesEl=document.getElementById('cyclus-acties');
+  const histLblEl=document.getElementById('cyclus-historie-lbl');
+  const histEl=document.getElementById('cyclus-historie');
+  if(!optinEl)return;
+  if(!cyclusIsEnabled()){
+    optinEl.innerHTML='<div class="card"><div style="font-weight:700;margin-bottom:6px">Cyclustracking inschakelen</div>'+
+      '<div style="font-size:13px;color:var(--g4);margin-bottom:10px">Optioneel. Alleen jij kunt je eigen registraties zien.</div>'+
+      '<button class="btn-primary" onclick="cyclusEnable()">Inschakelen</button></div>';
+    statusEl.style.display='none'; actiesEl.style.display='none'; histLblEl.style.display='none'; histEl.innerHTML='';
+    return;
+  }
+  optinEl.innerHTML='<button class="lich-goto" onclick="cyclusDisable()"><span class="ic">⏻</span><span class="b"><b>Uitschakelen</b><s>Je data blijft bewaard tot je die zelf verwijdert</s></span></button>';
+  statusEl.style.display=''; actiesEl.style.display=''; histLblEl.style.display='';
+
+  const periodes = await cyclusLaadPeriodes();
+  const ctx = CycleCore.cycleContext(periodes, td());
+  const laatsteActief = periodes.find(p=>p.end_date==null);
+
+  let statusHtml = '<div class="card">';
+  if(!ctx.trackingBeschikbaar){
+    statusHtml += '<div style="font-size:13px;color:var(--g4)">Nog geen registraties. Start hieronder je eerste menstruatie om te beginnen.</div>';
+  } else {
+    statusHtml += '<div style="font-weight:700;font-size:20px">Dag '+ctx.cyclusDag+'</div>';
+    const faseLbl = cyclusFaseLabel(ctx.geschatteFase);
+    if(faseLbl) statusHtml += '<div style="font-size:13px;color:var(--g4);margin-top:2px">Geschat: '+faseLbl+'</div>';
+    if(ctx.menstruatieActief) statusHtml += '<div style="font-size:13px;color:var(--dark);margin-top:6px">Menstruatie actief</div>';
+    if(ctx.voldoendeDataVoorVoorspelling && ctx.geschatteVolgendePeriode){
+      statusHtml += '<div style="font-size:12.5px;color:var(--g4);margin-top:8px">Geschatte volgende menstruatie: '+fmtDate(ctx.geschatteVolgendePeriode)+' (op basis van '+ctx.aantalGeregistreerdeCycli+' geregistreerde cycli — een schatting, geen zekerheid)</div>';
+    } else {
+      statusHtml += '<div style="font-size:12.5px;color:var(--g4);margin-top:8px">Nog onvoldoende data voor een schatting van de volgende menstruatie (minimaal 2 geregistreerde cycli nodig)</div>';
+    }
+  }
+  statusHtml += '</div>';
+  statusEl.innerHTML = statusHtml;
+
+  let actiesHtml = '';
+  if(laatsteActief){
+    actiesHtml += '<button class="btn-primary" style="width:100%" onclick="cyclusEindeMenstruatie(\''+laatsteActief.id+'\')">Einde menstruatie registreren</button>';
+  } else {
+    actiesHtml += '<button class="btn-primary" style="width:100%" onclick="cyclusStartMenstruatie()">Start menstruatie registreren</button>';
+  }
+  actiesEl.innerHTML = actiesHtml;
+
+  if(!periodes.length){
+    histEl.innerHTML = '<div class="lich-empty"><div class="e2">Nog geen historie</div></div>';
+  } else {
+    histEl.innerHTML = periodes.map(function(p){
+      const duur = p.end_date ? (' — ' + fmtDate(p.end_date)) : ' (loopt nog)';
+      return '<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
+        '<div style="font-size:13px">'+fmtDate(p.start_date)+duur+'</div>'+
+        '<button class="ibtn" onclick="cyclusVerwijderPeriode(\''+p.id+'\')" aria-label="Verwijderen">🗑</button></div>';
+    }).join('') +
+    '<button class="lich-goto" style="margin-top:10px;color:var(--status-bad,#c62828)" onclick="cyclusVerwijderAlleData()"><span class="ic">🗑</span><span class="b"><b>Alle cyclusdata verwijderen</b></span></button>';
+  }
+}
 // WEARABLE-KOPPELING (v328) — Fitbit via Google Health API, multi-user: elke gebruiker
 // koppelt zijn eigen account. Tokens komen nooit in de client — alle communicatie loopt
 // via Netlify Functions (wearable-*.js) met een server-side service-role key.
@@ -9225,6 +9373,7 @@ function go(id){
   // Fase 1 — Lichaam en zijn subschermen delen één renderer. De doel-ids staan altijd
   // in de DOM, ongeacht welk scherm actief is; er is dus geen tweede renderpad.
   if(id==='s-lichaam'||id==='s-lich-spieren'||id==='s-lich-health'||id==='s-lich-metingen')renderLichaam();
+  if(id==='s-lich-cyclus')renderCyclusScreen();
   if(id==='s-lich-spieren'){ try{ lichSpierenApply(); }catch(_){} }
   if(id==='s-lich-spier')renderLichaamSpierDetail();
   if(id==='s-lich-metric')renderLichaamMetricDetail();

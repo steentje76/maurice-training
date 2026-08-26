@@ -222,3 +222,26 @@
 - Alternatieven: bij (2) de oude cijfers laten staan — afgewezen, een audit die zijn eigen methodefout verzwijgt is geen audit.
 - Impact: (1) `core/fRC0.test.js` sectie E vergelijkt de verwijderlijst voortaan met elke tabel in het schema die een gebruikerskolom draagt, en controleert dat er nooit zonder gebruikersfilter wordt verwijderd en dat gedeelde gym-inrichting van andere leden blijft bestaan. (2) `docs/RELATIONSHIP_AUDIT.md` §0 corrigeert de cijfers: 23 circulair (was 24), 187 kenbaar (was 186), 7 patronen (was 6).
 - Verantwoordelijke: Maurice
+
+## DEC-028
+- Datum: 26 augustus 2026
+- Beslissing: Cyclustracking-MVP gebouwd en gemergd (roadmap POST-V1 #7): nieuwe tabel
+  `cycle_periods`, nieuwe Calculation-module `core/cycle.js`, nieuw subscherm Lichaam →
+  Cyclus. Bijkomend: `cycle_periods` én het eerder ontbrekende `race_segments` toegevoegd
+  aan de accountverwijderlijst (`netlify/functions/delete-account.js`) en aan de
+  referentielijst in `core/fRC0.test.js` (DEC-027's controle was zelf verouderd en kon dit
+  gat daardoor niet vangen).
+- Reden: Cyclustracking stond al op de roadmap als gewenste toekomstige feature. De
+  Calculation-laag hergebruikt bewust de al bestaande, protected `CalcCore.
+  cyclusDagFactor()`-vocabulaire (menstruatie/folliculair/ovulatie/luteaal, al aanwezig
+  via de dagelijkse HRV-check-in) in plaats van een tweede vocabulaire te introduceren.
+- Alternatieven: een vereenvoudigd fasemodel zonder "ovulatie" overwegen om elke schijn
+  van vruchtbaarheidsclaims te vermijden — afgewezen, omdat de bestaande, product-
+  eigenaar-goedgekeurde `cyclusDagFactor()`-vocabulaire dat begrip al bevat als
+  self-reported, geschatte waarde; een nieuwe, afwijkende vocabulaire zou juist
+  inconsistentie met het bestaande systeem introduceren.
+- Impact: nieuwe RLS-beveiligde tabel, geen wijziging aan protected core, geen AI-koppeling
+  (bewust uitgesteld). Twee accountverwijderingsgaten gedicht.
+- Verantwoordelijke: Autonome implementatiebeslissing door Claude tijdens een
+  onbeheerde master-sprint (de gebruiker was langere tijd niet beschikbaar). Niet door
+  Maurice persoonlijk beoordeeld op het moment van mergen — ter review bij terugkeer.

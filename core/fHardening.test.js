@@ -380,9 +380,17 @@ ok(/sbGet\('cycle_symptom_logs'/.test(html), 'K2: leest uit de dedicated cycle_s
 ok(/sbPostQ\('cycle_symptom_logs'/.test(html) || /sbPatch\('cycle_symptom_logs'/.test(html), 'K3: schrijft naar de dedicated cycle_symptom_logs-tabel');
 ok(/CycleCore\.symptomPatternSummary\(/.test(html), 'K4: de patroonweergave in de UI gebruikt UITSLUITEND CycleCore (Calculation Engine), berekent niets zelf in de UI-laag');
 const cyclusUiVanaf = html.indexOf('async function renderCyclusScreen(');
-const cyclusUiSrc = html.slice(cyclusUiVanaf, cyclusUiVanaf + 6000);
+const cyclusUiSrc = html.slice(cyclusUiVanaf, cyclusUiVanaf + 9000);
 ok(!/hormo|diagnos|oorzaak|veroorzaak|zeker(?!heid, geen)/i.test(cyclusUiSrc.replace(/schatting, geen zekerheid/gi,'')), 'K5: de gerenderde cyclusscherm-tekst bevat geen causale/hormonale/diagnostische taal');
 ok(/feitelijke telling, geen medische verklaring/.test(html), 'K6: het patroonkaartje bevat expliciet het voorbehoud "feitelijke telling, geen medische verklaring"');
+
+/* ── L. WOMEN'S PERFORMANCE DASHBOARD (v4.53.0) — cyclus <-> training-UI ── */
+console.log('\nL. Women\'s Performance-dashboard: UI-bedrading en neutrale taal');
+ok(/CycleTrainingCore\.cycleTrainingSummary\(/.test(html), 'L1: het dashboard gebruikt UITSLUITEND CycleTrainingCore (Calculation Engine), berekent niets zelf in de UI-laag');
+ok(/if\(!samenvatting\.voldoendeCycliVoorFaseVergelijking\)/.test(html), 'L2: respecteert de door de Calculation Engine bepaalde datadrempel -- geen eigen, losse drempel in de UI');
+ok(/feitelijke tellingen, geen medische verklaring of advies/.test(html), 'L3: het dashboard bevat een expliciet voorbehoud, consistent met het patroonkaartje');
+ok(!/hormo|diagnos|oorzaak|veroorzaak|zwanger|anticoncep|vruchtbaar/i.test(cyclusUiSrc), 'L4: ook de dashboard-tekst bevat geen medische/causale/DECISION-REQUIRED-grensoverschrijdende taal');
+ok(/sbGet\('sessions', '&order=date\.desc&limit=90'\)/.test(html), 'L5: haalt trainingssessies op via de bestaande, generieke sbGet -- geen nieuwe, parallelle datatoegang');
 
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');

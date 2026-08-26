@@ -4074,6 +4074,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="cyclus-symptomen-lbl" class="v43-lbl" style="margin:16px 0 10px;display:none">Hoe voel je je vandaag? (optioneel)</div>
     <div id="cyclus-symptomen"></div>
     <div id="cyclus-patroon" style="display:none"></div>
+    <div id="cyclus-dashboard-lbl" class="v43-lbl" style="margin:16px 0 10px;display:none">Training &amp; cyclus</div>
+    <div id="cyclus-dashboard"></div>
     <div class="v43-lbl" style="margin:16px 0 10px;display:none" id="cyclus-historie-lbl">Historie</div>
     <div id="cyclus-historie"></div>
     <div style="height:8px"></div>
@@ -5271,6 +5273,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/concept2Live.js"></script>
 <script src="core/weather.js"></script>
 <script src="core/cycle.js"></script>
+<script src="core/cycleTraining.js"></script>
 <script>
 // ── OPEN-METEO RUNTIME — additive context, NOOIT een blocker voor training ──
 // Keten: geolocation-consent → WeatherCore.buildOpenMeteoRequest → fetch →
@@ -5894,7 +5897,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.52.0';
+const APP_VER = 'v4.53.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -8196,6 +8199,8 @@ async function renderCyclusScreen(){
   const symLblEl=document.getElementById('cyclus-symptomen-lbl');
   const symEl=document.getElementById('cyclus-symptomen');
   const patroonEl=document.getElementById('cyclus-patroon');
+  const dashLblEl=document.getElementById('cyclus-dashboard-lbl');
+  const dashEl=document.getElementById('cyclus-dashboard');
   const histLblEl=document.getElementById('cyclus-historie-lbl');
   const histEl=document.getElementById('cyclus-historie');
   if(!optinEl)return;
@@ -8203,11 +8208,11 @@ async function renderCyclusScreen(){
     optinEl.innerHTML='<div class="card"><div style="font-weight:700;margin-bottom:6px">Cyclustracking inschakelen</div>'+
       '<div style="font-size:13px;color:var(--g4);margin-bottom:10px">Optioneel. Alleen jij kunt je eigen registraties zien.</div>'+
       '<button class="btn-primary" onclick="cyclusEnable()">Inschakelen</button></div>';
-    statusEl.style.display='none'; actiesEl.style.display='none'; symLblEl.style.display='none'; symEl.innerHTML=''; patroonEl.style.display='none'; histLblEl.style.display='none'; histEl.innerHTML='';
+    statusEl.style.display='none'; actiesEl.style.display='none'; symLblEl.style.display='none'; symEl.innerHTML=''; patroonEl.style.display='none'; dashLblEl.style.display='none'; dashEl.innerHTML=''; histLblEl.style.display='none'; histEl.innerHTML='';
     return;
   }
   optinEl.innerHTML='<button class="lich-goto" onclick="cyclusDisable()"><span class="ic">⏻</span><span class="b"><b>Uitschakelen</b><s>Je data blijft bewaard tot je die zelf verwijdert</s></span></button>';
-  statusEl.style.display=''; actiesEl.style.display=''; symLblEl.style.display=''; histLblEl.style.display='';
+  statusEl.style.display=''; actiesEl.style.display=''; symLblEl.style.display=''; dashLblEl.style.display=''; histLblEl.style.display='';
 
   const periodes = await cyclusLaadPeriodes();
   const ctx = CycleCore.cycleContext(periodes, td());
@@ -8262,6 +8267,41 @@ async function renderCyclusScreen(){
   } else {
     patroonEl.style.display='';
     patroonEl.innerHTML = '<div class="card" style="font-size:12.5px;color:var(--g4)">Nog onvoldoende data voor een betrouwbaar patroon (minimaal 3 geregistreerde cycli met symptomen nodig).</div>';
+  }
+
+  // Women's Performance-dashboard: cyclus <-> training (blueprint Fase 2). Uitsluitend
+  // FEITELIJKE tellingen/gemiddelden uit CycleTrainingCore (Calculation Engine) --
+  // geen enkele causale/medische interpretatie in deze UI-laag.
+  const dashSessies = await sbGet('sessions', '&order=date.desc&limit=90');
+  const samenvatting = CycleTrainingCore.cycleTrainingSummary(periodes, dashSessies);
+  if(!samenvatting.voldoendeCycliVoorFaseVergelijking){
+    dashEl.innerHTML = '<div class="card" style="font-size:12.5px;color:var(--g4)">Nog onvoldoende geregistreerde cycli voor een training-overzicht (minimaal 2 cycli nodig).</div>';
+  } else {
+    const faseLabel=function(f){ return ({menstruatie:'Menstruatie',folliculair:'Folliculaire fase',ovulatie:'Rond de geschatte eisprong',luteaal:'Luteale fase'})[f]||f; };
+    let html = '<div class="card">';
+    const fases = Object.keys(samenvatting.aantalPerFase||{}).filter(f=>f!=='onbekend' && samenvatting.aantalPerFase[f]>0);
+    if(fases.length){
+      html += '<div style="font-weight:700;margin-bottom:6px">Trainingen per fase (laatste 90 sessies)</div>';
+      fases.forEach(function(f){
+        html += '<div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0"><span style="color:var(--g4)">'+faseLabel(f)+'</span><span style="font-weight:600">'+samenvatting.aantalPerFase[f]+'x</span></div>';
+      });
+    }
+    const rpeFases = Object.keys(samenvatting.gemiddeldeRpePerFase||{});
+    if(rpeFases.length){
+      html += '<div style="font-weight:700;margin:10px 0 6px">Gemiddelde RPE per fase</div>';
+      rpeFases.forEach(function(f){
+        const d=samenvatting.gemiddeldeRpePerFase[f];
+        html += '<div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0"><span style="color:var(--g4)">'+faseLabel(f)+'</span><span style="font-weight:600">'+d.gemiddelde+' ('+d.aantalSessies+' sessies)</span></div>';
+      });
+    }
+    if(samenvatting.menstruatieEnTraining && samenvatting.menstruatieEnTraining.totaalSessies){
+      html += '<div style="font-size:12px;color:var(--g4);margin-top:8px">'+samenvatting.menstruatieEnTraining.tijdensMenstruatie+' van '+samenvatting.menstruatieEnTraining.totaalSessies+' sessies vielen op een dag met geregistreerde menstruatie.</div>';
+    }
+    if(!fases.length && !rpeFases.length){
+      html += '<div style="font-size:12.5px;color:var(--g4)">Nog onvoldoende trainingen per fase voor een betrouwbaar overzicht (minimaal 3 sessies per fase nodig).</div>';
+    }
+    html += '<div style="font-size:12px;color:var(--g4);margin-top:6px">Dit zijn feitelijke tellingen, geen medische verklaring of advies.</div></div>';
+    dashEl.innerHTML = html;
   }
 
   if(!periodes.length){

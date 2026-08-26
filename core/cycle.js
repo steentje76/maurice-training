@@ -154,15 +154,23 @@
     var gemLengte = averageCycleLength(periods);
     var norm = normalizePeriods(periods);
     var actief = false;
-    if (norm.length) {
-      var laatste = norm[norm.length - 1];
-      if (laatste.end == null) {
-        var ref = parseISODate(referenceDate);
-        actief = !!(ref && laatste.start.getTime() <= ref.getTime() &&
-          daysBetween(laatste.start, ref) < TYPISCHE_MENSTRUATIE_DAGEN + 2);
+    var ref = parseISODate(referenceDate);
+    // BUGFIX (v4.53.0) — voorheen werd hier ALTIJD de LAATST GELOGDE periode gecontroleerd
+    // (norm[norm.length-1]), ongeacht referenceDate. Dat klopte toevallig zolang uitsluitend
+    // "vandaag" werd bevraagd (de laatst gelogde periode is dan per definitie ook de relevante),
+    // maar gaf een fout resultaat bij een HISTORISCHE referenceDate -- ontdekt bij de bouw van
+    // de cyclus-training-correlatie, die cycleContext() voor eerdere trainingsdata aanroept.
+    // Nu: dezelfde "meest recente periode die vóór of op referenceDate begon"-logica als
+    // cycleDay() al hanteert, in plaats van blind de laatste array-index.
+    var relevant = null;
+    for (var i = 0; i < norm.length; i++) {
+      if (ref && norm[i].start.getTime() <= ref.getTime()) relevant = norm[i];
+    }
+    if (relevant) {
+      if (relevant.end == null) {
+        actief = !!(ref && daysBetween(relevant.start, ref) < TYPISCHE_MENSTRUATIE_DAGEN + 2);
       } else {
-        var ref2 = parseISODate(referenceDate);
-        actief = !!(ref2 && laatste.start.getTime() <= ref2.getTime() && laatste.end.getTime() >= ref2.getTime());
+        actief = !!(ref && relevant.end.getTime() >= ref.getTime());
       }
     }
     return {

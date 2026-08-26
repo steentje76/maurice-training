@@ -1,5 +1,36 @@
 # Trainingskompas — Changelog
 
+## v4.50.0 — HYROX/Triathlon race_segments-architectuur, roadmap-raw-data en database hardening (26 augustus 2026)
+
+Verzamelt de wijzigingen uit tien gemergede PR's (#33–#42) die sinds v4.49.0 geen
+versiebump kregen (Wet 84-schending, hersteld in deze release):
+
+- **HYROX/Triathlon-brick**: eerste-klas bereikbaar via Training → Bouwen & verkennen
+  (PR #33). Kritieke productiebug gerepareerd: segmentopslag faalde op een niet-
+  bestaande `extraNote`-kolom (PR #34). Volledige architectuurmigratie naar een
+  dedicated `race_segments`-tabel met afdwingbare `NOT NULL`-FK en een expliciete
+  `race_type`-kolom op `training_instances`, ter vervanging van de eerdere
+  `note`-tekstannotatie-workaround (PR #35, `migratie_v490.sql`/`migratie_v491.sql`).
+  Context Engine-koppeling: de AI Coach ontvangt nu voorberekende HYROX/Triathlon-
+  racesamenvattingen (`tkHyroxCoachContext()`).
+- **Calculation Engine-consolidatie**: vier resterende tonnage-/percentage-
+  berekeningsduplicaten buiten `CalcCore` gevonden en geconsolideerd (PR #36).
+- **Roadmap POST-V1, raw-datavastlegging**: `duration_s` per sessie (PR #37),
+  daadwerkelijke rustduur per set in `sets_detail` (PR #38), weer per sessie via de
+  bestaande weerinfrastructuur (PR #39) — alle drie bewust beperkt tot raw-data-
+  vastlegging; de bijbehorende Relationship Engine-registryvlaggen blijven
+  `beschikbaarheid:'toekomstig'` totdat er voldoende echte productiedata is om de
+  nieuwe relaties te verifiëren.
+- **Databasehardening**: 44 ontbrekende FK-indexen aangemaakt (PR #40). Vier
+  bewijsbaar-altijd-gevulde nullable FK's (0 NULL-waarden over 276 rijen)
+  aangescherpt naar `NOT NULL` (PR #42, `migratie_v494.sql`).
+- **Accessibility**: pinch-zoom weer toegestaan — `maximum-scale=1,user-scalable=no`
+  verwijderd uit de viewport-meta, zonder gedocumenteerde reden voor de eerdere
+  restrictie (PR #41).
+
+Protected core (`calculation.js`/`decision.js`/`relationship.js`/`athlete.js`/
+`coaching.js`) is door alle tien PR's heen SHA256-bevestigd byte-identiek gebleven.
+
 ## v4.49.0 — HYROX, Adaptive Triathlon en correction-state remediation (24 augustus 2026)
 
 HYROX-race-tracking (Single/Doubles/Relay/Adaptive) en triathlon-brick geïntegreerd, met de volledig bronbevestigde HYROX Adaptive-classificaties (13 waarden, rulebook 26/27). Race-context wordt vastgelegd via zes nieuwe, additieve kolommen op `training_instances` (`race_format`, `race_tier`, `race_gender`, `race_relay_age_category`, `race_relay_division`, `race_adaptive_class`), met een CHECK-constraint die uitsluitend de 13 canonieke Adaptive-waarden toestaat (live op Supabase geverifieerd). Bestaande HYROX-tijdrekenlogica (stationduur, transitietijd) is geconsolideerd in `core/cardio.js` (`CardioCore.stationDurationS`/`segmentTransitionS`) als enige bron van waarheid, in plaats van een los duplicaat in `index.html`.

@@ -139,6 +139,20 @@ const energiePatroon = patroonResultaat.patronen.find(function (p) { return p.sy
 eq(energiePatroon, undefined, 'K7: energy (slechts 1x gelogd) wordt NIET als patroon getoond -- voorkomt een conclusie op één datapunt');
 ok(!JSON.stringify(patroonResultaat).toLowerCase().match(/hormo|diagnos|oorzaak|veroorzaak/), 'K8: de output bevat GEEN causale/hormonale/diagnostische taal -- uitsluitend feitelijke tellingen (symptoom+aantal)');
 
+console.log('\nL. cycleContext() met MEERDERE cycli en een HISTORISCHE referenceDate (bugfix v4.53.0)');
+// Bug gevonden tijdens de bouw van cycleTraining.js: menstruatieActief keek altijd naar de
+// LAATST GELOGDE periode, ongeacht referenceDate -- correct voor "vandaag"-bevragingen, maar
+// fout zodra een HISTORISCHE datum (bv. voor correlatie met oudere trainingssessies) wordt
+// bevraagd terwijl er ook NIEUWERE periodes gelogd zijn.
+const drieCycliVoorL = [{ start_date: '2026-06-01' }, { start_date: '2026-06-29' }, { start_date: '2026-07-27' }];
+const ctxHistorisch = CycleCore.cycleContext(drieCycliVoorL, '2026-06-03');
+eq(ctxHistorisch.cyclusDag, 3, 'L1: cyclusdag correct t.o.v. de RELEVANTE (juni-)periode, niet de laatst gelogde (juli-)periode');
+eq(ctxHistorisch.menstruatieActief, true, 'L2: menstruatieActief correct TRUE voor een historische datum binnen de relevante periode -- ondanks dat er LATER nog twee periodes zijn gelogd');
+const ctxTussenPeriodes = CycleCore.cycleContext(drieCycliVoorL, '2026-06-20');
+eq(ctxTussenPeriodes.menstruatieActief, false, 'L3: dag 20 van de juni-cyclus (buiten het menstruatievenster) -> correct FALSE, ondanks latere periodes in de array');
+const ctxMeestRecent = CycleCore.cycleContext(drieCycliVoorL, '2026-07-29');
+eq(ctxMeestRecent.menstruatieActief, true, 'L4: een datum bij de MEEST RECENTE periode blijft correct werken (de oorspronkelijke, "vandaag"-achtige usecase)');
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { console.log('❌ Cyclustracking-Calculation niet groen.'); process.exitCode = 1; }

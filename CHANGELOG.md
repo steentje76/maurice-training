@@ -1,5 +1,35 @@
 # Trainingskompas — Changelog
 
+## v4.53.0 — Cyclus-training-correlatie + Women's Performance-dashboard + cycleContext()-bugfix (26 augustus 2026)
+
+Women's Performance Blueprint Fase 2. Autonome implementatiebeslissing door
+Claude tijdens een onbeheerde master-sprint (zie DECISION_LOG.md).
+
+**Bugfix in reeds gemergede code (v4.51.0)**: `CycleCore.cycleContext()`'s
+`menstruatieActief`-berekening controleerde altijd de LAATST GELOGDE periode,
+ongeacht de opgevraagde datum. Dit klopte toevallig zolang uitsluitend
+"vandaag" werd bevraagd, maar gaf een fout resultaat bij een historische
+datum met meerdere gelogde cycli — ontdekt tijdens de bouw van de cyclus-
+training-correlatie (die historische trainingsdata tegen cyclusdata legt).
+Gerepareerd: dezelfde "meest recente periode die vóór of op de gevraagde
+datum begon"-logica als `cycleDay()` al gebruikte. Bewezen effectief via
+bug-terugzet-simulatie (nieuwe tests L1-L4 in fCycle.test.js).
+
+**Nieuwe module — cyclus-training-correlatie**: `core/cycleTraining.js`
+(nieuwe, pure Calculation Engine-module). Uitsluitend feitelijke tellingen/
+gemiddelden: trainingen per geschatte cyclusfase, gemiddelde RPE/duur per
+fase (drempel: minimaal 3 sessies per fase), trainingen tijdens
+geregistreerde menstruatie. Geen enkele causale claim.
+
+**Nieuwe UI — Women's Performance-dashboard**: geïntegreerd in het bestaande
+cyclusscherm (Lichaam → Cyclus), toont uitsluitend onderdelen waarvoor
+daadwerkelijk voldoende data bestaat, met een expliciet voorbehoud
+("feitelijke tellingen, geen medische verklaring of advies"). Bestaande
+designtaal, geen nieuwe visuele stijl.
+
+Protected core (`calculation.js`/`decision.js`/`relationship.js`/`athlete.js`/
+`coaching.js`): SHA256-bevestigd byte-identiek, onaangetast.
+
 ## v4.52.0 — Cyclustracking-audit + PMS/symptoomregistratie (26 augustus 2026)
 
 Vervolg op v4.51.0's cyclustracking-MVP, uitgevoerd tijdens een onbeheerde

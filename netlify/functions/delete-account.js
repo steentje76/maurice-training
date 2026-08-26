@@ -64,12 +64,16 @@ exports.handler = async function(event) {
       'athlete_conditions', 'atleet_profiel', 'body_comp', 'chat_history',
       'checkin_conditions', 'exercise_favorites', 'hrv_log', 'sessions', 'weight_log',
       'goals', 'equipment_types', 'exercise_goals',
+      'cycle_periods',            // v4.51.0 — cyclustracking-MVP (RAW DATA, geen FK-cascade)
       // RC0-aanvulling
       'training_instances',      // uitgevoerde sessies met hun voorschrift-snapshot
       'training_context',        // frequentie, locatie, uitrusting, te vermijden oefeningen
       'common_data_points',      // ruwe gezondheids- en prestatiemetingen
       'wearable_connections',    // OAuth access- EN refresh-token van de koppeling
       'wearable_oauth_state',    // lopende koppelpogingen
+      'race_segments',           // HYROX/Triathlon-brick-segmenten (v4.91.0) — al veilig
+                                  // afgedekt via ON DELETE CASCADE vanuit training_instances,
+                                  // hier expliciet vermeld voor auditeerbaarheid (DEC-027)
       'memberships',             // lidmaatschap van gym/team/trainingsgroep
       'usage_log',               // gebruik per functie
       'user_credit_purchases'    // aangekochte credits

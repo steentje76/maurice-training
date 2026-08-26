@@ -1,5 +1,33 @@
 # Trainingskompas — Changelog
 
+## v4.51.0 — Cyclustracking-MVP (26 augustus 2026)
+
+Nieuwe, optionele feature: menstruatiecyclus als trainingscontext (roadmap POST-V1
+#7). Autonome implementatiebeslissing door Claude tijdens een master-sprint,
+gebouwd volgens de bestaande Calculation & Evidence Architecture, geen medisch
+hulpmiddel.
+
+- **Database**: nieuwe tabel `cycle_periods` (start_date/end_date, RAW DATA),
+  RLS-trigger/policy exact identiek aan het gevestigde patroon van `hrv_log`/
+  `athlete_conditions` (`user_id = auth.uid()`, alle commando's). `migratie_v495.sql`.
+- **Calculation Engine**: nieuwe, pure module `core/cycle.js` (cyclusdag,
+  gemiddelde cycluslengte, geschatte volgende menstruatie, geschatte fase).
+  Hergebruikt bewust de al bestaande, protected `CalcCore.cyclusDagFactor()`-
+  vocabulaire (`menstruatie`/`folliculair`/`ovulatie`/`luteaal`, al aanwezig via
+  de dagelijkse HRV-check-in) in plaats van een tweede vocabulaire te
+  introduceren. Geen wijziging aan protected core.
+- **UI**: nieuw subscherm Lichaam → Cyclus (opt-in, start/einde registreren,
+  geschatte dag/fase met expliciete schattings-taal, historie, volledige
+  verwijderopties), in de bestaande designtaal.
+- **Medische grenzen**: expliciet geen anticonceptie-, zwangerschaps- of
+  diagnoseclaims; voorspellingen alleen na ≥2 geregistreerde cycli, altijd
+  gelabeld als schatting.
+- **Bewust niet gedaan**: geen AI-koppeling (`buildCtx()`) voor cyclusdata —
+  aparte, latere beslissing.
+
+Protected core (`calculation.js`/`decision.js`/`relationship.js`/`athlete.js`/
+`coaching.js`): SHA256-bevestigd byte-identiek, onaangetast.
+
 ## v4.50.0 — HYROX/Triathlon race_segments-architectuur, roadmap-raw-data en database hardening (26 augustus 2026)
 
 Verzamelt de wijzigingen uit tien gemergede PR's (#33–#42) die sinds v4.49.0 geen

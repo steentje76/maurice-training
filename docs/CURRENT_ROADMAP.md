@@ -115,12 +115,34 @@ Op volgorde van opbrengst per eenheid werk:
    tekstgroottes) vereist een echte, visuele browsercontrole** — honderden losse,
    vaste px-font-sizes door de hele app; niet blind/zonder visuele verificatie
    uit te voeren.
-7. **Menstruatiecyclus-tracking** als volwaardige UI.
+7. **Menstruatiecyclus-tracking** als volwaardige UI. 🟢 MVP afgerond (PR #44, main
+   `f92ebfb`) — dedicated `cycle_periods`-tabel, `core/cycle.js` (cyclusdag/geschatte
+   fase/geschatte volgende menstruatie), nieuw subscherm Lichaam → Cyclus. Hergebruikt
+   bewust de al bestaande, protected `CalcCore.cyclusDagFactor()`-vocabulaire. **Audit +
+   PMS/symptoomregistratie afgerond** (PR #45, main `32f4f65`): overlap-preventie
+   gerepareerd (server-side controle ontbrak), `cycle_symptom_logs`-tabel toegevoegd
+   (neutrale patroondetectie, drempel ≥3 cycli, geen causale taal), privacygat in de
+   accountverwijderlijst gedicht. Zie `Trainingskompas_Womens_Performance_Blueprint_v1.0.md`
+   voor het volledige featurekader.
+   **DECISION REQUIRED (niet gebouwd, expliciete productbeslissingen nodig — zie
+   `docs/Womens_Performance/`):** zwangerschapscontext, postpartum/return-to-training,
+   perimenopauze/menopauze-terminologie, anticonceptie-als-context. Elk document bevat
+   opties A/B/C met aanbeveling; geen van deze vier is autonoom gebouwd, conform het
+   blueprint (sectie 27).
+   **Nog niet gedaan (lagere prioriteit, niet geblokkeerd):** cyclus↔training-correlatie
+   (blueprint sectie 9), Women's Performance-dashboard (sectie 10).
 8. **HYROX race-splits en triathlon-brick.** 🟢 afgerond (PR #31/#33/#34/#35/PR #36
    architectuuraudit) — dedicated `race_segments`-tabel met expliciete `race_type`,
    Context Engine-koppeling. Zie `migratie_v490.sql`/`migratie_v491.sql`.
 9. **Extra wearable-providers** (Apple HealthKit, Health Connect, Garmin, Whoop, Oura) —
-   geblokkeerd op een geregistreerde OAuth-app per provider; niet autonoom uitvoerbaar.
+   Google Health/Fitbit-integratie bestaat al volledig (provider-onafhankelijk
+   databaseontwerp, OAuth-flow, sync, normalisatie met provenance — bevestigd getest,
+   79/79 + 43/43). Garmin: Developer Program momenteel volledig opgeschort (geen
+   registratie mogelijk). Oura/WHOOP: technisch haalbaar (standaard OAuth2), vereist
+   een nieuwe developer-app-registratie door Maurice. Apple HealthKit/Health Connect:
+   uitsluitend native, on-device SDK's (geen cloud-API) — vereist aparte native
+   ontwikkeling, geen credential-blokkade maar een architecturaal andere opgave.
+   Niet autonoom verder uitvoerbaar zonder een van deze externe stappen.
 
 ## FUTURE — COMMERCIAL / SOCIAL / WHITE LABEL ⚪
 

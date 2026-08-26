@@ -245,3 +245,28 @@
 - Verantwoordelijke: Autonome implementatiebeslissing door Claude tijdens een
   onbeheerde master-sprint (de gebruiker was langere tijd niet beschikbaar). Niet door
   Maurice persoonlijk beoordeeld op het moment van mergen — ter review bij terugkeer.
+
+## DEC-029
+- Datum: 26 augustus 2026
+- Beslissing: Cyclustracking-audit uitgevoerd en PMS/symptoomregistratie gebouwd en
+  gemergd (Women's Performance Blueprint v1.0, secties 2/7/8). Audit vond en repareerde
+  een echte bug (overlap-preventie ontbrak server-side) en een privacygat
+  (`cycle_symptom_logs` ontbrak in de accountverwijderlijst).
+- Reden: Blueprint sectie 2 noemt Symptom Tracking en PMS Context als vroege
+  featurefase (W3), met exact hetzelfde risicoprofiel als de al gemergede
+  cyclustracking-MVP (self-reported logging, neutrale presentatie, geen
+  diagnoseclaim). Uitgevoerd conform blueprint sectie 3's taalregel: uitsluitend
+  feitelijke tellingen, nooit causale/hormonale claims, harde minimumdatadrempel
+  (>=3 cycli) vóór een patroon getoond wordt.
+- Alternatieven: patronen al tonen bij minder data overwogen (sneller nuttig voor de
+  gebruiker) — afgewezen, want dat zou precies het risico introduceren dat het
+  blueprint expliciet verbiedt ("nooit een conclusie op één of twee trainingen/
+  datapunten").
+- Impact: nieuwe RLS-beveiligde tabel (`cycle_symptom_logs`), geen wijziging aan
+  protected core, geen AI-koppeling. Bewust NIET uitgevoerd: zwangerschap/postpartum-
+  context, menopauze-terminologie, anticonceptie-categorieën — deze blijven expliciete
+  productbeslissingen (zie de DECISION REQUIRED-documenten in
+  docs/Womens_Performance/).
+- Verantwoordelijke: Autonome implementatiebeslissing door Claude tijdens een
+  onbeheerde master-sprint (de gebruiker was langere tijd niet beschikbaar). Niet door
+  Maurice persoonlijk beoordeeld op het moment van mergen — ter review bij terugkeer.

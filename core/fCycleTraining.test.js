@@ -73,6 +73,57 @@ const tijdensCheck = CTC.trainingDuringMenstruation(drieCycli, consistentieSessi
 eq(perFaseCheck.menstruatie, 1, 'F1: 3 juni correct geclassificeerd als menstruatie-fase');
 eq(tijdensCheck.tijdensMenstruatie, 1, 'F2: DEZELFDE sessie (3 juni) moet OOK als "tijdens menstruatie" tellen -- consistent met F1, ondanks dat er later nog twee cycli gelogd zijn');
 
+console.log('\nG. cycleTrainingSummary() — nieuwe transparantievelden (Fase 3, Advanced Insights)');
+const samenvattingUitgebreid = CTC.cycleTrainingSummary(drieCycli, [
+  { date: '2026-06-02', rpe: 7 }, { date: '2026-06-10', rpe: 6 }, { date: '2026-07-05' }
+]);
+eq(samenvattingUitgebreid.aantalGebruikteTrainingen, 3, 'G1: telt exact het aantal geldige sessies dat in de analyse is gebruikt');
+eq(samenvattingUitgebreid.aantalGeregistreerdeCycli, 3, 'G2: telt het aantal geregistreerde cycli (3 periodes)');
+eq(samenvattingUitgebreid.datumbereik, { van: '2026-06-02', tot: '2026-07-05' }, 'G3: datumbereik correct berekend uit de daadwerkelijke sessiedatums (vroegste/laatste), niet verzonnen');
+eq(CTC.cycleTrainingSummary([], []).datumbereik, null, 'G4: geen sessies -> datumbereik expliciet null, geen leeg-object-verzinsel');
+eq(CTC.cycleTrainingSummary([], []).aantalGebruikteTrainingen, 0, 'G5: geen sessies -> 0, niet undefined/null');
+
+console.log('\nH. trainingTrendPerCycle() — HISTORISCHE trend per afgeronde cyclus, geen voorspelling');
+eq(CTC.trainingTrendPerCycle([{ start_date: '2026-06-01' }], []), [], 'H1: slechts 1 periode gelogd -> GEEN enkele afgeronde cyclus mogelijk -> lege array');
+eq(CTC.trainingTrendPerCycle([], []), [], 'H2: geen data -> lege array, geen crash');
+const trend = CTC.trainingTrendPerCycle(drieCycli, [
+  { date: '2026-06-05' }, { date: '2026-06-15' }, // in cyclus 1 (1 juni t/m 28 juni)
+  { date: '2026-07-01' } // in cyclus 2 (29 juni t/m 26 juli)
+]);
+eq(trend.length, 2, 'H3: 3 gelogde periodes -> exact 2 AFGERONDE cycli (de laatste, lopende cyclus telt NIET mee -- geen extrapolatie van een onvoltooide cyclus)');
+eq(trend[0].cyclusNummer, 1, 'H4: cyclusnummers chronologisch, beginnend bij 1');
+eq(trend[0].startDatum, '2026-06-01', 'H5: startdatum van cyclus 1 correct');
+eq(trend[0].eindDatum, '2026-06-29', 'H6: einddatum = startdatum van de VOLGENDE periode (exclusief), niet verzonnen');
+eq(trend[0].aantalTrainingen, 2, 'H7: 2 sessies vallen binnen cyclus 1 (5 en 15 juni)');
+eq(trend[1].aantalTrainingen, 1, 'H8: 1 sessie valt binnen cyclus 2 (1 juli)');
+eq(trend[0].gemiddeldeRpe, null, 'H9: geen enkele sessie in cyclus 1 heeft een rpe-waarde -> null, geen 0 verzinnen');
+const trendMetRpe = CTC.trainingTrendPerCycle(drieCycli, [
+  { date: '2026-06-05', rpe: 6 }, { date: '2026-06-10', rpe: 8 }, { date: '2026-06-15', rpe: 7 }
+]);
+eq(trendMetRpe[0].gemiddeldeRpe, 7, 'H10: 3 rpe-waarden (>=drempel) -> correct gemiddelde ((6+8+7)/3=7)');
+const trendOnderDrempel = CTC.trainingTrendPerCycle(drieCycli, [
+  { date: '2026-06-05', rpe: 6 }, { date: '2026-06-10', rpe: 8 }
+]);
+eq(trendOnderDrempel[0].gemiddeldeRpe, null, 'H11: slechts 2 rpe-waarden (< MIN_SESSIES_PER_EMMER=3) -> null, geen schijngemiddelde');
+
+console.log('\nI. symptomTrainingOverlap() — feitelijke, neutrale overlap-telling, geen causaliteit');
+eq(CTC.symptomTrainingOverlap([], [], 'headache'), { onvoldoendeData: true, aantalDagenMetSymptoom: 0 }, 'I1: geen symptoomdata -> onvoldoendeData=true');
+const tweeHeadacheLogs = [
+  { log_date: '2026-06-02', symptoms: { headache: 6 } }, { log_date: '2026-06-03', symptoms: { headache: 5 } }
+];
+eq(CTC.symptomTrainingOverlap(tweeHeadacheLogs, [], 'headache').onvoldoendeData, true, 'I2: slechts 2 dagen met dit symptoom (< MIN_SYMPTOOM_DAGEN=3) -> onvoldoendeData=true, ongeacht trainingsdata');
+const vierHeadacheLogs = [
+  { log_date: '2026-06-02', symptoms: { headache: 6 } }, { log_date: '2026-06-03', symptoms: { headache: 5 } },
+  { log_date: '2026-06-04', symptoms: { headache: 7 } }, { log_date: '2026-06-05', symptoms: { headache: 4 } }
+];
+const overlapResultaat = CTC.symptomTrainingOverlap(vierHeadacheLogs, [
+  { date: '2026-06-02' }, { date: '2026-06-04' }, { date: '2026-06-04' }, { date: '2026-06-10' }
+], 'headache');
+eq(overlapResultaat.onvoldoendeData, false, 'I3: 4 dagen met symptoom (>= drempel) -> voldoende data');
+eq(overlapResultaat.aantalDagenMetSymptoom, 4, 'I4: telt het EXACTE aantal dagen met dit symptoom');
+eq(overlapResultaat.aantalMetTraining, 2, 'I5: 2 van de 4 symptoomdagen (2 en 4 juni) hadden OOK een training -- 4 juni telt maar 1x mee ondanks 2 sessies op die dag (feitelijke dagtelling, geen sessietelling)');
+ok(!JSON.stringify(overlapResultaat).toLowerCase().match(/hormo|diagnos|oorzaak|veroorzaak|beinvloed/), 'I6: de output bevat geen causale taal -- uitsluitend getallen');
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { console.log('❌ Cyclus-training-correlatie niet groen.'); process.exitCode = 1; }

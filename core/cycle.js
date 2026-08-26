@@ -178,6 +178,56 @@
     };
   }
 
+  /* ── symptom_pattern.v1 ────────────────────────────────────────────────────
+   * NEUTRALE, feitelijke patroondetectie op zelf-gerapporteerde symptomen.
+   * GEEN diagnose, GEEN causaliteitsclaim (nooit "je hormonen veroorzaken..."),
+   * uitsluitend een feitelijke telling: "je registreerde X op Y van Z
+   * vergelijkbare cyclusdagen". Toont pas iets bij voldoende data (>=3
+   * cycli met ten minste één registratie), anders expliciet "onvoldoende
+   * data" -- nooit een patroon suggereren op 1-2 datapunten.
+   *
+   * symptomLogs: [{ log_date, symptoms: {key: 0-10, ...} }, ...]
+   * Retourneert per symptoolkey een samenvatting, alleen voor symptomen die
+   * daadwerkelijk >=1x gelogd zijn EN waarvoor genoeg cyclusdekking bestaat. */
+  var MIN_CYCLI_VOOR_PATROON = 3;
+
+  function symptomPatternSummary(symptomLogs, periods) {
+    var logs = (symptomLogs || []).filter(function (l) { return l && l.log_date && l.symptoms; });
+    var norm = normalizePeriods(periods);
+    if (norm.length < MIN_CYCLI_VOOR_PATROON || !logs.length) {
+      return { voldoendeData: false, patronen: [] };
+    }
+    // Groepeer elke logregel op haar cyclusdag t.o.v. de op dat moment geldende periode-start.
+    var perSymptoomPerDag = {}; // { symptoomKey: { dag: [waarden] } }
+    logs.forEach(function (log) {
+      var dag = cycleDay(periods, log.log_date);
+      if (dag == null) return;
+      Object.keys(log.symptoms).forEach(function (key) {
+        var waarde = log.symptoms[key];
+        if (waarde == null) return;
+        if (!perSymptoomPerDag[key]) perSymptoomPerDag[key] = {};
+        if (!perSymptoomPerDag[key][dag]) perSymptoomPerDag[key][dag] = [];
+        perSymptoomPerDag[key][dag].push(waarde);
+      });
+    });
+    var patronen = [];
+    Object.keys(perSymptoomPerDag).forEach(function (key) {
+      var perDag = perSymptoomPerDag[key];
+      var totaalRegistraties = 0;
+      Object.keys(perDag).forEach(function (d) { totaalRegistraties += perDag[d].length; });
+      // Alleen een patroon melden als het symptoom op MEERDERE verschillende cycli is
+      // teruggekomen (niet slechts vaak binnen één cyclus) -- benaderd via het totaal
+      // aantal registraties t.o.v. het aantal gelogde cycli.
+      if (totaalRegistraties < MIN_CYCLI_VOOR_PATROON) return;
+      patronen.push({
+        symptoom: key,
+        aantalRegistraties: totaalRegistraties,
+        aantalCycliMetData: norm.length
+      });
+    });
+    return { voldoendeData: true, patronen: patronen };
+  }
+
   return {
     versie: CYCLE_VERSIE,
     normalizePeriods: normalizePeriods,
@@ -185,6 +235,8 @@
     averageCycleLength: averageCycleLength,
     estimatedNextPeriod: estimatedNextPeriod,
     estimatedPhaseFromDay: estimatedPhaseFromDay,
-    cycleContext: cycleContext
+    cycleContext: cycleContext,
+    symptomPatternSummary: symptomPatternSummary
   };
 });
+

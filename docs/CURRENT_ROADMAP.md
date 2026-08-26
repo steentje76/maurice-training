@@ -124,13 +124,19 @@ Op volgorde van opbrengst per eenheid werk:
    (neutrale patroondetectie, drempel ≥3 cycli, geen causale taal), privacygat in de
    accountverwijderlijst gedicht. Zie `Trainingskompas_Womens_Performance_Blueprint_v1.0.md`
    voor het volledige featurekader.
+   🟢 **Cyclus↔training-correlatie en Women's Performance-dashboard afgerond** (PR #47,
+   main `8bac03f`, v4.53.0): `core/cycleTraining.js` (trainingen/RPE/duur per fase,
+   menstruatie-en-training-telling), dashboard geïntegreerd in het cyclusscherm.
+   Tegelijk gevonden en gerepareerd: een historische-datum-bug in `cycleContext()`.
+   🟢 **Advanced Insights afgerond** (PR #48, main `4e53c2f`, v4.54.0):
+   `trainingTrendPerCycle()` (historische trend per afgeronde cyclus) en
+   `symptomTrainingOverlap()` (feitelijke symptomen×training-overlap), plus expliciete
+   transparantievelden ("gebaseerd op X trainingen en Y cycli").
    **DECISION REQUIRED (niet gebouwd, expliciete productbeslissingen nodig — zie
    `docs/Womens_Performance/`):** zwangerschapscontext, postpartum/return-to-training,
-   perimenopauze/menopauze-terminologie, anticonceptie-als-context. Elk document bevat
-   opties A/B/C met aanbeveling; geen van deze vier is autonoom gebouwd, conform het
-   blueprint (sectie 27).
-   **Nog niet gedaan (lagere prioriteit, niet geblokkeerd):** cyclus↔training-correlatie
-   (blueprint sectie 9), Women's Performance-dashboard (sectie 10).
+   perimenopauze/menopauze-terminologie, anticonceptie-als-context, bekkenbodem-context.
+   Vijf documenten, elk met opties A/B/C en aanbeveling; geen enkele autonoom gebouwd,
+   conform het blueprint (sectie 27 resp. gap-matrix-item 12).
 8. **HYROX race-splits en triathlon-brick.** 🟢 afgerond (PR #31/#33/#34/#35/PR #36
    architectuuraudit) — dedicated `race_segments`-tabel met expliciete `race_type`,
    Context Engine-koppeling. Zie `migratie_v490.sql`/`migratie_v491.sql`.

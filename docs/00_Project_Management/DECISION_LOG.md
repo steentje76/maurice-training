@@ -270,3 +270,22 @@
 - Verantwoordelijke: Autonome implementatiebeslissing door Claude tijdens een
   onbeheerde master-sprint (de gebruiker was langere tijd niet beschikbaar). Niet door
   Maurice persoonlijk beoordeeld op het moment van mergen — ter review bij terugkeer.
+
+## DEC-030
+- Datum: 26 augustus 2026
+- Beslissing: bij de Fase-4-rebaseline-audit (na PR #47/#48) een vijfde DECISION
+  REQUIRED-document toegevoegd voor "Bekkenbodem-context" (blueprint gap-matrix-item
+  12), naast de al bestaande vier (zwangerschap/postpartum/menopauze/anticonceptie).
+- Reden: dit onderwerp was nog niet expliciet behandeld. Het mengt fitness-relevante
+  en medisch-aangrenzende aspecten — het classificeren van specifieke oefeningen als
+  "bekkenbodemveilig" vereist fysiotherapeutische expertise die niet zelfstandig
+  verzonnen mag worden. Geen code geschreven; het document beschrijft opties A-C met
+  aanbeveling (optie B: hergebruik van het bestaande, generieke vermijdings-
+  mechanisme, geen door Claude verzonnen medische classificatie).
+- Alternatieven: zelf een lijst van "bekkenbodemveilige" oefeningen samenstellen —
+  expliciet afgewezen, want dat zou een ongeverifieerde medische claim zijn.
+- Impact: geen databasewijziging, geen Engine-wijziging, geen UI-wijziging in deze
+  stap — uitsluitend documentatie.
+- Verantwoordelijke: Autonome implementatiebeslissing door Claude tijdens een
+  onbeheerde master-sprint (de gebruiker was langere tijd niet beschikbaar). Niet door
+  Maurice persoonlijk beoordeeld op het moment van mergen — ter review bij terugkeer.

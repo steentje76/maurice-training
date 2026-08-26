@@ -287,7 +287,7 @@ ok(!!mVer, 'F6: de applicatieversie heeft de vorm vX.Y.Z');
  * registry-vlaggen in relationship.js/athlete.js is een aparte, apart te
  * rechtvaardigen protected-core-wijziging (nog niet in deze milestone). ── */
 console.log('\nG. duration_s wordt vastgelegd bij het afronden van een sessie');
-const finishSrc = html.slice(html.indexOf('async function finishSession('), html.indexOf('async function finishSession(') + 4000);
+const finishSrc = html.slice(html.indexOf('async function finishSession('), html.indexOf('async function finishSession(') + 5200);
 ok(/const _duurS = trainStart \? Math\.max\(0, Math\.round\(\(Date\.now\(\)-trainStart-\(pausedAccumMs\|\|0\)\)\/1000\)\) : null;/.test(finishSrc),
   'G1: duration_s hergebruikt EXACT dezelfde formule als de al bestaande live-klok (startTrainTimer) -- geen tweede, losse tijdsberekening');
 ok(/duration_s:_duurS/.test(finishSrc), 'G2: het cardio-schrijfpad geeft duration_s mee');
@@ -342,6 +342,22 @@ ok(/rest_sec:s\.rest_sec/.test(html), 'H3: buildStrengthSessionRow() geeft rest_
   eq(sessionLog['squat'].sets[0].rest_sec, null, 'H6: een andere oefening deelt NIET de rust-referentie -> null, geen vermenging tussen oefeningen');
   Date.now = origNow;
 })();
+
+/* ── I. ROADMAP POST-V1 #3 — weer per sessie (RAW DATA) ─────────────────────
+ * "Weer per sessie vastleggen — ontsluit temperatuur, luchtvochtigheid en wind."
+ * VARIABLE_REGISTRY heeft al drie geregistreerde variabelen (temperatuur/
+ * luchtvochtigheid/wind, beschikbaarheid:'toekomstig'), wachtend op precies deze
+ * data. Hergebruikt de al bestaande weerinfrastructuur (WeatherCore/TKWeather)
+ * volledig ongewijzigd -- geen nieuwe fetch-logica, geen nieuwe opt-in, hergebruikt
+ * het bestaande per-uur-cachemechanisme. Nooit een verzonnen waarde: opt-out/geen
+ * locatie/mislukte fetch -> weather blijft null. ──────────────────────────── */
+console.log('\nI. Weer wordt vastgelegd bij het afronden van een sessie');
+ok(/typeof TKWeather!=='undefined' && TKWeather\.isEnabled\(\)/.test(finishSrc), 'I1: respecteert de bestaande opt-in-gate -- geen ongevraagde locatie-aanvraag');
+ok(/TKWeather\.forContext\(tkWeatherCtx\(_fOut,_fMod\)\)/.test(finishSrc), 'I2: hergebruikt de bestaande TKWeather.forContext()/tkWeatherCtx() -- geen nieuwe weerlogica');
+ok(/OUTDOOR_CAPABLE\[ct\]/.test(finishSrc), 'I3: gebruikt dezelfde outdoor/modaliteit-bepaling als de bestaande weer-context-balk tijdens de training');
+ok(/weather:_weerData/.test(finishSrc), 'I4: het cardio-schrijfpad geeft weather mee');
+ok(/row\.weather=_weerData/.test(finishSrc), 'I5: het krachtschrijfpad geeft weather mee');
+ok(/let _weerData = null;/.test(finishSrc), 'I6: begint met null -- geen verzonnen standaardwaarde als het weer niet beschikbaar is');
 
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');

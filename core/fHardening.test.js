@@ -528,6 +528,30 @@ ok(/resolvedWorkout=null;activeInstanceId=null/.test(execDiscardSrc), 'T15: rese
 ok(!/sbPostQ|sbPatchQ|finishSession\(\)|completeTrainingInstance/.test(execDiscardSrc), 'T16 (EX-DISCARD-2, kernprincipe): verwerpen roept NERGENS een database-schrijfactie, finishSession() of completeTrainingInstance() aan -- discard ≠ finish, geen completed workout, geen history-rij, geen calculations');
 ok(/execLeavePause\(\)/.test(html) && !/execLeavePause[\s\S]{0,300}clearTrainingDraft/.test(html.slice(html.indexOf('function execLeavePause('),html.indexOf('function execLeavePause(')+300)), 'T17: "Pauzeren" blijft het bestaande gedrag -- de draft wordt NIET gewist, in tegenstelling tot verwerpen');
 
+/* ── U. A3 — AANVULLENDE COACH-ADVIES-CONTEXT (v4.64.0) — geen wijziging aan computeProgAdjustment() ── */
+console.log('\nU. A3: aanvullende, reeds berekende context in het bestaande coach-advies -- computeProgAdjustment() ongewijzigd');
+const extraCtxSrc = html.slice(html.indexOf('async function buildProgAdviesExtraContext('), html.indexOf('async function buildProgAdviesExtraContext(') + 2700);
+ok(/ScheduleAdherenceCore\.daysUntilEvent\(/.test(extraCtxSrc), 'U1: gebruikt UITSLUITEND ScheduleAdherenceCore.daysUntilEvent() (v4.56.0) -- geen eigen datumlogica');
+ok(/ScheduleAdherenceCore\.weeksUntilEvent\(/.test(extraCtxSrc), 'U2: gebruikt UITSLUITEND ScheduleAdherenceCore.weeksUntilEvent()');
+ok(/computeExerciseTrends\(\)/.test(extraCtxSrc), 'U3: hergebruikt de gedeelde, canonieke computeExerciseTrends() (v4.62.0) -- exact dezelfde bron als Voortgang en de AI-coachcontext, geen duplicate calculation path');
+ok(/relevantIds\.has\(exId\)/.test(extraCtxSrc), 'U4: filtert de trend-context expliciet tot uitsluitend de oefeningen die in DEZE training voorkomen -- geen irrelevante ruis');
+ok(!/setsDelta|rpeDelta\s*=/.test(extraCtxSrc), 'U5 (kernprincipe): deze functie wijzigt NERGENS setsDelta/rpeDelta -- puur aanvullende, informatieve context, geen invloed op de deterministische aanpassing zelf');
+ok(/escHtml\(/.test(extraCtxSrc), 'U6 (XSS-veiligheid): vrije tekst (event_name/oefeningnamen) wordt via escHtml() weergegeven');
+
+const evalAdjSrc = html.slice(html.indexOf('async function evaluateProgAdjustment('), html.indexOf('async function evaluateProgAdjustment(') + 2700);
+ok(/const adj=computeProgAdjustment\(df\.factor,muscleRows,progCheckinCtx\.voelt,progCheckinCtx\.pijn\)/.test(evalAdjSrc), 'U7 (protected-core-isolatie): computeProgAdjustment() wordt aangeroepen met EXACT dezelfde vier parameters als vóór v4.64.0 -- geen nieuw vijfde argument, geen gewijzigde signature');
+ok(/const extraContext=await buildProgAdviesExtraContext\(prog,rows\)/.test(evalAdjSrc), 'U8: de nieuwe context wordt apart, NA de bestaande adj-berekening opgehaald -- nooit vermengd met de Decision Engine-aanroep zelf');
+ok(/extraContext\.length\?/.test(evalAdjSrc), 'U9: de extra contextregel wordt uitsluitend getoond wanneer daadwerkelijk relevante content bestaat -- geen lege sectie');
+ok(/const extraContextIntro=await buildProgAdviesExtraContext\(prog,rows\)/.test(evalAdjSrc), 'U10: dezelfde aanvullende context wordt ook getoond wanneer GEEN readiness-aanpassing nodig is (m-prog-intro-pad) -- consistente informatie ongeacht adj');
+
+const decisionSrcU = fs.readFileSync(path.join(__dirname, 'decision.js'), 'utf8');
+ok(!decisionSrcU.includes('buildProgAdviesExtraContext') && !decisionSrcU.includes('ScheduleAdherenceCore'), 'U11 (protected core): core/decision.js bevat GEEN enkele referentie aan de nieuwe A3-functie of ScheduleAdherenceCore -- protected core bewijsbaar niet gewijzigd');
+ok(/TrainingLoadCore\.corroboratedLoadSignal\(acwrKlasse,aantalDalend\)/.test(extraCtxSrc), 'U12: hergebruikt UITSLUITEND TrainingLoadCore.corroboratedLoadSignal() -- geen eigen conjunctie-logica, geen nieuwe ACWR-classificatie');
+ok(/aantalDalend=dalend\.length/.test(extraCtxSrc) && !/(tkProgressionTrendContext|computeExerciseTrends\(\)[\s\S]*computeExerciseTrends\(\))/.test(extraCtxSrc), 'U13 (geen duplicate calculation): het aantal dalende oefeningen komt uit DEZELFDE trends-berekening als de trendregel hierboven -- geen tweede, parallelle trendberekening voor de belastingscheck');
+ok(!/deload|blessure|risico|overtraind/i.test(extraCtxSrc), 'U14 (taalgrens): geen deload-/blessurerisico-/overtraind-taal -- uitsluitend neutrale, beschrijvende formulering ("controleer hoe de training vandaag voelt")');
+ok(/belastingData=await tkCoachBelasting\(\)/.test(extraCtxSrc), 'U15: hergebruikt de bestaande tkCoachBelasting() -- exact dezelfde bron als de AI-coachcontext (v4.58.0), geen tweede ACWR-berekening');
+ok(!/setsDelta|rpeDelta\s*[-+]?=/.test(extraCtxSrc), 'U16 (single-signal safety, kernprincipe): het belastingssignaal wijzigt NERGENS setsDelta/rpeDelta -- puur aanvullende context, computeProgAdjustment() blijft de enige bron van de daadwerkelijke aanpassing');
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { console.log('❌ Hardening niet groen.'); process.exit(1); }

@@ -1,5 +1,61 @@
 # Trainingskompas — Changelog
 
+## v4.64.0 — A3: Load/trend-context in de pre-workout-aanbeveling (27 augustus 2026)
+
+MASTERSPRINT A3 (Adaptive Training Intelligence) — sluit uitsluitend de tijdens
+de A3-discoveryronde bewezen chain break. `evaluateProgAdjustment()` bleek al
+een volledig, canoniek "PLAN→OBSERVATION→DECISION→RECOMMENDATION→EXPLANATION"-
+model te zijn (`computeProgAdjustment()`, protected Decision Engine), maar
+gebruikte uitsluitend readiness (HRV/slaap/spierherstel/subjectief gevoel).
+Twee al bestaande, al berekende signalen — het gecorroboreerde
+belastingssignaal (v4.60.0) en de per-oefening-progressietrend (v4.62.0) —
+zaten uitsluitend in de AI-chatcontext, nooit in dit daadwerkelijke,
+vóór-elke-training getoonde advies.
+
+**Nieuwe functie**: `buildProgAdviesExtraContext(prog, rows)` — voegt
+uitsluitend AANVULLENDE, DUIDELIJK GESCHEIDEN context toe aan de bestaande
+`m-prog-advies`/`m-prog-intro`-modals:
+- **Event-datum-context**: hergebruikt `ScheduleAdherenceCore.daysUntilEvent()`/
+  `weeksUntilEvent()` (v4.56.0), geen nieuwe datumlogica.
+- **Relevante oefeningtrend**: hergebruikt `computeExerciseTrends()` (v4.62.0),
+  gefilterd tot uitsluitend oefeningen die in DEZE specifieke training
+  voorkomen — geen irrelevante ruis.
+- **Gecorroboreerd belastingssignaal**: hergebruikt exact
+  `TrainingLoadCore.corroboratedLoadSignal()` (v4.60.0). Het aantal dalende
+  oefeningen komt uit DEZELFDE trendberekening als hierboven — geen tweede,
+  parallelle berekening. Neutrale taal ("controleer hoe de training vandaag
+  voelt"), geen deload-/blessurerisico-taal.
+
+**Kernprincipe, bewezen niet alleen beweerd**: `computeProgAdjustment()`
+wordt aangeroepen met EXACT dezelfde vier parameters als vóór deze sprint —
+geen vijfde argument, geen gewijzigde signature. De nieuwe context wordt
+apart, NA de bestaande `adj`-berekening opgehaald en toegevoegd, en wijzigt
+nergens `setsDelta`/`rpeDelta`. Bug-terugzet-simulatie bevestigt dit expliciet
+(tests U5/U16 falen correct zodra de nieuwe functie een `rpeDelta`-toewijzing
+zou bevatten).
+
+**Single-signal-safety behouden**: het belastingssignaal verschijnt
+uitsluitend bij de conjunctie van twee onafhankelijke bronnen
+(`corroboratedLoadSignal()`, al zo ontworpen in v4.60.0) — nooit op ACWR of
+één dalende oefening alleen.
+
+Dezelfde aanvullende context wordt getoond ongeacht of er wel/geen
+readiness-aanpassing nodig is (zowel het `m-prog-advies`- als het
+`m-prog-intro`-pad) — consistente informatie.
+
+Geen databasewijziging. Geen wijziging aan protected core — expliciet
+geverifieerd dat `core/decision.js` geen enkele referentie naar de nieuwe
+functie of `ScheduleAdherenceCore` bevat.
+
+Protected core (`calculation.js`/`decision.js`/`relationship.js`/`athlete.js`/
+`coaching.js`/`progression.js`): SHA256-bevestigd byte-identiek, onaangetast.
+
+**A3-eindconclusie**: Trainingskompas heeft nu één coherent pre-workout
+adaptive-oppervlak waarin readiness-beslissing, schedule/programmacontext,
+belastingscorroboratie en relevante oefeningprogressie samenkomen zonder
+parallelle logica. Geen P0/P1 meer resterend. A3 CLOSED (zie DECISION_LOG.md
+DEC-040).
+
 ## v4.63.0 — A2.6: Exercise Detail Drill-down (27 augustus 2026)
 
 Afsluitende bouwstap van MASTERSPRINT A2 (Performance & Analytics 2.0).

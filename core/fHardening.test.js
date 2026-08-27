@@ -476,19 +476,30 @@ ok(!decisionSrc.includes('TrainingLoadCore') && !decisionSrc.includes('classifyA
 
 /* ── R. AI COACH: PROGRESSIE-TREND PER OEFENING (v4.59.0) — 100% hergebruik protected ProgressionCore ── */
 console.log('\nR. AI Coach: progressie-trend per oefening — geen nieuwe Calculation Engine, geen eigen 1RM-formule');
-const progTrendFnSrc = html.slice(html.indexOf('async function tkProgressionTrendContext('), html.indexOf('async function tkProgressionTrendContext(') + 1600);
+const progTrendFnSrc = html.slice(html.indexOf('async function tkProgressionTrendContext('), html.indexOf('async function tkProgressionTrendContext(') + 1900);
 ok(/PC\.trendBy\(/.test(progTrendFnSrc), 'R1: gebruikt UITSLUITEND ProgressionCore.trendBy() -- geen eigen trendberekening');
 ok(/CC\.oneRMRaw\(/.test(progTrendFnSrc), 'R2: gebruikt UITSLUITEND CalcCore.oneRMRaw() (Epley, protected) -- geen eigen 1RM-formule');
 ok(/hist\.length<3\)return/.test(progTrendFnSrc), 'R3: respecteert dezelfde minimale-data-drempel (3) als het bestaande post-sessie-signaal, geen verlaagde drempel');
 ok(/tr\.improving===false/.test(progTrendFnSrc), 'R4: selecteert uitsluitend oefeningen met een daadwerkelijk dalende trend (improving===false), niet stijgend/stabiel/onbekend');
-ok(/catch\(e\)\{ return ''; \}/.test(progTrendFnSrc), 'R5: een fout in deze functie mag de coach-context nooit laten crashen -- valt terug op lege string, exact zoals de bestaande context-functies');
+ok(/catch\(e\)\{ return \{tekst:'',aantalDalend:0\}; \}/.test(progTrendFnSrc), 'R5: een fout in deze functie mag de coach-context nooit laten crashen -- valt terug op een leeg resultaat, exact zoals de bestaande context-functies (v4.60.0: object i.p.v. string, zodat aantalDalend herbruikbaar is voor de gecorroboreerde belastingscheck)');
 ok(!/setsDelta|rpeDelta|computeProgAdjustment/.test(progTrendFnSrc), 'R6 (architectuurgrens): geen sets/RPE-delta-logica en geen aanroep van computeProgAdjustment() -- puur informatieve AI-coachcontext, geen automatische trainingsaanpassing');
 ok(!/deload/i.test(progTrendFnSrc), 'R7 (scope): deze functie doet GEEN deload-suggestie -- uitsluitend een feitelijke constatering, deload blijft expliciet HOLD');
-ok(/tkProgressionTrendContext\(\)\.catch\(function\(\)\{ return ''; \}\)/.test(html), 'R8: wordt in buildCtx() aangeroepen met dezelfde defensieve .catch()-fallback als de bestaande context-functies');
+ok(/tkProgressionTrendContext\(\)\.catch\(function\(\)\{ return \{tekst:'',aantalDalend:0\}; \}\)/.test(html), 'R8: wordt in buildCtx() aangeroepen met dezelfde defensieve .catch()-fallback als de bestaande context-functies (v4.60.0: object-vorm)');
 ok(/PROGRESSIE-TREND PER OEFENING \(reeds berekend door ProgressionCore, niet zelf herberekenen/.test(html), 'R9: de prompt-tekst is expliciet gelabeld "reeds berekend door ProgressionCore, niet zelf herberekenen"');
 ok(/geen deload-advies of trainingsbeslissing hierop baseren tenzij de gebruiker daar expliciet om vraagt/.test(html), 'R10: expliciete instructie aan de AI dat dit geen deload-advies is en geen trainingsbeslissing mag triggeren');
 const progressionSrc = fs.readFileSync(path.join(__dirname, 'progression.js'), 'utf8');
 ok(!progressionSrc.includes('tkProgressionTrendContext'), 'R11 (protected core): core/progression.js bevat GEEN enkele referentie aan de nieuwe UI-laag-functie -- protected core is bewijsbaar niet gewijzigd');
+
+/* ── S. GECORROBOREERD BELASTINGSSIGNAAL (v4.60.0) — G4-herbeoordeling, conservatieve conjunctie ── */
+console.log('\nS. Gecorroboreerd belastingssignaal: G4-herbeoordeling, nooit op één los signaal, geen advies');
+ok(/TrainingLoadCore\.corroboratedLoadSignal\(/.test(html), 'S1: gebruikt UITSLUITEND TrainingLoadCore.corroboratedLoadSignal() -- geen eigen conjunctie-logica in de UI-laag');
+const deloadSigSrc = html.slice(html.indexOf("let deloadSignaalTekst=''"), html.indexOf("let deloadSignaalTekst=''") + 1100);
+ok(/acwrKlasse=\(belastingVoorSignaal&&belastingVoorSignaal\.acwr&&belastingVoorSignaal\.acwr\.reden==='ok'\)/.test(deloadSigSrc), 'S2: respecteert dezelfde protected datadrempel (acwr.reden===\'ok\') als de bestaande ACWR-classificatie -- geen classificatie bij onvoldoende data');
+ok(/aantalDalend=\(progressionTrendResult&&progressionTrendResult\.aantalDalend\)\|\|0/.test(deloadSigSrc), 'S3: hergebruikt het AL BEREKENDE aantalDalend uit tkProgressionTrendContext() -- geen tweede, parallelle telling');
+ok(!/setsDelta|rpeDelta|computeProgAdjustment/.test(deloadSigSrc), 'S4 (architectuurgrens): geen sets/RPE-delta-logica en geen aanroep van computeProgAdjustment() -- puur informatieve AI-coachcontext, geen automatische trainingsaanpassing');
+ok(/geen automatische aanpassing, geen advies zonder overleg/.test(html), 'S5: de tekst zelf benadrukt expliciet dat dit geen automatisch advies is -- vereist menselijk overleg');
+ok(/GECORROBOREERD BELASTINGSSIGNAAL \(reeds bepaald door de Decision Engine op basis van TWEE onafhankelijke signalen, niet zelf herberekenen of op één los signaal baseren\)/.test(html), 'S6: de prompt-tekst waarschuwt expliciet tegen het baseren van een beslissing op één los signaal');
+ok(!/deloadSignaalTekst/.test(decisionSrc) && !/corroboratedLoadSignal/.test(decisionSrc), 'S7 (protected core): core/decision.js bevat GEEN enkele referentie aan het nieuwe belastingssignaal -- protected core bewijsbaar niet gewijzigd');
 
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');

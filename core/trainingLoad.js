@@ -71,9 +71,37 @@
     }
   }
 
+  /* ── corroborated_load_signal.v1 ──────────────────────────────────────────
+   * G4-HERBEOORDELING (v4.60.0). Eerdere ronde wees een deload-advies op
+   * ACWR ALLEEN af, omdat een enkel getal misleidend bleek (ACWR sterk_hoger,
+   * maar monotonie laag -- tegenstrijdige signalen). In plaats van één
+   * complex, persoonlijk-percentiel-vereisend "Training Strain"-getal te
+   * ontwerpen (eveneens afgewezen, zie DEC-035), gebruikt deze functie een
+   * EENVOUDIGER, robuuster patroon: CORROBORATIE. Een signaal wordt
+   * uitsluitend afgegeven wanneer TWEE ONAFHANKELIJKE, AL BESTAANDE,
+   * AL GETESTE bronnen HETZELFDE beeld geven:
+   *   1. ACWR-classificatie (classifyAcwr(), hierboven) = 'hoger' of
+   *      'sterk_hoger';
+   *   2. minimaal twee oefeningen met een dalende progressie-trend
+   *      (ProgressionCore.trendBy(), zie tkProgressionTrendContext()).
+   * Vereist BEIDE signalen tegelijk -- nooit één los signaal. Dit is een
+   * bewust conservatief, vals-positief-mijdend ontwerp: hoge belasting
+   * ALLEEN is normaal na een zware, productieve week; dalende progressie
+   * ALLEEN kan wijzen op techniek/motivatie/onvoldoende data. Uitsluitend
+   * de COMBINATIE is een corroborerend, feitelijk signaal waard om te
+   * benoemen -- nog steeds GEEN advies, GEEN automatische aanpassing.
+   * Retourneert uitsluitend true/false -- de aanroeper (AI-coachcontext)
+   * bepaalt de neutrale formulering, deze functie geeft geen tekst. */
+  function corroboratedLoadSignal(acwrClassificatie, aantalDalendeOefeningen) {
+    if (aantalDalendeOefeningen == null || typeof aantalDalendeOefeningen !== 'number' || aantalDalendeOefeningen < 0) return false;
+    var acwrHoog = (acwrClassificatie === 'hoger' || acwrClassificatie === 'sterk_hoger');
+    return acwrHoog && aantalDalendeOefeningen >= 2;
+  }
+
   return {
     versie: VERSIE,
     classifyAcwr: classifyAcwr,
-    acwrAdvisoryText: acwrAdvisoryText
+    acwrAdvisoryText: acwrAdvisoryText,
+    corroboratedLoadSignal: corroboratedLoadSignal
   };
 });

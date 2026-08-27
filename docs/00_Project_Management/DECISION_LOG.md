@@ -467,3 +467,41 @@
   expliciete voorafgaande toestemming voor implementatie én merge zonder
   tussentijdse bevestiging. Niet door Maurice persoonlijk beoordeeld op het
   moment van mergen — ter review bij terugkeer.
+
+## DEC-036
+- Datum: 27 augustus 2026
+- Beslissing: "Blocker Elimination V2" — systematische herbeoordeling van
+  alle bestaande HOLD/BLOCKED-items. duration_s-registratie bevestigd al
+  volledig gebouwd (geen actie nodig, Groep B, wacht op tijd/gebruik).
+  G4 (proactieve deload) herbeoordeeld en deels opgelost via een nieuw,
+  conservatief corroboratie-ontwerp.
+- Reden: eerdere aanname dat G4 volledig afhankelijk was van een enkel,
+  complex ACWR/Training-Strain-getal bleek te beperkt. Met de volle
+  breedte aan al bestaande, al berekende signalen (ACWR-classificatie uit
+  v4.58.0, progressie-trend-telling uit v4.59.0) kan een eenvoudiger,
+  conservatiever patroon: een signaal uitsluitend afgeven wanneer TWEE
+  onafhankelijke bronnen tegelijk hetzelfde beeld geven. Dit vermijdt zowel
+  het "één los getal is misleidend"-probleem (eerdere ACWR-alleen-
+  afwijzing) als het "vereist persoonlijke percentielen"-probleem
+  (eerdere Training-Strain-afwijzing).
+- Alternatieven expliciet afgewezen vóór deze keuze: een derde,
+  onafhankelijk signaal (bv. readiness-trend) toevoegen aan de conjunctie
+  — overwogen maar niet gebouwd deze ronde, want de huidige twee-signalen-
+  conjunctie is al bewijsbaar conservatiever dan elk eerder onderzocht
+  ontwerp; een derde signaal kan een latere verfijning zijn, geen
+  blokkerende noodzaak nu.
+- Impact: geen databasewijziging, geen nieuwe Calculation Engine-
+  berekening, geen protected-core-wijziging (expliciet geverifieerd:
+  core/decision.js bevat geen enkele referentie aan het nieuwe signaal).
+  Kleine, gerechtvaardigde aanpassing van tkProgressionTrendContext()'s
+  retourtype (string -> object) om dubbele berekening te voorkomen.
+  Bewezen via bug-terugzet-simulatie dat het signaal geen sets/RPE-logica
+  bevat en computeProgAdjustment() nergens aanroept.
+- Taalgrens: het signaal is expliciet geformuleerd als aanleiding voor een
+  mens-tot-mens-gesprek ("bespreken", "geen advies zonder overleg"), niet
+  als een AI- of systeembeslissing.
+- Verantwoordelijke: autonome blokkade-inventarisatie, -herbeoordeling en
+  -implementatie door Claude tijdens een onbeheerde master-sprint, met
+  expliciete voorafgaande toestemming voor implementatie én merge zonder
+  tussentijdse bevestiging. Niet door Maurice persoonlijk beoordeeld op
+  het moment van mergen — ter review bij terugkeer.

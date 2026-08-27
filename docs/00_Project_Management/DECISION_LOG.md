@@ -289,3 +289,32 @@
 - Verantwoordelijke: Autonome implementatiebeslissing door Claude tijdens een
   onbeheerde master-sprint (de gebruiker was langere tijd niet beschikbaar). Niet door
   Maurice persoonlijk beoordeeld op het moment van mergen — ter review bij terugkeer.
+
+## DEC-031
+- Datum: 27 augustus 2026
+- Beslissing: Program Adaptation V1 gebouwd — gemiste/verplaatste program_blocks
+  krijgen een contextuele prompt (vandaag doen / overslaan / planning aanpassen)
+  i.p.v. stil "open" te blijven staan.
+- Reden: bevestigde productgap (geen automatische/contextuele reactie op een
+  afwijkende uitvoeringsdatum), benchmark-onderbouwd (TrainHeroic doet dit al).
+- Belangrijk attributieverschil met eerdere DEC-entries: de KERNPRODUCTBESLISSINGEN
+  voor deze feature (welk model: hybride met expliciete keuze i.p.v. automatische
+  verschuiving; skip-semantiek; audit-trail wel meenemen; conflictgedrag:
+  waarschuwen, nooit automatisch alternatief zoeken) zijn VOORAF EXPLICIET DOOR
+  MAURICE VASTGESTELD als bindend uitgangspunt, niet door Claude autonoom bedacht.
+  Uitsluitend de TECHNISCHE UITVOERING (architectuurdetails, exacte functienamen,
+  precieze UX-copy, testdekking) is autonoom door Claude ingevuld binnen dat
+  vooraf gegeven kader.
+- Alternatieven: Model 1 (simpel, geen conflictdetectie), Model 2 (rest van
+  programma verschuift mee), Model 3 (volledig adaptief, vereist een
+  event_date-kolom) — door Maurice vooraf afgewezen ten gunste van Model 4
+  (hybride).
+- Impact: `program_blocks` uitgebreid met drie nullable kolommen
+  (rescheduled_from/reschedule_reason/schedule_status), geen nieuwe tabel, geen
+  RLS-wijziging, geen protected-core-wijziging. `heergenereerResterendeWeken()`
+  ongewijzigd. Bestaande readiness/adaptive-trainingflow volledig hergebruikt.
+- Verantwoordelijke: kernproductbeslissingen door Maurice (vooraf, expliciet,
+  bindend vastgelegd in de opdracht). Technische uitvoering: autonome
+  implementatie door Claude tijdens een onbeheerde master-sprint. Niet door
+  Maurice persoonlijk beoordeeld op het moment van mergen — ter review bij
+  terugkeer.

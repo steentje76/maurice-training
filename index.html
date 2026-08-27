@@ -4721,6 +4721,25 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </div>
 </div>
 
+<!-- ═══ PROGRAMMA — AFWIJKENDE DATUM (Program Adaptation V1, v4.55.0) ═══
+     Verschijnt vóór de bestaande readiness-check-in wanneer een niet-afgeronde,
+     niet-overgeslagen training wordt geopend op een dag die niet overeenkomt met
+     planned_date. Drie gelijkwaardige, expliciete keuzes -- nooit een stille
+     aanname. Geen schuldgevoel/alarmerende taal (zie prScheduleBody()). -->
+<div class="modal-bg" id="m-prog-schedule" onclick="">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Planning</div>
+    <div id="pschedule-body" style="font-size:14px;line-height:1.5;margin-bottom:4px"></div>
+    <div id="pschedule-conflict" style="display:none;font-size:13px;color:var(--red);margin:8px 0;padding:8px 10px;background:var(--g1);border-radius:8px"></div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+      <button class="btn btn-r" style="width:100%" onclick="pscheduleDoToday()">Deze training vandaag doen</button>
+      <button class="btn btn-o" style="width:100%" onclick="pscheduleShowReschedule()">Planning aanpassen</button>
+      <button class="btn btn-o" style="width:100%;color:var(--g4)" onclick="pscheduleSkip()">Overslaan</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ PROGRAMMA — TRAININGSINTRO (geen aanpassing nodig, wel korte uitleg wat/waarom) ═══ -->
 <div class="modal-bg" id="m-prog-intro" onclick="">
   <div class="modal">
@@ -5276,6 +5295,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/weather.js"></script>
 <script src="core/cycle.js"></script>
 <script src="core/cycleTraining.js"></script>
+<script src="core/scheduleAdherence.js"></script>
 <script>
 // ── OPEN-METEO RUNTIME — additive context, NOOIT een blocker voor training ──
 // Keten: geolocation-consent → WeatherCore.buildOpenMeteoRequest → fetch →
@@ -5899,7 +5919,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.54.0';
+const APP_VER = 'v4.55.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -11167,7 +11187,79 @@ async function toggleBlockExpand(blockId){
     : '<div style="padding:6px 0;color:var(--g4);font-size:12px">Nog geen oefeningen — tik op de training voor de detailpagina.</div>';
 }
 
-// ── PROGRAMMA — TRAININGDETAIL ─────────────────────────────
+// ══════════════════════════════════════════════════════════
+// PROGRAM ADAPTATION V1 (v4.55.0) — gemiste/verplaatste trainingen begrijpelijk
+// en bestuurbaar maken, zonder het programma zelfstandig te herschrijven.
+// Architectuur: RAW DATA (program_blocks) -> ScheduleAdherenceCore (Calculation
+// + Decision Engine, core/scheduleAdherence.js, puur/deterministisch) -> deze
+// UI-laag (uitsluitend weergave + gebruikerskeuze doorgeven) -> database-update
+// -> bestaande, ongewijzigde trainingsflow. Raakt NOOIT week_nr/fase_naam/
+// andere blocks — uitsluitend het aangeklikte block.
+// ══════════════════════════════════════════════════════════
+let pscheduleCtx=null;
+function pscheduleBody(gap,daysLate){
+  const plannedFmt=fmtDate(pscheduleCtx.block.planned_date);
+  if(gap==='FUTURE') return `Deze training staat gepland voor ${plannedFmt}.`;
+  const achterTekst=daysLate===1?'1 dag achter':daysLate+' dagen achter';
+  return `Deze training stond gepland voor ${plannedFmt}.<br>Je staat ${achterTekst}.`;
+}
+async function maybeShowScheduleGate(blockId,block,prog,rows){
+  const today=td();
+  const gap=ScheduleAdherenceCore.resolveScheduleGap(block.planned_date,today,block.completed_at,block.schedule_status);
+  // TODAY (of geen geldige planned_date) -> geen prompt nodig, bestaande flow gewoon doorzetten.
+  if(gap===null||gap==='TODAY'){ progCheckinCtx={blockId,block,prog,rows,voelt:null,pijn:null}; await openProgCheckin(); return; }
+  // COMPLETED/SKIPPED horen hier niet te komen (UI verbergt de startknop al), maar defensief:
+  // nooit een prompt tonen voor een al afgeronde of bewust overgeslagen training.
+  if(gap==='COMPLETED'||gap==='SKIPPED'){ toast(gap==='COMPLETED'?'Deze training is al afgerond':'Deze training is overgeslagen'); return; }
+  const dl=ScheduleAdherenceCore.daysLate(block.planned_date,today);
+  pscheduleCtx={blockId,block,prog,rows,gap,today};
+  document.getElementById('pschedule-body').innerHTML=pscheduleBody(gap,dl);
+  document.getElementById('pschedule-conflict').style.display='none';
+  openModal('m-prog-schedule');
+}
+async function pscheduleDoToday(){
+  // "Deze training vandaag doen" — planned_date blijft ONGEWIJZIGD. De bestaande
+  // readiness-check-in + computeProgAdjustment() bepalen de actuele aanpassing,
+  // exact zoals bij een training die wél op de juiste dag wordt gestart.
+  closeModal('m-prog-schedule');
+  const {blockId,block,prog,rows}=pscheduleCtx;
+  progCheckinCtx={blockId,block,prog,rows,voelt:null,pijn:null};
+  await openProgCheckin();
+  pscheduleCtx=null;
+}
+async function pscheduleSkip(){
+  const {blockId}=pscheduleCtx;
+  const bevestigd=await confirmModal('Deze training overslaan? Hij telt dan niet mee als afgerond, maar blijft zichtbaar als bewust overgeslagen.',{title:'Overslaan',okLabel:'Overslaan',cancelLabel:'Annuleren'});
+  if(!bevestigd)return;
+  const ok=await sbPatchQ('program_blocks','id=eq.'+blockId,{schedule_status:'skipped'});
+  closeModal('m-prog-schedule');
+  if(!ok){toast('Kon niet opslaan — probeer opnieuw');pscheduleCtx=null;return;}
+  toast('Training overgeslagen');
+  pscheduleCtx=null;
+  renderProgrammaList();
+}
+async function pscheduleShowReschedule(){
+  const {blockId,block,gap,today}=pscheduleCtx;
+  const nieuweDatum=today;
+  const allBlocks=await sbGet('program_blocks','&program_id=eq.'+block.program_id);
+  const decision=ScheduleAdherenceCore.resolveRescheduleDecision(allBlocks,nieuweDatum,blockId);
+  const conflictEl=document.getElementById('pschedule-conflict');
+  if(decision==='CONFLICT_WARNING'){
+    const botsend=ScheduleAdherenceCore.hasScheduleConflict(allBlocks,nieuweDatum,blockId);
+    conflictEl.textContent='Er staat al een andere training gepland voor '+fmtDate(nieuweDatum)+' ('+(botsend.fase_naam||'training')+'). Wil je toch verplaatsen?';
+    conflictEl.style.display='block';
+    const bevestigd=await confirmModal('Er staat al een andere training gepland voor '+fmtDate(nieuweDatum)+'. Toch verplaatsen?',{title:'Planning botst',okLabel:'Toch verplaatsen',cancelLabel:'Annuleren'});
+    if(!bevestigd)return;
+  }
+  const reden=(gap==='MISSED')?'missed':(gap==='FUTURE'?'early':'manual');
+  const ok=await sbPatchQ('program_blocks','id=eq.'+blockId,{planned_date:nieuweDatum,rescheduled_from:block.planned_date,reschedule_reason:reden,schedule_status:'rescheduled'});
+  closeModal('m-prog-schedule');
+  if(!ok){toast('Kon niet opslaan — probeer opnieuw');pscheduleCtx=null;return;}
+  toast('Training verplaatst naar '+fmtDate(nieuweDatum));
+  pscheduleCtx=null;
+  renderProgrammaList();
+}
+
 let curProgramBlockId=null;
 async function openProgramBlockDetail(blockId){
   await ensureExercisesLoaded();
@@ -19125,11 +19217,11 @@ async function startProgramBlockTraining(blockId){
   await ensureEquipmentTypesLoaded();
   const block=(await sbGet('program_blocks','&id=eq.'+blockId))[0];
   if(!block){toast('Training niet gevonden');return;}
+  if(block.completed_at){toast('Deze training is al afgerond');return;} // defensief: de UI verbergt de startknop al na completed_at
   const rows=await sbGet('program_block_exercises','&program_block_id=eq.'+blockId+'&order=sort_order.asc');
   if(!rows.length){toast('Deze training heeft nog geen oefeningen — voeg ze eerst toe');return;}
   const prog=(await sbGet('programs','&id=eq.'+block.program_id))[0]||null;
-  progCheckinCtx={blockId,block,prog,rows,voelt:null,pijn:null};
-  await openProgCheckin();
+  await maybeShowScheduleGate(blockId,block,prog,rows);
 }
 async function openProgCheckin(){
   const hd=await sbGet('hrv_log','&date=eq.'+td()+'&order=created_at.desc&limit=1');

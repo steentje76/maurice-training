@@ -1,5 +1,38 @@
 # Trainingskompas — Changelog
 
+## v4.55.0 — Program Adaptation V1: gemiste/verplaatste trainingen (27 augustus 2026)
+
+Autonome implementatiebeslissing door Claude, uitgevoerd op basis van vooraf
+door Maurice vastgestelde, bindende productbeslissingen (zie DECISION_LOG.md).
+
+**Probleem**: een training die op een andere dag werd uitgevoerd dan gepland,
+of volledig gemist werd, gaf geen enkele terugkoppeling — het program_block
+bleef voor altijd stil "open" staan.
+
+**Nieuwe module — Calculation/Decision Engine**: `core/scheduleAdherence.js`
+(nieuw, puur, geen wijziging aan protected core). `resolveScheduleGap()`
+bepaalt deterministisch FUTURE/TODAY/MISSED/COMPLETED/SKIPPED.
+`hasScheduleConflict()`/`resolveRescheduleDecision()` voorkomen een stille
+overschrijving wanneer een andere training al op de gekozen datum staat.
+
+**Database**: `program_blocks` uitgebreid met `rescheduled_from` (date),
+`reschedule_reason` (missed/early/manual), `schedule_status`
+(on_time/rescheduled/skipped) — bestaande RLS-policy (`user_id = auth.uid()`)
+dekt dit al, geen nieuwe policy nodig. Alle 32 bestaande rijen ongewijzigd
+(nieuwe kolommen NULL). Geen nieuwe tabel.
+
+**UI**: nieuwe, contextuele prompt (`m-prog-schedule`) bij het openen van een
+niet-afgeronde training op een afwijkende datum — drie gelijkwaardige keuzes
+("Deze training vandaag doen" / "Planning aanpassen" / "Overslaan"), gestileerde
+modal (geen `confirm()`). "Vandaag doen" wijzigt `planned_date` bewust NIET en
+hergebruikt de volledige, ongewijzigde readiness-check-in/`computeProgAdjustment()`-
+flow. "Planning aanpassen" wijzigt uitsluitend het aangeklikte block — nooit
+`week_nr`, `fase_naam`, of andere blocks. `heergenereerResterendeWeken()`
+blijft ongewijzigd bestaan, wordt niet gebruikt als workaround.
+
+Protected core (`calculation.js`/`decision.js`/`relationship.js`/`athlete.js`/
+`coaching.js`): SHA256-bevestigd byte-identiek, onaangetast.
+
 ## v4.54.0 — Advanced Women's Performance Insights: trend per cyclus, symptomen × training (26 augustus 2026)
 
 Women's Performance Blueprint Fase 3. Autonome implementatiebeslissing door

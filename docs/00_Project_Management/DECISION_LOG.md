@@ -366,3 +366,31 @@
   master-sprint, expliciet toegestaan door Maurice ("aantoonbare defecten
   binnen de bestaande G1-scope herstellen"). PR #51 nog niet gemerged op
   het moment van deze fix.
+
+## DEC-033
+- Datum: 27 augustus 2026
+- Beslissing: AI Coach krijgt toegang tot de reeds berekende Goal/Event-Date-
+  context (v4.56.0) via een nieuwe tkProgramEventContext()-functie, exact naar
+  het bestaande tkHyroxCoachContext()-patroon.
+- Reden: zelfstandige "Product Gap Discovery V7" bevestigde dat event_date
+  volledig gebouwd maar nergens aan de AI-context gekoppeld was — een
+  laag-risico, direct hergebruik van reeds bestaande, geteste code
+  (ScheduleAdherenceCore), geen nieuwe database, geen nieuwe Calculation
+  Engine-functie.
+- G3 (ACWR/trainingsbelasting) en G4 (proactieve deload) opnieuw
+  gecontroleerd tijdens dezelfde discovery-ronde: beide blijven HOLD.
+  sessions.duration_s heeft nog steeds 0 van 116 rijen gevuld — geen nieuwe
+  bouw, geen kunstmatige data aangemaakt.
+- Alternatieven overwogen: G2 (performance forecasting) — afgewezen als
+  #1-kandidaat dit keer, want de bestaande trendBy()/avgStep-basis vereist
+  eerst een zorgvuldiger certainty-framing-ontwerp dan binnen deze ronde
+  paste; blijft een geldige, latere kandidaat.
+- Impact: geen databasewijziging, geen protected-core-wijziging. AI ontvangt
+  uitsluitend een reeds berekend feit, rekent zelf niets — bewezen via
+  bug-terugzet-simulatie dat een fout in deze functie de coach-context nooit
+  laat crashen, en dat Program Adaptation V1 deze functie nergens raadpleegt.
+- Verantwoordelijke: autonome gap-discovery, -validatie en -implementatie
+  door Claude tijdens een onbeheerde master-sprint, met expliciete
+  voorafgaande toestemming voor implementatie én merge zonder tussentijdse
+  bevestiging. Niet door Maurice persoonlijk beoordeeld op het moment van
+  mergen — ter review bij terugkeer.

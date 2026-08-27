@@ -1,5 +1,43 @@
 # Trainingskompas — Changelog
 
+## v4.57.0 — AI Coach: Goal/Event-Date-context (27 augustus 2026)
+
+Autonome implementatiebeslissing door Claude, na een zelfstandige "Product Gap
+Discovery V7"-onderzoeksronde (zie DECISION_LOG.md). Directe, laag-risico
+vervolgstap op v4.56.0 (Goal/Event-Date Awareness).
+
+**Gap-analyse**: `event_date`/`daysUntilEvent()` (v4.56.0) werden uitsluitend
+gebruikt in de programma-overzicht-UI, nooit doorgegeven aan de AI Coach-
+context (`buildCtx()`) — bevestigd via grep, 0 treffers. G3 (ACWR/
+trainingsbelasting) opnieuw gecontroleerd en bevestigd nog steeds geblokkeerd
+(`sessions.duration_s`: nog steeds 0 van 116 rijen gevuld) — blijft terecht
+HOLD, geen nieuwe bouw. G4 blijft eveneens HOLD (afhankelijk van G3).
+
+**Nieuwe functie**: `tkProgramEventContext()`, exact naar het bestaande,
+bewezen patroon van `tkHyroxCoachContext()` — haalt het actieve programma met
+een ingestelde `event_date` op, gebruikt uitsluitend `ScheduleAdherenceCore`
+(geen eigen datumlogica), en levert een reeds berekende, feitelijke
+tekstsamenvatting. Defensieve `.catch()`-fallback naar een lege string bij elke
+fout — mag de coach-context nooit laten crashen.
+
+**Context Engine-koppeling**: toegevoegd aan `buildCtx()`'s bestaande,
+parallelle `Promise.all()`-ophaalronde, en aan de prompt met het label
+"reeds berekend, niet zelf herberekenen — uitsluitend informatief, geen
+trainingsbeslissing hierop baseren tenzij de gebruiker daar expliciet om
+vraagt" — exact dezelfde taalkundige waarborg als bij de HYROX-race-context.
+
+**Architectuurgrens bewezen** (niet alleen beweerd): via bug-terugzet-
+simulatie aangetoond dat een fout in `tkProgramEventContext()` correct wordt
+opgevangen (test P5), en dat Program Adaptation V1 deze nieuwe functie
+nergens raadpleegt (test P9) — volledig gescheiden concerns.
+
+Geen databasewijziging, geen nieuwe Calculation Engine-functie (hergebruikt
+volledig `core/scheduleAdherence.js` uit v4.56.0), geen wijziging aan
+protected core.
+
+Protected core (`calculation.js`/`decision.js`/`relationship.js`/`athlete.js`/
+`coaching.js`): SHA256-bevestigd byte-identiek, onaangetast.
+
 ## v4.56.0 — Goal/Event-Date Awareness (27 augustus 2026)
 
 Autonome implementatiebeslissing door Claude, na een grondige, zelfstandige

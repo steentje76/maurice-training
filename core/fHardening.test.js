@@ -449,6 +449,19 @@ ok(/dRest===0\?'Vandaag: '\+evNaam/.test(eventChipSrc), 'O13 (audit-fix): een ev
 ok(!/phaseForWeek/.test(eventChipSrc) && !/completed_at\s*=/.test(eventChipSrc) && !/computeProgAdjustment/.test(eventChipSrc) && !/pschedule[A-Z]/.test(eventChipSrc), 'O11 (architectuurgrens): de event-chip-weergave raakt NERGENS fase-, voltooiing-, readiness- of Program-Adaptation-logica -- puur additief en informatief');
 ok(!/event_date/.test(gateSrc) && !/event_date/.test(rescheduleSrc) && !/event_date/.test(skipSrc) && !/event_date/.test(doTodaySrc), 'O12 (architectuurgrens, omgekeerd): Program Adaptation V1 (maybeShowScheduleGate/reschedule/skip/doToday) raadpleegt event_date NERGENS -- volledig losgekoppeld van elkaar');
 
+/* ── P. AI COACH: GOAL/EVENT-DATE CONTEXT (v4.57.0) — Context Engine-koppeling ── */
+console.log('\nP. AI Coach: Goal/Event-Date-context — Calculation Engine, geen AI-berekening');
+const eventCtxFnSrc = html.slice(html.indexOf('async function tkProgramEventContext('), html.indexOf('async function tkProgramEventContext(') + 1000);
+ok(/ScheduleAdherenceCore\.daysUntilEvent\(/.test(eventCtxFnSrc), 'P1: gebruikt UITSLUITEND ScheduleAdherenceCore voor de berekening, geen eigen datumlogica');
+ok(/ScheduleAdherenceCore\.weeksUntilEvent\(/.test(eventCtxFnSrc), 'P2: gebruikt weeksUntilEvent() voor de weken-weergave in de coachcontext');
+ok(/status=eq\.actief&event_date=not\.is\.null/.test(eventCtxFnSrc), 'P3: haalt uitsluitend het actieve programma met een ingestelde event_date op -- geen brede, ongefilterde query');
+ok(/if\(dRest==null\)return ''/.test(eventCtxFnSrc), 'P4: geen event_date of ongeldige datum -> lege string, geen verzonnen context voor de AI');
+ok(/catch\(e\)\{ return ''; \}/.test(eventCtxFnSrc), 'P5: een fout in deze functie mag de coach-context NOOIT laten crashen -- valt terug op lege string, exact zoals tkHyroxCoachContext()');
+ok(/tkProgramEventContext\(\)\.catch\(function\(\)\{ return ''; \}\)/.test(html), 'P6: wordt in buildCtx() aangeroepen met dezelfde defensieve .catch()-fallback als het bestaande hyroxCtxTekst-patroon');
+ok(/eventCtxTekst\?'\\nWEDSTRIJD\/DOEL-CONTEXT \(reeds berekend, niet zelf herberekenen/.test(html), 'P7: de prompt-tekst is expliciet gelabeld "reeds berekend, niet zelf herberekenen" -- exact het bestaande, bewezen patroon om te voorkomen dat de AI dit als een eigen rekentaak opvat');
+ok(/geen trainingsbeslissing hierop baseren tenzij de gebruiker daar expliciet om vraagt/.test(html), 'P8: expliciete instructie aan de AI dat dit uitsluitend informatief is -- geen automatische trainingsaanpassing op basis van event_date');
+ok(!/tkProgramEventContext/.test(gateSrc) && !/tkProgramEventContext/.test(rescheduleSrc) && !/tkProgramEventContext/.test(skipSrc) && !/tkProgramEventContext/.test(doTodaySrc), 'P9 (architectuurgrens): Program Adaptation V1 raadpleegt de AI-coachcontext-functie NERGENS -- volledig gescheiden concerns');
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { console.log('❌ Hardening niet groen.'); process.exit(1); }

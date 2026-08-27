@@ -5927,7 +5927,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.56.0';
+const APP_VER = 'v4.57.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -18152,6 +18152,26 @@ async function tkCoachDataBlok(){
     'in plaats van het gat op te vullen. Beschrijf een samenhang nooit als oorzaak-gevolg. Verklaar iemand niet hersteld of ' +
     'trainingsklaar op basis van een verband; verwijs naar de herstelstatus hierboven.';
 }
+// AI COACH: GOAL/EVENT-DATE CONTEXT (v4.57.0) — zelfde patroon als
+// tkHyroxCoachContext(): een REEDS BEREKENDE, feitelijke tekstsamenvatting,
+// via ScheduleAdherenceCore (Calculation Engine, geen wijziging aan protected
+// core). De AI leest dit, rekent er zelf niets mee -- geen vooruitprojectie,
+// geen trainingsbeslissing op basis van deze datum (dat blijft uitsluitend
+// informatief, exact zoals in de programma-overzicht-UI van v4.56.0).
+async function tkProgramEventContext(){
+  try{
+    const progs=await sbGet('programs','&status=eq.actief&event_date=not.is.null&order=event_date.asc&limit=1');
+    if(!progs||!progs.length)return '';
+    const p=progs[0];
+    const dRest=ScheduleAdherenceCore.daysUntilEvent(p.event_date,td());
+    if(dRest==null)return '';
+    const naam=p.event_name||'het doel';
+    if(dRest<0)return '\n'+naam+' was gepland op '+p.event_date+' (inmiddels verstreken).\n';
+    if(dRest===0)return '\nVandaag is de dag van '+naam+'.\n';
+    const wRest=ScheduleAdherenceCore.weeksUntilEvent(p.event_date,td());
+    return '\nNog '+(wRest!=null?wRest+' '+(wRest===1?'week':'weken'):dRest+' dagen')+' tot '+naam+' ('+p.event_date+').\n';
+  }catch(e){ return ''; }
+}
 async function buildCtx(ctx){
   // v5.9.7 (AI Coach Performance) — was 8-10 sequentiële awaits (elk wachtend op de
   // vorige voordat de volgende begint), terwijl de meeste onderling onafhankelijk zijn.
@@ -18170,7 +18190,7 @@ async function buildCtx(ctx){
     ? sbGet('sessions','&exercise_id=in.('+[...relevantExIds].join(',')+')&order=exercise_id.asc,date.desc,created_at.desc')
     : sbGet('sessions','&date=gte.'+sinceStr+'&order=exercise_id.asc,date.desc,created_at.desc');
 
-  const [,hd,wd,bc,recentSessions,,blessureContext,conditionsContext,,trainingContextRows,dataBlok,hyroxCtxTekst] = await Promise.all([
+  const [,hd,wd,bc,recentSessions,,blessureContext,conditionsContext,,trainingContextRows,dataBlok,hyroxCtxTekst,eventCtxTekst] = await Promise.all([
     ensureExercisesLoaded(),
     sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'),
     sbGet('weight_log','&order=date.desc,created_at.desc&limit=3'),
@@ -18184,7 +18204,9 @@ async function buildCtx(ctx){
     // Sprint 10 — datakwaliteit, verbanden, herstel en belasting (reeds berekend).
     tkCoachDataBlok().catch(function(){ return ''; }),
     // v4.90.0 — HYROX/Triathlon-brick Context Engine-koppeling (zie tkHyroxCoachContext()).
-    tkHyroxCoachContext().catch(function(){ return ''; })
+    tkHyroxCoachContext().catch(function(){ return ''; }),
+    // v4.57.0 — Goal/Event-Date Context Engine-koppeling (zie tkProgramEventContext()).
+    tkProgramEventContext().catch(function(){ return ''; })
   ]);
   // Onboarding-intake: trainingscontext (frequentie/dagen/duur/locatie/materiaal/te-vermijden)
   // als feitelijke context voor de coach. De AI leest dit, rekent er niet mee (geen bron van waarheid).
@@ -18274,6 +18296,7 @@ ${hrvGuide}${dataBlok||''}
 ${conditionsContext?conditionsContext+'\n':''}${blessureContext?blessureContext+'\n':''}
 RECENTE SESSIES (app, [id:...] = exercise_id):${exCtx}
 ${hyroxCtxTekst?'\nRECENTE HYROX/TRIATHLON-RACES (reeds berekende race-samenvatting, niet zelf herberekenen):'+hyroxCtxTekst+'\n':''}
+${eventCtxTekst?'\nWEDSTRIJD/DOEL-CONTEXT (reeds berekend, niet zelf herberekenen — uitsluitend informatief, geen trainingsbeslissing hierop baseren tenzij de gebruiker daar expliciet om vraagt):'+eventCtxTekst:''}
 
 ACTIEVE SPORT: ${SPORT_LABELS[getActiveSport()]||getActiveSport()}
 ${sportBlock}

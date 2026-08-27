@@ -474,6 +474,22 @@ ok(!/setsDelta|rpeDelta/.test(acwrRegelSrc), 'Q6 (architectuurgrens): geen sets/
 const decisionSrc = fs.readFileSync(path.join(__dirname, 'decision.js'), 'utf8');
 ok(!decisionSrc.includes('TrainingLoadCore') && !decisionSrc.includes('classifyAcwr'), 'Q7 (protected core): core/decision.js bevat GEEN enkele referentie aan TrainingLoadCore/classifyAcwr -- protected core is bewijsbaar niet gewijzigd voor deze feature');
 
+/* ── R. AI COACH: PROGRESSIE-TREND PER OEFENING (v4.59.0) — 100% hergebruik protected ProgressionCore ── */
+console.log('\nR. AI Coach: progressie-trend per oefening — geen nieuwe Calculation Engine, geen eigen 1RM-formule');
+const progTrendFnSrc = html.slice(html.indexOf('async function tkProgressionTrendContext('), html.indexOf('async function tkProgressionTrendContext(') + 1600);
+ok(/PC\.trendBy\(/.test(progTrendFnSrc), 'R1: gebruikt UITSLUITEND ProgressionCore.trendBy() -- geen eigen trendberekening');
+ok(/CC\.oneRMRaw\(/.test(progTrendFnSrc), 'R2: gebruikt UITSLUITEND CalcCore.oneRMRaw() (Epley, protected) -- geen eigen 1RM-formule');
+ok(/hist\.length<3\)return/.test(progTrendFnSrc), 'R3: respecteert dezelfde minimale-data-drempel (3) als het bestaande post-sessie-signaal, geen verlaagde drempel');
+ok(/tr\.improving===false/.test(progTrendFnSrc), 'R4: selecteert uitsluitend oefeningen met een daadwerkelijk dalende trend (improving===false), niet stijgend/stabiel/onbekend');
+ok(/catch\(e\)\{ return ''; \}/.test(progTrendFnSrc), 'R5: een fout in deze functie mag de coach-context nooit laten crashen -- valt terug op lege string, exact zoals de bestaande context-functies');
+ok(!/setsDelta|rpeDelta|computeProgAdjustment/.test(progTrendFnSrc), 'R6 (architectuurgrens): geen sets/RPE-delta-logica en geen aanroep van computeProgAdjustment() -- puur informatieve AI-coachcontext, geen automatische trainingsaanpassing');
+ok(!/deload/i.test(progTrendFnSrc), 'R7 (scope): deze functie doet GEEN deload-suggestie -- uitsluitend een feitelijke constatering, deload blijft expliciet HOLD');
+ok(/tkProgressionTrendContext\(\)\.catch\(function\(\)\{ return ''; \}\)/.test(html), 'R8: wordt in buildCtx() aangeroepen met dezelfde defensieve .catch()-fallback als de bestaande context-functies');
+ok(/PROGRESSIE-TREND PER OEFENING \(reeds berekend door ProgressionCore, niet zelf herberekenen/.test(html), 'R9: de prompt-tekst is expliciet gelabeld "reeds berekend door ProgressionCore, niet zelf herberekenen"');
+ok(/geen deload-advies of trainingsbeslissing hierop baseren tenzij de gebruiker daar expliciet om vraagt/.test(html), 'R10: expliciete instructie aan de AI dat dit geen deload-advies is en geen trainingsbeslissing mag triggeren');
+const progressionSrc = fs.readFileSync(path.join(__dirname, 'progression.js'), 'utf8');
+ok(!progressionSrc.includes('tkProgressionTrendContext'), 'R11 (protected core): core/progression.js bevat GEEN enkele referentie aan de nieuwe UI-laag-functie -- protected core is bewijsbaar niet gewijzigd');
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { console.log('❌ Hardening niet groen.'); process.exit(1); }

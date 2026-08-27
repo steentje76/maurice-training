@@ -5950,7 +5950,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.62.0';
+const APP_VER = 'v4.63.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -20136,15 +20136,47 @@ async function show1RMChart(exId, exName){
     const est = epley1RMRaw(s.weight,s.reps);
     return {date:s.date, est:Math.round(est), w:s.weight, r:s.reps};
   });
+  // A2.6 — EXERCISE DETAIL DRILL-DOWN: uitbreiding van de al bestaande, al gekoppelde
+  // show1RMChart()-modal met vier reeds berekende, canonieke bronnen die er nog niet
+  // in stonden. GEEN nieuwe Calculation Engine, GEEN nieuwe PR-definitie, GEEN nieuwe
+  // trenddrempel -- uitsluitend hergebruik van computeExerciseTrends() (v4.62.0),
+  // computeRepPRsFromSessions() (Sprint 16, al bestaand), en peakGoalFor() (bestaand).
+  const trends=await computeExerciseTrends(); // zelfde gedeelde, canonieke bron als Voortgang/AI-coach
+  const tr=trends[exId];
+  let trendHtml='';
+  if(tr&&tr.status==='trend'){
+    const stijgend=tr.improving===true;
+    trendHtml=`<span style="font-size:13px;font-weight:800;color:${stijgend?'var(--green)':'var(--red)'}" aria-label="${stijgend?'Stijgend':'Dalend'}">${stijgend?'↑ Stijgend':'↓ Dalend'}</span>`;
+  }else{
+    trendHtml=`<span style="font-size:13px;color:var(--g4)">Onvoldoende data voor een trend</span>`;
+  }
+  const beste=Math.max(...points.map(p=>p.est));
+  const bestePunt=points.find(p=>p.est===beste);
+  const repPrs=await loadRepPRs(exId); // Sprint 16, canoniek -- geen nieuwe PR-berekening
+  const prCells=REP_PR_BUCKETS.filter(b=>repPrs[b]).map(b=>
+    `<div style="text-align:center;flex:1"><div style="font-size:10px;color:var(--g4);text-transform:uppercase">PR@${b}</div><div style="font-size:14px;font-weight:800">${repPrs[b].weight} kg</div><div style="font-size:10px;color:var(--g4)">${v48FmtDatum(repPrs[b].date)}</div></div>`
+  ).join('');
+  const doel=peakGoalFor(exId);
+  const doelHtml=doel?`<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--g2);font-size:13px">Doel: <strong>${doel} kg</strong> e1RM &middot; huidig <strong>${beste} kg</strong> (${Math.round(beste/doel*100)}%)</div>`:'';
   const modal = document.createElement('div');
   modal.className = 'modal-bg open';
   modal.style.zIndex = '200';
   modal.innerHTML = `<div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title">${exName} — 1RM trend</div>
-    <div style="font-size:12px;color:var(--g4);margin-bottom:8px">Geschatte 1RM (Epley formule) over tijd</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="font-size:12px;color:var(--g4)">Geschatte 1RM (Epley formule) over tijd</div>
+      ${trendHtml}
+    </div>
+    <div style="display:flex;gap:16px;margin-bottom:10px">
+      <div><div style="font-size:11px;color:var(--g4);text-transform:uppercase">Huidig</div><div style="font-size:18px;font-weight:800">${points[points.length-1].est} kg</div></div>
+      <div><div style="font-size:11px;color:var(--g4);text-transform:uppercase">Beste</div><div style="font-size:18px;font-weight:800">${beste} kg</div><div style="font-size:10px;color:var(--g4)">${v48FmtDatum(bestePunt.date)}</div></div>
+    </div>
     <div style="height:160px;margin-bottom:12px"><canvas id="chart-1rm-modal"></canvas></div>
-    <div style="max-height:140px;overflow-y:auto">
+    <div style="font-size:11px;color:var(--g4);margin-bottom:10px">Gebaseerd op ${points.length} geregistreerde trainingen</div>
+    ${prCells?`<div style="display:flex;margin-bottom:10px;padding:8px 0;border-top:1px solid var(--g2);border-bottom:1px solid var(--g2)">${prCells}</div>`:''}
+    ${doelHtml}
+    <div style="max-height:140px;overflow-y:auto;margin-top:10px">
       ${points.slice(-8).reverse().map(p=>`<div class="lrow"><div class="ldate">${p.date}</div><div class="lval"><strong>${p.est} kg</strong> 1RM</div><div class="lnote">${p.w}×${p.r}</div></div>`).join('')}
     </div>
     <button class="btn btn-o" onclick="this.closest('.modal-bg').remove()" style="margin-top:14px">Sluiten</button>

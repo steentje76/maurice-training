@@ -215,6 +215,22 @@ const progressionSrcI = fs.readFileSync(path.join(__dirname, 'progression.js'), 
 ok(!decisionSrcI.includes('tkWeekOverview') && !decisionSrcI.includes('computePrTimelineFromSessions'), 'I16 (protected core): core/decision.js bevat geen enkele referentie aan de nieuwe A2.5-functies');
 ok(!progressionSrcI.includes('tkWeekOverview') && !progressionSrcI.includes('computePrTimelineFromSessions'), 'I17 (protected core): core/progression.js bevat geen enkele referentie aan de nieuwe A2.5-functies');
 
+/* ── J. A2.6 — EXERCISE DETAIL DRILL-DOWN (v4.63.0) — uitbreiding van de bestaande show1RMChart(), geen nieuwe modal/engine ── */
+console.log('\nJ. A2.6: Exercise Detail Drill-down — 100% uitbreiding van bestaande modal, geen nieuwe Calculation Engine');
+const show1RMSrc = html.slice(html.indexOf('async function show1RMChart('), html.indexOf('async function show1RMChart(') + 4200);
+ok(/await computeExerciseTrends\(\)/.test(show1RMSrc), 'J1: hergebruikt de gedeelde, canonieke computeExerciseTrends() -- exact dezelfde bron als Voortgang en de AI-coachcontext, geen nieuwe trendberekening');
+ok(/await loadRepPRs\(exId\)/.test(show1RMSrc), 'J2: hergebruikt de bestaande, canonieke loadRepPRs()/computeRepPRsFromSessions() -- geen nieuwe PR-definitie');
+ok(/peakGoalFor\(exId\)/.test(show1RMSrc), 'J3: hergebruikt de bestaande peakGoalFor() voor het doel -- geen nieuw doelbegrip, geen nieuwe percentageberekening (Math.round(beste\\/doel\\*100) is dezelfde formule als elders al gebruikt)');
+ok(/const beste=Math\.max\(\.\.\.points\.map\(p=>p\.est\)\)/.test(show1RMSrc), 'J4: "beste e1RM" wordt afgeleid uit de AL BESTAANDE, al berekende punten-array (epley1RMRaw(), ongewijzigd) -- geen tweede, parallelle 1RM-berekening');
+ok(/drawChart\('chart-1rm-modal'/.test(show1RMSrc), 'J5: hergebruikt de bestaande drawChart()-canvascomponent -- geen nieuwe chart-library');
+ok(/Gebaseerd op \$\{points\.length\} geregistreerde trainingen/.test(show1RMSrc), 'J6 (transparantie): toont expliciet waarop de trend/weergave is gebaseerd (X geregistreerde trainingen)');
+ok(/Onvoldoende data voor een trend/.test(show1RMSrc), 'J7: expliciete "onvoldoende data"-state -- geen verzonnen trendclassificatie bij te weinig data');
+ok(!/forecast|voorspel|extrapol/i.test(show1RMSrc), 'J8 (scope): geen enkele forecasting-/extrapolatie-taal in de uitgebreide modal -- conform expliciet verbod');
+ok(!/setsDelta|rpeDelta|computeProgAdjustment/.test(show1RMSrc), 'J9 (architectuurgrens): geen sets/RPE-aanpassingslogica in de detailweergave -- puur informatief');
+const decisionSrcJ = fs.readFileSync(path.join(__dirname, 'decision.js'), 'utf8');
+const calcSrcJ = fs.readFileSync(path.join(__dirname, 'calculation.js'), 'utf8');
+ok(!decisionSrcJ.includes('show1RMChart') && !calcSrcJ.includes('show1RMChart'), 'J10 (protected core): core/decision.js en core/calculation.js bevatten geen enkele referentie aan de uitgebreide UI-functie -- protected core bewijsbaar niet gewijzigd');
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { console.log('❌ Voortgang niet groen.'); process.exit(1); }

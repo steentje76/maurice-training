@@ -569,3 +569,37 @@
   onbeheerde master-sprint, met expliciete voorafgaande toestemming. Niet
   door Maurice persoonlijk beoordeeld op het moment van mergen — ter review
   bij terugkeer.
+
+## DEC-039
+- Datum: 27 augustus 2026
+- Beslissing: A2.6 (Exercise Detail Drill-down) gebouwd door de al bestaande
+  show1RMChart()-modal uit te breiden, geen nieuwe modal/pagina gebouwd.
+  MASTERSPRINT A2 formeel gesloten.
+- Reden: discovery vóór het bouwen toonde aan dat show1RMChart() -- al
+  gekoppeld aan elke oefeningregel in Voortgang -- al circa 80% van de
+  gevraagde functionaliteit bevatte (e1RM-grafiek via de bestaande
+  drawChart()-component, geschiedenislijst). In plaats van een nieuwe,
+  grotere paginaarchitectuur te bouwen (expliciet af te wegen tegen P2 als
+  de scope groot zou blijken), is de bestaande modal uitgebreid met vier
+  reeds berekende, canonieke bronnen: trendlabel (computeExerciseTrends(),
+  v4.62.0), beste-e1RM (afgeleid uit de al bestaande puntenreeks), PR per
+  repbereik (loadRepPRs(), Sprint 16), en doel (peakGoalFor()).
+- Alternatieven overwogen: een volledig nieuwe detailpagina/route bouwen --
+  afgewezen, want de bestaande modal was al functioneel, al gekoppeld, en
+  uitbreiding hield de scope klein en het risico laag.
+- Impact: geen databasewijziging, geen nieuwe Calculation Engine-module,
+  geen protected-core-wijziging (expliciet geverifieerd: core/decision.js
+  en core/calculation.js bevatten geen enkele referentie aan de uitgebreide
+  UI-functie). Bewezen via bug-terugzet-simulatie dat forecasting-taal
+  correct als scope-overtreding wordt gedetecteerd.
+- **FORMELE A2-AFSLUITING**: na A2.5 (weekoverzicht, oefeningtrend,
+  PR-tijdlijn) en A2.6 (Exercise Detail Drill-down) bestaat er geen
+  resterende P0- of P1-analytics-gap meer die V1 blokkeert. Resterende
+  P2/backlog-items (week-vs-vorige-week-vergelijking, performance
+  forecasting als aparte G2-lijn) worden bewust niet kunstmatig als reden
+  gebruikt om A2 open te houden, conform de expliciete A2-closure-regel.
+  A2 CLOSED.
+- Verantwoordelijke: autonome implementatie door Claude tijdens een
+  onbeheerde master-sprint, met expliciete voorafgaande toestemming. Niet
+  door Maurice persoonlijk beoordeeld op het moment van mergen — ter review
+  bij terugkeer.

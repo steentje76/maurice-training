@@ -318,3 +318,51 @@
   implementatie door Claude tijdens een onbeheerde master-sprint. Niet door
   Maurice persoonlijk beoordeeld op het moment van mergen — ter review bij
   terugkeer.
+
+## DEC-032
+- Datum: 27 augustus 2026
+- Beslissing: Goal/Event-Date Awareness gebouwd — programs.event_date/
+  event_name, puur informatief (geen automatische planning-/fase-/
+  belastingsaanpassing).
+- Reden: grondige, zelfstandige gap-validatieronde bevestigde Bewijsniveau A
+  (0 code-/databasereferenties naar een event/wedstrijddatum-concept;
+  TrainHeroic/Boostcamp expliciet, actueel bevestigd wedstrijddatum-centrisch).
+  Expliciet onderzocht en uitgesloten dat het bestaande `goals.einddatum`
+  hetzelfde probleem al oploste: fundamenteel ander concept (numeriek
+  prestatiedoel, geen FK naar programs).
+- Alternatieven overwogen: event_date op program_blocks (afgewezen: het
+  evenement is een eigenschap van het HELE programma, niet van één dag),
+  op athlete/profile (afgewezen: een atleet kan meerdere programma's met
+  verschillende doelen hebben), op goals (afgewezen: zou het bestaande,
+  andere `einddatum`-concept vermengen en blijft zonder nieuwe FK alsnog
+  onzichtbaar op het programmascherm).
+- Impact: twee nullable kolommen op `programs`, geen nieuwe tabel, geen
+  RLS-wijziging, geen protected-core-wijziging. Bewezen (bug-terugzet-
+  simulatie, tests O11/O12) volledig losgekoppeld van bestaande fase-/
+  voltooiing-/readiness-/Program-Adaptation-logica.
+- Bewust op HOLD gehouden uit dezelfde onderzoekslijn: G2 (performance
+  forecasting) en G3 (ACWR/trainingsbelasting-activatie — sessions.
+  duration_s heeft nog steeds 0 gevulde rijen, geen nieuwe bouw nodig,
+  wacht uitsluitend op echte productiedata).
+- Verantwoordelijke: autonome gap-discovery, -validatie en -implementatie
+  door Claude tijdens een onbeheerde master-sprint (de gebruiker was
+  langere tijd niet beschikbaar, met expliciete voorafgaande toestemming
+  voor implementatie t/m PR, uitgezonderd de merge zelf). Niet door
+  Maurice persoonlijk beoordeeld op het moment van pushen — ter review bij
+  terugkeer.
+
+## DEC-032-VERVOLG (audit vóór merge)
+- Datum: 27 augustus 2026
+- Bevinding: tijdens de zelfstandige eindcontrole vóór merge van PR #51 werd
+  een echte, binnen-scope-defect gevonden in de "vandaag"-weergave van
+  Goal/Event-Date Awareness ("Nog 0 weken" i.p.v. "Vandaag: [naam]").
+- Actie: gerepareerd (dRest===0 als eerste conditie), regressietest
+  toegevoegd (fHardening.test.js O13), bewezen effectief via bug-terugzet-
+  simulatie, volledige regressie herhaald (alle suites groen), protected
+  core bevestigd onaangetast.
+- Scope: uitsluitend binnen de bestaande G1-implementatie — geen nieuwe
+  functionaliteit, geen scope-uitbreiding.
+- Verantwoordelijke: autonome bugfix door Claude tijdens een onbeheerde
+  master-sprint, expliciet toegestaan door Maurice ("aantoonbare defecten
+  binnen de bestaande G1-scope herstellen"). PR #51 nog niet gemerged op
+  het moment van deze fix.

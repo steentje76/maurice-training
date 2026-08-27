@@ -4676,6 +4676,14 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <option value="weekdagen">Vaste weekdagen</option>
     </select></div>
     <div id="prog-weekdag-picker" style="display:none;margin:-4px 0 10px"></div>
+    <div class="irow"><label class="ilbl">Wedstrijd/doel? (optioneel)</label><select class="inp" id="prog-event-toggle" onchange="renderProgEventFields()">
+      <option value="nee">Geen</option>
+      <option value="ja">Ja, datum kiezen</option>
+    </select></div>
+    <div id="prog-event-fields" style="display:none;margin:-4px 0 10px">
+      <div class="irow"><label class="ilbl">Datum</label><input class="inp" type="date" id="prog-event-date"></div>
+      <div class="irow"><label class="ilbl">Naam</label><input class="inp" type="text" id="prog-event-name" placeholder="bv. HYROX Amsterdam"></div>
+    </div>
     <div id="prog-gen-progress-wrap" style="display:none;margin-top:8px">
       <div class="prog-wrap"><div class="prog-fill" id="prog-gen-progress-fill" style="width:0%"></div></div>
     </div>
@@ -5919,7 +5927,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.55.0';
+const APP_VER = 'v4.56.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -10482,6 +10490,12 @@ function computeBlockPlannedDates(startDate,blockCount,schemaType,weekdagen,dage
 // bibliotheek — niet meer gekoppeld aan het vaste Training A/B-schema)
 // ══════════════════════════════════════════════════════════
 const WEEKDAG_LABELS=[{v:1,l:'Ma'},{v:2,l:'Di'},{v:3,l:'Wo'},{v:4,l:'Do'},{v:5,l:'Vr'},{v:6,l:'Za'},{v:7,l:'Zo'}];
+// GOAL/EVENT-DATE AWARENESS (v4.56.0) — puur informatief, wijzigt GEEN bestaande
+// planning/fase/belasting-logica. Optionele wedstrijddatum+naam bij aanmaken.
+function renderProgEventFields(){
+  const show=document.getElementById('prog-event-toggle').value==='ja';
+  document.getElementById('prog-event-fields').style.display=show?'block':'none';
+}
 function renderProgWeekdagPicker(){
   const type=document.getElementById('prog-schema-type').value;
   const el=document.getElementById('prog-weekdag-picker');
@@ -10556,6 +10570,10 @@ function openProgGenModal(){
   document.getElementById('prog-gen-status').textContent='';
   document.getElementById('prog-concept').innerHTML='';
   document.getElementById('prog-gen-progress-wrap').style.display='none';
+  document.getElementById('prog-event-toggle').value='nee';
+  document.getElementById('prog-event-date').value='';
+  document.getElementById('prog-event-name').value='';
+  renderProgEventFields();
   renderProgWeekdagPicker();
   renderProgDuurVariatie();
   openModal('m-programma-gen');
@@ -10748,6 +10766,8 @@ async function getRecentPainSummary(){
 async function genereerProgramma(){
   const naam=document.getElementById('prog-naam').value.trim()||'Programma';
   const doel=document.getElementById('prog-doel').value.trim()||'algemene kracht opbouwen';
+  const eventDate=document.getElementById('prog-event-toggle').value==='ja'?(document.getElementById('prog-event-date').value||null):null;
+  const eventName=eventDate?(document.getElementById('prog-event-name').value.trim()||null):null;
   const sport=document.getElementById('prog-sport').value;
   const weken=parseInt(document.getElementById('prog-weken').value)||8;
   const dagen=parseInt(document.getElementById('prog-dagen').value)||2;
@@ -10794,7 +10814,7 @@ async function genereerProgramma(){
   genBtn.disabled=false;
   if(allBlocks.length){
     statusEl.textContent=allBlocks.length+' trainingen voorgesteld — losse oefeningen kun je na opslaan nog aanpassen.';
-    window._progConcept={naam,doel,sport,schemaType,weekdagen,dagenPerWeek:dagen,duur,duurOverrides,blocks:allBlocks};
+    window._progConcept={naam,doel,sport,schemaType,weekdagen,dagenPerWeek:dagen,duur,duurOverrides,eventDate,eventName,blocks:allBlocks};
     renderProgConcept(allBlocks,true);
   }else if(!statusEl.textContent){
     statusEl.textContent='Genereren mislukt. Probeer opnieuw.';
@@ -10840,7 +10860,7 @@ async function opslaanProgramma(){
   try{
   const startDate=td();
   const plannedDates=computeBlockPlannedDates(startDate,c.blocks.length,c.schemaType,c.weekdagen,c.dagenPerWeek);
-  const prog=await sbPostReturning('programs',{naam:c.naam,doel:c.doel,sport:c.sport||null,start_date:startDate,status:'actief',schema_type:c.schemaType,weekdagen:(c.weekdagen&&c.weekdagen.length)?c.weekdagen:null,duur_minuten:c.duur||null,duur_overrides:(c.duurOverrides&&Object.keys(c.duurOverrides).length)?c.duurOverrides:null});
+  const prog=await sbPostReturning('programs',{naam:c.naam,doel:c.doel,sport:c.sport||null,start_date:startDate,status:'actief',schema_type:c.schemaType,weekdagen:(c.weekdagen&&c.weekdagen.length)?c.weekdagen:null,duur_minuten:c.duur||null,duur_overrides:(c.duurOverrides&&Object.keys(c.duurOverrides).length)?c.duurOverrides:null,event_date:c.eventDate||null,event_name:c.eventName||null});
   const progId=prog?.[0]?.id;
   if(!progId){console.error('opslaanProgramma: geen progId terug');toast('Opslaan mislukt bij het programma zelf — check console (F12) voor details');return;}
   // Elke insert wordt nu individueel gecontroleerd — voorheen faalde een oefening soms
@@ -10970,6 +10990,15 @@ async function renderProgrammaList(){
     // eerste niet-afgeronde blok = "volgende"
     let nextId=null;for(const b of blocks){if(!b.completed_at){nextId=b.id;break;}}
     const chip=(p.doel||p.start_date)?`<div class="v48-pchip">${V43I.target||''}${escHtml(p.doel||'Programma')}${p.start_date?` · gestart ${escHtml(v48FmtDatum(p.start_date))}`:''}</div>`:'';
+    let eventChip='';
+    if(p.event_date){
+      const dRest=ScheduleAdherenceCore.daysUntilEvent(p.event_date,td());
+      const wRest=ScheduleAdherenceCore.weeksUntilEvent(p.event_date,td());
+      const evNaam=p.event_name?escHtml(p.event_name):'je doel';
+      const evTekst=(dRest==null)?'':(dRest<0?evNaam+' — verlopen':(dRest===0?'Vandaag: '+evNaam:(wRest!=null?'Nog '+wRest+' '+(wRest===1?'week':'weken')+' tot '+evNaam:'')));
+      eventChip=evTekst?`<div class="v48-pchip" style="margin-top:4px">${evTekst}</div>`:'';
+    }
+
     const weeks=blocks.map(b=>{
       const done=!!b.completed_at;
       const isNext=(b.id===nextId);
@@ -10986,7 +11015,7 @@ async function renderProgrammaList(){
       </button>`;
     }).join('');
     h+=`<div class="v48-phero">
-      <div class="v48-ptop"><div style="flex:1;min-width:0"><div class="eye">Actief programma</div><div class="v48-pname">${escHtml(p.naam)}</div>${chip}</div>
+      <div class="v48-ptop"><div style="flex:1;min-width:0"><div class="eye">Actief programma</div><div class="v48-pname">${escHtml(p.naam)}</div>${chip}${eventChip}</div>
         <button class="v48-pdel" onclick="deleteProgramma('${p.id}')" title="Programma verwijderen" aria-label="Programma verwijderen">🗑</button></div>
       <div class="v48-pstats">
         <div class="v48-pstat"><div class="v">${prog.doneCount}/${prog.total}</div><div class="k">Weken</div></div>

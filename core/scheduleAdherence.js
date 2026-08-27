@@ -121,6 +121,34 @@
     return hasScheduleConflict(blocks, newDate, excludeBlockId) ? 'CONFLICT_WARNING' : 'PROCEED';
   }
 
+  /* ── days_until_event.v1 ───────────────────────────────────────────────────
+   * GOAL/EVENT-DATE AWARENESS (v4.56.0). Puur informatief -- beïnvloedt GEEN
+   * bestaande planning/fase/belasting-logica (zie architectuurgrens hierboven).
+   * eventDate=null -> null (geen evenement ingesteld, geen verzonnen getal).
+   * eventDate===today -> 0. eventDate>today -> positief (dagen te gaan).
+   * eventDate<today -> negatief (evenement al geweest) -- de UI-laag bepaalt
+   * zelf de nette weergave ("verlopen" i.p.v. een negatief getal tonen), deze
+   * functie geeft uitsluitend het feitelijke, ondubbelzinnige getal terug. */
+  function daysUntilEvent(eventDate, today) {
+    var e = parseISODate(eventDate), t = parseISODate(today);
+    if (!e || !t) return null;
+    return daysBetween(t, e);
+  }
+
+  /* ── weeks_until_event.v1 ──────────────────────────────────────────────────
+   * Afgeleid van daysUntilEvent(), naar boven afgerond zodat "8 dagen" nog
+   * steeds als "1 week" wordt getoond (niet 1.14 of afgerond naar 1 met verlies
+   * van de "iets meer dan een week"-nuance -- Math.ceil is hier de veiligste
+   * keuze: nooit een wedstrijd te vroeg laten lijken door naar beneden af te
+   * ronden). null bij null/negatieve input (verlopen evenement -> null, de UI
+   * toont in dat geval "verlopen" op basis van daysUntilEvent()'s teken, niet
+   * een verzonnen negatief-weken-getal). */
+  function weeksUntilEvent(eventDate, today) {
+    var d = daysUntilEvent(eventDate, today);
+    if (d == null || d < 0) return null;
+    return Math.ceil(d / 7);
+  }
+
   return {
     versie: VERSIE,
     daysLate: daysLate,
@@ -128,6 +156,8 @@
     hasScheduleConflict: hasScheduleConflict,
     sessionsMissed: sessionsMissed,
     daysUntilNextPlanned: daysUntilNextPlanned,
-    resolveRescheduleDecision: resolveRescheduleDecision
+    resolveRescheduleDecision: resolveRescheduleDecision,
+    daysUntilEvent: daysUntilEvent,
+    weeksUntilEvent: weeksUntilEvent
   };
 });

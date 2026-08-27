@@ -1,5 +1,57 @@
 # Trainingskompas — Changelog
 
+## v4.56.0 — Goal/Event-Date Awareness (27 augustus 2026)
+
+Autonome implementatiebeslissing door Claude, na een grondige, zelfstandige
+gap-validatieronde (zie DECISION_LOG.md). Vervolg op de "Autonome Product Gap
+Discovery"-onderzoekslijn: G1 (Goal/Event-Date Awareness) bewezen op
+Bewijsniveau A — 0 referenties naar event_date/target_date/competition_date
+in de volledige codebase én database, en actueel (2026) bevestigd dat
+TrainHeroic/Boostcamp expliciet wedstrijddatum-centrisch programmeren.
+
+**Waarom `goals.einddatum` dit niet al oploste**: onderzocht en bevestigd
+een fundamenteel ander concept — `goals` is een zuiver numeriek
+prestatiedoel-systeem (gewicht/PR/frequentie/volume), geen enkele foreign
+key tussen `goals` en `programs`. Een wedstrijddatum zou daar nooit
+zichtbaar worden op het programmascherm.
+
+**Database**: `programs` uitgebreid met `event_date` (date, nullable) en
+`event_name` (text, nullable). Geen nieuwe tabel — één bron van waarheid,
+op programmaniveau (niet op `program_blocks`: het evenement is een
+eigenschap van het hele programma, niet van één trainingsdag; niet op
+`athlete`/`goals`: zou meerdere-programma's-per-atleet-scenario's en het
+bestaande, andere `einddatum`-concept vermengen). Beide bestaande
+programma's bevestigd inhoudelijk ongewijzigd na migratie.
+
+**Calculation Engine**: `daysUntilEvent()`/`weeksUntilEvent()` toegevoegd
+aan `core/scheduleAdherence.js` (uitbreiding, geen nieuwe module, geen
+wijziging aan protected core). Puur, deterministisch: `null` bij
+ontbrekende datum, correcte jaargrens-/schrikkeljaarafhandeling, een
+verlopen evenement geeft expliciet `null` voor `weeksUntilEvent` (de UI
+toont "verlopen", nooit een verwarrend negatief weken-getal).
+
+**UI**: optionele wedstrijddatum + naam bij het aanmaken van een
+programma; een "Nog X weken tot [evenement]"-regel op het bestaande
+programma-overzicht. Puur informatief in V1 — bewezen (via bug-terugzet-
+simulatie, tests O11/O12) volledig losgekoppeld van `phaseForWeek()`,
+`completed_at`, `computeProgAdjustment()` en Program Adaptation V1: geen
+enkele automatische planning-, fase-, readiness- of belastingsaanpassing.
+
+**Audit-bevinding en fix (vóór merge, tijdens de zelfstandige eindcontrole)**:
+de weergavelogica gaf bij een evenement dat VANDAAG plaatsvindt "Nog 0 weken
+tot [naam]" i.p.v. het beoogde "Vandaag: [naam]" — `weeksUntilEvent()` geeft
+correct `0` (niet `null`) terug op de eventdag zelf, maar de oorspronkelijke
+UI-conditie controleerde `wRest!=null` vóór de "vandaag"-tak, waardoor die
+tak onbereikbaar was. Gerepareerd door `dRest===0` als eerste, specifiekere
+conditie te controleren. Bewezen via bug-terugzet-simulatie (test O13).
+
+**Bewust op HOLD gehouden** (uit dezelfde onderzoekslijn, geen nieuwe
+bouw): G2 (performance forecasting) en G3 (ACWR/trainingsbelasting-
+activatie — `sessions.duration_s` heeft nog steeds 0 gevulde rijen).
+
+Protected core (`calculation.js`/`decision.js`/`relationship.js`/`athlete.js`/
+`coaching.js`): SHA256-bevestigd byte-identiek, onaangetast.
+
 ## v4.55.0 — Program Adaptation V1: gemiste/verplaatste trainingen (27 augustus 2026)
 
 Autonome implementatiebeslissing door Claude, uitgevoerd op basis van vooraf

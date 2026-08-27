@@ -431,3 +431,39 @@
   implementatie én merge zonder tussentijdse bevestiging. Niet door Maurice
   persoonlijk beoordeeld op het moment van mergen — ter review bij
   terugkeer.
+
+## DEC-035
+- Datum: 27 augustus 2026
+- Beslissing: AI Coach krijgt een samenvattend, feitelijk signaal over
+  oefeningen met een dalende progressie-trend (v4.59.0), via een nieuwe
+  tkProgressionTrendContext()-functie, exact naar het bestaande
+  tkHyroxCoachContext()/tkProgramEventContext()-patroon.
+- Reden: "Autonomous Benchmark Gap Discovery V9" — echt, actueel (2026)
+  extern marktonderzoek toonde aan dat Alpha Progression en Dr. Muscle
+  stagnatiedetectie PER OEFENING als kernonderscheid hanteren ("lift-by-
+  lift granularity"). Trainingskompas had de onderliggende berekening
+  (ProgressionCore.trendBy(), protected) al, toonde die alleen als losse,
+  passieve geruststelling ná één sessie, nooit als samenvattend AI-
+  coachsignaal.
+- Vorige kandidaten deze onderzoekslijn EXPLICIET AFGEWEZEN vóór deze
+  keuze: (1) G4 proactieve deload op basis van ACWR alleen — afgewezen,
+  want ACWR (sterk_hoger) en monotonie (laag) toonden tegenstrijdige
+  signalen bij de echte data, en een deload-advies op één los getal is
+  expliciet verboden; (2) Training Strain-classificatie (belasting x
+  monotonie) — afgewezen ná berekening, want dit vereist een persoonlijke-
+  percentiel-vergelijking (in tegenstelling tot ACWR's zelf-normaliserende
+  ratio) die niet binnen deze ronde verantwoord ontworpen kon worden;
+  vaste drempels zouden hier pseudowetenschap zijn geweest.
+- Bewijs: bevestigd met echte productiedata (geen kunstmatige testdata) --
+  TK-000038 toont een reële stijgende trend, TK-000019 een reële dalende
+  trend (geschat 1RM 90,7->50,0 kg over 13 sessies).
+- Impact: geen databasewijziging, geen nieuwe Calculation Engine-module,
+  geen protected-core-wijziging (expliciet geverifieerd: core/progression.js
+  bevat geen enkele referentie aan de nieuwe functie). Eén nieuwe, duidelijk
+  gelabelde AI-coachcontextregel. Bewezen via bug-terugzet-simulatie dat de
+  functie geen "deload"-taal en geen sets/RPE-logica bevat.
+- Verantwoordelijke: autonome benchmarkonderzoek, gap-discovery, -validatie
+  en -implementatie door Claude tijdens een onbeheerde master-sprint, met
+  expliciete voorafgaande toestemming voor implementatie én merge zonder
+  tussentijdse bevestiging. Niet door Maurice persoonlijk beoordeeld op het
+  moment van mergen — ter review bij terugkeer.

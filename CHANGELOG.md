@@ -1,5 +1,54 @@
 # Trainingskompas — Changelog
 
+## v4.59.0 — AI Coach: progressie-trend per oefening (27 augustus 2026)
+
+Autonome implementatiebeslissing door Claude, na een "Autonomous Benchmark
+Gap Discovery V9"-onderzoeksronde met echt, actueel (2026) extern
+marktonderzoek (zie DECISION_LOG.md).
+
+**Benchmarkbewijs**: Alpha Progression (al in Trainingskompas' eigen
+benchmarklijst) en Dr. Muscle signaleren beide stagnatie/achteruitgang
+**per specifieke oefening** ("lift-by-lift granularity... meer bruikbaar
+dan het botte instrument van een one-size-fits-all deload") als kern van
+hun product. Trainingskompas had de onderliggende data en berekening
+(`ProgressionCore.trendBy()`, protected core) al, en toonde die al —
+maar uitsluitend als **losse, passieve geruststelling** ná één individuele
+sessie ("Licht dalend — herstel telt ook mee"), nooit als samenvattend
+signaal over meerdere oefeningen tegelijk aan de AI Coach.
+
+**Bevestigd met echte productiedata** (geen kunstmatige testdata): oefening
+TK-000038 toont een stijgende trend (geschat 1RM 96,25→100 kg over 10
+sessies); oefening TK-000019 toont een genuine dalende trend (geschat 1RM
+90,7→50,0 kg over 13 sessies) — een reëel, waardevol signaal.
+
+**Nieuwe functie**: `tkProgressionTrendContext()`, exact naar het bestaande
+`tkHyroxCoachContext()`/`tkProgramEventContext()`-patroon. Groepeert
+recente sessies per oefening, berekent per oefening met ≥3 vergelijkbare
+sessies het geschatte 1RM (`CalcCore.oneRMRaw()`, Epley, protected,
+ongewijzigd) en de trend (`ProgressionCore.trendBy()`, protected,
+ongewijzigd — **dezelfde functie/drempel** als het bestaande post-sessie-
+bericht). Verzamelt uitsluitend oefeningen met een daadwerkelijk dalende
+trend in een korte, feitelijke tekst voor de AI-coachcontext.
+
+**Expliciet geen deload-advies**: de tekst is uitdrukkelijk gelabeld
+"reeds berekend door ProgressionCore, niet zelf herberekenen... geen
+deload-advies of trainingsbeslissing hierop baseren tenzij de gebruiker
+daar expliciet om vraagt". G4 (proactieve deload) blijft bewust HOLD —
+deze feature signaleert uitsluitend, adviseert niets.
+
+**Architectuurgrens bewezen** (niet alleen beweerd): via bug-terugzet-
+simulatie aangetoond dat de nieuwe functie geen "deload"-taal, geen sets/
+RPE-delta-logica bevat, en `computeProgAdjustment()` nergens aanroept
+(tests R6/R7). Expliciet geverifieerd dat `core/progression.js` zelf geen
+enkele referentie naar de nieuwe UI-laag-functie bevat (test R11).
+
+Geen databasewijziging. Geen nieuwe Calculation Engine-module — 100%
+hergebruik van reeds bestaande, geteste, protected `ProgressionCore`/
+`CalcCore`-functies.
+
+Protected core (`calculation.js`/`decision.js`/`relationship.js`/`athlete.js`/
+`coaching.js`/`progression.js`): SHA256-bevestigd byte-identiek, onaangetast.
+
 ## v4.58.0 — Training Load Advisory: ACWR-classificatie (27 augustus 2026)
 
 Autonome implementatiebeslissing door Claude, na een zelfstandige "Product

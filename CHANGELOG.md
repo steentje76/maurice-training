@@ -1,5 +1,59 @@
 # Trainingskompas — Changelog
 
+## v4.65.0 — A4: Readiness-consistentie + Herstel & Readiness-detail (27 augustus 2026)
+
+MASTERSPRINT A4 (Daily Readiness & Recovery 2.0) — sluit uitsluitend de twee
+tijdens de A4-discoveryronde bewezen gaps.
+
+**Kernbevinding, gecorrigeerd t.o.v. de eerste hypothese**: `DecisionCore.
+readinessDay()` (voedt Home) en `computeProgAdjustment()` (voedt de
+pre-workout-flow) bleken bij nader onderzoek **geen** twee parallelle
+Decision Engine-functies — `readinessDay()` roept **intern** exact
+`computeProgAdjustment()` aan. Het enige echte verschil zit in de inputs:
+Home geeft **structureel altijd** `gevoel:null, pijn:null` door (bevestigd:
+de `hrv_log`-tabel heeft geen kolommen hiervoor), terwijl de pre-workout-
+flow deze vers uit dezelfde check-in haalt. Dit verschil is bewezen met
+echte, protected code: identieke dagfactor/herstel geeft op Home
+`ongewijzigd`, maar bij pre-workout (met echte gevoel/pijn) `aangepast` met
+concrete redenen — een legitiem, maar tot nu toe niet uitgelegd verschil.
+
+**Consistentiebrug** (puur presentatie, geen nieuwe Decision Engine):
+wanneer de pre-workout-flow een sessiespecifieke aanpassing doet terwijl
+Home eerder "ready" toonde, verschijnt nu een korte, verklarende regel die
+hergebruikt maakt van het al bestaande, alleen-te-lezen
+`window._tkReadiness` (Home's eigen besluit). Geen nieuwe berekening, geen
+wijziging aan `setsDelta`/`rpeDelta` — bewezen via bug-terugzet-simulatie
+(test V3).
+
+**Herstel & Readiness-detailweergave**: nieuwe, compacte modal vanuit de
+bestaande Home-readinesskaart ("Bekijk herstel"). Toont uitsluitend reeds
+bestaande, canonieke berekeningen: HRV (`hrvBaseline()`/`hrvStPersonal()`,
+ongewijzigd), RHR (`rhrBaselineDelta()`, ongewijzigd), trainingsbelasting
+(`TrainingLoadCore.classifyAcwr()`/`acwrAdvisoryText()`, ongewijzigd,
+v4.58.0). Subjectieve data expliciet gemarkeerd als "zelf ingevuld", nooit
+vermengd met meetdata. **Bewust geen nieuwe slaap-baselineformule**
+ontworpen (bestond niet canoniek) — toont uitsluitend vandaag + recente
+losse waarden, met een expliciete notitie dat een persoonlijk niveau nog
+ontbreekt, in plaats van dit stilzwijgend te verzinnen. Elke sectie
+verschijnt uitsluitend wanneer de onderliggende meting daadwerkelijk
+aanwezig is — geen verzonnen 0, met een vriendelijke lege-staat wanneer
+alle hersteldata ontbreekt.
+
+Geen databasewijziging. Geen wijziging aan protected core — expliciet
+geverifieerd dat `core/decision.js` en `core/calculation.js` geen enkele
+referentie naar de nieuwe functies bevatten.
+
+Protected core (`calculation.js`/`decision.js`/`relationship.js`/`athlete.js`/
+`coaching.js`/`progression.js`): SHA256-bevestigd byte-identiek, onaangetast.
+
+**A4-eindconclusie**: Home-readiness bestond al en is correct; het
+Home/pre-workout-verschil is niet langer misleidend (nu expliciet
+uitgelegd); dezelfde canonieke readiness-basis wordt gebruikt (bevestigd:
+`readinessDay()` roept intern `computeProgAdjustment()` aan); een compacte
+herstel-detailweergave is toegevoegd. Geen P0/P1 meer resterend. A4 CLOSED
+(zie DECISION_LOG.md DEC-041 en
+`docs/Sprintrapporten/A4_Readiness_Consistency_Recovery_Detail.md`).
+
 ## v4.64.0 — A3: Load/trend-context in de pre-workout-aanbeveling (27 augustus 2026)
 
 MASTERSPRINT A3 (Adaptive Training Intelligence) — sluit uitsluitend de tijdens

@@ -425,6 +425,25 @@ ok(/id=eq\.'\+blockId/.test(rescheduleSrc.replace(/\s/g,'')+skipSrc.replace(/\s/
 ok(/heergenereerResterendeWeken/.test(html) && !doTodaySrc.includes('heergenereerResterendeWeken') && !skipSrc.includes('heergenereerResterendeWeken') && !rescheduleSrc.includes('heergenereerResterendeWeken'), 'N15 (Scenario 17): heergenereerResterendeWeken() blijft ongewijzigd bestaan en wordt NIET aangeroepen als workaround voor een individuele gemiste training');
 ok(/sbPatchQ\('program_blocks'/.test(rescheduleSrc) && /sbPatchQ\('program_blocks'/.test(skipSrc), 'N16 (offline): hergebruikt de bestaande offline-veilige sbPatchQ-queue, geen tweede offline-mechanisme');
 
+/* ── O. GOAL/EVENT-DATE AWARENESS (v4.56.0) — UI-bedrading en isolatie ──── */
+console.log('\nO. Goal/Event-Date Awareness: UI-bedrading, opslag en architectuurisolatie');
+ok(/id="prog-event-toggle"/.test(html), 'O1: het optionele wedstrijd/doel-toggle-veld bestaat');
+ok(/id="prog-event-date"/.test(html), 'O2: het datumveld bestaat');
+ok(/id="prog-event-name"/.test(html), 'O3: het optionele naamveld bestaat');
+const eventReadSrc = html.slice(html.indexOf("const eventDate=document.getElementById('prog-event-toggle')"), html.indexOf("const eventDate=document.getElementById('prog-event-toggle')") + 300);
+ok(/prog-event-toggle'\)\.value==='ja'\?\(document\.getElementById\('prog-event-date'\)\.value\|\|null\):null/.test(eventReadSrc), "O4: event_date is uitsluitend gevuld wanneer de gebruiker expliciet 'ja' kiest -- anders altijd null (nooit een verzonnen datum)");
+ok(/eventDate\?\(document\.getElementById\('prog-event-name'\)\.value\.trim\(\)\|\|null\):null/.test(eventReadSrc), 'O5: event_name is alleen relevant/gevuld in combinatie met een gekozen event_date');
+ok(/event_date:c\.eventDate\|\|null,event_name:c\.eventName\|\|null/.test(html), 'O6: beide velden worden correct meegegeven aan de programs-insert');
+ok(/ScheduleAdherenceCore\.daysUntilEvent\(p\.event_date,td\(\)\)/.test(html), 'O7: de weergave gebruikt UITSLUITEND ScheduleAdherenceCore voor de berekening, geen eigen datumlogica in de UI-laag');
+ok(/ScheduleAdherenceCore\.weeksUntilEvent\(p\.event_date,td\(\)\)/.test(html), 'O8: weeksUntilEvent() wordt gebruikt voor de "nog X weken"-weergave');
+const eventChipSrc = html.slice(html.indexOf('let eventChip='), html.indexOf('let eventChip=') + 700);
+ok(/dRest<0\?evNaam\+' — verlopen'/.test(eventChipSrc), 'O9: een verlopen evenement toont "verlopen", geen verwarrend negatief weken-getal');
+ok(/if\(p\.event_date\)/.test(eventChipSrc), 'O10: zonder event_date wordt er helemaal niets berekend/getoond -- geen lege of foutieve regel bij programma\'s zonder evenement');
+// Architectuurisolatie: event_date/eventChip-logica mag NERGENS phaseForWeek, completed_at,
+// computeProgAdjustment of de Program Adaptation V1-functies (pschedule*) aanroepen.
+ok(!/phaseForWeek/.test(eventChipSrc) && !/completed_at\s*=/.test(eventChipSrc) && !/computeProgAdjustment/.test(eventChipSrc) && !/pschedule[A-Z]/.test(eventChipSrc), 'O11 (architectuurgrens): de event-chip-weergave raakt NERGENS fase-, voltooiing-, readiness- of Program-Adaptation-logica -- puur additief en informatief');
+ok(!/event_date/.test(gateSrc) && !/event_date/.test(rescheduleSrc) && !/event_date/.test(skipSrc) && !/event_date/.test(doTodaySrc), 'O12 (architectuurgrens, omgekeerd): Program Adaptation V1 (maybeShowScheduleGate/reschedule/skip/doToday) raadpleegt event_date NERGENS -- volledig losgekoppeld van elkaar');
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { console.log('❌ Hardening niet groen.'); process.exit(1); }

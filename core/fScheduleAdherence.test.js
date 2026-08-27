@@ -70,7 +70,21 @@ eq(S.resolveScheduleGap('2026-08-27', '2026-08-27', null, null), 'TODAY', 'F1: e
 eq(S.daysLate('2026-12-31', '2027-01-02'), 2, 'F2: jaargrens correct doorgeteld');
 
 console.log('\nG. Deload-week (Scenario 16) — deze module raakt fase/week_nr NOOIT');
-ok(!Object.keys(S).some(function(k){ return /week|fase|phase/i.test(k); }), 'G1: geen enkele functie in deze module raakt week_nr of fase_naam -- reschedule is uitsluitend een datumwijziging op het aangeklikte block');
+ok(!Object.keys(S).some(function(k){ return /week|fase|phase/i.test(k) && k !== 'weeksUntilEvent'; }), 'G1: geen enkele functie in deze module raakt week_nr of fase_naam -- reschedule is uitsluitend een datumwijziging op het aangeklikte block');
+
+console.log('\nH. GOAL/EVENT-DATE AWARENESS (v4.56.0) — daysUntilEvent()/weeksUntilEvent()');
+eq(S.daysUntilEvent(null, '2026-08-27'), null, 'H1: geen event_date ingesteld -> null, geen verzonnen getal');
+eq(S.daysUntilEvent('2026-08-27', '2026-08-27'), 0, 'H2: evenement is vandaag -> 0');
+eq(S.daysUntilEvent('2026-08-28', '2026-08-27'), 1, 'H3: evenement morgen -> 1');
+eq(S.daysUntilEvent('2026-11-19', '2026-08-27'), 84, 'H4: 12 weken vooruit -> 84 dagen (Scenario HYROX over 12 weken)');
+eq(S.daysUntilEvent('2026-08-20', '2026-08-27'), -7, 'H5: evenement al 7 dagen geleden -> negatief, feitelijk, geen verbloeming');
+eq(S.daysUntilEvent(null, null), null, 'H6: beide ontbrekend -> null, geen crash');
+eq(S.weeksUntilEvent('2026-11-19', '2026-08-27'), 12, 'H7: 84 dagen -> exact 12 weken');
+eq(S.weeksUntilEvent('2026-09-04', '2026-08-27'), 2, 'H8: 8 dagen -> naar boven afgerond naar 2 weken (nooit een wedstrijd te vroeg laten lijken door naar beneden af te ronden)');
+eq(S.weeksUntilEvent('2026-08-20', '2026-08-27'), null, 'H9: verlopen evenement -> weeksUntilEvent=null (UI toont "verlopen", geen negatief weken-getal)');
+eq(S.weeksUntilEvent(null, '2026-08-27'), null, 'H10: geen event_date -> null');
+eq(S.daysUntilEvent('2027-08-27', '2026-08-27'), 365, 'H11: jaargrens correct doorgeteld (2026 is geen schrikkeljaar)');
+eq(S.daysUntilEvent('2028-08-27', '2027-08-27'), 366, 'H12: schrikkeljaar (2028, met 29 februari) correct verdisconteerd');
 
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');

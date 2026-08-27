@@ -3635,6 +3635,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Voortgang</div><div class="hdr-sub" id="stats-peak-sub">1RM &amp; peakdoel</div></div><button class="ibtn" onclick="refreshStats()" aria-label="Statistieken vernieuwen">↻</button></div></div>
   <div class="scroll" style="padding-top:8px">
     <div id="stats-hero"></div>
+    <div id="stats-week-overview"></div>
 
     <div class="card"><div class="card-hd"><div class="card-title">Waar ben ik beter geworden?</div><div class="card-sub">Deterministisch &middot; op basis van je vergelijkbare trainingen</div></div><div class="card-body" id="stats-improve-list"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div></div>
     <div class="card"><div class="card-hd"><div class="card-title">Consistentie</div><div class="card-sub">Unieke trainingsdagen &middot; alleen echte sessies</div></div><div class="card-body" id="stats-consistency-list"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div></div>
@@ -3653,6 +3654,10 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="card">
       <div class="card-hd"><div class="card-title">PR per herhaling</div><div class="card-sub">Beste gewicht per repbereik (1/3/5/10)</div></div>
       <div class="card-body" id="stats-reppr-content"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Recente records</div><div class="card-sub">Chronologisch, alle oefeningen</div></div>
+      <div class="card-body" id="stats-pr-timeline"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div>
     </div>
     <div class="card"><div class="card-hd"><div class="card-title">Geschatte 1RM</div><div class="card-sub">Epley formule &middot; live</div></div>
       <div class="card-body">
@@ -5945,7 +5950,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.61.0';
+const APP_VER = 'v4.62.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -17208,6 +17213,7 @@ async function deleteSessionEntry(){
 // ══════════════════════════════════════════════════════════
 // Progressie-lijst: state + gecachte data (fetch één keer, filteren/sorteren zonder herladen)
 let progExData={};
+let progExTrends={}; // A2.5B — eenmalig async gevuld in refreshStatsScreen(), synchroon gelezen in renderProgList() (zelfde patroon als progExData)
 let progFilterState={sport:'all',type:'all',muscle:'all'};
 let progSortMode='az';
 function setProgSort(mode){progSortMode=mode;renderProgList();}
@@ -17223,8 +17229,18 @@ function renderProgList(){
   list.forEach(ex=>{
     const {disp,tgt,pct}=progExData[ex.id];
     const fc=pct?(pct>=100?'var(--green)':pct>=85?'var(--y)':'var(--accent)'):'var(--accent)';
+    // A2.5B — trendlabel: uitsluitend uit de gedeelde, canonieke progExTrends (computeExerciseTrends(),
+    // exact ProgressionCore.trendBy()) -- geen eigen drempel/berekening. Tekst + icoon (nooit alleen kleur).
+    const tr=progExTrends[ex.id];
+    let trendHtml='';
+    if(tr&&tr.status==='trend'){
+      const stijgend=tr.improving===true;
+      trendHtml=`<span style="font-size:11px;font-weight:700;margin-left:6px;color:${stijgend?'var(--green)':'var(--red)'}" aria-label="${stijgend?'Stijgend':'Dalend'}">${stijgend?'↑ Stijgend':'↓ Dalend'}</span>`;
+    }else if(tr&&tr.status!=='trend'){
+      trendHtml=`<span style="font-size:11px;color:var(--g4);margin-left:6px">Onvoldoende data</span>`;
+    }
     h+=`<div class="stat-1rm-item" onclick='show1RMChart(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)})' style="cursor:pointer">
-      <div class="stat-1rm-row"><button onclick="event.stopPropagation();toggleFavorite('${ex.id}').then(renderProgList)" style="background:none;border:none;font-size:14px;cursor:pointer;color:${isExerciseFavorite(ex.id)?'var(--accent2)':'var(--g3)'};padding:0 4px 0 0">${isExerciseFavorite(ex.id)?'★':'☆'}</button><span class="stat-1rm-name">${escHtml(ex.name)}</span><span class="stat-1rm-val">${disp} kg</span>${tgt?`<span class="stat-1rm-target">/ ${tgt} kg</span>`:''}<span style="color:var(--g3);font-size:14px;margin-left:4px">📈</span><button onclick='event.stopPropagation();openEditPeak(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${tgt||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-left:auto">🎯</button></div>
+      <div class="stat-1rm-row"><button onclick="event.stopPropagation();toggleFavorite('${ex.id}').then(renderProgList)" style="background:none;border:none;font-size:14px;cursor:pointer;color:${isExerciseFavorite(ex.id)?'var(--accent2)':'var(--g3)'};padding:0 4px 0 0">${isExerciseFavorite(ex.id)?'★':'☆'}</button><span class="stat-1rm-name">${escHtml(ex.name)}</span><span class="stat-1rm-val">${disp} kg</span>${tgt?`<span class="stat-1rm-target">/ ${tgt} kg</span>`:''}${trendHtml}<span style="color:var(--g3);font-size:14px;margin-left:4px">📈</span><button onclick='event.stopPropagation();openEditPeak(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${tgt||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-left:auto">🎯</button></div>
       <div class="prog-wrap"><div class="prog-fill" style="width:${Math.min(100,pct||Math.round(disp/3))}%;background:${fc}"></div></div>
       ${pct?`<div class="stat-1rm-pct">${pct}% van peakdoel${pct>=100?' ✓':' · '+(100-pct)+'% te gaan'}</div>`:tgt===null?`<div class="stat-1rm-pct" style="color:var(--g4)">Nog geen peakdoel ingesteld</div>`:''}
     </div>`;
@@ -17397,9 +17413,78 @@ async function refreshConsistency(){
     renderConsistency(el, tkConsistencyCounts(dates, new Date()));
   }catch(err){ /* stil: stats-scherm blijft werken */ }
 }
+// A2.5A — WEEKOVERZICHT (v4.62.0). Uitsluitend aggregatie van reeds bestaande,
+// canonieke bronnen: computeProgramProgress() (Program Adaptation, ongewijzigd,
+// hier toegepast op de subset program_blocks binnen de kalenderweek i.p.v. een
+// heel programma -- geen nieuwe formule), CalcCore's volume-berekening (protected,
+// ongewijzigd), en tkPrTimeline() (hierboven, zelfde sessions-tabel). Toont
+// uitsluitend secties waarvoor daadwerkelijk data bestaat -- nooit 0/null als
+// verzonnen waarde bij ontbrekende data (bv. duration_s, nog grotendeels leeg).
+function weekBounds(dateStr){
+  const wd=isoWeekday(dateStr); // 1=ma..7=zo
+  const maandag=addDaysStr(dateStr,-(wd-1));
+  const zondag=addDaysStr(maandag,6);
+  return {maandag,zondag};
+}
+async function tkWeekOverview(){
+  const {maandag,zondag}=weekBounds(td());
+  const [blocksWeek,sessiesWeek,prEvents]=await Promise.all([
+    sbGet('program_blocks','&planned_date=gte.'+maandag+'&planned_date=lte.'+zondag),
+    sbGet('sessions','&date=gte.'+maandag+'&date=lte.'+zondag),
+    tkPrTimeline()
+  ]);
+  const progress=blocksWeek.length?await computeProgramProgress(blocksWeek):null; // ongewijzigde, canonieke functie
+  const uniekeDagen=new Set((sessiesWeek||[]).map(s=>s.date)).size;
+  const metDuur=(sessiesWeek||[]).filter(s=>s.duration_s!=null&&s.duration_s>0);
+  let duurTekst=null;
+  if(metDuur.length){
+    const totSec=metDuur.reduce((a,s)=>a+s.duration_s,0);
+    const u=Math.floor(totSec/3600),m=Math.round((totSec%3600)/60);
+    duurTekst=(u>0?u+'u ':'')+m+'m';
+  }
+  let volumeKg=0,heeftVolume=false;
+  (sessiesWeek||[]).forEach(s=>{
+    if(s.sets&&s.reps&&s.weight){volumeKg+=CalcCore.calculateVolume({sets:parseFloat(s.sets),reps:parseFloat(s.reps),weight:parseFloat(s.weight)});heeftVolume=true;}
+  });
+  const prsDezeWeek=(prEvents||[]).filter(e=>e.date>=maandag&&e.date<=zondag);
+  const trends=await computeExerciseTrends(); // zelfde gedeelde, canonieke bron als de AI-coachcontext
+  const stijgend=Object.keys(trends).filter(id=>trends[id]&&trends[id].status==='trend'&&trends[id].improving===true);
+  const dalend=Object.keys(trends).filter(id=>trends[id]&&trends[id].status==='trend'&&trends[id].improving===false);
+  return {maandag,zondag,uniekeDagen,gepland:blocksWeek.length,progress,duurTekst,volumeKg:heeftVolume?Math.round(volumeKg):null,prsDezeWeek,stijgend,dalend};
+}
+async function renderWeekOverview(){
+  const el=document.getElementById('stats-week-overview');
+  if(!el)return;
+  try{
+    const w=await tkWeekOverview();
+    // Niets zinvols om te tonen: geen geplande blocks, geen sessies, geen PR's deze week.
+    if(!w.gepland&&!w.uniekeDagen&&!w.prsDezeWeek.length){ el.innerHTML=''; return; }
+    let rows='';
+    if(w.progress){
+      rows+='<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid var(--g1)"><span>Trainingen</span><span style="font-weight:800">'+w.progress.doneCount+' / '+w.progress.total+'</span></div>';
+      rows+='<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid var(--g1)"><span>Adherence</span><span style="font-weight:800">'+w.progress.adherencePct+'%</span></div>';
+    }else if(w.uniekeDagen){
+      rows+='<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid var(--g1)"><span>Trainingsdagen</span><span style="font-weight:800">'+w.uniekeDagen+'</span></div>';
+    }
+    if(w.duurTekst)rows+='<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid var(--g1)"><span>Trainingstijd</span><span style="font-weight:800">'+w.duurTekst+'</span></div>';
+    if(w.volumeKg!=null)rows+='<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid var(--g1)"><span>Volume</span><span style="font-weight:800">'+w.volumeKg.toLocaleString('nl-NL')+' kg</span></div>';
+    let progressieBlock='';
+    if(w.stijgend.length||w.dalend.length){
+      const namen=(ids,icon)=>ids.slice(0,3).map(id=>{const ex=(typeof E==='function'&&E().byId)?E().byId(id):null;return '<div style="font-size:13px;padding:2px 0">'+escHtml((ex&&ex.naam)||id)+' <span aria-hidden="true">'+icon+'</span> <span style="color:var(--g4)">'+(icon==='↑'?'Stijgend':'Dalend')+'</span></div>';}).join('');
+      progressieBlock='<div style="margin-top:10px"><div style="font-size:12px;color:var(--g4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px">Progressie</div>'+namen(w.stijgend,'↑')+namen(w.dalend,'↓')+'</div>';
+    }
+    let prBlock='';
+    if(w.prsDezeWeek.length){
+      prBlock='<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--g2)"><span style="font-weight:800">'+w.prsDezeWeek.length+'</span> nieuwe PR'+(w.prsDezeWeek.length===1?'':'\'s')+' deze week</div>';
+    }
+    el.innerHTML='<div class="card"><div class="card-hd"><div class="card-title">Deze week</div><div class="card-sub">'+v48FmtDatum(w.maandag)+' – '+v48FmtDatum(w.zondag)+'</div></div><div class="card-body">'+rows+progressieBlock+prBlock+'</div></div>';
+  }catch(e){ el.innerHTML=''; }
+}
 async function refreshStatsScreen(){
+  renderWeekOverview(); // A2.5A — onafhankelijk, niet-blokkerend voor de rest van het scherm
   await ensureFavoritesLoaded();
   await ensureExerciseGoalsLoaded();
+  computeExerciseTrends().then(t=>{progExTrends=t;renderProgList();}).catch(()=>{}); // A2.5B — niet-blokkerend, her-rendert de lijst zodra klaar
   // 1RM data ophalen (één keer per refresh) — nieuwe oefeningen komen hier automatisch in
   // zodra ze een sessie hebben, geen aparte registratiestap nodig.
   const strExs=exercises.filter(e=>e.type==='strength'||!e.type);
@@ -17472,6 +17557,7 @@ async function refreshStatsScreen(){
   await Promise.all([
     refreshVolumeSpiergroep().catch(()=>{}),
     refreshRepPRs().catch(()=>{}),
+    refreshPrTimeline().catch(()=>{}),
     refreshRatioFactors().catch(()=>{}),
     refreshCardioProgress().catch(()=>{}), // F7.3 cardio records
     refreshImprovements().catch(()=>{}),   // F7.9 "waar ben ik beter geworden?"
@@ -18300,29 +18386,39 @@ async function tkProgramEventContext(){
 // niet als één programmabreed getal -- Trainingskompas had deze data al,
 // maar toonde haar uitsluitend als losse, passieve geruststelling ná één
 // sessie, nooit als samenvattend AI-coachsignaal over meerdere oefeningen.
+// A2.5B — GEDEELDE, CANONIEKE PER-OEFENING-TRENDBEREKENING (v4.62.0). Geëxtraheerd
+// uit tkProgressionTrendContext() (v4.59.0) zodat zowel de AI-coachcontext ALS de
+// nieuwe Voortgang-trendlabels EXACT dezelfde berekening/drempel gebruiken -- geen
+// duplicate calculation path. Gebruikt UITSLUITEND ProgressionCore.trendBy() en
+// CalcCore.oneRMRaw() (beide protected, ongewijzigd). Retourneert per oefening met
+// >=3 vergelijkbare sessies het trendBy()-resultaat, ongewijzigd doorgegeven.
+async function computeExerciseTrends(){
+  const AC=(typeof AthleteCore!=='undefined')?AthleteCore:null;
+  const PC=(typeof ProgressionCore!=='undefined')?ProgressionCore:null;
+  const CC=(typeof CalcCore!=='undefined')?CalcCore:null;
+  if(!AC||!PC||!CC)return {};
+  await tkRelData();
+  const sessies=_tkRelSessies||[];
+  if(!sessies.length)return {};
+  const perOefening={};
+  sessies.forEach(function(s){
+    if(!s||!s.exercise_id||!s.date)return;
+    const w=parseFloat(s.weight), r=parseFloat(s.reps);
+    if(!isFinite(w)||!isFinite(r)||w<=0||r<=0)return;
+    (perOefening[s.exercise_id]=perOefening[s.exercise_id]||[]).push({date:s.date,key:s.exercise_id,e1rm:CC.oneRMRaw(w,r)});
+  });
+  const resultaat={};
+  Object.keys(perOefening).forEach(function(exId){
+    const hist=perOefening[exId].sort(function(a,b){ return a.date<b.date?-1:(a.date>b.date?1:0); });
+    if(hist.length<3)return; // trendBy() vereist zelf minimaal 3 -- hier al vooraf gefilterd, geen dubbele drempel-logica
+    resultaat[exId]=PC.trendBy(hist, exId, 'e1rm', 'max', 3);
+  });
+  return resultaat;
+}
 async function tkProgressionTrendContext(){
   try{
-    const AC=(typeof AthleteCore!=='undefined')?AthleteCore:null;
-    const PC=(typeof ProgressionCore!=='undefined')?ProgressionCore:null;
-    const CC=(typeof CalcCore!=='undefined')?CalcCore:null;
-    if(!AC||!PC||!CC)return {tekst:'',aantalDalend:0};
-    await tkRelData();
-    const sessies=_tkRelSessies||[];
-    if(!sessies.length)return {tekst:'',aantalDalend:0};
-    const perOefening={};
-    sessies.forEach(function(s){
-      if(!s||!s.exercise_id||!s.date)return;
-      const w=parseFloat(s.weight), r=parseFloat(s.reps);
-      if(!isFinite(w)||!isFinite(r)||w<=0||r<=0)return;
-      (perOefening[s.exercise_id]=perOefening[s.exercise_id]||[]).push({date:s.date,key:s.exercise_id,e1rm:CC.oneRMRaw(w,r)});
-    });
-    const dalend=[];
-    Object.keys(perOefening).forEach(function(exId){
-      const hist=perOefening[exId].sort(function(a,b){ return a.date<b.date?-1:(a.date>b.date?1:0); });
-      if(hist.length<3)return; // trendBy() vereist zelf minimaal 3 -- hier al vooraf gefilterd, geen dubbele drempel-logica
-      const tr=PC.trendBy(hist, exId, 'e1rm', 'max', 3);
-      if(tr&&tr.status==='trend'&&tr.improving===false)dalend.push(exId);
-    });
+    const trends=await computeExerciseTrends();
+    const dalend=Object.keys(trends).filter(function(exId){ return trends[exId]&&trends[exId].status==='trend'&&trends[exId].improving===false; });
     if(!dalend.length)return {tekst:'',aantalDalend:0};
     const namen=dalend.slice(0,5).map(function(id){
       const ex=(typeof E==='function'&&E().byId)?E().byId(id):null;
@@ -22374,6 +22470,52 @@ function computeRepPRsFromSessions(sessions){
   return result;
 }
 
+// A2.5C — PR-TIJDLIJN (v4.62.0). Chronologische reconstructie van PR-EVENTS (elk
+// moment waarop een record daadwerkelijk werd verbroken), niet uitsluitend het
+// huidige record. Hergebruikt EXACT dezelfde bucket-/vergelijkingslogica als
+// computeRepPRsFromSessions() (hierboven) en logSet()'s live PR-detectie -- geen
+// nieuwe PR-definitie. GEEN "future leakage": sessies worden oplopend gesorteerd
+// (oud->nieuw) en elke vergelijking gebeurt uitsluitend tegen het beste-tot-dan-toe,
+// nooit tegen een later record. Bekende, gedocumenteerde beperking: de database
+// bewaart geen expliciete PR-events, dus dit is een retroactieve reconstructie op
+// basis van de bestaande sessions-tabel -- exact dezelfde brondata als de
+// bestaande "PR per herhaling"-kaart, uitsluitend chronologisch geordend i.p.v.
+// gegroepeerd per oefening.
+function computePrTimelineFromSessions(exId,exNaam,sessions){
+  const gesorteerd=(sessions||[]).filter(s=>s&&s.weight&&s.reps&&s.date)
+    .slice().sort((a,b)=>{
+      if(a.date!==b.date)return a.date<b.date?-1:1;
+      return (a.created_at||'')<(b.created_at||'')?-1:1; // stabiele volgorde binnen dezelfde dag
+    });
+  const bestPerBucket={1:null,3:null,5:null,10:null};
+  const events=[];
+  gesorteerd.forEach(s=>{
+    const bucket=nearestRepBucket(s.reps);
+    const w=parseFloat(s.weight);
+    if(!bestPerBucket[bucket]||w>bestPerBucket[bucket]){
+      bestPerBucket[bucket]=w;
+      events.push({exerciseId:exId,exerciseNaam:exNaam,bucket:bucket,weight:w,date:s.date});
+    }
+  });
+  return events;
+}
+async function tkPrTimeline(limiet){
+  const strExs=exercises.filter(e=>e.type==='strength'||!e.type);
+  const alleEvents=[];
+  // Hergebruikt dezelfde sessie-ophaal-query als loadRepPRs() (limit 300, meest recente eerst
+  // voor de LOOKUP, hier oplopend gesorteerd voor de RECONSTRUCTIE binnen computePrTimelineFromSessions).
+  const perEx=await Promise.all(strExs.map(ex=>
+    sbGet('sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=date.asc,created_at.asc&limit=300')
+      .then(ss=>({ex,ss:ss||[]})).catch(()=>({ex,ss:[]}))
+  ));
+  perEx.forEach(({ex,ss})=>{
+    if(!ss.length)return;
+    alleEvents.push(...computePrTimelineFromSessions(ex.id,ex.naam||ex.name,ss));
+  });
+  alleEvents.sort((a,b)=>a.date<b.date?1:(a.date>b.date?-1:0)); // meest recente eerst
+  return limiet?alleEvents.slice(0,limiet):alleEvents;
+}
+
 async function loadRepPRs(exId){
   const ss = await sbGet('sessions','&exercise_id=eq.'+exId+'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=300');
   repPRCache[exId] = computeRepPRsFromSessions(ss);
@@ -22402,6 +22544,22 @@ async function refreshRepPRs(){
     </div>`;
   }
   el.innerHTML = html || '<p style="color:var(--g4);font-size:13px">Log sets om PR\'s per herhaling te zien</p>';
+}
+// A2.5C — Recente-records-kaart: puur presentatie van tkPrTimeline() (hierboven),
+// geen enkele eigen berekening.
+async function refreshPrTimeline(){
+  const el=document.getElementById('stats-pr-timeline');
+  if(!el)return;
+  try{
+    const events=await tkPrTimeline(10);
+    if(!events.length){ el.innerHTML='<p style="color:var(--g4);font-size:13px">Nog geen records geregistreerd — log meer trainingen om je eerste PR te zien.</p>'; return; }
+    el.innerHTML=events.map(function(e){
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid var(--g1)">'+
+        '<div><div style="font-size:13px;font-weight:700">'+escHtml(e.exerciseNaam||e.exerciseId)+'</div>'+
+        '<div style="font-size:11px;color:var(--g4)">PR@'+e.bucket+' &middot; '+v48FmtDatum(e.date)+'</div></div>'+
+        '<div style="font-size:14px;font-weight:800;color:var(--dark)">'+e.weight+' kg</div></div>';
+    }).join('');
+  }catch(err){ el.innerHTML=''; }
 }
 
 /* Sprint 16 — presentatiehulpjes voor Voortgang. Beide rekenen NIETS uit: de eerste maakt een

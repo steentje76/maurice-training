@@ -476,11 +476,12 @@ ok(!decisionSrc.includes('TrainingLoadCore') && !decisionSrc.includes('classifyA
 
 /* ── R. AI COACH: PROGRESSIE-TREND PER OEFENING (v4.59.0) — 100% hergebruik protected ProgressionCore ── */
 console.log('\nR. AI Coach: progressie-trend per oefening — geen nieuwe Calculation Engine, geen eigen 1RM-formule');
-const progTrendFnSrc = html.slice(html.indexOf('async function tkProgressionTrendContext('), html.indexOf('async function tkProgressionTrendContext(') + 1900);
-ok(/PC\.trendBy\(/.test(progTrendFnSrc), 'R1: gebruikt UITSLUITEND ProgressionCore.trendBy() -- geen eigen trendberekening');
-ok(/CC\.oneRMRaw\(/.test(progTrendFnSrc), 'R2: gebruikt UITSLUITEND CalcCore.oneRMRaw() (Epley, protected) -- geen eigen 1RM-formule');
-ok(/hist\.length<3\)return/.test(progTrendFnSrc), 'R3: respecteert dezelfde minimale-data-drempel (3) als het bestaande post-sessie-signaal, geen verlaagde drempel');
-ok(/tr\.improving===false/.test(progTrendFnSrc), 'R4: selecteert uitsluitend oefeningen met een daadwerkelijk dalende trend (improving===false), niet stijgend/stabiel/onbekend');
+const computeTrendsSrc = html.slice(html.indexOf('async function computeExerciseTrends('), html.indexOf('async function computeExerciseTrends(') + 1600);
+const progTrendFnSrc = html.slice(html.indexOf('async function tkProgressionTrendContext('), html.indexOf('async function tkProgressionTrendContext(') + 900);
+ok(/PC\.trendBy\(/.test(computeTrendsSrc), 'R1: gebruikt UITSLUITEND ProgressionCore.trendBy() -- geen eigen trendberekening (v4.62.0: nu in de gedeelde computeExerciseTrends(), hergebruikt door zowel AI-context als Voortgang-trendlabels)');
+ok(/CC\.oneRMRaw\(/.test(computeTrendsSrc), 'R2: gebruikt UITSLUITEND CalcCore.oneRMRaw() (Epley, protected) -- geen eigen 1RM-formule');
+ok(/hist\.length<3\)return/.test(computeTrendsSrc), 'R3: respecteert dezelfde minimale-data-drempel (3) als het bestaande post-sessie-signaal, geen verlaagde drempel');
+ok(/trends\[exId\]&&trends\[exId\]\.status==='trend'&&trends\[exId\]\.improving===false/.test(progTrendFnSrc), 'R4: selecteert uitsluitend oefeningen met een daadwerkelijk dalende trend (improving===false), niet stijgend/stabiel/onbekend');
 ok(/catch\(e\)\{ return \{tekst:'',aantalDalend:0\}; \}/.test(progTrendFnSrc), 'R5: een fout in deze functie mag de coach-context nooit laten crashen -- valt terug op een leeg resultaat, exact zoals de bestaande context-functies (v4.60.0: object i.p.v. string, zodat aantalDalend herbruikbaar is voor de gecorroboreerde belastingscheck)');
 ok(!/setsDelta|rpeDelta|computeProgAdjustment/.test(progTrendFnSrc), 'R6 (architectuurgrens): geen sets/RPE-delta-logica en geen aanroep van computeProgAdjustment() -- puur informatieve AI-coachcontext, geen automatische trainingsaanpassing');
 ok(!/deload/i.test(progTrendFnSrc), 'R7 (scope): deze functie doet GEEN deload-suggestie -- uitsluitend een feitelijke constatering, deload blijft expliciet HOLD');

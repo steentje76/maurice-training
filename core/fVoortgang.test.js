@@ -121,7 +121,7 @@ ok(!/\*\s*\(s\.weight/.test(volBlok), 'D5: er staat geen los tonnage-product mee
 // voor de gedetailleerde, plek-specifieke bewijzen. Bij een volgende wijziging: als dit
 // aantal daalt is een delegatie per ongeluk teruggedraaid naar een eigen kopie; als het
 // stijgt, is dat verwacht bij een nieuwe, terechte consolidatie -- werk dan dit getal bij.
-eq((html.match(/CalcCore\.calculateVolume\(/g) || []).length, 10, 'D6: alle tien volumeplekken lopen via de engine');
+eq((html.match(/CalcCore\.calculateVolume\(/g) || []).length, 11, 'D6: alle elf volumeplekken lopen via de engine (v4.62.0: +1 nieuwe, legitieme aanroep in tkWeekOverview() voor het weekoverzicht -- zelfde canonieke functie, geen nieuwe formule)');
 ok(/muscleVol\[m\]/.test(volBlok) && /tkFmtTonnage/.test(volBlok),
    'D7: het berekende tonnage wordt nu ook getoond (was dode code)');
 ok(!/function calculateVolume/.test(html), 'D8: de UI heeft geen eigen volumefunctie');
@@ -182,6 +182,38 @@ ok(/id="home-readiness"/.test(html), 'H7: de readinesskaart op Home staat er nog
 ok(/livecoach-'\+cur\.id/.test(html), 'H8: de live coach in de training staat er nog');
 ['id="home-hero"','id="home-plan"','Jouw ritme','Mijn trainingen','Workout Builder','Kalender','Logboek']
   .forEach(function (t) { ok(html.indexOf(t) >= 0, 'H9: buiten Voortgang ongewijzigd: ' + t); });
+
+/* ── I. A2.5A/B/C — Weekoverzicht, oefeningtrend-labels, PR-tijdlijn (v4.62.0) ── */
+console.log('\nI. A2.5: weekoverzicht, trendlabels in Voortgang, PR-tijdlijn — 100% hergebruik, geen nieuwe engine');
+ok(/id="stats-week-overview"/.test(html), 'I1: het weekoverzicht-kaart-element bestaat in het s-stats-scherm');
+ok(/id="stats-pr-timeline"/.test(html), 'I2: de PR-tijdlijn-kaart bestaat naast de bestaande "PR per herhaling"-kaart');
+const weekOverviewSrc = html.slice(html.indexOf('async function tkWeekOverview('), html.indexOf('async function tkWeekOverview(') + 1700);
+ok(/await computeProgramProgress\(blocksWeek\)/.test(weekOverviewSrc), 'I3: hergebruikt UITSLUITEND de bestaande, ongewijzigde computeProgramProgress() -- geen nieuwe adherence-formule, alleen toegepast op de week-subset');
+ok(/CalcCore\.calculateVolume\(/.test(weekOverviewSrc), 'I4: hergebruikt de canonieke volume-engine, geen eigen sets*reps*weight-berekening in de UI-laag');
+ok(/tkPrTimeline\(\)/.test(weekOverviewSrc), 'I5: hergebruikt tkPrTimeline() voor PR-telling deze week -- geen tweede PR-berekening');
+ok(/await computeExerciseTrends\(\)/.test(weekOverviewSrc), 'I6: hergebruikt de gedeelde, canonieke computeExerciseTrends() -- exact dezelfde bron als de AI-coachcontext (v4.59.0), geen duplicate calculation path');
+ok(!/duurTekst=.*['"]0/.test(weekOverviewSrc) && /if\(metDuur\.length\)/.test(weekOverviewSrc), 'I7: trainingstijd wordt uitsluitend getoond als er daadwerkelijk sessies met duration_s zijn -- geen verzonnen 0 bij ontbrekende data');
+
+const weekBoundsSrc = html.slice(html.indexOf('function weekBounds('), html.indexOf('function weekBounds(') + 300);
+ok(/isoWeekday\(dateStr\)/.test(weekBoundsSrc) && /addDaysStr\(/.test(weekBoundsSrc), 'I8: gebruikt de bestaande, al timezone-gecorrigeerde isoWeekday()/addDaysStr() -- geen nieuwe, eigen datum-/tijdzonelogica');
+ok(!/v43-pstat-row/.test(html), 'I8b (CSS-integriteit): geen verwijzing naar een niet-gedefinieerde CSS-klasse in het weekoverzicht -- bewezen bug gerepareerd (was per ongeluk een ongedefinieerde klasse, nu correct inline gestileerd)');
+
+const prTimelineSrc = html.slice(html.indexOf('function computePrTimelineFromSessions('), html.indexOf('function computePrTimelineFromSessions(') + 1000);
+ok(/nearestRepBucket\(s\.reps\)/.test(prTimelineSrc), 'I9: hergebruikt EXACT dezelfde nearestRepBucket()-bucketindeling als de bestaande "PR per herhaling"-kaart -- geen nieuwe PR-definitie');
+ok(/gesorteerd\.forEach/.test(prTimelineSrc) && /sort\(\(a,b\)=>\{/.test(prTimelineSrc), 'I10 (geen future leakage): sessies worden expliciet chronologisch (oud->nieuw) gesorteerd vóór de PR-vergelijking, ongeacht de aanlevervolgorde');
+ok(/if\(!bestPerBucket\[bucket\]\|\|w>bestPerBucket\[bucket\]\)/.test(prTimelineSrc), 'I11: een PR-event wordt uitsluitend vastgelegd als het beste-tot-dan-toe wordt overtroffen -- exact dezelfde vergelijking als computeRepPRsFromSessions()');
+
+const renderProgListSrc = html.slice(html.indexOf('function renderProgList('), html.indexOf('function renderProgList(') + 2400);
+ok(/const tr=progExTrends\[ex\.id\]/.test(renderProgListSrc), 'I12: het trendlabel in de e1RM-lijst leest UITSLUITEND uit de gedeelde progExTrends -- geen eigen trendberekening in renderProgList() zelf');
+ok(/↑ Stijgend/.test(renderProgListSrc) && /↓ Dalend/.test(renderProgListSrc), 'I13 (accessibility): trend wordt getoond met tekst EN icoon, nooit uitsluitend via kleur');
+ok(/Onvoldoende data/.test(renderProgListSrc), 'I14: expliciete "onvoldoende data"-state voor oefeningen zonder betrouwbare trend -- geen verzonnen classificatie');
+
+const computeTrendsRefSrc = html.slice(html.indexOf('async function computeExerciseTrends('), html.indexOf('async function computeExerciseTrends(') + 1600);
+ok(!computeTrendsRefSrc.includes('setsDelta') && !computeTrendsRefSrc.includes('rpeDelta'), 'I15 (architectuurgrens): computeExerciseTrends() bevat geen sets/RPE-aanpassingslogica -- puur, deterministisch, alleen trend-classificatie');
+const decisionSrcI = fs.readFileSync(path.join(__dirname, 'decision.js'), 'utf8');
+const progressionSrcI = fs.readFileSync(path.join(__dirname, 'progression.js'), 'utf8');
+ok(!decisionSrcI.includes('tkWeekOverview') && !decisionSrcI.includes('computePrTimelineFromSessions'), 'I16 (protected core): core/decision.js bevat geen enkele referentie aan de nieuwe A2.5-functies');
+ok(!progressionSrcI.includes('tkWeekOverview') && !progressionSrcI.includes('computePrTimelineFromSessions'), 'I17 (protected core): core/progression.js bevat geen enkele referentie aan de nieuwe A2.5-functies');
 
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');

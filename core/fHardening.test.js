@@ -501,6 +501,32 @@ ok(/geen automatische aanpassing, geen advies zonder overleg/.test(html), 'S5: d
 ok(/GECORROBOREERD BELASTINGSSIGNAAL \(reeds bepaald door de Decision Engine op basis van TWEE onafhankelijke signalen, niet zelf herberekenen of op één los signaal baseren\)/.test(html), 'S6: de prompt-tekst waarschuwt expliciet tegen het baseren van een beslissing op één los signaal');
 ok(!/deloadSignaalTekst/.test(decisionSrc) && !/corroboratedLoadSignal/.test(decisionSrc), 'S7 (protected core): core/decision.js bevat GEEN enkele referentie aan het nieuwe belastingssignaal -- protected core bewijsbaar niet gewijzigd');
 
+/* ── T. A1 FINAL GAP CLOSURE (v4.61.0) — actieve sessie: vervangen/verwijderen/verwerpen ── */
+console.log('\nT. Execution: vervangen/verwijderen/verwerpen tijdens actieve sessie — geen tweede execution path');
+const execReplaceSrc = html.slice(html.indexOf('function execReplaceExercise('), html.indexOf('function execReplaceExercise(') + 1600);
+ok(/openExPicker\(async function\(newEx\)/.test(execReplaceSrc), 'T1 (EX-REPLACE-1): hergebruikt de bestaande, unified openExPicker() -- geen tweede picker');
+ok(/resolvePickerEx\(newEx\.id\)/.test(execReplaceSrc), 'T2 (EX-REPLACE-3): gebruikt resolvePickerEx() voor het canonieke catalog_id, exact hetzelfde pad als addExConfirm()');
+ok(/heeftData=execExerciseHasData\(exId\)/.test(execReplaceSrc), 'T3 (EX-REPLACE-2): controleert expliciet op reeds geregistreerde data vóór vervangen');
+ok(/gaan die gegevens verloren -- ze worden NIET automatisch overgezet/.test(execReplaceSrc), 'T3b: waarschuwt expliciet dat data NIET automatisch wordt omgezet -- exacte, veilige productregel uit de opdracht');
+ok(/delete sessionLog\[exId\]/.test(execReplaceSrc), 'T4: oude sessionLog-data voor de vervangen oefening wordt opgeruimd -- geen orphan/ghost-koppeling aan de nieuwe oefening');
+ok(/renderTrainScreen\(t\)/.test(execReplaceSrc), 'T5: hergebruikt de bestaande renderTrainScreen() -- geen tweede render-/execution-pad');
+
+const execRemoveSrc = html.slice(html.indexOf('async function execRemoveExercise('), html.indexOf('async function execRemoveExercise(') + 1300);
+ok(/heeftData=execExerciseHasData\(exId\)/.test(execRemoveSrc), 'T6 (EX-REMOVE-eis): onderscheidt expliciet lege vs. reeds-gelogde oefening met verschillende bevestigingstaal');
+ok(/danger:heeftData/.test(execRemoveSrc), 'T7: toont de destructieve (danger) styling alleen wanneer er daadwerkelijk data verloren gaat -- niet bij een lege oefening');
+ok(/delete sessionLog\[exId\]/.test(execRemoveSrc), 'T8 (geen orphan rows): sessionLog voor de verwijderde oefening wordt opgeruimd, kan dus nooit als ghost-data in finishSession() belanden');
+ok(/execFocus\[t\]=Math\.max\(0,list\.length-1\)/.test(execRemoveSrc), 'T9: execFocus wordt correct bijgewerkt als de huidige focus-index na verwijdering buiten de nieuwe lijst valt');
+ok(/if\(!list\.length\).*return execLeaveDiscard\(\)/.test(execRemoveSrc.replace(/\n/g,' ')), 'T10: het verwijderen van de laatste resterende oefening leidt naar een expliciete verwerp-flow, nooit een lege, kapotte executie-staat');
+
+const execDiscardSrc = html.slice(html.indexOf('async function execLeaveDiscard('), html.indexOf('async function execLeaveDiscard(') + 1000);
+ok(/confirmModal\('Deze training wordt volledig verwijderd/.test(execDiscardSrc), 'T11 (EX-DISCARD-eis): vereist expliciete bevestiging vóór verwerpen, geen stille actie');
+ok(/cancelRestTimer\(\)/.test(execDiscardSrc), 'T12 (EX-DISCARD-4): stopt de rusttimer expliciet');
+ok(/stopTrainTimer\(\)/.test(execDiscardSrc), 'T13 (EX-DISCARD-3): stopt de trainingstimer (en daarmee releaseWakeLock(), zie stopTrainTimer() zelf)');
+ok(/clearTrainingDraft\(\)/.test(execDiscardSrc), 'T14 (EX-DISCARD-1): verwijdert de autosave-draft');
+ok(/resolvedWorkout=null;activeInstanceId=null/.test(execDiscardSrc), 'T15: reset alle actieve-instance-state, voorkomt stale instanceId bij een volgende training');
+ok(!/sbPostQ|sbPatchQ|finishSession\(\)|completeTrainingInstance/.test(execDiscardSrc), 'T16 (EX-DISCARD-2, kernprincipe): verwerpen roept NERGENS een database-schrijfactie, finishSession() of completeTrainingInstance() aan -- discard ≠ finish, geen completed workout, geen history-rij, geen calculations');
+ok(/execLeavePause\(\)/.test(html) && !/execLeavePause[\s\S]{0,300}clearTrainingDraft/.test(html.slice(html.indexOf('function execLeavePause('),html.indexOf('function execLeavePause(')+300)), 'T17: "Pauzeren" blijft het bestaande gedrag -- de draft wordt NIET gewist, in tegenstelling tot verwerpen');
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { console.log('❌ Hardening niet groen.'); process.exit(1); }

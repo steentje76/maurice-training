@@ -1,5 +1,57 @@
 # Trainingskompas — Changelog
 
+## v4.61.0 — A1 Final Gap Closure: actieve sessie vervangen/verwijderen/verwerpen (27 augustus 2026)
+
+Afsluitende sprint van MASTERSPRINT A1 (Workout Execution 2.0). Voortbouwend
+op de discovery- en verificatierondes die aantoonden dat Workout Execution
+grotendeels al volwassen was.
+
+**Drie fast-logging-punten alsnog geverifieerd, alle drie COMPLETE, geen
+bouwwerk nodig**: (A) direct wijzigen van gewicht/reps zonder modal —
+bevestigd via inline `<input type="number">`-velden met `onchange="logSet(...)"`.
+(B) automatische rusttimer na set-afronding — bevestigd via
+`autoRestAfterSet()`, expliciet aangeroepen bij het afvinken van een set.
+(C) RPE/RIR niet-blokkerend — bevestigd: `toggleSetDone()` bevat geen enkele
+RPE-validatie vóór het toestaan van set-afronding.
+
+**Nieuw gebouwd (P1)**:
+- **Oefening vervangen tijdens actieve sessie** (`execReplaceExercise()`):
+  100% hergebruik van de bestaande, unified `openExPicker()`/`resolvePickerEx()`
+  — geen tweede picker, geen tweede execution-path. Waarschuwt expliciet en
+  vereist bevestiging wanneer voor de te vervangen oefening al sets zijn
+  geregistreerd; die data wordt bewust NIET automatisch omgezet naar de
+  nieuwe oefening (expliciete, veilige productregel).
+- **Oefening verwijderen tijdens actieve sessie** (`execRemoveExercise()`):
+  eenvoudige bevestiging bij een lege oefening, expliciete waarschuwing bij
+  reeds gelogde data. Ruimt `sessionLog` correct op — voorkomt orphan/ghost-
+  data in `finishSession()`.
+- **Training expliciet verwerpen** (`execLeaveDiscard()`): een nieuwe,
+  derde keuze naast "Training hervatten"/"Pauzeren" in een nieuwe 3-knops-
+  modal (`m-exec-leave`, naar het bewezen `m-prog-schedule`-patroon uit
+  Program Adaptation V1). Stopt timer/wake-lock/rusttimer, wist de autosave-
+  draft, reset alle actieve-instance-state — **schrijft nergens een
+  database-actie, roept nergens `finishSession()` of
+  `completeTrainingInstance()` aan**. Discard ≠ finish, bewezen via bug-
+  terugzet-simulatie (test T16).
+
+**Bewust niet gebouwd**: oefeningen herordenen (P2) — geen bestaande,
+eenvoudig herbruikbare reorder-component gevonden; zou nieuwe drag-drop-
+infrastructuur vereisen, niet laag-risico. Doorgeschoven naar P2-backlog.
+Advanced set types (drop sets/AMRAP/EMOM/endurance-intervals): uitsluitend
+een architectuurnotitie geschreven
+(`docs/00_Project_Management/ADVANCED_SET_TYPES_ARCHITECTUUR.md`), geen
+enkele implementatie — conform expliciete instructie.
+
+Geen databasewijziging. Geen wijziging aan protected core
+(`calculation.js`/`decision.js`/`relationship.js`/`athlete.js`/
+`coaching.js`/`progression.js`): SHA256-bevestigd byte-identiek — deze
+feature raakt uitsluitend de UI-laag (`index.html`), geen enkele
+Calculation/Decision Engine-functie.
+
+**A1-eindconclusie**: Workout Execution wordt na deze sprint als
+benchmark-volwassen genoeg voor V1 beschouwd. Zie DECISION_LOG.md DEC-037
+voor de volledige onderbouwing.
+
 ## v4.60.0 — Blocker Elimination V2: gecorroboreerd belastingssignaal (27 augustus 2026)
 
 Autonome implementatiebeslissing door Claude, na een "Blocker Elimination

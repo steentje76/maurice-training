@@ -505,3 +505,32 @@
   expliciete voorafgaande toestemming voor implementatie én merge zonder
   tussentijdse bevestiging. Niet door Maurice persoonlijk beoordeeld op
   het moment van mergen — ter review bij terugkeer.
+
+## DEC-037
+- Datum: 27 augustus 2026
+- Beslissing: MASTERSPRINT A1 (Workout Execution 2.0) formeel afgesloten.
+  Discovery en verificatie toonden aan dat de execution-laag grotendeels al
+  volwassen was; deze afsluitende sprint dichtte de drie resterende, hard
+  bevestigde gaps: oefening vervangen/verwijderen tijdens een actieve sessie,
+  en een expliciete "training verwerpen"-actie naast pauzeren.
+- Bewijs: drie eerder als UNKNOWN geclassificeerde fast-logging-punten
+  (direct wijzigen gewicht/reps, automatische rusttimer, RPE niet-
+  blokkerend) alle drie bevestigd COMPLETE met exacte codeverwijzingen —
+  geen bouwwerk nodig gebleken.
+- Alternatieven expliciet afgewezen: oefeningen herordenen (P2) — geen
+  bestaande, eenvoudig herbruikbare drag-drop-component gevonden, zou
+  nieuwe infrastructuur vereisen, niet laag-risico binnen deze sprint.
+  Advanced set types (drop sets/AMRAP/EMOM/endurance-intervals) — bewust
+  niet gebouwd, uitsluitend een architectuurnotitie
+  (ADVANCED_SET_TYPES_ARCHITECTUUR.md), conform expliciete instructie dat
+  deze A1 niet mogen openhouden.
+- Impact: geen databasewijziging, geen protected-core-wijziging (uitsluitend
+  index.html gewijzigd). Kernprincipe "discard ≠ finish" bewezen via bug-
+  terugzet-simulatie: het verwerpen van een training roept nergens een
+  database-schrijfactie, finishSession() of completeTrainingInstance() aan.
+- A1-eindconclusie: Workout Execution wordt na deze sprint als benchmark-
+  volwassen genoeg voor V1 beschouwd. A1 GESLOTEN.
+- Verantwoordelijke: autonome discovery, verificatie, gap-closure en
+  -implementatie door Claude over meerdere sessierondes. Niet door Maurice
+  persoonlijk beoordeeld op het moment van mergen — ter review bij
+  terugkeer.

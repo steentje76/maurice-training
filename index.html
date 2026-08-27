@@ -4748,6 +4748,23 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </div>
 </div>
 
+<!-- ═══ EXECUTION — TRAINING VERLATEN (v4.61.0, A1 Final Gap Closure) ═══
+     Drie gelijkwaardige, expliciete keuzes -- vervangt de vorige, uitsluitend-
+     pauzeren-optie van confirmLeave(). "Verwerpen" schrijft NOOIT een completed
+     workout en triggert NOOIT finishSession() of calculations. -->
+<div class="modal-bg" id="m-exec-leave" onclick="">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Training verlaten?</div>
+    <div style="font-size:14px;line-height:1.5;margin-bottom:4px;color:var(--g4)">Je hebt al voortgang geregistreerd in deze training.</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+      <button class="btn btn-o" style="width:100%" onclick="closeModal('m-exec-leave')">Training hervatten</button>
+      <button class="btn btn-r" style="width:100%" onclick="execLeavePause()">Pauzeren</button>
+      <button class="btn btn-o" style="width:100%;color:var(--red)" onclick="execLeaveDiscard()">Training verwerpen</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ PROGRAMMA — TRAININGSINTRO (geen aanpassing nodig, wel korte uitleg wat/waarom) ═══ -->
 <div class="modal-bg" id="m-prog-intro" onclick="">
   <div class="modal">
@@ -5928,7 +5945,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.60.0';
+const APP_VER = 'v4.61.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -11856,6 +11873,10 @@ function applyExecutionFocus(t){
         '<div class="exfocus-hero-nm">'+escHtml(nm)+'</div>'+
         (tip?'<div class="exfocus-hero-desc">'+escHtml(tip)+'</div>':'')+
         '<button class="exfocus-hero-vid" onclick="openExecExplain(\''+t+'\')">▶ '+(_hasVid?'Bekijk video &amp; uitleg':'Techniek &amp; uitleg')+'</button>'+
+        '<div style="display:flex;gap:14px;margin-top:2px">'+
+          '<button class="exfocus-hero-vid" style="color:var(--g4)" onclick="execReplaceExercise(\''+t+'\',\''+curId+'\')">Vervang</button>'+
+          '<button class="exfocus-hero-vid" style="color:var(--red)" onclick="execRemoveExercise(\''+t+'\',\''+curId+'\')">Verwijder</button>'+
+        '</div>'+
       '</div>';
     heroC.innerHTML=hc; head.insertAdjacentElement('afterend',heroC);
   }catch(e){}
@@ -15195,11 +15216,90 @@ function addExConfirm(exId,t){
   toast(ex.name+' toegevoegd');
 }
 
+// ══════════════════════════════════════════════════════════
+// A1 FINAL GAP CLOSURE (v4.61.0) — actieve sessie: oefening vervangen/verwijderen.
+// Hergebruikt VOLLEDIG de bestaande, geteste unified picker (openExPicker/
+// resolvePickerEx, exact hetzelfde pad als addExToSession()) -- geen tweede
+// picker, geen tweede execution-path. Wijzigt uitsluitend resolvedWorkout.items
+// en/of sessionExtra (dezelfde twee bronnen als getSessionExs()) en sessionLog --
+// finishSession() blijft de enige canonical finish-route, ongewijzigd.
+// ══════════════════════════════════════════════════════════
+function execExerciseHasData(exId){
+  const l=sessionLog[exId]; if(!l)return false;
+  const setsData=(l.sets||[]).some(s=>s&&(s.kg||s.reps));
+  const wuData=(l.wu||[]).some(s=>s&&(s.kg||s.reps));
+  return setsData||wuData;
+}
+async function execRemoveExercise(t,exId){
+  const nm=(exercises.find(e=>e.id===exId)||{}).naam||'deze oefening';
+  const heeftData=execExerciseHasData(exId);
+  const ok=await confirmModal(
+    heeftData?('Voor '+nm+' zijn al sets geregistreerd in deze sessie. Verwijderen verwijdert ook die gegevens.'):('"'+nm+'" verwijderen uit deze training?'),
+    {title:'Oefening verwijderen',okLabel:'Verwijderen',cancelLabel:'Annuleren',danger:heeftData}
+  );
+  if(!ok)return;
+  if(resolvedWorkout&&resolvedWorkout.t===t)resolvedWorkout.items=resolvedWorkout.items.filter(e=>e.id!==exId);
+  sessionExtra=sessionExtra.filter(e=>!(e.id===exId&&e._t===t));
+  delete sessionLog[exId]; // voorkomt orphan/ghost-data in finishSession() voor een niet meer zichtbare oefening
+  const list=getSessionExs(t);
+  if(!list.length){ toast('Geen oefeningen meer over'); return execLeaveDiscard(); }
+  if((execFocus[t]||0)>=list.length)execFocus[t]=Math.max(0,list.length-1);
+  renderTrainScreen(t);
+  scheduleAutosave();
+  toast('Oefening verwijderd');
+}
+function execReplaceExercise(t,exId){
+  const nm=(exercises.find(e=>e.id===exId)||{}).naam||'deze oefening';
+  openExPicker(async function(newEx){
+    if(!newEx||!newEx.id||newEx.id===exId)return;
+    const replaced=resolvePickerEx(newEx.id); if(!replaced)return; // F41: canoniek catalog_id behouden
+    const heeftData=execExerciseHasData(exId);
+    if(heeftData){
+      const ok=await confirmModal('Voor '+nm+' zijn al sets geregistreerd in deze sessie. Bij vervangen gaan die gegevens verloren -- ze worden NIET automatisch overgezet naar de nieuwe oefening.',{title:'Oefening vervangen',okLabel:'Toch vervangen',cancelLabel:'Annuleren',danger:true});
+      if(!ok)return;
+    }
+    if(resolvedWorkout&&resolvedWorkout.t===t){
+      const idx=resolvedWorkout.items.findIndex(e=>e.id===exId);
+      if(idx>=0){
+        const old=resolvedWorkout.items[idx];
+        resolvedWorkout.items[idx]=Object.assign({},old,{id:replaced.id,naam:replaced.name,suggestedWeight:null});
+      }
+    }
+    const sxIdx=sessionExtra.findIndex(e=>e.id===exId&&e._t===t);
+    if(sxIdx>=0)sessionExtra[sxIdx]=Object.assign({},sessionExtra[sxIdx],{id:replaced.id,naam:replaced.name});
+    delete sessionLog[exId]; // oude, reeds gelogde data hoort NIET automatisch bij de nieuwe oefening (expliciete productregel)
+    renderTrainScreen(t);
+    scheduleAutosave();
+    toast('Vervangen door '+replaced.name);
+  });
+}
 async function confirmLeave(){
   if(Object.keys(sessionLog).length>0){
-    if(await confirmModal('Je sessie wordt bewaard en je kunt later hervatten.',{title:'Sessie pauzeren',okLabel:'Pauzeren'})){{stopTrainTimer();go('s-home');}
-    }
+    openModal('m-exec-leave');
   }else{curT=null;stopTrainTimer();document.querySelectorAll('.ni-dot').forEach(d=>d.classList.remove('show'));go('s-home');}
+}
+// v4.61.0 — A1 Final Gap Closure: "Pauzeren" (bestaand gedrag, nu via de 3-knops-modal).
+function execLeavePause(){
+  closeModal('m-exec-leave');
+  stopTrainTimer();
+  go('s-home');
+}
+// v4.61.0 — "Training verwerpen" (nieuw, expliciet, NOOIT een completed workout).
+// Reset exact dezelfde staat als finishSession() ná succesvolle afronding NIET aanraakt --
+// het verschil met finish is bewezen in test EX-DISCARD-2 (geen sbPostQ/sbPatchQ-aanroep,
+// geen completeTrainingInstance()-aanroep, geen finishSession()-aanroep).
+async function execLeaveDiscard(){
+  const ok=await confirmModal('Deze training wordt volledig verwijderd, inclusief alle ingevulde sets in deze sessie. Dit kan niet ongedaan worden gemaakt.',{title:'Training verwerpen',okLabel:'Verwerpen',cancelLabel:'Annuleren',danger:true});
+  if(!ok)return;
+  closeModal('m-exec-leave');
+  stopTrainTimer(); // stopt ook releaseWakeLock() (zie stopTrainTimer())
+  cancelRestTimer();
+  clearTrainingDraft();
+  curT=null;sessionLog={};sessionExtra=[];pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};sessionRxAdj={};sessionPrBase={};
+  resolvedWorkout=null;activeInstanceId=null; // dezelfde opruiming als na een afgeronde training -- geen stale instance/session state
+  document.querySelectorAll('.ni-dot').forEach(d=>d.classList.remove('show'));
+  toast('Training verworpen');
+  go('s-home');
 }
 
 // F3.2/F3.7 — deterministische cardio-vergelijking in de post-workout summary.

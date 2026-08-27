@@ -603,3 +603,41 @@
   onbeheerde master-sprint, met expliciete voorafgaande toestemming. Niet
   door Maurice persoonlijk beoordeeld op het moment van mergen — ter review
   bij terugkeer.
+
+## DEC-040
+- Datum: 27 augustus 2026
+- Beslissing: A3 Adaptive Training Intelligence — de bewezen chain break
+  gesloten: het gecorroboreerde belastingssignaal (v4.60.0) en de
+  per-oefening-progressietrend (v4.62.0) zijn toegevoegd als aanvullende
+  context aan de al bestaande, canonieke pre-workout-aanbevelingsflow
+  (evaluateProgAdjustment()/computeProgAdjustment()/m-prog-advies).
+- Reden: A3-discoveryronde bewees dat deze twee signalen al bestonden en al
+  berekend werden, maar uitsluitend in de AI-chatcontext zichtbaar waren --
+  nooit in het daadwerkelijke, vóór-elke-training getoonde advies, het meest
+  relevante en tijdige moment om ze te tonen.
+- Kernprincipe: readiness-beslissing (computeProgAdjustment()) blijft de
+  ENIGE bron van de daadwerkelijke sets/RPE-aanpassing. Load/trend-signalen
+  zijn expliciet AANVULLENDE CONTEXT, geen nieuwe automatische beslissing --
+  bewezen via bug-terugzet-simulatie dat de nieuwe functie nergens
+  setsDelta/rpeDelta aanraakt.
+- Belangrijke procesbevinding: bij aanvang van deze sprint werd ongecommitte,
+  gedeeltelijk werk aangetroffen DIRECT OP MAIN (een schending van de vaste
+  branch-discipline) -- veilig gered naar een nieuwe feature branch zonder
+  ooit main te wijzigen (bevestigd: git status op main toonde leeg vóór en
+  na de redding). Het aangetroffen werk was bovendien onvolledig (miste de
+  corroboratedLoadSignal()-integratie volledig) en de versiedocumentatie
+  (CHANGELOG/CURRENT_STATE) was nog niet bijgewerkt -- beide binnen deze
+  sprint alsnog correct afgerond.
+- Alternatieven afgewezen: geen wijziging aan protected computeProgAdjustment()
+  zelf (zou een vijfde parameter/gewijzigde signature vereisen voor iets dat
+  ook als aparte, aanvullende contextlaag kon -- lager risico, expliciet
+  voorkeursuitkomst uit de opdracht).
+- Impact: geen databasewijziging, geen nieuwe Calculation Engine-berekening,
+  geen protected-core-wijziging (expliciet geverifieerd: core/decision.js
+  bevat geen enkele referentie aan de nieuwe functie of ScheduleAdherenceCore).
+- A3-eindconclusie: coherent pre-workout adaptive-oppervlak bereikt, geen
+  P0/P1 meer resterend. A3 CLOSED.
+- Verantwoordelijke: autonome implementatie door Claude tijdens een
+  onbeheerde master-sprint, met expliciete voorafgaande toestemming. Niet
+  door Maurice persoonlijk beoordeeld op het moment van mergen — ter review
+  bij terugkeer.

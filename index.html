@@ -5950,7 +5950,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.63.0';
+const APP_VER = 'v4.64.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -19611,6 +19611,66 @@ async function pchkSubmit(){
 }
 // Stille achtergrondcheck: dagfactor (HRV/slaap) + spierherstel voor de spieren die deze
 // training raakt. Pure beslislogica zit in computeProgAdjustment (los testbaar).
+// A3 — AANVULLENDE, REEDS BEREKENDE CONTEXT VOOR HET COACH-ADVIES (v4.64.0).
+// De bestaande PLAN->OBSERVATION->DECISION->RECOMMENDATION->EXPLANATION-keten
+// (computeProgAdjustment() -> m-prog-advies) gebruikte tot nu toe uitsluitend
+// dagfactor/spierherstel/subjectief-gevoel/pijn. Andere, al bestaande, al
+// berekende signalen (event-datum, progressietrend, gecorroboreerd
+// belastingssignaal) zaten uitsluitend in de AI-chatcontext, nooit in dit
+// daadwerkelijke, vóór-elke-training getoonde advies. Deze functie voegt ze
+// uitsluitend ALS AANVULLENDE, DUIDELIJK GESCHEIDEN CONTEXT toe -- raakt
+// GEEN velden van computeProgAdjustment() (setsDelta/rpeDelta blijven exact
+// zoals ze waren), puur extra, feitelijke informatie voor de gebruiker.
+async function buildProgAdviesExtraContext(prog,rows){
+  const regels=[];
+  try{
+    if(prog&&prog.event_date&&typeof ScheduleAdherenceCore!=='undefined'){
+      const dRest=ScheduleAdherenceCore.daysUntilEvent(prog.event_date,td());
+      if(dRest!=null&&dRest>=0){
+        const wRest=ScheduleAdherenceCore.weeksUntilEvent(prog.event_date,td());
+        const naam=prog.event_name||'je doel';
+        if(dRest===0)regels.push('Vandaag is de dag van '+escHtml(naam)+'.');
+        else if(wRest!=null)regels.push('Nog '+wRest+' '+(wRest===1?'week':'weken')+' tot '+escHtml(naam)+'.');
+      }
+    }
+  }catch(_){}
+  let aantalDalend=0;
+  try{
+    if(typeof computeExerciseTrends==='function'&&rows&&rows.length){
+      const trends=await computeExerciseTrends();
+      const relevantIds=new Set(rows.map(r=>r.exercise_id));
+      const stijgend=[],dalend=[];
+      Object.keys(trends).forEach(exId=>{
+        if(!relevantIds.has(exId))return; // uitsluitend oefeningen die in DEZE training voorkomen
+        const tr=trends[exId];
+        if(!tr||tr.status!=='trend')return;
+        const ex=exercises.find(e=>e.id===exId);
+        const nm=(ex&&ex.naam)||exId;
+        if(tr.improving===true)stijgend.push(nm); else if(tr.improving===false)dalend.push(nm);
+      });
+      aantalDalend=dalend.length;
+      if(stijgend.length)regels.push(escHtml(stijgend.slice(0,2).join(', '))+' toont een stijgende trend.');
+      if(dalend.length)regels.push(escHtml(dalend.slice(0,2).join(', '))+' toont een dalende trend.');
+    }
+  }catch(_){}
+  // A3 — gecorroboreerd belastingssignaal (v4.60.0), nu ook in deze surface i.p.v.
+  // uitsluitend AI-chatcontext. Hergebruikt EXACT TrainingLoadCore.corroboratedLoadSignal()
+  // -- aantalDalend komt uit DEZELFDE trends-berekening hierboven, geen tweede,
+  // parallelle trendberekening. Uitsluitend neutrale, beschrijvende taal (zie
+  // TrainingLoadCore.acwrAdvisoryText() voor het bestaande taalprecedent), geen
+  // automatische aanpassing -- computeProgAdjustment()/adj blijven volledig ongemoeid.
+  try{
+    if(typeof TrainingLoadCore!=='undefined'){
+      const belastingData=await tkCoachBelasting();
+      const acwrKlasse=(belastingData&&belastingData.acwr&&belastingData.acwr.reden==='ok')
+        ? TrainingLoadCore.classifyAcwr(belastingData.acwr.waarde) : null;
+      if(TrainingLoadCore.corroboratedLoadSignal(acwrKlasse,aantalDalend)){
+        regels.push('Meerdere onafhankelijke signalen wijzen dezelfde richting op — je trainingsbelasting ligt hoger dan je eigen gemiddelde, en meerdere oefeningen tonen een dalende trend. Controleer hoe de training vandaag voelt.');
+      }
+    }
+  }catch(_){}
+  return regels;
+}
 async function evaluateProgAdjustment(){
   const {rows,block,prog}=progCheckinCtx;
   const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35');
@@ -19628,13 +19688,18 @@ async function evaluateProgAdjustment(){
     document.getElementById('padv-body').innerHTML=`<div style="font-size:13px;color:var(--g4)">Advies laden...</div>`;
     openModal('m-prog-advies');
     const uitleg=await generateProgAdviesAI(adj);
+    const extraContext=await buildProgAdviesExtraContext(prog,rows); // A3 — puur aanvullend, raakt adj niet
+    const extraHtml=extraContext.length?`<div style="font-size:12px;color:var(--g4);margin-top:8px">${extraContext.join(' ')}</div>`:'';
     document.getElementById('padv-body').innerHTML=`
       <div style="font-size:13px;color:var(--g4);margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--g2)">${introTekst}</div>
       <div style="font-size:14px;line-height:1.5;margin-bottom:10px">${uitleg||capitalize(adj.redenen.join('. '))+'.'}</div>
       ${renderMuscleRecoveryMiniList(muscleRows)}
-      <div style="font-size:12px;color:var(--g4);background:var(--g1);border-radius:8px;padding:8px 10px;margin-top:8px">Voorstel: ${voorstelTekst} voor deze training.${adj.painMuscle?'<br>Voel je pijn tijdens een oefening voor <b>'+adj.painMuscle+'</b>? Verwijder die dan met het kruisje in de trainingslijst.':''}</div>`;
+      <div style="font-size:12px;color:var(--g4);background:var(--g1);border-radius:8px;padding:8px 10px;margin-top:8px">Voorstel: ${voorstelTekst} voor deze training.${adj.painMuscle?'<br>Voel je pijn tijdens een oefening voor <b>'+adj.painMuscle+'</b>? Verwijder die dan met het kruisje in de trainingslijst.':''}</div>
+      ${extraHtml}`;
   }else{
-    document.getElementById('pintro-body').innerHTML=`<div style="font-size:14px;line-height:1.5">${introTekst}</div>`;
+    const extraContextIntro=await buildProgAdviesExtraContext(prog,rows); // A3 — zelfde aanvullende context, ook als geen readiness-aanpassing nodig is
+    const extraHtmlIntro=extraContextIntro.length?`<div style="font-size:12px;color:var(--g4);margin-top:8px">${extraContextIntro.join(' ')}</div>`:'';
+    document.getElementById('pintro-body').innerHTML=`<div style="font-size:14px;line-height:1.5">${introTekst}</div>${extraHtmlIntro}`;
     openModal('m-prog-intro');
   }
 }

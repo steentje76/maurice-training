@@ -5304,6 +5304,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/cycle.js"></script>
 <script src="core/cycleTraining.js"></script>
 <script src="core/scheduleAdherence.js"></script>
+<script src="core/trainingLoad.js"></script>
 <script>
 // ── OPEN-METEO RUNTIME — additive context, NOOIT een blocker voor training ──
 // Keten: geolocation-consent → WeatherCore.buildOpenMeteoRequest → fetch →
@@ -5927,7 +5928,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.57.0';
+const APP_VER = 'v4.58.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -18093,6 +18094,22 @@ async function tkCoachDataBlok(){
       Object.keys(dag28).length+' in de laatste 28 dagen.';
   }catch(_){}
 
+  // v4.58.0 — Training Load Advisory: neutrale classificatie van de al bestaande,
+  // al berekende ACWR-waarde (tkCoachBelasting(), ongewijzigd). Geen nieuwe
+  // berekening -- uitsluitend een wetenschappelijk onderbouwde duiding (Gabbett
+  // 2016-banden, TrainingLoadCore, geen wijziging aan protected core) van een
+  // getal dat al bestond. Geen invloed op sets/RPE (computeProgAdjustment blijft
+  // ongewijzigd) -- puur aanvullende, neutrale AI-coachcontext.
+  let acwrRegel='';
+  try{
+    const belastingData=await tkCoachBelasting();
+    if(belastingData&&belastingData.acwr&&belastingData.acwr.reden==='ok'&&typeof TrainingLoadCore!=='undefined'){
+      const klasse=TrainingLoadCore.classifyAcwr(belastingData.acwr.waarde);
+      const tekst=TrainingLoadCore.acwrAdvisoryText(klasse);
+      if(tekst) acwrRegel='\n'+tekst;
+    }
+  }catch(_){}
+
   /* 5. Trainingsbetekenis van het sterkste vrijgegeven verband — uit de Decision
         Engine, niet uit de AI en niet uit het verband zelf. Dit is precies de grens
         uit Sprint 22: een samenhang mag nooit zelf een trainingsadvies worden. */
@@ -18145,7 +18162,7 @@ async function tkCoachDataBlok(){
   return '\n\nDATAKWALITEIT, VERBANDEN EN HERSTEL (reeds berekend door de engines — niet zelf herberekenen):\n'+
     regels.join('\n')+
     (verb.length?('\nVerbanden (Spearman, vrijgegeven door de Decision Engine vanaf 30 vergelijkbare dagen, geprioriteerd door de Coaching Engine):\n'+verb.join('\n')):'')+
-    '\n'+herstelRegel+'\n'+belastingRegel+athleetRegel+betekenis+
+    '\n'+herstelRegel+'\n'+belastingRegel+acwrRegel+athleetRegel+betekenis+
     '\n\nREGELS BIJ DEZE GEGEVENS: '+intelRegels+' ' +
     'Bereken correlaties, herstelscores, dagfactoren of trends NOOIT zelf en spreek ze niet tegen — ' +
     'ze komen uit de Calculation Engine en de Decision Engine. Zijn metingen uitgesloten of ontbreken ze, benoem dat als onzekerheid ' +

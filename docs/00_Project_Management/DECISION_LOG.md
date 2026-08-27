@@ -394,3 +394,40 @@
   voorafgaande toestemming voor implementatie én merge zonder tussentijdse
   bevestiging. Niet door Maurice persoonlijk beoordeeld op het moment van
   mergen — ter review bij terugkeer.
+
+## DEC-034
+- Datum: 27 augustus 2026
+- Beslissing: Training Load Advisory gebouwd — een neutrale, wetenschappelijk
+  onderbouwde classificatie (Gabbett 2016-banden) van de al bestaande,
+  al berekende ACWR-waarde, toegevoegd aan de AI Coach-context.
+- Reden/herziening: eerdere sessierondes (incl. deze sessie zelf, meerdere
+  keren) concludeerden ten onrechte dat G3 (ACWR/trainingsbelasting)
+  volledig geblokkeerd bleef door onvoldoende `duration_s`-data. Grondig
+  hernieuwd onderzoek toonde aan dat `AthleteCore.unifiedLoad()` uitsluitend
+  geblokkeerd is bij MEERDERE, ongelijksoortige eenheden tegelijk — voor een
+  enkele modaliteit (overwegend krachttraining, de praktijksituatie) werkt de
+  volume-gebaseerde belasting al, bevestigd met 5 maanden echte
+  productiedata. Dit corrigeert een herhaalde, onvolledige eerdere conclusie.
+- Alternatieven overwogen: computeProgAdjustment() (protected core, decision.
+  js) direct uitbreiden met een ACWR-input — EXPLICIET AFGEWEZEN. Dat zou een
+  bewezen-werkende, geteste, protected functie inhoudelijk wijzigen voor een
+  ENHANCEMENT (geen bugfix) — in strijd met de vaste regel "beschermde core
+  niet wijzigen tenzij absoluut noodzakelijk en expliciet bewezen". In plaats
+  daarvan: een volledig nieuwe, aparte module (core/trainingLoad.js) die de
+  reeds berekende waarde uitsluitend classificeert en als aanvullende,
+  informatieve AI-coachcontext aanbiedt — zonder de bestaande sets/RPE-
+  aanpassing te raken.
+- Impact: geen databasewijziging, geen protected-core-wijziging (expliciet
+  geverifieerd: core/decision.js bevat geen enkele referentie aan de nieuwe
+  module). Eén nieuwe, duidelijk gelabelde AI-coachcontextregel. Bewezen via
+  bug-terugzet-simulatie dat de nieuwe regel geen sets/RPE-logica bevat en
+  computeProgAdjustment() nergens raadpleegt.
+- Taalgrens: expliciet getest op afwezigheid van blessurerisico-/medische-/
+  dwingende taal — uitsluitend neutraal-beschrijvend ("je belasting ligt
+  hoger dan je eigen gemiddelde"), geen diagnose, geen automatisch advies.
+- Verantwoordelijke: autonome gap-discovery, -validatie, -correctie van een
+  eerdere onvolledige conclusie, en -implementatie door Claude tijdens een
+  onbeheerde master-sprint, met expliciete voorafgaande toestemming voor
+  implementatie én merge zonder tussentijdse bevestiging. Niet door Maurice
+  persoonlijk beoordeeld op het moment van mergen — ter review bij
+  terugkeer.

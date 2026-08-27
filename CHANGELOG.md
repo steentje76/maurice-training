@@ -1,5 +1,53 @@
 # Trainingskompas — Changelog
 
+## v4.58.0 — Training Load Advisory: ACWR-classificatie (27 augustus 2026)
+
+Autonome implementatiebeslissing door Claude, na een zelfstandige "Product
+Evolution V8"-onderzoeksronde (zie DECISION_LOG.md).
+
+**Cruciale, herziene bevinding**: eerdere sessierondes concludeerden dat G3
+(ACWR/trainingsbelasting) volledig geblokkeerd bleef zolang
+`sessions.duration_s` onvoldoende gevuld was. Grondig hernieuwd onderzoek
+toonde aan dat dit **onvolledig** was: `AthleteCore.unifiedLoad()` (protected
+core) is uitsluitend geblokkeerd bij **meerdere, ongelijksoortige eenheden**
+tegelijk (bv. kracht + cardio mixen, waarvoor Foster session-RPE×duur nodig
+is). Voor een **enkele modaliteit** (zoals overwegend krachttraining) werkt
+de volume-gebaseerde belasting — via `tkCoachBelasting()` →
+`AthleteCore.dailyModel()`/`serie()`/`acuteChronic()` — al **zonder**
+`duration_s`. Bevestigd met echte, 5 maanden oude productiedata (35 unieke
+trainingsdagen, ruim boven de 21-dagen-drempel): `acuteChronic()` gaf een
+geldig, niet-`null` ACWR-resultaat (`reden:'ok'`).
+
+**Echte ketenbreuk gevonden**: deze al berekende ACWR-waarde bereikte al de
+AI Coach-context (via `tkCoachBelasting()` → `tkCoachDataBlok()` →
+`buildCtx()`), maar zonder enige duiding — een kaal getal, geen betekenis.
+
+**Nieuwe module**: `core/trainingLoad.js` (nieuw, puur, geen wijziging aan
+protected core). `classifyAcwr()` classificeert de reeds berekende ACWR-
+waarde volgens de breed gepubliceerde, geciteerde Gabbett (2016)-banden
+(<0,8 lager / 0,8–1,3 vergelijkbaar / 1,3–1,5 hoger / ≥1,5 sterk hoger) —
+geen zelfverzonnen formule. `acwrAdvisoryText()` levert uitsluitend
+neutrale, beschrijvende taal — expliciet getest op afwezigheid van
+blessurerisico-/medische-/dwingende taal.
+
+**AI Coach-context uitgebreid**: één nieuwe, duidelijk gelabelde regel
+("v4.58.0 — Training Load Advisory") toegevoegd aan de bestaande
+`tkCoachDataBlok()`-tekst, direct na de bestaande belastingsregel. Toont
+uitsluitend iets wanneer `AthleteCore.acuteChronic()` zelf een geldig
+resultaat geeft — respecteert de bestaande, protected datadrempel.
+
+**Architectuurgrens bewezen** (niet alleen beweerd): via bug-terugzet-
+simulatie aangetoond dat de nieuwe ACWR-regel geen enkele `sets`/`RPE`-
+delta-logica bevat en `computeProgAdjustment()` nergens raadpleegt (test
+Q6) — **geen enkele invloed op de bestaande, protected, geteste sets/RPE-
+aanpassing**. Puur aanvullende, informatieve AI-coachcontext.
+
+Geen databasewijziging. Geen wijziging aan protected core
+(`calculation.js`/`decision.js`/`relationship.js`/`athlete.js`/
+`coaching.js`): SHA256-bevestigd byte-identiek, expliciet ook geverifieerd
+dat `core/decision.js` zelf geen enkele referentie naar de nieuwe module
+bevat.
+
 ## v4.57.0 — AI Coach: Goal/Event-Date-context (27 augustus 2026)
 
 Autonome implementatiebeslissing door Claude, na een zelfstandige "Product Gap

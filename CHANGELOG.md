@@ -1,5 +1,51 @@
 # Trainingskompas — Changelog
 
+## v4.63.0 — A2.6: Exercise Detail Drill-down (27 augustus 2026)
+
+Afsluitende bouwstap van MASTERSPRINT A2 (Performance & Analytics 2.0).
+
+**Cruciale discovery-bevinding vóór het bouwen**: `show1RMChart()` — al
+gekoppeld aan elke oefeningregel in Voortgang — bleek **al te bestaan** als
+een e1RM-grafiek + geschiedenislijst-modal, met een reeds bestaande
+`drawChart()`-canvascomponent. Dit was al circa 80% van de gevraagde
+Exercise Detail Drill-down. In plaats van een nieuwe modal/pagina te bouwen
+(zoals de opdracht expliciet waarschuwde te vermijden bij grote scope), is
+de **bestaande modal uitgebreid** met vier reeds berekende, canonieke
+bronnen die er nog niet in stonden.
+
+**Toegevoegd aan de bestaande modal**:
+- **Trendlabel** ("↑ Stijgend"/"↓ Dalend"/"Onvoldoende data"), uit de
+  gedeelde `computeExerciseTrends()` (v4.62.0) — exact dezelfde bron als
+  Voortgang en de AI-coachcontext, geen nieuwe trendberekening.
+- **Huidig vs. beste e1RM**, afgeleid uit de al berekende puntenreeks
+  (`Math.max()`), geen tweede, parallelle 1RM-berekening.
+- **PR per repbereik**, hergebruikt `loadRepPRs()`/`computeRepPRsFromSessions()`
+  (Sprint 16, al bestaand) — geen nieuwe PR-definitie.
+- **Doel/target**, hergebruikt `peakGoalFor()` — geen nieuw doelbegrip.
+- **Transparantieregel**: "Gebaseerd op X geregistreerde trainingen".
+
+**Bewust niet gebouwd**: volume (P2, expliciet uitgesteld conform opdracht
+— e1RM/trend/PR/history hebben prioriteit), een nieuwe hoofdnavigatie-item,
+een tweede Progressie-sectie, forecasting/extrapolatie in de grafiek.
+
+**Architectuurgrens bewezen** (niet alleen beweerd): via bug-terugzet-
+simulatie aangetoond dat forecasting-taal correct wordt gedetecteerd als
+verboden (test J8). Geverifieerd dat `core/decision.js` en
+`core/calculation.js` geen enkele referentie naar de uitgebreide UI-functie
+bevatten.
+
+Geen databasewijziging. Geen nieuwe Calculation Engine-module — 100%
+hergebruik van reeds bestaande, geteste, protected functies en reeds
+bestaande UI-componenten (`drawChart()`).
+
+Protected core (`calculation.js`/`decision.js`/`relationship.js`/`athlete.js`/
+`coaching.js`/`progression.js`): SHA256-bevestigd byte-identiek, onaangetast.
+
+**A2-eindconclusie**: met deze sprint is de enige resterende P1
+(oefeningdetail) afgerond. Geen echte P0/P1-analytics-gaps meer resterend
+die V1 blokkeren. Zie DECISION_LOG.md DEC-039 voor de volledige
+onderbouwing en formele A2-afsluiting.
+
 ## v4.62.0 — A2.5: Weekoverzicht, oefeningtrend en PR-tijdlijn (27 augustus 2026)
 
 Bouwfase van MASTERSPRINT A2 (Performance & Analytics 2.0), voortbouwend op de

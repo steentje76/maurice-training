@@ -401,6 +401,30 @@ ok(/Uitsluitend geregistreerde, afgeronde cycli — geen voorspelling\./.test(ht
 ok(/Feitelijke telling, geen oorzakelijk verband\./.test(html), 'M5: symptomen-x-training toont expliciet het causaliteitsvoorbehoud');
 ok(!/hormo|diagnos|oorzaak(?!elijk verband)|veroorzaak|zwanger|anticoncep|vruchtbaar|beinvloed/i.test(cyclusUiSrc.replace(/geen oorzakelijk verband/gi,'')), 'M6: ook de nieuwe Fase-3-tekst bevat geen medische/causale/DECISION-REQUIRED-grensoverschrijdende taal');
 
+/* ── N. PROGRAM ADAPTATION V1 (v4.55.0) — UI-bedrading en architectuurgrenzen ── */
+console.log('\nN. Program Adaptation V1: UI-bedrading, engine-scheiding en scenario-dekking');
+const startBlockSrc = html.slice(html.indexOf('async function startProgramBlockTraining('), html.indexOf('async function startProgramBlockTraining(') + 800);
+ok(/if\(block\.completed_at\)\{toast/.test(startBlockSrc), 'N1 (Scenario 11): defensieve completed_at-check vóór het tonen van enige prompt of het starten van de flow');
+ok(/await maybeShowScheduleGate\(/.test(startBlockSrc), 'N2: routeert door de nieuwe schedule-gate i.p.v. direct de check-in te openen');
+ok(/ScheduleAdherenceCore\.resolveScheduleGap\(/.test(html), 'N3: gebruikt UITSLUITEND ScheduleAdherenceCore voor de gap-bepaling, geen eigen datumlogica in de UI-laag');
+ok(/ScheduleAdherenceCore\.resolveRescheduleDecision\(/.test(html), 'N4: gebruikt UITSLUITEND ScheduleAdherenceCore voor de conflictbeslissing');
+const gateSrc = html.slice(html.indexOf('async function maybeShowScheduleGate('), html.indexOf('async function maybeShowScheduleGate(') + 900);
+ok(/gap===null\|\|gap==='TODAY'/.test(gateSrc), 'N5 (Scenario 1): bij TODAY (of ontbrekende datum) geen prompt -- rechtstreeks door naar de bestaande check-in');
+ok(/progCheckinCtx=\{blockId,block,prog,rows,voelt:null,pijn:null\}/.test(gateSrc), 'N6: hergebruikt EXACT dezelfde progCheckinCtx-structuur als de oorspronkelijke flow -- geen parallel systeem');
+const doTodaySrc = html.slice(html.indexOf('async function pscheduleDoToday('), html.indexOf('async function pscheduleDoToday(') + 500);
+ok(!/planned_date\s*[:=]/.test(doTodaySrc), 'N7 (bindend principe): "vandaag doen" wijzigt planned_date NIET');
+ok(/await openProgCheckin\(\)/.test(doTodaySrc), 'N8: "vandaag doen" gebruikt de bestaande readiness-check-in/adaptive-flow, geen nieuwe/parallelle uitvoeringslogica');
+const skipSrc = html.slice(html.indexOf('async function pscheduleSkip('), html.indexOf('async function pscheduleSkip(') + 700);
+ok(/schedule_status:'skipped'/.test(skipSrc), 'N9 (Scenario 4): overslaan zet uitsluitend schedule_status, nooit completed_at');
+ok(!/completed_at\s*:/.test(skipSrc), 'N10: overslaan raakt completed_at NIET (blijft NULL, telt niet als voltooid)');
+const rescheduleSrc = html.slice(html.indexOf('async function pscheduleShowReschedule('), html.indexOf('async function pscheduleShowReschedule(') + 1400);
+ok(/rescheduled_from:block\.planned_date/.test(rescheduleSrc), 'N11 (audit trail): de oorspronkelijke datum wordt bewaard vóór overschrijven');
+ok(!/week_nr\s*:/.test(rescheduleSrc) && !/fase_naam\s*:/.test(rescheduleSrc), 'N12 (bindend principe): reschedule raakt week_nr/fase_naam NIET');
+ok(!/sbPostQ\('program_blocks'|sbPost\('program_blocks'/.test(rescheduleSrc), 'N13 (bindend principe): reschedule UPDATE\'t het bestaande block, maakt NOOIT een nieuw block aan');
+ok(/id=eq\.'\+blockId/.test(rescheduleSrc.replace(/\s/g,'')+skipSrc.replace(/\s/g,'')), 'N14 (security): de update is expliciet gescoped op het specifieke blockId, geen brede UPDATE zonder filter');
+ok(/heergenereerResterendeWeken/.test(html) && !doTodaySrc.includes('heergenereerResterendeWeken') && !skipSrc.includes('heergenereerResterendeWeken') && !rescheduleSrc.includes('heergenereerResterendeWeken'), 'N15 (Scenario 17): heergenereerResterendeWeken() blijft ongewijzigd bestaan en wordt NIET aangeroepen als workaround voor een individuele gemiste training');
+ok(/sbPatchQ\('program_blocks'/.test(rescheduleSrc) && /sbPatchQ\('program_blocks'/.test(skipSrc), 'N16 (offline): hergebruikt de bestaande offline-veilige sbPatchQ-queue, geen tweede offline-mechanisme');
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { console.log('❌ Hardening niet groen.'); process.exit(1); }

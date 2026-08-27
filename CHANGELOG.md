@@ -37,6 +37,14 @@ simulatie, tests O11/O12) volledig losgekoppeld van `phaseForWeek()`,
 `completed_at`, `computeProgAdjustment()` en Program Adaptation V1: geen
 enkele automatische planning-, fase-, readiness- of belastingsaanpassing.
 
+**Audit-bevinding en fix (vóór merge, tijdens de zelfstandige eindcontrole)**:
+de weergavelogica gaf bij een evenement dat VANDAAG plaatsvindt "Nog 0 weken
+tot [naam]" i.p.v. het beoogde "Vandaag: [naam]" — `weeksUntilEvent()` geeft
+correct `0` (niet `null`) terug op de eventdag zelf, maar de oorspronkelijke
+UI-conditie controleerde `wRest!=null` vóór de "vandaag"-tak, waardoor die
+tak onbereikbaar was. Gerepareerd door `dRest===0` als eerste, specifiekere
+conditie te controleren. Bewezen via bug-terugzet-simulatie (test O13).
+
 **Bewust op HOLD gehouden** (uit dezelfde onderzoekslijn, geen nieuwe
 bouw): G2 (performance forecasting) en G3 (ACWR/trainingsbelasting-
 activatie — `sessions.duration_s` heeft nog steeds 0 gevulde rijen).

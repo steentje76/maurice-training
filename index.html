@@ -10995,7 +10995,7 @@ async function renderProgrammaList(){
       const dRest=ScheduleAdherenceCore.daysUntilEvent(p.event_date,td());
       const wRest=ScheduleAdherenceCore.weeksUntilEvent(p.event_date,td());
       const evNaam=p.event_name?escHtml(p.event_name):'je doel';
-      const evTekst=(dRest==null)?'':(dRest<0?evNaam+' — verlopen':(wRest!=null?'Nog '+wRest+' '+(wRest===1?'week':'weken')+' tot '+evNaam:'Vandaag: '+evNaam));
+      const evTekst=(dRest==null)?'':(dRest<0?evNaam+' — verlopen':(dRest===0?'Vandaag: '+evNaam:(wRest!=null?'Nog '+wRest+' '+(wRest===1?'week':'weken')+' tot '+evNaam:'')));
       eventChip=evTekst?`<div class="v48-pchip" style="margin-top:4px">${evTekst}</div>`:'';
     }
 

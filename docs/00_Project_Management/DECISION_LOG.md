@@ -350,3 +350,19 @@
   voor implementatie t/m PR, uitgezonderd de merge zelf). Niet door
   Maurice persoonlijk beoordeeld op het moment van pushen — ter review bij
   terugkeer.
+
+## DEC-032-VERVOLG (audit vóór merge)
+- Datum: 27 augustus 2026
+- Bevinding: tijdens de zelfstandige eindcontrole vóór merge van PR #51 werd
+  een echte, binnen-scope-defect gevonden in de "vandaag"-weergave van
+  Goal/Event-Date Awareness ("Nog 0 weken" i.p.v. "Vandaag: [naam]").
+- Actie: gerepareerd (dRest===0 als eerste conditie), regressietest
+  toegevoegd (fHardening.test.js O13), bewezen effectief via bug-terugzet-
+  simulatie, volledige regressie herhaald (alle suites groen), protected
+  core bevestigd onaangetast.
+- Scope: uitsluitend binnen de bestaande G1-implementatie — geen nieuwe
+  functionaliteit, geen scope-uitbreiding.
+- Verantwoordelijke: autonome bugfix door Claude tijdens een onbeheerde
+  master-sprint, expliciet toegestaan door Maurice ("aantoonbare defecten
+  binnen de bestaande G1-scope herstellen"). PR #51 nog niet gemerged op
+  het moment van deze fix.

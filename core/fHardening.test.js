@@ -439,6 +439,11 @@ ok(/ScheduleAdherenceCore\.weeksUntilEvent\(p\.event_date,td\(\)\)/.test(html), 
 const eventChipSrc = html.slice(html.indexOf('let eventChip='), html.indexOf('let eventChip=') + 700);
 ok(/dRest<0\?evNaam\+' — verlopen'/.test(eventChipSrc), 'O9: een verlopen evenement toont "verlopen", geen verwarrend negatief weken-getal');
 ok(/if\(p\.event_date\)/.test(eventChipSrc), 'O10: zonder event_date wordt er helemaal niets berekend/getoond -- geen lege of foutieve regel bij programma\'s zonder evenement');
+// AUDIT-BEVINDING (nacontrole vóór merge): weeksUntilEvent() geeft 0 (niet null) terug
+// wanneer een evenement VANDAAG is, waardoor de oorspronkelijke conditie "Nog 0 weken tot..."
+// toonde in plaats van het beoogde "Vandaag: ...". Gerepareerd door dRest===0 EERST te
+// controleren, vóór de wRest!=null-tak. Bewijs dat de "vandaag"-tekst daadwerkelijk bereikbaar is:
+ok(/dRest===0\?'Vandaag: '\+evNaam/.test(eventChipSrc), 'O13 (audit-fix): een evenement dat VANDAAG is toont "Vandaag: [naam]", niet "Nog 0 weken tot [naam]" -- dRest===0 wordt vóór de weken-tak gecontroleerd');
 // Architectuurisolatie: event_date/eventChip-logica mag NERGENS phaseForWeek, completed_at,
 // computeProgAdjustment of de Program Adaptation V1-functies (pschedule*) aanroepen.
 ok(!/phaseForWeek/.test(eventChipSrc) && !/completed_at\s*=/.test(eventChipSrc) && !/computeProgAdjustment/.test(eventChipSrc) && !/pschedule[A-Z]/.test(eventChipSrc), 'O11 (architectuurgrens): de event-chip-weergave raakt NERGENS fase-, voltooiing-, readiness- of Program-Adaptation-logica -- puur additief en informatief');

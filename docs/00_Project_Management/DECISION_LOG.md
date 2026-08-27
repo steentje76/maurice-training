@@ -534,3 +534,38 @@
   -implementatie door Claude over meerdere sessierondes. Niet door Maurice
   persoonlijk beoordeeld op het moment van mergen — ter review bij
   terugkeer.
+
+## DEC-038
+- Datum: 27 augustus 2026
+- Beslissing: A2.5A/B/C gebouwd — weekoverzicht, per-oefening-trendlabels in
+  Voortgang, en een centrale, chronologische PR-tijdlijn.
+- Reden: A2-discoveryronde bewees drie echte, hoge-waarde gaps waarvoor de
+  onderliggende data/calculations al canonical en volledig aanwezig waren --
+  uitsluitend presentatie/aggregatie ontbrak.
+- Belangrijke tussenbevinding: vóór het bouwen van de PR-tijdlijn bleek een
+  "PR per herhaling"-kaart al te bestaan. Grondig onderzocht om duplicatie te
+  voorkomen -- de nieuwe tijdlijn hergebruikt exact dezelfde bucket-/
+  vergelijkingslogica (`nearestRepBucket`), uitsluitend chronologisch
+  geordend i.p.v. gegroepeerd per oefening.
+- Architectuurbeslissing: de per-oefening-trendberekening uit
+  tkProgressionTrendContext() (v4.59.0) is geëxtraheerd naar een gedeelde
+  computeExerciseTrends()-functie, zodat AI-coachcontext en Voortgang-UI
+  exact dezelfde berekening/drempel gebruiken -- voorkomt een duplicate
+  calculation path (expliciete Definition-of-Done-eis).
+- PR-tijdlijn-beperking, expliciet gedocumenteerd: de database bewaart geen
+  expliciete PR-events, dus dit is een retroactieve reconstructie op basis
+  van de bestaande sessions-tabel. Bewezen zonder "future data leakage"
+  (chronologische sortering vóór vergelijking, ongeacht aanlevervolgorde) --
+  zowel met gesimuleerde als echte productiedata getest.
+- Bug gevonden en binnen dezelfde sprint gerepareerd: het weekoverzicht
+  gebruikte aanvankelijk een niet-gedefinieerde CSS-klasse; vervangen door
+  correcte inline-stijl, met een nieuwe regressietest die dit bewaakt.
+- Impact: geen databasewijziging, geen nieuwe Calculation Engine-module,
+  geen protected-core-wijziging (expliciet geverifieerd: core/decision.js
+  en core/progression.js bevatten geen enkele referentie aan de nieuwe
+  functies). Eén bestaande test (fVoortgang.test.js D6) correct bijgewerkt
+  van 10 naar 11 na de legitieme, nieuwe volume-aanroep.
+- Verantwoordelijke: autonome implementatie door Claude tijdens een
+  onbeheerde master-sprint, met expliciete voorafgaande toestemming. Niet
+  door Maurice persoonlijk beoordeeld op het moment van mergen — ter review
+  bij terugkeer.

@@ -1,5 +1,64 @@
 # Trainingskompas — Changelog
 
+## v4.62.0 — A2.5: Weekoverzicht, oefeningtrend en PR-tijdlijn (27 augustus 2026)
+
+Bouwfase van MASTERSPRINT A2 (Performance & Analytics 2.0), voortbouwend op de
+A2-discoveryronde die drie echte, bewezen gaps identificeerde. Uitsluitend
+deze drie gebouwd, geen forecasting, geen nieuwe ACWR-berekening, geen
+parallelle analytics-engine, geen nieuwe chart-library — conform expliciete
+scope-begrenzing.
+
+**Belangrijke discovery-bevinding vóór het bouwen**: een "PR per herhaling"-
+kaart bleek al te bestaan (`computeRepPRsFromSessions()`) — grondig onderzocht
+om geen dubbele PR-logica te bouwen. De nieuwe PR-tijdlijn hergebruikt exact
+dezelfde bucket-/vergelijkingslogica, uitsluitend chronologisch geordend in
+plaats van gegroepeerd per oefening.
+
+**A2.5A — Weekoverzicht**: nieuwe `tkWeekOverview()`, uitsluitend aggregatie
+van reeds bestaande, canonieke bronnen — `computeProgramProgress()`
+(ongewijzigd, hier toegepast op de `program_blocks`-subset binnen de
+kalenderweek in plaats van een heel programma) en `CalcCore.calculateVolume()`
+(protected, ongewijzigd). Timezone-correcte weekgrenzen via de bestaande,
+al eerder gecorrigeerde `isoWeekday()`/`addDaysStr()`. Toont uitsluitend
+secties waarvoor daadwerkelijk data bestaat — trainingstijd blijft
+bijvoorbeeld verborgen zolang `duration_s` grotendeels leeg is, in plaats
+van een verzonnen "0m" te tonen.
+
+**A2.5B — Oefeningtrend in Voortgang**: de per-oefening-trendberekening uit
+`tkProgressionTrendContext()` (v4.59.0) is geëxtraheerd naar een gedeelde,
+canonieke functie `computeExerciseTrends()`, zodat zowel de AI-coachcontext
+als de nieuwe Voortgang-trendlabels **exact dezelfde berekening en drempel**
+gebruiken — geen duplicate calculation path. De bestaande e1RM-lijst toont nu
+per oefening "↑ Stijgend"/"↓ Dalend"/"Onvoldoende data" — tekst én icoon,
+nooit uitsluitend kleur (accessibility). Geen nieuwe drempels, geen eigen
+UI-trendberekening.
+
+**A2.5C — PR-tijdlijn**: nieuwe "Recente records"-kaart naast de bestaande
+"PR per herhaling"-kaart. `computePrTimelineFromSessions()` reconstrueert
+chronologisch elk moment waarop een record daadwerkelijk werd verbroken
+(geen expliciete PR-events in de database, dus retroactieve reconstructie
+op basis van de bestaande sessions-tabel — bewuste, gedocumenteerde
+beperking). Bewezen geen "future data leakage": sessies worden expliciet
+oplopend gesorteerd vóór vergelijking, ongeacht aanlevervolgorde — getest
+met zowel gesimuleerde als echte productiedata (oefening TK-000019: 8
+genuine PR-events correct gereconstrueerd uit 13 sessies).
+
+**Bug gevonden en gerepareerd tijdens deze sprint**: het weekoverzicht
+gebruikte aanvankelijk een niet-gedefinieerde CSS-klasse (`v43-pstat-row`);
+vervangen door correcte inline-stijl, met een nieuwe regressietest (I8b) die
+dit specifiek bewaakt.
+
+**Architectuurgrens bewezen** (niet alleen beweerd): geverifieerd dat
+`core/decision.js` en `core/progression.js` geen enkele referentie naar de
+nieuwe A2.5-functies bevatten. Bug-terugzet-simulatie bevestigt dat de
+PR-vergelijkingslogica daadwerkelijk vereist is (test I11).
+
+Geen databasewijziging. Geen nieuwe Calculation Engine-module — 100%
+hergebruik van reeds bestaande, geteste, protected functies.
+
+Protected core (`calculation.js`/`decision.js`/`relationship.js`/`athlete.js`/
+`coaching.js`/`progression.js`): SHA256-bevestigd byte-identiek, onaangetast.
+
 ## v4.61.0 — A1 Final Gap Closure: actieve sessie vervangen/verwijderen/verwerpen (27 augustus 2026)
 
 Afsluitende sprint van MASTERSPRINT A1 (Workout Execution 2.0). Voortbouwend

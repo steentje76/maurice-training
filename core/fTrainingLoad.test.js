@@ -71,6 +71,19 @@ const teWeinigData = AC.acuteChronic([{ date: '2026-08-20', value: 100 }], 7, 28
 ok(teWeinigData.reden !== 'ok', 'D1: AthleteCore.acuteChronic() (ongewijzigd) weigert terecht bij te weinig data');
 eq(T.classifyAcwr(teWeinigData.waarde), null, 'D2: deze module classificeert een ontbrekende/onbetrouwbare waarde correct als null, toont dus niets bij onvoldoende data');
 
+console.log('\nE. corroboratedLoadSignal() — G4-herbeoordeling, conservatieve conjunctie, nooit één los signaal');
+eq(T.corroboratedLoadSignal('sterk_hoger', 2), true, 'E1: beide signalen aanwezig (sterk_hoger + 2 dalende oefeningen) -> true');
+eq(T.corroboratedLoadSignal('hoger', 2), true, 'E2: "hoger" (niet alleen "sterk_hoger") telt ook mee als verhoogde ACWR');
+eq(T.corroboratedLoadSignal('sterk_hoger', 3), true, 'E3: meer dan het minimum aantal dalende oefeningen -> nog steeds true');
+eq(T.corroboratedLoadSignal('sterk_hoger', 1), false, 'E4 (kernprincipe): ACWR ALLEEN, met slechts 1 dalende oefening -> false, GEEN signaal op één los teken');
+eq(T.corroboratedLoadSignal('sterk_hoger', 0), false, 'E5: ACWR sterk_hoger maar GEEN dalende oefeningen -> false -- exact het scenario dat de vorige, afgewezen ACWR-alleen-aanpak ten onrechte had doen afgaan');
+eq(T.corroboratedLoadSignal('vergelijkbaar', 5), false, 'E6 (kernprincipe): veel dalende oefeningen ALLEEN, maar ACWR normaal -> false, GEEN signaal op één los teken');
+eq(T.corroboratedLoadSignal('lager', 3), false, 'E7: lage ACWR + dalende oefeningen -> false (mogelijk ondertraind, geen overbelastingssignaal)');
+eq(T.corroboratedLoadSignal(null, 5), false, 'E8: ontbrekende ACWR-classificatie -> false, geen gok');
+eq(T.corroboratedLoadSignal('sterk_hoger', null), false, 'E9: ontbrekend aantal dalende oefeningen -> false, geen gok');
+eq(T.corroboratedLoadSignal('sterk_hoger', -1), false, 'E10: negatief (ongeldig) aantal -> false, geen crash');
+eq(T.corroboratedLoadSignal('onbekende_classificatie', 5), false, 'E11: onbekende/foutieve classificatiestring -> false, geen crash, geen valse positief');
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { console.log('❌ Training Load Advisory niet groen.'); process.exitCode = 1; }

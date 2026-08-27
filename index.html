@@ -5928,7 +5928,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.59.0';
+const APP_VER = 'v4.60.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -18205,10 +18205,10 @@ async function tkProgressionTrendContext(){
     const AC=(typeof AthleteCore!=='undefined')?AthleteCore:null;
     const PC=(typeof ProgressionCore!=='undefined')?ProgressionCore:null;
     const CC=(typeof CalcCore!=='undefined')?CalcCore:null;
-    if(!AC||!PC||!CC)return '';
+    if(!AC||!PC||!CC)return {tekst:'',aantalDalend:0};
     await tkRelData();
     const sessies=_tkRelSessies||[];
-    if(!sessies.length)return '';
+    if(!sessies.length)return {tekst:'',aantalDalend:0};
     const perOefening={};
     sessies.forEach(function(s){
       if(!s||!s.exercise_id||!s.date)return;
@@ -18223,13 +18223,13 @@ async function tkProgressionTrendContext(){
       const tr=PC.trendBy(hist, exId, 'e1rm', 'max', 3);
       if(tr&&tr.status==='trend'&&tr.improving===false)dalend.push(exId);
     });
-    if(!dalend.length)return '';
+    if(!dalend.length)return {tekst:'',aantalDalend:0};
     const namen=dalend.slice(0,5).map(function(id){
       const ex=(typeof E==='function'&&E().byId)?E().byId(id):null;
       return (ex&&ex.naam)?ex.naam:id;
     });
-    return '\nOefeningen met een dalende trend in geschat 1RM over de laatste vergelijkbare trainingen: '+namen.join(', ')+'.\n';
-  }catch(e){ return ''; }
+    return {tekst:'\nOefeningen met een dalende trend in geschat 1RM over de laatste vergelijkbare trainingen: '+namen.join(', ')+'.\n', aantalDalend:dalend.length};
+  }catch(e){ return {tekst:'',aantalDalend:0}; }
 }
 async function buildCtx(ctx){
   // v5.9.7 (AI Coach Performance) — was 8-10 sequentiële awaits (elk wachtend op de
@@ -18249,7 +18249,7 @@ async function buildCtx(ctx){
     ? sbGet('sessions','&exercise_id=in.('+[...relevantExIds].join(',')+')&order=exercise_id.asc,date.desc,created_at.desc')
     : sbGet('sessions','&date=gte.'+sinceStr+'&order=exercise_id.asc,date.desc,created_at.desc');
 
-  const [,hd,wd,bc,recentSessions,,blessureContext,conditionsContext,,trainingContextRows,dataBlok,hyroxCtxTekst,eventCtxTekst,progressionTrendTekst] = await Promise.all([
+  const [,hd,wd,bc,recentSessions,,blessureContext,conditionsContext,,trainingContextRows,dataBlok,hyroxCtxTekst,eventCtxTekst,progressionTrendResult] = await Promise.all([
     ensureExercisesLoaded(),
     sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'),
     sbGet('weight_log','&order=date.desc,created_at.desc&limit=3'),
@@ -18267,8 +18267,25 @@ async function buildCtx(ctx){
     // v4.57.0 — Goal/Event-Date Context Engine-koppeling (zie tkProgramEventContext()).
     tkProgramEventContext().catch(function(){ return ''; }),
     // v4.59.0 — Progressie-trend-per-oefening Context Engine-koppeling (zie tkProgressionTrendContext()).
-    tkProgressionTrendContext().catch(function(){ return ''; })
+    tkProgressionTrendContext().catch(function(){ return {tekst:'',aantalDalend:0}; })
   ]);
+  const progressionTrendTekst=(progressionTrendResult&&progressionTrendResult.tekst)||'';
+  // v4.60.0 — G4-herbeoordeling: gecorroboreerd belastingssignaal. Vereist TWEE
+  // onafhankelijke, al bestaande signalen tegelijk (ACWR-classificatie EN
+  // >=2 dalende oefeningen) -- zie TrainingLoadCore.corroboratedLoadSignal().
+  // Nooit op één los signaal (zie DEC-036 voor de volledige onderbouwing).
+  let deloadSignaalTekst='';
+  try{
+    if(typeof TrainingLoadCore!=='undefined'){
+      const belastingVoorSignaal=await tkCoachBelasting();
+      const acwrKlasse=(belastingVoorSignaal&&belastingVoorSignaal.acwr&&belastingVoorSignaal.acwr.reden==='ok')
+        ? TrainingLoadCore.classifyAcwr(belastingVoorSignaal.acwr.waarde) : null;
+      const aantalDalend=(progressionTrendResult&&progressionTrendResult.aantalDalend)||0;
+      if(TrainingLoadCore.corroboratedLoadSignal(acwrKlasse,aantalDalend)){
+        deloadSignaalTekst='\nMeerdere onafhankelijke signalen wijzen in dezelfde richting: je trainingsbelasting ligt hoger dan je eigen gemiddelde, en meerdere oefeningen tonen een dalende trend. Dit kan een moment zijn om samen met de gebruiker een rustiger week te bespreken -- geen automatische aanpassing, geen advies zonder overleg.\n';
+      }
+    }
+  }catch(_){}
   // Onboarding-intake: trainingscontext (frequentie/dagen/duur/locatie/materiaal/te-vermijden)
   // als feitelijke context voor de coach. De AI leest dit, rekent er niet mee (geen bron van waarheid).
   const tcSummary = (window.OnboardingCore && trainingContextRows && trainingContextRows[0])
@@ -18359,6 +18376,7 @@ RECENTE SESSIES (app, [id:...] = exercise_id):${exCtx}
 ${hyroxCtxTekst?'\nRECENTE HYROX/TRIATHLON-RACES (reeds berekende race-samenvatting, niet zelf herberekenen):'+hyroxCtxTekst+'\n':''}
 ${eventCtxTekst?'\nWEDSTRIJD/DOEL-CONTEXT (reeds berekend, niet zelf herberekenen — uitsluitend informatief, geen trainingsbeslissing hierop baseren tenzij de gebruiker daar expliciet om vraagt):'+eventCtxTekst:''}
 ${progressionTrendTekst?'\nPROGRESSIE-TREND PER OEFENING (reeds berekend door ProgressionCore, niet zelf herberekenen — feitelijke constatering, geen deload-advies of trainingsbeslissing hierop baseren tenzij de gebruiker daar expliciet om vraagt):'+progressionTrendTekst:''}
+${deloadSignaalTekst?'\nGECORROBOREERD BELASTINGSSIGNAAL (reeds bepaald door de Decision Engine op basis van TWEE onafhankelijke signalen, niet zelf herberekenen of op één los signaal baseren):'+deloadSignaalTekst:''}
 
 ACTIEVE SPORT: ${SPORT_LABELS[getActiveSport()]||getActiveSport()}
 ${sportBlock}

@@ -1,5 +1,59 @@
 # Trainingskompas — Changelog
 
+## v4.60.0 — Blocker Elimination V2: gecorroboreerd belastingssignaal (27 augustus 2026)
+
+Autonome implementatiebeslissing door Claude, na een "Blocker Elimination
+V2"-onderzoeksronde die alle bestaande HOLD/BLOCKED-items systematisch
+opnieuw beoordeelde (zie DECISION_LOG.md DEC-036).
+
+**`duration_s`-registratie geverifieerd, geen actie nodig**: tot en met de
+daadwerkelijke schrijfregel in `finishSession()` bevestigd dat dit al
+volledig, correct gebouwd is (start/pauze/hervat-gebaseerde berekening,
+universeel toegepast). De 0/116 bestaande sessies zijn volledig verklaard
+door historische data van vóór deze feature — Groep B, bouwt zichzelf
+vanaf nu op, geen te repareren keten.
+
+**G4 (proactieve deload) herbeoordeeld met de volle breedte aan bestaande
+inputs** (ACWR, monotonie, RPE, readiness, HRV, pijn, frequentie,
+progressie, adherence — expliciet gevraagd, niet opnieuw alleen ACWR).
+Twee eerder onderzochte ontwerpen bevestigd terecht afgewezen: (1) ACWR
+alleen — tegenstrijdige signalen bij echte data; (2) Training Strain —
+vereist persoonlijke-percentiel-vergelijking, geen vaste banden mogelijk
+zonder pseudowetenschap.
+
+**Nieuw ontwerp — corroboratie**: in plaats van één complex getal, een
+eenvoudiger, conservatiever patroon. Een signaal wordt uitsluitend
+afgegeven wanneer **twee onafhankelijke, al bestaande, al geteste
+bronnen tegelijk** hetzelfde beeld geven: ACWR-classificatie (hoger/
+sterk_hoger) ÉN minimaal twee oefeningen met een dalende progressie-
+trend (beide reeds berekend in v4.58.0/v4.59.0). Nooit op één los
+signaal — expliciet getest (`corroboratedLoadSignal()`, 11 nieuwe tests
+in `core/trainingLoad.js`).
+
+**Kleine, gerechtvaardigde aanpassing** van `tkProgressionTrendContext()`
+(v4.59.0): retourneert nu `{tekst, aantalDalend}` in plaats van alleen
+tekst, zodat het aantal dalende oefeningen herbruikt kan worden zonder
+een tweede, parallelle berekening.
+
+**AI-coachcontext uitgebreid**: bij corroboratie een nieuwe, duidelijk
+gelabelde regel, expliciet geformuleerd als "geen automatische
+aanpassing, geen advies zonder overleg" — puur een feitelijke constatering
+voor een mens-tot-mens-gesprek, geen AI-beslissing, geen automatische
+trainingsaanpassing.
+
+**Architectuurgrens bewezen** (niet alleen beweerd): via bug-terugzet-
+simulatie aangetoond dat het signaal geen sets/RPE-delta-logica bevat en
+`computeProgAdjustment()` nergens aanroept (test S4). Expliciet
+geverifieerd dat `core/decision.js` geen enkele referentie naar het
+nieuwe signaal bevat (test S7).
+
+Geen databasewijziging. Geen nieuwe Calculation Engine-berekening — 100%
+hergebruik van reeds bestaande, geteste, protected `AthleteCore`/
+`ProgressionCore`-functies.
+
+Protected core (`calculation.js`/`decision.js`/`relationship.js`/`athlete.js`/
+`coaching.js`/`progression.js`): SHA256-bevestigd byte-identiek, onaangetast.
+
 ## v4.59.0 — AI Coach: progressie-trend per oefening (27 augustus 2026)
 
 Autonome implementatiebeslissing door Claude, na een "Autonomous Benchmark

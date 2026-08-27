@@ -538,7 +538,7 @@ ok(/relevantIds\.has\(exId\)/.test(extraCtxSrc), 'U4: filtert de trend-context e
 ok(!/setsDelta|rpeDelta\s*=/.test(extraCtxSrc), 'U5 (kernprincipe): deze functie wijzigt NERGENS setsDelta/rpeDelta -- puur aanvullende, informatieve context, geen invloed op de deterministische aanpassing zelf');
 ok(/escHtml\(/.test(extraCtxSrc), 'U6 (XSS-veiligheid): vrije tekst (event_name/oefeningnamen) wordt via escHtml() weergegeven');
 
-const evalAdjSrc = html.slice(html.indexOf('async function evaluateProgAdjustment('), html.indexOf('async function evaluateProgAdjustment(') + 2700);
+const evalAdjSrc = html.slice(html.indexOf('async function evaluateProgAdjustment('), html.indexOf('async function evaluateProgAdjustment(') + 3700);
 ok(/const adj=computeProgAdjustment\(df\.factor,muscleRows,progCheckinCtx\.voelt,progCheckinCtx\.pijn\)/.test(evalAdjSrc), 'U7 (protected-core-isolatie): computeProgAdjustment() wordt aangeroepen met EXACT dezelfde vier parameters als vóór v4.64.0 -- geen nieuw vijfde argument, geen gewijzigde signature');
 ok(/const extraContext=await buildProgAdviesExtraContext\(prog,rows\)/.test(evalAdjSrc), 'U8: de nieuwe context wordt apart, NA de bestaande adj-berekening opgehaald -- nooit vermengd met de Decision Engine-aanroep zelf');
 ok(/extraContext\.length\?/.test(evalAdjSrc), 'U9: de extra contextregel wordt uitsluitend getoond wanneer daadwerkelijk relevante content bestaat -- geen lege sectie');
@@ -551,6 +551,28 @@ ok(/aantalDalend=dalend\.length/.test(extraCtxSrc) && !/(tkProgressionTrendConte
 ok(!/deload|blessure|risico|overtraind/i.test(extraCtxSrc), 'U14 (taalgrens): geen deload-/blessurerisico-/overtraind-taal -- uitsluitend neutrale, beschrijvende formulering ("controleer hoe de training vandaag voelt")');
 ok(/belastingData=await tkCoachBelasting\(\)/.test(extraCtxSrc), 'U15: hergebruikt de bestaande tkCoachBelasting() -- exact dezelfde bron als de AI-coachcontext (v4.58.0), geen tweede ACWR-berekening');
 ok(!/setsDelta|rpeDelta\s*[-+]?=/.test(extraCtxSrc), 'U16 (single-signal safety, kernprincipe): het belastingssignaal wijzigt NERGENS setsDelta/rpeDelta -- puur aanvullende context, computeProgAdjustment() blijft de enige bron van de daadwerkelijke aanpassing');
+
+/* ── V. A4 — READINESS CONSISTENCY + RECOVERY DETAIL (v4.65.0) ── */
+console.log('\nV. A4: Home/pre-workout-consistentiebrug en herstel-detailweergave -- geen nieuwe Decision Engine, geen nieuwe drempel');
+const consBrugSrc = html.slice(html.indexOf("let consistentieBrug=''"), html.indexOf("let consistentieBrug=''") + 420);
+ok(/window\._tkReadiness/.test(consBrugSrc), 'V1: hergebruikt UITSLUITEND het al bestaande, alleen-te-lezen window._tkReadiness (Home) -- geen nieuwe berekening, geen tweede Decision Engine');
+ok(/hb\.zone==='ready'/.test(consBrugSrc), 'V2: de brug verschijnt uitsluitend wanneer Home eerder "ready" toonde EN er nu toch een sessiespecifieke aanpassing is -- exact het bewezen scenario (CASE 6)');
+ok(!/setsDelta|rpeDelta\s*[-+]?=/.test(consBrugSrc), 'V3 (kernprincipe): de consistentiebrug wijzigt NERGENS setsDelta/rpeDelta -- puur uitleg, geen nieuwe beslissing');
+ok(/escHtml\(hb\.zoneLabel/.test(consBrugSrc), 'V4 (XSS-veiligheid): de Home-zonelabel-tekst wordt via escHtml() weergegeven');
+
+const recDetailSrc = html.slice(html.indexOf('async function openRecoveryDetail('), html.indexOf('async function openRecoveryDetail(') + 4200);
+ok(/hrvBaseline\(hd\)/.test(recDetailSrc) && /hrvStPersonal\(hd\)/.test(recDetailSrc), 'V5: HRV-sectie hergebruikt UITSLUITEND de bestaande hrvBaseline()/hrvStPersonal() -- geen nieuwe SWC-drempel, geen nieuwe classificatie');
+ok(/rhrBaselineDelta\(hd\)/.test(recDetailSrc), 'V6: RHR-sectie hergebruikt UITSLUITEND de bestaande rhrBaselineDelta()');
+ok(!/slaapBaseline|sleepBaseline/i.test(recDetailSrc) && /Nog geen persoonlijk gebruikelijk niveau berekend voor slaap/.test(recDetailSrc), 'V7 (kernprincipe): GEEN nieuwe slaap-baselineformule -- expliciet gedocumenteerd als ontbrekend i.p.v. stilzwijgend verzonnen');
+ok(/TrainingLoadCore\.classifyAcwr\(/.test(recDetailSrc) && /TrainingLoadCore\.acwrAdvisoryText\(/.test(recDetailSrc), 'V8: belastingssectie hergebruikt UITSLUITEND de bestaande TrainingLoadCore-functies (v4.58.0), geen nieuwe ACWR-classificatie');
+ok(/\(zelf ingevuld\)/.test(recDetailSrc), 'V9 (provenance): subjectieve data wordt expliciet gemarkeerd als "zelf ingevuld", nooit vermengd met meetdata');
+ok(/if\(lh&&lh\.hrv!=null\)/.test(recDetailSrc) && /if\(lh&&lh\.rhr!=null\)/.test(recDetailSrc), 'V10 (missing-data-veiligheid): elke sectie wordt uitsluitend getoond wanneer de onderliggende meting daadwerkelijk aanwezig is -- geen verzonnen 0');
+ok(/Nog onvoldoende hersteldata beschikbaar/.test(recDetailSrc), 'V11: expliciete, vriendelijke lege-staat wanneer helemaal geen hersteldata beschikbaar is -- geen foutmelding voor normale afwezigheid');
+
+const decisionSrcV = fs.readFileSync(path.join(__dirname, 'decision.js'), 'utf8');
+const calcSrcV = fs.readFileSync(path.join(__dirname, 'calculation.js'), 'utf8');
+ok(!decisionSrcV.includes('openRecoveryDetail') && !decisionSrcV.includes('consistentieBrug'), 'V12 (protected core): core/decision.js bevat GEEN enkele referentie aan de nieuwe A4-functies -- protected core bewijsbaar niet gewijzigd');
+ok(!calcSrcV.includes('openRecoveryDetail') && !calcSrcV.includes('consistentieBrug'), 'V13 (protected core): core/calculation.js bevat GEEN enkele referentie aan de nieuwe A4-functies -- protected core bewijsbaar niet gewijzigd');
 
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');

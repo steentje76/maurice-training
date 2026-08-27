@@ -4770,6 +4770,18 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </div>
 </div>
 
+<!-- ═══ A4 — HERSTEL & READINESS DETAIL (v4.65.0) ═══
+     Compacte detailweergave, hergebruikt uitsluitend bestaande canonical
+     baselines/berekeningen. Geen nieuwe score, geen nieuwe drempel. -->
+<div class="modal-bg" id="m-recovery-detail" onclick="">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Herstel &amp; Readiness</div>
+    <div id="recdetail-body" style="font-size:14px;line-height:1.5"></div>
+    <button class="btn btn-o" style="width:100%;margin-top:14px" onclick="closeModal('m-recovery-detail')">Sluiten</button>
+  </div>
+</div>
+
 <!-- ═══ PROGRAMMA — TRAININGSINTRO (geen aanpassing nodig, wel korte uitleg wat/waarom) ═══ -->
 <div class="modal-bg" id="m-prog-intro" onclick="">
   <div class="modal">
@@ -5950,7 +5962,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.64.0';
+const APP_VER = 'v4.65.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -16254,7 +16266,72 @@ function tkReadinessHtml(ctx){
     (m.aanpassing?'<div class="tk-ready-aanp">'+escHtml(m.aanpassing)+'</div>':'')+
     (m.waarom?'<div class="tk-ready-sub">'+escHtml(m.waarom)+'</div>':'')+
     (m.onzekerheid?'<div class="tk-ready-sub">'+escHtml(m.onzekerheid)+'</div>':'')+
+    '<button class="exfocus-hero-vid" style="margin-top:6px" onclick="openRecoveryDetail()">Bekijk herstel</button>'+
   '</div>';
+}
+// A4 — HERSTEL & READINESS DETAIL (v4.65.0). Uitsluitend presentatie van reeds
+// bestaande, canonieke berekeningen (hrvBaseline/hrvStPersonal/rhrBaselineDelta/
+// TrainingLoadCore.classifyAcwr). Geen nieuwe score, geen nieuwe drempel. Elke
+// sectie toont uitsluitend wanneer de onderliggende data dit toelaat -- nooit
+// een verzonnen 0 of "goed" bij ontbrekende data.
+async function openRecoveryDetail(){
+  const el=document.getElementById('recdetail-body');
+  el.innerHTML='<div style="color:var(--g4);font-size:13px">Laden...</div>';
+  openModal('m-recovery-detail');
+  try{
+    const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35');
+    const lh=hd[0]||null;
+    let secties='';
+    // HRV — hergebruikt EXACT hrvBaseline()/hrvStPersonal(), geen nieuwe SWC-drempel.
+    if(lh&&lh.hrv!=null){
+      const baseline=hrvBaseline(hd);
+      const stInfo=hrvStPersonal(hd);
+      const statusTekst={g:'boven persoonlijk niveau',o:'onder persoonlijk niveau',r:'sterk lager dan gebruikelijk',ref:'onvoldoende historie voor een persoonlijk niveau'}[stInfo.st]||'onbekend';
+      secties+='<div style="margin-bottom:12px"><div style="font-weight:700">HRV</div>'+
+        '<div>Vandaag: '+lh.hrv+' ms</div>'+
+        (baseline.ready?'<div style="color:var(--g4)">Persoonlijk niveau ('+baseline.fase+'): '+Math.round(baseline.meanRaw)+' ms</div>':'<div style="color:var(--g4)">Persoonlijk niveau: '+ (baseline.days||0)+' van de benodigde dagen historie</div>')+
+        '<div style="color:var(--g4)">Status: '+statusTekst+'</div></div>';
+    }
+    // RHR — hergebruikt EXACT rhrBaselineDelta(), puur beschrijvend (geen "goed/slecht"-oordeel
+    // toegevoegd, want daarvoor bestaat geen canonical drempel).
+    if(lh&&lh.rhr!=null){
+      const delta=rhrBaselineDelta(hd);
+      secties+='<div style="margin-bottom:12px"><div style="font-weight:700">Rusthartslag</div>'+
+        '<div>Vandaag: '+lh.rhr+' bpm</div>'+
+        (delta!=null?'<div style="color:var(--g4)">'+(delta>0?'+':'')+delta+' bpm t.o.v. je recente gemiddelde</div>':'<div style="color:var(--g4)">Onvoldoende historie voor een vergelijking</div>')+
+        '</div>';
+    }
+    // Slaap — GEEN nieuwe baseline-formule (bestaat niet canoniek); uitsluitend vandaag +
+    // recente losse waarden, geen "boven/onder gebruikelijk"-claim.
+    const slaapRijen=hd.filter(r=>r.sleep!=null).slice(0,7);
+    if(slaapRijen.length){
+      secties+='<div style="margin-bottom:12px"><div style="font-weight:700">Slaap</div>'+
+        '<div>Vandaag: '+(lh&&lh.sleep!=null?tkSleepHours(lh.sleep)+' uur':'niet ingevuld')+'</div>'+
+        '<div style="color:var(--g4)">Laatste '+slaapRijen.length+' metingen: '+slaapRijen.map(r=>tkSleepHours(r.sleep)).join(', ')+' uur</div>'+
+        '<div style="font-size:11px;color:var(--g4);margin-top:2px">Nog geen persoonlijk gebruikelijk niveau berekend voor slaap.</div></div>';
+    }
+    // Subjectief — expliciet gemarkeerd als zelf ingevuld, nooit gemengd met meetdata.
+    if(progCheckinCtx&&(progCheckinCtx.voelt||progCheckinCtx.pijn)){
+      secties+='<div style="margin-bottom:12px"><div style="font-weight:700">Eigen gevoel <span style="font-size:11px;color:var(--g4);font-weight:400">(zelf ingevuld)</span></div>'+
+        (progCheckinCtx.voelt?'<div>'+escHtml(capitalize(progCheckinCtx.voelt))+'</div>':'')+
+        (progCheckinCtx.pijn?'<div style="color:var(--g4)">Pijn/ongemak gemeld: '+escHtml(progCheckinCtx.pijn)+'</div>':'')+
+        '</div>';
+    }
+    // Trainingsbelasting — hergebruikt EXACT TrainingLoadCore.classifyAcwr(), geen nieuwe classificatie.
+    try{
+      if(typeof TrainingLoadCore!=='undefined'){
+        const belastingData=await tkCoachBelasting();
+        if(belastingData&&belastingData.acwr&&belastingData.acwr.reden==='ok'){
+          const klasse=TrainingLoadCore.classifyAcwr(belastingData.acwr.waarde);
+          const tekst=TrainingLoadCore.acwrAdvisoryText(klasse);
+          if(tekst)secties+='<div style="margin-bottom:12px"><div style="font-weight:700">Trainingsbelasting</div><div style="color:var(--g4)">'+escHtml(tekst)+'</div></div>';
+        }
+      }
+    }catch(_){}
+    el.innerHTML=secties||'<div style="color:var(--g4);font-size:13px">Nog onvoldoende hersteldata beschikbaar. Synchroniseer je wearable of vul je gevoel in bij de volgende training voor meer context.</div>';
+  }catch(e){
+    el.innerHTML='<div style="color:var(--g4);font-size:13px">Herstelgegevens konden niet worden geladen.</div>';
+  }
 }
 function renderCoachAdvies(dfInfo,recRows){
   const el=document.getElementById('home-coach-advies');if(!el)return;
@@ -19681,6 +19758,19 @@ async function evaluateProgAdjustment(){
   const muscleRows=await getRelevantMuscleRecovery([...muscleSet]);
   const adj=computeProgAdjustment(df.factor,muscleRows,progCheckinCtx.voelt,progCheckinCtx.pijn);
   progCheckinCtx.adjustment=adj;
+  // A4 — CONSISTENTIEBRUG (v4.65.0): puur presentatie, GEEN nieuwe Decision Engine. Home
+  // en deze pre-workout-aanpassing gebruiken dezelfde computeProgAdjustment(), maar Home
+  // kent structureel nooit gevoel/pijn (hrv_log heeft geen kolommen hiervoor) en gebruikt
+  // algeheel spierherstel i.p.v. sessiespecifiek. Een verschil tussen "Home: goed hersteld"
+  // en "hier: aangepast" is daardoor legitiem, maar zonder brug lijkt het tegenstrijdig.
+  // window._tkReadiness is Home's AL BEREKENDE, alleen-te-lezen besluit (zie tkReadinessVandaag()).
+  let consistentieBrug='';
+  try{
+    const hb=window._tkReadiness;
+    if(adj&&hb&&hb.bruikbaar&&hb.zone==='ready'){
+      consistentieBrug='<div style="font-size:12px;color:var(--g4);margin-top:6px">Je algemene dagstatus was \''+escHtml(hb.zoneLabel||'goed hersteld')+'\'. Voor deze specifieke training is een aanvullende aanpassing gedaan op basis van net ingevulde, sessiespecifieke informatie.</div>';
+    }
+  }catch(_){}
   const oefeningNamen=rows.map(r=>exercises.find(e=>e.id===r.exercise_id)?.name).filter(Boolean);
   const introTekst=buildSessionIntroTekst(block.fase_naam,block.week_nr,prog?.doel,oefeningNamen);
   if(adj){
@@ -19695,6 +19785,7 @@ async function evaluateProgAdjustment(){
       <div style="font-size:14px;line-height:1.5;margin-bottom:10px">${uitleg||capitalize(adj.redenen.join('. '))+'.'}</div>
       ${renderMuscleRecoveryMiniList(muscleRows)}
       <div style="font-size:12px;color:var(--g4);background:var(--g1);border-radius:8px;padding:8px 10px;margin-top:8px">Voorstel: ${voorstelTekst} voor deze training.${adj.painMuscle?'<br>Voel je pijn tijdens een oefening voor <b>'+adj.painMuscle+'</b>? Verwijder die dan met het kruisje in de trainingslijst.':''}</div>
+      ${consistentieBrug}
       ${extraHtml}`;
   }else{
     const extraContextIntro=await buildProgAdviesExtraContext(prog,rows); // A3 — zelfde aanvullende context, ook als geen readiness-aanpassing nodig is

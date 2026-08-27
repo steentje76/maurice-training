@@ -641,3 +641,40 @@
   onbeheerde master-sprint, met expliciete voorafgaande toestemming. Niet
   door Maurice persoonlijk beoordeeld op het moment van mergen — ter review
   bij terugkeer.
+
+## DEC-041
+- Datum: 27 augustus 2026
+- Beslissing: A4 Daily Readiness & Recovery 2.0 — de twee bewezen gaps
+  gesloten: een consistentiebrug tussen Home-readiness en de pre-workout-
+  aanbeveling, en een compacte Herstel & Readiness-detailweergave.
+- Belangrijke correctie t.o.v. de eerste discovery-hypothese: aanvankelijk
+  leek DecisionCore.readinessDay() (Home) een tweede, parallelle Decision
+  Engine-functie t.o.v. computeProgAdjustment() (pre-workout). Nader
+  onderzoek van de daadwerkelijke, protected code toonde aan dat
+  readinessDay() INTERN exact computeProgAdjustment() aanroept -- er is dus
+  geen dubbele Decision Engine, uitsluitend een verschil in de daadwerkelijk
+  meegegeven inputs. Deze correctie is expliciet, transparant vastgelegd.
+- Kernbevinding: Home geeft structureel altijd gevoel=null, pijn=null door
+  aan readinessDay(), omdat de hrv_log-tabel deze kolommen niet heeft --
+  dit is geen bug maar een structurele beperking van de brondata die Home
+  gebruikt. Pre-workout haalt gevoel/pijn vers uit dezelfde check-in-sessie.
+  Bewezen met echte, protected code (identieke dagfactor/herstel, Home
+  toont 'ongewijzigd', pre-workout toont 'aangepast' met concrete redenen).
+- Alternatieven afgewezen: geen wijziging aan protected computeProgAdjustment()
+  of readinessDay() zelf (zou een vijfde/gewijzigde parameter vereisen voor
+  iets dat ook als aparte, aanvullende presentatielaag kon -- lager risico).
+  Geen nieuwe slaap-baselineformule ontworpen (bestond niet canoniek) --
+  expliciet als ontbrekend gedocumenteerd i.p.v. stilzwijgend verzonnen.
+- Impact: geen databasewijziging, geen nieuwe Calculation/Decision Engine-
+  berekening, geen protected-core-wijziging (expliciet geverifieerd:
+  core/decision.js en core/calculation.js bevatten geen enkele referentie
+  aan de nieuwe functies). Bewezen via bug-terugzet-simulatie dat de
+  consistentiebrug nergens setsDelta/rpeDelta wijzigt.
+- A4-eindconclusie: Home-readiness bestond al en is correct; het verschil
+  met pre-workout is niet langer misleidend; dezelfde canonieke basis wordt
+  gebruikt; compacte herstel-detailweergave toegevoegd. Geen P0/P1 meer
+  resterend. A4 CLOSED.
+- Verantwoordelijke: autonome implementatie door Claude tijdens een
+  onbeheerde master-sprint, met expliciete voorafgaande toestemming. Niet
+  door Maurice persoonlijk beoordeeld op het moment van mergen — ter review
+  bij terugkeer.

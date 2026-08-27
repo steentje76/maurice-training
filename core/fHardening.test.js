@@ -462,6 +462,18 @@ ok(/eventCtxTekst\?'\\nWEDSTRIJD\/DOEL-CONTEXT \(reeds berekend, niet zelf herbe
 ok(/geen trainingsbeslissing hierop baseren tenzij de gebruiker daar expliciet om vraagt/.test(html), 'P8: expliciete instructie aan de AI dat dit uitsluitend informatief is -- geen automatische trainingsaanpassing op basis van event_date');
 ok(!/tkProgramEventContext/.test(gateSrc) && !/tkProgramEventContext/.test(rescheduleSrc) && !/tkProgramEventContext/.test(skipSrc) && !/tkProgramEventContext/.test(doTodaySrc), 'P9 (architectuurgrens): Program Adaptation V1 raadpleegt de AI-coachcontext-functie NERGENS -- volledig gescheiden concerns');
 
+/* ── Q. TRAINING LOAD ADVISORY (v4.58.0) — ACWR-classificatie, geen protected-core-wijziging ── */
+console.log('\nQ. Training Load Advisory: neutrale ACWR-duiding, geen invloed op computeProgAdjustment()');
+ok(/TrainingLoadCore\.classifyAcwr\(/.test(html), 'Q1: gebruikt UITSLUITEND TrainingLoadCore voor de classificatie, geen eigen bandindeling in de UI-laag');
+ok(/TrainingLoadCore\.acwrAdvisoryText\(/.test(html), 'Q2: gebruikt UITSLUITEND TrainingLoadCore voor de tekstduiding');
+ok(/belastingData\.acwr\.reden==='ok'/.test(html), 'Q3: toont uitsluitend een classificatie wanneer AthleteCore.acuteChronic() zelf een geldig resultaat gaf -- respecteert de bestaande, protected datadrempel (ACWR_MIN_DAGEN)');
+ok(/await tkCoachBelasting\(\)/.test(html.slice(html.indexOf('let acwrRegel='), html.indexOf('let acwrRegel=')+400)), 'Q4: hergebruikt de al bestaande tkCoachBelasting() -- geen tweede, parallelle ACWR-berekening');
+const acwrRegelSrc = html.slice(html.indexOf('let acwrRegel='), html.indexOf('let acwrRegel=')+700);
+ok(!/computeProgAdjustment/.test(acwrRegelSrc), 'Q5 (architectuurgrens): de ACWR-classificatie raadpleegt computeProgAdjustment() NERGENS -- geen invloed op de bestaande, protected sets/RPE-aanpassing');
+ok(!/setsDelta|rpeDelta/.test(acwrRegelSrc), 'Q6 (architectuurgrens): geen sets/RPE-delta-logica in de ACWR-regel zelf -- puur informatieve AI-coachcontext, geen automatische trainingsaanpassing');
+const decisionSrc = fs.readFileSync(path.join(__dirname, 'decision.js'), 'utf8');
+ok(!decisionSrc.includes('TrainingLoadCore') && !decisionSrc.includes('classifyAcwr'), 'Q7 (protected core): core/decision.js bevat GEEN enkele referentie aan TrainingLoadCore/classifyAcwr -- protected core is bewijsbaar niet gewijzigd voor deze feature');
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { console.log('❌ Hardening niet groen.'); process.exit(1); }

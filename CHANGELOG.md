@@ -1,5 +1,50 @@
 # Trainingskompas — Changelog
 
+## v4.66.0 — A5: Device-connect-hardening, mid-workout-connect bewezen (27 augustus 2026)
+
+MASTERSPRINT A5 (Real Device Validation & Live Training 2.0). Discovery
+toonde aan dat mid-workout device-connect **al architecturaal bestond**:
+`tkRenderErgConnect()` is ingebed in de oefening-body zelf (identiek voor
+Training A/B, Workout, Losse oefening), en `_c2repaint()` werkt uitsluitend
+op een lokaal DOM-fragment (`c2body-${exId}`) — geen aanraking van
+`sessionLog`/`activeInstanceId`/`resolvedWorkout`/de trainingstimer.
+
+**Twee echte, bewezen bugs gevonden en gerepareerd** (geen nieuwe
+connect-flow gebouwd — het bestaande pad bleek grotendeels correct):
+
+1. **Gestapelde subscriptions** (`tkErgConnectDevice()`): `subscribeMetrics()`/
+   `subscribeConnection()` in `native/src/nativeConcept2BleTransport.js`
+   gebruiken `array.push()` — stapelen listeners, vervangen niet. De
+   aanroepende functie legde de teruggegeven unsubscribe-functies nooit
+   vast, waardoor dubbel tikken of opnieuw verbinden meerdere, gestapelde
+   listeners zou geven (dubbele DOM-updates, dubbele metric-callbacks).
+   Gerepareerd: de exercise-specifieke unsubscribe-functies worden nu
+   vastgelegd (`st._unsubMetrics`/`st._unsubConn`) en vóór elke nieuwe
+   subscriptie eerst opgeruimd — **nooit** de transportbrede
+   `unsubscribeMetrics()`, want dat zou een andere, gelijktijdig verbonden
+   oefening in dezelfde training kunnen raken.
+2. **Geen dubbel-tik-bescherming**: noch `tkErgPair()` (scannen) noch
+   `tkErgConnectDevice()` (verbinden) had een busy-guard. Toegevoegd:
+   `st._scanning`/`st._connecting`-vlaggen, correct teruggezet in alle
+   uitgangen (succes, mislukt, catch).
+
+Beide bugs bewezen via bug-terugzet-simulatie (tests W1/W6): de
+gerichte tests falen correct zodra de fix wordt teruggedraaid.
+
+**Bevestigd, niet gewijzigd** (al correct): machine-mismatch-detectie
+(`Concept2Live.machineMatchesExercise()`), reconnect-afhandeling bij
+signaalverlies, eerlijke web-fallback (nooit een nep-"verbonden"-status),
+canonieke logging-koppeling via `liveWorkoutToActual()` met
+provenance-tracking, RAW-naar-canoniek normalisatie via
+`Concept2Live.normalizeLiveMetric()` (nooit ongefilterde RAW-data naar
+UI/sessionLog/AI).
+
+Geen databasewijziging. Geen wijziging aan protected core — expliciet
+geverifieerd. Protected core (`calculation.js`/`decision.js`/
+`relationship.js`/`athlete.js`/`coaching.js`/`progression.js`) én de
+device-specifieke kernbestanden (`concept2Live.js`/`deviceIntegration.js`):
+SHA256-bevestigd byte-identiek, onaangetast.
+
 ## v4.65.0 — A4: Readiness-consistentie + Herstel & Readiness-detail (27 augustus 2026)
 
 MASTERSPRINT A4 (Daily Readiness & Recovery 2.0) — sluit uitsluitend de twee

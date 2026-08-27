@@ -678,3 +678,37 @@
   onbeheerde master-sprint, met expliciete voorafgaande toestemming. Niet
   door Maurice persoonlijk beoordeeld op het moment van mergen — ter review
   bij terugkeer.
+
+## DEC-042
+- Datum: 27 augustus 2026
+- Beslissing: A5 Real Device Validation & Live Training 2.0 — geen nieuwe
+  mid-workout-connect-flow gebouwd (bestond al architecturaal correct);
+  twee echte, bewezen bugs in de bestaande connect-functies gerepareerd.
+- Reden: discovery toonde aan dat het apparaat-koppel-widget al ingebed is
+  in de oefening-body zelf, identiek gerenderd tijdens actieve executie als
+  daarbuiten. _c2repaint() werkt uitsluitend op een lokaal DOM-fragment,
+  raakt sessionLog/activeInstanceId/resolvedWorkout/de trainingstimer niet.
+  Het "hard requirement" van deze sprint bleek dus al vervuld door
+  architectuurkeuzes uit eerdere sprints.
+- Gevonden bug 1 (gestapelde subscriptions): subscribeMetrics()/
+  subscribeConnection() in native/src/nativeConcept2BleTransport.js
+  gebruiken array.push() -- de aanroepende UI-code legde de teruggegeven
+  unsubscribe-functies nooit vast. Gerepareerd door exercise-specifieke
+  unsubscribe-functies vast te leggen en vóór elke nieuwe subscriptie op
+  te ruimen. Expliciet NIET de transportbrede unsubscribeMetrics()
+  gebruikt, omdat dat een andere, gelijktijdig verbonden oefening in
+  dezelfde training zou kunnen raken.
+- Gevonden bug 2 (geen dubbel-tik-bescherming): busy-guards toegevoegd aan
+  zowel het scannen (tkErgPair) als het verbinden (tkErgConnectDevice).
+- Beide bugs bewezen via bug-terugzet-simulatie (tests W1/W6).
+- Impact: geen databasewijziging, geen protected-core-wijziging (expliciet
+  geverifieerd, inclusief de device-specifieke kernbestanden
+  concept2Live.js/deviceIntegration.js). Minimale, precieze wijziging in
+  twee bestaande functies, geen nieuwe architectuur.
+- A5-status: het belangrijkste productrisico (mid-workout connect verliest
+  de sessie) bleek NIET te bestaan; de twee gevonden bugs waren reële,
+  maar kleinere robuustheidsgebreken, nu opgelost.
+- Verantwoordelijke: autonome discovery, bewijsvoering en gerichte reparatie
+  door Claude tijdens een onbeheerde master-sprint, met expliciete
+  voorafgaande toestemming. Niet door Maurice persoonlijk beoordeeld op het
+  moment van mergen — ter review bij terugkeer.

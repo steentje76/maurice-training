@@ -5615,16 +5615,22 @@ function tkErgPair(exId){
   try{
     var st=_c2pair[exId]; var t=tkDeviceTransport();
     if(!st||!t){ _c2repaint(exId, _c2note(_c2msg('not_available'))); return; }
+    // A5-hardening (v4.66.0): minimale busy-guard tegen dubbel tikken tijdens het scannen
+    // (Sectie 9) -- voorkomt twee overlappende discover()-aanroepen die elkaars resultaat
+    // in dezelfde _c2repaint() overschrijven.
+    if(st._scanning) return;
     var perm = (typeof t.getPermissionState==='function') ? t.getPermissionState() : 'granted';
     if(perm==='bluetooth_off'){ _c2repaint(exId, _c2note(_c2msg('bluetooth_off'))+_c2btn(exId,'Opnieuw zoeken')); return; }
     if(perm==='denied'){ _c2repaint(exId, _c2note(_c2msg('permission_required'))+_c2btn(exId,'Opnieuw proberen')); return; }
+    st._scanning=true;
     _c2repaint(exId, '<div style="font-size:12.5px;color:var(--g4)"><span style="opacity:.6">◌</span> '+_c2msg('scanning')+'</div>');
     Promise.resolve(t.discover()).then(function(devs){
+      st._scanning=false;
       devs=devs||[]; st.devices=devs;
       if(!devs.length){ _c2repaint(exId, _c2note('Geen Concept2 gevonden. Controleer of je PM5 aan staat en houd je telefoon dichtbij.')+_c2btn(exId,'Opnieuw zoeken')); return; }
       _c2repaint(exId, _c2deviceList(exId, devs));
-    }).catch(function(){ _c2repaint(exId, _c2note(_c2msg('failed'))+_c2btn(exId,'Opnieuw zoeken')); });
-  }catch(e){ _c2repaint(exId, _c2note(_c2msg('failed'))+_c2btn(exId,'Opnieuw zoeken')); }
+    }).catch(function(){ st._scanning=false; _c2repaint(exId, _c2note(_c2msg('failed'))+_c2btn(exId,'Opnieuw zoeken')); });
+  }catch(e){ if(_c2pair[exId])_c2pair[exId]._scanning=false; _c2repaint(exId, _c2note(_c2msg('failed'))+_c2btn(exId,'Opnieuw zoeken')); }
 }
 function _c2mLabel(mt){ return _C2ERGLBL[({rowerg:'rowing',skierg:'skierg',bikeerg:'bikeerg'}[mt])]||(mt?_C2ERGLBL[mt]:null)||'Concept2 PM5'; }
 function _c2deviceList(exId, devs){
@@ -5672,20 +5678,36 @@ function _c2connectedInner(exId, cm){
 }
 function tkErgConnectDevice(exId, idx){
   var st=_c2pair[exId]; var t=tkDeviceTransport(); if(!st||!t) return; var d=st.devices[idx]; if(!d) return;
+  // A5-hardening (v4.66.0): busy-guard tegen dubbel tikken op "verbinden" (Sectie 9) --
+  // voorkomt twee gelijktijdige connect-promises die elk hun eigen subscriptions zouden
+  // aanmaken vóórdat de eerste klaar is.
+  if(st._connecting) return;
+  st._connecting=true;
+  // A5-hardening (v4.66.0): subscribeMetrics()/subscribeConnection() STAPELEN listeners
+  // (array.push in het transport) i.p.v. te vervangen -- bevestigd via
+  // native/src/nativeConcept2BleTransport.js. Zonder eerst de vorige subscriptie van
+  // DEZE oefening op te ruimen zou dubbel tikken of opnieuw verbinden meerdere,
+  // gestapelde listeners geven (dubbele DOM-updates, dubbele metric-callbacks). Ruim
+  // daarom eerst de eerder VASTGELEGDE, EXERCISE-SPECIFIEKE unsubscribe-functies op
+  // (nooit de transportbrede unsubscribeMetrics(), want dat zou ook een ANDERE
+  // gelijktijdig verbonden oefening in dezelfde training kunnen raken).
+  if(typeof st._unsubMetrics==='function'){ try{st._unsubMetrics();}catch(_){} st._unsubMetrics=null; }
+  if(typeof st._unsubConn==='function'){ try{st._unsubConn();}catch(_){} st._unsubConn=null; }
   _c2repaint(exId, '<div style="font-size:12.5px;color:var(--g4)">'+_c2msg('connecting')+'</div>');
   try{
     Promise.resolve(t.connect(st.mt, d.id)).then(function(res){
+      st._connecting=false;
       if(!res||res.connected!==true){ _c2repaint(exId, _c2note(_c2msg('failed'))+_c2btn(exId,'Opnieuw zoeken')); return; }
       st.connected=true; st.deviceId=d.id;
       _c2repaint(exId, _c2connectedInner(exId, null));
       // connectie-events: reconnect/disconnect uit het transport (geen fake).
-      if(typeof t.subscribeConnection==='function') t.subscribeConnection(function(e){
+      if(typeof t.subscribeConnection==='function') st._unsubConn=t.subscribeConnection(function(e){
         if(!st.connected) return;
         if(e&&e.state==='reconnecting') _c2repaint(exId, _c2note('Verbinding verbroken — opnieuw verbinden…'));
         else if(e&&e.state==='disconnected' && st.connected){ st.connected=false; _c2repaint(exId, _c2note('PM5 niet meer bereikbaar.')+_c2btn(exId,'Opnieuw verbinden')); }
         else if(e&&e.state==='connected') _c2repaint(exId, _c2connectedInner(exId, st.lastCm||null));
       });
-      t.subscribeMetrics(function(evt){
+      st._unsubMetrics=t.subscribeMetrics(function(evt){
         var cm=(evt&&evt.metrics&&evt.metrics.schema)?evt.metrics
              : (typeof Concept2Live!=='undefined'?Concept2Live.normalizeLiveMetric((evt&&evt.metrics)||evt||{}, st.mt, {}):null);
         if(!cm) return; st.lastCm=cm;
@@ -5693,8 +5715,8 @@ function tkErgConnectDevice(exId, idx){
         if(_c2liveLast[exId] && (now-_c2liveLast[exId])<250){ return; }  // gecontroleerde UI-cadans
         _c2liveLast[exId]=now; _c2repaint(exId, _c2connectedInner(exId, cm));
       });
-    }).catch(function(){ _c2repaint(exId, _c2note(_c2msg('failed'))+_c2btn(exId,'Opnieuw zoeken')); });
-  }catch(e){ _c2repaint(exId, _c2note(_c2msg('failed'))+_c2btn(exId,'Opnieuw zoeken')); }
+    }).catch(function(){ st._connecting=false; _c2repaint(exId, _c2note(_c2msg('failed'))+_c2btn(exId,'Opnieuw zoeken')); });
+  }catch(e){ st._connecting=false; _c2repaint(exId, _c2note(_c2msg('failed'))+_c2btn(exId,'Opnieuw zoeken')); }
 }
 function tkErgDisconnect(exId){
   var st=_c2pair[exId]; var t=tkDeviceTransport();
@@ -5962,7 +5984,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.65.0';
+const APP_VER = 'v4.66.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';

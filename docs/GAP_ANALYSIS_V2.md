@@ -63,11 +63,12 @@ Geen enkel P0 is momenteel open. De drie eerder gevonden P0's zijn gesloten via 
 **Dependency:** blokkeert Track 8 (F8) volledig.
 **Priority:** P2. **Complexity:** M-L per besluit. **Roadmap phase:** F8.
 
-### GAP-P2-002 — 7 `bak_p_*`-backuptabellen zonder retentiebeleid
+### GAP-P2-002 (uitgebreid via de Backup & Retention Decision-sprint) — 8 `bak_p_*`-backuptabellen, audit compleet, verwijdering blijft open
 **Capability-ID:** PLAT-BACKUP-CLEANUP-001
-**Current:** 7 losse backup-kopieën (93-154 rijen elk), zonder primary key, RLS aan/geen policies (onbereikbaar voor gebruikers, wel nog in de DB).
-**Evidence:** DB VERIFIED.
-**Target:** exporteren en verwijderen via een kleine, expliciet goedgekeurde migratie.
+**Current:** 8 losse backup-kopieën (1-154 rijen elk, eerdere telling van 7 was onvolledig) — elk heeft een corresponderende, actief gebruikte canonieke tabel zonder `bak_`-prefix. Volledige audit uitgevoerd: 0 FK-referenties in beide richtingen, 0 code-referenties repo-breed, RLS enabled met 0 policies (deny-all, geen actieve exposure). Alle 8 geclassificeerd als **SAFE TO ARCHIVE** (niet "safe to remove" — data verwijderen is onomkeerbaar, geen enkele tabel is met zekerheid overbodig zonder Product Owner-bevestiging).
+**Evidence:** DB VERIFIED (rijaantal, RLS, FK-graaf) + CODE VERIFIED (0 referenties). Zie `docs/BACKUP_RETENTION_CONTRACT.md` voor de volledige classificatietabel.
+**Target:** exporteren en/of verwijderen via een kleine, expliciet goedgekeurde migratie — zodra de Product Owner een retentiebeslissing neemt.
+**Blocker classificatie:** `POLICY_DECISION_REQUIRED` voor de daadwerkelijke actie. De audit zelf is compleet en blokkeert niets.
 **Priority:** P2. **Complexity:** S. **Roadmap phase:** F1.
 
 ### GAP-P2-003 (verkleind) — Observability: resterende instrumentatie

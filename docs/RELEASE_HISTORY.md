@@ -2,8 +2,22 @@
 
 **Compacte index van alle 93 versie-releases in `CHANGELOG.md`.** Voor volledige details: zie de bijbehorende sectie in `CHANGELOG.md` (271 KB, niet hier gekopieerd — dit is bewust een index, geen duplicaat).
 
+## Verplaatst uit CURRENT_STATE.md tijdens de F1-entry-gate-cleanup (28 augustus 2026)
+
+Deze items stonden alleen in `CURRENT_STATE.md` (dat nu compact "current-only" is) en zijn hier bewaard zodat niets verloren gaat.
+
+**Technische schuld (pre-existing, niet door een specifieke sprint veroorzaakt):**
+- Dubbele HTML-id's (`nav-train-dot` ×12, spierheatmap-svg-onderdelen) en een klein div-tag-onbalans (1 stuk) — al aanwezig vóór Sprint 2, functioneel geen waargenomen probleem, nog op te schonen in een dedicated opruim-sprint. (`CHANGELOG.md` regel ~2958 verwijst naar dit item — die verwijzing wijst voortaan hierheen i.p.v. naar `CURRENT_STATE.md`.)
+- "Doel kiezen" in onboarding sloeg een eenvoudige `atleet.doel`-waarde op als tijdelijke oplossing vooruitlopend op het volwaardige Doelen-scherm (7.1) — Doelen-module is sindsdien gebouwd (Sprint 3, v3.3.30) en geconsolideerd in Voortgang (v4.21.0); niet geverifieerd of deze tijdelijke waarde toen is opgeruimd.
+
+**Open vragen die nooit expliciet zijn afgesloten (status ten tijde van verplaatsing, 28 augustus 2026 — mogelijk inmiddels achterhaald, niet opnieuw geverifieerd):**
+- Sport-specifieke AI-context-splitsing (`buildCtx()` generiek + per-sport, voorstel voor 7 sporten) — wachtte op bevestiging.
+- Vorm van social/competitief (leaderboards/teams/badges/combinatie) — DAT het gebouwd wordt was bevestigd (DEC-008), HOE niet.
+- Architectuur experience-motor voor leden-branding (DEC-010) — nog niet uitgewerkt op het moment van verplaatsing.
+- Privacy- en Help-schermen bevatten destijds bewust gemarkeerde placeholders (juridische tekst, contactkanaal) — status niet in deze sprint geverifieerd.
+
 ## Belangrijke architectuur-/securitymijlpalen (uitgelicht, niet chronologisch)
-- **P0 Security Closure (28 aug 2026, geen versienummer):** gyms-RLS-lek gesloten, 61 nieuwe security-regressietests, discovery-based release gate. Zie `SECURITY_FINDINGS.md`.
+- **P0 Security Closure (28 aug 2026, geen versienummer):** gyms-RLS-lek gesloten, 61 nieuwe security-regressietests, discovery-based release gate. Zie `docs/SECURITY_FINDINGS.md`.
 - **v4.69.0 — A6 Multi-Sport Interval Execution:** generieke interval-architectuur, geen 4 losse sport-engines.
 - **v4.50-4.55.0 — Women's Performance-fundament:** cyclustracking-MVP t/m Program Adaptation V1.
 - **v4.48.0 — RC0:** eerste release candidate voor Google Play Internal Testing.

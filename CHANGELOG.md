@@ -2955,7 +2955,7 @@ Zie `docs/Sprintrapporten/Sprint3.1_Rapport.md` voor het volledige verslag.
 - `APP_VER` → v3.3.27, `CACHE_NAME` → maurice-training-v3327 (sw.js).
 
 ### Opgelost
-- Geen functionele bugs gevonden tijdens QA; twee vooraf bestaande, niet door Sprint 2 veroorzaakte issues gedocumenteerd (dubbele `nav-train-dot`-id's, klein div-tag-onbalans) — zie CURRENT_STATE.md, Technische schuld.
+- Geen functionele bugs gevonden tijdens QA; twee vooraf bestaande, niet door Sprint 2 veroorzaakte issues gedocumenteerd (dubbele `nav-train-dot`-id's, klein div-tag-onbalans) — zie `docs/RELEASE_HISTORY.md`, "Verplaatst uit CURRENT_STATE.md".
 
 ### Bekende problemen
 - Onboarding en thema-wissel nog niet getest op een echt device/browser (geen device beschikbaar tijdens deze sprint).

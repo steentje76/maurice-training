@@ -64,7 +64,7 @@
 | ID | Capability | Code | DB | Tests | Integration | Device | Evidence/scientific | Maturity | Target | Gap | Priority | Phase |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | COMM-UI-001 | Commercial/entitlements-UI | **geen gevonden** — 0 treffers voor `plans`/`features` in index.html | `plans`, `features`, `credit_packs`, `plan_feature_quota`, `usage_log` volledig aanwezig | N/A | N/A | N/A | N/A | **NOT STARTED** | IMPLEMENTED | geen enkel UI-scherm | **P2** (gedowngraded van P1 per Roadmap 2.0 v1.1 §29/32 — schema/benchmark-pariteit rechtvaardigt geen vroege bouw) | **F12** (verplaatst uit F2; zie MS-F12-01 t/m 04) |
-| CAP-REGISTRY-SCREENS-001 | 38 top-level schermen (scherminventaris) | Geïnventariseerd via centrale router `go(id)` in index.html | N/A | Onderliggende modules TESTED; **flow-niveau geen dedicated tests** | N/A | N/A | N/A | IMPLEMENTED (inventaris **COMPLETED**) | — | flow-niveau testdekking per scherm | P3 | F1 |
+| CAP-REGISTRY-SCREENS-001 | 38 top-level schermen (scherminventaris) + trainingsstart-flow-audit (MS-F2-01) | `docs/MS-F2-01_CANONICAL_TRAINING_START.md` — entrypoint-matrix, 6/8 paden convergeren via `openTrainingPreview` | N/A | `core/fExecutionIdentity.test.js` 13/13 (incl. sabotagebewijs voor 2 gefixte defecten) | N/A | N/A | N/A | **TESTED** (was IMPLEMENTED) | INTEGRATED | volledige convergentie Programma-blok/Repeat-Workout naar Preview-adapter (grotere herbouw, bewust uitgesteld); overige flow-niveau testdekking per scherm | **P1** (F2-actief) | **F2** (MS-F2-01, PARTIAL) |
 
 | DEV-VALIDATION-001 | Real-device-validatie (samenvattend, dekt Concept2 + Google Health) | zie DEV-CONCEPT2-001, DEV-WEARAUTH-001, DEV-WEARSYNC-001 | N/A | Software-niveau TESTED op alle onderliggende capabilities | Deels (wearable-sync draait tegen echte handler) | **OPEN** op alle drie | N/A | TESTED (software) | VALIDATED | real-device-bevestiging in productie voor Concept2 PM5 en Google Health-sync | P2 | F5 |
 
@@ -83,12 +83,14 @@
 | Status | Aantal | IDs |
 |---|---|---|
 | CLOSED | 5 | SEC-GYMS-001, SEC-TEST-001, SEC-GATE-001, AI-COACH-001, SEC-USERROLE-001 |
-| TESTED | 9 | PLAT-DELETE-001, SOC-GYMTEAM-001, EVID-SCI-001, DEC-CORE-001, DEV-WEARAUTH-001, DEV-CONCEPT2-001, END-HYROX-001, DEV-VALIDATION-001, PLAT-OBSERVABILITY-001 |
+| TESTED | 10 | PLAT-DELETE-001, SOC-GYMTEAM-001, EVID-SCI-001, DEC-CORE-001, DEV-WEARAUTH-001, DEV-CONCEPT2-001, END-HYROX-001, DEV-VALIDATION-001, PLAT-OBSERVABILITY-001, CAP-REGISTRY-SCREENS-001 |
 | NOT STARTED | 5 | PLAT-BACKUP-CLEANUP-001, AI-OUTPUT-CONTRACT-001, WOMENS-PERF-DECISIONS-001, COMM-UI-001, SCI-CONSENT-001 |
-| IMPLEMENTED | 3 | COACH-RELATIONSHIP-001, AI-PROGRAM-AUTOGEN-001, CAP-REGISTRY-SCREENS-001 |
+| IMPLEMENTED | 2 | COACH-RELATIONSHIP-001, AI-PROGRAM-AUTOGEN-001 |
 | INTEGRATED | 3 | DEV-WEARSYNC-001, END-INTERVAL-001, CTX-CYCLE-001 |
 | VALIDATED | 2 | GYM-RLS-SCOPING-001, SEC-CONFIG-001 |
-| **Totaal** | **27** | 5+9+5+3+3+2 = 27 ✓ |
+| **Totaal** | **27** | 5+10+5+2+3+2 = 27 ✓ |
+
+**Wijziging deze sprint (MS-F2-01):** CAP-REGISTRY-SCREENS-001 van IMPLEMENTED → TESTED (eerste F2-mastersprint, PARTIAL — zie `docs/MS-F2-01_CANONICAL_TRAINING_START.md`).
 
 **Wijziging deze sprint (MS-F1-03):** nieuwe capability SEC-CONFIG-001 toegevoegd als VALIDATED (secret-inventory, client/server-classificatie, redactie-uitbreiding met de generieke term "key", live geverifieerd tegen de `config`-tabel). Twee orphaned DB-kolommen gevonden (`config.anthropic_key`, `config.pin_hash`) — niet verwijderd, `MANUAL_USER_VALIDATION_REQUIRED` (zie `docs/CONFIGURATION_SECURITY_CONTRACT.md`).
 

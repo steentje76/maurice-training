@@ -179,7 +179,7 @@
       "E1.1"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "TESTED",
     "dependencies": [],
     "target_maturity": "IMPLEMENTED",
     "objective": "All normal entry points converge without duplicated execution logic.",
@@ -2894,13 +2894,13 @@
     "track": "Platform/Production",
     "phase": "F2",
     "priority": "P2",
-    "status": "IMPLEMENTED",
+    "status": "TESTED",
     "target": "CLOSED",
     "dependencies": [],
-    "software_validation": "N/A",
+    "software_validation": "PASS",
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
-    "next_action": "opgewaardeerd van eigen F1/P3-testaudit naar volwaardige F2 Athlete Core Excellence per v1.1; zie MS-F2-01 t/m 08"
+    "next_action": "MS-F2-01 PARTIAL: execution-identity-lek en bevroren timer gefixed (activeInstanceId, startTrainTimer). Volledige architecturale convergentie van Programma-blok/Repeat-Workout naar de Preview-adapter blijft open, zie docs/MS-F2-01_CANONICAL_TRAINING_START.md."
   },
   {
     "id": "SCI-CONSENT-001",

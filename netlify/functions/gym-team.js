@@ -92,6 +92,14 @@ exports.handler = async function (event) {
       const [target] = await targetRes.json();
       if (!target || target.gym_id !== caller.gym_id) return { statusCode: 404, body: JSON.stringify({ error: { message: 'Gebruiker niet gevonden in jouw gym' } }) };
 
+      // P0-002-fix: niemand kan de rol wijzigen van iemand met een gelijke of hogere rol
+      // dan zijn eigen rol (voorkomt dat een manager een owner of een andere manager
+      // degradeert — de eerdere check hieronder blokkeerde alleen het TOEKENNEN van een
+      // te hoge rol, niet het WIJZIGEN van iemand die al gelijk/hoger stond).
+      if (target.gym_role_level >= caller.gym_role_level) {
+        return { statusCode: 403, body: JSON.stringify({ error: { message: 'Je kunt de rol niet wijzigen van iemand met een gelijke of hogere rol dan die van jezelf' } }) };
+      }
+
       // Niemand kan een rol toekennen die hoger is dan zijn eigen rol (voorkomt dat een
       // manager per ongeluk of moedwillig iemand tot owner promoveert).
       if (ROLE_LEVEL[newRole] > caller.gym_role_level) {

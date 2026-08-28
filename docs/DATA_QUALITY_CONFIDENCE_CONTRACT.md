@@ -45,8 +45,8 @@ Repo-brede zoekactie naar `||0`/`??0`-patronen op RPE/HRV/gewicht/reps leverde g
 
 **Alle 9 regels bevestigd veilig: geen enkele produceert een harde aanbeveling bij onvoldoende data.**
 
-## AI Quality Boundary — bevestigd (sectie 22)
-Reeds bevestigd in MS-F3-06/07: de AI ontvangt uitsluitend reeds-besloten Decision-uitkomsten met expliciete instructie deze niet te wijzigen. Bij onvoldoende data levert de Decision Engine zelf al `geen_advies`/`null` — de AI kan dus niet "toch een hard advies verzinnen", want er is niets om te verzinnen bovenop.
+## AI Quality Boundary — bevestigd op prompt-niveau, niet op technisch-afdwingbaar niveau (sectie 22, MS-F3-09-reconciliatie)
+De AI ontvangt uitsluitend reeds-besloten Decision-uitkomsten met expliciete promptinstructie deze niet te wijzigen. Bij onvoldoende data levert de Decision Engine zelf al `geen_advies`/`null`. **Precieze formulering (gecorrigeerd t.o.v. een eerdere, te sterke claim):** dit betekent dat de deterministische upstream-keten de AI geen gefabriceerde Decision-waarde aanreikt en het model instrueert deze grens te respecteren — het betekent NIET dat het technisch onmogelijk is voor een AI-modelantwoord om van deze instructie af te wijken. Er bestaat momenteel geen technische output-validator die elk afwijkend AI-antwoord afdwingbaar blokkeert; dat is expliciet **GAP-P1-003, met bestemming F4 (AI Output Contract)** — geen F3-capability. F3 claimt dus: "de AI krijgt nooit een gefabriceerde waarde aangereikt en wordt geïnstrueerd de grens te respecteren", niet: "de AI kan technisch onmogelijk fabriceren."
 
 ## Open Gap
 **GAP-P2-015** (nieuw): `recoveryScore()`'s confidence-model telt alleen componenten, filtert niet op componentkwaliteit (in tegenstelling tot `readinessDay()`'s wél-aanwezige `ONBETROUWBAAR`-filter). Niet kritiek (geen hard advies wordt hierdoor onveilig geproduceerd — de Recovery Score is altijd een aanvullend, informatief getal, nooit de directe bron van een Decision Rule-uitkomst zelf), maar een reële inconsistentie tussen twee vergelijkbare confidence-implementaties.

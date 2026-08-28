@@ -31,6 +31,32 @@
  *     registry-ID herkenbaar zijn, en (b) de "Canonical capability count"/"X/X"-telling die
  *     docs/ROADMAP_COVERAGE_AUDIT.md zelf rapporteert onder "Registry Coverage". Faalt hard
  *     bij een mismatch, met de drie afzonderlijke tellingen in de foutmelding.
+ * 15. Capability Maturity Consistency: voor elke capability-ID die zowel in
+ *     CAPABILITY_REGISTRY.md als in de classificatietabel van ROADMAP_COVERAGE_AUDIT.md
+ *     voorkomt, mag de ene bron niet "NOT STARTED" zeggen terwijl de andere een afgeronde
+ *     maturity (VALIDATED/CLOSED/INTEGRATED/TESTED) claimt. Bewust een asymmetrische,
+ *     regelgebaseerde check (niet kolom-positie-afhankelijk) om fragiliteit bij wisselende
+ *     tabellayouts te vermijden — zie code-commentaar voor de precieze grens.
+ * 16. Closed-Blocker Contradiction (heuristisch, handmatige verificatie blijft nodig):
+ *     signaleert zinnen in CURRENT_STATE.md die een capability-ID als actieve "blokkeert"-
+ *     reden noemen terwijl diezelfde ID elders (registry/roadmap-index) als CLOSED/VALIDATED
+ *     geregistreerd staat, tenzij de zin zelf al "verouderd"/"gecorrigeerd"/historische
+ *     markering bevat.
+ *
+ * NIET GEAUTOMATISEERD — Test-status freshness (bewust, zie Gate A-opdracht sectie 3):
+ *     een check die zou verifiëren of elk testtellingscitaat in de losse Markdown-
+ *     documentatie (CURRENT_STATE.md, TEST_VERIFICATION.md, CAPABILITY_REGISTRY.md, HANDBOOK)
+ *     overeenkomt met de daadwerkelijke, live output van `node core/release-gate.js` zou een
+ *     stabiel machine-leesbaar exportformaat van die runner vereisen (bv. een JSON-samenvatting
+ *     die release-gate.js zelf wegschrijft) — dat bestaat momenteel niet. Zonder die bron zou
+ *     de check moeten gokken op vrije tekst ("78 testbestanden", "80 stappen", "127+ tests")
+ *     verspreid over minstens vier documenten met elk hun eigen zinsopbouw, wat routinematig
+ *     valse positieven/negatieven zou opleveren bij elke kleine herformulering. Voor nu blijft
+ *     dit een HANDMATIGE controle bij elke roadmap-/documentatiesprint: draai `node core/
+ *     release-gate.js` en vergelijk de uitkomst met wat elk document beweert (zoals in deze
+ *     Gate A-sprint is gedaan voor de vier kandidaatbevindingen). Als een toekomstige sprint
+ *     `core/release-gate.js` uitbreidt met een `--json`-uitvoermodus, kan deze check alsnog
+ *     betrouwbaar worden toegevoegd.
  *
  * BEPERKING (bewust, geen overengineering): dit script parseert geen vrije Markdown-
  * prosa met volledige semantiek. Punt 4 is een grove, op sectiekoppen gebaseerde
@@ -265,6 +291,84 @@ try {
     }
   } catch (e) {
     fail('Capability count consistency check kon niet worden uitgevoerd: ' + e.message);
+  }
+})();
+
+// 15. Capability Maturity Consistency — betrouwbare kolomextractie, geen hele-regel-scan.
+// Coverage-audit heeft een simpel, consistent 4-koloms format (| ID | maturity | actie | doel |);
+// kolom 2 wordt exact geparsed. Registry-rijen hebben een historisch gegroeide, wisselende
+// kolomvolgorde, maar gebruiken door de hele registry heen consequent **vetgedrukt** voor de
+// daadwerkelijke huidige-status-marker (target-kolomwaarden staan nooit vetgedrukt). Rijen
+// zonder enige vetgedrukte maturity-marker worden bewust overgeslagen (geen vergelijking
+// mogelijk) in plaats van een gok te wagen — voorkomt de valse-positieven die een simpele
+// hele-regel-substring-scan zou geven op target-kolomwoorden.
+(function checkCapabilityMaturityConsistency() {
+  try {
+    const registryText = fs.readFileSync(path.join(ROOT, 'docs/CAPABILITY_REGISTRY.md'), 'utf8');
+    const coverageText = fs.readFileSync(path.join(ROOT, 'docs/ROADMAP_COVERAGE_AUDIT.md'), 'utf8');
+    const MATURITY_RE = /NOT STARTED|IMPLEMENTED|TESTED|INTEGRATED|VALIDATED|CLOSED/;
+
+    const registryStatus = {};
+    registryText.split('\n').forEach(line => {
+      const idMatch = line.match(/^\|\s*([A-Z][A-Za-z0-9/-]+-\d+)\s*\|/);
+      if (!idMatch) return;
+      const boldMatch = line.match(/\*\*(NOT STARTED|IMPLEMENTED|TESTED|INTEGRATED|VALIDATED|CLOSED)\*\*/);
+      if (boldMatch) registryStatus[idMatch[1]] = boldMatch[1];
+    });
+
+    const coverageStatus = {};
+    coverageText.split('\n').forEach(line => {
+      const cells = line.split('|').map(c => c.trim());
+      if (cells.length < 3) return;
+      const id = cells[1];
+      if (!/^[A-Z][A-Za-z0-9/-]+-\d+$/.test(id)) return;
+      const cell2 = cells[2].replace(/\*\*/g, '');
+      const m = cell2.match(MATURITY_RE);
+      if (m && cell2.trim() === m[0]) coverageStatus[id] = m[0]; // alleen als kolom 2 UITSLUITEND de maturity-waarde bevat
+    });
+
+    const DONE = new Set(['VALIDATED', 'CLOSED', 'INTEGRATED', 'TESTED']);
+    const mismatches = [];
+    Object.keys(registryStatus).forEach(id => {
+      if (!coverageStatus[id]) return;
+      const reg = registryStatus[id], cov = coverageStatus[id];
+      if (reg === 'NOT STARTED' && DONE.has(cov)) mismatches.push(id + ': registry=NOT STARTED, coverage-audit=' + cov);
+      if (cov === 'NOT STARTED' && DONE.has(reg)) mismatches.push(id + ': coverage-audit=NOT STARTED, registry=' + reg);
+    });
+
+    if (mismatches.length) fail('Capability maturity-tegenstrijdigheid tussen registry en coverage-audit: ' + mismatches.join('; '));
+    else pass('Geen maturity-tegenstrijdigheden tussen CAPABILITY_REGISTRY.md en ROADMAP_COVERAGE_AUDIT.md (' + Object.keys(registryStatus).length + ' vetgedrukte registry-statussen vergeleken met ' + Object.keys(coverageStatus).length + ' coverage-audit-statussen)');
+  } catch (e) {
+    fail('Capability maturity consistency check kon niet worden uitgevoerd: ' + e.message);
+  }
+})();
+
+// 16. Closed-Blocker Contradiction — heuristisch, zie docstring. Vervolg op de bestaande
+// "CLOSED roadmap-items in GAP_ANALYSIS_V2.md"-check, nu specifiek voor CURRENT_STATE.md se
+// "blokkeert"-taal, waar de Track-13/GYM-RLS-SCOPING-001-bevinding een reëel voorbeeld van was.
+// Vergelijking op ZINSNIVEAU (gesplitst op ". "), niet op regelniveau: een lange alinea kan
+// meerdere IDs en het woord "blokkeert" bevatten zonder dat ze inhoudelijk verbonden zijn
+// (bv. "X, Y, Z zijn CLOSED. Niets hiervan blokkeert de volgende fase." is geen tegenstrijdigheid).
+(function checkClosedBlockerContradiction() {
+  try {
+    const currentStateText = fs.readFileSync(path.join(ROOT, 'docs/00_Project_Management/CURRENT_STATE.md'), 'utf8');
+    const closedIds = new Set(
+      index.filter(x => x.status === 'CLOSED' || x.status === 'VALIDATED').map(x => x.id)
+    );
+    const staleMarkers = /verouderd|gecorrigeerd|~~/i;
+    const problems = [];
+    const sentences = currentStateText.replace(/\n/g, ' ').split(/(?<=[.!?])\s+/);
+    sentences.forEach(sentence => {
+      if (!/blokkeer/i.test(sentence)) return;
+      if (staleMarkers.test(sentence)) return; // al expliciet als gecorrigeerd/doorgestreept gemarkeerd
+      closedIds.forEach(id => {
+        if (sentence.includes(id)) problems.push('"' + id + '" (status ' + index.find(x => x.id === id).status + ') genoemd in dezelfde zin als "blokkeert" zonder verouderd/gecorrigeerd-markering: "' + sentence.trim().slice(0, 120) + '..."');
+      });
+    });
+    if (problems.length) fail('Closed-blocker contradictie(s) in CURRENT_STATE.md: ' + problems.join('; '));
+    else pass('Geen CLOSED/VALIDATED-capability wordt in CURRENT_STATE.md nog in dezelfde zin als een ongemarkeerde actieve blokkade genoemd');
+  } catch (e) {
+    fail('Closed-blocker contradiction check kon niet worden uitgevoerd: ' + e.message);
   }
 })();
 

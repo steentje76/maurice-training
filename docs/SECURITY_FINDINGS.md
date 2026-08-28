@@ -1,6 +1,6 @@
 # SECURITY_FINDINGS.md — Trainingskompas (canonieke, actuele versie)
 
-**Laatst herbouwd:** 28 augustus 2026, tegen `main` @ `0ac59fb62df961686152e6cfcb80ab532ee21a8d` (na MS-F1-01).
+**Laatst herbouwd:** 28 augustus 2026, tegen `main` @ `cba6af42b4774d27a35d27854d4815a9b52178b5` (na F1 Foundation Closure). **Scope van dit document:** toegangscontrole/RLS/privilege-escalatie-bevindingen. Secrets- en configuratiehygiëne-bevindingen (orphaned DB-kolommen, client-lock-hardening) staan apart in `docs/CONFIGURATION_SECURITY_CONTRACT.md` (MS-F1-03).
 **Bewijsniveau:** DB VERIFIED (volledige policy-definities, grants, triggers, functiebroncode gelezen, live SQL-transactietests) + CODE VERIFIED (Netlify Functions). Alle DB-wijzigingen via expliciet gedocumenteerde, reviewbare migraties.
 
 ## CURRENT STATUS (samenvatting)

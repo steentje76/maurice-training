@@ -73,16 +73,17 @@ const RESETS_INSTANCE_ID = /activeInstanceId\s*=\s*(null|draft\.instanceId|_draf
       fnName + '() bevat specifiek "activeInstanceId=null" (de MS-F2-01-fix, niet alleen een draft-restore-pad)');
   }
 });
-// launchProgramTrainScreen kreeg tijdens MS-F2-07 een eigen resume-pad (zie
-// fProgramResume.test.js): "null bij een verse start, of de eigen draft-instanceId bij
-// resume" is nu het juiste, sterkere contract — niet langer een kale, onvoorwaardelijke
-// "activeInstanceId=null" (die het legitieme draft.instanceId niet meer zou onderscheiden
-// van resume vs. vers). De algemene RESETS_INSTANCE_ID-check hierboven dekt dit al af.
+// launchProgramTrainScreen kreeg tijdens MS-F2-07 een eigen resume-pad, en tijdens
+// GAP-P1-006-closure (MS-F2-08) een echte instance-creatie bij een verse start (was:
+// altijd null). Het contract is nu: bij resume de eigen draft-instanceId, bij een verse
+// start een NIEUW aangemaakte canonical instance — nooit een vreemde/oude ID.
 {
   const body = extractFunctionBody(html, 'launchProgramTrainScreen');
   if (body) {
-    ok(/activeInstanceId=_resume\?\(_draft\.instanceId\|\|null\):null/.test(body),
-      'launchProgramTrainScreen() gebruikt het conditionele resume-contract (null bij verse start, eigen draft.instanceId bij resume) — nooit een vreemde/oude instance-ID');
+    ok(/if\(_resume\)\{\s*activeInstanceId=_draft\.instanceId\|\|null/.test(body),
+      'launchProgramTrainScreen() gebruikt bij resume de eigen draft-instanceId');
+    ok(/activeInstanceId=await createTrainingInstance\(/.test(body),
+      'launchProgramTrainScreen() maakt bij een verse start een echte, nieuwe training_instances-rij aan (GAP-P1-006-closure — vóór deze fix bleef activeInstanceId hier altijd null)');
   }
 }
 

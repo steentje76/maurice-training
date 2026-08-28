@@ -179,7 +179,7 @@
       "E1.1"
     ],
     "priority": "P1",
-    "status": "TESTED",
+    "status": "CLOSED",
     "dependencies": [],
     "target_maturity": "IMPLEMENTED",
     "objective": "All normal entry points converge without duplicated execution logic.",
@@ -410,7 +410,7 @@
       "UX"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F2-01",
       "MS-F2-02",

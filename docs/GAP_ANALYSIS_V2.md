@@ -10,12 +10,12 @@
 | Prioriteit | Aantal |
 |---|---|
 | P0 | **0 open** |
-| P1 | 3 |
+| P1 | 2 |
 | P2 | 8 |
 | P3 | 4 |
 | P4 | 2 |
 
-Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de volledige sluitingsgeschiedenis (F1-bevindingen + de 2 execution-defecten uit MS-F2-01). Nieuw open P1-item: convergentie van Programma-blok/Repeat-Workout naar de Preview-adapter (zie hieronder).
+Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de volledige sluitingsgeschiedenis (F1-bevindingen + de execution-defecten uit de F2 Canonical-Training-Start-sprint + de latere GAP-P1-006-closure).
 
 ---
 
@@ -59,13 +59,7 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Dependency:** EVID-SCI-001, DEC-CORE-001.
 **Priority:** P1. **Complexity:** L. **Roadmap phase:** F4.
 
-### GAP-P1-006 — Programma-blok en Repeat Workout niet geconvergeerd naar de Preview-adapter
-**Capability-ID:** CAP-REGISTRY-SCREENS-001
-**Current:** 6 van de 8 trainingsstart-entrypoints (alle vaste- en custom-trainingen) lopen via de canonieke `openTrainingPreview()`→`startInstanceFromDefinition()`-keten. De Programma-blok-start (`startProgramBlockTraining`→`launchProgramTrainScreen`) en Repeat Workout (`startRepeatWorkout`) hebben een eigen, deels gedupliceerde opzetlogica (resume-detectie, `activeInstanceId`-beheer, state-reset) die niet via deze adapter loopt.
-**Evidence:** CODE VERIFIED, volledige entrypoint-matrix in `docs/MS-F2-01_CANONICAL_TRAINING_START.md`.
-**Target:** beide paden migreren naar de Preview/Definition-Adapter-architectuur (nieuwe Definition Adapters voor "programma-blok" en "herhaal-workout" als brontype).
-**Dependency:** geen harde technische afhankelijkheid; wel een grotere, zorgvuldig te plannen herbouw (niet als minimale fix binnen één sprint te doen — zie MS-F2-01-rapport).
-**Priority:** P1. **Complexity:** L. **Roadmap phase:** F2.
+
 
 ---
 
@@ -139,6 +133,15 @@ Vereist eerst een consent-flow (nog niet gebouwd) bovenop de al aanwezige Eviden
 ---
 
 ## CLOSED GAPS / HISTORICAL
+
+### (voorheen GAP-P1-006) — Programma-blok en Repeat Workout niet geconvergeerd naar de Preview-adapter — **STATUS: CLOSED**
+- **Original finding:** 6 van de 8 trainingsstart-entrypoints liepen via de canonieke `openTrainingPreview()`→`startInstanceFromDefinition()`-keten. Programma-blok en Repeat Workout hadden een eigen, deels gedupliceerde opzetlogica. Diepere root cause bij heropening: beide bronnen kregen daardoor NOOIT een eigen `training_instances`-rij — `activeInstanceId` bleef bij een verse start altijd `null`, dus `completeTrainingInstance()` deed bij afronden niets. Volledig onzichtbaar voor de plan-versus-uitvoering-dataset.
+- **Resolution:** canonieke instance-creatie (`createTrainingInstance()`) toegevoegd aan beide paden, met source-specifieke provenance in de vrije-vorm `snapshot`-JSONB (geen migratie nodig). Preview-UI zelf bewust niet geforceerd gelijk te maken — beide bronnen behouden hun eigen, functioneel rijkere pre-executieflow (recovery-check-in resp. gewicht-aanpassing-preview) als legitieme source-specific Definition-constructie.
+- **Mastersprint:** MS-F2-08 (GAP-P1-006-closure).
+- **Evidence:** `core/fGapP1006Closure.test.js` 11/11, sabotagebewijs geleverd en teruggedraaid. Live DB geverifieerd: `training_instances.snapshot` (jsonb) accepteert de nieuwe velden zonder schemawijziging.
+- **Closed date:** 28 augustus 2026.
+- **Gerelateerd:** MS-F2-01 herclassificeerd van PARTIAL naar CLOSED (zie `docs/MS-F2-08_GAP_P1_006_CLOSURE.md`).
+
 
 ### (nieuw, Home/Dashboard-sprint) — Data-verlies bij hervatten van een programmatraining — **STATUS: CLOSED**
 - **Original finding:** `launchProgramTrainScreen()` reset `sessionLog`/`sessionExtra` altijd onvoorwaardelijk, zonder ooit een bestaande, geldige draft voor dezelfde programmatraining te herstellen. `guardExistingDraft()` beschermt hier niet tegen (vraagt alleen bevestiging bij een ándere training). Gevolg: een sporter die een programmatraining start, sets logt, de app sluit zonder af te ronden, en later dezelfde training opnieuw opent, verloor stilzwijgend alle al gelogde sets.

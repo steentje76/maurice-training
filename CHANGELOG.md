@@ -1,5 +1,97 @@
 # Trainingskompas — Changelog
 
+## v4.69.2 — Vervolgaudit Fitbit sync integriteit: centrale gate + Home-warning + OAuth-diagnostiek (28 augustus 2026)
+
+Vervolg op v4.69.1 na gerichte tegenvragen van de Product Owner op drie punten uit
+dat eerdere rapport, plus een hertoetsing van de tijdzone-conclusie.
+
+**Fase 1 — forensisch bewezen: `hrvDagFactorPersonal`/`hrvRollingRecent` hebben geen
+leeftijdsgrens.** Bij <4 metingen in de rollende 7-dagenvensters valt de functie terug
+op "laatste losse meting", ongeacht hoe oud die is — een 6+ dagen oude HRV-waarde kan
+zo zonder cap als `'g'` (goed, t.o.v. eigen baseline) geclassificeerd blijven en de
+dagfactor/gereedheid ten onrechte optrekken. De trendfuncties zelf zijn bewust
+ongewijzigd gelaten (historische data blijft bruikbaar voor trends); alleen de
+NUMERIEKE factor die de dagfactor van vandaag voedt wordt vanaf nu gegated
+(`tkCurrentHrvComponent()`).
+
+**Fase 2 — één centrale gate i.p.v. losse regels.** Forensisch onderzoek wees uit dat
+de v4.69.1-fix drie plekken (`refreshHome`, `tkReadinessVandaag`,
+`recoveryAdjustmentForToday`) elk apart gated had op `lh.date` (de globaal nieuwste
+rij) — en dat er daarnaast nog **vijf** volledig ongegatede plekken bestonden die
+`lh.hrv`/`lh.rhr`/`lh.sleep` rechtstreeks als "vandaag" gebruikten:
+- `evaluateProgAdjustment()` — stuurde een ECHTE sets/RPE-aanpassing op stale data;
+- `renderLichaamPremium()` — de Lichaam-hero met Herstel/Gereedheid/"Klaar om te
+  trainen"-tegels; **vermoedelijk de exacte bron van het gerapporteerde screenshot**;
+- `openRecoveryDetail()` — labelde een 6 dagen oude meting letterlijk als "Vandaag: …";
+- de primaire Home-hero (`renderV43Home`) — toonde `lh.sleep` rechtstreeks ("Slaap:
+  9u13") los van de (wel al gegatede) dagfactor-berekening ernaast;
+- de AI-coach-contextstring — gaf HRV/RHR/slaap ongedateerd aan de AI door, exact het
+  scenario dat de architectuurregel verbiedt ("AI mag stale data niet presenteren
+  alsof deze actueel is").
+
+Nieuwe centrale helpers in `index.html` (geen wijziging aan protected core):
+`tkCurrentHealthInputs(hd)` — hergebruikt `DeviceCore.bodyMetricsFromLog()` (al bewezen
+op het Lichaam-scherm) + `isDailyMetricFresh()`, geeft per metric `{value, date, fresh,
+rawValue}` en een `dataStatus` ('current'/'stale'/'no_data'). `tkCurrentHrvComponent(hd,
+cur)` — gate op de HRV-trendfactor, met behoud van `st`/`baseline` als uitleg-metadata.
+Alle acht bovengenoemde call-sites (3 bestaand + 5 nieuw gevonden) zijn nu op deze ene
+gate aangesloten.
+
+**Fase 3 — geen schijnzekerheid meer bij onvoldoende actuele data.** Zowel de primaire
+Home-hero (`renderV43Home`) als de Lichaam-hero (`renderLichaamPremium`) tonen nu
+expliciet "Onvoldoende actuele gegevens" / "Wearable niet bijgewerkt" i.p.v. een
+neutrale fallback-dagfactor (1.00) stilzwijgend als "Klaar om te trainen"/"Goed" te
+presenteren. Geen nieuwe parallelle classificatie: hergebruikt `dataStatus` uit
+`tkCurrentHealthInputs()`.
+
+**Fase 4 — zichtbare storingsmelding op Home.** Nieuwe `renderHomeSyncWarning()` toont
+een compacte banner ("Fitbit-gegevens niet bijgewerkt" + laatste bekende datum +
+knop naar Lichaam → Gegevens & koppelingen) zodra `DeviceCore.deviceConnectionState`
+`sync_failed`/`token_expired` meldt. Verschijnt nooit bij gewone staleness zonder
+koppelingsstoring. `wearableSyncSilent()` (auto-sync bij opstart) ververst deze banner
+nu ook bij een mislukte poging — voorheen volledig stil, wat mede verklaarde waarom het
+leek alsof de app "al dagen succesvol meldde": er werd niets gemeld.
+
+**Fase 5 — repo-brede audit van sync-tijdstempel-semantiek.** Alle overige
+`last_sync_at`/"gesynchroniseerd"/"bijgewerkt"-teksten gecontroleerd
+(`renderWearableCard` op Profiel, `renderLichaamDataStatus`, `tkSyncMessage`) — allemaal
+al correct gegated op `sync.status`, op één plek na: het Profiel-scherm toonde
+"Laatste sync: [datum]" met de storing er losjes achteraan, wat bij een vluchtige
+lezing als succes oogde. Nu een eigen, ondubbelzinnige zin bij een mislukte poging.
+
+**Fase 6 — OAuth-foutdiagnostiek, veilig gesaniteerd.** `wearable-sync.js`
+(token-refresh) en `wearable-auth-callback.js` (token-exchange) loggen nu
+`{provider, phase, at, httpStatus, oauthError, oauthErrorDescription}` — uitsluitend
+het standaard OAuth2-foutcontract (RFC 6749 §5.2 `error`/`error_description`, elk
+lengte-begrensd). **Beveiligingsverbetering**: `wearable-auth-callback.js` logde
+voorheen het volledige, ongefilterde tokenresponse-object bij een fout — nu whitelist
+i.p.v. blacklist, nooit tokens/secrets. Maakt de volgende `refresh_failed` voor het
+eerst diagnosticeerbaar (invalid_grant vs. invalid_client vs. temporarily_unavailable
+etc.) zonder toegang tot Netlify-logs nodig te hebben voor de classificatie zelf.
+
+**Tijdzone-correctie opnieuw getoetst (niet herhaald, maar herbevestigd met bewijs).**
+De hardcoded `Europe/Amsterdam` in `_wearableSyncLib.js` (`amsterdamToday()`) is
+uitsluitend gebruikt voor een intern diagnostiek-veld (`today`/`todayDiag`) in de
+sync-respons — geverifieerd via repo-brede grep dat de client dit veld nergens leest
+of toont. De datumsleutel waaronder een meting wordt opgeslagen komt uit Google's eigen
+payload-datum, niet uit deze functie. Raakt dus geen enkele gebruikersgerichte
+tijdzone-correctheid; bewust ongewijzigd gelaten (minimale-wijziging-principe), met een
+lage-prioriteit opschoonsuggestie voor een latere sprint (vervang door een simpele
+UTC-daggrens, aangezien exacte tijdzone hier feitelijk niet uitmaakt).
+
+**Tests**: +1 scenario (10 asserts) in `core/fWearableSyncHandler.test.js` (bewijst de
+gesaniteerde OAuth-foutlog end-to-end via de ECHTE handler + gemockte transport, inclusief
+een expliciete assert dat tokens/secrets nooit in de logregel voorkomen). Volledige
+regressie via `core/release-gate.js`: 80 testbestanden automatisch uitgevoerd, 0 gefaald.
+Protected core (`calculation.js`/`decision.js`/`relationship.js`/`athlete.js`/
+`coaching.js`) SHA-bevestigd ongewijzigd t.o.v. main.
+
+**Bekende, bewust ongewijzigde beperking (ongewijzigd t.o.v. v4.69.1):** de
+HRV-trendclassificatie zelf (`hrvBaseline`/`hrvRollingRecent`) blijft zonder eigen
+leeftijdsgrens — Fase 1/2 gaten de NUMERIEKE uitkomst bij elk gebruik ervan voor
+"vandaag", maar wijzigen de onderliggende trendfuncties niet (die blijven correct
+bruikbaar voor toekomstige historische/trend-weergaven).
+
 ## v4.69.1 — Root-cause-fix: stale Fitbit-data op Home/Coach (28 augustus 2026)
 
 **Aanleiding**: Fitbit toonde vanochtend actuele waarden (stappen 58, herstel 87,

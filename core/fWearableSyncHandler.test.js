@@ -173,6 +173,50 @@ const event = { httpMethod: 'POST', headers: { authorization: 'Bearer session' }
   eq(body.code, 'RATE_LIMIT', 'S9: RATE_LIMIT expliciet gerapporteerd');
   eq(body.status, 'no_new_data', 'S9: geen valse "success" bij een geblokkeerde provider');
 
+  // ── SCENARIO 10 (v4.69.2, Fase 6 vervolgaudit): token-refresh mislukt (verlopen access
+  // token + Google wijst de refresh af) → 'refresh_failed' status + gesaniteerde OAuth-
+  // foutdiagnostiek in de server-log (provider/phase/httpStatus/oauthError/oauthErrorDescription),
+  // NOOIT tokens/secrets/volledige response. Vangt console.error op i.p.v. te mocken, zodat
+  // dit de ECHTE geproduceerde logregel bewijst.
+  {
+    const past = new Date(Date.now() - 3600*1000).toISOString(); // al verlopen access token
+    writtenRows = [];
+    global.fetch = async function(url, opts){
+      url = String(url); opts = opts || {}; const method = opts.method || 'GET';
+      const J = (obj, okFlag=true, status=200) => ({ ok: okFlag, status, json: async()=>obj, text: async()=>JSON.stringify(obj) });
+      if (url.indexOf('/auth/v1/user') !== -1) return J({ id: 'u1' });
+      if (url.indexOf('wearable_connections') !== -1 && method === 'GET')
+        return J([{ access_token: 'AT_OLD', token_expires_at: past, refresh_token: 'RT_SECRET_DO_NOT_LOG' }]);
+      if (url.indexOf('oauth2.googleapis.com/token') !== -1)
+        return J({ error: 'invalid_grant', error_description: 'Token has been expired or revoked.' }, false, 400);
+      if (url.indexOf('wearable_connections') !== -1 && method === 'PATCH') return J({}, true, 204);
+      return J({}, true, 200);
+    };
+    const captured = [];
+    const origErr = console.error;
+    console.error = function(){ captured.push(Array.prototype.slice.call(arguments)); };
+    let res10, body10;
+    try{ res10 = await handlerMod.handler(event); body10 = JSON.parse(res10.body); }
+    finally{ console.error = origErr; }
+
+    eq(body10.status, 'token_expired', 'S10: refresh_failed → status token_expired richting client');
+    eq(body10.code, 'TOKEN_REFRESH_ERROR', 'S10: machineleesbare code voor de refresh-mislukking');
+    ok(!/AT_OLD|RT_SECRET_DO_NOT_LOG/.test(JSON.stringify(body10)), 'S10: geen tokens in de HTTP-respons richting client');
+
+    const logLine = captured.find(a => String(a[0]||'').indexOf('token_refresh_failed') !== -1);
+    ok(!!logLine, 'S10: gesaniteerde token_refresh_failed-logregel wordt geschreven');
+    if (logLine){
+      const payload = JSON.parse(logLine[1]);
+      eq(payload.provider, 'google_health', 'S10: provider in de diagnostiek');
+      eq(payload.phase, 'token_refresh', 'S10: fase expliciet vastgelegd');
+      eq(payload.httpStatus, 400, 'S10: HTTP-status van Google in de diagnostiek');
+      eq(payload.oauthError, 'invalid_grant', 'S10: OAuth-foutcode (RFC 6749 §5.2) vastgelegd');
+      eq(payload.oauthErrorDescription, 'Token has been expired or revoked.', 'S10: gesaniteerde error_description vastgelegd');
+      const raw = JSON.stringify(logLine);
+      ok(!/AT_OLD|RT_SECRET_DO_NOT_LOG|access_token|refresh_token/.test(raw), 'S10: NOOIT tokens/secrets/tokenveldnamen in de log');
+    }
+  }
+
   console.log('\nwearable-sync HANDLER (mocked transport): RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error('HANDLER TEST FAIL:', e); process.exit(2); });

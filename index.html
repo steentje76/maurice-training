@@ -6016,7 +6016,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.1';
+const APP_VER = 'v4.69.2';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -21114,12 +21114,18 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
   const heroEl=document.getElementById('home-hero');
   if(heroEl){
     const rd=(typeof trainReadiness==='function')?trainReadiness(dfInfo):null;
-    const title=dfInfo?(rd?rd.txt:'Klaar om te trainen'):'Doe je check-in';
-    const sub=dfInfo?(dfInfo.factor>=1?'Je lichaam is goed hersteld en klaar voor optimale prestaties.':dfInfo.factor>=0.93?'Train vandaag op gevoel en houd je RPE in de gaten.':'Je lichaam vraagt om rust — houd het vandaag licht.'):'Vul je HRV in voor je dagfactor en herstelbeeld.';
-    const gereed=v43GereedheidScore(dfInfo?dfInfo.factor:null);
+    // v4.69.2 — vervolgaudit Fase 3: dit is de PRIMAIRE Home-hero ("Klaar om te trainen" +
+    // "Je lichaam is goed hersteld...") — puur op dfInfo.factor, dus zonder deze check zou
+    // een neutrale fallback-factor (1.00, bij ontbrekende actuele data) hier alsnog als
+    // geruststellende conclusie ogen. dfInfo.dataStatus (uit tkCurrentHealthInputs) maakt
+    // expliciet onderscheid tussen "gemeten en goed" en "geen actuele meting, dus neutraal".
+    const dataActueel=!dfInfo || dfInfo.dataStatus==='current';
+    const title=dfInfo?(!dataActueel?'Onvoldoende actuele gegevens':(rd?rd.txt:'Klaar om te trainen')):'Doe je check-in';
+    const sub=dfInfo?(!dataActueel?'Je wearable heeft vandaag nog niets doorgegeven — dit is geen actueel herstelbeeld.':(dfInfo.factor>=1?'Je lichaam is goed hersteld en klaar voor optimale prestaties.':dfInfo.factor>=0.93?'Train vandaag op gevoel en houd je RPE in de gaten.':'Je lichaam vraagt om rust — houd het vandaag licht.')):'Vul je HRV in voor je dagfactor en herstelbeeld.';
+    const gereed=dataActueel?v43GereedheidScore(dfInfo?dfInfo.factor:null):null;
     const slaap=(lh&&(lh.sleep||lh.sleep===0))?v43SlaapTxt(lh.sleep):'—';
     // v4.6.0 — status-indicator = dagfactor-cirkel (vervangt het losse groene vinkje)
-    const factor=dfInfo?dfInfo.factor:null;
+    const factor=dataActueel?(dfInfo?dfInfo.factor:null):null;
     const dfCls=factor==null?'y':(factor>=1?'g':factor>=0.93?'y':'r');
     /* Home = goedgekeurde visuele baseline (27fb416): eigen kleuren, niet de Lichaam-tokens. */
     const dfCol=dfCls==='g'?'var(--green)':dfCls==='r'?'var(--red)':'var(--y)';
@@ -23653,7 +23659,9 @@ async function startAppAfterAuth(){
   fetchWearableStatus().then(st=>{if(st.connected)wearableSyncSilent();});
 }
 // Stille variant van wearableSyncNow — geen toasts, voor automatische sync bij opstart.
-// Faalt geluidloos (status is zichtbaar in het Wearable-beheerscherm als er iets misgaat).
+// v4.69.2: bij mislukking niet meer volledig stil — renderHomeSyncWarning() toont een
+// zichtbare banner op Home (Fase 4). Alleen de console/toast blijven stil; de storing
+// is dus zichtbaar zonder dat de gebruiker eerst naar het beheerscherm hoeft te navigeren.
 async function wearableSyncSilent(){
   const h=wearableAuthHeaders();
   if(!h)return;

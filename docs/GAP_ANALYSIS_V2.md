@@ -12,7 +12,7 @@
 | P0 | **0 open** |
 | P1 | 3 |
 | P2 | 7 |
-| P3 | 3 |
+| P3 | 4 |
 | P4 | 2 |
 
 Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de volledige sluitingsgeschiedenis (F1-bevindingen + de 2 execution-defecten uit MS-F2-01). Nieuw open P1-item: convergentie van Programma-blok/Repeat-Workout naar de Preview-adapter (zie hieronder).
@@ -111,6 +111,13 @@ Geen concreet bewijs van veroudering gevonden, maar ook niet actief uitgesloten.
 
 ### GAP-P3-003 — `fAndroidRelease.test.js` blijft CI-only valideerbaar
 Sinds de P0-003-fix skipt deze test zichtbaar i.p.v. hard te falen buiten een Android-buildomgeving — acceptabel, geen verdere actie vereist tenzij de lokale dev-flow dit vaker nodig heeft. **Complexity:** S.
+
+### GAP-P3-004 — 18 plekken gebruiken nog `toISOString()` voor datumbereikgrenzen (History/Calendar-sprint)
+**Capability-ID:** CAP-REGISTRY-SCREENS-001
+**Current:** de kritieke schrijf-datum van een training (`finishSession()`) gebruikt correct de lokale `td()`. 18 andere plekken (dashboard-/AI-context-bereikgrenzen zoals "laatste 7/14/28 dagen") gebruiken nog `toISOString().split('T')[0]`/`.slice(0,10)`, wat rond middernacht een sessie een paar uur te vroeg/laat in of uit het venster kan laten vallen. Geen "training op verkeerde dag"-defect.
+**Evidence:** CODE VERIFIED, zie het History/Calendar-sprintrapport in `docs/`.
+**Target:** de 18 call sites gericht vervangen door `td()`-equivalenten, per geval beoordeeld (sommige betreffen een datum in het verleden, niet "vandaag", en hebben een eigen helper nodig).
+**Priority:** P3. **Complexity:** M (18 verspreide call sites, elk individueel te beoordelen).
 
 ---
 

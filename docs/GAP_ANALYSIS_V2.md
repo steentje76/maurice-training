@@ -1,95 +1,165 @@
-# GAP_ANALYSIS.md — v2 (Master Roadmap 2.0 Consolidatie)
+# GAP_ANALYSIS_V2.md — Trainingskompas (canonieke, actuele versie — vervangt de losse "v1" volledig)
 
-**Status t.o.v. v1:** GAP-P0-001/002/003 zijn CLOSED (zie `SECURITY_FINDINGS.md`). Deze v2 herprioriteert de resterende gaps na de volledige capability/architectuur/benchmark-audit en voegt nieuwe gaps toe uit de index.html-, AI-governance- en benchmark-analyse.
-
-Prioriteiten: **P0** security/data-integriteit/architectuur/release-blocker · **P1** kernproduct/kritieke benchmark-gap · **P2** grote verbetering · **P3** latere optimalisatie · **P4** lange termijn/research/beyond-benchmark.
+**Laatst herbouwd:** 28 augustus 2026, tegen `main` @ `201385d2d7c6dbc3c1dcd093411aed7619d429c1`.
+**Regel:** dit document toont de HUIDIGE openstaande gaps. Gesloten gaps staan uitsluitend in sectie "CLOSED GAPS / HISTORICAL" onderaan en tellen niet mee in de totalen. Er bestaat geen apart "v1"-bestand meer in de repo — deze V2 is de enige bron.
 
 ---
 
-## P0 — geen nieuwe gevonden
-Geen acuut datalek of actief dataverlies aangetroffen tijdens deze consolidatie-audit. **Geen "EMERGENCY P0 FOUND".**
+## Actuele open-gap-telling
+
+| Prioriteit | Aantal |
+|---|---|
+| P0 | **0 open** |
+| P1 | 5 |
+| P2 | 5 |
+| P3 | 3 |
+| P4 | 2 |
+
+Geen enkel P0 is momenteel open. De drie eerder gevonden P0's zijn gesloten via PR #64 — zie sectie "CLOSED GAPS / HISTORICAL".
 
 ---
 
 ## P1 — kernproduct / kritieke benchmark-gap
 
-### GAP-P1-001 — Handbook-drift (ongewijzigd t.o.v. v1, nu met exact bewijs)
-H6 (Screen Library) en H9 (AI Governance) zijn **bevestigd feitelijk stale** (geen "Cyclus"/`s-lich-cyclus`-referentie, geen `evidence_store.v1`/DEC-036). Zie `HANDBOOK_UPDATE_PLAN.md`.
-**Target:** H6/H9/H12 eerst bijwerken. **Dependency:** geen. **Complexiteit:** L.
+### GAP-P1-001 — Handbook-drift
+**Capability-ID:** DOC-HANDBOOK-001
+**Current:** H6 (Screen Library) en H9 (AI Governance) bevestigd feitelijk stale (geen "Cyclus"/`s-lich-cyclus`-referentie in H6; geen `evidence_store.v1`/DEC-036-referentie in H9). Laatst bijgewerkt 2 augustus, code staat op v4.69.0.
+**Evidence:** CODE VERIFIED (grep tegen Handbook-bestanden).
+**Target:** H6/H9/H12 inhoudelijk bijwerken volgens `docs/HANDBOOK_UPDATE_PLAN.md`.
+**Dependency:** geen. **Test:** n.v.t. (documentatie). **Validation:** handmatige review na update.
+**Priority:** P1. **Complexity:** L. **Roadmap phase:** F1.
 
 ### GAP-P1-002 — Commercial/Entitlements heeft geen UI
-**Current:** DB-schema volledig aanwezig (`plans`, `features`, `credit_packs`, `plan_feature_quota`, `usage_log`), **geen enkel scherm** onder de 38 geïnventariseerde top-level schermen gebruikt dit schema.
-**Evidence:** CODE VERIFIED (index.html-doorzoeking, geen `plans`/`features`-referentie gevonden client-side).
-**Benchmark:** alle onderzochte concurrenten hebben een zichtbare upgrade-flow.
-**Target:** minimaal een "huidige plan"-scherm binnen Profiel, vóór enige multi-gym-commercialisering.
-**Dependency:** blokkeert Track 14 (Commercial). **Complexiteit:** M.
+**Capability-ID:** COMM-UI-001
+**Current:** DB-schema volledig aanwezig (`plans`, `features`, `credit_packs`, `plan_feature_quota`, `usage_log`); geen enkel scherm onder de 38 geïnventariseerde top-level schermen gebruikt dit schema.
+**Evidence:** CODE VERIFIED (index.html doorzocht op `plans`/`features`-referenties: 0 treffers client-side).
+**Target:** minimaal een plan-overzichtsscherm binnen Profiel.
+**Dependency:** GYM-RLS-SCOPING-001 (zie P1-004) — commercial-per-gym heeft correcte tenant-scoping nodig.
+**Priority:** P1. **Complexity:** M. **Roadmap phase:** F2.
 
-### GAP-P1-003 — AI-outputcontract (ongewijzigd, nu met concreet bewijs uit de governance-matrix)
-Geen technische blokkade tegen AI die een niet-onderbouwd cijfer noemt of een medische-diagnose-achtige uitspraak doet. `scientificEvidence.js` beschermt **regels**, niet de vrije AI-tekst zelf.
-**Target:** contracttest op de AI-responsstructuur (schema-validatie), zie ook GAP-P0-002-vervolg uit de closure-sprint.
-**Dependency:** geen. **Complexiteit:** M.
+### GAP-P1-003 — AI-outputcontract ontbreekt
+**Capability-ID:** AI-OUTPUT-CONTRACT-001 (**expliciet onderscheiden van AI-COACH-001**, zie Capability Registry — dit is een governance-gat, geen security-gat)
+**Current:** `coach.js`/`buildCtx()` zijn security-getest (JWT, open-proxy-regressie — zie AI-COACH-001, CLOSED voor dat deel) maar er is geen technische controle die een AI-antwoord blokkeert als het een niet-onderbouwd cijfer noemt of diagnose-achtige taal gebruikt.
+**Evidence:** CODE VERIFIED — `scientificEvidence.js` beschermt Decision Rules, niet de vrije AI-tekst zelf (zie Product Architecture §5).
+**Target:** contracttest op het AI-responsschema.
+**Dependency:** EVID-SCI-001.
+**Priority:** P1. **Complexity:** M. **Roadmap phase:** F2.
 
-### GAP-P1-004 — Phase 3-RLS-scoping (ongewijzigd uit v1)
-`organizations`/`teams`/`training_groups`/`seasons`/`macrocycles`/`mesocycles`/`microcycles` leesbaar voor elke ingelogde gebruiker, 0 rijen nu.
-**Target:** membership-gebaseerde scoping vóór Phase 3-data.
-**Dependency:** blokkeert Track 13 (Gym/Club/Team). **Complexiteit:** M.
+### GAP-P1-004 — Phase 3-RLS-scoping ontbreekt
+**Capability-ID:** GYM-RLS-SCOPING-001
+**Current:** `organizations`/`teams`/`training_groups`/`seasons`/`macrocycles`/`mesocycles`/`microcycles` leesbaar voor elke ingelogde gebruiker (`auth.role()='authenticated'`, geen ownership-scoping). 0 rijen op dit moment.
+**Evidence:** DB VERIFIED (policy-inhoud gelezen, 28 augustus).
+**Target:** membership-gebaseerde RLS-scoping naar analogie van `coach_athlete_relationships`, vóór de eerste echte coach/organisatie-data.
+**Dependency:** blokkeert Track 13 (Gym/Club/Team) volledig — harde afhankelijkheid, bevestigd in Master Roadmap 2.0.
+**Priority:** P1. **Complexity:** M. **Roadmap phase:** F1 (moet vóór F11 starten).
 
 ### GAP-P1-005 — AI-adaptive-programmering-gat t.o.v. Hevy Trainer
-**Current:** Hevy Trainer (feb 2026) genereert een volledig, zelf-aanpassend programma; TK's AI-coach legt uit/chat/genereert weekvoorstellen (`buildCtx()`-aanroeppunten voor week-generatie bestaan al) maar heeft geen volledig gesloten auto-aanpassingslus vergelijkbaar qua volwassenheid.
-**Evidence:** Web (juni 2026) + code (2 van de 6 AI-aanroeppunten zijn al week-generatie-gericht — dit is dichterbij dan het lijkt).
-**Target:** onderzoeken of de bestaande week-generatie-aanroepen (regel ~10888, ~11253 in index.html) kunnen doorgroeien naar een volledig gesloten, evidence-onderbouwde auto-aanpassingslus — TK's differentiator zou de uitlegbaarheid zijn die Hevy Trainer niet biedt.
-**Dependency:** EVID-SCI-001, DEC-CORE-001. **Complexiteit:** L.
+**Capability-ID:** AI-PROGRAM-AUTOGEN-001
+**Current:** Hevy Trainer (feb 2026) genereert een volledig, zelf-aanpassend trainingsprogramma. TK heeft AI-gestuurde week-generatie-aanroepen (2 van de 6 `buildCtx()`-aanroeppunten), maar geen even volwassen, gesloten auto-aanpassingslus.
+**Evidence:** Web (juni 2026, PRPath-vergelijking) + CODE VERIFIED (index.html regel ~10888, ~11253).
+**Target:** bestaande week-generatie doorontwikkelen, met TK's evidence-laag als differentiator t.o.v. Hevy's black-box-aanpak.
+**Dependency:** EVID-SCI-001, DEC-CORE-001.
+**Priority:** P1. **Complexity:** L. **Roadmap phase:** F4.
 
 ---
 
 ## P2 — grote verbetering
 
-### GAP-P2-001 — Vijf openstaande Women's Performance-besluiten (ongewijzigd)
-**Dependency:** blokkeert Track 8 (F8). **Complexiteit:** M-L per besluit.
+### GAP-P2-001 — Vijf openstaande Women's Performance-productbeslissingen
+**Capability-ID:** WOMENS-PERF-DECISIONS-001
+**Current:** `docs/Womens_Performance/DECISION_REQUIRED_{zwangerschap,postpartum,menopauze,anticonceptie,bekkenbodem}.md`, open sinds 26 augustus.
+**Target:** vijf expliciete besluiten van Maurice, daarna implementatie.
+**Dependency:** blokkeert Track 8 (F8) volledig.
+**Priority:** P2. **Complexity:** M-L per besluit. **Roadmap phase:** F8.
 
-### GAP-P2-002 — 7 `bak_p_*`-backuptabellen zonder retentiebeleid (ongewijzigd)
-**Complexiteit:** S.
+### GAP-P2-002 — 7 `bak_p_*`-backuptabellen zonder retentiebeleid
+**Capability-ID:** PLAT-BACKUP-CLEANUP-001
+**Current:** 7 losse backup-kopieën (93-154 rijen elk), zonder primary key, RLS aan/geen policies (onbereikbaar voor gebruikers, wel nog in de DB).
+**Evidence:** DB VERIFIED.
+**Target:** exporteren en verwijderen via een kleine, expliciet goedgekeurde migratie.
+**Priority:** P2. **Complexity:** S. **Roadmap phase:** F1.
 
 ### GAP-P2-003 — Observability ontbreekt structureel
-**Current:** geen bewijs van client-side errortracking of gestructureerde server-side monitoring buiten Netlify's eigen logs.
-**Evidence:** GEEN BEWIJS GEVONDEN (architectuur-audit, sectie 2).
-**Target:** minimaal basis error-logging voor de Netlify Functions (bv. gestructureerde console.error die via `Supabase:query_logs` doorzoekbaar is — deels al aanwezig, niet centraal ontsloten).
-**Complexiteit:** M.
+**Capability-ID:** PLAT-OBSERVABILITY-001
+**Current:** geen bewijs van gestructureerde client- of server-side monitoring buiten Netlify's eigen functielogs.
+**Evidence:** GEEN BEWIJS GEVONDEN (architectuur-audit).
+**Target:** basis gestructureerde logging voor Netlify Functions, doorzoekbaar via `Supabase:query_logs`.
+**Priority:** P2. **Complexity:** M. **Roadmap phase:** F1.
 
-### GAP-P2-004 — `config.anthropic_key`-encryptie niet geverifieerd (ongewijzigd)
-**Complexiteit:** S.
+### GAP-P2-004 — `config.anthropic_key`-encryptie niet geverifieerd
+**Capability-ID:** geen aparte roadmap-ID (gerelateerde nazorg op de reeds gesloten gyms-RLS-fix, zie sectie "CLOSED GAPS / HISTORICAL" onderaan — dit item zelf is een apart, nog open P2-punt)
+**Current:** RLS blokkeert client-toegang correct; of de waarde zelf versleuteld is opgeslagen is bewust niet gecontroleerd (inhoud van secrets nooit opgevraagd).
+**Priority:** P2. **Complexity:** S. **Roadmap phase:** F1.
 
-### GAP-P2-005 — `docs/DATABASE_STATUS.md`/`PLAY_STORE_READINESS.md`/`RELEASE_READINESS.md` verouderd (ongewijzigd, nu met Conflict Report-verwijzing)
-**Target:** zie `DOCUMENTATION_GOVERNANCE.md` voor het te kiezen onderhoudsmodel.
-**Complexiteit:** S per document.
+### GAP-P2-005 — Verouderde point-in-time-documenten
+**Current:** `docs/DATABASE_STATUS.md` (19 aug, claimt 10 migraties; live schema loopt tot v4.95.0), `docs/PLAY_STORE_READINESS.md`/`RELEASE_READINESS.md` (19 aug, v4.48.0).
+**Target:** zie `docs/DOCUMENTATION_GOVERNANCE.md` — bij een volgende relevante gebeurtenis een nieuw gedateerd document toevoegen i.p.v. overschrijven.
+**Priority:** P2. **Complexity:** S per document. **Roadmap phase:** F1.
 
 ---
 
 ## P3 — latere optimalisatie
 
-### GAP-P3-001 — Redundante ownership-check `WITH CHECK` ontbreekt (ongewijzigd)
-### GAP-P3-002 — `fAndroidRelease.test.js` vereist lokale Android-build (deels verzacht: nu zichtbaar SKIPPED i.p.v. hard falen, sinds P0-003-fix)
-### GAP-P3-003 — Component Library (H7)/Motion Design (H11) niet geverifieerd op drift
-**Complexiteit:** M (vereist inhoudelijke vergelijkingssessie).
+### GAP-P3-001 — Redundante ownership-check ontbreekt in `WITH CHECK` (defense-in-depth)
+`exercises`/`custom_trainings`/`equipment_catalog` leunen voor ownership-afdwinging volledig op `BEFORE INSERT`-triggers, niet op de RLS `WITH CHECK` zelf. **Complexity:** S.
+
+### GAP-P3-002 — Handbook H7 (Component Library)/H11 (Motion Design) niet inhoudelijk geverifieerd op drift
+Geen concreet bewijs van veroudering gevonden, maar ook niet actief uitgesloten. **Complexity:** M.
+
+### GAP-P3-003 — `fAndroidRelease.test.js` blijft CI-only valideerbaar
+Sinds de P0-003-fix skipt deze test zichtbaar i.p.v. hard te falen buiten een Android-buildomgeving — acceptabel, geen verdere actie vereist tenzij de lokale dev-flow dit vaker nodig heeft. **Complexity:** S.
 
 ---
 
 ## P4 — lange termijn / research / beyond benchmark
 
 ### GAP-P4-001 — Publieke social/community-laag
-Bewust laag geprioriteerd (Skill-prioriteitenlijst zet "Automatisering" boven "Integraties" en beide boven "Nieuwe functionaliteit"; social staat niet expliciet genoemd maar past qua aard bij de lage-prioriteitscategorieën). Alleen relevant als Maurice de productvisie expliciet verbreedt.
+Bewust laag geprioriteerd — geen productbeslissing om dit te bouwen. **Roadmap phase:** F9 (alleen bij expliciete koerswijziging).
 
 ### GAP-P4-002 — Scientific Platform (research-ready export, consent-governance)
-Track 16 in Master Roadmap 2.0 — vereist eerst een volwassen Evidence-laag (al aanwezig) + expliciete consent-flow (nog niet gebouwd).
+Vereist eerst een consent-flow (nog niet gebouwd) bovenop de al aanwezige Evidence-laag. **Roadmap phase:** F14.
 
 ---
 
-## Samenvatting
+## CLOSED GAPS / HISTORICAL
 
-| Prioriteit | Aantal | Kern |
-|---|---|---|
-| P0 | 0 (3 CLOSED) | — |
-| P1 | 5 | Handbook-drift, Commercial-UI-gat, AI-outputcontract, Phase 3-RLS, AI-programmering-benchmark-gap |
-| P2 | 5 | Women's Performance-besluiten, backup-tabellen, observability, secret-encryptie-verificatie, verouderde readiness-docs |
-| P3 | 3 | Cosmetische hardening, Android-testafhankelijkheid (verzacht), Handbook H7/H11 |
-| P4 | 2 | Social-laag (bewust), Scientific Platform (lange termijn) |
+Deze gaps zijn gesloten. Ze tellen niet mee in de totalen hierboven. Bewaard voor auditeerbaarheid.
+
+### GAP-P0-001 — Publieke blootstelling `gyms`-tabel — **STATUS: CLOSED**
+- **Original finding:** RLS-policy `gyms_read` (`USING true`, rol `public`) liet de `anon`-rol alle kolommen van `gyms` lezen, incl. `owner_email`, `coach_pin_hash`, `mollie_customer_id`.
+- **Resolution:** `migratie_v496.sql` — policy verwijderd, geen vervanging (deny-all voor anon/authenticated, service_role blijft werken).
+- **PR:** #64.
+- **Evidence:** `SET LOCAL ROLE anon/authenticated` → 0 rijen; `service_role` → 1 rij. Regressietest `core/fGymsRlsSecurity.test.js`.
+- **Closed date:** 28 augustus 2026.
+- **Current status:** CLOSED — geen open actie. Volledige details in `SECURITY_FINDINGS.md`.
+
+### GAP-P0-002 — Ontbrekende regressietests op security-kritieke Netlify Functions — **STATUS: CLOSED**
+- **Original finding:** `coach.js`, wearable-auth-flow, `delete-account.js`, `gym-team.js` hadden geen dedicated geautomatiseerde test.
+- **Resolution:** 61 nieuwe assertions over 4 nieuwe testbestanden. Tijdens testontwerp een echte bug gevonden en gefixed: een manager kon een owner degraderen naar `lid` (`target.gym_role_level >= caller.gym_role_level`-check toegevoegd aan `gym-team.js`).
+- **PR:** #64.
+- **Evidence:** `core/fCoachProxySecurity.test.js` (12/12), `core/fGymTeamSecurity.test.js` (17/17), `core/fWearableAuthSecurity.test.js` (20/20), `core/fDeleteAccountSecurity.test.js` (12/12).
+- **Closed date:** 28 augustus 2026.
+- **Current status:** CLOSED — geen open actie. (Zie GAP-P1-003 voor het aparte, nog wél open AI-**outputcontract**-governance-gat — dat is een andere capability dan deze security-testdekking.)
+
+### GAP-P0-003 — Lokale release gate dekte 10 van ~75 testbestanden — **STATUS: CLOSED**
+- **Original finding:** `core/release-gate.js` (lokaal `npm test`-commando) had een hardcoded lijst van 10 testbestanden.
+- **Correctie tijdens closure:** GitHub's `quality-gate.yml` draaide al sinds 18 augustus (vóór de audit) alle `core/*.test.js` via een eigen bash-lus — de daadwerkelijke, door GitHub afgedwongen merge-bescherming was dus minder lek dan aanvankelijk gerapporteerd. Alleen het lokale gemakscommando was incompleet.
+- **Resolution:** `core/release-gate.js` herbouwd naar discovery-based (v2), ontdekt nu automatisch alle 78 testbestanden. Bewezen via een tijdelijke, volledig teruggedraaide sabotage-test in `fCycle.test.js`.
+- **PR:** #64.
+- **Evidence:** `node core/release-gate.js` → 80 uitgevoerd, 1 zichtbaar geskipt (Android), 0 gefaald.
+- **Closed date:** 28 augustus 2026.
+- **Current status:** CLOSED — geen open actie.
+
+---
+
+## Legacy → canonical capability-ID-mapping
+
+| Legacy GAP-ID (v1) | Canonical capability-ID (Roadmap 2.0) |
+|---|---|
+| GAP-P0-001 | SEC-GYMS-001 (CLOSED) |
+| GAP-P0-002 | SEC-TEST-001 (CLOSED) |
+| GAP-P0-003 | SEC-GATE-001 (CLOSED) |
+| GAP-P1-001 (Handbook, v1) | DOC-HANDBOOK-001 |
+| GAP-P1-003 (Phase 3-RLS, v1) | GYM-RLS-SCOPING-001 |
+| GAP-P2-001 (Women's Performance, v1) | WOMENS-PERF-DECISIONS-001 |
+| GAP-P2-002 (backup-tabellen, v1) | PLAT-BACKUP-CLEANUP-001 |

@@ -1,5 +1,31 @@
 [
   {
+    "id": "EVID-SCI-001",
+    "track": "Decision & Evidence",
+    "phase": "F3",
+    "priority": "P3",
+    "status": "TESTED",
+    "target": "CLOSED",
+    "dependencies": [],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "metric-voor-metric evidencelevel-audit (A-E) per calculation, nog niet gedaan op dat detailniveau"
+  },
+  {
+    "id": "DEC-CORE-001",
+    "track": "Decision & Evidence",
+    "phase": "F3",
+    "priority": "P3",
+    "status": "TESTED",
+    "target": "CLOSED",
+    "dependencies": [],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "geen — corroboratieregel (DEC-036) CODE VERIFIED en getest"
+  },
+  {
     "id": "SEC-GYMS-001",
     "track": "Platform/Production",
     "phase": "F0",

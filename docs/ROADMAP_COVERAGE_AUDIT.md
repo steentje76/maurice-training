@@ -1,40 +1,61 @@
 # ROADMAP_COVERAGE_AUDIT.md
 
-**Doel:** garanderen dat geen enkele capability uit `docs/CAPABILITY_REGISTRY.md` ongemerkt verdwijnt bij de uitbreiding naar Master Roadmap 2.0. Elke capability krijgt een classificatie en een roadmapbestemming.
+**Belangrijke correctie t.o.v. de vorige versie (v1.1 §27):** "100% completeness" mag nooit als één enkel getal worden gerapporteerd. Er zijn vier afzonderlijke, niet-uitwisselbare dekkingsdimensies:
 
-**Classificaties:** NO ACTION · VALIDATION ONLY · IMPROVEMENT · MAJOR DEVELOPMENT · NEW CAPABILITY · DEFERRED.
+## 1. Registry Coverage
+**Definitie:** percentage van de huidige, geregistreerde Capability Registry-items met een roadmapbestemming.
+**Resultaat: 16/16 = 100%.** Alle capabilities in `docs/CAPABILITY_REGISTRY.md` hebben een mastersprint-verwijzing in `docs/ROADMAP_INDEX.json` (zie `next_action`-veld per capability).
+**Betekenis:** dit zegt alleen iets over wat al bekend/gebouwd is — niet over de gewenste producttoekomst.
 
-| Capability-ID | Huidige maturity | Classificatie | Roadmapbestemming |
+## 2. Roadmap Structural Completeness
+**Definitie:** machine-leesbare/traceability-volledigheid van de roadmap zelf.
+**Resultaat:** 15/15 geautomatiseerde consistentiechecks groen (`tools/check-doc-consistency.js`): 0 dubbele IDs, 0 orphan capabilities, 0 orphan roadmap-IDs, 0 ongeldige dependencies, 0 circulaire dependencies, 0 P0/P1 zonder mastersprint, 0 mastersprints zonder acceptance-gate/phase/track/target-maturity, 0 ongeldige priority/status-waarden, 0 onvolledige validation-schema's, 0 dependency-referenties naar obsolete/superseded oude MS-IDs.
+
+## 3. Product Domain Coverage
+**Definitie:** dekking van de 18 gewenste producttracks (T1-T18) door concrete mastersprints.
+**Resultaat: 18/18 tracks hebben minimaal 1 mastersprint.** Diepte verschilt sterk en is een bewuste productkeuze, geen tekortkoming:
+- **Diep uitgewerkt (10+ mastersprints of expliciete metric-registry-dekking):** T1 (Training Core, 8 sprints via F2), T4 (Calculation Engine, 5 sprints via F3), T7 (Evidence & Provenance, 3 sprints via F3)
+- **Middel uitgewerkt (3-6 mastersprints):** T2, T3, T5, T6, T8, T9, T11, T12, T14, T15, T16, T17
+- **Bewust dun (1-3 mastersprints, decision- of koers-gated):** T10 (Women's Performance, wacht op 5 besluiten), T13 (Social, wacht op koersbesluit), T18 (Scientific Platform, lange termijn)
+
+## 4. Execution Readiness
+**Definitie:** percentage mastersprints met voldoende objective, dependency, acceptance-gate, validation en maturity-target om daadwerkelijk gestart te kunnen worden.
+**Resultaat: 79/79 = 100%** op het niveau van "heeft de vereiste velden" (elk mastersprint-item in `docs/ROADMAP_INDEX.json` heeft objective/acceptance_gate/dependencies/validation/target_maturity — geverifieerd via consistentiechecks 8-12).
+**Belangrijke kanttekening:** dit is **structurele** volledigheid, geen inhoudelijke garantie dat elke acceptance-gate al scherp genoeg geformuleerd is voor een uitvoerende sprint — met name de "NEW"-gemarkeerde v1.1-toevoegingen (34 van de 79) hebben nog geen technische diepte-audit ondergaan zoals de oorspronkelijke 24 Capability Registry-items die wel hadden.
+
+---
+
+## Capability-classificatie (ongewijzigd qua methode, bijgewerkte bestemmingen)
+
+| Capability-ID | Maturity | Classificatie | Nieuwe roadmapbestemming (v1.1) |
 |---|---|---|---|
-| SEC-GYMS-001 | CLOSED | NO ACTION | — (F0, afgerond) |
-| SEC-TEST-001 | CLOSED | NO ACTION | — (F0, afgerond) |
-| SEC-GATE-001 | CLOSED | NO ACTION | — (F0, afgerond) |
-| PLAT-DELETE-001 | TESTED | VALIDATION ONLY | MS-F1-06 (live-verificatie in staging) |
-| PLAT-BACKUP-CLEANUP-001 | NOT STARTED | IMPROVEMENT | MS-F1-01 |
+| SEC-GYMS-001 | CLOSED | NO ACTION | — (F0) |
+| SEC-TEST-001 | CLOSED | NO ACTION | — (F0) |
+| SEC-GATE-001 | CLOSED | NO ACTION | — (F0) |
+| PLAT-DELETE-001 | TESTED | VALIDATION ONLY | MS-F13-05 |
+| PLAT-BACKUP-CLEANUP-001 | NOT STARTED | IMPROVEMENT | MS-F1-05 |
 | PLAT-OBSERVABILITY-001 | NOT STARTED | NEW CAPABILITY | MS-F1-02 |
-| SOC-GYMTEAM-001 | TESTED | VALIDATION ONLY | MS-F1-06 (samen met PLAT-DELETE-001) |
-| GYM-RLS-SCOPING-001 | NOT STARTED | MAJOR DEVELOPMENT | MS-F1-03 |
-| COACH-RELATIONSHIP-001 | IMPLEMENTED | IMPROVEMENT | MS-F10-01 (testdekking) |
-| AI-COACH-001 | CLOSED (security-deel) | NO ACTION | — (F0, afgerond) |
-| AI-OUTPUT-CONTRACT-001 | NOT STARTED | NEW CAPABILITY | MS-F2-03 |
-| AI-PROGRAM-AUTOGEN-001 | IMPLEMENTED | MAJOR DEVELOPMENT | MS-F4-04 t/m 06 |
-| EVID-SCI-001 | TESTED | IMPROVEMENT | MS-F3-04, MS-F3-05 |
-| DEC-CORE-001 | TESTED | NO ACTION (basis staat) | MS-F3-06 (uitbreiding naar meer domeinen) |
-| DEV-WEARAUTH-001 | TESTED | VALIDATION ONLY | MS-F5-01 |
-| DEV-WEARSYNC-001 | INTEGRATED | VALIDATION ONLY | MS-F5-01 |
+| SOC-GYMTEAM-001 | TESTED | VALIDATION ONLY | MS-F13-05 |
+| GYM-RLS-SCOPING-001 | NOT STARTED | MAJOR DEVELOPMENT | **MS-F1-01** (hernummerd van MS-F1-03) |
+| COACH-RELATIONSHIP-001 | IMPLEMENTED | IMPROVEMENT | MS-F10-01, MS-F10-02 |
+| AI-COACH-001 | CLOSED (security) | NO ACTION | — (F0) |
+| AI-OUTPUT-CONTRACT-001 | NOT STARTED | NEW CAPABILITY | **MS-F4-01** (verplaatst F2→F4) |
+| AI-PROGRAM-AUTOGEN-001 | IMPLEMENTED | MAJOR DEVELOPMENT | MS-F4-04, MS-F4-05, MS-F4-06 |
+| EVID-SCI-001 | TESTED | IMPROVEMENT | MS-F3-01/03/04/05/09/11 |
+| DEC-CORE-001 | TESTED | IMPROVEMENT | MS-F3-07 |
+| DEV-WEARAUTH-001 | TESTED | VALIDATION ONLY | MS-F5-03 |
+| DEV-WEARSYNC-001 | INTEGRATED | VALIDATION ONLY | MS-F5-03 |
 | DEV-CONCEPT2-001 | TESTED | VALIDATION ONLY | MS-F5-02 |
-| DEV-VALIDATION-001 | TESTED (software) | VALIDATION ONLY | MS-F5-01, MS-F5-02 |
-| END-INTERVAL-001 | INTEGRATED | IMPROVEMENT | MS-F6-03 (flow-niveau UX-test) |
-| END-HYROX-001 | CLOSED (kern) | IMPROVEMENT | MS-F6-04 (jaarlijkse rulebook-herverificatie) |
-| CTX-CYCLE-001 | INTEGRATED | DEFERRED | MS-F8-01 t/m 05 (wacht op productbesluiten) |
-| WOMENS-PERF-DECISIONS-001 | NOT STARTED | DEFERRED | Product decision gate, blokkeert F8 |
-| COMM-UI-001 | NOT STARTED (UI) | MAJOR DEVELOPMENT | MS-F2-01, MS-F2-02 |
-| CAP-REGISTRY-SCREENS-001 | IMPLEMENTED (inventaris) | IMPROVEMENT | Verspreid over T1/T2 (flow-niveau tests per scherm) |
-| SCI-CONSENT-001 | NOT STARTED | DEFERRED | MS-F14-01 (lange termijn) |
+| DEV-VALIDATION-001 | TESTED (software) | VALIDATION ONLY | MS-F5-01/02/03 |
+| END-INTERVAL-001 | INTEGRATED | IMPROVEMENT | MS-F6-01/02/03 |
+| END-HYROX-001 | CLOSED (kern) | IMPROVEMENT | MS-F6-04 |
+| CTX-CYCLE-001 | INTEGRATED | DEFERRED | MS-F8-03/04 |
+| WOMENS-PERF-DECISIONS-001 | NOT STARTED | DEFERRED | MS-F8-01 (gate), MS-F8-02 |
+| COMM-UI-001 | NOT STARTED | MAJOR DEVELOPMENT | **MS-F12-01/02/03/04** (verplaatst F2→F12, P1→P2) |
+| CAP-REGISTRY-SCREENS-001 | IMPLEMENTED | IMPROVEMENT | MS-F2-01 t/m MS-F2-08 |
+| SCI-CONSENT-001 | NOT STARTED | DEFERRED | MS-F14-01/02/03 |
 
-**Dekking: 24/24 capabilities geclassificeerd, 0 orphan.**
+**Dekking: 24/24 capabilities geclassificeerd, 0 orphan** (Registry Coverage = 100%, zie hierboven).
 
-## Nieuw geïdentificeerde first-class domeinen (niet eerder als aparte track erkend)
-Bij deze audit is **Exercise Intelligence (T2)** expliciet losgetrokken van Training Core (T1) — de bestaande `s-library`/`s-lich-oefeningen`-schermen en MoveKit-catalogus rechtvaardigen een eigen track, analoog aan hoe Context Engine bij de vorige consolidatie al is erkend. Bewijs: 206 MoveKit-oefeningen, aparte exercise-catalog.json (302 KB), eigen zoek/filter/favorieten-functionaliteit in index.html, los van de trainingsuitvoering zelf.
-
-Overige gesuggereerde tracks (T13 Social, T18 Scientific Platform) bestaan al impliciet in de vorige roadmap (F9, F14) en worden hier alleen formeler benoemd — geen nieuw bewijs van een ontbrekend domein buiten wat al bekend was.
+## Track-erkenning
+Exercise Intelligence (T2) blijft expliciet erkend als eigen track (bevestigd in v1.1 §6, ongewijzigd t.o.v. de vorige consolidatie).

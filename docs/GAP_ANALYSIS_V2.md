@@ -10,8 +10,8 @@
 | Prioriteit | Aantal |
 |---|---|
 | P0 | **0 open** |
-| P1 | 5 |
-| P2 | 5 |
+| P1 | 3 |
+| P2 | 7 |
 | P3 | 3 |
 | P4 | 2 |
 
@@ -21,27 +21,27 @@ Geen enkel P0 is momenteel open. De drie eerder gevonden P0's zijn gesloten via 
 
 ## P1 — kernproduct / kritieke benchmark-gap
 
-### GAP-P1-001 — Handbook-drift
+### GAP-P2-006 — Handbook-drift (verplaatst van P1, zie Roadmap 2.0 v1.1 §29)
 **Capability-ID:** DOC-HANDBOOK-001
 **Current:** H6 (Screen Library) en H9 (AI Governance) bevestigd feitelijk stale (geen "Cyclus"/`s-lich-cyclus`-referentie in H6; geen `evidence_store.v1`/DEC-036-referentie in H9). Laatst bijgewerkt 2 augustus, code staat op v4.69.0.
 **Evidence:** CODE VERIFIED (grep tegen Handbook-bestanden).
 **Target:** H6/H9/H12 inhoudelijk bijwerken volgens `docs/HANDBOOK_UPDATE_PLAN.md`.
 **Dependency:** geen. **Test:** n.v.t. (documentatie). **Validation:** handmatige review na update.
-**Priority:** P1. **Complexity:** L. **Roadmap phase:** F1.
+**Priority:** **P2** (gedowngraded van P1 — Roadmap 2.0 v1.1: "documentatie is geen vervanging voor productwaarde"; blijft wel F1-onderhoud, MS-F1-04). **Complexity:** L. **Roadmap phase:** F1.
 
-### GAP-P1-002 — Commercial/Entitlements heeft geen UI
+### GAP-P2-007 — Commercial/Entitlements heeft geen UI (verplaatst van P1/F2, zie Roadmap 2.0 v1.1 §32)
 **Capability-ID:** COMM-UI-001
 **Current:** DB-schema volledig aanwezig (`plans`, `features`, `credit_packs`, `plan_feature_quota`, `usage_log`); geen enkel scherm onder de 38 geïnventariseerde top-level schermen gebruikt dit schema.
 **Evidence:** CODE VERIFIED (index.html doorzocht op `plans`/`features`-referenties: 0 treffers client-side).
-**Target:** minimaal een plan-overzichtsscherm binnen Profiel.
-**Dependency:** GYM-RLS-SCOPING-001 (zie P1-004) — commercial-per-gym heeft correcte tenant-scoping nodig.
-**Priority:** P1. **Complexity:** M. **Roadmap phase:** F2.
+**Target:** tier/waardepropositie + entitlement domain model (MS-F12-01) → entitlement enforcement (MS-F12-02) → plan-overzichtsscherm/Commercial UX (MS-F12-03) → billing/reconciliation (MS-F12-04).
+**Dependency:** GYM-RLS-SCOPING-001 (MS-F1-01).
+**Priority:** **P2** (gedowngraded van P1 — een bestaand DB-schema of benchmark-pariteit rechtvaardigt op zichzelf geen vroege bouw). **Complexity:** M. **Roadmap phase:** **F12** (verplaatst van F2).
 
 ### GAP-P1-003 — AI-outputcontract ontbreekt
 **Capability-ID:** AI-OUTPUT-CONTRACT-001 (**expliciet onderscheiden van AI-COACH-001**, zie Capability Registry — dit is een governance-gat, geen security-gat)
 **Current:** `coach.js`/`buildCtx()` zijn security-getest (JWT, open-proxy-regressie — zie AI-COACH-001, CLOSED voor dat deel) maar er is geen technische controle die een AI-antwoord blokkeert als het een niet-onderbouwd cijfer noemt of diagnose-achtige taal gebruikt.
 **Evidence:** CODE VERIFIED — `scientificEvidence.js` beschermt Decision Rules, niet de vrije AI-tekst zelf (zie Product Architecture §5).
-**Target:** contracttest op het AI-responsschema.
+**Target:** contracttest op het AI-responsschema (MS-F4-01).
 **Dependency:** EVID-SCI-001.
 **Priority:** P1. **Complexity:** M. **Roadmap phase:** F2.
 
@@ -49,8 +49,8 @@ Geen enkel P0 is momenteel open. De drie eerder gevonden P0's zijn gesloten via 
 **Capability-ID:** GYM-RLS-SCOPING-001
 **Current:** `organizations`/`teams`/`training_groups`/`seasons`/`macrocycles`/`mesocycles`/`microcycles` leesbaar voor elke ingelogde gebruiker (`auth.role()='authenticated'`, geen ownership-scoping). 0 rijen op dit moment.
 **Evidence:** DB VERIFIED (policy-inhoud gelezen, 28 augustus).
-**Target:** membership-gebaseerde RLS-scoping naar analogie van `coach_athlete_relationships`, vóór de eerste echte coach/organisatie-data.
-**Dependency:** blokkeert Track 13 (Gym/Club/Team) volledig — harde afhankelijkheid, bevestigd in Master Roadmap 2.0.
+**Target:** membership-gebaseerde RLS-scoping naar analogie van `coach_athlete_relationships`, vóór de eerste echte coach/organisatie-data (MS-F1-01, hernummerd van MS-F1-03 per Roadmap 2.0 v1.1).
+**Dependency:** blokkeert Track 15 (Gym/Club/Team) volledig — harde afhankelijkheid, bevestigd in Master Roadmap 2.0 v1.1.
 **Priority:** P1. **Complexity:** M. **Roadmap phase:** F1 (moet vóór F11 starten).
 
 ### GAP-P1-005 — AI-adaptive-programmering-gat t.o.v. Hevy Trainer
@@ -154,12 +154,15 @@ Deze gaps zijn gesloten. Ze tellen niet mee in de totalen hierboven. Bewaard voo
 
 ## Legacy → canonical capability-ID-mapping
 
-| Legacy GAP-ID (v1) | Canonical capability-ID (Roadmap 2.0) |
+| Legacy GAP-ID (v1) | Canonical capability-ID (Roadmap 2.0 v1.1) |
 |---|---|
 | GAP-P0-001 | SEC-GYMS-001 (CLOSED) |
 | GAP-P0-002 | SEC-TEST-001 (CLOSED) |
 | GAP-P0-003 | SEC-GATE-001 (CLOSED) |
-| GAP-P1-001 (Handbook, v1) | DOC-HANDBOOK-001 |
-| GAP-P1-003 (Phase 3-RLS, v1) | GYM-RLS-SCOPING-001 |
+| GAP-P1-001 (Handbook, v1) | DOC-HANDBOOK-001 → hernummerd **GAP-P2-006** (P1→P2 per v1.1 §29) |
+| GAP-P1-002 (Commercial UI, v1) | COMM-UI-001 → hernummerd **GAP-P2-007** (P1→P2, F2→F12 per v1.1 §32) |
+| GAP-P1-003 (Phase 3-RLS, v1) | GYM-RLS-SCOPING-001 (blijft P1, mastersprint nu MS-F1-01) |
 | GAP-P2-001 (Women's Performance, v1) | WOMENS-PERF-DECISIONS-001 |
 | GAP-P2-002 (backup-tabellen, v1) | PLAT-BACKUP-CLEANUP-001 |
+
+**Volledige mastersprint-ID-migratie (57 oude PR#68-IDs → 79 canonieke v1.1-IDs):** zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md`.

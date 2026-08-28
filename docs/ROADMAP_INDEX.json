@@ -1,91 +1,2935 @@
 [
-  {"id": "SEC-GYMS-001", "type": "capability", "track": "Platform/Production", "phase": "F0", "priority": "P0", "status": "CLOSED", "target": "CLOSED", "dependencies": [], "software_validation": "PASS", "device_validation": "N/A", "evidence_status": "VERIFIED", "next_action": "geen — gesloten in P0 Closure Sprint (migratie_v496.sql)"},
-  {"id": "SEC-TEST-001", "type": "capability", "track": "Platform/Production", "phase": "F0", "priority": "P0", "status": "CLOSED", "target": "CLOSED", "dependencies": [], "software_validation": "PASS", "device_validation": "N/A", "evidence_status": "VERIFIED", "next_action": "geen — 61 nieuwe assertions, inclusief gym-team demotie-fix"},
-  {"id": "SEC-GATE-001", "type": "capability", "track": "Platform/Production", "phase": "F0", "priority": "P0", "status": "CLOSED", "target": "CLOSED", "dependencies": [], "software_validation": "PASS", "device_validation": "N/A", "evidence_status": "VERIFIED", "next_action": "geen — discovery-based release gate, bewezen via sabotage-test"},
-  {"id": "EVID-SCI-001", "type": "capability", "track": "Decision & Evidence", "phase": "F3", "priority": "P3", "status": "TESTED", "target": "CLOSED", "dependencies": [], "software_validation": "PASS", "device_validation": "N/A", "evidence_status": "VERIFIED", "next_action": "metric-voor-metric evidencelevel-audit (A-E), zie MS-F3-04"},
-  {"id": "DEC-CORE-001", "type": "capability", "track": "Decision & Evidence", "phase": "F3", "priority": "P3", "status": "TESTED", "target": "CLOSED", "dependencies": [], "software_validation": "PASS", "device_validation": "N/A", "evidence_status": "VERIFIED", "next_action": "geen — corroboratieregel (DEC-036) CODE VERIFIED en getest; uitbreiding zie MS-F3-06"},
-
-  {"id": "MS-F1-01", "type": "mastersprint", "phase": "F1", "tracks": ["Platform/Production"], "capabilities": ["PLAT-BACKUP-CLEANUP-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": [], "target_maturity": "CLOSED", "acceptance_gate": ["7 bak_p_*-tabellen geëxporteerd of expliciet gedocumenteerd als permanent archief", "migratie goedgekeurd door Maurice vóór uitvoering"], "validation": {"software": "REQUIRED", "database": "REQUIRED", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F1-02", "type": "mastersprint", "phase": "F1", "tracks": ["Platform/Production"], "capabilities": ["PLAT-OBSERVABILITY-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": [], "target_maturity": "IMPLEMENTED", "acceptance_gate": ["gestructureerde logging voor alle Netlify Functions", "doorzoekbaar via Supabase:query_logs"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F1-03", "type": "mastersprint", "phase": "F1", "tracks": ["Gym/Club/Team Platform"], "capabilities": ["GYM-RLS-SCOPING-001"], "priority": "P1", "status": "NOT STARTED", "dependencies": [], "target_maturity": "VALIDATED", "acceptance_gate": ["membership-gebaseerde RLS-scoping op organizations/teams/training_groups/seasons/macrocycles/mesocycles/microcycles", "regressietest analoog aan fGymsRlsSecurity.test.js", "SET LOCAL ROLE-verificatie tegen live DB"], "validation": {"software": "REQUIRED", "database": "REQUIRED", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F1-04", "type": "mastersprint", "phase": "F1", "tracks": ["Platform/Production"], "capabilities": ["DOC-HANDBOOK-001"], "priority": "P1", "status": "NOT STARTED", "dependencies": [], "target_maturity": "CLOSED", "acceptance_gate": ["H6 (Screen Library) bevat alle 38 schermen inclusief Cyclus/HYROX", "H9 (AI Governance) bevat evidence_store.v1 en DEC-036", "H12 (Quality Assurance) beschrijft de discovery-based release gate"], "validation": {"software": "NOT_APPLICABLE", "database": "NOT_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F1-05", "type": "mastersprint", "phase": "F1", "tracks": ["Platform/Production"], "capabilities": [], "priority": "P2", "status": "NOT STARTED", "dependencies": [], "target_maturity": "CLOSED", "acceptance_gate": ["DATABASE_STATUS.md/PLAY_STORE_READINESS.md/RELEASE_READINESS.md expliciet gedateerd als snapshot of vervangen door actuele versie"], "validation": {"software": "NOT_APPLICABLE", "database": "AS_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F1-06", "type": "mastersprint", "phase": "F1", "tracks": ["Platform/Production", "Gym/Club/Team Platform"], "capabilities": ["PLAT-DELETE-001", "SOC-GYMTEAM-001"], "priority": "P3", "status": "NOT STARTED", "dependencies": [], "target_maturity": "VALIDATED", "acceptance_gate": ["daadwerkelijke accountverwijdering getest in staging", "gym-team-rolwijzigingen getest in staging"], "validation": {"software": "PASS", "database": "REQUIRED", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-
-  {"id": "MS-F2-01", "type": "mastersprint", "phase": "F2", "tracks": ["Commercial & Entitlements"], "capabilities": ["COMM-UI-001"], "priority": "P1", "status": "NOT STARTED", "dependencies": ["MS-F1-03"], "target_maturity": "IMPLEMENTED", "acceptance_gate": ["minimaal een plan-overzichtsscherm binnen Profiel op het bestaande plans/features-schema"], "validation": {"software": "REQUIRED", "database": "AS_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F2-02", "type": "mastersprint", "phase": "F2", "tracks": ["Commercial & Entitlements"], "capabilities": ["COMM-UI-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": ["MS-F2-01"], "target_maturity": "TESTED", "acceptance_gate": ["feature-gating daadwerkelijk afgedwongen o.b.v. plan_features/plan_feature_quota"], "validation": {"software": "REQUIRED", "database": "REQUIRED", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F2-03", "type": "mastersprint", "phase": "F2", "tracks": ["AI Coach"], "capabilities": ["AI-OUTPUT-CONTRACT-001"], "priority": "P1", "status": "NOT STARTED", "dependencies": ["EVID-SCI-001"], "target_maturity": "TESTED", "acceptance_gate": ["contracttest op AI-responsschema (geen ongefundeerd cijfer, geen diagnose-taal)", "test faalt zichtbaar bij schemabreuk"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-  {"id": "MS-F2-04", "type": "mastersprint", "phase": "F2", "tracks": ["Training Core"], "capabilities": ["CAP-REGISTRY-SCREENS-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": [], "target_maturity": "TESTED", "acceptance_gate": ["flow-niveau tests voor Builder/Preview/Execution-schermen (s-builder, s-guided)"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F2-05", "type": "mastersprint", "phase": "F2", "tracks": ["Training Core"], "capabilities": [], "priority": "P2", "status": "NOT STARTED", "dependencies": [], "target_maturity": "IMPLEMENTED", "acceptance_gate": ["expliciete conclusie: Guided Workout convergeert met canonieke executie of blijft bewust gescheiden, met reden"], "validation": {"software": "NOT_APPLICABLE", "database": "NOT_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F2-06", "type": "mastersprint", "phase": "F2", "tracks": ["Exercise Intelligence"], "capabilities": [], "priority": "P3", "status": "NOT STARTED", "dependencies": [], "target_maturity": "TESTED", "acceptance_gate": ["flow-niveau tests voor s-library, s-lich-oefeningen"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-
-  {"id": "MS-F3-01", "type": "mastersprint", "phase": "F3", "tracks": ["Calculation Engine"], "capabilities": ["EVID-SCI-001"], "priority": "P1", "status": "NOT STARTED", "dependencies": [], "target_maturity": "CLOSED", "acceptance_gate": ["e1RM/volume/tonnage/relative load/RPE/RIR elk met unique ID, formule, evidence-level A-E, bron"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-  {"id": "MS-F3-02", "type": "mastersprint", "phase": "F3", "tracks": ["Calculation Engine", "Recovery & Health Context"], "capabilities": ["EVID-SCI-001"], "priority": "P1", "status": "NOT STARTED", "dependencies": [], "target_maturity": "CLOSED", "acceptance_gate": ["HRV/RHR/slaap/readiness elk met evidence-level A-E, expliciet: HRV nooit als zelfstandige rustbeslissing"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-  {"id": "MS-F3-03", "type": "mastersprint", "phase": "F3", "tracks": ["Calculation Engine", "Endurance & Multisport"], "capabilities": ["EVID-SCI-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": [], "target_maturity": "CLOSED", "acceptance_gate": ["pace/watt/stroke-rate/split/Concept2-metrics elk met evidence-level A-E"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "AS_APPLICABLE", "scientific": "REQUIRED"}},
-  {"id": "MS-F3-04", "type": "mastersprint", "phase": "F3", "tracks": ["Evidence & Provenance"], "capabilities": ["EVID-SCI-001"], "priority": "P1", "status": "NOT STARTED", "dependencies": ["MS-F3-01", "MS-F3-02", "MS-F3-03"], "target_maturity": "CLOSED", "acceptance_gate": ["Evidence Registry volledig: elke calculation in de registry heeft evidence_store.v1-entry of expliciete UNVALIDATED-markering"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-  {"id": "MS-F3-05", "type": "mastersprint", "phase": "F3", "tracks": ["Evidence & Provenance"], "capabilities": ["EVID-SCI-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": ["MS-F3-04"], "target_maturity": "TESTED", "acceptance_gate": ["data quality/confidence zichtbaar per metric in UI waar relevant"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-  {"id": "MS-F3-06", "type": "mastersprint", "phase": "F3", "tracks": ["Decision & Rules Engine"], "capabilities": ["DEC-CORE-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": [], "target_maturity": "TESTED", "acceptance_gate": ["corroboratiepatroon (DEC-036) toegepast op minimaal 1 nieuw domein naast training load"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-  {"id": "MS-F3-07", "type": "mastersprint", "phase": "F3", "tracks": ["Evidence & Provenance"], "capabilities": ["EVID-SCI-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": ["MS-F3-04"], "target_maturity": "CLOSED", "acceptance_gate": ["docs/CALCULATION_EVIDENCE_SPEC.md bestaat en is de canonieke bron (vervangt de placeholder-verwijzing in DOCUMENTATION_GOVERNANCE.md)"], "validation": {"software": "NOT_APPLICABLE", "database": "NOT_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-
-  {"id": "MS-F4-01", "type": "mastersprint", "phase": "F4", "tracks": ["AI Coach"], "capabilities": ["AI-OUTPUT-CONTRACT-001"], "priority": "P1", "status": "NOT STARTED", "dependencies": ["MS-F2-03"], "target_maturity": "VALIDATED", "acceptance_gate": ["technische guardrail tegen ongefundeerde cijfers/diagnose-taal, niet alleen prompt-niveau"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-  {"id": "MS-F4-02", "type": "mastersprint", "phase": "F4", "tracks": ["AI Coach"], "capabilities": ["AI-OUTPUT-CONTRACT-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": ["MS-F4-01"], "target_maturity": "IMPLEMENTED", "acceptance_gate": ["elke AI-aanbeveling toont welke metric/regel/confidence eraan ten grondslag ligt"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F4-03", "type": "mastersprint", "phase": "F4", "tracks": ["AI Coach"], "capabilities": ["AI-PROGRAM-AUTOGEN-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": [], "target_maturity": "IMPLEMENTED", "acceptance_gate": ["expliciete coaching-modi onderscheiden in buildCtx()-aanroepen"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F4-04", "type": "mastersprint", "phase": "F4", "tracks": ["AI Coach"], "capabilities": ["AI-PROGRAM-AUTOGEN-001"], "priority": "P1", "status": "IMPLEMENTED", "dependencies": ["MS-F3-04", "MS-F4-01"], "target_maturity": "VALIDATED", "acceptance_gate": ["bestaande week-generatie-aanroepen doorontwikkeld naar gesloten, uitlegbare lus (benchmark: Hevy Trainer)"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-  {"id": "MS-F4-05", "type": "mastersprint", "phase": "F4", "tracks": ["AI Coach"], "capabilities": ["AI-PROGRAM-AUTOGEN-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": ["MS-F4-04"], "target_maturity": "TESTED", "acceptance_gate": ["wekelijkse adaptatie o.b.v. progressie-trend en belasting"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-  {"id": "MS-F4-06", "type": "mastersprint", "phase": "F4", "tracks": ["AI Coach"], "capabilities": ["AI-PROGRAM-AUTOGEN-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": ["MS-F4-05"], "target_maturity": "VALIDATED", "acceptance_gate": ["longitudinale adaptatie werkt over meerdere weken, benchmark-vergelijking herhaald"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-
-  {"id": "MS-F5-01", "type": "mastersprint", "phase": "F5", "tracks": ["Wearables & Devices"], "capabilities": ["DEV-WEARAUTH-001", "DEV-WEARSYNC-001", "DEV-VALIDATION-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": [], "target_maturity": "VALIDATED", "acceptance_gate": ["real-device Google Health-sync bevestigd in productie met echte account"], "validation": {"software": "PASS", "database": "AS_APPLICABLE", "integration": "PASS", "device": "REQUIRED", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F5-02", "type": "mastersprint", "phase": "F5", "tracks": ["Wearables & Devices"], "capabilities": ["DEV-CONCEPT2-001", "DEV-VALIDATION-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": [], "target_maturity": "VALIDATED", "acceptance_gate": ["real-device Concept2 PM5 BLE-koppeling bevestigd met fysiek apparaat"], "validation": {"software": "PASS", "database": "NOT_APPLICABLE", "integration": "PASS", "device": "REQUIRED", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F5-03", "type": "mastersprint", "phase": "F5", "tracks": ["Wearables & Devices"], "capabilities": [], "priority": "P3", "status": "NOT STARTED", "dependencies": [], "target_maturity": "NOT STARTED", "acceptance_gate": ["feasibility-rapport Apple HealthKit/Health Connect, geen bouwwerk"], "validation": {"software": "NOT_APPLICABLE", "database": "NOT_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F5-04", "type": "mastersprint", "phase": "F5", "tracks": ["Wearables & Devices"], "capabilities": [], "priority": "P3", "status": "NOT STARTED", "dependencies": [], "target_maturity": "NOT STARTED", "acceptance_gate": ["feasibility-rapport Garmin/Polar/WHOOP/Suunto/COROS, geen bouwwerk"], "validation": {"software": "NOT_APPLICABLE", "database": "NOT_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F5-05", "type": "mastersprint", "phase": "F5", "tracks": ["Wearables & Devices"], "capabilities": [], "priority": "P3", "status": "IMPLEMENTED", "dependencies": [], "target_maturity": "CLOSED", "acceptance_gate": ["formele documentatie van bestaande core/weather.js-scope en -grenzen"], "validation": {"software": "PASS", "database": "NOT_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "AS_APPLICABLE"}},
-
-  {"id": "MS-F6-01", "type": "mastersprint", "phase": "F6", "tracks": ["Endurance & Multisport"], "capabilities": [], "priority": "P4", "status": "NOT STARTED", "dependencies": [], "target_maturity": "NOT STARTED", "acceptance_gate": ["feasibility-rapport zwemmen, geen bouwwerk"], "validation": {"software": "NOT_APPLICABLE", "database": "NOT_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F6-02", "type": "mastersprint", "phase": "F6", "tracks": ["Endurance & Multisport", "Calculation Engine"], "capabilities": [], "priority": "P3", "status": "NOT STARTED", "dependencies": ["MS-F3-03"], "target_maturity": "TESTED", "acceptance_gate": ["critical speed/power en aerobic decoupling geïmplementeerd met evidence-level"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-  {"id": "MS-F6-03", "type": "mastersprint", "phase": "F6", "tracks": ["Endurance & Multisport"], "capabilities": ["END-INTERVAL-001"], "priority": "P3", "status": "NOT STARTED", "dependencies": [], "target_maturity": "VALIDATED", "acceptance_gate": ["flow-niveau UX-test voor de interval-executie-overlay"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F6-04", "type": "mastersprint", "phase": "F6", "tracks": ["Endurance & Multisport"], "capabilities": ["END-HYROX-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": [], "target_maturity": "CLOSED", "acceptance_gate": ["HYROX/Triathlon-rulebook-bronnen herbevestigd tegen actuele hyrox.com-documentatie (jaarlijks terugkerend)"], "validation": {"software": "NOT_APPLICABLE", "database": "AS_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-  {"id": "MS-F6-05", "type": "mastersprint", "phase": "F6", "tracks": ["Endurance & Multisport"], "capabilities": [], "priority": "P3", "status": "NOT STARTED", "dependencies": ["MS-F6-04"], "target_maturity": "IMPLEMENTED", "acceptance_gate": ["race preparation/analysis-flow voor HYROX/triathlon-brick"], "validation": {"software": "REQUIRED", "database": "AS_APPLICABLE", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "AS_APPLICABLE"}},
-
-  {"id": "MS-F7-01", "type": "mastersprint", "phase": "F7", "tracks": ["Analytics & Athlete Intelligence"], "capabilities": [], "priority": "P3", "status": "NOT STARTED", "dependencies": [], "target_maturity": "VALIDATED", "acceptance_gate": ["flow-niveau UX-audit van de Verbanden-schermen (s-lich-verbanden)"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F7-02", "type": "mastersprint", "phase": "F7", "tracks": ["Analytics & Athlete Intelligence"], "capabilities": [], "priority": "P3", "status": "NOT STARTED", "dependencies": [], "target_maturity": "TESTED", "acceptance_gate": ["performance_index.v1 uitgebreid met minimaal 1 nieuwe dimensie, evidence-onderbouwd"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-  {"id": "MS-F7-03", "type": "mastersprint", "phase": "F7", "tracks": ["Analytics & Athlete Intelligence"], "capabilities": [], "priority": "P2", "status": "NOT STARTED", "dependencies": [], "target_maturity": "CLOSED", "acceptance_gate": ["alle UI-teksten die correlaties tonen, vermijden causale taal zonder onderbouwing"], "validation": {"software": "NOT_APPLICABLE", "database": "NOT_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-
-  {"id": "MS-F8-01", "type": "mastersprint", "phase": "F8", "tracks": ["Women's Performance"], "capabilities": ["CTX-CYCLE-001", "WOMENS-PERF-DECISIONS-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": ["WOMENS-PERF-DECISIONS-001"], "target_maturity": "IMPLEMENTED", "acceptance_gate": ["implementatie volgt exact het door Maurice genomen besluit over zwangerschap"], "validation": {"software": "REQUIRED", "database": "AS_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-  {"id": "MS-F8-02", "type": "mastersprint", "phase": "F8", "tracks": ["Women's Performance"], "capabilities": ["CTX-CYCLE-001", "WOMENS-PERF-DECISIONS-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": ["WOMENS-PERF-DECISIONS-001"], "target_maturity": "IMPLEMENTED", "acceptance_gate": ["implementatie volgt exact het door Maurice genomen besluit over postpartum"], "validation": {"software": "REQUIRED", "database": "AS_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-  {"id": "MS-F8-03", "type": "mastersprint", "phase": "F8", "tracks": ["Women's Performance"], "capabilities": ["CTX-CYCLE-001", "WOMENS-PERF-DECISIONS-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": ["WOMENS-PERF-DECISIONS-001"], "target_maturity": "IMPLEMENTED", "acceptance_gate": ["implementatie volgt exact het door Maurice genomen besluit over menopauze/perimenopauze"], "validation": {"software": "REQUIRED", "database": "AS_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-  {"id": "MS-F8-04", "type": "mastersprint", "phase": "F8", "tracks": ["Women's Performance"], "capabilities": ["CTX-CYCLE-001", "WOMENS-PERF-DECISIONS-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": ["WOMENS-PERF-DECISIONS-001"], "target_maturity": "IMPLEMENTED", "acceptance_gate": ["implementatie volgt exact het door Maurice genomen besluit over anticonceptie"], "validation": {"software": "REQUIRED", "database": "AS_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-  {"id": "MS-F8-05", "type": "mastersprint", "phase": "F8", "tracks": ["Women's Performance"], "capabilities": ["CTX-CYCLE-001", "WOMENS-PERF-DECISIONS-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": ["WOMENS-PERF-DECISIONS-001"], "target_maturity": "IMPLEMENTED", "acceptance_gate": ["implementatie volgt exact het door Maurice genomen besluit over bekkenbodem"], "validation": {"software": "REQUIRED", "database": "AS_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-  {"id": "WOMENS-PERF-DECISIONS-001", "type": "capability", "track": "Women's Performance", "phase": "F8", "priority": "P2", "status": "NOT STARTED", "target": "CLOSED", "dependencies": [], "software_validation": "N/A", "device_validation": "N/A", "evidence_status": "VERIFIED", "next_action": "wacht op 5 expliciete productbeslissingen van Maurice"},
-
-  {"id": "MS-F9-01", "type": "mastersprint", "phase": "F9", "tracks": ["Social & Community"], "capabilities": [], "priority": "P4", "status": "NOT STARTED", "dependencies": [], "target_maturity": "NOT STARTED", "acceptance_gate": ["onderzoeksrapport privacy-model voor eventuele social-laag, geen bouwwerk, wacht op productbeslissing"], "validation": {"software": "NOT_APPLICABLE", "database": "NOT_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-
-  {"id": "MS-F10-01", "type": "mastersprint", "phase": "F10", "tracks": ["Coach/PT Platform"], "capabilities": ["COACH-RELATIONSHIP-001"], "priority": "P3", "status": "NOT STARTED", "dependencies": [], "target_maturity": "TESTED", "acceptance_gate": ["dedicated testbestand voor coach_athlete_relationships-consent-flow"], "validation": {"software": "REQUIRED", "database": "PASS", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F10-02", "type": "mastersprint", "phase": "F10", "tracks": ["Coach/PT Platform"], "capabilities": [], "priority": "P2", "status": "NOT STARTED", "dependencies": ["MS-F1-03"], "target_maturity": "IMPLEMENTED", "acceptance_gate": ["coach-dashboard MVP op bestaand coach_athlete_relationships-schema"], "validation": {"software": "REQUIRED", "database": "REQUIRED", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F10-03", "type": "mastersprint", "phase": "F10", "tracks": ["Coach/PT Platform"], "capabilities": [], "priority": "P3", "status": "NOT STARTED", "dependencies": ["MS-F10-02"], "target_maturity": "IMPLEMENTED", "acceptance_gate": ["coach kan programma's toewijzen aan gekoppelde atleten"], "validation": {"software": "REQUIRED", "database": "REQUIRED", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-
-  {"id": "MS-F11-01", "type": "mastersprint", "phase": "F11", "tracks": ["Gym/Club/Team Platform"], "capabilities": ["GYM-RLS-SCOPING-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": ["MS-F1-03"], "target_maturity": "IMPLEMENTED", "acceptance_gate": ["tenant/locaties/staff-model gebouwd op de dan-gescoped organizations/teams-tabellen"], "validation": {"software": "REQUIRED", "database": "REQUIRED", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F11-02", "type": "mastersprint", "phase": "F11", "tracks": ["Gym/Club/Team Platform"], "capabilities": [], "priority": "P3", "status": "NOT STARTED", "dependencies": ["MS-F11-01"], "target_maturity": "IMPLEMENTED", "acceptance_gate": ["team/groep-beheer-UI voor gym-owners"], "validation": {"software": "REQUIRED", "database": "REQUIRED", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-
-  {"id": "MS-F12-01", "type": "mastersprint", "phase": "F12", "tracks": ["Commercial & Entitlements"], "capabilities": ["COMM-UI-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": ["MS-F2-02"], "target_maturity": "VALIDATED", "acceptance_gate": ["entitlement-reconciliatie tegen Mollie-webhook, geen dubbele/gemiste toekenningen"], "validation": {"software": "REQUIRED", "database": "REQUIRED", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F12-02", "type": "mastersprint", "phase": "F12", "tracks": ["Commercial & Entitlements"], "capabilities": ["COMM-UI-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": ["MS-F12-01"], "target_maturity": "VALIDATED", "acceptance_gate": ["upgrade/downgrade/cancel/restore-flow volledig getest, incl. billing-failure-scenario's"], "validation": {"software": "REQUIRED", "database": "REQUIRED", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-
-  {"id": "MS-F13-01", "type": "mastersprint", "phase": "F13", "tracks": ["Platform/Production"], "capabilities": ["PLAT-OBSERVABILITY-001"], "priority": "P2", "status": "NOT STARTED", "dependencies": ["MS-F1-02"], "target_maturity": "VALIDATED", "acceptance_gate": ["error-tracking dekt alle Netlify Functions, met alerting"], "validation": {"software": "REQUIRED", "database": "NOT_APPLICABLE", "integration": "REQUIRED", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F13-02", "type": "mastersprint", "phase": "F13", "tracks": ["Platform/Production"], "capabilities": [], "priority": "P4", "status": "NOT STARTED", "dependencies": [], "target_maturity": "NOT STARTED", "acceptance_gate": ["feasibility-rapport iOS/Capacitor, geen bouwwerk"], "validation": {"software": "NOT_APPLICABLE", "database": "NOT_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-  {"id": "MS-F13-03", "type": "mastersprint", "phase": "F13", "tracks": ["Platform/Production"], "capabilities": [], "priority": "P3", "status": "NOT STARTED", "dependencies": [], "target_maturity": "IMPLEMENTED", "acceptance_gate": ["formeel backup/retentiebeleid gedocumenteerd, incl. bak_p_*-lessen (MS-F1-01)"], "validation": {"software": "NOT_APPLICABLE", "database": "AS_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-
-  {"id": "MS-F14-01", "type": "mastersprint", "phase": "F14", "tracks": ["Scientific Platform"], "capabilities": ["SCI-CONSENT-001"], "priority": "P4", "status": "NOT STARTED", "dependencies": ["EVID-SCI-001"], "target_maturity": "IMPLEMENTED", "acceptance_gate": ["consent-flow ontworpen en goedgekeurd vóór enige research-export mogelijk wordt"], "validation": {"software": "REQUIRED", "database": "REQUIRED", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-  {"id": "MS-F14-02", "type": "mastersprint", "phase": "F14", "tracks": ["Scientific Platform"], "capabilities": ["SCI-CONSENT-001"], "priority": "P4", "status": "NOT STARTED", "dependencies": ["MS-F14-01"], "target_maturity": "IMPLEMENTED", "acceptance_gate": ["geanonimiseerde/gepseudonimiseerde export-pijplijn met provenance"], "validation": {"software": "REQUIRED", "database": "REQUIRED", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "REQUIRED"}},
-
-  {"id": "MS-F15-01", "type": "mastersprint", "phase": "F15", "tracks": ["Platform/Production"], "capabilities": ["EVID-SCI-001"], "priority": "P3", "status": "NOT STARTED", "dependencies": ["MS-F3-04"], "target_maturity": "IMPLEMENTED", "acceptance_gate": ["evidence-transparantie-positionering uitgewerkt (communicatie, geen nieuwe code vereist)"], "validation": {"software": "NOT_APPLICABLE", "database": "NOT_APPLICABLE", "integration": "NOT_APPLICABLE", "device": "NOT_APPLICABLE", "scientific": "NOT_APPLICABLE"}},
-
-  {"id": "DOC-HANDBOOK-001", "type": "capability", "track": "Platform/Production", "phase": "F1", "priority": "P1", "status": "IMPLEMENTED", "target": "CLOSED", "dependencies": [], "software_validation": "N/A", "device_validation": "N/A", "evidence_status": "VERIFIED", "next_action": "zie MS-F1-04"},
-  {"id": "GYM-RLS-SCOPING-001", "type": "capability", "track": "Gym/Club/Team Platform", "phase": "F1", "priority": "P1", "status": "NOT STARTED", "target": "VALIDATED", "dependencies": [], "software_validation": "N/A", "device_validation": "N/A", "evidence_status": "VERIFIED", "next_action": "zie MS-F1-03"},
-  {"id": "PLAT-BACKUP-CLEANUP-001", "type": "capability", "track": "Platform/Production", "phase": "F1", "priority": "P2", "status": "NOT STARTED", "target": "CLOSED", "dependencies": [], "software_validation": "N/A", "device_validation": "N/A", "evidence_status": "VERIFIED", "next_action": "zie MS-F1-01"},
-  {"id": "PLAT-OBSERVABILITY-001", "type": "capability", "track": "Platform/Production", "phase": "F1", "priority": "P2", "status": "NOT STARTED", "target": "IMPLEMENTED", "dependencies": [], "software_validation": "N/A", "device_validation": "N/A", "evidence_status": "UNKNOWN", "next_action": "zie MS-F1-02 en MS-F13-01"},
-  {"id": "COMM-UI-001", "type": "capability", "track": "Commercial & Entitlements", "phase": "F2", "priority": "P1", "status": "NOT STARTED", "target": "IMPLEMENTED", "dependencies": ["GYM-RLS-SCOPING-001"], "software_validation": "N/A", "device_validation": "N/A", "evidence_status": "VERIFIED", "next_action": "zie MS-F2-01, MS-F2-02, MS-F12-01, MS-F12-02"},
-  {"id": "AI-OUTPUT-CONTRACT-001", "type": "capability", "track": "AI Coach", "phase": "F2", "priority": "P1", "status": "NOT STARTED", "target": "TESTED", "dependencies": ["EVID-SCI-001"], "software_validation": "N/A", "device_validation": "N/A", "evidence_status": "PARTIAL", "next_action": "zie MS-F2-03, MS-F4-01, MS-F4-02"},
-  {"id": "AI-PROGRAM-AUTOGEN-001", "type": "capability", "track": "AI Coach", "phase": "F4", "priority": "P1", "status": "IMPLEMENTED", "target": "VALIDATED", "dependencies": ["EVID-SCI-001", "DEC-CORE-001"], "software_validation": "PARTIAL", "device_validation": "N/A", "evidence_status": "PARTIAL", "next_action": "zie MS-F4-03 t/m MS-F4-06"},
-  {"id": "DEV-VALIDATION-001", "type": "capability", "track": "Wearables & Devices", "phase": "F5", "priority": "P2", "status": "TESTED", "target": "VALIDATED", "dependencies": [], "software_validation": "PASS", "device_validation": "OPEN", "evidence_status": "N/A", "next_action": "zie MS-F5-01, MS-F5-02"},
-  {"id": "CAP-REGISTRY-SCREENS-001", "type": "capability", "track": "Platform/Production", "phase": "F1", "priority": "P3", "status": "IMPLEMENTED", "target": "CLOSED", "dependencies": [], "software_validation": "N/A", "device_validation": "N/A", "evidence_status": "VERIFIED", "next_action": "zie MS-F2-04, MS-F2-06"},
-  {"id": "SCI-CONSENT-001", "type": "capability", "track": "Scientific Platform", "phase": "F14", "priority": "P4", "status": "NOT STARTED", "target": "IMPLEMENTED", "dependencies": ["EVID-SCI-001"], "software_validation": "N/A", "device_validation": "N/A", "evidence_status": "UNKNOWN", "next_action": "zie MS-F14-01, MS-F14-02"}
+  {
+    "id": "MS-F1-01",
+    "type": "mastersprint",
+    "phase": "F1",
+    "name": "Multi-tenant RLS Security Closure",
+    "tracks": [
+      "Gym/Club/Team Platform",
+      "Platform/Production"
+    ],
+    "capabilities": [
+      "GYM-RLS-SCOPING-001"
+    ],
+    "epics": [
+      "E15.1",
+      "E17.1"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Membership-scoped policies + DB regression proof; no real org data before pass.",
+    "acceptance_gate": [
+      "Membership-scoped policies + DB regression proof; no real org data before pass."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F1-02",
+    "type": "mastersprint",
+    "phase": "F1",
+    "name": "Observability Foundation",
+    "tracks": [
+      "Platform/Production"
+    ],
+    "capabilities": [
+      "PLAT-OBSERVABILITY-001"
+    ],
+    "epics": [
+      "E17.2"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Structured server/client error events, traceability, no secret leakage.",
+    "acceptance_gate": [
+      "Structured server/client error events, traceability, no secret leakage."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F1-03",
+    "type": "mastersprint",
+    "phase": "F1",
+    "name": "Secrets & Configuration Hygiene",
+    "tracks": [
+      "Platform/Production"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E17.1"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Verify storage/rotation boundaries; no secret values exposed during audit.",
+    "acceptance_gate": [
+      "Verify storage/rotation boundaries; no secret values exposed during audit."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F1-04",
+    "type": "mastersprint",
+    "phase": "F1",
+    "name": "Normative Documentation Sync",
+    "tracks": [
+      "Platform/Production"
+    ],
+    "capabilities": [
+      "DOC-HANDBOOK-001"
+    ],
+    "epics": [
+      "Platform"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Handbook/governance aligned to current architecture; no stale normative instructions.",
+    "acceptance_gate": [
+      "Handbook/governance aligned to current architecture; no stale normative instructions."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F1-05",
+    "type": "mastersprint",
+    "phase": "F1",
+    "name": "Backup & Retention Decision",
+    "tracks": [
+      "Platform/Production"
+    ],
+    "capabilities": [
+      "PLAT-BACKUP-CLEANUP-001"
+    ],
+    "epics": [
+      "Platform"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Retention/export decision; deletion only with explicit approval.",
+    "acceptance_gate": [
+      "Retention/export decision; deletion only with explicit approval."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F2-01",
+    "type": "mastersprint",
+    "phase": "F2",
+    "name": "Canonical Training Start & Preview",
+    "tracks": [
+      "Training Core"
+    ],
+    "capabilities": [
+      "CAP-REGISTRY-SCREENS-001"
+    ],
+    "epics": [
+      "E1.1"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "All normal entry points converge without duplicated execution logic.",
+    "acceptance_gate": [
+      "All normal entry points converge without duplicated execution logic."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F2-02",
+    "type": "mastersprint",
+    "phase": "F2",
+    "name": "Execution Reliability & Persistence",
+    "tracks": [
+      "Training Core"
+    ],
+    "capabilities": [
+      "CAP-REGISTRY-SCREENS-001"
+    ],
+    "epics": [
+      "E1.2"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F2-01"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Timer/logging/resume/finish/discard/offline edge cases closed.",
+    "acceptance_gate": [
+      "Timer/logging/resume/finish/discard/offline edge cases closed."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F2-03",
+    "type": "mastersprint",
+    "phase": "F2",
+    "name": "Workout Builder & My Trainings",
+    "tracks": [
+      "Training Core"
+    ],
+    "capabilities": [
+      "CAP-REGISTRY-SCREENS-001"
+    ],
+    "epics": [
+      "E1.1"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F2-01"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Builder as editor behind Training maken; reusable custom workouts.",
+    "acceptance_gate": [
+      "Builder as editor behind Training maken; reusable custom workouts."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F2-04",
+    "type": "mastersprint",
+    "phase": "F2",
+    "name": "Exercise Library UX Excellence",
+    "tracks": [
+      "Exercise Intelligence"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E2.1"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Fast search/filter/favorites/recent/equipment/muscle UX.",
+    "acceptance_gate": [
+      "Fast search/filter/favorites/recent/equipment/muscle UX."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F2-05",
+    "type": "mastersprint",
+    "phase": "F2",
+    "name": "History, Calendar & Scheduling",
+    "tracks": [
+      "Training Core"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E1.3",
+      "E1.4"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F2-01"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "History and future planning form one coherent flow.",
+    "acceptance_gate": [
+      "History and future planning form one coherent flow."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F2-06",
+    "type": "mastersprint",
+    "phase": "F2",
+    "name": "Onboarding & Athlete Goal Intake",
+    "tracks": [
+      "Training Core"
+    ],
+    "capabilities": [],
+    "epics": [
+      "Athlete UX"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Conversational but structured intake; goal/context captured deterministically.",
+    "acceptance_gate": [
+      "Conversational but structured intake; goal/context captured deterministically."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F2-07",
+    "type": "mastersprint",
+    "phase": "F2",
+    "name": "Home/Dashboard Actionability",
+    "tracks": [
+      "Training Core"
+    ],
+    "capabilities": [],
+    "epics": [
+      "Athlete UX"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F2-01",
+      "MS-F2-06"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Next workout, recovery/context, progress and coach actions prioritized.",
+    "acceptance_gate": [
+      "Next workout, recovery/context, progress and coach actions prioritized."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F2-08",
+    "type": "mastersprint",
+    "phase": "F2",
+    "name": "Athlete Core UX Benchmark Pass",
+    "tracks": [
+      "Training Core"
+    ],
+    "capabilities": [],
+    "epics": [
+      "UX"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F2-01",
+      "MS-F2-02",
+      "MS-F2-03",
+      "MS-F2-04",
+      "MS-F2-06",
+      "MS-F2-07"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Flow/taps/error/empty/loading benchmark against leading apps.",
+    "acceptance_gate": [
+      "Flow/taps/error/empty/loading benchmark against leading apps."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F3-01",
+    "type": "mastersprint",
+    "phase": "F3",
+    "name": "Strength Calculation Registry",
+    "tracks": [
+      "Calculation Engine"
+    ],
+    "capabilities": [
+      "EVID-SCI-001"
+    ],
+    "epics": [
+      "E4.1"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Metric-level formulas, units, inputs, confidence, evidence.",
+    "acceptance_gate": [
+      "Metric-level formulas, units, inputs, confidence, evidence."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F3-02",
+    "type": "mastersprint",
+    "phase": "F3",
+    "name": "Load & Progression Calculation Registry",
+    "tracks": [
+      "Calculation Engine",
+      "Decision & Rules Engine"
+    ],
+    "capabilities": [
+      "EVID-SCI-001"
+    ],
+    "epics": [
+      "E4.2",
+      "E6.2"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F3-01"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "sRPE/rolling load/progression/stagnation models bounded and versioned.",
+    "acceptance_gate": [
+      "sRPE/rolling load/progression/stagnation models bounded and versioned."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F3-03",
+    "type": "mastersprint",
+    "phase": "F3",
+    "name": "Recovery Calculation Registry",
+    "tracks": [
+      "Calculation Engine",
+      "Recovery & Health Context"
+    ],
+    "capabilities": [
+      "EVID-SCI-001"
+    ],
+    "epics": [
+      "E4.3",
+      "E9.1"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "HRV/RHR/sleep/readiness components with baseline/confidence.",
+    "acceptance_gate": [
+      "HRV/RHR/sleep/readiness components with baseline/confidence."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F3-04",
+    "type": "mastersprint",
+    "phase": "F3",
+    "name": "Endurance & Erg Calculation Registry",
+    "tracks": [
+      "Calculation Engine",
+      "Endurance & Multisport"
+    ],
+    "capabilities": [
+      "EVID-SCI-001"
+    ],
+    "epics": [
+      "E4.4",
+      "E3.3"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Pace/power/zones/CS/CP/decoupling/erg metrics.",
+    "acceptance_gate": [
+      "Pace/power/zones/CS/CP/decoupling/erg metrics."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F3-05",
+    "type": "mastersprint",
+    "phase": "F3",
+    "name": "Energy & Estimate Registry",
+    "tracks": [
+      "Calculation Engine"
+    ],
+    "capabilities": [
+      "EVID-SCI-001"
+    ],
+    "epics": [
+      "E4.5"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Calories/estimates explicitly uncertain.",
+    "acceptance_gate": [
+      "Calories/estimates explicitly uncertain."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F3-06",
+    "type": "mastersprint",
+    "phase": "F3",
+    "name": "Context Taxonomy & Contract",
+    "tracks": [
+      "Context Engine"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E5.1",
+      "E5.2"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Canonical context types, provenance and precedence.",
+    "acceptance_gate": [
+      "Canonical context types, provenance and precedence."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F3-07",
+    "type": "mastersprint",
+    "phase": "F3",
+    "name": "Decision Rule Registry",
+    "tracks": [
+      "Decision & Rules Engine"
+    ],
+    "capabilities": [
+      "DEC-CORE-001"
+    ],
+    "epics": [
+      "E6.1"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F3-06"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Rule IDs, versions, inputs, outputs, thresholds, forbidden use.",
+    "acceptance_gate": [
+      "Rule IDs, versions, inputs, outputs, thresholds, forbidden use."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F3-08",
+    "type": "mastersprint",
+    "phase": "F3",
+    "name": "Data Quality & Confidence Layer",
+    "tracks": [
+      "Evidence & Provenance"
+    ],
+    "capabilities": [
+      "EVID-SCI-001"
+    ],
+    "epics": [
+      "E7.2"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F3-01",
+      "MS-F3-02",
+      "MS-F3-03",
+      "MS-F3-04"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Shared quality/confidence semantics across engines.",
+    "acceptance_gate": [
+      "Shared quality/confidence semantics across engines."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F3-09",
+    "type": "mastersprint",
+    "phase": "F3",
+    "name": "Evidence Registry Metric Audit",
+    "tracks": [
+      "Evidence & Provenance"
+    ],
+    "capabilities": [
+      "EVID-SCI-001"
+    ],
+    "epics": [
+      "E7.1"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F3-01",
+      "MS-F3-02",
+      "MS-F3-03",
+      "MS-F3-04",
+      "MS-F3-08"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "A-E evidence per calculation/rule with sources and limitations.",
+    "acceptance_gate": [
+      "A-E evidence per calculation/rule with sources and limitations."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F3-10",
+    "type": "mastersprint",
+    "phase": "F3",
+    "name": "Explainability & Provenance Contract",
+    "tracks": [
+      "Evidence & Provenance"
+    ],
+    "capabilities": [
+      "EVID-SCI-001"
+    ],
+    "epics": [
+      "E7.3"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F3-09"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Every recommendation traceable end-to-end.",
+    "acceptance_gate": [
+      "Every recommendation traceable end-to-end."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F4-01",
+    "type": "mastersprint",
+    "phase": "F4",
+    "name": "AI Output Contract & Guardrails",
+    "tracks": [
+      "AI Coach"
+    ],
+    "capabilities": [
+      "AI-OUTPUT-CONTRACT-001"
+    ],
+    "epics": [
+      "E8.1"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F3-09",
+      "MS-F3-10"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Schema/contract tests; no invented values/diagnosis language.",
+    "acceptance_gate": [
+      "Schema/contract tests; no invented values/diagnosis language."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F4-02",
+    "type": "mastersprint",
+    "phase": "F4",
+    "name": "Explainable Daily Coach",
+    "tracks": [
+      "AI Coach"
+    ],
+    "capabilities": [
+      "AI-OUTPUT-CONTRACT-001"
+    ],
+    "epics": [
+      "E8.2",
+      "E8.3"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F4-01"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "What/why/confidence/missing-data explanation.",
+    "acceptance_gate": [
+      "What/why/confidence/missing-data explanation."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F4-03",
+    "type": "mastersprint",
+    "phase": "F4",
+    "name": "Exercise-specific Progression Coach",
+    "tracks": [
+      "AI Coach",
+      "Exercise Intelligence"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E2.2",
+      "E6.2"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F4-01",
+      "MS-F3-02"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Lift-by-lift stagnation/progression advice.",
+    "acceptance_gate": [
+      "Lift-by-lift stagnation/progression advice."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F4-04",
+    "type": "mastersprint",
+    "phase": "F4",
+    "name": "Adaptive Weekly Program Loop",
+    "tracks": [
+      "AI Coach"
+    ],
+    "capabilities": [
+      "AI-PROGRAM-AUTOGEN-001"
+    ],
+    "epics": [
+      "E8.4"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F4-01",
+      "MS-F4-02",
+      "MS-F3-07"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Rule/evidence-governed adaptation with audit trail.",
+    "acceptance_gate": [
+      "Rule/evidence-governed adaptation with audit trail."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F4-05",
+    "type": "mastersprint",
+    "phase": "F4",
+    "name": "Schedule & Missed-workout Adaptation",
+    "tracks": [
+      "Decision & Rules Engine"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E6.4"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F4-04",
+      "MS-F3-07"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Adapt safely to adherence and event proximity.",
+    "acceptance_gate": [
+      "Adapt safely to adherence and event proximity."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F5-01",
+    "type": "mastersprint",
+    "phase": "F5",
+    "name": "Provider Integration Contract",
+    "tracks": [
+      "Wearables & Devices"
+    ],
+    "capabilities": [
+      "DEV-VALIDATION-001"
+    ],
+    "epics": [
+      "E11.1"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Connector interface, canonical model, provenance, duplicate safety.",
+    "acceptance_gate": [
+      "Connector interface, canonical model, provenance, duplicate safety."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F5-02",
+    "type": "mastersprint",
+    "phase": "F5",
+    "name": "Concept2 PM5 Real-device Validation",
+    "tracks": [
+      "Wearables & Devices"
+    ],
+    "capabilities": [
+      "DEV-CONCEPT2-001"
+    ],
+    "epics": [
+      "E11.2"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F5-01"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Production-like PM5 validation matrix closed.",
+    "acceptance_gate": [
+      "Production-like PM5 validation matrix closed."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F5-03",
+    "type": "mastersprint",
+    "phase": "F5",
+    "name": "Android Health Connect Production Path",
+    "tracks": [
+      "Wearables & Devices"
+    ],
+    "capabilities": [
+      "DEV-WEARAUTH-001",
+      "DEV-WEARSYNC-001"
+    ],
+    "epics": [
+      "E11.3"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F5-01"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Current Android health architecture validated end-to-end.",
+    "acceptance_gate": [
+      "Current Android health architecture validated end-to-end."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F5-04",
+    "type": "mastersprint",
+    "phase": "F5",
+    "name": "Apple HealthKit Architecture",
+    "tracks": [
+      "Wearables & Devices"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E11.3"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F5-01"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "iOS path designed before implementation.",
+    "acceptance_gate": [
+      "iOS path designed before implementation."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F5-05",
+    "type": "mastersprint",
+    "phase": "F5",
+    "name": "Wearable Provider Feasibility Matrix",
+    "tracks": [
+      "Wearables & Devices"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E11.4"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F5-01"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Garmin/Polar/WHOOP/Suunto/COROS official access and value ranked.",
+    "acceptance_gate": [
+      "Garmin/Polar/WHOOP/Suunto/COROS official access and value ranked."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F5-06",
+    "type": "mastersprint",
+    "phase": "F5",
+    "name": "Weather & Environment Context",
+    "tracks": [
+      "Context Engine"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E5.3"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Weather attached to outdoor sessions with provenance.",
+    "acceptance_gate": [
+      "Weather attached to outdoor sessions with provenance."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F6-01",
+    "type": "mastersprint",
+    "phase": "F6",
+    "name": "Running Intelligence",
+    "tracks": [
+      "Endurance & Multisport"
+    ],
+    "capabilities": [
+      "END-INTERVAL-001"
+    ],
+    "epics": [
+      "E3.1",
+      "E3.3"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F3-04"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Execution + pace/zones/CS/trends.",
+    "acceptance_gate": [
+      "Execution + pace/zones/CS/trends."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F6-02",
+    "type": "mastersprint",
+    "phase": "F6",
+    "name": "Cycling Intelligence",
+    "tracks": [
+      "Endurance & Multisport"
+    ],
+    "capabilities": [
+      "END-INTERVAL-001"
+    ],
+    "epics": [
+      "E3.1",
+      "E3.3"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F3-04"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Power/zones/CP/trends.",
+    "acceptance_gate": [
+      "Power/zones/CP/trends."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F6-03",
+    "type": "mastersprint",
+    "phase": "F6",
+    "name": "Rowing & Erg Intelligence",
+    "tracks": [
+      "Endurance & Multisport"
+    ],
+    "capabilities": [
+      "END-INTERVAL-001",
+      "DEV-CONCEPT2-001"
+    ],
+    "epics": [
+      "E3.1",
+      "E3.3"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F3-04",
+      "MS-F5-02"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Concept2-specific performance model.",
+    "acceptance_gate": [
+      "Concept2-specific performance model."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F6-04",
+    "type": "mastersprint",
+    "phase": "F6",
+    "name": "HYROX Excellence",
+    "tracks": [
+      "Endurance & Multisport"
+    ],
+    "capabilities": [
+      "END-HYROX-001"
+    ],
+    "epics": [
+      "E3.2"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F6-01",
+      "MS-F6-02",
+      "MS-F6-03"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Race preparation/execution/analysis, rules revalidated.",
+    "acceptance_gate": [
+      "Race preparation/execution/analysis, rules revalidated."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F6-05",
+    "type": "mastersprint",
+    "phase": "F6",
+    "name": "Triathlon & Brick Workflows",
+    "tracks": [
+      "Endurance & Multisport"
+    ],
+    "capabilities": [
+      "END-HYROX-001"
+    ],
+    "epics": [
+      "E3.2"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F6-01",
+      "MS-F6-02",
+      "MS-F6-03"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Multi-sport scheduling/execution/analysis.",
+    "acceptance_gate": [
+      "Multi-sport scheduling/execution/analysis."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F7-01",
+    "type": "mastersprint",
+    "phase": "F7",
+    "name": "Athlete Trend Model",
+    "tracks": [
+      "Analytics & Athlete Intelligence"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E12.1"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F3-08"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Unified longitudinal trend layer.",
+    "acceptance_gate": [
+      "Unified longitudinal trend layer."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F7-02",
+    "type": "mastersprint",
+    "phase": "F7",
+    "name": "Exercise Stagnation & Plateau Detection",
+    "tracks": [
+      "Analytics & Athlete Intelligence",
+      "Exercise Intelligence"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E2.2"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F3-02",
+      "MS-F7-01"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Exercise-specific, not blunt global strain trigger.",
+    "acceptance_gate": [
+      "Exercise-specific, not blunt global strain trigger."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F7-03",
+    "type": "mastersprint",
+    "phase": "F7",
+    "name": "Adherence & Consistency Intelligence",
+    "tracks": [
+      "Analytics & Athlete Intelligence"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E12.1"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F7-01"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Planned vs executed behavior over time.",
+    "acceptance_gate": [
+      "Planned vs executed behavior over time."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F7-04",
+    "type": "mastersprint",
+    "phase": "F7",
+    "name": "Relationship Intelligence",
+    "tracks": [
+      "Analytics & Athlete Intelligence"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E12.2"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F7-01"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Correlations with data sufficiency and causality warnings.",
+    "acceptance_gate": [
+      "Correlations with data sufficiency and causality warnings."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F7-05",
+    "type": "mastersprint",
+    "phase": "F7",
+    "name": "Athlete Dashboard 2.0",
+    "tracks": [
+      "Analytics & Athlete Intelligence"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E12.3"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F7-01",
+      "MS-F7-02",
+      "MS-F7-03",
+      "MS-F7-04"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Longitudinal insights converted into action.",
+    "acceptance_gate": [
+      "Longitudinal insights converted into action."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F8-01",
+    "type": "mastersprint",
+    "phase": "F8",
+    "name": "Women's Performance Product Decisions",
+    "tracks": [
+      "Women's Performance"
+    ],
+    "capabilities": [
+      "WOMENS-PERF-DECISIONS-001"
+    ],
+    "epics": [
+      "E10.1"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Five decisions closed before implementation.",
+    "acceptance_gate": [
+      "Five decisions closed before implementation."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F8-02",
+    "type": "mastersprint",
+    "phase": "F8",
+    "name": "Women's Privacy & Consent Model",
+    "tracks": [
+      "Women's Performance"
+    ],
+    "capabilities": [
+      "WOMENS-PERF-DECISIONS-001"
+    ],
+    "epics": [
+      "E10.1"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F8-01"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Sensitive context visibility/retention/sharing rules.",
+    "acceptance_gate": [
+      "Sensitive context visibility/retention/sharing rules."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F8-03",
+    "type": "mastersprint",
+    "phase": "F8",
+    "name": "Cycle & Symptom Performance Context",
+    "tracks": [
+      "Women's Performance"
+    ],
+    "capabilities": [
+      "CTX-CYCLE-001",
+      "WOMENS-PERF-DECISIONS-001"
+    ],
+    "epics": [
+      "E10.2"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F8-01",
+      "MS-F8-02"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Optional contextual coaching, evidence-bounded.",
+    "acceptance_gate": [
+      "Optional contextual coaching, evidence-bounded."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F8-04",
+    "type": "mastersprint",
+    "phase": "F8",
+    "name": "Life-stage Performance Context",
+    "tracks": [
+      "Women's Performance"
+    ],
+    "capabilities": [
+      "CTX-CYCLE-001",
+      "WOMENS-PERF-DECISIONS-001"
+    ],
+    "epics": [
+      "E10.3"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F8-01",
+      "MS-F8-02"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Only approved life-stage scope.",
+    "acceptance_gate": [
+      "Only approved life-stage scope."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F9-01",
+    "type": "mastersprint",
+    "phase": "F9",
+    "name": "Social Identity & Privacy Foundation",
+    "tracks": [
+      "Social & Community"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E13.1"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Visibility and relationship model first.",
+    "acceptance_gate": [
+      "Visibility and relationship model first."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F9-02",
+    "type": "mastersprint",
+    "phase": "F9",
+    "name": "Clubs, Groups & Challenges",
+    "tracks": [
+      "Social & Community"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E13.2"
+    ],
+    "priority": "P3",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F9-01"
+    ],
+    "target_maturity": "TESTED",
+    "objective": "Community engagement without health oversharing.",
+    "acceptance_gate": [
+      "Community engagement without health oversharing."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F9-03",
+    "type": "mastersprint",
+    "phase": "F9",
+    "name": "Sharing, Moderation & Notifications",
+    "tracks": [
+      "Social & Community"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E13.2",
+      "E13.3"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F9-01"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Safe interaction layer.",
+    "acceptance_gate": [
+      "Safe interaction layer."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F10-01",
+    "type": "mastersprint",
+    "phase": "F10",
+    "name": "Coach Consent & Permissions",
+    "tracks": [
+      "Coach/PT Platform"
+    ],
+    "capabilities": [
+      "COACH-RELATIONSHIP-001"
+    ],
+    "epics": [
+      "E14.1"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Dedicated tests and athlete-controlled access.",
+    "acceptance_gate": [
+      "Dedicated tests and athlete-controlled access."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F10-02",
+    "type": "mastersprint",
+    "phase": "F10",
+    "name": "Coach Roster & Athlete Overview",
+    "tracks": [
+      "Coach/PT Platform"
+    ],
+    "capabilities": [
+      "COACH-RELATIONSHIP-001"
+    ],
+    "epics": [
+      "E14.2"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F10-01"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Scalable multi-athlete workflow.",
+    "acceptance_gate": [
+      "Scalable multi-athlete workflow."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F10-03",
+    "type": "mastersprint",
+    "phase": "F10",
+    "name": "Coach Programming & Assignment",
+    "tracks": [
+      "Coach/PT Platform"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E14.3"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F10-02"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Templates/assignment/calendar/adherence.",
+    "acceptance_gate": [
+      "Templates/assignment/calendar/adherence."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F10-04",
+    "type": "mastersprint",
+    "phase": "F10",
+    "name": "Coach Intelligence",
+    "tracks": [
+      "Coach/PT Platform",
+      "AI Coach"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E8",
+      "E14"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F10-03",
+      "MS-F4-01"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "AI summaries constrained by same evidence/decision architecture.",
+    "acceptance_gate": [
+      "AI summaries constrained by same evidence/decision architecture."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F11-01",
+    "type": "mastersprint",
+    "phase": "F11",
+    "name": "Organization & Location Core",
+    "tracks": [
+      "Gym/Club/Team Platform"
+    ],
+    "capabilities": [
+      "GYM-RLS-SCOPING-001"
+    ],
+    "epics": [
+      "E15.2"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F1-01"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Tenant/location/staff/member model after RLS gate.",
+    "acceptance_gate": [
+      "Tenant/location/staff/member model after RLS gate."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F11-02",
+    "type": "mastersprint",
+    "phase": "F11",
+    "name": "Gym Programming & Equipment",
+    "tracks": [
+      "Gym/Club/Team Platform"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E15.3"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F11-01"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Gym templates/equipment/exercise mapping.",
+    "acceptance_gate": [
+      "Gym templates/equipment/exercise mapping."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F11-03",
+    "type": "mastersprint",
+    "phase": "F11",
+    "name": "Teams, Groups & Analytics",
+    "tracks": [
+      "Gym/Club/Team Platform"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E15.2",
+      "E15.4"
+    ],
+    "priority": "P3",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F11-01"
+    ],
+    "target_maturity": "TESTED",
+    "objective": "Team workflows and privacy-safe dashboards.",
+    "acceptance_gate": [
+      "Team workflows and privacy-safe dashboards."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F11-04",
+    "type": "mastersprint",
+    "phase": "F11",
+    "name": "Gym Device Vendor Feasibility",
+    "tracks": [
+      "Gym/Club/Team Platform",
+      "Wearables & Devices"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E11.5"
+    ],
+    "priority": "P3",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F11-02"
+    ],
+    "target_maturity": "TESTED",
+    "objective": "EGYM/Technogym/etc. official integration feasibility.",
+    "acceptance_gate": [
+      "EGYM/Technogym/etc. official integration feasibility."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F11-05",
+    "type": "mastersprint",
+    "phase": "F11",
+    "name": "Dynamic Branding & Admin",
+    "tracks": [
+      "Gym/Club/Team Platform"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E15.4"
+    ],
+    "priority": "P3",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F11-01"
+    ],
+    "target_maturity": "TESTED",
+    "objective": "Tenant skin while Trainingskompas identity remains visible.",
+    "acceptance_gate": [
+      "Tenant skin while Trainingskompas identity remains visible."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F12-01",
+    "type": "mastersprint",
+    "phase": "F12",
+    "name": "Tier & Entitlement Design",
+    "tracks": [
+      "Commercial & Entitlements"
+    ],
+    "capabilities": [
+      "COMM-UI-001"
+    ],
+    "epics": [
+      "E16.1"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Value-based tiers before paywall UI.",
+    "acceptance_gate": [
+      "Value-based tiers before paywall UI."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F12-02",
+    "type": "mastersprint",
+    "phase": "F12",
+    "name": "Entitlement Enforcement",
+    "tracks": [
+      "Commercial & Entitlements"
+    ],
+    "capabilities": [
+      "COMM-UI-001"
+    ],
+    "epics": [
+      "E16.1"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F12-01"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Central feature gates/quotas.",
+    "acceptance_gate": [
+      "Central feature gates/quotas."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F12-03",
+    "type": "mastersprint",
+    "phase": "F12",
+    "name": "Commercial UX",
+    "tracks": [
+      "Commercial & Entitlements"
+    ],
+    "capabilities": [
+      "COMM-UI-001"
+    ],
+    "epics": [
+      "E16.2"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F12-02"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Plan comparison/upgrade/downgrade/cancel/restore.",
+    "acceptance_gate": [
+      "Plan comparison/upgrade/downgrade/cancel/restore."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F12-04",
+    "type": "mastersprint",
+    "phase": "F12",
+    "name": "Billing & Reconciliation",
+    "tracks": [
+      "Commercial & Entitlements"
+    ],
+    "capabilities": [
+      "COMM-UI-001"
+    ],
+    "epics": [
+      "E16.3"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F12-03"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Store/web/seat billing and failure handling.",
+    "acceptance_gate": [
+      "Store/web/seat billing and failure handling."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F13-01",
+    "type": "mastersprint",
+    "phase": "F13",
+    "name": "Offline Sync Queue & Conflict Strategy",
+    "tracks": [
+      "Platform/Production"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E17.3"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Durable sync and idempotency.",
+    "acceptance_gate": [
+      "Durable sync and idempotency."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F13-02",
+    "type": "mastersprint",
+    "phase": "F13",
+    "name": "Release/Migration/Rollback Governance",
+    "tracks": [
+      "Platform/Production"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E17.4"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Safer production change management.",
+    "acceptance_gate": [
+      "Safer production change management."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F13-03",
+    "type": "mastersprint",
+    "phase": "F13",
+    "name": "Performance Architecture",
+    "tracks": [
+      "Platform/Production"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E17.5"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Reduce monolithic load/runtime bottlenecks.",
+    "acceptance_gate": [
+      "Reduce monolithic load/runtime bottlenecks."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F13-04",
+    "type": "mastersprint",
+    "phase": "F13",
+    "name": "Accessibility & Mobile Ergonomics",
+    "tracks": [
+      "Platform/Production"
+    ],
+    "capabilities": [],
+    "epics": [
+      "E17.5"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Accessible, one-handed, resilient mobile UX.",
+    "acceptance_gate": [
+      "Accessible, one-handed, resilient mobile UX."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F13-05",
+    "type": "mastersprint",
+    "phase": "F13",
+    "name": "Privacy & Security Recertification",
+    "tracks": [
+      "Platform/Production"
+    ],
+    "capabilities": [
+      "PLAT-DELETE-001",
+      "SOC-GYMTEAM-001"
+    ],
+    "epics": [
+      "E17.1"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F1-01",
+      "MS-F1-03"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Periodic RLS/auth/data-retention audit.",
+    "acceptance_gate": [
+      "Periodic RLS/auth/data-retention audit."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F14-01",
+    "type": "mastersprint",
+    "phase": "F14",
+    "name": "Research Consent & Withdrawal",
+    "tracks": [
+      "Scientific Platform"
+    ],
+    "capabilities": [
+      "SCI-CONSENT-001"
+    ],
+    "epics": [
+      "E18.1"
+    ],
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F3-09"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Explicit research-specific consent.",
+    "acceptance_gate": [
+      "Explicit research-specific consent."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F14-02",
+    "type": "mastersprint",
+    "phase": "F14",
+    "name": "Reproducible Dataset Export",
+    "tracks": [
+      "Scientific Platform"
+    ],
+    "capabilities": [
+      "SCI-CONSENT-001"
+    ],
+    "epics": [
+      "E18.2"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F14-01"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Versioned calculations/evidence/data dictionary.",
+    "acceptance_gate": [
+      "Versioned calculations/evidence/data dictionary."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F14-03",
+    "type": "mastersprint",
+    "phase": "F14",
+    "name": "Cohort & Research Governance",
+    "tracks": [
+      "Scientific Platform"
+    ],
+    "capabilities": [
+      "SCI-CONSENT-001"
+    ],
+    "epics": [
+      "E18.3"
+    ],
+    "priority": "P3",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F14-01",
+      "MS-F14-02"
+    ],
+    "target_maturity": "TESTED",
+    "objective": "Pseudonymized access and governance.",
+    "acceptance_gate": [
+      "Pseudonymized access and governance."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F15-01",
+    "type": "mastersprint",
+    "phase": "F15",
+    "name": "Cross-domain Athlete Model",
+    "tracks": [
+      "Platform/Production"
+    ],
+    "capabilities": [],
+    "epics": [
+      "Beyond"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F3-08"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Strength/endurance/recovery/context unified without black-box claims.",
+    "acceptance_gate": [
+      "Strength/endurance/recovery/context unified without black-box claims."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F15-02",
+    "type": "mastersprint",
+    "phase": "F15",
+    "name": "Explainability as Product Surface",
+    "tracks": [
+      "Evidence & Provenance"
+    ],
+    "capabilities": [
+      "EVID-SCI-001"
+    ],
+    "epics": [
+      "Beyond"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F3-09",
+      "MS-F3-10"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Evidence/provenance becomes visible differentiation.",
+    "acceptance_gate": [
+      "Evidence/provenance becomes visible differentiation."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F15-03",
+    "type": "mastersprint",
+    "phase": "F15",
+    "name": "Sensor-assisted Movement Intelligence",
+    "tracks": [
+      "Exercise Intelligence"
+    ],
+    "capabilities": [],
+    "epics": [
+      "Beyond"
+    ],
+    "priority": "P3",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "TESTED",
+    "objective": "Future camera/sensor/hardware analysis after feasibility/privacy.",
+    "acceptance_gate": [
+      "Future camera/sensor/hardware analysis after feasibility/privacy."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F3-11",
+    "type": "mastersprint",
+    "phase": "F3",
+    "name": "Formele Calculation & Evidence Specification (documentdeliverable)",
+    "tracks": [
+      "Evidence & Provenance"
+    ],
+    "capabilities": [
+      "EVID-SCI-001"
+    ],
+    "epics": [],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F3-09"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "docs/CALCULATION_EVIDENCE_SPEC.md bestaat, gevoed door MS-F3-01 t/m MS-F3-10.",
+    "acceptance_gate": [
+      "docs/CALCULATION_EVIDENCE_SPEC.md bestaat, gevoed door MS-F3-01 t/m MS-F3-10."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F4-06",
+    "type": "mastersprint",
+    "phase": "F4",
+    "name": "Longitudinal Program Adaptation & Benchmark Tracking",
+    "tracks": [
+      "AI Coach"
+    ],
+    "capabilities": [
+      "AI-PROGRAM-AUTOGEN-001"
+    ],
+    "epics": [],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F4-04"
+    ],
+    "target_maturity": "IMPLEMENTED",
+    "objective": "Herhaalde benchmark-vergelijking t.o.v. Hevy Trainer na MS-F4-04; niet expliciet in v1.1 maar niet strijdig.",
+    "acceptance_gate": [
+      "Herhaalde benchmark-vergelijking t.o.v. Hevy Trainer na MS-F4-04; niet expliciet in v1.1 maar niet strijdig."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F6-06",
+    "type": "mastersprint",
+    "phase": "F6",
+    "name": "Swimming Feasibility Assessment",
+    "tracks": [
+      "Endurance & Multisport"
+    ],
+    "capabilities": [],
+    "epics": [],
+    "priority": "P4",
+    "status": "NOT STARTED",
+    "dependencies": [],
+    "target_maturity": "TESTED",
+    "objective": "Feasibility-onderzoek zwemmen; niet in v1.1's 5 kern-F6-sprints, blijft geldig als losstaand onderzoek.",
+    "acceptance_gate": [
+      "Feasibility-onderzoek zwemmen; niet in v1.1's 5 kern-F6-sprints, blijft geldig als losstaand onderzoek."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F13-06",
+    "type": "mastersprint",
+    "phase": "F13",
+    "name": "iOS Feasibility Research",
+    "tracks": [
+      "Platform/Production"
+    ],
+    "capabilities": [],
+    "epics": [],
+    "priority": "P3",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F5-04"
+    ],
+    "target_maturity": "TESTED",
+    "objective": "Decision-gated vervolg op MS-F5-04 (Apple HealthKit Architecture); zie Open Product Decisions.",
+    "acceptance_gate": [
+      "Decision-gated vervolg op MS-F5-04 (Apple HealthKit Architecture); zie Open Product Decisions."
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "AS_APPLICABLE",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "AS_APPLICABLE",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "SEC-GYMS-001",
+    "type": "capability",
+    "track": "Platform/Production",
+    "phase": "F0",
+    "priority": "P0",
+    "status": "CLOSED",
+    "target": "CLOSED",
+    "dependencies": [],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "geen — gesloten in P0 Closure Sprint (migratie_v496.sql)"
+  },
+  {
+    "id": "SEC-TEST-001",
+    "type": "capability",
+    "track": "Platform/Production",
+    "phase": "F0",
+    "priority": "P0",
+    "status": "CLOSED",
+    "target": "CLOSED",
+    "dependencies": [],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "geen — 61 nieuwe assertions, inclusief gym-team demotie-fix"
+  },
+  {
+    "id": "SEC-GATE-001",
+    "type": "capability",
+    "track": "Platform/Production",
+    "phase": "F0",
+    "priority": "P0",
+    "status": "CLOSED",
+    "target": "CLOSED",
+    "dependencies": [],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "geen — discovery-based release gate, bewezen via sabotage-test"
+  },
+  {
+    "id": "EVID-SCI-001",
+    "type": "capability",
+    "track": "Decision & Evidence",
+    "phase": "F3",
+    "priority": "P1",
+    "status": "TESTED",
+    "target": "CLOSED",
+    "dependencies": [],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "metric-voor-metric evidencelevel-audit, zie MS-F3-01/02/03/04/05/09"
+  },
+  {
+    "id": "DEC-CORE-001",
+    "type": "capability",
+    "track": "Decision & Rules Engine",
+    "phase": "F3",
+    "priority": "P2",
+    "status": "TESTED",
+    "target": "CLOSED",
+    "dependencies": [],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "corroboratieregel (DEC-036) CODE VERIFIED; uitbreiding zie MS-F3-07"
+  },
+  {
+    "id": "DOC-HANDBOOK-001",
+    "type": "capability",
+    "track": "Platform/Production",
+    "phase": "F1",
+    "priority": "P2",
+    "status": "IMPLEMENTED",
+    "target": "CLOSED",
+    "dependencies": [],
+    "software_validation": "N/A",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "gedowngraded P1->P2 per v1.1 (documentatie is geen productwaarde-vervanger); zie MS-F1-04"
+  },
+  {
+    "id": "GYM-RLS-SCOPING-001",
+    "type": "capability",
+    "track": "Gym/Club/Team Platform",
+    "phase": "F1",
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "target": "VALIDATED",
+    "dependencies": [],
+    "software_validation": "N/A",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F1-01 (hernummerd van oude MS-F1-03)"
+  },
+  {
+    "id": "PLAT-BACKUP-CLEANUP-001",
+    "type": "capability",
+    "track": "Platform/Production",
+    "phase": "F1",
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "target": "CLOSED",
+    "dependencies": [],
+    "software_validation": "N/A",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F1-05"
+  },
+  {
+    "id": "PLAT-OBSERVABILITY-001",
+    "type": "capability",
+    "track": "Platform/Production",
+    "phase": "F1",
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "target": "IMPLEMENTED",
+    "dependencies": [],
+    "software_validation": "N/A",
+    "device_validation": "N/A",
+    "evidence_status": "UNKNOWN",
+    "next_action": "zie MS-F1-02"
+  },
+  {
+    "id": "COMM-UI-001",
+    "type": "capability",
+    "track": "Commercial & Entitlements",
+    "phase": "F12",
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "target": "IMPLEMENTED",
+    "dependencies": [
+      "GYM-RLS-SCOPING-001"
+    ],
+    "software_validation": "N/A",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "gedowngraded P1->P2 EN verplaatst F2->F12 per v1.1 §32 (schema/benchmark-pariteit rechtvaardigt geen vroege bouw); zie MS-F12-01 t/m 04"
+  },
+  {
+    "id": "AI-OUTPUT-CONTRACT-001",
+    "type": "capability",
+    "track": "AI Coach",
+    "phase": "F4",
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "target": "TESTED",
+    "dependencies": [
+      "EVID-SCI-001"
+    ],
+    "software_validation": "N/A",
+    "device_validation": "N/A",
+    "evidence_status": "PARTIAL",
+    "next_action": "verplaatst F2->F4 per v1.1 (na Calculation/Context/Decision/Evidence-dependencies); zie MS-F4-01"
+  },
+  {
+    "id": "AI-PROGRAM-AUTOGEN-001",
+    "type": "capability",
+    "track": "AI Coach",
+    "phase": "F4",
+    "priority": "P1",
+    "status": "IMPLEMENTED",
+    "target": "VALIDATED",
+    "dependencies": [
+      "EVID-SCI-001",
+      "DEC-CORE-001",
+      "AI-OUTPUT-CONTRACT-001"
+    ],
+    "software_validation": "PARTIAL",
+    "device_validation": "N/A",
+    "evidence_status": "PARTIAL",
+    "next_action": "zie MS-F4-04"
+  },
+  {
+    "id": "DEV-VALIDATION-001",
+    "type": "capability",
+    "track": "Wearables & Devices",
+    "phase": "F5",
+    "priority": "P2",
+    "status": "TESTED",
+    "target": "VALIDATED",
+    "dependencies": [],
+    "software_validation": "PASS",
+    "device_validation": "OPEN",
+    "evidence_status": "N/A",
+    "next_action": "zie MS-F5-01, MS-F5-02, MS-F5-03"
+  },
+  {
+    "id": "CAP-REGISTRY-SCREENS-001",
+    "type": "capability",
+    "track": "Platform/Production",
+    "phase": "F2",
+    "priority": "P2",
+    "status": "IMPLEMENTED",
+    "target": "CLOSED",
+    "dependencies": [],
+    "software_validation": "N/A",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "opgewaardeerd van eigen F1/P3-testaudit naar volwaardige F2 Athlete Core Excellence per v1.1; zie MS-F2-01 t/m 08"
+  },
+  {
+    "id": "SCI-CONSENT-001",
+    "type": "capability",
+    "track": "Scientific Platform",
+    "phase": "F14",
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "target": "IMPLEMENTED",
+    "dependencies": [
+      "EVID-SCI-001"
+    ],
+    "software_validation": "N/A",
+    "device_validation": "N/A",
+    "evidence_status": "UNKNOWN",
+    "next_action": "zie MS-F14-01, MS-F14-02, MS-F14-03"
+  },
+  {
+    "id": "WOMENS-PERF-DECISIONS-001",
+    "type": "capability",
+    "track": "Women's Performance",
+    "phase": "F8",
+    "priority": "P1",
+    "status": "NOT STARTED",
+    "target": "CLOSED",
+    "dependencies": [],
+    "software_validation": "N/A",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "wacht op 5 productbeslissingen; zie MS-F8-01"
+  }
 ]

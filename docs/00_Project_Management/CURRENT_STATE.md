@@ -15,9 +15,11 @@ v4.69.0
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 
 ## 2. Current roadmap position
-- **F0 — Verified Baseline: CLOSED** (documentatie-inventaris, capability registry, product architecture, benchmark registry, gap analysis, P0-security-closure — PR #64, #65, #66)
-- **F1 — Foundation Closure: CURRENT** — nog niet inhoudelijk gestart; eerstvolgende concrete stappen zijn GYM-RLS-SCOPING-001, DOC-HANDBOOK-001, `bak_p_*`-cleanup
-- Volledige fasering (F0-F15): zie `docs/TRAININGSKOMPAS_MASTER_ROADMAP.md`
+- **F0 — Verified Baseline: CLOSED** (documentatie-inventaris, capability registry, product architecture, benchmark registry, gap analysis, P0-security-closure — PR #64, #65, #66, #67)
+- **F1 — Foundation Closure: CURRENT** — nog niet inhoudelijk gestart; eerstvolgende concrete stappen zijn MS-F1-01 (Gym RLS Scoping), MS-F1-02 (Observability), MS-F1-03 (Secrets & Configuration Hygiene) — zie `docs/GAP_ANALYSIS_V2.md` en `docs/ROADMAP_INDEX.json`
+- **Master Roadmap 2.0 v1.1 = CANONICAL** productstrategische bron (PR #68 technische expansie + ChatGPT-productarchitectuur, geconsolideerd). Repository blijft technische autoriteit. Zie `docs/DOCUMENTATION_GOVERNANCE.md`.
+- **Productontwikkeling is nog NIET hervat** — geen enkele inhoudelijke mastersprint is uitgevoerd sinds F0-afronding.
+- Volledige fasering (F0-F15): zie `docs/TRAININGSKOMPAS_MASTER_ROADMAP.md`. Volledige mastersprint-ID-migratie: zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md`.
 
 ## 3. Current product maturity (samenvatting — zie `docs/CAPABILITY_REGISTRY.md` voor detail)
 Training Core, Calculation Engine, Context Engine, Decision Engine, Evidence Architecture, Recovery en Security/Platform staan op een volwassen niveau (TESTED/INTEGRATED/CLOSED, zie registry). Women's Performance, Commercial en Coach/Gym-platform zijn architecturaal voorbereid (DB-schema aanwezig) maar UI/RLS-scoping nog niet afgerond. Devices/Wearables zijn software-TESTED, real-device-validatie staat open.
@@ -25,8 +27,9 @@ Training Core, Calculation Engine, Context Engine, Decision Engine, Evidence Arc
 ## 4. Current open priorities
 Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
 - **Open P0: 0**
-- **Open P1: 5** — Handbook-drift (DOC-HANDBOOK-001), Commercial-UI ontbreekt (COMM-UI-001), AI-outputcontract ontbreekt (AI-OUTPUT-CONTRACT-001), Phase 3-RLS-scoping ontbreekt (GYM-RLS-SCOPING-001), AI-adaptive-programmering-gat t.o.v. Hevy Trainer (AI-PROGRAM-AUTOGEN-001)
-- Open P2/P3/P4: zie `docs/GAP_ANALYSIS_V2.md` voor de volledige lijst
+- **Open P1: 3** — Phase 3/Gym-RLS-scoping ontbreekt (GYM-RLS-SCOPING-001, MS-F1-01), AI-outputcontract ontbreekt (AI-OUTPUT-CONTRACT-001, MS-F4-01), AI-adaptive-programmering-gat t.o.v. Hevy Trainer (AI-PROGRAM-AUTOGEN-001, MS-F4-04)
+- **Open P2: 7** — incl. Handbook-drift en Commercial-UI, beide gedowngraded van P1 per Roadmap 2.0 v1.1 (documentatie/schema-aanwezigheid rechtvaardigt geen vroege prioriteit)
+- Open P3/P4: zie `docs/GAP_ANALYSIS_V2.md` voor de volledige lijst
 
 ## 5. Current validation status
 - **Code:** CODE VERIFIED tegen `main` @ bovenstaande SHA

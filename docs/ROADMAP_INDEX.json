@@ -113,7 +113,7 @@
       "Platform"
     ],
     "priority": "P2",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [],
     "target_maturity": "IMPLEMENTED",
     "objective": "Handbook/governance aligned to current architecture; no stale normative instructions.",
@@ -2774,13 +2774,13 @@
     "track": "Platform/Production",
     "phase": "F1",
     "priority": "P2",
-    "status": "IMPLEMENTED",
+    "status": "INTEGRATED",
     "target": "CLOSED",
     "dependencies": [],
     "software_validation": "N/A",
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
-    "next_action": "gedowngraded P1->P2 per v1.1 (documentatie is geen productwaarde-vervanger); zie MS-F1-04"
+    "next_action": "Prioriteit 1 (H6/H9/H12) CLOSED via de Normative Documentation Sync-sprint. Prioriteit 2 (H4/H5/H8/H10) blijft open, zie GAP-P2-006 (verkleind) en docs/HANDBOOK_UPDATE_PLAN.md."
   },
   {
     "id": "GYM-RLS-SCOPING-001",

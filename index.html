@@ -5718,6 +5718,20 @@ function tkErgConnectDevice(exId, idx){
     }).catch(function(){ st._connecting=false; _c2repaint(exId, _c2note(_c2msg('failed'))+_c2btn(exId,'Opnieuw zoeken')); });
   }catch(e){ st._connecting=false; _c2repaint(exId, _c2note(_c2msg('failed'))+_c2btn(exId,'Opnieuw zoeken')); }
 }
+// A5-hardening (v4.67.0) — PRIORITEIT 9/10: noch execLeaveDiscard() noch
+// finishSession() riepen ooit tkErgDisconnect() aan. Een verbonden apparaat
+// bleef daardoor op de achtergrond actief (BLE-verbinding + metric-
+// subscriptie) nadat de training was verworpen of afgerond. Deze functie
+// ruimt uitsluitend device-gerelateerde state op (via de bestaande,
+// ongewijzigde tkErgDisconnect() per verbonden oefening) -- raakt
+// sessionLog/activeInstanceId/finishSession-uitkomst op geen enkele manier.
+function tkErgDisconnectAll(){
+  try{
+    Object.keys(_c2pair).forEach(function(exId){
+      if(_c2pair[exId]&&_c2pair[exId].connected) tkErgDisconnect(exId);
+    });
+  }catch(_){}
+}
 function tkErgDisconnect(exId){
   var st=_c2pair[exId]; var t=tkDeviceTransport();
   try{ if(t&&typeof t.unsubscribeMetrics==='function') t.unsubscribeMetrics(); }catch(_){}
@@ -5984,7 +5998,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.66.0';
+const APP_VER = 'v4.67.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -15333,6 +15347,7 @@ async function execLeaveDiscard(){
   closeModal('m-exec-leave');
   stopTrainTimer(); // stopt ook releaseWakeLock() (zie stopTrainTimer())
   cancelRestTimer();
+  tkErgDisconnectAll(); // A5-hardening (v4.67.0) -- zie functiedefinitie: voorkomt een BLE-verbinding/subscriptie die op de achtergrond actief blijft ná het verlaten van de training
   clearTrainingDraft();
   curT=null;sessionLog={};sessionExtra=[];pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};sessionRxAdj={};sessionPrBase={};
   resolvedWorkout=null;activeInstanceId=null; // dezelfde opruiming als na een afgeronde training -- geen stale instance/session state
@@ -15842,6 +15857,7 @@ async function finishSession(){
     return;
   }
   closeModal('m-session-end');stopTrainTimer();
+  tkErgDisconnectAll(); // A5-hardening (v4.67.0) -- voorkomt een BLE-verbinding/subscriptie die op de achtergrond actief blijft ná het afronden van de training
   clearTrainingDraft();
   /* Fase 2 — LEVENSCYCLUS VAN EEN TRAINING-INSTANCE.
      completeTrainingInstance() bestond sinds Werkblok A maar werd nergens aangeroepen.

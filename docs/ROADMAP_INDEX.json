@@ -450,7 +450,7 @@
       "E4.1"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [],
     "target_maturity": "IMPLEMENTED",
     "objective": "Metric-level formulas, units, inputs, confidence, evidence.",
@@ -3101,5 +3101,19 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "zie MS-F1-03 (CLOSED). Resterend: F-01/F-02 (orphaned DB-kolommen config.anthropic_key/config.pin_hash) vereisen MANUAL_USER_VALIDATION_REQUIRED; F-03 (client-lock-hardening) is PRODUCT_DECISION_REQUIRED."
+  },
+  {
+    "id": "CALC-STR-REGISTRY-001",
+    "type": "capability",
+    "track": "Calculation Engine",
+    "phase": "F3",
+    "priority": "P1",
+    "status": "VALIDATED",
+    "target": "VALIDATED",
+    "dependencies": [],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F3-01 (CLOSED). Zelfde registry-diepte nodig voor Load & Progression (MS-F3-02), Recovery (MS-F3-03), Endurance (MS-F3-04)."
   }
 ]

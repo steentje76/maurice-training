@@ -678,3 +678,76 @@
   onbeheerde master-sprint, met expliciete voorafgaande toestemming. Niet
   door Maurice persoonlijk beoordeeld op het moment van mergen — ter review
   bij terugkeer.
+
+## DEC-042
+- Datum: 27 augustus 2026
+- Beslissing: A5 Real Device Validation & Live Training 2.0 — geen nieuwe
+  mid-workout-connect-flow gebouwd (bestond al architecturaal correct);
+  twee echte, bewezen bugs in de bestaande connect-functies gerepareerd.
+- Reden: discovery toonde aan dat het apparaat-koppel-widget al ingebed is
+  in de oefening-body zelf, identiek gerenderd tijdens actieve executie als
+  daarbuiten. _c2repaint() werkt uitsluitend op een lokaal DOM-fragment,
+  raakt sessionLog/activeInstanceId/resolvedWorkout/de trainingstimer niet.
+  Het "hard requirement" van deze sprint bleek dus al vervuld door
+  architectuurkeuzes uit eerdere sprints.
+- Gevonden bug 1 (gestapelde subscriptions): subscribeMetrics()/
+  subscribeConnection() in native/src/nativeConcept2BleTransport.js
+  gebruiken array.push() -- de aanroepende UI-code legde de teruggegeven
+  unsubscribe-functies nooit vast. Gerepareerd door exercise-specifieke
+  unsubscribe-functies vast te leggen en vóór elke nieuwe subscriptie op
+  te ruimen. Expliciet NIET de transportbrede unsubscribeMetrics()
+  gebruikt, omdat dat een andere, gelijktijdig verbonden oefening in
+  dezelfde training zou kunnen raken.
+- Gevonden bug 2 (geen dubbel-tik-bescherming): busy-guards toegevoegd aan
+  zowel het scannen (tkErgPair) als het verbinden (tkErgConnectDevice).
+- Beide bugs bewezen via bug-terugzet-simulatie (tests W1/W6).
+- Impact: geen databasewijziging, geen protected-core-wijziging (expliciet
+  geverifieerd, inclusief de device-specifieke kernbestanden
+  concept2Live.js/deviceIntegration.js). Minimale, precieze wijziging in
+  twee bestaande functies, geen nieuwe architectuur.
+- A5-status: het belangrijkste productrisico (mid-workout connect verliest
+  de sessie) bleek NIET te bestaan; de twee gevonden bugs waren reële,
+  maar kleinere robuustheidsgebreken, nu opgelost.
+- Verantwoordelijke: autonome discovery, bewijsvoering en gerichte reparatie
+  door Claude tijdens een onbeheerde master-sprint, met expliciete
+  voorafgaande toestemming. Niet door Maurice persoonlijk beoordeeld op het
+  moment van mergen — ter review bij terugkeer.
+
+## DEC-043
+- Datum: 27 augustus 2026
+- Beslissing: A5-vervolg — functionele (niet uitsluitend statische)
+  bewijsvoering toegevoegd voor mid-workout device-connect; een nieuwe,
+  echte bug gevonden en gerepareerd (device-cleanup bij discard/finish).
+- Nieuwe testmethode: core/fA5DeviceConnectE2E.test.js extraheert de
+  daadwerkelijke functies (tkErgPair/tkErgSelect/tkErgConnectDevice) uit
+  index.html en draait ze in een echte JS-omgeving (Node vm-module) tegen
+  een gemockte transport en de echte trainingsstaat-variabelen. Dit is
+  een methodologische verbetering t.o.v. de eerdere, uitsluitend
+  regex-gebaseerde tests in fHardening.test.js -- beide blijven bestaan,
+  complementair.
+- Bewijs, niet aanname: de nieuwe testsuite is expliciet gedraaid tegen de
+  ONGEREPAREERDE v4.65.0-code, met gemeten resultaat (3 connect-aanroepen
+  i.p.v. 1, 3 gestapelde listeners i.p.v. 1 bij dubbel tikken; 2 gestapelde
+  listeners i.p.v. 1 bij reconnect) -- geconcretiseerd, niet louter
+  beweerd dat de v4.66.0-fix nodig was.
+- Nieuwe bug gevonden (Prioriteiten 9/10): execLeaveDiscard() en
+  finishSession() riepen nooit tkErgDisconnect() aan, waardoor een
+  verbonden apparaat op de achtergrond actief bleef ná het einde van de
+  training. Gerepareerd met een nieuwe tkErgDisconnectAll()-functie,
+  bewezen via bug-terugzet-simulatie (tests X1/X5).
+- Bewust niet gebouwd: cross-exercise device-switch-cleanup (twee
+  verschillende oefeningen, elk met een eigen verbinding, zonder
+  expliciete disconnect tussendoor) -- smaller randgeval, onderliggende
+  transport is single-device, dus niet als blokkerende P0/P1
+  geclassificeerd. Gedocumenteerd, geen architectuurwijziging gebouwd.
+- Hardwarevalidatie: EXTERN BLOCKED — REAL PM5 VALIDATION (geen fysiek
+  Concept2-apparaat beschikbaar in deze ontwikkelomgeving).
+- A5-status: alle softwarematig bewijsbare eisen zijn aantoonbaar
+  afgerond. FINAL DECISION: A5 SOFTWARE CLOSED — REAL DEVICE VALIDATION
+  OPEN.
+- Impact: geen databasewijziging, geen protected-core-wijziging.
+- Verantwoordelijke: autonome, functionele bewijsvoering en gerichte
+  reparatie door Claude tijdens een onbeheerde master-sprint, met
+  expliciete voorafgaande toestemming voor doorwerken zonder tussentijdse
+  bevestiging. Niet door Maurice persoonlijk beoordeeld op het moment van
+  mergen — ter review bij terugkeer.

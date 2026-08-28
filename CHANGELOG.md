@@ -1,5 +1,107 @@
 # Trainingskompas — Changelog
 
+## v4.67.0 — A5-vervolg: functioneel bewezen state preservation + device-cleanup bij einde training (27 augustus 2026)
+
+Vervolg op v4.66.0, binnen dezelfde MASTERSPRINT A5. Op expliciet verzoek
+autonoom doorgewerkt tot A5 softwarematig aantoonbaar afgerond is.
+
+**Nieuwe, functionele testharness** (`core/fA5DeviceConnectE2E.test.js`):
+in tegenstelling tot de eerdere, statische (regex-gebaseerde) tests, worden
+hier de daadwerkelijke `tkErgPair()`/`tkErgSelect()`/`tkErgConnectDevice()`-
+functies **letterlijk uit `index.html` geëxtraheerd en in een echte
+JavaScript-omgeving uitgevoerd** (Node's `vm`-module), tegen een gemockte
+transport en de **echte, daadwerkelijke** trainingsstaat-variabelen
+(`activeInstanceId`/`curT`/`resolvedWorkout`/`sessionLog`/`trainStart`/
+`pausedAccumMs`). Dit bewijst — met echt gedrag, niet aangenomen —:
+- **State preservation**: alle acht kritieke trainingsstaat-velden blijven
+  bewijsbaar exact ongewijzigd vóór/na een daadwerkelijk uitgevoerde
+  connect-flow.
+- **Geen lifecycle-triggers**: disconnect/reconnect-events roepen
+  aantoonbaar nooit `finishSession()`/`execLeaveDiscard()`/
+  `completeTrainingInstance()` aan.
+- **Geen dubbele subscriptions**: drie snelle taps op "verbinden"
+  resulteren in exact één daadwerkelijke `connect()`-aanroep en exact één
+  actieve metrics-/connection-subscription (bevestigd doordat dezelfde
+  test, gedraaid tegen de OORSPRONKELIJKE, ongerepareerde code uit v4.65.0,
+  daadwerkelijk 3 aanroepen en 3 gestapelde listeners opleverde — een
+  concreet, gemeten bewijs, geen theoretische aanname).
+- **Reconnect zonder stapeling**: na een simulatie van signaalverlies
+  gevolgd door hernieuwd verbinden blijft het aantal actieve listeners
+  exact één.
+- **Robuustheid tegen ongeldige metrics**: null/NaN/malformed
+  device-events veroorzaken geen crash in de live-update-keten.
+
+**Nieuwe, echte bug gevonden en gerepareerd** (Prioriteiten 9/10 van de
+A5-hardeningsopdracht): noch `execLeaveDiscard()` noch `finishSession()`
+riep ooit `tkErgDisconnect()` aan. Een verbonden apparaat bleef daardoor
+op de achtergrond actief (BLE-verbinding + metric-subscriptie) nadat de
+training was verworpen of afgerond. Nieuwe functie
+`tkErgDisconnectAll()` toegevoegd — itereert over alle oefeningen en
+ontkoppelt uitsluitend de daadwerkelijk verbonden, ingehaakt op beide
+plekken. Bewezen via bug-terugzet-simulatie (tests X1/X5).
+
+**Onderzocht en bewust niet gebouwd** (Prioriteit 6, device-switch): een
+smaller randgeval — twee VERSCHILLENDE oefeningen in dezelfde training
+elk met een eigen device-verbinding, zonder expliciete disconnect
+tussendoor — zou in theorie tot "ghost metrics" kunnen leiden. Gegeven dat
+de onderliggende transport single-device is (één fysieke BLE-verbinding
+tegelijk) en "Ander apparaat" altijd binnen dezelfde oefening blijft (al
+correct gedekt door de v4.66.0-fix), is dit randgeval smal genoeg om niet
+als blokkerende P0/P1 te classificeren. Gedocumenteerd als bekende,
+kleine beperking, geen architectuurwijziging gebouwd.
+
+**Hardwarevalidatie**: EXTERN BLOCKED — REAL PM5 VALIDATION. Geen fysiek
+Concept2-apparaat beschikbaar in deze ontwikkelomgeving. Alle
+softwarematige A5-vereisten zijn hiermee aantoonbaar afgerond.
+
+Geen databasewijziging. Geen wijziging aan protected core. Protected core
+en de device-specifieke kernbestanden: SHA256-bevestigd byte-identiek.
+
+## v4.66.0 — A5: Device-connect-hardening, mid-workout-connect bewezen (27 augustus 2026)
+
+MASTERSPRINT A5 (Real Device Validation & Live Training 2.0). Discovery
+toonde aan dat mid-workout device-connect **al architecturaal bestond**:
+`tkRenderErgConnect()` is ingebed in de oefening-body zelf (identiek voor
+Training A/B, Workout, Losse oefening), en `_c2repaint()` werkt uitsluitend
+op een lokaal DOM-fragment (`c2body-${exId}`) — geen aanraking van
+`sessionLog`/`activeInstanceId`/`resolvedWorkout`/de trainingstimer.
+
+**Twee echte, bewezen bugs gevonden en gerepareerd** (geen nieuwe
+connect-flow gebouwd — het bestaande pad bleek grotendeels correct):
+
+1. **Gestapelde subscriptions** (`tkErgConnectDevice()`): `subscribeMetrics()`/
+   `subscribeConnection()` in `native/src/nativeConcept2BleTransport.js`
+   gebruiken `array.push()` — stapelen listeners, vervangen niet. De
+   aanroepende functie legde de teruggegeven unsubscribe-functies nooit
+   vast, waardoor dubbel tikken of opnieuw verbinden meerdere, gestapelde
+   listeners zou geven (dubbele DOM-updates, dubbele metric-callbacks).
+   Gerepareerd: de exercise-specifieke unsubscribe-functies worden nu
+   vastgelegd (`st._unsubMetrics`/`st._unsubConn`) en vóór elke nieuwe
+   subscriptie eerst opgeruimd — **nooit** de transportbrede
+   `unsubscribeMetrics()`, want dat zou een andere, gelijktijdig verbonden
+   oefening in dezelfde training kunnen raken.
+2. **Geen dubbel-tik-bescherming**: noch `tkErgPair()` (scannen) noch
+   `tkErgConnectDevice()` (verbinden) had een busy-guard. Toegevoegd:
+   `st._scanning`/`st._connecting`-vlaggen, correct teruggezet in alle
+   uitgangen (succes, mislukt, catch).
+
+Beide bugs bewezen via bug-terugzet-simulatie (tests W1/W6): de
+gerichte tests falen correct zodra de fix wordt teruggedraaid.
+
+**Bevestigd, niet gewijzigd** (al correct): machine-mismatch-detectie
+(`Concept2Live.machineMatchesExercise()`), reconnect-afhandeling bij
+signaalverlies, eerlijke web-fallback (nooit een nep-"verbonden"-status),
+canonieke logging-koppeling via `liveWorkoutToActual()` met
+provenance-tracking, RAW-naar-canoniek normalisatie via
+`Concept2Live.normalizeLiveMetric()` (nooit ongefilterde RAW-data naar
+UI/sessionLog/AI).
+
+Geen databasewijziging. Geen wijziging aan protected core — expliciet
+geverifieerd. Protected core (`calculation.js`/`decision.js`/
+`relationship.js`/`athlete.js`/`coaching.js`/`progression.js`) én de
+device-specifieke kernbestanden (`concept2Live.js`/`deviceIntegration.js`):
+SHA256-bevestigd byte-identiek, onaangetast.
+
 ## v4.65.0 — A4: Readiness-consistentie + Herstel & Readiness-detail (27 augustus 2026)
 
 MASTERSPRINT A4 (Daily Readiness & Recovery 2.0) — sluit uitsluitend de twee

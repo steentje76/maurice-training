@@ -574,6 +574,41 @@ const calcSrcV = fs.readFileSync(path.join(__dirname, 'calculation.js'), 'utf8')
 ok(!decisionSrcV.includes('openRecoveryDetail') && !decisionSrcV.includes('consistentieBrug'), 'V12 (protected core): core/decision.js bevat GEEN enkele referentie aan de nieuwe A4-functies -- protected core bewijsbaar niet gewijzigd');
 ok(!calcSrcV.includes('openRecoveryDetail') && !calcSrcV.includes('consistentieBrug'), 'V13 (protected core): core/calculation.js bevat GEEN enkele referentie aan de nieuwe A4-functies -- protected core bewijsbaar niet gewijzigd');
 
+/* ── W. A5 — DEVICE CONNECT HARDENING (v4.66.0) — mid-workout connect, geen state loss ── */
+console.log('\nW. A5: device-connect-hardening -- geen gestapelde subscriptions, geen dubbel-tik-race, geen aanraking van trainingsstaat');
+const connDevSrc = html.slice(html.indexOf('function tkErgConnectDevice('), html.indexOf('function tkErgConnectDevice(') + 3200);
+ok(/typeof st\._unsubMetrics==='function'/.test(connDevSrc), 'W1 (bewezen bug, gerepareerd): ruimt vóór elke nieuwe subscribeMetrics()-aanroep de eerder VASTGELEGDE, exercise-specifieke unsubscribe-functie op -- voorkomt gestapelde listeners bij dubbel verbinden');
+ok(/typeof st\._unsubConn==='function'/.test(connDevSrc), 'W2: idem voor de connection-listener (subscribeConnection)');
+ok(/st\._unsubConn=t\.subscribeConnection\(/.test(connDevSrc), 'W3: legt de door subscribeConnection() teruggegeven unsubscribe-functie vast -- niet alleen aanroepen en negeren');
+ok(/st\._unsubMetrics=t\.subscribeMetrics\(/.test(connDevSrc), 'W4: legt de door subscribeMetrics() teruggegeven unsubscribe-functie vast');
+ok(!/t\.unsubscribeMetrics\(\)/.test(connDevSrc), 'W5 (kernprincipe): gebruikt NOOIT de transportbrede unsubscribeMetrics() -- dat zou een ANDERE, gelijktijdig verbonden oefening in dezelfde training kunnen raken; uitsluitend de exercise-specifieke unsubscribe-functie');
+ok(/if\(st\._connecting\)return/.test(connDevSrc.replace(/\s/g,'')), 'W6 (Sectie 9, dubbel-tik-bescherming): een tweede tik op "verbinden" tijdens een lopende connect-poging wordt genegeerd, geen twee simultane connect-promises');
+ok(/st\._connecting=false/.test(connDevSrc) && (connDevSrc.match(/st\._connecting=false/g)||[]).length>=3, 'W7: de busy-guard wordt in ALLE uitgangen (success, mislukt, catch) correct teruggezet -- geen permanent geblokkeerde knop na een fout');
+ok(!/sessionLog\s*=|activeInstanceId\s*=|resolvedWorkout\s*=|curT\s*=/.test(connDevSrc), 'W8 (Sectie 4, kernprincipe): tkErgConnectDevice() wijzigt NERGENS sessionLog/activeInstanceId/resolvedWorkout/curT -- uitsluitend device-gerelateerde state en een lokaal DOM-fragment (_c2repaint)');
+ok(!/renderTrainScreen\(|finishSession\(\)|completeTrainingInstance\(|execLeaveDiscard\(\)/.test(connDevSrc), 'W9 (Sectie 5/6, kernprincipe): connect roept NERGENS een volledige scherm-re-render of de finish-/discard-flow aan -- device-lifecycle is strikt gescheiden van workout-lifecycle');
+
+const pairSrc = html.slice(html.indexOf('function tkErgPair('), html.indexOf('function tkErgPair(') + 1600);
+ok(/if\(st\._scanning\)return/.test(pairSrc.replace(/\s/g,'')), 'W10 (Sectie 9): dubbel tikken op "apparaat koppelen" tijdens het scannen wordt genegeerd -- geen twee overlappende discover()-aanroepen');
+ok((pairSrc.match(/_scanning=false/g)||[]).length>=3, 'W11: de scan-busy-guard wordt in alle uitgangen correct teruggezet');
+
+const normalizeSrc = html.slice(html.indexOf('function tkErgConnectDevice('), html.indexOf('function tkErgConnectDevice(') + 3200);
+ok(/Concept2Live\.normalizeLiveMetric/.test(normalizeSrc), 'W12 (Sectie 18, live metric ownership): ruwe device-events gaan UITSLUITEND via Concept2Live.normalizeLiveMetric() naar een canoniek object -- nooit ongefilterd RAW naar de UI/sessionLog');
+
+/* ── X. A5-VERVOLG (v4.67.0) — device-cleanup bij discard/finish (Prioriteiten 9/10) ── */
+console.log('\nX. A5: tkErgDisconnectAll() bij verwerpen/afronden -- geen achtergrond-BLE-verbinding ná einde training');
+const discardFnSrc2 = html.slice(html.indexOf('async function execLeaveDiscard('), html.indexOf('async function execLeaveDiscard(') + 1200);
+ok(/tkErgDisconnectAll\(\)/.test(discardFnSrc2), 'X1 (bewezen gat, gerepareerd): execLeaveDiscard() roept nu tkErgDisconnectAll() aan -- voorkomt een device-verbinding die op de achtergrond blijft na het verwerpen van de training');
+ok(!/sbPostQ|sbPatchQ|finishSession\(\)|completeTrainingInstance/.test(discardFnSrc2), 'X2 (regressie op T16): de nieuwe device-cleanup-aanroep verandert niets aan het bewezen "discard schrijft nooit iets"-principe');
+
+const disconnectAllSrc = html.slice(html.indexOf('function tkErgDisconnectAll('), html.indexOf('function tkErgDisconnectAll(') + 500);
+ok(/if\(_c2pair\[exId\]&&_c2pair\[exId\]\.connected\) tkErgDisconnect\(exId\)/.test(disconnectAllSrc), 'X3: itereert over ALLE oefeningen en ontkoppelt uitsluitend de daadwerkelijk verbonden -- geen blinde, foutieve aanroep op een niet-verbonden oefening');
+ok(!/sessionLog|activeInstanceId|resolvedWorkout|curT\s*=/.test(disconnectAllSrc), 'X4 (architectuurgrens): tkErgDisconnectAll() raakt UITSLUITEND device-state (_c2pair via het bestaande, ongewijzigde tkErgDisconnect()) -- geen enkele trainingsstaat');
+
+const finishFnSrc = html.slice(html.indexOf("closeModal('m-session-end');stopTrainTimer();"), html.indexOf("closeModal('m-session-end');stopTrainTimer();") + 150);
+ok(/tkErgDisconnectAll\(\)/.test(finishFnSrc), 'X5 (Prioriteit 10): finishSession() roept tkErgDisconnectAll() aan direct na het sluiten van de sessie-modal en het stoppen van de timer');
+const decisionSrcX = fs.readFileSync(path.join(__dirname, 'decision.js'), 'utf8');
+ok(!decisionSrcX.includes('tkErgDisconnectAll'), 'X6 (protected core): core/decision.js bevat geen enkele referentie aan de nieuwe device-cleanup-functie');
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { console.log('❌ Hardening niet groen.'); process.exit(1); }

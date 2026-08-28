@@ -17,7 +17,7 @@ v4.69.2
 ## 2. Current roadmap position
 - **F0 — Verified Baseline: CLOSED**
 - **F1 — Foundation Closure: CLOSED** (Gate A semantische-integriteitsaudit geslaagd — 18/18 consistentiechecks, release gate groen, geen open P0/P1)
-- **F2 — Athlete Core Excellence: CURRENT.** MS-F2-01 (Canonical Training Start & Preview): PARTIAL — 2 defecten gefixed, volledige convergentie blijft open (GAP-P1-006). MS-F2-02, MS-F2-03 en MS-F2-04 (Exercise Library UX Excellence): **CLOSED** — audits bevestigen dat de bestaande code (incl. een geavanceerde inverted-index-zoekmachine) al zorgvuldig gehard is; geen nieuwe defecten gevonden. Zie docs/MS-F2-02..04_*.md.
+- **F2 — Athlete Core Excellence: CURRENT.** MS-F2-01 (Canonical Training Start & Preview): PARTIAL — 2 defecten gefixed, volledige convergentie blijft open (GAP-P1-006). MS-F2-02, MS-F2-03, MS-F2-04 en MS-F2-05 (History, Calendar & Scheduling): **CLOSED** — audits bevestigen dat de bestaande code al zorgvuldig gehard is; geen blokkerende defecten gevonden. Eén niet-blokkerend P3-punt genoteerd (18 plekken gebruiken nog toISOString() voor datumbereikgrenzen, niet de kritieke schrijf-datum). Zie docs/MS-F2-02..05_*.md.
 - **Master Roadmap 2.0 v1.1 = CANONICAL** productstrategische bron. Repository blijft technische autoriteit. Zie `docs/DOCUMENTATION_GOVERNANCE.md`.
 - Volledige fasering (F0-F15): zie `docs/TRAININGSKOMPAS_MASTER_ROADMAP.md`. Volledige mastersprint-ID-migratie: zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md`.
 
@@ -35,7 +35,7 @@ Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
 ## 5. Current validation status
 - **Code:** CODE VERIFIED tegen `main` @ bovenstaande SHA
 - **DB:** VERIFIED — 69 tabellen, RLS gecontroleerd op alle tabellen, `gyms`-lek gesloten en geverifieerd via `SET LOCAL ROLE anon/authenticated/service_role`
-- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 84 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 87 stappen totaal), 86 automatisch uitgevoerd, 1 zichtbaar geskipt (`fAndroidRelease.test.js`, ontbrekende Android-buildmap in deze schone checkout — draait wél in echte CI via `npm run cap:copy`), 0 gefaald
+- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 85 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 88 stappen totaal), 87 automatisch uitgevoerd, 1 zichtbaar geskipt (`fAndroidRelease.test.js`, ontbrekende Android-buildmap in deze schone checkout — draait wél in echte CI via `npm run cap:copy`), 0 gefaald
 - **Integration:** wearable-sync getest tegen de echte handler-functie; overige integraties overwegend unit-getest
 - **Device:** **OPEN** — Concept2 PM5 en Google Health-sync hebben geen bevestigde real-device-validatie in productie
 - **UX:** niet apart beoordeeld in de laatste consolidatiesprint (38 top-level schermen geïnventariseerd, geen flow-niveau UX-testdekking)

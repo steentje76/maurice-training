@@ -5998,7 +5998,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.67.0';
+const APP_VER = 'v4.68.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -14221,6 +14221,8 @@ function cascadeRpe(exId,fromSet,val){
 // stepField blijft gedefinieerd — de velden zijn direct bewerkbaar, conform de mock-up.)
 function buildWorkSetRow(exId,i,prefill=null){
   const mode='vast';
+  const setObj=(sessionLog[exId]&&sessionLog[exId].sets&&sessionLog[exId].sets[i-1])||null;
+  const isAmrap=!!(setObj&&setObj.isAmrap);
   return `<div class="set-row setr" id="sr-${exId}-${i}">
     <div class="setr-no">${i}</div>
     <div class="setr-cells">
@@ -14234,18 +14236,37 @@ function buildWorkSetRow(exId,i,prefill=null){
         <input class="set-field" type="number" inputmode="numeric" aria-label="Herhalingen" placeholder="–" id="s-${exId}-${i}-reps" value="${prefill?prefill.reps:''}" min="1" max="100" step="1"
           oninput="logSet('${exId}','work',${i},true)"
           onchange="clampNumInput(this,1,100);logSet('${exId}','work',${i},true);copyToSets('${exId}',${i},'reps',this.value)">
-        <div class="setr-u">reps</div>
+        <div class="setr-u" id="repsu-${exId}-${i}">${isAmrap?'AMRAP':'reps'}</div>
       </div>
       <div class="setr-cell setr-cell-rpe">
         ${buildRpeStepper(exId,i,prefill&&i===1?prefill.rpe:'',prefill?prefill.rpe:'')}
       </div>
     </div>
     <div class="setr-side">
+      <button class="rower-chip amrap-chip${isAmrap?' sel':''}" id="amrapchip-${exId}-${i}" style="font-size:10px;padding:2px 6px;min-width:auto" onclick="toggleAmrapSet('${exId}',${i})" aria-pressed="${isAmrap}" aria-label="Markeer als AMRAP">AMRAP</button>
       <div class="set-circle setr-ring" id="sc-${exId}-${i}" onclick="toggleSetDone('${exId}',${i})" role="button" tabindex="0" aria-label="Set ${i} afronden"></div>
       <button class="set-more setr-toolbtn" onclick="showSetMenu('${exId}',${i},'work')" aria-label="Meer opties"><svg viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
     </div>
     <div class="setr-e1rm" id="e1rm-${exId}-${i}" style="grid-column:1/-1;font-size:11px;color:var(--g4);padding:2px 0 0 44px"></div>
   </div>`;
+}
+// AMRAP-vlag (v4.68.0) — puur UI + in-memory sessionLog-state, GEEN nieuwe berekening.
+// Reps-invoer blijft functioneel identiek (vrij numeriek veld, al ondersteund); dit voegt
+// uitsluitend de AMRAP-SEMANTIEK toe (zie docs/00_Project_Management/
+// ADVANCED_SET_TYPES_ARCHITECTUUR.md -- expliciet als "laagste drempel"-kandidaat
+// aangemerkt). Bij het afronden van de training wordt deze vlag meegeschreven in
+// sets_detail (jsonb, geen migratie nodig) en expliciet UITGESLOTEN van de
+// beste-set-selectie die de e1RM/PR/trend-berekeningen voedt (zie buildStrengthSessionRow()).
+function toggleAmrapSet(exId,i){
+  if(!sessionLog[exId])sessionLog[exId]={wu:[],sets:[]};
+  if(!sessionLog[exId].sets)sessionLog[exId].sets=[];
+  if(!sessionLog[exId].sets[i-1])sessionLog[exId].sets[i-1]={};
+  const s=sessionLog[exId].sets[i-1];
+  s.isAmrap=!s.isAmrap;
+  const chip=document.getElementById('amrapchip-'+exId+'-'+i);
+  if(chip){ chip.classList.toggle('sel',!!s.isAmrap); chip.setAttribute('aria-pressed',!!s.isAmrap); }
+  const u=document.getElementById('repsu-'+exId+'-'+i);
+  if(u) u.textContent=s.isAmrap?'AMRAP':'reps';
 }
 // P2 — compacte geschatte-1RM-hint onder een werkset ("1RM ≈ x kg"). Deterministisch via de bestaande
 // Epley-core (epley1RM = CalcCore.calculate1RM, e1rm.v1); GEEN AI, geen nieuwe formule. Alleen ≥2 reps
@@ -15656,12 +15677,20 @@ function tkSetEvidence(exId, s, index, opts){
 function buildStrengthSessionRow(exId, ws, opts){
   opts=opts||{};
   const bestKg=s=>s.effKg!=null?s.effKg:parseFloat(s.kg||0);
-  const best=ws.reduce((b,s)=>(!b||bestKg(s)>bestKg(b))?s:b,null);
+  // AMRAP-uitsluiting (v4.68.0): een AMRAP-set heeft geen vast reps-doel en zou de
+  // e1RM/PR/trend-berekening (die de rij-niveau 'best'-set gebruikt) kunnen vervuilen --
+  // exact de waarschuwing uit ADVANCED_SET_TYPES_ARCHITECTUUR.md. Kies de beste
+  // NIET-AMRAP-set als representatief; alleen als ALLE sets AMRAP zijn, val terug op
+  // de gewone selectie (beter een indicatieve waarde dan een lege rij).
+  const nietAmrap=ws.filter(s=>!s.isAmrap);
+  const kandidaten=nietAmrap.length?nietAmrap:ws;
+  const best=kandidaten.reduce((b,s)=>(!b||bestKg(s)>bestKg(b))?s:b,null);
   /* Sprint 18: het bewijsspoor reist mee IN sets_detail — dezelfde jsonb-kolom, dezelfde rij,
      dezelfde offline-veilige schrijfweg, gekoppeld aan het bestaande training_instance_id.
      Additief: bestaande lezers van sets_detail zien exact dezelfde velden als voorheen. */
   const setsDetail=ws.map(function(s,i){
     const d={kg:s.kg,effKg:bestKg(s),reps:s.reps,rpe:s.rpe,rest_sec:s.rest_sec};
+    if(s.isAmrap)d.isAmrap=true; // additief: alleen aanwezig wanneer daadwerkelijk gezet, geen bestaande lezer geraakt
     const ev=(typeof tkSetEvidence==='function')?tkSetEvidence(exId,s,i,opts):null;
     if(ev) d.evidence=ev;
     return d;

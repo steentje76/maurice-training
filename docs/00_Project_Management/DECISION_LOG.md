@@ -751,3 +751,40 @@
   expliciete voorafgaande toestemming voor doorwerken zonder tussentijdse
   bevestiging. Niet door Maurice persoonlijk beoordeeld op het moment van
   mergen — ter review bij terugkeer.
+
+## DEC-044
+- Datum: 27 augustus 2026
+- Beslissing: post-A1-A5/G2 volledige roadmap-gap-audit uitgevoerd; #1
+  geselecteerde gap (AMRAP-set-ondersteuning) autonoom gebouwd, getest en
+  gemerged.
+- G2 formeel geclassificeerd: DEFERRED BY EVIDENCE GATE (geen wijziging
+  t.o.v. de eerdere G2-discoveryronde -- bevestigd, niet opnieuw
+  onderzocht).
+- Sporterreis-audit: post-workout-scherm bleek COMPLETE (deterministische
+  kernconclusie vóór AI, per-oefening vervolgadvies, vorige-sessie-
+  vergelijking, fail-safe foutafhandeling) -- geen actie.
+- Geselecteerde #1: AMRAP-set-ondersteuning. Reden: expliciet, in een
+  eerdere sprint (A1 Final Gap Closure, v4.61.0) vastgelegde
+  architectuuranalyse markeerde dit als de laagste-drempel-kandidaat van
+  vier onderzochte advanced-set-types -- maar bleef desondanks drie
+  sprints (A1/A2/A3) ongebouwd. Directe relevantie voor Maurice's eigen
+  CrossFit/HYROX-context.
+- Kernbevinding vóór het bouwen: `sessions.sets_detail` is jsonb --
+  bevestigd via Supabase-schema-query dat GEEN databasemigratie nodig is
+  om de nieuwe `isAmrap`-vlag toe te voegen.
+- Kernprincipe, expliciet uit de eerdere architectuurnotitie
+  overgenomen: AMRAP-sets mogen de e1RM/PR-trendberekening niet vervuilen.
+  Gerealiseerd door AMRAP-sets uit te sluiten van de "beste set"-selectie
+  in buildStrengthSessionRow() (met veilige fallback wanneer alle sets
+  AMRAP zijn). Bewezen met een functionele test (een zwaardere AMRAP-set
+  wordt terecht niet als representatief gekozen) en via bug-terugzet-
+  simulatie.
+- Impact: geen databasewijziging, geen protected-core-wijziging (expliciet
+  geverifieerd: core/decision.js en core/calculation.js bevatten geen
+  enkele referentie aan AMRAP -- geen nieuwe Decision Rule, geen nieuwe
+  1RM-formule).
+- Verantwoordelijke: autonome audit, selectie, implementatie en merge door
+  Claude tijdens een onbeheerde master-sprint, met expliciete voorafgaande
+  toestemming voor de volledige cyclus zonder tussentijdse bevestiging.
+  Niet door Maurice persoonlijk beoordeeld op het moment van mergen — ter
+  review bij terugkeer.

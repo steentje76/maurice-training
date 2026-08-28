@@ -20,6 +20,12 @@ Niet gebouwd deze sprint, conform expliciete instructie. Uitsluitend analyse.
 
 ## AMRAP
 
+**GEBOUWD in v4.68.0** (Post-A1-A5-audit #1). Zie CHANGELOG.md v4.68.0 en
+DECISION_LOG.md DEC-044 voor de volledige implementatie: UI-toggle per
+werkset, `isAmrap`-vlag additief in `sets_detail` (jsonb, geen migratie),
+expliciete uitsluiting van de e1RM/PR/trend-"beste set"-selectie in
+`buildStrengthSessionRow()`.
+
 - **Datamodelvelden**: geen vaste `reps`-target, wel een "zoveel mogelijk
   reps"-vlag op oefeningsniveau (`amrap:true` op het voorschrift).
 - **Huidige ondersteuning**: het reps-invoerveld bestaat al generiek (vrije

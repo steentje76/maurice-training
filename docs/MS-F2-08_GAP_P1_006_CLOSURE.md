@@ -52,6 +52,19 @@ Zie `docs/BENCHMARK_REGISTRY.md` (reeds bestaand, niet in deze sprint opnieuw ex
 ## Data-integriteit finale check (sectie 38)
 Geen nieuwe P0/P1 gevonden tijdens deze afsluitende audit. De twee reeds gefixte defecten (MS-F2-01 execution-identity, MS-F2-07 programma-resume) en deze sprint (GAP-P1-006 instance-tracking) waren de enige geïdentificeerde data-integriteitsgaten in de volledige F2-scope.
 
+## Final Contract Reconciliation (heraudit na F2-closure)
+Een aparte, gerichte heraudit vergeleek de vier startfamilies (vast/custom/programma/repeat) opnieuw, punt voor punt, op elk concern uit het canonieke contract. Bevinding: **B — technisch voldoet aan de intentie van het contract, de oorspronkelijke formulering behoefde precisering, geen resterende architectuurgap.**
+
+**Concreet bewijs:**
+- `createTrainingInstance()` is en blijft de enige, canonieke plek waar een `training_instances`-rij ontstaat — voor alle 4 families. Vast/custom roepen dit aan via de gedeelde `startInstanceFromDefinition()`-adapter (binnen `previewStartTraining()`); Programma/Repeat roepen dezelfde primitief rechtstreeks aan met hun eigen, legitiem afwijkende snapshot-provenance. Dit patroon (gedeelde primitief, source-specifieke orchestratie voor categorieën met wezenlijk andere context) is **geen nieuwe afwijking** — de bestaande HYROX/multisport-race-start-functie (buiten F2-scope, regel ~23765) gebruikt exact hetzelfde patroon en bestond al vóór deze sprint.
+- Timer-lifecycle (`startTrainTimer`), persistence (autosave-draft/`sessionLog`-globals), logging (`finishSession()`'s schrijflogica), completion (`completeTrainingInstance()`) en discard (`execLeaveDiscard`) zijn voor alle 4 families **onvoorwaardelijk identiek** — geen enkele van deze vijf concerns bevat een source-specifieke tak.
+- Resume-detectie is voor elke van de 4 families **apart geïmplementeerd** (geen centrale `resumeExecution()`-helper) — maar dit is de **uniforme, bestaande conventie in de hele codebase**: ook vast en custom (de twee "canonieke" families) delen onderling geen gemeenschappelijke resume-functie, elk heeft zijn eigen resume-blok. Dit is dus geen door Programma/Repeat geïntroduceerde nieuwe inconsistentie.
+
+**Gecorrigeerde acceptance-formulering (verduidelijking, geen versoepeling):**
+*"All normal entry points converge on one canonical execution lifecycle (instance creation, timer, persistence, logging, completion, discard) without duplicated execution logic; source-specific pre-execution UX/adapters (definition construction, program/repeat provenance, targets, adjustments) may differ."*
+
+**Geen productcodewijziging in deze reconciliatiesprint** — geen echt defect aangetroffen dat een wijziging rechtvaardigde.
+
 ## MS-F2-08 acceptance-gate-toetsing
 Letterlijke acceptance gate: *"Flow/taps/error/empty/loading benchmark against leading apps."*
 **Resultaat: CLOSED.** De F2-integratiesprint is voltooid: GAP-P1-006 is gesloten (canonieke persistence voor alle 8 entrypoints), MS-F2-01 is herclassificeerd naar CLOSED, en geen resterend F2-blokkerend architectuurgat is aangetroffen.

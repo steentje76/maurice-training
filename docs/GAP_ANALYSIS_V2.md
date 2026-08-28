@@ -41,7 +41,7 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Current:** een niet-afgeronde trainingsdraft wordt correct en veilig bewaard (inclusief de tijdens deze sprint gefixte programmatraining-resume), maar Home controleert nooit proactief op het bestaan ervan — de gebruiker ontdekt een hervatbare training pas als hij toevallig hetzelfde trainingstype opnieuw probeert te starten.
 **Evidence:** CODE VERIFIED, zie het Home/Dashboard-sprintrapport in `docs/`.
 **Target:** een prominente resume-banner/kaart bovenaan Home wanneer `restoreTrainingDraft()` een geldige, data-bevattende draft oplevert, die routeert naar de juiste startfunctie op basis van het trainingstype (vaste/custom/programma).
-**Priority:** P2 (discoverability, geen dataverliesrisico meer). **Complexity:** M. **Roadmap phase:** F2 (vervolgwerk) of F2-08.
+**Priority:** P2 (discoverability, geen dataverliesrisico meer). **Complexity:** M. **Roadmap phase:** F2 (vervolgwerk — de laatste F2-mastersprint is inmiddels afgerond zonder dit punt op te pakken, blijft dus staan als losstaand vervolgitem, geen eigen nieuwe mastersprint-ID).
 
 ### GAP-P1-003 — AI-outputcontract ontbreekt
 **Capability-ID:** AI-OUTPUT-CONTRACT-001 (**expliciet onderscheiden van de reeds gesloten security-capability voor dezelfde proxy**, zie sectie "CLOSED GAPS / HISTORICAL" en Capability Registry — dit is een governance-gat, geen security-gat)
@@ -49,7 +49,7 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Evidence:** CODE VERIFIED — `scientificEvidence.js` beschermt Decision Rules, niet de vrije AI-tekst zelf (zie Product Architecture §5).
 **Target:** contracttest op het AI-responsschema (MS-F4-01).
 **Dependency:** EVID-SCI-001.
-**Priority:** P1. **Complexity:** M. **Roadmap phase:** F2.
+**Priority:** P1. **Complexity:** M. **Roadmap phase:** **F4** (gecorrigeerd van F2 — de roadmap-index-bestemming is MS-F4-01, AI Output Contract & Guardrails, na de Calculation/Context/Decision/Evidence-dependencies; F2 was stale).
 
 ### GAP-P1-005 — AI-adaptive-programmering-gat t.o.v. Hevy Trainer
 **Capability-ID:** AI-PROGRAM-AUTOGEN-001

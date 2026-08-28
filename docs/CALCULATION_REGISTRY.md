@@ -135,3 +135,112 @@ Geen "unexplained critical threshold" gevonden in het Strength-domein — elke m
 
 ## Duplicate Calculation Audit (Strength-domein)
 Herbevestigd tegen de historische `claude_F1_0_CalculationRegistry.md` (F1.0-audit): de destijds gevonden duplicaten (7× `calculate1RM`, 6× `calculateVolume`, 5× `applyPercentage`) zijn sindsdien geconsolideerd naar de canonieke `core/calculation.js`-implementaties. `resolveWorkingWeight` (destijds P0 wegens een gerapporteerd "[[APPLY]]-lek") is bij herlezing van de actuele code (regel 10749) een schone, pure compositiefunctie zonder DOM/globale state-lek — dit P0-punt is niet meer reproduceerbaar en wordt hierbij gesloten. `computeGoalProgress` delegeert inmiddels expliciet naar `CalcCore.calculateGoalProgress` (comment: "F1.6/DataAccess: canonical core") — het destijds gevonden P1-punt is eveneens gesloten.
+
+---
+
+## Domein: Load & Progression (MS-F3-02)
+
+**Auditmethode:** volledige lezing van `core/trainingLoad.js` en `core/progression.js`, plus een repo-brede zoekactie naar sRPE/rolling-load/stagnatie-signalen. Het `AthleteCore.acuteChronic()`-mechanisme zelf (de daadwerkelijke ACWR-berekening) is **protected core** (index.html) en is in deze sprint bewust NIET aangeraakt of opnieuw geïmplementeerd — alleen de reeds bestaande, losstaande classificatie-/corroboratielaag (`TrainingLoadCore`) en de nieuwe, hieronder toegevoegde sRPE-bouwstenen vallen binnen deze registry.
+
+### CALC-LOAD-001 — ACWR-classificatie (banden)
+| Veld | Waarde |
+|---|---|
+| Domain | Load & Progression |
+| Name | Classificatie van een reeds berekende acuut:chronisch-belastingsratio (ACWR) in vier banden |
+| Version | `trainingLoad.v1` (`classifyAcwr`) |
+| Formula | <0.8→'lager'; <1.3→'vergelijkbaar'; <1.5→'hoger'; anders→'sterk_hoger' |
+| Implementation | `core/trainingLoad.js` — `classifyAcwr`, `acwrAdvisoryText` |
+| Required inputs | een reeds elders berekende ACWR-waarde (uit `AthleteCore.acuteChronic()`, protected core — deze functie berekent de ratio zelf NIET opnieuw) |
+| Output | categorische classificatie + neutrale, beschrijvende NL-tekst |
+| Evidence level | **C** — contextafhankelijk, NIET B. De onderliggende bandindeling is ontleend aan breed geciteerde literatuur (zie bronnen), maar ACWR als methode staat sindsdien bloot aan serieuze, gepubliceerde methodologische kritiek (zie Limitations) — dit rechtvaardigt een conservatievere classificatie dan de oorspronkelijke bron alleen zou suggereren. |
+| Confidence model | daalt sterk bij een korte trainingsgeschiedenis (chronische component heeft per definitie een meerdere-weken-venster nodig); geen ingebouwde minimum-databewaking in deze classificatiefunctie zelf (die verantwoordelijkheid ligt bij `AthleteCore.acuteChronic()`) |
+| Scientific sources | Gabbett, T.J. (2016). "The training-injury prevention paradox: should athletes be training smarter and harder?" *British Journal of Sports Medicine*, 50(5), 273-280. doi:10.1136/bjsports-2015-095788 (geverifieerd via web-onderzoek, exacte bandgrenzen 0.8/1.3/1.5 komen overeen met het vervolgwerk Blanch & Gabbett, 2016, "Has the athlete trained enough to return to play safely?", *BJSM* 50(8), 471-475). |
+| Limitations | **belangrijke, expliciet te vermelden methodologische kritiek**: Windt & Gabbett (2018), "Is it all for naught? What does mathematical coupling mean for acute:chronic workload ratios?", *BJSM* 53(16), 988-990, wijst op "mathematical coupling" — de acute component is een deelverzameling van de chronische component, wat de ratio zelf kan vertekenen. ACWR wordt in het bredere vakgebied inmiddels als omstreden beschouwd, niet als onomstreden voorspeller. Deze registry classificeert daarom bewust als **C**, niet B. |
+| Applicability | uitsluitend als één van meerdere signalen (zie `corroboratedLoadSignal`), nooit alleenstaand |
+| Forbidden interpretations | **hard verboden** (expliciet zo gebouwd, zie code-commentaar): blessurevoorspelling, medische diagnose, automatische trainingsvrijstelling/-verbod, of "1.5 = gevaar" als universele waarheid. Taal is bewust neutraal-beschrijvend. |
+| Allowed Decision Rules | mag uitsluitend samen met een tweede, onafhankelijk signaal (zie CALC-LOAD-002) een corroborerend signaal vormen; nooit zelfstandig een Decision Rule voeden |
+| AI permissions | AI mag de classificatie en de vaste, neutrale tekst tonen/toelichten; AI mag NOOIT zelf een risico-interpretatie toevoegen die verder gaat dan de neutrale tekst |
+| Athlete-visible values | ja, uitsluitend via de vaste, neutrale tekst |
+| Test status | `fTrainingLoad.test.js` (45/45, dekt bandgrenzen en null-gedrag) |
+| Status | **VALIDATED** (classificatiefunctie zelf getest en wetenschappelijk onderbouwd; onderliggende ACWR-berekening zelf valt buiten deze registry-scope, protected core) |
+
+### CALC-LOAD-002 — Corroborated Load Signal
+| Veld | Waarde |
+|---|---|
+| Domain | Load & Progression |
+| Name | Corroboratieregel: ACWR-classificatie + dalende progressietrend, uitsluitend samen |
+| Version | `trainingLoad.v1` (`corroboratedLoadSignal`) |
+| Formula | `true` alleen als ACWR-classificatie ∈ {'hoger','sterk_hoger'} ÉN aantal dalende-trend-oefeningen ≥2 |
+| Implementation | `core/trainingLoad.js` — `corroboratedLoadSignal` |
+| Required inputs | CALC-LOAD-001-uitkomst + aantal oefeningen met een dalende trend (CALC-LOAD-004) |
+| Evidence level | **E** — dit is een **product heuristic** (bewust conservatief, vals-positief-mijdend ontwerp — code-commentaar verwijst naar interne besluit DEC-035/DEC-036), geen zelfstandige wetenschappelijke claim. Het corrigeert wél een eerder, te zwak signaal (ACWR alleen) door multi-signal-corroboratie te eisen — een verstandig ontwerpprincipe, niet een gevalideerde formule. |
+| Limitations | drempel "≥2 dalende oefeningen" is zelf een productkeuze, geen uit onderzoek afgeleide grens |
+| Forbidden interpretations | zelfs de corroborerende combinatie mag nooit als blessurevoorspelling of trainingsverbod gepresenteerd worden — retourneert uitsluitend true/false, geen eigen tekst |
+| Allowed Decision Rules | mag een neutrale AI-coachcontext-vermelding triggeren, nooit een automatische trainingsaanpassing |
+| Status | **TECHNICAL/PRODUCT HEURISTIC** (expliciet niet als wetenschappelijk gevalideerd gelabeld) |
+
+### CALC-LOAD-003 — Session Load (sRPE, Foster-methode) — **NIEUW, gevonden lacune**
+| Veld | Waarde |
+|---|---|
+| Domain | Load & Progression |
+| Name | Sessie-belasting via de Foster session-RPE-methode |
+| Version | `trainingLoad.v1` (`sessionLoadSRPE`) |
+| Formula | `round((durationSec/60) * rpe)` |
+| Implementation | `core/trainingLoad.js` — `sessionLoadSRPE` (nieuw toegevoegd deze sprint) |
+| Required inputs | `durationSec` (sessieduur, `sessions.duration_s` — live in Supabase geverifieerd aanwezig), `rpe` (sessie-RPE, Borg CR10, 0-10) |
+| Output | arbitraire eenheden (AU) |
+| Evidence level | **B** — de Foster-sRPE-methode zelf is een breed toegepaste, gevalideerde interne-belastingsmaat in de sport-/trainingswetenschap |
+| Confidence model | volledig afhankelijk van de betrouwbaarheid van de gerapporteerde sessie-RPE (subjectief, per definitie) |
+| Scientific sources | Foster C, Florhaug JA, Franklin J, Gottschall L, Hrovatin LA, Parker S, Doleshal P, Dodge C. "A new approach to monitoring exercise training." *Journal of Strength & Conditioning Research*. 2001;15(1):109-115. |
+| Limitations | AU is een RELATIEVE, geen absolute fysiologische maat — vergelijkbaar binnen dezelfde sporter over tijd, niet tussen sporters onderling zonder verdere normalisatie; sessie-RPE dekt niet dezelfde informatie als externe (bv. GPS-)belasting |
+| Applicability | elke sessie met bekende duur + sessie-RPE |
+| Forbidden interpretations | nooit presenteren als fysiologisch gemeten belasting; geen absolute vergelijking tussen sporters |
+| Allowed Decision Rules | mag als bouwsteen dienen voor een toekomstige rolling-load-/ACWR-achtige analyse (via CALC-LOAD-005) |
+| AI permissions | AI mag de waarde toelichten, niet zelf herberekenen |
+| Athlete-visible values | nog niet in de UI geïntegreerd (bouwsteen, geen UI-wijziging in deze sprint — zie Open Gaps) |
+| Test status | `core/fLoadProgressionRegistry.test.js` (nieuw) |
+| Status | **IMPLEMENTED/TESTED** (nieuw, minimale toevoeging — nog niet UI-geïntegreerd of live gevalideerd) |
+
+### CALC-LOAD-004 — Progression Trend (`trendBy`)
+| Veld | Waarde |
+|---|---|
+| Domain | Load & Progression |
+| Name | Gemiddelde verandering per stap over ≥N vergelijkbare eerdere prestaties |
+| Version | `progression_trend.v1` |
+| Formula | `(laatste−eerste)/(n−1)`, met expliciete richting (`dir: 'min'\|'max'`); onder `minN` (default 3) → `status:'insufficient'` |
+| Implementation | `core/progression.js` — `trendBy` |
+| Evidence level | **E** — zuiver wiskundig signaal (gemiddelde verandering), geen zelfstandige wetenschappelijke claim nodig; de WAARDE van trendanalyse voor prestatiemonitoring is wel breed geaccepteerde sportwetenschappelijke praktijk |
+| Limitations | gevoelig voor uitschieters bij kleine `n`; geeft nooit een oorzaak, alleen een richting |
+| Forbidden interpretations | **cruciaal**: deze functie bepaalt zelf NOOIT "deload nodig" of "stagnatie vereist ingrijpen" — dat blijft exclusief Decision Engine-logica (MS-F3-07). `trendBy`/`isNewBest` zijn pure signalen. |
+| Allowed Decision Rules | mag input zijn voor een toekomstige, expliciete Decision Rule over stagnatie |
+| Status | **VERIFIED** (bestaand, `fVoortgang.test.js`/gerelateerde tests dekken dit al) |
+
+### CALC-LOAD-005 — Rolling Load Sum — **NIEUW, minimale bouwsteen**
+| Veld | Waarde |
+|---|---|
+| Domain | Load & Progression |
+| Name | Som van sRPE-waarden binnen een aangeleverd venster |
+| Version | `trainingLoad.v1` (`rollingLoadSum`) |
+| Formula | `Σ srpeValues` (ongeldige/niet-numerieke waarden genegeerd) |
+| Implementation | `core/trainingLoad.js` — `rollingLoadSum` (nieuw toegevoegd deze sprint) |
+| Evidence level | **E** — zuivere optelling, geen zelfstandige claim |
+| Limitations | levert alleen de bouwsteen; een daadwerkelijke acute:chronisch-ratio op sRPE-basis is NIET gebouwd in deze sprint (dat zou een nieuwe, aparte ratio naast de bestaande, protected-core volume-ACWR zijn — bewust niet toegevoegd zonder aangetoonde productnoodzaak, zie Open Gaps) |
+| Forbidden interpretations | een som van sRPE-waarden is nooit zelfstandig een blessurerisico- of vermoeidheidsclaim; alleen een bouwsteen voor een toekomstige, expliciet ontworpen trendanalyse |
+| Status | **IMPLEMENTED/TESTED** |
+
+## Magic Number Audit (Load & Progression-domein)
+
+| Waarde | Locatie | Classificatie |
+|---|---|---|
+| ACWR-bandgrenzen 0.8/1.3/1.5 | `trainingLoad.js` | **Evidence-backed** (Gabbett 2016/Blanch & Gabbett 2016), met expliciet vermelde methodologische kritiek — zie CALC-LOAD-001 |
+| Corroboratiedrempel "≥2 dalende oefeningen" | `trainingLoad.js` | **Product heuristic** — bewust conservatief ontwerp (DEC-035/036), geen wetenschappelijke bron |
+| `trendBy`-default `minN=3` | `progression.js` | **Technical threshold** — minimum voor een zinvolle trendrichting, geen specifieke studiebron |
+| Foster sRPE-formule (duur×RPE) | `trainingLoad.js` (nieuw) | **Evidence-backed** (Foster et al. 2001) |
+
+Geen onverklaarde critical threshold gevonden in dit domein.
+
+## Duplicate Calculation Audit (Load & Progression-domein)
+Geen duplicaat gevonden: `AthleteCore.acuteChronic()` (protected core, de daadwerkelijke ACWR-berekening) is de enige plek die deze ratio berekent; `TrainingLoadCore` classificeert uitsluitend een reeds berekende waarde. `trendBy`/`isNewBest` in `progression.js` zijn eveneens single-source — geen concurrerende implementatie elders in de codebase gevonden.
+
+## Open Gap (P2, genoteerd, niet binnen deze sprint gebouwd)
+De nieuwe sRPE-bouwstenen (CALC-LOAD-003/005) zijn nog niet in de UI of AI-coachcontext geïntegreerd, en er bestaat nog geen sRPE-gebaseerde rolling-load-trend (los van de bestaande, volume-gebaseerde ACWR). Dit zou een aparte, product-beslissing-vereisende toevoeging zijn (een tweede "belasting"-signaal naast de bestaande ACWR kan verwarrend zijn zonder doordachte UX) — bewust niet binnen deze audit-sprint gebouwd zonder die afweging. Geregistreerd in `docs/GAP_ANALYSIS_V2.md` als GAP-P2-009.

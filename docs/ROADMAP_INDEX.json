@@ -485,7 +485,7 @@
       "E6.2"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F3-01"
     ],
@@ -3115,5 +3115,21 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "zie MS-F3-01 (CLOSED). Zelfde registry-diepte nodig voor Load & Progression (MS-F3-02), Recovery (MS-F3-03), Endurance (MS-F3-04)."
+  },
+  {
+    "id": "CALC-LOAD-REGISTRY-001",
+    "type": "capability",
+    "track": "Calculation Engine",
+    "phase": "F3",
+    "priority": "P1",
+    "status": "VALIDATED",
+    "target": "VALIDATED",
+    "dependencies": [
+      "CALC-STR-REGISTRY-001"
+    ],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F3-02 (CLOSED). Zelfde registry-diepte nodig voor Recovery (MS-F3-03), Endurance (MS-F3-04)."
   }
 ]

@@ -98,10 +98,56 @@
     return acwrHoog && aantalDalendeOefeningen >= 2;
   }
 
+  /* ── session_load_srpe.v1 ─────────────────────────────────────────────────
+   * MS-F3-02 (Load & Progression Calculation Registry) — GEVONDEN LACUNE:
+   * de acceptance gate noemt sRPE expliciet, maar geen enkele sRPE-berekening
+   * bestond vóór deze sprint. sessions.duration_s en sessions.rpe bestaan al
+   * (POST-V1 roadmap-item #1, live geverifieerd in Supabase), dus dit is een
+   * minimale, direct bruikbare toevoeging — geen nieuwe databronnen nodig.
+   *
+   * FOSTER-METHODE (session-RPE): duur (minuten) × sessie-RPE (0-10 Borg CR10)
+   * = arbitraire eenheden (AU) "interne trainingsbelasting" van één sessie.
+   * BEWUST GEEN fysiologische belasting, GEEN externe load — een eenvoudige,
+   * subjectieve, per-sessie samenvatting bedoeld voor RELATIEVE vergelijking
+   * over tijd (bv. rolling/acute-chronic-gebruik), niet voor absolute
+   * interpretatie op zichzelf.
+   *
+   * Bron: Foster C, Florhaug JA, Franklin J, Gottschall L, Hrovatin LA,
+   * Parker S, Doleshal P, Dodge C. "A new approach to monitoring exercise
+   * training." Journal of Strength & Conditioning Research. 2001;15(1):109-115.
+   *
+   * Puur/deterministisch. Ongeldige/ontbrekende input -> null (geen fabricage).
+   *   durationSec: sessieduur in seconden (bv. sessions.duration_s)
+   *   rpe: sessie-RPE, 0-10 (Borg CR10-schaal) */
+  function sessionLoadSRPE(durationSec, rpe) {
+    var d = (typeof durationSec === 'number') ? durationSec : parseFloat(durationSec);
+    var r = (typeof rpe === 'number') ? rpe : parseFloat(rpe);
+    if (!isFinite(d) || d <= 0 || !isFinite(r) || r < 0 || r > 10) return null;
+    var minuten = d / 60;
+    return Math.round(minuten * r);
+  }
+
+  /* ── rolling_load_sum.v1 ──────────────────────────────────────────────────
+   * Zuivere optelling van sRPE-waarden binnen een venster — GEEN nieuwe
+   * acute:chronic-ratio (die blijft AthleteCore.acuteChronic(), protected
+   * core, hier bewust ongewijzigd). Deze functie levert alleen de
+   * bouwsteen (som van sRPE over N sessies) waarmee een caller zelf een
+   * rolling-venster kan samenstellen. Lege/ongeldige lijst -> 0 (een lege
+   * periode heeft terecht nul belasting, geen "onbekend").
+   *   srpeValues: array van sessionLoadSRPE()-uitkomsten (nulls worden genegeerd) */
+  function rollingLoadSum(srpeValues) {
+    var vals = Array.isArray(srpeValues) ? srpeValues : [];
+    var som = 0;
+    vals.forEach(function (v) { if (typeof v === 'number' && isFinite(v)) som += v; });
+    return som;
+  }
+
   return {
     versie: VERSIE,
     classifyAcwr: classifyAcwr,
     acwrAdvisoryText: acwrAdvisoryText,
-    corroboratedLoadSignal: corroboratedLoadSignal
+    corroboratedLoadSignal: corroboratedLoadSignal,
+    sessionLoadSRPE: sessionLoadSRPE,
+    rollingLoadSum: rollingLoadSum
   };
 });

@@ -655,7 +655,7 @@
       "E6.1"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F3-06"
     ],
@@ -3187,5 +3187,19 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "zie MS-F3-06 (CLOSED). GAP-P2-014 (ContextEngineCore ongebruikt) geregistreerd. docs/CONTEXT_CONTRACT.md is het canonieke taxonomie-document."
+  },
+  {
+    "id": "DEC-RULE-REGISTRY-001",
+    "type": "capability",
+    "track": "Decision & Rules Engine",
+    "phase": "F3",
+    "priority": "P1",
+    "status": "VALIDATED",
+    "target": "VALIDATED",
+    "dependencies": [],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F3-07 (CLOSED). 9 Decision Rules geregistreerd, ACWR/HRV-guardrails heraudit en bevestigd intact, geen AI-decision-violatie, geen duplicatie."
   }
 ]

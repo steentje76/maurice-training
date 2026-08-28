@@ -9,6 +9,17 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 v4.69.0
 
 ## Laatste release
+- Versie: geen APP_VER-bump (backend/DB/test-only, geen index.html/sw.js/core-wijziging — sw-guard bevestigt CORE_SIG ongewijzigd)
+- Datum: 28 augustus 2026
+- Inhoud: **P0 Security & Release-Gate Closure Sprint**, direct volgend op een consolidatie-audit dezelfde dag. Drie P0-bevindingen gesloten met bewijs:
+  1. **`gyms`-tabel publiek leesbaar zonder inloggen** (RLS-policy `gyms_read` met `USING(true)`, `owner_email`/`coach_pin_hash`/`mollie_customer_id` lekten naar de anon-rol). Codebewijs: geen enkele bestaande flow gebruikte publieke/authenticated toegang tot deze tabel. Fix: `migratie_v496.sql`, policy verwijderd, geen vervanging (deny-all, service_role blijft werken). Live geverifieerd via `SET LOCAL ROLE anon/authenticated/service_role`.
+  2. **Ontbrekende regressietests op vier security-kritieke Netlify Functions** (`coach.js`, wearable-OAuth-flow, `delete-account.js`, `gym-team.js`). 61 nieuwe assertions toegevoegd. Tijdens het testontwerp een **echte, nog niet eerder gerapporteerde bug** gevonden en gefixed: een manager kon een gym-owner degraderen naar `lid` (de bestaande bescherming blokkeerde alleen het *toekennen* van een te hoge rol, niet het *wijzigen* van iemand die al gelijk/hoger stond).
+  3. **Release gate dekte slechts 10 van ~75 testbestanden.** `core/release-gate.js` herbouwd naar discovery-based (ontdekt automatisch alle `core/*.test.js`, nu 78 bestanden + logic_tests.js). Bewezen dat de gate écht kan falen via een tijdelijke, volledig teruggedraaide sabotage-test. Verouderd `sw-guard.test.js`-duplicaat op repo-root verwijderd.
+- Nieuwe testbestanden: `core/fGymsRlsSecurity.test.js`, `core/fCoachProxySecurity.test.js`, `core/fGymTeamSecurity.test.js`, `core/fWearableAuthSecurity.test.js`, `core/fDeleteAccountSecurity.test.js`.
+- Zie `SECURITY_FINDINGS.md`, `GAP_ANALYSIS.md`, `TEST_VERIFICATION.md`, `CAPABILITY_REGISTRY.md` (deze mastersprint-serie is nog niet in de repo zelf opgenomen, alleen als sessie-output).
+- **Openstaand:** P1-P3 uit dezelfde audit (Handbook-drift, backup-tabellen, Phase 3-RLS-scoping, verouderde `DATABASE_STATUS.md`, AI-outputcontract) zijn bewust NIET in deze sprint aangepakt — expliciet uitgesloten van de closure-scope.
+
+## Laatste release (vorig)
 - Versie: v4.49.0 — HYROX, Adaptive Triathlon en correction-state remediation
 - Datum: 24 augustus 2026
 - Inhoud: HYROX-race-tracking (Single/Doubles/Relay/Adaptive) en triathlon-brick geïntegreerd, met de volledig bronbevestigde HYROX Adaptive-classificaties (13 waarden, rulebook 26/27). Race-context via zes nieuwe, additieve kolommen op `training_instances`, CHECK-constraint live op Supabase geverifieerd. HYROX-tijdrekenlogica geconsolideerd in `core/cardio.js` als enige bron van waarheid. Twee bugs gevonden en opgelost: een correctie op een voltooid stationresultaat toonde de oude waarde totdat de app herlaadde (P1, hyroxCorrigeerLaatste() werkte de live state niet bij); het HYROX-startpunt in de Workout Builder ontbrak in de daadwerkelijke schermopbouw, waardoor niemand er ooit bij kon (P0). Zie `CHANGELOG.md`.

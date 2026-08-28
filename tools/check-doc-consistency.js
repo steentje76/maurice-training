@@ -10,6 +10,14 @@
  *  5. CURRENT_STATE.md claimt exact één actieve ("CURRENT") roadmapfase, bevat geen
  *     stale "alleen als sessie-output"-claim, en geen "Actieve sprint"/"Vorige actieve
  *     sprint"-sectiekop die een tweede, gelijktijdige actieve status zou suggereren.
+ *  6. Geen circulaire dependency-ketens binnen de roadmap-index.
+ *  7. Elk item met priority P0 of P1 is van het type "mastersprint" zelf, óf heeft
+ *     minimaal één mastersprint-item dat er in zijn "next_action"-veld naar verwijst
+ *     (voorkomt een P0/P1-capability zonder concrete uitvoeringsbestemming).
+ *  8. Elk mastersprint-item heeft een niet-lege "acceptance_gate"-array.
+ *  9. Elk mastersprint-item heeft een "phase"-veld en minimaal één "tracks"-entry.
+ * 10. Elk mastersprint-item heeft een "target_maturity" die een geldige waarde is uit
+ *     het maturity-model (NOT STARTED/IMPLEMENTED/TESTED/INTEGRATED/VALIDATED/CLOSED).
  *
  * BEPERKING (bewust, geen overengineering): dit script parseert geen vrije Markdown-
  * prosa met volledige semantiek. Punt 4 is een grove, op sectiekoppen gebaseerde
@@ -101,6 +109,69 @@ try {
 } catch (e) {
   fail('Kon docs/00_Project_Management/CURRENT_STATE.md niet lezen: ' + e.message);
 }
+
+// 6. Geen circulaire dependencies (eenvoudige DFS-cyclusdetectie).
+(function checkCircularDeps() {
+  const byId = {};
+  index.forEach(item => { byId[item.id] = item; });
+  const WHITE = 0, GRAY = 1, BLACK = 2;
+  const color = {};
+  index.forEach(item => { color[item.id] = WHITE; });
+  let cyclePath = null;
+
+  function visit(id, path) {
+    if (cyclePath) return;
+    color[id] = GRAY;
+    const deps = (byId[id] && byId[id].dependencies) || [];
+    for (const dep of deps) {
+      if (!byId[dep]) continue; // orphan-check gebeurt al in stap 3
+      if (color[dep] === GRAY) { cyclePath = path.concat([id, dep]); return; }
+      if (color[dep] === WHITE) visit(dep, path.concat([id]));
+      if (cyclePath) return;
+    }
+    color[id] = BLACK;
+  }
+  index.forEach(item => { if (color[item.id] === WHITE) visit(item.id, []); });
+
+  if (cyclePath) fail('Circulaire dependency-keten gevonden: ' + cyclePath.join(' -> '));
+  else pass('Geen circulaire dependencies in de roadmap-index');
+})();
+
+// 7. Elke P0/P1-capability heeft een concrete mastersprint-bestemming.
+(function checkP0P1HasMastersprint() {
+  const highPrio = index.filter(x => x.type === 'capability' && (x.priority === 'P0' || x.priority === 'P1'));
+  const mastersprintText = JSON.stringify(index.filter(x => x.type === 'mastersprint'));
+  let unmapped = [];
+  highPrio.forEach(cap => {
+    const referencedInNextAction = /zie MS-/.test((cap.next_action || '')) || cap.status === 'CLOSED';
+    const referencedInMastersprints = mastersprintText.includes('"' + cap.id + '"');
+    if (!referencedInNextAction && !referencedInMastersprints) unmapped.push(cap.id);
+  });
+  if (unmapped.length) fail('P0/P1-capabilities zonder mastersprint-bestemming: ' + unmapped.join(', '));
+  else pass('Elke P0/P1-capability (' + highPrio.length + ') heeft een mastersprint-bestemming of is CLOSED');
+})();
+
+// 8. Elk mastersprint-item heeft een niet-lege acceptance_gate.
+(function checkAcceptanceGates() {
+  const missing = index.filter(x => x.type === 'mastersprint' && (!Array.isArray(x.acceptance_gate) || x.acceptance_gate.length === 0)).map(x => x.id);
+  if (missing.length) fail('Mastersprints zonder acceptance_gate: ' + missing.join(', '));
+  else pass('Elk mastersprint-item heeft minimaal 1 acceptance_gate-regel');
+})();
+
+// 9. Elk mastersprint-item heeft phase + minimaal 1 track.
+(function checkPhaseAndTrack() {
+  const missing = index.filter(x => x.type === 'mastersprint' && (!x.phase || !Array.isArray(x.tracks) || x.tracks.length === 0)).map(x => x.id);
+  if (missing.length) fail('Mastersprints zonder phase en/of track: ' + missing.join(', '));
+  else pass('Elk mastersprint-item heeft een phase en minimaal 1 track');
+})();
+
+// 10. target_maturity is een geldige waarde uit het maturity-model.
+(function checkMaturityValues() {
+  const VALID = new Set(['NOT STARTED', 'IMPLEMENTED', 'TESTED', 'INTEGRATED', 'VALIDATED', 'CLOSED']);
+  const invalid = index.filter(x => x.type === 'mastersprint' && !VALID.has(x.target_maturity)).map(x => x.id + ':' + x.target_maturity);
+  if (invalid.length) fail('Mastersprints met ongeldige target_maturity: ' + invalid.join(', '));
+  else pass('Elk mastersprint-item heeft een geldige target_maturity');
+})();
 
 console.log('─'.repeat(52));
 if (errors) {

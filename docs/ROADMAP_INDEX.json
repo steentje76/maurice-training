@@ -146,7 +146,7 @@
       "Platform"
     ],
     "priority": "P2",
-    "status": "NOT STARTED",
+    "status": "TESTED",
     "dependencies": [],
     "target_maturity": "IMPLEMENTED",
     "objective": "Retention/export decision; deletion only with explicit approval.",
@@ -2802,13 +2802,13 @@
     "track": "Platform/Production",
     "phase": "F1",
     "priority": "P2",
-    "status": "NOT STARTED",
+    "status": "TESTED",
     "target": "CLOSED",
     "dependencies": [],
-    "software_validation": "N/A",
+    "software_validation": "PASS",
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
-    "next_action": "zie MS-F1-05"
+    "next_action": "Audit CLOSED via MS-F1-05 (docs/BACKUP_RETENTION_CONTRACT.md). Verwijdering/archivering is POLICY_DECISION_REQUIRED -- wacht op Product Owner."
   },
   {
     "id": "PLAT-OBSERVABILITY-001",

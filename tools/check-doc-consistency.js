@@ -57,6 +57,11 @@
  *     Gate A-sprint is gedaan voor de vier kandidaatbevindingen). Als een toekomstige sprint
  *     `core/release-gate.js` uitbreidt met een `--json`-uitvoermodus, kan deze check alsnog
  *     betrouwbaar worden toegevoegd.
+ * 17. Open P0/P1 Count Consistency (dynamisch, geen hardcoded aantal): telt de daadwerkelijke
+ *     "### GAP-P0-"/"### GAP-P1-"-sectiekoppen in docs/GAP_ANALYSIS_V2.md die vóór de
+ *     "## CLOSED GAPS / HISTORICAL"-scheiding staan (dus daadwerkelijk open), en vergelijkt dat
+ *     met de "Open P0: N"/"Open P1: N"-regels in docs/00_Project_Management/CURRENT_STATE.md.
+ *     Faalt hard bij een mismatch.
  *
  * BEPERKING (bewust, geen overengineering): dit script parseert geen vrije Markdown-
  * prosa met volledige semantiek. Punt 4 is een grove, op sectiekoppen gebaseerde
@@ -369,6 +374,35 @@ try {
     else pass('Geen CLOSED/VALIDATED-capability wordt in CURRENT_STATE.md nog in dezelfde zin als een ongemarkeerde actieve blokkade genoemd');
   } catch (e) {
     fail('Closed-blocker contradiction check kon niet worden uitgevoerd: ' + e.message);
+  }
+})();
+
+// 17. Open P0/P1 Count Consistency — dynamisch, geen hardcoded aantal.
+(function checkOpenP0P1CountConsistency() {
+  try {
+    const gapText = fs.readFileSync(path.join(ROOT, 'docs/GAP_ANALYSIS_V2.md'), 'utf8');
+    const currentStateText = fs.readFileSync(path.join(ROOT, 'docs/00_Project_Management/CURRENT_STATE.md'), 'utf8');
+
+    const closedMarkerIdx = gapText.indexOf('## CLOSED GAPS / HISTORICAL');
+    const openSection = closedMarkerIdx === -1 ? gapText : gapText.slice(0, closedMarkerIdx);
+    const gapOpenP0 = (openSection.match(/^### GAP-P0-/gm) || []).length;
+    const gapOpenP1 = (openSection.match(/^### GAP-P1-/gm) || []).length;
+
+    const csP0Match = currentStateText.match(/Open P0:\s*\*?\*?(\d+)/);
+    const csP1Match = currentStateText.match(/Open P1:\s*\*?\*?(\d+)/);
+    const csOpenP0 = csP0Match ? parseInt(csP0Match[1], 10) : null;
+    const csOpenP1 = csP1Match ? parseInt(csP1Match[1], 10) : null;
+
+    const problems = [];
+    if (csOpenP0 === null) problems.push('kon geen "Open P0: N" vinden in CURRENT_STATE.md');
+    if (csOpenP1 === null) problems.push('kon geen "Open P1: N" vinden in CURRENT_STATE.md');
+    if (csOpenP0 !== null && csOpenP0 !== gapOpenP0) problems.push('P0: GAP_ANALYSIS_V2.md telt ' + gapOpenP0 + ' open GAP-P0-secties, CURRENT_STATE.md zegt ' + csOpenP0);
+    if (csOpenP1 !== null && csOpenP1 !== gapOpenP1) problems.push('P1: GAP_ANALYSIS_V2.md telt ' + gapOpenP1 + ' open GAP-P1-secties, CURRENT_STATE.md zegt ' + csOpenP1);
+
+    if (problems.length) fail('Open P0/P1-tellingen niet synchroon tussen GAP_ANALYSIS_V2.md en CURRENT_STATE.md: ' + problems.join('; '));
+    else pass('Open P0/P1-tellingen synchroon: P0=' + gapOpenP0 + ', P1=' + gapOpenP1 + ' (GAP_ANALYSIS_V2.md en CURRENT_STATE.md komen exact overeen)');
+  } catch (e) {
+    fail('Open P0/P1 count consistency check kon niet worden uitgevoerd: ' + e.message);
   }
 })();
 

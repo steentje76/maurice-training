@@ -728,7 +728,7 @@
       "E7.1"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F3-01",
       "MS-F3-02",
@@ -3220,5 +3220,22 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "zie MS-F3-08 (CLOSED). GAP-P2-015 (recoveryScore-confidence telt alleen componenten, geen kwaliteitsweging) geregistreerd, niet-kritiek."
+  },
+  {
+    "id": "EVIDENCE-CLAIM-AUDIT-001",
+    "type": "capability",
+    "track": "Calculation Engine",
+    "phase": "F3",
+    "priority": "P1",
+    "status": "VALIDATED",
+    "target": "VALIDATED",
+    "dependencies": [
+      "CALC-STR-REGISTRY-001",
+      "DEC-RULE-REGISTRY-001"
+    ],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F3-09 (CLOSED). Epley/Brzycki formule-specifiek heraudit en gepreciseerd. 2 eerdere overclaims (crash-bescherming, AI-fabricage) gecorrigeerd. Reproduceerbare evidence-telling: 23 CALC-items (A1/B4/C4/D1/E7/3xNOT_IMPLEMENTED), 9 Decision Rules (0xA/B)."
   }
 ]

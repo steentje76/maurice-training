@@ -244,3 +244,100 @@ Geen duplicaat gevonden: `AthleteCore.acuteChronic()` (protected core, de daadwe
 
 ## Open Gap (P2, genoteerd, niet binnen deze sprint gebouwd)
 De nieuwe sRPE-bouwstenen (CALC-LOAD-003/005) zijn nog niet in de UI of AI-coachcontext geïntegreerd, en er bestaat nog geen sRPE-gebaseerde rolling-load-trend (los van de bestaande, volume-gebaseerde ACWR). Dit zou een aparte, product-beslissing-vereisende toevoeging zijn (een tweede "belasting"-signaal naast de bestaande ACWR kan verwarrend zijn zonder doordachte UX) — bewust niet binnen deze audit-sprint gebouwd zonder die afweging. Geregistreerd in `docs/GAP_ANALYSIS_V2.md` als GAP-P2-009.
+
+---
+
+## Domein: Recovery (MS-F3-03)
+
+**Auditmethode:** volledige lezing van de HRV-baseline-keten (`hrvBaseline`, `hrvRollingRecent`, `hrvStPersonal`, `hrvDagFactorPersonal`, `lnRmssd`), de dagfactor-compositie (`dagfactor`, `CalcCore.calculateDayFactor`), de Recovery Score (`CalcCore.recoveryScore`), en `rhrBaselineDelta`. Live geverifieerd tegen het `hrv_log`-schema in Supabase.
+
+### CALC-REC-001 — HRV-baseline (Ln-RMSSD, rollend gemiddelde + SWC)
+| Veld | Waarde |
+|---|---|
+| Domain | Recovery |
+| Name | Persoonlijke HRV-baseline met "smallest worthwhile change" (SWC) |
+| Version | intern ongenummerd (index.html-functiegroep `hrvBaseline`/`hrvRollingRecent`/`hrvStPersonal`/`lnRmssd`) |
+| Formula | `lnRmssd(v) = ln(v)` (v>0); baseline = gemiddelde + SD van `lnRmssd`-waarden over een venster; SWC = 0,5×SD; classificatie 'g'/'o'/'r'/'ref' op basis van het rollend 7-daags gemiddelde t.o.v. baseline±SWC |
+| Implementation | `index.html` — `lnRmssd`, `hrvBaseline`, `hrvRollingRecent`, `hrvStPersonal` |
+| Required inputs | reeks `{date, hrv}`-metingen (uit `hrv_log`) |
+| Minimum data | `HRV_BASELINE_MIN_DAYS=14` dagen ÉN `HRV_BASELINE_MIN_N=4` metingen — anders `fase:'referentie'`, geen persoonlijke claim mogelijk (correct "unknown", geen fabricage) |
+| Evidence level | **B** — de Ln-RMSSD-transformatie + rollend-gemiddelde + SWC-aanpak is een gevestigde, veelgeciteerde methodologie in de HRV-guided-training-literatuur |
+| Confidence model | expliciet gefaseerd: `'referentie'` (onvoldoende data, factor altijd neutraal 1.00) → `'voorlopig'` (≥14 dagen) → `'volledig'` (≥`HRV_BASELINE_FULL_DAYS=28` dagen) |
+| Scientific sources | Plews DJ, Laursen PB, Stanley J, Kilding AE, Buchheit M. "Training adaptation and heart rate variability in elite endurance athletes: opening the door to effective monitoring." *Sports Medicine*. 2013;43(9):773-781. (opnieuw geverifieerd via web-onderzoek: Ln-RMSSD als "meest betrouwbare en praktisch toepasbare maat voor dagelijkse monitoring", 7-daags rollend gemiddelde, SWC=0,5×SD — exact de in de code geïmplementeerde aanpak). |
+| Limitations | HRV kent aanzienlijke dag-tot-dag-variabiliteit door meetcondities (houding, tijdstip, cafeïne — niet gestandaardiseerd in deze app); bij zeer hoge individuele HRV kan een "parasympathetic saturation"-fenomeen de lineaire aanname verstoren (Plews et al., 2013) — niet gecorrigeerd in deze implementatie, wel een bekende beperking |
+| Applicability | uitsluitend sporters met voldoende, regelmatige HRV-metingen; geen enkele claim tijdens de referentiefase |
+| Forbidden interpretations | **hard vereist** (opdracht-guardrail): HRV alleen mag nooit overtraining diagnosticeren, een medische toestand vaststellen, een verplichte rustdag afdwingen, of blessure voorspellen. Code-implementatie bevestigt dit: `hrvDagFactorPersonal` levert uitsluitend een dagfactor-COMPONENT (0.85-1.05), nooit een zelfstandig advies. |
+| Allowed Decision Rules | mag uitsluitend als één component in de bredere dagfactor-/Recovery-Score-compositie meewegen (CALC-REC-002/003), nooit zelfstandig een trainingsbeslissing bepalen |
+| AI permissions | AI mag de classificatie en context uitleggen; AI mag NOOIT zelf een HRV-gebaseerde medische of trainingsclaim toevoegen |
+| Test status | geen dedicated unit-test-bestand gevonden voor deze specifieke functiegroep binnen `core/`; functies leven in `index.html` (niet in de pure-core-extractie). Genoteerd als vervolgpunt (zie Open Gaps). |
+| Status | **PARTIAL** (wetenschappelijk goed onderbouwd en functioneel correct gebouwd; ontbrekende dedicated unit-test voor deze specifieke functiegroep) |
+
+### CALC-REC-002 — Dagfactor (HRV × slaap × cyclus, samengesteld)
+| Veld | Waarde |
+|---|---|
+| Domain | Recovery |
+| Name | Samengestelde dagfactor uit HRV-, slaap- en cycluscomponent |
+| Version | `dayfactor.v1` |
+| Formula | `clamp(hrvFactor × slaapDagFactor(uren) × cyclusDagFactor(fase), 0.85, 1.05)`, afgerond op 2 decimalen |
+| Implementation | `core/calculation.js` — `calculateDayFactor`; `index.html` — `dagfactor` (orchestratie) |
+| Required inputs | `hrvFactor` (CALC-REC-001-uitkomst, of 1.00 neutraal), `sleepHours`, `cyclePhase` (optioneel, alleen relevant bij vrouwelijke sporters) |
+| Evidence level | **C** — contextafhankelijk. Elke individuele component (HRV, slaap) heeft een eigen evidence-basis, maar de SPECIFIEKE combinatie via vermenigvuldiging + clamp(0.85, 1.05) is een **productontwerp**, geen uit één studie afgeleide formule. |
+| Limitations | vermenigvuldiging van drie factoren impliceert onafhankelijkheid tussen HRV/slaap/cyclus, wat fysiologisch niet exact klopt (bv. slechte slaap beïnvloedt vaak ook HRV) — een bekende, geaccepteerde vereenvoudiging, geen gevalideerd multiplicatief model |
+| Forbidden interpretations | de dagfactor is "puur informatief" (code-commentaar) en past nooit automatisch een ingevuld gewicht aan zonder expliciete gebruikersactie |
+| Allowed Decision Rules | voedt `readinessPercent`/`recoveryScore` (CALC-REC-003) en de bestaande `computeProgAdjustment` (Decision-laag, buiten deze registry-scope) |
+| Test status | `calculation.test.js` (dekt `calculateDayFactor`) |
+| Status | **VERIFIED** (bestaand, correct getest) |
+
+### CALC-REC-003 — Recovery Score (0-100, gewogen samengesteld)
+| Veld | Waarde |
+|---|---|
+| Domain | Recovery |
+| Name | Eén zichtbare 0-100 herstelscore uit beschikbare signalen |
+| Version | `recovery_score.v1` |
+| Formula | gewogen gemiddelde van beschikbare componenten: dagfactor (via `readinessPercent`) 0,45 · gemiddeld spierherstel-% 0,30 · RHR-delta 0,15 · subjectief gevoel 0,10 — **gewichten worden herverdeeld over uitsluitend de daadwerkelijk aanwezige componenten** (geen fabricage bij ontbrekende data) |
+| Implementation | `core/calculation.js` — `recoveryScore`, `readinessPercent`, `recoveryBand` |
+| Evidence level | **D** — de individuele componenten (dagfactor, spierherstel) hebben elk hun eigen, hierboven vermelde evidence, maar de SPECIFIEKE gewichtsverdeling (45/30/15/10%) is een **product heuristic** zonder eigen wetenschappelijke bron — code-commentaar bevestigt dit expliciet ("sprint-default"). Dit is bewust conservatief geclassificeerd: een samengestelde score die zich presenteert als één getal verdient een lager evidence-niveau dan zijn best-onderbouwde component. |
+| Confidence model | **expliciet en reproduceerbaar**: `confidence: comps.length>=3 ? 'hoog' : comps.length===2 ? 'gemiddeld' : 'laag'`; 0 componenten → `score:null, confidence:'geen'` (nooit een score fabriceren zonder data) |
+| Limitations | de gewichtsverdeling is niet gevalideerd tegen een externe uitkomstmaat (bv. prestatie of blessurecijfers); band-grenzen (≥80 hoog, ≥60 gemiddeld) zijn eveneens een productkeuze |
+| Forbidden interpretations | de score is nooit een medische of fysiologische meting; een "laag"-band betekent niet automatisch een blessurerisico of noodzaak tot rust |
+| Allowed Decision Rules | mag getoond worden als coachcontext; mag NOOIT automatisch trainingsinhoud wijzigen zonder de aparte, expliciete `computeProgAdjustment`-Decision-laag |
+| AI permissions | AI mag de score en de aanwezige componenten toelichten; AI mag NOOIT de score zelf herberekenen of de ontbrekende componenten invullen |
+| Test status | `calculation.test.js` |
+| Status | **VERIFIED** (functioneel correct en transparant; evidence-classificatie bewust conservatief D, zie boven — geen evidence-inflatie) |
+
+### CALC-REC-004 — RHR-baseline-delta
+| Veld | Waarde |
+|---|---|
+| Domain | Recovery |
+| Name | Rusthartslag t.o.v. het eigen historisch gemiddelde |
+| Version | intern ongenummerd (`rhrBaselineDelta`) |
+| Formula | `vandaag − gemiddelde(eerdere metingen)`, afgerond op 1 decimaal; `<2` metingen → `null` |
+| Implementation | `index.html` — `rhrBaselineDelta` |
+| Evidence level | **C** — een verhoogde RHR t.o.v. de eigen baseline is een breed erkend, niet-specifiek herstelsignaal (kan wijzen op vermoeidheid, ziekte, stress, of niets) |
+| Limitations | geen enkele oorzaak wordt onderscheiden; minimum van 2 metingen is zeer laag voor een betrouwbare baseline (in tegenstelling tot HRV's striktere `MIN_N=4`/`MIN_DAYS=14`) |
+| Forbidden interpretations | **expliciet in code bevestigd**: "geen enkelvoudige verhoogde RHR automatisch als 'slecht herstel' presenteren zonder context" — de delta wordt uitsluitend als component in CALC-REC-003 gebruikt, nooit los getoond als diagnose |
+| Status | **PARTIAL** (functioneel correct; het lage minimum van 2 metingen is een reëel, niet volledig opgelost aandachtspunt — zie Open Gaps) |
+
+## Sleep — brononderscheid (gevonden gap)
+Live geverifieerd tegen het `hrv_log`-schema in Supabase: de tabel bevat **geen provenance-kolom**. `sleep`/`hrv`/`rhr` kunnen zowel uit een handmatige check-in als uit wearable-sync afkomstig zijn, zonder dat dit onderscheid ergens wordt vastgelegd. Dit is een reële afwijking van de opdrachtvereiste ("maak brononderscheid... provider-score niet herlabelen als eigen TK-calculation"). **Niet binnen deze sprint gecorrigeerd** — een DB-migratie (nieuwe `source`-kolom) plus aanpassing van alle schrijfpaden (`saveHRV`, wearable-sync-functies) is een grotere, zorgvuldiger te plannen ingreep dan verantwoord binnen een audit-sprint. Geregistreerd als GAP-P1-007 (zie hieronder — P1 omdat dit de betrouwbaarheid van de hele Recovery-keten raakt, niet slechts cosmetisch is).
+
+## Magic Number Audit (Recovery-domein)
+
+| Waarde | Locatie | Classificatie |
+|---|---|---|
+| `HRV_BASELINE_MIN_DAYS=14`, `HRV_BASELINE_FULL_DAYS=28`, `HRV_BASELINE_MIN_N=4` | index.html | **Evidence-backed** (consistent met Plews et al.'s aanbeveling van minimaal 3-5 metingen/week) |
+| `HRV_SWC_MULTIPLIER=0.5` | index.html | **Evidence-backed** (Plews et al., letterlijk "0.5 SD as the smallest worthwhile change") |
+| `HRV_SEVERE_DROP_PCT=0.15` | index.html | **Product heuristic** — code citeert zelf "athletedata.health" (een coaching-webbron, geen peer-reviewed studie) — terecht NIET als evidence-backed geclassificeerd, ondanks de nabijheid van de wél sterk onderbouwde SWC-drempel in dezelfde functie |
+| Recovery Score-gewichten (45/30/15/10%) | calculation.js | **Product heuristic** (code-commentaar: "sprint-default") |
+| Recovery-band-grenzen (≥80/≥60) | calculation.js | **Product heuristic** |
+| RHR-delta-scoreformule (`100−delta×6`, plafond bij +17bpm) | calculation.js | **Technical/product heuristic** — geen specifieke brontoewijzing |
+
+Geen onverklaarde critical threshold gevonden — inclusief het belangrijke onderscheid tussen de wél sterk onderbouwde SWC-drempel en de ernaast liggende, zwakker onderbouwde "ernstige daling"-drempel binnen dezelfde functiegroep (sectie 51/52 van de opdracht: claim-specifieke, niet functie-brede evidence).
+
+## Duplicate Calculation Audit (Recovery-domein)
+`readinessPercent` had volgens code-commentaar ooit een duplicaat (`v43GereedheidScore` in index.html) — dit is al in een eerdere sprint (Sprint 14, per het commentaar) geconsolideerd tot één canonieke implementatie in `calculation.js`, met `v43GereedheidScore` nu als dunne wrapper. Geen actieve duplicatie meer aangetroffen.
+
+## Open Gaps (Recovery-domein)
+- **GAP-P1-007** (nieuw, deze sprint): `hrv_log` heeft geen provenance-kolom — handmatige en wearable-afkomstige metingen zijn niet te onderscheiden. P1 omdat dit de betrouwbaarheid van de gehele Recovery-keten raakt.
+- **GAP-P2-011** (nieuw, deze sprint): geen dedicated `core/`-unit-test voor de HRV-baseline-functiegroep (leeft nog in `index.html`, niet in de pure-core-extractie zoals `calculation.js`).
+- **GAP-P2-012** (nieuw, deze sprint): `rhrBaselineDelta`'s minimum van 2 metingen is laag vergeleken met HRV's striktere gates — mogelijk een inconsistentie in hoe streng elk Recovery-signaal zijn eigen datakwaliteit bewaakt.

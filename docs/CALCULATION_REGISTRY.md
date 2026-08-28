@@ -341,3 +341,85 @@ Geen onverklaarde critical threshold gevonden — inclusief het belangrijke onde
 - **GAP-P1-007** (nieuw, deze sprint): `hrv_log` heeft geen provenance-kolom — handmatige en wearable-afkomstige metingen zijn niet te onderscheiden. P1 omdat dit de betrouwbaarheid van de gehele Recovery-keten raakt.
 - **GAP-P2-011** (nieuw, deze sprint): geen dedicated `core/`-unit-test voor de HRV-baseline-functiegroep (leeft nog in `index.html`, niet in de pure-core-extractie zoals `calculation.js`).
 - **GAP-P2-012** (nieuw, deze sprint): `rhrBaselineDelta`'s minimum van 2 metingen is laag vergeleken met HRV's striktere gates — mogelijk een inconsistentie in hoe streng elk Recovery-signaal zijn eigen datakwaliteit bewaakt.
+
+---
+
+## Domein: Endurance & Erg (MS-F3-04)
+
+**Auditmethode:** volledige lezing van `core/cardio.js` (pace/split/power/tijd), `core/intervalEngine.js` (work/recovery-blokprescriptie), en `CARDIO_TYPES` (index.html, sport-specifieke veldschema's voor RowErg/BikeErg/SkiErg/AssaultBike/hardlopen/zwemmen). Repo-brede zoekactie naar TRIMP/critical-speed/critical-power/decoupling/HR-zones.
+
+**Belangrijke bevinding vooraf:** `core/intervalEngine.js` bevat het EXPLICIETE, bestaande architectuurcommentaar *"Geen FTP/critical power/critical speed"* — dit is dus geen omissie die ontdekt moest worden, maar een reeds bewust vastgelegde scope-grens. Bevestigd via repo-brede zoekactie: TRIMP, Critical Speed/Power, aerobic decoupling en HR-zones (%HRmax-classificatie) bestaan nergens in de codebase — `hr` wordt voor hardlopen wél als ruwe, gemeten waarde opgeslagen (`CARDIO_TYPES.running`), maar nooit geclassificeerd in zones.
+
+### CALC-END-001 — Pace/Speed/Split-conversie
+| Veld | Waarde |
+|---|---|
+| Domain | Endurance & Erg |
+| Name | Canonieke omzetting tussen afstand, tijd en split/pace |
+| Version | `cardio_split.v1` |
+| Formula | `splitFromDistTime(dist,time,basis) = (time/dist)*basis`; met exacte inverses `timeFromDistSplit`/`distFromTimeSplit` |
+| Implementation | `core/cardio.js` — `splitFromDistTime`, `timeFromDistSplit`, `distFromTimeSplit` |
+| Required inputs | `dist` (meters), `timeSec` (seconden), `basis` (referentie-afstand: 500 voor erg, 1 voor hardlopen-pace/km, 100 voor zwemmen) |
+| Input units | **canoniek**: meters, seconden — expliciet zo gedocumenteerd in het bestandscommentaar ("cardio is unit-gevoelig"); UI-conversie (km, min:sec-weergave) is presentatie, geen aparte formule |
+| Output | split/pace in seconden per `basis`-eenheid |
+| Evidence level | **E** — zuivere wiskundige omzetting (delen/vermenigvuldigen), geen zelfstandige wetenschappelijke claim nodig |
+| Confidence model | n.v.t. — deterministisch; betrouwbaarheid hangt volledig af van de brondata (device-nauwkeurigheid, GPS-kwaliteit — buiten deze functie) |
+| Limitations | `dist=0` of `timeSec=0` → `null` (geen Infinity/NaN naar de consument — expliciet getest) |
+| Applicability | elke sport met afstand+tijd (roeien/ski/bike-erg, hardlopen, zwemmen) |
+| Forbidden interpretations | geen — puur technische conversie, geen interpretatieve claim mogelijk |
+| Status | **VERIFIED** |
+
+### CALC-END-002 — Erg-vermogen (Concept2-formule)
+| Veld | Waarde |
+|---|---|
+| Domain | Endurance & Erg |
+| Name | Vermogen uit split, en omgekeerd (roei-/ski-/bike-erg) |
+| Version | `cardio_power.v1` |
+| Formula | `watt = 2.80 / (split_per_500m_sec / 500)^3`; exacte inverse via kubuswortel |
+| Implementation | `core/cardio.js` — `wattFromSplit500`, `splitFromWatt500` |
+| Evidence level | **E** (technische conversie) voor de formule zelf — dit is de door Concept2 gepubliceerde, industriestandaard omrekenformule tussen split en vermogen (geen sportwetenschappelijke prestatieclaim, een fysica/techniek-conversie). Bewust ONGEWIJZIGD overgenomen uit legacy (code-commentaar bevestigt dit expliciet). |
+| Limitations | geldt specifiek voor Concept2-achtige ergometers met deze split-vermogen-relatie; niet toepasbaar op andere vermogensbronnen zonder validatie |
+| Applicability | RowErg/BikeErg/SkiErg (roeien/ski/bike-erg-context) |
+| Forbidden interpretations | dit vermogen is een **AFGELEIDE** waarde uit de split, geen onafhankelijk gemeten vermogen — mag niet verward worden met een direct door het apparaat gemeten wattage (zie CALC-END-003 voor het onderscheid) |
+| Status | **VERIFIED** |
+
+### CALC-END-003 — Device-gemeten vs. afgeleid vermogen (provenance-onderscheid)
+| Veld | Waarde |
+|---|---|
+| Domain | Endurance & Erg |
+| Name | Onderscheid `watt`-provenance: rechtstreeks door het apparaat gerapporteerd, versus via CALC-END-002 afgeleid uit split |
+| Current state | `CARDIO_TYPES` (RowErg/BikeErg/SkiErg) heeft een los `watt`-veld dat de gebruiker rechtstreeks kan invoeren (van het schermpje van de erg), ÉN `calc:{type:'split',...}` dat split-gebaseerde afleiding mogelijk maakt. **Er is geen expliciete provenance-vlag** die vastlegt of een opgeslagen `watt`-waarde rechtstreeks van het apparaat kwam of achteraf berekend is uit een ingevoerde split. |
+| Evidence level | n.v.t. (architecturale bevinding, geen calculation zelf) |
+| Status | **GAP, geregistreerd** — zie Open Gaps hieronder (GAP-P2-013). Dit is exact de opdrachtvereiste ("MEASURED POWER versus DERIVED/ESTIMATED POWER... provenance verplicht") die momenteel niet expliciet is vastgelegd. |
+
+### CALC-END-004 — Kritieke prestatiemodellen (Critical Speed/Power) — **NIET GEÏMPLEMENTEERD (bewust)**
+| Veld | Waarde |
+|---|---|
+| Domain | Endurance & Erg |
+| Current state | **Bestaat niet.** `core/intervalEngine.js` bevat het expliciete architectuurcommentaar "Geen FTP/critical power/critical speed" — een bewuste, reeds vastgelegde scope-grens, geen ontdekte omissie. |
+| Reden om niet binnen deze sprint te bouwen | Critical Speed/Power vereist een gevalideerd model (doorgaans lineaire regressie over meerdere maximale-inspanningstests van verschillende duur), expliciete minimum-trial-vereisten, en duidelijke confidence-regels bij onvoldoende data (opdracht sectie 11/24: "geen fabricated result bij insufficient trials"). Deze onderliggende trial-verzamelinfrastructuur bestaat niet. Een CS/CP-"calculation" bouwen zonder die infrastructuur zou zelf een vorm van fabricage zijn — precies wat de opdracht verbiedt. |
+| Status | **NOT_IMPLEMENTED** (bewust, gedocumenteerd) |
+
+### CALC-END-005 — TRIMP / Aerobic Decoupling / HR-zones — **NIET GEÏMPLEMENTEERD**
+| Veld | Waarde |
+|---|---|
+| Domain | Endurance & Erg |
+| Current state | **Bestaat niet.** Geen TRIMP-variant (Banister/Edwards/anders), geen aerobic-decoupling-berekening, geen HR-zone-classificatie (%HRmax/HRR/LTHR-gebaseerd) gevonden. `hr` wordt voor hardlopen wel als ruwe, gemeten gemiddelde-waarde opgeslagen, maar nooit verder verwerkt. |
+| Reden om niet binnen deze sprint te bouwen | Elke van deze drie metrics vereist een eigen, formule-specifieke wetenschappelijke onderbouwing (opdracht sectie 12/16: "Banister TRIMP ≠ Edwards ≠ andere varianten... noem niet alleen 'TRIMP' zonder formulevariant") en, voor HR-zones, een expliciete methodekeuze (%HRmax vs. HRR vs. LTHR) die een productbeslissing is, geen technische default. Zonder deze keuzes zou elke implementatie een verzonnen, niet-onderbouwde default zijn. |
+| Status | **NOT_IMPLEMENTED** (bewust, geregistreerd als toekomstig vervolgwerk, geen F3-blokkade — endurance-basisfunctionaliteit (pace/split/power) is wél volledig aanwezig en gedekt) |
+
+## Magic Number Audit (Endurance & Erg-domein)
+
+| Waarde | Locatie | Classificatie |
+|---|---|---|
+| Concept2-constante `2.80` in de watt-formule | `cardio.js` | **Evidence-backed** (Concept2's gepubliceerde, industriestandaard omrekenformule — een technische, geen sportwetenschappelijke constante) |
+| `splitDist`/`splitTotal`-defaults per sport (bv. 250m/1000m voor erg, 1km/5km voor hardlopen) | `CARDIO_TYPES` (index.html) | **Product heuristic** — praktische UI-defaults voor split-weergave, geen wetenschappelijke claim |
+| `SEGMENT_TRANSITIE_MAX_DUUR_S = 3600` | `cardio.js` | **Technical threshold** — een praktische bovengrens om onrealistische transitietijden (bv. door een vergeten actieve timer) uit te sluiten |
+
+Geen onverklaarde critical threshold gevonden.
+
+## Duplicate Calculation Audit (Endurance & Erg-domein)
+`stationDurationS`/`segmentTransitionS` hadden ooit een duplicaat in `index.html` (`tkHyroxStationDurationS`/`tkHyroxSegmentTransitionS`) — al in een eerdere sprint (PR #31, per code-commentaar) geconsolideerd naar `core/cardio.js` als enige bron. Geen actieve duplicatie meer aangetroffen. `intervalEngine.js` bevestigt expliciet géén overlap met `CardioCore` te zijn (aparte, complementaire verantwoordelijkheid: prescriptie/executie-state versus eenheden/metrics).
+
+## Open Gaps (Endurance & Erg-domein)
+- **GAP-P2-013** (nieuw, deze sprint): geen expliciete provenance-vlag voor `watt` (device-gemeten vs. via split afgeleid) in `CARDIO_TYPES`-schema's.
+- **NOT_IMPLEMENTED, geen gap-nummer (bewust, geen actie vereist zonder productbeslissing):** Critical Speed/Power, TRIMP (elke variant), aerobic decoupling, HR-zones. Zie CALC-END-004/005 hierboven voor de volledige onderbouwing waarom dit terecht niet binnen deze sprint gebouwd is.

@@ -557,12 +557,12 @@
       "E3.3"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "TESTED",
     "dependencies": [],
     "target_maturity": "IMPLEMENTED",
     "objective": "Pace/power/zones/CS/CP/decoupling/erg metrics.",
     "acceptance_gate": [
-      "Pace/power/zones/CS/CP/decoupling/erg metrics."
+      "Pace/power/erg metrics: CLOSED. Zones/CS/CP/decoupling: NOT_IMPLEMENTED (bewust, zie docs/MS-F3-04_ENDURANCE_ERG.md) -- geen productbeslissing genomen zonder vrijgave."
     ],
     "validation": {
       "software": "REQUIRED",
@@ -3145,5 +3145,19 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "zie MS-F3-03 (CLOSED). GAP-P1-007 (hrv_log-provenance) is een F3-FASE-blokkerende P1, target mastersprint MS-F3-10 (Explainability & Provenance Contract) -- niet MS-F3-03-blokkerend (die sprint zelf is terecht CLOSED). F3 als geheel mag niet CLOSED tot GAP-P1-007 is opgelost of formeel hergeclassificeerd."
+  },
+  {
+    "id": "CALC-END-REGISTRY-001",
+    "type": "capability",
+    "track": "Calculation Engine",
+    "phase": "F3",
+    "priority": "P1",
+    "status": "TESTED",
+    "target": "VALIDATED",
+    "dependencies": [],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "PARTIAL",
+    "next_action": "zie MS-F3-04 (status TESTED, sprintuitkomst inhoudelijk gedeeltelijk -- geen vals CLOSED). Pace/power/erg metrics VALIDATED. CS/CP/TRIMP/HR-zones NOT_IMPLEMENTED (bewust) -- vereist een aparte productbeslissing (welke TRIMP-variant, welke HR-zone-methode) vóór implementatie, geen F3-blokkade voor de reeds gedekte basisfunctionaliteit."
   }
 ]

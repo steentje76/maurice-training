@@ -11,7 +11,7 @@
 |---|---|
 | P0 | **0 open** |
 | P1 | 3 |
-| P2 | 12 |
+| P2 | 13 |
 | P3 | 4 |
 | P4 | 2 |
 
@@ -69,6 +69,13 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Current:** `rhrBaselineDelta` vereist slechts 2 eerdere metingen, terwijl `hrvBaseline` 14 dagen én 4 metingen vereist vóór een claim. Beide zijn Recovery-signalen met vergelijkbare datakwaliteitsrisico's, maar met sterk verschillende drempels.
 **Evidence:** CODE VERIFIED, zie het Recovery-sprintrapport in `docs/`.
 **Target:** heroverwegen of RHR-delta een strengere minimumdrempel verdient, consistent met de HRV-aanpak.
+**Priority:** P2. **Complexity:** S.
+
+### GAP-P2-013 — Geen provenance-onderscheid tussen device-gemeten en split-afgeleid vermogen (Endurance & Erg-sprint)
+**Capability-ID:** CALC-END-REGISTRY-001
+**Current:** `CARDIO_TYPES` (RowErg/BikeErg/SkiErg) laat zowel een rechtstreeks device-ingevoerd `watt`-veld toe als een split-gebaseerde afleiding (CALC-END-002), zonder een vlag die vastlegt welke van de twee een specifieke opgeslagen waarde is.
+**Evidence:** CODE VERIFIED, zie het Endurance & Erg-sprintrapport in `docs/`.
+**Target:** expliciete provenance-vlag (`measured`/`derived`) toevoegen aan de opslag van erg-vermogenswaarden.
 **Priority:** P2. **Complexity:** S.
 
 ### GAP-P1-003 — AI-outputcontract ontbreekt

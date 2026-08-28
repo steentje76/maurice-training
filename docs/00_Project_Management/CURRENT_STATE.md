@@ -5,6 +5,11 @@
 ## Projectnaam
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en docs/Brand/BRAND_IDENTITY.md)
 
+## Huidige roadmappositie
+**F0 — Verified Baseline: CLOSED** (deze mastersprint-serie: documentatie-inventaris, capability registry, product architecture, benchmark registry, gap analysis, P0-security-closure — PR #64 en #65).
+**F1 — Foundation Closure: CURRENT** (nog niet gestart qua uitvoering; eerstvolgende concrete stappen zijn GYM-RLS-SCOPING-001, DOC-HANDBOOK-001, `bak_p_*`-cleanup — zie `docs/GAP_ANALYSIS_V2.md` en `docs/ROADMAP_INDEX.json`).
+Zie `docs/TRAININGSKOMPAS_MASTER_ROADMAP.md` voor de volledige fasering (F0-F15).
+
 ## Huidige versie
 v4.69.0
 

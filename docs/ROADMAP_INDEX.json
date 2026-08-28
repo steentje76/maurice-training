@@ -16,7 +16,7 @@
       "E17.1"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [],
     "target_maturity": "IMPLEMENTED",
     "objective": "Membership-scoped policies + DB regression proof; no real org data before pass.",
@@ -2788,13 +2788,13 @@
     "track": "Gym/Club/Team Platform",
     "phase": "F1",
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "VALIDATED",
     "target": "VALIDATED",
     "dependencies": [],
     "software_validation": "N/A",
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
-    "next_action": "zie MS-F1-01 (hernummerd van oude MS-F1-03)"
+    "next_action": "CLOSED via MS-F1-01 (migratie_v498.sql) -- membership-gescoopte policies live geverifieerd"
   },
   {
     "id": "PLAT-BACKUP-CLEANUP-001",
@@ -3073,5 +3073,19 @@
     "device_validation": "N/A",
     "evidence_status": "N/A",
     "next_action": "zie MS-F13-05"
+  },
+  {
+    "id": "SEC-USERROLE-001",
+    "type": "capability",
+    "track": "Platform/Production",
+    "phase": "F1",
+    "priority": "P0",
+    "status": "CLOSED",
+    "target": "CLOSED",
+    "dependencies": [],
+    "software_validation": "N/A",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "geen -- gesloten via MS-F1-01 (migratie_v497.sql), gevonden tijdens deze mastersprint, niet in de oorspronkelijke audit"
   }
 ]

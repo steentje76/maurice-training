@@ -1,6 +1,6 @@
 # GAP_ANALYSIS_V2.md — Trainingskompas (canonieke, actuele versie — vervangt de losse "v1" volledig)
 
-**Laatst herbouwd:** 28 augustus 2026, tegen `main` @ `201385d2d7c6dbc3c1dcd093411aed7619d429c1`.
+**Laatst herbouwd:** 28 augustus 2026, tegen `main` @ `0ac59fb62df961686152e6cfcb80ab532ee21a8d` (na de Multi-tenant RLS Security Closure-sprint).
 **Regel:** dit document toont de HUIDIGE openstaande gaps. Gesloten gaps staan uitsluitend in sectie "CLOSED GAPS / HISTORICAL" onderaan en tellen niet mee in de totalen. Er bestaat geen apart "v1"-bestand meer in de repo — deze V2 is de enige bron.
 
 ---
@@ -10,12 +10,12 @@
 | Prioriteit | Aantal |
 |---|---|
 | P0 | **0 open** |
-| P1 | 3 |
+| P1 | 2 |
 | P2 | 7 |
 | P3 | 3 |
 | P4 | 2 |
 
-Geen enkel P0 is momenteel open. De drie eerder gevonden P0's zijn gesloten via PR #64 — zie sectie "CLOSED GAPS / HISTORICAL".
+Geen enkel P0 is momenteel open. De drie eerder gevonden P0's zijn gesloten via PR #64. Een vierde, tijdens de Multi-tenant RLS Security Closure-sprint gevonden P0 (self-privilege-escalatie via `users`-kolommen) is gesloten via `migratie_v497.sql` — zie sectie "CLOSED GAPS / HISTORICAL" voor het volledige mastersprint-ID en bewijs. GAP-P1-004 (Gym-RLS-scoping) is gesloten via `migratie_v498.sql` (zelfde sprint) — eveneens verplaatst naar die sectie.
 
 ---
 
@@ -34,7 +34,7 @@ Geen enkel P0 is momenteel open. De drie eerder gevonden P0's zijn gesloten via 
 **Current:** DB-schema volledig aanwezig (`plans`, `features`, `credit_packs`, `plan_feature_quota`, `usage_log`); geen enkel scherm onder de 38 geïnventariseerde top-level schermen gebruikt dit schema.
 **Evidence:** CODE VERIFIED (index.html doorzocht op `plans`/`features`-referenties: 0 treffers client-side).
 **Target:** tier/waardepropositie + entitlement domain model (MS-F12-01) → entitlement enforcement (MS-F12-02) → plan-overzichtsscherm/Commercial UX (MS-F12-03) → billing/reconciliation (MS-F12-04).
-**Dependency:** GYM-RLS-SCOPING-001 (MS-F1-01).
+**Dependency:** GYM-RLS-SCOPING-001 — inmiddels VALIDATED (zie sectie "CLOSED GAPS / HISTORICAL"), geen resterende blocker.
 **Priority:** **P2** (gedowngraded van P1 — een bestaand DB-schema of benchmark-pariteit rechtvaardigt op zichzelf geen vroege bouw). **Complexity:** M. **Roadmap phase:** **F12** (verplaatst van F2).
 
 ### GAP-P1-003 — AI-outputcontract ontbreekt
@@ -44,14 +44,6 @@ Geen enkel P0 is momenteel open. De drie eerder gevonden P0's zijn gesloten via 
 **Target:** contracttest op het AI-responsschema (MS-F4-01).
 **Dependency:** EVID-SCI-001.
 **Priority:** P1. **Complexity:** M. **Roadmap phase:** F2.
-
-### GAP-P1-004 — Phase 3-RLS-scoping ontbreekt
-**Capability-ID:** GYM-RLS-SCOPING-001
-**Current:** `organizations`/`teams`/`training_groups`/`seasons`/`macrocycles`/`mesocycles`/`microcycles` leesbaar voor elke ingelogde gebruiker (`auth.role()='authenticated'`, geen ownership-scoping). 0 rijen op dit moment.
-**Evidence:** DB VERIFIED (policy-inhoud gelezen, 28 augustus).
-**Target:** membership-gebaseerde RLS-scoping naar analogie van `coach_athlete_relationships`, vóór de eerste echte coach/organisatie-data (MS-F1-01, hernummerd van MS-F1-03 per Roadmap 2.0 v1.1).
-**Dependency:** blokkeert Track 15 (Gym/Club/Team) volledig — harde afhankelijkheid, bevestigd in Master Roadmap 2.0 v1.1.
-**Priority:** P1. **Complexity:** M. **Roadmap phase:** F1 (moet vóór F11 starten).
 
 ### GAP-P1-005 — AI-adaptive-programmering-gat t.o.v. Hevy Trainer
 **Capability-ID:** AI-PROGRAM-AUTOGEN-001
@@ -122,6 +114,23 @@ Vereist eerst een consent-flow (nog niet gebouwd) bovenop de al aanwezige Eviden
 ---
 
 ## CLOSED GAPS / HISTORICAL
+
+### GAP-P1-004 (voorheen) — Multi-tenant RLS-scoping ontbreekt — **STATUS: CLOSED (MS-F1-01)**
+- **Original finding:** `organizations`/`teams`/`training_groups`/`seasons`/`macrocycles`/`mesocycles`/`microcycles` leesbaar voor elke ingelogde gebruiker (`auth.role()='authenticated'`, geen ownership-scoping). 0 rijen op dat moment.
+- **Resolution:** `migratie_v498.sql` — 7 brede policies vervangen door membership-gescoopte policies (met owner-bootstrap-uitzondering).
+- **Mastersprint:** MS-F1-01.
+- **Evidence:** live SQL-transactietest met 2 volledig gescheiden tenants — lid van tenant A ziet tenant A (ALLOW), ziet tenant B niet (DENY), onbetrokken gebruiker ziet geen van beide (DENY), owner zonder eigen membership-rij ziet zijn eigen organisatie (ALLOW). Regressietest: `core/fGymRlsMultiTenant.test.js`.
+- **Closed date:** 28 augustus 2026.
+- **Current status:** CLOSED — GYM-RLS-SCOPING-001 nu VALIDATED.
+
+### GAP-P0-004 (nieuw gevonden tijdens MS-F1-01) — Self-privilege-escalatie via `users`-tabel — **STATUS: CLOSED**
+- **Original finding:** policy `users_update_own` (`USING id=auth.uid()`) had geen kolomrestrictie, en `authenticated` had UPDATE-GRANT op `gym_role`/`gym_id`/`system_role`. Een gewone gebruiker kon zichzelf via een directe PostgREST-PATCH naar `gym_role='owner'` én `system_role='developer'` promoveren, volledig buiten de hiërarchie-checks van `gym-team.js` om.
+- **Resolution:** `migratie_v497.sql` — `BEFORE UPDATE`-trigger die deze drie kolommen terugzet naar hun oude waarde tenzij de aanroep van `service_role` komt.
+- **Mastersprint:** MS-F1-01 (niet in de oorspronkelijke audit gevonden — ontdekt tijdens de threat-model-tests van deze sprint).
+- **Evidence:** live SQL-transactietest — self-update van de drie kolommen wordt geblokkeerd (waarden blijven ongewijzigd); service-role-update (simuleert `gym-team.js`) slaagt zoals bedoeld. Regressietest: `core/fGymRlsMultiTenant.test.js`.
+- **Closed date:** 28 augustus 2026.
+- **Current status:** CLOSED — nieuwe capability SEC-USERROLE-001, CLOSED.
+
 
 Deze gaps zijn gesloten. Ze tellen niet mee in de totalen hierboven. Bewaard voor auditeerbaarheid.
 

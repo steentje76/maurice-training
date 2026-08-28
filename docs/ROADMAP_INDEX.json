@@ -2894,13 +2894,13 @@
     "track": "Platform/Production",
     "phase": "F2",
     "priority": "P2",
-    "status": "TESTED",
+    "status": "INTEGRATED",
     "target": "CLOSED",
     "dependencies": [],
     "software_validation": "PASS",
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
-    "next_action": "MS-F2-01 PARTIAL: execution-identity-lek en bevroren timer gefixed (activeInstanceId, startTrainTimer). Volledige architecturale convergentie van Programma-blok/Repeat-Workout naar de Preview-adapter blijft open, zie docs/MS-F2-01_CANONICAL_TRAINING_START.md."
+    "next_action": "GAP-P1-006 CLOSED via MS-F2-08: canonieke training_instances-creatie toegevoegd voor Programma-blok en Repeat Workout. 8/8 entrypoints canonieke instance-tracking; 6/8 delen bovendien identieke Preview-UI, 2/8 bewust gedifferentieerde pre-executieflow. Zie docs/MS-F2-08_GAP_P1_006_CLOSURE.md. Resterend: live/productie-validatie (P2, GAP-P2-008 discoverability)."
   },
   {
     "id": "SCI-CONSENT-001",

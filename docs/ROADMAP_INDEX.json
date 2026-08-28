@@ -345,7 +345,7 @@
       "Athlete UX"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [],
     "target_maturity": "IMPLEMENTED",
     "objective": "Conversational but structured intake; goal/context captured deterministically.",

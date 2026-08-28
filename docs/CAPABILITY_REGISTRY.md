@@ -24,6 +24,7 @@
 | SOC-GYMTEAM-001 | Gym-team-beheer (RBAC: lid/coach/manager/owner) | `gym-team.js`, `gym-team-set-pin.js` | `users.gym_role/gym_role_level`, `gym_audit_log` | `fGymTeamSecurity.test.js` 17/17 — incl. de gefixte owner-demotie-bug | Gemockt | N/A | N/A | **TESTED** | VALIDATED | live-verificatie in productie | P3 | F1 |
 | GYM-RLS-SCOPING-001 | Multi-tenant RLS-scoping (organizations/teams/training_groups/seasons/macrocycles/mesocycles/microcycles) | `migratie_v498.sql` | DB VERIFIED: membership-gescoopte policies live geverifieerd (2 tenants, cross-tenant DENY, owner-bootstrap ALLOW) | `fGymRlsMultiTenant.test.js` 22/22 (statische contractcheck) | N/A | OPEN (geen live PostgREST-JWT-test, wel live SQL-transactiebewijs) | N/A | **VALIDATED** | VALIDATED | live PostgREST-end-to-end-test met echte JWT's (optioneel, SQL-niveau al bewezen) | **P1** | F1 (MS-F1-01, CLOSED) |
 | SEC-USERROLE-001 | Bescherming tegen self-service privilege-escalatie op `users.gym_role`/`gym_id`/`system_role` | `migratie_v497.sql` (BEFORE UPDATE-trigger) | DB VERIFIED: self-update van deze 3 kolommen wordt teruggezet, service_role-update (gym-team.js) blijft werken | `fGymRlsMultiTenant.test.js` (onderdeel van dezelfde 22/22) | N/A | N/A | N/A | **CLOSED** | CLOSED | geen | **P0 (gevonden tijdens MS-F1-01, niet in de oorspronkelijke audit)** | F1 (MS-F1-01, CLOSED) |
+| SEC-CONFIG-001 | Secrets- en configuratiehygiëne (client/server-classificatie, redactie, fail-closed-gedrag) | 9 Netlify Functions gecontroleerd op fail-closed-gedrag, `.gitignore` voor keystore/`.env` bevestigd | DB VERIFIED: `config.anthropic_key`/`config.pin_hash` aanwezig maar orphaned (0 code-referenties) | `observability.test.js` sectie K (6 nieuwe assertions, config-redactie) | N/A | N/A | Gerichte git-geschiedenisscan: geen rotation-required items gevonden | **VALIDATED** | VALIDATED | F-01/F-02 (orphaned DB-kolommen) vereisen `MANUAL_USER_VALIDATION_REQUIRED` vóór verwijdering; F-03 (client-lock-hardening) is `PRODUCT_DECISION_REQUIRED` | P1 | F1 (MS-F1-03, CLOSED) |
 | COACH-RELATIONSHIP-001 | Coach-athlete-relaties | `coach_athlete_relationships` | DB VERIFIED — correcte consent-flow (pending→active, wederzijdse revocatie) | Geen dedicated test gevonden | N/A | N/A | N/A | IMPLEMENTED | TESTED | testdekking | P3 | F10 |
 
 ## C. AI Coach (security vs. governance expliciet gescheiden)
@@ -77,17 +78,19 @@
 
 ## Samenvatting per maturity-status
 
-**Canonieke capability count: 26** (was 25 vóór MS-F1-01 — SEC-USERROLE-001 toegevoegd als nieuwe, tijdens deze mastersprint gevonden en gesloten capability. Zie `docs/ROADMAP_COVERAGE_AUDIT.md` voor de formele definitie en reconciliatie met `docs/ROADMAP_INDEX.json`).
+**Canonieke capability count: 27** (was 26 vóór MS-F1-03 — SEC-CONFIG-001 toegevoegd. De vorige "TESTED"-telling was bovendien nog niet bijgewerkt met de MS-F1-02-closure van PLAT-OBSERVABILITY-001, hier gecorrigeerd).
 
 | Status | Aantal | IDs |
 |---|---|---|
 | CLOSED | 5 | SEC-GYMS-001, SEC-TEST-001, SEC-GATE-001, AI-COACH-001, SEC-USERROLE-001 |
-| TESTED | 8 | PLAT-DELETE-001, SOC-GYMTEAM-001, EVID-SCI-001, DEC-CORE-001, DEV-WEARAUTH-001, DEV-CONCEPT2-001, END-HYROX-001, DEV-VALIDATION-001 |
-| NOT STARTED | 6 | PLAT-BACKUP-CLEANUP-001, PLAT-OBSERVABILITY-001, AI-OUTPUT-CONTRACT-001, WOMENS-PERF-DECISIONS-001, COMM-UI-001, SCI-CONSENT-001 |
+| TESTED | 9 | PLAT-DELETE-001, SOC-GYMTEAM-001, EVID-SCI-001, DEC-CORE-001, DEV-WEARAUTH-001, DEV-CONCEPT2-001, END-HYROX-001, DEV-VALIDATION-001, PLAT-OBSERVABILITY-001 |
+| NOT STARTED | 5 | PLAT-BACKUP-CLEANUP-001, AI-OUTPUT-CONTRACT-001, WOMENS-PERF-DECISIONS-001, COMM-UI-001, SCI-CONSENT-001 |
 | IMPLEMENTED | 3 | COACH-RELATIONSHIP-001, AI-PROGRAM-AUTOGEN-001, CAP-REGISTRY-SCREENS-001 |
 | INTEGRATED | 3 | DEV-WEARSYNC-001, END-INTERVAL-001, CTX-CYCLE-001 |
-| VALIDATED | 1 | GYM-RLS-SCOPING-001 |
-| **Totaal** | **26** | 5+8+6+3+3+1 = 26 ✓ |
+| VALIDATED | 2 | GYM-RLS-SCOPING-001, SEC-CONFIG-001 |
+| **Totaal** | **27** | 5+9+5+3+3+2 = 27 ✓ |
+
+**Wijziging deze sprint (MS-F1-03):** nieuwe capability SEC-CONFIG-001 toegevoegd als VALIDATED (secret-inventory, client/server-classificatie, redactie-uitbreiding met de generieke term "key", live geverifieerd tegen de `config`-tabel). Twee orphaned DB-kolommen gevonden (`config.anthropic_key`, `config.pin_hash`) — niet verwijderd, `MANUAL_USER_VALIDATION_REQUIRED` (zie `docs/CONFIGURATION_SECURITY_CONTRACT.md`).
 
 **Wijziging deze sprint (MS-F1-01):** GYM-RLS-SCOPING-001 van NOT STARTED → VALIDATED; nieuwe capability SEC-USERROLE-001 toegevoegd als CLOSED (privilege-escalatie-fix, gevonden tijdens deze sprint, niet in de oorspronkelijke audit).
 

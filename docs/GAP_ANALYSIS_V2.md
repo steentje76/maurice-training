@@ -78,10 +78,13 @@ Geen enkel P0 is momenteel open. De drie eerder gevonden P0's zijn gesloten via 
 **Target:** resterende functies/flows instrumenteren met het bestaande contract; retentiebeleid formaliseren.
 **Priority:** P2. **Complexity:** M. **Roadmap phase:** F1/F13.
 
-### GAP-P2-004 — `config.anthropic_key`-encryptie niet geverifieerd
-**Capability-ID:** geen aparte roadmap-ID (gerelateerde nazorg op de reeds gesloten gyms-RLS-fix, zie sectie "CLOSED GAPS / HISTORICAL" onderaan — dit item zelf is een apart, nog open P2-punt)
-**Current:** RLS blokkeert client-toegang correct; of de waarde zelf versleuteld is opgeslagen is bewust niet gecontroleerd (inhoud van secrets nooit opgevraagd).
-**Priority:** P2. **Complexity:** S. **Roadmap phase:** F1.
+### GAP-P2-004 (uitgebreid via de Secrets & Configuration Hygiene-sprint) — Orphaned secret-achtige DB-kolommen + client-side lock-hardening
+**Capability-ID:** SEC-CONFIG-001
+**Current:** `config.anthropic_key` en `config.pin_hash` bevatten beide een waarde maar hebben 0 code-referenties (repo-breed geverifieerd) — vermoedelijk historische duplicaten van vóór de server-side proxy-architectuur. RLS blokkeert client-toegang correct (alleen `service_role`); risico is onnodige attack surface, niet actieve exposure. Daarnaast: de client-side app-lock (`PIN_HASH` in index.html) is een ongesalte, hardcoded SHA-256-hash zichtbaar in verzonden JS — geen echte autorisatiegrens (die loopt via Supabase Auth + RLS), wel een low-severity design-punt.
+**Evidence:** DB VERIFIED (aanwezigheid, nooit waarden) + CODE VERIFIED (0 referenties). Zie `docs/CONFIGURATION_SECURITY_CONTRACT.md` F-01/F-02/F-03.
+**Target:** F-01/F-02 — bevestig met Product Owner dat niets buiten deze repo deze kolommen leest, verwijder daarna in een aparte, expliciet goedgekeurde migratie. F-03 — productbeslissing of een sterkere client-lock gewenst is.
+**Blocker classificatie:** F-01/F-02 = `MANUAL_USER_VALIDATION_REQUIRED`. F-03 = `PRODUCT_DECISION_REQUIRED`. Geen van beide blokkeert de closure van de Secrets & Configuration Hygiene-sprint zelf (geen actieve exposure).
+**Priority:** P2 (F-01/F-02), P3 (F-03). **Complexity:** S. **Roadmap phase:** F1.
 
 ### GAP-P2-005 — Verouderde point-in-time-documenten
 **Current:** `docs/DATABASE_STATUS.md` (19 aug, claimt 10 migraties; live schema loopt tot v4.95.0), `docs/PLAY_STORE_READINESS.md`/`RELEASE_READINESS.md` (19 aug, v4.48.0).

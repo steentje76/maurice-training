@@ -80,7 +80,7 @@
       "E17.1"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [],
     "target_maturity": "IMPLEMENTED",
     "objective": "Verify storage/rotation boundaries; no secret values exposed during audit.",
@@ -3087,5 +3087,19 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "geen -- gesloten via MS-F1-01 (migratie_v497.sql), gevonden tijdens deze mastersprint, niet in de oorspronkelijke audit"
+  },
+  {
+    "id": "SEC-CONFIG-001",
+    "type": "capability",
+    "track": "Platform/Production",
+    "phase": "F1",
+    "priority": "P1",
+    "status": "VALIDATED",
+    "target": "VALIDATED",
+    "dependencies": [],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F1-03 (CLOSED). Resterend: F-01/F-02 (orphaned DB-kolommen config.anthropic_key/config.pin_hash) vereisen MANUAL_USER_VALIDATION_REQUIRED; F-03 (client-lock-hardening) is PRODUCT_DECISION_REQUIRED."
   }
 ]

@@ -609,6 +609,28 @@ ok(/tkErgDisconnectAll\(\)/.test(finishFnSrc), 'X5 (Prioriteit 10): finishSessio
 const decisionSrcX = fs.readFileSync(path.join(__dirname, 'decision.js'), 'utf8');
 ok(!decisionSrcX.includes('tkErgDisconnectAll'), 'X6 (protected core): core/decision.js bevat geen enkele referentie aan de nieuwe device-cleanup-functie');
 
+/* ── Y. NEXT MASTERSPRINT #1 — AMRAP SET-TYPE (v4.68.0) ── */
+console.log('\nY. AMRAP-set-ondersteuning -- puur UI+data, geen nieuwe berekening, AMRAP uitgesloten van e1RM/PR-selectie');
+const buildRowSrc = html.slice(html.indexOf('function buildStrengthSessionRow('), html.indexOf('function buildStrengthSessionRow(') + 1600);
+ok(/const nietAmrap=ws\.filter\(s=>!s\.isAmrap\)/.test(buildRowSrc), 'Y1 (kernprincipe, bewezen risico uit ADVANCED_SET_TYPES_ARCHITECTUUR.md): AMRAP-sets worden expliciet uitgesloten vóórdat de representatieve "beste set" (die e1RM/PR/trend voedt) wordt gekozen');
+ok(/const kandidaten=nietAmrap\.length\?nietAmrap:ws/.test(buildRowSrc), 'Y2: veilige fallback wanneer ALLE sets AMRAP zijn -- geen lege/null rij-samenvatting');
+ok(/if\(s\.isAmrap\)d\.isAmrap=true/.test(buildRowSrc), 'Y3: isAmrap wordt additief in sets_detail vastgelegd -- uitsluitend aanwezig wanneer werkelijk gezet, geen bestaande lezer van sets_detail geraakt');
+ok(!/ALTER TABLE|CREATE TABLE/i.test(buildRowSrc), 'Y4: geen enkele databasewijziging nodig -- sets_detail is jsonb, isAmrap reist mee zonder migratie');
+
+const toggleAmrapSrc = html.slice(html.indexOf('function toggleAmrapSet('), html.indexOf('function toggleAmrapSet(') + 700);
+ok(/s\.isAmrap=!s\.isAmrap/.test(toggleAmrapSrc), 'Y5: toggleAmrapSet() wijzigt uitsluitend de isAmrap-vlag op het bestaande sessionLog-set-object -- geen nieuwe state-structuur');
+ok(!/sessionLog\[exId\]\.sets=\[\]/.test(toggleAmrapSrc) || /if\(!sessionLog\[exId\]\.sets\)sessionLog\[exId\]\.sets=\[\]/.test(toggleAmrapSrc), 'Y6: initialiseert sessionLog defensief zonder een bestaande, al gevulde sets-array te overschrijven');
+
+const workRowSrc = html.slice(html.indexOf('function buildWorkSetRow('), html.indexOf('function buildWorkSetRow(') + 2200);
+ok(/toggleAmrapSet\('\$\{exId\}',\$\{i\}\)/.test(workRowSrc), 'Y7: de AMRAP-knop roept toggleAmrapSet() aan per exacte set-index, geen gedeelde/globale state');
+ok(/aria-pressed="\$\{isAmrap\}"/.test(workRowSrc), 'Y8 (accessibility): de AMRAP-knop heeft een correct aria-pressed-attribuut voor screenreaders');
+ok(/isAmrap\?'AMRAP':'reps'/.test(workRowSrc), 'Y9 (accessibility, kernprincipe): AMRAP-status wordt via TEKST getoond (repseenheid wisselt naar "AMRAP"), nooit uitsluitend via kleur/knopstatus');
+
+const decisionSrcY = fs.readFileSync(path.join(__dirname, 'decision.js'), 'utf8');
+const calcSrcY = fs.readFileSync(path.join(__dirname, 'calculation.js'), 'utf8');
+ok(!decisionSrcY.includes('isAmrap') && !decisionSrcY.includes('toggleAmrapSet'), 'Y10 (protected core): core/decision.js bevat geen enkele referentie aan AMRAP -- geen nieuwe Decision Rule');
+ok(!calcSrcY.includes('isAmrap') && !calcSrcY.includes('toggleAmrapSet'), 'Y11 (protected core): core/calculation.js bevat geen enkele referentie aan AMRAP -- geen nieuwe berekening, geen 1RM-formulewijziging');
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { console.log('❌ Hardening niet groen.'); process.exit(1); }

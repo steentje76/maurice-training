@@ -1,5 +1,50 @@
 # Trainingskompas — Changelog
 
+## v4.68.0 — Post-A1-A5-audit #1: AMRAP-set-ondersteuning (27 augustus 2026)
+
+MASTERSPRINT: volledige post-A1–A5/G2 roadmap-gap-audit uitgevoerd. G2
+Performance Forecasting formeel geclassificeerd als **DEFERRED BY EVIDENCE
+GATE** (geen forecastmodel gebouwd — descriptive trend bestaat al via
+`trendBy()`, milestone/time-to-target-predictie en race-predictie-
+infrastructuur ontbreken bewijsbaar). Sporterreis-audit uitgevoerd: het
+post-workout-scherm bleek al zeer volwassen (deterministische
+kernconclusie, per-oefening vervolgadvies, vergelijking met vorige sessie,
+fail-safe foutafhandeling) — COMPLETE, geen actie nodig.
+
+**Geselecteerde #1-gap**: AMRAP-set-ondersteuning. Al in de A1 Final Gap
+Closure (v4.61.0) vastgelegde architectuurnotitie
+(`ADVANCED_SET_TYPES_ARCHITECTUUR.md`) markeerde dit expliciet als de
+"laagste drempel"-kandidaat van de vier onderzochte advanced-set-types —
+maar noch A2 noch A3 heeft dit gebouwd, ondanks drie sprints gelegenheid.
+Directe relevantie: AMRAP is een kernonderdeel van CrossFit/HYROX-
+programmering (Maurice's eigen gymcontext, en de al bestaande diepe
+HYROX/Triathlon-ondersteuning in de app).
+
+**Gebouwd**: een AMRAP-toggle-knop per werkset (hergebruikt de bestaande
+`rower-chip`-CSS-klasse, geen nieuwe stijl). Bij activering wisselt het
+repseenheid-label naar "AMRAP" (tekst, niet uitsluitend kleur —
+accessibility). De vlag (`isAmrap`) wordt bij het afronden van de training
+additief meegeschreven in `sessions.sets_detail` (jsonb — **geen enkele
+databasemigratie nodig**).
+
+**Kernprincipe, exact conform de eerder gedocumenteerde waarschuwing**:
+AMRAP-sets worden expliciet uitgesloten van de "beste set"-selectie die de
+rij-niveau `weight`/`reps`-kolommen vult — en daarmee ook van elke
+e1RM/PR/trend-berekening die op die kolommen leunt (`computeExerciseTrends()`,
+de PR-tijdlijn, enz.). Bewezen met een functionele test: een AMRAP-set van
+100kg wordt terecht NIET als representatieve set gekozen wanneer een
+niet-AMRAP-set van 85kg beschikbaar is. Veilige fallback wanneer een
+oefening uitsluitend AMRAP-sets bevat.
+
+Geen databasewijziging. Geen wijziging aan protected core — expliciet
+geverifieerd dat `core/decision.js` en `core/calculation.js` geen enkele
+referentie naar AMRAP bevatten (geen nieuwe Decision Rule, geen nieuwe
+1RM-formule).
+
+Protected core (`calculation.js`/`decision.js`/`relationship.js`/`athlete.js`/
+`coaching.js`/`progression.js`) en de device-specifieke kernbestanden
+(`concept2Live.js`/`deviceIntegration.js`): SHA256-bevestigd byte-identiek.
+
 ## v4.67.0 — A5-vervolg: functioneel bewezen state preservation + device-cleanup bij einde training (27 augustus 2026)
 
 Vervolg op v4.66.0, binnen dezelfde MASTERSPRINT A5. Op expliciet verzoek

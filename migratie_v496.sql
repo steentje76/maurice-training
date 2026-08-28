@@ -1,0 +1,34 @@
+-- migratie_v496.sql
+-- P0-001 SECURITY FIX — verwijder publieke leestoegang tot public.gyms
+--
+-- BEVINDING (mastersprint-audit, SHA 9ee6198, v4.69.0):
+-- policy "gyms_read" (USING (true), rol public) liet de anon-rol
+-- (de rol van de publieke Supabase anon-key, die per ontwerp
+-- client-side in de PWA staat) ALLE kolommen van gyms lezen,
+-- inclusief owner_email, coach_pin_hash en mollie_customer_id.
+--
+-- CODEBEWIJS (niet aangenomen, geverifieerd):
+-- - index.html bevat GEEN enkele query naar de gyms-tabel (client-side).
+-- - netlify/functions/gym-team.js en gym-team-set-pin.js zijn de ENIGE
+--   plekken die coach_pin_hash lezen/schrijven, en doen dat uitsluitend
+--   met SUPABASE_SERVICE_ROLE_KEY (bypasst RLS sowieso).
+-- - Geen van de branding-velden (logo_url, primary_color, accent_color,
+--   font, app_name) wordt momenteel ergens in de codebase gebruikt.
+-- => Er is op dit moment GEEN bewezen legitieme reden voor publieke
+--    of zelfs authenticated client-leestoegang tot deze tabel.
+--
+-- FIX: verwijder de permissieve policy. Zonder vervangende policy geldt
+-- (net als bij o.a. public.config, public.plans, public.credit_packs)
+-- deny-all voor anon EN authenticated; alleen service_role (bypasst RLS)
+-- houdt toegang. Dit raakt geen enkele bestaande, werkende flow, omdat
+-- geen enkele bestaande flow via anon/authenticated van deze tabel leest.
+--
+-- TOEKOMST: als in een latere, expliciete sprint publieke pre-login
+-- branding (naam/logo/kleur) nodig blijkt, hoort dat via een aparte,
+-- bewust beperkte view (bijv. gyms_public met uitsluitend die kolommen)
+-- — nooit door deze bredere policy terug te zetten.
+--
+-- ROLLBACK (afgeraden — herstelt het lek):
+--   CREATE POLICY gyms_read ON public.gyms FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS gyms_read ON public.gyms;

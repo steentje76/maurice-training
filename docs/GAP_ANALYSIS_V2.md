@@ -10,8 +10,8 @@
 | Prioriteit | Aantal |
 |---|---|
 | P0 | **0 open** |
-| P1 | 2 |
-| P2 | 10 |
+| P1 | 3 |
+| P2 | 12 |
 | P3 | 4 |
 | P4 | 2 |
 
@@ -57,6 +57,20 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Target:** de resterende 13 bestanden toevoegen aan `STATIC_ASSETS`, met een `CACHE_STATIC`-bump.
 **Priority:** P2. **Complexity:** S (mechanische toevoeging, wel een volledige regressietest + versiebump per keer).
 
+### GAP-P2-011 — Geen dedicated `core/`-unit-test voor de HRV-baseline-functiegroep (Recovery-sprint)
+**Capability-ID:** CALC-REC-REGISTRY-001
+**Current:** `lnRmssd`/`hrvBaseline`/`hrvRollingRecent`/`hrvStPersonal` leven in `index.html`, niet in een pure-core-extractie zoals `calculation.js`. `core/fRecoveryRegistry.test.js` (deze sprint) test ze via bracket-matching-extractie, maar een echte, aparte core-module (bv. `core/recovery.js`) zou robuuster en beter herbruikbaar zijn.
+**Evidence:** CODE VERIFIED, zie het Recovery-sprintrapport in `docs/`.
+**Target:** de HRV-baseline-functiegroep extraheren naar een pure `core/recovery.js`-module, analoog aan `core/trainingLoad.js`/`core/progression.js`.
+**Priority:** P2. **Complexity:** M.
+
+### GAP-P2-012 — RHR-delta-minimum (2 metingen) inconsistent met HRV's striktere datakwaliteitsgates (Recovery-sprint)
+**Capability-ID:** CALC-REC-REGISTRY-001
+**Current:** `rhrBaselineDelta` vereist slechts 2 eerdere metingen, terwijl `hrvBaseline` 14 dagen én 4 metingen vereist vóór een claim. Beide zijn Recovery-signalen met vergelijkbare datakwaliteitsrisico's, maar met sterk verschillende drempels.
+**Evidence:** CODE VERIFIED, zie het Recovery-sprintrapport in `docs/`.
+**Target:** heroverwegen of RHR-delta een strengere minimumdrempel verdient, consistent met de HRV-aanpak.
+**Priority:** P2. **Complexity:** S.
+
 ### GAP-P1-003 — AI-outputcontract ontbreekt
 **Capability-ID:** AI-OUTPUT-CONTRACT-001 (**expliciet onderscheiden van de reeds gesloten security-capability voor dezelfde proxy**, zie sectie "CLOSED GAPS / HISTORICAL" en Capability Registry — dit is een governance-gat, geen security-gat)
 **Current:** `coach.js`/`buildCtx()` zijn security-getest (JWT, open-proxy-regressie — zie de historische P0-002-sluiting hierboven) maar er is geen technische controle die een AI-antwoord blokkeert als het een niet-onderbouwd cijfer noemt of diagnose-achtige taal gebruikt.
@@ -72,6 +86,14 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Target:** bestaande week-generatie doorontwikkelen, met TK's evidence-laag als differentiator t.o.v. Hevy's black-box-aanpak.
 **Dependency:** EVID-SCI-001, DEC-CORE-001.
 **Priority:** P1. **Complexity:** L. **Roadmap phase:** F4.
+
+### GAP-P1-007 — `hrv_log` heeft geen provenance-kolom (Recovery-sprint)
+**Capability-ID:** CALC-REC-REGISTRY-001
+**Current:** `hrv_log` bevat `sleep`/`hrv`/`rhr`, maar geen kolom die vastlegt of een waarde afkomstig is van een handmatige check-in of wearable-sync. Beide schrijven naar dezelfde kolommen zonder onderscheid — live geverifieerd tegen het Supabase-schema.
+**Evidence:** DB VERIFIED (`information_schema.columns` voor `hrv_log`), zie het Recovery-sprintrapport in `docs/`.
+**Target:** nieuwe, nullable `source`-kolom (`manual`/`wearable`/`unknown` voor bestaande rijen); alle schrijfpaden (`saveHRV`, wearable-sync-functies) bijwerken om dit veld te vullen.
+**Dependency:** geen harde technische afhankelijkheid; wel een DB-migratie + meerdere schrijfpad-aanpassingen — grotere, zorgvuldiger te plannen ingreep dan binnen een audit-sprint.
+**Priority:** P1 (raakt de betrouwbaarheid van de hele Recovery-keten, niet slechts cosmetisch). **Complexity:** M. **Roadmap phase:** F3 (vervolgwerk).
 
 
 

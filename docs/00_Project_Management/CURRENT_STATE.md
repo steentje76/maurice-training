@@ -18,7 +18,7 @@ v4.69.5
 - **F0 — Verified Baseline: CLOSED**
 - **F1 — Foundation Closure: CLOSED** (Gate A semantische-integriteitsaudit geslaagd — 18/18 consistentiechecks, release gate groen, geen open P0/P1)
 - **F2 — Athlete Core Excellence: CLOSED.** MS-F2-01 (Canonical Training Start & Preview) is herclassificeerd van PARTIAL naar **CLOSED** nadat GAP-P1-006 tijdens MS-F2-08 is gesloten: Programma-blok en Repeat Workout krijgen nu beide een canonieke `training_instances`-rij. Preview-UI blijft bewust gedifferentieerd voor deze twee bronnen — een gedocumenteerde productgrens, geen open architectuurgat. MS-F2-02 t/m MS-F2-07 blijven CLOSED. Final Contract Reconciliation bevestigde: geen resterende architectuurgap, gepreciseerde acceptance-wording vastgelegd. Zie `docs/MS-F2-01..08_*.md`.
-- **F3 — Calculation/Context/Evidence Excellence: CURRENT.** MS-F3-01 en MS-F3-02 (Load & Progression Calculation Registry): **CLOSED**. MS-F3-02 vond en vulde een echte, roadmap-expliciete lacune (sRPE bestond nergens) en herbeoordeelde de ACWR-evidence-classificatie van B naar C na het opnieuw opzoeken van methodologische kritiek (mathematical coupling). Resterende F3-mastersprints (MS-F3-03 t/m 11) nog niet uitgevoerd. Zie `docs/CALCULATION_REGISTRY.md`.
+- **F3 — Calculation/Context/Evidence Excellence: CURRENT.** MS-F3-01 t/m MS-F3-03 (Recovery Calculation Registry): **CLOSED**. MS-F3-03 bevestigde een uitzonderlijk goed onderbouwde bestaande HRV-baseline-implementatie (Plews et al.-methodologie), classificeerde composietscores bewust conservatief (nooit hoger dan hun zwakste, niet-gevalideerde schakel), en vond een reële gap: geen sleep/HRV-provenance in `hrv_log` (GAP-P1-007). Resterende F3-mastersprints (MS-F3-04 t/m 11) nog niet uitgevoerd. Zie `docs/CALCULATION_REGISTRY.md`.
 - **Master Roadmap 2.0 v1.1 = CANONICAL** productstrategische bron. Repository blijft technische autoriteit. Zie `docs/DOCUMENTATION_GOVERNANCE.md`.
 - Volledige fasering (F0-F15): zie `docs/TRAININGSKOMPAS_MASTER_ROADMAP.md`. Volledige mastersprint-ID-migratie: zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md`.
 
@@ -28,7 +28,7 @@ Training Core, Calculation Engine, Context Engine, Decision Engine, Evidence Arc
 ## 4. Current open priorities
 Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
 - **Open P0: 0**
-- **Open P1: 2** — AI-outputcontract ontbreekt (AI-OUTPUT-CONTRACT-001, MS-F4-01), AI-adaptive-programmering-gat t.o.v. Hevy Trainer (AI-PROGRAM-AUTOGEN-001, MS-F4-04). GAP-P1-006 (Programma-blok/Repeat Workout-convergentie) is gesloten tijdens MS-F2-08 — zie sectie "CLOSED GAPS / HISTORICAL" in `docs/GAP_ANALYSIS_V2.md`.
+- **Open P1: 3** — AI-outputcontract ontbreekt (AI-OUTPUT-CONTRACT-001, MS-F4-01), AI-adaptive-programmering-gat t.o.v. Hevy Trainer (AI-PROGRAM-AUTOGEN-001, MS-F4-04), geen sleep/HRV-provenance in `hrv_log` (GAP-P1-007, CALC-REC-REGISTRY-001, F3-vervolgwerk — raakt de betrouwbaarheid van de hele Recovery-keten).
 - **MS-F1-01 (Multi-tenant RLS Security Closure) is CLOSED** — membership-scoped RLS op organizations/teams/training_groups/seasons/macrocycles/mesocycles/microcycles (`migratie_v498.sql`), plus een tijdens de sprint gevonden en gesloten P0 (self-privilege-escalatie via `users.gym_role`/`gym_id`/`system_role`, `migratie_v497.sql`)
 - Open P2: 7 — incl. Handbook-drift en Commercial-UI, beide gedowngraded van P1 per Roadmap 2.0 v1.1
 - Open P3/P4: zie `docs/GAP_ANALYSIS_V2.md` voor de volledige lijst
@@ -36,7 +36,7 @@ Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
 ## 5. Current validation status
 - **Code:** CODE VERIFIED tegen `main` @ bovenstaande SHA
 - **DB:** VERIFIED — 69 tabellen, RLS gecontroleerd op alle tabellen, `gyms`-lek gesloten en geverifieerd via `SET LOCAL ROLE anon/authenticated/service_role`
-- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 91 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 94 stappen totaal), 93 automatisch uitgevoerd, 1 zichtbaar geskipt (`fAndroidRelease.test.js`, ontbrekende Android-buildmap in deze schone checkout), 0 gefaald
+- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 92 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 95 stappen totaal), 94 automatisch uitgevoerd, 1 zichtbaar geskipt (`fAndroidRelease.test.js`, ontbrekende Android-buildmap in deze schone checkout), 0 gefaald
 - **Integration:** wearable-sync getest tegen de echte handler-functie; overige integraties overwegend unit-getest
 - **Device:** **OPEN** — Concept2 PM5 en Google Health-sync hebben geen bevestigde real-device-validatie in productie
 - **UX:** niet apart beoordeeld in de laatste consolidatiesprint (38 top-level schermen geïnventariseerd, geen flow-niveau UX-testdekking)

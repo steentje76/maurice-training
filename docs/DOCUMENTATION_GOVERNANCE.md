@@ -1,6 +1,15 @@
 # DOCUMENTATION_GOVERNANCE.md
 
-> **Kernregel, zonder uitzondering: een historische sectie in een source-of-truth-document mag nooit de actuele status overschrijven.** Elk document dat zowel actuele als historische informatie bevat, moet een expliciete "CURRENT STATUS"-kop bovenaan hebben; alles daaronder dat over het verleden gaat, staat gelabeld als "HISTORICAL RECORD" en bevat nooit een aanbeveling die nog als open actie gelezen kan worden — historische aanbevelingen zijn expliciet gemarkeerd als "HISTORICAL RECOMMENDATION — IMPLEMENTED via ...". Dit is toegepast op `SECURITY_FINDINGS.md`, `TEST_VERIFICATION.md` en `GAP_ANALYSIS_V2.md` in deze sprint.
+> **Kernregel, zonder uitzondering: een historische sectie in een source-of-truth-document mag nooit de actuele status overschrijven.** Elk document dat zowel actuele als historische informatie bevat, moet een expliciete "CURRENT STATUS"-kop bovenaan hebben; alles daaronder dat over het verleden gaat, staat gelabeld als "HISTORICAL RECORD" en bevat nooit een aanbeveling die nog als open actie gelezen kan worden — historische aanbevelingen zijn expliciet gemarkeerd als "HISTORICAL RECOMMENDATION — IMPLEMENTED via ...". Dit is toegepast op `SECURITY_FINDINGS.md`, `TEST_VERIFICATION.md` en `GAP_ANALYSIS_V2.md`.
+
+## Autoriteitsmodel: productstrategie vs. technische werkelijkheid (vastgesteld met Roadmap 2.0 v1.1)
+
+| Laag | Bron | Leidend voor |
+|---|---|---|
+| **Productstrategie** | `docs/TRAININGSKOMPAS_MASTER_ROADMAP.md` (Roadmap 2.0 v1.1, Product Owner + ChatGPT-architectuur) | Producttracks, gewenste richting, fasering, strategische prioriteiten, nieuwe epics, gewenste mastersprint-sequencing, wat bewust deferred wordt |
+| **Technische werkelijkheid** | Repository + DB-bewijs + tests (Claude) | Wat al bestaat, maturity, IMPLEMENTED/TESTED/INTEGRATED/VALIDATED/CLOSED, technische dependencies, bestaande IDs, feitelijke architectuur, bestaande tests, technische beperkingen |
+
+**Regel:** technische cross-audit mag status, effort, dependency en technisch risico betwisten met bewijs (gemarkeerd als "TECHNICAL CONFLICT"), maar mag productprioriteit of productrichting niet stilzwijgend terugdraaien. Een bestaand DB-schema of benchmark-pariteit is op zichzelf geen reden voor vroege productbouw — dat is een productbeslissing, geen technisch feit (zie de Commercial-UI-herfasering P1/F2→P2/F12 als precedent).
 
 Vastgesteld na controle van de bestaande documentstructuur (niet blind het voorstel uit de sprintopdracht overgenomen — hieronder per rij bevestigd of aangepast).
 

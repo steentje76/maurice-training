@@ -1,227 +1,207 @@
-# TRAININGSKOMPAS_MASTER_ROADMAP.md — 2.0 (Full Execution Blueprint)
+# TRAININGSKOMPAS_MASTER_ROADMAP.md — 2.0 v1.1 (CANONICAL)
 
-**Vastgesteld:** 28 augustus 2026, tegen `main` @ `7fe0c12572094e8f9035e58d1330260fc945d04b`.
-**Karakter:** dit is een analyse/architectuur/planningsdocument — geen enkele mastersprint hierin is uitgevoerd. Zie `docs/ROADMAP_COVERAGE_AUDIT.md` voor de volledige capability-dekkingscontrole (24/24 capabilities geclassificeerd, 0 orphan).
-**Compressieniveau, expliciet:** voor P0/P1-tracks (Calculation Engine, AI Coach, Training Core, Gym-RLS) zijn epics tot op mastersprint-niveau uitgewerkt. Voor P3/P4-tracks (Social, Scientific Platform) is de eerste onderzoeks-mastersprint uitgewerkt en de rest bewust als "later, na die uitkomst" benoemd — een volledige epic-boom voor een track die nog niet eens een productbeslissing heeft, zou giswerk zijn, geen planning.
+**Bron:** `TRAININGSKOMPAS_MASTER_ROADMAP_2.0_v1.1_FINAL.docx` (Product Owner + ChatGPT-productarchitectuur, geconsolideerd met Claude's technische PR #68).
+**Autoriteitsmodel:** dit document is vanaf nu de **productstrategische autoriteit** voor Roadmap 2.0 (tracks, fasering, prioriteiten, epics, mastersprint-sequencing). De repository (code/DB/tests) blijft de **technische autoriteit** voor wat daadwerkelijk bestaat/getest/geïntegreerd/gevalideerd is. Zie `docs/DOCUMENTATION_GOVERNANCE.md`.
+**Canonicalisatiedatum:** 28 augustus 2026, tegen `main` @ `59b99c428577abc5cfbf9fe61a9f85dfe5e8fbd8`.
+**Migratie:** alle 57 mastersprint-IDs uit PR #68 zijn getraceerd naar deze v1.1-structuur — zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md` (0 zoekgeraakt).
 
 ---
 
 ## 1. Executive Summary
-Trainingskompas heeft een architecturaal solide, breed geverifieerd fundament (F0 CLOSED: 0 open P0's, 69/69 DB-tabellen RLS-geverifieerd, 78 testbestanden comprehensive in zowel lokale als CI-gate). De komende fasen (F1-F15) brengen dit fundament naar productvolwassenheid langs 18 tracks, met een expliciete, bewezen differentiator (evidence-transparantie t.o.v. "unvalidated black box"-concurrenten) als rode draad.
+Trainingskompas wordt niet ontwikkeld als een verzameling losse features, maar als één traceerbaar trainingsplatform waarin ruwe data, deterministische berekeningen, context, expliciete beslisregels, wetenschappelijke evidence en AI-uitleg in een vaste keten samenwerken. De huidige softwarebasis is relatief volwassen in Training Core, Calculation, Context, Decision, Recovery en security/release-governance (bevestigd door PR #64-68). De grootste strategische kans ligt niet in zo snel mogelijk meer schermen bouwen, maar in het verdiepen van de kern: betrouwbare berekeningen, evidence, explainability, athlete intelligence en uitzonderlijk goede trainingsuitvoering. Coach, Gym, Commercial, Social en Scientific worden daarna bovenop dezelfde kern gebouwd.
 
-## 2. Product Vision
-Ongewijzigd t.o.v. `docs/01_Product/Product_Book.md`: eerst de beste AI-gestuurde personal training-app, met AI als interpreteerder/communicator — nooit als rekenende bron van waarheid. Deze roadmap versterkt dat principe (zie Track 8/T8, AI Coach).
-
-## 3. Architecture Principles
-Bevestigd in `docs/TRAININGSKOMPAS_PRODUCT_ARCHITECTURE.md`: RAW → NORMALIZATION → CALCULATION → CONTEXT → DECISION → EVIDENCE → AI → UX. Elke mastersprint hieronder die de Calculation/Decision/Evidence-laag raakt, moet deze keten respecteren en mag de bestaande "Calculation/Decision Core purity"-gate (`core/release-gate.js`) niet doorbreken.
-
-## 4. Current Baseline
-- `main` @ `7fe0c12572094e8f9035e58d1330260fc945d04b`, v4.69.0
-- F0 Verified Baseline: CLOSED · Open P0: 0 · Documentation Source of Truth: CONSISTENT
-- 78 testbestanden (discovery-based, lokaal + CI), 69 DB-tabellen (RLS geverifieerd), 24 capabilities geregistreerd
-
-## 5. Product Tracks (T1-T18)
-| Track | Naam | Status vandaag |
+## 2. Bron- en bewijsmodel
+| Bron | Rol | Autoriteit |
 |---|---|---|
-| T1 | Training Core | Volwassen (TESTED/INTEGRATED), flow-niveau UX-tests ontbreken |
-| T2 | Exercise Intelligence | **Nieuw expliciet erkend als eigen track deze sprint** (was impliciet onder T1) — MoveKit (206 oefeningen), eigen catalogus/zoek/filter |
-| T3 | Endurance & Multisport | DIFFERENTIATED (HYROX/Adaptive), zie Benchmark |
-| T4 | Calculation Engine | Fundament sterk, registry-volledigheid per metric nog niet A-E gelabeld |
-| T5 | Context Engine | First-class (bevestigd vorige sprint), 6 eigen modules |
-| T6 | Decision & Rules Engine | Corroboratiepatroon (DEC-036) aanwezig, uitbreiding naar meer domeinen mogelijk |
-| T7 | Evidence & Provenance | `evidence_store.v1` hard afgedwongen voor regels, niet voor AI-vrije-tekst |
-| T8 | AI Coach | Security CLOSED, governance/outputcontract open, benchmark-gap t.o.v. Hevy Trainer |
-| T9 | Recovery & Health Context | Volwassen, cyclus-context geïntegreerd |
-| T10 | Women's Performance | Geblokkeerd door 5 productbeslissingen |
-| T11 | Wearables & Devices | Software TESTED, real-device-validatie OPEN |
-| T12 | Analytics & Athlete Intelligence | Relationship Discovery Engine bestaat, UX-audit niet gedaan |
-| T13 | Social & Community | Bewust laag (P4), geen productbeslissing om te bouwen |
-| T14 | Coach/PT Platform | Schema aanwezig, UI ontbreekt |
-| T15 | Gym/Club/Team Platform | Schema aanwezig, **RLS-scoping-gat is harde blocker** |
-| T16 | Commercial & Entitlements | DB-schema compleet, UI ontbreekt volledig |
-| T17 | Platform/Production/Security | Sterk na P0-closure; observability ontbreekt |
-| T18 | Scientific Platform | Evidence-laag is een goede basis, consent-flow ontbreekt |
+| GitHub current state / code | Wat aantoonbaar bestaat | Hoog voor softwarestatus |
+| Live DB / RLS-verificatie | Wat aantoonbaar in schema/policies bestaat | Hoog voor datalaag |
+| Automatische tests / CI | Wat reproduceerbaar getest is | Hoog voor teststatus |
+| Capability Registry | Samenvatting van geverifieerde capabilities | Afgeleid; moet met code synchroon blijven |
+| Gap Analysis V2 | Actuele bekende gaps | Afgeleid; prioriteit mag door deze roadmap worden herijkt |
+| Benchmark Registry | Concurrentie-/UX-referentie | Ondersteunend, periodiek herverifiëren |
+| Calculation & Evidence Specification | Normatief voor berekening/evidence | Hoog zodra metric-level gevuld |
+| Productbesluiten | Gewenste richting | Hoog voor scope/UX |
+| AI | Interpretatie en communicatie | Nooit bron van numerieke waarheid |
 
-## 6. Capability Coverage
-Zie `docs/ROADMAP_COVERAGE_AUDIT.md` — 24/24 capabilities geclassificeerd (NO ACTION/VALIDATION ONLY/IMPROVEMENT/MAJOR DEVELOPMENT/NEW CAPABILITY/DEFERRED), elk met een mastersprint-bestemming.
+## 3. Niet-onderhandelbare architectuur
+**RAW DATA → NORMALIZATION/DATA QUALITY → CALCULATION → CONTEXT → DECISION/RULES → EVIDENCE/PROVENANCE → AI COACH → ATHLETE UX**
+Calculation Engine is deterministisch, reproduceerbaar, versioneerbaar en rekent — AI niet. Decision Engine bevat expliciete sportlogica, geen verborgen AI-regelvorming. Evidence/Provenance legt vast waar metric, regel, bron, versie, confidence en beperkingen vandaan komen. AI Coach mag samenvatten, combineren, contextualiseren, uitleggen en aanbevelingen formuleren binnen regels; niet herberekenen, ontbrekende data verzinnen of diagnoses stellen. CODE VERIFIED tegen `main`: zie `docs/TRAININGSKOMPAS_PRODUCT_ARCHITECTURE.md` §5 (AI Coach Governance-matrix).
 
-## 7. Benchmark Position
-Uit `docs/BENCHMARK_REGISTRY.md`: BEHIND 4 (AI-auto-programmering specifiek, exercise library schaal, social, commercial-UI) · PARITY 2 · AHEAD 2 (evidence-transparantie, HRV-voorzichtigheid) · DIFFERENTIATED 3 (HYROX-specificiteit, cyclus-trainingskoppeling, evidence-eis). Sterkste bewijs: onafhankelijk onderzoek (Doherty et al., Altini) noemt concurrerende recovery-scores "unvalidated black boxes" — TK's evidence-architectuur is een aantoonbaar, niet slechts marketing-, verschil.
+## 4. Productprincipes
+Elke uitbreiding naar Coach/Gym/Research hergebruikt dezelfde engine; geen tweede productkern. Exercise-specific stagnation/progression krijgt voorkeur boven een botte globale load/deload-trigger. Geen paywall/billing alleen omdat tabellen al bestaan. Geen black-box readinessscore zonder componenten/confidence.
 
-## 8. Dependency Architecture
+## 5. Maturity & closure model
+NOT STARTED → IMPLEMENTED → TESTED → INTEGRATED → VALIDATED → CLOSED. Geen maturity-upgrade zonder passend bewijs (code/DB/test/device/scientific, per capability).
+
+## 6. Strategische producttracks (T1-T18)
+| Track | Naam |
+|---|---|
+| T1 | Training Core |
+| T2 | Exercise Intelligence |
+| T3 | Endurance & Multisport |
+| T4 | Calculation Engine |
+| T5 | Context Engine |
+| T6 | Decision & Rules Engine |
+| T7 | Evidence & Provenance |
+| T8 | AI Coach |
+| T9 | Recovery & Health Context |
+| T10 | Women's Performance |
+| T11 | Wearables & Devices |
+| T12 | Analytics & Athlete Intelligence |
+| T13 | Social & Community |
+| T14 | Coach/PT Platform |
+| T15 | Gym/Club/Team Platform |
+| T16 | Commercial & Entitlements |
+| T17 | Platform / Production / Security |
+| T18 | Scientific Platform |
+
+## 7. Doelarchitectuur per productlaag
+**Athlete Layer:** Home/Dashboard, Training, Progress, Body/Recovery, Coach, Profile — één persoonlijke trainingscockpit. **Intelligence Layer:** Calculation+Context+Decision+Evidence+AI = explainable athlete intelligence, geen losstaande 'AI-feature'. **Connected Layer:** wearables/health platforms/machines/weather met provenance en duplicate-safe sync. **Professional Layer:** Coach/PT en Gym/Club/Team gebruiken dezelfde athlete engine met expliciete consent/RBAC/tenant-isolatie. **Commercial Layer:** entitlements centraal afgedwongen; UI volgt pas na tiers/waardepropositie. **Scientific Layer:** research is een expliciete consent-/governancelaag bovenop reproduceerbare calculations/evidence, nooit een neveneffect.
+
+## 8. Prioriteringsmodel
+Elke epic beoordeeld op: safety/security, dependency criticality, athlete value, benchmark gap, strategic differentiation, evidence importance, architecture leverage, effort, risk, validation burden. P0=veiligheid/privacy/dataverlies/release-integriteit. P1=kernwaarde of harde dependency met hoge impact. P2=grote verbetering/schaalbaarheid. P3=optimalisatie/verbreding. P4=lange termijn/research/deferred.
+
+**Definitieve prioriteitscorrecties (§30 van v1.1, overgenomen als productbeslissing, niet zelfstandig teruggedraaid):**
+- GYM-RLS-SCOPING blijft P1, eerste F1-uitvoering (veiligheid + harde dependency).
+- Observability vóór grootschalige nieuwe productlagen.
+- **Commercial UI is geen vroege P1** — schema/benchmark-pariteit is onvoldoende reden vóór athlete core/intelligence. COMM-UI-001: P1→**P2**, F2→**F12**.
+- AI Output Contract blijft P1 (AI is al actief), maar ná Calculation/Context/Decision/Evidence-contracten.
+- Calculation/Evidence breder dan de oorspronkelijke 3 domeinen: training load/progression, energy estimates, context taxonomy en provenance zijn first-class.
+- Training Core Excellence vóór diepe AI/commercial-expansie, op echte athlete-flowkwaliteit.
+- Exercise-specific stagnation/progression eerder dan globale strain/deload-signalen.
+- Social blijft deferred tot koersbesluit; Scientific blijft lange termijn, reproducibility wel al voorbereid in de kern.
+
+## 9. Fasering F0-F15
+| Phase | Naam | Status |
+|---|---|---|
+| F0 | Verified Baseline | **CLOSED** |
+| F1 | Foundation Closure | **NEXT/CURRENT** |
+| F2 | Athlete Core Excellence | PLANNED |
+| F3 | Calculation/Context/Evidence Excellence | PLANNED |
+| F4 | Coach Intelligence | PLANNED |
+| F5 | Connected Athlete | PLANNED |
+| F6 | Endurance & Multisport Excellence | PLANNED |
+| F7 | Longitudinal Athlete Intelligence | PLANNED |
+| F8 | Women's Performance | DECISION-GATED |
+| F9 | Social & Community | DEFERRED |
+| F10 | Coach/PT Platform | PLANNED |
+| F11 | Gym/Club/Team Platform | DEPENDENCY-GATED (vereist F1 RLS-closure) |
+| F12 | Commercial | PLANNED (na tier/waarde-besluiten) |
+| F13 | Production & Scale | CONTINUOUS |
+| F14 | Scientific Platform | LONG TERM |
+| F15 | Beyond Benchmark | CONTINUOUS |
+
+## 10. Critical dependency graph
 ```
-Raw Data → Normalization → Calculation → Context → Decision → Evidence → AI → UX
-Training Definition → Preview → Execution → Logging → History → Analytics → Coaching
-Identity → Privacy → Social                              (T13, laag geprioriteerd)
-Identity → RBAC → Organization → Coach/Gym                (T14/T15, geblokkeerd door GYM-RLS-SCOPING-001)
-Entitlements → Commercial UI → Billing                     (T16, geen blocker behalve bouwwerk zelf)
-Evidence → Scientific Platform                              (T18, lange termijn)
+Identity → Athlete Profile → Training Definition → Preview → Execution → Logging → History → Analytics → Coaching
+Raw Data → Normalization → Calculation → Context → Decision → Evidence/Provenance → AI → UX
+Calculation Registry → Data Quality/Confidence → Decision Rule Registry → Explainability → Adaptive Coaching
+Identity → Privacy/Consent → Connections → Social/Community
+Identity → RBAC → Organization Membership/RLS → Coach/Gym workflows → Licenses
+Entitlement model → Feature gates → Commercial UI → Billing → Reconciliation
+Provider feasibility → Connector → Canonical mapping → Sync/idempotency → Validation → Athlete-facing use
+Evidence/Provenance → Research consent → Scientific export → Reproducibility
 ```
-**Harde regel, ongewijzigd:** Track 15 (Gym/Club/Team) mag niet starten met echte multi-tenant-data vóór GYM-RLS-SCOPING-001 gesloten is.
+**Harde regel:** Track 15 (Gym/Club/Team) mag niet starten met echte multi-tenant-data vóór GYM-RLS-SCOPING-001 (MS-F1-01) gesloten is.
 
-## 9. Prioritization Model
-Score per epic/mastersprint op: Safety/security · Dependency criticality · Athlete value · Benchmark gap · Strategic differentiation · Evidence importance · Architecture leverage · Development effort · Risk · Validation burden. Toegepast kwalitatief (geen numerieke weegformule opgesteld — dat zou schijnprecisie suggereren voor een eenmansteam met wisselende beschikbaarheid). Resultaat per mastersprint: zie sectie 12 en `docs/ROADMAP_INDEX.json`.
+## 11. Epic portfolio
+51 epics (E1.1–E18.3), elk gekoppeld aan een track/phase/priority/mastersprint. Volledige lijst: zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md` en `docs/ROADMAP_INDEX.json` (elk mastersprint-item draagt zijn epic-ID('s) in het `epics`-veld).
 
-**Herbeoordeling van eerdere prioriteiten:** `COMM-UI-001` (Commercial-UI) blijft P1 — bevestigd, want blokkeert Track 16 volledig en heeft een reële benchmark-parity-eis (elke onderzochte concurrent heeft een zichtbare upgrade-flow). Geen eerdere P1 is bij herbeoordeling gedegradeerd; wel zijn `GYM-RLS-SCOPING-001` en `DOC-HANDBOOK-001` bevestigd als de twee met de hoogste dependency-criticaliteit (ze blokkeren respectievelijk een hele track en de betrouwbaarheid van alle toekomstige Handbook-toetsing).
+## 12. Mastersprint execution map
+**75 canonieke v1.1-mastersprints + 4 supplementaire IDs** (geldige inhoud uit PR #68 zonder v1.1-equivalent: MS-F3-11, MS-F4-06, MS-F6-06, MS-F13-06) = **79 mastersprints totaal**, volledig machine-leesbaar in `docs/ROADMAP_INDEX.json`. Zie dat bestand voor phase/priority/tracks/capabilities/dependencies/acceptance_gate/validation per sprint.
 
-## 10. F0-F15 Fasering
-Ongewijzigd qua namen t.o.v. de vorige versie; hieronder met mastersprint-toewijzing (sectie 12).
-
-## 11. Epics (per track, samengevat — volledige mastersprints in sectie 12)
-- **T1 Training Core:** Guided-Workout-convergentie-audit · flow-niveau testdekking Builder/Preview/Execution/History
-- **T2 Exercise Intelligence:** flow-niveau testdekking catalogus/zoek/filter/detail
-- **T4 Calculation Engine:** Strength-registry · Recovery-registry · Endurance/Ergometer-registry · formele Calculation & Evidence Specification
-- **T7 Evidence & Provenance:** Evidence Registry-voltooiing · Data Quality & Confidence-laag
-- **T8 AI Coach:** Output-contract · Explainability-laag · Coaching-modi · Program-generatie-sluitlus
-- **T11 Wearables & Devices:** real-device-validatie (2×) · providerfeasibility-onderzoek
-- **T15 Gym/Club/Team:** RLS-scoping (blocker) · tenant/locaties/staff-model
-- **T16 Commercial:** plan-overzichtsscherm · entitlement-afdwinging · billing-lifecycle
-
-## 12. Mastersprints (concreet, uitvoerbaar — NIET uitgevoerd)
-
-### F1 — Foundation Closure
-| ID | Naam | Capability | Priority | Complexity |
+## 13. Definitieve eerste 20 mastersprints (dependency-gevalideerd)
+| # | Sprint | Naam | Prio | Waarom |
 |---|---|---|---|---|
-| MS-F1-01 | Backup Table Cleanup | PLAT-BACKUP-CLEANUP-001 | P2 | S |
-| MS-F1-02 | Observability Foundation | PLAT-OBSERVABILITY-001 | P2 | M |
-| MS-F1-03 | Gym RLS Scoping | GYM-RLS-SCOPING-001 | **P1** | M |
-| MS-F1-04 | Handbook Update H6/H9/H12 | DOC-HANDBOOK-001 | **P1** | L |
-| MS-F1-05 | Point-in-time Docs Refresh | (DATABASE_STATUS/PLAY_STORE_READINESS/RELEASE_READINESS) | P2 | S |
-| MS-F1-06 | Security Test Live Validation | PLAT-DELETE-001, SOC-GYMTEAM-001 | P3 | S |
+| 1 | MS-F1-01 | Multi-tenant RLS Security Closure | P1 | Security/dependency; blokkeert echte Coach/Gym-data (was: oude repo-ID MS-F1-03) |
+| 2 | MS-F1-02 | Observability Foundation | P1 | Operational visibility vóór verdere productgroei |
+| 3 | MS-F1-03 | Secrets & Configuration Hygiene | P1 | Security hygiëne vóór verdere externe/AI-integraties |
+| 4 | MS-F1-04 | Normative Documentation Sync | P2 | Normatieve instructies synchroon; geen productfeature |
+| 5 | MS-F2-01 | Canonical Training Start & Preview | P1 | Dagelijkse kernflow; hoge architectuurleverage |
+| 6 | MS-F2-02 | Execution Reliability & Persistence | P1 | Logging is de primaire producttransactie |
+| 7 | MS-F2-03 | Workout Builder & My Trainings | P1 | Voltooit Training maken → Builder → reuse-keten |
+| 8 | MS-F2-04 | Exercise Library UX Excellence | P1 | Verlaagt frictie in vrijwel elke krachttraining |
+| 9 | MS-F2-06 | Onboarding & Athlete Goal Intake | P1 | Betere context/personalisatie vanaf dag één |
+| 10 | MS-F2-07 | Home/Dashboard Actionability | P1 | Maakt bestaande intelligence dagelijks bruikbaar |
+| 11 | MS-F2-08 | Athlete Core UX Benchmark Pass | P1 | Meet flowkwaliteit vóór intelligentielaag verdiept |
+| 12 | MS-F3-01 | Strength Calculation Registry | P1 | Start metric-level source of truth |
+| 13 | MS-F3-02 | Load & Progression Calculation Registry | P1 | Basis voor stagnatie/adaptatie |
+| 14 | MS-F3-03 | Recovery Calculation Registry | P1 | Basis voor traceerbare readiness |
+| 15 | MS-F3-06 | Context Taxonomy & Contract | P1 | Voorkomt contextwildgroei |
+| 16 | MS-F3-08 | Data Quality & Confidence Layer | P1 | Vereist vóór geavanceerde decision/AI-claims |
+| 17 | MS-F3-07 | Decision Rule Registry | P1 | Versioneerbare regels, insufficient-data-gedrag |
+| 18 | MS-F3-09 | Evidence Registry Metric Audit | P1 | A-E per metric/rule; bronnen/limitaties |
+| 19 | MS-F3-10 | Explainability & Provenance Contract | P1 | End-to-end trace van bron tot advies |
+| 20 | MS-F4-01 | AI Output Contract & Guardrails | P1 | Nu pas verdere AI-adaptatie; geen invented numerics/diagnose |
 
-### F2 — Athlete Core Excellence
-| ID | Naam | Capability | Priority | Complexity |
-|---|---|---|---|---|
-| MS-F2-01 | Commercial UI — Plan Overview Screen | COMM-UI-001 | **P1** | M |
-| MS-F2-02 | Commercial UI — Entitlement Enforcement | COMM-UI-001 | P2 | M |
-| MS-F2-03 | AI Output Contract Test | AI-OUTPUT-CONTRACT-001 | **P1** | M |
-| MS-F2-04 | Training Core Flow-Level Test Coverage (Builder/Preview/Execution) | CAP-REGISTRY-SCREENS-001 | P2 | L |
-| MS-F2-05 | Guided Workout Convergence Audit | T1 (geen aparte capability-ID, architectuuraudit) | P2 | M |
-| MS-F2-06 | Exercise Intelligence Flow Tests | T2 | P3 | M |
+**ORDER CONFLICT-check:** 0 gevonden. De volgorde is dependency-consistent (RLS/observability/secrets/docs eerst, dan Athlete Core, dan Calculation→Context→Decision→Evidence, AI Output Contract pas na Evidence/Provenance). Zie `docs/ROADMAP_INDEX.json` voor de expliciete `dependencies`-array per item.
 
-### F3 — Calculation / Context / Evidence Excellence
-| ID | Naam | Capability | Priority | Complexity |
-|---|---|---|---|---|
-| MS-F3-01 | Calculation Registry — Strength (e1RM, volume, tonnage, relative load, RPE/RIR) | EVID-SCI-001 | **P1** | L |
-| MS-F3-02 | Calculation Registry — Recovery (HRV, RHR, slaap, readiness) | EVID-SCI-001 | **P1** | L |
-| MS-F3-03 | Calculation Registry — Endurance/Ergometer | EVID-SCI-001 | P2 | L |
-| MS-F3-04 | Evidence Registry Completion (metric-voor-metric A-E) | EVID-SCI-001 | **P1** | L |
-| MS-F3-05 | Data Quality & Confidence-laag | EVID-SCI-001 | P2 | M |
-| MS-F3-06 | Decision Rule Registry-uitbreiding (corroboratiepatroon naar meer domeinen) | DEC-CORE-001 | P2 | M |
-| MS-F3-07 | Formele Calculation & Evidence Specification (los document) | EVID-SCI-001 | P2 | M |
+**Interne inconsistentie in het brondocument, opgelost:** v1.1 §31 gebruikte op meerdere plekken oude PR#68-repo-IDs (MS-F1-03, MS-F3-04/05/06) als shorthand voor sprints die in v1.1 §12 een ander ID-nummer kregen (MS-F1-01, MS-F3-09/08/07). Bovenstaande tabel gebruikt overal de v1.1 §12-nummering (de systematische, complete execution map) als canoniek. Zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md` voor de volledige toelichting.
 
-### F4 — Coach Intelligence
-| ID | Naam | Capability | Priority | Complexity |
-|---|---|---|---|---|
-| MS-F4-01 | AI Governance — Numerieke/diagnose-guardrails | AI-OUTPUT-CONTRACT-001 | **P1** | M |
-| MS-F4-02 | AI Explainability-laag (waarom/welke metric/welke regel/confidence) | AI-OUTPUT-CONTRACT-001 | P2 | M |
-| MS-F4-03 | Coaching-modi (dagelijks/workout/herstel/progressie/stagnatie/adherentie/event-prep) | AI-PROGRAM-AUTOGEN-001 | P2 | L |
-| MS-F4-04 | Program-generatie gesloten lus v1 | AI-PROGRAM-AUTOGEN-001 | **P1** | L |
-| MS-F4-05 | Program-adaptatie — wekelijks | AI-PROGRAM-AUTOGEN-001 | P2 | M |
-| MS-F4-06 | Program-adaptatie — longitudinaal (benchmark t.o.v. Hevy Trainer) | AI-PROGRAM-AUTOGEN-001 | P2 | L |
+## 14. Calculation & Evidence Specification-roadmap
+Verplicht eindresultaat per calculation: unique ID, domain, name, formula/algorithm, algorithm version, inputs, outputs, units, supported sports, minimum data, data quality, confidence, evidence level A-E, scientific sources, limitations, applicability, forbidden interpretations, allowed Decision Rules, AI permissions, athlete-visible values. Gedekt door MS-F3-01 t/m MS-F3-05 (per domein) + MS-F3-09 (metric-audit) + MS-F3-11 (formeel specificatiedocument). Geen globale "Evidence complete"-status toegestaan zolang metric-voor-metric coverage ontbreekt.
 
-### F5 — Connected Athlete
-| ID | Naam | Capability | Priority | Complexity |
-|---|---|---|---|---|
-| MS-F5-01 | Wearable Real-Device-validatie (Google Health) | DEV-WEARAUTH-001, DEV-WEARSYNC-001 | P2 | M |
-| MS-F5-02 | Concept2 PM5 Real-Device-validatie | DEV-CONCEPT2-001 | P2 | M |
-| MS-F5-03 | Health-platformfeasibility-onderzoek (Apple HealthKit, Health Connect) | NEW CAPABILITY | P3 | M (onderzoek, geen bouw) |
-| MS-F5-04 | Wearable-providerfeasibility-onderzoek (Garmin/Polar/WHOOP/Suunto/COROS) | NEW CAPABILITY | P3 | M (onderzoek) |
-| MS-F5-05 | Weather/Environment-roadmap formaliseren | bestaand `core/weather.js` | P3 | S |
+## 15. Decision Engine-roadmap
+Decision Rule Registry (MS-F3-07): rule IDs, versions, inputs, outputs, thresholds, forbidden use. Harde grenzen: HRV mag nooit zelfstandig een rustdag bepalen of overtraining vaststellen; ACWR mag nooit een harde blessurevoorspeller of universele veilige zone zijn. Multi-signal corroboration (DEC-036-patroon) blijft de norm.
 
-### F6 — Endurance & Multisport Excellence
-| ID | Naam | Capability | Priority | Complexity |
-|---|---|---|---|---|
-| MS-F6-01 | Swimming-feasibility-assessment | NEW CAPABILITY | P4 | S (onderzoek) |
-| MS-F6-02 | Critical speed/power + aerobic decoupling | NEW CAPABILITY | P3 | L |
-| MS-F6-03 | Interval-executie flow-niveau UX-test | END-INTERVAL-001 | P3 | M |
-| MS-F6-04 | HYROX/Triathlon rulebook jaarlijkse herverificatie | END-HYROX-001 | P2 | S (terugkerend) |
-| MS-F6-05 | Race preparation & analysis-epic | END-HYROX-001 | P3 | L |
+## 16. AI Coach-roadmap
+AI blijft interpreter/communicator, nooit calculator/source of truth. MS-F4-01 (Output Contract & Guardrails) → MS-F4-02 (Explainable Daily Coach) → MS-F4-03 (Exercise-specific Progression Coach) → MS-F4-04 (Adaptive Weekly Program Loop) → MS-F4-05 (Schedule & Missed-workout Adaptation). AI-programgeneratie mag niet vóór de Calculation→Context→Decision→Evidence-dependencies (zie `docs/ROADMAP_INDEX.json` dependencies van MS-F4-04).
 
-### F7 — Longitudinal Athlete Intelligence
-| ID | Naam | Capability | Priority | Complexity |
-|---|---|---|---|---|
-| MS-F7-01 | Relationship Engine flow-niveau UX-audit | T12 | P3 | M |
-| MS-F7-02 | Performance Index-uitbreiding | T12 | P3 | M |
-| MS-F7-03 | Correlatie-vs-causatie-boodschap-audit (UI-teksten) | T12 | P2 | S |
+## 17. Connected Athlete-roadmap
+Provider feasibility → Connector/Adapter → Auth/Consent → Raw+Provenance → Canonical Mapping → Units/Time Normalization → Duplicate Prevention → Sync/Idempotency → Calculation Integration → Decision/Context Integration → Athlete UX → Real Device Validation. Providertracks: Android Health Connect, Apple HealthKit, Garmin, Polar, WHOOP, Suunto, COROS, Strava, TrainingPeaks, Concept2, Technogym, EGYM. Niet elke provider is technisch even toegankelijk — feasibility eerst (MS-F5-01, MS-F5-04, MS-F5-05, MS-F11-04).
 
-### F8 — Women's Performance (GEBLOKKEERD — elk item wacht op zijn eigen productbeslissing)
-| ID | Naam | Capability | Priority | Complexity |
-|---|---|---|---|---|
-| MS-F8-01 | Zwangerschap — implementatie na besluit | CTX-CYCLE-001 | P2 (na besluit) | M-L |
-| MS-F8-02 | Postpartum — implementatie na besluit | CTX-CYCLE-001 | P2 (na besluit) | M-L |
-| MS-F8-03 | Menopauze/perimenopauze — implementatie na besluit | CTX-CYCLE-001 | P2 (na besluit) | M-L |
-| MS-F8-04 | Anticonceptie — implementatie na besluit | CTX-CYCLE-001 | P2 (na besluit) | M |
-| MS-F8-05 | Bekkenbodem — implementatie na besluit | CTX-CYCLE-001 | P2 (na besluit) | M |
+## 18. UX-roadmap & benchmarkbeleid
+MS-F2-08 (Athlete Core UX Benchmark Pass): flow/taps/errors/empty/loading gebenchmarkt tegen leidende apps (zie `docs/BENCHMARK_REGISTRY.md`). Geen redesign in deze sprint uitgevoerd — alleen gepland.
 
-### F9 — Social & Community (bewust laag, P4)
-| ID | Naam | Capability | Priority | Complexity |
-|---|---|---|---|---|
-| MS-F9-01 | Social-architectuuronderzoek (privacy-model, geen bouw) | NEW CAPABILITY | P4 | S (onderzoek) |
+## 19. Women's Performance decision gate
+F8 blijft decision-gated. 5 open besluiten (zwangerschap, postpartum, menopauze/perimenopauze, anticonceptie, bekkenbodem) blokkeren MS-F8-03/04. Geen implementatie vóór besluit. Optionele performance-context, geen medische diagnose-/period-trackerfunctie. Privacy/consent (MS-F8-02) is harde dependency vóór MS-F8-03/04.
 
-*Verdere Social-mastersprints worden pas gedefinieerd ná een expliciete productbeslissing om deze track te bouwen — vooraf verder detailleren zou giswerk zijn.*
+## 20. Coach, Gym en Commercial sequencing
+`Identity → Consent → RBAC → Membership-scoped RLS → Coach Relationship → Coach Dashboard → Programming → Organization → Locations → Staff → Members → Teams/Groups → Gym Programming → Equipment → Analytics → Licensing`. Geen echte multi-tenant Gym-data vóór RLS-scoping (MS-F1-01) gesloten is. Commercial: `Tier/value proposition → Entitlement Domain Model → Entitlement Enforcement → Commercial UX → Billing/Reconciliation` (MS-F12-01→02→03→04).
 
-### F10 — Coach/PT Platform
-| ID | Naam | Capability | Priority | Complexity |
-|---|---|---|---|---|
-| MS-F10-01 | Coach-Relationship testdekking | COACH-RELATIONSHIP-001 | P3 | S |
-| MS-F10-02 | Coach-dashboard MVP | NEW CAPABILITY | P2 | L |
-| MS-F10-03 | Coach-programmering/toewijzing | NEW CAPABILITY | P3 | L |
+## 21. Scientific Platform
+Lange termijn: research consent/withdrawal, pseudonymization, data minimization, dataset definitions, calculation/evidence versions, reproducible export, cohorts, governance, researcher access. Gewone productconsent is niet automatisch researchconsent (MS-F14-01 is een aparte, expliciete consent-laag).
 
-### F11 — Gym/Club/Team Platform
-| ID | Naam | Capability | Priority | Complexity |
-|---|---|---|---|---|
-| MS-F11-01 | Tenant/locaties/staff-model (vereist MS-F1-03 eerst) | GYM-RLS-SCOPING-001 | P2 | L |
-| MS-F11-02 | Team/groep-beheer-UI | NEW CAPABILITY | P3 | M |
+## 22. Validation gates per mastersprint
+8 dimensies (zie `docs/ROADMAP_INDEX.json` `validation`-object per item): software (altijd bij codewijziging), database (schema/RLS/data-impact), integration (cross-module/provider), device (hardware/wearable), UX (athlete-facing flow), scientific (calculation/rule/claim), privacy/security (sensitive/multi-user), documentation (iedere closure).
 
-### F12 — Commercial
-| ID | Naam | Capability | Priority | Complexity |
-|---|---|---|---|---|
-| MS-F12-01 | Entitlement-reconciliatie & billing-providerintegratie | COMM-UI-001 | P2 | L |
-| MS-F12-02 | Subscription-lifecycle (upgrade/downgrade/cancel/restore) | COMM-UI-001 | P2 | L |
+## 23. Definition of Done voor een mastersprint
+Scope/out-of-scope vooraf expliciet · geen maturity-upgrade zonder bewijs · acceptance criteria aantoonbaar behaald · tests toegevoegd of gemotiveerd waarom niet · DB/integration/device/UX/scientific gates uitgevoerd waar van toepassing · Capability Registry en relevante specs bijgewerkt · Decision/Evidence IDs gekoppeld bij sportlogica-wijziging · geen open P0 veroorzaakt · release/CI groen · post-merge verificatie op actuele main.
 
-### F13 — Production & Scale
-| ID | Naam | Capability | Priority | Complexity |
-|---|---|---|---|---|
-| MS-F13-01 | Observability & error-tracking (uitbouw MS-F1-02) | PLAT-OBSERVABILITY-001 | P2 | M |
-| MS-F13-02 | iOS-feasibility-onderzoek | NEW CAPABILITY | P4 | S (onderzoek) |
-| MS-F13-03 | Backup/retentiebeleid formaliseren | NEW CAPABILITY | P3 | S |
+## 24. Open product decisions
+| Decision | Wanneer nodig | Blokkeert |
+|---|---|---|
+| Women's Performance: zwangerschap/postpartum/menopauze | Vóór F8 life-stage build | MS-F8-04 |
+| Women's Performance: anticonceptie | Vóór F8 contextmodel | MS-F8-03/04 |
+| Women's Performance: bekkenbodem | Vóór F8-scope | MS-F8-04 |
+| Commercial tiers & concrete pricing | Vóór F12 UX/billing | MS-F12-01+ |
+| Social koers/prioriteit | Vóór F9 | F9 |
+| iOS timing | Vóór Apple HealthKit-implementatie | MS-F5-04-vervolg (MS-F13-06) |
+| Research operating model | Vóór F14 access/export | MS-F14-01+ |
 
-### F14 — Scientific Platform
-| ID | Naam | Capability | Priority | Complexity |
-|---|---|---|---|---|
-| MS-F14-01 | Consent- & governancemodel | SCI-CONSENT-001 | P4 | M |
-| MS-F14-02 | Research-exportpijplijn | SCI-CONSENT-001 | P4 | L |
+## 25. Wat bewust NIET vroeg wordt gebouwd
+Paywall/billing alleen omdat tabellen al bestaan · social feed vóór identity/privacy/moderation · Gym real-data-workflows vóór membership-scoped RLS · AI-adaptatie vóór Calculation/Context/Decision/Evidence-contracten sterk genoeg zijn · nieuwe deviceconnector zonder officiële feasibility en concrete athlete value · black-box readinessscore zonder componenten/confidence · research-export zonder research-consent en reproducibility.
 
-### F15 — Beyond Benchmark
-| ID | Naam | Capability | Priority | Complexity |
-|---|---|---|---|---|
-| MS-F15-01 | Evidence-transparantie als positionering (benutten, niet herbouwen) | EVID-SCI-001 | P3 | S |
+## 26. Roadmap governance
+Deze roadmap is het productplan; de repository is de waarheid over de huidige implementatie. Technische cross-audit mag status/effort/dependency/risico betwisten met bewijs, maar productprioriteit of -richting niet stilzwijgend herschrijven — zie `docs/DOCUMENTATION_GOVERNANCE.md`. Na iedere mastersprint: CURRENT_STATE, Capability Registry, Roadmap Index en relevante Calculation/Evidence/Decision-documenten bijwerken.
 
-**Totaal: 57 mastersprints**, gedekt in `docs/ROADMAP_INDEX.json` met volledige velden (dependencies, validation-vereisten, acceptance-gates).
+## 27-29. Technical cross-audit — samenvatting
+Technische bron: PR #68 / `main` @ `59b99c428577abc5cfbf9fe61a9f85dfe5e8fbd8`, v4.69.0. Resultaat destijds: 24/24 capabilities gemapt, 57 mastersprints, 73 index-entries, 0 orphans, 11/11 checks groen — sterke technische traceability, maar "100% completeness" betekende uitsluitend 100% dekking van de tóén bestaande Capability Registry, niet van de gewenste producttoekomst (zie de vier-dimensionale correctie in `docs/ROADMAP_COVERAGE_AUDIT.md` §"Belangrijke correctie").
 
-## 13. Validation Gates
-Per mastersprint in `docs/ROADMAP_INDEX.json`: `validation.software` (altijd REQUIRED), `validation.database`/`integration`/`device`/`scientific` (AS_APPLICABLE, per mastersprint bepaald).
+## 30. Definitieve prioriteitscorrecties
+Zie sectie 8 hierboven — letterlijk overgenomen uit v1.1, niet zelfstandig gewijzigd.
 
-## 14. Scientific/Evidence Gates
-MS-F3-01 t/m MS-F3-07 mogen niet CLOSED worden zonder dat elke behandelde metric een evidence-level (A-E) én bronvermelding heeft — dit is de kern van T7 en mag niet informeel worden afgevinkt.
+## 31. Definitieve eerste 20 mastersprints
+Zie sectie 13 hierboven (met technische dependency-validatie toegevoegd).
 
-## 15. Device Gates
-MS-F5-01/02 vereisen een daadwerkelijke, niet-gesimuleerde device-sessie (Concept2 PM5 fysiek aanwezig, Google Health-account met echte historische data) vóór VALIDATED.
+## 32. Herfasering van Commercial
+**Besluit (overgenomen, niet technisch tegengesproken):** COMM-UI-001 is P2/F12, niet P1/F2. Volgorde: tier/waardepropositie + entitlement domain model (MS-F12-01) → entitlement enforcement (MS-F12-02) → plan/upgrade-UX (MS-F12-03) → billing/reconciliation (MS-F12-04). Gym/Coach-licenties bouwen voort op dezelfde entitlementlaag.
 
-## 16. Security/Privacy Gates
-Elke mastersprint die RLS, Netlify Functions, of persoonsgegevens raakt (met name MS-F1-03, MS-F11-01, MS-F14-01) doorloopt dezelfde P0-closure-discipline: read-only audit eerst, kleinste-veilige-fix-principe, regressietest verplicht vóór CLOSED.
+## 33. Uitgebreide Calculation/Context/Decision/Evidence closure
+Zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md` F3-sectie en `docs/ROADMAP_INDEX.json` MS-F3-*-items voor de volledige, verplichte resultaten per werkstroom (Strength/Load & Progression/Recovery/Endurance & Erg/Energy/Context/Decision/Evidence/Confidence/Provenance).
 
-## 17. Product Decision Gates
-- **F8 volledig geblokkeerd** tot de 5 Women's Performance-besluiten er zijn.
-- **F9 (Social)** geblokkeerd tot een expliciete productbeslissing om deze track te bouwen (nu bewust P4/laag).
-- **T14/T16 UI-omvang** (hoeveel Coach/PT- en Commercial-functionaliteit) is uiteindelijk een productbeslissing van Maurice, niet alleen een technische — deze roadmap plant de technische stappen, niet de commerciële scope-keuze zelf.
+## 34. Canonicalization plan naar GitHub — UITGEVOERD
+Deze sprint (zie PR-nummer in `docs/00_Project_Management/CURRENT_STATE.md`) heeft: (1) current main als baseline gebruikt en heraudit gedaan sinds SHA 59b99c, (2) bestaande MS-ID's behouden waar semantisch gelijk, nieuwe IDs gemaakt voor v1.1-toevoegingen (zie migratiematrix), (3) COMM-UI uit vroege F2-prioriteit verplaatst naar Commercial F12, (4) ontbrekende Athlete Core/Context/Load-Progression/Provenance/Offline-Sync/Accessibility/dashboard-sprints toegevoegd, (5) ROADMAP_INDEX.json en consistency checks aangepast, geen productcodewijzigingen, (6) geen technische conflicts gevonden die productprioriteit zouden dwingen terug te draaien (alleen het interne v1.1-ID-naamgevingsconflict, opgelost ten gunste van de systematische sectie-12-nummering).
 
-## 18. Deferred Work
-MS-F5-03/04 (providerfeasibility), MS-F6-01 (swimming), MS-F9-01-en-verder (social), MS-F13-02 (iOS) — bewust onderzoeks-eerst, bouw-later.
-
-## 19. Beyond Benchmark
-MS-F15-01: de wetenschappelijk onderbouwde "evidence-transparantie t.o.v. black-box-concurrenten"-positionering (zie Benchmark Registry) is al een reëel differentiatiepunt zonder dat er nieuwe code voor nodig is — vooral een communicatie-/positioneringsvraagstuk.
-
-## 20. Definition of Roadmap Completion
-Deze roadmap is "compleet" (niet: "uitgevoerd") wanneer, zoals nu het geval is: (1) elke capability uit de registry een classificatie en mastersprint-bestemming heeft (bevestigd, `docs/ROADMAP_COVERAGE_AUDIT.md`), (2) elke P0/P1 een mastersprint heeft (bevestigd, zie sectie 12 — 9 P1-mastersprints, allemaal met mastersprint), (3) `docs/ROADMAP_INDEX.json` valide is en 0 orphan-IDs/dependencies heeft (geverifieerd via `tools/check-doc-consistency.js`).
+## 35. Final Roadmap Decision
+**MASTER ROADMAP 2.0 v1.1 = CANONICAL SOURCE OF TRUTH.** Zie het finale canonicalisatierapport voor volledige validatiestatus.

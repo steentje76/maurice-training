@@ -18,6 +18,13 @@
  *  9. Elk mastersprint-item heeft een "phase"-veld en minimaal één "tracks"-entry.
  * 10. Elk mastersprint-item heeft een "target_maturity" die een geldige waarde is uit
  *     het maturity-model (NOT STARTED/IMPLEMENTED/TESTED/INTEGRATED/VALIDATED/CLOSED).
+ * 11. Elk item heeft een geldige "priority" (P0-P4) en, indien aanwezig, geldige "status".
+ * 12. Elk mastersprint-item heeft een "validation"-object met exact de 8 verwachte
+ *     dimensies (software/database/integration/device/ux/scientific/privacy_security/
+ *     documentation), elk met een geldige waarde (REQUIRED/AS_APPLICABLE/PASS/NOT_APPLICABLE/OPEN/PARTIAL).
+ * 13. Geen obsolete/superseded MS-ID-referenties: IDs die in ROADMAP_V1_1_MIGRATION_MATRIX.md
+ *     als SUPERSEDE/REMOVE_AS_DUPLICATE zijn gemarkeerd, mogen niet meer als "dependencies"
+ *     ergens in de actuele roadmap-index voorkomen.
  *
  * BEPERKING (bewust, geen overengineering): dit script parseert geen vrije Markdown-
  * prosa met volledige semantiek. Punt 4 is een grove, op sectiekoppen gebaseerde
@@ -172,6 +179,53 @@ try {
   if (invalid.length) fail('Mastersprints met ongeldige target_maturity: ' + invalid.join(', '));
   else pass('Elk mastersprint-item heeft een geldige target_maturity');
 })();
+
+// 11. Geldige priority (P0-P4) en, indien aanwezig, geldige status.
+(function checkPriorityStatus() {
+  const VALID_PRIO = new Set(['P0','P1','P2','P3','P4']);
+  const VALID_STATUS = new Set(['NOT STARTED','IMPLEMENTED','TESTED','INTEGRATED','VALIDATED','CLOSED']);
+  const badPrio = index.filter(x => x.priority && !VALID_PRIO.has(x.priority)).map(x => x.id + ':' + x.priority);
+  const badStatus = index.filter(x => x.status && !VALID_STATUS.has(x.status)).map(x => x.id + ':' + x.status);
+  if (badPrio.length) fail('Items met ongeldige priority: ' + badPrio.join(', '));
+  else pass('Elk item heeft een geldige priority (P0-P4)');
+  if (badStatus.length) fail('Items met ongeldige status: ' + badStatus.join(', '));
+  else pass('Elk item met een status-veld heeft een geldige waarde');
+})();
+
+// 12. Validation-object: 8 verwachte dimensies, geldige waarden.
+(function checkValidationSchema() {
+  const DIMENSIONS = ['software', 'database', 'integration', 'device', 'ux', 'scientific', 'privacy_security', 'documentation'];
+  const VALID_VALUES = new Set(['REQUIRED', 'AS_APPLICABLE', 'PASS', 'NOT_APPLICABLE', 'OPEN', 'PARTIAL']);
+  let problems = [];
+  index.filter(x => x.type === 'mastersprint').forEach(item => {
+    const v = item.validation || {};
+    DIMENSIONS.forEach(dim => {
+      if (!(dim in v)) problems.push(item.id + ' mist dimensie "' + dim + '"');
+      else if (!VALID_VALUES.has(v[dim])) problems.push(item.id + '.' + dim + '=' + v[dim] + ' is ongeldig');
+    });
+  });
+  if (problems.length) fail('Validation-schema-problemen: ' + problems.slice(0, 10).join('; ') + (problems.length > 10 ? ' (+' + (problems.length - 10) + ' meer)' : ''));
+  else pass('Elk mastersprint-item heeft een volledig, geldig validation-object (8 dimensies)');
+})();
+
+// 13. Geen obsolete/superseded oude PR#68-MS-IDs meer als dependency-referentie.
+// Bron: alle "Oud ID (PR #68)"-cellen in ROADMAP_V1_1_MIGRATION_MATRIX.md die niet ook
+// als canoniek ID zijn hergebruikt (KEEP-gevallen negeren we bewust, want daar is
+// oud-ID == nieuw-ID en mag het wél als dependency voorkomen).
+try {
+  const matrixText = fs.readFileSync(path.join(ROOT, 'docs/ROADMAP_V1_1_MIGRATION_MATRIX.md'), 'utf8');
+  const oldIdMatches = [...matrixText.matchAll(/\|\s*(MS-F\d+-\d+)\s*\(/g)].map(m => m[1]);
+  const canonicalIds = new Set(index.map(x => x.id));
+  const obsoleteIds = new Set(oldIdMatches.filter(id => !canonicalIds.has(id)));
+  let leaks = [];
+  index.forEach(item => {
+    (item.dependencies || []).forEach(dep => { if (obsoleteIds.has(dep)) leaks.push(item.id + ' -> ' + dep); });
+  });
+  if (leaks.length) fail('Verwijzingen naar obsolete/superseded oude MS-IDs: ' + leaks.join(', '));
+  else pass('Geen dependency-referenties naar obsolete/superseded oude MS-IDs (' + obsoleteIds.size + ' obsolete IDs gecontroleerd)');
+} catch (e) {
+  fail('Kon docs/ROADMAP_V1_1_MIGRATION_MATRIX.md niet lezen: ' + e.message);
+}
 
 console.log('─'.repeat(52));
 if (errors) {

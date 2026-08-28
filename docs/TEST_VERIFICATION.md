@@ -10,7 +10,7 @@
 | **Lokale gate** (`node core/release-gate.js`, ook `npm test`) | Discovery-based v2: ontdekt automatisch alle `core/*.test.js` | ✅ Comprehensive sinds PR #64 (was: 10 hardcoded bestanden — HISTORISCH, zie onderaan) |
 | **CI Quality Gate** (`.github/workflows/quality-gate.yml`, vereiste check op `main`) | Eigen bash-lus (`tests=(core/*.test.js)`) die alle testbestanden draait | ✅ Comprehensive sinds commit `65e71bd` (18 augustus 2026) — **al vóór de audit**, zie correctie hieronder |
 
-**Actuele cijfers (28 augustus 2026, na F1 Foundation Closure):** 80 testbestanden in `core/` ontdekt (was 78 vóór de Observability Foundation- en Multi-tenant RLS-sprints, die `core/observability.test.js` en `core/fGymRlsMultiTenant.test.js` toevoegden), + `logic_tests.js` + 2 statische checks (syntax, purity) = 83 stappen. **82 automatisch uitgevoerd, 1 zichtbaar geskipt** (`fAndroidRelease.test.js`, reden: ontbrekende Android-buildmap in deze sandbox — draait wél in echte CI via `npm run cap:copy`), **0 gefaald**.
+**Actuele cijfers (28 augustus 2026, na MS-F2-01, schone checkout):** 81 testbestanden in `core/` ontdekt (was 80 vóór MS-F2-01, dat `core/fExecutionIdentity.test.js` toevoegde), + `logic_tests.js` + 2 statische checks (syntax, purity) = 84 stappen. **83 automatisch uitgevoerd, 1 zichtbaar geskipt** (`fAndroidRelease.test.js`, reden: ontbrekende Android-buildmap in deze sandbox — draait wél in echte CI via `npm run cap:copy`, en lokaal na een expliciete `npm run cap:copy`-reproductie, zoals tijdens MS-F2-01 zelf gedaan), **0 gefaald**. **Let op:** dit cijfer verandert bij elke sprint die een nieuw `core/*.test.js`-bestand toevoegt of de Android-buildmap tijdelijk aanwezig heeft — controleer bij twijfel altijd door `node core/release-gate.js` daadwerkelijk te draaien op een schone checkout, in plaats van een eerder gerapporteerd getal over te nemen.
 
 ---
 
@@ -38,16 +38,16 @@ Bij het aanmaken van PR #64 bleek dat `.github/workflows/quality-gate.yml` **al 
 ```
 🟢 logic_tests (regressie)                250/250
 🟢 core/adaptiveCoaching.test              15/15
-... (80 core/*.test.js-bestanden, automatisch ontdekt)
+... (81 core/*.test.js-bestanden, automatisch ontdekt)
 🟡 core/fAndroidRelease.test               SKIPPED — reason: vereist gesynchroniseerde Android-buildmap
 🟢 syntax index.html (11 scripts)          ok
 🟢 Calculation/Decision Core purity        geen DOM/DB/network
 ──────────────────────────────────────────────────────────
-Testbestanden ontdekt in core/: 80 (+ logic_tests.js, + 2 statische checks)
-Automatisch uitgevoerd: 82  |  Geskipt (zichtbaar): 1  |  Gefaald: 0
+Testbestanden ontdekt in core/: 81 (+ logic_tests.js, + 2 statische checks)
+Automatisch uitgevoerd: 83  |  Geskipt (zichtbaar): 1  |  Gefaald: 0
 🟢 RELEASE GATE GROEN
 ```
 
 | Categorie | Aantal | Geslaagd | Geskipt | Gefaald |
 |---|---|---|---|---|
-| Discovery-based lokale + CI-gate | 83 stappen (80 testbestanden + logic_tests + 2 statisch) | 82 | 1 (Android, met reden) | 0 |
+| Discovery-based lokale + CI-gate | 84 stappen (81 testbestanden + logic_tests + 2 statisch) | 83 | 1 (Android, met reden) | 0 |

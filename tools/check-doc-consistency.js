@@ -25,6 +25,12 @@
  * 13. Geen obsolete/superseded MS-ID-referenties: IDs die in ROADMAP_V1_1_MIGRATION_MATRIX.md
  *     als SUPERSEDE/REMOVE_AS_DUPLICATE zijn gemarkeerd, mogen niet meer als "dependencies"
  *     ergens in de actuele roadmap-index voorkomen.
+ * 14. Capability Count Consistency (dynamisch, geen hardcoded aantal): het aantal unieke
+ *     capability-IDs in docs/CAPABILITY_REGISTRY.md (canonieke bron) moet exact overeenkomen
+ *     met (a) het aantal `type:"capability"`-entries in docs/ROADMAP_INDEX.json die ook als
+ *     registry-ID herkenbaar zijn, en (b) de "Canonical capability count"/"X/X"-telling die
+ *     docs/ROADMAP_COVERAGE_AUDIT.md zelf rapporteert onder "Registry Coverage". Faalt hard
+ *     bij een mismatch, met de drie afzonderlijke tellingen in de foutmelding.
  *
  * BEPERKING (bewust, geen overengineering): dit script parseert geen vrije Markdown-
  * prosa met volledige semantiek. Punt 4 is een grove, op sectiekoppen gebaseerde
@@ -226,6 +232,41 @@ try {
 } catch (e) {
   fail('Kon docs/ROADMAP_V1_1_MIGRATION_MATRIX.md niet lezen: ' + e.message);
 }
+
+// 14. Capability Count Consistency — dynamisch, geen hardcoded aantal.
+(function checkCapabilityCountConsistency() {
+  try {
+    const registryText = fs.readFileSync(path.join(ROOT, 'docs/CAPABILITY_REGISTRY.md'), 'utf8');
+    const registryIds = new Set(
+      [...registryText.matchAll(/^\|\s*([A-Z][A-Za-z0-9/-]+-\d+(?:\/\d+)?)\s*\|/gm)].map(m => m[1])
+    );
+    const registryCount = registryIds.size;
+
+    const roadmapCapIds = new Set(
+      index.filter(x => x.type === 'capability').map(x => x.id).filter(id => registryIds.has(id))
+    );
+    const roadmapCapCount = roadmapCapIds.size;
+    const roadmapCapTotal = index.filter(x => x.type === 'capability').length;
+
+    const coverageText = fs.readFileSync(path.join(ROOT, 'docs/ROADMAP_COVERAGE_AUDIT.md'), 'utf8');
+    const coverageMatch = coverageText.match(/Registry Coverage[\s\S]{0,600}?(\d+)\/(\d+)\s*=\s*100%/);
+    const coverageNum = coverageMatch ? parseInt(coverageMatch[1], 10) : null;
+    const coverageDen = coverageMatch ? parseInt(coverageMatch[2], 10) : null;
+
+    const problems = [];
+    if (!coverageMatch) problems.push('kon geen "X/X = 100%"-telling vinden onder "Registry Coverage" in ROADMAP_COVERAGE_AUDIT.md');
+    if (roadmapCapCount !== registryCount) problems.push('roadmap_index capability-items die matchen met de registry (' + roadmapCapCount + ') komt niet overeen met registry (' + registryCount + ')');
+    if (coverageMatch && (coverageNum !== registryCount || coverageDen !== registryCount)) problems.push('coverage_audit (' + coverageNum + '/' + coverageDen + ') komt niet overeen met registry (' + registryCount + ')');
+
+    if (problems.length) {
+      fail('Capability count mismatch: registry=' + registryCount + ', roadmap_index_matching=' + roadmapCapCount + ' (totaal capability-items in index=' + roadmapCapTotal + '), coverage_audit=' + (coverageMatch ? coverageNum + '/' + coverageDen : 'onbekend') + ' — ' + problems.join('; '));
+    } else {
+      pass('Capability count consistent: registry=' + registryCount + ', roadmap_index=' + roadmapCapCount + ', coverage_audit=' + coverageNum + '/' + coverageDen + ' (index bevat daarnaast ' + (roadmapCapTotal - roadmapCapCount) + ' governance-item(s) zonder eigen registry-rij, bv. DOC-HANDBOOK-001 — bewust buiten deze telling)');
+    }
+  } catch (e) {
+    fail('Capability count consistency check kon niet worden uitgevoerd: ' + e.message);
+  }
+})();
 
 console.log('─'.repeat(52));
 if (errors) {

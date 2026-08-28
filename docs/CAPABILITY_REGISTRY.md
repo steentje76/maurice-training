@@ -40,7 +40,7 @@
 | ID | Capability | Code | DB | Tests | Integration | Device | Evidence/scientific | Maturity | Target | Gap | Priority | Phase |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | DEV-WEARAUTH-001 | Wearable OAuth-flow (start/callback/disconnect/status) | `wearable-auth-start.js`, `wearable-auth-callback.js`, `wearable-disconnect.js`, `wearable-status.js` | `wearable_connections`, `wearable_oauth_state` | `fWearableAuthSecurity.test.js` 20/20 — state altijd server-gebonden, eenmalig, verloopt na 10 min | Gemockt | N/A | N/A | **TESTED** | VALIDATED | real-device/live Google Health-sync-validatie | P2 | F5 |
-| DEV-WEARSYNC-001/002 | Wearable-sync (library + handler) | `_wearableSyncLib.js`, `wearable-sync.js` | `hrv_log` | `fWearableSync.test.js` 79/79, `fWearableSyncHandler.test.js` 43/43 (draait tegen echte handler) | **INTEGRATED** — test draait tegen echte handler-functie | Open | N/A | INTEGRATED | VALIDATED | real-device-validatie | P2 | F5 |
+| DEV-WEARSYNC-001 | Wearable-sync (library + handler) | `_wearableSyncLib.js`, `wearable-sync.js` | `hrv_log` | `fWearableSync.test.js` 79/79, `fWearableSyncHandler.test.js` 43/43 (draait tegen echte handler) | **INTEGRATED** — test draait tegen echte handler-functie | Open | N/A | INTEGRATED | VALIDATED | real-device-validatie | P2 | F5 |
 | DEV-CONCEPT2-001 | Concept2 PM5 live (BLE) | `core/concept2Live.js` | N/A | `fConcept2Live.test.js` 95/95, `fA5DeviceConnectE2E.test.js` 21/21 | Unit + E2E-simulatie | **OPEN** (geen real-device-bevestiging in deze audit) | N/A | TESTED | VALIDATED | real-device-validatie PM5 | P2 | F5 |
 
 ## E. Endurance & Multisport
@@ -64,7 +64,7 @@
 | COMM-UI-001 | Commercial/entitlements-UI | **geen gevonden** — 0 treffers voor `plans`/`features` in index.html | `plans`, `features`, `credit_packs`, `plan_feature_quota`, `usage_log` volledig aanwezig | N/A | N/A | N/A | N/A | **NOT STARTED** | IMPLEMENTED | geen enkel UI-scherm | **P2** (gedowngraded van P1 per Roadmap 2.0 v1.1 §29/32 — schema/benchmark-pariteit rechtvaardigt geen vroege bouw) | **F12** (verplaatst uit F2; zie MS-F12-01 t/m 04) |
 | CAP-REGISTRY-SCREENS-001 | 38 top-level schermen (scherminventaris) | Geïnventariseerd via centrale router `go(id)` in index.html | N/A | Onderliggende modules TESTED; **flow-niveau geen dedicated tests** | N/A | N/A | N/A | IMPLEMENTED (inventaris **COMPLETED**) | — | flow-niveau testdekking per scherm | P3 | F1 |
 
-| DEV-VALIDATION-001 | Real-device-validatie (samenvattend, dekt Concept2 + Google Health) | zie DEV-CONCEPT2-001, DEV-WEARAUTH-001, DEV-WEARSYNC-001/002 | N/A | Software-niveau TESTED op alle onderliggende capabilities | Deels (wearable-sync draait tegen echte handler) | **OPEN** op alle drie | N/A | TESTED (software) | VALIDATED | real-device-bevestiging in productie voor Concept2 PM5 en Google Health-sync | P2 | F5 |
+| DEV-VALIDATION-001 | Real-device-validatie (samenvattend, dekt Concept2 + Google Health) | zie DEV-CONCEPT2-001, DEV-WEARAUTH-001, DEV-WEARSYNC-001 | N/A | Software-niveau TESTED op alle onderliggende capabilities | Deels (wearable-sync draait tegen echte handler) | **OPEN** op alle drie | N/A | TESTED (software) | VALIDATED | real-device-bevestiging in productie voor Concept2 PM5 en Google Health-sync | P2 | F5 |
 
 ## H. Scientific Platform (lange termijn)
 
@@ -76,12 +76,17 @@
 
 ## Samenvatting per maturity-status
 
-| Status | Aantal capabilities |
-|---|---|
-| CLOSED | 6 (SEC-GYMS-001, SEC-TEST-001, SEC-GATE-001, AI-COACH-001, DEC-CORE-001 qua huidige scope, END-HYROX-001) |
-| INTEGRATED | 3 (DEV-WEARSYNC-001/002, CTX-CYCLE-001, END-INTERVAL-001) |
-| TESTED | 6 (PLAT-DELETE-001, SOC-GYMTEAM-001, EVID-SCI-001, DEV-WEARAUTH-001, DEV-CONCEPT2-001, END-HYROX-001-basis) |
-| IMPLEMENTED | 3 (AI-PROGRAM-AUTOGEN-001, COMM-UI-001 qua DB-schema, CAP-REGISTRY-SCREENS-001) |
-| NOT STARTED | 4 (GYM-RLS-SCOPING-001, AI-OUTPUT-CONTRACT-001, PLAT-BACKUP-CLEANUP-001, PLAT-OBSERVABILITY-001, WOMENS-PERF-DECISIONS-001) |
+**Canonieke capability count: 25** (alle unieke rijen in dit document — zie `docs/ROADMAP_COVERAGE_AUDIT.md` voor de formele definitie en reconciliatie met `docs/ROADMAP_INDEX.json`).
+
+| Status | Aantal | IDs |
+|---|---|---|
+| CLOSED | 4 | SEC-GYMS-001, SEC-TEST-001, SEC-GATE-001, AI-COACH-001 |
+| TESTED | 8 | PLAT-DELETE-001, SOC-GYMTEAM-001, EVID-SCI-001, DEC-CORE-001, DEV-WEARAUTH-001, DEV-CONCEPT2-001, END-HYROX-001, DEV-VALIDATION-001 |
+| NOT STARTED | 7 | PLAT-BACKUP-CLEANUP-001, PLAT-OBSERVABILITY-001, GYM-RLS-SCOPING-001, AI-OUTPUT-CONTRACT-001, WOMENS-PERF-DECISIONS-001, COMM-UI-001, SCI-CONSENT-001 |
+| IMPLEMENTED | 3 | COACH-RELATIONSHIP-001, AI-PROGRAM-AUTOGEN-001, CAP-REGISTRY-SCREENS-001 |
+| INTEGRATED | 3 | DEV-WEARSYNC-001, END-INTERVAL-001, CTX-CYCLE-001 |
+| **Totaal** | **25** | 4+8+7+3+3 = 25 ✓ |
+
+**Correctie t.o.v. de vorige versie van deze tabel:** de eerdere samenvatting telde END-HYROX-001 dubbel (in zowel CLOSED als TESTED), miste COACH-RELATIONSHIP-001, SCI-CONSENT-001 en DEV-VALIDATION-001 volledig, en had een denominator-fout bij NOT STARTED (label "4" bij een lijst van 5 IDs). Bovenstaande tabel is opnieuw opgebouwd direct vanuit de daadwerkelijke Maturity-kolom van elke rij hierboven, niet handmatig bijgehouden.
 
 **Expliciete status:** DB-verificatie is **VOLLEDIG UITGEVOERD** voor alle capabilities hierboven waar "DB" een kolom heeft — er is geen enkele capability meer waarvoor "DB VERIFIED ontbreekt" een geldige status is. De `index.html`-scherminventaris is **COMPLETED** (38 schermen, zie `docs/TRAININGSKOMPAS_PRODUCT_ARCHITECTURE.md` §3); wat nog open is, is uitsluitend **flow-niveau geautomatiseerde testdekking per scherm**, niet de inventarisatie zelf.

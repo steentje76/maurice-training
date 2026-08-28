@@ -38,8 +38,8 @@ Geen enkel P0 is momenteel open. De drie eerder gevonden P0's zijn gesloten via 
 **Priority:** **P2** (gedowngraded van P1 — een bestaand DB-schema of benchmark-pariteit rechtvaardigt op zichzelf geen vroege bouw). **Complexity:** M. **Roadmap phase:** **F12** (verplaatst van F2).
 
 ### GAP-P1-003 — AI-outputcontract ontbreekt
-**Capability-ID:** AI-OUTPUT-CONTRACT-001 (**expliciet onderscheiden van AI-COACH-001**, zie Capability Registry — dit is een governance-gat, geen security-gat)
-**Current:** `coach.js`/`buildCtx()` zijn security-getest (JWT, open-proxy-regressie — zie AI-COACH-001, CLOSED voor dat deel) maar er is geen technische controle die een AI-antwoord blokkeert als het een niet-onderbouwd cijfer noemt of diagnose-achtige taal gebruikt.
+**Capability-ID:** AI-OUTPUT-CONTRACT-001 (**expliciet onderscheiden van de reeds gesloten security-capability voor dezelfde proxy**, zie sectie "CLOSED GAPS / HISTORICAL" en Capability Registry — dit is een governance-gat, geen security-gat)
+**Current:** `coach.js`/`buildCtx()` zijn security-getest (JWT, open-proxy-regressie — zie de historische P0-002-sluiting hierboven) maar er is geen technische controle die een AI-antwoord blokkeert als het een niet-onderbouwd cijfer noemt of diagnose-achtige taal gebruikt.
 **Evidence:** CODE VERIFIED — `scientificEvidence.js` beschermt Decision Rules, niet de vrije AI-tekst zelf (zie Product Architecture §5).
 **Target:** contracttest op het AI-responsschema (MS-F4-01).
 **Dependency:** EVID-SCI-001.

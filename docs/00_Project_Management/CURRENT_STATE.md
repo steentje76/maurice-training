@@ -28,7 +28,11 @@ Training Core, Calculation Engine, Context Engine, Decision Engine, Evidence Arc
 ## 4. Current open priorities
 Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
 - **Open P0: 0**
-- **Open P1: 3** — AI-outputcontract ontbreekt (AI-OUTPUT-CONTRACT-001, MS-F4-01), AI-adaptive-programmering-gat t.o.v. Hevy Trainer (AI-PROGRAM-AUTOGEN-001, MS-F4-04), geen sleep/HRV-provenance in `hrv_log` (GAP-P1-007, CALC-REC-REGISTRY-001, F3-vervolgwerk — raakt de betrouwbaarheid van de hele Recovery-keten).
+- **Open P1: 3, met expliciet onderscheid in scope** (nooit een ongescopeerde "P1 bestaat" zonder aan te geven wát hij blokkeert):
+  - AI-outputcontract ontbreekt (AI-OUTPUT-CONTRACT-001) — **F4-fase-item**, target MS-F4-01, blokkeert F2/F3 niet.
+  - AI-adaptive-programmering-gat t.o.v. Hevy Trainer (AI-PROGRAM-AUTOGEN-001) — **F4-fase-item**, target MS-F4-04, blokkeert F2/F3 niet.
+  - Geen sleep/HRV-provenance in `hrv_log` (GAP-P1-007, CALC-REC-REGISTRY-001) — **F3-fase-blokkerende P1**, target MS-F3-10 (Explainability & Provenance Contract). Géén MS-F3-03- of MS-F3-04-blokkerende P1 (die sprints se eigen acceptance gates vereisten dit niet en zijn terecht CLOSED). **F3 als geheel mag niet CLOSED tot deze P1 is opgelost of formeel, evidence-based hergeclassificeerd.**
+  - **MS-F3-04-blocking P1: 0.** **F3-phase open P1: 1** (GAP-P1-007).
 - **MS-F1-01 (Multi-tenant RLS Security Closure) is CLOSED** — membership-scoped RLS op organizations/teams/training_groups/seasons/macrocycles/mesocycles/microcycles (`migratie_v498.sql`), plus een tijdens de sprint gevonden en gesloten P0 (self-privilege-escalatie via `users.gym_role`/`gym_id`/`system_role`, `migratie_v497.sql`)
 - Open P2: 7 — incl. Handbook-drift en Commercial-UI, beide gedowngraded van P1 per Roadmap 2.0 v1.1
 - Open P3/P4: zie `docs/GAP_ANALYSIS_V2.md` voor de volledige lijst

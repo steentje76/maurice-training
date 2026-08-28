@@ -21,13 +21,12 @@ Geen enkel P0 is momenteel open. De drie eerder gevonden P0's zijn gesloten via 
 
 ## P1 — kernproduct / kritieke benchmark-gap
 
-### GAP-P2-006 — Handbook-drift (verplaatst van P1, zie Roadmap 2.0 v1.1 §29)
+### GAP-P2-006 (verkleind) — Handbook: resterende Prioriteit-2-hoofdstukken
 **Capability-ID:** DOC-HANDBOOK-001
-**Current:** H6 (Screen Library) en H9 (AI Governance) bevestigd feitelijk stale (geen "Cyclus"/`s-lich-cyclus`-referentie in H6; geen `evidence_store.v1`/DEC-036-referentie in H9). Laatst bijgewerkt 2 augustus, code staat op v4.69.0.
-**Evidence:** CODE VERIFIED (grep tegen Handbook-bestanden).
-**Target:** H6/H9/H12 inhoudelijk bijwerken volgens `docs/HANDBOOK_UPDATE_PLAN.md`.
-**Dependency:** geen. **Test:** n.v.t. (documentatie). **Validation:** handmatige review na update.
-**Priority:** **P2** (gedowngraded van P1 — Roadmap 2.0 v1.1: "documentatie is geen vervanging voor productwaarde"; blijft wel F1-onderhoud, MS-F1-04). **Complexity:** L. **Roadmap phase:** F1.
+**Current:** H6/H9/H12 (Prioriteit 1) zijn CLOSED via de Normative Documentation Sync-sprint (zie sectie "CLOSED GAPS / HISTORICAL"). H4 (UX Interaction Design), H5 (UI Design System), H8 (AI Behaviour Library) en H10 (Navigation Architecture) blijven vermoedelijk gedeeltelijk stale (nog niet inhoudelijk geverifieerd) — zie `docs/HANDBOOK_UPDATE_PLAN.md` Prioriteit 2.
+**Evidence:** CODE VERIFIED voor H6/H9/H12; H4/H5/H8/H10 nog niet geverifieerd.
+**Target:** gerichte vergelijkingssessie per Prioriteit-2-hoofdstuk.
+**Priority:** P3 (verlaagd t.o.v. de afgeronde Prioriteit-1-hoofdstukken — geen bewezen tegenstrijdigheid, alleen vermoede onvolledigheid). **Complexity:** M. **Roadmap phase:** F1 (onderhoud, niet blokkerend).
 
 ### GAP-P2-007 — Commercial/Entitlements heeft geen UI (verplaatst van P1/F2, zie Roadmap 2.0 v1.1 §32)
 **Capability-ID:** COMM-UI-001
@@ -117,6 +116,15 @@ Vereist eerst een consent-flow (nog niet gebouwd) bovenop de al aanwezige Eviden
 ---
 
 ## CLOSED GAPS / HISTORICAL
+
+### GAP-P2-006 (voorheen) — Handbook-drift H6/H9/H12 — **STATUS: CLOSED (Prioriteit 1) via de Normative Documentation Sync-sprint**
+- **Original finding:** H6 (Screen Library) en H9 (AI Governance) bevestigd feitelijk stale — geen "Cyclus"/`s-lich-cyclus`-referentie in H6; geen `evidence_store.v1`/DEC-036-referentie in H9. H12 (Quality Assurance) beschreef `logic_tests.js` als hét bindende regressiemechanisme terwijl `core/release-gate.js` al langer de daadwerkelijke gate is.
+- **Resolution:** H6 — prominente COVERAGE GAP-notitie bovenaan het hoofdstuk. H9 — nieuwe bindende subsectie 6.5 "Evidence & Corroboratie-governance". H12 — 4 gerichte correcties (Deel 4/5/16/18) naar `core/release-gate.js`.
+- **Mastersprint:** Normative Documentation Sync (F1).
+- **Evidence:** directe grep-bevestiging van de toegevoegde tekst in alle drie de bestanden; geen testsuite van toepassing (documentatiewijziging).
+- **Closed date:** 28 augustus 2026.
+- **Current status:** CLOSED voor Prioriteit 1. H4/H5/H8/H10 (Prioriteit 2) blijven open als verkleind vervolg-item GAP-P2-006 (zie boven, nu P3).
+
 
 ### GAP-P2-003 (voorheen) — Observability ontbreekt volledig — **STATUS: CLOSED (kern) via MS-F1-02**
 - **Original finding:** geen bewijs van gestructureerde client- of server-side monitoring buiten Netlify's eigen functielogs.

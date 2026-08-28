@@ -98,7 +98,7 @@ Acht "Done"-categorieën, elk met concrete, toetsbare voorwaarden.
 | **UI Done** | Elk element herleidbaar tot een Design Token (Hoofdstuk 5, Deel 15); Premium Design Checklist (Hoofdstuk 5, Deel 18, 252 punten) doorlopen voor de geraakte componenten |
 | **UX Done** | Premium UX Checklist (Hoofdstuk 4, Deel 11) doorlopen; UX Scorecard (Hoofdstuk 4, Deel 12) scoort minimaal "Voldoende", met een concreet actieplan indien niet "Premium" |
 | **AI Done** | Alle vijf testtypen uit Hoofdstuk 9 (Deel 4.2: functioneel, explainability, safety, persoonlijkheid, sportspecifiek) geslaagd; Constitution-toetsing (Hoofdstuk 8-9) zonder onopgeloste schending |
-| **Testing Done** | Zie Deel 5 van dit hoofdstuk — alle relevante testtypen voor de wijziging uitgevoerd en geslaagd, inclusief de bestaande `logic_tests.js`-suite (127+ tests) zonder regressie |
+| **Testing Done** | Zie Deel 5 van dit hoofdstuk — alle relevante testtypen voor de wijziging uitgevoerd en geslaagd, inclusief de volledige `core/release-gate.js`-suite (discovery-based, 80 testbestanden, 82 teststappen — bijgewerkt via MS-F1-04, zie kanttekening onder Deel 5) zonder regressie |
 | **Accessibility Done** | Zie Deel 8 van dit hoofdstuk — WCAG AA bevestigd, alle relevante accessibility-checklists (Hoofdstuk 4/5/10/11) doorlopen |
 | **Performance Done** | Zie Deel 7 van dit hoofdstuk — alle relevante performance-normen gehaald, gemeten niet aangenomen |
 | **Documentation Done** | CURRENT_STATE.md/Decision Log bijgewerkt waar relevant (Hoofdstuk 9, Deel 1.5/10.5); versiebump uitgevoerd (bestaande, bindende praktijk) |
@@ -111,17 +111,19 @@ Acht "Done"-categorieën, elk met concrete, toetsbare voorwaarden.
 
 ## Deel 5 — Test Strategy
 
+**Kanttekening (toegevoegd via MS-F1-04, 28 augustus 2026 — CANONICAL CURRENT vervangt de hieronder genoemde `logic_tests.js`-centrische beschrijving):** `logic_tests.js` bestaat nog en draait mee, maar is niet langer hét regressiemechanisme — de daadwerkelijke, bindende gate is `node core/release-gate.js`, een discovery-based runner die automatisch elk bestand onder `core/*.test.js` vindt en uitvoert (momenteel 80 testbestanden, 82 teststappen incl. `logic_tests.js` en 2 statische checks). Dit verving het oude, handmatig bijgehouden `logic_tests.js`-only-beeld nadat bleek dat de lokale testrun structureel achterliep bij wat CI al langer volledig draaide (zie `docs/TEST_VERIFICATION.md`). De onderstaande tabel is voor het overige ongewijzigd gelaten (historische context, niet elke rij vereiste correctie).
+
 Dertien testtypen, elk met status, doel en bron.
 
 | Testtype | Status | Doel | Bron/uitvoering |
 |---|---|---|---|
-| **Unit Tests** | 🟢 | Geïsoleerde logica-validatie (berekeningen: dagfactor, 1RM, ACWR) | Bestaande `logic_tests.js`, 127+ zelfstandige tests, Node.js, geen DOM/imports |
-| **Integration Tests** | 🟡 | Samenwerking tussen modules (bijv. check-in → dagfactor → AI-advies) | Uit te breiden binnen dezelfde `logic_tests.js`-aanpak; geen aparte tooling nodig zolang de bestaande, zelfstandige-scenario-structuur volstaat |
+| **Unit Tests** | 🟢 | Geïsoleerde logica-validatie (berekeningen: dagfactor, 1RM, ACWR) | `core/release-gate.js` (80 discovery-based testbestanden, incl. `logic_tests.js`), Node.js, geen DOM/imports |
+| **Integration Tests** | 🟡 | Samenwerking tussen modules (bijv. check-in → dagfactor → AI-advies) | Eigen `core/*.test.js`-bestanden binnen dezelfde discovery-based aanpak; geen aparte tooling nodig zolang de bestaande, zelfstandige-scenario-structuur volstaat |
 | **Component Tests** | 🔴 | Individuele UI-componenten (Hoofdstuk 7) tegen hun specificatie | Nieuw: elke component uit Hoofdstuk 7 krijgt een geïsoleerd testscenario tegen zijn 24-veld-specificatie (padding/radius/states/accessibility) |
 | **UX Tests** | 🟡 | Doorloop van de Premium UX Checklist (Hoofdstuk 4, Deel 11) | Handmatige/steekproef-doorloop per release |
 | **Accessibility Tests** | 🟡 | Schermlezer, toetsenbord, contrast, reduce motion | Handmatige steekproef (Deel 8) + geautomatiseerde contrastcontrole waar mogelijk |
 | **AI Tests** | 🟡 | Functioneel, explainability, safety, persoonlijkheid, sportspecifiek (Hoofdstuk 9, Deel 4.2) | Vaste edge-casetestset (Hoofdstuk 9, Deel 5.11) bij elke AI-wijziging |
-| **Regression Tests** | 🟢 | Voorkomen dat een eerder opgeloste bug terugkeert | Volledige `logic_tests.js`-run bij elke wijziging (bestaande, bindende praktijk) |
+| **Regression Tests** | 🟢 | Voorkomen dat een eerder opgeloste bug terugkeert | Volledige `core/release-gate.js`-run bij elke wijziging (bestaande, bindende praktijk) |
 | **Smoke Tests** | 🔴 | Snelle, oppervlakkige controle dat de kernflow (inloggen, trainen loggen, AI-advies) functioneert na elke deploy | Nieuw: een minimale testset (<10 scenario's) die binnen enkele minuten de kernflow bevestigt vóór uitgebreidere tests |
 | **Exploratory Testing** | 🟡 | Ongestructureerd, ervaringsgedreven testen door de Product Owner zelf, gericht op "voelt dit goed" | Bestaande praktijk (Maurice test als primaire atleet), hier geformaliseerd als verplichte stap vóór Internal Testing (Deel 12) |
 | **User Acceptance Tests** | 🟡 | Bevestiging door de daadwerkelijke doelgroep (ART CrossFit-leden) dat een feature de bedoelde waarde levert | Onderdeel van Closed Testing (Deel 13) |
@@ -129,7 +131,7 @@ Dertien testtypen, elk met status, doel en bron.
 | **Offline Tests** | 🔴 | Functionaliteit onder vliegtuigmodus/verbroken verbinding | Nieuw: verplichte vliegtuigmodus-test voor elke wijziging aan de trainingsflow (Hoofdstuk 4, Golden Rule UX41-eis) |
 | **Wearable Tests** | 🔴 | OAuth-koppeling, synchronisatie, tokenverval-afhandeling | Nieuw: periodieke, handmatige verificatie van de Fitbit-koppeling inclusief de bekende Testing-mode-tokenvervalbeperking (Product Audit, sectie 4.8) |
 
-**Bindende regel:** Unit Tests en Regression Tests (via `logic_tests.js`) zijn **verplicht en geautomatiseerd** bij elke wijziging, zonder uitzondering — dit is de bestaande, bewezen kern van de testpraktijk en wordt hier expliciet als fundament van de overige twaalf testtypen bevestigd.
+**Bindende regel:** Unit Tests en Regression Tests (via `core/release-gate.js`) zijn **verplicht en geautomatiseerd** bij elke wijziging, zonder uitzondering — dit is de bestaande, bewezen kern van de testpraktijk en wordt hier expliciet als fundament van de overige twaalf testtypen bevestigd.
 
 
 ---
@@ -777,7 +779,7 @@ Acht poorten, elk met doel, benodigde documentatie, verantwoordelijke, acceptati
 | Doel | Alle Stories binnen de sprint zijn functioneel afgerond |
 | Documentatie | Bijgewerkte CURRENT_STATE.md |
 | Verantwoordelijke | AI Software Engineer, akkoord Product Owner |
-| Acceptatiecriteria | Volledige `logic_tests.js`-suite (127+ tests) slaagt zonder regressie |
+| Acceptatiecriteria | Volledige `core/release-gate.js`-suite (80 testbestanden, 82 teststappen) slaagt zonder regressie |
 | Risico's | Sprint-druk leidt tot overslaan van niet-functionele eisen (accessibility, motion) — gemitigeerd door Deel 4 (Definition of Done, acht categorieën) |
 
 ### Gate 3 — Feature Complete
@@ -866,7 +868,7 @@ Honderd bindende Quality Laws — de samenvatting van dit gehele hoofdstuk, en d
 
 **1.** Kwaliteit gaat altijd boven snelheid.
 
-**2.** Geen build zonder volledige regressietest (`logic_tests.js`).
+**2.** Geen build zonder volledige regressietest (`core/release-gate.js`).
 
 **3.** Geen release met kritieke bugs, ongeacht releasedruk.
 

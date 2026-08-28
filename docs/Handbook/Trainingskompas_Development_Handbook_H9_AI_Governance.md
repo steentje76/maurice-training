@@ -273,6 +273,19 @@ De belangrijkste preventie is architecturaal, niet reactief: elke AI-output word
 |---|---|
 | Een output bevat een cijfer dat niet matcht met de brondata (geautomatiseerd gedetecteerd) | Output wordt geblokkeerd, gebruiker krijgt de neutrale "onvoldoende informatie"-fallback (Hoofdstuk 8, Deel 2.4) in plaats van de foutieve output |
 | Een gebruiker meldt een onjuist advies (Deel 7) | Directe prioritaire review; bij bevestiging: toevoeging aan de regressietestset (Deel 4.4) |
+
+### 6.5 Evidence & Corroboratie-governance 🟢 — TOEGEVOEGD via MS-F1-04 (Normative Documentation Sync, 28 augustus 2026)
+
+**CANONICAL CURRENT** (deze subsectie ontbrak volledig in eerdere versies van dit hoofdstuk; de onderliggende architectuur bestaat al sinds de Evidence/Provenance-sprints, ruim vóór deze documentatiecorrectie — zie `docs/CAPABILITY_REGISTRY.md`, EVID-SCI-001/DEC-CORE-001).
+
+TrainingKompas kent een aparte **Evidence Registry** (`core/scientificEvidence.js`, `evidence_store.v1`) die vastlegt welke wetenschappelijke onderbouwing achter een trainingsregel zit, met een verplicht evidence-niveau (A t/m E), bron, scope en limitaties per entry. Dit is bindend voor élke AI-output die een claim doet die aan een Decision Rule is gekoppeld:
+
+- **Ongevalideerde evidence voedt nooit een regel.** Een Decision Rule mag alleen een claim aan de gebruiker presenteren als de onderliggende evidence-entry gevalideerd is (`validated_by` ingevuld, verplichte metadata compleet). De AI verzint nooit zelf een evidence-entry of bron.
+- **Corroboratieregel (DEC-036, `core/decision.js`):** een enkel signaal is nooit voldoende voor een ingrijpend advies. Concreet: HRV mag nooit zelfstandig een rustdag afdwingen of overtraining vaststellen — een deload-/rustadvies vereist minimaal **twee onafhankelijke, gelijktijdige signalen** (bijvoorbeeld ACWR platform + ≥2 dalende oefeningen), nooit één losstaand signaal. Dit is een architecturale regel, niet een AI-instructie — de AI kan deze eis niet omzeilen omdat de onderliggende Decision Rule het advies zelf pas genereert nadat aan de corroboratie-voorwaarde is voldaan.
+- **Elke AI-uitleg die naar wetenschappelijke onderbouwing verwijst** (Hoofdstuk 8, Deel 2 — Explainability) citeert het evidence-niveau en de bron zoals vastgelegd in de Evidence Registry, nooit een eigen, niet-herleidbare formulering van "onderzoek toont aan dat...".
+- Deze governance-laag is aanvullend op, niet ter vervanging van, de bestaande hallucination-preventie in 6.1-6.4 hierboven.
+
+**Bindende regel (toegevoegd aan de Golden Rules van dit hoofdstuk):** een AI-output mag nooit een wetenschappelijke claim als feit presenteren zonder een gekoppelde, gevalideerde Evidence Registry-entry, en mag nooit een ingrijpend trainingsadvies (deload/rust/stopzetten) baseren op een enkel fysiologisch signaal.
 | Herhaalde hallucination in eenzelfde gespreksthread | De AI stopt met verder ongefundeerd redeneren binnen dat thema en verwijst naar de eenvoudigere, deterministisch berekende basisweergave |
 
 ### 6.5 Geen antwoord geven 🟢

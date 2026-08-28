@@ -4,6 +4,8 @@
 **Voortbouwend op:** Hoofdstuk 1 (Productvisie & Filosofie), Hoofdstuk 2 (Doelgroepen, Persona's & Customer Journey), Hoofdstuk 3 (Product Design Principles & Golden Rules), Hoofdstuk 4 (Premium UX & Interaction Design Handbook), Hoofdstuk 5 (Premium UI Design System & Visual Language).
 **Karakter:** dit hoofdstuk is uitsluitend product-, UX-, functionele en ontwerpdocumentatie — geen code, geen wireframes, geen architectuur. Elke specificatie is geschreven zodat een ontwerper of ontwikkelaar zonder verdere interpretatie kan beginnen.
 
+> **COVERAGE GAP (POINT-IN-TIME AUDIT, toegevoegd via MS-F1-04, 28 augustus 2026):** dit hoofdstuk noemt "v3.3.25" als referentieversie en bevat geen specificatie voor de 11 Lichaam-subschermen (`s-lich-*`, incl. `s-lich-cyclus`) of de HYROX-schermen (`s-hyrox`, `s-hyrox-perf`, incl. Adaptive/Relay/Doubles-varianten) die inmiddels bestaan in de huidige app (v4.69.1). Dit hoofdstuk beschrijft dus geen schermen die tegenstrijdig zijn met de huidige architectuur — het is onvolledig, niet fout, voor deze specifieke schermen. Zie `docs/CAPABILITY_REGISTRY.md` (CTX-CYCLE-001, END-HYROX-001) en `docs/HANDBOOK_UPDATE_PLAN.md` voor de volledige lijst. Het volledig uitschrijven van 24-veld-specificaties voor deze schermen is bewust NIET in deze sync-sprint gedaan (dat is contentcreatie, geen "synchronisatie van tegenstrijdige normatieve instructies") en blijft open vervolgwerk.
+
 ---
 
 ### Leeswijzer en gebruikte conventies

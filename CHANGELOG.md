@@ -1,5 +1,77 @@
 # Trainingskompas — Changelog
 
+## v4.69.1 — Root-cause-fix: stale Fitbit-data op Home/Coach (28 augustus 2026)
+
+**Aanleiding**: Fitbit toonde vanochtend actuele waarden (stappen 58, herstel 87,
+slaap 5u52) terwijl Trainingskompas tegelijk Herstel 100% / Gereedheid 100 /
+Slaap 9u13 / "Klaar om te trainen" liet zien.
+
+**Root cause 1 (extern, niet code)**: de Google Health-koppeling
+(`wearable_connections`, provider `google_health`) staat sinds 22 augustus op
+`last_sync_status='refresh_failed'` — elke tokenvernieuwing bij
+`oauth2.googleapis.com/token` faalt sindsdien. Laatste succesvolle Fitbit-rij in
+`hrv_log`: 22-08-2026 (slaap 9.22u = 9u13m — exact de getoonde waarde). De
+precieze externe oorzaak (ingetrokken toestemming / config-wijziging / iets
+anders) is met de beschikbare logs niet vast te stellen — de eerdere aanname
+"Google OAuth Testing-mode" is voor dit incident **niet geverifieerd** en wordt
+hierbij gecorrigeerd (een eerder rapport meldt dat de app al op 17 augustus
+naar Production stond). Vereist herkoppeling door de gebruiker; geen codefix
+mogelijk.
+
+**Root cause 2 (code, hier gefixt)**: `refreshHome()`, `tkReadinessVandaag()` en
+`recoveryAdjustmentForToday()` gebruikten de nieuwste `hrv_log`-rij
+(`order=date.desc`) zonder te controleren of die rij daadwerkelijk van vandaag
+was. Een 6 dagen oude rij werd zo stilzwijgend als actuele status
+gepresenteerd — in strijd met de architectuurregel dat verouderde data nooit
+als actueel mag worden getoond. Het Lichaam-scherm had dit probleem al niet
+(via `DeviceCore.observation`/`staleAfterDays:2`); Home/Coach volgden een
+ander, ongeveiligd pad.
+
+**Fix (uitsluitend index.html + core/deviceIntegration.js, GEEN wijziging aan
+`core/calculation.js`/`core/decision.js`/`core/coaching.js`)**:
+- Nieuwe pure helper `isDailyMetricFresh(rowDateYmd, todayYmd)` (drempel 2
+  dagen, dezelfde grens als het Lichaam-scherm) op basis van de al bestaande
+  `daysBetweenDates()` (UTC-anker) en `td()` (device-lokale datum — geen
+  hardcoded tijdzone, werkt correct in elke tijdzone en tijdens reizen).
+- `refreshHome()`/`recoveryAdjustmentForToday()`: slaap/cyclus uit een stale
+  rij worden vóór de (ongewijzigde) `dagfactor()`-aanroep naar `null` vertaald;
+  `CalcCore.slaapDagFactor(null)` valt daardoor terug op de bestaande neutrale
+  1.00 — geen fabricage, geen ongeziene straf of beloning.
+- `tkReadinessVandaag()`: stale hrv/rhr/slaap krijgen `kwaliteit:'no_data'`
+  vóór de aanroep van `DecisionCore.readinessDay()`. Die functie had dit
+  ONBETROUWBAAR-mechanisme al (verhuist het signaal naar `ontbreekt`); het werd
+  alleen nooit gevoed — nul regels in `core/decision.js` gewijzigd.
+- `core/deviceIntegration.js`: `observation()` kreeg een `staleAfterDays`-
+  parameter (default ongewijzigd op 7) zodat het Lichaam-scherm HRV/RHR/slaap
+  nu op 2 dagen beoordeelt i.p.v. de generieke 7 — dezelfde 6 dagen oude data
+  werd daar voorheen nog als "recent" geclassificeerd. `deviceConnectionState()`
+  herkent nu ook de daadwerkelijke serverwaarden `refresh_failed` en
+  `error:<CODE>` als `sync_failed` (voorheen alleen de nooit-geschreven literal
+  `'error'` — dode code). Het Lichaam-scherm toont "laatste synchronisatie"
+  voortaan alleen bij een écht geslaagde poging, niet bij elke poging
+  (server schrijft `last_sync_at` ook bij mislukking).
+- Bekende, bewust ongewijzigde beperking: `hrvDagFactorPersonal()` (HRV-
+  trendclassificatie) heeft geen eigen leeftijd-check en kan bij een langdurig
+  kapotte sync nog een aantal dagen een 'g'-classificatie tonen op basis van de
+  laatste echte meting. Vastgelegd als vervolgpunt, niet in deze sprint
+  aangepakt (risico van een bredere statistische-baseline-wijziging).
+
+**Tests**: 10 nieuwe gevallen in `logic_tests.js` (freshness-gate, grensgevallen,
+tijdzones Amsterdam/Dublin/UTC-middernacht, regressie op het exacte
+9u13-scenario) + 7 nieuwe gevallen in `core/fDeviceIntegration.test.js`
+(refresh_failed/error:-classificatie, staleAfterDays-override). Volledige
+regressie: 260/260 (was 250/250) + `fDeviceIntegration` 240/240 +
+`fWearableSync` 79/79 + `fWearableSyncHandler` 43/43, alle groen. Protected
+core (`calculation.js`/`decision.js`/`relationship.js`/`athlete.js`/
+`coaching.js`) SHA-bevestigd ongewijzigd. `sw.js`: alleen `CACHE_NAME`
+v46900→v46901 (`CACHE_STATIC`/`CORE_SIG` ongewijzigd — die hashen alleen
+`calculation.js`+`decision.js`, niet geraakt).
+
+**Niet in deze sprint**: geen proactieve storingsmelding op Home zelf bij een
+mislukte sync (`wearableSyncSilent()` blijft bewust stil bij falen — de fix
+zorgt dat stale data dan niet meer ten onrechte als "goed" oogt, maar meldt de
+storing niet actief op het beginscherm). Voorstel voor een vervolgsprint.
+
 ## v4.69.0 — A6: Multi-Sport Interval Execution 1.0 (27 augustus 2026)
 
 MASTERSPRINT A6. Bouwt van Trainingskompas een echte multi-sport

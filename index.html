@@ -6011,7 +6011,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.0';
+const APP_VER = 'v4.69.1';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -10705,6 +10705,22 @@ function daysBetweenDates(fromYmd,toYmd){
   if(isNaN(a)||isNaN(b))return null;
   const d=Math.round((b-a)/86400000);
   return d<0?0:d;
+}
+// v4.69.1 — root-cause-audit Fitbit-sync-integriteit (28-08-2026): HRV/rusthartslag/
+// slaap zijn DAGELIJKSE signalen. Ouder dan gisteren mag niet stil als "vandaag"
+// worden gebruikt in de dagfactor/readiness-berekening — dat presenteerde 6 dagen
+// oude Fitbit-data (slaap 9u13 van 22-08) als actuele status op Home ("Klaar om te
+// trainen", 100%). Puur, geen fabricage: gebruikt de al bestaande, al geteste
+// daysBetweenDates() (UTC-anker, geen timezone-drift) en td() (lokale devicedag,
+// geen hardcoded Europe/Amsterdam — werkt voor elk toestel/tijdzone).
+// Drempel = 2 (vandaag/gisteren = vers), zelfde als staleAfterDays op het Lichaam-
+// scherm (index.html renderLichaamGegevens) — één gedeelde freshness-semantiek voor
+// dagelijkse wearable-metrics, twee call-sites (Home leest een losse rij i.p.v. een
+// serie, dus geen DeviceCore.observation()-hergebruik hier — wel dezelfde drempel).
+const TK_DAILY_METRIC_STALE_AFTER_DAYS=2;
+function isDailyMetricFresh(rowDateYmd,todayYmd){
+  const age=daysBetweenDates(rowDateYmd,todayYmd);
+  return age!=null && age<TK_DAILY_METRIC_STALE_AFTER_DAYS;
 }
 
 // ── F0.7L — CANONICAL WEIGHT RESOLVER ──
@@ -16252,14 +16268,23 @@ async function refreshHome(){
   catch(e){ renderHomeContextCard(null); }
   let dfInfo=null,nextT=null;
   if(lh){
+    // v4.69.1 — root-cause-audit Fitbit-sync-integriteit (28-08-2026): slaap is een
+    // dagelijks signaal. Is de nieuwste hrv_log-rij ouder dan gisteren (bv. omdat de
+    // wearable-sync al dagen kapot is), dan mag die slaapwaarde niet meer als "vandaag"
+    // de dagfactor voeden — anders presenteert Home een 6 dagen oude meting (bv. 9u13
+    // slaap) als actuele status. CalcCore.slaapDagFactor(null) valt al terug op een
+    // neutrale factor (geen fabricage, geen kunstmatige straf) — bestaand gedrag, hier
+    // alleen correct aangeroepen. hrvComponent/hrvDagFactorPersonal blijft bewust
+    // ongewijzigd: dat is een trend-over-tijd-classificatie, geen "is dit van vandaag".
+    const slaapActueel=isDailyMetricFresh(lh.date,td());
     const hrvComponent=hrvDagFactorPersonal(hd);
     const st=hrvComponent.st;
-    const df=dagfactor(hrvComponent,lh.sleep,lh.cyclus_fase);
+    const df=dagfactor(hrvComponent,slaapActueel?lh.sleep:null,lh.cyclus_fase);
     // v3.3.36 Batch 2 #1: dagfactor gepromoveerd tot dominant, tikbaar dag-element (H8 explainable AI).
     const heroKleur='var(--day)'; // v3.3.50 P6 — dagfactor-ring volgt het dag-thema (dayState)
     const dfStat=dagfactorStatus(df.factor);
     const ringPct=Math.max(0,Math.min(1,(df.factor-0.85)/0.20));const RC=Math.round(2*Math.PI*24);
-    const uitleg=dagfactorUitleg(lh.hrv,lh.sleep,lh.cyclus_fase,df);
+    const uitleg=dagfactorUitleg(lh.hrv,slaapActueel?lh.sleep:null,lh.cyclus_fase,df);
     dfInfo={factor:df.factor,uitleg,hero:heroKleur,st};
     const sig=[lh.hrv,lh.sleep,lh.cyclus_fase].filter(Boolean).length;
     const conf=(lh.hrv&&lh.sleep)?'Hoog':(lh.hrv||lh.sleep)?'Middel':'Laag';
@@ -16464,14 +16489,20 @@ async function tkReadinessVandaag(dfInfo,recRows,nextT){
     const rhrDelta=rhrBaselineDelta(hd);
     herstel=recoveryScoreFrom(dfInfo, recRows||[], {rhrDelta:(rhrDelta!=null?rhrDelta:undefined), voelt:(lh&&lh.voelt)||undefined});
   }catch(_){ herstel=null; }
+  // v4.69.1 — root-cause-audit Fitbit-sync-integriteit (28-08-2026): DecisionCore.readinessDay
+  // heeft al een ONBETROUWBAAR-mechanisme (kwaliteit:'no_data'|'sync_failed' → signaal
+  // verhuist naar 'ontbreekt', geen protected-core-wijziging nodig) — het werd alleen nooit
+  // gevoed. hrv/rhr/slaap zijn dagelijkse signalen: ouder dan gisteren → kwaliteit:'no_data',
+  // zodat readinessDay ze correct als ontbrekend behandelt i.p.v. stilzwijgend als "vandaag".
+  const lhActueel=lh?isDailyMetricFresh(lh.date,td()):false;
   const besluit=DecisionCore.readinessDay({
     dagfactor: dfInfo?dfInfo.factor:null,
     gereedheid: dfInfo?v43GereedheidScore(dfInfo.factor):null,
     herstel: herstel,
     signalen: {
-      hrv: (lh&&lh.hrv!=null)?{waarde:lh.hrv}:null,
-      rhr: (lh&&lh.rhr!=null)?{waarde:lh.rhr}:null,
-      slaap: (lh&&lh.sleep!=null)?{waarde:tkSleepHours(lh.sleep)}:null,
+      hrv: (lh&&lh.hrv!=null)?{waarde:lh.hrv, kwaliteit:(lhActueel?undefined:'no_data')}:null,
+      rhr: (lh&&lh.rhr!=null)?{waarde:lh.rhr, kwaliteit:(lhActueel?undefined:'no_data')}:null,
+      slaap: (lh&&lh.sleep!=null)?{waarde:tkSleepHours(lh.sleep), kwaliteit:(lhActueel?undefined:'no_data')}:null,
       spierherstel: (recRows&&recRows.length)?recRows:null,
       gevoel: (lh&&lh.voelt)?String(lh.voelt):null,
       pijn: null,
@@ -16928,7 +16959,11 @@ function rhrBaselineDelta(hd){
 async function recoveryAdjustmentForToday(muscleNames){
   try{
     const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35');
-    const dfInfo=dagfactor(hrvDagFactorPersonal(hd), (hd&&hd[0])?hd[0].sleep:null, (hd&&hd[0])?hd[0].cyclus_fase:null);
+    // v4.69.1 — zelfde freshness-gate als refreshHome()/tkReadinessVandaag(): een
+    // stale slaapwaarde mag de trainingsaanpassing van vandaag niet sturen.
+    const lh0=(hd&&hd[0])?hd[0]:null;
+    const slaapActueel0=lh0?isDailyMetricFresh(lh0.date,td()):false;
+    const dfInfo=dagfactor(hrvDagFactorPersonal(hd), (lh0&&slaapActueel0)?lh0.sleep:null, lh0?lh0.cyclus_fase:null);
     let recRows=[]; try{ if(Array.isArray(muscleNames)&&muscleNames.length) recRows=await getRelevantMuscleRecovery(muscleNames); }catch(_){}
     // GEVOEL uit de check-in (indien opgeslagen) → beïnvloedt de DecisionCore-aanpassing (slecht/matig).
     const voelt=(hd&&hd[0]&&hd[0].voelt)?String(hd[0].voelt):null;
@@ -21869,10 +21904,13 @@ async function _renderLichaamGegevens(el){
     return (veld==='sleep') ? r.map(function(p){ return {date:p.date, value:tkSleepHours(p.value), source:p.source}; }) : r;
   };
   const gewichtSerie=(wl&&wl.length)?dc.weightSeries(wl,String(wl[0].date).slice(0,10),TK_GEG_VENSTER):[];
+  // staleAfterDays:2 voor hrv/rhr/slaap — dit zijn dagelijkse signalen (root-cause-audit
+  // 28-08-2026: de generieke 7-dagen-grens liet 6 dagen oude Fitbit-data als 'recent'
+  // doorgaan). Gewicht behoudt de generieke grens: minder frequent loggen is normaal.
   const OBS={
-    hrv:   dc.observation(serieVan('hrv'),   {today:vandaag, unit:'ms'}),
-    rhr:   dc.observation(serieVan('rhr'),   {today:vandaag, unit:'bpm'}),
-    slaap: dc.observation(serieVan('sleep'), {today:vandaag, unit:'u'}),
+    hrv:   dc.observation(serieVan('hrv'),   {today:vandaag, unit:'ms', staleAfterDays:2}),
+    rhr:   dc.observation(serieVan('rhr'),   {today:vandaag, unit:'bpm', staleAfterDays:2}),
+    slaap: dc.observation(serieVan('sleep'), {today:vandaag, unit:'u', staleAfterDays:2}),
     gewicht: dc.observation(gewichtSerie,    {today:vandaag, unit:'kg', kind:'entered'})
   };
   const kwaliteit=function(k){ return dc.observationQuality(OBS[k], sync||{}); };
@@ -21931,7 +21969,16 @@ async function _renderLichaamGegevens(el){
         '<span style="width:10px;height:10px;border-radius:50%;background:'+kop[1]+';flex:0 0 auto"></span>'+
         '<div><div style="font-size:14px;font-weight:800;color:var(--dark)">'+escHtml(kop[0])+'</div>'+
         '<div style="font-size:11.5px;color:var(--g4);font-weight:600;margin-top:2px">'+
-          (gekoppeld ? escHtml((sync&&sync.lastSyncAt) ? ('Fitbit · laatste synchronisatie '+fmtDate(String(sync.lastSyncAt).slice(0,10))) : 'Fitbit gekoppeld · nog niet gesynchroniseerd')
+          (gekoppeld ? escHtml(
+              // v4.69.1: 'laatste synchronisatie' mag alleen de tijd van een GESLAAGDE
+              // poging tonen — sync.lastSyncAt wordt door de server bij ELKE poging
+              // bijgewerkt, ook bij mislukking (root-cause-audit 28-08-2026: dit toonde
+              // vandaags datum terwijl de sync al 6 dagen kapot was).
+              (sync && sync.status!=='sync_failed' && sync.status!=='token_expired' && sync.lastSyncAt)
+                ? ('Fitbit · laatste synchronisatie '+fmtDate(String(sync.lastSyncAt).slice(0,10)))
+                : (sync && (sync.status==='sync_failed'||sync.status==='token_expired'))
+                  ? 'Fitbit gekoppeld · laatste synchronisatiepoging mislukt'
+                  : 'Fitbit gekoppeld · nog niet gesynchroniseerd')
                      : (iets ? 'Geen wearable gekoppeld · gegevens komen uit je check-in' : 'Geen wearable gekoppeld en nog geen metingen'))+
         '</div></div></div>'+
     '</div>'+

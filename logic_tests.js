@@ -446,6 +446,89 @@ test('ratioFactor: fallback naar fase1 als één lift geen data heeft', ()=>{
   assert(r.ratio !== null, 'fase1 fallback moet altijd een ratio geven voor bekende liften');
 });
 
+// ── FRESHNESS-GATE HOME/COACH (v4.69.1, root-cause-audit Fitbit-sync-integriteit) ─────
+// Reimplementatie zoals index.html (niet geïmporteerd, zelfde regel als de rest van dit bestand).
+console.log("\n🕐 Freshness-gate (Home/Coach — stale wearable-data)");
+function daysBetweenDates(fromYmd,toYmd){
+  if(!fromYmd||!toYmd)return null;
+  const a=Date.parse(String(fromYmd).slice(0,10)+'T00:00:00Z');
+  const b=Date.parse(String(toYmd).slice(0,10)+'T00:00:00Z');
+  if(isNaN(a)||isNaN(b))return null;
+  const d=Math.round((b-a)/86400000);
+  return d<0?0:d;
+}
+const TK_DAILY_METRIC_STALE_AFTER_DAYS=2;
+function isDailyMetricFresh(rowDateYmd,todayYmd){
+  const age=daysBetweenDates(rowDateYmd,todayYmd);
+  return age!=null && age<TK_DAILY_METRIC_STALE_AFTER_DAYS;
+}
+function td(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+test('Test 1 — 22 aug slaap mag niet als actueel gelden op 28 aug (het gerapporteerde 9u13-scenario)', ()=>{
+  assertEq(isDailyMetricFresh('2026-08-22','2026-08-28'), false);
+});
+test('Test 2 — data van vandaag telt wél als actueel', ()=>{
+  assertEq(isDailyMetricFresh('2026-08-28','2026-08-28'), true);
+});
+test('Grensgeval — gisteren telt nog als actueel (dagelijkse sync in de vroege ochtend)', ()=>{
+  assertEq(isDailyMetricFresh('2026-08-27','2026-08-28'), true);
+});
+test('Grensgeval — exact 2 dagen oud is al stale (drempel is exclusief)', ()=>{
+  assertEq(isDailyMetricFresh('2026-08-26','2026-08-28'), false);
+});
+test('Test 6a — td() volgt de systeem-/apparaat-tijdzone Europe/Amsterdam correct (geen hardcoded string)', ()=>{
+  const origTZ=process.env.TZ;
+  process.env.TZ='Europe/Amsterdam';
+  try{
+    const d=new Date('2026-08-28T23:30:00Z'); // 01:30 lokale tijd op 29-08 in CEST (UTC+2)
+    const orig=Date.now; Date.now=()=>d.getTime();
+    try{
+      const origDateCtor=global.Date;
+      global.Date=class extends origDateCtor{ constructor(...a){ if(a.length===0){ super(d.getTime()); } else { super(...a); } } };
+      assertEq(td(),'2026-08-29');
+      global.Date=origDateCtor;
+    }finally{ Date.now=orig; }
+  }finally{
+    if(origTZ===undefined)delete process.env.TZ; else process.env.TZ=origTZ;
+  }
+});
+test('Test 6b — td() volgt Europe/Dublin correct (zelfde UTC-moment, kan andere lokale dag geven dan Amsterdam)', ()=>{
+  const origTZ=process.env.TZ;
+  process.env.TZ='Europe/Dublin';
+  try{
+    const d=new Date('2026-01-15T23:30:00Z'); // 23:30 lokale tijd in Dublin (UTC+0 in januari) -> nog 15-01
+    const origDateCtor=global.Date;
+    global.Date=class extends origDateCtor{ constructor(...a){ if(a.length===0){ super(d.getTime()); } else { super(...a); } } };
+    try{ assertEq(td(),'2026-01-15'); } finally{ global.Date=origDateCtor; }
+  }finally{
+    if(origTZ===undefined)delete process.env.TZ; else process.env.TZ=origTZ;
+  }
+});
+test('Test 7 — UTC-middernacht-grens: geen dubbele/overgeslagen dag', ()=>{
+  const origTZ=process.env.TZ;
+  process.env.TZ='UTC';
+  try{
+    const d=new Date('2026-08-27T23:59:59Z');
+    const origDateCtor=global.Date;
+    global.Date=class extends origDateCtor{ constructor(...a){ if(a.length===0){ super(d.getTime()); } else { super(...a); } } };
+    try{
+      const gisteren=td();
+      assertEq(gisteren,'2026-08-27');
+      assertEq(isDailyMetricFresh('2026-08-22',gisteren), false, '22 aug blijft stale, ongeacht seconden-grens rond middernacht');
+    } finally{ global.Date=origDateCtor; }
+  }finally{
+    if(origTZ===undefined)delete process.env.TZ; else process.env.TZ=origTZ;
+  }
+});
+test('daysBetweenDates: ongeldige/lege datums geven null, nooit een fabricage', ()=>{
+  assertEq(daysBetweenDates(null,'2026-08-28'), null);
+  assertEq(daysBetweenDates('2026-08-28',null), null);
+  assertEq(isDailyMetricFresh(null,'2026-08-28'), false, 'ontbrekende datum is nooit \"fresh\"');
+});
+
 // ── DAGFACTOR-MOTOR (v300, HRV-component vernieuwd in Sprint 5.7.1) ─────
 console.log("\n🌤️  Dagfactor-motor");
 
@@ -510,6 +593,37 @@ test('Dagfactor: normale/stabiele HRV + normale slaap = 1.00', ()=>{
   // nieuwe methode een stabiele/normale HRV al als positief signaal waardeert i.p.v.
   // als neutraal te behandelen (verschil met de oude vaste-drempel-versie).
   assertEq(df.factor,1.05);
+});
+
+test('Test 3 — regressie op het gerapporteerde incident: een stale slaapwaarde (welke dan ook) mag het cijfer van vandaag niet kleuren, positief noch negatief', ()=>{
+  // Kern van het incident: een 6 dagen oude meting (9.22u, 22 aug) werd zonder disclosure als
+  // "vandaag" gepresenteerd. slaapDagFactor plafonneert op 1.00 vanaf 7 uur, dus een hoge stale
+  // waarde en 'geen data' geven toevallig hetzelfde cijfer — het echte bewijs zit in de andere
+  // richting: een stale SLECHTE nacht (bv. van een oude ziekte-/reisdag) mag vandaag evenmin
+  // ongezien een lager cijfer opleveren. Beide kanten moeten naar de neutrale 1.00 vallen.
+  const vandaag='2026-08-28';
+  const hrvC={factor:1.00,st:'ref',baseline:null};
+  [ {label:'stale hoge slaap (het gerapporteerde 9.22u-scenario)', rowDate:'2026-08-22', staleSleep:9.22},
+    {label:'stale lage slaap (omgekeerd risico: vals alarm)',       rowDate:'2026-08-21', staleSleep:2.48}
+  ].forEach(({label,rowDate,staleSleep})=>{
+    const slaapActueel=isDailyMetricFresh(rowDate,vandaag);
+    assertEq(slaapActueel,false,label+': moet als stale herkend worden');
+    const dfZonderGate=dagfactor(hrvC, staleSleep, null);         // hypothetisch: zonder de fix
+    const dfMetGate=dagfactor(hrvC, slaapActueel?staleSleep:null, null); // met de fix (nu in index.html)
+    assertEq(dfMetGate.factor,1.00, label+': gate valt terug op neutrale dagfactor, nooit op de stale waarde');
+    assertEq(dfMetGate.slaapFactor,1.00, label+': CalcCore.slaapDagFactor(null)=1.00, geen fabricage in beide richtingen');
+    if(staleSleep>=7) assertEq(dfZonderGate.factor,dfMetGate.factor,'ter documentatie: bij een hoge stale waarde valt het verschil toevallig numeriek weg (plafond) — de winst zit in eerlijke labeling/ontbreekt-status, niet in dit getal');
+    else assert(dfZonderGate.factor<dfMetGate.factor, label+': zonder de gate zou een oude slechte nacht het cijfer van vandaag ten onrechte verlagen');
+  });
+});
+test('Bekende resterende beperking (gedocumenteerd, bewust buiten scope van deze fix): de HRV-trendclassificatie (hrvDagFactorPersonal) wordt niet gegated op leeftijd van de laatste meting', ()=>{
+  // hrvRollingRecent/hrvStPersonal classificeren een trend (g/o/r/ref) t.o.v. een eigen baseline;
+  // ze hebben geen ingebouwde "is dit van vandaag"-check. Bij een langdurig kapotte sync kan de
+  // classificatie dus nog een aantal dagen een 'g' (stabiel/goed) uitspraak blijven doen op basis
+  // van de laatste écht ontvangen meting. Dit is in de huidige sprint bewust niet aangepakt (risico/
+  // scope van een bredere statistische-baseline-wijziging); vastgelegd zodat dit niet stilzwijgend
+  // als "volledig opgelost" wordt gerapporteerd. Zie eindrapport, punt 15 (resterende acties).
+  assert(true);
 });
 
 // ── COLD-START-PREDICTOR (v300) ──────────────────────────

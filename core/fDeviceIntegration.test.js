@@ -234,6 +234,33 @@ eq(stale.status, 'stale', 'sync >26u geleden → stale');
 eq(stale.isStale, true, 'stale-vlag gezet');
 ok(stale.ageMs > 26*3600*1000, 'ageMs berekend (>26u)');
 eq(D.deviceConnectionState({connected:true, lastSyncStatus:'ok'}, {now:NOW}).isStale, false, 'geen lastSyncAt → niet stale (geen aanname)');
+
+// ── ROOT-CAUSE-AUDIT FITBIT-SYNC-INTEGRITEIT (28-08-2026) ──
+// wearable-sync.js schrijft nooit de literal 'error' — alleen 'ok'|'no_new_data'|
+// 'token_expired_no_refresh'|'refresh_failed'|'error:<CODE>'. Vóór deze fix viel
+// 'refresh_failed' door alle voorwaarden heen naar de stale/connected-fallback, en
+// omdat last_sync_at bij ELKE poging (ook mislukt) wordt bijgewerkt, maakte dat een
+// al 6 dagen kapotte koppeling ononderscheidbaar van een gezonde ('connected').
+eq(D.deviceConnectionState({connected:true, lastSyncStatus:'refresh_failed', lastSyncAt:NOW}, {now:NOW}).status, 'sync_failed', 'refresh_failed (echte serverwaarde) → sync_failed, ook met verse lastSyncAt');
+eq(D.deviceConnectionState({connected:true, lastSyncStatus:'error:NETWORK_ERROR', lastSyncAt:NOW}, {now:NOW}).status, 'sync_failed', 'error:<CODE> → sync_failed');
+eq(D.deviceConnectionState({connected:true, lastSyncStatus:'error:FITBIT_API_ERROR', lastSyncAt:NOW}, {now:NOW}).status, 'sync_failed', 'elke error:-prefix → sync_failed');
+eq(D.deviceConnectionState({connected:true, lastSyncStatus:'token_expired_no_refresh', lastSyncAt:NOW}, {now:NOW}).status, 'token_expired', 'token_expired_no_refresh zonder externe tokenExpired-flag → token_expired (was eerder alleen via call-site tokenExpired-berekening)');
+eq(D.deviceConnectionState({connected:true, lastSyncStatus:'no_new_data', lastSyncAt:NOW}, {now:NOW}).status, 'connected', 'no_new_data is GEEN storing (OAuth ok, gewoon niets nieuws) → connected blijft correct');
+eq(D.deviceConnectionState({connected:true, lastSyncStatus:'ok', lastSyncAt:NOW}, {now:NOW}).status, 'connected', 'echte succesvolle sync blijft connected (geen regressie)');
+
+// observation(): staleAfterDays-override voor dagelijkse metrics (default blijft 7 —
+// FRESHNESS_RECENT_DAYS-test hieronder moet ongewijzigd blijven, zie fObservation.test.js).
+{
+  const serie=[{date:'2026-08-22', value:9.22, source:'fitbit'}];
+  const generiek=D.observation(serie, {today:'2026-08-28'});
+  eq(generiek.freshness, 'recent', 'zonder staleAfterDays: 6 dagen oud blijft "recent" op de generieke 7-dagen-grens (geen ongevraagde gedragswijziging)');
+  const dagelijks=D.observation(serie, {today:'2026-08-28', staleAfterDays:2});
+  eq(dagelijks.freshness, 'stale', 'met staleAfterDays:2 (HRV/RHR/slaap): 6 dagen oud → stale');
+  const vandaag=D.observation([{date:'2026-08-28', value:5.87, source:'fitbit'}], {today:'2026-08-28', staleAfterDays:2});
+  eq(vandaag.freshness, 'today', 'vandaag geschreven data blijft "today" met de striktere grens');
+  const gisteren=D.observation([{date:'2026-08-27', value:6.5, source:'fitbit'}], {today:'2026-08-28', staleAfterDays:2});
+  eq(gisteren.freshness, 'yesterday', 'gisteren blijft "yesterday", niet stale (grensgeval leeftijd=1)');
+}
 ok(D.DEVICE_STATUSES.indexOf('token_expired')!==-1 && D.DEVICE_STATUSES.length===6, 'DEVICE_STATUSES manifest compleet (6)');
 
 // ── FITBIT METRIC-STATUS MANIFEST (eerlijk; geen fabricage) ──

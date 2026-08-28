@@ -1080,12 +1080,19 @@
     var lo = pts[0], hi = pts[0];
     pts.forEach(function (s) { if (s.value < lo.value) lo = s; if (s.value > hi.value) hi = s; });
     var age = today ? _dayDiff(today, _ymd(last.date)) : null;
+    // staleAfterDays: per-call override van de generieke FRESHNESS_RECENT_DAYS (7).
+    // Nodig omdat metrics verschillende freshness-semantiek hebben (root-cause-audit
+    // 28-08-2026): gewicht wordt legitiem niet dagelijks gelogd (7 dagen is daar
+    // redelijk), maar HRV/rusthartslag/slaap zijn dagelijkse signalen — 6 dagen oude
+    // Fitbit-data werd met de generieke grens nog als 'recent' geclassificeerd.
+    // Default blijft 7 (ongewijzigd, bestaande FRESHNESS_RECENT_DAYS-test blijft geldig).
+    var staleAfterDays = (typeof o.staleAfterDays === 'number' && o.staleAfterDays > 0) ? o.staleAfterDays : FRESHNESS_RECENT_DAYS;
     var fresh = 'unknown';
     if (age != null) {
       if (age < 0) fresh = 'future';           // meting in de toekomst — nooit als vers tellen
       else if (age === 0) fresh = 'today';
       else if (age === 1) fresh = 'yesterday';
-      else if (age < FRESHNESS_RECENT_DAYS) fresh = 'recent';
+      else if (age < staleAfterDays) fresh = 'recent';
       else fresh = 'stale';
     }
     return {
@@ -1141,6 +1148,19 @@
     var n = Date.parse(String(t));
     return isFinite(n) ? n : null;
   }
+  // Herkent de daadwerkelijke foutstatussen die wearable-sync.js schrijft naar
+  // last_sync_status: 'token_expired_no_refresh' (geen refresh_token/credentials),
+  // 'refresh_failed' (Google wees de tokenvernieuwing af — bv. Testing-mode 7-dagen-
+  // verval) en 'error:<CODE>' (overige uitzonderingen). De literal 'error' wordt
+  // NOOIT geschreven door de server — die voorwaarde stond hier eerder als enige
+  // check en was dus dode code (root-cause-audit 28-08-2026: 'refresh_failed' viel
+  // hierdoor door naar de stale/connected-fallback, en omdat last_sync_at bij ELKE
+  // poging wordt bijgewerkt (ook bij mislukking), maakte dat een 6 dagen kapotte
+  // koppeling ononderscheidbaar van een gezonde).
+  function _isTokenFailure(lastSyncStatus){ return lastSyncStatus === 'token_expired_no_refresh'; }
+  function _isSyncFailure(lastSyncStatus){
+    return lastSyncStatus === 'refresh_failed' || /^error:/.test(String(lastSyncStatus || ''));
+  }
   function deviceConnectionState(input, opts){
     input = input || {}; opts = opts || {};
     var nowMs = _toMs(opts.now);
@@ -1150,9 +1170,9 @@
     var isStale = (ageMs != null) ? (ageMs > staleAfterMs) : false;
     var status;
     if (input.connected !== true)            status = 'not_connected';
-    else if (input.tokenExpired === true)    status = 'token_expired';
+    else if (input.tokenExpired === true || _isTokenFailure(input.lastSyncStatus)) status = 'token_expired';
     else if (input.syncing === true || input.lastSyncStatus === 'running') status = 'syncing';
-    else if (input.lastSyncStatus === 'error') status = 'sync_failed';
+    else if (input.lastSyncStatus === 'error' || _isSyncFailure(input.lastSyncStatus)) status = 'sync_failed';
     else if (isStale)                        status = 'stale';
     else                                     status = 'connected';
     return {

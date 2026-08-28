@@ -91,9 +91,11 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Capability-ID:** CALC-REC-REGISTRY-001
 **Current:** `hrv_log` bevat `sleep`/`hrv`/`rhr`, maar geen kolom die vastlegt of een waarde afkomstig is van een handmatige check-in of wearable-sync. Beide schrijven naar dezelfde kolommen zonder onderscheid — live geverifieerd tegen het Supabase-schema.
 **Evidence:** DB VERIFIED (`information_schema.columns` voor `hrv_log`), zie het Recovery-sprintrapport in `docs/`.
-**Target:** nieuwe, nullable `source`-kolom (`manual`/`wearable`/`unknown` voor bestaande rijen); alle schrijfpaden (`saveHRV`, wearable-sync-functies) bijwerken om dit veld te vullen.
-**Dependency:** geen harde technische afhankelijkheid; wel een DB-migratie + meerdere schrijfpad-aanpassingen — grotere, zorgvuldiger te plannen ingreep dan binnen een audit-sprint.
-**Priority:** P1 (raakt de betrouwbaarheid van de hele Recovery-keten, niet slechts cosmetisch). **Complexity:** M. **Roadmap phase:** F3 (vervolgwerk).
+**Target mastersprint:** **MS-F3-10 (Explainability & Provenance Contract)** — niet MS-F3-08. Governance-reconciliatie uitgevoerd: MS-F3-08's acceptance gate ("shared quality/confidence semantics across engines") gaat over consistente confidence-modellering, niet over een schema-niveau brontoewijzing. MS-F3-10's acceptance gate ("every recommendation traceable end-to-end") vereist letterlijk dat de bronketen — inclusief de RAUWE bron zelf — reconstrueerbaar is; zonder een `source`-kolom is die keten voor elke HRV-gebaseerde aanbeveling onvolledig bij de eerste schakel. Dit is dus een directe, geen indirecte match.
+**Target:** binnen MS-F3-10 volledig oplossen: nieuwe, nullable `source`-kolom (`manual`/`wearable`/`unknown` voor bestaande rijen, backward-compatible migratie); alle schrijfpaden (`saveHRV`, wearable-sync-functies) bijwerken om dit veld te vullen; RLS/privacy-regressie; geen wijziging aan bestaande historische migraties.
+**Dependency:** geen harde technische afhankelijkheid; wel een DB-migratie + meerdere schrijfpad-aanpassingen — grotere, zorgvuldiger te plannen ingreep dan binnen een audit-sprint, vandaar bewust gepland voor MS-F3-10 in plaats van ad-hoc tijdens de Recovery-sprint waarin dit gat werd gevonden.
+**Status:** dit is een **F3-fase-blokkerende P1** (F3 als geheel mag niet CLOSED worden zolang dit openstaat of niet formeel, evidence-based hergeclassificeerd is), maar **geen sprint-blokkerende P1 voor de Recovery- of Endurance-sprint** — de acceptance gate van de Recovery-sprint ("HRV/RHR/sleep/readiness components with baseline/confidence") vereiste geen provenance-kolom en is terecht gehaald; die sprint blijft CLOSED.
+**Priority:** P1 (F3-fase-blokkerend, raakt de betrouwbaarheid van de hele Recovery-keten). **Complexity:** M. **Roadmap phase:** F3 (MS-F3-10).
 
 
 

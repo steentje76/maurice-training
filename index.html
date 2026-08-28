@@ -6043,7 +6043,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.3';
+const APP_VER = 'v4.69.4';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -20116,7 +20116,30 @@ async function launchProgramTrainScreen(adjustment){
   // vraagt alleen bevestiging bij een ANDERE training (draft.t!==ctxT), niet bij dezelfde.
   const _draft=restoreTrainingDraft();
   const _resume=!!(_draft&&_draft.t===ctxT&&isSameLocalDay(_draft.ts)&&draftHasData(_draft));
-  activeInstanceId=_resume?(_draft.instanceId||null):null;
+  // GAP-P1-006-CLOSURE (MS-F2-08): vóór deze fix kreeg een verse programmatraining NOOIT een
+  // eigen training_instances-rij (activeInstanceId bleef simpelweg null voor de hele sessie).
+  // Dezelfde canonical instance-creatie als vaste/custom-trainingen (via Preview), met
+  // expliciete programma-provenance (program/block/week/fase) in de snapshot. Bij resume wordt
+  // terecht de instanceId van de bestaande draft hergebruikt — geen dubbele instance voor
+  // dezelfde, nog niet afgeronde sessie.
+  if(_resume){
+    activeInstanceId=_draft.instanceId||null;
+  }else{
+    try{
+      activeInstanceId=await createTrainingInstance({
+        snapshot:{
+          source:'program_block',
+          definition_id:blockId,
+          program_id:prog?.id||null,
+          week_nr:block?.week_nr||null,
+          fase_naam:block?.fase_naam||null,
+          items:(rows||[]).map(r=>({exercise_id:r.exercise_id,sets:r.sets,reps:r.reps,rpe_target:r.rpe_target,sort_order:r.sort_order})),
+          decision_rules:(typeof DecisionCore!=='undefined'&&DecisionCore.Evidence)?DecisionCore.Evidence.decisionRulesSnapshot((typeof DETRAINING_RULES!=='undefined')?DETRAINING_RULES:null):null,
+          modifications:adjustment?[{type:'recovery_adjustment',setsDelta:adjustment.setsDelta||0,rpeDelta:adjustment.rpeDelta||0}]:[]
+        }
+      });
+    }catch(e){ activeInstanceId=null; /* instance-tracking mag nooit de trainingstart zelf blokkeren */ }
+  }
   curT=ctxT;
   pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};
   if(_resume){
@@ -20501,15 +20524,43 @@ async function startRepeatWorkout(){
   // localStorage-draft, niet deze in-memory variabele — zonder deze reset zou een geloste set
   // hier per ongeluk aan de training_instances-rij van de vorige, niet-afgeronde training
   // gekoppeld kunnen worden (verkeerde instance wordt bij het afronden completed gezet).
-  activeInstanceId=null;
+  //
+  // GAP-P1-006-CLOSURE (MS-F2-08): vóór deze fix kreeg een Repeat Workout NOOIT een eigen
+  // training_instances-rij — activeInstanceId bleef simpelweg null voor de hele sessie, en
+  // completeTrainingInstance() bij afronden deed dus feitelijk niets. Repeat-trainingen waren
+  // daarmee volledig onzichtbaar voor de plan-versus-uitvoering-dataset die vaste/custom
+  // trainingen (via Preview/startInstanceFromDefinition) al wél krijgen. Fix: dezelfde
+  // canonical instance-creatie (createTrainingInstance) nu ook hier, met expliciete
+  // repeat-provenance in de snapshot (welke datum/training herhaald wordt, met welke
+  // aanpassing) — ÉÉN gedeelde persistence-infrastructuur, source-specifieke provenance
+  // blijft behouden (opdracht sectie 20: "convergentie betekent niet dat alle broncontext
+  // hetzelfde wordt"). Altijd een NIEUWE instance (nooit de oorspronkelijke sessie-identity
+  // hergebruikt) — voldoet aan de invariant "oude execution ≠ nieuwe execution".
   const prefillMap={};
+  const _repeatItems=[];
   repeatSessions.forEach(s=>{
     if(!s.weight||!s.reps) return;
     let nw=s.weight;
     if(repeatMode==='plus') nw=Math.round((s.weight+adj)*2)/2;
     else if(repeatMode==='pct') nw=Math.round(s.weight*(1+adj/100)*2)/2;
     prefillMap[s.exercise_id]={kg:nw,reps:s.reps,rpe:s.rpe,sets:s.sets||4};
+    _repeatItems.push({exercise_id:s.exercise_id,sets:s.sets||4,reps:s.reps,rpe:s.rpe,weight_original:s.weight,weight_repeat:nw});
   });
+  try{
+    activeInstanceId=await createTrainingInstance({
+      vasteTrainingId:t,
+      snapshot:{
+        source:'vaste_training_repeat',
+        definition_id:t,
+        repeat_of_date:repeatDate,
+        repeat_mode:repeatMode,
+        repeat_adjustment:adj||0,
+        items:_repeatItems,
+        decision_rules:(typeof DecisionCore!=='undefined'&&DecisionCore.Evidence)?DecisionCore.Evidence.decisionRulesSnapshot((typeof DETRAINING_RULES!=='undefined')?DETRAINING_RULES:null):null,
+        modifications:[]
+      }
+    });
+  }catch(e){ activeInstanceId=null; /* instance-tracking mag nooit de repeat-start zelf blokkeren */ }
   window._prefillMap=prefillMap;
   await ensureVasteTrainingScreenExists(t);
   curT=t;sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};

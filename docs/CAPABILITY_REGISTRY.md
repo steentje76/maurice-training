@@ -64,7 +64,7 @@
 | ID | Capability | Code | DB | Tests | Integration | Device | Evidence/scientific | Maturity | Target | Gap | Priority | Phase |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | COMM-UI-001 | Commercial/entitlements-UI | **geen gevonden** — 0 treffers voor `plans`/`features` in index.html | `plans`, `features`, `credit_packs`, `plan_feature_quota`, `usage_log` volledig aanwezig | N/A | N/A | N/A | N/A | **NOT STARTED** | IMPLEMENTED | geen enkel UI-scherm | **P2** (gedowngraded van P1 per Roadmap 2.0 v1.1 §29/32 — schema/benchmark-pariteit rechtvaardigt geen vroege bouw) | **F12** (verplaatst uit F2; zie MS-F12-01 t/m 04) |
-| CAP-REGISTRY-SCREENS-001 | 38 top-level schermen (scherminventaris) + trainingsstart-flow-audit (MS-F2-01) | `docs/MS-F2-01_CANONICAL_TRAINING_START.md` — entrypoint-matrix, 6/8 paden convergeren via `openTrainingPreview` | N/A | `core/fExecutionIdentity.test.js` 13/13 (incl. sabotagebewijs voor 2 gefixte defecten) | N/A | N/A | N/A | **TESTED** (was IMPLEMENTED) | INTEGRATED | volledige convergentie Programma-blok/Repeat-Workout naar Preview-adapter (grotere herbouw, bewust uitgesteld); overige flow-niveau testdekking per scherm | **P1** (F2-actief) | **F2** (MS-F2-01, PARTIAL) |
+| CAP-REGISTRY-SCREENS-001 | 38 top-level schermen + volledige F2 Athlete Core-audit (MS-F2-01 t/m MS-F2-08) | `docs/MS-F2-01..08_*.md` — 8/8 entrypoints canonieke instance-creatie + execution-infrastructuur (GAP-P1-006 gesloten); 6/8 delen bovendien identieke Preview-UI, 2/8 (Programma/Repeat) bewust gedifferentieerde, functioneel rijkere pre-executie-flows | N/A | `core/fExecutionIdentity.test.js` 14/14, `core/fGapP1006Closure.test.js` 11/11, + 6 andere F2-testbestanden (Reliability/Builder/Library/History/Onboarding/ProgramResume) — allemaal met sabotagebewijs | N/A | N/A | Live DB geverifieerd: `training_instances.snapshot` (jsonb) accepteert de nieuwe provenance-velden zonder migratie | **INTEGRATED** (was TESTED) | INTEGRATED | live/productie-validatie van de nieuwe programma-/repeat-instance-creatie (geen unit-test-niveau bewijs meer nodig, wel praktijkbevestiging) | **P1** | **F2** (MS-F2-01 t/m 08, alle CLOSED) |
 
 | DEV-VALIDATION-001 | Real-device-validatie (samenvattend, dekt Concept2 + Google Health) | zie DEV-CONCEPT2-001, DEV-WEARAUTH-001, DEV-WEARSYNC-001 | N/A | Software-niveau TESTED op alle onderliggende capabilities | Deels (wearable-sync draait tegen echte handler) | **OPEN** op alle drie | N/A | TESTED (software) | VALIDATED | real-device-bevestiging in productie voor Concept2 PM5 en Google Health-sync | P2 | F5 |
 
@@ -83,12 +83,14 @@
 | Status | Aantal | IDs |
 |---|---|---|
 | CLOSED | 5 | SEC-GYMS-001, SEC-TEST-001, SEC-GATE-001, AI-COACH-001, SEC-USERROLE-001 |
-| TESTED | 10 | PLAT-DELETE-001, SOC-GYMTEAM-001, EVID-SCI-001, DEC-CORE-001, DEV-WEARAUTH-001, DEV-CONCEPT2-001, END-HYROX-001, DEV-VALIDATION-001, PLAT-OBSERVABILITY-001, CAP-REGISTRY-SCREENS-001 |
+| TESTED | 9 | PLAT-DELETE-001, SOC-GYMTEAM-001, EVID-SCI-001, DEC-CORE-001, DEV-WEARAUTH-001, DEV-CONCEPT2-001, END-HYROX-001, DEV-VALIDATION-001, PLAT-OBSERVABILITY-001 |
 | NOT STARTED | 5 | PLAT-BACKUP-CLEANUP-001, AI-OUTPUT-CONTRACT-001, WOMENS-PERF-DECISIONS-001, COMM-UI-001, SCI-CONSENT-001 |
 | IMPLEMENTED | 2 | COACH-RELATIONSHIP-001, AI-PROGRAM-AUTOGEN-001 |
-| INTEGRATED | 3 | DEV-WEARSYNC-001, END-INTERVAL-001, CTX-CYCLE-001 |
+| INTEGRATED | 4 | DEV-WEARSYNC-001, END-INTERVAL-001, CTX-CYCLE-001, CAP-REGISTRY-SCREENS-001 |
 | VALIDATED | 2 | GYM-RLS-SCOPING-001, SEC-CONFIG-001 |
-| **Totaal** | **27** | 5+10+5+2+3+2 = 27 ✓ |
+| **Totaal** | **27** | 5+9+5+2+4+2 = 27 ✓ |
+
+**Wijziging deze sprint (MS-F2-08):** CAP-REGISTRY-SCREENS-001 van TESTED → INTEGRATED (GAP-P1-006 gesloten, alle 8 F2-mastersprints CLOSED, MS-F2-01 heropend en herclassificeerd naar CLOSED — zie `docs/MS-F2-08_GAP_P1_006_CLOSURE.md`).
 
 **Wijziging deze sprint (MS-F2-01):** CAP-REGISTRY-SCREENS-001 van IMPLEMENTED → TESTED (eerste F2-mastersprint, PARTIAL — zie `docs/MS-F2-01_CANONICAL_TRAINING_START.md`).
 

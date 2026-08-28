@@ -1,5 +1,39 @@
 # Trainingskompas — Changelog
 
+## v4.69.4 — MS-F2-08: GAP-P1-006 Closure — Canonical Instance Tracking voor Programma/Repeat (28 augustus 2026)
+
+Achtste en laatste inhoudelijke F2-mastersprint. Sluit het sinds MS-F2-01 bekende
+architectuur-gat: Programma-blok- en Repeat Workout-trainingen kregen nooit een eigen
+`training_instances`-rij. `activeInstanceId` bleef voor de volledige sessie op `null`
+staan (bij een verse start), waardoor `completeTrainingInstance()` bij afronden
+feitelijk niets deed. Beide trainingsbronnen waren daarmee volledig onzichtbaar voor de
+plan-versus-uitvoering-dataset die vaste/custom trainingen (via Preview) al wél kregen.
+
+**Sluiting (bewust beperkt tot de persistence-laag, niet de Preview-UI zelf — zie
+`docs/MS-F2-08_GAP_P1_006_CLOSURE.md` voor de volledige onderbouwing):**
+- `startRepeatWorkout()` maakt nu een echte `training_instances`-rij aan
+  (`createTrainingInstance`), gekoppeld aan de herhaalde vaste training, met expliciete
+  repeat-provenance in de snapshot (`source:'vaste_training_repeat'`, oorspronkelijke
+  datum, aanpassingsmodus). Altijd een nieuwe instance — nooit de oorspronkelijke
+  sessie-identity hergebruikt.
+- `launchProgramTrainScreen()` maakt bij een verse start eveneens een echte instance aan
+  (`source:'program_block'`, met program/block/week-provenance); bij resume wordt
+  terecht de bestaande instance van de draft hergebruikt (geen dubbele instance voor
+  dezelfde, nog niet afgeronde sessie — de MS-F2-07-resume-fix blijft volledig intact).
+
+Beide source-specifieke pre-executieflows (recovery-check-in voor Programma,
+gewicht-aanpassing-preview voor Repeat) blijven ongewijzigd bestaan als legitieme
+"source-specific Definition construction" — geen gedwongen migratie naar de generieke
+Preview-modal, wat een grotere, risicovollere UI-herbouw zou zijn geweest zonder
+aangetoonde noodzaak.
+
+Nieuwe regressietest `core/fGapP1006Closure.test.js` (11/11, sabotagebewijs geleverd).
+Bestaande `core/fExecutionIdentity.test.js` bijgewerkt (legitieme contractverbreding).
+Geen databasemigratie nodig — `training_instances.snapshot` is al vrije-vorm JSONB.
+
+`APP_VER` → v4.69.4, `CACHE_NAME`/`CACHE_STATIC` en Android `versionCode`/`versionName`
+meegenomen.
+
 ## v4.69.3 — MS-F2-07: Home/Dashboard Actionability (28 augustus 2026)
 
 Zevende F2-mastersprint. Audit van de Home-flow (`refreshHome`, dagfactor-kaart,

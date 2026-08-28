@@ -5,9 +5,12 @@
 ## Projectnaam
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
+## Huidige versie
+v4.69.0
+
 ## 1. Verified baseline
 - **main SHA:** `27653ef25967b34bbef152befaf8b9d26acfe274`
-- **APP_VER:** v4.69.0
+- **APP_VER:** v4.69.0 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 28 augustus 2026
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 

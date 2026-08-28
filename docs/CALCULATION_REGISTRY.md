@@ -423,3 +423,65 @@ Geen onverklaarde critical threshold gevonden.
 ## Open Gaps (Endurance & Erg-domein)
 - **GAP-P2-013** (nieuw, deze sprint): geen expliciete provenance-vlag voor `watt` (device-gemeten vs. via split afgeleid) in `CARDIO_TYPES`-schema's.
 - **NOT_IMPLEMENTED, geen gap-nummer (bewust, geen actie vereist zonder productbeslissing):** Critical Speed/Power, TRIMP (elke variant), aerobic decoupling, HR-zones. Zie CALC-END-004/005 hierboven voor de volledige onderbouwing waarom dit terecht niet binnen deze sprint gebouwd is.
+
+---
+
+## Domein: Energy & Estimate (MS-F3-05)
+
+**Auditmethode:** repo-brede zoekactie naar calorieën/kcal/MET/BMR/RMR/TDEE-gerelateerde code in `index.html`, `core/*.js`, en `core/deviceIntegration.js` (wearable-datamodel).
+
+**Kernbevinding: Trainingskompas berekent zelf géén energieverbruik.** Er bestaat geen MET-tabel, geen BMR/RMR/TDEE-formule, geen calorie-schattingsvergelijking. Alle calorie-/BMR-gerelateerde waarden in de app zijn ofwel handmatig ingevoerd (workout-calorieën, Tanita-scale-BMR), ofwel rechtstreeks doorgegeven vanuit een wearable-sync (`calories_total`). Dit is precies de architectuur die de acceptance gate ("calories/estimates explicitly uncertain") vraagt: door zelf niets te berekenen, kan de app ook nooit ten onrechte een eigen precisie-claim doen — de onzekerheid van de bron blijft bij de bron.
+
+### CALC-ENE-001 — Calorieën per minuut (afgeleide ratio)
+| Veld | Waarde |
+|---|---|
+| Domain | Energy & Estimate |
+| Name | Calorieën per minuut, afgeleid uit ingevoerde/gesynchroniseerde totaalcalorieën en sessieduur |
+| Version | intern ongenummerd (`cardioPerfFromSession`) |
+| Formula | `calPerMin = calories / (durationSec/60)` |
+| Implementation | `index.html` — regel ~15586 |
+| Required inputs | `calories` (handmatig ingevoerd of wearable-gesynchroniseerd — zelf GEEN TK-calculation, zie hieronder), `durationSec` |
+| Evidence level | **E** — zuivere wiskundige ratio, geen zelfstandige wetenschappelijke claim |
+| Confidence model | erft volledig de onzekerheid van de bron-`calories`-waarde (zie CALC-ENE-002/003); de deling zelf voegt geen extra onzekerheid toe |
+| Limitations | is nooit nauwkeuriger dan de bron-caloriewaarde waarvan hij is afgeleid |
+| Forbidden interpretations | mag nooit gepresenteerd worden als preciezer of onafhankelijk gevalideerd t.o.v. de bron |
+| Status | **VERIFIED** (triviale, correcte afleiding) |
+
+### CALC-ENE-002 — Handmatig ingevoerde workout-calorieën
+| Veld | Waarde |
+|---|---|
+| Domain | Energy & Estimate |
+| Source type | **USER_REPORTED** (expliciet, geen TK-berekening) |
+| Current state | `CARDIO_TYPES`-schema's (AssaultBike, RowErg, etc.) hebben een `cals`-invoerveld; de gebruiker vult dit rechtstreeks over van het schermpje van het apparaat |
+| Evidence level | **N.v.t.** (geen TK-calculation — de nauwkeurigheid is die van het apparaat zelf, buiten TK's invloed) |
+| Forbidden interpretations | TK claimt hier expliciet niets — de waarde wordt onveranderd opgeslagen en getoond als wat de gebruiker invoerde |
+| Status | **VERIFIED als correct niet-berekend** |
+
+### CALC-ENE-003 — Wearable-gesynchroniseerde calorieën
+| Veld | Waarde |
+|---|---|
+| Domain | Energy & Estimate |
+| Source type | **WEARABLE_ESTIMATE** (expliciet, geen TK-berekening) |
+| Current state | `core/deviceIntegration.js` (regel ~305) mapt `calories_total` (kcal) rechtstreeks uit de wearable-payload door; regel ~1179 markeert dagcalorieën-sync expliciet als `'OPTIONAL', note:'nog niet gemapt/gevalideerd'` — een eerlijke, ongevalideerde status, geen voortijdige claim |
+| Evidence level | **N.v.t.** (geen TK-calculation — TK plakt geen eigen wetenschappelijke validatie op een providerschatting) |
+| Limitations | wearable-calorieschattingen zijn zelf, apparaatafhankelijk, met bekende (in de literatuur breed gedocumenteerde) foutmarges — TK claimt hier expliciet geen eigen nauwkeurigheid bovenop wat het apparaat rapporteert |
+| Forbidden interpretations | nooit presenteren als exact of klinisch nauwkeurig; nooit een eigen TK-evidence-label plakken op een providerwaarde |
+| Status | **VERIFIED als correct niet-berekend, provenance intact (`source` via de wearable-adapter)** |
+
+### CALC-ENE-004 — BMR/RMR/TDEE — **NIET GEÏMPLEMENTEERD (bewust)**
+| Veld | Waarde |
+|---|---|
+| Domain | Energy & Estimate |
+| Current state | **Bestaat niet als TK-berekening.** `bmr` is een los invoerveld gekoppeld aan lichaamscompositiemetingen (Tanita-schaal-sync), in de UI al correct gelabeld als `soort:'ingevoerd'` (regel ~19529) — dus al vóór deze sprint correct als extern/ingevoerd behandeld, niet als TK-eigen berekening. |
+| Reden om niet binnen deze sprint te bouwen | Er bestaan meerdere, wetenschappelijk verschillende BMR-vergelijkingen (Mifflin-St Jeor, Harris-Benedict, Katch-McArdle) die uiteenlopende resultaten geven. De roadmap schrijft geen specifieke methode voor. Zelf willekeurig één vergelijking kiezen zou een verzonnen productbeslissing zijn (opdracht sectie 10: "als roadmap geen keuze maakt, registreer NOT_IMPLEMENTED of product decision required — geen productkeuze fabriceren"). |
+| Status | **NOT_IMPLEMENTED (PRODUCT_DECISION_REQUIRED indien ooit gewenst)** |
+
+## Magic Number Audit (Energy-domein)
+Geen calorie-specifieke constanten, MET-waarden, of activiteitsfactoren gevonden in de codebase (bevestigt de kernbevinding: geen eigen energieberekening bestaat om te auditen).
+
+## Duplicate Calculation Audit (Energy-domein)
+Geen duplicaat gevonden — er is precies één plek (`cardioPerfFromSession`) die de triviale `calPerMin`-ratio berekent.
+
+## MS-F3-05 acceptance-gate-toetsing
+Letterlijke acceptance gate: *"Calories/estimates explicitly uncertain."*
+**Resultaat: CLOSED.** De architectuur voldoet al volledig: Trainingskompas berekent zelf geen energieverbruik, dus kan het ook nooit ten onrechte een eigen precisie claimen. Alle calorie-/BMR-waarden zijn correct gelabeld als extern (`USER_REPORTED`/`WEARABLE_ESTIMATE`), niet als TK-berekening. De enige afgeleide waarde (`calPerMin`) is een triviale, foutloze ratio die de onzekerheid van de bron correct erft. BMR/RMR/TDEE zijn terecht NOT_IMPLEMENTED — een methodekeuze zou een productbeslissing vereisen die niet is voorgeschreven.

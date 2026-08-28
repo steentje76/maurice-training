@@ -16,7 +16,7 @@
 
 ## 2. Roadmap Structural Completeness
 **Definitie:** machine-leesbare/traceability-volledigheid van de roadmap zelf.
-**Resultaat:** 15/15 geautomatiseerde consistentiechecks groen (`tools/check-doc-consistency.js`): 0 dubbele IDs, 0 orphan capabilities, 0 orphan roadmap-IDs, 0 ongeldige dependencies, 0 circulaire dependencies, 0 P0/P1 zonder mastersprint, 0 mastersprints zonder acceptance-gate/phase/track/target-maturity, 0 ongeldige priority/status-waarden, 0 onvolledige validation-schema's, 0 dependency-referenties naar obsolete/superseded oude MS-IDs.
+**Resultaat:** 16/16 geautomatiseerde consistentiechecks groen (`tools/check-doc-consistency.js`, geverifieerd door de checker daadwerkelijk te draaien): 0 dubbele IDs, 0 orphan capabilities, 0 orphan roadmap-IDs, 0 ongeldige dependencies, 0 circulaire dependencies, 0 P0/P1 zonder mastersprint, 0 mastersprints zonder acceptance-gate/phase/track/target-maturity, 0 ongeldige priority/status-waarden, 0 onvolledige validation-schema's, 0 dependency-referenties naar obsolete/superseded oude MS-IDs, 0 capability-count-mismatches (registry/roadmap-index/coverage-audit synchroon).
 
 ## 3. Product Domain Coverage
 **Definitie:** dekking van de 18 gewenste producttracks (T1-T18) door concrete mastersprints.
@@ -41,7 +41,7 @@
 | SEC-GATE-001 | CLOSED | NO ACTION | — (F0) |
 | PLAT-DELETE-001 | TESTED | VALIDATION ONLY | MS-F13-05 |
 | PLAT-BACKUP-CLEANUP-001 | NOT STARTED | IMPROVEMENT | MS-F1-05 |
-| PLAT-OBSERVABILITY-001 | NOT STARTED | NEW CAPABILITY | MS-F1-02 |
+| PLAT-OBSERVABILITY-001 | **INTEGRATED** (voorheen ongestart) | NO ACTION | — (F1, MS-F1-02 SOFTWARE CLOSED; operationele validatie blijft open, niet blokkerend) |
 | SOC-GYMTEAM-001 | TESTED | VALIDATION ONLY | MS-F13-05 |
 | GYM-RLS-SCOPING-001 | **VALIDATED** | NO ACTION (was MAJOR DEVELOPMENT) | — (F1, MS-F1-01 CLOSED) |
 | SEC-USERROLE-001 | CLOSED | NO ACTION | — (F1, MS-F1-01 CLOSED, gevonden tijdens de sprint) |

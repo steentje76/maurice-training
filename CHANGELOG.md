@@ -1,5 +1,39 @@
 # Trainingskompas — Changelog
 
+## v4.69.3 — MS-F2-07: Home/Dashboard Actionability (28 augustus 2026)
+
+Zevende F2-mastersprint. Audit van de Home-flow (`refreshHome`, dagfactor-kaart,
+volgende-training-berekening, empty states) en het resume-gedrag voor actieve
+trainingen.
+
+**Kritieke bevinding en fix (P1, data-verlies-risico):** `launchProgramTrainScreen()`
+reset `sessionLog`/`sessionExtra` altijd onvoorwaardelijk, zonder ooit een bestaande,
+geldige draft voor dezelfde programmatraining te herstellen — in tegenstelling tot
+`startT()`/`startCustomTraining()`, die dit al correct deden. `guardExistingDraft()`
+beschermt hier niet tegen (die vraagt alleen bevestiging bij een ándere training).
+Gevolg vóór de fix: een gebruiker die een programmatraining start, sets logt, de app
+sluit zonder af te ronden, en later dezelfde programmatraining opnieuw opent, verloor
+stilzwijgend alle al gelogde sets. Gefixed met dezelfde resume-branch die
+`startT`/`startCustomTraining` al gebruiken (sessionLog/sessionExtra/activeInstanceId/
+klok hersteld uit de draft wanneer die bij dezelfde training hoort en daadwerkelijk
+data bevat).
+
+Overige bevindingen: dagfactor-kaart bevestigd explainable/traceable (bestaande
+Calculation Engine, geen AI-herberekening); empty state voor nieuwe sporters zonder
+vaste trainingen al aanwezig. Eén niet-geïmplementeerd, lager-risico UX-punt genoteerd:
+Home toont geen proactieve "hervat je training"-banner (de data is nu wel altijd veilig,
+alleen de ontdekbaarheid kan beter) — geregistreerd als vervolgwerk, niet binnen deze
+sprint gebouwd.
+
+Nieuwe regressietest `core/fProgramResume.test.js` (7/7, sabotagebewijs). Bestaande
+`core/fExecutionIdentity.test.js` bijgewerkt: het activeInstanceId-contract van
+`launchProgramTrainScreen()` is legitiem verbreed van een kale onvoorwaardelijke reset
+naar "null bij verse start, eigen draft-instanceId bij resume" — geen regressie, een
+sterker contract.
+
+`APP_VER` → v4.69.3, `CACHE_NAME`/`CACHE_STATIC` en Android `versionCode`/`versionName`
+meegenomen.
+
 ## v4.69.2 — MS-F2-01: Canonical Training Start & Preview (28 augustus 2026)
 
 Eerste inhoudelijke F2-mastersprint (Athlete Core Excellence) onder Master Roadmap

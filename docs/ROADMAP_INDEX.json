@@ -376,7 +376,7 @@
       "Athlete UX"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F2-01",
       "MS-F2-06"

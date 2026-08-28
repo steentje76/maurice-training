@@ -11,7 +11,7 @@
 |---|---|
 | P0 | **0 open** |
 | P1 | 3 |
-| P2 | 7 |
+| P2 | 8 |
 | P3 | 4 |
 | P4 | 2 |
 
@@ -35,6 +35,13 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Target:** tier/waardepropositie + entitlement domain model (MS-F12-01) → entitlement enforcement (MS-F12-02) → plan-overzichtsscherm/Commercial UX (MS-F12-03) → billing/reconciliation (MS-F12-04).
 **Dependency:** GYM-RLS-SCOPING-001 — inmiddels VALIDATED (zie sectie "CLOSED GAPS / HISTORICAL"), geen resterende blocker.
 **Priority:** **P2** (gedowngraded van P1 — een bestaand DB-schema of benchmark-pariteit rechtvaardigt op zichzelf geen vroege bouw). **Complexity:** M. **Roadmap phase:** **F12** (verplaatst van F2).
+
+### GAP-P2-008 — Home toont geen proactieve "hervat je training"-banner (Home/Dashboard-sprint)
+**Capability-ID:** CAP-REGISTRY-SCREENS-001
+**Current:** een niet-afgeronde trainingsdraft wordt correct en veilig bewaard (inclusief de tijdens deze sprint gefixte programmatraining-resume), maar Home controleert nooit proactief op het bestaan ervan — de gebruiker ontdekt een hervatbare training pas als hij toevallig hetzelfde trainingstype opnieuw probeert te starten.
+**Evidence:** CODE VERIFIED, zie het Home/Dashboard-sprintrapport in `docs/`.
+**Target:** een prominente resume-banner/kaart bovenaan Home wanneer `restoreTrainingDraft()` een geldige, data-bevattende draft oplevert, die routeert naar de juiste startfunctie op basis van het trainingstype (vaste/custom/programma).
+**Priority:** P2 (discoverability, geen dataverliesrisico meer). **Complexity:** M. **Roadmap phase:** F2 (vervolgwerk) of F2-08.
 
 ### GAP-P1-003 — AI-outputcontract ontbreekt
 **Capability-ID:** AI-OUTPUT-CONTRACT-001 (**expliciet onderscheiden van de reeds gesloten security-capability voor dezelfde proxy**, zie sectie "CLOSED GAPS / HISTORICAL" en Capability Registry — dit is een governance-gat, geen security-gat)
@@ -132,6 +139,14 @@ Vereist eerst een consent-flow (nog niet gebouwd) bovenop de al aanwezige Eviden
 ---
 
 ## CLOSED GAPS / HISTORICAL
+
+### (nieuw, Home/Dashboard-sprint) — Data-verlies bij hervatten van een programmatraining — **STATUS: CLOSED**
+- **Original finding:** `launchProgramTrainScreen()` reset `sessionLog`/`sessionExtra` altijd onvoorwaardelijk, zonder ooit een bestaande, geldige draft voor dezelfde programmatraining te herstellen. `guardExistingDraft()` beschermt hier niet tegen (vraagt alleen bevestiging bij een ándere training). Gevolg: een sporter die een programmatraining start, sets logt, de app sluit zonder af te ronden, en later dezelfde training opnieuw opent, verloor stilzwijgend alle al gelogde sets.
+- **Resolution:** dezelfde resume-branch toegevoegd die `startT`/`startCustomTraining` al gebruiken (sessionLog/sessionExtra/activeInstanceId/klok hersteld uit de draft bij een geldige match).
+- **Mastersprint:** Home/Dashboard Actionability-sprint (gevonden tijdens de resume-audit).
+- **Evidence:** `core/fProgramResume.test.js` 7/7, sabotagebewijs geleverd en teruggedraaid. Bestaand `core/fExecutionIdentity.test.js` bijgewerkt (legitieme contractverbreding, geen regressie).
+- **Closed date:** 28 augustus 2026.
+
 
 ### (nieuw, MS-F2-01) — Execution-identity-lek bij Repeat Workout / Programma-training — **STATUS: CLOSED**
 - **Original finding:** `startRepeatWorkout()` en `launchProgramTrainScreen()` resetten `activeInstanceId` niet vóór een nieuwe sessie. Een afgebroken training kon zijn instance-ID laten lekken naar een latere, ongerelateerde sessie, die bij afronden dan de verkeerde `training_instances`-rij als voltooid markeerde.

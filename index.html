@@ -6043,7 +6043,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.2';
+const APP_VER = 'v4.69.3';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -20107,40 +20107,58 @@ async function launchProgramTrainScreen(adjustment){
   const {blockId,block,prog,rows}=progCheckinCtx;
   const ctxT='prog_'+blockId;
   if(!(await guardExistingDraft(ctxT))) return; // P0: bescherm niet-afgeronde andere training
-  // MS-F2-01: zie startRepeatWorkout hierboven — zelfde execution-identity-regel ("Werkblok D").
-  // Dit startpad loopt niet via Preview/resolvedWorkout, dus een activeInstanceId van een vorige,
-  // afgebroken sessie mag hier nooit meegenomen worden naar deze programmatraining.
-  activeInstanceId=null;
-  curT=ctxT;sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
+  // MS-F2-07/GAP-P1-006 P1-FIX: net als startT/startCustomTraining moet een bestaande, geldige
+  // draft VOOR DEZE ZELFDE programmatraining hersteld worden i.p.v. stilzwijgend overschreven.
+  // Vóór deze fix wiste elke herbinnenkomst (bv. na het sluiten van de app tijdens een
+  // programmatraining) onvoorwaardelijk sessionLog/sessionExtra — reeds gelogde sets voor
+  // die sessie gingen dan verloren, ook al bestond er een geldige, niet-gesynchroniseerde
+  // draft met precies dezelfde ctxT. guardExistingDraft() beschermt hier niet tegen: die
+  // vraagt alleen bevestiging bij een ANDERE training (draft.t!==ctxT), niet bij dezelfde.
+  const _draft=restoreTrainingDraft();
+  const _resume=!!(_draft&&_draft.t===ctxT&&isSameLocalDay(_draft.ts)&&draftHasData(_draft));
+  activeInstanceId=_resume?(_draft.instanceId||null):null;
+  curT=ctxT;
   pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};
-  rows.forEach(r=>{
-    const ex=exercises.find(e=>e.id===r.exercise_id);
-    if(!ex)return;
-    const cardioType=resolveCardioType(ex);
-    const exType=cardioType||ex.type||'strength';
-    if(cardioType){
-      sessionExtra.push({id:ex.id,naam:ex.name,type:exType,_t:ctxT,_preloaded:true});
-      return;
-    }
-    let sets=r.sets||3, rpe=parseFloat(r.rpe_target)||7;
-    if(adjustment){
-      sets=Math.max(1,sets+(adjustment.setsDelta||0));
-      rpe=Math.max(5,Math.min(10,rpe+(adjustment.rpeDelta||0)));
-    }
-    const _reps=r.reps||'8-10';
-    // ÉÉN prescription-truth ook voor Programma: canonical werkgewicht = 1RM × (aangepaste) reps ×
-    // (recovery-aangepaste) RPE — dezelfde bron/formule als computeProgPrefill. Zo tonen de VANDAAG-kaart,
-    // de prefill én de coaching hetzelfde getal (geen "nog te bepalen" en geen concurrerend advies).
-    let _sug=null;
-    try{ const _1rm=getOneRM(ex.id)||estimatedOneRM(ex.id); if(_1rm){ _sug=suggestWeightForRepsRpe(_1rm, parseFloat(repsPrefillFromRange(_reps)), String(rpe)); } }catch(e){}
-    sessionExtra.push({id:ex.id,naam:ex.name,type:exType,sets,reps:_reps,rpe:String(rpe),suggestedWeight:(_sug!=null?_sug:null),_t:ctxT,_preloaded:true});
-  });
+  if(_resume){
+    sessionLog=_draft.sessionLog||{};sessionExtra=_draft.sessionExtra||[];trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
+  }else{
+    sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
+    rows.forEach(r=>{
+      const ex=exercises.find(e=>e.id===r.exercise_id);
+      if(!ex)return;
+      const cardioType=resolveCardioType(ex);
+      const exType=cardioType||ex.type||'strength';
+      if(cardioType){
+        sessionExtra.push({id:ex.id,naam:ex.name,type:exType,_t:ctxT,_preloaded:true});
+        return;
+      }
+      let sets=r.sets||3, rpe=parseFloat(r.rpe_target)||7;
+      if(adjustment){
+        sets=Math.max(1,sets+(adjustment.setsDelta||0));
+        rpe=Math.max(5,Math.min(10,rpe+(adjustment.rpeDelta||0)));
+      }
+      const _reps=r.reps||'8-10';
+      // ÉÉN prescription-truth ook voor Programma: canonical werkgewicht = 1RM × (aangepaste) reps ×
+      // (recovery-aangepaste) RPE — dezelfde bron/formule als computeProgPrefill. Zo tonen de VANDAAG-kaart,
+      // de prefill én de coaching hetzelfde getal (geen "nog te bepalen" en geen concurrerend advies).
+      let _sug=null;
+      try{ const _1rm=getOneRM(ex.id)||estimatedOneRM(ex.id); if(_1rm){ _sug=suggestWeightForRepsRpe(_1rm, parseFloat(repsPrefillFromRange(_reps)), String(rpe)); } }catch(e){}
+      sessionExtra.push({id:ex.id,naam:ex.name,type:exType,sets,reps:_reps,rpe:String(rpe),suggestedWeight:(_sug!=null?_sug:null),_t:ctxT,_preloaded:true});
+    });
+  }
   buildProgramTrainScreen(block,prog);
   cleanupOtherTrainScreens('s-train-prog-'+blockId);
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('s-train-prog-'+blockId)?.classList.add('active');
   await renderTrainScreen(ctxT);
-  trainStart=Date.now();startTrainTimer(ctxT);
+  if(_resume){
+    restoreSessionLogToDom(ctxT);
+    trainStart=Date.now()-(Number(_draft.elapsedMs)||0);
+    lastSaveTs=_draft.ts;saveState='saved';if(typeof updateSaveIndicator==='function')updateSaveIndicator();
+  }else{
+    trainStart=Date.now();
+  }
+  startTrainTimer(ctxT);
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.add('show'));
   if(adjustment)toast('Belasting aangepast voor deze training');
   progCheckinCtx=null;

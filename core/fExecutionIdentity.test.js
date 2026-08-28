@@ -48,7 +48,7 @@ function extractFunctionBody(source, name) {
   return null;
 }
 
-const RESETS_INSTANCE_ID = /activeInstanceId\s*=\s*(null|draft\.instanceId|_draft\.instanceId)/;
+const RESETS_INSTANCE_ID = /activeInstanceId\s*=\s*(null|draft\.instanceId|_draft\.instanceId|_resume\?)/;
 
 [
   'startT',
@@ -64,16 +64,27 @@ const RESETS_INSTANCE_ID = /activeInstanceId\s*=\s*(null|draft\.instanceId|_draf
   }
 });
 
-// Regressiebescherming op de exacte MS-F2-01-fix: de twee functies die het defect
-// hadden, moeten nu specifiek "activeInstanceId=null" bevatten (niet alleen een
-// draft-restore-tak, want zij hebben geen eigen resume-pad zoals startT/startCustomTraining).
-['startRepeatWorkout', 'launchProgramTrainScreen'].forEach(fnName => {
+// Regressiebescherming op de exacte MS-F2-01-fix: startRepeatWorkout had geen eigen
+// resume-pad en moet daarom altijd onvoorwaardelijk "activeInstanceId=null" bevatten.
+['startRepeatWorkout'].forEach(fnName => {
   const body = extractFunctionBody(html, fnName);
   if (body) {
     ok(/activeInstanceId\s*=\s*null/.test(body),
       fnName + '() bevat specifiek "activeInstanceId=null" (de MS-F2-01-fix, niet alleen een draft-restore-pad)');
   }
 });
+// launchProgramTrainScreen kreeg tijdens MS-F2-07 een eigen resume-pad (zie
+// fProgramResume.test.js): "null bij een verse start, of de eigen draft-instanceId bij
+// resume" is nu het juiste, sterkere contract — niet langer een kale, onvoorwaardelijke
+// "activeInstanceId=null" (die het legitieme draft.instanceId niet meer zou onderscheiden
+// van resume vs. vers). De algemene RESETS_INSTANCE_ID-check hierboven dekt dit al af.
+{
+  const body = extractFunctionBody(html, 'launchProgramTrainScreen');
+  if (body) {
+    ok(/activeInstanceId=_resume\?\(_draft\.instanceId\|\|null\):null/.test(body),
+      'launchProgramTrainScreen() gebruikt het conditionele resume-contract (null bij verse start, eigen draft.instanceId bij resume) — nooit een vreemde/oude instance-ID');
+  }
+}
 
 // MS-F2-01: bevroren-timer-defect bij custom trainingen (startTrainTimer('A') hardcoded,
 // zocht altijd naar 'elapsed-a' i.p.v. het daadwerkelijke, zichtbare element).

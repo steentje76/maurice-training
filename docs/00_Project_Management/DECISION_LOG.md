@@ -788,3 +788,42 @@
   toestemming voor de volledige cyclus zonder tussentijdse bevestiging.
   Niet door Maurice persoonlijk beoordeeld op het moment van mergen — ter
   review bij terugkeer.
+
+## DEC-045
+- Datum: 27 augustus 2026
+- Beslissing: A6 Multi-Sport Interval Execution 1.0 — één generieke
+  intervalarchitectuur geïntegreerd voor RowErg/SkiErg/BikeErg/Hardlopen,
+  in plaats van vier losse sport-specifieke engines.
+- Belangrijke bevinding vóór het bouwen: een reeds bestaand, zelfstandig
+  ontwikkeld core/intervalEngine.js (IntervalEngineCore) bleek al aanwezig
+  te zijn -- puur, deterministisch, 28/28 tests al groen, maar zonder
+  enige UI-integratie. Deze sprint heeft dit NIET herbouwd, uitsluitend
+  geïntegreerd (prescriptie-UI, executie-overlay, logging).
+- Architectuurprincipe gevolgd: geen vier onafhankelijke sport-engines,
+  één canoniek block/repeat-model met sportcontext erboven (CARDIO_TYPES
+  blijft de bron voor per-sport metrics/eenheden).
+- Kernprincipe, expliciet uit de bestaande core-documentatie
+  overgenomen: geen schijnprecisie. DISTANCE/MANUAL-blocks eindigen nooit
+  automatisch (geen live, device-onafhankelijke afstandsmeting bestaat).
+  totalPlannedSeconds() retourneert null zodra niet alle blocks
+  time-based zijn.
+- Logging-beslissing: geen directe databaseschrijving vanuit de
+  intervalmodule zelf. Vult uitsluitend bestaande cardio-invoervelden en
+  het bestaande sessionLog.exNote-veld -- de bestaande, ongewijzigde
+  finishSession()-schrijfweg blijft de enige bron van waarheid. Uitsluitend
+  natuurlijk voltooide werk-blocks tellen mee (geen overtelling bij
+  vroegtijdig doorklikken).
+- Bewezen, niet alleen beweerd: de intervaltimer gebruikt exact hetzelfde
+  wall-clock-patroon als de bestaande rusttimer; het niet-opruimen van een
+  vorige timer (analoog aan het A5-gevonden BLE-listener-lek) wordt
+  bewezen gedetecteerd via bug-terugzet-simulatie.
+- Bewust buiten scope: EMOM (eigen sub-engine nodig, per eerdere
+  architectuurnotitie), per-interval-detaillogging, FTP/critical power/
+  critical speed, AI-targets, forecasting.
+- Impact: geen databasewijziging, geen protected-core-wijziging (expliciet
+  geverifieerd).
+- Verantwoordelijke: autonome discovery, integratie en merge door Claude
+  tijdens een onbeheerde master-sprint, met expliciete voorafgaande
+  toestemming voor de volledige cyclus zonder tussentijdse bevestiging.
+  Niet door Maurice persoonlijk beoordeeld op het moment van mergen — ter
+  review bij terugkeer.

@@ -4782,6 +4782,18 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </div>
 </div>
 
+<!-- ═══ A6 — INTERVALTRAINING-EXECUTIE (v4.69.0) ═══
+     Compacte, blokgestuurde executie-overlay, gedreven door IntervalEngineCore
+     (puur, protected-adjacent). Device blijft optioneel -- geen afhankelijkheid
+     van BLE-status in deze modal. -->
+<div class="modal-bg" id="m-interval-exec" onclick="">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Intervaltraining</div>
+    <div id="interval-exec-body"></div>
+  </div>
+</div>
+
 <!-- ═══ PROGRAMMA — TRAININGSINTRO (geen aanpassing nodig, wel korte uitleg wat/waarom) ═══ -->
 <div class="modal-bg" id="m-prog-intro" onclick="">
   <div class="modal">
@@ -5326,6 +5338,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/decision.js"></script>
 <script src="core/cardio.js"></script>
 <script src="core/progression.js"></script>
+<script src="core/intervalEngine.js"></script>
 <script src="core/coaching.js"></script>
 <script src="core/relationship.js"></script>
 <script src="core/athlete.js"></script>
@@ -5998,7 +6011,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.68.0';
+const APP_VER = 'v4.69.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -14408,6 +14421,148 @@ function getMachineList(type){
 // Wordt aangeroepen vanuit buildExerciseBody, dus identiek voor Training A/B, Workout, Losse
 // oefening én de Logboek-editor. Toont uitsluitend cardio-relevante velden: nooit sets/kg/reps/
 // 1RM/percentages/backoff/gewichtsmodi (die horen bij buildStrengthBody, hier niet aangeroepen).
+// ══════════════════════════════════════════════════════════════════════════
+// A6 v1 — MULTI-SPORT INTERVAL EXECUTION. Prescriptie-UI, uitvoering en logging.
+// Hergebruikt uitsluitend het bestaande, pure IntervalEngineCore (core/intervalEngine.js)
+// voor het model/de state -- deze laag doet UITSLUITEND DOM/timer/opslag, geen enkele
+// nieuwe berekening. Device is optioneel (het bestaande tkRenderErgConnect() staat al
+// los boven deze sectie in buildCardioBody() en blijft ongewijzigd functioneren).
+// ══════════════════════════════════════════════════════════════════════════
+var _ivPrescr={}; // per exId: laatst ingevoerde ruwe formulierwaarden (voor hertoon na re-render)
+var _ivExec=null; // actieve executiestate: {exId,cardioType,prescription,blockIndex,startedAt,elapsedBeforePause,paused}
+var _ivTimerHandle=null, _ivBlockEndAt=null;
+
+function buildIntervalSection(exId,cardioType){
+  const p=_ivPrescr[exId]||{on:false,repeats:6,work:60,rest:60,warmup:0,cooldown:0};
+  return `<div class="tks-card" style="margin:6px 14px 8px;padding:12px 14px">
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--g5,#1a2b33);cursor:pointer">
+      <input type="checkbox" id="ivon-${exId}" ${p.on?'checked':''} onchange="toggleIntervalMode('${exId}','${cardioType}')"> Intervaltraining
+    </label>
+    <div id="ivform-${exId}" style="display:${p.on?'block':'none'};margin-top:10px">
+      <div class="row-grid">
+        <div class="row-item"><input class="row-inp" type="number" min="1" max="50" id="iv-repeats-${exId}" value="${p.repeats}"><div class="row-inp-lbl">Herhalingen</div></div>
+        <div class="row-item"><input class="row-inp" type="number" min="5" max="3600" id="iv-work-${exId}" value="${p.work}"><div class="row-inp-lbl">Werk (sec)</div></div>
+        <div class="row-item"><input class="row-inp" type="number" min="5" max="3600" id="iv-rest-${exId}" value="${p.rest}"><div class="row-inp-lbl">Herstel (sec)</div></div>
+        <div class="row-item"><input class="row-inp" type="number" min="0" max="1800" id="iv-warmup-${exId}" value="${p.warmup}"><div class="row-inp-lbl">Warm-up (sec)</div></div>
+        <div class="row-item"><input class="row-inp" type="number" min="0" max="1800" id="iv-cooldown-${exId}" value="${p.cooldown}"><div class="row-inp-lbl">Cooldown (sec)</div></div>
+      </div>
+      <button class="btn btn-r" style="width:100%;margin-top:10px" onclick="startIntervalExecution('${exId}','${cardioType}')">▶ Start intervaltraining</button>
+      <div style="font-size:11px;color:var(--g4);margin-top:6px">Werk en herstel worden automatisch afgeteld. Je kunt tijdens het werk-block desgewenst een apparaat koppelen hierboven.</div>
+    </div>
+  </div>`;
+}
+function toggleIntervalMode(exId,cardioType){
+  const on=document.getElementById('ivon-'+exId).checked;
+  _ivPrescr[exId]=Object.assign({on:false,repeats:6,work:60,rest:60,warmup:0,cooldown:0},_ivPrescr[exId],{on:on});
+  const f=document.getElementById('ivform-'+exId); if(f)f.style.display=on?'block':'none';
+}
+// Bouwt een ruwe prescriptie uit de formuliervelden en normaliseert die via het
+// bestaande, pure IntervalEngineCore -- GEEN eigen validatie/parsing hier dupliceren.
+function buildIntervalPrescriptionFromForm(exId,cardioType){
+  const repeats=Math.max(1,parseInt(document.getElementById('iv-repeats-'+exId).value)||1);
+  const work=Math.max(1,parseInt(document.getElementById('iv-work-'+exId).value)||60);
+  const rest=Math.max(1,parseInt(document.getElementById('iv-rest-'+exId).value)||60);
+  const warmup=Math.max(0,parseInt(document.getElementById('iv-warmup-'+exId).value)||0);
+  const cooldown=Math.max(0,parseInt(document.getElementById('iv-cooldown-'+exId).value)||0);
+  _ivPrescr[exId]={on:true,repeats,work,rest,warmup,cooldown};
+  const blocks=[];
+  if(warmup>0)blocks.push({type:'warmup',termination:{type:'time',seconds:warmup}});
+  blocks.push({repeat:repeats,of:[
+    {type:'work',termination:{type:'time',seconds:work}},
+    {type:'recovery',termination:{type:'time',seconds:rest}}
+  ]});
+  if(cooldown>0)blocks.push({type:'cooldown',termination:{type:'time',seconds:cooldown}});
+  return IntervalEngineCore.normalizePrescription({sport:cardioType,blocks});
+}
+function startIntervalExecution(exId,cardioType){
+  const prescription=buildIntervalPrescriptionFromForm(exId,cardioType);
+  if(!prescription.geldig){ toast('Ongeldige intervalinstelling: '+(prescription.reden||'onbekende fout')); return; }
+  _ivExec={exId,cardioType,prescription,blockIndex:0,workSecondsTotaal:0,completedWorkBlocks:0};
+  openModal('m-interval-exec');
+  renderIntervalExecBlock();
+}
+const IV_BLOCK_LABEL={warmup:'Warm-up',work:'Werk',recovery:'Herstel',cooldown:'Cooldown'};
+function renderIntervalExecBlock(){
+  if(!_ivExec)return;
+  const st=IntervalEngineCore.stateAt(_ivExec.prescription,_ivExec.blockIndex);
+  const body=document.getElementById('interval-exec-body');
+  if(!body)return;
+  if(st.voltooid){ finishIntervalExecution(); return; }
+  const b=st.block;
+  const repLabel=b.repeatTotal>1?` (${b.repeatIndex+1}/${b.repeatTotal})`:'';
+  const isManual=b.termination.type!=='time';
+  body.innerHTML=`
+    <div style="text-align:center;padding:12px 0">
+      <div style="font-size:13px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">${escHtml(IV_BLOCK_LABEL[b.type]||b.type)}${repLabel}</div>
+      <div id="iv-countdown" style="font-size:44px;font-weight:800;color:var(--g5,#1a2b33);margin:10px 0">${isManual?'—':fmtMmSs(b.termination.seconds)}</div>
+      ${b.termination.type==='distance'?`<div style="font-size:12px;color:var(--g4)">Doel: ${b.termination.meters} m — tik "Volgende" zodra bereikt</div>`:''}
+      ${(!isManual)?'':'<div style="font-size:12px;color:var(--g4)">Tik "Volgende" wanneer klaar</div>'}
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-o" style="flex:1" onclick="advanceIntervalBlock()">Volgende ▶</button>
+      <button class="btn btn-o" style="flex:1;color:var(--red)" onclick="stopIntervalExecutionEarly()">Stoppen</button>
+    </div>`;
+  if(!isManual){ startIntervalBlockTimer(b.termination.seconds,b.type==='work'); }
+}
+function fmtMmSs(sec){ const m=Math.floor(sec/60),s=Math.round(sec%60); return (m<10?'0':'')+m+':'+(s<10?'0':'')+s; }
+// Wall-clock-gebaseerde afteller, EXACT hetzelfde patroon als de bestaande startRestTimer()
+// (restEndAt/setInterval) -- geen nieuwe timerlogica, uitsluitend een aparte instantie
+// zodat de gewone rusttimer en de intervaltimer elkaar nooit kunnen overschrijven.
+function startIntervalBlockTimer(seconds,isWork){
+  if(_ivTimerHandle)clearInterval(_ivTimerHandle);
+  _ivBlockEndAt=Date.now()+seconds*1000;
+  const tick=()=>{
+    if(!_ivExec){ clearInterval(_ivTimerHandle); return; }
+    const rem=Math.max(0,Math.round((_ivBlockEndAt-Date.now())/1000));
+    const el=document.getElementById('iv-countdown'); if(el)el.textContent=fmtMmSs(rem);
+    if(rem<=0){
+      clearInterval(_ivTimerHandle);_ivTimerHandle=null;
+      if(navigator.vibrate&&isSettingOn('tk_haptics_enabled',true))navigator.vibrate([200,100,200]);
+      if(isWork)_ivExec.workSecondsTotaal+=seconds;
+      if(isWork)_ivExec.completedWorkBlocks++;
+      advanceIntervalBlock();
+    }
+  };
+  tick();
+  _ivTimerHandle=setInterval(tick,1000);
+}
+function advanceIntervalBlock(){
+  if(!_ivExec)return;
+  if(_ivTimerHandle){clearInterval(_ivTimerHandle);_ivTimerHandle=null;}
+  _ivExec.blockIndex=IntervalEngineCore.nextBlockIndex(_ivExec.blockIndex);
+  renderIntervalExecBlock();
+}
+function stopIntervalExecutionEarly(){
+  if(_ivTimerHandle){clearInterval(_ivTimerHandle);_ivTimerHandle=null;}
+  finishIntervalExecution(true);
+}
+// Logging: hergebruikt EXACT de bestaande cardio-schrijfweg (cardioDataToRow()+writeSessionRow()),
+// GEEN nieuwe tabel/kolom. De intervalstructuur zelf wordt niet per-interval opgeslagen (dat zou
+// een nieuwe datamodel-laag vereisen, buiten A6 v1-scope) -- uitsluitend een canonieke samenvatting:
+// totale werktijd en aantal voltooide werk-blocks, in dezelfde vorm als een handmatige cardio-invoer.
+async function finishIntervalExecution(vroegtijdigGestopt){
+  if(!_ivExec)return;
+  const {exId,cardioType,workSecondsTotaal,completedWorkBlocks}=_ivExec;
+  closeModal('m-interval-exec');
+  if(workSecondsTotaal>0){
+    const m=Math.floor(workSecondsTotaal/60),s=workSecondsTotaal%60;
+    const noteTekst='Intervaltraining: '+completedWorkBlocks+'x werk, totaal '+m+':'+(s<10?'0':'')+s+(vroegtijdigGestopt?' (vroegtijdig gestopt)':'');
+    // Vult het bestaande tijd-invoerveld van deze cardio-oefening -- de sporter kan hierna
+    // desgewenst nog afstand/watt/etc. handmatig aanvullen vóór het afronden van de training,
+    // exact zoals bij elke andere cardio-oefening. Geen aparte, tweede schrijfweg.
+    const timeField=document.getElementById(exId+'-time');
+    if(timeField){ timeField.value=fmtMmSs(workSecondsTotaal); onCardioFieldInput(exId,cardioType,'time'); }
+    // exNote via exact hetzelfde, al bestaande sessionLog-veld als execSaveNote() gebruikt
+    // (P1-fix, overleeft autosave/draft/resume) -- geen nieuwe notitie-opslagweg.
+    if(!sessionLog[exId])sessionLog[exId]={};
+    sessionLog[exId].exNote=(sessionLog[exId].exNote?sessionLog[exId].exNote+' · ':'')+noteTekst;
+    if(typeof scheduleAutosave==='function')scheduleAutosave();
+    toast('Intervaltraining verwerkt — controleer de resultaatvelden vóór het afronden.');
+  }else{
+    toast('Intervaltraining gestopt zonder voltooide werk-blocks.');
+  }
+  _ivExec=null;
+}
 function buildCardioBody(exId, cardioType){
   const cfg=CARDIO_TYPES[cardioType]||CARDIO_TYPES.rowing;
   const machines=getMachineList(cardioType);
@@ -14431,6 +14586,14 @@ function buildCardioBody(exId, cardioType){
     <div class="rower-scroll" id="msel-${exId}">
       ${machines.map(m=>`<button class="rower-chip${m===selM?' sel':''}" onclick="selMachine_fn('${m}','${cardioType}','${exId}')">${m}</button>`).join('')}
     </div>`;
+  }
+
+  // A6 v1 — INTERVALTRAINING (optioneel). Hergebruikt uitsluitend het bestaande
+  // IntervalEngineCore (puur, protected-adjacent, reeds getest) voor prescriptie/state --
+  // geen tweede parallelle workoutarchitectuur. Toont uitsluitend voor sporten met een
+  // canoniek erkende intervalcontext (rowing/skierg/bikeerg/running).
+  if(['rowing','skierg','bikeerg','running'].indexOf(cardioType)!==-1){
+    h+=buildIntervalSection(exId,cardioType);
   }
 
   h+=`<div style="padding:8px 14px 4px;font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Resultaat</div>

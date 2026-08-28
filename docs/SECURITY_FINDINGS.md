@@ -1,19 +1,30 @@
 # SECURITY_FINDINGS.md — Trainingskompas (canonieke, actuele versie)
 
-**Laatst herbouwd:** 28 augustus 2026, tegen `main` @ `201385d2d7c6dbc3c1dcd093411aed7619d429c1`.
-**Bewijsniveau:** DB VERIFIED (volledige policy-definities, grants, triggers, functiebroncode gelezen) + CODE VERIFIED (Netlify Functions). Read-only, geen wijzigingen aangebracht buiten de expliciet goedgekeurde P0-closure-migratie.
+**Laatst herbouwd:** 28 augustus 2026, tegen `main` @ `0ac59fb62df961686152e6cfcb80ab532ee21a8d` (na MS-F1-01).
+**Bewijsniveau:** DB VERIFIED (volledige policy-definities, grants, triggers, functiebroncode gelezen, live SQL-transactietests) + CODE VERIFIED (Netlify Functions). Alle DB-wijzigingen via expliciet gedocumenteerde, reviewbare migraties.
 
 ## CURRENT STATUS (samenvatting)
 
-| Bevinding | Status | PR |
+| Bevinding | Status | PR/Mastersprint |
 |---|---|---|
 | P0-001 — `gyms`-tabel publiek leesbaar | **CLOSED** | #64 |
 | P0-002 — ontbrekende security-tests (coach.js, wearable-OAuth, delete-account.js, gym-team.js) | **CLOSED** | #64 |
 | P0-003 — release gate dekte 10 van ~75 tests (lokaal) | **CLOSED** (met correctie: CI was al comprehensive sinds 18-08) | #64 |
-| P2 — ontbrekende scoping op multi-tenant-schema (organizations/teams/etc.) | **OPEN** — zie `GAP_ANALYSIS_V2.md`, GYM-RLS-SCOPING-001 | — |
+| P0-004 — self-privilege-escalatie via `users.gym_role`/`gym_id`/`system_role` | **CLOSED** | MS-F1-01, `migratie_v497.sql` |
+| P1 — ontbrekende membership-scoping op multi-tenant-schema (organizations/teams/etc.) | **CLOSED** | MS-F1-01, `migratie_v498.sql` |
 | P3 — redundante ownership-check in `WITH CHECK` ontbreekt | **OPEN**, cosmetisch | — |
 
 **Alles onder "HISTORICAL RECORD" hieronder beschrijft de situatie ZOALS DIE WAS vóór de fix. Niets daarin is een open actie — elke aanbeveling is óf al geïmplementeerd (zie CURRENT STATUS hierboven), óf expliciet als nog open gemarkeerd in `GAP_ANALYSIS_V2.md`.**
+
+---
+
+## HISTORICAL RECORD — P0-004 (MS-F1-01) — self-privilege-escalatie via `users`-tabel
+
+**Bevinding:** policy `users_update_own` (`USING id=auth.uid()`) had geen kolomrestrictie. Combinatie met een UPDATE-GRANT voor `authenticated` op `gym_role`, `gym_id` en `system_role` betekende dat elke ingelogde gebruiker via een directe `PATCH /rest/v1/users?id=eq.<eigen-id>` zichzelf kon promoveren tot `gym_role='owner'` en `system_role='developer'` — volledig buiten de zorgvuldig gebouwde hiërarchie-checks van `gym-team.js` om (die alleen relevant zijn als de client de Netlify Function gebruikt, niet wanneer de client de Supabase REST-API rechtstreeks aanspreekt).
+
+**Live bewijs (transactie, teruggerold, geen echte data gewijzigd):** een self-update naar `gym_role='owner'`/`system_role='developer'` slaagde vóór de fix. Na de fix (`migratie_v497.sql`, een `BEFORE UPDATE`-trigger die deze drie kolommen terugzet naar hun oude waarde tenzij de aanroep van `service_role` komt) blijven de waarden ongewijzigd bij eenzelfde poging, terwijl een service-role-update (het patroon van `gym-team.js`) gewoon blijft slagen.
+
+**STATUS: CLOSED.** Nieuwe capability `SEC-USERROLE-001`, gesloten.
 
 ---
 
@@ -42,9 +53,11 @@ Op dit moment staat er 1 rij in (`art_crossfit`), dus de blootstelling is beperk
 
 ---
 
-## 🟡 P2 — Ontbrekende scoping op referentietabellen (nog geen actieve exposure, wel vóór Phase 3 te fixen)
+## HISTORICAL RECORD — ontbrekende scoping op referentietabellen (STATUS: CLOSED via MS-F1-01)
 
-`macrocycles`, `mesocycles`, `microcycles`, `organizations`, `seasons`, `teams`, `training_groups` hebben allemaal een SELECT-policy `auth.role() = 'authenticated'` — dus **elke ingelogde gebruiker kan alle rijen van alle organisaties/teams zien**, niet alleen die van zichzelf. Dit is exact het coach-dashboard/multi-tenant-schema dat volgens `DECISION_LOG.md`/memory "voorbereid maar nog niet afgedwongen" is (Phase 3). Op dit moment staan er 0 rijen in deze tabellen — geen actief lek — maar dit moet vóór de eerste coach/organisatie-data wordt ingevoerd, gefixed worden naar een membership-gebaseerde scoping (naar analogie van `coach_athlete_relationships`, die dat wél correct doet).
+`macrocycles`, `mesocycles`, `microcycles`, `organizations`, `seasons`, `teams`, `training_groups` hadden allemaal een SELECT-policy `auth.role() = 'authenticated'` — elke ingelogde gebruiker kon alle rijen van alle organisaties/teams zien, niet alleen die van zichzelf. 0 rijen op dat moment — geen actief lek, wel vóór de eerste coach/organisatie-data te fixen.
+
+**STATUS: CLOSED.** `migratie_v498.sql` (MS-F1-01) verving alle 7 policies door membership-gescoopte varianten, live geverifieerd met 2 gescheiden testtenants.
 
 ## 🟢 Verified: schrijfrechten correct afgedwongen via triggers (geen bug, gecontroleerd)
 

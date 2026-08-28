@@ -22,7 +22,8 @@
 | ID | Capability | Code | DB | Tests | Integration | Device | Evidence/scientific | Maturity | Target | Gap | Priority | Phase |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | SOC-GYMTEAM-001 | Gym-team-beheer (RBAC: lid/coach/manager/owner) | `gym-team.js`, `gym-team-set-pin.js` | `users.gym_role/gym_role_level`, `gym_audit_log` | `fGymTeamSecurity.test.js` 17/17 — incl. de gefixte owner-demotie-bug | Gemockt | N/A | N/A | **TESTED** | VALIDATED | live-verificatie in productie | P3 | F1 |
-| GYM-RLS-SCOPING-001 | Multi-tenant RLS-scoping (organizations/teams/training_groups/seasons/macrocycles/mesocycles/microcycles) | schema aanwezig | DB VERIFIED: `auth.role()='authenticated'`, geen ownership-scoping, 0 rijen | N/A | N/A | N/A | N/A | **NOT STARTED** | VALIDATED | ontbrekende membership-gebaseerde scoping | **P1** | F1 (vóór F11) |
+| GYM-RLS-SCOPING-001 | Multi-tenant RLS-scoping (organizations/teams/training_groups/seasons/macrocycles/mesocycles/microcycles) | `migratie_v498.sql` | DB VERIFIED: membership-gescoopte policies live geverifieerd (2 tenants, cross-tenant DENY, owner-bootstrap ALLOW) | `fGymRlsMultiTenant.test.js` 22/22 (statische contractcheck) | N/A | OPEN (geen live PostgREST-JWT-test, wel live SQL-transactiebewijs) | N/A | **VALIDATED** | VALIDATED | live PostgREST-end-to-end-test met echte JWT's (optioneel, SQL-niveau al bewezen) | **P1** | F1 (MS-F1-01, CLOSED) |
+| SEC-USERROLE-001 | Bescherming tegen self-service privilege-escalatie op `users.gym_role`/`gym_id`/`system_role` | `migratie_v497.sql` (BEFORE UPDATE-trigger) | DB VERIFIED: self-update van deze 3 kolommen wordt teruggezet, service_role-update (gym-team.js) blijft werken | `fGymRlsMultiTenant.test.js` (onderdeel van dezelfde 22/22) | N/A | N/A | N/A | **CLOSED** | CLOSED | geen | **P0 (gevonden tijdens MS-F1-01, niet in de oorspronkelijke audit)** | F1 (MS-F1-01, CLOSED) |
 | COACH-RELATIONSHIP-001 | Coach-athlete-relaties | `coach_athlete_relationships` | DB VERIFIED — correcte consent-flow (pending→active, wederzijdse revocatie) | Geen dedicated test gevonden | N/A | N/A | N/A | IMPLEMENTED | TESTED | testdekking | P3 | F10 |
 
 ## C. AI Coach (security vs. governance expliciet gescheiden)
@@ -76,17 +77,18 @@
 
 ## Samenvatting per maturity-status
 
-**Canonieke capability count: 25** (alle unieke rijen in dit document — zie `docs/ROADMAP_COVERAGE_AUDIT.md` voor de formele definitie en reconciliatie met `docs/ROADMAP_INDEX.json`).
+**Canonieke capability count: 26** (was 25 vóór MS-F1-01 — SEC-USERROLE-001 toegevoegd als nieuwe, tijdens deze mastersprint gevonden en gesloten capability. Zie `docs/ROADMAP_COVERAGE_AUDIT.md` voor de formele definitie en reconciliatie met `docs/ROADMAP_INDEX.json`).
 
 | Status | Aantal | IDs |
 |---|---|---|
-| CLOSED | 4 | SEC-GYMS-001, SEC-TEST-001, SEC-GATE-001, AI-COACH-001 |
+| CLOSED | 5 | SEC-GYMS-001, SEC-TEST-001, SEC-GATE-001, AI-COACH-001, SEC-USERROLE-001 |
 | TESTED | 8 | PLAT-DELETE-001, SOC-GYMTEAM-001, EVID-SCI-001, DEC-CORE-001, DEV-WEARAUTH-001, DEV-CONCEPT2-001, END-HYROX-001, DEV-VALIDATION-001 |
-| NOT STARTED | 7 | PLAT-BACKUP-CLEANUP-001, PLAT-OBSERVABILITY-001, GYM-RLS-SCOPING-001, AI-OUTPUT-CONTRACT-001, WOMENS-PERF-DECISIONS-001, COMM-UI-001, SCI-CONSENT-001 |
+| NOT STARTED | 6 | PLAT-BACKUP-CLEANUP-001, PLAT-OBSERVABILITY-001, AI-OUTPUT-CONTRACT-001, WOMENS-PERF-DECISIONS-001, COMM-UI-001, SCI-CONSENT-001 |
 | IMPLEMENTED | 3 | COACH-RELATIONSHIP-001, AI-PROGRAM-AUTOGEN-001, CAP-REGISTRY-SCREENS-001 |
 | INTEGRATED | 3 | DEV-WEARSYNC-001, END-INTERVAL-001, CTX-CYCLE-001 |
-| **Totaal** | **25** | 4+8+7+3+3 = 25 ✓ |
+| VALIDATED | 1 | GYM-RLS-SCOPING-001 |
+| **Totaal** | **26** | 5+8+6+3+3+1 = 26 ✓ |
 
-**Correctie t.o.v. de vorige versie van deze tabel:** de eerdere samenvatting telde END-HYROX-001 dubbel (in zowel CLOSED als TESTED), miste COACH-RELATIONSHIP-001, SCI-CONSENT-001 en DEV-VALIDATION-001 volledig, en had een denominator-fout bij NOT STARTED (label "4" bij een lijst van 5 IDs). Bovenstaande tabel is opnieuw opgebouwd direct vanuit de daadwerkelijke Maturity-kolom van elke rij hierboven, niet handmatig bijgehouden.
+**Wijziging deze sprint (MS-F1-01):** GYM-RLS-SCOPING-001 van NOT STARTED → VALIDATED; nieuwe capability SEC-USERROLE-001 toegevoegd als CLOSED (privilege-escalatie-fix, gevonden tijdens deze sprint, niet in de oorspronkelijke audit).
 
 **Expliciete status:** DB-verificatie is **VOLLEDIG UITGEVOERD** voor alle capabilities hierboven waar "DB" een kolom heeft — er is geen enkele capability meer waarvoor "DB VERIFIED ontbreekt" een geldige status is. De `index.html`-scherminventaris is **COMPLETED** (38 schermen, zie `docs/TRAININGSKOMPAS_PRODUCT_ARCHITECTURE.md` §3); wat nog open is, is uitsluitend **flow-niveau geautomatiseerde testdekking per scherm**, niet de inventarisatie zelf.

@@ -1,5 +1,35 @@
 # Trainingskompas — Changelog
 
+## v4.69.5 — MS-F3-02: Load & Progression Calculation Registry (28 augustus 2026)
+
+Tweede F3-mastersprint. Audit van `core/trainingLoad.js` (ACWR-classificatie,
+corroboratieregel) en `core/progression.js` (trendanalyse). Bestaande code al
+zeer goed onderbouwd — ACWR-classificatie citeert al Gabbett (2016); tijdens
+deze audit aangevuld met de bekende methodologische kritiek op ACWR zelf
+(Windt & Gabbett 2018, "mathematical coupling") en op basis daarvan
+gedeclasseerd van B naar **C** in de nieuwe formele registry — geen
+evidence-inflatie.
+
+**Gevonden, echte lacune (roadmap-expliciet):** sRPE (Foster session-RPE-
+methode: duur × sessie-RPE) stond letterlijk in de MS-F3-02-acceptance-gate,
+maar bestond nergens in de codebase. `sessions.duration_s`/`sessions.rpe`
+bleken al aanwezig (live geverifieerd in Supabase), dus toegevoegd als
+minimale, pure, geciteerde berekening: `sessionLoadSRPE()` en de bijbehorende
+bouwsteen `rollingLoadSum()` in `core/trainingLoad.js`. Nog niet UI-
+geïntegreerd (bewust, zie GAP-P2-009) — dit is uitsluitend de canonieke
+rekenkern.
+
+**Bijvangst:** `core/trainingLoad.js` bleek niet in de service-worker-
+precache te staan (in tegenstelling tot `calculation.js`/`progression.js`)
+— gecorrigeerd. Bredere, vergelijkbare precache-lacune bij 13 andere
+`core/*.js`-bestanden gevonden en geregistreerd als apart P2-vervolgpunt
+(buiten scope van deze sprint).
+
+Nieuwe formele registry-secties in `docs/CALCULATION_REGISTRY.md` (5
+CALC-LOAD-items) en `core/fLoadProgressionRegistry.test.js` (64/64,
+sabotagebewijs). `APP_VER` → v4.69.5, `CACHE_NAME`/`CACHE_STATIC` en Android
+`versionCode`/`versionName` meegenomen.
+
 ## v4.69.4 — MS-F2-08: GAP-P1-006 Closure — Canonical Instance Tracking voor Programma/Repeat (28 augustus 2026)
 
 Achtste en laatste inhoudelijke F2-mastersprint. Sluit het sinds MS-F2-01 bekende

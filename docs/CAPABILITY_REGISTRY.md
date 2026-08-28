@@ -26,6 +26,7 @@
 | SEC-USERROLE-001 | Bescherming tegen self-service privilege-escalatie op `users.gym_role`/`gym_id`/`system_role` | `migratie_v497.sql` (BEFORE UPDATE-trigger) | DB VERIFIED: self-update van deze 3 kolommen wordt teruggezet, service_role-update (gym-team.js) blijft werken | `fGymRlsMultiTenant.test.js` (onderdeel van dezelfde 22/22) | N/A | N/A | N/A | **CLOSED** | CLOSED | geen | **P0 (gevonden tijdens MS-F1-01, niet in de oorspronkelijke audit)** | F1 (MS-F1-01, CLOSED) |
 | SEC-CONFIG-001 | Secrets- en configuratiehygiëne (client/server-classificatie, redactie, fail-closed-gedrag) | 9 Netlify Functions gecontroleerd op fail-closed-gedrag, `.gitignore` voor keystore/`.env` bevestigd | DB VERIFIED: `config.anthropic_key`/`config.pin_hash` aanwezig maar orphaned (0 code-referenties) | `observability.test.js` sectie K (6 nieuwe assertions, config-redactie) | N/A | N/A | Gerichte git-geschiedenisscan: geen rotation-required items gevonden | **VALIDATED** | VALIDATED | F-01/F-02 (orphaned DB-kolommen) vereisen `MANUAL_USER_VALIDATION_REQUIRED` vóór verwijdering; F-03 (client-lock-hardening) is `PRODUCT_DECISION_REQUIRED` | P1 | F1 (MS-F1-03, CLOSED) |
 | CALC-STR-REGISTRY-001 | Formele Calculation Registry, Strength-domein (e1RM/werkgewicht/volume/warmup/RPE-herstelfactor) | `docs/CALCULATION_REGISTRY.md` — 5 CALC-STR-items, elk met ID/formule/evidence/bronnen/beperkingen/verboden-interpretaties | N/A | `core/fCalculationRegistryStrength.test.js` 56/56 (structurele volledigheid + evidence-inflatie-detectie), sabotagebewijs geleverd | N/A | N/A | Wetenschappelijk geverifieerd: ACSM 2026 Position Stand (Currier et al., MSSE, april 2026, 137 systematic reviews) opnieuw opgezocht en geciteerd voor RPE/RIR-belastingsturing en volume-drempel | **VALIDATED** | VALIDATED | zelfde registry-diepte voor de overige F3-domeinen (Load & Progression, Recovery, Endurance) | P1 | F3 (MS-F3-01, CLOSED) |
+| CALC-LOAD-REGISTRY-001 | Formele Calculation Registry, Load & Progression-domein (ACWR-classificatie/corroboratie/sRPE/rolling-load/trend) | `docs/CALCULATION_REGISTRY.md` — 5 CALC-LOAD-items | N/A | `core/fLoadProgressionRegistry.test.js` 64/64 (functioneel + structureel + evidence-inflatie-detectie), sabotagebewijs geleverd | N/A | N/A | ACWR-classificatie herbeoordeeld: B→C na het opnieuw opzoeken van methodologische kritiek (Windt & Gabbett 2018, mathematical coupling) — geen evidence-inflatie. Foster sRPE-methode (2001) formule-specifiek geciteerd en als nieuwe, minimale calculatie toegevoegd (echte roadmap-lacune). | **VALIDATED** | VALIDATED | UI-integratie van sRPE (GAP-P2-009), zelfde registry-diepte voor Recovery/Endurance | P1 | F3 (MS-F3-02, CLOSED) |
 | COACH-RELATIONSHIP-001 | Coach-athlete-relaties | `coach_athlete_relationships` | DB VERIFIED — correcte consent-flow (pending→active, wederzijdse revocatie) | Geen dedicated test gevonden | N/A | N/A | N/A | IMPLEMENTED | TESTED | testdekking | P3 | F10 |
 
 ## C. AI Coach (security vs. governance expliciet gescheiden)
@@ -88,8 +89,10 @@
 | NOT STARTED | 5 | PLAT-BACKUP-CLEANUP-001, AI-OUTPUT-CONTRACT-001, WOMENS-PERF-DECISIONS-001, COMM-UI-001, SCI-CONSENT-001 |
 | IMPLEMENTED | 2 | COACH-RELATIONSHIP-001, AI-PROGRAM-AUTOGEN-001 |
 | INTEGRATED | 4 | DEV-WEARSYNC-001, END-INTERVAL-001, CTX-CYCLE-001, CAP-REGISTRY-SCREENS-001 |
-| VALIDATED | 3 | GYM-RLS-SCOPING-001, SEC-CONFIG-001, CALC-STR-REGISTRY-001 |
-| **Totaal** | **28** | 5+9+5+2+4+3 = 28 ✓ |
+| VALIDATED | 4 | GYM-RLS-SCOPING-001, SEC-CONFIG-001, CALC-STR-REGISTRY-001, CALC-LOAD-REGISTRY-001 |
+| **Totaal** | **29** | 5+9+5+2+4+4 = 29 ✓ |
+
+**Wijziging deze sprint (MS-F3-02):** nieuwe capability CALC-LOAD-REGISTRY-001 toegevoegd als VALIDATED.
 
 **Wijziging deze sprint (MS-F3-01):** nieuwe capability CALC-STR-REGISTRY-001 toegevoegd als VALIDATED (eerste F3-mastersprint — formele Calculation Registry voor het Strength-domein, met opnieuw geverifieerde wetenschappelijke bronnen).
 

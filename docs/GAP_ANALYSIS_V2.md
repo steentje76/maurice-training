@@ -11,7 +11,7 @@
 |---|---|
 | P0 | **0 open** |
 | P1 | 2 |
-| P2 | 8 |
+| P2 | 10 |
 | P3 | 4 |
 | P4 | 2 |
 
@@ -42,6 +42,20 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Evidence:** CODE VERIFIED, zie het Home/Dashboard-sprintrapport in `docs/`.
 **Target:** een prominente resume-banner/kaart bovenaan Home wanneer `restoreTrainingDraft()` een geldige, data-bevattende draft oplevert, die routeert naar de juiste startfunctie op basis van het trainingstype (vaste/custom/programma).
 **Priority:** P2 (discoverability, geen dataverliesrisico meer). **Complexity:** M. **Roadmap phase:** F2 (vervolgwerk — de laatste F2-mastersprint is inmiddels afgerond zonder dit punt op te pakken, blijft dus staan als losstaand vervolgitem, geen eigen nieuwe mastersprint-ID).
+
+### GAP-P2-009 — sRPE-bouwstenen (Load & Progression-sprint) nog niet UI-geïntegreerd
+**Capability-ID:** CALC-LOAD-REGISTRY-001
+**Current:** `sessionLoadSRPE()`/`rollingLoadSum()` (nieuw, Foster-methode) bestaan als geteste, geciteerde pure calculaties in `core/trainingLoad.js`, maar worden nergens in de UI of AI-coachcontext gebruikt. Er bestaat ook nog geen sRPE-gebaseerde rolling-load-trend naast de bestaande, volume-gebaseerde ACWR.
+**Evidence:** CODE VERIFIED, zie het Load & Progression-sprintrapport in `docs/`.
+**Target:** productbeslissing + ontwerp voor hoe een tweede belasting-signaal (sRPE-gebaseerd) naast de bestaande ACWR-classificatie zinvol en niet-verwarrend getoond kan worden.
+**Priority:** P2. **Complexity:** M. **Roadmap phase:** F3 (vervolgwerk) of later productbeslissing.
+
+### GAP-P2-010 — 13 `core/*.js`-bestanden ontbreken in de service-worker-precache
+**Capability-ID:** PLAT-OBSERVABILITY-001 (platform/PWA-track, breder dan één capability)
+**Current:** `sw.js`'s `STATIC_ASSETS` bevat 15 van de 28 daadwerkelijk in `index.html` geladen `core/*.js`-modules. 13 ontbreken (o.a. `contextEngine.js`, `scientificEvidence.js`, `cycle.js`, `intervalEngine.js`, `teamPerformance.js`) — deze modules zijn dus niet gegarandeerd offline beschikbaar, in tegenstelling tot bijvoorbeeld `calculation.js`/`progression.js`/(sinds deze sprint) `trainingLoad.js`.
+**Evidence:** CODE VERIFIED, repo-brede vergelijking van `index.html`-scripttags tegen `sw.js`'s `STATIC_ASSETS`-array.
+**Target:** de resterende 13 bestanden toevoegen aan `STATIC_ASSETS`, met een `CACHE_STATIC`-bump.
+**Priority:** P2. **Complexity:** S (mechanische toevoeging, wel een volledige regressietest + versiebump per keer).
 
 ### GAP-P1-003 — AI-outputcontract ontbreekt
 **Capability-ID:** AI-OUTPUT-CONTRACT-001 (**expliciet onderscheiden van de reeds gesloten security-capability voor dezelfde proxy**, zie sectie "CLOSED GAPS / HISTORICAL" en Capability Registry — dit is een governance-gat, geen security-gat)

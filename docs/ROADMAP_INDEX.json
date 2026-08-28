@@ -280,7 +280,7 @@
       "E2.1"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [],
     "target_maturity": "IMPLEMENTED",
     "objective": "Fast search/filter/favorites/recent/equipment/muscle UX.",

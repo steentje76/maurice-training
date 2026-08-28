@@ -622,7 +622,7 @@
       "E5.2"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [],
     "target_maturity": "IMPLEMENTED",
     "objective": "Canonical context types, provenance and precedence.",
@@ -3173,5 +3173,19 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "zie MS-F3-05 (CLOSED). BMR/RMR/TDEE blijft NOT_IMPLEMENTED (PRODUCT_DECISION_REQUIRED indien ooit gewenst)."
+  },
+  {
+    "id": "CTX-CONTRACT-001",
+    "type": "capability",
+    "track": "Context Engine",
+    "phase": "F3",
+    "priority": "P1",
+    "status": "VALIDATED",
+    "target": "VALIDATED",
+    "dependencies": [],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F3-06 (CLOSED). GAP-P2-014 (ContextEngineCore ongebruikt) geregistreerd. docs/CONTEXT_CONTRACT.md is het canonieke taxonomie-document."
   }
 ]

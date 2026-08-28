@@ -11,7 +11,7 @@
 |---|---|
 | P0 | **0 open** |
 | P1 | 3 |
-| P2 | 13 |
+| P2 | 14 |
 | P3 | 4 |
 | P4 | 2 |
 
@@ -77,6 +77,13 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Evidence:** CODE VERIFIED, zie het Endurance & Erg-sprintrapport in `docs/`.
 **Target:** expliciete provenance-vlag (`measured`/`derived`) toevoegen aan de opslag van erg-vermogenswaarden.
 **Priority:** P2. **Complexity:** S.
+
+### GAP-P2-014 — `ContextEngineCore` is dode code, nooit aangeroepen vanuit index.html (Context-sprint)
+**Capability-ID:** CTX-CONTRACT-001
+**Current:** `core/contextEngine.js` bevat zijn eigen, expliciete commentaar dat bevestigt: het bestand is additief naast `buildCtx()` (index.html, de daadwerkelijke, actief-aangeroepen contextbron) en wordt vanuit `index.html` nergens aangeroepen.
+**Evidence:** CODE VERIFIED, zie het Context Taxonomy-sprintrapport in `docs/`.
+**Target:** ofwel `ContextEngineCore` alsnog bedraden in `buildCtx()` (bewuste architectuurkeuze, geen technische blocker meer sinds F2), ofwel expliciet documenteren als "toekomstige building block, nog niet actief" i.p.v. impliciet ongebruikt te laten staan.
+**Priority:** P2 (architectuurinconsistentie, geen actieve bug — beide bronnen zijn intern consistent, er is geen tegenstrijdige waarheid). **Complexity:** M.
 
 ### GAP-P1-003 — AI-outputcontract ontbreekt
 **Capability-ID:** AI-OUTPUT-CONTRACT-001 (**expliciet onderscheiden van de reeds gesloten security-capability voor dezelfde proxy**, zie sectie "CLOSED GAPS / HISTORICAL" en Capability Registry — dit is een governance-gat, geen security-gat)

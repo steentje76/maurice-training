@@ -8,7 +8,16 @@
 // de URL, zonder in te loggen, deze proxy gebruiken als gratis/onbeperkte Claude-API op
 // kosten van de ANTHROPIC_API_KEY hierboven — geen rate limiting, geen kostenplafond.
 // Zelfde verificatiepatroon als de rest van het project.
+//
+// MS-F1-02 (Observability Foundation): request start/complete/failed als gestructureerd
+// event (ObservabilityCore), NOOIT de prompt/system/messages-inhoud of de AI-respons zelf
+// -- uitsluitend veilige metadata (aantal berichten, model, duur, HTTP-status, foutklasse).
+const Observability = require('../../core/observability.js');
 exports.handler = async function(event) {
+  const t0 = Date.now();
+  const correlationId = Observability.newCorrelationId();
+  const logCtx = { app_version: process.env.APP_VER || 'unknown', environment: process.env.CONTEXT || 'unknown', correlation_id: correlationId };
+
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: { message: 'Method not allowed' } }) };
   }
@@ -32,6 +41,9 @@ exports.handler = async function(event) {
 
   try {
     const payload = JSON.parse(event.body || '{}');
+    Observability.tkLog('INFO', 'ai.coach.request_started', 'ai', 'coach', {
+      operation: 'request', model: payload.model || 'claude-sonnet-4-5', message_count: Array.isArray(payload.messages) ? payload.messages.length : 0
+    }, logCtx);
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -47,8 +59,23 @@ exports.handler = async function(event) {
       })
     });
     const data = await res.json();
+    const durationMs = Date.now() - t0;
+    if (res.ok) {
+      Observability.tkLog('INFO', 'ai.coach.request_completed', 'ai', 'coach', {
+        operation: 'request', status: 'success', duration_ms: durationMs, provider: 'anthropic'
+      }, logCtx);
+    } else {
+      Observability.tkLog('ERROR', 'ai.coach.request_failed', 'ai', 'coach', Object.assign(
+        { operation: 'request', duration_ms: durationMs, provider: 'anthropic' },
+        Observability.normalizeError({ status: res.status }, { source: 'anthropic' })
+      ), logCtx);
+    }
     return { statusCode: res.status, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) };
   } catch (e) {
+    Observability.tkLog('ERROR', 'ai.coach.request_failed', 'ai', 'coach', Object.assign(
+      { operation: 'request', duration_ms: Date.now() - t0 },
+      Observability.normalizeError(e, { source: 'coach-proxy' })
+    ), logCtx);
     return { statusCode: 500, body: JSON.stringify({ error: { message: 'Proxy-fout: ' + e.message } }) };
   }
 };

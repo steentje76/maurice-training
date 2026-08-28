@@ -49,7 +49,7 @@
       "E17.2"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [],
     "target_maturity": "IMPLEMENTED",
     "objective": "Structured server/client error events, traceability, no secret leakage.",
@@ -2816,13 +2816,13 @@
     "track": "Platform/Production",
     "phase": "F1",
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "INTEGRATED",
     "target": "IMPLEMENTED",
     "dependencies": [],
-    "software_validation": "N/A",
+    "software_validation": "PASS",
     "device_validation": "N/A",
-    "evidence_status": "UNKNOWN",
-    "next_action": "zie MS-F1-02"
+    "evidence_status": "VERIFIED",
+    "next_action": "CLOSED via MS-F1-02 -- core/observability.js geintegreerd in coach.js, wearable-sync.js, frontend-error-capture. Uitbreiding naar overige functions is vervolgwerk (P2)."
   },
   {
     "id": "COMM-UI-001",

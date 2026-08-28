@@ -15,7 +15,7 @@
 | SEC-GATE-001 | Discovery-based release gate | `core/release-gate.js` v2 | N/A | 78 testbestanden automatisch ontdekt, 80 uitgevoerd, 1 zichtbaar geskipt (Android) | Bewezen via sabotage-test (fCycle.test.js, teruggedraaid) | N/A | N/A | **CLOSED** | CLOSED | geen | — | F0 (afgerond) |
 | PLAT-DELETE-001 | Accountverwijdering (GDPR) | `delete-account.js`, 29+ tabellen/kolomcombinaties | N/A | `fDeleteAccountSecurity.test.js` 12/12 — unauthenticated geweigerd, alleen eigen account, fail-closed bij onvaststelbare identity | Gemockt | N/A | N/A | **TESTED** | VALIDATED | live-verificatie van een daadwerkelijke verwijdering in staging | P3 | F1 |
 | PLAT-BACKUP-CLEANUP-001 | 7 `bak_p_*`-backuptabellen | — | DB VERIFIED (93-154 rijen, geen PK, RLS deny-all) | N/A | N/A | N/A | N/A | NOT STARTED | CLOSED | geen retentiebeleid | P2 | F1 |
-| PLAT-OBSERVABILITY-001 | Structurele logging/monitoring | geen gevonden | N/A | N/A | N/A | N/A | N/A | NOT STARTED | IMPLEMENTED | geen bewijs van gestructureerde monitoring | P2 | F1 |
+| PLAT-OBSERVABILITY-001 | Structurele logging/monitoring | `core/observability.js` (event-contract, redactie, foutnormalisatie), geïntegreerd in `coach.js`, `wearable-sync.js`, globale frontend-error-capture in index.html | N/A | `core/observability.test.js` 52/52 (incl. security-sabotagetest, failure-simulatie, fail-safe-serialisatie) | Geïntegreerd in 2 Netlify Functions + browser | N/A | Geen externe provider (bewust, MS-F1-02 §22) — eigen contract + capture points | **TESTED** | INTEGRATED | uitbreiding naar overige Netlify Functions (delete-account.js, gym-team.js, wearable-auth-*.js) en persistente opslag/retentiebeleid | P1 | F1 (MS-F1-02, CLOSED) |
 
 ## B. Gym/Coach/Team
 

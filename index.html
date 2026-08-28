@@ -5352,6 +5352,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/cycleTraining.js"></script>
 <script src="core/scheduleAdherence.js"></script>
 <script src="core/trainingLoad.js"></script>
+<script src="core/observability.js"></script>
 <script>
 // ── OPEN-METEO RUNTIME — additive context, NOOIT een blocker voor training ──
 // Keten: geolocation-consent → WeatherCore.buildOpenMeteoRequest → fetch →
@@ -6009,9 +6010,40 @@ async function tkFitbitSync(){
 </script>
 <script>
 // ══════════════════════════════════════════════════════════
+// MS-F1-02 (Observability Foundation) — GLOBALE FRONTEND-ERROR-CAPTURE
+// ══════════════════════════════════════════════════════════
+// Vangt onverwachte JS-fouten en niet-afgehandelde Promise-rejections en
+// stuurt ze als gestructureerd, geredacteerd event naar ObservabilityCore.
+// Verandert NOOIT bestaand user-facing gedrag (geen preventDefault, geen
+// alert) — uitsluitend diagnose. Faalt de logger zelf, dan gebeurt er
+// niets extra's (tkLog is intern al fail-safe).
+(function () {
+  if (typeof window === 'undefined' || !window.ObservabilityCore) return;
+  var O = window.ObservabilityCore;
+  function ctx() { return { app_version: (typeof APP_VER !== 'undefined' ? APP_VER : 'unknown'), environment: 'browser' }; }
+
+  window.addEventListener('error', function (evt) {
+    var err = evt && evt.error ? evt.error : (evt && evt.message ? new Error(evt.message) : null);
+    O.tkLog('ERROR', 'app.uncaught_error', 'platform', 'window', Object.assign(
+      { operation: 'uncaught_error' },
+      O.normalizeError(err, { source: 'window.onerror' })
+    ), ctx());
+  });
+
+  window.addEventListener('unhandledrejection', function (evt) {
+    var reason = evt && evt.reason;
+    O.tkLog('ERROR', 'app.unhandled_rejection', 'platform', 'window', Object.assign(
+      { operation: 'unhandled_rejection' },
+      O.normalizeError(reason, { source: 'unhandledrejection' })
+    ), ctx());
+  });
+})();
+</script>
+<script>
+// ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.0';
+const APP_VER = 'v4.69.1';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';

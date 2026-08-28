@@ -78,6 +78,11 @@ async function sbRows(res, what) {
 }
 
 exports.handler = async function (event) {
+  const Observability = require('../../core/observability.js');
+  const t0 = Date.now();
+  const correlationId = Observability.newCorrelationId();
+  const logCtx = { app_version: process.env.APP_VER || 'unknown', environment: process.env.CONTEXT || 'unknown', correlation_id: correlationId };
+  Observability.tkLog('INFO', 'wearable.sync.start', 'wearable', 'wearable-sync', { operation: 'sync', provider: 'google_health' }, logCtx);
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: { message: 'Method not allowed' } }) };
   }
@@ -213,6 +218,11 @@ exports.handler = async function (event) {
 
     const result = LIB.syncResult({ imported, updated, skipped });
     await markSyncStatus(supabaseUrl, sbHeaders, userId, imported + updated > 0 ? 'ok' : 'no_new_data');
+    Observability.tkLog('INFO', 'wearable.sync.complete', 'wearable', 'wearable-sync', {
+      operation: 'sync', status: result.status, duration_ms: Date.now() - t0, provider: 'google_health',
+      records_fetched: hrvData.length + rhrData.length + sleepData.length,
+      records_accepted: imported + updated, records_skipped: skipped
+    }, logCtx);
     // Backward-compat velden (synced, daysWritten) + canoniek contract + PER-METRIC tellingen
     // (client maakt hiermee "HRV 8 dagen · slaap 8 dagen · rusthartslag geen nieuwe data").
     // `today` maakt EERLIJK expliciet of vandaag beschikbaar is — "success" (er is íéts in 7 dagen
@@ -231,6 +241,10 @@ exports.handler = async function (event) {
     const code = classifyException(e);
     // Alleen de CODE in de log — geen stacktrace met URLs/tokens, geen gezondheidsdata.
     console.error('wearable-sync error', JSON.stringify({ code, at: 'handler' }));
+    Observability.tkLog('ERROR', 'wearable.sync.failed', 'wearable', 'wearable-sync', Object.assign(
+      { operation: 'sync', duration_ms: Date.now() - t0, provider: 'google_health' },
+      Observability.normalizeError(e, { source: 'wearable-sync', error_code: code })
+    ), logCtx);
     try { await markSyncStatus(supabaseUrl, sbHeaders, userId, 'error:' + code); } catch (_) {}
     return { statusCode: 500, headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ synced: false, provider: 'fitbit', status: 'sync_failed', code, error: { message: USER_MSG } }) };

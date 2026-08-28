@@ -631,6 +631,35 @@ const calcSrcY = fs.readFileSync(path.join(__dirname, 'calculation.js'), 'utf8')
 ok(!decisionSrcY.includes('isAmrap') && !decisionSrcY.includes('toggleAmrapSet'), 'Y10 (protected core): core/decision.js bevat geen enkele referentie aan AMRAP -- geen nieuwe Decision Rule');
 ok(!calcSrcY.includes('isAmrap') && !calcSrcY.includes('toggleAmrapSet'), 'Y11 (protected core): core/calculation.js bevat geen enkele referentie aan AMRAP -- geen nieuwe berekening, geen 1RM-formulewijziging');
 
+/* ── Z. A6 — MULTI-SPORT INTERVAL EXECUTION 1.0 (v4.69.0) ── */
+console.log('\nZ. A6: intervaltraining-integratie -- IntervalEngineCore hergebruikt, geen tweede workoutarchitectuur, device optioneel');
+ok(/<script src="core\/intervalEngine\.js"><\/script>/.test(html), 'Z1: core/intervalEngine.js wordt daadwerkelijk geladen in index.html');
+ok(/id="m-interval-exec"/.test(html), 'Z2: de intervaltraining-executie-modal bestaat');
+
+const buildSectionSrc = html.slice(html.indexOf('function buildIntervalSection('), html.indexOf('function buildIntervalSection(') + 1400);
+ok(/\['rowing','skierg','bikeerg','running'\]\.indexOf\(cardioType\)/.test(html.slice(html.indexOf('function buildCardioBody('), html.indexOf('function buildCardioBody(')+2000)), 'Z3: intervalsectie toont uitsluitend voor sporten met canoniek erkende cardio-context (rowing/skierg/bikeerg/running) -- geen kunstmatige ondersteuning voor andere types');
+
+const buildFormSrc = html.slice(html.indexOf('function buildIntervalPrescriptionFromForm('), html.indexOf('function buildIntervalPrescriptionFromForm(') + 1200);
+ok(/IntervalEngineCore\.normalizePrescription\(/.test(buildFormSrc), 'Z4 (kernprincipe): de UI bouwt uitsluitend een RUWE prescriptie en delegeert ALLE validatie/normalisatie aan het bestaande, pure IntervalEngineCore -- geen eigen validatielogica gedupliceerd');
+ok(!/new Date\(\)|setTimeout|setInterval/.test(buildFormSrc), 'Z5: het bouwen van de prescriptie zelf bevat geen tijdgebaseerde logica -- puur data-transformatie vóór normalisatie');
+
+const startExecSrc = html.slice(html.indexOf('function startIntervalExecution('), html.indexOf('function startIntervalExecution(') + 500);
+ok(/if\(!prescription\.geldig\)/.test(startExecSrc), 'Z6: een ongeldige prescriptie wordt expliciet geweigerd (toast), nooit stilzwijgend gestart met een kapot model');
+
+const timerSrc = html.slice(html.indexOf('function startIntervalBlockTimer('), html.indexOf('function startIntervalBlockTimer(') + 1200);
+ok(/_ivBlockEndAt=Date\.now\(\)\+seconds\*1000/.test(timerSrc), 'Z7: de intervaltimer gebruikt EXACT hetzelfde wall-clock-patroon (Date.now()+seconds*1000) als de bestaande rusttimer -- geen nieuwe, drift-gevoelige tel-logica');
+ok(/if\(_ivTimerHandle\)clearInterval\(_ivTimerHandle\)/.test(timerSrc), 'Z8: voorkomt gestapelde intervaltimers -- exact hetzelfde principe als de A5 device-connect-hardening (bewezen risico bij niet opruimen vóór hernieuwd starten)');
+
+const ivFinishSrc = html.slice(html.indexOf('async function finishIntervalExecution('), html.indexOf('async function finishIntervalExecution(') + 1400);
+ok(/onCardioFieldInput\(exId,cardioType,'time'\)/.test(ivFinishSrc), 'Z9: schrijft het resultaat via het BESTAANDE cardio-invoerveld/-pad (onCardioFieldInput) -- geen tweede, parallelle schrijfweg naast de bestaande cardio-logging');
+ok(/sessionLog\[exId\]\.exNote=/.test(ivFinishSrc), 'Z10: gebruikt EXACT hetzelfde, al bestaande sessionLog.exNote-veld (P1-fix, overleeft autosave/draft/resume) als execSaveNote() -- geen nieuwe notitie-opslagweg');
+ok(!/writeSessionRow\(|sbPostQ\(/.test(ivFinishSrc), 'Z11 (kernprincipe): finishIntervalExecution() schrijft zelf NOOIT rechtstreeks naar de database -- vult uitsluitend bestaande invoervelden, de sporter behoudt controle en de bestaande finishSession()-schrijfweg blijft de enige bron van waarheid');
+
+const decisionSrcZ = fs.readFileSync(path.join(__dirname, 'decision.js'), 'utf8');
+const calcSrcZ = fs.readFileSync(path.join(__dirname, 'calculation.js'), 'utf8');
+ok(!decisionSrcZ.includes('IntervalEngineCore') && !decisionSrcZ.includes('_ivExec'), 'Z12 (protected core): core/decision.js bevat geen enkele referentie aan de nieuwe A6-functionaliteit');
+ok(!calcSrcZ.includes('IntervalEngineCore') && !calcSrcZ.includes('_ivExec'), 'Z13 (protected core): core/calculation.js bevat geen enkele referentie aan de nieuwe A6-functionaliteit');
+
 console.log('\n' + '='.repeat(56));
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { console.log('❌ Hardening niet groen.'); process.exit(1); }

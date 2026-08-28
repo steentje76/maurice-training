@@ -1,5 +1,64 @@
 # Trainingskompas — Changelog
 
+## v4.69.0 — A6: Multi-Sport Interval Execution 1.0 (27 augustus 2026)
+
+MASTERSPRINT A6. Bouwt van Trainingskompas een echte multi-sport
+execution-engine door één generieke intervalarchitectuur toe te voegen
+voor gestructureerde work/recovery-trainingen (RowErg, SkiErg, BikeErg,
+Hardlopen) — geen vier losse sport-specifieke engines, geen AI-gegenereerde
+prescripties.
+
+**Discovery vóór bouwen**: bevestigd dat er een reeds bestaand,
+zelfstandig ontwikkeld `core/intervalEngine.js` (`IntervalEngineCore`)
+aanwezig was — puur, deterministisch, offline-capable, 28/28 tests al
+groen, geen enkele UI-integratie. Deze sprint heeft dit NIET herbouwd,
+uitsluitend geïntegreerd:
+- `normalizePrescription()` — rolt herhalingsgroepen (bv. "6× [werk,
+  herstel]") uit tot een platte, canonieke blocks-array; valideert
+  block-/terminatietypen.
+- `totalPlannedSeconds()` — retourneert bewust `null` zodra een
+  distance/manual-block aanwezig is (geen schijnprecisie).
+- `stateAt()`/`nextBlockIndex()` — pure state-lookup, geen wall-clock-
+  kennis (die blijft, exact zoals de bestaande trainingstimer, bij de
+  aanroepende UI-laag).
+
+**Gebouwd (integratielaag, geen nieuwe berekeningen)**:
+- Prescriptie-UI: een "Intervaltraining"-toggle binnen de bestaande
+  cardio-oefeningbody (RowErg/SkiErg/BikeErg/Hardlopen), met herhalingen/
+  werktijd/hersteltijd/warm-up/cooldown-velden.
+- Executie-overlay: toont het huidige block (type + herhaling X/N), telt
+  TIME-blocks af met exact hetzelfde wall-clock-patroon
+  (`Date.now()+seconds*1000`) als de bestaande rusttimer — geen nieuwe,
+  drift-gevoelige teller. DISTANCE/MANUAL-blocks vereisen een handmatige
+  "Volgende"-tik (eerlijk: geen live, device-onafhankelijke
+  afstandsmeting bestaat, dus geen gegokte automatische afsluiting).
+  Apparaatkoppeling blijft volledig optioneel — geen enkele afhankelijkheid
+  van BLE-status in deze modal.
+- Logging: schrijft **niet** rechtstreeks naar de database. Vult
+  uitsluitend het bestaande cardio-tijdveld (via `onCardioFieldInput()`)
+  en het bestaande `sessionLog.exNote`-veld (hetzelfde veld als
+  `execSaveNote()`, overleeft autosave/draft/resume) — de sporter behoudt
+  volledige controle vóór het afronden van de training via de bestaande,
+  ongewijzigde `finishSession()`-schrijfweg. Uitsluitend natuurlijk
+  voltooide (niet vroegtijdig doorgeklikte) werk-blocks tellen mee in de
+  gelogde totale werktijd — eerlijk, geen overtelling.
+
+Bewezen via bug-terugzet-simulatie: het niet-opruimen van een eerdere
+timer vóór het starten van een nieuwe (exact het patroon dat A5's
+device-connect-hardening al blootlegde) wordt correct gedetecteerd.
+
+Geen databasewijziging. Geen wijziging aan protected core — expliciet
+geverifieerd dat `core/decision.js` en `core/calculation.js` geen enkele
+referentie naar de nieuwe A6-functionaliteit bevatten.
+
+Protected core en de device-specifieke kernbestanden: SHA256-bevestigd
+byte-identiek.
+
+**Bewust buiten scope (A6 v1)**: EMOM (vereist een eigen sub-engine, per
+de eerdere architectuurnotitie), per-interval-detaillogging (uitsluitend
+een canonieke samenvatting per oefening, geen nieuwe datamodel-laag),
+FTP/critical power/critical speed, AI-gegenereerde targets, forecasting.
+
 ## v4.68.0 — Post-A1-A5-audit #1: AMRAP-set-ondersteuning (27 augustus 2026)
 
 MASTERSPRINT: volledige post-A1–A5/G2 roadmap-gap-audit uitgevoerd. G2

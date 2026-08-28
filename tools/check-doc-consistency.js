@@ -7,6 +7,9 @@
  *  3. Elke "dependencies"-referentie verwijst naar een bestaand ID binnen dezelfde index.
  *  4. Geen roadmap-index-item met status "CLOSED" dat in GAP_ANALYSIS_V2.md nog als
  *     open P0/P1/P2/P3 in een sectiekop voorkomt (tekstuele heuristiek).
+ *  5. CURRENT_STATE.md claimt exact één actieve ("CURRENT") roadmapfase, bevat geen
+ *     stale "alleen als sessie-output"-claim, en geen "Actieve sprint"/"Vorige actieve
+ *     sprint"-sectiekop die een tweede, gelijktijdige actieve status zou suggereren.
  *
  * BEPERKING (bewust, geen overengineering): dit script parseert geen vrije Markdown-
  * prosa met volledige semantiek. Punt 4 is een grove, op sectiekoppen gebaseerde
@@ -69,6 +72,34 @@ try {
   else pass('Geen CLOSED roadmap-items gevonden vóór de "CLOSED GAPS / HISTORICAL"-sectie in GAP_ANALYSIS_V2.md');
 } catch (e) {
   fail('Kon docs/GAP_ANALYSIS_V2.md niet lezen: ' + e.message);
+}
+
+// 5. CURRENT_STATE.md-integriteit: exact één "CURRENT"-roadmapfase, geen stale
+//    sessie-output-claim, geen oude "Actieve sprint"-kop die als huidig leest.
+try {
+  const csPath = path.join(ROOT, 'docs/00_Project_Management/CURRENT_STATE.md');
+  const csText = fs.readFileSync(csPath, 'utf8');
+
+  const currentPhaseMatches = csText.match(/F\d+\s*[—-].*?:\s*\*?\*?CURRENT/g) || [];
+  if (currentPhaseMatches.length !== 1) {
+    fail('CURRENT_STATE.md claimt ' + currentPhaseMatches.length + ' actieve roadmapfase(s) (verwacht: exact 1): ' + JSON.stringify(currentPhaseMatches));
+  } else {
+    pass('CURRENT_STATE.md claimt exact 1 actieve roadmapfase (' + currentPhaseMatches[0].split(':')[0].trim() + ')');
+  }
+
+  if (/alleen als sessie-output/i.test(csText)) {
+    fail('CURRENT_STATE.md bevat nog de stale claim "alleen als sessie-output" — canonieke documenten staan inmiddels in docs/');
+  } else {
+    pass('Geen stale "alleen als sessie-output"-claim in CURRENT_STATE.md');
+  }
+
+  if (/^##\s*Actieve sprint/im.test(csText) || /^##\s*Vorige actieve sprint/im.test(csText)) {
+    fail('CURRENT_STATE.md bevat nog een "Actieve sprint"/"Vorige actieve sprint"-sectiekop — dit suggereert een tweede, gelijktijdig actieve status naast de roadmapfase');
+  } else {
+    pass('Geen "Actieve sprint"-sectiekoppen meer in CURRENT_STATE.md');
+  }
+} catch (e) {
+  fail('Kon docs/00_Project_Management/CURRENT_STATE.md niet lezen: ' + e.message);
 }
 
 console.log('─'.repeat(52));

@@ -6,19 +6,18 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.69.0
+v4.69.1
 
 ## 1. Verified baseline
-- **main SHA:** `27653ef25967b34bbef152befaf8b9d26acfe274`
-- **APP_VER:** v4.69.0 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
+- **APP_VER:** v4.69.1 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 28 augustus 2026
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 
 ## 2. Current roadmap position
 - **F0 — Verified Baseline: CLOSED** (documentatie-inventaris, capability registry, product architecture, benchmark registry, gap analysis, P0-security-closure — PR #64, #65, #66, #67)
-- **F1 — Foundation Closure: CURRENT** — nog niet inhoudelijk gestart; eerstvolgende concrete stappen zijn MS-F1-01 (Gym RLS Scoping), MS-F1-02 (Observability), MS-F1-03 (Secrets & Configuration Hygiene) — zie `docs/GAP_ANALYSIS_V2.md` en `docs/ROADMAP_INDEX.json`
-- **Master Roadmap 2.0 v1.1 = CANONICAL** productstrategische bron (PR #68 technische expansie + ChatGPT-productarchitectuur, geconsolideerd). Repository blijft technische autoriteit. Zie `docs/DOCUMENTATION_GOVERNANCE.md`.
-- **Productontwikkeling is nog NIET hervat** — geen enkele inhoudelijke mastersprint is uitgevoerd sinds F0-afronding.
+- **F1 — Foundation Closure: CURRENT** — MS-F1-01 (Multi-tenant RLS Security Closure) en MS-F1-02 (Observability Foundation) zijn CLOSED; eerstvolgende stap is MS-F1-03 (Secrets & Configuration Hygiene) — zie `docs/GAP_ANALYSIS_V2.md` en `docs/ROADMAP_INDEX.json`
+- **Master Roadmap 2.0 v1.1 = CANONICAL** productstrategische bron. Repository blijft technische autoriteit. Zie `docs/DOCUMENTATION_GOVERNANCE.md`.
 - Volledige fasering (F0-F15): zie `docs/TRAININGSKOMPAS_MASTER_ROADMAP.md`. Volledige mastersprint-ID-migratie: zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md`.
 
 ## 3. Current product maturity (samenvatting — zie `docs/CAPABILITY_REGISTRY.md` voor detail)

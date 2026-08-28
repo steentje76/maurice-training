@@ -1,6 +1,6 @@
 # GAP_ANALYSIS_V2.md — Trainingskompas (canonieke, actuele versie — vervangt de losse "v1" volledig)
 
-**Laatst herbouwd:** 28 augustus 2026, tegen `main` @ `0ac59fb62df961686152e6cfcb80ab532ee21a8d` (na de Multi-tenant RLS Security Closure-sprint).
+**Laatst herbouwd:** 28 augustus 2026, tegen `main` @ (wordt bijgewerkt na de Observability Foundation-merge — zie git log voor de actuele HEAD).
 **Regel:** dit document toont de HUIDIGE openstaande gaps. Gesloten gaps staan uitsluitend in sectie "CLOSED GAPS / HISTORICAL" onderaan en tellen niet mee in de totalen. Er bestaat geen apart "v1"-bestand meer in de repo — deze V2 is de enige bron.
 
 ---
@@ -15,7 +15,7 @@
 | P3 | 3 |
 | P4 | 2 |
 
-Geen enkel P0 is momenteel open. De drie eerder gevonden P0's zijn gesloten via PR #64. Een vierde, tijdens de Multi-tenant RLS Security Closure-sprint gevonden P0 (self-privilege-escalatie via `users`-kolommen) is gesloten via `migratie_v497.sql` — zie sectie "CLOSED GAPS / HISTORICAL" voor het volledige mastersprint-ID en bewijs. GAP-P1-004 (Gym-RLS-scoping) is gesloten via `migratie_v498.sql` (zelfde sprint) — eveneens verplaatst naar die sectie.
+Geen enkel P0 is momenteel open. De drie eerder gevonden P0's zijn gesloten via PR #64. Een vierde, tijdens de Multi-tenant RLS Security Closure-sprint gevonden P0 (self-privilege-escalatie via `users`-kolommen) is gesloten via `migratie_v497.sql`. GAP-P1-004 (Gym-RLS-scoping) is gesloten via `migratie_v498.sql` (zelfde sprint). Het observability-kernraamwerk (voorheen GAP-P2-003) is gesloten via de Observability Foundation-sprint — het P2-aantal blijft 7 omdat het verkleinde vervolg-item (resterende instrumentatie) als apart, kleiner P2-item is blijven staan. Zie sectie "CLOSED GAPS / HISTORICAL" voor alle drie.
 
 ---
 
@@ -71,12 +71,12 @@ Geen enkel P0 is momenteel open. De drie eerder gevonden P0's zijn gesloten via 
 **Target:** exporteren en verwijderen via een kleine, expliciet goedgekeurde migratie.
 **Priority:** P2. **Complexity:** S. **Roadmap phase:** F1.
 
-### GAP-P2-003 — Observability ontbreekt structureel
+### GAP-P2-003 (verkleind) — Observability: resterende instrumentatie
 **Capability-ID:** PLAT-OBSERVABILITY-001
-**Current:** geen bewijs van gestructureerde client- of server-side monitoring buiten Netlify's eigen functielogs.
-**Evidence:** GEEN BEWIJS GEVONDEN (architectuur-audit).
-**Target:** basis gestructureerde logging voor Netlify Functions, doorzoekbaar via `Supabase:query_logs`.
-**Priority:** P2. **Complexity:** M. **Roadmap phase:** F1.
+**Current:** kernevent-contract (`core/observability.js`) bestaat en is geïntegreerd in AI-coach, wearable-sync en frontend-error-capture (zie sectie "CLOSED GAPS / HISTORICAL" voor het volledige bewijs van die kern-closure). Nog niet geïnstrumenteerd: `delete-account.js`, `gym-team.js`, `wearable-auth-*.js`, training-execution-lifecycle, auth-flow, device-integratie (Concept2). Geen persistente/doorzoekbare operational-log-opslag, geen formeel retentiebeleid.
+**Evidence:** CODE VERIFIED — zie `docs/OBSERVABILITY_CONTRACT.md` §"Gedekte flows" en §"Open gaps".
+**Target:** resterende functies/flows instrumenteren met het bestaande contract; retentiebeleid formaliseren.
+**Priority:** P2. **Complexity:** M. **Roadmap phase:** F1/F13.
 
 ### GAP-P2-004 — `config.anthropic_key`-encryptie niet geverifieerd
 **Capability-ID:** geen aparte roadmap-ID (gerelateerde nazorg op de reeds gesloten gyms-RLS-fix, zie sectie "CLOSED GAPS / HISTORICAL" onderaan — dit item zelf is een apart, nog open P2-punt)
@@ -114,6 +114,15 @@ Vereist eerst een consent-flow (nog niet gebouwd) bovenop de al aanwezige Eviden
 ---
 
 ## CLOSED GAPS / HISTORICAL
+
+### GAP-P2-003 (voorheen) — Observability ontbreekt volledig — **STATUS: CLOSED (kern) via MS-F1-02**
+- **Original finding:** geen bewijs van gestructureerde client- of server-side monitoring buiten Netlify's eigen functielogs.
+- **Resolution:** `core/observability.js` (`observability_event.v1`) — event-contract, 5 loglevels, correlation-ID's, redactielaag, foutnormalisatie, fail-safe serialisatie. Geïntegreerd in `coach.js`, `wearable-sync.js`, en als globale frontend-error-capture.
+- **Mastersprint:** MS-F1-02.
+- **Evidence:** `core/observability.test.js` 52/52, incl. verplichte security-sabotagetest (geen enkele secretwaarde lekt door) en failure-simulaties. Zie `docs/OBSERVABILITY_CONTRACT.md`.
+- **Closed date:** 28 augustus 2026.
+- **Current status:** CLOSED voor het kernraamwerk. Resterende instrumentatie-uitbreiding blijft open als GAP-P2-003 (verkleind, zie boven) — geen volledige closure geclaimd voor wat nog niet is geïnstrumenteerd.
+
 
 ### GAP-P1-004 (voorheen) — Multi-tenant RLS-scoping ontbreekt — **STATUS: CLOSED (MS-F1-01)**
 - **Original finding:** `organizations`/`teams`/`training_groups`/`seasons`/`macrocycles`/`mesocycles`/`microcycles` leesbaar voor elke ingelogde gebruiker (`auth.role()='authenticated'`, geen ownership-scoping). 0 rijen op dat moment.

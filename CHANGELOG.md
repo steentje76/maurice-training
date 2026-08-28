@@ -1,5 +1,34 @@
 # Trainingskompas — Changelog
 
+## v4.69.1 — MS-F1-01/MS-F1-02: Multi-tenant RLS Security Closure + Observability Foundation (28 augustus 2026)
+
+MASTERSPRINT MS-F1-01 (eerste inhoudelijke sprint onder Master Roadmap 2.0 v1.1).
+
+**MS-F1-01 — Multi-tenant RLS Security Closure.** Tijdens threat-model-testen een
+onverwachte P0 gevonden en gesloten: `users_update_own` had geen kolomrestrictie en
+`authenticated` had UPDATE-GRANT op `gym_role`/`gym_id`/`system_role` — een gewone
+gebruiker kon zichzelf via een directe PostgREST-PATCH tot `gym_role='owner'` en
+`system_role='developer'` promoveren, buiten `gym-team.js` om. Gefixed met een
+BEFORE UPDATE-trigger (`migratie_v497.sql`) die deze kolommen beschermt tenzij de
+aanroep van `service_role` komt. Kernopdracht: `organizations`/`teams`/
+`training_groups`/`seasons`/`macrocycles`/`mesocycles`/`microcycles` hadden een
+brede `auth.role()='authenticated'`-leespolicy — vervangen door membership-gescoopte
+policies (`migratie_v498.sql`), live geverifieerd met 2 gescheiden testtenants.
+
+**MS-F1-02 — Observability Foundation.** Nieuwe `core/observability.js`
+(`observability_event.v1`): gestructureerd event-contract, 5 loglevels (DEBUG/INFO/
+WARN/ERROR/SECURITY), correlation-ID's, foutnormalisatie (Supabase/PostgREST/timeout/
+netwerk), en een redactielaag die tokens/wachtwoorden/PIN's/secrets (geneste objecten
+en arrays) vervangt door `[REDACTED]` — fail-safe, een loggingfout crasht nooit de
+aanroepende flow. Geïntegreerd in `coach.js` (AI-request-events, nooit prompt/
+respons-inhoud), `wearable-sync.js` (sync-start/complete/failed naast de bestaande
+diagnostiek) en als globale frontend-error-capture (`window.onerror`,
+`unhandledrejection`) in index.html.
+
+`APP_VER` → v4.69.1, `CACHE_NAME`/`CACHE_STATIC` gebumpt (nieuw precache-bestand
+`core/observability.js`). Geen wijziging aan Calculation/Decision-core (CORE_SIG
+ongewijzigd qua brondata, sw-guard blijft groen).
+
 ## v4.69.0 — A6: Multi-Sport Interval Execution 1.0 (27 augustus 2026)
 
 MASTERSPRINT A6. Bouwt van Trainingskompas een echte multi-sport

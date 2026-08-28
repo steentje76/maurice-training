@@ -6043,7 +6043,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.1';
+const APP_VER = 'v4.69.2';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -19837,7 +19837,11 @@ async function startCustomTraining(id,resolvedItems){
   } else {
     trainStart=Date.now();
   }
-  startTrainTimer('A'); // use elapsed-a display
+  // MS-F2-01-fix: was hardcoded startTrainTimer('A') — zocht altijd naar het DOM-element
+  // 'elapsed-a' (van vaste training A), nooit naar het daadwerkelijke, zichtbare element van
+  // ÉÉN custom training (elapsed-${ctxT.toLowerCase()}, net als bij vaste/programma-trainingen).
+  // Gevolg: de live verstreken-tijd-klok bleef bij elke custom training op "00:00" staan.
+  startTrainTimer(curT);
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.add('show'));
 }
 
@@ -20103,6 +20107,10 @@ async function launchProgramTrainScreen(adjustment){
   const {blockId,block,prog,rows}=progCheckinCtx;
   const ctxT='prog_'+blockId;
   if(!(await guardExistingDraft(ctxT))) return; // P0: bescherm niet-afgeronde andere training
+  // MS-F2-01: zie startRepeatWorkout hierboven — zelfde execution-identity-regel ("Werkblok D").
+  // Dit startpad loopt niet via Preview/resolvedWorkout, dus een activeInstanceId van een vorige,
+  // afgebroken sessie mag hier nooit meegenomen worden naar deze programmatraining.
+  activeInstanceId=null;
   curT=ctxT;sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
   pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};
   rows.forEach(r=>{
@@ -20190,7 +20198,7 @@ function buildCustomTrainScreen(t){
       <div class="train-timer-bar">
         <div style="display:flex;align-items:center;gap:10px">
           <button class="tact red" onclick="confirmLeave()">✕</button>
-          <span class="train-elapsed" id="elapsed-custom-${t.id}">00:00</span>
+          <span class="train-elapsed" id="elapsed-${ctxT.toLowerCase()}">00:00</span>
         </div>
         <div class="train-actions">
           <button class="tact" onclick="pauseTraining()">⏸</button>
@@ -20469,6 +20477,13 @@ async function startRepeatWorkout(){
   await ensureVasteTrainingenLoaded();
   const t=vasteTrainingen.some(v=>v.id===repeatT)?repeatT:(vasteTrainingen[0]?.id||'A');
   if(!(await guardExistingDraft(t))) return; // P0: bescherm niet-afgeronde andere training
+  // MS-F2-01: zelfde regel als startT/startCustomTraining ("Werkblok D") — dit startpad loopt
+  // niet via Preview/resolvedWorkout, dus een eventuele activeInstanceId van een vorige,
+  // afgebroken sessie mag hier NOOIT meegenomen worden. guardExistingDraft() wist alleen de
+  // localStorage-draft, niet deze in-memory variabele — zonder deze reset zou een geloste set
+  // hier per ongeluk aan de training_instances-rij van de vorige, niet-afgeronde training
+  // gekoppeld kunnen worden (verkeerde instance wordt bij het afronden completed gezet).
+  activeInstanceId=null;
   const prefillMap={};
   repeatSessions.forEach(s=>{
     if(!s.weight||!s.reps) return;

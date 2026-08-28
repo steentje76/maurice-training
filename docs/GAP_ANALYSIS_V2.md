@@ -1,6 +1,6 @@
 # GAP_ANALYSIS_V2.md — Trainingskompas (canonieke, actuele versie — vervangt de losse "v1" volledig)
 
-**Laatst herbouwd:** 28 augustus 2026, tegen `main` @ (wordt bijgewerkt na de Observability Foundation-merge — zie git log voor de actuele HEAD).
+**Laatst herbouwd:** 28 augustus 2026, tegen `main` @ (wordt bijgewerkt na de MS-F2-01-merge — zie git log voor de actuele HEAD).
 **Regel:** dit document toont de HUIDIGE openstaande gaps. Gesloten gaps staan uitsluitend in sectie "CLOSED GAPS / HISTORICAL" onderaan en tellen niet mee in de totalen. Er bestaat geen apart "v1"-bestand meer in de repo — deze V2 is de enige bron.
 
 ---
@@ -10,12 +10,12 @@
 | Prioriteit | Aantal |
 |---|---|
 | P0 | **0 open** |
-| P1 | 2 |
+| P1 | 3 |
 | P2 | 7 |
 | P3 | 3 |
 | P4 | 2 |
 
-Geen enkel P0 is momenteel open. De drie eerder gevonden P0's zijn gesloten via PR #64. Een vierde, tijdens de Multi-tenant RLS Security Closure-sprint gevonden P0 (self-privilege-escalatie via `users`-kolommen) is gesloten via `migratie_v497.sql`. GAP-P1-004 (Gym-RLS-scoping) is gesloten via `migratie_v498.sql` (zelfde sprint). Het observability-kernraamwerk (voorheen GAP-P2-003) is gesloten via de Observability Foundation-sprint — het P2-aantal blijft 7 omdat het verkleinde vervolg-item (resterende instrumentatie) als apart, kleiner P2-item is blijven staan. Zie sectie "CLOSED GAPS / HISTORICAL" voor alle drie.
+Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de volledige sluitingsgeschiedenis (F1-bevindingen + de 2 execution-defecten uit MS-F2-01). Nieuw open P1-item: convergentie van Programma-blok/Repeat-Workout naar de Preview-adapter (zie hieronder).
 
 ---
 
@@ -51,6 +51,14 @@ Geen enkel P0 is momenteel open. De drie eerder gevonden P0's zijn gesloten via 
 **Target:** bestaande week-generatie doorontwikkelen, met TK's evidence-laag als differentiator t.o.v. Hevy's black-box-aanpak.
 **Dependency:** EVID-SCI-001, DEC-CORE-001.
 **Priority:** P1. **Complexity:** L. **Roadmap phase:** F4.
+
+### GAP-P1-006 — Programma-blok en Repeat Workout niet geconvergeerd naar de Preview-adapter
+**Capability-ID:** CAP-REGISTRY-SCREENS-001
+**Current:** 6 van de 8 trainingsstart-entrypoints (alle vaste- en custom-trainingen) lopen via de canonieke `openTrainingPreview()`→`startInstanceFromDefinition()`-keten. De Programma-blok-start (`startProgramBlockTraining`→`launchProgramTrainScreen`) en Repeat Workout (`startRepeatWorkout`) hebben een eigen, deels gedupliceerde opzetlogica (resume-detectie, `activeInstanceId`-beheer, state-reset) die niet via deze adapter loopt.
+**Evidence:** CODE VERIFIED, volledige entrypoint-matrix in `docs/MS-F2-01_CANONICAL_TRAINING_START.md`.
+**Target:** beide paden migreren naar de Preview/Definition-Adapter-architectuur (nieuwe Definition Adapters voor "programma-blok" en "herhaal-workout" als brontype).
+**Dependency:** geen harde technische afhankelijkheid; wel een grotere, zorgvuldig te plannen herbouw (niet als minimale fix binnen één sprint te doen — zie MS-F2-01-rapport).
+**Priority:** P1. **Complexity:** L. **Roadmap phase:** F2.
 
 ---
 
@@ -117,6 +125,21 @@ Vereist eerst een consent-flow (nog niet gebouwd) bovenop de al aanwezige Eviden
 ---
 
 ## CLOSED GAPS / HISTORICAL
+
+### (nieuw, MS-F2-01) — Execution-identity-lek bij Repeat Workout / Programma-training — **STATUS: CLOSED**
+- **Original finding:** `startRepeatWorkout()` en `launchProgramTrainScreen()` resetten `activeInstanceId` niet vóór een nieuwe sessie. Een afgebroken training kon zijn instance-ID laten lekken naar een latere, ongerelateerde sessie, die bij afronden dan de verkeerde `training_instances`-rij als voltooid markeerde.
+- **Resolution:** `activeInstanceId=null;` toegevoegd aan beide functies, zelfde patroon als `startT`/`startCustomTraining`.
+- **Mastersprint:** MS-F2-01.
+- **Evidence:** `core/fExecutionIdentity.test.js`, sabotagebewijs geleverd en teruggedraaid.
+- **Closed date:** 28 augustus 2026.
+
+### (nieuw, MS-F2-01) — Bevroren live-timer bij custom trainingen — **STATUS: CLOSED**
+- **Original finding:** `startCustomTraining()` riep de timer aan met een hardcoded `'A'` i.p.v. de daadwerkelijke trainingscontext; het DOM-element gebruikte bovendien een afwijkende naamgevingsconventie. De verstreken-tijd-klok bleef bij élke custom training op "00:00" staan.
+- **Resolution:** timer-aanroep naar `curT`; element-ID hernoemd naar de `ctxT`-conventie die vaste/programma-trainingen al gebruiken.
+- **Mastersprint:** MS-F2-01.
+- **Evidence:** `core/fExecutionIdentity.test.js`, sabotagebewijs geleverd en teruggedraaid.
+- **Closed date:** 28 augustus 2026.
+
 
 ### GAP-P2-006 (voorheen) — Handbook-drift H6/H9/H12 — **STATUS: CLOSED (Prioriteit 1) via de Normative Documentation Sync-sprint**
 - **Original finding:** H6 (Screen Library) en H9 (AI Governance) bevestigd feitelijk stale — geen "Cyclus"/`s-lich-cyclus`-referentie in H6; geen `evidence_store.v1`/DEC-036-referentie in H9. H12 (Quality Assurance) beschreef `logic_tests.js` als hét bindende regressiemechanisme terwijl `core/release-gate.js` al langer de daadwerkelijke gate is.

@@ -1,5 +1,31 @@
 # Trainingskompas — Changelog
 
+## v4.69.2 — MS-F2-01: Canonical Training Start & Preview (28 augustus 2026)
+
+Eerste inhoudelijke F2-mastersprint (Athlete Core Excellence) onder Master Roadmap
+2.0 v1.1. Audit van alle trainingsstart-paden (`startT`, `startCustomTraining`,
+`startProgramBlockTraining`→`launchProgramTrainScreen`, `startRepeatWorkout`) tegen
+de bestaande Preview-architectuur (`openTrainingPreview`→`startInstanceFromDefinition`
+uit eerdere "Werkblok"-sprints). Twee reële defecten gevonden en gefixed:
+
+- **Execution-identity-lek:** `startRepeatWorkout()` en `launchProgramTrainScreen()`
+  resetten `activeInstanceId` niet vóór een nieuwe sessie (in tegenstelling tot
+  `startT`/`startCustomTraining`, die dit al correct deden). Een afgebroken training
+  kon zo zijn instance-ID laten lekken naar een latere, ongerelateerde sessie, die bij
+  afronden dan de verkeerde `training_instances`-rij als voltooid markeerde. Beide
+  functies resetten `activeInstanceId` nu expliciet, zelfde patroon als de andere twee.
+- **Bevroren live-timer bij custom trainingen:** `startCustomTraining()` riep de timer
+  aan met een hardcoded `'A'` (de ID van vaste training A) in plaats van de
+  daadwerkelijke trainingscontext, en het bijbehorende DOM-element gebruikte een
+  afwijkende naamgevingsconventie. De verstreken-tijd-klok bleef daardoor bij élke
+  custom training op "00:00" staan. Beide nu consistent met de `ctxT`-conventie die
+  vaste/programma-trainingen al gebruiken.
+
+Nieuwe regressietest `core/fExecutionIdentity.test.js` (13/13), inclusief sabotagebewijs
+voor beide fixes. `APP_VER` → v4.69.2, `CACHE_NAME`/`CACHE_STATIC` en Android
+`versionCode`/`versionName` meegenomen (geen nieuw precache-bestand, alleen bestaande
+logica gecorrigeerd).
+
 ## v4.69.1 — MS-F1-01/MS-F1-02: Multi-tenant RLS Security Closure + Observability Foundation (28 augustus 2026)
 
 MASTERSPRINT MS-F1-01 (eerste inhoudelijke sprint onder Master Roadmap 2.0 v1.1).

@@ -6,17 +6,18 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.69.1
+v4.69.2
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.69.1 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.69.2 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 28 augustus 2026
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 
 ## 2. Current roadmap position
 - **F0 — Verified Baseline: CLOSED**
-- **F1 — Foundation Closure: CURRENT (alle 5 mastersprints uitgevoerd, F2 nog niet vrijgegeven).** MS-F1-01, MS-F1-02, MS-F1-03, MS-F1-04 volledig CLOSED. MS-F1-05 (Backup & Retention Decision): audit-component CLOSED, daadwerkelijke verwijdering/archivering van 8 `bak_p_*`-tabellen is **POLICY_DECISION_REQUIRED** (Product Owner) — zie `docs/BACKUP_RETENTION_CONTRACT.md`. Geen van deze openstaande punten blokkeert een volgende fase, maar F2 vereist een expliciete, aparte vrijgave.
+- **F1 — Foundation Closure: CLOSED** (Gate A semantische-integriteitsaudit geslaagd — 18/18 consistentiechecks, release gate groen, geen open P0/P1)
+- **F2 — Athlete Core Excellence: CURRENT.** MS-F2-01 (Canonical Training Start & Preview): **PARTIAL** — 2 reële defecten gevonden en gefixed (execution-identity-lek bij Repeat Workout/Programma-training, bevroren live-timer bij custom trainingen), maar volledige architecturale convergentie van alle 4 startpaden naar de Preview-adapter is nog niet voltooid (2 van 8 entrypoints, Programma-blok en Repeat Workout, blijven een eigen, deels gedupliceerd opzetpad). Zie `docs/MS-F2-01_CANONICAL_TRAINING_START.md`.
 - **Master Roadmap 2.0 v1.1 = CANONICAL** productstrategische bron. Repository blijft technische autoriteit. Zie `docs/DOCUMENTATION_GOVERNANCE.md`.
 - Volledige fasering (F0-F15): zie `docs/TRAININGSKOMPAS_MASTER_ROADMAP.md`. Volledige mastersprint-ID-migratie: zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md`.
 

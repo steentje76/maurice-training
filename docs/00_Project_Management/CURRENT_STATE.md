@@ -15,8 +15,8 @@ v4.69.1
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 
 ## 2. Current roadmap position
-- **F0 — Verified Baseline: CLOSED** (documentatie-inventaris, capability registry, product architecture, benchmark registry, gap analysis, P0-security-closure — PR #64, #65, #66, #67)
-- **F1 — Foundation Closure: CURRENT** — MS-F1-01 (Multi-tenant RLS Security Closure) en MS-F1-02 (Observability Foundation) zijn CLOSED; eerstvolgende stap is MS-F1-03 (Secrets & Configuration Hygiene) — zie `docs/GAP_ANALYSIS_V2.md` en `docs/ROADMAP_INDEX.json`
+- **F0 — Verified Baseline: CLOSED**
+- **F1 — Foundation Closure: CURRENT** — MS-F1-01 (Multi-tenant RLS Security Closure), MS-F1-02 (Observability Foundation) en MS-F1-03 (Secrets & Configuration Hygiene) zijn CLOSED; eerstvolgende stappen zijn MS-F1-04 (Normative Documentation Sync) en MS-F1-05 (Backup & Retention Decision) — zie `docs/GAP_ANALYSIS_V2.md` en `docs/ROADMAP_INDEX.json`
 - **Master Roadmap 2.0 v1.1 = CANONICAL** productstrategische bron. Repository blijft technische autoriteit. Zie `docs/DOCUMENTATION_GOVERNANCE.md`.
 - Volledige fasering (F0-F15): zie `docs/TRAININGSKOMPAS_MASTER_ROADMAP.md`. Volledige mastersprint-ID-migratie: zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md`.
 

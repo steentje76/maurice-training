@@ -46,7 +46,7 @@
 
   // Case-insensitive redactie van bekende gevoelige key-namen, nested objects/arrays.
   var REDACT_KEYS = [
-    'token', 'password', 'secret', 'authorization', 'cookie', 'api_key', 'apikey',
+    'token', 'password', 'secret', 'authorization', 'cookie', 'api_key', 'apikey', 'key',
     'access_token', 'refresh_token', 'pin', 'hash', 'service_role', 'servicerolekey',
     'jwt', 'credential'
   ];

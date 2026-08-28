@@ -160,6 +160,26 @@ function eq(a, b, label) { const same = JSON.stringify(a) === JSON.stringify(b);
   ok(!JSON.stringify(evt).match(/exercise_id|weight|reps/i), 'training-event bevat geen trainingsdata-velden (geen dubbele opslag van trainingsdata als log)');
 }
 
+// ---- K. MS-F1-03: expliciete config/secret-error-redactietest (sectie 14 van de opdracht) ----
+{
+  const configErrorPayload = {
+    provider_key: 'sk-ant-api03-echte-sleutel-waarde-hier',
+    bearer_token: 'Bearer eyJhbGciOiJIUzI1NiJ9.config.error.jwt',
+    refresh_token: 'RT-config-error-waarde',
+    service_role: 'sb_secret_service-role-waarde',
+    authorization: 'Basic dXNlcjpwYXNz',
+    pin: '4821'
+  };
+  const evt = O.buildEvent('ERROR', 'config.validation.failed', 'platform', 'config', configErrorPayload);
+  const serialized = JSON.stringify(evt);
+  ok(!serialized.includes('sk-ant-api03-echte-sleutel-waarde-hier'), 'MS-F1-03: provider key wordt geredacteerd in config-errors');
+  ok(!serialized.includes('eyJhbGciOiJIUzI1NiJ9.config.error.jwt'), 'MS-F1-03: bearer token wordt geredacteerd in config-errors');
+  ok(!serialized.includes('RT-config-error-waarde'), 'MS-F1-03: refresh token wordt geredacteerd in config-errors');
+  ok(!serialized.includes('sb_secret_service-role-waarde'), 'MS-F1-03: service_role wordt geredacteerd in config-errors');
+  ok(!serialized.includes('dXNlcjpwYXNz'), 'MS-F1-03: authorization-header wordt geredacteerd in config-errors');
+  ok(!serialized.includes('4821'), 'MS-F1-03: PIN wordt geredacteerd in config-errors');
+}
+
 console.log('ObservabilityCore: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 console.log('Resultaat: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail > 0 ? 1 : 0);

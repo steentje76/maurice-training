@@ -1,6 +1,6 @@
 # GAP_ANALYSIS_V2.md — Trainingskompas (canonieke, actuele versie — vervangt de losse "v1" volledig)
 
-**Laatst herbouwd:** 28 augustus 2026, tegen `main` @ (wordt bijgewerkt na de MS-F2-01-merge — zie git log voor de actuele HEAD).
+**Laatst herbouwd:** 28 augustus 2026, tegen `main` @ (wordt bijgewerkt na de Execution Reliability-merge — zie git log voor de actuele HEAD).
 **Regel:** dit document toont de HUIDIGE openstaande gaps. Gesloten gaps staan uitsluitend in sectie "CLOSED GAPS / HISTORICAL" onderaan en tellen niet mee in de totalen. Er bestaat geen apart "v1"-bestand meer in de repo — deze V2 is de enige bron.
 
 ---

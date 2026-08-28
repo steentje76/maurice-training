@@ -18,7 +18,7 @@ v4.69.5
 - **F0 — Verified Baseline: CLOSED**
 - **F1 — Foundation Closure: CLOSED** (Gate A semantische-integriteitsaudit geslaagd — 18/18 consistentiechecks, release gate groen, geen open P0/P1)
 - **F2 — Athlete Core Excellence: CLOSED.** MS-F2-01 (Canonical Training Start & Preview) is herclassificeerd van PARTIAL naar **CLOSED** nadat GAP-P1-006 tijdens MS-F2-08 is gesloten: Programma-blok en Repeat Workout krijgen nu beide een canonieke `training_instances`-rij. Preview-UI blijft bewust gedifferentieerd voor deze twee bronnen — een gedocumenteerde productgrens, geen open architectuurgat. MS-F2-02 t/m MS-F2-07 blijven CLOSED. Final Contract Reconciliation bevestigde: geen resterende architectuurgap, gepreciseerde acceptance-wording vastgelegd. Zie `docs/MS-F2-01..08_*.md`.
-- **F3 — Calculation/Context/Evidence Excellence: CURRENT.** MS-F3-01 t/m MS-F3-03: CLOSED. MS-F3-04: TESTED. MS-F3-05, MS-F3-06: CLOSED. MS-F3-07 (Decision Rule Registry): **CLOSED** — 9 Decision Rules geregistreerd; ACWR/HRV-guardrails opnieuw gecontroleerd op ALLE consumers in index.html en bevestigd intact (geen blessurevoorspelling, geen medische diagnose, geen verplichte rustdag); geen AI-als-decision-engine-violatie gevonden. Resterende F3-mastersprints (MS-F3-08 t/m 11) nog niet uitgevoerd. Zie `docs/DECISION_RULE_REGISTRY.md`.
+- **F3 — Calculation/Context/Evidence Excellence: CURRENT.** MS-F3-01 t/m MS-F3-03: CLOSED. MS-F3-04: TESTED. MS-F3-05 t/m MS-F3-07: CLOSED. MS-F3-08 (Data Quality & Confidence Layer): **CLOSED** — Evidence≠Confidence-onderscheid gedocumenteerd; alle 9 Decision Rules bevestigd veilig bij ontbrekende data (geen harde aanbeveling zonder voldoende input); Unknown≠Zero repo-breed bevestigd. Resterende F3-mastersprints (MS-F3-09 t/m 11) nog niet uitgevoerd. Zie `docs/DATA_QUALITY_CONFIDENCE_CONTRACT.md`.
 - **Master Roadmap 2.0 v1.1 = CANONICAL** productstrategische bron. Repository blijft technische autoriteit. Zie `docs/DOCUMENTATION_GOVERNANCE.md`.
 - Volledige fasering (F0-F15): zie `docs/TRAININGSKOMPAS_MASTER_ROADMAP.md`. Volledige mastersprint-ID-migratie: zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md`.
 
@@ -40,7 +40,7 @@ Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
 ## 5. Current validation status
 - **Code:** CODE VERIFIED tegen `main` @ bovenstaande SHA
 - **DB:** VERIFIED — 69 tabellen, RLS gecontroleerd op alle tabellen, `gyms`-lek gesloten en geverifieerd via `SET LOCAL ROLE anon/authenticated/service_role`
-- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 96 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 99 stappen totaal), 98 automatisch uitgevoerd, 1 zichtbaar geskipt (`fAndroidRelease.test.js`, ontbrekende Android-buildmap in deze schone checkout), 0 gefaald
+- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 97 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 100 stappen totaal), 99 automatisch uitgevoerd, 1 zichtbaar geskipt (`fAndroidRelease.test.js`, ontbrekende Android-buildmap in deze schone checkout), 0 gefaald
 - **Integration:** wearable-sync getest tegen de echte handler-functie; overige integraties overwegend unit-getest
 - **Device:** **OPEN** — Concept2 PM5 en Google Health-sync hebben geen bevestigde real-device-validatie in productie
 - **UX:** niet apart beoordeeld in de laatste consolidatiesprint (38 top-level schermen geïnventariseerd, geen flow-niveau UX-testdekking)

@@ -11,7 +11,7 @@
 |---|---|
 | P0 | **0 open** |
 | P1 | 3 |
-| P2 | 14 |
+| P2 | 15 |
 | P3 | 4 |
 | P4 | 2 |
 
@@ -85,6 +85,13 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Target:** ofwel `ContextEngineCore` alsnog bedraden in `buildCtx()` (bewuste architectuurkeuze, geen technische blocker meer sinds F2), ofwel expliciet documenteren als "toekomstige building block, nog niet actief" i.p.v. impliciet ongebruikt te laten staan.
 **Priority:** P2 (architectuurinconsistentie, geen actieve bug — beide bronnen zijn intern consistent, er is geen tegenstrijdige waarheid). **Complexity:** M.
 
+### GAP-P2-015 — `recoveryScore()`'s confidence telt alleen componentaantal, geen componentkwaliteit (Data Quality-sprint)
+**Capability-ID:** DQ-CONFIDENCE-CONTRACT-001
+**Current:** `recoveryScore()`'s confidence is uitsluitend gebaseerd op `comps.length`. In tegenstelling tot `readinessDay()`, dat een `ONBETROUWBAAR`-filter (`no_data`/`sync_failed`) toepast vóórdat een signaal meetelt, telt `recoveryScore()` een verouderde of onbetrouwbare component even zwaar mee als een verse.
+**Evidence:** CODE VERIFIED, zie het Data Quality & Confidence-sprintrapport in `docs/`.
+**Target:** `recoveryScore()` uitbreiden met hetzelfde soort kwaliteitsfilter dat `readinessDay()` al gebruikt.
+**Priority:** P2 (niet-kritiek — Recovery Score is altijd een aanvullend, informatief getal, nooit de directe bron van een Decision Rule-uitkomst zelf). **Complexity:** S.
+
 ### GAP-P1-003 — AI-outputcontract ontbreekt
 **Capability-ID:** AI-OUTPUT-CONTRACT-001 (**expliciet onderscheiden van de reeds gesloten security-capability voor dezelfde proxy**, zie sectie "CLOSED GAPS / HISTORICAL" en Capability Registry — dit is een governance-gat, geen security-gat)
 **Current:** `coach.js`/`buildCtx()` zijn security-getest (JWT, open-proxy-regressie — zie de historische P0-002-sluiting hierboven) maar er is geen technische controle die een AI-antwoord blokkeert als het een niet-onderbouwd cijfer noemt of diagnose-achtige taal gebruikt.
@@ -105,7 +112,7 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Capability-ID:** CALC-REC-REGISTRY-001
 **Current:** `hrv_log` bevat `sleep`/`hrv`/`rhr`, maar geen kolom die vastlegt of een waarde afkomstig is van een handmatige check-in of wearable-sync. Beide schrijven naar dezelfde kolommen zonder onderscheid — live geverifieerd tegen het Supabase-schema.
 **Evidence:** DB VERIFIED (`information_schema.columns` voor `hrv_log`), zie het Recovery-sprintrapport in `docs/`.
-**Target mastersprint:** **MS-F3-10 (Explainability & Provenance Contract)** — niet MS-F3-08. Governance-reconciliatie uitgevoerd: MS-F3-08's acceptance gate ("shared quality/confidence semantics across engines") gaat over consistente confidence-modellering, niet over een schema-niveau brontoewijzing. MS-F3-10's acceptance gate ("every recommendation traceable end-to-end") vereist letterlijk dat de bronketen — inclusief de RAUWE bron zelf — reconstrueerbaar is; zonder een `source`-kolom is die keten voor elke HRV-gebaseerde aanbeveling onvolledig bij de eerste schakel. Dit is dus een directe, geen indirecte match.
+**Target mastersprint:** **MS-F3-10 (Explainability & Provenance Contract)** — niet de Data Quality & Confidence-sprint. Governance-reconciliatie uitgevoerd: de Data Quality-sprint se acceptance gate ("shared quality/confidence semantics across engines") gaat over consistente confidence-modellering, niet over een schema-niveau brontoewijzing. MS-F3-10's acceptance gate ("every recommendation traceable end-to-end") vereist letterlijk dat de bronketen — inclusief de RAUWE bron zelf — reconstrueerbaar is; zonder een `source`-kolom is die keten voor elke HRV-gebaseerde aanbeveling onvolledig bij de eerste schakel. Dit is dus een directe, geen indirecte match.
 **Target:** binnen MS-F3-10 volledig oplossen: nieuwe, nullable `source`-kolom (`manual`/`wearable`/`unknown` voor bestaande rijen, backward-compatible migratie); alle schrijfpaden (`saveHRV`, wearable-sync-functies) bijwerken om dit veld te vullen; RLS/privacy-regressie; geen wijziging aan bestaande historische migraties.
 **Dependency:** geen harde technische afhankelijkheid; wel een DB-migratie + meerdere schrijfpad-aanpassingen — grotere, zorgvuldiger te plannen ingreep dan binnen een audit-sprint, vandaar bewust gepland voor MS-F3-10 in plaats van ad-hoc tijdens de Recovery-sprint waarin dit gat werd gevonden.
 **Status:** dit is een **F3-fase-blokkerende P1** (F3 als geheel mag niet CLOSED worden zolang dit openstaat of niet formeel, evidence-based hergeclassificeerd is), maar **geen sprint-blokkerende P1 voor de Recovery- of Endurance-sprint** — de acceptance gate van de Recovery-sprint ("HRV/RHR/sleep/readiness components with baseline/confidence") vereiste geen provenance-kolom en is terecht gehaald; die sprint blijft CLOSED.

@@ -199,8 +199,9 @@ ok(/lich-checkin/.test(html) && /class="lich-strip todo" onclick="openModal\('m-
   'de check-instrip opent de bestaande check-in (m-hrv)');
 ok(html.indexOf('id="m-hrv"') >= 0, 'de check-in-modal m-hrv is ongewijzigd aanwezig');
 
-// Gemeten versus berekend.
-ok(/tile\(df!=null\?df\.toFixed\(2\):'—','Dagfactor','berekend'\)/.test(html), 'dagfactor is gelabeld als berekend');
+// Gemeten versus berekend. v4.69.2: de dagfactor-waarde wordt nu ook gegate op
+// actuele-databeschikbaarheid (dataActueel) — het label 'berekend' blijft ongewijzigd.
+ok(/tile\(dataActueel&&df!=null\?df\.toFixed\(2\):'—','Dagfactor','berekend'\)/.test(html), 'dagfactor is gelabeld als berekend');
 ok(/'HRV','gemeten'/.test(html) && /'Rust HR','gemeten'/.test(html) && /'Slaap','gemeten'/.test(html),
   'slaap, HRV en rusthartslag zijn gelabeld als gemeten');
 // Anatomie is direct zichtbaar op het overzicht — harde acceptatie-eis.

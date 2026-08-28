@@ -127,6 +127,22 @@ exports.handler = async function (event) {
       let refreshed = null;
       try { refreshed = await refreshRes.json(); } catch (_) { refreshed = null; }
       if (!refreshRes.ok || !refreshed || !refreshed.access_token) {
+        // v4.69.2 — Fase 6 vervolgaudit (28-08-2026): tot nu toe ging de exacte reden van een
+        // mislukte tokenvernieuwing verloren — er werd alleen de generieke status
+        // 'refresh_failed' opgeslagen, zonder Google's eigen foutcode. Daardoor was een
+        // volgende storing (invalid_grant/ingetrokken toestemming vs. invalid_client/
+        // configuratiefout vs. temporarily_unavailable) niet te onderscheiden zonder
+        // toegang tot de Netlify-logs, en zelfs dan ontbrak de structuur. Dit logt UITSLUITEND
+        // het standaard OAuth2-foutcontract (RFC 6749 §5.2: error/error_description — geen
+        // tokens, geen secrets, geen volledige request/response body) samen met provider,
+        // timestamp, HTTP-status en fase. NOOIT: access_token, refresh_token, authorization
+        // code, client_secret, request-body, response-headers.
+        const oauthError = (refreshed && typeof refreshed.error === 'string') ? refreshed.error.slice(0, 64) : null;
+        const oauthErrorDesc = (refreshed && typeof refreshed.error_description === 'string') ? refreshed.error_description.slice(0, 200) : null;
+        console.error('wearable-sync token_refresh_failed', JSON.stringify({
+          provider: 'google_health', phase: 'token_refresh', at: new Date().toISOString(),
+          httpStatus: refreshRes.status, oauthError: oauthError, oauthErrorDescription: oauthErrorDesc
+        }));
         await markSyncStatus(supabaseUrl, sbHeaders, userId, 'refresh_failed');
         // refresh mislukt = koppeling verlopen → client toont "Opnieuw koppelen nodig"
         return jsonBody({ synced: false, daysWritten: 0, provider: 'fitbit', status: 'token_expired', code: ERR.TOKEN_REFRESH, reason: 'refresh_failed' });

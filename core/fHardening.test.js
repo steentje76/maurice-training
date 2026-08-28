@@ -560,13 +560,16 @@ ok(/hb\.zone==='ready'/.test(consBrugSrc), 'V2: de brug verschijnt uitsluitend w
 ok(!/setsDelta|rpeDelta\s*[-+]?=/.test(consBrugSrc), 'V3 (kernprincipe): de consistentiebrug wijzigt NERGENS setsDelta/rpeDelta -- puur uitleg, geen nieuwe beslissing');
 ok(/escHtml\(hb\.zoneLabel/.test(consBrugSrc), 'V4 (XSS-veiligheid): de Home-zonelabel-tekst wordt via escHtml() weergegeven');
 
-const recDetailSrc = html.slice(html.indexOf('async function openRecoveryDetail('), html.indexOf('async function openRecoveryDetail(') + 4200);
+const recDetailSrc = html.slice(html.indexOf('async function openRecoveryDetail('), html.indexOf('async function openRecoveryDetail(') + 5200);
 ok(/hrvBaseline\(hd\)/.test(recDetailSrc) && /hrvStPersonal\(hd\)/.test(recDetailSrc), 'V5: HRV-sectie hergebruikt UITSLUITEND de bestaande hrvBaseline()/hrvStPersonal() -- geen nieuwe SWC-drempel, geen nieuwe classificatie');
 ok(/rhrBaselineDelta\(hd\)/.test(recDetailSrc), 'V6: RHR-sectie hergebruikt UITSLUITEND de bestaande rhrBaselineDelta()');
 ok(!/slaapBaseline|sleepBaseline/i.test(recDetailSrc) && /Nog geen persoonlijk gebruikelijk niveau berekend voor slaap/.test(recDetailSrc), 'V7 (kernprincipe): GEEN nieuwe slaap-baselineformule -- expliciet gedocumenteerd als ontbrekend i.p.v. stilzwijgend verzonnen');
 ok(/TrainingLoadCore\.classifyAcwr\(/.test(recDetailSrc) && /TrainingLoadCore\.acwrAdvisoryText\(/.test(recDetailSrc), 'V8: belastingssectie hergebruikt UITSLUITEND de bestaande TrainingLoadCore-functies (v4.58.0), geen nieuwe ACWR-classificatie');
 ok(/\(zelf ingevuld\)/.test(recDetailSrc), 'V9 (provenance): subjectieve data wordt expliciet gemarkeerd als "zelf ingevuld", nooit vermengd met meetdata');
-ok(/if\(lh&&lh\.hrv!=null\)/.test(recDetailSrc) && /if\(lh&&lh\.rhr!=null\)/.test(recDetailSrc), 'V10 (missing-data-veiligheid): elke sectie wordt uitsluitend getoond wanneer de onderliggende meting daadwerkelijk aanwezig is -- geen verzonnen 0');
+// v4.69.2: 'aanwezig'-check verplaatst van lh.hrv/lh.rhr naar cur.hrv.rawValue/cur.rhr.rawValue
+// (de gegate current-health-snapshot) — dezelfde eigenschap (geen sectie zonder onderliggende
+// meting), nu via de centrale gate i.p.v. rechtstreeks op de rij.
+ok(/if\(cur\.hrv\.rawValue!=null\)/.test(recDetailSrc) && /if\(cur\.rhr\.rawValue!=null\)/.test(recDetailSrc), 'V10 (missing-data-veiligheid): elke sectie wordt uitsluitend getoond wanneer de onderliggende meting daadwerkelijk aanwezig is -- geen verzonnen 0');
 ok(/Nog onvoldoende hersteldata beschikbaar/.test(recDetailSrc), 'V11: expliciete, vriendelijke lege-staat wanneer helemaal geen hersteldata beschikbaar is -- geen foutmelding voor normale afwezigheid');
 
 const decisionSrcV = fs.readFileSync(path.join(__dirname, 'decision.js'), 'utf8');

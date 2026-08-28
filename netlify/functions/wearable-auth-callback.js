@@ -53,7 +53,16 @@ exports.handler = async function (event) {
     });
     const tokens = await tokenRes.json();
     if (!tokenRes.ok || !tokens.access_token) {
-      console.error('wearable-auth-callback token exchange failed', tokens);
+      // v4.69.2 — Fase 6 vervolgaudit: was `console.error(..., tokens)` — logde het volledige
+      // responsobject ongefilterd. Nooit veilig aannemen dat een foutrespons geen gevoelige
+      // velden bevat; expliciet whitelisten i.p.v. blacklisten. Zelfde sanitized contract als
+      // de refresh-failure in wearable-sync.js (RFC 6749 §5.2 error/error_description only).
+      const oauthError = (tokens && typeof tokens.error === 'string') ? tokens.error.slice(0, 64) : null;
+      const oauthErrorDesc = (tokens && typeof tokens.error_description === 'string') ? tokens.error_description.slice(0, 200) : null;
+      console.error('wearable-auth-callback token_exchange_failed', JSON.stringify({
+        provider: 'google_health', phase: 'token_exchange', at: new Date().toISOString(),
+        httpStatus: tokenRes.status, oauthError: oauthError, oauthErrorDescription: oauthErrorDesc
+      }));
       return redirectToApp('token_error');
     }
 

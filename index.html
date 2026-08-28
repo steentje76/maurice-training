@@ -3046,6 +3046,11 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="scroll" id="home-theme" data-day="goed" style="padding-top:10px">
     <div id="home-dash" style="display:none"></div>
     <!-- Home v2 (Sprint Home UX v2) — vaste volgorde: hero → coach → gepland → ritme/volume → consistentie → snelacties -->
+    <!-- v4.69.2 — Fase 4 vervolgaudit: compacte, niet-permanente wearable-syncstoring-banner.
+         Verschijnt alleen bij een ECHTE storing (refresh_failed/token_expired/error:*), niet bij
+         gewone staleness door het uitblijven van een nieuwe meting. Verdwijnt zodra een succesvolle
+         sync heeft plaatsgevonden (renderHomeSyncWarning() zet display:none anders). -->
+    <div id="home-sync-warn" style="display:none;margin-bottom:14px"></div>
     <div id="home-hero"></div>
     <div id="home-hrv-card" class="hcoach-item" style="display:none;margin-bottom:14px"></div>
     <div id="home-coach-vandaag"></div>
@@ -8498,7 +8503,23 @@ async function renderWearableCard(){
   detailEl.textContent='Laden...';actionsEl.innerHTML='';
   const st=await fetchWearableStatus();
   if(st.connected){
-    detailEl.innerHTML=`Gekoppeld sinds ${st.connectedAt?fmtDate(st.connectedAt.split('T')[0]):'onbekend'}.<br>Laatste sync: ${st.lastSyncAt?fmtDate(st.lastSyncAt.split('T')[0]):'nog niet gesynchroniseerd'}${st.lastSyncStatus?' ('+fmtWearableSyncStatus(st.lastSyncStatus)+')':''}`;
+    // v4.69.2 — vervolgaudit Fase 5: 'Laatste sync: [datum]' + status ernaast in dezelfde
+    // zin las bij een mislukking als "Laatste sync: 28 aug (mislukt)" — de datum en het
+    // woord "sync" bleven vooraan staan, wat op een vluchtige lezing als succes oogt.
+    // Zelfde onderscheid als het Lichaam-scherm: alleen een GESLAAGDE poging krijgt het
+    // "Laatste sync: [datum]"-label; een mislukte poging krijgt een eigen, ondubbelzinnige zin.
+    const dc=(typeof DeviceCore!=='undefined')?DeviceCore:null;
+    const mislukt = dc && typeof dc.deviceConnectionState==='function'
+      ? (function(){
+          const s=dc.deviceConnectionState({connected:true, lastSyncAt:st.lastSyncAt||null, lastSyncStatus:st.lastSyncStatus||null,
+            tokenExpired:st.lastSyncStatus==='token_expired_no_refresh'},{now:new Date().toISOString()});
+          return s.status==='sync_failed'||s.status==='token_expired';
+        })()
+      : (st.lastSyncStatus==='refresh_failed'||st.lastSyncStatus==='token_expired_no_refresh'||/^error:/.test(String(st.lastSyncStatus||'')));
+    const syncRegel = mislukt
+      ? 'Synchroniseren mislukt'+(st.lastSyncStatus?' ('+fmtWearableSyncStatus(st.lastSyncStatus)+')':'')+'.'
+      : 'Laatste sync: '+(st.lastSyncAt?fmtDate(st.lastSyncAt.split('T')[0]):'nog niet gesynchroniseerd')+'.';
+    detailEl.innerHTML=`Gekoppeld sinds ${st.connectedAt?fmtDate(st.connectedAt.split('T')[0]):'onbekend'}.<br>${syncRegel}`;
   }else{
     detailEl.textContent='Nog niet gekoppeld.';
   }
@@ -8524,6 +8545,7 @@ async function wearableDisconnect(){
     toast('Losgekoppeld');
     renderWearableCard();
     tkVerversGegevensScherm();
+    try{await renderHomeSyncWarning();}catch(_){} // banner verdwijnt meteen (not_connected = geen storing)
   }catch(e){toast('Verbindingsfout bij loskoppelen');}
 }
 // Vertaalt het (canonieke) serverantwoord naar één veilige gebruikerstekst.
@@ -8550,7 +8572,7 @@ async function wearableSyncNow(){
     const d=await r.json();
     // v4.29.1: geen technische foutcode/reason meer in de UI. De server logt de code
     // (AUTH_ERROR/TOKEN_REFRESH_ERROR/FITBIT_API_ERROR/RATE_LIMIT/...) veilig server-side.
-    if(!r.ok||!d.synced){toast(tkWearableFailMsg(d));renderWearableCard();tkVerversGegevensScherm();return;}
+    if(!r.ok||!d.synced){toast(tkWearableFailMsg(d));renderWearableCard();tkVerversGegevensScherm();try{await renderHomeSyncWarning();}catch(_){}return;}
     // Eerlijke, PER-METRIC microcopy: OAuth/API-succes ≠ nieuwe data. RHR=0 → "geen nieuwe data"
     // (nooit suggereren dat alles gesynct is). d.metrics = parsed dagen per metric.
     const _days=Number(d.daysWritten)||0, mm=d.metrics||null;
@@ -10721,6 +10743,53 @@ const TK_DAILY_METRIC_STALE_AFTER_DAYS=2;
 function isDailyMetricFresh(rowDateYmd,todayYmd){
   const age=daysBetweenDates(rowDateYmd,todayYmd);
   return age!=null && age<TK_DAILY_METRIC_STALE_AFTER_DAYS;
+}
+// v4.69.2 — vervolgaudit (Fase 1/2, 28-08-2026): de eerste fix voegde de freshness-check
+// op drie plekken apart toe (refreshHome/tkReadinessVandaag/recoveryAdjustmentForToday),
+// elk op basis van lh.date (de GLOBAAL nieuwste rij) — niet per metric. Forensisch
+// onderzoek wees uit dat er daarnaast nog MINSTENS vijf andere plekken bestonden die
+// lh.hrv/lh.rhr/lh.sleep rechtstreeks als "vandaag" lazen/toonden zonder enige
+// freshness-check (evaluateProgAdjustment, renderLichaamPremium, openRecoveryDetail,
+// de Home-hero-tekst in renderV43Home, en de AI-coach-contextstring) — precies het
+// "vier-losse-regels"-risico waarop deze vervolgaudit vroeg. Dit is nu ÉÉN centrale,
+// herbruikte gate voor alle current-day-consumenten. Hergebruikt DeviceCore.
+// bodyMetricsFromLog() (per-metric nieuwste waarde+datum+bron — al bewezen op het
+// Lichaam-scherm) i.p.v. een vierde eigen regel. Historische reeksen (hrvBaseline,
+// hrvRollingRecent, trends elders) blijven volledig ongewijzigd: dit gate uitsluitend
+// de vraag "mag dit vandaag als actuele fysiologische input tellen", nooit "bestaat
+// deze data" — geschiedenis blijft overal beschikbaar voor trend-analyse.
+function tkCurrentHealthInputs(hdRows){
+  const vandaag=td();
+  const dc=(typeof DeviceCore!=='undefined')?DeviceCore:null;
+  const bm=(dc&&dc.bodyMetricsFromLog)?dc.bodyMetricsFromLog(hdRows||[])
+    : {hrv:{value:null,date:null},rhr:{value:null,date:null},sleep:{value:null,date:null}};
+  function wrap(m){
+    const fresh=!!(m&&m.date&&isDailyMetricFresh(m.date,vandaag));
+    return {value:fresh?m.value:null, date:m?m.date:null, rawValue:m?m.value:null, fresh:fresh};
+  }
+  const out={hrv:wrap(bm.hrv), rhr:wrap(bm.rhr), sleep:wrap(bm.sleep)};
+  const freshCount=[out.hrv,out.rhr,out.sleep].filter(function(m){return m.fresh;}).length;
+  const anyRaw=[out.hrv,out.rhr,out.sleep].some(function(m){return m.rawValue!=null;});
+  // dataStatus: eenvoudige presentatie-vlag voor call-sites die readinessDay niet
+  // aanroepen (Lichaam-hero, prog-adjustment, AI-coach-context). Geen nieuwe parallelle
+  // classificatie t.o.v. readinessDay's datakwaliteit ('volledig'/'gedeeltelijk'/
+  // 'onvoldoende') — die blijft de canonieke bron waar hij al gebruikt wordt.
+  out.dataStatus = freshCount>0 ? 'current' : (anyRaw ? 'stale' : 'no_data');
+  out.freshCount = freshCount;
+  out.vandaag = vandaag;
+  return out;
+}
+// Gated HRV-component: de trendclassificatie zelf (hrvDagFactorPersonal) blijft
+// ongewijzigd bruikbaar voor historische/trend-doeleinden (Fase 1-vereiste), maar de
+// NUMERIEKE factor die de dagfactor van vandaag voedt mag niet op een stale losse
+// meting steunen (root-cause: hrvRollingRecent valt zonder leeftijdsgrens terug op
+// "laatste meting", ongeacht hoe oud). st/baseline blijven behouden als uitleg-metadata
+// (die zijn feitelijk waar, ook al is de conclusie niet actueel); alleen st wordt naar
+// 'ref' vertaald zodat de "Waarom?"-tekst geen ongeziene 'g'-claim voor vandaag toont.
+function tkCurrentHrvComponent(hdRows,cur){
+  const raw=hrvDagFactorPersonal(hdRows);
+  if(cur && cur.hrv && cur.hrv.fresh) return raw;
+  return {factor:1.00, st:'ref', baseline:raw.baseline, recent:null, drop:null};
 }
 
 // ── F0.7L — CANONICAL WEIGHT RESOLVER ──
@@ -16262,37 +16331,41 @@ function renderHomeContextCard(tc){
 async function refreshHome(){
   const hd=await v43SafeGet('hrv_log','&order=date.desc,created_at.desc&limit=35');
   const lh=hd[0];
+  // v4.69.2 — Fase 4 vervolgaudit: Home toonde tot nu toe NOOIT enig signaal wanneer de
+  // wearable-sync kapot is (wearableSyncSilent() faalt bewust geluidloos) — de gebruiker
+  // zag stilte, geen storing, en las die stilte als "het werkt wel". Faalsafe: eigen
+  // try/catch, blokkeert nooit de rest van Home.
+  try{ await renderHomeSyncWarning(); }catch(_){}
   // Sprint 2 — Home-personalisatie: 'Jouw ritme' uit training_context (onboarding).
   // Alleen tonen wanneer de data echt bestaat; geen fake planning.
   try{ const tcRows=await v43SafeGet('training_context','&limit=1'); renderHomeContextCard(tcRows&&tcRows[0]); }
   catch(e){ renderHomeContextCard(null); }
   let dfInfo=null,nextT=null;
+  const cur=tkCurrentHealthInputs(hd);
   if(lh){
-    // v4.69.1 — root-cause-audit Fitbit-sync-integriteit (28-08-2026): slaap is een
-    // dagelijks signaal. Is de nieuwste hrv_log-rij ouder dan gisteren (bv. omdat de
-    // wearable-sync al dagen kapot is), dan mag die slaapwaarde niet meer als "vandaag"
-    // de dagfactor voeden — anders presenteert Home een 6 dagen oude meting (bv. 9u13
-    // slaap) als actuele status. CalcCore.slaapDagFactor(null) valt al terug op een
-    // neutrale factor (geen fabricage, geen kunstmatige straf) — bestaand gedrag, hier
-    // alleen correct aangeroepen. hrvComponent/hrvDagFactorPersonal blijft bewust
-    // ongewijzigd: dat is een trend-over-tijd-classificatie, geen "is dit van vandaag".
-    const slaapActueel=isDailyMetricFresh(lh.date,td());
-    const hrvComponent=hrvDagFactorPersonal(hd);
+    // v4.69.2 — vervolgaudit (Fase 1/2): hergebruikt de centrale gate i.p.v. een eigen
+    // lh.date-check, en gate nu ook de HRV-component zelf (root-cause: hrvRollingRecent
+    // kan zonder leeftijdsgrens op een oude losse meting 'g' blijven zeggen). Zie
+    // tkCurrentHealthInputs()/tkCurrentHrvComponent() hierboven.
+    const hrvComponent=tkCurrentHrvComponent(hd,cur);
     const st=hrvComponent.st;
-    const df=dagfactor(hrvComponent,slaapActueel?lh.sleep:null,lh.cyclus_fase);
+    const df=dagfactor(hrvComponent,cur.sleep.value,lh.cyclus_fase);
     // v3.3.36 Batch 2 #1: dagfactor gepromoveerd tot dominant, tikbaar dag-element (H8 explainable AI).
     const heroKleur='var(--day)'; // v3.3.50 P6 — dagfactor-ring volgt het dag-thema (dayState)
     const dfStat=dagfactorStatus(df.factor);
     const ringPct=Math.max(0,Math.min(1,(df.factor-0.85)/0.20));const RC=Math.round(2*Math.PI*24);
-    const uitleg=dagfactorUitleg(lh.hrv,slaapActueel?lh.sleep:null,lh.cyclus_fase,df);
-    dfInfo={factor:df.factor,uitleg,hero:heroKleur,st};
-    const sig=[lh.hrv,lh.sleep,lh.cyclus_fase].filter(Boolean).length;
-    const conf=(lh.hrv&&lh.sleep)?'Hoog':(lh.hrv||lh.sleep)?'Middel':'Laag';
+    const uitleg=dagfactorUitleg(cur.hrv.value,cur.sleep.value,lh.cyclus_fase,df);
+    dfInfo={factor:df.factor,uitleg,hero:heroKleur,st,dataStatus:cur.dataStatus};
+    const sig=[cur.hrv.value,cur.sleep.value,lh.cyclus_fase].filter(Boolean).length;
+    const conf=(cur.hrv.value&&cur.sleep.value)?'Hoog':(cur.hrv.value||cur.sleep.value)?'Middel':'Laag';
     const cyc=lh.cyclus_fase?` × cyclus ${df.cyclusFactor.toFixed(2)}`:'';
     const dc=dagfactorCoach(df.factor);
     // v3.3.48 — betekenis-eerst + premium "Waarom?": rauwe cijfers/pills verhuizen naar de
     // uitklap (renderDagfactorDetail), zodat de kaart als coach voelt i.p.v. dashboard.
-    window.homeDfDetail={factor:df.factor,uitleg,hrv:lh.hrv,rhr:lh.rhr,sleep:lh.sleep,cyclus:lh.cyclus_fase,hrvF:df.hrvFactor,slaapF:df.slaapFactor,cycTxt:cyc,conf,sig,st,date:lh.date,statusTxt:dfStat.txt,hrvBaseline:df.hrvBaseline};
+    // v4.69.2: toont per metric de ECHTE meetdatum (hrvDate/rhrDate/sleepDate) i.p.v.
+    // uitsluitend lh.date — bij een gedeeltelijke sync (bv. wel HRV, geen slaap vandaag)
+    // hadden deze voorheen altijd dezelfde (mogelijk verouderde) datum.
+    window.homeDfDetail={factor:df.factor,uitleg,hrv:cur.hrv.rawValue,rhr:cur.rhr.rawValue,sleep:cur.sleep.rawValue,cyclus:lh.cyclus_fase,hrvF:df.hrvFactor,slaapF:df.slaapFactor,cycTxt:cyc,conf,sig,st,date:lh.date,hrvDate:cur.hrv.date,rhrDate:cur.rhr.date,sleepDate:cur.sleep.date,dataStatus:cur.dataStatus,statusTxt:dfStat.txt,hrvBaseline:df.hrvBaseline};
     document.getElementById('home-hrv-card').innerHTML=`<div class="card"><div class="card-body" style="padding-top:14px">
       <button onclick="toggleDagfactorDetail()" aria-expanded="false" aria-controls="dagfactor-detail" class="df-head">
         <div class="df-ring">
@@ -16305,6 +16378,7 @@ async function refreshHome(){
         <div style="flex:1;min-width:0">
           <div class="df-headline ${dc.cls}">${dc.headline}</div>
           <div class="df-meaning">${dc.meaning}</div>
+          ${cur.dataStatus!=='current' ? '<div class="df-meaning" style="color:var(--red);font-weight:700">'+(cur.dataStatus==='stale'?'Geen actuele meting vandaag — laatste gegevens van '+fmtDate(String(cur.hrv.date||cur.sleep.date||cur.rhr.date||lh.date).slice(0,10))+'.':'Nog geen gemeten gegevens.')+'</div>' : ''}
           <div class="df-tech">${uitleg} · ${lh.date}</div>
           <div id="dagfactor-chevron" class="df-why">Waarom vandaag? →</div>
         </div>
@@ -16368,7 +16442,11 @@ async function refreshHome(){
   refreshHomeGoalsCard();
   window.homeNextT=nextT;
   if(window.DASHUI)DASHUI.render();
-  try{await renderV43Home(dfInfo,lh,nextT,recRows);}catch(e){console.warn('v43 home',e);}
+  // v4.69.2: renderV43Home toont lh.sleep rechtstreeks als "Vandaag" in de hero — zonder
+  // gate zou dit dezelfde stale-datalek zijn die op het Lichaam-scherm al gefixt was.
+  // Alleen fresh metrics worden meegegeven; overige velden (date/cyclus/voelt) blijven intact.
+  const lhVoorHero=lh?Object.assign({},lh,{sleep:cur.sleep.value,hrv:cur.hrv.value,rhr:cur.rhr.value}):lh;
+  try{await renderV43Home(dfInfo,lhVoorHero,nextT,recRows);}catch(e){console.warn('v43 home',e);}
 }
 
 // v3.3.44 Epic 1 — Morning Report. Persoonlijke ochtendtekst, uitsluitend uit bestaande
@@ -16489,20 +16567,18 @@ async function tkReadinessVandaag(dfInfo,recRows,nextT){
     const rhrDelta=rhrBaselineDelta(hd);
     herstel=recoveryScoreFrom(dfInfo, recRows||[], {rhrDelta:(rhrDelta!=null?rhrDelta:undefined), voelt:(lh&&lh.voelt)||undefined});
   }catch(_){ herstel=null; }
-  // v4.69.1 — root-cause-audit Fitbit-sync-integriteit (28-08-2026): DecisionCore.readinessDay
-  // heeft al een ONBETROUWBAAR-mechanisme (kwaliteit:'no_data'|'sync_failed' → signaal
-  // verhuist naar 'ontbreekt', geen protected-core-wijziging nodig) — het werd alleen nooit
-  // gevoed. hrv/rhr/slaap zijn dagelijkse signalen: ouder dan gisteren → kwaliteit:'no_data',
-  // zodat readinessDay ze correct als ontbrekend behandelt i.p.v. stilzwijgend als "vandaag".
-  const lhActueel=lh?isDailyMetricFresh(lh.date,td()):false;
+  // v4.69.2 — vervolgaudit (Fase 1/2): per-metric gate i.p.v. lh.date blanket-check (een
+  // rij met wél verse HRV maar geen verse slaap werd voorheen als geheel stale/fresh
+  // behandeld op basis van dezelfde ene rij-datum). Hergebruikt de centrale gate.
+  const cur=tkCurrentHealthInputs(hd);
   const besluit=DecisionCore.readinessDay({
     dagfactor: dfInfo?dfInfo.factor:null,
     gereedheid: dfInfo?v43GereedheidScore(dfInfo.factor):null,
     herstel: herstel,
     signalen: {
-      hrv: (lh&&lh.hrv!=null)?{waarde:lh.hrv, kwaliteit:(lhActueel?undefined:'no_data')}:null,
-      rhr: (lh&&lh.rhr!=null)?{waarde:lh.rhr, kwaliteit:(lhActueel?undefined:'no_data')}:null,
-      slaap: (lh&&lh.sleep!=null)?{waarde:tkSleepHours(lh.sleep), kwaliteit:(lhActueel?undefined:'no_data')}:null,
+      hrv: (cur.hrv.rawValue!=null)?{waarde:cur.hrv.rawValue, kwaliteit:(cur.hrv.fresh?undefined:'no_data')}:null,
+      rhr: (cur.rhr.rawValue!=null)?{waarde:cur.rhr.rawValue, kwaliteit:(cur.rhr.fresh?undefined:'no_data')}:null,
+      slaap: (cur.sleep.rawValue!=null)?{waarde:tkSleepHours(cur.sleep.rawValue), kwaliteit:(cur.sleep.fresh?undefined:'no_data')}:null,
       spierherstel: (recRows&&recRows.length)?recRows:null,
       gevoel: (lh&&lh.voelt)?String(lh.voelt):null,
       pijn: null,
@@ -16542,24 +16618,32 @@ async function openRecoveryDetail(){
   try{
     const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35');
     const lh=hd[0]||null;
+    // v4.69.2 — vervolgaudit (Fase 1/2): dit detailscherm labelde een mogelijk dagenoude
+    // meting altijd als "Vandaag:", inclusief een 'g'/'boven persoonlijk niveau'-oordeel
+    // zonder leeftijdsgrens (hrvStPersonal). Toont nu de echte meetdatum i.p.v. "Vandaag"
+    // zodra die meting niet van vandaag/gisteren is, en zwakt de statusuitspraak af.
+    const cur=tkCurrentHealthInputs(hd);
+    const labelVoor=function(dateYmd){ return isDailyMetricFresh(dateYmd,td()) ? 'Vandaag' : ('Laatste meting ('+fmtDate(String(dateYmd).slice(0,10))+')'); };
     let secties='';
     // HRV — hergebruikt EXACT hrvBaseline()/hrvStPersonal(), geen nieuwe SWC-drempel.
-    if(lh&&lh.hrv!=null){
+    if(cur.hrv.rawValue!=null){
       const baseline=hrvBaseline(hd);
-      const stInfo=hrvStPersonal(hd);
-      const statusTekst={g:'boven persoonlijk niveau',o:'onder persoonlijk niveau',r:'sterk lager dan gebruikelijk',ref:'onvoldoende historie voor een persoonlijk niveau'}[stInfo.st]||'onbekend';
+      const stInfo=cur.hrv.fresh?hrvStPersonal(hd):{st:'ref'};
+      const statusTekst=cur.hrv.fresh
+        ? ({g:'boven persoonlijk niveau',o:'onder persoonlijk niveau',r:'sterk lager dan gebruikelijk',ref:'onvoldoende historie voor een persoonlijk niveau'}[stInfo.st]||'onbekend')
+        : 'geen actuele vergelijking mogelijk (meting niet van vandaag)';
       secties+='<div style="margin-bottom:12px"><div style="font-weight:700">HRV</div>'+
-        '<div>Vandaag: '+lh.hrv+' ms</div>'+
-        (baseline.ready?'<div style="color:var(--g4)">Persoonlijk niveau ('+baseline.fase+'): '+Math.round(baseline.meanRaw)+' ms</div>':'<div style="color:var(--g4)">Persoonlijk niveau: '+ (baseline.days||0)+' van de benodigde dagen historie</div>')+
+        '<div>'+labelVoor(cur.hrv.date)+': '+cur.hrv.rawValue+' ms</div>'+
+        (cur.hrv.fresh&&baseline.ready?'<div style="color:var(--g4)">Persoonlijk niveau ('+baseline.fase+'): '+Math.round(baseline.meanRaw)+' ms</div>':(cur.hrv.fresh?'<div style="color:var(--g4)">Persoonlijk niveau: '+ (baseline.days||0)+' van de benodigde dagen historie</div>':''))+
         '<div style="color:var(--g4)">Status: '+statusTekst+'</div></div>';
     }
     // RHR — hergebruikt EXACT rhrBaselineDelta(), puur beschrijvend (geen "goed/slecht"-oordeel
     // toegevoegd, want daarvoor bestaat geen canonical drempel).
-    if(lh&&lh.rhr!=null){
-      const delta=rhrBaselineDelta(hd);
+    if(cur.rhr.rawValue!=null){
+      const delta=cur.rhr.fresh?rhrBaselineDelta(hd):null;
       secties+='<div style="margin-bottom:12px"><div style="font-weight:700">Rusthartslag</div>'+
-        '<div>Vandaag: '+lh.rhr+' bpm</div>'+
-        (delta!=null?'<div style="color:var(--g4)">'+(delta>0?'+':'')+delta+' bpm t.o.v. je recente gemiddelde</div>':'<div style="color:var(--g4)">Onvoldoende historie voor een vergelijking</div>')+
+        '<div>'+labelVoor(cur.rhr.date)+': '+cur.rhr.rawValue+' bpm</div>'+
+        (delta!=null?'<div style="color:var(--g4)">'+(delta>0?'+':'')+delta+' bpm t.o.v. je recente gemiddelde</div>':'<div style="color:var(--g4)">'+(cur.rhr.fresh?'Onvoldoende historie voor een vergelijking':'Geen actuele vergelijking mogelijk')+'</div>')+
         '</div>';
     }
     // Slaap — GEEN nieuwe baseline-formule (bestaat niet canoniek); uitsluitend vandaag +
@@ -16567,7 +16651,7 @@ async function openRecoveryDetail(){
     const slaapRijen=hd.filter(r=>r.sleep!=null).slice(0,7);
     if(slaapRijen.length){
       secties+='<div style="margin-bottom:12px"><div style="font-weight:700">Slaap</div>'+
-        '<div>Vandaag: '+(lh&&lh.sleep!=null?tkSleepHours(lh.sleep)+' uur':'niet ingevuld')+'</div>'+
+        '<div>'+(cur.sleep.rawValue!=null?labelVoor(cur.sleep.date)+': '+tkSleepHours(cur.sleep.rawValue)+' uur':'Vandaag: niet ingevuld')+'</div>'+
         '<div style="color:var(--g4)">Laatste '+slaapRijen.length+' metingen: '+slaapRijen.map(r=>tkSleepHours(r.sleep)).join(', ')+' uur</div>'+
         '<div style="font-size:11px;color:var(--g4);margin-top:2px">Nog geen persoonlijk gebruikelijk niveau berekend voor slaap.</div></div>';
     }
@@ -16959,11 +17043,13 @@ function rhrBaselineDelta(hd){
 async function recoveryAdjustmentForToday(muscleNames){
   try{
     const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35');
-    // v4.69.1 — zelfde freshness-gate als refreshHome()/tkReadinessVandaag(): een
-    // stale slaapwaarde mag de trainingsaanpassing van vandaag niet sturen.
+    // v4.69.2 — vervolgaudit (Fase 1/2): centrale gate i.p.v. eigen lh0.date-check, en nu
+    // ook de HRV-component gegated (root-cause: hrvRollingRecent kan een stale losse
+    // meting zonder leeftijdsgrens als 'g' classificeren, wat de sets/RPE-aanpassing
+    // van vandaag ten onrechte zou kunnen versoepelen).
     const lh0=(hd&&hd[0])?hd[0]:null;
-    const slaapActueel0=lh0?isDailyMetricFresh(lh0.date,td()):false;
-    const dfInfo=dagfactor(hrvDagFactorPersonal(hd), (lh0&&slaapActueel0)?lh0.sleep:null, lh0?lh0.cyclus_fase:null);
+    const cur0=tkCurrentHealthInputs(hd);
+    const dfInfo=dagfactor(tkCurrentHrvComponent(hd,cur0), cur0.sleep.value, lh0?lh0.cyclus_fase:null);
     let recRows=[]; try{ if(Array.isArray(muscleNames)&&muscleNames.length) recRows=await getRelevantMuscleRecovery(muscleNames); }catch(_){}
     // GEVOEL uit de check-in (indien opgeslagen) → beïnvloedt de DecisionCore-aanpassing (slecht/matig).
     const voelt=(hd&&hd[0]&&hd[0].voelt)?String(hd[0].voelt):null;
@@ -18844,16 +18930,32 @@ async function buildCtx(ctx){
   const lh=hd[0];
   const recent7=hrvRollingRecent(hd);
   const avg7=(recent7&&recent7.bron==='7d-gemiddelde')?Math.round(recent7.meanRaw):null;
-  const hrvComponent=hrvDagFactorPersonal(hd);
+  // v4.69.2 — vervolgaudit Fitbit-sync-integriteit (28-08-2026): deze AI-coach-context
+  // gaf de HRV-trendclassificatie (mogelijk 'g'/"goed") en de ruwe HRV/RHR/slaap-waarden
+  // altijd ongedateerd door aan de AI, zonder leeftijdscontrole. Dat is exact het
+  // scenario dat de architectuurregel verbiedt: "AI mag stale data niet presenteren
+  // alsof deze actueel is." De AI krijgt nu wél de echte waarden + echte datum (geen
+  // fabricage, geen weggelaten data), maar met een expliciete leeftijd/staleness-
+  // vermelding zodat de AI zelf nooit kan concluderen dat dit vandaag gemeten is.
+  const cur=tkCurrentHealthInputs(hd);
+  const hrvComponent=tkCurrentHrvComponent(hd,cur);
   let hrvGuide;
   if(hrvComponent.st==='ref'){
-    hrvGuide='HRV-referentiefase: nog onvoldoende eigen data voor een persoonlijke baseline (minimaal 14 dagen nodig). Baseer trainingsadvies op RPE en subjectief gevoel, niet op een HRV-drempel.';
+    hrvGuide=(hrvComponent.baseline && hrvComponent.baseline.ready)
+      ? 'HRV-baseline bestaat wel, maar de laatste meting is niet van vandaag (zie leeftijd hieronder) — behandel als GEEN actuele HRV-status, baseer trainingsadvies op RPE en subjectief gevoel.'
+      : 'HRV-referentiefase: nog onvoldoende eigen data voor een persoonlijke baseline (minimaal 14 dagen nodig). Baseer trainingsadvies op RPE en subjectief gevoel, niet op een HRV-drempel.';
   }else{
     const faseTxt=hrvComponent.baseline.fase==='volledig'?'volledige':'voorlopige';
     const statusTxt=hrvComponent.st==='g'?'binnen/boven eigen baseline (goed)':hrvComponent.st==='o'?'onder eigen baseline (verlaagd)':'sterk onder eigen baseline (≥15% daling, sterk verlaagd)';
     hrvGuide=`HRV wordt beoordeeld t.o.v. de ${faseTxt} eigen baseline van deze gebruiker (nooit een vaste norm). Huidige status: ${statusTxt}.`;
   }
-  const hrvStr=lh?`HRV ${lh.hrv||'?'} ms | RHR ${lh.rhr||'?'} bpm | Slaap ${lh.sleep?fmtSleep(lh.sleep):'?'}`+(avg7?` | 7d gem: ${avg7} ms`:'')+(lh.edema?` | oedeem: ${lh.edema}`:'')+(lh.note?` | ${lh.note}`:''): 'Geen recente HRV';
+  const leeftijdTxt=function(dateYmd){
+    if(!dateYmd) return '';
+    const dagen=daysBetweenDates(dateYmd,td());
+    if(dagen==null) return '';
+    return dagen===0?' (vandaag)':dagen===1?' (gisteren)':' ('+dagen+' dagen geleden — NIET actueel, presenteer dit niet als vandaag)';
+  };
+  const hrvStr=lh?`HRV ${cur.hrv.rawValue||'?'} ms${leeftijdTxt(cur.hrv.date)} | RHR ${cur.rhr.rawValue||'?'} bpm${leeftijdTxt(cur.rhr.date)} | Slaap ${cur.sleep.rawValue?fmtSleep(cur.sleep.rawValue):'?'}${leeftijdTxt(cur.sleep.date)}`+(avg7?` | 7d gem: ${avg7} ms`:'')+(lh.edema?` | oedeem: ${lh.edema}`:'')+(lh.note?` | ${lh.note}`:''): 'Geen recente HRV';
   const wLast=wd[0],wPrev=wd[1];
   const wStr=wLast?`\nGewicht: ${wLast.weight} kg (${wLast.date})`+(wPrev?` | vorige: ${wPrev.weight} kg`:''): '';
   const bcStr=bc[0]?`\nTanita (${bc[0].date}): vet% ${bc[0].fat_pct}% | spier ${bc[0].muscle_mass} kg | BMR ${bc[0].bmr} | visceraal ${bc[0].visceral_fat}`+(bc[0].edema?` | oedeem: ${bc[0].edema}`:''): '';
@@ -20017,7 +20119,11 @@ async function evaluateProgAdjustment(){
   const {rows,block,prog}=progCheckinCtx;
   const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35');
   const lh=hd[0];
-  const df=lh?dagfactor(hrvDagFactorPersonal(hd),lh.sleep,lh.cyclus_fase):{factor:1};
+  // v4.69.2 — vervolgaudit (Fase 1/2): deze pre-workout-aanpassing stuurde echte
+  // sets/RPE-aanpassingen op een mogelijk stale slaap/HRV-waarde (was ongegated).
+  // Zelfde centrale gate als Home/Coach.
+  const cur=tkCurrentHealthInputs(hd);
+  const df=lh?dagfactor(tkCurrentHrvComponent(hd,cur),cur.sleep.value,lh.cyclus_fase):{factor:1};
   const muscleSet=new Set();
   rows.forEach(r=>getExerciseMuscles(r.exercise_id).forEach(m=>muscleSet.add(m)));
   const muscleRows=await getRelevantMuscleRecovery([...muscleSet]);
@@ -21250,24 +21356,35 @@ async function renderLichaamPremium(){
   const rec=window.v43LichRec||{overall:100,rows:[],hasData:false};
   const rows=rec.rows||[];
   let hd=[]; let lh=null; try{hd=await v43SafeGet('hrv_log','&order=date.desc,created_at.desc&limit=35'); lh=(hd&&hd[0])?hd[0]:null;}catch(_){}
+  // v4.69.2 — vervolgaudit (Fase 1/2/3, 28-08-2026): dit is de hero die het gerapporteerde
+  // incident exact reproduceerde (Herstel/Gereedheid/"Klaar om te trainen"/Slaap-tegel
+  // rechtstreeks uit de ongegatede lh-rij + ongegatede HRV-trendclassificatie). Nu via de
+  // centrale gate; bij onvoldoende actuele data toont de status dat expliciet i.p.v. een
+  // schijnbaar geruststellend "Klaar om te trainen" te tonen op basis van oude cijfers.
+  const cur=tkCurrentHealthInputs(hd);
   let df=null,ger=null,ds=null;
-  if(lh){ try{ df=dagfactor(hrvDagFactorPersonal(hd),lh.sleep,lh.cyclus_fase).factor; ger=v43GereedheidScore(df); ds=dayState(df); }catch(_){} }
+  if(lh){ try{ df=dagfactor(tkCurrentHrvComponent(hd,cur),cur.sleep.value,lh.cyclus_fase).factor; ger=v43GereedheidScore(df); ds=dayState(df); }catch(_){} }
   const hero=document.getElementById('lich-hero');
   if(hero){
     const ov=rec.hasData?rec.overall:null;
     const col=ov!=null?v43RecColor(ov):'var(--accent)';
-    const ready=ger==null?'Doe je check-in voor advies':(ger>=70?'Klaar om te trainen':ger>=45?'Train op gevoel':'Houd het licht vandaag');
-    const badge=ds?ds.headline:'Check-in nodig';
+    const dataActueel=cur.dataStatus==='current';
+    const ready=ger==null?'Doe je check-in voor advies'
+      :(!dataActueel?'Onvoldoende actuele gegevens'
+      :(ger>=70?'Klaar om te trainen':ger>=45?'Train op gevoel':'Houd het licht vandaag'));
+    const badge=!dataActueel?(cur.dataStatus==='stale'?'Wearable niet bijgewerkt':'Check-in nodig'):(ds?ds.headline:'Check-in nodig');
     const R=42,C=2*Math.PI*R,off=C*(1-((ov!=null?ov:0)/100));
     const ringSvg=`<svg width="96" height="96" viewBox="0 0 96 96" style="transform:rotate(-90deg)"><circle cx="48" cy="48" r="${R}" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="7"/><circle cx="48" cy="48" r="${R}" fill="none" stroke="${col}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/></svg>`;
     // Fase 1 — elke waarde toont of hij gemeten is of afgeleid.
     const tile=(v,k,src)=>`<div class="m"><div class="v">${v}</div><div class="k">${k}</div><div class="lich-src">${src}</div></div>`;
+    const staleNotice=!dataActueel && cur.dataStatus==='stale'
+      ? `<div style="font-size:11px;color:var(--red);font-weight:700;margin-top:4px">Laatste meting: ${escHtml(fmtDate(String(cur.hrv.date||cur.sleep.date||cur.rhr.date||lh&&lh.date).slice(0,10)))}</div>` : '';
     hero.innerHTML=`<div class="lich-rhero">
       <div class="top">
         <div class="rring">${ringSvg}<div class="c"><div class="n">${ov!=null?ov+'%':'—'}</div><div class="l">Herstel</div></div></div>
-        <div class="st"><div class="eye">Vandaag</div><div class="rd">${escHtml(ready)}</div><div class="badge">${escHtml(badge)}</div></div>
+        <div class="st"><div class="eye">Vandaag</div><div class="rd">${escHtml(ready)}</div><div class="badge">${escHtml(badge)}</div>${staleNotice}</div>
       </div>
-      <div class="grid">${tile(df!=null?df.toFixed(2):'—','Dagfactor','berekend')}${tile(lh&&lh.sleep!=null?v43SlaapTxt(lh.sleep):'—','Slaap','gemeten')}${tile(lh&&lh.hrv!=null?lh.hrv:'—','HRV','gemeten')}${tile(lh&&lh.rhr!=null?lh.rhr:'—','Rust HR','gemeten')}</div>
+      <div class="grid">${tile(dataActueel&&df!=null?df.toFixed(2):'—','Dagfactor','berekend')}${tile(cur.sleep.value!=null?v43SlaapTxt(cur.sleep.value):'—','Slaap','gemeten')}${tile(cur.hrv.value!=null?cur.hrv.value:'—','HRV','gemeten')}${tile(cur.rhr.value!=null?cur.rhr.value:'—','Rust HR','gemeten')}</div>
     </div>`;
   }
   // Body/Health foundation + apparaatstatus (echte data only). Fail-safe: eigen try/catch.
@@ -21527,7 +21644,12 @@ async function renderLichaamDataStatus(OBS){
   const delen = [];
   if(bronnen.length) delen.push('gemeten met ' + bronnen.join(', '));
   if(laatste) delen.push('laatste meting ' + fmtDate(laatste));
-  if(sync && sync.lastSyncAt) delen.push('laatste sync ' + fmtDate(String(sync.lastSyncAt).slice(0,10)));
+  // v4.69.2 — vervolgaudit Fase 5: 'laatste sync' mag alleen een GESLAAGDE poging tonen.
+  // sync.lastSyncAt wordt door de server bij ELKE poging bijgewerkt (ook bij mislukking) —
+  // dezelfde klasse fout als hierboven al gefixt in de Gegevens&koppelingen-detailweergave,
+  // hier op de compacte overzichtsregel opnieuw aangetroffen.
+  if(sync && sync.lastSyncAt && sync.status!=='sync_failed' && sync.status!=='token_expired') delen.push('laatste sync ' + fmtDate(String(sync.lastSyncAt).slice(0,10)));
+  else if(sync && (sync.status==='sync_failed'||sync.status==='token_expired')) delen.push('synchronisatie mislukt');
   else if(sync && sync.status === 'not_connected') delen.push(bronnen.length ? 'nu geen wearable gekoppeld' : 'geen wearable gekoppeld');
 
   el.innerHTML = '<div class="lich-dq"><span class="dot" style="background:'+t[1]+'"></span>'+
@@ -23537,8 +23659,54 @@ async function wearableSyncSilent(){
   if(!h)return;
   try{
     const r=await fetch('/.netlify/functions/wearable-sync',{method:'POST',headers:h});
-    if(r.ok){const d=await r.json();if(d.synced)refreshHome();}
+    if(r.ok){
+      const d=await r.json();
+      if(d.synced)refreshHome();
+      // v4.69.2: ook bij een mislukte poging de Home-banner verversen (refreshHome() zelf
+      // wordt dan niet opnieuw aangeroepen, dus zonder dit zou de banner pas bij de
+      // volgende paginaload/refresh de nieuwe status tonen).
+      else{ try{ await renderHomeSyncWarning(); }catch(_){} }
+    }
   }catch(e){/* stil falen, zie last_sync_status in beheerscherm */}
+}
+// v4.69.2 — Fase 4 vervolgaudit (28-08-2026): compacte, TK-passende storingsmelding op Home
+// zelf. Verschijnt UITSLUITEND bij een echte koppelingsstoring (refresh_failed/
+// token_expired_no_refresh/error:<CODE> — via de al bestaande DeviceCore.deviceConnectionState,
+// GEEN nieuwe classificatie), nooit bij gewone staleness door het simpelweg uitblijven van een
+// nieuwe meting (dat wordt al eerlijk getoond in de dagfactor-kaart zelf). Geen technische
+// foutcodes in de tekst — die blijven server-side gelogd (zie wearable-sync.js). Verdwijnt
+// vanzelf zodra fetchWearableStatus() weer een geslaagde sync teruggeeft. Blokkeert Home nooit
+// (eigen try/catch, geen await-keten die de rest van de pagina kan vertragen/breken) en doet
+// geen enkele uitspraak over andere (toekomstige) providers — dit gate uitsluitend de zichtbare
+// wearable-connectie, niet de onderliggende hrv_log-data (die kan best nog actueel zijn via een
+// handmatige check-in, ook als de wearable zelf stuk is).
+async function renderHomeSyncWarning(){
+  const el=document.getElementById('home-sync-warn');
+  if(!el)return;
+  const dc=(typeof DeviceCore!=='undefined')?DeviceCore:null;
+  if(!dc||typeof dc.deviceConnectionState!=='function'){ el.style.display='none'; el.innerHTML=''; return; }
+  let st=null; try{ st=await fetchWearableStatus(); }catch(_){ st=null; }
+  if(!st||!st.connected){ el.style.display='none'; el.innerHTML=''; return; } // nooit-gekoppeld = geen storing
+  const sync=dc.deviceConnectionState({
+    connected:!!st.connected, connectedAt:st.connectedAt||null,
+    lastSyncAt:st.lastSyncAt||null, lastSyncStatus:st.lastSyncStatus||null,
+    tokenExpired:st.lastSyncStatus==='token_expired_no_refresh', syncing:!!st.syncing
+  },{now:new Date().toISOString()});
+  if(sync.status!=='sync_failed' && sync.status!=='token_expired'){ el.style.display='none'; el.innerHTML=''; return; }
+  // Laatste écht bruikbare datum: de nieuwste meting die we nog hebben (ongeacht bron), zodat
+  // de melding concreet is ("laatste actuele data: 22 aug") i.p.v. alleen "sync is stuk".
+  let laatsteDatum=null;
+  try{
+    const hd=await v43SafeGet('hrv_log','&order=date.desc,created_at.desc&limit=1',3000);
+    laatsteDatum=(hd&&hd[0]&&hd[0].date)?String(hd[0].date).slice(0,10):null;
+  }catch(_){}
+  const actieText=sync.status==='token_expired'?'Opnieuw koppelen':'Beheer koppeling';
+  el.innerHTML='<div class="card" style="border-left:3px solid var(--red,#c0392b)"><div class="card-body" style="padding:10px 14px;display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap">'+
+    '<div style="min-width:0"><div style="font-weight:700;font-size:13px;color:var(--dark)">Fitbit-gegevens niet bijgewerkt</div>'+
+    '<div style="font-size:12px;color:var(--g4)">'+(laatsteDatum?('Laatste actuele data: '+escHtml(fmtDate(laatsteDatum))):'Nog geen metingen ontvangen')+'</div></div>'+
+    '<button class="btn btn-o btn-sm" style="flex:0 0 auto" onclick="go(\'s-lich-gegevens\')">'+escHtml(actieText)+'</button>'+
+    '</div></div>';
+  el.style.display='block';
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════

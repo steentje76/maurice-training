@@ -2649,7 +2649,7 @@
     "capabilities": [],
     "epics": [],
     "priority": "P4",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [],
     "target_maturity": "TESTED",
     "objective": "Feasibility-onderzoek zwemmen; niet in v1.1's 5 kern-F6-sprints, blijft geldig als losstaand onderzoek.",
@@ -3441,5 +3441,19 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "zie MS-F6-02 (CLOSED). CardioCore.criticalPower() gebouwd en getest, niet gewired op trainingsgeschiedenis (GAP-P2-021-achtige beperking, zelfde als criticalSpeed). Kritieke AI-boundary-fix in 4 sport-coachingteksten meegenomen."
+  },
+  {
+    "id": "SWIMMING-FEASIBILITY-001",
+    "type": "capability",
+    "track": "Endurance & Multisport",
+    "phase": "F6",
+    "priority": "P4",
+    "status": "TESTED",
+    "target": "TESTED",
+    "dependencies": [],
+    "software_validation": "N/A",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F6-06 (CLOSED). Feasibility decision: PARTIAL - PROVIDER DEPENDENCIES OPEN. Generieke CardioEngine-zwemondersteuning bestaat; SWOLF/CSS blijven bewust NOT_IMPLEMENTED. Geen productbeslissing hier genomen over welke provider prioriteit krijgt."
   }
 ]

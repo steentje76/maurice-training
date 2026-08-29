@@ -1465,7 +1465,7 @@
       "E12.2"
     ],
     "priority": "P2",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F7-01"
     ],
@@ -3505,5 +3505,19 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "zie MS-F7-03 (CLOSED). Geaggregeerde adherence-percentage-laag boven resolveScheduleGap(). Adherence vs consistency expliciet onderscheiden (NOT_AVAILABLE i.p.v. 0% zonder schema). Reschedule-dubbeltelling en SKIPPED-vrijstelling geverifieerd correct behandeld. Nog niet actief geconsumeerd door een dashboard (MS-F7-05)."
+  },
+  {
+    "id": "RELATIONSHIP-DISCOVERY-001",
+    "type": "capability",
+    "track": "Analytics & Athlete Intelligence",
+    "phase": "F7",
+    "priority": "P2",
+    "status": "TESTED",
+    "target": "TESTED",
+    "dependencies": [],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F7-04 (CLOSED). RelationshipCore (Sprint 19, relationship.v1) bleek bij audit al volledig geimplementeerd en gewired: data-sufficientie (REL_MIN_KANDIDAAT=10, SAMPLE_TIERS), causaliteits-/populatieclaim-preventie (RELATIE_VERBODEN_WOORDEN/RELATIE_POPULATIE_WOORDEN), spreidingstoets tegen schijnverbanden. Sabotagebewijs toegevoegd (ontbrak in het oudere testbestand). Progressie bewust uitgesloten wegens circulariteit met RPE."
   }
 ]

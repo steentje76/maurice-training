@@ -6044,7 +6044,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.8';
+const APP_VER = 'v4.69.9';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -16454,12 +16454,18 @@ async function buildCoachAdvice(dfInfo,nextT,recRows){
       ready=rec.filter(r=>r.hours!==null&&r.pct>=90).map(r=>low(r.muscle));
     }
   }catch(e){}
-  if(f>=1){
+  // MS-F4-02 (Explainable Daily Coach): delegeer de zone-classificatie aan de canonieke
+  // DecisionCore.trainReadiness() (DEC-READY-001) i.p.v. de drempels (f>=1/f>=0.93) hier
+  // opnieuw te dupliceren -- vóór deze fix konden beide implementaties stil uit elkaar
+  // groeien als DEC-READY-001's drempels ooit wijzigen zonder dat deze tekstfunctie het
+  // merkt. Zelfde output-teksten, nu structureel gebonden aan één bron van waarheid.
+  const zoneCls=(typeof DecisionCore!=='undefined'&&DecisionCore.trainReadiness)?(DecisionCore.trainReadiness(dfInfo)||{}).cls:(f>=1?'g':(f>=0.93?'y':'r'));
+  if(zoneCls==='g'){
     if(loaded.length)return `Je algehele herstel is sterk. Let op: ${joinNl(loaded.slice(0,2))} ${loaded.length>1?'zijn':'is'} nog niet volledig hersteld — houd daar rekening mee bij ${tnaam}.`;
     if(ready.length)return `Je lichaam is klaar voor belasting. ${joinNl(ready.slice(0,2)).replace(/^./,c=>c.toUpperCase())} ${ready.length>1?'zijn':'is'} volledig hersteld — vandaag is een uitstekend moment voor ${tnaam}.`;
     return `Je herstel is sterk. Vandaag heb je de grootste kans op progressie${nextT?` met ${tnaam}`:''}.`;
   }
-  if(f>=0.93)return `Je herstel is oké. Train ${tnaam} vandaag op gevoel en houd je RPE in de gaten.`;
+  if(zoneCls==='y')return `Je herstel is oké. Train ${tnaam} vandaag op gevoel en houd je RPE in de gaten.`;
   return `Je lichaam vraagt vandaag om rust. Houd ${tnaam} licht of kies voor actief herstel.`;
 }
 // v3.3.49/50 P4 — Welkom + motiverende coachintro (hoort bij de begroeting). Kort, uit dayState.

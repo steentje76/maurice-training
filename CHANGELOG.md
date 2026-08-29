@@ -1,5 +1,37 @@
 # Trainingskompas — Changelog
 
+## v4.69.9 — MS-F4-02: Explainable Daily Coach (29 augustus 2026)
+
+Tweede F4-mastersprint. Sluit `MS-F4-02` (target maturity: IMPLEMENTED).
+
+**Runtime-trace (`docs/DAILY_COACH_FLOW_INVENTORY.md`) toonde een belangrijke, positieve
+bevinding:** de canonieke pijplijn `tkReadinessVandaag()` → `DecisionCore.readinessDay()`
+(DEC-READYDAY-001) → `CoachingCore.buildReadinessContext()` →
+`CoachingCore.readinessCoachMessage()` → `tkReadinessHtml()` bestond al vrijwel volledig en
+werd al bevestigd gerenderd in `#home-readiness` op het Home-scherm — geen dode code.
+`readinessCoachMessage()` levert al exact WHAT (`kop`/`betekenis`), WHY (`waarom`,
+teruggevoerd op de Decision Rule se eigen `redenen`), CONFIDENCE (`onzekerheid` +
+expliciete "indicatief"-vermelding bij lage betrouwbaarheid) en MISSING DATA (`b.ontbreekt`,
+nooit als 0 gepresenteerd). Een reeds bestaande woordblokkade
+(`READINESS_VERBODEN_WOORDEN`) verbiedt al langer diagnose-/medische taal in deze
+tekstgeneratie zelf.
+
+**Nieuw gevonden en gefixed: een reëel "shadow threshold"-risico.** `buildCoachAdvice()`
+(een oudere, parallelle tekstgenerator) dupliceerde de dagfactor-drempels van
+`DecisionCore.trainReadiness()` (DEC-READY-001) inline (`f>=1`/`f>=0.93`) in plaats van de
+canonieke functie aan te roepen — een architectuurrisico waarbij de twee implementaties
+stil uit elkaar hadden kunnen groeien. Gefixed: `buildCoachAdvice()` roept nu
+`DecisionCore.trainReadiness(dfInfo)` aan, met identieke output-teksten (geen UX-wijziging).
+
+Nieuwe testsuite `core/fDailyCoachExplainability.test.js` (15/15): golden cases (volledige
+data/ready, onvoldoende signalen, geen wearable, lage confidence), bevestiging van de
+bestaande woordblokkade, en de shadow-threshold-fix. Sabotagebewijs geleverd (de delegatie
+naar `trainReadiness()` tijdelijk vervangen door een eigen, verkeerde drempel — gedetecteerd
+en teruggedraaid).
+
+`APP_VER` → v4.69.9, `CACHE_NAME`/`CACHE_STATIC` en Android `versionCode`/`versionName`
+meegenomen.
+
 ## v4.69.8 — MS-F4-01: AI Output Contract & Guardrails (29 augustus 2026)
 
 Eerste F4-mastersprint (F4 expliciet vrijgegeven na F3 CONDITIONALLY CLOSED).

@@ -5336,6 +5336,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
 <script src="core/calculation.js"></script>
 <script src="core/decision.js"></script>
+<script src="core/aiOutputContract.js"></script>
 <script src="core/cardio.js"></script>
 <script src="core/progression.js"></script>
 <script src="core/intervalEngine.js"></script>
@@ -6043,7 +6044,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.7';
+const APP_VER = 'v4.69.8';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -16259,7 +16260,11 @@ Sessiedata (JSON): ${JSON.stringify(summaryData)}`;
     const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:500,system:sys,messages:[{role:'user',content:'Geef de samenvatting.'}]})});
     const d=await res.json();
     if(d.error)return detConclusion||null;
-    return (d.content&&d.content[0]&&d.content[0].text)||detConclusion||null;
+    const tekst=(d.content&&d.content[0]&&d.content[0].text)||null;
+    // AI-OUTPUT-CONTRACT-001 (MS-F4-01): geen verboden taal (diagnose/HRV/ACWR) doorlaten;
+    // val terug op de reeds bestaande, deterministische conclusie i.p.v. een lege/rauwe tekst.
+    if(tekst&&window.AIOutputContract&&!AIOutputContract.validateAiOutputText(tekst).valid)return detConclusion||null;
+    return tekst||detConclusion||null;
   }catch(e){return detConclusion||null;}
 }
 
@@ -18996,9 +19001,16 @@ async function sendMsg(txt){
     else{
       const r=d.content[0].text;
       removeMsg(tid);
+      // AI-OUTPUT-CONTRACT-001: de opgeslagen geschiedenis (zowel in-memory als DB) moet
+      // exact reflecteren wat de gebruiker te zien kreeg. Anders zou een afgekeurde,
+      // verboden tekst alsnog in chatHist/chat_history belanden en bij de VOLGENDE beurt
+      // als "eerder eigen antwoord" terug naar het model gaan — precies het lek dat deze
+      // laag moet voorkomen.
+      const check=(window.AIOutputContract)?AIOutputContract.validateAiOutputText(r):{valid:true};
+      const opgeslagenTekst=check.valid?r:AIOutputContract.safeCoachFallback();
       renderCoachReply(r);
-      chatHist.push({role:'assistant',content:r});
-      await sbPost('chat_history',{role:'assistant',content:r,session_id:activeSessionId,session_label:activeSessionCtx?.exNaam||null});
+      chatHist.push({role:'assistant',content:opgeslagenTekst});
+      await sbPost('chat_history',{role:'assistant',content:opgeslagenTekst,session_id:activeSessionId,session_label:activeSessionCtx?.exNaam||null});
       if(!activeSessionId){ // opschonen alleen voor het algemene gesprek (bestaand gedrag)
         const all=await sbGet('chat_history','&session_id=is.null&order=created_at.asc');
         if(all.length>40)for(const x of all.slice(0,all.length-40))await sbDel('chat_history','id=eq.'+x.id);
@@ -19010,6 +19022,17 @@ async function sendMsg(txt){
 // v306 #9: parseert [[APPLY:exId:kg]]-markers uit het coach-antwoord naar een Toepassen-knop.
 const APPLY_RE=/\[\[APPLY:([a-zA-Z0-9_\-]+):([\d.]+)\]\]/g;
 function renderCoachReply(raw){
+  // AI-OUTPUT-CONTRACT-001 (MS-F4-01): valideer de PROZA-tekst vóórdat hij ooit gerenderd
+  // wordt. De APPLY-marker-mechanik (numerieke gewichtstoepassing) blijft ongewijzigd
+  // apart gevalideerd via CalcCore.validateProposedWeight (ai_guard.v1) — dit is een
+  // aanvullende, eerdere laag die verboden PROZA-taal (diagnose/HRV-als-diagnose/ACWR-
+  // als-blessurevoorspeller) tegenhoudt, ongeacht of er een APPLY-marker in zit.
+  const check=(window.AIOutputContract)?AIOutputContract.validateAiOutputText(raw):{valid:true,violations:[]};
+  if(!check.valid){
+    console.warn('AI-output geweigerd door AIOutputContract',check.violations.map(v=>v.categorie));
+    addMsg('coach',AIOutputContract.safeCoachFallback(),true);
+    return;
+  }
   const actions=[];
   const clean=raw.replace(APPLY_RE,(m,exId,kg)=>{actions.push({exId,kg:parseFloat(kg)});return '';}).trim();
   const id=addMsg('coach',clean,true);
@@ -20124,7 +20147,11 @@ async function generateProgAdviesAI(adj){
     const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:200,system:sys,messages:[{role:'user',content:'Leg het kort uit.'}]})});
     const d=await res.json();
     if(d.error)return null;
-    return d.content[0].text.trim();
+    const tekst=d.content[0].text.trim();
+    // AI-OUTPUT-CONTRACT-001 (MS-F4-01): geen verboden taal doorlaten; aanroeper (padvAccept/
+    // launchProgramTrainScreen) behandelt null al correct als "geen AI-uitleg beschikbaar".
+    if(window.AIOutputContract&&!AIOutputContract.validateAiOutputText(tekst).valid)return null;
+    return tekst;
   }catch(e){return null;}
 }
 function padvDecline(){closeModal('m-prog-advies');launchProgramTrainScreen(null);}

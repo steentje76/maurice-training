@@ -44,7 +44,7 @@
 | ID | Capability | Code | DB | Tests | Integration | Device | Evidence/scientific | Maturity | Target | Gap | Priority | Phase |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | AI-COACH-001 | AI-coachproxy — **security/toegang** (JWT-verificatie, open-proxy-bescherming) | `coach.js`, `buildCtx()` (6 aanroeppunten in index.html) | N/A | `fCoachProxySecurity.test.js` 12/12 | Gemockt | N/A | N/A | **CLOSED** (voor het security-deel) | CLOSED | geen | — | F0 (afgerond) |
-| AI-OUTPUT-CONTRACT-001 | AI-coach — **outputgovernance** (geen ongefundeerd cijfer, geen diagnose-taal, expliciete onzekerheid) | geen technische blokkade gevonden | N/A | geen contracttest | N/A | N/A | `scientificEvidence.js` beschermt regels, niet vrije AI-tekst | **NOT STARTED** | TESTED | contracttest op AI-responsschema | **P1** | **F4** (verplaatst uit F2 per Roadmap 2.0 v1.1 §29/32 — na Calculation/Context/Decision/Evidence-dependencies; zie MS-F4-01) |
+| AI-OUTPUT-CONTRACT-001 | AI-coach — **outputgovernance** (geen ongefundeerd cijfer, geen diagnose-taal, expliciete onzekerheid) | `docs/AI_CALL_PATH_INVENTORY.md`, `docs/MS-F4-01_AI_OUTPUT_CONTRACT.md`, `core/aiOutputContract.js` | N/A | `core/fAiOutputContract.test.js` 17/17 (adversarial-testmatrix, wiring-bevestiging, bypass-audit), sabotagebewijs geleverd | N/A | N/A | Patroon-gebaseerde semantische validator gebouwd en gekoppeld aan de 3 vrije-tekst-AI-paden (chat, post-workout-terugblik, herstel-uitleg). Bestaande veiligheidslagen bevestigd (canonieke exercise-ID-whitelist met preview+bevestiging; deterministische gewicht-plausibiliteitscheck, F1.3). Aanvullend lek gefixed: afgekeurde tekst kon eerder alsnog in de chatgeschiedenis belanden. | **TESTED** (niet CLOSED — eerlijk, geen status-inflatie: het volledige, structured-JSON-outputcontract met referentie-validatie tegen canonieke Calculation/Decision-ID's, zoals de F4-opdracht conceptueel schetst, is niet gebouwd — zou een architectuurverandering van de coach-interactie vereisen die de huidige, kleine risico-omvang niet rechtvaardigt) | TESTED | Geen structured-JSON-outputschema voor de vrije coach-chat; geen provenance-taalvalidatie in de tekst zelf (contextafhankelijk, buiten de scope van een tekstvalidator) | P1 | F4 (MS-F4-01, status TESTED) |
 | AI-PROGRAM-AUTOGEN-001 | AI-gestuurde programma-generatie (week-generatie) | 2 van 6 `buildCtx()`-aanroeppunten (index.html ~10888, ~11253) | N/A | Geen dedicated flow-test | N/A | N/A | Gekoppeld aan Decision/Evidence-laag | IMPLEMENTED | VALIDATED | benchmark-gap t.o.v. Hevy Trainer (feb 2026, volledig auto-adaptief) | P1 | F4 |
 | EVID-SCI-001 | Scientific evidence-registry | `core/scientificEvidence.js` (evidence_store.v1) | N/A | Indirect via `fEvidence.test.js` | N/A | N/A | Hard afgedwongen: UNVALIDATED evidence voedt geen regel, AI verzint nooit een entry | TESTED | CLOSED | volledige metric-voor-metric evidencelevel-audit (A-E) nog niet gedaan | P3 | F3 |
 | DEC-CORE-001 | Decision + evidence-koppeling, incl. corroboratieregels (DEC-036) | `core/decision.js` | N/A | `decision.test.js` 31/31 | N/A | N/A | Corroboratie-eis: nooit één los signaal (DEC-036, 27-08) | TESTED | CLOSED | geen | — | F3 |
@@ -95,12 +95,14 @@
 | Status | Aantal | IDs |
 |---|---|---|
 | CLOSED | 5 | SEC-GYMS-001, SEC-TEST-001, SEC-GATE-001, AI-COACH-001, SEC-USERROLE-001 |
-| TESTED | 10 | PLAT-DELETE-001, SOC-GYMTEAM-001, EVID-SCI-001, DEC-CORE-001, DEV-WEARAUTH-001, DEV-CONCEPT2-001, END-HYROX-001, DEV-VALIDATION-001, PLAT-OBSERVABILITY-001, CALC-END-REGISTRY-001 |
-| NOT STARTED | 5 | PLAT-BACKUP-CLEANUP-001, AI-OUTPUT-CONTRACT-001, WOMENS-PERF-DECISIONS-001, COMM-UI-001, SCI-CONSENT-001 |
+| TESTED | 11 | PLAT-DELETE-001, SOC-GYMTEAM-001, EVID-SCI-001, DEC-CORE-001, DEV-WEARAUTH-001, DEV-CONCEPT2-001, END-HYROX-001, DEV-VALIDATION-001, PLAT-OBSERVABILITY-001, CALC-END-REGISTRY-001, AI-OUTPUT-CONTRACT-001 |
+| NOT STARTED | 4 | PLAT-BACKUP-CLEANUP-001, WOMENS-PERF-DECISIONS-001, COMM-UI-001, SCI-CONSENT-001 |
 | IMPLEMENTED | 2 | COACH-RELATIONSHIP-001, AI-PROGRAM-AUTOGEN-001 |
 | INTEGRATED | 4 | DEV-WEARSYNC-001, END-INTERVAL-001, CTX-CYCLE-001, CAP-REGISTRY-SCREENS-001 |
 | VALIDATED | 13 | GYM-RLS-SCOPING-001, SEC-CONFIG-001, CALC-STR-REGISTRY-001, CALC-LOAD-REGISTRY-001, CALC-REC-REGISTRY-001, CALC-ENE-REGISTRY-001, CTX-CONTRACT-001, DEC-RULE-REGISTRY-001, DQ-CONFIDENCE-CONTRACT-001, EVIDENCE-CLAIM-AUDIT-001, PROVENANCE-EXPLAINABILITY-001, CALC-EVIDENCE-SPEC-001, HRV-LOG-ATOMICITY-001 |
-| **Totaal** | **39** | 5+10+5+2+4+13 = 39 ✓ |
+| **Totaal** | **39** | 5+11+4+2+4+13 = 39 ✓ |
+
+**Wijziging (MS-F4-01):** AI-OUTPUT-CONTRACT-001 verplaatst van NOT STARTED naar TESTED (niet CLOSED — zie `docs/MS-F4-01_AI_OUTPUT_CONTRACT.md`).
 
 **Wijziging (F3 Closure Hotfix):** nieuwe capability HRV-LOG-ATOMICITY-001 toegevoegd als VALIDATED. GAP-P1-008 CLOSED.
 

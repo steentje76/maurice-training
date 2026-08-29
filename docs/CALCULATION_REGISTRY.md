@@ -348,7 +348,7 @@ Geen onverklaarde critical threshold gevonden — inclusief het belangrijke onde
 
 **Auditmethode:** volledige lezing van `core/cardio.js` (pace/split/power/tijd), `core/intervalEngine.js` (work/recovery-blokprescriptie), en `CARDIO_TYPES` (index.html, sport-specifieke veldschema's voor RowErg/BikeErg/SkiErg/AssaultBike/hardlopen/zwemmen). Repo-brede zoekactie naar TRIMP/critical-speed/critical-power/decoupling/HR-zones.
 
-**Belangrijke bevinding vooraf:** `core/intervalEngine.js` bevat het EXPLICIETE, bestaande architectuurcommentaar *"Geen FTP/critical power/critical speed"* — dit is dus geen omissie die ontdekt moest worden, maar een reeds bewust vastgelegde scope-grens. Bevestigd via repo-brede zoekactie: TRIMP, Critical Speed/Power, aerobic decoupling en HR-zones (%HRmax-classificatie) bestaan nergens in de codebase — `hr` wordt voor hardlopen wél als ruwe, gemeten waarde opgeslagen (`CARDIO_TYPES.running`), maar nooit geclassificeerd in zones.
+**Belangrijke bevinding vooraf (F3, MS-F3-04):** `core/intervalEngine.js` bevat het EXPLICIETE, bestaande architectuurcommentaar *"Geen FTP/critical power/critical speed"* — een reeds bewust vastgelegde scope-grens van de EXECUTIE-laag (niet van de Calculation-laag, zie MS-F6-01's expliciete bevestiging hiervan). Bevestigd via repo-brede zoekactie: TRIMP, Critical Power, aerobic decoupling en HR-zones (%HRmax-classificatie) bestaan nog steeds nergens in de codebase — `hr` wordt voor hardlopen wél als ruwe, gemeten waarde opgeslagen (`CARDIO_TYPES.running`), maar nooit geclassificeerd in zones. **Bijgewerkt in F6 (MS-F6-01): Critical Speed is inmiddels geïmplementeerd** (`CardioCore.criticalSpeed()`, zie CALC-END-004) — deze regel gold dus destijds terecht, maar is voor Critical Speed niet langer actueel.
 
 ### CALC-END-001 — Pace/Speed/Split-conversie
 | Veld | Waarde |
@@ -391,13 +391,18 @@ Geen onverklaarde critical threshold gevonden — inclusief het belangrijke onde
 | Evidence level | n.v.t. (architecturale bevinding, geen calculation zelf) |
 | Status | **GAP, geregistreerd** — zie Open Gaps hieronder (GAP-P2-013). Dit is exact de opdrachtvereiste ("MEASURED POWER versus DERIVED/ESTIMATED POWER... provenance verplicht") die momenteel niet expliciet is vastgelegd. |
 
-### CALC-END-004 — Kritieke prestatiemodellen (Critical Speed/Power) — **NIET GEÏMPLEMENTEERD (bewust)**
+### CALC-END-004 — Critical Speed — **GEÏMPLEMENTEERD (MS-F6-01), niet geïntegreerd op trainingsgeschiedenis**
 | Veld | Waarde |
 |---|---|
 | Domain | Endurance & Erg |
-| Current state | **Bestaat niet.** `core/intervalEngine.js` bevat het expliciete architectuurcommentaar "Geen FTP/critical power/critical speed" — een bewuste, reeds vastgelegde scope-grens, geen ontdekte omissie. |
-| Reden om niet binnen deze sprint te bouwen | Critical Speed/Power vereist een gevalideerd model (doorgaans lineaire regressie over meerdere maximale-inspanningstests van verschillende duur), expliciete minimum-trial-vereisten, en duidelijke confidence-regels bij onvoldoende data (opdracht sectie 11/24: "geen fabricated result bij insufficient trials"). Deze onderliggende trial-verzamelinfrastructuur bestaat niet. Een CS/CP-"calculation" bouwen zonder die infrastructuur zou zelf een vorm van fabricage zijn — precies wat de opdracht verbiedt. |
-| Status | **NOT_IMPLEMENTED** (bewust, gedocumenteerd) |
+| Calculation ID | `critical_speed.v1` (`CardioCore.criticalSpeed()`) |
+| Model | Tweeparametermodel (Monod & Scherrer 1965, toegepast op hardlopen): afstand = CS·tijd + D'. Lineaire kleinste-kwadraten-regressie op {distance_m, duration_s}-paren. |
+| Required performances | Minimaal 2, met aantoonbaar verschillende duren (typisch 2-15 min-bereik in de literatuur). 3+ sterk aanbevolen voor stabiliteit. |
+| Minimum observations | 2 (hard vereist, anders `status:'insufficient'`) |
+| Confidence | `hoog` (N≥3, R²≥0.95), `middel` (N≥2, R²≥0.85), anders `laag` — nooit gefabriceerd bij een zwakke fit. |
+| Invalid input handling | Niet-array/negatieve/non-finite waarden gefilterd; identieke duren → `insufficient` (ongedefinieerde regressie); niet-positieve CS-uitkomst → `invalid`. |
+| **Kritieke, eerlijke beperking (F6 Entry Audit):** | Het TK-datamodel heeft geen mechanisme om een gelogde sessie te markeren als een genuine maximale-inspanning-tijdrit versus een rustige duurloop. De functie wordt daarom **bewust niet automatisch op trainingsgeschiedenis gewired** — de aanroeper moet expliciet gecureerde tijdritprestaties aanleveren. Automatische wiring op willekeurige sessiedata zou een wetenschappelijk ongeldig model opleveren. Zie GAP-P2-021. |
+| Status | **IMPLEMENTED** (functie bestaat, getest, geregistreerd) — **niet INTEGRATED** (geen UI/trainingsgeschiedenis-wiring, om bovenstaande reden) |
 
 ### CALC-END-005 — TRIMP / Aerobic Decoupling / HR-zones — **NIET GEÏMPLEMENTEERD**
 | Veld | Waarde |
@@ -422,7 +427,7 @@ Geen onverklaarde critical threshold gevonden.
 
 ## Open Gaps (Endurance & Erg-domein)
 - **GAP-P2-013** (nieuw, deze sprint): geen expliciete provenance-vlag voor `watt` (device-gemeten vs. via split afgeleid) in `CARDIO_TYPES`-schema's.
-- **NOT_IMPLEMENTED, geen gap-nummer (bewust, geen actie vereist zonder productbeslissing):** Critical Speed/Power, TRIMP (elke variant), aerobic decoupling, HR-zones. Zie CALC-END-004/005 hierboven voor de volledige onderbouwing waarom dit terecht niet binnen deze sprint gebouwd is.
+- **NOT_IMPLEMENTED, geen gap-nummer (bewust, geen actie vereist zonder productbeslissing):** Critical Power (cycling — Critical Speed voor hardlopen is inmiddels geïmplementeerd, zie CALC-END-004, MS-F6-01), TRIMP (elke variant), aerobic decoupling, HR-zones. Zie CALC-END-004/005 hierboven voor de volledige onderbouwing.
 
 ---
 

@@ -1183,7 +1183,7 @@
       "E3.3"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F3-04"
     ],
@@ -3409,5 +3409,21 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "zie MS-F5-06 (CLOSED). Live bevestigd: sessions.weather (jsonb) bevat het volledige canonieke object met provenance, geschreven bij het afronden van een outdoor-sessie. Correctie op een eerdere, onjuiste MS-F5-01-claim (module-commentaar was gedateerd, niet geverifieerd tegen daadwerkelijke aanroepen)."
+  },
+  {
+    "id": "RUNNING-INTELLIGENCE-001",
+    "type": "capability",
+    "track": "Endurance & Multisport",
+    "phase": "F6",
+    "priority": "P1",
+    "status": "IMPLEMENTED",
+    "target": "INTEGRATED",
+    "dependencies": [
+      "CALC-END-REGISTRY-001"
+    ],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F6-01 (CLOSED). CardioCore.criticalSpeed() gebouwd en getest (Monod & Scherrer 1965), niet geintegreerd in UI/trainingsgeschiedenis-wiring vanwege het ontbreken van een tijdrit-markeringsmechanisme (GAP-P2-021). Pace-trend hergebruikt ProgressionCore.trendBy(), geen duplicatie. Zones/TID/decoupling/TRIMP blijven bewust NOT_IMPLEMENTED."
   }
 ]

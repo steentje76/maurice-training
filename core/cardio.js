@@ -19,7 +19,7 @@
 (function (global) {
   'use strict';
 
-  var VERSIONS = { time: 'cardio_time.v1', split: 'cardio_split.v1', power: 'cardio_power.v1' };
+  var VERSIONS = { time: 'cardio_time.v1', split: 'cardio_split.v1', power: 'cardio_power.v1', criticalSpeed: 'critical_speed.v1' };
 
   // --- cardio_time.v1 (parse) --- exact gelijk aan legacy parseTimeToSec.
   // "mm:ss" of "h:mm:ss" of los getal -> seconden. Legacy-quirk behouden: leeg/ongeldig -> null.
@@ -140,6 +140,66 @@
     return s;
   }
 
+  // --- critical_speed.v1 (MS-F6-01) --------------------------------------
+  // Tweeparametermodel (Monod & Scherrer 1965; toegepast op hardlopen door o.a.
+  // Hughson et al. 1984): afstand = CS·tijd + D' (D' = anaerobe-afstandscapaciteit).
+  // Lineaire regressie op {distance_m, duration_s}-paren van NABIJ-MAXIMALE,
+  // constante-inspanning tijdritten (2-15 min-bereik is gangbaar in de literatuur).
+  //
+  // KRITIEKE, EERLIJKE BEPERKING (bevestigd tijdens de F6 Entry Audit): het TK-
+  // datamodel heeft GEEN manier om een gelogde sessie te markeren als een genuine
+  // maximale-inspanning-tijdrit versus een rustige duurloop. Deze functie neemt
+  // daarom NOOIT automatisch trainingsgeschiedenis als input — de aanroeper moet
+  // expliciet, gecureerde tijdrit-prestaties aanleveren. Automatische wiring op
+  // willekeurige sessiedata zou een wetenschappelijk ongeldig model opleveren
+  // (het CS-model vereist genuine uitputtende inspanningen, geen duurlopen).
+  //
+  // Vereist minimaal 2 performances (3+ sterk aanbevolen voor stabiliteit), met
+  // AANTOONBAAR VERSCHILLENDE duren (anders is de regressie ongedefinieerd/instabiel).
+  // Bij onvoldoende/ongeldige input: expliciete 'insufficient'/'invalid'-status,
+  // NOOIT een verzonnen of laag-confidence-maar-toch-getoond resultaat.
+  function criticalSpeed(performances) {
+    if (!Array.isArray(performances)) return { status: 'invalid', reason: 'not_array' };
+    var valid = performances.filter(function (p) {
+      return p && isFinite(p.distance_m) && isFinite(p.duration_s) && p.distance_m > 0 && p.duration_s > 0;
+    });
+    if (valid.length < 2) return { status: 'insufficient', reason: 'min_2_performances_required', n: valid.length };
+    var durations = valid.map(function (p) { return p.duration_s; });
+    var uniqueDurations = durations.filter(function (v, i) { return durations.indexOf(v) === i; });
+    if (uniqueDurations.length < 2) return { status: 'insufficient', reason: 'durations_not_distinct', n: valid.length };
+    // Lineaire regressie: distance = CS*time + D' (kleinste-kwadraten op (time, distance)).
+    var n = valid.length;
+    var sumT = 0, sumD = 0, sumTT = 0, sumTD = 0;
+    valid.forEach(function (p) {
+      sumT += p.duration_s; sumD += p.distance_m;
+      sumTT += p.duration_s * p.duration_s; sumTD += p.duration_s * p.distance_m;
+    });
+    var denom = (n * sumTT - sumT * sumT);
+    if (denom === 0) return { status: 'insufficient', reason: 'degenerate_regression', n: n };
+    var cs = (n * sumTD - sumT * sumD) / denom; // m/s
+    var dPrime = (sumD - cs * sumT) / n; // m
+    if (!isFinite(cs) || cs <= 0) return { status: 'invalid', reason: 'non_positive_cs' };
+    // R² voor transparantie (geen aparte 'confidence'-fabricage, puur statistische fit).
+    var meanD = sumD / n;
+    var ssTot = 0, ssRes = 0;
+    valid.forEach(function (p) {
+      var pred = cs * p.duration_s + dPrime;
+      ssRes += Math.pow(p.distance_m - pred, 2);
+      ssTot += Math.pow(p.distance_m - meanD, 2);
+    });
+    var rSquared = (ssTot === 0) ? null : (1 - ssRes / ssTot);
+    var confidence = (n >= 3 && rSquared != null && rSquared >= 0.95) ? 'hoog'
+      : (n >= 2 && rSquared != null && rSquared >= 0.85) ? 'middel' : 'laag';
+    return {
+      status: 'valid', schema: 'critical_speed.v1',
+      cs_m_s: cs, d_prime_m: (dPrime > 0 ? dPrime : 0),
+      n_performances: n, r_squared: rSquared, confidence: confidence,
+      // D' < 0 is fysiologisch onmogelijk (regressie-artefact bij te weinig/inconsistente data) —
+      // op 0 geklemd voor weergave, maar de R²/confidence blijft het onderliggende signaal.
+      limitations: 'Vereist genuine maximale-inspanningsprestaties (geen duurlopen); model is minder betrouwbaar buiten het 2-15 min-duurbereik; TK identificeert zelf geen tijdritten in trainingsgeschiedenis.'
+    };
+  }
+
   var CardioCore = {
     parseTime: parseTime,
     formatTime: formatTime,
@@ -154,6 +214,7 @@
     classifyTimeInput: classifyTimeInput,
     stationDurationS: stationDurationS,
     segmentTransitionS: segmentTransitionS,
+    criticalSpeed: criticalSpeed,
     VERSIONS: VERSIONS
   };
 

@@ -38,7 +38,12 @@ ok(calcCounts.B === 4, 'exact 4 CALC-items met evidence B (Epley/Brzycki/Foster-
 ok(calcCounts.C === 4, 'exact 4 CALC-items met evidence C');
 ok(calcCounts.D === 1, 'exact 1 CALC-item met evidence D (Recovery Score)');
 ok(calcCounts.E === 7, 'exact 7 CALC-items met evidence E');
-ok(calcCounts.NOT_IMPLEMENTED === 3, 'exact 3 CALC-items expliciet NOT_IMPLEMENTED (CS/CP, TRIMP/decoupling/zones, BMR/RMR/TDEE)');
+// MS-F6-01 (F6): Critical Speed is niet langer NOT_IMPLEMENTED (nu GEÏMPLEMENTEERD,
+// CardioCore.criticalSpeed()) -- de telling daalt daarom van 3 naar 2 resterende
+// bewust-NOT_IMPLEMENTED-items (TRIMP/decoupling/zones, BMR/RMR/TDEE; Critical Power
+// voor cycling blijft eveneens NOT_IMPLEMENTED, dus dat item verschuift niet mee --
+// zie CALC-END-004 in de registry voor de exacte, huidige tekst).
+ok(calcCounts.NOT_IMPLEMENTED === 2, 'exact 2 CALC-items blijven expliciet NOT_IMPLEMENTED na MS-F6-01 (TRIMP/decoupling/zones, BMR/RMR/TDEE) -- Critical Speed is niet langer in deze telling, geen stilzwijgende drift');
 
 // ---- B. Decision Rules: geen enkele stiekem A/B ----
 const decRows = decText.match(/^\| (DEC-[A-Z0-9-]+) \|.*\|$/gm) || [];

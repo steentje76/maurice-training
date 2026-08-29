@@ -1116,7 +1116,7 @@
       "E11.4"
     ],
     "priority": "P2",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F5-01"
     ],
@@ -3379,5 +3379,21 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "zie MS-F5-04 (CLOSED). Ontwerp-only, geverifieerd via actuele officiële Apple-documentatie. HRV-methodologie-nuance (SDNN) expliciet vastgelegd, geen geforceerde equivalentie met de Google Health API. Geen implementatie -- vereist een fysieke iPhone en canonieke roadmap-vrijgave."
+  },
+  {
+    "id": "WEARABLE-FEASIBILITY-MATRIX-001",
+    "type": "capability",
+    "track": "Wearables & Devices",
+    "phase": "F5",
+    "priority": "P2",
+    "status": "VALIDATED",
+    "target": "VALIDATED",
+    "dependencies": [
+      "PROVIDER-INTEGRATION-CONTRACT-001"
+    ],
+    "software_validation": "N/A",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F5-05 (CLOSED). Alle 5 providers onderzocht via actuele, officiële bronnen. Polar/COROS hoogste toegangs-feasibility. Garmin momenteel feitelijk ontoegankelijk (aanmeldingen stilgelegd) -- vastgelegd als product-besluitpunt."
   }
 ]

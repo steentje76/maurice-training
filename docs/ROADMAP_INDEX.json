@@ -981,7 +981,7 @@
       "E11.1"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [],
     "target_maturity": "IMPLEMENTED",
     "objective": "Connector interface, canonical model, provenance, duplicate safety.",
@@ -3349,5 +3349,19 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "zie MS-F4-06 (CLOSED). Actueel webonderzoek (augustus 2026): Hevy Trainer bevestigd een algoritme (geen AI/LLM), gebruikt geen herstelsignalen als input. Eerlijke, genuanceerde herpositionering vastgelegd, geen overbouwde infrastructuur voor dit P2-item."
+  },
+  {
+    "id": "PROVIDER-INTEGRATION-CONTRACT-001",
+    "type": "capability",
+    "track": "Device Integration",
+    "phase": "F5",
+    "priority": "P1",
+    "status": "VALIDATED",
+    "target": "VALIDATED",
+    "dependencies": [],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F5-01 (CLOSED). Connector inventory (Google Health enige actieve provider), canoniek datamodel, per-veld provenance, duplicate-safety allemaal bevestigd + live DB-geverifieerd (RLS deny-all op tokentabellen, UNIQUE-constraints). GAP-F5-001/002 (P2, niet-kritiek) geregistreerd."
   }
 ]

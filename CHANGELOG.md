@@ -1,5 +1,40 @@
 # Trainingskompas — Changelog
 
+## v4.69.10 — MS-F4-04: Adaptive Weekly Program Loop (29 augustus 2026)
+
+Vierde F4-mastersprint. Sluit `MS-F4-04` en `AI-PROGRAM-AUTOGEN-001`.
+
+**Runtime-trace bevestigde:** de "weken opnieuw genereren"-flow (`heergenereerResterendeWeken()`)
+was al rule/evidence-gestuurd — de regeneratieprompt gebruikt echte, deterministisch
+berekende voortgang (adherence%, gemiddelde RPE-afwijking t.o.v. plan) als context, en
+vereist al expliciete gebruikersbevestiging (`confirmModal()`) vóórdat er iets gebeurt.
+Twee actieve generatiepaden bevestigd (initiële generatie + weekregeneratie), geen
+verborgen derde, beide hergebruiken exact dezelfde `parseProgrammaJSON()`-validator
+(canonieke exercise-ID-whitelist).
+
+**Nieuw gevonden en gefixed: geen audit trail.** Vervangen `program_blocks` werden hard
+verwijderd zonder enige logging van wat, waarom, of wanneer. Nieuwe, forward-only,
+append-only tabel `program_regeneration_log` (`migratie_v501.sql`, live uitgevoerd en
+geverifieerd) bewaart vóór elke destructieve delete een onveranderlijk snapshot van de
+vervangen blocks + de evidence die de regeneratie triggerde. RLS identiek aan het
+bestaande patroon. De applicatie roept uitsluitend `INSERT` aan op deze tabel.
+
+Deep audit van `CalcCore.validateProposedWeight()`/`ai_guard.v1` bevestigde het
+120%-e1RM-plafond als correct geclassificeerde technical/product heuristic (geen
+wetenschappelijke claim) — al eerder zo vastgelegd in de Calculation Registry.
+
+Nieuwe testsuite `core/fProgramAutogenAudit.test.js` (13/13): functionele
+programma-validatiematrix (geldig/malformed/onbekende-ID/nul-sets/ontbrekende
+velden/markdown-fences), en audit-trail-wiring-bevestiging (INSERT gebeurt aantoonbaar
+vóór de destructieve delete, nooit UPDATE/DELETE op de logtabel). Sabotagebewijs
+geleverd (de exercise-ID-whitelist-check tijdelijk verwijderd, gedetecteerd en
+teruggedraaid).
+
+`APP_VER` → v4.69.10, `CACHE_NAME`/`CACHE_STATIC` en Android `versionCode`/
+`versionName` meegenomen.
+
+**AI-PROGRAM-AUTOGEN-001: CLOSED.**
+
 ## v4.69.9 — MS-F4-02: Explainable Daily Coach (29 augustus 2026)
 
 Tweede F4-mastersprint. Sluit `MS-F4-02` (target maturity: IMPLEMENTED).

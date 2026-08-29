@@ -1256,7 +1256,7 @@
       "E3.3"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F3-04",
       "MS-F5-02"
@@ -2988,7 +2988,7 @@
     "software_validation": "PASS",
     "device_validation": "OPEN",
     "evidence_status": "N/A",
-    "next_action": "zie MS-F5-02 (dimensionaal: Software TESTED, Integration OPEN, Real Device OPEN -- geen bewijs verzonnen, geen Android-buildruntime/fysieke PM5 in deze sandbox). Mid-workout BLE/sessie-ontkoppeling functioneel bewezen (fConcept2MidWorkoutIsolation.test.js, eigen sabotagebewijs). GAP-P2-020 (multiple HR sources) geregistreerd."
+    "next_action": "zie MS-F5-02 (dimensionaal: Software TESTED, Integration OPEN, Real Device OPEN -- geen bewijs verzonnen, geen Android-buildruntime/fysieke PM5 in deze sandbox). Mid-workout BLE/sessie-ontkoppeling functioneel bewezen (fConcept2MidWorkoutIsolation.test.js, eigen sabotagebewijs). GAP-P2-020 (multiple HR sources) geregistreerd. MS-F6-03 (CLOSED): criticalPower() (uit MS-F6-02) en trendBy() bevestigd sportagnostisch herbruikbaar voor Concept2-ergdata, geen nieuwe code nodig."
   },
   {
     "id": "DEV-WEARAUTH-001",

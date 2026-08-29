@@ -1,5 +1,36 @@
 # Trainingskompas — Changelog
 
+## v4.69.14 — MS-F7-01: Athlete Trend Model (29 augustus 2026)
+
+Eerste F7-mastersprint (F7 expliciet vrijgegeven). Sluit MS-F7-01.
+
+**F7 Entry Audit** (`docs/F7_EXISTING_INTELLIGENCE_INVENTORY.md`) bevestigde een
+uitzonderlijk mature bestaande basis: `ProgressionCore.trendBy()`/`isNewBest()`/
+`bestBy()`/`recordsBy()`, `computeExerciseTrends()` (al gedeeld tussen UI en
+AI-coach), `CalcCore.trendClassify()` (HRV/RHR/slaap), en `ScheduleAdherenceCore`.
+
+**Belangrijke architecturale bevestiging:** `trendBy()` en `trendClassify()` zijn
+GEEN ongewenste duplicatie -- twee legitiem verschillende, complementaire
+methoden (identity-gebonden prestatiematen versus ongefilterde dagreeksen).
+
+**Nieuw gebouwd:** `core/longitudinalTrend.js` (`LongitudinalTrendCore`) --
+een dunne, canonieke NORMALISATIE-laag (`longitudinal_trend.v1`-schema) die
+beide bestaande trendbronnen ONGEWIJZIGD blijft gebruiken en uitsluitend hun
+output naar één gedeeld contract vertaalt (metric/domain/context/direction/
+observation_count/latest/baseline/magnitude/confidence/calculation_version).
+Geen nieuwe berekeningslogica -- "unified" betekent hier één outputcontract,
+niet één formule. Directionality blijft altijd metric-aware (nooit een
+hardcoded "hoger=beter"-aanname).
+
+Nieuwe testsuite `core/fLongitudinalTrendCore.test.js` (11/11): golden cases
+voor beide bronnen, bevestiging van het gedeelde schema, en determinisme.
+Sabotagebewijs geleverd.
+
+`APP_VER` → v4.69.14, `CACHE_NAME`/`CACHE_STATIC` en Android
+`versionCode`/`versionName` meegenomen (CORE_SIG ongewijzigd -- de nieuwe
+module valt buiten de vaste CORE_FILES-hashlijst, consistent met bestaande
+vergelijkbare modules zoals `scheduleAdherence.js`).
+
 ## v4.69.13 — MS-F6-05: Triathlon & Brick Workflows (29 augustus 2026)
 
 Vijfde F6-mastersprint. Sluit MS-F6-05.

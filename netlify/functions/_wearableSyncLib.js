@@ -55,12 +55,22 @@ function contributed(vals) {
 function buildRow(date, userId, vals, existing) {
   vals = vals || {};
   var contrib = contributed(vals);
+  // MS-F3-10/GAP-P1-007: per-veld provenance, consistent met tkMergeHealthRow() (index.html).
+  // Alleen een veld dat DEZE sync-run daadwerkelijk aanlevert (vals.x != null) krijgt hier
+  // 'wearable'; een veld dat zijn bestaande waarde behoudt, behoudt ook zijn bestaande bron
+  // (kan dus 'manual' blijven als de gebruiker dat veld eerder zelf invulde).
+  var srcOf = function (key) {
+    return vals[key] != null ? 'wearable' : (existing ? existing[key + '_source'] : null) || null;
+  };
   var row = {
     date: date,
     user_id: userId,
     hrv:   vals.hrv   != null ? vals.hrv   : (existing ? existing.hrv   : null),
     rhr:   vals.rhr   != null ? vals.rhr   : (existing ? existing.rhr   : null),
     sleep: vals.sleep != null ? vals.sleep : (existing ? existing.sleep : null),
+    hrv_source:   srcOf('hrv'),
+    rhr_source:   srcOf('rhr'),
+    sleep_source: srcOf('sleep'),
     note:  contrib ? provenanceNote(existing ? existing.note : null)
                    : (existing ? existing.note : null)
   };

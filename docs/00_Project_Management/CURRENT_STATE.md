@@ -6,11 +6,11 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.69.5
+v4.69.6
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.69.5 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.69.6 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 28 augustus 2026
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 
@@ -18,7 +18,7 @@ v4.69.5
 - **F0 — Verified Baseline: CLOSED**
 - **F1 — Foundation Closure: CLOSED** (Gate A semantische-integriteitsaudit geslaagd — 18/18 consistentiechecks, release gate groen, geen open P0/P1)
 - **F2 — Athlete Core Excellence: CLOSED.** MS-F2-01 (Canonical Training Start & Preview) is herclassificeerd van PARTIAL naar **CLOSED** nadat GAP-P1-006 tijdens MS-F2-08 is gesloten: Programma-blok en Repeat Workout krijgen nu beide een canonieke `training_instances`-rij. Preview-UI blijft bewust gedifferentieerd voor deze twee bronnen — een gedocumenteerde productgrens, geen open architectuurgat. MS-F2-02 t/m MS-F2-07 blijven CLOSED. Final Contract Reconciliation bevestigde: geen resterende architectuurgap, gepreciseerde acceptance-wording vastgelegd. Zie `docs/MS-F2-01..08_*.md`.
-- **F3 — Calculation/Context/Evidence Excellence: CURRENT.** MS-F3-01 t/m MS-F3-03: CLOSED. MS-F3-04: TESTED. MS-F3-05 t/m MS-F3-08: CLOSED. MS-F3-09 (Evidence Registry Metric Audit): **CLOSED** — formule-specifieke heraudit Epley/Brzycki (beide oorspronkelijk niet peer-reviewed, B-classificatie herformuleerd naar de wél degelijke validatiestudies, o.a. LeSuer et al. 1997). Reproduceerbare evidence-telling: 23 CALC-items (A1/B4/C4/D1/E7/3xNOT_IMPLEMENTED), 9 Decision Rules (0xA/B). Twee eerdere documentatie-overclaims gecorrigeerd (crash-bescherming; AI-fabricage-claim, nu correct als prompt-governance i.p.v. technische afdwinging gedocumenteerd — GAP-P1-003 blijft terecht F4). Resterende F3-mastersprints (MS-F3-10 t/m 11) nog niet uitgevoerd. Zie `docs/MS-F3-09_EVIDENCE_REGISTRY_AUDIT.md`.
+- **F3 — Calculation/Context/Evidence Excellence: CURRENT.** MS-F3-01 t/m MS-F3-03: CLOSED. MS-F3-04: TESTED. MS-F3-05 t/m MS-F3-09: CLOSED. MS-F3-10 (Explainability & Provenance): **CLOSED** — GAP-P1-007 technisch (niet slechts documentair) opgelost: live schema-audit onthulde dat `hrv_log` geen `UNIQUE(user_id,date)` heeft en mixed-source-rijen dus reëel zijn (bv. wearable-HRV + handmatig gecorrigeerde RHR); per-veld provenance (`hrv_source`/`rhr_source`/`sleep_source`) toegevoegd via `migratie_v499.sql`, live uitgevoerd (3 kolommen, 70 bestaande rijen ongewijzigd/onbekend), beide schrijfpaden bijgewerkt en functioneel getest tegen het mixed-source-scenario. Decision Evidence-snapshotmechanisme diep geaudit (niet op naam vertrouwd) — immutability bewezen, niet aangenomen. Resterende F3-mastersprint (MS-F3-11) nog niet uitgevoerd. Zie `docs/MS-F3-10_EXPLAINABILITY_PROVENANCE.md`.
 - **Master Roadmap 2.0 v1.1 = CANONICAL** productstrategische bron. Repository blijft technische autoriteit. Zie `docs/DOCUMENTATION_GOVERNANCE.md`.
 - Volledige fasering (F0-F15): zie `docs/TRAININGSKOMPAS_MASTER_ROADMAP.md`. Volledige mastersprint-ID-migratie: zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md`.
 
@@ -28,11 +28,10 @@ Training Core, Calculation Engine, Context Engine, Decision Engine, Evidence Arc
 ## 4. Current open priorities
 Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
 - **Open P0: 0**
-- **Open P1: 3, met expliciet onderscheid in scope** (nooit een ongescopeerde "P1 bestaat" zonder aan te geven wát hij blokkeert):
+- **Open P1: 2, met expliciet onderscheid in scope** (nooit een ongescopeerde "P1 bestaat" zonder aan te geven wát hij blokkeert):
   - AI-outputcontract ontbreekt (AI-OUTPUT-CONTRACT-001) — **F4-fase-item**, target MS-F4-01, blokkeert F2/F3 niet.
   - AI-adaptive-programmering-gat t.o.v. Hevy Trainer (AI-PROGRAM-AUTOGEN-001) — **F4-fase-item**, target MS-F4-04, blokkeert F2/F3 niet.
-  - Geen sleep/HRV-provenance in `hrv_log` (GAP-P1-007, CALC-REC-REGISTRY-001) — **F3-fase-blokkerende P1**, target MS-F3-10 (Explainability & Provenance Contract). Géén MS-F3-03- of MS-F3-04-blokkerende P1 (die sprints se eigen acceptance gates vereisten dit niet en zijn terecht CLOSED). **F3 als geheel mag niet CLOSED tot deze P1 is opgelost of formeel, evidence-based hergeclassificeerd.**
-  - **MS-F3-04-blocking P1: 0.** **F3-phase open P1: 1** (GAP-P1-007).
+  - **F3-phase open P1: 0.** GAP-P1-007 (sleep/HRV-provenance) is CLOSED via MS-F3-10 (`migratie_v499.sql`, live geverifieerd) — zie sectie "CLOSED GAPS / HISTORICAL" in `docs/GAP_ANALYSIS_V2.md`.
 - **MS-F1-01 (Multi-tenant RLS Security Closure) is CLOSED** — membership-scoped RLS op organizations/teams/training_groups/seasons/macrocycles/mesocycles/microcycles (`migratie_v498.sql`), plus een tijdens de sprint gevonden en gesloten P0 (self-privilege-escalatie via `users.gym_role`/`gym_id`/`system_role`, `migratie_v497.sql`)
 - Open P2: 7 — incl. Handbook-drift en Commercial-UI, beide gedowngraded van P1 per Roadmap 2.0 v1.1
 - Open P3/P4: zie `docs/GAP_ANALYSIS_V2.md` voor de volledige lijst
@@ -40,7 +39,7 @@ Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
 ## 5. Current validation status
 - **Code:** CODE VERIFIED tegen `main` @ bovenstaande SHA
 - **DB:** VERIFIED — 69 tabellen, RLS gecontroleerd op alle tabellen, `gyms`-lek gesloten en geverifieerd via `SET LOCAL ROLE anon/authenticated/service_role`
-- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 98 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 101 stappen totaal), 100 automatisch uitgevoerd, 1 zichtbaar geskipt (`fAndroidRelease.test.js`, ontbrekende Android-buildmap in deze schone checkout), 0 gefaald
+- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 99 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 102 stappen totaal), 101 automatisch uitgevoerd, 1 zichtbaar geskipt (`fAndroidRelease.test.js`, ontbrekende Android-buildmap in deze schone checkout — draait wél in echte CI via `npm run cap:copy`, en lokaal na een expliciete reproductie: dan 102/102, 0 geskipt), 0 gefaald
 - **Integration:** wearable-sync getest tegen de echte handler-functie; overige integraties overwegend unit-getest
 - **Device:** **OPEN** — Concept2 PM5 en Google Health-sync hebben geen bevestigde real-device-validatie in productie
 - **UX:** niet apart beoordeeld in de laatste consolidatiesprint (38 top-level schermen geïnventariseerd, geen flow-niveau UX-testdekking)

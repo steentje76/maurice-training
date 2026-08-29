@@ -6043,7 +6043,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.5';
+const APP_VER = 'v4.69.6';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -7041,6 +7041,14 @@ function tkMergeHealthRow(existing,incoming){
   if(hadTag&&!/\[src:fitbit\]/i.test(String(out.note||''))){
     out.note=out.note?(String(out.note).trim()+' [src:fitbit]'):'[src:fitbit]';
   }
+  // MS-F3-10/GAP-P1-007: per-veld provenance, NIET rij-niveau (zie migratie_v499.sql —
+  // hrv_log heeft geen UNIQUE(user_id,date), dus HRV/RHR/slaap in dezelfde rij kunnen
+  // aantoonbaar verschillende bronnen hebben, bv. wearable-HRV + later handmatig
+  // gecorrigeerde RHR). Alleen het veld dat NU daadwerkelijk handmatig is ingevuld
+  // (incoming[k] heeft een echte waarde) krijgt hier 'manual' — een veld dat via keep()
+  // zijn BESTAANDE (mogelijk wearable-)waarde behield, behoudt ook zijn bestaande bron.
+  const src=(k)=>(incoming[k]!==null&&incoming[k]!==undefined&&incoming[k]!=='')?'manual':(existing[k+'_source']!==undefined?existing[k+'_source']:null);
+  out.hrv_source=src('hrv'); out.rhr_source=src('rhr'); out.sleep_source=src('sleep');
   return out;
 }
 async function upsertHrvLog(fields){

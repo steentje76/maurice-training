@@ -767,7 +767,7 @@
       "E7.3"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F3-09"
     ],
@@ -3144,7 +3144,7 @@
     "software_validation": "PASS",
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
-    "next_action": "zie MS-F3-03 (CLOSED). GAP-P1-007 (hrv_log-provenance) is een F3-FASE-blokkerende P1, target mastersprint MS-F3-10 (Explainability & Provenance Contract) -- niet MS-F3-03-blokkerend (die sprint zelf is terecht CLOSED). F3 als geheel mag niet CLOSED tot GAP-P1-007 is opgelost of formeel hergeclassificeerd."
+    "next_action": "zie MS-F3-03/MS-F3-10 (beide CLOSED). GAP-P1-007 (hrv_log-provenance) is opgelost via migratie_v499.sql -- per-veld provenance (hrv_source/rhr_source/sleep_source), live geverifieerd."
   },
   {
     "id": "CALC-END-REGISTRY-001",
@@ -3237,5 +3237,22 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "zie MS-F3-09 (CLOSED). Epley/Brzycki formule-specifiek heraudit en gepreciseerd. 2 eerdere overclaims (crash-bescherming, AI-fabricage) gecorrigeerd. Reproduceerbare evidence-telling: 23 CALC-items (A1/B4/C4/D1/E7/3xNOT_IMPLEMENTED), 9 Decision Rules (0xA/B)."
+  },
+  {
+    "id": "PROVENANCE-EXPLAINABILITY-001",
+    "type": "capability",
+    "track": "Evidence & Provenance",
+    "phase": "F3",
+    "priority": "P1",
+    "status": "VALIDATED",
+    "target": "VALIDATED",
+    "dependencies": [
+      "CALC-REC-REGISTRY-001",
+      "DEC-RULE-REGISTRY-001"
+    ],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F3-10 (CLOSED). GAP-P1-007 CLOSED: per-veld hrv_log-provenance live gemigreerd (migratie_v499.sql), beide schrijfpaden bijgewerkt, mixed-source-scenario functioneel getest. Decision Evidence-snapshot immutability bewezen (niet aangenomen)."
   }
 ]

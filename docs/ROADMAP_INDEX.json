@@ -1219,7 +1219,7 @@
       "E3.3"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F3-04"
     ],
@@ -3044,7 +3044,7 @@
     "software_validation": "PASS",
     "device_validation": "N/A",
     "evidence_status": "N/A",
-    "next_action": "zie MS-F6-01, MS-F6-02, MS-F6-03"
+    "next_action": "zie MS-F6-02 (CLOSED). CardioCore.criticalPower() gebouwd en getest (Monod & Scherrer 1965/Moritani 1981), niet geintegreerd op trainingsgeschiedenis (zelfde beperking als criticalSpeed()). Kritieke, cross-cutting bevinding gefixed: 4 SPORT_BLOCKS-coachingteksten (wielrennen/zwemmen/roeien/HYROX) instrueerden de AI om te herberekenen/voorspellen (FTP/CSS/race-prestaties) -- gecorrigeerd."
   },
   {
     "id": "SOC-GYMTEAM-001",
@@ -3425,5 +3425,21 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "zie MS-F6-01 (CLOSED). CardioCore.criticalSpeed() gebouwd en getest (Monod & Scherrer 1965), niet geintegreerd in UI/trainingsgeschiedenis-wiring vanwege het ontbreken van een tijdrit-markeringsmechanisme (GAP-P2-021). Pace-trend hergebruikt ProgressionCore.trendBy(), geen duplicatie. Zones/TID/decoupling/TRIMP blijven bewust NOT_IMPLEMENTED."
+  },
+  {
+    "id": "CYCLING-INTELLIGENCE-001",
+    "type": "capability",
+    "track": "Endurance & Multisport",
+    "phase": "F6",
+    "priority": "P1",
+    "status": "IMPLEMENTED",
+    "target": "INTEGRATED",
+    "dependencies": [
+      "CALC-END-REGISTRY-001"
+    ],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F6-02 (CLOSED). CardioCore.criticalPower() gebouwd en getest, niet gewired op trainingsgeschiedenis (GAP-P2-021-achtige beperking, zelfde als criticalSpeed). Kritieke AI-boundary-fix in 4 sport-coachingteksten meegenomen."
   }
 ]

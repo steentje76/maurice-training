@@ -52,7 +52,8 @@ ok(CardioCore.classifyNumericInput('42').status === 'valid' && CardioCore.classi
 
 // ---- B. Registry-structuur ----
 const items = registryText.split(/(?=^### CALC-END-)/m).filter(s => s.startsWith('### CALC-END-'));
-ok(items.length === 5, 'exact 5 CALC-END-items gevonden (001 t/m 005)');
+// MS-F6-02: CALC-END-004B (Critical Power) toegevoegd -- telling stijgt van 5 naar 6.
+ok(items.length === 6, 'exact 6 CALC-END-items gevonden (001, 002, 003, 004, 004B, 005)');
 
 // ---- B2. NOT_IMPLEMENTED-items correct en eerlijk gelabeld (geen stille fabricage) ----
 {

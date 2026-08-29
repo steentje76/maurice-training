@@ -404,6 +404,17 @@ Geen onverklaarde critical threshold gevonden — inclusief het belangrijke onde
 | **Kritieke, eerlijke beperking (F6 Entry Audit):** | Het TK-datamodel heeft geen mechanisme om een gelogde sessie te markeren als een genuine maximale-inspanning-tijdrit versus een rustige duurloop. De functie wordt daarom **bewust niet automatisch op trainingsgeschiedenis gewired** — de aanroeper moet expliciet gecureerde tijdritprestaties aanleveren. Automatische wiring op willekeurige sessiedata zou een wetenschappelijk ongeldig model opleveren. Zie GAP-P2-021. |
 | Status | **IMPLEMENTED** (functie bestaat, getest, geregistreerd) — **niet INTEGRATED** (geen UI/trainingsgeschiedenis-wiring, om bovenstaande reden) |
 
+### CALC-END-004B — Critical Power — **GEÏMPLEMENTEERD (MS-F6-02), niet geïntegreerd op trainingsgeschiedenis**
+| Veld | Waarde |
+|---|---|
+| Domain | Endurance & Erg |
+| Calculation ID | `critical_power.v1` (`CardioCore.criticalPower()`) |
+| Model | Canoniek Critical Power-model (Monod & Scherrer 1965; Moritani et al. 1981): totaal verricht werk (vermogen × tijd) = CP·tijd + W' (W' = anaerobe werkcapaciteit in joule). Correcte, in de literatuur gestandaardiseerde formulering -- niet simpelweg vermogen tegen tijd uitzetten. |
+| Required performances | Minimaal 2, met aantoonbaar verschillende duren. |
+| Confidence | Identiek aan CALC-END-004 (hoog/middel/laag, gebaseerd op N en R²). |
+| **Kritieke, eerlijke beperking:** | Identiek aan CALC-END-004 -- geen tijdrit-markeringsmechanisme in het datamodel, dus bewust niet automatisch gewired. Zie GAP-P2-021-categorie. Expliciet gedocumenteerd: dit is een technisch/fysiologisch model, geen vervanging voor een gestandaardiseerd FTP-testprotocol. |
+| Status | **IMPLEMENTED** (functie bestaat, getest, geregistreerd) — **niet INTEGRATED** |
+
 ### CALC-END-005 — TRIMP / Aerobic Decoupling / HR-zones — **NIET GEÏMPLEMENTEERD**
 | Veld | Waarde |
 |---|---|
@@ -427,7 +438,7 @@ Geen onverklaarde critical threshold gevonden.
 
 ## Open Gaps (Endurance & Erg-domein)
 - **GAP-P2-013** (nieuw, deze sprint): geen expliciete provenance-vlag voor `watt` (device-gemeten vs. via split afgeleid) in `CARDIO_TYPES`-schema's.
-- **NOT_IMPLEMENTED, geen gap-nummer (bewust, geen actie vereist zonder productbeslissing):** Critical Power (cycling — Critical Speed voor hardlopen is inmiddels geïmplementeerd, zie CALC-END-004, MS-F6-01), TRIMP (elke variant), aerobic decoupling, HR-zones. Zie CALC-END-004/005 hierboven voor de volledige onderbouwing.
+- **NOT_IMPLEMENTED, geen gap-nummer (bewust, geen actie vereist zonder productbeslissing):** TRIMP (elke variant), aerobic decoupling, HR-zones. (Critical Speed voor hardlopen en Critical Power voor cycling zijn inmiddels beide geïmplementeerd, zie CALC-END-004/CALC-END-004B, MS-F6-01/MS-F6-02.) Zie CALC-END-004/005 hierboven voor de volledige onderbouwing.
 
 ---
 

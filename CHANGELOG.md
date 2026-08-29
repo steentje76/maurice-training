@@ -1,5 +1,36 @@
 # Trainingskompas — Changelog
 
+## v4.69.12 — MS-F6-02: Cycling Intelligence (29 augustus 2026)
+
+Tweede F6-mastersprint. Sluit MS-F6-02.
+
+**KRITIEKE, CROSS-CUTTING BEVINDING EN FIX:** de bestaande, vrije-tekst
+coaching-identiteitsteksten (`SPORT_BLOCKS`) voor wielrennen, zwemmen, roeien en
+HYROX instrueerden de AI LETTERLIJK om te rekenen/voorspellen -- "herschat FTP",
+"Herbereken CSS", "voorspel 2K/5K-prestaties", "voorspel racepace". Dit is een
+directe schending van de architectuurwet (AI rekent niet zelfstandig, verzint
+geen thresholds). **Alle vier teksten gecorrigeerd** naar expliciete "uitleggen
+op basis van reeds berekende waarden, nooit zelf herberekenen"-instructies.
+
+**FTP-audit:** bevestigd dat FTP uitsluitend als conceptuele sportmetadata
+bestaat, geen enkel daadwerkelijk datamodel-veld -- niets te auditen qua
+provenance.
+
+**Nieuw gebouwd:** `CardioCore.criticalPower()` -- analoog aan Critical Speed,
+met totaal verricht werk (vermogen × tijd) als afhankelijke variabele (Monod &
+Scherrer 1965; Moritani et al. 1981): werk = CP·tijd + W'. Dezelfde strikte
+data-eisen en dezelfde eerlijke, bewuste niet-integratie-beperking.
+
+**Cycling zones/cadans/intervals:** bevestigd geen fake zones, geen ongefundeerde
+cadans-claims, hergebruikt de bestaande, generieke interval-executie-engine.
+
+Nieuwe testsuite `core/fCyclingIntelligence.test.js` (13/13): golden cases voor
+`criticalPower()` en regressie-lock op alle vier gecorrigeerde coachingteksten.
+Sabotagebewijs geleverd.
+
+`APP_VER` → v4.69.12, `CACHE_NAME`/`CACHE_STATIC`/`CORE_SIG` en Android
+`versionCode`/`versionName` meegenomen.
+
 ## v4.69.11 — MS-F6-01: Running Intelligence (29 augustus 2026)
 
 Eerste F6-mastersprint (F6 expliciet vrijgegeven). Sluit MS-F6-01.

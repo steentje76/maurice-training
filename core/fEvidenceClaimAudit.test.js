@@ -32,7 +32,8 @@ function countCalcEvidence(text) {
   return counts;
 }
 const calcCounts = countCalcEvidence(calcText);
-ok(calcCounts.total === 23, 'exact 23 CALC-items geregistreerd (reproduceerbare telling, niet handmatig)');
+// MS-F6-02: CALC-END-004B (Critical Power) toegevoegd -- telling stijgt van 23 naar 24.
+ok(calcCounts.total === 24, 'exact 24 CALC-items geregistreerd (reproduceerbare telling, niet handmatig)');
 ok(calcCounts.A === 1, 'exact 1 CALC-item met evidence A');
 ok(calcCounts.B === 4, 'exact 4 CALC-items met evidence B (Epley/Brzycki/Foster-sRPE/HRV-baseline)');
 ok(calcCounts.C === 4, 'exact 4 CALC-items met evidence C');

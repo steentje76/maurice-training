@@ -6,11 +6,11 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.69.11
+v4.69.12
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.69.11 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.69.12 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 28 augustus 2026
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 
@@ -21,7 +21,7 @@ v4.69.11
 - **F3 — Calculation/Context/Evidence Excellence: CONDITIONALLY CLOSED — non-blocking scientific/validation items open.** Alle 11 mastersprints eerlijk afgerond (MS-F3-04 blijft TESTED, geen kunstmatige CLOSED). GAP-P1-007 en GAP-P1-008 beide technisch en live gesloten. Volledig rapport: `docs/F3_MASTER_REPORT.md`.
 - **F4 — Coach Intelligence: CLOSED — READY FOR F5 SELECTION.** Alle 6 F4-mastersprints eerlijk afgerond (MS-F4-01 blijft correct op TESTED, geen kunstmatige CLOSED). Volledig rapport: `docs/F4_MASTER_REPORT.md`.
 - **F5 — Connected Athlete: SOFTWARE CLOSED — REAL DEVICE VALIDATION OPEN.** Alle 6 F5-mastersprints afgerond. Volledig rapport: `docs/F5_MASTER_REPORT.md`.
-- **F6 — Endurance & Multisport Excellence: CURRENT (expliciet vrijgegeven door de Product Owner, 29 augustus 2026; Product Owner langere tijd niet beschikbaar — autonome uitvoering binnen de canonieke F6-scope).** MS-F6-01 (Running Intelligence): **CLOSED** — F6 Entry Audit bevestigde een reeds bestaande, generieke `CardioEngine` die alle cardiosporten config-driven afhandelt (geen tweede execution engine gebouwd). Nieuw: `CardioCore.criticalSpeed()` (Monod & Scherrer 1965), correct geïmplementeerd en getest, maar **bewust niet gewired op trainingsgeschiedenis** — het datamodel kan geen genuine tijdrit van een duurloop onderscheiden, en automatische wiring zou wetenschappelijk ongeldig zijn (GAP-P2-021, niet-blokkerend). Pace-trends hergebruiken de bestaande `ProgressionCore.trendBy()`, geen duplicatie. Zones/TID/aerobic decoupling/TRIMP blijven bewust NOT_IMPLEMENTED, evidence-based heroverwogen conform F3's mandaat. **F6 open P1: 0.** Resterende F6-mastersprints (MS-F6-02 t/m 06) nog niet uitgevoerd.
+- **F6 — Endurance & Multisport Excellence: CURRENT (expliciet vrijgegeven door de Product Owner, 29 augustus 2026; Product Owner langere tijd niet beschikbaar — autonome uitvoering binnen de canonieke F6-scope).** MS-F6-01 (Running Intelligence): **CLOSED**. MS-F6-02 (Cycling Intelligence): **CLOSED, met een kritieke, cross-cutting bevinding en fix** — de bestaande coaching-identiteitsteksten voor wielrennen, zwemmen, roeien en HYROX instrueerden de AI letterlijk om te rekenen/voorspellen ("herschat FTP", "Herbereken CSS", "voorspel 2K/5K-prestaties", "voorspel racepace") — een directe schending van de architectuurwet. **Alle vier teksten gecorrigeerd** naar expliciete uitleg-op-basis-van-bestaande-data-instructies. Nieuw: `CardioCore.criticalPower()` (Monod & Scherrer 1965/Moritani 1981), zelfde eerlijke niet-integratie-beperking als Critical Speed (GAP-P2-021, nu uitgebreid naar beide sporten). FTP bevestigd geen daadwerkelijk datamodel-veld. **F6 open P1: 0.** Resterende F6-mastersprints (MS-F6-03 t/m 06) nog niet uitgevoerd.
 - **Master Roadmap 2.0 v1.1 = CANONICAL** productstrategische bron. Repository blijft technische autoriteit. Zie `docs/DOCUMENTATION_GOVERNANCE.md`.
 - Volledige fasering (F0-F15): zie `docs/TRAININGSKOMPAS_MASTER_ROADMAP.md`. Volledige mastersprint-ID-migratie: zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md`.
 
@@ -40,7 +40,7 @@ Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
 ## 5. Current validation status
 - **Code:** CODE VERIFIED tegen `main` @ bovenstaande SHA
 - **DB:** VERIFIED — 69 tabellen, RLS gecontroleerd op alle tabellen, `gyms`-lek gesloten en geverifieerd via `SET LOCAL ROLE anon/authenticated/service_role`
-- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 114 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 117 stappen totaal), 117 automatisch uitgevoerd (met Android-buildmap gereproduceerd; zonder buildmap 116 uitgevoerd, 1 geskipt), 0 gefaald
+- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 115 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 118 stappen totaal), 118 automatisch uitgevoerd (met Android-buildmap gereproduceerd; zonder buildmap 117 uitgevoerd, 1 geskipt), 0 gefaald
 - **Integration:** wearable-sync getest tegen de echte handler-functie; overige integraties overwegend unit-getest
 - **Device:** **OPEN** — Concept2 PM5 en Google Health-sync hebben geen bevestigde real-device-validatie in productie
 - **UX:** niet apart beoordeeld in de laatste consolidatiesprint (38 top-level schermen geïnventariseerd, geen flow-niveau UX-testdekking)

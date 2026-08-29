@@ -910,7 +910,7 @@
       "E8.4"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F4-01",
       "MS-F4-02",
@@ -2862,7 +2862,7 @@
     "track": "AI Coach",
     "phase": "F4",
     "priority": "P1",
-    "status": "IMPLEMENTED",
+    "status": "CLOSED",
     "target": "VALIDATED",
     "dependencies": [
       "EVID-SCI-001",
@@ -2872,7 +2872,7 @@
     "software_validation": "PARTIAL",
     "device_validation": "N/A",
     "evidence_status": "PARTIAL",
-    "next_action": "zie MS-F4-04"
+    "next_action": "zie MS-F4-04 (CLOSED). Audit trail toegevoegd (migratie_v501.sql, program_regeneration_log, live geverifieerd). Bestaande rule/evidence-gestuurde regeneratie (adherence%/RPE-delta), canonieke exercise-ID-whitelist, preview+bevestiging, unified execution -- allemaal bevestigd via runtime-trace."
   },
   {
     "id": "DEV-VALIDATION-001",

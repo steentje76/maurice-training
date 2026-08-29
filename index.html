@@ -6044,7 +6044,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.9';
+const APP_VER = 'v4.69.10';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -11285,6 +11285,26 @@ async function heergenereerResterendeWeken(progId,btnEl){
   if(btnEl){btnEl.disabled=true;btnEl.textContent='Bezig met her-genereren...';}
   try{
   await ensureExercisesLoaded();
+  // MS-F4-04 (Adaptive Weekly Program Loop) — audit trail: vóór de destructieve delete
+  // wordt een onveranderlijk snapshot van de te vervangen blocks + de evidence die de
+  // regeneratie triggerde (adherence/RPE-delta) weggeschreven naar een append-only
+  // logtabel (migratie_v501.sql). Dit is uitsluitend een INSERT — de applicatie roept
+  // nooit PATCH/DELETE aan op deze tabel (zie core/fProgramRegenerationAudit.test.js).
+  try{
+    const snapshotBlocks=[];
+    for(const b of incomplete){
+      const rows=await sbGet('program_block_exercises','&program_block_id=eq.'+b.id);
+      snapshotBlocks.push({block_id:b.id,week_nr:b.week_nr,fase_naam:b.fase_naam,planned_date:b.planned_date,oefeningen:rows});
+    }
+    await sbPost('program_regeneration_log',{
+      user_id:(authSession&&authSession.user&&authSession.user.id)?authSession.user.id:null,
+      program_id:progId,
+      regenerated_weeks:incompleteWeeks,
+      evidence:{adherencePct:progress.adherencePct,avgRpeDelta:(progress.avgRpeDelta!=null?progress.avgRpeDelta:null)},
+      replaced_blocks_snapshot:snapshotBlocks,
+      reden:'Gebruiker koos "Weken opnieuw genereren" op basis van getoonde voortgang.'
+    });
+  }catch(_auditErr){ console.error('program_regeneration_log write mislukt (regeneratie gaat door):',_auditErr); }
   for(const b of incomplete){
     await sbDel('program_block_exercises','program_block_id=eq.'+b.id);
     await sbDel('program_blocks','id=eq.'+b.id);

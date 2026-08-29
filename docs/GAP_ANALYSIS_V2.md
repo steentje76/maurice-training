@@ -10,8 +10,8 @@
 | Prioriteit | Aantal |
 |---|---|
 | P0 | **0 open** |
-| P1 | 1 |
-| P2 | 16 |
+| P1 | 0 |
+| P2 | 17 |
 | P3 | 4 |
 | P4 | 2 |
 
@@ -100,13 +100,13 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Dependency:** EVID-SCI-001 (voldaan).
 **Priority:** P2 — **hernummerd van GAP-P1-003** (het belangrijkste, aantoonbare risico — diagnose-/medische taal — is nu technisch afgedwongen; het resterende gat is architecturaal, geen actief veiligheidsrisico, dus terecht P2, niet langer P1). **Complexity:** L (indien ooit volledig gebouwd). **Roadmap phase:** F4 (MS-F4-01, status TESTED).
 
-### GAP-P1-005 — AI-adaptive-programmering-gat t.o.v. Hevy Trainer
-**Capability-ID:** AI-PROGRAM-AUTOGEN-001
-**Current:** Hevy Trainer (feb 2026) genereert een volledig, zelf-aanpassend trainingsprogramma. TK heeft AI-gestuurde week-generatie-aanroepen (2 van de 6 `buildCtx()`-aanroeppunten), maar geen even volwassen, gesloten auto-aanpassingslus.
-**Evidence:** Web (juni 2026, PRPath-vergelijking) + CODE VERIFIED (index.html regel ~10888, ~11253).
-**Target:** bestaande week-generatie doorontwikkelen, met TK's evidence-laag als differentiator t.o.v. Hevy's black-box-aanpak.
-**Dependency:** EVID-SCI-001, DEC-CORE-001.
-**Priority:** P1. **Complexity:** L. **Roadmap phase:** F4.
+### GAP-P2-017 (voorheen GAP-P1-005) — AI-adaptive-programmering, benchmark-gap t.o.v. Hevy Trainer — **STATUS: kern-capability CLOSED, productgat blijft**
+**Gerelateerde capability:** de AI-programmagenererings-/adaptieve-weekregeneratie-capability (de veiligheidskritieke kerncapability is inmiddels gesloten — zie het sprintrapport voor de Adaptive Weekly Program Loop: canonieke exercise-ID-whitelist, preview+bevestiging, unified execution, en een nieuwe audit trail zijn allemaal technisch bevestigd)
+**Current:** Hevy Trainer (feb 2026) genereert een volledig, zelf-aanpassend trainingsprogramma. TK's rule/evidence-gestuurde weekregeneratie (`heergenereerResterendeWeken()`) is nu volledig veilig en auditeerbaar, maar vereist nog altijd expliciete gebruikersbevestiging per regeneratie — geen volautomatische, ongevraagde doorlopende aanpassing zoals Hevy.
+**Evidence:** Web (juni 2026, PRPath-vergelijking) + CODE VERIFIED.
+**Target:** een eventuele verdere productrichting (volautomatische aanpassing) is een bewuste productbeslissing, geen technische blokkade — TK's evidence-laag (adherence%/RPE-delta-gestuurde regeneratie met audit trail) is al een differentiator t.o.v. Hevy's black-box-aanpak.
+**Dependency:** EVID-SCI-001, DEC-CORE-001 (beide voldaan).
+**Priority:** P2 — hernummerd van P1 (de veiligheidskritieke capability zelf is afgerond; het resterende gat is een productrichtingskeuze, geen architectuur- of veiligheidsrisico). **Complexity:** L. **Roadmap phase:** F4 (afgerond in de sprint die de Adaptive Weekly Program Loop bouwde).
 
 
 

@@ -6,11 +6,11 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.69.9
+v4.69.10
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.69.9 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.69.10 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 28 augustus 2026
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 
@@ -19,7 +19,7 @@ v4.69.9
 - **F1 — Foundation Closure: CLOSED** (Gate A semantische-integriteitsaudit geslaagd — 18/18 consistentiechecks, release gate groen, geen open P0/P1)
 - **F2 — Athlete Core Excellence: CLOSED.** MS-F2-01 (Canonical Training Start & Preview) is herclassificeerd van PARTIAL naar **CLOSED** nadat GAP-P1-006 tijdens MS-F2-08 is gesloten: Programma-blok en Repeat Workout krijgen nu beide een canonieke `training_instances`-rij. Preview-UI blijft bewust gedifferentieerd voor deze twee bronnen — een gedocumenteerde productgrens, geen open architectuurgat. MS-F2-02 t/m MS-F2-07 blijven CLOSED. Final Contract Reconciliation bevestigde: geen resterende architectuurgap, gepreciseerde acceptance-wording vastgelegd. Zie `docs/MS-F2-01..08_*.md`.
 - **F3 — Calculation/Context/Evidence Excellence: CONDITIONALLY CLOSED — non-blocking scientific/validation items open.** Alle 11 mastersprints eerlijk afgerond (MS-F3-04 blijft TESTED, geen kunstmatige CLOSED). GAP-P1-007 en GAP-P1-008 beide technisch en live gesloten. Volledig rapport: `docs/F3_MASTER_REPORT.md`.
-- **F4 — Coach Intelligence: CURRENT (expliciet vrijgegeven door de Product Owner, 29 augustus 2026).** MS-F4-01: TESTED. MS-F4-02: CLOSED. MS-F4-03 (canonieke naam: **Exercise-specific Progression Coach**, niet "Explainable Recommendations" zoals een eerdere opdrachttekst veronderstelde — roadmap-index leidend): **CLOSED** — runtime-trace bevestigde dat de lift-by-lift-stagnatiedetectie (`computeExerciseTrends()`/`ProgressionCore.trendBy()`) al puur deterministisch bestond, gebonden aan een expliciete "niet zelf herberekenen"-promptinstructie in `buildCtx()`. Recommendation Trace Matrix opgesteld (`docs/MS-F4-03_EXERCISE_PROGRESSION_COACH.md`): geen enkele lift-by-lift-recommendation zonder herleidbare onderbouwing. GAP-P2-016 herbeoordeeld en blijft terecht P2 (numerieke toepassing al deterministisch geborgd via `ai_guard.v1`; het resterende risico — een onjuist genoemd getal in vrije tekst, nooit toegepast — is laag-impact). Resterende F4-mastersprints (MS-F4-04 t/m 06) nog niet uitgevoerd.
+- **F4 — Coach Intelligence: CURRENT (expliciet vrijgegeven door de Product Owner, 29 augustus 2026).** MS-F4-01: TESTED. MS-F4-02, MS-F4-03: CLOSED. MS-F4-04 (canonieke naam: **Adaptive Weekly Program Loop**, niet "AI Program Autogeneration" zoals een eerdere opdrachttekst veronderstelde — roadmap-index leidend): **CLOSED** — runtime-trace bevestigde de rule/evidence-gestuurde weekregeneratie (`heergenereerResterendeWeken()`, adherence%/RPE-delta als evidence, expliciete gebruikersbevestiging) bestond al. Enige echte gat: geen audit trail — nu gedicht via `migratie_v501.sql` (nieuwe, forward-only, append-only tabel `program_regeneration_log`, live uitgevoerd en geverifieerd). **AI-PROGRAM-AUTOGEN-001 is CLOSED** (hernummerd naar GAP-P2-017: het resterende gat t.o.v. Hevy Trainer is een productrichtingskeuze, geen veiligheidsrisico). **F4 open P1: 0.** Resterende F4-mastersprints (MS-F4-05, MS-F4-06) nog niet uitgevoerd.
 - **Master Roadmap 2.0 v1.1 = CANONICAL** productstrategische bron. Repository blijft technische autoriteit. Zie `docs/DOCUMENTATION_GOVERNANCE.md`.
 - Volledige fasering (F0-F15): zie `docs/TRAININGSKOMPAS_MASTER_ROADMAP.md`. Volledige mastersprint-ID-migratie: zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md`.
 
@@ -29,9 +29,7 @@ Training Core, Calculation Engine, Context Engine, Decision Engine, Evidence Arc
 ## 4. Current open priorities
 Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
 - **Open P0: 0**
-- **Open P1: 1, met expliciet onderscheid in scope** (nooit een ongescopeerde "P1 bestaat" zonder aan te geven wát hij blokkeert):
-  - AI-adaptive-programmering-gat t.o.v. Hevy Trainer (AI-PROGRAM-AUTOGEN-001) — **F4-fase-item**, target MS-F4-04, blokkeert F2/F3 niet.
-  - **AI-outputcontract (AI-OUTPUT-CONTRACT-001) is na MS-F4-01 verplaatst van P1 naar P2**: het belangrijkste, aantoonbare risico (diagnose-/medische taal) is nu technisch afgedwongen en getest (`core/aiOutputContract.js`, sabotagebewijs geleverd); status TESTED, niet CLOSED — het resterende gat (een volledig structured-JSON-outputcontract) is architecturaal, geen actief veiligheidsrisico.
+- **Open P1: 0.** AI-adaptive-programmering (AI-PROGRAM-AUTOGEN-001) is na MS-F4-04 **CLOSED** — hernummerd naar GAP-P2-017 (het resterende gat t.o.v. Hevy Trainer is een productrichtingskeuze, geen veiligheids-/architectuurrisico; de audit-trail-lacune is gedicht via `migratie_v501.sql`). AI-outputcontract (AI-OUTPUT-CONTRACT-001) blijft P2/TESTED sinds MS-F4-01.
   - **F3-phase open P1 (mastersprint-acceptance-gate-blokkerend): 0.** GAP-P1-007 is CLOSED via MS-F3-10; GAP-P1-008 is CLOSED via de F3 Closure Hotfix — zie sectie "CLOSED GAPS / HISTORICAL" in `docs/GAP_ANALYSIS_V2.md`.
 - **MS-F1-01 (Multi-tenant RLS Security Closure) is CLOSED** — membership-scoped RLS op organizations/teams/training_groups/seasons/macrocycles/mesocycles/microcycles (`migratie_v498.sql`), plus een tijdens de sprint gevonden en gesloten P0 (self-privilege-escalatie via `users.gym_role`/`gym_id`/`system_role`, `migratie_v497.sql`)
 - Open P2: 7 — incl. Handbook-drift en Commercial-UI, beide gedowngraded van P1 per Roadmap 2.0 v1.1
@@ -40,7 +38,7 @@ Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
 ## 5. Current validation status
 - **Code:** CODE VERIFIED tegen `main` @ bovenstaande SHA
 - **DB:** VERIFIED — 69 tabellen, RLS gecontroleerd op alle tabellen, `gyms`-lek gesloten en geverifieerd via `SET LOCAL ROLE anon/authenticated/service_role`
-- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 104 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 107 stappen totaal), 106 automatisch uitgevoerd, 1 zichtbaar geskipt (fAndroidRelease.test.js zonder gereproduceerde buildmap), 1 zichtbaar geskipt (`fAndroidRelease.test.js`, ontbrekende Android-buildmap in deze schone checkout — draait wél in echte CI via `npm run cap:copy`, en lokaal na een expliciete reproductie: dan 102/102, 0 geskipt), 0 gefaald
+- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 105 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 108 stappen totaal), 108 automatisch uitgevoerd (met Android-buildmap gereproduceerd; zonder buildmap 107 uitgevoerd, 1 geskipt), 1 zichtbaar geskipt (`fAndroidRelease.test.js`, ontbrekende Android-buildmap in deze schone checkout — draait wél in echte CI via `npm run cap:copy`, en lokaal na een expliciete reproductie: dan 102/102, 0 geskipt), 0 gefaald
 - **Integration:** wearable-sync getest tegen de echte handler-functie; overige integraties overwegend unit-getest
 - **Device:** **OPEN** — Concept2 PM5 en Google Health-sync hebben geen bevestigde real-device-validatie in productie
 - **UX:** niet apart beoordeeld in de laatste consolidatiesprint (38 top-level schermen geïnventariseerd, geen flow-niveau UX-testdekking)

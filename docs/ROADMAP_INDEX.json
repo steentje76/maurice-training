@@ -1014,7 +1014,7 @@
       "E11.2"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "TESTED",
     "dependencies": [
       "MS-F5-01"
     ],
@@ -2988,7 +2988,7 @@
     "software_validation": "PASS",
     "device_validation": "OPEN",
     "evidence_status": "N/A",
-    "next_action": "zie MS-F5-02"
+    "next_action": "zie MS-F5-02 (dimensionaal: Software TESTED, Integration OPEN, Real Device OPEN -- geen bewijs verzonnen, geen Android-buildruntime/fysieke PM5 in deze sandbox). Mid-workout BLE/sessie-ontkoppeling functioneel bewezen (fConcept2MidWorkoutIsolation.test.js, eigen sabotagebewijs). GAP-P2-020 (multiple HR sources) geregistreerd."
   },
   {
     "id": "DEV-WEARAUTH-001",

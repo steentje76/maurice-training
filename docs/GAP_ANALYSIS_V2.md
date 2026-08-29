@@ -11,7 +11,7 @@
 |---|---|
 | P0 | **0 open** |
 | P1 | 0 |
-| P2 | 19 |
+| P2 | 20 |
 | P3 | 4 |
 | P4 | 2 |
 
@@ -113,6 +113,13 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Evidence:** CODE VERIFIED, zie het Provider Integration Contract-sprintrapport in `docs/`.
 **Target:** eventueel automatische retry-logica toevoegen, alleen indien gebruikersfeedback dit rechtvaardigt.
 **Priority:** P2 (niet-kritiek). **Complexity:** S.
+
+### GAP-P2-020 (voorheen GAP-F5-003) — Geen canonieke resolutieregel bij meerdere gelijktijdige hartslagbronnen
+**Capability-ID:** CONCEPT2-LIVE-001
+**Current:** wanneer zowel een Concept2 PM5 als een los polshorloge tegelijk hartslag leveren tijdens dezelfde sessie, bestaat er geen expliciete, canonieke "welke bron wint"-regel. Bevestigd: geen stille averaging-code gevonden (dus geen incompatibele-stromen-vermenging), maar ook geen expliciete resolutie.
+**Evidence:** CODE VERIFIED, zie het Concept2 PM5 Real-device Validation-sprintrapport in `docs/`.
+**Target:** eventueel een expliciete precedentieregel vastleggen (bv. PM5-hartslag heeft voorrang tijdens een erg-sessie), alleen indien een concrete productbehoefte dit vereist — geen productbeslissing hier gefabriceerd.
+**Priority:** P2 (niet-kritiek — geen incorrecte datavermenging, alleen een onbesliste keuze bij een zeldzaam gelijktijdig-bronnen-scenario). **Complexity:** S.
 
 ### GAP-P2-017 (voorheen GAP-P1-005) — AI-adaptive-programmering, benchmark-gap t.o.v. Hevy Trainer — **STATUS: kern-capability CLOSED, productgat blijft**
 **Gerelateerde capability:** de AI-programmagenererings-/adaptieve-weekregeneratie-capability (de veiligheidskritieke kerncapability is inmiddels gesloten — zie het sprintrapport voor de Adaptive Weekly Program Loop: canonieke exercise-ID-whitelist, preview+bevestiging, unified execution, en een nieuwe audit trail zijn allemaal technisch bevestigd)

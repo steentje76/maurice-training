@@ -72,7 +72,7 @@
 | ID | Capability | Code | DB | Tests | Integration | Device | Evidence/scientific | Maturity | Target | Gap | Priority | Phase |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | END-INTERVAL-001 | Generieke multi-sport interval-executie (v4.69.0) | `core/intervalEngine.js` | N/A | `intervalEngine.test.js` 28/28 | Geïntegreerd in cardio-executie-UI (index.html) | N/A | N/A | INTEGRATED | VALIDATED | flow-niveau UX-test | P3 | F6 |
-| END-HYROX-001 | HYROX/Triathlon race-classificaties (Adaptive/Relay/Doubles) | schema + `race_segments` | DB VERIFIED (race_type, race_relay_*, bronbevestigd tegen hyrox.com-rulebooks, niet dit jaar herverifieerd) | `fHyroxTriathlon.test.js` 386/386 (grootste testbestand) | Ja | N/A | Bronbevestigd (eerdere sprintdocumentatie) | TESTED | CLOSED | herverificatie van rulebook-bronnen (jaarlijks kunnen wijzigen) | P3 | F6 |
+| END-HYROX-001 | HYROX/Triathlon race-classificaties (Adaptive/Relay/Doubles) | schema + `race_segments`, `docs/MS-F6-04_HYROX_EXCELLENCE.md` | DB VERIFIED (race_type, race_relay_*), rulebook herverifieerd 29 aug 2026 (hyroxus.com, officieel HYROX EN Single Rulebook 26/27) | `fHyroxTriathlon.test.js` 386/386, `core/fHyroxRulebookRevalidation.test.js` 6/6 (nieuw) | Ja | N/A | Formaat/divisies bevestigd actueel; nieuwe Elite 15-divisie past binnen het bestaande generieke race_division-veld; recente burpee-knieregelwijziging bevestigd niet-conflicterend (geen hardcoded judging-regels in TK) | TESTED | CLOSED | geen -- rulebook-herverificatie afgerond (MS-F6-04) | P2 | F6 (MS-F6-04, CLOSED) |
 
 ## F. Recovery & Context
 

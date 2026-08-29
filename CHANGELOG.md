@@ -1,5 +1,48 @@
 # Trainingskompas — Changelog
 
+## v4.69.6 — MS-F3-10: Explainability & Provenance — GAP-P1-007 Closure (28 augustus 2026)
+
+Tiende, kritieke F3-mastersprint. Sluit het sinds MS-F3-03 bekende architectuurgat:
+`hrv_log` had geen provenance-kolommen, waardoor handmatige check-in-waarden en
+wearable-sync-waarden niet te onderscheiden waren.
+
+**Live schema-audit bevestigde het probleem, en onthulde een kritiek ontwerppunt:**
+`hrv_log` heeft geen `UNIQUE(user_id,date)`-constraint (bewust zo gelaten, al eerder
+gedocumenteerd in `wearable-sync.js`). Zowel de handmatige als de wearable-schrijfpaden
+lezen-mergen-schrijven **per veld** (hrv/rhr/sleep onafhankelijk behouden) naar dezelfde
+rij — waardoor één rij aantoonbaar **gemengde herkomst** kan hebben (bv. HRV van
+wearable-sync, RHR later handmatig gecorrigeerd). Een enkele rij-niveau `source`-kolom
+zou dit foutief hebben voorgesteld. Bovendien bestond er al een fragiel, ad-hoc
+provenance-signaal: een `[src:fitbit]`-tekst-tag verstopt in het vrije-tekst
+`note`-veld — rij-niveau, ondocumenteerd, regex-gematcht.
+
+**Oplossing: per-veld provenance, niet rij-niveau.** Nieuwe, forward-only migratie
+(`migratie_v499.sql`) voegt `hrv_source`/`rhr_source`/`sleep_source` toe
+(`manual`/`wearable`/`unknown`, met een CHECK-constraint). Live uitgevoerd en
+geverifieerd: 70 bestaande rijen ongewijzigd (NULL = onbekend, geen enkele historische
+bron geraden). RLS-policy (`eigen_data_alleen`, `ALL`-commando's) dekt de nieuwe
+kolommen automatisch — geen policy-uitbreiding nodig, live herbevestigd.
+
+Beide schrijfpaden bijgewerkt: `tkMergeHealthRow()`/`upsertHrvLog()` (client,
+index.html) en `buildRow()` (server, `netlify/functions/_wearableSyncLib.js`) — beide
+symmetrisch: alleen een veld dat *deze specifieke write* daadwerkelijk aanlevert
+krijgt de nieuwe bron; een ongewijzigd veld behoudt zijn bestaande bron. Dit is live
+getest tegen het exacte mixed-source-scenario (wearable-HRV + latere handmatige
+RHR-correctie) en bevestigd correct.
+
+**Decision Evidence-snapshotmechanisme diep geaudit** (niet op naam vertrouwd):
+`buildDecisionEvidence`/`readDecisionEvidence`/`evidenceReproduceerbaar` bevestigd
+daadwerkelijk immutable — `readDecisionEvidence()` retourneert een echte kopie, nooit
+een referentie naar levende state; het muteren van een teruggelezen kopie raakt het
+opgeslagen snapshot niet.
+
+Nieuwe regressietest `core/fProvenanceClosure.test.js` (17/17, sabotagebewijs
+geleverd) dekt het kritieke mixed-source-scenario, de server-symmetrie, en de
+bewezen immutability. `APP_VER` → v4.69.6, `CACHE_NAME`/`CACHE_STATIC` en Android
+`versionCode`/`versionName` meegenomen.
+
+**GAP-P1-007: CLOSED.**
+
 ## v4.69.5 — MS-F3-02: Load & Progression Calculation Registry (28 augustus 2026)
 
 Tweede F3-mastersprint. Audit van `core/trainingLoad.js` (ACWR-classificatie,

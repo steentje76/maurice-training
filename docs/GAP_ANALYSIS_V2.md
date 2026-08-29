@@ -10,7 +10,7 @@
 | Prioriteit | Aantal |
 |---|---|
 | P0 | **0 open** |
-| P1 | 3 |
+| P1 | 2 |
 | P2 | 15 |
 | P3 | 4 |
 | P4 | 2 |
@@ -108,18 +108,6 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Dependency:** EVID-SCI-001, DEC-CORE-001.
 **Priority:** P1. **Complexity:** L. **Roadmap phase:** F4.
 
-### GAP-P1-007 — `hrv_log` heeft geen provenance-kolom (Recovery-sprint)
-**Capability-ID:** CALC-REC-REGISTRY-001
-**Current:** `hrv_log` bevat `sleep`/`hrv`/`rhr`, maar geen kolom die vastlegt of een waarde afkomstig is van een handmatige check-in of wearable-sync. Beide schrijven naar dezelfde kolommen zonder onderscheid — live geverifieerd tegen het Supabase-schema.
-**Evidence:** DB VERIFIED (`information_schema.columns` voor `hrv_log`), zie het Recovery-sprintrapport in `docs/`.
-**Target mastersprint:** **MS-F3-10 (Explainability & Provenance Contract)** — niet de Data Quality & Confidence-sprint. Governance-reconciliatie uitgevoerd: de Data Quality-sprint se acceptance gate ("shared quality/confidence semantics across engines") gaat over consistente confidence-modellering, niet over een schema-niveau brontoewijzing. MS-F3-10's acceptance gate ("every recommendation traceable end-to-end") vereist letterlijk dat de bronketen — inclusief de RAUWE bron zelf — reconstrueerbaar is; zonder een `source`-kolom is die keten voor elke HRV-gebaseerde aanbeveling onvolledig bij de eerste schakel. Dit is dus een directe, geen indirecte match.
-**Target:** binnen MS-F3-10 volledig oplossen: nieuwe, nullable `source`-kolom (`manual`/`wearable`/`unknown` voor bestaande rijen, backward-compatible migratie); alle schrijfpaden (`saveHRV`, wearable-sync-functies) bijwerken om dit veld te vullen; RLS/privacy-regressie; geen wijziging aan bestaande historische migraties.
-**Dependency:** geen harde technische afhankelijkheid; wel een DB-migratie + meerdere schrijfpad-aanpassingen — grotere, zorgvuldiger te plannen ingreep dan binnen een audit-sprint, vandaar bewust gepland voor MS-F3-10 in plaats van ad-hoc tijdens de Recovery-sprint waarin dit gat werd gevonden.
-**Status:** dit is een **F3-fase-blokkerende P1** (F3 als geheel mag niet CLOSED worden zolang dit openstaat of niet formeel, evidence-based hergeclassificeerd is), maar **geen sprint-blokkerende P1 voor de Recovery- of Endurance-sprint** — de acceptance gate van de Recovery-sprint ("HRV/RHR/sleep/readiness components with baseline/confidence") vereiste geen provenance-kolom en is terecht gehaald; die sprint blijft CLOSED.
-**Priority:** P1 (F3-fase-blokkerend, raakt de betrouwbaarheid van de hele Recovery-keten). **Complexity:** M. **Roadmap phase:** F3 (MS-F3-10).
-
-
-
 ---
 
 ## P2 — grote verbetering
@@ -192,6 +180,15 @@ Vereist eerst een consent-flow (nog niet gebouwd) bovenop de al aanwezige Eviden
 ---
 
 ## CLOSED GAPS / HISTORICAL
+
+### (voorheen GAP-P1-007) — `hrv_log` had geen provenance-kolom — **STATUS: CLOSED**
+- **Original finding:** `hrv_log` bevatte `sleep`/`hrv`/`rhr`, maar geen kolom die vastlegde of een waarde afkomstig was van een handmatige check-in of wearable-sync.
+- **Diepere root cause bij heropening (MS-F3-10):** `hrv_log` heeft geen `UNIQUE(user_id,date)`-constraint; beide schrijfpaden mergen per veld naar dezelfde rij, waardoor één rij aantoonbaar gemengde herkomst kan hebben (bv. wearable-HRV + later handmatig gecorrigeerde RHR). Een enkele rij-niveau `source`-kolom zou dit foutief hebben voorgesteld. Een reeds bestaand, maar ontoereikend signaal werd gevonden: een `[src:fitbit]`-tekst-tag verstopt in het vrije-tekst `note`-veld.
+- **Resolution:** per-veld provenance (`hrv_source`/`rhr_source`/`sleep_source`, `manual`/`wearable`/`unknown`) via `migratie_v499.sql`, forward-only, live uitgevoerd. Beide schrijfpaden (`tkMergeHealthRow`/`upsertHrvLog` client, `buildRow` server) bijgewerkt en functioneel getest tegen het mixed-source-scenario.
+- **Mastersprint:** MS-F3-10 (Explainability & Provenance).
+- **Evidence:** live schema-verificatie (3 kolommen toegevoegd, 70 bestaande rijen ongewijzigd/NULL), RLS live herbevestigd, `core/fProvenanceClosure.test.js` 17/17 met sabotagebewijs.
+- **Closed date:** 28 augustus 2026.
+
 
 ### (voorheen GAP-P1-006) — Programma-blok en Repeat Workout niet geconvergeerd naar de Preview-adapter — **STATUS: CLOSED**
 - **Original finding:** 6 van de 8 trainingsstart-entrypoints liepen via de canonieke `openTrainingPreview()`→`startInstanceFromDefinition()`-keten. Programma-blok en Repeat Workout hadden een eigen, deels gedupliceerde opzetlogica. Diepere root cause bij heropening: beide bronnen kregen daardoor NOOIT een eigen `training_instances`-rij — `activeInstanceId` bleef bij een verse start altijd `null`, dus `completeTrainingInstance()` deed bij afronden niets. Volledig onzichtbaar voor de plan-versus-uitvoering-dataset.

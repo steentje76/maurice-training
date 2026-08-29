@@ -11,7 +11,7 @@
 |---|---|
 | P0 | **0 open** |
 | P1 | 0 |
-| P2 | 17 |
+| P2 | 19 |
 | P3 | 4 |
 | P4 | 2 |
 
@@ -99,6 +99,20 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Target:** eventueel toekomstig structured-JSON-outputcontract, alleen indien de productrisico-omvang dat ooit rechtvaardigt (`PRODUCT_DECISION_REQUIRED` indien gewenst).
 **Dependency:** EVID-SCI-001 (voldaan).
 **Priority:** P2 — **hernummerd van GAP-P1-003** (het belangrijkste, aantoonbare risico — diagnose-/medische taal — is nu technisch afgedwongen; het resterende gat is architecturaal, geen actief veiligheidsrisico, dus terecht P2, niet langer P1). **Complexity:** L (indien ooit volledig gebouwd). **Roadmap phase:** F4 (MS-F4-01, status TESTED).
+
+### GAP-P2-018 (voorheen GAP-F5-001) — Geen granulair per-waarde quality-veld voor wearable-gezondheidsdata
+**Capability-ID:** PROVIDER-INTEGRATION-CONTRACT-001
+**Current:** wearable-gezondheidsdata (HRV/RHR/slaap) heeft per-veld provenance (`manual`/`wearable`/`unknown`, uit een eerdere Explainability & Provenance-sprint), maar geen aparte, granulaire "quality"-classificatie per individuele meting (bv. "vers"/"verouderd"/"onbetrouwbaar" los van de bron zelf).
+**Evidence:** CODE VERIFIED, zie het Provider Integration Contract-sprintrapport in `docs/`.
+**Target:** eventueel een expliciet quality-veld toevoegen, alleen indien een concrete productbehoefte dit vereist.
+**Priority:** P2 (niet-kritiek — geen dataverlies, geen silent-corruption-risico, puur een verfijningsmogelijkheid). **Complexity:** M.
+
+### GAP-P2-019 (voorheen GAP-F5-002) — Geen geautomatiseerde retry-met-backoff in wearable-sync
+**Capability-ID:** PROVIDER-INTEGRATION-CONTRACT-001
+**Current:** `wearable-sync.js` heeft geen expliciete, automatische retry-met-backoff bij een gefaalde sync — een nieuwe poging vereist een door de gebruiker/client getriggerde herhaling.
+**Evidence:** CODE VERIFIED, zie het Provider Integration Contract-sprintrapport in `docs/`.
+**Target:** eventueel automatische retry-logica toevoegen, alleen indien gebruikersfeedback dit rechtvaardigt.
+**Priority:** P2 (niet-kritiek). **Complexity:** S.
 
 ### GAP-P2-017 (voorheen GAP-P1-005) — AI-adaptive-programmering, benchmark-gap t.o.v. Hevy Trainer — **STATUS: kern-capability CLOSED, productgat blijft**
 **Gerelateerde capability:** de AI-programmagenererings-/adaptieve-weekregeneratie-capability (de veiligheidskritieke kerncapability is inmiddels gesloten — zie het sprintrapport voor de Adaptive Weekly Program Loop: canonieke exercise-ID-whitelist, preview+bevestiging, unified execution, en een nieuwe audit trail zijn allemaal technisch bevestigd)

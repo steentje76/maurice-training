@@ -55,6 +55,8 @@ NOT STARTED → IMPLEMENTED → TESTED → INTEGRATED → VALIDATED → CLOSED. 
 | T17 | Platform / Production / Security |
 | T18 | Scientific Platform |
 
+**Teamsport-verduidelijking:** teamsport wordt formeel over twee bestaande tracks verdeeld. **Teamsport Performance** valt primair onder T3 (Endurance & Multisport) en **Team Operations** primair onder T15 (Gym/Club/Team Platform). Beide delen één event-/contextkoppeling met de athlete-engine maar blijven afzonderlijke capability-domeinen. Zie `docs/TEAMSPORT_ROADMAP_2_0.md`.
+
 ## 7. Doelarchitectuur per productlaag
 **Athlete Layer:** Home/Dashboard, Training, Progress, Body/Recovery, Coach, Profile — één persoonlijke trainingscockpit. **Intelligence Layer:** Calculation+Context+Decision+Evidence+AI = explainable athlete intelligence, geen losstaande 'AI-feature'. **Connected Layer:** wearables/health platforms/machines/weather met provenance en duplicate-safe sync. **Professional Layer:** Coach/PT en Gym/Club/Team gebruiken dezelfde athlete engine met expliciete consent/RBAC/tenant-isolatie. **Commercial Layer:** entitlements centraal afgedwongen; UI volgt pas na tiers/waardepropositie. **Scientific Layer:** research is een expliciete consent-/governancelaag bovenop reproduceerbare calculations/evidence, nooit een neveneffect.
 
@@ -80,12 +82,12 @@ Elke epic beoordeeld op: safety/security, dependency criticality, athlete value,
 | F3 | Calculation/Context/Evidence Excellence | PLANNED |
 | F4 | Coach Intelligence | PLANNED |
 | F5 | Connected Athlete | PLANNED |
-| F6 | Endurance & Multisport Excellence | PLANNED |
+| F6 | Endurance & Multisport Excellence | PLANNED — omvat Teamsport Performance |
 | F7 | Longitudinal Athlete Intelligence | PLANNED |
 | F8 | Women's Performance | DECISION-GATED |
 | F9 | Social & Community | DEFERRED |
 | F10 | Coach/PT Platform | PLANNED |
-| F11 | Gym/Club/Team Platform | DEPENDENCY-GATED (vereist F1 RLS-closure) |
+| F11 | Gym/Club/Team Platform | DEPENDENCY-GATED (vereist F1 RLS-closure) — omvat Team Operations |
 | F12 | Commercial | PLANNED (na tier/waarde-besluiten) |
 | F13 | Production & Scale | CONTINUOUS |
 | F14 | Scientific Platform | LONG TERM |
@@ -98,6 +100,8 @@ Raw Data → Normalization → Calculation → Context → Decision → Evidence
 Calculation Registry → Data Quality/Confidence → Decision Rule Registry → Explainability → Adaptive Coaching
 Identity → Privacy/Consent → Connections → Social/Community
 Identity → RBAC → Organization Membership/RLS → Coach/Gym workflows → Licenses
+Team Event/Planning → Context Engine → Decision Rules → Athlete-facing training context
+Team Match/Training → Minutes/RPE/Wearable-GPS → Calculation/Evidence → Athlete History/Coach
 Entitlement model → Feature gates → Commercial UI → Billing → Reconciliation
 Provider feasibility → Connector → Canonical mapping → Sync/idempotency → Validation → Athlete-facing use
 Evidence/Provenance → Research consent → Scientific export → Reproducibility
@@ -107,8 +111,12 @@ Evidence/Provenance → Research consent → Scientific export → Reproducibili
 ## 11. Epic portfolio
 51 epics (E1.1–E18.3), elk gekoppeld aan een track/phase/priority/mastersprint. Volledige lijst: zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md` en `docs/ROADMAP_INDEX.json` (elk mastersprint-item draagt zijn epic-ID('s) in het `epics`-veld).
 
+**Teamsport-productuitbreiding:** Roadmap 2.0 voegt als geplande productrichting E3.4 Teamsport Performance, E15.4 Team Operations Foundation, E15.5 Team Operations & Logistics en E15.6 Team Communication toe. Deze zijn nog niet als bestaande/geverifieerde capability geclaimd; detail en voorgestelde mastersprints staan in `docs/TEAMSPORT_ROADMAP_2_0.md`.
+
 ## 12. Mastersprint execution map
 **75 canonieke v1.1-mastersprints + 4 supplementaire IDs** (geldige inhoud uit PR #68 zonder v1.1-equivalent: MS-F3-11, MS-F4-06, MS-F6-06, MS-F13-06) = **79 mastersprints totaal**, volledig machine-leesbaar in `docs/ROADMAP_INDEX.json`. Zie dat bestand voor phase/priority/tracks/capabilities/dependencies/acceptance_gate/validation per sprint.
+
+**Teamsport-supplement:** zeven aanvullende geplande mastersprints zijn productmatig gereserveerd in `docs/TEAMSPORT_ROADMAP_2_0.md`: MS-F6-07 t/m MS-F6-09 en MS-F11-07 t/m MS-F11-10. Zij zijn nog niet opgenomen in de bestaande 79-item v1.1 execution baseline en mogen niet als IMPLEMENTED worden geïnterpreteerd. Integratie in de machine-leesbare execution index volgt bij de eerstvolgende formele roadmap-index canonicalisatiesprint.
 
 ## 13. Definitieve eerste 20 mastersprints (dependency-gevalideerd)
 | # | Sprint | Naam | Prio | Waarom |
@@ -159,6 +167,13 @@ F8 blijft decision-gated. 5 open besluiten (zwangerschap, postpartum, menopauze/
 ## 20. Coach, Gym en Commercial sequencing
 `Identity → Consent → RBAC → Membership-scoped RLS → Coach Relationship → Coach Dashboard → Programming → Organization → Locations → Staff → Members → Teams/Groups → Gym Programming → Equipment → Analytics → Licensing`. Geen echte multi-tenant Gym-data vóór RLS-scoping (MS-F1-01) gesloten is. Commercial: `Tier/value proposition → Entitlement Domain Model → Entitlement Enforcement → Commercial UX → Billing/Reconciliation` (MS-F12-01→02→03→04).
 
+### 20A. Teamsport Performance + Team Operations
+Teamsport is vanaf deze roadmapupdate expliciet onderdeel van Roadmap 2.0. **Teamsport Performance** wordt ontwikkeld in T3/F6 en omvat training/wedstrijd-context, positie/rol, speelminuten, RPE/sRPE, wearable/GPS-data met provenance, veld-/wedstrijdbelasting, combinatie strength+veld, trends en context voor Calculation/Context/Decision/AI Coach. **Team Operations** wordt ontwikkeld in T15/F11 en omvat team/seizoen/leden/rollen, trainingen/wedstrijden/evenementen, start-/eindtijd, verzameltijd, locatie, aanwezigheid, selectie, vervoer, materiaal/taken, verantwoordelijken, reminders/notificaties en later team-/eventchat, mededelingen en polls.
+
+De operationele en performancekant delen een event-identiteit en contextcontract maar vormen geen tweede athlete-engine. Planning mag context leveren aan de Context Engine; performancewaarden blijven afkomstig uit gevalideerde ruwe data en deterministische calculations. Coach/teamrollen krijgen niet automatisch toegang tot persoonlijke wearable-, recovery-, slaap- of HRV-data. Privacy, consent, RBAC en tenant-isolatie blijven harde voorwaarden.
+
+Fasering: **Phase 1 Foundation → Phase 2 Performance → Phase 3 Operations → Phase 4 Communication → Phase 5 Club/Organization later**. Phase 5 is bewust niet blokkerend voor athlete core/v1. Volledige scope, dependencies, hard constraints en voorgestelde mastersprints staan in `docs/TEAMSPORT_ROADMAP_2_0.md`.
+
 ## 21. Scientific Platform
 Lange termijn: research consent/withdrawal, pseudonymization, data minimization, dataset definitions, calculation/evidence versions, reproducible export, cohorts, governance, researcher access. Gewone productconsent is niet automatisch researchconsent (MS-F14-01 is een aparte, expliciete consent-laag).
 
@@ -180,7 +195,7 @@ Scope/out-of-scope vooraf expliciet · geen maturity-upgrade zonder bewijs · ac
 | Research operating model | Vóór F14 access/export | MS-F14-01+ |
 
 ## 25. Wat bewust NIET vroeg wordt gebouwd
-Paywall/billing alleen omdat tabellen al bestaan · social feed vóór identity/privacy/moderation · Gym real-data-workflows vóór membership-scoped RLS · AI-adaptatie vóór Calculation/Context/Decision/Evidence-contracten sterk genoeg zijn · nieuwe deviceconnector zonder officiële feasibility en concrete athlete value · black-box readinessscore zonder componenten/confidence · research-export zonder research-consent en reproducibility.
+Paywall/billing alleen omdat tabellen al bestaan · social feed vóór identity/privacy/moderation · Gym real-data-workflows vóór membership-scoped RLS · AI-adaptatie vóór Calculation/Context/Decision/Evidence-contracten sterk genoeg zijn · nieuwe deviceconnector zonder officiële feasibility en concrete athlete value · black-box readinessscore zonder componenten/confidence · research-export zonder research-consent en reproducibility. Teamsport Communication en Club/Organization-uitbreiding blokkeren de athlete core niet; eerst Foundation/Performance/Operations met privacy/RBAC op orde.
 
 ## 26. Roadmap governance
 Deze roadmap is het productplan; de repository is de waarheid over de huidige implementatie. Technische cross-audit mag status/effort/dependency/risico betwisten met bewijs, maar productprioriteit of -richting niet stilzwijgend herschrijven — zie `docs/DOCUMENTATION_GOVERNANCE.md`. Na iedere mastersprint: CURRENT_STATE, Capability Registry, Roadmap Index en relevante Calculation/Evidence/Decision-documenten bijwerken.
@@ -204,4 +219,4 @@ Zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md` F3-sectie en `docs/ROADMAP_INDEX.jso
 Deze sprint (zie PR-nummer in `docs/00_Project_Management/CURRENT_STATE.md`) heeft: (1) current main als baseline gebruikt en heraudit gedaan sinds SHA 59b99c, (2) bestaande MS-ID's behouden waar semantisch gelijk, nieuwe IDs gemaakt voor v1.1-toevoegingen (zie migratiematrix), (3) COMM-UI uit vroege F2-prioriteit verplaatst naar Commercial F12, (4) ontbrekende Athlete Core/Context/Load-Progression/Provenance/Offline-Sync/Accessibility/dashboard-sprints toegevoegd, (5) ROADMAP_INDEX.json en consistency checks aangepast, geen productcodewijzigingen, (6) geen technische conflicts gevonden die productprioriteit zouden dwingen terug te draaien (alleen het interne v1.1-ID-naamgevingsconflict, opgelost ten gunste van de systematische sectie-12-nummering).
 
 ## 35. Final Roadmap Decision
-**MASTER ROADMAP 2.0 v1.1 = CANONICAL SOURCE OF TRUTH.** Zie het finale canonicalisatierapport voor volledige validatiestatus.
+**MASTER ROADMAP 2.0 v1.1 = CANONICAL SOURCE OF TRUTH.** Teamsport is als geplande productrichting geïntegreerd via T3/F6 (Teamsport Performance) en T15/F11 (Team Operations), met detailcontract in `docs/TEAMSPORT_ROADMAP_2_0.md`. Zie het finale canonicalisatierapport voor volledige validatiestatus.

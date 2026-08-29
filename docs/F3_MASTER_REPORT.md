@@ -140,3 +140,64 @@ Dit is echter geen reden voor een onvoorwaardelijke "CLOSED": tijdens de finale 
 ## ABSOLUTE STOP VOOR F4
 
 Geen F4-branch, geen F4-code, geen AI Output Contract-implementatie, geen adaptive-programming-werk, geen F4-roadmapstatus-wijziging. F4 vereist een nieuwe, expliciete vrijgave.
+
+---
+
+## POST-F3 CLOSURE HOTFIX — GAP-P1-008
+
+**Datum:** 29 augustus 2026 · **PR:** #102 · **Merge SHA:** `6d3429248b94153abcad04e428c601eb140e2bf3` · **APP_VER:** v4.69.6 → v4.69.7
+
+### Discovery
+Tijdens de F3 Final Integration Audit (bovenstaand rapport) werd `GAP-P1-008` ontdekt: `hrv_log` heeft geen `UNIQUE(user_id,date)`-constraint, en beide schrijfpaden gebruikten een niet-atomair lees-dan-beslis-PATCH/POST-patroon.
+
+### Live evidence
+Live query bevestigde 4 duplicate-`(user_id,date)`-paren in productie. Forensische analyse per groep (`docs/DAILY_HEALTH_FIELD_RECONCILIATION_CONTRACT.md`): 3 paren exacte duplicaten (race, geen dataverlies), 1 paar complementair (geen conflict — `rhr=null` vs. `rhr=57`, beide `[src:fitbit]`, dus beide wearable). **Geen enkel conflicterend geval — geen `PRODUCT_DECISION_REQUIRED`.**
+
+### Root cause
+Geen DB-niveau uniciteitsgarantie; applicatiecode besliste zelf PATCH-vs-POST op basis van een voorafgaande, niet-atomaire lees-actie — een klassieke race window tussen lezen en schrijven.
+
+### Duplicate inventory (before/after)
+**Before:** 4 duplicate-groepen, 71 totaalrijen. **After:** 0 duplicate-groepen, 67 rijen (4 verwijderd, 8 gearchiveerd in `hrv_log_archive_v500`, permanent en reversibel).
+
+### Reconciliation policy
+Vooraf, expliciet vastgelegd (niet ad-hoc tijdens de cleanup zelf): per-veld union-merge, oudste rij canoniek, provenance-kolommen blijven `NULL`/onbekend voor gereconcilieerde historische rijen (geen retroactieve fabricage).
+
+### Migration
+`migratie_v500.sql`, live uitgevoerd: archief → reconciliatie → harde zero-duplicates-verificatie (`RAISE EXCEPTION` bij falen, transactie zou volledig terugrollen) → `UNIQUE(user_id,date)` → atomaire `upsert_daily_health`-RPC (`SECURITY DEFINER`, `INSERT..ON CONFLICT..DO UPDATE`).
+
+### Atomic write architecture
+Eén database-operatie per schrijfactie i.p.v. twee (lees + schrijf) — concurrente aanroepen serialiseren op rij-niveau in Postgres zelf, geen applicatiecode-race meer mogelijk. Per-veld `COALESCE` lost het lost-update-probleem op: een schrijver die alleen RHR aanlevert kan nooit een reeds aanwezige HRV-waarde van een andere schrijver overschrijven met `null`.
+
+### Manual path / Wearable path
+Beide (`upsertHrvLog()` client, `wearable-sync.js` server) omgebouwd naar dezelfde RPC — één canoniek schrijfcontract, geen aparte client- versus server-mergelogica meer.
+
+### Lost-update validation
+Live functioneel bewezen (testaccount, opgeruimd): write 1 (`hrv=40/wearable`) → write 2 (`rhr=55/manual`) → resultaat: `hrv=40/wearable` én `rhr=55/manual` in één rij. Geen enkel veld verloren.
+
+### Provenance validation
+Per-veld provenance blijft correct gekoppeld aan de bijbehorende waarde tijdens concurrent schrijven (functioneel bewezen, zie hierboven) — geen "waarde van rij A met bron van rij B"-vermenging mogelijk.
+
+### RLS
+Ongewijzigd, herbevestigd live vóór en na de migratie: `eigen_data_alleen` (`ALL`, `user_id = auth.uid()`) dekt de nieuwe constraint/RPC-flow automatisch. Cross-user writes expliciet geweigerd binnen de RPC zelf (`SECURITY DEFINER` + `auth.uid()`-check) als extra verdedigingslaag.
+
+### Production verification (post-merge, herhaald)
+Na de PR-merge opnieuw, onafhankelijk live geverifieerd: 0 duplicate-groepen, `UNIQUE`-constraint actief, RPC-functie aanwezig en actief.
+
+### Additional related fix
+`pickLatestMetric()` (`core/deviceIntegration.js`) gebruikte nog de oude, rij-niveau `note`-tag voor provenance-weergave — bijgewerkt naar de nieuwe, precieze per-veld-kolommen (met terugval op de tag voor historische rijen).
+
+### Final status
+**GAP-P1-008: CLOSED.** Alle 15 closure-gate-voorwaarden (sectie 41 van de opdracht) bevestigd, inclusief post-merge live-verificatie.
+
+### F3 herclassificatie
+Conform de opdracht ("GAP-P1-008 mag na succesvolle hotfix niet meer de reden voor conditional closure zijn"): de eerdere CONDITIONALLY CLOSED-beslissing wordt hierbij herbevestigd, maar met een gecorrigeerde onderbouwing. GAP-P1-008 is niet langer een open item. De resterende, geldige redenen voor CONDITIONALLY CLOSED (in plaats van een volmondige CLOSED) zijn nu uitsluitend:
+- **MS-F3-04** blijft eerlijk op TESTED (Critical Speed, Critical Power, TRIMP, HR-zones, aerobic decoupling blijven bewust NOT_IMPLEMENTED — een expliciet toegestane, niet-blokkerende reden per sectie 45/46 van de opdracht).
+- **Resterende P2-items** (GAP-P2-009 t/m GAP-P2-015, exclusief de nu gesloten P1's) — materieel maar niet fase-blokkerend.
+
+### FINAL DECISION (herbevestigd)
+**"F3 CONDITIONALLY CLOSED — NON-BLOCKING SCIENTIFIC/VALIDATION ITEMS OPEN"**
+
+Deze status blijft ongewijzigd t.o.v. het oorspronkelijke Master Report, maar rust nu op een zuiverdere onderbouwing: geen enkele openstaande P1 (F3-fase of anderszins binnen F3-scope) resteert. De conditionaliteit is volledig en uitsluitend toe te schrijven aan bewust open gelaten, expliciet niet-blokkerende wetenschappelijke/validatie-items (Endurance-toekomstmodellen, P2-verfijningen) — precies het scenario dat "CONDITIONALLY CLOSED" is bedoeld te dekken.
+
+## ABSOLUTE STOP VOOR F4 (herbevestigd)
+Zelfs met deze afronding: geen F4-branch, geen F4-code, geen AI Output Contract-implementatie, geen F4-roadmapstatus-wijziging. F4 vereist een nieuwe, expliciete vrijgave van de Product Owner.

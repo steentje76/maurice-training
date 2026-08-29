@@ -6043,7 +6043,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.6';
+const APP_VER = 'v4.69.7';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -7017,6 +7017,8 @@ async function sbPostReturning(t,d){
   }catch(e){console.error('sbPostReturning catch',t,e);return null;}
 }
 async function sbPatch(t,f,d){try{const r=await sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',prefer:'return=representation',body:d});if(!r.ok)console.error('sbPatch',t,r.status,await r.text());return r.ok;}catch(e){console.error('sbPatch catch',t,e);return false;}}
+// sbRpc: aanroep van een Postgres-functie (bv. de atomaire upsert_daily_health, GAP-P1-008-closure).
+async function sbRpc(fn,args){try{const r=await sbFetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',body:args});if(!r.ok){console.error('sbRpc',fn,r.status,await r.text());return null;}return await r.json();}catch(e){console.error('sbRpc catch',fn,e);return null;}}
 /* ── ÉÉN CANONIEKE hrv_log-RIJ PER DAG (v4.29.1 — dataverlies-fix) ─────────────
  * PROBLEEM: saveHRV()/pchkSubmit() deden een blinde INSERT in hrv_log. Vulde je in
  * de check-in alléén je rusthartslag in, dan ontstond een TWEEDE rij voor vandaag met
@@ -7051,13 +7053,30 @@ function tkMergeHealthRow(existing,incoming){
   out.hrv_source=src('hrv'); out.rhr_source=src('rhr'); out.sleep_source=src('sleep');
   return out;
 }
+// GAP-P1-008-closure (F3 Closure Hotfix): upsertHrvLog gebruikt nu de atomaire
+// upsert_daily_health-RPC (migratie_v500.sql) i.p.v. het oude, niet-atomaire
+// lees-dan-PATCH/POST-patroon. Dit lost het bewezen race-condition-risico op
+// (live geïdentificeerd: 4 duplicate-rij-paren, waarvan 1 met echte data-
+// divergentie) — de merge gebeurt nu als één, atomaire database-operatie
+// (INSERT..ON CONFLICT..DO UPDATE), zodat concurrente schrijvers op
+// rij-niveau serialiseren i.p.v. elkaars nog-niet-opgeslagen wijziging te
+// missen. tkMergeHealthRow() blijft bestaan (en getest) voor eventuele
+// overige call sites, maar is niet langer het schrijfpad van upsertHrvLog.
 async function upsertHrvLog(fields){
   const d=td();
-  const existing=await sbGet('hrv_log','&date=eq.'+d+'&order=created_at.desc&limit=1');
-  const cur=existing.length?existing[0]:null;
-  const merged=tkMergeHealthRow(cur,fields);
-  if(cur)return await sbPatch('hrv_log','id=eq.'+cur.id,merged);
-  return await sbPost('hrv_log',Object.assign({date:d},merged));
+  const f=fields||{};
+  const result=await sbRpc('upsert_daily_health',{
+    p_user_id:(authSession&&authSession.user&&authSession.user.id)?authSession.user.id:null,
+    p_date:d,
+    p_hrv:(f.hrv!=null&&f.hrv!=='')?f.hrv:null,
+    p_rhr:(f.rhr!=null&&f.rhr!=='')?f.rhr:null,
+    p_sleep:(f.sleep!=null&&f.sleep!=='')?f.sleep:null,
+    p_cyclus_fase:(f.cyclus_fase!=null&&f.cyclus_fase!=='')?f.cyclus_fase:null,
+    p_edema:(f.edema!=null&&f.edema!=='')?f.edema:null,
+    p_note:(f.note!=null&&f.note!=='')?f.note:null,
+    p_source:'manual'
+  });
+  return result!==null;
 }
 // Eén canoniek gewichtsrecord per dag: overschrijft bestaand record i.p.v. dupliceren
 // (voorheen schreven saveHRV/saveWeight/saveBC alle drie los naar weight_log)

@@ -1,5 +1,28 @@
 # Trainingskompas — Changelog
 
+## v4.69.13 — MS-F6-05: Triathlon & Brick Workflows (29 augustus 2026)
+
+Vijfde F6-mastersprint. Sluit MS-F6-05.
+
+**Centrale architectuurvraag beantwoord, bewezen vanuit code:** triathlon/brick
+gebruikt letterlijk hetzelfde parent/child-segmentcontract als HYROX
+(`hyroxReconstructPerformance()`, vaste `segment_index`, één `training_instance_id`)
+-- geen tweede multisportmodel gebouwd.
+
+**Load-dubbeltellingsaudit:** geen actief risico -- `sessionLoad()`/`unifiedLoad()`
+zijn nog niet in de runtime gewired. Vastgelegd als toekomstig aandachtspunt
+(GAP-P2-022).
+
+**Kritieke, aanvullende AI-boundary-fix:** de triathlon-coachingtekst instrueerde
+de AI om "automatisch" een taperschema op te stellen -- geen geregistreerde
+Decision Rule. Gecorrigeerd, plus proactief de milde running-variant.
+
+Nieuwe testsuite `core/fTriathlonBrickWorkflows.test.js` (7/7). Sabotagebewijs
+geleverd.
+
+`APP_VER` → v4.69.13, `CACHE_NAME`/`CACHE_STATIC` en Android
+`versionCode`/`versionName` meegenomen (CORE_SIG ongewijzigd -- geen core/*.js-wijziging).
+
 ## v4.69.12 — MS-F6-02: Cycling Intelligence (29 augustus 2026)
 
 Tweede F6-mastersprint. Sluit MS-F6-02.

@@ -11,7 +11,7 @@
 |---|---|
 | P0 | **0 open** |
 | P1 | 0 |
-| P2 | 21 |
+| P2 | 22 |
 | P3 | 4 |
 | P4 | 2 |
 
@@ -127,6 +127,13 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Evidence:** CODE VERIFIED, zie de Running Intelligence- en Cycling Intelligence-sprintrapporten in `docs/`.
 **Target:** een expliciet "tijdrit"-markeringsmechanisme (bv. een sessievlag of los invoerscherm voor time-trial-resultaten), alleen indien een concrete productbehoefte dit rechtvaardigt — geen productbeslissing hier gefabriceerd over hoe dit eruit zou moeten zien. Eén oplossing zou beide sporten tegelijk bedienen.
 **Priority:** P2 (niet-kritiek — beide calculations zijn correct en veilig; het ontbreekt uitsluitend aan een user-facing invoerpad). **Complexity:** M.
+
+### GAP-P2-022 (nieuw, Triathlon & Brick Workflows-sprint) — sessionLoad()/unifiedLoad() nog niet in de runtime gewired
+**Capability-ID:** END-HYROX-001
+**Current:** `AthleteCore.sessionLoad()`/`unifiedLoad()` (`core/athlete.js`) bestaan als pure, geteste functies, maar worden nergens in `index.html` aangeroepen — er is vandaag geen live dashboard/UI-feature die trainingsbelasting sommeert. Voor multisport (triathlon/brick) betekent dit: geen actief dubbeltellingsrisico vandaag, maar wél een aandachtspunt zodra deze functies ooit gewired worden — de parent (`training_instance_id`) draagt zelf geen apart gewicht/RPE-record, dus een toekomstige wiring moet uitsluitend de kindsegment-rijen sommeren, nooit een parent-rij + kindrijen samen.
+**Evidence:** CODE VERIFIED, zie het Triathlon & Brick Workflows-sprintrapport in `docs/`.
+**Target:** bij een toekomstige wiring van `unifiedLoad()` naar een live dashboard: expliciet testen dat multisport-parent-sessies niet dubbel meetellen. Geen productbeslissing hier gefabriceerd over wanneer/of dit gebouwd wordt.
+**Priority:** P2 (niet-kritiek — geen huidig, actief probleem; een architectuurwaarschuwing voor toekomstig werk). **Complexity:** S.
 
 ### GAP-P2-017 (voorheen GAP-P1-005) — AI-adaptive-programmering, benchmark-gap t.o.v. Hevy Trainer — **STATUS: kern-capability CLOSED, productgat blijft**
 **Gerelateerde capability:** de AI-programmagenererings-/adaptieve-weekregeneratie-capability (de veiligheidskritieke kerncapability is inmiddels gesloten — zie het sprintrapport voor de Adaptive Weekly Program Loop: canonieke exercise-ID-whitelist, preview+bevestiging, unified execution, en een nieuwe audit trail zijn allemaal technisch bevestigd)

@@ -6,11 +6,11 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.69.12
+v4.69.13
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.69.12 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.69.13 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 28 augustus 2026
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 
@@ -21,7 +21,7 @@ v4.69.12
 - **F3 — Calculation/Context/Evidence Excellence: CONDITIONALLY CLOSED — non-blocking scientific/validation items open.** Alle 11 mastersprints eerlijk afgerond (MS-F3-04 blijft TESTED, geen kunstmatige CLOSED). GAP-P1-007 en GAP-P1-008 beide technisch en live gesloten. Volledig rapport: `docs/F3_MASTER_REPORT.md`.
 - **F4 — Coach Intelligence: CLOSED — READY FOR F5 SELECTION.** Alle 6 F4-mastersprints eerlijk afgerond (MS-F4-01 blijft correct op TESTED, geen kunstmatige CLOSED). Volledig rapport: `docs/F4_MASTER_REPORT.md`.
 - **F5 — Connected Athlete: SOFTWARE CLOSED — REAL DEVICE VALIDATION OPEN.** Alle 6 F5-mastersprints afgerond. Volledig rapport: `docs/F5_MASTER_REPORT.md`.
-- **F6 — Endurance & Multisport Excellence: CURRENT (expliciet vrijgegeven door de Product Owner, 29 augustus 2026; Product Owner langere tijd niet beschikbaar — autonome uitvoering binnen de canonieke F6-scope).** MS-F6-01: **CLOSED**. MS-F6-02: **CLOSED, met een kritieke, cross-cutting AI-boundary-fix**. MS-F6-03: **CLOSED — hergebruik-sprint.** MS-F6-04 (HYROX Excellence): **CLOSED** — bevestigde een uitzonderlijk mature, reeds bestaande implementatie (386/386 tests: `hyroxStart()`, `hyroxReconstructPerformance()`, gedeelde `station_duration.v1`/`segment_transition.v1`-calculation-contracten, geen aparte executie-engine). **Rulebook-revalidatie uitgevoerd** (29 augustus 2026, actuele officiële bronnen): formaat/divisies bevestigd nog correct; een nieuwe "Elite 15"-divisie (seizoen 26/27) past binnen het bestaande generieke `race_division`-stringveld zonder schemawijziging; een recente regelwijziging (burpee-knieregel, 2025-2026) bevestigd niet-conflicterend omdat TK geen specifieke bewegingsstandaarden hardcodeert. Het bestaande P3-gap "herverificatie van rulebook-bronnen" is hiermee gesloten. **F6 open P1: 0.** Resterende F6-mastersprints (MS-F6-05, MS-F6-06) nog niet uitgevoerd.
+- **F6 — Endurance & Multisport Excellence: CURRENT (expliciet vrijgegeven door de Product Owner, 29 augustus 2026; Product Owner langere tijd niet beschikbaar — autonome uitvoering binnen de canonieke F6-scope).** MS-F6-01: **CLOSED**. MS-F6-02: **CLOSED, met een kritieke, cross-cutting AI-boundary-fix**. MS-F6-03: **CLOSED — hergebruik-sprint.** MS-F6-04: **CLOSED — rulebook-revalidatie afgerond.** MS-F6-05 (Triathlon & Brick Workflows): **CLOSED** — de centrale architectuurvraag ("kan TK één multisporttraining representeren zonder drie losstaande trainingen en zonder dubbeltelling?") is **JA, bewezen vanuit code**: triathlon/brick gebruikt letterlijk hetzelfde parent/child-segmentcontract als HYROX (`hyroxReconstructPerformance()`, vaste `segment_index`, één `training_instance_id`) — geen tweede multisportmodel gebouwd. **Geen actief load-dubbeltellingsrisico**: `sessionLoad()`/`unifiedLoad()` zijn nog niet in de runtime gewired, dus er bestaat vandaag geen aggregatiepad dat dit zou kunnen doen — eerlijk vastgelegd als een toekomstig aandachtspunt (GAP-P2-022). **Kritieke, aanvullende AI-boundary-fix**: de triathlon-coachingtekst instrueerde de AI om "automatisch" een taperschema op te stellen (geen geregistreerde Decision Rule) — gecorrigeerd, en proactief ook de milde running-variant meegecorrigeerd. **F6 open P1: 0.** Resterende F6-mastersprint (MS-F6-06) nog niet uitgevoerd.
 - **Master Roadmap 2.0 v1.1 = CANONICAL** productstrategische bron. Repository blijft technische autoriteit. Zie `docs/DOCUMENTATION_GOVERNANCE.md`.
 - Volledige fasering (F0-F15): zie `docs/TRAININGSKOMPAS_MASTER_ROADMAP.md`. Volledige mastersprint-ID-migratie: zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md`.
 
@@ -40,7 +40,7 @@ Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
 ## 5. Current validation status
 - **Code:** CODE VERIFIED tegen `main` @ bovenstaande SHA
 - **DB:** VERIFIED — 69 tabellen, RLS gecontroleerd op alle tabellen, `gyms`-lek gesloten en geverifieerd via `SET LOCAL ROLE anon/authenticated/service_role`
-- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 117 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 120 stappen totaal), 119 automatisch uitgevoerd, 1 zichtbaar geskipt (fAndroidRelease.test.js zonder gereproduceerde buildmap), 0 gefaald
+- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 118 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 121 stappen totaal), 120 automatisch uitgevoerd, 1 zichtbaar geskipt (fAndroidRelease.test.js zonder gereproduceerde buildmap), 0 gefaald
 - **Integration:** wearable-sync getest tegen de echte handler-functie; overige integraties overwegend unit-getest
 - **Device:** **OPEN** — Concept2 PM5 en Google Health-sync hebben geen bevestigde real-device-validatie in productie
 - **UX:** niet apart beoordeeld in de laatste consolidatiesprint (38 top-level schermen geïnventariseerd, geen flow-niveau UX-testdekking)

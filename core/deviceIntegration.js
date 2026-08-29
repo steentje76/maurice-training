@@ -584,19 +584,22 @@
 
   // ── BODY-METRIC SELECTIE + PROVENANCE (hrv_log rows → nieuwste échte meting per metric) ──
   // Repareert de Body-UI-inconsistentie: kies PER metric (hrv/rhr/sleep) de NIEUWSTE rij met een
-  // echte waarde (niet blind rij[0]), met de EIGEN datum en bron. Bron uit een [src:...]-tag in note
-  // (wearable-sync schrijft [src:fitbit]); ontbrekende tag → handmatige check-in. Geen fake, geen
-  // datumverschuiving, geen invullen van ontbrekende metrics. PUUR.
+  // echte waarde (niet blind rij[0]), met de EIGEN datum en bron. GAP-P1-008-closure (F3 Closure
+  // Hotfix): bron komt nu bij voorkeur uit de precieze, per-veld kolom (hrv_source/rhr_source/
+  // sleep_source, migratie_v499.sql) — deze onderscheidt correct per veld, i.t.t. de oude
+  // rij-niveau [src:...]-tag in note. Terugval op de note-tag blijft bestaan voor historische
+  // rijen van vóór de migratie (kolom is dan null) — backward compatible, geen regressie.
+  // Geen fake, geen datumverschuiving, geen invullen van ontbrekende metrics. PUUR.
   function _parseSrcTag(note){
     var m = String(note == null ? '' : note).match(/\[src:([a-z0-9_-]+)\]/i);
     return m ? m[1].toLowerCase() : null;
   }
   function _sourceLabel(tag){
-    if (tag === 'fitbit' || tag === 'google-health' || tag === 'google_health') return 'Fitbit';
+    if (tag === 'fitbit' || tag === 'google-health' || tag === 'google_health' || tag === 'wearable') return 'Fitbit';
     if (tag === 'checkin' || tag === 'check-in' || tag === 'manual') return 'Check-in';
     return tag ? tag : 'Check-in';       // onbekende tag → toon tag; geen tag → handmatige check-in
   }
-  // rows: [{date, hrv, rhr, sleep, note}] (volgorde maakt niet uit — defensief gesorteerd desc op date).
+  // rows: [{date, hrv, rhr, sleep, note, hrv_source, rhr_source, sleep_source}].
   function pickLatestMetric(rows, field){
     if (!Array.isArray(rows)) return { value: null, date: null, source: null, sourceTag: null };
     var sorted = rows.slice().sort(function (a, b){
@@ -606,7 +609,8 @@
       var r = sorted[i]; if (!r) continue;
       var v = r[field];
       if (v != null && v !== ''){
-        var tag = _parseSrcTag(r.note);
+        var kolomBron = r[field + '_source']; // 'manual' | 'wearable' | 'unknown' | null (pre-migratie)
+        var tag = kolomBron ? kolomBron : _parseSrcTag(r.note);
         return { value: v, date: r.date != null ? r.date : null, source: _sourceLabel(tag), sourceTag: tag };
       }
     }

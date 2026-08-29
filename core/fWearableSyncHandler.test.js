@@ -29,9 +29,15 @@ function makeFetch(healthPoints){
       if (url.indexOf('dataTypes/sleep') !== -1) return J({ dataPoints: healthPoints.sleep });
       return J({ dataPoints: [] });
     }
-    if (url.indexOf('/rest/v1/hrv_log') !== -1 && method === 'GET') return J([]); // geen bestaande rij
-    if (url.indexOf('/rest/v1/hrv_log') !== -1 && method === 'POST'){ writtenRows.push(JSON.parse(opts.body)); return J({}, true, 201); }
-    if (url.indexOf('/rest/v1/hrv_log') !== -1 && method === 'PATCH'){ writtenRows.push(JSON.parse(opts.body)); return J({}, true, 204); }
+    // GAP-P1-008-closure: de imported/updated-telling gebruikt een lichte existence-check
+    // (select=id&limit=1, geen order nodig -- puur telling, geen write-beslissing).
+    if (url.indexOf('/rest/v1/hrv_log') !== -1 && method === 'GET') return J([]); // "bestaat nog niet" tenzij scenario dit overschrijft
+    // De daadwerkelijke, atomaire write gaat nu via de RPC i.p.v. rechtstreeks POST/PATCH op hrv_log.
+    if (url.indexOf('/rest/v1/rpc/upsert_daily_health') !== -1 && method === 'POST'){
+      const body = JSON.parse(opts.body);
+      writtenRows.push({ hrv: body.p_hrv, rhr: body.p_rhr, sleep: body.p_sleep, note: body.p_note, date: body.p_date });
+      return J({}, true, 200);
+    }
     return J({}, true, 200);
   };
 }
@@ -109,10 +115,10 @@ const event = { httpMethod: 'POST', headers: { authorization: 'Bearer session' }
   eq(writtenRows[0].date, '2026-08-17', 'S5: juiste datum uit nested date');
   ok(/\[src:fitbit\]/.test(writtenRows[0].note), 'S5: provenance [src:fitbit] behouden');
   // SCENARIO 6: tweede identieke productie-sync → geen duplicaat (upsert per datum)
-  const prior = writtenRows[0]; writtenRows = [];
+  writtenRows = [];
   global.fetch = (function(base){ return async function(url, opts){
     url=String(url); const method=(opts&&opts.method)||'GET';
-    if (url.indexOf('/rest/v1/hrv_log')!==-1 && method==='GET') return { ok:true, status:200, json:async()=>[{ id:99, ...prior }] }; // bestaat al
+    if (url.indexOf('/rest/v1/hrv_log') !== -1 && method==='GET') return { ok:true, status:200, json:async()=>[{ id:99 }] }; // bestaat al (existence-check, GAP-P1-008-closure)
     return base(url, opts);
   }; })(makeFetch({
     hrv:   [{ dataSource:'d', dailyHeartRateVariability: { date:{year:2026,month:8,day:17}, averageHeartRateVariabilityMilliseconds: 42 } }],
@@ -143,8 +149,8 @@ const event = { httpMethod: 'POST', headers: { authorization: 'Bearer session' }
   eq(writtenRows[0].hrv, 28.5, 'S7: HRV blijft correct');
   ok(writtenRows[0].sleep > 7 && writtenRows[0].sleep < 7.2, 'S7: slaap uit interval (~7,07 uur)');
   eq(body.http && body.http.rhr, 200, 'S7: HTTP-status per datatype in het antwoord (diagnose zonder logtoegang)');
-  ok(seenHrvLogQuery && seenHrvLogQuery.indexOf('order=created_at.desc') !== -1,
-     'S7: bestaande-rij-lookup is deterministisch (order=created_at.desc) — patcht de rij die de app toont');
+  ok(seenHrvLogQuery !== null && seenHrvLogQuery.indexOf('order=created_at.desc') === -1,
+     'S7: GAP-P1-008-closure — de resterende hrv_log-aanroep is nu een simpele existence-check (select=id&limit=1, geen order nodig); de daadwerkelijke merge gebeurt atomair in de RPC, geen read-then-decide-race meer in de write zelf');
 
   // ── SCENARIO 8: PostgREST-foutobject → getypeerde SUPABASE_ERROR, geen lek ───
   // Voorheen gaf `const [conn] = <object>` een TypeError → generieke 500 "Serverfout".

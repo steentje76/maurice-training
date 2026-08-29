@@ -1,5 +1,30 @@
 # Trainingskompas — Changelog
 
+## v4.69.16 — MS-F7-03: Adherence & Consistency Intelligence (29 augustus 2026)
+
+Derde F7-mastersprint. Sluit MS-F7-03.
+
+**Kritiek semantisch onderscheid vastgelegd:** ADHERENCE (planned vs. completed,
+vereist een schema) versus CONSISTENCY (trainingsgedrag over tijd, kan bestaan
+zonder schema). NO SCHEDULE != 0% ADHERENCE -- canonieke status NOT_AVAILABLE.
+
+**Nieuw gebouwd:** `core/adherenceIntelligence.js` (`AdherenceIntelligenceCore`)
+-- bouwt bovenop de bestaande, ongewijzigde `ScheduleAdherenceCore.resolveScheduleGap()`.
+Noemer-definitie (closure-critical): COMPLETED/SKIPPED/MISSED tellen mee,
+FUTURE/TODAY/ongeldige datum nooit.
+
+**SKIPPED-semantiek bevestigd:** een expliciete, gebruiker-geïnitieerde keuze,
+conservatief behandeld als "niet voltooid" zoals MISSED.
+
+**Reschedule-veiligheid bevestigd (geen nieuwe fix nodig):** een verplaatst
+program_block is altijd een UPDATE, nooit een INSERT -- dubbele bestraffing is
+door datamodel-constructie onmogelijk. Handmatig geverifieerd.
+
+Nieuwe testsuite `core/fAdherenceIntelligence.test.js` (8/8). Sabotagebewijs geleverd.
+
+`APP_VER` → v4.69.16, `CACHE_NAME`/`CACHE_STATIC` en Android
+`versionCode`/`versionName` meegenomen.
+
 ## v4.69.15 — MS-F7-02: Exercise Stagnation & Plateau Detection (29 augustus 2026)
 
 Tweede F7-mastersprint. Sluit MS-F7-02.

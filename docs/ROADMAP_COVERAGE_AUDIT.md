@@ -6,9 +6,9 @@
 
 **Canonieke definitie:** het aantal actuele, unieke capability-ID's dat als eigen rij voorkomt in `docs/CAPABILITY_REGISTRY.md` (niet: tabelkoppen, historische IDs, aliases, dubbele verwijzingen, of samenvattingsregels). Dit is de canonieke bron voor "hoeveel capabilities bestaan er" — `docs/ROADMAP_INDEX.json` is een afgeleide, machine-leesbare weergave die met deze registry synchroon moet blijven, niet een tweede, onafhankelijke telling.
 
-**Canonical capability count: 52 (was 51 vóór MS-F7-02 — PLATEAU-DETECTION-001 toegevoegd).**
+**Canonical capability count: 53 (was 52 vóór MS-F7-03 — ADHERENCE-INTELLIGENCE-001 toegevoegd).**
 
-**Resultaat: 52/52 = 100%.** Alle 52 capabilities in `docs/CAPABILITY_REGISTRY.md` hebben een mastersprint-verwijzing in `docs/ROADMAP_INDEX.json` (zie `next_action`-veld per capability) én een eigen `capability`-type entry in `docs/ROADMAP_INDEX.json` (zie sectie "Capability-classificatie" hieronder voor de volledige lijst).
+**Resultaat: 53/53 = 100%.** Alle 53 capabilities in `docs/CAPABILITY_REGISTRY.md` hebben een mastersprint-verwijzing in `docs/ROADMAP_INDEX.json` (zie `next_action`-veld per capability) én een eigen `capability`-type entry in `docs/ROADMAP_INDEX.json` (zie sectie "Capability-classificatie" hieronder voor de volledige lijst).
 
 **Root cause van de eerdere 16/16-vermelding (opgelost):** dat cijfer was het aantal `type: "capability"`-entries dat destijds daadwerkelijk in `docs/ROADMAP_INDEX.json` stond (16), niet het aantal rijen in de Capability Registry zelf (25) — een onvolledige JSON-export die nooit 1-op-1 was gesynchroniseerd met de registry. Daarnaast bevatte de Capability Registry zelf een ambigu label (`DEV-WEARSYNC-001/002`, één rij die twee sub-ID's in de naam droeg) dat door eenvoudige ID-detectie werd overgeslagen — vandaar dat een eerdere handmatige telling op 24 in plaats van 25 uitkwam. Beide problemen zijn hier opgelost: het label is genormaliseerd naar `DEV-WEARSYNC-001` (aansluitend bij hoe het overal elders al werd genoemd), en `docs/ROADMAP_INDEX.json` bevat nu alle 25 registry-capabilities als eigen entry (plus `DOC-HANDBOOK-001`, dat bewust een *roadmap-governance-item* is, geen Capability Registry-capability — zie kanttekening hieronder, expliciet buiten de 25 gehouden).
 
@@ -71,6 +71,7 @@
 | SWIMMING-FEASIBILITY-001 | TESTED | NO ACTION | — (F6, MS-F6-06 CLOSED, feasibility PARTIAL - PROVIDER DEPENDENCIES OPEN) |
 | LONGITUDINAL-TREND-001 | IMPLEMENTED | INTEGRATION PENDING | — (F7, MS-F7-01 CLOSED, nog niet geconsumeerd door dashboard) |
 | PLATEAU-DETECTION-001 | IMPLEMENTED | INTEGRATION PENDING | — (F7, MS-F7-02 CLOSED, nog niet geconsumeerd door dashboard) |
+| ADHERENCE-INTELLIGENCE-001 | IMPLEMENTED | INTEGRATION PENDING | — (F7, MS-F7-03 CLOSED, nog niet geconsumeerd door dashboard) |
 | COACH-RELATIONSHIP-001 | IMPLEMENTED | IMPROVEMENT | MS-F10-01, MS-F10-02 |
 | AI-COACH-001 | CLOSED (security) | NO ACTION | — (F0) |
 | AI-OUTPUT-CONTRACT-001 | TESTED | NO ACTION (status TESTED, niet CLOSED -- zie MS-F4-01-rapport) | — (F4, MS-F4-01 status TESTED) |
@@ -89,7 +90,7 @@
 | CAP-REGISTRY-SCREENS-001 | IMPLEMENTED | IMPROVEMENT | MS-F2-01 t/m MS-F2-08 |
 | SCI-CONSENT-001 | NOT STARTED | DEFERRED | MS-F14-01/02/03 |
 
-**Dekking: 52/52 capabilities geclassificeerd, 0 orphan** (Registry Coverage = 100%, zie hierboven).
+**Dekking: 53/53 capabilities geclassificeerd, 0 orphan** (Registry Coverage = 100%, zie hierboven).
 
 ## Track-erkenning
 Exercise Intelligence (T2) blijft expliciet erkend als eigen track (bevestigd in v1.1 §6, ongewijzigd t.o.v. de vorige consolidatie).

@@ -1292,7 +1292,7 @@
       "E3.2"
     ],
     "priority": "P2",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F6-01",
       "MS-F6-02",
@@ -3030,7 +3030,7 @@
     "software_validation": "PASS",
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
-    "next_action": "zie MS-F6-04"
+    "next_action": "zie MS-F6-04 (CLOSED). Rulebook-revalidatie uitgevoerd (29 aug 2026): formaat/divisies bevestigd actueel, geen hardcoded verouderde bewegingsstandaard, nieuwe Elite 15-divisie past binnen het bestaande generieke race_division-stringveld. P3-gap herverificatie is hiermee gesloten."
   },
   {
     "id": "END-INTERVAL-001",

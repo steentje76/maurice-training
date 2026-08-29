@@ -6,11 +6,11 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.69.8
+v4.69.9
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.69.8 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.69.9 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 28 augustus 2026
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 
@@ -19,7 +19,7 @@ v4.69.8
 - **F1 — Foundation Closure: CLOSED** (Gate A semantische-integriteitsaudit geslaagd — 18/18 consistentiechecks, release gate groen, geen open P0/P1)
 - **F2 — Athlete Core Excellence: CLOSED.** MS-F2-01 (Canonical Training Start & Preview) is herclassificeerd van PARTIAL naar **CLOSED** nadat GAP-P1-006 tijdens MS-F2-08 is gesloten: Programma-blok en Repeat Workout krijgen nu beide een canonieke `training_instances`-rij. Preview-UI blijft bewust gedifferentieerd voor deze twee bronnen — een gedocumenteerde productgrens, geen open architectuurgat. MS-F2-02 t/m MS-F2-07 blijven CLOSED. Final Contract Reconciliation bevestigde: geen resterende architectuurgap, gepreciseerde acceptance-wording vastgelegd. Zie `docs/MS-F2-01..08_*.md`.
 - **F3 — Calculation/Context/Evidence Excellence: CONDITIONALLY CLOSED — non-blocking scientific/validation items open.** Alle 11 mastersprints eerlijk afgerond (MS-F3-04 blijft TESTED, geen kunstmatige CLOSED). GAP-P1-007 en GAP-P1-008 beide technisch en live gesloten. Volledig rapport: `docs/F3_MASTER_REPORT.md`.
-- **F4 — Coach Intelligence: CURRENT (expliciet vrijgegeven door de Product Owner, 29 augustus 2026).** MS-F4-01 (AI Output Contract & Guardrails): **status TESTED, niet CLOSED** — `core/aiOutputContract.js` (nieuw) dwingt technisch af dat coach-tekst geen diagnose-/HRV-als-diagnose-/ACWR-als-blessurevoorspeller-taal bevat, gekoppeld aan alle 3 vrije-tekst-AI-paden, met sabotagebewijs. Bevestigd: bestaande veiligheidslagen (canonieke exercise-ID-whitelist met preview+bevestiging voor programmagenerering; deterministische gewicht-plausibiliteitscheck vóór AI-toepassing, F1.3) waren al aanwezig, geen tweede Decision Engine gevonden (Shadow Decision Audit: 0 verborgen regels in alle 6 AI-aanroepen). Eerlijk niet-CLOSED: het volledige, opdracht-geschetste structured-JSON-outputcontract met referentie-validatie is niet gebouwd (architecturaal, geen actief risico — zie `docs/MS-F4-01_AI_OUTPUT_CONTRACT.md`). Resterende F4-mastersprints (MS-F4-02 t/m 06) nog niet uitgevoerd.
+- **F4 — Coach Intelligence: CURRENT (expliciet vrijgegeven door de Product Owner, 29 augustus 2026).** MS-F4-01 (AI Output Contract & Guardrails): status TESTED (eerlijk niet-CLOSED, zie `docs/MS-F4-01_AI_OUTPUT_CONTRACT.md`). MS-F4-02 (Explainable Daily Coach): **CLOSED** — runtime-trace bevestigde dat de canonieke pijplijn (`readinessDay()` → `CoachingCore.readinessCoachMessage()` → `tkReadinessHtml()`) al WHAT/WHY/CONFIDENCE/MISSING DATA levert en daadwerkelijk gerenderd wordt in `#home-readiness` (geen dode code). Nieuw gevonden en gefixed: `buildCoachAdvice()` dupliceerde DEC-READY-001-drempels inline (`f>=1`/`f>=0.93`) i.p.v. te delegeren aan `DecisionCore.trainReadiness()` — een reëel shadow-threshold-risico, nu structureel gebonden. Resterende F4-mastersprints (MS-F4-03 t/m 06) nog niet uitgevoerd.
 - **Master Roadmap 2.0 v1.1 = CANONICAL** productstrategische bron. Repository blijft technische autoriteit. Zie `docs/DOCUMENTATION_GOVERNANCE.md`.
 - Volledige fasering (F0-F15): zie `docs/TRAININGSKOMPAS_MASTER_ROADMAP.md`. Volledige mastersprint-ID-migratie: zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md`.
 
@@ -40,7 +40,7 @@ Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
 ## 5. Current validation status
 - **Code:** CODE VERIFIED tegen `main` @ bovenstaande SHA
 - **DB:** VERIFIED — 69 tabellen, RLS gecontroleerd op alle tabellen, `gyms`-lek gesloten en geverifieerd via `SET LOCAL ROLE anon/authenticated/service_role`
-- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 102 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 105 stappen totaal), 105 automatisch uitgevoerd (met Android-buildmap gereproduceerd; zonder buildmap 104 uitgevoerd, 1 geskipt), 1 zichtbaar geskipt (`fAndroidRelease.test.js`, ontbrekende Android-buildmap in deze schone checkout — draait wél in echte CI via `npm run cap:copy`, en lokaal na een expliciete reproductie: dan 102/102, 0 geskipt), 0 gefaald
+- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 103 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 106 stappen totaal), 106 automatisch uitgevoerd (met Android-buildmap gereproduceerd; zonder buildmap 105 uitgevoerd, 1 geskipt), 1 zichtbaar geskipt (`fAndroidRelease.test.js`, ontbrekende Android-buildmap in deze schone checkout — draait wél in echte CI via `npm run cap:copy`, en lokaal na een expliciete reproductie: dan 102/102, 0 geskipt), 0 gefaald
 - **Integration:** wearable-sync getest tegen de echte handler-functie; overige integraties overwegend unit-getest
 - **Device:** **OPEN** — Concept2 PM5 en Google Health-sync hebben geen bevestigde real-device-validatie in productie
 - **UX:** niet apart beoordeeld in de laatste consolidatiesprint (38 top-level schermen geïnventariseerd, geen flow-niveau UX-testdekking)

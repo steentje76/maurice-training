@@ -57,8 +57,13 @@ ok(items.length === 5, 'exact 5 CALC-END-items gevonden (001 t/m 005)');
 // ---- B2. NOT_IMPLEMENTED-items correct en eerlijk gelabeld (geen stille fabricage) ----
 {
   const csCp = items.find(i => i.startsWith('### CALC-END-004'));
-  ok(csCp && /\*\*NOT_IMPLEMENTED\*\*/.test(csCp), 'CALC-END-004 (Critical Speed/Power) is expliciet NOT_IMPLEMENTED, geen verzonnen implementatie');
-  ok(csCp && /intervalEngine\.js/.test(csCp), 'CALC-END-004 verwijst naar het bestaande, bevestigende architectuurcommentaar in intervalEngine.js');
+  // MS-F6-01 (F6): Critical Speed is inmiddels geïmplementeerd en getest
+  // (CardioCore.criticalSpeed(), Monod & Scherrer 1965) -- deze regressie-lock
+  // bewaakt nu dat de status-wijziging expliciet en eerlijk gedocumenteerd is,
+  // inclusief de bewuste niet-integratie-beperking (geen tijdrit-markering).
+  ok(csCp && /\*\*GEÏMPLEMENTEERD/.test(csCp), 'CALC-END-004 (Critical Speed) is expliciet GEÏMPLEMENTEERD (MS-F6-01), niet stilzwijgend teruggedraaid');
+  ok(csCp && /criticalSpeed\(\)/.test(csCp) && /niet automatisch op trainingsgeschiedenis gewired/.test(csCp),
+    'CALC-END-004 documenteert expliciet zowel de implementatie als de bewuste niet-integratie-beperking (geen tijdrit-markeringsmechanisme)');
 
   const trimpEtc = items.find(i => i.startsWith('### CALC-END-005'));
   ok(trimpEtc && /\*\*NOT_IMPLEMENTED\*\*/.test(trimpEtc), 'CALC-END-005 (TRIMP/decoupling/HR-zones) is expliciet NOT_IMPLEMENTED');

@@ -1,5 +1,35 @@
 # Trainingskompas — Changelog
 
+## v4.69.11 — MS-F6-01: Running Intelligence (29 augustus 2026)
+
+Eerste F6-mastersprint (F6 expliciet vrijgegeven). Sluit MS-F6-01.
+
+**F6 Entry Audit** (`docs/F6_EXISTING_RUNTIME_INVENTORY.md`) bevestigde een uitzonderlijk
+mature, reeds bestaande `CardioEngine`: één generieke, config-driven set functies
+(`CARDIO_TYPES`) die ALLE cardiosporten (running, cycling, rowing, swimming, e.a.)
+al afhandelt zonder aparte sport-specifieke logica.
+
+**Nieuw gebouwd:** `CardioCore.criticalSpeed()` -- het wetenschappelijk gevestigde
+tweeparametermodel (Monod & Scherrer 1965: afstand = CS·tijd + D') voor Critical Speed.
+Vereist minimaal 2 tijdritprestaties met verschillende duren, levert R² en een
+confidence-classificatie, weigert expliciet bij onvoldoende/ongeldige data.
+
+**Kritieke, eerlijke beperking ontdekt en vastgelegd:** het datamodel heeft geen manier
+om een sessie als "genuine maximale-inspanning-tijdrit" te markeren, dus deze functie
+wordt bewust NIET automatisch op trainingsgeschiedenis gewired. Nieuw GAP-P2-021.
+
+**Pace-trends:** hergebruiken de bestaande `ProgressionCore.trendBy()` (uit F4) --
+geen tweede, gedupliceerd trendalgoritme voor endurance.
+
+**Zones/TID/aerobic decoupling/TRIMP:** opnieuw beoordeeld, bewust nog steeds
+NOT_IMPLEMENTED -- geen concrete, productgedreven noodzaak, geen formule toegevoegd
+uitsluitend omdat deze populair is.
+
+Nieuwe testsuite `core/fRunningIntelligence.test.js` (9/9). Sabotagebewijs geleverd.
+
+`APP_VER` → v4.69.11, `CACHE_NAME`/`CACHE_STATIC`/`CORE_SIG` en Android
+`versionCode`/`versionName` meegenomen.
+
 ## v4.69.10 — MS-F4-04: Adaptive Weekly Program Loop (29 augustus 2026)
 
 Vierde F4-mastersprint. Sluit `MS-F4-04` en `AI-PROGRAM-AUTOGEN-001`.

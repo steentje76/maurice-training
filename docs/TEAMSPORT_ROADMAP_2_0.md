@@ -12,6 +12,14 @@ Teamsport is a formal product domain in Trainingskompas and is not limited to lo
 
 These are separate domains but must exchange context through the existing athlete engine. No second calculation/coaching core may be created.
 
+## 1A. Primary navigation decision (Roadmap Foundation Update, this sprint)
+Teamsport is a first-class athlete domain and gets its own primary navigation destination. It is not a hidden sub-mode of Training, Endurance, Multisport, Gym/Club or "Meer/Profiel".
+
+Conceptual primary navigation:
+`Home → Training → Teamsport → Progressie → Coach → Meer/Profiel`
+
+This is a roadmap/UX decision, not an instruction to rebuild the current navigation now. It fixes the target destination for whenever primary-navigation work is scheduled, so no future sprint quietly buries Teamsport under an existing tab. Teamsport Performance (§3) and Team Operations (§4) both live under this one destination; they remain separate capability domains internally, sharing the destination and the underlying athlete engine.
+
 ## 2. Architectural rule
 Sports-performance data follows the existing chain:
 

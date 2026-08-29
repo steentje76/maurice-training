@@ -12,7 +12,7 @@
 | P0 | **0 open** |
 | P1 | 0 |
 | P2 | 22 |
-| P3 | 4 |
+| P3 | 5 |
 | P4 | 2 |
 
 Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de volledige sluitingsgeschiedenis (F1-bevindingen + de execution-defecten uit de F2 Canonical-Training-Start-sprint + de latere GAP-P1-006-closure).
@@ -135,7 +135,12 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Target:** bij een toekomstige wiring van `unifiedLoad()` naar een live dashboard: expliciet testen dat multisport-parent-sessies niet dubbel meetellen. Geen productbeslissing hier gefabriceerd over wanneer/of dit gebouwd wordt.
 **Priority:** P2 (niet-kritiek — geen huidig, actief probleem; een architectuurwaarschuwing voor toekomstig werk). **Complexity:** S.
 
-### GAP-P2-017 (voorheen GAP-P1-005) — AI-adaptive-programmering, benchmark-gap t.o.v. Hevy Trainer — **STATUS: kern-capability CLOSED, productgat blijft**
+### GAP-P3-023 (nieuw, Athlete Dashboard 2.0-sprint) — verwarrende naamgeving: computeProgramProgress()'s "adherencePct" is een ander concept dan AdherenceIntelligenceCore
+**Capability-ID:** ADHERENCE-INTELLIGENCE-001
+**Current:** `computeProgramProgress()`/`computeProgramProgressPure()` (F4-erfenis, gebruikt bij programma-regeneratie en het weekoverzicht) berekenen `adherencePct` als `completed.length/blocks.length*100`, waarbij `blocks` het volledige programma kan omvatten inclusief toekomstige, nog-niet-uitgevoerde blokken. Dit is een ander concept ("programma-doorloop-percentage tijdens regeneratie-beslissingen") dan de nieuwe, canonieke `AdherenceIntelligenceCore` (die FUTURE-items expliciet uitsluit van de noemer) — maar de identieke veldnaam is verwarrend en kan tot onterechte aannames leiden dat beide hetzelfde meten.
+**Evidence:** CODE VERIFIED, vastgesteld tijdens de (inmiddels afgeronde) Athlete Dashboard 2.0-sprint, zie het bijbehorende sprintrapport in `docs/` (Dashboard 2.0, F7 Analytics & Athlete Intelligence).
+**Target:** een toekomstige naamsverduidelijking (bv. hernoemen naar `programCompletionPct`) om conceptuele verwarring te voorkomen. Geen berekeningswijziging nodig — de bestaande functie is voor haar eigen doel (regeneratie-context) correct, dit is uitsluitend een naamgevingsprobleem. Geen productbeslissing hier gefabriceerd over wanneer dit uitgevoerd wordt.
+**Priority:** P3 (niet-kritiek — geen functionele fout, uitsluitend naamgevingsverwarring). **Complexity:** S.
 **Gerelateerde capability:** de AI-programmagenererings-/adaptieve-weekregeneratie-capability (de veiligheidskritieke kerncapability is inmiddels gesloten — zie het sprintrapport voor de Adaptive Weekly Program Loop: canonieke exercise-ID-whitelist, preview+bevestiging, unified execution, en een nieuwe audit trail zijn allemaal technisch bevestigd)
 **Current:** Hevy Trainer (feb 2026) genereert een volledig, zelf-aanpassend trainingsprogramma. TK's rule/evidence-gestuurde weekregeneratie (`heergenereerResterendeWeken()`) is nu volledig veilig en auditeerbaar, maar vereist nog altijd expliciete gebruikersbevestiging per regeneratie — geen volautomatische, ongevraagde doorlopende aanpassing zoals Hevy.
 **Evidence:** Web (juni 2026, PRPath-vergelijking) + CODE VERIFIED.

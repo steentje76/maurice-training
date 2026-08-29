@@ -3057,6 +3057,11 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <!-- Weather 1.0 — beslissingscontext ("ga ik vandaag/buiten trainen?"), onder het plan, niet vóór de CTA. -->
     <div id="home-weather" class="hcoach-item" style="margin-bottom:14px"></div>
     <div id="home-weekstats" class="hcoach-item" style="margin-bottom:14px"></div>
+    <!-- F7 Dashboard 2.0 (MS-F7-05) — uitsluitend CONSUMPTIE van canonieke F7-outputs
+         (PlateauDetectionCore/AdherenceIntelligenceCore), geen eigen berekening hier.
+         Alleen zichtbaar wanneer er daadwerkelijk iets te melden is -- geen kaart bij
+         INSUFFICIENT_DATA/NOT_AVAILABLE. -->
+    <div id="home-f7-attention" class="hcoach-item" style="margin-bottom:14px"></div>
     <!-- S1 — "Recente vooruitgang": bestaande improvementsDigest (tot nu alleen op Stats) nu ook op Home. Presentatie-only, verschijnt alleen bij echte vooruitgang. -->
     <div id="home-improve" class="hcoach-item" style="margin-bottom:14px"></div>
     <div id="home-motivatie" class="hcoach-item" style="margin-bottom:4px"></div>
@@ -6047,7 +6052,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.16';
+const APP_VER = 'v4.69.17';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -21238,6 +21243,8 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
   // VANDAAG GEPLAND (met geïntegreerde programma-info)
   try{window.v43ProgInfo=await v43ProgramInfo();}catch(e){window.v43ProgInfo=null;}
   v43RenderPlan('home-plan',nextT);
+  // F7 DASHBOARD 2.0 (MS-F7-05) — uitsluitend consumptie van canonieke outputs, niet-blokkerend.
+  try{ renderF7Attention(); }catch(e){}
   // WEATHER 1.0 — beslissingscontext op Home (outdoor-variant: "ga ik buiten trainen?").
   // Opt-in; standaard toont een subtiele "Locatie gebruiken"-kaart. Weer past nooit de training aan.
   try{ if(typeof tkWeatherPaint==='function') tkWeatherPaint('home-weather','home',true,'run'); }catch(e){}
@@ -21298,6 +21305,59 @@ async function v43ProgramInfo(){
     }
   }catch(e){}
   return null;
+}
+
+// ── F7 DASHBOARD 2.0 (MS-F7-05) ──────────────────────────────────────────
+// Uitsluitend CONSUMPTIE van de canonieke F7-outputs (PlateauDetectionCore,
+// AdherenceIntelligenceCore) -- geen enkele berekening in deze functie zelf.
+// Toont alleen een kaart wanneer er daadwerkelijk een PLATEAU (nooit
+// STAGNATION_CANDIDATE -- te voorzichtig een label om als "aandachtspunt"
+// te tonen) of een lage adherence (met een bekend schema) is. Nooit een
+// kaart bij INSUFFICIENT_DATA/NOT_AVAILABLE -- geen fake empty-state-content.
+async function renderF7Attention(){
+  const el=document.getElementById('home-f7-attention'); if(!el) return;
+  const kaarten=[];
+  // -- Plateau: hergebruikt de al-opgehaalde sessiecache (tkRelData), geen extra query. --
+  try{
+    if(typeof PlateauDetectionCore!=='undefined' && typeof ProgressionCore!=='undefined'){
+      await tkRelData();
+      const sessies=_tkRelSessies||[];
+      const perOefening={};
+      sessies.forEach(function(s){
+        if(!s||!s.exercise_id||!s.date)return;
+        const w=parseFloat(s.weight),r=parseFloat(s.reps);
+        if(!isFinite(w)||!isFinite(r)||w<=0||r<=0)return;
+        (perOefening[s.exercise_id]=perOefening[s.exercise_id]||[]).push({key:s.exercise_id,date:s.date,e1rm:CalcCore.oneRMRaw(w,r)});
+      });
+      for(const exId in perOefening){
+        const hist=perOefening[exId];
+        const classificatie=PlateauDetectionCore.classify(hist,exId,'e1rm','max',ProgressionCore);
+        if(classificatie.status==='valid' && classificatie.state==='PLATEAU'){
+          const nm=(exercises.find(e=>e.id===exId)||{}).name||exId;
+          kaarten.push('<div class="v43-attn"><div class="v43-attn-ic">📊</div><div class="v43-attn-b">'+
+            '<div class="v43-attn-t">'+escHtml(nm)+': weinig verandering</div>'+
+            '<div class="v43-attn-s">De laatste '+classificatie.observation_count+' vergelijkbare sessies laten weinig verbetering zien.</div></div></div>');
+          break; // maximaal één plateau-kaart -- geen metric-wall
+        }
+      }
+    }
+  }catch(e){}
+  // -- Adherence: hergebruikt het al-opgehaalde actieve-programma-patroon. --
+  try{
+    if(typeof AdherenceIntelligenceCore!=='undefined' && typeof ScheduleAdherenceCore!=='undefined'){
+      const progs=await v43SafeGet('programs','&status=eq.actief&order=start_date.desc&limit=1');
+      if(progs&&progs.length){
+        const blocks=await v43SafeGet('program_blocks','&program_id=eq.'+progs[0].id);
+        const res=AdherenceIntelligenceCore.aggregate(blocks||[],td(),ScheduleAdherenceCore);
+        if(res.status==='valid' && res.percentage!=null && res.percentage<60){
+          kaarten.push('<div class="v43-attn"><div class="v43-attn-ic">📅</div><div class="v43-attn-b">'+
+            '<div class="v43-attn-t">Trainingsschema: '+res.percentage+'% uitgevoerd</div>'+
+            '<div class="v43-attn-s">'+res.completed+' van de '+res.planned_eligible+' geplande trainingen tot nu toe afgerond.</div></div></div>');
+        }
+      }
+    }
+  }catch(e){}
+  el.innerHTML=kaarten.length?kaarten.join(''):'';
 }
 // Gedeelde "Vandaag gepland"-kaart (Home + Training-tab). Integreert programma-info als chip.
 function v43RenderPlan(elId,nextT){

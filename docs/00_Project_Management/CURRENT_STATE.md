@@ -6,11 +6,11 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.69.16
+v4.69.17
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.69.16 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.69.17 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 28 augustus 2026
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 
@@ -22,7 +22,7 @@ v4.69.16
 - **F4 — Coach Intelligence: CLOSED — READY FOR F5 SELECTION.** Alle 6 F4-mastersprints eerlijk afgerond (MS-F4-01 blijft correct op TESTED, geen kunstmatige CLOSED). Volledig rapport: `docs/F4_MASTER_REPORT.md`.
 - **F5 — Connected Athlete: SOFTWARE CLOSED — REAL DEVICE VALIDATION OPEN.** Alle 6 F5-mastersprints afgerond. Volledig rapport: `docs/F5_MASTER_REPORT.md`.
 - **F6 — Endurance & Multisport Excellence: CLOSED — READY FOR F7 SELECTION.** Alle 6 F6-mastersprints afgerond. Volledig rapport: `docs/F6_MASTER_REPORT.md`.
-- **F7 — Longitudinal Athlete Intelligence: CURRENT (expliciet vrijgegeven door de Product Owner, 29 augustus 2026).** MS-F7-01: **CLOSED** — `LongitudinalTrendCore`. MS-F7-02: **CLOSED** — `PlateauDetectionCore`. MS-F7-03: **CLOSED** — `AdherenceIntelligenceCore`, adherence/consistency expliciet onderscheiden. MS-F7-04 (Relationship Intelligence): **CLOSED** — audit onthulde een reeds volledig bestaande, mature Relationship Discovery Engine (`core/relationship.js`, Sprint 19, ver vóór F6/F7): data-inventarisatie i.p.v. vaste lijst, `REL_MIN_KANDIDAAT=10` + een 5-laags confidence-schaal, een spreidingstoets tegen schijnverbanden, en expliciete `RELATIE_VERBODEN_WOORDEN`/`RELATIE_POPULATIE_WOORDEN`-lijsten (causaliteits- én populatieclaim-preventie). Al gewired in de UI (`RelationshipCore.discover()`). Belangrijke, methodologisch gefundeerde bevinding: het progressiebesluit is bewust NIET aan de variabelenregistratie toegevoegd wegens circulariteit met RPE — de vooraf gesuggereerde "adherence↔progressie"-relatie is dus al terecht afgewezen. Sabotagebewijs toegevoegd dat in het oudere testbestand ontbrak (72 bestaande asserts + 7 nieuwe). Geen nieuwe berekeningsengine gebouwd. **F7 open P1: 0.** Resterende F7-mastersprint (MS-F7-05) nog niet uitgevoerd.
+- **F7 — Longitudinal Athlete Intelligence: CURRENT (expliciet vrijgegeven door de Product Owner, 29 augustus 2026).** **Alle 5 F7-mastersprints afgerond:** MS-F7-01 (`LongitudinalTrendCore`), MS-F7-02 (`PlateauDetectionCore`), MS-F7-03 (`AdherenceIntelligenceCore`), MS-F7-04 (reeds bestaande `RelationshipCore` uit Sprint 19, geformaliseerd + sabotagebewijs toegevoegd; progressie bewust uitgesloten wegens circulariteit met RPE). MS-F7-05 (Athlete Dashboard 2.0): **CLOSED** — verplichte Shadow Calculation Audit uitgevoerd vóór UI-wijziging (geen F7-shadow-calculatie in `renderV43Home()` gevonden). Nieuwe Home-sectie (`renderF7Attention()`, container `#home-f7-attention`) consumeert uitsluitend `PlateauDetectionCore.classify()`/`AdherenceIntelligenceCore.aggregate()` — toont alleen een kaart bij de expliciete PLATEAU-state (nooit STAGNATION_CANDIDATE) of een laag, geldig adherence-percentage; lege container bij onvoldoende data. Genuine, niet-blokkerende naamgevingsverwarring gevonden (`computeProgramProgress()`'s "adherencePct" is een ander concept dan de canonieke F7-adherence) — gedocumenteerd als `GAP-P3-023`, bewust niet herschreven binnen deze sprint (productiekritieke, veelgebruikte functie met andere output-vorm). **F7 open P1: 0.** F7 Final Integration Audit en F7 Master Report volgen.
 - **Master Roadmap 2.0 v1.1 = CANONICAL** productstrategische bron. Repository blijft technische autoriteit. Zie `docs/DOCUMENTATION_GOVERNANCE.md`.
 - Volledige fasering (F0-F15): zie `docs/TRAININGSKOMPAS_MASTER_ROADMAP.md`. Volledige mastersprint-ID-migratie: zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md`.
 
@@ -41,7 +41,7 @@ Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
 ## 5. Current validation status
 - **Code:** CODE VERIFIED tegen `main` @ bovenstaande SHA
 - **DB:** VERIFIED — 69 tabellen, RLS gecontroleerd op alle tabellen, `gyms`-lek gesloten en geverifieerd via `SET LOCAL ROLE anon/authenticated/service_role`
-- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 123 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 126 stappen totaal), 125 automatisch uitgevoerd, 1 zichtbaar geskipt (fAndroidRelease.test.js zonder gereproduceerde buildmap), 0 gefaald
+- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 124 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 127 stappen totaal), 126 automatisch uitgevoerd, 1 zichtbaar geskipt (fAndroidRelease.test.js zonder gereproduceerde buildmap), 0 gefaald
 - **Integration:** wearable-sync getest tegen de echte handler-functie; overige integraties overwegend unit-getest
 - **Device:** **OPEN** — Concept2 PM5 en Google Health-sync hebben geen bevestigde real-device-validatie in productie
 - **UX:** niet apart beoordeeld in de laatste consolidatiesprint (38 top-level schermen geïnventariseerd, geen flow-niveau UX-testdekking)

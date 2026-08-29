@@ -1,5 +1,30 @@
 # Trainingskompas — Changelog
 
+## v4.69.17 — MS-F7-05: Athlete Dashboard 2.0 (29 augustus 2026)
+
+Vijfde en laatste F7-mastersprint. Sluit MS-F7-05.
+
+**Verplichte Shadow Calculation Audit uitgevoerd vóór enige UI-wijziging.**
+Geen F7-shadow-calculatie gevonden in `renderV43Home()` zelf. Genuine,
+gedocumenteerde bevinding: `computeProgramProgress()` (F4-erfenis) gebruikt
+een verwarrend-gelijknamig maar conceptueel ander "adherencePct"
+(programma-doorloop, inclusief toekomstige blokken) -- niet gerepareerd
+binnen deze sprint (productiekritieke, veelgebruikte functie), vastgelegd
+als niet-blokkerend GAP-P3-023.
+
+**Nieuw:** een kleine Dashboard 2.0-sectie (`renderF7Attention()`, container
+`#home-f7-attention`) die uitsluitend `PlateauDetectionCore.classify()` en
+`AdherenceIntelligenceCore.aggregate()` consumeert -- geen enkele eigen
+berekening. Toont alleen een kaart bij de expliciete PLATEAU-state (nooit
+STAGNATION_CANDIDATE) of een geldig, laag adherence-percentage. Lege
+container bij onvoldoende data -- geen fake content.
+
+Nieuwe testsuite `core/fDashboardF7Consumption.test.js` (9/9). Sabotagebewijs
+geleverd.
+
+`APP_VER` → v4.69.17, `CACHE_NAME`/`CACHE_STATIC` en Android
+`versionCode`/`versionName` meegenomen.
+
 ## v4.69.16 — MS-F7-03: Adherence & Consistency Intelligence (29 augustus 2026)
 
 Derde F7-mastersprint. Sluit MS-F7-03.

@@ -945,7 +945,7 @@
       "E6.4"
     ],
     "priority": "P2",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F4-04",
       "MS-F3-07"
@@ -3321,5 +3321,19 @@
     "device_validation": "N/A",
     "evidence_status": "N/A",
     "next_action": "zie MS-F4-03 (CLOSED). Lift-by-lift stagnatiedetectie (computeExerciseTrends/trendBy) bestond al, deterministisch, gebonden aan een expliciete niet-herberekenen-promptinstructie. Recommendation Trace Matrix opgesteld. GAP-P2-016 herbeoordeeld: blijft P2 (numerieke toepassing al deterministisch geborgd via ai_guard.v1)."
+  },
+  {
+    "id": "SCHEDULE-ADHERENCE-001",
+    "type": "capability",
+    "track": "Decision & Rules Engine",
+    "phase": "F4",
+    "priority": "P2",
+    "status": "VALIDATED",
+    "target": "VALIDATED",
+    "dependencies": [],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "N/A",
+    "next_action": "zie MS-F4-05 (CLOSED). ScheduleAdherenceCore bevestigd puur deterministisch en actief gebruikt (event-proximity voedt zelfs buildCtx()). Conflict-detectie nooit stille overschrijving, bevestigd via sabotagebewijs. sessionsMissed() geëxporteerd maar niet gekoppeld aan UI -- niet-kritieke observatie."
   }
 ]

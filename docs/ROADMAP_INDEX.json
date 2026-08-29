@@ -1050,7 +1050,7 @@
       "E11.3"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F5-01"
     ],
@@ -3002,7 +3002,7 @@
     "software_validation": "PASS",
     "device_validation": "OPEN",
     "evidence_status": "N/A",
-    "next_action": "zie MS-F5-03"
+    "next_action": "zie MS-F5-03 (CLOSED). Bevestigd: uitsluitend Google Health API (cloud OAuth), geen native Android Health Connect-SDK. Minimale, read-only scopes bevestigd. Product-besluitpunt over een eventuele aanvullende Health Connect-SDK vastgelegd in F5_PRODUCT_OWNER_DECISIONS.md."
   },
   {
     "id": "DEV-WEARSYNC-001",
@@ -3016,7 +3016,7 @@
     "software_validation": "PASS",
     "device_validation": "OPEN",
     "evidence_status": "N/A",
-    "next_action": "zie MS-F5-03"
+    "next_action": "zie MS-F5-03 (CLOSED). End-to-end gevalideerd: 7-dagen-sync-grens, idempotente atomaire upsert (F3-erfenis), no-wearable-garantie bevestigd. Geen Health Connect-aggregatie-scenario van toepassing (geen Health Connect-integratie aanwezig)."
   },
   {
     "id": "END-HYROX-001",

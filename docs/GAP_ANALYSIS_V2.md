@@ -10,8 +10,8 @@
 | Prioriteit | Aantal |
 |---|---|
 | P0 | **0 open** |
-| P1 | 2 |
-| P2 | 15 |
+| P1 | 1 |
+| P2 | 16 |
 | P3 | 4 |
 | P4 | 2 |
 
@@ -92,13 +92,13 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Target:** `recoveryScore()` uitbreiden met hetzelfde soort kwaliteitsfilter dat `readinessDay()` al gebruikt.
 **Priority:** P2 (niet-kritiek — Recovery Score is altijd een aanvullend, informatief getal, nooit de directe bron van een Decision Rule-uitkomst zelf). **Complexity:** S.
 
-### GAP-P1-003 — AI-outputcontract ontbreekt
-**Capability-ID:** AI-OUTPUT-CONTRACT-001 (**expliciet onderscheiden van de reeds gesloten security-capability voor dezelfde proxy**, zie sectie "CLOSED GAPS / HISTORICAL" en Capability Registry — dit is een governance-gat, geen security-gat)
-**Current:** `coach.js`/`buildCtx()` zijn security-getest (JWT, open-proxy-regressie — zie de historische P0-002-sluiting hierboven) maar er is geen technische controle die een AI-antwoord blokkeert als het een niet-onderbouwd cijfer noemt of diagnose-achtige taal gebruikt.
-**Evidence:** CODE VERIFIED — `scientificEvidence.js` beschermt Decision Rules, niet de vrije AI-tekst zelf (zie Product Architecture §5).
-**Target:** contracttest op het AI-responsschema (MS-F4-01).
-**Dependency:** EVID-SCI-001.
-**Priority:** P1. **Complexity:** M. **Roadmap phase:** **F4** (gecorrigeerd van F2 — de roadmap-index-bestemming is MS-F4-01, AI Output Contract & Guardrails, na de Calculation/Context/Decision/Evidence-dependencies; F2 was stale).
+### GAP-P2-016 (voorheen GAP-P1-003) — AI-outputcontract, resterend structured-JSON-gat — **STATUS: DEELS GESLOTEN (TESTED, niet CLOSED)**
+**Capability-ID:** AI-OUTPUT-CONTRACT-001
+**Current (bijgewerkt na MS-F4-01):** `core/aiOutputContract.js` (nieuw) is een patroon-gebaseerde semantische validator die coach-proza weigert bij diagnose-taal, HRV-als-diagnose, ACWR-als-blessurevoorspeller, of prompt-injectie-signalen — gekoppeld aan alle 3 vrije-tekst-AI-paden, met sabotagebewijs. De opdracht-geschetste, volledige structured-JSON-outputcontract met referentie-validatie tegen canonieke Calculation/Decision-ID's is NIET gebouwd (zou een architectuurverandering van vrije coachtaal naar gestructureerde JSON vereisen — momenteel niet gerechtvaardigd door de risico-omvang, zie `docs/MS-F4-01_AI_OUTPUT_CONTRACT.md`).
+**Evidence:** CODE VERIFIED + `core/fAiOutputContract.test.js` 17/17, sabotagebewijs geleverd.
+**Target:** eventueel toekomstig structured-JSON-outputcontract, alleen indien de productrisico-omvang dat ooit rechtvaardigt (`PRODUCT_DECISION_REQUIRED` indien gewenst).
+**Dependency:** EVID-SCI-001 (voldaan).
+**Priority:** P2 — **hernummerd van GAP-P1-003** (het belangrijkste, aantoonbare risico — diagnose-/medische taal — is nu technisch afgedwongen; het resterende gat is architecturaal, geen actief veiligheidsrisico, dus terecht P2, niet langer P1). **Complexity:** L (indien ooit volledig gebouwd). **Roadmap phase:** F4 (MS-F4-01, status TESTED).
 
 ### GAP-P1-005 — AI-adaptive-programmering-gat t.o.v. Hevy Trainer
 **Capability-ID:** AI-PROGRAM-AUTOGEN-001

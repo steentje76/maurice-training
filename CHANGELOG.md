@@ -1,5 +1,51 @@
 # Trainingskompas — Changelog
 
+## v4.69.8 — MS-F4-01: AI Output Contract & Guardrails (29 augustus 2026)
+
+Eerste F4-mastersprint (F4 expliciet vrijgegeven na F3 CONDITIONALLY CLOSED).
+Sluit `AI-OUTPUT-CONTRACT-001`.
+
+**Baseline audit** (`docs/AI_CALL_PATH_INVENTORY.md`): repo-breed slechts 2 bestanden
+en 6 client-side aanroeppunten raken de AI-laag — een klein, volledig overzichtelijk
+oppervlak. Kernbevinding: `netlify/functions/coach.js` is een pure doorgeefluik —
+gaf de ruwe Anthropic-respons ongevalideerd, ongefilterd door aan de client.
+
+**Shadow Decision Audit**: alle 6 prompts gelezen — geen enkele bevat verborgen,
+dubbele Decision-logica (geen "if HRV < X then...", "if ACWR..." e.d.). Bevestigd:
+Trainingskompas heeft al twee substantiële, bestaande veiligheidslagen die deze
+sprint niet opnieuw hoefde te bouwen — `parseProgrammaJSON()` (canonieke exercise-
+ID-whitelist voor programma-generatie, met preview+bevestiging vóór opslaan) en
+`CalcCore.validateProposedWeight()`/`ai_guard.v1` (deterministische plausibiliteits-
+check op AI-voorgestelde gewichten vóór toepassing, gebruiker voltooit zelf de set).
+
+**Nieuw gebouwd:** `core/aiOutputContract.js` — een deterministische, pure semantische
+validator voor de PROZA-tekst die de coach toont (het gat dat wél openstond): weigert
+tekst met diagnose-taal, HRV-als-diagnose-taal, ACWR-als-blessurevoorspeller-taal, en
+detecteert prompt-injectie-signalen. Bij afwijzing: canonieke, veilige fallbacktekst —
+nooit de ruwe, afgekeurde respons tonen.
+
+Gekoppeld aan de 3 vrije-tekst-call sites (chat, post-workout-terugblik, prog-advies-
+uitleg). **Aanvullende, tijdens deze sprint gevonden bevinding gefixed:** de opgeslagen
+chatgeschiedenis (in-memory én `chat_history`-tabel) sloeg altijd de RUWE respons op,
+ook als die door de validator zou zijn afgekeurd — waardoor een afgewezen tekst bij de
+volgende beurt alsnog als "eigen eerder antwoord" naar het model terug zou gaan. Nu
+slaat de geschiedenis altijd exact op wat de gebruiker te zien kreeg.
+
+Adversarial testsuite `core/fAiOutputContract.test.js` (17/17) met de exacte
+voorbeeldzinnen uit de opdracht ("Negeer eerdere instructies", "Je blessurerisico is
+67%", etc.), plus een bypass-audit (alle 6 aanroeppunten geverifieerd: 0 kritieke
+bypass) en sabotagebewijs (de validator tijdelijk altijd `valid` laten teruggeven,
+alle 6 kritieke adversarial-checks faalden zoals verwacht, teruggedraaid).
+
+`APP_VER` → v4.69.8, `CACHE_NAME`/`CACHE_STATIC` en Android `versionCode`/
+`versionName` meegenomen (nieuwe `core/aiOutputContract.js` toegevoegd aan de
+service-worker-precache).
+
+**AI-OUTPUT-CONTRACT-001: gedeeltelijk technisch afgedwongen** — zie
+`docs/MS-F4-01_AI_OUTPUT_CONTRACT.md` voor de volledige, eerlijke maturity-beoordeling
+(niet alle 26 matrixcategorieën uit de opdracht zijn met een volledig JSON-schema-
+gebaseerde validator gedekt; de huidige aanpak is patroon-gebaseerd op de proza-tekst).
+
 ## v4.69.7 — F3 Closure Hotfix: GAP-P1-008 (hrv_log concurrency) (29 augustus 2026)
 
 Sluit het tijdens de F3 Final Integration Audit ontdekte, bewezen race-condition-risico

@@ -2618,7 +2618,7 @@
     ],
     "epics": [],
     "priority": "P2",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F4-04"
     ],
@@ -3335,5 +3335,19 @@
     "device_validation": "N/A",
     "evidence_status": "N/A",
     "next_action": "zie MS-F4-05 (CLOSED). ScheduleAdherenceCore bevestigd puur deterministisch en actief gebruikt (event-proximity voedt zelfs buildCtx()). Conflict-detectie nooit stille overschrijving, bevestigd via sabotagebewijs. sessionsMissed() geëxporteerd maar niet gekoppeld aan UI -- niet-kritieke observatie."
+  },
+  {
+    "id": "BENCHMARK-TRACKING-001",
+    "type": "capability",
+    "track": "AI Coach",
+    "phase": "F4",
+    "priority": "P2",
+    "status": "VALIDATED",
+    "target": "VALIDATED",
+    "dependencies": [],
+    "software_validation": "N/A",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F4-06 (CLOSED). Actueel webonderzoek (augustus 2026): Hevy Trainer bevestigd een algoritme (geen AI/LLM), gebruikt geen herstelsignalen als input. Eerlijke, genuanceerde herpositionering vastgelegd, geen overbouwde infrastructuur voor dit P2-item."
   }
 ]

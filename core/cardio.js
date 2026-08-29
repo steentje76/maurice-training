@@ -19,7 +19,7 @@
 (function (global) {
   'use strict';
 
-  var VERSIONS = { time: 'cardio_time.v1', split: 'cardio_split.v1', power: 'cardio_power.v1', criticalSpeed: 'critical_speed.v1' };
+  var VERSIONS = { time: 'cardio_time.v1', split: 'cardio_split.v1', power: 'cardio_power.v1', criticalSpeed: 'critical_speed.v1', criticalPower: 'critical_power.v1' };
 
   // --- cardio_time.v1 (parse) --- exact gelijk aan legacy parseTimeToSec.
   // "mm:ss" of "h:mm:ss" of los getal -> seconden. Legacy-quirk behouden: leeg/ongeldig -> null.
@@ -200,6 +200,58 @@
     };
   }
 
+  // --- critical_power.v1 (MS-F6-02) ---------------------------------------
+  // Analoog aan critical_speed.v1, maar het canonieke Critical Power-model
+  // (Monod & Scherrer 1965; Moritani et al. 1981 toegepast op fietsen) gebruikt
+  // TOTAAL VERRICHT WERK (joule = gemiddeld vermogen × tijd) als afhankelijke
+  // variabele, niet afstand: werk = CP·tijd + W' (W' = anaerobe werkcapaciteit).
+  // Dit is de correcte, in de literatuur gestandaardiseerde formulering (niet
+  // simpelweg "vermogen over tijd uitzetten", wat een ander, minder robuust model zou zijn).
+  //
+  // KRITIEKE, EERLIJKE BEPERKING (identiek aan criticalSpeed(), F6 Entry Audit):
+  // het TK-datamodel heeft geen mechanisme om een gelogde rit te markeren als een
+  // genuine maximale-inspanning-tijdrit versus een rustige duurrit. Deze functie
+  // wordt daarom NOOIT automatisch op trainingsgeschiedenis gewired.
+  //
+  // Vereist minimaal 2 performances met aantoonbaar verschillende duren.
+  function criticalPower(performances) {
+    if (!Array.isArray(performances)) return { status: 'invalid', reason: 'not_array' };
+    var valid = performances.filter(function (p) {
+      return p && isFinite(p.avg_power_w) && isFinite(p.duration_s) && p.avg_power_w > 0 && p.duration_s > 0;
+    });
+    if (valid.length < 2) return { status: 'insufficient', reason: 'min_2_performances_required', n: valid.length };
+    var durations = valid.map(function (p) { return p.duration_s; });
+    var uniqueDurations = durations.filter(function (v, i) { return durations.indexOf(v) === i; });
+    if (uniqueDurations.length < 2) return { status: 'insufficient', reason: 'durations_not_distinct', n: valid.length };
+    var work = valid.map(function (p) { return { t: p.duration_s, w: p.avg_power_w * p.duration_s }; });
+    var n = work.length;
+    var sumT = 0, sumW = 0, sumTT = 0, sumTW = 0;
+    work.forEach(function (p) {
+      sumT += p.t; sumW += p.w; sumTT += p.t * p.t; sumTW += p.t * p.w;
+    });
+    var denom = (n * sumTT - sumT * sumT);
+    if (denom === 0) return { status: 'insufficient', reason: 'degenerate_regression', n: n };
+    var cp = (n * sumTW - sumT * sumW) / denom; // watt
+    var wPrime = (sumW - cp * sumT) / n; // joule
+    if (!isFinite(cp) || cp <= 0) return { status: 'invalid', reason: 'non_positive_cp' };
+    var meanW = sumW / n;
+    var ssTot = 0, ssRes = 0;
+    work.forEach(function (p) {
+      var pred = cp * p.t + wPrime;
+      ssRes += Math.pow(p.w - pred, 2);
+      ssTot += Math.pow(p.w - meanW, 2);
+    });
+    var rSquared = (ssTot === 0) ? null : (1 - ssRes / ssTot);
+    var confidence = (n >= 3 && rSquared != null && rSquared >= 0.95) ? 'hoog'
+      : (n >= 2 && rSquared != null && rSquared >= 0.85) ? 'middel' : 'laag';
+    return {
+      status: 'valid', schema: 'critical_power.v1',
+      cp_w: cp, w_prime_j: (wPrime > 0 ? wPrime : 0),
+      n_performances: n, r_squared: rSquared, confidence: confidence,
+      limitations: 'Vereist genuine maximale-inspanningsprestaties (geen duurritten); model minder betrouwbaar buiten het 2-15 min-duurbereik; TK identificeert zelf geen tijdritten in trainingsgeschiedenis. Dit is een technisch/fysiologisch model, geen vervanging voor een FTP-testprotocol.'
+    };
+  }
+
   var CardioCore = {
     parseTime: parseTime,
     formatTime: formatTime,
@@ -215,6 +267,7 @@
     stationDurationS: stationDurationS,
     segmentTransitionS: segmentTransitionS,
     criticalSpeed: criticalSpeed,
+    criticalPower: criticalPower,
     VERSIONS: VERSIONS
   };
 

@@ -6044,7 +6044,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.11';
+const APP_VER = 'v4.69.12';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -18515,7 +18515,7 @@ COACHING-RICHTLIJNEN: Analyseer WOD-resultaten (tijd/rondes/reps), adviseer scha
 BLESSURE-ALTERNATIEVEN: veelvoorkomend zijn schouder, pols, elleboog, knie, onderrug, achillespees — geef geschikte alternatieven en aangepaste workloads.`,
 
   hyrox: `IDENTITEIT: HYROX — gestandaardiseerde wedstrijd van 8× 1km hardlopen afgewisseld met 8 vaste functionele stations (SkiErg, Sled Push/Pull, Burpee Broad Jumps, Row, Farmer Carry, Sandbag Lunges, Wall Balls); exact hetzelfde format wereldwijd, dus prestaties zijn direct vergelijkbaar.
-COACHING-RICHTLIJNEN: Herken zwakke onderdelen/stations, voorspel racepace, adviseer intervaltraining, prioriteer zwakke stations, geef pacing-advies per kilometer, houd rekening met herstel tussen stations. Analyseer lopen en stations afzonderlijk én gecombineerd; bereken waar de meeste tijdwinst mogelijk is.
+COACHING-RICHTLIJNEN: Herken zwakke onderdelen/stations, leg racepace-verwachtingen uit op basis van reeds gelogde data (geen eigen voorspelling), adviseer intervaltraining, prioriteer zwakke stations, geef pacing-context per kilometer op basis van eerdere sessies, houd rekening met herstel tussen stations. Analyseer lopen en stations afzonderlijk én gecombineerd, aan de hand van reeds berekende cijfers — verzin nooit een tijdwinst-schatting zonder onderliggende data.
 BLESSURE-ALTERNATIEVEN: veelvoorkomend zijn knie, onderrug, achillespees, schouder, onderarm — adviseer alternatieve trainingen bij klachten.`,
 
   hardlopen: `IDENTITEIT: Hardlopen — duursport; prestaties bepaald door uithoudingsvermogen, loopsnelheid, loopefficiëntie en belastbaarheid.
@@ -18527,7 +18527,7 @@ COACHING-RICHTLIJNEN: Balanceer trainingsbelasting tussen de drie disciplines, p
 BLESSURE-ALTERNATIEVEN: veelvoorkomend zijn schouder, knie, achillespees, onderrug, nek — stel alternatieve trainingen voor en pas belasting per discipline aan.`,
 
   swimming: `IDENTITEIT: Zwemmen — technische duursport waarbij efficiëntie en techniek minstens zo belangrijk zijn als snelheid en uithoudingsvermogen.
-COACHING-RICHTLIJNEN: Herbereken CSS (Critical Swim Speed) als basis voor trainingszones, adviseer trainingsintensiteit, beveel techniektraining aan, pas intervalsets aan, bewaak herstel. Prioriteer techniek boven intensiteit, analyseer efficiëntie (SWOLF) naast snelheid, houd rekening met zwembad vs. open water.
+COACHING-RICHTLIJNEN: Leg CSS (Critical Swim Speed) en trainingszones uit op basis van reeds berekende waarden (AI berekent of herberekent CSS zelf nooit), adviseer trainingsintensiteit binnen die bestaande zones, beveel techniektraining aan, pas intervalsets aan, bewaak herstel. Prioriteer techniek boven intensiteit, bespreek efficiëntie (SWOLF) naast snelheid aan de hand van bestaande cijfers, houd rekening met zwembad vs. open water.
 BLESSURE-ALTERNATIEVEN: veelvoorkomend zijn schouder, nek, onderrug, knie (schoolslag), pols — pas techniek en belasting aan.`,
 
   weightlifting: `IDENTITEIT: Olympic Weightlifting — twee wedstrijdliften (Snatch, Clean & Jerk); succes bepaald door techniek, explosiviteit, mobiliteit en maximale kracht, techniek staat altijd centraal.
@@ -18535,11 +18535,11 @@ COACHING-RICHTLIJNEN: Volg techniekontwikkeling, adviseer belasting als percenta
 BLESSURE-ALTERNATIEVEN: veelvoorkomend zijn pols, schouder, knie, onderrug, elleboog — pas techniek en belasting aan, adviseer alternatieven.`,
 
   wielrennen: `IDENTITEIT: Wielrennen — duursport waarin uithoudingsvermogen, vermogen, tactiek en efficiëntie samenkomen (weg, gravel, mountainbike, indoor).
-COACHING-RICHTLIJNEN: Pas vermogenszones aan, herschat FTP, adviseer herstel, plan intervaltraining, herken overbelasting. Gebruik vermogen als primaire trainingsparameter, combineer met hartslag en herstel, houd rekening met terrein, wind en hoogtemeters.
+COACHING-RICHTLIJNEN: Leg vermogenszones uit op basis van reeds berekende waarden (AI herschat FTP zelf nooit — een FTP-update komt uitsluitend uit de deterministische Calculation Engine of een expliciete gebruikersinvoer), adviseer herstel, plan intervaltraining, herken overbelasting. Gebruik vermogen als primaire trainingsparameter, combineer met hartslag en herstel, houd rekening met terrein, wind en hoogtemeters.
 BLESSURE-ALTERNATIEVEN: veelvoorkomend zijn knie, onderrug, nek, schouder, achillespees, handen/polsen — weeg belasting en fietspositie mee.`,
 
   roeien: `IDENTITEIT: Roeien — duursport waarbij kracht, techniek, ritme en cardiovasculaire capaciteit samenkomen; op water of ergometer (Concept2).
-COACHING-RICHTLIJNEN: Adviseer trainingszones, voorspel 2K/5K-prestaties, beveel techniektraining aan, signaleer overbelasting, bewaak herstel. Gebruik split en vermogen als primaire prestatie-indicatoren, houd onderscheid tussen water- en ergometertraining.
+COACHING-RICHTLIJNEN: Leg trainingszones uit op basis van reeds berekende waarden, bespreek 2K/5K-trends aan de hand van eerder gelogde resultaten (AI voorspelt zelf geen toekomstige prestatie), beveel techniektraining aan, signaleer overbelasting, bewaak herstel. Gebruik split en vermogen als primaire prestatie-indicatoren, houd onderscheid tussen water- en ergometertraining.
 BLESSURE-ALTERNATIEVEN: veelvoorkomend zijn onderrug, ribstress, knie, pols, schouder — pas belasting aan en adviseer alternatieve training.`,
 
   calisthenics: `IDENTITEIT: Calisthenics — lichaamsgewicht-training gericht op kracht, controle, mobiliteit en balans; techniek en lichaamscontrole gaan vóór extra belasting, skills worden stapsgewijs opgebouwd.

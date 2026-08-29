@@ -121,12 +121,12 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Target:** eventueel een expliciete precedentieregel vastleggen (bv. PM5-hartslag heeft voorrang tijdens een erg-sessie), alleen indien een concrete productbehoefte dit vereist — geen productbeslissing hier gefabriceerd.
 **Priority:** P2 (niet-kritiek — geen incorrecte datavermenging, alleen een onbesliste keuze bij een zeldzaam gelijktijdig-bronnen-scenario). **Complexity:** S.
 
-### GAP-P2-021 (nieuw, Running Intelligence-sprint) — Critical Speed niet gewired op trainingsgeschiedenis
-**Capability-ID:** RUNNING-INTELLIGENCE-001
-**Current:** `CardioCore.criticalSpeed()` (Monod & Scherrer 1965-model) is geïmplementeerd en getest, maar wordt bewust niet automatisch gevoed met trainingsgeschiedenis. Het TK-datamodel heeft geen mechanisme om een gelogde sessie te markeren als een genuine maximale-inspanning-tijdrit versus een rustige duurloop — automatische wiring op willekeurige sessiedata zou een wetenschappelijk ongeldig model opleveren.
-**Evidence:** CODE VERIFIED, zie het Running Intelligence-sprintrapport in `docs/`.
-**Target:** een expliciet "tijdrit"-markeringsmechanisme (bv. een sessievlag of los invoerscherm voor time-trial-resultaten), alleen indien een concrete productbehoefte dit rechtvaardigt — geen productbeslissing hier gefabriceerd over hoe dit eruit zou moeten zien.
-**Priority:** P2 (niet-kritiek — de calculation zelf is correct en veilig; het ontbreekt uitsluitend aan een user-facing invoerpad). **Complexity:** M.
+### GAP-P2-021 (nieuw, Running/Cycling Intelligence-sprints) — Critical Speed/Power niet gewired op trainingsgeschiedenis
+**Capability-ID:** RUNNING-INTELLIGENCE-001, CYCLING-INTELLIGENCE-001
+**Current:** `CardioCore.criticalSpeed()` (running) en `CardioCore.criticalPower()` (cycling) zijn beide geïmplementeerd en getest, maar worden bewust niet automatisch gevoed met trainingsgeschiedenis. Het TK-datamodel heeft geen mechanisme om een gelogde sessie te markeren als een genuine maximale-inspanning-tijdrit versus een rustige duurloop/duurrit — automatische wiring op willekeurige sessiedata zou een wetenschappelijk ongeldig model opleveren.
+**Evidence:** CODE VERIFIED, zie de Running Intelligence- en Cycling Intelligence-sprintrapporten in `docs/`.
+**Target:** een expliciet "tijdrit"-markeringsmechanisme (bv. een sessievlag of los invoerscherm voor time-trial-resultaten), alleen indien een concrete productbehoefte dit rechtvaardigt — geen productbeslissing hier gefabriceerd over hoe dit eruit zou moeten zien. Eén oplossing zou beide sporten tegelijk bedienen.
+**Priority:** P2 (niet-kritiek — beide calculations zijn correct en veilig; het ontbreekt uitsluitend aan een user-facing invoerpad). **Complexity:** M.
 
 ### GAP-P2-017 (voorheen GAP-P1-005) — AI-adaptive-programmering, benchmark-gap t.o.v. Hevy Trainer — **STATUS: kern-capability CLOSED, productgat blijft**
 **Gerelateerde capability:** de AI-programmagenererings-/adaptieve-weekregeneratie-capability (de veiligheidskritieke kerncapability is inmiddels gesloten — zie het sprintrapport voor de Adaptive Weekly Program Loop: canonieke exercise-ID-whitelist, preview+bevestiging, unified execution, en een nieuwe audit trail zijn allemaal technisch bevestigd)

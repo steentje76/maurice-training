@@ -1,5 +1,45 @@
 # Trainingskompas — Changelog
 
+## v4.69.7 — F3 Closure Hotfix: GAP-P1-008 (hrv_log concurrency) (29 augustus 2026)
+
+Sluit het tijdens de F3 Final Integration Audit ontdekte, bewezen race-condition-risico
+op `hrv_log` op. Live forensische audit bevestigde 4 duplicate `(user_id,date)`-paren:
+3 identieke race-condities (geen dataverlies) en 1 paar met echte datadivergentie
+(`rhr=null` vs. `rhr=57`).
+
+**Root cause:** geen `UNIQUE(user_id,date)`-constraint; schrijfpaden gebruikten een
+niet-atomair lees-dan-beslis-PATCH/POST-patroon.
+
+**Oplossing:** `migratie_v500.sql` (live uitgevoerd en geverifieerd) — (1) archiveert
+alle betrokken originele rijen naar `hrv_log_archive_v500` (permanent, reversibel);
+(2) reconcilieert de 4 groepen per de vooraf vastgelegde `docs/DAILY_HEALTH_FIELD_
+RECONCILIATION_CONTRACT.md` (union-merge per veld, geen dataverlies, geen conflicterende
+gevallen gevonden — geen productbeslissing nodig); (3) verifieert live nul resterende
+duplicaten vóórdat; (4) een `UNIQUE(user_id,date)`-constraint wordt toegevoegd; (5) een
+nieuwe, atomaire `upsert_daily_health`-Postgres-functie (`SECURITY DEFINER`,
+`INSERT..ON CONFLICT..DO UPDATE`) lost het lost-update-probleem structureel op — concurrente
+schrijvers serialiseren op rij-niveau in de database, per veld gemerged, provenance
+(`hrv_source`/`rhr_source`/`sleep_source`) volgt altijd de bijbehorende waarde.
+
+Beide bestaande schrijfpaden (`upsertHrvLog()` client, `wearable-sync.js` server)
+omgebouwd naar deze RPC — het oude read-then-write-patroon bestaat niet meer.
+Live functioneel getest: het kritieke mixed-source-scenario (wearable-HRV +
+handmatige RHR-aanvulling in twee opeenvolgende aanroepen) resulteert in exact
+één rij met correcte per-veld-provenance.
+
+**Aanvullende, gerelateerde bevinding meegenomen:** `core/deviceIntegration.js`'s
+`pickLatestMetric()` toonde provenance nog via de oude, minder precieze rij-niveau
+`note`-tag in plaats van de nieuwe per-veld-kolommen uit MS-F3-10. Bijgewerkt om de
+kolom te prefereren, met terugval op de tag voor historische rijen (backward
+compatible).
+
+Nieuwe regressietest `core/fHrvConcurrencyClosure.test.js` (15/15, sabotagebewijs
+geleverd). Bestaande `core/fWearableSyncHandler.test.js` bijgewerkt naar de nieuwe
+RPC-architectuur (43/43, geen functioneel gedrag gewijzigd). `APP_VER` → v4.69.7,
+`CACHE_NAME`/`CACHE_STATIC` en Android `versionCode`/`versionName` meegenomen.
+
+**GAP-P1-008: CLOSED.**
+
 ## v4.69.6 — MS-F3-10: Explainability & Provenance — GAP-P1-007 Closure (28 augustus 2026)
 
 Tiende, kritieke F3-mastersprint. Sluit het sinds MS-F3-03 bekende architectuurgat:

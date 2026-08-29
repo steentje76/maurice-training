@@ -3253,7 +3253,7 @@
     "software_validation": "PASS",
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
-    "next_action": "zie MS-F3-10 (CLOSED). GAP-P1-007 CLOSED: per-veld hrv_log-provenance live gemigreerd (migratie_v499.sql), beide schrijfpaden bijgewerkt, mixed-source-scenario functioneel getest. Decision Evidence-snapshot immutability bewezen (niet aangenomen)."
+    "next_action": "zie MS-F3-10 (CLOSED) + F3 Closure Hotfix (CLOSED). GAP-P1-007 CLOSED (per-veld hrv_log-provenance). GAP-P1-008 CLOSED (migratie_v500.sql: UNIQUE(user_id,date) + atomaire upsert_daily_health-RPC, live geverifieerd, 0 resterende duplicaten)."
   },
   {
     "id": "CALC-EVIDENCE-SPEC-001",
@@ -3273,5 +3273,21 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "zie MS-F3-11 (CLOSED). docs/CALCULATION_EVIDENCE_SPEC.md is het canonieke formele specificatiedocument, consolideert alle F3-registries."
+  },
+  {
+    "id": "HRV-LOG-ATOMICITY-001",
+    "type": "capability",
+    "track": "Evidence & Provenance",
+    "phase": "F3",
+    "priority": "P1",
+    "status": "VALIDATED",
+    "target": "VALIDATED",
+    "dependencies": [
+      "PROVENANCE-EXPLAINABILITY-001"
+    ],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F3-11 en de daaropvolgende F3 Closure Hotfix (beide CLOSED). Live gemigreerd: UNIQUE(user_id,date) + atomaire upsert_daily_health-RPC. Beide schrijfpaden omgebouwd."
   }
 ]

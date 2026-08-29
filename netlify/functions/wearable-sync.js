@@ -172,20 +172,31 @@ exports.handler = async function (event) {
     for (const [date, vals] of Object.entries(byDate)) {
       const cls = LIB.classifyWrite(vals, false); // voorlopige klasse; existing bepaalt update vs import
       if (cls === 'skipped') { skipped++; if (date === todayAms) todayWrite = 'skipped'; continue; }
-      // DETERMINISTISCH: zonder expliciete order geeft PostgREST een willekeurige rij terug.
-      // Zolang er (nog) geen UNIQUE(user_id,date) op hrv_log staat, kan er meer dan één rij
-      // per datum bestaan; de app toont overal de NIEUWSTE (order=date.desc,created_at.desc).
-      // Wij moeten dus exact die rij bijwerken, anders schrijft de sync naar een rij die
-      // niemand ziet en lijkt Fitbit "niet te synchroniseren".
-      const existingRes = await fetch(`${supabaseUrl}/rest/v1/hrv_log?user_id=eq.${userId}&date=eq.${date}&order=created_at.desc&limit=1`, { headers: sbHeaders });
-      const [existing] = await sbRows(existingRes, 'hrv_log');
-      const built = LIB.buildRow(date, userId, vals, existing);
-      if (existing) {
-        await fetch(`${supabaseUrl}/rest/v1/hrv_log?id=eq.${existing.id}`, { method: 'PATCH', headers: { ...sbHeaders, Prefer: 'return=minimal' }, body: JSON.stringify(built.row) });
-        updated++; if (date === todayAms) todayWrite = 'updated';
-      } else {
-        await fetch(`${supabaseUrl}/rest/v1/hrv_log`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'return=minimal' }, body: JSON.stringify(built.row) });
-        imported++; if (date === todayAms) todayWrite = 'imported';
+      // GAP-P1-008-closure (F3 Closure Hotfix): het oude lees-existing-dan-PATCH/POST-patroon
+      // (niet-atomair, bewees een race-condition met 4 duplicate-rij-paren live in productie)
+      // is vervangen door één atomaire RPC-aanroep (migratie_v500.sql, INSERT..ON CONFLICT..
+      // DO UPDATE). De database lost de merge/lock zelf op, per veld, in één transactie.
+      // Onderstaande existence-check is UITSLUITEND voor de imported/updated-telling
+      // (diagnostiek) — hij beïnvloedt de write zelf niet en introduceert dus geen race
+      // terug in het schrijfpad zelf.
+      const existsRes = await fetch(`${supabaseUrl}/rest/v1/hrv_log?user_id=eq.${userId}&date=eq.${date}&select=id&limit=1`, { headers: sbHeaders });
+      const bestondAl = (await sbRows(existsRes, 'hrv_log')).length > 0;
+
+      const rpcRes = await fetch(`${supabaseUrl}/rest/v1/rpc/upsert_daily_health`, {
+        method: 'POST', headers: sbHeaders,
+        body: JSON.stringify({
+          p_user_id: userId, p_date: date,
+          p_hrv: vals.hrv != null ? vals.hrv : null,
+          p_rhr: vals.rhr != null ? vals.rhr : null,
+          p_sleep: vals.sleep != null ? vals.sleep : null,
+          p_cyclus_fase: null, p_edema: null,
+          p_note: LIB.provenanceNote(null),
+          p_source: 'wearable'
+        })
+      });
+      if (rpcRes.ok) {
+        if (bestondAl) { updated++; if (date === todayAms) todayWrite = 'updated'; }
+        else { imported++; if (date === todayAms) todayWrite = 'imported'; }
       }
     }
     // Eerlijke vandaag-samenvatting (Amsterdam): fetched vs parsed vs written — bewijst waar de keten VANDAAG stopt.

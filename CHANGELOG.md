@@ -1,5 +1,31 @@
 # Trainingskompas — Changelog
 
+## v4.69.15 — MS-F7-02: Exercise Stagnation & Plateau Detection (29 augustus 2026)
+
+Tweede F7-mastersprint. Sluit MS-F7-02.
+
+**Geregistreerde semantiek vóór implementatie:** IMPROVING, STAGNATION_CANDIDATE,
+PLATEAU (enige term die "plateau" mag heten, vereist >=6 vergelijkbare exposures
+zonder verbetering én zonder nieuwe PR), TEMPORARY_REGRESSION, INSUFFICIENT_DATA.
+
+**Nieuw gebouwd:** `core/plateauDetection.js` (`PlateauDetectionCore`) -- bouwt
+bovenop de bestaande `ProgressionCore.trendBy()`/`comparableHistory()`/
+`isNewBest()`, geen tweede vergelijkingslogica. Transparante, inspecteerbare
+regels, geen opaque score.
+
+**Bug gevonden en gecorrigeerd tijdens ontwikkeling:** een verwaarloosbare
+positieve stap werd initieel als IMPROVING geclassificeerd vóórdat de
+stabiliteitsdrempel werd toegepast -- volgorde gecorrigeerd.
+
+**Nooit plateau op basis van één sessie:** afgedwongen door een harde
+minimum-observatie-drempel. Geen whole-program deload-trigger, geen ACWR-koppeling.
+
+Nieuwe testsuite `core/fPlateauDetection.test.js` (10/10): golden cases + verplichte
+false-positive-cases. Sabotagebewijs geleverd.
+
+`APP_VER` → v4.69.15, `CACHE_NAME`/`CACHE_STATIC` en Android
+`versionCode`/`versionName` meegenomen.
+
 ## v4.69.14 — MS-F7-01: Athlete Trend Model (29 augustus 2026)
 
 Eerste F7-mastersprint (F7 expliciet vrijgegeven). Sluit MS-F7-01.

@@ -10,7 +10,7 @@
 | Prioriteit | Aantal |
 |---|---|
 | P0 | **0 open** |
-| P1 | 2 |
+| P1 | 3 |
 | P2 | 15 |
 | P3 | 4 |
 | P4 | 2 |
@@ -107,6 +107,14 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Target:** bestaande week-generatie doorontwikkelen, met TK's evidence-laag als differentiator t.o.v. Hevy's black-box-aanpak.
 **Dependency:** EVID-SCI-001, DEC-CORE-001.
 **Priority:** P1. **Complexity:** L. **Roadmap phase:** F4.
+
+### GAP-P1-008 — Bewezen race-condition op `hrv_log`: geen atomaire upsert, geen `UNIQUE(user_id,date)` (F3 Final Integration Audit)
+**Capability-ID:** PROVENANCE-EXPLAINABILITY-001
+**Current:** live data-audit (niet theoretisch) bevestigt **4 bestaande paren duplicate rijen** in productie (`(user_id,date)` met `count>1`). Zowel het handmatige schrijfpad (`upsertHrvLog`) als het wearable-syncpad (`wearable-sync.js`) gebruiken een niet-atomair "lees bestaande rij → merge → PATCH of POST"-patroon zonder DB-niveau `UNIQUE`-constraint of echte `ON CONFLICT`-upsert. Drie van de vier gevonden paren zijn identieke race-condities (geen dataverlies, toevallig identieke waarden — twee bijna-gelijktijdige aanroepen zagen elkaars rij nog niet en deden allebei een POST). **Eén paar (18 augustus) toont echte datadivergentie:** de eerste rij had `rhr=null`, de tweede rij (1,5 uur later) had `rhr=57`. De app leest altijd de nieuwste rij (`order=date.desc,created_at.desc&limit=1`) — in dit geval toevallig de meest complete — maar dit is geen garantie: bij een toekomstige race waarbij de OUDERE rij toevallig completer is, zou de app stilzwijgend de minder complete, nieuwere rij tonen.
+**Evidence:** DB VERIFIED (live query op `hrv_log`, 4 paren geïdentificeerd en geïnspecteerd, geen aanname).
+**Target:** (1) bestaande duplicate paren opschonen met een expliciete mergestrategie (bij divergentie: meest-recente-niet-null-per-veld, consistent met de bestaande `tkMergeHealthRow`-filosofie); (2) daarna een `UNIQUE(user_id,date)`-constraint toevoegen; (3) schrijfpaden ombouwen naar een echte, atomaire `ON CONFLICT`-upsert i.p.v. het huidige lees-dan-beslis-patroon.
+**Dependency:** vereist een zorgvuldig cleanup-plan vóór een constraint kan worden toegevoegd (opdracht: "nooit een constraint toevoegen die faalt op productierijen zonder cleanup-plan") — bewust NIET binnen deze audit-sprint uitgevoerd, want de 18-augustus-casus vereist een inhoudelijke keuze (welke waarde "wint" bij divergentie), geen mechanische opschoning.
+**Priority:** P1 (bewezen, niet theoretisch; raakt de betrouwbaarheid van dezelfde Recovery-keten als GAP-P1-007, maar is een apart, nieuw ontdekt probleem — geen F3-mastersprint-acceptance-gate vereiste dit expliciet op te lossen, dus geen F3-fase-blokkerende P1 in dezelfde zin als GAP-P1-007 was). **Complexity:** M.
 
 ---
 

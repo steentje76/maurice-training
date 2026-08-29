@@ -1149,7 +1149,7 @@
       "E5.3"
     ],
     "priority": "P2",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [],
     "target_maturity": "IMPLEMENTED",
     "objective": "Weather attached to outdoor sessions with provenance.",
@@ -3395,5 +3395,19 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "zie MS-F5-05 (CLOSED). Alle 5 providers onderzocht via actuele, officiële bronnen. Polar/COROS hoogste toegangs-feasibility. Garmin momenteel feitelijk ontoegankelijk (aanmeldingen stilgelegd) -- vastgelegd als product-besluitpunt."
+  },
+  {
+    "id": "WEATHER-CONTEXT-001",
+    "type": "capability",
+    "track": "Context Engine",
+    "phase": "F5",
+    "priority": "P2",
+    "status": "VALIDATED",
+    "target": "VALIDATED",
+    "dependencies": [],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F5-06 (CLOSED). Live bevestigd: sessions.weather (jsonb) bevat het volledige canonieke object met provenance, geschreven bij het afronden van een outdoor-sessie. Correctie op een eerdere, onjuiste MS-F5-01-claim (module-commentaar was gedateerd, niet geverifieerd tegen daadwerkelijke aanroepen)."
   }
 ]

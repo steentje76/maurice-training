@@ -1,5 +1,28 @@
 # Trainingskompas — Changelog
 
+## v4.69.18 — MS-F8-02: Women's Privacy & Consent Model (29 augustus 2026)
+
+Tweede F8-mastersprint. Sluit MS-F8-02.
+
+**Kritieke, gevonden en gerepareerde bevinding:** `cyclusVerwijderAlleData()`
+verwijderde uitsluitend `cycle_periods`, NIET `cycle_symptom_logs`. Een
+atleet die "alle cyclusdata verwijderen" koos, dacht alles kwijt te zijn,
+maar haar symptoomregistraties bleven bestaan (orphaned sensitive records).
+Gefixt: beide tabellen worden nu expliciet, apart verwijderd; een mislukking
+van een van beide wordt zichtbaar gemeld.
+
+**Live, adversarial RLS-verificatie** (rechtstreeks op de productiedatabase,
+transactie met rollback): cross-user-toegang correct geweigerd (User B ziet
+0 rijen van User A), anonieme toegang correct geweigerd (0 rijen in beide
+tabellen). Geen coach-proxy-toegang tot cyclus-data (behalve de legitieme
+`delete-account.js`-uitzondering). Geen observability/telemetry-lekken.
+
+Nieuwe testsuite `core/fWomensPrivacyConsent.test.js` (9/9). Sabotagebewijs
+geleverd.
+
+`APP_VER` → v4.69.18, `CACHE_NAME`/`CACHE_STATIC` en Android
+`versionCode`/`versionName` meegenomen.
+
 ## v4.69.17 — MS-F7-05: Athlete Dashboard 2.0 (29 augustus 2026)
 
 Vijfde en laatste F7-mastersprint. Sluit MS-F7-05.

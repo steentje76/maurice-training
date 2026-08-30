@@ -6,11 +6,11 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.69.17
+v4.69.18
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.69.17 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.69.18 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 28 augustus 2026
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 
@@ -23,7 +23,7 @@ v4.69.17
 - **F5 — Connected Athlete: SOFTWARE CLOSED — REAL DEVICE VALIDATION OPEN.** Alle 6 F5-mastersprints afgerond. Volledig rapport: `docs/F5_MASTER_REPORT.md`.
 - **F6 — Endurance & Multisport Excellence: CLOSED — READY FOR F7 SELECTION.** Alle 6 F6-mastersprints afgerond. Volledig rapport: `docs/F6_MASTER_REPORT.md`.
 - **F7 — Longitudinal Athlete Intelligence: CLOSED — READY FOR F8 SELECTION.** Alle 5 F7-mastersprints afgerond. Volledig rapport: `docs/F7_MASTER_REPORT.md`.
-- **F8 — Women's Performance: CURRENT (expliciet vrijgegeven door de Product Owner, 29 augustus 2026; Product Owner tijdens uitvoering niet beschikbaar — autonome uitvoering met conservatieve, reversibele defaults).** MS-F8-01 (Women's Performance Product Decisions): **CLOSED** — F8 Entry Audit (`docs/F8_EXISTING_WOMENS_PERFORMANCE_AUDIT.md`) bevestigde een reeds bestaande, zorgvuldig gebouwde Cycle & Symptom-infrastructuur (`core/cycle.js`/`core/cycleTraining.js`, `cycle_periods`/`cycle_symptom_logs` — beide **live geverifieerd met correcte RLS**, eigen-data-alleen-policy). Genuine documentatiegap gevonden en gerepareerd: `cycle_symptom_logs` had geen migratiebestand in de repo ondanks correct te bestaan op de live database — retroactief, veilig gedocumenteerd (`migratie_v502.sql`, `IF NOT EXISTS`, niet tegen de database uitgevoerd want overbodig). Belangrijke bevinding: `core/coaching.js` (AI-payload) bevat nog geen cyclus-referentie — de AI is nog niet gekoppeld. Actueel onderzoek (2023-2026) bevestigt: geen consistent bewijs voor cycle-fase-effecten op prestatie; ACOG (2025) bevestigt dat zwangerschapstraining altijd individuele medische beoordeling vereist. **Vijf besluiten vastgelegd** (`docs/MS-F8-01_WOMENS_PERFORMANCE_PRODUCT_DECISIONS.md`): Cycle en Symptoms → **IMPLEMENT** (reeds correct bestaand); Contraceptie, Zwangerschap/Postpartum, Perimenopauze/Menopauze/Bekkenbodem → **DEFER** (conservatieve, reversibele default, vastgelegd in `docs/F8_PRODUCT_OWNER_DECISIONS.md`). **F8 open P1: 0.** Resterende F8-mastersprints (MS-F8-02 t/m 04) nog niet uitgevoerd.
+- **F8 — Women's Performance: CURRENT (expliciet vrijgegeven door de Product Owner, 29 augustus 2026; Product Owner tijdens uitvoering niet beschikbaar — autonome uitvoering met conservatieve, reversibele defaults).** MS-F8-01: **CLOSED** — vijf productbeslissingen vastgelegd (Cycle/Symptoms IMPLEMENT, Contraceptie/Zwangerschap-Postpartum/Perimenopauze-Menopauze-Bekkenbodem DEFER). MS-F8-02 (Women's Privacy & Consent Model): **CLOSED** — **kritieke, gevonden en gerepareerde bevinding**: `cyclusVerwijderAlleData()` verwijderde uitsluitend `cycle_periods`, niet `cycle_symptom_logs` — een atleet die "alle cyclusdata verwijderen" koos, dacht alles kwijt te zijn, maar symptoomregistraties bleven bestaan (orphaned sensitive records). Gefixt: beide tabellen worden nu expliciet, apart verwijderd. **Live, adversarial RLS-verificatie op de productiedatabase** (transactie met rollback, geen data gewijzigd): cross-user-toegang correct geweigerd (User B ziet 0 rijen van User A), anonieme toegang correct geweigerd (0 rijen). Geen coach/team/gym/AI-toegang tot cyclus-data (repo-brede audit; `delete-account.js` correct uitgezonderd als legitieme volledige-verwijdering-flow). Geen observability/telemetry-lekken. **F8 open P1: 0.** Resterende F8-mastersprints (MS-F8-03, MS-F8-04) nog niet uitgevoerd.
 - **Master Roadmap 2.0 v1.1 = CANONICAL** productstrategische bron. Repository blijft technische autoriteit. Zie `docs/DOCUMENTATION_GOVERNANCE.md`.
 - Volledige fasering (F0-F15): zie `docs/TRAININGSKOMPAS_MASTER_ROADMAP.md`. Volledige mastersprint-ID-migratie: zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md`.
 
@@ -42,7 +42,7 @@ Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
 ## 5. Current validation status
 - **Code:** CODE VERIFIED tegen `main` @ bovenstaande SHA
 - **DB:** VERIFIED — 69 tabellen, RLS gecontroleerd op alle tabellen, `gyms`-lek gesloten en geverifieerd via `SET LOCAL ROLE anon/authenticated/service_role`
-- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 125 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 128 stappen totaal), 127 automatisch uitgevoerd, 1 zichtbaar geskipt (fAndroidRelease.test.js zonder gereproduceerde buildmap), 0 gefaald
+- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 126 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 129 stappen totaal), 128 automatisch uitgevoerd, 1 zichtbaar geskipt (fAndroidRelease.test.js zonder gereproduceerde buildmap), 0 gefaald
 - **Integration:** wearable-sync getest tegen de echte handler-functie; overige integraties overwegend unit-getest
 - **Device:** **OPEN** — Concept2 PM5 en Google Health-sync hebben geen bevestigde real-device-validatie in productie
 - **UX:** niet apart beoordeeld in de laatste consolidatiesprint (38 top-level schermen geïnventariseerd, geen flow-niveau UX-testdekking)

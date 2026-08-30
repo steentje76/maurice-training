@@ -1569,7 +1569,7 @@
       "E10.1"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F8-01"
     ],
@@ -3538,5 +3538,21 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "zie MS-F7-05 (CLOSED). Nieuwe Home-sectie (renderF7Attention) consumeert uitsluitend PlateauDetectionCore/AdherenceIntelligenceCore, geen shadow-calculatie. Genuine, niet-blokkerend gevonden naamgevingsverwarring vastgelegd als GAP-P3-023. Toekomstig werk: RelationshipCore-inzichten en LongitudinalTrendCore ook op het Dashboard tonen (niet in deze sprint geforceerd)."
+  },
+  {
+    "id": "WOMENS-PRIVACY-CONSENT-001",
+    "type": "capability",
+    "track": "Women's Performance",
+    "phase": "F8",
+    "priority": "P1",
+    "status": "IMPLEMENTED",
+    "target": "IMPLEMENTED",
+    "dependencies": [
+      "WOMENS-PERF-DECISIONS-001"
+    ],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F8-02 (CLOSED). Live adversarial RLS-tests (cross-user, anoniem) geslaagd op de productiedatabase. Kritieke bug gevonden en gerepareerd: cyclusVerwijderAlleData() verwijderde niet cycle_symptom_logs (orphaned sensitive records). Geen coach/team/AI-toegang tot cyclus-data."
   }
 ]

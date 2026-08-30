@@ -3105,6 +3105,25 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="scroll" style="padding-top:8px">
     <div class="pf-hero" id="pf-hero"></div>
 
+    <!-- MS-F11-05: minimale, zichtbare tenant-skin. Uitsluitend zichtbaar
+         (logo/naam) wanneer een geldige, geautoriseerde organization-branding
+         actief is (via applyBrandContext()) -- anders blijft dit element leeg/
+         verborgen en toont de app puur de Trainingskompas-identiteit. De
+         "Powered by Trainingskompas"-regel is ALTIJD aanwezig in de DOM zodra
+         deze kaart getoond wordt, ongeacht tenant-branding (co-branding-
+         invariant, nooit volledige vervanging). -->
+    <div class="pf-sect">Organisatie</div>
+    <div class="card pf-card" id="tenant-brand-card">
+      <div class="pf-row">
+        <img id="tenant-brand-logo" alt="" style="display:none;width:32px;height:32px;border-radius:8px;object-fit:cover" />
+        <div class="pf-tx">
+          <div class="pf-lb" id="tenant-brand-name">Trainingskompas</div>
+          <div class="pf-sb" id="tenant-powered-by">Powered by Trainingskompas</div>
+        </div>
+      </div>
+      <button class="pf-row" id="tenant-brand-admin-btn" style="display:none" onclick="tenantBrandingAdminEdit()"><span class="pf-tx"><div class="pf-lb">Uitstraling beheren</div><div class="pf-sb">Logo, kleuren en naam voor deze organisatie</div></span><span class="pf-chev">&#8250;</span></button>
+    </div>
+
     <div class="pf-sect">Mijn account</div>
     <div class="card pf-card">
       <div class="pf-row"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span><div class="pf-tx"><div class="pf-lb">E-mailadres</div><div class="pf-sb" id="account-email-lbl">&mdash;</div></div></div>
@@ -5349,6 +5368,9 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/relationship.js"></script>
 <script src="core/athlete.js"></script>
 <script src="core/movement.js"></script>
+<script src="core/organizationCore.js"></script>
+<script src="core/brandingCore.js"></script>
+<script src="core/organizationContextRuntime.js"></script>
 <script src="core/onboarding.js"></script>
 <script src="core/athleteConstraints.js"></script>
 <script src="core/deviceIntegration.js"></script>
@@ -6053,7 +6075,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.20';
+const APP_VER = 'v4.69.21';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6187,6 +6209,7 @@ async function authSignOut(){
   if(!await confirmModal('Weet je zeker dat je wilt uitloggen?',{title:'Uitloggen',okLabel:'Uitloggen'}))return;
   clearAuthSession();
   wipePersonalCache(); // v332: niet wachten tot volgende login, meteen wissen bij uitloggen
+  if(window.OrganizationContextRuntime) window.OrganizationContextRuntime.resetOrgContext(); // MS-F11-05: nooit tenant-branding van deze gebruiker laten hangen voor de volgende
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('s-auth').classList.add('active');
   document.getElementById('auth-email').value='';
@@ -23745,6 +23768,7 @@ async function startAppAfterAuth(){
   migrateLibraryFavoritesToSupabase(); // Sprint 6.0.1 — eenmalig, laadt ook favoriteExIds vroeg
   ensureExerciseGoalsLoaded(); // peakdoelen vroeg laden — voorkomt lege 'jouw doel'-weergave bij eerste render
   checkTeamAccess(); // v331: teamRoleLevel meteen beschikbaar, niet pas na bezoek aan Profiel
+  if(window.OrganizationContextRuntime) window.OrganizationContextRuntime.initOrganizationContext(); // MS-F11-05: F11 organization-context + tenant-branding, non-blocking (mag training nooit vertragen)
   syncAtleetFromSupabase();
   syncCustomTrainingsFromSupabase();
   updateOfflineBadge();

@@ -11,7 +11,7 @@
 |---|---|
 | P0 | **0 open** |
 | P1 | 0 |
-| P2 | 21 |
+| P2 | 22 |
 | P3 | 6 |
 | P4 | 2 |
 
@@ -148,6 +148,14 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Evidence:** CODE VERIFIED, vastgesteld tijdens de (inmiddels afgeronde) Life-stage Performance Context-sprint, F8 Women's Performance.
 **Target:** de dagelijkse HRV-check-in-UI zou de bestaande `CycleCore`-schatting als voorinvulling/suggestie kunnen tonen (nooit als automatische, ongeziene overschrijving) om de gebruikerslast te verlagen. Vereist zorgvuldig UI-werk in de dagelijkse check-in-flow.
 **Priority:** P3 (niet-kritiek — geen veiligheidsprobleem, uitsluitend een gebruikerslast-verbeterpunt). **Complexity:** M.
+
+### GAP-P2-023 (nieuw, Coach Programming & Assignment-sprint) — de bestaande `trg_set_user_id`-trigger op `programs` blokkeert legitieme coach-toewijzing
+**Capability-ID:** COACH-RELATIONSHIP-001
+**Current:** `programs` heeft een `BEFORE INSERT`-trigger (`trg_set_user_id` / `set_user_id_from_auth()`) die onvoorwaardelijk `NEW.user_id := auth.uid()` afdwingt zodra er een ingelogde gebruiker is. Dit is een correcte, bestaande bescherming tegen `user_id`-spoofing (voorkomt dat een gebruiker een rij voor iemand anders claimt), maar het blokkeert ook de legitieme MS-F10-03-usecase: een coach die een programma probeert aan te maken met `user_id = athlete_id` krijgt in werkelijkheid `user_id` overschreven naar de eigen ID van de coach.
+**Evidence:** CODE VERIFIED + LIVE DATABASE VERIFIED. Live adversarial getest (transactie zonder commit): een coach-INSERT-poging met `user_id = athlete_id` resulteerde in een daadwerkelijk aangemaakte rij met `user_id = coach_id` (niet athlete_id) — bevestigd via directe query binnen dezelfde transactie. Geen lek naar andermans data (het programma werd van de coach zelf, niet van de athlete), maar de bedoelde functionaliteit (coach maakt programma voor athlete) werkt niet. Een eerste, ongeteste RLS-INSERT-policy-poging (`coach_creates_program_for_athlete`) is hierdoor direct weer verwijderd, om geen misleidende, niet-functionerende autorisatielaag achter te laten.
+**Target:** een toekomstige, zorgvuldig ontworpen oplossing, bijvoorbeeld: (a) een `SECURITY DEFINER`-RPC-functie die expliciet, na coach-relatie/scope-validatie, de trigger-beperking omzeilt voor uitsluitend deze specifieke, gevalideerde use case, of (b) een volledig apart `coach_authored_programs`-concept dat niet direct in de bestaande `programs`-tabel schrijft. Vereist een aparte, expliciete architectuurbeslissing (welke van de twee aanpakken, en de exacte veiligheidswaarborgen) voordat implementatie verantwoord is.
+**Priority:** P2 (blokkeert MS-F10-03 volledig, maar is geen actief security-lek in de huidige, ongewijzigde staat). **Complexity:** M-L.
+**Gerelateerde tabel (reeds veilig aangemaakt, wacht op de bovenstaande oplossing):** `coach_program_assignments` (provenance-record, RLS correct, maar functioneel ongebruikt totdat de onderliggende `programs`-aanmaak-blokkade is opgelost).
 **Gerelateerde capability:** de AI-programmagenererings-/adaptieve-weekregeneratie-capability (de veiligheidskritieke kerncapability is inmiddels gesloten — zie het sprintrapport voor de Adaptive Weekly Program Loop: canonieke exercise-ID-whitelist, preview+bevestiging, unified execution, en een nieuwe audit trail zijn allemaal technisch bevestigd)
 **Current:** Hevy Trainer (feb 2026) genereert een volledig, zelf-aanpassend trainingsprogramma. TK's rule/evidence-gestuurde weekregeneratie (`heergenereerResterendeWeken()`) is nu volledig veilig en auditeerbaar, maar vereist nog altijd expliciete gebruikersbevestiging per regeneratie — geen volautomatische, ongevraagde doorlopende aanpassing zoals Hevy.
 **Evidence:** Web (juni 2026, PRPath-vergelijking) + CODE VERIFIED.

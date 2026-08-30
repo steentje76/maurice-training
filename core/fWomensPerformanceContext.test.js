@@ -57,6 +57,22 @@ ok(!Object.keys(WPC).some(function (k) { return /cycleContext|cycleDay|averageCy
   ok(output.recent_symptoms.provenance === 'athlete_reported', 'D2: symptomen expliciet gelabeld als athlete_reported');
 }
 
+// ---- E. MS-F8-04-heraudit: hormonale anticonceptie onderdrukt de faseschatting ----
+{
+  const ctx = CC.cycleContext([{ start_date: '2026-07-01', end_date: '2026-07-05' }, { start_date: '2026-07-29', end_date: '2026-08-02' }], '2026-08-29');
+  const zonderContraceptie = WPC.build(true, ctx, [], null);
+  ok(zonderContraceptie.cycle.geschatte_fase !== null, 'E1: zonder opgegeven anticonceptie blijft de faseschatting ongewijzigd getoond (backwards-compatible)');
+  const metHormonaal = WPC.build(true, ctx, [], 'hormonal');
+  ok(metHormonaal.cycle.geschatte_fase === null, 'E2: bij hormonale anticonceptie wordt de faseschatting bewust onderdrukt (null), niet een mogelijk misleidende schatting getoond');
+  ok(metHormonaal.cycle.fase_schatting_onderdrukt_reden === 'hormonale_anticonceptie_maakt_natuurlijke_fase_schatting_onbetrouwbaar',
+    'E3: de reden voor onderdrukking is expliciet vastgelegd');
+  const metNietHormonaal = WPC.build(true, ctx, [], 'non_hormonal');
+  ok(metNietHormonaal.cycle.geschatte_fase !== null, 'E4: bij niet-hormonale anticonceptie blijft de natuurlijke-cyclus-faseschatting van toepassing');
+  const hormonaalDataOnly = JSON.stringify(metHormonaal.cycle).toLowerCase();
+  ok(!hormonaalDataOnly.includes('advies') && !hormonaalDataOnly.includes('effectiviteit'),
+    'E5: geen enkel contraceptie-advies of effectiviteitsclaim in het cycle-datablok');
+}
+
 console.log('fWomensPerformanceContext: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (msgs.length) console.log(msgs.join('\n'));
 console.log('Resultaat: ' + pass + ' geslaagd, ' + fail + ' mislukt');

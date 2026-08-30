@@ -2150,7 +2150,7 @@
       "E16.2"
     ],
     "priority": "P2",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F12-02"
     ],

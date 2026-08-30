@@ -1,5 +1,66 @@
 # Trainingskompas — Changelog
 
+## v4.69.23 — MS-F12-03: Commercial UX (30 augustus 2026)
+
+Derde F12-mastersprint. Sluit MS-F12-03.
+
+**Existing-state audit** (`docs/F12_03_EXISTING_STATE_AUDIT.md`): bevestigd
+0% bestaande commerciële UX-runtime. Alle eerder gevonden "premium"/
+"restore"/"cancel"/"pro"-vermeldingen zijn UI-terminologie, trainings-
+draft-herstel, generieke dialoogknoppen of substring-treffers -- geen
+enkele commerciële betekenis.
+
+**Nieuwe centrale `core/commercialUxCore.js`**: de enige, canonieke bron
+voor "wat moet de commerciële UX tonen". Consumeert uitsluitend
+`EntitlementCore` + de catalogus (`plans`/`features`/`plan_features`/
+`plan_feature_quota`) -- bouwt nooit een eigen, tweede plan-beslissing.
+UI-lock =/= security: deze module bepaalt uitsluitend presentatie, nooit
+autorisatie. `buildPlanComparisonViewModel()`, `buildQuotaMessageViewModel()`
+en `buildDowngradeStateViewModel()` geven altijd een volledig, veilig
+view-model terug, nooit een fictieve prijs (NULL blijft NULL) en nooit een
+advies tot dataverlies bij downgrade/cancel/expiry.
+
+**Nieuw scherm**: een "Mijn abonnement"-kaart in het bestaande
+profielscherm (naast de F11-organisatiekaart) plus een
+planvergelijkingsvenster. Toont per plan naam, functies, quota (of
+expliciet "onbeperkt"), en de huidige-planmarkering. Geen fictieve prijs
+-- alle vier bestaande plannen hebben `prijs_cent=NULL`, dus toont de UI
+eerlijk "Prijs wordt nog bekendgemaakt" in plaats van een verzonnen
+bedrag.
+
+**Verfijnde quotafoutmeldingen**: de AI-coach-chat toont nu een
+specifieke, begrijpelijke boodschap bij `QUOTA_EXCEEDED` (met de
+reset-datum) en `ENTITLEMENT_REQUIRED` (verwijzing naar het
+abonnementenscherm), in plaats van de eerdere, generieke foutmelding --
+nooit een blokkerende modal die de rest van de app gijzelt.
+
+**Dark-patterns-audit** (`core/fCommercialUxDarkPatternsAudit.test.js`,
+17 assertions): geen vooraf aangevinkte commerciële keuzes, geen
+nep-countdown/schaarste, een duidelijke, primaire sluitknop op de
+planvergelijking, en `commercialUxCore.js` bevat geen enkele verwijzing
+naar accountverwijdering/privacy/consent/data-export -- veiligheids-
+functies worden hier principieel nooit als gateable capability
+gemodelleerd.
+
+**Sabotagebewijs, met een tussentijds gevonden en gerepareerde zwakte in
+de eigen testinfrastructuur**: de eerste sabotagepoging
+(`user.plan==='atleet_pro'`) werd NIET gedetecteerd door de bestaande
+shadow-commercial-logic-gate, omdat die uitsluitend het exacte woord
+"pro" herkende, niet de daadwerkelijke, volledige plan-key
+("atleet_pro"). Gevonden, de detectie uitgebreid naar alle vier
+canonieke plan-keys uit de catalogus, en de sabotage vervolgens opnieuw
+uitgevoerd -- nu correct gedetecteerd (exit 1) en teruggedraaid.
+
+APP_VER v4.69.22 -> v4.69.23 (runtime-UI wijzigt daadwerkelijk). sw.js
+CACHE_NAME/CACHE_STATIC synchroon gebumpt naar v469230, de twee nieuwe
+modules toegevoegd aan STATIC_ASSETS-precache. android/app/build.gradle
+versionCode/versionName gesynchroniseerd (46923/4.69.23) vóór de
+release-gate-run (geleerd van eerdere sessies binnen F11/F12).
+
+Volledige regressie: node core/release-gate.js -> 170 uitgevoerd/0
+geskipt/0 gefaald (was 168, +2 nieuwe testbestanden). Alle bestaande
+commerciële en tenant-securitysuites herbevestigd zonder regressie.
+
 ## v4.69.22 — MS-F12-02: Entitlement Enforcement (30 augustus 2026)
 
 Tweede F12-mastersprint. Sluit MS-F12-02.

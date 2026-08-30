@@ -77,7 +77,14 @@ exports.handler = async function(event) {
                                   // hier expliciet vermeld voor auditeerbaarheid (DEC-027)
       'memberships',             // lidmaatschap van gym/team/trainingsgroep
       'usage_log',               // gebruik per functie
-      'user_credit_purchases'    // aangekochte credits
+      'user_credit_purchases',   // aangekochte credits
+      // F9 (MS-F9-01/02/03) -- Social & Community. Deze vier hebben een
+      // standaard user_id-kolom (zelfde patroon als de rest van deze lijst).
+      // De overige F9-tabellen hebben afwijkende/dubbele eigenaarskolommen
+      // (follower_id/followee_id, blocker_id/blocked_id, enz.) en worden
+      // hieronder apart, expliciet per kolomnaam verwijderd -- exact het
+      // bestaande content_shares-patroon, geen nieuw mechanisme.
+      'social_profiles', 'social_group_memberships', 'social_challenge_participants'
     ];
     const failedTables = [];
     for (const table of USER_DATA_TABLES) {
@@ -125,6 +132,34 @@ exports.handler = async function(event) {
       headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, Prefer: 'return=minimal' }
     });
     if (!exR.ok) failedTables.push('exercises (personal)');
+
+    // F9 (Social & Community) — bevinding tijdens de F9 Final Integration
+    // Audit: deze zes tabellen dragen GEEN standaard user_id-kolom (net als
+    // content_shares hierboven), en stonden daardoor nog niet in de generieke
+    // USER_DATA_TABLES-lijst. Zonder deze stap blijven o.a. connecties, blocks,
+    // reports, groepen/challenges die deze gebruiker aanmaakte, gedeelde
+    // activiteiten en notificaties als privacygevoelige wees-data achter.
+    // social_groups.owner_user_id/social_challenges.creator_id: het verwijderen
+    // van de rij zelf ruimt via ON DELETE CASCADE ook de bijbehorende
+    // memberships/participants van ANDEREN op (die al hierboven, apart op hun
+    // eigen user_id, verwijderd zijn voor deze gebruiker als lid/deelnemer).
+    for (const [tabel, kolommen] of [
+      ['social_connections', ['follower_id', 'followee_id']],
+      ['social_blocks', ['blocker_id', 'blocked_id']],
+      ['social_reports', ['reporter_user_id', 'target_user_id']],
+      ['social_notifications', ['recipient_id', 'actor_id']],
+      ['social_groups', ['owner_user_id']],
+      ['social_challenges', ['creator_id']],
+      ['social_shared_activities', ['athlete_id']]
+    ]) {
+      for (const kolom of kolommen) {
+        const sfR = await fetch(`${supabaseUrl}/rest/v1/${tabel}?${kolom}=eq.${userId}`, {
+          method: 'DELETE',
+          headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, Prefer: 'return=minimal' }
+        });
+        if (!sfR.ok) failedTables.push(tabel + ' (' + kolom + ')');
+      }
+    }
 
     // public.users: aparte behandeling — dit is de gym-lidmaatschapsrij zelf (rol,
     // gym_id), primary key is 'id' (niet 'user_id' zoals de rest). Er bestaat GEEN

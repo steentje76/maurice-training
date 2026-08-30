@@ -85,6 +85,31 @@ function req(callerId) { return { httpMethod: 'POST', headers: callerId ? { auth
   const csDeletes = deletedByTableAndUser.filter(d => d.table.indexOf('content_shares') === 0);
   ok(csDeletes.length >= 2, '6: content_shares wordt in beide richtingen (shared_by EN shared_with) opgeruimd');
 
+  // 7. F9 (Social & Community) — bevinding uit de F9 Final Integration Audit:
+  // deze tien tabellen ontbraken oorspronkelijk volledig in delete-account.js.
+  // Vier hebben een standaard user_id-kolom (via USER_DATA_TABLES); zes hebben
+  // afwijkende/dubbele eigenaarskolommen en moeten per kolomnaam voorkomen.
+  deletedByTableAndUser = []; adminDeleteCalls = [];
+  global.fetch = makeFetch('u10');
+  res = await handlerMod.handler(req('u10'));
+  const f9StandaardTabellen = ['social_profiles', 'social_group_memberships', 'social_challenge_participants'];
+  f9StandaardTabellen.forEach(function (t) {
+    ok(deletedByTableAndUser.some(function (d) { return d.table === t; }), '7a: ' + t + ' wordt opgeruimd (standaard user_id-kolom)');
+  });
+  const f9DubbeleKolomTabellen = {
+    social_connections: ['follower_id', 'followee_id'],
+    social_blocks: ['blocker_id', 'blocked_id'],
+    social_reports: ['reporter_user_id', 'target_user_id'],
+    social_notifications: ['recipient_id', 'actor_id']
+  };
+  Object.keys(f9DubbeleKolomTabellen).forEach(function (t) {
+    const treffers = deletedByTableAndUser.filter(function (d) { return d.table === t; });
+    ok(treffers.length >= f9DubbeleKolomTabellen[t].length, '7b: ' + t + ' wordt in beide richtingen opgeruimd (' + f9DubbeleKolomTabellen[t].join('/') + ')');
+  });
+  ['social_groups', 'social_challenges', 'social_shared_activities'].forEach(function (t) {
+    ok(deletedByTableAndUser.some(function (d) { return d.table === t; }), '7c: ' + t + ' wordt opgeruimd (eigen aangemaakte objecten)');
+  });
+
   console.log('fDeleteAccountSecurity: ' + pass + ' geslaagd, ' + fail + ' mislukt');
   console.log('Resultaat: ' + pass + ' geslaagd, ' + fail + ' mislukt');
   process.exit(fail > 0 ? 1 : 0);

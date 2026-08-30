@@ -11,7 +11,7 @@ v4.69.20
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
 - **APP_VER:** v4.69.20 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
-- **Datum van deze stand:** 28 augustus 2026
+- **Datum van deze stand:** 30 augustus 2026
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 
 ## 2. Current roadmap position
@@ -30,7 +30,7 @@ v4.69.20
 - Volledige fasering (F0-F15): zie `docs/TRAININGSKOMPAS_MASTER_ROADMAP.md`. Volledige mastersprint-ID-migratie: zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md`.
 
 ## 3. Current product maturity (samenvatting — zie `docs/CAPABILITY_REGISTRY.md` voor detail)
-Training Core, Calculation Engine, Context Engine, Decision Engine, Evidence Architecture, Recovery en Security/Platform staan op een volwassen niveau (TESTED/INTEGRATED/CLOSED, zie registry). Women's Performance, Commercial en Coach/Gym-platform zijn architecturaal voorbereid (DB-schema aanwezig) maar UI/RLS-scoping nog niet afgerond. Devices/Wearables zijn software-TESTED, real-device-validatie staat open.
+Training Core, Calculation Engine, Context Engine, Decision Engine, Evidence Architecture, Recovery en Security/Platform staan op een volwassen niveau (TESTED/INTEGRATED/CLOSED, zie registry). ~~Women's Performance, Commercial en Coach/Gym-platform zijn architecturaal voorbereid (DB-schema aanwezig) maar UI/RLS-scoping nog niet afgerond.~~ **verouderd, gecorrigeerd:** Women's Performance is sinds F8 CLOSED (RLS/consent volledig bewezen). Coach/PT-platform is sinds F10 CLOSED — RLS/scoping is adversarial bewezen (self-elevation, cross-coach, Women's Performance-isolatie), zie `docs/F10_MASTER_REPORT.md`; UI/schermintegratie voor Coach/PT is bewust nog niet gebouwd (backend/Core-architectuur was de volledige scope van F10). Gym/Club/Team-platform (F11) is nog niet gestart op het moment van deze correctie. Commercial (F12) blijft architecturaal voorbereid, niet vrijgegeven. Devices/Wearables zijn software-TESTED, real-device-validatie staat open.
 
 ## 4. Current open priorities
 Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
@@ -51,7 +51,7 @@ Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
 - **Scientific/evidence:** architectuur-niveau geverifieerd (`evidence_store.v1`, corroboratieregels); metric-voor-metric evidencelevel-audit (A-E) nog niet uitgevoerd
 
 ## 6. Current known blockers / decisions
-- **5 openstaande Women's Performance-productbeslissingen** (zwangerschap, postpartum, menopauze, anticonceptie, bekkenbodem) — wachten op Maurice, zie `docs/Womens_Performance/DECISION_REQUIRED_*.md`
+- ~~5 openstaande Women's Performance-productbeslissingen (zwangerschap, postpartum, menopauze, anticonceptie, bekkenbodem) — wachten op Maurice~~ — **verouderd, gecorrigeerd:** deze vijf beslissingen zijn genomen tijdens MS-F8-01 (Women's Performance Product Decisions), vastgelegd in `docs/MS-F8-01_WOMENS_PERFORMANCE_PRODUCT_DECISIONS.md`: Cycle en Symptoms zijn IMPLEMENT (reeds correct bestaand); Contraceptie, Zwangerschap/Postpartum, Perimenopauze/Menopauze/Bekkenbodem zijn DEFER (conservatieve, reversibele default). F8 is sindsdien volledig CLOSED, zie `docs/F8_MASTER_REPORT.md`.
 - ~~GYM-RLS-SCOPING-001 blokkeert Track 13 (Gym/Club/Team)~~ — **verouderd, gecorrigeerd:** GYM-RLS-SCOPING-001 is CLOSED/VALIDATED sinds MS-F1-01 (membership-scoped policies, live geverifieerd met 2 gescheiden tenants). Bovendien was het tracknummer fout: Gym/Club/Team Platform is **Track 15** (T13 is Social & Community), zie `docs/TRAININGSKOMPAS_MASTER_ROADMAP.md` §6. Track 15 (F11) mag inmiddels wél starten met echte multi-tenant-data — de RLS-dependency is gesloten.
 - Overige, niet-blokkerende technische schuld: zie `docs/GAP_ANALYSIS_V2.md` P2-P4
 

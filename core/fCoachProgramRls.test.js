@@ -32,6 +32,23 @@ ok(migratie.includes("set search_path = public"),
 ok(migratie.includes('cpt_athlete_leest_via_assignment') && migratie.includes('a.athlete_user_id = auth.uid()'),
   'F1: een athlete kan een template uitsluitend lezen via een assignment die aan haar is gericht');
 
+// ---- G. Content-materialisatie: canonieke keten, geen tweede workoutmodel ----
+const migratie510 = fs.readFileSync(path.join(ROOT, 'migratie_v510.sql'), 'utf8');
+ok(migratie510.includes('insert into public.program_blocks') && migratie510.includes('insert into public.custom_trainings') && migratie510.includes('insert into public.training_exercises'),
+  'G1: de materialisatie gebruikt de bestaande, canonieke program_blocks/custom_trainings/training_exercises-keten');
+ok(!/create table.*coach_training_instance/i.test(migratie510) && !/create table.*coach_program_block/i.test(migratie510),
+  'G2: geen tweede, coach-specifieke workoutmodel-tabel wordt aangemaakt');
+
+// ---- H. Server-side exercise-ID-validatie (bron van waarheid, niet uitsluitend client-side) ----
+ok(migratie510.includes('not exists (select 1 from public.exercises ex where ex.id = e->>\'exercise_id\')'),
+  'H1: elke exercise_id wordt server-side gevalideerd tegen de canonieke Exercise Library');
+ok(migratie510.includes("raise exception 'template bevat % onbekende exercise_id"),
+  'H2: onbekende exercise_ids blokkeren de materialisatie met een expliciete fout');
+
+// ---- I. Idempotentie behouden in de content-versie ----
+ok(migratie510.includes('return v_assignment.materialized_program_id'),
+  'I1: idempotentie-guard blijft aanwezig in de content-materialisatie-versie');
+
 console.log('fCoachProgramRls: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (msgs.length) console.log(msgs.join('\n'));
 console.log('Resultaat: ' + pass + ' geslaagd, ' + fail + ' mislukt');

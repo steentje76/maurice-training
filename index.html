@@ -6052,7 +6052,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.17';
+const APP_VER = 'v4.69.18';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -8337,8 +8337,14 @@ async function cyclusVerwijderPeriode(periodeId){
 async function cyclusVerwijderAlleData(){
   const bevestigd = await confirmModal('Alle cyclusregistraties permanent verwijderen? Dit kan niet ongedaan worden gemaakt.',{title:'Alle data verwijderen',okLabel:'Verwijder alles',cancelLabel:'Annuleren'});
   if(!bevestigd)return;
-  const ok = await sbDel('cycle_periods', 'user_id=eq.'+encodeURIComponent(authSession?.user?.id||''));
-  if(!ok){ toast('Kon niet verwijderen — probeer opnieuw'); return; }
+  // MS-F8-02 (privacy/consent-gate) — FIX: "alle cyclusdata verwijderen" moet ECHT alles
+  // verwijderen. cycle_symptom_logs werd hier voorheen NIET verwijderd (orphaned sensitive
+  // records na "verwijderen" -- de atleet dacht alles kwijt te zijn, maar symptoomdata bleef
+  // bestaan). Beide tabellen nu expliciet, apart verwijderd; als een van beide faalt, wordt
+  // dit duidelijk gemeld in plaats van een valse "alles verwijderd"-suggestie.
+  const okPeriodes = await sbDel('cycle_periods', 'user_id=eq.'+encodeURIComponent(authSession?.user?.id||''));
+  const okSymptomen = await sbDel('cycle_symptom_logs', 'user_id=eq.'+encodeURIComponent(authSession?.user?.id||''));
+  if(!okPeriodes||!okSymptomen){ toast('Kon niet alles verwijderen — probeer opnieuw'); return; }
   toast('Alle cyclusdata verwijderd');
   renderCyclusScreen();
 }

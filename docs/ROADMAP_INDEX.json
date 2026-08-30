@@ -1707,7 +1707,7 @@
       "E13.2"
     ],
     "priority": "P3",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F9-01"
     ],
@@ -3568,5 +3568,21 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "zie MS-F9-01 (CLOSED). SocialPrivacyCore + social_profiles/social_connections/social_blocks/social_reports, alle met live geverifieerde RLS. Vier kritieke security-bugs live gevonden en gerepareerd (anonieme toegang, block-RLS-omzeiling, self-role-elevation, SECURITY DEFINER-EXECUTE-lek). Geen UI/schermintegratie in deze sprint."
+  },
+  {
+    "id": "SOCIAL-GROUPS-CHALLENGES-001",
+    "type": "capability",
+    "track": "Social & Community",
+    "phase": "F9",
+    "priority": "P3",
+    "status": "TESTED",
+    "target": "TESTED",
+    "dependencies": [
+      "SOCIAL-IDENTITY-PRIVACY-001"
+    ],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F9-02 (CLOSED). SocialGroupCore + SocialChallengeCore, apart datamodel van commerciele organizations/teams. V1-challenge-metric uitsluitend completed_sessions_count (pure telling, geen shadow-calculation). Self-elevation architecturaal onmogelijk gemaakt (geen rol-kolom bij participants). Live adversarial getest: self-elevation en block-bypass beide correct geweigerd. Geen UI in deze sprint."
   }
 ]

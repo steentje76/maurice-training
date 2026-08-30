@@ -1,12 +1,10 @@
 -- migratie_v503.sql
 -- MS-F9-01 (Social Identity & Privacy Foundation)
 --
--- Doel: het kleinst mogelijke, veilige datamodel voor sociale identiteit,
--- connecties en blokkades. Hergebruikt de bestaande auth.users-identiteit
--- (GEEN tweede accountsysteem). Forward-only, additief.
---
--- Dit bestand bevat de FINALE, LIVE GEVERIFIEERDE versie inclusief een
--- kritieke fix die tijdens live adversarial testing werd ontdekt.
+-- Hergebruikt auth.users (GEEN tweede accountsysteem). Forward-only, additief.
+-- Dit bestand bevat de FINALE, LIVE GEVERIFIEERDE staat inclusief drie
+-- kritieke fixes die tijdens verplichte live adversarial testing werden
+-- ontdekt en direct gerepareerd.
 
 create table if not exists public.social_profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
@@ -41,10 +39,20 @@ comment on table public.social_connections is
 
 alter table public.social_connections enable row level security;
 
-create policy social_connections_follower_beheer on public.social_connections
-  for all
-  using (follower_id = auth.uid())
-  with check (follower_id = auth.uid());
+-- ============================================================================
+-- FIX 1 (live adversarial test): de follower-policy was oorspronkelijk
+-- FOR ALL, wat OOK UPDATE omvatte. Hierdoor kon de follower ZELF zijn eigen
+-- 'pending'-verzoek naar 'accepted' zetten -- een self-role-elevation-
+-- kwetsbaarheid. Live bevestigd: status werd 'accepted' via de follower's
+-- eigen sessie. OPGELOST: follower krijgt uitsluitend INSERT + DELETE.
+-- ============================================================================
+create policy social_connections_follower_insert on public.social_connections
+  for insert
+  with check (follower_id = auth.uid() and status = 'pending');
+
+create policy social_connections_follower_delete on public.social_connections
+  for delete
+  using (follower_id = auth.uid());
 
 create policy social_connections_followee_accepteren on public.social_connections
   for update
@@ -75,23 +83,24 @@ create policy social_blocks_eigen_beheer on public.social_blocks
   using (blocker_id = auth.uid())
   with check (blocker_id = auth.uid());
 
--- Expliciet GEEN select-policy voor blocked_id: de geblokkeerde partij mag
--- nooit zien dat/door wie zij geblokkeerd is.
+-- Expliciet GEEN select-policy voor blocked_id.
 
 create index if not exists idx_social_blocks_blocked on public.social_blocks(blocked_id);
 
 -- ============================================================================
--- KRITIEKE FIX (live adversarial test tijdens deze sprint ontdekt):
+-- FIX 2 (live adversarial test): een directe EXISTS-subquery naar
+-- social_blocks vanuit de social_profiles-leespolicy wordt ZELF onderworpen
+-- aan de RLS van social_blocks. Omdat de geblokkeerde partij bewust geen
+-- select-toegang heeft tot de block-rij, FAALDE de block-check onopgemerkt
+-- vanuit HAAR perspectief. Live bevestigd: 1 rij gezien waar 0 verwacht werd.
+-- OPGELOST met een SECURITY DEFINER-functie die uitsluitend een boolean
+-- teruggeeft (geen rij-data).
 --
--- Een directe EXISTS-subquery naar social_blocks vanuit de social_profiles-
--- leespolicy wordt ZELF onderworpen aan de RLS van social_blocks. Omdat de
--- geblokkeerde partij bewust GEEN select-toegang heeft tot de block-rij,
--- FAALDE de block-check onopgemerkt vanuit HAAR perspectief -- een
--- discoverable profiel van de blocker bleef zichtbaar ondanks een actieve
--- block. Live bevestigd (0 rijen verwacht, 1 rij gevonden vóór de fix).
---
--- OPGELOST met een SECURITY DEFINER-functie die de RLS van social_blocks
--- omzeilt UITSLUITEND voor deze specifieke, beperkte boolean-check.
+-- FIX 2b (SECURITY DEFINER-heraudit): anon had onbedoeld EXECUTE-rechten op
+-- deze functie (Supabase-default-privilege, niet ondervangen door de
+-- eerdere REVOKE ALL FROM PUBLIC). Beperkt lek: anon kon met twee bekende
+-- user-ID's navragen of zij elkaar blokkeerden. OPGELOST: expliciete
+-- REVOKE EXECUTE FROM anon.
 -- ============================================================================
 create or replace function public.social_is_blocked_pair(a uuid, b uuid)
 returns boolean
@@ -107,10 +116,15 @@ as $$
 $$;
 
 revoke all on function public.social_is_blocked_pair(uuid, uuid) from public;
+revoke execute on function public.social_is_blocked_pair(uuid, uuid) from anon;
 grant execute on function public.social_is_blocked_pair(uuid, uuid) to authenticated;
 
--- Leesbeleid: uitsluitend ingelogde gebruikers, eigenaar altijd, anders
--- conform visibility EN geen actieve block in beide richtingen.
+-- ============================================================================
+-- FIX 3 (live adversarial test): de eerste versie van deze policy
+-- controleerde niet expliciet of de aanvrager is ingelogd. De anon-rol kon
+-- een 'discoverable'-profiel lezen. OPGELOST: auth.uid() IS NOT NULL als
+-- eerste voorwaarde.
+-- ============================================================================
 create policy social_profiles_lezen_conform_privacy on public.social_profiles
   for select
   using (
@@ -132,3 +146,37 @@ create policy social_profiles_lezen_conform_privacy on public.social_profiles
       )
     )
   );
+
+-- ============================================================================
+-- Report-architectuur (privacy/safety-foundation, vereist vóór MS-F9-01-sluiting)
+-- ============================================================================
+create table if not exists public.social_reports (
+  id uuid primary key default gen_random_uuid(),
+  reporter_user_id uuid not null references auth.users(id) on delete cascade,
+  target_user_id uuid not null references auth.users(id) on delete cascade,
+  target_type text not null check (target_type in ('profile')),
+  reason_code text not null check (reason_code in ('harassment','spam','inappropriate_content','impersonation','other')),
+  note text check (note is null or char_length(note) <= 1000),
+  status text not null default 'open' check (status in ('open','reviewed','dismissed')),
+  created_at timestamptz not null default now(),
+  constraint social_reports_no_self_report check (reporter_user_id <> target_user_id)
+);
+comment on table public.social_reports is
+  'MS-F9-01 -- vertrouwelijke reports. target_user_id mag dit NOOIT lezen. Alleen reporter ziet eigen reports; moderatie via service_role (nog geen aparte moderator-rol -- geen nep-rol gebouwd zonder architectuur).';
+
+alter table public.social_reports enable row level security;
+
+create policy social_reports_reporter_aanmaken on public.social_reports
+  for insert
+  with check (reporter_user_id = auth.uid());
+
+create policy social_reports_reporter_lezen_eigen on public.social_reports
+  for select
+  using (reporter_user_id = auth.uid());
+
+-- Expliciet GEEN update/delete-policy voor gewone gebruikers (reports zijn
+-- onveranderlijk vanuit het perspectief van de reporter). Expliciet GEEN
+-- select-policy voor target_user_id.
+
+create index if not exists idx_social_reports_target on public.social_reports(target_user_id, status);
+create index if not exists idx_social_reports_reporter on public.social_reports(reporter_user_id);

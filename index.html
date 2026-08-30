@@ -5356,6 +5356,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/weather.js"></script>
 <script src="core/cycle.js"></script>
 <script src="core/cycleTraining.js"></script>
+<script src="core/womensPerformanceContext.js"></script>
 <script src="core/scheduleAdherence.js"></script>
 <script src="core/adherenceIntelligence.js"></script>
 <script src="core/longitudinalTrend.js"></script>
@@ -6052,7 +6053,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.18';
+const APP_VER = 'v4.69.19';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -18856,7 +18857,7 @@ async function buildCtx(ctx){
     ? sbGet('sessions','&exercise_id=in.('+[...relevantExIds].join(',')+')&order=exercise_id.asc,date.desc,created_at.desc')
     : sbGet('sessions','&date=gte.'+sinceStr+'&order=exercise_id.asc,date.desc,created_at.desc');
 
-  const [,hd,wd,bc,recentSessions,,blessureContext,conditionsContext,,trainingContextRows,dataBlok,hyroxCtxTekst,eventCtxTekst,progressionTrendResult] = await Promise.all([
+  const [,hd,wd,bc,recentSessions,,blessureContext,conditionsContext,,trainingContextRows,dataBlok,hyroxCtxTekst,eventCtxTekst,progressionTrendResult,womensCtxTekst] = await Promise.all([
     ensureExercisesLoaded(),
     sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'),
     sbGet('weight_log','&order=date.desc,created_at.desc&limit=3'),
@@ -18874,7 +18875,9 @@ async function buildCtx(ctx){
     // v4.57.0 — Goal/Event-Date Context Engine-koppeling (zie tkProgramEventContext()).
     tkProgramEventContext().catch(function(){ return ''; }),
     // v4.59.0 — Progressie-trend-per-oefening Context Engine-koppeling (zie tkProgressionTrendContext()).
-    tkProgressionTrendContext().catch(function(){ return {tekst:'',aantalDalend:0}; })
+    tkProgressionTrendContext().catch(function(){ return {tekst:'',aantalDalend:0}; }),
+    // MS-F8-03 — Women's Performance Context Engine-koppeling (zie tkWomensPerformanceCoachContext()).
+    tkWomensPerformanceCoachContext().catch(function(){ return ''; })
   ]);
   const progressionTrendTekst=(progressionTrendResult&&progressionTrendResult.tekst)||'';
   // v4.60.0 — G4-herbeoordeling: gecorroboreerd belastingssignaal. Vereist TWEE
@@ -18983,6 +18986,7 @@ RECENTE SESSIES (app, [id:...] = exercise_id):${exCtx}
 ${hyroxCtxTekst?'\nRECENTE HYROX/TRIATHLON-RACES (reeds berekende race-samenvatting, niet zelf herberekenen):'+hyroxCtxTekst+'\n':''}
 ${eventCtxTekst?'\nWEDSTRIJD/DOEL-CONTEXT (reeds berekend, niet zelf herberekenen — uitsluitend informatief, geen trainingsbeslissing hierop baseren tenzij de gebruiker daar expliciet om vraagt):'+eventCtxTekst:''}
 ${progressionTrendTekst?'\nPROGRESSIE-TREND PER OEFENING (reeds berekend door ProgressionCore, niet zelf herberekenen — feitelijke constatering, geen deload-advies of trainingsbeslissing hierop baseren tenzij de gebruiker daar expliciet om vraagt):'+progressionTrendTekst:''}
+${womensCtxTekst?womensCtxTekst+'\n(BELANGRIJK: bereken zelf NOOIT cyclusdag/fase/hormonen, leid nooit zwangerschap/fertility af, stel nooit een diagnose, en pas nooit automatisch trainingsvolume/-intensiteit aan op basis van deze context — erken de context uitsluitend als extra informatie naast readiness/RPE, en laat de sporter zelf beslissen.)':''}
 ${deloadSignaalTekst?'\nGECORROBOREERD BELASTINGSSIGNAAL (reeds bepaald door de Decision Engine op basis van TWEE onafhankelijke signalen, niet zelf herberekenen of op één los signaal baseren):'+deloadSignaalTekst:''}
 
 ACTIEVE SPORT: ${SPORT_LABELS[getActiveSport()]||getActiveSport()}
@@ -24919,6 +24923,29 @@ async function tkHyroxCoachContext(){
     }
     return tekst;
   }catch(e){ console.error('tkHyroxCoachContext', e); return ''; }
+}
+// MS-F8-03 — Women's Performance Context Engine-koppeling. UITSLUITEND consumptie van het
+// canonieke WomensPerformanceContextCore.build()-resultaat (whitelist, athlete_reported/
+// derived_estimate correct gelabeld). Geen ruwe cyclushistorie naar de AI, geen hormonen,
+// geen fertility, geen diagnose. Retourneert '' als de atleet geen tracking-data heeft --
+// geen enkel spoor van deze feature in de prompt voor atleten die het niet gebruiken.
+async function tkWomensPerformanceCoachContext(){
+  try{
+    if(typeof WomensPerformanceContextCore==='undefined'||typeof CycleCore==='undefined') return '';
+    const periodes = await sbGet('cycle_periods', '&order=start_date.desc&limit=12');
+    if(!periodes||!periodes.length) return '';
+    const ctx = CycleCore.cycleContext(periodes, td());
+    const symptomen = await sbGet('cycle_symptom_logs', '&log_date=eq.'+td()+'&limit=1');
+    const wpCtx = WomensPerformanceContextCore.build(true, ctx, symptomen||[]);
+    if(!wpCtx.enabled) return '';
+    let tekst = '\nCYCLUSCONTEXT (optioneel, self-reported door de sporter -- ' + wpCtx.limitations + ' ' + wpCtx.forbidden_ai_use + '):';
+    tekst += '\n- Cyclusdag ' + wpCtx.cycle.cyclus_dag + ', geschatte fase: ' + (wpCtx.cycle.geschatte_fase||'onbekend') + ' (schatting, geen meting)';
+    if(wpCtx.recent_symptoms){
+      const sev = Object.entries(wpCtx.recent_symptoms.severity).map(function(kv){ return kv[0]+':'+kv[1]; }).join(', ');
+      tekst += '\n- Vandaag gerapporteerde klachten (self-reported, 0-10-schaal): ' + sev;
+    }
+    return tekst;
+  }catch(e){ console.error('tkWomensPerformanceCoachContext', e); return ''; }
 }
 
 function hyroxContextLabel(sport, raceContext){

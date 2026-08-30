@@ -1,5 +1,32 @@
 # Trainingskompas — Changelog
 
+## v4.69.19 — MS-F8-03: Cycle & Symptom Performance Context (29 augustus 2026)
+
+Derde F8-mastersprint. Sluit MS-F8-03.
+
+**Kritieke evidence-heraudit van `cyclusDagFactor()`** (hardcoded fase-
+multiplicatoren 0.93/1.03/1.00/0.97 in de dagfactor-formule): bevestigd al
+eerder correct geclassificeerd als Evidence level C. Actueel onderzoek
+(2023-2026) bevestigt deze classificatie -- geen wijziging nodig.
+
+**Nieuw:** `core/womensPerformanceContext.js` (`WomensPerformanceContextCore`)
+-- het enige, canonieke `women_performance_context.v1`-contract. Whitelist-
+filter boven de ongewijzigde `CycleCore`-output.
+
+**AI-integratie live doorgevoerd:** `tkWomensPerformanceCoachContext()`
+(consistent met het bestaande HYROX-context-patroon) voegt een vooraf
+berekend, canoniek tekstblok toe aan de AI-coach-prompt, met een directe,
+harde grens in de prompt-tekst zelf tegen zelf-berekening, zwangerschaps-/
+fertility-inferentie, diagnose, en automatische trainingsaanpassing. Lege
+string (geen spoor) als de atleet geen tracking-data heeft.
+
+Nieuwe testsuites `core/fWomensPerformanceContext.test.js` (12/12) en
+`core/fWomensPerformanceAiIntegration.test.js` (13/13). Sabotagebewijs
+geleverd op beide.
+
+`APP_VER` → v4.69.19, `CACHE_NAME`/`CACHE_STATIC` en Android
+`versionCode`/`versionName` meegenomen.
+
 ## v4.69.18 — MS-F8-02: Women's Privacy & Consent Model (29 augustus 2026)
 
 Tweede F8-mastersprint. Sluit MS-F8-02.

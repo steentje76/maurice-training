@@ -3124,6 +3124,21 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <button class="pf-row" id="tenant-brand-admin-btn" style="display:none" onclick="tenantBrandingAdminEdit()"><span class="pf-tx"><div class="pf-lb">Uitstraling beheren</div><div class="pf-sb">Logo, kleuren en naam voor deze organisatie</div></span><span class="pf-chev">&#8250;</span></button>
     </div>
 
+    <!-- MS-F12-03: Commercial UX. Toont uitsluitend wat CommercialUxCore
+         (op basis van EntitlementCore + de canonieke catalogus) teruggeeft
+         -- geen eigen plan-logica hier. UI-lock =/= security: server-side
+         enforcement (coach.js) blijft de bron van waarheid. -->
+    <div class="pf-sect">Mijn abonnement</div>
+    <div class="card pf-card" id="plan-huidig-card">
+      <div class="pf-row">
+        <div class="pf-tx">
+          <div class="pf-lb" id="plan-huidig-naam">Gratis</div>
+          <div class="pf-sb" id="plan-huidig-status"></div>
+        </div>
+      </div>
+      <button class="pf-row" onclick="openPlanOverzicht()"><span class="pf-tx"><div class="pf-lb">Plannen vergelijken</div><div class="pf-sb">Bekijk wat elk plan biedt</div></span><span class="pf-chev">&#8250;</span></button>
+    </div>
+
     <div class="pf-sect">Mijn account</div>
     <div class="card pf-card">
       <div class="pf-row"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span><div class="pf-tx"><div class="pf-lb">E-mailadres</div><div class="pf-sb" id="account-email-lbl">&mdash;</div></div></div>
@@ -4362,6 +4377,18 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 </div>
 
 <!-- ═══ MODALS ═══ -->
+<!-- MS-F12-03: Commercial UX -- planoverzicht. Uitsluitend gerenderd via
+     renderPlanOverzicht(), die zelf uitsluitend CommercialUxCore consumeert.
+     UI-lock =/= security: dit scherm is presentatie, geen autoriteit. -->
+<div class="modal-bg" id="m-plan-overzicht" onclick="bgClose(event,'m-plan-overzicht')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Plannen vergelijken</div>
+    <div id="plan-overzicht-inhoud" style="max-height:65vh;overflow-y:auto"></div>
+    <button class="btn-primary" style="width:100%;margin-top:12px" onclick="closeModal('m-plan-overzicht')">Sluiten</button>
+  </div>
+</div>
+
 <div class="modal-bg" id="m-hrv" onclick="bgClose(event,'m-hrv')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -5371,6 +5398,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/organizationCore.js"></script>
 <script src="core/brandingCore.js"></script>
 <script src="core/organizationContextRuntime.js"></script>
+<script src="core/entitlementCore.js"></script>
+<script src="core/commercialUxCore.js"></script>
 <script src="core/onboarding.js"></script>
 <script src="core/athleteConstraints.js"></script>
 <script src="core/deviceIntegration.js"></script>
@@ -6075,7 +6104,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.22';
+const APP_VER = 'v4.69.23';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -9884,6 +9913,94 @@ function closeModal(id){
   }
 }
 function bgClose(e,id){if(e.target===document.getElementById(id))closeModal(id);}
+
+// ══════════════════════════════════════════════════════════
+// MS-F12-03 — COMMERCIAL UX. Uitsluitend presentatie op basis van
+// CommercialUxCore/EntitlementCore -- GEEN eigen plan-beslissing hier.
+// UI-lock =/= security: server-side enforcement (coach.js) blijft de
+// bron van waarheid. Deze functies bepalen alleen wat de gebruiker TE
+// ZIEN krijgt.
+// ══════════════════════════════════════════════════════════
+async function loadCommercialCatalog(){
+  const [plans,features,planFeatures,planQuota]=await Promise.all([
+    sbGet('plans',''), sbGet('features',''), sbGet('plan_features',''), sbGet('plan_feature_quota','')
+  ]);
+  return {plans:plans||[],features:features||[],planFeatures:planFeatures||[],planQuota:planQuota||[]};
+}
+async function loadCommercialActor(){
+  const rows=await sbGet('users','&id=eq.'+authSession.user.id+'&select=individual_plan_key,individual_plan_status,individual_plan_expires_at');
+  const u=(rows&&rows[0])||{};
+  return {
+    userId:authSession.user.id,
+    planKey:u.individual_plan_key||null,
+    subscriptionStatus:u.individual_plan_status||null,
+    expiresAt:u.individual_plan_expires_at||null,
+    organizationMemberships:[] // MS-F12-03: organization-billing volgt in een latere sprint, consistent met MS-F12-02's minimale scope
+  };
+}
+async function refreshMijnAbonnementCard(){
+  const naamEl=document.getElementById('plan-huidig-naam'), statusEl=document.getElementById('plan-huidig-status');
+  if(!naamEl||!authSession)return;
+  try{
+    const [catalog,actor]=await Promise.all([loadCommercialCatalog(),loadCommercialActor()]);
+    const vm=CommercialUxCore.buildPlanComparisonViewModel(actor,catalog);
+    const huidig=vm.plans.find(p=>p.isHuidigPlan);
+    naamEl.textContent=huidig?huidig.naam:'Gratis';
+    const downgradeVm=CommercialUxCore.buildDowngradeStateViewModel(actor);
+    statusEl.textContent=downgradeVm.message||vm.statusLabel||'';
+  }catch(e){
+    // Fail-safe: bij een backendstoring blijft "Gratis" zichtbaar -- nooit
+    // een crash, nooit een onterecht getoond betaald plan.
+    naamEl.textContent='Gratis';
+    statusEl.textContent='';
+  }
+}
+async function openPlanOverzicht(){
+  openModal('m-plan-overzicht');
+  const inhoudEl=document.getElementById('plan-overzicht-inhoud');
+  inhoudEl.innerHTML='<div class="tk-empty">Plannen laden…</div>';
+  try{
+    const [catalog,actor]=await Promise.all([loadCommercialCatalog(),loadCommercialActor()]);
+    renderPlanOverzicht(inhoudEl,catalog,actor);
+  }catch(e){
+    inhoudEl.innerHTML='<div class="tk-empty tk-empty--error">Kon plannen niet laden — probeer het later opnieuw.</div>';
+  }
+}
+function renderPlanOverzicht(el,catalog,actor){
+  const vm=CommercialUxCore.buildPlanComparisonViewModel(actor,catalog);
+  if(!vm.plans.length){ el.innerHTML='<div class="tk-empty">Geen plannen beschikbaar.</div>'; return; }
+  let html='';
+  vm.plans.forEach(p=>{
+    // Prijs: NOOIT een verzonnen bedrag. plans.prijs_cent is de enige bron.
+    const prijsTekst=(p.prijsCent===null||p.prijsCent===undefined)?'Prijs wordt nog bekendgemaakt':('€'+(p.prijsCent/100).toFixed(2).replace('.',',')+' / maand');
+    const featuresTekst=p.features.map(f=>{
+      const quotaTekst=(f.quotaPerMaand===null)?'':(' ('+f.quotaPerMaand+'x per maand)');
+      return '<div class="pf-row" style="padding:4px 0"><span class="pf-sb">✓ '+escHtml(f.naam)+quotaTekst+'</span></div>';
+    }).join('');
+    html+='<div class="card pf-card" style="'+(p.isHuidigPlan?'border-left:3px solid var(--accent)':'')+'">'
+      +'<div class="pf-lb">'+escHtml(p.naam)+(p.isHuidigPlan?' <span style="color:var(--accent);font-weight:700">— jouw huidige plan</span>':'')+'</div>'
+      +'<div class="pf-sb" style="margin-bottom:6px">'+prijsTekst+'</div>'
+      +featuresTekst
+      +'</div>';
+  });
+  el.innerHTML=html;
+}
+// MS-F12-03: vertaalt een server-side commerciële foutcode (coach.js,
+// MS-F12-02) naar een begrijpelijke, specifieke boodschap -- NOOIT een
+// generieke "er ging iets mis" voor een echte quota-/entitlementstatus.
+// Blokkeert nooit de rest van de app: dit is uitsluitend tekst in de
+// chatweergave, geen modal die de app gijzelt.
+function commercialErrorMessage(error){
+  if(!error||typeof error!=='object')return 'Er ging iets mis bij het ophalen van je advies. Probeer het zo nog een keer.';
+  if(error.code==='QUOTA_EXCEEDED'){
+    const resetDatum=(function(){try{return CommercialUxCore.buildQuotaMessageViewModel('ai_coach',null,null).resetOp;}catch(_){return null;}})();
+    return 'Je hebt je maandelijkse limiet voor deze functie bereikt.'+(resetDatum?' Deze wordt op '+resetDatum+' weer bijgevuld.':'')+' Bekijk bij Profiel → Mijn abonnement wat andere plannen bieden.';
+  }
+  if(error.code==='ENTITLEMENT_REQUIRED'){
+    return 'Deze functie is niet inbegrepen in je huidige plan. Bekijk bij Profiel → Mijn abonnement de mogelijkheden.';
+  }
+  return 'Er ging iets mis bij het ophalen van je advies. Probeer het zo nog een keer.';
+}
 // v3.3.10: XSS-fix, fase 1. User-input (oefeningnamen, trainingsnamen, conditie-labels)
 // werd op tientallen plekken ongefilterd in innerHTML gezet. Zolang de app single-user
 // was, was dat vooral theoretisch — sinds vandaag (gym-breed/persoon-tot-persoon delen,
@@ -19064,7 +19181,7 @@ async function sendMsg(txt){
     const sys=await buildCtx(activeSessionCtx);
     const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'chat',model:'claude-sonnet-4-5',max_tokens:1000,system:sys,messages:chatHist.slice(-12)})});
     const d=await res.json();
-    if(d.error){removeMsg(tid);console.warn('coach error',d.error);addMsg('coach','Er ging iets mis bij het ophalen van je advies. Probeer het zo nog een keer.');}
+    if(d.error){removeMsg(tid);console.warn('coach error',d.error);addMsg('coach',commercialErrorMessage(d.error));}
     else{
       const r=d.content[0].text;
       removeMsg(tid);
@@ -23769,6 +23886,7 @@ async function startAppAfterAuth(){
   ensureExerciseGoalsLoaded(); // peakdoelen vroeg laden — voorkomt lege 'jouw doel'-weergave bij eerste render
   checkTeamAccess(); // v331: teamRoleLevel meteen beschikbaar, niet pas na bezoek aan Profiel
   if(window.OrganizationContextRuntime) window.OrganizationContextRuntime.initOrganizationContext(); // MS-F11-05: F11 organization-context + tenant-branding, non-blocking (mag training nooit vertragen)
+  refreshMijnAbonnementCard(); // MS-F12-03: non-blocking, mag training nooit vertragen
   syncAtleetFromSupabase();
   syncCustomTrainingsFromSupabase();
   updateOfflineBadge();

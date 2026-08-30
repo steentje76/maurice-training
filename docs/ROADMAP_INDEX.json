@@ -2014,7 +2014,7 @@
       "E11.5"
     ],
     "priority": "P3",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F11-02"
     ],
@@ -3681,5 +3681,21 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "zie MS-F11-03 (CLOSED). Team-events/aanwezigheid/verantwoordelijkheden, server-side privacy-safe analytics (kritieke cohort-floor-omzeiling gevonden en gerepareerd), vier tenant-escape-bugs gerepareerd. Teamchat bewust DEFERRED (F9 bouwde ook geen chat). UI nog niet gebouwd."
+  },
+  {
+    "id": "GYM-DEVICE-FEASIBILITY-001",
+    "type": "capability",
+    "track": "Gym/Club/Team Platform",
+    "phase": "F11",
+    "priority": "P3",
+    "status": "TESTED",
+    "target": "TESTED",
+    "dependencies": [
+      "GYM-PROGRAMMING-EQUIPMENT-001"
+    ],
+    "software_validation": "PASS",
+    "device_validation": "N/A (feasibility-only, geen vendor geimplementeerd)",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F11-04 (CLOSED). Volledige feasibility-matrix voor EGYM/Technogym/Life Fitness/Precor/Matrix/Keiser/Wattbike/gym80. FTMS/ANT+ (open standaarden) en Keiser BLE geclassificeerd als NOW/architecture-ready. EGYM/Technogym Enterprise als PARTNER DEPENDENT. Matrix Fitness als RESEARCH FURTHER (geen bron gevonden). gym80 als NO-GO. Geen vendor daadwerkelijk geimplementeerd -- external vendor/partner validation blijft open."
   }
 ]

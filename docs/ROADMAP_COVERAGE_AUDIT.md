@@ -99,7 +99,7 @@
 | END-HYROX-001 | CLOSED (kern) | IMPROVEMENT | MS-F6-04 |
 | CTX-CYCLE-001 | INTEGRATED | DEFERRED | MS-F8-03/04 |
 | WOMENS-PERF-DECISIONS-001 | CLOSED | NO ACTION | -- (F8, MS-F8-01 CLOSED, 5 besluiten vastgelegd) |
-| COMM-UI-001 | NOT STARTED | MAJOR DEVELOPMENT | **MS-F12-01/02/03/04** (verplaatst F2→F12, P1→P2) |
+| COMM-UI-001 | TESTED | NO ACTION | — (F12, MS-F12-01/02/03/04 allemaal CLOSED, twee kritieke P0-bevindingen gevonden en gerepareerd, sabotagebewijs voor alle vier mastersprints) |
 | CAP-REGISTRY-SCREENS-001 | IMPLEMENTED | IMPROVEMENT | MS-F2-01 t/m MS-F2-08 |
 | SCI-CONSENT-001 | NOT STARTED | DEFERRED | MS-F14-01/02/03 |
 

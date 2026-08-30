@@ -827,3 +827,33 @@
   toestemming voor de volledige cyclus zonder tussentijdse bevestiging.
   Niet door Maurice persoonlijk beoordeeld op het moment van mergen — ter
   review bij terugkeer.
+
+## DEC-047
+- Datum: 30 augustus 2026
+- Beslissing: een opdracht voor "Unified Account, Google/Apple Sign-In &
+  Multi-Provider Payments" is NIET geïmplementeerd, maar uitsluitend
+  gedocumenteerd/ontworpen (`docs/UNIFIED_IDENTITY_AND_PAYMENTS_CURRENT_STATE.md`)
+  en als twee `PLANNED`-capabilities aan `ROADMAP_INDEX.json` toegevoegd
+  (`FEDERATED-IDENTITY-001`, `MULTI-PROVIDER-BILLING-001`).
+- Reden: repo-brede roadmap-audit bevestigde 0 treffers voor social login
+  (Google/Apple Sign-In), Google Play Billing, of Apple StoreKit als
+  bestaande, goedgekeurde mastersprint of capability. F12 is expliciet
+  vrijgegeven voor MS-F12-01 t/m MS-F12-04 (Mollie als enige onderzochte
+  provider voor Billing & Reconciliation) — deze opdracht beschreef een
+  substantiële, nieuwe scope-uitbreiding, geen uitvoering van een reeds
+  bestaande, vrijgegeven mastersprint. De opdracht zelf bevatte de
+  expliciete governance-instructie om in dit geval te documenteren/
+  ontwerpen in plaats van te implementeren.
+- Alternatieven overwogen: direct implementeren (afgewezen — zou een
+  ongeplande, zeer omvangrijke scope-uitbreiding midden in een lopende,
+  wél vrijgegeven sprint (MS-F12-04) betekenen, met reëel risico op
+  precies het soort shadow-architectuur en overclaimde status die
+  eerder in F11/F12 al meermaals actief is opgespoord en gerepareerd).
+- Impact: geen code-/database-wijziging voor identity/multi-provider-
+  billing. MS-F12-04 (Mollie) wordt ongestoord afgerond als het eerste,
+  bewezen providerpatroon. Een toekomstige, expliciete Product Owner-
+  vrijgave van de twee nieuwe PLANNED-capabilities kan op deze audit
+  voortbouwen zonder opnieuw te hoeven onderzoeken.
+- Verantwoordelijke: autonome beoordeling door Claude, conform de
+  expliciete, in de opdracht zelf aanwezige governance-regel.
+

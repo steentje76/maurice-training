@@ -136,6 +136,37 @@ ok(EC.getQuota(undefined, 'ai_coach') === null, 'K3: getQuota met undefined enti
   ok(codeRegelsMetRls.length === 0, 'L2: "RLS" komt uitsluitend voor in commentaarregels, nooit in uitvoerbare code');
 }
 
+// ---- M. MS-F12-04: money-never-widens-data-access, ook voor de nieuwe billing-laag.
+// De reconcile_billing_event()-RPC (via migratie_v524.sql) en de billing-
+// endpoints mogen NOOIT role/gym_id/organization membership/RLS-gerelateerde
+// velden muteren -- uitsluitend de vier commerciële authority-velden. ----
+{
+  const fs = require('fs');
+  const migratiePath = path.join(ROOT, 'migratie_v524.sql');
+  if (fs.existsSync(migratiePath)) {
+    const migratie = fs.readFileSync(migratiePath, 'utf8');
+    const fnBlok = migratie.split('function public.reconcile_billing_event')[1] ? migratie.split('function public.reconcile_billing_event')[1].split('$$;')[0] : '';
+    ['gym_role', 'gym_id', 'system_role', 'organization_id', 'role ='].forEach(function (term) {
+      ok(!fnBlok.includes(term), 'M1: reconcile_billing_event() muteert nergens "' + term + '" -- uitsluitend individual_plan_key/status/expires_at, nooit rol/tenant-velden');
+    });
+    ok(fnBlok.includes('individual_plan_key') && fnBlok.includes('individual_plan_status') && fnBlok.includes('individual_plan_expires_at'),
+      'M2: reconcile_billing_event() muteert uitsluitend de bekende, vaste commerciële authority-velden');
+  }
+  ['billing-checkout.js', 'billing-webhook.js'].forEach(function (bestand) {
+    const bestandPath = path.join(ROOT, 'netlify/functions', bestand);
+    if (fs.existsSync(bestandPath)) {
+      const src = fs.readFileSync(bestandPath, 'utf8');
+      const codeRegelsAlleen = src.split('\n').filter(function (regel) {
+        var t = regel.trim();
+        return !t.startsWith('//') && !t.startsWith('*') && !t.startsWith('/*');
+      }).join('\n');
+      ['gym_role', 'gym_id', 'system_role', 'memberships'].forEach(function (term) {
+        ok(!codeRegelsAlleen.includes(term), 'M3: ' + bestand + ' bevat "' + term + '" uitsluitend in commentaar (documentatie van het principe), nooit in uitvoerbare code');
+      });
+    }
+  });
+}
+
 console.log('fEntitlementCore: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (msgs.length) console.log(msgs.join('\n'));
 console.log('Resultaat: ' + pass + ' geslaagd, ' + fail + ' mislukt');

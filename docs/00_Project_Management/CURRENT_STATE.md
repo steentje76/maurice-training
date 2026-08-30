@@ -6,11 +6,11 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.69.23
+v4.69.24
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.69.23 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.69.24 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 30 augustus 2026
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 
@@ -46,7 +46,7 @@ Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
 ## 5. Current validation status
 - **Code:** CODE VERIFIED tegen `main` @ bovenstaande SHA
 - **DB:** VERIFIED — 69 tabellen, RLS gecontroleerd op alle tabellen, `gyms`-lek gesloten en geverifieerd via `SET LOCAL ROLE anon/authenticated/service_role`
-- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 150 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 153 stappen totaal), 152 automatisch uitgevoerd, 1 zichtbaar geskipt (fAndroidRelease.test.js zonder gereproduceerde buildmap), 0 gefaald
+- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 174 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 177 stappen totaal), 177 automatisch uitgevoerd, 0 zichtbaar geskipt, 0 gefaald
 - **Integration:** wearable-sync getest tegen de echte handler-functie; overige integraties overwegend unit-getest
 - **Device:** **OPEN** — Concept2 PM5 en Google Health-sync hebben geen bevestigde real-device-validatie in productie
 - **UX:** niet apart beoordeeld in de laatste consolidatiesprint (38 top-level schermen geïnventariseerd, geen flow-niveau UX-testdekking)

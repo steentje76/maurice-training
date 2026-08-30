@@ -2311,7 +2311,7 @@
       "E17.5"
     ],
     "priority": "P2",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [],
     "target_maturity": "IMPLEMENTED",
     "objective": "Accessible, one-handed, resilient mobile UX.",

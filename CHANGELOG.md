@@ -1,5 +1,20 @@
 # Trainingskompas — Changelog
 
+## v4.69.24 — MS-F13-04: Accessibility & Mobile Ergonomics (30 augustus 2026)
+
+Vierde F13-mastersprint. Audit van kernflows bevestigt: pinch-zoom-
+toegankelijkheid, modal-focus-restore, Android-terugknop-bescherming,
+en icon-only-knop-labels waren al correct aanwezig.
+
+Gevonden en gecorrigeerd: de touch-targets van de setopties-knop en de
+rust-knop tijdens actieve training waren 36x42px, onder de aanbevolen
+minimale 44x44px (WCAG 2.5.5) -- specifiek relevant tijdens fysieke
+inspanning. Vergroot naar 44x44px, minimale CSS-wijziging, geen
+visuele redesign.
+
+Sabotagebewijs: de touch-target tijdelijk teruggezet naar 24x24px ->
+de nieuwe regressietest detecteerde dit exact, teruggedraaid.
+
 ## v4.69.23 — MS-F12-03: Commercial UX (30 augustus 2026)
 
 Derde F12-mastersprint. Sluit MS-F12-03.

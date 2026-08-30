@@ -6,9 +6,9 @@
 
 **Canonieke definitie:** het aantal actuele, unieke capability-ID's dat als eigen rij voorkomt in `docs/CAPABILITY_REGISTRY.md` (niet: tabelkoppen, historische IDs, aliases, dubbele verwijzingen, of samenvattingsregels). Dit is de canonieke bron voor "hoeveel capabilities bestaan er" — `docs/ROADMAP_INDEX.json` is een afgeleide, machine-leesbare weergave die met deze registry synchroon moet blijven, niet een tweede, onafhankelijke telling.
 
-**Canonical capability count: 61 (was 60 vóór MS-F10-04 — COACH-INTELLIGENCE-001 toegevoegd).**
+**Canonical capability count: 62 (was 61 vóór MS-F11-01 — ORGANIZATION-CORE-001 toegevoegd).**
 
-**Resultaat: 61/61 = 100%.** Alle 61 capabilities in `docs/CAPABILITY_REGISTRY.md` hebben een mastersprint-verwijzing in `docs/ROADMAP_INDEX.json` (zie `next_action`-veld per capability) én een eigen `capability`-type entry in `docs/ROADMAP_INDEX.json` (zie sectie "Capability-classificatie" hieronder voor de volledige lijst).
+**Resultaat: 62/62 = 100%.** Alle 62 capabilities in `docs/CAPABILITY_REGISTRY.md` hebben een mastersprint-verwijzing in `docs/ROADMAP_INDEX.json` (zie `next_action`-veld per capability) én een eigen `capability`-type entry in `docs/ROADMAP_INDEX.json` (zie sectie "Capability-classificatie" hieronder voor de volledige lijst).
 
 **Root cause van de eerdere 16/16-vermelding (opgelost):** dat cijfer was het aantal `type: "capability"`-entries dat destijds daadwerkelijk in `docs/ROADMAP_INDEX.json` stond (16), niet het aantal rijen in de Capability Registry zelf (25) — een onvolledige JSON-export die nooit 1-op-1 was gesynchroniseerd met de registry. Daarnaast bevatte de Capability Registry zelf een ambigu label (`DEV-WEARSYNC-001/002`, één rij die twee sub-ID's in de naam droeg) dat door eenvoudige ID-detectie werd overgeslagen — vandaar dat een eerdere handmatige telling op 24 in plaats van 25 uitkwam. Beide problemen zijn hier opgelost: het label is genormaliseerd naar `DEV-WEARSYNC-001` (aansluitend bij hoe het overal elders al werd genoemd), en `docs/ROADMAP_INDEX.json` bevat nu alle 25 registry-capabilities als eigen entry (plus `DOC-HANDBOOK-001`, dat bewust een *roadmap-governance-item* is, geen Capability Registry-capability — zie kanttekening hieronder, expliciet buiten de 25 gehouden).
 
@@ -80,6 +80,7 @@
 | SOCIAL-SHARING-NOTIFICATIONS-001 | IMPLEMENTED | NO ACTION | — (F9, MS-F9-03 CLOSED, block wint over public, notificaties forgeer-veilig) |
 | COACH-PROGRAM-ASSIGNMENT-001 | TESTED | NO ACTION | — (F10, MS-F10-03 CLOSED, GAP-P2-023 volledig gesloten, atomiciteit/idempotentie/revoke/delete-completeness bewezen) |
 | COACH-INTELLIGENCE-001 | TESTED | NO ACTION | — (F10, MS-F10-04 CLOSED, Womens Performance-isolatie bewezen, geen shadow-calculation) |
+| ORGANIZATION-CORE-001 | TESTED | NO ACTION | — (F11, MS-F11-01 CLOSED, twee tenant-escape-bugs live gevonden en gerepareerd) |
 | COACH-RELATIONSHIP-001 | IMPLEMENTED | NO ACTION | — (F10, MS-F10-01 CLOSED, granulaire scopes live adversarial geverifieerd) |
 | AI-COACH-001 | CLOSED (security) | NO ACTION | — (F0) |
 | AI-OUTPUT-CONTRACT-001 | TESTED | NO ACTION (status TESTED, niet CLOSED -- zie MS-F4-01-rapport) | — (F4, MS-F4-01 status TESTED) |
@@ -98,7 +99,7 @@
 | CAP-REGISTRY-SCREENS-001 | IMPLEMENTED | IMPROVEMENT | MS-F2-01 t/m MS-F2-08 |
 | SCI-CONSENT-001 | NOT STARTED | DEFERRED | MS-F14-01/02/03 |
 
-**Dekking: 61/61 capabilities geclassificeerd, 0 orphan** (Registry Coverage = 100%, zie hierboven).
+**Dekking: 62/62 capabilities geclassificeerd, 0 orphan** (Registry Coverage = 100%, zie hierboven).
 
 ## Track-erkenning
 Exercise Intelligence (T2) blijft expliciet erkend als eigen track (bevestigd in v1.1 §6, ongewijzigd t.o.v. de vorige consolidatie).

@@ -1,0 +1,67 @@
+-- migratie_v516.sql
+-- MS-F11-03 (Teams, Groups & Analytics)
+--
+-- BELANGRIJKE, TRANSPARANTE VASTLEGGING: tijdens de baseline-audit van
+-- MS-F11-03 bleken team_events, event_attendance, event_responsibilities
+-- en de functie team_has_access() al LIVE in de productiedatabase te
+-- bestaan, correct gebouwd op het MS-F11-01-fundament (org_has_role()) en
+-- de MS-F11-01 locations-tabel -- maar NERGENS in deze repository
+-- gedocumenteerd of als migratiebestand vastgelegd (0 treffers bij een
+-- repo-brede grep). Alle drie tabellen bevatten 0 rijen (bevestigd, geen
+-- productiedata in gevaar).
+--
+-- Dit bestand legt de reeds-bestaande, live staat retroactief vast zodat
+-- de repository een waarheidsgetrouwe afspiegeling van de database blijft.
+-- Bewust GEEN CREATE TABLE/CREATE POLICY toegevoegd voor structuren die na
+-- adversarial verificatie al correct bleken -- dit is documentatie van
+-- bewezen, bestaande staat, geen uitvoerbare "opnieuw aanmaken"-migratie.
+--
+-- LIVE ADVERSARIAAL GEVERIFIEERD (transacties zonder commit, geen
+-- permanente wijziging), vóór verder gebruik binnen MS-F11-03:
+-- 1. Een gewoon lid (member) kan GEEN team_events aanmaken -> expliciete
+--    RLS-schending.
+-- 2. Een lid van het team ziet het event en kan de eigen aanwezigheid
+--    registreren.
+-- 3. Een ANDER lid kan de aanwezigheidsstatus van een teamgenoot niet
+--    wijzigen -> status blijft ongewijzigd.
+--
+-- CANONIEK SCHEMA (ter documentatie, reeds bestaand):
+--
+-- team_events(id uuid pk, team_id text -> teams(id) cascade,
+--   created_by uuid -> auth.users(id) cascade, title text, description text,
+--   event_type text, starts_at timestamptz, ends_at timestamptz,
+--   timezone text, location_id uuid -> locations(id) set null,
+--   linked_training_instance_id uuid -> training_instances(id) set null,
+--   created_at timestamptz)
+--   -- location_id hergebruikt de MS-F11-01 locations-tabel;
+--   -- linked_training_instance_id hergebruikt de canonieke
+--   -- training_instances-tabel -- geen tweede workoutmodel.
+--
+-- event_attendance(id uuid pk, event_id uuid -> team_events(id) cascade,
+--   user_id uuid -> auth.users(id) cascade,
+--   status text check in ('present','absent','maybe','no_response'),
+--   responded_at timestamptz)
+--
+-- event_responsibilities(id uuid pk, event_id uuid -> team_events(id) cascade,
+--   task text, assigned_user_id uuid -> auth.users(id) set null,
+--   status text check in ('open','done'), deadline timestamptz, note text,
+--   created_at timestamptz)
+--   -- generiek taak/verantwoordelijke-model, sport-onafhankelijk.
+--
+-- team_has_access(p_team_id text, p_roles text[]) returns boolean
+--   SECURITY DEFINER, hergebruikt org_has_role() voor organisatiebrede
+--   staff-rollen EN controleert team-specifieke memberships.team_id --
+--   geen derde, parallel autorisatiemodel.
+--
+-- RLS (reeds bestaand, bevestigd correct):
+--   team_events: SELECT voor owner/admin/staff/member, ALL uitsluitend
+--     voor owner/admin/staff.
+--   event_attendance: SELECT voor zichzelf OF staff van het team; INSERT/
+--     UPDATE uitsluitend de eigen rij.
+--   event_responsibilities: SELECT voor owner/admin/staff/member; ALL voor
+--     staff; UPDATE ook voor de toegewezen persoon zelf.
+--
+-- Delete-completeness: alle drie tabellen hebben CASCADE via auth.users of
+-- via team_events -> teams -> organizations. Geen aanvulling nodig op
+-- delete-account.js (cascade-only, geen user-owned top-level rij, analoog
+-- aan de eerdere F11-conclusie voor coach_program_templates).

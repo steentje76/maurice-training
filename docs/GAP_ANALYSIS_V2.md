@@ -11,7 +11,7 @@
 |---|---|
 | P0 | **0 open** |
 | P1 | 0 |
-| P2 | 22 |
+| P2 | 21 |
 | P3 | 5 |
 | P4 | 2 |
 
@@ -154,13 +154,6 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 
 ## P2 — grote verbetering
 
-### GAP-P2-001 — Vijf openstaande Women's Performance-productbeslissingen
-**Capability-ID:** WOMENS-PERF-DECISIONS-001
-**Current:** `docs/Womens_Performance/DECISION_REQUIRED_{zwangerschap,postpartum,menopauze,anticonceptie,bekkenbodem}.md`, open sinds 26 augustus.
-**Target:** vijf expliciete besluiten van Maurice, daarna implementatie.
-**Dependency:** blokkeert Track 8 (F8) volledig.
-**Priority:** P2. **Complexity:** M-L per besluit. **Roadmap phase:** F8.
-
 ### GAP-P2-002 (uitgebreid via de Backup & Retention Decision-sprint) — 8 `bak_p_*`-backuptabellen, audit compleet, verwijdering blijft open
 **Capability-ID:** PLAT-BACKUP-CLEANUP-001
 **Current:** 8 losse backup-kopieën (1-154 rijen elk, eerdere telling van 7 was onvolledig) — elk heeft een corresponderende, actief gebruikte canonieke tabel zonder `bak_`-prefix. Volledige audit uitgevoerd: 0 FK-referenties in beide richtingen, 0 code-referenties repo-breed, RLS enabled met 0 policies (deny-all, geen actieve exposure). Alle 8 geclassificeerd als **SAFE TO ARCHIVE** (niet "safe to remove" — data verwijderen is onomkeerbaar, geen enkele tabel is met zekerheid overbodig zonder Product Owner-bevestiging).
@@ -222,6 +215,13 @@ Vereist eerst een consent-flow (nog niet gebouwd) bovenop de al aanwezige Eviden
 ---
 
 ## CLOSED GAPS / HISTORICAL
+
+### (voorheen GAP-P2-001) — Vijf openstaande Women's Performance-productbeslissingen — **STATUS: CLOSED**
+- **Original finding:** vijf productbeslissingen (cycle/symptomen/contraceptie/zwangerschap-postpartum/perimenopauze-menopauze-bekkenbodem) stonden open sinds 26 augustus, blokkeerden F8 volledig.
+- **Resolution (MS-F8-01):** F8 Entry Audit bevestigde een reeds bestaande, zorgvuldig gebouwde Cycle & Symptom-infrastructuur (`core/cycle.js`/`core/cycleTraining.js`, `cycle_periods`/`cycle_symptom_logs`, beide live geverifieerd met correcte RLS). Actueel onderzoek (2023-2026) geraadpleegd. Vijf besluiten expliciet vastgelegd (`docs/MS-F8-01_WOMENS_PERFORMANCE_PRODUCT_DECISIONS.md`): Cycle en Symptoms IMPLEMENT (reeds correct bestaand); Contraceptie, Zwangerschap/Postpartum, Perimenopauze/Menopauze/Bekkenbodem DEFER (conservatieve, reversibele default, Product Owner niet beschikbaar tijdens uitvoering, vastgelegd in `docs/F8_PRODUCT_OWNER_DECISIONS.md`).
+- **Mastersprint:** MS-F8-01 (Women's Performance Product Decisions).
+- **Evidence:** `docs/F8_EXISTING_WOMENS_PERFORMANCE_AUDIT.md`, `core/fWomensPerformanceDecisions.test.js` 13/13 met sabotagebewijs.
+- **Closed date:** 29 augustus 2026.
 
 ### (voorheen GAP-P1-008) — hrv_log race-condition / duplicate daily records — **STATUS: CLOSED**
 - **Original finding (F3 Final Integration Audit):** live data-audit bevestigde 4 bestaande paren duplicate `(user_id,date)`-rijen. 3 identieke race-condities, 1 met echte datadivergentie (`rhr=null` vs. `rhr=57`). Root cause: geen `UNIQUE(user_id,date)`, niet-atomair lees-dan-PATCH/POST-schrijfpatroon.

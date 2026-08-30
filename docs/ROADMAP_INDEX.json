@@ -1536,7 +1536,7 @@
       "E10.1"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [],
     "target_maturity": "IMPLEMENTED",
     "objective": "Five decisions closed before implementation.",
@@ -2924,7 +2924,7 @@
     "track": "Women's Performance",
     "phase": "F8",
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "target": "CLOSED",
     "dependencies": [],
     "software_validation": "N/A",

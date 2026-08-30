@@ -2047,7 +2047,7 @@
       "E15.4"
     ],
     "priority": "P3",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F11-01"
     ],
@@ -3697,5 +3697,21 @@
     "device_validation": "N/A (feasibility-only, geen vendor geimplementeerd)",
     "evidence_status": "VERIFIED",
     "next_action": "zie MS-F11-04 (CLOSED). Volledige feasibility-matrix voor EGYM/Technogym/Life Fitness/Precor/Matrix/Keiser/Wattbike/gym80. FTMS/ANT+ (open standaarden) en Keiser BLE geclassificeerd als NOW/architecture-ready. EGYM/Technogym Enterprise als PARTNER DEPENDENT. Matrix Fitness als RESEARCH FURTHER (geen bron gevonden). gym80 als NO-GO. Geen vendor daadwerkelijk geimplementeerd -- external vendor/partner validation blijft open."
+  },
+  {
+    "id": "DYNAMIC-BRANDING-ADMIN-001",
+    "type": "capability",
+    "track": "Gym/Club/Team Platform",
+    "phase": "F11",
+    "priority": "P3",
+    "status": "TESTED",
+    "target": "TESTED",
+    "dependencies": [
+      "ORGANIZATION-CORE-001"
+    ],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "zie MS-F11-05 (CLOSED). Kritieke RLS-kolomlek gevonden en gerepareerd vóór merge (get_organization_branding() SECURITY DEFINER-RPC vervangt brede member-SELECT-policy). Runtime-integratie volledig: organizationContextRuntime.js, zichtbare tenant-skin + altijd-zichtbare Powered-by-Trainingskompas-co-branding, minimale admin-beheerknop. APP_VER v4.69.21."
   }
 ]

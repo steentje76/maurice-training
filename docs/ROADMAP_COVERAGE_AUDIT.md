@@ -78,7 +78,7 @@
 | SOCIAL-IDENTITY-PRIVACY-001 | IMPLEMENTED | NO ACTION | — (F9, MS-F9-01 CLOSED, vier kritieke security-bugs live gevonden en gerepareerd) |
 | SOCIAL-GROUPS-CHALLENGES-001 | TESTED | NO ACTION | — (F9, MS-F9-02 CLOSED, self-elevation en block-bypass live geweigerd) |
 | SOCIAL-SHARING-NOTIFICATIONS-001 | IMPLEMENTED | NO ACTION | — (F9, MS-F9-03 CLOSED, block wint over public, notificaties forgeer-veilig) |
-| COACH-RELATIONSHIP-001 | IMPLEMENTED | IMPROVEMENT | MS-F10-01, MS-F10-02 |
+| COACH-RELATIONSHIP-001 | IMPLEMENTED | NO ACTION | — (F10, MS-F10-01 CLOSED, granulaire scopes live adversarial geverifieerd) |
 | AI-COACH-001 | CLOSED (security) | NO ACTION | — (F0) |
 | AI-OUTPUT-CONTRACT-001 | TESTED | NO ACTION (status TESTED, niet CLOSED -- zie MS-F4-01-rapport) | — (F4, MS-F4-01 status TESTED) |
 | AI-PROGRAM-AUTOGEN-001 | CLOSED | NO ACTION | — (F4, MS-F4-04 CLOSED) |

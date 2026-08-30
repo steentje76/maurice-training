@@ -1842,7 +1842,7 @@
       "E14.3"
     ],
     "priority": "P2",
-    "status": "IMPLEMENTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F10-02"
     ],
@@ -3607,7 +3607,7 @@
     "track": "Coach/PT Platform",
     "phase": "F10",
     "priority": "P2",
-    "status": "IMPLEMENTED",
+    "status": "TESTED",
     "target": "CLOSED",
     "dependencies": [
       "COACH-RELATIONSHIP-001"
@@ -3615,6 +3615,6 @@
     "software_validation": "PASS",
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
-    "next_action": "zie MS-F10-03 (IMPLEMENTED, niet CLOSED). GAP-P2-023 blijft open: content-materialisatie (template naar program_blocks) ontbreekt nog. Templates/assignment/materialisatie-architectuur volledig live adversarial bewezen, trigger-invariant intact."
+    "next_action": "MS-F10-03 (CLOSED): volledige content-materialisatie geimplementeerd en adversarial bewezen. GAP-P2-023 CLOSED. Calendar/adherence bewezen via bestaande AdherenceIntelligenceCore, geen aanpassing nodig."
   }
 ]

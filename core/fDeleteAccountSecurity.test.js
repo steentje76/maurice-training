@@ -123,6 +123,15 @@ function req(callerId) { return { httpMethod: 'POST', headers: callerId ? { auth
   const carTreffers = deletedByTableAndUser.filter(function (d) { return d.table === 'coach_athlete_relationships'; });
   ok(carTreffers.length >= 2, '8: coach_athlete_relationships wordt in beide richtingen opgeruimd (coach_user_id/athlete_user_id)');
 
+  // 9. MS-F10-03 (Coach Programming & Assignment) -- coach_program_templates
+  // en coach_program_assignments moeten eveneens opgeruimd worden bij het
+  // verwijderen van de coach (beide hebben coach_user_id, geen standaard
+  // user_id-kolom).
+  const cptTreffers = deletedByTableAndUser.filter(function (d) { return d.table === 'coach_program_templates'; });
+  ok(cptTreffers.length >= 1, '9a: coach_program_templates wordt opgeruimd op coach_user_id');
+  const cpaTreffers = deletedByTableAndUser.filter(function (d) { return d.table === 'coach_program_assignments'; });
+  ok(cpaTreffers.length >= 2, '9b: coach_program_assignments wordt in beide richtingen opgeruimd (coach_user_id/athlete_user_id)');
+
   console.log('fDeleteAccountSecurity: ' + pass + ' geslaagd, ' + fail + ' mislukt');
   console.log('Resultaat: ' + pass + ' geslaagd, ' + fail + ' mislukt');
   process.exit(fail > 0 ? 1 : 0);

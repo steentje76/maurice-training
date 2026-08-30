@@ -85,7 +85,7 @@
 | ID | Capability | Code | DB | Tests | Integration | Device | Evidence/scientific | Maturity | Target | Gap | Priority | Phase |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | CTX-CYCLE-001 | Cyclus-context (Women's Performance) | `core/cycle.js`, `s-lich-cyclus` | `cycle_periods`, `cycle_symptom_logs` | `fCycle.test.js` 56/56 | Geïntegreerd (scherm bestaat) | N/A | RAW DATA, geen medisch hulpmiddel (DB-commentaar bevestigd) | INTEGRATED | CLOSED | 5 open productbeslissingen blokkeren verdere uitbouw | P2 | F8 |
-| WOMENS-PERF-DECISIONS-001 | 5 openstaande Women's Performance-besluiten | N/A | N/A | N/A | N/A | N/A | N/A | NOT STARTED | CLOSED | wacht op Maurice | P2 | F8 |
+| WOMENS-PERF-DECISIONS-001 | 5 Women's Performance-besluiten (Cycle/Symptoms IMPLEMENT, Contraception/Pregnancy-Postpartum/Perimenopause-Menopause-Pelvic-Floor DEFER) | `docs/MS-F8-01_WOMENS_PERFORMANCE_PRODUCT_DECISIONS.md`, `docs/F8_EXISTING_WOMENS_PERFORMANCE_AUDIT.md` | N/A | `core/fWomensPerformanceDecisions.test.js` 13/13, sabotagebewijs geleverd | N/A | N/A | Audit bevestigde CycleCore (cycle.v1) + cycle_periods/cycle_symptom_logs (RLS live geverifieerd) al correct bestaand. Drie gevoeligere domeinen bewust DEFER (conservatieve, reversibele default, Product Owner niet beschikbaar) -- zie `docs/F8_PRODUCT_OWNER_DECISIONS.md`. Actueel onderzoek (2023-2026): geen bewijs voor harde cycle-phase-trainingsvoorschriften; ACOG bevestigt zwangerschapstraining vereist individuele medische beoordeling. | **CLOSED** | CLOSED | contraceptie/zwangerschap-postpartum/perimenopauze-menopauze-bekkenbodem blijven bewust niet-geimplementeerd (DEFER) | P1 | F8 (MS-F8-01, CLOSED) |
 
 ## G. Commercial & Platform-schermen
 
@@ -110,9 +110,9 @@
 
 | Status | Aantal | IDs |
 |---|---|---|
-| CLOSED | 6 | SEC-GYMS-001, SEC-TEST-001, SEC-GATE-001, AI-COACH-001, SEC-USERROLE-001, AI-PROGRAM-AUTOGEN-001 |
+| CLOSED | 7 | SEC-GYMS-001, SEC-TEST-001, SEC-GATE-001, AI-COACH-001, SEC-USERROLE-001, AI-PROGRAM-AUTOGEN-001, WOMENS-PERF-DECISIONS-001 |
 | TESTED | 13 | PLAT-DELETE-001, SOC-GYMTEAM-001, EVID-SCI-001, DEC-CORE-001, DEV-WEARAUTH-001, DEV-CONCEPT2-001, END-HYROX-001, DEV-VALIDATION-001, PLAT-OBSERVABILITY-001, CALC-END-REGISTRY-001, AI-OUTPUT-CONTRACT-001, SWIMMING-FEASIBILITY-001, RELATIONSHIP-DISCOVERY-001 |
-| NOT STARTED | 4 | PLAT-BACKUP-CLEANUP-001, WOMENS-PERF-DECISIONS-001, COMM-UI-001, SCI-CONSENT-001 |
+| NOT STARTED | 3 | PLAT-BACKUP-CLEANUP-001, COMM-UI-001, SCI-CONSENT-001 |
 | IMPLEMENTED | 7 | COACH-RELATIONSHIP-001, RUNNING-INTELLIGENCE-001, CYCLING-INTELLIGENCE-001, LONGITUDINAL-TREND-001, PLATEAU-DETECTION-001, ADHERENCE-INTELLIGENCE-001, ATHLETE-DASHBOARD-2-001 |
 | INTEGRATED | 4 | DEV-WEARSYNC-001, END-INTERVAL-001, CTX-CYCLE-001, CAP-REGISTRY-SCREENS-001 |
 | VALIDATED | 21 | GYM-RLS-SCOPING-001, SEC-CONFIG-001, CALC-STR-REGISTRY-001, CALC-LOAD-REGISTRY-001, CALC-REC-REGISTRY-001, CALC-ENE-REGISTRY-001, CTX-CONTRACT-001, DEC-RULE-REGISTRY-001, DQ-CONFIDENCE-CONTRACT-001, EVIDENCE-CLAIM-AUDIT-001, PROVENANCE-EXPLAINABILITY-001, CALC-EVIDENCE-SPEC-001, HRV-LOG-ATOMICITY-001, DAILY-COACH-EXPLAINABILITY-001, EXERCISE-PROGRESSION-COACH-001, SCHEDULE-ADHERENCE-001, BENCHMARK-TRACKING-001, PROVIDER-INTEGRATION-CONTRACT-001, HEALTHKIT-ARCHITECTURE-001, WEARABLE-FEASIBILITY-MATRIX-001, WEATHER-CONTEXT-001 |

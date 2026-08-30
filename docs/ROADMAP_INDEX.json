@@ -3713,5 +3713,37 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "zie MS-F11-05 (CLOSED). Kritieke RLS-kolomlek gevonden en gerepareerd vóór merge (get_organization_branding() SECURITY DEFINER-RPC vervangt brede member-SELECT-policy). Runtime-integratie volledig: organizationContextRuntime.js, zichtbare tenant-skin + altijd-zichtbare Powered-by-Trainingskompas-co-branding, minimale admin-beheerknop. APP_VER v4.69.21."
+  },
+  {
+    "id": "FEDERATED-IDENTITY-001",
+    "type": "capability",
+    "track": "Commercial & Entitlements",
+    "phase": "F12",
+    "priority": "P3",
+    "status": "NOT STARTED",
+    "target": "IMPLEMENTED",
+    "dependencies": [
+      "MS-F12-04"
+    ],
+    "software_validation": "N/A",
+    "device_validation": "N/A",
+    "evidence_status": "DESIGN ONLY",
+    "next_action": "PLANNED, niet geimplementeerd (zie docs/UNIFIED_IDENTITY_AND_PAYMENTS_CURRENT_STATE.md). Vereist expliciete Product Owner-vrijgave als nieuwe mastersprint vóór implementatie -- geen goedgekeurde roadmap-plek bij aanvang. Google/Apple Sign-In naast bestaande e-mail/wachtwoord-auth, canonical user_id blijft auth.users.id, account-linking-strategie vereist eigen securityaudit."
+  },
+  {
+    "id": "MULTI-PROVIDER-BILLING-001",
+    "type": "capability",
+    "track": "Commercial & Entitlements",
+    "phase": "F12",
+    "priority": "P3",
+    "status": "NOT STARTED",
+    "target": "IMPLEMENTED",
+    "dependencies": [
+      "MS-F12-04"
+    ],
+    "software_validation": "N/A",
+    "device_validation": "N/A",
+    "evidence_status": "DESIGN ONLY",
+    "next_action": "PLANNED, niet geimplementeerd (zie docs/UNIFIED_IDENTITY_AND_PAYMENTS_CURRENT_STATE.md). Google Play Billing + Apple StoreKit als aanvullende, provider-onafhankelijke betaalroutes naast Mollie (MS-F12-04). Vereist eigen Google Cloud-/Apple Developer-accountconfiguratie en (voor StoreKit) een iOS-buildtarget die momenteel niet bestaat. Vereist expliciete Product Owner-vrijgave als nieuwe mastersprint(s)."
   }
 ]

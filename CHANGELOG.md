@@ -1,5 +1,34 @@
 # Trainingskompas — Changelog
 
+## v4.69.20 — MS-F8-04: Life-stage Performance Context (29 augustus 2026)
+
+Vierde en laatste F8-mastersprint. Sluit MS-F8-04.
+
+**Elk domein zelfstandig, evidence-based heroverwogen** (geen automatische
+groepering "gevoelig = DEFER"):
+- **Contraceptie:** kleine, veilige verbetering gebouwd. Bevestigd dat
+  `CycleCore` impliciet natuurlijke-cyclus-fysiologie veronderstelt, wat bij
+  hormonale anticonceptie misleidend kan zijn. `WomensPerformanceContextCore.
+  build()` accepteert nu een optioneel `contraceptionType`-argument
+  (atleet-gedeclareerd) en onderdrukt de faseschatting bij hormonale
+  anticonceptie in plaats van een mogelijk onjuiste schatting te tonen.
+- **Perimenopauze/menopauze:** CONTEXT_ONLY, ARCHITECTURE READY. Actueel
+  onderzoek (WHEN 2026/ACSM) rechtvaardigt een context-only aanpak analoog
+  aan Cycle/Symptoms; UI-implementatie is een aparte, toekomstige sprint.
+- **Zwangerschap, postpartum, bekkenbodem:** DEFER herbevestigd op basis van
+  actueel bewijs (ACOG 2025 bevestigt individuele medische beoordeling
+  vereist) -- niet omdat DEFER de default was.
+
+**Kritieke heraudit `cyclusDagFactor()` + dual-cycle-architectuur:** bestaande
+Evidence-level-C-classificatie en de bewuste scheiding tussen de twee
+cyclus-invoerpaden herbevestigd correct en veilig.
+
+`core/fWomensPerformanceContext.test.js` uitgebreid (17/17, was 12).
+Sabotagebewijs geleverd.
+
+`APP_VER` → v4.69.20, `CACHE_NAME`/`CACHE_STATIC` en Android
+`versionCode`/`versionName` meegenomen.
+
 ## v4.69.19 — MS-F8-03: Cycle & Symptom Performance Context (29 augustus 2026)
 
 Derde F8-mastersprint. Sluit MS-F8-03.

@@ -12,7 +12,7 @@
 | P0 | **0 open** |
 | P1 | 0 |
 | P2 | 21 |
-| P3 | 5 |
+| P3 | 6 |
 | P4 | 2 |
 
 Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de volledige sluitingsgeschiedenis (F1-bevindingen + de execution-defecten uit de F2 Canonical-Training-Start-sprint + de latere GAP-P1-006-closure).
@@ -141,6 +141,13 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Evidence:** CODE VERIFIED, vastgesteld tijdens de (inmiddels afgeronde) Athlete Dashboard 2.0-sprint, zie het bijbehorende sprintrapport in `docs/` (Dashboard 2.0, F7 Analytics & Athlete Intelligence).
 **Target:** een toekomstige naamsverduidelijking (bv. hernoemen naar `programCompletionPct`) om conceptuele verwarring te voorkomen. Geen berekeningswijziging nodig — de bestaande functie is voor haar eigen doel (regeneratie-context) correct, dit is uitsluitend een naamgevingsprobleem. Geen productbeslissing hier gefabriceerd over wanneer dit uitgevoerd wordt.
 **Priority:** P3 (niet-kritiek — geen functionele fout, uitsluitend naamgevingsverwarring). **Complexity:** S.
+
+### GAP-P3-024 (nieuw, Life-stage Performance Context-sprint) — geen suggestie-koppeling tussen de dagelijkse cyclus-self-report en de bestaande CycleCore-schatting
+**Capability-ID:** CTX-CYCLE-001
+**Current:** `hrv_log.cyclus_fase` (dagelijkse, handmatige self-report in de HRV-check-in, voedt `cyclusDagFactor()`) en `cycle_periods`/`cycle_symptom_logs` (voedt `CycleCore.cycleContext()`, een berekende fase-schatting) zijn bewust, veilig gescheiden systemen (geen automatische overschrijving). De atleet moet echter volledig handmatig haar fase invullen in de dagelijkse check-in, ook als er al een `CycleCore`-schatting beschikbaar is -- geen suggestie-koppeling tussen beide.
+**Evidence:** CODE VERIFIED, vastgesteld tijdens de (inmiddels afgeronde) Life-stage Performance Context-sprint, F8 Women's Performance.
+**Target:** de dagelijkse HRV-check-in-UI zou de bestaande `CycleCore`-schatting als voorinvulling/suggestie kunnen tonen (nooit als automatische, ongeziene overschrijving) om de gebruikerslast te verlagen. Vereist zorgvuldig UI-werk in de dagelijkse check-in-flow.
+**Priority:** P3 (niet-kritiek — geen veiligheidsprobleem, uitsluitend een gebruikerslast-verbeterpunt). **Complexity:** M.
 **Gerelateerde capability:** de AI-programmagenererings-/adaptieve-weekregeneratie-capability (de veiligheidskritieke kerncapability is inmiddels gesloten — zie het sprintrapport voor de Adaptive Weekly Program Loop: canonieke exercise-ID-whitelist, preview+bevestiging, unified execution, en een nieuwe audit trail zijn allemaal technisch bevestigd)
 **Current:** Hevy Trainer (feb 2026) genereert een volledig, zelf-aanpassend trainingsprogramma. TK's rule/evidence-gestuurde weekregeneratie (`heergenereerResterendeWeken()`) is nu volledig veilig en auditeerbaar, maar vereist nog altijd expliciete gebruikersbevestiging per regeneratie — geen volautomatische, ongevraagde doorlopende aanpassing zoals Hevy.
 **Evidence:** Web (juni 2026, PRPath-vergelijking) + CODE VERIFIED.

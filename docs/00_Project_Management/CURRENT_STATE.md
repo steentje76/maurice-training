@@ -6,11 +6,11 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.69.19
+v4.69.20
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.69.19 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.69.20 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 28 augustus 2026
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 
@@ -23,7 +23,7 @@ v4.69.19
 - **F5 — Connected Athlete: SOFTWARE CLOSED — REAL DEVICE VALIDATION OPEN.** Alle 6 F5-mastersprints afgerond. Volledig rapport: `docs/F5_MASTER_REPORT.md`.
 - **F6 — Endurance & Multisport Excellence: CLOSED — READY FOR F7 SELECTION.** Alle 6 F6-mastersprints afgerond. Volledig rapport: `docs/F6_MASTER_REPORT.md`.
 - **F7 — Longitudinal Athlete Intelligence: CLOSED — READY FOR F8 SELECTION.** Alle 5 F7-mastersprints afgerond. Volledig rapport: `docs/F7_MASTER_REPORT.md`.
-- **F8 — Women's Performance: CURRENT (expliciet vrijgegeven door de Product Owner, 29 augustus 2026; Product Owner tijdens uitvoering niet beschikbaar — autonome uitvoering met conservatieve, reversibele defaults, telkens onderbouwd met genuine evidence-review, niet als automatisch vangnet).** MS-F8-01: **CLOSED** — vijf productbeslissingen vastgelegd. MS-F8-02: **CLOSED** — kritieke privacy-bug (onvolledige verwijdering) gevonden en gerepareerd, live adversarial RLS-verificatie geslaagd. MS-F8-03 (Cycle & Symptom Performance Context): **CLOSED** — evidence-heraudit van `cyclusDagFactor()` herbevestigt de bestaande Evidence-level-C-classificatie correct. Nieuw canoniek `WomensPerformanceContextCore` (`women_performance_context.v1`)-contract gebouwd, en **live gekoppeld aan de AI-coach** via `tkWomensPerformanceCoachContext()` (consistent met het bestaande HYROX-contextpatroon), met een directe, harde grens in de prompt-tekst tegen zelf-berekening, zwangerschaps-/fertility-inferentie, diagnose en automatische trainingsaanpassing. **F8 open P1: 0.** Resterende F8-mastersprint (MS-F8-04) nog niet uitgevoerd.
+- **F8 — Women's Performance: CURRENT (expliciet vrijgegeven door de Product Owner, 29 augustus 2026; Product Owner tijdens uitvoering niet beschikbaar — autonome uitvoering met conservatieve, reversibele defaults, telkens onderbouwd met genuine evidence-review, niet als automatisch vangnet).** **Alle 4 F8-mastersprints afgerond:** MS-F8-01 (vijf productbeslissingen), MS-F8-02 (privacy-bug gevonden en gerepareerd, live RLS-verificatie), MS-F8-03 (`WomensPerformanceContextCore` live gekoppeld aan de AI-coach met harde promptgrenzen). MS-F8-04 (Life-stage Performance Context): **CLOSED** — elk domein zelfstandig, evidence-based heroverwogen (geen automatische "gevoelig = DEFER"-groepering). **Contraceptie:** kleine, veilige verbetering gebouwd — `WomensPerformanceContextCore` onderdrukt nu de faseschatting bij (atleet-gedeclareerde) hormonale anticonceptie, omdat `CycleCore` impliciet natuurlijke-cyclus-fysiologie veronderstelt. **Perimenopauze/menopauze:** CONTEXT_ONLY/ARCHITECTURE READY — actueel onderzoek (WHEN 2026/ACSM) rechtvaardigt een context-only aanpak analoog aan Cycle/Symptoms, UI-implementatie blijft een aparte, toekomstige sprint. **Zwangerschap, postpartum, bekkenbodem:** DEFER herbevestigd op basis van actueel bewijs (ACOG 2025 bevestigt individuele medische beoordeling vereist) — een evidence-based conclusie, geen default. Kritieke heraudit van `cyclusDagFactor()` en de dual-cycle-architectuur herbevestigt beide correct en veilig. **F8 open P1: 0.** F8 Final Integration Audit en F8 Master Report volgen.
 - **Master Roadmap 2.0 v1.1 = CANONICAL** productstrategische bron. Repository blijft technische autoriteit. Zie `docs/DOCUMENTATION_GOVERNANCE.md`.
 - Volledige fasering (F0-F15): zie `docs/TRAININGSKOMPAS_MASTER_ROADMAP.md`. Volledige mastersprint-ID-migratie: zie `docs/ROADMAP_V1_1_MIGRATION_MATRIX.md`.
 
@@ -42,7 +42,7 @@ Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
 ## 5. Current validation status
 - **Code:** CODE VERIFIED tegen `main` @ bovenstaande SHA
 - **DB:** VERIFIED — 69 tabellen, RLS gecontroleerd op alle tabellen, `gyms`-lek gesloten en geverifieerd via `SET LOCAL ROLE anon/authenticated/service_role`
-- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 128 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 131 stappen totaal), 130 automatisch uitgevoerd, 1 zichtbaar geskipt (fAndroidRelease.test.js zonder gereproduceerde buildmap), 0 gefaald
+- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 128 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 131 stappen totaal), 130 automatisch uitgevoerd, 1 zichtbaar geskipt (fAndroidRelease.test.js zonder gereproduceerde buildmap) -- fWomensPerformanceContext.test.js uitgebreid naar 17/17, 0 gefaald
 - **Integration:** wearable-sync getest tegen de echte handler-functie; overige integraties overwegend unit-getest
 - **Device:** **OPEN** — Concept2 PM5 en Google Health-sync hebben geen bevestigde real-device-validatie in productie
 - **UX:** niet apart beoordeeld in de laatste consolidatiesprint (38 top-level schermen geïnventariseerd, geen flow-niveau UX-testdekking)

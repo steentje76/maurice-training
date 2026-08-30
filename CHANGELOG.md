@@ -1,5 +1,48 @@
 # Trainingskompas — Changelog
 
+## v4.69.21 — MS-F11-05: Dynamic Branding & Admin, runtime-integratie (30 augustus 2026)
+
+Vijfde en laatste F11-mastersprint. Sluit MS-F11-05.
+
+**Kritieke, tijdens dezelfde sessie gevonden en gerepareerde RLS-bevinding**
+(vóór merge, geen productie-impact): een brede member-SELECT-policy op
+`gyms` gaf toegang tot de volledige rij, inclusief niet-branding-
+gerelateerde, gevoelige kolommen (`coach_pin_hash`, `plan_key`,
+`mollie_customer_id`) -- RLS is row-level, geen column-level bescherming.
+Gerepareerd met een nieuwe `get_organization_branding()` SECURITY
+DEFINER-RPC die uitsluitend de veilige, publieke brandingvelden
+projecteert. Uitsluitend owner/admin behouden directe toegang tot de
+volledige rij (nodig voor het beheerscherm).
+
+**Runtime-integratie volledig afgerond** (BrandingCore was tot deze
+sprint een getest maar ongebruikt bestand): nieuwe, generieke
+`organizationContextRuntime.js` bepaalt deterministisch de actieve
+organisatie (0/1/meerdere memberships, een sessionStorage-voorkeur is
+uitsluitend een hint, altijd opnieuw gevalideerd tegen de actuele
+memberships) en verbindt `get_organization_branding()` met
+`BrandingCore.resolveBrandContext()` en een nieuwe, gecontroleerde
+`applyBrandContext()`-presentatiegrens.
+
+**Zichtbare tenant-skin**: een nieuwe "Organisatie"-kaart in het
+profielscherm toont organisatienaam, logo (veilige `<img src>`, geen
+innerHTML/SVG-executie) en een kleuraccent, uitsluitend op dat
+gecontroleerde element (nooit globaal op `:root`, voorkomt dat een
+tenantkleur foutmeldingen/waarschuwingen elders semantisch onbruikbaar
+maakt). De niet-onderhandelbare "Powered by Trainingskompas"-co-branding
+wordt bij elke weergave daadwerkelijk in de DOM gezet.
+
+**Minimale admin-beheerknop** (geen los beheerplatform): uitsluitend
+zichtbaar voor owner/admin. Preview is lokaal en nooit authoritative --
+opslaan gaat altijd via de database, die de daadwerkelijke autoriteit
+blijft (een staff/member-mutatiepoging via directe API faalt, live
+bevestigd).
+
+Basis (voorgaande commits binnen dezelfde sprint): `gyms` uitgebreid met
+`organization_id`/`branding_enabled`/`short_name`/`updated_at`/
+`updated_by`, HEX/https-validatie, tenant-immutabiliteit. Baseline-audit
+bevestigde dat de bestaande brandingvelden nooit gebruikt werden omdat
+`gyms` RLS had ingeschakeld zonder enige policy (volledige default-deny).
+
 ## v4.69.20 — MS-F8-04: Life-stage Performance Context (29 augustus 2026)
 
 Vierde en laatste F8-mastersprint. Sluit MS-F8-04.

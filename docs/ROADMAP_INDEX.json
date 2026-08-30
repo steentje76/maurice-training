@@ -1776,7 +1776,7 @@
       "E14.1"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [],
     "target_maturity": "IMPLEMENTED",
     "objective": "Dedicated tests and athlete-controlled access.",
@@ -2958,7 +2958,7 @@
     "software_validation": "N/A",
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
-    "next_action": "zie MS-F10-01, MS-F10-02"
+    "next_action": "MS-F10-01 (CLOSED): granulaire CoachAccessCore-scope-laag toegevoegd (TRAINING_CORE/RECOVERY_HEALTH/WOMENS_PERFORMANCE). Live adversarial getest: self-elevation onmogelijk, Womens Performance altijd apart, revoke direct, geen cross-coach-lek. Dedicated tests toegevoegd (was ontbrekend)."
   },
   {
     "id": "CTX-CYCLE-001",

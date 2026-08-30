@@ -36,11 +36,20 @@ exports.handler = async function(event) {
       return { statusCode: 401, body: JSON.stringify({ error: { message: 'Kon gebruiker niet vaststellen' } }) };
     }
 
-    // Stap 2: verwijder eerst alle persoonlijke data. Er bestaat GEEN foreign
-    // key met ON DELETE CASCADE van deze tabellen naar auth.users (expliciet
-    // gecontroleerd — de enige CASCADE-relaties zitten in Supabase's eigen
-    // interne auth.*-tabellen). Zonder deze stap blijft alle trainingsdata
-    // van de gebruiker achter als wees-data na het verwijderen van het account.
+    // Stap 2: verwijder eerst alle persoonlijke data. De MEESTE van deze
+    // tabellen hebben GEEN foreign key met ON DELETE CASCADE naar auth.users.
+    // CORRECTIE (MS-F10-01, F10 Baseline Audit): dit bleek GEEN universele
+    // waarheid -- coach_athlete_relationships heeft WEL ON DELETE CASCADE op
+    // beide user-kolommen (bevestigd via pg_get_constraintdef op de live
+    // database), en coach_access_scopes erft dit via een tweede-niveau
+    // CASCADE. Beide staan hieronder/verderop ALSNOG expliciet vermeld, voor
+    // auditeerbaarheid en omdat deze stap (stap 2) toch al vóór de
+    // auth.users-verwijdering (stap 3) draait -- exact het bestaande
+    // race_segments-patroon (al CASCADE-afgedekt, hier toch expliciet
+    // genoemd). Vertrouw dus NOOIT blind op deze algemene aanname; audit
+    // CASCADE-gedrag per tabel voordat je een tabel hier weglaat.
+    // Zonder deze stap blijft alle trainingsdata van de gebruiker achter
+    // als wees-data na het verwijderen van het account.
     // v5.8.4 (Privacy-audit): 'goals' en 'equipment_types' toegevoegd — zelfde
     // per-gebruiker-configureerbare patroon als athlete_conditions, maar stonden
     // hier nog niet in. Zonder deze twee bleven iemands doelen en eigen
@@ -145,6 +154,14 @@ exports.handler = async function(event) {
     // eigen user_id, verwijderd zijn voor deze gebruiker als lid/deelnemer).
     for (const [tabel, kolommen] of [
       ['social_connections', ['follower_id', 'followee_id']],
+      // MS-F10-01 (Coach Consent & Permissions) -- expliciet vermeld voor
+      // auditeerbaarheid, ondanks dat deze tabel al via ON DELETE CASCADE
+      // wordt opgeruimd zodra stap 3 (auth.users-verwijdering) draait (zie
+      // de gecorrigeerde uitleg bovenaan deze functie). coach_access_scopes
+      // hoeft hier NIET apart te staan: die heeft geen eigen user-kolom en
+      // wordt automatisch via een tweede-niveau CASCADE vanaf
+      // coach_athlete_relationships opgeruimd.
+      ['coach_athlete_relationships', ['coach_user_id', 'athlete_user_id']],
       ['social_blocks', ['blocker_id', 'blocked_id']],
       ['social_reports', ['reporter_user_id', 'target_user_id']],
       ['social_notifications', ['recipient_id', 'actor_id']],

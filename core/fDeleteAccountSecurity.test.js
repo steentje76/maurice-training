@@ -110,6 +110,19 @@ function req(callerId) { return { httpMethod: 'POST', headers: callerId ? { auth
     ok(deletedByTableAndUser.some(function (d) { return d.table === t; }), '7c: ' + t + ' wordt opgeruimd (eigen aangemaakte objecten)');
   });
 
+  // 8. MS-F10-01 (Coach Consent & Permissions) — coach_athlete_relationships
+  // heeft twee niet-standaard kolommen (coach_user_id/athlete_user_id) en
+  // moet daarom, net als de F9-tabellen, in beide richtingen expliciet
+  // opgeruimd worden (ook al is dit al via ON DELETE CASCADE afgedekt --
+  // hier voor auditeerbaarheid getest, exact het race_segments-patroon).
+  // coach_access_scopes heeft geen eigen user-kolom en hoeft hier niet apart
+  // getest te worden (tweede-niveau CASCADE via de relatie zelf).
+  deletedByTableAndUser = []; adminDeleteCalls = [];
+  global.fetch = makeFetch('u11');
+  res = await handlerMod.handler(req('u11'));
+  const carTreffers = deletedByTableAndUser.filter(function (d) { return d.table === 'coach_athlete_relationships'; });
+  ok(carTreffers.length >= 2, '8: coach_athlete_relationships wordt in beide richtingen opgeruimd (coach_user_id/athlete_user_id)');
+
   console.log('fDeleteAccountSecurity: ' + pass + ' geslaagd, ' + fail + ' mislukt');
   console.log('Resultaat: ' + pass + ' geslaagd, ' + fail + ' mislukt');
   process.exit(fail > 0 ? 1 : 0);

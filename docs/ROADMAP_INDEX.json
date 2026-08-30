@@ -2185,7 +2185,7 @@
       "E16.3"
     ],
     "priority": "P2",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F12-03"
     ],
@@ -2830,7 +2830,7 @@
     "track": "Commercial & Entitlements",
     "phase": "F12",
     "priority": "P2",
-    "status": "IMPLEMENTED",
+    "status": "TESTED",
     "target": "IMPLEMENTED",
     "dependencies": [
       "GYM-RLS-SCOPING-001"

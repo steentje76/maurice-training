@@ -2218,7 +2218,7 @@
       "E17.3"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [],
     "target_maturity": "IMPLEMENTED",
     "objective": "Durable sync and idempotency.",

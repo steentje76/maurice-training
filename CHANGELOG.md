@@ -1,5 +1,56 @@
 # Trainingskompas — Changelog
 
+## v4.69.22 — MS-F12-02: Entitlement Enforcement (30 augustus 2026)
+
+Tweede F12-mastersprint. Sluit MS-F12-02.
+
+**Kritieke, P0-niveau bevinding** (gevonden EN gerepareerd vóór enige merge,
+geen productie-impact): een gewone, geauthenticeerde gebruiker kon het
+eigen `individual_plan_key` (en `mollie_customer_id`/status/expiry) direct
+naar elk gewenst betaald plan zetten via een simpele UPDATE op de eigen
+`users`-rij -- een volledige, rechtstreekse omzeiling van het gehele
+commerciële systeem, zonder enige betaling. Gerepareerd met een
+BEFORE UPDATE-trigger, consistent met het al bestaande, bewezen
+`protect_privileged_user_columns()`-patroon dat de rol/gym-velden op
+dezelfde tabel al beschermde. Volledige foutklasse-audit uitgevoerd op de
+`users`-tabel; geen overige onbeschermde commerciële/autoriteitsvelden
+gevonden.
+
+**Server-side enforcement volledig geïntegreerd** in
+`netlify/functions/coach.js`, het centrale AI-proxy-endpoint dat alle zes
+client-side AI-aanroepen bedient (intake-extractie, programmageneratie x2,
+sessiesamenvatting, chat, trainingsadvies-uitleg). Elke aanroep draagt nu
+een vast, niet-manipuleerbaar `requestType` dat de server naar de
+canonieke feature-key vertaalt (`ai_coach`/`programma_generator`/geen) --
+nooit een client-aangeleverde feature-key of plan-claim. De server haalt
+de commerciële context altijd zelf, opnieuw op via de vertrouwde
+JWT-identiteit; een client-geclaimd plan wordt genegeerd (DB wint altijd).
+
+**Atomaire, race-safe quota-enforcement**: een nieuwe
+`check_and_increment_usage()`-RPC combineert de limietcontrole en de
+verhoging in één atomaire databasetransactie -- bewezen bestand tegen
+parallelle verzoeken die dezelfde, laatste quota-eenheid proberen te
+claimen. Bij een mislukte AI-aanroep na een succesvolle reservering wordt
+de eenheid gecompenseerd (`decrement_usage()`, nooit onder 0, nooit
+aangeroepen zonder een voorafgaande reservering -- expliciet getest tegen
+het risico dat een compensatie zonder consumptie gratis quota zou
+opleveren).
+
+Volledige adversarial matrix bewezen: geen JWT (401), onbekend
+requestType (400, fail-closed), gratis binnen/buiten quota, betaald
+onbeperkt, verlopen abonnement (terugval op gratis-niveau, geen totale
+blokkade), cancel-at-period-end vóór/na expiry, grace-periode,
+client-geclaimd plan genegeerd, geforgede organization-membership
+genegeerd, verschillende feature-keys geen kruisbesmetting, backend-storing
+faalt veilig dicht (503, geen crash, geen stilzwijgende toegang).
+
+Vier sabotagebewijzen geleverd en teruggedraaid: de trigger-bescherming
+volledig uitgeschakeld, de server laten vertrouwen op een client-body
+`planKey`, de atomaire quota-check vervangen door een race-gevoelig
+read-then-write-patroon, en de compensatie onvoorwaardelijk gemaakt (los
+van een daadwerkelijke reservering) -- alle vier exact gedetecteerd door
+de bijbehorende regressietests.
+
 ## v4.69.21 — MS-F11-05: Dynamic Branding & Admin, runtime-integratie (30 augustus 2026)
 
 Vijfde en laatste F11-mastersprint. Sluit MS-F11-05.

@@ -61,9 +61,12 @@ const handlerMod = require('../netlify/functions/coach.js');
   ok(!anthropicCalled, 'S4: Anthropic NIET aangeroepen bij verificatiefout');
 
   // SCENARIO 5: geldige sessie -> mag de normale route bereiken (Anthropic wél aangeroepen)
+  // MS-F12-02: requestType is nu verplicht -- intake_extract is het meest
+  // neutrale, altijd-toegankelijke type (geen entitlement/quota-check),
+  // consistent met deze test se doel (auth-boundary, niet entitlements).
   anthropicCalled = false;
   global.fetch = makeFetch(true);
-  res = await handlerMod.handler({ httpMethod: 'POST', headers: { authorization: 'Bearer good-token' }, body: JSON.stringify({ messages: [{ role: 'user', content: 'hoi' }] }) });
+  res = await handlerMod.handler({ httpMethod: 'POST', headers: { authorization: 'Bearer good-token' }, body: JSON.stringify({ requestType: 'intake_extract', messages: [{ role: 'user', content: 'hoi' }] }) });
   eq(res.statusCode, 200, 'S5: geldige sessie -> 200');
   ok(anthropicCalled, 'S5: Anthropic WEL aangeroepen bij geldige sessie (normale flow blijft werken)');
 

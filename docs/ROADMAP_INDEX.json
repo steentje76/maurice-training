@@ -2115,7 +2115,7 @@
       "E16.1"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F12-01"
     ],

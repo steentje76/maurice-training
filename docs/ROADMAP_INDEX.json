@@ -2280,7 +2280,7 @@
       "E17.5"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [],
     "target_maturity": "IMPLEMENTED",
     "objective": "Reduce monolithic load/runtime bottlenecks.",

@@ -566,14 +566,24 @@ t('D2: geen enkele migratie gebruikt een niet-toegestane statuswaarde', function
   assert.ok(migraties.length > 0, 'geen migratiebestanden gevonden');
   migraties.forEach(function (f) {
     var sql = fs.readFileSync(path.join(dir, f), 'utf8');
-    if (sql.indexOf('training_instances') < 0) return;
-    /* Alleen echte SQL-regels; commentaarregels mogen de fout juist beschrijven. */
-    sql.split('\n').forEach(function (regel, i) {
-      if (regel.replace(/^\s+/, '').indexOf('--') === 0) return;
-      var m = regel.match(/status\s*=\s*'([a-z_]+)'/);
-      if (!m) return;
-      assert.ok(INSTANCE_STATUS.indexOf(m[1]) >= 0,
-        f + ' regel ' + (i + 1) + ' zet status "' + m[1] + '", niet toegestaan door de constraint');
+    /* PRECISERING (MS-F9-03): oorspronkelijk werd het HELE bestand gescand op
+       "status = '...'" zodra het bestand ergens "training_instances" bevatte
+       -- dit gaf een valse-positief zodra een migratie ZOWEL training_instances
+       aanraakt ALS een status-kolom van een ANDERE tabel (bv. social_connections.
+       status = 'accepted' in een RLS-subquery). Nu per SQL-STATEMENT (gesplitst
+       op ';') getoetst: alleen statements die zelf "training_instances" bevatten
+       worden gecontroleerd op hun status-toewijzingen -- exact zo streng als
+       voorheen voor training_instances zelf, zonder onterecht andere tabellen
+       mee te toetsen aan een constraint die niet voor hen geldt. */
+    sql.split(';').forEach(function (statement) {
+      if (statement.indexOf('training_instances') < 0) return;
+      statement.split('\n').forEach(function (regel) {
+        if (regel.replace(/^\s+/, '').indexOf('--') === 0) return;
+        var m = regel.match(/status\s*=\s*'([a-z_]+)'/);
+        if (!m) return;
+        assert.ok(INSTANCE_STATUS.indexOf(m[1]) >= 0,
+          f + ' (statement met training_instances) zet status "' + m[1] + '", niet toegestaan door de constraint');
+      });
     });
   });
 });

@@ -11,7 +11,7 @@
 |---|---|
 | P0 | **0 open** |
 | P1 | 0 |
-| P2 | 22 |
+| P2 | 23 |
 | P3 | 6 |
 | P4 | 2 |
 
@@ -185,6 +185,11 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Blocker classificatie:** F-01/F-02 = `MANUAL_USER_VALIDATION_REQUIRED`. F-03 = `PRODUCT_DECISION_REQUIRED`. Geen van beide blokkeert de closure van de Secrets & Configuration Hygiene-sprint zelf (geen actieve exposure).
 **Priority:** P2 (F-01/F-02), P3 (F-03). **Complexity:** S. **Roadmap phase:** F1.
 
+### GAP-P2-024 (nieuw, F11.03) — team_events.created_by CASCADE kan andermans aanwezigheidshistorie meeslepen
+**Current:** als de aanmaker van een `team_events`-rij (`created_by`) het account verwijdert, verdwijnt het event via CASCADE, inclusief `event_attendance`/`event_responsibilities` van ANDERE, actieve teamleden (die op hun beurt cascaden via `event_id`). Geen security-lek (geen ongeautoriseerde toegang), wel een data-retentie-vraagstuk: een teamlid kan zijn eigen historische aanwezigheidsregistratie kwijtraken doordat een andere gebruiker (de organisator) het account verwijdert.
+**Target:** `created_by` op `ON DELETE SET NULL` in plaats van CASCADE, zodat het event (en de aanwezigheidshistorie van anderen) blijft bestaan met een "verwijderde organisator"-weergave.
+**Priority:** P2, niet-blokkerend voor MS-F11-03 CLOSED. **Complexity:** S. **Roadmap phase:** F11 (toekomstige vervolgsprint of technical-debt-cyclus).
+
 ### GAP-P2-005 — Verouderde point-in-time-documenten
 **Current:** `docs/DATABASE_STATUS.md` (19 aug, claimt 10 migraties; live schema loopt tot v4.95.0), `docs/PLAY_STORE_READINESS.md`/`RELEASE_READINESS.md` (19 aug, v4.48.0).
 **Target:** zie `docs/DOCUMENTATION_GOVERNANCE.md` — bij een volgende relevante gebeurtenis een nieuw gedateerd document toevoegen i.p.v. overschrijven.
@@ -223,6 +228,16 @@ Vereist eerst een consent-flow (nog niet gebouwd) bovenop de al aanwezige Eviden
 ---
 
 ## CLOSED GAPS / HISTORICAL
+
+### (nieuw, F11.03 zelf-gevonden en zelf-gerepareerd) — team-analytics cohort-drempel was client-omzeilbaar — **STATUS: CLOSED (live gerepareerd)**
+- **Original finding:** `get_team_attendance_summary()` (migratie_v517.sql, deze sessie, nooit gemergd naar main) stond toe dat de aanroeper zelf `p_min_cohort_size` verlaagde tot onder het canonieke minimum van 5. Live bevestigd: met `p_min_cohort_size=1` kon staff het exacte percentage van een cohort van 1 persoon zien -- een volledige omzeiling van de minimum-cohort-privacygarantie.
+- **Resolution:** `migratie_v519.sql` -- het canonieke minimum (5) is nu een server-side ondergrens via `GREATEST(coalesce(p_min_cohort_size, 5), 5)`, nooit door de client te verlagen, uitsluitend te verhogen.
+- **Verified:** live adversarial herbevestigd (aanval geeft nu insufficient_data), `core/fTeamAnalyticsCohortFloor.test.js` (4/4, sabotagebewijs).
+
+### (nieuw, F11.03 adversarial matrix) — vier tenant-escape/data-integriteitsbugs in team_events/attendance/responsibilities — **STATUS: CLOSED (live gerepareerd)**
+- **Findings:** (1) cross-tenant location-koppeling op team_events (P1); (2) team_id-mutatie op team_events (lagere impact); (3) linked_training_instance_id kon verwijzen naar een niet-teamlid (data-integriteit, geen data-lek); (4) event_id/user_id-mutatie op event_attendance/event_responsibilities (P2, tenant-identifier-immutabiliteit).
+- **Resolution:** `migratie_v518.sql` -- vier BEFORE INSERT/UPDATE-triggers die de betrokken identiteitsvelden valideren/onveranderlijk maken.
+- **Verified:** live adversarial bevestigd vóór en na elke fix, `core/fTeamEventsAdversarialFixes.test.js` (6/6, met een zelf-gecorrigeerde testzwakte: de eerste versie testte alleen een foutmelding-string, niet de daadwerkelijke conditie).
 
 ### (nieuw, F11 Baseline & Gap Audit) — `memberships` stond self-role-elevation toe naar `owner` voor elke organisatie — **STATUS: CLOSED (live gerepareerd)**
 - **Original finding:** vóór enige MS-F11-01-implementatie, tijdens de verplichte baseline-audit van de bestaande, als VALIDATED gemarkeerde `GYM-RLS-SCOPING-001`-capability, bleek `public.memberships` een kritieke, cross-tenant privilege-escalatie-kwetsbaarheid te bevatten: de bestaande INSERT- en UPDATE-policies controleerden uitsluitend `auth.uid() = user_id` (voorkomt dat je een rij voor iemand anders aanmaakt), maar controleerden GEEN ENKELE keer de `role`-kolom. Live adversarial bevestigd (transacties zonder commit, geen permanente wijziging): (1) een willekeurige, niet-gerelateerde gebruiker kon een `memberships`-rij insereren met `role='owner'` voor een organisatie van iemand anders, zonder enige uitnodiging; (2) een gewoon, legitiem lid ('member') kon zichzelf via een UPDATE promoveren naar `role='owner'`. Impact: elke ingelogde gebruiker kon zichzelf volledige eigenaarsrechten geven over elke organisatie in het systeem.

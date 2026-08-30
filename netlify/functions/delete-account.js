@@ -162,6 +162,17 @@ exports.handler = async function(event) {
       // wordt automatisch via een tweede-niveau CASCADE vanaf
       // coach_athlete_relationships opgeruimd.
       ['coach_athlete_relationships', ['coach_user_id', 'athlete_user_id']],
+      // MS-F10-03 (Coach Programming & Assignment) -- zelfde auditeerbaarheids-
+      // patroon. Beide hebben al ON DELETE CASCADE naar auth.users (coach_
+      // program_templates.coach_user_id; coach_program_assignments.coach_user_id
+      // EN .athlete_user_id), dus dit werkt al via stap 3 hieronder -- hier
+      // expliciet vermeld voor auditeerbaarheid. Het athlete-owned, gemate-
+      // rialiseerde programs-record zelf heeft GEEN FK naar deze tabellen en
+      // blijft dus, terecht, intact als de COACH wordt verwijderd -- alleen
+      // de provenance-koppeling verdwijnt (live bevestigd: geen FK-pad van
+      // programs naar coach_program_assignments/coach_program_templates).
+      ['coach_program_templates', ['coach_user_id']],
+      ['coach_program_assignments', ['coach_user_id', 'athlete_user_id']],
       ['social_blocks', ['blocker_id', 'blocked_id']],
       ['social_reports', ['reporter_user_id', 'target_user_id']],
       ['social_notifications', ['recipient_id', 'actor_id']],

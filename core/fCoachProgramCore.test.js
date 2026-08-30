@@ -36,6 +36,34 @@ ok(CP.isAlreadyMaterialized({ materialized_program_id: null }) === false, 'D2: e
 ok(CP.nextRevision({ revision: 1 }) === 2, 'E1: revisie wordt correct opgehoogd');
 ok(CP.nextRevision(null) === 1, 'E2: ontbrekende template geeft veilig revisie 1');
 
+// ---- F. validateTemplateContent: server-side spiegel van de RPC-validatie ----
+const knownExercises = ['power_clean', 'bike_erg'];
+{
+  const geldig = { schema_version: 1, days: [{ week_nr: 1, day_offset: 0, training_name: 'Dag 1', exercises: [{ exercise_id: 'power_clean', sets: 5, reps: '5' }] }] };
+  ok(CP.validateTemplateContent(geldig, knownExercises).valid === true, 'F1: een correcte, volledige template valideert als geldig');
+}
+ok(CP.validateTemplateContent(null, knownExercises).valid === false, 'F2: ontbrekende content is ongeldig');
+ok(CP.validateTemplateContent({ schema_version: 2, days: [] }, knownExercises).valid === false, 'F3: onbekende schema_version is ongeldig');
+ok(CP.validateTemplateContent({ schema_version: 1, days: [] }, knownExercises).valid === false, 'F4: lege days-array is ongeldig');
+{
+  const onbekendExercise = { schema_version: 1, days: [{ week_nr: 1, day_offset: 0, training_name: 'D', exercises: [{ exercise_id: 'niet-bestaand', sets: 5 }] }] };
+  const result = CP.validateTemplateContent(onbekendExercise, knownExercises);
+  ok(result.valid === false && result.errors.some(function (e) { return e.indexOf('onbekend exercise_id') !== -1; }),
+    'F5: een niet-canoniek exercise_id wordt geweigerd, met een duidelijke foutmelding');
+}
+{
+  const negatieveSets = { schema_version: 1, days: [{ week_nr: 1, day_offset: 0, training_name: 'D', exercises: [{ exercise_id: 'power_clean', sets: -3 }] }] };
+  ok(CP.validateTemplateContent(negatieveSets, knownExercises).valid === false, 'F6: negatieve sets worden geweigerd');
+}
+{
+  const duplicaat = { schema_version: 1, days: [{ week_nr: 1, day_offset: 0, training_name: 'D', exercises: [{ exercise_id: 'power_clean', sets: 5 }, { exercise_id: 'power_clean', sets: 3 }] }] };
+  ok(CP.validateTemplateContent(duplicaat, knownExercises).valid === false, 'F7: een duplicate exercise_id binnen dezelfde dag wordt geweigerd');
+}
+{
+  const ongeldigeWeek = { schema_version: 1, days: [{ week_nr: 0, day_offset: 0, training_name: 'D', exercises: [{ exercise_id: 'power_clean', sets: 5 }] }] };
+  ok(CP.validateTemplateContent(ongeldigeWeek, knownExercises).valid === false, 'F8: week_nr moet positief zijn (0 is ongeldig)');
+}
+
 console.log('fCoachProgramCore: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (msgs.length) console.log(msgs.join('\n'));
 console.log('Resultaat: ' + pass + ' geslaagd, ' + fail + ' mislukt');

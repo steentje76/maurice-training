@@ -132,6 +132,16 @@ function req(callerId) { return { httpMethod: 'POST', headers: callerId ? { auth
   const cpaTreffers = deletedByTableAndUser.filter(function (d) { return d.table === 'coach_program_assignments'; });
   ok(cpaTreffers.length >= 2, '9b: coach_program_assignments wordt in beide richtingen opgeruimd (coach_user_id/athlete_user_id)');
 
+  // 10. MS-F11-01 (Organization & Location Core) -- organizations mist
+  // ON DELETE CASCADE op owner_user_id, dus expliciete verwijdering is
+  // hier noodzakelijk (niet uitsluitend voor auditeerbaarheid, zoals bij
+  // andere tabellen, maar om daadwerkelijk falende accountverwijdering
+  // of wees-organisaties te voorkomen).
+  const orgTreffers = deletedByTableAndUser.filter(function (d) { return d.table === 'organizations'; });
+  ok(orgTreffers.length >= 1, '10a: organizations wordt opgeruimd op owner_user_id');
+  const memTreffers = deletedByTableAndUser.filter(function (d) { return d.table === 'memberships'; });
+  ok(memTreffers.length >= 1, '10b: memberships wordt opgeruimd op user_id');
+
   console.log('fDeleteAccountSecurity: ' + pass + ' geslaagd, ' + fail + ' mislukt');
   console.log('Resultaat: ' + pass + ' geslaagd, ' + fail + ' mislukt');
   process.exit(fail > 0 ? 1 : 0);

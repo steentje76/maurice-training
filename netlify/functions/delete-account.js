@@ -173,6 +173,18 @@ exports.handler = async function(event) {
       // programs naar coach_program_assignments/coach_program_templates).
       ['coach_program_templates', ['coach_user_id']],
       ['coach_program_assignments', ['coach_user_id', 'athlete_user_id']],
+      // MS-F11-01 (Organization & Location Core) -- organizations.owner_user_id
+      // heeft GEEN ON DELETE CASCADE (bevestigd via pg_get_constraintdef) --
+      // zonder deze expliciete stap zou het verwijderen van een organisatie-
+      // eigenaar's account falen op de foreign-key-constraint, of (als de FK
+      // ooit RESTRICT->CASCADE zou wijzigen) wees-organisaties achterlaten.
+      // memberships.user_id heeft WEL CASCADE, hier toch expliciet vermeld
+      // voor auditeerbaarheid (race_segments-patroon). locations heeft geen
+      // eigen user-kolom en wordt automatisch opgeruimd via de bestaande
+      // locations.organization_id -> organizations(id) ON DELETE CASCADE
+      // zodra de organisatie zelf hieronder wordt verwijderd.
+      ['organizations', ['owner_user_id']],
+      ['memberships', ['user_id']],
       ['social_blocks', ['blocker_id', 'blocked_id']],
       ['social_reports', ['reporter_user_id', 'target_user_id']],
       ['social_notifications', ['recipient_id', 'actor_id']],

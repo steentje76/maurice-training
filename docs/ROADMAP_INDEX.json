@@ -2082,7 +2082,7 @@
       "E16.1"
     ],
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [],
     "target_maturity": "IMPLEMENTED",
     "objective": "Value-based tiers before paywall UI.",
@@ -2830,7 +2830,7 @@
     "track": "Commercial & Entitlements",
     "phase": "F12",
     "priority": "P2",
-    "status": "NOT STARTED",
+    "status": "IMPLEMENTED",
     "target": "IMPLEMENTED",
     "dependencies": [
       "GYM-RLS-SCOPING-001"

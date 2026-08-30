@@ -11,6 +11,7 @@
 | P0-002 — ontbrekende security-tests (coach.js, wearable-OAuth, delete-account.js, gym-team.js) | **CLOSED** | #64 |
 | P0-003 — release gate dekte 10 van ~75 tests (lokaal) | **CLOSED** (met correctie: CI was al comprehensive sinds 18-08) | #64 |
 | P0-004 — self-privilege-escalatie via `users.gym_role`/`gym_id`/`system_role` | **CLOSED** | MS-F1-01, `migratie_v497.sql` |
+| P0-005 — self-service commerciële plan-escalatie via `users.individual_plan_key`/`individual_plan_status`/`individual_plan_expires_at`/`mollie_customer_id` | **CLOSED** | MS-F12-02, `migratie_v523.sql` |
 | P1 — ontbrekende membership-scoping op multi-tenant-schema (organizations/teams/etc.) | **CLOSED** | MS-F1-01, `migratie_v498.sql` |
 | P3 — redundante ownership-check in `WITH CHECK` ontbreekt | **OPEN**, cosmetisch | — |
 
@@ -83,4 +84,18 @@ Bij eerste lezing lijken de `WITH CHECK`-clausules op `exercises`, `custom_train
 - Alle sporter-eigen data (`sessions`, `hrv_log`, `weight_log`, `body_comp`, `atleet_profiel`, `programs`, `program_blocks`, `goals`, `exercise_goals`, `training_instances`, `race_segments`, `cycle_periods`, `cycle_symptom_logs`, enz.) is consequent scoped op `user_id = auth.uid()` of `auth.uid() = user_id` — consistent patroon, geen anomalieën gevonden.
 - `coach_athlete_relationships` heeft een correct opgezette consent-flow: alleen de betrokken partijen zien de relatie, alleen de sporter kan van `pending` naar `active` zetten (consent geven), beide partijen kunnen intrekken (`revoked`) maar niet meer terugzetten.
 - `support_access_log` is terecht alleen leesbaar voor gebruikers met `system_role` support/developer.
-- `users`-tabel: alleen eigen rij lezen/updaten — geen gat gevonden dat je andermans rol zou kunnen wijzigen via directe tabeltoegang (rolwijzigingen lopen via `gym-team.js`, met de bovengenoemde bescherming).
+- `users`-tabel: alleen eigen rij lezen/updaten. ~~Geen gat gevonden dat je andermans rol zou kunnen wijzigen via directe tabeltoegang (rolwijzigingen lopen via `gym-team.js`, met de bovengenoemde bescherming).~~ **Correctie (MS-F12-02, P0-005):** deze claim klopte voor de rol-velden (`gym_role`/`gym_id`/`system_role`, beschermd sinds P0-004), maar niet meer zodra de latere, commerciële velden (`individual_plan_key`/`individual_plan_status`/`individual_plan_expires_at`/`mollie_customer_id`) aan dezelfde tabel werden toegevoegd zonder dezelfde bescherming. Zie hieronder.
+
+## HISTORICAL RECORD — P0-005 (STATUS: CLOSED, MS-F12-02)
+
+**Root cause:** de `users_update_own`-RLS-policy (`FOR UPDATE`, `qual: id=auth.uid()::text`, geen `WITH CHECK`) is row-level, niet column-level. Toen `individual_plan_key`/`mollie_customer_id` (bestonden al) en `individual_plan_status`/`individual_plan_expires_at` (nieuw in MS-F12-02) aan `public.users` werden toegevoegd, erfden deze automatisch dezelfde, brede update-toegang als elk ander veld op de eigen rij — zonder dat de al bestaande, aparte bescherming (`protect_privileged_user_columns()`, die alleen `gym_role`/`gym_id`/`system_role` dekt) hierop van toepassing was.
+
+**Exploit (live bevestigd, transactie zonder commit, geen permanente wijziging):** een gewone, geauthenticeerde gebruiker kon met een simpele, directe `UPDATE users SET individual_plan_key='atleet_pro' WHERE id=auth.uid()` zichzelf een betaald abonnement toekennen, zonder enige betaling of server-side autorisatie.
+
+**Affected fields:** `individual_plan_key`, `individual_plan_status`, `individual_plan_expires_at`, `mollie_customer_id` (alle vier op `public.users`).
+
+**Remediation:** een nieuwe `protect_commercial_user_columns()` BEFORE UPDATE-trigger, met exact dezelfde, bewezen conditie als de bestaande `protect_privileged_user_columns()` (`auth.role() IS DISTINCT FROM 'service_role'`) — bewust hergebruikt in plaats van een nieuw patroon te bedenken. Uitsluitend `service_role` (toekomstige, server-side billing-bevestiging) kan deze velden nog wijzigen.
+
+**Permanent regressiebewijs:** `core/fUsersCommercialAuthority.test.js` (16 assertions) + live adversarial matrix (authenticated self-mutatie geweigerd, cross-user geweigerd, bulk-update met een legitiem + een verboden veld tegelijk laat het legitieme veld wel slagen zonder het verboden veld te lekken, service-role met een echte JWT role-claim werkt correct, een dubieuze/ontbrekende rolcontext faalt veilig dicht). Sabotagebewijs: de trigger-conditie tijdelijk op `false` gezet (bescherming volledig uit) — de regressietest detecteerde dit exact, teruggedraaid.
+
+**Volledige foutklasse-audit op `public.users`** (alle kolommen expliciet geclassificeerd, zie `migratie_v523.sql` voor de volledige tabel): geen overige client-writable commerciële of privilege-velden gevonden buiten de vier hierboven en de reeds beschermde rol-velden.

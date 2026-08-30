@@ -6075,7 +6075,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.21';
+const APP_VER = 'v4.69.22';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -9323,7 +9323,7 @@ function intakeApplyCorrection(mutations){
 async function intakeAiExtract(q,txt){
   try{
     const sys=ocore().buildExtractionPrompt(q);
-    const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:200,system:sys,messages:[{role:'user',content:txt}]})});
+    const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'intake_extract',model:'claude-sonnet-4-5',max_tokens:200,system:sys,messages:[{role:'user',content:txt}]})});
     const d=await res.json();
     if(d.error||!d.content||!d.content[0])return null;
     const m=String(d.content[0].text||'').match(/\{[\s\S]*\}/);
@@ -10983,7 +10983,7 @@ async function genereerProgramma(){
     const varietyTekst=buildVarietyTekst(gebruiktIds,recentIds,exercises);
     const sys=buildWeekPrompt(wk,weken,dagDuren,doel,sportLabel,sportBlockTekst,profielTekst,bibliotheek,faseNaam,varietyTekst,blessureContext);
     try{
-      const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1500,system:sys,messages:[{role:'user',content:'Genereer week '+wk+'.'}]})});
+const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'program_generation',model:'claude-sonnet-4-5',max_tokens:1500,system:sys,messages:[{role:'user',content:'Genereer week '+wk+'.'}]})});
       const d=await res.json();
       if(d.error){statusEl.textContent='Fout in week '+wk+': '+d.error.message+(allBlocks.length?' — eerdere weken blijven staan.':'');break;}
       const parsed=parseProgrammaJSON(d.content[0].text,exercises);
@@ -11368,7 +11368,7 @@ async function heergenereerResterendeWeken(progId,btnEl){
     const varietyTekst=buildVarietyTekst(gebruiktIds,recentIds,exercises);
     const sys=buildWeekPrompt(wk,maxWeek,dagDuren,prog.doel,sportLabel,sportBlockTekst,profielTekst,bibliotheek,faseNaam,varietyTekst,voortgangContext);
     try{
-      const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1500,system:sys,messages:[{role:'user',content:'Genereer week '+wk+'.'}]})});
+const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'program_generation',model:'claude-sonnet-4-5',max_tokens:1500,system:sys,messages:[{role:'user',content:'Genereer week '+wk+'.'}]})});
       const d=await res.json();
       if(d.error){toast('Fout bij week '+wk+': '+d.error.message);break;}
       const parsed=parseProgrammaJSON(d.content[0].text,exercises);
@@ -16315,7 +16315,7 @@ Coaching-context (JSON): ${JSON.stringify(_ctx)}`;
   const sys=`Je bent de persoonlijke krachtcoach van deze sporter. Geef een korte, persoonlijke terugblik op de zojuist afgeronde Training ${t}, in het Nederlands, alsof je naast hem staat. Spreek de sporter direct aan ("je"). Max 3-4 zinnen. Verbind de cijfers aan betekenis: benoem concrete progressie (bv. "je verhoogde je bankdrukken met 2,5 kg terwijl je RPE beheerst bleef"), koppel het volume en de gemiddelde RPE aan hoe gecontroleerd de sessie was, en sluit af met één concrete focus voor de volgende keer (meestal techniek of een kleine progressie-stap). Geen opsomming van elke set, geen bulletlijst, geen opvulling, geen bevestigingszinnen zoals "Goed gedaan!". Warm en concreet.${coachBlock}
 Sessiedata (JSON): ${JSON.stringify(summaryData)}`;
   try{
-    const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:500,system:sys,messages:[{role:'user',content:'Geef de samenvatting.'}]})});
+    const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'session_summary',model:'claude-sonnet-4-5',max_tokens:500,system:sys,messages:[{role:'user',content:'Geef de samenvatting.'}]})});
     const d=await res.json();
     if(d.error)return detConclusion||null;
     const tekst=(d.content&&d.content[0]&&d.content[0].text)||null;
@@ -19062,7 +19062,7 @@ async function sendMsg(txt){
   const tid=addMsg('coach','<span class="tk-typing"><span></span><span></span><span></span></span>',true,true);
   try{
     const sys=await buildCtx(activeSessionCtx);
-    const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,system:sys,messages:chatHist.slice(-12)})});
+    const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'chat',model:'claude-sonnet-4-5',max_tokens:1000,system:sys,messages:chatHist.slice(-12)})});
     const d=await res.json();
     if(d.error){removeMsg(tid);console.warn('coach error',d.error);addMsg('coach','Er ging iets mis bij het ophalen van je advies. Probeer het zo nog een keer.');}
     else{
@@ -20211,7 +20211,7 @@ function buildSessionIntroTekst(faseNaam,weekNr,progDoel,oefeningNamen){
 async function generateProgAdviesAI(adj){
   const sys=`Je bent een trainingscoach die in 1-2 korte zinnen mondeling uitlegt waarom je een lichtere training voorstelt vandaag. Baseer je op deze data (JSON), maar noem niet elk cijfer letterlijk op: ${JSON.stringify(adj.redenen)}. Warme, directe coach-toon. Geen aanhef, geen afsluiting, geen opsomming.`;
   try{
-    const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:200,system:sys,messages:[{role:'user',content:'Leg het kort uit.'}]})});
+    const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'chat',model:'claude-sonnet-4-5',max_tokens:200,system:sys,messages:[{role:'user',content:'Leg het kort uit.'}]})});
     const d=await res.json();
     if(d.error)return null;
     const tekst=d.content[0].text.trim();

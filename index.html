@@ -6128,7 +6128,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.28';
+const APP_VER = 'v4.69.29';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6814,7 +6814,7 @@ async function renderSchemaTrainingList(){
       <div class="sc-meta"><span>${V48I.list} ${n} oefening${n===1?'':'en'}</span><span>${V48I.clock} ${escHtml(v48RelDate(lastMap[v.id]))}</span></div>
       <div class="sc-actions">
         <button class="sc-start" onclick="openTrainingPreview('vast','${v.id}')">${V48I.play} Start</button>
-        <button class="sc-ic" onclick='openRenameVasteTraining(${JSON.stringify(v.id)},${JSON.stringify(v.naam)})' aria-label="Hernoemen">${V48I.edit}</button>
+        <button class="sc-ic" onclick='openRenameVasteTraining(${escJsAttr(v.id)},${escJsAttr(v.naam)})' aria-label="Hernoemen">${V48I.edit}</button>
         <button class="sc-ic del" onclick="deleteVasteTraining('${v.id}')" aria-label="Verwijderen">${V48I.trash}</button>
       </div>
     </div>`;
@@ -7453,9 +7453,9 @@ function describeOfflineQueueItem(item){
   const methodLbl={POST:'Nieuw',PATCH:'Wijziging',DELETE:'Verwijdering'}[item.method]||item.method;
   if(item.table==='sessions'&&item.body){
     const n=exercises?.find(e=>e.id===item.body.exercise_id)?.name||item.body.exercise_id||'sessie';
-    return `${methodLbl}: ${n} — ${item.body.date||''}`;
+    return `${methodLbl}: ${escHtml(n)} — ${escHtml(item.body.date||'')}`;
   }
-  if(item.table==='exercises'&&item.body)return `${methodLbl} oefening: ${item.body.name||item.body.id}`;
+  if(item.table==='exercises'&&item.body)return `${methodLbl} oefening: ${escHtml(item.body.name||item.body.id)}`;
   if(item.table==='exercises'&&item.filter)return `PR-update oefening`;
   if(item.table==='program_blocks')return `Programma-blok afgerond`;
   if(item.table==='training_instances')return `${methodLbl}: trainingssessie (${item.body?.status||'update'})`;
@@ -10139,6 +10139,19 @@ function escHtml(s){
   if(s==null)return '';
   return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+// F13 Post-Audit Remediation (P1-16): JSON.stringify(waarde) alleen is NIET veilig
+// als argument binnen een onclick='...'-attribuut (enkele-quote-delimiter) --
+// JSON.stringify escaped wel dubbele quotes (JSON-syntax), maar NIET de enkele
+// quote die het onclick='...'-attribuut zelf afsluit. Een naam/notitie met een
+// enkele quote erin (bijv. een oefeningnaam als "Farmer's Walk") kon zo het
+// attribuut vroegtijdig afsluiten en een nieuw, kwaadaardig attribuut injecteren.
+// escJsAttr() combineert JSON.stringify() met escHtml() op de resulterende
+// string -- de browser decodeert de HTML-entiteiten terug vóórdat de inline
+// JavaScript-parser de attribuutwaarde ziet, dus het gedrag blijft identiek
+// voor legitieme waarden, maar een quote kan het attribuut niet meer doorbreken.
+function escJsAttr(waarde){
+  return escHtml(JSON.stringify(waarde));
+}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 // ══════════════════════════════════════════════════════════
@@ -10401,8 +10414,8 @@ function renderExerciseRow(ex, meta={}){
   if(meta.rpe_target) parts.push('RPE '+meta.rpe_target);
   if(meta.pct_1rm) parts.push(meta.pct_1rm+'%');
   return `<div class="lrow">
-    <div class="lval">${ex?ex.name:'(onbekende oefening)'}</div>
-    <div class="lnote">${parts.join(' · ')||'—'}${meta.notes?'<br><span style="font-style:italic">'+meta.notes+'</span>':''}</div>
+    <div class="lval">${ex?escHtml(ex.name):'(onbekende oefening)'}</div>
+    <div class="lnote">${parts.join(' · ')||'—'}${meta.notes?'<br><span style="font-style:italic">'+escHtml(meta.notes)+'</span>':''}</div>
   </div>`;
 }
 
@@ -12200,7 +12213,7 @@ async function renderTrainScreen(t){
           <span class="add-row-icon">+</span>
           <span class="add-row-lbl" style="color:var(--red);font-size:13px">Set toevoegen</span>
         </div>`}
-        <button onclick='askCoachEx(${JSON.stringify(ex.naam)},${JSON.stringify(t)},${JSON.stringify(ex.id)})' style="margin:8px 14px 12px;background:var(--dark);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">🤖 Vraag de coach</button>
+        <button onclick='askCoachEx(${escJsAttr(ex.naam)},${escJsAttr(t)},${escJsAttr(ex.id)})' style="margin:8px 14px 12px;background:var(--dark);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">🤖 Vraag de coach</button>
       </div>`;
     container.appendChild(div);
     // v3.3.56 — poster lui injecteren bij eerste-keer-open (Trigger A); anders pas bij tik.
@@ -16128,7 +16141,7 @@ function renderSessionSummaryContent(t){
       det+=ws.map(s=>(s.kg||'?')+'kg×'+(s.reps||'?')+(s.rpe?' @'+s.rpe:'')).join(' · ');
     }
     if(det){
-      const card=`<div id="sumex-${ex.id}" style="padding:8px 0;border-bottom:1px solid var(--g2)"><div style="font-size:13px;font-weight:700;color:var(--dark)">${ex.naam}</div><div style="font-size:12px;color:var(--g4);margin-top:3px">${det}</div></div>`;
+      const card=`<div id="sumex-${ex.id}" style="padding:8px 0;border-bottom:1px solid var(--g2)"><div style="font-size:13px;font-weight:700;color:var(--dark)">${escHtml(ex.naam)}</div><div style="font-size:12px;color:var(--g4);margin-top:3px">${det}</div></div>`;
       (group==='cardio'?cardioCards:strengthCards).push(card);
     }
   });
@@ -17769,7 +17782,7 @@ function renderEditSessFields(ex,session){
       </div>`;
   }
   f+=`<div class="irow"><label class="ilbl">Datum</label><input class="inp" type="date" id="es-date" value="${session?.date||curAddDate||td()}"></div>`;
-  f+=`<div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="es-note" value="${session?.note||''}"></div>`;
+  f+=`<div class="irow"><label class="ilbl">Notitie</label><input class="inp" type="text" id="es-note" value="${escHtml(session?.note||'')}"></div>`;
   document.getElementById('edit-sess-fields').innerHTML=f;
   // Cardio-edit: vul de gestructureerde velden (afstand/tijd/watt/split/…) terug uit de
   // opgeslagen sessie-kolommen — generiek via rowMap (reverse). Zonder dit bleef alleen de
@@ -17917,8 +17930,8 @@ function renderProgList(){
     }else if(tr&&tr.status!=='trend'){
       trendHtml=`<span style="font-size:11px;color:var(--g4);margin-left:6px">Onvoldoende data</span>`;
     }
-    h+=`<div class="stat-1rm-item" onclick='show1RMChart(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)})' style="cursor:pointer">
-      <div class="stat-1rm-row"><button onclick="event.stopPropagation();toggleFavorite('${ex.id}').then(renderProgList)" style="background:none;border:none;font-size:14px;cursor:pointer;color:${isExerciseFavorite(ex.id)?'var(--accent2)':'var(--g3)'};padding:0 4px 0 0">${isExerciseFavorite(ex.id)?'★':'☆'}</button><span class="stat-1rm-name">${escHtml(ex.name)}</span><span class="stat-1rm-val">${disp} kg</span>${tgt?`<span class="stat-1rm-target">/ ${tgt} kg</span>`:''}${trendHtml}<span style="color:var(--g3);font-size:14px;margin-left:4px">📈</span><button onclick='event.stopPropagation();openEditPeak(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${tgt||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-left:auto">🎯</button></div>
+    h+=`<div class="stat-1rm-item" onclick='show1RMChart(${escJsAttr(ex.id)},${escJsAttr(ex.name)})' style="cursor:pointer">
+      <div class="stat-1rm-row"><button onclick="event.stopPropagation();toggleFavorite('${ex.id}').then(renderProgList)" style="background:none;border:none;font-size:14px;cursor:pointer;color:${isExerciseFavorite(ex.id)?'var(--accent2)':'var(--g3)'};padding:0 4px 0 0">${isExerciseFavorite(ex.id)?'★':'☆'}</button><span class="stat-1rm-name">${escHtml(ex.name)}</span><span class="stat-1rm-val">${disp} kg</span>${tgt?`<span class="stat-1rm-target">/ ${tgt} kg</span>`:''}${trendHtml}<span style="color:var(--g3);font-size:14px;margin-left:4px">📈</span><button onclick='event.stopPropagation();openEditPeak(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${tgt||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-left:auto">🎯</button></div>
       <div class="prog-wrap"><div class="prog-fill" style="width:${Math.min(100,pct||Math.round(disp/3))}%;background:${fc}"></div></div>
       ${pct?`<div class="stat-1rm-pct">${pct}% van peakdoel${pct>=100?' ✓':' · '+(100-pct)+'% te gaan'}</div>`:tgt===null?`<div class="stat-1rm-pct" style="color:var(--g4)">Nog geen peakdoel ingesteld</div>`:''}
     </div>`;
@@ -18351,7 +18364,7 @@ async function refreshAdmin(){
     const exs=exercises.filter(e=>e.active!==false&&e.category===cat);
     if(!exs.length)return;
     h+=`<div style="font-size:10px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;padding:10px 0 4px;margin-top:4px">${catL[cat]}</div>`;
-    exs.forEach(ex=>{const exPeak=peakGoalFor(ex.id);h+=`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)"><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${escHtml(ex.name)}</div><div style="font-size:11px;color:var(--g4)">${ex.type||'strength'}${ex.rest_seconds?' · rust '+ex.rest_seconds+'s':''}${exPeak?' · jouw doel '+exPeak+'kg':''}${ex.ratio_anchor?' · anker '+escHtml(ex.ratio_anchor)+' ×'+ex.ratio_factor:''}${(ex.muscle_primary&&ex.muscle_primary.length)?' · '+escHtml(ex.muscle_primary.join(', ')):' · geen spieren'}</div></div><button onclick='openEditMuscles(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${JSON.stringify(ex.muscle_primary||[])},${JSON.stringify(ex.muscle_secondary||[])})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">💪</button><button onclick='openEditRest(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${ex.rest_seconds||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.rest_seconds?'⏱ '+ex.rest_seconds+'s':'⏱ Rust'}</button><button onclick='openEditPeak(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${exPeak||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${exPeak?'🎯 '+exPeak+'kg':'🎯 Doel'}</button><button onclick='openEditAnchor(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${JSON.stringify(ex.ratio_anchor||null)},${ex.ratio_factor||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.ratio_anchor?'🔗 '+escHtml(ex.ratio_anchor):'🔗 Anker'}</button><button onclick='openEditYT(${JSON.stringify(ex.id)},${JSON.stringify(ex.name)},${JSON.stringify(ex.yt||'')},${JSON.stringify(ex.category)})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.yt?'▶ YT':'+ YT'}</button><button data-id="${ex.id}" onclick="delEx(this.dataset.id)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button></div>`;});
+    exs.forEach(ex=>{const exPeak=peakGoalFor(ex.id);h+=`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)"><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${escHtml(ex.name)}</div><div style="font-size:11px;color:var(--g4)">${ex.type||'strength'}${ex.rest_seconds?' · rust '+ex.rest_seconds+'s':''}${exPeak?' · jouw doel '+exPeak+'kg':''}${ex.ratio_anchor?' · anker '+escHtml(ex.ratio_anchor)+' ×'+ex.ratio_factor:''}${(ex.muscle_primary&&ex.muscle_primary.length)?' · '+escHtml(ex.muscle_primary.join(', ')):' · geen spieren'}</div></div><button onclick='openEditMuscles(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${escJsAttr(ex.muscle_primary||[])},${escJsAttr(ex.muscle_secondary||[])})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">💪</button><button onclick='openEditRest(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${ex.rest_seconds||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.rest_seconds?'⏱ '+ex.rest_seconds+'s':'⏱ Rust'}</button><button onclick='openEditPeak(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${exPeak||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${exPeak?'🎯 '+exPeak+'kg':'🎯 Doel'}</button><button onclick='openEditAnchor(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${escJsAttr(ex.ratio_anchor||null)},${ex.ratio_factor||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.ratio_anchor?'🔗 '+escHtml(ex.ratio_anchor):'🔗 Anker'}</button><button onclick='openEditYT(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${escJsAttr(ex.yt||'')},${escJsAttr(ex.category)})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.yt?'▶ YT':'+ YT'}</button><button data-id="${ex.id}" onclick="delEx(this.dataset.id)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button></div>`;});
   });
   document.getElementById('admin-exlist').innerHTML=h;
   await refreshStats();

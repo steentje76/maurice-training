@@ -5445,6 +5445,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/decision.js"></script>
 <script src="core/aiOutputContract.js"></script>
 <script src="core/cardio.js"></script>
+<script src="core/runningExecution.js"></script>
 <script src="core/progression.js"></script>
 <script src="core/intervalEngine.js"></script>
 <script src="core/coaching.js"></script>
@@ -6187,7 +6188,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.33';
+const APP_VER = 'v4.69.34';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -10317,6 +10318,7 @@ let _runningGekozenVorm=null;
 function renderRunningEntry(){
   const el=document.getElementById('running-scroll');
   if(!el)return;
+  if(herstelRunningExecutionIndienAanwezig())return;
   _runningGekozenVorm=null;
   el.innerHTML=`
     <div style="padding:16px">
@@ -10337,19 +10339,294 @@ function selecteerRunningVorm(vormId){
   document.querySelectorAll('#running-vormen-lijst .row').forEach(b=>b.setAttribute('aria-pressed', b.dataset.vorm===vormId?'true':'false'));
   const vorm=RUNNING_TRAININGSVORMEN.find(v=>v.id===vormId);
   const form=document.getElementById('running-log-form');
-  // Preview: toont uitsluitend wat de gebruiker zelf invult -- nooit een
-  // verzonnen doel (sectie 11: ontbrekende waarden blijven ontbrekend).
+  const isInterval=vormId==='interval';
   form.innerHTML=`
     <div class="card">
       <div class="card-hd"><div class="card-title">${vorm.label}</div></div>
       <div class="card-body">
-        <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Afstand (km, optioneel)</label>
-        <input type="number" inputmode="decimal" step="0.01" min="0" id="running-afstand-km" style="width:100%;margin-bottom:10px" placeholder="bv. 5.2">
-        <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Duur (minuten, optioneel)</label>
-        <input type="number" inputmode="decimal" step="0.1" min="0" id="running-duur-min" style="width:100%;margin-bottom:10px" placeholder="bv. 28.5">
-        <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Gemiddelde hartslag (optioneel)</label>
-        <input type="number" inputmode="numeric" min="0" id="running-hr" style="width:100%;margin-bottom:14px" placeholder="bv. 152">
-        <button class="btn btn-p" onclick="afrondenRunningActivity()">Afronden &amp; opslaan</button>
+        <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Doelafstand (km, optioneel)</label>
+        <input type="number" inputmode="decimal" step="0.01" min="0" id="running-doel-afstand-km" style="width:100%;margin-bottom:10px" placeholder="bv. 5">
+        <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Doelduur (minuten, optioneel)</label>
+        <input type="number" inputmode="decimal" step="1" min="0" id="running-doel-duur-min" style="width:100%;margin-bottom:10px" placeholder="bv. 30">
+        ${isInterval?`
+        <div style="border-top:1px solid var(--bd);margin:10px 0;padding-top:10px">
+          <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Herhalingen</label>
+          <input type="number" inputmode="numeric" min="1" id="running-int-herhalingen" style="width:100%;margin-bottom:10px" value="4">
+          <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Work (minuten)</label>
+          <input type="number" inputmode="decimal" min="0" step="0.5" id="running-int-work-min" style="width:100%;margin-bottom:10px" value="5">
+          <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Herstel (minuten)</label>
+          <input type="number" inputmode="decimal" min="0" step="0.5" id="running-int-recovery-min" style="width:100%;margin-bottom:10px" value="2">
+        </div>`:''}
+        <button class="btn btn-p" onclick="toonRunningPreview()">Preview</button>
+      </div>
+    </div>`;
+}
+
+// ── Preview (B9-02B sectie 3) ──────────────────────────────────────────
+// Toont uitsluitend wat de gebruiker zelf invulde of wat canoniek bekend
+// is (profiel) -- nooit een verzonnen doel of pace-getal. Ontbrekende
+// waarden blijven expliciet ontbrekend (geen vulling om het scherm mooi
+// te maken).
+let _runningPreviewConfig=null;
+async function toonRunningPreview(){
+  const afstandKm=parseFloat(document.getElementById('running-doel-afstand-km').value);
+  const duurMin=parseFloat(document.getElementById('running-doel-duur-min').value);
+  const isInterval=_runningGekozenVorm==='interval';
+  let intervalBlokken=null;
+  if(isInterval){
+    const herhalingen=parseInt(document.getElementById('running-int-herhalingen').value,10)||1;
+    const workMin=parseFloat(document.getElementById('running-int-work-min').value)||0;
+    const recoveryMin=parseFloat(document.getElementById('running-int-recovery-min').value)||0;
+    // CLIENT-SIDE, EPHEMERE structuur (B9-02B sectie 10 -- architectuurbeslissing):
+    // een geplande intervalstructuur is conceptueel iets anders dan een
+    // feitelijk uitgevoerde activity_lap. Voor deze sprint blijft de
+    // GEPLANDE structuur uitsluitend client-side/in-memory (niet in een
+    // aparte databasetabel opgeslagen) -- alleen de FEITELIJK uitgevoerde
+    // laps worden canoniek als activity_laps gepersisteerd. Dit is een
+    // bewuste, transparante scope-keuze: een aparte "running_workout_
+    // blocks"-tabel zou RLS/deletion/indexes vanaf dag 1 vereisen (sectie
+    // 10) voor een structuur die in B9-02B nog geen tweede consumer heeft
+    // (bijv. hergebruik in een programma-bibliotheek) -- gedocumenteerd
+    // in docs/B9_02_RUNNING_CORE_REPORT.md als open punt voor B9-03.
+    intervalBlokken=[{type:'warmup',label:'Warming-up',duration_s:600}];
+    for(let i=1;i<=herhalingen;i++){
+      intervalBlokken.push({type:'work',label:`Work ${i}/${herhalingen}`,duration_s:Math.round(workMin*60)});
+      if(i<herhalingen||true)intervalBlokken.push({type:'recovery',label:`Herstel ${i}/${herhalingen}`,duration_s:Math.round(recoveryMin*60)});
+    }
+    intervalBlokken.push({type:'cooldown',label:'Cooling-down',duration_s:600});
+  }
+  // Profiel-integratie (sectie 11): toon threshold pace/max HR MET
+  // expliciete bron -- nooit een stille default (bv. "220-leeftijd").
+  let profielRij=null;
+  try{
+    const rows=await sbGet('athlete_endurance_profile', `&sport=eq.running&limit=1`);
+    profielRij=rows&&rows[0]?rows[0]:null;
+  }catch(e){profielRij=null;}
+  _runningPreviewConfig={vorm:_runningGekozenVorm,doelAfstandM:isFinite(afstandKm)&&afstandKm>0?Math.round(afstandKm*1000):null,doelDuurS:isFinite(duurMin)&&duurMin>0?Math.round(duurMin*60):null,intervalBlokken,profielRij};
+  const vorm=RUNNING_TRAININGSVORMEN.find(v=>v.id===_runningGekozenVorm);
+  const form=document.getElementById('running-log-form');
+  form.innerHTML=`
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Preview — ${vorm.label}</div></div>
+      <div class="card-body">
+        <div style="font-size:13px;margin-bottom:8px"><b>Doel afstand:</b> ${_runningPreviewConfig.doelAfstandM?(_runningPreviewConfig.doelAfstandM/1000).toFixed(2)+' km':'Geen doel opgegeven'}</div>
+        <div style="font-size:13px;margin-bottom:8px"><b>Doel duur:</b> ${_runningPreviewConfig.doelDuurS?Math.round(_runningPreviewConfig.doelDuurS/60)+' min':'Geen doel opgegeven'}</div>
+        <div style="font-size:13px;margin-bottom:8px"><b>Pace-doel:</b> ${profielRij&&profielRij.threshold_pace_seconds_per_km?CardioCore.formatTime(profielRij.threshold_pace_seconds_per_km)+'/km (bron: '+(profielRij.data_quality==='provider_verified'?'provider':profielRij.data_quality==='user_corrected'?'gebruiker gecorrigeerd':'onbevestigd')+')':'Geen persoonlijk pace-doel beschikbaar'}</div>
+        <div style="font-size:13px;margin-bottom:8px"><b>Max HR:</b> ${profielRij&&profielRij.max_heart_rate_bpm?profielRij.max_heart_rate_bpm+' bpm':'Onbekend'}</div>
+        <!-- HR-zones NIET getoond (B9-02B sectie 11, expliciete architectuurkeuze): CALC-END-005
+             (TRIMP/aerobic decoupling/HR-zones) is nog NOT IMPLEMENTED in de Calculation Registry.
+             Zonder een canonieke berekening zouden HR-zones hier alleen via een nieuwe, lokale
+             formule getoond kunnen worden -- dat zou een verboden shadow calculation zijn (sectie
+             8/18/25). Bewust weggelaten i.p.v. zelf een formule te verzinnen; wordt pas getoond
+             zodra CALC-END-005 canoniek geimplementeerd is (B9-03-dependency). -->
+        <div style="font-size:11px;color:var(--g4);margin-bottom:8px">HR-zones: nog niet beschikbaar (canonieke berekening ontbreekt)</div>
+        ${intervalBlokken?`<div style="font-size:13px;margin:10px 0"><b>Structuur:</b><ul style="margin:6px 0 0 18px;padding:0">${intervalBlokken.map(b=>`<li>${b.label} — ${Math.round(b.duration_s/60)} min</li>`).join('')}</ul></div>`:''}
+        <button class="btn btn-p" style="margin-top:10px" onclick="startRunningExecution()">Start training</button>
+      </div>
+    </div>`;
+}
+
+// ── Execution (B9-02B sectie 4/5/6) ─────────────────────────────────────
+// Canonical state machine uit core/runningExecution.js. GEEN setInterval()
+// als bron van waarheid voor tijd -- uitsluitend voor het elke seconde
+// opnieuw aanroepen van elapsedActiveMs() t.b.v. de weergave.
+let _runningExecState=null;
+let _runningExecTimerHandle=null;
+const RUNNING_EXEC_LOCALSTORAGE_KEY='tk_running_execution_v1';
+
+function startRunningExecution(){
+  const nu=Date.now();
+  _runningExecState=RunningExecutionCore.createSession(nu);
+  const r=RunningExecutionCore.start(_runningExecState,nu);
+  if(!r.ok){toast('Kon training niet starten');return;}
+  _runningExecState=r.state;
+  persisteerRunningExecState();
+  renderRunningExecutionScreen();
+}
+
+function persisteerRunningExecState(){
+  try{
+    if(_runningExecState&&(_runningExecState.status==='RUNNING'||_runningExecState.status==='PAUSED'))
+      localStorage.setItem(RUNNING_EXEC_LOCALSTORAGE_KEY,JSON.stringify({state:_runningExecState,config:_runningPreviewConfig}));
+    else localStorage.removeItem(RUNNING_EXEC_LOCALSTORAGE_KEY);
+  }catch(e){}
+}
+
+// Crash/refresh-herstel (sectie 15): bij het openen van Hardlopen wordt
+// gecontroleerd of er een onafgeronde executie in localStorage staat.
+function herstelRunningExecutionIndienAanwezig(){
+  try{
+    const raw=localStorage.getItem(RUNNING_EXEC_LOCALSTORAGE_KEY);
+    if(!raw)return false;
+    const data=JSON.parse(raw);
+    if(!data||!data.state||(data.state.status!=='RUNNING'&&data.state.status!=='PAUSED'))return false;
+    _runningExecState=data.state;
+    _runningPreviewConfig=data.config;
+    renderRunningExecutionScreen();
+    toast('Onafgeronde training hersteld');
+    return true;
+  }catch(e){return false;}
+}
+
+function huidigeIntervalStap(nu){
+  if(!_runningPreviewConfig||!_runningPreviewConfig.intervalBlokken)return null;
+  const actieveMs=RunningExecutionCore.elapsedActiveMs(_runningExecState,nu);
+  let cumS=0;
+  for(let i=0;i<_runningPreviewConfig.intervalBlokken.length;i++){
+    const blok=_runningPreviewConfig.intervalBlokken[i];
+    if(actieveMs/1000<cumS+blok.duration_s){
+      return {index:i,totaal:_runningPreviewConfig.intervalBlokken.length,blok,resterendS:Math.max(0,cumS+blok.duration_s-actieveMs/1000),volgende:_runningPreviewConfig.intervalBlokken[i+1]||null};
+    }
+    cumS+=blok.duration_s;
+  }
+  return {index:_runningPreviewConfig.intervalBlokken.length-1,totaal:_runningPreviewConfig.intervalBlokken.length,blok:{label:'Klaar'},resterendS:0,volgende:null};
+}
+
+function renderRunningExecutionScreen(){
+  const el=document.getElementById('running-scroll');
+  if(!el||!_runningExecState)return;
+  clearInterval(_runningExecTimerHandle);
+  const st=_runningExecState;
+  const nu=Date.now();
+  const actiefS=Math.round(RunningExecutionCore.elapsedActiveMs(st,nu)/1000);
+  const intervalStap=huidigeIntervalStap(nu);
+  el.innerHTML=`
+    <div style="padding:16px;text-align:center">
+      ${st.status==='FINISH_CONFIRM'?`
+        <div class="card"><div class="card-body">
+          <p style="font-size:15px;margin-bottom:14px">Training afronden?</p>
+          <button class="btn btn-p" style="width:100%;margin-bottom:8px;padding:16px;font-size:16px" onclick="runningConfirmFinish()">Bevestig afronden</button>
+          <button class="btn btn-o" style="width:100%" onclick="runningCancelFinish()">Doorgaan met trainen</button>
+        </div></div>`:`
+        <div style="font-size:48px;font-weight:700;margin:20px 0" id="running-exec-timer">${CardioCore.formatTime(actiefS)}</div>
+        ${intervalStap?`<div style="font-size:16px;font-weight:600;margin-bottom:4px" aria-live="polite">${intervalStap.blok.label} (${intervalStap.index+1}/${intervalStap.totaal})</div><div style="font-size:13px;color:var(--g4);margin-bottom:16px">Nog ${Math.round(intervalStap.resterendS)}s — volgende: ${intervalStap.volgende?intervalStap.volgende.label:'—'}</div>`:'<div style="margin-bottom:16px"></div>'}
+        <div style="font-size:13px;color:var(--g4);margin-bottom:20px" role="status">${st.status==='RUNNING'?'Bezig':'Gepauzeerd'}${st.laps.length?' · '+st.laps.length+' lap(s)':''}</div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          ${st.status==='RUNNING'?`
+            <button class="btn btn-o" style="min-width:100px;padding:18px;font-size:16px" aria-label="Pauzeer training" onclick="runningPause()">Pause</button>
+            <button class="btn btn-o" style="min-width:100px;padding:18px;font-size:16px" aria-label="Lap registreren" onclick="runningLap()">Lap</button>
+          `:`
+            <button class="btn btn-p" style="min-width:100px;padding:18px;font-size:16px" aria-label="Hervat training" onclick="runningResume()">Resume</button>
+          `}
+          <button class="btn btn-p" style="min-width:100px;padding:18px;font-size:16px;background:var(--r)" aria-label="Training afronden" onclick="runningRequestFinish()">Finish</button>
+        </div>
+      `}
+    </div>`;
+  if(st.status==='RUNNING')_runningExecTimerHandle=setInterval(()=>renderRunningExecutionScreen(),1000);
+}
+
+function runningPause(){
+  const r=RunningExecutionCore.pause(_runningExecState,Date.now());
+  if(!r.ok){toast('Kon niet pauzeren');return;}
+  _runningExecState=r.state;persisteerRunningExecState();renderRunningExecutionScreen();
+}
+function runningResume(){
+  const r=RunningExecutionCore.resume(_runningExecState,Date.now());
+  if(!r.ok){toast('Kon niet hervatten');return;}
+  _runningExecState=r.state;persisteerRunningExecState();renderRunningExecutionScreen();
+}
+function runningLap(){
+  const r=RunningExecutionCore.addLap(_runningExecState,Date.now(),{});
+  if(!r.ok){toast('Lap alleen mogelijk tijdens actief lopen');return;}
+  _runningExecState=r.state;persisteerRunningExecState();renderRunningExecutionScreen();
+  toast('Lap '+_runningExecState.laps.length+' geregistreerd');
+}
+function runningRequestFinish(){
+  const r=RunningExecutionCore.requestFinish(_runningExecState,Date.now());
+  if(!r.ok){toast('Kon niet afronden');return;}
+  _runningExecState=r.state;persisteerRunningExecState();renderRunningExecutionScreen();
+}
+function runningCancelFinish(){
+  const r=RunningExecutionCore.cancelFinish(_runningExecState,Date.now());
+  if(!r.ok){toast('Kon niet doorgaan');return;}
+  _runningExecState=r.state;persisteerRunningExecState();renderRunningExecutionScreen();
+}
+
+// Idempotency (sectie 14): een client-side vlag voorkomt een dubbele
+// opslag bij dubbel tikken; een dedupe_key (hergebruik van de B9-01-
+// dedupe-kolom, nu ook voor handmatige executie i.p.v. uitsluitend
+// provider-sync) voorkomt een dubbele opslag bij een netwerkretry.
+let _runningOpslagBezig=false;
+async function runningConfirmFinish(){
+  if(_runningOpslagBezig)return;
+  _runningOpslagBezig=true;
+  try{
+    const r=RunningExecutionCore.confirmFinish(_runningExecState,Date.now());
+    if(!r.ok){toast('Kon niet afronden');_runningOpslagBezig=false;return;}
+    _runningExecState=r.state;
+    const uid=authSession?.user?.id;
+    if(!uid){toast('Niet ingelogd');_runningOpslagBezig=false;return;}
+    const duurS=Math.round(RunningExecutionCore.elapsedActiveMs(_runningExecState,_runningExecState.finishedAt)/1000);
+    let afstandM=_runningPreviewConfig&&_runningPreviewConfig.doelAfstandM?null:null; // afstand NOOIT afgeleid uit tijd/pace (sectie 6) -- alleen handmatig, hieronder gevraagd indien onbekend.
+    const dedupeKey='manual-exec-'+_runningExecState.startedAt+'-'+uid;
+    const payload={
+      user_id:uid,sport:'running',
+      distance_meters:afstandM,
+      duration_seconds:duurS,
+      source_provenance:'manual',data_quality:'unverified',
+      recorded_at:new Date(_runningExecState.startedAt).toISOString(),
+      dedupe_key:dedupeKey
+    };
+    const savedActivity=await fetch(`${SB_URL}/rest/v1/activities`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify(payload)});
+    let activityId=null;
+    try{
+      const rows=await sbGet('activities',`&dedupe_key=eq.${encodeURIComponent(dedupeKey)}&limit=1`);
+      activityId=rows&&rows[0]?rows[0].id:null;
+    }catch(e){}
+    // FAILURE ATOMICITY (B9-02B sectie 5): elke lap-insert wordt individueel
+    // gecontroleerd. Als de activity wel is opgeslagen maar (een deel van)
+    // de laps niet, wordt dit NOOIT stilzwijgend als "Training opgeslagen"
+    // gepresenteerd -- de execution-state blijft in localStorage bewaard
+    // (geen cleanup) zodat een volgende poging de ontbrekende laps opnieuw
+    // kan proberen op te slaan, in plaats van ze onherroepelijk te verliezen.
+    let alleLapsGelukt=true;
+    if(activityId&&_runningExecState.laps.length){
+      for(const lap of _runningExecState.laps){
+        const lapOk=await sbPostQ('activity_laps',{activity_id:activityId,lap_index:lap.lap_index,duration_seconds:lap.duration_seconds,distance_meters:lap.distance_meters,avg_heart_rate_bpm:lap.avg_heart_rate_bpm});
+        if(!lapOk)alleLapsGelukt=false;
+      }
+    }
+    if(!activityId){
+      toast('Opslaan mislukt — probeer opnieuw (training blijft bewaard)');
+      // Geen localStorage.removeItem: de sessie blijft herstelbaar.
+      return;
+    }
+    if(!alleLapsGelukt){
+      toast('Training opgeslagen, maar niet alle laps — probeer later opnieuw');
+      // Geen localStorage.removeItem: laat de gebruiker een retry doen voor de laps.
+      renderRunDetail(activityId);
+      return;
+    }
+    localStorage.removeItem(RUNNING_EXEC_LOCALSTORAGE_KEY);
+    toast('Training opgeslagen');
+    renderRunDetail(activityId);
+  }finally{
+    _runningOpslagBezig=false;
+  }
+}
+
+// ── Run Detail (sectie 16/17) ───────────────────────────────────────────
+async function renderRunDetail(activityId){
+  const el=document.getElementById('running-scroll');
+  if(!el)return;
+  const rows=await sbGet('activities',`&id=eq.${activityId}&limit=1`);
+  const act=rows&&rows[0];
+  if(!act){el.innerHTML='<div style="padding:16px">Run niet gevonden</div>';return;}
+  const laps=await sbGet('activity_laps',`&activity_id=eq.${activityId}&order=lap_index.asc`);
+  const paceLine=(act.distance_meters&&act.duration_seconds)?CardioCore.formatTime(CardioCore.splitFromDistTime(act.distance_meters,act.duration_seconds,1000))+'/km':'Onbekend (geen afstand ingevuld)';
+  el.innerHTML=`
+    <div style="padding:16px">
+      <button class="btn btn-o btn-sm" onclick="renderRunningEntry()" style="margin-bottom:12px">← Terug naar geschiedenis</button>
+      <div class="card"><div class="card-hd"><div class="card-title">Run detail</div></div>
+        <div class="card-body">
+          <div style="font-size:13px;margin-bottom:6px"><b>Datum:</b> ${new Date(act.recorded_at).toLocaleDateString('nl-NL')}</div>
+          <div style="font-size:13px;margin-bottom:6px"><b>Duur:</b> ${act.duration_seconds?CardioCore.formatTime(act.duration_seconds):'Onbekend'}</div>
+          <div style="font-size:13px;margin-bottom:6px"><b>Afstand:</b> ${act.distance_meters?(act.distance_meters/1000).toFixed(2)+' km':'Onbekend'}</div>
+          <div style="font-size:13px;margin-bottom:6px"><b>Gem. pace:</b> ${paceLine}</div>
+          <div style="font-size:13px;margin-bottom:6px"><b>HR:</b> ${act.avg_heart_rate_bpm?act.avg_heart_rate_bpm+' bpm':'Onbekend'}</div>
+          <div style="font-size:13px;margin-bottom:6px"><b>Bron:</b> ${act.source_provenance} · ${act.data_quality}</div>
+          ${laps&&laps.length?`<div style="font-size:13px;margin-top:10px"><b>Laps:</b><ul style="margin:6px 0 0 18px;padding:0">${laps.map(l=>`<li>Lap ${l.lap_index}: ${CardioCore.formatTime(l.duration_seconds)}${l.distance_meters?' · '+(l.distance_meters/1000).toFixed(2)+' km':''}</li>`).join('')}</ul></div>`:''}
+        </div>
       </div>
     </div>`;
 }
@@ -10403,7 +10680,7 @@ async function renderRunningHistory(){
       if(split!=null)paceStr=CardioCore.formatTime(Math.round(split))+'/km';
     }
     const sub=[km,duur,paceStr].filter(Boolean).join(' · ')||'Geen details';
-    return `<div class="row" style="cursor:default"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 4a2 2 0 100 4 2 2 0 000-4zM4 20l4-5 3 2 3-5 3 2 3-7"/></svg></span><span class="b"><span class="t">${datum}</span><span class="s">${sub}</span></span></div>`;
+    return `<button class="row" onclick="renderRunDetail('${r.id}')" aria-label="Bekijk run van ${datum}"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 4a2 2 0 100 4 2 2 0 000-4zM4 20l4-5 3 2 3-5 3 2 3-7"/></svg></span><span class="b"><span class="t">${datum}</span><span class="s">${sub}</span></span><span class="ar">›</span></button>`;
   }).join('');
 }
 

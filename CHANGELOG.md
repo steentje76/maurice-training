@@ -1,6 +1,85 @@
 # Trainingskompas — Changelog
 
+## v4.69.34 — B9-02B: Running Core Closure (31 augustus 2026)
+
+Sluit de bewezen B9-02-blockers (Preview, live Execution, Pause/Resume/
+Finish, laps, profiel-integratie, Run Detail, History->Detail).
+
+core/runningExecution.js (nieuw): pure, deterministische execution
+state machine + timer-engine (geen DOM/database, Calculation/Decision
+Core purity). Expliciete, gesloten transitietabel: READY->RUNNING->
+PAUSED->RUNNING->...->FINISH_CONFIRM->COMPLETED, met INTERRUPTED als
+alternatief eindpunt. Elapsed active time uitsluitend deterministisch
+afgeleid uit een segmentenlijst (timestamps), NOOIT setInterval() als
+bron van waarheid -- setInterval() ververst uitsluitend de UI-weergave.
+Pauzetijd telt nooit mee als actieve looptijd.
+
+Preview: toont doel/structuur/athlete_endurance_profile-context (met
+expliciete provenance -- nooit een stille default), ontbrekende
+waarden blijven expliciet ontbrekend.
+
+Execution-UI: grote Start/Pause/Resume/Finish-bediening, live timer,
+huidige/volgende intervalstap, handmatige lap-registratie.
+Crash/refresh-herstel via localStorage.
+
+Finish: een FINISH_CONFIRM-tussenstap voorkomt een accidental finish.
+Idempotent: een client-side vlag + een server-side dedupe_key
+(Prefer: resolution=ignore-duplicates) voorkomen een dubbele activity
+bij dubbel tikken of een netwerkretry.
+
+Run Detail + History->Detail: elke opgeslagen run opent een eigen
+detailscherm; elk item in de geschiedenis is klikbaar (een kritiek,
+zelf gevonden gebrek -- niet-klikbare, dode lijstitems -- is
+gecorrigeerd vóór oplevering).
+
+Interval-datamodel (architectuurbeslissing): de geplande
+intervalstructuur blijft in deze sprint client-side/ephemeer, geen
+nieuwe databasetabel -- expliciet gemotiveerd in de code en het
+rapport, geen bewezen tweede consumer die persistentie nu al vereist.
+
+Security: geen nieuwe tabellen, de bestaande B9-01-RLS dekt alle
+nieuwe schrijfpaden. Live herbevestigd: forged lap ownership correct
+geweigerd.
+
+Tests: core/fRunningExecutionCore.test.js (19/19, nieuw), core/
+fB9_02BRunningClosure.test.js (16/16, nieuw), core/fB9_02RunningCore.test.js
+bijgewerkt (21/21) naar de nieuwe werkelijkheid dat laps-schrijfcode nu
+bestaat. In totaal 82 gerichte assertions voor B9-01/B9-02/B9-02B samen,
+allemaal groen.
+
+Sabotagebewijs (8 scenario's uit de opdracht): pauzetijd als actieve
+tijd, lokale pace-herberekening, dubbel finishen, lap aan verkeerde
+activity, forged owner, interval-repeat-fout, profielwaarde zonder
+provenance, en verdwijnende recovery-state bij refresh -- allemaal
+gedetecteerd en teruggedraaid.
+
+GPS-capability herbevestigd: getCurrentPosition() bestaat,
+watchPosition() (live tracking) bestaat niet -- geen pseudo-GPS
+gebouwd, expliciete, eerlijke capability-grens.
+
+Zelf gevonden en gerepareerd: een eigen testfout (ontbrekende
+requestFinish-tussenstap) die de execution-module verbeterde (elke
+mislukte transitie geeft nu de ongewijzigde state terug i.p.v.
+undefined); een kortstondige CRLF/LF-tekstmodusfout tijdens het
+saboteren, direct hersteld; de kritieke, niet-klikbare
+geschiedenis-items.
+
+APP_VER v4.69.33 -> v4.69.34 (echte, functionele runtime-wijziging).
+sw.js CACHE_NAME/CACHE_STATIC synchroon gebumpt naar v469340.
+android/app/build.gradle gesynchroniseerd (46934/4.69.34).
+
+Volledige regressie: node core/release-gate.js -> 204 uitgevoerd/0
+geskipt/0 gefaald (3 nieuwe/bijgewerkte testbestanden).
+
+BELANGRIJKE, EERLIJKE BEPERKING: dit sluit 8 van de 10 in de opdracht
+genoemde blockers volledig. Twee blijven gedeeltelijk open: structured-
+interval-persistentie (bewuste architectuurkeuze) en de volledige,
+in de opdracht opgesomde error-state-matrix (kernscenario's bewezen,
+niet elk van de vijftien genoemde gevallen apart gesimuleerd). Zie
+docs/B9_02_RUNNING_CORE_REPORT.md voor de volledige, eerlijke status.
+
 ## v4.69.33 — B9-02: Running Core + Training-IA Hardlopen/Fietsen (31 augustus 2026)
+ — B9-02: Running Core + Training-IA Hardlopen/Fietsen (31 augustus 2026)
 
 Tweede sprint van het Benchmark 9.0 Floor Program. Harde
 productbeslissing (sectie 2): Hardlopen en Fietsen zijn nu afzonderlijke,

@@ -86,13 +86,14 @@ ok(html.includes("sport:'running'") && html.includes("sport:'cycling'"),
   ok(afrondenFn.includes("toast('Kies eerst een trainingsvorm')") && afrondenFn.includes("toast('Vul minimaal afstand of duur in')"),
     'F4 (duplicate/invalid save): expliciete validatie voorkomt een opslagpoging zonder gekozen vorm of zonder enige ingevulde waarde (voorkomt lege, betekenisloze duplicate-activities)');
 }
-// "laps aan andere gebruiker koppelen": B9-02 schrijft in deze sprint geen
-// enkele activity_laps-rij vanuit de UI (expliciet, transparant vastgesteld
-// als open blocker in docs/B9_02_RUNNING_CORE_REPORT.md) -- dit bevestigt
-// dat er domweg geen nieuwe, potentieel kwetsbare laps-schrijfcode bestaat
-// om te saboteren.
-ok(!html.match(/activity_laps.*insert|sbPostQ\(['"]activity_laps['"]/i),
-  'F5 (laps aan andere gebruiker koppelen): geen enkele activity_laps-schrijfactie bestaat in B9-02 -- expliciet, eerlijk vastgesteld als niet-gebouwd, dus geen aanvalsoppervlak om te saboteren');
+// "laps aan andere gebruiker koppelen" (bijgewerkt voor B9-02B: laps-
+// schrijfcode bestaat nu wel -- controleer dat elke lap uitsluitend
+// gekoppeld wordt aan de activity_id van de zojuist, door dezelfde
+// sessie aangemaakte activiteit, nooit aan een los, extern/manipuleerbaar
+// ID. De B9-01-RLS (via de activities-parent) is de architecturale
+// verdediging; live, adversarial database-bevijs staat in migratie_v534.sql.
+ok(html.includes("await sbPostQ('activity_laps',{activity_id:activityId"),
+  'F5 (laps aan andere gebruiker koppelen): elke lap wordt gekoppeld aan de activityId die zojuist, in dezelfde functie-aanroep, is aangemaakt -- nooit een extern of client-invoerbaar activity_id');
 
 console.log('fB9_02RunningCore: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (msgs.length) console.log(msgs.join('\n'));

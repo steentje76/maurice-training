@@ -2678,7 +2678,7 @@
     "capabilities": [],
     "epics": [],
     "priority": "P3",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F5-04"
     ],

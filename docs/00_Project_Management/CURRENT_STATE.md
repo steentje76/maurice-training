@@ -46,7 +46,7 @@ Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
 ## 5. Current validation status
 - **Code:** CODE VERIFIED tegen `main` @ bovenstaande SHA
 - **DB:** VERIFIED — 69 tabellen, RLS gecontroleerd op alle tabellen, `gyms`-lek gesloten en geverifieerd via `SET LOCAL ROLE anon/authenticated/service_role`
-- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 174 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 177 stappen totaal), 177 automatisch uitgevoerd, 0 zichtbaar geskipt, 0 gefaald
+- **Tests:** discovery-based release gate (lokaal én CI, schone checkout) — 176 testbestanden in `core/` ontdekt (+ `logic_tests.js` + 2 statische checks = 179 stappen totaal), 179 automatisch uitgevoerd, 0 zichtbaar geskipt, 0 gefaald
 - **Integration:** wearable-sync getest tegen de echte handler-functie; overige integraties overwegend unit-getest
 - **Device:** **OPEN** — Concept2 PM5 en Google Health-sync hebben geen bevestigde real-device-validatie in productie
 - **UX:** niet apart beoordeeld in de laatste consolidatiesprint (38 top-level schermen geïnventariseerd, geen flow-niveau UX-testdekking)

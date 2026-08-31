@@ -3,6 +3,7 @@
 // geldig is en haalt het user-id daar rechtstreeks uit op, zodat een
 // gebruiker nooit een ander account dan zijn eigen kan laten verwijderen
 // (er wordt bewust geen user-id van de client zelf geaccepteerd).
+const { deleteWearableTokenSecret } = require('./wearableTokenVault.js');
 exports.handler = async function(event) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: { message: 'Method not allowed' } }) };
@@ -96,6 +97,23 @@ exports.handler = async function(event) {
       'social_profiles', 'social_group_memberships', 'social_challenge_participants'
     ];
     const failedTables = [];
+    // F13 Post-Audit Remediation (P1-09): de Vault-secrets zelf hebben
+    // geen FK-cascade vanuit wearable_connections -- zonder deze
+    // expliciete opruiming zou een versleutelde, maar praktisch
+    // onbruikbare "wees"-secret achterblijven na accountverwijdering.
+    // Best-effort: een mislukte opruiming hier blokkeert de rest van de
+    // accountverwijdering niet (de secret is al versleuteld, geen
+    // plaintext-blootstellingsrisico als hij achterblijft).
+    try {
+      const connRes = await fetch(`${supabaseUrl}/rest/v1/wearable_connections?user_id=eq.${userId}&select=access_token_secret_id,refresh_token_secret_id`, {
+        headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }
+      });
+      const connRows = connRes.ok ? await connRes.json() : [];
+      for (const row of connRows) {
+        if (row.access_token_secret_id) await deleteWearableTokenSecret(supabaseUrl, serviceKey, row.access_token_secret_id);
+        if (row.refresh_token_secret_id) await deleteWearableTokenSecret(supabaseUrl, serviceKey, row.refresh_token_secret_id);
+      }
+    } catch (e) { console.warn('delete-account: opruimen van wearable Vault-secrets mislukt (best-effort)', e.message); }
     for (const table of USER_DATA_TABLES) {
       const r = await fetch(`${supabaseUrl}/rest/v1/${table}?user_id=eq.${userId}`, {
         method: 'DELETE',

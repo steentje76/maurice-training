@@ -23,6 +23,7 @@
 // plausibele paden met fallback + structurele key-logging (diagnostiek #2) bevestigt het live pad.
 
 const LIB = require('./_wearableSyncLib.js');
+const { getWearableTokenSecret, updateWearableTokenSecret } = require('./wearableTokenVault.js');
 
 const GOOGLE_HEALTH_DATA_TYPES = {
   hrv:   { id: 'daily-heart-rate-variability', filterField: 'daily_heart_rate_variability', kind: 'daily' },
@@ -115,19 +116,29 @@ exports.handler = async function (event) {
     const [conn] = await sbRows(connRes, 'wearable_connections');
     if (!conn) return jsonBody({ synced: false, daysWritten: 0, provider: 'fitbit', status: 'not_connected', code: ERR.NOT_CONNECTED, reason: 'not_connected' });
 
-    let accessToken = conn.access_token;
+    // F13 Post-Audit Remediation (P1-09): tokens staan niet langer in
+    // plaintext op conn.access_token/refresh_token, maar als een Vault-
+    // secret-verwijzing (access_token_secret_id/refresh_token_secret_id).
+    // getWearableTokenSecret() decrypt uitsluitend server-side, met de
+    // service-role-sleutel -- nooit client-readable.
+    let accessToken = await getWearableTokenSecret(supabaseUrl, serviceKey, conn.access_token_secret_id);
+    const refreshTokenValue = conn.refresh_token_secret_id ? await getWearableTokenSecret(supabaseUrl, serviceKey, conn.refresh_token_secret_id) : null;
+    if (!accessToken) {
+      await markSyncStatus(supabaseUrl, sbHeaders, userId, 'token_expired_no_refresh');
+      return jsonBody({ synced: false, daysWritten: 0, provider: 'fitbit', status: 'token_expired', code: ERR.TOKEN_REFRESH, reason: 'token_secret_unavailable' });
+    }
 
     // Token verversen als hij binnen 5 minuten verloopt of al verlopen is.
     const expiresAt = conn.token_expires_at ? new Date(conn.token_expires_at).getTime() : 0;
     if (expiresAt - Date.now() < 5 * 60 * 1000) {
-      if (!conn.refresh_token || !clientId || !clientSecret) {
+      if (!refreshTokenValue || !clientId || !clientSecret) {
         await markSyncStatus(supabaseUrl, sbHeaders, userId, 'token_expired_no_refresh');
         return jsonBody({ synced: false, daysWritten: 0, provider: 'fitbit', status: 'token_expired', code: ERR.TOKEN_REFRESH, reason: 'token_expired_no_refresh' });
       }
       const refreshRes = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ refresh_token: conn.refresh_token, client_id: clientId, client_secret: clientSecret, grant_type: 'refresh_token' })
+        body: new URLSearchParams({ refresh_token: refreshTokenValue, client_id: clientId, client_secret: clientSecret, grant_type: 'refresh_token' })
       });
       let refreshed = null;
       try { refreshed = await refreshRes.json(); } catch (_) { refreshed = null; }
@@ -138,9 +149,14 @@ exports.handler = async function (event) {
       }
       accessToken = refreshed.access_token;
       const newExpiresAt = new Date(Date.now() + (refreshed.expires_in || 3600) * 1000).toISOString();
+      // F13 Post-Audit Remediation (P1-09): de vernieuwde token wordt in
+      // hetzelfde Vault-secret bijgewerkt (rotation strategy) -- geen
+      // nieuwe secret-rij per refresh, en nooit meer plaintext in
+      // wearable_connections zelf.
+      await updateWearableTokenSecret(supabaseUrl, serviceKey, conn.access_token_secret_id, accessToken);
       await fetch(`${supabaseUrl}/rest/v1/wearable_connections?user_id=eq.${userId}&provider=eq.google_health`, {
         method: 'PATCH', headers: { ...sbHeaders, Prefer: 'return=minimal' },
-        body: JSON.stringify({ access_token: accessToken, token_expires_at: newExpiresAt })
+        body: JSON.stringify({ token_expires_at: newExpiresAt })
       });
     }
 

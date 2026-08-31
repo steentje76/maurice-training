@@ -2,6 +2,7 @@
 // header — vandaar de state-lookup i.p.v. JWT-verificatie zoals de andere functions).
 // Wisselt de code om voor tokens en slaat ze op voor de gebruiker die bij deze state
 // hoort. Eenmalig bruikbaar: de state-rij wordt na gebruik verwijderd.
+const { storeWearableTokenSecret } = require('./wearableTokenVault.js');
 exports.handler = async function (event) {
   const supabaseUrl = process.env.SUPABASE_URL || 'https://mhfxhzkdmgkaplicdszg.supabase.co';
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -59,6 +60,21 @@ exports.handler = async function (event) {
 
     const expiresAt = new Date(Date.now() + (tokens.expires_in || 3600) * 1000).toISOString();
 
+    // F13 Post-Audit Remediation (P1-09): OAuth-tokens worden nooit meer
+    // in plaintext opgeslagen. store_wearable_token_secret() gebruikt
+    // Supabase Vault (Transparent Column Encryption) -- de encryptie-
+    // sleutel zelf is nooit beschikbaar via SQL, wordt buiten de database
+    // beheerd. Encrypt gebeurt uitsluitend server-side, hier, met de
+    // service-role-sleutel.
+    const accessTokenSecretId = await storeWearableTokenSecret(supabaseUrl, serviceKey, tokens.access_token, 'wearable_access_' + userId);
+    const refreshTokenSecretId = tokens.refresh_token
+      ? await storeWearableTokenSecret(supabaseUrl, serviceKey, tokens.refresh_token, 'wearable_refresh_' + userId)
+      : null;
+    if (!accessTokenSecretId) {
+      console.error('wearable-auth-callback: kon access-token niet veilig opslaan in Vault');
+      return redirectToApp('save_error');
+    }
+
     // Stap 3: opslaan (upsert — herkoppelen overschrijft de vorige koppeling voor deze
     // gebruiker/provider-combinatie, dankzij de UNIQUE(user_id, provider) constraint).
     const upsertRes = await fetch(`${supabaseUrl}/rest/v1/wearable_connections`, {
@@ -70,8 +86,8 @@ exports.handler = async function (event) {
       body: JSON.stringify({
         user_id: userId,
         provider: 'google_health',
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token || null,
+        access_token_secret_id: accessTokenSecretId,
+        refresh_token_secret_id: refreshTokenSecretId,
         token_expires_at: expiresAt,
         scope: tokens.scope || null,
         connected_at: new Date().toISOString(),

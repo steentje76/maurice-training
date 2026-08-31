@@ -21,8 +21,17 @@ function makeFetch(healthPoints){
     const J = (obj, okFlag=true, status=200) => ({ ok: okFlag, status, json: async()=>obj, text: async()=>JSON.stringify(obj) });
     if (url.indexOf('/auth/v1/user') !== -1) return J({ id: 'u1' });
     if (url.indexOf('wearable_connections') !== -1 && method === 'GET')
-      return J([{ access_token: 'AT', token_expires_at: future, refresh_token: 'RT' }]);
+      return J([{ access_token_secret_id: 'sid-at', refresh_token_secret_id: 'sid-rt', token_expires_at: future }]);
     if (url.indexOf('wearable_connections') !== -1 && method === 'PATCH') return J({}, true, 204);
+    // F13 Post-Audit Remediation (P1-09): de handler haalt tokens nu via
+    // de Vault-RPC's op i.p.v. rechtstreeks uit de wearable_connections-rij.
+    if (url.indexOf('/rpc/get_wearable_token_secret') !== -1) {
+      const body = JSON.parse(opts.body || '{}');
+      if (body.p_secret_id === 'sid-at') return J('AT');
+      if (body.p_secret_id === 'sid-rt') return J('RT');
+      return J(null);
+    }
+    if (url.indexOf('/rpc/update_wearable_token_secret') !== -1) return J(null);
     if (url.indexOf('health.googleapis.com') !== -1){
       if (url.indexOf('daily-heart-rate-variability') !== -1) return J({ dataPoints: healthPoints.hrv });
       if (url.indexOf('daily-resting-heart-rate') !== -1) return J({ dataPoints: healthPoints.rhr });

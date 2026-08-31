@@ -40,6 +40,37 @@ const REQUEST_TYPE_TO_FEATURE = {
   chat: 'ai_coach'
 };
 
+// F13 Post-Audit Remediation (P1-01, AI cost abuse): het model wordt
+// ALTIJD server-side vastgelegd -- een client-aangeleverde payload.model
+// wordt nooit gebruikt, zelfs niet als fallback-default. Dit voorkomt dat
+// een gemanipuleerde client een ander, mogelijk duurder model afdwingt.
+// max_tokens krijgt een vast PLAFOND per requestType (gebaseerd op de
+// daadwerkelijke, bestaande call-sites in index.html) -- de client mag
+// nog steeds een lagere waarde vragen voor de legitieme variatie binnen
+// hetzelfde type (bijv. een korte vs. volledige chat-vraag), maar kan
+// nooit boven het plafond uitkomen. Voorkomt dat een gemanipuleerde
+// client een absurd hoge tokenlimiet (en dus kosten) forceert.
+const AI_MODEL_PER_REQUEST_TYPE = {
+  intake_extract: 'claude-sonnet-4-5',
+  program_generation: 'claude-sonnet-4-5',
+  session_summary: 'claude-sonnet-4-5',
+  chat: 'claude-sonnet-4-5'
+};
+const AI_MAX_TOKENS_CEILING_PER_REQUEST_TYPE = {
+  intake_extract: 300,
+  program_generation: 1800,
+  session_summary: 700,
+  chat: 1200
+};
+function resolveServerAuthoritativeModelAndMaxTokens(requestType, clientRequestedMaxTokens) {
+  const model = AI_MODEL_PER_REQUEST_TYPE[requestType]; // nooit client-input, ook niet als fallback
+  const ceiling = AI_MAX_TOKENS_CEILING_PER_REQUEST_TYPE[requestType];
+  const requested = typeof clientRequestedMaxTokens === 'number' && isFinite(clientRequestedMaxTokens) && clientRequestedMaxTokens > 0
+    ? Math.floor(clientRequestedMaxTokens) : ceiling;
+  const maxTokens = Math.min(requested, ceiling); // nooit boven het server-plafond, ongeacht client-input
+  return { model: model, maxTokens: maxTokens };
+}
+
 async function fetchCommercialContext(supabaseUrl, anonKey, authHeader, userId) {
   const headers = { apikey: anonKey, Authorization: authHeader };
   const [userRes, membershipsRes, planFeaturesRes, planQuotaRes] = await Promise.all([
@@ -160,8 +191,13 @@ exports.handler = async function(event) {
 
   try {
     const payload = payloadVoorType;
+    // F13 Post-Audit Remediation (P1-01): model en max_tokens komen
+    // uitsluitend uit de server-side, vaste configuratie per requestType
+    // -- payload.model/payload.max_tokens worden NOOIT rechtstreeks
+    // doorgegeven aan de Anthropic API.
+    const { model: serverModel, maxTokens: serverMaxTokens } = resolveServerAuthoritativeModelAndMaxTokens(requestType, payload.max_tokens);
     Observability.tkLog('INFO', 'ai.coach.request_started', 'ai', 'coach', {
-      operation: 'request', model: payload.model || 'claude-sonnet-4-5', message_count: Array.isArray(payload.messages) ? payload.messages.length : 0, request_type: requestType
+      operation: 'request', model: serverModel, message_count: Array.isArray(payload.messages) ? payload.messages.length : 0, request_type: requestType
     }, logCtx);
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -171,8 +207,8 @@ exports.handler = async function(event) {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: payload.model || 'claude-sonnet-4-5',
-        max_tokens: payload.max_tokens || 1000,
+        model: serverModel,
+        max_tokens: serverMaxTokens,
         system: payload.system,
         messages: payload.messages
       })

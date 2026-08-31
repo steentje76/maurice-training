@@ -1,6 +1,62 @@
 # Trainingskompas — Changelog
 
+## v4.69.27 — F13 Post-Audit Remediation: P1-04 Duplicate Sessions (31 augustus 2026)
+
+Vijfde bevinding van de F13 Post-Audit Reconciliation & Remediation
+Masterprint. Bevestigd als STILL OPEN op de actuele main vóór deze fix.
+
+sessions-rijen kregen hun id server-side (gen_random_uuid(), geen
+unique constraint buiten de primary key zelf) -- geen client-
+gegenereerd id. Bij een verloren HTTP-response (server schrijft de
+rij succesvol weg, maar de client ontvangt dat nooit) queuete de
+client dezelfde POST-body opnieuw voor een latere retry, wat bij een
+gewone INSERT een echte, tweede rij zou opleveren -- een duplicate
+sessie in de trainingsgeschiedenis.
+
+Fix: sbPostQ() genereert nu vooraf een eigen, stabiel client-id
+(newClientRowId(), crypto.randomUUID() met fallback -- consistent met
+het bestaande, bewezen newTrainingInstanceId()-patroon) voor sessions
+en race_segments (beide met hetzelfde risico), en gebruikt een
+idempotente upsert (Prefer: resolution=merge-duplicates) i.p.v. een
+gewone insert. flushOfflineQueue() gebruikt dezelfde upsert-header bij
+een retry vanuit de offline-wachtrij -- zonder dit zou een item dat
+vóór het queuen al succesvol was weggeschreven, bij een latere retry
+een 409-conflict geven i.p.v. een onschadelijke no-op.
+
+Live geverifieerd (SQL-simulatie van het exacte PostgREST-upsert-
+gedrag, transactie teruggedraaid): twee identieke INSERT..ON
+CONFLICT..DO UPDATE-pogingen met hetzelfde id resulteren in exact 1
+rij, nooit 2.
+
+core/fDuplicateSessionPrevention.test.js (nieuw, 6/6): bevestigt de
+client-id-generatie, de idempotente upsert-header in zowel sbPostQ()
+als flushOfflineQueue(), en dat beide risicotabellen expliciet
+gedekt zijn.
+
+Sabotagebewijs: (1) de idempotentie-header verwijderd -> gedetecteerd,
+teruggedraaid; (2) de client-id-generatie verwijderd -> gedetecteerd,
+teruggedraaid.
+
+Zelf gevonden en direct gecorrigeerde regressie: twee bestaande
+testsuites (fFase2.test.js, fSessieIntegriteit.test.js) extraheren
+sbPostQ()/flushOfflineQueue() rechtstreeks uit index.html in een
+VM-sandbox voor gedragstests -- deze braken doordat de nieuwe
+IDEMPOTENT_TABELLEN_MET_CLIENT_ID-constante en newClientRowId()-
+functie buiten de geëxtraheerde functiebody vielen. Beide testbestanden
+uitgebreid met de ontbrekende extractie, beide weer volledig groen
+(36/36 resp. 38/38) zonder enige aanpassing aan de geteste logica zelf.
+
+APP_VER v4.69.26 -> v4.69.27 (echte, functionele runtime-wijziging).
+sw.js CACHE_NAME/CACHE_STATIC synchroon gebumpt naar v469270.
+android/app/build.gradle gesynchroniseerd (46927/4.69.27) vóór de
+release-gate-run.
+
+Volledige regressie: node core/release-gate.js -> 188 uitgevoerd/0
+geskipt/0 gefaald (was 185, +1 nieuw testbestand, 2 bestaande
+testbestanden uitgebreid zonder telling-toename).
+
 ## v4.69.26 — F13 Post-Audit Remediation: P1-02/P1-03 AI Governance (31 augustus 2026)
+ — F13 Post-Audit Remediation: P1-02/P1-03 AI Governance (31 augustus 2026)
 
 Derde en vierde bevinding van de F13 Post-Audit Reconciliation &
 Remediation Masterprint. Beide bevestigd als STILL OPEN op de actuele

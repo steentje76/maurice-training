@@ -6128,7 +6128,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.26';
+const APP_VER = 'v4.69.27';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -7290,10 +7290,25 @@ async function offlineQueueRemove(id){
 // sbPostQ/sbPatchQ: als sbPost/sbPatch, maar queuen in IndexedDB bij netwerkfout i.p.v.
 // data verliezen. Geven bij een queue nog steeds true terug — de lokale flow (toast,
 // modal sluiten) mag gewoon doorgaan, de gebruiker hoeft niet te wachten op sync.
+// F13 Post-Audit Remediation (P1-04): tabellen waarbij een verloren HTTP-
+// response + offline-queue-retry een ECHTE duplicate-rij kan opleveren
+// (de server schreef de rij al succesvol weg, maar de client kreeg dat
+// nooit te zien en queuet dezelfde POST-body opnieuw). Voor deze tabellen
+// genereert de client vooraf een eigen, unieke id (net als het bestaande
+// newTrainingInstanceId()-patroon voor training_instances) en gebruikt de
+// server een idempotente upsert (Prefer: resolution=merge-duplicates) --
+// een exacte replay met hetzelfde, client-gegenereerde id overschrijft
+// zichzelf onschadelijk, in plaats van een tweede rij aan te maken.
+const IDEMPOTENT_TABELLEN_MET_CLIENT_ID = { sessions: true, race_segments: true };
+function newClientRowId(){
+  return (typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():('row-'+Date.now()+'-'+Math.random().toString(16).slice(2));
+}
 async function sbPostQ(t,d){
+  if(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]&&d&&d.id==null){ d={...d,id:newClientRowId()}; }
+  const prefer=IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]?'return=representation,resolution=merge-duplicates':'return=representation';
   if(!navigator.onLine){await offlineQueueAdd({table:t,method:'POST',body:d});updateOfflineBadge();return true;}
   try{
-    const r=await sbFetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',prefer:'return=representation',body:d});
+    const r=await sbFetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',prefer:prefer,body:d});
     if(!r.ok){
       const err=await r.text();console.error('sbPostQ',t,r.status,err);
       // Tijdelijke serverfout (401 na mislukte refresh, 429, 5xx): NIET verliezen — dezelfde
@@ -7370,9 +7385,15 @@ async function flushOfflineQueue(){
   for(const item of items){
     try{
       const url=item.method==='POST'?`${SB_URL}/rest/v1/${item.table}`:`${SB_URL}/rest/v1/${item.table}?${item.filter}`;
+      // F13 Post-Audit Remediation (P1-04): dezelfde idempotente upsert-header
+      // als sbPostQ() zelf gebruikt. Zonder dit zou een item dat vóór het
+      // queuen al succesvol (met hetzelfde, client-gegenereerde id) was
+      // weggeschreven, hier een 409-conflict geven i.p.v. een onschadelijke
+      // no-op-upsert -- het item zou dan voor altijd "mislukt" in de wachtrij
+      // blijven staan, zonder dat er ooit een echte duplicate ontstaat.
       const opts=item.method==='DELETE'
         ?{method:'DELETE'}
-        :{method:item.method,prefer:'return=representation',body:item.body};
+        :{method:item.method,prefer:(item.method==='POST'&&IDEMPOTENT_TABELLEN_MET_CLIENT_ID[item.table])?'return=representation,resolution=merge-duplicates':'return=representation',body:item.body};
       const r=await sbFetch(url,opts);
       if(!r.ok){
         // v5.9.5: serverfout op dit ene item (bv. validatie, verwijzing naar inmiddels

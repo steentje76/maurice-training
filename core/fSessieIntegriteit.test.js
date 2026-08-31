@@ -115,6 +115,7 @@ function zandbak(opts) {
   vm.runInContext([
     konstVar('OFFLINE_DB_NAME'), konstVar('SB_RETRY_STATUS'),
     konstVar('_sbRefreshInFlight'), konstVar('_sbSessieVerlopenGemeld'), konstVar('_flushBezig'),
+    konstVar('IDEMPOTENT_TABELLEN_MET_CLIENT_ID'), pak('newClientRowId'),
     pak('sbRetryable'), pak('sbRefreshOnce'), pak('sbSessieVerlopen'), pak('sbFetch'),
     pak('offlineDb'), pak('offlineQueueAdd'), pak('offlineQueueAll'), pak('offlineQueueRemove'),
     pak('sbGet'), pak('sbPostQ'), pak('sbPatchQ'), pak('sbDelQ'), pak('flushOfflineQueue')

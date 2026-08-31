@@ -1,6 +1,58 @@
 # Trainingskompas — Changelog
 
+## v4.69.31 — F14 MS-F14-01: Research Consent & Withdrawal (31 augustus 2026)
+
+Eerste mastersprint van F14 Scientific Platform (canoniek uit
+ROADMAP_INDEX.json: MS-F14-01, P1, dependency MS-F3-09 CLOSED --
+voldaan). Existing-state audit (docs/F14_EXISTING_STATE_AUDIT.md):
+geen bestaande, hergebruikbare research-consent-infrastructuur --
+de enige gerelateerde kolom (cyclus_consent) is een ander doel,
+niet versioneerbaar/intrekbaar, en nergens in index.html gebruikt.
+
+migratie_v530.sql: nieuwe research_consents-tabel. Append-only:
+elke actie (granted/withdrawn) is een nieuwe rij -- geen UPDATE/
+DELETE-grant aan authenticated, architecturaal afgedwongen, niet
+alleen conventie. Doelgebonden (gesloten enum, begint met
+'general_research_export'). Versioneerbaar (consent_version) --
+een granted onder een oudere versie telt niet automatisch mee bij
+een nieuwe versie. Volledig los van elk ander consent-mechanisme
+(account, wearable, Women's Performance, coach, social, commercieel).
+Least privilege vanaf dag 1 (conform de expliciete F14-instructie
+om de F13-P2-bevinding over te ruime standaard anon-grants niet te
+herhalen): anon helemaal geen toegang, authenticated uitsluitend
+SELECT (eigen rijen) + INSERT (eigen rijen).
+
+Live adversarial geverifieerd: anon -> permission denied; cross-user
+insert -> RLS-violation; eigen-user granted -> slaagt; UPDATE op een
+bestaande rij -> permission denied (append-only bevestigd); eigen-
+user withdrawn (nieuwe rij) -> slaagt.
+
+index.html: getResearchConsentStatus()/grantResearchConsent()/
+withdrawResearchConsent()/toggleResearchConsent() + een nieuwe
+"Onderzoeksdeelname"-kaart in het profielscherm. Fail-closed: zonder
+een expliciete, bestaande consent-rij is de status altijd false --
+geen impliciete opt-in. Geen enkel element staat vooraf aangevinkt.
+Intrekking bevestigt expliciet dat normaal gebruik van de app niet
+verandert (geen dark pattern).
+
+core/fResearchConsentWithdrawal.test.js (nieuw, 12/12): bevestigt het
+append-only-schema, doelbinding, versionering, least privilege, dat
+de nieuwe laag volledig los staat van elk ander consent-mechanisme,
+en het fail-closed client-gedrag.
+
+Sabotagebewijs: getResearchConsentStatus() tijdelijk laten altijd
+true teruggeven (impliciete opt-in) -> gedetecteerd, teruggedraaid.
+
+APP_VER v4.69.30 -> v4.69.31 (echte, functionele runtime-wijziging).
+sw.js CACHE_NAME/CACHE_STATIC synchroon gebumpt naar v469310.
+android/app/build.gradle en CHANGELOG.md vooraf gesynchroniseerd
+(46931/4.69.31) vóór de release-gate-run.
+
+Volledige regressie: node core/release-gate.js -> 197 uitgevoerd/0
+geskipt/0 gefaald (was 196, +1 nieuw testbestand).
+
 ## v4.69.30 — F13 Post-Audit Remediation: P1-13 Client Crash Telemetry (31 augustus 2026)
+ — F13 Post-Audit Remediation: P1-13 Client Crash Telemetry (31 augustus 2026)
 
 Twaalfde cluster van de F13 Post-Audit Reconciliation & Remediation
 Masterprint. Bevestigd als STILL OPEN op de actuele main vóór deze fix:

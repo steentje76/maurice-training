@@ -3171,6 +3171,12 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <button class="pf-row pf-danger" onclick="deleteAccount()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></span><div class="pf-tx"><div class="pf-lb">Account verwijderen</div><div class="pf-sb">Onomkeerbaar</div></div><span class="pf-chev">&#8250;</span></button>
     </div>
 
+    <div class="pf-sect">Privacy</div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Onderzoeksdeelname</div></div>
+      <div class="card-body" id="pf-research-consent-card"><p style="color:var(--g4);font-size:13px">Laden…</p></div>
+    </div>
+
     <div class="pf-sect">Trainingsprofiel</div>
     <div class="card">
       <div class="card-hd"><div class="card-title">Atleet profiel</div><button class="btn btn-o btn-sm" onclick="openAtleetModal()">Bewerken</button></div>
@@ -6155,7 +6161,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.30';
+const APP_VER = 'v4.69.31';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -10180,6 +10186,68 @@ function escJsAttr(waarde){
   return escHtml(JSON.stringify(waarde));
 }
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+// ══════════════════════════════════════════════════════════
+// F14 MS-F14-01 — Research Consent & Withdrawal
+// ══════════════════════════════════════════════════════════
+// Volledig los van elk ander consent/voorwaarden-mechanisme (account-
+// registratie, algemene voorwaarden, wearable, Women's Performance,
+// coach-sharing, gym/team, gedeelde content, commercieel). Append-only: elke
+// actie is een nieuwe rij; intrekking gebeurt via een nieuwe
+// 'withdrawn'-rij, nooit via een wijziging van een bestaande rij (de
+// database staat UPDATE/DELETE hier niet eens toe, zie migratie_v530.sql).
+const RESEARCH_CONSENT_ACTIVE_VERSION = 'v1';
+
+// Retourneert true alleen als de MEEST RECENTE actie voor dit doel
+// 'granted' is, EN die granted-rij bij de huidige, actieve consent-versie
+// hoort -- een granted onder een oudere versie telt niet automatisch mee
+// (versiewijziging vereist opnieuw, expliciet toestemming geven).
+async function getResearchConsentStatus(purpose='general_research_export'){
+  const rows=await sbGet('research_consents', `&research_purpose=eq.${purpose}&order=created_at.desc&limit=1`);
+  if(!rows.length) return false;
+  const laatste=rows[0];
+  return laatste.action==='granted' && laatste.consent_version===RESEARCH_CONSENT_ACTIVE_VERSION;
+}
+
+async function grantResearchConsent(purpose='general_research_export'){
+  const uid=authSession?.user?.id;
+  if(!uid) return false;
+  return await sbPostQ('research_consents', {user_id:uid, research_purpose:purpose, consent_version:RESEARCH_CONSENT_ACTIVE_VERSION, action:'granted'});
+}
+
+async function withdrawResearchConsent(purpose='general_research_export'){
+  const uid=authSession?.user?.id;
+  if(!uid) return false;
+  return await sbPostQ('research_consents', {user_id:uid, research_purpose:purpose, consent_version:RESEARCH_CONSENT_ACTIVE_VERSION, action:'withdrawn'});
+}
+
+async function toggleResearchConsent(){
+  const heeftNu=await getResearchConsentStatus();
+  if(heeftNu){
+    if(!confirm('Onderzoeksdeelname intrekken? Je normale gebruik van Trainingskompas verandert hierdoor niet.'))return;
+    await withdrawResearchConsent();
+    toast('Onderzoeksdeelname ingetrokken');
+  }else{
+    await grantResearchConsent();
+    toast('Bedankt voor je deelname aan onderzoek');
+  }
+  renderResearchConsentCard();
+}
+
+async function renderResearchConsentCard(){
+  const el=document.getElementById('pf-research-consent-card');
+  if(!el)return;
+  const actief=await getResearchConsentStatus();
+  el.innerHTML=`
+    <p style="font-size:12px;color:var(--g4);margin:0 0 10px">
+      Draag (volledig vrijwillig, altijd intrekbaar) bij aan wetenschappelijk onderzoek naar trainingsdata.
+      Dit heeft geen enkele invloed op je gewone gebruik van Trainingskompas.
+    </p>
+    <button class="btn ${actief?'btn-o':'btn-p'} btn-sm" onclick="toggleResearchConsent()">
+      ${actief?'Deelname intrekken':'Deelnemen aan onderzoek'}
+    </button>
+    <div style="font-size:11px;color:var(--g4);margin-top:8px">Status: ${actief?'Actief':'Niet actief'}</div>`;
+}
 
 // ══════════════════════════════════════════════════════════
 // HRV / WEIGHT
@@ -19886,6 +19954,7 @@ async function refreshProfiel(){
   }
   renderConditionsList();
   renderWearableCard();
+  renderResearchConsentCard();
   checkTeamAccess();
   // Atleet kaart
   const el = document.getElementById('profiel-atleet-card');

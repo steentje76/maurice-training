@@ -111,7 +111,7 @@
 
 | ID | Capability | Code | DB | Tests | Integration | Device | Evidence/scientific | Maturity | Target | Gap | Priority | Phase |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| SCI-CONSENT-001 | Consent-governance voor research-export | geen gevonden | N/A | N/A | N/A | N/A | Bouwt voort op EVID-SCI-001 (evidence_store.v1) | NOT STARTED | IMPLEMENTED | consent-flow ontbreekt volledig, vereist vóór enige research-export | P4 | F14 |
+| SCI-CONSENT-001 | Consent-governance voor research-export | `research_consents` (append-only, migratie_v530.sql) | N/A | N/A | N/A | N/A | Bouwt voort op EVID-SCI-001 (evidence_store.v1) | NOT STARTED | IMPLEMENTED | MS-F14-01 (Research Consent & Withdrawal) CLOSED: consent-mechanisme zelf gebouwd en getest. MS-F14-02 (Reproducible Dataset Export) en MS-F14-03 (Cohort & Research Governance) nog niet gestart -- de volledige capability (incl. daadwerkelijke export) is dus nog niet af, status blijft bewust op NOT STARTED tot alle drie mastersprints CLOSED zijn | P4 | F14 |
 
 ---
 

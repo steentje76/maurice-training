@@ -1,6 +1,73 @@
 # Trainingskompas — Changelog
 
+## v4.69.30 — F13 Post-Audit Remediation: P1-13 Client Crash Telemetry (31 augustus 2026)
+
+Twaalfde cluster van de F13 Post-Audit Reconciliation & Remediation
+Masterprint. Bevestigd als STILL OPEN op de actuele main vóór deze fix:
+de observability-sink was uitsluitend console -- een crash bij een
+echte gebruiker was voor Maurice volledig onzichtbaar. Dit moest worden
+opgelost vóór een gesloten beta.
+
+migratie_v528.sql: nieuwe client_telemetry_events-tabel. RLS: uitsluitend
+INSERT voor de eigen, authenticated gebruiker (of NULL user_id voor een
+crash vóór het inloggen), geen SELECT-policy voor client-rollen
+(uitsluitend server-side/admin-leesbaar). Least privilege: anon heeft
+helemaal geen toegang, authenticated uitsluitend INSERT (de standaard,
+te ruime SELECT/UPDATE/DELETE-grants die Supabase aan nieuwe tabellen
+geeft, expliciet ingetrokken -- hetzelfde patroon als eerder gevonden
+bij hrv_log_archive_v500, P0-B).
+
+BELANGRIJKE, LIVE ONTDEKTE TECHNISCHE LES: een PostgREST INSERT met
+"Prefer: return=representation" vereist impliciet dat de zojuist
+ingevoegde rij ook zichtbaar is volgens een SELECT-RLS-policy (Postgres
+RETURNING-semantiek) -- zonder SELECT-policy faalt zo'n insert met "new
+row violates row-level security policy", ondanks een correcte,
+slagende INSERT-policy. Live bevestigd door twee, tegengestelde
+pogingen: exact dezelfde insert-statement faalt met RETURNING, slaagt
+zonder. netlify/functions/telemetry.js gebruikt daarom altijd
+"Prefer: return=minimal".
+
+netlify/functions/telemetry.js (nieuw): ontvangt client-side crash-/
+errortelemetrie. Nooit blokkerend (elk foutpad geeft stil 204 terug,
+nooit een zichtbare fout bovenop de crash die al gerapporteerd werd).
+Payload size limit (4KB), rate limiting per gebruiker (20/minuut,
+best-effort in-memory), server-side redactie als tweede, aanvullende
+laag (nooit volledig vertrouwen op client-side redactie alleen),
+expliciete veldwhitelist (fail-closed voor onbekende velden), route
+altijd afgekapt (nooit de volledige URL met mogelijk gevoelige query-
+parameters).
+
+index.html: de bestaande window.onerror/unhandledrejection-handlers
+(die al bestonden en al correct naar ObservabilityCore.tkLog()
+loggen) uitgebreid met sendTelemetryBestEffort() -- stuurt hetzelfde,
+al genormaliseerde event (message_safe/error_code via de bestaande
+normalizeError(), nooit de rauwe stack trace) ook naar het nieuwe
+endpoint. Expliciet non-blocking (geen await, lege .catch()) -- kan
+onder geen enkele omstandigheid bestaand, user-facing gedrag
+beinvloeden. tkLog()/console blijven ongewijzigd de primaire, lokale
+sink.
+
+core/fClientTelemetry.test.js (nieuw, 15/15): bevestigt het schema/RLS/
+least-privilege, dat de client-handlers correct zijn uitgebreid en
+nooit de rauwe stack meesturen, en dat het endpoint de kritieke
+Prefer-header, payload-limiet, rate-limiting, en redactie correct
+implementeert.
+
+Sabotagebewijs: de Prefer-header tijdelijk teruggezet naar
+return=representation -> gedetecteerd door de test, en LIVE bevestigd
+dat dit de insert daadwerkelijk laat falen (exacte, herhaalde
+verificatie tegen de database) -- teruggedraaid.
+
+APP_VER v4.69.29 -> v4.69.30 (echte, functionele runtime-wijziging).
+sw.js CACHE_NAME/CACHE_STATIC synchroon gebumpt naar v469300.
+android/app/build.gradle en CHANGELOG.md vooraf gesynchroniseerd
+(46930/4.69.30) vóór de release-gate-run.
+
+Volledige regressie: node core/release-gate.js -> 195 uitgevoerd/0
+geskipt/0 gefaald (was 194, +1 nieuw testbestand).
+
 ## v4.69.29 — F13 Post-Audit Remediation: P1-16 XSS/HTML-Injectie Hardening (31 augustus 2026)
+ — F13 Post-Audit Remediation: P1-16 XSS/HTML-Injectie Hardening (31 augustus 2026)
 
 Negende cluster van de F13 Post-Audit Reconciliation & Remediation
 Masterprint. Taint-oriented audit van alle 345 innerHTML-voorkomens en

@@ -1,6 +1,20 @@
 # F13 Post-Audit — P1-10 Endurance Data Architecture: Migration-Ready Contract
 
-**Status: ARCHITECTURE READY — IMPLEMENTATION OPEN.**
+**Status: IMPLEMENTED (B9-01 Endurance Data Foundation, `migratie_v533.sql`).**
+
+**UPDATE (B9-01):** dit contract is gecontroleerd geïmplementeerd. Elk
+detail is opnieuw geverifieerd tegen de actuele code/database vóór
+uitvoering (conform de B9-01-opdracht) -- zie
+`docs/B9_01_EXISTING_STATE_AUDIT.md` en
+`docs/B9_01_ENDURANCE_DATA_FOUNDATION_REPORT.md` voor de volledige,
+bijgewerkte audit en het bewijs. Enkele details wijken bewust af van
+het oorspronkelijke ontwerp hieronder (bijv. geen opgeslagen pace-kolom
+op lapniveau, `sessions` bleek al rijker dan hier verondersteld) --
+deze afwijkingen zijn expliciet gemotiveerd in `migratie_v533.sql` en
+het B9-01-rapport. Dit document blijft staan als het oorspronkelijke,
+historische ontwerpvoorstel.
+
+---
 
 Conform de opdracht se eigen richtlijn ("Als implementatie te groot is
 voor veilig werk: lever eerst een exact migration-ready contract en

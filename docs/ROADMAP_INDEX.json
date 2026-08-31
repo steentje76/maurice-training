@@ -3833,5 +3833,21 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "B9-01 (CLOSED): canonical endurance-datalaag (activities/activity_laps/athlete_endurance_profile) geimplementeerd, RLS adversarial bewezen, least-privilege vanaf dag 1, account-deletion-completeness bevestigd. Geen shadow-calculation (CardioCore.criticalSpeed/criticalPower blijven bewust niet automatisch gewired). Dependencies voor B9-02/B9-04 expliciet geregistreerd, niet gebouwd. Wacht op onafhankelijke Benchmark 9.0-review."
+  },
+  {
+    "id": "END-RUNNINGCORE-001",
+    "type": "capability",
+    "track": "Endurance & Multisport",
+    "phase": "B9",
+    "priority": "P2",
+    "status": "TESTED",
+    "target": "TESTED",
+    "dependencies": [
+      "END-DATAFOUNDATION-001"
+    ],
+    "software_validation": "PARTIAL",
+    "device_validation": "N/A",
+    "evidence_status": "N/A",
+    "next_action": "B9-02 (PARTIAL): Training-IA gewijzigd (Hardlopen/Fietsen first-class, harde productbeslissing), handmatige run-log zonder wearable + geschiedenis werkend en getest. EERLIJK ONVOLLEDIG: geen live execution-scherm, geen lap/interval-UI, geen profile-integratie, geen Run Detail-scherm. Zie docs/B9_02_RUNNING_CORE_REPORT.md voor de volledige, transparante lijst open blockers. Wacht op onafhankelijke Benchmark 9.0-review en een besluit over vervolgscope."
   }
 ]

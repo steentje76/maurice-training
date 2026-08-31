@@ -857,3 +857,29 @@
 - Verantwoordelijke: autonome beoordeling door Claude, conform de
   expliciete, in de opdracht zelf aanwezige governance-regel.
 
+
+## DEC-048
+- Datum: 30 augustus 2026
+- Beslissing: financiële audit-records (billing_events) worden nooit
+  verwijderd bij accountverwijdering. De foreign-key naar de gebruiker
+  gebruikt ON DELETE SET NULL (nooit CASCADE) -- de koppeling naar de
+  persoon verdwijnt, de financiële geschiedenis zelf (bedrag, plan,
+  status, tijdstip) blijft bewaard.
+- Reden: MS-F13-05 (Privacy & Security Recertification) vereiste een
+  expliciete data-retentiebeslissing voor financiële records. Dit
+  gedrag bestond al impliciet sinds MS-F12-04 (de ON DELETE SET NULL-
+  keuze werd toen al gemaakt), maar was nooit expliciet als bewuste
+  productbeslissing vastgelegd of getest in de context van account-
+  verwijdering. Live geverifieerd (transactie zonder commit): een
+  verwijderde auth.users-rij laat het bijbehorende billing_events-
+  record volledig intact bestaan, met target_user_id automatisch op
+  NULL.
+- Alternatieven overwogen: CASCADE-verwijdering van billing_events bij
+  accountverwijdering (afgewezen -- zou mogelijk fiscale/boekhoudkundige
+  bewaarplichten schenden en maakt reconciliatie/geschillenbeslechting
+  na verwijdering onmogelijk).
+- Impact: geen code-wijziging nodig (het gedrag bestond al correct).
+  Nieuwe regressietest (core/fDeleteAccountBillingRetention.test.js)
+  bewaakt dit voortaan expliciet, inclusief sabotagebewijs (ON DELETE
+  CASCADE tijdelijk gesimuleerd, gedetecteerd, teruggedraaid).
+- Verantwoordelijke: autonome beoordeling door Claude tijdens MS-F13-05.

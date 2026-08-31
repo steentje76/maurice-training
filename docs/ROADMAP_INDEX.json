@@ -3718,12 +3718,12 @@
     "id": "FEDERATED-IDENTITY-001",
     "type": "capability",
     "track": "Commercial & Entitlements",
-    "phase": "F12",
+    "phase": "F13",
     "priority": "P3",
-    "status": "NOT STARTED",
+    "status": "TESTED",
     "target": "IMPLEMENTED",
     "dependencies": [
-      "MS-F12-04"
+      "MS-F13-07"
     ],
     "software_validation": "N/A",
     "device_validation": "N/A",
@@ -3734,16 +3734,90 @@
     "id": "MULTI-PROVIDER-BILLING-001",
     "type": "capability",
     "track": "Commercial & Entitlements",
-    "phase": "F12",
+    "phase": "F13",
     "priority": "P3",
     "status": "NOT STARTED",
     "target": "IMPLEMENTED",
     "dependencies": [
-      "MS-F12-04"
+      "MS-F13-08"
     ],
     "software_validation": "N/A",
     "device_validation": "N/A",
     "evidence_status": "DESIGN ONLY",
     "next_action": "PLANNED, niet geimplementeerd (zie docs/UNIFIED_IDENTITY_AND_PAYMENTS_CURRENT_STATE.md). Google Play Billing + Apple StoreKit als aanvullende, provider-onafhankelijke betaalroutes naast Mollie (MS-F12-04). Vereist eigen Google Cloud-/Apple Developer-accountconfiguratie en (voor StoreKit) een iOS-buildtarget die momenteel niet bestaat. Vereist expliciete Product Owner-vrijgave als nieuwe mastersprint(s)."
+  },
+  {
+    "id": "MS-F13-07",
+    "type": "mastersprint",
+    "phase": "F13",
+    "name": "Federated Identity & Account Linking",
+    "tracks": [
+      "Platform & Auth",
+      "Commercial & Entitlements"
+    ],
+    "capabilities": [
+      "FEDERATED-IDENTITY-001"
+    ],
+    "priority": "P2",
+    "status": "CLOSED",
+    "dependencies": [
+      "MS-F12-04"
+    ],
+    "target_maturity": "TESTED",
+    "objective": "Google Sign-In + Sign in with Apple naast bestaande e-mail/wachtwoord-auth, met veilige account-linking en canonieke user-identiteit (auth.users.id blijft de business primary key).",
+    "acceptance_gate": [
+      "Google Sign-In werkt via Supabase Auth",
+      "Sign in with Apple werkt web-based via Supabase Auth",
+      "geen automatische, onveilige account-merge puur op e-mailadres",
+      "sabotagebewijs voor account-takeover-scenario's",
+      "provider identity is nooit de business identity"
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "REQUIRED",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "REQUIRED",
+      "documentation": "REQUIRED"
+    }
+  },
+  {
+    "id": "MS-F13-08",
+    "type": "mastersprint",
+    "phase": "F13",
+    "name": "Multi-Provider Billing & Entitlement Reconciliation",
+    "tracks": [
+      "Commercial & Entitlements"
+    ],
+    "capabilities": [
+      "MULTI-PROVIDER-BILLING-001"
+    ],
+    "priority": "P2",
+    "status": "NOT STARTED",
+    "dependencies": [
+      "MS-F12-04",
+      "MS-F13-06"
+    ],
+    "target_maturity": "TESTED",
+    "objective": "Google Play Billing + Apple StoreKit als aanvullende, provider-onafhankelijke betaalroutes naast Mollie, met centrale, providerneutrale entitlement-reconciliatie.",
+    "acceptance_gate": [
+      "provider-onafhankelijke adapter-architectuur (herbruikt billing_events/reconcile_billing_event)",
+      "Google Play server-side verificatie-architectuur",
+      "Apple StoreKit blijft expliciet VALIDATION OPEN zonder een native iOS-buildtarget (MS-F13-06)",
+      "money-never-widens-data-access opnieuw bewezen",
+      "sabotagebewijs"
+    ],
+    "validation": {
+      "software": "REQUIRED",
+      "database": "AS_APPLICABLE",
+      "integration": "AS_APPLICABLE",
+      "device": "AS_APPLICABLE",
+      "ux": "REQUIRED",
+      "scientific": "AS_APPLICABLE",
+      "privacy_security": "REQUIRED",
+      "documentation": "REQUIRED"
+    }
   }
 ]

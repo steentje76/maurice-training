@@ -152,7 +152,7 @@ ok(EC.getQuota(undefined, 'ai_coach') === null, 'K3: getQuota met undefined enti
     ok(fnBlok.includes('individual_plan_key') && fnBlok.includes('individual_plan_status') && fnBlok.includes('individual_plan_expires_at'),
       'M2: reconcile_billing_event() muteert uitsluitend de bekende, vaste commerciële authority-velden');
   }
-  ['billing-checkout.js', 'billing-webhook.js'].forEach(function (bestand) {
+  ['billing-checkout.js', 'billing-webhook.js', 'billing-verify-google-play.js', 'billing-verify-apple.js'].forEach(function (bestand) {
     const bestandPath = path.join(ROOT, 'netlify/functions', bestand);
     if (fs.existsSync(bestandPath)) {
       const src = fs.readFileSync(bestandPath, 'utf8');

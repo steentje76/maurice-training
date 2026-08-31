@@ -1,7 +1,16 @@
 # F14 Scientific Platform — Master Report
 
 **Start SHA:** `a1f66c6598dff1ef8a3358d11312399b5378c9bd` (F13 SOFTWARE CLOSED).
-**Final SHA:** `087ee60b5c6de7af1854e8f9b05e1e5f1335c6ee`.
+**Pre-final-audit main SHA:** `087ee60b5c6de7af1854e8f9b05e1e5f1335c6ee`
+(de main-stand waarop de finale F14-audit hieronder is uitgevoerd,
+vóór het samenvoegen van deze auditrapportage zelf via PR #189).
+**Final F14 main SHA (na PR #189, dit document zelf):**
+`5309b1b18d355cbe2255f11c433fc83ba1181fc2`.
+*(Documentatie-integriteitscorrectie, F14 Final Documentation Integrity
+Hotfix: een rapport kan nooit zijn eigen, uiteindelijke merge-commit-SHA
+bevatten op het moment van schrijven -- vandaar dit expliciete
+onderscheid tussen de SHA waarop de audit is uitgevoerd en de SHA die
+na het samenvoegen van dit document zelf ontstond.)*
 **APP_VER:** v4.69.32.
 
 ## Mastersprints

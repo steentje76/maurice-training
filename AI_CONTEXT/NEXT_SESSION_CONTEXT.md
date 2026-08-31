@@ -9,7 +9,9 @@
 Trainingskompas — AI Performance Coach. Governance-niveau B (Middenweg).
 
 ## Huidige status
-App-versie **v4.69.32**. Main SHA `087ee60b5c6de7af1854e8f9b05e1e5f1335c6ee`.
+App-versie **v4.69.32**. Main SHA `5309b1b18d355cbe2255f11c433fc83ba1181fc2`
+(F14 Final Documentation Integrity Hotfix -- dit is de finale F14-merge-SHA
+na PR #189, die het eerdere, tussentijdse `087ee60...` corrigeert).
 Release gate: 199 stappen groen (0 gefaald). Doc-consistency: 0 problemen.
 **F13: SOFTWARE CLOSED — EXTERNAL PROVIDER/DEVICE VALIDATION OPEN.**
 **F14: SCIENTIFIC PLATFORM SOFTWARE CLOSED — EXTERNAL RESEARCH/ETHICS

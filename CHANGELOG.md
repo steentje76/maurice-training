@@ -1,5 +1,74 @@
 # Trainingskompas — Changelog
 
+## v4.69.25 — MS-F13-07: Federated Identity & Account Linking (30 augustus 2026)
+
+Nieuwe, door de Product Owner expliciet goedgekeurde uitbreiding (was
+FEDERATED-IDENTITY-001, NOT STARTED, nu MS-F13-07). Voegt Google Sign-In
+en Sign in with Apple toe naast de bestaande e-mail/wachtwoord-auth.
+
+Existing-state audit: public.users.id heeft geen expliciete foreign
+key naar auth.users(id) -- de koppeling loopt via een bestaande AFTER
+INSERT-trigger (provision_public_user()) die automatisch een
+public.users-rij aanmaakt bij elke nieuwe auth.users-rij, idempotent
+via ON CONFLICT DO NOTHING. Bevestigd (bestaand, ongewijzigd gedrag):
+deze trigger kent elke nieuwe gebruiker hardcoded toe aan gym_id=
+'art-crossfit'.
+
+Actueel onderzoek (officiële Supabase-documentatie, 30 augustus 2026):
+Supabase Auth linkt automatisch identities met hetzelfde, GEVERIFIEERDE
+e-mailadres aan één bestaande gebruiker -- bij een OAuth-login met een
+reeds bekend e-mailadres ontstaat geen nieuwe auth.users-rij (dus geen
+dubbele public.users-rij via de bestaande trigger). Ongeverifieerde
+e-mailadressen worden nooit automatisch gekoppeld (voorkomt pre-
+account-takeover). Live bevestigd: e-mailverificatie is actief in dit
+project (4 van 6 bestaande gebruikers bevestigd) -- automatische
+linking is hier dus veilig.
+
+Technische architectuurkeuze: Trainingskompas gebruikt geen
+@supabase/supabase-js-SDK, uitsluitend directe REST-fetch-calls. De
+integratie gebruikt daarom het raw GoTrue-endpoint (GET /auth/v1/
+authorize?provider=...&redirect_to=...) i.p.v. signInWithOAuth().
+Zonder PKCE-parameters gebruikt dit de implicit flow (tokens als URL-
+hash-fragment) -- de eenvoudigste, meest passende keuze zonder SDK/
+code-exchange-infrastructuur.
+
+Nieuw: "Doorgaan met Google"/"Doorgaan met Apple"-knoppen op het login-
+scherm. signInWithFederatedProvider() redirect naar het raw /authorize-
+endpoint. handleFederatedAuthCallback() vangt de teruggekeerde tokens
+op bij app-start, hergebruikt exact het bestaande sessie-opslag-pad
+(saveAuthSession), en verwijdert de tokens uit de URL na verwerking
+(voorkomt leakage via adresbalk/geschiedenis). Canonical user identity
+blijft altijd auth.users.id/public.users.id -- nooit een provider-
+specifiek ID. Nieuwe "Inlogmethoden"-sectie in het profielscherm,
+gebaseerd op de bestaande identities-array uit /auth/v1/user.
+
+core/fFederatedIdentity.test.js (nieuw, 16/16): runtime-integratie-
+bewijs, correct gebruik van het raw GoTrue-protocol, canonical
+identity-bewaking (nooit een provider-ID als business-key), token-
+URL-cleanup, geen client_secret in clientcode, presentatie-only
+(geen mutaties), en architectonische scheiding tussen identity- en
+billing-code.
+
+Twee sabotagebewijzen geleverd en teruggedraaid: (1) een provider_token
+gebruikt als user.id i.p.v. het canonieke auth.users.id -- gedetecteerd
+en hersteld; (2) URL-encoding van de provider/redirect_to-parameters
+verwijderd -- gedetecteerd en hersteld.
+
+Wat NIET is gebouwd (vereist providercredentials die niet in deze
+sessie beschikbaar zijn): het daadwerkelijk activeren van Google/Apple
+in het Supabase-dashboard, en een live, end-to-end OAuth-round-trip.
+Status: SOFTWARE IMPLEMENTED/TESTED — GOOGLE/APPLE PROVIDER
+CONFIGURATION VALIDATION OPEN.
+
+APP_VER v4.69.24 -> v4.69.25. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469250. android/app/build.gradle gesynchroniseerd
+(46925/4.69.25) vóór de release-gate-run.
+
+Volledige regressie: node core/release-gate.js -> 180 uitgevoerd/0
+geskipt/0 gefaald (was 179, +1 nieuw testbestand).
+
+— Changelog
+
 ## v4.69.24 — MS-F13-04: Accessibility & Mobile Ergonomics (30 augustus 2026)
 
 Vierde F13-mastersprint. Audit van kernflows bevestigt: pinch-zoom-

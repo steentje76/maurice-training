@@ -3840,14 +3840,14 @@
     "track": "Endurance & Multisport",
     "phase": "B9",
     "priority": "P2",
-    "status": "TESTED",
-    "target": "TESTED",
+    "status": "CLOSED",
+    "target": "CLOSED",
     "dependencies": [
       "END-DATAFOUNDATION-001"
     ],
-    "software_validation": "PARTIAL",
+    "software_validation": "PASS",
     "device_validation": "N/A",
     "evidence_status": "N/A",
-    "next_action": "B9-02 (PARTIAL): Training-IA gewijzigd (Hardlopen/Fietsen first-class, harde productbeslissing), handmatige run-log zonder wearable + geschiedenis werkend en getest. EERLIJK ONVOLLEDIG: geen live execution-scherm, geen lap/interval-UI, geen profile-integratie, geen Run Detail-scherm. Zie docs/B9_02_RUNNING_CORE_REPORT.md voor de volledige, transparante lijst open blockers. Wacht op onafhankelijke Benchmark 9.0-review en een besluit over vervolgscope."
+    "next_action": "B9-02/B9-02B/B9-02C (CLOSED): Training-IA, volledige live execution, laps, structured intervals, profile-integratie, Run Detail, History->Detail -- allemaal bewezen, adversarial getest. Twee zelf gevonden en gerepareerde P1-bevindingen (wrong-user-recovery, corrupted-state-crash). Geen benchmarkscore toegekend. Wacht op onafhankelijke Benchmark 9.0-review. Dependencies voor B9-03/B9-04 expliciet geregistreerd."
   }
 ]

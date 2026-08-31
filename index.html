@@ -6188,7 +6188,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.34';
+const APP_VER = 'v4.69.35';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -10432,7 +10432,19 @@ async function toonRunningPreview(){
 // opnieuw aanroepen van elapsedActiveMs() t.b.v. de weergave.
 let _runningExecState=null;
 let _runningExecTimerHandle=null;
-const RUNNING_EXEC_LOCALSTORAGE_KEY='tk_running_execution_v1';
+// P1-FIX (B9-02C sectie 14, zelf gevonden tijdens de nachtsprint): de key
+// was voorheen een vaste, globale string ('tk_running_execution_v1'),
+// NIET gekoppeld aan de ingelogde gebruiker. Op een gedeeld apparaat kon
+// USER B daardoor de onafgeronde run van USER A herstellen en voortzetten
+// -- die zou vervolgens als USER B's eigen activiteit worden opgeslagen
+// (runningConfirmFinish() gebruikt de huidige sessie, niet de starter).
+// Gecorrigeerd: de key bevat nu altijd de user-id, EN de state zelf
+// bevat een expliciete ownerUserId die bij herstel opnieuw wordt
+// gecontroleerd tegen de huidige sessie (dubbele verdediging).
+function runningExecLocalStorageKey(){
+  const uid=authSession?.user?.id;
+  return uid?('tk_running_execution_v1_'+uid):null;
+}
 
 function startRunningExecution(){
   const nu=Date.now();
@@ -10440,32 +10452,65 @@ function startRunningExecution(){
   const r=RunningExecutionCore.start(_runningExecState,nu);
   if(!r.ok){toast('Kon training niet starten');return;}
   _runningExecState=r.state;
+  _runningExecState.ownerUserId=authSession?.user?.id||null;
   persisteerRunningExecState();
   renderRunningExecutionScreen();
 }
 
 function persisteerRunningExecState(){
   try{
+    const key=runningExecLocalStorageKey();
+    if(!key)return;
     if(_runningExecState&&(_runningExecState.status==='RUNNING'||_runningExecState.status==='PAUSED'))
-      localStorage.setItem(RUNNING_EXEC_LOCALSTORAGE_KEY,JSON.stringify({state:_runningExecState,config:_runningPreviewConfig}));
-    else localStorage.removeItem(RUNNING_EXEC_LOCALSTORAGE_KEY);
+      localStorage.setItem(key,JSON.stringify({state:_runningExecState,config:_runningPreviewConfig}));
+    else localStorage.removeItem(key);
   }catch(e){}
 }
 
 // Crash/refresh-herstel (sectie 15): bij het openen van Hardlopen wordt
 // gecontroleerd of er een onafgeronde executie in localStorage staat.
+// Dubbele owner-verdediging (sectie 14): (1) de key zelf bevat de user-id,
+// (2) de opgeslagen state.ownerUserId wordt expliciet vergeleken met de
+// huidige, ingelogde gebruiker -- bij een mismatch wordt NIET geladen,
+// NIET getoond, en de vreemde entry wordt veilig verwijderd (quarantaine).
 function herstelRunningExecutionIndienAanwezig(){
   try{
-    const raw=localStorage.getItem(RUNNING_EXEC_LOCALSTORAGE_KEY);
+    const key=runningExecLocalStorageKey();
+    if(!key)return false;
+    const raw=localStorage.getItem(key);
     if(!raw)return false;
     const data=JSON.parse(raw);
-    if(!data||!data.state||(data.state.status!=='RUNNING'&&data.state.status!=='PAUSED'))return false;
+    const huidigeUid=authSession?.user?.id;
+    // P1-FIX (B9-02C sectie 15, zelf gevonden tijdens de nachtsprint): een
+    // corrupte state (bv. segments:null/undefined door een handmatig
+    // beschadigd localStorage-record) veroorzaakte eerder een daadwerkelijke
+    // crash zodra elapsedActiveMs() erop werd aangeroepen (Cannot read
+    // properties of null (reading 'forEach')). Nu expliciet gevalideerd
+    // vóór acceptatie: status geldig, segments een array, startedAt een
+    // eindig getal -- bij twijfel wordt de entry gequarantaineerd (verwijderd),
+    // nooit geladen/getoond, nooit een crash.
+    const stateGeldig=data&&data.state&&
+      (data.state.status==='RUNNING'||data.state.status==='PAUSED')&&
+      Array.isArray(data.state.segments)&&
+      isFinite(data.state.startedAt);
+    if(!stateGeldig){
+      localStorage.removeItem(key);
+      return false;
+    }
+    if(!huidigeUid||data.state.ownerUserId!==huidigeUid){
+      localStorage.removeItem(key); // quarantaine: nooit tonen/laden bij een owner-mismatch
+      return false;
+    }
     _runningExecState=data.state;
     _runningPreviewConfig=data.config;
     renderRunningExecutionScreen();
     toast('Onafgeronde training hersteld');
     return true;
-  }catch(e){return false;}
+  }catch(e){
+    // Corrupte state (sectie 15): nooit crashen, de entry veilig opruimen.
+    try{const key=runningExecLocalStorageKey();if(key)localStorage.removeItem(key);}catch(e2){}
+    return false;
+  }
 }
 
 function huidigeIntervalStap(nu){
@@ -10597,7 +10642,7 @@ async function runningConfirmFinish(){
       renderRunDetail(activityId);
       return;
     }
-    localStorage.removeItem(RUNNING_EXEC_LOCALSTORAGE_KEY);
+    { const k=runningExecLocalStorageKey(); if(k)localStorage.removeItem(k); }
     toast('Training opgeslagen');
     renderRunDetail(activityId);
   }finally{

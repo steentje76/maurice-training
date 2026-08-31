@@ -73,6 +73,33 @@ ok(!RC.canTransition('READY', 'COMPLETED'), 'B4: READY -> COMPLETED is geen geld
   ok(r.state.laps.length === 2 && r.state.laps[1].lap_index === 2, 'E3: laps blijven oplopend, uniek genummerd (lap_index 1, 2, ...)');
 }
 
+// ---- F. B9-02C adversariale timer-audit (sectie 7) ----
+{
+  let s = RC.createSession(T0);
+  let r = RC.start(s, T0);
+  r = RC.requestFinish(r.state, T0 + 10000);
+  r = RC.confirmFinish(r.state, T0 + 11000);
+  const naFinishDirect = RC.elapsedActiveMs(r.state, T0 + 11000);
+  const naFinishLater = RC.elapsedActiveMs(r.state, T0 + 999999999);
+  ok(naFinishDirect === 10000 && naFinishDirect === naFinishLater,
+    'F1: na confirmFinish() groeit elapsedActiveMs() niet verder, ongeacht hoe lang later het wordt opgevraagd');
+}
+{
+  let s = RC.createSession(T0);
+  let r = RC.start(s, T0);
+  const teruggesprongenKlok = RC.elapsedActiveMs(r.state, T0 - 5000);
+  ok(teruggesprongenKlok === 0, 'F2 (malformed/future clock): een teruggesprongen klok (nowMs < segment.from) geeft nooit een negatieve elapsed-tijd, uitsluitend 0');
+}
+{
+  let s = RC.createSession(T0);
+  let r = RC.start(s, T0);
+  r = RC.pause(r.state, T0 + 5000);
+  const dup = RC.pause(r.state, T0 + 6000);
+  ok(!dup.ok, 'F3 (duplicate transition): PAUSED -> PAUSED wordt geweigerd, geen dubbel gepauzeerd segment');
+  const dupStart = RC.start(r.state, T0 + 7000);
+  ok(!dupStart.ok, 'F4 (duplicate transition): PAUSED -> RUNNING via start() (i.p.v. resume()) wordt geweigerd -- alleen READY mag start()');
+}
+
 console.log('fRunningExecutionCore: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (msgs.length) console.log(msgs.join('\n'));
 console.log('Resultaat: ' + pass + ' geslaagd, ' + fail + ' mislukt');

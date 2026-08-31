@@ -1,6 +1,72 @@
 # Trainingskompas — Changelog
 
+## v4.69.35 — B9-02C: Running Core Final Closure (31 augustus 2026)
+
+Autonome nachtsprint. Sluit de twee resterende B9-02-closuregebieden
+(structured-interval-architectuur, volledige error-state-matrix) en
+repareert twee zelf gevonden, echte P1-bevindingen.
+
+Interval-architectuur herbeoordeeld: bevestigd dat de bestaande
+programma/kalender-infrastructuur (custom_trainings/program_blocks/
+vaste_trainingen) geen enkele koppeling heeft met running-intervallen
+-- geen bewezen consumer die persistentie nu vereist. De client-side/
+ephemere keuze blijft daarom correct, met een expliciet toekomstcontract
+voor B9-03.
+
+Volledige, 24-punts error-state-matrix (sectie 11) systematisch
+doorlopen. Twee echte, kritieke gebreken gevonden en gerepareerd:
+
+1. **Wrong-user localStorage recovery (P1):** de execution-state-key
+   was een vaste, globale string, niet gekoppeld aan de ingelogde
+   gebruiker. Op een gedeeld apparaat kon USER B daardoor de onafgeronde
+   run van USER A herstellen, voortzetten, en opslaan als eigen
+   activiteit. Gecorrigeerd: de key bevat nu altijd de user-id, plus een
+   expliciete `ownerUserId`-verificatie bij elk herstel (dubbele
+   verdediging). Bij een mismatch wordt de entry nooit geladen/getoond
+   en direct gequarantaineerd.
+
+2. **Corrupted-state-crash (P1):** een corrupte localStorage-entry
+   (bijv. ontbrekende `segments`) veroorzaakte een daadwerkelijke
+   JavaScript-crash zodra de timer erop werd aangeroepen -- live,
+   reproduceerbaar bevestigd vóór de fix. Gecorrigeerd: expliciete
+   validatie (`Array.isArray`/`isFinite`) vóór acceptatie, anders
+   quarantaine i.p.v. crash.
+
+Timer-adversariale-audit uitgebreid: bevestigd dat `elapsedActiveMs()`
+nooit meer groeit na `confirmFinish()`, een teruggesprongen klok nooit
+een negatieve tijd geeft, en duplicate transitions (PAUSED->PAUSED,
+PAUSED->RUNNING via de verkeerde functie) correct geweigerd worden.
+
+Repo-brede audit op de Running-code: 0 TODO/FIXME/dead routes/console.log
+gevonden, geen onveilige innerHTML-injectie (alle invoervelden zijn
+numeriek, geen ongefilterde vrije tekst).
+
+Sabotagebewijs voor beide nieuwe P1-fixes: de owner-check en de
+corrupted-state-validatie tijdelijk verwijderd/omzeild -> beide
+gedetecteerd, teruggedraaid.
+
+core/fRunningExecutionCore.test.js: 19/19 -> 23/23 (+4, timer-audit).
+core/fB9_02BRunningClosure.test.js: 20/20 -> 24/24 (+4, P1-fixes).
+Totaal: 94 gerichte assertions (was 86), allemaal groen.
+
+APP_VER v4.69.34 -> v4.69.35 (echte, functionele runtime-bugfixes).
+sw.js CACHE_NAME/CACHE_STATIC synchroon gebumpt naar v469350.
+android/app/build.gradle gesynchroniseerd (46935/4.69.35).
+
+Volledige regressie: node core/release-gate.js -> 204 uitgevoerd/0
+geskipt/0 gefaald. node tools/check-doc-consistency.js -> volledig
+groen, 0 problemen.
+
+Geen benchmarkscore toegekend (voorbehouden aan de onafhankelijke
+Benchmark 9.0-eigenaar).
+
+FINAL STATUS: B9-02 RUNNING CORE CLOSED — READY FOR INDEPENDENT
+BENCHMARK REVIEW. Zie docs/B9_02C_RUNNING_FINAL_CLOSURE_REPORT.md voor
+het volledige, gedetailleerde bewijs (interval-architectuur, de
+volledige error-state-matrix, alle sabotageresultaten).
+
 ## v4.69.34 — B9-02B: Running Core Closure (31 augustus 2026)
+ — B9-02B: Running Core Closure (31 augustus 2026)
 
 Sluit de bewezen B9-02-blockers (Preview, live Execution, Pause/Resume/
 Finish, laps, profiel-integratie, Run Detail, History->Detail).

@@ -455,3 +455,18 @@ gedeeltelijk open -- niet alle 15 zijn individueel gesimuleerd binnen
 deze sessie.
 
 **FINAL STATUS: B9-02 RUNNING CORE PARTIAL — BLOCKERS OPEN**
+
+---
+
+## B9-02C-UPDATE (nachtsprint, zie `docs/B9_02C_RUNNING_FINAL_CLOSURE_REPORT.md` voor het volledige bewijs)
+
+De hierboven vastgestelde "PARTIAL"-status was historisch correct op
+het moment van de B9-02B-sessie. Een aanvullende, autonome nachtsprint
+(B9-02C) heeft de twee resterende closure-gebieden (structured-interval-
+architectuurbeslissing, volledige error-state-matrix) expliciet
+behandeld, twee echte, kritieke P1-bevindingen gevonden en gerepareerd
+(wrong-user-localStorage-recovery, een corrupted-state-crash), en
+94 gerichte assertions (was 86) allemaal groen bevestigd.
+
+**BIJGEWERKTE FINAL STATUS: B9-02 RUNNING CORE CLOSED — READY FOR
+INDEPENDENT BENCHMARK REVIEW.**

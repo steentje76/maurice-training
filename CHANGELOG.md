@@ -1,6 +1,81 @@
 # Trainingskompas — Changelog
 
+## v4.69.29 — F13 Post-Audit Remediation: P1-16 XSS/HTML-Injectie Hardening (31 augustus 2026)
+
+Negende cluster van de F13 Post-Audit Reconciliation & Remediation
+Masterprint. Taint-oriented audit van alle 345 innerHTML-voorkomens en
+748 onclick=-voorkomens in index.html, geclassificeerd per sink-type
+(STATIC TRUSTED / ESCAPED USER DATA / UNESCAPED USER DATA / AI INPUT),
+zie docs/F13_POST_AUDIT_P1_16_XSS_SECURITY_AUDIT.md voor de volledige
+matrix.
+
+Vier bevestigde, echte XSS-kwetsbaarheden gevonden en gerepareerd
+(escHtml() toegepast waar dit vóór deze sprint ontbrak):
+- renderExerciseRow(): ex.name/meta.notes ongeescaped in innerHTML.
+- Sessie-samenvattingskaart: ex.naam ongeescaped in innerHTML.
+- Notitie-invoerveld (m-edit-session): session.note ongeescaped in een
+  HTML-attribuutcontext (value="...").
+- describeOfflineQueueItem(): exercise-naam ongeescaped in innerHTML
+  (offline-wachtrij-beheerscherm).
+
+Daarnaast een subtieler, repo-breed patroon geidentificeerd en
+gerepareerd: 6 onclick='...'-attributen gebruikten JSON.stringify()
+om een naam-veld als functieargument mee te geven. JSON.stringify()
+escaped wel JSON-syntax (dubbele quotes), maar NIET de enkele quote
+die het onclick='...'-attribuut zelf afsluit -- een naam als
+"Farmer's Walk" kon dit attribuut theoretisch vroegtijdig afsluiten en
+een nieuw attribuut injecteren. Nieuwe helper escJsAttr() (direct na
+escHtml()) combineert JSON.stringify() met escHtml() op de resulterende
+string -- toegepast op openRenameVasteTraining, askCoachEx,
+show1RMChart, openEditPeak, openEditMuscles, openEditRest,
+openEditAnchor, openEditYT.
+
+Bewust ongewijzigd gelaten (verantwoorde keuzes, gedocumenteerd in het
+auditrapport): AI-promptcontext-strings (buildPRTekst, bibliotheek,
+hrvStr, atleetProfielTekst) zijn plain-text richting de Anthropic-API,
+nooit een HTML-sink -- prompt-injectie via deze velden wordt al
+opgevangen door de server-side AIOutputContract-validatie (P1-02) op
+de uitkomst van de AI. c.naam/c.icoon (challenge-generator) is
+interne, berekende data, geen user-controlled invoer.
+
+core/fXssHardening.test.js (nieuw, 16/16): bevestigt dat escJsAttr()
+bestaat en correct werkt, dat geen enkele onclick='...'-aanroep nog
+een kale JSON.stringify() voor een naam-veld gebruikt, dat alle 8
+specifieke, eerder kwetsbare functie-aanroepen nu escJsAttr()
+gebruiken, en dat de vier bevestigde innerHTML/attribuut-sinks nu
+escHtml() gebruiken.
+
+Sabotagebewijs: (1) renderExerciseRow() teruggezet naar ongeescaped ->
+gedetecteerd, teruggedraaid; (2) een escJsAttr()-aanroep teruggezet
+naar kale JSON.stringify() -> gedetecteerd (2 assertions),
+teruggedraaid.
+
+ZELF GEVONDEN EN DIRECT GECORRIGEERDE, KRITIEKE REGRESSIE: een Python
+text-mode schrijfactie tijdens het toepassen van de fixes zette het
+volledige bestand om van CRLF- naar LF-regeleindes (26784 regels
+geraakt) -- exact de al eerder gedocumenteerde, bekende regressie
+("CRLF/LF-regressie... shifting fixed-position test windows"). Dit liet
+core/fHardening.test.js falen (W9: een test die een VAST 3200-tekens-
+venster vanaf tkErgConnectDevice() gebruikt) doordat de gewijzigde
+tekstlengte vóór dat punt in het bestand het venster liet opschuiven,
+waardoor het toevallig een verderop staande commentaarregel met
+"execLeaveDiscard()" erin meenam. Root cause geidentificeerd via een
+regeleinde-neutrale diff tegen de laatst gemergede main (bevestigde:
+uitsluitend de bedoelde escHtml/escJsAttr-wijzigingen, geen enkele
+onbedoelde inhoudelijke wijziging) -- alle regeleindes hersteld naar
+CRLF, waarna alle 192 release-gate-stappen weer groen waren zonder
+enige aanpassing aan de geteste logica zelf.
+
+APP_VER v4.69.28 -> v4.69.29 (echte, functionele runtime-wijziging).
+sw.js CACHE_NAME/CACHE_STATIC synchroon gebumpt naar v469290.
+android/app/build.gradle en CHANGELOG.md vooraf gesynchroniseerd
+(46929/4.69.29) vóór de release-gate-run.
+
+Volledige regressie: node core/release-gate.js -> 192 uitgevoerd/0
+geskipt/0 gefaald (was 191, +1 nieuw testbestand).
+
 ## v4.69.28 — F13 Post-Audit Remediation: P1-05 Offline Queue Cross-Account Leakage (31 augustus 2026)
+ — F13 Post-Audit Remediation: P1-05 Offline Queue Cross-Account Leakage (31 augustus 2026)
 
 Zesde bevinding van de F13 Post-Audit Reconciliation & Remediation
 Masterprint. Bevestigd als STILL OPEN op de actuele main vóór deze fix.

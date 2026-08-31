@@ -1,5 +1,6 @@
 // Loskoppelen: verwijdert de opgeslagen tokens en probeert (best-effort) de toegang ook
 // bij Google zelf in te trekken. Zelfde JWT-verificatiepatroon als delete-account.js.
+const { getWearableTokenSecret } = require('./wearableTokenVault.js');
 exports.handler = async function (event) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: { message: 'Method not allowed' } }) };
@@ -19,15 +20,21 @@ exports.handler = async function (event) {
     if (!userId) return { statusCode: 401, body: JSON.stringify({ error: { message: 'Kon gebruiker niet vaststellen' } }) };
 
     const r = await fetch(
-      `${supabaseUrl}/rest/v1/wearable_connections?user_id=eq.${userId}&provider=eq.google_health&select=access_token`,
+      `${supabaseUrl}/rest/v1/wearable_connections?user_id=eq.${userId}&provider=eq.google_health&select=access_token_secret_id`,
       { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } }
     );
     const rows = await r.json();
-    if (rows[0]?.access_token) {
+    // F13 Post-Audit Remediation (P1-09): de token wordt server-side, via
+    // Vault, opgehaald voor de revoke-aanroep -- staat niet langer in
+    // plaintext in wearable_connections zelf.
+    const accessTokenVoorRevoke = rows[0]?.access_token_secret_id
+      ? await getWearableTokenSecret(supabaseUrl, serviceKey, rows[0].access_token_secret_id)
+      : null;
+    if (accessTokenVoorRevoke) {
       // Best-effort: als dit faalt (bv. token al verlopen) gaat het loskoppelen lokaal
       // gewoon door — de gebruiker moet altijd kunnen loskoppelen, ongeacht Google's status.
       try {
-        await fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(rows[0].access_token)}`, { method: 'POST' });
+        await fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(accessTokenVoorRevoke)}`, { method: 'POST' });
       } catch (e) { console.warn('wearable-disconnect: revoke bij Google mislukt', e.message); }
     }
 

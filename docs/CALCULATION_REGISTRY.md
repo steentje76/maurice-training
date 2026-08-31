@@ -501,3 +501,17 @@ Geen duplicaat gevonden — er is precies één plek (`cardioPerfFromSession`) d
 ## MS-F3-05 acceptance-gate-toetsing
 Letterlijke acceptance gate: *"Calories/estimates explicitly uncertain."*
 **Resultaat: CLOSED.** De architectuur voldoet al volledig: Trainingskompas berekent zelf geen energieverbruik, dus kan het ook nooit ten onrechte een eigen precisie claimen. Alle calorie-/BMR-waarden zijn correct gelabeld als extern (`USER_REPORTED`/`WEARABLE_ESTIMATE`), niet als TK-berekening. De enige afgeleide waarde (`calPerMin`) is een triviale, foutloze ratio die de onzekerheid van de bron correct erft. BMR/RMR/TDEE zijn terecht NOT_IMPLEMENTED — een methodekeuze zou een productbeslissing vereisen die niet is voorgeschreven.
+
+## Domein: AI-Boundary Guards (F13 Post-Audit Remediation, P1-11-toevoeging)
+
+### CALC-GUARD-001 — AI-voorstel-plausibiliteitsgrens (ai_guard.v1)
+| Veld | Waarde |
+|---|---|
+| Domain | AI-Boundary / Safety Guard |
+| Name | Validatie van een door de AI voorgesteld gewicht vóór toepassing |
+| Version | `ai_guard.v1` (`core/calculation.js`, `validateProposedWeight`) |
+| Formula | getypeerd/`roundKg`-afgerond; `cap = oneRM*1.2` indien bekend, anders `500` kg absoluut. Boven de cap → afgewezen. |
+| Implementation | `core/calculation.js` — `validateProposedWeight`. Server-side hergebruikt in `netlify/functions/coach.js` (F13 Post-Audit P1-03) als aanvullende, absolute veiligheidsgrens op elke `[[APPLY:...]]`-marker in de AI-respons, naast de bestaande client-side, 1RM-relatieve check in `applyCoachSuggestion()` (index.html). |
+| Classificatie | **GUARD, geen zelfstandige Calculation** — dit is geen wetenschappelijk onderbouwde trainingsberekening, maar een veiligheidsgrens die voorkomt dat een AI-voorstel een fysiek onplausibele waarde ongefilterd bereikt. Vandaar geen "Evidence level"/"Scientific sources"-velden zoals bij een echte CALC-entry. |
+| Forbidden interpretations | Dit is expliciet GEEN verificatie dat het voorgestelde getal daadwerkelijk van een geautoriseerde Calculation/Decision-uitkomst afkomstig is (dat zou een striktere, contextuele validatie vereisen die de huidige plausibiliteitsgrens niet biedt — bekende, in F13 Post-Audit P1-03 gedocumenteerde beperking). Nooit gebruiken als vervanging voor de Decision Engine zelf. |
+| Status | **ACTIEF, TWEE LAGEN** (client + server, F13 Post-Audit P1-03) — geregistreerd conform P1-11 (Calculation/Evidence registry coverage) |

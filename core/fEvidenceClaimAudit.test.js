@@ -32,8 +32,13 @@ function countCalcEvidence(text) {
   return counts;
 }
 const calcCounts = countCalcEvidence(calcText);
-// MS-F6-02: CALC-END-004B (Critical Power) toegevoegd -- telling stijgt van 23 naar 24.
-ok(calcCounts.total === 24, 'exact 24 CALC-items geregistreerd (reproduceerbare telling, niet handmatig)');
+// MS-F6-02: CALC-END-004B (Critical Power) toegevoegd -- telling steeg van 23 naar 24.
+// F13 Post-Audit Remediation (P1-11): CALC-GUARD-001 (ai_guard.v1) toegevoegd --
+// telling stijgt van 24 naar 25. Dit item heeft BEWUST geen Evidence level-veld
+// (het is een AI-veiligheidsguard, geen wetenschappelijk onderbouwde calculation),
+// en valt dus in GEEN_EVIDENCE_VELD, niet in een van de A-E-tellingen hieronder --
+// die blijven daarom ongewijzigd.
+ok(calcCounts.total === 25, 'exact 25 CALC-items geregistreerd (reproduceerbare telling, niet handmatig)');
 ok(calcCounts.A === 1, 'exact 1 CALC-item met evidence A');
 ok(calcCounts.B === 4, 'exact 4 CALC-items met evidence B (Epley/Brzycki/Foster-sRPE/HRV-baseline)');
 ok(calcCounts.C === 4, 'exact 4 CALC-items met evidence C');

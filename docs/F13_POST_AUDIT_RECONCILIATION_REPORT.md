@@ -27,5 +27,11 @@ Het onafhankelijke Sprint 13 Master Audit Report bevatte minimaal twee kritieke,
 
 De eerdere claim "F13 SOFTWARE CLOSED — EXTERNAL PROVIDER/DEVICE VALIDATION OPEN" was onjuist voor P0-A/P0-B. Beide zijn nu hersteld. Onderzoek naar de resterende P1-bevindingen (P1-01 t/m P1-16) volgt.
 
+## P1-bevindingen
+
+| ID | Origineel | Actuele status vóór fix (live bevestigd) | Fix | Status |
+|---|---|---|---|---|
+| P1-01 | `coach.js` vertrouwde `payload.model`/`payload.max_tokens` rechtstreeks | **STILL OPEN, code-bevestigd**: `model: payload.model \|\| 'claude-sonnet-4-5'` en `max_tokens: payload.max_tokens \|\| 1000` werden ongewijzigd doorgegeven aan de Anthropic API | Server-side, vaste `AI_MODEL_PER_REQUEST_TYPE`-mapping (client-model wordt nooit gebruikt, ook niet als fallback) + `AI_MAX_TOKENS_CEILING_PER_REQUEST_TYPE` (client mag een lagere waarde vragen voor legitieme variatie tussen call-sites, nooit hoger dan het plafond) | **VERIFIED CLOSED** |
+
 ---
 *Dit document wordt tijdens de sessie iteratief uitgebreid naarmate elke bevinding wordt onderzocht.*

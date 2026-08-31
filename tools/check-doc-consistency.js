@@ -109,16 +109,41 @@ index.forEach(item => {
 if (orphanDeps.length) fail('Dependency-referenties naar onbekende IDs: ' + orphanDeps.join(', '));
 else pass('Alle dependency-referenties verwijzen naar een bestaand ID binnen de roadmap-index');
 
-// 4. CLOSED-items niet als open P0/P1/P2/P3 in GAP_ANALYSIS_V2.md (grove heuristiek)
+// 4. CLOSED-items niet als open P0/P1/P2/P3 in GAP_ANALYSIS_V2.md
+// F13 Post-Audit Remediation (P1-14): was een "grove heuristiek" (alleen
+// tekstaanwezigheid vóór de HISTORICAL-sectie) -- verbeterd naar een
+// semantische check op de REGEL waarin de match staat, zodat de checker
+// het juiste documenttype/gebruik begrijpt i.p.v. blind te matchen op elke
+// vermelding van een CLOSED-ID. Twee legitieme, niet-verdachte patronen:
+//   (a) de regel bevat zelf het woord "CLOSED" vlak bij de ID (bijv.
+//       "niet-blokkerend voor MS-F11-03 CLOSED") -- bevestigt juist de
+//       CLOSED-status, is geen "nog open"-claim.
+//   (b) de regel is een "**Target:**"-oplossingsketen die meerdere
+//       MS-ID's via een pijl (→) aan elkaar rijgt (bijv. "MS-F12-01 →
+//       MS-F12-02 → ... → MS-F12-04") -- dit beschrijft historisch WELKE
+//       sprints een ander, apart gap-item hebben opgelost, geen claim dat
+//       die sprints zelf nog open zijn.
+// Een match die geen van beide patronen is, blijft een echte, te
+// verifiëren verdachte vermelding.
 try {
   const gapText = fs.readFileSync(path.join(ROOT, 'docs/GAP_ANALYSIS_V2.md'), 'utf8');
   const closedIds = index.filter(x => x.status === 'CLOSED').map(x => x.id);
+  const gapLines = gapText.split('\n');
   let suspiciousMatches = [];
   closedIds.forEach(id => {
-    // Zoek het ID in een open-gap-sectie (## P0/P1/P2/P3, niet in "CLOSED GAPS / HISTORICAL")
     const historicalStart = gapText.indexOf('## CLOSED GAPS / HISTORICAL');
     const beforeHistorical = historicalStart === -1 ? gapText : gapText.slice(0, historicalStart);
-    if (beforeHistorical.includes(id)) suspiciousMatches.push(id);
+    if (!beforeHistorical.includes(id)) return;
+    // Zoek elke regel vóór de HISTORICAL-sectie waarin de ID voorkomt, en
+    // beoordeel per regel of het een legitiem patroon is.
+    const beforeLines = beforeHistorical.split('\n');
+    const relevantLines = beforeLines.filter(l => l.includes(id));
+    const alleLegitiem = relevantLines.length > 0 && relevantLines.every(line => {
+      const closedNearId = new RegExp(id.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&') + '[^\\n]{0,30}\\bCLOSED\\b').test(line);
+      const isOplossingsketen = /\*\*Target:\*\*/.test(line) && (line.match(/MS-[A-Z0-9-]+/g) || []).length >= 2 && line.includes('→');
+      return closedNearId || isOplossingsketen;
+    });
+    if (!alleLegitiem) suspiciousMatches.push(id);
   });
   if (suspiciousMatches.length) fail('CLOSED roadmap-items die mogelijk nog als open gap in GAP_ANALYSIS_V2.md staan (handmatig verifiëren): ' + suspiciousMatches.join(', '));
   else pass('Geen CLOSED roadmap-items gevonden vóór de "CLOSED GAPS / HISTORICAL"-sectie in GAP_ANALYSIS_V2.md');

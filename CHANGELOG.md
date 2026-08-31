@@ -1,6 +1,59 @@
 # Trainingskompas — Changelog
 
+## v4.69.28 — F13 Post-Audit Remediation: P1-05 Offline Queue Cross-Account Leakage (31 augustus 2026)
+
+Zesde bevinding van de F13 Post-Audit Reconciliation & Remediation
+Masterprint. Bevestigd als STILL OPEN op de actuele main vóór deze fix.
+
+De IndexedDB-offline-wachtrij (maurice_offline) was niet user-scoped.
+Bevestigd via code-inspectie: de bestaande "nieuwe apparaat-eigenaar"-
+detectie (resetPersonalCacheIfNewDeviceOwner()) wist bij een
+accountwissel op een gedeeld toestel wel de localStorage-cache
+(PERSONAL_CACHE_KEYS), maar liet de offline-queue zelf volledig
+onaangeroerd. Scenario: gebruiker A logt offline een training, wisselt
+van account op hetzelfde toestel (of logt uit zonder eerst online te
+zijn geweest), gebruiker B logt in -- een latere flushOfflineQueue()
+zou het item van A onder B's sessie/JWT wegschrijven.
+
+Fix (index.html):
+- offlineQueueAdd() slaat nu de auth.uid() van de op dat moment actieve
+  sessie op als owner_uid bij elk item -- de "provenance" die nodig is
+  om bij een latere flush te kunnen bevestigen bij wie het item hoort.
+- flushOfflineQueue() filtert de wachtrij vóór verwerking: uitsluitend
+  items waarvan owner_uid overeenkomt met de nu actief ingelogde
+  gebruiker (of geen owner_uid heeft -- legacy-items van vóór deze fix,
+  om geen stille dataverlies-regressie te introduceren) worden
+  verwerkt. Items van een andere gebruiker blijven ongemoeid, geisoleerd
+  in de wachtrij staan -- nooit stil weggegooid, wél beschikbaar zodra
+  de oorspronkelijke eigenaar terugkeert op hetzelfde toestel.
+
+core/fOfflineQueueCrossAccountLeakage.test.js (nieuw, 3/3): test het
+exacte, door de audit geeiste scenario met de echte, verzonden
+implementatie in een VM-sandbox (zelfde patroon als het bestaande
+fFase2.test.js): gebruiker A queuet offline, gebruiker B logt in op
+hetzelfde toestel, een flush levert GEEN enkele POST op namens A's
+item. Bevestigt ook dat het item bewaard blijft (niet weggegooid) en
+alsnog correct geflushed wordt zodra A terugkeert, en dat legacy-items
+zonder owner_uid geen regressie ondervinden.
+
+Sabotagebewijs: de eigenaar-filter in flushOfflineQueue() tijdelijk
+verwijderd -> beide scenario-tests falen exact zoals verwacht (exit
+1), teruggedraaid (exit 0, 3/3, exacte diff bevestigd).
+
+Bestaande fFase2.test.js (36/36) en fSessieIntegriteit.test.js (38/38)
+herbevestigd zonder regressie (geen nieuwe const/functie buiten de
+gewijzigde functiebodies zelf nodig deze keer).
+
+APP_VER v4.69.27 -> v4.69.28 (echte, functionele runtime-wijziging).
+sw.js CACHE_NAME/CACHE_STATIC synchroon gebumpt naar v469280.
+android/app/build.gradle gesynchroniseerd (46928/4.69.28) vóór de
+release-gate-run.
+
+Volledige regressie: node core/release-gate.js -> 189 uitgevoerd/0
+geskipt/0 gefaald (was 188, +1 nieuw testbestand).
+
 ## v4.69.27 — F13 Post-Audit Remediation: P1-04 Duplicate Sessions (31 augustus 2026)
+ — F13 Post-Audit Remediation: P1-04 Duplicate Sessions (31 augustus 2026)
 
 Vijfde bevinding van de F13 Post-Audit Reconciliation & Remediation
 Masterprint. Bevestigd als STILL OPEN op de actuele main vóór deze fix.

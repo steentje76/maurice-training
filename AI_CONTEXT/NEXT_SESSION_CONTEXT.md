@@ -9,13 +9,12 @@
 Trainingskompas — AI Performance Coach. Governance-niveau B (Middenweg).
 
 ## Huidige status
-App-versie **v4.69.30**. Main SHA `fa0bf82cc14200bd9fbb12a27a2d1598ea4888be`
-(vóór het finale-audit-cluster; wordt na merge van dat cluster verder
-opgeschoven). Release gate: 196 stappen groen (0 gefaald). Doc-
-consistency: 0 problemen. **F13 is FINAAL AFGESLOTEN: F13 SOFTWARE
-CLOSED — EXTERNAL PROVIDER/DEVICE VALIDATION OPEN** (zie
-`docs/F13_POST_AUDIT_RECONCILIATION_REPORT.md` voor de volledige,
-finale audit en alle 18 individueel herbeoordeelde bevindingen).
+App-versie **v4.69.32**. Main SHA `087ee60b5c6de7af1854e8f9b05e1e5f1335c6ee`.
+Release gate: 199 stappen groen (0 gefaald). Doc-consistency: 0 problemen.
+**F13: SOFTWARE CLOSED — EXTERNAL PROVIDER/DEVICE VALIDATION OPEN.**
+**F14: SCIENTIFIC PLATFORM SOFTWARE CLOSED — EXTERNAL RESEARCH/ETHICS
+VALIDATION OPEN** (zie `docs/F14_MASTER_REPORT.md` voor het volledige,
+finale verslag). F15 NIET GESTART (absolute stop-instructie).
 
 ## Wat er in deze sessie is gebeurd
 Een onafhankelijk auditrapport identificeerde bevindingen die tijdens F13

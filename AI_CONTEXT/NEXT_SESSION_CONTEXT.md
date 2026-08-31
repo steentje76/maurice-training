@@ -9,10 +9,13 @@
 Trainingskompas — AI Performance Coach. Governance-niveau B (Middenweg).
 
 ## Huidige status
-App-versie **v4.69.29**. Main SHA `b1d5d676b959a12bfdcdfe9684f4d909e158c276`.
-Release gate: 194 stappen groen (0 gefaald). F13 is **REOPENED — SECURITY
-REMEDIATION IN PROGRESS** (niet langer "SOFTWARE CLOSED" zoals eerder
-geclaimd — zie `docs/F13_POST_AUDIT_RECONCILIATION_REPORT.md`).
+App-versie **v4.69.30**. Main SHA `fa0bf82cc14200bd9fbb12a27a2d1598ea4888be`
+(vóór het finale-audit-cluster; wordt na merge van dat cluster verder
+opgeschoven). Release gate: 196 stappen groen (0 gefaald). Doc-
+consistency: 0 problemen. **F13 is FINAAL AFGESLOTEN: F13 SOFTWARE
+CLOSED — EXTERNAL PROVIDER/DEVICE VALIDATION OPEN** (zie
+`docs/F13_POST_AUDIT_RECONCILIATION_REPORT.md` voor de volledige,
+finale audit en alle 18 individueel herbeoordeelde bevindingen).
 
 ## Wat er in deze sessie is gebeurd
 Een onafhankelijk auditrapport identificeerde bevindingen die tijdens F13
@@ -63,14 +66,21 @@ zodanig gedocumenteerd i.p.v. blind CLOSED te laten staan):**
   is de conventie: elke live `apply_migration` krijgt direct een eigen,
   apart repo-bestand (zie `migratie_v525.sql` t/m `migratie_v527.sql`).
 
-## Nog openstaand (F13 Post-Audit, resterende clusters)
-- P1-10: endurance-datamodel (running/cycling/rowing) -- architectuuropgave,
-  nog niet gestart.
-- P1-12: query-scalability bij grote datavolumes -- nog niet gemeten.
-- P1-13: crash/product-telemetry vóór gesloten beta -- nog niet gebouwd.
-- UX-nabeschouwing, sport-capability-matrix, Google Health live-validatie,
-  en de finale, allesomvattende F13-eindaudit (release gate, doc-consistency,
-  security/AI/data/calculation/observability/performance/mobile).
+## Nog openstaand (na de finale F13 Post-Audit-audit)
+- Structurele P2-aanbeveling (finale audit, sectie B): vrijwel elke
+  publieke tabel heeft de Supabase-standaard, te ruime `anon`-grants op
+  grant-niveau (RLS zelf is overal aanwezig en correct -- geen actief
+  bewezen lek, wel een ontbrekende, tweede defense-in-depth-laag).
+  Aanbevolen voor een toekomstige, aparte "least-privilege-hardening"-
+  sprint, systematisch per tabel.
+- Toekomstige, bewust niet-gebouwde architectuur: het endurance-
+  datamodel (`docs/F13_POST_AUDIT_P1_10_ENDURANCE_ARCHITECTURE_CONTRACT.md`,
+  GAP-P2-025) is volledig, migratie-klaar uitgewerkt maar niet
+  geimplementeerd -- klaar voor een toekomstige sprint zodra een
+  concrete UI-consumer gepland wordt.
+- `select=*`-optimalisatie in `sbGet()`: bewust proportioneel buiten
+  scope gehouden (P1-12), transparant gedocumenteerd als bekende,
+  resterende optimalisatiekans.
 
 ## Belangrijke, actuele technische feiten
 - `IDEMPOTENT_TABELLEN_MET_CLIENT_ID` (index.html): `sessions`/`race_segments`

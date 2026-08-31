@@ -3736,7 +3736,7 @@
     "track": "Commercial & Entitlements",
     "phase": "F13",
     "priority": "P3",
-    "status": "NOT STARTED",
+    "status": "TESTED",
     "target": "IMPLEMENTED",
     "dependencies": [
       "MS-F13-08"
@@ -3795,7 +3795,7 @@
       "MULTI-PROVIDER-BILLING-001"
     ],
     "priority": "P2",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F12-04",
       "MS-F13-06"

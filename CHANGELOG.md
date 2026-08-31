@@ -1,6 +1,61 @@
 # Trainingskompas — Changelog
 
+## v4.69.32 — F14 MS-F14-02: Reproducible Dataset Export (31 augustus 2026)
+
+Tweede mastersprint van F14 Scientific Platform (canoniek uit
+ROADMAP_INDEX.json, dependency MS-F14-01 CLOSED -- voldaan).
+
+migratie_v531.sql: nieuwe export_research_dataset()-RPC, GEEN
+parameters -- gebruikt uitsluitend auth.uid() van de aanroepende
+sessie, security invoker (RLS van sessions geldt dus als tweede,
+onafhankelijke beschermingslaag). Consent-gate: retourneert een lege,
+expliciet gemarkeerde payload (consent_status: not_granted) tenzij
+een geldige, granted-consent bestaat bij de huidige, actieve versie
+(MS-F14-01). Dataminimalisatie: een vaste veldenwhitelist voor
+sessions (exercise_id/date/weight/reps/training_type) -- notes (vrije
+tekst, kan PII bevatten) en alle gezondheidsdata expliciet buiten
+scope. Pseudonimisering (sha256(uid+salt) als subject_id, nooit het
+rauwe user_id) -- nadrukkelijk nooit "anonymous" genoemd, want de hash
+is omkeerbaar voor wie de salt+uid kent. Volledige provenance per
+record (calculation_id/calculation_version/source_provenance/unit/
+timezone) en op exportniveau (schema_version/export_generated_at/
+consent_version).
+
+pgcrypto-extensie geactiveerd (stond al in het extensions-schema,
+niet public -- de functie se search_path aangepast om dit te vinden).
+
+Live geverifieerd: zonder consent -> 0 records; met consent + een
+testsessie mét een notitie -> de sessie-velden correct geexporteerd,
+de notitie correct NIET meegenomen (dataminimalisatie bevestigd);
+anon -> permission denied. Alle testdata binnen een niet-gecommitte
+transactie, 0 restanten na afloop.
+
+netlify/functions/research-export.js (nieuw): geeft de eigen JWT van
+de aanroeper door aan de RPC, NOOIT de service-role-sleutel -- dit
+garandeert dat auth.uid() binnen de RPC exact de ingelogde gebruiker
+is.
+
+index.html: downloadResearchExport() + een downloadknop in de
+research-consent-kaart, uitsluitend zichtbaar bij actieve consent.
+
+core/fReproducibleDatasetExport.test.js (nieuw, 22/22): bevestigt de
+parameterloze, auth.uid()-only-opzet, de consent-gate, dataminimalisatie
+(geen notes/gezondheidsdata), volledige provenance, correcte
+pseudonimisering-terminologie, least privilege, en dat de Netlify
+Function nooit de service-role-sleutel gebruikt.
+
+Sabotagebewijs: een onterechte "Deze export is anonymous"-claim
+toegevoegd aan de migratie -> gedetecteerd, teruggedraaid.
+
+APP_VER v4.69.31 -> v4.69.32. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469320. android/app/build.gradle en CHANGELOG.md vooraf
+gesynchroniseerd (46932/4.69.32) vóór de release-gate-run.
+
+Volledige regressie: node core/release-gate.js -> 198 uitgevoerd/0
+geskipt/0 gefaald (was 197, +1 nieuw testbestand).
+
 ## v4.69.31 — F14 MS-F14-01: Research Consent & Withdrawal (31 augustus 2026)
+ — F14 MS-F14-01: Research Consent & Withdrawal (31 augustus 2026)
 
 Eerste mastersprint van F14 Scientific Platform (canoniek uit
 ROADMAP_INDEX.json: MS-F14-01, P1, dependency MS-F3-09 CLOSED --

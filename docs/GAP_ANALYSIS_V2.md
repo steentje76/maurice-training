@@ -190,6 +190,11 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Target:** `created_by` op `ON DELETE SET NULL` in plaats van CASCADE, zodat het event (en de aanwezigheidshistorie van anderen) blijft bestaan met een "verwijderde organisator"-weergave.
 **Priority:** P2, niet-blokkerend voor MS-F11-03 CLOSED. **Complexity:** S. **Roadmap phase:** F11 (toekomstige vervolgsprint of technical-debt-cyclus).
 
+### GAP-P2-025 (nieuw, F13 Post-Audit P1-10) — Endurance datamodel (running/cycling/rowing) blijft minimaal
+**Current:** `sessions.distance` is `integer` zonder expliciete unit, `time_str` is vrije tekst, geen laps/intervals/streams-model, geen athlete endurance-profiel (FTP/threshold-pace/max-HR/zones). `CardioCore.criticalSpeed()`/`criticalPower()` (CALC-END-004/004B) zijn al geïmplementeerd maar niet geïntegreerd op echte lap/stream-data. Running/Cycling-capability-scores blijven 3/10 (ongewijzigd t.o.v. de oorspronkelijke audit).
+**Target:** een volledig, migratie-klaar schemacontract (`activities`/`activity_laps`/`athlete_endurance_profile`, SI-canonical units, provenance, RLS, indexering) is uitgewerkt in `docs/F13_POST_AUDIT_P1_10_ENDURANCE_ARCHITECTURE_CONTRACT.md`. Bewust NIET live uitgevoerd in F13 Post-Audit -- er bestaat nog geen enkele UI/logica-consumer die deze tabellen zou gebruiken; een toekomstige, aparte sprint kan het contract direct als migratie uitvoeren.
+**Priority:** P2 (architectuurschuld, geen actief security-/data-integriteitsrisico). **Complexity:** L. **Roadmap phase:** toekomstige, nog niet ingeplande sprint (ARCHITECTURE READY — IMPLEMENTATION OPEN).
+
 ### GAP-P2-005 — Verouderde point-in-time-documenten
 **Current:** `docs/DATABASE_STATUS.md` (19 aug, claimt 10 migraties; live schema loopt tot v4.95.0), `docs/PLAY_STORE_READINESS.md`/`RELEASE_READINESS.md` (19 aug, v4.48.0).
 **Target:** zie `docs/DOCUMENTATION_GOVERNANCE.md` — bij een volgende relevante gebeurtenis een nieuw gedateerd document toevoegen i.p.v. overschrijven.

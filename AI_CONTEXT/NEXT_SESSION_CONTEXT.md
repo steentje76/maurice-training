@@ -10,7 +10,7 @@ Trainingskompas — AI Performance Coach. Governance-niveau B (Middenweg).
 
 ## Huidige status
 App-versie **v4.69.32** (ongewijzigd, B9-01 was database-only).
-Main SHA `<wordt bijgewerkt na merge van B9-01>`.
+Main SHA `86c0d66024012d982aae994d8d95b6fe270c2163`.
 **F14: SCIENTIFIC PLATFORM SOFTWARE CLOSED — EXTERNAL RESEARCH/ETHICS
 VALIDATION OPEN.** **B9-01: ENDURANCE DATA FOUNDATION CLOSED — READY
 FOR INDEPENDENT BENCHMARK REVIEW** (zie `docs/B9_01_ENDURANCE_DATA_

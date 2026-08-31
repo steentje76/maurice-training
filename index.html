@@ -6128,7 +6128,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.27';
+const APP_VER = 'v4.69.28';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -7254,12 +7254,19 @@ function offlineDb(){
     req.onerror=()=>reject(req.error);
   });
 }
+// F13 Post-Audit Remediation (P1-05): elk item krijgt de auth.uid() van de
+// sessie die op dit moment actief is (op het moment van QUEUEN, niet pas
+// bij flushen). Dit is de "provenance" die nodig is om bij een latere
+// flush te kunnen bevestigen dat het item daadwerkelijk bij de dan actief
+// ingelogde gebruiker hoort -- op een gedeeld toestel mag een offline-
+// item van gebruiker A nooit onder gebruiker B's sessie geflushed worden.
 async function offlineQueueAdd(item){
   try{
     const db=await offlineDb();
+    const ownerUid=(typeof authSession!=='undefined'&&authSession&&authSession.user)?authSession.user.id:null;
     return await new Promise((resolve,reject)=>{
       const tx=db.transaction(OFFLINE_STORE,'readwrite');
-      tx.objectStore(OFFLINE_STORE).add({...item,ts:Date.now()});
+      tx.objectStore(OFFLINE_STORE).add({...item,ts:Date.now(),owner_uid:ownerUid});
       tx.oncomplete=()=>resolve(true);
       tx.onerror=()=>reject(tx.error);
     });
@@ -7381,8 +7388,26 @@ async function flushOfflineQueue(){
   const items=await offlineQueueAll();
   if(!items.length)return;
   items.sort((a,b)=>a.id-b.id);
+  // F13 Post-Audit Remediation (P1-05): op een gedeeld toestel kan de
+  // wachtrij nog items van een EERDERE gebruiker bevatten (offline
+  // gelogd, nooit geflushed, daarna ingelogd als iemand anders). Zo'n
+  // item mag NOOIT onder de nu actieve sessie geflushed worden -- dat
+  // zou de trainingsdata van de vorige gebruiker onder het account van
+  // de huidige gebruiker wegschrijven. Items zonder bekende owner_uid
+  // (gequeued vóór deze fix bestond) blijven, conform het reeds
+  // bestaande "nooit stil weggooien"-principe, wel geflushed -- er is
+  // voor die items geen enkele manier om de oorspronkelijke eigenaar
+  // met zekerheid vast te stellen, en dit is exact het gedrag van
+  // vóór deze fix (geen regressie, wel geen extra bescherming voor
+  // die specifieke, tijdelijke overgangsgroep).
+  const huidigeUid=authSession&&authSession.user?authSession.user.id:null;
+  const teVerwerken=items.filter(function(item){ return item.owner_uid==null||item.owner_uid===huidigeUid; });
+  const vanAndereGebruiker=items.length-teVerwerken.length;
+  if(vanAndereGebruiker>0){
+    console.warn('flushOfflineQueue: '+vanAndereGebruiker+' item(s) van een andere gebruiker overgeslagen (blijven geisoleerd in de wachtrij)');
+  }
   let syncedAny=false, skippedAny=false;
-  for(const item of items){
+  for(const item of teVerwerken){
     try{
       const url=item.method==='POST'?`${SB_URL}/rest/v1/${item.table}`:`${SB_URL}/rest/v1/${item.table}?${item.filter}`;
       // F13 Post-Audit Remediation (P1-04): dezelfde idempotente upsert-header

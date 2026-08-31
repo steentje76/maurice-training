@@ -38,5 +38,7 @@ De eerdere claim "F13 SOFTWARE CLOSED — EXTERNAL PROVIDER/DEVICE VALIDATION OP
 
 | P1-04 | `sessions`-POST had geen client-generated id; verloren response → replay → duplicate session | **STILL OPEN, live bevestigd**: `sessions.id` was `gen_random_uuid()` server-side, geen unique constraint. SQL-simulatie van het exacte PostgREST-gedrag bevestigde het gevaarscenario | `sbPostQ()` genereert vooraf een client-id (`newClientRowId()`, consistent met het bestaande `newTrainingInstanceId()`-patroon) voor `sessions`/`race_segments`, gebruikt een idempotente upsert (`Prefer: resolution=merge-duplicates`). `flushOfflineQueue()` gebruikt dezelfde header bij een retry. Live SQL-geverifieerd: twee identieke pogingen met hetzelfde id → exact 1 rij | **VERIFIED CLOSED** |
 
+| P1-05 | `maurice_offline` was niet user-scoped; account A schrijft offline, accountwissel, flush kon A-data onder B opslaan | **STILL OPEN, code-bevestigd**: `wipePersonalCache()` wiste bij een accountwissel wel localStorage, maar liet de IndexedDB-offline-queue volledig onaangeroerd -- geen enkel owner-veld op de queue-items | `offlineQueueAdd()` slaat de actieve `auth.uid()` op als `owner_uid` per item; `flushOfflineQueue()` verwerkt uitsluitend items van de nu actieve gebruiker (of zonder bekende owner -- legacy, geen regressie), items van een andere gebruiker blijven geïsoleerd in de wachtrij, nooit stil weggegooid | **VERIFIED CLOSED** |
+
 ---
 *Dit document wordt tijdens de sessie iteratief uitgebreid naarmate elke bevinding wordt onderzocht.*

@@ -2451,7 +2451,7 @@
       "E18.3"
     ],
     "priority": "P3",
-    "status": "NOT STARTED",
+    "status": "CLOSED",
     "dependencies": [
       "MS-F14-01",
       "MS-F14-02"
@@ -2908,7 +2908,7 @@
     "track": "Scientific Platform",
     "phase": "F14",
     "priority": "P1",
-    "status": "NOT STARTED",
+    "status": "IMPLEMENTED",
     "target": "IMPLEMENTED",
     "dependencies": [
       "EVID-SCI-001"

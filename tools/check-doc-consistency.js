@@ -175,6 +175,25 @@ try {
   } else {
     pass('Geen "Actieve sprint"-sectiekoppen meer in CURRENT_STATE.md');
   }
+
+  // F14 Final Documentation Integrity Hotfix: CURRENT_STATE.md bevat twee,
+  // onafhankelijk onderhouden "current APP_VER"-achtige vermeldingen -- de
+  // "## Huidige versie"-sectie (al gedekt door core/fAndroidRelease.test.js
+  // H2) EN de losse "**APP_VER:**"-regel onder "1. Verified baseline". Beide
+  // MOETEN exact dezelfde waarde hebben; ze zijn eerder, onopgemerkt uit
+  // elkaar gelopen (v4.69.32 vs. v4.69.30) omdat H2 uitsluitend de eerste
+  // sectie controleert. Deze check vergelijkt beide expliciet.
+  const huidigeVersieMatch = csText.match(/## Huidige versie\s*\n(v[\d.]+)/);
+  const verifiedBaselineApiVerMatch = csText.match(/\*\*APP_VER:\*\*\s*(v[\d.]+)/);
+  if (huidigeVersieMatch && verifiedBaselineApiVerMatch) {
+    if (huidigeVersieMatch[1] !== verifiedBaselineApiVerMatch[1]) {
+      fail('CURRENT_STATE.md bevat twee verschillende APP_VER-waarden: "## Huidige versie" zegt ' + huidigeVersieMatch[1] + ', maar de "1. Verified baseline"-regel ("**APP_VER:**") zegt ' + verifiedBaselineApiVerMatch[1] + ' -- deze moeten identiek zijn');
+    } else {
+      pass('CURRENT_STATE.md se "Huidige versie" en "Verified baseline"-APP_VER komen overeen (' + huidigeVersieMatch[1] + ')');
+    }
+  } else {
+    fail('CURRENT_STATE.md mist de "## Huidige versie"-sectie of de "1. Verified baseline"-"**APP_VER:**"-regel -- kan de interne APP_VER-consistentie niet controleren');
+  }
 } catch (e) {
   fail('Kon docs/00_Project_Management/CURRENT_STATE.md niet lezen: ' + e.message);
 }

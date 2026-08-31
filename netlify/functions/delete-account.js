@@ -85,6 +85,17 @@ exports.handler = async function(event) {
       'race_segments',           // HYROX/Triathlon-brick-segmenten (v4.91.0) — al veilig
                                   // afgedekt via ON DELETE CASCADE vanuit training_instances,
                                   // hier expliciet vermeld voor auditeerbaarheid (DEC-027)
+      'activities',              // B9-01 -- canonical endurance-activiteitenmodel (running/
+                                  // cycling/rowing/swimming), ON DELETE CASCADE vanuit auth.users
+      'athlete_endurance_profile', // B9-01 -- FTP/threshold-pace/Critical Speed-Power-profiel,
+                                  // ON DELETE CASCADE vanuit auth.users
+      // LET OP: activity_laps staat BEWUST NIET in deze lijst -- die tabel heeft, anders
+      // dan race_segments, GEEN eigen (gedenormaliseerde) user_id-kolom, alleen een FK naar
+      // activities.id. Een generieke "DELETE ... WHERE user_id=eq.X" zou hier falen (kolom
+      // bestaat niet). activity_laps wordt volledig, aantoonbaar afgedekt via de bestaande
+      // ON DELETE CASCADE-keten (activity_laps.activity_id -> activities.id -> activities.
+      // user_id -> auth.users.id), live geverifieerd in migratie_v533.sql en bewaakt door
+      // core/fB9EnduranceFoundation.test.js (delete-completeness-sectie).
       'memberships',             // lidmaatschap van gym/team/trainingsgroep
       'usage_log',               // gebruik per functie
       'user_credit_purchases',   // aangekochte credits

@@ -9,9 +9,13 @@
 Trainingskompas — AI Performance Coach. Governance-niveau B (Middenweg).
 
 ## Huidige status
-App-versie **v4.69.32**. Main SHA `5309b1b18d355cbe2255f11c433fc83ba1181fc2`
-(F14 Final Documentation Integrity Hotfix -- dit is de finale F14-merge-SHA
-na PR #189, die het eerdere, tussentijdse `087ee60...` corrigeert).
+App-versie **v4.69.32** (ongewijzigd, B9-01 was database-only).
+Main SHA `<wordt bijgewerkt na merge van B9-01>`.
+**F14: SCIENTIFIC PLATFORM SOFTWARE CLOSED — EXTERNAL RESEARCH/ETHICS
+VALIDATION OPEN.** **B9-01: ENDURANCE DATA FOUNDATION CLOSED — READY
+FOR INDEPENDENT BENCHMARK REVIEW** (zie `docs/B9_01_ENDURANCE_DATA_
+FOUNDATION_REPORT.md`). B9-02 t/m B9-06 NIET GESTART (absolute
+stop-instructie, wacht op onafhankelijke Benchmark 9.0-review).
 Release gate: 199 stappen groen (0 gefaald). Doc-consistency: 0 problemen.
 **F13: SOFTWARE CLOSED — EXTERNAL PROVIDER/DEVICE VALIDATION OPEN.**
 **F14: SCIENTIFIC PLATFORM SOFTWARE CLOSED — EXTERNAL RESEARCH/ETHICS

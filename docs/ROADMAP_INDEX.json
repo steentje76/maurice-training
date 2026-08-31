@@ -3819,5 +3819,19 @@
       "privacy_security": "REQUIRED",
       "documentation": "REQUIRED"
     }
+  },
+  {
+    "id": "END-DATAFOUNDATION-001",
+    "type": "capability",
+    "track": "Endurance & Multisport",
+    "phase": "B9",
+    "priority": "P2",
+    "status": "TESTED",
+    "target": "CLOSED",
+    "dependencies": [],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "B9-01 (CLOSED): canonical endurance-datalaag (activities/activity_laps/athlete_endurance_profile) geimplementeerd, RLS adversarial bewezen, least-privilege vanaf dag 1, account-deletion-completeness bevestigd. Geen shadow-calculation (CardioCore.criticalSpeed/criticalPower blijven bewust niet automatisch gewired). Dependencies voor B9-02/B9-04 expliciet geregistreerd, niet gebouwd. Wacht op onafhankelijke Benchmark 9.0-review."
   }
 ]

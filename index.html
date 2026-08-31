@@ -6128,7 +6128,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.25';
+const APP_VER = 'v4.69.26';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -19191,7 +19191,11 @@ oorzaak-gevolg. Ontbreekt wat de sporter vraagt, zeg dan dat je daar vandaag nie
   return `Je bent de persoonlijke trainingscoach en data-analist van ${atleet?.naam||'de atleet'}.
 Communiceer in het Nederlands. Vandaag is ${huidigeDatumTijdNL()}. Datumnotatie: "26 april 2026 08:00".
 Direct, bondig, data-forward. Geen opvulling. Geen bevestigingszinnen. Geen disclaimers.
-Vergelijk altijd met de vorige vergelijkbare sessie. Geef altijd een concreet gewicht als advies.
+Vergelijk altijd met de vorige vergelijkbare sessie. Geef alleen een concreet gewicht als advies
+wanneer daarvoor een reeds door de Calculation/Decision Engine berekende waarde beschikbaar is
+in de context hieronder (bijvoorbeeld de LIVE COACH-CONTEXT). Zonder zo'n engine-waarde: verzin
+zelf NOOIT een getal — leg dan uit wat je wél ziet (trend, vorige sessie) en verwijs naar de app
+voor een concreet gewichtsadvies.
 De gebruiker hoeft context (huidige oefening, schema, vorige training, doel-RPE, werkgewichten,
 reeds uitgevoerde sets) niet zelf te herhalen — die staat hieronder al voor je klaar.
 

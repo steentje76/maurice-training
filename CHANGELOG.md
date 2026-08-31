@@ -1,6 +1,63 @@
 # Trainingskompas — Changelog
 
+## v4.69.26 — F13 Post-Audit Remediation: P1-02/P1-03 AI Governance (31 augustus 2026)
+
+Derde en vierde bevinding van de F13 Post-Audit Reconciliation &
+Remediation Masterprint. Beide bevestigd als STILL OPEN op de actuele
+main vóór deze fix.
+
+P1-02 (AI-governance client-side omzeilbaar): coach.js gebruikte
+"system: payload.system" rechtstreeks, zonder enige server-side
+validatie. Alle governance-instructies zaten uitsluitend in de
+client-side samengestelde system-prompt (buildCtx() in index.html),
+en de bestaande output-validatie (AIOutputContract) draaide
+uitsluitend client-side -- een gemanipuleerde client kon deze
+simpelweg overslaan en de rauwe, ongefilterde AI-respons tonen.
+
+Fix: coach.js hergebruikt nu server-side dezelfde, pure, Node-
+compatibele AIOutputContract-validator die index.html al client-side
+gebruikte. Elke AI-respons wordt server-side gecontroleerd op
+verboden diagnostische/medische taal vóórdat de tekst de client
+bereikt -- bij een schending vervangt de server de tekst met de
+canonieke, veilige fallback, ongeacht wat een gemanipuleerde client
+zelf zou doen.
+
+P1-03 (AI genereert numerieke load prescription): de client-side
+system-promptopbouw bevatte de instructie "Geef altijd een concreet
+gewicht als advies" -- een architectuurschending (AI mag nooit
+zelfstandig numerieke load berekenen). De bestaande APPLY-validatie
+(CalcCore.validateProposedWeight) was een simpele plausibiliteitsgrens
+(1RM x 1.2), geen verificatie dat het getal daadwerkelijk van een
+geautoriseerde Calculation/Decision-uitkomst afkomstig is.
+
+Fix: de promptinstructie is gecorrigeerd naar een expliciet verbod om
+zelf een getal te verzinnen zonder een reeds door de engine berekende
+waarde. Daarnaast valideert coach.js nu ook server-side elke
+[[APPLY:exId:kg]]-marker met een absolute veiligheidsgrens (500kg
+zonder 1RM-context) -- een aanvullende, servergecontroleerde laag
+bovenop de bestaande client-side, 1RM-relatieve check.
+
+docs/F13_POST_AUDIT_P1_02_P1_03_AI_GOVERNANCE_MATRIX.md (nieuw):
+volledige call-site-matrix van alle 6 AI-aanroeppunten (request type,
+client input, server input, system-promptbron, output-validatie,
+numerieke/decision-mutatie-mogelijkheden).
+
+core/fAiGovernanceServerSide.test.js (nieuw, 5/5) en
+core/fAiPromptNumericBoundary.test.js (nieuw, 3/3): permanent
+regressiebewijs. Sabotagebewijs voor beide: server-side validatie
+uitgeschakeld resp. de oude, onveilige promptinstructie teruggezet --
+beide exact gedetecteerd, teruggedraaid.
+
+APP_VER v4.69.25 -> v4.69.26 (echte, functionele promptwijziging in
+index.html). sw.js CACHE_NAME/CACHE_STATIC synchroon gebumpt naar
+v469260. android/app/build.gradle gesynchroniseerd (46926/4.69.26)
+vóór de release-gate-run.
+
+Volledige regressie: node core/release-gate.js -> 187 uitgevoerd/0
+geskipt/0 gefaald (was 185, +2 nieuwe testbestanden).
+
 ## v4.69.25 — MS-F13-07: Federated Identity & Account Linking (30 augustus 2026)
+ — MS-F13-07: Federated Identity & Account Linking (30 augustus 2026)
 
 Nieuwe, door de Product Owner expliciet goedgekeurde uitbreiding (was
 FEDERATED-IDENTITY-001, NOT STARTED, nu MS-F13-07). Voegt Google Sign-In

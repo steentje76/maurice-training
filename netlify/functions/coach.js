@@ -22,6 +22,15 @@
 // opnieuw, server-side opgehaald via de vertrouwde auth-boundary (user.id).
 const Observability = require('../../core/observability.js');
 const EntitlementCore = require('../../core/entitlementCore.js');
+// F13 Post-Audit Remediation (P1-02, P1-03): beide modules zijn pure,
+// Node-compatibele bibliotheken (geen DOM-afhankelijkheid) die al
+// bestonden en al client-side werden toegepast in index.html.
+// Server-side hergebruik hiervan is de kern van de fix: governance mag
+// nooit uitsluitend client-side afgedwongen worden, want een
+// gemanipuleerde client kan die stap simpelweg overslaan. Dezelfde
+// validator, nu ook op de plek die de client niet kan omzeilen.
+const AIOutputContract = require('../../core/aiOutputContract.js');
+const CalcCore = require('../../core/calculation.js');
 
 // MS-F12-02: vaste, server-side classificatie van request-type naar de
 // canonieke feature-key. NIET manipuleerbaar via een willekeurige client-
@@ -216,6 +225,44 @@ exports.handler = async function(event) {
     const data = await res.json();
     const durationMs = Date.now() - t0;
     if (res.ok) {
+      // F13 Post-Audit Remediation (P1-02): server-side AIOutputContract-
+      // validatie -- DEZELFDE validator die index.html al client-side
+      // toepaste, maar nu op de plek die een gemanipuleerde client niet
+      // kan omzeilen. Governance mag nooit uitsluitend client-side
+      // afgedwongen worden.
+      if (Array.isArray(data.content)) {
+        data.content = data.content.map(function (blok) {
+          if (blok.type !== 'text' || typeof blok.text !== 'string') return blok;
+          const check = AIOutputContract.validateAiOutputText(blok.text);
+          if (!check.valid) {
+            Observability.tkLog('ERROR', 'ai.coach.output_contract_violation', 'ai', 'coach', {
+              operation: 'output_validation', request_type: requestType,
+              metadata: { violations: check.violations.map(function (v) { return v.categorie; }) }
+            }, logCtx);
+            return Object.assign({}, blok, { text: AIOutputContract.safeCoachFallback() });
+          }
+          // F13 Post-Audit Remediation (P1-03): een absolute, server-side
+          // veiligheidsgrens op elke [[APPLY:exId:kg]]-marker in de tekst --
+          // aanvullend op de bestaande client-side, 1RM-relatieve
+          // plausibiliteitscheck (die de server niet kan reproduceren
+          // zonder de gebruikers 1RM-context, wat buiten deze fix valt).
+          // Een marker boven de absolute grens wordt uit de tekst
+          // verwijderd -- de client kan dan geen "Toepassen"-knop tonen
+          // voor een fysiek onplausibel voorstel, ongeacht 1RM-context.
+          const APPLY_RE = /\[\[APPLY:([a-zA-Z0-9_-]+):([\d.]+)\]\]/g;
+          const gefilterdeTekst = blok.text.replace(APPLY_RE, function (m, exId, kg) {
+            const validatie = CalcCore.validateProposedWeight(kg, null); // null = absolute cap (500kg), geen 1RM-context server-side beschikbaar
+            if (!validatie.ok) {
+              Observability.tkLog('ERROR', 'ai.coach.apply_rejected', 'ai', 'coach', {
+                operation: 'output_validation', request_type: requestType, metadata: { reason: validatie.reason }
+              }, logCtx);
+              return '';
+            }
+            return m;
+          });
+          return gefilterdeTekst === blok.text ? blok : Object.assign({}, blok, { text: gefilterdeTekst });
+        });
+      }
       Observability.tkLog('INFO', 'ai.coach.request_completed', 'ai', 'coach', {
         operation: 'request', status: 'success', duration_ms: durationMs, provider: 'anthropic'
       }, logCtx);

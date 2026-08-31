@@ -2975,6 +2975,30 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
   </nav>
 </div>
+<!-- ═══ B9-02 · RUNNING CORE ═══ -->
+<div class="scr" id="s-running">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Hardlopen</div><div class="hdr-sub">sport: running</div></div><button class="ibtn" onclick="go('s-train-mgr')" aria-label="Terug naar Training">←</button></div></div>
+  <div class="scroll" id="running-scroll"></div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
+  </nav>
+</div>
+<!-- ═══ B9-02 · CYCLING DESTINATION SHELL (architecture-ready voor B9-04) ═══ -->
+<div class="scr" id="s-cycling">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Fietsen</div><div class="hdr-sub">sport: cycling</div></div><button class="ibtn" onclick="go('s-train-mgr')" aria-label="Terug naar Training">←</button></div></div>
+  <div class="scroll" id="cycling-scroll"></div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
+  </nav>
+</div>
 <div class="scr" id="s-guided">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Begeleide training</div><div class="hdr-sub">Je coach, stap voor stap</div></div><button class="ibtn" onclick="if(window.GWUI)GWUI.quit();else go('s-builder')" aria-label="Terug naar Workout Builder">←</button></div></div>
   <div class="scroll" id="gw-scroll"></div>
@@ -3796,6 +3820,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="v43-lbl" style="margin:20px 0 8px">Bouwen &amp; verkennen</div>
     <div class="v43-tmt">
       <button class="row" onclick="go('s-builder');if(window.WBUI)WBUI.render()"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span class="b"><span class="t">Workout Builder</span><span class="s">AI stelt een training samen op je herstel</span></span><span class="ar">›</span></button>
+      <button class="row" onclick="go('s-running')" aria-label="Hardlopen"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 4a2 2 0 100 4 2 2 0 000-4zM4 20l4-5 3 2 3-5 3 2 3-7"/></svg></span><span class="b"><span class="t">Hardlopen</span><span class="s">Vrij, interval, tempo of duurloop</span></span><span class="ar">›</span></button>
+      <button class="row" onclick="go('s-cycling')" aria-label="Fietsen"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><path d="M6 18l4-9h4l3 5M10 9h4"/></svg></span><span class="b"><span class="t">Fietsen</span><span class="s">Rit loggen — vermogen &amp; FTP volgen in B9-04</span></span><span class="ar">›</span></button>
       <button class="row" onclick="hyroxOpenSetupDirect('hyrox')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 21l4-4M8 17l3-3M15 10l3-3M18 6l2-2M6 19l1 1M10 15l1 1M13 12l1 1M17 8l1 1"/><circle cx="12" cy="12" r="9"/></svg></span><span class="b"><span class="t">HYROX</span><span class="s">Single, Doubles, Relay of Adaptive — 8 stations, 8 runs</span></span><span class="ar">›</span></button>
       <button class="row" onclick="hyroxOpenSetupDirect('brick')"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="3"/><circle cx="18" cy="6" r="3"/><path d="M9 18h6a3 3 0 003-3V9"/></svg></span><span class="b"><span class="t">Triathlon-brick</span><span class="s">Zwemmen → fietsen → hardlopen, aaneengesloten</span></span><span class="ar">›</span></button>
       <button class="row" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></span><span class="b"><span class="t">Oefeningen</span><span class="s">206 oefeningen &#183; video&#8217;s &#183; alternatieven</span></span><span class="ar">›</span></button>
@@ -6161,7 +6187,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.32';
+const APP_VER = 'v4.69.33';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -9895,6 +9921,8 @@ function go(id){
   if(id==='s-builder'&&window.WBUI)WBUI.render();
   if(id==='s-builder')renderHyroxEntry();
   if(id==='s-guided'&&window.GWUI)GWUI.render();
+  if(id==='s-running')renderRunningEntry();
+  if(id==='s-cycling')renderCyclingShell();
   if(id==='s-hist'){histOff=0;renderHistFilterTabs();loadHistory();}
   if(id==='s-train-mgr'){renderSportSwitcher();renderV43Train();}
   if(id==='s-train-mine'){renderSchemaTrainingList();renderCustomTrainList();renderCustomTrainBtns();mineSeg(window._minePendingSeg||'schema');window._minePendingSeg=null;}
@@ -10266,6 +10294,178 @@ async function downloadResearchExport(){
     URL.revokeObjectURL(url);
     toast('Export gedownload');
   }catch(e){toast('Export mislukt');}
+}
+
+// ══════════════════════════════════════════════════════════
+// B9-02 — Running Core (sport = running, canonical activities/activity_laps)
+// ══════════════════════════════════════════════════════════
+// Trainingsvormen conform de opdracht (sectie 9) -- GEEN automatisch
+// gegenereerd voorschrift, uitsluitend een keuze van vorm. Targets
+// (afstand/tijd/pace) worden expliciet door de gebruiker zelf ingevuld.
+const RUNNING_TRAININGSVORMEN=[
+  {id:'vrij',label:'Vrij hardlopen',sub:'Geen vast doel'},
+  {id:'afstand',label:'Afstand',sub:'Vaste afstand als doel'},
+  {id:'tijd',label:'Tijd',sub:'Vaste duur als doel'},
+  {id:'interval',label:'Interval',sub:'Werk/herstel-blokken'},
+  {id:'easy',label:'Easy / herstel',sub:'Rustig tempo'},
+  {id:'tempo',label:'Tempo / threshold',sub:'Duurzaam, stevig tempo'},
+  {id:'lange_duurloop',label:'Lange duurloop',sub:'Langere, rustige afstand'}
+];
+
+let _runningGekozenVorm=null;
+
+function renderRunningEntry(){
+  const el=document.getElementById('running-scroll');
+  if(!el)return;
+  _runningGekozenVorm=null;
+  el.innerHTML=`
+    <div style="padding:16px">
+      <p style="font-size:13px;color:var(--g4);margin:0 0 14px">Kies een trainingsvorm. Geen wearable nodig — je vult afstand en tijd zelf in.</p>
+      <div class="v43-tmt" id="running-vormen-lijst"></div>
+      <div id="running-log-form" style="margin-top:16px"></div>
+      <div id="running-hist-wrap" style="margin-top:24px"></div>
+    </div>`;
+  const lijst=document.getElementById('running-vormen-lijst');
+  lijst.innerHTML=RUNNING_TRAININGSVORMEN.map(v=>
+    `<button class="row" onclick="selecteerRunningVorm('${v.id}')" aria-pressed="false" data-vorm="${v.id}"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 4a2 2 0 100 4 2 2 0 000-4zM4 20l4-5 3 2 3-5 3 2 3-7"/></svg></span><span class="b"><span class="t">${v.label}</span><span class="s">${v.sub}</span></span><span class="ar">›</span></button>`
+  ).join('');
+  renderRunningHistory();
+}
+
+function selecteerRunningVorm(vormId){
+  _runningGekozenVorm=vormId;
+  document.querySelectorAll('#running-vormen-lijst .row').forEach(b=>b.setAttribute('aria-pressed', b.dataset.vorm===vormId?'true':'false'));
+  const vorm=RUNNING_TRAININGSVORMEN.find(v=>v.id===vormId);
+  const form=document.getElementById('running-log-form');
+  // Preview: toont uitsluitend wat de gebruiker zelf invult -- nooit een
+  // verzonnen doel (sectie 11: ontbrekende waarden blijven ontbrekend).
+  form.innerHTML=`
+    <div class="card">
+      <div class="card-hd"><div class="card-title">${vorm.label}</div></div>
+      <div class="card-body">
+        <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Afstand (km, optioneel)</label>
+        <input type="number" inputmode="decimal" step="0.01" min="0" id="running-afstand-km" style="width:100%;margin-bottom:10px" placeholder="bv. 5.2">
+        <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Duur (minuten, optioneel)</label>
+        <input type="number" inputmode="decimal" step="0.1" min="0" id="running-duur-min" style="width:100%;margin-bottom:10px" placeholder="bv. 28.5">
+        <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Gemiddelde hartslag (optioneel)</label>
+        <input type="number" inputmode="numeric" min="0" id="running-hr" style="width:100%;margin-bottom:14px" placeholder="bv. 152">
+        <button class="btn btn-p" onclick="afrondenRunningActivity()">Afronden &amp; opslaan</button>
+      </div>
+    </div>`;
+}
+
+// Afronding: schrijft naar de B9-01 canonical activities-tabel. Pace wordt
+// NERGENS hier zelf berekend en opgeslagen -- uitsluitend distance_meters/
+// duration_seconds worden bewaard; pace wordt bij weergave deterministisch
+// afgeleid via CardioCore.splitFromDistTime() (geen shadow calculation).
+async function afrondenRunningActivity(){
+  if(!_runningGekozenVorm){toast('Kies eerst een trainingsvorm');return;}
+  const afstandKm=parseFloat(document.getElementById('running-afstand-km').value);
+  const duurMin=parseFloat(document.getElementById('running-duur-min').value);
+  const hr=parseInt(document.getElementById('running-hr').value,10);
+  if((!isFinite(afstandKm)||afstandKm<=0) && (!isFinite(duurMin)||duurMin<=0)){
+    toast('Vul minimaal afstand of duur in');return;
+  }
+  const uid=authSession?.user?.id;
+  if(!uid){toast('Niet ingelogd');return;}
+  const payload={
+    user_id:uid,
+    sport:'running',
+    distance_meters:isFinite(afstandKm)&&afstandKm>0?Math.round(afstandKm*1000):null,
+    duration_seconds:isFinite(duurMin)&&duurMin>0?Math.round(duurMin*60):null,
+    avg_heart_rate_bpm:isFinite(hr)&&hr>0?hr:null,
+    source_provenance:'manual',
+    data_quality:'unverified',
+    recorded_at:new Date().toISOString()
+  };
+  const ok=await sbPostQ('activities', payload);
+  if(ok){toast('Run opgeslagen');renderRunningEntry();}
+  else{toast('Opslaan mislukt — probeer opnieuw');}
+}
+
+// History: alleen de eigen, canonical activities (RLS garandeert dit al
+// server-side); pace altijd deterministisch berekend bij weergave.
+async function renderRunningHistory(){
+  const wrap=document.getElementById('running-hist-wrap');
+  if(!wrap)return;
+  wrap.innerHTML='<div class="v43-lbl">Recente runs</div><p style="font-size:12px;color:var(--g4)">Laden…</p>';
+  const rows=await sbGet('activities', "&sport=eq.running&order=recorded_at.desc&limit=20");
+  if(!rows.length){wrap.innerHTML='<div class="v43-lbl">Recente runs</div><p style="font-size:12px;color:var(--g4)">Nog geen runs opgeslagen.</p>';return;}
+  wrap.innerHTML='<div class="v43-lbl">Recente runs</div><div class="v43-tmt" id="running-hist-lijst"></div>';
+  const lijst=document.getElementById('running-hist-lijst');
+  lijst.innerHTML=rows.map(r=>{
+    const datum=new Date(r.recorded_at).toLocaleDateString('nl-NL',{day:'numeric',month:'short'});
+    const km=r.distance_meters?(r.distance_meters/1000).toFixed(2)+' km':'';
+    const duur=r.duration_seconds?CardioCore.formatTime(r.duration_seconds):'';
+    let paceStr='';
+    if(r.distance_meters>0 && r.duration_seconds>0){
+      const split=CardioCore.splitFromDistTime(r.distance_meters, r.duration_seconds, 1000);
+      if(split!=null)paceStr=CardioCore.formatTime(Math.round(split))+'/km';
+    }
+    const sub=[km,duur,paceStr].filter(Boolean).join(' · ')||'Geen details';
+    return `<div class="row" style="cursor:default"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 4a2 2 0 100 4 2 2 0 000-4zM4 20l4-5 3 2 3-5 3 2 3-7"/></svg></span><span class="b"><span class="t">${datum}</span><span class="s">${sub}</span></span></div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// B9-02 — Cycling destination shell (architecture-ready voor B9-04)
+// ══════════════════════════════════════════════════════════
+// Bewust GEEN "Coming soon"-alert (sectie 6): een volwassen, functionele
+// lege state die al wel een basale, echte handmatige rit-log ontsluit
+// (dezelfde activities-tabel, sport='cycling'), zonder B9-04 se volledige
+// Cycling Core (FTP-productervaring, power-analytics) te bouwen.
+function renderCyclingShell(){
+  const el=document.getElementById('cycling-scroll');
+  if(!el)return;
+  el.innerHTML=`
+    <div style="padding:16px">
+      <div class="card">
+        <div class="card-hd"><div class="card-title">Rit loggen</div></div>
+        <div class="card-body">
+          <p style="font-size:13px;color:var(--g4);margin:0 0 12px">Volledige fietservaring (vermogen, FTP, power-zones) volgt in een latere sprint. Je kunt nu al een rit handmatig loggen.</p>
+          <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Afstand (km, optioneel)</label>
+          <input type="number" inputmode="decimal" step="0.01" min="0" id="cycling-afstand-km" style="width:100%;margin-bottom:10px" placeholder="bv. 32.5">
+          <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Duur (minuten, optioneel)</label>
+          <input type="number" inputmode="decimal" step="0.1" min="0" id="cycling-duur-min" style="width:100%;margin-bottom:14px" placeholder="bv. 65">
+          <button class="btn btn-p" onclick="afrondenCyclingActivity()">Rit opslaan</button>
+        </div>
+      </div>
+      <div id="cycling-hist-wrap" style="margin-top:20px"></div>
+    </div>`;
+  renderCyclingHistory();
+}
+
+async function afrondenCyclingActivity(){
+  const afstandKm=parseFloat(document.getElementById('cycling-afstand-km').value);
+  const duurMin=parseFloat(document.getElementById('cycling-duur-min').value);
+  if((!isFinite(afstandKm)||afstandKm<=0) && (!isFinite(duurMin)||duurMin<=0)){
+    toast('Vul minimaal afstand of duur in');return;
+  }
+  const uid=authSession?.user?.id;
+  if(!uid){toast('Niet ingelogd');return;}
+  const ok=await sbPostQ('activities', {
+    user_id:uid, sport:'cycling',
+    distance_meters:isFinite(afstandKm)&&afstandKm>0?Math.round(afstandKm*1000):null,
+    duration_seconds:isFinite(duurMin)&&duurMin>0?Math.round(duurMin*60):null,
+    source_provenance:'manual', data_quality:'unverified', recorded_at:new Date().toISOString()
+  });
+  if(ok){toast('Rit opgeslagen');renderCyclingShell();}
+  else{toast('Opslaan mislukt — probeer opnieuw');}
+}
+
+async function renderCyclingHistory(){
+  const wrap=document.getElementById('cycling-hist-wrap');
+  if(!wrap)return;
+  const rows=await sbGet('activities', "&sport=eq.cycling&order=recorded_at.desc&limit=20");
+  if(!rows.length){wrap.innerHTML='<div class="v43-lbl">Recente ritten</div><p style="font-size:12px;color:var(--g4)">Nog geen ritten opgeslagen.</p>';return;}
+  wrap.innerHTML='<div class="v43-lbl">Recente ritten</div><div class="v43-tmt" id="cycling-hist-lijst"></div>';
+  document.getElementById('cycling-hist-lijst').innerHTML=rows.map(r=>{
+    const datum=new Date(r.recorded_at).toLocaleDateString('nl-NL',{day:'numeric',month:'short'});
+    const km=r.distance_meters?(r.distance_meters/1000).toFixed(1)+' km':'';
+    const duur=r.duration_seconds?CardioCore.formatTime(r.duration_seconds):'';
+    const sub=[km,duur].filter(Boolean).join(' · ')||'Geen details';
+    return `<div class="row" style="cursor:default"><span class="b"><span class="t">${datum}</span><span class="s">${sub}</span></span></div>`;
+  }).join('');
 }
 
 // ══════════════════════════════════════════════════════════

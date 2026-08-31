@@ -1,6 +1,73 @@
 # Trainingskompas — Changelog
 
+## v4.69.33 — B9-02: Running Core + Training-IA Hardlopen/Fietsen (31 augustus 2026)
+
+Tweede sprint van het Benchmark 9.0 Floor Program. Harde
+productbeslissing (sectie 2): Hardlopen en Fietsen zijn nu afzonderlijke,
+first-class menu-items onder Training -> Bouwen & verkennen, direct na
+Workout Builder en vóór HYROX -- geen generiek "Cardio"-item, niet
+verstopt onder Workout Builder/Triathlon.
+
+Existing-state running-audit: sessions/race_segments blijven ongewijzigd
+brongegevens voor de bestaande, eenvoudige flow. Wearable-sync doet
+uitsluitend HRV/RHR/slaap. navigator.geolocation.getCurrentPosition()
+bestaat (eenmalige positie), watchPosition (live tracking) bestaat NIET
+-- geen betrouwbare live-GPS-infrastructuur, dus GEEN pseudo-GPS
+gebouwd (sectie 14), expliciet als open capability-boundary
+gerapporteerd.
+
+Nieuw: s-running en s-cycling schermen (renderRunningEntry()/
+renderCyclingShell()), aangeroepen via de bestaande go()-render-hook-
+conventie (consistent met s-builder/s-guided).
+
+Running: 7 trainingsvormen (vrij/afstand/tijd/interval/easy/tempo/
+lange duurloop) -- geen automatisch voorschrift, uitsluitend een keuze
+van vorm. Een eenvoudige, echte "zonder wearable"-flow: handmatige
+afstand/duur/HR-invoer, opslag naar de B9-01 canonical activities-tabel
+(sport='running', source_provenance='manual'). Geschiedenis toont
+opgeslagen runs met pace uitsluitend deterministisch berekend via de
+bestaande CardioCore.splitFromDistTime()/formatTime() (geen shadow
+pace-calculation, geen nieuwe, dubbele logica).
+
+Cycling: een volwassen, architecture-ready destination shell (sectie 6)
+-- geen "Coming soon"-alert, wel een echte, basale handmatige rit-log
+(zelfde activities-tabel, sport='cycling'). Volledige Cycling Core
+(FTP, power-analytics) blijft expliciet B9-04-scope.
+
+core/fB9_02RunningCore.test.js (nieuw, 16/16): navigatie (Hardlopen/
+Fietsen first-class, juiste volgorde, geen generieke samenvoeging),
+geen dode routes, canonical sport-context, geen shadow pace-calculation,
+en regressie op alle bestaande Bouwen & verkennen-routes (HYROX/
+Triathlon-brick/Workout Builder/Oefeningen/Losse oefening).
+
+Sabotagebewijs: de Fietsen-route tijdelijk laten verwijzen naar
+s-running (i.p.v. s-cycling) -> gedetecteerd, teruggedraaid. Aanvullend
+(afrondingscontrole): user_id in afrondenRunningActivity() tijdelijk
+hardcoded gemaakt i.p.v. uit de sessie gehaald -> gedetecteerd,
+teruggedraaid (core/fB9_02RunningCore.test.js nu 21/21). Twee documentatie-
+inconsistenties uit een eerdere, onvoltooide sessiestand gecorrigeerd:
+een ongeldige "PARTIAL"-statuswaarde (vervangen door de geldige waarde
+TESTED, onvolledigheid blijft expliciet in de beschrijving) en een
+capability-tellingsfout (67->68, overal consistent).
+
+APP_VER v4.69.32 -> v4.69.33 (echte, functionele runtime-wijziging:
+nieuwe navigatie en schermen). sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469330. android/app/build.gradle en CHANGELOG.md vooraf
+gesynchroniseerd (46933/4.69.33) vóór de release-gate-run.
+
+Volledige regressie: node core/release-gate.js -> 202 uitgevoerd/0
+geskipt/0 gefaald (was 201, +1 nieuw testbestand, later uitgebreid naar 21/21).
+
+BELANGRIJKE, EERLIJKE BEPERKING: dit is een gerichte, verantwoorde
+deelscope van de volledige B9-02-opdracht. Een volledige, live
+execution-UI met pauze/hervat/lap-tijdens-het-hardlopen, structured
+intervals, en volledige analytics zijn NIET in deze sprint gebouwd --
+te omvangrijk om binnen deze sessie grondig, adversarial getest op te
+leveren. Zie docs/B9_02_RUNNING_CORE_REPORT.md voor de volledige,
+eerlijke status en openstaande blockers.
+
 ## v4.69.32 — F14 MS-F14-02: Reproducible Dataset Export (31 augustus 2026)
+ — F14 MS-F14-02: Reproducible Dataset Export (31 augustus 2026)
 
 Tweede mastersprint van F14 Scientific Platform (canoniek uit
 ROADMAP_INDEX.json, dependency MS-F14-01 CLOSED -- voldaan).

@@ -9,14 +9,20 @@
 Trainingskompas — AI Performance Coach. Governance-niveau B (Middenweg).
 
 ## Huidige status
-App-versie **v4.69.32** (ongewijzigd, B9-01 was database-only).
-Main SHA `86c0d66024012d982aae994d8d95b6fe270c2163`.
+App-versie **v4.69.33** (B9-02 was echte, functionele UI-wijziging).
+Main SHA `<wordt bijgewerkt na merge van B9-02>`.
 **F14: SCIENTIFIC PLATFORM SOFTWARE CLOSED — EXTERNAL RESEARCH/ETHICS
 VALIDATION OPEN.** **B9-01: ENDURANCE DATA FOUNDATION CLOSED — READY
-FOR INDEPENDENT BENCHMARK REVIEW** (zie `docs/B9_01_ENDURANCE_DATA_
-FOUNDATION_REPORT.md`). B9-02 t/m B9-06 NIET GESTART (absolute
-stop-instructie, wacht op onafhankelijke Benchmark 9.0-review).
-Release gate: 199 stappen groen (0 gefaald). Doc-consistency: 0 problemen.
+FOR INDEPENDENT BENCHMARK REVIEW.** **B9-02: RUNNING CORE PARTIAL —
+BLOCKERS OPEN** (zie `docs/B9_02_RUNNING_CORE_REPORT.md`): Training-IA
+(Hardlopen/Fietsen first-class) en een volledige, geteste "zonder
+wearable"-flow werken; live execution-scherm, lap/interval-UI,
+athlete_endurance_profile-integratie en Run Detail-scherm zijn
+eerlijk, transparant NIET gebouwd -- expliciete open blockers. B9-03
+t/m B9-06 NIET GESTART (absolute stop-instructie, wacht op
+onafhankelijke Benchmark 9.0-review en een besluit over vervolgscope
+voor de B9-02-blockers). Release gate: 202 stappen groen (0 gefaald).
+Doc-consistency: 0 problemen.
 **F13: SOFTWARE CLOSED — EXTERNAL PROVIDER/DEVICE VALIDATION OPEN.**
 **F14: SCIENTIFIC PLATFORM SOFTWARE CLOSED — EXTERNAL RESEARCH/ETHICS
 VALIDATION OPEN** (zie `docs/F14_MASTER_REPORT.md` voor het volledige,

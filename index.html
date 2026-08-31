@@ -6107,20 +6107,47 @@ async function tkFitbitSync(){
   var O = window.ObservabilityCore;
   function ctx() { return { app_version: (typeof APP_VER !== 'undefined' ? APP_VER : 'unknown'), environment: 'browser' }; }
 
+  // F13 Post-Audit Remediation (P1-13): voorheen was de sink uitsluitend
+  // console -- een crash bij een echte gebruiker was volledig onzichtbaar
+  // voor Maurice. sendTelemetryBestEffort() stuurt hetzelfde, al
+  // geredacteerde event (message_safe/error_code, nooit de rauwe stack)
+  // ook naar de server, altijd best-effort en non-blocking: geen await,
+  // geen enkele invloed op bestaand, user-facing gedrag als dit faalt of
+  // traag is. tkLog()/console blijven ongewijzigd de primaire, lokale sink.
+  function sendTelemetryBestEffort(eventType, normalized) {
+    try {
+      var headers = { 'Content-Type': 'application/json' };
+      if (typeof SB_H !== 'undefined' && SB_H && SB_H.Authorization) headers.Authorization = SB_H.Authorization;
+      var payload = {
+        event_type: eventType,
+        error_code: normalized.error_code,
+        message_safe: normalized.message_safe,
+        app_version: (typeof APP_VER !== 'undefined' ? APP_VER : null),
+        platform: 'browser',
+        route: (typeof location !== 'undefined' && location.pathname) ? location.pathname : null
+      };
+      fetch('/.netlify/functions/telemetry', { method: 'POST', headers: headers, body: JSON.stringify(payload) }).catch(function () {});
+    } catch (e) { /* telemetrie mag nooit de app beinvloeden, ook niet bij een eigen fout */ }
+  }
+
   window.addEventListener('error', function (evt) {
     var err = evt && evt.error ? evt.error : (evt && evt.message ? new Error(evt.message) : null);
+    var normalized = O.normalizeError(err, { source: 'window.onerror' });
     O.tkLog('ERROR', 'app.uncaught_error', 'platform', 'window', Object.assign(
       { operation: 'uncaught_error' },
-      O.normalizeError(err, { source: 'window.onerror' })
+      normalized
     ), ctx());
+    sendTelemetryBestEffort('app.uncaught_error', normalized);
   });
 
   window.addEventListener('unhandledrejection', function (evt) {
     var reason = evt && evt.reason;
+    var normalized = O.normalizeError(reason, { source: 'unhandledrejection' });
     O.tkLog('ERROR', 'app.unhandled_rejection', 'platform', 'window', Object.assign(
       { operation: 'unhandled_rejection' },
-      O.normalizeError(reason, { source: 'unhandledrejection' })
+      normalized
     ), ctx());
+    sendTelemetryBestEffort('app.unhandled_rejection', normalized);
   });
 })();
 </script>
@@ -6128,7 +6155,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.29';
+const APP_VER = 'v4.69.30';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';

@@ -6161,7 +6161,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.31';
+const APP_VER = 'v4.69.32';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -10246,7 +10246,26 @@ async function renderResearchConsentCard(){
     <button class="btn ${actief?'btn-o':'btn-p'} btn-sm" onclick="toggleResearchConsent()">
       ${actief?'Deelname intrekken':'Deelnemen aan onderzoek'}
     </button>
+    ${actief?'<button class="btn btn-o btn-sm" style="margin-left:6px" onclick="downloadResearchExport()">Mijn data downloaden</button>':''}
     <div style="font-size:11px;color:var(--g4);margin-top:8px">Status: ${actief?'Actief':'Niet actief'}</div>`;
+}
+
+// F14 MS-F14-02 — Reproducible Dataset Export. Uitsluitend zichtbaar/
+// bruikbaar bij actieve consent (server-side sowieso afgedwongen, dit
+// is alleen de UI-weergave). Roept het server-endpoint aan met de eigen
+// sessie -- kan nooit andermans data ophalen (zie migratie_v531.sql).
+async function downloadResearchExport(){
+  try{
+    const res=await fetch('/.netlify/functions/research-export',{method:'POST',headers:{Authorization:SB_H.Authorization,'Content-Type':'application/json'}});
+    if(!res.ok){toast('Export mislukt');return;}
+    const data=await res.json();
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='trainingskompas-research-export.json';a.click();
+    URL.revokeObjectURL(url);
+    toast('Export gedownload');
+  }catch(e){toast('Export mislukt');}
 }
 
 // ══════════════════════════════════════════════════════════

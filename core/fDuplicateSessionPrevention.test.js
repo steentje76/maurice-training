@@ -24,9 +24,9 @@ const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   ok(fnBlok.includes("resolution=merge-duplicates"), 'A2: sbPostQ() gebruikt de idempotente upsert-header voor die tabellen');
 }
 
-// ---- B. De idempotente-tabellenlijst bevat expliciet sessions en race_segments ----
-ok(html.match(/IDEMPOTENT_TABELLEN_MET_CLIENT_ID\s*=\s*\{\s*sessions:\s*true,\s*race_segments:\s*true\s*\}/),
-  'B1: sessions en race_segments staan expliciet in de idempotente-tabellenlijst (beide gebruiken een server-gegenereerd uuid zonder client-id, hetzelfde risico)');
+// ---- B. De idempotente-tabellenlijst bevat expliciet sessions, race_segments en nutrition_entries ----
+ok(html.match(/IDEMPOTENT_TABELLEN_MET_CLIENT_ID\s*=\s*\{\s*sessions:\s*true,\s*race_segments:\s*true,\s*nutrition_entries:\s*true\s*\}/),
+  'B1: sessions, race_segments en nutrition_entries (B9-10) staan expliciet in de idempotente-tabellenlijst (alle drie gebruiken een server-gegenereerd/client-gegenereerd uuid, hetzelfde dubbeltel-risico bij een offline-replay)');
 
 // ---- C. flushOfflineQueue() gebruikt DEZELFDE upsert-header voor deze tabellen bij een retry ----
 {

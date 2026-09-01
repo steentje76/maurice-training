@@ -1,6 +1,94 @@
 # Trainingskompas — Changelog
 
+## v4.69.44 — B9-10: Nutrition Product (31 augustus 2026)
+
+Maakt Nutrition daadwerkelijk bruikbaar als productonderdeel -- geen
+Nutrition Intelligence (dat is B9-11, niet vrijgegeven).
+
+EXISTING-STATE AUDIT bevestigde: edit ontbrak volledig (delete+opnieuw
+was de enige route om een fout te corrigeren), geen datumnavigatie
+(alleen "vandaag"), offline was niet geïntegreerd (rechtstreekse
+fetch()-aanroepen).
+
+ZELF GEVONDEN, KRITIEK SECURITY-GAT (P0, migratie_v537.sql): de
+B9-09-RLS-policies controleerden bij een insert/update uitsluitend
+user_id=auth.uid() op de nutrition_entry zelf -- niet of een
+meegegeven training_instance_id/activity_id ook daadwerkelijk van
+dezelfde gebruiker was. Live bevestigd vóór de fix: user B kon een
+training_instance_id van user A koppelen aan zijn eigen entry.
+Gecorrigeerd met een uitgebreide WITH CHECK-clausule die expliciet
+controleert dat een gekoppelde training/activiteit van dezelfde
+auth.uid() is. Live, opnieuw geverifieerd na de fix: geweigerd voor
+andermans training, correct toegestaan voor eigen training.
+
+Edit-functionaliteit (nieuw): nutritionEditEntry()/nutritionSaveEntry()
+combineert create en update in één, hergebruikte flow -- dezelfde
+validatie, dezelfde velden, owner (user_id) en created_at nooit
+onderdeel van de update-payload.
+
+Datumnavigatie (nieuw): vorige/volgende dag + "naar vandaag", op basis
+van de lokale dag (Date.setHours(0,0,0,0)/(23,59,59,999)), geen
+UTC-datumstring-vergelijking die rond middernacht fout zou kunnen gaan.
+
+Offline (B9-09-open-punt, nu gesloten): nutrition_entries-writes
+gemigreerd van rechtstreekse fetch()-aanroepen naar de bestaande,
+bewezen sbPostQ()/sbPatchQ()/sbDelQ()-infrastructuur (IndexedDB-queue
+met owner_uid-binding, retry-logica). nutrition_entries toegevoegd aan
+IDEMPOTENT_TABELLEN_MET_CLIENT_ID (client-gegenereerde id +
+merge-duplicates op de primary key) -- voorkomt dubbele entries bij
+een offline-replay. Geen tweede offline-engine gebouwd.
+
+Hydratatie quick-add (nieuw): +250ml/+500ml-presets die het
+vocht-veld ophogen -- uitsluitend invoerhulp, geen dagdoel-taal.
+
+Completeness-UX (nieuw): PARTIAL-dagtotalen tonen nu "dag mogelijk
+onvolledig" per veld -- neutrale, informatieve taal, geen score of
+beoordeling van de sporter.
+
+Training-context zichtbaar: timing_context (vóór/tijdens/na training)
+wordt nu getoond per entry. Geen concrete training_instance_id-link-UI
+gebouwd (bewuste, door de opdracht expliciet toegestane keuze, sectie
+15 -- voorkomt een foutgevoelige koppeling-flow).
+
+ACCOUNT EXPORT (B9-09-open-punt): opnieuw geaudit, nog steeds geen
+bestaand, generiek account-exportcontract gevonden. Conform optie C
+van de opdracht: blijft een P2/P3-backlogitem, niet blokkerend voor
+B9-10 (privacy en account-deletion zijn al correct bewezen).
+
+core/fB9_10NutritionProduct.test.js (nieuw, 13/13): edit-
+functionaliteit, lokale-dag-datumnavigatie, offline-queue-hergebruik
+(geen tweede engine), de foreign-training-link-security-fix,
+hydratatie-presets zonder dagdoel-taal, completeness-taal, afwezigheid
+van caloriedoel-/macrodoel-gerelateerde velden.
+
+Sabotagebewijs: (1) de ownership-check uit de migratie-tekst verwijderd
+-> gedetecteerd, teruggedraaid, live opnieuw bevestigd dat de
+daadwerkelijke database-fix intact blijft. (2) negatieve waarden
+toegestaan in de validator -> gedetecteerd, teruggedraaid.
+
+Bestaande core/fDuplicateSessionPrevention.test.js bijgewerkt: de
+exacte regex-verwachting van IDEMPOTENT_TABELLEN_MET_CLIENT_ID
+uitgebreid met de nieuwe nutrition_entries-vermelding.
+
+APP_VER v4.69.43 -> v4.69.44 (echte, functionele runtime-wijziging +
+een kritieke database-security-fix). sw.js CACHE_NAME/CACHE_STATIC
+synchroon gebumpt naar v469440. android/app/build.gradle
+gesynchroniseerd (46944/4.69.44).
+
+Volledige regressie: node core/release-gate.js -> 216 uitgevoerd/0
+geskipt/0 gefaald (was 215, +1 nieuw testbestand). node tools/
+check-doc-consistency.js -> volledig groen, 0 problemen.
+
+Geen benchmarkscore toegekend.
+
+FINAL STATUS: B9-10 NUTRITION PRODUCT CLOSED — READY FOR B9-11
+SELECTION.
+
+STOP na B9-10. B9-11 Nutrition Intelligence vereist expliciete
+vrijgave van de Product Owner.
+
 ## v4.69.43 — B9-09: Nutrition Foundation (31 augustus 2026)
+ — B9-09: Nutrition Foundation (31 augustus 2026)
 
 Bouwt het betrouwbare, veilige fundament waarop latere Nutrition-
 functionaliteit veilig kan worden gebouwd. Registreert primair --

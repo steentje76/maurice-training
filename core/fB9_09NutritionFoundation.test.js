@@ -28,7 +28,7 @@ ok(migratie.includes('for select using (user_id = auth.uid())') && migratie.incl
   'A4: RLS is default-private (eigen data, geen social/coach/gym/research-policy toegevoegd)');
 
 // ---- B. Hergebruik van de canonieke core-module, geen dubbele logica ----
-ok(html.includes('NutritionFoundationCore.validateEntry(entry)') && html.includes('NutritionFoundationCore.dailyLoggedTotals(entries)'),
+ok(html.includes('NutritionFoundationCore.validateEntry(') && html.includes('NutritionFoundationCore.dailyLoggedTotals(entries)'),
   'B1: de UI hergebruikt uitsluitend NutritionFoundationCore -- geen eigen, dubbele validatie/optel-logica in index.html');
 {
   const nutritionBlok = html.slice(html.indexOf('function nutritionParseGetal'), html.indexOf('async function nutritionDeleteEntry') + 300);
@@ -42,14 +42,14 @@ ok(html.includes('function nutritionParseGetal') && html.includes("if(waarde==nu
 ok(html.includes("km=v=>v==null?'niet geregistreerd':v"),
   'C2: de UI toont expliciet "niet geregistreerd" i.p.v. een 0 bij ontbrekende dagtotalen');
 {
-  const addFnStart = html.indexOf('async function nutritionAddEntry');
+  const addFnStart = html.indexOf('async function nutritionSaveEntry');
   const addFnEnd = html.indexOf('\n}', addFnStart);
   const addFn = html.slice(addFnStart, addFnEnd);
   const velden = ['nutrition-kcal', 'nutrition-protein', 'nutrition-carbs', 'nutrition-fat', 'nutrition-fluid'];
   const alleGebruikenParseGetal = velden.every(function (veldId) {
     return addFn.includes(`nutritionParseGetal(document.getElementById('${veldId}').value)`);
   });
-  ok(alleGebruikenParseGetal, 'C3: alle vijf nutrition-velden (kcal/protein/carbs/fat/fluid) gebruiken in nutritionAddEntry() daadwerkelijk nutritionParseGetal() -- geen enkel veld stuurt een rauwe, mogelijk lege string of stille 0');
+  ok(alleGebruikenParseGetal, 'C3: alle vijf nutrition-velden (kcal/protein/carbs/fat/fluid) gebruiken in nutritionSaveEntry() (create+update) daadwerkelijk nutritionParseGetal() -- geen enkel veld stuurt een rauwe, mogelijk lege string of stille 0');
 }
 
 // ---- D. Decimaal-parsing (sectie 41): komma wordt correct afgehandeld ----

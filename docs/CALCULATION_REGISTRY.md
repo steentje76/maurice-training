@@ -671,3 +671,34 @@ schatting).
 uit `core/runningIntelligence.js` (CALC-RUN-WEEKLY-001/CALC-RUN-CONSIST-001,
 zie het Running Intelligence-domein hierboven) werken ongewijzigd op
 Cycling-`activities`.
+
+## Domein: Nutrition Intelligence (B9-11)
+
+### NUTR-CALC-002 — Training-Window Logged Intake Summary
+| Veld | Waarde |
+|---|---|
+| Domain | Nutrition Intelligence / Aggregatie |
+| Name | Telling van geregistreerde entries per timing_context (pre/during/post-training) |
+| Version | `nutrition_context.v1` (`core/nutritionIntelligence.js`, `trainingWindowSummary`) |
+| Formula | Groepering en telling per bestaande, user-entered `timing_context`-waarde |
+| Inputs | `nutrition_entries`-rijen van de geselecteerde dag |
+| Outputs | `{pre_training_entries, during_training_entries, post_training_entries}` |
+| Units | Telling (aantal) |
+| Supported sports | Alle (sport-agnostisch, werkt op `timing_context`, niet op sportsoort) |
+| Min data quality | Geen minimum -- 0 entries geeft correct 0 per categorie, `null`-input geeft NOT_AVAILABLE |
+| Evidence level | N/A (zuivere telling, geen sportwetenschappelijke claim) |
+| Confidence | N/A |
+| Sources | N/A |
+| Limitations | Uitsluitend gebaseerd op user-entered `timing_context` -- geen automatische tijdsinterpretatie t.o.v. een trainingstijdstip (bewuste architectuurkeuze, sectie 14) |
+| Scope | Uitsluitend voeding voor de Context Engine (`buildNutritionContext`) |
+| Forbidden interpretations | Een telling van 0 mag NOOIT geinterpreteerd worden als "niet gegeten/gedronken" (logging-gap != nutrition-gap) |
+| Allowed Decision Rules | NUTR-RULE-001, NUTR-RULE-002 |
+| AI permissions | AI heeft geen toegang tot deze calculation binnen B9-11 (geen AI-integratie gebouwd) |
+| Athlete-visible output | Indirect (via de Inzichten-kaart op het Nutrition-scherm) |
+
+**Bewust NIET geregistreerd/geimplementeerd in B9-11**: caloriedoel/
+macrodoel/hydratatievoorschrift-calculations (expliciet buiten scope,
+zie `docs/B9_11_NUTRITION_INTELLIGENCE_REPORT.md`). NUTR-CALC-001
+(Daily Logged Nutrition Totals) is reeds volledig gedekt door de
+bestaande `NutritionFoundationCore.dailyLoggedTotals()` (B9-09) --
+geen duplicaat geregistreerd.

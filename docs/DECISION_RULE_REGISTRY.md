@@ -55,3 +55,29 @@ Geen duplicaat gevonden. Elke regel heeft precies één canonieke implementatie 
 ## MS-F3-07 acceptance-gate-toetsing
 Letterlijke acceptance gate: *"Rule IDs, versions, inputs, outputs, thresholds, forbidden use."*
 **Resultaat: CLOSED.** Alle 9 daadwerkelijke Decision Rules geregistreerd. ACWR/HRV-guardrails opnieuw gecontroleerd op alle consumers — intact. Geen AI-als-decision-engine-violatie. Geen calculation/decision-vermenging. Geen onverklaarde critical threshold.
+
+## B9-11 — Nutrition Intelligence Decision Rules
+
+### NUTR-RULE-001 "Nutrition Data Insufficient" (v1)
+Detecteert uitsluitend DATA-AANWEZIGHEID, nooit een fysiologisch
+tekort. Als er 0 `timing_context`-registraties bestaan rond een
+training, is de output expliciet `insufficient_data` met een neutrale
+boodschap ("Geen voedings- of hydratatieregistratie... gevonden") --
+NOOIT "te weinig gegeten/gedronken". Dit is de harde toepassing van
+sectie 16 van de B9-11-opdracht: logging gap != nutrition gap.
+Geimplementeerd in `core/nutritionIntelligence.js`,
+`evaluateNutritionDecisionRules()`.
+
+### NUTR-RULE-002 "Training-Linked Nutrition Context Available" (v1)
+Als minimaal één `timing_context`-registratie bestaat, retourneert
+deze regel per aanwezig venster (pre/during/post_training) een signaal
+gekoppeld aan een geregistreerde evidence-ID (NUTR-EV-001/002/003, zie
+`docs/B9_11_NUTRITION_EVIDENCE_AUDIT.md`), met een expliciete, lage
+confidence. Geen dosering, geen individuele target -- uitsluitend een
+vaste, algemene, Evidence-Level-C-gebonden contexttekst.
+
+Beide regels zijn zuiver DATA/CONTEXT-detecterend, bevatten geen
+inline threshold op een nutrition-waarde zelf (geen "protein < X"),
+en zijn expliciet geverifieerd via `core/fNutritionIntelligenceCore.test.js`
+(D1: repo-brede afwezigheid van waarde-vergelijkingen op
+protein/fluid/energy/carbohydrate-velden).

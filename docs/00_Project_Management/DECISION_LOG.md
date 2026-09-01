@@ -952,3 +952,37 @@
   eerlijk vastgelegd, geen verzonnen score.
 - **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
   uitgevoerd door Claude tijdens de B9-H1-mastersprint.
+
+## B9-H2A -- Canonical Gym/Club/Organization Architecture
+
+- **Datum:** 1 september 2026.
+- **Context:** de Benchmark 9+ Functional Deep-Dive vond twee
+  parallelle Gym/Club-datamodellen: een ouder, actief systeem
+  (`users.gym_id`/`gym_role`, `gyms`) en een nieuwer, grotendeels
+  ongebruikt systeem (`organizations`/`teams`/`memberships`).
+- **Kritieke, live geverifieerde bevindingen:** (1) `gyms.organization_id`
+  heeft al een bestaande foreign-key naar `organizations(id)` (ON
+  DELETE CASCADE) -- de architectuur was al eerder voorbereid op
+  precies deze consolidatie, nooit afgemaakt. (2) De Coach/PT- en Team
+  Operations-infrastructuur (`coach_program_assignments.organization_id`,
+  `team_events.team_id`) is al gebouwd bovenop het `organizations`/
+  `teams`-model, niet op `gyms`/`gym_id`. (3) Slechts 1 productie-gym
+  bestaat, migratierisico minimaal.
+- **Beslissing:** Strategy C (Controlled Consolidation).
+  `organizations`/`teams`/`memberships` worden de canonieke
+  organisatie-/lidmaatschap-laag. `gyms` blijft bestaan als 1:1
+  product-uitbreiding (branding/billing/pincode) via de bestaande FK.
+  `coach_athlete_relationships` blijft bewust standalone (onafhankelijk
+  van organisatie-lidmaatschap). `users.gym_id`/`gym_role` wordt op
+  termijn, gefaseerd gemigreerd naar `memberships` -- niet in deze
+  sprint uitgevoerd (geen big-bang migratie).
+- **Alternatieven overwogen:** Strategy A (System A uitbreiden --
+  zou feitelijk memberships opnieuw bouwen), Strategy B (direct,
+  volledig migreren zonder tussenstap -- onnodig risicovol gezien de
+  al bestaande, ongebruikte brug).
+- **Impact:** geen code-/schema-wijziging in deze sprint (uitsluitend
+  architectuurvaststelling en documentatie). Vervolgstappen (migratie-
+  fasen, UX-review voor Team/Coach-schermen) vereisen aparte,
+  toekomstige sprints/vrijgaves.
+- **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
+  uitgevoerd door Claude tijdens de B9-H2A-mastersprint.

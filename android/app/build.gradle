@@ -29,8 +29,8 @@ android {
         // RC0: liep uit de pas met de app zelf (die meldde v4.47.0 in het scherm 'Over').
         // Schema: versionCode = major*10000 + minor*100 + patch, zodat elke release
         // aantoonbaar oploopt en één op één te herleiden is tot versionName.
-        versionCode 46947
-        versionName "4.69.47"
+        versionCode 46948
+        versionName "4.69.48"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

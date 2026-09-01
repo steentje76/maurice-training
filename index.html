@@ -6252,7 +6252,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.47';
+const APP_VER = 'v4.69.48';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -7430,7 +7430,7 @@ async function offlineQueueRemove(id){
 // server een idempotente upsert (Prefer: resolution=merge-duplicates) --
 // een exacte replay met hetzelfde, client-gegenereerde id overschrijft
 // zichzelf onschadelijk, in plaats van een tweede rij aan te maken.
-const IDEMPOTENT_TABELLEN_MET_CLIENT_ID = { sessions: true, race_segments: true, nutrition_entries: true };
+const IDEMPOTENT_TABELLEN_MET_CLIENT_ID = { sessions: true, race_segments: true, nutrition_entries: true, team_events: true };
 function newClientRowId(){
   return (typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():('row-'+Date.now()+'-'+Math.random().toString(16).slice(2));
 }

@@ -108,16 +108,16 @@ zijn functionele/evidence-gaps, geen zichtbare UX-wijzigingen).
 **GAP ID:** B9G-TEAM-001
 **DOMAIN:** Team Operations
 **TYPE:** FUNC
-**CURRENT BEHAVIOR:** `team_events`/`event_attendance`/`event_responsibilities` bestaan volledig als backend-schema, 0 UI/Netlify-integratie -- geen enkele gebruiker kan dit vandaag gebruiken.
+**CURRENT BEHAVIOR:** `team_events`/`event_attendance`/`event_responsibilities` zijn nu functioneel compleet (B9-H2C: meeting-time, lifecycle, availability/attendance-splitsing, notificaties, recurring), volledig RLS-beveiligd en live adversariaal bevestigd -- maar nog steeds 0 UI-integratie.
 **EXPECTED 9+ BEHAVIOR:** een coach kan een event aanmaken, leden zien tijd/locatie, geven beschikbaarheid aan, verantwoordelijkheden worden toegewezen.
-**EVIDENCE:** repo-brede `grep`, 0 treffers in index.html/netlify/functions voor alle drie tabellen.
-**USER IMPACT:** HOOG -- blokkeert de volledige, in de opdracht beschreven teamworkflow.
-**DEPENDENCIES:** B9G-GYM-001 (architectuurambiguïteit eerst oplossen).
-**SECURITY IMPACT:** RLS van deze tabellen niet binnen deze sessie live geverifieerd -- vereist verificatie vóór implementatie.
-**DATA IMPACT:** geen (schema bestaat al).
-**IMPLEMENTATION COMPLEXITY:** HOOG (nieuwe Netlify-functie(s) + nieuw scherm).
-**BLOCKS 9.0:** YES
-**UX MOCK-UP NEEDED:** YES (nieuw scherm, valt onder de B9-H1-UX-gate)
+**EVIDENCE:** `docs/B9_H2C_TEAM_OPERATIONS_FUNCTIONAL_MODEL.md`, `docs/B9_H2C_TEAM_OPERATIONS_SECURITY_MATRIX.md`, live security-tests (S3/S4/S5/anon), core/fB9_H2CTeamOperations.test.js 21/21.
+**USER IMPACT:** HOOG -- backend niet langer blokkerend, UI blijft de enige resterende blocker.
+**DEPENDENCIES:** UX-goedkeuring voor het nieuwe scherm (B9-H1-UX-gate).
+**SECURITY IMPACT:** live, adversariaal bevestigd geen regressie -- inclusief een zelf gevonden en gerepareerde kritieke gap (staff kon oorspronkelijk geen attendance van anderen registreren).
+**DATA IMPACT:** migratie_v540.sql live toegepast (meeting_at/status/duplicated_from_event_id/stage-kolommen, geen productiedata-verlies).
+**IMPLEMENTATION COMPLEXITY:** MEDIUM (backend compleet, resteert uitsluitend UI-implementatie na goedkeuring).
+**BLOCKS 9.0:** YES (uitsluitend vanwege ontbrekende UI)
+**UX MOCK-UP NEEDED:** YES (nieuw scherm, valt onder de B9-H1-UX-gate, zie `docs/B9_H2C_TEAM_OPERATIONS_UI_REQUIREMENTS.md` voor de functionele specificatie)
 **STATUS:** OPEN -- BLOCKED UNTIL UX PHASE (conform sectie 27 van de opdracht: functionaliteit vereist hier een nieuw scherm, dus niet gebouwd in deze sprint)
 
 **GAP ID:** B9G-COACH-001

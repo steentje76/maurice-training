@@ -1,6 +1,107 @@
 # Trainingskompas — Changelog
 
+## v4.69.48 — B9-H2C: Team Operations 9+ Functional Enablement (1 september 2026)
+
+Bouwt Team Operations functioneel/backend-matig uit vanaf de laagste
+benchmarkscore (6.8). Geen enkel scherm gebouwd -- functionaliteit
+eerst, conform de absolute scope van deze opdracht. Baseline
+geverifieerd: main `a0d665b`, release gate 221/221 groen vóór wijziging.
+
+Bestaand vóór deze sprint (existing-state audit, live herbevestigd):
+`teams`/`team_events`/`event_attendance`/`event_responsibilities`/
+`team_has_access()` bestonden al volledig, RLS-beveiligd -- maar 0%
+toegankelijk via de UI (bevestigd in B9-H1).
+
+migratie_v540.sql (live toegepast): meeting-time (apart veld i.p.v. in
+description verstopt), event-lifecycle (planned/cancelled/completed),
+availability-vs-attendance-splitsing (`event_attendance.stage`, met
+een aparte unique-constraint per stage), recurring-events via een
+eenvoudige self-reference (`duplicated_from_event_id`, geen complete
+recurrence-engine), en volledige notificatie-integratie voor event-
+create/update/cancel/responsibility-assigned via de bestaande, veilige
+`social_create_notification`-RPC (uitbreiding van de al bestaande
+event_type/target_type-whitelist, zelfde patroon als B9G-SOC-002).
+
+VIJF ECHTE, ZELF GEVONDEN EN GEREPAREERDE GATEN TIJDENS DEZE SPRINT:
+
+1. **Idempotency:** `team_events` ontbrak in de bestaande
+   `IDEMPOTENT_TABELLEN_MET_CLIENT_ID`-registratie -- een netwerk-retry
+   bij event-aanmaak kon een duplicaat event creëren. Toegevoegd aan
+   het bestaande mechanisme (geen nieuw framework).
+2. **Account deletion:** `team_events`/`event_attendance`/
+   `event_responsibilities` hadden al correcte CASCADE/SET NULL-FK's
+   naar auth.users, maar stonden niet expliciet in de
+   account-deletion-lijst (auditeerbaarheid). Toegevoegd, met een
+   expliciet gedocumenteerd aandachtspunt: `team_events.created_by`
+   heeft CASCADE, dus een verwijderde teammaker laat het hele event
+   verdwijnen (bestaande, niet in deze sprint gewijzigde keuze).
+3. **KRITIEKE FUNCTIONELE GAP (gevonden tijdens UI-requirements-
+   analyse):** de bestaande RLS op `event_attendance` stond
+   UITSLUITEND self-mutatie toe voor zowel `availability` als
+   `attendance` -- een coach kon dus helemaal geen aanwezigheid voor
+   een ander teamlid registreren, terwijl dit een kernvereiste is van
+   Team Operations (sectie 16). Nieuwe RLS-policies toegevoegd:
+   coach/manager/staff (via de bestaande `team_has_access()`) mag nu
+   een `attendance`-rij van een teamlid muteren; `availability` blijft
+   expliciet, strikt self-only, ook voor staff (sectie 49: "Athlete
+   mag availability van andere athlete niet manipuleren"). Live,
+   adversariaal bevestigd op beide punten: (a) coach kan nu attendance
+   voor een teamlid registreren -> geslaagd; (b) coach kan nog steeds
+   NIET de availability van een teamlid wijzigen -> RLS-violation,
+   correct geweigerd.
+
+LIVE, ADVERSARIAAL BEVESTIGD (transacties zonder commit, 0 restanten):
+S3 (normaal lid maakt event) geweigerd; S4 (coach Team A wijzigt Team
+B event) geweigerd; S5 (taak toewijzen aan gebruiker buiten het team)
+geweigerd; anon op `team_has_access()` en alle 5 nieuwe/gewijzigde
+RPC's: `execute`-recht bevestigd `false` voor elk.
+
+core/fB9_H2CTeamOperations.test.js (nieuw, 21/21): lifecycle,
+availability/attendance-splitsing, notificatie-integratie, geen
+self-elevation-route, geen dubbele engines, en de drie zelf gevonden
+gaten (idempotency/deletion/RLS-fix), elk met een eigen assertie.
+
+Sabotagebewijs: de naam van de nieuwe, kritieke RLS-policy gewijzigd
+zodat de fix niet meer herkenbaar zou zijn -> gedetecteerd,
+teruggedraaid.
+
+docs/B9_H2C_TEAM_OPERATIONS_EXISTING_STATE_AUDIT.md,
+docs/B9_H2C_TEAM_OPERATIONS_FUNCTIONAL_MODEL.md,
+docs/B9_H2C_TEAM_OPERATIONS_SECURITY_MATRIX.md,
+docs/B9_H2C_TEAM_OPERATIONS_FUNCTIONAL_BENCHMARK.md,
+docs/B9_H2C_TEAM_OPERATIONS_UI_REQUIREMENTS.md (alle vijf nieuw):
+volledige operationele-lus-audit, security-matrix, functionele
+benchmark tegen TeamSnap/Spond/Heja/TeamBuildr (functioneel, niet
+visueel), en gedetailleerde UI-requirements per de vijf resterende
+product-capabilities (team-agenda, event-CRUD, availability,
+attendance, responsibilities) -- geen layout/kleur/knopplaatsing,
+uitsluitend functionele vereisten conform sectie 60.
+
+BACKEND/FUNCTIONAL FOUNDATION SCORE: sterk verbeterd (volledige
+operationele lus nu backend-compleet). USER-ACCESSIBLE PRODUCT SCORE:
+onveranderd laag (0% toegankelijk zonder scherm) -- expliciet GEEN
+9.0 toegekend, conform sectie 58. UX SCORE: DEFERRED.
+
+APP_VER v4.69.47 -> v4.69.48. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469480. android/app/build.gradle gesynchroniseerd
+(46948/4.69.48).
+
+Volledige regressie: node core/release-gate.js -> 222 uitgevoerd/0
+geskipt/0 gefaald (was 221, +1 nieuw testbestand). node tools/
+check-doc-consistency.js -> volledig groen, 0 problemen.
+
+Geen benchmarkscore toegekend.
+
+FINAL STATUS: B9-H2C TEAM OPERATIONS FUNCTIONAL FOUNDATION CLOSED —
+USER ACCESS REQUIRES PRODUCT OWNER APPROVED UI.
+
+STOP. Geen scherm gebouwd, geen menu gemaakt, geen navigatie
+aangepast, geen Coach/PT-sprint gestart, geen algemene UX-fase of F15
+gestart. Wacht op Product Owner-beoordeling van de UI-requirements en
+een concreet schermvoorstel.
+
 ## v4.69.47 — B9-H2B: Organization Controlled Consolidation (1 september 2026)
+ — B9-H2B: Organization Controlled Consolidation (1 september 2026)
 
 Voert de in B9-H2A formeel gekozen Strategy C daadwerkelijk, technisch
 uit: `organizations`/`teams`/`memberships` worden de canonieke,

@@ -1016,3 +1016,26 @@
   UI/UX gewijzigd.
 - **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
   uitgevoerd door Claude tijdens de B9-H2B-mastersprint.
+
+## B9-H2C -- Team Operations Functional Enablement, kritieke RLS-gap gerepareerd
+
+- **Datum:** 1 september 2026.
+- **Context:** Team Operations had de laagste benchmarkscore (6.8).
+  Het backend-fundament bestond al (vorige sprint), maar was 0%
+  bruikbaar zonder UI. Deze sprint bouwt de resterende, functionele
+  backend-laag uit: meeting-time, event-lifecycle, availability/
+  attendance-splitsing, recurring-events, notificatie-integratie.
+- **Kritieke, zelf gevonden functionele gap tijdens UI-requirements-
+  analyse:** de bestaande RLS op `event_attendance` stond uitsluitend
+  self-mutatie toe -- een coach kon geen aanwezigheid voor een ander
+  teamlid registreren, een kernvereiste van teamoperaties. Nieuwe
+  RLS-policies toegevoegd die coach/staff toestaan attendance van
+  anderen te muteren, terwijl availability strikt self-only blijft.
+  Live, adversariaal bevestigd op beide punten.
+- **Impact:** Team Operations backend/functional foundation nu
+  compleet voor de volledige, in de opdracht beschreven operationele
+  lus. Geen UI gebouwd -- vijf concrete product-capabilities
+  gedocumenteerd voor Product Owner-beoordeling
+  (`docs/B9_H2C_TEAM_OPERATIONS_UI_REQUIREMENTS.md`).
+- **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
+  uitgevoerd door Claude tijdens de B9-H2C-mastersprint.

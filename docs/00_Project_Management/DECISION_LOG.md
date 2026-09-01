@@ -986,3 +986,33 @@
   toekomstige sprints/vrijgaves.
 - **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
   uitgevoerd door Claude tijdens de B9-H2A-mastersprint.
+
+## B9-H2B -- Organization Controlled Consolidation (Strategy C uitgevoerd)
+
+- **Datum:** 1 september 2026.
+- **Context:** B9-H2A koos formeel Strategy C (Controlled
+  Consolidation). B9-H2B voert deze daadwerkelijk, technisch uit.
+- **Uitgevoerd:** migratie_v539.sql, live toegepast. De bestaande gym
+  (`art-crossfit`) gekoppeld aan een nieuwe, canonieke
+  `organizations`-rij (deterministische id = gym-id). 5 bestaande
+  gebruikers gemigreerd naar canonieke `memberships`-rijen (1 owner, 4
+  members).
+- **Vier issues zelf gevonden en gerepareerd tijdens uitvoering:**
+  type-mismatch (text vs uuid), een trigger die de legitieme, eerste
+  koppeling blokkeerde, een tot dan toe onbekende constraint
+  (`gyms_owner_context_chk`) die bevestigde dat `owner_email` leeg
+  moet zijn na koppeling, en een idempotentie-bug (NULL-waarden in een
+  unique constraint worden door PostgreSQL nooit als gelijk
+  beschouwd) -- live, adversarial bevestigd en gecorrigeerd.
+- **Security, live bevestigd:** een legacy `gym_role='owner'`-waarde
+  voor een andere gym geeft geen enkele canonieke autorisatie-impact
+  (kritieke sabotage S2, geslaagd). Cross-tenant coach-assignment-
+  spoofing geweigerd. Anon-toegang tot de organization-helper-functie
+  geweigerd.
+- **Impact:** `organizations`/`teams`/`memberships` zijn nu de
+  daadwerkelijk gevulde, canonieke bron. `users.gym_id`/`gym_role`
+  blijven bestaan als read-only, non-authoritative compatibility
+  (deprecation-plan vastgelegd, geen big-bang verwijdering). Geen
+  UI/UX gewijzigd.
+- **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
+  uitgevoerd door Claude tijdens de B9-H2B-mastersprint.

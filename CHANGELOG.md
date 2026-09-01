@@ -1,6 +1,123 @@
 # Trainingskompas — Changelog
 
+## v4.69.47 — B9-H2B: Organization Controlled Consolidation (1 september 2026)
+
+Voert de in B9-H2A formeel gekozen Strategy C daadwerkelijk, technisch
+uit: `organizations`/`teams`/`memberships` worden de canonieke,
+gevulde organisatie-/lidmaatschapslaag. Geen Team/Coach/Gym-scherm
+gebouwd, geen navigatiewijziging.
+
+Baseline geverifieerd: main `820ed47`, release gate 220/220 groen vóór
+wijziging.
+
+Live productiedata-inventaris (zonder PII in documentatie/logs): 1
+gym (`art-crossfit`), 5 gebruikers gekoppeld, 2 distincte
+`gym_role`-waarden (`owner`: 1, `lid`: 4), 0 bestaande organizations/
+memberships.
+
+migratie_v539.sql (live toegepast): een deterministische,
+idempotente migratie -- de organization-id is bewust gelijk aan de
+gym-id zelf, zodat een herhaalde uitvoering nooit een tweede
+organization voor dezelfde gym aanmaakt. Role-mapping expliciet en
+fail-safe: uitsluitend de twee bekende waarden (`owner`->`owner`,
+`lid`->`member`) worden gemigreerd, een onbekende waarde krijgt geen
+membership (geen automatische admin/owner-promotie).
+
+VIER ECHTE, KRITIEKE ISSUES ZELF GEVONDEN EN GEREPAREERD TIJDENS
+UITVOERING (het kernresultaat van deze sprint):
+
+1. **Type-mismatch:** `users.id` is `text`, `organizations.owner_user_id`/
+   `memberships.user_id` zijn `uuid` -- expliciete cast toegevoegd.
+2. **Trigger blokkeerde de legitieme, eerste koppeling:** de bestaande
+   `prevent_gyms_organization_id_change()`-trigger blokkeerde
+   onvoorwaardelijk elke wijziging aan `gyms.organization_id`, ook de
+   allereerste (NULL -> waarde). Gecorrigeerd naar de kennelijk bedoelde
+   bescherming: een eenmalige toewijzing blijft toegestaan, elke
+   verdere wijziging (kapen van een bestaande koppeling) blijft
+   geblokkeerd.
+3. **Onbekende, reeds bestaande constraint ontdekt:**
+   `gyms_owner_context_chk` vereist dat `owner_email` leeg is zodra
+   `organization_id` gezet is -- bevestigt de architectuurbeslissing
+   zelf als bestaande database-regel. `owner_email` wordt daarom
+   expliciet geleegd bij koppeling (0 treffers in actieve code, live
+   bevestigd vóór deze wijziging -- geen backward-compatibility-risico).
+4. **Idempotentie-bug:** `on conflict (user_id, organization_id,
+   team_id) do nothing` bleek NIET betrouwbaar te werken wanneer
+   `team_id = NULL` -- PostgreSQL behandelt twee NULL-waarden in een
+   unique constraint nooit als gelijk aan elkaar. Live, adversarial
+   bevestigd (sabotage S1): een tweede, identieke uitvoering gaf 10
+   i.p.v. de verwachte 5 memberships. Vervangen door een expliciete
+   `where not exists`-check, die wel correct met NULL omgaat -- live
+   herbevestigd: 5 memberships na twee uitvoeringen.
+
+LIVE MIGRATIE, DEFINITIEF TOEGEPAST EN GEVERIFIEERD: 1 organization
+(`art-crossfit`), 5 memberships (1 owner, 4 members -- exact matchend
+met de vooraf bekende mapping), `gyms.organization_id` gevuld,
+`gyms.owner_email` correct geleegd.
+
+SECURITY, LIVE ADVERSARIAAL GETEST (transacties zonder commit, 0
+restanten): (1) **legacy-auth-bypass (S2, kritiek):** een testgebruiker
+met een legacy `gym_role='owner'`-waarde voor een ANDERE gym probeerde
+de bestaande, canonieke organisatie te wijzigen -> **geen effect,
+geweigerd** -- de RLS gebruikt uitsluitend `owner_user_id`/
+`memberships`, nooit `users.gym_role`. (2) Een coach-program-assignment
+naar een foreign organization -> RLS-violation, geweigerd. (3) Anon op
+de `org_has_role`-helper-functie -> `execute`-recht bevestigd `false`,
+harde weigering, geen datalek.
+
+OWNERSHIP, ARCHITECTUREEL, DEFINITIEF BEVESTIGD: 10 tabellen hebben een
+foreign key naar `organizations` (teams/memberships/seasons/locations/
+equipment_catalog/exercise_equipment/coach_program_templates/
+coach_program_assignments/gyms/billing_events) -- geen enkele daarvan
+is een persoonlijke trainingsdata-tabel. Organization-deletion kan dus
+nooit persoonlijke trainingsgeschiedenis/HRV/nutrition/Women's
+Performance-data raken.
+
+ACCOUNT-/ORGANIZATION-DELETION: `organizations`/`memberships` bleken al
+vóór deze sprint (MS-F11-01) correct opgenomen in
+`netlify/functions/delete-account.js`. Bestaand, bewust gedrag
+bevestigd: bij verwijdering van een organisatie-eigenaar wordt de hele
+organisatie cascade-verwijderd (geen "blokkeren"/"vereist
+overdracht") -- live, met een geïsoleerde testorganisatie bevestigd
+dat deze cascade uitsluitend organisatie-eigen data raakt.
+
+core/fB9_H2BOrganizationConsolidation.test.js (nieuw, 13/13):
+deterministische mapping, idempotentie (met het expliciete
+sabotagebewijs), role-mapping, legacy-non-authoritatief, geen
+permanente dual-write, geen UI-wijziging.
+
+docs/B9_H2B_ORGANIZATION_MIGRATION_PLAN.md,
+docs/B9_H2B_ORGANIZATION_MIGRATION_REPORT.md,
+docs/B9_H2B_CANONICAL_AUTHORIZATION_MATRIX.md,
+docs/B9_H2B_LEGACY_DEPRECATION_PLAN.md (alle vier nieuw): volledige
+migratiematrix, live-uitvoeringsverslag, autorisatiematrix, en een
+per-element deprecation-plan voor `users.gym_id`/`gym_role`/
+`gym_role_level` (blijven voorlopig bestaan als read-only compatibility,
+canonieke bron is nu `memberships`).
+
+APP_VER v4.69.46 -> v4.69.47 (echte database-/backend-wijziging, geen
+UI-wijziging). sw.js CACHE_NAME/CACHE_STATIC synchroon gebumpt naar
+v469470. android/app/build.gradle gesynchroniseerd (46947/4.69.47).
+
+Volledige regressie: node core/release-gate.js -> 221 uitgevoerd/0
+geskipt/0 gefaald (was 220, +1 nieuw testbestand). node tools/
+check-doc-consistency.js -> volledig groen, 0 problemen.
+
+Geen benchmarkscore toegekend.
+
+FOUNDATION READINESS: Gym/Club FOUNDATION VALIDATED. Team Operations
+FOUNDATION READY. Coach/PT FOUNDATION READY. Geen 9.0-score enkel op
+basis van deze migratie.
+
+FINAL STATUS: B9-H2B ORGANIZATION CONTROLLED CONSOLIDATION CLOSED —
+CANONICAL FOUNDATION VALIDATED.
+
+STOP. Geen Team/Coach-scherm gebouwd, geen UX-fase gestart, geen F15
+gestart. Wacht op Product Owner-selectie van de volgende, functionele
+9+ stap.
+
 ## v4.69.46 — Benchmark 9+ Functional Deep-Dive + B9G-SOC-002 (31 augustus 2026)
+ — Benchmark 9+ Functional Deep-Dive + B9G-SOC-002 (31 augustus 2026)
 
 **Repo-brede functionele deep-dive** over alle 13 door de Product Owner
 aangewezen benchmarkdomeinen (Team Operations/Coach-PT/Devices-

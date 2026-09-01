@@ -102,3 +102,80 @@ geregistreerd met STATUS: OPEN, PRIORITY: P2 (geen van deze blokkeert
 een kritieke user journey op de manier die B9G-UX-001 wel doet), en
 UX MOCK-UP REQUIRED: NO tenzij expliciet anders vermeld (de meeste
 zijn functionele/evidence-gaps, geen zichtbare UX-wijzigingen).
+
+## Functionele uitbreiding (Benchmark 9+ Functional Deep-Dive)
+
+**GAP ID:** B9G-TEAM-001
+**DOMAIN:** Team Operations
+**TYPE:** FUNC
+**CURRENT BEHAVIOR:** `team_events`/`event_attendance`/`event_responsibilities` bestaan volledig als backend-schema, 0 UI/Netlify-integratie -- geen enkele gebruiker kan dit vandaag gebruiken.
+**EXPECTED 9+ BEHAVIOR:** een coach kan een event aanmaken, leden zien tijd/locatie, geven beschikbaarheid aan, verantwoordelijkheden worden toegewezen.
+**EVIDENCE:** repo-brede `grep`, 0 treffers in index.html/netlify/functions voor alle drie tabellen.
+**USER IMPACT:** HOOG -- blokkeert de volledige, in de opdracht beschreven teamworkflow.
+**DEPENDENCIES:** B9G-GYM-001 (architectuurambiguïteit eerst oplossen).
+**SECURITY IMPACT:** RLS van deze tabellen niet binnen deze sessie live geverifieerd -- vereist verificatie vóór implementatie.
+**DATA IMPACT:** geen (schema bestaat al).
+**IMPLEMENTATION COMPLEXITY:** HOOG (nieuwe Netlify-functie(s) + nieuw scherm).
+**BLOCKS 9.0:** YES
+**UX MOCK-UP NEEDED:** YES (nieuw scherm, valt onder de B9-H1-UX-gate)
+**STATUS:** OPEN -- BLOCKED UNTIL UX PHASE (conform sectie 27 van de opdracht: functionaliteit vereist hier een nieuw scherm, dus niet gebouwd in deze sprint)
+
+**GAP ID:** B9G-COACH-001
+**DOMAIN:** Coach/PT
+**TYPE:** FUNC
+**CURRENT BEHAVIOR:** `coach_athlete_relationships`/`coach_program_assignments`/`coach_program_templates` bestaan volledig als backend-schema, 0 UI/Netlify-integratie. `netlify/functions/coach.js` is de AI-coach-proxy, geen PT-relatiebeheer.
+**EXPECTED 9+ BEHAVIOR:** een coach kan tientallen atleten uitnodigen, programma's toewijzen, voortgang monitoren.
+**EVIDENCE:** repo-brede `grep`, 0 treffers.
+**USER IMPACT:** HOOG.
+**DEPENDENCIES:** B9G-TEAM-001, B9G-GYM-001.
+**SECURITY IMPACT:** "data after relationship ends"-scenario nog niet getest (kan pas zodra een UI-laag bestaat).
+**DATA IMPACT:** geen.
+**IMPLEMENTATION COMPLEXITY:** HOOG (nieuw scherm).
+**BLOCKS 9.0:** YES
+**UX MOCK-UP NEEDED:** YES
+**STATUS:** OPEN -- BLOCKED UNTIL UX PHASE
+
+**GAP ID:** B9G-GYM-001
+**DOMAIN:** Gym/Club
+**TYPE:** DATA / architectuur
+**CURRENT BEHAVIOR:** twee parallelle systemen bestaan: `users.gym_id`/`gym_role` (actief, via `gym-team.js`) versus `organizations`/`teams`/`gyms`/`memberships` (backend-only, ongebruikt).
+**EXPECTED 9+ BEHAVIOR:** één, duidelijk canoniek systeem, of een bewuste, gedocumenteerde migratiestrategie tussen beide.
+**EVIDENCE:** live database-schema-audit + repo-brede `grep` op beide systemen.
+**USER IMPACT:** MEDIUM (het bestaande systeem werkt voor de huidige, eenvoudige use-case; de ambiguïteit is een risico voor toekomstige uitbreiding, geen acuut, zichtbaar gebruikersprobleem).
+**DEPENDENCIES:** blokkeert B9G-TEAM-001/B9G-COACH-001.
+**SECURITY IMPACT:** geen nieuw gevonden probleem, wel een risico op toekomstige inconsistentie als beide systemen ooit tegelijk worden gebruikt.
+**DATA IMPACT:** een architectuurbeslissing hier bepaalt of toekomstige data-migratie nodig is.
+**IMPLEMENTATION COMPLEXITY:** MEDIUM (architectuurbeslissing + eventuele migratie, geen nieuwe UI op zichzelf).
+**BLOCKS 9.0:** YES (indirect, via de twee bovenstaande gaps)
+**UX MOCK-UP NEEDED:** NO / LATER (dit is primair een architectuurbeslissing, geen zichtbare UX-wijziging op zichzelf)
+**STATUS:** OPEN -- vereist een expliciete Product Owner-beslissing over welk systeem canoniek wordt, vóór B9G-TEAM-001/B9G-COACH-001 kunnen starten.
+
+**GAP ID:** B9G-DEV-001
+**DOMAIN:** Devices/Wearables
+**TYPE:** VALID
+**CURRENT BEHAVIOR:** architectuur correct (OAuth/token-vault/sync server-side), geen enkele provider fysiek, extern gevalideerd.
+**EXPECTED 9+ BEHAVIOR:** minimaal één provider REAL DEVICE VALIDATED.
+**EVIDENCE:** geen extern provideraccount/hardware beschikbaar binnen een geautomatiseerde sessie.
+**USER IMPACT:** MEDIUM.
+**DEPENDENCIES:** extern (buiten Trainingskompas se controle).
+**SECURITY IMPACT:** geen nieuw gevonden probleem.
+**DATA IMPACT:** geen.
+**IMPLEMENTATION COMPLEXITY:** N.v.t. (externe validatie, geen implementatie).
+**BLOCKS 9.0:** NO (SOFTWARE 9+ READY blijft haalbaar zonder dit)
+**UX MOCK-UP NEEDED:** NO
+**STATUS:** OPEN -- EXTERNAL VALIDATION OPEN, niet-blokkerend voor software-gereedheid.
+
+**GAP ID:** B9G-SOC-002
+**DOMAIN:** Social
+**TYPE:** FUNC
+**CURRENT BEHAVIOR:** notificatie-generatie beperkt tot connection_request/connection_accepted.
+**EXPECTED 9+ BEHAVIOR:** ook notificaties voor reacties/comments/challenge-mijlpalen.
+**EVIDENCE:** B9-07B/B9-08-codeaudit binnen deze sessie.
+**USER IMPACT:** LAAG-MEDIUM.
+**DEPENDENCIES:** geen.
+**SECURITY IMPACT:** geen (hergebruik van de bestaande, veilige RPC).
+**DATA IMPACT:** geen nieuwe tabel nodig.
+**IMPLEMENTATION COMPLEXITY:** LAAG.
+**BLOCKS 9.0:** NO
+**UX MOCK-UP NEEDED:** NO (functionele uitbreiding van bestaand, ongewijzigd notificatiescherm)
+**STATUS:** CLOSED -- geimplementeerd via migratie_v538.sql, live adversarial herbevestigd, core/fB9G_SOC_002_ReactionCommentNotifications.test.js 7/7. Geen UX-wijziging, conform vooraf gemarkeerd "UX MOCK-UP NEEDED: NO".

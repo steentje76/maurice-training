@@ -1,6 +1,101 @@
 # Trainingskompas — Changelog
 
+## v4.69.46 — Benchmark 9+ Functional Deep-Dive + B9G-SOC-002 (31 augustus 2026)
+
+**Repo-brede functionele deep-dive** over alle 13 door de Product Owner
+aangewezen benchmarkdomeinen (Team Operations/Coach-PT/Devices-
+Wearables/Gym-Club/Social/Triathlon/Women's Performance/Ergometers/
+Cycling/Running/Recovery/Commercial/HYROX-Athlete Intelligence).
+
+TWEE KRITIEKE, NIEUWE BEVINDINGEN:
+
+1. Team Operations en Coach/PT hebben allebei een volledig, correct
+   gestructureerd backend-datamodel (team_events/event_attendance/
+   event_responsibilities; coach_athlete_relationships/coach_program_
+   assignments/coach_program_templates/coach_access_scopes) dat 0
+   functionele UI- of API-integratie heeft -- uitsluitend een
+   verwijzing in de account-deletion-dekking (defensief, geen
+   business-logic). Dit verklaart de lage baseline-scores (6.8/7.5)
+   niet als "onvolledige functionaliteit" maar als "functionaliteit
+   die vandaag volledig onbereikbaar is voor een echte gebruiker".
+2. Gym/Club heeft twee parallelle systemen: een ouder, daadwerkelijk
+   actief systeem (`users.gym_id`/`gym_role`, bediend door
+   `netlify/functions/gym-team.js`) en een nieuwer, rijker datamodel
+   (`organizations`/`teams`/`gyms`/`memberships`) dat volledig
+   ongebruikt ligt (0 treffers in index.html). Live, onafhankelijk
+   geverifieerd.
+
+Beide grootste gaps (Team Operations, Coach/PT) vereisen een volledig
+nieuw scherm -- conform de in de vorige sprint (B9-H1) ingestelde,
+verplichte UX-gate zijn ze expliciet BLOCKED UNTIL UX PHASE, niet
+geïmplementeerd. De Gym/Club-architectuurambiguïteit is evenmin
+eigenmachtig opgelost -- vereist een expliciete Product Owner-
+beslissing.
+
+**Kleine, veilige functionele fix wél geïmplementeerd (B9G-SOC-002,
+LAAG complexiteit, expliciet UX MOCK-UP NEEDED: NO):** notificaties nu
+ook voor reacties en comments op gedeelde activiteiten, naast de
+bestaande connection/group/challenge-events. migratie_v538.sql breidt
+de bestaande, veilige `social_notifications`-infrastructuur uit (twee
+nieuwe, toegestane `event_type`-waarden, één nieuwe `target_type`-
+waarde) en werkt de bestaande `social_create_notification`-RPC bij --
+alle bestaande security-eigenschappen (SECURITY DEFINER, expliciete
+search_path, authenticatiecheck, zelf-notificatie-preventie) live,
+onafhankelijk herbevestigd na de wijziging.
+
+`socialToggleReaction()`/`socialPostComment()` roepen nu de bestaande
+RPC aan met de eigenaar van de gedeelde activiteit als ontvanger --
+geen nieuwe engine, geen nieuwe tabel, geen schermwijziging (uitsluitend
+het bestaande, ongewijzigde notificatiescherm toont nu ook deze twee
+typen).
+
+core/fB9G_SOC_002_ReactionCommentNotifications.test.js (nieuw, 7/7):
+migratie-eigenschappen, RPC-security-behoud, zelf-notificatie-
+preventie, geen nieuwe schermstructuur.
+
+Live, adversarial herbevestigd: een zelf-notificatie-poging via de
+bijgewerkte RPC blijft correct geweigerd (0 resultaten); de anon-rol
+heeft na de `CREATE OR REPLACE FUNCTION` nog steeds geen execute-recht
+(regressie op de B9-07-P0-les, expliciet herbevestigd).
+
+docs/BENCHMARK_9_PLUS_FUNCTIONAL_DEEP_DIVE.md,
+docs/BENCHMARK_9_PLUS_FUNCTIONAL_DEPENDENCY_GRAPH.md,
+docs/BENCHMARK_9_PLUS_FUNCTIONAL_HARDENING_PLAN.md (alle drie al
+aangemaakt door een eerdere, onderbroken sessie -- deze keer grondig,
+onafhankelijk geverifieerd, niet blind vertrouwd: de kernbevindingen
+zijn live tegen de database en de repo bevestigd, met één kleine,
+genuanceerde precisering over de aard van de bestaande
+delete-account.js-verwijzing).
+
+docs/BENCHMARK_9_PLUS_GAP_REGISTRY.md: B9G-SOC-002 van OPEN naar
+CLOSED bijgewerkt.
+
+Geen enkele UX-/navigatie-/schermwijziging doorgevoerd, conform de
+absolute scope van deze opdracht.
+
+APP_VER v4.69.45 -> v4.69.46. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469460. android/app/build.gradle gesynchroniseerd
+(46946/4.69.46).
+
+Volledige regressie: node core/release-gate.js -> 219 uitgevoerd/0
+geskipt/0 gefaald (was 218, +1 nieuw testbestand). node tools/
+check-doc-consistency.js -> volledig groen, 0 problemen.
+
+Geen benchmarkscore toegekend als productclaim.
+
+FINAL STATUS: functionele deep-dive compleet voor alle 13 domeinen.
+Twee grootste gaps (Team Operations, Coach/PT) BLOCKED UNTIL UX PHASE.
+Gym/Club-architectuurbeslissing vereist Product Owner-input. Eén
+kleine, veilige functionele fix (B9G-SOC-002) geimplementeerd en
+CLOSED. Overige domeinen: zie het volledige rapport voor per-domein
+status.
+
+STOP. Wacht op Product Owner-selectie van de volgende functionele
+hardeningsgolf, de Gym/Club-architectuurbeslissing, en/of de UX-review
+voor Team Operations/Coach-PT.
+
 ## v4.69.45 — B9-11: Nutrition Intelligence (31 augustus 2026)
+ — B9-11: Nutrition Intelligence (31 augustus 2026)
 
 Bouwt een veilige, trainingsgerichte interpretatielaag boven
 geregistreerde Nutrition-data. Geen dieetcoach, geen calorie-/

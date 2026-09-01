@@ -3011,6 +3011,18 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
   </nav>
 </div>
+<!-- ═══ B9-05 · CYCLING INSIGHTS (Training → Fietsen → Inzichten, geen extra bottom-nav) ═══ -->
+<div class="scr" id="s-cycling-insights">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Inzichten</div><div class="hdr-sub">Fietsen</div></div><button class="ibtn" onclick="go('s-cycling')" aria-label="Terug naar Fietsen">←</button></div></div>
+  <div class="scroll" id="cycling-insights-scroll"></div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
+  </nav>
+</div>
 <div class="scr" id="s-guided">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Begeleide training</div><div class="hdr-sub">Je coach, stap voor stap</div></div><button class="ibtn" onclick="if(window.GWUI)GWUI.quit();else go('s-builder')" aria-label="Terug naar Workout Builder">←</button></div></div>
   <div class="scroll" id="gw-scroll"></div>
@@ -5460,6 +5472,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/enduranceExecution.js"></script>
 <script src="core/runningExecution.js"></script>
 <script src="core/runningIntelligence.js"></script>
+<script src="core/cyclingIntelligence.js"></script>
 <script src="core/progression.js"></script>
 <script src="core/intervalEngine.js"></script>
 <script src="core/coaching.js"></script>
@@ -6202,7 +6215,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.37';
+const APP_VER = 'v4.69.38';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -9938,6 +9951,7 @@ function go(id){
   if(id==='s-guided'&&window.GWUI)GWUI.render();
   if(id==='s-running')renderRunningEntry();
   if(id==='s-running-insights')renderRunningInsights();
+  if(id==='s-cycling-insights')renderCyclingInsights();
   if(id==='s-cycling')renderCyclingShell();
   if(id==='s-hist'){histOff=0;renderHistFilterTabs();loadHistory();}
   if(id==='s-train-mgr'){renderSportSwitcher();renderV43Train();}
@@ -10893,7 +10907,7 @@ function renderCyclingShell(){
   _cyclingGekozenVorm=null;
   el.innerHTML=`
     <div style="padding:16px">
-      <button class="btn btn-o btn-sm" style="margin-bottom:14px" onclick="go('s-cycling-insights')" aria-label="Bekijk Fietsen-inzichten" disabled title="Volgt in een latere sprint">📊 Inzichten (B9-05)</button>
+      <button class="btn btn-o btn-sm" style="margin-bottom:14px" onclick="go('s-cycling-insights')" aria-label="Bekijk Fietsen-inzichten">📊 Inzichten</button>
       <p style="font-size:13px;color:var(--g4);margin:0 0 14px">Kies een trainingsvorm. Geen sensoren nodig — je vult zelf gegevens in.</p>
       <div class="v43-tmt" id="cycling-vormen-lijst"></div>
       <div id="cycling-log-form" style="margin-top:16px"></div>
@@ -11079,6 +11093,10 @@ function renderCyclingExecutionScreen(){
       ${st.status==='FINISH_CONFIRM'?`
         <div class="card"><div class="card-body">
           <p style="font-size:15px;margin-bottom:14px">Training afronden?</p>
+          <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;text-align:left">
+            <input type="checkbox" id="cycling-is-max-effort" style="width:20px;height:20px">
+            Was dit een maximale test-/wedstrijdinspanning?
+          </label>
           <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px;text-align:left">Afstand (km, indien niet automatisch bekend)</label>
           <input type="number" inputmode="decimal" step="0.01" min="0" id="cycling-finish-afstand-km" style="width:100%;margin-bottom:10px" placeholder="optioneel">
           <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px;text-align:left">Gemiddeld vermogen (W, optioneel)</label>
@@ -11152,6 +11170,8 @@ async function cyclingConfirmFinish(){
     const powerEl=document.getElementById('cycling-finish-power');
     const cadenceEl=document.getElementById('cycling-finish-cadence');
     const rpeEl=document.getElementById('cycling-finish-rpe');
+    const isMaxEffortEl=document.getElementById('cycling-is-max-effort');
+    const isMaxEffort=isMaxEffortEl?isMaxEffortEl.checked:false;
     const afstandKm=afstandKmEl?parseFloat(afstandKmEl.value):NaN;
     const power=powerEl?parseFloat(powerEl.value):NaN;
     const cadence=cadenceEl?parseFloat(cadenceEl.value):NaN;
@@ -11166,6 +11186,7 @@ async function cyclingConfirmFinish(){
       source_provenance:'manual',data_quality:'unverified',
       recorded_at:new Date(_cyclingExecState.startedAt).toISOString(),
       dedupe_key:dedupeKey,
+      is_max_effort:isMaxEffort,
       rpe:isFinite(rpeWaarde)&&rpeWaarde>=0&&rpeWaarde<=10?rpeWaarde:null
     };
     await fetch(`${SB_URL}/rest/v1/activities`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify(payload)});
@@ -11246,8 +11267,147 @@ async function renderCyclingHistory(){
     const km=r.distance_meters?(r.distance_meters/1000).toFixed(1)+' km':'';
     const duur=r.duration_seconds?CardioCore.formatTime(r.duration_seconds):'';
     const sub=[km,duur].filter(Boolean).join(' · ')||'Geen details';
-    return `<div class="row" style="cursor:default"><span class="b"><span class="t">${datum}</span><span class="s">${sub}</span></span></div>`;
+    return `<button class="row" onclick="renderRideDetail('${r.id}')" aria-label="Bekijk rit van ${datum}"><span class="b"><span class="t">${datum}</span><span class="s">${sub}</span></span><span class="ar">›</span></button>`;
   }).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// B9-05 — Cycling Intelligence (Training → Fietsen → Inzichten)
+// ══════════════════════════════════════════════════════════
+// Hergebruikt de generieke, sport-neutrale RunningIntelligenceCore.
+// weeklyVolume()/consistency() (geen duplicaat -- die functies bevatten
+// geen enkele running-specifieke aanname). CyclingIntelligenceCore
+// levert uitsluitend de echte, inhoudelijke fiets-specifieke verschillen
+// (afstandsschaal, vermogen). Alle berekeningen via canonieke engines,
+// geen shadow calculation.
+async function renderCyclingInsights(){
+  const el=document.getElementById('cycling-insights-scroll');
+  if(!el)return;
+  el.innerHTML='<div style="padding:16px"><p style="font-size:13px;color:var(--g4)">Laden…</p></div>';
+  const activities=await sbGet('activities', "&sport=eq.cycling&order=recorded_at.asc&limit=500");
+  const n=activities.length;
+
+  if(n===0){
+    el.innerHTML='<div style="padding:16px"><div class="card"><div class="card-body"><p style="font-size:14px;margin:0">Nog geen ritten opgeslagen. Rond je eerste fietstraining af om hier inzichten te zien opbouwen.</p></div></div></div>';
+    return;
+  }
+
+  const nu=new Date();
+  const perWeek=RunningIntelligenceCore.weeklyVolume(activities);
+  const huidigeWeekKey=RunningIntelligenceCore.weekKeyFromDate(nu);
+  const huidigeWeek=perWeek[huidigeWeekKey]||{distanceMeters:0,durationSeconds:0,count:0};
+  const consist=RunningIntelligenceCore.consistency(activities,8,nu);
+
+  function rollingTotaal(weken){
+    let afstand=0,duur=0,aantal=0;
+    for(let i=0;i<weken;i++){
+      const wkDate=new Date(new Date(huidigeWeekKey+'T00:00:00Z').getTime()-i*7*86400000);
+      const wk=wkDate.toISOString().slice(0,10);
+      if(perWeek[wk]){afstand+=perWeek[wk].distanceMeters;duur+=perWeek[wk].durationSeconds;aantal+=perWeek[wk].count;}
+    }
+    return {afstand,duur,aantal};
+  }
+  const r4=rollingTotaal(4), r8=rollingTotaal(8);
+
+  // Snelheidstrend per fiets-specifieke afstandsband (appels-met-appels,
+  // GEEN hergebruik van Running se afstandsbanden -- fietsschaal is anders).
+  const perfsMetSnelheid=activities.filter(a=>a.distance_meters>0&&a.duration_seconds>0).map(a=>{
+    const band=CyclingIntelligenceCore.speedBandKey(a.distance_meters);
+    const split=CardioCore.splitFromDistTime(a.distance_meters,a.duration_seconds,1000);
+    return band&&split!=null?{key:band,date:a.recorded_at.slice(0,10),paceSecPerKm:split}:null;
+  }).filter(Boolean);
+  const bandenAanwezig=[...new Set(perfsMetSnelheid.map(p=>p.key))];
+  const snelheidTrends=bandenAanwezig.map(band=>{
+    const trend=ProgressionCore.trendBy(perfsMetSnelheid,band,'paceSecPerKm','min',3);
+    const labels={cycling_lt20km:'< 20 km',cycling_20_50km:'20-50 km',cycling_50_100km:'50-100 km',cycling_100km_plus:'100+ km'};
+    return {band,label:labels[band]||band,trend};
+  });
+
+  // Vermogenstrend (nieuw t.o.v. Running -- fietsen heeft deze extra
+  // dimensie). Geen band-groepering nodig: vermogen is al genormaliseerd
+  // (watt), geen afstand-afhankelijke context zoals pace.
+  const perfsMetPower=activities.filter(a=>a.avg_power_watts>0).map(a=>({key:'cycling_power',date:a.recorded_at.slice(0,10),avgPowerWatts:a.avg_power_watts}));
+  const powerTrend=perfsMetPower.length?ProgressionCore.trendBy(perfsMetPower,'cycling_power','avgPowerWatts','max',3):null;
+
+  // Critical Power (sectie 26-27 B9-05, analoog aan Critical Speed B9-03):
+  // uitsluitend expliciet gemarkeerde max-effort-ritten met vermogensdata.
+  const cpElig=CyclingIntelligenceCore.criticalPowerEligiblePerformances(activities,3);
+  let cpResultaat=null;
+  if(cpElig.status==='eligible'){
+    try{
+      const r=CardioCore.criticalPower(cpElig.performances);
+      if(r&&r.status==='valid')cpResultaat=r;
+    }catch(e){cpResultaat=null;}
+  }
+
+  // FTP: uitsluitend user-entered, expliciete provenance, geen "95% van
+  // 20-min-power"-schatting toegevoegd.
+  let profielRij=null;
+  try{
+    const rows=await sbGet('athlete_endurance_profile', `&sport=eq.cycling&limit=1`);
+    profielRij=rows&&rows[0]?rows[0]:null;
+  }catch(e){profielRij=null;}
+  const ftp=profielRij&&profielRij.ftp_watts_user_entered?profielRij.ftp_watts_user_entered:null;
+
+  // Load: hergebruik van de bestaande, canonieke TrainingLoadCore.
+  const srpeWaarden=activities.filter(a=>a.rpe!=null&&a.duration_seconds>0).map(a=>TrainingLoadCore.sessionLoadSRPE(a.duration_seconds,a.rpe));
+  const rollingLoad=TrainingLoadCore.rollingLoadSum(srpeWaarden);
+  const aantalMetRpe=srpeWaarden.filter(v=>v!=null).length;
+
+  const km=m=>(m/1000).toFixed(1);
+  const uur=s=>CardioCore.formatTime(s);
+
+  el.innerHTML=`
+    <div style="padding:16px">
+      <div class="card" style="margin-bottom:14px"><div class="card-body">
+        <div style="font-size:12px;color:var(--g4);margin-bottom:2px">Deze week</div>
+        <div style="font-size:24px;font-weight:700">${km(huidigeWeek.distanceMeters)} km</div>
+        <div style="font-size:13px;color:var(--g4)">${huidigeWeek.count} rit(ten) · ${uur(huidigeWeek.durationSeconds)}</div>
+      </div></div>
+
+      <div class="card" style="margin-bottom:14px"><div class="card-body">
+        <div class="card-title" style="margin-bottom:8px">Volume</div>
+        <div style="font-size:13px;margin-bottom:4px">Laatste 4 weken: <b>${km(r4.afstand)} km</b> · ${r4.aantal} rit(ten)</div>
+        <div style="font-size:13px">Laatste 8 weken: <b>${km(r8.afstand)} km</b> · ${r8.aantal} rit(ten)</div>
+      </div></div>
+
+      <div class="card" style="margin-bottom:14px"><div class="card-body">
+        <div class="card-title" style="margin-bottom:8px">Trainingsconsistentie</div>
+        <div style="font-size:13px">${consist.activeWeeks} van de laatste ${consist.totalWeeks} weken actief</div>
+        <div style="font-size:11px;color:var(--g4);margin-top:4px">Technische, afgeleide indicator (Evidence Level E) — zegt niets over verwachte prestaties.</div>
+      </div></div>
+
+      ${snelheidTrends.length?`<div class="card" style="margin-bottom:14px"><div class="card-body">
+        <div class="card-title" style="margin-bottom:8px">Snelheidstrend</div>
+        ${snelheidTrends.map(st=>`<div style="font-size:13px;margin-bottom:6px"><b>${st.label}:</b> ${st.trend.status==='insufficient'?'Nog onvoldoende gegevens voor een betrouwbare trend ('+st.trend.n+' van 3 nodig)':(st.trend.improving===true?'Sneller geworden':st.trend.improving===false?'Langzamer geworden':'Stabiel')+' over '+st.trend.n+' vergelijkbare ritten'}</div>`).join('')}
+      </div></div>`:'<div class="card" style="margin-bottom:14px"><div class="card-body"><p style="font-size:13px;margin:0">Nog geen snelheidstrend beschikbaar — vul afstand én duur in bij je ritten.</p></div></div>'}
+
+      <div class="card" style="margin-bottom:14px"><div class="card-body">
+        <div class="card-title" style="margin-bottom:8px">Vermogenstrend</div>
+        ${powerTrend?(powerTrend.status==='insufficient'?`<div style="font-size:13px;color:var(--g4)">Nog onvoldoende gegevens voor een betrouwbare trend (${powerTrend.n} van 3 nodig)</div>`:`<div style="font-size:13px">${powerTrend.improving===true?'Hoger geworden':powerTrend.improving===false?'Lager geworden':'Stabiel'} over ${powerTrend.n} ritten met vermogensdata</div>`):`<div style="font-size:13px;color:var(--g4)">Geen vermogensdata ingevuld</div>`}
+      </div></div>
+
+      <div class="card" style="margin-bottom:14px"><div class="card-body">
+        <div class="card-title" style="margin-bottom:8px">FTP</div>
+        <div style="font-size:13px">${ftp?ftp+' W (bron: door jou ingesteld)':'Nog niet ingesteld'}</div>
+      </div></div>
+
+      <div class="card" style="margin-bottom:14px"><div class="card-body">
+        <div class="card-title" style="margin-bottom:8px">Critical Power</div>
+        ${cpResultaat?`<div style="font-size:13px">${Math.round(cpResultaat.cp_w)} W — gebaseerd op ${cpResultaat.n_performances} gemarkeerde maximale inspanningen (betrouwbaarheid: ${cpResultaat.confidence})</div>`:`<div style="font-size:13px;color:var(--g4)">${cpElig.status==='eligible'?'Onvoldoende variatie in de gemarkeerde inspanningen voor een betrouwbare berekening':cpElig.label+' ('+cpElig.n+'/'+cpElig.minRequired+')'}</div>`}
+        <div style="font-size:11px;color:var(--g4);margin-top:4px">Alleen berekend uit ritten die je zelf als maximale test-/wedstrijdinspanning hebt gemarkeerd.</div>
+      </div></div>
+
+      <div class="card" style="margin-bottom:14px"><div class="card-body">
+        <div class="card-title" style="margin-bottom:8px">Belasting</div>
+        ${aantalMetRpe>0?`<div style="font-size:13px">Rolling load (laatste ${aantalMetRpe} ritten met RPE): <b>${rollingLoad}</b> AU</div>`:`<div style="font-size:13px;color:var(--g4)">Nog geen RPE ingevuld — vul dit bij het afronden van een rit in om belasting te zien.</div>`}
+      </div></div>
+
+      <div class="card"><div class="card-body">
+        <div class="card-title" style="margin-bottom:8px">Powerzones</div>
+        <div style="font-size:13px;color:var(--g4)">Nog niet beschikbaar (canonieke berekening ontbreekt) — geen verzonnen zones.</div>
+      </div></div>
+    </div>`;
 }
 
 // ══════════════════════════════════════════════════════════

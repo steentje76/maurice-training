@@ -613,3 +613,61 @@ HR-zones (geen gevalideerde, universeel toepasbare formule), TRIMP
 bevonden -- sRPE/rolling load is de gekozen, eenvoudigere loadmetriek),
 aerobic decoupling (onvoldoende datagranulariteit -- alleen gemiddelde
 HR per activiteit/lap, geen continue tijdreeks beschikbaar).
+
+## Domein: Cycling Intelligence (B9-05)
+
+### CALC-CYC-SPEEDBAND-001 — Afstandsband voor snelheidsvergelijking (fietsschaal)
+| Veld | Waarde |
+|---|---|
+| Domain | Cycling Intelligence / Context |
+| Name | Groeperingssleutel op basis van afstand, fiets-specifieke schaal |
+| Version | `cycling_speed_band.v1` (`core/cyclingIntelligence.js`, `speedBandKey`) |
+| Formula | `<20km` / `20-50km` / `50-100km` / `100km+`, gebaseerd op `distance_meters/1000` |
+| Inputs | `distance_meters` |
+| Outputs | Een van vier band-sleutels, of `null` bij ontbrekende/ongeldige afstand |
+| Units | N/A (categorisch) |
+| Supported sports | Cycling |
+| Min data quality | `distance_meters` moet een positief getal zijn |
+| Evidence level | N/A (contextuele groepering, geen sportwetenschappelijke claim) |
+| Confidence | N/A |
+| Sources | N/A |
+| Limitations | Eigen, fiets-specifieke banden (bewust NIET de Running-banden hergebruikt -- fietsafstanden liggen typisch 5-10x hoger dan hardloopafstanden, dezelfde banden zouden een verkeerde, misleidende groepering geven) |
+| Scope | Voeding voor `ProgressionCore.trendBy()` als groeperings-`key` voor snelheidstrend |
+| Forbidden interpretations | Geen |
+| Allowed Decision Rules | Geen |
+| AI permissions | N/A (interne groeperingssleutel) |
+| Athlete-visible output | Nee (intern gebruikt, de labels wel zichtbaar) |
+
+### CALC-CYC-CPELIG-001 — Critical Power-geschiktheidsfilter
+| Veld | Waarde |
+|---|---|
+| Domain | Cycling Intelligence / Data Quality Guard |
+| Name | Selecteert uitsluitend expliciet gemarkeerde max-effort-ritten met vermogensdata als input voor `CardioCore.criticalPower()` |
+| Version | `cycling_cp_eligibility.v1` (`core/cyclingIntelligence.js`, `criticalPowerEligiblePerformances`) |
+| Formula | Filter op `is_max_effort === true` + geldige `avg_power_watts`/`duration_seconds`; `status: 'insufficient'` bij minder dan 3 (standaard) geschikte activiteiten |
+| Inputs | `activities` (met de bestaande, B9-03 `is_max_effort`-kolom, nu ook gebruikt voor Cycling via een nieuwe UI-checkbox) |
+| Outputs | `{status, n, performances}` of `{status:'insufficient', n, minRequired}` |
+| Units | N/A (filter/guard, geen berekende sportwaarde zelf) |
+| Supported sports | Cycling |
+| Min data quality | Minimaal 3 expliciet gemarkeerde, geldige max-effort-ritten MET vermogensdata (een gemarkeerde rit zonder `avg_power_watts` telt niet mee) |
+| Evidence level | N/A -- data-guard, geen sportwetenschappelijke calculation zelf (CALC-END-004B/Critical Power, ongewijzigd) |
+| Confidence | N/A (overgenomen van CALC-END-004B's eigen `confidence`-output) |
+| Sources | N/A |
+| Limitations | Vertrouwt volledig op de eerlijkheid van de gebruiker se opt-in markering |
+| Scope | Uitsluitend als voorfilter vóór `CardioCore.criticalPower()` (CALC-END-004B) |
+| Forbidden interpretations | Een rit die niet expliciet gemarkeerd is, mag NOOIT Critical Power voeden, ongeacht hoe hoog het vermogen lijkt |
+| Allowed Decision Rules | Geen |
+| AI permissions | AI mag de uitkomst (wel/niet genoeg data) uitleggen, nooit zelf de eligibiliteit herberekenen |
+| Athlete-visible output | Indirect (via de Critical Power-kaart op het Cycling-Inzichten-scherm) |
+
+**Bewust NIET geregistreerd/geimplementeerd in B9-05** (expliciete,
+gemotiveerde architectuurkeuzes, zie
+`docs/B9_05_CYCLING_INTELLIGENCE_REPORT.md`): power zones (geen
+gevalideerde, canonieke formule), canonieke FTP-testprotocol-berekening
+(alleen user-entered blijft de bron, geen "95% van 20-min-power"-
+schatting).
+
+**Hergebruikt, GEEN duplicaat** (bevestigd sport-neutraal): `weeklyVolume()`/`consistency()`
+uit `core/runningIntelligence.js` (CALC-RUN-WEEKLY-001/CALC-RUN-CONSIST-001,
+zie het Running Intelligence-domein hierboven) werken ongewijzigd op
+Cycling-`activities`.

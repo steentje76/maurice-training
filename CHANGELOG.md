@@ -1,6 +1,77 @@
 # Trainingskompas — Changelog
 
+## v4.69.37 — B9-04: Cycling Core (31 augustus 2026)
+
+Bouwt een volwaardige Cycling Core, volledig bruikbaar zonder wearable/
+GPS/HR/power meter/cadance sensor.
+
+Deep audit van core/runningExecution.js (B9-02B): bevestigde dat de
+state machine/timer/laps-kern altijd al volledig sport-neutraal was --
+geen enkele running-specifieke aanname. Gegeneraliseerd naar
+core/enduranceExecution.js (EnduranceExecutionCore); core/
+runningExecution.js blijft ONGEWIJZIGD bestaan als een dunne, backward-
+compatible alias -- nul regressierisico op de bewezen, B9-02/B9-02B/
+B9-02C-geteste Running-functionaliteit. Alle 126 bestaande Running-
+assertions herbevestigd groen na de refactor.
+
+Cycling Core (Training -> Fietsen): 7 trainingsvormen, configuratie,
+Preview (afstand/duur/structuur/FTP met expliciete "door jou
+ingesteld"-provenance), volledige live Execution via de gedeelde
+EnduranceExecutionCore (start/pause/resume/laps/structured intervals/
+finish-confirm), Ride Detail, History -> Ride Detail. Km/h wordt
+uitsluitend via CardioCore.splitFromDistTime() (triviale
+eenheidsconversie) getoond, geen lokale distance/duration-formule.
+
+Shared-device security (B9-02C-les direct toegepast): een user-
+specifieke localStorage-key + expliciete ownerUserId-verificatie bij
+elk herstel, en dezelfde, strikte corrupted-state-validatie
+(Array.isArray/isFinite) als Running -- de eerder gevonden P1
+(wrong-user-recovery) kon hierdoor niet opnieuw ontstaan.
+
+Idempotency/failure-atomicity: dezelfde, bewezen strategie als Running
+(dedupe_key + ignore-duplicates + individuele lap-controle, geen
+false-success).
+
+FTP: uitsluitend user-entered met expliciete provenance getoond -- geen
+canonieke FTP-berekening, dus geen "bro-science"-formule (bijv.
+95%-van-20-min-power) toegevoegd. Power-zones tonen expliciet "nog
+niet beschikbaar" (geen canonieke berekening). RPE hergebruikt het
+bestaande activities.rpe-veld, geen tweede, Cycling-specifiek veld.
+GPS: geen live tracking gebouwd (bestaande capability-boundary blijft
+van kracht, geen pseudo-GPS).
+
+Geen extra bottom-nav-tab. Hardlopen en Fietsen blijven twee aparte,
+first-class bestemmingen, geen samenvoeging.
+
+core/fB9_04CyclingCore.test.js (nieuw, 22/22): architectuur (gedeelde
+engine, geen copy/paste state machine), Training-IA-behoud,
+canonieke km/h-berekening, FTP-provenance, geen power-zone-bro-science,
+shared-device security, idempotency/failure-atomicity, RPE-hergebruik,
+geen extra bottom-nav-tab, geen pseudo-GPS.
+
+core/fB9_02RunningCore.test.js bijgewerkt (F3): de oude, specifieke
+cycling-payload-check aangepast naar de nieuwe, volledige Cycling
+Core-implementatie.
+
+Sabotagebewijs: (1) de cycling-owner-verificatie verwijderd ->
+gedetecteerd, teruggedraaid. (2) de runningExecution.js-alias-
+doorverwijzing verbroken -> dubbel gedetecteerd (eigen testsuite EN de
+volledige, bestaande Running-testsuite crashte) -- bevestigt hoe
+kritiek de alias is voor de bestaande functionaliteit, teruggedraaid.
+
+APP_VER v4.69.36 -> v4.69.37 (echte, functionele runtime-wijziging).
+sw.js CACHE_NAME/CACHE_STATIC synchroon gebumpt naar v469370.
+android/app/build.gradle gesynchroniseerd (46937/4.69.37).
+
+Volledige regressie: node core/release-gate.js -> 207 uitgevoerd/0
+geskipt/0 gefaald (was 206, +1 nieuw testbestand). node tools/
+check-doc-consistency.js -> volledig groen, 0 problemen.
+
+Geen benchmarkscore toegekend (voorbehouden aan de onafhankelijke
+Benchmark 9.0-eigenaar).
+
 ## v4.69.36 — B9-03: Running Intelligence (31 augustus 2026)
+ — B9-03: Running Intelligence (31 augustus 2026)
 
 Bouwt van verzamelde Running-data bruikbare, verantwoorde intelligentie
 op verzoek van de Benchmark 9.0-eigenaar.

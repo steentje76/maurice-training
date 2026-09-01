@@ -179,3 +179,21 @@ zijn functionele/evidence-gaps, geen zichtbare UX-wijzigingen).
 **BLOCKS 9.0:** NO
 **UX MOCK-UP NEEDED:** NO (functionele uitbreiding van bestaand, ongewijzigd notificatiescherm)
 **STATUS:** CLOSED -- geimplementeerd via migratie_v538.sql, live adversarial herbevestigd, core/fB9G_SOC_002_ReactionCommentNotifications.test.js 7/7. Geen UX-wijziging, conform vooraf gemarkeerd "UX MOCK-UP NEEDED: NO".
+
+
+## B9-H2A -- Gym/Club Architecture Reconciliation
+
+**GAP ID:** B9G-GYM-002
+**DOMAIN:** Gym/Club, Team Operations, Coach/PT
+**TYPE:** DATA (architectuur/canonicalisatie)
+**CURRENT BEHAVIOR:** twee parallelle organisatiemodellen bestonden naast elkaar.
+**EXPECTED 9+ BEHAVIOR:** exact één canonieke organisatie-/lidmaatschapslaag.
+**EVIDENCE:** docs/B9_H2A_ORGANIZATION_ARCHITECTURE_DECISION.md, live database-audit.
+**USER IMPACT:** indirect (blokkeert Team/Coach-functionaliteit).
+**DEPENDENCIES:** geen (deze sprint lost de ambiguiteit zelf op).
+**SECURITY IMPACT:** geen regressie (self-elevation live herbevestigd geweigerd).
+**DATA IMPACT:** architectuurbeslissing vastgelegd, migratie nog niet uitgevoerd.
+**IMPLEMENTATION COMPLEXITY:** HOOG (toekomstige, gefaseerde migratie).
+**BLOCKS 9.0:** YES (voor Team Operations en Coach/PT).
+**UX MOCK-UP NEEDED:** LATER (voor de uiteindelijke Team/Coach-schermen, niet voor de architectuurbeslissing zelf).
+**STATUS:** ARCHITECTURE DECIDED -- migratie-uitvoering en UI-implementatie blijven open, aparte, toekomstige sprints.

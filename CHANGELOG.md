@@ -1,6 +1,77 @@
 # Trainingskompas — Changelog
 
+## v4.69.42 — B9-08: Social Intelligence (31 augustus 2026)
+
+Bouwt een veilige, nuttige Social Intelligence-laag boven het bruikbare
+B9-07-fundament, zonder engagement-optimalisatie of vanity metrics.
+
+Existing-state audit: `AdherenceIntelligenceCore` (F7) en
+`SocialChallengeCore` (F9/B9-07) bevestigd volledig herbruikbaar --
+geen tweede adherence-engine, geen tweede challenge-engine gebouwd.
+Geen bestaande ranking-/leaderboard-/score-infrastructuur gevonden.
+`tkCoachDataBlok()` bevat geen Social-data -- geen bestaande
+AI-integratie om uit te breiden.
+
+core/socialIntelligence.js (nieuw): pure, deterministische aggregatie
+boven reeds RLS-gefilterde, geautoriseerde data (privacy vóór
+intelligence). `activitySummary()`: pure tellingen (actieve challenges,
+open volgverzoeken, ongelezen meldingen, nieuwe reacties op eigen
+gedeelde trainingen) -- `null`/ontbrekende data wordt nooit als 0
+behandeld (missing != zero, error != empty). `challengeIntelligence()`:
+hergebruikt uitsluitend `SocialChallengeCore` voor progressie en
+status, GEEN ranking gebouwd (bewuste, expliciet toegestane
+architectuurkeuze -- de zesvoudige voorwaarde uit de opdracht werd niet
+overtuigend voldaan binnen deze sprint). `groupNotifications()`:
+deterministische groepering van gelijksoortige, ongelezen events op
+hetzelfde target-object ("3x: wil je volgen" i.p.v. drie losse kaarten).
+
+Nieuwe "Samenvatting"-kaart bovenaan het bestaande Sociaal-scherm:
+toont de vier activitySummary-tellingen, met een expliciete "Onbekend
+(kon niet laden)"-melding bij een query-fout i.p.v. een misleidende 0.
+Notificatielijst nu gegroepeerd via `groupNotifications()`.
+
+BEWUST NIET GEBOUWD (expliciete, toegestane uitkomsten, geen
+tekortkoming): ranking/leaderboard, athlete-to-athlete comparison
+(geen vergelijkbare-metric-contract gevonden dat aan alle zeven
+vereisten voldoet), recommendations los van wat B9-07 al toont (geen
+aantoonbare, aanvullende productwaarde), AI-integratie (geen bewezen
+toegevoegde waarde binnen deze sprint -- de deterministische laag
+staat al op zichzelf).
+
+Privacy-through-aggregation live, adversarial getest: een shared
+activity met zichtbaarheid 'connections' en een reactie erop zijn
+beide onzichtbaar (0 resultaten) voor een niet-verbonden, derde
+gebruiker -- de aggregatielaag kan dus nooit meer tonen dan wat de
+onderliggende RLS al toestaat, ongeacht welke telling erbovenop wordt
+gebouwd.
+
+core/fSocialIntelligenceCore.test.js (nieuw, 15/15): determinisme,
+geen mutatie, missing != zero, hergebruik van bestaande engines, geen
+ranking-velden, deterministische notificatiegroepering met behoud van
+alle onderliggende ids.
+
+Sabotagebewijs: ontbrekende data (`null`) als 0 behandeld -> gedetecteerd
+(sabotage-scenario 9 uit de opdracht), teruggedraaid.
+
+APP_VER v4.69.41 -> v4.69.42. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469420. android/app/build.gradle gesynchroniseerd
+(46942/4.69.42).
+
+Volledige regressie: node core/release-gate.js -> 213 uitgevoerd/0
+geskipt/0 gefaald (was 212, +1 nieuw testbestand). node tools/
+check-doc-consistency.js -> volledig groen, 0 problemen.
+
+Geen benchmarkscore toegekend.
+
+FINAL STATUS: B9-08 SOCIAL INTELLIGENCE CLOSED — READY FOR B9-09
+SELECTION.
+
+Conform de opdracht: STOP na B9-08. B9-09/10/11 Nutrition en alle
+overige Benchmark 9.0-sprints vereisen expliciete vrijgave van de
+Product Owner.
+
 ## v4.69.41 — B9-07B: Social Product Layer Closure (31 augustus 2026)
+ — B9-07B: Social Product Layer Closure (31 augustus 2026)
 
 Sluit de resterende blockers van B9-07 (PARTIAL). Voortgezet vanaf een
 gedeeltelijk voltooide, onderbroken werkboom -- niet blind vertrouwd,

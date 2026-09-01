@@ -5493,6 +5493,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/socialChallenge.js"></script>
 <script src="core/socialPrivacy.js"></script>
 <script src="core/socialSharing.js"></script>
+<script src="core/socialIntelligence.js"></script>
 <script src="core/progression.js"></script>
 <script src="core/intervalEngine.js"></script>
 <script src="core/coaching.js"></script>
@@ -6235,7 +6236,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.41';
+const APP_VER = 'v4.69.42';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -10836,7 +10837,35 @@ async function renderSocialScreen(){
   try{blocks=await sbGet('social_blocks',`&blocker_id=eq.${uid}`);}catch(e){}
   const profiel=profielRows&&profielRows[0]?profielRows[0]:null;
 
+  // B9-08 Social Intelligence: uitsluitend een pure aggregatie boven
+  // reeds RLS-gefilterde, geautoriseerde data (privacy vóór intelligence,
+  // sectie 4.2). Elke query hieronder is dezelfde als B9-07 al gebruikte
+  // -- geen nieuwe, bredere toegang. 'null' bij een fout, nooit een
+  // stille lege array die als "0" zou worden gelezen.
+  let activeChallengesRaw=null,unreadNotifsRaw=null,recentReactionsRaw=null;
+  try{
+    const alleChallenges=await sbGet('social_challenges','&order=starts_at.desc&limit=30');
+    const vandaag=new Date().toISOString().slice(0,10);
+    activeChallengesRaw=alleChallenges.filter(c=>SocialChallengeCore.challengeStatus(c.starts_at,c.ends_at,vandaag)==='active');
+  }catch(e){}
+  try{unreadNotifsRaw=await sbGet('social_notifications',`&recipient_id=eq.${uid}&read_at=is.null`);}catch(e){}
+  try{
+    const eigenShares=await sbGet('social_shared_activities',`&athlete_id=eq.${uid}&limit=20`);
+    if(eigenShares.length){
+      const ids=eigenShares.map(s=>s.id);
+      recentReactionsRaw=await sbGet('social_reactions',`&shared_activity_id=in.(${ids.join(',')})&user_id=neq.${uid}`);
+    }else{recentReactionsRaw=[];}
+  }catch(e){}
+  const samenvatting=SocialIntelligenceCore.activitySummary({activeChallenges:activeChallengesRaw,pendingFollowRequests:pendingIn,unreadNotifications:unreadNotifsRaw,recentReactionsOnOwnShares:recentReactionsRaw});
+
   el.innerHTML=`
+    <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Samenvatting</div></div><div class="card-body">
+      <div style="font-size:13px;margin-bottom:4px">${samenvatting.activeChallenges===null?'Onbekend (kon niet laden)':samenvatting.activeChallenges+' actieve challenge(s)'}</div>
+      <div style="font-size:13px;margin-bottom:4px">${samenvatting.pendingFollowRequests===null?'Onbekend (kon niet laden)':samenvatting.pendingFollowRequests+' openstaand volgverzoek(en)'}</div>
+      <div style="font-size:13px;margin-bottom:4px">${samenvatting.unreadNotifications===null?'Onbekend (kon niet laden)':samenvatting.unreadNotifications+' ongelezen melding(en)'}</div>
+      <div style="font-size:13px">${samenvatting.recentReactionsOnOwnShares===null?'Onbekend (kon niet laden)':samenvatting.recentReactionsOnOwnShares+' nieuwe reactie(s) op jouw gedeelde trainingen'}</div>
+    </div></div>
+
     <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Mijn profiel</div></div><div class="card-body">
       <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Weergavenaam</label>
       <input type="text" id="social-display-name" maxlength="60" style="width:100%;margin-bottom:10px" value="${profiel?escHtml(profiel.display_name||''):''}" placeholder="Hoe anderen je zien">
@@ -11103,7 +11132,23 @@ async function socialRenderNotifications(){
   try{notifs=await sbGet('social_notifications',`&recipient_id=eq.${uid}&order=created_at.desc&limit=20`);}catch(e){}
   if(!notifs.length){el.innerHTML='<p style="font-size:13px;color:var(--g4);margin:0">Geen meldingen.</p>';return;}
   const labels={connection_request:'wil je volgen',connection_accepted:'heeft je volgverzoek geaccepteerd',group_invite:'nodigde je uit voor een groep',group_join_approved:'jouw groepslidmaatschap is goedgekeurd',challenge_invite:'nodigde je uit voor een challenge'};
-  el.innerHTML=notifs.map(n=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;${n.read_at?'opacity:.6':''}"><span style="font-size:12px">${escHtml(n.actor_id)} ${labels[n.event_type]||n.event_type}</span>${!n.read_at?`<button class="btn btn-o btn-sm" onclick="socialMarkNotificationRead('${n.id}')">Gelezen</button>`:''}</div>`).join('');
+  // B9-08: deterministische groepering (sectie 12) -- "3x nodigden je uit
+  // voor deze groep" i.p.v. drie losse, vrijwel identieke kaarten. Puur
+  // groeperen, geen AI, geen nieuwe informatie -- alle onderliggende
+  // notification_ids blijven bewaard voor de "markeer als gelezen"-actie.
+  const gegroepeerd=SocialIntelligenceCore.groupNotifications(notifs);
+  el.innerHTML=gegroepeerd.groups.map(g=>{
+    const label=labels[g.event_type]||g.event_type;
+    const tekst=g.count>1?`${g.count}x: ${label}`:label;
+    const idsAttr=g.notification_ids.join(',');
+    return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;${g.any_unread?'':'opacity:.6'}"><span style="font-size:12px">${escHtml(tekst)}</span>${g.any_unread?`<button class="btn btn-o btn-sm" onclick="socialMarkNotificationsRead('${idsAttr}')">Gelezen</button>`:''}</div>`;
+  }).join('');
+}
+async function socialMarkNotificationsRead(idsCsv){
+  const ids=idsCsv.split(',').filter(Boolean);
+  if(!ids.length)return;
+  await fetch(`${SB_URL}/rest/v1/social_notifications?id=in.(${ids.join(',')})`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({read_at:new Date().toISOString()})});
+  socialRenderNotifications();
 }
 async function socialMarkNotificationRead(notificationId){
   await fetch(`${SB_URL}/rest/v1/social_notifications?id=eq.${notificationId}`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({read_at:new Date().toISOString()})});

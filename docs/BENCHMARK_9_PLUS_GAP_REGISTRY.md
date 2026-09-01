@@ -153,17 +153,32 @@ zijn functionele/evidence-gaps, geen zichtbare UX-wijzigingen).
 **GAP ID:** B9G-DEV-001
 **DOMAIN:** Devices/Wearables
 **TYPE:** VALID
-**CURRENT BEHAVIOR:** architectuur correct (OAuth/token-vault/sync server-side), geen enkele provider fysiek, extern gevalideerd.
+**CURRENT BEHAVIOR:** CORRECTIE (B9-H3A): architectuur correct (OAuth/token-vault/sync server-side) voor de TWEE bestaande assen (Google Health-recovery, Concept2) -- geen enkele provider fysiek, extern gevalideerd. Zie B9G-DEV-002 voor de bredere, ontbrekende cross-sport-architectuur.
 **EXPECTED 9+ BEHAVIOR:** minimaal één provider REAL DEVICE VALIDATED.
 **EVIDENCE:** geen extern provideraccount/hardware beschikbaar binnen een geautomatiseerde sessie.
 **USER IMPACT:** MEDIUM.
 **DEPENDENCIES:** extern (buiten Trainingskompas se controle).
-**SECURITY IMPACT:** geen nieuw gevonden probleem.
+**SECURITY IMPACT:** geen nieuw gevonden probleem; live herbevestigd (DEV-S1/DEV-S2 geweigerd, tokens correct in account-deletion).
 **DATA IMPACT:** geen.
 **IMPLEMENTATION COMPLEXITY:** N.v.t. (externe validatie, geen implementatie).
-**BLOCKS 9.0:** NO (SOFTWARE 9+ READY blijft haalbaar zonder dit)
+**BLOCKS 9.0:** NO (SOFTWARE 9+ READY blijft haalbaar zonder dit, uitsluitend voor de twee bestaande assen)
 **UX MOCK-UP NEEDED:** NO
-**STATUS:** OPEN -- EXTERNAL VALIDATION OPEN, niet-blokkerend voor software-gereedheid.
+**STATUS:** OPEN -- EXTERNAL VALIDATION OPEN, niet-blokkerend voor software-gereedheid van de bestaande assen.
+
+**GAP ID:** B9G-DEV-002
+**DOMAIN:** Devices/Wearables
+**TYPE:** FUNC
+**CURRENT BEHAVIOR:** geen generieke, cross-sport cloud-provider-activity-import bestaat (Garmin/Polar/WHOOP/Suunto/COROS/Strava/TrainingPeaks allemaal NOT IMPLEMENTED). Alle sporten behalve Rowing/SkiErg (Concept2) gebruiken uitsluitend handmatige invoer.
+**EXPECTED 9+ BEHAVIOR:** minimaal één cross-sport cloud-provider (bijv. Garmin) levert Running/Cycling-activity-data via de bestaande, generieke normalisatie-architectuur.
+**EVIDENCE:** `docs/B9_H3A_DEVICES_WEARABLES_EXISTING_STATE_AUDIT.md`, `docs/B9_H3A_PROVIDER_CAPABILITY_MATRIX.md`.
+**USER IMPACT:** HOOG (voor gebruikers die een sporthorloge gebruiken en handmatige invoer als frictie ervaren).
+**DEPENDENCIES:** vereist een echte provider-OAuth-app-registratie (extern, buiten deze sessie te verkrijgen).
+**SECURITY IMPACT:** geen (nog niet gebouwd).
+**DATA IMPACT:** vereist een nieuwe migratie voor generieke activity-import (canonieke sport-mapping, per-metric provenance).
+**IMPLEMENTATION COMPLEXITY:** HOOG (nieuwe provider-integratie + sport capability registry, zie `docs/B9_H3A_CROSS_SPORT_DEVICE_ARCHITECTURE.md`).
+**BLOCKS 9.0:** NEE voor de bestaande assen; JA voor de volledige, in de opdracht beschreven visie van "één generieke architectuur voor alle sporten".
+**UX MOCK-UP NEEDED:** NO (backend-first, UI kan later apart).
+**STATUS:** OPEN, nieuw gevonden en expliciet vastgelegd deze sessie -- vereist een aparte, toekomstige sprint met externe provider-toegang.
 
 **GAP ID:** B9G-SOC-002
 **DOMAIN:** Social

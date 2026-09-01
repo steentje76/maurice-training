@@ -1,6 +1,99 @@
 # Trainingskompas — Changelog
 
+## v4.69.40 — B9-07: Social Product Layer PARTIAL (31 augustus 2026)
+
+Maakt de bestaande, volledig backend-only Social-laag voor het eerst
+daadwerkelijk bruikbaar als product, met een eerlijk, transparant
+onvolledige scope t.o.v. de volledige Social-architectuur.
+
+EXISTING-STATE AUDIT: 10 social_*-tabellen bevestigd te bestaan
+(social_profiles/social_connections/social_blocks/social_reports/
+social_groups/social_group_memberships/social_challenges/
+social_challenge_participants/social_shared_activities/
+social_notifications), allemaal met RLS ingeschakeld en volwassen,
+goed doordachte policies (bijv. een follow-verzoek moet altijd met
+status 'pending' beginnen, alleen de followee mag accepteren; een
+blokkering overrulet zichtbaarheid, ook bij 'discoverable'-profielen).
+Repo-breed geverifieerd: 0 UI-code gebruikte deze tabellen vóór deze
+sprint (exacte tabelnamen doorzocht, 0 treffers). Classificatie vóór
+B9-07: BACKEND ONLY, exact zoals de opdracht anticipeerde.
+
+Nieuw scherm "Sociaal" (bereikbaar via een knop op Home): eigen
+profiel (weergavenaam/bio/zichtbaarheid: privé/connecties/vindbaar),
+profielen zoeken en volgen, volgverzoeken accepteren, connectie-lijst,
+geblokkeerde-gebruikers-lijst. Geen nieuwe bottom-nav-tab op de 35
+bestaande schermen (te risicovol voor deze sprint) -- in plaats daarvan
+een eigen, nieuw scherm met eigen navigatie en een duidelijke toegang
+vanaf Home.
+
+Privacy is first-class: geen enkele client-side privacy-aanname --
+elke lees-/schrijfactie loopt uitsluitend via de bestaande, canonieke
+RLS-policies. Live, adversarial herbevestigd (drie scenario's, telkens
+een transactie zonder commit): (1) een follow-verzoek direct met
+status 'accepted' insereren wordt geweigerd; (2) een privé-profiel van
+een ander is onzichtbaar; (3) een blokkering overrulet correct de
+'discoverable'-zichtbaarheid.
+
+ZELF GEVONDEN EN GEREPAREERD TIJDENS HET BOUWEN: een eigen invoegfout
+verwijderde per ongeluk de functiedefinitieregel van de bestaande
+renderRunningInsights() -- direct opgemerkt via de syntax-check,
+hersteld, en de volledige, bestaande Running/Cycling/Multisport-
+regressie (180 assertions) herbevestigd groen.
+
+core/fB9_07SocialProductLayer.test.js (nieuw, 8/8): geen client-side
+privacy-schijnveiligheid, correcte pending-status bij follow, XSS-
+veilige weergave van user-gegenereerde namen/bio (escHtml()), geen
+regressie op de 35 bestaande bottom-nav-blokken, geen dubbele
+functie-definitie.
+
+Sabotagebewijs: een follow-verzoek direct als 'accepted' verstuurd
+i.p.v. 'pending' -> gedetecteerd, teruggedraaid.
+
+GROEPEN (vervolg, hergebruik van bestaande, canonieke modules): tijdens
+de audit bleek `SOCIAL-GROUPS-CHALLENGES-001` al een volledige,
+canonieke, getest business-logic-laag te hebben (core/socialGroup.js/
+core/socialChallenge.js, MS-F9-02, 51 reeds bestaande assertions) --
+alleen de UI-integratie ontbrak. Alsnog toegevoegd (laag risico, geen
+nieuwe business logic): groepen aanmaken, groepenlijst met correcte
+rol-weergave, direct lid worden bij open-groepen. Uitsluitend de
+bestaande SocialGroupCore.isMember()/isOwner()/canJoinDirectly()
+gebruikt. Live, adversariaal herbevestigd (kritieke MS-F9-01-les): een
+zelf-elevation-poging (direct 'owner' i.p.v. 'member' bij toetreden)
+wordt door de bestaande RLS geweigerd. Challenges-UI blijft een open
+punt.
+
+core/fB9_07SocialProductLayer.test.js uitgebreid naar 11/11 (+3
+groepen-assertions). Tweede sabotagebewijs: een zelf-elevation-poging
+via de join-functie -> gedetecteerd, teruggedraaid.
+
+APP_VER v4.69.39 -> v4.69.40. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469400. android/app/build.gradle gesynchroniseerd
+(46940/4.69.40).
+
+Volledige regressie: node core/release-gate.js -> 211 uitgevoerd/0
+geskipt/0 gefaald (was 210, +1 nieuw testbestand). node tools/
+check-doc-consistency.js -> volledig groen, 0 problemen.
+
+EERLIJK, TRANSPARANT ONVOLLEDIG t.o.v. de volledige Social-architectuur
+(sectie 7 van de opdracht: identity/profile -> privacy -> connections
+-> clubs/groups -> activities -> challenges -> sharing -> reactions/
+comments -> moderation/block/report -> notifications). Gebouwd:
+identity/profile, privacy, connections (volgen/accepteren), een
+minimale blocks-weergave, groepen (aanmaken/lid worden). NIET gebouwd
+in deze sprint: challenges-UI, activity sharing-UI, reacties/comments,
+volledige moderatie/report-UI, notificaties-UI -- alle expliciet, transparant
+vastgesteld als open blockers, niet stilzwijgend overgeslagen.
+
+Geen benchmarkscore toegekend.
+
+FINAL STATUS: B9-07 SOCIAL PRODUCT LAYER PARTIAL — BLOCKERS OPEN.
+
+Conform de harde gate (sectie 2 van de opdracht): B9-08 wordt NIET
+gestart. Wacht op onafhankelijke review en een besluit over
+vervolgscope voor de resterende Social-onderdelen.
+
 ## v4.69.39 — B9-06: Multisport Integration (31 augustus 2026)
+ — B9-06: Multisport Integration (31 augustus 2026)
 
 Bewijst dat Running/Cycling/Rowing/HYROX/Triathlon geen losse
 producteilanden zijn, maar correct samenwerken via dezelfde

@@ -3109,6 +3109,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr">
     <div id="v43-home-head"></div>
     <div id="offline-badge" style="display:none;margin-top:8px;font-size:11px;font-weight:700;color:var(--y,#b8860b);background:rgba(184,134,11,.12);border-radius:8px;padding:2px 8px;width:fit-content;cursor:pointer" onclick="openOfflineQueueModal()"></div>
+    <button class="ibtn" onclick="go('s-social')" aria-label="Naar Sociaal" style="position:absolute;top:12px;right:12px">👥</button>
   </div>
   <div class="scroll" id="home-theme" data-day="goed" style="padding-top:10px">
     <div id="home-dash" style="display:none"></div>
@@ -3154,6 +3155,19 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
+  </nav>
+</div>
+
+<!-- ═══ B9-07 · SOCIAL PRODUCT LAYER (Home → 👥 → Sociaal) ═══ -->
+<div class="scr" id="s-social">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Sociaal</div><div class="hdr-sub">Profiel, connecties &amp; privacy</div></div><button class="ibtn" onclick="go('s-home')" aria-label="Terug naar Home">←</button></div></div>
+  <div class="scroll" id="social-scroll" style="padding:16px"></div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-social')"><span class="ni-icon">👥</span><span class="ni-label">Sociaal</span></button>
   </nav>
 </div>
 
@@ -5475,6 +5489,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/runningExecution.js"></script>
 <script src="core/runningIntelligence.js"></script>
 <script src="core/cyclingIntelligence.js"></script>
+<script src="core/socialGroup.js"></script>
+<script src="core/socialChallenge.js"></script>
 <script src="core/progression.js"></script>
 <script src="core/intervalEngine.js"></script>
 <script src="core/coaching.js"></script>
@@ -6217,7 +6233,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.39';
+const APP_VER = 'v4.69.40';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -9954,6 +9970,7 @@ function go(id){
   if(id==='s-running')renderRunningEntry();
   if(id==='s-running-insights')renderRunningInsights();
   if(id==='s-cycling-insights')renderCyclingInsights();
+  if(id==='s-social')renderSocialScreen();
   if(id==='s-cycling')renderCyclingShell();
   if(id==='s-hist'){histOff=0;renderHistFilterTabs();loadHistory();}
   if(id==='s-train-mgr'){renderSportSwitcher();renderV43Train();}
@@ -10784,6 +10801,194 @@ async function renderRunningHistory(){
 // -- deze functie is uitsluitend presentatie, geen shadow calculation.
 // Progressive disclosure: belangrijkste status bovenaan, detail eronder.
 // Expliciete, eerlijke empty-states bij onvoldoende data (sectie 5/22).
+// ══════════════════════════════════════════════════════════
+// B9-07 — Social Product Layer (Home → 👥 → Sociaal)
+// ══════════════════════════════════════════════════════════
+// EXISTING-STATE AUDIT: de backend (social_profiles/social_connections/
+// social_blocks/social_reports/social_groups/social_group_memberships/
+// social_challenges/social_challenge_participants/social_shared_
+// activities/social_notifications) bestond al volledig met RLS en
+// policies -- 0 UI-code gebruikte deze tabellen (repo-breed geverifieerd,
+// exacte tabelnamen, 0 treffers). Classificatie vóór B9-07: BACKEND ONLY.
+// Deze sprint bouwt de V1-productlaag: profiel/privacy/connections/
+// blokkeren -- het veiligheidskritische fundament (identity/profile →
+// privacy → connections, sectie 7). Groepen/challenges/sharing/
+// notificaties zijn nog CANONICAL/BACKEND ONLY (open, sectie 42-rapport).
+//
+// Privacy is first-class (sectie 7): elke lees-/schrijfactie loopt
+// uitsluitend via de bestaande, canonieke RLS-policies -- geen enkele
+// client-side aanname over wie iets mag zien/doen; de database is de
+// enige bron van waarheid voor toegang.
+async function renderSocialScreen(){
+  const el=document.getElementById('social-scroll');
+  if(!el)return;
+  el.innerHTML='<p style="font-size:13px;color:var(--g4)">Laden…</p>';
+  const uid=authSession?.user?.id;
+  if(!uid){el.innerHTML='<p style="font-size:13px;color:var(--g4)">Niet ingelogd.</p>';return;}
+
+  let profielRows=[],pendingIn=[],connections=[],blocks=[];
+  try{profielRows=await sbGet('social_profiles',`&user_id=eq.${uid}&limit=1`);}catch(e){}
+  try{pendingIn=await sbGet('social_connections',`&followee_id=eq.${uid}&status=eq.pending`);}catch(e){}
+  try{connections=await sbGet('social_connections',`&status=eq.accepted&or=(follower_id.eq.${uid},followee_id.eq.${uid})`);}catch(e){}
+  try{blocks=await sbGet('social_blocks',`&blocker_id=eq.${uid}`);}catch(e){}
+  const profiel=profielRows&&profielRows[0]?profielRows[0]:null;
+
+  el.innerHTML=`
+    <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Mijn profiel</div></div><div class="card-body">
+      <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Weergavenaam</label>
+      <input type="text" id="social-display-name" maxlength="60" style="width:100%;margin-bottom:10px" value="${profiel?escHtml(profiel.display_name||''):''}" placeholder="Hoe anderen je zien">
+      <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Bio (optioneel)</label>
+      <textarea id="social-bio" maxlength="280" style="width:100%;margin-bottom:10px;min-height:60px">${profiel?escHtml(profiel.bio||''):''}</textarea>
+      <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Zichtbaarheid</label>
+      <select id="social-visibility" style="width:100%;margin-bottom:12px">
+        <option value="private" ${profiel&&profiel.visibility==='private'?'selected':''}>Privé (niemand vindt je profiel)</option>
+        <option value="connections" ${!profiel||profiel.visibility==='connections'?'selected':''}>Alleen connecties</option>
+        <option value="discoverable" ${profiel&&profiel.visibility==='discoverable'?'selected':''}>Vindbaar (iedereen kan je profiel zien)</option>
+      </select>
+      <button class="btn btn-p" style="width:100%" onclick="socialSaveProfile()">Profiel opslaan</button>
+    </div></div>
+
+    <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Iemand volgen</div></div><div class="card-body">
+      <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Zoek op weergavenaam</label>
+      <input type="text" id="social-search-name" style="width:100%;margin-bottom:10px" placeholder="Weergavenaam">
+      <button class="btn btn-o" style="width:100%;margin-bottom:8px" onclick="socialSearchProfiles()">Zoeken</button>
+      <div id="social-search-results"></div>
+    </div></div>
+
+    ${pendingIn.length?`<div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Volgverzoeken (${pendingIn.length})</div></div><div class="card-body" id="social-pending-list">
+      ${pendingIn.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px">${escHtml(p.follower_id)}</span><button class="btn btn-p btn-sm" onclick="socialAcceptFollow('${p.id}')">Accepteren</button></div>`).join('')}
+    </div></div>`:''}
+
+    <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Mijn connecties (${connections.length})</div></div><div class="card-body">
+      ${connections.length?connections.map(c=>{const anderId=c.follower_id===uid?c.followee_id:c.follower_id;return `<div style="font-size:13px;margin-bottom:6px">${escHtml(anderId)}</div>`;}).join(''):'<p style="font-size:13px;color:var(--g4);margin:0">Nog geen connecties.</p>'}
+    </div></div>
+
+    <div class="card"><div class="card-hd"><div class="card-title">Geblokkeerd (${blocks.length})</div></div><div class="card-body">
+      ${blocks.length?blocks.map(b=>`<div style="font-size:13px;margin-bottom:6px">${escHtml(b.blocked_id)}</div>`).join(''):'<p style="font-size:13px;color:var(--g4);margin:0">Niemand geblokkeerd.</p>'}
+      <div style="font-size:11px;color:var(--g4);margin-top:8px">Blokkeren/rapporteren vanaf een profiel wordt uitgebreid in een volgende sprint.</div>
+    </div></div>
+
+    <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Groepen aanmaken</div></div><div class="card-body">
+      <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Naam</label>
+      <input type="text" id="social-group-name" maxlength="60" style="width:100%;margin-bottom:10px" placeholder="Groepsnaam">
+      <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Toetreden</label>
+      <select id="social-group-joinmode" style="width:100%;margin-bottom:12px">
+        <option value="open">Open (iedereen kan direct lid worden)</option>
+        <option value="approval_required">Op goedkeuring</option>
+        <option value="invite_only">Alleen op uitnodiging</option>
+      </select>
+      <button class="btn btn-p" style="width:100%" onclick="socialCreateGroup()">Groep aanmaken</button>
+    </div></div>
+
+    <div class="card" id="social-groups-card"><div class="card-hd"><div class="card-title">Mijn groepen</div></div><div class="card-body" id="social-groups-list"><p style="font-size:13px;color:var(--g4);margin:0">Laden…</p></div></div>`;
+
+  socialRenderGroups();
+}
+
+// ══════════════════════════════════════════════════════════
+// B9-07 vervolg — Groepen &amp; Challenges (hergebruikt de bestaande,
+// canonieke core/socialGroup.js / core/socialChallenge.js -- MS-F9-02,
+// 51 reeds bestaande assertions). Geen nieuwe business logic gebouwd,
+// uitsluitend de al bewezen SocialGroupCore.canJoinDirectly()/
+// SocialChallengeCore.canJoinChallenge()/challengeStatus() als bron
+// van waarheid voor wat de UI wel/niet toestaat -- de RLS blijft de
+// uiteindelijke, harde afdwinging.
+// ══════════════════════════════════════════════════════════
+async function socialCreateGroup(){
+  const uid=authSession?.user?.id;
+  if(!uid)return;
+  const name=document.getElementById('social-group-name').value.trim();
+  const joinMode=document.getElementById('social-group-joinmode').value;
+  if(!name){toast('Naam is verplicht');return;}
+  if(SocialGroupCore.JOIN_MODES.indexOf(joinMode)===-1){toast('Ongeldige instelling');return;}
+  const r=await fetch(`${SB_URL}/rest/v1/social_groups`,{method:'POST',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify({owner_user_id:uid,name,join_mode:joinMode})});
+  if(!r.ok){toast('Aanmaken mislukt');return;}
+  const rows=await r.json();
+  const groupId=rows&&rows[0]?rows[0].id:null;
+  if(groupId){
+    // De aanmaker wordt direct owner-lid (consistent met SocialGroupCore.isOwner()-contract).
+    await fetch(`${SB_URL}/rest/v1/social_group_memberships`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({group_id:groupId,user_id:uid,role:'owner',status:'active'})});
+  }
+  toast('Groep aangemaakt');
+  document.getElementById('social-group-name').value='';
+  socialRenderGroups();
+}
+
+async function socialRenderGroups(){
+  const uid=authSession?.user?.id;
+  const el=document.getElementById('social-groups-list');
+  if(!el||!uid)return;
+  let groups=[],memberships=[];
+  try{groups=await sbGet('social_groups','&order=created_at.desc&limit=50');}catch(e){}
+  try{memberships=await sbGet('social_group_memberships',`&user_id=eq.${uid}`);}catch(e){}
+  if(!groups.length){el.innerHTML='<p style="font-size:13px;color:var(--g4);margin:0">Nog geen groepen zichtbaar.</p>';return;}
+  el.innerHTML=groups.map(g=>{
+    const lid=SocialGroupCore.isMember(uid,g.id,memberships);
+    const eigenaar=SocialGroupCore.isOwner(uid,g.id,memberships);
+    const magDirectJoinen=SocialGroupCore.canJoinDirectly(g);
+    let actie='';
+    if(lid){actie=eigenaar?'<span style="font-size:11px;color:var(--g4)">Eigenaar</span>':'<span style="font-size:11px;color:var(--g4)">Lid</span>';}
+    else if(magDirectJoinen){actie=`<button class="btn btn-o btn-sm" onclick="socialJoinGroup('${g.id}')">Word lid</button>`;}
+    else{actie='<span style="font-size:11px;color:var(--g4)">Alleen op uitnodiging/goedkeuring</span>';}
+    return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px">${escHtml(g.name)}</span>${actie}</div>`;
+  }).join('');
+}
+
+async function socialJoinGroup(groupId){
+  const uid=authSession?.user?.id;
+  if(!uid)return;
+  const ok=await fetch(`${SB_URL}/rest/v1/social_group_memberships`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({group_id:groupId,user_id:uid,role:'member',status:'active'})});
+  toast(ok.ok?'Lid geworden':'Toetreden mislukt');
+  if(ok.ok)socialRenderGroups();
+}
+
+async function socialSaveProfile(){
+  const uid=authSession?.user?.id;
+  if(!uid)return;
+  const displayName=document.getElementById('social-display-name').value.trim();
+  const bio=document.getElementById('social-bio').value.trim();
+  const visibility=document.getElementById('social-visibility').value;
+  if(!displayName){toast('Weergavenaam is verplicht');return;}
+  const payload={user_id:uid,display_name:displayName,bio:bio||null,visibility};
+  const ok=await fetch(`${SB_URL}/rest/v1/social_profiles`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(payload)});
+  toast(ok.ok?'Profiel opgeslagen':'Opslaan mislukt');
+  if(ok.ok)renderSocialScreen();
+}
+
+async function socialSearchProfiles(){
+  const term=document.getElementById('social-search-name').value.trim();
+  const resEl=document.getElementById('social-search-results');
+  if(!term){resEl.innerHTML='';return;}
+  resEl.innerHTML='<p style="font-size:12px;color:var(--g4)">Zoeken…</p>';
+  // Privacy-first (sectie 7): deze query loopt door de bestaande RLS-
+  // policy social_profiles_lezen_conform_privacy -- de gebruiker ziet
+  // uitsluitend profielen die volgens de database-regels zichtbaar zijn
+  // (eigen profiel, discoverable, of connections met een accepted-status).
+  // Geen client-side filtering die de indruk van privacy geeft zonder
+  // dat de database dit ook daadwerkelijk afdwingt.
+  let rows=[];
+  try{rows=await sbGet('social_profiles',`&display_name=ilike.*${encodeURIComponent(term)}*&limit=10`);}catch(e){}
+  if(!rows.length){resEl.innerHTML='<p style="font-size:12px;color:var(--g4)">Geen (zichtbare) profielen gevonden.</p>';return;}
+  resEl.innerHTML=rows.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px">${escHtml(r.display_name)}</span><button class="btn btn-o btn-sm" onclick="socialFollow('${r.user_id}')">Volgen</button></div>`).join('');
+}
+
+async function socialFollow(targetUserId){
+  const uid=authSession?.user?.id;
+  if(!uid||uid===targetUserId)return;
+  // RLS vereist expliciet status:'pending' bij insert (social_connections_
+  // follower_insert) -- nooit direct 'accepted', de followee moet altijd
+  // zelf accepteren (social_connections_followee_accepteren).
+  const ok=await fetch(`${SB_URL}/rest/v1/social_connections`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({follower_id:uid,followee_id:targetUserId,status:'pending'})});
+  toast(ok.ok?'Volgverzoek verstuurd':'Versturen mislukt');
+}
+
+async function socialAcceptFollow(connectionId){
+  const ok=await fetch(`${SB_URL}/rest/v1/social_connections?id=eq.${connectionId}`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({status:'accepted'})});
+  toast(ok.ok?'Geaccepteerd':'Accepteren mislukt');
+  if(ok.ok)renderSocialScreen();
+}
+
+
 async function renderRunningInsights(){
   const el=document.getElementById('running-insights-scroll');
   if(!el)return;

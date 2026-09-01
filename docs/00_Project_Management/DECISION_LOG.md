@@ -1122,3 +1122,30 @@
   Console-scope-vrijgave door de Product Owner).
 - **Verantwoordelijke:** Product Owner (expliciete, autonome
   nachtsprint-vrijgave), uitgevoerd door Claude tijdens B9-H3B.
+
+## B9-H3C -- Real provider validatie: extern geblokkeerd, één echte bug gerepareerd
+
+- **Datum:** 1 september 2026.
+- **Context:** poging om de B9-H3B-software daadwerkelijk te valideren
+  tegen een echte Google-account/API/device. Repo-brede scan bevestigt
+  0 credentials/omgevingstoegang beschikbaar -- real-validatie volledig
+  extern geblokkeerd, geen technische omissie van deze sessie.
+- **Zelf gevonden en gerepareerde echte bug:** `wearable-sync-
+  activities.js` kon geen onderscheid maken tussen een scope-tekort
+  (bestaande gebruiker met een oud, vóór B9-H3B verkregen token) en
+  een generieke provider-fout. Onderzocht via publieke Google-
+  foutrapporten en gerepareerd: een specifieke, herkenbare
+  `scope_missing`-status toegevoegd, gebaseerd op Google se officiële
+  403-foutcontract (`insufficientPermissions`/`ACCESS_TOKEN_SCOPE_
+  INSUFFICIENT`). De bestaande, kritieke HRV/RHR/sleep-sync is hierbij
+  niet aangeraakt.
+- **Kritieke, officieel geverifieerde bevinding:** een Google OAuth-
+  project in "Testing"-modus vereist test-user-registratie en heeft
+  7-dagen-verlopende refresh tokens -- of dit voor Trainingskompas
+  geldt, kon niet worden vastgesteld zonder Google Cloud Console-
+  toegang. Vastgelegd als exacte, minimale externe actie voor de
+  Product Owner (3 stappen, 5-10 minuten).
+- **Impact:** B9G-DEV-002 blijft expliciet PARTIAL, niet CLOSED --
+  geen docs-only closure zonder daadwerkelijk real-world bewijs.
+- **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
+  uitgevoerd door Claude tijdens de B9-H3C-mastersprint.

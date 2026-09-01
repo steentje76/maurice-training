@@ -34,7 +34,26 @@ async function fetchExerciseDataPoints(authFetch, sinceDate) {
   const url = `${GOOGLE_HEALTH_BASE}/users/me/dataTypes/exercise/dataPoints?filter=${encodeURIComponent(filter)}&pageSize=100`;
   try {
     const r = await authFetch(url);
-    if (!r.ok) return { points: [], status: r.status, ok: false };
+    if (!r.ok) {
+      // B9-H3C, sectie 11: de app/backend moet CONNECTED_BUT_SCOPE_MISSING
+      // kunnen onderscheiden van TOKEN_EXPIRED/DISCONNECTED. Een gebruiker
+      // die vóór B9-H3B al Google koppelde, heeft een geldig token ZONDER de
+      // nieuwe activity_and_fitness-scope -- dat token blijft geldig voor
+      // HRV/RHR/sleep (wearable-sync.js, ongewijzigd), maar geeft voor DEZE
+      // aanroep een 403 terug. Google se officiële foutcontract (geverifieerd
+      // tegen bekende, publieke incident-rapporten) gebruikt hiervoor
+      // "reason": "insufficientPermissions" of "ACCESS_TOKEN_SCOPE_INSUFFICIENT"
+      // -- expliciet onderscheiden van een generieke 401/overige 403.
+      let scopeMissing = false;
+      if (r.status === 403) {
+        const errBody = await r.json().catch(() => null);
+        const errors = (errBody && errBody.error && Array.isArray(errBody.error.errors)) ? errBody.error.errors : [];
+        const details = (errBody && errBody.error && Array.isArray(errBody.error.details)) ? errBody.error.details : [];
+        scopeMissing = errors.some(e => e && e.reason === 'insufficientPermissions')
+          || details.some(d => d && d.reason === 'ACCESS_TOKEN_SCOPE_INSUFFICIENT');
+      }
+      return { points: [], status: r.status, ok: false, scopeMissing };
+    }
     const body = await r.json().catch(() => null);
     return { points: (body && Array.isArray(body.dataPoints)) ? body.dataPoints : [], status: r.status, ok: true };
   } catch (e) {
@@ -78,11 +97,14 @@ exports.handler = async function (event) {
 
     const exerciseR = await fetchExerciseDataPoints(authFetch, sinceDate);
     if (!exerciseR.ok) {
-      // sectie 45: nieuwe scope mogelijk nog niet geaccepteerd/geconfigureerd
-      // -- nette, canonieke foutafhandeling, geen crash, geen fake data.
+      // sectie 11 (B9-H3C): CONNECTED_BUT_SCOPE_MISSING wordt nu expliciet
+      // onderscheiden van een generieke provider-fout -- een bestaande
+      // gebruiker (vóór B9-H3B gekoppeld) krijgt een duidelijke,
+      // canonieke status i.p.v. een ondoorzichtige "provider_error".
+      const status = exerciseR.scopeMissing ? 'scope_missing' : 'provider_error';
       Observability.tkLog('WARN', 'wearable.sync_activities.provider_error', 'wearable', 'wearable-sync-activities',
-        { operation: 'sync', status: 'provider_error', http_status: exerciseR.status }, logCtx);
-      return jsonBody({ synced: false, imported: 0, updated: 0, skipped: 0, status: 'provider_error', httpStatus: exerciseR.status });
+        { operation: 'sync', status, http_status: exerciseR.status }, logCtx);
+      return jsonBody({ synced: false, imported: 0, updated: 0, skipped: 0, status, httpStatus: exerciseR.status });
     }
 
     let imported = 0, updated = 0, skipped = 0, unsupported = 0;

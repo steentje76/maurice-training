@@ -178,7 +178,7 @@ zijn functionele/evidence-gaps, geen zichtbare UX-wijzigingen).
 **IMPLEMENTATION COMPLEXITY:** MEDIUM voor een tweede provider (architectuur is Provider-2-ready, bevestigd).
 **BLOCKS 9.0:** NEE voor de bestaande assen + Google Health-Running/Cycling; JA voor de volledige, meerdere-providers-visie (Garmin blijft extern geblokkeerd).
 **UX MOCK-UP NEEDED:** NO.
-**STATUS:** GEDEELTELIJK GESLOTEN -- softwarematige architectuur + eerste provider (Google Health) volledig gebouwd/getest; real-provider/device-validatie blijft OPEN, extern.
+**STATUS:** GEDEELTELIJK GESLOTEN (PARTIAL, herbevestigd B9-H3C) -- softwarematige architectuur + eerste provider (Google Health) volledig gebouwd/getest, nu ook gehard tegen het bestaande-gebruiker-scope-scenario (CONNECTED_BUT_SCOPE_MISSING, zelf gevonden en gerepareerd tijdens B9-H3C); real-provider/account/device-validatie blijft OPEN, extern geblokkeerd (0 credentials/Google Cloud Console-toegang beschikbaar). Exacte, minimale externe actie vastgelegd in `docs/B9_H3C_PRODUCT_OWNER_EXTERNAL_ACTION.md` (geschat 5-10 minuten). Conform sectie 79 van de B9-H3C-opdracht: GEEN docs-only closure zolang real-world bewijs ontbreekt.
 **STATUS:** OPEN, nieuw gevonden en expliciet vastgelegd deze sessie -- vereist een aparte, toekomstige sprint met externe provider-toegang.
 
 **GAP ID:** B9G-SOC-002

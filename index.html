@@ -6252,7 +6252,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.45';
+const APP_VER = 'v4.69.46';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -11058,25 +11058,33 @@ async function socialRenderFeed(){
       ${it.achievement_label?`<div style="font-size:12px;margin-bottom:4px">🏆 ${escHtml(it.achievement_label)}</div>`:''}
       ${it.athlete_note?`<div style="font-size:12px;color:var(--g4);margin-bottom:6px">${escHtml(it.athlete_note)}</div>`:''}
       <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
-        <button class="btn ${mijnReactie?'btn-p':'btn-o'} btn-sm" onclick="socialToggleReaction('${it.id}',${mijnReactie})">👍 ${aantalReacties}</button>
+        <button class="btn ${mijnReactie?'btn-p':'btn-o'} btn-sm" onclick="socialToggleReaction('${it.id}',${mijnReactie},'${it.athlete_id}')">👍 ${aantalReacties}</button>
         <button class="btn btn-o btn-sm" onclick="socialToggleCommentForm('${it.id}')">💬 ${itemComments.length}</button>
         ${it.athlete_id!==uid?`<button class="btn btn-o btn-sm" onclick="socialReport('${it.athlete_id}','shared_activity','${it.id}')">Rapporteren</button>`:''}
       </div>
       <div id="social-comment-form-${it.id}" style="display:none;margin-top:8px">
         <input type="text" id="social-comment-input-${it.id}" maxlength="500" style="width:100%;margin-bottom:6px" placeholder="Schrijf een reactie...">
-        <button class="btn btn-p btn-sm" onclick="socialPostComment('${it.id}')">Plaatsen</button>
+        <button class="btn btn-p btn-sm" onclick="socialPostComment('${it.id}','${it.athlete_id}')">Plaatsen</button>
       </div>
       ${itemComments.length?`<div style="margin-top:8px">${itemComments.map(c=>`<div style="font-size:12px;margin-bottom:4px"><b>${escHtml(c.user_id)}:</b> ${escHtml(c.body)}</div>`).join('')}</div>`:''}
     </div></div>`;
   }).join('');
 }
-async function socialToggleReaction(sharedActivityId,heeftAl){
+async function socialToggleReaction(sharedActivityId,heeftAl,athleteId){
   const uid=authSession?.user?.id;
   if(!uid)return;
   if(heeftAl){
     await fetch(`${SB_URL}/rest/v1/social_reactions?shared_activity_id=eq.${sharedActivityId}&user_id=eq.${uid}`,{method:'DELETE',headers:SB_H});
   }else{
-    await fetch(`${SB_URL}/rest/v1/social_reactions`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal,resolution=ignore-duplicates'},body:JSON.stringify({shared_activity_id:sharedActivityId,user_id:uid})});
+    const ok=await fetch(`${SB_URL}/rest/v1/social_reactions`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal,resolution=ignore-duplicates'},body:JSON.stringify({shared_activity_id:sharedActivityId,user_id:uid})});
+    // B9G-SOC-002 (Benchmark 9+ deep-dive, kleine functionele uitbreiding,
+    // geen UX-wijziging): notificeer de eigenaar via de bestaande, veilige
+    // RPC. athleteId===uid wordt door de RPC zelf al genegeerd (geen
+    // zelf-notificatie), maar we roepen 'm alleen aan als het echt een
+    // ander is, om onnodige verzoeken te vermijden.
+    if(ok.ok&&athleteId&&athleteId!==uid){
+      try{await fetch(`${SB_URL}/rest/v1/rpc/social_create_notification`,{method:'POST',headers:SB_H,body:JSON.stringify({p_recipient_id:athleteId,p_event_type:'reaction',p_target_type:'shared_activity',p_target_id:sharedActivityId})});}catch(e){}
+    }
   }
   socialRenderFeed();
 }
@@ -11084,14 +11092,19 @@ function socialToggleCommentForm(sharedActivityId){
   const el=document.getElementById('social-comment-form-'+sharedActivityId);
   if(el)el.style.display=el.style.display==='none'?'block':'none';
 }
-async function socialPostComment(sharedActivityId){
+async function socialPostComment(sharedActivityId,athleteId){
   const uid=authSession?.user?.id;
   const inputEl=document.getElementById('social-comment-input-'+sharedActivityId);
   const body=inputEl?inputEl.value.trim():'';
   if(!uid||!body)return;
   const ok=await fetch(`${SB_URL}/rest/v1/social_comments`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({shared_activity_id:sharedActivityId,user_id:uid,body:body.slice(0,500)})});
   toast(ok.ok?'Geplaatst':'Plaatsen mislukt');
-  if(ok.ok)socialRenderFeed();
+  if(ok.ok){
+    if(athleteId&&athleteId!==uid){
+      try{await fetch(`${SB_URL}/rest/v1/rpc/social_create_notification`,{method:'POST',headers:SB_H,body:JSON.stringify({p_recipient_id:athleteId,p_event_type:'comment',p_target_type:'shared_activity',p_target_id:sharedActivityId})});}catch(e){}
+    }
+    socialRenderFeed();
+  }
 }
 
 // --- Moderatie: rapporteren (bestaande social_reports-tabel) ---
@@ -11148,7 +11161,7 @@ async function socialRenderNotifications(){
   let notifs=[];
   try{notifs=await sbGet('social_notifications',`&recipient_id=eq.${uid}&order=created_at.desc&limit=20`);}catch(e){}
   if(!notifs.length){el.innerHTML='<p style="font-size:13px;color:var(--g4);margin:0">Geen meldingen.</p>';return;}
-  const labels={connection_request:'wil je volgen',connection_accepted:'heeft je volgverzoek geaccepteerd',group_invite:'nodigde je uit voor een groep',group_join_approved:'jouw groepslidmaatschap is goedgekeurd',challenge_invite:'nodigde je uit voor een challenge'};
+  const labels={connection_request:'wil je volgen',connection_accepted:'heeft je volgverzoek geaccepteerd',group_invite:'nodigde je uit voor een groep',group_join_approved:'jouw groepslidmaatschap is goedgekeurd',challenge_invite:'nodigde je uit voor een challenge',reaction:'reageerde op je gedeelde training',comment:'plaatste een reactie op je gedeelde training'};
   // B9-08: deterministische groepering (sectie 12) -- "3x nodigden je uit
   // voor deze groep" i.p.v. drie losse, vrijwel identieke kaarten. Puur
   // groeperen, geen AI, geen nieuwe informatie -- alle onderliggende

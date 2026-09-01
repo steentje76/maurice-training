@@ -178,4 +178,4 @@ zijn functionele/evidence-gaps, geen zichtbare UX-wijzigingen).
 **IMPLEMENTATION COMPLEXITY:** LAAG.
 **BLOCKS 9.0:** NO
 **UX MOCK-UP NEEDED:** NO (functionele uitbreiding van bestaand, ongewijzigd notificatiescherm)
-**STATUS:** OPEN -- kandidaat voor een kleine, veilige functionele fix in een toekomstige sprint.
+**STATUS:** CLOSED -- geimplementeerd via migratie_v538.sql, live adversarial herbevestigd, core/fB9G_SOC_002_ReactionCommentNotifications.test.js 7/7. Geen UX-wijziging, conform vooraf gemarkeerd "UX MOCK-UP NEEDED: NO".

@@ -912,3 +912,43 @@
   minimalisatie, geen directe productbehoefte vastgesteld).
 - **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
   uitgevoerd door Claude tijdens de B9-09-mastersprint.
+
+## B9-H1 -- Benchmark 9+ Hardening Program vastgelegd, F15 gepauzeerd
+
+- **Datum:** 31 augustus 2026.
+- **Historische status vóór deze beslissing:** F15 "Beyond Benchmark"
+  stond als de volgende, geselecteerde roadmapfase na afsluiting van
+  de Benchmark 9.0 Floor Program-reeks (B9-01 t/m B9-11). Dit was de
+  destijds correcte, geldende planning -- niet met terugwerkende
+  kracht herschreven.
+- **Beslissing:** de Product Owner heeft F15 voorlopig gepauzeerd en
+  in plaats daarvan het **Benchmark 9+ Hardening Program** vrijgegeven:
+  een reeks audit-/verbeteringssprints (B9-H1 t/m B9-H9) met als doel
+  dat elke kritieke productdimensie afzonderlijk (niet gemiddeld)
+  aantoonbaar >=9.0 scoort, vóórdat F15 opnieuw wordt geselecteerd.
+- **Programma-indeling (voorlopig, geen fictieve CLOSED-statussen):**
+  B9-H1 Complete Rebenchmark & Gap Registry, B9-H2 Athlete Core 9+,
+  B9-H3 Strength & Exercise Intelligence 9+, B9-H4 Endurance &
+  Multisport 9+, B9-H5 Recovery/Health/Women's Performance/Nutrition
+  9+, B9-H6 AI/Analytics/Longitudinal Intelligence 9+, B9-H7 Social/
+  Coach/Gym 9+, B9-H8 Platform/Security/Reliability 9+, B9-H9 Final
+  Competitive Rebenchmark & 9+ Certification.
+- **Nieuw, verplicht projectprincipe (vanaf nu geldend):** een
+  absolute UX-gate -- elke wezenlijke, zichtbare wijziging aan een
+  bestaand of nieuw scherm (navigatie, hoofdmenu, primaire CTA's,
+  informatiehiërarchie, globale look-and-feel) vereist eerst een
+  concreet voorstel/mock-up en expliciete Product Owner-goedkeuring
+  vóór implementatie. Kleine, evidente technische bugfixes blijven
+  hiervan uitgezonderd.
+- **B9-H1-uitkomst:** volledige rebenchmark uitgevoerd (zie
+  `docs/BENCHMARK_9_PLUS_SCORECARD.md`), een centrale gap-registry
+  aangelegd (`docs/BENCHMARK_9_PLUS_GAP_REGISTRY.md`), en één scherm/
+  navigatievraagstuk (B9G-UX-001: discoverability van Sociaal en
+  Voeding) geselecteerd voor de eerste UX-review
+  (`docs/UX_NEXT_SCREEN_BRIEF.md`). Geen enkele kritieke dimensie is
+  in deze audit bevestigd op >=9.0 met HIGH confidence, behalve
+  Platform-Security. Meerdere domeinen (Strength/Recovery/Women's
+  Performance/AI/Analytics/Coach/Gym) kregen NOT ENOUGH EVIDENCE --
+  eerlijk vastgelegd, geen verzonnen score.
+- **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
+  uitgevoerd door Claude tijdens de B9-H1-mastersprint.

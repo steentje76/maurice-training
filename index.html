@@ -5509,6 +5509,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/socialSharing.js"></script>
 <script src="core/socialIntelligence.js"></script>
 <script src="core/nutritionFoundation.js"></script>
+<script src="core/nutritionIntelligence.js"></script>
 <script src="core/progression.js"></script>
 <script src="core/intervalEngine.js"></script>
 <script src="core/coaching.js"></script>
@@ -6251,7 +6252,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.44';
+const APP_VER = 'v4.69.45';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -11247,7 +11248,20 @@ async function renderNutritionScreen(){
     return `<div class="row"><span class="b"><span class="t">${tijd} — ${labels[e.entry_type]||e.entry_type}${timing}</span><span class="s">${details?escHtml(details):'Geen waarden ingevuld'}${e.note?' · '+escHtml(e.note):''}</span></span><button class="ibtn" onclick="nutritionEditEntry('${e.id}')" aria-label="Bewerken">✎</button><button class="btn btn-o btn-sm" onclick="nutritionDeleteEntry('${e.id}')" aria-label="Verwijderen">🗑</button></div>`;
   }).join(''):`<p style="font-size:13px;color:var(--g4);margin:0">${isVandaag?'Nog niets geregistreerd vandaag.':'Niets geregistreerd op deze dag.'}</p>`;
 
-  el.innerHTML=datumNavHtml+nutritionFormHtml()+totalenHtml+`<div class="card"><div class="card-hd"><div class="card-title">Registraties</div></div><div class="card-body">${lijstHtml}</div></div>`;
+  // B9-11 Nutrition Intelligence: uitsluitend context tonen op basis van
+  // reeds bestaande, user-entered timing_context -- geen dosering, geen
+  // AI-integratie (bewuste keuze, zie het rapport). Logging-gap wordt
+  // nooit als nutrition-gap gepresenteerd.
+  const nutritionCtx=NutritionIntelligenceCore.buildNutritionContext(entries,totalen);
+  const nutritionBeslissing=NutritionIntelligenceCore.evaluateNutritionDecisionRules(nutritionCtx);
+  const evidenceTeksten={'NUTR-EV-001':'Bij langere of intensievere inspanning kan koolhydraatbeschikbaarheid relevant zijn voor prestatie.','NUTR-EV-002':'Bij langere inspanning kan hydratatie extra aandacht verdienen.','NUTR-EV-003':'Na training kunnen eiwit en koolhydraten een rol spelen bij herstel.'};
+  const inzichtenHtml=entries.length?`<div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Inzichten</div></div><div class="card-body">
+    ${nutritionBeslissing.outcome==='insufficient_data'?`<p style="font-size:13px;color:var(--g4);margin:0">${escHtml(nutritionBeslissing.message)}</p>`:''}
+    ${nutritionBeslissing.outcome==='context_available'?nutritionBeslissing.signals.map(s=>`<p style="font-size:13px;margin:0 0 6px">${escHtml(evidenceTeksten[s.evidence_id])}</p>`).join(''):''}
+    <div style="font-size:11px;color:var(--g4);margin-top:6px">Algemene, kwalitatieve context -- geen persoonlijk voedingsadvies. Trainingskompas rekent geen calorie- of macrodoelen uit.</div>
+  </div></div>`:'';
+
+  el.innerHTML=datumNavHtml+nutritionFormHtml()+totalenHtml+inzichtenHtml+`<div class="card"><div class="card-hd"><div class="card-title">Registraties</div></div><div class="card-body">${lijstHtml}</div></div>`;
   window._nutritionEntriesCache=entries;
 }
 

@@ -1,6 +1,92 @@
 # Trainingskompas — Changelog
 
+## v4.69.45 — B9-11: Nutrition Intelligence (31 augustus 2026)
+
+Bouwt een veilige, trainingsgerichte interpretatielaag boven
+geregistreerde Nutrition-data. Geen dieetcoach, geen calorie-/
+macrodoelen, geen dieetadvies.
+
+Existing-state audit bevestigde dat NutritionFoundationCore
+(dailyLoggedTotals, B9-09) al de enige benodigde totaal-/data-quality-
+calculation levert -- geen duplicaat gebouwd.
+
+core/nutritionIntelligence.js (nieuw): trainingWindowSummary() (telt
+entries per bestaande, user-entered timing_context -- pre/during/
+post_training, geen automatische tijdsinterpretatie), buildNutritionContext()
+(nutrition_context.v1, pure samenvatting, geen aanbevelingslogica in de
+Context Engine), evaluateNutritionDecisionRules() (NUTR-RULE-001/002,
+detecteert uitsluitend data-aanwezigheid).
+
+ABSOLUTE REGEL AFGEDWONGEN: logging gap != nutrition gap. Bij 0
+geregistreerde entries rond een training is de output expliciet
+"insufficient_data" met een neutrale boodschap ("geen registratie
+gevonden") -- NOOIT "te weinig gegeten/gedronken". Bij aanwezige
+registraties toont de UI uitsluitend vaste, aan een evidence-ID
+gekoppelde, algemene context (NUTR-EV-001/002/003, Evidence Level C),
+nooit een dosering of individuele target.
+
+docs/B9_11_NUTRITION_EVIDENCE_AUDIT.md: drie claims, elk expliciet
+beperkt tot Evidence Level C (contextafhankelijk) -- koolhydraat-
+beschikbaarheid rond inspanning, hydratatie tijdens langdurige
+inspanning, eiwit/koolhydraten rond herstel. Geen Evidence Level A/B-
+claim gedaan (onvoldoende voor individuele precisie).
+
+AI-INTEGRATIE BEWUST NIET GEBOUWD (expliciete, gemotiveerde keuze,
+consistent met het B9-08-precedent): "eerst bewijzen dat AI
+toegevoegde waarde heeft" -- de pure, deterministische Context/
+Decision-laag staat al op zichzelf als productwaarde, een nieuwe AI-
+integratie zou een aanzienlijk, apart te verantwoorden veiligheidsrisico
+(prompt-injectie, adversariale verzoeken om calorieberekeningen)
+toevoegen zonder aangetoonde, aanvullende waarde binnen deze sprint.
+
+Nieuwe "Inzichten"-kaart op het Nutrition-scherm: toont de NUTR-RULE-
+001/002-uitkomst, met een zichtbare, expliciete grens-tekst
+("Trainingskompas rekent geen calorie- of macrodoelen uit").
+
+PRIVACY-ISOLATIE expliciet geaudit en bevestigd: 0 verwijzingen naar
+de nieuwe Nutrition Intelligence-laag in de AI-coach-context
+(tkCoachDataBlok), 0 nutrition-gerelateerde velden in de
+SocialSharingCore-allowlist, 0 referenties in research-export.js.
+
+Causale/evidence-taal-audit: 0 treffers voor verboden termen
+("door je voeding", "bewezen", "optimaal", "gegarandeerd", etc.)
+binnen het nieuwe codeblok.
+
+core/fNutritionIntelligenceCore.test.js (nieuw, 14/14) en core/
+fB9_11NutritionIntelligence.test.js (nieuw, 7/7): determinisme, geen
+mutatie, missing != zero, geen hidden thresholds (repo-brede afwezigheid
+van waarde-vergelijkingen op nutrition-velden, ook met suffixen zoals
+_logged_total), evidence-koppeling, hergebruik van de core-module, 0
+AI/Social-blootstelling, geen causale taal in de UI-copy.
+
+Sabotagebewijs: (1) een "geen entry"-boodschap laten claimen dat de
+sporter te weinig at/dronk -> gedetecteerd, teruggedraaid. (2) een
+verboden "protein < drempel"-threshold toegevoegd -> aanvankelijk niet
+gedetecteerd door een te specifieke regex (miste `_logged_total`-
+suffixen) -- zelf ontdekt, de test verbreed, sabotage daarna correct
+gedetecteerd, teruggedraaid.
+
+Calculation Registry (NUTR-CALC-002) en Decision Rule Registry
+(NUTR-RULE-001/002) bijgewerkt.
+
+APP_VER v4.69.44 -> v4.69.45. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469450. android/app/build.gradle gesynchroniseerd
+(46945/4.69.45).
+
+Volledige regressie: node core/release-gate.js -> 218 uitgevoerd/0
+geskipt/0 gefaald (was 216, +2 nieuwe testbestanden). node tools/
+check-doc-consistency.js -> volledig groen, 0 problemen.
+
+Geen benchmarkscore toegekend.
+
+FINAL STATUS: B9-11 NUTRITION INTELLIGENCE CLOSED — READY FOR NEXT
+BENCHMARK 9.0 SELECTION.
+
+STOP na B9-11. Geen volgende Benchmark 9.0-fase gestart zonder
+expliciete vrijgave van de Product Owner.
+
 ## v4.69.44 — B9-10: Nutrition Product (31 augustus 2026)
+ — B9-10: Nutrition Product (31 augustus 2026)
 
 Maakt Nutrition daadwerkelijk bruikbaar als productonderdeel -- geen
 Nutrition Intelligence (dat is B9-11, niet vrijgegeven).

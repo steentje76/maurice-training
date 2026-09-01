@@ -38,12 +38,20 @@ const calcCounts = countCalcEvidence(calcText);
 // (het is een AI-veiligheidsguard, geen wetenschappelijk onderbouwde calculation),
 // en valt dus in GEEN_EVIDENCE_VELD, niet in een van de A-E-tellingen hieronder --
 // die blijven daarom ongewijzigd.
-ok(calcCounts.total === 25, 'exact 25 CALC-items geregistreerd (reproduceerbare telling, niet handmatig)');
+// B9-03 (Running Intelligence): 4 nieuwe CALC-items toegevoegd
+// (CALC-RUN-WEEKLY-001, CALC-RUN-DISTBAND-001, CALC-RUN-CONSIST-001,
+// CALC-RUN-CSELIG-001) -- telling stijgt van 25 naar 29. Van deze vier
+// heeft alleen CALC-RUN-CONSIST-001 een Evidence level (E, technisch/
+// afgeleid) -- de overige drie zijn aggregatie-/filter-bouwstenen zonder
+// eigen sportwetenschappelijke claim (GEEN_EVIDENCE_VELD), consistent
+// met hoe CALC-GUARD-001 al eerder werd behandeld. E-telling stijgt dus
+// van 7 naar 8.
+ok(calcCounts.total === 29, 'exact 29 CALC-items geregistreerd (reproduceerbare telling, niet handmatig)');
 ok(calcCounts.A === 1, 'exact 1 CALC-item met evidence A');
 ok(calcCounts.B === 4, 'exact 4 CALC-items met evidence B (Epley/Brzycki/Foster-sRPE/HRV-baseline)');
 ok(calcCounts.C === 4, 'exact 4 CALC-items met evidence C');
 ok(calcCounts.D === 1, 'exact 1 CALC-item met evidence D (Recovery Score)');
-ok(calcCounts.E === 7, 'exact 7 CALC-items met evidence E');
+ok(calcCounts.E === 8, 'exact 8 CALC-items met evidence E (was 7, +1 CALC-RUN-CONSIST-001)');
 // MS-F6-01 (F6): Critical Speed is niet langer NOT_IMPLEMENTED (nu GEÏMPLEMENTEERD,
 // CardioCore.criticalSpeed()) -- de telling daalt daarom van 3 naar 2 resterende
 // bewust-NOT_IMPLEMENTED-items (TRIMP/decoupling/zones, BMR/RMR/TDEE; Critical Power

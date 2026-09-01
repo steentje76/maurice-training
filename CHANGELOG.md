@@ -1,6 +1,95 @@
 # Trainingskompas — Changelog
 
+## v4.69.36 — B9-03: Running Intelligence (31 augustus 2026)
+
+Bouwt van verzamelde Running-data bruikbare, verantwoorde intelligentie
+op verzoek van de Benchmark 9.0-eigenaar.
+
+Existing-state audit: ProgressionCore.trendBy()/comparableHistory()
+(bestaand, canoniek) en TrainingLoadCore.sessionLoadSRPE()/
+rollingLoadSum() (bestaand, canoniek) bleken direct herbruikbaar --
+geen tweede trend-/load-engine gebouwd.
+
+migratie_v534.sql: minimale schema-uitbreiding op activities --
+`rpe` (0-10, Borg CR10, laat Running de bestaande Foster-sRPE-load
+hergebruiken) en `is_max_effort` (expliciete, opt-in markering, default
+false, lost het bestaande "hoe weet het systeem dat dit een genuine
+maximale inspanning was"-probleem op voor Critical Speed). Geen nieuwe
+RLS-policies nodig (bestaande activities-policies dekken nieuwe
+kolommen al af, rijniveau niet kolomniveau) -- live geverifieerd.
+
+core/runningIntelligence.js (nieuw): pure, deterministische
+bouwstenen -- weeklyVolume() (aggregatie per kalenderweek, geen
+fabricage bij ontbrekende datum), distanceBandKey() (appels-met-appels
+voor pace-vergelijking: <5km/5-10km/10-15km/15km+, een 5km-tempo-run
+wordt nooit met een 25km-duurloop vergeleken), consistency() (Evidence
+Level E, expliciet geen performance-voorspelling), criticalSpeedEligible
+Performances() (uitsluitend expliciet gemarkeerde max-effort-
+activiteiten voeden CardioCore.criticalSpeed(), nooit een normale run).
+
+Nieuw scherm "Inzichten" (Training -> Hardlopen -> Inzichten, geen
+extra bottom-nav-tab): weekly volume (huidige/rolling 4/8 weken),
+tempo-trend per afstandsband, trainingsconsistentie, Critical Speed
+(alleen getoond bij voldoende gemarkeerde inspanningen, met
+confidence), belasting (rolling sRPE-load, alleen bij ingevulde RPE).
+Progressive disclosure, expliciete empty-state bij 0 runs.
+
+BEWUST NIET GEBOUWD (expliciete, gemotiveerde architectuurkeuzes, geen
+shadow calculation): HR-zones (geen gevalideerde, universeel
+toepasbare formule -- "nog niet beschikbaar" i.p.v. een verzonnen
+"220-leeftijd"), TRIMP (methodologische complexiteit/sex-specifieke
+aannames niet passend -- sRPE/rolling load is de gekozen, eenvoudigere
+loadmetriek), aerobic decoupling (activities/activity_laps bevatten
+alleen gemiddelde HR, geen continue tijdreeks -- onvoldoende
+granulariteit), race-goal-model (geen directe noodzaak voor de
+gebouwde functionaliteit), AI-coach-integratie voor Running (bestond
+nog niet, geen scope-uitbreiding in deze sprint).
+
+Finish-flow uitgebreid: een checkbox "Was dit een maximale test-/
+wedstrijdinspanning?" (standaard uit) en een optioneel RPE-invoerveld,
+beide uitsluitend gelezen uit expliciete gebruikersinvoer.
+
+docs/CALCULATION_REGISTRY.md: vier nieuwe, volledig geregistreerde
+calculations (CALC-RUN-WEEKLY-001, CALC-RUN-DISTBAND-001,
+CALC-RUN-CONSIST-001, CALC-RUN-CSELIG-001), inclusief expliciete
+limitations/forbidden-interpretations/AI-permissions per item.
+
+Live, adversarial herbevestigd: de nieuwe activities-kolommen
+introduceren geen cross-user-lek (bestaande B9-01-RLS dekt dit
+volledig af, transactie zonder commit, 0 restanten).
+
+core/fRunningIntelligenceCore.test.js (nieuw, 15/15) en core/
+fB9_03RunningIntelligence.test.js (nieuw, 17/17): weekly-aggregatie,
+distance-bands, consistency, CS-eligibility, UI-integratie (hergebruik
+van canonieke engines, opt-in max-effort, eerlijke HR-zones-gap, geen
+extra bottom-nav-tab).
+
+Sabotagebewijs: (1) de is_max_effort-eligibiliteitscheck verwijderd ->
+gedetecteerd, teruggedraaid. (2) een lokale pace-formule (buiten
+CardioCore) geinjecteerd -> aanvankelijk NIET gedetecteerd door een te
+smalle, breekbare negatieve regex-test -- gecorrigeerd naar een
+robuustere, positieve check die exact controleert welke functie de
+pace-waarde levert; sabotage daarna wel correct gedetecteerd,
+teruggedraaid.
+
+Bestaande core/fEvidenceClaimAudit.test.js bijgewerkt: de hardcoded
+CALC-item-telling (25->29) en Evidence-E-telling (7->8) na de vier
+nieuwe registry-toevoegingen, consistent met het bestaande
+update-patroon van eerdere sprints.
+
+APP_VER v4.69.35 -> v4.69.36 (echte, functionele runtime-wijziging).
+sw.js CACHE_NAME/CACHE_STATIC synchroon gebumpt naar v469360.
+android/app/build.gradle gesynchroniseerd (46936/4.69.36).
+
+Volledige regressie: node core/release-gate.js -> 206 uitgevoerd/0
+geskipt/0 gefaald (was 204, +2 nieuwe testbestanden). node tools/
+check-doc-consistency.js -> volledig groen, 0 problemen.
+
+Geen benchmarkscore toegekend (voorbehouden aan de onafhankelijke
+Benchmark 9.0-eigenaar).
+
 ## v4.69.35 — B9-02C: Running Core Final Closure (31 augustus 2026)
+ — B9-02C: Running Core Final Closure (31 augustus 2026)
 
 Autonome nachtsprint. Sluit de twee resterende B9-02-closuregebieden
 (structured-interval-architectuur, volledige error-state-matrix) en

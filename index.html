@@ -2987,6 +2987,18 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
   </nav>
 </div>
+<!-- ═══ B9-03 · RUNNING INSIGHTS (Training → Hardlopen → Inzichten, geen extra bottom-nav) ═══ -->
+<div class="scr" id="s-running-insights">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Inzichten</div><div class="hdr-sub">Hardlopen</div></div><button class="ibtn" onclick="go('s-running')" aria-label="Terug naar Hardlopen">←</button></div></div>
+  <div class="scroll" id="running-insights-scroll"></div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
+  </nav>
+</div>
 <!-- ═══ B9-02 · CYCLING DESTINATION SHELL (architecture-ready voor B9-04) ═══ -->
 <div class="scr" id="s-cycling">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Fietsen</div><div class="hdr-sub">sport: cycling</div></div><button class="ibtn" onclick="go('s-train-mgr')" aria-label="Terug naar Training">←</button></div></div>
@@ -5446,6 +5458,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/aiOutputContract.js"></script>
 <script src="core/cardio.js"></script>
 <script src="core/runningExecution.js"></script>
+<script src="core/runningIntelligence.js"></script>
 <script src="core/progression.js"></script>
 <script src="core/intervalEngine.js"></script>
 <script src="core/coaching.js"></script>
@@ -6188,7 +6201,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.35';
+const APP_VER = 'v4.69.36';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -9923,6 +9936,7 @@ function go(id){
   if(id==='s-builder')renderHyroxEntry();
   if(id==='s-guided'&&window.GWUI)GWUI.render();
   if(id==='s-running')renderRunningEntry();
+  if(id==='s-running-insights')renderRunningInsights();
   if(id==='s-cycling')renderCyclingShell();
   if(id==='s-hist'){histOff=0;renderHistFilterTabs();loadHistory();}
   if(id==='s-train-mgr'){renderSportSwitcher();renderV43Train();}
@@ -10322,6 +10336,7 @@ function renderRunningEntry(){
   _runningGekozenVorm=null;
   el.innerHTML=`
     <div style="padding:16px">
+      <button class="btn btn-o btn-sm" style="margin-bottom:14px" onclick="go('s-running-insights')" aria-label="Bekijk Running-inzichten">📊 Inzichten</button>
       <p style="font-size:13px;color:var(--g4);margin:0 0 14px">Kies een trainingsvorm. Geen wearable nodig — je vult afstand en tijd zelf in.</p>
       <div class="v43-tmt" id="running-vormen-lijst"></div>
       <div id="running-log-form" style="margin-top:16px"></div>
@@ -10540,6 +10555,12 @@ function renderRunningExecutionScreen(){
       ${st.status==='FINISH_CONFIRM'?`
         <div class="card"><div class="card-body">
           <p style="font-size:15px;margin-bottom:14px">Training afronden?</p>
+          <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;text-align:left">
+            <input type="checkbox" id="running-is-max-effort" style="width:20px;height:20px">
+            Was dit een maximale test-/wedstrijdinspanning?
+          </label>
+          <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px;text-align:left">Ervaren inspanning (RPE 0-10, optioneel)</label>
+          <input type="number" inputmode="numeric" min="0" max="10" id="running-rpe" style="width:100%;margin-bottom:14px" placeholder="bv. 7">
           <button class="btn btn-p" style="width:100%;margin-bottom:8px;padding:16px;font-size:16px" onclick="runningConfirmFinish()">Bevestig afronden</button>
           <button class="btn btn-o" style="width:100%" onclick="runningCancelFinish()">Doorgaan met trainen</button>
         </div></div>`:`
@@ -10604,13 +10625,22 @@ async function runningConfirmFinish(){
     const duurS=Math.round(RunningExecutionCore.elapsedActiveMs(_runningExecState,_runningExecState.finishedAt)/1000);
     let afstandM=_runningPreviewConfig&&_runningPreviewConfig.doelAfstandM?null:null; // afstand NOOIT afgeleid uit tijd/pace (sectie 6) -- alleen handmatig, hieronder gevraagd indien onbekend.
     const dedupeKey='manual-exec-'+_runningExecState.startedAt+'-'+uid;
+    // Max-effort-markering en RPE worden gelezen vóór het scherm wordt
+    // hertekend (sectie 11: expliciete, opt-in keuze van de gebruiker,
+    // nooit automatisch aangenomen).
+    const isMaxEffortEl=document.getElementById('running-is-max-effort');
+    const rpeEl=document.getElementById('running-rpe');
+    const isMaxEffort=isMaxEffortEl?isMaxEffortEl.checked:false;
+    const rpeWaarde=rpeEl?parseFloat(rpeEl.value):NaN;
     const payload={
       user_id:uid,sport:'running',
       distance_meters:afstandM,
       duration_seconds:duurS,
       source_provenance:'manual',data_quality:'unverified',
       recorded_at:new Date(_runningExecState.startedAt).toISOString(),
-      dedupe_key:dedupeKey
+      dedupe_key:dedupeKey,
+      is_max_effort:isMaxEffort,
+      rpe:isFinite(rpeWaarde)&&rpeWaarde>=0&&rpeWaarde<=10?rpeWaarde:null
     };
     const savedActivity=await fetch(`${SB_URL}/rest/v1/activities`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify(payload)});
     let activityId=null;
@@ -10727,6 +10757,125 @@ async function renderRunningHistory(){
     const sub=[km,duur,paceStr].filter(Boolean).join(' · ')||'Geen details';
     return `<button class="row" onclick="renderRunDetail('${r.id}')" aria-label="Bekijk run van ${datum}"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 4a2 2 0 100 4 2 2 0 000-4zM4 20l4-5 3 2 3-5 3 2 3-7"/></svg></span><span class="b"><span class="t">${datum}</span><span class="s">${sub}</span></span><span class="ar">›</span></button>`;
   }).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// B9-03 — Running Intelligence (Training → Hardlopen → Inzichten)
+// ══════════════════════════════════════════════════════════
+// Alle berekeningen lopen uitsluitend via canonieke, bestaande engines
+// (RunningIntelligenceCore/ProgressionCore/TrainingLoadCore/CardioCore)
+// -- deze functie is uitsluitend presentatie, geen shadow calculation.
+// Progressive disclosure: belangrijkste status bovenaan, detail eronder.
+// Expliciete, eerlijke empty-states bij onvoldoende data (sectie 5/22).
+async function renderRunningInsights(){
+  const el=document.getElementById('running-insights-scroll');
+  if(!el)return;
+  el.innerHTML='<div style="padding:16px"><p style="font-size:13px;color:var(--g4)">Laden…</p></div>';
+  const activities=await sbGet('activities', "&sport=eq.running&order=recorded_at.asc&limit=500");
+  const n=activities.length;
+
+  if(n===0){
+    el.innerHTML='<div style="padding:16px"><div class="card"><div class="card-body"><p style="font-size:14px;margin:0">Nog geen runs opgeslagen. Rond je eerste hardlooptraining af om hier inzichten te zien opbouwen.</p></div></div></div>';
+    return;
+  }
+
+  const nu=new Date();
+  const perWeek=RunningIntelligenceCore.weeklyVolume(activities);
+  const huidigeWeekKey=RunningIntelligenceCore.weekKeyFromDate(nu);
+  const huidigeWeek=perWeek[huidigeWeekKey]||{distanceMeters:0,durationSeconds:0,count:0};
+  const consist=RunningIntelligenceCore.consistency(activities,8,nu);
+
+  // Rolling 4/8-weken totalen (sectie 6): som van de weekly-volume-map
+  // over de laatste N kalenderweken t.o.v. nu.
+  function rollingTotaal(weken){
+    let afstand=0,duur=0,aantal=0;
+    for(let i=0;i<weken;i++){
+      const wkDate=new Date(new Date(huidigeWeekKey+'T00:00:00Z').getTime()-i*7*86400000);
+      const wk=wkDate.toISOString().slice(0,10);
+      if(perWeek[wk]){afstand+=perWeek[wk].distanceMeters;duur+=perWeek[wk].durationSeconds;aantal+=perWeek[wk].count;}
+    }
+    return {afstand,duur,aantal};
+  }
+  const r4=rollingTotaal(4), r8=rollingTotaal(8);
+
+  // Pace-trend per distance-band (sectie 8: appels-met-appels, nooit
+  // een 5km-tempo-run met een 25km-duurloop vergelijken). Gebruikt de
+  // canonieke ProgressionCore.trendBy(), geen nieuwe trend-engine.
+  const perfsMetPace=activities.filter(a=>a.distance_meters>0&&a.duration_seconds>0).map(a=>{
+    const band=RunningIntelligenceCore.distanceBandKey(a.distance_meters);
+    const split=CardioCore.splitFromDistTime(a.distance_meters,a.duration_seconds,1000);
+    return band&&split!=null?{key:band,date:a.recorded_at.slice(0,10),paceSecPerKm:split}:null;
+  }).filter(Boolean);
+  const bandenAanwezig=[...new Set(perfsMetPace.map(p=>p.key))];
+  const paceTrends=bandenAanwezig.map(band=>{
+    const trend=ProgressionCore.trendBy(perfsMetPace,band,'paceSecPerKm','min',3);
+    const labels={running_lt5km:'< 5 km',running_5_10km:'5-10 km',running_10_15km:'10-15 km',running_15km_plus:'15+ km'};
+    return {band,label:labels[band]||band,trend};
+  });
+
+  // Critical Speed (sectie 10-12): uitsluitend expliciet gemarkeerde
+  // max-effort-activiteiten voeden de bestaande, canonieke
+  // CardioCore.criticalSpeed() -- nooit een normale training.
+  const csElig=RunningIntelligenceCore.criticalSpeedEligiblePerformances(activities,3);
+  let csResultaat=null;
+  if(csElig.status==='eligible'){
+    try{
+      const r=CardioCore.criticalSpeed(csElig.performances);
+      if(r&&r.status==='valid')csResultaat=r;
+    }catch(e){csResultaat=null;}
+  }
+
+  // Load (sectie 17-18): hergebruik van de bestaande, canonieke
+  // TrainingLoadCore -- geen tweede load-engine. Alleen activiteiten
+  // met een ingevulde RPE dragen bij (geen fabricage van ontbrekende RPE).
+  const srpeWaarden=activities.filter(a=>a.rpe!=null&&a.duration_seconds>0).map(a=>TrainingLoadCore.sessionLoadSRPE(a.duration_seconds,a.rpe));
+  const rollingLoad=TrainingLoadCore.rollingLoadSum(srpeWaarden);
+  const aantalMetRpe=srpeWaarden.filter(v=>v!=null).length;
+
+  const km=m=>(m/1000).toFixed(1);
+  const uur=s=>CardioCore.formatTime(s);
+
+  el.innerHTML=`
+    <div style="padding:16px">
+      <div class="card" style="margin-bottom:14px"><div class="card-body">
+        <div style="font-size:12px;color:var(--g4);margin-bottom:2px">Deze week</div>
+        <div style="font-size:24px;font-weight:700">${km(huidigeWeek.distanceMeters)} km</div>
+        <div style="font-size:13px;color:var(--g4)">${huidigeWeek.count} run(s) · ${uur(huidigeWeek.durationSeconds)}</div>
+      </div></div>
+
+      <div class="card" style="margin-bottom:14px"><div class="card-body">
+        <div class="card-title" style="margin-bottom:8px">Volume</div>
+        <div style="font-size:13px;margin-bottom:4px">Laatste 4 weken: <b>${km(r4.afstand)} km</b> · ${r4.aantal} run(s)</div>
+        <div style="font-size:13px">Laatste 8 weken: <b>${km(r8.afstand)} km</b> · ${r8.aantal} run(s)</div>
+      </div></div>
+
+      <div class="card" style="margin-bottom:14px"><div class="card-body">
+        <div class="card-title" style="margin-bottom:8px">Trainingsconsistentie</div>
+        <div style="font-size:13px">${consist.activeWeeks} van de laatste ${consist.totalWeeks} weken actief</div>
+        <div style="font-size:11px;color:var(--g4);margin-top:4px">Technische, afgeleide indicator (Evidence Level E) — zegt niets over verwachte prestaties.</div>
+      </div></div>
+
+      ${paceTrends.length?`<div class="card" style="margin-bottom:14px"><div class="card-body">
+        <div class="card-title" style="margin-bottom:8px">Tempo-trend</div>
+        ${paceTrends.map(pt=>`<div style="font-size:13px;margin-bottom:6px"><b>${pt.label}:</b> ${pt.trend.status==='insufficient'?'Nog onvoldoende gegevens voor een betrouwbare trend ('+pt.trend.n+' van 3 nodig)':(pt.trend.improving===true?'Sneller geworden':pt.trend.improving===false?'Langzamer geworden':'Stabiel')+' over '+pt.trend.n+' vergelijkbare runs'}</div>`).join('')}
+      </div></div>`:'<div class="card" style="margin-bottom:14px"><div class="card-body"><p style="font-size:13px;margin:0">Nog geen tempo-trend beschikbaar — vul afstand én duur in bij je runs.</p></div></div>'}
+
+      <div class="card" style="margin-bottom:14px"><div class="card-body">
+        <div class="card-title" style="margin-bottom:8px">Critical Speed</div>
+        ${csResultaat?`<div style="font-size:13px">${CardioCore.formatTime(Math.round(1000/csResultaat.cs_m_s))}/km — gebaseerd op ${csResultaat.n_performances} gemarkeerde maximale inspanningen (betrouwbaarheid: ${csResultaat.confidence})</div>`:`<div style="font-size:13px;color:var(--g4)">${csElig.status==='eligible'?'Onvoldoende variatie in de gemarkeerde inspanningen voor een betrouwbare berekening':csElig.label+' ('+csElig.n+'/'+csElig.minRequired+')'}</div>`}
+        <div style="font-size:11px;color:var(--g4);margin-top:4px">Alleen berekend uit runs die je zelf als maximale test-/wedstrijdinspanning hebt gemarkeerd.</div>
+      </div></div>
+
+      <div class="card" style="margin-bottom:14px"><div class="card-body">
+        <div class="card-title" style="margin-bottom:8px">Belasting</div>
+        ${aantalMetRpe>0?`<div style="font-size:13px">Rolling load (laatste ${aantalMetRpe} runs met RPE): <b>${rollingLoad}</b> AU</div>`:`<div style="font-size:13px;color:var(--g4)">Nog geen RPE ingevuld — vul dit bij het afronden van een run in om belasting te zien.</div>`}
+      </div></div>
+
+      <div class="card"><div class="card-body">
+        <div class="card-title" style="margin-bottom:8px">HR-zones</div>
+        <div style="font-size:13px;color:var(--g4)">Nog niet beschikbaar (canonieke berekening ontbreekt) — geen verzonnen zones.</div>
+      </div></div>
+    </div>`;
 }
 
 // ══════════════════════════════════════════════════════════

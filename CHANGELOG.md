@@ -1,6 +1,79 @@
 # Trainingskompas — Changelog
 
+## v4.69.39 — B9-06: Multisport Integration (31 augustus 2026)
+
+Bewijst dat Running/Cycling/Rowing/HYROX/Triathlon geen losse
+producteilanden zijn, maar correct samenwerken via dezelfde
+architectuur -- zonder de first-class, aparte bestemmingen per sport
+op te heffen.
+
+FORENSISCHE MULTISPORT-AUDIT (vóór implementatie):
+- Running/Cycling: CANONICAL, schrijven uitsluitend naar `activities`
+  (B9-01), delen dezelfde `EnduranceExecutionCore`-state-machine
+  (B9-04).
+- HYROX/Triathlon/Brick: CANONICAL, gebruiken al een eigen, bestaand
+  parent/child-model (`race_segments`, met `training_instance_id` als
+  parent, `segment_index` als sequence) -- dit is exact de canonieke
+  grouping-structuur die multisport-representatie vereist, al gebouwd
+  vóór deze B9-serie. Geen nieuwe schema-uitbreiding nodig.
+- Rowing/Concept2: bevestigd LEGACY, blijft op `sessions` -- bewust
+  NIET gemigreerd (reeds functioneel werkend, geen bewezen noodzaak
+  voor een risicovolle refactor van een werkend systeem).
+- Live, expliciet bevestigd: 0 overlap tussen `activities` en
+  `race_segments` -- geen enkel codepad schrijft naar beide voor
+  dezelfde gebeurtenis, dus geen dubbeltelrisico.
+
+Canonical sport taxonomy: `activities.sport` (running/cycling/rowing/
+swimming) bevestigd gesloten en consistent, al klaar voor een
+toekomstige Rowing-migratie zonder dat de taxonomie zelf hoeft te
+wijzigen.
+
+Endurance Execution Core opnieuw geaudit: bevestigd dat de generic
+engine (`core/enduranceExecution.js`) geen enkele sportspecifieke term
+(pace/watt/cadence/stroke) in de uitvoerbare code bevat -- puur
+state/timer, sportspecifieke logica leeft uitsluitend in de UI-laag.
+Rowing NIET gerefactored naar deze engine (geen functionele noodzaak
+vastgesteld binnen deze sprint, conform "refactor alleen indien nodig
+en veilig, nooit puur voor code-esthetiek").
+
+Nieuw: een "Multisport endurance"-overzicht op het bestaande
+Voortgangsscherm (Training -> Voortgang), naast (niet in plaats van)
+de bestaande, aparte Hardlopen/Fietsen-inzichtenschermen. Toont
+gecombineerd wekelijks volume (Running+Cycling samen) via de bestaande,
+sport-neutrale `RunningIntelligenceCore.weeklyVolume()` -- geen derde
+aggregatie-engine gebouwd. Expliciet, zichtbaar voor de gebruiker:
+Rowing/Concept2 en HYROX/Triathlon-segmenten staan hier bewust niet in
+(aparte, canonieke bronnen), elke sport blijft een eigen bestemming.
+
+core/fB9_06MultisportIntegration.test.js (nieuw, 11/11): hergebruik
+van canonieke engines, canonieke sport-taxonomie, geen dubbeltelling
+tussen activities/race_segments, Rowing bewust legacy, geen
+sportspecifieke term in de generic execution engine, UX-coherentie
+(Hardlopen en Fietsen blijven beide bestaan als aparte schermen), geen
+nieuwe, overbodige migratie.
+
+Live, adversarial herbevestigd: de multisport-query (`sport=in.
+(running,cycling)`) blijft volledig onderworpen aan de bestaande,
+B9-01-bewezen RLS -- geen cross-user-lek, ook niet met de `in`-operator.
+
+Sabotagebewijs: de sport-filter uit de multisport-query verwijderd
+(zou Rowing-data per ongeluk laten meetellen) -> aanvankelijk niet
+gedetecteerd door een ontbrekende, gerichte assertie -- zelf ontdekt,
+een nieuwe test toegevoegd, sabotage daarna wel correct gedetecteerd,
+teruggedraaid.
+
+APP_VER v4.69.38 -> v4.69.39 (echte, functionele runtime-wijziging).
+sw.js CACHE_NAME/CACHE_STATIC synchroon gebumpt naar v469390.
+android/app/build.gradle gesynchroniseerd (46939/4.69.39).
+
+Volledige regressie: node core/release-gate.js -> 210 uitgevoerd/0
+geskipt/0 gefaald (was 209, +1 nieuw testbestand). node tools/
+check-doc-consistency.js -> volledig groen, 0 problemen.
+
+Geen benchmarkscore toegekend.
+
 ## v4.69.38 — B9-05: Cycling Intelligence (31 augustus 2026)
+ — B9-05: Cycling Intelligence (31 augustus 2026)
 
 Maakt bestaande Cyclingdata (B9-04) intelligent en bruikbaar, zonder
 nieuwe execution te bouwen.

@@ -6251,7 +6251,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.43';
+const APP_VER = 'v4.69.44';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -7429,7 +7429,7 @@ async function offlineQueueRemove(id){
 // server een idempotente upsert (Prefer: resolution=merge-duplicates) --
 // een exacte replay met hetzelfde, client-gegenereerde id overschrijft
 // zichzelf onschadelijk, in plaats van een tweede rij aan te maken.
-const IDEMPOTENT_TABELLEN_MET_CLIENT_ID = { sessions: true, race_segments: true };
+const IDEMPOTENT_TABELLEN_MET_CLIENT_ID = { sessions: true, race_segments: true, nutrition_entries: true };
 function newClientRowId(){
   return (typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():('row-'+Date.now()+'-'+Math.random().toString(16).slice(2));
 }
@@ -11188,6 +11188,15 @@ function nutritionParseGetal(waarde){
   return isFinite(getal)?getal:null;
 }
 
+let _nutritionSelectedDate=new Date();
+let _nutritionEditingId=null;
+
+function nutritionDagGrenzen(datum){
+  const start=new Date(datum);start.setHours(0,0,0,0);
+  const eind=new Date(datum);eind.setHours(23,59,59,999);
+  return {start,eind};
+}
+
 async function renderNutritionScreen(){
   const el=document.getElementById('nutrition-scroll');
   if(!el)return;
@@ -11195,68 +11204,123 @@ async function renderNutritionScreen(){
   const uid=authSession?.user?.id;
   if(!uid){el.innerHTML='<p style="font-size:13px;color:var(--g4)">Niet ingelogd.</p>';return;}
 
-  const vandaagStart=new Date();vandaagStart.setHours(0,0,0,0);
-  const vandaagEind=new Date();vandaagEind.setHours(23,59,59,999);
+  const {start,eind}=nutritionDagGrenzen(_nutritionSelectedDate);
   let entries=null;
   try{
-    entries=await sbGet('nutrition_entries',`&user_id=eq.${uid}&occurred_at=gte.${vandaagStart.toISOString()}&occurred_at=lte.${vandaagEind.toISOString()}&order=occurred_at.desc`);
+    entries=await sbGet('nutrition_entries',`&user_id=eq.${uid}&occurred_at=gte.${start.toISOString()}&occurred_at=lte.${eind.toISOString()}&order=occurred_at.desc`);
   }catch(e){entries=null;}
 
+  const vandaag=new Date();
+  const isVandaag=_nutritionSelectedDate.toDateString()===vandaag.toDateString();
+  const datumLabel=isVandaag?'Vandaag':_nutritionSelectedDate.toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'});
+  // Datumnavigatie (sectie 8): lokale dag, geen UTC-grensfout -- werkt op
+  // basis van de lokale Date-object-dag, niet op een losse datumstring.
+  const datumNavHtml=`<div class="card" style="margin-bottom:14px"><div class="card-body" style="display:flex;align-items:center;justify-content:space-between">
+    <button class="ibtn" onclick="nutritionGaNaarDag(-1)" aria-label="Vorige dag">‹</button>
+    <div style="text-align:center"><div style="font-size:14px;font-weight:600">${datumLabel}</div>${!isVandaag?'<button class="btn btn-o btn-sm" style="margin-top:4px" onclick="nutritionGaNaarVandaag()">Naar vandaag</button>':''}</div>
+    <button class="ibtn" onclick="nutritionGaNaarDag(1)" aria-label="Volgende dag" ${isVandaag?'disabled style="opacity:.3"':''}>›</button>
+  </div></div>`;
+
   if(entries===null){
-    el.innerHTML=nutritionFormHtml()+'<div class="card"><div class="card-body"><p style="font-size:13px;color:var(--g4);margin:0">Kon vandaag niet laden -- probeer het opnieuw.</p></div></div>';
+    el.innerHTML=datumNavHtml+nutritionFormHtml()+'<div class="card"><div class="card-body"><p style="font-size:13px;color:var(--g4);margin:0">Kon deze dag niet laden -- probeer het opnieuw.</p></div></div>';
     return;
   }
 
   const totalen=NutritionFoundationCore.dailyLoggedTotals(entries);
   const km=v=>v==null?'niet geregistreerd':v;
   const totalenHtml=entries.length?`
-    <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Vandaag geregistreerd</div></div><div class="card-body">
+    <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Geregistreerd deze dag</div></div><div class="card-body">
       <div style="font-size:12px;color:var(--g4);margin-bottom:8px">Som van wat je zelf invulde -- geen doel, geen volledige daginname als niet alles is geregistreerd.</div>
-      <div style="font-size:13px">Energie: ${km(totalen.energy_kcal_logged_total)}${totalen.energy_kcal_logged_total!=null?' kcal':''}</div>
-      <div style="font-size:13px">Eiwit: ${km(totalen.protein_g_logged_total)}${totalen.protein_g_logged_total!=null?' g':''}</div>
-      <div style="font-size:13px">Koolhydraten: ${km(totalen.carbohydrate_g_logged_total)}${totalen.carbohydrate_g_logged_total!=null?' g':''}</div>
-      <div style="font-size:13px">Vet: ${km(totalen.fat_g_logged_total)}${totalen.fat_g_logged_total!=null?' g':''}</div>
-      <div style="font-size:13px">Vocht: ${km(totalen.fluid_ml_logged_total)}${totalen.fluid_ml_logged_total!=null?' ml':''}</div>
+      <div style="font-size:13px">Energie: ${km(totalen.energy_kcal_logged_total)}${totalen.energy_kcal_logged_total!=null?' kcal':''}${totalen.data_quality.energy_kcal==='PARTIAL'?' (dag mogelijk onvolledig)':''}</div>
+      <div style="font-size:13px">Eiwit: ${km(totalen.protein_g_logged_total)}${totalen.protein_g_logged_total!=null?' g':''}${totalen.data_quality.protein_g==='PARTIAL'?' (dag mogelijk onvolledig)':''}</div>
+      <div style="font-size:13px">Koolhydraten: ${km(totalen.carbohydrate_g_logged_total)}${totalen.carbohydrate_g_logged_total!=null?' g':''}${totalen.data_quality.carbohydrate_g==='PARTIAL'?' (dag mogelijk onvolledig)':''}</div>
+      <div style="font-size:13px">Vet: ${km(totalen.fat_g_logged_total)}${totalen.fat_g_logged_total!=null?' g':''}${totalen.data_quality.fat_g==='PARTIAL'?' (dag mogelijk onvolledig)':''}</div>
+      <div style="font-size:13px">Vocht: ${km(totalen.fluid_ml_logged_total)}${totalen.fluid_ml_logged_total!=null?' ml':''}${totalen.data_quality.fluid_ml==='PARTIAL'?' (dag mogelijk onvolledig)':''}</div>
     </div></div>`:'';
 
+  const timingLabels={pre_training:'Vóór training',during_training:'Tijdens training',post_training:'Na training'};
   const labels={meal:'Maaltijd',snack:'Snack',hydration:'Hydratatie',other:'Overig'};
   const lijstHtml=entries.length?entries.map(e=>{
     const tijd=new Date(e.occurred_at).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
     const details=[e.energy_kcal!=null?e.energy_kcal+' kcal':null,e.protein_g!=null?e.protein_g+'g eiwit':null,e.carbohydrate_g!=null?e.carbohydrate_g+'g kh':null,e.fat_g!=null?e.fat_g+'g vet':null,e.fluid_ml!=null?e.fluid_ml+'ml':null].filter(Boolean).join(' · ');
-    return `<div class="row"><span class="b"><span class="t">${tijd} — ${labels[e.entry_type]||e.entry_type}</span><span class="s">${details?escHtml(details):'Geen waarden ingevuld'}${e.note?' · '+escHtml(e.note):''}</span></span><button class="btn btn-o btn-sm" onclick="nutritionDeleteEntry('${e.id}')" aria-label="Verwijderen">🗑</button></div>`;
-  }).join(''):'<p style="font-size:13px;color:var(--g4);margin:0">Nog niets geregistreerd vandaag.</p>';
+    const timing=e.timing_context?' · '+timingLabels[e.timing_context]:'';
+    return `<div class="row"><span class="b"><span class="t">${tijd} — ${labels[e.entry_type]||e.entry_type}${timing}</span><span class="s">${details?escHtml(details):'Geen waarden ingevuld'}${e.note?' · '+escHtml(e.note):''}</span></span><button class="ibtn" onclick="nutritionEditEntry('${e.id}')" aria-label="Bewerken">✎</button><button class="btn btn-o btn-sm" onclick="nutritionDeleteEntry('${e.id}')" aria-label="Verwijderen">🗑</button></div>`;
+  }).join(''):`<p style="font-size:13px;color:var(--g4);margin:0">${isVandaag?'Nog niets geregistreerd vandaag.':'Niets geregistreerd op deze dag.'}</p>`;
 
-  el.innerHTML=nutritionFormHtml()+totalenHtml+`<div class="card"><div class="card-hd"><div class="card-title">Vandaag</div></div><div class="card-body">${lijstHtml}</div></div>`;
+  el.innerHTML=datumNavHtml+nutritionFormHtml()+totalenHtml+`<div class="card"><div class="card-hd"><div class="card-title">Registraties</div></div><div class="card-body">${lijstHtml}</div></div>`;
+  window._nutritionEntriesCache=entries;
+}
+
+function nutritionGaNaarDag(delta){
+  _nutritionSelectedDate=new Date(_nutritionSelectedDate);
+  _nutritionSelectedDate.setDate(_nutritionSelectedDate.getDate()+delta);
+  _nutritionEditingId=null;
+  renderNutritionScreen();
+}
+function nutritionGaNaarVandaag(){
+  _nutritionSelectedDate=new Date();
+  _nutritionEditingId=null;
+  renderNutritionScreen();
 }
 
 function nutritionFormHtml(){
-  return `<div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Toevoegen</div></div><div class="card-body">
+  const bewerken=_nutritionEditingId&&window._nutritionEntriesCache?window._nutritionEntriesCache.find(e=>e.id===_nutritionEditingId):null;
+  const titel=bewerken?'Bewerken':'Toevoegen';
+  const val=(veld)=>bewerken&&bewerken[veld]!=null?bewerken[veld]:'';
+  return `<div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">${titel}</div></div><div class="card-body">
     <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Type</label>
     <select id="nutrition-entry-type" style="width:100%;margin-bottom:10px">
-      <option value="meal">Maaltijd</option><option value="snack">Snack</option><option value="hydration">Hydratatie</option><option value="other">Overig</option>
+      <option value="meal" ${bewerken?.entry_type==='meal'?'selected':''}>Maaltijd</option><option value="snack" ${bewerken?.entry_type==='snack'?'selected':''}>Snack</option><option value="hydration" ${bewerken?.entry_type==='hydration'?'selected':''}>Hydratatie</option><option value="other" ${bewerken?.entry_type==='other'?'selected':''}>Overig</option>
     </select>
+    <div id="nutrition-hydration-presets" style="display:${bewerken?.entry_type==='hydration'||!bewerken?'flex':'none'};gap:8px;margin-bottom:10px">
+      <button type="button" class="btn btn-o btn-sm" onclick="nutritionHydrationPreset(250)">+250 ml</button>
+      <button type="button" class="btn btn-o btn-sm" onclick="nutritionHydrationPreset(500)">+500 ml</button>
+    </div>
     <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Moment (optioneel)</label>
     <select id="nutrition-timing-context" style="width:100%;margin-bottom:10px">
-      <option value="">Geen</option><option value="pre_training">Vóór training</option><option value="during_training">Tijdens training</option><option value="post_training">Na training</option>
+      <option value="">Geen</option><option value="pre_training" ${bewerken?.timing_context==='pre_training'?'selected':''}>Vóór training</option><option value="during_training" ${bewerken?.timing_context==='during_training'?'selected':''}>Tijdens training</option><option value="post_training" ${bewerken?.timing_context==='post_training'?'selected':''}>Na training</option>
     </select>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-      <input type="text" inputmode="decimal" id="nutrition-kcal" placeholder="kcal (optioneel)">
-      <input type="text" inputmode="decimal" id="nutrition-protein" placeholder="eiwit g (optioneel)">
-      <input type="text" inputmode="decimal" id="nutrition-carbs" placeholder="koolhydraten g (optioneel)">
-      <input type="text" inputmode="decimal" id="nutrition-fat" placeholder="vet g (optioneel)">
-      <input type="text" inputmode="decimal" id="nutrition-fluid" placeholder="vocht ml (optioneel)">
+      <input type="text" inputmode="decimal" id="nutrition-kcal" placeholder="kcal (optioneel)" value="${escHtml(String(val('energy_kcal')))}">
+      <input type="text" inputmode="decimal" id="nutrition-protein" placeholder="eiwit g (optioneel)" value="${escHtml(String(val('protein_g')))}">
+      <input type="text" inputmode="decimal" id="nutrition-carbs" placeholder="koolhydraten g (optioneel)" value="${escHtml(String(val('carbohydrate_g')))}">
+      <input type="text" inputmode="decimal" id="nutrition-fat" placeholder="vet g (optioneel)" value="${escHtml(String(val('fat_g')))}">
+      <input type="text" inputmode="decimal" id="nutrition-fluid" placeholder="vocht ml (optioneel)" value="${escHtml(String(val('fluid_ml')))}">
     </div>
-    <textarea id="nutrition-note" maxlength="500" placeholder="Notitie (optioneel)" style="width:100%;margin-bottom:10px;min-height:44px"></textarea>
-    <button class="btn btn-p" style="width:100%" onclick="nutritionAddEntry()">Toevoegen</button>
+    <textarea id="nutrition-note" maxlength="500" placeholder="Notitie (optioneel)" style="width:100%;margin-bottom:10px;min-height:44px">${bewerken?escHtml(bewerken.note||''):''}</textarea>
+    <button class="btn btn-p" style="width:100%" onclick="nutritionSaveEntry()">${bewerken?'Wijzigingen opslaan':'Toevoegen'}</button>
+    ${bewerken?'<button class="btn btn-o" style="width:100%;margin-top:8px" onclick="nutritionCancelEdit()">Annuleren</button>':''}
   </div></div>`;
 }
 
-async function nutritionAddEntry(){
+function nutritionHydrationPreset(ml){
+  document.getElementById('nutrition-entry-type').value='hydration';
+  const veld=document.getElementById('nutrition-fluid');
+  const huidig=nutritionParseGetal(veld.value)||0;
+  veld.value=String(huidig+ml);
+}
+
+function nutritionEditEntry(entryId){
+  _nutritionEditingId=entryId;
+  renderNutritionScreen();
+  // Na renderen: bewaar de cache opnieuw, want renderNutritionScreen() haalt
+  // opnieuw op en overschrijft window._nutritionEntriesCache correct.
+}
+function nutritionCancelEdit(){
+  _nutritionEditingId=null;
+  renderNutritionScreen();
+}
+
+// Edit gebruikt exact dezelfde validatie als create (sectie 10). Owner
+// (user_id) en created_at zijn nooit onderdeel van de payload bij een
+// update -- alleen de bewerkbare velden. updated_at wordt niet expliciet
+// verstuurd; een database-trigger kan dit later beheren indien gewenst,
+// PostgREST update zet dit anders niet automatisch bij zonder trigger --
+// dit is een bekend, klein, niet-blokkerend punt (zie rapport).
+async function nutritionSaveEntry(){
   const uid=authSession?.user?.id;
   if(!uid)return;
-  const entry={
-    user_id:uid,
-    occurred_at:new Date().toISOString(),
+  const payload={
     entry_type:document.getElementById('nutrition-entry-type').value,
     timing_context:document.getElementById('nutrition-timing-context').value||null,
     energy_kcal:nutritionParseGetal(document.getElementById('nutrition-kcal').value),
@@ -11266,18 +11330,27 @@ async function nutritionAddEntry(){
     fluid_ml:nutritionParseGetal(document.getElementById('nutrition-fluid').value),
     note:document.getElementById('nutrition-note').value.trim()||null
   };
-  const validatie=NutritionFoundationCore.validateEntry(entry);
+  const validatie=NutritionFoundationCore.validateEntry(Object.assign({occurred_at:new Date().toISOString()},payload));
   if(!validatie.valid){toast('Controleer je invoer');return;}
-  const ok=await fetch(`${SB_URL}/rest/v1/nutrition_entries`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify(entry)});
-  toast(ok.ok?'Toegevoegd':'Toevoegen mislukt');
-  if(ok.ok)renderNutritionScreen();
+  // Offline (sectie 19): geen tweede offline-engine -- hergebruikt de
+  // bestaande, bewezen sbPostQ()/sbPatchQ() (IndexedDB-queue met
+  // owner_uid-binding, retry, en idempotency via een client-gegenereerde
+  // id + merge-duplicates op de primary key bij een POST-replay).
+  let ok;
+  if(_nutritionEditingId){
+    ok=await sbPatchQ('nutrition_entries',`id=eq.${_nutritionEditingId}`,payload);
+  }else{
+    ok=await sbPostQ('nutrition_entries',Object.assign({user_id:uid,occurred_at:new Date().toISOString()},payload));
+  }
+  toast(ok?(_nutritionEditingId?'Bijgewerkt':'Toegevoegd'):'Opslaan mislukt');
+  if(ok){_nutritionEditingId=null;renderNutritionScreen();}
 }
 
 async function nutritionDeleteEntry(entryId){
   if(!confirm('Deze registratie verwijderen?'))return;
-  const ok=await fetch(`${SB_URL}/rest/v1/nutrition_entries?id=eq.${entryId}`,{method:'DELETE',headers:SB_H});
-  toast(ok.ok?'Verwijderd':'Verwijderen mislukt');
-  if(ok.ok)renderNutritionScreen();
+  const ok=await sbDelQ('nutrition_entries',`id=eq.${entryId}`);
+  toast(ok?'Verwijderd':'Verwijderen mislukt');
+  if(ok)renderNutritionScreen();
 }
 
 async function socialSaveProfile(){

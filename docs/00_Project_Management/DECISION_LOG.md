@@ -883,3 +883,32 @@
   bewaakt dit voortaan expliciet, inclusief sabotagebewijs (ON DELETE
   CASCADE tijdelijk gesimuleerd, gedetecteerd, teruggedraaid).
 - Verantwoordelijke: autonome beoordeling door Claude tijdens MS-F13-05.
+
+## B9-09 -- Nutrition expliciet vrijgegeven binnen Benchmark 9.0 Floor Program
+
+- **Datum:** 31 augustus 2026.
+- **Historische status vóór deze beslissing:** Nutrition stond in
+  oudere Handbook-documentatie (o.a. `Trainingskompas_Development_
+  Handbook_H1_Productvisie.md`) als toekomstig, speculatief, niet-
+  gecommitteerd onderdeel, zonder concrete fase of implementatiedatum.
+  Deze historische documenten worden niet met terugwerkende kracht
+  herschreven -- ze beschreven de destijds correcte, nog-niet-besloten
+  status.
+- **Beslissing:** de Product Owner heeft Nutrition expliciet vrijgegeven
+  als B9-09 Nutrition Foundation binnen het Benchmark 9.0 Floor Program,
+  met een expliciete, harde scope-begrenzing: uitsluitend een
+  registratie-fundament (dataset/schema/UI), GEEN calorie-/macrodoel-
+  engine, GEEN dieetadvies, GEEN voedingsmiddelendatabase, GEEN
+  Nutrition AI Coach. B9-10 (Nutrition Product) en B9-11 (Nutrition
+  Intelligence) vereisen een aparte, latere, expliciete vrijgave.
+- **Wat B9-09 wel omvat:** `nutrition_entries` (één canonieke tabel,
+  event-semantiek: meal/snack/hydration/other, met optionele
+  `timing_context` t.o.v. training), user-entered provenance,
+  missing-!=-zero-semantiek, default-private RLS, een eenvoudig
+  registratiescherm (Lichaam -> Voeding).
+- **Wat B9-09 bewust niet omvat:** caloriedoelen, macrodoelen, BMR/TDEE-
+  berekening, voedingsmiddelendatabase/barcode, AI-integratie, Social-
+  sharing van voedingsdata, allergie-/dieetvoorkeurenregistratie (data-
+  minimalisatie, geen directe productbehoefte vastgesteld).
+- **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
+  uitgevoerd door Claude tijdens de B9-09-mastersprint.

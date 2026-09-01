@@ -228,7 +228,13 @@ exports.handler = async function(event) {
       // orphaned verwijzing achterlaten. Expliciet toegevoegd, zelfde
       // patroon als de overige social_*-tabellen hierboven.
       ['social_comments', ['user_id']],
-      ['social_reactions', ['user_id']]
+      ['social_reactions', ['user_id']],
+      // B9-09: nutrition_entries heeft wel een CASCADE-foreign-key op
+      // user_id naar auth.users (net als de meeste andere persoonsgebonden
+      // tabellen), maar wordt hier toch expliciet vermeld voor
+      // auditeerbaarheid, consistent met het bestaande patroon
+      // (bijv. memberships.user_id hierboven).
+      ['nutrition_entries', ['user_id']]
     ]) {
       for (const kolom of kolommen) {
         const sfR = await fetch(`${supabaseUrl}/rest/v1/${tabel}?${kolom}=eq.${userId}`, {

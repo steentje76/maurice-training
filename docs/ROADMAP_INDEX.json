@@ -3865,5 +3865,21 @@
     "device_validation": "N/A",
     "evidence_status": "VERIFIED",
     "next_action": "B9-03 (CLOSED): weekly volume/pace-trend/consistency/Critical Speed met opt-in max-effort-markering/belasting -- allemaal bewezen, hergebruik van bestaande canonieke engines, geen shadow calculation. HR-zones/TRIMP/aerobic-decoupling bewust niet gebouwd (evidence/data-gaps). Wacht op onafhankelijke Benchmark 9.0-review."
+  },
+  {
+    "id": "END-CYCLINGCORE-001",
+    "type": "capability",
+    "track": "Endurance & Multisport",
+    "phase": "B9",
+    "priority": "P2",
+    "status": "TESTED",
+    "target": "CLOSED",
+    "dependencies": [
+      "END-DATAFOUNDATION-001"
+    ],
+    "software_validation": "PASS",
+    "device_validation": "N/A",
+    "evidence_status": "VERIFIED",
+    "next_action": "B9-04 (CLOSED): volledige Cycling Core via de gegeneraliseerde EnduranceExecutionCore -- geen tweede state machine, 0 regressie op Running. FTP user-entered met provenance, geen bro-science. Power-zones/Critical Power Intelligence bewust niet gebouwd (B9-05-dependency). Wacht op onafhankelijke Benchmark 9.0-review."
   }
 ]

@@ -71,9 +71,9 @@ ok(html.includes("sport:'running'") && html.includes("sport:'cycling'"),
     'F2 (activity zonder owner/forged user): geen enkel formulierveld in de running-flow kan user_id beinvloeden -- er bestaat geen zodanig inputveld');
 }
 {
-  const cyclingBlok = html.split("user_id:uid, sport:'cycling'")[0].slice(-400);
-  ok(cyclingBlok.includes('authSession'),
-    'F3 (forged user, cycling): ook de cycling-shell haalt user_id uit authSession, niet uit een client-inputveld');
+  const cyclingConfirmFn = html.split('async function cyclingConfirmFinish()')[1].split('// Ride Detail')[0];
+  ok(cyclingConfirmFn.includes('const uid=authSession?.user?.id') && cyclingConfirmFn.includes('user_id:uid'),
+    'F3 (forged user, cycling): de cycling-execution-opslag gebruikt uitsluitend authSession.user.id, geen client-inputveld of hardcoded waarde voor user_id');
 }
 // "duplicate run save": de opslaanfunctie moet minimaal een vorm-validatie
 // hebben die een dubbele, snelle her-klik niet zomaar laat resulteren in

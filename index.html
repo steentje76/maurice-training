@@ -5457,6 +5457,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/decision.js"></script>
 <script src="core/aiOutputContract.js"></script>
 <script src="core/cardio.js"></script>
+<script src="core/enduranceExecution.js"></script>
 <script src="core/runningExecution.js"></script>
 <script src="core/runningIntelligence.js"></script>
 <script src="core/progression.js"></script>
@@ -6201,7 +6202,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.36';
+const APP_VER = 'v4.69.37';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -10888,45 +10889,355 @@ async function renderRunningInsights(){
 function renderCyclingShell(){
   const el=document.getElementById('cycling-scroll');
   if(!el)return;
+  if(herstelCyclingExecutionIndienAanwezig())return;
+  _cyclingGekozenVorm=null;
   el.innerHTML=`
     <div style="padding:16px">
-      <div class="card">
-        <div class="card-hd"><div class="card-title">Rit loggen</div></div>
-        <div class="card-body">
-          <p style="font-size:13px;color:var(--g4);margin:0 0 12px">Volledige fietservaring (vermogen, FTP, power-zones) volgt in een latere sprint. Je kunt nu al een rit handmatig loggen.</p>
-          <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Afstand (km, optioneel)</label>
-          <input type="number" inputmode="decimal" step="0.01" min="0" id="cycling-afstand-km" style="width:100%;margin-bottom:10px" placeholder="bv. 32.5">
-          <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Duur (minuten, optioneel)</label>
-          <input type="number" inputmode="decimal" step="0.1" min="0" id="cycling-duur-min" style="width:100%;margin-bottom:14px" placeholder="bv. 65">
-          <button class="btn btn-p" onclick="afrondenCyclingActivity()">Rit opslaan</button>
-        </div>
-      </div>
-      <div id="cycling-hist-wrap" style="margin-top:20px"></div>
+      <button class="btn btn-o btn-sm" style="margin-bottom:14px" onclick="go('s-cycling-insights')" aria-label="Bekijk Fietsen-inzichten" disabled title="Volgt in een latere sprint">📊 Inzichten (B9-05)</button>
+      <p style="font-size:13px;color:var(--g4);margin:0 0 14px">Kies een trainingsvorm. Geen sensoren nodig — je vult zelf gegevens in.</p>
+      <div class="v43-tmt" id="cycling-vormen-lijst"></div>
+      <div id="cycling-log-form" style="margin-top:16px"></div>
+      <div id="cycling-hist-wrap" style="margin-top:24px"></div>
     </div>`;
+  const lijst=document.getElementById('cycling-vormen-lijst');
+  lijst.innerHTML=CYCLING_TRAININGSVORMEN.map(v=>`<button class="row" data-vorm="${v.id}" aria-pressed="false" onclick="selecteerCyclingVorm('${v.id}')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><path d="M6 18l4-9h4l3 5M10 9h4"/></svg></span><span class="b"><span class="t">${v.label}</span></span><span class="ar">›</span></button>`).join('');
   renderCyclingHistory();
 }
 
-async function afrondenCyclingActivity(){
-  const afstandKm=parseFloat(document.getElementById('cycling-afstand-km').value);
-  const duurMin=parseFloat(document.getElementById('cycling-duur-min').value);
-  if((!isFinite(afstandKm)||afstandKm<=0) && (!isFinite(duurMin)||duurMin<=0)){
-    toast('Vul minimaal afstand of duur in');return;
+// Cycling-trainingsvormen (sectie 10) -- dezelfde 7 categorieen als
+// Running, met passende Nederlandse producttermen voor fietsen.
+const CYCLING_TRAININGSVORMEN=[
+  {id:'vrij',label:'Vrij fietsen'},
+  {id:'afstand',label:'Afstand'},
+  {id:'tijd',label:'Tijd'},
+  {id:'interval',label:'Interval'},
+  {id:'herstel',label:'Herstel / easy'},
+  {id:'tempo',label:'Tempo'},
+  {id:'lang',label:'Lange duurtraining'}
+];
+let _cyclingGekozenVorm=null;
+
+function selecteerCyclingVorm(vormId){
+  _cyclingGekozenVorm=vormId;
+  document.querySelectorAll('#cycling-vormen-lijst .row').forEach(b=>b.setAttribute('aria-pressed', b.dataset.vorm===vormId?'true':'false'));
+  const vorm=CYCLING_TRAININGSVORMEN.find(v=>v.id===vormId);
+  const form=document.getElementById('cycling-log-form');
+  const isInterval=vormId==='interval';
+  form.innerHTML=`
+    <div class="card">
+      <div class="card-hd"><div class="card-title">${vorm.label}</div></div>
+      <div class="card-body">
+        <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Doelafstand (km, optioneel)</label>
+        <input type="number" inputmode="decimal" step="0.01" min="0" id="cycling-doel-afstand-km" style="width:100%;margin-bottom:10px" placeholder="bv. 40">
+        <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Doelduur (minuten, optioneel)</label>
+        <input type="number" inputmode="decimal" step="1" min="0" id="cycling-doel-duur-min" style="width:100%;margin-bottom:10px" placeholder="bv. 60">
+        ${isInterval?`
+        <div style="border-top:1px solid var(--bd);margin:10px 0;padding-top:10px">
+          <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Herhalingen</label>
+          <input type="number" inputmode="numeric" min="1" id="cycling-int-herhalingen" style="width:100%;margin-bottom:10px" value="4">
+          <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Work (minuten)</label>
+          <input type="number" inputmode="decimal" min="0" step="0.5" id="cycling-int-work-min" style="width:100%;margin-bottom:10px" value="4">
+          <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Herstel (minuten)</label>
+          <input type="number" inputmode="decimal" min="0" step="0.5" id="cycling-int-recovery-min" style="width:100%;margin-bottom:10px" value="3">
+        </div>`:''}
+        <button class="btn btn-p" onclick="toonCyclingPreview()">Preview</button>
+      </div>
+    </div>`;
+}
+
+// Preview (sectie 12): toont uitsluitend echte/canonieke waarden --
+// FTP alleen met expliciete bron (sectie 24: geen "bro-science"-formule,
+// user-entered is voldoende voor B9-04). Power-zones bewust NIET getoond
+// (sectie 26: geen canonieke berekening bestaat).
+let _cyclingPreviewConfig=null;
+async function toonCyclingPreview(){
+  const afstandKm=parseFloat(document.getElementById('cycling-doel-afstand-km').value);
+  const duurMin=parseFloat(document.getElementById('cycling-doel-duur-min').value);
+  const isInterval=_cyclingGekozenVorm==='interval';
+  let intervalBlokken=null;
+  if(isInterval){
+    const herhalingen=parseInt(document.getElementById('cycling-int-herhalingen').value,10)||1;
+    const workMin=parseFloat(document.getElementById('cycling-int-work-min').value)||0;
+    const recoveryMin=parseFloat(document.getElementById('cycling-int-recovery-min').value)||0;
+    // Zelfde architectuurkeuze als Running (B9-02B/B9-03 sectie 10):
+    // de geplande structuur blijft client-side/ephemeer, geen aparte
+    // databasetabel -- geen bewezen consumer die persistentie vereist.
+    intervalBlokken=[{type:'warmup',label:'Warming-up',duration_s:600}];
+    for(let i=1;i<=herhalingen;i++){
+      intervalBlokken.push({type:'work',label:`Work ${i}/${herhalingen}`,duration_s:Math.round(workMin*60)});
+      intervalBlokken.push({type:'recovery',label:`Herstel ${i}/${herhalingen}`,duration_s:Math.round(recoveryMin*60)});
+    }
+    intervalBlokken.push({type:'cooldown',label:'Cooling-down',duration_s:600});
   }
+  let profielRij=null;
+  try{
+    const rows=await sbGet('athlete_endurance_profile', `&sport=eq.cycling&limit=1`);
+    profielRij=rows&&rows[0]?rows[0]:null;
+  }catch(e){profielRij=null;}
+  _cyclingPreviewConfig={vorm:_cyclingGekozenVorm,doelAfstandM:isFinite(afstandKm)&&afstandKm>0?Math.round(afstandKm*1000):null,doelDuurS:isFinite(duurMin)&&duurMin>0?Math.round(duurMin*60):null,intervalBlokken};
+  const vorm=CYCLING_TRAININGSVORMEN.find(v=>v.id===_cyclingGekozenVorm);
+  const ftp=profielRij&&profielRij.ftp_watts_user_entered?profielRij.ftp_watts_user_entered:null;
+  const form=document.getElementById('cycling-log-form');
+  form.innerHTML=`
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Preview — ${vorm.label}</div></div>
+      <div class="card-body">
+        <div style="font-size:13px;margin-bottom:8px"><b>Doel afstand:</b> ${_cyclingPreviewConfig.doelAfstandM?(_cyclingPreviewConfig.doelAfstandM/1000).toFixed(1)+' km':'Geen doel opgegeven'}</div>
+        <div style="font-size:13px;margin-bottom:8px"><b>Doel duur:</b> ${_cyclingPreviewConfig.doelDuurS?Math.round(_cyclingPreviewConfig.doelDuurS/60)+' min':'Geen doel opgegeven'}</div>
+        <div style="font-size:13px;margin-bottom:8px"><b>FTP:</b> ${ftp?ftp+' W (bron: door jou ingesteld)':'Nog niet ingesteld'}</div>
+        <div style="font-size:11px;color:var(--g4);margin-bottom:8px">Powerzones nog niet beschikbaar (canonieke berekening ontbreekt).</div>
+        ${intervalBlokken?`<div style="font-size:13px;margin:10px 0"><b>Structuur:</b><ul style="margin:6px 0 0 18px;padding:0">${intervalBlokken.map(b=>`<li>${b.label} — ${Math.round(b.duration_s/60)} min</li>`).join('')}</ul></div>`:''}
+        <button class="btn btn-p" style="margin-top:10px" onclick="startCyclingExecution()">Start training</button>
+      </div>
+    </div>`;
+}
+
+// Execution: hergebruikt EXACT dezelfde canonical state machine als
+// Running (EnduranceExecutionCore, gegeneraliseerd B9-04) -- geen
+// tweede state machine gebouwd.
+let _cyclingExecState=null;
+let _cyclingExecTimerHandle=null;
+function cyclingExecLocalStorageKey(){
   const uid=authSession?.user?.id;
-  if(!uid){toast('Niet ingelogd');return;}
-  const ok=await sbPostQ('activities', {
-    user_id:uid, sport:'cycling',
-    distance_meters:isFinite(afstandKm)&&afstandKm>0?Math.round(afstandKm*1000):null,
-    duration_seconds:isFinite(duurMin)&&duurMin>0?Math.round(duurMin*60):null,
-    source_provenance:'manual', data_quality:'unverified', recorded_at:new Date().toISOString()
-  });
-  if(ok){toast('Rit opgeslagen');renderCyclingShell();}
-  else{toast('Opslaan mislukt — probeer opnieuw');}
+  return uid?('tk_cycling_execution_v1_'+uid):null; // sport-specifieke key (B9-02C-les: altijd user-specifiek)
+}
+
+function startCyclingExecution(){
+  const nu=Date.now();
+  _cyclingExecState=EnduranceExecutionCore.createSession(nu);
+  const r=EnduranceExecutionCore.start(_cyclingExecState,nu);
+  if(!r.ok){toast('Kon training niet starten');return;}
+  _cyclingExecState=r.state;
+  _cyclingExecState.ownerUserId=authSession?.user?.id||null;
+  persisteerCyclingExecState();
+  renderCyclingExecutionScreen();
+}
+
+function persisteerCyclingExecState(){
+  try{
+    const key=cyclingExecLocalStorageKey();
+    if(!key)return;
+    if(_cyclingExecState&&(_cyclingExecState.status==='RUNNING'||_cyclingExecState.status==='PAUSED'))
+      localStorage.setItem(key,JSON.stringify({state:_cyclingExecState,config:_cyclingPreviewConfig}));
+    else localStorage.removeItem(key);
+  }catch(e){}
+}
+
+// Crash/wrong-user/corrupted-state-recovery: exact dezelfde, drievoudige
+// verdediging als Running (B9-02C-lessen direct toegepast, niet opnieuw
+// hoeven ontdekken): user-specifieke key + expliciete ownerUserId-check
+// + strikte validatie van segments/startedAt vóór acceptatie.
+function herstelCyclingExecutionIndienAanwezig(){
+  try{
+    const key=cyclingExecLocalStorageKey();
+    if(!key)return false;
+    const raw=localStorage.getItem(key);
+    if(!raw)return false;
+    const data=JSON.parse(raw);
+    const huidigeUid=authSession?.user?.id;
+    const stateGeldig=data&&data.state&&
+      (data.state.status==='RUNNING'||data.state.status==='PAUSED')&&
+      Array.isArray(data.state.segments)&&
+      isFinite(data.state.startedAt);
+    if(!stateGeldig){localStorage.removeItem(key);return false;}
+    if(!huidigeUid||data.state.ownerUserId!==huidigeUid){localStorage.removeItem(key);return false;}
+    _cyclingExecState=data.state;
+    _cyclingPreviewConfig=data.config;
+    renderCyclingExecutionScreen();
+    toast('Onafgeronde training hersteld');
+    return true;
+  }catch(e){
+    try{const key=cyclingExecLocalStorageKey();if(key)localStorage.removeItem(key);}catch(e2){}
+    return false;
+  }
+}
+
+function huidigeCyclingIntervalStap(nu){
+  if(!_cyclingPreviewConfig||!_cyclingPreviewConfig.intervalBlokken)return null;
+  const actieveMs=EnduranceExecutionCore.elapsedActiveMs(_cyclingExecState,nu);
+  let cumS=0;
+  for(let i=0;i<_cyclingPreviewConfig.intervalBlokken.length;i++){
+    const blok=_cyclingPreviewConfig.intervalBlokken[i];
+    if(actieveMs/1000<cumS+blok.duration_s){
+      return {index:i,totaal:_cyclingPreviewConfig.intervalBlokken.length,blok,resterendS:Math.max(0,cumS+blok.duration_s-actieveMs/1000),volgende:_cyclingPreviewConfig.intervalBlokken[i+1]||null};
+    }
+    cumS+=blok.duration_s;
+  }
+  return {index:_cyclingPreviewConfig.intervalBlokken.length-1,totaal:_cyclingPreviewConfig.intervalBlokken.length,blok:{label:'Klaar'},resterendS:0,volgende:null};
+}
+
+function renderCyclingExecutionScreen(){
+  const el=document.getElementById('cycling-scroll');
+  if(!el||!_cyclingExecState)return;
+  clearInterval(_cyclingExecTimerHandle);
+  const st=_cyclingExecState;
+  const nu=Date.now();
+  const actiefS=Math.round(EnduranceExecutionCore.elapsedActiveMs(st,nu)/1000);
+  const intervalStap=huidigeCyclingIntervalStap(nu);
+  el.innerHTML=`
+    <div style="padding:16px;text-align:center">
+      ${st.status==='FINISH_CONFIRM'?`
+        <div class="card"><div class="card-body">
+          <p style="font-size:15px;margin-bottom:14px">Training afronden?</p>
+          <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px;text-align:left">Afstand (km, indien niet automatisch bekend)</label>
+          <input type="number" inputmode="decimal" step="0.01" min="0" id="cycling-finish-afstand-km" style="width:100%;margin-bottom:10px" placeholder="optioneel">
+          <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px;text-align:left">Gemiddeld vermogen (W, optioneel)</label>
+          <input type="number" inputmode="numeric" min="0" id="cycling-finish-power" style="width:100%;margin-bottom:10px" placeholder="optioneel">
+          <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px;text-align:left">Gemiddelde cadans (rpm, optioneel)</label>
+          <input type="number" inputmode="numeric" min="0" id="cycling-finish-cadence" style="width:100%;margin-bottom:10px" placeholder="optioneel">
+          <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px;text-align:left">Ervaren inspanning (RPE 0-10, optioneel)</label>
+          <input type="number" inputmode="numeric" min="0" max="10" id="cycling-finish-rpe" style="width:100%;margin-bottom:14px" placeholder="bv. 6">
+          <button class="btn btn-p" style="width:100%;margin-bottom:8px;padding:16px;font-size:16px" onclick="cyclingConfirmFinish()">Bevestig afronden</button>
+          <button class="btn btn-o" style="width:100%" onclick="cyclingCancelFinish()">Doorgaan met trainen</button>
+        </div></div>`:`
+        <div style="font-size:48px;font-weight:700;margin:20px 0" id="cycling-exec-timer">${CardioCore.formatTime(actiefS)}</div>
+        ${intervalStap?`<div style="font-size:16px;font-weight:600;margin-bottom:4px" aria-live="polite">${intervalStap.blok.label} (${intervalStap.index+1}/${intervalStap.totaal})</div><div style="font-size:13px;color:var(--g4);margin-bottom:16px">Nog ${Math.round(intervalStap.resterendS)}s — volgende: ${intervalStap.volgende?intervalStap.volgende.label:'—'}</div>`:'<div style="margin-bottom:16px"></div>'}
+        <div style="font-size:13px;color:var(--g4);margin-bottom:20px" role="status">${st.status==='RUNNING'?'Bezig':'Gepauzeerd'}${st.laps.length?' · '+st.laps.length+' lap(s)':''}</div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          ${st.status==='RUNNING'?`
+            <button class="btn btn-o" style="min-width:100px;padding:18px;font-size:16px" aria-label="Pauzeer training" onclick="cyclingPause()">Pause</button>
+            <button class="btn btn-o" style="min-width:100px;padding:18px;font-size:16px" aria-label="Lap registreren" onclick="cyclingLap()">Lap</button>
+          `:`
+            <button class="btn btn-p" style="min-width:100px;padding:18px;font-size:16px" aria-label="Hervat training" onclick="cyclingResume()">Resume</button>
+          `}
+          <button class="btn btn-p" style="min-width:100px;padding:18px;font-size:16px;background:var(--r)" aria-label="Training afronden" onclick="cyclingRequestFinish()">Finish</button>
+        </div>
+      `}
+    </div>`;
+  if(st.status==='RUNNING')_cyclingExecTimerHandle=setInterval(()=>renderCyclingExecutionScreen(),1000);
+}
+
+function cyclingPause(){
+  const r=EnduranceExecutionCore.pause(_cyclingExecState,Date.now());
+  if(!r.ok){toast('Kon niet pauzeren');return;}
+  _cyclingExecState=r.state;persisteerCyclingExecState();renderCyclingExecutionScreen();
+}
+function cyclingResume(){
+  const r=EnduranceExecutionCore.resume(_cyclingExecState,Date.now());
+  if(!r.ok){toast('Kon niet hervatten');return;}
+  _cyclingExecState=r.state;persisteerCyclingExecState();renderCyclingExecutionScreen();
+}
+function cyclingLap(){
+  const r=EnduranceExecutionCore.addLap(_cyclingExecState,Date.now(),{});
+  if(!r.ok){toast('Lap alleen mogelijk tijdens actief fietsen');return;}
+  _cyclingExecState=r.state;persisteerCyclingExecState();renderCyclingExecutionScreen();
+  toast('Lap '+_cyclingExecState.laps.length+' geregistreerd');
+}
+function cyclingRequestFinish(){
+  const r=EnduranceExecutionCore.requestFinish(_cyclingExecState,Date.now());
+  if(!r.ok){toast('Kon niet afronden');return;}
+  _cyclingExecState=r.state;persisteerCyclingExecState();renderCyclingExecutionScreen();
+}
+function cyclingCancelFinish(){
+  const r=EnduranceExecutionCore.cancelFinish(_cyclingExecState,Date.now());
+  if(!r.ok){toast('Kon niet doorgaan');return;}
+  _cyclingExecState=r.state;persisteerCyclingExecState();renderCyclingExecutionScreen();
+}
+
+// Idempotency + failure atomicity: exact dezelfde, bewezen strategie
+// als Running (B9-02B/B9-02C) -- dedupe_key + ignore-duplicates +
+// individuele lap-controle, geen false-success.
+let _cyclingOpslagBezig=false;
+async function cyclingConfirmFinish(){
+  if(_cyclingOpslagBezig)return;
+  _cyclingOpslagBezig=true;
+  try{
+    const r=EnduranceExecutionCore.confirmFinish(_cyclingExecState,Date.now());
+    if(!r.ok){toast('Kon niet afronden');_cyclingOpslagBezig=false;return;}
+    _cyclingExecState=r.state;
+    const uid=authSession?.user?.id;
+    if(!uid){toast('Niet ingelogd');_cyclingOpslagBezig=false;return;}
+    const duurS=Math.round(EnduranceExecutionCore.elapsedActiveMs(_cyclingExecState,_cyclingExecState.finishedAt)/1000);
+    const afstandKmEl=document.getElementById('cycling-finish-afstand-km');
+    const powerEl=document.getElementById('cycling-finish-power');
+    const cadenceEl=document.getElementById('cycling-finish-cadence');
+    const rpeEl=document.getElementById('cycling-finish-rpe');
+    const afstandKm=afstandKmEl?parseFloat(afstandKmEl.value):NaN;
+    const power=powerEl?parseFloat(powerEl.value):NaN;
+    const cadence=cadenceEl?parseFloat(cadenceEl.value):NaN;
+    const rpeWaarde=rpeEl?parseFloat(rpeEl.value):NaN;
+    const dedupeKey='manual-exec-'+_cyclingExecState.startedAt+'-'+uid;
+    const payload={
+      user_id:uid,sport:'cycling',
+      distance_meters:isFinite(afstandKm)&&afstandKm>0?Math.round(afstandKm*1000):null,
+      duration_seconds:duurS,
+      avg_power_watts:isFinite(power)&&power>=0?power:null,
+      avg_cadence_rpm:isFinite(cadence)&&cadence>=0?cadence:null,
+      source_provenance:'manual',data_quality:'unverified',
+      recorded_at:new Date(_cyclingExecState.startedAt).toISOString(),
+      dedupe_key:dedupeKey,
+      rpe:isFinite(rpeWaarde)&&rpeWaarde>=0&&rpeWaarde<=10?rpeWaarde:null
+    };
+    await fetch(`${SB_URL}/rest/v1/activities`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify(payload)});
+    let activityId=null;
+    try{
+      const rows=await sbGet('activities',`&dedupe_key=eq.${encodeURIComponent(dedupeKey)}&limit=1`);
+      activityId=rows&&rows[0]?rows[0].id:null;
+    }catch(e){}
+    let alleLapsGelukt=true;
+    if(activityId&&_cyclingExecState.laps.length){
+      for(const lap of _cyclingExecState.laps){
+        const lapOk=await sbPostQ('activity_laps',{activity_id:activityId,lap_index:lap.lap_index,duration_seconds:lap.duration_seconds,distance_meters:lap.distance_meters,avg_heart_rate_bpm:lap.avg_heart_rate_bpm});
+        if(!lapOk)alleLapsGelukt=false;
+      }
+    }
+    if(!activityId){
+      toast('Opslaan mislukt — probeer opnieuw (training blijft bewaard)');
+      return;
+    }
+    if(!alleLapsGelukt){
+      toast('Training opgeslagen, maar niet alle laps — probeer later opnieuw');
+      renderRideDetail(activityId);
+      return;
+    }
+    { const k=cyclingExecLocalStorageKey(); if(k)localStorage.removeItem(k); }
+    toast('Training opgeslagen');
+    renderRideDetail(activityId);
+  }finally{
+    _cyclingOpslagBezig=false;
+  }
+}
+
+// Ride Detail: analoog aan Run Detail, met km/h i.p.v. pace (sectie 32:
+// canonical via CardioCore, geen lokale distance/duration-snelheidsformule).
+async function renderRideDetail(activityId){
+  const el=document.getElementById('cycling-scroll');
+  if(!el)return;
+  const rows=await sbGet('activities',`&id=eq.${activityId}&limit=1`);
+  const act=rows&&rows[0];
+  if(!act){el.innerHTML='<div style="padding:16px">Rit niet gevonden</div>';return;}
+  const laps=await sbGet('activity_laps',`&activity_id=eq.${activityId}&order=lap_index.asc`);
+  let snelheidLine='Onbekend (geen afstand ingevuld)';
+  if(act.distance_meters>0&&act.duration_seconds>0){
+    // Canonical (sectie 32): uitsluitend via CardioCore.splitFromDistTime()
+    // (seconden per km), km/h is een triviale eenheidsconversie van dat
+    // reeds canoniek berekende getal -- GEEN nieuwe, lokale distance/
+    // duration-formule.
+    const secPerKm=CardioCore.splitFromDistTime(act.distance_meters,act.duration_seconds,1000);
+    if(secPerKm!=null&&secPerKm>0)snelheidLine=(3600/secPerKm).toFixed(1)+' km/h';
+  }
+  el.innerHTML=`
+    <div style="padding:16px">
+      <button class="btn btn-o btn-sm" onclick="renderCyclingShell()" style="margin-bottom:12px">← Terug naar geschiedenis</button>
+      <div class="card"><div class="card-hd"><div class="card-title">Ride detail</div></div>
+        <div class="card-body">
+          <div style="font-size:13px;margin-bottom:6px"><b>Datum:</b> ${new Date(act.recorded_at).toLocaleDateString('nl-NL')}</div>
+          <div style="font-size:13px;margin-bottom:6px"><b>Duur:</b> ${act.duration_seconds?CardioCore.formatTime(act.duration_seconds):'Onbekend'}</div>
+          <div style="font-size:13px;margin-bottom:6px"><b>Afstand:</b> ${act.distance_meters?(act.distance_meters/1000).toFixed(1)+' km':'Onbekend'}</div>
+          <div style="font-size:13px;margin-bottom:6px"><b>Gem. snelheid:</b> ${snelheidLine}</div>
+          <div style="font-size:13px;margin-bottom:6px"><b>Gem. vermogen:</b> ${act.avg_power_watts?act.avg_power_watts+' W':'Onbekend'}</div>
+          <div style="font-size:13px;margin-bottom:6px"><b>Gem. cadans:</b> ${act.avg_cadence_rpm?act.avg_cadence_rpm+' rpm':'Onbekend'}</div>
+          <div style="font-size:13px;margin-bottom:6px"><b>Bron:</b> ${act.source_provenance} · ${act.data_quality}</div>
+          ${laps&&laps.length?`<div style="font-size:13px;margin-top:10px"><b>Laps:</b><ul style="margin:6px 0 0 18px;padding:0">${laps.map(l=>`<li>Lap ${l.lap_index}: ${CardioCore.formatTime(l.duration_seconds)}${l.distance_meters?' · '+(l.distance_meters/1000).toFixed(1)+' km':''}</li>`).join('')}</ul></div>`:''}
+        </div>
+      </div>
+    </div>`;
 }
 
 async function renderCyclingHistory(){
   const wrap=document.getElementById('cycling-hist-wrap');
   if(!wrap)return;
+
   const rows=await sbGet('activities', "&sport=eq.cycling&order=recorded_at.desc&limit=20");
   if(!rows.length){wrap.innerHTML='<div class="v43-lbl">Recente ritten</div><p style="font-size:12px;color:var(--g4)">Nog geen ritten opgeslagen.</p>';return;}
   wrap.innerHTML='<div class="v43-lbl">Recente ritten</div><div class="v43-tmt" id="cycling-hist-lijst"></div>';

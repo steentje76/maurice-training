@@ -5491,6 +5491,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/cyclingIntelligence.js"></script>
 <script src="core/socialGroup.js"></script>
 <script src="core/socialChallenge.js"></script>
+<script src="core/socialPrivacy.js"></script>
+<script src="core/socialSharing.js"></script>
 <script src="core/progression.js"></script>
 <script src="core/intervalEngine.js"></script>
 <script src="core/coaching.js"></script>
@@ -6233,7 +6235,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.40';
+const APP_VER = 'v4.69.41';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -10735,6 +10737,7 @@ async function renderRunDetail(activityId){
           <div style="font-size:13px;margin-bottom:6px"><b>HR:</b> ${act.avg_heart_rate_bpm?act.avg_heart_rate_bpm+' bpm':'Onbekend'}</div>
           <div style="font-size:13px;margin-bottom:6px"><b>Bron:</b> ${act.source_provenance} · ${act.data_quality}</div>
           ${laps&&laps.length?`<div style="font-size:13px;margin-top:10px"><b>Laps:</b><ul style="margin:6px 0 0 18px;padding:0">${laps.map(l=>`<li>Lap ${l.lap_index}: ${CardioCore.formatTime(l.duration_seconds)}${l.distance_meters?' · '+(l.distance_meters/1000).toFixed(2)+' km':''}</li>`).join('')}</ul></div>`:''}
+          <button class="btn btn-o btn-sm" style="margin-top:12px" onclick='socialOpenShareDialog(${JSON.stringify({sport:"running",title:"Hardlooptraining",completedAt:act.recorded_at,durationSeconds:act.duration_seconds,distanceMeters:act.distance_meters})})'>Delen met connecties</button>
         </div>
       </div>
     </div>`;
@@ -10856,7 +10859,7 @@ async function renderSocialScreen(){
     </div></div>
 
     ${pendingIn.length?`<div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Volgverzoeken (${pendingIn.length})</div></div><div class="card-body" id="social-pending-list">
-      ${pendingIn.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px">${escHtml(p.follower_id)}</span><button class="btn btn-p btn-sm" onclick="socialAcceptFollow('${p.id}')">Accepteren</button></div>`).join('')}
+      ${pendingIn.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px">${escHtml(p.follower_id)}</span><button class="btn btn-p btn-sm" onclick="socialAcceptFollow('${p.id}','${p.follower_id}')">Accepteren</button></div>`).join('')}
     </div></div>`:''}
 
     <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Mijn connecties (${connections.length})</div></div><div class="card-body">
@@ -10880,9 +10883,18 @@ async function renderSocialScreen(){
       <button class="btn btn-p" style="width:100%" onclick="socialCreateGroup()">Groep aanmaken</button>
     </div></div>
 
-    <div class="card" id="social-groups-card"><div class="card-hd"><div class="card-title">Mijn groepen</div></div><div class="card-body" id="social-groups-list"><p style="font-size:13px;color:var(--g4);margin:0">Laden…</p></div></div>`;
+    <div class="card" id="social-groups-card"><div class="card-hd"><div class="card-title">Mijn groepen</div></div><div class="card-body" id="social-groups-list"><p style="font-size:13px;color:var(--g4);margin:0">Laden…</p></div></div>
+
+    <div class="card" style="margin-top:14px"><div class="card-hd"><div class="card-title">Challenges</div></div><div class="card-body" id="social-challenges-list"><p style="font-size:13px;color:var(--g4);margin:0">Laden…</p></div></div>
+
+    <div class="card" style="margin:14px 0"><div class="card-hd"><div class="card-title">Meldingen</div></div><div class="card-body" id="social-notifications-list"><p style="font-size:13px;color:var(--g4);margin:0">Laden…</p></div></div>
+
+    <div class="card"><div class="card-hd"><div class="card-title">Feed</div></div><div class="card-body" id="social-feed-list"><p style="font-size:13px;color:var(--g4);margin:0">Laden…</p></div></div>`;
 
   socialRenderGroups();
+  socialRenderNotifications();
+  socialRenderChallenges();
+  socialRenderFeed();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -10942,6 +10954,162 @@ async function socialJoinGroup(groupId){
   if(ok.ok)socialRenderGroups();
 }
 
+// ══════════════════════════════════════════════════════════
+// B9-07B — Social Closure: sharing, feed, reacties, comments,
+// challenges, notificaties, moderatie. Hergebruikt uitsluitend
+// bestaande, canonieke modules (SocialSharingCore/SocialPrivacyCore/
+// SocialChallengeCore) -- geen dubbele business logic. RLS blijft de
+// enige bron van waarheid; deze functies bevatten geen eigen
+// autorisatie-aannames.
+// ══════════════════════════════════════════════════════════
+
+// --- Activity sharing (expliciet, nooit automatisch) ---
+function socialOpenShareDialog(activityData){
+  const label=prompt('Optioneel: een korte prestatie-omschrijving (bv. "Nieuw persoonlijk record")');
+  if(label===null)return; // geannuleerd
+  const note=prompt('Optioneel: een korte notitie bij deze training');
+  if(note===null)return;
+  const zichtbaarheid=confirm('OK = zichtbaar voor iedereen (public). Annuleren = alleen voor connecties.')?'public':'connections';
+  socialShareActivity(activityData,label,note,zichtbaarheid);
+}
+async function socialShareActivity(activityData,achievementLabel,athleteNote,visibility){
+  const uid=authSession?.user?.id;
+  if(!uid)return;
+  // Whitelist via de bestaande, canonieke SocialSharingCore -- nooit het
+  // volledige trainingsrecord delen, uitsluitend de expliciet
+  // toegestane velden (geen HRV/RHR/gewicht/medische context, etc.).
+  const veilig=SocialSharingCore.sanitizeShare({...activityData,achievementLabel,athleteNote});
+  const payload={
+    athlete_id:uid,sport:veilig.sport,title:veilig.title,
+    completed_at:veilig.completedAt,duration_seconds:veilig.durationSeconds,
+    distance_meters:veilig.distanceMeters,achievement_label:achievementLabel||null,
+    athlete_note:athleteNote||null,visibility
+  };
+  const ok=await fetch(`${SB_URL}/rest/v1/social_shared_activities`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify(payload)});
+  toast(ok.ok?'Gedeeld':'Delen mislukt');
+}
+
+// --- Feed: gedeelde activiteiten van jezelf + connecties, met reacties/comments ---
+async function socialRenderFeed(){
+  const uid=authSession?.user?.id;
+  const el=document.getElementById('social-feed-list');
+  if(!el||!uid)return;
+  el.innerHTML='<p style="font-size:13px;color:var(--g4)">Laden…</p>';
+  let items=[];
+  try{items=await sbGet('social_shared_activities','&order=completed_at.desc&limit=30');}catch(e){}
+  if(!items.length){el.innerHTML='<p style="font-size:13px;color:var(--g4);margin:0">Nog geen gedeelde trainingen in je feed.</p>';return;}
+  const ids=items.map(i=>i.id);
+  let reacties=[],comments=[];
+  try{reacties=await sbGet('social_reactions',`&shared_activity_id=in.(${ids.join(',')})`);}catch(e){}
+  try{comments=await sbGet('social_comments',`&shared_activity_id=in.(${ids.join(',')})&order=created_at.asc`);}catch(e){}
+  el.innerHTML=items.map(it=>{
+    const mijnReactie=reacties.some(r=>r.shared_activity_id===it.id&&r.user_id===uid);
+    const aantalReacties=reacties.filter(r=>r.shared_activity_id===it.id).length;
+    const itemComments=comments.filter(c=>c.shared_activity_id===it.id);
+    return `<div class="card" style="margin-bottom:12px"><div class="card-body">
+      <div style="font-size:13px;font-weight:700">${escHtml(it.title||it.sport)}</div>
+      <div style="font-size:12px;color:var(--g4);margin-bottom:6px">${new Date(it.completed_at).toLocaleDateString('nl-NL')}${it.distance_meters?' · '+(it.distance_meters/1000).toFixed(1)+' km':''}${it.duration_seconds?' · '+CardioCore.formatTime(it.duration_seconds):''}</div>
+      ${it.achievement_label?`<div style="font-size:12px;margin-bottom:4px">🏆 ${escHtml(it.achievement_label)}</div>`:''}
+      ${it.athlete_note?`<div style="font-size:12px;color:var(--g4);margin-bottom:6px">${escHtml(it.athlete_note)}</div>`:''}
+      <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
+        <button class="btn ${mijnReactie?'btn-p':'btn-o'} btn-sm" onclick="socialToggleReaction('${it.id}',${mijnReactie})">👍 ${aantalReacties}</button>
+        <button class="btn btn-o btn-sm" onclick="socialToggleCommentForm('${it.id}')">💬 ${itemComments.length}</button>
+        ${it.athlete_id!==uid?`<button class="btn btn-o btn-sm" onclick="socialReport('${it.athlete_id}','shared_activity','${it.id}')">Rapporteren</button>`:''}
+      </div>
+      <div id="social-comment-form-${it.id}" style="display:none;margin-top:8px">
+        <input type="text" id="social-comment-input-${it.id}" maxlength="500" style="width:100%;margin-bottom:6px" placeholder="Schrijf een reactie...">
+        <button class="btn btn-p btn-sm" onclick="socialPostComment('${it.id}')">Plaatsen</button>
+      </div>
+      ${itemComments.length?`<div style="margin-top:8px">${itemComments.map(c=>`<div style="font-size:12px;margin-bottom:4px"><b>${escHtml(c.user_id)}:</b> ${escHtml(c.body)}</div>`).join('')}</div>`:''}
+    </div></div>`;
+  }).join('');
+}
+async function socialToggleReaction(sharedActivityId,heeftAl){
+  const uid=authSession?.user?.id;
+  if(!uid)return;
+  if(heeftAl){
+    await fetch(`${SB_URL}/rest/v1/social_reactions?shared_activity_id=eq.${sharedActivityId}&user_id=eq.${uid}`,{method:'DELETE',headers:SB_H});
+  }else{
+    await fetch(`${SB_URL}/rest/v1/social_reactions`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal,resolution=ignore-duplicates'},body:JSON.stringify({shared_activity_id:sharedActivityId,user_id:uid})});
+  }
+  socialRenderFeed();
+}
+function socialToggleCommentForm(sharedActivityId){
+  const el=document.getElementById('social-comment-form-'+sharedActivityId);
+  if(el)el.style.display=el.style.display==='none'?'block':'none';
+}
+async function socialPostComment(sharedActivityId){
+  const uid=authSession?.user?.id;
+  const inputEl=document.getElementById('social-comment-input-'+sharedActivityId);
+  const body=inputEl?inputEl.value.trim():'';
+  if(!uid||!body)return;
+  const ok=await fetch(`${SB_URL}/rest/v1/social_comments`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({shared_activity_id:sharedActivityId,user_id:uid,body:body.slice(0,500)})});
+  toast(ok.ok?'Geplaatst':'Plaatsen mislukt');
+  if(ok.ok)socialRenderFeed();
+}
+
+// --- Moderatie: rapporteren (bestaande social_reports-tabel) ---
+// P1-FIX (zelf gevonden bij verificatie): reporterUserId werd eerder als
+// aanroepparameter doorgegeven (altijd gevuld met de eigen uid, maar een
+// onnodig risicovol patroon). Nu altijd zelf uit authSession gehaald --
+// de client kan nooit meer per ongeluk of moedwillig een andere waarde
+// doorgeven. De RLS (reporter_user_id = auth.uid()) blijft de
+// daadwerkelijke, harde afdwinging; dit is uitsluitend defense-in-depth.
+async function socialReport(targetUserId,targetType,targetId){
+  const uid=authSession?.user?.id;
+  if(!uid)return;
+  const reden=prompt('Waarom rapporteer je dit? (korte omschrijving)');
+  if(reden===null||!reden.trim())return;
+  const ok=await fetch(`${SB_URL}/rest/v1/social_reports`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({reporter_user_id:uid,target_user_id:targetUserId,target_type:targetType,reason_code:'other',note:reden.slice(0,500),status:'open'})});
+  toast(ok.ok?'Gerapporteerd, bedankt':'Rapporteren mislukt');
+}
+
+// --- Challenges (hergebruikt de bestaande, canonieke SocialChallengeCore) ---
+async function socialRenderChallenges(){
+  const uid=authSession?.user?.id;
+  const el=document.getElementById('social-challenges-list');
+  if(!el||!uid)return;
+  let challenges=[],participants=[],memberships=[],blocks=[];
+  try{challenges=await sbGet('social_challenges','&order=starts_at.desc&limit=30');}catch(e){}
+  try{participants=await sbGet('social_challenge_participants',`&user_id=eq.${uid}`);}catch(e){}
+  try{memberships=await sbGet('social_group_memberships',`&user_id=eq.${uid}`);}catch(e){}
+  try{blocks=await sbGet('social_blocks','');}catch(e){}
+  if(!challenges.length){el.innerHTML='<p style="font-size:13px;color:var(--g4);margin:0">Nog geen challenges zichtbaar.</p>';return;}
+  const vandaag=new Date().toISOString().slice(0,10);
+  el.innerHTML=challenges.map(c=>{
+    const status=SocialChallengeCore.challengeStatus(c.starts_at,c.ends_at,vandaag);
+    const doetMee=participants.some(p=>p.challenge_id===c.id);
+    const magMeedoen=!doetMee&&SocialChallengeCore.canJoinChallenge(uid,c,memberships,blocks);
+    return `<div style="margin-bottom:10px"><div style="font-size:13px;font-weight:700">${escHtml(c.title)}</div>
+      <div style="font-size:11px;color:var(--g4);margin-bottom:4px">${status} · ${c.starts_at} t/m ${c.ends_at}</div>
+      ${doetMee?'<span style="font-size:11px;color:var(--g4)">Je doet mee</span>':magMeedoen?`<button class="btn btn-o btn-sm" onclick="socialJoinChallenge('${c.id}')">Doe mee</button>`:'<span style="font-size:11px;color:var(--g4)">Niet beschikbaar</span>'}
+    </div>`;
+  }).join('');
+}
+async function socialJoinChallenge(challengeId){
+  const uid=authSession?.user?.id;
+  if(!uid)return;
+  const ok=await fetch(`${SB_URL}/rest/v1/social_challenge_participants`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({challenge_id:challengeId,user_id:uid,status:'active'})});
+  toast(ok.ok?'Meegedaan':'Deelnemen mislukt');
+  if(ok.ok)socialRenderChallenges();
+}
+
+// --- Notificaties ---
+async function socialRenderNotifications(){
+  const uid=authSession?.user?.id;
+  const el=document.getElementById('social-notifications-list');
+  if(!el||!uid)return;
+  let notifs=[];
+  try{notifs=await sbGet('social_notifications',`&recipient_id=eq.${uid}&order=created_at.desc&limit=20`);}catch(e){}
+  if(!notifs.length){el.innerHTML='<p style="font-size:13px;color:var(--g4);margin:0">Geen meldingen.</p>';return;}
+  const labels={connection_request:'wil je volgen',connection_accepted:'heeft je volgverzoek geaccepteerd',group_invite:'nodigde je uit voor een groep',group_join_approved:'jouw groepslidmaatschap is goedgekeurd',challenge_invite:'nodigde je uit voor een challenge'};
+  el.innerHTML=notifs.map(n=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;${n.read_at?'opacity:.6':''}"><span style="font-size:12px">${escHtml(n.actor_id)} ${labels[n.event_type]||n.event_type}</span>${!n.read_at?`<button class="btn btn-o btn-sm" onclick="socialMarkNotificationRead('${n.id}')">Gelezen</button>`:''}</div>`).join('');
+}
+async function socialMarkNotificationRead(notificationId){
+  await fetch(`${SB_URL}/rest/v1/social_notifications?id=eq.${notificationId}`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({read_at:new Date().toISOString()})});
+  socialRenderNotifications();
+}
+
 async function socialSaveProfile(){
   const uid=authSession?.user?.id;
   if(!uid)return;
@@ -10980,12 +11148,26 @@ async function socialFollow(targetUserId){
   // zelf accepteren (social_connections_followee_accepteren).
   const ok=await fetch(`${SB_URL}/rest/v1/social_connections`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({follower_id:uid,followee_id:targetUserId,status:'pending'})});
   toast(ok.ok?'Volgverzoek verstuurd':'Versturen mislukt');
+  // Event-driven notificatie (sectie 5): uitsluitend via de bestaande,
+  // veilige RPC (social_create_notification) -- nooit een directe insert
+  // op social_notifications (die tabel heeft geen insert-policy voor
+  // authenticated). Mislukking wordt bewust genegeerd (het volgverzoek
+  // zelf is al geslaagd, een ontbrekende notificatie mag dat niet blokkeren).
+  if(ok.ok){
+    try{await fetch(`${SB_URL}/rest/v1/rpc/social_create_notification`,{method:'POST',headers:SB_H,body:JSON.stringify({p_recipient_id:targetUserId,p_event_type:'connection_request',p_target_type:'profile',p_target_id:uid})});}catch(e){}
+  }
 }
 
-async function socialAcceptFollow(connectionId){
+async function socialAcceptFollow(connectionId,followerId){
   const ok=await fetch(`${SB_URL}/rest/v1/social_connections?id=eq.${connectionId}`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({status:'accepted'})});
   toast(ok.ok?'Geaccepteerd':'Accepteren mislukt');
-  if(ok.ok)renderSocialScreen();
+  if(ok.ok){
+    const uid=authSession?.user?.id;
+    if(followerId&&uid){
+      try{await fetch(`${SB_URL}/rest/v1/rpc/social_create_notification`,{method:'POST',headers:SB_H,body:JSON.stringify({p_recipient_id:followerId,p_event_type:'connection_accepted',p_target_type:'profile',p_target_id:uid})});}catch(e){}
+    }
+    renderSocialScreen();
+  }
 }
 
 

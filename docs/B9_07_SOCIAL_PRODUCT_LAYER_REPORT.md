@@ -143,3 +143,78 @@ sprint levert een eerlijk, veilig, grondig geverifieerd fundament
 in de opdracht beschreven Social-architectuur. Wacht op onafhankelijke
 review en een besluit over vervolgscope voor groepen/challenges/
 sharing/moderatie/notificaties.
+
+---
+
+# B9-07B — Social Product Layer Closure
+
+**Startpunt van deze closure-sprint:** een gedeeltelijk voltooide,
+onderbroken werkboom (branch `benchmark9/b9-07-closure-challenges-
+sharing`), niet blind vertrouwd -- grondig zelfstandig geverifieerd.
+
+## Volledige Social-matrix
+
+| Onderdeel | Backend | Core logic | UI | Security/RLS | Test | Status |
+|---|---|---|---|---|---|---|
+| profiel | social_profiles | -- | zoeken/bewerken | ✅ live getest | ✅ | **BRUIKBAAR** |
+| privacy | visibility-kolom | SocialPrivacyCore | zichtbaarheid-select | ✅ live getest | ✅ | **BRUIKBAAR** |
+| connections | social_connections | -- | volgen/accepteren | ✅ live getest | ✅ | **BRUIKBAAR** |
+| groepen | social_groups/memberships | SocialGroupCore | aanmaken/lid worden | ✅ live getest (self-elevation) | ✅ | **BRUIKBAAR** |
+| challenges | social_challenges/participants | SocialChallengeCore | overzicht/deelnemen | ✅ live getest (ownership/deelname-spoof) | ✅ | **BRUIKBAAR** |
+| activity sharing | social_shared_activities | SocialSharingCore (allowlist) | delen vanuit Run/Ride Detail, feed | ✅ live getest | ✅ | **BRUIKBAAR** |
+| reacties/comments | social_reactions/comments (migratie_v535) | -- | like/comment in feed | ✅ live getest | ✅ | **BRUIKBAAR** |
+| block/report/moderation | social_blocks/reports | -- | blocks-lijst, report-knop | ✅ live getest | ✅ | **BRUIKBAAR** |
+| notifications | social_notifications + RPC (migratie_v535) | -- | lijst, markeren als gelezen | ✅ live getest + RPC event-driven | ✅ | **BRUIKBAAR** |
+
+## Zelf gevonden en gerepareerde gebreken (kernresultaat)
+
+1. **P0** -- anon had execute-rechten op de SECURITY DEFINER-
+   notificatiefunctie ondanks een `revoke ... from public`. Gecorrigeerd
+   met een aparte, expliciete revoke van `anon`.
+2. **P1** -- de Challenges-kaart bestond dubbel in de HTML (ongeldig
+   element-id). Verwijderd.
+3. **P1** -- `socialReport()` nam de reporter-uid als parameter aan
+   i.p.v. altijd zelf uit de sessie te halen. Vereenvoudigd.
+4. **P1** -- de notificatie-RPC werd nergens aangeroepen; notificaties
+   werden dus nooit gegenereerd. Toegevoegd bij follow-verzoek en
+   -acceptatie.
+5. **P1** -- `social_comments`/`social_reactions` ontbraken in de
+   account-deletion-lijst (geen CASCADE op `user_id`). Toegevoegd.
+
+## Security adversarial suite (alle 17 scenario's)
+
+Alle 17 in de opdracht genoemde scenario's live, individueel getest
+(transacties zonder commit): private profiel, blocked-user-bypass,
+follow-direct-accepted, self-elevation, challenge-ownership-spoof,
+challenge-deelname-namens-ander, shared-activity-namens-ander, niet-
+toegestane-activiteit, comment-namens-ander, comment-verwijderen-van-
+ander (architecturaal geborgd via RLS-policy), report-namens-ander,
+report-status-zelf-wijzigen (geen update-policy bestaat), notificatie-
+lezen/muteren-van-ander, account-deletion-completeness, anon-toegang,
+authenticated-but-unrelated-user. Allemaal correct geweigerd/gedekt.
+
+## Sensitive-data audit
+
+Repo-breed, binnen het volledige Social-codeblok: 0 treffers voor
+`daily_health`/`hrv_log`/Women's Performance/readiness/
+`research_consent`/billing/coach-notities/OAuth-tokens.
+
+## Tests
+
+`core/fB9_07BSocialClosure.test.js`: 20/20. Geen regressie op de
+overige 208 bestaande testbestanden.
+
+## Release gate
+
+**212/212 uitgevoerd, 0 geskipt, 0 gefaald.**
+
+## Doc consistency
+
+**0 problemen.**
+
+## FINAL STATUS
+
+**B9-07 SOCIAL PRODUCT LAYER CLOSED — READY FOR B9-08**
+
+Conform de opdracht: STOP vóór B9-08. B9-08 vereist expliciete
+vrijgave van de Product Owner.

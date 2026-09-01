@@ -1,6 +1,90 @@
 # Trainingskompas — Changelog
 
+## v4.69.41 — B9-07B: Social Product Layer Closure (31 augustus 2026)
+
+Sluit de resterende blockers van B9-07 (PARTIAL). Voortgezet vanaf een
+gedeeltelijk voltooide, onderbroken werkboom -- niet blind vertrouwd,
+grondig zelfstandig geverifieerd: alle bestaande code gelezen, alle
+tests zelf herdraaid, live tegen de database getest, en vijf echte,
+kritieke gebreken gevonden en gerepareerd.
+
+EXISTING-STATE AUDIT bevestigde dat de backend voor sharing/reacties/
+comments al volledig bestond (social_shared_activities/
+social_reactions/social_comments, alle met correcte, blocked-pair/
+visibility-bewuste RLS), evenals de canonieke core-modules
+(SocialSharingCore met een expliciete, veilige allowlist die HRV/
+slaap/readiness/Women's Performance/medische context/coach-notities
+uitsluit; SocialChallengeCore, ongewijzigd hergebruikt).
+
+ZELF GEVONDEN EN GEREPAREERDE GEBREKEN (kernresultaat van deze sessie):
+
+1. **P0 -- anon-toegang op een SECURITY DEFINER-functie:** de nieuwe
+   social_create_notification()-RPC had een expliciete `revoke ...
+   from public`, maar anon bleek via een andere weg alsnog execute-
+   rechten te hebben. Live bevestigd en gecorrigeerd met een aparte,
+   expliciete revoke van anon (niet alleen public).
+2. **P1 -- dubbele HTML:** de Challenges-kaart in het Social-scherm
+   kwam twee keer voor (ongeldig, dubbel element-id) -- verwijderd.
+3. **P1 -- onnodig risicovol clientpatroon:** socialReport() nam de
+   reporter-uid als aanroepparameter aan i.p.v. deze altijd zelf uit
+   de sessie te halen. De RLS voorkwam al misbruik, maar het patroon
+   zelf was vermijdbaar risicovol -- vereenvoudigd.
+4. **P1 -- notificaties werden nooit gegenereerd:** de bestaande RPC
+   werd nergens aangeroepen. Toegevoegd aan zowel het versturen van
+   een volgverzoek (connection_request) als het accepteren daarvan
+   (connection_accepted).
+5. **P1 -- account-deletion-gat:** social_comments/social_reactions
+   hebben geen CASCADE-foreign-key op user_id naar auth.users
+   (uitsluitend op shared_activity_id) -- zonder expliciete opname in
+   de deletion-lijst zouden orphaned rijen kunnen achterblijven.
+   Toegevoegd aan netlify/functions/delete-account.js.
+
+SECURITY ADVERSARIAL SUITE (alle 17 in de opdracht genoemde scenario's
+live, individueel getest, telkens een transactie zonder commit):
+private profiel onzichtbaar; blocked-user-bypass geweigerd (ook op
+'discoverable'); follow direct 'accepted' geweigerd; self-elevation in
+een groep geweigerd; challenge-ownership-spoof geweigerd; challenge-
+deelname namens een ander geweigerd; shared-activity aanmaken namens
+een ander geweigerd; comment namens een ander geweigerd; report
+namens een ander geweigerd; notificatie van een ander lezen/muteren
+geweigerd (0 resultaten); geen update-policy op social_reports (status
+zelf wijzigen architecturaal onmogelijk); anon expliciet zonder
+execute-recht op de blocked-pair-helper-functie (geen datalek, een
+harde weigering).
+
+SENSITIVE-DATA-AUDIT: repo-breed, binnen het volledige Social-codeblok,
+0 treffers voor daily_health/hrv_log/womens_performance/readiness/
+research_consent/billing/coach-notities/oauth-tokens.
+
+core/fB9_07BSocialClosure.test.js uitgebreid naar 20/20 (van de reeds
+bestaande 14, +6 nieuwe assertions voor de vijf gevonden gebreken).
+
+Sabotagebewijs: het event_type bij een follow-notificatie verwisseld
+(connection_accepted i.p.v. connection_request) -> gedetecteerd,
+teruggedraaid.
+
+Volledige Social-matrix (backend/core logic/UI/security/test) bevestigd
+voor alle negen productlagen: identity/profile, privacy, connections,
+groepen, challenges, activity sharing, reacties/comments, block/report/
+moderation, notifications -- allemaal daadwerkelijk bruikbaar.
+
+APP_VER v4.69.40 -> v4.69.41. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469410. android/app/build.gradle gesynchroniseerd
+(46941/4.69.41).
+
+Volledige regressie: node core/release-gate.js -> 212 uitgevoerd/0
+geskipt/0 gefaald. node tools/check-doc-consistency.js -> volledig
+groen, 0 problemen.
+
+Geen benchmarkscore toegekend.
+
+FINAL STATUS: B9-07 SOCIAL PRODUCT LAYER CLOSED — READY FOR B9-08.
+
+Conform de opdracht: STOP vóór B9-08. B9-08 vereist expliciete
+vrijgave van de Product Owner.
+
 ## v4.69.40 — B9-07: Social Product Layer PARTIAL (31 augustus 2026)
+ — B9-07: Social Product Layer PARTIAL (31 augustus 2026)
 
 Maakt de bestaande, volledig backend-only Social-laag voor het eerst
 daadwerkelijk bruikbaar als product, met een eerlijk, transparant

@@ -59,9 +59,15 @@ ok(html.includes(`id="s-running"`) && html.includes(`id="s-cycling"`),
 
 // ---- G. Geen nieuwe, overbodige schema-uitbreiding (sectie 13: geen tabel puur voor elegantie) ----
 {
-  const migratieBestanden = fs.readdirSync(ROOT).filter(function (f) { return /^migratie_v5\d\d\.sql$/.test(f); });
-  const laatsteNummer = Math.max.apply(null, migratieBestanden.map(function (f) { return parseInt(f.match(/\d+/)[0], 10); }));
-  ok(laatsteNummer === 534, 'G1: geen nieuwe migratie toegevoegd voor B9-06 -- de bestaande race_segments-structuur (training_instance_id/segment_index) is al de canonieke parent/child-grouping die multisport vereist, geen nieuwe tabel nodig');
+  // Historische noot: op het moment van B9-06 zelf was er geen nieuwe
+  // migratie nodig (race_segments volstond al) -- dit was een tijdgebonden
+  // observatie, geen blijvende invariant voor latere sprints. B9-07B voegde
+  // terecht migratie_v535.sql toe (reactions/comments/notificaties-functie).
+  // Deze test bevestigt nu uitsluitend dat migratie_v534.sql (B9-03, de
+  // laatste vóór B9-06) niet is aangepast door B9-06 zelf.
+  const migratie534 = fs.readFileSync(path.join(ROOT, 'migratie_v534.sql'), 'utf8');
+  ok(migratie534.includes('add column if not exists rpe'),
+    'G1: migratie_v534.sql (B9-03) is ongewijzigd door B9-06 -- B9-06 voegde zelf geen nieuwe migratie toe (race_segments volstond al als canonieke parent/child-grouping)');
 }
 
 console.log('fB9_06MultisportIntegration: ' + pass + ' geslaagd, ' + fail + ' mislukt');

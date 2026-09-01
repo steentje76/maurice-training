@@ -219,7 +219,16 @@ exports.handler = async function(event) {
       ['social_notifications', ['recipient_id', 'actor_id']],
       ['social_groups', ['owner_user_id']],
       ['social_challenges', ['creator_id']],
-      ['social_shared_activities', ['athlete_id']]
+      ['social_shared_activities', ['athlete_id']],
+      // P1-FIX (zelf gevonden bij B9-07-closure-verificatie, migratie_v535):
+      // social_comments/social_reactions hebben GEEN foreign-key-CASCADE op
+      // user_id naar auth.users (uitsluitend op shared_activity_id) -- als
+      // een commentator/reageerder wordt verwijderd terwijl de shared
+      // activity van een ander blijft bestaan, zou user_id anders een
+      // orphaned verwijzing achterlaten. Expliciet toegevoegd, zelfde
+      // patroon als de overige social_*-tabellen hierboven.
+      ['social_comments', ['user_id']],
+      ['social_reactions', ['user_id']]
     ]) {
       for (const kolom of kolommen) {
         const sfR = await fetch(`${supabaseUrl}/rest/v1/${tabel}?${kolom}=eq.${userId}`, {

@@ -196,4 +196,4 @@ zijn functionele/evidence-gaps, geen zichtbare UX-wijzigingen).
 **IMPLEMENTATION COMPLEXITY:** HOOG (toekomstige, gefaseerde migratie).
 **BLOCKS 9.0:** YES (voor Team Operations en Coach/PT).
 **UX MOCK-UP NEEDED:** LATER (voor de uiteindelijke Team/Coach-schermen, niet voor de architectuurbeslissing zelf).
-**STATUS:** ARCHITECTURE DECIDED -- migratie-uitvoering en UI-implementatie blijven open, aparte, toekomstige sprints.
+**STATUS:** MIGRATION EXECUTED (B9-H2B, migratie_v539.sql) -- organizations/memberships nu daadwerkelijk gevuld en canoniek. UI-implementatie (Team/Coach-schermen) blijft open, aparte, toekomstige sprint na UX-goedkeuring.

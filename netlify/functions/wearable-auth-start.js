@@ -48,13 +48,16 @@ exports.handler = async function (event) {
     }
     const [stateRow] = await stateRes.json();
 
-    // Scopes: alleen wat we daadwerkelijk gebruiken (HRV, rusthartslag, slaap) — principe
-    // van minimale toegang. Geverifieerd tegen developers.google.com/health/scopes na een
-    // eerdere live 400 invalid_scope-fout met de verkeerde (health.*) scope-namen —
-    // de juiste prefix is googlehealth.*, niet health.*.
+    // Scopes: alleen wat we daadwerkelijk gebruiken (HRV, rusthartslag, slaap,
+    // sinds B9-H3B ook sportactiviteiten voor canonieke Running/Cycling-
+    // ingestion) — principe van minimale toegang. Geverifieerd tegen
+    // developers.google.com/health/scopes (augustus 2026) na een eerdere live
+    // 400 invalid_scope-fout met de verkeerde (health.*) scope-namen — de
+    // juiste prefix is googlehealth.*, niet health.*.
     const scope = [
       'https://www.googleapis.com/auth/googlehealth.health_metrics_and_measurements.readonly',
-      'https://www.googleapis.com/auth/googlehealth.sleep.readonly'
+      'https://www.googleapis.com/auth/googlehealth.sleep.readonly',
+      'https://www.googleapis.com/auth/googlehealth.activity_and_fitness.readonly'
     ].join(' ');
 
     const params = new URLSearchParams({

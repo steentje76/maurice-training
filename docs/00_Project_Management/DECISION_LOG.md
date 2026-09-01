@@ -1092,3 +1092,33 @@
   echte provider-OAuth-toegang (niet beschikbaar binnen deze sessie).
 - **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
   uitgevoerd door Claude tijdens de B9-H3A-mastersprint.
+
+## B9-H3B -- Eerste, echte cross-sport cloud provider ingestion gebouwd
+
+- **Datum:** 1 september 2026 (autonome nachtsprint).
+- **Context:** B9-H3A stelde vast dat de bredere, cross-sport cloud-
+  ingestion nog niet bestond. Garmin bleek extern geblokkeerd (geen
+  developer-toegang). Gekozen fallback: uitbreiding van de bestaande,
+  al geautoriseerde Google Health-integratie met het officiële
+  `exercise`-datatype (Running/Cycling-activity-data).
+- **Gebouwd:** `core/cloudActivityIngestion.js` (Provider Adapter +
+  Sport Mapper + Metric Mapper), `netlify/functions/wearable-sync-
+  activities.js` (nieuwe, geïsoleerde Netlify-functie), `netlify/
+  functions/_wearableAuthLib.js` (gedeelde, herbruikbare auth-helper),
+  `migratie_v541.sql` (nieuwe `upsert_provider_activity()` RPC).
+- **Twee zelf gevonden en gerepareerde kritieke bugs:** (1) PostgREST
+  se generieke `on_conflict`-parameter ondersteunt geen partial-index-
+  WHERE, opgelost via een eigen, atomaire RPC; (2) de oorspronkelijke
+  update-logica zou een handmatige gebruikerscorrectie stil hebben
+  kunnen overschrijven bij een volgende sync -- opgelost met expliciete
+  manual-data-protection, live bewezen.
+- **Architectuur:** de bestaande, canonieke `activities`-tabel bleek
+  al volledig voorbereid (provenance/dedupe-kolommen bestonden al) --
+  geen schemawijziging nodig. `runningIntelligence.js`/
+  `cyclingIntelligence.js` verwerken de nieuwe, provider-afkomstige
+  rijen al, ongewijzigd, generiek.
+- **Externe blokkade, niet opgelost binnen deze sessie:** real-API/
+  account/device-validatie (mogelijk vereist een Google Cloud
+  Console-scope-vrijgave door de Product Owner).
+- **Verantwoordelijke:** Product Owner (expliciete, autonome
+  nachtsprint-vrijgave), uitgevoerd door Claude tijdens B9-H3B.

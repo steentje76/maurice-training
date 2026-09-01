@@ -1,6 +1,130 @@
 # Trainingskompas — Changelog
 
+## v4.69.49 — B9-H3B: Eerste Cross-Sport Cloud Provider Integration (1 september 2026)
+
+Autonome nachtsprint: bouwt daadwerkelijk de generieke cross-sport
+cloud-provider-architectuur die B9-H3A als ontbrekend identificeerde.
+Baseline geverifieerd: main `97660e7`, release gate 222/222 groen.
+
+Garmin: BLOCKED (geen developer-toegang/API-credentials beschikbaar).
+Fallback, conform sectie 10: uitbreiding van de bestaande, al
+geautoriseerde Google Health-integratie met het officiële
+`exercise`-datatype (Running/Cycling-activity-data), geverifieerd
+tegen developers.google.com/health/data-types/workouts.
+
+NIEUW GEBOUWD: `core/cloudActivityIngestion.js` (Provider Adapter +
+Sport Mapper + Metric Mapper, puur, geen sportengine), `netlify/
+functions/wearable-sync-activities.js` (nieuwe, geïsoleerde Netlify-
+functie -- de bestaande, kritieke `wearable-sync.js` voor HRV/RHR/
+sleep blijft volledig ongewijzigd, failure-isolation), `netlify/
+functions/_wearableAuthLib.js` (gedeelde token-ophaal/refresh-helper,
+geen duplicatie van de bestaande logica), `migratie_v541.sql` (nieuwe
+`upsert_provider_activity()` SECURITY DEFINER RPC).
+
+BELANGRIJKE, ZELFSTANDIGE ONTDEKKING: de bestaande, canonieke
+`activities`-tabel bleek al volledig voorbereid voor precies dit
+scenario (`source_provenance`/`source_provider`/`data_quality`/
+`dedupe_key`-kolommen en een unique dedupe-index bestonden al) -- geen
+nieuwe tabel of schema-herontwerp nodig, uitsluitend de
+ingestie-pijplijn zelf.
+
+TWEE ECHTE, KRITIEKE BUGS ZELF GEVONDEN EN GEREPAREERD TIJDENS LIVE
+VERIFICATIE:
+
+1. **Dedupe/idempotentie:** de bestaande unique index is een PARTIAL
+   index (`WHERE dedupe_key IS NOT NULL`, correct -- handmatige
+   activiteiten hebben geen dedupe_key). PostgREST se generieke
+   `on_conflict`-query-parameter ondersteunt geen partial-index-WHERE
+   op de conflict-target -- live bevestigd: `42P10`-fout bij een
+   eerste poging. Opgelost via de nieuwe RPC, die de correcte, native
+   SQL `ON CONFLICT (...) WHERE dedupe_key IS NOT NULL DO UPDATE`
+   intern uitvoert (zelfde patroon als de bestaande
+   `upsert_daily_health()`). Live, adversariaal herbevestigd: 3x
+   dezelfde activity via de RPC -> 1 canonieke rij.
+2. **Manual data protection (sectie 31):** tijdens het ontwerpen van
+   de update-semantiek werd duidelijk dat de RPC een handmatige
+   gebruikerscorrectie (`data_quality='user_corrected'`, bestaand
+   label) stil zou kunnen overschrijven bij een volgende sync.
+   Opgelost met een expliciete `WHERE data_quality IS DISTINCT FROM
+   'user_corrected'` op de update-clausule. Live, adversariaal
+   bevestigd: een handmatig gecorrigeerde afstand (5000m) bleef exact
+   behouden na een sync-poging met een andere waarde (9999m).
+
+SECURITY, LIVE ADVERSARIAAL BEVESTIGD: anon heeft 0 GRANT op
+`activities` (striktste vorm van default-deny); een gewone,
+authenticated gebruiker die probeert te schrijven namens een ANDER
+account via de nieuwe RPC wordt geweigerd (`not authorized to write
+activity data for another user`, zelfde patroon als
+`upsert_daily_health()`); service-role (het patroon dat de Netlify-
+functie gebruikt) kan wél correct namens de gevalideerde gebruiker
+schrijven. Sabotage: beide beveiligingen (manual-protection,
+cross-user-check) apart verwijderd -> beide gedetecteerd door de
+nieuwe testsuite, teruggedraaid.
+
+DOWNSTREAM, LIVE BEVESTIGD ZONDER ENIGE CODEWIJZIGING NODIG:
+`runningIntelligence.js`/`cyclingIntelligence.js` nemen al een
+generieke `activities`-array als parameter -- een provider-afkomstige
+rij wordt precies hetzelfde verwerkt als een handmatig ingevoerde
+activity, exact conform sectie 19/20 ("connector berekent dit NIET").
+
+OAuth-scope uitgebreid: `googlehealth.activity_and_fitness.readonly`
+toegevoegd aan `wearable-auth-start.js`, naast de bestaande, ongewijzigd
+behouden HRV/RHR/sleep-scopes (geen regressie).
+
+core/fB9_H3BCloudProviderIntegration.test.js (nieuw, 37/37): sport-
+mapping, units/timezone, missing-vs-zero, provenance, dedupe/
+idempotency (met het sabotagebewijs), manual data protection, cross-
+user/anon-security, token-vault-hergebruik, failure-isolation, AI/
+Calculation/Decision-boundary, Provider-2-ready-architectuur, en
+expliciete downstream-consumptie-bevestiging.
+
+Volledige, bestaande device/wearable-regressie zelf, opnieuw gedraaid:
+569+ assertions over 12 testsuites, 0 gefaald, 0 regressie.
+
+Eerlijk vastgelegd, niet verhuld: REAL API/REAL ACCOUNT/REAL DEVICE
+blijven OPEN (geen test-Google-account met de nieuwe scope
+geconsenteerd beschikbaar binnen deze sessie; mogelijk vereist een
+korte Google Cloud Console-scope-vrijgave door de Product Owner).
+Garmin blijft BLOCKED (externe developer-toegang vereist).
+
+docs/B9_H3B_EXISTING_STATE_REVALIDATION.md,
+docs/B9_H3B_PROVIDER_SELECTION.md,
+docs/B9_H3B_CLOUD_PROVIDER_ARCHITECTURE.md,
+docs/B9_H3B_CANONICAL_ACTIVITY_MAPPING.md,
+docs/B9_H3B_DEDUPLICATION_AND_PROVENANCE.md,
+docs/B9_H3B_PROVIDER_SECURITY_MATRIX.md,
+docs/B9_H3B_RUNNING_CYCLING_INTEGRATION_REPORT.md,
+docs/B9_H3B_PROVIDER_VALIDATION_MATRIX.md,
+docs/B9_H3B_FINAL_REPORT.md (alle negen nieuw).
+
+docs/BENCHMARK_9_PLUS_GAP_REGISTRY.md: B9G-DEV-002 bijgewerkt van
+"NOT IMPLEMENTED" naar "gedeeltelijk gesloten -- softwarematige
+architectuur + eerste provider volledig gebouwd/getest, real-provider/
+device-validatie blijft open, extern".
+
+APP_VER v4.69.48 -> v4.69.49. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469490. android/app/build.gradle gesynchroniseerd
+(46949/4.69.49).
+
+Volledige regressie: node core/release-gate.js -> 223 uitgevoerd/0
+geskipt/0 gefaald (was 222, +1 nieuw testbestand). node tools/
+check-doc-consistency.js -> volledig groen, 0 problemen.
+
+Geen benchmarkscore toegekend.
+
+SOFTWARE FUNCTIONAL SCORE: hoog (volledige keten bewezen, inclusief
+twee zelf gevonden en gerepareerde kritieke bugs). REAL PROVIDER/
+DEVICE VALIDATION: extern geblokkeerd. UX: DEFERRED.
+
+FINAL STATUS: B9-H3B CROSS-SPORT CLOUD INGESTION SOFTWARE CLOSED —
+REAL PROVIDER/DEVICE VALIDATION BLOCKED EXTERN.
+
+STOP. Geen scherm gebouwd, geen navigatie aangepast. Wacht op Product
+Owner-keuze: Google Cloud Console-scope-verificatie, een real-account-
+test, of een volgende functionele prioriteit.
+
 ## v4.69.48 — B9-H2C: Team Operations 9+ Functional Enablement (1 september 2026)
+ — B9-H2C: Team Operations 9+ Functional Enablement (1 september 2026)
 
 Bouwt Team Operations functioneel/backend-matig uit vanaf de laagste
 benchmarkscore (6.8). Geen enkel scherm gebouwd -- functionaliteit

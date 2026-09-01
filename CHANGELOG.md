@@ -1,6 +1,80 @@
 # Trainingskompas — Changelog
 
+## v4.69.38 — B9-05: Cycling Intelligence (31 augustus 2026)
+
+Maakt bestaande Cyclingdata (B9-04) intelligent en bruikbaar, zonder
+nieuwe execution te bouwen.
+
+Existing-state audit: RunningIntelligenceCore.weeklyVolume()/
+consistency() (core/runningIntelligence.js) bevestigd volledig
+sport-neutraal -- direct hergebruikt, geen duplicaat. De echte,
+inhoudelijke fiets-specifieke verschillen (afstandsschaal, vermogen)
+vereisten wel nieuw werk: core/cyclingIntelligence.js (nieuw).
+
+speedBandKey(): fiets-specifieke afstandsbanden (<20km/20-50km/
+50-100km/100km+) -- bewust NIET Running se banden hergebruikt
+(fietsafstanden liggen typisch 5-10x hoger dan hardloopafstanden,
+dezelfde banden zouden een misleidende groepering geven).
+criticalPowerEligiblePerformances(): analoog aan Running se
+CS-eligibility, hier toegepast op vermogen -- uitsluitend expliciet
+gemarkeerde (is_max_effort=true) ritten MET geldige avg_power_watts
+mogen CardioCore.criticalPower() voeden.
+
+Finish-flow uitgebreid: een checkbox "Was dit een maximale test-/
+wedstrijdinspanning?" (standaard uit), analoog aan Running, nodig om
+Critical Power te kunnen voeden (ontbrak nog volledig in B9-04).
+
+Nieuw scherm "Inzichten" (Training -> Fietsen -> Inzichten, geen extra
+bottom-nav-tab -- activeert de door B9-04 al klaargezette, uitgeschakelde
+placeholder-knop): weekly volume (hergebruikt), snelheidstrend per
+fiets-specifieke afstandsband, vermogenstrend (nieuw t.o.v. Running),
+trainingsconsistentie (hergebruikt), Critical Power (alleen bij
+voldoende gemarkeerde inspanningen), FTP (uitsluitend user-entered,
+expliciete "door jou ingesteld"-provenance), belasting (Foster-sRPE-
+hergebruik). Power zones tonen expliciet "nog niet beschikbaar" --
+geen canonieke formule, geen shadow calculation.
+
+ZELF GEVONDEN EN GEREPAREERD (dezelfde B9-02C-les, nu voor Cycling):
+de Cycling-geschiedenis toonde niet-klikbare, dode lijstitems (geen
+onclick, geen link naar Ride Detail). Gecorrigeerd: elk item opent nu
+zijn eigen Ride Detail.
+
+docs/CALCULATION_REGISTRY.md: twee nieuwe calculations volledig
+geregistreerd (CALC-CYC-SPEEDBAND-001, CALC-CYC-CPELIG-001), plus een
+expliciete vermelding dat weeklyVolume()/consistency() bevestigd
+hergebruikt worden, geen duplicaat.
+
+Live, adversarial herbevestigd: forged lap op een cycling-activity door
+een andere gebruiker wordt door de bestaande B9-01-RLS correct
+geweigerd (transactie automatisch teruggedraaid).
+
+core/fCyclingIntelligenceCore.test.js (nieuw, 7/7) en core/
+fB9_05CyclingIntelligence.test.js (nieuw, 14/14): fiets-specifieke
+banden, CP-eligibility, hergebruik van canonieke engines, correcte
+CardioCore.criticalPower()-veldnaam (cp_w), max-effort-opt-in, eerlijke
+power-zones-gap, dode-lijstitem-fix, geen extra bottom-nav-tab.
+
+Sabotagebewijs: (1) de is_max_effort-eligibiliteitscheck voor Critical
+Power verwijderd -> gedetecteerd, teruggedraaid. (2) Running se
+afstandsbanden hergebruikt voor Cycling i.p.v. de eigen, fiets-
+specifieke banden -> gedetecteerd, teruggedraaid.
+
+Bestaande core/fEvidenceClaimAudit.test.js bijgewerkt: de hardcoded
+CALC-item-telling (29->31) na de twee nieuwe registry-toevoegingen.
+
+APP_VER v4.69.37 -> v4.69.38. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469380. android/app/build.gradle gesynchroniseerd
+(46938/4.69.38).
+
+Volledige regressie: node core/release-gate.js -> 209 uitgevoerd/0
+geskipt/0 gefaald (was 207, +2 nieuwe testbestanden). node tools/
+check-doc-consistency.js -> volledig groen, 0 problemen (71/71
+capability-telling consistent overal).
+
+Geen benchmarkscore toegekend.
+
 ## v4.69.37 — B9-04: Cycling Core (31 augustus 2026)
+ — B9-04: Cycling Core (31 augustus 2026)
 
 Bouwt een volwaardige Cycling Core, volledig bruikbaar zonder wearable/
 GPS/HR/power meter/cadance sensor.

@@ -46,7 +46,13 @@ const calcCounts = countCalcEvidence(calcText);
 // eigen sportwetenschappelijke claim (GEEN_EVIDENCE_VELD), consistent
 // met hoe CALC-GUARD-001 al eerder werd behandeld. E-telling stijgt dus
 // van 7 naar 8.
-ok(calcCounts.total === 29, 'exact 29 CALC-items geregistreerd (reproduceerbare telling, niet handmatig)');
+// B9-05 (Cycling Intelligence): 2 nieuwe CALC-items toegevoegd
+// (CALC-CYC-SPEEDBAND-001, CALC-CYC-CPELIG-001) -- telling stijgt van
+// 29 naar 31. Beide zijn context-/filter-bouwstenen zonder eigen
+// sportwetenschappelijke claim (GEEN_EVIDENCE_VELD), net als hun
+// Running-tegenhangers CALC-RUN-DISTBAND-001/CALC-RUN-CSELIG-001.
+// E-telling blijft ongewijzigd op 8.
+ok(calcCounts.total === 31, 'exact 31 CALC-items geregistreerd (reproduceerbare telling, niet handmatig)');
 ok(calcCounts.A === 1, 'exact 1 CALC-item met evidence A');
 ok(calcCounts.B === 4, 'exact 4 CALC-items met evidence B (Epley/Brzycki/Foster-sRPE/HRV-baseline)');
 ok(calcCounts.C === 4, 'exact 4 CALC-items met evidence C');

@@ -3171,6 +3171,19 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </nav>
 </div>
 
+<!-- ═══ B9-09 · NUTRITION FOUNDATION (Lichaam → 🍽️ → Voeding) ═══ -->
+<div class="scr" id="s-nutrition">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Voeding</div><div class="hdr-sub">Registreren, geen advies</div></div><button class="ibtn" onclick="go('s-lichaam')" aria-label="Terug naar Lichaam">←</button></div></div>
+  <div class="scroll" id="nutrition-scroll" style="padding:16px"></div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-social')"><span class="ni-icon">👥</span><span class="ni-label">Sociaal</span></button>
+  </nav>
+</div>
+
 <!-- ═══ TRAINING A ═══ -->
 <!-- Training-schermen (Training A/B en eventuele nieuwe vaste trainingen) worden sinds
      v318 dynamisch gebouwd via buildVasteTrainingScreen(), net als Programma/Workouts.
@@ -3924,6 +3937,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr">
     <div class="hdr-row">
       <div><div class="hdr-title" role="heading" aria-level="1">Lichaam</div><div class="hdr-sub">Mijn lichaam vandaag</div></div>
+      <button class="ibtn" onclick="go('s-nutrition')" aria-label="Naar Voeding" style="margin-right:6px">🍽️</button>
       <button class="ibtn" onclick="openModal('m-bc')" aria-label="Lichaamsmeting toevoegen">＋</button>
     </div>
   </div>
@@ -5494,6 +5508,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/socialPrivacy.js"></script>
 <script src="core/socialSharing.js"></script>
 <script src="core/socialIntelligence.js"></script>
+<script src="core/nutritionFoundation.js"></script>
 <script src="core/progression.js"></script>
 <script src="core/intervalEngine.js"></script>
 <script src="core/coaching.js"></script>
@@ -6236,7 +6251,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.42';
+const APP_VER = 'v4.69.43';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -9974,6 +9989,7 @@ function go(id){
   if(id==='s-running-insights')renderRunningInsights();
   if(id==='s-cycling-insights')renderCyclingInsights();
   if(id==='s-social')renderSocialScreen();
+  if(id==='s-nutrition')renderNutritionScreen();
   if(id==='s-cycling')renderCyclingShell();
   if(id==='s-hist'){histOff=0;renderHistFilterTabs();loadHistory();}
   if(id==='s-train-mgr'){renderSportSwitcher();renderV43Train();}
@@ -11153,6 +11169,115 @@ async function socialMarkNotificationsRead(idsCsv){
 async function socialMarkNotificationRead(notificationId){
   await fetch(`${SB_URL}/rest/v1/social_notifications?id=eq.${notificationId}`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({read_at:new Date().toISOString()})});
   socialRenderNotifications();
+}
+
+// ══════════════════════════════════════════════════════════
+// B9-09 — Nutrition Foundation (Lichaam → 🍽️ → Voeding)
+// ══════════════════════════════════════════════════════════
+// Registreren, niet adviseren. Geen caloriedoel, geen macrodoel, geen
+// voedingsmiddelendatabase. Uitsluitend eigen data (RLS: user_id=
+// auth.uid()), 0 automatische Social/Coach/Gym/Research/AI-blootstelling
+// (deze module wordt bewust NERGENS aangeroepen vanuit tkCoachDataBlok(),
+// SocialSharingCore, of enige export/research-flow). Missing != zero:
+// elk nutrition-veld is optioneel, een leeg veld wordt nooit als 0
+// verstuurd.
+function nutritionParseGetal(waarde){
+  if(waarde==null||waarde==='')return null;
+  const genormaliseerd=String(waarde).trim().replace(',','.');
+  const getal=parseFloat(genormaliseerd);
+  return isFinite(getal)?getal:null;
+}
+
+async function renderNutritionScreen(){
+  const el=document.getElementById('nutrition-scroll');
+  if(!el)return;
+  el.innerHTML='<p style="font-size:13px;color:var(--g4)">Laden…</p>';
+  const uid=authSession?.user?.id;
+  if(!uid){el.innerHTML='<p style="font-size:13px;color:var(--g4)">Niet ingelogd.</p>';return;}
+
+  const vandaagStart=new Date();vandaagStart.setHours(0,0,0,0);
+  const vandaagEind=new Date();vandaagEind.setHours(23,59,59,999);
+  let entries=null;
+  try{
+    entries=await sbGet('nutrition_entries',`&user_id=eq.${uid}&occurred_at=gte.${vandaagStart.toISOString()}&occurred_at=lte.${vandaagEind.toISOString()}&order=occurred_at.desc`);
+  }catch(e){entries=null;}
+
+  if(entries===null){
+    el.innerHTML=nutritionFormHtml()+'<div class="card"><div class="card-body"><p style="font-size:13px;color:var(--g4);margin:0">Kon vandaag niet laden -- probeer het opnieuw.</p></div></div>';
+    return;
+  }
+
+  const totalen=NutritionFoundationCore.dailyLoggedTotals(entries);
+  const km=v=>v==null?'niet geregistreerd':v;
+  const totalenHtml=entries.length?`
+    <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Vandaag geregistreerd</div></div><div class="card-body">
+      <div style="font-size:12px;color:var(--g4);margin-bottom:8px">Som van wat je zelf invulde -- geen doel, geen volledige daginname als niet alles is geregistreerd.</div>
+      <div style="font-size:13px">Energie: ${km(totalen.energy_kcal_logged_total)}${totalen.energy_kcal_logged_total!=null?' kcal':''}</div>
+      <div style="font-size:13px">Eiwit: ${km(totalen.protein_g_logged_total)}${totalen.protein_g_logged_total!=null?' g':''}</div>
+      <div style="font-size:13px">Koolhydraten: ${km(totalen.carbohydrate_g_logged_total)}${totalen.carbohydrate_g_logged_total!=null?' g':''}</div>
+      <div style="font-size:13px">Vet: ${km(totalen.fat_g_logged_total)}${totalen.fat_g_logged_total!=null?' g':''}</div>
+      <div style="font-size:13px">Vocht: ${km(totalen.fluid_ml_logged_total)}${totalen.fluid_ml_logged_total!=null?' ml':''}</div>
+    </div></div>`:'';
+
+  const labels={meal:'Maaltijd',snack:'Snack',hydration:'Hydratatie',other:'Overig'};
+  const lijstHtml=entries.length?entries.map(e=>{
+    const tijd=new Date(e.occurred_at).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
+    const details=[e.energy_kcal!=null?e.energy_kcal+' kcal':null,e.protein_g!=null?e.protein_g+'g eiwit':null,e.carbohydrate_g!=null?e.carbohydrate_g+'g kh':null,e.fat_g!=null?e.fat_g+'g vet':null,e.fluid_ml!=null?e.fluid_ml+'ml':null].filter(Boolean).join(' · ');
+    return `<div class="row"><span class="b"><span class="t">${tijd} — ${labels[e.entry_type]||e.entry_type}</span><span class="s">${details?escHtml(details):'Geen waarden ingevuld'}${e.note?' · '+escHtml(e.note):''}</span></span><button class="btn btn-o btn-sm" onclick="nutritionDeleteEntry('${e.id}')" aria-label="Verwijderen">🗑</button></div>`;
+  }).join(''):'<p style="font-size:13px;color:var(--g4);margin:0">Nog niets geregistreerd vandaag.</p>';
+
+  el.innerHTML=nutritionFormHtml()+totalenHtml+`<div class="card"><div class="card-hd"><div class="card-title">Vandaag</div></div><div class="card-body">${lijstHtml}</div></div>`;
+}
+
+function nutritionFormHtml(){
+  return `<div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Toevoegen</div></div><div class="card-body">
+    <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Type</label>
+    <select id="nutrition-entry-type" style="width:100%;margin-bottom:10px">
+      <option value="meal">Maaltijd</option><option value="snack">Snack</option><option value="hydration">Hydratatie</option><option value="other">Overig</option>
+    </select>
+    <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Moment (optioneel)</label>
+    <select id="nutrition-timing-context" style="width:100%;margin-bottom:10px">
+      <option value="">Geen</option><option value="pre_training">Vóór training</option><option value="during_training">Tijdens training</option><option value="post_training">Na training</option>
+    </select>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <input type="text" inputmode="decimal" id="nutrition-kcal" placeholder="kcal (optioneel)">
+      <input type="text" inputmode="decimal" id="nutrition-protein" placeholder="eiwit g (optioneel)">
+      <input type="text" inputmode="decimal" id="nutrition-carbs" placeholder="koolhydraten g (optioneel)">
+      <input type="text" inputmode="decimal" id="nutrition-fat" placeholder="vet g (optioneel)">
+      <input type="text" inputmode="decimal" id="nutrition-fluid" placeholder="vocht ml (optioneel)">
+    </div>
+    <textarea id="nutrition-note" maxlength="500" placeholder="Notitie (optioneel)" style="width:100%;margin-bottom:10px;min-height:44px"></textarea>
+    <button class="btn btn-p" style="width:100%" onclick="nutritionAddEntry()">Toevoegen</button>
+  </div></div>`;
+}
+
+async function nutritionAddEntry(){
+  const uid=authSession?.user?.id;
+  if(!uid)return;
+  const entry={
+    user_id:uid,
+    occurred_at:new Date().toISOString(),
+    entry_type:document.getElementById('nutrition-entry-type').value,
+    timing_context:document.getElementById('nutrition-timing-context').value||null,
+    energy_kcal:nutritionParseGetal(document.getElementById('nutrition-kcal').value),
+    protein_g:nutritionParseGetal(document.getElementById('nutrition-protein').value),
+    carbohydrate_g:nutritionParseGetal(document.getElementById('nutrition-carbs').value),
+    fat_g:nutritionParseGetal(document.getElementById('nutrition-fat').value),
+    fluid_ml:nutritionParseGetal(document.getElementById('nutrition-fluid').value),
+    note:document.getElementById('nutrition-note').value.trim()||null
+  };
+  const validatie=NutritionFoundationCore.validateEntry(entry);
+  if(!validatie.valid){toast('Controleer je invoer');return;}
+  const ok=await fetch(`${SB_URL}/rest/v1/nutrition_entries`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify(entry)});
+  toast(ok.ok?'Toegevoegd':'Toevoegen mislukt');
+  if(ok.ok)renderNutritionScreen();
+}
+
+async function nutritionDeleteEntry(entryId){
+  if(!confirm('Deze registratie verwijderen?'))return;
+  const ok=await fetch(`${SB_URL}/rest/v1/nutrition_entries?id=eq.${entryId}`,{method:'DELETE',headers:SB_H});
+  toast(ok.ok?'Verwijderd':'Verwijderen mislukt');
+  if(ok.ok)renderNutritionScreen();
 }
 
 async function socialSaveProfile(){

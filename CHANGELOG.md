@@ -1,6 +1,110 @@
 # Trainingskompas — Changelog
 
+## v4.69.43 — B9-09: Nutrition Foundation (31 augustus 2026)
+
+Bouwt het betrouwbare, veilige fundament waarop latere Nutrition-
+functionaliteit veilig kan worden gebouwd. Registreert primair --
+diagnosticeert niet, adviseert niet.
+
+PRODUCTBESLISSING: Nutrition was in oudere documentatie speculatief/
+niet-gecommitteerd. De Product Owner heeft dit nu expliciet vrijgegeven
+als B9-09 binnen het Benchmark 9.0 Floor Program, met een harde
+scope-begrenzing (zie DECISION_LOG.md). Oude historische documenten
+zijn niet met terugwerkende kracht herschreven.
+
+EXISTING-STATE AUDIT: repo-breed, exacte zoekopdrachten voor alle in de
+opdracht genoemde termen -- 0 bestaande nutrition-database-tabellen, 0
+functionele nutrition-logica (alleen generieke AI-coach-prompttekst die
+"voeding" als coachingsonderwerp noemt). Volledig schone lei.
+
+SCOPEBESLISSING (migratie_v536.sql): één, duidelijke event-tabel
+(`nutrition_entries`) i.p.v. een aparte hydration-tabel (voorkomt
+taxonomie-explosie -- hydratatie is een entry_type met uitsluitend
+fluid_ml ingevuld). `timing_context` losstaand van `entry_type` (een
+maaltijd kan pre_training zijn zonder een apart entry_type nodig te
+hebben). Alle vijf nutrition-waarden (energy_kcal/protein_g/
+carbohydrate_g/fat_g/fluid_ml) NULLABLE met brede, technische sanity-
+checks (geen medische norm). Optionele koppeling aan
+training_instance_id/activity_id met ON DELETE SET NULL (niet CASCADE
+-- een verwijderde training laat de nutrition-entry zelf intact). RLS
+default-private: uitsluitend eigen data (SELECT/INSERT/UPDATE/DELETE
+own), geen social/coach/gym/research-policy.
+
+Live, adversarial getest (transacties zonder commit): anon-SELECT
+geweigerd, cross-user-read geweigerd, user_id-spoofing bij insert
+geweigerd, negatieve fluid_ml geweigerd door de check-constraint, het
+positieve pad bevestigt correct null (niet 0) voor niet-ingevulde
+velden.
+
+core/nutritionFoundation.js (nieuw): validateEntry() (technische
+sanity-checks, geen medisch oordeel) en dailyLoggedTotals() (expliciet
+"logged_total", nooit "actual_intake" -- per-veld data_quality:
+COMPLETE alleen als elke entry een waarde had, anders PARTIAL, of
+NOT_AVAILABLE zonder enige waarde). Zelf gevonden en gerepareerde bug
+tijdens het bouwen: data_quality was aanvankelijk altijd "PARTIAL"
+ongeacht de daadwerkelijke volledigheid -- gecorrigeerd naar een
+correcte, per-veld berekening.
+
+Nieuw scherm "Voeding" (Lichaam -> 🍽️ -> Voeding, geen brede bottom-
+nav-refactor): toevoegen/bekijken/verwijderen van entries, een
+dagoverzicht met expliciete "niet geregistreerd"-taal i.p.v. een
+verzonnen 0. Decimaal-invoer met een komma (Nederlandse notatie, bv.
+"1,5") wordt correct genormaliseerd vóór het parsen.
+
+PRIVACY-ISOLATIE (absolute grenzen, expliciet geaudit): tkCoachDataBlok()
+(AI-coach-context) bevat 0 verwijzingen naar nutrition_entries.
+SocialSharingCore se allowlist bevat 0 nutrition-velden. research-
+export.js bevat 0 nutrition-referenties. Nutrition-data heeft dus 0
+automatische Social-, Coach-, Gym-, Research-, of AI-blootstelling.
+
+Account-deletion: nutrition_entries expliciet toegevoegd aan de
+deletion-lijst (naast de bestaande CASCADE-foreign-key, voor
+auditeerbaarheid, consistent met het bestaande patroon). Account-
+export: geen bestaand, generiek "exporteer mijn data"-contract
+gevonden om op aan te sluiten -- eerlijk gedocumenteerd als een niet-
+blokkerend, open punt.
+
+core/fNutritionFoundationCore.test.js (nieuw, 18/18) en core/
+fB9_09NutritionFoundation.test.js (nieuw, 17/17): determinisme, missing
+!= zero, validatie, hergebruik van de canonieke module (geen dubbele
+.reduce()-optelling in de UI), XSS-veilige weergave, decimaal-parsing,
+privacy-isolatie (AI/Social-audit), causale/medische-taal-audit, geen
+caloriedoel-/macrodoel-gerelateerd veld, account-deletion, geen
+bottom-nav-regressie.
+
+Sabotagebewijs: (1) null-waarden behandelen als 0 in
+dailyLoggedTotals() -> gedetecteerd, teruggedraaid. (2) een nutrition-
+veld (fluid_ml) een rauwe, ongeparste stringwaarde laten versturen
+i.p.v. via nutritionParseGetal() -> aanvankelijk niet gedetecteerd
+door een te generieke test -- zelf ontdekt, een gerichte test
+toegevoegd die alle vijf velden apart controleert, sabotage daarna
+correct gedetecteerd, teruggedraaid.
+
+Decision Log bijgewerkt met de expliciete Nutrition-vrijgave
+(chronologisch correct, geen herschrijving van oudere, destijds
+correcte "speculatief"-status).
+
+APP_VER v4.69.42 -> v4.69.43. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469430. android/app/build.gradle gesynchroniseerd
+(46943/4.69.43).
+
+Volledige regressie: node core/release-gate.js -> 215 uitgevoerd/0
+geskipt/0 gefaald (was 213, +2 nieuwe testbestanden). node tools/
+check-doc-consistency.js -> volledig groen, 0 problemen.
+
+Geen benchmarkscore toegekend.
+
+FINAL STATUS: B9-09 NUTRITION FOUNDATION CONDITIONALLY CLOSED —
+NON-BLOCKING ITEMS OPEN (geen generiek account-exportcontract
+gevonden om Nutrition aan te koppelen -- niet-blokkerend, geen
+privacy/security-risico, uitsluitend een productgemak-item voor een
+latere sprint).
+
+STOP na B9-09. B9-10/11 Nutrition Product/Intelligence vereisen
+expliciete vrijgave van de Product Owner.
+
 ## v4.69.42 — B9-08: Social Intelligence (31 augustus 2026)
+ — B9-08: Social Intelligence (31 augustus 2026)
 
 Bouwt een veilige, nuttige Social Intelligence-laag boven het bruikbare
 B9-07-fundament, zonder engagement-optimalisatie of vanity metrics.

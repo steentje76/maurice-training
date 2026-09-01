@@ -123,16 +123,16 @@ zijn functionele/evidence-gaps, geen zichtbare UX-wijzigingen).
 **GAP ID:** B9G-COACH-001
 **DOMAIN:** Coach/PT
 **TYPE:** FUNC
-**CURRENT BEHAVIOR:** `coach_athlete_relationships`/`coach_program_assignments`/`coach_program_templates` bestaan volledig als backend-schema, 0 UI/Netlify-integratie. `netlify/functions/coach.js` is de AI-coach-proxy, geen PT-relatiebeheer.
+**CURRENT BEHAVIOR:** CORRECTIE (B9-H2D): `coach_athlete_relationships`/`coach_program_assignments`/`coach_program_templates` zijn NIET slechts backend-schema -- een volledige, eerdere mastersprint-serie (F10, PR #142-#148) bouwde hier al een grondig geteste Core-laag bovenop (relationship/consent/scopes/roster/programming/assignment/materialisatie/adherence/AI-intelligence, 146 tests). Zelf, opnieuw geverifieerd deze sessie (79/79 kern-testsuites, 0 gefaald, self-elevation/cross-coach live herbevestigd). Nog steeds 0 UI-integratie. Twee, nieuw gevonden echte gaten: coach-notes/feedback ontbreken volledig; entitlement-gating (Coach Pro) ontbreekt volledig.
 **EXPECTED 9+ BEHAVIOR:** een coach kan tientallen atleten uitnodigen, programma's toewijzen, voortgang monitoren.
-**EVIDENCE:** repo-brede `grep`, 0 treffers.
-**USER IMPACT:** HOOG.
-**DEPENDENCIES:** B9G-TEAM-001, B9G-GYM-001.
-**SECURITY IMPACT:** "data after relationship ends"-scenario nog niet getest (kan pas zodra een UI-laag bestaat).
-**DATA IMPACT:** geen.
-**IMPLEMENTATION COMPLEXITY:** HOOG (nieuw scherm).
-**BLOCKS 9.0:** YES
-**UX MOCK-UP NEEDED:** YES
+**EVIDENCE:** `docs/B9_H2D_COACH_PT_EXISTING_STATE_AUDIT.md`, `docs/F10_MASTER_REPORT.md`, live security-tests deze sessie.
+**USER IMPACT:** HOOG -- backend niet langer blokkerend, UI blijft de enige resterende blocker voor de kernketen.
+**DEPENDENCIES:** UX-goedkeuring (B9-H1-UX-gate); coach-notes vereist eerst een klein schema-ontwerp; entitlement-gating vereist een productbeslissing.
+**SECURITY IMPACT:** live, adversariaal bevestigd geen regressie na B9-H2A/B/C.
+**DATA IMPACT:** geen (geen migratie in B9-H2D).
+**IMPLEMENTATION COMPLEXITY:** MEDIUM (backend/Core compleet, resteert UI-implementatie + twee kleinere, aparte features).
+**BLOCKS 9.0:** YES (uitsluitend vanwege ontbrekende UI)
+**UX MOCK-UP NEEDED:** YES (zie `docs/B9_H2D_COACH_PT_UI_REQUIREMENTS.md` voor de functionele specificatie)
 **STATUS:** OPEN -- BLOCKED UNTIL UX PHASE
 
 **GAP ID:** B9G-GYM-001
@@ -197,3 +197,35 @@ zijn functionele/evidence-gaps, geen zichtbare UX-wijzigingen).
 **BLOCKS 9.0:** YES (voor Team Operations en Coach/PT).
 **UX MOCK-UP NEEDED:** LATER (voor de uiteindelijke Team/Coach-schermen, niet voor de architectuurbeslissing zelf).
 **STATUS:** MIGRATION EXECUTED (B9-H2B, migratie_v539.sql) -- organizations/memberships nu daadwerkelijk gevuld en canoniek. UI-implementatie (Team/Coach-schermen) blijft open, aparte, toekomstige sprint na UX-goedkeuring.
+
+## B9-H2D -- Coach/PT, twee nieuw gevonden echte gaten
+
+**GAP ID:** B9G-COACH-002
+**DOMAIN:** Coach/PT
+**TYPE:** FUNC
+**CURRENT BEHAVIOR:** geen coach-notes/feedback-mechanisme bestaat.
+**EXPECTED 9+ BEHAVIOR:** coach kan feedback geven op workout/sessie/programma; onderscheid tussen private professional notes en athlete-visible feedback.
+**EVIDENCE:** `docs/B9_H2D_COACH_PT_FUNCTIONAL_MODEL.md`.
+**USER IMPACT:** MEDIUM.
+**DEPENDENCIES:** relationship-model (bestaat al).
+**SECURITY IMPACT:** geen (nog niet gebouwd).
+**DATA IMPACT:** vereist een nieuwe, kleine tabel/schema-ontwerp.
+**IMPLEMENTATION COMPLEXITY:** MEDIUM.
+**BLOCKS 9.0:** NO (niet blokkerend voor de kernketen, wel voor een volledig coachingproduct)
+**UX MOCK-UP NEEDED:** LATER (backend-ontwerp eerst)
+**STATUS:** OPEN, nieuw gevonden.
+
+**GAP ID:** B9G-COACH-003
+**DOMAIN:** Coach/PT, Commercial
+**TYPE:** SEC (privacy/authorization-omissie, geen actieve datalek)
+**CURRENT BEHAVIOR:** 0 entitlement-checks in de RLS van coach-tabellen -- elke gebruiker kan vandaag coach-functionaliteit gebruiken ongeacht abonnement.
+**EXPECTED 9+ BEHAVIOR:** role != entitlement, Coach Pro-capabilities correct gated.
+**EVIDENCE:** live database-audit, `docs/B9_H2D_COACH_PT_EXISTING_STATE_AUDIT.md`.
+**USER IMPACT:** LAAG (geen privacy-schending, wel een commercieel gat).
+**DEPENDENCIES:** productbeslissing (welk plan geeft welke coach-capaciteit).
+**SECURITY IMPACT:** geen ongeautoriseerde data-toegang -- uitsluitend een ontbrekende commerciële grens.
+**DATA IMPACT:** geen.
+**IMPLEMENTATION COMPLEXITY:** MEDIUM (RLS-uitbreiding na productbeslissing).
+**BLOCKS 9.0:** NO.
+**UX MOCK-UP NEEDED:** NO (backend/policy-beslissing).
+**STATUS:** OPEN, nieuw gevonden, vereist Product Owner-beslissing.

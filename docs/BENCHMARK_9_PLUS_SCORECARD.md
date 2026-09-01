@@ -45,3 +45,21 @@ wordt als closure-gate gebruikt (sectie 6).
 in deze sprint bevestigd op >=9.0 met HIGH confidence, behalve
 Platform-Security (9.2). Trainingskompas is dus nog niet 9+
 gecertificeerd -- dat was ook niet het doel van deze audit-sprint.
+
+## Functional Deep-Dive uitbreiding (sectie 35: leidende benchmark vanaf nu)
+
+| Domain | Overall old | Functional verified | UX deferred | Main functional blockers | Target |
+|---|---|---|---|---|---|
+| Team Operations | 6.8 | 6.8 (bevestigd: volledig backend-only, 0 UI) | N.v.t. (geen scherm bestaat) | B9G-TEAM-001: geen enkele UI/Netlify-integratie; B9G-GYM-001 (architectuurambiguïteit eerst oplossen) | 9.0 |
+| Coach/PT | 7.5 | 7.5 (bevestigd: volledig backend-only, 0 UI) | N.v.t. | B9G-COACH-001: geen relatiebeheer-UI; `coach.js` is de AI-proxy, geen PT-endpoint | 9.0 |
+| Devices/Wearables | 7.5 | 7.5 (architectuur bevestigd sterk) | N.v.t. | B9G-DEV-001: 0 externe, fysieke provider-validatie | SOFTWARE 9+ READY / EXTERNAL VALIDATION OPEN |
+| Gym/Club | 8.0 | 8.0 (bevestigd: twee parallelle systemen) | N.v.t. | B9G-GYM-001: architecturele ambiguïteit, vereist Product Owner-beslissing | 9.0 |
+| Social | 8.2 | 8.2 (bevestigd bruikbaar over 9 onderdelen) | B9G-UX-001 (discoverability, reeds B9-H1) | B9G-SOC-002: beperkte notificatie-dekking, groep-administratie-lifecycle | 9.0 |
+| Triathlon | 8.2 | 8.2 (datamodel bevestigd correct via B9-06) | N.v.t. | race-vs-training-onderscheid, expliciete transitie-tijd | 8.9 |
+| Women's Performance | 8.3 | NOT ENOUGH EVIDENCE | N.v.t. | vereist eigen, gerichte audit | 9.0 (na audit) |
+| Ergometers | 8.3 | NOT ENOUGH EVIDENCE (Concept2-basis bevestigd, niet grondig herbevestigd) | N.v.t. | vereist eigen, gerichte audit | 9.0 (na audit) |
+| Cycling | 8.5 | 8.5 (bevestigd bruikbaar) | N.v.t. | power zones (bewuste scope-keuze, geen onbedoeld gat) | 8.5 blijft grotendeels gerechtvaardigd |
+| Running | 8.6 | 8.6 (bevestigd bruikbaar) | N.v.t. | HR-zones/TRIMP/decoupling (bewuste scope-keuzes) | 8.6 blijft grotendeels gerechtvaardigd |
+| Recovery | 8.7 | NOT ENOUGH EVIDENCE | N.v.t. | vereist eigen, gerichte audit | 9.0 (na audit) |
+| Commercial | 8.7 | MEDIUM (lees-pad bevestigd, lifecycle niet) | N.v.t. | upgrade/downgrade/cancellation-flows niet herbevestigd | 9.0 (na audit) |
+| HYROX/Athlete Intelligence | 8.8 | MEDIUM (HYROX-datamodel bevestigd; Athlete Intelligence NOT ENOUGH EVIDENCE) | N.v.t. | splitsing bevestigd relevant, Athlete Intelligence apart traject nodig | 8.9 (HYROX-deel) |

@@ -515,3 +515,101 @@ Letterlijke acceptance gate: *"Calories/estimates explicitly uncertain."*
 | Classificatie | **GUARD, geen zelfstandige Calculation** — dit is geen wetenschappelijk onderbouwde trainingsberekening, maar een veiligheidsgrens die voorkomt dat een AI-voorstel een fysiek onplausibele waarde ongefilterd bereikt. Vandaar geen "Evidence level"/"Scientific sources"-velden zoals bij een echte CALC-entry. |
 | Forbidden interpretations | Dit is expliciet GEEN verificatie dat het voorgestelde getal daadwerkelijk van een geautoriseerde Calculation/Decision-uitkomst afkomstig is (dat zou een striktere, contextuele validatie vereisen die de huidige plausibiliteitsgrens niet biedt — bekende, in F13 Post-Audit P1-03 gedocumenteerde beperking). Nooit gebruiken als vervanging voor de Decision Engine zelf. |
 | Status | **ACTIEF, TWEE LAGEN** (client + server, F13 Post-Audit P1-03) — geregistreerd conform P1-11 (Calculation/Evidence registry coverage) |
+
+## Domein: Running Intelligence (B9-03)
+
+### CALC-RUN-WEEKLY-001 — Wekelijkse volume-aggregatie
+| Veld | Waarde |
+|---|---|
+| Domain | Running Intelligence / Aggregatie |
+| Name | Afstand/duur/aantal per kalenderweek uit `activities` |
+| Version | `running_weekly_volume.v1` (`core/runningIntelligence.js`, `weeklyVolume`) |
+| Formula | Groepering per ISO-achtige weeksleutel (maandag als startdag, UTC), sommatie van `distance_meters`/`duration_seconds`, telling van rijen. Puur/deterministisch. |
+| Inputs | `activities`-rijen (sport='running') met `recorded_at`/`distance_meters`/`duration_seconds` |
+| Outputs | Map weekKey -> {distanceMeters, durationSeconds, count} |
+| Units | Meters, seconden |
+| Supported sports | Running (generiek toepasbaar op elke sport-activiteit) |
+| Min data quality | Geen minimum -- een activiteit zonder geldige `recorded_at` wordt genegeerd, niet als 0 meegeteld |
+| Evidence level | N/A (zuivere aggregatie, geen sportwetenschappelijke claim) |
+| Confidence | N/A |
+| Sources | N/A |
+| Limitations | Een activiteit zonder `recorded_at` draagt niet bij (data-integriteitskeuze, geen fabricage van een datum) |
+| Scope | Uitsluitend Running-analytics-weergave (B9-03 Inzichten-scherm) |
+| Forbidden interpretations | Geen performance-claim; puur een volumetelling |
+| Allowed Decision Rules | Geen (nog geen Decision Rules gebouwd op deze aggregatie) |
+| AI permissions | AI mag de uitkomst samenvatten/uitleggen, nooit zelf herberekenen |
+| Athlete-visible output | Ja (Inzichten-scherm: huidige week, rolling 4/8 weken) |
+
+### CALC-RUN-DISTBAND-001 — Afstandsband voor pace-vergelijking
+| Veld | Waarde |
+|---|---|
+| Domain | Running Intelligence / Context |
+| Name | Groeperingssleutel op basis van afstand, voorkomt naieve pace-vergelijking |
+| Version | `running_distance_band.v1` (`core/runningIntelligence.js`, `distanceBandKey`) |
+| Formula | `<5km` / `5-10km` / `10-15km` / `15km+`, gebaseerd op `distance_meters/1000` |
+| Inputs | `distance_meters` |
+| Outputs | Een van vier band-sleutels, of `null` bij ontbrekende/ongeldige afstand |
+| Units | N/A (categorisch) |
+| Supported sports | Running |
+| Min data quality | `distance_meters` moet een positief getal zijn |
+| Evidence level | N/A (contextuele groepering, geen sportwetenschappelijke claim) |
+| Confidence | N/A |
+| Sources | N/A |
+| Limitations | Vier vaste banden zijn een eenvoudige, conservatieve keuze -- geen wetenschappelijk gevalideerde indeling, uitsluitend bedoeld om appels-met-appels-vergelijking (sectie 8) te garanderen |
+| Scope | Voeding voor `ProgressionCore.trendBy()` als groeperings-`key` |
+| Forbidden interpretations | Geen |
+| Allowed Decision Rules | Geen |
+| AI permissions | N/A (interne groeperingssleutel, niet athlete-facing) |
+| Athlete-visible output | Nee (intern gebruikt, de labels "< 5 km" etc. wel zichtbaar) |
+
+### CALC-RUN-CONSIST-001 — Trainingsconsistentie
+| Veld | Waarde |
+|---|---|
+| Domain | Running Intelligence / Consistency |
+| Name | Aantal actieve weken binnen een venster |
+| Version | `running_weekly_volume.v1` (hergebruikt `weeklyVolume`, `core/runningIntelligence.js`, `consistency`) |
+| Formula | Aantal weken met >=1 activiteit / totaal aantal weken in het venster (standaard 8) |
+| Inputs | `activities`, venstergrootte in weken |
+| Outputs | `{activeWeeks, totalWeeks, ratio, evidenceLevel:'E'}` |
+| Units | Weken (telling), ratio |
+| Supported sports | Running (generiek) |
+| Min data quality | Geen minimum -- 0 activiteiten geeft correct 0 actieve weken |
+| Evidence level | **E** (technisch/afgeleid, geen gevalideerde sportwetenschappelijke claim) |
+| Confidence | N/A |
+| Sources | N/A -- expliciet een eenvoudige, zelf-gedefinieerde metriek, geen externe evidence-claim |
+| Limitations | Zegt niets over trainingskwaliteit of verwachte prestatie-uitkomst |
+| Scope | Inzichten-scherm, "Trainingsconsistentie"-kaart |
+| Forbidden interpretations | NOOIT presenteren als voorspeller van prestatie of blessurerisico |
+| Allowed Decision Rules | Geen |
+| AI permissions | AI mag de uitkomst uitleggen, nooit zelf herberekenen |
+| Athlete-visible output | Ja, met expliciete Evidence Level E-disclaimer in de UI |
+
+### CALC-RUN-CSELIG-001 — Critical Speed-geschiktheidsfilter
+| Veld | Waarde |
+|---|---|
+| Domain | Running Intelligence / Data Quality Guard |
+| Name | Selecteert uitsluitend expliciet gemarkeerde max-effort-activiteiten als input voor `CardioCore.criticalSpeed()` |
+| Version | `running_cs_eligibility.v1` (`core/runningIntelligence.js`, `criticalSpeedEligiblePerformances`) |
+| Formula | Filter op `is_max_effort === true` + geldige `distance_meters`/`duration_seconds`; `status: 'insufficient'` bij minder dan 3 (standaard) geschikte activiteiten |
+| Inputs | `activities` (met de nieuwe, B9-03 `is_max_effort`-kolom, `migratie_v534.sql`) |
+| Outputs | `{status, n, performances}` of `{status:'insufficient', n, minRequired}` |
+| Units | N/A (filter/guard, geen berekende sportwaarde zelf) |
+| Supported sports | Running |
+| Min data quality | Minimaal 3 expliciet gemarkeerde, geldige max-effort-activiteiten |
+| Evidence level | N/A -- dit is een data-guard, geen sportwetenschappelijke calculation zelf (de eigenlijke Critical Speed-berekening blijft CALC-END-004, ongewijzigd) |
+| Confidence | N/A (wordt overgenomen van CALC-END-004's eigen `confidence`-output) |
+| Sources | N/A |
+| Limitations | Vertrouwt volledig op de eerlijkheid van de gebruiker se opt-in markering -- geen automatische detectie van een "genuine" maximale inspanning |
+| Scope | Uitsluitend als voorfilter vóór `CardioCore.criticalSpeed()` (CALC-END-004) |
+| Forbidden interpretations | Een activiteit die niet expliciet gemarkeerd is, mag NOOIT Critical Speed voeden, ongeacht hoe snel/kort deze lijkt |
+| Allowed Decision Rules | Geen |
+| AI permissions | AI mag de uitkomst (wel/niet genoeg data) uitleggen, nooit zelf de eligibiliteit herberekenen of overrulen |
+| Athlete-visible output | Indirect (via de Critical Speed-kaart op het Inzichten-scherm) |
+
+**Bewust NIET geregistreerd/geimplementeerd in B9-03** (expliciete, gemotiveerde
+architectuurkeuzes, zie `docs/B9_03_RUNNING_INTELLIGENCE_REPORT.md`):
+HR-zones (geen gevalideerde, universeel toepasbare formule), TRIMP
+(methodologische complexiteit/sex-specifieke aannames niet passend
+bevonden -- sRPE/rolling load is de gekozen, eenvoudigere loadmetriek),
+aerobic decoupling (onvoldoende datagranulariteit -- alleen gemiddelde
+HR per activiteit/lap, geen continue tijdreeks beschikbaar).

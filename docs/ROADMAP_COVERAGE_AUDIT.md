@@ -8,7 +8,7 @@
 
 **Canonical capability count: 66 (was 65 vóór MS-F11-05 — DYNAMIC-BRANDING-ADMIN-001 toegevoegd).**
 
-**Resultaat: 68/68 = 100%.** Alle 68 capabilities in `docs/CAPABILITY_REGISTRY.md` hebben een mastersprint-verwijzing in `docs/ROADMAP_INDEX.json` (zie `next_action`-veld per capability) én een eigen `capability`-type entry in `docs/ROADMAP_INDEX.json` (zie sectie "Capability-classificatie" hieronder voor de volledige lijst).
+**Resultaat: 69/69 = 100%.** Alle 69 capabilities in `docs/CAPABILITY_REGISTRY.md` hebben een mastersprint-verwijzing in `docs/ROADMAP_INDEX.json` (zie `next_action`-veld per capability) én een eigen `capability`-type entry in `docs/ROADMAP_INDEX.json` (zie sectie "Capability-classificatie" hieronder voor de volledige lijst).
 
 **Root cause van de eerdere 16/16-vermelding (opgelost):** dat cijfer was het aantal `type: "capability"`-entries dat destijds daadwerkelijk in `docs/ROADMAP_INDEX.json` stond (16), niet het aantal rijen in de Capability Registry zelf (25) — een onvolledige JSON-export die nooit 1-op-1 was gesynchroniseerd met de registry. Daarnaast bevatte de Capability Registry zelf een ambigu label (`DEV-WEARSYNC-001/002`, één rij die twee sub-ID's in de naam droeg) dat door eenvoudige ID-detectie werd overgeslagen — vandaar dat een eerdere handmatige telling op 24 in plaats van 25 uitkwam. Beide problemen zijn hier opgelost: het label is genormaliseerd naar `DEV-WEARSYNC-001` (aansluitend bij hoe het overal elders al werd genoemd), en `docs/ROADMAP_INDEX.json` bevat nu alle 25 registry-capabilities als eigen entry (plus `DOC-HANDBOOK-001`, dat bewust een *roadmap-governance-item* is, geen Capability Registry-capability — zie kanttekening hieronder, expliciet buiten de 25 gehouden).
 
@@ -98,6 +98,7 @@
 | END-INTERVAL-001 | INTEGRATED | IMPROVEMENT | MS-F6-01/02/03 |
 | END-HYROX-001 | CLOSED (kern) | IMPROVEMENT | MS-F6-04 |
 | END-DATAFOUNDATION-001 | TESTED | NO ACTION | -- (B9-01 CLOSED, canonical endurance-datalaag, RLS adversarial bewezen) |
+| END-RUNINTEL-001 | TESTED | CLOSED | -- (B9-03 CLOSED, weekly volume/pace-trend/consistency/CS bewezen, HR-zones/TRIMP/decoupling bewust niet gebouwd) |
 | END-RUNNINGCORE-001 | TESTED | CLOSED | -- (B9-02/B9-02B/B9-02C CLOSED, volledige live execution/laps/intervals/profile/detail bewezen -- zie B9_02C_RUNNING_FINAL_CLOSURE_REPORT.md) |
 | CTX-CYCLE-001 | INTEGRATED | DEFERRED | MS-F8-03/04 |
 | WOMENS-PERF-DECISIONS-001 | CLOSED | NO ACTION | -- (F8, MS-F8-01 CLOSED, 5 besluiten vastgelegd) |
@@ -105,7 +106,7 @@
 | CAP-REGISTRY-SCREENS-001 | IMPLEMENTED | IMPROVEMENT | MS-F2-01 t/m MS-F2-08 |
 | SCI-CONSENT-001 | NOT STARTED | DEFERRED | MS-F14-01/02/03 |
 
-**Dekking: 68/68 capabilities geclassificeerd, 0 orphan** (Registry Coverage = 100%, zie hierboven).
+**Dekking: 69/69 capabilities geclassificeerd, 0 orphan** (Registry Coverage = 100%, zie hierboven).
 
 ## Track-erkenning
 Exercise Intelligence (T2) blijft expliciet erkend als eigen track (bevestigd in v1.1 §6, ongewijzigd t.o.v. de vorige consolidatie).

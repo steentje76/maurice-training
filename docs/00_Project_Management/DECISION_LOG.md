@@ -1039,3 +1039,30 @@
   (`docs/B9_H2C_TEAM_OPERATIONS_UI_REQUIREMENTS.md`).
 - **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
   uitgevoerd door Claude tijdens de B9-H2C-mastersprint.
+
+## B9-H2D -- Coach/PT: corrigerende bevinding (F10 al bewezen, gemiste eerdere audit)
+
+- **Datum:** 1 september 2026.
+- **Context:** de opdracht ging uit van een verouderde aanname
+  (Coach/PT = 7.5, weinig bewezen backend). Existing-state audit
+  onthulde dat een volledige, eerdere mastersprint-serie (F10, PR
+  #142-#148) Coach/PT al "CLOSED — READY FOR F11 SELECTION" had
+  bereikt: relationship/consent/scopes/roster/programming/assignment/
+  materialisatie/adherence/AI-intelligence, 146 tests, 0 UI. De
+  eerdere Benchmark 9+ Functional Deep-Dive had dit gemist door
+  uitsluitend op tabelnamen te zoeken zonder de bijbehorende Core-
+  modules en tests te controleren.
+- **Zelfstandig, opnieuw geverifieerd:** 79 kern-testsuites herdraaid
+  (0 gefaald), self-elevation en cross-coach-scenario's live,
+  adversariaal herbevestigd na de B9-H2A/B/C-architectuurwijzigingen
+  -- geen regressie.
+- **Twee echte, nieuwe gaten gevonden:** coach-notes/feedback
+  ontbreken volledig; entitlement-gating (Coach Pro) ontbreekt
+  volledig (elke gebruiker kan vandaag coach-functionaliteit
+  gebruiken ongeacht abonnement -- geen actieve privacy-/security-
+  schending, wel een ontbrekende commerciële grens).
+- **Impact:** geen code-/schema-wijziging in deze sprint (audit-only).
+  B9G-COACH-001 gecorrigeerd met de nu volledige, accurate status.
+  Twee nieuwe gap-entries (B9G-COACH-002/003) toegevoegd.
+- **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
+  uitgevoerd door Claude tijdens de B9-H2D-mastersprint.

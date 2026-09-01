@@ -98,7 +98,7 @@
 | END-INTERVAL-001 | INTEGRATED | IMPROVEMENT | MS-F6-01/02/03 |
 | END-HYROX-001 | CLOSED (kern) | IMPROVEMENT | MS-F6-04 |
 | END-DATAFOUNDATION-001 | TESTED | NO ACTION | -- (B9-01 CLOSED, canonical endurance-datalaag, RLS adversarial bewezen) |
-| END-RUNNINGCORE-001 | TESTED | TESTED | -- (B9-02 PARTIAL, Training-IA + handmatige run-log werkend en getest, execution/laps/intervals/profile/detail nog open -- zie B9_02_RUNNING_CORE_REPORT.md) |
+| END-RUNNINGCORE-001 | TESTED | CLOSED | -- (B9-02/B9-02B/B9-02C CLOSED, volledige live execution/laps/intervals/profile/detail bewezen -- zie B9_02C_RUNNING_FINAL_CLOSURE_REPORT.md) |
 | CTX-CYCLE-001 | INTEGRATED | DEFERRED | MS-F8-03/04 |
 | WOMENS-PERF-DECISIONS-001 | CLOSED | NO ACTION | -- (F8, MS-F8-01 CLOSED, 5 besluiten vastgelegd) |
 | COMM-UI-001 | TESTED | NO ACTION | — (F12, MS-F12-01/02/03/04 allemaal CLOSED, twee kritieke P0-bevindingen gevonden en gerepareerd, sabotagebewijs voor alle vier mastersprints) |

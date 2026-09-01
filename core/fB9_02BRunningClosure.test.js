@@ -41,12 +41,28 @@ ok(html.includes("'Prefer':'resolution=ignore-duplicates,return=minimal'"),
   'D3: de server-side upsert gebruikt ignore-duplicates -- een herhaalde poging met dezelfde dedupe_key creeert nooit een tweede rij');
 
 // ---- E. Crash/refresh-herstel (sabotage-scenario 8) ----
-ok(html.includes('function persisteerRunningExecState') && html.includes('localStorage.setItem(RUNNING_EXEC_LOCALSTORAGE_KEY'),
-  'E1: de execution-state wordt bij elke transitie opgeslagen in localStorage');
+ok(html.includes('function persisteerRunningExecState') && html.includes('localStorage.setItem(key,JSON.stringify'),
+  'E1: de execution-state wordt bij elke transitie opgeslagen in localStorage (onder een user-specifieke key)');
 ok(html.includes('function herstelRunningExecutionIndienAanwezig') && html.includes("if(herstelRunningExecutionIndienAanwezig())return"),
   'E2: het openen van het Hardlopen-scherm controleert eerst op een onafgeronde, herstelbare sessie');
-ok(html.includes("localStorage.removeItem(RUNNING_EXEC_LOCALSTORAGE_KEY)") && html.includes('Training opgeslagen'),
+ok(html.match(/localStorage\.removeItem\(k\)/) && html.includes('Training opgeslagen'),
   'E3: na een succesvolle afronding wordt de herstelbare state expliciet opgeruimd (geen "spooksessie" na een geldige finish)');
+// P1-FIX (sectie 14, zelf gevonden tijdens B9-02C): de localStorage-key is
+// nooit een vaste, globale string -- bevat altijd de user-id, EN de
+// opgeslagen state wordt bij herstel expliciet tegen de huidige sessie
+// gecontroleerd (dubbele owner-verdediging tegen cross-account-herstel
+// op een gedeeld apparaat).
+ok(html.includes("function runningExecLocalStorageKey()") && html.includes("return uid?('tk_running_execution_v1_'+uid):null"),
+  'E4 (P1, wrong-user recovery): de localStorage-key is altijd user-specifiek, nooit een vaste, gedeelde string');
+ok(html.includes('_runningExecState.ownerUserId=authSession?.user?.id'),
+  'E5 (P1, wrong-user recovery): elke gestarte executie legt expliciet vast wie de eigenaar is');
+ok(html.match(/if\(!huidigeUid\|\|data\.state\.ownerUserId!==huidigeUid\)\{[\s\S]{0,60}localStorage\.removeItem/),
+  'E6 (P1, wrong-user recovery): bij een owner-mismatch wordt de staat nooit geladen/getoond en wordt de vreemde entry direct gequarantaineerd (verwijderd)');
+// P1-FIX (sectie 15, zelf gevonden tijdens B9-02C): een corrupte state
+// (segments:null/undefined) veroorzaakte eerder een daadwerkelijke crash
+// in elapsedActiveMs(). Nu expliciet gevalideerd vóór acceptatie.
+ok(html.includes('Array.isArray(data.state.segments)') && html.includes('isFinite(data.state.startedAt)'),
+  'E7 (P1, corrupted state): segments moet een geldige array zijn en startedAt een eindig getal, anders wordt de state gequarantaineerd i.p.v. geaccepteerd (voorkomt een crash bij elapsedActiveMs())');
 
 // ---- F. Interval-structuur: correcte repeat-logica (sabotage-scenario 6) ----
 {

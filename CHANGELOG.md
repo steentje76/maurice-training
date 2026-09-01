@@ -1,6 +1,102 @@
 # Trainingskompas — Changelog
 
+## v4.69.50 — B9-H3C: Real Provider & Device Validation Closure (1 september 2026)
+
+Real-validatie-sprint (geen nieuwe architectuur). Baseline geverifieerd:
+main `4ce6117`, release gate 223/223 groen, B9-H3B (37/37) herbevestigd.
+
+Repo-brede scan bevestigt: 0 Google/Garmin/Strava/Polar-credentials
+beschikbaar in deze omgeving, geen Netlify-CLI-toegang, geen
+environment-variabelen zichtbaar. REAL API/REAL ACCOUNT/REAL DEVICE
+blijven daarom volledig extern geblokkeerd -- dit is geen mislukking,
+maar de eerlijke, technische grens van deze sessie.
+
+Google-technologie herbevestigd, geen verwarring: uitsluitend Google
+Health API v4 (health.googleapis.com), niet Google Fit, niet Health
+Connect.
+
+Kritieke, officieel geverifieerde bevinding (developers.google.com/
+health/setup): een OAuth-project in "Testing"-modus vereist expliciete
+test-user-registratie per gebruiker, en refresh tokens verlopen na 7
+dagen. Of het Trainingskompas-project in Testing- of Published-modus
+staat, kon niet worden vastgesteld zonder Google Cloud Console-
+toegang -- vastgelegd als de kern van de externe actie die de Product
+Owner moet uitvoeren.
+
+ZELF GEVONDEN EN GEREPAREERDE ECHTE BUG: tijdens het uitwerken van het
+"bestaande gebruiker met een oud token"-scenario (een gebruiker die
+vóór B9-H3B al Google koppelde, dus zonder de nieuwe activity-scope)
+bleek `wearable-sync-activities.js` geen onderscheid te kunnen maken
+tussen "scope ontbreekt" en een generieke provider-fout -- beide
+gaven dezelfde, ondoorzichtige "provider_error"-status. Onderzocht via
+publieke, officiële Google-foutrapporten: een scope-tekort geeft een
+specifiek, herkenbaar HTTP 403-foutcontract (`reason:
+insufficientPermissions` of `ACCESS_TOKEN_SCOPE_INSUFFICIENT`).
+Gerepareerd: `fetchExerciseDataPoints()` parseert nu de foutbody en
+herkent dit specifieke patroon; de functie retourneert een aparte,
+expliciete `scope_missing`-status, te onderscheiden van `token_
+expired`/`not_connected`/`provider_error`. De bestaande, kritieke
+`wearable-sync.js` (HRV/RHR/sleep) is hierbij niet aangeraakt en blijft
+voor dezelfde, oude verbinding gewoon werken (die scope was daar nooit
+voor nodig).
+
+core/fB9_H3CRealProviderValidation.test.js (nieuw, 8/8): de scope-
+missing-detectie, plus aanvullende adversariale robuustheidstests op
+de provider-adapter (negatieve afstand niet stilzwijgend gecorrigeerd,
+absurd-lange-duration-in-combinatie-met-onbekende-sport correct
+geweigerd, malformed timestamp ongewijzigd doorgegeven i.p.v. zelf
+"gecorrigeerd", lege-string-external-ID geweigerd, dubbele datapoint
+binnen een sync-batch produceert dezelfde dedupe_key).
+
+Live, adversariaal herbevestigd: anon/cross-user-toegang tot
+wearable_connections en de upsert_provider_activity()-RPC opnieuw
+geweigerd (inclusief een eigen testfout tijdens deze sessie zelf
+gevonden en gecorrigeerd -- een vergeten rolwissel in een
+verificatiequery, geen echte productiebug).
+
+docs/B9_H3C_GOOGLE_CONFIGURATION_AUDIT.md,
+docs/B9_H3C_PRODUCT_OWNER_EXTERNAL_ACTION.md (het exacte, minimale
+stappenplan: drie stappen, geschat 5-10 minuten),
+docs/B9_H3C_REAL_RUNNING_VALIDATION.md,
+docs/B9_H3C_REAL_CYCLING_VALIDATION.md (beide eerlijk: NIET
+UITGEVOERD, externe blokkade),
+docs/B9_H3C_REAL_PROVIDER_DEVICE_VALIDATION_REGISTER.md (per-test
+L0-L7-validatieniveaus, geen enkel niveau hoger geclaimd dan bewezen),
+docs/B9_H3C_FINAL_REPORT.md (alle vijf nieuw, conform de vereiste
+documentlijst).
+
+docs/BENCHMARK_9_PLUS_GAP_REGISTRY.md: B9G-DEV-002 blijft PARTIAL
+(niet CLOSED -- conform sectie 79, geen docs-only closure zonder
+daadwerkelijk, real-world bewijs).
+
+APP_VER v4.69.49 -> v4.69.50 (echte code-fix, geen schemawijziging).
+sw.js CACHE_NAME/CACHE_STATIC synchroon gebumpt naar v469500.
+android/app/build.gradle gesynchroniseerd (46950/4.69.50).
+
+Volledige regressie: node core/release-gate.js -> 224 uitgevoerd/0
+geskipt/0 gefaald (was 223, +1 nieuw testbestand). node tools/
+check-doc-consistency.js -> volledig groen, 0 problemen.
+
+Geen benchmarkscore toegekend.
+
+DEVICES/WEARABLES SOFTWARE SCORE: hoog. REAL-WORLD VALIDATION SCORE:
+laag/nul, volledig extern geblokkeerd. Devices/Wearables kan NIET
+functioneel >=9 worden genoemd zolang real-account/provider-bewijs
+ontbreekt.
+
+FINAL STATUS: B9-H3C SOFTWARE READY — REAL ACCOUNT/PROVIDER/DEVICE
+VALIDATION REQUIRES PRODUCT OWNER ACTION.
+
+EXTERNAL ACTION REQUIRED: JA. Zie docs/B9_H3C_PRODUCT_OWNER_EXTERNAL_
+ACTION.md voor de exacte, minimale stappen. Geschatte tijd: 5-10
+minuten plus een echte training om te synchroniseren.
+
+STOP. Geen scherm gebouwd, geen navigatie aangepast, geen Recovery/
+Women's Performance/Ergometers/Commercial/Coach notes/Team UI/Coach
+UI/Gym UI/UX-redesign/F15 gestart.
+
 ## v4.69.49 — B9-H3B: Eerste Cross-Sport Cloud Provider Integration (1 september 2026)
+ — B9-H3B: Eerste Cross-Sport Cloud Provider Integration (1 september 2026)
 
 Autonome nachtsprint: bouwt daadwerkelijk de generieke cross-sport
 cloud-provider-architectuur die B9-H3A als ontbrekend identificeerde.

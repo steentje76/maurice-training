@@ -3757,6 +3757,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="card"><div class="card-hd"><div class="card-title">Waar ben ik beter geworden?</div><div class="card-sub">Deterministisch &middot; op basis van je vergelijkbare trainingen</div></div><div class="card-body" id="stats-improve-list"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div></div>
     <div class="card"><div class="card-hd"><div class="card-title">Consistentie</div><div class="card-sub">Unieke trainingsdagen &middot; alleen echte sessies</div></div><div class="card-body" id="stats-consistency-list"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div></div>
 
+    <div class="card"><div class="card-hd"><div class="card-title">Multisport endurance</div><div class="card-sub">Hardlopen &amp; fietsen samen &middot; elke sport blijft een eigen bestemming</div></div><div class="card-body" id="stats-multisport-overview"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div></div>
+
     <div class="v43-lbl" style="margin:18px 0 9px">Doelen</div>
     <div class="card">
       <div class="card-hd"><div class="card-title">Actieve doelen</div><button class="ibtn" onclick="openModal('m-goal-add')" style="width:auto;height:auto;padding:6px 12px;border-radius:12px;font-size:12px;font-weight:800;font-family:var(--f);background:var(--v43-mint);color:var(--accent)">+ Doel</button></div>
@@ -6215,7 +6217,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.38';
+const APP_VER = 'v4.69.39';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -19360,6 +19362,45 @@ async function refreshConsistency(){
     renderConsistency(el, tkConsistencyCounts(dates, new Date()));
   }catch(err){ /* stil: stats-scherm blijft werken */ }
 }
+
+// ══════════════════════════════════════════════════════════
+// B9-06 — Multisport Integration (Training → Voortgang → Multisport endurance)
+// ══════════════════════════════════════════════════════════
+// FORENSISCHE AUDIT (B9-06): Running/Cycling schrijven uitsluitend naar de
+// canonical activities-tabel (B9-01) -- bevestigd, 0 overlap met
+// race_segments (HYROX/Triathlon/Brick, een apart, al bestaand
+// parent/child-model via training_instance_id+segment_index). Rowing/
+// Concept2 blijft LEGACY op sessions (bewust NIET gemigreerd -- reeds
+// functioneel werkend, geen bewezen noodzaak voor een risicovolle
+// refactor, conform "refactor alleen als functioneel nodig"). Dit
+// overzicht aggregeert daarom uitsluitend activities (running+cycling) --
+// GEEN dubbeltelling met race_segments (andere tabel, andere schrijfpaden,
+// live bevestigd geen overlappende code) of sessions (Rowing, apart domein).
+// Hergebruikt de bestaande, sport-neutrale RunningIntelligenceCore.
+// weeklyVolume() -- geen derde, multisport-specifieke aggregatie-engine.
+async function refreshMultisportOverview(){
+  var el=document.getElementById('stats-multisport-overview');
+  if(!el)return;
+  try{
+    var activities=await sbGet('activities', "&sport=in.(running,cycling)&order=recorded_at.asc&limit=1000");
+    if(!activities.length){
+      el.innerHTML='<div style="font-size:13px;color:var(--g4);padding:6px 0">Nog geen hardloop- of fietstrainingen gelogd. Zodra je traint, verschijnt hier je gecombineerde overzicht.</div>';
+      return;
+    }
+    var perWeek=RunningIntelligenceCore.weeklyVolume(activities);
+    var huidigeWeekKey=RunningIntelligenceCore.weekKeyFromDate(new Date());
+    var huidigeWeek=perWeek[huidigeWeekKey]||{distanceMeters:0,durationSeconds:0,count:0};
+    var runActivities=activities.filter(function(a){return a.sport==='running';});
+    var cycActivities=activities.filter(function(a){return a.sport==='cycling';});
+    var runKm=runActivities.reduce(function(s,a){return s+(a.distance_meters||0);},0)/1000;
+    var cycKm=cycActivities.reduce(function(s,a){return s+(a.distance_meters||0);},0)/1000;
+    el.innerHTML=
+      '<div style="font-size:13px;color:var(--dark)"><strong>'+(huidigeWeek.distanceMeters/1000).toFixed(1)+' km</strong> <span style="color:var(--g4)">gecombineerd deze week ('+huidigeWeek.count+' training(en))</span></div>'+
+      '<div style="font-size:12px;color:var(--g4);margin-top:6px">Hardlopen totaal: '+runKm.toFixed(1)+' km ('+runActivities.length+') · Fietsen totaal: '+cycKm.toFixed(1)+' km ('+cycActivities.length+')</div>'+
+      '<div style="font-size:11px;color:var(--g4);margin-top:6px">Rowing/Concept2 en HYROX/Triathlon-segmenten staan hier bewust niet in (aparte, canonieke bronnen) — elke sport blijft een eigen bestemming.</div>';
+  }catch(err){ /* stil: stats-scherm blijft werken */ }
+}
+
 // A2.5A — WEEKOVERZICHT (v4.62.0). Uitsluitend aggregatie van reeds bestaande,
 // canonieke bronnen: computeProgramProgress() (Program Adaptation, ongewijzigd,
 // hier toegepast op de subset program_blocks binnen de kalenderweek i.p.v. een
@@ -19508,7 +19549,8 @@ async function refreshStatsScreen(){
     refreshRatioFactors().catch(()=>{}),
     refreshCardioProgress().catch(()=>{}), // F7.3 cardio records
     refreshImprovements().catch(()=>{}),   // F7.9 "waar ben ik beter geworden?"
-    refreshConsistency().catch(()=>{})     // F8.4 consistency
+    refreshConsistency().catch(()=>{}),    // F8.4 consistency
+    refreshMultisportOverview().catch(()=>{}) // B9-06 multisport endurance
   ]);
   // v4.21.0 (Sprint 5.2) — Doelen geïntegreerd in Voortgang; herstel/belasting-heatmaps leven op Lichaam.
   renderStatsHero();

@@ -238,7 +238,15 @@ if (originMainAvailable) {
     // aparte grep-subshell -- dat voorkomt tegelijk het aanverwante "grep geeft exit 1 bij nul
     // matches"-probleem, zonder dat daar weer een aparte catch/negeer-constructie voor nodig is.
     const indexHtmlAddedLines = rawDiff.split('\n').filter(l => l.startsWith('+') && !l.startsWith('+++')).join('\n');
-    ok(!/leaderboard|ranking|gamificat|social/i.test(indexHtmlAddedLines), 'O1: geen leaderboard/ranking/gamificatie/social in de daadwerkelijk toegevoegde regels van index.html');
+    // KORREKTIE (B9-07): deze check vergelijkt met de altijd-actuele origin/main,
+    // niet met een vaste, historische pre-HYROX/Triathlon-baseline. Daardoor
+    // zou elke toekomstige, legitieme PR die het woord "social" toevoegt aan
+    // index.html hier onterecht op vastlopen -- "social" is inmiddels een
+    // apart, expliciet goedgekeurd productdomein (Benchmark 9.0 Floor, B9-07
+    // Social Product Layer), geen scope-creep binnen een HYROX/Triathlon-PR.
+    // leaderboard/ranking/gamificatie blijven wel verboden termen: die zijn
+    // nooit apart goedgekeurd en dienen nog steeds als scope-guard.
+    ok(!/leaderboard|ranking|gamificat/i.test(indexHtmlAddedLines), 'O1: geen leaderboard/ranking/gamificatie in de daadwerkelijk toegevoegde regels van index.html ("social" is sinds B9-07 een apart, goedgekeurd productdomein en geen scope-creep-signaal meer)');
   }
 } else if (isCI) {
   ok(false, 'O0/O1: FAIL -- origin/main is niet beschikbaar in deze CI-run (git rev-parse --verify origin/main faalde). Dit duidt op een ontbrekende fetch-depth (checkout-stap moet fetch-depth: 0 gebruiken) en mag NOOIT stilzwijgend als PASS worden behandeld.');

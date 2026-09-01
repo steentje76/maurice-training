@@ -1066,3 +1066,29 @@
   Twee nieuwe gap-entries (B9G-COACH-002/003) toegevoegd.
 - **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
   uitgevoerd door Claude tijdens de B9-H2D-mastersprint.
+
+## B9-H3A -- Devices/Wearables: corrigerende bevinding (smalle, niet brede architectuur)
+
+- **Datum:** 1 september 2026.
+- **Context:** de Product Owner gaf een architectuurrichting: één
+  generieke, sport-agnostische device-laag voor alle sporten. Audit
+  toonde aan dat de bestaande device-architectuur (569+ tests, 0
+  gefaald) grondig en correct is, maar functioneel beperkt tot twee
+  smalle assen: Google Health-recovery (HRV/RHR/sleep) en Concept2-
+  ergometer (real-time, lokaal). Geen enkele cross-sport cloud-
+  provider (Garmin/Polar/WHOOP/Strava/etc.) is geïmplementeerd -- alle
+  overige sporten gebruiken uitsluitend handmatige invoer.
+- **Zelfstandig geverifieerd:** het generieke normalisatiepatroon in
+  `core/deviceIntegration.js` (`normalizeMetric`/`normalizeWorkout`/
+  `normalizeSeries`) is al het juiste architectuurpatroon voor
+  toekomstige provider-uitbreiding, maar wordt uitsluitend door
+  Concept2 gebruikt. Live, adversariaal herbevestigd: DEV-S1/DEV-S2
+  (anon/cross-user-toegang tot wearable-connecties) correct geweigerd,
+  DEV-S7 (tokens na account-deletion) al correct gedekt.
+- **Impact:** geen code-/schema-wijziging (audit-only). B9G-DEV-001
+  gecorrigeerd, nieuwe B9G-DEV-002 toegevoegd voor de bredere,
+  ontbrekende cross-sport-integratie. Een volledige, generieke cross-
+  sport architectuur bouwen vereist een aparte, toekomstige sprint met
+  echte provider-OAuth-toegang (niet beschikbaar binnen deze sessie).
+- **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
+  uitgevoerd door Claude tijdens de B9-H3A-mastersprint.

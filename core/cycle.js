@@ -124,6 +124,30 @@
     return geschat.toISOString().slice(0, 10);
   }
 
+  /* ── estimated_phase_confidence.v1 (B9-H5, zelf gevonden en gerepareerd) ──
+   * ECHTE, ZELF GEVONDEN GAP: estimatedPhaseFromDay() gebruikte tot deze
+   * sprint altijd 28 dagen als stille fallback wanneer geen gemeten
+   * gemiddelde cycluslengte beschikbaar was (bijv. bij de eerste, enige
+   * gelogde cyclus) -- zonder dit te onderscheiden van een gebruiker met
+   * meerdere, bekende cycli. Dit is exact het "forced 28-day model"/
+   * "missing != normal"-risico. Confidence is nu expliciet, deterministisch,
+   * en uitsluitend gebaseerd op data-volledigheid (aantal bekende
+   * cyclus-intervallen), niet op een willekeurige AI-score.
+   * Categorieën: 'unavailable' (geen schatting mogelijk), 'low' (28-dagen-
+   * fallback gebruikt, <2 bekende cyclus-intervallen), 'medium' (2 bekende
+   * intervallen), 'high' (>=3 bekende intervallen, stabielere gemiddelde). */
+  function estimatedPhaseConfidence(cycleDayNr, periods) {
+    if (cycleDayNr == null || cycleDayNr <= 0) return 'unavailable';
+    var norm = normalizePeriods(periods);
+    var n = 0;
+    for (var i = 1; i < norm.length; i++) {
+      if (daysBetween(norm[i - 1].start, norm[i].start) > 0) n++;
+    }
+    if (n === 0) return 'low';        // 28-dagen-fallback wordt gebruikt
+    if (n <= 1) return 'medium';      // exact 1 gemeten interval
+    return 'high';                    // >=2 gemeten intervallen
+  }
+
   /* ── estimated_phase_from_day.v1 ──────────────────────────────────────────
    * Vertaalt een cyclusdag (+ eventueel een bekende gemiddelde cycluslengte)
    * naar één van de VIER AL BESTAANDE fasewaarden die
@@ -178,6 +202,7 @@
       trackingBeschikbaar: norm.length > 0,
       cyclusDag: dag,
       geschatteFase: estimatedPhaseFromDay(dag, gemLengte),
+      geschatteFaseConfidence: estimatedPhaseConfidence(dag, periods),
       menstruatieActief: actief,
       gemiddeldeCyclusLengte: gemLengte,
       geschatteVolgendePeriode: estimatedNextPeriod(periods),
@@ -243,6 +268,7 @@
     averageCycleLength: averageCycleLength,
     estimatedNextPeriod: estimatedNextPeriod,
     estimatedPhaseFromDay: estimatedPhaseFromDay,
+    estimatedPhaseConfidence: estimatedPhaseConfidence,
     cycleContext: cycleContext,
     symptomPatternSummary: symptomPatternSummary
   };

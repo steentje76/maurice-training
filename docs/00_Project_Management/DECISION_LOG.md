@@ -1170,3 +1170,24 @@
   bevindingen vastlegt.
 - **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
   uitgevoerd door Claude tijdens de B9-H4-mastersprint.
+
+## B9-H5 -- Women's Performance: een echte bug gevonden en gerepareerd (forced 28-day model zonder confidence)
+
+- **Datum:** 1 september 2026.
+- **Context:** forensische audit van Women's Performance (F8-serie,
+  151+ bestaande tests herbevestigd, 0 gefaald).
+- **Zelf gevonden en gerepareerde bug:** `estimatedPhaseFromDay()`
+  gebruikte een stille 28-dagen-fallback bij onvoldoende
+  cyclusgeschiedenis, zonder dit te onderscheiden van een gebruiker
+  met een betrouwbare, gemeten gemiddelde cycluslengte. Nieuwe
+  `estimatedPhaseConfidence()`-functie toegevoegd (unavailable/low/
+  medium/high, gebaseerd op data-volledigheid), doorgegeven via
+  `cycleContext()`. Live sabotage bevestigt de fix.
+- **Bevestigd correct:** causale/medische taal (0 overtredingen),
+  Decision Rules-grens (0 categorie-gebaseerde trainingsregels), RLS/
+  coach-scope-isolatie (aparte `WOMENS_PERFORMANCE`-scope, live
+  bevestigd).
+- **Impact:** kleine, veilige, backward-compatible Calculation-
+  uitbreiding, geen schemawijziging, geen APP_VER-bump nodig.
+- **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
+  uitgevoerd door Claude tijdens de B9-H5-mastersprint.

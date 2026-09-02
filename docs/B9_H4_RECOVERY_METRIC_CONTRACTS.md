@@ -9,11 +9,16 @@
 **RAW/DERIVED/MANUAL:** beide ondersteund, expliciet onderscheiden via `hrv_source`.
 **MISSING-DATA SEMANTICS:** `null`, nooit `0` (live herbevestigd tijdens deze sprint).
 **EVIDENCE LEVEL:** C (signaal-niveau, geen klinisch instrument).
-**LIMITATIONS (nieuw, deze sprint vastgelegd):** het onderliggende
-berekeningstype (RMSSD vs SDNN) wordt niet vastgelegd of geverifieerd
--- zie de existing-state audit voor de volledige, wetenschappelijk
-onderbouwde toelichting. Een baseline blijft intern consistent zolang
-de gebruiker niet van apparaattype wisselt.
+**LIMITATIONS (nieuw, deze sprint vastgelegd, gedeeltelijk verbeterd
+in een latere long-run-sprint):** het onderliggende berekeningstype
+(RMSSD vs SDNN) wordt nu expliciet vastgelegd via `hrv_log.
+hrv_metric_type` (rmssd/sdnn/unknown, default 'unknown' voor alle
+bestaande en nieuwe rijen) -- de ONZEKERHEID zelf is nu zichtbaar
+i.p.v. stilzwijgend aangenomen. De daadwerkelijke, correcte waarde
+kan nog niet automatisch worden ingevuld: dit vereist live verificatie
+van de Google Health `dataSource`-metadata, wat real-API-toegang
+vereist (extern geblokkeerd sinds B9-H3C). Een baseline blijft intern
+consistent zolang de gebruiker niet van apparaattype wisselt.
 **ALLOWED DECISION RULES:** HRV is één van zes `READINESS_SIGNALEN`
 (hrv/rhr/slaap/spierherstel/gevoel/trainingsbelasting) -- nooit
 enkelvoudig doorslaggevend (bevestigd: 0 treffers voor een harde,

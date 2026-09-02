@@ -1230,3 +1230,28 @@
   regressiebescherming gebouwd tegen het B9-H6-pace-basis-defect.
 - **Verantwoordelijke:** Product Owner (autonome long-run-vrijgave),
   uitgevoerd door Claude.
+
+## Long-run-sprint -- HRV metric-type-onzekerheid expliciet vastgelegd
+
+- **Datum:** 2 september 2026 (autonome long-run-sprint, na B9-H6B).
+- **Context:** het bekende B9-H4-P2-item (RMSSD vs SDNN niet
+  vastgelegd) werd heronderzocht op de vraag: kan dit veilig verbeterd
+  worden ZONDER real Google API-toegang? Antwoord: ja, gedeeltelijk --
+  de onzekerheid zelf kan expliciet worden vastgelegd, ook al kan de
+  daadwerkelijke waarde nog niet worden bepaald.
+- **Gebouwd:** `hrv_log.hrv_metric_type` (rmssd/sdnn/unknown), default
+  'unknown' voor alle bestaande en nieuwe rijen. Live bevestigd: alle
+  71 bestaande rijen kregen correct 'unknown', geen enkele rij kreeg
+  een geraden waarde.
+- **Impact:** kleine, veilige, additieve migratie. Geen overclaim: de
+  daadwerkelijke RMSSD/SDNN-bepaling blijft afhankelijk van toekomstige
+  real-API-toegang (B9-H3C-blokkade, ongewijzigd).
+- **Repo-brede conclusie deze long-run-sprint:** na B9-H6B en deze
+  micro-sprint is er geen resterende, softwarematig uitvoerbare
+  Benchmark 9+ functional gap gevonden binnen de onderzochte scope die
+  niet in een van de drie uitgesloten categorieën valt (UI-beslissing,
+  Product Owner-productbeslissing, externe blokkade). Zie
+  `docs/BENCHMARK_9_PLUS_FUNCTIONAL_PROGRESS.md` voor het volledige
+  overzicht per domein.
+- **Verantwoordelijke:** Product Owner (autonome long-run-vrijgave),
+  uitgevoerd door Claude.

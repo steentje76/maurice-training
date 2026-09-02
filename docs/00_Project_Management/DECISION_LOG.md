@@ -1215,3 +1215,18 @@
   schemawijziging.
 - **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
   uitgevoerd door Claude tijdens de B9-H6-mastersprint.
+
+## B9-H6B -- Concept2/sessions vs activities: architectuurscheiding zelfstandig herbevestigd, geen migratie
+
+- **Datum:** 2 september 2026 (autonome long-run-sprint).
+- **Context:** onderzocht of Concept2-data (sessions) veilig naar de
+  canonieke activities-architectuur gemigreerd moest worden.
+- **Bevinding:** sessions is de generieke workout-execution-log
+  (kracht/WOD/ergometer), activities is specifiek voor standalone
+  endurance. Geen parallelle waarheden -- bewuste, correcte scheiding.
+  Live productiedata (118 sessions, 11 met ergometer-velden) bevestigt
+  geen functionele noodzaak voor migratie.
+- **Besluit:** geen migratie, geen dual-write. Harde
+  regressiebescherming gebouwd tegen het B9-H6-pace-basis-defect.
+- **Verantwoordelijke:** Product Owner (autonome long-run-vrijgave),
+  uitgevoerd door Claude.

@@ -105,8 +105,8 @@ T('rowing (Concept2 RowErg): m · /500m · split+watt+stroke · basis 500', () =
   ['dist','time','split','watt','stroke'].forEach(f => ok(r.fields.includes(f), 'rowing mist ' + f));
   eq(r.calc.basis, 500);
 });
-T('bikeerg (Concept2 BikeErg): m · /500m · watt+rpm+resistance · GEEN stroke/drag', () => {
-  const b = CT.bikeerg; eq(b.unit, 'm'); eq(b.splitUnit, '/500m'); eq(b.calc.basis, 500);
+T('bikeerg (Concept2 BikeErg): m · /1000m · watt+rpm+resistance · GEEN stroke/drag', () => {
+  const b = CT.bikeerg; eq(b.unit, 'm'); eq(b.splitUnit, '/1000m'); eq(b.calc.basis, 1000);
   ['dist','time','split','watt','rpm','resistance'].forEach(f => ok(b.fields.includes(f), 'bikeerg mist ' + f));
   ok(!b.fields.includes('stroke'), 'bikeerg mag geen roeislag hebben'); ok(!b.fields.includes('drag'));
 });
@@ -123,8 +123,8 @@ T('UNIT-safety: rowing/bikeerg/skierg in meter, assaultbike in calorieën (niet 
   eq(CT.rowing.unit, 'm'); eq(CT.bikeerg.unit, 'm'); eq(CT.skierg.unit, 'm'); eq(CT.assaultbike.unit, 'cal');
   ok(CT.rowing.unit !== CT.assaultbike.unit, 'm ≠ cal');
 });
-T('Concept2-devices delen split-basis 500m; running/swimming NIET', () => {
-  eq(CT.rowing.calc.basis, 500); eq(CT.bikeerg.calc.basis, 500); eq(CT.skierg.calc.basis, 500);
+T('RowErg/SkiErg delen 500m-splitbasis; BikeErg gebruikt 1000m (B9-H6, zelf gevonden en gerepareerd: Concept2 se eigen, officiële conventie -- PM5-handleiding bevestigt expliciet "time/500m for indoor rowers and SkiErg; time/1000m for BikeErg")', () => {
+  eq(CT.rowing.calc.basis, 500); eq(CT.bikeerg.calc.basis, 1000); eq(CT.skierg.calc.basis, 500);
   if (CT.running && CT.running.calc) ok(CT.running.calc.basis !== 500, 'running basis ≠ 500');
   if (CT.swimming && CT.swimming.calc) ok(CT.swimming.calc.basis !== 500, 'swimming basis ≠ 500');
 });

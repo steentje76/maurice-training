@@ -1191,3 +1191,27 @@
   uitbreiding, geen schemawijziging, geen APP_VER-bump nodig.
 - **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
   uitgevoerd door Claude tijdens de B9-H5-mastersprint.
+
+## B9-H6 -- Connected Equipment: BikeErg-splitbasis-bug gevonden en gerepareerd
+
+- **Datum:** 1 september 2026.
+- **Context:** forensische audit van Concept2 (RowErg/SkiErg/BikeErg)
+  en generieke Connected Equipment-architectuur (95+10 bestaande
+  tests herbevestigd, 0 gefaald).
+- **Zelf gevonden en gerepareerde echte bug:** BikeErg gebruikte een
+  onjuiste 500m-splitbasis in de handmatige-invoer-configuratie
+  (index.html), terwijl Concept2 se eigen, officiële conventie
+  (meervoudig bevestigd) 1000m is. De realtime PM5-code had dit al
+  correct. Gecorrigeerd, plus de verouderde testverwachting in
+  core/cardio.test.js bijgewerkt.
+- **Belangrijke, architecturale bevinding, niet opgelost:** Concept2-
+  data loopt via de oudere `sessions`-tabel, niet via de canonieke
+  `activities`-tabel -- geen consumptie door runningIntelligence/
+  cyclingIntelligence. Vastgelegd als P2 voor een toekomstige,
+  aparte, grote migratie-sprint.
+- **Vendor-onderzoek:** EGYM/Technogym hebben officiële APIs maar
+  vereisen een externe partnerschapsaanvraag.
+- **Impact:** kleine, veilige runtime-fix (APP_VER-bump), geen
+  schemawijziging.
+- **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
+  uitgevoerd door Claude tijdens de B9-H6-mastersprint.

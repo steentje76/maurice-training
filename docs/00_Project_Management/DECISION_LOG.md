@@ -1149,3 +1149,24 @@
   geen docs-only closure zonder daadwerkelijk real-world bewijs.
 - **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
   uitgevoerd door Claude tijdens de B9-H3C-mastersprint.
+
+## B9-H4 -- Recovery & Health Context: bevestigd volwassen, één nieuwe limitatie gevonden
+
+- **Datum:** 1 september 2026.
+- **Context:** forensische audit van de volledige Recovery/Health-
+  keten. Bleek al buitengewoon volwassen (F7/F8-mastersprint-serie,
+  210+ tests herbevestigd, 0 regressie).
+- **Bevestigd correct:** missing != zero, HRV als multi-signaal (nooit
+  enkelvoudige trigger), geen parallelle waarheden, RLS/coach-scope-
+  gating, account deletion.
+- **Nieuwe, wetenschappelijk onderbouwde bevinding:** Google Health se
+  HRV-veld kan zowel RMSSD (Garmin/Fitbit/Oura) als SDNN (Apple)
+  representeren, zonder dit vast te leggen -- de bestaande code neemt
+  RMSSD aan. Praktische impact vandaag laag; potentieel relevant bij
+  toekomstige apparaatwissel. Niet zelfstandig gerepareerd (vereist
+  live Google-API-verificatie, niet beschikbaar).
+- **Impact:** geen code-/schema-wijziging aan de kernlogica; nieuwe
+  Metric Contracts-documentatie en een nieuwe testsuite (8/8) die de
+  bevindingen vastlegt.
+- **Verantwoordelijke:** Product Owner (expliciete vrijgave-opdracht),
+  uitgevoerd door Claude tijdens de B9-H4-mastersprint.

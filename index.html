@@ -6252,7 +6252,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.50';
+const APP_VER = 'v4.69.51';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -6586,13 +6586,22 @@ const CARDIO_TYPES = {
     calc:{type:'split',distField:'dist',basis:500,defaultDist:1000}
   },
   bikeerg: {
-    naam:'BikeErg', unit:'m', splitUnit:'/500m',
+    naam:'BikeErg', unit:'m', splitUnit:'/1000m',
     fields:['dist','time','split','watt','rpm','resistance','rpe'],
-    labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /500m',watt:'Watt',rpm:'RPM',resistance:'Weerstand',rpe:'RPE'},
+    labels:{dist:'Afstand (m)',time:'Totaal tijd',split:'Split /1000m',watt:'Watt',rpm:'RPM',resistance:'Weerstand',rpe:'RPE'},
     splits:true, splitDist:250, splitTotal:1000,
     machines:'bikeerg_machines',
     rowMap:{dist:{col:'distance',parse:'int'},time:{col:'time_str',parse:'string'},watt:{col:'watt',parse:'float'},rpm:{col:'stroke_rate',parse:'int'},resistance:{col:'extraNote',template:v=>'weerstand '+v},split:{col:'extraNote',template:(v,d)=>(d.machine?d.machine+' ':'')+'split:'+v},rpe:{col:'rpe',parse:'float'}},
-    calc:{type:'split',distField:'dist',basis:500,defaultDist:1000}
+    calc:{type:'split',distField:'dist',basis:1000,defaultDist:1000}
+    // B9-H6 (zelf gevonden en gerepareerd): BikeErg gebruikte hier ten
+    // onrechte een 500m-splitbasis, terwijl Concept2 se eigen, officiële
+    // conventie (PM5-handleiding, meerdere onafhankelijke bronnen) een
+    // 1000m-split voorschrijft voor BikeErg (RowErg/SkiErg blijven 500m).
+    // Dit is dezelfde, al correcte waarde die concept2Live.js se
+    // paceBasisFor() al gebruikte voor de realtime PM5-weergave -- deze
+    // handmatige-invoer-configuratie was daarmee inconsistent, wat een
+    // exact-factor-2-fout in elke handmatig ingevoerde/opgeslagen
+    // BikeErg-pace zou hebben veroorzaakt.
   },
   skierg: {
     naam:'SkiErg', unit:'m', splitUnit:'/500m',

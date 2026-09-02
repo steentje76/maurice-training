@@ -1,6 +1,101 @@
 # Trainingskompas — Changelog
 
-## v4.69.50 — B9-H3C: Real Provider & Device Validation Closure (1 september 2026)
+## v4.69.51 — B9-H6: Ergometers & Connected Equipment 9+ Hardening (1 september 2026)
+
+Forensische audit + één echte, kritieke bug gevonden en gerepareerd.
+Baseline geverifieerd: main `70c1de0`, release gate 226/226 groen.
+
+Repo-brede, forensische audit van de Concept2-familie (RowErg/SkiErg/
+BikeErg via PM5) en de generieke Connected Equipment-architectuur.
+Kernbevinding: Concept2 is grondig, correct gebouwd (fConcept2Live
+95/95, fConcept2MidWorkoutIsolation 10/10, zelfstandig herdraaid vóór
+enige wijziging, 0 gefaald), inclusief proactieve machine-mismatch-
+detectie (waarschuwt als het gekoppelde apparaat niet overeenkomt met
+de gekozen oefening) en correcte, aparte canonieke identiteiten voor
+RowErg/SkiErg/BikeErg (geen shadow-domain-verwarring).
+
+ZELF GEVONDEN EN GEREPAREERDE ECHTE, KRITIEKE BUG: `CARDIO_TYPES.
+bikeerg` (index.html, handmatige-invoer-configuratie) gebruikte een
+onjuiste 500m-splitbasis. Officieel, meervoudig bevestigd tegen de
+Concept2 PM5-productmanual en meerdere onafhankelijke, actuele bronnen
+(concept2.com/training-artikelen, een derde-partij Concept2-pace-
+calculator): Concept2 se eigen conventie is expliciet "time/500m for
+indoor rowers and SkiErg; time/1000m for BikeErg" -- fietssnelheden
+zijn ruwweg het dubbele van roeisnelheden bij vergelijkbare inspanning,
+vandaar de andere schaal. De realtime PM5-weergave (core/
+concept2Live.js se paceBasisFor()) gebruikte AL correct 1000m voor
+BikeErg -- de bug zat uitsluitend in de aparte, handmatige-invoer-
+configuratie, die hiermee inconsistent was. Dit veroorzaakte een
+exact-factor-2-fout in elke handmatig ingevoerde of via het formulier
+opgeslagen BikeErg-pace (bijv. een werkelijke 2:30/1000m zou als
+1:15/500m zijn opgeslagen/getoond).
+
+Gerepareerd: `splitUnit`/`calc.basis` gecorrigeerd naar `/1000m`/
+`1000`, consistent met de al-correcte realtime-code. De bestaande
+`core/cardio.test.js` bevatte zelf de verouderde aanname ("Concept2-
+devices delen split-basis 500m") -- bijgewerkt naar de nu correcte,
+officieel onderbouwde verwachting (RowErg/SkiErg = 500m, BikeErg =
+1000m). Live sabotage bevestigt de fix: teruggezet naar 500 -> 2 tests
+falen correct, teruggedraaid.
+
+BELANGRIJKE, ARCHITECTURALE BEVINDING (niet binnen deze sprint
+opgelost, vastgelegd als toekomstige P2): Concept2-familie-data
+(RowErg/SkiErg/BikeErg) wordt opgeslagen in de oudere, per-exercise
+`sessions`-tabel, niet in de nieuwere, canonieke `activities`-tabel
+(geïntroduceerd door B9-01/B9-H3B voor Running/Cycling-cloud-
+ingestie). Dit betekent dat Concept2-trainingen niet worden
+geconsumeerd door `runningIntelligence.js`/`cyclingIntelligence.js`
+(die specifiek op `activities` filteren). Repo-brede audit bevestigt:
+0 queries filteren op `sport=eq.bikeerg`/`sport=eq.skierg` tegen
+`activities`, consistent met deze vaststelling. Dit is een bestaande,
+eerdere architectuurkeuze, niet nieuw ontstaan -- een volledige
+migratie zou een grote, aparte, toekomstige sprint vereisen.
+
+Vendor-onderzoek (EGYM/Technogym): beide hebben officiële, gedocu-
+menteerde developer-APIs, maar vereisen expliciet een menselijke
+partnerschapsaanvraag (integrations@egym.com / Technogym-
+marketplace-activatie) -- een externe blokkade, geen technische
+tekortkoming.
+
+Live, adversariaal bevestigd: anon geweigerd op functieniveau
+(`coach_has_scope()`) voor `sessions`, cross-user-toegang geweigerd
+(0 resultaten voor andermans sessies).
+
+core/fB9_H6ConnectedEquipmentHardening.test.js (nieuw, 7/7): de
+BikeErg-splitbasis-fix, consistentie tussen realtime en handmatige
+invoer, sport-mapping-differentiatie, machine-mismatch-detectie,
+missing-!= -zero, en de architecturale sessions-vs-activities-
+bevinding.
+
+docs/B9_H6_CONNECTED_EQUIPMENT_EXISTING_STATE_AUDIT.md,
+docs/B9_H6_CONNECTED_EQUIPMENT_CAPABILITY_MATRIX.md,
+docs/B9_H6_CONNECTED_EQUIPMENT_DATA_CONTRACT.md,
+docs/B9_H6_CONNECTED_EQUIPMENT_PROVIDER_RESEARCH.md,
+docs/B9_H6_CONNECTED_EQUIPMENT_SECURITY_PRIVACY_MATRIX.md,
+docs/B9_H6_REAL_DEVICE_VALIDATION_REGISTER.md,
+docs/B9_H6_FUNCTIONAL_BENCHMARK.md,
+docs/B9_H6_FINAL_REPORT.md (alle acht nieuw, conform de vereiste
+documentlijst).
+
+APP_VER v4.69.50 -> v4.69.51 (echte runtime-codewijziging in
+index.html). sw.js CACHE_NAME/CACHE_STATIC synchroon gebumpt naar
+v469510. android/app/build.gradle gesynchroniseerd (46951/4.69.51).
+
+Volledige regressie: node core/release-gate.js -> 227 uitgevoerd/0
+geskipt/0 gefaald (was 226, +1 nieuw testbestand). node tools/
+check-doc-consistency.js -> volledig groen, 0 problemen.
+
+Geen benchmarkscore toegekend.
+
+FINAL STATUS: B9-H6 ERGOMETERS & CONNECTED EQUIPMENT SOFTWARE 9+
+CLOSED — REAL DEVICE VALIDATION OPEN.
+
+STOP. Geen scherm gebouwd, geen navigatie aangepast, geen B9-H7/
+Commercial/Social/Coach notes/Team UI/Coach UI/Gym UI/algemene UX/F15/
+movement intelligence gestart.
+
+## v4.69.50 — B9-H5: Women's Performance 9+ Hardening (1 september 2026)
+ — B9-H3C: Real Provider & Device Validation Closure (1 september 2026)
 
 Real-validatie-sprint (geen nieuwe architectuur). Baseline geverifieerd:
 main `4ce6117`, release gate 223/223 groen, B9-H3B (37/37) herbevestigd.

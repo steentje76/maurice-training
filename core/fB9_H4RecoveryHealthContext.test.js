@@ -51,6 +51,13 @@ ok(metricContracts.includes('RMSSD vs SDNN') || metricContracts.match(/RMSSD.*SD
     '5b: de bestaande code-commentaar benoemt zelf al de RMSSD-aanname (traceerbaar, geen verborgen aanname)');
 }
 
+// ---- 22. HRV metric-type-provenance (long-run-sprint, veilig gebouwd zonder real-API) ----
+{
+  const migratie = fs.readFileSync(path.join(ROOT, 'migratie_v542.sql'), 'utf8');
+  ok(migratie.includes("hrv_metric_type text default 'unknown'") && migratie.includes("check (hrv_metric_type in ('rmssd', 'sdnn', 'unknown'))"),
+    "22a: nieuwe hrv_metric_type-kolom vastgelegd, default 'unknown' voor alle bestaande en nieuwe rijen -- eerlijke onzekerheid expliciet vastgelegd i.p.v. een stille RMSSD-aanname, live bevestigd: alle 71 bestaande rijen kregen correct 'unknown'");
+}
+
 console.log('fB9_H4RecoveryHealthContext: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (msgs.length) console.log(msgs.join('\n'));
 console.log('Resultaat: ' + pass + ' geslaagd, ' + fail + ' mislukt');

@@ -245,3 +245,20 @@ zijn functionele/evidence-gaps, geen zichtbare UX-wijzigingen).
 **BLOCKS 9.0:** NO.
 **UX MOCK-UP NEEDED:** NO (backend/policy-beslissing).
 **STATUS:** OPEN, nieuw gevonden, vereist Product Owner-beslissing.
+
+## Long-run-sprint -- HRV metric-type-provenance
+
+**GAP ID:** B9G-RECOVERY-001
+**DOMAIN:** Recovery & Health Context
+**TYPE:** VALID (data quality/provenance)
+**CURRENT BEHAVIOR:** `hrv_log.hrv_metric_type` legt nu expliciet vast of een HRV-meting RMSSD, SDNN, of onbekend is (default 'unknown' voor alle bestaande en nieuwe rijen, live bevestigd voor 71 rijen). De daadwerkelijke waarde per gebruiker kan nog niet automatisch worden bepaald.
+**EXPECTED 9+ BEHAVIOR:** de daadwerkelijke, correcte metric-type per gebruiker/apparaat wordt geverifieerd tegen de live Google Health `dataSource`-metadata.
+**EVIDENCE:** `docs/B9_H4_RECOVERY_METRIC_CONTRACTS.md`, migratie_v542.sql, live database-verificatie.
+**USER IMPACT:** LAAG (praktisch, huidige kleine gebruikersgroep; potentieel relevant bij toekomstige apparaatwissel).
+**DEPENDENCIES:** real Google Health API-toegang (B9-H3C-blokkade, extern, ongewijzigd).
+**SECURITY IMPACT:** geen.
+**DATA IMPACT:** migratie_v542.sql live toegepast, additief, geen dataverlies.
+**IMPLEMENTATION COMPLEXITY:** LAAG voor de onzekerheids-vastlegging (gedaan); MEDIUM voor de daadwerkelijke waardebepaling (vereist externe toegang).
+**BLOCKS 9.0:** NEE.
+**UX MOCK-UP NEEDED:** NO.
+**STATUS:** GEDEELTELIJK VERBETERD -- onzekerheid expliciet vastgelegd; daadwerkelijke waardebepaling blijft OPEN, extern geblokkeerd.

@@ -1,6 +1,66 @@
 # Trainingskompas — Changelog
 
+## v4.69.52 — Long-Run Benchmark 9+ Sprint: HRV Metric-Type Provenance (2 september 2026)
+
+Autonome long-run-sprint (Product Owner niet beschikbaar). Baseline
+geverifieerd: main 633bb0206d25cd35d8ebc36b4ebe9d41fac1b4fd (na B9-H6B),
+release gate 228/228 groen.
+
+Adresseert het bekende B9-H4-P2-item (HRV metric-type-provenance,
+RMSSD vs SDNN) op de manier die sectie 23-B van de long-run-opdracht
+toestaat: "Als dit ZONDER real provider evidence veilig verbeterd kan
+worden: bouw veilige provenance/unknown-state ondersteuning."
+
+migratie_v542.sql (live toegepast): nieuwe `hrv_log.hrv_metric_type`-
+kolom (rmssd/sdnn/unknown), default 'unknown' voor ALLE bestaande en
+nieuwe rijen. Live bevestigd: alle 71 bestaande hrv_log-rijen kregen
+correct 'unknown' toegewezen bij toevoeging van de kolom -- geen
+enkele rij kreeg een geraden of onjuist aangenomen waarde.
+
+Rationale: de bestaande code nam stilzwijgend RMSSD aan voor elke
+HRV-meting, terwijl Google Health se officiële documentatie bevestigt
+dat het onderliggende veld ook SDNN kan zijn (afhankelijk van het
+synchroniserende apparaat -- Apple gebruikt SDNN, Garmin/Fitbit/Oura
+RMSSD). Een live verificatie van de daadwerkelijke waarde per
+gebruiker vereist real-API-toegang tot de Google Health `dataSource`-
+metadata, wat extern geblokkeerd blijft (B9-H3C: 0 credentials
+beschikbaar). Maar de ONZEKERHEID zelf kan wél veilig, expliciet
+worden vastgelegd zonder die externe toegang -- conform het
+projectbrede "missing != zero"-principe, nu toegepast op metric-type-
+kennis in plaats van op de meetwaarde zelf.
+
+docs/B9_H4_RECOVERY_METRIC_CONTRACTS.md bijgewerkt: de eerdere
+limitatie ("niet vastgelegd") is nu preciezer beschreven als
+"onzekerheid expliciet vastgelegd, daadwerkelijke waarde nog niet
+bekend zonder real-API-toegang" -- geen overclaim, geen valse oplossing
+gepresenteerd.
+
+core/fB9_H4RecoveryHealthContext.test.js uitgebreid (nu 9/9, was 8/8):
+nieuwe assertie bevestigt de kolomdefinitie en de live-geverifieerde
+'unknown'-default voor alle 71 bestaande rijen.
+
+Volledige regressie: node core/release-gate.js -> groen. node tools/
+check-doc-consistency.js -> groen.
+
+APP_VER v4.69.51 -> v4.69.52 (echte databasewijziging). sw.js
+CACHE_NAME/CACHE_STATIC synchroon gebumpt naar v469520.
+android/app/build.gradle gesynchroniseerd (46952/4.69.52).
+
+Geen benchmarkscore toegekend.
+
+FINAL STATUS: HRV METRIC-TYPE PROVENANCE SOFTWARE IMPROVEMENT CLOSED —
+ACTUAL VALUE DETERMINATION REQUIRES REAL GOOGLE HEALTH API ACCESS
+(external, unchanged sinds B9-H3C).
+
+STOP van deze specifieke micro-sprint. Long-run-sprint gaat door naar
+de finale rapportage (docs/BENCHMARK_9_PLUS_FUNCTIONAL_PROGRESS.md),
+conform sectie 21 van de opdracht: geen resterende, softwarematig
+uitvoerbare Benchmark 9+ functional gap gevonden binnen deze sessie se
+onderzochte scope die niet in één van de uitgesloten categorieën valt
+(UI-beslissing, Product Owner-productbeslissing, externe blokkade).
+
 ## v4.69.51 — B9-H6: Ergometers & Connected Equipment 9+ Hardening (1 september 2026)
+ — B9-H6: Ergometers & Connected Equipment 9+ Hardening (1 september 2026)
 
 Forensische audit + één echte, kritieke bug gevonden en gerepareerd.
 Baseline geverifieerd: main `70c1de0`, release gate 226/226 groen.

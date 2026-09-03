@@ -1,5 +1,38 @@
 # Trainingskompas — Changelog
 
+## v4.69.53 — Design System v1 Foundation: DS-01 (tokens) + DS-02 (typography) (3 september 2026)
+
+Design System Foundation Masterprint. Uitsluitend een ADDITIEVE token-foundation
+in index.html -- geen enkele bestaande CSS-regel gewijzigd of verwijderd, dus
+0 visuele wijziging aan bestaande schermen.
+
+Nieuwe, canonieke tokens toegevoegd aan :root, elk 1-op-1 afgeleid uit reeds
+bestaand, herhaald gebruik in de codebase (geen nieuwe designkeuze verzonnen):
+--radius-small/-control/-card/-modal, --space-xs/-sm/-md/-lg/-xl,
+--elevation-none/-subtle/-card, --color-surface/-text-primary/-primary/etc.
+(semantische kleurrolmapping op bestaande kleurtokens), --text-caption/-label/
+-body/-button/etc. (typography-schaal op bestaande, meest gebruikte font-sizes).
+
+Cardradius (--radius-card:16px) en de semantische kleurrolmapping verwerken de
+expliciete Product Owner-besluiten uit de Design System v1-canonicalisatie
+(PR #225). De bestaande --r:8px en --shadow blijven ongewijzigd van waarde --
+de nieuwe namen wijzen er (nog) naar toe, ter voorbereiding op toekomstige,
+gecontroleerde schermmigraties.
+
+Twee kleine, additieve accessibility-foundations toegevoegd: een consistente
+:focus-visible-outline (vult een bestaande gap, overschrijft geen bestaande
+interactie-state) en een prefers-reduced-motion-media-query die animatie-/
+transitieduur verkort voor gebruikers die dat OS-breed hebben aangevraagd
+(verwijdert geen enkele bestaande transitie).
+
+Geen scherm geimplementeerd of geredesigned. Geen navigatie gewijzigd. Geen
+businesslogica naar UI verplaatst. Zie
+docs/DESIGN_SYSTEM_V1_FOUNDATION_IMPLEMENTATION_REPORT.md voor de volledige
+token-mapping, source register en adversariele eindaudit.
+
+APP_VER v4.69.52 -> v4.69.53. sw.js CACHE_NAME/CACHE_STATIC synchroon gebumpt
+naar v469530. android/app/build.gradle gesynchroniseerd (46953/4.69.53).
+
 ## v4.69.52 — Long-Run Benchmark 9+ Sprint: HRV Metric-Type Provenance (2 september 2026)
 
 Autonome long-run-sprint (Product Owner niet beschikbaar). Baseline

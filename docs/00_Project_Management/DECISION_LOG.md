@@ -1263,3 +1263,12 @@
 - **Bevinding:** de PIN gaf nooit zelfstandig privilege -- alle gevoelige acties waren al server-side/RLS-beschermd. Twee `WITH CHECK (true)`-INSERT-policies bleken bij live onderzoek geen exploiteerbaar gat (trigger-bescherming), maar zijn alsnog als defense-in-depth gehard naar het bestaande, bewezen rolgebaseerde patroon.
 - **Niet gedaan:** verwijderen van `s-admin-pin` zelf (UX-wijziging, buiten scope) en migratie van de gym-join-flow naar canonical memberships (vereist aparte PO-goedkeuring).
 - **Verantwoordelijke:** Product Owner (Technical Foundation Masterprint-opdracht), uitgevoerd door Claude, onafhankelijk live geverifieerd (eigen adversariële insert-test, trigger-bevestiging, RLS-policy-vergelijking).
+
+## Technical Foundation Track B -- canonical gym-migratie (strangler, geen destructieve migratie)
+
+- **Datum:** 3 september 2026.
+- **Context:** gecontroleerde uitfasering van het legacy Gym-model, uitsluitend technisch (geen UX-wijziging), na expliciete Product Owner-vrijgave onder de voorwaarde CURRENT USER FUNCTION -> SAME USER FUNCTION -> CANONICAL BACKEND.
+- **Bevinding:** canonical data was al 1:1 aanwezig (B9-H2B); er bestaat 0 actieve join-flow naar legacy. gym-team.js list-actie migreert naar canonical (organizations+memberships), update_role schrijft dual (TRANSITIONAL) zodat de bestaande exercise_equipment/equipment_catalog-RLS (die nog gym_role_level leest) niet regresseert.
+- **Zelf gevonden en gerepareerd, buiten de oorspronkelijke scope:** gym-team-set-pin.js had een hardcoded, nog 0-indexed drempel die sinds de Track A-fix een manager onterecht toegang gaf tot het instellen van de coach-pincode (bevoegdheid uitsluitend voor owner bedoeld). Gerepareerd en live geverifieerd.
+- **Niet gedaan:** volledige RLS-migratie van exercise_equipment/equipment_catalog naar uitsluitend organization_id (aparte, latere, zuiver technische sprint); verwijderen van legacy kolommen/functies (geen bewezen noodzaak, geen destructieve migratie zonder bewijs).
+- **Verantwoordelijke:** Product Owner (expliciete Track B-vrijgave), uitgevoerd door Claude, elke aanname live, onafhankelijk herverifieerd.

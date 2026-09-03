@@ -65,8 +65,8 @@ ok(trainMgr.includes('id="sport-switcher"') && trainMgr.includes('setActiveSport
 ok((trainMgr.match(/tk-card tk-card-l3/g) || []).length >= 4,
   '5a: meerdere Level-3 (standard function) cards gebruiken de canonical .tk-card-l3-klasse');
 ok(trainMgr.includes('tk-card tk-card-l2'), '5b: de empty-state gebruikt een canonical Level-2 (context) card');
-ok((trainMgr.match(/tkIcon\(/g) || []).length >= 10,
-  '5c: de nieuwe secties gebruiken tkIcon() voor iconen (canonical DS-03), niet een nieuwe, lokale icon-stijl');
+ok((trainMgr.match(/data-icon="/g) || []).length >= 10,
+  '5c (gecorrigeerd na de PR #229-runtimefix): de nieuwe secties gebruiken statisch gerenderde tk-icon-SVG (data-icon-attribuut) i.p.v. runtime tkIcon()-aanroepen -- ${tkIcon(...)} in STATISCHE HTML wordt NOOIT door JS geevalueerd (geen omringende template literal), dus werd letterlijk als tekst gerenderd in de echte browser. Root cause zelf gevonden, herbevestigd, en hier permanent geblokkeerd (zie ook fTrainenTemplateLiteralAudit.test.js).');
 ok(!trainMgr.match(/\.tk-btn-custom|\.tk-card-custom|\.trainen-btn-|\.trainen-card-/),
   '5d: geen nieuwe, lokale button-/card-family geintroduceerd -- uitsluitend de bestaande canonical DS-04/DS-05-klassen hergebruikt');
 
@@ -122,7 +122,16 @@ ok(html.includes("onclick=\"go('s-train-mgr')\" aria-label=\"Sluiten, terug naar
 ok(!html.match(/id="s-home-v2"|id="s-inzicht-v2"|id="s-coach-v2"|id="s-samen-v2"|id="s-profiel-v2"/),
   '12: geen van de overige vijf hoofdschermen (Vandaag/Inzicht/Coach/Samen/Profiel) is als nieuw scherm geimplementeerd -- uitsluitend Trainen deze sprint');
 
+// ---- Fase 5 (statische, snelle aanvulling op fTrainenBrowserRuntime.test.js) ----
+// Deze checks draaien altijd (geen browser/CI-afhankelijkheid) en blokkeren de
+// meest voorkomende variant van de PR #229-regressie al op source-niveau,
+// als eerste, snelle verdedigingslinie vóór de echte browsertest.
+ok(!html.match(/\$\{tkIcon\(/), 'FASE5-1: geen enkele letterlijke "${tkIcon(" in de volledige index.html (STATISCHE HTML mag nooit een onuitgevoerde template-expressie bevatten)');
+ok(!trainMgr.match(/\$\{[a-zA-Z_]/), 'FASE5-2: geen enkele "${" gevolgd door een JS-identifier binnen s-train-mgr (zou duiden op een onuitgevoerde template-literal-interpolatie in statische markup)');
+ok((trainMgr.match(/<svg class="tk-icon"/g) || []).length >= 12, 'FASE5-3: canonical icon markup resolveert daadwerkelijk naar <svg (bron-niveau bevestiging, aanvullend op de browser-DOM-test)');
+
 console.log('fTrainenV02Migration: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (msgs.length) console.log(msgs.join('\n'));
 console.log('Resultaat: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail > 0 ? 1 : 0);
+

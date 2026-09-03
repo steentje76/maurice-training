@@ -108,7 +108,92 @@
   --motion-navigation:200ms;
   --motion-loading-pulse:1200ms;
   --motion-ease:cubic-bezier(.4,0,.2,1);
+
+  /* ═══ DESIGN SYSTEM V1 — DS-01/DS-02 FOUNDATION (Product Owner Approved, 3-9-2026) ═══
+     Zuiver ADDITIEF: geen enkele bestaande tokenwaarde hierboven wordt gewijzigd of
+     verwijderd. Deze nieuwe, canonieke namen zijn beschikbaar voor toekomstige,
+     gecontroleerde schermmigraties (Vandaag/Trainen/Inzicht/Coach/Samen/Profiel) en
+     worden in DEZE sprint nog nergens op bestaande elementen toegepast — bouwen zonder
+     direct overal toe te passen (conform Design System Foundation Masterprint Fase 6).
+     Elke waarde is 1-op-1 afgeleid uit reeds bestaand, herhaald gebruik in deze codebase
+     (zie docs/DESIGN_SYSTEM_V1_FOUNDATION_IMPLEMENTATION_REPORT.md, sectie 6) — geen
+     enkele nieuwe designkeuze verzonnen. */
+
+  /* DS-01a — Radius: card=16px is het PO-goedgekeurde besluit (Design System v1 §5);
+     control hergebruikt de bestaande --r:8px-waarde onder een semantische naam. */
+  --radius-small:8px;
+  --radius-control:8px;
+  --radius-card:16px;
+  --radius-modal:16px;
+
+  /* DS-01b — Spacing: benoemde schaal op de reeds herhaald gebruikte pixelwaarden
+     (Design System v1 §4) — geen nieuwe getallen. */
+  --space-xs:4px;
+  --space-sm:8px;
+  --space-md:12px;
+  --space-lg:16px;
+  --space-xl:20px;
+
+  /* DS-01c — Elevation: subtiele niveaus (Design System v1 §6, PO-besluit: cards
+     mogen niet "zweven"). --shadow blijft ongewijzigd; deze namen wijzen er (nog)
+     naar toe zodat toekomstige code semantisch kan kiezen zonder een nieuwe waarde
+     te verzinnen. floating/modal exacte sterktes blijven OPEN (PO-review, DS-01
+     implementatieplan) en zijn daarom bewust NIET hieronder ingevuld. */
+  --elevation-none:none;
+  --elevation-subtle:var(--shadow);
+  --elevation-card:var(--shadow);
+
+  /* DS-01d — Semantic color mapping: canonieke rolnamen op reeds bestaande
+     kleurtokens (Design System v1 §2, PO-besluiten) — geen nieuwe kleurwaarden. */
+  --color-surface:var(--card);
+  --color-surface-secondary:var(--g1);
+  --color-text-primary:var(--dark);
+  --color-text-secondary:var(--g4);
+  --color-text-muted:var(--g3);
+  --color-border:var(--g2);
+  --color-primary:var(--accent);
+  --color-primary-surface:var(--accent2);
+  --color-success:var(--status-good);
+  --color-warning:var(--status-warn);
+  --color-error:var(--df-r);
+  --color-destructive:var(--df-r);
+
+  /* DS-02 — Typography: benoemde schaal op de reeds herhaald gebruikte font-sizes
+     (Design System v1 §3) — 13px/12px/11px zijn de meest gebruikte bestaande
+     waarden in de codebase, niet nieuw verzonnen. */
+  --text-caption:9px;
+  --text-label:11px;
+  --text-secondary-body:12px;
+  --text-body-sm:13px;
+  --text-body:15px;
+  --text-button:16px;
+  --text-card-title:11px;
 }
+
+/* DS-04 (foundation only) — accessible focus-visible foundation. Additief: bestaat
+   naast bestaande interactie-states, overschrijft niets. Zichtbare, consistente
+   focusring op elk interactief element dat native :focus-visible ondersteunt —
+   vult een bestaande accessibility-gap (Design System Foundation Masterprint
+   Fase 7) zonder enige bestaande visuele state te wijzigen. */
+:focus-visible{
+  outline:2px solid var(--focus-ring);
+  outline-offset:2px;
+}
+
+/* DS-07 (foundation only) — reduced motion foundation. Respecteert het
+   besturingssysteem-niveau "verminderde beweging"-voorkeur voor alle bestaande
+   en toekomstige transities/animaties die transition/animation gebruiken; geen
+   enkele bestaande transitie wordt hierdoor verwijderd, alleen versneld voor
+   gebruikers die dat hebben aangevraagd. */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:0.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:0.01ms !important;
+    scroll-behavior:auto !important;
+  }
+}
+
 
 /* Dark mode: automatische detectie op basis van systeeminstelling (prefers-color-scheme). */
 @media (prefers-color-scheme: dark){
@@ -6252,7 +6337,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.52';
+const APP_VER = 'v4.69.53';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';

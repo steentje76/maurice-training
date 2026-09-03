@@ -118,9 +118,6 @@
      Elke waarde is 1-op-1 afgeleid uit reeds bestaand, herhaald gebruik in deze codebase
      (zie docs/DESIGN_SYSTEM_V1_FOUNDATION_IMPLEMENTATION_REPORT.md, sectie 6) — geen
      enkele nieuwe designkeuze verzonnen. */
-
-  /* DS-01a — Radius: card=16px is het PO-goedgekeurde besluit (Design System v1 §5);
-     control hergebruikt de bestaande --r:8px-waarde onder een semantische naam. */
   --radius-small:8px;
   --radius-control:8px;
   --radius-card:16px;
@@ -170,29 +167,86 @@
   --text-card-title:11px;
 }
 
-/* DS-04 (foundation only) — accessible focus-visible foundation. Additief: bestaat
-   naast bestaande interactie-states, overschrijft niets. Zichtbare, consistente
-   focusring op elk interactief element dat native :focus-visible ondersteunt —
-   vult een bestaande accessibility-gap (Design System Foundation Masterprint
-   Fase 7) zonder enige bestaande visuele state te wijzigen. */
-:focus-visible{
-  outline:2px solid var(--focus-ring);
-  outline-offset:2px;
-}
+/* DS-04/DS-07 accessibility-foundation — ZELF GEVONDEN EN GECORRIGEERD tijdens
+   DS-03/04/05: een eerdere versie van deze sprint (DS-01/DS-02) voegde hier een
+   eigen :focus-visible- en @media(prefers-reduced-motion)-regel toe, zonder te
+   ontdekken dat de codebase beide al had (zie ":focus-visible{outline:3px...}"
+   en het reduced-motion-blok met motion-token-nullering, enkele regels verderop
+   -- "Accessibility-basis (Sprint 1)"/"Sprint v3.3.35"). Dat was een onbedoelde
+   dubbele waarheid (twee regels voor dezelfde eigenschap) -- geen functionele
+   bug (CSS-cascade liet de latere regel winnen), maar wel precies het soort
+   duplicatie die het Design System expliciet verbiedt. Hier verwijderd; de
+   bestaande, volledigere regels verderop in dit bestand blijven de enige,
+   canonieke bron. */
 
-/* DS-07 (foundation only) — reduced motion foundation. Respecteert het
-   besturingssysteem-niveau "verminderde beweging"-voorkeur voor alle bestaande
-   en toekomstige transities/animaties die transition/animation gebruiken; geen
-   enkele bestaande transitie wordt hierdoor verwijderd, alleen versneld voor
-   gebruikers die dat hebben aangevraagd. */
-@media (prefers-reduced-motion: reduce){
-  *,*::before,*::after{
-    animation-duration:0.01ms !important;
-    animation-iteration-count:1 !important;
-    transition-duration:0.01ms !important;
-    scroll-behavior:auto !important;
-  }
+/* ═══ DESIGN SYSTEM V1 — DS-03 (ICONOGRAPHY) / DS-04 (BUTTONS) / DS-05 (CARDS) ═══
+   Product Owner Approved componentfoundation. Zuiver ADDITIEF: nieuwe, canonieke
+   klassen naast de bestaande .btn-r/-o/-d/.ibtn/.card -- geen enkele bestaande
+   klasse gewijzigd, geen repo-brede migratie. Legacy blijft bestaan totdat een
+   scherm gecontroleerd wordt gemigreerd (strangler-aanpak). Zie
+   core/designSystemIcons.js voor de icon-strategie/-registry. */
+
+/* DS-03 — Icon container foundation. Iconen zelf komen uit tkIcon() (inline SVG,
+   currentColor). Deze klasse regelt uitsluitend maat/uitlijning via DS-01-tokens. */
+.tk-icon{display:inline-block;vertical-align:middle;flex-shrink:0}
+.tk-icon-inline{width:16px;height:16px}
+.tk-icon-standard{width:20px;height:20px}
+.tk-icon-feature{width:28px;height:28px}
+.tk-icon-navigation{width:22px;height:22px}
+
+/* DS-04 — Canonical button hierarchy. PRIMARY=teal (PO-besluit), SECONDARY=outline,
+   TERTIARY=text-only (geen surface), DESTRUCTIVE=rood-uitsluitend-voor-destructief,
+   ICON=vierkant/rond icoon-only. Alle varianten: min. 44px touch target, focus via
+   de bestaande, canonieke :focus-visible-regel (geen eigen focusstijl hier). */
+.tk-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:44px;padding:0 20px;border:none;border-radius:var(--radius-control);
+  font-family:var(--f);font-size:var(--text-button);font-weight:700;cursor:pointer;
+  transition:transform var(--motion-fast) var(--motion-ease);
 }
+.tk-btn:active{transform:scale(.97)}
+.tk-btn[disabled],.tk-btn[aria-disabled="true"]{opacity:.45;cursor:not-allowed;pointer-events:none}
+.tk-btn[data-loading="true"]{position:relative;color:transparent;pointer-events:none}
+.tk-btn[data-loading="true"]::after{
+  content:"";position:absolute;width:16px;height:16px;border-radius:50%;
+  border:2px solid currentColor;border-top-color:transparent;color:var(--color-text-secondary);
+  animation:tk-btn-spin .7s linear infinite;
+}
+@keyframes tk-btn-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.tk-btn[data-loading="true"]::after{animation-duration:1.4s}}
+
+/* PRIMARY — teal, de belangrijkste bevestigende actie (PO: max. 1 per lokale context). */
+.tk-btn-primary{background:var(--color-primary);color:#fff}
+/* SECONDARY — minder gewicht, outline, mag niet concurreren met primary. */
+.tk-btn-secondary{background:var(--color-surface-secondary);color:var(--color-text-primary);border:1.5px solid var(--color-border)}
+/* TERTIARY / TEXT ACTION — rustige actie zonder zware surface (bv. "Bekijk details"). */
+.tk-btn-tertiary{background:none;color:var(--color-primary);min-height:auto;padding:8px 4px;font-weight:600}
+/* DESTRUCTIVE — uitsluitend voor daadwerkelijk destructieve/risicovolle acties. */
+.tk-btn-destructive{background:transparent;color:var(--color-destructive);border:1.5px solid var(--color-destructive)}
+/* ICON ACTION — vierkant/rond, icoon-only; MOET altijd een accessible name hebben
+   (aria-label op het button-element zelf, niet alleen op het icoon). */
+.tk-btn-icon{min-height:44px;min-width:44px;padding:0;border-radius:50%;background:var(--color-surface);color:var(--color-text-primary);box-shadow:var(--elevation-subtle)}
+
+/* DS-05 — Canonical card hierarchy (5 levels, PO-besluit radius=16px voor cards). */
+.tk-card{border-radius:var(--radius-card);box-shadow:var(--elevation-card);overflow:hidden}
+/* Level 1 — Primary action card (mag marine surface + dominant zijn, max. 1 tegelijk zonder functionele reden). */
+.tk-card-l1{background:var(--color-primary-surface);color:#fff;padding:var(--space-lg)}
+/* Level 2 — Context card (ondersteunt een primaire actie, niet dominant erboven). */
+.tk-card-l2{background:var(--color-surface);color:var(--color-text-primary);padding:var(--space-md);border:1px solid var(--color-border)}
+/* Level 3 — Standard function card (normale navigatie/functie-bestemming, rustige witte surface). */
+.tk-card-l3{background:var(--color-surface);color:var(--color-text-primary);padding:var(--space-lg)}
+/* Level 4 — Compact data/status card (metric/status/korte info; moet UNKNOWN correct kunnen tonen). */
+.tk-card-l4{background:var(--color-surface);color:var(--color-text-primary);padding:var(--space-sm) var(--space-md)}
+.tk-card-l4[data-value-state="unknown"] .tk-card-value{color:var(--color-text-muted);font-style:italic}
+/* Level 5 — Social content card (mag iets levendiger, blijft dezelfde designfamilie). */
+.tk-card-l5{background:var(--color-surface);color:var(--color-text-primary);padding:var(--space-md)}
+
+.tk-card[data-state="selected"]{outline:2px solid var(--color-primary);outline-offset:-2px}
+.tk-card[data-state="disabled"]{opacity:.5;pointer-events:none}
+.tk-card[data-state="loading"] .tk-card-body{visibility:hidden}
+/* Card-as-button: alleen gebruikt wanneer de HELE kaart één, ondubbelzinnige actie is
+   (semantisch <button>/<a>, nooit een onclick-div -- zie Fase 10). */
+button.tk-card,a.tk-card{display:block;width:100%;text-align:left;border:none;text-decoration:none;font-family:var(--f);cursor:pointer}
 
 
 /* Dark mode: automatische detectie op basis van systeeminstelling (prefers-color-scheme). */
@@ -6337,7 +6391,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.53';
+const APP_VER = 'v4.69.54';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';

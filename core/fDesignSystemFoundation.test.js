@@ -44,8 +44,8 @@ ok(html.includes("--accent:#00B894") && html.includes("--accent2:#0E3B4A"), '4c:
 ok((html.match(/font-size:13px/g) || []).length >= 300, '4d: het bestaande, hoogfrequente font-size:13px-gebruik is niet vervangen door een token (0 automatische conversie deze sprint)');
 
 // ---- 5. Accessibility-foundations zijn additief ----
-ok(html.includes(':focus-visible{') && html.includes('outline:2px solid var(--focus-ring)'),
-  '5a: een consistente :focus-visible-foundation is toegevoegd, gebruikt het bestaande --focus-ring-token');
+ok(html.includes(':focus-visible{outline:3px solid var(--focus-ring);outline-offset:2px}'),
+  '5a (gecorrigeerd tijdens DS-03/04/05, zelf gevonden): een consistente :focus-visible-foundation bestond al sinds Sprint 1 (outline:3px, --focus-ring) -- een eerdere DS-01/DS-02-poging voegde per abuis een tweede, redundante regel toe (dubbele waarheid); dat is teruggedraaid, de enige, canonieke bron is nu deze al bestaande regel');
 ok(html.includes('prefers-reduced-motion: reduce'), '5b: een reduced-motion-foundation is toegevoegd, verwijdert geen bestaande transitie (verkort alleen duur)');
 
 // ---- 6. Geen robot-Coach geintroduceerd, repo-breed ----

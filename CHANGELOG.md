@@ -1,5 +1,59 @@
 # Trainingskompas — Changelog
 
+## v4.69.54 — Design System v1 Component Foundation: DS-03 (iconography) + DS-04 (buttons) + DS-05 (cards) (3 september 2026)
+
+Design System Component Foundation Masterprint. Bouwt herbruikbare bouwstenen
+voor toekomstige schermmigraties -- GEEN hoofdscherm gemigreerd, GEEN
+navigatiewijziging, uitsluitend additieve componentfoundation.
+
+DS-03 ICONOGRAPHY: nieuwe module core/designSystemIcons.js. Icon strategy
+decision: hergebruik van de reeds bestaande, dominante inline-SVG-stijl
+(viewBox 24x24, stroke=currentColor, fill=none -- 31 van 44 bestaande SVG's
+gebruikten dit al). Geen externe library/CDN: 100% offline/PWA-veilig, geen
+licentierisico, geen bundle-gewicht. Canonical registry van 55 semantische
+iconen (navigatie, training, herstel, coach, samen, systeem), vier
+semantische maten (inline/standard/feature/navigation), accessible-by-default
+(label -> role=img+aria-label, geen label -> aria-hidden). AI-icoon is
+expliciet een sparkle-vorm, geen robotverwijzing.
+
+DS-04 BUTTONS: 6 canonical varianten (.tk-btn-primary/-secondary/-tertiary/
+-destructive/-icon + gedeelde .tk-btn-basis). PRIMARY gebruikt --color-primary
+(teal, PO-besluit); marine is expliciet NIET de standaard-primary. Destructive
+is semantisch beperkt tot een eigen, herkenbare variant. Min. 44px touch
+target, disabled/loading-states zonder layout shift, hergebruikt de bestaande,
+canonieke :focus-visible-regel (geen eigen focusstijl).
+
+DS-05 CARDS: 5 canonical levels (.tk-card-l1..l5), gedeelde radius 16px via
+--radius-card (PO-besluit). Level 1 marine/dominant, Level 3 rustige witte
+surface, Level 4 met expliciete UNKNOWN-presentatie (missing != zero, ook
+visueel), card-als-actie uitsluitend via semantisch button/a (geen onclick-
+div). Subtiele elevation via --elevation-card (bestaand --shadow-token).
+
+ZELF GEVONDEN EN GECORRIGEERD (buiten de oorspronkelijke scope, ontdekt
+tijdens deze sprint): de vorige DS-01/DS-02-sprint had onbedoeld een dubbele
+:focus-visible- en prefers-reduced-motion-regel geintroduceerd naast reeds
+bestaande, volledigere versies uit "Sprint 1"/"Sprint v3.3.35" -- geen
+functionele bug (CSS-cascade loste het correct op), maar wel een onbedoelde
+dubbele waarheid. Verwijderd; de bestaande, oorspronkelijke regels blijven de
+enige, canonieke bron.
+
+Component/render-fixture-tests (core/fDesignSystemComponents.test.js, nieuw,
+39/39) i.p.v. een development-only showcase-route: dit is een single-file PWA
+zonder build-pipeline; een nieuwe, zichtbare route zou productie-navigatie/
+cleanliness kunnen aantasten. Live sabotage (4x: primary-kleur, structurele
+emoji in de registry, card-radius, canonical PNG-byte) allemaal correct
+gedetecteerd en volledig hersteld.
+
+Cross-domein regressie (Entitlements/Team/Gym/Admin-Auth/Women's Performance/
+Recovery/Devices/Ergometers): 0 problemen.
+
+Geen van de zes hoofdschermen gemigreerd. Geen navigatie gewijzigd. Zie
+docs/DESIGN_SYSTEM_DS03_05_IMPLEMENTATION_REPORT.md voor het volledige
+implementatierapport.
+
+APP_VER v4.69.53 -> v4.69.54. sw.js CACHE_NAME/CACHE_STATIC synchroon gebumpt
+naar v469540. android/app/build.gradle gesynchroniseerd (46954/4.69.54).
+
 ## v4.69.53 — Design System v1 Foundation: DS-01 (tokens) + DS-02 (typography) (3 september 2026)
 
 Design System Foundation Masterprint. Uitsluitend een ADDITIEVE token-foundation

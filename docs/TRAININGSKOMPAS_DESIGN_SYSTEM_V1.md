@@ -1,7 +1,7 @@
 # TRAININGSKOMPAS DESIGN SYSTEM V1
 
 **Status:** SPECIFIED — AWAITING PRODUCT OWNER REVIEW. Geen enkel bestaand scherm visueel gewijzigd in deze sprint.
-**Baseline-datum:** 3 september 2026. Bron: goedgekeurde referentieconcepten (Vandaag v0.11, Trainen v0.2, Inzicht v0.1, Coach v0.2, Samen v0.1, Profiel v0.1) + code-geverifieerde bestaande implementatie (`index.html`, fresh main `c0ec6c1`).
+**Baseline-datum:** 3 september 2026. **Canonieke visuele referenties (screen-composition source of truth, geen dubbele waarheid met dit document):** `docs/ux/baseline/v1/README.md` — de zes goedgekeurde PNG-mockups zelf. Dit Design System-document blijft de component-/token-source-of-truth; de PNG's bepalen de schermcompositie. Bron: goedgekeurde referentieconcepten (Vandaag v0.11, Trainen v0.2, Inzicht v0.1, Coach v0.2, Samen v0.1, Profiel v0.1) + code-geverifieerde bestaande implementatie (`index.html`, fresh main `c0ec6c1`).
 
 Elke regel is gemarkeerd: **A**=APPROVED (letterlijk uit de goedgekeurde baseline), **B**=DERIVED FROM APPROVED BASELINE (logisch afgeleid, geen nieuwe keuze), **C**=EXISTING IMPLEMENTATION (uit de code, nog niet expliciet PO-goedgekeurd als canoniek maar wel al in productie), **D**=PROPOSED (vereist expliciete PO-goedkeuring).
 

@@ -130,6 +130,16 @@ function tkIcon(name, opts) {
 /** Geeft alle geregistreerde icoonnamen terug (voor tests/showcase). */
 function tkIconNames() { return Object.keys(ICON_PATHS); }
 
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { tkIcon: tkIcon, tkIconNames: tkIconNames, ICON_SIZE: ICON_SIZE, ICON_PATHS: ICON_PATHS };
-}
+/* Consistent met het bestaande patroon van andere core/*.js-modules (bv.
+   cardio.js): expliciete global-toewijzing zodat <script src="core/
+   designSystemIcons.js"> in index.html tkIcon()/tkIconNames() direct
+   beschikbaar maakt in de browser, naast module.exports voor Node/tests. */
+(function (global) {
+  var exportsObj = { tkIcon: tkIcon, tkIconNames: tkIconNames, ICON_SIZE: ICON_SIZE, ICON_PATHS: ICON_PATHS };
+  if (typeof module !== 'undefined' && module.exports) { module.exports = exportsObj; }
+  if (global) {
+    global.tkIcon = tkIcon;
+    global.tkIconNames = tkIconNames;
+    global.ICON_SIZE = ICON_SIZE;
+  }
+})(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));

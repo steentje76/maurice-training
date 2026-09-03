@@ -3994,36 +3994,61 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <div class="scr" id="s-train-mgr">
   <div class="hdr">
     <div class="hdr-row">
-      <div><div class="hdr-title" role="heading" aria-level="1">Training</div><div class="hdr-sub">Bouw, plan en start</div></div>
+      <div><div class="hdr-title" role="heading" aria-level="1">Trainen</div><div class="hdr-sub">Plan, start en beheer je trainingen</div></div>
+      <button class="ibtn" onclick="go('s-profiel')" aria-label="Profiel openen">${tkIcon('profiel',{label:'Profiel'})}</button>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
     <div class="irow" style="margin-bottom:14px"><label class="ilbl">Sport vandaag</label><select class="inp" id="sport-switcher" onchange="setActiveSport(this.value)"></select></div>
 
-    <div class="v43-lbl" style="margin-bottom:10px">Vandaag</div>
+    <!-- SECTION 1 — Eerstvolgende training (Level 1, ongewijzigde, gedeelde renderfunctie
+         v43RenderPlan -- ook gebruikt door Home; niet aanpassen zonder Home-regressie te
+         riskeren. Empty state hieronder is een AANVULLING, geen wijziging van die functie. -->
+    <div class="v43-lbl" style="margin-bottom:10px">Eerstvolgende training</div>
     <div id="v43-train-plan"></div>
-
-    <div class="v43-lbl" style="margin:20px 0 8px">Mijn trainingen</div>
-    <div class="v43-tmt">
-      <button class="row" onclick="go('s-train-mine')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></span><span class="b"><span class="t">Mijn trainingen</span><span class="s">Schema&#8217;s &amp; eigen workouts &#8212; herbruikbaar</span></span><span class="ar">›</span></button>
-      <button class="row" onclick="go('s-programma')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 17l9 5 9-5"/></svg></span><span class="b"><span class="t">Programma&#8217;s</span><span class="s">Meerdere weken plannen &#8212; week, fase, doel</span></span><span class="ar">›</span></button>
+    <div id="trainen-plan-empty" class="tk-card tk-card-l2" style="display:none;margin-bottom:14px">
+      <div style="font-weight:700;margin-bottom:4px">Nog geen training gepland</div>
+      <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:10px">Kies hieronder een programma, maak een training, of train vrij.</div>
+      <button class="tk-btn tk-btn-secondary" onclick="go('s-programma')">Bekijk programma's</button>
     </div>
 
-    <div class="v43-lbl" style="margin:20px 0 8px">Bouwen &amp; verkennen</div>
-    <div class="v43-tmt">
-      <button class="row" onclick="go('s-builder');if(window.WBUI)WBUI.render()"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span class="b"><span class="t">Workout Builder</span><span class="s">AI stelt een training samen op je herstel</span></span><span class="ar">›</span></button>
-      <button class="row" onclick="go('s-running')" aria-label="Hardlopen"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 4a2 2 0 100 4 2 2 0 000-4zM4 20l4-5 3 2 3-5 3 2 3-7"/></svg></span><span class="b"><span class="t">Hardlopen</span><span class="s">Vrij, interval, tempo of duurloop</span></span><span class="ar">›</span></button>
-      <button class="row" onclick="go('s-cycling')" aria-label="Fietsen"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><path d="M6 18l4-9h4l3 5M10 9h4"/></svg></span><span class="b"><span class="t">Fietsen</span><span class="s">Rit loggen — vermogen &amp; FTP volgen in B9-04</span></span><span class="ar">›</span></button>
-      <button class="row" onclick="hyroxOpenSetupDirect('hyrox')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 21l4-4M8 17l3-3M15 10l3-3M18 6l2-2M6 19l1 1M10 15l1 1M13 12l1 1M17 8l1 1"/><circle cx="12" cy="12" r="9"/></svg></span><span class="b"><span class="t">HYROX</span><span class="s">Single, Doubles, Relay of Adaptive — 8 stations, 8 runs</span></span><span class="ar">›</span></button>
-      <button class="row" onclick="hyroxOpenSetupDirect('brick')"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="3"/><circle cx="18" cy="6" r="3"/><path d="M9 18h6a3 3 0 003-3V9"/></svg></span><span class="b"><span class="t">Triathlon-brick</span><span class="s">Zwemmen → fietsen → hardlopen, aaneengesloten</span></span><span class="ar">›</span></button>
-      <button class="row" onclick="go('s-library');if(window.renderLibrary)renderLibrary()"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></span><span class="b"><span class="t">Oefeningen</span><span class="s">206 oefeningen &#183; video&#8217;s &#183; alternatieven</span></span><span class="ar">›</span></button>
-      <button class="row" onclick="openLosOefening()"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 9v6M7 6v12M17 6v12M20 9v6M7 12h10"/></svg></span><span class="b"><span class="t">Losse oefening</span><span class="s">E&#233;n oefening loggen, zonder training</span></span><span class="ar">›</span></button>
+    <!-- SECTION 2 — Jouw training: Mijn trainingen / Programma's / Planning (Level 3). -->
+    <div class="v43-lbl" style="margin:20px 0 8px">Jouw training</div>
+    <div class="tk-card tk-card-l3" style="display:flex;padding:0">
+      <button class="row" onclick="go('s-train-mine')" style="flex:1;flex-direction:column;align-items:flex-start;gap:6px;padding:14px 12px">${tkIcon('programma',{size:'feature'})}<span class="t" style="font-size:13px">Mijn trainingen</span><span class="s" style="font-size:11px">Schema's &amp; eigen workouts</span></button>
+      <button class="row" onclick="go('s-programma')" style="flex:1;flex-direction:column;align-items:flex-start;gap:6px;padding:14px 12px;border-left:1px solid var(--color-border)">${tkIcon('programma',{size:'feature'})}<span class="t" style="font-size:13px">Programma's</span><span class="s" style="font-size:11px">Meerdere weken plannen</span></button>
+      <button class="row" onclick="go('s-kalender')" style="flex:1;flex-direction:column;align-items:flex-start;gap:6px;padding:14px 12px;border-left:1px solid var(--color-border)">${tkIcon('agenda',{size:'feature'})}<span class="t" style="font-size:13px">Planning</span><span class="s" style="font-size:11px">Week, dag &amp; komende sessies</span></button>
     </div>
 
-    <div class="v43-lbl" style="margin:20px 0 8px">Plannen &amp; historie</div>
-    <div class="v43-tmt">
-      <button class="row" onclick="go('s-kalender')"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span><span class="b"><span class="t">Kalender</span><span class="s">Plannen, deload &amp; historie</span></span><span class="ar">›</span></button>
-      <button class="row" onclick="go('s-hist')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg></span><span class="b"><span class="t">Logboek</span><span class="s">Je trainingsgeschiedenis</span></span><span class="ar">›</span></button>
+    <!-- SECTION 3 — Start een activiteit: max. 5 zichtbare tiles (PO-contract), overige
+         activiteiten (Triathlon-brick, Losse oefening) blijven bereikbaar via "Meer" --
+         een inline uitklap binnen dit scherm, GEEN nieuw scherm/nieuwe execution-path. -->
+    <div class="v43-lbl" style="margin:20px 0 8px">Start een activiteit</div>
+    <div class="tk-card tk-card-l3" style="display:flex;flex-wrap:wrap;padding:12px;gap:8px">
+      <button class="quick-act" onclick="go('s-builder');if(window.WBUI)WBUI.render()" aria-label="Kracht">${tkIcon('kracht',{size:'feature'})}<span style="font-size:11px">Kracht</span></button>
+      <button class="quick-act" onclick="go('s-running')" aria-label="Hardlopen">${tkIcon('hardlopen',{size:'feature'})}<span style="font-size:11px">Hardlopen</span></button>
+      <button class="quick-act" onclick="go('s-cycling')" aria-label="Fietsen">${tkIcon('fietsen',{size:'feature'})}<span style="font-size:11px">Fietsen</span></button>
+      <button class="quick-act" onclick="hyroxOpenSetupDirect('hyrox')" aria-label="HYROX">${tkIcon('hyrox',{size:'feature'})}<span style="font-size:11px">HYROX</span></button>
+      <button class="quick-act" onclick="document.getElementById('trainen-meer-activiteiten').style.display=document.getElementById('trainen-meer-activiteiten').style.display==='none'?'flex':'none'" aria-label="Meer activiteiten" aria-expanded="false" id="trainen-meer-btn">${tkIcon('meer',{size:'feature'})}<span style="font-size:11px">Meer</span></button>
+    </div>
+    <div id="trainen-meer-activiteiten" class="tk-card tk-card-l3" style="display:none;flex-wrap:wrap;padding:12px;gap:8px;margin-top:-4px">
+      <button class="quick-act" onclick="hyroxOpenSetupDirect('brick')" aria-label="Triathlon-brick">${tkIcon('fietsen',{size:'feature'})}<span style="font-size:11px">Triathlon</span></button>
+      <button class="quick-act" onclick="openLosOefening()" aria-label="Losse oefening">${tkIcon('oefening',{size:'feature'})}<span style="font-size:11px">Losse oefening</span></button>
+    </div>
+
+    <!-- SECTION 4 — Maken & ontdekken: Training maken (-> bestaande Workout Builder,
+         GEEN tweede execution-path) + Oefeningen (Level 3). -->
+    <div class="v43-lbl" style="margin:20px 0 8px">Maken &amp; ontdekken</div>
+    <div class="tk-card tk-card-l3" style="padding:0">
+      <button class="row" onclick="go('s-builder');if(window.WBUI)WBUI.render()">${tkIcon('bewerken',{size:'standard'})}<span class="b"><span class="t">Training maken <span class="ilbl" style="background:var(--color-primary-surface);color:#fff;padding:1px 6px;border-radius:8px;font-size:9px;vertical-align:middle">AI</span></span><span class="s">AI stelt een training samen op je herstel</span></span><span class="ar">›</span></button>
+      <button class="row" onclick="go('s-library');if(window.renderLibrary)renderLibrary()" style="border-top:1px solid var(--color-border)">${tkIcon('zoeken',{size:'standard'})}<span class="b"><span class="t">Oefeningen</span><span class="s">206 oefeningen &#183; video&#8217;s &#183; alternatieven</span></span><span class="ar">›</span></button>
+    </div>
+
+    <!-- SECTION 5 — Terugkijken: wat heb ik gedaan (geen progressie-interpretatie, dat
+         hoort onder Inzicht). -->
+    <div class="v43-lbl" style="margin:20px 0 8px">Terugkijken</div>
+    <div class="tk-card tk-card-l3" style="padding:0">
+      <button class="row" onclick="go('s-hist')">${tkIcon('historie',{size:'standard'})}<span class="b"><span class="t">Trainingshistorie / Logboek</span><span class="s">Je volledige trainingsgeschiedenis en statistieken</span></span><span class="ar">›</span></button>
     </div>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
@@ -5635,6 +5660,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 </div>
 
 <script src="core/calculation.js"></script>
+<script src="core/designSystemIcons.js"></script>
 <script src="core/decision.js"></script>
 <script src="core/aiOutputContract.js"></script>
 <script src="core/cardio.js"></script>
@@ -6391,7 +6417,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.54';
+const APP_VER = 'v4.69.55';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';

@@ -74,3 +74,57 @@ De Playwright/Chromium-browsertests draaiden succesvol in deze ontwikkelomgeving
 
 ## STATUS
 **TRAINEN v0.2 RUNTIME FIXED — READY FOR PRODUCT OWNER RE-REVIEW**
+
+---
+
+# VERVOLGSPRINT — VISUAL POLISH & REPRODUCTIE-ONDERZOEK
+
+Na nieuw bewijs van de Product Owner (drie echte Android/Brave-screenshots die bevestigden dat de icon-bug al was opgelost).
+
+## 1. Eerstvolgende training card
+Bevestigd correct rendert met echte data: "Training A", "7 oefeningen", "Kracht · Week 1 · Anatomische Aanpassing", "Start training". **Tijd/locatie ("Vandaag 19:00", "Gym · Strength") ontbreken bewust** — live geverifieerd tegen het echte databaseschema: `vaste_trainingen` heeft geen starttijd/locatie-kolom. Geen fictieve data toegevoegd. **"Bekijk details" bevestigd functioneel aanwezig**: de volledige kaart is `role="button"` met `openTrainingPreview()`, functioneel gelijkwaardig, zonder de gedeelde, ook door Home gebruikte functie te wijzigen.
+
+## 2. Onderzoek vermeend ontbrekende card
+**Gereproduceerd: GEEN echte bug.** Met echte `window.homeNextT`-data rendert de kaart 100% correct. De eerdere observatie was een gevolg van het ontbreken van data in de niet-ingelogde, `file://`-testcontext van de vorige sprint — niet van een renderfout in de productiecode.
+
+## 3. Start een activiteit / Meer
+**Echte, bevestigde bug gevonden en opgelost.** "Meer" wrapte bij 390px-breedte naar een eigen rij en nam vervolgens de volledige, resterende breedte in (334px vs. 77.5px voor de andere tegels) — veel dominanter dan toegestaan. Root cause: `flex-wrap` + `flex:1` op de tegels, die net niet allemaal op één rij pasten. Opgelost met CSS Grid (5 gelijke kolommen). Live gemeten na de fix: alle 5 tegels nagenoeg identieke breedte (verschil <5px). Getest op alle 6 vereiste viewports (320–430px), geen horizontale overflow.
+
+## 4. Jouw training
+Bevestigd correct (padding, icon-alignment, heading-alignment, gelijke hoogte) — geen wijziging nodig t.o.v. de vorige sprint.
+
+## 5. Maken & ontdekken
+Bevestigd correct (vertical alignment, chevrons, icon-sizing, divider, AI-badge-spacing).
+
+## 6. Terugkijken
+Bevestigd correct, bestaande route (`go('s-hist')`) ongewijzigd.
+
+## 7. Header
+Bevestigd: "Trainen" / "Plan, start en beheer je trainingen" / profiel-trigger rechtsboven, geen afwijkende whitespace t.o.v. de canonical PNG.
+
+## 8. Bottom nav
+Niet aangepast (NAVIGATION MIGRATION DEPENDENCY blijft van kracht, zoals voorgeschreven).
+
+## VISUAL DELTA AUDIT (bijgewerkt)
+| Element | Target | Runtime | Delta | Severity |
+|---|---|---|---|---|
+| Header | "Trainen" + subtitel + avatar | identiek | geen | PASS |
+| Eerstvolgende training (met data) | marine, naam, oefeningaantal, programma-chip, Start training | identiek qua structuur; tijd/locatie ontbreken (data niet beschikbaar in schema) | tijd/locatie afwezig | MINOR — reden: geen bronveld in `vaste_trainingen`, geen fictieve data toegestaan; vereist een toekomstige, aparte schema-uitbreiding (Product Owner-beslissing, buiten scope van een herstelsprint) |
+| Jouw training | 3 tegels, titel+subtekst gescheiden | identiek | geen | PASS |
+| Start een activiteit | 5 gelijke tiles | identiek (na fix) | geen | PASS |
+| Maken & ontdekken | 2 rijen, AI-badge | identiek | geen | PASS |
+| Terugkijken | 1 rij | identiek | geen | PASS |
+
+**0 BLOCKER. 0 MAJOR. 1 MINOR (tijd/locatie op de trainingskaart), met expliciete, bewezen reden.**
+
+## FUNCTIONAL PRESERVATION (herbevestigd)
+Mijn trainingen, Programma's, Planning, Kracht, Hardlopen, Fietsen, HYROX, Meer, Triathlon, Losse oefening, Training maken, Oefeningen, Trainingshistorie, Profiel — alle 13 routes ongewijzigd, live bevestigd via `fTrainenV02Migration`/`fTrainenBrowserRuntime` (35/35 + 19/19).
+
+## BIJGEWERKTE SCREENSHOTS
+`docs/screenshots/trainen_v02_runtime_fixed.png` (empty state, geen ingelogde data) en `docs/screenshots/trainen_v02_runtime_with_data.png` (met echte trainingsdata gesimuleerd — toont de volledige, canonical-conforme kaart).
+
+## TEST-GAP LES (vastgelegd, geldt later ook voor Vandaag/Inzicht/Coach/Samen/Profiel)
+**ROOT CAUSE:** statische HTML bevatte `${tkIcon(...)}` die nooit werd geïnterpoleerd. **WHY TESTS MISSED IT:** source-level tests bewezen aanwezigheid van markup/patronen, niet browser-evaluatie/rendering. **PREVENTION:** een echte browser-runtime-test (Playwright/Chromium) is toegevoegd en permanent onderdeel gemaakt van de Trainen-testsuite — dit principe moet bij elke toekomstige, zichtbare schermmigratie worden toegepast, maar wordt nu niet op andere schermen uitgevoerd.
+
+## BIJGEWERKTE EINDSTATUS
+**TRAINEN v0.2 RUNTIME FIXED — READY FOR PRODUCT OWNER RE-REVIEW**

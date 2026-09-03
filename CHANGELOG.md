@@ -1,5 +1,64 @@
 # Trainingskompas — Changelog
 
+## v4.69.55 — Trainen v0.2: eerste gecontroleerde screen migration (3 september 2026)
+
+First Controlled Screen Migration Masterprint. Uitsluitend het Trainen-scherm
+(s-train-mgr) visueel gemigreerd naar Design System v1 / canonical baseline
+trainen-v0.2.png -- geen ander hoofdscherm aangeraakt, geen navigatiemigratie.
+
+DEEL A: PR #228 (DS-03/04/05) veilig gemergd (merge SHA e13ff1b), fresh-main
+gecertificeerd (release gate/Android/canonical-hashes groen).
+
+DEEL B: s-train-mgr herstructureerd naar de vijf secties uit de canonical
+baseline (Eerstvolgende training / Jouw training / Start een activiteit /
+Maken & ontdekken / Terugkijken). Header hernoemd van "Training"/"Bouw, plan
+en start" naar "Trainen"/"Plan, start en beheer je trainingen" (exacte tekst
+uit trainen-v0.2.png), avatar rechtsboven toegevoegd (opent bestaande
+Profiel-route). Canonical DS-03/04/05-primitives hergebruikt: tkIcon() i.p.v.
+losse SVG-paden, .tk-card-l2/l3 i.p.v. nieuwe, lokale kaartstijlen.
+
+FUNCTIONAL PRESERVATION (harde eis, geen enkele route verloren): Mijn
+trainingen, Programma's, Planning/Kalender, Training maken (-> bestaande
+Workout Builder, geen tweede execution-path), Hardlopen, Fietsen, HYROX,
+Triathlon-brick, Oefeningen, Losse oefening, Trainingshistorie/Logboek --
+allemaal exact dezelfde route/handler als vóór de migratie. "Start een
+activiteit" toont maximaal 5 zichtbare tiles (PO-contract: Kracht/Hardlopen/
+Fietsen/HYROX/Meer); Triathlon-brick en Losse oefening blijven bereikbaar via
+een inline "Meer"-uitklap (geen nieuw scherm, geen tweede executiepad).
+
+NAVIGATION MIGRATION DEPENDENCY (bewust niet opgelost, expliciet
+gedocumenteerd): de bottom-navigatie is nog volledig legacy (Home/Training/
+Lichaam/Coach/Voortgang) -- een gedeelde component op elk scherm. Deze sprint
+migreert die NIET, om te voorkomen dat een gedeeltelijke labelwijziging een
+onbedoelde, inconsistente app-brede navigatiewijziging veroorzaakt op
+schermen die niet in scope zijn (Home/Lichaam/Coach/Voortgang).
+
+GEEN mockdata hardcoded: de "eerstvolgende training"-kaart blijft de
+bestaande, gedeelde v43RenderPlan()-functie gebruiken (ook door Home
+gebruikt, dus bewust NIET gewijzigd om Home-regressie te voorkomen) met
+window.homeNextT als enige, echte databron. Een aparte, Trainen-specifieke
+empty-state is toegevoegd naast (niet in plaats van) die functie voor het
+geval er geen training gepland is.
+
+core/fTrainenV02Migration.test.js (nieuw, 32/32): alle bestaande routes,
+5-tiles-contract, canonical-componentgebruik, geen mockdata, ongewijzigde
+gedeelde renderfunctie, ongewijzigde bottom-nav, canonical-PNG-integriteit.
+core/fB9_02RunningCore.test.js bijgewerkt (1 assertie: parse-markers naar de
+nieuwe sectienamen, functionele eis ongewijzigd).
+
+Live sabotage (6x: kapotte route, verwijderde Meer-activiteit, primary-kleur,
+card-radius, canonical PNG-byte, hardcoded "Training A") allemaal correct
+gedetecteerd en volledig hersteld.
+
+Cross-domein regressie (Entitlements/Team/Gym/Admin-Auth/Women's Performance/
+Recovery/Devices/Ergometers/Running-Core): 0 problemen.
+
+APP_VER v4.69.54 -> v4.69.55. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469550. android/app/build.gradle gesynchroniseerd
+(46955/4.69.55).
+
+Zie docs/TRAINEN_V02_IMPLEMENTATION_REPORT.md voor het volledige rapport.
+
 ## v4.69.54 — Design System v1 Component Foundation: DS-03 (iconography) + DS-04 (buttons) + DS-05 (cards) (3 september 2026)
 
 Design System Component Foundation Masterprint. Bouwt herbruikbare bouwstenen

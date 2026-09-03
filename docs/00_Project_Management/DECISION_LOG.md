@@ -1255,3 +1255,11 @@
   overzicht per domein.
 - **Verantwoordelijke:** Product Owner (autonome long-run-vrijgave),
   uitgevoerd door Claude.
+
+## Technical Foundation -- Admin-PIN was geen authorization-boundary; RLS defense-in-depth toegepast
+
+- **Datum:** 3 september 2026.
+- **Context:** forensisch onderzoek naar de gedeelde admin-PIN (target-architectuur verbiedt dit expliciet als mechanisme).
+- **Bevinding:** de PIN gaf nooit zelfstandig privilege -- alle gevoelige acties waren al server-side/RLS-beschermd. Twee `WITH CHECK (true)`-INSERT-policies bleken bij live onderzoek geen exploiteerbaar gat (trigger-bescherming), maar zijn alsnog als defense-in-depth gehard naar het bestaande, bewezen rolgebaseerde patroon.
+- **Niet gedaan:** verwijderen van `s-admin-pin` zelf (UX-wijziging, buiten scope) en migratie van de gym-join-flow naar canonical memberships (vereist aparte PO-goedkeuring).
+- **Verantwoordelijke:** Product Owner (Technical Foundation Masterprint-opdracht), uitgevoerd door Claude, onafhankelijk live geverifieerd (eigen adversariële insert-test, trigger-bevestiging, RLS-policy-vergelijking).

@@ -135,3 +135,12 @@ Canonical bron: `docs/GAP_ANALYSIS_V2.md`.
 
 ## 8. Historical reference
 Release- en sprintgeschiedenis (v3.3.x t/m v4.69.0, inclusief Fase 2-afronding/v4.47.0, Night Sprint 19-23/v4.41-4.45, Sprint 3/3.1, en alle overige releases) staat volledig in `CHANGELOG.md` (93 versie-entries) en `docs/RELEASE_HISTORY.md` (compacte index), met gedetailleerde sprintrapporten in `docs/Sprintrapporten/`. Dit document herhaalt die geschiedenis niet.
+
+## 9. Technical Foundation — Admin Auth Hardening + Legacy Gym audit (Track A CLOSED, Track B analyse)
+Forensisch onderzoek naar de gedeelde admin-PIN (`s-admin-pin`) en het legacy Gym-model, uitgevoerd los van het UX-spoor (`docs/ux-night-preparation`). **Kernbevinding, onafhankelijk geverifieerd:** de PIN was geen zelfstandige authorization-boundary voor gevoelige acties. `s-admin-pin` ontsluit uitsluitend een oefeningen-/apparatuurcatalogusscherm waarvan de onderliggende `exercises`-tabel al correct RLS-beschermd was (`gym_role_level>=1`); `gym-team.js` (het echte, gevoelige team-/rollenbeheer) had al server-side identiteitscontrole, rolcontrole vóór de PIN-check, privilege-escalatiebescherming en audit-logging.
+
+**Wel gevonden en gerepareerd (defense-in-depth, geen kritiek gat):** `equipment_catalog`/`exercise_equipment` hadden `WITH CHECK (true)` op INSERT. Live, transactioneel onderzoek (rollback) toonde aan dat dit géén exploiteerbaar gat was — before-insert-triggers overschrijven `gym_id`/`user_id`/`organization_id` altijd met server-vertrouwde waarden. Beide policies alsnog vervangen door het bestaande, bewezen rolgebaseerde UPDATE/DELETE-patroon. Live, zelfstandig adversarieel herbevestigd: een gewoon lid (`gym_role_level=1`) wordt geblokkeerd, ook via de `user_id`-uitzondering (trigger geeft expliciete foutmelding).
+
+**Legacy vs. canoniek (Track B, alleen geanalyseerd, niet gemigreerd):** `exercise_equipment`/`equipment_catalog`-RLS bleek al dual-model (gym_id-tak én organization_id-tak in dezelfde policy) — geen nieuwe RLS nodig voor een toekomstige canonical-migratie. Gym-join-flow schrijft nog uitsluitend legacy `users.gym_id`; bewust niet gewijzigd zonder aparte PO-goedkeuring van de UX-consequenties.
+
+**Tests:** `core/fAdminAuthGymRlsHardening.test.js` (nieuw, 8/8). Release gate: 229/229 (was 228). Geen schema-, data-, of UX-wijziging. **STATUS: TRACK A CLOSED.** Volledig rapport: `docs/ADMIN_AUTH_HARDENING_REPORT.md`, `docs/ADMIN_AUTH_AND_GYM_MIGRATION_PLAN.md`.

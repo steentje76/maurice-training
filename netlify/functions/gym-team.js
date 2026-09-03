@@ -2,7 +2,18 @@
 // (1) een geldige sessie, (2) een gym_role_level die hoog genoeg is voor de actie, en
 // (3) de juiste coach-pincode van de eigen gym. Rolwijzigingen worden altijd gelogd in
 // gym_audit_log — nooit atleet-/trainingsdata, uitsluitend lidmaatschap/rol-gebeurtenissen.
-const ROLE_LEVEL = { lid: 0, coach: 1, manager: 2, owner: 3 };
+// KRITIEKE FIX (deze sprint, zelf gevonden): deze constante moet EXACT
+// overeenkomen met de database-gegenereerde kolom users.gym_role_level
+// (CASE gym_role WHEN 'lid' THEN 1 WHEN 'coach' THEN 2 WHEN 'manager' THEN 3
+// WHEN 'owner' THEN 4 ELSE 0 END). De eerdere constante was 0-indexed
+// (lid:0..owner:3) terwijl caller.gym_role_level altijd de 1-indexed
+// databasewaarde is -- een off-by-one-mismatch die systematisch iedere rol
+// één stap hoger autoriseerde dan bedoeld: een gewoon lid kreeg toegang tot
+// coach-only acties (list/audit_log), en een coach kon zowel update_role
+// uitvoeren als een lid tot manager promoveren (bedoeld voor manager+).
+// Live, transactioneel bevestigd tijdens forensisch onderzoek (Technical
+// Foundation Masterprint, Admin Auth Hardening).
+const ROLE_LEVEL = { lid: 1, coach: 2, manager: 3, owner: 4 };
 
 exports.handler = async function (event) {
   if (event.httpMethod !== 'POST') {

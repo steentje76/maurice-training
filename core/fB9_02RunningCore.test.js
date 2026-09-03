@@ -24,9 +24,16 @@ ok(html.match(/onclick="go\('s-cycling'\)" aria-label="Fietsen"/),
 ok(!html.match(/>Cardio<\/span>[\s\S]{0,50}go\('s-running'\)/) && !html.match(/go\('s-running'\)[\s\S]{0,10}Fietsen/),
   'A3: geen generiek "Cardio"-item dat Hardlopen en Fietsen samenvoegt');
 {
-  const iaBlok = html.split("Bouwen &amp; verkennen")[1].split('Plannen &amp; historie')[0];
+  // Sectienamen bijgewerkt tijdens de Trainen v0.2-migratie (Design System v1):
+  // "Bouwen & verkennen"/"Plannen & historie" bestaan niet meer als zodanig --
+  // de vijf activiteit-tiles (voorheen losse rijen) staan nu onder "Start een
+  // activiteit". De functionele eis (volgorde Builder/Kracht -> Hardlopen ->
+  // Fietsen -> HYROX) blijft ongewijzigd en is nog steeds waar. Marker gebruikt
+  // de exacte, zichtbare sectiekop (met sluit-tag) om niet per ongeluk een
+  // gelijkluidend stuk broncode-commentaar te raken.
+  const iaBlok = html.split('>Start een activiteit</div>')[1].split('Maken &amp; ontdekken')[0];
   ok(iaBlok.includes("s-builder") && iaBlok.indexOf('s-running') < iaBlok.indexOf('s-cycling') && iaBlok.indexOf('s-cycling') < iaBlok.indexOf('hyroxOpenSetupDirect'),
-    'A4: volgorde is Workout Builder -> Hardlopen -> Fietsen -> HYROX (conform de voorkeursstructuur)');
+    'A4: volgorde is Workout Builder/Kracht -> Hardlopen -> Fietsen -> HYROX (conform de voorkeursstructuur, nu binnen de "Start een activiteit"-sectie van Trainen v0.2)');
 }
 
 // ---- B. Geen dode routes: beide schermen bestaan daadwerkelijk ----

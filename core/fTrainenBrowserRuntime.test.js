@@ -110,6 +110,23 @@ async function loadTrainenDOM(page) {
     });
     ok(emptyStateVisible === true, '9: wanneer er geen geplande training is (window.homeNextT leeg, zoals in deze niet-ingelogde testcontext), toont de echte DOM de bruikbare empty-state ("Nog geen training gepland") in plaats van een lege sectie');
 
+    // Zelf gevonden, derde bugklasse (herstelsprint 3): "Meer" was met flex-wrap
+    // op een eigen regel gewrapt en nam vervolgens de volledige, resterende
+    // breedte in (334px vs. 77.5px voor de andere 4 tegels) -- veel dominanter
+    // dan de PO-baseline toestaat. Opgelost met CSS Grid (5 gelijke kolommen,
+    // robuust tegen marginale breedteverschillen op elke viewport).
+    const tileWidths = await page.evaluate(() => {
+      const containers = document.querySelectorAll('#s-train-mgr .tk-card.tk-card-l3');
+      const activityContainer = Array.from(containers).find(c => c.querySelector('[aria-label="Kracht"]'));
+      if (!activityContainer) return null;
+      return Array.from(activityContainer.querySelectorAll('.quick-act')).map(t => t.getBoundingClientRect().width);
+    });
+    ok(tileWidths && tileWidths.length === 5, '10: alle 5 primaire activity-tiles (Kracht/Hardlopen/Fietsen/HYROX/Meer) staan op dezelfde rij in de echte DOM');
+    if (tileWidths && tileWidths.length === 5) {
+      const maxW = Math.max(...tileWidths), minW = Math.min(...tileWidths);
+      ok(maxW - minW < 5, '11: geen enkele tile (incl. "Meer") is visueel dominanter dan de andere -- alle 5 hebben nagenoeg identieke breedte (verschil ' + (maxW - minW).toFixed(1) + 'px), conform het PO-contract "Meer mag niet visueel dominanter zijn"');
+    }
+
     await page.close();
   }
 
@@ -132,11 +149,11 @@ async function loadTrainenDOM(page) {
     const htmlPath = path.join(ROOT, 'index.html');
     const original = fs.readFileSync(htmlPath, 'utf8');
     const sabotaged = original.replace(
-      '<span style="font-size:11px">Kracht</span>',
-      '${tkIcon(\'kracht\',{size:\'feature\'})}<span style="font-size:11px">Kracht</span>'
+      '<span style="font-size:10.5px">Kracht</span>',
+      '${tkIcon(\'kracht\',{size:\'feature\'})}<span style="font-size:10.5px">Kracht</span>'
     );
     if (sabotaged === original) {
-      ok(false, '10 (sabotage-setup): kon de sabotage-marker niet vinden -- test-infrastructuur zelf is stuk, geen betrouwbare sabotage uitgevoerd');
+      ok(false, '12 (sabotage-setup): kon de sabotage-marker niet vinden -- test-infrastructuur zelf is stuk, geen betrouwbare sabotage uitgevoerd');
     } else {
       fs.writeFileSync(htmlPath, sabotaged, 'utf8');
       const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
@@ -144,9 +161,9 @@ async function loadTrainenDOM(page) {
       const detecteert = html && html.includes('${tkIcon(');
       await page.close();
       fs.writeFileSync(htmlPath, original, 'utf8'); // direct herstellen, ongeacht resultaat
-      ok(detecteert === true, '10: live sabotage (opnieuw ${tkIcon(...)} in statische HTML geintroduceerd) wordt door deze testsuite gedetecteerd -- bewijst dat de test de exacte bugklasse daadwerkelijk vangt, niet toevallig slaagt');
+      ok(detecteert === true, '12: live sabotage (opnieuw ${tkIcon(...)} in statische HTML geintroduceerd) wordt door deze testsuite gedetecteerd -- bewijst dat de test de exacte bugklasse daadwerkelijk vangt, niet toevallig slaagt');
       const restored = fs.readFileSync(htmlPath, 'utf8');
-      ok(restored === original, '10b: index.html is na de sabotage-test byte-identiek hersteld naar de originele, gecorrigeerde staat');
+      ok(restored === original, '12b: index.html is na de sabotage-test byte-identiek hersteld naar de originele, gecorrigeerde staat');
     }
   }
 

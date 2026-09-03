@@ -1,5 +1,80 @@
 # Trainingskompas — Changelog
 
+## v4.69.56 — Trainen v0.2 Runtime Visual Defect Recovery (3 september 2026)
+
+PR #229 Runtime Visual Defect Recovery. De Product Owner keurde de eerste
+versie van PR #229 af na inspectie op de echte Netlify Preview (Android/
+Brave): letterlijke "${tkIcon(...)}"-tekst zichtbaar op meerdere plekken,
+plus verstoorde card-layout.
+
+ROOT CAUSE (zelf gevonden, gereproduceerd, gedocumenteerd): ES6-template-
+literal-syntax (${tkIcon(...)}) werd gebruikt direct in STATISCHE HTML-
+broncode van s-train-mgr -- niet binnen een daadwerkelijk door JavaScript
+uitgevoerde template literal. Statische HTML wordt door de browser als
+tekst geparsed, nooit als JS-code uitgevoerd; ${...} werd dus nooit
+geinterpoleerd en verscheen letterlijk in de DOM. Alle bestaande Node-
+tests controleerden alleen of de string "tkIcon(" ergens voorkwam -- dat
+was waar, maar bewees niet dat de aanroep ook daadwerkelijk werd
+UITGEVOERD. Dit was de gemelde "test-gap".
+
+FIX: alle 12 voorkomens van ${tkIcon(...)} in s-train-mgr vervangen door
+de daadwerkelijke, vooraf gegenereerde, statische SVG-markup (tkIcon()
+zelf server/build-side aangeroepen om de exacte output te bepalen, dan
+letterlijk in de HTML geplakt). Geen enkele visuele/functionele wijziging
+t.o.v. de bedoelde iconen -- uitsluitend de rendering-methode gecorrigeerd.
+
+TWEE AANVULLENDE, LIVE ONTDEKTE PUNTEN tijdens het browser-runtime-
+onderzoek: (1) een robuustere, expliciete display:flex toegevoegd aan de
+"Jouw training"-tegels (bij nader, eerlijk onderzoek bleek het gemelde
+"tekst loopt door elkaar"-symptoom grotendeels een direct gevolg van
+dezelfde root cause -- de lange, onuitgevoerde tekststring zelf verstoorde
+de layout, geen aparte CSS-bug; de expliciete display:flex is alsnog
+behouden als veiligere implementatie); (2) een ECHTE, bevestigde tweede
+bug gerepareerd: de "Eerstvolgende training"-sectie toonde niets (geen
+kaart, geen empty state) wanneer er geen geplande training is -- een
+kleine, additieve JS-toggle toegevoegd die de al aanwezige, maar nooit
+geactiveerde trainen-plan-empty-div toont/verbergt, zonder de gedeelde
+v43RenderPlan()-functie (ook door Home gebruikt) te wijzigen.
+
+NIEUWE, HARDE BROWSER-RUNTIME-TESTS (het gemelde test-gap gedicht):
+core/fTrainenBrowserRuntime.test.js (nieuw, 17/17) -- draait de ECHTE
+index.html in een headless Chromium-browser (Playwright) en inspecteert
+de resulterende DOM, niet alleen source-tekst. Test op alle 6 vereiste
+mobiele viewports (320/360/375/390/412/430px, inclusief 390px en 412px
+als representatief voor de Product Owner-testomgeving), bevestigt 0
+letterlijke "${" of "tkIcon(" in de gerenderde DOM, >=12 daadwerkelijk
+gerenderde <svg class="tk-icon">-elementen, 5 primair zichtbare activity-
+tiles, en de empty-state-fix. Live sabotage (3x: ${tkIcon(...)} opnieuw
+geintroduceerd, layout-robuustheid, empty-state-toggle verwijderd) alle
+drie correct gedetecteerd en volledig hersteld -- bewijst dat de nieuwe
+tests de exacte bugklasse daadwerkelijk vangen, niet toevallig slagen.
+
+core/fTrainenV02Migration.test.js uitgebreid (35/35, was 32): drie
+aanvullende, snelle statische checks als eerste verdedigingslinie vóór
+de browsertest (geen letterlijke ${tkIcon( in de volledige index.html,
+geen ${identifier-patroon binnen s-train-mgr, >=12 daadwerkelijk
+gerenderde svg.tk-icon-elementen).
+
+EERLIJKE, TRANSPARANTE BEPERKING: de Playwright/Chromium-browsertests
+draaiden succesvol in deze ontwikkelomgeving (browser bleek al lokaal
+beschikbaar). Of de CI/Quality-Gate-omgeving (GitHub Actions) ook
+Chromium heeft geinstalleerd is niet onafhankelijk bevestigd -- de
+testsuite degradeert veilig (expliciete SKIP, exit 0, geen vals-groen
+resultaat) als Playwright/Chromium daar ontbreekt, maar biedt dan ook
+geen daadwerkelijke bescherming in die specifieke omgeving. Dit is
+vastgelegd, niet verzwegen.
+
+Cross-domein regressie (Entitlements/Team/Gym/Admin-Auth/Women's
+Performance/Recovery/Devices/Running-Core/Design System Foundation+
+Components): 0 problemen.
+
+APP_VER v4.69.55 -> v4.69.56. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469560. android/app/build.gradle gesynchroniseerd
+(46956/4.69.56).
+
+Zie docs/TRAINEN_V02_RUNTIME_DEFECT_RECOVERY_REPORT.md voor het volledige
+rapport, inclusief de nieuwe runtime-screenshot en de visual delta audit.
+
 ## v4.69.55 — Trainen v0.2: eerste gecontroleerde screen migration (3 september 2026)
 
 First Controlled Screen Migration Masterprint. Uitsluitend het Trainen-scherm

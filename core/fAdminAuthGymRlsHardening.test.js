@@ -44,8 +44,9 @@ ok(gymTeam.includes('gelijke of hogere rol dan die van jezelf') && gymTeam.inclu
   '3: update_role blokkeert zowel het wijzigen van een gelijke/hogere rol als het toekennen van een hogere rol dan de aanroeper zelf heeft (bevestigd, al aanwezige bescherming)');
 
 // ---- 4. Tenant-scoping: alle queries in gym-team.js zijn gym_id-gescoped ----
-ok(gymTeam.match(/gym_id=eq\.\$\{caller\.gym_id\}/g)?.length >= 3,
-  '4: list/audit_log/update_role-queries zijn allemaal expliciet gescoped op de gym van de aanroeper, geen cross-tenant query gevonden');
+ok((gymTeam.match(/gym_id=eq\.\$\{caller\.gym_id\}/g)?.length >= 1) &&
+   (gymTeam.match(/organization_id=eq\.\$\{orgId\}|organization_id=eq\.\$\{caller\.gym_id\}/g)?.length >= 2),
+  '4: list/audit_log/update_role-queries zijn allemaal expliciet gescoped op de gym/organization van de aanroeper (na de Track B-canonical-migratie deels via organization_id, deels via gym_id), geen cross-tenant query gevonden');
 
 // ---- 5. Audit-logging van rolwijzigingen (target-vereiste, al aanwezig) ----
 ok(gymTeam.includes("action: 'role_changed'") && gymTeam.includes('gym_audit_log'),

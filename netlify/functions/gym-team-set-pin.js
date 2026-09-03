@@ -26,9 +26,17 @@ exports.handler = async function (event) {
     const { id: callerId, email: callerEmail } = await userRes.json();
     if (!callerId) return { statusCode: 401, body: JSON.stringify({ error: { message: 'Kon gebruiker niet vaststellen' } }) };
 
-    const callerRes = await fetch(`${supabaseUrl}/rest/v1/users?id=eq.${callerId}&select=gym_id,gym_role_level`, { headers: sbHeaders });
+    // KRITIEKE FIX (Track B, zelf gevonden -- regressie geïntroduceerd door de
+// Track A off-by-one-fix in gym-team.js): deze drempel was hardcoded op de
+// OUDE, 0-indexed schaal (owner was level 3). Sinds Track A users.gym_role_level
+// correct 1-indexed behandelt (owner=4), liet deze ongewijzigde `< 3`-check
+// een MANAGER (nu level 3) ook door -- een manager kon sinds die merge de
+// coach-pincode instellen, een bevoegdheid die uitsluitend voor de owner
+// bedoeld is. Ontdekt doordat de bijbehorende mock-testsuite (fGymTeamSecurity)
+// tegelijk naar de correcte, 1-indexed schaal is bijgewerkt.
+const callerRes = await fetch(`${supabaseUrl}/rest/v1/users?id=eq.${callerId}&select=gym_id,gym_role_level`, { headers: sbHeaders });
     const [caller] = await callerRes.json();
-    if (!caller || (caller.gym_role_level ?? -1) < 3) {
+    if (!caller || (caller.gym_role_level ?? -1) < 4) {
       return { statusCode: 403, body: JSON.stringify({ error: { message: 'Alleen de gym-owner mag de coach-pincode instellen' } }) };
     }
 

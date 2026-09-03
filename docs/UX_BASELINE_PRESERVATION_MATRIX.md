@@ -1,5 +1,7 @@
 # UX_BASELINE_PRESERVATION_MATRIX.md
 
+**Status: PRODUCT OWNER APPROVED — SPECIFICATION BASELINE (3 september 2026).** Alle zes referentieversies hieronder (v0.11/v0.2/v0.1/v0.2/v0.1/v0.1) blijven de goedgekeurde baseline; geen enkel scherm is geïmplementeerd.
+
 ## VANDAAG
 **Purpose:** dagelijkse orchestratie, Next Best Action. **Approved version:** v0.11. **Approved structural elements:** header, Next Best Action-kaart, Today Timeline, relevante context (conditioneel), progress snapshot (compact), quick actions. **Approved visual principles:** rustig ondanks context, teal/marine/wit, geen concurrerende Level-1-kaarten. **Mandatory navigation:** eerste bottom-tab, startscherm na login. **Domain-specific patterns:** orchestreert alleen, rekent niets zelf. **Illustrative/mockdata only:** alle voorbeeldnamen/percentages/coachnamen/weerdata in v0.11 — geen productwaarheid tenzij canonical backend dit levert. **Nog te ontwerpen:** exacte Quick Action Registry-UX, P0-banner-styling. **Verboden autonome wijziging:** motivatietekst/streak-achtige elementen toevoegen zonder PO-review (target verbiedt dark patterns). **Dependencies:** volledige functionele spec al aanwezig in `docs/ux-night-preparation/ux-01-vandaag/`.
 

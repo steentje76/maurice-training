@@ -2,6 +2,8 @@
 
 **Dit is uitsluitend een plan. Geen enkel onderdeel is uitgevoerd.**
 
+**Status: PRODUCT OWNER APPROVED — SPECIFICATION BASELINE (3 september 2026).** DS-01 (canonical tokens: spacing/radius/elevation/semantic color mapping) en DS-02 (typography) zijn de eerstvolgende TECHNISCHE Design System-sprints, bevestigd als FIRST FOUNDATION SPRINT — maar NIET uitgevoerd in deze opdracht. DS-06 (navigatie) blijft user-facing en vereist een aparte, expliciete implementatie-opdracht na de foundation-sprints.
+
 | # | Onderdeel | Current | Target | Dependencies | Risk | Affected surfaces | Testing | PO review |
 |---|---|---|---|---|---|---|---|---|
 | DS-01 | Canonical tokens (spacing/radius) | ad-hoc, consistent gebruikt, niet gedocumenteerd | benoemde schaal (zie DS v1 §4-5) | geen | LAAG | alle | visuele regressie op bestaande schermen (moet 0 verschil tonen) | JA (radius-keuze card=16px) |

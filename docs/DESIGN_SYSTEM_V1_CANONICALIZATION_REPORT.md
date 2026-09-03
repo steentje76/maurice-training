@@ -48,5 +48,10 @@ Wordt aangemaakt na dit rapport. NIET auto-gemerged (conform opdracht). PR #222 
 ## Final self-audit (sectie 26, alle 14 vragen — geen enkele ongewenste "ja")
 Geen bestaande UX gewijzigd. Geen navigatie gewijzigd. Geen mockdata als productwaarheid behandeld. Geen ongemarkeerde kleur-/pixelkeuzes (alles A/B/C/D). Geen robotmascotte geïntroduceerd. Profiel niet als bottom-tab gemaakt. Geen bestaande functionaliteit verwijderd. Accessibility niet als polish behandeld (expliciet vooraan in het plan). UI niet verantwoordelijk gemaakt voor calculations. AI geen extra bevoegdheid gegeven. Geen automatische social exposure van health-data. Payment niet gelijkgesteld aan authorization. PR #222 niet aangeraakt. Geen user-facing werk zonder PO-approval uitgevoerd.
 
+## P. Product Owner decisions applied (3 september 2026)
+Primary CTA = teal `#00B894` (`.btn-d`). Marine `#0E3B4A` blijft voor dominante content surfaces, niet standaard-CTA. Cardradius = 16px canoniek. AI identity: geen apart kleurschema, teal/navy-familie, onderscheid via sparkle-icoon + label, GEEN robotmascotte. Iconography: één outline/line-family, geen emoji als structurele nav-iconen (exacte set is een technische keuze). Data-visualisatiepalet-principe: teal/navy-basis, geen regenboogcharts, geen kleur-only. Destructive: rood, uitsluitend voor echt destructieve acties. Tertiary: rustige text-actions. Elevation: subtiel, cards zweven niet. Profiel: avatar rechtsboven, geen zesde tab. Avatar: één canoniek component, principe goedgekeurd.
+
+**Nog steeds OPEN (niet als opgelost te beschouwen):** accessibility, responsive, charts (concreet), loading/empty/error/offline, tabs/segmented controls, dialogs/sheets, icon/control-size-schaal, list-row-normalization. Exacte iconenset, exacte kleinere-radius-waarde, exacte elevation-waarden floating/modal, exacte data-visualisatiepalet-kleuren.
+
 ## EINDSTATUS
-**DESIGN SYSTEM V1 SPECIFIED — READY FOR PRODUCT OWNER REVIEW**
+**DESIGN SYSTEM V1 PRODUCT OWNER APPROVED — READY FOR FOUNDATION IMPLEMENTATION**

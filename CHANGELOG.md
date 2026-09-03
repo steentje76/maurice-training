@@ -1,5 +1,58 @@
 # Trainingskompas — Changelog
 
+## v4.69.57 — Trainen v0.2 Visual Polish + Reproductie-onderzoek (3 september 2026)
+
+PR #229 vervolg-herstelsprint, na nieuw bewijs van de Product Owner (drie
+echte Android/Brave-screenshots die bevestigden dat de icon-bug al was
+opgelost, en de eerstvolgende-training-kaart wel degelijk zichtbaar is
+in de echte runtime).
+
+REPRODUCTIE-ONDERZOEK (conform de opdracht: eerst reproduceren, geen
+speculatieve fix): live getest of window.homeNextT met echte data de
+kaart correct rendert. BEVESTIGD: JA, volledig correct -- de eerdere
+observatie ("kaart ontbreekt") was een gevolg van het ontbreken van
+data in de niet-ingelogde, file://-testcontext, GEEN echte renderbug.
+Vastgelegd als FIRST TRAINING CARD RENDER ISSUE REAL BUG: NEE.
+
+ECHTE, BEVESTIGDE BUG GEVONDEN EN OPGELOST: de "Meer"-tegel in "Start
+een activiteit" wrapte (bij marginaal te weinig breedte op 390px) naar
+een eigen rij en nam vervolgens de volledige, resterende breedte in
+(334px vs. 77.5px voor de andere 4 tegels) -- veel visueel dominanter
+dan de andere activity-tiles, in strijd met het PO-contract. Root cause:
+flex-wrap in combinatie met flex:1 op de quick-act-tegels. Opgelost met
+CSS Grid (5 gelijke kolommen, robuust tegen marginale breedteverschillen
+op elke viewport-breedte) -- geen wijziging aan de gedeelde .quick-act-
+klasse zelf (die ook elders wordt gebruikt).
+
+TIJD/LOCATIE/"BEKIJK DETAILS" op de eerstvolgende-training-kaart:
+onderzocht of deze velden uit een bestaande, echte databron kunnen
+komen. Live geverifieerd tegen het daadwerkelijke databaseschema:
+vaste_trainingen heeft GEEN starttijd/locatie-kolom. Deze context
+ontbreekt daarom bewust in de runtime (MOCKUP OMISSION != FUNCTIONALITY
+REMOVAL, maar ook: MOCKUP VALUE != HARDCODED PRODUCTION VALUE -- geen
+fictieve tijd/locatie toegevoegd). "Bekijk details" bevestigd functioneel
+aanwezig: de volledige kaart is al role="button" met openTrainingPreview()
+als handler, functioneel gelijkwaardig aan een aparte knop, zonder de
+gedeelde, ook door Home gebruikte renderfunctie te wijzigen.
+
+core/fTrainenBrowserRuntime.test.js uitgebreid (19/19, was 17): nieuwe
+assertie die expliciet controleert dat geen enkele activity-tile
+(inclusief "Meer") visueel dominanter is dan de andere (breedteverschil
+<5px), plus bevestiging dat alle 5 tiles op dezelfde rij staan.
+
+Volledige, herhaalde sabotage van de oorspronkelijke kernbug (opnieuw
+\${tkIcon(...)} geintroduceerd): correct gedetecteerd, volledig hersteld.
+
+Cross-domein regressie: 0 problemen. Release gate 234/234, Android 29/29.
+
+APP_VER v4.69.56 -> v4.69.57. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469570. android/app/build.gradle gesynchroniseerd
+(46957/4.69.57).
+
+Zie docs/TRAINEN_V02_RUNTIME_DEFECT_RECOVERY_REPORT.md (bijgewerkt) voor
+het volledige, definitieve rapport inclusief nieuwe runtime-screenshots
+(met en zonder echte trainingsdata).
+
 ## v4.69.56 — Trainen v0.2 Runtime Visual Defect Recovery (3 september 2026)
 
 PR #229 Runtime Visual Defect Recovery. De Product Owner keurde de eerste

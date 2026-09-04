@@ -2005,7 +2005,7 @@ html[data-theme="dark"] .v43-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
 .tk-recovery-ring{width:28px;height:28px;flex-shrink:0}
 .tk-recovery-ring .rg{fill:none;stroke:var(--color-border);stroke-width:4}
 .tk-recovery-ring .rf{fill:none;stroke:var(--color-primary);stroke-width:4;stroke-linecap:round;transform:rotate(-90deg);transform-origin:center}
-.tk-overview-cell .lbl{font-size:9px;color:var(--color-text-secondary);font-weight:600;line-height:1.15;overflow-wrap:break-word;hyphens:auto}
+.tk-overview-cell .lbl{font-size:9px;color:var(--color-text-secondary);font-weight:600;line-height:1.15}
 .tk-overview-cell .val{font-size:13px;font-weight:800;color:var(--color-text-primary);white-space:nowrap}
 .tk-overview-cell .unit{font-size:8.5px;font-weight:600;color:var(--color-text-secondary);margin-left:1px}
 .tk-overview-cell .trend{font-size:9px;font-weight:700}
@@ -2016,8 +2016,10 @@ html[data-theme="dark"] .v43-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
 /* D. DOMAIN ROW — Icon Row Pattern-variant met mini-visualisatie rechts. */
 .tk-domain-row .miniviz{width:44px;height:24px;flex-shrink:0}
 .tk-domain-row .miniviz-wrap{display:flex;align-items:center;flex-shrink:0;margin-right:4px}
-.tk-domain-row .miniviz-empty svg{width:44px;height:24px}
-.tk-domain-row .miniviz-empty line{stroke:var(--color-border);stroke-width:2;stroke-dasharray:3 3}
+/* Final Geometry/Density Pass: domain-rows waren 77-78px hoog (gemeten), veel
+   hoger dan canonical suggereert. Gescoped override, UITSLUITEND voor Inzicht
+   -- de gedeelde .v43-tmt .row zelf (Trainen/Running/Cycling) blijft
+   ongewijzigd op 15px padding. */
 
 /* Insight Row — Icon Row Pattern-variant, icoon-in-cirkel i.p.v. vierkant. */
 .tk-insight-icon{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--color-primary-soft);color:var(--color-primary)}
@@ -2039,6 +2041,15 @@ html[data-theme="dark"] .v43-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
 .v43-tmt .b .t{font-size:14.5px;font-weight:800;color:var(--dark);display:block}
 .v43-tmt .b .s{font-size:12px;color:var(--g4);margin-top:2px;display:block}
 .v43-tmt .ar{color:var(--g3);font-size:22px;flex:0 0 auto;line-height:1}
+/* PO Final Correction (Round 5) -- uitsluitend .tk-domain-row gescoped, GEEN
+   wijziging aan de gedeelde .v43-tmt .row/.ic/.b .t/.s zelf (die worden ook
+   door Running/Cycling gebruikt). Compactere padding/icon/typografie/marge
+   conform canonical information density, zonder de gedeelde class te raken. */
+.tk-domain-row.row{padding:10px 0;gap:11px}
+.tk-domain-row .tk-icon-box{width:36px;height:36px;border-radius:11px}
+.tk-domain-row .tk-icon-box .tk-icon{width:18px;height:18px}
+.tk-domain-row .b .t{font-size:13.5px;line-height:1.2}
+.tk-domain-row .b .s{font-size:11.5px;margin-top:1px;line-height:1.25}
 /* Lichaam-tab */
 .v43-lich-hero{background:var(--card);border-radius:22px;box-shadow:0 16px 36px rgba(11,29,42,.16);padding:18px 14px;margin-bottom:14px;text-align:center}
 html[data-theme="dark"] .v43-lich-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
@@ -6580,7 +6591,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.63';
+const APP_VER = 'v4.69.65';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -20546,7 +20557,7 @@ async function inzichtRenderDomains(){
   el.innerHTML=domains.map(function(d,i){
     var vizHtml=d.viz
       ? '<span class="miniviz-wrap">'+d.viz+'</span>'
-      : '<span class="miniviz-wrap miniviz-empty" aria-hidden="true"><svg viewBox="0 0 44 24"><line x1="2" y1="12" x2="42" y2="12"/></svg></span>';
+      : '<span class="miniviz-wrap" style="width:44px" aria-hidden="true"></span>';
     return '<button class="row tk-domain-row" onclick="go(\''+d.go+'\')" '+(i>0?'style="border-top:1px solid var(--color-border)"':'')+'><span class="tk-icon-box">'+tkIcon(d.icon,{size:'standard'})+'</span><span class="b"><span class="t">'+escHtml(d.title)+'</span><span class="s">'+escHtml(d.sub)+'</span></span>'+vizHtml+'<span class="ar">›</span></button>';
   }).join('');
 }

@@ -1972,11 +1972,15 @@ html[data-theme="dark"] .v43-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
 
 /* C. FILTER CHIP / DROPDOWN — visueel een pill, functioneel een select
    (toegankelijk zonder een custom dropdown te hoeven bouwen). */
-.tk-filter-chip{display:inline-flex;align-items:center;gap:6px;background:var(--color-surface);border:1.5px solid var(--color-border);border-radius:999px;padding:8px 14px;font-family:var(--f);font-size:13px;font-weight:700;color:var(--color-text-primary)}
-.tk-filter-chip select{border:none;background:none;font-family:var(--f);font-size:13px;font-weight:700;color:var(--color-text-primary);appearance:none;-webkit-appearance:none;padding-right:2px;max-width:90px;text-overflow:ellipsis;overflow:hidden}
+.tk-filter-chip{display:inline-flex;align-items:center;gap:6px;background:var(--color-surface);border:1.5px solid var(--color-border);border-radius:999px;padding:8px 12px;font-family:var(--f);font-size:12.5px;font-weight:700;color:var(--color-text-primary);flex-shrink:0;white-space:nowrap}
+.tk-filter-chip select{border:none;background:none;font-family:var(--f);font-size:12.5px;font-weight:700;color:var(--color-text-primary);appearance:none;-webkit-appearance:none;padding-right:2px;white-space:nowrap}
+@media (max-width:360px){
+  .tk-controls-row{flex-wrap:wrap}
+  .tk-controls-row .tk-period-selector{flex:1 1 100%;order:1}
+  .tk-controls-row .tk-filter-chip{flex:1 1 100%;order:2;justify-content:center}
+}
 @media (max-width:389px){
   .tk-filter-chip{padding:8px 10px}
-  .tk-filter-chip select{max-width:60px}
   .tk-period-selector button{font-size:9.5px;padding:8px 0}
 }
 
@@ -1988,10 +1992,12 @@ html[data-theme="dark"] .v43-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
 .tk-summary-cell .sub{font-size:9.5px;color:var(--color-text-muted)}
 
 /* B (variant). METRIC OVERVIEW CELL — de 5 "Snel overzicht"-cellen. */
-.tk-overview-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.tk-overview-cell{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:6px 2px}
-.tk-overview-cell .lbl{font-size:9.5px;color:var(--color-text-secondary);display:flex;align-items:center;gap:3px}
-.tk-overview-cell .val{font-size:14px;font-weight:800;color:var(--color-text-primary)}
+.tk-overview-grid{display:flex}
+.tk-overview-cell{display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;padding:4px 4px;flex:1;min-width:0;border-left:1px solid var(--color-border)}
+.tk-overview-cell:first-child{border-left:none}
+.tk-overview-cell .ic{width:16px;height:16px;color:var(--color-primary)}
+.tk-overview-cell .lbl{font-size:9px;color:var(--color-text-secondary);font-weight:600;line-height:1.2}
+.tk-overview-cell .val{font-size:14.5px;font-weight:800;color:var(--color-text-primary)}
 .tk-overview-cell .trend{font-size:9.5px;font-weight:700}
 .tk-overview-cell .trend.up{color:var(--color-success)}
 .tk-overview-cell .trend.down{color:var(--color-text-muted)}
@@ -4062,7 +4068,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+    <div class="tk-controls-row" style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
       <div class="tk-period-selector" role="tablist" aria-label="Periode" style="flex:1">
         <button role="tab" aria-selected="true" onclick="inzichtSetPeriod('7d',this)">7 dagen</button>
         <button role="tab" aria-selected="false" onclick="inzichtSetPeriod('4w',this)">4 weken</button>
@@ -20400,8 +20406,9 @@ async function inzichtRenderOverview(){
   var grid=document.getElementById('inzicht-overview-grid'); if(!grid) return;
   var cells=[];
   var rows=await inzichtGetOrNull('hrv_log','&order=date.desc,created_at.desc&limit=400');
+  var icons={HRV:'heart',Rusthartslag:'heart',Slaap:'moon'};
   if(rows===null){
-    ['HRV','Rusthartslag','Slaap'].forEach(function(lbl){ cells.push('<div class="tk-overview-cell"><div class="lbl">'+lbl+'</div><div class="unavailable">—</div></div>'); });
+    ['HRV','Rusthartslag','Slaap'].forEach(function(lbl){ cells.push('<div class="tk-overview-cell"><span class="ic">'+V43I[icons[lbl]]+'</span><div class="lbl">'+lbl+'</div><div class="unavailable">—</div></div>'); });
   } else {
     var eind=rows.length?String(rows[0].date).slice(0,10):td();
     [{k:'hrv',lbl:'HRV',unit:'ms',up:true},{k:'rhr',lbl:'Rusthartslag',unit:'bpm',up:false},{k:'sleep',lbl:'Slaap',unit:'u',up:true}].forEach(function(v){
@@ -20410,14 +20417,37 @@ async function inzichtRenderOverview(){
         var ser=(v.k==='sleep')?ruw.map(function(p){return {date:p.date,value:tkSleepHours(p.value),source:p.source};}):ruw;
         var q=dc.qualifySeries(ser,{field:v.k});
         var st=dc.healthStats(q.valid), tr=dc.healthTrend(q.valid);
-        if(st.count===0){ cells.push('<div class="tk-overview-cell"><div class="lbl">'+v.lbl+'</div><div class="unavailable">MISSING</div></div>'); return; }
+        var icHtml='<span class="ic">'+V43I[icons[v.lbl]]+'</span>';
+        if(st.count===0){ cells.push('<div class="tk-overview-cell">'+icHtml+'<div class="lbl">'+v.lbl+'</div><div class="unavailable">MISSING</div></div>'); return; }
         var trendCls=(tr.dir==='flat')?'':((tr.dir==='up')===v.up?'up':'down');
-        cells.push('<div class="tk-overview-cell"><div class="lbl">'+v.lbl+' (7d)</div><div class="val">'+st.mean+' '+v.unit+'</div><div class="trend '+trendCls+'">'+tr.symbol+'</div></div>');
-      }catch(_){ cells.push('<div class="tk-overview-cell"><div class="lbl">'+v.lbl+'</div><div class="unavailable">—</div></div>'); }
+        cells.push('<div class="tk-overview-cell">'+icHtml+'<div class="lbl">'+v.lbl+' (7d)</div><div class="val">'+st.mean+' '+v.unit+'</div><div class="trend '+trendCls+'">'+tr.symbol+'</div></div>');
+      }catch(_){ cells.push('<div class="tk-overview-cell"><span class="ic">'+V43I[icons[v.lbl]]+'</span><div class="lbl">'+v.lbl+'</div><div class="unavailable">—</div></div>'); }
     });
   }
-  cells.push('<div class="tk-overview-cell"><div class="lbl">Herstelstatus</div><div class="unavailable">Zie Herstel</div></div>');
-  cells.push('<div class="tk-overview-cell"><div class="lbl">Belasting</div><div class="unavailable">Zie Belasting</div></div>');
+  // Herstelstatus: bestaande, canonieke v43OverallRecovery() hergebruikt (dezelfde
+  // functie als Home/Lichaam) -- was "Zie Herstel" (Classificatie A: data bestaat,
+  // overview-contract ontbrak simpelweg omdat deze nog niet was aangesloten).
+  try{
+    var rec=(typeof v43OverallRecovery==='function')?await v43OverallRecovery():null;
+    if(rec && rec.hasData){
+      cells.push('<div class="tk-overview-cell"><span class="ic">'+V43I.bolt+'</span><div class="lbl">Herstelstatus</div><div class="val">'+rec.overall+'%</div></div>');
+    } else {
+      cells.push('<div class="tk-overview-cell"><span class="ic">'+V43I.bolt+'</span><div class="lbl">Herstelstatus</div><div class="unavailable">Onvoldoende data</div></div>');
+    }
+  }catch(_){ cells.push('<div class="tk-overview-cell"><span class="ic">'+V43I.bolt+'</span><div class="lbl">Herstelstatus</div><div class="unavailable">—</div></div>'); }
+  // Belasting: bestaande, canonieke tkCoachBelasting() hergebruikt (zelfde functie
+  // als Coach). Toont uitsluitend het neutrale, wekelijkse getal -- GEEN ACWR-
+  // classificatie/"Optimaal"-taal, conform de expliciete eis (geen impliciete
+  // blessurevoorspelling, geen veilige-zone-claim zonder bevestigde, canonieke
+  // classificatiefunctie hiervoor).
+  try{
+    var bel=(typeof tkCoachBelasting==='function')?await tkCoachBelasting():null;
+    if(bel && bel.week!=null){
+      cells.push('<div class="tk-overview-cell"><span class="ic">'+V43I.dumbbell+'</span><div class="lbl">Belasting (7d)</div><div class="val">'+Math.round(bel.week)+'</div></div>');
+    } else {
+      cells.push('<div class="tk-overview-cell"><span class="ic">'+V43I.dumbbell+'</span><div class="lbl">Belasting</div><div class="unavailable">Onvoldoende data</div></div>');
+    }
+  }catch(_){ cells.push('<div class="tk-overview-cell"><span class="ic">'+V43I.dumbbell+'</span><div class="lbl">Belasting</div><div class="unavailable">—</div></div>'); }
   grid.innerHTML=cells.join('');
 }
 
@@ -20450,7 +20480,11 @@ async function inzichtRenderRecent(){
       el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--color-text-muted);font-size:13px">Nog niet genoeg vergelijkbare trainingen om recente inzichten te tonen.</div>';
       return;
     }
-    el.innerHTML='<div class="tk-card tk-card-l3">'+digest.highlights.slice(0,3).map(function(h,i){
+    // BUGFIX (PO mobile visual pass): .v43-tmt ontbrak -- .t/.s stonden zonder
+    // display:block aan elkaar geplakt ("Frontsquathogere geschatte 1RM").
+    // Zelfde, bewezen Icon Row Pattern als de Domeinen-sectie, nu consistent
+    // ook hier toegepast (icoon-in-cirkel-variant, canonical padding/inset).
+    el.innerHTML='<div class="tk-card tk-card-l3 v43-tmt v43-tmt-inset">'+digest.highlights.slice(0,3).map(function(h,i){
       return '<div class="row" style="cursor:default'+(i>0?';border-top:1px solid var(--color-border)':'')+'"><span class="tk-insight-icon">'+(h.newBest?'🏆':tkIcon('trend',{size:'standard'}))+'</span><span class="b"><span class="t">'+escHtml(h.exercise)+'</span><span class="s">'+escHtml(h.reason||'')+'</span></span></div>';
     }).join('')+'</div>';
   }catch(err){ el.innerHTML=''; }

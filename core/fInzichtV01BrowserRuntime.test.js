@@ -66,6 +66,15 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     const summaryText = await page.evaluate(() => document.getElementById('inzicht-summary-grid')?.innerText || '');
     ok(!/(^|\s)0(\s|$)/.test(summaryText), w + 'px 10: geen fictieve "0" in Jouw ontwikkeling bij een data-ophaalfout (UNKNOWN != 0)');
 
+    // PO Mobile Visual Fidelity Pass: sportfilter mag nooit worden afgekapt.
+    const selectClipped = await page.evaluate(() => {
+      const s = document.querySelector('.tk-filter-chip select');
+      return s ? s.scrollWidth > s.clientWidth + 1 : true;
+    });
+    ok(!selectClipped, w + 'px 10b: de sportfilter ("Alle sporten") wordt nooit afgekapt -- volledige betekenis blijft leesbaar');
+    const periodBtnsClipped = await page.evaluate(() => Array.from(document.querySelectorAll('.tk-period-selector button')).some(b => b.scrollWidth > b.clientWidth + 1));
+    ok(!periodBtnsClipped, w + 'px 10c: geen enkele Period Selector-optie (incl. "3 maanden") wordt afgekapt op deze viewport');
+
     const relevantErrors = jsErrors.filter(e => !/fetch|CORS|NetworkError/i.test(e));
     ok(relevantErrors.length === 0, w + 'px 11: geen onverwachte (niet-netwerk) JS pageerrors: ' + JSON.stringify(relevantErrors));
 
@@ -149,6 +158,42 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     }
     const restored = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
     ok(restored === original, '18b: index.html is na de sabotage-test byte-identiek hersteld');
+    await page.close();
+  }
+
+  // PO Mobile Visual Fidelity Pass: Recente inzichten mag titel en beschrijving
+  // NOOIT aan elkaar plakken (was: "Frontsquathogere geschatte 1RM").
+  {
+    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    await page.goto(url);
+    await page.waitForTimeout(500);
+    await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+    await page.waitForTimeout(400);
+    await page.evaluate(() => {
+      const fake = [
+        { exercise: 'Frontsquat', reason: 'Hogere geschatte 1RM', newBest: false },
+        { exercise: 'Barbell Overhead Press', reason: 'Een langere, testende Nederlandse inzichttekst om wrapping te controleren zonder overflow', newBest: true }
+      ];
+      const el = document.getElementById('inzicht-recent-list');
+      el.innerHTML = '<div class="tk-card tk-card-l3 v43-tmt v43-tmt-inset">' + fake.map((h,i) =>
+        '<div class="row" style="cursor:default' + (i>0?';border-top:1px solid var(--color-border)':'') + '"><span class="tk-insight-icon">' + (h.newBest?'\u{1F3C6}':'\u{1F4C8}') + '</span><span class="b"><span class="t">' + h.exercise + '</span><span class="s">' + h.reason + '</span></span></div>'
+      ).join('') + '</div>';
+    });
+    await page.waitForTimeout(200);
+    const check = await page.evaluate(() => {
+      const el = document.getElementById('inzicht-recent-list');
+      const t = el.querySelector('.t'), s = el.querySelector('.s');
+      return {
+        titleDisplay: t ? getComputedStyle(t).display : null,
+        subDisplay: s ? getComputedStyle(s).display : null,
+        concatenated: el.innerText.includes('Frontsquathogere'),
+        overflow: el.scrollWidth > el.clientWidth + 2
+      };
+    });
+    ok(check.titleDisplay === 'block', '22: insight-titel (.t) is display:block -- staat gegarandeerd op een eigen regel, nooit vastgeplakt aan de beschrijving');
+    ok(check.subDisplay === 'block', '23: insight-beschrijving (.s) is display:block -- zelfde garantie');
+    ok(!check.concatenated, '24: "Frontsquathogere geschatte 1RM"-concatenatie komt niet meer voor (zelf gevonden en gecorrigeerde PO-gerapporteerde bug)');
+    ok(!check.overflow, '25: lange, realistische inzichttekst wrapt gecontroleerd zonder horizontale overflow');
     await page.close();
   }
 

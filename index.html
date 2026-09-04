@@ -4228,6 +4228,15 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <button class="ibtn" onclick="openModal('m-bc')" aria-label="Lichaamsmeting toevoegen">＋</button>
     </div>
   </div>
+  <!-- TIJDELIJKE PREVIEW-ACCESS (PR #232) -- GEEN bottom-nav-migratie. Additieve,
+       duidelijk gemarkeerde toegang tot het nieuwe, nog niet in de navigatie
+       opgenomen Inzicht v0.1-scherm, uitsluitend zodat de Product Owner het
+       kan bereiken vanaf de bestaande Netlify Preview. Verwijderen zodra de
+       daadwerkelijke navigatie-migratie plaatsvindt (aparte, toekomstige PO-
+       opdracht) -- dit is bewust geen permanente entry point. -->
+  <button onclick="go('s-inzicht')" style="display:flex;align-items:center;justify-content:space-between;width:calc(100% - 36px);margin:8px 18px 0;padding:10px 14px;background:var(--color-primary-soft);border:1px dashed var(--color-primary);border-radius:12px;font-family:var(--f);font-size:12.5px;font-weight:700;color:var(--color-primary);cursor:pointer">
+    <span>🔍 Preview: nieuw Inzicht-scherm (v0.1)</span><span>›</span>
+  </button>
   <!-- Fase 1 — het overzicht toont de stand van vandaag en verwijst door. De verdieping
        (anatomie, trends, metingen) staat op eigen subschermen met dezelfde renderers. -->
   <div class="scroll" style="padding-top:8px">

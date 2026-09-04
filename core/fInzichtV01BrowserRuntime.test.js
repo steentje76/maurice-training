@@ -489,8 +489,8 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     });
     ok(contrastInfo !== null, '43 (setup): een "down"-trend is aanwezig om het contrast op te meten');
     if(contrastInfo){
-      ok(contrastInfo.ratio > 3.0, '44: de "down"-trendtekst heeft een gemeten contrastratio van ' + contrastInfo.ratio.toFixed(2) + ':1 tegen de kaartachtergrond -- duidelijk verbeterd t.o.v. de oude --color-text-muted (~1.95:1), gebruikmakend van de eerstvolgende, bestaande --color-text-secondary-token (geen nieuwe kleur toegevoegd)');
-      ok(contrastInfo.fg[0]===136 && contrastInfo.fg[1]===136 && contrastInfo.fg[2]===136, '45: de trend gebruikt exact --color-text-secondary (rgb(136,136,136)), geen willekeurige, nieuwe hexkleur');
+      ok(contrastInfo.ratio >= 4.5, '44: de "down"-trendtekst heeft een gemeten contrastratio van ' + contrastInfo.ratio.toFixed(2) + ':1 tegen de kaartachtergrond -- voldoet aan de WCAG AA-hard-gate van >=4.5:1 voor normale, kleine tekst (eerdere --color-text-secondary gaf slechts ~3.54:1, onvoldoende; --g6 is een bestaand, elders al bewezen secundair-maar-leesbaar token, o.a. gebruikt door Trainen v0.2 .quick-lbl -- geen nieuwe kleur toegevoegd)');
+      ok(contrastInfo.fg[0]===68 && contrastInfo.fg[1]===68 && contrastInfo.fg[2]===68, '45: de trend gebruikt exact --g6 (rgb(68,68,68)), een bestaand, elders al gebruikt Design System-token, geen willekeurige, nieuwe hexkleur');
     }
     await page.close();
   }

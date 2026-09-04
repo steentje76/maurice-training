@@ -1987,6 +1987,7 @@ html[data-theme="dark"] .v43-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
 /* B. METRIC SUMMARY CELL — de 4 "Jouw ontwikkeling"-cellen. */
 .tk-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .tk-summary-cell{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:8px 2px}
+.tk-summary-cell .ic{width:20px;height:20px;color:var(--color-primary);margin-bottom:2px}
 .tk-summary-cell .num{font-size:22px;font-weight:800;color:var(--color-text-primary)}
 .tk-summary-cell .lbl{font-size:11px;color:var(--color-text-secondary);font-weight:600}
 .tk-summary-cell .sub{font-size:9.5px;color:var(--color-text-muted)}
@@ -2001,6 +2002,9 @@ html[data-theme="dark"] .v43-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
 .tk-overview-cell .ic-wrap{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--color-primary-soft);color:var(--color-primary)}
 .tk-overview-cell .ic-wrap .tk-icon{width:15px;height:15px}
 .tk-overview-cell.is-unavailable .ic-wrap{background:var(--color-surface-secondary);color:var(--color-text-muted)}
+.tk-recovery-ring{width:34px;height:34px;flex-shrink:0}
+.tk-recovery-ring .rg{fill:none;stroke:var(--color-border);stroke-width:4}
+.tk-recovery-ring .rf{fill:none;stroke:var(--color-primary);stroke-width:4;stroke-linecap:round;transform:rotate(-90deg);transform-origin:center}
 .tk-overview-cell .lbl{font-size:10.5px;color:var(--color-text-secondary);font-weight:600;line-height:1.25}
 .tk-overview-cell .val{font-size:16px;font-weight:800;color:var(--color-text-primary)}
 .tk-overview-cell .unit{font-size:10px;font-weight:600;color:var(--color-text-secondary);margin-left:2px}
@@ -2011,9 +2015,20 @@ html[data-theme="dark"] .v43-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
 
 /* D. DOMAIN ROW — Icon Row Pattern-variant met mini-visualisatie rechts. */
 .tk-domain-row .miniviz{width:44px;height:24px;flex-shrink:0}
+.tk-domain-row .miniviz-wrap{display:flex;align-items:center;flex-shrink:0;margin-right:4px}
 
 /* Insight Row — Icon Row Pattern-variant, icoon-in-cirkel i.p.v. vierkant. */
 .tk-insight-icon{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--color-primary-soft);color:var(--color-primary)}
+
+/* Recente inzichten -- 3 compacte kaarten naast elkaar (canonical fidelity
+   pass), i.p.v. één grote, verticale lijst-kaart. Responsive: op voldoende
+   breedte drie gelijke kolommen; op smalle schermen horizontale scroll
+   (bewust mobile pattern, geen terugval naar de generieke lijst-kaart). */
+.tk-insight-cards{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:2px}
+.tk-insight-cards::-webkit-scrollbar{display:none}
+.tk-insight-card{flex:1 1 0;min-width:132px;background:var(--color-surface);border-radius:16px;box-shadow:var(--elevation-card);padding:14px;display:flex;flex-direction:column;gap:6px}
+.tk-insight-card .t{display:block;font-size:13px;font-weight:800;color:var(--color-text-primary);line-height:1.25}
+.tk-insight-card .s{display:block;font-size:11px;color:var(--color-text-secondary);line-height:1.3}
 .v43-tmt .row:last-child{border-bottom:0}
 .v43-tmt .ic{width:40px;height:40px;border-radius:12px;background:var(--v43-mint);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .v43-tmt .ic svg{width:20px;height:20px;stroke:var(--accent);fill:none;stroke-width:2}
@@ -4084,8 +4099,9 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
 
     <div class="tk-card tk-card-l3">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div><div class="v43-lbl" style="margin:0">Jouw ontwikkeling</div><div style="font-size:11px;color:var(--color-text-muted)" id="inzicht-dev-sub">vs. vorige periode</div></div>
+        <button onclick="go('s-stats')" style="display:flex;align-items:center;gap:4px;padding:7px 12px;border-radius:999px;border:1.5px solid var(--color-primary-soft);background:none;font-family:var(--f);font-size:11.5px;font-weight:700;color:var(--color-primary);cursor:pointer;flex-shrink:0">Bekijk details <span style="font-size:13px">›</span></button>
       </div>
       <div class="tk-summary-grid" id="inzicht-summary-grid"></div>
     </div>
@@ -4101,7 +4117,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="v43-lbl" style="margin:18px 0 10px">Recente inzichten</div>
     <div id="inzicht-recent-list"></div>
 
-    <button class="tk-btn tk-btn-secondary" style="width:100%;margin-top:14px" onclick="go('s-stats')">Bekijk alle inzichten en trends</button>
+    <button onclick="go('s-stats')" style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:14px;padding:14px 16px;background:var(--color-primary-soft);border:none;border-radius:14px;font-family:var(--f);font-size:13.5px;font-weight:700;color:var(--color-primary);cursor:pointer"><span style="display:flex;align-items:center;gap:8px"><svg class="tk-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M5 16l.7 1.8L7.5 18.5l-1.8.7L5 21l-.7-1.8L2.5 18.5l1.8-.7z"/></svg>Bekijk alle inzichten en trends</span><span>›</span></button>
     <div style="height:8px"></div>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
@@ -6561,7 +6577,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.61';
+const APP_VER = 'v4.69.62';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -20358,7 +20374,7 @@ async function renderInzicht(){
   }
   await inzichtRenderDevelopment();
   await inzichtRenderOverview();
-  inzichtRenderDomains();
+  await inzichtRenderDomains();
   await inzichtRenderRecent();
 }
 
@@ -20400,11 +20416,15 @@ async function inzichtRenderDevelopment(){
     }catch(_){}
   }
 
+  var ICTREND='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>';
+  var ICCAL='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></svg>';
+  var ICGOAL='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>';
+
   grid.innerHTML=
-    '<div class="tk-summary-cell">'+improvedHtml+'<div class="lbl">Verbeterd</div></div>'+
-    '<div class="tk-summary-cell">'+trendHtml+'<div class="lbl">Stijgende trends</div></div>'+
-    '<div class="tk-summary-cell">'+trainingHtml+'<div class="lbl">Trainingen</div></div>'+
-    '<div class="tk-summary-cell">'+adherenceHtml+'<div class="lbl">Adherence</div></div>';
+    '<div class="tk-summary-cell">'+ICTREND+improvedHtml+'<div class="lbl">Verbeterd</div></div>'+
+    '<div class="tk-summary-cell">'+ICTREND+trendHtml+'<div class="lbl">Stijgende trends</div></div>'+
+    '<div class="tk-summary-cell">'+ICCAL+trainingHtml+'<div class="lbl">Trainingen</div></div>'+
+    '<div class="tk-summary-cell">'+ICGOAL+adherenceHtml+'<div class="lbl">Adherence</div></div>';
 }
 
 /* Snel overzicht -- 5 cells, canonical health/load-bronnen. UNKNOWN != 0. */
@@ -20441,7 +20461,9 @@ async function inzichtRenderOverview(){
   try{
     var rec=(typeof v43OverallRecovery==='function')?await v43OverallRecovery():null;
     if(rec && rec.hasData){
-      cells.push(ovCell('herstel','Herstelstatus','<div class="val">'+rec.overall+'<span class="unit">%</span></div>',false));
+      var rR=13,rC=2*Math.PI*rR,rOff=rC*(1-Math.max(0,Math.min(100,rec.overall))/100);
+      var ringHtml='<svg class="tk-recovery-ring" viewBox="0 0 34 34" aria-hidden="true"><circle class="rg" cx="17" cy="17" r="'+rR+'"/><circle class="rf" cx="17" cy="17" r="'+rR+'" style="stroke-dasharray:'+rC.toFixed(1)+';stroke-dashoffset:'+rOff.toFixed(1)+'"/></svg>';
+      cells.push('<div class="tk-overview-cell"><span class="ic-wrap" style="background:none;width:34px;height:34px">'+ringHtml+'</span><div class="lbl">Herstelstatus</div><div class="val">'+rec.overall+'<span class="unit">%</span></div></div>');
     } else {
       cells.push(ovCell('herstel','Herstelstatus','<div class="unavailable">—</div>',true));
     }
@@ -20454,28 +20476,72 @@ async function inzichtRenderOverview(){
   try{
     var bel=(typeof tkCoachBelasting==='function')?await tkCoachBelasting():null;
     if(bel && bel.week!=null){
-      cells.push(ovCell('belasting','Belasting (7d)','<div class="val">'+Math.round(bel.week)+'<span class="unit">'+escHtml(bel.eenheid||'')+'</span></div>',false));
+      // Semantic data audit (canonical fidelity pass): tkCoachBelasting() gebruikt
+      // uitsluitend AC.serie(model,'strength','belasting') -- dit is technisch
+      // bevestigd UITSLUITEND krachtvolume (tonnage), GEEN multisport-belasting.
+      // Label bewust "Krachtvolume" i.p.v. de generieke canonical mockup-tekst
+      // "Trainingsbelasting", conform de expliciete eis om geen onjuiste,
+      // bredere claim te suggereren dan de data daadwerkelijk representeert.
+      cells.push(ovCell('belasting','Krachtvolume (7d)','<div class="val">'+Math.round(bel.week)+'<span class="unit">'+escHtml(bel.eenheid||'')+'</span></div>',false));
     } else {
-      cells.push(ovCell('belasting','Belasting','<div class="unavailable">—</div>',true));
+      cells.push(ovCell('belasting','Krachtvolume','<div class="unavailable">—</div>',true));
     }
-  }catch(_){ cells.push(ovCell('belasting','Belasting','<div class="unavailable">—</div>',true)); }
+  }catch(_){ cells.push(ovCell('belasting','Krachtvolume','<div class="unavailable">—</div>',true)); }
   grid.innerHTML=cells.join('');
 }
 
 /* Domeinen -- 6 rijen, elk een bewezen, bestaand entry-point (Functional
    Preservation Matrix). Geen enkele van de 26 legacy-functies verwijderd. */
-function inzichtRenderDomains(){
+/* Mini Trend Visualization -- generieke, herbruikbare presentation primitive
+   over een array van bestaande, echte getallen (GEEN nieuwe calculation, puur
+   visualisatie van reeds-bestaande output). Canonical fidelity pass, Fase 6:
+   per domein onderzocht of veilige, echte data binnen dit tijdsbudget
+   toegankelijk is -- REAL DATA READY (Herstel, Lichaam), NO SAFE VISUALIZATION
+   (Prestaties/Belasting/Verbanden/Doelen: vereist een aparte, dagelijkse
+   reeks-aanroep of extra afhankelijkheden die niet binnen deze sprint veilig
+   te bevestigen waren -- leeg gelaten i.p.v. verzonnen/decoratieve data).
+   GEEN AI, GEEN mock values. */
+function inzichtMiniViz(values,color){
+  if(!values||values.length<2) return '';
+  var w=44,h=24,min=Math.min.apply(null,values),max=Math.max.apply(null,values);
+  if(max===min){ max=min+1; }
+  var pts=values.map(function(v,i){
+    var x=(i/(values.length-1))*w;
+    var y=h-((v-min)/(max-min))*h;
+    return x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ');
+  return '<svg class="miniviz" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" aria-hidden="true"><polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+async function inzichtRenderDomains(){
   var el=document.getElementById('inzicht-domain-list'); if(!el) return;
   var domains=[
-    {icon:'prestaties',title:'Prestaties',sub:"PR's, 1RM, krachtverhoudingen, cardio",go:'s-stats'},
-    {icon:'herstel',title:'Herstel',sub:'Anatomie, hersteltrends, HRV/slaap',go:'s-lich-health'},
-    {icon:'belasting',title:'Belasting',sub:'Volume per spiergroep, consistentie',go:'s-stats'},
-    {icon:'lichaam',title:'Lichaam',sub:'Metingen, samenstelling, historie',go:'s-lich-metingen'},
-    {icon:'verbanden',title:'Verbanden',sub:'Wat lijkt bij jou samen te hangen?',go:'s-lich-verbanden'},
-    {icon:'doel',title:'Doelen',sub:'Actieve doelen en challenges',go:'s-stats'}
+    {icon:'prestaties',title:'Prestaties',sub:"PR's, 1RM, krachtverhoudingen, cardio",go:'s-stats',viz:''},
+    {icon:'herstel',title:'Herstel',sub:'Anatomie, hersteltrends, HRV/slaap',go:'s-lich-health',viz:''},
+    {icon:'belasting',title:'Belasting',sub:'Volume per spiergroep, consistentie',go:'s-stats',viz:''},
+    {icon:'lichaam',title:'Lichaam',sub:'Metingen, samenstelling, historie',go:'s-lich-metingen',viz:''},
+    {icon:'verbanden',title:'Verbanden',sub:'Wat lijkt bij jou samen te hangen?',go:'s-lich-verbanden',viz:''},
+    {icon:'doel',title:'Doelen',sub:'Actieve doelen en challenges',go:'s-stats',viz:''}
   ];
+  // Herstel: REAL DATA READY -- v43OverallRecovery().rows (per-spiergroep %),
+  // bestaande, ongewijzigde functie (zelfde als Home/Lichaam).
+  try{
+    var rec=(typeof v43OverallRecovery==='function')?await v43OverallRecovery():null;
+    if(rec && rec.hasData && rec.rows && rec.rows.length>1){
+      var pcts=rec.rows.map(function(r){return r.pct;}).slice(0,8).reverse();
+      domains[1].viz=inzichtMiniViz(pcts,'#00B894');
+    }
+  }catch(_){}
+  // Lichaam: REAL DATA READY -- recente gewichtsmetingen (weight_log), geen
+  // nieuwe calculation, puur de ruwe, chronologische reeks gevisualiseerd.
+  try{
+    var wl=await inzichtGetOrNull('weight_log','&order=date.asc&limit=8');
+    if(wl && wl.length>1){
+      var weights=wl.map(function(r){return Number(r.gewicht||r.weight||r.value);}).filter(function(v){return isFinite(v);});
+      if(weights.length>1) domains[3].viz=inzichtMiniViz(weights,'#00B894');
+    }
+  }catch(_){}
   el.innerHTML=domains.map(function(d,i){
-    return '<button class="row" onclick="go(\''+d.go+'\')" '+(i>0?'style="border-top:1px solid var(--color-border)"':'')+'><span class="tk-icon-box">'+tkIcon(d.icon,{size:'standard'})+'</span><span class="b"><span class="t">'+escHtml(d.title)+'</span><span class="s">'+escHtml(d.sub)+'</span></span><span class="ar">›</span></button>';
+    return '<button class="row tk-domain-row" onclick="go(\''+d.go+'\')" '+(i>0?'style="border-top:1px solid var(--color-border)"':'')+'><span class="tk-icon-box">'+tkIcon(d.icon,{size:'standard'})+'</span><span class="b"><span class="t">'+escHtml(d.title)+'</span><span class="s">'+escHtml(d.sub)+'</span></span>'+(d.viz?'<span class="miniviz-wrap">'+d.viz+'</span>':'')+'<span class="ar">›</span></button>';
   }).join('');
 }
 
@@ -20491,12 +20557,14 @@ async function inzichtRenderRecent(){
       el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--color-text-muted);font-size:13px">Nog niet genoeg vergelijkbare trainingen om recente inzichten te tonen.</div>';
       return;
     }
-    // BUGFIX (PO mobile visual pass): .v43-tmt ontbrak -- .t/.s stonden zonder
-    // display:block aan elkaar geplakt ("Frontsquathogere geschatte 1RM").
-    // Zelfde, bewezen Icon Row Pattern als de Domeinen-sectie, nu consistent
-    // ook hier toegepast (icoon-in-cirkel-variant, canonical padding/inset).
-    el.innerHTML='<div class="tk-card tk-card-l3 v43-tmt v43-tmt-inset">'+digest.highlights.slice(0,3).map(function(h,i){
-      return '<div class="row" style="cursor:default'+(i>0?';border-top:1px solid var(--color-border)':'')+'"><span class="tk-insight-icon">'+(h.newBest?'🏆':tkIcon('trend',{size:'standard'}))+'</span><span class="b"><span class="t">'+escHtml(h.exercise)+'</span><span class="s">'+escHtml(h.reason||'')+'</span></span></div>';
+    // Canonical fidelity pass: 3 compacte kaarten naast elkaar (flex-wrap,
+    // gelijke breedte) i.p.v. één grote, verticale lijst-kaart -- zelfde
+    // onderliggende data (digest.highlights), alleen de compositie is
+    // aangepast conform de goedgekeurde mockup. Titel blijft "RECENTE
+    // INZICHTEN" (PO2, chronologisch, geen ranking) -- die beslissing wijzigt
+    // niet.
+    el.innerHTML='<div class="tk-insight-cards">'+digest.highlights.slice(0,3).map(function(h){
+      return '<div class="tk-insight-card"><span class="tk-insight-icon">'+(h.newBest?'🏆':tkIcon('trend',{size:'standard'}))+'</span><span class="t">'+escHtml(h.exercise)+'</span><span class="s">'+escHtml(h.reason||'')+'</span></div>';
     }).join('')+'</div>';
   }catch(err){ el.innerHTML=''; }
 }

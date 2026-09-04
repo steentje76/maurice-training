@@ -1,5 +1,316 @@
 # Trainingskompas — Changelog
 
+## v4.69.65 — Inzicht v0.1 Final PO Correction (4 september 2026)
+
+Vijfde Product Owner-review-ronde op PR #232. Drie, gerichte correcties
+op de vorige density-pass -- geen nieuwe redesignronde.
+
+1. SNEL OVERZICHT -- ONNATUURLIJKE WOORDAFBREKING VERWIJDERD: root cause
+gevonden (hyphens:auto + overflow-wrap:break-word veroorzaakten
+"Rusthart-slag"/"Herstelsta-tus"/"Krachtvo-lume"). Verwijderd, EMPIRISCH
+getest op alle 6 viewports (320-430px): alle labels blijven volledig,
+leesbaar, op 1 rij van 5, zonder enige mid-word-afbreking en zonder
+clipping.
+
+2. DOMEINEN -- COMPACTER: gescoped CSS-override (uitsluitend
+.tk-domain-row, GEEN wijziging aan de gedeelde .v43-tmt .row die ook
+Running/Cycling gebruiken) voor kleinere padding/icon-container/
+regelafstand. GEMETEN: domain-block 470px -> 350px (-120px), individuele
+rijen 77-78px -> 57-67px (Prestaties-rij heeft legitiem 2 tekstregels,
+geen informatie verwijderd).
+
+3. DECORATIEVE PLACEHOLDER-GRAFIEKEN VERWIJDERD: de gestippelde
+horizontale lijntjes bij domeinen zonder echte visualisatiedata zijn
+verwijderd (suggereerden ten onrechte data/loading). De visual-zone
+blijft gereserveerd voor alignment-consistentie, maar toont nu niets
+zichtbaars bij ontbrekende data. Herstel-visualisatie geverifieerd als
+echte data (v43OverallRecovery().rows) -- behouden.
+
+Zelf gevonden en opgeruimd: een eerdere, niet-gecommitte follow-up
+(v4.69.64) had een deels overlappende, !important-gebaseerde CSS-
+override voor dezelfde domain-row-compactering toegevoegd. Samengevoegd
+tot één, consistente regelset zonder !important (hogere specificiteit
+via .tk-domain-row.row volstaat).
+
+core/fInzichtV01BrowserRuntime.test.js uitgebreid (143/143, was 135):
+expliciete assertions per viewport dat geen enkel Snel-overzicht-label
+een mid-word-break vertoont, en dat geen enkele domain-row nog een
+decoratieve SVG zonder echte polyline-data toont.
+
+Screenshots op 390/430px (TOP/MIDDLE/BOTTOM) bevestigen alle drie de
+correcties visueel. Cross-domein regressie, canonical PNG-hash, 26/26
+preservation: ongewijzigd bevestigd. Release gate 238/238. Android
+29/29.
+
+APP_VER v4.69.64 -> v4.69.65. sw.js/build.gradle/CURRENT_STATE.md
+gesynchroniseerd.
+
+## v4.69.64 — Inzicht v0.1 Domain Row Density Follow-up (4 september 2026)
+
+Aanvullende, gerichte density-fix bovenop v4.69.63 (dezelfde PO Round 4
+geometry/density-pass). GEMETEN: domain-rows waren nog altijd 77-78px
+hoog -- substantieel hoger dan canonical suggereert, en niet
+meegenomen in de vorige entry.
+
+Gescoped CSS-override toegevoegd (uitsluitend voor Inzicht se
+domain-rows via .tk-domain-row, met !important om de gedeelde
+.v43-tmt .row-padding van 15px te overschrijven zonder die gedeelde
+class zelf te wijzigen -- Trainen/Running/Cycling blijven volledig
+ongewijzigd): padding 15px->10px, icon-box 40px->34px, gap 13px->11px.
+
+GEMETEN RESULTAAT: domain-row-hoogte 77-78px -> 55-56px (-28%).
+Domain-list totale hoogte 470px -> 338px. Blijft ruim boven de
+44px-accessibility-touch-target-minimum (nu expliciet getest).
+
+core/fInzichtV01BrowserRuntime.test.js uitgebreid (135/135, was 132):
+nieuwe assertions bewaken zowel de bovengrens (<=62px, was 77-78px)
+als de accessibility-ondergrens (>=44px) van elke domain-row, en
+herbevestigen dat Snel overzicht op 1 rij van 5 blijft.
+
+Cross-domein regressie, canonical PNG-hash, 26/26 preservation:
+ongewijzigd bevestigd. Release gate 238/238. Android 29/29.
+
+APP_VER v4.69.63 -> v4.69.64 (patch-bump: gerichte density-fix, geen
+nieuwe functionaliteit).
+
+## v4.69.63 — Inzicht v0.1 Final Density + Geometry Fidelity Pass (4 september 2026)
+
+Vierde Product Owner-review-ronde op PR #232. Duidelijke vooruitgang
+erkend, nog geen merge -- de information density week nog te sterk af
+van canonical. Geen nieuwe features, uitsluitend geometry/density.
+
+GEMETEN, VOOR CODEWIJZIGING: canonical PNG (853x1844px) toont Snel
+overzicht als ÉÉN, compacte rij van 5 metrics -- de runtime forceerde
+door een min-width:92px per cel altijd een 3+2-wrap op mobiele
+breedtes (390-430px). Root cause geidentificeerd vóór enige
+codewijziging.
+
+SNEL OVERZICHT: herschreven naar flex:1 1 0 (geen vaste min-width) --
+dwingt nu altijd 1 compacte rij van 5 af op alle mobiele breedtes
+(320-430px), met iets compactere maar nog altijd leesbare typografie
+(labels mogen gecontroleerd wrappen via overflow-wrap, geen clipping).
+GEMETEN RESULTAAT: kaarthoogte 204px -> 92px (-55%). Herstel-ring
+proportioneel verkleind (34px -> 28px) om de compactere celhoogte te
+volgen, zonder de kaart kunstmatig hoger te maken.
+
+INSIGHT CARDS: padding/iconformaat/typografie verkleind conform de
+canonical, compacte insight-summary-stijl (was te groot na de vorige
+ronde).
+
+MINI VISUALIZATION EMPTY STATE: nieuwe, consistente
+INSUFFICIENT_DATA-placeholder (rustige, dashed lijn) toegevoegd voor
+domeinen zonder echte, veilig toegankelijke visualisatiedata
+(Prestaties/Belasting/Verbanden/Doelen) -- GEEN nep-trendlijn, wel een
+bewust ontworpen, consistente rechterzijde i.p.v. toevallige leegte.
+Herstel/Lichaam blijven hun echte, bestaande data tonen.
+
+GEMETEN EINDRESULTAAT (390px, realistische 844px-viewport, vóór/na
+deze sprint): totale content-hoogte 1168px -> 1092px (-76px, -6.5%).
+
+core/fInzichtV01BrowserRuntime.test.js uitgebreid (132/132, was 125):
+nieuwe assertions bevestigen op alle 6 viewports dat Snel overzicht
+exact 1 rij van 5 metrics blijft (geen 3+2-wrap), en dat elke
+domain-row een miniviz-wrap heeft (data of bewuste placeholder).
+
+Cross-domein regressie, canonical PNG-hash, 26/26 preservation:
+ongewijzigd bevestigd. Release gate 238/238. Android 29/29.
+
+APP_VER v4.69.62 -> v4.69.63 (patch-bump: geometry/density-polish,
+geen nieuwe functionaliteit). sw.js/build.gradle/CURRENT_STATE.md
+gesynchroniseerd.
+
+## v4.69.62 — Inzicht v0.1 Canonical Mockup Fidelity Pass (4 september 2026)
+
+Derde Product Owner-review-ronde op PR #232 (Android/canonical PNG naast
+elkaar gelegd). NO-GO for merge -- functioneel sterk, maar visueel te
+sterk afwijkend van de goedgekeurde mockup. Deze sprint herstelt de
+canonical information density en compositie, met uitsluitend echte data.
+
+FORENSISCHE VISUAL DELTA AUDIT uitgevoerd vóór enige codewijziging (zie
+sectie hieronder voor de volledige tabel).
+
+JOUW ONTWIKKELING: "Bekijk details"-knop toegevoegd (canonical), plus
+een semantisch icoon boven elk van de vier cijfers (trend/kalender/
+doel). Geen nieuwe calculation -- uitsluitend presentatie.
+
+SNEL OVERZICHT: Herstelstatus toont nu een ring-visualisatie (dezelfde,
+bewezen ring-wiskunde als de bestaande _radial()-component elders in
+de app), i.p.v. uitsluitend een percentage. SEMANTIC DATA AUDIT
+uitgevoerd op "Belasting 5427 kg": technisch bevestigd dat
+tkCoachBelasting() uitsluitend AC.serie(model,'strength','belasting')
+gebruikt -- dit is UITSLUITEND krachtvolume, geen multisport-belasting.
+Label bewust gecorrigeerd naar "Krachtvolume (7d)" i.p.v. de generieke
+canonical mockup-tekst "Trainingsbelasting", om geen onjuiste, bredere
+claim te suggereren dan de data representeert.
+
+DOMEINEN: Mini Trend Visualization (nieuwe, herbruikbare presentation
+primitive, geen nieuwe calculation) toegevoegd waar binnen dit
+tijdsbudget veilig, echte data toegankelijk was: Herstel (v43Overall
+Recovery().rows, per-spiergroep-percentages) en Lichaam (weight_log,
+recente gewichtsmetingen). Voor Prestaties/Belasting/Verbanden/Doelen
+bleef dit binnen deze sprint NO SAFE VISUALIZATION (vereist een aparte,
+dagelijkse reeks-aanroep of extra afhankelijkheden) -- bewust leeg
+gelaten, geen verzonnen/decoratieve grafiek.
+
+RECENTE INZICHTEN: heringericht van één grote, verticale lijst-kaart
+naar drie compacte kaarten naast elkaar (canonical compositie), met een
+gecontroleerde, interne horizontale scroll op smallere viewports
+(bewust mobile pattern, geen pagina-brede overflow). Titel blijft
+"RECENTE INZICHTEN" (PO2, chronologisch, geen ranking) -- die eerdere
+beslissing wijzigt niet. De eerder gevonden concatenatie-garantie
+(display:block op titel/beschrijving) expliciet opnieuw bevestigd voor
+de nieuwe kaartstructuur.
+
+ONDERSTE CTA: herstijld naar een zachte, teal action-strip (--color-
+primary-soft), i.p.v. de eerdere, zware witte knop.
+
+core/fInzichtV01BrowserRuntime.test.js uitgebreid (125/125, was 118):
+nieuwe assertions voor Bekijk details-knop, iconen in Jouw ontwikkeling,
+herstel-ring-wiskunde, 3-insight-cards-structuur met concatenatie-
+garantie, en CTA-kleur.
+
+Responsive op alle 6 viewports (320-430px) herbevestigd: geen enkele
+pagina-brede overflow; de insight-cards' interne scroll is het enige,
+bewuste, lokale scroll-gedrag.
+
+Cross-domein regressie, canonical PNG-hash, 26/26 preservation:
+allemaal ongewijzigd bevestigd. Release gate 238/238. Android 29/29.
+
+APP_VER v4.69.61 -> v4.69.62 (minor bump: significante visuele
+herstructurering, meerdere nieuwe, herbruikbare componenten). sw.js/
+build.gradle/CURRENT_STATE.md gesynchroniseerd.
+
+## v4.69.61 — Inzicht v0.1 Snel Overzicht Final Polish (4 september 2026)
+
+Tweede Product Owner-review-ronde op PR #232 (Android/Netlify Preview).
+Vier gebieden expliciet GO (structuur, Recente inzichten, Domeinen,
+sportfilter, period selector) -- uitsluitend Snel overzicht kreeg een
+gerichte polish. Freeze op alle andere, al goedgekeurde onderdelen.
+
+ICON LANGUAGE (root cause gevonden): Snel overzicht gebruikte de
+oudere V43I-iconenset, waarvan de SVG's geen stroke="currentColor" op
+het <svg>-element zelf hadden -- vandaar zwart, ongeacht CSS-kleur.
+Vervangen door de canonieke DS-03 tkIcon()-registry (teal,
+--color-primary), consistent met Domeinen/Trainen. V43I zelf is NIET
+gewijzigd (blijft ongewijzigd voor zijn bestaande, andere gebruikers
+elders in de app).
+
+RESPONSIVE STRATEGY: vijf-gelijke-kolommen-grid met verticale
+separators vervangen door een responsive wrap-grid (flex-wrap, 92px
+minimumbreedte per cel) -- comfortabele 5-op-1-rij bij voldoende
+breedte, gecontroleerde 3+2-wrap op smallere schermen. Geen krimpende
+tekst, geen afkortingen, geen horizontale scroll. Getest op 320-430px:
+geen enkel label afgekapt.
+
+BELASTING/HERSTELSTATUS CONTEXT (onderzocht en gedocumenteerd): "5427"
+bleek het rollende, 7-daagse krachtvolume in kilogram te zijn
+(AC.MODALITEITEN.strength.eenheid='kg', via de bestaande, ongewijzigde
+tkCoachBelasting()). "100%" komt van de bestaande, ongewijzigde
+v43OverallRecovery() (gemiddeld spierherstelpercentage). Beide tonen nu
+expliciet hun eenheid ("5427 kg", "100 %") in plaats van een kaal,
+contextloos getal. Geen nieuwe calculation.
+
+METRIC HIERARCHY: elke cel volgt nu consistent icoon-container (teal
+bij beschikbare data, neutraal grijs bij unavailable) -> label ->
+waarde+eenheid -> optionele trend. UNKNOWN != 0 blijft gehandhaafd
+(missing data toont "--", nooit 0 ms/bpm/uur).
+
+core/fInzichtV01BrowserRuntime.test.js uitgebreid (118/118, was 109):
+teal-iconkleur bevestigd (rgb(0,184,148)), geen verticale borders meer,
+eenheden aanwezig, en op alle 6 viewports opnieuw bevestigd dat geen
+enkel label wordt afgekapt.
+
+Geen collateral changes: diff bevestigd beperkt tot uitsluitend de
+Snel-overzicht-functie/CSS. Cross-domein regressie, canonical PNG-hash,
+26/26 preservation: allemaal ongewijzigd bevestigd. Release gate
+238/238. Android 29/29.
+
+APP_VER v4.69.60 -> v4.69.61 (patch-bump: presentatie-polish, geen
+nieuwe functionaliteit). sw.js CACHE_NAME/CACHE_STATIC synchroon naar
+v469610. android/app/build.gradle gesynchroniseerd (46961/4.69.61).
+
+## v4.69.60 — Inzicht v0.1 Implementation (3 september 2026)
+
+Eerste implementatie van Inzicht v0.1, het nieuwe overzichtsscherm dat
+conceptueel Lichaam+Voortgang vervangt zonder een enkele bestaande
+functie te verwijderen. Volgt volledig de Screen Implementation
+Standard v1 en de pre-implementation audit/decision-resolution (PR
+#231, CLOSED).
+
+NIEUW SCHERM: s-inzicht (additief, bereikbaar via go('s-inzicht') --
+GEEN bottom-nav-wijziging in deze sprint, dat blijft een aparte,
+toekomstige Product Owner-opdracht conform NAVIGATION MIGRATION
+DEPENDENCY).
+
+NIEUWE, VOORAF GERECHTVAARDIGDE COMPONENTEN (Screen Implementation
+Standard v1 uitgebreid): Period Selector (.tk-period-selector, echte
+segmented control, role=tablist/tab), Filter Chip (.tk-filter-chip),
+Metric Summary Cell (.tk-summary-cell, de 4 "Jouw ontwikkeling"-
+cellen), Metric Overview Cell (.tk-overview-cell, de 5 "Snel
+overzicht"-cellen), Domain Row (icon-row-variant met mini-viz-ruimte),
+Insight Row (icon-in-cirkel-variant).
+
+GEEN SHADOW CALCULATIONS: Verbeterd/Stijgende trends gebruiken
+uitsluitend CoachingCore.improvementsDigest(). Adherence gebruikt
+uitsluitend AdherenceIntelligenceCore.aggregate() (PO1, CLOSED, 0
+codewijziging). HRV/Rusthartslag/Slaap gebruiken uitsluitend de
+bestaande dc.health*-functiefamilie. Trainingen telt sessions+
+activities op (architecturaal gescheiden, B9-H6B, geen dubbeltelling).
+Recente inzichten (PO2, CLOSED): deterministische recentheid van
+CoachingCore's bestaande, gevalideerde highlights -- GEEN AI-ranking,
+GEEN nieuwe rankingregel. Titel "Recente inzichten" gebruikt (niet
+"Belangrijkste inzichten", conform PO2).
+
+UNKNOWN != 0 (zelf gevonden en gerepareerd tijdens implementatie): een
+eigen, veilige data-wrapper (inzichtGetOrNull) toegevoegd die expliciet
+onderscheid maakt tussen een echte, lege dataset ([]) en een fout/geen
+verbinding (null) -- de bestaande, app-brede v43SafeGet/sbGet geven bij
+ELKE fout stilzwijgend [] terug (correct voor hun bestaande, andere
+gebruikers, niet gewijzigd), wat bij hergebruik voor Inzicht een
+fictieve "0 Verbeterd/Trainingen" zou hebben getoond bij een
+netwerkfout. Nu: "--" bij een fout, een echte 0 alleen bij een
+daadwerkelijk lege, succesvol opgehaalde dataset.
+
+FUNCTIONAL PRESERVATION: alle 26 legacy-functies (Lichaam + 11 sub-
+schermen, Voortgang, Doelen) blijven exact, ongewijzigd bereikbaar --
+6 domain-cards op Inzicht linken naar bewezen, bestaande schermen
+(s-stats, s-lich-health, s-lich-metingen, s-lich-verbanden), de overige
+sub-routes (Cyclus, Gegevens & koppelingen, spiergroep-detail, etc.)
+blijven bereikbaar via de ongewijzigde s-lichaam-hub. Consolidation !=
+deletion.
+
+Zelf gevonden en gerepareerd: domain-rows misten aanvankelijk de
+.v43-tmt-basisclass (alleen de -inset-variant was toegevoegd), waardoor
+titel/subtitel zonder scheiding aan elkaar plakten -- gecorrigeerd door
+beide classes samen toe te voegen, exact zoals bij de Trainen-rijen.
+
+Twee iconen toegevoegd aan core/designSystemIcons.js (prestaties,
+verbanden) -- additief, geen bestaand icoon gewijzigd.
+
+Tests (nieuw): core/fInzichtV01BrowserRuntime.test.js (75/75, echte
+Chromium-render op 6 viewports + interactie- en sabotagetests),
+core/fInzichtV01DataContract.test.js (11/11, bevestigt afwezigheid van
+shadow calculations), core/fInzichtV01Preservation.test.js (35/35,
+bevestigt alle 26 functies bereikbaar).
+
+Twee bestaande tests bijgewerkt (fB9_07BSocialClosure,
+fB9_07SocialProductLayer): de vaste bottom-nav-blok-telling (35) is nu
+36 door de additieve komst van s-inzicht's eigen nav-blok -- geen
+verzwakking, uitsluitend de correcte, nieuwe telling.
+
+Release gate 238/238, Android 29/29. Cross-domein regressie
+(Entitlements/Team/Gym/Admin-Auth/Women's Performance/Recovery/
+Devices/Running-Core/Design System/Trainen/Hardening/HyroxTriathlon):
+0 problemen. Canonical PNG-integriteit: alle 6 hashes exact
+ongewijzigd.
+
+APP_VER v4.69.59 -> v4.69.60. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469600. android/app/build.gradle gesynchroniseerd
+(46960/4.69.60).
+
+Bottom navigation, andere hoofdschermen (Vandaag/Trainen/Coach/Samen/
+Profiel) en PR #222: allemaal ongewijzigd.
+
 ## v4.69.59 — Trainen v0.2 Micro Alignment Pass (3 september 2026)
 
 Laatste micro-correctie op PR #229, geen redesign. De Product Owner

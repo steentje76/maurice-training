@@ -67,6 +67,8 @@ var ICON_PATHS = {
   trend: '<path d="M3 17l5-5 4 4 8-8"/><path d="M15 8h5v5"/>',
   doel: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.7" fill="currentColor"/>',
   belasting: '<path d="M4 20V10M9 20V4M14 20v-8M19 20v-4"/>',
+  prestaties: '<path d="M3 20V10M9 20V6M15 20v-9M21 20V4"/>',
+  verbanden: '<circle cx="6" cy="7" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="12" cy="17" r="2"/><path d="M7.8 8.2L11 15.3M16.4 7.3L13 15.3"/>',
 
   // Coach
   aisparkle: '<path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M5 16l.7 1.8L7.5 18.5l-1.8.7L5 21l-.7-1.8L2.5 18.5l1.8-.7z"/>',

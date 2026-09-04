@@ -1,5 +1,304 @@
 # Trainingskompas — Changelog
 
+## v4.69.59 — Trainen v0.2 Micro Alignment Pass (3 september 2026)
+
+Laatste micro-correctie op PR #229, geen redesign. De Product Owner
+beoordeelde de vorige runtime als goed, met één resterende afwijking:
+de lichte teal icon-containers in Training maken/Oefeningen/
+Trainingshistorie stonden te dicht tegen de linker kaartrand.
+
+ROOT CAUSE: de gedeelde .v43-tmt .row-klasse (ook gebruikt door Running/
+Cycling-schermen) heeft padding:15px 0 -- geen horizontale ruimte. De
+buitenste kaartcontainer had eveneens 0 horizontale padding.
+
+FIX: één nieuwe, gescoped CSS-regel (.v43-tmt-inset .row{padding:15px
+16px}) toegevoegd, uitsluitend op de twee betrokken containers via een
+extra class (v43-tmt-inset) naast de bestaande, gedeelde v43-tmt --
+de gedeelde .v43-tmt .row-regel zelf blijft volledig ongewijzigd, dus
+Running/Cycling zijn niet geraakt. Bewust ÉÉN gedeelde regel voor alle
+drie de rijen, geen losse pixel-hacks.
+
+Zelf gevonden en gecorrigeerd tijdens implementatie: de nieuwe regel
+werkte aanvankelijk niet door CSS-cascade-volgorde (de regel stond
+vroeg in het bestand, de gedeelde .v43-tmt .row-regel staat later en
+won bij gelijke specificiteit) -- verplaatst naar direct na de
+bestaande regel, nu consistent toegepast.
+
+Live gemeten in de echte browser op alle 6 vereiste viewports (320/360/
+375/390/412/430px): alle 3 icon-boxen exact 16px vanaf de linkerrand,
+alle 3 chevrons exact 16px vanaf de rechterrand, geen horizontale
+overflow, geen tekst-wrapping-regressie, divider bij Maken & ontdekken
+intact.
+
+core/fTrainenBrowserRuntime.test.js uitgebreid (25/25, was 22): 3
+nieuwe assertions die de exacte, gemeten pixel-uitlijning bewaken. Live
+sabotage (padding teruggezet naar 0) correct gedetecteerd en volledig
+hersteld.
+
+Geen andere visuele wijziging: header, Eerstvolgende training, Jouw
+training, Start een activiteit, kleuren, typography, card-radius,
+bottom navigation en alle andere schermen ongewijzigd.
+
+Release gate 234/234, Android 29/29. Cross-domein regressie
+(HyroxTriathlon/RunningIntelligence/Hardening/DesignSystemComponents):
+0 problemen.
+
+APP_VER v4.69.58 -> v4.69.59. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469590. android/app/build.gradle gesynchroniseerd
+(46959/4.69.59).
+
+## v4.69.58 — Trainen v0.2 Visual Fidelity Pass (3 september 2026)
+
+Visuele verfijning naar 1-op-1-conformiteit met de canonical baseline
+(trainen-v0.2.png), na Product Owner-feedback dat de functionele fix
+correct was maar het scherm nog niet visueel identiek aan het ontwerp
+aanvoelde. Geen bugfix, geen nieuwe functionaliteit -- puur presentatie.
+
+EERSTVOLGENDE TRAINING-KAART: v43RenderPlan() backward-compatible
+uitgebreid met een optionele 3e parameter (opts.detailsButton,
+opts.compact). Home roept de functie nog steeds aan met exact 2
+argumenten (geen opts) -- 100% ongewijzigd gedrag/HTML voor s-home,
+geverifieerd en getest. Trainen toont nu "Start training" en "Bekijk
+details" naast elkaar (horizontale actierij), compactere padding, alle
+CSS-wijzigingen uitsluitend gescoped op #v43-train-plan (niet #home-plan).
+
+TIJD/LOCATIE ONDERZOCHT EN BEVESTIGD AFWEZIG: live geverifieerd tegen
+het echte databaseschema (vaste_trainingen, training_instances, geen
+calendar-tabel) -- geen enkel veld voor een geplande starttijd of
+locatie bestaat. Geen fictieve waarde toegevoegd; nieuwe browsertest
+bevestigt expliciet de afwezigheid van elk HH:MM-patroon of
+locatie-achtige tekst op de kaart.
+
+CANONICAL TEAL ICON-CONTAINER (nieuw, additief token --color-primary-
+soft + .tk-icon-box/.tk-icon-box-sm): toegepast op alle 11 icon-
+containers in Jouw training (3), Start een activiteit (5), Maken &
+ontdekken (2), Terugkijken (1) -- lichte teal achtergrond met teal
+icoon, conform de canonical baseline (was: groot, zwart icoon op
+transparante achtergrond).
+
+START EEN ACTIVITEIT: chevron-iconen toegevoegd aan Jouw training-
+tegels voor visuele consistentie met de baseline.
+
+ZELF GEVONDEN EN GEREPAREERD, BUITEN DE OORSPRONKELIJKE SCOPE: een
+pre-existing, te fragiele test in core/fHardening.test.js (W9) gebruikte
+een vaste, 3200-tekens-brongrens i.p.v. de echte functiegrens van
+tkErgConnectDevice() (3617 tekens) om te controleren dat device-connect
+nooit de workout-finish-flow aanroept. Door de toegevoegde/verplaatste
+code elders in dit bestand verschoof de absolute bestandspositie,
+waardoor de vaste grens toevallig een VERKLAREND COMMENTAAR meenam
+("...noch execLeaveDiscard() noch finishSession() riep...") en dat
+per ongeluk als een echte functieaanroep interpreteerde -- een
+vals-positief, geen echte regressie (herleid tot de exacte, oude en
+nieuwe brontekst-diff, en herbevestigd door de test te draaien op de
+ongewijzigde staat vóór deze sprint: 347/347 groen daar, 346/347 na de
+verschuiving, terug naar 347/347 na de fix). Test verbeterd: commentaar-
+regels worden nu eerst gestript vóór de regex-controle -- geen
+verzwakking van de onderliggende, functionele controle.
+
+core/fTrainenBrowserRuntime.test.js uitgebreid (22/22, was 19): 11
+canonical icon-boxes bevestigd (exacte telling, niet een losse
+ondergrens), "Bekijk details" functioneel aanwezig, geen fictieve tijd/
+locatie. Herhaalde sabotage van de oorspronkelijke kernbug correct
+gedetecteerd en volledig hersteld.
+
+Cross-domein regressie (Entitlements/Team/Gym/Admin-Auth/Women's
+Performance/Recovery/Devices/Running-Core/Design System/Hardening):
+0 problemen. Release gate 234/234, Android 29/29, Hardening 347/347.
+
+APP_VER v4.69.57 -> v4.69.58. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469580. android/app/build.gradle gesynchroniseerd
+(46958/4.69.58).
+
+Zie docs/TRAINEN_V02_VISUAL_FIDELITY_REPORT.md voor het volledige
+rapport inclusief drie nieuwe runtime-screenshots.
+
+## v4.69.57 — Trainen v0.2 Visual Polish + Reproductie-onderzoek (3 september 2026)
+
+PR #229 vervolg-herstelsprint, na nieuw bewijs van de Product Owner (drie
+echte Android/Brave-screenshots die bevestigden dat de icon-bug al was
+opgelost, en de eerstvolgende-training-kaart wel degelijk zichtbaar is
+in de echte runtime).
+
+REPRODUCTIE-ONDERZOEK (conform de opdracht: eerst reproduceren, geen
+speculatieve fix): live getest of window.homeNextT met echte data de
+kaart correct rendert. BEVESTIGD: JA, volledig correct -- de eerdere
+observatie ("kaart ontbreekt") was een gevolg van het ontbreken van
+data in de niet-ingelogde, file://-testcontext, GEEN echte renderbug.
+Vastgelegd als FIRST TRAINING CARD RENDER ISSUE REAL BUG: NEE.
+
+ECHTE, BEVESTIGDE BUG GEVONDEN EN OPGELOST: de "Meer"-tegel in "Start
+een activiteit" wrapte (bij marginaal te weinig breedte op 390px) naar
+een eigen rij en nam vervolgens de volledige, resterende breedte in
+(334px vs. 77.5px voor de andere 4 tegels) -- veel visueel dominanter
+dan de andere activity-tiles, in strijd met het PO-contract. Root cause:
+flex-wrap in combinatie met flex:1 op de quick-act-tegels. Opgelost met
+CSS Grid (5 gelijke kolommen, robuust tegen marginale breedteverschillen
+op elke viewport-breedte) -- geen wijziging aan de gedeelde .quick-act-
+klasse zelf (die ook elders wordt gebruikt).
+
+TIJD/LOCATIE/"BEKIJK DETAILS" op de eerstvolgende-training-kaart:
+onderzocht of deze velden uit een bestaande, echte databron kunnen
+komen. Live geverifieerd tegen het daadwerkelijke databaseschema:
+vaste_trainingen heeft GEEN starttijd/locatie-kolom. Deze context
+ontbreekt daarom bewust in de runtime (MOCKUP OMISSION != FUNCTIONALITY
+REMOVAL, maar ook: MOCKUP VALUE != HARDCODED PRODUCTION VALUE -- geen
+fictieve tijd/locatie toegevoegd). "Bekijk details" bevestigd functioneel
+aanwezig: de volledige kaart is al role="button" met openTrainingPreview()
+als handler, functioneel gelijkwaardig aan een aparte knop, zonder de
+gedeelde, ook door Home gebruikte renderfunctie te wijzigen.
+
+core/fTrainenBrowserRuntime.test.js uitgebreid (19/19, was 17): nieuwe
+assertie die expliciet controleert dat geen enkele activity-tile
+(inclusief "Meer") visueel dominanter is dan de andere (breedteverschil
+<5px), plus bevestiging dat alle 5 tiles op dezelfde rij staan.
+
+Volledige, herhaalde sabotage van de oorspronkelijke kernbug (opnieuw
+\${tkIcon(...)} geintroduceerd): correct gedetecteerd, volledig hersteld.
+
+Cross-domein regressie: 0 problemen. Release gate 234/234, Android 29/29.
+
+APP_VER v4.69.56 -> v4.69.57. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469570. android/app/build.gradle gesynchroniseerd
+(46957/4.69.57).
+
+Zie docs/TRAINEN_V02_RUNTIME_DEFECT_RECOVERY_REPORT.md (bijgewerkt) voor
+het volledige, definitieve rapport inclusief nieuwe runtime-screenshots
+(met en zonder echte trainingsdata).
+
+## v4.69.56 — Trainen v0.2 Runtime Visual Defect Recovery (3 september 2026)
+
+PR #229 Runtime Visual Defect Recovery. De Product Owner keurde de eerste
+versie van PR #229 af na inspectie op de echte Netlify Preview (Android/
+Brave): letterlijke "${tkIcon(...)}"-tekst zichtbaar op meerdere plekken,
+plus verstoorde card-layout.
+
+ROOT CAUSE (zelf gevonden, gereproduceerd, gedocumenteerd): ES6-template-
+literal-syntax (${tkIcon(...)}) werd gebruikt direct in STATISCHE HTML-
+broncode van s-train-mgr -- niet binnen een daadwerkelijk door JavaScript
+uitgevoerde template literal. Statische HTML wordt door de browser als
+tekst geparsed, nooit als JS-code uitgevoerd; ${...} werd dus nooit
+geinterpoleerd en verscheen letterlijk in de DOM. Alle bestaande Node-
+tests controleerden alleen of de string "tkIcon(" ergens voorkwam -- dat
+was waar, maar bewees niet dat de aanroep ook daadwerkelijk werd
+UITGEVOERD. Dit was de gemelde "test-gap".
+
+FIX: alle 12 voorkomens van ${tkIcon(...)} in s-train-mgr vervangen door
+de daadwerkelijke, vooraf gegenereerde, statische SVG-markup (tkIcon()
+zelf server/build-side aangeroepen om de exacte output te bepalen, dan
+letterlijk in de HTML geplakt). Geen enkele visuele/functionele wijziging
+t.o.v. de bedoelde iconen -- uitsluitend de rendering-methode gecorrigeerd.
+
+TWEE AANVULLENDE, LIVE ONTDEKTE PUNTEN tijdens het browser-runtime-
+onderzoek: (1) een robuustere, expliciete display:flex toegevoegd aan de
+"Jouw training"-tegels (bij nader, eerlijk onderzoek bleek het gemelde
+"tekst loopt door elkaar"-symptoom grotendeels een direct gevolg van
+dezelfde root cause -- de lange, onuitgevoerde tekststring zelf verstoorde
+de layout, geen aparte CSS-bug; de expliciete display:flex is alsnog
+behouden als veiligere implementatie); (2) een ECHTE, bevestigde tweede
+bug gerepareerd: de "Eerstvolgende training"-sectie toonde niets (geen
+kaart, geen empty state) wanneer er geen geplande training is -- een
+kleine, additieve JS-toggle toegevoegd die de al aanwezige, maar nooit
+geactiveerde trainen-plan-empty-div toont/verbergt, zonder de gedeelde
+v43RenderPlan()-functie (ook door Home gebruikt) te wijzigen.
+
+NIEUWE, HARDE BROWSER-RUNTIME-TESTS (het gemelde test-gap gedicht):
+core/fTrainenBrowserRuntime.test.js (nieuw, 17/17) -- draait de ECHTE
+index.html in een headless Chromium-browser (Playwright) en inspecteert
+de resulterende DOM, niet alleen source-tekst. Test op alle 6 vereiste
+mobiele viewports (320/360/375/390/412/430px, inclusief 390px en 412px
+als representatief voor de Product Owner-testomgeving), bevestigt 0
+letterlijke "${" of "tkIcon(" in de gerenderde DOM, >=12 daadwerkelijk
+gerenderde <svg class="tk-icon">-elementen, 5 primair zichtbare activity-
+tiles, en de empty-state-fix. Live sabotage (3x: ${tkIcon(...)} opnieuw
+geintroduceerd, layout-robuustheid, empty-state-toggle verwijderd) alle
+drie correct gedetecteerd en volledig hersteld -- bewijst dat de nieuwe
+tests de exacte bugklasse daadwerkelijk vangen, niet toevallig slagen.
+
+core/fTrainenV02Migration.test.js uitgebreid (35/35, was 32): drie
+aanvullende, snelle statische checks als eerste verdedigingslinie vóór
+de browsertest (geen letterlijke ${tkIcon( in de volledige index.html,
+geen ${identifier-patroon binnen s-train-mgr, >=12 daadwerkelijk
+gerenderde svg.tk-icon-elementen).
+
+EERLIJKE, TRANSPARANTE BEPERKING: de Playwright/Chromium-browsertests
+draaiden succesvol in deze ontwikkelomgeving (browser bleek al lokaal
+beschikbaar). Of de CI/Quality-Gate-omgeving (GitHub Actions) ook
+Chromium heeft geinstalleerd is niet onafhankelijk bevestigd -- de
+testsuite degradeert veilig (expliciete SKIP, exit 0, geen vals-groen
+resultaat) als Playwright/Chromium daar ontbreekt, maar biedt dan ook
+geen daadwerkelijke bescherming in die specifieke omgeving. Dit is
+vastgelegd, niet verzwegen.
+
+Cross-domein regressie (Entitlements/Team/Gym/Admin-Auth/Women's
+Performance/Recovery/Devices/Running-Core/Design System Foundation+
+Components): 0 problemen.
+
+APP_VER v4.69.55 -> v4.69.56. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469560. android/app/build.gradle gesynchroniseerd
+(46956/4.69.56).
+
+Zie docs/TRAINEN_V02_RUNTIME_DEFECT_RECOVERY_REPORT.md voor het volledige
+rapport, inclusief de nieuwe runtime-screenshot en de visual delta audit.
+
+## v4.69.55 — Trainen v0.2: eerste gecontroleerde screen migration (3 september 2026)
+
+First Controlled Screen Migration Masterprint. Uitsluitend het Trainen-scherm
+(s-train-mgr) visueel gemigreerd naar Design System v1 / canonical baseline
+trainen-v0.2.png -- geen ander hoofdscherm aangeraakt, geen navigatiemigratie.
+
+DEEL A: PR #228 (DS-03/04/05) veilig gemergd (merge SHA e13ff1b), fresh-main
+gecertificeerd (release gate/Android/canonical-hashes groen).
+
+DEEL B: s-train-mgr herstructureerd naar de vijf secties uit de canonical
+baseline (Eerstvolgende training / Jouw training / Start een activiteit /
+Maken & ontdekken / Terugkijken). Header hernoemd van "Training"/"Bouw, plan
+en start" naar "Trainen"/"Plan, start en beheer je trainingen" (exacte tekst
+uit trainen-v0.2.png), avatar rechtsboven toegevoegd (opent bestaande
+Profiel-route). Canonical DS-03/04/05-primitives hergebruikt: tkIcon() i.p.v.
+losse SVG-paden, .tk-card-l2/l3 i.p.v. nieuwe, lokale kaartstijlen.
+
+FUNCTIONAL PRESERVATION (harde eis, geen enkele route verloren): Mijn
+trainingen, Programma's, Planning/Kalender, Training maken (-> bestaande
+Workout Builder, geen tweede execution-path), Hardlopen, Fietsen, HYROX,
+Triathlon-brick, Oefeningen, Losse oefening, Trainingshistorie/Logboek --
+allemaal exact dezelfde route/handler als vóór de migratie. "Start een
+activiteit" toont maximaal 5 zichtbare tiles (PO-contract: Kracht/Hardlopen/
+Fietsen/HYROX/Meer); Triathlon-brick en Losse oefening blijven bereikbaar via
+een inline "Meer"-uitklap (geen nieuw scherm, geen tweede executiepad).
+
+NAVIGATION MIGRATION DEPENDENCY (bewust niet opgelost, expliciet
+gedocumenteerd): de bottom-navigatie is nog volledig legacy (Home/Training/
+Lichaam/Coach/Voortgang) -- een gedeelde component op elk scherm. Deze sprint
+migreert die NIET, om te voorkomen dat een gedeeltelijke labelwijziging een
+onbedoelde, inconsistente app-brede navigatiewijziging veroorzaakt op
+schermen die niet in scope zijn (Home/Lichaam/Coach/Voortgang).
+
+GEEN mockdata hardcoded: de "eerstvolgende training"-kaart blijft de
+bestaande, gedeelde v43RenderPlan()-functie gebruiken (ook door Home
+gebruikt, dus bewust NIET gewijzigd om Home-regressie te voorkomen) met
+window.homeNextT als enige, echte databron. Een aparte, Trainen-specifieke
+empty-state is toegevoegd naast (niet in plaats van) die functie voor het
+geval er geen training gepland is.
+
+core/fTrainenV02Migration.test.js (nieuw, 32/32): alle bestaande routes,
+5-tiles-contract, canonical-componentgebruik, geen mockdata, ongewijzigde
+gedeelde renderfunctie, ongewijzigde bottom-nav, canonical-PNG-integriteit.
+core/fB9_02RunningCore.test.js bijgewerkt (1 assertie: parse-markers naar de
+nieuwe sectienamen, functionele eis ongewijzigd).
+
+Live sabotage (6x: kapotte route, verwijderde Meer-activiteit, primary-kleur,
+card-radius, canonical PNG-byte, hardcoded "Training A") allemaal correct
+gedetecteerd en volledig hersteld.
+
+Cross-domein regressie (Entitlements/Team/Gym/Admin-Auth/Women's Performance/
+Recovery/Devices/Ergometers/Running-Core): 0 problemen.
+
+APP_VER v4.69.54 -> v4.69.55. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469550. android/app/build.gradle gesynchroniseerd
+(46955/4.69.55).
+
+Zie docs/TRAINEN_V02_IMPLEMENTATION_REPORT.md voor het volledige rapport.
+
 ## v4.69.54 — Design System v1 Component Foundation: DS-03 (iconography) + DS-04 (buttons) + DS-05 (cards) (3 september 2026)
 
 Design System Component Foundation Masterprint. Bouwt herbruikbare bouwstenen

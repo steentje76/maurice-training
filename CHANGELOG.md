@@ -1,5 +1,66 @@
 # Trainingskompas — Changelog
 
+## v4.69.66 — Inzicht v0.1 Production Data Regression Fix (4 september 2026)
+
+FUNCTIONAL DATA REGRESSION, gevonden door Product Owner na de PR
+#232-merge naar productie. HRV/Rusthartslag/Slaap toonden "--" in
+Inzicht's Snel overzicht, terwijl exact dezelfde, echte data op het
+oude Lichaam-scherm wel zichtbaar was (bv. HRV 28.5, Rust HR 56,
+Slaap 7u35m).
+
+FORENSISCHE DATA TRACE (oud vs. nieuw):
+- OUD (renderLichaamPremium(), bewezen werkend): haalt hrv_log op via
+  v43SafeGet(), gebruikt lh=hd[0] (de laatste, meest recente rij),
+  toont lh.hrv/lh.rhr/lh.sleep direct.
+- NIEUW (inzichtRenderOverview(), gebroken): riep dc.healthSeries()/
+  dc.qualifySeries()/dc.healthStats() aan voor een 7-daags gemiddelde
+  (canonical mockup-label "HRV (7d)") -- SEMANTISCH BEWUST ANDERS dan
+  het oude scherm (canonical contract, geen 1-op-1-overname vereist).
+
+ROOT CAUSE (technisch, niet semantisch): 'dc' is geen globale
+variabele -- het is een lokale alias (var dc=DeviceCore) die elders in
+de app per functie apart wordt gedefinieerd (bv. regel ~6353). In
+inzichtRenderOverview() ontbrak deze lokale definitie volledig, wat bij
+elke dc.health*-aanroep een stille ReferenceError gaf. De bestaande
+try/catch ving deze op zonder te loggen, waardoor de functie altijd in
+de catch-branch belandde en "--" toonde -- ongeacht of canonical data
+daadwerkelijk bestond.
+
+FIX (minimaal, exact het bewezen patroon overgenomen): var dc=(typeof
+DeviceCore!=='undefined')?DeviceCore:null; toegevoegd aan het begin van
+inzichtRenderOverview() -- EXACT dezelfde regel als het al werkende
+Lichaam-scherm gebruikt. Geen nieuwe calculation, geen gewijzigde
+semantiek, geen ander databronpad -- uitsluitend de ontbrekende lokale
+referentie hersteld.
+
+Bevestigd, technisch: DeviceCore (core/deviceIntegration.js) exporteert
+exact de vier benodigde functies (healthSeries/healthStats/
+qualifySeries/healthTrend) die inzichtRenderOverview() al aanriep --
+de databron- en aggregatielogica zelf was en blijft ongewijzigd.
+
+TESTS: core/fInzichtV01ProductionDataRegression.test.js (nieuw, 4/4) --
+source-level garantie dat de lokale dc-definitie aanwezig blijft.
+core/fInzichtV01BrowserRuntime.test.js uitgebreid (150/150, was 143)
+met een ECHTE, gemockte productie-vorm-fixture (page.route() op
+hrv_log, inclusief string-getallen zoals Supabase teruggeeft en een
+dag met ontbrekende HRV): bevestigt dat HRV/Rusthartslag/Slaap geen
+"--" meer tonen bij aantoonbaar bestaande data, dat de juiste eenheden
+(ms/bpm/u) zichtbaar zijn, en dat bij daadwerkelijk lege data nooit
+"0 ms"/"0 bpm" wordt getoond (UNKNOWN != 0 blijft gehandhaafd).
+
+Sabotage bevestigd: de fix-regel tijdelijk verwijderd liet precies de
+6 nieuwe regressietests falen (exact de productiefout gereproduceerd),
+daarna volledig hersteld.
+
+Geen shadow calculation, geen mock data, geen wijziging aan Calculation/
+Context/Decision Engine, geen databasewijziging, geen wijziging aan
+andere schermen/bottom navigation. Cross-domein regressie, canonical
+PNG-hash, 26/26 preservation: ongewijzigd bevestigd. Release gate
+239/239. Android 29/29.
+
+APP_VER v4.69.65 -> v4.69.66. sw.js/build.gradle/CURRENT_STATE.md
+gesynchroniseerd.
+
 ## v4.69.65 — Inzicht v0.1 Final PO Correction (4 september 2026)
 
 Vijfde Product Owner-review-ronde op PR #232. Drie, gerichte correcties

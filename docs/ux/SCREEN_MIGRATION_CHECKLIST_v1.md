@@ -2,6 +2,16 @@
 
 Elke toekomstige hoofdschermmigratie (Vandaag, Inzicht, Coach, Samen, Profiel) volgt exact deze 16 stappen, in volgorde. Geen volgend hoofdscherm vóór STEP 16 van het vorige.
 
+**HARD RULE (Screen Implementation Standard v1 Final Closure): STEP 1 t/m 5 zijn verplicht en moeten volledig zijn afgerond vóórdat ook maar één regel runtime-code (index.html/CSS/JS) wordt gewijzigd.** Concreet, vóór elke runtime-wijziging:
+1. canonical PNG lezen (STEP 1);
+2. functional preservation matrix maken (STEP 2);
+3. bestaande componenten inventariseren (STEP 3, conform de No-Duplication Rule in `SCREEN_IMPLEMENTATION_STANDARD_v1.md`);
+4. component reuse-map maken (STEP 3, Future Screen Reuse Map als startpunt);
+5. data-source mapping maken (STEP 4);
+6. pas daarna runtime wijzigen (STEP 5).
+
+Deze volgorde is geen suggestie maar een harde voorwaarde — runtime-implementatie die STEP 1-5 overslaat of in een andere volgorde uitvoert, voldoet niet aan deze standaard.
+
 **STEP 1 — Canonical PNG bevestigen.** Het juiste bestand uit `docs/ux/baseline/v1/` visueel, opnieuw bekijken (niet uit het geheugen aannemen).
 
 **STEP 2 — Functional preservation matrix.** Alle bestaande routes/functies van het huidige scherm forensisch inventariseren (zoals `TRAINEN_V02_FUNCTIONAL_PRESERVATION_MATRIX.md`).

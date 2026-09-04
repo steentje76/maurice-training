@@ -69,7 +69,9 @@ Bevestigd, na onderzoek van zowel de goedgekeurde Trainen-runtime als alle zes c
 - Elevation: sterker dan Standard Card (`0 14px 30px rgba(0,0,0,.30)` gemeten, duidelijk zwaarder dan Standard Card se `0 10px 26px rgba(11,29,42,.1)`) -- ook dit is consistent met de bedoelde, visuele dominantie van een Featured Card.
 - Gedeeld tussen Vandaag en Trainen via dezelfde, canonieke `v43RenderPlan()`-functie -- reeds bewezen herbruikbaar.
 
-**RADIUS DECISION: 22px is de canonieke, formeel vastgelegde FEATURED CARD-radius, gescheiden van en naast de 16px STANDARD CARD-radius. Geen wijziging aan de runtime nodig -- de bestaande waarde wordt nu alleen formeel gedocumenteerd in plaats van als openstaande mismatch gerapporteerd.** Toekomstige schermen (Vandaag bij migratie) gebruiken FEATURED CARD voor hun eigen, enkelvoudige hoofdactie-kaart; STANDARD CARD voor al het overige.
+**RADIUS DECISION (Final Closure, definitief): 22px is de canonieke, formeel vastgelegde FEATURED CARD-radius, gescheiden van en naast de 16px STANDARD CARD-radius.** Geen wijziging aan de runtime nodig. Toekomstige schermen (Vandaag bij migratie) gebruiken FEATURED CARD voor hun eigen, enkelvoudige hoofdactie-kaart; STANDARD CARD voor al het overige.
+
+**HARD RULE (Final Closure): gebruik Featured Card uitsluitend wanneer er werkelijk sprake is van een dominante/uitgelichte primaire actie of context. Niet elke donkere kaart wordt automatisch Featured Card** -- de classificatie volgt uit de functie (enkelvoudige, dominante volgende-actie per scherm), niet uit de kleur alleen.
 
 ## E. ICON CONTAINER (canonical, `.tk-icon-box`)
 - Standaard: `40x40px`, radius `12px`, achtergrond `rgba(0,184,148,.12)` (`--color-primary-soft`), icoon `20x20px`, kleur `#00B894` (`--color-primary`).
@@ -151,7 +153,7 @@ Canonical PNG-vergelijking + een echte, live Product Owner-mobiele-review vóór
 **VISUEEL/FUNCTIONEEL EFFECT:** geen zichtbaar probleem -- de waarde is consistent overal waar `.hdr` wordt gebruikt. Het "afwijken" is uitsluitend ten opzichte van de DS-01-tokenschaal, niet ten opzichte van zichzelf.
 **TOEKOMSTIGE SCHERMEN GERAAKT:** alle vijf resterende schermen (Vandaag, Inzicht, Coach, Samen, Profiel) gebruiken dezelfde, gedeelde `.hdr`-class -- een eventuele tokenmigratie zou ze allemaal tegelijk raken, nooit één scherm geïsoleerd.
 **CLASSIFICATIE: C. Screen-specific** -- nee, preciezer: dit is een **APP-WIDE, PRE-EXISTING SHARED VALUE**, geen screen-specific afwijking en geen componentvariant. Het is ook geen "echte inconsistentie" in de zin van een fout -- de waarde is overal consistent. Het is een **legitieme, bestaande waarde die nog niet als DS-01-token is vastgelegd.**
-**DECISION:** GEEN wijziging. Dit blijft een gedeelde, app-brede waarde totdat een aparte, expliciete DS-01-consolidatiesprint (met Product Owner-goedkeuring) besluit of 18px een eigen token wordt of naar 16px genormaliseerd wordt. Niet relevant voor Trainen-specifieke besluitvorming.
+**DECISION (Final Closure, definitief):** 18px is een **APPROVED RUNTIME VALUE + DOCUMENTED IMPLEMENTATION VALUE** -- geen automatisch nieuw globaal spacing-token. Geen runtime aanpassen. Een eventuele toekomstige token-normalisatie is een aparte, cross-screen Design System-beslissing, niet gekoppeld aan enige schermmigratie.
 
 ### DEVIATION 2
 
@@ -162,7 +164,7 @@ Canonical PNG-vergelijking + een echte, live Product Owner-mobiele-review vóór
 **VISUEEL/FUNCTIONEEL EFFECT:** geen zichtbaar probleem, consistent gebruik binnen alle drie de schermen die de class delen.
 **TOEKOMSTIGE SCHERMEN GERAAKT:** Profiel (dat zeer waarschijnlijk hetzelfde Icon Row Pattern hergebruikt, zie Future Screen Reuse Map) zou deze 13px-gap overnemen tenzij expliciet anders besloten.
 **CLASSIFICATIE: C. Screen-specific** -- nee, preciezer: net als Deviation 1, een **APP-WIDE, PRE-EXISTING SHARED VALUE** binnen een reeds bestaand, gedeeld component-patroon. Geen inconsistentie (consistent binnen zijn eigen gebruik), geen bewust ontworpen componentvariant (nooit expliciet als zodanig vastgelegd totdat deze sprint het meette en documenteerde).
-**DECISION:** GEEN wijziging. Blijft ongewijzigd totdat een aparte DS-01-consolidatiesprint, met Product Owner-input, besluit of 13px een eigen, benoemd token wordt (bijvoorbeeld `--space-icon-gap`) of genormaliseerd wordt naar een bestaande waarde (12px of 16px).
+**DECISION (Final Closure, definitief):** 13px is een **APPROVED RUNTIME VALUE + DOCUMENTED IMPLEMENTATION VALUE** -- geen automatisch nieuw globaal spacing-token. Geen runtime aanpassen. Een eventuele toekomstige token-normalisatie is een aparte, cross-screen Design System-beslissing.
 
 **Samenvattend, herclassificatie t.o.v. het vorige rapport:** beide afwijkingen zijn bij nader onderzoek geen "A. echte inconsistentie" (er is geen enkel geval waar dezelfde waarde inconsistent wordt toegepast) en geen "D. nog Product Owner-besluit nodig voor Trainen zelf" (Trainen hoeft niet te wachten -- de waarden werken correct zoals ze zijn). Ze zijn correct geclassificeerd als **pre-existing, app-brede, gedeelde waarden die nog niet in de DS-01-tokenschaal zijn opgenomen** -- een documentatiegat, geen functioneel of visueel probleem. Het Product Owner-besluit dat eventueel nodig is (nieuw token toevoegen vs. normaliseren) is een DS-01-consolidatiebeslissing, geen Trainen-v0.2-goedkeuringsblokkade.
 
@@ -203,9 +205,20 @@ tk-segmented-control (shared foundation: pill/blok-groep, actief/inactief-stylin
   - .tk-segmented-control--period    (Inzicht-stijl: 2-4 compacte pills, filtert data)
   - .tk-segmented-control--mode      (Coach-stijl: 2 gelijke blokken, content-wissel, ondersteunt badge)
 ```
-**Samen's 5-item content-tab-bar wordt NIET automatisch in dezelfde abstractie geperst** -- visueel te verschillend (variabele breedte, geen gelijke blokken) om zonder een aparte Product Owner-afweging als derde variant van `tk-segmented-control` vast te leggen, versus een eigen, nieuw `tk-content-tab-bar`-component. **CLASSIFICATIE: D. nog Product Owner-besluit nodig** -- of Samen een derde variant wordt of een apart component.
+**PRODUCT OWNER FINAL DECISION (Screen Implementation Standard v1 Final Closure):** de eerdere open vraag is definitief beslist. **Samen's 5-item content-tab-bar is GEEN derde `tk-segmented-control`-variant.** Het is semantisch een fundamenteel ander component: **SECTION TABS / LOCAL NAVIGATION** — lokale navigatie tussen verschillende subsecties binnen één scherm, niet een dataweergave-filter (zoals Period Selector) en niet een wissel tussen twee contentmodi (zoals Content Mode Switch). **HARD RULE, geldt voortaan: semantiek bepaalt de componentkeuze, visuele gelijkenis alleen is onvoldoende.** Componenten mogen onderliggende Design System-tokens delen (kleur, pill-vorm) zonder dezelfde semantische component te zijn.
 
-**FUTURE SCREENS:** Inzicht en Coach zijn de eerste twee kandidaten om `tk-segmented-control` daadwerkelijk te bouwen (bij hun eigen migratie, niet nu). Samen wacht op de Product Owner-beslissing hierboven.
+### DEFINITIEF, GOEDGEKEURD SEMANTISCH COMPONENTMODEL (vier, elk apart)
+
+| # | Naam | Voorbeeld | Betekenis | Component |
+|---|---|---|---|---|
+| A | **Period Selector** | Inzicht: 7 dagen \| 4 weken \| 3 maanden | zelfde inhoud/dataset, ander tijdsvenster | `.tk-segmented-control--period` |
+| B | **Content Mode Switch** | Coach: AI Coach \| Mijn coach | wisselt tussen twee fundamenteel verschillende contentmodi | `.tk-segmented-control--mode` |
+| C | **Section Tabs / Local Navigation** | Samen: Overzicht \| Feed \| Vrienden \| Groepen \| Clubs | lokale navigatie tussen subsecties binnen één scherm — GEEN derde segmented-control-variant | eigen, apart component (nog te bouwen, niet deze sprint) |
+| D | **Filter Chip / Dropdown** | Inzicht: Alle sporten ▾ | filtert de bestaande inhoud | apart component, geen segmented control |
+
+Deze classificatie is nu **definitief en goedgekeurd** — geen open vraag meer.
+
+**FUTURE SCREENS:** Inzicht en Coach zijn de eerste twee kandidaten om `tk-segmented-control` (Period Selector- en Content Mode Switch-varianten) daadwerkelijk te bouwen (bij hun eigen migratie, niet nu). Samen krijgt geen `tk-segmented-control`-variant, maar een eigen, apart Section Tabs-component (eveneens pas bij zijn eigen migratie te bouwen).
 
 **Filter chip/dropdown (Inzicht "Alle sporten") is expliciet GEEN segmented control** -- apart component, geen overlap met bovenstaande.
 

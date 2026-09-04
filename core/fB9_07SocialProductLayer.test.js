@@ -36,7 +36,7 @@ ok(html.includes('id="s-social"') && html.includes(`onclick="go('s-social')"`),
   'D1: een nieuwe, bereikbare Social-bestemming bestaat, met een expliciete toegangsroute vanaf Home');
 {
   const aantalVoortgangTabs = (html.match(/<span class="ni-label">Voortgang<\/span>/g) || []).length;
-  ok(aantalVoortgangTabs === 35, 'D2: geen enkele van de 35 bestaande bottom-nav-blokken is aangeraakt (0 regressierisico op bestaande navigatie) -- Social kreeg een eigen, nieuw scherm i.p.v. een risicovolle, brede wijziging over alle bestaande schermen');
+  ok(aantalVoortgangTabs === 36, 'D2: geen enkele van de bestaande bottom-nav-blokken is aangeraakt (0 regressierisico op bestaande navigatie) -- Social kreeg een eigen, nieuw scherm i.p.v. een risicovolle, brede wijziging over alle bestaande schermen (35 -> 36 door de additieve komst van s-inzicht in Inzicht v0.1, PR #232)');
 }
 
 // ---- E. Geen dubbele functie-definitie (zelf gevonden en gerepareerde fout tijdens het bouwen) ----

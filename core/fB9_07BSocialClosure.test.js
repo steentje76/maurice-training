@@ -54,7 +54,7 @@ ok(migratie.includes('check (char_length(body) between 1 and 500)'),
 // ---- F. Geen extra bottom-nav-regressie ----
 {
   const aantalVoortgangTabs = (html.match(/<span class="ni-label">Voortgang<\/span>/g) || []).length;
-  ok(aantalVoortgangTabs === 35, 'F1: geen enkele van de 35 bestaande bottom-nav-blokken is aangeraakt door deze uitbreiding');
+  ok(aantalVoortgangTabs === 36, 'F1: geen enkele van de bestaande bottom-nav-blokken is aangeraakt door deze uitbreiding (35 -> 36 door de additieve komst van s-inzicht in Inzicht v0.1, PR #232)');
 }
 
 // ---- G. Moderatie: gebruikt de bestaande social_reports-tabel ----

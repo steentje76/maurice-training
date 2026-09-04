@@ -268,6 +268,39 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     await page.close();
   }
 
+  // PO Round 4 (Geometry+Density): Snel overzicht moet ALTIJD één, compacte
+  // rij van 5 metrics zijn, geen 3+2-wrap meer (canonical density).
+  for (const w of [320, 360, 375, 390, 412, 430]) {
+    const page = await browser.newPage({ viewport: { width: w, height: 900 } });
+    await page.goto(url);
+    await page.waitForTimeout(500);
+    await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+    await page.waitForTimeout(500);
+    const rowCheck = await page.evaluate(() => {
+      const cells = Array.from(document.querySelectorAll('.tk-overview-cell'));
+      const tops = [...new Set(cells.map(c => Math.round(c.getBoundingClientRect().top)))];
+      return { cellCount: cells.length, rowCount: tops.length };
+    });
+    ok(rowCheck.cellCount === 5 && rowCheck.rowCount === 1, w + 'px 37: Snel overzicht toont alle 5 metrics op exact 1 rij (canonical density), geen 3+2-wrap meer');
+    await page.close();
+  }
+
+  // PO Round 4: domain-rows tonen een consistente, bewuste placeholder i.p.v.
+  // toevallig lege ruimte wanneer geen echte visualisatie-data beschikbaar is.
+  {
+    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    await page.goto(url);
+    await page.waitForTimeout(500);
+    await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+    await page.waitForTimeout(500);
+    const placeholderCheck = await page.evaluate(() => {
+      const rows = Array.from(document.querySelectorAll('#inzicht-domain-list .tk-domain-row'));
+      return rows.every(r => r.querySelector('.miniviz-wrap') !== null);
+    });
+    ok(placeholderCheck, '38: elke domain-row heeft een miniviz-wrap (echte data of een bewuste, consistente placeholder) -- geen enkele rechterzijde oogt toevallig leeg');
+    await page.close();
+  }
+
   // PO Mobile Visual Fidelity Pass: Recente inzichten mag titel en beschrijving
   // NOOIT aan elkaar plakken (was: "Frontsquathogere geschatte 1RM").
   {

@@ -1,5 +1,54 @@
 # Trainingskompas — Changelog
 
+## v4.69.61 — Inzicht v0.1 Snel Overzicht Final Polish (4 september 2026)
+
+Tweede Product Owner-review-ronde op PR #232 (Android/Netlify Preview).
+Vier gebieden expliciet GO (structuur, Recente inzichten, Domeinen,
+sportfilter, period selector) -- uitsluitend Snel overzicht kreeg een
+gerichte polish. Freeze op alle andere, al goedgekeurde onderdelen.
+
+ICON LANGUAGE (root cause gevonden): Snel overzicht gebruikte de
+oudere V43I-iconenset, waarvan de SVG's geen stroke="currentColor" op
+het <svg>-element zelf hadden -- vandaar zwart, ongeacht CSS-kleur.
+Vervangen door de canonieke DS-03 tkIcon()-registry (teal,
+--color-primary), consistent met Domeinen/Trainen. V43I zelf is NIET
+gewijzigd (blijft ongewijzigd voor zijn bestaande, andere gebruikers
+elders in de app).
+
+RESPONSIVE STRATEGY: vijf-gelijke-kolommen-grid met verticale
+separators vervangen door een responsive wrap-grid (flex-wrap, 92px
+minimumbreedte per cel) -- comfortabele 5-op-1-rij bij voldoende
+breedte, gecontroleerde 3+2-wrap op smallere schermen. Geen krimpende
+tekst, geen afkortingen, geen horizontale scroll. Getest op 320-430px:
+geen enkel label afgekapt.
+
+BELASTING/HERSTELSTATUS CONTEXT (onderzocht en gedocumenteerd): "5427"
+bleek het rollende, 7-daagse krachtvolume in kilogram te zijn
+(AC.MODALITEITEN.strength.eenheid='kg', via de bestaande, ongewijzigde
+tkCoachBelasting()). "100%" komt van de bestaande, ongewijzigde
+v43OverallRecovery() (gemiddeld spierherstelpercentage). Beide tonen nu
+expliciet hun eenheid ("5427 kg", "100 %") in plaats van een kaal,
+contextloos getal. Geen nieuwe calculation.
+
+METRIC HIERARCHY: elke cel volgt nu consistent icoon-container (teal
+bij beschikbare data, neutraal grijs bij unavailable) -> label ->
+waarde+eenheid -> optionele trend. UNKNOWN != 0 blijft gehandhaafd
+(missing data toont "--", nooit 0 ms/bpm/uur).
+
+core/fInzichtV01BrowserRuntime.test.js uitgebreid (118/118, was 109):
+teal-iconkleur bevestigd (rgb(0,184,148)), geen verticale borders meer,
+eenheden aanwezig, en op alle 6 viewports opnieuw bevestigd dat geen
+enkel label wordt afgekapt.
+
+Geen collateral changes: diff bevestigd beperkt tot uitsluitend de
+Snel-overzicht-functie/CSS. Cross-domein regressie, canonical PNG-hash,
+26/26 preservation: allemaal ongewijzigd bevestigd. Release gate
+238/238. Android 29/29.
+
+APP_VER v4.69.60 -> v4.69.61 (patch-bump: presentatie-polish, geen
+nieuwe functionaliteit). sw.js CACHE_NAME/CACHE_STATIC synchroon naar
+v469610. android/app/build.gradle gesynchroniseerd (46961/4.69.61).
+
 ## v4.69.60 — Inzicht v0.1 Implementation (3 september 2026)
 
 Eerste implementatie van Inzicht v0.1, het nieuwe overzichtsscherm dat

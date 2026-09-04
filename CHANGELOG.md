@@ -1,5 +1,78 @@
 # Trainingskompas — Changelog
 
+## v4.69.65 — Inzicht v0.1 Final PO Correction (4 september 2026)
+
+Vijfde Product Owner-review-ronde op PR #232. Drie, gerichte correcties
+op de vorige density-pass -- geen nieuwe redesignronde.
+
+1. SNEL OVERZICHT -- ONNATUURLIJKE WOORDAFBREKING VERWIJDERD: root cause
+gevonden (hyphens:auto + overflow-wrap:break-word veroorzaakten
+"Rusthart-slag"/"Herstelsta-tus"/"Krachtvo-lume"). Verwijderd, EMPIRISCH
+getest op alle 6 viewports (320-430px): alle labels blijven volledig,
+leesbaar, op 1 rij van 5, zonder enige mid-word-afbreking en zonder
+clipping.
+
+2. DOMEINEN -- COMPACTER: gescoped CSS-override (uitsluitend
+.tk-domain-row, GEEN wijziging aan de gedeelde .v43-tmt .row die ook
+Running/Cycling gebruiken) voor kleinere padding/icon-container/
+regelafstand. GEMETEN: domain-block 470px -> 350px (-120px), individuele
+rijen 77-78px -> 57-67px (Prestaties-rij heeft legitiem 2 tekstregels,
+geen informatie verwijderd).
+
+3. DECORATIEVE PLACEHOLDER-GRAFIEKEN VERWIJDERD: de gestippelde
+horizontale lijntjes bij domeinen zonder echte visualisatiedata zijn
+verwijderd (suggereerden ten onrechte data/loading). De visual-zone
+blijft gereserveerd voor alignment-consistentie, maar toont nu niets
+zichtbaars bij ontbrekende data. Herstel-visualisatie geverifieerd als
+echte data (v43OverallRecovery().rows) -- behouden.
+
+Zelf gevonden en opgeruimd: een eerdere, niet-gecommitte follow-up
+(v4.69.64) had een deels overlappende, !important-gebaseerde CSS-
+override voor dezelfde domain-row-compactering toegevoegd. Samengevoegd
+tot één, consistente regelset zonder !important (hogere specificiteit
+via .tk-domain-row.row volstaat).
+
+core/fInzichtV01BrowserRuntime.test.js uitgebreid (143/143, was 135):
+expliciete assertions per viewport dat geen enkel Snel-overzicht-label
+een mid-word-break vertoont, en dat geen enkele domain-row nog een
+decoratieve SVG zonder echte polyline-data toont.
+
+Screenshots op 390/430px (TOP/MIDDLE/BOTTOM) bevestigen alle drie de
+correcties visueel. Cross-domein regressie, canonical PNG-hash, 26/26
+preservation: ongewijzigd bevestigd. Release gate 238/238. Android
+29/29.
+
+APP_VER v4.69.64 -> v4.69.65. sw.js/build.gradle/CURRENT_STATE.md
+gesynchroniseerd.
+
+## v4.69.64 — Inzicht v0.1 Domain Row Density Follow-up (4 september 2026)
+
+Aanvullende, gerichte density-fix bovenop v4.69.63 (dezelfde PO Round 4
+geometry/density-pass). GEMETEN: domain-rows waren nog altijd 77-78px
+hoog -- substantieel hoger dan canonical suggereert, en niet
+meegenomen in de vorige entry.
+
+Gescoped CSS-override toegevoegd (uitsluitend voor Inzicht se
+domain-rows via .tk-domain-row, met !important om de gedeelde
+.v43-tmt .row-padding van 15px te overschrijven zonder die gedeelde
+class zelf te wijzigen -- Trainen/Running/Cycling blijven volledig
+ongewijzigd): padding 15px->10px, icon-box 40px->34px, gap 13px->11px.
+
+GEMETEN RESULTAAT: domain-row-hoogte 77-78px -> 55-56px (-28%).
+Domain-list totale hoogte 470px -> 338px. Blijft ruim boven de
+44px-accessibility-touch-target-minimum (nu expliciet getest).
+
+core/fInzichtV01BrowserRuntime.test.js uitgebreid (135/135, was 132):
+nieuwe assertions bewaken zowel de bovengrens (<=62px, was 77-78px)
+als de accessibility-ondergrens (>=44px) van elke domain-row, en
+herbevestigen dat Snel overzicht op 1 rij van 5 blijft.
+
+Cross-domein regressie, canonical PNG-hash, 26/26 preservation:
+ongewijzigd bevestigd. Release gate 238/238. Android 29/29.
+
+APP_VER v4.69.63 -> v4.69.64 (patch-bump: gerichte density-fix, geen
+nieuwe functionaliteit).
+
 ## v4.69.63 — Inzicht v0.1 Final Density + Geometry Fidelity Pass (4 september 2026)
 
 Vierde Product Owner-review-ronde op PR #232. Duidelijke vooruitgang

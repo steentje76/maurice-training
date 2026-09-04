@@ -187,6 +187,15 @@
    scherm gecontroleerd wordt gemigreerd (strangler-aanpak). Zie
    core/designSystemIcons.js voor de icon-strategie/-registry. */
 
+/* Trainen v0.2 Micro Alignment Pass — consistente horizontale inner-padding voor
+   de Maken & ontdekken/Terugkijken-rijen. Uitsluitend deze twee containers
+   (.v43-tmt-inset), NIET de gedeelde .v43-tmt zelf, die ook door Running/Cycling
+   wordt gebruikt (running-vormen-lijst, cycling-hist-lijst, etc.) -- een wijziging
+   aan de gedeelde class zou die andere schermen ongewild raken. Eén regel, geen
+   losse pixel-hacks per rij. Regel bewust NA de bestaande .v43-tmt .row-definitie
+   geplaatst (verderop in dit bestand) i.p.v. hier, om CSS-cascade-volgorde-
+   conflicten te voorkomen (gelijke specificiteit, latere regel wint anders). */
+
 /* DS-03 — Icon container variant: lichte teal-achtergrond met teal icoon.
    Gebruikt in canonical function/context-cards (Jouw training, Start een
    activiteit, Maken & ontdekken, Terugkijken) conform trainen-v0.2.png.
@@ -1943,6 +1952,11 @@ html[data-theme="dark"] .v43-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
 .v43-tqa .q .t{font-size:12px;font-weight:800;color:var(--dark);line-height:1.15}
 .v43-tmt{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:2px 16px;margin-top:4px}
 .v43-tmt .row{display:flex;align-items:center;gap:13px;padding:15px 0;border-bottom:1px solid var(--g2);cursor:pointer;width:100%;background:0;border-left:0;border-right:0;border-top:0;text-align:left}
+/* Trainen v0.2 Micro Alignment Pass (zie commentaar bovenaan dit bestand) --
+   geplaatst NA de regel hierboven zodat deze, bij gelijke specificiteit,
+   correct wint voor de .v43-tmt-inset-context. */
+.v43-tmt-inset .row{padding:15px 16px}
+.v43-tmt-inset .row .b{padding-right:8px}
 .v43-tmt .row:last-child{border-bottom:0}
 .v43-tmt .ic{width:40px;height:40px;border-radius:12px;background:var(--v43-mint);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .v43-tmt .ic svg{width:20px;height:20px;stroke:var(--accent);fill:none;stroke-width:2}
@@ -4056,7 +4070,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <!-- SECTION 4 — Maken & ontdekken: Training maken (-> bestaande Workout Builder,
          GEEN tweede execution-path) + Oefeningen (Level 3). -->
     <div class="v43-lbl" style="margin:20px 0 8px">Maken &amp; ontdekken</div>
-    <div class="tk-card tk-card-l3 v43-tmt" style="padding:2px 0">
+    <div class="tk-card tk-card-l3 v43-tmt v43-tmt-inset" style="padding:2px 0">
       <button class="row" onclick="go('s-builder');if(window.WBUI)WBUI.render()"><span class="tk-icon-box"><svg class="tk-icon" data-icon="bewerken" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4l11-11-4-4L4 16z"/></svg></span><span class="b"><span class="t">Training maken <span class="ilbl" style="background:var(--color-primary-surface);color:#fff;padding:1px 6px;border-radius:8px;font-size:9px;vertical-align:middle">AI</span></span><span class="s">AI stelt een training samen op je herstel</span></span><span class="ar">›</span></button>
       <button class="row" onclick="go('s-library');if(window.renderLibrary)renderLibrary()" style="border-top:1px solid var(--color-border)"><span class="tk-icon-box"><svg class="tk-icon" data-icon="zoeken" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="M20 20l-5.5-5.5"/></svg></span><span class="b"><span class="t">Oefeningen</span><span class="s">206 oefeningen &#183; video&#8217;s &#183; alternatieven</span></span><span class="ar">›</span></button>
     </div>
@@ -4064,7 +4078,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <!-- SECTION 5 — Terugkijken: wat heb ik gedaan (geen progressie-interpretatie, dat
          hoort onder Inzicht). -->
     <div class="v43-lbl" style="margin:20px 0 8px">Terugkijken</div>
-    <div class="tk-card tk-card-l3 v43-tmt" style="padding:2px 0">
+    <div class="tk-card tk-card-l3 v43-tmt v43-tmt-inset" style="padding:2px 0">
       <button class="row" onclick="go('s-hist')"><span class="tk-icon-box"><svg class="tk-icon" data-icon="historie" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/><path d="M4 5l1.5 3"/></svg></span><span class="b"><span class="t">Trainingshistorie / Logboek</span><span class="s">Je volledige trainingsgeschiedenis en statistieken</span></span><span class="ar">›</span></button>
     </div>
   </div>
@@ -6434,7 +6448,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.58';
+const APP_VER = 'v4.69.59';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';

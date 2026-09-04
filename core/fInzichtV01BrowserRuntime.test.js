@@ -81,25 +81,34 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
 
     // Sabotage: introduceer opnieuw een letterlijke ${...} in de statische
     // s-inzicht-HTML en bevestig dat deze testsuite dit daadwerkelijk vangt.
+    // KRITIEK: try/finally garandeert dat index.html ALTIJD wordt hersteld,
+    // ook als een tussenstap (bv. page2.evaluate op een tragere CI-runner)
+    // een exception gooit -- anders zou een gecorrumpeerd index.html
+    // permanent achterblijven en elke volgende test in de CI-testloop laten
+    // falen (zelf gevonden root cause van een CI-only Quality Gate-failure).
     const fs = require('fs');
     const original = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-    const sabotaged = original.replace(
-      '<div class="hdr-title" role="heading" aria-level="1">Inzicht</div>',
-      '<div class="hdr-title" role="heading" aria-level="1">${tkIcon(\'inzicht\')}Inzicht</div>'
-    );
-    ok(sabotaged !== original, '18 (sabotage-setup): de sabotage-marker is gevonden en vervangen');
-    fs.writeFileSync(path.join(__dirname, '..', 'index.html'), sabotaged, 'utf8');
-    const page2 = await browser.newPage({ viewport: { width: 390, height: 800 } });
-    await page2.goto(url);
-    await page2.waitForTimeout(500);
-    await page2.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
-    await page2.waitForTimeout(500);
-    const sabotagedHtml = await page2.evaluate(() => document.getElementById('s-inzicht')?.outerHTML || '');
-    ok(sabotagedHtml.includes('${'), '18: live sabotage (opnieuw "${" geintroduceerd) wordt door deze testsuite gedetecteerd');
-    fs.writeFileSync(path.join(__dirname, '..', 'index.html'), original, 'utf8');
+    let page2 = null;
+    try {
+      const sabotaged = original.replace(
+        '<div class="hdr-title" role="heading" aria-level="1">Inzicht</div>',
+        '<div class="hdr-title" role="heading" aria-level="1">${tkIcon(\'inzicht\')}Inzicht</div>'
+      );
+      ok(sabotaged !== original, '18 (sabotage-setup): de sabotage-marker is gevonden en vervangen');
+      fs.writeFileSync(path.join(__dirname, '..', 'index.html'), sabotaged, 'utf8');
+      page2 = await browser.newPage({ viewport: { width: 390, height: 800 } });
+      await page2.goto(url);
+      await page2.waitForTimeout(500);
+      await page2.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+      await page2.waitForTimeout(500);
+      const sabotagedHtml = await page2.evaluate(() => document.getElementById('s-inzicht')?.outerHTML || '');
+      ok(sabotagedHtml.includes('${'), '18: live sabotage (opnieuw "${" geintroduceerd) wordt door deze testsuite gedetecteerd');
+    } finally {
+      fs.writeFileSync(path.join(__dirname, '..', 'index.html'), original, 'utf8');
+      if (page2) await page2.close().catch(() => {});
+    }
     const restored = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
     ok(restored === original, '18b: index.html is na de sabotage-test byte-identiek hersteld');
-    await page2.close();
     await page.close();
   }
 

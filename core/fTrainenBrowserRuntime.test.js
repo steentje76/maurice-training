@@ -200,12 +200,23 @@ async function loadTrainenDOM(page) {
     if (sabotaged === original) {
       ok(false, '18 (sabotage-setup): kon de sabotage-marker niet vinden -- test-infrastructuur zelf is stuk, geen betrouwbare sabotage uitgevoerd');
     } else {
-      fs.writeFileSync(htmlPath, sabotaged, 'utf8');
-      const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
-      const html = await loadTrainenDOM(page);
-      const detecteert = html && html.includes('${tkIcon(');
-      await page.close();
-      fs.writeFileSync(htmlPath, original, 'utf8'); // direct herstellen, ongeacht resultaat
+      // KRITIEK: try/finally garandeert herstel ook als browser.newPage()/
+      // loadTrainenDOM()/page.close() een exception gooit (bv. op een tragere
+      // of anders-belaste CI-runner) -- anders blijft index.html permanent
+      // gesaboteerd en laat elke volgende test in de CI-testloop falen. Zelf
+      // gevonden als root cause van een CI-only Quality Gate-failure tijdens
+      // de Inzicht v0.1-sprint (de vorige, ongebeschermde variant van dit
+      // patroon in de nieuwe fInzichtV01BrowserRuntime.test.js).
+      let detecteert = false, page = null;
+      try {
+        fs.writeFileSync(htmlPath, sabotaged, 'utf8');
+        page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+        const html = await loadTrainenDOM(page);
+        detecteert = html && html.includes('${tkIcon(');
+      } finally {
+        fs.writeFileSync(htmlPath, original, 'utf8'); // direct herstellen, ongeacht resultaat
+        if (page) await page.close().catch(() => {});
+      }
       ok(detecteert === true, '18: live sabotage (opnieuw ${tkIcon(...)} in statische HTML geintroduceerd) wordt door deze testsuite gedetecteerd -- bewijst dat de test de exacte bugklasse daadwerkelijk vangt, niet toevallig slaagt');
       const restored = fs.readFileSync(htmlPath, 'utf8');
       ok(restored === original, '18b: index.html is na de sabotage-test byte-identiek hersteld naar de originele, gecorrigeerde staat');

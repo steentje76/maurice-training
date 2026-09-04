@@ -4,6 +4,40 @@
 
 **Status: geen runtime-wijziging in deze sprint.** Dit document beschrijft uitsluitend wat al bestaat en werkt.
 
+## CLASSIFICATIE-LEGENDA (geldt voor elke regel/patroon in dit document)
+
+- **GLOBAL TOKEN** -- een enkele, herbruikbare waarde (kleur/maat/radius) die overal hetzelfde betekent, ongeacht component (bv. `--color-primary`, `--radius-card`).
+- **REUSABLE COMPONENT** -- een samengestelde, herbruikbare UI-bouwsteen die tokens combineert (bv. Icon Container, Icon Row Pattern, Standard Card).
+- **COMPONENT VARIANT** -- een gedocumenteerde afwijking van een Reusable Component voor een specifiek, herhaalbaar doel (bv. Featured Card t.o.v. Standard Card, `.tk-icon-box-sm` t.o.v. `.tk-icon-box`, `.v43-tmt-inset` t.o.v. `.v43-tmt`).
+- **SCREEN-SPECIFIC COMPOSITION** -- de manier waarop Reusable Components op één scherm worden samengesteld; niet zelf herbruikbaar (bv. de exacte 5-sectie-volgorde van Trainen).
+- **DATA-DEPENDENT** -- content die uit een echte databron komt en per gebruiker/moment verschilt (bv. "Training A", "7 oefeningen").
+- **DEFERRED** -- bewust nog niet aangepakt, met een bekende, geplande vervolgstap (bv. bottom navigation).
+
+Elke sectie hieronder markeert zijn onderdelen met één van deze zes labels.
+
+## CLASSIFICATIE-OVERZICHT (secties A-Q)
+
+| Sectie | Classificatie |
+|---|---|
+| A. Page Shell | SCREEN-SPECIFIC COMPOSITION (spacing-waarden zelf: GLOBAL TOKEN waar DS-01 dekt, zie Spacing Contract voor 2 uitzonderingen) |
+| B. Header | REUSABLE COMPONENT (gedeeld app-breed, niet Trainen-specifiek) |
+| C. Section Header | REUSABLE COMPONENT |
+| D. Standard/Featured Card | REUSABLE COMPONENT + COMPONENT VARIANT (Featured t.o.v. Standard) |
+| E. Icon Container | REUSABLE COMPONENT + COMPONENT VARIANT (`-sm`) |
+| F. Icon Row Pattern | REUSABLE COMPONENT + COMPONENT VARIANT (`-inset`) |
+| G. Destination Tile | REUSABLE COMPONENT |
+| H. Action Tile | REUSABLE COMPONENT |
+| I/J. Primary/Secondary Button | REUSABLE COMPONENT |
+| K. Dividers | GLOBAL TOKEN (kleur/dikte) |
+| L. Spacing System | GLOBAL TOKEN, met 2 gedocumenteerde uitzonderingen (zie Spacing Contract) |
+| M. Typography | GLOBAL TOKEN |
+| N. Responsive | REUSABLE COMPONENT-gedrag (Action Tile Grid), geen apart token |
+| O. Accessibility | REUSABLE COMPONENT-gedrag, geldt voor alle componenten |
+| P. Browser-Runtime Gate | DEFERRED-bewakingsmechanisme (proces, geen visueel component) |
+| Q. Visual Review Gate | DEFERRED-bewakingsmechanisme (proces, geen visueel component) |
+| "Training A", "7 oefeningen", programma-chip-inhoud | DATA-DEPENDENT |
+| Bottom navigation | DEFERRED |
+
 ## A. PAGE SHELL
 - Horizontal page inset (content): `18px` (`.hdr`-padding-left/right, hergebruikt door `.scroll`'s children impliciet).
 - Top spacing: `52px` (`.hdr`-padding-top, bevat al `max(52px, safe-area-inset-top+12px)` — safe-area-bewust).
@@ -18,10 +52,24 @@
 ## C. SECTION HEADER
 - `11px`/`800`/`1.4px letter-spacing`/uppercase/kleur `#888` (`.v43-lbl`).
 
-## D. STANDARD CARD
-**Twee, bewust verschillende varianten in gebruik — GEEN mismatch stilzwijgend opgelost, zie Fase 6-rapportage onderaan:**
-- **Level 1 (Eerstvolgende training, marine):** radius `22px`, achtergrond `#0E3B4A`, shadow `0 14px 30px rgba(0,0,0,.30)`, padding `14px`.
-- **Level 3 (Jouw training / Start een activiteit-tiles):** radius `16px` (kaart) / `14px` (individuele tile), achtergrond wit, shadow `0 10px 26px rgba(11,29,42,.1)`.
+## D. STANDARD CARD + FEATURED / PRIMARY ACTION CARD (formeel onderscheiden, Product Owner Review Follow-up)
+
+Bevestigd, na onderzoek van zowel de goedgekeurde Trainen-runtime als alle zes canonical mock-ups: **dit is GEEN inconsistentie maar een bewuste, herkenbare compositie-tweedeling die al in elke mockup zichtbaar is** (de donkere "Training A"/"Volgende actie"-kaart is in zowel Vandaag als Trainen zichtbaar visueel dominanter en groter afgerond dan de witte content-kaarten eromheen).
+
+### STANDARD CARD
+- Gebruik: normale navigatie-/functie-/data-bestemmingen (Jouw training, Start een activiteit, Maken & ontdekken, Terugkijken, en de DS-05 Levels 2-5 in het algemeen).
+- Radius: `16px` (`--radius-card`, canoniek DS-01-token).
+- Achtergrond: wit (`--color-surface`).
+- Elevation: subtiel (`--elevation-card`).
+
+### FEATURED / PRIMARY ACTION CARD
+- Gebruik: de enkelvoudige, dominante "volgende actie" per scherm (Eerstvolgende training in Trainen, "Volgende actie"/Training A in Vandaag) -- DS-05 Level 1, zoals al benoemd.
+- Radius: `22px` -- **GOEDGEKEURD ALS LEGITIEME VARIANT, NIET ALS FOUT.** Zowel de gemergde runtime als de canonical Vandaag- én Trainen-mockup tonen deze grotere afronding consistent voor dit ene, specifieke kaarttype.
+- Achtergrond: marine (`--color-primary-surface`).
+- Elevation: sterker dan Standard Card (`0 14px 30px rgba(0,0,0,.30)` gemeten, duidelijk zwaarder dan Standard Card se `0 10px 26px rgba(11,29,42,.1)`) -- ook dit is consistent met de bedoelde, visuele dominantie van een Featured Card.
+- Gedeeld tussen Vandaag en Trainen via dezelfde, canonieke `v43RenderPlan()`-functie -- reeds bewezen herbruikbaar.
+
+**RADIUS DECISION: 22px is de canonieke, formeel vastgelegde FEATURED CARD-radius, gescheiden van en naast de 16px STANDARD CARD-radius. Geen wijziging aan de runtime nodig -- de bestaande waarde wordt nu alleen formeel gedocumenteerd in plaats van als openstaande mismatch gerapporteerd.** Toekomstige schermen (Vandaag bij migratie) gebruiken FEATURED CARD voor hun eigen, enkelvoudige hoofdactie-kaart; STANDARD CARD voor al het overige.
 
 ## E. ICON CONTAINER (canonical, `.tk-icon-box`)
 - Standaard: `40x40px`, radius `12px`, achtergrond `rgba(0,184,148,.12)` (`--color-primary-soft`), icoon `20x20px`, kleur `#00B894` (`--color-primary`).
@@ -92,20 +140,31 @@ Canonical PNG-vergelijking + een echte, live Product Owner-mobiele-review vóór
 
 ---
 
-## SPACING CONTRACT (Fase 6)
+## SPACING CONTRACT (Fase 6) -- Product Owner Review Follow-up: beide afwijkingen volledig expliciet gemaakt
 
-| Relatie | Gemeten waarde | Bestaand DS-token? | Actie |
-|---|---|---|---|
-| Page edge → content | 18px | Nee (`--space-lg`=16px is dichtstbijzijnd, niet exact) | **MISMATCH gerapporteerd, niet opgelost.** 18px is een pre-existing, gedeelde `.hdr`-waarde, gebruikt op meerdere schermen — geen nieuw token toegevoegd zonder brede impact-analyse. |
-| Section → card | 8-10px (`.v43-lbl`-margin) | Deels (`--space-sm`=8px komt dicht in de buurt) | Aanvaardbaar, geen actie |
-| Card edge → content (icon-row) | 16px | JA (`--space-lg`=16px, exact) | Reeds correct |
-| Icon → text (icon-row) | 13px | Nee | **MISMATCH gerapporteerd.** Pre-existing `.v43-tmt .row{gap:13px}`, gedeeld met Running/Cycling — niet gewijzigd. |
-| Text → chevron | flex-auto (geen vaste waarde) | N.v.t. | Geen mismatch, dit is bewust flexibel |
-| Row → row | 0px + 1px divider | JA (divider-patroon, geen spacing-token nodig) | Reeds correct |
-| Card → card | 20px (section-margin) | JA (`--space-xl`=20px, exact) | Reeds correct |
-| Section → section | 20px | JA (`--space-xl`=20px, exact) | Reeds correct |
+### DEVIATION 1
 
-**Conclusie:** twee waarden (18px page-inset, 13px icon-gap) zijn pre-existing, gedeelde waarden die niet exact op een DS-01-token vallen. Conform Fase 6 zijn deze **gerapporteerd, niet stilzwijgend als nieuw token toegevoegd** — een toekomstige, aparte DS-01-consolidatiesprint kan beoordelen of deze bewust afwijken of alsnog genormaliseerd moeten worden, met expliciete Product Owner-afweging omdat beide waarden gedeeld zijn met andere, reeds werkende schermen (Running/Cycling).
+**VALUE:** `18px` (page horizontal inset, `.hdr{padding:...18px 12px}`)
+**TOKEN:** geen exacte match. `--space-lg` (16px) komt het dichtst in de buurt maar is niet identiek.
+**LOCATIONS:** `.hdr`-class, gedeeld door minimaal Vandaag/Trainen/Lichaam/Coach/Voortgang (alle schermen die de gedeelde header-component gebruiken) -- niet uniek aan Trainen.
+**WAAROM DIT AFWIJKT:** `.hdr` is een pre-existing, app-brede component van vóór het Design System v1-tokenwerk; de 18px-waarde is nooit gemigreerd naar een DS-01-token omdat dat een repo-brede, meerdere-schermen-rakende wijziging zou zijn -- expliciet buiten de scope van elke Trainen-sprint tot nu toe.
+**VISUEEL/FUNCTIONEEL EFFECT:** geen zichtbaar probleem -- de waarde is consistent overal waar `.hdr` wordt gebruikt. Het "afwijken" is uitsluitend ten opzichte van de DS-01-tokenschaal, niet ten opzichte van zichzelf.
+**TOEKOMSTIGE SCHERMEN GERAAKT:** alle vijf resterende schermen (Vandaag, Inzicht, Coach, Samen, Profiel) gebruiken dezelfde, gedeelde `.hdr`-class -- een eventuele tokenmigratie zou ze allemaal tegelijk raken, nooit één scherm geïsoleerd.
+**CLASSIFICATIE: C. Screen-specific** -- nee, preciezer: dit is een **APP-WIDE, PRE-EXISTING SHARED VALUE**, geen screen-specific afwijking en geen componentvariant. Het is ook geen "echte inconsistentie" in de zin van een fout -- de waarde is overal consistent. Het is een **legitieme, bestaande waarde die nog niet als DS-01-token is vastgelegd.**
+**DECISION:** GEEN wijziging. Dit blijft een gedeelde, app-brede waarde totdat een aparte, expliciete DS-01-consolidatiesprint (met Product Owner-goedkeuring) besluit of 18px een eigen token wordt of naar 16px genormaliseerd wordt. Niet relevant voor Trainen-specifieke besluitvorming.
+
+### DEVIATION 2
+
+**VALUE:** `13px` (icon-naar-tekst gap in de Icon Row Pattern, `.v43-tmt .row{gap:13px}`)
+**TOKEN:** geen exacte match. Geen DS-01-spacing-token van 13px bestaat; `--space-sm` (8px) en `--space-md` (12px) zijn de dichtstbijzijnde, geen van beide exact.
+**LOCATIONS:** de gedeelde `.v43-tmt .row`-class, gebruikt in Trainen (Training maken/Oefeningen/Trainingshistorie) EN in Running/Cycling (`running-vormen-lijst`, `running-hist-lijst`, `cycling-vormen-lijst`, `cycling-hist-lijst`).
+**WAAROM DIT AFWIJKT:** `.v43-tmt` is een pre-existing, gedeeld patroon van vóór DS-01; de 13px-gap is nooit heroverwogen tijdens de Trainen-migratie omdat wijziging aan deze gedeelde class Running/Cycling zou raken -- expliciet buiten scope gehouden (zie eerdere Trainen-sprints, "geen ander scherm").
+**VISUEEL/FUNCTIONEEL EFFECT:** geen zichtbaar probleem, consistent gebruik binnen alle drie de schermen die de class delen.
+**TOEKOMSTIGE SCHERMEN GERAAKT:** Profiel (dat zeer waarschijnlijk hetzelfde Icon Row Pattern hergebruikt, zie Future Screen Reuse Map) zou deze 13px-gap overnemen tenzij expliciet anders besloten.
+**CLASSIFICATIE: C. Screen-specific** -- nee, preciezer: net als Deviation 1, een **APP-WIDE, PRE-EXISTING SHARED VALUE** binnen een reeds bestaand, gedeeld component-patroon. Geen inconsistentie (consistent binnen zijn eigen gebruik), geen bewust ontworpen componentvariant (nooit expliciet als zodanig vastgelegd totdat deze sprint het meette en documenteerde).
+**DECISION:** GEEN wijziging. Blijft ongewijzigd totdat een aparte DS-01-consolidatiesprint, met Product Owner-input, besluit of 13px een eigen, benoemd token wordt (bijvoorbeeld `--space-icon-gap`) of genormaliseerd wordt naar een bestaande waarde (12px of 16px).
+
+**Samenvattend, herclassificatie t.o.v. het vorige rapport:** beide afwijkingen zijn bij nader onderzoek geen "A. echte inconsistentie" (er is geen enkel geval waar dezelfde waarde inconsistent wordt toegepast) en geen "D. nog Product Owner-besluit nodig voor Trainen zelf" (Trainen hoeft niet te wachten -- de waarden werken correct zoals ze zijn). Ze zijn correct geclassificeerd als **pre-existing, app-brede, gedeelde waarden die nog niet in de DS-01-tokenschaal zijn opgenomen** -- een documentatiegat, geen functioneel of visueel probleem. Het Product Owner-besluit dat eventueel nodig is (nieuw token toevoegen vs. normaliseren) is een DS-01-consolidatiebeslissing, geen Trainen-v0.2-goedkeuringsblokkade.
 
 ## COMPONENT INVENTORY (Fase 7)
 
@@ -120,6 +179,35 @@ Canonical PNG-vergelijking + een echte, live Product Owner-mobiele-review vóór
 | Secondary button (op marine) | Secondary Button (inverse) | `.v43-details` | — (transparant + witte border, geen bestaand token voor "op-marine"-outline) | Ja (nieuw, deze sprint) | overal waar een secundaire actie op een marine/donkere surface nodig is | — | — |
 
 **KNOWN MISMATCH, expliciet niet stilzwijgend opgelost (conform Fase 6):** de Level 1 "Eerstvolgende training"-kaart gebruikt radius `22px`, terwijl DS-05 `--radius-card` (16px) als canonieke standaard voor alle cardlevels vastlegt. Dit is een **pre-existing, gedeelde waarde** (ook gebruikt door Home's identieke kaart, via dezelfde `v43RenderPlan()`-functie) — niet in deze of enige Trainen-sprint gewijzigd, om Home niet te raken. Een toekomstige, aparte DS-05-consolidatiesprint moet expliciet beslissen of deze 22px een bewuste, goedgekeurde uitzondering wordt (Level-1-kaarten mogen groter radius hebben) of alsnog naar 16px genormaliseerd wordt — met Product Owner-review, niet autonoom door Claude.
+
+## SEGMENTED CONTROLS -- ANALYSE VAN DE VIJF RESTERENDE CANONICAL MOCK-UPS (Product Owner Review Follow-up)
+
+Alle vijf resterende mock-ups (Vandaag, Inzicht, Coach, Samen, Profiel) visueel, opnieuw geïnspecteerd op keuzecomponenten. **Geen automatisch één component toegepast** -- drie semantisch verschillende patronen gevonden, plus twee schermen zonder enig segmented-control-achtig element.
+
+| Scherm | Element | Type | Aantal opties | Effect bij wisselen | Visuele vorm |
+|---|---|---|---|---|---|
+| Inzicht | "7 dagen / 4 weken / 3 maanden" | **Period selector** | 3 | filtert data binnen dezelfde view, geen contentwissel | compacte pills, één teal-actief |
+| Inzicht | "Alle sporten ▾" | **Filter chip / dropdown** (GEEN segmented control) | open lijst | filtert data, opent een aparte lijst-keuze | enkele, klikbare pill met chevron |
+| Coach | "AI Coach / Mijn coach" | **Mode switch (top-level content tab, met badge)** | 2 | wisselt volledig andere content-sectie binnen het scherm | 2 gelijke-breedte, volle-hoogte blokken, badge op inactief |
+| Samen | "Overzicht / Feed / Vrienden / Groepen / Clubs" | **Top-level content tab bar** | 5 | wisselt volledig andere content-sectie binnen het scherm | tekstlabels, één gevulde pill-actief-staat, variabele breedte per label |
+| Vandaag | -- | geen segmented-control-element gevonden | -- | -- | -- |
+| Profiel | -- | geen segmented-control-element gevonden (uitsluitend Icon Row Pattern; nieuwe observatie: icon-container-kleur varieert per sectie -- groen/paars/blauw i.p.v. uitsluitend teal) | -- | -- | -- |
+
+### SHARED VISUAL FOUNDATION + SEMANTIC VARIANTS
+
+Bevestigd: de drie gevonden patronen delen een herkenbare, gemeenschappelijke basis (pill-vormige of blok-vormige opties, één teal/gevulde actieve staat, neutrale inactieve staat) -- genoeg om een gedeelde foundation te rechtvaardigen. Maar Coach (2 items) en Samen (5 items) verschillen zowel in itemaantal als in exacte visuele vorm (gelijke blokken vs. variabele-breedte tekstlabels) -- **geen abstractie geforceerd** waar de mock-ups zelf een verschil laten zien.
+
+**Voorgestelde, niet-geïmplementeerde structuur (component-planning, geen code):**
+```
+tk-segmented-control (shared foundation: pill/blok-groep, actief/inactief-styling, teal-token)
+  - .tk-segmented-control--period    (Inzicht-stijl: 2-4 compacte pills, filtert data)
+  - .tk-segmented-control--mode      (Coach-stijl: 2 gelijke blokken, content-wissel, ondersteunt badge)
+```
+**Samen's 5-item content-tab-bar wordt NIET automatisch in dezelfde abstractie geperst** -- visueel te verschillend (variabele breedte, geen gelijke blokken) om zonder een aparte Product Owner-afweging als derde variant van `tk-segmented-control` vast te leggen, versus een eigen, nieuw `tk-content-tab-bar`-component. **CLASSIFICATIE: D. nog Product Owner-besluit nodig** -- of Samen een derde variant wordt of een apart component.
+
+**FUTURE SCREENS:** Inzicht en Coach zijn de eerste twee kandidaten om `tk-segmented-control` daadwerkelijk te bouwen (bij hun eigen migratie, niet nu). Samen wacht op de Product Owner-beslissing hierboven.
+
+**Filter chip/dropdown (Inzicht "Alle sporten") is expliciet GEEN segmented control** -- apart component, geen overlap met bovenstaande.
 
 ## NO-DUPLICATION RULE (Fase 8, canoniek, geldt voortaan)
 

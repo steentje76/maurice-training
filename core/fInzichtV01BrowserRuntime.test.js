@@ -480,7 +480,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
       function relLum(r,g,b){ function c(v){ v/=255; return v<=0.03928? v/12.92 : Math.pow((v+0.055)/1.055,2.4); } return 0.2126*c(r)+0.7152*c(g)+0.0722*c(b); }
       function contrastRatio(rgb1, rgb2){ const l1=relLum(...rgb1), l2=relLum(...rgb2); const lighter=Math.max(l1,l2), darker=Math.min(l1,l2); return (lighter+0.05)/(darker+0.05); }
       function parseRgb(s){ const m=s.match(/\d+/g); return [parseInt(m[0]),parseInt(m[1]),parseInt(m[2])]; }
-      const card = document.querySelector('.tk-overview-cell').closest('.tk-card');
+      const card = document.querySelector('.tk-overview-cell');
       const bg = parseRgb(getComputedStyle(card).backgroundColor);
       const trend = document.querySelector('.tk-overview-cell .trend.down');
       if(!trend) return null;
@@ -555,6 +555,60 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     ok(overviewRowCount === 1, '41: alle 5 Snel-overzicht-metrics passen op één rij op 390px (canonical density-doel), geen 3+2-wrap meer nodig bij realistische labellengtes');
 
     await page.close();
+  }
+
+  // PO Final Visual Fidelity Rework: Jouw Ontwikkeling -- 4 KPI's op één rij,
+  // zelfstandige tegels (eigen achtergrond+schaduw), waarde-top alignment.
+  for (const w of [320, 390, 430]) {
+    const page = await browser.newPage({ viewport: { width: w, height: 900 } });
+    await page.goto(url);
+    await page.waitForTimeout(500);
+    await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+    await page.waitForTimeout(700);
+    const info = await page.evaluate(() => {
+      const cells = Array.from(document.querySelectorAll('.tk-summary-cell'));
+      const tops = cells.map(c => Math.round((c.querySelector('.num')||c.querySelector('.unavailable')||c).getBoundingClientRect().top));
+      const bgs = cells.map(c => getComputedStyle(c).backgroundColor);
+      const rows = [...new Set(cells.map(c => Math.round(c.getBoundingClientRect().top)))].length;
+      return { count: cells.length, rows, maxDelta: Math.max(...tops)-Math.min(...tops), bgs };
+    });
+    ok(info.count === 4 && info.rows === 1, w + 'px 46: alle 4 KPI-tegels (Jouw Ontwikkeling) staan op exact 1 rij, geen 2+2-wrap');
+    ok(info.maxDelta <= 1, w + 'px 47: de 4 KPI-hoofdwaarden staan binnen 1px verticale tolerantie op dezelfde baseline (delta=' + info.maxDelta + 'px)');
+    ok(info.bgs.every(b => b !== 'rgba(0, 0, 0, 0)' && b !== 'transparent'), w + 'px 48: elke KPI-tegel heeft een eigen, zichtbare achtergrond (zelfstandige tegeltaal, geen tekstkolom in een gedeelde kaart)');
+    await page.close();
+  }
+
+  // Sabotage: bewijs dat de KPI-alignment-test een echte afwijking vangt.
+  // Saboteert de icon-zone (staat VÓÓR de waarde in de DOM-volgorde
+  // icoon->waarde->label), wat gegarandeerd de waarde-positie verschuift --
+  // in tegenstelling tot het label (dat NA de waarde staat en dus terecht
+  // geen effect heeft op de waarde-top, exact de bewezen, robuustere
+  // volgorde die deze rework introduceerde).
+  {
+    const fs = require('fs');
+    const original = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+    let page = null;
+    try {
+      const sabotaged = original.replace(
+        ".tk-summary-cell .ic{width:18px;height:18px;color:var(--color-primary)}",
+        ".tk-summary-cell .ic{width:18px;height:18px;color:var(--color-primary)} .tk-summary-cell:nth-child(2) .ic{height:40px}"
+      );
+      ok(sabotaged !== original, '49 (sabotage-setup): de KPI-icon-regel is gevonden en tijdelijk uitgebreid met een afwijkende hoogte voor cel 2');
+      fs.writeFileSync(path.join(__dirname, '..', 'index.html'), sabotaged, 'utf8');
+      page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+      await page.goto('file://' + path.join(__dirname, '..', 'index.html'));
+      await page.waitForTimeout(500);
+      await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+      await page.waitForTimeout(700);
+      const tops = await page.evaluate(() => Array.from(document.querySelectorAll('.tk-summary-cell')).map(c => Math.round((c.querySelector('.num')||c.querySelector('.unavailable')||c).getBoundingClientRect().top)));
+      const sabotagedDelta = Math.max(...tops) - Math.min(...tops);
+      ok(sabotagedDelta > 1, '50: sabotage (icon-hoogte van 1 KPI vergroot) veroorzaakt een meetbare afwijking (delta=' + sabotagedDelta + 'px) -- bewijst dat de KPI-alignment-test een echte regressie zou vangen');
+    } finally {
+      fs.writeFileSync(path.join(__dirname, '..', 'index.html'), original, 'utf8');
+      if (page) await page.close().catch(() => {});
+    }
+    const restored = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+    ok(restored === original, '50b: index.html is na de sabotage-test byte-identiek hersteld');
   }
 
   await browser.close();

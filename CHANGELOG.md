@@ -1,5 +1,70 @@
 # Trainingskompas — Changelog
 
+## v4.69.58 — Trainen v0.2 Visual Fidelity Pass (3 september 2026)
+
+Visuele verfijning naar 1-op-1-conformiteit met de canonical baseline
+(trainen-v0.2.png), na Product Owner-feedback dat de functionele fix
+correct was maar het scherm nog niet visueel identiek aan het ontwerp
+aanvoelde. Geen bugfix, geen nieuwe functionaliteit -- puur presentatie.
+
+EERSTVOLGENDE TRAINING-KAART: v43RenderPlan() backward-compatible
+uitgebreid met een optionele 3e parameter (opts.detailsButton,
+opts.compact). Home roept de functie nog steeds aan met exact 2
+argumenten (geen opts) -- 100% ongewijzigd gedrag/HTML voor s-home,
+geverifieerd en getest. Trainen toont nu "Start training" en "Bekijk
+details" naast elkaar (horizontale actierij), compactere padding, alle
+CSS-wijzigingen uitsluitend gescoped op #v43-train-plan (niet #home-plan).
+
+TIJD/LOCATIE ONDERZOCHT EN BEVESTIGD AFWEZIG: live geverifieerd tegen
+het echte databaseschema (vaste_trainingen, training_instances, geen
+calendar-tabel) -- geen enkel veld voor een geplande starttijd of
+locatie bestaat. Geen fictieve waarde toegevoegd; nieuwe browsertest
+bevestigt expliciet de afwezigheid van elk HH:MM-patroon of
+locatie-achtige tekst op de kaart.
+
+CANONICAL TEAL ICON-CONTAINER (nieuw, additief token --color-primary-
+soft + .tk-icon-box/.tk-icon-box-sm): toegepast op alle 11 icon-
+containers in Jouw training (3), Start een activiteit (5), Maken &
+ontdekken (2), Terugkijken (1) -- lichte teal achtergrond met teal
+icoon, conform de canonical baseline (was: groot, zwart icoon op
+transparante achtergrond).
+
+START EEN ACTIVITEIT: chevron-iconen toegevoegd aan Jouw training-
+tegels voor visuele consistentie met de baseline.
+
+ZELF GEVONDEN EN GEREPAREERD, BUITEN DE OORSPRONKELIJKE SCOPE: een
+pre-existing, te fragiele test in core/fHardening.test.js (W9) gebruikte
+een vaste, 3200-tekens-brongrens i.p.v. de echte functiegrens van
+tkErgConnectDevice() (3617 tekens) om te controleren dat device-connect
+nooit de workout-finish-flow aanroept. Door de toegevoegde/verplaatste
+code elders in dit bestand verschoof de absolute bestandspositie,
+waardoor de vaste grens toevallig een VERKLAREND COMMENTAAR meenam
+("...noch execLeaveDiscard() noch finishSession() riep...") en dat
+per ongeluk als een echte functieaanroep interpreteerde -- een
+vals-positief, geen echte regressie (herleid tot de exacte, oude en
+nieuwe brontekst-diff, en herbevestigd door de test te draaien op de
+ongewijzigde staat vóór deze sprint: 347/347 groen daar, 346/347 na de
+verschuiving, terug naar 347/347 na de fix). Test verbeterd: commentaar-
+regels worden nu eerst gestript vóór de regex-controle -- geen
+verzwakking van de onderliggende, functionele controle.
+
+core/fTrainenBrowserRuntime.test.js uitgebreid (22/22, was 19): 11
+canonical icon-boxes bevestigd (exacte telling, niet een losse
+ondergrens), "Bekijk details" functioneel aanwezig, geen fictieve tijd/
+locatie. Herhaalde sabotage van de oorspronkelijke kernbug correct
+gedetecteerd en volledig hersteld.
+
+Cross-domein regressie (Entitlements/Team/Gym/Admin-Auth/Women's
+Performance/Recovery/Devices/Running-Core/Design System/Hardening):
+0 problemen. Release gate 234/234, Android 29/29, Hardening 347/347.
+
+APP_VER v4.69.57 -> v4.69.58. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469580. android/app/build.gradle gesynchroniseerd
+(46958/4.69.58).
+
+Zie docs/TRAINEN_V02_VISUAL_FIDELITY_REPORT.md voor het volledige
+rapport inclusief drie nieuwe runtime-screenshots.
+
 ## v4.69.57 — Trainen v0.2 Visual Polish + Reproductie-onderzoek (3 september 2026)
 
 PR #229 vervolg-herstelsprint, na nieuw bewijs van de Product Owner (drie

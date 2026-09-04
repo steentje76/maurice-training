@@ -1,5 +1,52 @@
 # Trainingskompas — Changelog
 
+## v4.69.59 — Trainen v0.2 Micro Alignment Pass (3 september 2026)
+
+Laatste micro-correctie op PR #229, geen redesign. De Product Owner
+beoordeelde de vorige runtime als goed, met één resterende afwijking:
+de lichte teal icon-containers in Training maken/Oefeningen/
+Trainingshistorie stonden te dicht tegen de linker kaartrand.
+
+ROOT CAUSE: de gedeelde .v43-tmt .row-klasse (ook gebruikt door Running/
+Cycling-schermen) heeft padding:15px 0 -- geen horizontale ruimte. De
+buitenste kaartcontainer had eveneens 0 horizontale padding.
+
+FIX: één nieuwe, gescoped CSS-regel (.v43-tmt-inset .row{padding:15px
+16px}) toegevoegd, uitsluitend op de twee betrokken containers via een
+extra class (v43-tmt-inset) naast de bestaande, gedeelde v43-tmt --
+de gedeelde .v43-tmt .row-regel zelf blijft volledig ongewijzigd, dus
+Running/Cycling zijn niet geraakt. Bewust ÉÉN gedeelde regel voor alle
+drie de rijen, geen losse pixel-hacks.
+
+Zelf gevonden en gecorrigeerd tijdens implementatie: de nieuwe regel
+werkte aanvankelijk niet door CSS-cascade-volgorde (de regel stond
+vroeg in het bestand, de gedeelde .v43-tmt .row-regel staat later en
+won bij gelijke specificiteit) -- verplaatst naar direct na de
+bestaande regel, nu consistent toegepast.
+
+Live gemeten in de echte browser op alle 6 vereiste viewports (320/360/
+375/390/412/430px): alle 3 icon-boxen exact 16px vanaf de linkerrand,
+alle 3 chevrons exact 16px vanaf de rechterrand, geen horizontale
+overflow, geen tekst-wrapping-regressie, divider bij Maken & ontdekken
+intact.
+
+core/fTrainenBrowserRuntime.test.js uitgebreid (25/25, was 22): 3
+nieuwe assertions die de exacte, gemeten pixel-uitlijning bewaken. Live
+sabotage (padding teruggezet naar 0) correct gedetecteerd en volledig
+hersteld.
+
+Geen andere visuele wijziging: header, Eerstvolgende training, Jouw
+training, Start een activiteit, kleuren, typography, card-radius,
+bottom navigation en alle andere schermen ongewijzigd.
+
+Release gate 234/234, Android 29/29. Cross-domein regressie
+(HyroxTriathlon/RunningIntelligence/Hardening/DesignSystemComponents):
+0 problemen.
+
+APP_VER v4.69.58 -> v4.69.59. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469590. android/app/build.gradle gesynchroniseerd
+(46959/4.69.59).
+
 ## v4.69.58 — Trainen v0.2 Visual Fidelity Pass (3 september 2026)
 
 Visuele verfijning naar 1-op-1-conformiteit met de canonical baseline

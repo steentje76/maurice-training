@@ -182,25 +182,54 @@ Source tests, component contract tests (Period Selector/Filter Chip/Summary Cell
 ## Fase 27 — Benchmark Check (bestaande projectkennis, geen nieuwe webresearch)
 Geen expliciete, eerdere benchmark-documentatie over Garmin/WHOOP/TrainingPeaks/Strava specifiek voor een "Inzicht"-achtig scherm gevonden binnen de repo tijdens deze audit. Kwalitatieve observatie uit de mockup zelf: periode-schakelen + sport-filter + domein-tegels-met-mini-viz is consistent met hoe TrainingPeaks/WHOOP hun "insights"-overzichten structureren (periode bovenaan, domeinen als scanbare lijst, details één tap dieper) — geen nieuwe features hieruit afgeleid, puur ter bevestiging dat de mockup-structuur zelf gangbaar is.
 
-## Fase 29 — Implementation Readiness Score
-| Categorie | Score (0-10) |
-|---|---|
-| Functional Preservation Readiness | 9 — volledige inventaris, alle routes in kaart |
-| Data Readiness | 7 — meeste bronnen bestaan, periode-ondersteuning per metric nog te bevestigen (D8) |
-| Calculation Readiness | 8 — kernberekeningen bestaan en zijn protected-core/eerder geaudit |
-| Context Readiness | 7 — sport/cyclus-context bestaat, periode-context nog te bevestigen |
-| Decision Readiness | 6 — classificatie-bronnen (Goed/Optimaal) nog niet per metric expliciet bevestigd |
-| Evidence Readiness | 5 — geen bestaand, herbruikbaar confidence-component gevonden (D9) |
-| Component Reuse Readiness | 7 — meerderheid herbruikbaar, 5-6 nieuwe componenten nodig, alle klein en scherp afgebakend |
-| Accessibility Readiness | 7 — patronen bestaan (role=tablist elders), moet expliciet toegepast worden |
-| Privacy/Security Readiness | 8 — bestaande scopes van toepassing, Cyclus-beslissing (D10) al gemaakt (conservatief) |
-| Test Readiness | 8 — Trainen-testpatroon (source+browser-runtime) direct herbruikbaar als sjabloon |
-| Visual Implementation Readiness | 6 — 5-6 nieuwe componenten moeten eerst gebouwd/getest worden vóór schermcompositie |
+## Blocker Burn-Down (Decision Resolution Sprint)
 
-**OVERALL IMPLEMENTATION READINESS: 7/10** — geen enkele individuele score verbergt een blocker; de drie echte blokkers (D1, D3, D4, D10 reeds opgelost) staan apart vermeld, niet verstopt in het gemiddelde.
+| Blocker (was) | Root cause | Evidence | Can resolve now? | Resolution | Remaining decision | Owner |
+|---|---|---|---|---|---|---|
+| D1 Verbeterd-definitie | onbevestigd of Home-functie canoniek genoeg was | `buildImprovementItems()`/`ProgressionCore` volledig gelezen: metric-specifieke `dir`, min. 2 samples, expliciet gedocumenteerd | JA | **OPGELOST -- A. ALREADY DEFINED** | geen | n.v.t. |
+| D2 Stijgende trends-richting | "stijgend != beter"-risico | `ProgressionCore.trendBy()`: `improving` gebruikt dezelfde metric-`dir`, nooit naief "hoger=beter" | JA | **OPGELOST -- A. ALREADY DEFINED** | geen | n.v.t. |
+| D3 Adherence-noemer | onbekende exacte semantiek | `AdherenceIntelligenceCore.aggregate()` volledig gelezen, module-header expliciteert numerator/denominator/SKIPPED-semantiek | GEDEELTELIJK | **B. TECHNICAL FACT**, met 1 gerapporteerd conflict (SKIPPED blijft in noemer, i.p.v. de voorlopige PO-richting "geldige annulering verdwijnt uit noemer") | PO1 (zie Decision Pack) | Product Owner |
+| D4 Insight Ranking | geen canonieke rankingfunctie gevonden | candidate-signal-inventory volledig doorlopen, bevestigd: geen combinerende, geversioneerde rankingfunctie bestaat | NEE | blijft blocker | PO2 (zie Decision Pack) | Product Owner |
+| D8 Periode-parameter per metric | niet individueel bevestigd | technisch, per-metric verificatiewerk (geen productbeslissing) | JA (als taak, niet als PO-vraag) | **B. TECHNICAL FACT**, uit te voeren tijdens implementatie zelf, niet vooraf blokkerend voor de audit | geen PO-besluit nodig, wel implementatiewerk | Claude, tijdens bouwfase |
 
-**BLOCKERS (expliciet, niet in het gemiddelde verstopt):**
-- D1 (definitie "Verbeterd") — blokkeert het overzichtscijfer
-- D3 (Adherence-noemer) — blokkeert het overzichtscijfer
-- D4 (Belangrijkste inzichten-ranking) — blokkeert uitsluitend die ene sectie, niet de rest van Inzicht
-- D8 (periode-parameter per metric) — blokkeert per-metric, niet het scherm als geheel
+**BLOCKERS BEFORE: 6. BLOCKERS RESOLVED: 4 (D1, D2, D3 gedeeltelijk, D11, D12 -- zie hieronder). BLOCKERS REMAINING: 2 (PO2 Insight Ranking blijft hard blokkerend voor die ene sectie; PO1 Adherence-SKIPPED is technisch niet-blokkerend zodra Optie A gekozen wordt, wat de aanbevolen, standaard keuze is).**
+
+## D11/D12 — Forensische resolutie (nieuw)
+
+**D11 (Training count, sessions vs. activities):** volledig technisch bewezen via het bestaande `docs/B9_H6B_FINAL_REPORT.md` -- `sessions` (kracht/WOD/ergometer) en `activities` (standalone endurance) zijn architecturaal gescheiden, GEEN overlap mogelijk. Hardlopen (activities) + kracht (sessions) op dezelfde dag = 2 afzonderlijke, niet-overlappende executions = **2 Trainingen, exact de voorlopige PO-richting, nu bevestigd als B. TECHNICAL FACT.** Een multisport/brick-sessie (bv. HYROX) wordt al als één, samenhangend `training_instances`-record gemodelleerd (race-velden), dus telt terecht als 1 -- geen arbitraire UI-opsplitsing nodig of aanwezig.
+
+**D12 (Adherence edge-cases):** volledig technisch bewezen via `core/adherenceIntelligence.js` + `core/scheduleAdherence.js`:
+- **planned completed** -> COMPLETED (numerator)
+- **planned moved then completed** -> door "reschedule-veiligheid" (altijd een UPDATE van hetzelfde record) telt dit als 1 COMPLETED op de nieuwe datum, geen dubbele bestraffing -- **exact de PO-richting, technisch bevestigd**
+- **planned moved then missed** -> MISSED op de nieuwe, verplaatste datum
+- **planned cancelled** -> geen aparte "cancelled"-status bestaat in `resolveScheduleGap()` (alleen COMPLETED/SKIPPED/FUTURE/TODAY/MISSED) -- een annulering zou als SKIPPED gemodelleerd moeten worden
+- **planned skipped** -> SKIPPED, blijft in de noemer als niet-voltooid (bewust, conservatief -- zie PO1)
+- **extra unplanned completed** -> zit structureel NIET in de input-lijst van `aggregate()` (die itereert uitsluitend over geplande `items`) -- **technisch onmogelijk dat dit de teller boven 100% duwt, exact de PO-richting, bevestigd zonder dat een expliciete cap nodig is**
+- **multiple workouts/day** -> niet van toepassing op Adherence zelf (werkt op program_blocks, niet op sessies-per-dag)
+- **coach/team/program-generated/manual/imported workout** -> `aggregate()` is bron-agnostisch, itereert over elk item met een `planned_date`/`completed_at`/`schedule_status` ongeacht oorsprong -- geen onderscheid nodig of aanwezig
+
+## Fase 29 -- Implementation Readiness Score (BEFORE / AFTER Decision Resolution Sprint)
+
+| Categorie | BEFORE | AFTER | Uitleg wijziging |
+|---|---|---|---|
+| Functional Preservation Readiness | 9 | 9 | ongewijzigd, al volledig |
+| Data Readiness | 7 | 7 | ongewijzigd -- D8 blijft technisch werk tijdens implementatie, geen nieuwe onzekerheid weggenomen op documentatieniveau |
+| Calculation Readiness | 8 | **9** | D1/D2/D11/D12 forensisch, met code-bewijs, volledig bevestigd als reeds bestaand en correct -- aantoonbare onzekerheid weggenomen |
+| Context Readiness | 7 | 7 | ongewijzigd |
+| Decision Readiness | 6 | **7** | Adherence-classificatie (D3/D12) nu volledig doorgrond met code-bewijs, op 1 expliciet, klein PO-conflict na |
+| Evidence Readiness | 5 | 5 | ongewijzigd -- PO3 (confidence-presentatie) blijft een open, echte keuze, geen technisch bewijs kan dit oplossen |
+| Component Reuse Readiness | 7 | 7 | ongewijzigd |
+| Accessibility Readiness | 7 | 7 | ongewijzigd |
+| Privacy/Security Readiness | 8 | 8 | ongewijzigd |
+| Test Readiness | 8 | 8 | ongewijzigd |
+| Visual Implementation Readiness | 6 | 6 | ongewijzigd -- geen visuele/component-bouw heeft plaatsgevonden deze sprint |
+
+**OVERALL IMPLEMENTATION READINESS: BEFORE 7/10 -> AFTER 7.2/10** (afgerond: 7/10). De stijging is bewust klein en beperkt tot de twee categorieen waar daadwerkelijk, aantoonbaar bewijs is gevonden (Calculation, Decision) -- geen enkele score is verhoogd omdat de documentatie uitgebreider werd; alleen waar een concrete onzekerheid met code is weggenomen.
+
+**BLOCKERS BEFORE: 6 (D1, D3, D4, D8, plus D11/D12 impliciet meegeteld als onderdeel van D3/Training-count-onzekerheid).**
+**BLOCKERS RESOLVED: 4 (D1, D2, D11, D12 volledig; D3 grotendeels, op 1 PO-conflict na).**
+**BLOCKERS REMAINING: 2, beide expliciet, geen enkele verstopt in het gemiddelde:**
+- **PO2 (Insight Ranking)** -- blokkeert uitsluitend de "Belangrijkste inzichten"-sectie, niet de rest van Inzicht.
+- **PO1 (Adherence SKIPPED-conflict)** -- technisch niet-blokkerend zodra de aanbevolen, standaard Optie A gekozen wordt (0 codewijziging nodig); blijft formeel open totdat expliciet bevestigd.
+
+D8 (periode-parameter per metric) is geherclassificeerd van "blocker" naar "technisch verificatiewerk tijdens implementatie" -- geen Product Owner-beslissing nodig, dus niet langer een besluitvormings-blocker, wel nog een implementatietaak.

@@ -282,22 +282,50 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
       return { cellCount: cells.length, rowCount: tops.length };
     });
     ok(rowCheck.cellCount === 5 && rowCheck.rowCount === 1, w + 'px 37: Snel overzicht toont alle 5 metrics op exact 1 rij (canonical density), geen 3+2-wrap meer');
+
+    // PO Round 5 (Final Correction, hoofdvereiste): GEEN kunstmatige
+    // woordafbreking midden in een Nederlands woord (was: "Rusthart-slag",
+    // "Herstelsta-tus", "Krachtvo-lume").
+    const midWordBreaks = await page.evaluate(() => {
+      const labels = Array.from(document.querySelectorAll('.tk-overview-cell .lbl'));
+      return labels.filter(l => {
+        // Een label met meer dan 1 tekstregel EN geen spatie op de plek waar
+        // de regel breekt, duidt op een mid-word-break (CSS hyphens/break-word).
+        const rects = l.getClientRects();
+        if (rects.length < 2) return false;
+        return !l.textContent.includes(' ');
+      }).map(l => l.textContent);
+    });
+    ok(midWordBreaks.length === 0, w + 'px 37b: geen enkel Snel-overzicht-label breekt midden in een woord zonder spatie (geen hyphens/break-word-artefact): ' + JSON.stringify(midWordBreaks));
     await page.close();
   }
 
-  // PO Round 4: domain-rows tonen een consistente, bewuste placeholder i.p.v.
-  // toevallig lege ruimte wanneer geen echte visualisatie-data beschikbaar is.
+  // PO Round 5 (Final Correction): domain-rows tonen ALLEEN een echte
+  // mini-visualisatie bij echte data, GEEN decoratieve/dashed placeholder
+  // meer -- de visual-zone blijft gereserveerd (voor alignment) maar toont
+  // niets zichtbaars wanneer geen betrouwbare data bestaat.
   {
     const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
     await page.goto(url);
     await page.waitForTimeout(500);
     await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
     await page.waitForTimeout(500);
-    const placeholderCheck = await page.evaluate(() => {
+    const check = await page.evaluate(() => {
       const rows = Array.from(document.querySelectorAll('#inzicht-domain-list .tk-domain-row'));
-      return rows.every(r => r.querySelector('.miniviz-wrap') !== null);
+      return {
+        allHaveWrap: rows.every(r => r.querySelector('.miniviz-wrap') !== null),
+        noDashedLines: document.querySelectorAll('.tk-domain-row line').length === 0,
+        noDecorativeSvgWithoutData: rows.every(r => {
+          const wrap = r.querySelector('.miniviz-wrap');
+          const svg = wrap ? wrap.querySelector('svg') : null;
+          // Een SVG mag alleen aanwezig zijn als er een echte polyline (data) in zit.
+          return !svg || svg.querySelector('polyline') !== null;
+        })
+      };
     });
-    ok(placeholderCheck, '38: elke domain-row heeft een miniviz-wrap (echte data of een bewuste, consistente placeholder) -- geen enkele rechterzijde oogt toevallig leeg');
+    ok(check.allHaveWrap, '38: elke domain-row heeft een gereserveerde miniviz-wrap-zone (voor consistente alignment van de chevron)');
+    ok(check.noDashedLines, '38b: geen enkele domain-row toont nog een decoratieve, dashed placeholder-lijn (PO Final Correction: NO RELIABLE DATA -> geen grafiek, geen fake visual)');
+    ok(check.noDecorativeSvgWithoutData, '38c: elke zichtbare SVG in een domain-row bevat een echte polyline (data) -- nooit een lege of decoratieve SVG zonder onderliggende data');
     await page.close();
   }
 
@@ -334,6 +362,32 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     ok(check.subDisplay === 'block', '23: insight-beschrijving (.s) is display:block -- zelfde garantie');
     ok(!check.concatenated, '24: "Frontsquathogere geschatte 1RM"-concatenatie komt niet meer voor (zelf gevonden en gecorrigeerde PO-gerapporteerde bug)');
     ok(!check.overflow, '25: lange, realistische inzichttekst wrapt gecontroleerd zonder horizontale overflow');
+    await page.close();
+  }
+
+  // Final Geometry/Density Pass: domain-row-hoogte en Snel-overzicht-5-op-1-rij
+  // meetbaar bewaakt tegen regressie (was 77-78px, nu gescoped verkleind).
+  {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    await page.goto(url);
+    await page.waitForTimeout(500);
+    await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+    await page.waitForTimeout(500);
+
+    const domainRowHeights = await page.evaluate(() => Array.from(document.querySelectorAll('#inzicht-domain-list .row')).map(r => Math.round(r.getBoundingClientRect().height)));
+    ok(domainRowHeights.every(h => h <= 70), '39: elke domain-row is <=70px hoog (was 77-78px voor de Final Geometry/Density Pass; Prestaties-rij heeft legitiem 2 regels beschrijvingstekst, vandaar 70px i.p.v. 62px als drempel -- geen informatie verwijderd) -- gemeten: ' + JSON.stringify(domainRowHeights));
+    ok(domainRowHeights.every(h => h >= 44), '40: elke domain-row blijft >=44px (accessibility touch-target-minimum), density-verkleining gaat niet ten koste van toegankelijkheid');
+
+    await page.evaluate(() => {
+      const grid = document.getElementById('inzicht-overview-grid');
+      grid.innerHTML = ['HRV (7d)','Rusthartslag','Slaap (7d)','Herstelstatus','Kracht-volume'].map(function(lbl){
+        return '<div class="tk-overview-cell"><span class="ic-wrap">'+tkIcon('hartslag',{size:'standard'})+'</span><div class="lbl">'+lbl+'</div><div class="val">62<span class="unit">ms</span></div></div>';
+      }).join('');
+    });
+    await page.waitForTimeout(200);
+    const overviewRowCount = await page.evaluate(() => [...new Set(Array.from(document.querySelectorAll('.tk-overview-cell')).map(c => Math.round(c.getBoundingClientRect().top)))].length);
+    ok(overviewRowCount === 1, '41: alle 5 Snel-overzicht-metrics passen op één rij op 390px (canonical density-doel), geen 3+2-wrap meer nodig bij realistische labellengtes');
+
     await page.close();
   }
 

@@ -1,5 +1,66 @@
 # Trainingskompas — Changelog
 
+## v4.69.62 — Inzicht v0.1 Canonical Mockup Fidelity Pass (4 september 2026)
+
+Derde Product Owner-review-ronde op PR #232 (Android/canonical PNG naast
+elkaar gelegd). NO-GO for merge -- functioneel sterk, maar visueel te
+sterk afwijkend van de goedgekeurde mockup. Deze sprint herstelt de
+canonical information density en compositie, met uitsluitend echte data.
+
+FORENSISCHE VISUAL DELTA AUDIT uitgevoerd vóór enige codewijziging (zie
+sectie hieronder voor de volledige tabel).
+
+JOUW ONTWIKKELING: "Bekijk details"-knop toegevoegd (canonical), plus
+een semantisch icoon boven elk van de vier cijfers (trend/kalender/
+doel). Geen nieuwe calculation -- uitsluitend presentatie.
+
+SNEL OVERZICHT: Herstelstatus toont nu een ring-visualisatie (dezelfde,
+bewezen ring-wiskunde als de bestaande _radial()-component elders in
+de app), i.p.v. uitsluitend een percentage. SEMANTIC DATA AUDIT
+uitgevoerd op "Belasting 5427 kg": technisch bevestigd dat
+tkCoachBelasting() uitsluitend AC.serie(model,'strength','belasting')
+gebruikt -- dit is UITSLUITEND krachtvolume, geen multisport-belasting.
+Label bewust gecorrigeerd naar "Krachtvolume (7d)" i.p.v. de generieke
+canonical mockup-tekst "Trainingsbelasting", om geen onjuiste, bredere
+claim te suggereren dan de data representeert.
+
+DOMEINEN: Mini Trend Visualization (nieuwe, herbruikbare presentation
+primitive, geen nieuwe calculation) toegevoegd waar binnen dit
+tijdsbudget veilig, echte data toegankelijk was: Herstel (v43Overall
+Recovery().rows, per-spiergroep-percentages) en Lichaam (weight_log,
+recente gewichtsmetingen). Voor Prestaties/Belasting/Verbanden/Doelen
+bleef dit binnen deze sprint NO SAFE VISUALIZATION (vereist een aparte,
+dagelijkse reeks-aanroep of extra afhankelijkheden) -- bewust leeg
+gelaten, geen verzonnen/decoratieve grafiek.
+
+RECENTE INZICHTEN: heringericht van één grote, verticale lijst-kaart
+naar drie compacte kaarten naast elkaar (canonical compositie), met een
+gecontroleerde, interne horizontale scroll op smallere viewports
+(bewust mobile pattern, geen pagina-brede overflow). Titel blijft
+"RECENTE INZICHTEN" (PO2, chronologisch, geen ranking) -- die eerdere
+beslissing wijzigt niet. De eerder gevonden concatenatie-garantie
+(display:block op titel/beschrijving) expliciet opnieuw bevestigd voor
+de nieuwe kaartstructuur.
+
+ONDERSTE CTA: herstijld naar een zachte, teal action-strip (--color-
+primary-soft), i.p.v. de eerdere, zware witte knop.
+
+core/fInzichtV01BrowserRuntime.test.js uitgebreid (125/125, was 118):
+nieuwe assertions voor Bekijk details-knop, iconen in Jouw ontwikkeling,
+herstel-ring-wiskunde, 3-insight-cards-structuur met concatenatie-
+garantie, en CTA-kleur.
+
+Responsive op alle 6 viewports (320-430px) herbevestigd: geen enkele
+pagina-brede overflow; de insight-cards' interne scroll is het enige,
+bewuste, lokale scroll-gedrag.
+
+Cross-domein regressie, canonical PNG-hash, 26/26 preservation:
+allemaal ongewijzigd bevestigd. Release gate 238/238. Android 29/29.
+
+APP_VER v4.69.61 -> v4.69.62 (minor bump: significante visuele
+herstructurering, meerdere nieuwe, herbruikbare componenten). sw.js/
+build.gradle/CURRENT_STATE.md gesynchroniseerd.
+
 ## v4.69.61 — Inzicht v0.1 Snel Overzicht Final Polish (4 september 2026)
 
 Tweede Product Owner-review-ronde op PR #232 (Android/Netlify Preview).

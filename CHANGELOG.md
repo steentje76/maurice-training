@@ -1,5 +1,51 @@
 # Trainingskompas — Changelog
 
+## v4.69.63 — Inzicht v0.1 Final Density + Geometry Fidelity Pass (4 september 2026)
+
+Vierde Product Owner-review-ronde op PR #232. Duidelijke vooruitgang
+erkend, nog geen merge -- de information density week nog te sterk af
+van canonical. Geen nieuwe features, uitsluitend geometry/density.
+
+GEMETEN, VOOR CODEWIJZIGING: canonical PNG (853x1844px) toont Snel
+overzicht als ÉÉN, compacte rij van 5 metrics -- de runtime forceerde
+door een min-width:92px per cel altijd een 3+2-wrap op mobiele
+breedtes (390-430px). Root cause geidentificeerd vóór enige
+codewijziging.
+
+SNEL OVERZICHT: herschreven naar flex:1 1 0 (geen vaste min-width) --
+dwingt nu altijd 1 compacte rij van 5 af op alle mobiele breedtes
+(320-430px), met iets compactere maar nog altijd leesbare typografie
+(labels mogen gecontroleerd wrappen via overflow-wrap, geen clipping).
+GEMETEN RESULTAAT: kaarthoogte 204px -> 92px (-55%). Herstel-ring
+proportioneel verkleind (34px -> 28px) om de compactere celhoogte te
+volgen, zonder de kaart kunstmatig hoger te maken.
+
+INSIGHT CARDS: padding/iconformaat/typografie verkleind conform de
+canonical, compacte insight-summary-stijl (was te groot na de vorige
+ronde).
+
+MINI VISUALIZATION EMPTY STATE: nieuwe, consistente
+INSUFFICIENT_DATA-placeholder (rustige, dashed lijn) toegevoegd voor
+domeinen zonder echte, veilig toegankelijke visualisatiedata
+(Prestaties/Belasting/Verbanden/Doelen) -- GEEN nep-trendlijn, wel een
+bewust ontworpen, consistente rechterzijde i.p.v. toevallige leegte.
+Herstel/Lichaam blijven hun echte, bestaande data tonen.
+
+GEMETEN EINDRESULTAAT (390px, realistische 844px-viewport, vóór/na
+deze sprint): totale content-hoogte 1168px -> 1092px (-76px, -6.5%).
+
+core/fInzichtV01BrowserRuntime.test.js uitgebreid (132/132, was 125):
+nieuwe assertions bevestigen op alle 6 viewports dat Snel overzicht
+exact 1 rij van 5 metrics blijft (geen 3+2-wrap), en dat elke
+domain-row een miniviz-wrap heeft (data of bewuste placeholder).
+
+Cross-domein regressie, canonical PNG-hash, 26/26 preservation:
+ongewijzigd bevestigd. Release gate 238/238. Android 29/29.
+
+APP_VER v4.69.62 -> v4.69.63 (patch-bump: geometry/density-polish,
+geen nieuwe functionaliteit). sw.js/build.gradle/CURRENT_STATE.md
+gesynchroniseerd.
+
 ## v4.69.62 — Inzicht v0.1 Canonical Mockup Fidelity Pass (4 september 2026)
 
 Derde Product Owner-review-ronde op PR #232 (Android/canonical PNG naast

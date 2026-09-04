@@ -228,7 +228,14 @@ if (originMainAvailable) {
   let rawDiff = '';
   let diffFaalde = false;
   try {
-    rawDiff = execSync('git diff origin/main HEAD -- index.html', { cwd: path.join(__dirname, '..'), encoding: 'utf8' });
+    // maxBuffer expliciet vergroot (Node-default is 1MB): een PR die over meerdere
+    // sprints heen cumulatief aan index.html werkt (zoals deze) kan een git diff
+    // opleveren die groter is dan de standaardlimiet -- dat is geen foutsituatie,
+    // alleen een infrastructurele beperking van execSync zelf. Zelf gevonden en
+    // gerepareerd tijdens de Trainen v0.2 Visual Fidelity Pass; geen wijziging aan
+    // de onderliggende, inhoudelijke controle (dezelfde verboden termen, dezelfde
+    // diff-scope).
+    rawDiff = execSync('git diff origin/main HEAD -- index.html', { cwd: path.join(__dirname, '..'), encoding: 'utf8', maxBuffer: 20 * 1024 * 1024 });
   } catch (e) {
     diffFaalde = true;
     ok(false, 'O0b: git diff origin/main HEAD -- index.html faalde onverwacht, terwijl origin/main wel bestaat -- echte fout, geen stille PASS: ' + (e.stderr || e.message || e));

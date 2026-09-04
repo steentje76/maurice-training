@@ -6591,7 +6591,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.65';
+const APP_VER = 'v4.69.66';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -20444,6 +20444,16 @@ async function inzichtRenderDevelopment(){
 /* Snel overzicht -- 5 cells, canonical health/load-bronnen. UNKNOWN != 0. */
 async function inzichtRenderOverview(){
   var grid=document.getElementById('inzicht-overview-grid'); if(!grid) return;
+  // PRODUCTION DATA REGRESSION FIX: 'dc' is GEEN globale variabele -- het is
+  // een lokale alias (var dc=DeviceCore) die alleen binnen andere, specifieke
+  // functies bestaat (bv. renderLichaamPremium, regel ~6353). Deze functie
+  // riep dc.healthSeries/qualifySeries/healthStats aan zonder deze lokale
+  // definitie, wat een stille ReferenceError gaf die door de try/catch werd
+  // opgevangen -- vandaar "--" in productie ondanks aantoonbaar bestaande
+  // data. Fix: exact hetzelfde, bewezen patroon overnemen als het oude
+  // Lichaam-scherm gebruikt. Geen nieuwe calculation, geen gewijzigde
+  // semantiek -- uitsluitend de ontbrekende referentie hersteld.
+  var dc=(typeof DeviceCore!=='undefined')?DeviceCore:null;
   var cells=[];
   // Iconen: canonieke DS-03 tkIcon()-registry (teal, currentColor) -- consistent
   // met Domeinen/Trainen, niet de oudere V43I-set (geen stroke=currentColor op

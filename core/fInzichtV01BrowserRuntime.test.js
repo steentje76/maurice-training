@@ -161,6 +161,55 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     await page.close();
   }
 
+  // PRODUCTION DATA REGRESSION (Fase 4): 'dc' (DeviceCore-alias) bestond niet
+  // globaal in inzichtRenderOverview() -- een stille ReferenceError liet HRV/
+  // Rusthartslag/Slaap altijd "--" tonen, ook met aantoonbaar bestaande data.
+  {
+    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    // A. DATA AVAILABLE: exacte, echte productiedata (incl. string-types zoals
+    // Supabase teruggeeft) gemockt -- Inzicht MAG geen "--" tonen.
+    await page.route('**/rest/v1/hrv_log**', route => {
+      route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify([
+          { date: '2026-09-04', hrv: '28.5', rhr: 56, sleep: '7.58', note: '[src:fitbit]' },
+          { date: '2026-09-03', hrv: null, rhr: 57, sleep: '2.58', note: '[src:fitbit]' },
+          { date: '2026-09-02', hrv: '22.0', rhr: 57, sleep: '5.58', note: '[src:fitbit]' },
+          { date: '2026-09-01', hrv: '25.5', rhr: 56, sleep: '7.58', note: '[src:fitbit]' },
+          { date: '2026-08-31', hrv: '29.5', rhr: 57, sleep: '6.82', note: '[src:fitbit]' }
+        ])
+      });
+    });
+    await page.goto(url);
+    await page.waitForTimeout(500);
+    await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+    await page.waitForTimeout(900);
+    const text = await page.evaluate(() => document.getElementById('inzicht-overview-grid').innerText);
+    ok(!/HRV[\s\S]{0,20}—/.test(text), '19b (regressie): HRV toont GEEN "--" wanneer canonical data aantoonbaar bestaat -- exacte productiefout (dc undefined) zou hier weer "--" tonen als hij terugkeert');
+    ok(!/Rusthartslag[\s\S]{0,20}—/.test(text), '19c (regressie): Rusthartslag toont GEEN "--" wanneer canonical data aantoonbaar bestaat');
+    ok(!/Slaap[\s\S]{0,20}—/.test(text), '19d (regressie): Slaap toont GEEN "--" wanneer canonical data aantoonbaar bestaat');
+    ok(/ms/.test(text), '19e (units): HRV toont de eenheid "ms"');
+    ok(/bpm/.test(text), '19f (units): Rusthartslag toont de eenheid "bpm"');
+    ok(/\du\b/.test(text), '19g (units): Slaap toont een correcte uren-eenheid ("u")');
+    await page.close();
+  }
+
+  // B. DATA MISSING: bevestig dat "--" (nooit 0) nog steeds correct getoond
+  // wordt wanneer data werkelijk ontbreekt (lege array, geen fout).
+  {
+    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    await page.route('**/rest/v1/hrv_log**', route => {
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+    });
+    await page.goto(url);
+    await page.waitForTimeout(500);
+    await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+    await page.waitForTimeout(900);
+    const text = await page.evaluate(() => document.getElementById('inzicht-overview-grid').innerText);
+    ok(!/\b0\s*ms\b/.test(text) && !/\b0\s*bpm\b/.test(text), '19h: bij daadwerkelijk lege data toont geen enkele metric "0 ms"/"0 bpm" -- UNKNOWN != 0 blijft gehandhaafd');
+    await page.close();
+  }
+
   // PO Round 2: Snel overzicht -- teal iconen (was zwart), eenheden zichtbaar,
   // geen tabelachtige verticale separators, responsive wrap-gedrag.
   {
@@ -329,6 +378,123 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     await page.close();
   }
 
+  // Quick Overview Alignment Gate (PO Final Correction): de vijf hoofdwaarden
+  // moeten op exact dezelfde verticale positie starten, ongeacht labellengte/
+  // wrapping/aan- of afwezigheid van een trend-indicator.
+  for (const w of [320, 390, 430]) {
+    const page = await browser.newPage({ viewport: { width: w, height: 900 } });
+    await page.route('**/rest/v1/hrv_log**', route => {
+      route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify([
+          { date: '2026-09-04', hrv: '28.5', rhr: 56, sleep: '7.58' },
+          { date: '2026-09-03', hrv: '24.0', rhr: 57, sleep: '2.58' },
+          { date: '2026-09-02', hrv: '22.0', rhr: 57, sleep: '5.58' },
+          { date: '2026-09-01', hrv: '25.5', rhr: 56, sleep: '7.58' },
+          { date: '2026-08-31', hrv: '18.5', rhr: 60, sleep: '6.82' }
+        ])
+      });
+    });
+    await page.goto(url);
+    await page.waitForTimeout(500);
+    await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+    await page.waitForTimeout(900);
+    const tops = await page.evaluate(() => {
+      const cells = Array.from(document.querySelectorAll('.tk-overview-cell'));
+      return cells.map(c => {
+        const val = c.querySelector('.val') || c.querySelector('.unavailable');
+        return val ? Math.round(val.getBoundingClientRect().top) : null;
+      });
+    });
+    const maxDelta = Math.max(...tops) - Math.min(...tops);
+    ok(maxDelta <= 1, w + 'px 40: de 5 Snel-overzicht-hoofdwaarden staan binnen 1px verticale tolerantie op dezelfde baseline (gemeten tops: ' + JSON.stringify(tops) + ', delta=' + maxDelta + 'px) -- ongeacht labellengte/wrapping/trend-aan-of-afwezigheid');
+    await page.close();
+  }
+
+  // Sabotage: bewijs dat de alignment-test een ECHTE afwijking daadwerkelijk
+  // vangt (niet toevallig altijd slaagt).
+  {
+    const fs = require('fs');
+    const original = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+    let page = null;
+    try {
+      const sabotaged = original.replace(
+        ".tk-overview-cell .lbl{font-size:9px;color:var(--color-text-secondary);font-weight:600;line-height:1.15;min-height:21px;display:flex;align-items:center;justify-content:center}",
+        ".tk-overview-cell .lbl{font-size:9px;color:var(--color-text-secondary);font-weight:600;line-height:1.15}"
+      );
+      ok(sabotaged !== original, '41 (sabotage-setup): de min-height-regel is gevonden en tijdelijk verwijderd');
+      fs.writeFileSync(path.join(__dirname, '..', 'index.html'), sabotaged, 'utf8');
+      page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+      await page.route('**/rest/v1/hrv_log**', route => {
+        route.fulfill({
+          status: 200, contentType: 'application/json',
+          body: JSON.stringify([
+            { date: '2026-09-04', hrv: '28.5', rhr: 56, sleep: '7.58' },
+            { date: '2026-09-03', hrv: '24.0', rhr: 57, sleep: '2.58' }
+          ])
+        });
+      });
+      await page.goto('file://' + path.join(__dirname, '..', 'index.html'));
+      await page.waitForTimeout(500);
+      await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+      await page.waitForTimeout(900);
+      const tops = await page.evaluate(() => {
+        const cells = Array.from(document.querySelectorAll('.tk-overview-cell'));
+        return cells.map(c => {
+          const val = c.querySelector('.val') || c.querySelector('.unavailable');
+          return val ? Math.round(val.getBoundingClientRect().top) : null;
+        });
+      });
+      const sabotagedDelta = Math.max(...tops) - Math.min(...tops);
+      ok(sabotagedDelta > 1, '42: sabotage (min-height verwijderd) veroorzaakt daadwerkelijk een meetbare afwijking (delta=' + sabotagedDelta + 'px) -- bewijst dat de alignment-test op regel 40 een echte regressie zou vangen, niet toevallig altijd slaagt');
+    } finally {
+      fs.writeFileSync(path.join(__dirname, '..', 'index.html'), original, 'utf8');
+      if (page) await page.close().catch(() => {});
+    }
+    const restored = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+    ok(restored === original, '42b: index.html is na de sabotage-test byte-identiek hersteld');
+  }
+
+  // Final Trend Contrast Micro-Correction: programmatische contrastcontrole
+  // van de trend-tekst tegen de kaart-achtergrond (echte, gerenderde kleuren,
+  // geen aanname).
+  {
+    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    await page.route('**/rest/v1/hrv_log**', route => {
+      route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify([
+          { date: '2026-09-04', hrv: '18.5', rhr: 56, sleep: '5.58' },
+          { date: '2026-09-03', hrv: '24.0', rhr: 57, sleep: '7.58' },
+          { date: '2026-09-02', hrv: '22.0', rhr: 57, sleep: '7.58' },
+          { date: '2026-09-01', hrv: '28.5', rhr: 56, sleep: '7.58' },
+          { date: '2026-08-31', hrv: '29.5', rhr: 60, sleep: '7.82' }
+        ])
+      });
+    });
+    await page.goto(url);
+    await page.waitForTimeout(500);
+    await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+    await page.waitForTimeout(900);
+    const contrastInfo = await page.evaluate(() => {
+      function relLum(r,g,b){ function c(v){ v/=255; return v<=0.03928? v/12.92 : Math.pow((v+0.055)/1.055,2.4); } return 0.2126*c(r)+0.7152*c(g)+0.0722*c(b); }
+      function contrastRatio(rgb1, rgb2){ const l1=relLum(...rgb1), l2=relLum(...rgb2); const lighter=Math.max(l1,l2), darker=Math.min(l1,l2); return (lighter+0.05)/(darker+0.05); }
+      function parseRgb(s){ const m=s.match(/\d+/g); return [parseInt(m[0]),parseInt(m[1]),parseInt(m[2])]; }
+      const card = document.querySelector('.tk-overview-cell');
+      const bg = parseRgb(getComputedStyle(card).backgroundColor);
+      const trend = document.querySelector('.tk-overview-cell .trend.down');
+      if(!trend) return null;
+      const fg = parseRgb(getComputedStyle(trend).color);
+      return { ratio: contrastRatio(fg, bg), fg, bg, text: trend.textContent };
+    });
+    ok(contrastInfo !== null, '43 (setup): een "down"-trend is aanwezig om het contrast op te meten');
+    if(contrastInfo){
+      ok(contrastInfo.ratio >= 4.5, '44: de "down"-trendtekst heeft een gemeten contrastratio van ' + contrastInfo.ratio.toFixed(2) + ':1 tegen de kaartachtergrond -- voldoet aan de WCAG AA-hard-gate van >=4.5:1 voor normale, kleine tekst (eerdere --color-text-secondary gaf slechts ~3.54:1, onvoldoende; --g6 is een bestaand, elders al bewezen secundair-maar-leesbaar token, o.a. gebruikt door Trainen v0.2 .quick-lbl -- geen nieuwe kleur toegevoegd)');
+      ok(contrastInfo.fg[0]===68 && contrastInfo.fg[1]===68 && contrastInfo.fg[2]===68, '45: de trend gebruikt exact --g6 (rgb(68,68,68)), een bestaand, elders al gebruikt Design System-token, geen willekeurige, nieuwe hexkleur');
+    }
+    await page.close();
+  }
+
   // PO Mobile Visual Fidelity Pass: Recente inzichten mag titel en beschrijving
   // NOOIT aan elkaar plakken (was: "Frontsquathogere geschatte 1RM").
   {
@@ -389,6 +555,60 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     ok(overviewRowCount === 1, '41: alle 5 Snel-overzicht-metrics passen op één rij op 390px (canonical density-doel), geen 3+2-wrap meer nodig bij realistische labellengtes');
 
     await page.close();
+  }
+
+  // PO Final Visual Fidelity Rework: Jouw Ontwikkeling -- 4 KPI's op één rij,
+  // zelfstandige tegels (eigen achtergrond+schaduw), waarde-top alignment.
+  for (const w of [320, 390, 430]) {
+    const page = await browser.newPage({ viewport: { width: w, height: 900 } });
+    await page.goto(url);
+    await page.waitForTimeout(500);
+    await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+    await page.waitForTimeout(700);
+    const info = await page.evaluate(() => {
+      const cells = Array.from(document.querySelectorAll('.tk-summary-cell'));
+      const tops = cells.map(c => Math.round((c.querySelector('.num')||c.querySelector('.unavailable')||c).getBoundingClientRect().top));
+      const bgs = cells.map(c => getComputedStyle(c).backgroundColor);
+      const rows = [...new Set(cells.map(c => Math.round(c.getBoundingClientRect().top)))].length;
+      return { count: cells.length, rows, maxDelta: Math.max(...tops)-Math.min(...tops), bgs };
+    });
+    ok(info.count === 4 && info.rows === 1, w + 'px 46: alle 4 KPI-tegels (Jouw Ontwikkeling) staan op exact 1 rij, geen 2+2-wrap');
+    ok(info.maxDelta <= 1, w + 'px 47: de 4 KPI-hoofdwaarden staan binnen 1px verticale tolerantie op dezelfde baseline (delta=' + info.maxDelta + 'px)');
+    ok(info.bgs.every(b => b !== 'rgba(0, 0, 0, 0)' && b !== 'transparent'), w + 'px 48: elke KPI-tegel heeft een eigen, zichtbare achtergrond (zelfstandige tegeltaal, geen tekstkolom in een gedeelde kaart)');
+    await page.close();
+  }
+
+  // Sabotage: bewijs dat de KPI-alignment-test een echte afwijking vangt.
+  // Saboteert de icon-zone (staat VÓÓR de waarde in de DOM-volgorde
+  // icoon->waarde->label), wat gegarandeerd de waarde-positie verschuift --
+  // in tegenstelling tot het label (dat NA de waarde staat en dus terecht
+  // geen effect heeft op de waarde-top, exact de bewezen, robuustere
+  // volgorde die deze rework introduceerde).
+  {
+    const fs = require('fs');
+    const original = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+    let page = null;
+    try {
+      const sabotaged = original.replace(
+        ".tk-summary-cell .ic{width:18px;height:18px;color:var(--color-primary)}",
+        ".tk-summary-cell .ic{width:18px;height:18px;color:var(--color-primary)} .tk-summary-cell:nth-child(2) .ic{height:40px}"
+      );
+      ok(sabotaged !== original, '49 (sabotage-setup): de KPI-icon-regel is gevonden en tijdelijk uitgebreid met een afwijkende hoogte voor cel 2');
+      fs.writeFileSync(path.join(__dirname, '..', 'index.html'), sabotaged, 'utf8');
+      page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+      await page.goto('file://' + path.join(__dirname, '..', 'index.html'));
+      await page.waitForTimeout(500);
+      await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+      await page.waitForTimeout(700);
+      const tops = await page.evaluate(() => Array.from(document.querySelectorAll('.tk-summary-cell')).map(c => Math.round((c.querySelector('.num')||c.querySelector('.unavailable')||c).getBoundingClientRect().top)));
+      const sabotagedDelta = Math.max(...tops) - Math.min(...tops);
+      ok(sabotagedDelta > 1, '50: sabotage (icon-hoogte van 1 KPI vergroot) veroorzaakt een meetbare afwijking (delta=' + sabotagedDelta + 'px) -- bewijst dat de KPI-alignment-test een echte regressie zou vangen');
+    } finally {
+      fs.writeFileSync(path.join(__dirname, '..', 'index.html'), original, 'utf8');
+      if (page) await page.close().catch(() => {});
+    }
+    const restored = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+    ok(restored === original, '50b: index.html is na de sabotage-test byte-identiek hersteld');
   }
 
   await browser.close();

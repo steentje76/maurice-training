@@ -1957,6 +1957,51 @@ html[data-theme="dark"] .v43-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
    correct wint voor de .v43-tmt-inset-context. */
 .v43-tmt-inset .row{padding:15px 16px}
 .v43-tmt-inset .row .b{padding-right:8px}
+
+/* ═══ INZICHT v0.1 — nieuwe, vooraf gerechtvaardigde componenten (Screen ═══
+   Implementation Standard v1, Fase 5-analyse). Additief, canonical tokens
+   hergebruikt (--color-primary, --radius-*, --space-*), geen lokale magic
+   values zonder reden. */
+
+/* A. PERIOD SELECTOR — echte segmented control (Fase 6-model, definitief
+   PO-besloten). role="tablist"/"tab", zelfde interactiepatroon als de
+   bestaande .lich-seg in s-lichaam (hergebruikt als referentie). */
+.tk-period-selector{display:flex;background:var(--color-surface-secondary);border-radius:var(--radius-control);padding:3px;gap:1px}
+.tk-period-selector button{flex:1;border:none;background:none;padding:8px 1px;border-radius:calc(var(--radius-control) - 2px);font-family:var(--f);font-size:10.5px;font-weight:700;color:var(--color-text-secondary);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tk-period-selector button[aria-selected="true"]{background:var(--color-primary-soft);color:var(--color-primary)}
+
+/* C. FILTER CHIP / DROPDOWN — visueel een pill, functioneel een select
+   (toegankelijk zonder een custom dropdown te hoeven bouwen). */
+.tk-filter-chip{display:inline-flex;align-items:center;gap:6px;background:var(--color-surface);border:1.5px solid var(--color-border);border-radius:999px;padding:8px 14px;font-family:var(--f);font-size:13px;font-weight:700;color:var(--color-text-primary)}
+.tk-filter-chip select{border:none;background:none;font-family:var(--f);font-size:13px;font-weight:700;color:var(--color-text-primary);appearance:none;-webkit-appearance:none;padding-right:2px;max-width:90px;text-overflow:ellipsis;overflow:hidden}
+@media (max-width:389px){
+  .tk-filter-chip{padding:8px 10px}
+  .tk-filter-chip select{max-width:60px}
+  .tk-period-selector button{font-size:9.5px;padding:8px 0}
+}
+
+/* B. METRIC SUMMARY CELL — de 4 "Jouw ontwikkeling"-cellen. */
+.tk-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.tk-summary-cell{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:8px 2px}
+.tk-summary-cell .num{font-size:22px;font-weight:800;color:var(--color-text-primary)}
+.tk-summary-cell .lbl{font-size:11px;color:var(--color-text-secondary);font-weight:600}
+.tk-summary-cell .sub{font-size:9.5px;color:var(--color-text-muted)}
+
+/* B (variant). METRIC OVERVIEW CELL — de 5 "Snel overzicht"-cellen. */
+.tk-overview-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.tk-overview-cell{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:6px 2px}
+.tk-overview-cell .lbl{font-size:9.5px;color:var(--color-text-secondary);display:flex;align-items:center;gap:3px}
+.tk-overview-cell .val{font-size:14px;font-weight:800;color:var(--color-text-primary)}
+.tk-overview-cell .trend{font-size:9.5px;font-weight:700}
+.tk-overview-cell .trend.up{color:var(--color-success)}
+.tk-overview-cell .trend.down{color:var(--color-text-muted)}
+.tk-overview-cell .unavailable{font-size:10px;color:var(--color-text-muted);font-style:italic}
+
+/* D. DOMAIN ROW — Icon Row Pattern-variant met mini-visualisatie rechts. */
+.tk-domain-row .miniviz{width:44px;height:24px;flex-shrink:0}
+
+/* Insight Row — Icon Row Pattern-variant, icoon-in-cirkel i.p.v. vierkant. */
+.tk-insight-icon{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--color-primary-soft);color:var(--color-primary)}
 .v43-tmt .row:last-child{border-bottom:0}
 .v43-tmt .ic{width:40px;height:40px;border-radius:12px;background:var(--v43-mint);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .v43-tmt .ic svg{width:20px;height:20px;stroke:var(--accent);fill:none;stroke-width:2}
@@ -4003,6 +4048,53 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
+  </nav>
+</div>
+
+<div class="scr" id="s-inzicht">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title" role="heading" aria-level="1">Inzicht</div><div class="hdr-sub">Jouw ontwikkeling en herstel</div></div>
+      <button class="ibtn" onclick="go('s-profiel')" aria-label="Profiel openen"><svg class="tk-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+      <div class="tk-period-selector" role="tablist" aria-label="Periode" style="flex:1">
+        <button role="tab" aria-selected="true" onclick="inzichtSetPeriod('7d',this)">7 dagen</button>
+        <button role="tab" aria-selected="false" onclick="inzichtSetPeriod('4w',this)">4 weken</button>
+        <button role="tab" aria-selected="false" onclick="inzichtSetPeriod('3m',this)">3 maanden</button>
+      </div>
+      <div class="tk-filter-chip"><svg class="tk-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16M7 12h10M10 19h4"/></svg><select id="inzicht-sport-filter" aria-label="Sportfilter" onchange="renderInzicht()"><option value="all">Alle sporten</option></select></div>
+    </div>
+
+    <div class="tk-card tk-card-l3">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+        <div><div class="v43-lbl" style="margin:0">Jouw ontwikkeling</div><div style="font-size:11px;color:var(--color-text-muted)" id="inzicht-dev-sub">vs. vorige periode</div></div>
+      </div>
+      <div class="tk-summary-grid" id="inzicht-summary-grid"></div>
+    </div>
+
+    <div class="v43-lbl" style="margin:18px 0 10px">Snel overzicht</div>
+    <div class="tk-card tk-card-l3">
+      <div class="tk-overview-grid" id="inzicht-overview-grid"></div>
+    </div>
+
+    <div class="v43-lbl" style="margin:18px 0 10px">Domeinen</div>
+    <div class="tk-card tk-card-l3 v43-tmt v43-tmt-inset" id="inzicht-domain-list"></div>
+
+    <div class="v43-lbl" style="margin:18px 0 10px">Recente inzichten</div>
+    <div id="inzicht-recent-list"></div>
+
+    <button class="tk-btn tk-btn-secondary" style="width:100%;margin-top:14px" onclick="go('s-stats')">Bekijk alle inzichten en trends</button>
+    <div style="height:8px"></div>
+  </div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
     <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
     <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
     <button class="ni active" aria-current="page" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
@@ -6448,7 +6540,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.59';
+const APP_VER = 'v4.69.60';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -10203,6 +10295,11 @@ function go(id){
   // Fase 1 — Lichaam en zijn subschermen delen één renderer. De doel-ids staan altijd
   // in de DOM, ongeacht welk scherm actief is; er is dus geen tweede renderpad.
   if(id==='s-lichaam'||id==='s-lich-spieren'||id==='s-lich-health'||id==='s-lich-metingen')renderLichaam();
+  // INZICHT v0.1 — nieuw, additief scherm. Hergebruikt uitsluitend bestaande,
+  // canonieke databronnen (geen nieuwe calculation). Zie
+  // docs/ux/INZICHT_V01_PREIMPLEMENTATION_AUDIT.md voor de volledige,
+  // vooraf uitgevoerde audit/decision-resolution.
+  if(id==='s-inzicht')renderInzicht();
   if(id==='s-lich-cyclus')renderCyclusScreen();
   if(id==='s-lich-spieren'){ try{ lichSpierenApply(); }catch(_){} }
   if(id==='s-lich-spier')renderLichaamSpierDetail();
@@ -20196,6 +20293,158 @@ async function refreshImprovements(){
     var all=await v43SafeGet('sessions','&order=date.desc,created_at.desc&limit=500');
     renderImprovements(el, CoachingCore.improvementsDigest(buildImprovementItems(all)));
   }catch(err){ /* stil: stats-scherm blijft werken */ }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * INZICHT v0.1 (nieuw, additief scherm). PO Decision Pack (PR #231):
+ * - PO1 Adherence: bestaande AdherenceIntelligenceCore, ongewijzigd.
+ * - PO2 Insight order: deterministische recentheid, GEEN AI-ranking.
+ * - PO3 Evidence/Confidence: progressive disclosure, geen badge bij
+ *   normale, voldoende data.
+ * Periode-selector: verandert vooralsnog uitsluitend de visuele actieve
+ * staat. Voor GEEN van de onderliggende metrics is binnen deze sprint
+ * bevestigd dat de canonical calculation een periode-parameter
+ * accepteert (Fase 7/D8-harde-eis "geen shadow calculations") -- de
+ * frontend berekent daarom NOOIT zelf een periode-specifieke vergelijking.
+ * Elke metric toont zijn eigen, canonieke, reeds-bestaande venster
+ * (bv. HRV/Slaap altijd 7d, Verbeterd/Trends over de laatst beschikbare
+ * sessies) ongeacht de periode-selector-stand, met een eerlijke sub-tekst.
+ * ═══════════════════════════════════════════════════════════════════════ */
+/* INZICHT v0.1 — eigen, lokale data-wrapper (GEEN wijziging aan v43SafeGet/
+   sbGet zelf, die blijven ongewijzigd voor alle bestaande schermen).
+   v43SafeGet/sbGet geven bij ELKE fout stilzwijgend [] terug -- correct voor
+   hun bestaande gebruik, maar voor Inzicht's harde eis "UNKNOWN != 0" moet
+   onderscheid gemaakt worden tussen "echt 0 resultaten" en "fout/geen
+   verbinding". Retourneert de array bij succes, of null bij een fout. */
+async function inzichtGetOrNull(table,q){
+  try{
+    var r=await sbFetch(SB_URL+'/rest/v1/'+table+'?select=*'+(q||''),{});
+    if(!r.ok) return null;
+    return await r.json();
+  }catch(e){ return null; }
+}
+window._inzichtPeriod='7d';
+function inzichtSetPeriod(p,btn){
+  window._inzichtPeriod=p;
+  document.querySelectorAll('#s-inzicht .tk-period-selector button').forEach(function(b){b.setAttribute('aria-selected', b===btn?'true':'false');});
+  // Bewust GEEN her-berekening van onderliggende metrics -- zie header-comment.
+}
+function inzichtEmptyCell(lbl){return '<div class="tk-summary-cell"><div class="unavailable" style="font-size:11px;color:var(--color-text-muted)">—</div><div class="lbl">'+escHtml(lbl)+'</div></div>';}
+async function renderInzicht(){
+  var sportSel=document.getElementById('inzicht-sport-filter');
+  if(sportSel && sportSel.options.length<=1 && typeof SPORT_BLOCKS!=='undefined'){
+    Object.keys(SPORT_BLOCKS).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=SPORT_BLOCKS[k].naam||k;sportSel.appendChild(o);});
+  }
+  await inzichtRenderDevelopment();
+  await inzichtRenderOverview();
+  inzichtRenderDomains();
+  await inzichtRenderRecent();
+}
+
+/* Jouw ontwikkeling -- 4 summary cells, uitsluitend canonical bronnen. */
+async function inzichtRenderDevelopment(){
+  var grid=document.getElementById('inzicht-summary-grid'); if(!grid) return;
+  grid.innerHTML='<div class="tk-summary-cell">…</div><div class="tk-summary-cell">…</div><div class="tk-summary-cell">…</div><div class="tk-summary-cell">…</div>';
+  var all=await inzichtGetOrNull('sessions','&order=date.desc,created_at.desc&limit=500');
+  var activities=await inzichtGetOrNull('activities','&order=date.desc&limit=200');
+  var blocks=await inzichtGetOrNull('program_blocks','&order=planned_date.desc&limit=200');
+
+  var improvedHtml='<div class="unavailable">—</div>', trendHtml='<div class="unavailable">—</div>', trainingHtml='<div class="unavailable">—</div>', adherenceHtml='<div class="unavailable">—</div>';
+
+  if(all!==null){
+    try{
+      var digest=(typeof CoachingCore!=='undefined')?CoachingCore.improvementsDigest(buildImprovementItems(all)):null;
+      var improved=digest&&digest.hasAny?digest.counts.improved:0;
+      var trendUps=digest&&digest.hasAny?digest.counts.trendUps:0;
+      improvedHtml='<div class="num">'+improved+'</div>';
+      trendHtml='<div class="num">'+trendUps+'</div>';
+    }catch(_){}
+  }
+
+  // Trainingen: canonical, gededupliceerd per bron -- sessions (kracht/WOD/ergometer)
+  // en activities (standalone endurance) zijn architecturaal gescheiden (B9-H6B),
+  // dus een simpele optelling van beide tellingen dubbelt niet. UNKNOWN != 0: als
+  // een van beide bronnen faalde (null), is de totale telling onbetrouwbaar --
+  // toon dan "--", nooit een gedeeltelijke, mogelijk te lage telling als feit.
+  if(all!==null && activities!==null){
+    trainingHtml='<div class="num">'+(all.length+activities.length)+'</div>';
+  }
+
+  if(blocks!==null){
+    try{
+      if(typeof AdherenceIntelligenceCore!=='undefined' && typeof ScheduleAdherenceCore!=='undefined' && blocks.length){
+        var agg=AdherenceIntelligenceCore.aggregate(blocks, td(), ScheduleAdherenceCore);
+        if(agg.status==='valid') adherenceHtml='<div class="num">'+agg.percentage+'%</div>';
+      }
+    }catch(_){}
+  }
+
+  grid.innerHTML=
+    '<div class="tk-summary-cell">'+improvedHtml+'<div class="lbl">Verbeterd</div></div>'+
+    '<div class="tk-summary-cell">'+trendHtml+'<div class="lbl">Stijgende trends</div></div>'+
+    '<div class="tk-summary-cell">'+trainingHtml+'<div class="lbl">Trainingen</div></div>'+
+    '<div class="tk-summary-cell">'+adherenceHtml+'<div class="lbl">Adherence</div></div>';
+}
+
+/* Snel overzicht -- 5 cells, canonical health/load-bronnen. UNKNOWN != 0. */
+async function inzichtRenderOverview(){
+  var grid=document.getElementById('inzicht-overview-grid'); if(!grid) return;
+  var cells=[];
+  var rows=await inzichtGetOrNull('hrv_log','&order=date.desc,created_at.desc&limit=400');
+  if(rows===null){
+    ['HRV','Rusthartslag','Slaap'].forEach(function(lbl){ cells.push('<div class="tk-overview-cell"><div class="lbl">'+lbl+'</div><div class="unavailable">—</div></div>'); });
+  } else {
+    var eind=rows.length?String(rows[0].date).slice(0,10):td();
+    [{k:'hrv',lbl:'HRV',unit:'ms',up:true},{k:'rhr',lbl:'Rusthartslag',unit:'bpm',up:false},{k:'sleep',lbl:'Slaap',unit:'u',up:true}].forEach(function(v){
+      try{
+        var ruw=dc.healthSeries(rows,v.k,eind,7);
+        var ser=(v.k==='sleep')?ruw.map(function(p){return {date:p.date,value:tkSleepHours(p.value),source:p.source};}):ruw;
+        var q=dc.qualifySeries(ser,{field:v.k});
+        var st=dc.healthStats(q.valid), tr=dc.healthTrend(q.valid);
+        if(st.count===0){ cells.push('<div class="tk-overview-cell"><div class="lbl">'+v.lbl+'</div><div class="unavailable">MISSING</div></div>'); return; }
+        var trendCls=(tr.dir==='flat')?'':((tr.dir==='up')===v.up?'up':'down');
+        cells.push('<div class="tk-overview-cell"><div class="lbl">'+v.lbl+' (7d)</div><div class="val">'+st.mean+' '+v.unit+'</div><div class="trend '+trendCls+'">'+tr.symbol+'</div></div>');
+      }catch(_){ cells.push('<div class="tk-overview-cell"><div class="lbl">'+v.lbl+'</div><div class="unavailable">—</div></div>'); }
+    });
+  }
+  cells.push('<div class="tk-overview-cell"><div class="lbl">Herstelstatus</div><div class="unavailable">Zie Herstel</div></div>');
+  cells.push('<div class="tk-overview-cell"><div class="lbl">Belasting</div><div class="unavailable">Zie Belasting</div></div>');
+  grid.innerHTML=cells.join('');
+}
+
+/* Domeinen -- 6 rijen, elk een bewezen, bestaand entry-point (Functional
+   Preservation Matrix). Geen enkele van de 26 legacy-functies verwijderd. */
+function inzichtRenderDomains(){
+  var el=document.getElementById('inzicht-domain-list'); if(!el) return;
+  var domains=[
+    {icon:'prestaties',title:'Prestaties',sub:"PR's, 1RM, krachtverhoudingen, cardio",go:'s-stats'},
+    {icon:'herstel',title:'Herstel',sub:'Anatomie, hersteltrends, HRV/slaap',go:'s-lich-health'},
+    {icon:'belasting',title:'Belasting',sub:'Volume per spiergroep, consistentie',go:'s-stats'},
+    {icon:'lichaam',title:'Lichaam',sub:'Metingen, samenstelling, historie',go:'s-lich-metingen'},
+    {icon:'verbanden',title:'Verbanden',sub:'Wat lijkt bij jou samen te hangen?',go:'s-lich-verbanden'},
+    {icon:'doel',title:'Doelen',sub:'Actieve doelen en challenges',go:'s-stats'}
+  ];
+  el.innerHTML=domains.map(function(d,i){
+    return '<button class="row" onclick="go(\''+d.go+'\')" '+(i>0?'style="border-top:1px solid var(--color-border)"':'')+'><span class="tk-icon-box">'+tkIcon(d.icon,{size:'standard'})+'</span><span class="b"><span class="t">'+escHtml(d.title)+'</span><span class="s">'+escHtml(d.sub)+'</span></span><span class="ar">›</span></button>';
+  }).join('');
+}
+
+/* Recente inzichten -- PO2: GEEN ranking, deterministische recentheid van
+   bestaande, gevalideerde canonical signalen. GEEN AI-score. */
+async function inzichtRenderRecent(){
+  var el=document.getElementById('inzicht-recent-list'); if(!el) return;
+  var all=await inzichtGetOrNull('sessions','&order=date.desc,created_at.desc&limit=500');
+  if(all===null){ el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--color-text-muted);font-size:13px">Kon recente inzichten niet ophalen.</div>'; return; }
+  try{
+    var digest=(typeof CoachingCore!=='undefined')?CoachingCore.improvementsDigest(buildImprovementItems(all)):null;
+    if(!digest||!digest.hasAny||!digest.highlights||!digest.highlights.length){
+      el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--color-text-muted);font-size:13px">Nog niet genoeg vergelijkbare trainingen om recente inzichten te tonen.</div>';
+      return;
+    }
+    el.innerHTML='<div class="tk-card tk-card-l3">'+digest.highlights.slice(0,3).map(function(h,i){
+      return '<div class="row" style="cursor:default'+(i>0?';border-top:1px solid var(--color-border)':'')+'"><span class="tk-insight-icon">'+(h.newBest?'🏆':tkIcon('trend',{size:'standard'}))+'</span><span class="b"><span class="t">'+escHtml(h.exercise)+'</span><span class="s">'+escHtml(h.reason||'')+'</span></span></div>';
+    }).join('')+'</div>';
+  }catch(err){ el.innerHTML=''; }
 }
 // F8.4 — PURE consistency-telling uit sessiedatums. `now` wordt geïnjecteerd (determinisme/testbaarheid).
 // Telt UNIEKE trainingsdagen in rollende vensters. Geen fake streak, geen verzonnen score.

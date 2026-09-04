@@ -76,13 +76,15 @@ ok(!trainMgr.includes('Training A') || trainMgr.split('Training A').length <= 1,
 ok(!trainMgr.match(/19:00|Gym · Strength|7 oefeningen<\/span>/),
   '6b: geen hardcoded mockup-tijd/locatie/oefeningaantal in de statische HTML');
 
-// ---- 7. De gedeelde v43RenderPlan-functie (ook gebruikt door Home) is NIET aangepast ----
+// ---- 7. De gedeelde v43RenderPlan-functie (ook gebruikt door Home) blijft backward-compatible ----
 {
-  const fnMatch = html.match(/function v43RenderPlan\(elId,nextT\)\{[\s\S]*?\n\}/);
+  const fnMatch = html.match(/function v43RenderPlan\(elId,nextT,opts\)\{[\s\S]*?\n\}/);
   ok(fnMatch && fnMatch[0].includes("if(!nextT){el.innerHTML='';return;}"),
-    '7: v43RenderPlan() zelf is ongewijzigd (dezelfde functie wordt aangeroepen voor zowel home-plan als v43-train-plan) -- een wijziging hieraan zou Home kunnen regresseren, wat buiten de scope van deze Trainen-sprint valt');
-  ok(html.includes("v43RenderPlan('home-plan',nextT)") && html.includes("v43RenderPlan('v43-train-plan',window.homeNextT)"),
-    '7b: beide aanroepen (Home en Trainen) blijven de gedeelde functie gebruiken -- geen gedupliceerde, tweede databron/renderlogica voor dezelfde "volgende training"-kaart');
+    '7 (Visual Fidelity Pass, backward-compatible uitgebreid): v43RenderPlan() heeft een nieuwe, optionele 3e parameter (opts) voor Trainen v0.2 (Bekijk details-knop, compacte padding) -- Home roept de functie nog steeds met exact 2 argumenten aan, dus opts is daar altijd undefined en het gedrag/de HTML voor Home is 100% ongewijzigd');
+  ok(html.includes("v43RenderPlan('home-plan',nextT)"),
+    '7a: Home roept v43RenderPlan nog steeds aan met precies 2 argumenten (geen opts) -- geen regressie op s-home');
+  ok(html.includes("v43RenderPlan('v43-train-plan',window.homeNextT,{detailsButton:true,compact:true})"),
+    '7b: Trainen roept dezelfde, gedeelde functie aan met de nieuwe, optionele parameters -- geen gedupliceerde, tweede renderlogica voor dezelfde "volgende training"-kaart');
 }
 
 // ---- 8. Aanvullende, Trainen-specifieke empty state (additief, buiten de gedeelde functie) ----

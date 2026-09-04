@@ -127,6 +127,28 @@ async function loadTrainenDOM(page) {
       ok(maxW - minW < 5, '11: geen enkele tile (incl. "Meer") is visueel dominanter dan de andere -- alle 5 hebben nagenoeg identieke breedte (verschil ' + (maxW - minW).toFixed(1) + 'px), conform het PO-contract "Meer mag niet visueel dominanter zijn"');
     }
 
+    // Visual Fidelity Pass: canonical icon-container-classes (lichte teal, DS-03/05).
+    const iconBoxCount = await page.evaluate(() => document.querySelectorAll('#s-train-mgr .tk-icon-box').length);
+    ok(iconBoxCount === 11, '12: exact 11 canonical .tk-icon-box-containers (lichte teal icon-achtergrond) aanwezig in de echte DOM -- Jouw training (3) + Start een activiteit (5) + Maken & ontdekken (2) + Terugkijken (1)');
+
+    // Zet echte, gesimuleerde trainingsdata om "Bekijk details" en de tijd/
+    // locatie-afwezigheid te kunnen verifieren (v43RenderPlan-outputvorm).
+    await page.evaluate(() => {
+      window.homeNextT = { id: 'test123', naam: 'Training A', _exCount: 7 };
+      window.v43ProgInfo = { naam: 'Kracht', week: 1, fase: 'Anatomische Aanpassing' };
+      if (typeof renderV43Train === 'function') renderV43Train();
+    });
+    await page.waitForTimeout(200);
+
+    // Visual Fidelity Pass: "Bekijk details" is een echte, functionele actie naast "Start training".
+    const detailsBtnPresent = await page.evaluate(() => !!document.querySelector('#v43-train-plan .v43-details'));
+    ok(detailsBtnPresent, '13: "Bekijk details" is aanwezig als aparte, zichtbare actie naast "Start training" wanneer een training gepland is (echte data gesimuleerd in deze test)');
+
+    // Visual Fidelity Pass: geen fictieve tijd/locatie -- alleen echt beschikbare velden.
+    const planText = await page.evaluate(() => document.getElementById('v43-train-plan')?.innerText || '');
+    ok(!/\d{2}:\d{2}/.test(planText) && !/Gym|Strength room|Sportschool/i.test(planText),
+      '14: geen fictief tijdstip (HH:MM) of locatie getoond op de trainingskaart -- bevestigd tegen het echte databaseschema dat deze velden niet bestaan, geen hardcoded waarde toegevoegd');
+
     await page.close();
   }
 

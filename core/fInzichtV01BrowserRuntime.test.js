@@ -76,6 +76,31 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   {
     const page = await browser.newPage({ viewport: { width: 390, height: 1300 } });
     await page.goto(url);
+    await page.waitForTimeout(600);
+
+    // PREVIEW ACCESS CHECK (PR #232 follow-up): daadwerkelijke, echte tap-
+    // navigatie vanaf Lichaam via de tijdelijke preview-knop, GEEN directe
+    // go()-aanroep. Bewijst dat de Product Owner het scherm ook echt kan
+    // bereiken vanuit de Netlify Preview zonder bottom-nav-migratie.
+    await page.evaluate(() => { if (typeof go === 'function') go('s-lichaam'); });
+    await page.waitForTimeout(400);
+    const previewBtnExists = await page.evaluate(() => Array.from(document.querySelectorAll('#s-lichaam button')).some(b => b.textContent.includes('Preview: nieuw Inzicht-scherm')));
+    ok(previewBtnExists, '19: de tijdelijke preview-toegangsknop is zichtbaar op het bestaande Lichaam-scherm (geen bottom-nav-wijziging)');
+    await page.click('#s-lichaam >> text=Preview: nieuw Inzicht-scherm (v0.1)');
+    await page.waitForTimeout(700);
+    const reachedViaRealTap = await page.evaluate(() => document.querySelector('.scr.active')?.id === 's-inzicht');
+    ok(reachedViaRealTap, '20: een echte, daadwerkelijke tap-navigatie (Lichaam -> preview-knop) bereikt s-inzicht -- geen directe go()-aanroep nodig, dus ook bruikbaar in de Netlify Preview zelf');
+    const fullText = await page.evaluate(() => document.getElementById('s-inzicht')?.innerText || '');
+    ['Inzicht','Jouw ontwikkeling en herstel','7 dagen','4 weken','3 maanden','Alle sporten','JOUW ONTWIKKELING','SNEL OVERZICHT','DOMEINEN','RECENTE INZICHTEN'].forEach(function(txt){
+      ok(fullText.includes(txt), '21.' + txt + ': aanwezig in de daadwerkelijk, via tap bereikte s-inzicht-DOM');
+    });
+    await page.close();
+  }
+
+  // Eenmalige, functionele checks (niet per viewport).
+  {
+    const page = await browser.newPage({ viewport: { width: 390, height: 1300 } });
+    await page.goto(url);
     await page.waitForTimeout(500);
     await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
     await page.waitForTimeout(700);

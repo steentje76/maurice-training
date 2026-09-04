@@ -378,6 +378,83 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     await page.close();
   }
 
+  // Quick Overview Alignment Gate (PO Final Correction): de vijf hoofdwaarden
+  // moeten op exact dezelfde verticale positie starten, ongeacht labellengte/
+  // wrapping/aan- of afwezigheid van een trend-indicator.
+  for (const w of [320, 390, 430]) {
+    const page = await browser.newPage({ viewport: { width: w, height: 900 } });
+    await page.route('**/rest/v1/hrv_log**', route => {
+      route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify([
+          { date: '2026-09-04', hrv: '28.5', rhr: 56, sleep: '7.58' },
+          { date: '2026-09-03', hrv: '24.0', rhr: 57, sleep: '2.58' },
+          { date: '2026-09-02', hrv: '22.0', rhr: 57, sleep: '5.58' },
+          { date: '2026-09-01', hrv: '25.5', rhr: 56, sleep: '7.58' },
+          { date: '2026-08-31', hrv: '18.5', rhr: 60, sleep: '6.82' }
+        ])
+      });
+    });
+    await page.goto(url);
+    await page.waitForTimeout(500);
+    await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+    await page.waitForTimeout(900);
+    const tops = await page.evaluate(() => {
+      const cells = Array.from(document.querySelectorAll('.tk-overview-cell'));
+      return cells.map(c => {
+        const val = c.querySelector('.val') || c.querySelector('.unavailable');
+        return val ? Math.round(val.getBoundingClientRect().top) : null;
+      });
+    });
+    const maxDelta = Math.max(...tops) - Math.min(...tops);
+    ok(maxDelta <= 1, w + 'px 40: de 5 Snel-overzicht-hoofdwaarden staan binnen 1px verticale tolerantie op dezelfde baseline (gemeten tops: ' + JSON.stringify(tops) + ', delta=' + maxDelta + 'px) -- ongeacht labellengte/wrapping/trend-aan-of-afwezigheid');
+    await page.close();
+  }
+
+  // Sabotage: bewijs dat de alignment-test een ECHTE afwijking daadwerkelijk
+  // vangt (niet toevallig altijd slaagt).
+  {
+    const fs = require('fs');
+    const original = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+    let page = null;
+    try {
+      const sabotaged = original.replace(
+        ".tk-overview-cell .lbl{font-size:9px;color:var(--color-text-secondary);font-weight:600;line-height:1.15;min-height:21px;display:flex;align-items:center;justify-content:center}",
+        ".tk-overview-cell .lbl{font-size:9px;color:var(--color-text-secondary);font-weight:600;line-height:1.15}"
+      );
+      ok(sabotaged !== original, '41 (sabotage-setup): de min-height-regel is gevonden en tijdelijk verwijderd');
+      fs.writeFileSync(path.join(__dirname, '..', 'index.html'), sabotaged, 'utf8');
+      page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+      await page.route('**/rest/v1/hrv_log**', route => {
+        route.fulfill({
+          status: 200, contentType: 'application/json',
+          body: JSON.stringify([
+            { date: '2026-09-04', hrv: '28.5', rhr: 56, sleep: '7.58' },
+            { date: '2026-09-03', hrv: '24.0', rhr: 57, sleep: '2.58' }
+          ])
+        });
+      });
+      await page.goto('file://' + path.join(__dirname, '..', 'index.html'));
+      await page.waitForTimeout(500);
+      await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+      await page.waitForTimeout(900);
+      const tops = await page.evaluate(() => {
+        const cells = Array.from(document.querySelectorAll('.tk-overview-cell'));
+        return cells.map(c => {
+          const val = c.querySelector('.val') || c.querySelector('.unavailable');
+          return val ? Math.round(val.getBoundingClientRect().top) : null;
+        });
+      });
+      const sabotagedDelta = Math.max(...tops) - Math.min(...tops);
+      ok(sabotagedDelta > 1, '42: sabotage (min-height verwijderd) veroorzaakt daadwerkelijk een meetbare afwijking (delta=' + sabotagedDelta + 'px) -- bewijst dat de alignment-test op regel 40 een echte regressie zou vangen, niet toevallig altijd slaagt');
+    } finally {
+      fs.writeFileSync(path.join(__dirname, '..', 'index.html'), original, 'utf8');
+      if (page) await page.close().catch(() => {});
+    }
+    const restored = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+    ok(restored === original, '42b: index.html is na de sabotage-test byte-identiek hersteld');
+  }
+
   // PO Mobile Visual Fidelity Pass: Recente inzichten mag titel en beschrijving
   // NOOIT aan elkaar plakken (was: "Frontsquathogere geschatte 1RM").
   {

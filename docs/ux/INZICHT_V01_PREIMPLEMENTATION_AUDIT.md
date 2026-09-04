@@ -49,29 +49,43 @@ Overzichtsscherm toont 6 domain-tiles (conform mockup), niet alle 11 architectuu
 | Mini Trend Visualization (sparklines, bar-mini-charts) | — | **NEW COMPONENT** | geen bestaand, herbruikbaar mini-chart-component gevonden; bestaande `stats-hrv-chart` gebruikt canvas voor een volwaardige chart, geen mini-sparkline |
 | Insight/Trend Row ("Belangrijkste inzichten"-kaarten) | Standard Card, variant | REUSE WITH VARIANT | icoon-in-cirkel (i.p.v. icon-box-vierkant) + pijl-indicator — kleine, gedocumenteerde variant |
 
+## Nieuwe componenten — bewijs eerst noodzaak (volledig, gestructureerd)
+
+| Component | Purpose | Semantics | Existing equivalent? | Reuse possible? | New component justified? | Tokens | Accessibility | Responsive |
+|---|---|---|---|---|---|---|---|---|
+| Period Selector | tijdsvenster kiezen zonder contentwissel | Period Selector (Fase 6-model, definitief) | `lich-seg`-toggle in `s-lichaam` is visueel gelijkend maar semantisch een Content Mode Switch (Herstel/Belasting), niet een periode-filter | gedeeltelijk (CSS-vorm herbruikbaar als referentie, semantiek niet) | JA | `--color-primary` (actief), bestaande pill-radius | `role="tablist"`/`role="tab"` (patroon al aanwezig in `lich-seg`) | compacte pills, getest op 320px moet passen zonder wrap |
+| Metric Summary Cell | 4-koloms cijfer+label+sub-vergelijking | DATA-DEPENDENT presentatie van een DIRECT-cijfer | geen gevonden | nee | JA | `--space-*`, typography-schaal | cijfer + label + trend-richting elk apart voor screenreader (nooit alleen kleur/pijl) | 4 kolommen op 320px moeten smal genoeg blijven, mogelijk 2x2-grid nodig op kleinste viewport |
+| Metric Overview Card | 5-koloms compacte metric+ring/waarde+trend | idem, DATA-DEPENDENT | mogelijk een bestaande ring-indicator elders (niet bevestigd binnen dit tijdsbudget) | gedeeltelijk, te onderzoeken tijdens implementatie | ONBEVESTIGD -- eerst bevestigen of een ring-component al bestaat | idem | idem | 5 kolommen, waarschijnlijk horizontaal scrollbaar op kleinste viewports i.p.v. samengeperst |
+| Filter Chip/Dropdown | sportfilter, geen segmented control | Filter Chip (Fase 6-model, definitief) | Trainen's `<select id="sport-switcher">` is functioneel gelijkend maar visueel een kale HTML-select, geen pill-chip | gedeeltelijk (databron `getActiveSport()` herbruikbaar, visuele vorm niet) | JA (visuele vorm), NEE (databron, die bestaat al) | `--color-border`, pill-radius | `aria-haspopup`, keyboard-navigeerbaar | compact genoeg om naast de Period Selector te passen op 320px |
+| Mini Trend Visualization | sparkline/mini-bar in domain-rows | SCREEN-SPECIFIC presentatie van bestaande trend-output | `stats-hrv-chart` (canvas, volwaardige chart) is geen mini-sparkline | nee | JA | `--color-primary` voor lijn/staven | tekstalternatief verplicht (bv. "stijgende trend") | schaalt mee met rijbreedte, geen vaste pixelbreedte |
+| Insight Row | icoon-in-cirkel + titel + delta + chevron | REUSE WITH VARIANT van Icon Row Pattern | Icon Row Pattern bestaat, maar met vierkante icon-box, niet rond | JA, als gedocumenteerde variant | JA (variant, niet nieuw component) | zelfde tokens als Icon Row Pattern | zelfde als Icon Row Pattern | zelfde als bestaand patroon, bewezen op 6 viewports bij Trainen |
+
 ## Fase 7 — Period Selector
 Geen bestaand, vergelijkbaar runtime-patroon gevonden (geen `.tk-segmented-control` bestaat al, conform Screen Implementation Standard — dit was al voorzien als toekomstige bouwbehoefte). **NEW COMPONENT, conform de reeds goedgekeurde `tk-segmented-control--period`-variant uit de Standard.** Tokens: `--color-primary` (actief-achtergrond), bestaande pill-radius-conventie. Accessibility: `role="tablist"`/`role="tab"` (patroon bestaat al in `s-lichaam`'s `lich-seg`, hergebruikbaar als referentie-implementatie). **Kritieke, harde eis (Fase 7): per metric moet bevestigd worden of de onderliggende calculation een periode-parameter accepteert — zie Decision Register D8. Geen enkele metric toont een periode-afhankelijk cijfer totdat dit per metric bevestigd is.**
 
 ## Fase 8 — Sport Filter
 Geen bestaand dropdown/filter-chip-component gevonden voor dit specifieke doel (de bestaande sport-switcher in Trainen is een `<select>`, geen visuele filter-chip). **NEW COMPONENT.** Bestaand sport-contextmodel (`getActiveSport()`, `SPORT_BLOCKS`) is herbruikbaar als databron. "Alle sporten" moet de default zijn; single-sport-filter moet metrics tonen die alleen voor die sport zinvol zijn (bv. geen "roei-progressie" tonen bij filter "Hardlopen").
 
-## Fase 9 — Data Source Mapping (kernmetrics)
-| UI ELEMENT | SOURCE | RAW/CALC | CALCULATION ID | PERIOD SUPPORT | SPORT SUPPORT | EMPTY STATE |
-|---|---|---|---|---|---|---|
-| Herstelstatus | Recovery Decision Engine (bestaand, B9-H4) | CALCULATED | bestaand, niet hernoemd binnen dit tijdsbudget | onbevestigd (D8) | sport-onafhankelijk | "Onvoldoende data" |
-| HRV (7d) | `dc.healthTrend` | CALCULATED | bestaand | JA (7d expliciet in naam) | n.v.t. | "MISSING" bij geen wearable/handmatige invoer |
-| Rusthartslag | idem | CALCULATED | bestaand | onbevestigd | n.v.t. | "MISSING" |
-| Slaap (7d) | idem | CALCULATED | bestaand | JA | n.v.t. | "MISSING" |
-| Trainingsbelasting | bestaande load-aggregatie | CALCULATED | bestaand | onbevestigd (D8) | mogelijk sport-specifiek | "Onvoldoende data" |
-| "4 Verbeterd" | `CoachingCore.improvementsDigest(buildImprovementItems())` | CALCULATED | bestaand, reeds gebruikt in Home | onbevestigd (D8, D1) | multi-sport | "0" is een geldige, echte telling hier (geen MISSING-situatie) mits de digest zelf draait |
-| "5 Stijgende trends" | `ProgressionCore.trendBy` + telling (`c.trendUps`) | CALCULATED | bestaand | onbevestigd (D8) | per-sport | idem |
-| "2 Trainingen" | sessions-telling | RAW (telling) | bestaand | JA (periode = telvenster) | alle | "0" geldig |
-| "0% Adherence" | `AdherenceIntelligenceCore`/`ScheduleAdherenceCore` | CALCULATED | bestaand | onbevestigd | programma-specifiek | "—" wanneer geen actief programma (zie D3), NOOIT stilzwijgend 0% |
-| e1RM-trend (Frontsquat-voorbeeld) | `core/calculation.js oneRMResult` + `ProgressionCore.trendBy` | CALCULATED | bestaand, protected core | JA (4 weken expliciet in mockup) | kracht-only | "Onvoldoende historie" |
-| Roeien-trend | `ProgressionCore.trendBy` op ergometer-data | CALCULATED | bestaand | JA | roeien-only | "Onvoldoende historie" |
-| Slaapduur-trend | `dc.healthTrend` | CALCULATED | bestaand | JA | n.v.t. | "MISSING" |
+## Fase 9 -- Data Source Mapping / Data Contract (harde gate, STATUS-kolom toegevoegd)
 
-Geen enkele waarde hierboven is een "shadow calculation" — alle wijzen naar reeds bestaande, protected-core of eerder-geaudite functies.
+Per element: STATUS = READY (bron + berekening bestaan, direct herbruikbaar) / PARTIAL (bron bestaat, periode- of sport-ondersteuning nog te bevestigen) / MISSING (geen canonieke bron gevonden) / NOT APPLICABLE.
+
+| UI ELEMENT | REQUIRED VALUE | ACTUAL SOURCE | RAW/CALC | CALCULATION ID | PERIOD SUPPORT | SPORT SUPPORT | EMPTY STATE | STATUS |
+|---|---|---|---|---|---|---|---|---|
+| Herstelstatus | % + kwalificatie (Goed/Optimaal/...) | Recovery Decision Engine (B9-H4) | CALCULATED | bestaand | onbevestigd | sport-onafhankelijk | "Onvoldoende data" | **PARTIAL** |
+| HRV (7d) | ms + trend | `dc.healthTrend` | CALCULATED | bestaand | JA (7d expliciet) | n.v.t. | "MISSING" | **READY** |
+| Rusthartslag | bpm + trend | `dc.healthTrend` | CALCULATED | bestaand | onbevestigd | n.v.t. | "MISSING" | **PARTIAL** |
+| Slaap (7d) | uren + trend | `dc.healthTrend` | CALCULATED | bestaand | JA | n.v.t. | "MISSING" | **READY** |
+| Trainingsbelasting | waarde + kwalificatie (Optimaal) | bestaande load-aggregatie | CALCULATED | bestaand | onbevestigd | mogelijk sport-specifiek | "Onvoldoende data" | **PARTIAL** |
+| "4 Verbeterd" | telling | `CoachingCore.improvementsDigest(buildImprovementItems())` | CALCULATED | bestaand | onbevestigd | multi-sport | "0" (echte telling) | **PARTIAL** (bron READY, exacte teldefinitie D1 nog PO-besluit) |
+| "5 Stijgende trends" | telling | `ProgressionCore.trendBy` + `c.trendUps` | CALCULATED | bestaand | onbevestigd | per-sport | "0" (echte telling) | **PARTIAL** (bron READY, richting-semantiek D2 nog PO-besluit) |
+| "2 Trainingen" | telling | sessions-telling | RAW (telling) | bestaand | JA | alle | "0" geldig | **PARTIAL** (welke executions precies meetellen -- zie hieronder, Fase 11-uitbreiding) |
+| "0% Adherence" | percentage | `AdherenceIntelligenceCore`/`ScheduleAdherenceCore` | CALCULATED | bestaand | onbevestigd | programma-specifiek | "--" bij geen programma | **PARTIAL** (bron READY, noemer-definitie D3 nog PO-besluit) |
+| e1RM-trend | % + richting | `core/calculation.js oneRMResult` + `ProgressionCore.trendBy` | CALCULATED | bestaand, protected core | JA (4wk expliciet) | kracht-only | "Onvoldoende historie" | **READY** |
+| Roeien-trend (rowing/endurance) | tijd + richting | `ProgressionCore.trendBy` op ergometer-data | CALCULATED | bestaand | JA | roeien-only | "Onvoldoende historie" | **READY** |
+| Slaapduur-trend | minuten + richting | `dc.healthTrend` | CALCULATED | bestaand | JA | n.v.t. | "MISSING" | **READY** |
+
+Geen enkel element is MISSING op bronniveau -- alle bestaande calculation-functies zijn gevonden. De PARTIAL-status betreft uitsluitend (a) periode-parameter-ondersteuning nog niet individueel bevestigd, of (b) een exacte teldefinitie die een Product Owner-besluit vereist (zie Decision Register).
 
 ## Fase 10 — Calculation Engine Audit
 Alle in Fase 9 genoemde bronnen zijn reeds bestaand en eerder (in vorige sprints) gecontroleerd op determinisme/versioning binnen hun eigen domein (Recovery: B9-H4, e1RM: `core/calculation.js` protected core, Adherence: eerder geaudit in Trainen-context). Geen nieuwe calculation-audit nodig voor hergebruik — wel een expliciete, per-metric bevestiging van periode-parameter-ondersteuning (D8) vóór implementatie.
@@ -85,10 +99,34 @@ Classificaties zoals "Goed"/"Optimaal"/"Lager dan normaal" in de mockup moeten u
 ## Fase 13 — Evidence/Data Quality/Confidence
 Onderscheid: overzicht toont compact (bv. een icoon/kleur-neutrale indicator bij onvoldoende data), detail toont volledige uitleg (bron, periode, beperkingen). Geen bestaand, herbruikbaar "confidence badge"-component gevonden (D9) — mogelijk een nieuwe, kleine component, pas te bouwen na bevestiging dat dit niet al elders bestaat.
 
-## Fase 14 — "Jouw ontwikkeling" — zie Decision Register D1-D3 voor de drie meest kritieke, blokkerende vragen.
+## Fase 14 — "Jouw ontwikkeling": de vier development summary metrics, in detail
 
-## Fase 15 — Snel overzicht
-Alle 5 items hebben een bestaande, canonieke bron (Fase 9). **NO-WEARABLE bevestigd haalbaar:** elk item heeft al een MISSING/onvoldoende-data-pad in de bestaande logica (het scherm crasht niet en toont geen fictieve 0 bij afwezigheid van wearable-data, conform bestaande architectuurprincipes elders in de app).
+### VERBETERD
+Welke metrics tellen mee, directionality, of lager soms beter is, minimum history, confidence: **alles al onderdeel van de bestaande `CoachingCore.improvementsDigest()`-implementatie** (per-metric-directionality zit al verwerkt in de onderliggende `buildImprovementItems()`-logica, gebruikt in Home). Geen nieuwe regel nodig — wel expliciet te bevestigen (D1) dat Inzicht exact dezelfde digest-aanroep gebruikt, geen eigen, licht-afwijkende variant.
+
+### STIJGENDE TRENDS
+Stijgend != beter, expliciet bevestigd (D2). Minimum history en trend-logica zitten al in `ProgressionCore.trendBy(perfsMetPace, band, field, dir, 3)` — de `dir`-parameter (bv. `'min'` voor pace, `'max'` voor kracht) bepaalt al per metric wat "verbeteren" betekent; de telling zelf (`c.trendUps`) is losstaand van die richting en telt puur "trend gedetecteerd", niet "trend is positief" — dit is precies de nuance die Fase 14 vraagt te onderscheiden, en die al zo geïmplementeerd is.
+
+### TRAININGEN — gedetailleerde executie-inventarisatie
+Welke completed executions precies meetellen is **nog niet bevestigd als canonieke, vaste regel** — de bestaande `sessions`-telling omvat naar bevinding: Strength (`sessions`-tabel), Running/Cycling (aparte `activities`-tabel, zie B9-H6B-bevinding: sessions en activities zijn NIET parallelle waarheden), HYROX/Triathlon (`training_instances` met race-velden), Team-sessies (indien via Gym/Team-context gelogd), handmatige en apparaat-gesynchroniseerde sessies (beide via dezelfde tabel, `_pending`-vlag onderscheidt sync-status). **Duplicaten:** geen expliciete, canonieke dedupe-regel gevonden binnen dit tijdsbudget voor de combinatie sessions+activities in één "Trainingen"-telling — **PRODUCT/CALCULATION GAP, zie Decision Register D11 (nieuw).**
+
+### ADHERENCE — edge cases
+Noemer (D3) nog te bevestigen. Specifieke edge-cases uit deze opdracht, onderzocht: **verplaatste training** — `ScheduleAdherenceCore.resolveScheduleGap()` bestaat al en verwerkt `planned_date` vs. `completed_at`/`schedule_status`, dus verplaatsing lijkt al gedekt. **Gemiste/geannuleerde training, extra training, meerdere trainingen per dag:** niet expliciet bevestigd binnen dit tijdsbudget of `AdherenceIntelligenceCore.aggregate()` deze vier scenario's correct onderscheidt — **PRODUCT/CALCULATION GAP, zie Decision Register D12 (nieuw).** Geen van beide gaps zelf ingevuld; beide vereisen een gerichte, technische verificatie van de bestaande functie-inhoud vóór implementatie, niet een nieuwe aanname.
+
+## Fase 15 — Snel overzicht + No-Wearable Audit (uitgebreid, scenariomatrix)
+
+Alle 5 items hebben een bestaande, canonieke bron (Fase 9). **NO-WEARABLE bevestigd haalbaar.**
+
+| Scenario | Herstelstatus | HRV | Rusthartslag | Slaap | Trainingsbelasting |
+|---|---|---|---|---|---|
+| No wearable | UNAVAILABLE (toont "geen data", niet 0) | UNAVAILABLE | UNAVAILABLE | REPLACED BY ALTERNATIVE DATA (handmatige invoer mogelijk, zoals nu al bij Home's "Herstelcheck niet compleet") | AVAILABLE (trainingsbelasting is sessie-gebaseerd, geen wearable nodig) |
+| Partial wearable (bv. alleen stappen, geen HRV-sensor) | PARTIAL (lagere confidence, bestaand principe uit B9-H5) | UNAVAILABLE | AVAILABLE indien device dit wel meet | AVAILABLE indien device dit wel meet | AVAILABLE |
+| Manual data only | PARTIAL (afhankelijk van welke velden handmatig ingevuld zijn) | REPLACED BY ALTERNATIVE DATA (handmatige HRV-invoer bestaat, zie Home) | REPLACED BY ALTERNATIVE DATA indien handmatig ingevoerd | REPLACED BY ALTERNATIVE DATA | AVAILABLE |
+| Multiple sources | AVAILABLE (bestaande brondisambiguatie) | AVAILABLE, met provenance-vermelding | AVAILABLE | AVAILABLE | AVAILABLE |
+| Stale source | PARTIAL (bestaande staleness-gate, zie `fix/home-coach-freshness-gate`-precedent) | PARTIAL | PARTIAL | PARTIAL | AVAILABLE |
+| Disconnected source | UNAVAILABLE, met een duidelijke reconnect-CTA (bestaand patroon uit Profiel/Apparaten-concept) | UNAVAILABLE | UNAVAILABLE | UNAVAILABLE | AVAILABLE |
+
+Geen fictieve recovery-data in enig scenario — elk UNAVAILABLE/PARTIAL-geval toont een tekstuele status, nooit een verzonnen getal.
 
 ## Fase 16 — Domain Cards
 6 kaarten (Prestaties/Herstel/Belasting/Lichaam/Verbanden/Doelen), elk met een bestaande data-achterliggende functie (zie matrix). Mini-visualisaties zijn NIEUW als component maar visualiseren uitsluitend bestaande, reeds berekende output — geen nieuwe calculation.

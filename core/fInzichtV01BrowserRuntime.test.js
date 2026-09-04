@@ -161,6 +161,55 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     await page.close();
   }
 
+  // PRODUCTION DATA REGRESSION (Fase 4): 'dc' (DeviceCore-alias) bestond niet
+  // globaal in inzichtRenderOverview() -- een stille ReferenceError liet HRV/
+  // Rusthartslag/Slaap altijd "--" tonen, ook met aantoonbaar bestaande data.
+  {
+    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    // A. DATA AVAILABLE: exacte, echte productiedata (incl. string-types zoals
+    // Supabase teruggeeft) gemockt -- Inzicht MAG geen "--" tonen.
+    await page.route('**/rest/v1/hrv_log**', route => {
+      route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify([
+          { date: '2026-09-04', hrv: '28.5', rhr: 56, sleep: '7.58', note: '[src:fitbit]' },
+          { date: '2026-09-03', hrv: null, rhr: 57, sleep: '2.58', note: '[src:fitbit]' },
+          { date: '2026-09-02', hrv: '22.0', rhr: 57, sleep: '5.58', note: '[src:fitbit]' },
+          { date: '2026-09-01', hrv: '25.5', rhr: 56, sleep: '7.58', note: '[src:fitbit]' },
+          { date: '2026-08-31', hrv: '29.5', rhr: 57, sleep: '6.82', note: '[src:fitbit]' }
+        ])
+      });
+    });
+    await page.goto(url);
+    await page.waitForTimeout(500);
+    await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+    await page.waitForTimeout(900);
+    const text = await page.evaluate(() => document.getElementById('inzicht-overview-grid').innerText);
+    ok(!/HRV[\s\S]{0,20}—/.test(text), '19b (regressie): HRV toont GEEN "--" wanneer canonical data aantoonbaar bestaat -- exacte productiefout (dc undefined) zou hier weer "--" tonen als hij terugkeert');
+    ok(!/Rusthartslag[\s\S]{0,20}—/.test(text), '19c (regressie): Rusthartslag toont GEEN "--" wanneer canonical data aantoonbaar bestaat');
+    ok(!/Slaap[\s\S]{0,20}—/.test(text), '19d (regressie): Slaap toont GEEN "--" wanneer canonical data aantoonbaar bestaat');
+    ok(/ms/.test(text), '19e (units): HRV toont de eenheid "ms"');
+    ok(/bpm/.test(text), '19f (units): Rusthartslag toont de eenheid "bpm"');
+    ok(/\du\b/.test(text), '19g (units): Slaap toont een correcte uren-eenheid ("u")');
+    await page.close();
+  }
+
+  // B. DATA MISSING: bevestig dat "--" (nooit 0) nog steeds correct getoond
+  // wordt wanneer data werkelijk ontbreekt (lege array, geen fout).
+  {
+    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    await page.route('**/rest/v1/hrv_log**', route => {
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+    });
+    await page.goto(url);
+    await page.waitForTimeout(500);
+    await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+    await page.waitForTimeout(900);
+    const text = await page.evaluate(() => document.getElementById('inzicht-overview-grid').innerText);
+    ok(!/\b0\s*ms\b/.test(text) && !/\b0\s*bpm\b/.test(text), '19h: bij daadwerkelijk lege data toont geen enkele metric "0 ms"/"0 bpm" -- UNKNOWN != 0 blijft gehandhaafd');
+    await page.close();
+  }
+
   // PO Round 2: Snel overzicht -- teal iconen (was zwart), eenheden zichtbaar,
   // geen tabelachtige verticale separators, responsive wrap-gedrag.
   {

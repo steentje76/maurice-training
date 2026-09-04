@@ -39,7 +39,17 @@
 
 **BLOCKING BUILD?** NEE bij keuze A (0 wijziging nodig). JA bij keuze B (vereist een aparte sprint eerst).
 
-**MY DECISION: [OPEN]**
+**MY DECISION: [OPEN]** (historie behouden)
+
+---
+
+### PO1 -- STATUS: DECIDED (PR #231 Closure)
+
+**DECISION:** Optie A. SKIPPED blijft onderdeel van de denominator, niet van de numerator. MISSED idem. EXTRA unplanned completed workouts verhogen adherence niet boven 100%. MOVED workouts bestraffen niet dubbel.
+
+**RATIONALE:** een geplande training die bewust wordt overgeslagen is geen uitgevoerde trainingsverplichting -- de bestaande, al geimplementeerde regel is correct en vereist 0 codewijziging. De aanvullende Cancelled Forensic Check (hard gate, uitgevoerd vóór closure) bevestigde: er bestaat geen aparte, semantisch verschillende "annuleer"-actie die verward wordt met "overslaan" -- de enige bestaande actie (`pscheduleSkip()`) heet in de UI zelf al expliciet "Overslaan" en wordt exact zo opgeslagen (`schedule_status:'skipped'`). Geen FUNCTIONAL GAP gevonden.
+
+**IMPLEMENTATION CONSEQUENCE:** geen codewijziging nodig aan `AdherenceIntelligenceCore`/`ScheduleAdherenceCore`. Inzicht v0.1 kan de bestaande adherence-output direct, ongewijzigd gebruiken.
 
 ---
 
@@ -71,7 +81,19 @@
 
 **BLOCKING BUILD?** JA totdat gekozen — deze sectie kan niet zonder een expliciete keuze gebouwd worden.
 
-**MY DECISION: [OPEN]**
+**MY DECISION: [OPEN]** (historie behouden)
+
+---
+
+### PO2 -- STATUS: DECIDED (PR #231 Closure)
+
+**DECISION:** Optie B (met een lichte precisering). Geen nieuw rankingalgoritme, geen AI-ranking, geen verborgen score. Inzicht v0.1 toont de meest recente, geldige canonical insights uit reeds bestaande, gevalideerde signalen, met expliciete voorwaarden: canonical output, voldoende data, geldige sport/context, geen duplicaten, geen stale/invalid insight, privacy toegestaan. Bij meerdere kandidaten: deterministische recentheidsvolgorde, zonder enige claim dat item 1 belangrijker is dan item 2.
+
+**RATIONALE:** er bestaat geen canonieke, geversioneerde functie die meerdere signaaltypes combineert en prioriteert (bevestigd via de candidate-signal-inventory). Een nieuwe ranking-regel zou een Decision Engine-uitbreiding zijn -- buiten de scope van een UI-migratiesprint. AI mag geselecteerde inzichten uitleggen, mag nooit zelfstandig de canonical productranking bepalen. Een toekomstige, echte importance-ranking (deterministisch, versioned, Decision Engine-owned, testbaar, context-/goal-/confidence-aware, evidence-governed) is expliciet DEFERRED, geen blocker voor v0.1.
+
+**TITEL-CONSEQUENTIE:** de canonical titel "Belangrijkste inzichten" impliceert een ranking die v0.1 niet heeft -- **RENAME RECOMMENDED naar "Recente inzichten"** (of "Nieuwe inzichten"/"Ontwikkelingen" als alternatief). Dit is een build-inputadvies, geen visuele wijziging in deze opdracht.
+
+**IMPLEMENTATION CONSEQUENCE:** 0 nieuwe calculation-code. De sectie gebruikt de bestaande `buildImprovementItems()`/soortgelijke-signalen-output, gesorteerd op datum, met de bovenstaande filtervoorwaarden.
 
 ---
 
@@ -97,4 +119,14 @@
 
 **BLOCKING BUILD?** NEE — kan met de eenvoudigste optie (A) zonder verder oponthoud starten; B/C zijn latere verbeteringen.
 
-**MY DECISION: [OPEN]**
+**MY DECISION: [OPEN]** (historie behouden)
+
+---
+
+### PO3 -- STATUS: DECIDED (PR #231 Closure)
+
+**DECISION:** Progressive Disclosure (Optie A voor overview, uitgebreid detailcontract). Overview: geen permanente confidence-badge bij normale, voldoende betrouwbare data; een compacte status uitsluitend wanneer relevant (beperkte data, onvoldoende historie, geschat, verouderd, ontbrekend), met bestaande, canonieke terminologie. Detail: mag uitgebreider tonen (provenance/source, data quality, confidence, evidence level, periode, inputs, calculation version, beperkingen, estimated/manual/device-status), uitsluitend wanneer de onderliggende architectuur dit al daadwerkelijk levert.
+
+**RATIONALE:** de onderliggende data/architectuur bevat al gedeeltelijke provenance-/staleness-/sufficiency-concepten (bv. `hrv_metric_type`, `ProgressionCore.sufficiency()`, Adherence's NOT_AVAILABLE/INSUFFICIENT_DATA-statussen) -- geen nieuwe wetenschappelijke betekenis wordt verzonnen, uitsluitend een presentatiecontract dat bestaande onderscheidingen zichtbaar maakt. UNKNOWN != 0, MISSING != LOW CONFIDENCE, STALE != MISSING blijven drie, expliciet aparte concepten.
+
+**IMPLEMENTATION CONSEQUENCE:** geen nieuw, groot badge-component (Optie C expliciet afgewezen). Mogelijk een klein, nieuw tekst-statuslabel (Optie B) als latere verfijning, maar niet vereist om te starten.

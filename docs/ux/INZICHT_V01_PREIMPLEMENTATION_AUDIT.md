@@ -182,7 +182,32 @@ Source tests, component contract tests (Period Selector/Filter Chip/Summary Cell
 ## Fase 27 — Benchmark Check (bestaande projectkennis, geen nieuwe webresearch)
 Geen expliciete, eerdere benchmark-documentatie over Garmin/WHOOP/TrainingPeaks/Strava specifiek voor een "Inzicht"-achtig scherm gevonden binnen de repo tijdens deze audit. Kwalitatieve observatie uit de mockup zelf: periode-schakelen + sport-filter + domein-tegels-met-mini-viz is consistent met hoe TrainingPeaks/WHOOP hun "insights"-overzichten structureren (periode bovenaan, domeinen als scanbare lijst, details één tap dieper) — geen nieuwe features hieruit afgeleid, puur ter bevestiging dat de mockup-structuur zelf gangbaar is.
 
-## Blocker Burn-Down (Decision Resolution Sprint)
+## INSIGHT SECTION TITLE — semantische beoordeling tegen PO Decision 2
+
+De canonical titel "BELANGRIJKSTE INZICHTEN" impliceert een importance-ranking ("belangrijkste" = een vergelijkende, prioriterende claim). Nu PO Decision 2 expliciet bepaalt dat v0.1 uitsluitend een deterministische **recentheidsvolgorde** toont, zonder enige claim dat item 1 belangrijker is dan item 2, is de huidige titel **functioneel misleidend** ten opzichte van wat het scherm daadwerkelijk doet.
+
+**BEOORDELING: RENAME RECOMMENDED.**
+
+**Drie voorgestelde, korte Nederlandse alternatieven (geen visuele wijziging, uitsluitend advies voor de latere build):**
+1. **"Recente inzichten"** — sluit exact aan bij de deterministische recentheidsvolgorde, geen prioriteitsclaim.
+2. **"Nieuwe inzichten"** — kort, neutraal, benadrukt "nieuw" zonder "belangrijk" te suggereren.
+3. **"Ontwikkelingen"** — breder, sluit aan bij de "Jouw ontwikkeling"-sectie erboven, geen ranking-connotatie.
+
+**Aanbeveling voor de build: "Recente inzichten"** — de meest precieze, letterlijke beschrijving van wat het onderdeel functioneel doet (PO Decision 2), zonder een claim te doen die de UI niet waarmaakt. **Geen canonical PNG gewijzigd in deze opdracht — dit is uitsluitend input voor de build-review, geen visuele wijziging.**
+
+
+
+Repo-breed onderzocht op elke gebruikersactie die semantisch een "annulering" van een geplande training zou kunnen betekenen.
+
+| User action | Current route/function | Current stored status | Semantic meaning | Adherence effect | Correct? | Gap? |
+|---|---|---|---|---|---|---|
+| "Deze training overslaan?" (enige bestaande actie op een geplande training die deze niet gaat uitvoeren) | `pscheduleSkip()` | `program_blocks.schedule_status = 'skipped'` | expliciet, letterlijk "overslaan" -- de UI-tekst zelf zegt nooit "annuleren" voor deze actie ("Deze training overslaan? Hij telt dan niet mee als afgerond, maar blijft zichtbaar als bewust overgeslagen.") | telt in de noemer, niet in de teller (SKIPPED-regel, PO1) | **JA** -- UI-taal en opgeslagen status zijn identiek, geen mismatch | **GEEN GAP** |
+| Overige "cancel"-functies gevonden in de repo (`runningCancelFinish`, `cyclingCancelFinish`, `enduranceExecution.js cancelFinish`, `nutritionCancelEdit`, `losCancel`, `cancelRestTimer`) | diverse | n.v.t. -- geen van deze raakt `program_blocks`/schedule-status | annuleren van een LOPENDE UI-actie (bevestigingsdialoog tijdens/na een training, voedingsbewerking, rusttimer) -- GEEN van deze annuleert een GEPLANDE, toekomstige training | n.v.t. | n.v.t. | **GEEN GAP** -- semantisch niet relevant voor Adherence |
+| Volledig verwijderen van een geplande training uit de planning (aparte "delete schedule item"-actie) | **niet gevonden** | n.v.t. | n.v.t. | n.v.t. | n.v.t. | **GEEN GAP** -- deze actie bestaat simpelweg niet, dus kan ook niet verkeerd gemodelleerd zijn |
+
+**UITKOMST: SCENARIO A.** Er bestaat momenteel geen echte, semantisch aparte cancellation-flow die verschilt van "overslaan" — de enige bestaande actie heet in de UI zelf al expliciet "Overslaan", nooit "Annuleren", en wordt exact zo opgeslagen (`skipped`). **Geen FUNCTIONAL GAP. Geen blocker voor Inzicht v0.1.** De eerdere zorg in PO Decision 1 (dat een "geldige annulering" mogelijk verkeerd als SKIPPED/MISSED wordt opgeslagen) is hiermee **weerlegd door forensisch bewijs**: er is geen apart concept "geldige annulering" dat door de huidige app wordt aangeboden of verward wordt met overslaan -- ze zijn hetzelfde, bewust, en consistent benoemd.
+
+
 
 | Blocker (was) | Root cause | Evidence | Can resolve now? | Resolution | Remaining decision | Owner |
 |---|---|---|---|---|---|---|
@@ -192,7 +217,7 @@ Geen expliciete, eerdere benchmark-documentatie over Garmin/WHOOP/TrainingPeaks/
 | D4 Insight Ranking | geen canonieke rankingfunctie gevonden | candidate-signal-inventory volledig doorlopen, bevestigd: geen combinerende, geversioneerde rankingfunctie bestaat | NEE | blijft blocker | PO2 (zie Decision Pack) | Product Owner |
 | D8 Periode-parameter per metric | niet individueel bevestigd | technisch, per-metric verificatiewerk (geen productbeslissing) | JA (als taak, niet als PO-vraag) | **B. TECHNICAL FACT**, uit te voeren tijdens implementatie zelf, niet vooraf blokkerend voor de audit | geen PO-besluit nodig, wel implementatiewerk | Claude, tijdens bouwfase |
 
-**BLOCKERS BEFORE: 6. BLOCKERS RESOLVED: 4 (D1, D2, D3 gedeeltelijk, D11, D12 -- zie hieronder). BLOCKERS REMAINING: 2 (PO2 Insight Ranking blijft hard blokkerend voor die ene sectie; PO1 Adherence-SKIPPED is technisch niet-blokkerend zodra Optie A gekozen wordt, wat de aanbevolen, standaard keuze is).**
+**BLOCKERS BEFORE (deze sprint): 2 (PO1 Adherence-SKIPPED-conflict, PO2 Insight Ranking). BLOCKERS RESOLVED (na PO Decision + Cancelled Forensic Check): 2. BLOCKERS REMAINING: 0.** PO1 is DECIDED (SKIPPED blijft in de noemer, niet in de teller -- exact zoals de bestaande code al werkte, nu formeel bevestigd; Cancelled Forensic Check bevestigt SCENARIO A, geen verborgen mismatch). PO2 is DECIDED (deterministische recentheidsvolgorde, geen ranking, geen AI-score) -- zie de bijgewerkte Decision Pack voor de volledige rationale.
 
 ## D11/D12 — Forensische resolutie (nieuw)
 
@@ -208,28 +233,46 @@ Geen expliciete, eerdere benchmark-documentatie over Garmin/WHOOP/TrainingPeaks/
 - **multiple workouts/day** -> niet van toepassing op Adherence zelf (werkt op program_blocks, niet op sessies-per-dag)
 - **coach/team/program-generated/manual/imported workout** -> `aggregate()` is bron-agnostisch, itereert over elk item met een `planned_date`/`completed_at`/`schedule_status` ongeacht oorsprong -- geen onderscheid nodig of aanwezig
 
-## Fase 29 -- Implementation Readiness Score (BEFORE / AFTER Decision Resolution Sprint)
+## Fase 29 -- Implementation Readiness Score (BEFORE Decision Resolution / AFTER PO Final Resolution)
 
-| Categorie | BEFORE | AFTER | Uitleg wijziging |
+| Categorie | BEFORE (vorige sprint) | AFTER (PO Final Resolution) | Uitleg wijziging |
 |---|---|---|---|
 | Functional Preservation Readiness | 9 | 9 | ongewijzigd, al volledig |
-| Data Readiness | 7 | 7 | ongewijzigd -- D8 blijft technisch werk tijdens implementatie, geen nieuwe onzekerheid weggenomen op documentatieniveau |
-| Calculation Readiness | 8 | **9** | D1/D2/D11/D12 forensisch, met code-bewijs, volledig bevestigd als reeds bestaand en correct -- aantoonbare onzekerheid weggenomen |
+| Data Readiness | 7 | 7 | ongewijzigd -- periode-verificatie blijft impl.-werk, geen PO-beslissing verandert dit |
+| Calculation Readiness | 9 | 9 | ongewijzigd t.o.v. vorige sprint (al forensisch bevestigd) |
 | Context Readiness | 7 | 7 | ongewijzigd |
-| Decision Readiness | 6 | **7** | Adherence-classificatie (D3/D12) nu volledig doorgrond met code-bewijs, op 1 expliciet, klein PO-conflict na |
-| Evidence Readiness | 5 | 5 | ongewijzigd -- PO3 (confidence-presentatie) blijft een open, echte keuze, geen technisch bewijs kan dit oplossen |
+| Decision Readiness | 7 | **9** | PO1 definitief DECIDED (geen conflict meer, Cancelled Forensic Check bevestigt SCENARIO A) -- de enige resterende onzekerheid in deze categorie is nu weggenomen door een expliciet PO-besluit |
+| Evidence Readiness | 5 | **8** | PO3 definitief DECIDED (progressive disclosure, met concreet, haalbaar contract voor overview vs. detail) -- niet langer een open vraag |
 | Component Reuse Readiness | 7 | 7 | ongewijzigd |
 | Accessibility Readiness | 7 | 7 | ongewijzigd |
 | Privacy/Security Readiness | 8 | 8 | ongewijzigd |
 | Test Readiness | 8 | 8 | ongewijzigd |
-| Visual Implementation Readiness | 6 | 6 | ongewijzigd -- geen visuele/component-bouw heeft plaatsgevonden deze sprint |
+| Visual Implementation Readiness | 6 | 6 | ongewijzigd -- geen visuele/component-bouw heeft plaatsgevonden, PO2 raakt wel de titel-tekst (RENAME RECOMMENDED) maar dat is een build-inputadvies, geen uitgevoerde wijziging |
 
-**OVERALL IMPLEMENTATION READINESS: BEFORE 7/10 -> AFTER 7.2/10** (afgerond: 7/10). De stijging is bewust klein en beperkt tot de twee categorieen waar daadwerkelijk, aantoonbaar bewijs is gevonden (Calculation, Decision) -- geen enkele score is verhoogd omdat de documentatie uitgebreider werd; alleen waar een concrete onzekerheid met code is weggenomen.
+**OVERALL IMPLEMENTATION READINESS: BEFORE 7/10 -> AFTER 8/10.** De stijging is uitsluitend toe te schrijven aan de drie, nu definitief door de Product Owner besliste vragen (PO1/PO2/PO3) -- elk met een concreet, vastgelegd besluit, geen enkele score is kunstmatig verhoogd.
 
-**BLOCKERS BEFORE: 6 (D1, D3, D4, D8, plus D11/D12 impliciet meegeteld als onderdeel van D3/Training-count-onzekerheid).**
-**BLOCKERS RESOLVED: 4 (D1, D2, D11, D12 volledig; D3 grotendeels, op 1 PO-conflict na).**
-**BLOCKERS REMAINING: 2, beide expliciet, geen enkele verstopt in het gemiddelde:**
-- **PO2 (Insight Ranking)** -- blokkeert uitsluitend de "Belangrijkste inzichten"-sectie, niet de rest van Inzicht.
-- **PO1 (Adherence SKIPPED-conflict)** -- technisch niet-blokkerend zodra de aanbevolen, standaard Optie A gekozen wordt (0 codewijziging nodig); blijft formeel open totdat expliciet bevestigd.
+**BLOCKERS BEFORE (deze sprint): 2 (PO1 Adherence-SKIPPED-conflict, PO2 Insight Ranking).**
+**BLOCKERS RESOLVED: 2 (beide DECIDED, plus de Cancelled Forensic Check bevestigt geen nieuwe blocker).**
+**BLOCKERS REMAINING: 0.**
 
-D8 (periode-parameter per metric) is geherclassificeerd van "blocker" naar "technisch verificatiewerk tijdens implementatie" -- geen Product Owner-beslissing nodig, dus niet langer een besluitvormings-blocker, wel nog een implementatietaak.
+Enige, resterende, niet-blokkerende implementatietaken (geen PO-beslissing, puur technisch werk tijdens de build zelf): periode-parameter-verificatie per metric (D8), en de aanbevolen titel-hernoeming ("Belangrijkste inzichten" -> "Recente inzichten") als build-inputadvies.
+
+## PRE-BUILD ACCEPTANCE CONTRACT
+
+**INZICHT v0.1 BUILD MAY START ONLY IF:**
+- [x] 26/26 legacy functions have preservation path (Functional Preservation Matrix)
+- [x] no unresolved hard PO decision (PO1/PO2/PO3 all DECIDED)
+- [x] no unresolved adherence semantic blocker (Cancelled Forensic Check: SCENARIO A, geen gap)
+- [x] training count canonical (D11, forensisch bevestigd)
+- [ ] period calculations verified during implementation per metric (D8 -- expliciet, niet-blokkerend implementatiewerk, geen PO-beslissing)
+- [x] no UI shadow calculations (bevestigd, alle bronnen zijn bestaande, protected-core of eerder geaudite functies)
+- [x] recent canonical insight ordering accepted (PO2)
+- [x] evidence/confidence progressive disclosure accepted (PO3)
+- [x] no-wearable paths defined (Fase 15-scenariomatrix)
+- [x] empty states defined (Fase 22)
+- [x] privacy boundaries preserved (Fase 20, D10 Cyclus-beslissing)
+- [x] reusable component mapping complete (Fase 6/24)
+- [x] canonical PNG unchanged (hash geverifieerd, elke sprint)
+- [x] browser/runtime test contract ready (Fase 26, Trainen-sjabloon herbruikbaar)
+
+**Alle harde voorwaarden zijn vervuld. De enige open regel (periode-verificatie per metric) is expliciet geen blokkerende Product Owner-beslissing, maar een routinematige, technische controlestap die tijdens de implementatie zelf wordt uitgevoerd — conform Fase 7/D8: "als canonical periodized output ontbreekt tijdens build: STOP voor die specifieke metric", niet voor het scherm als geheel.**

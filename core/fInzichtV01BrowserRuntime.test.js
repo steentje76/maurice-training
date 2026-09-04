@@ -455,6 +455,46 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     ok(restored === original, '42b: index.html is na de sabotage-test byte-identiek hersteld');
   }
 
+  // Final Trend Contrast Micro-Correction: programmatische contrastcontrole
+  // van de trend-tekst tegen de kaart-achtergrond (echte, gerenderde kleuren,
+  // geen aanname).
+  {
+    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    await page.route('**/rest/v1/hrv_log**', route => {
+      route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify([
+          { date: '2026-09-04', hrv: '18.5', rhr: 56, sleep: '5.58' },
+          { date: '2026-09-03', hrv: '24.0', rhr: 57, sleep: '7.58' },
+          { date: '2026-09-02', hrv: '22.0', rhr: 57, sleep: '7.58' },
+          { date: '2026-09-01', hrv: '28.5', rhr: 56, sleep: '7.58' },
+          { date: '2026-08-31', hrv: '29.5', rhr: 60, sleep: '7.82' }
+        ])
+      });
+    });
+    await page.goto(url);
+    await page.waitForTimeout(500);
+    await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+    await page.waitForTimeout(900);
+    const contrastInfo = await page.evaluate(() => {
+      function relLum(r,g,b){ function c(v){ v/=255; return v<=0.03928? v/12.92 : Math.pow((v+0.055)/1.055,2.4); } return 0.2126*c(r)+0.7152*c(g)+0.0722*c(b); }
+      function contrastRatio(rgb1, rgb2){ const l1=relLum(...rgb1), l2=relLum(...rgb2); const lighter=Math.max(l1,l2), darker=Math.min(l1,l2); return (lighter+0.05)/(darker+0.05); }
+      function parseRgb(s){ const m=s.match(/\d+/g); return [parseInt(m[0]),parseInt(m[1]),parseInt(m[2])]; }
+      const card = document.querySelector('.tk-overview-cell').closest('.tk-card');
+      const bg = parseRgb(getComputedStyle(card).backgroundColor);
+      const trend = document.querySelector('.tk-overview-cell .trend.down');
+      if(!trend) return null;
+      const fg = parseRgb(getComputedStyle(trend).color);
+      return { ratio: contrastRatio(fg, bg), fg, bg, text: trend.textContent };
+    });
+    ok(contrastInfo !== null, '43 (setup): een "down"-trend is aanwezig om het contrast op te meten');
+    if(contrastInfo){
+      ok(contrastInfo.ratio > 3.0, '44: de "down"-trendtekst heeft een gemeten contrastratio van ' + contrastInfo.ratio.toFixed(2) + ':1 tegen de kaartachtergrond -- duidelijk verbeterd t.o.v. de oude --color-text-muted (~1.95:1), gebruikmakend van de eerstvolgende, bestaande --color-text-secondary-token (geen nieuwe kleur toegevoegd)');
+      ok(contrastInfo.fg[0]===136 && contrastInfo.fg[1]===136 && contrastInfo.fg[2]===136, '45: de trend gebruikt exact --color-text-secondary (rgb(136,136,136)), geen willekeurige, nieuwe hexkleur');
+    }
+    await page.close();
+  }
+
   // PO Mobile Visual Fidelity Pass: Recente inzichten mag titel en beschrijving
   // NOOIT aan elkaar plakken (was: "Frontsquathogere geschatte 1RM").
   {

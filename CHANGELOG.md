@@ -1,5 +1,87 @@
 # Trainingskompas — Changelog
 
+## v4.69.60 — Inzicht v0.1 Implementation (3 september 2026)
+
+Eerste implementatie van Inzicht v0.1, het nieuwe overzichtsscherm dat
+conceptueel Lichaam+Voortgang vervangt zonder een enkele bestaande
+functie te verwijderen. Volgt volledig de Screen Implementation
+Standard v1 en de pre-implementation audit/decision-resolution (PR
+#231, CLOSED).
+
+NIEUW SCHERM: s-inzicht (additief, bereikbaar via go('s-inzicht') --
+GEEN bottom-nav-wijziging in deze sprint, dat blijft een aparte,
+toekomstige Product Owner-opdracht conform NAVIGATION MIGRATION
+DEPENDENCY).
+
+NIEUWE, VOORAF GERECHTVAARDIGDE COMPONENTEN (Screen Implementation
+Standard v1 uitgebreid): Period Selector (.tk-period-selector, echte
+segmented control, role=tablist/tab), Filter Chip (.tk-filter-chip),
+Metric Summary Cell (.tk-summary-cell, de 4 "Jouw ontwikkeling"-
+cellen), Metric Overview Cell (.tk-overview-cell, de 5 "Snel
+overzicht"-cellen), Domain Row (icon-row-variant met mini-viz-ruimte),
+Insight Row (icon-in-cirkel-variant).
+
+GEEN SHADOW CALCULATIONS: Verbeterd/Stijgende trends gebruiken
+uitsluitend CoachingCore.improvementsDigest(). Adherence gebruikt
+uitsluitend AdherenceIntelligenceCore.aggregate() (PO1, CLOSED, 0
+codewijziging). HRV/Rusthartslag/Slaap gebruiken uitsluitend de
+bestaande dc.health*-functiefamilie. Trainingen telt sessions+
+activities op (architecturaal gescheiden, B9-H6B, geen dubbeltelling).
+Recente inzichten (PO2, CLOSED): deterministische recentheid van
+CoachingCore's bestaande, gevalideerde highlights -- GEEN AI-ranking,
+GEEN nieuwe rankingregel. Titel "Recente inzichten" gebruikt (niet
+"Belangrijkste inzichten", conform PO2).
+
+UNKNOWN != 0 (zelf gevonden en gerepareerd tijdens implementatie): een
+eigen, veilige data-wrapper (inzichtGetOrNull) toegevoegd die expliciet
+onderscheid maakt tussen een echte, lege dataset ([]) en een fout/geen
+verbinding (null) -- de bestaande, app-brede v43SafeGet/sbGet geven bij
+ELKE fout stilzwijgend [] terug (correct voor hun bestaande, andere
+gebruikers, niet gewijzigd), wat bij hergebruik voor Inzicht een
+fictieve "0 Verbeterd/Trainingen" zou hebben getoond bij een
+netwerkfout. Nu: "--" bij een fout, een echte 0 alleen bij een
+daadwerkelijk lege, succesvol opgehaalde dataset.
+
+FUNCTIONAL PRESERVATION: alle 26 legacy-functies (Lichaam + 11 sub-
+schermen, Voortgang, Doelen) blijven exact, ongewijzigd bereikbaar --
+6 domain-cards op Inzicht linken naar bewezen, bestaande schermen
+(s-stats, s-lich-health, s-lich-metingen, s-lich-verbanden), de overige
+sub-routes (Cyclus, Gegevens & koppelingen, spiergroep-detail, etc.)
+blijven bereikbaar via de ongewijzigde s-lichaam-hub. Consolidation !=
+deletion.
+
+Zelf gevonden en gerepareerd: domain-rows misten aanvankelijk de
+.v43-tmt-basisclass (alleen de -inset-variant was toegevoegd), waardoor
+titel/subtitel zonder scheiding aan elkaar plakten -- gecorrigeerd door
+beide classes samen toe te voegen, exact zoals bij de Trainen-rijen.
+
+Twee iconen toegevoegd aan core/designSystemIcons.js (prestaties,
+verbanden) -- additief, geen bestaand icoon gewijzigd.
+
+Tests (nieuw): core/fInzichtV01BrowserRuntime.test.js (75/75, echte
+Chromium-render op 6 viewports + interactie- en sabotagetests),
+core/fInzichtV01DataContract.test.js (11/11, bevestigt afwezigheid van
+shadow calculations), core/fInzichtV01Preservation.test.js (35/35,
+bevestigt alle 26 functies bereikbaar).
+
+Twee bestaande tests bijgewerkt (fB9_07BSocialClosure,
+fB9_07SocialProductLayer): de vaste bottom-nav-blok-telling (35) is nu
+36 door de additieve komst van s-inzicht's eigen nav-blok -- geen
+verzwakking, uitsluitend de correcte, nieuwe telling.
+
+Release gate 238/238, Android 29/29. Cross-domein regressie
+(Entitlements/Team/Gym/Admin-Auth/Women's Performance/Recovery/
+Devices/Running-Core/Design System/Trainen/Hardening/HyroxTriathlon):
+0 problemen. Canonical PNG-integriteit: alle 6 hashes exact
+ongewijzigd.
+
+APP_VER v4.69.59 -> v4.69.60. sw.js CACHE_NAME/CACHE_STATIC synchroon
+gebumpt naar v469600. android/app/build.gradle gesynchroniseerd
+(46960/4.69.60).
+
+Bottom navigation, andere hoofdschermen (Vandaag/Trainen/Coach/Samen/
+Profiel) en PR #222: allemaal ongewijzigd.
+
 ## v4.69.59 — Trainen v0.2 Micro Alignment Pass (3 september 2026)
 
 Laatste micro-correctie op PR #229, geen redesign. De Product Owner

@@ -161,6 +161,46 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     await page.close();
   }
 
+  // PO Round 2: Snel overzicht -- teal iconen (was zwart), eenheden zichtbaar,
+  // geen tabelachtige verticale separators, responsive wrap-gedrag.
+  {
+    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    await page.goto(url);
+    await page.waitForTimeout(500);
+    await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+    await page.waitForTimeout(400);
+    await page.evaluate(() => {
+      const grid = document.getElementById('inzicht-overview-grid');
+      grid.innerHTML = '<div class="tk-overview-cell"><span class="ic-wrap">' + tkIcon('hartslag',{size:'standard'}) + '</span><div class="lbl">HRV (7d)</div><div class="val">62<span class="unit">ms</span></div></div>' +
+        '<div class="tk-overview-cell"><span class="ic-wrap">' + tkIcon('herstel',{size:'standard'}) + '</span><div class="lbl">Herstelstatus</div><div class="val">100<span class="unit">%</span></div></div>' +
+        '<div class="tk-overview-cell"><span class="ic-wrap">' + tkIcon('belasting',{size:'standard'}) + '</span><div class="lbl">Belasting (7d)</div><div class="val">5427<span class="unit">kg</span></div></div>';
+    });
+    await page.waitForTimeout(200);
+    const check = await page.evaluate(() => {
+      const icons = Array.from(document.querySelectorAll('.tk-overview-cell .ic-wrap .tk-icon'));
+      const cells = Array.from(document.querySelectorAll('.tk-overview-cell'));
+      return {
+        iconColors: icons.map(i => getComputedStyle(i).color),
+        hasVerticalBorders: cells.some(c => getComputedStyle(c).borderLeftWidth !== '0px' && getComputedStyle(c).borderLeftStyle !== 'none'),
+        unitsPresent: document.getElementById('inzicht-overview-grid').innerText.includes('ms') && document.getElementById('inzicht-overview-grid').innerText.includes('kg') && document.getElementById('inzicht-overview-grid').innerText.includes('%')
+      };
+    });
+    ok(check.iconColors.every(c => c === 'rgb(0, 184, 148)'), '26: Snel overzicht-iconen zijn teal (--color-primary) bij beschikbare data, niet zwart (PO Round 2, root cause: ontbrekende stroke=currentColor op de oudere V43I-set, nu tkIcon() gebruikt)');
+    ok(!check.hasVerticalBorders, '27: geen tabelachtige, verticale separators meer tussen Snel-overzicht-cellen');
+    ok(check.unitsPresent, '28: Belasting/Herstelstatus/HRV tonen expliciete eenheden (kg/%/ms) i.p.v. een kaal, contextloos getal');
+
+    for (const w of [320, 360, 375, 390, 412, 430]) {
+      await page.setViewportSize({ width: w, height: 900 });
+      await page.waitForTimeout(150);
+      const wrapCheck = await page.evaluate(() => {
+        const labels = Array.from(document.querySelectorAll('.tk-overview-cell .lbl'));
+        return { clipped: labels.some(l => l.scrollWidth > l.clientWidth + 2) };
+      });
+      ok(!wrapCheck.clipped, '29.' + w + 'px: geen enkel Snel-overzicht-label wordt afgekapt (gecontroleerde wrap i.p.v. krimpende tekst)');
+    }
+    await page.close();
+  }
+
   // PO Mobile Visual Fidelity Pass: Recente inzichten mag titel en beschrijving
   // NOOIT aan elkaar plakken (was: "Frontsquathogere geschatte 1RM").
   {

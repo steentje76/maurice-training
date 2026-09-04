@@ -2005,7 +2005,7 @@ html[data-theme="dark"] .v43-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
 .tk-recovery-ring{width:28px;height:28px;flex-shrink:0}
 .tk-recovery-ring .rg{fill:none;stroke:var(--color-border);stroke-width:4}
 .tk-recovery-ring .rf{fill:none;stroke:var(--color-primary);stroke-width:4;stroke-linecap:round;transform:rotate(-90deg);transform-origin:center}
-.tk-overview-cell .lbl{font-size:9px;color:var(--color-text-secondary);font-weight:600;line-height:1.15}
+.tk-overview-cell .lbl{font-size:9px;color:var(--color-text-secondary);font-weight:600;line-height:1.15;min-height:21px;display:flex;align-items:center;justify-content:center}
 .tk-overview-cell .val{font-size:13px;font-weight:800;color:var(--color-text-primary);white-space:nowrap}
 .tk-overview-cell .unit{font-size:8.5px;font-weight:600;color:var(--color-text-secondary);margin-left:1px}
 .tk-overview-cell .trend{font-size:9px;font-weight:700}
@@ -20474,8 +20474,21 @@ async function inzichtRenderOverview(){
         var q=dc.qualifySeries(ser,{field:v.k});
         var st=dc.healthStats(q.valid), tr=dc.healthTrend(q.valid);
         if(st.count===0){ cells.push(ovCell(icons[v.lbl],v.lbl,'<div class="unavailable">—</div>',true)); return; }
-        var trendCls=(tr.dir==='flat')?'':((tr.dir==='up')===v.up?'up':'down');
-        cells.push(ovCell(icons[v.lbl],v.lbl+' (7d)','<div class="val">'+st.mean+'<span class="unit">'+v.unit+'</span></div><div class="trend '+trendCls+'">'+tr.symbol+'</div>',false));
+        // Trend Integrity Fix: healthTrend() geeft bij <2 geldige punten een
+        // "fake flat" terug ({dir:'flat',symbol:'→',delta:0}) -- dat is GEEN
+        // echte, gevalideerde vergelijking, dus tonen we dan GEEN trend-
+        // indicator (UNKNOWN != geen verandering). Bij >=2 punten is
+        // tr.delta een bestaande, canonieke Calculation-uitkomst (eerste
+        // helft vs. tweede helft van dezelfde 7-daagse reeks) -- geen
+        // nieuwe berekening, we tonen uitsluitend het al aanwezige veld.
+        var trendHtml='';
+        if(q.valid.length>=2 && tr.dir!=='flat'){
+          var trendCls=(tr.dir==='up')===v.up?'up':'down';
+          var dSign=tr.delta>0?'+':'';
+          var dRounded=(v.k==='sleep')?(Math.round(tr.delta*60)+'m'):(Math.round(tr.delta*10)/10+' '+v.unit);
+          trendHtml='<div class="trend '+trendCls+'">'+tr.symbol+' '+dSign+dRounded+'</div>';
+        }
+        cells.push(ovCell(icons[v.lbl],v.lbl+' (7d)','<div class="val">'+st.mean+'<span class="unit">'+v.unit+'</span></div>'+trendHtml,false));
       }catch(_){ cells.push(ovCell(icons[v.lbl],v.lbl,'<div class="unavailable">—</div>',true)); }
     });
   }

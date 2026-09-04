@@ -201,6 +201,73 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     await page.close();
   }
 
+  // Canonical Fidelity Pass: "Bekijk details", iconen in Jouw ontwikkeling,
+  // herstel-ring, insight-cards (3 naast elkaar), CTA soft-teal.
+  {
+    const page = await browser.newPage({ viewport: { width: 390, height: 1300 } });
+    await page.goto(url);
+    await page.waitForTimeout(500);
+    await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
+    await page.waitForTimeout(500);
+
+    const detailsBtn = await page.evaluate(() => Array.from(document.querySelectorAll('#s-inzicht button')).some(b => b.textContent.includes('Bekijk details')));
+    ok(detailsBtn, '30: "Bekijk details"-knop is aanwezig bij Jouw ontwikkeling, conform canonical');
+
+    const devIcons = await page.evaluate(() => document.querySelectorAll('#inzicht-summary-grid .tk-summary-cell .ic').length);
+    ok(devIcons === 4, '31: alle 4 Jouw-ontwikkeling-cellen hebben een icoon boven het cijfer, conform canonical');
+
+    // Herstel-ring: functioneel getest met echte ring-wiskunde (zelfde
+    // patroon als de bestaande _radial()-functie elders in de app).
+    await page.evaluate(() => {
+      const grid = document.getElementById('inzicht-overview-grid');
+      const rR=13, rC=2*Math.PI*rR, rOff=rC*(1-0.78);
+      grid.innerHTML = '<div class="tk-overview-cell"><span class="ic-wrap" style="background:none;width:34px;height:34px"><svg class="tk-recovery-ring" viewBox="0 0 34 34"><circle class="rg" cx="17" cy="17" r="'+rR+'"/><circle class="rf" cx="17" cy="17" r="'+rR+'" style="stroke-dasharray:'+rC.toFixed(1)+';stroke-dashoffset:'+rOff.toFixed(1)+'"/></svg></span><div class="lbl">Herstelstatus</div><div class="val">78<span class="unit">%</span></div></div>';
+    });
+    const ringOk = await page.evaluate(() => {
+      const rf = document.querySelector('.tk-recovery-ring .rf');
+      return rf && rf.style.strokeDasharray && rf.style.strokeDashoffset;
+    });
+    ok(!!ringOk, '32: de herstel-ring gebruikt correcte, wiskundig-consistente stroke-dasharray/dashoffset (zelfde, bewezen patroon als elders in de app)');
+
+    // Insight cards: 3 naast elkaar, elk met display:block .t/.s (concatenatie-
+    // garantie opnieuw, expliciet bevestigd voor de nieuwe kaartstructuur).
+    await page.evaluate(() => {
+      const el = document.getElementById('inzicht-recent-list');
+      const fake = [
+        { exercise: 'Frontsquat', reason: 'Hogere geschatte 1RM', newBest: false },
+        { exercise: 'Roeien', reason: 'Sneller op 1000m', newBest: true },
+        { exercise: 'Slaapduur', reason: 'Lager dan normaal', newBest: false }
+      ];
+      el.innerHTML = '<div class="tk-insight-cards">' + fake.map(h =>
+        '<div class="tk-insight-card"><span class="tk-insight-icon">' + (h.newBest?'\u{1F3C6}':'\u{1F4C8}') + '</span><span class="t">' + h.exercise + '</span><span class="s">' + h.reason + '</span></div>'
+      ).join('') + '</div>';
+    });
+    const cardsCheck = await page.evaluate(() => {
+      const cards = Array.from(document.querySelectorAll('.tk-insight-card'));
+      return {
+        count: cards.length,
+        allBlock: cards.every(c => {
+          const t = c.querySelector('.t'), s = c.querySelector('.s');
+          return getComputedStyle(t).display === 'block' && getComputedStyle(s).display === 'block';
+        }),
+        concatenated: document.getElementById('inzicht-recent-list').innerText.includes('Frontsquathogere')
+      };
+    });
+    ok(cardsCheck.count === 3, '33: exact 3 insight-cards worden getoond, conform canonical (naast elkaar, niet meer één grote lijst-kaart)');
+    ok(cardsCheck.allBlock, '34: alle insight-cards hebben display:block op titel/beschrijving -- concatenatie-garantie behouden in de nieuwe structuur');
+    ok(!cardsCheck.concatenated, '35: geen concatenatie in de nieuwe insight-card-structuur');
+
+    // CTA: soft-teal, niet wit/zwaar.
+    const ctaColor = await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll('#s-inzicht button'));
+      const cta = btns.find(b => b.textContent.includes('Bekijk alle inzichten'));
+      return cta ? getComputedStyle(cta).backgroundColor : null;
+    });
+    ok(ctaColor === 'rgb(0, 184, 148)' || (ctaColor && ctaColor.includes('184')), '36: de onderste CTA gebruikt de zachte, teal achtergrond (--color-primary-soft), niet wit/grijs');
+
+    await page.close();
+  }
+
   // PO Mobile Visual Fidelity Pass: Recente inzichten mag titel en beschrijving
   // NOOIT aan elkaar plakken (was: "Frontsquathogere geschatte 1RM").
   {

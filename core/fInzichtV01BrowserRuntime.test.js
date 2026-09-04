@@ -1,13 +1,28 @@
 /* core/fInzichtV01BrowserRuntime.test.js — echte Chromium-render, geen
- * source-only-aannames (harde les uit Trainen v0.2). */
+ * source-only-aannames (harde les uit Trainen v0.2).
+ *
+ * ZELF GEVONDEN, KRITIEKE CI-ROOT-CAUSE: playwright staat NIET als
+ * dependency in package.json (het is elders/globaal aanwezig in de
+ * ontwikkelomgeving, maar niet in een verse `npm install`). Een module-
+ * level `require('playwright')` zonder try/catch crasht daardoor het
+ * hele testproces met exit code 1 op een schone CI-checkout, VOORDAT er
+ * ook maar een assertie kan draaien -- exact de eerder gerapporteerde,
+ * niet-lokaal-reproduceerbare Quality Gate-failure. Fix: hetzelfde,
+ * bewezen try/catch-patroon overnemen dat al in de bestaande
+ * fTrainenBrowserRuntime.test.js staat (nette skip i.p.v. crash). */
 'use strict';
-const { chromium } = require('playwright');
 const path = require('path');
+let chromium;
+try { chromium = require('playwright').chromium; } catch (e) { chromium = null; }
 let pass = 0, fail = 0;
 const msgs = [];
 function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: ' + label); } }
 
 (async () => {
+  if (!chromium) {
+    console.log('fInzichtV01BrowserRuntime: SKIP (Playwright niet beschikbaar in deze omgeving)');
+    process.exit(0);
+  }
   let browser;
   try { browser = await chromium.launch(); }
   catch (e) { console.log('fInzichtV01BrowserRuntime: SKIP (Chromium niet beschikbaar in deze omgeving)'); process.exit(0); }

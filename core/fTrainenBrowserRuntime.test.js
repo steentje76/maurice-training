@@ -149,6 +149,29 @@ async function loadTrainenDOM(page) {
     ok(!/\d{2}:\d{2}/.test(planText) && !/Gym|Strength room|Sportschool/i.test(planText),
       '14: geen fictief tijdstip (HH:MM) of locatie getoond op de trainingskaart -- bevestigd tegen het echte databaseschema dat deze velden niet bestaan, geen hardcoded waarde toegevoegd');
 
+    // Micro Alignment Pass: consistente horizontale inner-padding voor de
+    // Maken & ontdekken/Terugkijken-rijen (icon-box niet meer tegen de linker
+    // kaartrand). Meet de ECHTE, gerenderde posities, niet alleen bron-CSS.
+    const rowAlignment = await page.evaluate(() => {
+      const containers = document.querySelectorAll('#s-train-mgr .v43-tmt-inset');
+      const out = [];
+      containers.forEach(c => {
+        const cardRect = c.getBoundingClientRect();
+        c.querySelectorAll('.row').forEach(r => {
+          const box = r.querySelector('.tk-icon-box');
+          const ar = r.querySelector('.ar');
+          out.push({
+            iconLeft: box ? Math.round(box.getBoundingClientRect().left - cardRect.left) : null,
+            chevronRight: ar ? Math.round(cardRect.right - ar.getBoundingClientRect().right) : null
+          });
+        });
+      });
+      return out;
+    });
+    ok(rowAlignment.length === 3, '15: exact 3 rijen (Training maken, Oefeningen, Trainingshistorie) hebben de nieuwe, consistente inner-padding-container');
+    ok(rowAlignment.every(r => r.iconLeft === 16), '16: alle 3 icon-boxen staan op exact dezelfde, consistente linker afstand (16px) tot de kaartrand -- niet meer tegen de rand aan (was 0px)');
+    ok(rowAlignment.every(r => r.chevronRight === 16), '17: alle 3 chevrons staan op exact dezelfde, consistente rechter afstand (16px) tot de kaartrand');
+
     await page.close();
   }
 
@@ -175,7 +198,7 @@ async function loadTrainenDOM(page) {
       '${tkIcon(\'kracht\',{size:\'feature\'})}<span style="font-size:10.5px">Kracht</span>'
     );
     if (sabotaged === original) {
-      ok(false, '12 (sabotage-setup): kon de sabotage-marker niet vinden -- test-infrastructuur zelf is stuk, geen betrouwbare sabotage uitgevoerd');
+      ok(false, '18 (sabotage-setup): kon de sabotage-marker niet vinden -- test-infrastructuur zelf is stuk, geen betrouwbare sabotage uitgevoerd');
     } else {
       fs.writeFileSync(htmlPath, sabotaged, 'utf8');
       const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
@@ -183,9 +206,9 @@ async function loadTrainenDOM(page) {
       const detecteert = html && html.includes('${tkIcon(');
       await page.close();
       fs.writeFileSync(htmlPath, original, 'utf8'); // direct herstellen, ongeacht resultaat
-      ok(detecteert === true, '12: live sabotage (opnieuw ${tkIcon(...)} in statische HTML geintroduceerd) wordt door deze testsuite gedetecteerd -- bewijst dat de test de exacte bugklasse daadwerkelijk vangt, niet toevallig slaagt');
+      ok(detecteert === true, '18: live sabotage (opnieuw ${tkIcon(...)} in statische HTML geintroduceerd) wordt door deze testsuite gedetecteerd -- bewijst dat de test de exacte bugklasse daadwerkelijk vangt, niet toevallig slaagt');
       const restored = fs.readFileSync(htmlPath, 'utf8');
-      ok(restored === original, '12b: index.html is na de sabotage-test byte-identiek hersteld naar de originele, gecorrigeerde staat');
+      ok(restored === original, '18b: index.html is na de sabotage-test byte-identiek hersteld naar de originele, gecorrigeerde staat');
     }
   }
 

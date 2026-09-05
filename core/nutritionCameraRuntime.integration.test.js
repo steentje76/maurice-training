@@ -90,58 +90,60 @@ async function t(label, fn) {
   // -- ECHTE barcode-decodering op echte, gerenderde pixels ------------------
   await t('Barcode: echte EAN-13-afbeelding -> FOUND via ZXing-fallback, checksum gevalideerd (geen handmatige string)', async () => {
     const browser = await chromium.launch();
-    const page = await browser.newPage();
-    const zxingLib = fs.readFileSync(path.join(__dirname, '..', 'node_modules', '@zxing', 'library', 'umd', 'index.min.js'), 'utf8');
-    await page.addScriptTag({ content: zxingLib });
-    for (const f of ['nutritionCameraCapture.js', 'nutritionFoundation2.js', 'nutritionBarcodeRuntime.js']) {
-      await page.addScriptTag({ content: fs.readFileSync(path.join(__dirname, f), 'utf8') });
-    }
-    const imgBase64 = fs.readFileSync(path.join(FIXTURE_DIR, 'ean13_valid.png')).toString('base64');
-    await page.setContent(`<img id="bc" src="data:image/png;base64,${imgBase64}">`);
-    await page.waitForFunction(() => document.getElementById('bc').complete);
-    const result = await page.evaluate(async () => {
-      const img = document.getElementById('bc');
-      const zxingReader = new ZXing.BrowserMultiFormatReader();
-      const zxingAdapter = { decodeFromImageElement: (im) => zxingReader.decodeFromImageElement(im) };
-      return await NutritionBarcodeRuntime.decodeBarcodeFromImage(img, {
-        globalObj: window,
-        normalizeBarcodeFn: NutritionFoundation2Core.normalizeBarcode,
-        resolveBarcodeDetectionResultFn: NutritionCameraCapture.resolveBarcodeDetectionResult,
-        zxingReader: zxingAdapter
+    try {
+      const page = await browser.newPage();
+      const zxingLib = fs.readFileSync(path.join(__dirname, '..', 'node_modules', '@zxing', 'library', 'umd', 'index.min.js'), 'utf8');
+      await page.addScriptTag({ content: zxingLib });
+      for (const f of ['nutritionCameraCapture.js', 'nutritionFoundation2.js', 'nutritionBarcodeRuntime.js']) {
+        await page.addScriptTag({ content: fs.readFileSync(path.join(__dirname, f), 'utf8') });
+      }
+      const imgBase64 = fs.readFileSync(path.join(FIXTURE_DIR, 'ean13_valid.png')).toString('base64');
+      await page.setContent(`<img id="bc" src="data:image/png;base64,${imgBase64}">`);
+      await page.waitForFunction(() => document.getElementById('bc').complete);
+      const result = await page.evaluate(async () => {
+        const img = document.getElementById('bc');
+        const zxingReader = new ZXing.BrowserMultiFormatReader();
+        const zxingAdapter = { decodeFromImageElement: (im) => zxingReader.decodeFromImageElement(im) };
+        return await NutritionBarcodeRuntime.decodeBarcodeFromImage(img, {
+          globalObj: window,
+          normalizeBarcodeFn: NutritionFoundation2Core.normalizeBarcode,
+          resolveBarcodeDetectionResultFn: NutritionCameraCapture.resolveBarcodeDetectionResult,
+          zxingReader: zxingAdapter
+        });
       });
-    });
-    await browser.close();
-    assert.strictEqual(result.status, 'FOUND');
-    assert.strictEqual(result.identifier.value, '4006381333931');
-    assert.strictEqual(result.identifier.status, 'valid');
-    assert.strictEqual(result.path, 'zxing_fallback');
+      assert.strictEqual(result.status, 'FOUND');
+      assert.strictEqual(result.identifier.value, '4006381333931');
+      assert.strictEqual(result.identifier.status, 'valid');
+      assert.strictEqual(result.path, 'zxing_fallback');
+    } finally { await browser.close(); }
   });
 
   await t('Barcode: NO_BARCODE bij een afbeelding zonder enige barcode (echte pixels, geen barcode aanwezig)', async () => {
     const browser = await chromium.launch();
-    const page = await browser.newPage();
-    const zxingLib = fs.readFileSync(path.join(__dirname, '..', 'node_modules', '@zxing', 'library', 'umd', 'index.min.js'), 'utf8');
-    await page.addScriptTag({ content: zxingLib });
-    for (const f of ['nutritionCameraCapture.js', 'nutritionFoundation2.js', 'nutritionBarcodeRuntime.js']) {
-      await page.addScriptTag({ content: fs.readFileSync(path.join(__dirname, f), 'utf8') });
-    }
-    // Hergebruik het label-plaatje (bevat tekst, geen barcode) als "geen barcode"-fixture.
-    const imgBase64 = fs.readFileSync(path.join(FIXTURE_DIR, 'label_nl_per100g.png')).toString('base64');
-    await page.setContent(`<img id="bc" src="data:image/png;base64,${imgBase64}">`);
-    await page.waitForFunction(() => document.getElementById('bc').complete);
-    const result = await page.evaluate(async () => {
-      const img = document.getElementById('bc');
-      const zxingReader = new ZXing.BrowserMultiFormatReader();
-      const zxingAdapter = { decodeFromImageElement: (im) => zxingReader.decodeFromImageElement(im) };
-      return await NutritionBarcodeRuntime.decodeBarcodeFromImage(img, {
-        globalObj: window,
-        normalizeBarcodeFn: NutritionFoundation2Core.normalizeBarcode,
-        resolveBarcodeDetectionResultFn: NutritionCameraCapture.resolveBarcodeDetectionResult,
-        zxingReader: zxingAdapter
+    try {
+      const page = await browser.newPage();
+      const zxingLib = fs.readFileSync(path.join(__dirname, '..', 'node_modules', '@zxing', 'library', 'umd', 'index.min.js'), 'utf8');
+      await page.addScriptTag({ content: zxingLib });
+      for (const f of ['nutritionCameraCapture.js', 'nutritionFoundation2.js', 'nutritionBarcodeRuntime.js']) {
+        await page.addScriptTag({ content: fs.readFileSync(path.join(__dirname, f), 'utf8') });
+      }
+      // Hergebruik het label-plaatje (bevat tekst, geen barcode) als "geen barcode"-fixture.
+      const imgBase64 = fs.readFileSync(path.join(FIXTURE_DIR, 'label_nl_per100g.png')).toString('base64');
+      await page.setContent(`<img id="bc" src="data:image/png;base64,${imgBase64}">`);
+      await page.waitForFunction(() => document.getElementById('bc').complete);
+      const result = await page.evaluate(async () => {
+        const img = document.getElementById('bc');
+        const zxingReader = new ZXing.BrowserMultiFormatReader();
+        const zxingAdapter = { decodeFromImageElement: (im) => zxingReader.decodeFromImageElement(im) };
+        return await NutritionBarcodeRuntime.decodeBarcodeFromImage(img, {
+          globalObj: window,
+          normalizeBarcodeFn: NutritionFoundation2Core.normalizeBarcode,
+          resolveBarcodeDetectionResultFn: NutritionCameraCapture.resolveBarcodeDetectionResult,
+          zxingReader: zxingAdapter
+        });
       });
-    });
-    await browser.close();
-    assert.strictEqual(result.status, 'NO_BARCODE');
+      assert.strictEqual(result.status, 'NO_BARCODE');
+    } finally { await browser.close(); }
   });
 
   // -- ECHTE end-to-end: OCR -> bridge -> multi-source (MATCH + CONFLICT) --

@@ -21,40 +21,47 @@ async function t(label, fn) {
   catch (e) { console.log('OVERGESLAGEN: playwright niet beschikbaar.'); console.log('Resultaat: 0 geslaagd, 0 mislukt (skipped)'); return; }
 
   const INDEX_PATH = 'file://' + path.join(__dirname, '..', 'index.html');
-  const browser = await chromium.launch();
+  let browser;
+  try {
+    browser = await chromium.launch();
 
-  await t('Inzicht: Voeding-domeinrij bestaat en navigeert naar s-voeding', async () => {
-    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
-    await page.goto(INDEX_PATH);
-    await page.waitForTimeout(400);
-    await page.evaluate(() => go('s-inzicht'));
-    await page.waitForTimeout(400);
-    const hasVoedingRow = await page.evaluate(() => {
-      var rows = Array.from(document.querySelectorAll('#inzicht-domain-list .tk-domain-row .t'));
-      return rows.some(function (el) { return el.textContent === 'Voeding'; });
-    });
-    assert.strictEqual(hasVoedingRow, true);
-    await page.close();
-  });
-
-  const screens = ['s-voeding', 's-voeding-maaltijden', 's-voeding-zoeken', 's-voeding-supplement'];
-  for (const scr of screens) {
-    await t('Screen ' + scr + ': laadt foutloos (geen pageerror/JS-crash)', async () => {
+    await t('Inzicht: Voeding-domeinrij bestaat en navigeert naar s-voeding', async () => {
       const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
-      const errors = [];
-      page.on('pageerror', e => errors.push(e.message));
-      await page.goto(INDEX_PATH);
-      await page.waitForTimeout(400);
-      await page.evaluate((s) => go(s), scr);
-      await page.waitForTimeout(400);
-      const isActive = await page.evaluate((s) => {
-        const el = document.getElementById(s);
-        return el && el.classList.contains('active');
-      }, scr);
-      assert.strictEqual(isActive, true, scr + ' moet actief worden na go()');
-      assert.deepStrictEqual(errors, [], scr + ' mag geen pageerror geven: ' + JSON.stringify(errors));
-      await page.close();
+      try {
+        await page.goto(INDEX_PATH);
+        await page.waitForTimeout(400);
+        await page.evaluate(() => go('s-inzicht'));
+        await page.waitForTimeout(400);
+        const hasVoedingRow = await page.evaluate(() => {
+          var rows = Array.from(document.querySelectorAll('#inzicht-domain-list .tk-domain-row .t'));
+          return rows.some(function (el) { return el.textContent === 'Voeding'; });
+        });
+        assert.strictEqual(hasVoedingRow, true);
+      } finally { await page.close(); }
     });
+
+    const screens = ['s-voeding', 's-voeding-maaltijden', 's-voeding-zoeken', 's-voeding-supplement'];
+    for (const scr of screens) {
+      await t('Screen ' + scr + ': laadt foutloos (geen pageerror/JS-crash)', async () => {
+        const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+        try {
+          const errors = [];
+          page.on('pageerror', e => errors.push(e.message));
+          await page.goto(INDEX_PATH);
+          await page.waitForTimeout(400);
+          await page.evaluate((s) => go(s), scr);
+          await page.waitForTimeout(400);
+          const isActive = await page.evaluate((s) => {
+            const el = document.getElementById(s);
+            return el && el.classList.contains('active');
+          }, scr);
+          assert.strictEqual(isActive, true, scr + ' moet actief worden na go()');
+          assert.deepStrictEqual(errors, [], scr + ' mag geen pageerror geven: ' + JSON.stringify(errors));
+        } finally { await page.close(); }
+      });
+    }
+  } finally {
+    if (browser) await browser.close();
   }
 
   await t('Knoppen gebruiken de echte, bestaande tk-btn-primary/tk-btn-secondary classes (geen dode class-namen, adversarial regressie-check)', async () => {
@@ -109,6 +116,5 @@ async function t(label, fn) {
 
   console.log(`fVoedingUXSetA: ${pass} geslaagd, ${fail} mislukt`);
   console.log(`Resultaat: ${pass} geslaagd, ${fail} mislukt`);
-  await browser.close();
   if (fail > 0) process.exit(1);
 })();

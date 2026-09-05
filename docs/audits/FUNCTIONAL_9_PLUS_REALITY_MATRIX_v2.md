@@ -32,3 +32,84 @@ een "architecture only"-classificatie die te dicht aanleunde tegen
 Periodisering. Nu expliciet onderscheiden: Human Coach heeft wel
 degelijk meerdere, doordachte code-modules (~4 bestanden), Periodisering
 heeft geen enkele. Beide zijn A<5, maar om verschillende redenen.
+
+---
+
+## AANVULLING (Audit Closure Sprint) — voorheen NOT YET DEEPLY AUDITED
+
+### Exercise Intelligence / Sport-specifiek — FULL STACK, sterk getest
+
+Bewijs: 24+ toegewijde testbestanden (fB9_02RunningCore t/m
+fB9_06MultisportIntegration, fRowingErgIntelligence, fHyroxTriathlon,
+fHyroxRulebookRevalidation, fB9_H2CTeamOperations, teamPerformance,
+fGlobalExerciseAuthority, fExerciseLibrary, fExerciseProgressionCoach),
+allemaal individueel gedraaid en groen bevestigd in deze sessie (niet
+alleen aangenomen via de release gate).
+
+| Sport/domein | Software maturity | Data population | External validation |
+|---|---|---|---|
+| Running | 9 (21+17 tests groen) | bevestigd via activities (3 rijen) | UNKNOWN — EXTERNAL VALIDATION REQUIRED (echt device/GPS-track niet in deze sessie getest) |
+| Cycling | 9 (22+14 tests groen) | idem | UNKNOWN — EXTERNAL VALIDATION REQUIRED |
+| Rowing/Concept2 | 8 (6 tests groen, kleinere suite) | idem | UNKNOWN — EXTERNAL VALIDATION REQUIRED (Concept2 PM5-koppeling niet hardware-getest deze sessie) |
+| HYROX/Triathlon | 9 (rulebook-revalidatie + volledige keten getest) | activities/race_segments (3 rijen) | software closed, external device n.v.t. voor dit format |
+| Multisport | 8 (11 tests groen) | idem | n.v.t. |
+| Team | 9 (21+teamPerformance groen) | organizations:1, memberships:4 | echte-gebruik-validatie: laag (weinig teams-rijen) |
+| Exercise library/authority | 9 (10+10+8 tests groen) | exercises:103, echt gebruikt | n.v.t. (geen externe hardware) |
+
+**Correctie op eerdere impliciete aanname:** dit domein is NIET
+"onderbelicht" -- het is, naast Training Core, het best-geteste domein
+in de hele applicatie.
+
+### Calculation/Evidence/Decision Registries — FULL STACK, reeds gesloten sprint
+
+Bewijs: `docs/CALCULATION_REGISTRY.md` (704 regels), `docs/
+MS-F3-09_EVIDENCE_REGISTRY_AUDIT.md`, `docs/DECISION_RULE_REGISTRY.md`,
+met bijbehorende, individueel bevestigde tests:
+- fCalculationRegistryCoverage: 5/5
+- fCalculationRegistryStrength: 56/56
+- fEvidenceClaimAudit: 21/21 (reproduceerbare, machine-getelde evidence-
+  classificatie: 23 calculations met evidence A-E, 9 Decision Rules,
+  0 rules die ten onrechte A/B claimen)
+- fDecisionRuleRegistry: 20/20
+
+**Classificatie: FULL STACK.** Dit is een eerder al formeel afgesloten
+sprint (MS-F3-09, status CLOSED in het eigen document) met een
+reproduceerbare, adversarieel-geteste governance-laag. Twee eerdere
+overclaims zijn daarin zelf al gecorrigeerd (geen "crash-bescherming"
+als ontworpen mechanisme, AI-fabricatie-preventie is prompt-niveau, geen
+technische afdwinging -- expliciet als open F4-item genoteerd, niet
+verzwegen).
+
+### Platform / Security -- FULL STACK, zeer breed getest
+
+Bewijs: 27 toegewijde RLS/security-testbestanden gevonden; steekproef
+van 8 kern-bestanden individueel gedraaid in deze sessie, allemaal
+groen (fCoachAccessRls 16/16, fDeleteAccountSecurity 27/27,
+fEntitlementRls 18/18, fGymRlsMultiTenant 22/22, fSocialRlsMultiTenant
+14/14, fWearableAuthSecurity 20/20, fWomensPrivacyConsent 9/9,
+fUsersCommercialAuthority 16/16).
+
+**Classificatie: FULL STACK voor de geteste RLS/multi-tenant/privacy-
+laag.** Niet apart in deze sessie geverifieerd: productie-observability/
+telemetrie-activatie (eerder al als PARTIAL/ARCHITECTURE ONLY
+vastgesteld via `client_telemetry_events`: 3 rijen) en support/admin-
+tooling (niet onderzocht) -- deze blijven UNKNOWN, niet aangenomen als
+FULL STACK.
+
+### Nog steeds UNKNOWN — EXTERNAL VALIDATION REQUIRED (niet "not investigated")
+
+- Running/Cycling/Rowing: echte GPS-track/hardware-validatie
+- Concept2 PM5: echte, live hardware-koppeling
+- Devices/Wearables buiten de ene bevestigde koppeling: echte provider-
+  accounts
+- Commercial: echte betaaltransactie via een live payment-provider
+
+### Nog steeds NOT INVESTIGATED deze sessie (expliciet, geen aanname gedaan)
+
+- Notifications (creation/delivery/preferences) -- geen code-inspectie
+  uitgevoerd in deze sessie
+- Profile/Account avatar-upload-flow (technisch) -- niet apart
+  geinspecteerd
+- Research/Scientific cohort-export-mechanisme in detail
+- Error/empty/degraded-states app-brede steekproef (Fase 15) -- niet
+  systematisch doorlopen

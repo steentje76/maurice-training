@@ -14,3 +14,21 @@
 | B10 | Touch target / focus-visible | Design drift gates | niet gebouwd | geen bestaande test dekt dit | ontbrekend test-contract, geen productblocker op zich | nee (technisch) | nee | ja -- veilige, technische testtoevoeging | P2 |
 
 **P0:** geen gevonden in deze of vorige sessie.
+
+## Aanvulling (Audit Closure Sprint)
+
+| ID | Domain | Capability | Current maturity | Exact gap | Priority | PO decision? | External? | Safe software work? |
+|---|---|---|---|---|---|---|---|---|
+| B11 | Running/Cycling/Rowing | Real device/GPS validatie | software closed (9), external open | geen echte hardware/provider getest in enige sessie | P2 | nee | ja | nee |
+| B12 | Concept2 | PM5 live-koppeling | software bestaat, external open | geen echte ergometer getest | P2 | nee | ja | nee |
+| B13 | Platform | Observability/telemetrie-activatie | ARCHITECTURE ONLY (3 events) | schrijf-pad bestaat vermoedelijk, wordt niet actief gebruikt | P2 | nee | nee | ja -- wiring-audit is veilig technisch werk |
+| B14 | Platform | Notifications | NOT INVESTIGATED | geen code-inspectie uitgevoerd | P2 | nee | nee | onbekend zonder audit |
+| B15 | Commercial | Echte betaaltransactie-validatie | ARCHITECTURE ONLY | 0 billing_events | P2 | ja (prijzen blijven PO) | ja (payment-provider) | nee |
+
+Geen duplicates of superseded items gevonden bij herbeoordeling van
+B01-B10 (Samen/Messaging/Human Coach/Nutrition/Periodisering/Devices/
+Team-canoniek/drift-gates blijven ongewijzigd, correct geclassificeerd).
+
+**Nog steeds geen P0 (security/data-integrity) gevonden** -- de brede
+RLS-testdekking (27 bestanden, steekproef bevestigd groen) geeft geen
+aanleiding tot een kritieke bevinding in deze sessie.

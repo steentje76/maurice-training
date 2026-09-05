@@ -182,22 +182,125 @@ expliciete degraded-state-tests voor de client zijn niet geschreven.
 
 ## KNOWN LIMITATIONS (expliciet, geen verzwegen risico)
 
-1. RLS-policies niet black-box, end-to-end adversarieel gevalideerd
-   (tool-beperking, zie boven) -- wel syntactisch correct en 1:1
-   overeenkomstig het bewezen bestaande patroon.
+1. **RLS-policies niet black-box, end-to-end adversarieel gevalideerd
+   via een echte authenticated-JWT.** Ik heb dit expliciet geprobeerd op
+   te lossen in de closure-pass: de SQL-tool verbindt altijd als
+   `session_user=postgres` (tabel-eigenaar, `relforcerowsecurity=false`
+   op alle betrokken tabellen, identiek aan de bestaande, productie-
+   bewezen `coach_athlete_relationships`/`hrv_log`). Ik heb ook
+   onderzocht of ik zelf een geldige `authenticated`-JWT kon genereren
+   via een test-gebruiker; `auth.users` bevat uitsluitend echte,
+   bestaande productie-accounts (met e-mail/wachtwoord-hash) -- ik heb
+   bewust GEEN wachtwoord-reset of JWT-forging voor een bestaand account
+   geprobeerd (dat zou zelf een beveiligingsschending zijn), en had geen
+   toegang tot een auth-signup-endpoint om een nieuw, veilig testaccount
+   aan te maken binnen deze sessie. **Status: RLS IMPLEMENTED +
+   STRUCTURALLY REVIEWED. BLACK-BOX AUTH VALIDATION OPEN.** Dit is geen
+   merge-blocker voor de foundation-code (de policies zijn structureel
+   correct en volgen 1:1 het bewezen patroon), maar wel een blocker voor
+   VALIDATED/>=9-status.
 2. Geen UI/scherm-integratie (bewust, buiten scope).
-3. Geen private-notes-model.
-4. Geen notification-integratie.
-5. Geen GROUP/TEAM-schrijfpad daadwerkelijk gebruikt (wel
-   architectonisch voorbereid in de migratie, check-constraints staan
-   dit toe).
-6. Geen error/degraded-state-tests voor de client-flows.
+3. Private-notes-model: **NOT IMPLEMENTED / DEFERRED** (expliciete,
+   aparte capability, geen onderdeel van canonical messaging; mag nooit
+   automatisch lekken naar athlete messages/AI payload/social/team/
+   gym/exports -- er bestaat simpelweg nog geen tabel/pad die dit zou
+   kunnen laten gebeuren, dus dit risico is momenteel niet aanwezig
+   omdat de capability zelf niet bestaat).
+4. Geen GROUP/TEAM-schrijfpad daadwerkelijk gebruikt.
+5. **Revocation-gedrag voor bestaande threads:** een revoked
+   coach_athlete_relationship verwijdert GEEN participant-rij uit
+   `message_participants` (geen automatische, destructieve migratie).
+   Of historische berichten na revocatie zichtbaar mogen blijven is
+   expliciet **PO DECISION REQUIRED** (`MessagingCore.
+   canReadHistoricalMessagesAfterRevocation()`, fail-closed default:
+   nee). Belangrijk, wel technisch geborgd: revocatie kan NOOIT nieuwe,
+   ongeautoriseerde berichten of nieuwe health-data-toegang opleveren --
+   dat blijft ongewijzigd via de bestaande RLS/CoachAccessCore.
+6. **Block-integratie:** `MessagingCore.blockPreventsFurtherMessages()`
+   (nieuw, getest) spiegelt het bestaande, canonical "block wint altijd"-
+   principe (MS-F9-01/03) -- een actieve `social_blocks`-rij in beide
+   richtingen voorkomt het versturen van nieuwe berichten. Dit is
+   vooralsnog uitsluitend client-side/presentatielaag; een server-side
+   RLS-koppeling tussen `social_blocks` en `messages`-inserts is NIET
+   in deze sprint aan de database-migratie toegevoegd (zou een aparte,
+   voorzichtige migratie-stap vereisen) -- expliciet genoteerd als open
+   punt, niet verzwegen.
+7. Geen error/degraded-state-tests voor de client-flows (netwerkfouten/
+   duplicate send) buiten de nu toegevoegde `isValidThreadState`/
+   `canSendMessage`-fail-closed-logica.
+
+## NOTIFICATIONS (nieuw, deze closure-pass)
+
+Onderzocht: de bestaande, canonical `social_notifications`-infrastructuur
+(MS-F9-03: `recipient_id, event_type, actor_id, target_type/id, read_at`,
+geen sensitive content-snapshot, insert uitsluitend via `service_role`).
+**Geen tweede notification engine gebouwd.**
+
+Nieuwe, additieve migraties:
+- `ms_f_messaging_notification_trigger_v1`: `SECURITY DEFINER`-trigger
+  (`notify_message_participants()`) op `messages` AFTER INSERT, die voor
+  elke andere, niet-geblokkeerde participant een `social_notifications`-
+  rij aanmaakt (`event_type='new_message'`, `target_type='message'`).
+  Geen notificatie naar de afzender zelf (bevestigd via een echte,
+  functionele test met bestaande, echte user-ID's, direct daarna volledig
+  opgeruimd -- geen testdata achtergebleven).
+- Twee vervolgmigraties om de bestaande check-constraints op
+  `social_notifications.event_type`/`target_type` additief uit te
+  breiden met `'new_message'`/`'message'` (geen bestaande, toegestane
+  waarde verwijderd).
+
+**Bevestigd, functioneel getest (niet alleen source-inspectie):**
+ontvanger krijgt precies 1 notificatie, afzender krijgt er 0.
+
+**Niet in deze sprint:** preference-respectering (geen bestaande
+notification-preference-infrastructuur gevonden om op aan te sluiten),
+retry-gedrag (de trigger is synchroon met de insert; er is geen
+bestaand, apart retry-mechanisme voor `social_notifications` gevonden
+om te hergebruiken).
+
+## UNREAD CONTRACT (nieuw, deze closure-pass)
+
+`MessagingCore.unreadCount()` (bestond al) is nu aanvullend getest op
+adversariale randgevallen. Geen thread-unread-leakage mogelijk zolang
+`last_read_at` uitsluitend via `mp_update_own_read_state` (bestaande
+RLS: `user_id = auth.uid()`) gewijzigd kan worden -- een gebruiker kan
+nooit de `last_read_at` van een ander manipuleren. Geen "global unread
+count"-implementatie in deze sprint (geen bestaande, canonical
+architectuur hiervoor gevonden om zonder nieuwe productbeslissing op
+aan te sluiten).
+
+## FINAL MATURITY (afzonderlijk, geen samengestelde claim)
+
+| | Status |
+|---|---|
+| Human Coach core logic | IMPLEMENTED + TESTED |
+| Human Coach database/RLS | IMPLEMENTED (structureel gereviewd) |
+| Human Coach normal UX | NOT YET INTEGRATED |
+| Human Coach real user validation | OPEN |
+| Messaging core | IMPLEMENTED + TESTED |
+| Messaging database/RLS | IMPLEMENTED (structureel gereviewd) |
+| Messaging black-box auth validation | OPEN |
+| Messaging notifications | IMPLEMENTED + TESTED (functioneel, niet alleen source) |
+| Messaging unread | IMPLEMENTED + TESTED |
+| Messaging normal UX | NOT YET INTEGRATED |
+| Messaging real user validation | OPEN |
+| Private notes | NOT IMPLEMENTED / DEFERRED |
+
+**Geen "FULL STACK"-claim voor Human Coach of Messaging als geheel.**
 
 ## PO DECISIONS STILL OPEN
 
 - Wanneer/hoe een daadwerkelijk Coach v0.2-scherm deze foundation gaat
   gebruiken.
 - Private coach notes: apart model laten ontwerpen of bewust uitstellen.
-- Welke notification-infrastructuur (bestaand of nieuw te bouwen) de
-  message-events moet dragen.
+- **Revocation:** mogen historische berichten na het intrekken van een
+  coach-athlete-relatie zichtbaar blijven voor beide partijen, of moeten
+  ze verborgen/gearchiveerd worden? (`canReadHistoricalMessagesAfterRevocation`
+  staat nu fail-closed op "nee", maar dit is een productkeuze, geen
+  technisch gegeven.)
+- Server-side RLS-koppeling tussen `social_blocks` en nieuwe `messages`-
+  inserts (nu uitsluitend client-side gespiegeld) -- gewenst als
+  aanvullende, harde database-garantie?
 - GROUP/TEAM messaging: wanneer dit daadwerkelijk geactiveerd wordt.
+- Notification-preferences en retry-gedrag: bestaande infrastructuur
+  hiervoor identificeren of bewust (nog) niet bouwen.

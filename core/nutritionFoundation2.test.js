@@ -287,6 +287,24 @@ t('sabotage: provider not found (lege kandidatenlijst) geeft nooit lege productd
   assert.strictEqual(r.productId, undefined);
 });
 
+// -- Portion Engine, formele scenario-dekking (PR #239 closure) -----------
+t('Portion engine: 250g PER_100G correct geschaald', () => {
+  const r = N2.portionToNutrients({ basis: 'PER_100G', energy_kcal: 200 }, 250, 'g');
+  assert.strictEqual(r.energy_kcal, 500);
+});
+t('Portion engine: 330ml PER_100ML correct geschaald', () => {
+  const r = N2.portionToNutrients({ basis: 'PER_100ML', energy_kcal: 40 }, 330, 'ml');
+  assert.strictEqual(r.energy_kcal, 132);
+});
+t('Portion engine: 0.5 serving correct geschaald', () => {
+  const r = N2.portionToNutrients({ basis: 'PER_SERVING', energy_kcal: 150 }, 0.5, 'serving');
+  assert.strictEqual(r.energy_kcal, 75);
+});
+t('Portion engine: custom gram-hoeveelheid (bv. 137g) correct, geen afronding naar een vast getal (adversarial)', () => {
+  const r = N2.portionToNutrients({ basis: 'PER_100G', energy_kcal: 200 }, 137, 'g');
+  assert.strictEqual(r.energy_kcal, 274);
+});
+
 console.log(`NutritionFoundation2Core: ${pass} geslaagd, ${fail} mislukt`);
 console.log(`Resultaat: ${pass} geslaagd, ${fail} mislukt`);
 if (fail > 0) process.exit(1);

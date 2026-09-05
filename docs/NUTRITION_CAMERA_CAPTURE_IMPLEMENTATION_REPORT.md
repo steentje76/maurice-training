@@ -140,21 +140,65 @@ met hoe Wave 3 dit ook client-side liet gebeuren). Geen nieuwe
 database-testdata is deze sprint aangemaakt (de bridge is een pure
 functie) -- er is dus niets op te ruimen.
 
-## MATURITY (bijgewerkt na canonical-ingest-koppeling)
+## DATABASE PERSISTENCE CLOSURE (deze pass, echt bewezen tegen de live database)
+
+Alle onderstaande scenario's zijn **echt uitgevoerd** tegen de live
+Supabase-database (project `mhfxhzkdmgkaplicdszg`), niet gesimuleerd,
+en volledig, verifieerbaar opgeruimd (0 rijen achtergebleven in
+`nutrition_products`/`nutrition_product_identifiers`/
+`nutrition_nutrient_values`/`nutrition_meals`/`nutrition_meal_items`).
+
+1. **Echte persistence:** de echte OCR-uitkomst (539 kcal/6,3 g eiwit/
+   57,5 g koolhydraten/30,9 g vet, uit `label_nl_clear.png`) is
+   daadwerkelijk in `nutrition_products`+`nutrition_product_identifiers`+
+   `nutrition_nutrient_values` geschreven, met `source_type:
+   USER_LABEL_SCAN` en `verification_state: USER_PRIVATE`.
+2. **Reload-bewijs:** een frisse query via het normale identifier-
+   lookup-pad haalde exact dezelfde waarden + provenance terug --
+   geen enkel veld week af, en `verification_state` was **niet**
+   automatisch `VERIFIED`.
+3. **VERIFIED-bescherming, echte database:** een `VERIFIED`-testproduct
+   aangemaakt; de exacte RLS-policy-expressie (dezelfde, betrouwbare
+   testmethode als in Wave 3) bevestigde `false` voor een update-poging
+   door de oorspronkelijke maker -- ongeacht de brontype van de
+   conflicterende poging.
+4. **Historische reproduceerbaarheid, echte database:** een
+   `nutrition_meal_items`-rij met een bevroren snapshot (539/6,3)
+   aangemaakt; daarna een nieuwe, afwijkende
+   `nutrition_nutrient_values`-revisie (480/7,0) voor hetzelfde product
+   toegevoegd. Een herhaalde query bevestigde: de historische snapshot
+   bleef **exact** 539/6,3 -- geen retroactieve wijziging.
+5. **Unknown-product-flow, echte database:** een barcode die lokaal
+   niet bestond, is via het label-scan-pad daadwerkelijk aangemaakt en
+   was direct daarna via het normale lookup-pad vindbaar -- zonder dat
+   Open Food Facts hierbij betrokken was.
+6. **Incomplete-OFF-product-flow, echte database:** een product met een
+   ontbrekend `protein_g`-veld (`EXTERNAL_DATABASE`-rij) aangevuld met
+   een aparte, nieuwe `nutrition_nutrient_values`-rij met
+   `source_type: USER_LABEL_SCAN` en `extraction_confidence: 0.82`.
+   Beide rijen bestaan naast elkaar -- **geen valse claim dat OFF het
+   eiwit-veld leverde.** Dit werkte binnen het bestaande schema (de
+   `source_type`/`extraction_confidence`-kolommen op
+   `nutrition_nutrient_values` bleken al aanwezig) -- geen "groter
+   modelwijziging"-STOP nodig.
+
+## MATURITY (definitief bijgewerkt na database-persistence-closure)
 
 ```
-CANONICAL INGEST CONNECTION     = FUNCTIONALLY PROVEN (end-to-end, echte OCR -> comparison -> ingestdecision, geen echte database-write getest)
-MULTI-SOURCE VERIFICATION       = FUNCTIONALLY PROVEN (nu wel end-to-end gekoppeld aan echte OCR-output, MATCH en CONFLICT beide bewezen)
-HISTORICAL REPRODUCIBILITY      = FUNCTIONALLY PROVEN (expliciete test: oude snapshot blijft ongewijzigd na een nieuwe, echte label-scan)
-UNKNOWN PRODUCT FLOW            = FUNCTIONALLY PROVEN (REJECT zonder naam, CREATE_NEW met bevestigde naam, beide met echte OCR-waarden)
-VERIFIED PROTECTION             = FUNCTIONALLY PROVEN (nu ook tegen een echt, foto-herkend conflict, niet alleen tegen een database-write-poging)
+CANONICAL INGEST CONNECTION     = FUNCTIONALLY PROVEN, INCLUSIEF ECHTE DATABASE-PERSISTENCE EN RELOAD
+MULTI-SOURCE VERIFICATION       = FUNCTIONALLY PROVEN
+HISTORICAL REPRODUCIBILITY      = FUNCTIONALLY PROVEN, ECHTE DATABASE
+UNKNOWN PRODUCT FLOW            = FUNCTIONALLY PROVEN, ECHTE DATABASE
+INCOMPLETE OFF PRODUCT FLOW     = FUNCTIONALLY PROVEN, ECHTE DATABASE
+VERIFIED PROTECTION             = FUNCTIONALLY PROVEN, ECHTE DATABASE (policy-expressie-niveau, structurele tool-beperking voor black-box auth blijft, zie eerdere Wave 3-documentatie)
 ```
 
 **Wat nog steeds ontbreekt voor een volledig, productieklaar pad:**
-de daadwerkelijke database-schrijfstap vanuit dit pad, en een
-Netlify-Function-equivalent voor de label-scan-flow (Wave 3 had dit al
-voor OFF; de label-scan-flow hergebruikt dezelfde ingest-beslissingen
-maar heeft nog geen eigen persistence-aanroep).
+een Netlify-Function-equivalent die dit pad automatisch aanroept vanuit
+een echte gebruikersactie (Wave 3 had dit al voor OFF-barcode-lookup;
+de label-scan-flow heeft nog geen eigen, geautomatiseerde
+persistence-aanroep vanuit de client -- de database-laag zelf is nu wel
+bewezen correct).
 
 - **Geen daadwerkelijke `index.html`-integratie** -- de harnas
   (`tools/nutrition-camera-harness.html`) is bewust apart gehouden
@@ -168,10 +212,6 @@ maar heeft nog geen eigen persistence-aanroep).
 - Geen ondersteuning voor niet-Nederlandse/Engelse etiketten getest.
 - `TABLE_NOT_FOUND`/`IMAGE_BLURRY`-detectie (Fase 8) blijft niet
   gebouwd -- vereist beeldanalyse buiten deze scope.
-- **Canonical ingest-koppeling is nu wel functioneel bewezen** (zie
-  hieronder), maar de daadwerkelijke database-schrijfstap vanuit dit
-  pad ontbreekt nog -- de bridge levert een beslissing + snapshot,
-  het schrijven zelf is niet apart getest deze sprint.
 
 ## TESTS
 

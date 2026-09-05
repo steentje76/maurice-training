@@ -34,7 +34,20 @@ nog niet in een gebruikersscherm gebracht.
 | Hydratie | Apart canonical model, geen UI | Meestal wel aanwezig | Matig |
 | Supplementen | Apart canonical model, geen UI | Wisselend aanwezig | Matig |
 
-## Conclusie
+## Aanvulling (Closure 2): correcties, custom foods, degraded behavior
+
+| Capability | Trainingskompas CURRENT | Benchmark |
+|---|---|---|
+| Custom foods | Volledig, met expliciete USER/USER_PRIVATE-provenance, nooit automatisch VERIFIED | Alle drie referenties ondersteunen dit, provenance-transparantie wisselend gedocumenteerd |
+| Databron-correcties met VERIFIED-bescherming | Expliciet, 5 scenario's (A-E) getest, VERIFIED altijd beschermd | Niet publiek gedocumenteerd bij de drie referenties -- Trainingskompas' expliciete, geteste precedence-model is op dit vlak transparanter dan wat extern bekend is |
+| Degraded/offline gedrag | Eerlijk, per-capability geclassificeerd (LOCAL_OK vs. REQUIRES_NETWORK), geen overclaim | Niet vergelijkbaar gedocumenteerd bij de drie referenties |
+
+**Bijgewerkte conclusie:** het grootste, resterende gat blijft
+populatie van echte productdata en een daadwerkelijke UX -- niet de
+onderliggende architectuur, die na Closure 1+2 op meerdere vlakken
+(coverage-transparantie, correctie-precedence, historische
+reproduceerbaarheid) minstens even sterk staat als wat er publiek over
+de drie referenties bekend is.
 
 Trainingskompas hoeft niet elke functie van deze drie apps te evenaren.
 De doelstelling blijft: een uitstekende, sportgerichte

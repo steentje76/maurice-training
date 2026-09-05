@@ -27,3 +27,13 @@ Bron: code/database-inspectie + deze sprint. Geen documentatie-aanname.
 micronutriënten, hydratie/supplementen-service-laag) zijn eerlijk laag
 gehouden -- ze vereisen ofwel een PO-beslissing, ofwel simpelweg nog
 niet-gedaan werk, niet een architecturale blokkade.
+
+## CLOSURE 2 (deze pass): Custom Products + Corrections + Duplicates + Degraded States
+
+| Capability | Status | Maturity 0-10 | Test evidence |
+|---|---|---|---|
+| Custom food/product lifecycle | FUNCTIONALLY PROVEN | 8 | 12/12 pure tests + live database-scenario (aanmaken, loggen, later wijzigen, oude meal ongewijzigd 150kcal, nieuwe meal 225kcal) |
+| Product correction workflow (scenario's A-E) | FUNCTIONALLY PROVEN | 8 | 12/12 pure tests, hergebruikt de al eerder live-geverifieerde VERIFIED-precedence |
+| Duplicate handling (barcode/naam) | IMPLEMENTED + TESTED | 6 | pure tests, geen live database-scenario met een echte dubbele barcode-poging deze pass (al wel eerder, in Wave 3, functioneel bewezen op databaseniveau via de unique-constraint) |
+| Degraded/offline state-classificatie | IMPLEMENTED + TESTED | 7 | 12/12 pure tests, eerlijke LOCAL_OK/REQUIRES_NETWORK-matrix, geen overclaim |
+| Barcode/OCR error-states (Wave 4, hergebruikt) | ONGEWIJZIGD, FUNCTIONALLY PROVEN | 8 | geen wijziging deze pass, eerder al live/functioneel bewezen |

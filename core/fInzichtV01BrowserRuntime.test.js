@@ -50,7 +50,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     const overviewCells = await page.evaluate(() => document.querySelectorAll('#inzicht-overview-grid .tk-overview-cell').length);
     ok(overviewCells === 5, w + 'px 6: exact 5 Snel overzicht-cellen');
     const domainRows = await page.evaluate(() => document.querySelectorAll('#inzicht-domain-list .row').length);
-    ok(domainRows === 6, w + 'px 7: exact 6 domain-rows (Prestaties/Herstel/Belasting/Lichaam/Verbanden/Doelen)');
+    ok(domainRows === 7, w + 'px 7: exact 7 domain-rows (Prestaties/Herstel/Belasting/Lichaam/Voeding/Verbanden/Doelen)');
     const periodBtns = await page.evaluate(() => document.querySelectorAll('#s-inzicht .tk-period-selector button[role="tab"]').length);
     ok(periodBtns === 3, w + 'px 8: Period Selector heeft exact 3 opties (7 dagen/4 weken/3 maanden)');
     const filterChip = await page.evaluate(() => !!document.querySelector('#s-inzicht .tk-filter-chip select'));

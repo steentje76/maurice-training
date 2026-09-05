@@ -143,12 +143,50 @@ t('unreadCount: 0 zonder berichten', () => {
   assert.strictEqual(MessagingCore.unreadCount('2026-09-01T11:00:00Z', []), 0);
 });
 
-// -- canReadHistoricalMessagesAfterRevocation (PO decision required) --------
-t('canReadHistoricalMessagesAfterRevocation: fail-closed default, expliciet PO_DECISION_REQUIRED', () => {
-  const r = MessagingCore.canReadHistoricalMessagesAfterRevocation();
-  assert.strictEqual(r.allowed, false);
-  assert.strictEqual(r.reason, 'PO_DECISION_REQUIRED');
+// -- PO-besluit: revocation/end -> READ-ONLY (history blijft, send niet) ---
+t('canReadHistoricalMessagesAfterRevocation: history blijft leesbaar voor participant, ongeacht relationship-status (PO-besluit, definitief)', () => {
+  const parts = [{ thread_id: 't1', user_id: 'a', is_blocked: false }];
+  assert.strictEqual(MessagingCore.canReadHistoricalMessagesAfterRevocation('a', 't1', parts), true);
 });
+t('canReadHistoricalMessagesAfterRevocation: false voor niet-participant (adversarial, ongewijzigd)', () => {
+  const parts = [{ thread_id: 't1', user_id: 'a', is_blocked: false }];
+  assert.strictEqual(MessagingCore.canReadHistoricalMessagesAfterRevocation('b', 't1', parts), false);
+});
+t('canReadHistoricalMessagesAfterRevocation: false wanneer geblokkeerd (block blijft sterker dan revocation-toegang, KERN block-precedence)', () => {
+  const parts = [{ thread_id: 't1', user_id: 'a', is_blocked: true }];
+  assert.strictEqual(MessagingCore.canReadHistoricalMessagesAfterRevocation('a', 't1', parts), false);
+});
+
+// -- canSendCoachAthleteMessage: active -> allowed, revoked/pending -> READ-ONLY (nieuw bericht geweigerd)
+t('canSendCoachAthleteMessage: true bij actieve relatie voor coach (active relationship -> send allowed)', () => {
+  const rel = { status: 'active', coach_user_id: 'coach1', athlete_user_id: 'ath1' };
+  assert.strictEqual(MessagingCore.canSendCoachAthleteMessage('coach1', rel), true);
+});
+t('canSendCoachAthleteMessage: true bij actieve relatie voor athlete', () => {
+  const rel = { status: 'active', coach_user_id: 'coach1', athlete_user_id: 'ath1' };
+  assert.strictEqual(MessagingCore.canSendCoachAthleteMessage('ath1', rel), true);
+});
+t('canSendCoachAthleteMessage: false bij revoked relatie (revoked relationship -> new message rejected, KERN van deze closure)', () => {
+  const rel = { status: 'revoked', coach_user_id: 'coach1', athlete_user_id: 'ath1' };
+  assert.strictEqual(MessagingCore.canSendCoachAthleteMessage('coach1', rel), false);
+  assert.strictEqual(MessagingCore.canSendCoachAthleteMessage('ath1', rel), false);
+});
+t('canSendCoachAthleteMessage: false bij pending relatie (nog niet actief, dus ook geen send)', () => {
+  const rel = { status: 'pending', coach_user_id: 'coach1', athlete_user_id: 'ath1' };
+  assert.strictEqual(MessagingCore.canSendCoachAthleteMessage('coach1', rel), false);
+});
+t('canSendCoachAthleteMessage: false voor elke hypothetische, niet-"active"-status (ended-equivalent, generieke regel dekt toekomstige statussen)', () => {
+  const rel = { status: 'ended', coach_user_id: 'coach1', athlete_user_id: 'ath1' };
+  assert.strictEqual(MessagingCore.canSendCoachAthleteMessage('coach1', rel), false);
+});
+t('canSendCoachAthleteMessage: geen restored health scopes -- deze functie regelt uitsluitend messaging, nooit CoachAccessCore-scopes (architecturale scheiding bevestigd)', () => {
+  // canSendCoachAthleteMessage kent geen scope-parameter en kan dus per
+  // ontwerp nooit RECOVERY_HEALTH/WOMENS_PERFORMANCE-toegang beinvloeden --
+  // die blijft volledig, exclusief bij CoachAccessCore.hasScope().
+  assert.strictEqual(typeof MessagingCore.canSendCoachAthleteMessage, 'function');
+  assert.strictEqual(MessagingCore.canSendCoachAthleteMessage.length, 2); // (userId, relationship) -- geen scope-arg mogelijk
+});
+
 
 // -- blockPreventsFurtherMessages (block wint altijd, MS-F9-01/03) ----------
 t('blockPreventsFurtherMessages: true wanneer sender de recipient blokkeerde', () => {

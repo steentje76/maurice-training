@@ -269,24 +269,62 @@ count"-implementatie in deze sprint (geen bestaande, canonical
 architectuur hiervoor gevonden om zonder nieuwe productbeslissing op
 aan te sluiten).
 
-## FINAL MATURITY (afzonderlijk, geen samengestelde claim)
+## PO-BESLUIT: COACH RELATIONSHIP REVOCATION/END (deze closure-pass)
 
-| | Status |
-|---|---|
-| Human Coach core logic | IMPLEMENTED + TESTED |
-| Human Coach database/RLS | IMPLEMENTED (structureel gereviewd) |
-| Human Coach normal UX | NOT YET INTEGRATED |
-| Human Coach real user validation | OPEN |
-| Messaging core | IMPLEMENTED + TESTED |
-| Messaging database/RLS | IMPLEMENTED (structureel gereviewd) |
-| Messaging black-box auth validation | OPEN |
-| Messaging notifications | IMPLEMENTED + TESTED (functioneel, niet alleen source) |
-| Messaging unread | IMPLEMENTED + TESTED |
-| Messaging normal UX | NOT YET INTEGRATED |
-| Messaging real user validation | OPEN |
-| Private notes | NOT IMPLEMENTED / DEFERRED |
+De Product Owner heeft dit definitief vastgesteld (geen open technisch
+punt meer):
+- bestaande message history blijft behouden, wordt NIET verwijderd;
+- na revoked/ended wordt de coach-athlete-conversatie **READ-ONLY**:
+  geen nieuwe berichten, geen nieuwe coach-notificaties (implicaties
+  van elkaar: de notificatie-trigger vuurt uitsluitend na een
+  succesvolle insert; als de insert al door RLS geblokkeerd wordt,
+  ontstaat er per definitie nooit een notificatie);
+- geen nieuwe/herstelde coach access/scopes via messaging -- die blijven
+  exclusief bij `CoachAccessCore.hasScope()`, ongewijzigd;
+- block/privacy blijft sterker en kan leestoegang verder beperken dan
+  revocation alleen toestaat.
 
-**Geen "FULL STACK"-claim voor Human Coach of Messaging als geheel.**
+**Geïmplementeerd (database, additieve migratie
+`ms_f_messaging_revocation_readonly_v1`):** `m_insert_own_sender`
+aangescherpt met een extra `not exists`-voorwaarde: voor een
+COACH_ATHLETE-thread moet de gekoppelde `coach_athlete_relationships.
+status = 'active'` zijn om een nieuw bericht te mogen versturen. De
+SELECT-policy (`m_select_participant`) is **niet gewijzigd** -- history
+blijft leesbaar zolang je participant bent en niet geblokkeerd, exact
+zoals besloten.
+
+**Functioneel getest** (echte, tijdelijke `revoked`-relatie + thread
+aangemaakt met bestaande, echte user-ID's, de exacte policy-expressie
+bevestigd `true` voor de blokkade, daarna volledig, verifieerbaar
+opgeruimd -- 0 rijen achtergebleven): de blokkade-logica werkt correct.
+
+**Client-side:** nieuwe `MessagingCore.canSendCoachAthleteMessage()`
+(vervangt de eerdere `canCreateCoachAthleteThread`-achtige aanname voor
+send-momenten) en een bijgewerkte `canReadHistoricalMessagesAfterRevocation()`
+die niet langer fail-closed "PO_DECISION_REQUIRED" retourneert, maar het
+definitieve besluit spiegelt: history blijft leesbaar, tenzij een
+actieve block dit specifiek verder beperkt (block-precedence expliciet
+getest).
+
+## FINAL MATURITY (exact, zoals voorgeschreven -- geen samengestelde claim)
+
+```
+HUMAN COACH CORE                     = IMPLEMENTED + TESTED
+HUMAN COACH NORMAL UX                = OPEN
+HUMAN COACH REAL USER VALIDATION     = OPEN
+
+MESSAGING FOUNDATION                 = IMPLEMENTED + TESTED
+MESSAGING RLS                        = IMPLEMENTED + STRUCTURALLY VERIFIED
+MESSAGING BLACK-BOX AUTH VALIDATION  = OPEN
+MESSAGING NORMAL UX                  = OPEN
+MESSAGING REAL USER VALIDATION       = OPEN
+
+PRIVATE NOTES                        = DEFERRED
+```
+
+**Geen VALIDATED/FULL STACK/>=9-claim voor Human Coach of Messaging**
+zolang black-box, non-owner authenticated RLS-validatie ontbreekt. Dit
+blijft, conform het PO-besluit, GEEN merge-blocker voor de foundation.
 
 ## PO DECISIONS STILL OPEN
 

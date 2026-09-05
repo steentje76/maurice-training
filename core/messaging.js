@@ -97,8 +97,17 @@
     }
   }
 
-  /* unreadCount: puur, gebaseerd op last_read_at vs. message-timestamps --
-   * geen nieuwe berekening van betekenis, uitsluitend een vergelijking. */
+  /* canSendCoachAthleteMessage: spiegelt de aangescherpte m_insert_own_sender
+   * (PO-besluit: revoked/ended relationship -> thread wordt READ-ONLY).
+   * Elke status anders dan 'active' blokkeert een NIEUW bericht -- history
+   * blijft via de (ongewijzigde) SELECT-policy leesbaar zolang je
+   * participant bent en niet geblokkeerd. Dit is dus uitsluitend een
+   * schrijf-blokkade, geen leesblokkade. */
+  function canSendCoachAthleteMessage(userId, relationship) {
+    if (!userId || !relationship) return false;
+    if (relationship.status !== 'active') return false;
+    return relationship.coach_user_id === userId || relationship.athlete_user_id === userId;
+  }
   function unreadCount(lastReadAt, messages) {
     if (!Array.isArray(messages)) return 0;
     if (!lastReadAt) return messages.length;
@@ -106,15 +115,19 @@
     return messages.filter(function (m) { return new Date(m.created_at).getTime() > cutoff; }).length;
   }
 
-  /* canReadHistoricalMessages: bij een revoked coach_athlete-relationship
-   * blijft de vraag "mag de historische conversatie nog gelezen worden"
-   * een PRODUCTKEUZE die deze module niet zelf maakt. Conservatief,
-   * fail-closed default: NEE (spiegelt de bedoeling van de RLS, die
-   * uitsluitend leest via is_thread_participant() -- revocation zelf
-   * verwijdert GEEN participant-rij, dus dit is een expliciet, apart
-   * PO-besluit, geen technisch gegeven). */
-  function canReadHistoricalMessagesAfterRevocation() {
-    return { allowed: false, reason: 'PO_DECISION_REQUIRED', note: 'Revocation verwijdert geen participant-rij; of historische berichten zichtbaar mogen blijven is een productkeuze, geen technisch gegeven.' };
+  /* canReadHistoricalMessagesAfterRevocation: PO-BESLUIT (definitief,
+   * niet langer open): bestaande message history blijft behouden en
+   * leesbaar na revocation/end -- de thread wordt READ-ONLY (geen nieuwe
+   * berichten), niet ontoegankelijk. Revocation verwijdert geen
+   * participant-rij. EXPLICIETE UITZONDERING: een actieve social-block
+   * blijft sterker en kan leestoegang alsnog verder beperken (block
+   * wint altijd, MS-F9-01/03) -- deze functie regelt uitsluitend het
+   * revocation-aspect, niet block. */
+  function canReadHistoricalMessagesAfterRevocation(userId, threadId, participants, blocks) {
+    if (!isParticipant(userId, threadId, participants)) return false;
+    var self = (participants || []).find(function (p) { return p.thread_id === threadId && p.user_id === userId; });
+    if (self && self.is_blocked) return false;
+    return true;
   }
 
   /* blockPreventsFurtherMessages: messaging mag NOOIT een bypass zijn van
@@ -147,6 +160,7 @@
     canCreateCoachAthleteThread: canCreateCoachAthleteThread,
     resolveSenderType: resolveSenderType,
     canSendMessage: canSendMessage,
+    canSendCoachAthleteMessage: canSendCoachAthleteMessage,
     renderSenderLabel: renderSenderLabel,
     unreadCount: unreadCount,
     canReadHistoricalMessagesAfterRevocation: canReadHistoricalMessagesAfterRevocation,

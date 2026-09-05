@@ -136,25 +136,76 @@ te migreren). **Rows before: 0 (alle nieuwe tabellen). Rows after: 0**
 (alle test-rijen tijdens deze sprint zijn expliciet, verifieerbaar
 opgeruimd). **Data loss: 0.**
 
-## MATURITY
+## CLOSURE-FIXES (deze sprint, na PO-review)
 
-| Subcapability | Status |
-|---|---|
-| Manual macro logging (bestaand, nutrition_entries) | IMPLEMENTED + TESTED (ongewijzigd) |
-| Food database (canonical model) | IMPLEMENTED + TESTED (structuur), 0 echte rijen |
-| Product database (canonical model) | IMPLEMENTED + TESTED (structuur), 0 echte rijen |
-| Barcode resolution | IMPLEMENTED + TESTED |
-| Meals | IMPLEMENTED + TESTED (structuur), geen UI |
-| Hydration (apart model) | IMPLEMENTED + TESTED (structuur), geen UI |
-| Supplements | IMPLEMENTED + TESTED (structuur), geen UI |
-| External provider | NOT INTEGRATED (bewust, adapter-only) |
-| Normal user UX | NOT BUILT (bewust, buiten scope) |
-| Real user validation | OPEN |
+**1. PER_100G/piece-bug gerepareerd (KERN).** `1 piece != 1 gram` werd
+voorheen genegeerd: `portionToNutrients()` liet `quantityUnit==='piece'`
+toe op een PER_100G-basis en rekende `quantity/100` alsof 1 stuk 1 gram
+was. Gecorrigeerd: `piece` op een PER_100G-basis vereist nu een
+expliciete, betrouwbare `pieceWeightG`-parameter; ontbreekt die, dan is
+de uitkomst `UNKNOWN_CONVERSION` (nooit een gok, nooit 0). Nieuwe
+database-kolom `nutrition_nutrient_values.piece_weight_g` (additief,
+apart van het bestaande `serving_size_g`-concept om geen dubbelzinnige
+betekenis te introduceren). 6 nieuwe, gerichte tests.
 
-**Geen FULL STACK/>=9-claim voor de canonical laag als geheel** --
-structuur en logica zijn solide en getest, maar zonder UI en zonder
-enige echte gebruikersdata is dit een foundation, geen afgeronde
-capability.
+**2. Serving model consistency: bevestigd, geen tweede truth.** Eén
+canonical plek (`nutrition_nutrient_values`) draagt `serving_size_g`/
+`serving_size_ml` (voor de PER_SERVING-basis) en nu ook `piece_weight_g`
+(voor piece-conversie op een PER_100G-basis). Geen los, concurrerend
+serving-systeem gebouwd op `nutrition_products` of `nutrition_meal_items`.
+
+**3. GTIN/EAN/UPC-checksumvalidatie toegevoegd.** `computeCheckDigit()`
+implementeert het standaard GS1-mod-10-algoritme, `validateChecksum()`
+past dit toe per standaard (EAN-8/EAN-13/UPC-A/GTIN-14). Vóór
+implementatie handmatig geverifieerd tegen bekende, geldige
+referentiebarcodes (EAN-13 4006381333931, UPC-A 036000291452, EAN-8
+96385074, GTIN-14 00036000291452). `normalizeBarcode()` geeft nu
+`INVALID_IDENTIFIER` (nooit stilzwijgend `OTHER`) wanneer een lengte een
+bekende standaard claimt maar de checksum niet klopt. `resolveBarcode()`
+voert **nooit** een lookup uit bij `INVALID_IDENTIFIER`, zelfs niet als
+er toevallig kandidaat-rijen zouden bestaan (adversarieel getest). 12
+nieuwe, gerichte tests (geldig/ongeldig per standaard + whitespace +
+garbage + niet-standaard-lengte blijft legitiem OTHER).
+
+**4. Identifier canonicalization voor cross-standaard-duplicaten.**
+Onderzocht en bevestigd: een UPC-A en zijn GTIN-14-representatie (met
+leading zeros) zijn dezelfde fysieke barcode, maar de oorspronkelijke
+`unique(identifier_type, value)`-constraint zou dit niet hebben
+gedetecteerd. Toegevoegd: een additieve, gegenereerde
+`canonical_gtin14`-kolom (GS1-conventie, links aangevuld met nullen) met
+een partial unique index (uitsluitend voor de 4 bekende standaarden).
+**Functioneel geverifieerd** (niet alleen source-inspectie): een UPC-A
+en de overeenkomstige GTIN-14-vorm van dezelfde barcode werden na deze
+fix correct als conflict geweigerd door de database (`23505 duplicate
+key ... canonical_gtin14`), daarna volledig opgeruimd. Geen destructieve
+migratie (0 bestaande rijen, dus geen data om te verzoenen).
+
+**5. Extra UNKNOWN != 0-sabotagetests toegevoegd (6 nieuwe):** unknown
+serving/nutrient/quantity/unit/barcode/provider-not-found -- geen van
+allen genereert 0-nutrition, lege productdata als geldig, of een
+gegokte serving.
+
+**Totaal nieuwe tests deze closure: 29 (was 24, nu 53).**
+
+## FINAL MATURITY (exact, zoals voorgeschreven)
+
+```
+MANUAL NUTRITION LOGGING             = existing integrated capability
+CANONICAL FOOD/PRODUCT FOUNDATION    = IMPLEMENTED + TESTED
+CANONICAL PRODUCT DATA POPULATION    = EMPTY / NOT POPULATED
+EXTERNAL PRODUCT SOURCE              = NOT INTEGRATED
+BARCODE CORE                         = IMPLEMENTED + TESTED
+BARCODE REAL PRODUCT LOOKUP          = NOT YET INTEGRATED
+MEALS FOUNDATION                     = IMPLEMENTED + TESTED
+HYDRATION FOUNDATION                 = IMPLEMENTED + TESTED
+SUPPLEMENTS FOUNDATION               = IMPLEMENTED + TESTED
+NEW NUTRITION NORMAL UX              = NOT INTEGRATED
+REAL USER VALIDATION                 = OPEN
+```
+
+**Niet geclaimd:** "food database volledig opgelost", "nutrition >=9",
+"barcode product scanning werkt voor gebruikers" -- provider/data/UI
+ontbreken nog steeds.
 
 ## BLOCKERS REMOVED
 

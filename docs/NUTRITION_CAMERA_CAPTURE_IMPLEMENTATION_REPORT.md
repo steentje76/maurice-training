@@ -94,7 +94,67 @@ deterministische OCR, geen LLM/AI-vision). Geen enkele berekening in de
 parser-laag -- uitsluitend tekstextractie en veilige, deterministische
 parsing.
 
-## Wat NIET is gebouwd (bewust, eerlijk, bijgewerkt na runtime-completion)
+## CANONICAL INGEST CONNECTION (deze closure-pass, nu wél gebouwd)
+
+**core/nutritionLabelIngestBridge.js** (nieuw): de ontbrekende schakel
+tussen (1) `NutritionOcrRuntime`-observaties (per-veld-formaat), (2)
+`NutritionMultiSourceVerification` (plat vergelijkingsformaat), en (3)
+`NutritionIngestService` (Wave 3, ongewijzigd). Bevat zelf **geen
+enkele database-aanroep en geen nieuwe beslisregel** -- uitsluitend
+conversie + orchestratie tussen drie, bestaande, ongewijzigde modules.
+
+**Functioneel bewezen, END-TO-END, tegen ECHTE OCR-output** (11/11 in
+`nutritionCameraRuntime.integration.test.js`, geen handmatig
+ingespoten OCR-string telt mee als bewijs):
+
+- **MATCH:** een echt gerenderd etiket (`label_nl_clear.png`), echt
+  door Tesseract gehaald (539 kcal/6,3 g eiwit/57,5 g koolhydraten/
+  30,9 g vet correct herkend), vergeleken tegen identieke, bestaande
+  waarden -> `MATCH`.
+- **CONFLICT:** dezelfde, echte OCR-uitkomst vergeleken tegen duidelijk
+  afwijkende, bestaande waarden -> `CONFLICT`, geen automatische
+  winnaar.
+- **VERIFIED-bescherming houdt stand tegen een echt, uit een foto
+  herkend conflict:** `resolveIngestDecision()` geeft
+  `KEEP_EXISTING_VERIFIED`, ook al levert de echte OCR een afwijkende
+  waarde op.
+- **Onbekend product zonder bevestigde naam -> REJECT:** de OCR haalt
+  geen productnaam uit een pure voedingswaardetabel, en het systeem
+  verzint er nooit een.
+- **Onbekend product + gebruiker bevestigt naam -> CREATE_NEW**, met
+  een snapshot-candidate opgebouwd uit de echte, herkende waarden
+  (`energy_kcal: 539`, `protein_g: 6.3`).
+- **Historische reproduceerbaarheid (hard gate):** een oude, bevroren
+  snapshot (`energy_kcal: 500`) blijft bewijsbaar ongewijzigd
+  (`deepStrictEqual` tegen een voor-de-aanroep gemaakte kopie) wanneer
+  een nieuwe, echte label-scan een andere waarde (539) oplevert.
+  `isSnapshotStillValid()` (Wave 3, ongewijzigd) meldt correct `false`
+  (de waarden wijken af) zonder de oude snapshot ooit aan te passen.
+
+**Nog steeds niet gebouwd:** de daadwerkelijke database-persistence-
+aanroep vanuit deze bridge (de bridge levert een beslissing +
+snapshot-candidate; het schrijven naar `nutrition_products`/
+`nutrition_nutrient_values` via de bestaande, RLS-gedekte
+`sbPostQ`-infrastructuur is niet apart getest deze sprint, consistent
+met hoe Wave 3 dit ook client-side liet gebeuren). Geen nieuwe
+database-testdata is deze sprint aangemaakt (de bridge is een pure
+functie) -- er is dus niets op te ruimen.
+
+## MATURITY (bijgewerkt na canonical-ingest-koppeling)
+
+```
+CANONICAL INGEST CONNECTION     = FUNCTIONALLY PROVEN (end-to-end, echte OCR -> comparison -> ingestdecision, geen echte database-write getest)
+MULTI-SOURCE VERIFICATION       = FUNCTIONALLY PROVEN (nu wel end-to-end gekoppeld aan echte OCR-output, MATCH en CONFLICT beide bewezen)
+HISTORICAL REPRODUCIBILITY      = FUNCTIONALLY PROVEN (expliciete test: oude snapshot blijft ongewijzigd na een nieuwe, echte label-scan)
+UNKNOWN PRODUCT FLOW            = FUNCTIONALLY PROVEN (REJECT zonder naam, CREATE_NEW met bevestigde naam, beide met echte OCR-waarden)
+VERIFIED PROTECTION             = FUNCTIONALLY PROVEN (nu ook tegen een echt, foto-herkend conflict, niet alleen tegen een database-write-poging)
+```
+
+**Wat nog steeds ontbreekt voor een volledig, productieklaar pad:**
+de daadwerkelijke database-schrijfstap vanuit dit pad, en een
+Netlify-Function-equivalent voor de label-scan-flow (Wave 3 had dit al
+voor OFF; de label-scan-flow hergebruikt dezelfde ingest-beslissingen
+maar heeft nog geen eigen persistence-aanroep).
 
 - **Geen daadwerkelijke `index.html`-integratie** -- de harnas
   (`tools/nutrition-camera-harness.html`) is bewust apart gehouden
@@ -108,13 +168,10 @@ parsing.
 - Geen ondersteuning voor niet-Nederlandse/Engelse etiketten getest.
 - `TABLE_NOT_FOUND`/`IMAGE_BLURRY`-detectie (Fase 8) blijft niet
   gebouwd -- vereist beeldanalyse buiten deze scope.
-- **Canonical ingest-koppeling ontbreekt volledig**: een geaccepteerde
-  `USER_LABEL_SCAN`-candidate wordt nergens automatisch doorgegeven aan
-  `NutritionIngestService`. Dit is de belangrijkste, resterende
-  technische stap voor een werkelijk bruikbare functie.
-- Multi-source-vergelijking is niet end-to-end getest met echte
-  OCR-output tegen een echt OFF/lokaal-record (wel met de bestaande,
-  ongewijzigde pure functies apart bewezen).
+- **Canonical ingest-koppeling is nu wel functioneel bewezen** (zie
+  hieronder), maar de daadwerkelijke database-schrijfstap vanuit dit
+  pad ontbreekt nog -- de bridge levert een beslissing + snapshot,
+  het schrijven zelf is niet apart getest deze sprint.
 
 ## TESTS
 

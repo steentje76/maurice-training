@@ -143,6 +143,57 @@ t('unreadCount: 0 zonder berichten', () => {
   assert.strictEqual(MessagingCore.unreadCount('2026-09-01T11:00:00Z', []), 0);
 });
 
+// -- canReadHistoricalMessagesAfterRevocation (PO decision required) --------
+t('canReadHistoricalMessagesAfterRevocation: fail-closed default, expliciet PO_DECISION_REQUIRED', () => {
+  const r = MessagingCore.canReadHistoricalMessagesAfterRevocation();
+  assert.strictEqual(r.allowed, false);
+  assert.strictEqual(r.reason, 'PO_DECISION_REQUIRED');
+});
+
+// -- blockPreventsFurtherMessages (block wint altijd, MS-F9-01/03) ----------
+t('blockPreventsFurtherMessages: true wanneer sender de recipient blokkeerde', () => {
+  const blocks = [{ blocker_id: 'a', blocked_id: 'b' }];
+  assert.strictEqual(MessagingCore.blockPreventsFurtherMessages('a', 'b', blocks), true);
+});
+t('blockPreventsFurtherMessages: true ook in omgekeerde richting (adversarial -- block werkt symmetrisch voor messaging-doeleinden)', () => {
+  const blocks = [{ blocker_id: 'b', blocked_id: 'a' }];
+  assert.strictEqual(MessagingCore.blockPreventsFurtherMessages('a', 'b', blocks), true);
+});
+t('blockPreventsFurtherMessages: false zonder enige block-relatie', () => {
+  const blocks = [{ blocker_id: 'x', blocked_id: 'y' }];
+  assert.strictEqual(MessagingCore.blockPreventsFurtherMessages('a', 'b', blocks), false);
+});
+
+// -- isValidThreadState (error/retry: closed/non-existent thread) ----------
+t('isValidThreadState: false voor closed thread (adversarial)', () => {
+  assert.strictEqual(MessagingCore.isValidThreadState({ status: 'closed' }), false);
+});
+t('isValidThreadState: false voor null/non-existent thread (adversarial)', () => {
+  assert.strictEqual(MessagingCore.isValidThreadState(null), false);
+});
+t('isValidThreadState: true voor actieve thread', () => {
+  assert.strictEqual(MessagingCore.isValidThreadState({ status: 'active' }), true);
+});
+
+// -- canSendMessage: uitgebreid met thread-status + block (error/retry + block-integratie)
+t('canSendMessage: false op een closed thread, ook als participant (adversarial error/retry-scenario)', () => {
+  const parts = [{ thread_id: 't1', user_id: 'a', is_blocked: false }];
+  assert.strictEqual(MessagingCore.canSendMessage('a', 't1', parts, 'ATHLETE', { status: 'closed' }), false);
+});
+t('canSendMessage: false wanneer een social-block bestaat met de andere participant (block-integratie, MS-F9-01/03)', () => {
+  const parts = [{ thread_id: 't1', user_id: 'a', is_blocked: false }, { thread_id: 't1', user_id: 'b', is_blocked: false }];
+  const blocks = [{ blocker_id: 'b', blocked_id: 'a' }];
+  assert.strictEqual(MessagingCore.canSendMessage('a', 't1', parts, 'ATHLETE', { status: 'active' }, blocks), false);
+});
+t('canSendMessage: blijft true zonder block en met actieve thread (regressie op bestaand gedrag)', () => {
+  const parts = [{ thread_id: 't1', user_id: 'a', is_blocked: false }, { thread_id: 't1', user_id: 'b', is_blocked: false }];
+  assert.strictEqual(MessagingCore.canSendMessage('a', 't1', parts, 'ATHLETE', { status: 'active' }, []), true);
+});
+t('canSendMessage: backward-compatible zonder thread/blocks-argumenten (bestaande aanroepen blijven werken)', () => {
+  const parts = [{ thread_id: 't1', user_id: 'a', is_blocked: false }];
+  assert.strictEqual(MessagingCore.canSendMessage('a', 't1', parts, 'ATHLETE'), true);
+});
+
 console.log(`MessagingCore: ${pass} geslaagd, ${fail} mislukt`);
 console.log(`Resultaat: ${pass} geslaagd, ${fail} mislukt`);
 if (fail > 0) process.exit(1);

@@ -65,13 +65,22 @@
 
   /* canSendMessage: puur, client-side spiegel van m_insert_own_sender --
    * sender_type mag nooit SYSTEM zijn vanuit de client, sender moet
-   * participant zijn, en mag niet geblokkeerd zijn. */
-  function canSendMessage(userId, threadId, participants, senderType) {
+   * participant zijn, mag niet geblokkeerd zijn, thread moet actief zijn,
+   * en een bestaande social-block (in welke richting dan ook, naar een
+   * andere participant) blokkeert eveneens (fail-closed, spiegelt "block
+   * wint altijd" uit MS-F9-01/03). */
+  function canSendMessage(userId, threadId, participants, senderType, thread, blocks) {
     if (senderType === 'SYSTEM') return false;
     if (SENDER_TYPES.indexOf(senderType) === -1) return false;
     if (!isParticipant(userId, threadId, participants)) return false;
+    if (thread !== undefined && !isValidThreadState(thread)) return false;
     var self = (participants || []).find(function (p) { return p.thread_id === threadId && p.user_id === userId; });
     if (self && self.is_blocked) return false;
+    if (Array.isArray(blocks)) {
+      var otherParticipants = (participants || []).filter(function (p) { return p.thread_id === threadId && p.user_id !== userId; });
+      var blocked = otherParticipants.some(function (p) { return blockPreventsFurtherMessages(userId, p.user_id, blocks); });
+      if (blocked) return false;
+    }
     return true;
   }
 
@@ -97,6 +106,37 @@
     return messages.filter(function (m) { return new Date(m.created_at).getTime() > cutoff; }).length;
   }
 
+  /* canReadHistoricalMessages: bij een revoked coach_athlete-relationship
+   * blijft de vraag "mag de historische conversatie nog gelezen worden"
+   * een PRODUCTKEUZE die deze module niet zelf maakt. Conservatief,
+   * fail-closed default: NEE (spiegelt de bedoeling van de RLS, die
+   * uitsluitend leest via is_thread_participant() -- revocation zelf
+   * verwijdert GEEN participant-rij, dus dit is een expliciet, apart
+   * PO-besluit, geen technisch gegeven). */
+  function canReadHistoricalMessagesAfterRevocation() {
+    return { allowed: false, reason: 'PO_DECISION_REQUIRED', note: 'Revocation verwijdert geen participant-rij; of historische berichten zichtbaar mogen blijven is een productkeuze, geen technisch gegeven.' };
+  }
+
+  /* blockPreventsFurtherMessages: messaging mag NOOIT een bypass zijn van
+   * een bestaande, canonical social-block (MS-F9-01/03: "block wint
+   * altijd"). Puur, deterministisch: als de afzender OF ontvanger een
+   * actieve block-relatie heeft (in welke richting dan ook), mag geen
+   * nieuw bericht worden verstuurd -- ongeacht thread-participantschap. */
+  function blockPreventsFurtherMessages(senderId, recipientId, blocks) {
+    if (!Array.isArray(blocks)) return false;
+    return blocks.some(function (b) {
+      return (b.blocker_id === senderId && b.blocked_id === recipientId) ||
+             (b.blocker_id === recipientId && b.blocked_id === senderId);
+    });
+  }
+
+  /* isValidThreadState: fail-closed helper voor error/retry-scenario's --
+   * een gesloten of niet-bestaande thread mag nooit een nieuw bericht
+   * accepteren, ongeacht participantschap. */
+  function isValidThreadState(thread) {
+    return !!thread && thread.status === 'active';
+  }
+
   var MessagingCore = {
     VERSIONS: VERSIONS,
     THREAD_TYPES: THREAD_TYPES,
@@ -108,7 +148,10 @@
     resolveSenderType: resolveSenderType,
     canSendMessage: canSendMessage,
     renderSenderLabel: renderSenderLabel,
-    unreadCount: unreadCount
+    unreadCount: unreadCount,
+    canReadHistoricalMessagesAfterRevocation: canReadHistoricalMessagesAfterRevocation,
+    blockPreventsFurtherMessages: blockPreventsFurtherMessages,
+    isValidThreadState: isValidThreadState
   };
 
   if (typeof module !== 'undefined' && module.exports) { module.exports = MessagingCore; }

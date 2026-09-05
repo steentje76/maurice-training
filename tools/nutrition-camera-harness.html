@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>Trainingskompas — Nutrition Camera/OCR technische harnas (intern)</title>
+<meta name="robots" content="noindex">
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 480px; margin: 20px auto; padding: 0 16px; }
+  button { display: block; width: 100%; padding: 12px; margin: 8px 0; font-size: 16px; }
+  pre { background: #f0f0f0; padding: 12px; white-space: pre-wrap; word-break: break-word; font-size: 12px; }
+  video { width: 100%; background: #000; }
+  h1 { font-size: 18px; }
+  .warn { background: #fff3cd; padding: 10px; border-radius: 4px; font-size: 13px; }
+</style>
+</head>
+<body>
+<h1>Nutrition Camera/OCR — Interne technische harnas</h1>
+<p class="warn">Dit is GEEN Nutrition-UX. Uitsluitend voor technische verificatie van de camera-/barcode-/OCR-runtime (Wave 4). Niet gekoppeld aan de bottom navigation.</p>
+
+<button id="btn-open-camera">Open camera</button>
+<button id="btn-scan-barcode" disabled>Scan barcode (live)</button>
+<button id="btn-stop-camera" disabled>Stop camera</button>
+<video id="video" autoplay playsinline style="display:none"></video>
+
+<input type="file" id="file-barcode" accept="image/*" style="display:none">
+<button id="btn-choose-barcode-photo">Kies barcode-foto</button>
+
+<input type="file" id="file-label" accept="image/*" style="display:none">
+<button id="btn-choose-label-photo">Kies etiket-foto</button>
+
+<h2>Resultaat</h2>
+<pre id="output">(nog geen actie uitgevoerd)</pre>
+
+<!-- Echte, bestaande core-modules (ongewijzigd, hergebruikt) -->
+<script src="../core/nutritionCameraCapture.js"></script>
+<script src="../core/nutritionFoundation2.js"></script>
+<script src="../core/nutritionBarcodeRuntime.js"></script>
+<script src="../core/nutritionLabelParser.js"></script>
+<script src="../core/nutritionOcrRuntime.js"></script>
+<!-- Externe, echte, npm-geinstalleerde libraries (lokaal vendored, geen CDN) -->
+<script src="../node_modules/@zxing/library/umd/index.min.js"></script>
+<script src="../node_modules/tesseract.js/dist/tesseract.min.js"></script>
+
+<script>
+(function () {
+  var output = document.getElementById('output');
+  var video = document.getElementById('video');
+  var stream = null;
+
+  function log(obj) {
+    output.textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 1);
+  }
+
+  // -- Camera-toegang (Fase 3) ------------------------------------------
+  document.getElementById('btn-open-camera').addEventListener('click', async function () {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      video.srcObject = stream;
+      video.style.display = 'block';
+      document.getElementById('btn-scan-barcode').disabled = false;
+      document.getElementById('btn-stop-camera').disabled = false;
+      log({ status: 'SUCCESS' });
+    } catch (e) {
+      var resolved = NutritionCameraCapture.resolveCameraAccessResult(e);
+      log(resolved);
+    }
+  });
+
+  document.getElementById('btn-stop-camera').addEventListener('click', function () {
+    if (stream) { stream.getTracks().forEach(function (tr) { tr.stop(); }); stream = null; }
+    video.style.display = 'none';
+    document.getElementById('btn-scan-barcode').disabled = true;
+    document.getElementById('btn-stop-camera').disabled = true;
+    log('Camera gestopt, stream volledig vrijgegeven.');
+  });
+
+  async function getZxingAdapter() {
+    var reader = new ZXing.BrowserMultiFormatReader();
+    return { decodeFromImageElement: function (im) { return reader.decodeFromImageElement(im); } };
+  }
+
+  // -- Live barcode-scan (Fase 4) ------------------------------------------
+  document.getElementById('btn-scan-barcode').addEventListener('click', async function () {
+    log('Bezig met scannen...');
+    var zxingAdapter = await getZxingAdapter();
+    var result = await NutritionBarcodeRuntime.decodeBarcodeFromImage(video, {
+      globalObj: window,
+      normalizeBarcodeFn: NutritionFoundation2Core.normalizeBarcode,
+      resolveBarcodeDetectionResultFn: NutritionCameraCapture.resolveBarcodeDetectionResult,
+      zxingReader: zxingAdapter
+    });
+    log(result);
+  });
+
+  // -- Barcode uit foto (Fase 5) --------------------------------------------
+  document.getElementById('btn-choose-barcode-photo').addEventListener('click', function () {
+    document.getElementById('file-barcode').click();
+  });
+  document.getElementById('file-barcode').addEventListener('change', async function (ev) {
+    var file = ev.target.files[0];
+    if (!file) return;
+    var img = new Image();
+    img.src = URL.createObjectURL(file);
+    await img.decode();
+    var zxingAdapter = await getZxingAdapter();
+    var result = await NutritionBarcodeRuntime.decodeBarcodeFromImage(img, {
+      globalObj: window,
+      normalizeBarcodeFn: NutritionFoundation2Core.normalizeBarcode,
+      resolveBarcodeDetectionResultFn: NutritionCameraCapture.resolveBarcodeDetectionResult,
+      zxingReader: zxingAdapter
+    });
+    URL.revokeObjectURL(img.src); // afbeelding direct vrijgeven, geen retentie (Fase 13/24)
+    log(result);
+  });
+
+  // -- Etiket-OCR (Fase 6-9) -------------------------------------------------
+  document.getElementById('btn-choose-label-photo').addEventListener('click', function () {
+    document.getElementById('file-label').click();
+  });
+  document.getElementById('file-label').addEventListener('change', async function (ev) {
+    var file = ev.target.files[0];
+    if (!file) return;
+    log('OCR bezig (kan enkele seconden duren)...');
+    var url = URL.createObjectURL(file);
+    var result = await NutritionOcrRuntime.extractStructuredNutrientsFromImage(url, {
+      tesseractLib: { recognize: function (img) { return Tesseract.recognize(img, 'eng'); } },
+      labelParser: NutritionLabelParser
+    });
+    URL.revokeObjectURL(url); // afbeelding direct vrijgeven na verwerking, geen permanente opslag
+    log(result);
+  });
+})();
+</script>
+</body>
+</html>

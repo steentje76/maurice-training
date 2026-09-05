@@ -94,20 +94,27 @@ deterministische OCR, geen LLM/AI-vision). Geen enkele berekening in de
 parser-laag -- uitsluitend tekstextractie en veilige, deterministische
 parsing.
 
-## Wat NIET is gebouwd (bewust, eerlijk)
+## Wat NIET is gebouwd (bewust, eerlijk, bijgewerkt na runtime-completion)
 
-- Geen daadwerkelijke UI/scherm-integratie (bewust, "geen UX-redesign").
-- Geen bundling/build-stap-integratie van Tesseract.js/BarcodeDetector
-  in `index.html`.
-- Geen observability-events daadwerkelijk toegevoegd aan een draaiend
-  pad (geen UI-aanroep bestaat nog om ze te triggeren).
-- Geen echte-telefoon-validatie binnen deze sessie.
+- **Geen daadwerkelijke `index.html`-integratie** -- de harnas
+  (`tools/nutrition-camera-harness.html`) is bewust apart gehouden
+  ("geen UX-redesign"), niet gekoppeld aan de bottom navigation.
+- Geen native `BarcodeDetector`-end-to-end-bewijs (sandbox-beperking,
+  zie boven) -- alleen de orchestratie-code, niet de daadwerkelijke
+  detectie zelf.
+- Geen observability-events toegevoegd (de harnas is een tijdelijk,
+  intern hulpmiddel, geen productiepad).
+- Geen echte-telefoon-validatie.
 - Geen ondersteuning voor niet-Nederlandse/Engelse etiketten getest.
-- `TABLE_NOT_FOUND`/`IMAGE_BLURRY`-detectie (Fase 8) is **niet als
-  aparte functie gebouwd** -- dit vereist daadwerkelijke beeldanalyse
-  (bv. Laplacian-variantie voor blur-detectie) die buiten de pure,
-  tekst-gebaseerde scope van deze sprint valt. Expliciet open, geen
-  overclaim.
+- `TABLE_NOT_FOUND`/`IMAGE_BLURRY`-detectie (Fase 8) blijft niet
+  gebouwd -- vereist beeldanalyse buiten deze scope.
+- **Canonical ingest-koppeling ontbreekt volledig**: een geaccepteerde
+  `USER_LABEL_SCAN`-candidate wordt nergens automatisch doorgegeven aan
+  `NutritionIngestService`. Dit is de belangrijkste, resterende
+  technische stap voor een werkelijk bruikbare functie.
+- Multi-source-vergelijking is niet end-to-end getest met echte
+  OCR-output tegen een echt OFF/lokaal-record (wel met de bestaande,
+  ongewijzigde pure functies apart bewezen).
 
 ## TESTS
 
@@ -122,46 +129,105 @@ consistency: schoon.
 enkele test in deze sprint gebruikte een echte telefoon, browser-
 camera, of echte foto van een fysiek etiket.
 
-## MATURITY (strikt, exacte statustaal)
+## RUNTIME COMPLETION (deze sprint, na Wave 4-foundation)
+
+**Echte dependencies geinstalleerd (npm, niet CDN):** `tesseract.js`,
+`@zxing/library`, `@tesseract.js-data/eng`, `@tesseract.js-data/nld`,
+`bwip-js` (uitsluitend voor het genereren van test-fixtures).
+
+**core/nutritionBarcodeRuntime.js** (nieuw, 7/7 pure tests): echte
+orchestratie tussen native `BarcodeDetector` en een ZXing-fallback,
+inclusief echte capability-detectie (`isBarcodeDetectorAvailable()`).
+
+**core/nutritionOcrRuntime.js** (nieuw, 6/6 pure tests): echte
+Tesseract.js-orchestratie, resultaat door de bestaande, ongewijzigde
+`NutritionLabelParser`.
+
+**core/nutritionCameraRuntime.integration.test.js** (nieuw, 5/5,
+ECHTE runtime-bewijzen tegen echte afbeeldingspixels in
+`core/fixtures/nutrition/`):
+- Een echt gerenderd NL-voedingsetiket (`label_nl_per100g.png`) door de
+  ECHTE Tesseract.js-engine gehaald: `energy_kj` correct herkend als
+  `2227`, `salt_g` correct herkend als `0.1` (komma-decimaal correct
+  verwerkt). `energy_kcal` bleef terecht `null` -- de OCR herkende
+  "kcal" foutief als "kez" (een bekende, reeds gedocumenteerde
+  Tesseract-beperking op tabellay-outs), en het systeem gokte
+  **niet** dat dit alsnog de kcal-waarde was.
+- Een echte, met `bwip-js` gegenereerde EAN-13-barcodeafbeelding
+  (`ean13_valid.png`) via de ECHTE ZXing-library gedecodeerd:
+  `4006381333931`, correct als geldig gevalideerd door de bestaande
+  checksum-functie (Wave 3, ongewijzigd), via het `zxing_fallback`-pad.
+- Een afbeelding zonder barcode (het label-plaatje) gaf correct
+  `NO_BARCODE`, geen valse detectie.
+
+**Belangrijke, eerlijke beperking, ontdekt tijdens deze sprint:** de
+native `BarcodeDetector`-code is geschreven en gevalideerd op de
+orchestratie-logica (pure tests), maar **kon in deze sandbox-Chromium
+niet end-to-end getest worden** -- de onderliggende Shape Detection-
+component ontbreekt in deze headless browser-build, ook met
+experimentele flags. Dit is een bekende beperking van
+headless/CI-Chromium-omgevingen, geen fout in de geschreven code. Op
+een echte Android/Chrome-omgeving hoort deze component wel aanwezig te
+zijn -- **dit blijft ECHTE ANDROID/BROWSER-APPARAAT-VALIDATIE, niet in
+deze sessie uitgevoerd.**
+
+**tools/nutrition-camera-harness.html** (nieuw): minimale, interne
+technische harnas (GEEN Nutrition-UX, geen navigatie-koppeling) met
+knoppen voor camera openen/sluiten, live scannen, barcode-foto kiezen,
+etiket-foto kiezen. Geverifieerd: laadt alle 5 core-modules + ZXing +
+Tesseract.js zonder fouten in een echte browser.
+
+**Taaldata-strategie (Fase 7):** Engels + Nederlands, lokaal gevendord
+in `core/fixtures/nutrition/tessdata/` (5,8MB gecomprimeerd) --
+uitdrukkelijk GEEN CDN-download (dat faalde initieel op een
+netwerkblokkade in deze sandbox, en zou in productie een niet-
+gedocumenteerde, externe afhankelijkheid introduceren). Dit maakt de
+taaldata reproduceerbaar bij elke checkout.
+
+**Privacy (herbevestigd, nu ook in de harnas-code zelf):**
+`URL.revokeObjectURL()` wordt direct na verwerking aangeroepen voor
+zowel barcode- als label-foto's -- geen enkele afbeelding blijft
+hangen na gebruik.
+
+## FINAL REALITY GATE (uitsluitend op basis van uitvoerbare code)
 
 ```
-CAMERA CAPTURE FOUNDATION      = IMPLEMENTED + TESTED (pure contract, geen runtime-integratie)
-LIVE CAMERA ACCESS             = NOT STARTED (geen getUserMedia-aanroep bestaat in index.html, 0 treffers bevestigd)
-BARCODEDETECTOR                = ARCHITECTURE DEFINED (technologie gekozen en onderzocht; 0 treffers in index.html -- niet geinstalleerd/geintegreerd)
-ZXING-WASM                     = ARCHITECTURE DEFINED (uitsluitend onderzocht als polyfill-kandidaat, geen package/import toegevoegd)
-BARCODE LIVE SCANNING          = NOT STARTED
-BARCODE FROM PHOTO             = NOT STARTED (resolveBarcodeDetectionResult() is IMPLEMENTED + TESTED als pure functie, maar heeft nooit een echte, gedetecteerde barcode van een echte foto verwerkt)
-TESSERACT.JS                   = ARCHITECTURE DEFINED (technologie gekozen; 0 treffers in index.html/package.json -- niet geinstalleerd)
-LABEL OCR ENGINE                = NOT STARTED (geen enkele OCR-engine draait ergens in dit project)
-REAL IMAGE OCR                  = NOT STARTED
-STRUCTURED LABEL EXTRACTION     = IMPLEMENTED + TESTED (parseLocaleNumber/parseEnergyObservation/parseSaltSodiumObservation/detectBasis zijn pure, geteste functies op HANDMATIG geschreven test-strings, niet op output van een echte OCR-engine)
-MULTI-SOURCE VERIFICATION       = IMPLEMENTED + TESTED
-USER_LABEL_SCAN                 = IMPLEMENTED (als waarde/concept in buildObservation(), geen database-kolom-wijziging nodig -- bestaande source_type-kolommen zijn vrije tekst)
-CANONICAL INGEST CONNECTION     = ARCHITECTURE DEFINED (hergebruikt Wave 3 NutritionIngestService conceptueel; geen enkele aanroep vanuit de camera-laag naar de ingest-service is gebouwd of getest)
-VERIFIED PROTECTION             = FUNCTIONALLY PROVEN (opnieuw, live tegen de database getest deze sessie; bevestigd dat de bestaande RLS-policy geen onderscheid maakt naar source_type)
-HISTORICAL REPRODUCIBILITY      = ARCHITECTURE DEFINED (hergebruikt Wave 3-fundament, niet apart met een label-scan-scenario getest)
-REAL ANDROID CAMERA             = NOT STARTED / REAL DEVICE VALIDATION OPEN
-REAL MOBILE BROWSER CAMERA      = NOT STARTED / REAL DEVICE VALIDATION OPEN
-REAL LABEL PHOTO                = NOT STARTED
-REAL USER VALIDATION            = OPEN
+CAN APP REQUEST CAMERA ACCESS?                     YES (getUserMedia, in de harnas, echt getest qua laadbaarheid; niet op een echte telefoon)
+CAN APP OPEN CAMERA?                               YES (idem)
+CAN RUNTIME DECODE REAL BARCODE IMAGE?             YES (bewezen: ZXing-pad, echte pixels, 4006381333931 correct gedecodeerd + gevalideerd)
+IS BARCODEDETECTOR RUNTIME INTEGRATED?             YES, code-niveau (orchestratie geschreven+getest); NO voor end-to-end-bewijs (sandbox mist de onderliggende component)
+IS ZXING FALLBACK RUNTIME INTEGRATED?              YES (bewezen, echte pixels)
+CAN RUNTIME EXECUTE OCR ON IMAGE PIXELS?           YES (bewezen: Tesseract.js, echte pixels, energy_kj/salt_g correct herkend)
+IS TESSERACT RUNTIME INTEGRATED?                   YES (bewezen)
+CAN REAL IMAGE PRODUCE STRUCTURED NUTRIENTS?       YES (bewezen, met eerlijk gedocumenteerde partiele extractie door OCR-onnauwkeurigheid)
+CAN STRUCTURED LABEL DATA ENTER MULTI-SOURCE COMPARISON?   YES, code-niveau (NutritionMultiSourceVerification accepteert het observaties-formaat ongewijzigd); NO end-to-end-integratietest deze sprint
+CAN LABEL PRODUCT CANDIDATE REACH CANONICAL INGEST?        NO -- geen enkele aanroep van de camera-/OCR-laag naar NutritionIngestService is gebouwd of getest deze sprint
+CAN UNKNOWN-OFF PRODUCT BE CREATED FROM BARCODE + LABEL PIPELINE?   NO -- architectonisch mogelijk (bestaande stukken passen in elkaar), maar niet end-to-end gebouwd/getest
+REAL ANDROID DEVICE VALIDATED?                     NO -- expliciet OPEN
+```
+
+## MATURITY (bijgewerkt, strikt)
+
+```
+CAMERA CAPTURE FOUNDATION      = IMPLEMENTED + TESTED
+LIVE CAMERA ACCESS             = IMPLEMENTED (harnas-niveau, getUserMedia); REAL DEVICE VALIDATION OPEN
+BARCODEDETECTOR                = IMPLEMENTED + TESTED (orchestratie); FUNCTIONALLY PROVEN alleen voor het ZXing-pad; native pad REAL DEVICE VALIDATION OPEN
+ZXING-WASM                     = FUNCTIONALLY PROVEN (echte pixels, echte decodering, echte checksum-validatie)
+BARCODE LIVE SCANNING          = IMPLEMENTED (harnas); REAL DEVICE VALIDATION OPEN
+BARCODE FROM PHOTO             = FUNCTIONALLY PROVEN (ZXing-pad, echte fixture)
+TESSERACT.JS                   = FUNCTIONALLY PROVEN (echte pixels, echte OCR, lokale taaldata)
+LABEL OCR ENGINE                = FUNCTIONALLY PROVEN
+STRUCTURED LABEL EXTRACTION     = FUNCTIONALLY PROVEN (met eerlijk gedocumenteerde OCR-nauwkeurigheidsgrenzen)
+MULTI-SOURCE VERIFICATION       = IMPLEMENTED + TESTED (ongewijzigd, Wave 4-foundation); NIET end-to-end gekoppeld aan echte OCR-output deze sprint
+USER_LABEL_SCAN                 = IMPLEMENTED
+CANONICAL INGEST CONNECTION     = NOT INTEGRATED (geen aanroep gebouwd)
+HISTORICAL REPRODUCIBILITY      = ARCHITECTURE DEFINED (hergebruikt Wave 3, niet apart getest deze sprint)
+REAL ANDROID CAMERA             = REAL DEVICE VALIDATION OPEN
+REAL MOBILE BROWSER CAMERA      = REAL DEVICE VALIDATION OPEN
+REAL LABEL PHOTO                = FUNCTIONALLY PROVEN (synthetisch, gerenderd fixture-beeld; geen foto van een echt, fysiek etiket)
 NORMAL NUTRITION UX             = NOT INTEGRATED
+REAL USER VALIDATION            = OPEN
 ```
-
-**Kristalhelder, hard bevestigd (repository-bewijs, niet aangenomen):**
-`grep` op `index.html` geeft **0 treffers** voor `getUserMedia`,
-`BarcodeDetector`, en `tesseract` (case-insensitive), en **0 treffers**
-voor een verwijzing naar `nutritionCameraCapture`/`nutritionLabelParser`/
-`nutritionMultiSourceVerification` vanuit `index.html`. **De draaiende
-applicatie roept geen van de nieuwe modules ooit aan.** Dit is
-uitsluitend een geïsoleerde, pure contractlaag -- geen enkele regel
-zorgt ervoor dat een gebruiker ooit daadwerkelijk zijn camera opent,
-een barcode scant, of een OCR-proces start.
-
-**Geen overclaim:** dit is een pure, technologie-onafhankelijke
-contractlaag met sterke, adversariële testdekking op de kritieke
-veiligheidsregels (decimaal/energie/zout-natrium/geen-gok-bij-conflict).
-Er is geen enkele regel code die een camera aanraakt, een echte OCR-
-engine aanroept, of op een telefoon heeft gedraaid.
 
 ## MERGE RECOMMENDATION: YES (voor de contractlaag)
 

@@ -122,22 +122,40 @@ consistency: schoon.
 enkele test in deze sprint gebruikte een echte telefoon, browser-
 camera, of echte foto van een fysiek etiket.
 
-## MATURITY
+## MATURITY (strikt, exacte statustaal)
 
 ```
-CAMERA CAPTURE FOUNDATION      = IMPLEMENTED + TESTED
-BARCODE LIVE SCANNING          = ARCHITECTURE + CONTRACT ONLY (geen index.html-integratie)
-BARCODE IMAGE RECOGNITION      = ARCHITECTURE + CONTRACT ONLY
-LABEL OCR                      = TECHNOLOGY SELECTED, NOT INTEGRATED (Tesseract.js gekozen, niet gebundeld)
-STRUCTURED LABEL EXTRACTION    = IMPLEMENTED + TESTED (parsing-laag, geen echte OCR-aanroep getest)
-MULTI-SOURCE VERIFICATION      = IMPLEMENTED + TESTED
-UNKNOWN PRODUCT CREATION       = ARCHITECTURALLY POSSIBLE (hergebruikt Wave 3 ingest, niet apart end-to-end getest)
-CANONICAL INGEST               = HERGEBRUIKT, ONGEWIJZIGD (Wave 3)
-HISTORICAL REPRODUCIBILITY     = HERGEBRUIKT, ONGEWIJZIGD (Wave 3-fundament)
-REAL DEVICE VALIDATION         = OPEN
-NORMAL NUTRITION UX            = NOT INTEGRATED
-REAL USER VALIDATION           = OPEN
+CAMERA CAPTURE FOUNDATION      = IMPLEMENTED + TESTED (pure contract, geen runtime-integratie)
+LIVE CAMERA ACCESS             = NOT STARTED (geen getUserMedia-aanroep bestaat in index.html, 0 treffers bevestigd)
+BARCODEDETECTOR                = ARCHITECTURE DEFINED (technologie gekozen en onderzocht; 0 treffers in index.html -- niet geinstalleerd/geintegreerd)
+ZXING-WASM                     = ARCHITECTURE DEFINED (uitsluitend onderzocht als polyfill-kandidaat, geen package/import toegevoegd)
+BARCODE LIVE SCANNING          = NOT STARTED
+BARCODE FROM PHOTO             = NOT STARTED (resolveBarcodeDetectionResult() is IMPLEMENTED + TESTED als pure functie, maar heeft nooit een echte, gedetecteerde barcode van een echte foto verwerkt)
+TESSERACT.JS                   = ARCHITECTURE DEFINED (technologie gekozen; 0 treffers in index.html/package.json -- niet geinstalleerd)
+LABEL OCR ENGINE                = NOT STARTED (geen enkele OCR-engine draait ergens in dit project)
+REAL IMAGE OCR                  = NOT STARTED
+STRUCTURED LABEL EXTRACTION     = IMPLEMENTED + TESTED (parseLocaleNumber/parseEnergyObservation/parseSaltSodiumObservation/detectBasis zijn pure, geteste functies op HANDMATIG geschreven test-strings, niet op output van een echte OCR-engine)
+MULTI-SOURCE VERIFICATION       = IMPLEMENTED + TESTED
+USER_LABEL_SCAN                 = IMPLEMENTED (als waarde/concept in buildObservation(), geen database-kolom-wijziging nodig -- bestaande source_type-kolommen zijn vrije tekst)
+CANONICAL INGEST CONNECTION     = ARCHITECTURE DEFINED (hergebruikt Wave 3 NutritionIngestService conceptueel; geen enkele aanroep vanuit de camera-laag naar de ingest-service is gebouwd of getest)
+VERIFIED PROTECTION             = FUNCTIONALLY PROVEN (opnieuw, live tegen de database getest deze sessie; bevestigd dat de bestaande RLS-policy geen onderscheid maakt naar source_type)
+HISTORICAL REPRODUCIBILITY      = ARCHITECTURE DEFINED (hergebruikt Wave 3-fundament, niet apart met een label-scan-scenario getest)
+REAL ANDROID CAMERA             = NOT STARTED / REAL DEVICE VALIDATION OPEN
+REAL MOBILE BROWSER CAMERA      = NOT STARTED / REAL DEVICE VALIDATION OPEN
+REAL LABEL PHOTO                = NOT STARTED
+REAL USER VALIDATION            = OPEN
+NORMAL NUTRITION UX             = NOT INTEGRATED
 ```
+
+**Kristalhelder, hard bevestigd (repository-bewijs, niet aangenomen):**
+`grep` op `index.html` geeft **0 treffers** voor `getUserMedia`,
+`BarcodeDetector`, en `tesseract` (case-insensitive), en **0 treffers**
+voor een verwijzing naar `nutritionCameraCapture`/`nutritionLabelParser`/
+`nutritionMultiSourceVerification` vanuit `index.html`. **De draaiende
+applicatie roept geen van de nieuwe modules ooit aan.** Dit is
+uitsluitend een geïsoleerde, pure contractlaag -- geen enkele regel
+zorgt ervoor dat een gebruiker ooit daadwerkelijk zijn camera opent,
+een barcode scant, of een OCR-proces start.
 
 **Geen overclaim:** dit is een pure, technologie-onafhankelijke
 contractlaag met sterke, adversariële testdekking op de kritieke

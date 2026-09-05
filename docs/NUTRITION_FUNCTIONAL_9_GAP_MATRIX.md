@@ -12,8 +12,10 @@ Bron: code/database-inspectie + deze sprint. Geen documentatie-aanname.
 | Discovery (search/recent/frequent) | IMPLEMENTED + TESTED | 5 | voorkomt "altijd barcode scannen" | 10/10 pure tests, geen live database-query getest |
 | Cross-domain read-contract | IMPLEMENTED + TESTED | 5 | veilige basis voor toekomstige Today/Inzicht/Coach-context | 7/7 pure tests |
 | Correction-workflow (VERIFIED-precedence) | IMPLEMENTED + TESTED (hergebruikt Wave 3/4) | 7 | voorkomt datavervuiling | hergebruikt eerder, live geverifieerde RLS-fix |
-| Hydratie CRUD | FOUNDATION ONLY | 3 | canonical tabel bestaat (Wave 3), geen service-laag/UI | schema+RLS bevestigd, geen nieuwe service gebouwd deze sprint |
-| Supplementen CRUD | FOUNDATION ONLY | 3 | canonical tabel bestaat (Wave 3), geen service-laag/UI | idem |
+| Hydratie CRUD | FUNCTIONALLY PROVEN | 7 | canonical tabel bestaat (Wave 3), nu een echte service-laag + live CRUD-bewijs | 10/10 pure tests + live database-scenario (create/aggregate/edit/re-aggregate/delete, 750ml->900ml na edit) |
+| Supplementen CRUD | FUNCTIONALLY PROVEN | 7 | canonical tabel bestaat (Wave 3), nu een echte, veilige logging-service | 8/8 pure tests + live database-scenario (definitie/log/edit-dosis/delete) |
+| Portion engine (11 vereiste scenario's) | FUNCTIONALLY PROVEN | 8 | fundament voor elke nauwkeurige logging | alle 11 scenario's (100g/250g/100ml/330ml/0.5-2 servings/piece bekend+onbekend/negatief/0) expliciet getest, hergebruikt bestaande, ongewijzigde logica |
+| Meal CRUD (create/add/edit-quantity/remove/delete) | FUNCTIONALLY PROVEN | 8 | kern van het hele logboek | live database-scenario: create->add item->edit quantity (100g/165kcal -> 200g/330kcal)->remove item->delete meal, alle stappen bevestigd |
 | Voedingsdoelen/targets | MISSING (bewust) | 0 | vereist een productbeslissing (athlete-entered/coach-set/Decision-Engine) | geen architectuur gebouwd, PRODUCT OWNER DECISION REQUIRED |
 | Micronutriënten buiten de huidige 8 velden | ARCHITECTURE ONLY | 2 | concurrenten (Cronometer) trekken hier een streep | schema is uitbreidbaar, geen extra velden toegevoegd |
 | Security/RLS (privé data, geen coach/gym-toegang) | FUNCTIONALLY PROVEN (structureel) | 7 | fundamenteel privacyvereiste | hergebruikt eerder bewezen policies, geen nieuwe policy nodig voor de service-laag zelf (pure functies) |

@@ -91,3 +91,35 @@ geen fysieke apparaatvalidatie, en geen echte gebruiker geweest.
 
 30 nieuwe, pure tests (13+10+7), allemaal groen. Release gate:
 onveranderd groen (zie regressie-log). Geen bestaande test verzwakt.
+
+## CLOSURE 1 (deze pass): Meal CRUD + Portion Engine + Hydration + Supplements
+
+**Nieuwe, pure modules:** `core/nutritionHydrationService.js` (10/10
+tests: ml/L-normalisatie, aggregatie, ownership), `core/
+nutritionSupplementService.js` (8/8 tests: veilige definitie-/log-
+validatie, expliciet geen dosering-/werkzaamheidsoordeel). Portion
+engine: geen nieuwe code nodig -- alle 11 vereiste scenario's
+(100g/250g/100ml/330ml/0,5-2 servings/piece met en zonder bekend
+gewicht/negatief/nul) werkten al correct met de bestaande, ongewijzigde
+`portionToNutrients()`; nu expliciet, formeel vastgelegd als tests.
+
+**Live, functioneel bewezen tegen de echte database, volledig
+opgeruimd (0 rijen in alle 6 betrokken tabellen na afloop):**
+
+- **Meal CRUD:** een echte meal + item aangemaakt (100g kip, 165 kcal),
+  de hoeveelheid echt gewijzigd naar 200g (snapshot bijgewerkt naar 330
+  kcal/62g eiwit), bevestigd dat de aggregatie-functie op deze
+  bijgewerkte data correct 330 kcal berekent, het item verwijderd
+  (bevestigd: 0 items over), en de meal verwijderd.
+- **Hydratie:** twee echte entries (250+500ml) aangemaakt, aggregatie
+  bevestigd op 750ml, een entry echt bewerkt (250->400ml), aggregatie
+  opnieuw bevestigd op 900ml (correct veranderd), beide verwijderd.
+- **Supplementen:** een echte definitie + log (1000 IU) aangemaakt, de
+  dosis echt bewerkt naar 2000, beide verwijderd.
+- **RLS herbevestigd** (niet aangenomen): `nutrition_hydration_entries`
+  en `nutrition_supplement_logs` hebben op elk commando (SELECT/INSERT/
+  UPDATE/DELETE) een strikte `user_id = auth.uid()`-voorwaarde, geen
+  enkele verwijzing naar coach/gym/team-tabellen.
+
+**Nutrition targets: bewust, expliciet NIET aangeraakt** conform de
+PO-beslissing -- blijft een aparte, toekomstige beslissing.

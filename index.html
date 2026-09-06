@@ -21421,7 +21421,7 @@ async function renderVoedingHoeveelheid(){
   var presets=[25,50,75,100,150,200];
   el.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><div style="width:44px;height:44px;border-radius:10px;background:var(--card);display:flex;align-items:center;justify-content:center">📦</div><div style="min-width:0"><div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(voedingSelectedProduct.name||'')+'</div>'+(voedingSelectedProduct.brand?'<div style="font-size:12px;color:var(--g4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(voedingSelectedProduct.brand)+'</div>':'')+'</div></div>'
     +'<label class="v43-lbl" for="voeding-qty-input" style="display:block;margin:6px 0 6px">Hoeveelheid</label>'
-    +'<div style="display:flex;gap:8px;margin-bottom:10px"><input id="voeding-qty-input" type="number" inputmode="decimal" min="0" step="any" value="100" class="vd-input" style="flex:1" oninput="voedingUpdatePortionPreview()" aria-describedby="voeding-portion-preview"><select id="voeding-qty-unit" aria-label="Eenheid" class="vd-input" style="width:auto" onchange="document.getElementById(\'voeding-qty-input\').value=100;voedingUpdatePortionPreview()"><option value="g">g</option><option value="serving">portie</option></select></div>'
+    +'<div style="display:flex;gap:8px;margin-bottom:10px"><input id="voeding-qty-input" type="number" inputmode="decimal" min="0" step="any" value="'+(voedingSelectedProduct.initialQty!=null?voedingSelectedProduct.initialQty:100)+'" class="vd-input" style="flex:1" oninput="voedingUpdatePortionPreview()" aria-describedby="voeding-portion-preview"><select id="voeding-qty-unit" aria-label="Eenheid" class="vd-input" style="width:auto" onchange="document.getElementById(\'voeding-qty-input\').value=100;voedingUpdatePortionPreview()"><option value="g"'+(voedingSelectedProduct.initialUnit==='g'||!voedingSelectedProduct.initialUnit?' selected':'')+'>g</option><option value="serving"'+(voedingSelectedProduct.initialUnit==='serving'?' selected':'')+'>portie</option></select></div>'
     +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">'+presets.map(function(g){return '<button class="tk-btn tk-btn-secondary" style="padding:8px 12px" onclick="document.getElementById(\'voeding-qty-input\').value='+g+';document.getElementById(\'voeding-qty-unit\').value=\'g\';voedingUpdatePortionPreview()">'+g+' g</button>';}).join('')+'<button class="tk-btn tk-btn-secondary" style="padding:8px 12px" onclick="document.getElementById(\'voeding-qty-input\').value=1;document.getElementById(\'voeding-qty-unit\').value=\'serving\';voedingUpdatePortionPreview()">1 portie</button></div>'
     +'<div id="voeding-portion-preview" class="tk-card tk-card-l3" style="padding:12px 14px;margin-bottom:14px" aria-live="polite"></div>'
     +'<div id="voeding-portion-error" style="color:#c0392b;font-size:13px;margin-bottom:10px;display:none"></div>'
@@ -21541,6 +21541,20 @@ async function voedingRemoveMealItemConfirmed(itemId){
 var voedingEditingItem=null;
 function voedingOpenMealItemEdit(itemId){ voedingEditingItem={itemId:itemId}; go('s-voeding-item-edit'); }
 function voedingCloseItemEdit(){ voedingEditingItem=null; go('s-voeding-maaltijd-detail'); }
+/* == CONCEPT B / UX-05: 'Nogmaals toevoegen' vanuit een bestaand item. Dit is GEEN
+   database-clone: uitsluitend het canonical product_id en de huidige quantity worden
+   overgenomen als EXPLICIETE startwaarde (bewust dit ene item kopiëren, geen remembered
+   serving voor het product in het algemeen). De daadwerkelijke logging loopt daarna
+   via dezelfde, ongewijzigde create-pipeline (renderVoedingHoeveelheid haalt zelf de
+   actuele canonical nutrient_values op; voedingConfirmAddToMeal roept opnieuw
+   portionToNutrients aan en maakt een nieuw, eigen meal_item). Geen oude snapshot
+   wordt gekopieerd of hergebruikt. */
+function voedingRepeatItem(){
+  if(!voedingEditingItem||!voedingEditingItem.productId) return;
+  voedingSelectedProduct={id:voedingEditingItem.productId, initialQty:voedingEditingItem.quantity, initialUnit:voedingEditingItem.quantityUnit};
+  voedingEditingItem=null;
+  go('s-voeding-hoeveelheid');
+}
 async function voedingRenderItemEdit(){
   var el=document.getElementById('voeding-item-edit-body'); if(!el||!voedingEditingItem) return;
   el.innerHTML='<div style="text-align:center;padding:24px;color:var(--g4);font-size:13px">Laden…</div>';
@@ -21552,6 +21566,7 @@ async function voedingRenderItemEdit(){
     var nvs=await sbGet('nutrition_nutrient_values','&product_id=eq.'+item.product_id+'&order=created_at.desc&limit=1'); // canonical, actueel -- geen shadow-kopie
     var nv=nvs&&nvs[0];
     voedingEditingItem.mealId=item.meal_id; voedingEditingItem.nutrientRow=nv;
+    voedingEditingItem.productId=item.product_id; voedingEditingItem.quantity=item.quantity; voedingEditingItem.quantityUnit=item.quantity_unit;
     document.getElementById('voeding-item-edit-sub').textContent=prod?prod.name:'';
     el.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><div style="width:44px;height:44px;border-radius:10px;background:var(--card);display:flex;align-items:center;justify-content:center">📦</div><div style="min-width:0"><div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(prod?prod.name:'')+'</div>'+(prod&&prod.brand?'<div style="font-size:12px;color:var(--g4)">'+escHtml(prod.brand)+'</div>':'')+'</div></div>'
       +'<label class="v43-lbl" for="voeding-edit-qty-input" style="display:block;margin:6px 0 6px">Hoeveelheid</label>'
@@ -21559,6 +21574,7 @@ async function voedingRenderItemEdit(){
       +'<div id="voeding-edit-preview" class="tk-card tk-card-l3" style="padding:12px 14px;margin-bottom:14px" aria-live="polite"></div>'
       +'<div id="voeding-edit-error" style="color:#c0392b;font-size:13px;margin-bottom:10px;display:none"></div>'
       +'<button class="tk-btn tk-btn-primary" style="width:100%;margin-bottom:8px" onclick="voedingSaveItemEdit()">Wijzigingen opslaan</button>'
+      +'<button class="tk-btn tk-btn-tertiary" style="width:100%" onclick="voedingRepeatItem()">Nogmaals toevoegen als nieuw item</button>'
       +'<button class="tk-btn tk-btn-tertiary" style="width:100%" onclick="voedingCloseItemEdit()">Annuleren</button>';
     voedingUpdateItemEditPreview();
   }catch(e){ el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--g4)">Kon item niet laden.</div>'; }

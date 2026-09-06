@@ -4330,6 +4330,33 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="scroll" style="flex:1;overflow-y:auto" id="voeding-new-product-body"></div>
 </div>
 
+<div class="scr" id="s-voeding-handmatig">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Gegevens handmatig invoeren</div><div class="hdr-sub">Vul in wat op de verpakking staat</div></div><button class="ibtn" onclick="go('s-voeding-foto-controleren')" aria-label="Terug">‹</button></div></div>
+  <div class="scroll" style="flex:1;overflow-y:auto">
+    <div class="v43-lbl" style="margin:8px 0 6px">Productnaam</div>
+    <input id="voeding-manual-name" type="text" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px;margin-bottom:12px">
+    <div class="v43-lbl" style="margin:8px 0 6px">Merk (optioneel)</div>
+    <input id="voeding-manual-brand" type="text" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px;margin-bottom:12px">
+    <div class="v43-lbl" style="margin:8px 0 6px">Basis</div>
+    <select id="voeding-manual-basis" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px;margin-bottom:14px"><option value="PER_100G">per 100 g</option><option value="PER_100ML">per 100 ml</option><option value="PER_SERVING">per portie</option></select>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <input id="voeding-manual-kcal" type="number" step="any" placeholder="Energie (kcal)" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px">
+      <input id="voeding-manual-kj" type="number" step="any" placeholder="Energie (kJ, optioneel)" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px">
+      <input id="voeding-manual-protein" type="number" step="any" placeholder="Eiwit (g)" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px">
+      <input id="voeding-manual-carbs" type="number" step="any" placeholder="Koolhydraten (g)" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px">
+      <input id="voeding-manual-sugar" type="number" step="any" placeholder="Suikers (g, optioneel)" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px">
+      <input id="voeding-manual-fat" type="number" step="any" placeholder="Vet (g)" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px">
+      <input id="voeding-manual-satfat" type="number" step="any" placeholder="Verzadigd vet (g, optioneel)" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px">
+      <input id="voeding-manual-fiber" type="number" step="any" placeholder="Vezels (g, optioneel)" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px">
+      <input id="voeding-manual-salt" type="number" step="any" placeholder="Zout (g, optioneel)" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px">
+    </div>
+    <div class="v43-lbl" style="margin:8px 0 6px">Barcode (optioneel)</div>
+    <input id="voeding-manual-barcode" type="text" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px;margin-bottom:8px">
+    <div id="voeding-manual-error" style="color:#c0392b;font-size:13px;margin-bottom:8px;display:none"></div>
+    <button class="tk-btn tk-btn-primary" style="width:100%" onclick="voedingSaveManualEntry()">Product opslaan</button>
+  </div>
+</div>
+
 <div class="scr" id="s-voeding-bevestiging">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1"></div></div></div></div>
   <div class="scroll" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px">
@@ -5014,6 +5041,33 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <!-- MS-F12-03: Commercial UX -- planoverzicht. Uitsluitend gerenderd via
      renderPlanOverzicht(), die zelf uitsluitend CommercialUxCore consumeert.
      UI-lock =/= security: dit scherm is presentatie, geen autoriteit. -->
+<div class="modal-bg" id="m-voeding-confirm" onclick="bgClose(event,'m-voeding-confirm')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="m-voeding-confirm-title">Weet je het zeker?</div>
+    <div style="color:var(--g4);font-size:13px;margin-bottom:16px" id="m-voeding-confirm-body"></div>
+    <button class="tk-btn tk-btn-destructive" style="width:100%;margin-bottom:8px" id="m-voeding-confirm-yes">Verwijderen</button>
+    <button class="tk-btn tk-btn-secondary" style="width:100%" onclick="closeModal('m-voeding-confirm')">Annuleren</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-voeding-water" onclick="bgClose(event,'m-voeding-water')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Water toevoegen</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="tk-btn tk-btn-secondary" style="flex:1" onclick="document.getElementById('m-voeding-water-input').value=100">100 ml</button>
+      <button class="tk-btn tk-btn-secondary" style="flex:1" onclick="document.getElementById('m-voeding-water-input').value=250">250 ml</button>
+      <button class="tk-btn tk-btn-secondary" style="flex:1" onclick="document.getElementById('m-voeding-water-input').value=500">500 ml</button>
+      <button class="tk-btn tk-btn-secondary" style="flex:1" onclick="document.getElementById('m-voeding-water-input').value=750">750 ml</button>
+    </div>
+    <div class="v43-lbl" style="margin:6px 0 6px">Of vul zelf in (ml)</div>
+    <input id="m-voeding-water-input" type="number" min="0" step="any" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px;margin-bottom:8px">
+    <div id="m-voeding-water-error" style="color:#c0392b;font-size:13px;margin-bottom:8px;display:none"></div>
+    <button class="tk-btn tk-btn-primary" style="width:100%" onclick="voedingConfirmWaterEntry()">Toevoegen</button>
+  </div>
+</div>
+
 <div class="modal-bg" id="m-plan-overzicht" onclick="bgClose(event,'m-plan-overzicht')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -10559,6 +10613,7 @@ function go(id){
   if(id==='s-voeding-maaltijd-detail')renderVoedingMaaltijdDetail();
   if(id==='s-voeding-supplement')voedingRenderSupplementHistory();
   if(id==='s-voeding-custom')voedingRenderCustomForm();
+  if(id==='s-voeding-handmatig')voedingRenderManualForm();
   if(id==='s-voeding-correctie')voedingRenderCorrectieForm();
   if(id==='s-voeding-herkende-gegevens')voedingRunRecognitionOnEnter();
   if(id==='s-voeding-product-match')voedingRenderMatch();
@@ -20916,13 +20971,20 @@ async function voedingRenderOverview(){
 }
 
 /* Lichte, minimale water-invoer (geen apart scherm nodig conform Fase 13 -- prompt-achtige, snelle invoer via window.prompt is bewust NIET gebruikt; i.p.v. daarvan een korte inline-flow). */
-async function voedingOpenWaterEntry(){
-  var amountStr=window.prompt('Hoeveel water (ml)? Bijv. 250, 500 of 750');
-  if(amountStr==null) return;
-  var norm=NutritionHydrationService.normalizeHydrationAmount(Number(amountStr.replace(',','.')),'ml');
-  if(norm.status!=='OK'){ alert('Ongeldige hoeveelheid.'); return; }
+function voedingOpenWaterEntry(){
+  document.getElementById('m-voeding-water-input').value='';
+  document.getElementById('m-voeding-water-error').style.display='none';
+  openModal('m-voeding-water');
+}
+async function voedingConfirmWaterEntry(){
+  var errEl=document.getElementById('m-voeding-water-error');
+  var amountStr=document.getElementById('m-voeding-water-input').value;
+  var norm=NutritionHydrationService.normalizeHydrationAmount(Number(amountStr),'ml');
+  if(norm.status!=='OK'){ errEl.textContent='Vul een geldige hoeveelheid in.'; errEl.style.display='block'; return; }
   var uid=voedingUid(); if(!uid) return;
   await sbPostQ('nutrition_hydration_entries',{user_id:uid,occurred_at:new Date().toISOString(),amount_ml:norm.amount_ml,source:'manual'});
+  closeModal('m-voeding-water');
+  toast('Water toegevoegd');
   voedingRenderOverview();
 }
 
@@ -21001,12 +21063,12 @@ async function voedingScanLiveBarcode(){
     if(result.status==='FOUND'){
       var localMatch=await sbGet('nutrition_product_identifiers','&value=eq.'+result.identifier.value);
       if(localMatch&&localMatch.length){ voedingOpenProduct(localMatch[0].product_id); return; }
-      alert('Barcode '+result.identifier.value+' herkend, maar nog niet lokaal bekend. Gebruik "Foto etiket" om dit product toe te voegen.');
-    } else if(result.status==='INVALID_IDENTIFIER'){ alert('Ongeldige barcode gedetecteerd.'); }
-    else { alert('Geen barcode gevonden.'); }
+      toast('Barcode herkend, maar nog niet lokaal bekend. Gebruik "Foto etiket" om dit product toe te voegen.');
+    } else if(result.status==='INVALID_IDENTIFIER'){ toast('Ongeldige barcode gedetecteerd.'); }
+    else { toast('Geen barcode gevonden.'); }
   }catch(e){
     var resolved=(typeof NutritionCameraCapture!=='undefined')?NutritionCameraCapture.resolveCameraAccessResult(e):{status:'CAPTURE_FAILED'};
-    alert(resolved.status==='PERMISSION_DENIED'?'Cameratoegang geweigerd.':'Camera kon niet worden geopend.');
+    toast(resolved.status==='PERMISSION_DENIED'?'Cameratoegang geweigerd.':'Camera kon niet worden geopend.');
   }
 }
 
@@ -21034,8 +21096,22 @@ async function renderVoedingProduct(){
 }
 
 /* SCREEN 6 — Hoeveelheid/portie, VOOR toevoegen (hard requirement). Gebruikt uitsluitend NutritionFoundation2Core.portionToNutrients(). */
-function renderVoedingHoeveelheid(){
+async function renderVoedingHoeveelheid(){
   var el=document.getElementById('voeding-portion-body'); if(!el||!voedingSelectedProduct) return;
+  // Blocker 3-fix: na een foto-/custom-product-pad is nutrientRow/name nog
+  // niet geladen (dat gebeurde alleen in het zoek-pad). Haal dit hier alsnog
+  // op zodat de portie-flow altijd correct kan rekenen, ongeacht het pad
+  // waarlangs het product tot stand kwam.
+  if(!voedingSelectedProduct.nutrientRow || !voedingSelectedProduct.name){
+    el.innerHTML='<div style="text-align:center;padding:24px;color:var(--g4);font-size:13px">Laden…</div>';
+    try{
+      var prods=await sbGet('nutrition_products','&id=eq.'+voedingSelectedProduct.id);
+      var p=prods&&prods[0];
+      if(p){ voedingSelectedProduct.name=p.name; voedingSelectedProduct.brand=p.brand; }
+      var nvs=await sbGet('nutrition_nutrient_values','&product_id=eq.'+voedingSelectedProduct.id+'&order=created_at.desc&limit=1');
+      voedingSelectedProduct.nutrientRow=nvs&&nvs[0];
+    }catch(e){ console.error('renderVoedingHoeveelheid: kon productdata niet laden',e); }
+  }
   var presets=[25,50,75,100,150,200];
   el.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><div style="width:44px;height:44px;border-radius:10px;background:var(--card);display:flex;align-items:center;justify-content:center">📦</div><div style="font-weight:700">'+escHtml(voedingSelectedProduct.name||'')+'</div></div>'
     +'<div class="v43-lbl" style="margin:6px 0 6px">Hoeveelheid</div>'
@@ -21074,6 +21150,7 @@ async function voedingConfirmAddToMeal(){
   var snapshot=NutritionIngestService.buildNutrientSnapshot(result,null);
   await sbPostQ('nutrition_meal_items',{meal_id:mealId,product_id:voedingSelectedProduct.id,quantity:qty,quantity_unit:unit,nutrient_snapshot:snapshot});
   voedingCurrentMealTypeForAdd=null; voedingSelectedProduct=null;
+  toast('Toegevoegd aan maaltijd');
   go('s-voeding-maaltijden');
 }
 
@@ -21101,8 +21178,13 @@ async function renderVoedingMaaltijdDetail(){
   }catch(e){ el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--g4)">Kon maaltijd niet laden.</div>'; }
 }
 async function voedingRemoveMealItem(itemId){ await sbDelQ('nutrition_meal_items','id=eq.'+itemId); renderVoedingMaaltijdDetail(); }
-async function voedingDeleteMeal(mealId){
-  if(!confirm('Deze maaltijd verwijderen?')) return;
+function voedingDeleteMeal(mealId){
+  document.getElementById('m-voeding-confirm-title').textContent='Maaltijd verwijderen?';
+  document.getElementById('m-voeding-confirm-body').textContent='Deze maaltijd en alle items hierin worden verwijderd.';
+  document.getElementById('m-voeding-confirm-yes').onclick=function(){ closeModal('m-voeding-confirm'); voedingDeleteMealConfirmed(mealId); };
+  openModal('m-voeding-confirm');
+}
+async function voedingDeleteMealConfirmed(mealId){
   await sbDelQ('nutrition_meal_items','meal_id=eq.'+mealId);
   await sbDelQ('nutrition_meals','id=eq.'+mealId);
   voedingOpenMealDetailId=null; go('s-voeding-maaltijden');
@@ -21218,8 +21300,10 @@ async function voedingPersistCustomProduct(name,brand,basis,barcode,normalizedBa
     await sbPostQ('nutrition_product_identifiers',{product_id:productId,identifier_type:normalizedBarcode.identifier_type,value:normalizedBarcode.value});
   }
   await sbPostQ('nutrition_nutrient_values',{product_id:productId,basis:basis,energy_kcal:kcal?Number(kcal):null,protein_g:protein?Number(protein):null,carbohydrate_g:carbs?Number(carbs):null,fat_g:fat?Number(fat):null});
-  voedingSelectedProduct={id:productId};
-  voedingShowConfirmation('Dit product is toegevoegd aan de Trainingskompas database. Je maaltijd is nu bijgewerkt.');
+  // Blocker 3-fix: direct door naar de Portion Engine, geen tussenliggende
+  // bevestiging vóór de daadwerkelijke intake-registratie.
+  voedingSelectedProduct={id:productId, name:validation.canonicalFields.name, nutrientRow:{basis:basis, energy_kcal:kcal?Number(kcal):null, protein_g:protein?Number(protein):null, carbohydrate_g:carbs?Number(carbs):null, fat_g:fat?Number(fat):null}};
+  go('s-voeding-hoeveelheid');
 }
 
 /* -- Correctie / aanvulling (bestaand product, onvolledig of afwijkend) -- */
@@ -21233,22 +21317,25 @@ async function voedingRenderCorrectieForm(){
       el.innerHTML='<div class="tk-card tk-card-l3" style="padding:14px;margin-bottom:14px">🔒 Dit product is geverifieerd. Je kunt een afwijkende waarde melden, maar de canonical gegevens worden niet automatisch overschreven.</div>'
         +'<div class="v43-lbl" style="margin:8px 0 6px">Jouw waarneming (energie, kcal per 100g)</div>'
         +'<input id="voeding-correctie-value" type="number" step="any" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px;margin-bottom:12px">'
+        +'<div id="voeding-correctie-error" style="color:#c0392b;font-size:13px;margin-bottom:8px;display:none"></div>'
         +'<button class="tk-btn tk-btn-secondary" style="width:100%" onclick="voedingSubmitCorrection(\''+p.id+'\',true)">Verschil melden (canonical blijft ongewijzigd)</button>';
       return;
     }
     el.innerHTML='<div class="v43-lbl" style="margin:8px 0 6px">Jouw waarneming (energie, kcal per 100g)</div>'
       +'<input id="voeding-correctie-value" type="number" step="any" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px;margin-bottom:12px">'
+      +'<div id="voeding-correctie-error" style="color:#c0392b;font-size:13px;margin-bottom:8px;display:none"></div>'
       +'<div style="font-size:12px;color:var(--g4);margin-bottom:14px">Bron: door jou toegevoegd (USER_LABEL_SCAN/USER)</div>'
       +'<button class="tk-btn tk-btn-primary" style="width:100%" onclick="voedingSubmitCorrection(\''+p.id+'\',false)">Correctie opslaan</button>';
   }catch(e){ el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--g4)">Kon gegevens niet laden.</div>'; }
 }
 async function voedingSubmitCorrection(productId,verifiedProtected){
+  var errEl=document.getElementById('voeding-correctie-error');
   var val=Number(document.getElementById('voeding-correctie-value').value);
-  if(!isFinite(val)){ alert('Vul een geldige waarde in.'); return; }
+  if(!isFinite(val)){ if(errEl){errEl.textContent='Vul een geldige waarde in.';errEl.style.display='block';} return; }
   // Additief: altijd een NIEUWE nutrient_values-rij (revisie), nooit een
   // UPDATE-in-place -- spiegelt exact de Wave 3/4 ingest-precedence.
   await sbPostQ('nutrition_nutrient_values',{product_id:productId,basis:'PER_100G',energy_kcal:val,source_type:'USER_LABEL_SCAN'});
-  alert(verifiedProtected?'Bedankt, je melding is opgeslagen. De geverifieerde gegevens zijn niet gewijzigd.':'Correctie opgeslagen.');
+  toast(verifiedProtected?'Bedankt, je melding is opgeslagen. De geverifieerde gegevens zijn niet gewijzigd.':'Correctie opgeslagen.');
   go('s-voeding-product');
 }
 
@@ -21306,11 +21393,30 @@ async function voedingRunRecognitionOnEnter(){
     var tesseractAdapter={ recognize:function(img){ return Tesseract.recognize(img,'eng',{ workerPath:'core/vendor/tesseract-worker.min.js', langPath:'core/vendor', corePath:'core/vendor/tesseract-core', gzip:true }); } };
     var result=await NutritionOcrRuntime.extractStructuredNutrientsFromImage(voedingPhotoCaptures.label, {tesseractLib:tesseractAdapter, labelParser:NutritionLabelParser});
     if(result.status!=='OK'){
-      el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--g4)">Kon geen gegevens herkennen op het etiket. Probeer een scherpere foto.</div>'
-        +'<button class="tk-btn tk-btn-secondary" style="width:100%;margin-top:12px" onclick="go(\'s-voeding-foto-etiket\')">Opnieuw maken</button>';
+      el.innerHTML='<div class="tk-card tk-card-l3" style="padding:20px;text-align:center">'
+        +'<div style="font-weight:700;margin-bottom:6px">Geen gegevens herkend</div>'
+        +'<div style="color:var(--g4);font-size:13px;margin-bottom:16px">We konden het etiket niet betrouwbaar uitlezen.</div>'
+        +'<button class="tk-btn tk-btn-secondary" style="width:100%;margin-bottom:10px" onclick="go(\'s-voeding-foto-etiket\')">Opnieuw fotograferen</button>'
+        +'<button class="tk-btn tk-btn-primary" style="width:100%" onclick="go(\'s-voeding-handmatig\')">Gegevens handmatig invoeren</button>'
+        +'</div>';
       return;
     }
     voedingLastRecognition=result;
+    // Blocker 2-fix: OCR kan status='OK' teruggeven maar GEEN enkel
+    // bruikbaar voedingsstof-veld herkennen. In dat geval mag "Volgende"
+    // nooit beschikbaar zijn met een lege tabel -- expliciete, eerlijke
+    // "niets herkend"-staat met twee bruikbare vervolgstappen.
+    var coreFields=['energy_kcal','protein_g','carbohydrate_g','fat_g'];
+    var anyUsableValue=coreFields.some(function(f){ return result.observations[f] && result.observations[f].normalized_value!=null; });
+    if(!anyUsableValue){
+      el.innerHTML='<div class="tk-card tk-card-l3" style="padding:20px;text-align:center">'
+        +'<div style="font-weight:700;margin-bottom:6px">Geen gegevens herkend</div>'
+        +'<div style="color:var(--g4);font-size:13px;margin-bottom:16px">We konden het etiket niet betrouwbaar uitlezen.</div>'
+        +'<button class="tk-btn tk-btn-secondary" style="width:100%;margin-bottom:10px" onclick="go(\'s-voeding-foto-etiket\')">Opnieuw fotograferen</button>'
+        +'<button class="tk-btn tk-btn-primary" style="width:100%" onclick="go(\'s-voeding-handmatig\')">Gegevens handmatig invoeren</button>'
+        +'</div>';
+      return;
+    }
     function row(id,label,unit){
       var obs=result.observations[id];
       if(!obs||obs.normalized_value==null) return '';
@@ -21318,9 +21424,17 @@ async function voedingRunRecognitionOnEnter(){
     }
     el.innerHTML='<div class="v43-lbl" style="margin:6px 0 10px">Gegevens uit etiket (per '+(result.basis==='PER_100ML'?'100 ml':'100 g')+')</div>'
       +row('energy_kcal','Energie','kcal')+row('protein_g','Eiwit','g')+row('carbohydrate_g','Koolhydraten','g')+row('sugar_g','- waarvan suikers','g')+row('fat_g','Vet','g')+row('saturated_fat_g','- waarvan verzadigd','g')+row('fiber_g','Vezels','g')+row('salt_g','Zout','g')
-      +'<button class="tk-btn tk-btn-tertiary" style="margin-top:10px" onclick="alert(\'Handmatig aanpassen: correcties blijven USER_LABEL_SCAN-herkomst.\')">Gegevens handmatig aanpassen</button>'
+      +'<button class="tk-btn tk-btn-tertiary" style="margin-top:10px" onclick="go(\'s-voeding-handmatig\')">Gegevens handmatig aanpassen</button>'
       +'<button class="tk-btn tk-btn-primary" style="width:100%;margin-top:14px" onclick="go(\'s-voeding-product-match\')">Volgende</button>';
-  }catch(e){ el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--g4)">Herkenning mislukt.</div>'; console.error('voedingRunRecognitionOnEnter',e); }
+  }catch(e){
+    el.innerHTML='<div class="tk-card tk-card-l3" style="padding:20px;text-align:center">'
+      +'<div style="font-weight:700;margin-bottom:6px">Geen gegevens herkend</div>'
+      +'<div style="color:var(--g4);font-size:13px;margin-bottom:16px">We konden het etiket niet betrouwbaar uitlezen.</div>'
+      +'<button class="tk-btn tk-btn-secondary" style="width:100%;margin-bottom:10px" onclick="go(\'s-voeding-foto-etiket\')">Opnieuw fotograferen</button>'
+      +'<button class="tk-btn tk-btn-primary" style="width:100%" onclick="go(\'s-voeding-handmatig\')">Gegevens handmatig invoeren</button>'
+      +'</div>';
+    console.error('voedingRunRecognitionOnEnter',e);
+  }
 }
 
 /* -- Product match / conflict (Screens 12-13) -- gebruikt de bestaande
@@ -21362,12 +21476,14 @@ async function renderVoedingNieuwProduct(){
   el.innerHTML='<div class="v43-lbl" style="margin:6px 0 10px">Herkende gegevens (per '+(voedingLastRecognition.basis==='PER_100ML'?'100 ml':'100 g')+')</div>'
     +'<div class="v43-lbl" style="margin:8px 0 6px">Productnaam (niet automatisch herkend)</div>'
     +'<input id="voeding-newproduct-name" type="text" placeholder="Vul een naam in" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px;margin-bottom:14px">'
+    +'<div id="voeding-newproduct-error" style="color:#c0392b;font-size:13px;margin-bottom:8px;display:none"></div>'
     +'<div style="font-size:12px;color:var(--g4);margin-bottom:14px">Bron: USER_LABEL_SCAN -- nog niet geverifieerd</div>'
-    +'<button class="tk-btn tk-btn-primary" style="width:100%" onclick="voedingSaveNewProductFromLabel()">Toevoegen en loggen</button>';
+    +'<button class="tk-btn tk-btn-primary" style="width:100%" onclick="voedingSaveNewProductFromLabel()">Volgende</button>';
 }
 async function voedingSaveNewProductFromLabel(){
+  var errEl=document.getElementById('voeding-newproduct-error');
   var name=document.getElementById('voeding-newproduct-name').value;
-  if(!name||!name.trim()){ alert('Vul een productnaam in.'); return; }
+  if(!name||!name.trim()){ errEl.textContent='Vul een productnaam in.'; errEl.style.display='block'; return; }
   var uid=voedingUid(); if(!uid) return;
   var obs=voedingLastRecognition.observations;
   await sbPostQ('nutrition_products',{name:name.trim(),source_type:'USER',verification_state:'USER_PRIVATE',created_by:uid});
@@ -21380,8 +21496,16 @@ async function voedingSaveNewProductFromLabel(){
     fiber_g:obs.fiber_g?obs.fiber_g.normalized_value:null, sugar_g:obs.sugar_g?obs.sugar_g.normalized_value:null,
     saturated_fat_g:obs.saturated_fat_g?obs.saturated_fat_g.normalized_value:null, sodium_mg:obs.sodium_mg?obs.sodium_mg.normalized_value:null,
     source_type:'USER_LABEL_SCAN'});
-  voedingSelectedProduct={id:productId};
-  voedingShowConfirmation('Dit product is toegevoegd aan de Trainingskompas database. Je gegevens helpen de productinformatie te verbeteren.');
+  // Blocker 3-fix: NIET direct loggen -- altijd eerst via de Portion Engine
+  // (hoeveelheid kiezen), conform de harde regel "product ready -> quantity
+  // screen -> add". nutrientRow direct meegeven (net opgeslagen, geen extra
+  // round-trip nodig) zodat de portie-flow meteen correct kan rekenen.
+  voedingSelectedProduct={id:productId, name:name.trim(), nutrientRow:{
+    basis:voedingLastRecognition.basis||'PER_100G', energy_kcal:obs.energy_kcal?obs.energy_kcal.normalized_value:null,
+    protein_g:obs.protein_g?obs.protein_g.normalized_value:null, carbohydrate_g:obs.carbohydrate_g?obs.carbohydrate_g.normalized_value:null,
+    fat_g:obs.fat_g?obs.fat_g.normalized_value:null
+  }};
+  go('s-voeding-hoeveelheid');
 }
 
 /* -- Bevestiging (Screen 15) -- */
@@ -21390,6 +21514,56 @@ function voedingShowConfirmation(text){
   go('s-voeding-bevestiging');
 }
 function voedingConfirmGoToMeal(){ go('s-voeding-hoeveelheid'); }
+
+function voedingRenderManualForm(){
+  ['name','brand','kcal','kj','protein','carbs','sugar','fat','satfat','fiber','salt','barcode'].forEach(function(f){
+    var el=document.getElementById('voeding-manual-'+f); if(el) el.value='';
+  });
+  document.getElementById('voeding-manual-error').style.display='none';
+}
+
+/* -- Handmatige invoer na een mislukte/lege OCR-herkenning (Blocker 2) --
+   Zelfde persistence-pad als het custom-productformulier, hergebruikt
+   NutritionCustomProductService, geen tweede validatie-implementatie. */
+async function voedingSaveManualEntry(){
+  var errEl=document.getElementById('voeding-manual-error');
+  errEl.style.display='none';
+  var name=document.getElementById('voeding-manual-name').value;
+  var brand=document.getElementById('voeding-manual-brand').value;
+  var basis=document.getElementById('voeding-manual-basis').value;
+  var validation=NutritionCustomProductService.validateCustomProduct({name:name,brand:brand,basis:basis});
+  if(!validation.valid){ errEl.textContent='Vul een productnaam in.'; errEl.style.display='block'; return; }
+  var uid=voedingUid(); if(!uid) return;
+
+  var barcode=document.getElementById('voeding-manual-barcode').value.trim();
+  var normalizedBarcode=null;
+  if(barcode){
+    normalizedBarcode=NutritionFoundation2Core.normalizeBarcode(barcode);
+    if(normalizedBarcode && normalizedBarcode.status==='INVALID_IDENTIFIER'){ errEl.textContent='Deze barcode lijkt ongeldig (controlegetal klopt niet).'; errEl.style.display='block'; return; }
+  }
+
+  await sbPostQ('nutrition_products',{name:validation.canonicalFields.name,brand:validation.canonicalFields.brand,source_type:'USER_LABEL_SCAN',verification_state:'USER_PRIVATE',created_by:uid});
+  var fresh=await sbGet('nutrition_products','&name=eq.'+encodeURIComponent(validation.canonicalFields.name)+'&created_by=eq.'+uid+'&order=created_at.desc&limit=1');
+  var productId=fresh&&fresh[0]&&fresh[0].id;
+  if(!productId) return;
+  if(normalizedBarcode && normalizedBarcode.status==='valid'){
+    await sbPostQ('nutrition_product_identifiers',{product_id:productId,identifier_type:normalizedBarcode.identifier_type,value:normalizedBarcode.value});
+  }
+  function numOrNull(id){ var v=document.getElementById(id).value; return v?Number(v):null; } // UNKNOWN != 0: leeg veld blijft null, nooit 0
+  var kcal=numOrNull('voeding-manual-kcal');
+  var kj=numOrNull('voeding-manual-kj');
+  var nutrientRow={
+    basis:basis,
+    energy_kcal: kcal!=null ? kcal : null, // kJ != kcal: kJ wordt NIET automatisch omgerekend naar kcal (zou een shadow calculation zijn)
+    protein_g:numOrNull('voeding-manual-protein'), carbohydrate_g:numOrNull('voeding-manual-carbs'),
+    sugar_g:numOrNull('voeding-manual-sugar'), fat_g:numOrNull('voeding-manual-fat'),
+    saturated_fat_g:numOrNull('voeding-manual-satfat'), fiber_g:numOrNull('voeding-manual-fiber')
+  };
+  var saltVal=numOrNull('voeding-manual-salt'); // salt != sodium: apart bewaard, geen conversie
+  await sbPostQ('nutrition_nutrient_values',Object.assign({product_id:productId},nutrientRow,{source_type:'USER_LABEL_SCAN'}));
+  voedingSelectedProduct={id:productId, name:validation.canonicalFields.name, nutrientRow:nutrientRow};
+  go('s-voeding-hoeveelheid');
+}
 
 /* -- Conflict-scherm (Screen 13), ontbrak: render de daadwerkelijke
    afwijking, geen automatische keuze. Hergebruikt voedingLastMatchDecision

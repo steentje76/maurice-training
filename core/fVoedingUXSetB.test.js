@@ -81,6 +81,54 @@ t('Correctie-UI toont een expliciete VERIFIED-beschermingsmelding, biedt geen di
   assert.strictEqual(fnBody.includes('canonical gegevens worden niet automatisch overschreven') || fnBody.includes('canonical blijft ongewijzigd'), true);
 });
 
+// -- Real-device closure: geen browser-native dialogen meer (Blocker 1) ----
+t('Nutrition UX bevat GEEN enkele alert()/prompt()/confirm()-aanroep (KERN, adversarial regressie-check tegen browser-popups op een echt Android-toestel)', () => {
+  const htmlStart = html.indexOf('VOEDING (Nutrition UX v1)');
+  const htmlEnd = html.indexOf('<!-- ═══ TRAINING HUB');
+  const htmlBlock = html.slice(htmlStart, htmlEnd);
+  const jsBlockFull = html.slice(setBJsStart, html.indexOf('async function voedingSaveManualEntry') + 3000);
+  const combined = htmlBlock + jsBlockFull;
+  const found = combined.match(/\b(alert|prompt|confirm)\(/g) || [];
+  assert.deepStrictEqual(found, [], 'gevonden browser-native dialoog-aanroepen: ' + JSON.stringify(found));
+});
+
+// -- Blocker 2: OCR-lege-staat mag nooit een bruikbare 'Volgende' tonen ----
+t('OCR-herkenning blokkeert Volgende wanneer geen enkel kernveld herkend is (Blocker 2, structurele check)', () => {
+  const fnStart = html.indexOf('async function voedingRunRecognitionOnEnter');
+  const fnEnd = html.indexOf('async function voedingRenderMatch', fnStart);
+  const fnBody = html.slice(fnStart, fnEnd);
+  assert.strictEqual(fnBody.includes('anyUsableValue'), true);
+  assert.strictEqual(fnBody.includes('Geen gegevens herkend'), true);
+  assert.strictEqual(fnBody.includes("go('s-voeding-handmatig')") || fnBody.includes('go(\\\'s-voeding-handmatig\\\')'), true);
+});
+
+// -- Blocker 3: elk product-aanmaakpad moet naar de portion-flow leiden, nooit direct loggen --
+t('Custom product-flow leidt naar de portion-flow, niet direct naar bevestiging (Blocker 3, structurele check)', () => {
+  const fnStart = html.indexOf('async function voedingPersistCustomProduct');
+  const fnEnd = html.indexOf('\n}', fnStart);
+  const fnBody = html.slice(fnStart, fnEnd);
+  assert.strictEqual(fnBody.includes("go('s-voeding-hoeveelheid')"), true);
+});
+t('Label-naar-nieuw-product-flow leidt naar de portion-flow, niet direct naar bevestiging (Blocker 3, structurele check)', () => {
+  const fnStart = html.indexOf('async function voedingSaveNewProductFromLabel');
+  const fnEnd = html.indexOf('\n}', fnStart);
+  const fnBody = html.slice(fnStart, fnEnd);
+  assert.strictEqual(fnBody.includes("go('s-voeding-hoeveelheid')"), true);
+});
+t('Handmatige-invoer-flow (na mislukte OCR) leidt naar de portion-flow (Blocker 3, structurele check)', () => {
+  const fnStart = html.indexOf('async function voedingSaveManualEntry');
+  const fnEnd = html.indexOf('\n}', fnStart);
+  const fnBody = html.slice(fnStart, fnEnd);
+  assert.strictEqual(fnBody.includes("go('s-voeding-hoeveelheid')"), true);
+});
+t('renderVoedingHoeveelheid haalt zelf ontbrekende productdata op (fix voor het echte, op een Android-toestel gevonden defect: leeg hoeveelheid-scherm na foto/custom product)', () => {
+  const fnStart = html.indexOf('async function renderVoedingHoeveelheid');
+  const fnEnd = html.indexOf('async function voedingConfirmAddToMeal', fnStart);
+  const fnBody = html.slice(fnStart, fnEnd);
+  assert.strictEqual(fnBody.includes('nutrition_nutrient_values'), true);
+  assert.strictEqual(fnBody.includes('!voedingSelectedProduct.nutrientRow'), true);
+});
+
 console.log(`fVoedingUXSetB: ${pass} geslaagd, ${fail} mislukt`);
 console.log(`Resultaat: ${pass} geslaagd, ${fail} mislukt`);
 if (fail > 0) process.exit(1);

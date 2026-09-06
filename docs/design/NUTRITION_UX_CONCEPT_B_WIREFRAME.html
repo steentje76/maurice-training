@@ -1,0 +1,54 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nutrition Concept B — wireframe (niet gekoppeld aan de app)</title>
+<style>
+:root{--bg:#E8ECF0;--card:#fff;--dark:#0F1B2D;--g3:#5C6B7A;--g4:#8A96A3;--g2:#D5DBE2;--p:#00B894;--amber:#E8A33D;--r:14px}
+*{box-sizing:border-box}body{margin:0;background:#cfd6dd;font-family:Poppins,system-ui,sans-serif;color:var(--dark);display:flex;gap:24px;padding:24px;flex-wrap:wrap;justify-content:center}
+.phone{width:390px;height:844px;background:var(--bg);border-radius:32px;overflow:hidden;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.25);display:flex;flex-direction:column}
+.scr{padding:22px 16px 0;flex:1;overflow:auto}.h1{font-size:26px;font-weight:800;margin:0}.sub{color:var(--g4);font-size:13px;margin:2px 0 14px}
+.card{background:var(--card);border-radius:var(--r);padding:16px;margin-bottom:12px}.lbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--g4);font-weight:600}
+.row{display:flex;justify-content:space-between;align-items:center}.bar{height:6px;background:var(--g2);border-radius:3px;overflow:hidden;margin:6px 0 3px}.bar>i{display:block;height:100%;background:var(--p)}.bar>i.over{background:var(--amber)}
+.small{font-size:12px;color:var(--g4)}.btn{display:block;width:100%;border:0;border-radius:12px;padding:14px;font-weight:700;font-size:15px;text-align:center}.btn.p{background:var(--p);color:#fff}.btn.s{background:#EEF1F4;color:var(--dark)}.btn.t{background:none;color:var(--p);padding:8px}
+.meal{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #EEF1F4}.meal:last-child{border:0}.meal b{display:block}.meal .small{margin-top:2px}.plus{width:36px;height:36px;border-radius:50%;background:#EEF1F4;display:grid;place-items:center;font-weight:700;color:var(--p)}
+.sticky{position:absolute;left:16px;right:16px;bottom:78px}.nav{height:64px;background:#fff;border-top:1px solid var(--g2);display:flex;justify-content:space-around;align-items:center;font-size:10px;color:var(--g4);letter-spacing:.06em}.nav b{color:var(--p)}
+.chips{display:flex;gap:8px;margin:10px 0}.chip{padding:8px 12px;border-radius:999px;background:#EEF1F4;font-size:13px;font-weight:600}.chip.on{background:var(--dark);color:#fff}
+.preset{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.preset span{padding:8px 12px;border-radius:10px;background:#fff;font-weight:700;font-size:14px}.preset span.on{background:var(--dark);color:#fff}
+input,select{width:100%;min-height:44px;border:1px solid var(--g2);border-radius:10px;padding:10px 12px;font-size:14px;background:#fff}
+.note{width:100%;max-width:820px;font-size:13px;color:#333;background:#fff;border-radius:12px;padding:14px 16px}
+</style></head><body>
+<div class="note"><b>Concept B — statische wireframe.</b> Niet gekoppeld aan productieflows; geen appcode. Alle getallen zijn illustratief. Doelen zijn <b>USER_DEFINED</b> ("je ingestelde doel"), nooit "optimale behoefte". UNKNOWN wordt als "—" getoond, nooit als 0. Progress via bestaande bars (partial/UNKNOWN-veilig), geen ringen.</div>
+
+<div class="phone"><div class="scr">
+  <div class="row"><h1 class="h1">Voeding</h1><span class="small">‹ zo 6 sep ›</span></div>
+  <div class="sub">Wat je vandaag hebt gegeten</div>
+  <div class="card">
+    <div class="row"><span class="lbl">Vandaag · je ingestelde doelen</span><a class="btn t" style="width:auto;display:inline;padding:0">Wijzigen</a></div>
+    <div class="row" style="margin-top:8px"><span style="font-size:28px;font-weight:800">1300 <span style="font-size:14px;color:var(--g4)">/ 2400 kcal</span></span><span class="small">Nog 1100 kcal</span></div>
+    <div class="bar"><i style="width:54%"></i></div>
+    <div class="row" style="margin-top:10px;font-size:14px"><span>Eiwit</span><b>77 / 160 g</b></div><div class="bar"><i style="width:48%"></i></div>
+    <div class="row" style="margin-top:8px;font-size:14px"><span>Koolhydraten <span class="small">(deels bekend)</span></span><b>150 / 250 g</b></div><div class="bar"><i style="width:60%"></i></div>
+    <div class="row" style="margin-top:8px;font-size:14px"><span>Vet</span><b>82 / 70 g</b></div><div class="bar"><i class="over" style="width:100%"></i></div><div class="small">12 g boven doel</div>
+  </div>
+  <div class="card" style="padding:4px 16px">
+    <div class="meal"><div><b>Ontbijt</b><span class="small">Skyr naturel · 520 kcal</span></div><span class="plus">+</span></div>
+    <div class="meal"><div><b>Lunch</b><span class="small">Volkoren wrap kip · 780 kcal</span></div><span class="plus">+</span></div>
+    <div class="meal"><div><b>Diner</b><span class="small">Nog niets toegevoegd</span></div><span class="plus">+</span></div>
+    <div class="meal"><div><b>Snacks</b><span class="small">Nog niets toegevoegd</span></div><span class="plus">+</span></div>
+  </div>
+  <div style="display:flex;gap:10px"><div class="card" style="flex:1"><div class="small">💧 Water</div><b>0.8 L</b></div><div class="card" style="flex:1"><div class="small">💊 Supplementen</div><b>0 vandaag</b></div></div>
+  <div style="height:80px"></div>
+</div>
+<div class="sticky"><button class="btn p">+ Eten toevoegen</button></div>
+<div class="nav"><span>HOME</span><span>TRAINING</span><b>VOORTGANG</b><span>COACH</span></div></div>
+
+<div class="phone"><div class="scr">
+  <div class="row"><h1 class="h1">Hoeveelheid</h1><span class="small">‹</span></div>
+  <div class="sub">Toevoegen aan: <b style="color:var(--dark)">Ontbijt</b></div>
+  <div class="card"><div class="row"><b>Skyr naturel</b><span class="small">Arla · per 100 g</span></div></div>
+  <div class="lbl">Hoeveelheid</div>
+  <div style="display:flex;gap:8px;margin:6px 0"><input value="150" style="flex:1"><select style="width:90px"><option>g</option></select></div>
+  <div class="preset"><span>25 g</span><span>50 g</span><span>100 g</span><span class="on">150 g</span><span>200 g</span></div>
+  <div class="card" style="background:#F3FBF8"><div class="lbl" style="color:var(--p)">Dit voegt toe</div><div class="row" style="margin-top:6px"><span style="font-size:22px;font-weight:800">95 kcal</span><span class="small">Eiwit 16,5 g · Kh 6 g · Vet 0,3 g</span></div><div class="small" style="margin-top:4px">Berekend door de Portion Engine op basis van 150 g.</div></div>
+  <div class="lbl">Maaltijd</div><select style="margin:6px 0 16px"><option>Ontbijt</option><option>Lunch</option><option>Diner</option><option>Snacks</option></select>
+  <button class="btn p">Toevoegen</button>
+  <button class="btn t">Productdetails</button>
+</div><div class="nav"><span>HOME</span><span>TRAINING</span><b>VOORTGANG</b><span>COACH</span></div></div>
+</body></html>

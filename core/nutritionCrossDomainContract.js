@@ -45,8 +45,24 @@
     };
   }
 
+  /* buildTargetContext: canonieke target/consumed/remaining voor andere
+   * domeinen/AI. Waarden komen UITSLUITEND uit NutritionTargetService.
+   * computeDailyProgress(); niemand (ook AI niet) rekent 'remaining'
+   * opnieuw uit. source_wording is verplicht 'je ingestelde doel' voor
+   * USER_DEFINED -- nooit 'optimale behoefte'. */
+  function buildTargetContext(progress, target) {
+    if (!progress || !progress.has_any_target) return { status: 'NO_TARGET' };
+    var out = { status: 'OK', source: (target && target.source) || 'USER_DEFINED', source_wording: 'je ingestelde doel', fields: {} };
+    Object.keys(progress.fields).forEach(function (f) {
+      var r = progress.fields[f];
+      out.fields[f] = { target: r.target, consumed: r.consumed, remaining: r.remaining, status: r.status, coverage: r.coverage };
+    });
+    return out;
+  }
+
   var NutritionCrossDomainContract = {
     buildDailyNutritionContext: buildDailyNutritionContext,
+    buildTargetContext: buildTargetContext,
     evaluateCorrectionRequest: evaluateCorrectionRequest
   };
 

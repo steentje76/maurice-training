@@ -50,6 +50,14 @@ t('evaluateCorrectionRequest: OWNER_NON_VERIFIED wanneer toegestaan', () => {
   assert.strictEqual(r.reason, 'OWNER_NON_VERIFIED');
 });
 
+t('buildTargetContext: canonieke remaining doorgegeven, source_wording "je ingestelde doel" (AI mag niet herberekenen/herformuleren)', () => {
+  const T=require('./nutritionTargetService.js');
+  const prog=T.computeDailyProgress({energy_kcal:2400,protein_g:null,carbohydrate_g:null,fat_g:null},{status:'valid',item_count:1,energy_kcal:1820,coverage:{energy_kcal:'COMPLETE'}});
+  const ctx=Contract.buildTargetContext(prog,{source:'USER_DEFINED'});
+  assert.strictEqual(ctx.fields.energy_kcal.remaining,580); assert.strictEqual(ctx.source_wording,'je ingestelde doel'); assert.strictEqual(/optima/i.test(JSON.stringify(ctx)),false);
+});
+t('buildTargetContext: NO_TARGET zonder doelen (AI krijgt geen verzonnen doel)', () => { assert.strictEqual(Contract.buildTargetContext({has_any_target:false},null).status,'NO_TARGET'); });
+
 console.log(`NutritionCrossDomainContract: ${pass} geslaagd, ${fail} mislukt`);
 console.log(`Resultaat: ${pass} geslaagd, ${fail} mislukt`);
 if (fail > 0) process.exit(1);

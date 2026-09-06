@@ -25,8 +25,11 @@ const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 }
 
 // ---- B. De idempotente-tabellenlijst bevat expliciet sessions, race_segments, nutrition_entries en team_events ----
-ok(html.match(/IDEMPOTENT_TABELLEN_MET_CLIENT_ID\s*=\s*\{\s*sessions:\s*true,\s*race_segments:\s*true,\s*nutrition_entries:\s*true,\s*team_events:\s*true\s*\}/),
-  'B1: sessions, race_segments, nutrition_entries (B9-10) en team_events (B9-H2C) staan expliciet in de idempotente-tabellenlijst (allemaal gebruiken een server-gegenereerd/client-gegenereerd uuid, hetzelfde dubbeltel-risico bij een offline-replay/retry)');
+{
+  const idempBlokB = html.match(/IDEMPOTENT_TABELLEN_MET_CLIENT_ID\s*=[\s\S]*?\};/)[0];
+  ok(idempBlokB.includes('sessions: true') && idempBlokB.includes('race_segments: true') && idempBlokB.includes('nutrition_entries: true') && idempBlokB.includes('team_events: true'),
+    'B1: sessions, race_segments, nutrition_entries (B9-10) en team_events (B9-H2C) staan expliciet in de idempotente-tabellenlijst (allemaal gebruiken een server-gegenereerd/client-gegenereerd uuid, hetzelfde dubbeltel-risico bij een offline-replay/retry). Controleert aanwezigheid, niet de exacte, inmiddels uitgebreide lijst-inhoud.');
+}
 
 // ---- C. flushOfflineQueue() gebruikt DEZELFDE upsert-header voor deze tabellen bij een retry ----
 {

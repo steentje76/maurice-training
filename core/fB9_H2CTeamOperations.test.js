@@ -72,8 +72,11 @@ ok(!migratie.includes('<div') && !migratie.includes('onclick'),
   '11: de migratie bevat geen enkele HTML/UI-constructie -- puur backend');
 
 // ---- 12. Idempotency: team_events toegevoegd aan het bestaande mechanisme (zelf gevonden gat, sectie 45) ----
-ok(html.includes('IDEMPOTENT_TABELLEN_MET_CLIENT_ID = { sessions: true, race_segments: true, nutrition_entries: true, team_events: true }'),
-  '12 (zelf gevonden en gerepareerd): team_events ontbrak in de bestaande, generieke idempotency-registratie -- een netwerk-retry bij event-aanmaak zou een duplicaat event hebben kunnen creëren. Toegevoegd aan het reeds bestaande mechanisme (geen nieuw framework, sectie 45).');
+{
+  const idempBlok = html.match(/IDEMPOTENT_TABELLEN_MET_CLIENT_ID\s*=[\s\S]*?\};/)[0];
+  ok(idempBlok.includes('sessions: true') && idempBlok.includes('race_segments: true') && idempBlok.includes('nutrition_entries: true') && idempBlok.includes('team_events: true'),
+    '12 (zelf gevonden en gerepareerd): team_events ontbrak in de bestaande, generieke idempotency-registratie -- een netwerk-retry bij event-aanmaak zou een duplicaat event hebben kunnen creëren. Toegevoegd aan het reeds bestaande mechanisme (geen nieuw framework, sectie 45). Controleert aanwezigheid, niet de exacte, inmiddels uitgebreide lijst-inhoud.');
+}
 
 // ---- 13. Account deletion: team-tabellen expliciet gedekt (zelf gevonden gat, sectie 41) ----
 ok(delAcct.includes("['team_events', ['created_by']]") && delAcct.includes("['event_attendance', ['user_id']]") && delAcct.includes("['event_responsibilities', ['assigned_user_id']]"),

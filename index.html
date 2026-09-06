@@ -8107,7 +8107,12 @@ async function offlineQueueRemove(id){
 // server een idempotente upsert (Prefer: resolution=merge-duplicates) --
 // een exacte replay met hetzelfde, client-gegenereerde id overschrijft
 // zichzelf onschadelijk, in plaats van een tweede rij aan te maken.
-const IDEMPOTENT_TABELLEN_MET_CLIENT_ID = { sessions: true, race_segments: true, nutrition_entries: true, team_events: true };
+const IDEMPOTENT_TABELLEN_MET_CLIENT_ID = { sessions: true, race_segments: true, nutrition_entries: true, team_events: true,
+  // Fase 9-fix: retry na een onbevestigde netwerkfout (bv. timeout ná een geslaagde
+  // server-write) kon voorheen een echte, zichtbare dubbele meal/water/supplement-rij
+  // opleveren -- deze tabellen hebben exact dezelfde id-uuid-structuur als de reeds
+  // bewezen tabellen hierboven, dus hergebruikt hetzelfde, bestaande mechanisme.
+  nutrition_meals: true, nutrition_meal_items: true, nutrition_hydration_entries: true, nutrition_supplement_logs: true };
 function newClientRowId(){
   return (typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():('row-'+Date.now()+'-'+Math.random().toString(16).slice(2));
 }
@@ -21157,8 +21162,10 @@ async function voedingConfirmWaterEntry(){
   var norm=NutritionHydrationService.normalizeHydrationAmount(Number(amountStr),'ml');
   if(norm.status!=='OK'){ errEl.textContent='Vul een geldige hoeveelheid in.'; errEl.style.display='block'; return; }
   var _done=voedingWithBusy(document.querySelector('#m-voeding-water .tk-btn-primary'),'Toevoegen…');
-  var uid=voedingUid(); if(!uid) return;
-  await sbPostQ('nutrition_hydration_entries',{user_id:uid,occurred_at:new Date().toISOString(),amount_ml:norm.amount_ml,source:'manual'});
+  var uid=voedingUid(); if(!uid){ _done(); return; }
+  try{
+    await sbPostQ('nutrition_hydration_entries',{user_id:uid,occurred_at:new Date().toISOString(),amount_ml:norm.amount_ml,source:'manual'});
+  }catch(e){ errEl.textContent='Opslaan mislukt. Controleer je verbinding en probeer opnieuw.'; errEl.style.display='block'; _done(); return; }
   closeModal('m-voeding-water');
   _done(); toast('Water toegevoegd');
   voedingRenderOverview();
@@ -21372,10 +21379,12 @@ function voedingLookupManualBarcode(){
   voedingLookupBarcodeValue(normalized.value);
 }
 async function voedingLookupBarcodeValue(value){
-  var localMatch=await sbGet('nutrition_product_identifiers','&value=eq.'+value);
-  if(localMatch&&localMatch.length){ voedingOpenProduct(localMatch[0].product_id); return; }
-  toast('Barcode herkend, maar nog niet lokaal bekend. Gebruik "Foto etiket" om dit product toe te voegen.');
-  go('s-voeding-zoeken');
+  try{
+    var localMatch=await sbGet('nutrition_product_identifiers','&value=eq.'+value);
+    if(localMatch&&localMatch.length){ voedingOpenProduct(localMatch[0].product_id); return; }
+    toast('Barcode herkend, maar nog niet lokaal bekend. Gebruik "Foto etiket" om dit product toe te voegen.');
+    go('s-voeding-zoeken');
+  }catch(e){ toast('Opzoeken mislukt. Controleer je verbinding en probeer opnieuw.'); }
 }
 
 /* SCREEN 5 — Product details. */
@@ -21403,6 +21412,7 @@ async function renderVoedingProduct(){
 
 /* SCREEN 6 — Hoeveelheid/portie, VOOR toevoegen (hard requirement). Gebruikt uitsluitend NutritionFoundation2Core.portionToNutrients(). */
 async function renderVoedingHoeveelheid(){
+  voedingPendingAddItemId=null; // vers scherm = nieuw product/hoeveelheid, geen oude retry-id hergebruiken
   var el=document.getElementById('voeding-portion-body'); if(!el||!voedingSelectedProduct) return;
   // Blocker 3-fix: na een foto-/custom-product-pad is nutrientRow/name nog
   // niet geladen (dat gebeurde alleen in het zoek-pad). Haal dit hier alsnog
@@ -21453,6 +21463,16 @@ function voedingUpdatePortionPreview(){
   var anyUnknown=r.energy_kcal==null||r.protein_g==null||r.carbohydrate_g==null||r.fat_g==null;
   el.innerHTML=lbl+'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><span style="font-size:22px;font-weight:800">'+(kcal||'\u2014 kcal')+'</span><span style="font-size:12px;color:var(--g4)">'+macros+'</span></div>'+(anyUnknown?'<div style="font-size:11px;color:var(--g4);margin-top:4px">\u2014 = niet bekend voor dit product</div>':'');
 }
+var voedingPendingAddItemId=null; // Fase 9: overleeft meerdere klikken op "Opnieuw proberen", zodat retry idempotent blijft
+function voedingShowAddMealError(errEl,_done){
+  // De client-id (voedingPendingAddItemId) blijft bewust staan: bij een tweede klik op
+  // Toevoegen wordt dezelfde id hergebruikt, dus zelfs als de eerste poging op de
+  // server al gelukt was (alleen de respons ging verloren), ontstaat er nooit een
+  // zichtbare dubbele rij (merge-duplicates op nutrition_meal_items.id).
+  errEl.innerHTML='Opslaan mislukt. Controleer je verbinding en probeer opnieuw.';
+  errEl.style.display='block';
+  _done();
+}
 async function voedingConfirmAddToMeal(){
   var errEl=document.getElementById('voeding-portion-error');
   var qty=Number(document.getElementById('voeding-qty-input').value);
@@ -21469,7 +21489,12 @@ async function voedingConfirmAddToMeal(){
   }
   errEl.style.display='none';
   var _done=voedingWithBusy(document.querySelector('#voeding-portion-body .tk-btn-primary'),'Toevoegen…');
-  var uid=voedingUid(); if(!uid) return;
+  var uid=voedingUid(); if(!uid){ _done(); return; }
+  // Fase 9: vaste client-id over eventuele retries heen, zodat een herhaalde klik na
+  // een onbevestigde netwerkfout NOOIT een tweede, zichtbare rij oplevert (hergebruikt
+  // het bestaande merge-duplicates-mechanisme, geen nieuwe architectuur).
+  if(!voedingPendingAddItemId) voedingPendingAddItemId=newClientRowId();
+  try{
   var dateStr=voedingDateStr(voedingCurrentDate);
   var meals=await sbGet('nutrition_meals','&occurred_at=gte.'+dateStr+'T00:00:00&occurred_at=lt.'+dateStr+'T23:59:59&meal_type=eq.'+mealType);
   var mealId;
@@ -21479,9 +21504,11 @@ async function voedingConfirmAddToMeal(){
     var freshMeals=await sbGet('nutrition_meals','&occurred_at=gte.'+dateStr+'T00:00:00&occurred_at=lt.'+dateStr+'T23:59:59&meal_type=eq.'+mealType+'&order=created_at.desc&limit=1');
     mealId=freshMeals&&freshMeals[0]&&freshMeals[0].id;
   }
-  if(!mealId){ _done(); return; }
+  if(!mealId){ voedingShowAddMealError(errEl,_done); return; }
   var snapshot=NutritionIngestService.buildNutrientSnapshot(result,null);
-  await sbPostQ('nutrition_meal_items',{meal_id:mealId,product_id:voedingSelectedProduct.id,quantity:qty,quantity_unit:unit,nutrient_snapshot:snapshot});
+  await sbPostQ('nutrition_meal_items',{id:voedingPendingAddItemId,meal_id:mealId,product_id:voedingSelectedProduct.id,quantity:qty,quantity_unit:unit,nutrient_snapshot:snapshot});
+  }catch(e){ voedingShowAddMealError(errEl,_done); return; }
+  voedingPendingAddItemId=null;
   voedingCurrentMealTypeForAdd=null; voedingSelectedProduct=null;
   _done(); toast('Toegevoegd aan maaltijd');
   go('s-voeding-maaltijden');
@@ -21619,8 +21646,10 @@ function voedingDeleteMeal(mealId){
   openModal('m-voeding-confirm');
 }
 async function voedingDeleteMealConfirmed(mealId){
-  await sbDelQ('nutrition_meal_items','meal_id=eq.'+mealId);
-  await sbDelQ('nutrition_meals','id=eq.'+mealId);
+  try{
+    await sbDelQ('nutrition_meal_items','meal_id=eq.'+mealId);
+    await sbDelQ('nutrition_meals','id=eq.'+mealId);
+  }catch(e){ toast('Verwijderen mislukt. Controleer je verbinding en probeer opnieuw.'); return; }
   voedingOpenMealDetailId=null; go('s-voeding-maaltijden');
 }
 
@@ -21663,7 +21692,7 @@ async function voedingRenderSupplementHistory(){
     }).join('');
   }catch(e){ el.innerHTML=''; }
 }
-async function voedingDeleteSupplementLog(logId){ await sbDelQ('nutrition_supplement_logs','id=eq.'+logId); voedingRenderSupplementHistory(); }
+async function voedingDeleteSupplementLog(logId){ try{ await sbDelQ('nutrition_supplement_logs','id=eq.'+logId); }catch(e){ toast('Verwijderen mislukt. Controleer je verbinding en probeer opnieuw.'); return; } voedingRenderSupplementHistory(); }
 
 /* ═══ VOEDING SET B — Custom product, correctie, foto-/etiketflow ═══
    Alle berekening/vergelijking/ingest-beslissing loopt via bestaande,
@@ -21697,8 +21726,9 @@ async function voedingSaveCustomProduct(){
 
   // Duplicate-detectie (Fase 24): eerst op barcode, dan op naam -- hergebruikt
   // de bestaande, ongewijzigde NutritionCustomProductService, geen eigen logica.
-  var existingByBarcode=[];
+  var existingByBarcode=[]; var existingByName=[];
   var normalizedBarcode=null;
+  try{
   if(barcode){
     normalizedBarcode=NutritionFoundation2Core.normalizeBarcode(barcode);
     if(normalizedBarcode && normalizedBarcode.status==='INVALID_IDENTIFIER'){ errEl.textContent='Deze barcode lijkt ongeldig (controlegetal klopt niet).'; errEl.style.display='block'; return; }
@@ -21707,7 +21737,8 @@ async function voedingSaveCustomProduct(){
       if(idMatches&&idMatches.length){ existingByBarcode=idMatches.map(function(m){return {id:m.product_id};}); }
     }
   }
-  var existingByName=await sbGet('nutrition_products','&name=ilike.'+encodeURIComponent(name.trim()));
+  existingByName=await sbGet('nutrition_products','&name=ilike.'+encodeURIComponent(name.trim()));
+  }catch(e){ errEl.textContent='Controleren mislukt. Controleer je verbinding en probeer opnieuw.'; errEl.style.display='block'; return; }
   var dup=NutritionCustomProductService.detectDuplicateCandidates(name, normalizedBarcode?normalizedBarcode.value:null, existingByBarcode, existingByName||[]);
   if(dup.status==='EXISTING_FOUND' || dup.status==='POSSIBLE_DUPLICATE'){
     dupEl.style.display='block';
@@ -21721,21 +21752,25 @@ async function voedingSaveCustomProduct(){
   await voedingPersistCustomProduct(name,brand,basis,barcode,normalizedBarcode);
 }
 async function voedingPersistCustomProduct(name,brand,basis,barcode,normalizedBarcode){
+  var errEl=document.getElementById('voeding-custom-error');
   var _done=voedingWithBusy(document.querySelector('#s-voeding-custom .tk-btn-primary'),'Opslaan…');
-  var uid=voedingUid(); if(!uid) return;
+  var uid=voedingUid(); if(!uid){ _done(); return; }
   var kcal=document.getElementById('voeding-custom-kcal').value;
   var protein=document.getElementById('voeding-custom-protein').value;
   var carbs=document.getElementById('voeding-custom-carbs').value;
   var fat=document.getElementById('voeding-custom-fat').value;
   var validation=NutritionCustomProductService.validateCustomProduct({name:name,brand:brand,basis:basis});
+  var productId;
+  try{
   await sbPostQ('nutrition_products',{name:validation.canonicalFields.name,brand:validation.canonicalFields.brand,source_type:validation.canonicalFields.source_type,verification_state:validation.canonicalFields.verification_state,created_by:uid});
   var fresh=await sbGet('nutrition_products','&name=eq.'+encodeURIComponent(validation.canonicalFields.name)+'&created_by=eq.'+uid+'&order=created_at.desc&limit=1');
-  var productId=fresh&&fresh[0]&&fresh[0].id;
-  if(!productId){ _done(); return; }
+  productId=fresh&&fresh[0]&&fresh[0].id;
+  if(!productId){ errEl.textContent='Opslaan mislukt. Controleer je verbinding en probeer opnieuw.'; errEl.style.display='block'; _done(); return; }
   if(normalizedBarcode && normalizedBarcode.status==='valid'){
     await sbPostQ('nutrition_product_identifiers',{product_id:productId,identifier_type:normalizedBarcode.identifier_type,value:normalizedBarcode.value});
   }
   await sbPostQ('nutrition_nutrient_values',{product_id:productId,basis:basis,energy_kcal:kcal?Number(kcal):null,protein_g:protein?Number(protein):null,carbohydrate_g:carbs?Number(carbs):null,fat_g:fat?Number(fat):null});
+  }catch(e){ errEl.textContent='Opslaan mislukt. Controleer je verbinding en probeer opnieuw.'; errEl.style.display='block'; _done(); return; }
   // Blocker 3-fix: direct door naar de Portion Engine, geen tussenliggende
   // bevestiging vóór de daadwerkelijke intake-registratie.
   voedingSelectedProduct={id:productId, name:validation.canonicalFields.name, nutrientRow:{basis:basis, energy_kcal:kcal?Number(kcal):null, protein_g:protein?Number(protein):null, carbohydrate_g:carbs?Number(carbs):null, fat_g:fat?Number(fat):null}};
@@ -21768,9 +21803,14 @@ async function voedingSubmitCorrection(productId,verifiedProtected){
   var errEl=document.getElementById('voeding-correctie-error');
   var val=Number(document.getElementById('voeding-correctie-value').value);
   if(!isFinite(val)){ if(errEl){errEl.textContent='Vul een geldige waarde in.';errEl.style.display='block';} return; }
+  var btn=document.querySelector('#s-voeding-correctie .tk-btn-primary')||document.querySelector('#s-voeding-correctie .tk-btn-secondary');
+  var _done=voedingWithBusy(btn,'Opslaan\u2026');
+  try{
   // Additief: altijd een NIEUWE nutrient_values-rij (revisie), nooit een
   // UPDATE-in-place -- spiegelt exact de Wave 3/4 ingest-precedence.
   await sbPostQ('nutrition_nutrient_values',{product_id:productId,basis:'PER_100G',energy_kcal:val,source_type:'USER_LABEL_SCAN'});
+  }catch(e){ if(errEl){errEl.textContent='Opslaan mislukt. Controleer je verbinding en probeer opnieuw.';errEl.style.display='block';} _done(); return; }
+  _done();
   toast(verifiedProtected?'Bedankt, je melding is opgeslagen. De geverifieerde gegevens zijn niet gewijzigd.':'Correctie opgeslagen.');
   go('s-voeding-product');
 }

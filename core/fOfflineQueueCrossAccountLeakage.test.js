@@ -28,6 +28,11 @@ function pak(naam) {
 function konst(naam) {
   var m = HTML.match(new RegExp('(?:^|\\n)(?:const|let) ' + naam + '\\s*=.*?;', 'm'));
   if (m) return m[0];
+  // Multi-line object-literal (bv. met toelichtende commentaarregels tussen de velden):
+  // match tot de EERSTE sluitende '};' vanaf de openende accolade -- geldig zolang er geen
+  // geneste '};'-substring in de tussenliggende commentaren staat (niet het geval hier).
+  m = HTML.match(new RegExp('(?:^|\\n)(?:const|let) ' + naam + '\\s*=\\s*\\{[\\s\\S]*?\\};', 'm'));
+  if (m) return m[0];
   m = HTML.match(new RegExp('(?:^|\\n)(?:const|let) ' + naam + '\\s*=[\\s\\S]*?\\n\\};', 'm'));
   assert.ok(m, 'const/let niet gevonden in index.html: ' + naam);
   return m[0];
@@ -62,6 +67,23 @@ function nepIndexedDB() {
   };
 }
 
+// Eenmalig gecompileerd (vóór queueZandbak) i.p.v. per aanroep opnieuw als raw string
+// via vm.runInContext: Node/V8 kan bij herhaalde vm.runInContext-aanroepen met
+// IDENTIEKE, top-level let/const-bevattende scriptbron een 'already been declared'-
+// SyntaxError geven zodra de bronstring een bepaalde lengte overschrijdt (hier
+// getriggerd door de legitieme uitbreiding van IDEMPOTENT_TABELLEN_MET_CLIENT_ID
+// met de nutrition-tabellen). Eenmalige compilatie via vm.Script + hergebruikte
+// .runInContext(ctx) is de door Node zelf voorziene weg voor herhaald scriptgebruik
+// en verhelpt dit mechanisch -- geen enkele assertie of geteste waarde verandert.
+var _sandboxScript = new vm.Script([konstVar('OFFLINE_DB_NAME'), konstVar('SB_RETRY_STATUS'),
+                 konstVar('_sbRefreshInFlight'), konstVar('_sbSessieVerlopenGemeld'),
+                 konstVar('_flushBezig'), konstVar('IDEMPOTENT_TABELLEN_MET_CLIENT_ID'),
+                 pak('newClientRowId'),
+                 pak('sbRetryable'), pak('sbRefreshOnce'), pak('sbSessieVerlopen'),
+                 pak('sbFetch'), pak('offlineDb'), pak('offlineQueueAdd'),
+                 pak('offlineQueueAll'), pak('offlineQueueRemove'), pak('sbPostQ'),
+                 pak('sbPatchQ'), pak('sbDelQ'), pak('flushOfflineQueue')].join('\n'));
+
 function queueZandbak(opts) {
   opts = opts || {};
   var idb = opts.idb || nepIndexedDB();
@@ -87,14 +109,7 @@ function queueZandbak(opts) {
     }
   };
   vm.createContext(ctx);
-  vm.runInContext([konstVar('OFFLINE_DB_NAME'), konstVar('SB_RETRY_STATUS'),
-                   konstVar('_sbRefreshInFlight'), konstVar('_sbSessieVerlopenGemeld'),
-                   konstVar('_flushBezig'), konstVar('IDEMPOTENT_TABELLEN_MET_CLIENT_ID'),
-                   pak('newClientRowId'),
-                   pak('sbRetryable'), pak('sbRefreshOnce'), pak('sbSessieVerlopen'),
-                   pak('sbFetch'), pak('offlineDb'), pak('offlineQueueAdd'),
-                   pak('offlineQueueAll'), pak('offlineQueueRemove'), pak('sbPostQ'),
-                   pak('sbPatchQ'), pak('sbDelQ'), pak('flushOfflineQueue')].join('\n'), ctx);
+  _sandboxScript.runInContext(ctx);
   ctx._idb = idb;
   return ctx;
 }

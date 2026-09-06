@@ -4264,6 +4264,11 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="scroll" style="flex:1;overflow-y:auto" id="voeding-portion-body"></div>
 </div>
 
+<div class="scr" id="s-voeding-item-edit">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1" id="voeding-item-edit-title">Item bewerken</div><div class="hdr-sub" id="voeding-item-edit-sub"></div></div><button class="ibtn" onclick="voedingCloseItemEdit()" aria-label="Terug">‹</button></div></div>
+  <div class="scroll" style="flex:1;overflow-y:auto" id="voeding-item-edit-body"></div>
+</div>
+
 <div class="scr" id="s-voeding-maaltijd-detail">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1" id="voeding-meal-detail-title">Maaltijd</div><div class="hdr-sub" id="voeding-meal-detail-sub"></div></div><button class="ibtn" onclick="go('s-voeding-maaltijden')" aria-label="Terug">‹</button></div></div>
   <div class="scroll" style="flex:1;overflow-y:auto" id="voeding-meal-detail-body"></div>
@@ -10686,6 +10691,7 @@ function go(id){
   if(id==='s-voeding-supplement')voedingRenderSupplementHistory();
   if(id==='s-voeding-custom')voedingRenderCustomForm();
   if(id==='s-voeding-handmatig')voedingRenderManualForm();
+  if(id==='s-voeding-item-edit')voedingRenderItemEdit();
   if(id==='s-voeding-doelen')voedingRenderDoelen();
   if(id==='s-voeding-correctie')voedingRenderCorrectieForm();
   if(id==='s-voeding-herkende-gegevens')voedingRunRecognitionOnEnter();
@@ -21490,13 +21496,25 @@ async function renderVoedingMaaltijdDetail(){
     var meal=meals&&meals[0]; if(!meal){ el.innerHTML=''; return; }
     var mealLabels={breakfast:'Ontbijt',lunch:'Lunch',dinner:'Diner',snack:'Snack',other:'Overig'};
     document.getElementById('voeding-meal-detail-title').textContent=mealLabels[meal.meal_type]||'Maaltijd';
-    var items=await sbGet('nutrition_meal_items','&meal_id=eq.'+meal.id);
+    var items0=await sbGet('nutrition_meal_items','&meal_id=eq.'+meal.id);
+    document.getElementById('voeding-meal-detail-sub').textContent = items0&&items0.length ? (items0.length===1?'1 product':items0.length+' producten') : '';
+    var items=items0;
     var prodIds=(items||[]).map(function(i){return i.product_id;}).filter(Boolean);
     var prods=prodIds.length?await sbGet('nutrition_products','&id=in.('+prodIds.join(',')+')'):[];
     var agg=NutritionMealService.aggregateDailyNutrition(items||[]);
+    if(!items||!items.length){
+      el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--g4);font-size:13px">Nog niets toegevoegd.</div>'
+        +'<button class="tk-btn tk-btn-secondary" style="width:100%;margin:10px 0 16px" onclick="voedingCurrentMealTypeForAdd=\''+meal.meal_type+'\';go(\'s-voeding-zoeken\')">+ Product toevoegen</button>'
+        +'<button style="width:100%;text-align:left;border:none;background:none;color:#c0392b;font-size:14px;margin-top:6px;padding:10px 0;cursor:pointer" onclick="voedingDeleteMeal(\''+meal.id+'\')">Maaltijd verwijderen</button>';
+      return;
+    }
     el.innerHTML=(items||[]).map(function(it){
       var p=prods.find(function(pp){return pp.id===it.product_id;});
-      return '<div class="tk-card tk-card-l3" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span><span style="display:block;font-weight:700">'+escHtml(p?p.name:'Product')+'</span><span style="display:block;font-size:12px;color:var(--g4)">'+it.quantity+' '+it.quantity_unit+' · '+(it.nutrient_snapshot&&it.nutrient_snapshot.energy_kcal!=null?it.nutrient_snapshot.energy_kcal+' kcal':'—')+'</span></span><button style="border:none;background:none;color:#c0392b;font-size:18px;cursor:pointer" onclick="voedingRemoveMealItem(\''+it.id+'\')" aria-label="Verwijderen">🗑</button></div>';
+      var pname=p?p.name:'Product';
+      return '<div style="display:flex;gap:6px;margin-bottom:8px">'
+        +'<button class="vd-prow" style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--card);border:0;border-radius:12px;min-height:52px;min-width:0;padding:10px 14px;text-align:left;color:var(--dark);cursor:pointer" onclick="voedingOpenMealItemEdit(\''+it.id+'\')" aria-label="'+escHtml(pname)+', '+it.quantity+' '+it.quantity_unit+', bewerken"><span style="min-width:0"><span style="display:block;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(pname)+'</span><span style="display:block;font-size:12px;color:var(--g4)">'+it.quantity+' '+it.quantity_unit+' · '+(it.nutrient_snapshot&&it.nutrient_snapshot.energy_kcal!=null?it.nutrient_snapshot.energy_kcal+' kcal':'—')+'</span></span><span aria-hidden="true">›</span></button>'
+        +'<button class="tk-btn tk-btn-secondary" style="flex:0 0 auto;min-width:44px;min-height:44px;padding:0" onclick="voedingConfirmRemoveMealItem(\''+it.id+'\')" aria-label="'+escHtml(pname)+' verwijderen">🗑</button>'
+        +'</div>';
     }).join('')
     +'<button class="tk-btn tk-btn-secondary" style="width:100%;margin:10px 0 16px" onclick="voedingCurrentMealTypeForAdd=\''+meal.meal_type+'\';go(\'s-voeding-zoeken\')">+ Product toevoegen</button>'
     +'<div class="tk-card tk-card-l3" style="padding:12px"><div style="font-weight:700;margin-bottom:6px">Totaal maaltijd '+(agg.energy_kcal==null?'—':agg.energy_kcal+' kcal')+'</div>'
@@ -21504,7 +21522,80 @@ async function renderVoedingMaaltijdDetail(){
     +'<button style="width:100%;text-align:left;border:none;background:none;color:#c0392b;font-size:14px;margin-top:16px;padding:10px 0;cursor:pointer" onclick="voedingDeleteMeal(\''+meal.id+'\')">Maaltijd verwijderen</button>';
   }catch(e){ el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--g4)">Kon maaltijd niet laden.</div>'; }
 }
-async function voedingRemoveMealItem(itemId){ await sbDelQ('nutrition_meal_items','id=eq.'+itemId); renderVoedingMaaltijdDetail(); }
+function voedingConfirmRemoveMealItem(itemId){
+  document.getElementById('m-voeding-confirm-title').textContent='Item verwijderen?';
+  document.getElementById('m-voeding-confirm-body').textContent='Dit product wordt uit de maaltijd verwijderd.';
+  document.getElementById('m-voeding-confirm-yes').onclick=function(){ closeModal('m-voeding-confirm'); voedingRemoveMealItemConfirmed(itemId); };
+  openModal('m-voeding-confirm');
+}
+async function voedingRemoveMealItemConfirmed(itemId){
+  try{ await sbDelQ('nutrition_meal_items','id=eq.'+itemId); toast('Verwijderd'); }
+  catch(e){ toast('Verwijderen mislukt. Probeer opnieuw.'); }
+  finally{ renderVoedingMaaltijdDetail(); } // her-render leest canonical items/aggregatie opnieuw -- geen DOM-delta
+}
+/* == CONCEPT B / UX-04: item bewerken. Hergebruikt UX-03 (NutritionFoundation2Core.
+   portionToNutrients + voedingFmtNutrient) 1-op-1 -- geen tweede preview-implementatie,
+   geen eigen delta-berekening. nutrient_snapshot bevat geen per-100g-brondata, dus een
+   nieuwe hoeveelheid vereist het opnieuw ophalen van de canonical nutrient_values
+   (mechanisch afgeleid, geen nieuw beleid -- zie forensic report). */
+var voedingEditingItem=null;
+function voedingOpenMealItemEdit(itemId){ voedingEditingItem={itemId:itemId}; go('s-voeding-item-edit'); }
+function voedingCloseItemEdit(){ voedingEditingItem=null; go('s-voeding-maaltijd-detail'); }
+async function voedingRenderItemEdit(){
+  var el=document.getElementById('voeding-item-edit-body'); if(!el||!voedingEditingItem) return;
+  el.innerHTML='<div style="text-align:center;padding:24px;color:var(--g4);font-size:13px">Laden…</div>';
+  try{
+    var items=await sbGet('nutrition_meal_items','&id=eq.'+voedingEditingItem.itemId);
+    var item=items&&items[0]; if(!item){ el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--g4)">Item niet gevonden.</div>'; return; }
+    var prods=await sbGet('nutrition_products','&id=eq.'+item.product_id);
+    var prod=prods&&prods[0];
+    var nvs=await sbGet('nutrition_nutrient_values','&product_id=eq.'+item.product_id+'&order=created_at.desc&limit=1'); // canonical, actueel -- geen shadow-kopie
+    var nv=nvs&&nvs[0];
+    voedingEditingItem.mealId=item.meal_id; voedingEditingItem.nutrientRow=nv;
+    document.getElementById('voeding-item-edit-sub').textContent=prod?prod.name:'';
+    el.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><div style="width:44px;height:44px;border-radius:10px;background:var(--card);display:flex;align-items:center;justify-content:center">📦</div><div style="min-width:0"><div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(prod?prod.name:'')+'</div>'+(prod&&prod.brand?'<div style="font-size:12px;color:var(--g4)">'+escHtml(prod.brand)+'</div>':'')+'</div></div>'
+      +'<label class="v43-lbl" for="voeding-edit-qty-input" style="display:block;margin:6px 0 6px">Hoeveelheid</label>'
+      +'<div style="display:flex;gap:8px;margin-bottom:10px"><input id="voeding-edit-qty-input" type="number" inputmode="decimal" min="0" step="any" value="'+item.quantity+'" class="vd-input" style="flex:1" oninput="voedingUpdateItemEditPreview()" aria-describedby="voeding-edit-preview"><select id="voeding-edit-qty-unit" aria-label="Eenheid" class="vd-input" style="width:110px" onchange="voedingUpdateItemEditPreview()"><option value="g"'+(item.quantity_unit==='g'?' selected':'')+'>g</option><option value="serving"'+(item.quantity_unit==='serving'?' selected':'')+'>portie</option></select></div>'
+      +'<div id="voeding-edit-preview" class="tk-card tk-card-l3" style="padding:12px 14px;margin-bottom:14px" aria-live="polite"></div>'
+      +'<div id="voeding-edit-error" style="color:#c0392b;font-size:13px;margin-bottom:10px;display:none"></div>'
+      +'<button class="tk-btn tk-btn-primary" style="width:100%;margin-bottom:8px" onclick="voedingSaveItemEdit()">Wijzigingen opslaan</button>'
+      +'<button class="tk-btn tk-btn-tertiary" style="width:100%" onclick="voedingCloseItemEdit()">Annuleren</button>';
+    voedingUpdateItemEditPreview();
+  }catch(e){ el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--g4)">Kon item niet laden.</div>'; }
+}
+function voedingUpdateItemEditPreview(){
+  var el=document.getElementById('voeding-edit-preview'); if(!el||!voedingEditingItem) return;
+  var qty=Number(String(document.getElementById('voeding-edit-qty-input').value).replace(',','.'));
+  var unit=document.getElementById('voeding-edit-qty-unit').value;
+  var nv=voedingEditingItem.nutrientRow;
+  var lbl='<div class="v43-lbl" style="margin:0 0 6px">Dit voegt toe</div>';
+  voedingEditingItem.pendingResult=null;
+  if(!nv){ el.innerHTML=lbl+'<div style="font-size:13px;color:var(--g4)">Voedingswaarden van dit product zijn niet beschikbaar.</div>'; return; }
+  var v=NutritionMealService.validateQuantity(qty);
+  if(!v.valid){ el.innerHTML=lbl+'<div style="font-size:13px;color:var(--g4)">Vul een geldige hoeveelheid in.</div>'; return; }
+  var r=NutritionFoundation2Core.portionToNutrients(nv,qty,unit); // zelfde engine als UX-03, geen tweede implementatie
+  if(!r||r.status!=='valid'){ el.innerHTML=lbl+'<div style="font-size:13px;color:var(--g4)">'+(r&&r.status==='UNKNOWN_CONVERSION'?'Gewicht per stuk is onbekend; kies een hoeveelheid in gram.':'Deze eenheid kan voor dit product niet worden omgerekend.')+'</div>'; return; }
+  var allUnknown=r.energy_kcal==null&&r.protein_g==null&&r.carbohydrate_g==null&&r.fat_g==null;
+  if(allUnknown){ el.innerHTML=lbl+'<div style="font-size:13px;color:var(--g4)">Voedingswaarden van dit product zijn niet beschikbaar.</div>'; return; }
+  var kcal=voedingFmtNutrient(r.energy_kcal,'kcal');
+  var macros=[['Eiwit',r.protein_g],['Koolhydraten',r.carbohydrate_g],['Vet',r.fat_g]].map(function(m){ return '<span style="white-space:nowrap">'+m[0]+' <b>'+(voedingFmtNutrient(m[1],'g')||'—')+'</b></span>'; }).join('<span aria-hidden="true"> · </span>');
+  var anyUnknown=r.energy_kcal==null||r.protein_g==null||r.carbohydrate_g==null||r.fat_g==null;
+  voedingEditingItem.pendingResult=r; voedingEditingItem.pendingQty=qty; voedingEditingItem.pendingUnit=unit;
+  el.innerHTML=lbl+'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><span style="font-size:22px;font-weight:800">'+(kcal||'— kcal')+'</span><span style="font-size:12px;color:var(--g4)">'+macros+'</span></div>'+(anyUnknown?'<div style="font-size:11px;color:var(--g4);margin-top:4px">— = niet bekend voor dit product</div>':'');
+}
+async function voedingSaveItemEdit(){
+  var errEl=document.getElementById('voeding-edit-error'); errEl.style.display='none';
+  var r=voedingEditingItem&&voedingEditingItem.pendingResult;
+  if(!r){ errEl.textContent='Vul eerst een geldige hoeveelheid in.'; errEl.style.display='block'; return; }
+  var _done=voedingWithBusy(document.querySelector('#voeding-item-edit-body .tk-btn-primary'),'Opslaan…');
+  try{
+    var snapshot=NutritionIngestService.buildNutrientSnapshot(r,null); // zelfde snapshot-opbouw als bij het aanmaken
+    await sbPatchQ('nutrition_meal_items','id=eq.'+voedingEditingItem.itemId,{quantity:voedingEditingItem.pendingQty,quantity_unit:voedingEditingItem.pendingUnit,nutrient_snapshot:snapshot});
+    toast('Wijzigingen opgeslagen');
+    voedingEditingItem=null; go('s-voeding-maaltijd-detail'); // her-render leest canonical items/aggregatie opnieuw -- geen delta-berekening
+  }catch(e){ errEl.textContent='Opslaan mislukt. Controleer je verbinding en probeer opnieuw.'; errEl.style.display='block'; }
+  finally{ _done(); }
+}
 function voedingDeleteMeal(mealId){
   document.getElementById('m-voeding-confirm-title').textContent='Maaltijd verwijderen?';
   document.getElementById('m-voeding-confirm-body').textContent='Deze maaltijd en alle items hierin worden verwijderd.';

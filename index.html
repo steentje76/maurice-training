@@ -4395,6 +4395,25 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </div>
 </div>
 
+<div class="scr" id="s-voeding-doelen">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Voedingsdoelen</div><div class="hdr-sub">Je eigen dagdoelen (optioneel per veld)</div></div><button class="ibtn" onclick="go('s-voeding')" aria-label="Terug">‹</button></div></div>
+  <div class="scroll" style="flex:1;overflow-y:auto">
+    <div class="v43-lbl" style="margin:8px 0 6px">Dagelijks energiedoel (kcal)</div>
+    <input id="voeding-doel-kcal" type="number" inputmode="decimal" min="0" step="any" placeholder="Bijv. 2400" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px;margin-bottom:12px">
+    <div class="v43-lbl" style="margin:8px 0 6px">Eiwit (g)</div>
+    <input id="voeding-doel-protein" type="number" inputmode="decimal" min="0" step="any" placeholder="Bijv. 160" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px;margin-bottom:12px">
+    <div class="v43-lbl" style="margin:8px 0 6px">Koolhydraten (g)</div>
+    <input id="voeding-doel-carbs" type="number" inputmode="decimal" min="0" step="any" placeholder="Bijv. 250" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px;margin-bottom:12px">
+    <div class="v43-lbl" style="margin:8px 0 6px">Vet (g)</div>
+    <input id="voeding-doel-fat" type="number" inputmode="decimal" min="0" step="any" placeholder="Bijv. 70" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px;margin-bottom:8px">
+    <div style="font-size:12px;color:var(--g4);margin-bottom:12px">Laat een veld leeg als je daar geen doel voor wilt. Dit zijn je eigen doelen, geen berekende behoefte.</div>
+    <div id="voeding-doel-check" style="display:none;background:#fff3cd;border-radius:10px;padding:12px;font-size:13px;margin-bottom:10px"></div>
+    <div id="voeding-doel-error" style="color:#c0392b;font-size:13px;margin-bottom:8px;display:none"></div>
+    <button class="tk-btn tk-btn-primary" style="width:100%" id="voeding-doel-save-btn" onclick="voedingSaveTargets()">Opslaan</button>
+    <button class="tk-btn tk-btn-tertiary" style="width:100%;margin-top:6px" onclick="go('s-voeding')">Annuleren</button>
+  </div>
+</div>
+
 <div class="scr" id="s-voeding-bevestiging">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1"></div></div></div></div>
   <div class="scroll" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px">
@@ -6127,6 +6146,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/vendor/zxing.min.js"></script>
 <script src="core/vendor/tesseract.min.js"></script>
 <script src="core/nutritionImageQualityGate.js"></script>
+<script src="core/nutritionTargetService.js"></script>
 <script src="core/nutritionBarcodeRuntime.js"></script>
 <script src="core/designSystemIcons.js"></script>
 <script src="core/decision.js"></script>
@@ -10655,6 +10675,7 @@ function go(id){
   if(id==='s-voeding-supplement')voedingRenderSupplementHistory();
   if(id==='s-voeding-custom')voedingRenderCustomForm();
   if(id==='s-voeding-handmatig')voedingRenderManualForm();
+  if(id==='s-voeding-doelen')voedingRenderDoelen();
   if(id==='s-voeding-correctie')voedingRenderCorrectieForm();
   if(id==='s-voeding-herkende-gegevens')voedingRunRecognitionOnEnter();
   if(id==='s-voeding-product-match')voedingRenderMatch();
@@ -20968,6 +20989,61 @@ function voedingCoverageBar(pct,color){
 async function renderVoeding(){
   voedingShiftDay(0);
 }
+/* == NUTRITION TARGETS V1 (USER_DEFINED) ==
+   Alle target/consumed/remaining-berekening loopt via NutritionTargetService
+   (centraal, deterministisch). De UI rekent hier NIETS zelf uit. */
+async function voedingFetchEffectiveTarget(dateStr){
+  var rows=await sbGet('nutrition_targets','&effective_from=lte.'+dateStr+'&order=effective_from.desc,created_at.desc&limit=5');
+  return NutritionTargetService.resolveEffectiveTarget(rows||[], dateStr);
+}
+async function voedingRenderDoelen(){
+  var errEl=document.getElementById('voeding-doel-error'); errEl.style.display='none';
+  document.getElementById('voeding-doel-check').style.display='none';
+  voedingDoelConfirmedCheck=false;
+  var map={kcal:'energy_kcal',protein:'protein_g',carbs:'carbohydrate_g',fat:'fat_g'};
+  Object.keys(map).forEach(function(k){ document.getElementById('voeding-doel-'+k).value=''; });
+  if(!voedingUid()) return;
+  try{
+    var t=await voedingFetchEffectiveTarget(voedingDateStr(new Date()));
+    if(t){ Object.keys(map).forEach(function(k){ var v=t[map[k]]; if(v!=null) document.getElementById('voeding-doel-'+k).value=v; }); }
+  }catch(e){ console.error('voedingRenderDoelen',e); }
+}
+var voedingDoelConfirmedCheck=false;
+async function voedingSaveTargets(){
+  var errEl=document.getElementById('voeding-doel-error'); var checkEl=document.getElementById('voeding-doel-check');
+  errEl.style.display='none';
+  function val(id){ var v=document.getElementById(id).value; return v===''?null:Number(v); }
+  var input={energy_kcal:val('voeding-doel-kcal'),protein_g:val('voeding-doel-protein'),carbohydrate_g:val('voeding-doel-carbs'),fat_g:val('voeding-doel-fat')};
+  var v=NutritionTargetService.validateTarget(input);
+  if(!v.valid){
+    errEl.textContent = v.reason==='NO_FIELDS_SET' ? 'Vul minstens één doel in.' : 'Controleer de ingevulde waarden: alleen positieve getallen.';
+    errEl.style.display='block'; return;
+  }
+  if(v.needsConfirmation && !voedingDoelConfirmedCheck){
+    var labels={energy_kcal:'energie',protein_g:'eiwit',carbohydrate_g:'koolhydraten',fat_g:'vet'};
+    checkEl.textContent='Controleer deze waarde: '+v.checkFields.map(function(f){return labels[f];}).join(', ')+' ligt buiten het gebruikelijke bereik. Klik nogmaals op Opslaan om te bevestigen.';
+    checkEl.style.display='block'; voedingDoelConfirmedCheck=true; return;
+  }
+  voedingDoelConfirmedCheck=false;
+  var uid=voedingUid(); if(!uid) return;
+  var row=NutritionTargetService.toCanonicalRow(input, voedingDateStr(new Date()));
+  row.user_id=uid;
+  try{
+    await sbPostQ('nutrition_targets',row); // historie: altijd NIEUWE rij, nooit UPDATE-in-place
+    toast('Voedingsdoelen opgeslagen');
+    go('s-voeding');
+  }catch(e){ errEl.textContent='Opslaan mislukt. Controleer je verbinding.'; errEl.style.display='block'; }
+}
+function voedingProgressRow(label, fr, unit){
+  if(!fr || fr.status==='NO_TARGET') return '';
+  var rem=NutritionTargetService.formatRemaining(fr, unit);
+  var pct=fr.progress_pct==null?0:Math.min(100,fr.progress_pct);
+  var consumedTxt = fr.status==='UNKNOWN_CONSUMED' ? '—' : fr.consumed;
+  var covNote = fr.coverage==='PARTIAL' ? ' <span style="color:var(--g4);font-size:11px">(deels bekend)</span>' : '';
+  return '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:14px"><span>'+label+covNote+'</span><span style="font-weight:700">'+consumedTxt+' / '+fr.target+' '+unit+'</span></div>'
+    +voedingCoverageBar(pct, fr.status==='OVER_TARGET' ? '#E8A33D' : '#00B894')
+    +(rem?'<div style="font-size:12px;color:var(--g4);margin-top:3px">'+rem+'</div>':'')+'</div>';
+}
 async function voedingRenderOverview(){
   var el=document.getElementById('voeding-overview-body'); if(!el) return;
   el.innerHTML='<div style="text-align:center;padding:24px;color:var(--g4);font-size:13px">Laden…</div>';
@@ -21003,7 +21079,18 @@ async function voedingRenderOverview(){
     }
 
     var waterHtml='<button class="tk-card tk-card-l3" style="flex:1;text-align:left;border:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="go(\'s-voeding-supplement\')" disabled></button>';
-    el.innerHTML=summaryHtml
+    var targetHtml='';
+    try{
+      var effTarget=await voedingFetchEffectiveTarget(voedingDateStr(voedingCurrentDate));
+      var prog=NutritionTargetService.computeDailyProgress(effTarget, agg);
+      if(!prog.has_any_target){
+        targetHtml='<div class="tk-card tk-card-l3" style="padding:14px;margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span><span style="display:block;font-weight:700">Stel je voedingsdoelen in</span><span style="display:block;font-size:12px;color:var(--g4)">Zie in één oogopslag wat je nog kunt eten.</span></span><button class="tk-btn tk-btn-secondary" style="white-space:nowrap" onclick="go(\'s-voeding-doelen\')">Doelen instellen</button></div>';
+      } else {
+        targetHtml='<div class="tk-card tk-card-l3" style="padding:16px;margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--g4)">Je ingestelde doelen</span><button style="border:none;background:none;color:var(--color-primary);font-size:13px;font-weight:600;cursor:pointer" onclick="go(\'s-voeding-doelen\')">Wijzigen</button></div>'
+          +voedingProgressRow('Energie',prog.fields.energy_kcal,'kcal')+voedingProgressRow('Eiwit',prog.fields.protein_g,'g')+voedingProgressRow('Koolhydraten',prog.fields.carbohydrate_g,'g')+voedingProgressRow('Vet',prog.fields.fat_g,'g')+'</div>';
+      }
+    }catch(e){ console.error('targets',e); }
+    el.innerHTML=summaryHtml+targetHtml
       +'<div style="display:flex;gap:10px;margin-top:12px">'
       +'<button class="tk-card tk-card-l3" style="flex:1;text-align:left;border:none;cursor:pointer" onclick="voedingOpenWaterEntry()"><span style="display:block;font-size:12px;color:var(--g4)">💧 Water</span><span style="display:block;font-weight:700;margin-top:4px">'+(hydAgg.status==='NO_ITEMS'?'0 L':(hydAgg.total_ml/1000).toFixed(1)+' L')+'</span></button>'
       +'<button class="tk-card tk-card-l3" style="flex:1;text-align:left;border:none;cursor:pointer" onclick="go(\'s-voeding-supplement\')"><span style="display:block;font-size:12px;color:var(--g4)">💊 Supplementen</span><span style="display:block;font-weight:700;margin-top:4px">'+(supplements?supplements.length:0)+' vandaag</span></button>'

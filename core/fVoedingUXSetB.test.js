@@ -289,6 +289,33 @@ t('Geen "Barcode gebruiken"-knop zonder gedetecteerde barcode: er bestaat geen k
   assert.strictEqual(/Barcode gebruiken/.test(html), false);
 });
 
+// -- Nutrition Targets V1 (stacked sprint) -----------------------------------
+t('Targets: doelen-scherm bestaat, 4 onafhankelijke velden, geen prompt/alert/confirm', () => {
+  assert.strictEqual(html.includes('id="s-voeding-doelen"'), true);
+  ['kcal','protein','carbs','fat'].forEach(k=>assert.strictEqual(html.includes('id="voeding-doel-'+k+'"'), true));
+  const b=fnBodyOf('async function voedingRenderDoelen','function voedingProgressRow'); assert.deepStrictEqual(b.match(/\b(alert|prompt|confirm)\(/g)||[],[]);
+});
+t('Targets: UI rekent remaining/progress NIET zelf -- alles via NutritionTargetService (geen shadow calculation, adversarial)', () => {
+  const b=fnBodyOf('function voedingProgressRow','async function voedingRenderOverview');
+  assert.strictEqual(b.includes('NutritionTargetService.formatRemaining'), true);
+  assert.strictEqual(/fr\.target\s*-\s*fr\.consumed/.test(b), false, 'geen ad-hoc target-consumed in UI');
+  const o=fnBodyOf('async function voedingRenderOverview','function voedingOpenWaterEntry');
+  assert.strictEqual(o.includes('NutritionTargetService.computeDailyProgress'), true);
+});
+t('Targets: opslaan is altijd een NIEUWE rij (sbPostQ), nooit UPDATE-in-place -- historie/effective_from (Fase 9)', () => {
+  const b=fnBodyOf('async function voedingSaveTargets','function voedingProgressRow');
+  assert.strictEqual(b.includes("sbPostQ('nutrition_targets'"), true); assert.strictEqual(b.includes('sbPatchQ'), false);
+  assert.strictEqual(b.includes('NutritionTargetService.toCanonicalRow'), true);
+});
+t('Targets: no-target empty state met actie "Doelen instellen", geen nep-progress', () => {
+  const o=fnBodyOf('async function voedingRenderOverview','function voedingOpenWaterEntry');
+  assert.strictEqual(o.includes('Stel je voedingsdoelen in'), true); assert.strictEqual(o.includes('has_any_target'), true);
+});
+t('Targets: extreme waarde vraagt bevestiging (CHECK_VALUE), geen stille correctie, geen medische claim', () => {
+  const b=fnBodyOf('async function voedingSaveTargets','function voedingProgressRow');
+  assert.strictEqual(b.includes('needsConfirmation'), true); assert.strictEqual(b.includes('Controleer deze waarde'), true); assert.strictEqual(/ongezond/i.test(b), false);
+});
+
 console.log(`fVoedingUXSetB: ${pass} geslaagd, ${fail} mislukt`);
 console.log(`Resultaat: ${pass} geslaagd, ${fail} mislukt`);
 if (fail > 0) process.exit(1);

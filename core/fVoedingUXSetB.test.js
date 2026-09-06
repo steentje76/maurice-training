@@ -309,7 +309,7 @@ t('Targets: opslaan is altijd een NIEUWE rij (sbPostQ), nooit UPDATE-in-place --
 });
 t('Targets: no-target empty state met actie "Doelen instellen", geen nep-progress', () => {
   const o=fnBodyOf('async function voedingRenderOverview','function voedingOpenWaterEntry');
-  assert.strictEqual(o.includes('Stel je voedingsdoelen in'), true); assert.strictEqual(o.includes('has_any_target'), true);
+  assert.strictEqual(/voedingsdoelen/.test(o) && o.includes('Doelen instellen') && o.includes("go(\\'s-voeding-doelen\\')"), true, 'no-target state met actie naar s-voeding-doelen'); assert.strictEqual(o.includes('has_any_target'), true);
 });
 t('Targets: extreme waarde vraagt bevestiging (CHECK_VALUE), geen stille correctie, geen medische claim', () => {
   const b=fnBodyOf('async function voedingSaveTargets','function voedingProgressRow');
@@ -347,11 +347,11 @@ t('Copy: geen "optimale/aanbevolen/ideale behoefte", geen schuld-/straftaal in d
   const block=html.slice(start,end);
   assert.strictEqual(/optima(le|al)\s+behoefte|aanbevolen\s+behoefte|ideale\s+macro/i.test(block), false);
   assert.strictEqual(/\b(zondig|schuldig|slecht bezig|te veel gegeten|gefaald)\b/i.test(block), false);
-  assert.strictEqual(block.includes('Je ingestelde doelen'), true);
+  assert.strictEqual(/je ingestelde doelen/i.test(block), true);
 });
 t('Empty states zijn functioneel (tekst + één vervolgactie): maaltijden, targets, zoeken', () => {
   assert.strictEqual(html.includes('Geen producten gevonden'), true);
-  assert.strictEqual(html.includes('Stel je voedingsdoelen in'), true);
+  assert.strictEqual(html.includes('Doelen instellen'), true);
   assert.strictEqual(/Nog niets toegevoegd|nog niets toegevoegd/.test(html), true);
 });
 t('Save-failure: netwerkfout geeft een menselijke inline-melding, geen stille failure, geen technische details in copy', () => {

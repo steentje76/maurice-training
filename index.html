@@ -238,6 +238,10 @@
 .vd-input{width:100%;box-sizing:border-box;min-height:44px;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px;background:var(--card);color:var(--dark)}
 .vd-input:focus-visible{outline:2px solid var(--color-primary);outline-offset:1px}
 .vd-input[aria-invalid="true"]{border-color:#c0392b}
+.vd-daterow{width:100%;min-height:44px;display:flex;align-items:center;gap:8px;background:none;border:0;padding:4px 2px 10px;color:var(--dark);font-size:14px;cursor:pointer}.vd-daterow .ar{margin-left:auto;color:var(--g4)}.vd-daterow:focus-visible{outline:2px solid var(--color-primary);border-radius:8px}
+.vd-sec{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--g4);font-weight:600;margin:16px 0 8px}
+.vd-meal{width:100%;min-height:56px;display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--card);border:0;border-radius:12px;padding:12px 14px;margin-bottom:8px;text-align:left;color:var(--dark);cursor:pointer}.vd-meal:focus-visible{outline:2px solid var(--color-primary)}.vd-meal .n{display:block;font-weight:700;font-size:15px}.vd-meal .s{display:block;font-size:12px;color:var(--g4);margin-top:2px}.vd-meal .k{font-weight:700;font-size:14px;white-space:nowrap}.vd-meal .ar{color:var(--g4);margin-left:4px}
+.vd-sec2{display:flex;gap:10px}.vd-sec2 .vd-meal{min-height:52px;flex:1;margin:0}.vd-sec2 .vd-meal .n{font-size:14px}
 /* SECONDARY — minder gewicht, outline, mag niet concurreren met primary. */
 .tk-btn-secondary{background:var(--color-surface-secondary);color:var(--color-text-primary);border:1.5px solid var(--color-border)}
 /* TERTIARY / TEXT ACTION — rustige actie zonder zware surface (bv. "Bekijk details"). */
@@ -4163,18 +4167,15 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <div class="scr" id="s-voeding">
   <div class="hdr">
     <div class="hdr-row">
-      <div><div class="hdr-title" role="heading" aria-level="1">Voeding</div><div class="hdr-sub">Inzicht in je voeding en energie</div></div>
+      <div><div class="hdr-title" role="heading" aria-level="1">Voeding</div><div class="hdr-sub">Wat je vandaag hebt gegeten</div></div>
       <button class="ibtn" onclick="go('s-profiel')" aria-label="Profiel openen"><svg class="tk-icon" data-icon="profiel" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
     </div>
   </div>
   <div class="scroll" style="flex:1;overflow-y:auto">
-    <button class="tk-card tk-card-l3" style="width:100%;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:8px;border:none;cursor:pointer" onclick="voedingShiftDay(0)" aria-label="Datum">
-      <span><span class="s" style="display:block;font-size:12px;color:var(--g4)">Vandaag</span><span class="t" id="voeding-date-label" style="display:block;font-weight:700"></span></span>
-      <span class="ar">›</span>
-    </button>
+    <button class="vd-daterow" onclick="voedingShiftDay(0)" aria-label="Datum wijzigen"><span style="font-size:12px;color:var(--g4)">Vandaag</span><span id="voeding-date-label" style="font-weight:700"></span><span class="ar" aria-hidden="true">›</span></button>
     <div id="voeding-overview-body" aria-live="polite"><div style="text-align:center;padding:24px;color:var(--g4);font-size:13px">Laden…</div></div>
-    <button class="tk-btn tk-btn-primary" style="width:100%;margin-top:12px" onclick="go('s-voeding-maaltijden')">+ Voeg maaltijd toe</button>
   </div>
+  <div class="ex-pick-sticky-bottom"><button class="tk-btn tk-btn-primary" style="width:100%" onclick="go('s-voeding-maaltijden')">+ Eten toevoegen</button></div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
     <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
@@ -20985,7 +20986,7 @@ async function voedingFetchDaySupplements(){
 }
 
 function voedingCoverageBar(pct,color){
-  return '<div style="height:6px;background:var(--g6);border-radius:3px;overflow:hidden;flex:1"><div style="height:100%;width:'+Math.max(0,Math.min(100,pct))+'%;background:'+color+'"></div></div>';
+  return '<div style="height:6px;background:var(--g2);border-radius:3px;overflow:hidden;flex:1" role="presentation"><div style="height:100%;width:'+Math.max(0,Math.min(100,pct))+'%;background:'+color+'"></div></div>';
 }
 
 /* SCREEN 2 — Voeding overzicht. Uitsluitend feiten: geen "X / Y"-doelnotatie. */
@@ -21053,7 +21054,7 @@ function voedingProgressRow(label, fr, unit){
   var consumedTxt = fr.status==='UNKNOWN_CONSUMED' ? '—' : fr.consumed;
   var covNote = fr.coverage==='PARTIAL' ? ' <span style="color:var(--g4);font-size:11px">(deels bekend)</span>' : '';
   return '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:14px"><span>'+label+covNote+'</span><span style="font-weight:700">'+consumedTxt+' / '+fr.target+' '+unit+'</span></div>'
-    +voedingCoverageBar(pct, fr.status==='OVER_TARGET' ? '#E8A33D' : '#00B894')
+    +(fr.status==='UNKNOWN_CONSUMED' ? '' : voedingCoverageBar(pct, fr.status==='OVER_TARGET' ? '#E8A33D' : '#00B894')) // UNKNOWN: geen bar (een lege bar zou 0 suggereren)
     +(rem?'<div style="font-size:12px;color:var(--g4);margin-top:3px">'+rem+'</div>':'')+'</div>';
 }
 async function voedingRenderOverview(){
@@ -21062,52 +21063,73 @@ async function voedingRenderOverview(){
   var uid=voedingUid();
   if(!uid){ el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--g4);font-size:13px">Log in om je voeding te bekijken.</div>'; return; }
   try{
+    /* == CONCEPT B / UX-01: hierarchie = dagstatus -> maaltijden -> water/supplementen.
+       Alle getallen komen uitsluitend uit canonical services:
+       NutritionMealService.aggregateDailyNutrition (dag + per maaltijd, zelfde functie),
+       NutritionTargetService.computeDailyProgress, NutritionHydrationService.
+       De UI telt, deelt of schat NIETS zelf. UNKNOWN != 0. */
     var meals=await voedingFetchDayMeals();
     var allItems=[]; meals.forEach(function(m){ allItems=allItems.concat(m.items||[]); });
     var agg=NutritionMealService.aggregateDailyNutrition(allItems);
     var hydration=await voedingFetchDayHydration();
     var hydAgg=NutritionHydrationService.aggregateDailyHydration(hydration.map(function(h){return {amount_ml:Number(h.amount_ml)};}));
     var supplements=await voedingFetchDaySupplements();
+    var effTarget=null, prog=null;
+    try{ effTarget=await voedingFetchEffectiveTarget(voedingDateStr(voedingCurrentDate)); prog=NutritionTargetService.computeDailyProgress(effTarget, agg); }catch(e){ console.error('targets',e); }
+    var hasTargets=!!(prog&&prog.has_any_target);
+    var nothingLogged=agg.status==='NO_ITEMS';
+    function fmt(v){ return v==null?'—':v; }
 
-    var summaryHtml='';
-    if(agg.status==='NO_ITEMS'){
-      summaryHtml='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--g4);font-size:13px">Nog niets gelogd vandaag.</div>';
+    /* -- 1. DAGSTATUS (een kaart, geen nesting, geen dubbele cijfers) -- */
+    var status='<div class="tk-card tk-card-l3" style="padding:16px">';
+    status+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span class="vd-sec" style="margin:0">'+(hasTargets?'Vandaag · je ingestelde doelen':'Vandaag')+'</span>'
+      +(hasTargets?'<button style="border:none;background:none;color:var(--color-primary);font-size:13px;font-weight:600;cursor:pointer;min-height:44px;padding:0 4px" onclick="go(\'s-voeding-doelen\')">Wijzigen</button>':'')+'</div>';
+    if(hasTargets){
+      // Alleen velden MET doel krijgen een progress-regel (geen verzonnen doelen).
+      status+=voedingProgressRow('Energie',prog.fields.energy_kcal,'kcal')+voedingProgressRow('Eiwit',prog.fields.protein_g,'g')+voedingProgressRow('Koolhydraten',prog.fields.carbohydrate_g,'g')+voedingProgressRow('Vet',prog.fields.fat_g,'g');
+      // Gelogde waarden ZONDER doel: een keer, compact, als feit (niet als progress).
+      var noTarget=[['energy_kcal','Energie','kcal'],['protein_g','Eiwit','g'],['carbohydrate_g','Koolhydraten','g'],['fat_g','Vet','g']].filter(function(f){ return prog.fields[f[0]].status==='NO_TARGET' && !nothingLogged && agg[f[0]]!=null; });
+      if(noTarget.length) status+='<div style="font-size:12px;color:var(--g4);margin-top:4px">Gelogd zonder doel: '+noTarget.map(function(f){return f[1]+' '+agg[f[0]]+' '+f[2];}).join(' · ')+'</div>';
+    } else if(nothingLogged){
+      status+='<div style="color:var(--g4);font-size:13px;padding:6px 0 2px">Je hebt vandaag nog niets toegevoegd.</div>';
     } else {
-      var macroChip=function(label,val,color){
-        return '<span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--g3)"><span style="width:8px;height:8px;border-radius:50%;background:'+color+'"></span>'+label+' '+(val==null?'—':val+'g')+'</span>';
-      };
-      summaryHtml='<div class="tk-card tk-card-l3" style="padding:16px">'
-        +'<div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--g4);margin-bottom:6px">Vandaag gelogd</div>'
-        +'<div style="font-size:32px;font-weight:800;color:var(--dark);margin-bottom:10px">'+(agg.energy_kcal==null?'—':agg.energy_kcal)+' <span style="font-size:14px;font-weight:600;color:var(--g4)">kcal</span></div>'
-        +'<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px">'+macroChip('Eiwit',agg.protein_g,'#00B894')+macroChip('Koolhydraten',agg.carbohydrate_g,'#3B82C4')+macroChip('Vet',agg.fat_g,'#E8A33D')+'</div>'
-        +'<div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--g4);margin:10px 0 6px">Voedingsstoffen (vandaag)</div>'
-        +['fiber_g','sugar_g','saturated_fat_g','sodium_mg'].map(function(f){
-            var labelMap={fiber_g:'Vezels',sugar_g:'Suikers',saturated_fat_g:'Verzadigd vet',sodium_mg:'Natrium'};
-            var unit=f==='sodium_mg'?'mg':'g';
-            var val=agg[f];
-            if(val==null && agg.coverage[f]==='UNKNOWN') return ''; // UNKNOWN != 0: niet tonen i.p.v. 0 tonen
-            return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px"><span style="width:110px;color:var(--g3)">'+labelMap[f]+'</span>'+voedingCoverageBar(agg.coverage[f]==='COMPLETE'?100:60,'#00B894')+'<span style="width:50px;text-align:right;font-weight:600">'+val+unit+'</span></div>';
-          }).join('');
+      status+='<div style="font-size:30px;font-weight:800;line-height:1.1">'+fmt(agg.energy_kcal)+' <span style="font-size:14px;font-weight:600;color:var(--g4)">kcal</span></div>'
+        +'<div style="font-size:13px;color:var(--g3);margin-top:6px">Eiwit '+fmt(agg.protein_g)+' g · Koolhydraten '+fmt(agg.carbohydrate_g)+' g · Vet '+fmt(agg.fat_g)+' g</div>'
+        +(['protein_g','carbohydrate_g','fat_g','energy_kcal'].some(function(f){return agg.coverage[f]==='PARTIAL'||agg.coverage[f]==='UNKNOWN';})?'<div style="font-size:12px;color:var(--g4);margin-top:4px">Inname deels onbekend (— = niet bekend, geen 0)</div>':'');
     }
+    if(!hasTargets){
+      status+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--color-border)"><span style="font-size:13px;color:var(--g3)">Je hebt nog geen voedingsdoelen ingesteld.</span><button class="tk-btn tk-btn-secondary" style="white-space:nowrap;min-height:40px;padding:8px 12px" onclick="go(\'s-voeding-doelen\')">Doelen instellen</button></div>';
+    }
+    // Overige voedingsstoffen: bestaande capability behouden, kop ALLEEN als er inhoud is (geen verweesde kop).
+    var extra=['fiber_g','sugar_g','saturated_fat_g','sodium_mg'].filter(function(f){ return !(agg[f]==null && agg.coverage[f]==='UNKNOWN'); });
+    if(!nothingLogged && extra.length){
+      var labelMap={fiber_g:'Vezels',sugar_g:'Suikers',saturated_fat_g:'Verzadigd vet',sodium_mg:'Natrium'};
+      status+='<div style="font-size:12px;color:var(--g4);margin-top:10px;padding-top:10px;border-top:1px solid var(--color-border)">'+extra.map(function(f){ return labelMap[f]+' '+fmt(agg[f])+' '+(f==='sodium_mg'?'mg':'g')+(agg.coverage[f]==='PARTIAL'?' (deels)':''); }).join(' · ')+'</div>';
+    }
+    status+='</div>';
 
-    var waterHtml='<button class="tk-card tk-card-l3" style="flex:1;text-align:left;border:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="go(\'s-voeding-supplement\')" disabled></button>';
-    var targetHtml='';
-    try{
-      var effTarget=await voedingFetchEffectiveTarget(voedingDateStr(voedingCurrentDate));
-      var prog=NutritionTargetService.computeDailyProgress(effTarget, agg);
-      if(!prog.has_any_target){
-        targetHtml='<div class="tk-card tk-card-l3" style="padding:14px;margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span><span style="display:block;font-weight:700">Stel je voedingsdoelen in</span><span style="display:block;font-size:12px;color:var(--g4)">Zie in één oogopslag wat je nog kunt eten.</span></span><button class="tk-btn tk-btn-secondary" style="white-space:nowrap" onclick="go(\'s-voeding-doelen\')">Doelen instellen</button></div>';
-      } else {
-        targetHtml='<div class="tk-card tk-card-l3" style="padding:16px;margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--g4)">Je ingestelde doelen</span><button style="border:none;background:none;color:var(--color-primary);font-size:13px;font-weight:600;cursor:pointer" onclick="go(\'s-voeding-doelen\')">Wijzigen</button></div>'
-          +voedingProgressRow('Energie',prog.fields.energy_kcal,'kcal')+voedingProgressRow('Eiwit',prog.fields.protein_g,'g')+voedingProgressRow('Koolhydraten',prog.fields.carbohydrate_g,'g')+voedingProgressRow('Vet',prog.fields.fat_g,'g')+'</div>';
+    /* -- 2. MAALTIJDEN (canonical meal types, subtotaal via dezelfde aggregate-functie) -- */
+    var mealTypes=[['breakfast','Ontbijt'],['lunch','Lunch'],['dinner','Diner'],['snack','Snacks']];
+    var mealsHtml='<div class="vd-sec">Maaltijden</div>'+mealTypes.map(function(mt){
+      var existing=meals.filter(function(m){return m.meal_type===mt[0];});
+      if(!existing.length){
+        return '<button class="vd-meal" onclick="voedingStartAddToMeal(\''+mt[0]+'\')" aria-label="'+mt[1]+': nog niets toegevoegd, toevoegen"><span><span class="n">'+mt[1]+'</span><span class="s">Nog niets toegevoegd</span></span><span class="ar" aria-hidden="true">+</span></button>';
       }
-    }catch(e){ console.error('targets',e); }
-    el.innerHTML=summaryHtml+targetHtml
-      +'<div style="display:flex;gap:10px;margin-top:12px">'
-      +'<button class="tk-card tk-card-l3" style="flex:1;text-align:left;border:none;cursor:pointer" onclick="voedingOpenWaterEntry()"><span style="display:block;font-size:12px;color:var(--g4)">💧 Water</span><span style="display:block;font-weight:700;margin-top:4px">'+(hydAgg.status==='NO_ITEMS'?'0 L':(hydAgg.total_ml/1000).toFixed(1)+' L')+'</span></button>'
-      +'<button class="tk-card tk-card-l3" style="flex:1;text-align:left;border:none;cursor:pointer" onclick="go(\'s-voeding-supplement\')"><span style="display:block;font-size:12px;color:var(--g4)">💊 Supplementen</span><span style="display:block;font-weight:700;margin-top:4px">'+(supplements?supplements.length:0)+' vandaag</span></button>'
+      var items=[]; existing.forEach(function(m){ items=items.concat(m.items||[]); });
+      var ma=NutritionMealService.aggregateDailyNutrition(items);
+      var kcal=ma.energy_kcal==null?'—':ma.energy_kcal+' kcal';
+      var sub=ma.item_count+(ma.item_count===1?' product':' producten')+(ma.coverage.energy_kcal==='PARTIAL'?' · deels bekend':'');
+      return '<button class="vd-meal" onclick="voedingOpenMealDetail(\''+existing[0].id+'\')" aria-label="'+mt[1]+', '+kcal+', '+sub+', openen"><span><span class="n">'+mt[1]+'</span><span class="s">'+sub+'</span></span><span><span class="k">'+kcal+'</span><span class="ar" aria-hidden="true">›</span></span></button>';
+    }).join('');
+
+    /* -- 3. WATER / SUPPLEMENTEN (secundair) -- */
+    var secHtml='<div class="vd-sec">Overig</div><div class="vd-sec2">'
+      +'<button class="vd-meal" onclick="voedingOpenWaterEntry()" aria-label="Water toevoegen, vandaag '+(hydAgg.status==='NO_ITEMS'?'0 liter':hydAgg.total_ml!=null?(hydAgg.total_ml/1000).toFixed(1)+' liter':'onbekend')+'"><span><span class="s" style="margin:0 0 2px">💧 Water</span><span class="n">'+(hydAgg.status==='NO_ITEMS'?'0 L':hydAgg.total_ml!=null?(hydAgg.total_ml/1000).toFixed(1)+' L':'—')+'</span></span><span class="ar" aria-hidden="true">+</span></button>'
+      +'<button class="vd-meal" onclick="go(\'s-voeding-supplement\')" aria-label="Supplementen, '+supplements.length+' vandaag"><span><span class="s" style="margin:0 0 2px">💊 Supplementen</span><span class="n">'+supplements.length+' vandaag</span></span><span class="ar" aria-hidden="true">›</span></button>'
       +'</div>';
-  }catch(e){ el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--g4);font-size:13px">Kon voeding niet laden.</div>'; console.error('voedingRenderOverview',e); }
+
+    el.innerHTML=status+mealsHtml+secHtml;
+  }catch(e){ el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--g4);font-size:13px">Kon voeding niet laden. <button class="tk-btn tk-btn-tertiary" onclick="voedingRenderOverview()">Opnieuw proberen</button></div>'; console.error('voedingRenderOverview',e); }
 }
 
 /* Lichte, minimale water-invoer (geen apart scherm nodig conform Fase 13 -- prompt-achtige, snelle invoer via window.prompt is bewust NIET gebruikt; i.p.v. daarvan een korte inline-flow). */

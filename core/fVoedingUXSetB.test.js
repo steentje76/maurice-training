@@ -31,9 +31,9 @@ t('index.html gebruikt uitsluitend lokale core/vendor-paden voor Tesseract-confi
 });
 
 // -- Geen duplicate runtime: hergebruik van Wave 3/4-modules, geen nieuwe implementatie ----
-t('Barcode-scan in Set B hergebruikt NutritionBarcodeRuntime.decodeBarcodeFromImage (geen tweede decoder)', () => {
-  const fnStart = html.indexOf('async function voedingScanLiveBarcode');
-  const fnEnd = html.indexOf('\n}', fnStart);
+t('Barcode-scanner hergebruikt NutritionBarcodeRuntime.decodeBarcodeFromImage (geen tweede decoder)', () => {
+  const fnStart = html.indexOf('async function voedingRunScanLoop');
+  const fnEnd = html.indexOf('\nfunction voedingScannerRetry', fnStart);
   const fnBody = html.slice(fnStart, fnEnd);
   assert.strictEqual(fnBody.includes('NutritionBarcodeRuntime.decodeBarcodeFromImage'), true);
   assert.strictEqual(fnBody.includes('NutritionFoundation2Core.normalizeBarcode'), true);

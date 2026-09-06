@@ -4212,6 +4212,37 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </div>
 </div>
 
+<div class="scr" id="s-voeding-scanner">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Barcode scannen</div></div><button class="ibtn" onclick="voedingCloseScanner();go('s-voeding-zoeken')" aria-label="Annuleren">‹</button></div></div>
+  <div class="scroll" style="flex:1;overflow-y:auto;display:flex;flex-direction:column">
+    <div style="position:relative;width:100%;aspect-ratio:3/4;background:#000;border-radius:12px;overflow:hidden;margin-bottom:16px">
+      <video id="voeding-scanner-video" autoplay playsinline style="width:100%;height:100%;object-fit:cover;display:none"></video>
+      <div id="voeding-scanner-frame" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:75%;height:35%;border:3px solid #fff;border-radius:12px;box-shadow:0 0 0 2000px rgba(0,0,0,0.35);display:none"></div>
+      <div id="voeding-scanner-status" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;text-align:center;padding:20px;font-size:14px">Camera wordt gestart…</div>
+    </div>
+    <div id="voeding-scanner-instruction" style="text-align:center;font-size:13px;color:var(--g4);margin-bottom:16px">Houd de barcode binnen het kader</div>
+    <div id="voeding-scanner-notfound" style="display:none;background:var(--card);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center">
+      <div style="font-weight:700;margin-bottom:6px">Nog geen barcode gevonden</div>
+      <div style="color:var(--g4);font-size:13px;margin-bottom:14px">Houd de camera stil en zorg dat de barcode scherp en volledig zichtbaar is.</div>
+      <button class="tk-btn tk-btn-primary" style="width:100%;margin-bottom:8px" onclick="voedingScannerRetry()">Opnieuw proberen</button>
+    </div>
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px">
+      <button class="tk-btn tk-btn-secondary" style="width:100%" onclick="go('s-voeding-scanner-handmatig')">Barcode handmatig invoeren</button>
+      <button class="tk-btn tk-btn-tertiary" style="width:100%" onclick="voedingCloseScanner();go('s-voeding-zoeken')">Annuleren</button>
+    </div>
+  </div>
+</div>
+
+<div class="scr" id="s-voeding-scanner-handmatig">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Barcode handmatig invoeren</div></div><button class="ibtn" onclick="go('s-voeding-zoeken')" aria-label="Terug">‹</button></div></div>
+  <div class="scroll" style="flex:1;overflow-y:auto">
+    <div class="v43-lbl" style="margin:8px 0 6px">Barcode</div>
+    <input id="voeding-manual-barcode-input" type="text" inputmode="numeric" placeholder="Bijv. 8710398513896" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px;margin-bottom:8px">
+    <div id="voeding-manual-barcode-error" style="color:#c0392b;font-size:13px;margin-bottom:12px;display:none"></div>
+    <button class="tk-btn tk-btn-primary" style="width:100%" onclick="voedingLookupManualBarcode()">Opzoeken</button>
+  </div>
+</div>
+
 <div class="scr" id="s-voeding-product">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Product</div></div><button class="ibtn" onclick="go('s-voeding-zoeken')" aria-label="Terug">‹</button></div></div>
   <div class="scroll" style="flex:1;overflow-y:auto" id="voeding-product-body"></div>
@@ -10607,6 +10638,8 @@ function go(id){
   // vooraf uitgevoerde audit/decision-resolution.
   if(id==='s-inzicht')renderInzicht();
   if(id==='s-voeding')renderVoeding();
+  if(id==='s-voeding-scanner')voedingStartScanner(); else voedingCloseScanner();
+  if(id==='s-voeding-scanner-handmatig'){ document.getElementById('voeding-manual-barcode-input').value=''; document.getElementById('voeding-manual-barcode-error').style.display='none'; }
   if(id==='s-voeding-maaltijden')renderVoedingMaaltijden();
   if(id==='s-voeding-product')renderVoedingProduct();
   if(id==='s-voeding-hoeveelheid')renderVoedingHoeveelheid();
@@ -21044,32 +21077,105 @@ async function voedingRunSearch(q){
     }).join('');
   }catch(e){ el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:16px;color:var(--g4);font-size:13px">Zoeken mislukt. Controleer je verbinding.</div>'; }
 }
-function voedingOpenBarcodeUnavailable(){ voedingScanLiveBarcode(); }
 function voedingOpenPhotoUnavailable(){ voedingClosePhotoFlow(); voedingPhotoCaptures={front:null,label:null}; document.getElementById('voeding-photo-continue-btn').disabled=true; document.getElementById('voeding-photo-continue-btn').textContent="Foto's maken"; ['front','label'].forEach(function(w){document.getElementById('voeding-photo-preview-'+w).style.display='none';document.getElementById('voeding-photo-video-'+w).style.display='none';}); go('s-voeding-foto-etiket'); }
 function voedingOpenCustomProductForm(){ go('s-voeding-custom'); }
-async function voedingScanLiveBarcode(){
+/* -- Barcode scanner: apart, zichtbaar scherm met live preview + kader.
+   Vervangt de eerdere, onzichtbare achtergrond-scan (real-device
+   blocker: gebruiker zag niets gebeuren na "Scan barcode"). Hergebruikt
+   uitsluitend de bestaande, ongewijzigde NutritionBarcodeRuntime/
+   NutritionFoundation2Core -- geen tweede decoder-implementatie. */
+var voedingScannerStream=null;
+var voedingScannerActive=false;
+function voedingSetScannerStatus(text, showFrame){
+  var statusEl=document.getElementById('voeding-scanner-status');
+  var frameEl=document.getElementById('voeding-scanner-frame');
+  if(text){ statusEl.textContent=text; statusEl.style.display='flex'; } else { statusEl.style.display='none'; }
+  frameEl.style.display=showFrame?'block':'none';
+}
+function voedingOpenBarcodeUnavailable(){ go('s-voeding-scanner'); }
+async function voedingStartScanner(){
+  var video=document.getElementById('voeding-scanner-video');
+  document.getElementById('voeding-scanner-notfound').style.display='none';
+  document.getElementById('voeding-scanner-instruction').style.display='block';
+  video.style.display='none';
+  voedingSetScannerStatus('Camera wordt gestart…', false); // CAMERA_STARTING
   try{
-    var stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
-    var video=document.createElement('video'); video.srcObject=stream; video.autoplay=true; video.playsInline=true;
+    voedingScannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment', width:{ideal:1280}, height:{ideal:720}}});
+    video.srcObject=voedingScannerStream;
     await new Promise(function(res){ video.onloadedmetadata=res; });
-    await new Promise(function(res){ setTimeout(res,600); }); // frame laten stabiliseren
+    video.style.display='block';
+    voedingSetScannerStatus(null, true); // CAMERA_ACTIVE
+    voedingScannerActive=true;
+    voedingRunScanLoop();
+  }catch(e){
+    var resolved=(typeof NutritionCameraCapture!=='undefined')?NutritionCameraCapture.resolveCameraAccessResult(e):{status:'CAPTURE_FAILED'};
+    var msg = resolved.status==='PERMISSION_DENIED' ? 'Cameratoegang is nodig om te kunnen scannen. Geef toestemming en probeer opnieuw.' // PERMISSION_REQUIRED
+      : resolved.status==='NO_CAMERA' ? 'Geen camera gevonden op dit apparaat.' // CAMERA_UNAVAILABLE
+      : resolved.status==='UNSUPPORTED' ? 'Scannen wordt niet ondersteund in deze browser.' // CAMERA_UNAVAILABLE
+      : 'Camera kon niet worden geopend.'; // CAMERA_UNAVAILABLE
+    voedingSetScannerStatus(msg, false);
+  }
+}
+async function voedingRunScanLoop(){
+  var video=document.getElementById('voeding-scanner-video');
+  if(!voedingScannerActive) return;
+  try{
     var zxingReader=new ZXing.BrowserMultiFormatReader();
     var zxingAdapter={ decodeFromImageElement:function(im){ return zxingReader.decodeFromVideoElement(im); } };
     var result=await NutritionBarcodeRuntime.decodeBarcodeFromImage(video, {
       globalObj:window, normalizeBarcodeFn:NutritionFoundation2Core.normalizeBarcode,
       resolveBarcodeDetectionResultFn:NutritionCameraCapture.resolveBarcodeDetectionResult, zxingReader:zxingAdapter
     });
-    stream.getTracks().forEach(function(t){t.stop();});
-    if(result.status==='FOUND'){
+    if(!voedingScannerActive) return; // scherm inmiddels verlaten
+    if(result.status==='FOUND'){ // BARCODE_DETECTED
+      voedingCloseScanner();
+      voedingSetScannerStatus('Product opzoeken…', false); // LOOKUP_IN_PROGRESS
       var localMatch=await sbGet('nutrition_product_identifiers','&value=eq.'+result.identifier.value);
-      if(localMatch&&localMatch.length){ voedingOpenProduct(localMatch[0].product_id); return; }
-      toast('Barcode herkend, maar nog niet lokaal bekend. Gebruik "Foto etiket" om dit product toe te voegen.');
-    } else if(result.status==='INVALID_IDENTIFIER'){ toast('Ongeldige barcode gedetecteerd.'); }
-    else { toast('Geen barcode gevonden.'); }
+      if(localMatch&&localMatch.length){ voedingOpenProduct(localMatch[0].product_id); return; } // PRODUCT_FOUND
+      toast('Barcode herkend, maar nog niet lokaal bekend. Gebruik "Foto etiket" om dit product toe te voegen.'); // PRODUCT_NOT_FOUND
+      go('s-voeding-zoeken');
+      return;
+    }
+    if(result.status==='INVALID_IDENTIFIER'){ // BARCODE_NOT_FOUND (ongeldige checksum)
+      voedingScannerActive=false;
+      document.getElementById('voeding-scanner-instruction').style.display='none';
+      document.getElementById('voeding-scanner-notfound').style.display='block';
+      return;
+    }
+    // NO_BARCODE/UNSUPPORTED_FORMAT: nog niets gedetecteerd, blijf actief scannen.
+    setTimeout(voedingRunScanLoop, 400);
   }catch(e){
-    var resolved=(typeof NutritionCameraCapture!=='undefined')?NutritionCameraCapture.resolveCameraAccessResult(e):{status:'CAPTURE_FAILED'};
-    toast(resolved.status==='PERMISSION_DENIED'?'Cameratoegang geweigerd.':'Camera kon niet worden geopend.');
+    if(!voedingScannerActive) return;
+    setTimeout(voedingRunScanLoop, 600); // voorbijgaande decode-fout, gewoon doorgaan
   }
+}
+function voedingScannerRetry(){
+  document.getElementById('voeding-scanner-notfound').style.display='none';
+  document.getElementById('voeding-scanner-instruction').style.display='block';
+  voedingScannerActive=true;
+  voedingRunScanLoop();
+}
+function voedingCloseScanner(){
+  voedingScannerActive=false;
+  if(voedingScannerStream){ voedingScannerStream.getTracks().forEach(function(t){t.stop();}); voedingScannerStream=null; }
+}
+
+/* -- Barcode handmatig invoeren -- hergebruikt uitsluitend de bestaande,
+   ongewijzigde checksum-validatie, geen tweede parser. */
+function voedingLookupManualBarcode(){
+  var errEl=document.getElementById('voeding-manual-barcode-error');
+  errEl.style.display='none';
+  var raw=document.getElementById('voeding-manual-barcode-input').value;
+  var normalized=NutritionFoundation2Core.normalizeBarcode(raw);
+  if(!normalized){ errEl.textContent='Vul een barcode in.'; errEl.style.display='block'; return; }
+  if(normalized.status==='INVALID_IDENTIFIER'){ errEl.textContent='Deze barcode lijkt ongeldig (controlegetal klopt niet).'; errEl.style.display='block'; return; }
+  voedingLookupBarcodeValue(normalized.value);
+}
+async function voedingLookupBarcodeValue(value){
+  var localMatch=await sbGet('nutrition_product_identifiers','&value=eq.'+value);
+  if(localMatch&&localMatch.length){ voedingOpenProduct(localMatch[0].product_id); return; }
+  toast('Barcode herkend, maar nog niet lokaal bekend. Gebruik "Foto etiket" om dit product toe te voegen.');
+  go('s-voeding-zoeken');
 }
 
 /* SCREEN 5 — Product details. */

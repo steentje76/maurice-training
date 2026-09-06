@@ -36,7 +36,7 @@ ok(html.includes('id="s-social"') && html.includes(`onclick="go('s-social')"`),
   'D1: een nieuwe, bereikbare Social-bestemming bestaat, met een expliciete toegangsroute vanaf Home');
 {
   const aantalVoortgangTabs = (html.match(/<span class="ni-label">Voortgang<\/span>/g) || []).length;
-  ok(aantalVoortgangTabs === 36, 'D2: geen enkele van de bestaande bottom-nav-blokken is aangeraakt (0 regressierisico op bestaande navigatie) -- Social kreeg een eigen, nieuw scherm i.p.v. een risicovolle, brede wijziging over alle bestaande schermen (35 -> 36 door de additieve komst van s-inzicht in Inzicht v0.1, PR #232)');
+  ok(aantalVoortgangTabs === 38, 'D2: geen enkele van de bestaande bottom-nav-blokken is aangeraakt -- 36 -> 38 door de additieve komst van s-voeding + s-voeding-maaltijden (Nutrition UX v1)');
 }
 
 // ---- E. Geen dubbele functie-definitie (zelf gevonden en gerepareerde fout tijdens het bouwen) ----

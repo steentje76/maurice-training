@@ -241,6 +241,7 @@
 .vd-daterow{width:100%;min-height:44px;display:flex;align-items:center;gap:8px;background:none;border:0;padding:4px 2px 10px;color:var(--dark);font-size:14px;cursor:pointer}.vd-daterow .ar{margin-left:auto;color:var(--g4)}.vd-daterow:focus-visible{outline:2px solid var(--color-primary);border-radius:8px}
 .vd-sec{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--g4);font-weight:600;margin:16px 0 8px}
 .vd-meal{width:100%;min-height:56px;display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--card);border:0;border-radius:12px;padding:12px 14px;margin-bottom:8px;text-align:left;color:var(--dark);cursor:pointer}.vd-meal:focus-visible{outline:2px solid var(--color-primary)}.vd-meal .n{display:block;font-weight:700;font-size:15px}.vd-meal .s{display:block;font-size:12px;color:var(--g4);margin-top:2px}.vd-meal .k{font-weight:700;font-size:14px;white-space:nowrap}.vd-meal .ar{color:var(--g4);margin-left:4px}
+.vd-chips{display:flex;flex-wrap:wrap;gap:8px;padding:2px 0 10px}.vd-chip{flex:0 0 auto;min-height:44px;padding:0 13px;border-radius:999px;border:1.5px solid var(--color-border);background:var(--card);color:var(--dark);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}.vd-chip[aria-pressed="true"]{background:var(--dark);color:#fff;border-color:var(--dark)}.vd-chip:focus-visible{outline:2px solid var(--color-primary);outline-offset:2px}
 .vd-sec2{display:flex;gap:10px}.vd-sec2 .vd-meal{min-height:52px;flex:1;margin:0}.vd-sec2 .vd-meal .n{font-size:14px}
 /* SECONDARY — minder gewicht, outline, mag niet concurreren met primary. */
 .tk-btn-secondary{background:var(--color-surface-secondary);color:var(--color-text-primary);border:1.5px solid var(--color-border)}
@@ -4207,12 +4208,17 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <span aria-hidden="true">🔍</span>
       <input id="voeding-search-input" aria-label="Zoek product, merk of barcode" type="text" placeholder="Zoek product, merk of barcode" style="border:none;outline:none;flex:1;font-size:14px;background:transparent" oninput="voedingHandleSearchInput(this.value)">
     </div>
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <button class="tk-btn tk-btn-secondary" style="flex:1" onclick="voedingOpenBarcodeUnavailable()">Scan barcode</button>
-      <button class="tk-btn tk-btn-secondary" style="flex:1" onclick="voedingOpenPhotoUnavailable()">Foto etiket</button>
+    <div id="voeding-search-context" class="small" style="font-size:12px;color:var(--g4);margin:-4px 0 8px;display:none" aria-live="polite"></div>
+    <div class="vd-chips" role="group" aria-label="Manier van toevoegen">
+      <button class="vd-chip" id="voeding-chip-zoeken" aria-pressed="true" onclick="voedingSearchMode('zoeken')">Zoeken</button>
+      <button class="vd-chip" id="voeding-chip-recent" aria-pressed="false" onclick="voedingSearchMode('recent')">Recent</button>
+      <button class="vd-chip" aria-pressed="false" onclick="voedingOpenBarcodeUnavailable()">Barcode</button>
+      <button class="vd-chip" aria-pressed="false" onclick="voedingOpenPhotoUnavailable()">Foto</button>
+      <button class="vd-chip" aria-pressed="false" onclick="voedingOpenCustomProductForm()">Eigen</button>
     </div>
-    <button style="width:100%;background:var(--card);border-radius:12px;margin-bottom:12px;padding:12px;text-align:left;border:none;font-size:14px;color:var(--color-primary);font-weight:600;cursor:pointer" onclick="voedingOpenCustomProductForm()">+ Zelf product toevoegen</button>
+    
     <div id="voeding-search-results" aria-live="polite"></div>
+    <button style="width:100%;background:var(--card);border-radius:12px;margin:4px 0 12px;padding:12px;text-align:left;border:none;font-size:14px;color:var(--color-primary);font-weight:600;cursor:pointer" onclick="voedingOpenCustomProductForm()">+ Zelf product toevoegen</button>
   </div>
 </div>
 
@@ -10670,6 +10676,7 @@ function go(id){
   // vooraf uitgevoerde audit/decision-resolution.
   if(id==='s-inzicht')renderInzicht();
   if(id==='s-voeding')renderVoeding();
+  if(id==='s-voeding-zoeken')voedingRenderSearchEntry();
   if(id==='s-voeding-scanner')voedingStartScanner(); else voedingCloseScanner();
   if(id==='s-voeding-scanner-handmatig'){ document.getElementById('voeding-manual-barcode-input').value=''; document.getElementById('voeding-manual-barcode-error').style.display='none'; }
   if(id==='s-voeding-maaltijden')renderVoedingMaaltijden();
@@ -21181,30 +21188,79 @@ function voedingHandleSearchInput(q){
   clearTimeout(voedingSearchDebounce);
   voedingSearchDebounce=setTimeout(function(){ voedingRunSearch(q); },300);
 }
+/* == CONCEPT B / UX-02: logging-entry. Consumeert uitsluitend bestaande
+   services (NutritionDiscoveryService, canonical nutrition_products,
+   nutrition_meal_items via RLS). Geen zoekengine, geen shadow nutrition,
+   geen auto-portie/auto-maaltijd. Barcode/Foto/Eigen = bestaande routes. */
+var voedingSearchModeState='zoeken';
+var voedingSearchSeq=0;
+function voedingPickProduct(productId){ voedingSelectedProduct={id:productId}; go('s-voeding-hoeveelheid'); } // Concept B: product kiezen -> Hoeveelheid; details via aparte knop
+function voedingProductRow(p){
+  var name=escHtml(p.name||''), brand=p.brand?escHtml(p.brand):'';
+  return '<div style="display:flex;gap:6px;margin-bottom:6px">'
+    +'<button class="vd-prow" style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--card);border:0;border-radius:12px;min-height:52px;min-width:0;padding:10px 14px;text-align:left;color:var(--dark);cursor:pointer" onclick="voedingPickProduct(\''+p.id+'\')" aria-label="'+name+(brand?', '+brand:'')+', hoeveelheid kiezen"><span style="min-width:0;flex:1"><span style="display:block;font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+name+'</span>'+(brand?'<span style="display:block;font-size:12px;color:var(--g4);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+brand+'</span>':'')+'</span><span style="color:var(--g4)" aria-hidden="true">\u203a</span></button>'
+    +'<button class="tk-btn tk-btn-secondary" style="flex:0 0 auto;min-width:44px;padding:0 12px;font-size:12px" onclick="voedingOpenProduct(\''+p.id+'\')" aria-label="Details van '+name+'">Details</button>'
+    +'</div>';
+}
+function voedingMealLabel(t){ return {breakfast:'Ontbijt',lunch:'Lunch',dinner:'Diner',snack:'Snacks'}[t]||null; }
+function voedingRenderSearchEntry(){
+  var ctx=document.getElementById('voeding-search-context');
+  var label=voedingMealLabel(voedingCurrentMealTypeForAdd);
+  if(ctx){ if(label){ ctx.textContent='Toevoegen aan: '+label; ctx.style.display='block'; } else { ctx.style.display='none'; ctx.textContent=''; } } // geen context = niets tonen (UNKNOWN blijft UNKNOWN)
+  var inp=document.getElementById('voeding-search-input'); if(inp) inp.value='';
+  voedingSearchMode('zoeken');
+  if(inp) setTimeout(function(){ try{ inp.focus({preventScroll:true}); }catch(_){ } },50);
+}
+function voedingSearchMode(mode){
+  voedingSearchModeState=mode;
+  ['zoeken','recent'].forEach(function(m){ var c=document.getElementById('voeding-chip-'+m); if(c) c.setAttribute('aria-pressed', m===mode?'true':'false'); });
+  var inp=document.getElementById('voeding-search-input');
+  if(mode==='recent'){ voedingRenderRecent(); }
+  else { var q=inp?inp.value:''; if(NutritionDiscoveryService.buildSearchFilter(q)) voedingRunSearch(q); else voedingRenderInitialState(); }
+}
+function voedingRenderInitialState(){
+  var el=document.getElementById('voeding-search-results'); if(!el) return;
+  el.innerHTML='<div style="font-size:13px;color:var(--g4);padding:6px 2px 10px">Typ een productnaam of merk, of kies hierboven een andere manier om toe te voegen.</div>';
+  // Recent er direct onder (indien aanwezig) -- geen extra tap voor het meest voorkomende geval.
+  voedingRenderRecent(true);
+}
+async function voedingRenderRecent(appendToInitial){
+  var el=document.getElementById('voeding-search-results'); if(!el) return;
+  var seq=++voedingSearchSeq;
+  if(!appendToInitial) el.innerHTML='<div style="text-align:center;padding:16px;color:var(--g4);font-size:13px" role="status">Laden…</div>';
+  try{
+    var recentItems=await sbGet('nutrition_meal_items','&order=created_at.desc&limit=50');
+    if(seq!==voedingSearchSeq) return; // verouderd resultaat negeren (snel wisselen/typen)
+    var recent=NutritionDiscoveryService.rankRecentFoods((recentItems||[]).map(function(i){return {product_id:i.product_id,food_id:i.food_id,occurred_at:i.created_at};}),8);
+    var prodIds=recent.map(function(r){return r.product_id;}).filter(Boolean);
+    var prods=prodIds.length?await sbGet('nutrition_products','&id=in.('+prodIds.join(',')+')'):[];
+    if(seq!==voedingSearchSeq) return;
+    // Volgorde van rankRecentFoods behouden (DB geeft willekeurige volgorde terug).
+    var byId={}; (prods||[]).forEach(function(p){byId[p.id]=p;});
+    var ordered=prodIds.map(function(id){return byId[id];}).filter(Boolean);
+    var html='';
+    if(!ordered.length){
+      html = appendToInitial ? '' : '<div class="tk-card tk-card-l3" style="text-align:center;padding:16px;color:var(--g4);font-size:13px">Nog geen recent toegevoegde producten.</div>';
+    } else {
+      html='<div class="v43-lbl" style="margin:4px 0 6px">Recent</div>'+ordered.map(function(p){
+        return voedingProductRow(p);
+      }).join('');
+    }
+    if(appendToInitial) el.innerHTML+=html; else el.innerHTML=html;
+  }catch(e){ if(!appendToInitial) el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:16px;color:var(--g4);font-size:13px">Recente producten konden niet worden geladen.</div>'; }
+}
 async function voedingRunSearch(q){
   var el=document.getElementById('voeding-search-results'); if(!el) return;
   var filter=NutritionDiscoveryService.buildSearchFilter(q);
-  if(!filter){
-    // Geen query: toon recent gelogde producten (Fase 11).
-    try{
-      var recentItems=await sbGet('nutrition_meal_items','&order=created_at.desc&limit=50');
-      var recent=NutritionDiscoveryService.rankRecentFoods((recentItems||[]).map(function(i){return {product_id:i.product_id,food_id:i.food_id,occurred_at:i.created_at};}),8);
-      if(!recent.length){ el.innerHTML=''; return; }
-      var prodIds=recent.map(function(r){return r.product_id;}).filter(Boolean);
-      var prods=prodIds.length?await sbGet('nutrition_products','&id=in.('+prodIds.join(',')+')'):[];
-      el.innerHTML='<div class="v43-lbl" style="margin:8px 0 6px">Recent</div>'+prods.map(function(p){
-        return '<button class="tk-domain-row row" style="width:100%;background:var(--card);border-radius:12px;margin-bottom:6px" onclick="voedingOpenProduct(\''+p.id+'\')"><span class="b"><span class="t">'+escHtml(p.name)+'</span><span class="s">'+escHtml(p.brand||'')+'</span></span><span class="ar">›</span></button>';
-      }).join('');
-    }catch(e){ el.innerHTML=''; }
-    return;
-  }
+  if(!filter){ voedingRenderInitialState(); return; }
   if(filter.status==='TOO_SHORT'){ el.innerHTML=''; return; }
+  var seq=++voedingSearchSeq;
+  el.innerHTML='<div style="text-align:center;padding:16px;color:var(--g4);font-size:13px" role="status">Zoeken…</div>';
   try{
     var results=await sbGet('nutrition_products','&name=ilike.'+encodeURIComponent(filter.ilikePattern)+'&limit=20');
-    if(!results||!results.length){ el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:16px;color:var(--g4);font-size:13px">Geen producten gevonden. Probeer een foto etiket of voeg zelf een product toe.</div>'; return; }
-    el.innerHTML=results.map(function(p){
-      return '<button class="tk-domain-row row" style="width:100%;background:var(--card);border-radius:12px;margin-bottom:6px" onclick="voedingOpenProduct(\''+p.id+'\')"><span class="b"><span class="t">'+escHtml(p.name)+'</span><span class="s">'+escHtml(p.brand||'')+'</span></span><span class="ar">›</span></button>';
-    }).join('');
+    if(seq!==voedingSearchSeq) return;
+    if(!results||!results.length){ el.innerHTML='<div class="tk-card tk-card-l3" style="padding:16px"><div style="font-weight:700;margin-bottom:4px">Geen producten gevonden</div><div style="font-size:13px;color:var(--g4);margin-bottom:12px">Probeer een andere zoekterm, of voeg het product op een andere manier toe.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="tk-btn tk-btn-secondary" style="flex:1;min-width:120px" onclick="voedingOpenBarcodeUnavailable()">Barcode</button><button class="tk-btn tk-btn-secondary" style="flex:1;min-width:120px" onclick="voedingOpenPhotoUnavailable()">Foto etiket</button></div><button class="tk-btn tk-btn-primary" style="width:100%;margin-top:8px" onclick="voedingOpenCustomProductForm()">Zelf product toevoegen</button></div>'; return; }
+    el.innerHTML=results.map(function(p){ return voedingProductRow(p); }).join('');
   }catch(e){ el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:16px;color:var(--g4);font-size:13px">Zoeken mislukt. Controleer je verbinding.</div>'; }
 }
 function voedingOpenPhotoUnavailable(){ voedingClosePhotoFlow(); voedingPhotoCaptures={front:null,label:null}; document.getElementById('voeding-photo-continue-btn').disabled=true; document.getElementById('voeding-photo-continue-btn').textContent="Foto's maken"; ['front','label'].forEach(function(w){document.getElementById('voeding-photo-preview-'+w).style.display='none';document.getElementById('voeding-photo-video-'+w).style.display='none';}); go('s-voeding-foto-etiket'); }

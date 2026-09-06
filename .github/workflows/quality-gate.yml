@@ -2,7 +2,7 @@ name: Trainingskompas Quality Gate
 
 on:
   pull_request:
-    branches: [main]
+    branches: ['**']
   push:
     branches: [main]
 

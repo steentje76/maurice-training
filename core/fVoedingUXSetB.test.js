@@ -316,6 +316,52 @@ t('Targets: extreme waarde vraagt bevestiging (CHECK_VALUE), geen stille correct
   assert.strictEqual(b.includes('needsConfirmation'), true); assert.strictEqual(b.includes('Controleer deze waarde'), true); assert.strictEqual(/ongezond/i.test(b), false);
 });
 
+// -- UX Hardening (unattended sprint) ----------------------------------------
+t('A11y: elk statisch Nutrition-input/select heeft een <label for> of aria-label (geen placeholder-als-enig-label)', () => {
+  const start=html.indexOf('id="s-voeding"'); const end=html.indexOf('<!-- ═══ TRAINING HUB');
+  const block=html.slice(start,end);
+  const inputs=[...block.matchAll(/<(input|select)\s[^>]*id="([^"]+)"[^>]*>/g)];
+  const missing=inputs.filter(m=>!/aria-label=/.test(m[0]) && !block.includes('for="'+m[2]+'"')).map(m=>m[2]);
+  assert.deepStrictEqual(missing, []);
+});
+t('A11y: JS-gerenderde inputs (qty-unit, correctie, nieuw-product, water) hebben een toegankelijke naam', () => {
+  ['voeding-qty-unit','voeding-correctie-value','voeding-newproduct-name'].forEach(id=>assert.strictEqual(new RegExp('id="'+id+'" aria-label=').test(html), true, id));
+  assert.strictEqual(html.includes('for="m-voeding-water-input"'), true);
+});
+t('A11y: async feedback-regio\'s zijn aria-live (overzicht, zoekresultaten, scanner-status, fouten)', () => {
+  ['voeding-overview-body','voeding-search-results','voeding-scanner-status','voeding-supp-error','voeding-custom-error'].forEach(id=>{
+    const m=html.match(new RegExp('id="'+id+'"[^>]*')); assert.strictEqual(!!m && /aria-live=/.test(m[0]), true, id);
+  });
+});
+t('Gedeelde input-primitive .vd-input: 44px min-height, focus-visible, aria-invalid-styling (geen nieuw design system, hergebruik)', () => {
+  assert.strictEqual(html.includes('.vd-input{width:100%;box-sizing:border-box;min-height:44px'), true);
+  assert.strictEqual(html.includes('.vd-input:focus-visible'), true);
+  assert.strictEqual(html.includes('.vd-input[aria-invalid="true"]'), true);
+});
+t('Dubbele-submit: alle async save-paden gebruiken voedingWithBusy (disabled + aria-busy), incl. label-naar-nieuw-product', () => {
+  ['#voeding-doel-save-btn','#m-voeding-water .tk-btn-primary','#voeding-portion-body .tk-btn-primary','#s-voeding-supplement .tk-btn-primary','#s-voeding-custom .tk-btn-primary','#s-voeding-handmatig .tk-btn-primary','#voeding-new-product-body .tk-btn-primary'].forEach(sel=>assert.strictEqual(html.includes("voedingWithBusy(document.querySelector('"+sel+"')"), true, sel));
+  const h=fnBodyOf('function voedingWithBusy','function voedingMarkInvalid'); assert.strictEqual(h.includes("setAttribute('aria-busy','true')"), true);
+});
+t('Copy: geen "optimale/aanbevolen/ideale behoefte", geen schuld-/straftaal in de Nutrition UX (USER_DEFINED-wording)', () => {
+  const start=html.indexOf('id="s-voeding"'); const end=html.indexOf('function voedingRenderManualForm');
+  const block=html.slice(start,end);
+  assert.strictEqual(/optima(le|al)\s+behoefte|aanbevolen\s+behoefte|ideale\s+macro/i.test(block), false);
+  assert.strictEqual(/\b(zondig|schuldig|slecht bezig|te veel gegeten|gefaald)\b/i.test(block), false);
+  assert.strictEqual(block.includes('Je ingestelde doelen'), true);
+});
+t('Empty states zijn functioneel (tekst + één vervolgactie): maaltijden, targets, zoeken', () => {
+  assert.strictEqual(html.includes('Geen producten gevonden'), true);
+  assert.strictEqual(html.includes('Stel je voedingsdoelen in'), true);
+  assert.strictEqual(/Nog niets toegevoegd|nog niets toegevoegd/.test(html), true);
+});
+t('Save-failure: netwerkfout geeft een menselijke inline-melding, geen stille failure, geen technische details in copy', () => {
+  ['async function voedingSaveTargets','async function voedingSaveNewProductFromLabel'].forEach(sig=>{
+    const b=html.slice(html.indexOf(sig), html.indexOf('\n}', html.indexOf(sig)));
+    assert.strictEqual(/catch\(e\)\{[^}]*Opslaan mislukt/.test(b), true, sig);
+    assert.strictEqual(/e\.message|stack|status ?\d{3}/.test(b.split('catch')[1]||''), false, sig+' geen technische details');
+  });
+});
+
 console.log(`fVoedingUXSetB: ${pass} geslaagd, ${fail} mislukt`);
 console.log(`Resultaat: ${pass} geslaagd, ${fail} mislukt`);
 if (fail > 0) process.exit(1);

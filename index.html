@@ -4265,7 +4265,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <input id="voeding-supp-name" type="text" placeholder="Bijv. Creatine" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px;margin-bottom:14px">
     <div class="v43-lbl" style="margin:8px 0 6px">Dosering</div>
     <div style="display:flex;gap:8px;margin-bottom:14px">
-      <input id="voeding-supp-dose" type="number" step="any" min="0" placeholder="5" style="flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px">
+      <input id="voeding-supp-dose" type="number" step="any" min="0" placeholder="Hoeveelheid" style="flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px">
       <select id="voeding-supp-unit" style="padding:10px 12px;border-radius:10px;border:1px solid var(--color-border);font-size:14px"><option value="g">g</option><option value="mg">mg</option><option value="ml">ml</option><option value="IU">IU</option><option value="capsule">capsule</option></select>
     </div>
     <div id="voeding-supp-error" style="color:#c0392b;font-size:13px;margin-bottom:8px;display:none"></div>
@@ -4317,12 +4317,16 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
     <div style="background:var(--card);border-radius:12px;padding:14px;margin-bottom:12px">
       <div style="font-weight:700;margin-bottom:6px">2. Maak foto etiket</div>
-      <div style="font-size:12px;color:var(--g4);margin-bottom:10px">Voor voedingswaarden en ingrediënten.</div>
+      <div style="font-size:12px;color:var(--g4);margin-bottom:10px">Voor voedingswaarden en productinformatie.</div>
       <video id="voeding-photo-video-label" autoplay playsinline style="width:100%;border-radius:8px;background:#000;display:none;max-height:160px;object-fit:cover"></video>
       <img id="voeding-photo-preview-label" style="width:100%;border-radius:8px;display:none;max-height:160px;object-fit:cover">
       <button class="tk-btn tk-btn-secondary" style="width:100%;margin-top:8px" onclick="voedingCapturePhoto('label')">Maak foto</button>
     </div>
     <div id="voeding-photo-error" style="color:#c0392b;font-size:13px;margin-bottom:8px;display:none"></div>
+    <div id="voeding-photo-quality-warning" style="display:none;background:#fff3cd;border-radius:10px;padding:14px;margin-bottom:12px">
+      <div style="font-weight:700;margin-bottom:6px" id="voeding-photo-quality-title">Foto niet scherp genoeg</div>
+      <div style="font-size:13px;color:var(--g3)" id="voeding-photo-quality-body">De voedingswaarden zijn niet goed leesbaar. Houd de camera stil en zorg dat het etiket scherp in beeld is.</div>
+    </div>
     <div style="font-size:12px;color:var(--g4);margin-bottom:12px">ℹ️ We verwerken je foto's veilig. De afbeeldingen worden na verwerking automatisch verwijderd.</div>
     <button class="tk-btn tk-btn-primary" style="width:100%" id="voeding-photo-continue-btn" onclick="voedingGoToPhotoReview()" disabled>Foto's maken</button>
   </div>
@@ -6119,6 +6123,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/nutritionLabelIngestBridge.js"></script>
 <script src="core/vendor/zxing.min.js"></script>
 <script src="core/vendor/tesseract.min.js"></script>
+<script src="core/nutritionImageQualityGate.js"></script>
 <script src="core/nutritionBarcodeRuntime.js"></script>
 <script src="core/designSystemIcons.js"></script>
 <script src="core/decision.js"></script>
@@ -21451,19 +21456,53 @@ var voedingPhotoCaptures={front:null,label:null};
 var voedingActiveStream=null;
 async function voedingCapturePhoto(which){
   var errEl=document.getElementById('voeding-photo-error'); errEl.style.display='none';
+  var qualityEl=document.getElementById('voeding-photo-quality-warning'); qualityEl.style.display='none';
   var video=document.getElementById('voeding-photo-video-'+which);
   var img=document.getElementById('voeding-photo-preview-'+which);
   try{
     if(!video.srcObject){
-      var stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+      // FORENSISCHE FIX: expliciete ideal-resolutie-constraints toegevoegd.
+      // Zonder deze koos de browser vaak een lage default-resolutie (vaak
+      // rond 640x480 op Android Chrome), onvoldoende voor kleine
+      // etiketcijfers -- bevestigde root cause van de gerapporteerde,
+      // onvoldoende OCR-kwaliteit. Uitsluitend 'ideal', geen 'exact' --
+      // valt veilig terug op wat het device wel ondersteunt.
+      var stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment', width:{ideal:1920}, height:{ideal:1080}}});
       video.srcObject=stream; video.style.display='block';
       await new Promise(function(res){ video.onloadedmetadata=res; });
       return; // eerste klik: camera tonen; tweede klik maakt de foto
     }
+    // FORENSISCHE FIX: korte stabilisatiewachttijd zodat continuous-
+    // autofocus (waar het device dit ondersteunt) de tijd krijgt scherp
+    // te stellen vóór de daadwerkelijke capture.
+    await new Promise(function(res){ setTimeout(res,400); });
+
     var canvas=document.createElement('canvas');
     canvas.width=video.videoWidth; canvas.height=video.videoHeight;
-    canvas.getContext('2d').drawImage(video,0,0);
-    var dataUrl=canvas.toDataURL('image/jpeg',0.85);
+    var ctx=canvas.getContext('2d');
+    ctx.drawImage(video,0,0);
+
+    // FASE 4: deterministische image-quality-gate vóór acceptatie --
+    // een aantoonbaar wazige/te donkere/te lichte foto wordt NIET
+    // stilzwijgend als betrouwbare OCR-input geaccepteerd.
+    var imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+    var gray=new Array(canvas.width*canvas.height);
+    for(var i=0;i<gray.length;i++){
+      var o=i*4;
+      gray[i]=(imgData.data[o]*0.299+imgData.data[o+1]*0.587+imgData.data[o+2]*0.114); // luminantie
+    }
+    var quality=NutritionImageQualityGate.evaluateImageQuality(gray,canvas.width,canvas.height);
+    if(quality.status!=='PASS' && quality.status!=='UNKNOWN'){
+      var titleEl=document.getElementById('voeding-photo-quality-title');
+      var bodyEl=document.getElementById('voeding-photo-quality-body');
+      if(quality.status==='FAIL_BLUR'){ titleEl.textContent='Foto niet scherp genoeg'; bodyEl.textContent='De voedingswaarden zijn niet goed leesbaar. Houd de camera stil en zorg dat het etiket scherp in beeld is.'; }
+      else if(quality.status==='FAIL_TOO_DARK'){ titleEl.textContent='Foto te donker'; bodyEl.textContent='Zorg voor voldoende licht en probeer opnieuw.'; }
+      else { titleEl.textContent='Foto te licht/overbelicht'; bodyEl.textContent='Vermijd fel tegenlicht of directe reflectie op de verpakking.'; }
+      qualityEl.style.display='block';
+      return; // GEEN silent doorgang -- gebruiker moet expliciet opnieuw proberen (camera blijft actief)
+    }
+
+    var dataUrl=canvas.toDataURL('image/jpeg',0.9);
     voedingPhotoCaptures[which]=dataUrl;
     img.src=dataUrl; img.style.display='block'; video.style.display='none';
     video.srcObject.getTracks().forEach(function(t){t.stop();}); video.srcObject=null; // camera direct vrijgeven

@@ -129,6 +129,61 @@ t('renderVoedingHoeveelheid haalt zelf ontbrekende productdata op (fix voor het 
   assert.strictEqual(fnBody.includes('!voedingSelectedProduct.nutrientRow'), true);
 });
 
+// -- Fase 6: geen vooraf ingevulde supplementdosering (real device blocker) --
+t('Supplement-dosering-veld heeft GEEN placeholder/value van "5" meer (KERN, adversarial regressie tegen de gerapporteerde, ongewenste default)', () => {
+  const inputStart = html.indexOf('id="voeding-supp-dose"');
+  const inputEnd = html.indexOf('>', inputStart);
+  const inputTag = html.slice(inputStart - 20, inputEnd);
+  assert.strictEqual(/placeholder=\\?"5\\?"/.test(inputTag), false);
+  assert.strictEqual(/\svalue=\\?"5\\?"/.test(inputTag), false);
+  assert.strictEqual(inputTag.includes('placeholder="Hoeveelheid"'), true);
+});
+
+// -- Fase 7: geen impliciete ingrediënten-claim -------------------------------
+t('Foto-etiket-copy claimt geen ingrediënten-ondersteuning die niet functioneel bestaat', () => {
+  assert.strictEqual(html.includes('Voor voedingswaarden en ingrediënten.'), false);
+  assert.strictEqual(html.includes('Voor voedingswaarden en productinformatie.'), true);
+});
+
+// -- Fase 3: camera-resolutie-hardening (forensische root-cause-fix) --------
+t('voedingCapturePhoto vraagt expliciete ideal-resolutie-constraints (forensische fix, geen hardcoded exact-waarden)', () => {
+  const fnStart = html.indexOf('async function voedingCapturePhoto');
+  const fnEnd = html.indexOf('function voedingClosePhotoFlow', fnStart);
+  const fnBody = html.slice(fnStart, fnEnd);
+  assert.strictEqual(fnBody.includes('width:{ideal:1920}'), true);
+  assert.strictEqual(fnBody.includes('height:{ideal:1080}'), true);
+  assert.strictEqual(/exact:/.test(fnBody), false, 'geen harde exact-constraints die op specifieke devices kunnen falen');
+});
+t('voedingCapturePhoto wacht op focus-stabilisatie vóór capture (forensische fix)', () => {
+  const fnStart = html.indexOf('async function voedingCapturePhoto');
+  const fnEnd = html.indexOf('function voedingClosePhotoFlow', fnStart);
+  const fnBody = html.slice(fnStart, fnEnd);
+  assert.strictEqual(fnBody.includes('setTimeout(res,400)'), true);
+});
+t('voedingCapturePhoto past de deterministische image-quality-gate toe VOORDAT de foto geaccepteerd wordt (Fase 4, KERN)', () => {
+  const fnStart = html.indexOf('async function voedingCapturePhoto');
+  const fnEnd = html.indexOf('function voedingClosePhotoFlow', fnStart);
+  const fnBody = html.slice(fnStart, fnEnd);
+  assert.strictEqual(fnBody.includes('NutritionImageQualityGate.evaluateImageQuality'), true);
+  // De quality-check moet VOOR de voedingPhotoCaptures[which]=dataUrl-toewijzing staan.
+  const qualityIdx = fnBody.indexOf('NutritionImageQualityGate.evaluateImageQuality');
+  const acceptIdx = fnBody.indexOf('voedingPhotoCaptures[which]=dataUrl');
+  assert.strictEqual(qualityIdx < acceptIdx, true);
+});
+t('Bij FAIL_BLUR/FAIL_TOO_DARK/FAIL_TOO_BRIGHT wordt de foto NIET geaccepteerd (return vóór voedingPhotoCaptures-toewijzing, geen silent doorgang, adversarial)', () => {
+  const fnStart = html.indexOf('async function voedingCapturePhoto');
+  const fnEnd = html.indexOf('function voedingClosePhotoFlow', fnStart);
+  const fnBody = html.slice(fnStart, fnEnd);
+  assert.strictEqual(fnBody.includes("quality.status!=='PASS' && quality.status!=='UNKNOWN'"), true);
+  assert.strictEqual(fnBody.includes('Foto niet scherp genoeg'), true);
+});
+t('Geen AI-beoordeling van beeldkwaliteit -- uitsluitend de deterministische NutritionImageQualityGate-module (adversarial, structurele check)', () => {
+  const fnStart = html.indexOf('async function voedingCapturePhoto');
+  const fnEnd = html.indexOf('function voedingClosePhotoFlow', fnStart);
+  const fnBody = html.slice(fnStart, fnEnd);
+  assert.strictEqual(/\b(ai|gpt|llm|vision api)\b/i.test(fnBody), false);
+});
+
 console.log(`fVoedingUXSetB: ${pass} geslaagd, ${fail} mislukt`);
 console.log(`Resultaat: ${pass} geslaagd, ${fail} mislukt`);
 if (fail > 0) process.exit(1);

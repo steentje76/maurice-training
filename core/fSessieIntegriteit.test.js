@@ -35,8 +35,10 @@ function konst(naam) {
   var enkel = HTML.match(new RegExp('(?:^|\\n)(?:const|var|let) ' + naam + "\\s*=[^\\n]*?;", 'm'));
   if (enkel) return enkel[0];
   var array = HTML.match(new RegExp('(?:^|\\n)(?:const|var|let) ' + naam + '\\s*=\\s*\\[[\\s\\S]*?\\n\\];', 'm'));
-  assert.ok(array, 'constante niet gevonden: ' + naam);
-  return array[0];
+  if (array) return array[0];
+  var obj = HTML.match(new RegExp('(?:^|\\n)(?:const|var|let) ' + naam + '\\s*=\\s*\\{[\\s\\S]*?\\};', 'm'));
+  assert.ok(obj, 'constante niet gevonden: ' + naam);
+  return obj[0];
 }
 function konstVar(naam) { return konst(naam).replace(/^(\s*)(?:const|let) /m, '$1var '); }
 

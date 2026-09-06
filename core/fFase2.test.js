@@ -31,8 +31,10 @@ function konst(naam) {
   var enkel = HTML.match(new RegExp('(?:^|\\n)(?:const|var|let) ' + naam + "\\s*=[^\\n]*?;", 'm'));
   if (enkel) return enkel[0];
   var array = HTML.match(new RegExp('(?:^|\\n)(?:const|var|let) ' + naam + '\\s*=\\s*\\[[\\s\\S]*?\\n\\];', 'm'));
-  assert.ok(array, 'constante niet gevonden: ' + naam);
-  return array[0];
+  if (array) return array[0];
+  var obj = HTML.match(new RegExp('(?:^|\\n)(?:const|var|let) ' + naam + '\\s*=\\s*\\{[\\s\\S]*?\\};', 'm'));
+  assert.ok(obj, 'constante niet gevonden: ' + naam);
+  return obj[0];
 }
 /* `const` en `let` zijn lexicaal en komen in een vm-context niet op het contextobject
    terecht; `var` wel. De declaratie wordt daarom omgezet, puur zodat de test de waarde

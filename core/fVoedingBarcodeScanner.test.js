@@ -107,7 +107,7 @@ t('Camera-aanvraag gebruikt facingMode:environment + redelijke ideal-resolutie, 
   const fnEnd = html.indexOf('catch(e)', fnStart);
   const fnBody = html.slice(fnStart, fnEnd);
   assert.strictEqual(fnBody.includes("facingMode:'environment'"), true);
-  assert.strictEqual(fnBody.includes('ideal:1280'), true);
+  assert.strictEqual(fnBody.includes('ideal:1920'), true);
   assert.strictEqual(/exact:/.test(fnBody), false, 'geen harde exact-constraints die op specifieke devices kunnen falen');
 });
 

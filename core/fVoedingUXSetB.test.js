@@ -184,6 +184,111 @@ t('Geen AI-beoordeling van beeldkwaliteit -- uitsluitend de deterministische Nut
   assert.strictEqual(/\b(ai|gpt|llm|vision api)\b/i.test(fnBody), false);
 });
 
+// -- Real device ronde 2: ImageCapture.takePhoto() progressive enhancement --
+t('voedingCapturePhoto probeert ImageCapture.takePhoto() als progressive enhancement (echte still-capture i.p.v. videoframe, KERN forensische fix)', () => {
+  const fnStart = html.indexOf('async function voedingCapturePhoto');
+  const fnEnd = html.indexOf('function voedingUseNativeCameraCapture', fnStart);
+  const fnBody = html.slice(fnStart, fnEnd);
+  assert.strictEqual(fnBody.includes("typeof ImageCapture!=='undefined'"), true);
+  assert.strictEqual(fnBody.includes('imageCapture.takePhoto()'), true);
+});
+t('ImageCapture-pad heeft een werkende fallback naar de bestaande video-frame-methode (progressive enhancement, geen harde afhankelijkheid)', () => {
+  const fnStart = html.indexOf('async function voedingCapturePhoto');
+  const fnEnd = html.indexOf('function voedingUseNativeCameraCapture', fnStart);
+  const fnBody = html.slice(fnStart, fnEnd);
+  assert.strictEqual(fnBody.includes("captureMechanism='VIDEO_FRAME'"), true);
+  assert.strictEqual(fnBody.includes('ctx.drawImage(video,0,0)'), true);
+});
+t('Diagnostiek logt actual stream settings (Fase 2), geen gevoelige deviceId-informatie naar de gebruiker', () => {
+  const fnStart = html.indexOf('async function voedingCapturePhoto');
+  const fnEnd = html.indexOf('function voedingUseNativeCameraCapture', fnStart);
+  const fnBody = html.slice(fnStart, fnEnd);
+  assert.strictEqual(fnBody.includes('track.getSettings'), true);
+  assert.strictEqual(fnBody.includes('deviceId'), false);
+});
+
+// -- Native camera fallback (Fase 16) ----------------------------------------
+t('voedingUseNativeCameraCapture bestaat als alternatief, gebruikt input capture="environment" (native still-capture-fallback)', () => {
+  const fnStart = html.indexOf('function voedingUseNativeCameraCapture');
+  const fnEnd = html.indexOf('function voedingClosePhotoFlow', fnStart);
+  const fnBody = html.slice(fnStart, fnEnd);
+  assert.strictEqual(fnBody.includes("input.capture='environment'"), true);
+  assert.strictEqual(fnBody.includes("input.accept='image/*'"), true);
+});
+t('Native-camera-knop is een alternatief naast de bestaande live-cameraflow, niet een vervanging (structurele UI-check)', () => {
+  assert.strictEqual(html.includes('voedingUseNativeCameraCapture'), true);
+  assert.strictEqual(html.includes("onclick=\"voedingCapturePhoto('label')\""), true); // bestaande knop blijft
+});
+
+// -- Barcode: expliciete bevestiging + altijd-zichtbare retry-actie ---------
+t('Barcode-detectie toont een expliciete, zichtbare bevestiging ("Barcode gevonden: <waarde>") voordat de lookup start (KERN, Fase 12)', () => {
+  const fnStart = html.indexOf('async function voedingRunScanLoop');
+  const fnEnd = html.indexOf('function voedingScannerRetry', fnStart);
+  const fnBody = html.slice(fnStart, fnEnd);
+  assert.strictEqual(fnBody.includes("'Barcode gevonden: '+result.identifier.value"), true);
+});
+t('Scanner-scherm heeft een altijd-zichtbare "Opnieuw scannen"-actie tijdens actief scannen (adversarial tegen de gerapporteerde dead-end)', () => {
+  assert.strictEqual(html.includes('id="voeding-scanner-rescan-btn"'), true);
+  assert.strictEqual(html.includes('>Opnieuw scannen<'), true);
+});
+t('Scanner-resolutie verhoogd naar hetzelfde niveau als de foto-capture (1920x1080) voor betere barcode-leesbaarheid', () => {
+  const fnStart = html.indexOf('async function voedingStartScanner');
+  const fnEnd = html.indexOf('catch(e)', fnStart);
+  const fnBody = html.slice(fnStart, fnEnd);
+  assert.strictEqual(fnBody.includes('ideal:1920'), true);
+  assert.strictEqual(fnBody.includes('ideal:1080'), true);
+});
+t('Instructietekst wordt correct gereset naar "Houd de barcode binnen het kader" bij starten/opnieuw scannen (adversarial, geen blijvende "Barcode gevonden"-tekst)', () => {
+  const startFn = html.slice(html.indexOf('async function voedingStartScanner'), html.indexOf('catch(e)', html.indexOf('async function voedingStartScanner')));
+  const retryFn = html.slice(html.indexOf('function voedingScannerRetry'), html.indexOf('function voedingCloseScanner'));
+  assert.strictEqual(startFn.includes("textContent='Houd de barcode binnen het kader'"), true);
+  assert.strictEqual(retryFn.includes("textContent='Houd de barcode binnen het kader'"), true);
+});
+
+// -- Real-device parity (deze ronde) ----------------------------------------
+function fnBodyOf(startSig, endSig){ const a=html.indexOf(startSig); const b=html.indexOf(endSig,a); return html.slice(a,b); }
+t('Foto-capture gebruikt ImageCapture.takePhoto() als progressive enhancement met video-frame-fallback (Fase 4/7)', () => {
+  const b=fnBodyOf('async function voedingCapturePhoto','function voedingUseNativeCameraCapture');
+  assert.strictEqual(b.includes("typeof ImageCapture!=='undefined'"), true);
+  assert.strictEqual(b.includes('imageCapture.takePhoto()'), true);
+  assert.strictEqual(b.includes("captureMechanism='VIDEO_FRAME'"), true, 'expliciete fallback naar video-frame');
+  assert.strictEqual(b.includes('ctx.drawImage(video,0,0)'), true, 'video-frame-fallback bestaat nog');
+});
+t('Native camera-app-fallback bestaat voor ZOWEL voorkant als etiket (Fase 16)', () => {
+  const n=(html.match(/onclick="voedingUseNativeCameraCapture\('(front|label)'\)"/g)||[]).length;
+  assert.strictEqual(n, 2);
+  assert.strictEqual(html.includes("input.capture='environment'"), true);
+});
+t('Native-fallback loopt door DEZELFDE quality gate en respecteert EXIF-orientatie (geen omweg om het veiligheidsnet)', () => {
+  const b=fnBodyOf('function voedingUseNativeCameraCapture','function voedingClosePhotoFlow');
+  assert.strictEqual(b.includes('NutritionImageQualityGate.evaluateImageQuality'), true);
+  assert.strictEqual(b.includes("imageOrientation:'from-image'"), true);
+  assert.strictEqual(b.includes('NATIVE_CAPTURE'), true);
+});
+t('Focus-enhancement is progressive: alleen bij gerapporteerde continuous-capability, nooit blind, fouten genegeerd (Fase 3)', () => {
+  const b=fnBodyOf('async function voedingApplyFocusEnhancement','async function voedingCapturePhoto');
+  assert.strictEqual(b.includes("caps.focusMode.indexOf('continuous')!==-1"), true);
+  assert.strictEqual(b.includes('applyConstraints'), true);
+  assert.strictEqual(b.includes('if(!track||!track.getCapabilities||!track.applyConstraints) return result;'), true);
+});
+t('Diagnostiek logt gemeten stream-settings + capture-mechanisme, geen apparaat-identifier (Fase 2/5)', () => {
+  const b=fnBodyOf('async function voedingCapturePhoto','function voedingUseNativeCameraCapture');
+  assert.strictEqual(b.includes('track.getSettings'), true);
+  assert.strictEqual(b.includes('capture mechanism used'), true);
+  assert.strictEqual(/deviceId/.test(b), false);
+});
+t('Barcode FOUND toont zichtbare bevestiging met de barcodewaarde vóór de lookup (Fase 12); BARCODE_DETECTED stopt de scan-loop', () => {
+  const b=fnBodyOf('async function voedingRunScanLoop','function voedingScannerRetry');
+  assert.strictEqual(b.includes("'Barcode gevonden: '+result.identifier.value"), true);
+  assert.strictEqual(b.includes('voedingScannerActive=false;'), true);
+});
+t('Scanner heeft een expliciete, altijd zichtbare "Opnieuw scannen"-actie (geen dead-end, Fase 8)', () => {
+  assert.strictEqual(html.includes('id="voeding-scanner-rescan-btn"'), true);
+});
+t('Geen "Barcode gebruiken"-knop zonder gedetecteerde barcode: er bestaat geen knop die een niet-gedetecteerde waarde doorgeeft (adversarial)', () => {
+  assert.strictEqual(/Barcode gebruiken/.test(html), false);
+});
+
 console.log(`fVoedingUXSetB: ${pass} geslaagd, ${fail} mislukt`);
 console.log(`Resultaat: ${pass} geslaagd, ${fail} mislukt`);
 if (fail > 0) process.exit(1);

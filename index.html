@@ -4220,7 +4220,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <div id="voeding-scanner-frame" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:75%;height:35%;border:3px solid #fff;border-radius:12px;box-shadow:0 0 0 2000px rgba(0,0,0,0.35);display:none"></div>
       <div id="voeding-scanner-status" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;text-align:center;padding:20px;font-size:14px">Camera wordt gestart…</div>
     </div>
-    <div id="voeding-scanner-instruction" style="text-align:center;font-size:13px;color:var(--g4);margin-bottom:16px">Houd de barcode binnen het kader</div>
+    <div id="voeding-scanner-instruction" style="text-align:center;font-size:13px;color:var(--g4);margin-bottom:12px">Houd de barcode binnen het kader</div>
+    <button id="voeding-scanner-rescan-btn" class="tk-btn tk-btn-tertiary" style="width:100%;margin-bottom:16px" onclick="voedingScannerRetry()">Opnieuw scannen</button>
     <div id="voeding-scanner-notfound" style="display:none;background:var(--card);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center">
       <div style="font-weight:700;margin-bottom:6px">Nog geen barcode gevonden</div>
       <div style="color:var(--g4);font-size:13px;margin-bottom:14px">Houd de camera stil en zorg dat de barcode scherp en volledig zichtbaar is.</div>
@@ -4314,6 +4315,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <video id="voeding-photo-video-front" autoplay playsinline style="width:100%;border-radius:8px;background:#000;display:none;max-height:160px;object-fit:cover"></video>
       <img id="voeding-photo-preview-front" style="width:100%;border-radius:8px;display:none;max-height:160px;object-fit:cover">
       <button class="tk-btn tk-btn-secondary" style="width:100%;margin-top:8px" onclick="voedingCapturePhoto('front')">Maak foto</button>
+      <button class="tk-btn tk-btn-tertiary" style="width:100%;margin-top:4px" onclick="voedingUseNativeCameraCapture('front')">Of gebruik de camera-app van je telefoon</button>
     </div>
     <div style="background:var(--card);border-radius:12px;padding:14px;margin-bottom:12px">
       <div style="font-weight:700;margin-bottom:6px">2. Maak foto etiket</div>
@@ -4321,6 +4323,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <video id="voeding-photo-video-label" autoplay playsinline style="width:100%;border-radius:8px;background:#000;display:none;max-height:160px;object-fit:cover"></video>
       <img id="voeding-photo-preview-label" style="width:100%;border-radius:8px;display:none;max-height:160px;object-fit:cover">
       <button class="tk-btn tk-btn-secondary" style="width:100%;margin-top:8px" onclick="voedingCapturePhoto('label')">Maak foto</button>
+      <button class="tk-btn tk-btn-tertiary" style="width:100%;margin-top:4px" onclick="voedingUseNativeCameraCapture('label')">Of gebruik de camera-app van je telefoon</button>
     </div>
     <div id="voeding-photo-error" style="color:#c0392b;font-size:13px;margin-bottom:8px;display:none"></div>
     <div id="voeding-photo-quality-warning" style="display:none;background:#fff3cd;border-radius:10px;padding:14px;margin-bottom:12px">
@@ -21102,12 +21105,15 @@ async function voedingStartScanner(){
   var video=document.getElementById('voeding-scanner-video');
   document.getElementById('voeding-scanner-notfound').style.display='none';
   document.getElementById('voeding-scanner-instruction').style.display='block';
+  document.getElementById('voeding-scanner-instruction').textContent='Houd de barcode binnen het kader';
   video.style.display='none';
   voedingSetScannerStatus('Camera wordt gestart…', false); // CAMERA_STARTING
   try{
-    voedingScannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment', width:{ideal:1280}, height:{ideal:720}}});
+    voedingScannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment', width:{ideal:1920}, height:{ideal:1080}}});
     video.srcObject=voedingScannerStream;
     await new Promise(function(res){ video.onloadedmetadata=res; });
+    await voedingApplyFocusEnhancement(voedingScannerStream.getVideoTracks()[0]); // Fase 3
+    try{ var st=voedingScannerStream.getVideoTracks()[0].getSettings(); console.log('[nutrition-barcode-diag] stream:', {width:st.width,height:st.height,frameRate:st.frameRate,facingMode:st.facingMode}, '| video:', video.videoWidth+'x'+video.videoHeight); }catch(_){}
     video.style.display='block';
     voedingSetScannerStatus(null, true); // CAMERA_ACTIVE
     voedingScannerActive=true;
@@ -21133,6 +21139,10 @@ async function voedingRunScanLoop(){
     });
     if(!voedingScannerActive) return; // scherm inmiddels verlaten
     if(result.status==='FOUND'){ // BARCODE_DETECTED
+      voedingScannerActive=false;
+      voedingSetScannerStatus(null, true);
+      document.getElementById('voeding-scanner-instruction').textContent='Barcode gevonden: '+result.identifier.value; // zichtbare bevestiging (Fase 12)
+      await new Promise(function(res){ setTimeout(res,600); }); // gebruiker kort de bevestiging laten zien
       voedingCloseScanner();
       voedingSetScannerStatus('Product opzoeken…', false); // LOOKUP_IN_PROGRESS
       var localMatch=await sbGet('nutrition_product_identifiers','&value=eq.'+result.identifier.value);
@@ -21157,6 +21167,7 @@ async function voedingRunScanLoop(){
 function voedingScannerRetry(){
   document.getElementById('voeding-scanner-notfound').style.display='none';
   document.getElementById('voeding-scanner-instruction').style.display='block';
+  document.getElementById('voeding-scanner-instruction').textContent='Houd de barcode binnen het kader';
   voedingScannerActive=true;
   voedingRunScanLoop();
 }
@@ -21454,6 +21465,26 @@ async function voedingSubmitCorrection(productId,verifiedProtected){
    bestaande, ongewijzigde camera/OCR-runtime (Wave 4). */
 var voedingPhotoCaptures={front:null,label:null};
 var voedingActiveStream=null;
+/* Fase 3: progressive focus-enhancement. Past continuous autofocus toe
+   UITSLUITEND wanneer track.getCapabilities() dit expliciet rapporteert.
+   Nooit blind afdwingen; elke fout wordt genegeerd (mag de flow niet
+   breken). Retourneert wat werkelijk gebeurde, voor diagnostiek. */
+async function voedingApplyFocusEnhancement(track){
+  var result={focusMode:'UNSUPPORTED', applied:false};
+  try{
+    if(!track||!track.getCapabilities||!track.applyConstraints) return result;
+    var caps=track.getCapabilities();
+    if(caps&&Array.isArray(caps.focusMode)&&caps.focusMode.indexOf('continuous')!==-1){
+      result.focusMode='continuous';
+      await track.applyConstraints({advanced:[{focusMode:'continuous'}]});
+      result.applied=true;
+    } else if(caps&&Array.isArray(caps.focusMode)){
+      result.focusMode='SUPPORTED_BUT_NO_CONTINUOUS';
+    }
+  }catch(_){ result.applied=false; }
+  console.log('[nutrition-camera-diag] focus enhancement:', result);
+  return result;
+}
 async function voedingCapturePhoto(which){
   var errEl=document.getElementById('voeding-photo-error'); errEl.style.display='none';
   var qualityEl=document.getElementById('voeding-photo-quality-warning'); qualityEl.style.display='none';
@@ -21461,30 +21492,67 @@ async function voedingCapturePhoto(which){
   var img=document.getElementById('voeding-photo-preview-'+which);
   try{
     if(!video.srcObject){
-      // FORENSISCHE FIX: expliciete ideal-resolutie-constraints toegevoegd.
-      // Zonder deze koos de browser vaak een lage default-resolutie (vaak
-      // rond 640x480 op Android Chrome), onvoldoende voor kleine
-      // etiketcijfers -- bevestigde root cause van de gerapporteerde,
-      // onvoldoende OCR-kwaliteit. Uitsluitend 'ideal', geen 'exact' --
-      // valt veilig terug op wat het device wel ondersteunt.
       var stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment', width:{ideal:1920}, height:{ideal:1080}}});
       video.srcObject=stream; video.style.display='block';
       await new Promise(function(res){ video.onloadedmetadata=res; });
+      await voedingApplyFocusEnhancement(stream.getVideoTracks()[0]); // Fase 3, progressive
+      // Diagnostiek (Fase 2): wat is daadwerkelijk geleverd, niet alleen gevraagd.
+      // Geen gevoelige info (geen apparaat-identifier naar buiten), uitsluitend technische
+      // stream-eigenschappen, en alleen naar de console (geen productie-UX-ruis).
+      try{
+        var track=stream.getVideoTracks()[0];
+        var settings=track.getSettings?track.getSettings():{};
+        console.log('[nutrition-camera-diag] actual stream settings:', {width:settings.width,height:settings.height,aspectRatio:settings.aspectRatio,frameRate:settings.frameRate,facingMode:settings.facingMode});
+        if(track.getCapabilities){
+          var caps=track.getCapabilities();
+          console.log('[nutrition-camera-diag] capabilities:', {width:caps.width,height:caps.height,focusMode:caps.focusMode,zoom:caps.zoom,torch:caps.torch});
+        }
+      }catch(diagErr){ /* diagnostiek mag nooit de flow breken */ }
       return; // eerste klik: camera tonen; tweede klik maakt de foto
     }
-    // FORENSISCHE FIX: korte stabilisatiewachttijd zodat continuous-
-    // autofocus (waar het device dit ondersteunt) de tijd krijgt scherp
-    // te stellen vóór de daadwerkelijke capture.
-    await new Promise(function(res){ setTimeout(res,400); });
+    await new Promise(function(res){ setTimeout(res,400); }); // focus-stabilisatie
+
+    // FORENSISCHE FIX (Fase 4/7): ImageCapture.takePhoto() gebruikt de
+    // ECHTE still-capture-pijplijn van de camerahardware (dezelfde route
+    // als de native camera-app) i.p.v. een videoframe uit de live,
+    // voor framerate/bandbreedte geoptimaliseerde MediaStream. Dit is de
+    // bevestigde, meest waarschijnlijke oorzaak van het kwaliteitsverschil
+    // met de native camera. Progressive enhancement: valt terug op de
+    // bestaande video-frame-methode wanneer ImageCapture niet ondersteund
+    // wordt (bv. Safari/iOS, oudere Android-browsers).
+    var blob=null;
+    var captureMechanism='VIDEO_FRAME';
+    if(typeof ImageCapture!=='undefined'){
+      try{
+        var track2=video.srcObject.getVideoTracks()[0];
+        var imageCapture=new ImageCapture(track2);
+        blob=await imageCapture.takePhoto();
+        captureMechanism='IMAGE_CAPTURE';
+        console.log('[nutrition-camera-diag] capture mechanism: IMAGE_CAPTURE, blob size:', blob.size);
+      }catch(icErr){
+        console.log('[nutrition-camera-diag] ImageCapture.takePhoto() faalde, terugval op video-frame:', icErr.message);
+        blob=null; captureMechanism='VIDEO_FRAME';
+      }
+    }
 
     var canvas=document.createElement('canvas');
-    canvas.width=video.videoWidth; canvas.height=video.videoHeight;
-    var ctx=canvas.getContext('2d');
-    ctx.drawImage(video,0,0);
+    var ctx;
+    if(blob){
+      var bitmap=await createImageBitmap(blob);
+      canvas.width=bitmap.width; canvas.height=bitmap.height;
+      ctx=canvas.getContext('2d');
+      ctx.drawImage(bitmap,0,0);
+    } else {
+      canvas.width=video.videoWidth; canvas.height=video.videoHeight;
+      ctx=canvas.getContext('2d');
+      ctx.drawImage(video,0,0);
+    }
+    console.log('[nutrition-camera-diag] capture mechanism used:', captureMechanism, '| output dimensions:', canvas.width+'x'+canvas.height);
 
     // FASE 4: deterministische image-quality-gate vóór acceptatie --
     // een aantoonbaar wazige/te donkere/te lichte foto wordt NIET
-    // stilzwijgend als betrouwbare OCR-input geaccepteerd.
+    // stilzwijgend als betrouwbare OCR-input geaccepteerd. Blijft een
+    // veiligheidsnet, GEEN garantie dat OCR daadwerkelijk lukt.
     var imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
     var gray=new Array(canvas.width*canvas.height);
     for(var i=0;i<gray.length;i++){
@@ -21502,7 +21570,7 @@ async function voedingCapturePhoto(which){
       return; // GEEN silent doorgang -- gebruiker moet expliciet opnieuw proberen (camera blijft actief)
     }
 
-    var dataUrl=canvas.toDataURL('image/jpeg',0.9);
+    var dataUrl=canvas.toDataURL('image/jpeg',0.92);
     voedingPhotoCaptures[which]=dataUrl;
     img.src=dataUrl; img.style.display='block'; video.style.display='none';
     video.srcObject.getTracks().forEach(function(t){t.stop();}); video.srcObject=null; // camera direct vrijgeven
@@ -21516,6 +21584,56 @@ async function voedingCapturePhoto(which){
       : 'Camera kon niet worden geopend.';
     errEl.style.display='block';
   }
+}
+/* Native-file-capture-fallback (Fase 16): laat het besturingssysteem/de
+   native cameraApp de foto maken -- kan op sommige Android-toestellen een
+   betrouwbaardere still-kwaliteit opleveren dan een browser-MediaStream,
+   ten koste van de live-preview-UX. Uitdrukkelijk een ALTERNATIEF naast
+   de bestaande live-cameraflow, geen vervanging. */
+function voedingUseNativeCameraCapture(which){
+  var input=document.createElement('input');
+  input.type='file'; input.accept='image/*'; input.capture='environment';
+  input.onchange=async function(){
+    var file=input.files&&input.files[0];
+    if(!file) return;
+    var errEl=document.getElementById('voeding-photo-error'); errEl.style.display='none';
+    var qualityEl=document.getElementById('voeding-photo-quality-warning'); qualityEl.style.display='none';
+    try{
+      // createImageBitmap met imageOrientation:'from-image' respecteert EXIF-
+      // orientatie van native camera-foto's (Fase 5: orientation-probleem).
+      var bitmap;
+      try{ bitmap=await createImageBitmap(file,{imageOrientation:'from-image'}); }
+      catch(_){ bitmap=await createImageBitmap(file); }
+      var canvas=document.createElement('canvas');
+      canvas.width=bitmap.width; canvas.height=bitmap.height;
+      var ctx=canvas.getContext('2d'); ctx.drawImage(bitmap,0,0);
+      console.log('[nutrition-camera-diag] capture mechanism used: NATIVE_CAPTURE | output dimensions:', canvas.width+'x'+canvas.height, '| file size:', file.size);
+      // Zelfde deterministische quality gate als de live-cameraflow (geen omweg).
+      var imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+      var gray=new Array(canvas.width*canvas.height);
+      for(var i=0;i<gray.length;i++){ var o=i*4; gray[i]=(imgData.data[o]*0.299+imgData.data[o+1]*0.587+imgData.data[o+2]*0.114); }
+      var quality=NutritionImageQualityGate.evaluateImageQuality(gray,canvas.width,canvas.height);
+      if(quality.status!=='PASS' && quality.status!=='UNKNOWN'){
+        var titleEl=document.getElementById('voeding-photo-quality-title');
+        var bodyEl=document.getElementById('voeding-photo-quality-body');
+        if(quality.status==='FAIL_BLUR'){ titleEl.textContent='Foto niet scherp genoeg'; bodyEl.textContent='De voedingswaarden zijn niet goed leesbaar. Houd de camera stil en zorg dat het etiket scherp in beeld is.'; }
+        else if(quality.status==='FAIL_TOO_DARK'){ titleEl.textContent='Foto te donker'; bodyEl.textContent='Zorg voor voldoende licht en probeer opnieuw.'; }
+        else { titleEl.textContent='Foto te licht/overbelicht'; bodyEl.textContent='Vermijd fel tegenlicht of directe reflectie op de verpakking.'; }
+        qualityEl.style.display='block';
+        return;
+      }
+      var dataUrl=canvas.toDataURL('image/jpeg',0.92);
+      voedingPhotoCaptures[which]=dataUrl;
+      var img=document.getElementById('voeding-photo-preview-'+which);
+      img.src=dataUrl; img.style.display='block';
+      document.getElementById('voeding-photo-video-'+which).style.display='none';
+      var btn=document.getElementById('voeding-photo-continue-btn');
+      if(voedingPhotoCaptures.front && voedingPhotoCaptures.label){ btn.disabled=false; btn.textContent="Foto's controleren"; }
+    }catch(e){
+      errEl.textContent='De foto kon niet worden verwerkt. Probeer opnieuw.'; errEl.style.display='block';
+    }
+  };
+  input.click();
 }
 function voedingClosePhotoFlow(){
   ['front','label'].forEach(function(w){

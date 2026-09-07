@@ -16,8 +16,12 @@ const creatineMatch = Search.search('creatine');
 ok(creatineMatch.some((r) => r.supplement_id === 'CREATINE' && r.matched_via === 'canonical_name'), 'canonical-name matching: "creatine" vindt CREATINE via canonical_name');
 
 // ---- synonym matching ----
-const cafeineMatch = Search.search('cafeïne');
-ok(cafeineMatch.some((r) => r.supplement_id === 'CAFFEINE' && r.matched_via === 'synonym'), 'synonym matching: "cafeïne" vindt CAFFEINE via zijn synonym');
+// "coffee" is een synonym van CAFFEINE dat NIET gelijk is aan de display_name
+// ("Cafeïne") -- dat maakt dit een ondubbelzinnige synonym-matchtest. ("cafeïne"
+// zelf is inmiddels zowel synonym als display_name en wordt terecht via de
+// hogere-rang display_name-exacte-match gevonden, zie de ranking-tests verderop.)
+const coffeeMatch = Search.search('coffee');
+ok(coffeeMatch.some((r) => r.supplement_id === 'CAFFEINE' && r.matched_via === 'synonym'), 'synonym matching: "coffee" vindt CAFFEINE via zijn synonym');
 
 // ---- case-insensitive matching ----
 ok(Search.search('CREATINE').some((r) => r.supplement_id === 'CREATINE'), 'case-insensitive: hoofdletters "CREATINE" vindt hetzelfde resultaat');

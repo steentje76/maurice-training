@@ -17,8 +17,8 @@ ok(!!doseMatch && !!unitMatch, 'dose- en unit-elementen hebben een style-attribu
 if (doseMatch && unitMatch) {
   const doseFlexPct = parseFloat((doseMatch[1].match(/flex:\s*[\d.]+\s+[\d.]+\s+(\d+)%/) || [])[1]);
   const unitFlexPct = parseFloat((unitMatch[1].match(/flex:\s*[\d.]+\s+[\d.]+\s+(\d+)%/) || [])[1]);
-  ok(doseFlexPct >= 38 && doseFlexPct <= 47, 'dosisveld heeft een flex-basis binnen de gevraagde 40-45%-richtwaarde (gevonden: ' + doseFlexPct + '%)');
-  ok(unitFlexPct >= 53 && unitFlexPct <= 62, 'eenheidsveld heeft een flex-basis binnen de gevraagde 55-60%-richtwaarde (gevonden: ' + unitFlexPct + '%)');
+  ok(doseFlexPct >= 48 && doseFlexPct <= 52, 'dosisveld heeft een flex-basis binnen de (SUP-EVIDENCE-03B) gevraagde 50%-richtwaarde (gevonden: ' + doseFlexPct + '%)');
+  ok(unitFlexPct >= 48 && unitFlexPct <= 52, 'eenheidsveld heeft een flex-basis binnen de (SUP-EVIDENCE-03B) gevraagde 50%-richtwaarde (gevonden: ' + unitFlexPct + '%)');
   ok(doseMatch[1].indexOf('min-width:0') >= 0, 'dosisveld heeft min-width:0 zodat de flex-basis niet wordt overschreven');
   ok(unitMatch[1].indexOf('min-width:0') >= 0, 'eenheidsveld (select) heeft min-width:0 -- voorkomt dat de langste optietekst ("capsule") de flexverdeling overschrijft (het gerapporteerde Android-probleem)');
 }

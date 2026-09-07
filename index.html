@@ -4293,13 +4293,13 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <div id="voeding-supp-suggest" role="listbox" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:20;margin-top:4px;background:var(--card);border:1px solid var(--color-border);border-radius:10px;max-height:240px;overflow-y:auto;box-shadow:var(--shadow)"></div>
     </div>
     <div class="v43-lbl" style="margin:8px 0 6px">Dosering</div>
-    <!-- SUP-EVIDENCE-03A: dosis ~42% / eenheid ~58% via flex-basis (responsief,
-         geen vaste pixelbreedte); min-width:0 op de select voorkomt dat de
-         optietekst ("capsule") de flexverdeling overschrijft en het dosisveld
-         wegdrukt (het gerapporteerde Android-probleem). -->
+    <!-- SUP-EVIDENCE-03B: dosis 50% / eenheid 50% via flex-basis (responsief,
+         geen vaste pixelbreedte) -- na fysieke Android-retest bleek 42/58 nog
+         te krap voor de dosis; min-width:0 op beide voorkomt dat de
+         optietekst ("capsule") de flexverdeling overschrijft. -->
     <div style="display:flex;gap:8px;margin-bottom:14px">
-      <input id="voeding-supp-dose" aria-label="Hoeveelheid" type="number" inputmode="decimal" step="any" min="0" placeholder="Hoeveelheid" class="vd-input" style="flex:0 1 42%;min-width:0">
-      <select id="voeding-supp-unit" aria-label="Eenheid" class="vd-input" style="flex:1 1 58%;min-width:0"><option value="g">g</option><option value="mg">mg</option><option value="ml">ml</option><option value="IU">IU</option><option value="capsule">capsule</option></select>
+      <input id="voeding-supp-dose" aria-label="Dosering" type="number" inputmode="decimal" step="any" min="0" placeholder="Dosering" class="vd-input" style="flex:1 1 50%;min-width:0;min-height:44px">
+      <select id="voeding-supp-unit" aria-label="Eenheid" class="vd-input" style="flex:1 1 50%;min-width:0;min-height:44px"><option value="g">g</option><option value="mg">mg</option><option value="ml">ml</option><option value="IU">IU</option><option value="capsule">capsule</option></select>
     </div>
     <div id="voeding-supp-error" aria-live="polite" style="color:#c0392b;font-size:13px;margin-bottom:8px;display:none"></div>
     <button class="tk-btn tk-btn-primary" style="width:100%" onclick="voedingSaveSupplement()">Opslaan</button>
@@ -22026,10 +22026,14 @@ function voedingSuppRenderSuggestions(matches){
   if(!box) return;
   if(!matches||!matches.length){ voedingSuppHideSuggestions(); return; }
   box.innerHTML=matches.map(function(m){
+    // SUP-EVIDENCE-03B: toon de gebruikersvriendelijke display_name, niet de
+    // technische canonical_name (bv. "Eiwit" i.p.v. "Protein/whey (groep)").
+    // De hint toont de bijnaam/synonym alleen als de match daarvia liep --
+    // dit is puur presentatie en verandert niets aan matching/koppeling.
     var hint=(m.matched_via==='synonym')?' <span style="color:var(--g4);font-size:12px">('+escHtml(m.matched_text)+')</span>':'';
     return '<div role="option" tabindex="-1" style="padding:10px 12px;min-height:44px;display:flex;align-items:center;cursor:pointer;border-bottom:1px solid var(--color-border)" '
       +'onmousedown="event.preventDefault();voedingSuppSelectSuggestion(\''+m.supplement_id+'\')">'
-      +'<span>'+escHtml(m.canonical_name)+hint+'</span></div>';
+      +'<span>'+escHtml(m.display_name||m.canonical_name)+hint+'</span></div>';
   }).join('');
   box.style.display='block';
   if(input) input.setAttribute('aria-expanded','true');
@@ -22038,7 +22042,11 @@ function voedingSuppSelectSuggestion(supplementId){
   var item=(typeof NutritionSupplementCatalog!=='undefined')?NutritionSupplementCatalog.getById(supplementId):null;
   var input=document.getElementById('voeding-supp-name');
   if(!item||!input) return;
-  input.value=item.canonical_name;
+  // display_name (SUP-EVIDENCE-03B) is uitsluitend presentatie: bySynonymOrName
+  // matcht ook op display_name, dus dit blijft een geldige, herkoppelbare
+  // exacte match zodra de gebruiker verdergaat. supplement_id (de
+  // wetenschappelijke identiteit) blijft ongewijzigd.
+  input.value=NutritionSupplementCatalog.getDisplayName(item);
   input.setAttribute('data-supplement-id', item.supplement_id);
   voedingSuppHideSuggestions();
   voedingSuppInfoButtonUpdate();
@@ -22063,7 +22071,15 @@ function voedingOpenSupplementInfoFromInput(){
 function voedingOpenSupplementInfo(nameOrSynonym){
   if(typeof NutritionSupplementEducationService==='undefined') return;
   var edu=NutritionSupplementEducationService.getSupplementEducationByName(nameOrSynonym);
-  document.getElementById('voeding-supp-info-title').textContent=(edu.status==='OK')?edu.canonical_name:'Uitleg';
+  // SUP-EVIDENCE-03B: titel toont display_name (presentatie) waar
+  // beschikbaar; edu.canonical_name (de wetenschappelijke identiteit uit de
+  // EducationService, ongewijzigd) blijft de fallback.
+  var titel='Uitleg';
+  if(edu.status==='OK'){
+    var catItem=(typeof NutritionSupplementCatalog!=='undefined')?NutritionSupplementCatalog.getById(edu.supplement_id):null;
+    titel=catItem?NutritionSupplementCatalog.getDisplayName(catItem):edu.canonical_name;
+  }
+  document.getElementById('voeding-supp-info-title').textContent=titel;
   go('s-voeding-supplement-info');
   renderVoedingSupplementInfo(edu);
 }

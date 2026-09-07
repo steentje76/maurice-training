@@ -143,7 +143,10 @@ t('Supplement-dosering-veld heeft GEEN placeholder/value van "5" meer (KERN, adv
   const inputTag = html.slice(inputStart - 20, inputEnd);
   assert.strictEqual(/placeholder=\\?"5\\?"/.test(inputTag), false);
   assert.strictEqual(/\svalue=\\?"5\\?"/.test(inputTag), false);
-  assert.strictEqual(inputTag.includes('placeholder="Hoeveelheid"'), true);
+  // SUP-EVIDENCE-03B: placeholder is bewust hernoemd naar "Dosering" (dekt ook
+  // g/mg naast telbare eenheden, ongewijzigd t.o.v. de kernregressie hierboven
+  // -- er staat nog steeds geen "5" of andere vooraf ingevulde waarde).
+  assert.strictEqual(inputTag.includes('placeholder="Dosering"'), true);
 });
 
 // -- Fase 7: geen impliciete ingrediënten-claim -------------------------------

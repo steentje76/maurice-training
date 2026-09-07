@@ -58,7 +58,8 @@ t('A1: geen enkele registersleutel is verdwenen', function () {
   var verwacht = ['hrv', 'rhr', 'sleep', 'dagfactor', 'readiness', 'gewicht', 'volume', 'rpe',
     'sets', 'load', 'load_vorige_dag', 'weekbelasting', 'duur', 'rust', 'e1rm', 'topgewicht',
     'cardio_split', 'temperatuur', 'luchtvochtigheid', 'wind',
-    'rustdagen'];                                   // Fase 2 (v4.47.0)
+    'rustdagen',                                    // Fase 2 (v4.47.0)
+    'nutrition_kcal', 'nutrition_protein', 'nutrition_carbs', 'nutrition_hydration']; // NUT-REL-01B
   var aanwezig = RC.VARIABLE_REGISTRY.map(function (v) { return v.key; });
   verwacht.forEach(function (k) { assert.ok(aanwezig.indexOf(k) >= 0, 'registersleutel verdwenen: ' + k); });
   assert.ok(aanwezig.length >= verwacht.length, 'registeromvang gekrompen');

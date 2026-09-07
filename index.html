@@ -6170,6 +6170,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/nutritionTargetService.js"></script>
 <script src="core/nutritionCrossDomainContract.js"></script>
 <script src="core/nutritionTimeUtils.js"></script>
+<script src="core/nutritionRelationshipSources.js"></script>
 <script src="core/nutritionBarcodeRuntime.js"></script>
 <script src="core/designSystemIcons.js"></script>
 <script src="core/decision.js"></script>
@@ -6928,7 +6929,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.66';
+const APP_VER = 'v4.69.67';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -26994,6 +26995,7 @@ function tkVerbandPijl(richting){ return richting==='higher' ? '↗' : (richting
 const TK_REL_PERIODES = [7, 30, 90, 365];
 const TK_REL_VENSTER  = 365;                 // langste periode: één query bedient alle knoppen
 let _tkRelRows = null, _tkRelWeight = null, _tkRelSessies = null;  // ruwe rijen, één keer per sessie
+let _tkRelNutritionMeals = null, _tkRelNutritionHydration = null;  // NUT-REL-01B — idem voor Nutrition
 let _tkRelCache = {};                        // per periode: de uitkomst van discover
 let tkRelFilter = 'alle';
 let tkRelToonAlles = false;                  // false = alleen de eerste schermvulling
@@ -27012,8 +27014,36 @@ async function tkRelData(){
      dag ligt hoger dan het aantal metingen, vandaar de ruimere limiet. */
   let ss=[];
   try{ ss = await v43SafeGet('sessions','&order=date.desc,created_at.desc&limit=2000',4000) || []; }catch(_){ ss=[]; }
-  _tkRelRows=hrv; _tkRelWeight=wl; _tkRelSessies=ss;
-  return {hrv:hrv, weight:wl, sessies:ss};
+  /* NUT-REL-01B — uitsluitend Foundation 2.0 (nutrition_meals + hun items,
+     nutrition_hydration_entries). NOOIT nutrition_entries (legacy,
+     NUT-CANON-01). order=consumed_at, niet occurred_at (NUT-TIME-01). */
+  let nm=[], nh=[];
+  try{
+    nm = await v43SafeGet('nutrition_meals','&order=consumed_at.desc&limit='+lim,4000) || [];
+    if(nm.length){
+      const ids=nm.map(function(m){return m.id;}).join(',');
+      const items = await v43SafeGet('nutrition_meal_items','&meal_id=in.('+ids+')',4000) || [];
+      nm.forEach(function(m){ m.items=items.filter(function(it){return it.meal_id===m.id;}); });
+    }
+  }catch(_){ nm=[]; }
+  try{ nh = await v43SafeGet('nutrition_hydration_entries','&order=consumed_at.desc&limit='+lim,4000) || []; }catch(_){ nh=[]; }
+  _tkRelRows=hrv; _tkRelWeight=wl; _tkRelSessies=ss; _tkRelNutritionMeals=nm; _tkRelNutritionHydration=nh;
+  return {hrv:hrv, weight:wl, sessies:ss, nutritionMeals:nm, nutritionHydration:nh};
+}
+
+/* NUT-REL-01B — Nutrition-reeksen voor de Relationship Engine. Synchroon,
+   analoog aan tkAthleteBronnen: de rijen zijn op dit punt al geladen door
+   tkRelData. Alle daadwerkelijke aggregatie/provenance-filtering gebeurt
+   in de pure NutritionRelationshipSources-module -- hier wordt niets
+   opgeteld en geen enkele rij zelf beoordeeld. Ontbreekt de module of zijn
+   er geen rijen, dan komt er een leeg object terug (geen nulreeksen). */
+function tkNutritionBronnen(){
+  const NRS=(typeof NutritionRelationshipSources!=='undefined')?NutritionRelationshipSources:null;
+  if(!NRS||typeof NRS.build!=='function') return {};
+  const meals=_tkRelNutritionMeals||[];
+  const hydratie=_tkRelNutritionHydration||[];
+  if(!meals.length && !hydratie.length) return {};
+  try{ return NRS.build(meals, hydratie)||{}; }catch(_){ return {}; }
 }
 
 /* Trainings- en prestatiereeksen uit AthleteCore. Synchroon: de sessies zijn op dit
@@ -27087,6 +27117,14 @@ function tkRelBronnen(data, dagen){
      training en herstel onderzoeken, zonder dat hier iets over verbanden staat. */
   if(typeof tkAthleteBronnen==='function'){
     try{ const extra=tkAthleteBronnen(dagen)||{}; Object.keys(extra).forEach(function(k){ if(extra[k]&&extra[k].length) bronnen[k]=extra[k]; }); }
+    catch(_){ }
+  }
+  /* NUT-REL-01B — Nutrition-reeksen (uitsluitend Foundation 2.0, nooit
+     nutrition_entries). Zelfde "niet aanwezig != leeg" conventie als
+     hierboven; de provenance-/dagfilter zit volledig in
+     NutritionRelationshipSources, hier wordt niets zelf beoordeeld. */
+  if(typeof tkNutritionBronnen==='function'){
+    try{ const nutExtra=tkNutritionBronnen()||{}; Object.keys(nutExtra).forEach(function(k){ if(nutExtra[k]&&nutExtra[k].length) bronnen[k]=nutExtra[k]; }); }
     catch(_){ }
   }
   return bronnen;

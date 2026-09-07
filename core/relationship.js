@@ -53,7 +53,8 @@
     { key: 'recovery',    label: 'Herstel',    volgorde: 1 },
     { key: 'training',    label: 'Training',   volgorde: 2 },
     { key: 'performance', label: 'Prestaties', volgorde: 3 },
-    { key: 'environment', label: 'Omgeving',   volgorde: 4 }
+    { key: 'environment', label: 'Omgeving',   volgorde: 4 },
+    { key: 'nutrition',   label: 'Voeding',    volgorde: 5 }
   ];
   function domeinLabel(key) {
     for (var i = 0; i < DOMEINEN.length; i++) if (DOMEINEN[i].key === key) return DOMEINEN[i].label;
@@ -196,7 +197,30 @@
       domein: 'environment', inputs: ['humidity'], veld: null, afgeleid: false, beschikbaarheid: 'toekomstig' },
     { key: 'wind', label: 'Wind', zinNaam: 'windsnelheid', conditie: 'het harder waaide',
       noemer: 'windsnelheid', eenheid: 'km/u', domein: 'environment', inputs: ['wind_kmh'], veld: null,
-      afgeleid: false, beschikbaarheid: 'toekomstig' }
+      afgeleid: false, beschikbaarheid: 'toekomstig' },
+
+    /* ── Voeding (NUT-REL-01B) ───────────────────────────────────────────────
+       Uitsluitend Foundation 2.0 (nutrition_meals/nutrition_meal_items/
+       nutrition_hydration_entries), nooit nutrition_entries (legacy,
+       NUT-CANON-01). Elke grootheid is een zelfstandig gelogd/gescand veld
+       (geen door deze app berekende macro-formule), dus vier losse, niet-
+       overlappende inputs -- exact zoals hrv/rhr/sleep elk hun eigen input
+       hebben, ook al zijn ze inhoudelijk verwant. veld:null omdat deze
+       reeksen niet via DeviceCore.healthSeries/DQ_CONTRACT lopen (ze komen
+       uit NutritionRelationshipSources, met hun eigen, per-rij
+       provenance-filter vóór aggregatie -- zie dat bestand). */
+    { key: 'nutrition_kcal', label: 'Calorie-inname', zinNaam: 'calorie-inname',
+      conditie: 'je calorie-inname hoger was', noemer: 'calorie-inname', eenheid: 'kcal',
+      domein: 'nutrition', inputs: ['nutrition_kcal_raw'], veld: null, afgeleid: false, beschikbaarheid: 'nu' },
+    { key: 'nutrition_protein', label: 'Eiwitinname', zinNaam: 'eiwitinname',
+      conditie: 'je eiwitinname hoger was', noemer: 'eiwitinname', eenheid: 'g',
+      domein: 'nutrition', inputs: ['nutrition_protein_raw'], veld: null, afgeleid: false, beschikbaarheid: 'nu' },
+    { key: 'nutrition_carbs', label: 'Koolhydraatinname', zinNaam: 'koolhydraatinname',
+      conditie: 'je koolhydraatinname hoger was', noemer: 'koolhydraatinname', eenheid: 'g',
+      domein: 'nutrition', inputs: ['nutrition_carbs_raw'], veld: null, afgeleid: false, beschikbaarheid: 'nu' },
+    { key: 'nutrition_hydration', label: 'Vochtinname', zinNaam: 'vochtinname',
+      conditie: 'je meer vocht binnenkreeg', noemer: 'vochtinname', eenheid: 'ml',
+      domein: 'nutrition', inputs: ['nutrition_hydration_raw'], veld: null, afgeleid: false, beschikbaarheid: 'nu' }
   ];
 
   function variableRegistry() { return VARIABLE_REGISTRY.slice(); }

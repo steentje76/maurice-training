@@ -3237,12 +3237,14 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .nk-acc[open]>summary .nk-chev{transform:rotate(180deg)}
 .nk-acc[open]>summary{border-bottom:1px solid var(--color-border)}
 .nk-acc-body{padding:4px 14px 14px;font-size:14.5px;line-height:1.55;color:var(--dark);max-width:62ch}
-.nk-faq-row{border-bottom:1px solid var(--color-border)}
-.nk-faq-row>summary{list-style:none;cursor:pointer;padding:12px 4px;min-height:44px;display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:600;color:var(--dark)}
+.nk-faq-row{background:var(--card);border:1px solid var(--color-border);border-radius:12px;margin-bottom:7px;overflow:hidden}
+.nk-faq-row>summary{list-style:none;cursor:pointer;padding:12px 13px;min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13.5px;font-weight:600;color:var(--dark);line-height:1.35}
 .nk-faq-row>summary::-webkit-details-marker{display:none}
-.nk-faq-row>summary .nk-chev{transition:transform .15s ease;color:var(--g4);flex-shrink:0;margin-left:8px}
+.nk-faq-row>summary .nk-chev{transition:transform .15s ease;color:var(--g4);flex-shrink:0}
+.nk-faq-row[open]{border-color:var(--color-primary,var(--accent))}
+.nk-faq-row[open]>summary{border-bottom:1px solid var(--color-border)}
 .nk-faq-row[open]>summary .nk-chev{transform:rotate(180deg)}
-.nk-faq-body{padding:0 4px 14px;font-size:14px;line-height:1.5;color:var(--dark);max-width:62ch}
+.nk-faq-body{padding:10px 13px 13px;font-size:13.5px;line-height:1.5;color:var(--dark)}
 .nk-callout{border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.45;margin-top:8px}
 .nk-callout-info{background:var(--g1);color:var(--dark)}
 .nk-callout-warn{background:#fdecea;color:#c0392b}
@@ -3253,6 +3255,23 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .nk-ai-cta{display:block;width:100%;text-align:left;background:var(--g1);border:1px solid var(--color-border);border-radius:12px;padding:11px 14px;font-family:var(--f);font-size:13.5px;font-weight:700;color:var(--dark);margin:14px 0;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
 .nk-ai-cta .ar{color:var(--g4)}
 .nk-ai-disclaimer{font-size:12px;color:var(--g4);line-height:1.4;margin-bottom:14px}
+/* NK-04A — Kennis-AI vrije-vraag input (sectie 5/8/17) */
+.nk-ai-input-wrap{margin-bottom:12px}
+.nk-ai-input{width:100%;min-height:76px;max-height:160px;resize:vertical;border:1px solid var(--color-border);border-radius:12px;padding:12px 13px;font-family:var(--f);font-size:14.5px;line-height:1.4;color:var(--dark);background:var(--card)}
+.nk-ai-input:focus{outline:none;border-color:var(--color-primary,var(--accent))}
+.nk-ai-suggestions{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
+.nk-ai-chip{font-size:12px;font-weight:600;color:var(--dark);background:var(--g1);border:1px solid var(--color-border);border-radius:999px;padding:7px 12px;cursor:pointer;font-family:var(--f);min-height:34px}
+.nk-ai-submit{width:100%;min-height:46px;border-radius:12px;border:none;background:var(--color-primary,var(--accent));color:#fff;font-family:var(--f);font-size:14.5px;font-weight:700;cursor:pointer}
+.nk-ai-submit:disabled{opacity:.55;cursor:default}
+.nk-ai-status{font-size:12.5px;color:var(--g4);margin:8px 0;min-height:16px}
+.nk-ai-answer-card{background:var(--card);border:1px solid var(--color-border);border-radius:14px;padding:14px;margin-bottom:12px}
+.nk-ai-answer-q{font-size:12.5px;color:var(--g4);margin-bottom:6px}
+.nk-ai-answer-text{font-size:14.5px;line-height:1.55;color:var(--dark);white-space:pre-wrap}
+.nk-ai-explain-toggle{font-size:12.5px;font-weight:700;color:var(--color-primary,var(--accent));background:none;border:none;padding:8px 0;cursor:pointer;font-family:var(--f);min-height:36px}
+.nk-ai-typing span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--g4);margin-right:3px;animation:nkTypingBlink 1s infinite}
+.nk-ai-typing span:nth-child(2){animation-delay:.15s}
+.nk-ai-typing span:nth-child(3){animation-delay:.3s}
+@keyframes nkTypingBlink{0%,80%,100%{opacity:.25}40%{opacity:1}}
 </style>
 </head>
 <body>
@@ -6252,6 +6271,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/nutritionKnowledgeEvidenceRegistry.js"></script>
 <script src="core/nutritionKnowledgeTopics.js"></script>
 <script src="core/nutritionKnowledgeService.js"></script>
+<script src="core/nutritionKnowledgeResolver.js"></script>
 <script src="core/nutritionKnowledgeUiGroups.js"></script>
 <script src="core/nutritionDiscoveryService.js"></script>
 <script src="core/nutritionCustomProductService.js"></script>
@@ -22318,6 +22338,15 @@ function voedingKennisWetenschapHtml(topicId){
   return '<div class="nk-group"><div class="nk-group-label">Claims &amp; bewijsniveau</div>'+claimsHtml+'</div>'
     +(bronnenHtml?'<div class="nk-group"><div class="nk-group-label">Bronnen</div>'+bronnenHtml+'</div>':'');
 }
+// ═══ NK-04A — Kennis-AI: echte vrije-vraag flow (sectie 8-18) ═══
+// Vervangt de NK-02-pseudo-AI (die uitsluitend een vooraf-gekozen FAQ-
+// selectie teruggaf, functioneel identiek aan de FAQ-tab). Hergebruikt
+// bewust de bestaande AI-infrastructuur: /.netlify/functions/coach
+// (server-side proxy + entitlements + Observability), AIOutputContract
+// (client-side, nu uitgebreid met nutrition-specifieke categorieën), en
+// hetzelfde ensureAiConsent()-toestemmingsmechanisme als de trainings-AI
+// Coach -- GEEN nieuwe, parallelle AI-stack (sectie 3/22).
+var _nkAiSending = false;
 function voedingOpenKennisAi(topicId){
   _voedingKennisHuidigTopic=topicId;
   go('s-voeding-kennis-ai');
@@ -22326,34 +22355,125 @@ function voedingOpenKennisAi(topicId){
 function voedingKennisAiBack(){
   go('s-voeding-kennis-topic');
 }
+/* renderVoedingKennisAiVraagKeuze: EMPTY-state -- vrij tekstveld + FAQ-
+   vragen als tap-shortcuts (sectie 8/9: suggesties mogen NOOIT de enige
+   invoer zijn). Content van de suggesties komt woordelijk uit het
+   bevroren FAQ-model, alleen de presentatie is nieuw. */
 function renderVoedingKennisAiVraagKeuze(topicId){
   var el=document.getElementById('voeding-kennis-ai-body'); if(!el) return;
   var faq=NutritionKnowledgeService.getFaq(topicId);
-  el.innerHTML='<div class="tk-card tk-card-l2" style="margin-bottom:14px;font-size:13px">Dit is een veilig, beperkt AI-prototype: kies hieronder een vraag. Trainingskompas verwoordt uitsluitend reeds gecertificeerde kennis -- er wordt niets vrij gegenereerd of berekend.</div>'
-    +(faq.status==='OK'?faq.items.map(function(f){
-      return '<button class="vd-meal" style="margin-bottom:6px" onclick="voedingRenderKennisAiAntwoord(\''+topicId+'\',\''+f.faq_id+'\')"><span class="n">'+escHtml(f.question)+'</span><span class="ar" aria-hidden="true">›</span></button>';
-    }).join(''):'');
-}
-function voedingRenderKennisAiAntwoord(topicId, faqId){
-  var el=document.getElementById('voeding-kennis-ai-body'); if(!el) return;
-  var ctx=NutritionKnowledgeService.buildAiContext(topicId, faqId);
-  if(ctx.status!=='OK'){ el.innerHTML='<div class="tk-card tk-card-l3" style="padding:16px">Geen antwoord beschikbaar.</div>'; return; }
-  function blok(titel,lijst,kleur){
-    if(!lijst||!lijst.length) return '';
-    return '<div class="v43-lbl" style="margin:14px 0 4px'+(kleur?';color:'+kleur:'')+'">'+titel+'</div>'
-      +'<ul style="margin:0;padding-left:18px;font-size:14px">'+lijst.map(function(x){return '<li>'+escHtml(x)+'</li>';}).join('')+'</ul>';
+  var topic=NutritionKnowledgeTopics.getTopic(topicId);
+  var html='<div class="tk-card tk-card-l2" style="margin-bottom:12px;font-size:12.5px;color:var(--g4)">Trainingskompas AI antwoordt uitsluitend op basis van al-gecertificeerde kennis -- geen persoonlijke berekening, geen medische diagnose.</div>';
+  html+='<div class="nk-ai-input-wrap">'
+    +'<textarea id="nk-ai-input" class="nk-ai-input" placeholder="Stel je vraag over '+escHtml(topic?topic.display_name:'voeding')+'..." aria-label="Je vraag"></textarea>'
+    +'</div>';
+  if(faq.status==='OK' && faq.items.length){
+    html+='<div class="nk-ai-suggestions">'+faq.items.slice(0,6).map(function(f){
+      return '<button type="button" class="nk-ai-chip" onclick="voedingKennisAiUseSuggestion(\''+topicId+'\',\''+f.faq_id+'\')">'+escHtml(f.question)+'</button>';
+    }).join('')+'</div>';
   }
-  var html='<button class="ibtn" style="margin-bottom:10px" onclick="renderVoedingKennisAiVraagKeuze(\''+topicId+'\')" aria-label="Andere vraag">‹ Andere vraag</button>'
-    +'<div class="tk-card tk-card-l1" style="margin-bottom:10px"><div style="font-size:13px;opacity:.85">'+escHtml(ctx.TOPIC)+'</div><div style="font-size:16px;font-weight:700">'+escHtml(ctx.QUESTION)+'</div></div>'
-    +blok('Wat we weten', ctx.APPROVED_FACTS, null)
-    +blok('Wat we (nog) niet zeker weten', ctx.MISSING_INFORMATION, 'var(--g4)')
-    +blok('Beperkingen', ctx.LIMITATIONS, 'var(--g4)')
-    +blok('Veiligheid', ctx.SAFETY_BOUNDARIES, '#c0392b');
-  if(ctx.SOURCE_REFERENCES&&ctx.SOURCE_REFERENCES.length){
-    html+='<div class="v43-lbl" style="margin:14px 0 4px">Bronnen</div><div style="font-size:12px;color:var(--g4)">'
-      +ctx.SOURCE_REFERENCES.map(function(s){return escHtml(s.title)+(s.year?' ('+escHtml(s.year)+')':'');}).join('<br>')+'</div>';
-  }
+  html+='<button id="nk-ai-submit-btn" class="nk-ai-submit" onclick="voedingKennisAiSubmit(\''+topicId+'\')">Vraag stellen</button>'
+    +'<div id="nk-ai-status" class="nk-ai-status" role="status" aria-live="polite"></div>'
+    +'<div id="nk-ai-answer-area"></div>';
   el.innerHTML=html;
+}
+function voedingKennisAiUseSuggestion(topicId,faqId){
+  var faq=NutritionKnowledgeService.getFaq(topicId);
+  var item=faq.status==='OK'?faq.items.filter(function(f){return f.faq_id===faqId;})[0]:null;
+  var inp=document.getElementById('nk-ai-input'); if(!inp||!item) return;
+  inp.value=item.question;
+  inp.focus();
+}
+/* voedingKennisAiSubmit: SUBMITTING-state. Dubbele indiening voorkomen
+   (_nkAiSending-vlag + disabled-knop, sectie 24/AF). */
+async function voedingKennisAiSubmit(topicId){
+  if(_nkAiSending) return;
+  var inp=document.getElementById('nk-ai-input');
+  var vraag=(inp?inp.value:'').trim();
+  var statusEl=document.getElementById('nk-ai-status');
+  var answerArea=document.getElementById('nk-ai-answer-area');
+  if(!vraag){ if(statusEl) statusEl.textContent='Typ eerst een vraag.'; return; }
+  _nkAiSending=true;
+  var btn=document.getElementById('nk-ai-submit-btn'); if(btn) btn.disabled=true;
+  if(statusEl) statusEl.textContent='';
+  if(answerArea) answerArea.innerHTML='<div class="nk-ai-answer-card"><span class="nk-ai-typing"><span></span><span></span><span></span></span></div>';
+
+  // Knowledge Resolver: deterministisch, geen AI -- bepaalt eerst OF er
+  // voldoende gecertificeerde kennis is, VOORDAT er een dure/onnodige
+  // AI-call wordt gedaan (sectie 13: INSUFFICIENT is een kernfeature).
+  var pkg=NutritionKnowledgeResolver.resolveQuestion(vraag, topicId);
+  if(pkg.status!=='OK'){
+    if(answerArea) answerArea.innerHTML=voedingKennisAiInsufficientHtml();
+    _nkAiSending=false; if(btn) btn.disabled=false;
+    return;
+  }
+
+  var consent=await ensureAiConsent();
+  if(!consent){
+    if(answerArea) answerArea.innerHTML='<div class="nk-ai-answer-card">De Kennis-AI is uitgeschakeld omdat je geen toestemming hebt gegeven voor het delen van gegevens met de AI-leverancier. Je kunt dit aanzetten via Instellingen → Privacy.</div>';
+    _nkAiSending=false; if(btn) btn.disabled=false;
+    return;
+  }
+
+  var sys=NutritionKnowledgeResolver.buildSystemPrompt(pkg);
+  try{
+    // NK-04A: apart requestType ('knowledge_chat') i.p.v. 'chat' -- ander
+    // contract (evidence-pakket i.p.v. trainingscontext, geen APPLY-marker).
+    // Data-minimalisatie (sectie 25): uitsluitend de vrije vraag + het
+    // begrensde evidence-pakket worden verstuurd -- GEEN trainingshistorie,
+    // GEEN lichaamsdata, GEEN volledige knowledge base.
+    var res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'knowledge_chat',model:'claude-sonnet-4-5',max_tokens:500,system:sys,messages:[{role:'user',content:vraag}]})});
+    var d=await res.json();
+    if(d.error){
+      if(answerArea) answerArea.innerHTML='<div class="nk-ai-answer-card">'+escHtml(commercialErrorMessage(d.error))+'</div>';
+    } else {
+      var raw=d.content[0].text;
+      var check=(window.AIOutputContract)?AIOutputContract.validateAiOutputText(raw):{valid:true};
+      var tekst=check.valid?raw:AIOutputContract.safeCoachFallback();
+      if(answerArea) answerArea.innerHTML=voedingKennisAiAnswerHtml(pkg,tekst);
+    }
+  }catch(e){
+    if(answerArea) answerArea.innerHTML='<div class="nk-ai-answer-card">Geen verbinding — ik kan de Kennis-AI nu niet bereiken. Controleer je internet en probeer het opnieuw.</div>';
+  }
+  _nkAiSending=false; if(btn) btn.disabled=false;
+}
+/* voedingKennisAiInsufficientHtml: sectie 13 -- kernfeature, geen error. */
+function voedingKennisAiInsufficientHtml(){
+  return '<div class="nk-ai-answer-card">Trainingskompas heeft nog onvoldoende gecontroleerde informatie om deze vraag betrouwbaar te beantwoorden. Probeer het anders te formuleren, of bekijk de FAQ/Wetenschap-tab voor wat we wel weten.</div>';
+}
+/* voedingKennisAiAnswerHtml: ANSWER-state + "Waarom dit antwoord?"
+   (explainability, sectie 18 -- provenance, GEEN chain-of-thought) +
+   "Bronnen bekijken" (sectie 19 -- uitsluitend echt gebruikte bronnen). */
+function voedingKennisAiAnswerHtml(pkg, tekst){
+  var uid='nk-ai-explain-'+Math.random().toString(36).slice(2,8);
+  var html='<div class="nk-ai-answer-card">'
+    +'<div class="nk-ai-answer-q">'+escHtml(pkg.TOPIC)+'</div>'
+    +'<div class="nk-ai-answer-text">'+escHtml(tekst)+'</div>'
+    +'<button type="button" class="nk-ai-explain-toggle" onclick="voedingKennisAiToggleExplain(\''+uid+'\')">Waarom dit antwoord? ›</button>'
+    +'<div id="'+uid+'" style="display:none">';
+  html+='<div class="nk-callout nk-callout-info">Gebaseerd op:<br>'+pkg.APPROVED_FACTS.map(function(f){return '✓ '+escHtml(f);}).join('<br>')+'</div>';
+  html+='<div class="nk-callout nk-callout-info">Onderbouwing: '+escHtml((pkg.CONFIDENCE&&pkg.CONFIDENCE[0])||'')+'</div>';
+  if(pkg.MISSING_INFORMATION&&pkg.MISSING_INFORMATION.length){
+    html+='<div class="nk-callout nk-callout-warn">Nog niet zeker: '+pkg.MISSING_INFORMATION.map(escHtml).join('; ')+'</div>';
+  }
+  if(pkg.LIMITATIONS&&pkg.LIMITATIONS.length){
+    html+='<div class="nk-callout nk-callout-info">Beperkingen: '+pkg.LIMITATIONS.map(escHtml).join('; ')+'</div>';
+  }
+  if(pkg.SAFETY_BOUNDARIES&&pkg.SAFETY_BOUNDARIES.length){
+    html+='<div class="nk-callout nk-callout-warn">'+pkg.SAFETY_BOUNDARIES.map(escHtml).join('; ')+'</div>';
+  }
+  if(pkg.SOURCE_REFERENCES&&pkg.SOURCE_REFERENCES.length){
+    html+='<button type="button" class="nk-ai-explain-toggle" onclick="voedingKennisAiToggleExplain(\''+uid+'-src\')" style="padding-top:2px">Bronnen bekijken ›</button>'
+      +'<div id="'+uid+'-src" style="display:none">'+pkg.SOURCE_REFERENCES.map(function(s){
+        return '<div class="nk-source-card"><div class="nk-source-title">'+escHtml(s.title)+'</div><div class="nk-source-meta">'+escHtml(s.organisation||'')+(s.year?' · '+escHtml(s.year):'')+'</div></div>';
+      }).join('')+'</div>';
+  }
+  html+='</div></div>';
+  return html;
+}
+function voedingKennisAiToggleExplain(uid){
+  var el=document.getElementById(uid); if(!el) return;
+  el.style.display=el.style.display==='none'?'block':'none';
 }
 
 

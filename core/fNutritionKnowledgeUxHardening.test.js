@@ -86,7 +86,10 @@ ok(!!kennisUiBlockMatch && !/mg\s*\/\s*kg|gewicht\s*\*|weight\s*\*/i.test(kennis
 
 // ---- M: touch targets ----
 ok(html.indexOf('.nk-acc>summary{list-style:none;cursor:pointer;padding:13px 14px;min-height:44px') >= 0, 'M: accordion-summary heeft min-height:44px');
-ok(html.indexOf('.nk-faq-row>summary{list-style:none;cursor:pointer;padding:12px 4px;min-height:44px') >= 0, 'M-b: FAQ-rij heeft min-height:44px');
+// NK-04A: FAQ-rij visueel herzien (PO-verzoek, sectie 5-7 van de NK-04A-
+// opdracht) -- exacte padding is bewust gewijzigd, maar het 44px-
+// touchtarget-contract zelf moet ongewijzigd overeind blijven.
+ok(/\.nk-faq-row>summary\{[^}]*min-height:44px/.test(html), 'M-b: FAQ-rij heeft nog steeds min-height:44px (padding mag door NK-04A-redesign zijn gewijzigd)');
 ok(/\.seg-opt\{[^}]*padding:8px 4px/.test(html), 'M-c: bestaande .seg-opt (hergebruikt voor de tabs) heeft voldoende padding voor een touch target');
 
 // ---- N: 360px geen structurele overflow / O: 430px correct ----

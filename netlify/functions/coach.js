@@ -42,11 +42,19 @@ const CalcCore = require('../../core/calculation.js');
 //   (analoog aan "account aanmaken" -- altijd toegankelijk, geen quota).
 // - program_generation -> programma_generator
 // - session_summary / chat -> ai_coach
+// - knowledge_chat -> ai_coach (NK-04A: Nutrition Knowledge Kennis-AI --
+//   zelfde commerciële feature/quota-bucket als de gewone AI Coach-chat,
+//   geen nieuwe betaalde capability. Apart requestType i.p.v. hergebruik
+//   van 'chat' omdat het contract fundamenteel anders is: de client stuurt
+//   hier een door NutritionKnowledgeResolver samengesteld, begrensd
+//   evidence-pakket als system-prompt in plaats van trainingscontext, en
+//   het antwoord komt nooit met een [[APPLY:...]]-gewichtsmarker.
 const REQUEST_TYPE_TO_FEATURE = {
   intake_extract: null, // geen entitlement/quota-check: fundamentele onboarding-stap
   program_generation: 'programma_generator',
   session_summary: 'ai_coach',
-  chat: 'ai_coach'
+  chat: 'ai_coach',
+  knowledge_chat: 'ai_coach'
 };
 
 // F13 Post-Audit Remediation (P1-01, AI cost abuse): het model wordt
@@ -63,13 +71,15 @@ const AI_MODEL_PER_REQUEST_TYPE = {
   intake_extract: 'claude-sonnet-4-5',
   program_generation: 'claude-sonnet-4-5',
   session_summary: 'claude-sonnet-4-5',
-  chat: 'claude-sonnet-4-5'
+  chat: 'claude-sonnet-4-5',
+  knowledge_chat: 'claude-sonnet-4-5'
 };
 const AI_MAX_TOKENS_CEILING_PER_REQUEST_TYPE = {
   intake_extract: 300,
   program_generation: 1800,
   session_summary: 700,
-  chat: 1200
+  chat: 1200,
+  knowledge_chat: 500 // kort, rustig antwoord op basis van een klein, begrensd evidence-pakket
 };
 function resolveServerAuthoritativeModelAndMaxTokens(requestType, clientRequestedMaxTokens) {
   const model = AI_MODEL_PER_REQUEST_TYPE[requestType]; // nooit client-input, ook niet als fallback

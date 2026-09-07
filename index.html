@@ -4278,14 +4278,28 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Supplement toevoegen</div></div><button class="ibtn" onclick="go('s-voeding')" aria-label="Terug">‹</button></div></div>
   <div class="scroll" style="flex:1;overflow-y:auto">
     <label class="v43-lbl" for="voeding-supp-name" style="display:block;margin:8px 0 6px">Supplement</label>
-    <div style="display:flex;gap:8px;margin-bottom:14px">
-      <input id="voeding-supp-name" type="text" placeholder="Bijv. Creatine" class="vd-input" style="flex:1" oninput="voedingSuppInfoButtonUpdate()">
-      <button id="voeding-supp-info-btn" class="ibtn" style="display:none" aria-label="Uitleg over dit supplement" onclick="voedingOpenSupplementInfoFromInput()">ℹ️</button>
+    <!-- SUP-EVIDENCE-03A: mobielvriendelijke searchable combobox, catalogus als
+         enige autocompletebron. Vrije, niet-gematchte tekst blijft mogelijk
+         (custom logging) -- selectie uit de lijst is de ENIGE manier waarop
+         hier een supplement_id gekoppeld wordt buiten een letterlijke
+         exacte match om. -->
+    <div style="position:relative;margin-bottom:14px">
+      <div style="display:flex;gap:8px">
+        <input id="voeding-supp-name" type="text" placeholder="Zoek of typ een supplement" class="vd-input" style="flex:1"
+          role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="voeding-supp-suggest" autocomplete="off"
+          data-supplement-id="" oninput="voedingSuppNameInput()" onfocus="voedingSuppNameInput()" onblur="voedingSuppSuggestBlur()">
+        <button id="voeding-supp-info-btn" class="ibtn" style="display:none" aria-label="Uitleg over dit supplement" onclick="voedingOpenSupplementInfoFromInput()">ℹ️</button>
+      </div>
+      <div id="voeding-supp-suggest" role="listbox" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:20;margin-top:4px;background:var(--card);border:1px solid var(--color-border);border-radius:10px;max-height:240px;overflow-y:auto;box-shadow:var(--shadow)"></div>
     </div>
     <div class="v43-lbl" style="margin:8px 0 6px">Dosering</div>
+    <!-- SUP-EVIDENCE-03A: dosis ~42% / eenheid ~58% via flex-basis (responsief,
+         geen vaste pixelbreedte); min-width:0 op de select voorkomt dat de
+         optietekst ("capsule") de flexverdeling overschrijft en het dosisveld
+         wegdrukt (het gerapporteerde Android-probleem). -->
     <div style="display:flex;gap:8px;margin-bottom:14px">
-      <input id="voeding-supp-dose" aria-label="Hoeveelheid" type="number" step="any" min="0" placeholder="Hoeveelheid" class="vd-input" style="flex:1">
-      <select id="voeding-supp-unit" aria-label="Eenheid" class="vd-input"><option value="g">g</option><option value="mg">mg</option><option value="ml">ml</option><option value="IU">IU</option><option value="capsule">capsule</option></select>
+      <input id="voeding-supp-dose" aria-label="Hoeveelheid" type="number" inputmode="decimal" step="any" min="0" placeholder="Hoeveelheid" class="vd-input" style="flex:0 1 42%;min-width:0">
+      <select id="voeding-supp-unit" aria-label="Eenheid" class="vd-input" style="flex:1 1 58%;min-width:0"><option value="g">g</option><option value="mg">mg</option><option value="ml">ml</option><option value="IU">IU</option><option value="capsule">capsule</option></select>
     </div>
     <div id="voeding-supp-error" aria-live="polite" style="color:#c0392b;font-size:13px;margin-bottom:8px;display:none"></div>
     <button class="tk-btn tk-btn-primary" style="width:100%" onclick="voedingSaveSupplement()">Opslaan</button>
@@ -6178,6 +6192,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/nutritionHydrationService.js"></script>
 <script src="core/nutritionSupplementService.js"></script>
 <script src="core/nutritionSupplementCatalog.js"></script>
+<script src="core/nutritionSupplementSearch.js"></script>
 <script src="core/nutritionSupplementSourceRegistry.js"></script>
 <script src="core/nutritionSupplementEvidenceRegistry.js"></script>
 <script src="core/nutritionSupplementEducationService.js"></script>
@@ -21949,7 +21964,9 @@ async function voedingSaveSupplement(){
     errEl.style.display='none';
     var nu=new Date().toISOString();
     await sbPostQ('nutrition_supplement_logs',{user_id:uid,supplement_id:defId,occurred_at:nu,consumed_at:nu,consumed_at_source:'user_confirmed',dose:dose||null,unit:unit,source:'manual'});
-    document.getElementById('voeding-supp-name').value=''; document.getElementById('voeding-supp-dose').value='';
+    document.getElementById('voeding-supp-name').value=''; document.getElementById('voeding-supp-name').setAttribute('data-supplement-id','');
+    document.getElementById('voeding-supp-dose').value='';
+    voedingSuppInfoButtonUpdate(); voedingSuppHideSuggestions();
     _done(); voedingRenderSupplementHistory();
   }catch(e){ _done(); errEl.textContent='Opslaan mislukt.'; errEl.style.display='block'; }
 }
@@ -21980,6 +21997,65 @@ function voedingSuppInfoButtonUpdate(){
   if(!btn) return;
   btn.style.display=item?'flex':'none';
 }
+
+/* ═══ SUP-EVIDENCE-03A — mobiele supplement-autocomplete ═══
+ * NutritionSupplementSearch/Catalog zijn de ENIGE bron -- geen tweede,
+ * handgeschreven supplementlijst hier. `search()` levert uitsluitend
+ * SUGGESTIES (substring-match); een supplement_id wordt alleen gekoppeld
+ * via (a) een expliciete klik op een suggestie, of (b) een letterlijke
+ * exacte match (bestaand gedrag, ongewijzigd). Typen alleen levert NOOIT
+ * automatisch een koppeling op -- dat zou een "gegokte" match naar
+ * Education kunnen sturen. */
+function voedingSuppNameInput(){
+  var input=document.getElementById('voeding-supp-name');
+  if(!input) return;
+  var naam=input.value;
+  // Elke wijziging in de tekst maakt een eerder via-klik gekoppelde
+  // supplement_id ongeldig, behalve als de nieuwe tekst zelf weer een
+  // letterlijke exacte match is (zelfde, bestaande bySynonymOrName-regel).
+  var exact=(typeof NutritionSupplementSearch!=='undefined')?NutritionSupplementSearch.exactMatch(naam):null;
+  input.setAttribute('data-supplement-id', exact?exact.supplement_id:'');
+  voedingSuppInfoButtonUpdate();
+  if(typeof NutritionSupplementSearch==='undefined'){ voedingSuppHideSuggestions(); return; }
+  var matches=NutritionSupplementSearch.search(naam);
+  voedingSuppRenderSuggestions(matches);
+}
+function voedingSuppRenderSuggestions(matches){
+  var box=document.getElementById('voeding-supp-suggest');
+  var input=document.getElementById('voeding-supp-name');
+  if(!box) return;
+  if(!matches||!matches.length){ voedingSuppHideSuggestions(); return; }
+  box.innerHTML=matches.map(function(m){
+    var hint=(m.matched_via==='synonym')?' <span style="color:var(--g4);font-size:12px">('+escHtml(m.matched_text)+')</span>':'';
+    return '<div role="option" tabindex="-1" style="padding:10px 12px;min-height:44px;display:flex;align-items:center;cursor:pointer;border-bottom:1px solid var(--color-border)" '
+      +'onmousedown="event.preventDefault();voedingSuppSelectSuggestion(\''+m.supplement_id+'\')">'
+      +'<span>'+escHtml(m.canonical_name)+hint+'</span></div>';
+  }).join('');
+  box.style.display='block';
+  if(input) input.setAttribute('aria-expanded','true');
+}
+function voedingSuppSelectSuggestion(supplementId){
+  var item=(typeof NutritionSupplementCatalog!=='undefined')?NutritionSupplementCatalog.getById(supplementId):null;
+  var input=document.getElementById('voeding-supp-name');
+  if(!item||!input) return;
+  input.value=item.canonical_name;
+  input.setAttribute('data-supplement-id', item.supplement_id);
+  voedingSuppHideSuggestions();
+  voedingSuppInfoButtonUpdate();
+}
+function voedingSuppHideSuggestions(){
+  var box=document.getElementById('voeding-supp-suggest');
+  var input=document.getElementById('voeding-supp-name');
+  if(box){ box.style.display='none'; box.innerHTML=''; }
+  if(input) input.setAttribute('aria-expanded','false');
+}
+function voedingSuppSuggestBlur(){
+  // Korte vertraging zodat een klik op een suggestie (onmousedown hierboven
+  // voorkomt al de meeste race-conditions, dit is een extra vangnet) nog kan
+  // registreren voordat de lijst verdwijnt.
+  setTimeout(voedingSuppHideSuggestions, 150);
+}
+
 function voedingOpenSupplementInfoFromInput(){
   var naam=(document.getElementById('voeding-supp-name')||{}).value;
   voedingOpenSupplementInfo(naam);

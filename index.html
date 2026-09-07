@@ -3255,14 +3255,16 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .nk-ai-cta{display:block;width:100%;text-align:left;background:var(--g1);border:1px solid var(--color-border);border-radius:12px;padding:11px 14px;font-family:var(--f);font-size:13.5px;font-weight:700;color:var(--dark);margin:14px 0;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
 .nk-ai-cta .ar{color:var(--g4)}
 .nk-ai-disclaimer{font-size:12px;color:var(--g4);line-height:1.4;margin-bottom:14px}
-/* NK-04A — Kennis-AI vrije-vraag input (sectie 5/8/17) */
-.nk-ai-input-wrap{margin-bottom:12px}
+/* NK-04A/B — Kennis-AI vrije-vraag input (sectie 5/8/17, NK-04B: compact,
+   geen FAQ-achtige suggestiekaarten meer op het AI-scherm). */
+.nk-ai-lead{font-size:14px;font-weight:700;color:var(--dark);margin-bottom:8px}
+.nk-ai-input-wrap{margin-bottom:10px}
 .nk-ai-input{width:100%;min-height:76px;max-height:160px;resize:vertical;border:1px solid var(--color-border);border-radius:12px;padding:12px 13px;font-family:var(--f);font-size:14.5px;line-height:1.4;color:var(--dark);background:var(--card)}
 .nk-ai-input:focus{outline:none;border-color:var(--color-primary,var(--accent))}
-.nk-ai-suggestions{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
-.nk-ai-chip{font-size:12px;font-weight:600;color:var(--dark);background:var(--g1);border:1px solid var(--color-border);border-radius:999px;padding:7px 12px;cursor:pointer;font-family:var(--f);min-height:34px}
 .nk-ai-submit{width:100%;min-height:46px;border-radius:12px;border:none;background:var(--color-primary,var(--accent));color:#fff;font-family:var(--f);font-size:14.5px;font-weight:700;cursor:pointer}
 .nk-ai-submit:disabled{opacity:.55;cursor:default}
+.nk-ai-howworks-toggle{display:block;font-size:12px;font-weight:600;color:var(--g4);background:none;border:none;padding:8px 0;cursor:pointer;font-family:var(--f);min-height:32px;text-align:left}
+.nk-ai-how{font-size:12px;color:var(--g4);line-height:1.45;background:var(--g1);border-radius:10px;padding:10px 12px;margin-bottom:4px}
 .nk-ai-status{font-size:12.5px;color:var(--g4);margin:8px 0;min-height:16px}
 .nk-ai-answer-card{background:var(--card);border:1px solid var(--color-border);border-radius:14px;padding:14px;margin-bottom:12px}
 .nk-ai-answer-q{font-size:12.5px;color:var(--g4);margin-bottom:6px}
@@ -4381,7 +4383,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 </div>
 
 <div class="scr" id="s-voeding-kennis-ai">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Vraag Trainingskompas AI</div></div><button class="ibtn" onclick="voedingKennisAiBack()" aria-label="Terug">‹</button></div></div>
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Trainingskompas AI</div><div class="hdr-sub" id="nk-ai-hdr-sub"></div></div><button class="ibtn" onclick="voedingKennisAiBack()" aria-label="Terug">‹</button></div></div>
   <div class="scroll" style="flex:1;overflow-y:auto" id="voeding-kennis-ai-body"></div>
 </div>
 
@@ -22350,39 +22352,34 @@ var _nkAiSending = false;
 function voedingOpenKennisAi(topicId){
   _voedingKennisHuidigTopic=topicId;
   go('s-voeding-kennis-ai');
+  var topic=NutritionKnowledgeTopics.getTopic(topicId);
+  var hdrSub=document.getElementById('nk-ai-hdr-sub');
+  if(hdrSub) hdrSub.textContent=topic?topic.display_name:'';
   renderVoedingKennisAiVraagKeuze(topicId);
 }
 function voedingKennisAiBack(){
   go('s-voeding-kennis-topic');
 }
-/* renderVoedingKennisAiVraagKeuze: EMPTY-state -- vrij tekstveld + FAQ-
-   vragen als tap-shortcuts (sectie 8/9: suggesties mogen NOOIT de enige
-   invoer zijn). Content van de suggesties komt woordelijk uit het
-   bevroren FAQ-model, alleen de presentatie is nieuw. */
+/* renderVoedingKennisAiVraagKeuze: EMPTY-state. NK-04B (fysieke PO-review
+   sectie 3/4): GEEN FAQ-achtige suggestiekaarten meer op dit scherm --
+   FAQ = bladeren in de FAQ-tab, AI = zelf een vraag stellen. Compact:
+   korte lead-in + input + knop + optionele, standaard-ingeklapte
+   "Hoe werkt dit?"-toggle (sectie 6/7), zodat de input zonder scrollen
+   zichtbaar is. */
 function renderVoedingKennisAiVraagKeuze(topicId){
   var el=document.getElementById('voeding-kennis-ai-body'); if(!el) return;
-  var faq=NutritionKnowledgeService.getFaq(topicId);
-  var topic=NutritionKnowledgeTopics.getTopic(topicId);
-  var html='<div class="tk-card tk-card-l2" style="margin-bottom:12px;font-size:12.5px;color:var(--g4)">Trainingskompas AI antwoordt uitsluitend op basis van al-gecertificeerde kennis -- geen persoonlijke berekening, geen medische diagnose.</div>';
-  html+='<div class="nk-ai-input-wrap">'
-    +'<textarea id="nk-ai-input" class="nk-ai-input" placeholder="Stel je vraag over '+escHtml(topic?topic.display_name:'voeding')+'..." aria-label="Je vraag"></textarea>'
-    +'</div>';
-  if(faq.status==='OK' && faq.items.length){
-    html+='<div class="nk-ai-suggestions">'+faq.items.slice(0,6).map(function(f){
-      return '<button type="button" class="nk-ai-chip" onclick="voedingKennisAiUseSuggestion(\''+topicId+'\',\''+f.faq_id+'\')">'+escHtml(f.question)+'</button>';
-    }).join('')+'</div>';
-  }
-  html+='<button id="nk-ai-submit-btn" class="nk-ai-submit" onclick="voedingKennisAiSubmit(\''+topicId+'\')">Vraag stellen</button>'
+  var html='<div class="nk-ai-lead">Waar wil je meer over weten?</div>'
+    +'<div class="nk-ai-input-wrap"><textarea id="nk-ai-input" class="nk-ai-input" placeholder="Stel je vraag..." aria-label="Je vraag"></textarea></div>'
+    +'<button id="nk-ai-submit-btn" class="nk-ai-submit" onclick="voedingKennisAiSubmit(\''+topicId+'\')">Vraag stellen</button>'
+    +'<button type="button" class="nk-ai-howworks-toggle" onclick="voedingKennisAiToggleHow()">Hoe werkt dit? ›</button>'
+    +'<div id="nk-ai-how" class="nk-ai-how" style="display:none">Antwoorden zijn gebaseerd op gecontroleerde Trainingskompas-kennis. De AI berekent nooit iets persoonlijks (zoals je gewicht) en stelt geen diagnoses -- bij twijfel verwijst hij je naar een deskundige.</div>'
     +'<div id="nk-ai-status" class="nk-ai-status" role="status" aria-live="polite"></div>'
     +'<div id="nk-ai-answer-area"></div>';
   el.innerHTML=html;
 }
-function voedingKennisAiUseSuggestion(topicId,faqId){
-  var faq=NutritionKnowledgeService.getFaq(topicId);
-  var item=faq.status==='OK'?faq.items.filter(function(f){return f.faq_id===faqId;})[0]:null;
-  var inp=document.getElementById('nk-ai-input'); if(!inp||!item) return;
-  inp.value=item.question;
-  inp.focus();
+function voedingKennisAiToggleHow(){
+  var el=document.getElementById('nk-ai-how'); if(!el) return;
+  el.style.display=el.style.display==='none'?'block':'none';
 }
 /* voedingKennisAiSubmit: SUBMITTING-state. Dubbele indiening voorkomen
    (_nkAiSending-vlag + disabled-knop, sectie 24/AF). */
@@ -22428,8 +22425,9 @@ async function voedingKennisAiSubmit(topicId){
       if(answerArea) answerArea.innerHTML='<div class="nk-ai-answer-card">'+escHtml(commercialErrorMessage(d.error))+'</div>';
     } else {
       var raw=d.content[0].text;
-      var check=(window.AIOutputContract)?AIOutputContract.validateAiOutputText(raw):{valid:true};
-      var tekst=check.valid?raw:AIOutputContract.safeCoachFallback();
+      var schoon=nkStripMarkdownLite(raw);
+      var check=(window.AIOutputContract)?AIOutputContract.validateAiOutputText(schoon):{valid:true};
+      var tekst=check.valid?schoon:AIOutputContract.safeCoachFallback();
       if(answerArea) answerArea.innerHTML=voedingKennisAiAnswerHtml(pkg,tekst);
     }
   }catch(e){
@@ -22470,6 +22468,29 @@ function voedingKennisAiAnswerHtml(pkg, tekst){
   }
   html+='</div></div>';
   return html;
+}
+/* nkStripMarkdownLite: NK-04B P1-fix -- markdown-syntax (**, *, #, `,
+   [links](url)) mag NOOIT letterlijk zichtbaar zijn in een AI-antwoord.
+   Dit is de client-side vangnet-laag; de systeeminstructie
+   (NutritionKnowledgeResolver.buildSystemPrompt) vraagt het model al
+   expliciet om geen markdown te gebruiken, maar modellen doen dit soms
+   toch uit gewoonte -- vandaar deze deterministische, altijd-toegepaste
+   opschoning vóór weergave. Zet markdown om naar gewone leesbare tekst,
+   verzint niets, verwijdert uitsluitend opmaaktekens. */
+function nkStripMarkdownLite(t){
+  if(typeof t!=='string') return t;
+  return t
+    .replace(/^#{1,6}\s+/gm,'')
+    .replace(/\*\*\*(.+?)\*\*\*/g,'$1')
+    .replace(/\*\*(.+?)\*\*/g,'$1')
+    .replace(/__(.+?)__/g,'$1')
+    .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g,'$1$2')
+    .replace(/(^|[^_])_([^_\n]+)_(?!_)/g,'$1$2')
+    .replace(/`{1,3}([^`]+)`{1,3}/g,'$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g,'$1')
+    .replace(/^\s*[-*+]\s+/gm,'• ')
+    .replace(/[ \t]+\n/g,'\n')
+    .trim();
 }
 function voedingKennisAiToggleExplain(uid){
   var el=document.getElementById(uid); if(!el) return;

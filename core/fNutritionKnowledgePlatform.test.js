@@ -59,8 +59,10 @@ ok(KEvidence.confidenceLabel('A', 'VERIFIED') === 'Sterk bewijs' && KEvidence.co
 ok(KEvidence.confidenceLabel('D', 'VERIFIED') === 'Onvoldoende bewijs', 'F-b: evidence level D wordt nooit als sterk bewijs getoond, ongeacht status');
 
 // ---- G: user-friendly tekst verandert claimbetekenis niet ----
-// (steekproef: user_friendly_summary bevat geen omgekeerde bewering t.o.v. claim_text_internal)
-KEvidence.CLAIMS.forEach((c) => {
+// (steekproef: user_friendly_summary bevat geen omgekeerde bewering t.o.v.
+// claim_text_internal. Claims zonder user_friendly_summary zijn HIDDEN/
+// architectuurclaims -- die worden nooit getoond, dus hier niet relevant.)
+KEvidence.CLAIMS.filter((c) => !!c.user_friendly_summary).forEach((c) => {
   const negatiefInIntern = /geen|niet|nooit/i.test(c.claim_text_internal);
   const negatiefInSummary = /geen|niet|nooit/i.test(c.user_friendly_summary);
   ok(negatiefInIntern === negatiefInSummary || !negatiefInIntern, 'G: ontkenning in claim_text_internal van ' + c.claim_id + ' komt overeen met de gebruikersvriendelijke samenvatting (geen tegengestelde betekenis)');
@@ -78,8 +80,20 @@ Topics.TOPICS.forEach((t) => {
 const aiCtxCreatine = Service.buildAiContext('CREATINE', 'CRE-FAQ-CREATININE');
 const claimForCtx = Service.resolveClaim('CRE-SAFE-002');
 ok(claimForCtx.allowed_ai_use === true, 'I: de gebruikte claim (CRE-SAFE-002) heeft zelf allowed_ai_use=true');
-const fakeDisallowed = KEvidence.CLAIMS.find((c) => c.allowed_ai_use === false);
-ok(!fakeDisallowed, 'I-b: er bestaan vandaag geen NK-claims met allowed_ai_use=false (architectuur staat dit wel toe, gebruikt vandaag niet)');
+// NK-03: NK-ENE-NOCALC-001 is de eerste NK-claim met allowed_ai_use=false (een
+// architectuurregel-claim, geen gebruikerszin) -- de architectuur ondersteunde
+// dit al sinds NK-01, nu voor het eerst daadwerkelijk gebruikt. Test bewaakt
+// dat zo'n claim nooit door de AI-contractbouwer wordt meegenomen.
+const disallowedClaim = KEvidence.getById('NK-ENE-NOCALC-001');
+ok(disallowedClaim && disallowedClaim.allowed_ai_use === false, 'I-b: NK-ENE-NOCALC-001 bestaat en heeft expliciet allowed_ai_use=false');
+const energyCtx = Service.buildAiContext('ENERGY', 'ENE-FAQ-BALANS');
+ok(energyCtx.status === 'OK' && !energyCtx.APPROVED_FACTS.some((f) => f === null), 'I-c: een allowed_ai_use=false-claim levert nooit een (lege/null) APPROVED_FACT op in een AI-context');
+// NK-03 architectuurfix: isClaimReleasable filtert nu ook claims zonder
+// user_friendly_summary (het HIDDEN-signaal in beide registries) -- eerder
+// werd dit alleen door output_mode in de Supplement-registry afgedwongen,
+// wat de Knowledge Service niet zelf controleerde (latente kloof, nu gedicht).
+ok(!Service.isClaimReleasable(Service.resolveClaim('NK-ENE-NOCALC-001')), 'I-d: NK-ENE-NOCALC-001 (geen summary, architectuurregel) is nooit releasable');
+ok(!Service.isClaimReleasable(Service.resolveClaim('CARB-PERSONAL-001')), 'I-e: de bestaande, hergebruikte HIDDEN-supplementclaim CARB-PERSONAL-001 is ook via de Knowledge Service nooit releasable');
 
 // ---- J: AI krijgt geen REMOVE ----
 const removedClaimId = 'ELEC-SODIUM-PREVENTS-HYPONATREMIA-001';

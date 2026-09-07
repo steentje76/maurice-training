@@ -22189,7 +22189,10 @@ function renderVoedingSupplementInfo(edu){
  * vooraf-gedefinieerd contract-object per FAQ-vraag (een veilig
  * prototype, expliciet geen vrij chatgesprek). */
 function voedingKennisKnownTopics(){
-  return ['PROTEIN', 'CREATINE']; // NK-01 prototype: 2 verticale topics
+  // NK-03: uitgebreid van 2 naar 7 topics (Koolhydraten/Vetten/Energie/Vezels/
+  // Gezonde voeding toegevoegd aan Eiwitten/Creatine). Volgorde bepaalt geen
+  // gedrag, alleen weergavevolgorde binnen de Voeding/Supplementen-groep.
+  return ['PROTEIN', 'CARBOHYDRATES', 'FATS', 'ENERGY', 'FIBRE', 'HEALTHY_EATING', 'CREATINE'];
 }
 function voedingRenderKennisHub(){
   var el=document.getElementById('voeding-kennis-hub'); if(!el) return;

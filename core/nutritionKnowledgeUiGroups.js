@@ -33,6 +33,31 @@
       { group_id: 'basis', group_label: 'Basis', section_ids: ['wat-zijn-eiwitten', 'aminozuren', 'waarom-nodig', 'eiwit-sport'] },
       { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['totale-inname', 'verdeling-dag', 'rond-training', 'eiwitkwaliteit', 'spieropbouw', 'herstel'] },
       { group_id: 'verdieping', group_label: 'Voedingskeuzes & verdieping', section_ids: ['dierlijk-plantaardig', 'vegetarisch-vegan', 'energietekort', 'eiwit-spieropbouw-hoog', 'shake-noodzakelijk', 'misverstanden'] }
+    ],
+    CARBOHYDRATES: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['wat-zijn-koolhydraten', 'functies-energiebron', 'rol-bij-inspanning', 'glycogeenbeschikbaarheid', 'herstel'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['voedingsbronnen-kwaliteit', 'koolhydraten-voor-training', 'koolhydraten-tijdens-training', 'koolhydraten-na-training', 'vrije-suikers'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: ['eenvoudig-complex-gi', 'low-carb-context', 'endurance-versus-kracht', 'gut-training-gi-tolerantie', 'misverstanden'] }
+    ],
+    FATS: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['wat-zijn-vetten', 'functies', 'essentiele-vetzuren', 'verzadigd-onverzadigd', 'omega-3-omega-6'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['vetoplosbare-vitaminen', 'voedingsbronnen', 'sportcontext', 'energie-inname', 'timing-rond-training'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: ['vet-en-gezondheid', 'extreem-vetarme-voeding', 'claims-vetverbranding', 'vet-versus-lichaamsvet', 'misverstanden'] }
+    ],
+    ENERGY: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['energie-uit-voeding', 'kcal-kj', 'energiebalans', 'inname-versus-verbruik'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['onderhoud', 'energietekort', 'energieoverschot', 'lichaamssamenstelling', 'sportprestatie-herstel'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: ['bmr-rmr-tdee', 'lage-energiebeschikbaarheid', 'red-s', 'onzekerheid-energieverbruik', 'wearable-schattingen'] }
+    ],
+    FIBRE: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['wat-zijn-vezels', 'typen-vezels', 'darmfunctie', 'gezondheid'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['verzadiging', 'voedingsbronnen', 'volkoren', 'groente-fruit', 'peulvruchten'] },
+      { group_id: 'verdieping', group_label: 'Sportcontext & verdieping', section_ids: ['geleidelijk-verhogen', 'vochtcontext', 'sportcontext', 'vezels-voor-wedstrijd', 'individuele-tolerantie', 'supplementvezels'] }
+    ],
+    HEALTHY_EATING: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['wat-bedoelen-we', 'patroon-boven-product', 'variatie'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['groente', 'fruit', 'volkoren', 'peulvruchten', 'eiwitbronnen', 'vetkwaliteit', 'vrije-suikers', 'zout-natrium'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: ['bewerkte-voeding', 'energiedichtheid', 'sportvoeding-past', 'flexibiliteit'] }
     ]
   };
 

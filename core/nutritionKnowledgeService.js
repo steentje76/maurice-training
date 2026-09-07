@@ -90,9 +90,14 @@
 
   /* isClaimReleasable: zelfde harde regels als de Supplement
    * EducationService, hier expliciet herhaald zodat deze module ook
-   * zelfstandig leesbaar/testbaar is. */
+   * zelfstandig leesbaar/testbaar is. GEEN-summary betekent in beide
+   * bronregistries altijd een architectuur-/HIDDEN-claim (nooit een per
+   * ongeluk vergeten tekst) -- daarom is een ontbrekende
+   * user_friendly_summary hier, net als output_mode HIDDEN in de
+   * Supplement-registry, een harde reden om nooit door te geven. */
   function isClaimReleasable(resolved) {
     if (!resolved) return false;
+    if (!resolved.user_friendly_summary) return false;
     if (resolved.status === 'REVISE' || resolved.status === 'REMOVE') return false;
     return resolved.status === 'VERIFIED' || resolved.status === 'INSUFFICIENT';
   }

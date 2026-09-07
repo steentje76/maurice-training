@@ -95,15 +95,188 @@
     }
   ];
 
+  // ── NK-03: basisvoeding-topics (Koolhydraten, Vetten, Energie, Vezels, Gezonde voeding) ──
+  var NK03_TOPICS = [
+    {
+      topic_id: 'CARBOHYDRATES',
+      domain: 'NUTRITION',
+      display_name: 'Koolhydraten',
+      quick_summary_evidence_ref: 'NK-CARB-QUALITY-001',
+      quick_summary_text: 'Koolhydraten zijn een belangrijke energiebron. Voor sporters is vooral de sportcontext (duur/intensiteit) relevant; voor gezondheid telt vooral de kwaliteit van de bron.',
+      sections: [
+        { section_id: 'wat-zijn-koolhydraten', title: 'Wat zijn koolhydraten?', body: 'Koolhydraten worden afgebroken tot glucose, de belangrijkste brandstof voor je lichaam en hersenen.', evidence_refs: ['NK-CARB-DEF-001'] },
+        { section_id: 'functies-energiebron', title: 'Belangrijkste functies', body: 'Naast directe energie dient glucose als opslag (glycogeen) in spieren en lever voor later gebruik.', evidence_refs: ['NK-CARB-DEF-001'] },
+        { section_id: 'rol-bij-inspanning', title: 'Rol bij inspanning', body: 'Bij langere of intensievere inspanning worden koolhydraten steeds belangrijker als brandstofbron.', evidence_refs: ['CARB-MID-001'] },
+        { section_id: 'glycogeenbeschikbaarheid', title: 'Glycogeenbeschikbaarheid', body: 'Bij langere duurinspanning kan bijvullen tijdens het sporten nodig zijn omdat je glycogeenvoorraad beperkt is.', evidence_refs: ['CARB-LONG-001', 'CARB-ELITE-001'] },
+        { section_id: 'herstel', title: 'Herstel', body: 'Na inspanning helpt koolhydraatinname om je glycogeenvoorraad weer aan te vullen.', evidence_refs: ['CARB-MID-001'] },
+        { section_id: 'voedingsbronnen-kwaliteit', title: 'Voedingsbronnen en koolhydraatkwaliteit', body: 'Volkoren granen, groente, fruit en peulvruchten zijn de aanbevolen basisbronnen voor koolhydraten.', evidence_refs: ['NK-CARB-QUALITY-001'] },
+        { section_id: 'koolhydraten-voor-training', title: 'Koolhydraten voor training', body: 'Bij kortere inspanning zijn koolhydraten vlak vooraf meestal niet nodig.', evidence_refs: ['CARB-SHORT-001'] },
+        { section_id: 'koolhydraten-tijdens-training', title: 'Koolhydraten tijdens training', body: 'Bij langere duurinspanning is bijvullen tijdens het sporten onderzocht en kan het relevant zijn.', evidence_refs: ['CARB-MID-001', 'CARB-LONG-001'] },
+        { section_id: 'koolhydraten-na-training', title: 'Koolhydraten na training', body: 'Na afloop helpt koolhydraatinname bij het herstellen van je energievoorraad.', evidence_refs: ['CARB-MID-001'] },
+        { section_id: 'eenvoudig-complex-gi', title: 'Eenvoudige/complexe koolhydraten en glykemische index', body: 'De glykemische index kan nuttig zijn, maar zegt niet alles -- de voedingsmiddelbron en vezels tellen minstens zo zwaar mee.', evidence_refs: ['NK-CARB-GI-001'] },
+        { section_id: 'low-carb-context', title: 'Low-carb in context', body: 'Low-carb-diëten geven vaak sneller resultaat, maar op langere termijn is er geen overtuigend voordeel t.o.v. een gewone, calorie-gecontroleerde manier van eten.', evidence_refs: ['NK-CARB-LOWCARB-001'] },
+        { section_id: 'endurance-versus-kracht', title: 'Duursport versus krachtcontext', body: 'De behoefte aan koolhydraten tijdens inspanning hangt sterk af van duur en intensiteit van de activiteit.', evidence_refs: ['CARB-MID-001'] },
+        { section_id: 'gut-training-gi-tolerantie', title: '"Gut training" en GI-tolerantie', body: 'Je spijsvertering kan wennen aan hogere koolhydraatinname tijdens sport -- dit is individueel en trainbaar.', evidence_refs: ['CARB-GI-001'] },
+        { section_id: 'vrije-suikers', title: 'Vrije/toegevoegde suikers', body: 'Beperk toegevoegde suikers tot minder dan 10% van je totale energie-inname.', evidence_refs: ['NK-CARB-SUGAR-001'] },
+        { section_id: 'misverstanden', title: 'Veelgemaakte misverstanden', body: 'Koolhydraten zijn niet inherent ongezond of dikmakend -- je totale energiebalans en de kwaliteit van de bron zijn bepalend.', evidence_refs: ['NK-CARB-NOTUNHEALTHY-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'CARB-FAQ-ONGEZOND', question: 'Zijn koolhydraten ongezond?', evidence_refs: ['NK-CARB-NOTUNHEALTHY-001'] },
+        { faq_id: 'CARB-FAQ-DIK', question: 'Maken koolhydraten dik?', evidence_refs: ['NK-CARB-NOTUNHEALTHY-001'] },
+        { faq_id: 'CARB-FAQ-KRACHT', question: 'Heb ik koolhydraten nodig voor krachttraining?', evidence_refs: ['CARB-MID-001'] },
+        { faq_id: 'CARB-FAQ-VOOR-SPORT', question: 'Moet ik koolhydraten eten voor het sporten?', evidence_refs: ['CARB-SHORT-001'] },
+        { faq_id: 'CARB-FAQ-SPORTDRANK', question: 'Wanneer zijn sportdranken nuttig?', evidence_refs: ['CARB-MID-001', 'CARB-LONG-001'] },
+        { faq_id: 'CARB-FAQ-LOWCARB', question: 'Is low-carb beter voor vetverlies?', evidence_refs: ['NK-CARB-LOWCARB-001'] }
+      ]
+    },
+    {
+      topic_id: 'FATS',
+      domain: 'NUTRITION',
+      display_name: 'Vetten',
+      quick_summary_evidence_ref: 'NK-FAT-NOTBAD-001',
+      quick_summary_text: 'Vet is een essentiële voedingsstof, geen vijand. Het type vet en de context van je totale voedingspatroon bepalen de gezondheidsimpact.',
+      sections: [
+        { section_id: 'wat-zijn-vetten', title: 'Wat zijn voedingsvetten?', body: 'Vet is de meest energiedichte voedingsstof en bevat vetzuren die je lichaam voor veel processen nodig heeft.', evidence_refs: ['NK-FAT-DEF-001'] },
+        { section_id: 'functies', title: 'Functies', body: 'Naast energie levert vet de bouwstenen voor celwanden, hormonen en andere lichaamsprocessen.', evidence_refs: ['NK-FAT-DEF-001'] },
+        { section_id: 'essentiele-vetzuren', title: 'Essentiële vetzuren', body: 'Sommige vetzuren kan je lichaam niet zelf maken -- die moeten uit voeding komen.', evidence_refs: ['NK-FAT-DEF-001'] },
+        { section_id: 'verzadigd-onverzadigd', title: 'Verzadigd/onverzadigd vet', body: 'Beperk verzadigd en transvet, en vervang deze bij voorkeur door onverzadigde vetten.', evidence_refs: ['NK-FAT-TYPES-001'] },
+        { section_id: 'omega-3-omega-6', title: 'Omega-3/omega-6 context', body: 'Omega-3 en omega-6 zijn beide essentiële vetzuurfamilies met elk hun eigen rol.', evidence_refs: ['NK-FAT-TYPES-001'] },
+        { section_id: 'vetoplosbare-vitaminen', title: 'Vetoplosbare vitaminen', body: 'Vet is nodig om de vitamines A, D, E en K goed op te nemen.', evidence_refs: ['NK-FAT-VITAMINS-001'] },
+        { section_id: 'voedingsbronnen', title: 'Voedingsbronnen', body: 'Onverzadigde vetten vind je vooral in vis, noten, zaden en plantaardige oliën; verzadigd vet vooral in vet vlees en zuivel.', evidence_refs: ['NK-FAT-TYPES-001'] },
+        { section_id: 'sportcontext', title: 'Sportcontext', body: 'Vet blijft ook voor sporters een normaal onderdeel van het voedingspatroon, naast koolhydraten en eiwit.', evidence_refs: ['NK-FAT-INTAKE-001'] },
+        { section_id: 'energie-inname', title: 'Energie-inname', body: 'De totale vetinname ligt doorgaans tussen 15-20% (minimum) en circa 30% (maximum) van je energie-inname.', evidence_refs: ['NK-FAT-INTAKE-001'] },
+        { section_id: 'vet-en-gezondheid', title: 'Vet en gezondheid', body: 'Vervanging van verzadigd/transvet door onverzadigd vet wordt geassocieerd met een lager cardiovasculair risico.', evidence_refs: ['NK-FAT-TYPES-001'] },
+        { section_id: 'timing-rond-training', title: 'Timing rond training', body: 'Er is geen sterke reden om vet structureel te vermijden rond training; de totale dagelijkse inname is belangrijker.', evidence_refs: ['NK-FAT-INTAKE-001'] },
+        { section_id: 'extreem-vetarme-voeding', title: 'Extreem vetarme voeding', body: 'Te weinig vet (onder het aanbevolen minimum) kan de opname van essentiële vetzuren en vitamines belemmeren.', evidence_refs: ['NK-FAT-INTAKE-001', 'NK-FAT-VITAMINS-001'] },
+        { section_id: 'claims-vetverbranding', title: 'Claims rond "vetverbranding"', body: 'Voedingsvet eten is niet hetzelfde als lichaamsvet verbranden of opslaan -- dat hangt af van je totale energiebalans.', evidence_refs: ['NK-FAT-BODYFAT-001'] },
+        { section_id: 'vet-versus-lichaamsvet', title: 'Voedingsvet ≠ automatisch lichaamsvet', body: 'Of je vet opslaat, hangt af van je totale energiebalans -- niet specifiek van hoeveel vet je eet.', evidence_refs: ['NK-FAT-BODYFAT-001'] },
+        { section_id: 'misverstanden', title: 'Veelgemaakte misverstanden', body: 'Vet is niet per definitie ongezond -- het type vet en je totale voedingspatroon maken het verschil.', evidence_refs: ['NK-FAT-NOTBAD-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'FAT-FAQ-ONGEZOND', question: 'Is vet ongezond?', evidence_refs: ['NK-FAT-NOTBAD-001'] },
+        { faq_id: 'FAT-FAQ-VERZADIGD', question: 'Is verzadigd vet hetzelfde als onverzadigd vet?', evidence_refs: ['NK-FAT-TYPES-001'] },
+        { faq_id: 'FAT-FAQ-DIK', question: 'Word je dik van vet?', evidence_refs: ['NK-FAT-BODYFAT-001'] },
+        { faq_id: 'FAT-FAQ-SPORTERS', question: 'Hebben sporters meer vet nodig?', evidence_refs: ['NK-FAT-INTAKE-001'] },
+        { faq_id: 'FAT-FAQ-VETARM', question: 'Is een vetarm dieet beter?', evidence_refs: ['NK-FAT-INTAKE-001'] },
+        { faq_id: 'FAT-FAQ-TRAINING', question: 'Moet je vet vermijden voor training?', evidence_refs: ['NK-FAT-INTAKE-001', 'NK-FAT-VITAMINS-001'] }
+      ]
+    },
+    {
+      topic_id: 'ENERGY',
+      domain: 'NUTRITION',
+      display_name: 'Energie',
+      quick_summary_evidence_ref: 'NK-ENE-BALANCE-001',
+      quick_summary_text: 'Energiebalans is de basis van gewichtsverandering: inname versus verbruik. Trainingskompas berekent geen persoonlijke calorie- of macrodoelen.',
+      sections: [
+        { section_id: 'energie-uit-voeding', title: 'Energie uit voeding', body: 'Voeding levert energie, gemeten in kcal of kJ.', evidence_refs: ['NK-ENE-DEF-001'] },
+        { section_id: 'kcal-kj', title: 'kcal/kJ', body: 'Vet levert per gram meer dan twee keer zoveel energie als eiwit of koolhydraten.', evidence_refs: ['NK-ENE-DEF-001'] },
+        { section_id: 'energiebalans', title: 'Energiebalans', body: 'Energiebalans is de verhouding tussen wat je binnenkrijgt en wat je verbruikt.', evidence_refs: ['NK-ENE-BALANCE-001'] },
+        { section_id: 'inname-versus-verbruik', title: 'Energie-inname versus energieverbruik', body: 'Een langdurig overschot of tekort in deze balans verandert je gewicht over tijd.', evidence_refs: ['NK-ENE-BALANCE-001'] },
+        { section_id: 'onderhoud', title: 'Onderhoud', body: 'Bij een gebalanceerde energie-inname en -verbruik blijft je gewicht over tijd ongeveer stabiel.', evidence_refs: ['NK-ENE-BALANCE-001'] },
+        { section_id: 'energietekort', title: 'Energietekort', body: 'Een aanhoudend energietekort leidt over tijd tot gewichtsverlies.', evidence_refs: ['NK-ENE-BALANCE-001'] },
+        { section_id: 'energieoverschot', title: 'Energieoverschot', body: 'Een aanhoudend energieoverschot leidt over tijd tot gewichtstoename.', evidence_refs: ['NK-ENE-BALANCE-001'] },
+        { section_id: 'lichaamssamenstelling', title: 'Lichaamssamenstelling', body: 'Energiebalans beïnvloedt gewicht, maar de samenstelling van die verandering (vet/spier) hangt ook af van andere factoren zoals training en eiwitinname.', evidence_refs: ['NK-ENE-BALANCE-001'] },
+        { section_id: 'sportprestatie-herstel', title: 'Sportprestatie en herstel', body: 'Voldoende energiebeschikbaarheid is een voorwaarde voor goede prestaties en herstel.', evidence_refs: ['NK-ENE-BALANCE-001'] },
+        { section_id: 'bmr-rmr-tdee', title: 'BMR/RMR/TDEE', body: 'BMR is je energieverbruik in rust; TDEE is je totale dagelijkse verbruik. Dit zijn begrippen om te begrijpen, geen rekentool in Trainingskompas.', evidence_refs: ['NK-ENE-BMR-001'] },
+        { section_id: 'lage-energiebeschikbaarheid', title: 'Lage energiebeschikbaarheid', body: 'Structureel te weinig energie voor je trainingsbelasting kan leiden tot gezondheids- en prestatieproblemen.', evidence_refs: ['NK-ENE-REDS-001'] },
+        { section_id: 'red-s', title: 'RED-S', body: 'RED-S (Relative Energy Deficiency in Sport) is een erkend concept met mogelijke gevolgen voor hormonen, botten, afweer en prestatie -- diagnose vereist medische beoordeling.', evidence_refs: ['NK-ENE-REDS-001'] },
+        { section_id: 'onzekerheid-energieverbruik', title: 'Onzekerheid in energieverbruik', body: 'Zowel BMR-schattingen als activiteitsverbruik kennen aanzienlijke individuele onzekerheidsmarges.', evidence_refs: ['NK-ENE-BMR-001', 'NK-ENE-WEARABLE-001'] },
+        { section_id: 'wearable-schattingen', title: 'Wearable-calorieën zijn schattingen', body: 'De calorieën op je smartwatch zijn een schatting met een aanzienlijke foutmarge, geen exacte meting.', evidence_refs: ['NK-ENE-WEARABLE-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'ENE-FAQ-BALANS', question: 'Wat betekent energiebalans?', evidence_refs: ['NK-ENE-BALANCE-001'] },
+        { faq_id: 'ENE-FAQ-BMR', question: 'Wat zijn BMR en TDEE?', evidence_refs: ['NK-ENE-BMR-001'] },
+        { faq_id: 'ENE-FAQ-WEARABLE', question: 'Klopt het aantal calorieën op mijn smartwatch?', evidence_refs: ['NK-ENE-WEARABLE-001'] },
+        { faq_id: 'ENE-FAQ-REDS', question: 'Wat is RED-S?', evidence_refs: ['NK-ENE-REDS-001'] }
+      ]
+    },
+    {
+      topic_id: 'FIBRE',
+      domain: 'NUTRITION',
+      display_name: 'Vezels',
+      quick_summary_evidence_ref: 'NK-FIB-HEALTH-001',
+      quick_summary_text: 'Vezels zijn belangrijk voor je spijsvertering en algemene gezondheid. Streef naar minstens 25 gram per dag, bij voorkeur uit voeding.',
+      sections: [
+        { section_id: 'wat-zijn-vezels', title: 'Wat zijn vezels?', body: 'Vezels zijn onverteerbare koolhydraten uit plantaardige voeding, met oplosbare en onoplosbare vormen.', evidence_refs: ['NK-FIB-DEF-001'] },
+        { section_id: 'typen-vezels', title: 'Typen vezels', body: 'Oplosbare en onoplosbare vezels hebben elk net iets andere effecten op je spijsvertering.', evidence_refs: ['NK-FIB-DEF-001'] },
+        { section_id: 'darmfunctie', title: 'Darmfunctie', body: 'Vezels dragen bij aan een gezonde spijsvertering.', evidence_refs: ['NK-FIB-DEF-001'] },
+        { section_id: 'gezondheid', title: 'Gezondheid', body: 'Meer vezels hangen samen met een lager risico op hart- en vaatziekten, diabetes type 2 en bepaalde kankers.', evidence_refs: ['NK-FIB-HEALTH-001'] },
+        { section_id: 'verzadiging', title: 'Verzadiging', body: 'Vezels kunnen een beetje helpen bij verzadiging, maar zijn geen garantie voor gewichtsverlies op zich.', evidence_refs: ['NK-FIB-SATIETY-001'] },
+        { section_id: 'voedingsbronnen', title: 'Voedingsbronnen', body: 'Volkoren, groente, fruit en peulvruchten zijn de belangrijkste vezelbronnen.', evidence_refs: ['NK-FIB-INTAKE-001'] },
+        { section_id: 'volkoren', title: 'Volkoren', body: 'Volkorenproducten leveren meer vezels dan geraffineerde granen.', evidence_refs: ['NK-FIB-INTAKE-001'] },
+        { section_id: 'groente-fruit', title: 'Groente/fruit', body: 'Groente en fruit dragen substantieel bij aan je dagelijkse vezelinname.', evidence_refs: ['NK-FIB-INTAKE-001'] },
+        { section_id: 'peulvruchten', title: 'Peulvruchten', body: 'Peulvruchten zijn een vezelrijke, veelzijdige bron.', evidence_refs: ['NK-FIB-INTAKE-001'] },
+        { section_id: 'geleidelijk-verhogen', title: 'Geleidelijk verhogen', body: 'Bouw je vezelinname geleidelijk op, samen met voldoende vocht, om buikklachten te beperken.', evidence_refs: ['NK-FIB-GI-001'] },
+        { section_id: 'vochtcontext', title: 'Vochtcontext', body: 'Voldoende drinken hoort bij een hogere vezelinname.', evidence_refs: ['NK-FIB-GI-001'] },
+        { section_id: 'sportcontext', title: 'Sportcontext', body: 'Rond training kan een te hoge, plotselinge vezelinname bij gevoelige personen maag-darmklachten geven.', evidence_refs: ['NK-FIB-GI-001'] },
+        { section_id: 'vezels-voor-wedstrijd', title: 'Vezels vlak voor training/wedstrijd', body: 'Overweeg vlak voor een wedstrijd wat minder vezels als je daar gevoelig voor bent -- dit is individueel.', evidence_refs: ['NK-FIB-GI-001'] },
+        { section_id: 'individuele-tolerantie', title: 'Individuele tolerantie', body: 'Vezeltolerantie verschilt sterk van persoon tot persoon.', evidence_refs: ['NK-FIB-GI-001'] },
+        { section_id: 'supplementvezels', title: 'Supplementvezels versus vezelrijke voeding', body: 'Een vezelsupplement is niet automatisch hetzelfde als vezelrijke, volledige voeding.', evidence_refs: ['NK-FIB-SUPPLEMENT-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'FIB-FAQ-WAAROM', question: 'Waarom zijn vezels belangrijk?', evidence_refs: ['NK-FIB-HEALTH-001'] },
+        { faq_id: 'FIB-FAQ-MEER', question: 'Hoe krijg ik meer vezels binnen?', evidence_refs: ['NK-FIB-INTAKE-001'] },
+        { faq_id: 'FIB-FAQ-AFVALLEN', question: 'Zijn vezels goed voor afvallen?', evidence_refs: ['NK-FIB-SATIETY-001'] },
+        { faq_id: 'FIB-FAQ-WEDSTRIJD', question: 'Moet ik veel vezels eten voor een wedstrijd?', evidence_refs: ['NK-FIB-GI-001'] },
+        { faq_id: 'FIB-FAQ-BUIKKLACHTEN', question: 'Kunnen vezels buikklachten geven?', evidence_refs: ['NK-FIB-GI-001'] },
+        { faq_id: 'FIB-FAQ-SUPPLEMENT', question: 'Zijn supplementvezels hetzelfde als vezelrijke voeding?', evidence_refs: ['NK-FIB-SUPPLEMENT-001'] }
+      ]
+    },
+    {
+      topic_id: 'HEALTHY_EATING',
+      domain: 'NUTRITION',
+      display_name: 'Gezonde voeding',
+      quick_summary_evidence_ref: 'NK-HE-PATTERN-001',
+      quick_summary_text: 'Gezonde voeding draait om je totale voedingspatroon over tijd, variatie en balans -- niet om één goed of slecht product.',
+      sections: [
+        { section_id: 'wat-bedoelen-we', title: 'Wat bedoelen we met een gezond voedingspatroon?', body: 'Een gezond voedingspatroon is de optelsom van wat je over dagen en weken eet, niet één losse maaltijd of product.', evidence_refs: ['NK-HE-PATTERN-001'] },
+        { section_id: 'patroon-boven-product', title: 'Voedingspatroon belangrijker dan één product', body: 'Eén "ongezond" of "superfood"-product bepaalt niet of je totale voeding gezond is.', evidence_refs: ['NK-HE-PATTERN-001'] },
+        { section_id: 'variatie', title: 'Variatie', body: 'Variatie in voedingsmiddelen helpt om aan uiteenlopende voedingsstoffen te komen.', evidence_refs: ['NK-HE-PATTERN-001'] },
+        { section_id: 'groente', title: 'Groente', body: 'Groente draagt bij aan de aanbevolen 400 gram groente en fruit per dag.', evidence_refs: ['NK-HE-FRUITVEG-001'] },
+        { section_id: 'fruit', title: 'Fruit', body: 'Fruit telt mee voor de aanbevolen 400 gram groente en fruit per dag.', evidence_refs: ['NK-HE-FRUITVEG-001'] },
+        { section_id: 'volkoren', title: 'Volkoren', body: 'Volkoren producten passen bij een gezond voedingspatroon.', evidence_refs: ['NK-HE-PATTERN-001'] },
+        { section_id: 'peulvruchten', title: 'Peulvruchten', body: 'Peulvruchten zijn een waardevol onderdeel van een gezond, gevarieerd voedingspatroon.', evidence_refs: ['NK-HE-PATTERN-001'] },
+        { section_id: 'eiwitbronnen', title: 'Eiwitbronnen', body: 'Een gezond patroon bevat gevarieerde eiwitbronnen, dierlijk en/of plantaardig.', evidence_refs: ['NK-HE-PATTERN-001'] },
+        { section_id: 'vetkwaliteit', title: 'Vetkwaliteit', body: 'De kwaliteit van vet (verzadigd versus onverzadigd) is relevanter dan de totale hoeveelheid alleen.', evidence_refs: ['NK-HE-PATTERN-001'] },
+        { section_id: 'vrije-suikers', title: 'Vrije/toegevoegde suikers', body: 'Beperk vrije/toegevoegde suikers als onderdeel van een gezond patroon.', evidence_refs: ['NK-HE-PATTERN-001'] },
+        { section_id: 'zout-natrium', title: 'Zout/natrium', body: 'Ook zout/natrium is onderdeel van de bredere gezondheidsrichtlijnen rond voeding.', evidence_refs: ['NK-HE-PATTERN-001'] },
+        { section_id: 'bewerkte-voeding', title: 'Sterk bewerkte voeding', body: '"Bewerkt" is geen eenduidige wetenschappelijke categorie die per definitie ongezond is -- het gehalte aan verzadigd vet, suiker en zout is relevanter.', evidence_refs: ['NK-HE-PROCESSED-001'] },
+        { section_id: 'energiedichtheid', title: 'Energiedichtheid', body: 'Energiedichtheid van voeding is een van de factoren die meespelen in een gezond voedingspatroon.', evidence_refs: ['NK-HE-PATTERN-001'] },
+        { section_id: 'sportvoeding-past', title: 'Sportvoeding binnen een gezond patroon', body: 'Sportvoeding zoals gels of eiwitpoeder kan prima passen binnen een verder gezond, gevarieerd voedingspatroon.', evidence_refs: ['NK-HE-SPORTFIT-001'] },
+        { section_id: 'flexibiliteit', title: 'Flexibiliteit en context', body: 'Niet elke maaltijd hoeft perfect te zijn -- je patroon over tijd is bepalend.', evidence_refs: ['NK-HE-FLEX-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'HE-FAQ-WAT-IS', question: 'Wat is gezonde voeding?', evidence_refs: ['NK-HE-PATTERN-001'] },
+        { faq_id: 'HE-FAQ-SUIKER', question: 'Moet je suiker volledig vermijden?', evidence_refs: ['NK-HE-PATTERN-001'] },
+        { faq_id: 'HE-FAQ-BEWERKT', question: 'Is bewerkt voedsel altijd ongezond?', evidence_refs: ['NK-HE-PROCESSED-001'] },
+        { faq_id: 'HE-FAQ-SPORTVOEDING', question: 'Past sportvoeding in een gezond voedingspatroon?', evidence_refs: ['NK-HE-SPORTFIT-001'] },
+        { faq_id: 'HE-FAQ-PERFECT', question: 'Moet iedere maaltijd perfect gezond zijn?', evidence_refs: ['NK-HE-FLEX-001'] }
+      ]
+    }
+  ];
+  TOPICS.push.apply(TOPICS, NK03_TOPICS);
+
   /* ROADMAP: sectie 17 -- inhoudelijke roadmap, GEEN gebouwde topics.
-   * Uitsluitend classificatiedata, geen evidence/claims. */
+   * Uitsluitend classificatiedata, geen evidence/claims. NK-03 heeft
+   * Koolhydraten/Vetten/Energie/Vezels/Gezonde voeding gebouwd -- deze
+   * zijn hieronder verwijderd uit de roadmap (niet langer "toekomstig"). */
   var ROADMAP = [
-    { topic: 'Koolhydraten', priority: 'P0', note: 'CARB_GROUP-evidence bestaat al in de Supplement Evidence Registry; kennisdossier is grotendeels hergebruik.' },
-    { topic: 'Vetten', priority: 'P0', note: 'Nog geen gecertificeerde evidence-basis; nieuw onderzoek nodig.' },
     { topic: 'Hydratatie', priority: 'P0', note: 'ELECTROLYTE_GROUP-evidence bestaat al; sterke EAH/veiligheidsnuance direct herbruikbaar.' },
-    { topic: 'Energie (calorieën/energiebalans)', priority: 'P1', note: 'Basisconcept, geen sport-supplement-overlap.' },
-    { topic: 'Gezonde voeding (algemeen)', priority: 'P1', note: 'Breed onderwerp, vereist eigen scopeafbakening.' },
-    { topic: 'Vezels', priority: 'P1', note: 'Nog geen evidence-onderzoek gedaan.' },
     { topic: 'IJzer', priority: 'P0', note: 'IRON-evidence bestaat al volledig gecertificeerd in de Supplement Evidence Registry.' },
     { topic: 'Vitamine D', priority: 'P0', note: 'VITAMIN_D-evidence bestaat al volledig gecertificeerd in de Supplement Evidence Registry.' },
     { topic: 'Calcium', priority: 'P1', note: 'Catalogitem bestaat (CALCIUM, P1), nog geen gecertificeerde claims.' },

@@ -50,9 +50,22 @@ ok(html.indexOf("id:'wetenschap'") > 0 || html.indexOf("id: 'wetenschap'") > 0, 
 });
 
 // ---- H: content claim IDs ongewijzigd / I: evidence IDs ongewijzigd (content freeze) ----
+// De "bevriezing" gold specifiek voor de NK-02 UX-sprint (geen contentwijziging
+// tijdens een UX-only sprint). NK-03 is uitdrukkelijk een content-uitbreidings-
+// sprint (nieuwe topics/claims toegevoegd), dus een vast totaalaantal is hier
+// niet meer het juiste contract. Wat wel blijft gelden, nu en in toekomstige
+// sprints: de oorspronkelijke 11 NK-01-claims mogen nooit stilzwijgend worden
+// herschreven -- dat wordt hier letterlijk, veld-voor-veld geverifieerd.
 const FROZEN_NK_CLAIM_IDS = ['NK-CRE-DEF-001', 'NK-CRE-MECH-001', 'NK-CRE-CYCLE-001', 'NK-CRE-WEIGHT-001', 'NK-CRE-MISC-001', 'NK-PROT-DEF-001', 'NK-PROT-AA-001', 'NK-PROT-RDA-001', 'NK-PROT-QUALITY-001', 'NK-PROT-PLANT-001', 'NK-PROT-VEGAN-001'];
-ok(KEvidence.CLAIMS.length === 11, 'H: nutritionKnowledgeEvidenceRegistry.js bevat nog steeds precies 11 claims (geen NK-02-contentwijziging)');
-ok(FROZEN_NK_CLAIM_IDS.every((id) => !!KEvidence.getById(id)), 'H-b: alle 11 bevroren NK-claim_id\'s bestaan nog exact zo');
+const FROZEN_NK_CLAIM_TEXT_SNAPSHOT = {
+  'NK-CRE-CYCLE-001': 'Er is geen wetenschappelijk bewijs dat cyclen (periodiek stoppen en herstarten) van creatinegebruik noodzakelijk of voordelig is; continu gebruik op de aanbevolen dosis is veilig en effectief op lange termijn.',
+  'NK-PROT-RDA-001': 'Voor de algemene, niet-sportende volwassen bevolking geldt een gemiddelde eiwitbehoefte van circa 0,66 g/kg/dag en een "veilig niveau" (RDA-equivalent) van circa 0,83 g/kg/dag, gebaseerd op stikstofbalansonderzoek.'
+};
+ok(KEvidence.CLAIMS.length >= 11, 'H: nutritionKnowledgeEvidenceRegistry.js bevat minimaal de 11 oorspronkelijke NK-01-claims (NK-03 voegt toe, verwijdert niets)');
+ok(FROZEN_NK_CLAIM_IDS.every((id) => !!KEvidence.getById(id)), 'H-b: alle 11 bevroren NK-01-claim_id\'s bestaan nog exact zo');
+Object.keys(FROZEN_NK_CLAIM_TEXT_SNAPSHOT).forEach((id) => {
+  ok(KEvidence.getById(id).claim_text_internal === FROZEN_NK_CLAIM_TEXT_SNAPSHOT[id], 'H-c: de letterlijke claim-tekst van ' + id + ' is niet stilzwijgend gewijzigd sinds NK-01');
+});
 ok(SupEvidence.CLAIMS.length === 67, 'I: de Supplement Evidence Registry bevat nog steeds precies 67 claims (ongewijzigd)');
 
 // ---- J: medische boundaries ongewijzigd ----

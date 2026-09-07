@@ -4278,7 +4278,10 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Supplement toevoegen</div></div><button class="ibtn" onclick="go('s-voeding')" aria-label="Terug">‹</button></div></div>
   <div class="scroll" style="flex:1;overflow-y:auto">
     <label class="v43-lbl" for="voeding-supp-name" style="display:block;margin:8px 0 6px">Supplement</label>
-    <input id="voeding-supp-name" type="text" placeholder="Bijv. Creatine" class="vd-input" style="margin-bottom:14px">
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <input id="voeding-supp-name" type="text" placeholder="Bijv. Creatine" class="vd-input" style="flex:1" oninput="voedingSuppInfoButtonUpdate()">
+      <button id="voeding-supp-info-btn" class="ibtn" style="display:none" aria-label="Uitleg over dit supplement" onclick="voedingOpenSupplementInfoFromInput()">ℹ️</button>
+    </div>
     <div class="v43-lbl" style="margin:8px 0 6px">Dosering</div>
     <div style="display:flex;gap:8px;margin-bottom:14px">
       <input id="voeding-supp-dose" aria-label="Hoeveelheid" type="number" step="any" min="0" placeholder="Hoeveelheid" class="vd-input" style="flex:1">
@@ -4289,6 +4292,12 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="v43-lbl" style="margin:20px 0 6px">Recente invoer</div>
     <div id="voeding-supp-history"><div style="text-align:center;padding:16px;color:var(--g4);font-size:13px">Laden…</div></div>
   </div>
+</div>
+
+<!-- SUP-EVIDENCE-02 — uitsluitend EducationService-output, geen eigen claimtekst hier. -->
+<div class="scr" id="s-voeding-supplement-info">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1" id="voeding-supp-info-title">Uitleg</div></div><button class="ibtn" onclick="go('s-voeding-supplement')" aria-label="Terug">‹</button></div></div>
+  <div class="scroll" style="flex:1;overflow-y:auto" id="voeding-supp-info-body"></div>
 </div>
 
 <!-- ═══ VOEDING SET B (foto-/etiketflow) + custom product + correctie ═══ -->
@@ -6168,6 +6177,10 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/nutritionMealService.js"></script>
 <script src="core/nutritionHydrationService.js"></script>
 <script src="core/nutritionSupplementService.js"></script>
+<script src="core/nutritionSupplementCatalog.js"></script>
+<script src="core/nutritionSupplementSourceRegistry.js"></script>
+<script src="core/nutritionSupplementEvidenceRegistry.js"></script>
+<script src="core/nutritionSupplementEducationService.js"></script>
 <script src="core/nutritionDiscoveryService.js"></script>
 <script src="core/nutritionCustomProductService.js"></script>
 <script src="core/nutritionIngestService.js"></script>
@@ -21952,6 +21965,70 @@ async function voedingRenderSupplementHistory(){
   }catch(e){ el.innerHTML=''; }
 }
 async function voedingDeleteSupplementLog(logId){ try{ await sbDelQ('nutrition_supplement_logs','id=eq.'+logId); }catch(e){ toast('Verwijderen mislukt. Controleer je verbinding en probeer opnieuw.'); return; } voedingRenderSupplementHistory(); }
+
+/* ═══ SUP-EVIDENCE-02 — minimale, functionele koppeling ═══
+ * Logging (hierboven) en Education (hieronder) blijven strikt gescheiden:
+ * dit scherm toont UITSLUITEND wat NutritionSupplementEducationService
+ * teruggeeft -- geen eigen claimtekst, geen eigen bewijsoordeel. Een
+ * getypte naam die niet in de catalogus voorkomt, of een catalogitem
+ * zonder gecertificeerde claims (P1+), toont gewoon geen info-knop/
+ * geen inhoud -- nooit een gegokte uitleg. */
+function voedingSuppInfoButtonUpdate(){
+  var btn=document.getElementById('voeding-supp-info-btn');
+  var naam=(document.getElementById('voeding-supp-name')||{}).value;
+  var item=(typeof NutritionSupplementCatalog!=='undefined')?NutritionSupplementCatalog.bySynonymOrName(naam):null;
+  if(!btn) return;
+  btn.style.display=item?'flex':'none';
+}
+function voedingOpenSupplementInfoFromInput(){
+  var naam=(document.getElementById('voeding-supp-name')||{}).value;
+  voedingOpenSupplementInfo(naam);
+}
+function voedingOpenSupplementInfo(nameOrSynonym){
+  if(typeof NutritionSupplementEducationService==='undefined') return;
+  var edu=NutritionSupplementEducationService.getSupplementEducationByName(nameOrSynonym);
+  document.getElementById('voeding-supp-info-title').textContent=(edu.status==='OK')?edu.canonical_name:'Uitleg';
+  go('s-voeding-supplement-info');
+  renderVoedingSupplementInfo(edu);
+}
+/* renderVoedingSupplementInfo: rendert UITSLUITEND velden die de service
+   al goedkeurde (user_visible_summary/user_visible_evidence_label/
+   limitations/safety_notes) -- nooit claim.claim zelf (dat is de interne,
+   niet per se voor UI geschreven tekst) en nooit iets buiten de
+   geretourneerde claims-array. */
+function renderVoedingSupplementInfo(edu){
+  var el=document.getElementById('voeding-supp-info-body'); if(!el) return;
+  if(!edu || edu.status==='NOT_FOUND'){
+    el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--g4);font-size:13px">Geen informatie beschikbaar voor dit supplement.</div>';
+    return;
+  }
+  if(edu.status==='NO_CONTENT'){
+    el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--g4);font-size:13px">Voor '+escHtml(edu.canonical_name)+' is nog geen uitleg beschikbaar.</div>';
+    return;
+  }
+  function section(titel,lijst,kleur){
+    if(!lijst||!lijst.length) return '';
+    var html='<div class="v43-lbl" style="margin:16px 0 6px">'+titel+'</div>';
+    lijst.forEach(function(c){
+      html+='<div class="tk-card tk-card-l3" style="padding:12px;margin-bottom:8px'+(kleur?';border-left:3px solid '+kleur:'')+'">'
+        +'<div style="font-size:14px;font-weight:600;margin-bottom:2px">'+escHtml(c.user_visible_summary||'')+'</div>'
+        +(c.user_visible_evidence_label?'<div style="font-size:12px;color:var(--g4)">'+escHtml(c.user_visible_evidence_label)+'</div>':'')
+        +(c.safety_notes&&c.safety_notes.length?'<div style="font-size:12px;color:#c0392b;margin-top:4px">⚠️ '+c.safety_notes.map(escHtml).join(' · ')+'</div>':'')
+        +(c.contraindications&&c.contraindications.length?'<div style="font-size:12px;color:#c0392b;margin-top:2px">Let op: '+c.contraindications.map(escHtml).join(', ')+'</div>':'')
+        +'</div>';
+    });
+    return html;
+  }
+  var body='<div style="padding:4px 0 8px;color:var(--g4);font-size:13px">'+escHtml(edu.common_use||'')+'</div>';
+  body+=section('Wat weten we?',edu.guidance,null);
+  body+=section('Onzekerheid/context',edu.uncertainty_education,'var(--color-border)');
+  body+=section('Veiligheid',edu.safety_warnings,'#c0392b');
+  body+=section('Medisch aandachtspunt',edu.medical_referrals,'#c0392b');
+  if(edu.has_expired_evidence) body+='<div style="font-size:12px;color:var(--g4);margin-top:10px">Sommige informatie is toe aan herbeoordeling.</div>';
+  var bronnen=[]; (edu.claims||[]).forEach(function(c){ (c.sources||[]).forEach(function(s){ if(bronnen.indexOf(s.title)<0) bronnen.push(s.title); }); });
+  if(bronnen.length) body+='<div class="v43-lbl" style="margin:16px 0 6px">Bronnen</div><div style="font-size:12px;color:var(--g4)">'+bronnen.map(escHtml).join('<br>')+'</div>';
+  el.innerHTML=body;
+}
 
 /* ═══ VOEDING SET B — Custom product, correctie, foto-/etiketflow ═══
    Alle berekening/vergelijking/ingest-beslissing loopt via bestaande,

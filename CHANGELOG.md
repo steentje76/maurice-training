@@ -1,5 +1,20 @@
 # Trainingskompas — Changelog
 
+## v4.69.67 — NUT-REL-01B: Nutrition aangesloten op de Relationship Engine (7 september 2026)
+
+Sluit Nutrition aan op de bestaande, ongewijzigde Relationship Engine
+(DataQuality -> Calculation -> Decision -> Relationship -> Coach/UI)
+met vier dag-niveau metrics: nutrition_kcal, nutrition_protein,
+nutrition_carbs, nutrition_hydration. Uitsluitend Foundation 2.0
+(nutrition_meals/nutrition_meal_items/nutrition_hydration_entries) als
+bron -- nutrition_entries (legacy, NUT-CANON-01) wordt nergens
+gebruikt. Nieuwe, pure core/nutritionRelationshipSources.js filtert
+harde, per-rij provenance (uitsluitend consumed_at_source=
+'user_confirmed') vóór aggregatie; missing != zero. Bestaande
+thresholds (REL_MIN_KANDIDAAT/REL_MIN_PATROON/REL_MIN_DISTINCT/
+REL_MAX_UITSLUIT/REL_TOON_MAX, DecisionCore.VERBAND_MIN_N) ongewijzigd.
+Geen databasewijziging.
+
 ## v4.69.66 — Inzicht v0.1 Production Data Regression Fix (4 september 2026)
 
 FUNCTIONAL DATA REGRESSION, gevonden door Product Owner na de PR

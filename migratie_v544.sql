@@ -23,10 +23,22 @@
 -- - CREATE TABLE IF NOT EXISTS voor alle tien tabellen, met exact de live-
 --   geverifieerde kolommen/defaults/checks. Op een omgeving waar de tabel
 --   al identiek bestaat is dit een no-op; er wordt niets overschreven.
+--   Dit is een FRESH-INSTALL-garantie (zet een lege database compleet
+--   neer); op de huidige live database is elke CREATE-regel een no-op
+--   die uitsluitend documenteert wat al bestaat (ADOPTION), nooit een
+--   correctie van eventuele afwijkingen in een bestaande tabel.
 -- - ALTER TABLE ... ADD CONSTRAINT voor de ontbrekende owner-FK's naar
---   auth.users (live bevestigd afwezig op vijf tabellen).
--- - Eén nieuwe UNIQUE constraint (nutrition_meals) die vóór de reset
---   onveilig was, nu niet meer (tabel is leeg).
+--   auth.users, uitsluitend op de drie PRIVATE tabellen waar dit veilig
+--   aantoonbaar correct is (nutrition_meals, nutrition_hydration_entries,
+--   nutrition_supplement_logs). Voor de drie GEDEELDE catalogusobjecten
+--   (nutrition_products/nutrition_foods.created_by, nutrition_supplement_
+--   definitions.created_by) wordt bewust GEEN FK toegevoegd -- gedeferred,
+--   zie sectie 5 van het corrective-review-rapport (NUT-SCHEMA-01C).
+-- - GEEN nieuwe UNIQUE constraint op nutrition_meals. Een eerdere versie
+--   van dit bestand voegde die toe; teruggedraaid op expliciete PO-
+--   instructie (NUT-SCHEMA-01C, blocker 1) omdat occurred_at vandaag
+--   registratietijd is, geen betrouwbaar consumptietijdstip. GAP-S3
+--   blijft: OPEN / DEFERRED TO NUT-TIME-01.
 -- - Indexes op de veelgebruikte FK/query-kolommen.
 -- - RLS + policies: exact de live-bevestigde, reeds werkende policies,
 --   opnieuw vastgelegd (DROP POLICY IF EXISTS + CREATE POLICY, geen
@@ -40,16 +52,32 @@
 -- HANDMATIG UITVOEREN in de Supabase SQL-editor.
 
 -- ── STAP 0 — vóórmeting (apart draaien, uitkomst bewaren) ─────────────────
-select table_name, count(*) as rows
-from (
-  select 'nutrition_foods' as table_name union all select 'nutrition_products'
-  union all select 'nutrition_product_identifiers' union all select 'nutrition_nutrient_values'
-  union all select 'nutrition_meals' union all select 'nutrition_meal_items'
-  union all select 'nutrition_hydration_entries' union all select 'nutrition_supplement_definitions'
-  union all select 'nutrition_supplement_logs' union all select 'nutrition_targets'
-) t
-group by table_name;
--- Verwacht op het moment van draaien: alle tellingen 0 (data is per
+-- CORRECTIE (NUT-SCHEMA-01C, blocker 2): de eerdere versie telde een
+-- inline literal-lijst i.p.v. de echte tabellen en leverde dus geen bewijs.
+-- Dit telt daadwerkelijk elke Nutrition-tabel, inclusief nutrition_entries
+-- (al gedekt door v536/v537/v543, hier alleen ter controle meegenomen).
+select 'nutrition_entries' as table_name, count(*) as row_count from public.nutrition_entries
+union all
+select 'nutrition_foods', count(*) from public.nutrition_foods
+union all
+select 'nutrition_products', count(*) from public.nutrition_products
+union all
+select 'nutrition_product_identifiers', count(*) from public.nutrition_product_identifiers
+union all
+select 'nutrition_nutrient_values', count(*) from public.nutrition_nutrient_values
+union all
+select 'nutrition_meals', count(*) from public.nutrition_meals
+union all
+select 'nutrition_meal_items', count(*) from public.nutrition_meal_items
+union all
+select 'nutrition_hydration_entries', count(*) from public.nutrition_hydration_entries
+union all
+select 'nutrition_supplement_definitions', count(*) from public.nutrition_supplement_definitions
+union all
+select 'nutrition_supplement_logs', count(*) from public.nutrition_supplement_logs
+union all
+select 'nutrition_targets', count(*) from public.nutrition_targets;
+-- Verwacht op het moment van draaien: alle elf tellingen 0 (data is per
 -- PO-besluit al verwijderd vóór dit bestand wordt toegepast).
 
 -- ══════════════════════════════════════════════════════════════════════════
@@ -200,9 +228,19 @@ create table if not exists public.nutrition_targets (
 commit;
 
 -- ══════════════════════════════════════════════════════════════════════════
--- STAP 2 — FOREIGN KEYS (voegt uitsluitend toe wat live-verificatie als
--- afwezig aantoonde: de owner-FK's naar auth.users op vijf tabellen, plus
--- de al bestaande FK's als guard voor omgevingen zonder deze tabellen).
+-- STAP 2 — FOREIGN KEYS
+-- Voegt de owner-FK naar auth.users toe op de drie PRIVATE (niet-gedeelde)
+-- tabellen waar live-verificatie hem afwezig toonde: nutrition_meals,
+-- nutrition_hydration_entries, nutrition_supplement_logs (RLS: eigen data
+-- via user_id=auth.uid(), zelfde CASCADE-patroon als het al langer
+-- bestaande nutrition_entries.user_id/nutrition_targets.user_id).
+-- Voor de DRIE GEDEELDE catalogusobjecten (nutrition_products.created_by,
+-- nutrition_foods.created_by, nutrition_supplement_definitions.created_by)
+-- wordt BEWUST GEEN FK toegevoegd -- zie de toelichting bij elk van de
+-- drie hieronder (NUT-SCHEMA-01C, sectie 5: gedeferred, geen gok over
+-- ON DELETE-gedrag van een gedeeld object).
+-- Alle overige FK's hieronder bestonden al live en staan hier alleen als
+-- idempotente guard voor omgevingen waar deze tabellen nog moeten ontstaan.
 -- ══════════════════════════════════════════════════════════════════════════
 begin;
 
@@ -212,14 +250,18 @@ begin
     alter table public.nutrition_products add constraint nutrition_products_food_id_fkey
       foreign key (food_id) references public.nutrition_foods(id);
   end if;
-  if not exists (select 1 from pg_constraint where conname = 'nutrition_products_created_by_fkey') then
-    alter table public.nutrition_products add constraint nutrition_products_created_by_fkey
-      foreign key (created_by) references auth.users(id) on delete cascade;
-  end if;
-  if not exists (select 1 from pg_constraint where conname = 'nutrition_foods_created_by_fkey') then
-    alter table public.nutrition_foods add constraint nutrition_foods_created_by_fkey
-      foreign key (created_by) references auth.users(id) on delete cascade;
-  end if;
+  -- CORRECTIE (NUT-SCHEMA-01C, sectie 5): created_by-FK op
+  -- nutrition_products/nutrition_foods is HIER BEWUST NIET toegevoegd.
+  -- Beide zijn gedeelde/canonical catalogusobjecten (RLS: select_all,
+  -- door iedereen leesbaar en herbruikbaar via meal_items/nutrient_values
+  -- van andere gebruikers). ON DELETE CASCADE zou een product/food laten
+  -- verdwijnen zodra de MAKER zijn account verwijdert, ook als andere
+  -- gebruikers er via hun eigen meal_items/nutrient_values nog naar
+  -- verwijzen (die FK's zijn zelf niet CASCADE) -- dat is een ander
+  -- lifecycle-model dan private user data en niet zonder een expliciete
+  -- productbeslissing (CASCADE? SET NULL? RESTRICT + soft-delete?) veilig
+  -- te kiezen. Live bestaat deze FK niet; hij wordt hier gedeferred, niet
+  -- gegokt. Kolom blijft nullable, dus dit blokkeert niets.
   if not exists (select 1 from pg_constraint where conname = 'nutrition_product_identifiers_product_id_fkey') then
     alter table public.nutrition_product_identifiers add constraint nutrition_product_identifiers_product_id_fkey
       foreign key (product_id) references public.nutrition_products(id) on delete cascade;
@@ -252,10 +294,11 @@ begin
     alter table public.nutrition_hydration_entries add constraint nutrition_hydration_entries_user_id_fkey
       foreign key (user_id) references auth.users(id) on delete cascade;
   end if;
-  if not exists (select 1 from pg_constraint where conname = 'nutrition_supplement_definitions_created_by_fkey') then
-    alter table public.nutrition_supplement_definitions add constraint nutrition_supplement_definitions_created_by_fkey
-      foreign key (created_by) references auth.users(id) on delete cascade;
-  end if;
+  -- CORRECTIE (NUT-SCHEMA-01C, sectie 5): created_by-FK op
+  -- nutrition_supplement_definitions is HIER BEWUST NIET toegevoegd,
+  -- zelfde reden als products/foods hierboven -- ook deze tabel heeft
+  -- RLS select_all (gedeeld/catalog) en wordt door nutrition_supplement_
+  -- logs van andere gebruikers gerefereerd (niet-CASCADE FK). Gedeferred.
   if not exists (select 1 from pg_constraint where conname = 'nutrition_supplement_logs_user_id_fkey') then
     alter table public.nutrition_supplement_logs add constraint nutrition_supplement_logs_user_id_fkey
       foreign key (user_id) references auth.users(id) on delete cascade;
@@ -270,15 +313,17 @@ begin
   end if;
 end $$;
 
--- NIEUW t.o.v. de live staat (alleen mogelijk omdat de tabel nu leeg is):
--- voorkomt twee meal-rijen voor dezelfde gebruiker/dag/type.
-do $$
-begin
-  if not exists (select 1 from pg_constraint where conname = 'nutrition_meals_user_day_type_key') then
-    alter table public.nutrition_meals add constraint nutrition_meals_user_day_type_key
-      unique (user_id, meal_type, (occurred_at::date));
-  end if;
-end $$;
+-- GAP-S3 (dubbele meal-rij per dag/type door check-then-insert zonder
+-- DB-unique) is UITDRUKKELIJK NIET opgelost in deze migratie.
+-- CORRECTIE (NUT-SCHEMA-01C, blocker 1): een eerdere versie van dit
+-- bestand voegde hier een UNIQUE (user_id, meal_type, occurred_at::date)
+-- toe. Dat is teruggedraaid op expliciete PO-instructie: occurred_at is
+-- vandaag registratietijd, geen betrouwbaar consumptietijdstip (zie de
+-- Nutrition Depth Audit). Een unique-constraint op die kolom zou een
+-- aanname over toekomstige NUT-TIME-01-tijdsemantiek vastbetonneren
+-- vóórdat die is ontworpen. GAP-S3 blijft daarom:
+--   STATUS: OPEN / DEFERRED TO NUT-TIME-01
+-- Geen vervangende constraint, geen index, geen andere vorm toegevoegd.
 
 commit;
 
@@ -437,9 +482,9 @@ where table_schema='public' and table_name like 'nutrition_%' and grantee in ('a
 group by table_name, grantee order by table_name, grantee;
 
 -- Rooktest: log een echte maaltijd/hydratatie/supplement in de app en
--- bevestig dat dit ongewijzigd slaagt; bevestig dat een tweede meal-rij
--- voor dezelfde dag/type nu een 409 (unique violation) geeft i.p.v. een
--- stille duplicaat.
+-- bevestig dat dit ongewijzigd slaagt. GAP-S3 (mogelijke dubbele meal-rij
+-- per dag/type) blijft bestaan en is bewust niet in deze migratie
+-- opgelost -- zie GAP-S3-notitie bij STAP 2.
 
 -- ══════════════════════════════════════════════════════════════════════════
 -- ROLLBACK

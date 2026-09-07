@@ -149,6 +149,21 @@
     var effectiveUnit = quantityUnit;
     var effectiveQuantity = quantity;
 
+    if (quantityUnit === 'serving' && (nutrientRow.basis === 'PER_100G' || nutrientRow.basis === 'PER_100ML')) {
+      // NUT-PORTION-01: canonical portiegrootte (serving_size_g/serving_size_ml),
+      // door de gebruiker zelf ingevoerd bij het product (geen AI, geen gok, geen
+      // afleiding uit de naam). Ontbreekt dit veld, dan is 'serving' voor dit
+      // product expliciet niet converteerbaar -- geen stille terugval, geen 0.
+      var servingField = nutrientRow.basis === 'PER_100G' ? 'serving_size_g' : 'serving_size_ml';
+      var servingUnit = nutrientRow.basis === 'PER_100G' ? 'g' : 'ml';
+      var servingSize = nutrientRow[servingField];
+      if (!isNum(servingSize) || servingSize <= 0) {
+        return { status: 'UNKNOWN_CONVERSION', basis: nutrientRow.basis, quantityUnit: quantityUnit, reason: 'missing_' + servingField };
+      }
+      effectiveUnit = servingUnit;
+      effectiveQuantity = quantity * servingSize;
+    }
+
     if (quantityUnit === 'piece') {
       if (nutrientRow.basis === 'PER_SERVING') {
         // Een PER_SERVING-waarde en 'piece' zijn compatibel zonder
@@ -227,6 +242,27 @@
     return record.created_by === userId;
   }
 
+  /* availableQuantityUnits: capability-check voor de UI (NUT-PORTION-01, sectie
+   * "CAPABILITY-AWARE UI") -- welke eenheden kan portionToNutrients() voor DIT
+   * canonical product daadwerkelijk verwerken? Puur, leest alleen canonical
+   * velden, rekent niets. Nooit een unit aanbieden die de engine zou weigeren. */
+  function availableQuantityUnits(nutrientRow) {
+    if (!nutrientRow) return [];
+    if (nutrientRow.basis === 'PER_100G') {
+      var units = ['g'];
+      if (isNum(nutrientRow.serving_size_g) && nutrientRow.serving_size_g > 0) units.push('serving');
+      if (isNum(nutrientRow.piece_weight_g) && nutrientRow.piece_weight_g > 0) units.push('piece');
+      return units;
+    }
+    if (nutrientRow.basis === 'PER_100ML') {
+      var unitsMl = ['ml'];
+      if (isNum(nutrientRow.serving_size_ml) && nutrientRow.serving_size_ml > 0) unitsMl.push('serving');
+      return unitsMl;
+    }
+    if (nutrientRow.basis === 'PER_SERVING') return ['serving', 'piece'];
+    return [];
+  }
+
   var NutritionFoundation2Core = {
     VERSIONS: VERSIONS,
     IDENTIFIER_TYPES: IDENTIFIER_TYPES,
@@ -240,7 +276,8 @@
     computeCheckDigit: computeCheckDigit,
     portionToNutrients: portionToNutrients,
     aggregateNutrients: aggregateNutrients,
-    canModifyCanonicalRecord: canModifyCanonicalRecord
+    canModifyCanonicalRecord: canModifyCanonicalRecord,
+    availableQuantityUnits: availableQuantityUnits
   };
 
   return NutritionFoundation2Core;

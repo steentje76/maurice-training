@@ -103,6 +103,33 @@ ok(!/require\(.*nutritionSupplementEvidenceRegistry/.test(loggingSrc) && !/Evide
 ok(S.getSupplementEducation({ supplementId: 'NIET_BESTAAND' }).status === 'NOT_FOUND', 'onbestaand item geeft NOT_FOUND');
 ok(S.getSupplementEducation({ supplementId: 'GINSENG' }).status === 'NO_CONTENT', 'een P3-item zonder gecertificeerde claims geeft NO_CONTENT, geen crash');
 
+// ═══ SUP-EVIDENCE-02A — anti-doping certification leak audit (sectie 6.A/B/D) ═══
+const NutritionSupplementCatalog = require('./nutritionSupplementCatalog.js');
+
+// 6.A: ongecertificeerde anti_doping_relevance verschijnt niet in EducationService-output als WADA-status
+const alleSupplementIds = NutritionSupplementCatalog.CATALOG.map((c) => c.supplement_id);
+const alleEducationOutputs = alleSupplementIds.map((id) => S.getSupplementEducation({ supplementId: id }));
+function bevatAntiDopingSleutel(obj) {
+  if (!obj || typeof obj !== 'object') return false;
+  return Object.keys(obj).some((k) => /anti_doping|wada|doping/i.test(k)) ||
+    Object.values(obj).some((v) => (Array.isArray(v) ? v.some(bevatAntiDopingSleutel) : (typeof v === 'object' && v !== null ? bevatAntiDopingSleutel(v) : false)));
+}
+ok(alleEducationOutputs.every((out) => !bevatAntiDopingSleutel(out)),
+  '6A: geen enkele EducationService-output (over alle ' + alleSupplementIds.length + ' catalogitems) bevat een anti_doping/WADA/doping-sleutel of -waarde -- de interne triage-metadata wordt nergens doorgegeven als gebruikersclaim');
+
+// 6.B: AI-payload (= dezelfde EducationService-output, AI krijgt niets anders, zie SUP-EVIDENCE-02 sectie 15)
+// krijgt dus per definitie ook geen ongecertificeerde "not prohibited"-claim, want de sleutel bestaat nergens in de payload.
+ok(alleEducationOutputs.every((out) => JSON.stringify(out).toLowerCase().indexOf('not prohibited') === -1 && JSON.stringify(out).toLowerCase().indexOf('niet verboden') === -1),
+  '6B: geen enkele AI-payload (identiek aan de EducationService-output) bevat de tekst "niet verboden"/"not prohibited"');
+
+// 6.D: NOT_LISTED != DOPING_SAFE -- geformaliseerd als: een item zonder gecertificeerde
+// anti-doping-registry-record (= alle items vandaag) mag NOOIT een claim met
+// output_mode ANTI_DOPING_WARNING of een dopingveilig-bewering opleveren.
+ok(E.byOutputMode('ANTI_DOPING_WARNING').length === 0,
+  '6D: er bestaan vandaag terecht 0 ANTI_DOPING_WARNING-claims (geen gecertificeerde Anti-Doping Registry) -- dit betekent NOT_LISTED, nooit DOPING_SAFE');
+ok(alleEducationOutputs.every((out) => JSON.stringify(out).toLowerCase().indexOf('dopingveilig') === -1),
+  '6D-b: geen enkele output beweert ooit "dopingveilig"');
+
 console.log('nutritionSupplementEducationService: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (msgs.length) console.log(msgs.join('\n'));
 console.log('Resultaat: ' + pass + ' geslaagd, ' + fail + ' mislukt');

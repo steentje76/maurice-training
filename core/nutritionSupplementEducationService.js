@@ -14,6 +14,16 @@
  *   REMOVE                                -> nooit output
  *   HIDDEN (output_mode)                  -> nooit user/AI-zichtbaar, ongeacht status
  *   requires_medical_referral=true        -> referral-info verplicht meegenomen in de output
+ *
+ * SUP-EVIDENCE-02A HARDING: catalog.anti_doping_relevance is interne
+ * triage-metadata (zie nutritionSupplementCatalog.js), GEEN
+ * gecertificeerde WADA-status. Deze service geeft dat veld daarom
+ * NERGENS door in zijn output -- er bestaat vandaag geen gecertificeerde
+ * Supplement Safety / Anti-Doping Registry om aan te koppelen. Zodra die
+ * registry bestaat, mag uitsluitend een daaruit afkomstige,
+ * gecertificeerde status worden doorgegeven -- nooit de catalog-triage
+ * zelf, en NOT_LISTED/geen-registry-record betekent dan nog steeds
+ * UNKNOWN, nooit "dopingveilig".
  */
 (function (root, factory) {
   if (typeof module !== 'undefined' && module.exports) {

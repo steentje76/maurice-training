@@ -42,6 +42,10 @@ coreFiles.forEach((f) => {
 ok(!foundPositiveSodiumClaim, '33b: geen enkel ander core-bestand herintroduceert de verwijderde "natrium voorkomt hyponatriemie"-claim');
 ok(!html.includes('natrium voorkomt hyponatri'), '33c: index.html bevat de verwijderde claim niet');
 
+// ---- SUP-EVIDENCE-02A / 6.C: UI toont nergens "dopingveilig" of een ongecertificeerde WADA-uitspraak ----
+ok(!/dopingveilig|wada toegestaan/i.test(html), '6C: index.html bevat nergens "dopingveilig" of "WADA toegestaan"');
+ok(!/anti_doping_relevance/i.test(html), '6C-b: index.html rendert het interne triageveld anti_doping_relevance niet rechtstreeks');
+
 // ---- geen enkel ander bestand claimt AI mag zelfstandig een dosis berekenen ----
 const alleCoreSrc = coreFiles.map((f) => fs.readFileSync(path.join(CORE_DIR, f), 'utf8')).join('\n');
 ok(!/AI.{0,20}(berekent|rekent uit).{0,30}(dosis|dosering)/i.test(alleCoreSrc),

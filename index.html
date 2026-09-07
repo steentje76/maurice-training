@@ -4314,6 +4314,24 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="scroll" style="flex:1;overflow-y:auto" id="voeding-supp-info-body"></div>
 </div>
 
+<!-- ═══ NK-01 — Nutrition Knowledge & Evidence Platform (prototype) ═══
+     Uitsluitend NutritionKnowledgeService-output -- geen eigen claimtekst
+     in HTML. Navigatieprototype: Inzicht -> Voeding -> Kennis. -->
+<div class="scr" id="s-voeding-kennis">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Kennis</div></div><button class="ibtn" onclick="go('s-voeding')" aria-label="Terug">‹</button></div></div>
+  <div class="scroll" style="flex:1;overflow-y:auto" id="voeding-kennis-hub"></div>
+</div>
+
+<div class="scr" id="s-voeding-kennis-topic">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1" id="voeding-kennis-topic-title">Kennis</div></div><button class="ibtn" onclick="go('s-voeding-kennis')" aria-label="Terug">‹</button></div></div>
+  <div class="scroll" style="flex:1;overflow-y:auto" id="voeding-kennis-topic-body"></div>
+</div>
+
+<div class="scr" id="s-voeding-kennis-ai">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Vraag Trainingskompas AI</div></div><button class="ibtn" onclick="voedingKennisAiBack()" aria-label="Terug">‹</button></div></div>
+  <div class="scroll" style="flex:1;overflow-y:auto" id="voeding-kennis-ai-body"></div>
+</div>
+
 <!-- ═══ VOEDING SET B (foto-/etiketflow) + custom product + correctie ═══ -->
 <div class="scr" id="s-voeding-custom">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Zelf product toevoegen</div></div><button class="ibtn" onclick="go('s-voeding-zoeken')" aria-label="Terug">‹</button></div></div>
@@ -6196,6 +6214,10 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/nutritionSupplementSourceRegistry.js"></script>
 <script src="core/nutritionSupplementEvidenceRegistry.js"></script>
 <script src="core/nutritionSupplementEducationService.js"></script>
+<script src="core/nutritionKnowledgeSources.js"></script>
+<script src="core/nutritionKnowledgeEvidenceRegistry.js"></script>
+<script src="core/nutritionKnowledgeTopics.js"></script>
+<script src="core/nutritionKnowledgeService.js"></script>
 <script src="core/nutritionDiscoveryService.js"></script>
 <script src="core/nutritionCustomProductService.js"></script>
 <script src="core/nutritionIngestService.js"></script>
@@ -10743,6 +10765,7 @@ function go(id){
   if(id==='s-voeding-hoeveelheid')renderVoedingHoeveelheid();
   if(id==='s-voeding-maaltijd-detail')renderVoedingMaaltijdDetail();
   if(id==='s-voeding-supplement')voedingRenderSupplementHistory();
+  if(id==='s-voeding-kennis')voedingRenderKennisHub();
   if(id==='s-voeding-custom')voedingRenderCustomForm();
   if(id==='s-voeding-handmatig')voedingRenderManualForm();
   if(id==='s-voeding-item-edit')voedingRenderItemEdit();
@@ -21243,10 +21266,11 @@ async function voedingRenderOverview(){
       return '<button class="vd-meal" onclick="voedingOpenMealDetail(\''+existing[0].id+'\')" aria-label="'+mt[1]+', '+kcal+', '+sub+', openen"><span><span class="n">'+mt[1]+'</span><span class="s">'+sub+'</span></span><span><span class="k">'+kcal+'</span><span class="ar" aria-hidden="true">›</span></span></button>';
     }).join('');
 
-    /* -- 3. WATER / SUPPLEMENTEN (secundair) -- */
+    /* -- 3. WATER / SUPPLEMENTEN / KENNIS (secundair) -- */
     var secHtml='<div class="vd-sec">Overig</div><div class="vd-sec2">'
       +'<button class="vd-meal" onclick="voedingOpenWaterEntry()" aria-label="Water toevoegen, vandaag '+(hydAgg.status==='NO_ITEMS'?'0 liter':hydAgg.total_ml!=null?(hydAgg.total_ml/1000).toFixed(1)+' liter':'onbekend')+'"><span><span class="s" style="margin:0 0 2px">💧 Water</span><span class="n">'+(hydAgg.status==='NO_ITEMS'?'0 L':hydAgg.total_ml!=null?(hydAgg.total_ml/1000).toFixed(1)+' L':'—')+'</span></span><span class="ar" aria-hidden="true">+</span></button>'
       +'<button class="vd-meal" onclick="go(\'s-voeding-supplement\')" aria-label="Supplementen, '+supplements.length+' vandaag"><span><span class="s" style="margin:0 0 2px">💊 Supplementen</span><span class="n">'+supplements.length+' vandaag</span></span><span class="ar" aria-hidden="true">›</span></button>'
+      +'<button class="vd-meal" onclick="go(\'s-voeding-kennis\')" aria-label="Kennis, uitleg over voeding en supplementen"><span><span class="s" style="margin:0 0 2px">📖 Kennis</span><span class="n">Creatine, eiwitten &amp; meer</span></span><span class="ar" aria-hidden="true">›</span></button>'
       +'</div>';
 
     el.innerHTML=status+mealsHtml+secHtml;
@@ -22121,6 +22145,127 @@ function renderVoedingSupplementInfo(edu){
   if(bronnen.length) body+='<div class="v43-lbl" style="margin:16px 0 6px">Bronnen</div><div style="font-size:12px;color:var(--g4)">'+bronnen.map(escHtml).join('<br>')+'</div>';
   el.innerHTML=body;
 }
+
+/* ═══ NK-01 — Nutrition Knowledge & Evidence Platform (prototype) ═══
+ * Uitsluitend NutritionKnowledgeService-output. GEEN eigen claimtekst of
+ * evidence-oordeel hier -- deze functies renderen alleen wat de service
+ * al goedkeurde. GEEN persoonlijke berekening, GEEN live AI-aanroep:
+ * de "Vraag Trainingskompas AI"-knop toont een deterministisch,
+ * vooraf-gedefinieerd contract-object per FAQ-vraag (een veilig
+ * prototype, expliciet geen vrij chatgesprek). */
+function voedingKennisKnownTopics(){
+  return ['PROTEIN', 'CREATINE']; // NK-01 prototype: 2 verticale topics
+}
+function voedingRenderKennisHub(){
+  var el=document.getElementById('voeding-kennis-hub'); if(!el) return;
+  if(typeof NutritionKnowledgeService==='undefined'){ el.innerHTML=''; return; }
+  var groepen=[
+    {titel:'Voeding', ids:voedingKennisKnownTopics().filter(function(id){var t=NutritionKnowledgeTopics.getTopic(id);return t&&t.domain==='NUTRITION';})},
+    {titel:'Supplementen', ids:voedingKennisKnownTopics().filter(function(id){var t=NutritionKnowledgeTopics.getTopic(id);return t&&t.domain==='SUPPLEMENT';})}
+  ];
+  el.innerHTML=groepen.map(function(g){
+    if(!g.ids.length) return '';
+    var kaarten=g.ids.map(function(id){
+      var ov=NutritionKnowledgeService.getTopicOverview(id);
+      if(ov.status!=='OK') return '';
+      return '<button class="vd-meal" onclick="voedingOpenKennisTopic(\''+id+'\')" aria-label="'+escHtml(ov.display_name)+'"><span><span class="n">'+escHtml(ov.display_name)+'</span><span class="s">'+escHtml(ov.quick_summary_confidence||'')+'</span></span><span class="ar" aria-hidden="true">›</span></button>';
+    }).join('');
+    return '<div class="vd-sec">'+g.titel+'</div><div class="vd-sec2">'+kaarten+'</div>';
+  }).join('');
+}
+var _voedingKennisHuidigTopic=null;
+function voedingOpenKennisTopic(topicId){
+  _voedingKennisHuidigTopic=topicId;
+  var ov=NutritionKnowledgeService.getTopicOverview(topicId);
+  document.getElementById('voeding-kennis-topic-title').textContent=(ov.status==='OK')?ov.display_name:'Kennis';
+  go('s-voeding-kennis-topic');
+  renderVoedingKennisTopic(topicId);
+}
+function renderVoedingKennisTopic(topicId){
+  var el=document.getElementById('voeding-kennis-topic-body'); if(!el) return;
+  var ov=NutritionKnowledgeService.getTopicOverview(topicId);
+  if(ov.status!=='OK'){ el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--g4);font-size:13px">Niet gevonden.</div>'; return; }
+  // NIVEAU 1 — snel antwoord
+  var html='<div class="tk-card tk-card-l1" style="margin-bottom:14px"><div style="font-size:18px;font-weight:700">'+escHtml(ov.display_name)+'</div>'
+    +'<div style="font-size:13px;opacity:.9;margin:4px 0">'+escHtml(ov.quick_summary_confidence||'')+'</div>'
+    +'<div style="font-size:14px">'+escHtml(ov.quick_summary_text)+'</div></div>';
+  // NIVEAU 2 — secties (eenvoudige, native <details> accordion -- geen zware UI-library)
+  var secties=NutritionKnowledgeService.getAllSections(topicId).filter(function(s){return s.status==='OK';});
+  html+=secties.map(function(s){
+    return '<details style="margin-bottom:8px"><summary class="v43-lbl" style="cursor:pointer;padding:8px 0">'+escHtml(s.title)+'</summary>'
+      +'<div style="padding:4px 0 10px;font-size:14px;color:var(--dark)">'+escHtml(s.body)+'</div></details>';
+  }).join('');
+  // NIVEAU 3 — wetenschap (toggle-knop, toont evidence-detail via dezelfde service)
+  html+='<button class="tk-btn tk-btn-tertiary" style="width:100%;margin:10px 0" onclick="voedingToggleKennisWetenschap(\''+topicId+'\')">🔬 Wetenschappelijke onderbouwing</button>'
+    +'<div id="voeding-kennis-wetenschap" style="display:none"></div>';
+  // FAQ
+  var faq=NutritionKnowledgeService.getFaq(topicId);
+  if(faq.status==='OK'){
+    html+='<div class="v43-lbl" style="margin:18px 0 6px">Veelgestelde vragen</div>'
+      +faq.items.map(function(f){
+        return '<div class="tk-card tk-card-l3" style="padding:12px;margin-bottom:8px">'
+          +'<div style="font-weight:600;font-size:14px;margin-bottom:4px">'+escHtml(f.question)+'</div>'
+          +f.claims.map(function(c){return '<div style="font-size:13px;color:var(--dark)">'+escHtml(c.user_friendly_summary||'')+'</div>';}).join('')
+          +'</div>';
+      }).join('');
+  }
+  // AI-entrypoint (veilig prototype, geen live chat)
+  html+='<button class="tk-btn tk-btn-primary" style="width:100%;margin:14px 0" onclick="voedingOpenKennisAi(\''+topicId+'\')">💬 Vraag Trainingskompas AI</button>';
+  el.innerHTML=html;
+}
+function voedingToggleKennisWetenschap(topicId){
+  var el=document.getElementById('voeding-kennis-wetenschap'); if(!el) return;
+  if(el.style.display==='block'){ el.style.display='none'; return; }
+  var detail=NutritionKnowledgeService.getScienceDetail(topicId);
+  var bronIds=[];
+  el.innerHTML=(detail.claims||[]).map(function(c){
+    (c.sources||[]).forEach(function(s){ if(bronIds.indexOf(s.title)<0) bronIds.push(s.title); });
+    return '<div class="tk-card tk-card-l3" style="padding:10px 12px;margin-bottom:6px">'
+      +'<div style="font-size:13px">'+escHtml(c.user_friendly_summary||'')+'</div>'
+      +'<div style="font-size:11px;color:var(--g4);margin-top:2px">'+escHtml(c.confidence)+' · '+escHtml(c.population||'')+(c.context?' · '+escHtml(c.context):'')+'</div>'
+      +(c.limitations&&c.limitations.length?'<div style="font-size:11px;color:var(--g4);margin-top:2px">Beperkingen: '+c.limitations.map(escHtml).join('; ')+'</div>':'')
+      +'</div>';
+  }).join('')+(bronIds.length?'<div class="v43-lbl" style="margin:12px 0 6px">Bronnen</div><div style="font-size:12px;color:var(--g4)">'+bronIds.map(escHtml).join('<br>')+'</div>':'');
+  el.style.display='block';
+}
+function voedingOpenKennisAi(topicId){
+  _voedingKennisHuidigTopic=topicId;
+  go('s-voeding-kennis-ai');
+  renderVoedingKennisAiVraagKeuze(topicId);
+}
+function voedingKennisAiBack(){
+  go('s-voeding-kennis-topic');
+}
+function renderVoedingKennisAiVraagKeuze(topicId){
+  var el=document.getElementById('voeding-kennis-ai-body'); if(!el) return;
+  var faq=NutritionKnowledgeService.getFaq(topicId);
+  el.innerHTML='<div class="tk-card tk-card-l2" style="margin-bottom:14px;font-size:13px">Dit is een veilig, beperkt AI-prototype: kies hieronder een vraag. Trainingskompas verwoordt uitsluitend reeds gecertificeerde kennis -- er wordt niets vrij gegenereerd of berekend.</div>'
+    +(faq.status==='OK'?faq.items.map(function(f){
+      return '<button class="vd-meal" style="margin-bottom:6px" onclick="voedingRenderKennisAiAntwoord(\''+topicId+'\',\''+f.faq_id+'\')"><span class="n">'+escHtml(f.question)+'</span><span class="ar" aria-hidden="true">›</span></button>';
+    }).join(''):'');
+}
+function voedingRenderKennisAiAntwoord(topicId, faqId){
+  var el=document.getElementById('voeding-kennis-ai-body'); if(!el) return;
+  var ctx=NutritionKnowledgeService.buildAiContext(topicId, faqId);
+  if(ctx.status!=='OK'){ el.innerHTML='<div class="tk-card tk-card-l3" style="padding:16px">Geen antwoord beschikbaar.</div>'; return; }
+  function blok(titel,lijst,kleur){
+    if(!lijst||!lijst.length) return '';
+    return '<div class="v43-lbl" style="margin:14px 0 4px'+(kleur?';color:'+kleur:'')+'">'+titel+'</div>'
+      +'<ul style="margin:0;padding-left:18px;font-size:14px">'+lijst.map(function(x){return '<li>'+escHtml(x)+'</li>';}).join('')+'</ul>';
+  }
+  var html='<button class="ibtn" style="margin-bottom:10px" onclick="renderVoedingKennisAiVraagKeuze(\''+topicId+'\')" aria-label="Andere vraag">‹ Andere vraag</button>'
+    +'<div class="tk-card tk-card-l1" style="margin-bottom:10px"><div style="font-size:13px;opacity:.85">'+escHtml(ctx.TOPIC)+'</div><div style="font-size:16px;font-weight:700">'+escHtml(ctx.QUESTION)+'</div></div>'
+    +blok('Wat we weten', ctx.APPROVED_FACTS, null)
+    +blok('Wat we (nog) niet zeker weten', ctx.MISSING_INFORMATION, 'var(--g4)')
+    +blok('Beperkingen', ctx.LIMITATIONS, 'var(--g4)')
+    +blok('Veiligheid', ctx.SAFETY_BOUNDARIES, '#c0392b');
+  if(ctx.SOURCE_REFERENCES&&ctx.SOURCE_REFERENCES.length){
+    html+='<div class="v43-lbl" style="margin:14px 0 4px">Bronnen</div><div style="font-size:12px;color:var(--g4)">'
+      +ctx.SOURCE_REFERENCES.map(function(s){return escHtml(s.title)+(s.year?' ('+escHtml(s.year)+')':'');}).join('<br>')+'</div>';
+  }
+  el.innerHTML=html;
+}
+
 
 /* ═══ VOEDING SET B — Custom product, correctie, foto-/etiketflow ═══
    Alle berekening/vergelijking/ingest-beslissing loopt via bestaande,

@@ -4300,7 +4300,13 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <label class="v43-lbl" for="voeding-custom-brand" style="display:block;margin:8px 0 6px">Merk (optioneel)</label>
     <input id="voeding-custom-brand" type="text" class="vd-input" style="margin-bottom:12px">
     <label class="v43-lbl" for="voeding-custom-basis" style="display:block;margin:8px 0 6px">Basis</label>
-    <select id="voeding-custom-basis" class="vd-input" style="margin-bottom:14px"><option value="PER_100G">per 100 g</option><option value="PER_100ML">per 100 ml</option><option value="PER_SERVING">per portie</option></select>
+    <select id="voeding-custom-basis" class="vd-input" style="margin-bottom:14px" onchange="voedingUpdateCustomServingField()"><option value="PER_100G">per 100 g</option><option value="PER_100ML">per 100 ml</option><option value="PER_SERVING">per portie</option></select>
+    <div id="voeding-custom-serving-wrap" style="margin-bottom:14px">
+      <label class="v43-lbl" for="voeding-custom-serving" style="display:block;margin:8px 0 4px">Portiegrootte (optioneel)</label>
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;color:var(--g4);white-space:nowrap">1 portie =</span><input id="voeding-custom-serving" aria-label="Portiegrootte" type="number" inputmode="decimal" step="any" min="0" class="vd-input" style="flex:1"><span id="voeding-custom-serving-unit" style="font-size:13px;color:var(--g4)">g</span></div>
+      <div style="font-size:11px;color:var(--g4);margin-top:4px">Vul dit in als je het product ook per portie wilt kunnen toevoegen.</div>
+      <div id="voeding-custom-serving-error" style="color:#c0392b;font-size:12px;margin-top:4px;display:none"></div>
+    </div>
     <div class="v43-lbl" style="margin:8px 0 6px">Voedingswaarden</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
       <input id="voeding-custom-kcal" aria-label="Energie in kcal" type="number" step="any" placeholder="Energie (kcal)" class="vd-input">
@@ -21429,10 +21435,15 @@ async function renderVoedingHoeveelheid(){
     }catch(e){ console.error('renderVoedingHoeveelheid: kon productdata niet laden',e); }
   }
   var presets=[25,50,75,100,150,200];
+  // NUT-PORTION-01: 'portie' alleen aanbieden als de Portion Engine dit voor
+  // DIT canonical product daadwerkelijk kan verwerken (capability-aware UI,
+  // geen universele aanname meer -- zie NutritionFoundation2Core.availableQuantityUnits).
+  var availUnits=NutritionFoundation2Core.availableQuantityUnits(voedingSelectedProduct.nutrientRow)||[];
+  var servingOk=availUnits.indexOf('serving')>=0;
   el.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><div style="width:44px;height:44px;border-radius:10px;background:var(--card);display:flex;align-items:center;justify-content:center">📦</div><div style="min-width:0"><div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(voedingSelectedProduct.name||'')+'</div>'+(voedingSelectedProduct.brand?'<div style="font-size:12px;color:var(--g4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(voedingSelectedProduct.brand)+'</div>':'')+'</div></div>'
     +'<label class="v43-lbl" for="voeding-qty-input" style="display:block;margin:6px 0 6px">Hoeveelheid</label>'
-    +'<div style="display:flex;gap:8px;margin-bottom:10px"><input id="voeding-qty-input" type="number" inputmode="decimal" min="0" step="any" value="'+(voedingSelectedProduct.initialQty!=null?voedingSelectedProduct.initialQty:100)+'" class="vd-input" style="flex:1" oninput="voedingUpdatePortionPreview()" aria-describedby="voeding-portion-preview"><select id="voeding-qty-unit" aria-label="Eenheid" class="vd-input" style="width:auto" onchange="document.getElementById(\'voeding-qty-input\').value=100;voedingUpdatePortionPreview()"><option value="g"'+(voedingSelectedProduct.initialUnit==='g'||!voedingSelectedProduct.initialUnit?' selected':'')+'>g</option><option value="serving"'+(voedingSelectedProduct.initialUnit==='serving'?' selected':'')+'>portie</option></select></div>'
-    +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">'+presets.map(function(g){return '<button class="tk-btn tk-btn-secondary" style="padding:8px 12px" onclick="document.getElementById(\'voeding-qty-input\').value='+g+';document.getElementById(\'voeding-qty-unit\').value=\'g\';voedingUpdatePortionPreview()">'+g+' g</button>';}).join('')+'<button class="tk-btn tk-btn-secondary" style="padding:8px 12px" onclick="document.getElementById(\'voeding-qty-input\').value=1;document.getElementById(\'voeding-qty-unit\').value=\'serving\';voedingUpdatePortionPreview()">1 portie</button></div>'
+    +'<div style="display:flex;gap:8px;margin-bottom:10px"><input id="voeding-qty-input" type="number" inputmode="decimal" min="0" step="any" value="'+(voedingSelectedProduct.initialQty!=null?voedingSelectedProduct.initialQty:100)+'" class="vd-input" style="flex:1" oninput="voedingUpdatePortionPreview()" aria-describedby="voeding-portion-preview"><select id="voeding-qty-unit" aria-label="Eenheid" class="vd-input" style="width:auto" onchange="document.getElementById(\'voeding-qty-input\').value=100;voedingUpdatePortionPreview()"><option value="g"'+(voedingSelectedProduct.initialUnit==='g'||!voedingSelectedProduct.initialUnit?' selected':'')+'>g</option>'+(servingOk?'<option value="serving"'+(voedingSelectedProduct.initialUnit==='serving'?' selected':'')+'>portie</option>':'')+'</select></div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">'+presets.map(function(g){return '<button class="tk-btn tk-btn-secondary" style="padding:8px 12px" onclick="document.getElementById(\'voeding-qty-input\').value='+g+';document.getElementById(\'voeding-qty-unit\').value=\'g\';voedingUpdatePortionPreview()">'+g+' g</button>';}).join('')+(servingOk?'<button class="tk-btn tk-btn-secondary" style="padding:8px 12px" onclick="document.getElementById(\'voeding-qty-input\').value=1;document.getElementById(\'voeding-qty-unit\').value=\'serving\';voedingUpdatePortionPreview()">1 portie</button>':'')+'</div>'
     +'<div id="voeding-portion-preview" class="tk-card tk-card-l3" style="padding:12px 14px;margin-bottom:14px" aria-live="polite"></div>'
     +'<div id="voeding-portion-error" style="color:#c0392b;font-size:13px;margin-bottom:10px;display:none"></div>'
     +'<label class="v43-lbl" for="voeding-meal-select" style="display:block;margin:6px 0 6px">Aan welke maaltijd?</label>'
@@ -21597,7 +21608,7 @@ async function voedingRenderItemEdit(){
     document.getElementById('voeding-item-edit-sub').textContent=prod?prod.name:'';
     el.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><div style="width:44px;height:44px;border-radius:10px;background:var(--card);display:flex;align-items:center;justify-content:center">📦</div><div style="min-width:0"><div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(prod?prod.name:'')+'</div>'+(prod&&prod.brand?'<div style="font-size:12px;color:var(--g4)">'+escHtml(prod.brand)+'</div>':'')+'</div></div>'
       +'<label class="v43-lbl" for="voeding-edit-qty-input" style="display:block;margin:6px 0 6px">Hoeveelheid</label>'
-      +'<div style="display:flex;gap:8px;margin-bottom:10px"><input id="voeding-edit-qty-input" type="number" inputmode="decimal" min="0" step="any" value="'+item.quantity+'" class="vd-input" style="flex:1" oninput="voedingUpdateItemEditPreview()" aria-describedby="voeding-edit-preview"><select id="voeding-edit-qty-unit" aria-label="Eenheid" class="vd-input" style="width:110px" onchange="voedingUpdateItemEditPreview()"><option value="g"'+(item.quantity_unit==='g'?' selected':'')+'>g</option><option value="serving"'+(item.quantity_unit==='serving'?' selected':'')+'>portie</option></select></div>'
+      +'<div style="display:flex;gap:8px;margin-bottom:10px"><input id="voeding-edit-qty-input" type="number" inputmode="decimal" min="0" step="any" value="'+item.quantity+'" class="vd-input" style="flex:1" oninput="voedingUpdateItemEditPreview()" aria-describedby="voeding-edit-preview"><select id="voeding-edit-qty-unit" aria-label="Eenheid" class="vd-input" style="width:110px" onchange="voedingUpdateItemEditPreview()"><option value="g"'+(item.quantity_unit==='g'?' selected':'')+'>g</option>'+((NutritionFoundation2Core.availableQuantityUnits(nv)||[]).indexOf('serving')>=0?'<option value="serving"'+(item.quantity_unit==='serving'?' selected':'')+'>portie</option>':'')+'</select></div>'
       +'<div id="voeding-edit-preview" class="tk-card tk-card-l3" style="padding:12px 14px;margin-bottom:14px" aria-live="polite"></div>'
       +'<div id="voeding-edit-error" style="color:#c0392b;font-size:13px;margin-bottom:10px;display:none"></div>'
       +'<button class="tk-btn tk-btn-primary" style="width:100%;margin-bottom:8px" onclick="voedingSaveItemEdit()">Wijzigingen opslaan</button>'
@@ -21703,13 +21714,27 @@ async function voedingDeleteSupplementLog(logId){ try{ await sbDelQ('nutrition_s
 async function voedingRenderCustomForm(){
   document.getElementById('voeding-custom-name').value='';
   document.getElementById('voeding-custom-brand').value='';
+  document.getElementById('voeding-custom-basis').value='PER_100G';
   document.getElementById('voeding-custom-kcal').value='';
   document.getElementById('voeding-custom-protein').value='';
   document.getElementById('voeding-custom-carbs').value='';
   document.getElementById('voeding-custom-fat').value='';
   document.getElementById('voeding-custom-barcode').value='';
+  document.getElementById('voeding-custom-serving').value='';
+  document.getElementById('voeding-custom-serving-error').style.display='none';
   document.getElementById('voeding-custom-error').style.display='none';
   document.getElementById('voeding-custom-duplicate').style.display='none';
+  voedingUpdateCustomServingField();
+}
+/* NUT-PORTION-01: portiegrootte alleen zinvol/tonen bij PER_100G/PER_100ML
+   (bij PER_SERVING IS de rij zelf al 1 portie -- geen aparte conversie nodig). */
+function voedingUpdateCustomServingField(){
+  var basis=document.getElementById('voeding-custom-basis').value;
+  var wrap=document.getElementById('voeding-custom-serving-wrap');
+  var unitEl=document.getElementById('voeding-custom-serving-unit');
+  if(basis==='PER_SERVING'){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  unitEl.textContent=basis==='PER_100ML'?'ml':'g';
 }
 async function voedingSaveCustomProduct(){
   var errEl=document.getElementById('voeding-custom-error');
@@ -21721,6 +21746,19 @@ async function voedingSaveCustomProduct(){
   var barcode=document.getElementById('voeding-custom-barcode').value.trim();
   var validation=NutritionCustomProductService.validateCustomProduct({name:name,brand:brand,basis:basis});
   if(!validation.valid){ errEl.textContent=validation.reason==='NAME_REQUIRED'?'Vul een naam in.':'Ongeldige basis.'; errEl.style.display='block'; return; }
+
+  // NUT-PORTION-01: optionele, door de gebruiker zelf opgegeven portiegrootte.
+  // Leeg = toegestaan (product blijft geldig zonder 'portie'-optie). Ingevuld
+  // moet het een geldig, positief getal zijn -- geen 0, geen negatief.
+  var servingErrEl=document.getElementById('voeding-custom-serving-error');
+  servingErrEl.style.display='none';
+  var servingRaw=basis!=='PER_SERVING'?document.getElementById('voeding-custom-serving').value.trim():'';
+  var servingValue=null;
+  if(servingRaw!==''){
+    var servingNum=Number(servingRaw.replace(',','.'));
+    if(!isFinite(servingNum)||servingNum<=0){ servingErrEl.textContent='Vul een geldige, positieve portiegrootte in (of laat leeg).'; servingErrEl.style.display='block'; return; }
+    servingValue=servingNum;
+  }
 
   var uid=voedingUid(); if(!uid) return;
 
@@ -21745,13 +21783,13 @@ async function voedingSaveCustomProduct(){
     dupEl.textContent='Dit product lijkt al te bestaan. Je kunt het bestaande product zoeken, of toch een nieuw, eigen product aanmaken.';
     var forceBtn=document.createElement('button');
     forceBtn.className='tk-btn tk-btn-secondary'; forceBtn.style.width='100%'; forceBtn.style.marginTop='8px';
-    forceBtn.textContent='Toch nieuw product aanmaken'; forceBtn.onclick=function(){ voedingPersistCustomProduct(name,brand,basis,barcode,normalizedBarcode); };
+    forceBtn.textContent='Toch nieuw product aanmaken'; forceBtn.onclick=function(){ voedingPersistCustomProduct(name,brand,basis,barcode,normalizedBarcode,servingValue); };
     dupEl.appendChild(document.createElement('br')); dupEl.appendChild(forceBtn);
     return;
   }
-  await voedingPersistCustomProduct(name,brand,basis,barcode,normalizedBarcode);
+  await voedingPersistCustomProduct(name,brand,basis,barcode,normalizedBarcode,servingValue);
 }
-async function voedingPersistCustomProduct(name,brand,basis,barcode,normalizedBarcode){
+async function voedingPersistCustomProduct(name,brand,basis,barcode,normalizedBarcode,servingValue){
   var errEl=document.getElementById('voeding-custom-error');
   var _done=voedingWithBusy(document.querySelector('#s-voeding-custom .tk-btn-primary'),'Opslaan…');
   var uid=voedingUid(); if(!uid){ _done(); return; }
@@ -21769,11 +21807,14 @@ async function voedingPersistCustomProduct(name,brand,basis,barcode,normalizedBa
   if(normalizedBarcode && normalizedBarcode.status==='valid'){
     await sbPostQ('nutrition_product_identifiers',{product_id:productId,identifier_type:normalizedBarcode.identifier_type,value:normalizedBarcode.value});
   }
-  await sbPostQ('nutrition_nutrient_values',{product_id:productId,basis:basis,energy_kcal:kcal?Number(kcal):null,protein_g:protein?Number(protein):null,carbohydrate_g:carbs?Number(carbs):null,fat_g:fat?Number(fat):null});
+  var servingFields={};
+  if(servingValue!=null && basis==='PER_100G') servingFields.serving_size_g=servingValue;
+  if(servingValue!=null && basis==='PER_100ML') servingFields.serving_size_ml=servingValue;
+  await sbPostQ('nutrition_nutrient_values',Object.assign({product_id:productId,basis:basis,energy_kcal:kcal?Number(kcal):null,protein_g:protein?Number(protein):null,carbohydrate_g:carbs?Number(carbs):null,fat_g:fat?Number(fat):null},servingFields));
   }catch(e){ errEl.textContent='Opslaan mislukt. Controleer je verbinding en probeer opnieuw.'; errEl.style.display='block'; _done(); return; }
   // Blocker 3-fix: direct door naar de Portion Engine, geen tussenliggende
   // bevestiging vóór de daadwerkelijke intake-registratie.
-  voedingSelectedProduct={id:productId, name:validation.canonicalFields.name, nutrientRow:{basis:basis, energy_kcal:kcal?Number(kcal):null, protein_g:protein?Number(protein):null, carbohydrate_g:carbs?Number(carbs):null, fat_g:fat?Number(fat):null}};
+  voedingSelectedProduct={id:productId, name:validation.canonicalFields.name, nutrientRow:Object.assign({basis:basis, energy_kcal:kcal?Number(kcal):null, protein_g:protein?Number(protein):null, carbohydrate_g:carbs?Number(carbs):null, fat_g:fat?Number(fat):null},servingFields)};
   _done(); go('s-voeding-hoeveelheid');
 }
 

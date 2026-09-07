@@ -58,8 +58,9 @@ function nl(v, u) { return v == null ? '—' : v.toLocaleString('nl-NL', { maxim
   await t('12-14. invalid / 0 / negatief / leeg: geen engine-output, eerlijke melding, geen crash', async () => {
     const p = await open(390, NV_FULL); for (const v of ['abc', '0', '-5', '', '  ']) { await setQty(p, v); const txt = await preview(p); assert.strictEqual(txt.includes('Vul een geldige hoeveelheid in'), true, 'v=' + JSON.stringify(v)); assert.strictEqual(/kcal/.test(txt), false); } assert.deepStrictEqual(p.__dialogs, []); await p.close();
   });
-  await t('14b. unit "portie" bij PER_100G zonder stukgewicht: geen fictieve preview (engine-status gerespecteerd)', async () => {
-    const p = await open(390, NV_FULL); await p.click('#voeding-portion-body button:has-text("1 portie")'); await p.waitForTimeout(80); const txt = await preview(p); assert.strictEqual(/kcal/.test(txt), false); assert.strictEqual(txt.includes('kan voor dit product niet') || txt.includes('onbekend'), true); await p.close();
+  await t('14b. NUT-PORTION-01: unit "portie" bij PER_100G zonder serving_size_g wordt niet als bruikbare keuze aangeboden (capability-aware, geen schijnconversie)', async () => {
+    const p = await open(390, NV_FULL); const hasServing = await p.evaluate(() => !!document.querySelector('#voeding-portion-body button.tk-btn-secondary') && [...document.querySelectorAll('#voeding-portion-body button')].some(b => b.textContent.includes('portie')));
+    assert.strictEqual(hasServing, false); await p.close();
   });
   await t('16-17. meal context Lunch behouden; zonder context geen verzonnen keuze (eerste optie, geen "laatst gebruikt")', async () => {
     let p = await open(390, NV_FULL, 'lunch'); assert.strictEqual(await p.evaluate(() => document.getElementById('voeding-meal-select').value), 'lunch'); await p.close();

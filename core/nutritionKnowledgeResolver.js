@@ -26,16 +26,48 @@
 }(typeof self !== 'undefined' ? self : this, function (Topics, Service) {
   'use strict';
 
-  var RESOLVER_VERSION = 'nutrition_knowledge_resolver.v1';
+  var RESOLVER_VERSION = 'nutrition_knowledge_resolver.v2'; // NK-04C: intent resolution + clarification-first
   var MAX_TOPICS = 2;         // hoogstens 2 topics tegelijk in het pakket (cross-topic vragen)
   var MAX_ITEMS_PER_TOPIC = 3; // hoogstens 3 secties/FAQ-items per topic meetellen voor claim-selectie
   var MAX_CLAIMS = 6;         // hard plafond op het aantal claims in het uiteindelijke pakket
   var MIN_TOKEN_LEN = 3;
   var SPECIAL_SECTIONS = ['veelgestelde-vragen', 'wetenschap', 'bronnen'];
+  // NK-04C sectie 6: de drie sportvoedingstopics die qua ONDERWERP
+  // overlappen (koolhydraten/eiwit rond training) maar qua TIMING
+  // fundamenteel verschillen. Een persoonlijke hoeveelheids-/timingvraag
+  // zonder duidelijke timing in de tekst mag deze nooit door elkaar
+  // combineren (sectie 5/10: "SAFE != RELEVANT" -- de gerapporteerde bug).
+  var TIMING_TOPIC_GROUP = ['PRE_TRAINING', 'DURING_TRAINING', 'POST_TRAINING'];
+  var TIMING_RE = /\btijdens\b|\bvooraf\b|\berna\b|\bachteraf\b|\bvoor\s+(het\s+)?(sporten|trainen|de\s+training|je\s+training)\b|\bna\s+(het\s+)?(sporten|trainen|de\s+training|je\s+training)\b/i;
+  function mentionsTiming(text) { return TIMING_RE.test(String(text || '')); }
   var STOPWORDS = ['een', 'van', 'het', 'de', 'en', 'voor', 'met', 'bij', 'wat', 'hoe', 'moet',
     'kan', 'zijn', 'deze', 'dat', 'als', 'niet', 'die', 'over', 'wil', 'naar', 'tijdens', 'jouw',
     'jij', 'ik', 'mijn', 'is', 'op', 'aan', 'ook', 'nog', 'wel', 'dan', 'toch', 'per', 'the', 'and',
     'meer', 'veel', 'goed', 'nodig', 'altijd', 'alle', 'elke', 'iemand', 'gewoon', 'zeker', 'echt'];
+
+  // ── NK-04C sectie 6: INTENT RESOLUTION ──────────────────────────────
+  // Deterministisch, keyword-gebaseerd -- GEEN AI. Volgorde is betekenisvol:
+  // specifiekere/gevoeligere intents (MEDICAL/SAFETY/WEIGHT_LOSS/PERSONAL_*)
+  // worden vóór de generieke WHAT_IS/WHY/HOW_GENERAL gecontroleerd.
+  var INTENTS = ['WHAT_IS', 'WHY', 'WHEN', 'HOW_GENERAL', 'PERSONAL_AMOUNT', 'PERSONAL_TIMING',
+    'COMPARISON', 'SAFETY', 'MEDICAL', 'PERFORMANCE', 'RECOVERY', 'WEIGHT_LOSS', 'UNKNOWN'];
+  function classifyIntent(text) {
+    var t = String(text || '').toLowerCase();
+    if (/\b(diagnose|bevestig|red-?s|blessure|ziekte|tekort heb)\b/.test(t)) return 'MEDICAL';
+    if (/\bveilig|risico|gevaarlijk|schadelijk\b/.test(t)) return 'SAFETY';
+    if (/\bafvallen|vetverlies|gewicht verliezen|kilo('s)? kwijt\b/.test(t)) return 'WEIGHT_LOSS';
+    if (/\bherstel|hersteltijd\b/.test(t) && !/\bhoeveel\b/.test(t)) return 'RECOVERY';
+    if (/\bprestatie|sneller|harder|beter presteren\b/.test(t)) return 'PERFORMANCE';
+    if (/\bverschil tussen\b|\bversus\b|\bof\b.+\bof\b/.test(t)) return 'COMPARISON';
+    if (/\bhoeveel\b|\bhoeveelheid\b/.test(t) && /\bik\b|\bmijn\b|\bmoet ik\b|\bzou ik\b/.test(t)) return 'PERSONAL_AMOUNT';
+    if (/\b(hoe laat|hoe lang van tevoren|wanneer moet ik|hoeveel .*van tevoren)\b/.test(t) && /\bik\b|\bmijn\b/.test(t)) return 'PERSONAL_TIMING';
+    if (/\bwaarom\b/.test(t)) return 'WHY';
+    if (/\bwanneer\b/.test(t)) return 'WHEN';
+    if (/\bwat is\b|\bwat zijn\b|\bwat betekent\b/.test(t)) return 'WHAT_IS';
+    if (/\bhoe\b/.test(t)) return 'HOW_GENERAL';
+    return 'UNKNOWN';
+  }
+  var PERSONAL_INTENTS = ['PERSONAL_AMOUNT', 'PERSONAL_TIMING'];
 
   function normalize(s) {
     return String(s || '').toLowerCase()
@@ -105,6 +137,15 @@
     scores.sort(function (a, b) { return b.score !== a.score ? b.score - a.score : (a.topicId < b.topicId ? -1 : 1); });
     return scores.slice(0, MAX_TOPICS);
   }
+  // Score uitsluitend tegen de topic-NAAM zelf (de eerste, weight-3-entry
+  // in de index) -- gebruikt om te bepalen of de gebruiker een ánder
+  // topic dan het huidige EXPLICIET noemde (i.p.v. een toevallige
+  // overlap via een gedeeld sectietitel-woord).
+  function topicNameMatchScore(topicId, queryTokens) {
+    var entries = _topicIndex[topicId];
+    if (!entries || !entries.length) return 0;
+    return scoreTokensAgainst(queryTokens, entries[0].tokens, entries[0].weight);
+  }
 
   function scoreItemsInTopic(topicId, queryTokens) {
     var items = _itemIndex[topicId] || [];
@@ -124,20 +165,53 @@
    * (bv. de "Vraag Trainingskompas AI"-knop op het Koolhydraten-scherm) --
    * telt als een sterke hint, maar overschrijft nooit een duidelijkere
    * keyword-match elders (bv. een expliciete "creatine vs eiwit"-vraag).
+   *
+   * NK-04C: retourneert nu ook status 'CLARIFY' (sectie 8/9) wanneer een
+   * PERSONAL_AMOUNT/PERSONAL_TIMING-vraag niet verantwoord/relevant kan
+   * worden beantwoord zonder te weten of het om vóór/tijdens/na training
+   * gaat -- ÉÉN gerichte vervolgvraag, geen evidence-dump.
    */
   function resolveQuestion(freeText, preferredTopicId) {
     buildIndexes();
+    var intent = classifyIntent(freeText);
     var queryTokens = tokenize(freeText);
     if (!queryTokens.length) {
-      return { status: 'INSUFFICIENT', schema: RESOLVER_VERSION, QUESTION: freeText, reason: 'leeg_of_te_kort', matchedTopics: [] };
+      return { status: 'INSUFFICIENT', schema: RESOLVER_VERSION, QUESTION: freeText, INTENT: intent, reason: 'leeg_of_te_kort', matchedTopics: [] };
     }
     var topicScores = scoreTopics(queryTokens);
     if (preferredTopicId && Topics.getTopic(preferredTopicId) && !topicScores.some(function (t) { return t.topicId === preferredTopicId; })) {
       // Hint telt licht mee, maar alleen als er nog ruimte is (nooit een sterkere match verdringen).
       if (topicScores.length < MAX_TOPICS) topicScores.push({ topicId: preferredTopicId, score: 0.5 });
     }
+
+    // NK-04C sectie 6/10/11: bij een PERSOONLIJKE hoeveelheids-/timingvraag
+    // verankeren we bij voorkeur aan het topic waar de gebruiker al was
+    // (preferredTopicId) -- andere topics tellen alleen mee als de
+    // gebruiker ze EXPLICIET noemde (topicNameMatchScore>0), niet via een
+    // toevallige sectietitel-woordoverlap. Dit is de directe fix voor de
+    // gerapporteerde bug ("Hoeveel moet ik eten?" op "Voeding voor
+    // training" trok ongerelateerde eiwit-/tijdens-training-kennis aan).
+    if (PERSONAL_INTENTS.indexOf(intent) >= 0 && preferredTopicId && topicScores.some(function (t) { return t.topicId === preferredTopicId; })) {
+      topicScores = topicScores.filter(function (t) {
+        return t.topicId === preferredTopicId || topicNameMatchScore(t.topicId, queryTokens) > 0;
+      });
+    }
+
     if (!topicScores.length) {
-      return { status: 'INSUFFICIENT', schema: RESOLVER_VERSION, QUESTION: freeText, reason: 'geen_topic_match', matchedTopics: [] };
+      return { status: 'INSUFFICIENT', schema: RESOLVER_VERSION, QUESTION: freeText, INTENT: intent, reason: 'geen_topic_match', matchedTopics: [] };
+    }
+
+    // NK-04C sectie 8/9: CLARIFICATION-FIRST. Als een persoonlijke vraag
+    // (mede) binnen de timing-ambigue topicgroep valt en de vraagtekst
+    // zelf geen timing noemt, stel ÉÉN gerichte vervolgvraag i.p.v. een
+    // (deels irrelevante) evidence-dump te geven.
+    var timingMatches = topicScores.filter(function (t) { return TIMING_TOPIC_GROUP.indexOf(t.topicId) >= 0; });
+    if (PERSONAL_INTENTS.indexOf(intent) >= 0 && timingMatches.length >= 1 && !mentionsTiming(freeText)) {
+      return {
+        status: 'CLARIFY', schema: RESOLVER_VERSION, QUESTION: freeText, INTENT: intent,
+        matchedTopics: topicScores.map(function (t) { return t.topicId; }),
+        clarifyQuestion: 'Bedoel je vóór, tijdens of na je training?'
+      };
     }
 
     var evidenceRefs = [];
@@ -159,7 +233,7 @@
     var aiApproved = releasable.filter(function (c) { return c.allowed_ai_use; }).slice(0, MAX_CLAIMS);
 
     if (!aiApproved.length) {
-      return { status: 'INSUFFICIENT', schema: RESOLVER_VERSION, QUESTION: freeText, reason: 'geen_vrijgegeven_claims', matchedTopics: topicScores.map(function (t) { return t.topicId; }) };
+      return { status: 'INSUFFICIENT', schema: RESOLVER_VERSION, QUESTION: freeText, INTENT: intent, reason: 'geen_vrijgegeven_claims', matchedTopics: topicScores.map(function (t) { return t.topicId; }) };
     }
 
     var known = aiApproved.filter(function (c) { return c.status === 'VERIFIED'; });
@@ -176,6 +250,7 @@
       status: 'OK', schema: RESOLVER_VERSION,
       TOPIC: topicNames.join(' / '),
       QUESTION: freeText,
+      INTENT: intent,
       matchedTopics: topicScores.map(function (t) { return t.topicId; }),
       APPROVED_FACTS: known.map(function (c) { return c.user_friendly_summary; }),
       EVIDENCE_LEVEL: known.map(function (c) { return c.evidence_level; }),
@@ -238,14 +313,30 @@
     return lines.join('\n');
   }
 
+  /**
+   * combineWithClarificationAnswer(originalQuestion, answerText) -> puur,
+   * deterministisch, GEEN AI (sectie 12: conversation state). Voegt het
+   * korte vervolgantwoord ("Tijdens.") samen met de oorspronkelijke vraag
+   * zodat resolveQuestion() niet vanaf nul hoeft te beginnen. Bewust
+   * minimaal: geen onbeperkte chatgeschiedenis, uitsluitend de ene
+   * openstaande vraag + het ene antwoord (data-minimalisatie, sectie 12).
+   */
+  function combineWithClarificationAnswer(originalQuestion, answerText) {
+    return String(originalQuestion || '').trim() + ' (' + String(answerText || '').trim() + ')';
+  }
+
   var NutritionKnowledgeResolver = {
     RESOLVER_VERSION: RESOLVER_VERSION,
     MAX_TOPICS: MAX_TOPICS,
     MAX_CLAIMS: MAX_CLAIMS,
+    INTENTS: INTENTS,
     tokenize: tokenize,
+    classifyIntent: classifyIntent,
+    mentionsTiming: mentionsTiming,
     resolveQuestion: resolveQuestion,
     buildSystemPrompt: buildSystemPrompt,
-    containsPersonalNumeric: containsPersonalNumeric
+    containsPersonalNumeric: containsPersonalNumeric,
+    combineWithClarificationAnswer: combineWithClarificationAnswer
   };
   return NutritionKnowledgeResolver;
 }));

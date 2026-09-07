@@ -22351,6 +22351,7 @@ function voedingKennisWetenschapHtml(topicId){
 var _nkAiSending = false;
 function voedingOpenKennisAi(topicId){
   _voedingKennisHuidigTopic=topicId;
+  _nkAiPendingClarification=null;
   go('s-voeding-kennis-ai');
   var topic=NutritionKnowledgeTopics.getTopic(topicId);
   var hdrSub=document.getElementById('nk-ai-hdr-sub');
@@ -22382,14 +22383,22 @@ function voedingKennisAiToggleHow(){
   el.style.display=el.style.display==='none'?'block':'none';
 }
 /* voedingKennisAiSubmit: SUBMITTING-state. Dubbele indiening voorkomen
-   (_nkAiSending-vlag + disabled-knop, sectie 24/AF). */
+   (_nkAiSending-vlag + disabled-knop, sectie 24/AF). NK-04C sectie 8/12:
+   ondersteunt nu CLARIFY (één gerichte vervolgvraag i.p.v. een evidence-
+   dump) met minimale, puur tekstuele conversation-state (geen AI, geen
+   onbeperkte geschiedenis) om het vervolgantwoord aan de oorspronkelijke
+   vraag te koppelen. */
+var _nkAiPendingClarification=null; // {originalQuestion} | null
 async function voedingKennisAiSubmit(topicId){
   if(_nkAiSending) return;
   var inp=document.getElementById('nk-ai-input');
-  var vraag=(inp?inp.value:'').trim();
+  var ingetypt=(inp?inp.value:'').trim();
   var statusEl=document.getElementById('nk-ai-status');
   var answerArea=document.getElementById('nk-ai-answer-area');
-  if(!vraag){ if(statusEl) statusEl.textContent='Typ eerst een vraag.'; return; }
+  if(!ingetypt){ if(statusEl) statusEl.textContent='Typ eerst een vraag.'; return; }
+  var vraag=_nkAiPendingClarification
+    ? NutritionKnowledgeResolver.combineWithClarificationAnswer(_nkAiPendingClarification.originalQuestion, ingetypt)
+    : ingetypt;
   _nkAiSending=true;
   var btn=document.getElementById('nk-ai-submit-btn'); if(btn) btn.disabled=true;
   if(statusEl) statusEl.textContent='';
@@ -22399,6 +22408,15 @@ async function voedingKennisAiSubmit(topicId){
   // voldoende gecertificeerde kennis is, VOORDAT er een dure/onnodige
   // AI-call wordt gedaan (sectie 13: INSUFFICIENT is een kernfeature).
   var pkg=NutritionKnowledgeResolver.resolveQuestion(vraag, topicId);
+  if(pkg.status==='CLARIFY'){
+    _nkAiPendingClarification={originalQuestion:vraag};
+    if(answerArea) answerArea.innerHTML='<div class="nk-ai-answer-card">'+escHtml(pkg.clarifyQuestion)+'</div>';
+    if(inp){ inp.value=''; inp.placeholder='Bijv. "tijdens"...'; inp.focus(); }
+    _nkAiSending=false; if(btn) btn.disabled=false;
+    return;
+  }
+  _nkAiPendingClarification=null;
+  if(inp) inp.placeholder='Stel je vraag...';
   if(pkg.status!=='OK'){
     if(answerArea) answerArea.innerHTML=voedingKennisAiInsufficientHtml();
     _nkAiSending=false; if(btn) btn.disabled=false;
@@ -22416,9 +22434,10 @@ async function voedingKennisAiSubmit(topicId){
   try{
     // NK-04A: apart requestType ('knowledge_chat') i.p.v. 'chat' -- ander
     // contract (evidence-pakket i.p.v. trainingscontext, geen APPLY-marker).
-    // Data-minimalisatie (sectie 25): uitsluitend de vrije vraag + het
-    // begrensde evidence-pakket worden verstuurd -- GEEN trainingshistorie,
-    // GEEN lichaamsdata, GEEN volledige knowledge base.
+    // Data-minimalisatie (sectie 25): uitsluitend de (eventueel met de
+    // vervolgvraag samengevoegde) vrije vraag + het begrensde evidence-
+    // pakket worden verstuurd -- GEEN trainingshistorie, GEEN lichaamsdata,
+    // GEEN volledige knowledge base, GEEN onbeperkte chatgeschiedenis.
     var res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'knowledge_chat',model:'claude-sonnet-4-5',max_tokens:500,system:sys,messages:[{role:'user',content:vraag}]})});
     var d=await res.json();
     if(d.error){

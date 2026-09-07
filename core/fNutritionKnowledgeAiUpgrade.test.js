@@ -23,7 +23,7 @@ if (faqFnMatch) {
   ok(!/fetch\(/.test(faqFnMatch[0]), '26-b: FAQ_PATH doet geen fetch()/AI-aanroep -- uitsluitend getFaq()+claims');
   ok(faqFnMatch[0].indexOf('NutritionKnowledgeService.getFaq') > 0, '26-c: FAQ_PATH gaat via getFaq(faqId), een vaste, vooraf-gedefinieerde vraag');
 }
-const aiSubmitMatch = html.match(/async function voedingKennisAiSubmit\(topicId\)\{[\s\S]{0,3000}?\n\}/);
+const aiSubmitMatch = html.match(/async function voedingKennisAiSubmit\(topicId\)\{[\s\S]{0,4200}?\n\}/);
 ok(!!aiSubmitMatch, '26-d: voedingKennisAiSubmit() (AI_PATH) gevonden');
 if (aiSubmitMatch) {
   ok(aiSubmitMatch[0].indexOf('NutritionKnowledgeResolver.resolveQuestion') > 0, '26-e: AI_PATH gaat via de Knowledge Resolver op VRIJE tekst, geen vaste faqId');
@@ -64,7 +64,12 @@ if (r.status === 'OK') {
 
 // G: numeric-personal query -- resolver berekent zelf niets
 r = Resolver.resolveQuestion('Ik weeg 82 kg, hoeveel koolhydraten moet ik eten?');
-ok(r.status === 'OK', 'G: persoonlijke/numerieke vraag levert een resultaat op');
+// NK-04C: deze exacte, timing-ambigue combinatie (PERSONAL_AMOUNT + geen
+// vóór/tijdens/na genoemd) levert nu terecht CLARIFY op i.p.v. een
+// evidence-dump -- dat IS de bugfix uit NK-04C (sectie 5/8: "SAFE !=
+// RELEVANT"). Beide uitkomsten zijn hier acceptabel; alleen OF blijft
+// verboden.
+ok(r.status === 'OK' || r.status === 'CLARIFY', 'G: persoonlijke/numerieke vraag levert een resultaat of een gerichte vervolgvraag op, nooit een crash');
 if (r.status === 'OK') {
   ok(!r.APPROVED_FACTS.some((f) => /\b82\b/.test(f)), 'G-b: het "82" uit de vraag komt niet terug in een berekend feit (resolver rekent zelf niets)');
   ok(!Resolver.buildSystemPrompt(r).match(/\b82\s*[x×*]/i), 'G-c: system-prompt bevat geen 82 x ...-berekening');

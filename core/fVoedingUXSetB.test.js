@@ -113,7 +113,14 @@ t('Label-naar-nieuw-product-flow leidt naar de portion-flow, niet direct naar be
   const fnStart = html.indexOf('async function voedingSaveNewProductFromLabel');
   const fnEnd = html.indexOf('\n}', fnStart);
   const fnBody = html.slice(fnStart, fnEnd);
-  assert.strictEqual(fnBody.includes("go('s-voeding-hoeveelheid')"), true);
+  // NUT-DATA-OBS-01: de duplicate-check zit nu voor de eigenlijke persist,
+  // in een aparte, hergebruikte functie -- volg de keten in plaats van
+  // aan te nemen dat alles in één functie-body zit.
+  assert.strictEqual(fnBody.includes('voedingPersistNewProductFromLabel'), true);
+  const persistStart = html.indexOf('async function voedingPersistNewProductFromLabel');
+  const persistEnd = html.indexOf('\nasync function ', persistStart + 10);
+  const persistBody = html.slice(persistStart, persistEnd);
+  assert.strictEqual(persistBody.includes("go('s-voeding-hoeveelheid')"), true);
 });
 t('Handmatige-invoer-flow (na mislukte OCR) leidt naar de portion-flow (Blocker 3, structurele check)', () => {
   const fnStart = html.indexOf('async function voedingSaveManualEntry');
@@ -355,7 +362,7 @@ t('Empty states zijn functioneel (tekst + één vervolgactie): maaltijden, targe
   assert.strictEqual(/Nog niets toegevoegd|nog niets toegevoegd/.test(html), true);
 });
 t('Save-failure: netwerkfout geeft een menselijke inline-melding, geen stille failure, geen technische details in copy', () => {
-  ['async function voedingSaveTargets','async function voedingSaveNewProductFromLabel'].forEach(sig=>{
+  ['async function voedingSaveTargets','async function voedingPersistNewProductFromLabel'].forEach(sig=>{
     const b=html.slice(html.indexOf(sig), html.indexOf('\n}', html.indexOf(sig)));
     assert.strictEqual(/catch\(e\)\{[^}]*Opslaan mislukt/.test(b), true, sig);
     assert.strictEqual(/e\.message|stack|status ?\d{3}/.test(b.split('catch')[1]||''), false, sig+' geen technische details');

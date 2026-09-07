@@ -6169,6 +6169,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/nutritionImageQualityGate.js"></script>
 <script src="core/nutritionTargetService.js"></script>
 <script src="core/nutritionCrossDomainContract.js"></script>
+<script src="core/nutritionTimeUtils.js"></script>
 <script src="core/nutritionBarcodeRuntime.js"></script>
 <script src="core/designSystemIcons.js"></script>
 <script src="core/decision.js"></script>
@@ -11933,7 +11934,7 @@ async function renderNutritionScreen(){
   const {start,eind}=nutritionDagGrenzen(_nutritionSelectedDate);
   let entries=null;
   try{
-    entries=await sbGet('nutrition_entries',`&user_id=eq.${uid}&occurred_at=gte.${start.toISOString()}&occurred_at=lte.${eind.toISOString()}&order=occurred_at.desc`);
+    entries=await sbGet('nutrition_entries',`&user_id=eq.${uid}&consumed_at=gte.${start.toISOString()}&consumed_at=lte.${eind.toISOString()}&order=consumed_at.desc`);
   }catch(e){entries=null;}
 
   const vandaag=new Date();
@@ -11967,7 +11968,7 @@ async function renderNutritionScreen(){
   const timingLabels={pre_training:'Vóór training',during_training:'Tijdens training',post_training:'Na training'};
   const labels={meal:'Maaltijd',snack:'Snack',hydration:'Hydratatie',other:'Overig'};
   const lijstHtml=entries.length?entries.map(e=>{
-    const tijd=new Date(e.occurred_at).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
+    const tijd=new Date(e.consumed_at||e.occurred_at).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
     const details=[e.energy_kcal!=null?e.energy_kcal+' kcal':null,e.protein_g!=null?e.protein_g+'g eiwit':null,e.carbohydrate_g!=null?e.carbohydrate_g+'g kh':null,e.fat_g!=null?e.fat_g+'g vet':null,e.fluid_ml!=null?e.fluid_ml+'ml':null].filter(Boolean).join(' · ');
     const timing=e.timing_context?' · '+timingLabels[e.timing_context]:'';
     return `<div class="row"><span class="b"><span class="t">${tijd} — ${labels[e.entry_type]||e.entry_type}${timing}</span><span class="s">${details?escHtml(details):'Geen waarden ingevuld'}${e.note?' · '+escHtml(e.note):''}</span></span><button class="ibtn" onclick="nutritionEditEntry('${e.id}')" aria-label="Bewerken">✎</button><button class="btn btn-o btn-sm" onclick="nutritionDeleteEntry('${e.id}')" aria-label="Verwijderen">🗑</button></div>`;
@@ -12015,6 +12016,8 @@ function nutritionFormHtml(){
       <button type="button" class="btn btn-o btn-sm" onclick="nutritionHydrationPreset(250)">+250 ml</button>
       <button type="button" class="btn btn-o btn-sm" onclick="nutritionHydrationPreset(500)">+500 ml</button>
     </div>
+    <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Tijdstip</label>
+    <input type="datetime-local" id="nutrition-consumed-at" style="width:100%;margin-bottom:10px" value="${bewerken&&bewerken.consumed_at?voedingIsoToLocalInputValue(bewerken.consumed_at):voedingNowLocalInputValue()}">
     <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Moment (optioneel)</label>
     <select id="nutrition-timing-context" style="width:100%;margin-bottom:10px">
       <option value="">Geen</option><option value="pre_training" ${bewerken?.timing_context==='pre_training'?'selected':''}>Vóór training</option><option value="during_training" ${bewerken?.timing_context==='during_training'?'selected':''}>Tijdens training</option><option value="post_training" ${bewerken?.timing_context==='post_training'?'selected':''}>Na training</option>
@@ -12059,9 +12062,16 @@ function nutritionCancelEdit(){
 async function nutritionSaveEntry(){
   const uid=authSession?.user?.id;
   if(!uid)return;
+  // NUT-TIME-01: consumed_at komt uit de datetime-local-invoer (default
+  // "nu", door de gebruiker aan te passen vóór opslaan). Bij edit staat
+  // het veld voorgevuld met de bestaande consumed_at; niet aanraken =
+  // ongewijzigd opnieuw opslaan, precies "behouden tenzij gewijzigd".
+  const consumedAtIso=voedingLocalInputToIso(document.getElementById('nutrition-consumed-at').value);
   const payload={
     entry_type:document.getElementById('nutrition-entry-type').value,
     timing_context:document.getElementById('nutrition-timing-context').value||null,
+    consumed_at:consumedAtIso,
+    consumed_at_source:'user_confirmed',
     energy_kcal:nutritionParseGetal(document.getElementById('nutrition-kcal').value),
     protein_g:nutritionParseGetal(document.getElementById('nutrition-protein').value),
     carbohydrate_g:nutritionParseGetal(document.getElementById('nutrition-carbs').value),
@@ -12070,7 +12080,7 @@ async function nutritionSaveEntry(){
     note:document.getElementById('nutrition-note').value.trim()||null
   };
   const validatie=NutritionFoundationCore.validateEntry(Object.assign({occurred_at:new Date().toISOString()},payload));
-  if(!validatie.valid){toast('Controleer je invoer');return;}
+  if(!validatie.valid || !consumedAtIso){toast('Controleer je invoer');return;}
   // Offline (sectie 19): geen tweede offline-engine -- hergebruikt de
   // bestaande, bewezen sbPostQ()/sbPatchQ() (IndexedDB-queue met
   // owner_uid-binding, retry, en idempotency via een client-gegenereerde
@@ -12079,6 +12089,9 @@ async function nutritionSaveEntry(){
   if(_nutritionEditingId){
     ok=await sbPatchQ('nutrition_entries',`id=eq.${_nutritionEditingId}`,payload);
   }else{
+    // occurred_at blijft ongewijzigd meegeschreven (registratiemoment,
+    // achterwaartse compatibiliteit); consumed_at is de nieuwe, canonieke
+    // gebeurtenistijd.
     ok=await sbPostQ('nutrition_entries',Object.assign({user_id:uid,occurred_at:new Date().toISOString()},payload));
   }
   toast(ok?(_nutritionEditingId?'Bijgewerkt':'Toegevoegd'):'Opslaan mislukt');
@@ -20979,7 +20992,21 @@ var voedingCurrentDate = new Date();
 var voedingCurrentMealTypeForAdd = null;
 var voedingSelectedProduct = null; // {id, name, brand, nutrientRow}
 
-function voedingDateStr(d){ return d.toISOString().slice(0,10); }
+// NUT-TIME-01 (bugfix): dit gaf voorheen de UTC-kalenderdag terug, niet de
+// lokale dag -- rond middernacht (bv. 00:30 lokale tijd = nog steeds de
+// vorige dag in UTC voor UTC+1/+2) groepeerde dit meals/hydratatie/
+// supplementen verkeerd. Gedelegeerd naar NutritionTimeUtils (puur,
+// apart getest), consistent met het al langer bestaande, correcte
+// patroon in nutritionDagGrenzen().
+function voedingDateStr(d){ return NutritionTimeUtils.localDateStr(d); }
+/* NUT-TIME-01: gedeelde tijd-invoer-utilities voor consumed_at (het
+   werkelijke consumptiemoment, niet het registratiemoment). Dunne
+   delegatie naar NutritionTimeUtils -- zie core/nutritionTimeUtils.js
+   voor de eigenlijke, pure, apart geteste logica. */
+function voedingNowLocalInputValue(){ return NutritionTimeUtils.nowLocalInputValue(); }
+function voedingIsoToLocalInputValue(iso){ return NutritionTimeUtils.isoToLocalInputValue(iso); }
+function voedingLocalInputToIso(value){ return NutritionTimeUtils.localInputToIso(value); }
+function voedingLocalDayBoundsIso(d){ return NutritionTimeUtils.localDayBoundsIso(d); }
 function voedingUid(){ return (typeof authSession!=='undefined' && authSession && authSession.user) ? authSession.user.id : null; }
 
 function voedingShiftDay(deltaOrZero){
@@ -20992,8 +21019,11 @@ function voedingShiftDay(deltaOrZero){
 /* voedingFetchDayMeals: haalt meals+items voor de huidige dag op. RLS
    filtert automatisch op de ingelogde gebruiker (bestaande conventie). */
 async function voedingFetchDayMeals(){
-  var dateStr=voedingDateStr(voedingCurrentDate);
-  var meals=await sbGet('nutrition_meals','&occurred_at=gte.'+dateStr+'T00:00:00&occurred_at=lt.'+dateStr+'T23:59:59&order=occurred_at.asc');
+  // NUT-TIME-01: filtert nu op consumed_at (werkelijk consumptiemoment)
+  // i.p.v. occurred_at, met echte lokale-daggrenzen (voedingLocalDayBoundsIso)
+  // i.p.v. een naïeve datum-string-concatenatie.
+  var b=voedingLocalDayBoundsIso(voedingCurrentDate);
+  var meals=await sbGet('nutrition_meals','&consumed_at=gte.'+b.startIso+'&consumed_at=lt.'+b.eindIso+'&order=consumed_at.asc');
   if(!meals||!meals.length) return [];
   var ids=meals.map(function(m){return m.id;}).join(',');
   var items=await sbGet('nutrition_meal_items','&meal_id=in.('+ids+')');
@@ -21002,12 +21032,12 @@ async function voedingFetchDayMeals(){
 }
 
 async function voedingFetchDayHydration(){
-  var dateStr=voedingDateStr(voedingCurrentDate);
-  return await sbGet('nutrition_hydration_entries','&occurred_at=gte.'+dateStr+'T00:00:00&occurred_at=lt.'+dateStr+'T23:59:59');
+  var b=voedingLocalDayBoundsIso(voedingCurrentDate);
+  return await sbGet('nutrition_hydration_entries','&consumed_at=gte.'+b.startIso+'&consumed_at=lt.'+b.eindIso);
 }
 async function voedingFetchDaySupplements(){
-  var dateStr=voedingDateStr(voedingCurrentDate);
-  return await sbGet('nutrition_supplement_logs','&occurred_at=gte.'+dateStr+'T00:00:00&occurred_at=lt.'+dateStr+'T23:59:59');
+  var b=voedingLocalDayBoundsIso(voedingCurrentDate);
+  return await sbGet('nutrition_supplement_logs','&consumed_at=gte.'+b.startIso+'&consumed_at=lt.'+b.eindIso);
 }
 
 function voedingCoverageBar(pct,color){
@@ -21171,7 +21201,8 @@ async function voedingConfirmWaterEntry(){
   var _done=voedingWithBusy(document.querySelector('#m-voeding-water .tk-btn-primary'),'Toevoegen…');
   var uid=voedingUid(); if(!uid){ _done(); return; }
   try{
-    await sbPostQ('nutrition_hydration_entries',{user_id:uid,occurred_at:new Date().toISOString(),amount_ml:norm.amount_ml,source:'manual'});
+    var nu=new Date().toISOString();
+    await sbPostQ('nutrition_hydration_entries',{user_id:uid,occurred_at:nu,consumed_at:nu,consumed_at_source:'user_confirmed',amount_ml:norm.amount_ml,source:'manual'});
   }catch(e){ errEl.textContent='Opslaan mislukt. Controleer je verbinding en probeer opnieuw.'; errEl.style.display='block'; _done(); return; }
   closeModal('m-voeding-water');
   _done(); toast('Water toegevoegd');
@@ -21507,13 +21538,18 @@ async function voedingConfirmAddToMeal(){
   // het bestaande merge-duplicates-mechanisme, geen nieuwe architectuur).
   if(!voedingPendingAddItemId) voedingPendingAddItemId=newClientRowId();
   try{
-  var dateStr=voedingDateStr(voedingCurrentDate);
-  var meals=await sbGet('nutrition_meals','&occurred_at=gte.'+dateStr+'T00:00:00&occurred_at=lt.'+dateStr+'T23:59:59&meal_type=eq.'+mealType);
+  // NUT-TIME-01: opzoeken/aanmaken van de dag-meal-shell gaat nu via
+  // consumed_at (werkelijk consumptiemoment). occurred_at blijft ongewijzigd
+  // meegeschreven voor achterwaartse compatibiliteit met eventuele andere
+  // lezers, maar is niet langer de bron voor "welke dag/welk moment".
+  var b=voedingLocalDayBoundsIso(voedingCurrentDate);
+  var meals=await sbGet('nutrition_meals','&consumed_at=gte.'+b.startIso+'&consumed_at=lt.'+b.eindIso+'&meal_type=eq.'+mealType);
   var mealId;
   if(meals&&meals.length){ mealId=meals[0].id; }
   else {
-    var created=await sbPostQ('nutrition_meals',{user_id:uid,occurred_at:new Date().toISOString(),meal_type:mealType});
-    var freshMeals=await sbGet('nutrition_meals','&occurred_at=gte.'+dateStr+'T00:00:00&occurred_at=lt.'+dateStr+'T23:59:59&meal_type=eq.'+mealType+'&order=created_at.desc&limit=1');
+    var nu=new Date().toISOString();
+    var created=await sbPostQ('nutrition_meals',{user_id:uid,occurred_at:nu,consumed_at:nu,consumed_at_source:'user_confirmed',meal_type:mealType});
+    var freshMeals=await sbGet('nutrition_meals','&consumed_at=gte.'+b.startIso+'&consumed_at=lt.'+b.eindIso+'&meal_type=eq.'+mealType+'&order=created_at.desc&limit=1');
     mealId=freshMeals&&freshMeals[0]&&freshMeals[0].id;
   }
   if(!mealId){ voedingShowAddMealError(errEl,_done); return; }
@@ -21536,7 +21572,18 @@ async function renderVoedingMaaltijdDetail(){
     var mealLabels={breakfast:'Ontbijt',lunch:'Lunch',dinner:'Diner',snack:'Snack',other:'Overig'};
     document.getElementById('voeding-meal-detail-title').textContent=mealLabels[meal.meal_type]||'Maaltijd';
     var items0=await sbGet('nutrition_meal_items','&meal_id=eq.'+meal.id);
-    document.getElementById('voeding-meal-detail-sub').textContent = items0&&items0.length ? (items0.length===1?'1 product':items0.length+' producten') : '';
+    var aantalTekst = items0&&items0.length ? (items0.length===1?'1 product':items0.length+' producten') : '';
+    // NUT-TIME-01: consumed_at tonen + aanpasbaar via edit (geen verplichte
+    // extra stap bij het toevoegen zelf -- default blijft "nu"). Val terug
+    // op occurred_at als een oudere rij nog geen consumed_at zou hebben.
+    window._voedingMealDetailId=meal.id;
+    var tijdIso=meal.consumed_at||meal.occurred_at;
+    var tijdLabel=tijdIso?new Date(tijdIso).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):'--:--';
+    var tijdHtml='<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--g4);margin-top:2px">'
+      +'<span id="voeding-meal-detail-tijd">'+tijdLabel+'</span>'
+      +'<button class="ibtn" style="min-width:28px;min-height:28px" onclick="voedingEditMealTime()" aria-label="Tijdstip aanpassen">✎</button>'
+      +'</div>';
+    document.getElementById('voeding-meal-detail-sub').innerHTML=escHtml(aantalTekst)+tijdHtml;
     var items=items0;
     var prodIds=(items||[]).map(function(i){return i.product_id;}).filter(Boolean);
     var prods=prodIds.length?await sbGet('nutrition_products','&id=in.('+prodIds.join(',')+')'):[];
@@ -21560,6 +21607,31 @@ async function renderVoedingMaaltijdDetail(){
     +'<div style="font-size:12px;color:var(--g4)">Eiwit '+(agg.protein_g==null?'—':agg.protein_g+'g')+' · Koolhydraten '+(agg.carbohydrate_g==null?'—':agg.carbohydrate_g+'g')+' · Vet '+(agg.fat_g==null?'—':agg.fat_g+'g')+'</div></div>'
     +'<button style="width:100%;text-align:left;border:none;background:none;color:#c0392b;font-size:14px;margin-top:16px;padding:10px 0;cursor:pointer" onclick="voedingDeleteMeal(\''+meal.id+'\')">Maaltijd verwijderen</button>';
   }catch(e){ el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--g4)">Kon maaltijd niet laden.</div>'; }
+}
+
+/* NUT-TIME-01: tijdstip van een maaltijd achteraf aanpassen (edit-pad,
+   conform "gebruiker moet datum/tijd kunnen aanpassen ... of via edit").
+   Wijzigt uitsluitend consumed_at; occurred_at blijft ongewijzigd staan
+   (registratiehistorie), geen nutrient-herberekening. */
+async function voedingEditMealTime(){
+  var mealId=window._voedingMealDetailId; if(!mealId) return;
+  var huidige=document.getElementById('voeding-meal-detail-tijd');
+  var meals=await sbGet('nutrition_meals','&id=eq.'+mealId);
+  var meal=meals&&meals[0]; if(!meal) return;
+  var iso=meal.consumed_at||meal.occurred_at||new Date().toISOString();
+  var wrap=document.createElement('span');
+  wrap.innerHTML='<input type="datetime-local" id="voeding-meal-tijd-input" style="font-size:12px;padding:2px 4px" value="'+voedingIsoToLocalInputValue(iso)+'">'
+    +'<button class="ibtn" style="min-width:28px;min-height:28px" onclick="voedingSaveMealTime()" aria-label="Opslaan">✓</button>';
+  huidige.replaceWith(wrap);
+}
+async function voedingSaveMealTime(){
+  var mealId=window._voedingMealDetailId; if(!mealId) return;
+  var input=document.getElementById('voeding-meal-tijd-input'); if(!input) return;
+  var iso=voedingLocalInputToIso(input.value);
+  if(!iso){ toast('Ongeldig tijdstip'); return; }
+  var ok=await sbPatchQ('nutrition_meals','id=eq.'+mealId,{consumed_at:iso,consumed_at_source:'user_confirmed'});
+  toast(ok?'Tijdstip bijgewerkt':'Opslaan mislukt');
+  if(ok) renderVoedingMaaltijdDetail();
 }
 function voedingConfirmRemoveMealItem(itemId){
   document.getElementById('m-voeding-confirm-title').textContent='Item verwijderen?';
@@ -21688,7 +21760,8 @@ async function voedingSaveSupplement(){
     var logCheck=NutritionSupplementService.validateSupplementLog({supplement_id:defId,dose:dose||null});
     if(!logCheck.valid){ errEl.textContent='Ongeldige dosering.'; errEl.style.display='block'; return; }
     errEl.style.display='none';
-    await sbPostQ('nutrition_supplement_logs',{user_id:uid,supplement_id:defId,occurred_at:new Date().toISOString(),dose:dose||null,unit:unit,source:'manual'});
+    var nu=new Date().toISOString();
+    await sbPostQ('nutrition_supplement_logs',{user_id:uid,supplement_id:defId,occurred_at:nu,consumed_at:nu,consumed_at_source:'user_confirmed',dose:dose||null,unit:unit,source:'manual'});
     document.getElementById('voeding-supp-name').value=''; document.getElementById('voeding-supp-dose').value='';
     _done(); voedingRenderSupplementHistory();
   }catch(e){ _done(); errEl.textContent='Opslaan mislukt.'; errEl.style.display='block'; }
@@ -21696,10 +21769,10 @@ async function voedingSaveSupplement(){
 async function voedingRenderSupplementHistory(){
   var el=document.getElementById('voeding-supp-history'); if(!el) return;
   try{
-    var logs=await sbGet('nutrition_supplement_logs','&order=occurred_at.desc&limit=10');
+    var logs=await sbGet('nutrition_supplement_logs','&order=consumed_at.desc&limit=10');
     if(!logs||!logs.length){ el.innerHTML='<div style="text-align:center;padding:12px;color:var(--g4);font-size:13px">Nog geen supplementen gelogd.</div>'; return; }
     el.innerHTML=logs.map(function(l){
-      var d=new Date(l.occurred_at);
+      var d=new Date(l.consumed_at||l.occurred_at);
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--color-border);font-size:13px"><span>'+(l.dose!=null?l.dose+' '+(l.unit||''):'—')+'</span><span style="color:var(--g4)">'+d.toLocaleDateString('nl-NL')+'</span><button style="border:none;background:none;color:#c0392b;cursor:pointer" onclick="voedingDeleteSupplementLog(\''+l.id+'\')">🗑</button></div>';
     }).join('');
   }catch(e){ el.innerHTML=''; }

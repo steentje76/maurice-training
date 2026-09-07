@@ -58,6 +58,36 @@
       { group_id: 'basis', group_label: 'Basis', section_ids: ['wat-bedoelen-we', 'patroon-boven-product', 'variatie'] },
       { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['groente', 'fruit', 'volkoren', 'peulvruchten', 'eiwitbronnen', 'vetkwaliteit', 'vrije-suikers', 'zout-natrium'] },
       { group_id: 'verdieping', group_label: 'Verdieping', section_ids: ['bewerkte-voeding', 'energiedichtheid', 'sportvoeding-past', 'flexibiliteit'] }
+    ],
+    PRE_TRAINING: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['doel-pre-exercise', 'beschikbare-energie', 'koolhydraatbeschikbaarheid', 'koolhydraatcontext', 'eiwitcontext'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['timing', 'maaltijd-versus-snack', 'vetcontext', 'vezelcontext', 'hydratatie-crosslink'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: ['training-vroeg-ochtend', 'kort-versus-lang', 'hoge-lage-intensiteit', 'individuele-tolerantie', 'algemeen-versus-pre-workout'] }
+    ],
+    DURING_TRAINING: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['wanneer-relevant', 'inspanningsduur', 'intensiteit', 'koolhydraten-tijdens', 'mondspoeling'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['dertig-zestig-context', 'hogere-intake-langere-inspanning', 'sportdrank-gel-vast', 'gi-tolerantie', 'gut-training'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: ['glucose-fructose-mtc', 'tot-90-correct-onderbouwd', 'hogere-innames-120', 'individuele-verschillen', 'wedstrijd-versus-training'] }
+    ],
+    POST_TRAINING: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['doelen-herstelvoeding', 'totale-daginname', 'glycogeenherstel', 'koolhydraten'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['eiwit', 'vocht-crosslink', 'timing', 'maaltijd-versus-shake'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: ['snelle-aanvulling-relevant', 'meerdere-trainingen-dag', 'lange-versus-korte-turnaround', 'totale-voedingskwaliteit', 'slaap-herstel'] }
+    ],
+    ENDURANCE_CARB: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['glycogeen', 'duur-intensiteit', 'exogene-koolhydraten', 'koolhydraatoxidatie'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['mtc', 'gi-tolerantie', 'gut-training', 'vloeibaar-versus-vast'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: ['wedstrijdstrategie', 'training-van-strategie', 'carb-loading', 'carb-loading-gewicht', 'beperkingen-hoge-innames'] }
+    ],
+    MUSCLE_GAIN: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['resistance-training-primair', 'voldoende-energie', 'eiwitinname', 'totale-dagelijkse-inname'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['verdeling', 'eiwitkwaliteit', 'timing-nuance', 'koolhydraten-trainingskwaliteit'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: ['energietekort-versus-spieropbouw', 'supplementen-niet-noodzakelijk', 'creatine-crosslink', 'meer-eiwit-niet-onbeperkt'] }
+    ],
+    FAT_LOSS_SPORT: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['energiebalans', 'duurzaam-tekort', 'behoud-trainingskwaliteit'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['eiwitcontext', 'resistance-training-context', 'snelheid-gewichtsverlies', 'behoud-vetvrije-massa'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: ['sportprestatie', 'herstel', 'lage-energiebeschikbaarheid', 'red-s', 'dieetkwaliteit', 'haalbaarheid'] }
     ]
   };
 

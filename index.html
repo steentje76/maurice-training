@@ -22190,15 +22190,27 @@ function renderVoedingSupplementInfo(edu){
  * prototype, expliciet geen vrij chatgesprek). */
 function voedingKennisKnownTopics(){
   // NK-03: uitgebreid van 2 naar 7 topics (Koolhydraten/Vetten/Energie/Vezels/
-  // Gezonde voeding toegevoegd aan Eiwitten/Creatine). Volgorde bepaalt geen
-  // gedrag, alleen weergavevolgorde binnen de Voeding/Supplementen-groep.
-  return ['PROTEIN', 'CARBOHYDRATES', 'FATS', 'ENERGY', 'FIBRE', 'HEALTHY_EATING', 'CREATINE'];
+  // Gezonde voeding toegevoegd aan Eiwitten/Creatine).
+  // NK-04: 6 sportvoedingstopics toegevoegd (Voor/Tijdens/Na training,
+  // Langdurige inspanning, Spieropbouw, Vetverlies & sport). Volgorde bepaalt
+  // geen gedrag, alleen weergavevolgorde binnen de hub-groepen.
+  return ['PROTEIN', 'CARBOHYDRATES', 'FATS', 'ENERGY', 'FIBRE', 'HEALTHY_EATING',
+    'PRE_TRAINING', 'DURING_TRAINING', 'POST_TRAINING', 'ENDURANCE_CARB', 'MUSCLE_GAIN', 'FAT_LOSS_SPORT',
+    'CREATINE'];
+}
+// NK-04 sectie 17: expliciete Sportvoeding-subgroep binnen Voeding (UI-alleen --
+// verandert het domain-veld van deze topics niet, dat blijft NUTRITION, exact
+// zoals de overige voedingstopics; dit is uitsluitend hub-presentatie).
+function voedingKennisSportvoedingTopicIds(){
+  return ['PRE_TRAINING', 'DURING_TRAINING', 'POST_TRAINING', 'ENDURANCE_CARB', 'MUSCLE_GAIN', 'FAT_LOSS_SPORT'];
 }
 function voedingRenderKennisHub(){
   var el=document.getElementById('voeding-kennis-hub'); if(!el) return;
   if(typeof NutritionKnowledgeService==='undefined'){ el.innerHTML=''; return; }
+  var sportIds=voedingKennisSportvoedingTopicIds();
   var groepen=[
-    {titel:'Voeding', ids:voedingKennisKnownTopics().filter(function(id){var t=NutritionKnowledgeTopics.getTopic(id);return t&&t.domain==='NUTRITION';})},
+    {titel:'Voeding', ids:voedingKennisKnownTopics().filter(function(id){var t=NutritionKnowledgeTopics.getTopic(id);return t&&t.domain==='NUTRITION'&&sportIds.indexOf(id)===-1;})},
+    {titel:'Sportvoeding', ids:voedingKennisKnownTopics().filter(function(id){var t=NutritionKnowledgeTopics.getTopic(id);return t&&t.domain==='NUTRITION'&&sportIds.indexOf(id)>=0;})},
     {titel:'Supplementen', ids:voedingKennisKnownTopics().filter(function(id){var t=NutritionKnowledgeTopics.getTopic(id);return t&&t.domain==='SUPPLEMENT';})}
   ];
   el.innerHTML=groepen.map(function(g){

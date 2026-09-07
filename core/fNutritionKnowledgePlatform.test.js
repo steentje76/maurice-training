@@ -61,10 +61,13 @@ ok(KEvidence.confidenceLabel('D', 'VERIFIED') === 'Onvoldoende bewijs', 'F-b: ev
 // ---- G: user-friendly tekst verandert claimbetekenis niet ----
 // (steekproef: user_friendly_summary bevat geen omgekeerde bewering t.o.v.
 // claim_text_internal. Claims zonder user_friendly_summary zijn HIDDEN/
-// architectuurclaims -- die worden nooit getoond, dus hier niet relevant.)
+// architectuurclaims -- die worden nooit getoond, dus hier niet relevant.
+// Woordgrenzen (\b) verplicht: zonder grenzen matcht "geen" ook als
+// substring binnen "glycogeen", wat valse positieven gaf voor elke
+// koolhydraat-/hersteltclaim die het woord "glycogeen" noemt.)
 KEvidence.CLAIMS.filter((c) => !!c.user_friendly_summary).forEach((c) => {
-  const negatiefInIntern = /geen|niet|nooit/i.test(c.claim_text_internal);
-  const negatiefInSummary = /geen|niet|nooit/i.test(c.user_friendly_summary);
+  const negatiefInIntern = /\b(geen|niet|nooit)\b/i.test(c.claim_text_internal);
+  const negatiefInSummary = /\b(geen|niet|nooit)\b/i.test(c.user_friendly_summary);
   ok(negatiefInIntern === negatiefInSummary || !negatiefInIntern, 'G: ontkenning in claim_text_internal van ' + c.claim_id + ' komt overeen met de gebruikersvriendelijke samenvatting (geen tegengestelde betekenis)');
 });
 

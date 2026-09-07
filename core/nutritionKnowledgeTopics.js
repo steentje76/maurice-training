@@ -271,6 +271,202 @@
   ];
   TOPICS.push.apply(TOPICS, NK03_TOPICS);
 
+  // ── NK-04: sportvoedingstopics (voor/tijdens/na training, langdurige inspanning, spieropbouw, vetverlies) ──
+  var NK04_TOPICS = [
+    {
+      topic_id: 'PRE_TRAINING',
+      domain: 'NUTRITION',
+      display_name: 'Voeding voor training',
+      quick_summary_evidence_ref: 'NK-PRE-CARB-001',
+      quick_summary_text: 'Wat je voor het sporten eet, hangt af van duur en intensiteit. Er is geen universeel voorschrift -- wel bruikbare richtlijnen.',
+      sections: [
+        { section_id: 'doel-pre-exercise', title: 'Doel van pre-exercise voeding', body: 'Voeding vooraf ondersteunt voldoende brandstof en comfort tijdens het sporten.', evidence_refs: ['NK-PRE-CARB-001'] },
+        { section_id: 'beschikbare-energie', title: 'Beschikbare energie', body: 'Voldoende energie vooraf helpt om de geplande trainingsintensiteit te kunnen halen.', evidence_refs: ['NK-PRE-CARB-001'] },
+        { section_id: 'koolhydraatbeschikbaarheid', title: 'Koolhydraatbeschikbaarheid', body: 'Voor zwaardere, langere trainingen wordt vaak extra koolhydraat vooraf onderzocht/gebruikt.', evidence_refs: ['NK-PRE-CARB-001'] },
+        { section_id: 'timing', title: 'Timing', body: 'Hoe dichter bij het sporten, hoe kleiner en lichter verteerbaar een maaltijd doorgaans moet zijn.', evidence_refs: ['NK-PRE-TIMING-001'] },
+        { section_id: 'maaltijd-versus-snack', title: 'Maaltijd versus snack', body: 'Een volledige maaltijd ruim vooraf of een lichte snack vlak ervoor kunnen beide werken, afhankelijk van timing en tolerantie.', evidence_refs: ['NK-PRE-TIMING-001'] },
+        { section_id: 'koolhydraatcontext', title: 'Koolhydraatcontext', body: 'Koolhydraten zijn meestal het belangrijkste aandachtspunt in een pre-exercise maaltijd bij langere/zwaardere inspanning.', evidence_refs: ['NK-PRE-CARB-001'] },
+        { section_id: 'eiwitcontext', title: 'Eiwitcontext', body: 'Eiwit vooraf is geen vereiste, maar kan onderdeel zijn van een gebalanceerde maaltijd.', evidence_refs: ['PROT-TOTAL-001'] },
+        { section_id: 'vetcontext', title: 'Vetcontext', body: 'Veel vet vlak voor het sporten kan de spijsvertering vertragen en oncomfortabel aanvoelen.', evidence_refs: ['NK-PRE-TIMING-001'] },
+        { section_id: 'vezelcontext', title: 'Vezelcontext', body: 'Veel vezels vlak voor het sporten kan bij gevoelige personen buikklachten geven.', evidence_refs: ['NK-FIB-GI-001'] },
+        { section_id: 'hydratatie-crosslink', title: 'Hydratatie (kort)', body: 'Voldoende gehydrateerd aan de start beginnen is relevant -- meer hierover volgt in een toekomstig Hydratatie-dossier.', evidence_refs: ['ELEC-HYDRA-001'] },
+        { section_id: 'training-vroeg-ochtend', title: 'Training vroeg in de ochtend', body: 'Bij vroege training is er vaak minder tijd voor een uitgebreide maaltijd -- een lichte snack of nuchter trainen zijn beide onderzochte opties.', evidence_refs: ['NK-PRE-FASTED-001'] },
+        { section_id: 'kort-versus-lang', title: 'Korte versus lange training', body: 'Bij kortere inspanning is pre-exercise voeding minder cruciaal dan bij langere, zwaardere sessies.', evidence_refs: ['CARB-SHORT-001'] },
+        { section_id: 'hoge-lage-intensiteit', title: 'Hoge versus lage intensiteit', body: 'Bij hogere intensiteit wordt koolhydraatbeschikbaarheid vooraf relevanter dan bij rustige inspanning.', evidence_refs: ['NK-PRE-CARB-001'] },
+        { section_id: 'individuele-tolerantie', title: 'Individuele tolerantie', body: 'Wat werkt voor pre-exercise voeding, verschilt sterk van persoon tot persoon -- test dit vooral in training, niet voor het eerst in een wedstrijd.', evidence_refs: ['NK-PRE-TIMING-001'] },
+        { section_id: 'algemeen-versus-pre-workout', title: 'Algemene voeding over de dag versus één pre-workout maaltijd', body: 'Je totale voeding over de dag is minstens zo belangrijk als de ene maaltijd vlak voor het sporten.', evidence_refs: ['PROT-TIMING-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'PRE-FAQ-ALTIJD', question: 'Moet ik altijd eten voor training?', evidence_refs: ['CARB-SHORT-001'] },
+        { faq_id: 'PRE-FAQ-HOELANG', question: 'Hoe lang voor training kun je eten?', evidence_refs: ['NK-PRE-TIMING-001'] },
+        { faq_id: 'PRE-FAQ-KOOLHYDRAAT', question: 'Zijn koolhydraten voor training belangrijk?', evidence_refs: ['NK-PRE-CARB-001'] },
+        { faq_id: 'PRE-FAQ-EIWIT', question: 'Moet ik eiwit voor training nemen?', evidence_refs: ['PROT-TOTAL-001'] },
+        { faq_id: 'PRE-FAQ-BUIKKLACHTEN', question: 'Waarom krijg ik buikklachten tijdens sporten?', evidence_refs: ['NK-PRE-TIMING-001', 'NK-FIB-GI-001'] },
+        { faq_id: 'PRE-FAQ-NUCHTER', question: 'Kun je nuchter trainen?', evidence_refs: ['NK-PRE-FASTED-001'] }
+      ]
+    },
+    {
+      topic_id: 'DURING_TRAINING',
+      domain: 'NUTRITION',
+      display_name: 'Voeding tijdens training',
+      quick_summary_evidence_ref: 'CARB-MID-001',
+      quick_summary_text: 'Bij kortere inspanning is voeding tijdens het sporten meestal niet nodig; bij langere duur wordt koolhydraatinname steeds relevanter.',
+      sections: [
+        { section_id: 'wanneer-relevant', title: 'Wanneer wordt voeding tijdens training relevant?', body: 'Vanaf ongeveer 45-75 minuten kan koolhydraatinname tijdens het sporten relevant worden.', evidence_refs: ['CARB-SHORT-001'] },
+        { section_id: 'inspanningsduur', title: 'Inspanningsduur', body: 'Hoe langer de inspanning, hoe meer koolhydraten tijdens het sporten kunnen helpen.', evidence_refs: ['CARB-MID-001', 'CARB-LONG-001'] },
+        { section_id: 'intensiteit', title: 'Intensiteit', body: 'Naast duur speelt ook intensiteit een rol in hoeveel koolhydraten tijdens inspanning zinvol zijn.', evidence_refs: ['CARB-MID-001'] },
+        { section_id: 'koolhydraten-tijdens', title: 'Koolhydraten tijdens inspanning', body: 'Bij 1-2,5 uur inspanning wordt 30-60 g koolhydraten per uur onderzocht/gebruikt.', evidence_refs: ['CARB-MID-001'] },
+        { section_id: 'mondspoeling', title: 'Mondspoeling (mouth rinse)', body: 'Bij kortere, intensieve inspanning kan zelfs een mondspoeling met koolhydraten al een licht effect geven.', evidence_refs: ['NK-DUR-RINSE-001'] },
+        { section_id: 'dertig-zestig-context', title: '30-60 g/u-context', body: 'Dit bereik geldt met name voor inspanning van 1-2,5 uur.', evidence_refs: ['CARB-MID-001'] },
+        { section_id: 'hogere-intake-langere-inspanning', title: 'Hogere intake bij langere inspanning', body: 'Bij meer dan 2,5-3 uur inspanning wordt tot circa 90 g/uur onderzocht, met een mix van koolhydraattypen.', evidence_refs: ['CARB-LONG-001'] },
+        { section_id: 'glucose-fructose-mtc', title: 'Glucose/fructose (multiple transportable carbohydrates)', body: 'Boven circa 60 g/uur is een mix van glucose en fructose nodig vanwege een opnameplafond voor een enkel koolhydraattype.', evidence_refs: ['NK-DUR-MTC-001'] },
+        { section_id: 'tot-90-correct-onderbouwd', title: 'Tot circa 90 g/u waar correct onderbouwd', body: 'Dit hogere bereik is specifiek onderzocht bij langere inspanning met een glucose+fructose-mix.', evidence_refs: ['CARB-LONG-001'] },
+        { section_id: 'hogere-innames-120', title: 'Onderzoek naar hogere innames (~120 g/u)', body: 'Zeer hoge innames zijn vooral onderzocht bij specifieke, zeer getrainde ultra-atleten -- lage generaliseerbaarheid naar de meeste sporters.', evidence_refs: ['CARB-ELITE-001'] },
+        { section_id: 'gi-tolerantie', title: 'GI-tolerantie', body: 'Je spijsvertering kan wennen aan hogere koolhydraatinname tijdens sport.', evidence_refs: ['CARB-GI-001'] },
+        { section_id: 'gut-training', title: 'Gut training', body: 'Geleidelijk oefenen met hogere innames tijdens training kan de GI-tolerantie verbeteren.', evidence_refs: ['CARB-GI-001'] },
+        { section_id: 'sportdrank-gel-vast', title: 'Sportdrank/gels/vaste voeding', body: 'Vloeibare en vaste koolhydraatbronnen kunnen beide werken -- de keuze hangt af van tolerantie en praktische haalbaarheid.', evidence_refs: ['NK-END-VLOEIBAAR-001'] },
+        { section_id: 'individuele-verschillen', title: 'Individuele verschillen', body: 'Wat werkt tijdens inspanning verschilt sterk per persoon -- test dit in training.', evidence_refs: ['CARB-GI-001'] },
+        { section_id: 'wedstrijd-versus-training', title: 'Wedstrijd versus training', body: 'Test je voedingsstrategie tijdens training, niet voor het eerst tijdens een wedstrijd.', evidence_refs: ['CARB-GI-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'DUR-FAQ-EEN-UUR', question: 'Heb ik tijdens een uur sporten koolhydraten nodig?', evidence_refs: ['CARB-MID-001'] },
+        { faq_id: 'DUR-FAQ-GELS', question: 'Waarom gebruiken duursporters gels?', evidence_refs: ['CARB-LONG-001', 'NK-DUR-MTC-001'] },
+        { faq_id: 'DUR-FAQ-MONDSPOELING', question: 'Helpt het om alleen mijn mond te spoelen met een sportdrank?', evidence_refs: ['NK-DUR-RINSE-001'] },
+        { faq_id: 'DUR-FAQ-VEEL', question: 'Kan ik zoveel koolhydraten eten als ik wil tijdens het sporten?', evidence_refs: ['CARB-GI-001'] }
+      ]
+    },
+    {
+      topic_id: 'POST_TRAINING',
+      domain: 'NUTRITION',
+      display_name: 'Voeding na training & herstel',
+      quick_summary_evidence_ref: 'NK-POST-TOTAL-001',
+      quick_summary_text: 'Herstelvoeding draait om je totale dagelijkse inname. Er bestaat geen strikt "30-minuten-venster" dat voor iedereen geldt.',
+      sections: [
+        { section_id: 'doelen-herstelvoeding', title: 'Doelen van herstelvoeding', body: 'Herstelvoeding ondersteunt het aanvullen van energie/glycogeen en het herstel van spierweefsel.', evidence_refs: ['NK-POST-TOTAL-001'] },
+        { section_id: 'totale-daginname', title: 'Totale daginname', body: 'Je totale dagelijkse koolhydraat- en eiwitinname is meestal belangrijker dan het exacte tijdstip na training.', evidence_refs: ['NK-POST-TOTAL-001'] },
+        { section_id: 'glycogeenherstel', title: 'Glycogeenherstel', body: 'Koolhydraten na training helpen je glycogeenvoorraad weer aan te vullen.', evidence_refs: ['CARB-MID-001'] },
+        { section_id: 'koolhydraten', title: 'Koolhydraten', body: 'De hoeveelheid koolhydraten die nodig is voor herstel hangt af van de duur/intensiteit van je training en de tijd tot je volgende sessie.', evidence_refs: ['NK-POST-GLYCOGEN-001'] },
+        { section_id: 'eiwit', title: 'Eiwit', body: 'Eiwit na training ondersteunt spierherstel; 20-40 g hoogwaardig eiwit is hiervoor onderzocht.', evidence_refs: ['PROT-DOSE-001'] },
+        { section_id: 'vocht-crosslink', title: 'Vocht (kort)', body: 'Herstel van vochtverlies hoort ook bij herstelvoeding -- meer hierover volgt in een toekomstig Hydratatie-dossier.', evidence_refs: ['ELEC-HYDRA-001'] },
+        { section_id: 'timing', title: 'Timing', body: 'Er bestaat geen strikt "30-minuten-venster" -- het effect van training op spiereiwitsynthese houdt veel langer aan.', evidence_refs: ['PROT-TIMING-001'] },
+        { section_id: 'snelle-aanvulling-relevant', title: 'Wanneer snelle aanvulling relevant is', body: 'Bij minder dan circa 8 uur tot de volgende training is snel aanvullen relevanter dan bij een langere hersteltijd.', evidence_refs: ['NK-POST-GLYCOGEN-001'] },
+        { section_id: 'meerdere-trainingen-dag', title: 'Meerdere trainingen op één dag', body: 'Bij twee sessies op een dag is de timing van je tussenmaaltijd belangrijker dan bij één training per dag.', evidence_refs: ['NK-POST-GLYCOGEN-001'] },
+        { section_id: 'lange-versus-korte-turnaround', title: 'Lange herstelperiode versus korte turnaround', body: 'Bij een lange hersteltijd (>24 uur) telt vooral je totale dagelijkse inname; bij een korte turnaround telt snelheid meer.', evidence_refs: ['NK-POST-GLYCOGEN-001'] },
+        { section_id: 'maaltijd-versus-shake', title: 'Maaltijd versus shake', body: 'Een gewone maaltijd of een shake kunnen allebei prima werken voor herstel, zolang de totale inname klopt.', evidence_refs: ['PROT-NECESSITY-001'] },
+        { section_id: 'totale-voedingskwaliteit', title: 'Totale voedingskwaliteit', body: 'De kwaliteit van je voeding over de hele dag is minstens zo belangrijk als één herstelmaaltijd.', evidence_refs: ['PROT-DISTRIB-001'] },
+        { section_id: 'slaap-herstel', title: 'Slaap/herstel', body: 'Eiwit vlak voor het slapen kan het nachtelijke herstel ondersteunen.', evidence_refs: ['PROT-SLEEP-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'POST-FAQ-KRACHT', question: 'Moet ik direct na krachttraining eiwit nemen?', evidence_refs: ['PROT-TIMING-001'] },
+        { faq_id: 'POST-FAQ-DERTIG-MIN', question: 'Klopt het dat je binnen 30 minuten moet eten na training?', evidence_refs: ['PROT-TIMING-001'] },
+        { faq_id: 'POST-FAQ-TWEE-SESSIES', question: 'Wat als ik twee keer op een dag train?', evidence_refs: ['NK-POST-GLYCOGEN-001'] },
+        { faq_id: 'POST-FAQ-SHAKE', question: 'Moet dat per se een shake zijn na het sporten?', evidence_refs: ['PROT-NECESSITY-001'] }
+      ]
+    },
+    {
+      topic_id: 'ENDURANCE_CARB',
+      domain: 'NUTRITION',
+      display_name: 'Koolhydraatstrategieën bij langdurige inspanning',
+      quick_summary_evidence_ref: 'NK-END-LOAD-001',
+      quick_summary_text: 'Bij lange, zware inspanning bestaan onderzochte koolhydraatstrategieën, van tijdens de inspanning tot in de dagen ervoor (carb loading).',
+      sections: [
+        { section_id: 'glycogeen', title: 'Glycogeen', body: 'Je glycogeenvoorraad is beperkt en bepaalt mede hoe lang je op hoog niveau kunt presteren.', evidence_refs: ['CARB-LONG-001'] },
+        { section_id: 'duur-intensiteit', title: 'Duur/intensiteit', body: 'Hoe langer en intensiever de inspanning, hoe belangrijker koolhydraatstrategieën worden.', evidence_refs: ['CARB-LONG-001'] },
+        { section_id: 'exogene-koolhydraten', title: 'Exogene koolhydraten', body: 'Koolhydraten die je tijdens het sporten inneemt, vullen je eigen voorraad aan.', evidence_refs: ['CARB-LONG-001'] },
+        { section_id: 'koolhydraatoxidatie', title: 'Koolhydraatoxidatie', body: 'Je lichaam kan koolhydraten uit voeding tijdens inspanning maar tot op zekere hoogte gebruiken als brandstof.', evidence_refs: ['NK-DUR-MTC-001'] },
+        { section_id: 'mtc', title: 'Multiple transportable carbohydrates', body: 'Een mix van glucose en fructose verhoogt het opnameplafond t.o.v. één koolhydraattype alleen.', evidence_refs: ['NK-DUR-MTC-001'] },
+        { section_id: 'gi-tolerantie', title: 'GI-tolerantie', body: 'Hogere koolhydraatinname vraagt om een getrainde spijsvertering.', evidence_refs: ['CARB-GI-001'] },
+        { section_id: 'gut-training', title: 'Gut training', body: 'Oefen hogere innames tijdens training, niet voor het eerst tijdens een wedstrijd.', evidence_refs: ['CARB-GI-001'] },
+        { section_id: 'vloeibaar-versus-vast', title: 'Vloeibaar versus vast', body: 'Beide vormen kunnen werken -- kies wat voor jou praktisch en verdraagbaar is.', evidence_refs: ['NK-END-VLOEIBAAR-001'] },
+        { section_id: 'wedstrijdstrategie', title: 'Wedstrijdstrategie', body: 'Bouw je wedstrijdvoedingsstrategie op basis van wat je in training hebt getest.', evidence_refs: ['CARB-GI-001'] },
+        { section_id: 'training-van-strategie', title: 'Training van je voedingsstrategie', body: 'Gebruik trainingen om je koolhydraatstrategie te testen en te verfijnen.', evidence_refs: ['CARB-GI-001'] },
+        { section_id: 'carb-loading', title: 'Carb loading als education', body: 'Carb loading (verhoogde koolhydraatinname 24-48u vooraf) wordt onderzocht voor wedstrijden langer dan circa 90 minuten.', evidence_refs: ['NK-END-LOAD-001'] },
+        { section_id: 'carb-loading-gewicht', title: 'Carb loading en gewicht', body: 'Carb loading kan tijdelijke gewichtstoename geven door extra water bij het glycogeen -- geen vet.', evidence_refs: ['NK-END-LOAD-WEIGHT-001'] },
+        { section_id: 'beperkingen-hoge-innames', title: 'Beperkingen van hoge innames', body: 'Zeer hoge innames (~120 g/u) zijn alleen onderzocht bij specifieke, zeer getrainde ultra-atleten.', evidence_refs: ['CARB-ELITE-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'END-FAQ-CARBLOADING', question: 'Wat is carb loading?', evidence_refs: ['NK-END-LOAD-001'] },
+        { faq_id: 'END-FAQ-VOOR-WIE', question: 'Voor wie is carb loading relevant?', evidence_refs: ['NK-END-LOAD-001'] },
+        { faq_id: 'END-FAQ-ZWAARDER', question: 'Word ik zwaarder van carb loading?', evidence_refs: ['NK-END-LOAD-WEIGHT-001'] },
+        { faq_id: 'END-FAQ-120', question: 'Kan iedereen 120 g/uur koolhydraten verdragen?', evidence_refs: ['CARB-ELITE-001'] }
+      ]
+    },
+    {
+      topic_id: 'MUSCLE_GAIN',
+      domain: 'NUTRITION',
+      display_name: 'Spieropbouw & voeding',
+      quick_summary_evidence_ref: 'NK-MUS-STIMULUS-001',
+      quick_summary_text: 'Krachttraining is de motor achter spiergroei; voeding (energie, eiwit) ondersteunt dit, maar meer eiwit is geen onbeperkte hefboom.',
+      sections: [
+        { section_id: 'resistance-training-primair', title: 'Resistance training blijft primaire stimulus', body: 'Spieren groeien primair door krachttraining -- voeding ondersteunt, vervangt niet.', evidence_refs: ['NK-MUS-STIMULUS-001'] },
+        { section_id: 'voldoende-energie', title: 'Voldoende energie', body: 'Voor spiermassatoename wordt doorgaans een licht energieoverschot aanbevolen naast training.', evidence_refs: ['NK-MUS-SURPLUS-001'] },
+        { section_id: 'eiwitinname', title: 'Eiwitinname', body: 'Sporters die spiermassa opbouwen, hebben doorgaans 1,4-2,0 g/kg/dag eiwit nodig.', evidence_refs: ['PROT-TOTAL-001'] },
+        { section_id: 'totale-dagelijkse-inname', title: 'Totale dagelijkse inname', body: 'Je totale eiwitinname over de dag is het belangrijkste, meer dan één specifieke maaltijd.', evidence_refs: ['PROT-TOTAL-001'] },
+        { section_id: 'verdeling', title: 'Verdeling', body: 'Verspreid je eiwitinname over de dag, ongeveer elke 3-4 uur.', evidence_refs: ['PROT-DISTRIB-001'] },
+        { section_id: 'eiwitkwaliteit', title: 'Eiwitkwaliteit', body: 'Hoogwaardige eiwitbronnen ondersteunen spiereiwitsynthese effectief.', evidence_refs: ['NK-PROT-QUALITY-001'] },
+        { section_id: 'timing-nuance', title: 'Timing met nuance', body: 'Er is geen strikt tijdvenster -- je totale dagdosis telt het meest.', evidence_refs: ['PROT-TIMING-001'] },
+        { section_id: 'koolhydraten-trainingskwaliteit', title: 'Koolhydraten en trainingskwaliteit', body: 'Voldoende koolhydraten ondersteunen de kwaliteit en intensiteit van je krachttraining.', evidence_refs: ['CARB-MID-001'] },
+        { section_id: 'energietekort-versus-spieropbouw', title: 'Energietekort versus spieropbouw', body: 'Onder een aanhoudend energietekort is spiermassatoename beperkter dan bij onderhoud of een licht overschot.', evidence_refs: ['NK-MUS-SURPLUS-001'] },
+        { section_id: 'supplementen-niet-noodzakelijk', title: 'Supplementen zijn niet automatisch noodzakelijk', body: 'Een eiwitsupplement is nooit noodzakelijk als je de totale dagdosis via gewone voeding haalt.', evidence_refs: ['PROT-NECESSITY-001'] },
+        { section_id: 'creatine-crosslink', title: 'Creatine (kort)', body: 'Creatine kan spiermassatoename ondersteunen, uitsluitend in combinatie met krachttraining -- zie het aparte Creatine-dossier voor meer.', evidence_refs: ['CRE-MASS-001'] },
+        { section_id: 'meer-eiwit-niet-onbeperkt', title: 'Meer eiwit is geen onbeperkte hefboom', body: 'Boven een bepaald niveau levert extra eiwit geen extra spiergroei meer op.', evidence_refs: ['PROT-HIGH-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'MUS-FAQ-MEER-EIWIT', question: 'Geeft meer eiwit altijd meer spiergroei?', evidence_refs: ['PROT-HIGH-001'] },
+        { faq_id: 'MUS-FAQ-OVERSCHOT', question: 'Heb ik een calorie-overschot nodig om spieren op te bouwen?', evidence_refs: ['NK-MUS-SURPLUS-001'] },
+        { faq_id: 'MUS-FAQ-CREATINE', question: 'Helpt creatine bij spieropbouw?', evidence_refs: ['CRE-MASS-001'] },
+        { faq_id: 'MUS-FAQ-TEKORT', question: 'Kan ik spieren opbouwen in een energietekort?', evidence_refs: ['NK-MUS-SURPLUS-001'] }
+      ]
+    },
+    {
+      topic_id: 'FAT_LOSS_SPORT',
+      domain: 'NUTRITION',
+      display_name: 'Vetverlies & sport',
+      quick_summary_evidence_ref: 'NK-FATLOSS-RATE-001',
+      quick_summary_text: 'Verantwoord vetverlies bij sporters draait om een geleidelijk energietekort, met behoud van prestatie en spiermassa.',
+      sections: [
+        { section_id: 'energiebalans', title: 'Energiebalans', body: 'Vetverlies vereist een langdurig energietekort.', evidence_refs: ['NK-ENE-BALANCE-001'] },
+        { section_id: 'duurzaam-tekort', title: 'Duurzaam energietekort als concept', body: 'Een geleidelijk, vol te houden tekort wordt geassocieerd met beter resultaat op langere termijn dan een streng, kortdurend dieet.', evidence_refs: ['NK-FATLOSS-RATE-001'] },
+        { section_id: 'behoud-trainingskwaliteit', title: 'Behoud van trainingskwaliteit', body: 'Een te streng tekort kan je trainingskwaliteit en herstel negatief beïnvloeden.', evidence_refs: ['NK-FATLOSS-NOCRASH-001'] },
+        { section_id: 'eiwitcontext', title: 'Eiwitcontext', body: 'Tijdens een energietekort kan een hogere eiwitinname (2,3-3,1 g/kg) helpen spiermassa te behouden.', evidence_refs: ['PROT-HYPOCAL-001'] },
+        { section_id: 'resistance-training-context', title: 'Resistance training/context', body: 'Krachttraining tijdens een dieet helpt spiermassa te behouden.', evidence_refs: ['NK-MUS-STIMULUS-001'] },
+        { section_id: 'snelheid-gewichtsverlies', title: 'Snelheid van gewichtsverlies', body: 'Een tempo van circa 0,5-1,0 kg per week wordt vaker geassocieerd met beter behoud van prestatie dan sneller gewichtsverlies.', evidence_refs: ['NK-FATLOSS-RATE-001'] },
+        { section_id: 'behoud-vetvrije-massa', title: 'Behoud vetvrije massa', body: 'Voldoende eiwit en krachttraining helpen vetvrije massa te behouden tijdens een dieet.', evidence_refs: ['PROT-HYPOCAL-001'] },
+        { section_id: 'sportprestatie', title: 'Sportprestatie', body: 'Een te streng tekort kan sportprestatie negatief beïnvloeden.', evidence_refs: ['NK-FATLOSS-NOCRASH-001'] },
+        { section_id: 'herstel', title: 'Herstel', body: 'Een langdurig tekort kan herstel tussen trainingen bemoeilijken.', evidence_refs: ['NK-FATLOSS-NOCRASH-001'] },
+        { section_id: 'lage-energiebeschikbaarheid', title: 'Lage energiebeschikbaarheid', body: 'Te weinig energie t.o.v. je trainingsbelasting kan leiden tot lage energiebeschikbaarheid.', evidence_refs: ['NK-FATLOSS-EA-001'] },
+        { section_id: 'red-s', title: 'RED-S', body: 'Aanhoudende lage energiebeschikbaarheid kan RED-S veroorzaken -- diagnose vereist medische beoordeling.', evidence_refs: ['NK-ENE-REDS-001'] },
+        { section_id: 'dieetkwaliteit', title: 'Dieetkwaliteit', body: 'Ook tijdens een energietekort blijft de kwaliteit van je voeding (vezels, micronutriënten) van belang.', evidence_refs: ['NK-FIB-HEALTH-001'] },
+        { section_id: 'haalbaarheid', title: 'Gedrag/haalbaarheid', body: 'Een aanpak die je vol kunt houden, levert op de lange termijn meer op dan een streng, kortdurend dieet.', evidence_refs: ['NK-FATLOSS-NOCRASH-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'FATL-FAQ-VERPESTEN', question: 'Hoe verlies ik vet zonder mijn training te verpesten?', evidence_refs: ['NK-FATLOSS-RATE-001'] },
+        { faq_id: 'FATL-FAQ-SNEL', question: 'Kan ik snel afvallen als sporter?', evidence_refs: ['NK-FATLOSS-NOCRASH-001'] },
+        { faq_id: 'FATL-FAQ-SPIERBEHOUD', question: 'Hoe behoud ik spiermassa tijdens een dieet?', evidence_refs: ['PROT-HYPOCAL-001'] },
+        { faq_id: 'FATL-FAQ-REDS', question: 'Wat is het risico van te streng lijnen als sporter?', evidence_refs: ['NK-FATLOSS-EA-001', 'NK-ENE-REDS-001'] }
+      ]
+    }
+  ];
+  TOPICS.push.apply(TOPICS, NK04_TOPICS);
+
   /* ROADMAP: sectie 17 -- inhoudelijke roadmap, GEEN gebouwde topics.
    * Uitsluitend classificatiedata, geen evidence/claims. NK-03 heeft
    * Koolhydraten/Vetten/Energie/Vezels/Gezonde voeding gebouwd -- deze

@@ -5146,6 +5146,18 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </div>
 </div>
 
+<!-- NUT-OFF-UI-01: geen dead end bij een onbekende barcode (lokaal én extern gemist). -->
+<div class="modal-bg" id="m-voeding-off-miss" onclick="bgClose(event,'m-voeding-off-miss')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Product niet gevonden</div>
+    <div id="m-voeding-off-miss-body" style="font-size:13px;color:var(--g4);margin-bottom:14px">Deze barcode is niet lokaal bekend en is ook niet gevonden in de externe database.</div>
+    <button class="tk-btn tk-btn-primary" style="width:100%;margin-bottom:8px" onclick="closeModal('m-voeding-off-miss');voedingOpenPhotoUnavailable()">Foto etiket</button>
+    <button class="tk-btn tk-btn-secondary" style="width:100%;margin-bottom:8px" onclick="closeModal('m-voeding-off-miss');voedingOpenCustomProductForm()">Zelf product toevoegen</button>
+    <button class="tk-btn tk-btn-tertiary" style="width:100%" onclick="closeModal('m-voeding-off-miss')">Annuleren</button>
+  </div>
+</div>
+
 <div class="modal-bg" id="m-plan-overzicht" onclick="bgClose(event,'m-plan-overzicht')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -21382,6 +21394,143 @@ async function voedingStartScanner(){
     voedingSetScannerStatus(msg, false);
   }
 }
+/* ═══ NUT-OFF-UI-01 — Open Food Facts UI-integratie ═══
+ * Architectuurregel: OFF is NOOIT source of truth. Elke hit gaat via
+ * NutritionIngestService (bestaand, ongewijzigd) naar de canonieke
+ * nutrition_products/nutrition_product_identifiers/nutrition_nutrient_
+ * values -- nooit direct een meal_item. Local-first: de externe lookup
+ * gebeurt uitsluitend bij een lokale miss, en uitsluitend op exacte
+ * barcode-identity (geen fuzzy naam-match). */
+
+/* voedingOffLookup: dunne client-wrapper om de bestaande, geteste
+   Netlify-functie. Geen eigen HTTP-logica voor OFF zelf -- die blijft
+   server-side (User-Agent-eis, zie de functie zelf). Faalt nooit hard:
+   elke uitkomst (network/timeout/malformed) komt terug als een status,
+   nooit een throw. */
+async function voedingOffLookup(barcode){
+  if(!authSession?.access_token) return {status:'AUTH_REQUIRED'};
+  var r;
+  try{
+    r=await fetch('/.netlify/functions/nutrition-off-lookup',{
+      method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+authSession.access_token},
+      body:JSON.stringify({barcode:barcode})
+    });
+  }catch(e){ return {status:'NETWORK_ERROR'}; }
+  var d=null; try{ d=await r.json(); }catch(_){ d=null; }
+  if(!d || typeof d!=='object') return {status:'MALFORMED_RESPONSE'};
+  return d;
+}
+
+/* voedingIngestOffCandidate: canonicaliseert een OFF-treffer via de
+   bestaande, ongewijzigde NutritionIngestService.resolveIngestDecision.
+   Retry-veiligheid (sectie 9): het lokale-identifier-lookup gebeurt
+   hier ALTIJD opnieuw, vlak vóór het schrijven -- als een eerdere,
+   ogenschijnlijk mislukte poging in werkelijkheid wel is doorgekomen
+   (netwerk viel pas weg NA de commit), vindt deze her-lookup die
+   identifier alsnog en wordt er nooit een tweede product aangemaakt.
+   Alleen een echte, gelijktijdige dubbele eerste-scan van exact
+   dezelfde, nog-nooit-geziene barcode kan in theorie één onschadelijke,
+   nooit aan een identifier gekoppelde weesrij opleveren (geen
+   delete-policy op nutrition_products, dus bewust niet zelf opgeruimd)
+   -- expliciet buiten scope, dit is geen brede idempotency-uitbreiding. */
+async function voedingIngestOffCandidate(candidate, identifierType, provenance, dataQuality, uid){
+  if(!candidate || !candidate.barcode) return {productId:null, reason:'INVALID_CANDIDATE'};
+  var existingProduct=null;
+  try{
+    var existingIdentifiers=await sbGet('nutrition_product_identifiers','&value=eq.'+candidate.barcode);
+    if(existingIdentifiers&&existingIdentifiers.length){
+      var prods=await sbGet('nutrition_products','&id=eq.'+existingIdentifiers[0].product_id);
+      if(prods&&prods[0]) existingProduct={id:prods[0].id, verification_state:prods[0].verification_state, name:prods[0].name};
+    }
+  }catch(e){ return {productId:null, reason:'LOOKUP_FAILED'}; }
+
+  var decision=NutritionIngestService.resolveIngestDecision(candidate, existingProduct);
+  if(decision.action==='REJECT') return {productId:null, reason:decision.reason};
+  if(decision.action==='KEEP_EXISTING_VERIFIED'||decision.action==='KEEP_EXISTING_USER_PRIVATE'){
+    return {productId:decision.existingProductId};
+  }
+  if(decision.action==='ADD_REVISION'){
+    // Additieve revisie op het bestaande product -- geen UPDATE-in-place,
+    // exact zoals de bestaande correctieflow (PR #253) al werkt.
+    if(candidate.nutrients&&candidate.nutrients.status==='valid'){
+      try{
+        await sbPostQ('nutrition_nutrient_values',{
+          product_id:decision.existingProductId, basis:candidate.nutrients.basis,
+          energy_kcal:candidate.nutrients.energy_kcal, protein_g:candidate.nutrients.protein_g,
+          carbohydrate_g:candidate.nutrients.carbohydrate_g, fat_g:candidate.nutrients.fat_g,
+          fiber_g:candidate.nutrients.fiber_g, sugar_g:candidate.nutrients.sugar_g,
+          saturated_fat_g:candidate.nutrients.saturated_fat_g, sodium_mg:candidate.nutrients.sodium_mg,
+          source_type:provenance.source_type, data_quality:dataQuality
+        });
+      }catch(e){ /* de bestaande, geldige rij blijft bruikbaar ook als de revisie faalt */ }
+    }
+    return {productId:decision.existingProductId};
+  }
+  // CREATE_NEW
+  try{
+    await sbPostQ('nutrition_products',{
+      name:candidate.name, brand:candidate.brand||null,
+      source_type:provenance.source_type, source_name:provenance.source_name,
+      source_record_id:provenance.source_record_id, source_version:provenance.source_version,
+      fetched_at:provenance.fetched_at, verification_state:'COMMUNITY_UNVERIFIED',
+      data_quality:dataQuality, allergen_metadata:candidate.allergen_metadata||null, created_by:uid
+    });
+  }catch(e){ return {productId:null, reason:'PERSIST_FAILED'}; }
+  var fresh=await sbGet('nutrition_products','&name=eq.'+encodeURIComponent(candidate.name)+'&created_by=eq.'+uid+'&order=created_at.desc&limit=1');
+  var productId=fresh&&fresh[0]&&fresh[0].id;
+  if(!productId) return {productId:null, reason:'PERSIST_FAILED'};
+  try{
+    await sbPostQ('nutrition_product_identifiers',{product_id:productId, identifier_type:identifierType, value:candidate.barcode});
+  }catch(e){
+    // UNIQUE(identifier_type,value)-conflict: iemand anders won de race op
+    // exact dit moment voor exact deze barcode. Hergebruik die winnaar i.p.v.
+    // een tweede, onvindbare rij te laten staan.
+    var raceWinner=await sbGet('nutrition_product_identifiers','&value=eq.'+candidate.barcode);
+    if(raceWinner&&raceWinner.length) return {productId:raceWinner[0].product_id};
+  }
+  if(candidate.nutrients&&candidate.nutrients.status==='valid'){
+    try{
+      await sbPostQ('nutrition_nutrient_values',{
+        product_id:productId, basis:candidate.nutrients.basis,
+        energy_kcal:candidate.nutrients.energy_kcal, protein_g:candidate.nutrients.protein_g,
+        carbohydrate_g:candidate.nutrients.carbohydrate_g, fat_g:candidate.nutrients.fat_g,
+        fiber_g:candidate.nutrients.fiber_g, sugar_g:candidate.nutrients.sugar_g,
+        saturated_fat_g:candidate.nutrients.saturated_fat_g, sodium_mg:candidate.nutrients.sodium_mg,
+        source_type:provenance.source_type, data_quality:dataQuality
+      });
+    }catch(e){ /* product/identifier staan al goed; nutrientwaarden ontbreken dan expliciet (UNKNOWN), geen 0 */ }
+  }
+  return {productId:productId};
+}
+
+/* voedingResolveBarcode: de ENE plek waar lokale + externe barcode-
+   resolutie samenkomt -- gebruikt door zowel de live scanner als
+   handmatige invoer, zodat er geen twee, mogelijk uit de pas lopende
+   implementaties naast elkaar bestaan. */
+async function voedingResolveBarcode(value){
+  var localMatch;
+  try{ localMatch=await sbGet('nutrition_product_identifiers','&value=eq.'+value); }
+  catch(e){ return {status:'MISS', reason:'LOCAL_LOOKUP_FAILED'}; }
+  if(localMatch&&localMatch.length) return {status:'FOUND_LOCAL', productId:localMatch[0].product_id};
+
+  var uid=voedingUid();
+  if(!uid) return {status:'MISS', reason:'AUTH_REQUIRED'};
+  var off=await voedingOffLookup(value);
+  if(off&&off.status==='FOUND_PROVIDER'){
+    var ingest=await voedingIngestOffCandidate(off.candidate, off.identifier_type, off.provenance, off.data_quality, uid);
+    if(ingest&&ingest.productId) return {status:'FOUND_PROVIDER', productId:ingest.productId};
+    return {status:'MISS', reason:(ingest&&ingest.reason)||'INGEST_FAILED'};
+  }
+  return {status:'MISS', reason:(off&&off.status)||'UNKNOWN'};
+}
+
+/* voedingOpenBarcodeMiss: geen dead end (sectie 7) -- altijd een
+   duidelijke, drieledige keuze i.p.v. alleen een toast. */
+function voedingOpenBarcodeMiss(){
+  openModal('m-voeding-off-miss');
+}
+
 async function voedingRunScanLoop(){
   var video=document.getElementById('voeding-scanner-video');
   if(!voedingScannerActive) return;
@@ -21400,10 +21549,9 @@ async function voedingRunScanLoop(){
       await new Promise(function(res){ setTimeout(res,600); }); // gebruiker kort de bevestiging laten zien
       voedingCloseScanner();
       voedingSetScannerStatus('Product opzoeken…', false); // LOOKUP_IN_PROGRESS
-      var localMatch=await sbGet('nutrition_product_identifiers','&value=eq.'+result.identifier.value);
-      if(localMatch&&localMatch.length){ voedingOpenProduct(localMatch[0].product_id); return; } // PRODUCT_FOUND
-      toast('Barcode herkend, maar nog niet lokaal bekend. Gebruik "Foto etiket" om dit product toe te voegen.'); // PRODUCT_NOT_FOUND
-      go('s-voeding-zoeken');
+      var resolved=await voedingResolveBarcode(result.identifier.value);
+      if(resolved.status==='FOUND_LOCAL'||resolved.status==='FOUND_PROVIDER'){ voedingOpenProduct(resolved.productId); return; } // PRODUCT_FOUND
+      voedingOpenBarcodeMiss(); // PRODUCT_NOT_FOUND (lokaal én extern) -- geen dead end
       return;
     }
     if(result.status==='INVALID_IDENTIFIER'){ // BARCODE_NOT_FOUND (ongeldige checksum)
@@ -21443,11 +21591,11 @@ function voedingLookupManualBarcode(){
   voedingLookupBarcodeValue(normalized.value);
 }
 async function voedingLookupBarcodeValue(value){
+  toast('Product opzoeken…');
   try{
-    var localMatch=await sbGet('nutrition_product_identifiers','&value=eq.'+value);
-    if(localMatch&&localMatch.length){ voedingOpenProduct(localMatch[0].product_id); return; }
-    toast('Barcode herkend, maar nog niet lokaal bekend. Gebruik "Foto etiket" om dit product toe te voegen.');
-    go('s-voeding-zoeken');
+    var resolved=await voedingResolveBarcode(value);
+    if(resolved.status==='FOUND_LOCAL'||resolved.status==='FOUND_PROVIDER'){ voedingOpenProduct(resolved.productId); return; }
+    voedingOpenBarcodeMiss(); // geen dead end
   }catch(e){ toast('Opzoeken mislukt. Controleer je verbinding en probeer opnieuw.'); }
 }
 

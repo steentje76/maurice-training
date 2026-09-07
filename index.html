@@ -11918,6 +11918,31 @@ function nutritionParseGetal(waarde){
 let _nutritionSelectedDate=new Date();
 let _nutritionEditingId=null;
 
+/* ═══ LEGACY/COMPATIBILITY (NUT-CANON-01) ═══
+ * Dit scherm (s-nutrition) en de tabel nutrition_entries zijn NIET het
+ * canonieke Nutrition-datapad. Foundation 2.0 (nutrition_meals/
+ * nutrition_meal_items/nutrition_hydration_entries/
+ * nutrition_supplement_logs, via s-voeding) is per PO-besluit de
+ * canonieke keten voor alle nieuwe Nutrition-logging.
+ *
+ * Dit scherm blijft uitdrukkelijk bestaan omdat het twee capabilities
+ * biedt die Foundation 2.0 vandaag niet heeft, forensisch bevestigd
+ * (NUT-CANON-01, sectie 1/3):
+ *  1. timing_context (vóór/tijdens/na training) -- geen equivalent veld
+ *     op nutrition_meals of enige Foundation 2.0-tabel.
+ *  2. Vrije-vorm kcal/macro-invoer ZONDER een product/voedingsmiddel aan
+ *     te maken -- Foundation 2.0 vereist altijd een nutrition_products-
+ *     rij (custom, label-scan of barcode).
+ * Beide vereisen een productbeslissing (nieuw veld op nutrition_meals?
+ * een generiek "vrije-invoer-product"? een apart tijdscontext-model?)
+ * die NIET in NUT-CANON-01 is genomen -- zie het rapport. Tot die
+ * beslissing is genomen blijft dit de bewust gesauctioneerde
+ * uitzondering, GEEN kandidaat voor stille verwijdering of migratie.
+ *
+ * GEEN dubbeltelling: het hoofd-Voeding-dashboard (renderVoeding/
+ * voedingRenderOverview, s-voeding) leest UITSLUITEND Foundation 2.0 en
+ * raakt nutrition_entries nooit aan -- forensisch bevestigd, geen
+ * codewijziging hiervoor nodig geweest. */
 function nutritionDagGrenzen(datum){
   const start=new Date(datum);start.setHours(0,0,0,0);
   const eind=new Date(datum);eind.setHours(23,59,59,999);

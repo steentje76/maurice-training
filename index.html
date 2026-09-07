@@ -6168,6 +6168,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/vendor/tesseract.min.js"></script>
 <script src="core/nutritionImageQualityGate.js"></script>
 <script src="core/nutritionTargetService.js"></script>
+<script src="core/nutritionCrossDomainContract.js"></script>
 <script src="core/nutritionBarcodeRuntime.js"></script>
 <script src="core/designSystemIcons.js"></script>
 <script src="core/decision.js"></script>
@@ -21736,6 +21737,35 @@ function voedingUpdateCustomServingField(){
   wrap.style.display='block';
   unitEl.textContent=basis==='PER_100ML'?'ml':'g';
 }
+/* NUT-DATA-OBS-01 V1: gecentraliseerde duplicate-detectie, gebruikt door
+   zowel het custom-product-pad (USER) als het foto-etiket-pad
+   (USER_LABEL_SCAN) -- zelfde contract, niet twee keer geimplementeerd.
+   Uitsluitend binnen producten van dezelfde gebruiker (created_by=uid).
+   Barcode heeft hogere bewijskracht dan naam (NutritionCustomProductService.
+   detectDuplicateCandidates, ongewijzigd, puur). Geen fuzzy matching, geen
+   automatische merge/delete -- alleen classificeren, de gebruiker beslist. */
+async function voedingCheckDuplicateProduct(uid,name,barcode){
+  var existingByBarcode=[]; var existingByName=[]; var normalizedBarcode=null;
+  try{
+    if(barcode){
+      normalizedBarcode=NutritionFoundation2Core.normalizeBarcode(barcode);
+      if(normalizedBarcode && normalizedBarcode.status==='INVALID_IDENTIFIER') return {status:'INVALID_BARCODE'};
+      if(normalizedBarcode && normalizedBarcode.status==='valid'){
+        var idMatches=await sbGet('nutrition_product_identifiers','&value=eq.'+normalizedBarcode.value);
+        if(idMatches&&idMatches.length){
+          var candidateIds=idMatches.map(function(m){return m.product_id;});
+          var ownProds=await sbGet('nutrition_products','&id=in.('+candidateIds.join(',')+')&created_by=eq.'+uid);
+          existingByBarcode=(ownProds||[]).map(function(p){return {id:p.id};});
+        }
+      }
+    }
+    var byName=await sbGet('nutrition_products','&name=ilike.'+encodeURIComponent(name.trim())+'&created_by=eq.'+uid);
+    existingByName=byName||[];
+  }catch(e){ return {status:'CHECK_FAILED'}; }
+  var result=NutritionCustomProductService.detectDuplicateCandidates(name, normalizedBarcode&&normalizedBarcode.status==='valid'?normalizedBarcode.value:null, existingByBarcode, existingByName);
+  result.normalizedBarcode=normalizedBarcode;
+  return result;
+}
 async function voedingSaveCustomProduct(){
   var errEl=document.getElementById('voeding-custom-error');
   var dupEl=document.getElementById('voeding-custom-duplicate');
@@ -21762,22 +21792,13 @@ async function voedingSaveCustomProduct(){
 
   var uid=voedingUid(); if(!uid) return;
 
-  // Duplicate-detectie (Fase 24): eerst op barcode, dan op naam -- hergebruikt
-  // de bestaande, ongewijzigde NutritionCustomProductService, geen eigen logica.
-  var existingByBarcode=[]; var existingByName=[];
-  var normalizedBarcode=null;
-  try{
-  if(barcode){
-    normalizedBarcode=NutritionFoundation2Core.normalizeBarcode(barcode);
-    if(normalizedBarcode && normalizedBarcode.status==='INVALID_IDENTIFIER'){ errEl.textContent='Deze barcode lijkt ongeldig (controlegetal klopt niet).'; errEl.style.display='block'; return; }
-    if(normalizedBarcode && normalizedBarcode.status==='valid'){
-      var idMatches=await sbGet('nutrition_product_identifiers','&value=eq.'+normalizedBarcode.value);
-      if(idMatches&&idMatches.length){ existingByBarcode=idMatches.map(function(m){return {id:m.product_id};}); }
-    }
-  }
-  existingByName=await sbGet('nutrition_products','&name=ilike.'+encodeURIComponent(name.trim()));
-  }catch(e){ errEl.textContent='Controleren mislukt. Controleer je verbinding en probeer opnieuw.'; errEl.style.display='block'; return; }
-  var dup=NutritionCustomProductService.detectDuplicateCandidates(name, normalizedBarcode?normalizedBarcode.value:null, existingByBarcode, existingByName||[]);
+  // Duplicate-detectie (NUT-DATA-OBS-01 V1): eerst op barcode, dan op naam,
+  // uitsluitend binnen producten van dezelfde gebruiker -- hergebruikt de
+  // bestaande, ongewijzigde NutritionCustomProductService, geen eigen logica.
+  var dup=await voedingCheckDuplicateProduct(uid,name,barcode);
+  if(dup.status==='INVALID_BARCODE'){ errEl.textContent='Deze barcode lijkt ongeldig (controlegetal klopt niet).'; errEl.style.display='block'; return; }
+  if(dup.status==='CHECK_FAILED'){ errEl.textContent='Controleren mislukt. Controleer je verbinding en probeer opnieuw.'; errEl.style.display='block'; return; }
+  var normalizedBarcode=dup.normalizedBarcode;
   if(dup.status==='EXISTING_FOUND' || dup.status==='POSSIBLE_DUPLICATE'){
     dupEl.style.display='block';
     dupEl.textContent='Dit product lijkt al te bestaan. Je kunt het bestaande product zoeken, of toch een nieuw, eigen product aanmaken.';
@@ -21824,32 +21845,64 @@ async function voedingRenderCorrectieForm(){
   try{
     var prods=await sbGet('nutrition_products','&id=eq.'+voedingSelectedProduct.id);
     var p=prods&&prods[0]; if(!p){ el.innerHTML=''; return; }
+    var nvs=await sbGet('nutrition_nutrient_values','&product_id=eq.'+p.id+'&order=created_at.desc&limit=1');
+    var currentNv=nvs&&nvs[0];
+    var currentBasis=(currentNv&&currentNv.basis)||'PER_100G';
+    // NUT-SERVING-CORRECTION: alleen zinvol bij PER_100G/PER_100ML (bij
+    // PER_SERVING is er geen aparte portiegrootte-conversie nodig).
+    var servingHtml='';
+    if(currentBasis==='PER_100G'||currentBasis==='PER_100ML'){
+      var servingUnit=currentBasis==='PER_100ML'?'ml':'g';
+      var currentServing=currentNv?(currentBasis==='PER_100ML'?currentNv.serving_size_ml:currentNv.serving_size_g):null;
+      servingHtml='<div class="v43-lbl" style="margin:14px 0 6px">Portiegrootte (optioneel)</div>'
+        +'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;color:var(--g4);white-space:nowrap">1 portie =</span><input id="voeding-correctie-serving" aria-label="Portiegrootte" type="number" inputmode="decimal" step="any" min="0" class="vd-input" style="flex:1" value="'+(currentServing!=null?currentServing:'')+'"><span style="font-size:13px;color:var(--g4)">'+servingUnit+'</span></div>'
+        +'<div style="font-size:11px;color:var(--g4);margin-top:4px">Laat leeg om de portie-optie te laten vervallen.</div>'
+        +'<div id="voeding-correctie-serving-error" style="color:#c0392b;font-size:12px;margin-top:4px;display:none"></div>';
+    }
     var decision=NutritionCrossDomainContract.evaluateCorrectionRequest(voedingUid(), p, NutritionFoundation2Core.canModifyCanonicalRecord);
     if(decision.reason==='VERIFIED_PROTECTED'){
       el.innerHTML='<div class="tk-card tk-card-l3" style="padding:14px;margin-bottom:14px">🔒 Dit product is geverifieerd. Je kunt een afwijkende waarde melden, maar de canonical gegevens worden niet automatisch overschreven.</div>'
         +'<div class="v43-lbl" style="margin:8px 0 6px">Jouw waarneming (energie, kcal per 100g)</div>'
         +'<input id="voeding-correctie-value" aria-label="Jouw waarneming, energie in kcal per 100 gram" type="number" step="any" class="vd-input" style="margin-bottom:12px">'
         +'<div id="voeding-correctie-error" style="color:#c0392b;font-size:13px;margin-bottom:8px;display:none"></div>'
-        +'<button class="tk-btn tk-btn-secondary" style="width:100%" onclick="voedingSubmitCorrection(\''+p.id+'\',true)">Verschil melden (canonical blijft ongewijzigd)</button>';
+        +servingHtml
+        +'<button class="tk-btn tk-btn-secondary" style="width:100%;margin-top:14px" onclick="voedingSubmitCorrection(\''+p.id+'\',true,\''+currentBasis+'\')">Verschil melden (canonical blijft ongewijzigd)</button>';
       return;
     }
     el.innerHTML='<div class="v43-lbl" style="margin:8px 0 6px">Jouw waarneming (energie, kcal per 100g)</div>'
       +'<input id="voeding-correctie-value" aria-label="Jouw waarneming, energie in kcal per 100 gram" type="number" step="any" class="vd-input" style="margin-bottom:12px">'
       +'<div id="voeding-correctie-error" style="color:#c0392b;font-size:13px;margin-bottom:8px;display:none"></div>'
-      +'<div style="font-size:12px;color:var(--g4);margin-bottom:14px">Bron: door jou toegevoegd (USER_LABEL_SCAN/USER)</div>'
-      +'<button class="tk-btn tk-btn-primary" style="width:100%" onclick="voedingSubmitCorrection(\''+p.id+'\',false)">Correctie opslaan</button>';
+      +servingHtml
+      +'<div style="font-size:12px;color:var(--g4);margin:14px 0">Bron: door jou toegevoegd (USER_LABEL_SCAN/USER)</div>'
+      +'<button class="tk-btn tk-btn-primary" style="width:100%" onclick="voedingSubmitCorrection(\''+p.id+'\',false,\''+currentBasis+'\')">Correctie opslaan</button>';
   }catch(e){ el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--g4)">Kon gegevens niet laden.</div>'; }
 }
-async function voedingSubmitCorrection(productId,verifiedProtected){
+async function voedingSubmitCorrection(productId,verifiedProtected,basis){
   var errEl=document.getElementById('voeding-correctie-error');
   var val=Number(document.getElementById('voeding-correctie-value').value);
   if(!isFinite(val)){ if(errEl){errEl.textContent='Vul een geldige waarde in.';errEl.style.display='block';} return; }
+  // NUT-SERVING-CORRECTION: optioneel, zelfde validatie als NUT-PORTION-01
+  // (leeg toegestaan, >0 vereist indien ingevuld, komma-tolerant).
+  var servingErrEl=document.getElementById('voeding-correctie-serving-error');
+  var servingInput=document.getElementById('voeding-correctie-serving');
+  var servingFields={};
+  if(servingInput && (basis==='PER_100G'||basis==='PER_100ML')){
+    if(servingErrEl) servingErrEl.style.display='none';
+    var raw=servingInput.value.trim();
+    if(raw!==''){
+      var num=Number(raw.replace(',','.'));
+      if(!isFinite(num)||num<=0){ if(servingErrEl){servingErrEl.textContent='Vul een geldige, positieve portiegrootte in (of laat leeg).';servingErrEl.style.display='block';} return; }
+      if(basis==='PER_100ML') servingFields.serving_size_ml=num; else servingFields.serving_size_g=num;
+    }
+  }
   var btn=document.querySelector('#s-voeding-correctie .tk-btn-primary')||document.querySelector('#s-voeding-correctie .tk-btn-secondary');
   var _done=voedingWithBusy(btn,'Opslaan\u2026');
   try{
   // Additief: altijd een NIEUWE nutrient_values-rij (revisie), nooit een
-  // UPDATE-in-place -- spiegelt exact de Wave 3/4 ingest-precedence.
-  await sbPostQ('nutrition_nutrient_values',{product_id:productId,basis:'PER_100G',energy_kcal:val,source_type:'USER_LABEL_SCAN'});
+  // UPDATE-in-place -- spiegelt exact de Wave 3/4 ingest-precedence. Al
+  // gelogde meal-item snapshots blijven ongewijzigd (geen retroactieve
+  // mutatie); de eerstvolgende Hoeveelheid-render leest deze nieuwe rij.
+  await sbPostQ('nutrition_nutrient_values',Object.assign({product_id:productId,basis:'PER_100G',energy_kcal:val,source_type:'USER_LABEL_SCAN'},servingFields));
   }catch(e){ if(errEl){errEl.textContent='Opslaan mislukt. Controleer je verbinding en probeer opnieuw.';errEl.style.display='block';} _done(); return; }
   _done();
   toast(verifiedProtected?'Bedankt, je melding is opgeslagen. De geverifieerde gegevens zijn niet gewijzigd.':'Correctie opgeslagen.');
@@ -22143,6 +22196,22 @@ async function voedingSaveNewProductFromLabel(){
   var name=document.getElementById('voeding-newproduct-name').value;
   if(!name||!name.trim()){ errEl.textContent='Vul een productnaam in.'; errEl.style.display='block'; return; }
   var uid=voedingUid(); if(!uid) return;
+  // NUT-DATA-OBS-01 V1: zelfde gecentraliseerde check als het custom-
+  // productformulier -- barcode eerst (indien uit de foto herkend), dan
+  // naam-fallback, uitsluitend binnen producten van deze gebruiker.
+  var obsBarcode=voedingLastRecognition&&voedingLastRecognition.observations&&voedingLastRecognition.observations.barcode&&voedingLastRecognition.observations.barcode.normalized_value;
+  var dupCheck=await voedingCheckDuplicateProduct(uid,name.trim(),obsBarcode||'');
+  if(dupCheck.status==='EXISTING_FOUND' || dupCheck.status==='POSSIBLE_DUPLICATE'){
+    errEl.innerHTML='Dit product lijkt al te bestaan. Je kunt het bestaande product zoeken, of toch een nieuw, eigen product aanmaken.<br><button class="tk-btn tk-btn-secondary" style="width:100%;margin-top:8px" id="voeding-newproduct-force-btn">Toch nieuw product aanmaken</button>';
+    errEl.style.display='block';
+    document.getElementById('voeding-newproduct-force-btn').onclick=function(){ voedingPersistNewProductFromLabel(name); };
+    return;
+  }
+  await voedingPersistNewProductFromLabel(name);
+}
+async function voedingPersistNewProductFromLabel(name){
+  var errEl=document.getElementById('voeding-newproduct-error');
+  var uid=voedingUid(); if(!uid) return;
   var _done=voedingWithBusy(document.querySelector('#voeding-new-product-body .tk-btn-primary'),'Opslaan…');
   try{
   var obs=voedingLastRecognition.observations;
@@ -22187,7 +22256,7 @@ function voedingRenderManualForm(){
 /* -- Handmatige invoer na een mislukte/lege OCR-herkenning (Blocker 2) --
    Zelfde persistence-pad als het custom-productformulier, hergebruikt
    NutritionCustomProductService, geen tweede validatie-implementatie. */
-async function voedingSaveManualEntry(){
+async function voedingSaveManualEntry(skipDuplicateCheck){
   var errEl=document.getElementById('voeding-manual-error');
   errEl.style.display='none';
   var name=document.getElementById('voeding-manual-name').value;
@@ -22202,7 +22271,17 @@ async function voedingSaveManualEntry(){
   var normalizedBarcode=null;
   if(barcode){
     normalizedBarcode=NutritionFoundation2Core.normalizeBarcode(barcode);
-    if(normalizedBarcode && normalizedBarcode.status==='INVALID_IDENTIFIER'){ errEl.textContent='Deze barcode lijkt ongeldig (controlegetal klopt niet).'; errEl.style.display='block'; return; }
+    if(normalizedBarcode && normalizedBarcode.status==='INVALID_IDENTIFIER'){ errEl.textContent='Deze barcode lijkt ongeldig (controlegetal klopt niet).'; errEl.style.display='block'; _done(); return; }
+  }
+  // NUT-DATA-OBS-01 V1: zelfde gecentraliseerde check, barcode-eerst-dan-naam.
+  if(!skipDuplicateCheck){
+    var dupCheck=await voedingCheckDuplicateProduct(uid,validation.canonicalFields.name,barcode);
+    if(dupCheck.status==='EXISTING_FOUND' || dupCheck.status==='POSSIBLE_DUPLICATE'){
+      errEl.innerHTML='Dit product lijkt al te bestaan. Je kunt het bestaande product zoeken, of toch doorgaan.<br><button class="tk-btn tk-btn-secondary" style="width:100%;margin-top:8px" id="voeding-manual-force-btn">Toch doorgaan</button>';
+      errEl.style.display='block'; _done();
+      document.getElementById('voeding-manual-force-btn').onclick=function(){ voedingSaveManualEntry(true); };
+      return;
+    }
   }
 
   await sbPostQ('nutrition_products',{name:validation.canonicalFields.name,brand:validation.canonicalFields.brand,source_type:'USER_LABEL_SCAN',verification_state:'USER_PRIVATE',created_by:uid});

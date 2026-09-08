@@ -179,6 +179,30 @@
       return { status: 'INSUFFICIENT', schema: RESOLVER_VERSION, QUESTION: freeText, INTENT: intent, reason: 'leeg_of_te_kort', matchedTopics: [] };
     }
     var topicScores = scoreTopics(queryTokens);
+
+    // NK-08 sectie 20/34, adversarial test #14 ("Is mijn custom supplement
+    // SuperMegaTestBoost veilig?"): zonder deze guard konden generieke
+    // woorden als "supplement"/"veilig" -- die legitiem in VEEL topics'
+    // secties/FAQ's voorkomen -- samen genoeg score opleveren om
+    // WILLEKEURIGE, ongerelateerde topics (bv. IJzer, Ashwagandha) als
+    // "match" te presenteren voor een vraag over een niet-bestaand product.
+    // Geen enkel echt topic werd daarbij ooit bij NAAM genoemd. Fix:
+    // detecteer een lang (>=10 tekens), nergens in de hele index
+    // voorkomend token (een sterk signaal voor een verzonnen/onbekende
+    // merk-/productnaam) -- gecombineerd met de afwezigheid van een
+    // ECHTE naam-match, wordt dit expliciet als onbekend product
+    // behandeld i.p.v. generieke topics te lenen.
+    var hasUnrecognizedDistinctiveToken = queryTokens.some(function (qt) {
+      if (qt.length < 10) return false;
+      return !Object.keys(_itemIndex).some(function (topicId) {
+        return _topicIndex[topicId].some(function (entry) { return entry.tokens.some(function (it) { return tokenOverlap(qt, it); }); });
+      });
+    });
+    var hasRealTopicNameMatch = topicScores.some(function (t) { return topicNameMatchScore(t.topicId, queryTokens) > 0; });
+    if (hasUnrecognizedDistinctiveToken && !hasRealTopicNameMatch) {
+      return { status: 'INSUFFICIENT', schema: RESOLVER_VERSION, QUESTION: freeText, INTENT: intent, reason: 'onbekend_product', matchedTopics: [] };
+    }
+
     if (preferredTopicId && Topics.getTopic(preferredTopicId) && !topicScores.some(function (t) { return t.topicId === preferredTopicId; })) {
       // Hint telt licht mee, maar alleen als er nog ruimte is (nooit een sterkere match verdringen).
       if (topicScores.length < MAX_TOPICS) topicScores.push({ topicId: preferredTopicId, score: 0.5 });

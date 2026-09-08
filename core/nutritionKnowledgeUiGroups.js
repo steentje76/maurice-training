@@ -223,6 +223,16 @@
       { group_id: 'basis', group_label: 'Basis', section_ids: ['certificering'] },
       { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['triage'] },
       { group_id: 'verdieping', group_label: 'Verdieping', section_ids: [] }
+    ],
+    CAFFEINE: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['duurprestatie', 'kracht', 'individuele-verschillen'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['dosering', 'timing'] },
+      { group_id: 'verdieping', group_label: 'Veiligheid & verdieping', section_ids: ['slaap', 'veiligheid', 'zwangerschap', 'interacties'] }
+    ],
+    BETA_ALANINE: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['kerneffect', 'bredere-context'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['dosering', 'bijwerking'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: ['geen-krachteffect', 'langere-duur', 'veiligheid'] }
     ]
   };
 

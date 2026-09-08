@@ -976,6 +976,62 @@
     },
   ];
   TOPICS.push.apply(TOPICS, NK07_TOPICS);
+  // NK-08: CAFFEINE en BETA_ALANINE waren beide al P0-CERTIFIED in de
+  // Supplement Evidence Registry, maar hadden nog GEEN Knowledge-topic --
+  // ontdekt tijdens NK-08-testen ("Hoeveel cafeïne moet ik nemen?" kon
+  // niet coherent beantwoord worden). Alle onderstaande claims bestonden
+  // al, ongewijzigd hergebruikt (geen nieuwe claim, geen duplicate truth).
+  var NK08_TOPICS = [
+    {
+      topic_id: 'CAFFEINE', domain: 'SUPPLEMENT',
+      display_name: 'Cafeïne', quick_summary_evidence_ref: 'CAF-END-001',
+      quick_summary_text: 'Verbetert duurprestatie het meest consistent -- iedereen reageert er anders op.',
+      sections: [
+        { section_id: 'duurprestatie', title: 'Duurprestatie', body: 'Cafeïne verbetert duurprestaties; dit is het meest consistent aangetoonde effect.', evidence_refs: ['CAF-END-001'] },
+        { section_id: 'kracht', title: 'Kracht/vermogen', body: 'Cafeïne kan kracht/vermogen verbeteren, al is dit minder eenduidig dan bij duurinspanning.', evidence_refs: ['CAF-STR-001'] },
+        { section_id: 'dosering', title: 'Onderzochte dosering', body: 'Het onderzochte effectieve bereik is 3-6 mg per kg lichaamsgewicht -- een algemene onderzoeksrange, geen persoonlijk voorschrift.', evidence_refs: ['CAF-DOSE-001'] },
+        { section_id: 'timing', title: 'Timing', body: 'Vaak circa 60 minuten voor het sporten ingenomen in onderzoek.', evidence_refs: ['CAF-TIME-001'] },
+        { section_id: 'individuele-verschillen', title: 'Individuele verschillen', body: 'Iedereen reageert anders op cafeïne; wat voor de één werkt, kan voor een ander te veel of te weinig zijn.', evidence_refs: ['CAF-VAR-001'] },
+        { section_id: 'slaap', title: 'Slaap', body: 'Cafeïne dicht bij bedtijd kan je slaap verstoren, ook bij relatief lage hoeveelheden.', evidence_refs: ['CAF-SLEEP-001'] },
+        { section_id: 'veiligheid', title: 'Veiligheid', body: 'Tot 400 mg per dag, of 200 mg in één keer, geldt als veilig voor gezonde volwassenen -- dit is een veiligheidsgrens, geen prestatie-advies.', evidence_refs: ['CAF-SAFE-001'] },
+        { section_id: 'zwangerschap', title: 'Zwangerschap/borstvoeding', body: 'Er geldt een lagere veiligheidsgrens; overleg met je verloskundige of arts.', evidence_refs: ['CAF-PREG-001'] },
+        { section_id: 'interacties', title: 'Combinaties', body: 'Bij normale hoeveelheden is geen gevaarlijke wisselwerking met gangbare energiedrank-ingrediënten of matig alcoholgebruik gevonden.', evidence_refs: ['CAF-INTERACT-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'CAF-FAQ-1', question: 'Wanneer neem je het beste cafeïne?', evidence_refs: ['CAF-TIME-001'] },
+        { faq_id: 'CAF-FAQ-2', question: 'Hoeveel cafeïne mag ik per dag?', evidence_refs: ['CAF-SAFE-001'] },
+        { faq_id: 'CAF-FAQ-3', question: 'Verstoort cafeïne mijn slaap?', evidence_refs: ['CAF-SLEEP-001'] },
+        { faq_id: 'CAF-FAQ-4', question: 'Is cafeïne veilig tijdens zwangerschap?', evidence_refs: ['CAF-PREG-001'] }
+      ]
+    },
+    {
+      topic_id: 'BETA_ALANINE', domain: 'SUPPLEMENT',
+      display_name: 'Bèta-alanine', quick_summary_evidence_ref: 'BA-PERF-001',
+      quick_summary_text: 'Werkt het beste bewezen bij inspanning van 1 tot 4 minuten -- geen algemeen "sterker worden"-effect.',
+      sections: [
+        { section_id: 'kerneffect', title: 'Kerneffect (1-4 min)', body: 'Bèta-alanine werkt het beste bewezen bij inspanning van 1 tot 4 minuten.', evidence_refs: ['BA-PERF-001'] },
+        { section_id: 'bredere-context', title: 'Bredere context', body: 'Er is ook zwakker bewijs voor een effect tot ongeveer 10 minuten inspanning.', evidence_refs: ['BA-PERF-002'] },
+        { section_id: 'dosering', title: 'Onderzocht protocol', body: '4-6 g per dag, minstens 2-4 weken vol te houden, is nodig voor effect -- algemene onderzoeksrange, geen persoonlijk voorschrift.', evidence_refs: ['BA-DOSE-001'] },
+        { section_id: 'bijwerking', title: 'Tintelingen', body: 'Tintelingen (paresthesie) zijn de enige bekende bijwerking en zijn onschuldig.', evidence_refs: ['BA-PARES-001'] },
+        { section_id: 'geen-krachteffect', title: 'Geen apart krachteffect', body: 'Een apart krachteffect (los van de 1-4 min-inspanning) is niet duidelijk aangetoond.', evidence_refs: ['BA-STR-001'] },
+        { section_id: 'langere-duur', title: 'Langere duurinspanning', body: 'Voor langere duurinspanning of lichaamssamenstelling is het bewijs nog onvoldoende.', evidence_refs: ['BA-END-001'] },
+        { section_id: 'veiligheid', title: 'Veiligheid', body: 'Op de aanbevolen dosis is bèta-alanine veilig voor gezonde mensen.', evidence_refs: ['BA-SAFE-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'BA-FAQ-1', question: 'Waarom tintelt mijn huid van bèta-alanine?', evidence_refs: ['BA-PARES-001'] },
+        { faq_id: 'BA-FAQ-2', question: 'Maakt bèta-alanine me sterker?', evidence_refs: ['BA-STR-001'] },
+        { faq_id: 'BA-FAQ-3', question: 'Voor welke sporten werkt bèta-alanine het best?', evidence_refs: ['BA-PERF-001', 'BA-PERF-002'] }
+      ]
+    }
+  ];
+  TOPICS.push.apply(TOPICS, NK08_TOPICS);
+
 
   /* ROADMAP: sectie 17 -- inhoudelijke roadmap, GEEN gebouwde topics.
    * Uitsluitend classificatiedata, geen evidence/claims. NK-03 heeft

@@ -293,7 +293,17 @@
    * buildSystemPrompt(pkg) -> de systeeminstructie voor de AI-runtime.
    * Bevat UITSLUITEND het begrensde pakket + harde regels -- nooit de
    * volledige registry, nooit persoonlijke berekening, nooit vrije bronnen.
+   *
+   * NK-08A sectie 12 (server-side allowlist tegen stille scope-creep):
+   * dit zijn de ENIGE pkg-velden die deze functie ooit in de AI-prompt mag
+   * verwerken. Als een toekomstige wijziging een nieuw pkg-veld toevoegt
+   * (bv. een persoonlijk profielveld), moet die wijziging dit hier expliciet
+   * uitbreiden -- geen enkel ander veld mag stilzwijgend meegenomen worden.
+   * Puur documentair/testbaar (geen dynamische pkg[key]-iteratie in deze
+   * functie, dus geen enkel niet-vermeld veld kan hier ooit lekken): zie
+   * fNutritionKnowledgeAiCoach.test.js voor de structurele afdwinging.
    */
+  var KNOWLEDGE_CHAT_SYSTEM_PROMPT_ALLOWED_FIELDS = ['status', 'TOPIC', 'QUESTION', 'APPROVED_FACTS', 'EVIDENCE_LEVEL', 'CONFIDENCE', 'MISSING_INFORMATION', 'LIMITATIONS', 'FORBIDDEN_INTERPRETATIONS'];
   // NK-04B: detecteert of de oorspronkelijke vraag een persoonlijk getal
   // bevat (gewicht/leeftijd/lengte) -- puur signalerend, verandert niets
   // aan de claim-matching/Resolver-principes zelf. Gebruikt om de
@@ -353,6 +363,7 @@
     RESOLVER_VERSION: RESOLVER_VERSION,
     MAX_TOPICS: MAX_TOPICS,
     MAX_CLAIMS: MAX_CLAIMS,
+    KNOWLEDGE_CHAT_SYSTEM_PROMPT_ALLOWED_FIELDS: KNOWLEDGE_CHAT_SYSTEM_PROMPT_ALLOWED_FIELDS,
     INTENTS: INTENTS,
     tokenize: tokenize,
     classifyIntent: classifyIntent,

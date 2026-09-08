@@ -243,6 +243,26 @@
 .vd-meal{width:100%;min-height:56px;display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--card);border:0;border-radius:12px;padding:12px 14px;margin-bottom:8px;text-align:left;color:var(--dark);cursor:pointer}.vd-meal:focus-visible{outline:2px solid var(--color-primary)}.vd-meal .n{display:block;font-weight:700;font-size:15px}.vd-meal .s{display:block;font-size:12px;color:var(--g4);margin-top:2px}.vd-meal .k{font-weight:700;font-size:14px;white-space:nowrap}.vd-meal .ar{color:var(--g4);margin-left:4px}
 .vd-chips{display:flex;flex-wrap:wrap;gap:8px;padding:2px 0 10px}.vd-chip{flex:0 0 auto;min-height:44px;padding:0 13px;border-radius:999px;border:1.5px solid var(--color-border);background:var(--card);color:var(--dark);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}.vd-chip[aria-pressed="true"]{background:var(--dark);color:#fff;border-color:var(--dark)}.vd-chip:focus-visible{outline:2px solid var(--color-primary);outline-offset:2px}
 .vd-sec2{display:flex;gap:10px}.vd-sec2 .vd-meal{min-height:52px;flex:1;margin:0}.vd-sec2 .vd-meal .n{font-size:14px}
+/* NK-262/263 Knowledge UX hardening: vervangt de flex-rij-squeeze (.vd-sec2,
+   hierboven, blijft ongebruikt voor Kennis-groepen maar niet verwijderd --
+   elders in de app nog in gebruik voor korte, vaste rijtjes van 2-3 items)
+   door een schaalbare 2-koloms-grid voor Kennis-categorieblokken (sectie 2A).
+   Blijft compact tot 44+ topics, geen carrousel, geen horizontale scroll. */
+.nk-cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
+.nk-cat-grid .vd-meal{min-height:52px;margin:0}
+.nk-cat-grid .vd-meal .n{font-size:13px;line-height:1.25}
+.nk-cat-viewall{display:block;text-align:right;font-size:13px;font-weight:600;color:var(--color-primary);padding:4px 2px 14px;background:none;border:none;cursor:pointer;width:100%}
+/* Zoekfunctie (sectie 2B) -- eigen, minimale stijl, geen nieuw designsysteem. */
+.nk-search-wrap{margin-bottom:16px}
+.nk-search-input{width:100%;min-height:44px;border-radius:12px;border:1px solid var(--color-border);background:var(--card);padding:0 14px;font-family:var(--f);font-size:15px;color:var(--dark)}
+.nk-search-empty{text-align:center;padding:24px 16px;color:var(--g4);font-size:13px}
+/* Hydratatie-detail (sectie 2E): de 5 tabs mogen lokaal horizontaal
+   scrollen bij smalle viewports (320px) i.p.v. onleesbaar samen te
+   persen -- uitsluitend gescoped op .nk-seg, raakt geen ander .seg-gebruik
+   elders in de app. */
+.nk-seg .seg{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.nk-seg .seg::-webkit-scrollbar{display:none}
+.nk-seg .seg-opt{flex:0 0 auto;white-space:nowrap;padding:8px 10px}
 /* SECONDARY — minder gewicht, outline, mag niet concurreren met primary. */
 .tk-btn-secondary{background:var(--color-surface-secondary);color:var(--color-text-primary);border:1.5px solid var(--color-border)}
 /* TERTIARY / TEXT ACTION — rustige actie zonder zware surface (bv. "Bekijk details"). */
@@ -4378,7 +4398,14 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
      in HTML. Navigatieprototype: Inzicht -> Voeding -> Kennis. -->
 <div class="scr" id="s-voeding-kennis">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Kennis</div></div><button class="ibtn" onclick="go('s-voeding')" aria-label="Terug">‹</button></div></div>
-  <div class="scroll" style="flex:1;overflow-y:auto" id="voeding-kennis-hub"></div>
+  <div class="scroll" style="flex:1;overflow-y:auto;padding:0 4px" id="voeding-kennis-hub"></div>
+</div>
+
+<!-- NK-262/263 sectie 2C: "Bekijk alles" per hoofdgroep (Voeding/Sportvoeding/
+     Supplementen/Micronutriënten) -- volledige grid, geen carrousel. -->
+<div class="scr" id="s-voeding-kennis-categorie">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1" id="voeding-kennis-categorie-title">Kennis</div></div><button class="ibtn" onclick="go('s-voeding-kennis')" aria-label="Terug">‹</button></div></div>
+  <div class="scroll" style="flex:1;overflow-y:auto;padding:12px 4px" id="voeding-kennis-categorie-body"></div>
 </div>
 
 <div class="scr" id="s-voeding-kennis-topic">
@@ -4389,6 +4416,35 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <div class="scr" id="s-voeding-kennis-ai">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Trainingskompas AI</div><div class="hdr-sub" id="nk-ai-hdr-sub"></div></div><button class="ibtn" onclick="voedingKennisAiBack()" aria-label="Terug">‹</button></div></div>
   <div class="scroll" style="flex:1;overflow-y:auto" id="voeding-kennis-ai-body"></div>
+</div>
+
+<!-- ═══ NK-09/NK-05C: Hydratatie — Zweetverlies meten ═══
+     Eenmalige, in-memory meting (sectie 13: geen persistence gebouwd --
+     geen DB-wijziging nodig, geen historie/trend in deze sprint). Gebruikt
+     UITSLUITEND de bestaande, ongewijzigde hydrationCalculation.js
+     (sweat_loss_estimate.v1 / sweat_rate_estimate.v1) -- geen tweede
+     formule in de UI. Flow: UITLEG -> INVOER -> VALIDATIE -> CALCULATION
+     ENGINE -> RESULTAAT -> DATA QUALITY/CONFIDENCE -> UITLEG. -->
+<div class="scr" id="s-voeding-hydratatie-meting">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Zweetverlies meten</div></div><button class="ibtn" onclick="go('s-voeding-kennis-topic')" aria-label="Terug">‹</button></div></div>
+  <div class="scroll" style="flex:1;overflow-y:auto;padding:16px">
+    <div class="tk-card tk-card-l3" style="padding:14px;margin-bottom:16px;font-size:13px;line-height:1.5;color:var(--g4)">
+      Weeg jezelf vlak vóór en vlak ná je training (zo mogelijk zonder kleding, of steeds in dezelfde kleding). Vul hieronder in wat je hebt gedronken en geplast tijdens de training -- dat maakt de schatting nauwkeuriger, maar is niet verplicht.
+    </div>
+    <label class="v43-lbl" for="hyd-meting-pre" style="display:block;margin:8px 0 6px">Lichaamsgewicht vóór training (kg)</label>
+    <input id="hyd-meting-pre" type="number" inputmode="decimal" step="any" min="0" class="vd-input" style="margin-bottom:12px;min-height:44px">
+    <label class="v43-lbl" for="hyd-meting-post" style="display:block;margin:8px 0 6px">Lichaamsgewicht ná training (kg)</label>
+    <input id="hyd-meting-post" type="number" inputmode="decimal" step="any" min="0" class="vd-input" style="margin-bottom:12px;min-height:44px">
+    <label class="v43-lbl" for="hyd-meting-fluid" style="display:block;margin:8px 0 6px">Gedronken tijdens training (L, optioneel)</label>
+    <input id="hyd-meting-fluid" type="number" inputmode="decimal" step="any" min="0" placeholder="Onbekend? Laat leeg" class="vd-input" style="margin-bottom:12px;min-height:44px">
+    <label class="v43-lbl" for="hyd-meting-urine" style="display:block;margin:8px 0 6px">Geplast tijdens training (L, optioneel)</label>
+    <input id="hyd-meting-urine" type="number" inputmode="decimal" step="any" min="0" placeholder="Onbekend? Laat leeg" class="vd-input" style="margin-bottom:12px;min-height:44px">
+    <label class="v43-lbl" for="hyd-meting-duur" style="display:block;margin:8px 0 6px">Duur van de training (minuten)</label>
+    <input id="hyd-meting-duur" type="number" inputmode="decimal" step="any" min="0" class="vd-input" style="margin-bottom:16px;min-height:44px">
+    <div id="hyd-meting-error" aria-live="polite" style="color:#c0392b;font-size:13px;margin-bottom:12px;display:none"></div>
+    <button class="tk-btn tk-btn-primary" style="width:100%;min-height:44px" onclick="voedingHydratatieMetingBereken()">Bereken</button>
+    <div id="hyd-meting-resultaat" style="margin-top:16px"></div>
+  </div>
 </div>
 
 <!-- ═══ VOEDING SET B (foto-/etiketflow) + custom product + correctie ═══ -->
@@ -22297,24 +22353,89 @@ function voedingKennisKnownTopics(){
 function voedingKennisSportvoedingTopicIds(){
   return ['PRE_TRAINING', 'DURING_TRAINING', 'POST_TRAINING', 'ENDURANCE_CARB', 'MUSCLE_GAIN', 'FAT_LOSS_SPORT'];
 }
+// NK-262/263 Knowledge UX hardening sectie 2A: zelfde bestaande patroon als
+// voedingKennisSportvoedingTopicIds() hierboven -- UI-only presentatiegroep,
+// verandert het domain-veld (blijft SUPPLEMENT) niet. Geen tweede
+// handmatige source of truth: dit is exact de vaste lijst uit NK-06
+// (Micronutriëntentopics), hier alleen hergebruikt om de hub in 4 i.p.v.
+// 3 hoofdgroepen te presenteren.
+function voedingKennisMicronutrientTopicIds(){
+  return ['IRON', 'VITAMIN_D', 'CALCIUM', 'MAGNESIUM', 'ZINC', 'VITAMIN_B12', 'FOLATE', 'IODINE'];
+}
+// NK-262/263 sectie 2A/2C: maximaal aantal kaarten getoond op de hub per
+// categorie vóórdat "Bekijk alles" nodig is -- 6 komt overeen met de
+// mockup (2 kolommen x 3 rijen).
+var NK_HUB_CARDS_PER_CATEGORY = 6;
+/* NK-262/263 Knowledge UX hardening (sectie 2A/2B): vertikale
+   categorieblokken i.p.v. de oude flex-rij-squeeze (.vd-sec2, die bij
+   35+ Supplementen-topics onleesbaar samengeperste kaarten gaf). Elke
+   categorie toont een 2-koloms-grid met maximaal NK_HUB_CARDS_PER_CATEGORY
+   kaarten + "Bekijk alles" indien er meer zijn -- geen carrousel, geen
+   horizontale scroll op dit niveau. Bovenaan een deterministische
+   zoekbalk (geen AI, geen fuzzy-naar-verkeerd-topic). */
+function voedingKennisHubGroepen(){
+  var sportIds=voedingKennisSportvoedingTopicIds();
+  var microIds=voedingKennisMicronutrientTopicIds();
+  var alleTopics=voedingKennisKnownTopics();
+  return [
+    {id:'VOEDING', titel:'Voeding', ids:alleTopics.filter(function(id){var t=NutritionKnowledgeTopics.getTopic(id);return t&&t.domain==='NUTRITION'&&sportIds.indexOf(id)===-1;})},
+    {id:'SPORTVOEDING', titel:'Sportvoeding', ids:alleTopics.filter(function(id){var t=NutritionKnowledgeTopics.getTopic(id);return t&&t.domain==='NUTRITION'&&sportIds.indexOf(id)>=0;})},
+    {id:'SUPPLEMENTEN', titel:'Supplementen', ids:alleTopics.filter(function(id){var t=NutritionKnowledgeTopics.getTopic(id);return t&&t.domain==='SUPPLEMENT'&&microIds.indexOf(id)===-1;})},
+    {id:'MICRONUTRIENTEN', titel:'Micronutriënten', ids:alleTopics.filter(function(id){var t=NutritionKnowledgeTopics.getTopic(id);return t&&t.domain==='SUPPLEMENT'&&microIds.indexOf(id)>=0;})}
+  ];
+}
+function voedingKennisTopicKaartHtml(id){
+  var ov=NutritionKnowledgeService.getTopicOverview(id);
+  if(ov.status!=='OK') return '';
+  return '<button class="vd-meal" onclick="voedingOpenKennisTopic(\''+id+'\')" aria-label="'+escHtml(ov.display_name)+'"><span><span class="n">'+escHtml(ov.display_name)+'</span><span class="s">'+escHtml(ov.quick_summary_confidence||'')+'</span></span><span class="ar" aria-hidden="true">›</span></button>';
+}
 function voedingRenderKennisHub(){
   var el=document.getElementById('voeding-kennis-hub'); if(!el) return;
   if(typeof NutritionKnowledgeService==='undefined'){ el.innerHTML=''; return; }
-  var sportIds=voedingKennisSportvoedingTopicIds();
-  var groepen=[
-    {titel:'Voeding', ids:voedingKennisKnownTopics().filter(function(id){var t=NutritionKnowledgeTopics.getTopic(id);return t&&t.domain==='NUTRITION'&&sportIds.indexOf(id)===-1;})},
-    {titel:'Sportvoeding', ids:voedingKennisKnownTopics().filter(function(id){var t=NutritionKnowledgeTopics.getTopic(id);return t&&t.domain==='NUTRITION'&&sportIds.indexOf(id)>=0;})},
-    {titel:'Supplementen', ids:voedingKennisKnownTopics().filter(function(id){var t=NutritionKnowledgeTopics.getTopic(id);return t&&t.domain==='SUPPLEMENT';})}
-  ];
-  el.innerHTML=groepen.map(function(g){
+  var q=(document.getElementById('nk-search-input')?document.getElementById('nk-search-input').value:'')||'';
+  var html='<div class="nk-search-wrap"><input id="nk-search-input" class="nk-search-input" type="text" inputmode="search" placeholder="Zoek in Kennis..." value="'+escHtml(q)+'" oninput="voedingRenderKennisHub()"></div>';
+  var trimmed=q.trim();
+  if(trimmed.length){
+    var resultaten=voedingKennisZoek(trimmed);
+    if(!resultaten.length){
+      html+='<div class="nk-search-empty">Geen onderwerpen gevonden voor "'+escHtml(trimmed)+'".</div>';
+    } else {
+      html+='<div class="nk-cat-grid">'+resultaten.map(voedingKennisTopicKaartHtml).join('')+'</div>';
+    }
+    el.innerHTML=html;
+    return;
+  }
+  html+=voedingKennisHubGroepen().map(function(g){
     if(!g.ids.length) return '';
-    var kaarten=g.ids.map(function(id){
-      var ov=NutritionKnowledgeService.getTopicOverview(id);
-      if(ov.status!=='OK') return '';
-      return '<button class="vd-meal" onclick="voedingOpenKennisTopic(\''+id+'\')" aria-label="'+escHtml(ov.display_name)+'"><span><span class="n">'+escHtml(ov.display_name)+'</span><span class="s">'+escHtml(ov.quick_summary_confidence||'')+'</span></span><span class="ar" aria-hidden="true">›</span></button>';
-    }).join('');
-    return '<div class="vd-sec">'+g.titel+'</div><div class="vd-sec2">'+kaarten+'</div>';
+    var getoond=g.ids.slice(0,NK_HUB_CARDS_PER_CATEGORY);
+    var kaarten=getoond.map(voedingKennisTopicKaartHtml).join('');
+    var viewAll=g.ids.length>NK_HUB_CARDS_PER_CATEGORY
+      ? '<button class="nk-cat-viewall" onclick="voedingOpenKennisCategorie(\''+g.id+'\')">Bekijk alles ('+g.ids.length+') ›</button>' : '';
+    return '<div class="vd-sec">'+g.titel+'</div><div class="nk-cat-grid">'+kaarten+'</div>'+viewAll;
   }).join('');
+  el.innerHTML=html;
+}
+/* voedingKennisZoek: sectie 2B, deterministisch -- exacte match, prefix-
+   match, of prefix-match op een los woord binnen de canonical display_name
+   (zodat bv. "biet" "Nitraat / bietensap" vindt). GEEN AI, GEEN externe
+   API, GEEN fuzzy-match naar een ander topic dan wat de gebruiker typte. */
+function voedingKennisZoek(query){
+  var qNorm=query.trim().toLowerCase();
+  if(!qNorm) return [];
+  return voedingKennisKnownTopics().filter(function(id){
+    var ov=NutritionKnowledgeService.getTopicOverview(id);
+    if(ov.status!=='OK') return false;
+    var naam=ov.display_name.toLowerCase();
+    if(naam.indexOf(qNorm)===0) return true; // prefix van de volledige naam
+    return naam.split(/[\s/(),-]+/).some(function(woord){ return woord.indexOf(qNorm)===0; }); // prefix van een los woord
+  });
+}
+function voedingOpenKennisCategorie(categorieId){
+  var groep=voedingKennisHubGroepen().filter(function(g){ return g.id===categorieId; })[0];
+  if(!groep) return;
+  document.getElementById('voeding-kennis-categorie-title').textContent=groep.titel;
+  go('s-voeding-kennis-categorie');
+  document.getElementById('voeding-kennis-categorie-body').innerHTML='<div class="nk-cat-grid">'+groep.ids.map(voedingKennisTopicKaartHtml).join('')+'</div>';
 }
 var _voedingKennisHuidigTopic=null;
 function voedingOpenKennisTopic(topicId){
@@ -22336,6 +22457,12 @@ function renderVoedingKennisTopic(topicId){
     +'<div class="nk-hero-text">'+escHtml(ov.quick_summary_text)+'</div></div>';
   // AI-CTA — herkenbaar maar niet dominant, direct onder de hero, eerlijke tekst
   html+='<button class="nk-ai-cta" onclick="voedingOpenKennisAi(\''+topicId+'\')"><span>\uD83D\uDCAC Vraag Trainingskompas AI</span><span class="ar" aria-hidden="true">\u203a</span></button>';
+  // NK-09/NK-05C: Zweetverlies meten -- uitsluitend zichtbaar op het
+  // Hydratatie-topic zelf, gebruikt de bestaande, ongewijzigde
+  // hydrationCalculation.js-contracten (geen tweede formule in de UI).
+  if(topicId==='HYDRATION'){
+    html+='<button class="nk-ai-cta" style="background:var(--card2,var(--card))" onclick="voedingOpenHydratatieMeting()"><span>\uD83D\uDCA7 Zweetverlies meten</span><span class="ar" aria-hidden="true">\u203a</span></button>';
+  }
   // SEGMENTED NAV — Overzicht/Praktisch/Verdieping/FAQ/Wetenschap (bestaand .seg/.seg-opt-patroon)
   var tabs=[{id:'overzicht',label:'Overzicht'},{id:'praktisch',label:'Praktisch'},{id:'verdieping',label:'Verdieping'},{id:'faq',label:'FAQ'},{id:'wetenschap',label:'Wetenschap'}];
   html+='<div class="seg nk-seg" role="radiogroup" aria-label="Kennisonderdeel">'+tabs.map(function(t){
@@ -22344,6 +22471,73 @@ function renderVoedingKennisTopic(topicId){
   html+='<div id="voeding-kennis-tab-body"></div>';
   el.innerHTML=html;
   voedingKennisRenderTabBody(topicId,'overzicht');
+}
+/* NK-09/NK-05C: Hydratatie — Zweetverlies meten. Eenmalige, in-memory
+   meting -- geen opslag/persistence (sectie 13: alleen als provenance/
+   data-quality/versie veilig opgeslagen kunnen worden, wat een nieuwe
+   DB-architectuur zou vereisen; dat is bewust NIET in deze sprint gedaan).
+   Roept UITSLUITEND HydrationCalculation.estimateSweatLoss/estimateSweatRate
+   aan -- geen tweede formule, geen eigen berekening in deze functie. */
+function voedingOpenHydratatieMeting(){
+  ['hyd-meting-pre','hyd-meting-post','hyd-meting-fluid','hyd-meting-urine','hyd-meting-duur'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  var errEl=document.getElementById('hyd-meting-error'); if(errEl){ errEl.style.display='none'; errEl.textContent=''; }
+  var resEl=document.getElementById('hyd-meting-resultaat'); if(resEl) resEl.innerHTML='';
+  go('s-voeding-hydratatie-meting');
+}
+function voedingHydratatieMetingBereken(){
+  var errEl=document.getElementById('hyd-meting-error');
+  var resEl=document.getElementById('hyd-meting-resultaat');
+  errEl.style.display='none'; errEl.textContent=''; resEl.innerHTML='';
+  function getal(id){ var v=document.getElementById(id).value; return v===''?null:parseFloat(v); }
+  var pre=getal('hyd-meting-pre'), post=getal('hyd-meting-post'), fluid=getal('hyd-meting-fluid'), urine=getal('hyd-meting-urine'), duur=getal('hyd-meting-duur');
+
+  var verliesResultaat=HydrationCalculation.estimateSweatLoss({ preWeightKg:pre, postWeightKg:post, fluidIntakeL:fluid, urineL:urine });
+  if(verliesResultaat.status==='INSUFFICIENT_INPUT'){ errEl.textContent='Vul in elk geval je gewicht vóór en ná de training in.'; errEl.style.display='block'; return; }
+  if(verliesResultaat.status==='IMPLAUSIBLE'){ errEl.textContent='Deze invoer lijkt niet fysiek mogelijk. Controleer je gewicht(en) en de ingevulde hoeveelheden.'; errEl.style.display='block'; return; }
+
+  var tempoResultaat=HydrationCalculation.estimateSweatRate({ sweatLossResult:verliesResultaat, durationMinutes:duur });
+  if(tempoResultaat.status==='INSUFFICIENT_INPUT'){ errEl.textContent='Vul de duur van je training in (in minuten).'; errEl.style.display='block'; return; }
+  if(tempoResultaat.status==='IMPLAUSIBLE'){ errEl.textContent='De ingevulde duur lijkt niet fysiek mogelijk.'; errEl.style.display='block'; return; }
+
+  // RESULTAAT -> DATA QUALITY/CONFIDENCE -> UITLEG. Uitsluitend
+  // engine-output; geen enkel drinkadvies (allowed_decision_use:false op
+  // beide calculations -- sectie 12 van de NK-09-opdracht, EAH-boundary).
+  var reg=HydrationCalculation.getCalculation('sweat_loss_estimate.v1');
+  // NK-262/263 sectie 2F: interne engine-waarden (dataQuality: LOW/MEDIUM/
+  // HIGH) zijn technische codes -- de gebruiker ziet altijd de Nederlandse
+  // weergave. De vertaling verandert de canonical waarde zelf niet (die
+  // blijft ongewijzigd beschikbaar voor AI/toekomstige opslag).
+  var KWALITEIT_NL={LOW:'laag',MEDIUM:'redelijk',HIGH:'hoog'};
+  var kwaliteitNl=KWALITEIT_NL[verliesResultaat.dataQuality]||verliesResultaat.dataQuality;
+  var iu=verliesResultaat.inputsUsed||{};
+  // UNKNOWN != 0 (sectie 2F, hard vereist): de canonical invoer blijft
+  // "niet geregistreerd" -- de UI verbergt nooit dat een niet-ingevulde
+  // waarde vóór de berekening als 0 is behandeld.
+  var nietGeregistreerd=[];
+  if(!iu.fluidIntakeKnown) nietGeregistreerd.push('vochtinname');
+  if(!iu.urineKnown) nietGeregistreerd.push('urine');
+  var html='<div class="tk-card tk-card-l3" style="padding:16px;text-align:center;margin-bottom:12px">'
+    +'<div style="font-size:12px;color:var(--g4);margin-bottom:4px">Geschat zweetverlies</div>'
+    +'<div style="font-size:28px;font-weight:700">'+verliesResultaat.sweatLossL.toFixed(2).replace('.',',')+' L</div>'
+    +'<div style="font-size:12px;color:var(--g4);margin-top:10px">Geschat zweettempo</div>'
+    +'<div style="font-size:22px;font-weight:700">'+tempoResultaat.sweatRateLPerHour.toFixed(2).replace('.',',')+' L/uur</div>'
+    +'</div>';
+  html+='<div class="tk-card tk-card-l3" style="padding:14px;margin-bottom:12px;font-size:13px">'
+    +'<div style="font-weight:600;margin-bottom:4px">Meetkwaliteit: '+escHtml(kwaliteitNl)+'</div>'
+    +(nietGeregistreerd.length
+      ? '<div style="color:var(--g4)">'+escHtml(nietGeregistreerd.join(' en ').replace(/^./,function(c){return c.toUpperCase();}))+' '+(nietGeregistreerd.length>1?'zijn':'is')+' niet geregistreerd; voor deze schatting als 0 verwerkt.</div>'
+      : '<div style="color:var(--g4)">Betrouwbaarheid: '+escHtml(verliesResultaat.confidence)+'</div>')
+    +'</div>';
+  html+='<details class="tk-card tk-card-l3" style="padding:14px;margin-bottom:12px;font-size:13px;color:var(--g4);line-height:1.5">'
+    +'<summary style="font-weight:600;color:var(--fg,inherit);cursor:pointer">Hoe wordt dit berekend?</summary>'
+    +'<div style="margin-top:8px">'
+    +'<div style="margin-bottom:8px">Dit is een schatting voor déze training, onder deze omstandigheden -- geen vaste waarde voor elke toekomstige sessie.</div>'
+    +(reg&&reg.limitations||[]).map(function(l){ return '<div style="margin-bottom:4px">• '+escHtml(l)+'</div>'; }).join('')
+    +'</div></details>';
+  html+='<div class="tk-card tk-card-l3" style="padding:14px;margin-bottom:12px;font-size:13px;color:var(--g4);line-height:1.5">'
+    +'<div style="font-weight:600;color:var(--fg,inherit)">Trainingskompas geeft op basis hiervan geen persoonlijk drinkadvies (bijvoorbeeld "drink X ml per uur") en geen zoutadvies -- overdrinken is een reëel risico, meer drinken is niet automatisch beter, en dit getal alleen bepaalt niet wat voor jou de juiste hoeveelheid is.</div>'
+    +'</div>';
+  resEl.innerHTML=html;
 }
 function voedingKennisSwitchTab(topicId,tabId){
   _voedingKennisActieveTab=tabId;

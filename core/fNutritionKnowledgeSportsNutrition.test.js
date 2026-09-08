@@ -134,7 +134,14 @@ ok(KEvidence.getById('NK-ENE-WEARABLE-001').forbidden_interpretations.some((f) =
   ok(!!hydSection, 'Z: ' + topicId + ' bevat een hydratatie/vocht-cross-link');
   ok(!/\bg\/kg\b.{0,20}vocht|sweat.?rate|zweetpercentage/i.test(hydSection.body), 'Z-b: hydratatie-cross-link in ' + topicId + ' bevat geen sweat-rate-berekening');
 });
-ok(!/sweatRate|calculateSweatRate|hydrationTarget/i.test(serviceSrc + html), 'Z-c: geen sweat-rate/hydration-target-functie toegevoegd');
+// NK-09/NK-05C: een aanroep van de bestaande, gecertificeerde
+// HydrationCalculation.estimateSweatRate() is het EXPLICIET gesanctioneerde
+// doel van deze sprint (Hydratatie-meetscherm) -- geen tweede, zelfstandige
+// implementatie. De check moet dus specifiek een NIEUWE functiedefinitie
+// vangen (bv. "function calculateSweatRate"/"function hydrationTarget"),
+// niet elke toevallige substring-overlap met de naam van de reeds
+// bestaande, geautoriseerde engine-functie.
+ok(!/function\s+(calculateSweatRate|hydrationTarget|sweatRateCalc)/i.test(serviceSrc + html), 'Z-c: geen NIEUWE sweat-rate/hydration-target-berekeningsfunctie toegevoegd (aanroepen van de bestaande, gecertificeerde HydrationCalculation-engine is het gesanctioneerde NK-05C-doel, geen overtreding)');
 
 // ═══ SECTIE 24 — AI ═══
 

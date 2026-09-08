@@ -86,7 +86,17 @@ ok(JSON.stringify(aiCtxKeys) === JSON.stringify(['APPROVED_FACTS', 'CONFIDENCE',
 // ---- L: geen persoonlijke calculation (herbevestiging) ----
 const uiGroupsSrc = fs.readFileSync(path.join(ROOT, 'core/nutritionKnowledgeUiGroups.js'), 'utf8');
 ok(!/mg\s*\/\s*kg|gewicht\s*\*|weight\s*\*/i.test(uiGroupsSrc), 'L: geen mg/kg- of gewicht-berekening in de nieuwe UI-groeperingsmodule');
-const kennisUiBlockMatch = html.match(/renderVoedingKennisTopic[\s\S]{0,6000}voedingKennisWetenschapHtml[\s\S]{0,2000}\n\}/);
+// NK-09: het venster tussen deze twee functienamen groeide legitiem (NK-05C
+// Hydratatie-meetscherm-code ertussen toegevoegd) -- vaste tekenlimieten
+// vervangen door een robuuste, indexOf-gebaseerde extractie die met de
+// werkelijke, actuele afstand meegroeit i.p.v. een geharde, snel-verlopende
+// aanname. Zelfde onderliggende controle (geen persoonlijke berekening in
+// het VOLLEDIGE Kennis-UI-functieblok), niets verzwakt.
+const kennisUiBlockStart2 = html.indexOf('function renderVoedingKennisTopic');
+const kennisUiBlockEndMarker2 = html.indexOf('function voedingKennisWetenschapHtml', kennisUiBlockStart2);
+const kennisUiBlockMatch = (kennisUiBlockStart2 > -1 && kennisUiBlockEndMarker2 > kennisUiBlockStart2)
+  ? [html.slice(kennisUiBlockStart2, html.indexOf('\n}', kennisUiBlockEndMarker2) + 2)]
+  : null;
 ok(!!kennisUiBlockMatch && !/mg\s*\/\s*kg|gewicht\s*\*|weight\s*\*/i.test(kennisUiBlockMatch[0]), 'L-b: geen mg/kg- of gewicht-berekening in de nieuwe Kennis-UI-JS');
 
 // ---- M: touch targets ----

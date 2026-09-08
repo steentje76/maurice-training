@@ -39,6 +39,12 @@ const lookupBody = functionBody('voedingOffLookup');
 const missBody = functionBody('voedingOpenBarcodeMiss');
 const scanLoopBody = functionBody('voedingRunScanLoop');
 const manualBody = functionBody('voedingLookupBarcodeValue');
+// ANDROID-BARCODE-SCANNER-opdracht: de FOUND/INVALID_IDENTIFIER-afhandeling
+// (incl. de voedingResolveBarcode-aanroep) is uit voedingRunScanLoop
+// geextraheerd naar een gedeelde handler, zodat zowel het web- als het
+// native CameraX+ML Kit-scanpad exact dezelfde, ongewijzigde
+// canonical-product-resolutie gebruiken (geen tweede implementatie).
+const sharedDecodeHandlerBody = functionBody('voedingHandleBarcodeDecodeResult');
 
 ok(!!resolveBody, 'setup: voedingResolveBarcode gevonden');
 ok(!!ingestBody, 'setup: voedingIngestOffCandidate gevonden');
@@ -102,7 +108,8 @@ ok(!/alert\(|confirm\(|prompt\(/.test(resolveBody || '') && !/alert\(|confirm\(|
 });
 
 // ---- BEIDE BESTAANDE AANROEPPUNTEN GEBRUIKEN NU DEZELFDE GEDEELDE RESOLUTIE (geen twee losse implementaties meer) ----
-ok(!!scanLoopBody && scanLoopBody.includes('voedingResolveBarcode('), 'H1: de live scanner gebruikt de gedeelde voedingResolveBarcode');
+ok(!!sharedDecodeHandlerBody, 'setup: voedingHandleBarcodeDecodeResult (gedeelde web+native-afhandeling) gevonden');
+ok(!!sharedDecodeHandlerBody && sharedDecodeHandlerBody.includes('voedingResolveBarcode('), 'H1: de live scanner (web+native, via de gedeelde handler) gebruikt de gedeelde voedingResolveBarcode');
 ok(!!manualBody && manualBody.includes('voedingResolveBarcode('), 'H2: handmatige invoer gebruikt dezelfde gedeelde voedingResolveBarcode');
 ok(!!scanLoopBody && !/sbGet\('nutrition_product_identifiers'/.test(scanLoopBody),
   'H3: de scanner doet geen eigen, dubbele lokale-lookup meer (uitsluitend via voedingResolveBarcode)');

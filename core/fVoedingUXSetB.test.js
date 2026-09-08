@@ -231,9 +231,9 @@ t('Native-camera-knop is een alternatief naast de bestaande live-cameraflow, nie
 });
 
 // -- Barcode: expliciete bevestiging + altijd-zichtbare retry-actie ---------
-t('Barcode-detectie toont een expliciete, zichtbare bevestiging ("Barcode gevonden: <waarde>") voordat de lookup start (KERN, Fase 12)', () => {
-  const fnStart = html.indexOf('async function voedingRunScanLoop');
-  const fnEnd = html.indexOf('function voedingScannerRetry', fnStart);
+t('Barcode-detectie (gedeeld door web- en native-scanpad, sectie NK-04A/ANDROID-SCANNER) toont een expliciete, zichtbare bevestiging ("Barcode gevonden: <waarde>") voordat de lookup start (KERN, Fase 12)', () => {
+  const fnStart = html.indexOf('async function voedingHandleBarcodeDecodeResult');
+  const fnEnd = html.indexOf('async function voedingNativeBarcodeDetected', fnStart);
   const fnBody = html.slice(fnStart, fnEnd);
   assert.strictEqual(fnBody.includes("'Barcode gevonden: '+result.identifier.value"), true);
 });
@@ -287,8 +287,8 @@ t('Diagnostiek logt gemeten stream-settings + capture-mechanisme, geen apparaat-
   assert.strictEqual(b.includes('capture mechanism used'), true);
   assert.strictEqual(/deviceId/.test(b), false);
 });
-t('Barcode FOUND toont zichtbare bevestiging met de barcodewaarde vóór de lookup (Fase 12); BARCODE_DETECTED stopt de scan-loop', () => {
-  const b=fnBodyOf('async function voedingRunScanLoop','function voedingScannerRetry');
+t('Barcode FOUND (gedeeld door web- en native-scanpad) toont zichtbare bevestiging met de barcodewaarde vóór de lookup (Fase 12); BARCODE_DETECTED stopt de scan-loop', () => {
+  const b=fnBodyOf('async function voedingHandleBarcodeDecodeResult','async function voedingNativeBarcodeDetected');
   assert.strictEqual(b.includes("'Barcode gevonden: '+result.identifier.value"), true);
   assert.strictEqual(b.includes('voedingScannerActive=false;'), true);
 });

@@ -45,9 +45,9 @@ t('BARCODE_NOT_FOUND toont een echte, in-scherm staat met twee acties (Opnieuw p
   assert.strictEqual(html.includes('Houd de camera stil en zorg dat de barcode scherp en volledig zichtbaar is.'), true);
   assert.strictEqual(html.includes('voedingScannerRetry'), true);
 });
-t('voedingRunScanLoop schakelt naar de not-found-staat bij INVALID_IDENTIFIER, blijft NIET stilzwijgend doorscannen zonder feedback (structureel)', () => {
-  const fnStart = html.indexOf('async function voedingRunScanLoop');
-  const fnEnd = html.indexOf('function voedingScannerRetry', fnStart);
+t('voedingHandleBarcodeDecodeResult (gedeeld door web- en native-scanpad) schakelt naar de not-found-staat bij INVALID_IDENTIFIER, blijft NIET stilzwijgend doorscannen zonder feedback (structureel)', () => {
+  const fnStart = html.indexOf('async function voedingHandleBarcodeDecodeResult');
+  const fnEnd = html.indexOf('async function voedingNativeBarcodeDetected', fnStart);
   const fnBody = html.slice(fnStart, fnEnd);
   assert.strictEqual(fnBody.includes("result.status==='INVALID_IDENTIFIER'"), true);
   assert.strictEqual(fnBody.includes("voeding-scanner-notfound').style.display='block'"), true);
@@ -62,9 +62,9 @@ t('voedingStartScanner toont expliciet CAMERA_STARTING/PERMISSION_REQUIRED-tekst
   assert.strictEqual(fnBody.includes('PERMISSION_DENIED'), true);
   assert.strictEqual(fnBody.includes('Camera kon niet worden geopend'), true);
 });
-t('Barcode-detectie routeert naar lookup (BARCODE_DETECTED -> LOOKUP_IN_PROGRESS), niet direct terug naar zoeken zonder feedback', () => {
-  const fnStart = html.indexOf('async function voedingRunScanLoop');
-  const fnEnd = html.indexOf('function voedingScannerRetry', fnStart);
+t('Barcode-detectie (gedeeld door web- en native-scanpad) routeert naar lookup (BARCODE_DETECTED -> LOOKUP_IN_PROGRESS), niet direct terug naar zoeken zonder feedback', () => {
+  const fnStart = html.indexOf('async function voedingHandleBarcodeDecodeResult');
+  const fnEnd = html.indexOf('async function voedingNativeBarcodeDetected', fnStart);
   const fnBody = html.slice(fnStart, fnEnd);
   assert.strictEqual(fnBody.includes("result.status==='FOUND'"), true);
   assert.strictEqual(fnBody.includes('Product opzoeken'), true);

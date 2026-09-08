@@ -138,7 +138,13 @@ t('C4: alleen de rechten die de app echt gebruikt', function () {
   var rechten = (MANIFEST.match(/android:name="android\.permission\.[A-Z_]+"/g) || [])
     .map(function (r) { return r.replace(/.*permission\./, '').replace('"', ''); });
   var toegestaan = ['INTERNET', 'BLUETOOTH_SCAN', 'BLUETOOTH_CONNECT', 'BLUETOOTH',
-                    'BLUETOOTH_ADMIN', 'ACCESS_FINE_LOCATION'];
+                    'BLUETOOTH_ADMIN', 'ACCESS_FINE_LOCATION',
+                    // ANDROID-BARCODE-SCANNER-opdracht: CAMERA is een bewust, nieuw
+                    // toegevoegd, gebruikersgezien runtime-recht (native CameraX+ML
+                    // Kit barcode-scanning) -- geen achtergrond-/gevoelig recht, hier
+                    // expliciet, bewust aan de allowlist toegevoegd (niet stilzwijgend
+                    // uitgebreid) exact conform het doel van deze test.
+                    'CAMERA'];
   var onverwacht = rechten.filter(function (r) { return toegestaan.indexOf(r) < 0; });
   assert.deepStrictEqual(onverwacht, [],
     'onverwachte rechten (elk recht kost uitleg in de Play-datavragenlijst): ' + onverwacht.join(', '));

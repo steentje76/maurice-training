@@ -4286,6 +4286,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <div id="voeding-scanner-status" aria-live="polite" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;text-align:center;padding:20px;font-size:14px">Camera wordt gestart…</div>
     </div>
     <div id="voeding-scanner-instruction" style="text-align:center;font-size:13px;color:var(--g4);margin-bottom:12px">Houd de barcode binnen het kader</div>
+    <button id="voeding-scanner-torch-btn" class="tk-btn tk-btn-tertiary" style="width:100%;margin-bottom:10px;display:none" onclick="voedingToggleTorch()">🔦 Lamp aan</button>
     <button id="voeding-scanner-rescan-btn" class="tk-btn tk-btn-tertiary" style="width:100%;margin-bottom:16px" onclick="voedingScannerRetry()">Opnieuw scannen</button>
     <div id="voeding-scanner-notfound" aria-live="polite" style="display:none;background:var(--card);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center">
       <div style="font-weight:700;margin-bottom:6px">Nog geen barcode gevonden</div>
@@ -6292,6 +6293,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/nutritionTimeUtils.js"></script>
 <script src="core/nutritionRelationshipSources.js"></script>
 <script src="core/nutritionBarcodeRuntime.js"></script>
+<script src="core/nativeBarcodeScannerBridge.js"></script>
 <script src="core/designSystemIcons.js"></script>
 <script src="core/decision.js"></script>
 <script src="core/aiOutputContract.js"></script>
@@ -21484,8 +21486,30 @@ async function voedingStartScanner(){
   document.getElementById('voeding-scanner-notfound').style.display='none';
   document.getElementById('voeding-scanner-instruction').style.display='block';
   document.getElementById('voeding-scanner-instruction').textContent='Houd de barcode binnen het kader';
-  video.style.display='none';
   voedingSetScannerStatus('Camera wordt gestart…', false); // CAMERA_STARTING
+  // ANDROID-BARCODE-SCANNER-opdracht (sectie 3/12): binnen de native
+  // Capacitor-Android-runtime gebruiken we CameraX+ML Kit i.p.v. de
+  // browser-getUserMedia-permissiedialoog (die op Android als "deploy-
+  // preview-...netlify.app wil je camera gebruiken" verscheen). Web/PWA
+  // buiten Capacitor blijft het bestaande, ongewijzigde ZXing/
+  // BarcodeDetector-pad gebruiken (BarcodeScannerAdapter-patroon: de
+  // Nutrition-laag hoeft nooit te weten welk technisch pad actief is,
+  // beide monden uit in exact dezelfde voedingHandleBarcodeDecodeResult).
+  if(typeof NativeBarcodeScannerBridge!=='undefined' && NativeBarcodeScannerBridge.isNativeAndroidScannerAvailable(window)){
+    video.style.display='none'; // native toont zijn eigen CameraX-preview, geen <video>-element nodig
+    voedingScannerActive=true;
+    voedingScannerTorchOn=false;
+    document.getElementById('voeding-scanner-torch-btn').style.display='block';
+    document.getElementById('voeding-scanner-torch-btn').textContent='🔦 Lamp aan';
+    var gestart=NativeBarcodeScannerBridge.startScan(function(rawDetection){ voedingNativeBarcodeDetected(rawDetection); }, function(err){
+      voedingScannerActive=false;
+      voedingSetScannerStatus('Camera kon niet worden geopend.', false);
+    });
+    if(gestart) voedingSetScannerStatus(null, true); // CAMERA_ACTIVE
+    return;
+  }
+  document.getElementById('voeding-scanner-torch-btn').style.display='none';
+  video.style.display='none';
   try{
     voedingScannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment', width:{ideal:1920}, height:{ideal:1080}}});
     video.srcObject=voedingScannerStream;
@@ -21642,6 +21666,47 @@ function voedingOpenBarcodeMiss(){
   openModal('m-voeding-off-miss');
 }
 
+/* voedingHandleBarcodeDecodeResult: GEDEELDE afhandeling van een reeds
+   geresolveerd NutritionCameraCapture-resultaat, ongeacht welke
+   technologie het produceerde (web BarcodeDetector/ZXing via
+   voedingRunScanLoop, óf native CameraX+ML Kit via
+   voedingNativeBarcodeDetected). "De Nutrition-laag hoeft niet te weten
+   welke technische scanner actief is" (native-scanner-opdracht, sectie
+   12) -- vóór deze functie bestond deze logica alleen inline in
+   voedingRunScanLoop; nu één plek, twee aanroepers, geen gedrags-
+   duplicatie. */
+async function voedingHandleBarcodeDecodeResult(result){
+  if(result.status==='FOUND'){
+    voedingScannerActive=false;
+    voedingSetScannerStatus(null, true);
+    document.getElementById('voeding-scanner-instruction').textContent='Barcode gevonden: '+result.identifier.value;
+    await new Promise(function(res){ setTimeout(res,600); });
+    voedingCloseScanner();
+    voedingSetScannerStatus('Product opzoeken…', false);
+    var resolved=await voedingResolveBarcode(result.identifier.value);
+    if(resolved.status==='FOUND_LOCAL'||resolved.status==='FOUND_PROVIDER'){ voedingOpenProduct(resolved.productId); return; }
+    voedingOpenBarcodeMiss();
+    return;
+  }
+  if(result.status==='INVALID_IDENTIFIER'){
+    voedingScannerActive=false;
+    document.getElementById('voeding-scanner-instruction').style.display='none';
+    document.getElementById('voeding-scanner-notfound').style.display='block';
+    return;
+  }
+  // NO_BARCODE/UNSUPPORTED_FORMAT/MULTIPLE_BARCODES/LOW_CONFIDENCE: nog
+  // niets bruikbaars -- de aanroeper bepaalt zelf of/hoe hervat wordt
+  // (web: opnieuw pollen; native: lock al vrijgegeven door de bridge).
+}
+/* voedingNativeBarcodeDetected: callback vanuit NativeBarcodeScannerBridge
+   (event-gedreven i.p.v. de web-polling-lus). Hergebruikt exact dezelfde
+   NutritionCameraCapture-resolver + NutritionFoundation2Core-checksum-
+   validatie als het web-pad -- geen tweede beslislaag (sectie 12/20). */
+async function voedingNativeBarcodeDetected(rawDetection){
+  var result=NutritionCameraCapture.resolveBarcodeDetectionResult([rawDetection], NutritionFoundation2Core.normalizeBarcode);
+  await voedingHandleBarcodeDecodeResult(result);
+  if(result.status!=='FOUND' && voedingScannerActive) NativeBarcodeScannerBridge.resumeScan(); // sectie 8: expliciete hervatting, geen impliciete timeout
+}
 async function voedingRunScanLoop(){
   var video=document.getElementById('voeding-scanner-video');
   if(!voedingScannerActive) return;
@@ -21653,24 +21718,7 @@ async function voedingRunScanLoop(){
       resolveBarcodeDetectionResultFn:NutritionCameraCapture.resolveBarcodeDetectionResult, zxingReader:zxingAdapter
     });
     if(!voedingScannerActive) return; // scherm inmiddels verlaten
-    if(result.status==='FOUND'){ // BARCODE_DETECTED
-      voedingScannerActive=false;
-      voedingSetScannerStatus(null, true);
-      document.getElementById('voeding-scanner-instruction').textContent='Barcode gevonden: '+result.identifier.value; // zichtbare bevestiging (Fase 12)
-      await new Promise(function(res){ setTimeout(res,600); }); // gebruiker kort de bevestiging laten zien
-      voedingCloseScanner();
-      voedingSetScannerStatus('Product opzoeken…', false); // LOOKUP_IN_PROGRESS
-      var resolved=await voedingResolveBarcode(result.identifier.value);
-      if(resolved.status==='FOUND_LOCAL'||resolved.status==='FOUND_PROVIDER'){ voedingOpenProduct(resolved.productId); return; } // PRODUCT_FOUND
-      voedingOpenBarcodeMiss(); // PRODUCT_NOT_FOUND (lokaal én extern) -- geen dead end
-      return;
-    }
-    if(result.status==='INVALID_IDENTIFIER'){ // BARCODE_NOT_FOUND (ongeldige checksum)
-      voedingScannerActive=false;
-      document.getElementById('voeding-scanner-instruction').style.display='none';
-      document.getElementById('voeding-scanner-notfound').style.display='block';
-      return;
-    }
+    if(result.status==='FOUND'||result.status==='INVALID_IDENTIFIER'){ await voedingHandleBarcodeDecodeResult(result); return; }
     // NO_BARCODE/UNSUPPORTED_FORMAT: nog niets gedetecteerd, blijf actief scannen.
     setTimeout(voedingRunScanLoop, 400);
   }catch(e){
@@ -21688,6 +21736,14 @@ function voedingScannerRetry(){
 function voedingCloseScanner(){
   voedingScannerActive=false;
   if(voedingScannerStream){ voedingScannerStream.getTracks().forEach(function(t){t.stop();}); voedingScannerStream=null; }
+  if(typeof NativeBarcodeScannerBridge!=='undefined') NativeBarcodeScannerBridge.stopScan();
+}
+var voedingScannerTorchOn=false;
+async function voedingToggleTorch(){
+  if(typeof NativeBarcodeScannerBridge==='undefined') return;
+  voedingScannerTorchOn=!voedingScannerTorchOn;
+  await NativeBarcodeScannerBridge.setTorch(voedingScannerTorchOn);
+  document.getElementById('voeding-scanner-torch-btn').textContent=voedingScannerTorchOn?'🔦 Lamp uit':'🔦 Lamp aan';
 }
 
 /* -- Barcode handmatig invoeren -- hergebruikt uitsluitend de bestaande,

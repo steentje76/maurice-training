@@ -26,10 +26,12 @@ ok(C.getById('PROHORMONES').entity_type === 'RISK_CATEGORY', 'PROHORMONES is RIS
 
 // ---- schaalbaarheid: catalogus is niet vastgeklonken aan de negen P0-items;
 // nieuwe P1/P2/P3-items zijn puur databuit, geen enginewijziging nodig.
-// Getallen komen uit CATALOG zelf, nooit uit een hardgecodeerd historisch cijfer. ----
-const p1Sample = C.getById('SODIUM_BICARBONATE');
-ok(!!p1Sample && p1Sample.priority === 'P1' && p1Sample.evidence_coverage_status === 'PENDING_VERIFICATION',
-  'een P1-item bestaat in de catalogus als gewone databuit, geen hardgecodeerde negen-items-aanname');
+// Getallen komen uit CATALOG zelf, nooit uit een hardgecodeerd historisch cijfer.
+// NK-07: SODIUM_BICARBONATE (het oorspronkelijke voorbeeld hier) is inmiddels
+// zelf CERTIFIED -- vervangen door een P2-item dat nog PENDING_VERIFICATION is,
+// dezelfde onderliggende schaalbaarheids-invariant, geen zwakkere check. ----
+const p2Sample = C.getById('DHEA') && C.getById('DHEA').priority === 'P1' ? C.CATALOG.find((c) => c.priority === 'P2' && c.evidence_coverage_status === 'PENDING_VERIFICATION') : null;
+ok(!!p2Sample, 'een lager-prioriteits-item bestaat in de catalogus als gewone databuit, geen hardgecodeerde negen-items-aanname');
 ok(C.byPriority('P0').length === 9, 'P0-telling is exact 9 (de gecertificeerde set)');
 ok(C.byPriority('P1').length + C.byPriority('P2').length + C.byPriority('P3').length > 50,
   'ruim meer dan 50 niet-P0-items aanwezig, klaar voor toekomstige claim-batches zonder enginewijziging');

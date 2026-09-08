@@ -133,6 +133,96 @@
       { group_id: 'basis', group_label: 'Basis', section_ids: ['functie'] },
       { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['balans'] },
       { group_id: 'verdieping', group_label: 'Verdieping', section_ids: ['diagnose'] }
+    ],
+    SODIUM_BICARBONATE: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['functie'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['prestatie'] },
+      { group_id: 'verdieping', group_label: 'Veiligheid', section_ids: ['veiligheid'] }
+    ],
+    NITRATE_BEETROOT: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['functie'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['prestatie'] },
+      { group_id: 'verdieping', group_label: 'Veiligheid', section_ids: ['veiligheid'] }
+    ],
+    CITRULLINE: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['functie'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['prestatie'] },
+      { group_id: 'verdieping', group_label: 'Veiligheid', section_ids: ['veiligheid'] }
+    ],
+    OMEGA_3: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['functie'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['herstel'] },
+      { group_id: 'verdieping', group_label: 'Veiligheid', section_ids: ['veiligheid'] }
+    ],
+    EAA: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['functie'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['context'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: [] }
+    ],
+    BCAA: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['functie'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['context'] },
+      { group_id: 'verdieping', group_label: 'Beperking', section_ids: ['beperking'] }
+    ],
+    COLLAGEN: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['functie'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['spieropbouw'] },
+      { group_id: 'verdieping', group_label: 'Veiligheid', section_ids: ['veiligheid'] }
+    ],
+    MULTIVITAMIN: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['prestatie'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['context'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: [] }
+    ],
+    TART_CHERRY: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['herstel'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['veiligheid'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: [] }
+    ],
+    ANTIOXIDANTS_CE: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['trainingsaanpassing'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['voeding'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: [] }
+    ],
+    THEANINE: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['functie'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['slaap'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: [] }
+    ],
+    ASHWAGANDHA: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['prestatie'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['dosering'] },
+      { group_id: 'verdieping', group_label: 'Veiligheid', section_ids: ['veiligheid'] }
+    ],
+    TESTOSTERONE_BOOSTER: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['categorie'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['ingredienten'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: [] }
+    ],
+    FAT_BURNER: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['categorie'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['energiebalans'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: [] }
+    ],
+    DHEA: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['status'] }
+    ],
+    DMAA: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['status'] }
+    ],
+    DMBA: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['status'] }
+    ],
+    PROHORMONES: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['status'] }
+    ],
+    STIMULANT_ADULTERANTS: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['risico'] }
+    ],
+    UNDECLARED_CONTAMINATION: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['certificering'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['triage'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: [] }
     ]
   };
 

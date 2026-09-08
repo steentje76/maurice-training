@@ -4359,6 +4359,9 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
     <div id="voeding-supp-error" aria-live="polite" style="color:#c0392b;font-size:13px;margin-bottom:8px;display:none"></div>
     <button class="tk-btn tk-btn-primary" style="width:100%" onclick="voedingSaveSupplement()">Opslaan</button>
+    <!-- NK-07 sectie 19: logging != aanbeveling -- moet expliciet in de UI staan,
+         niet alleen als code-architectuurregel. Compact, geen alarmerende toon. -->
+    <div style="font-size:12px;color:var(--g4);margin-top:10px;text-align:center">Loggen dat je iets gebruikt betekent niet dat Trainingskompas dit adviseert.</div>
     <div class="v43-lbl" style="margin:20px 0 6px">Recente invoer</div>
     <div id="voeding-supp-history"><div style="text-align:center;padding:16px;color:var(--g4);font-size:13px">Laden…</div></div>
   </div>
@@ -22275,11 +22278,18 @@ function voedingKennisKnownTopics(){
   // Langdurige inspanning, Spieropbouw, Vetverlies & sport).
   // NK-05: Hydratatie toegevoegd.
   // NK-06: 8 micronutriëntentopics toegevoegd (IJzer, Vitamine D, Calcium,
-  // Magnesium, Zink, B12, Folaat, Jodium) onder Supplementen. Volgorde
-  // bepaalt geen gedrag, alleen weergavevolgorde binnen de hub-groepen.
+  // Magnesium, Zink, B12, Folaat, Jodium) onder Supplementen.
+  // NK-07: 20 resterende P1-supplementtopics toegevoegd (Supplement Knowledge
+  // Completion) onder Supplementen -- alle actuele P0/P1-catalogusitems zijn
+  // hiermee discoverable. Volgorde bepaalt geen gedrag, alleen
+  // weergavevolgorde binnen de hub-groepen.
   return ['PROTEIN', 'CARBOHYDRATES', 'FATS', 'ENERGY', 'FIBRE', 'HEALTHY_EATING', 'HYDRATION',
     'PRE_TRAINING', 'DURING_TRAINING', 'POST_TRAINING', 'ENDURANCE_CARB', 'MUSCLE_GAIN', 'FAT_LOSS_SPORT',
-    'CREATINE', 'IRON', 'VITAMIN_D', 'CALCIUM', 'MAGNESIUM', 'ZINC', 'VITAMIN_B12', 'FOLATE', 'IODINE'];
+    'CREATINE', 'IRON', 'VITAMIN_D', 'CALCIUM', 'MAGNESIUM', 'ZINC', 'VITAMIN_B12', 'FOLATE', 'IODINE',
+    'SODIUM_BICARBONATE', 'NITRATE_BEETROOT', 'CITRULLINE', 'OMEGA_3', 'EAA', 'BCAA', 'COLLAGEN',
+    'MULTIVITAMIN', 'TART_CHERRY', 'ANTIOXIDANTS_CE', 'THEANINE', 'ASHWAGANDHA',
+    'TESTOSTERONE_BOOSTER', 'FAT_BURNER', 'DHEA', 'DMAA', 'DMBA', 'PROHORMONES',
+    'STIMULANT_ADULTERANTS', 'UNDECLARED_CONTAMINATION'];
 }
 // NK-04 sectie 17: expliciete Sportvoeding-subgroep binnen Voeding (UI-alleen --
 // verandert het domain-veld van deze topics niet, dat blijft NUTRITION, exact

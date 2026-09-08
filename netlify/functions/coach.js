@@ -42,19 +42,24 @@ const CalcCore = require('../../core/calculation.js');
 //   (analoog aan "account aanmaken" -- altijd toegankelijk, geen quota).
 // - program_generation -> programma_generator
 // - session_summary / chat -> ai_coach
-// - knowledge_chat -> ai_coach (NK-04A: Nutrition Knowledge Kennis-AI --
-//   zelfde commerciële feature/quota-bucket als de gewone AI Coach-chat,
-//   geen nieuwe betaalde capability. Apart requestType i.p.v. hergebruik
-//   van 'chat' omdat het contract fundamenteel anders is: de client stuurt
-//   hier een door NutritionKnowledgeResolver samengesteld, begrensd
-//   evidence-pakket als system-prompt in plaats van trainingscontext, en
-//   het antwoord komt nooit met een [[APPLY:...]]-gewichtsmarker.
+// - knowledge_chat -> knowledge_ai (AI-QUOTA-FORENSIC-fix: was 'ai_coach'
+//   t/m NK-04C. Root cause van de gerapporteerde blokkade tijdens fysieke
+//   NK-04C-validatie: knowledge_chat deelde de feature-key 'ai_coach' met
+//   de gewone Daily Coach-chat ('chat'/'session_summary'). Bij een quotum
+//   van 5/maand (gratis/atleet_basis) verbruikte elke Kennis-AI-testvraag
+//   dezelfde, zeer beperkte Daily-Coach-capaciteit -- bevestigd via
+//   usage_log (testaccount stond op exact 5/5 voor feature_key=ai_coach).
+//   Nu een eigen, apart getrackte feature_key/quotabucket (plan_features/
+//   plan_feature_quota-rijen toegevoegd met PRECIES dezelfde, al
+//   goedgekeurde getallen als ai_coach -- geen nieuwe commerciële limiet
+//   verzonnen). Effect: Kennis-AI en Daily Coach kunnen elkaars capaciteit
+//   niet meer opsouperen (cross-feature starvation opgelost).
 const REQUEST_TYPE_TO_FEATURE = {
   intake_extract: null, // geen entitlement/quota-check: fundamentele onboarding-stap
   program_generation: 'programma_generator',
   session_summary: 'ai_coach',
   chat: 'ai_coach',
-  knowledge_chat: 'ai_coach'
+  knowledge_chat: 'knowledge_ai'
 };
 
 // F13 Post-Audit Remediation (P1-01, AI cost abuse): het model wordt
@@ -93,7 +98,7 @@ function resolveServerAuthoritativeModelAndMaxTokens(requestType, clientRequeste
 async function fetchCommercialContext(supabaseUrl, anonKey, authHeader, userId) {
   const headers = { apikey: anonKey, Authorization: authHeader };
   const [userRes, membershipsRes, planFeaturesRes, planQuotaRes] = await Promise.all([
-    fetch(`${supabaseUrl}/rest/v1/users?id=eq.${userId}&select=individual_plan_key,individual_plan_status,individual_plan_expires_at`, { headers }),
+    fetch(`${supabaseUrl}/rest/v1/users?id=eq.${userId}&select=individual_plan_key,individual_plan_status,individual_plan_expires_at,system_role`, { headers }),
     fetch(`${supabaseUrl}/rest/v1/memberships?user_id=eq.${userId}&status=eq.active&select=organization_id,role`, { headers }),
     fetch(`${supabaseUrl}/rest/v1/plan_features?select=plan_key,feature_key`, { headers }),
     fetch(`${supabaseUrl}/rest/v1/plan_feature_quota?select=plan_key,feature_key,quota_per_maand`, { headers })
@@ -121,7 +126,17 @@ async function fetchCommercialContext(supabaseUrl, anonKey, authHeader, userId) 
     organizationMemberships: []
   };
   const catalog = { planFeatures: planFeatures, planQuota: planQuota };
-  return EntitlementCore.resolveEntitlements(actor, catalog);
+  const entitlements = EntitlementCore.resolveEntitlements(actor, catalog);
+  // AI-QUOTA-FORENSIC Fase 3 (tester/PO-quotavrijstelling): system_role
+  // wordt UITSLUITEND server-side, hier, opgehaald uit de al-bestaande
+  // users-rij van de geauthenticeerde gebruiker (userId komt uit de JWT-
+  // verificatie hierboven, nooit uit de client-payload) -- nooit vertrouwd
+  // vanuit de request-body. De kolom is al langer beschermd tegen zelf-
+  // escalatie door de bestaande protect_privileged_user_columns()-trigger
+  // (alleen service_role kan hem zetten) -- geen nieuwe kolom/mechanisme,
+  // hergebruik van een al-geverifieerd-veilig bestaand veld.
+  entitlements.isVerifiedTester = u.system_role === 'developer';
+  return entitlements;
 }
 
 exports.handler = async function(event) {
@@ -188,7 +203,16 @@ exports.handler = async function(event) {
   }
 
   const periode = new Date().toISOString().slice(0, 8) + '01'; // YYYY-MM-01, timezone-safe maandgrens (UTC-kalendermaand)
-  const quota = featureKey !== null ? EntitlementCore.getQuota(entitlements, featureKey) : null;
+  // AI-QUOTA-FORENSIC Fase 3: een geverifieerde tester (server-side
+  // system_role='developer', zie fetchCommercialContext hierboven) is
+  // vrijgesteld van het MAANDQUOTUM -- NIET van de entitlement/capability-
+  // check hierboven (die blijft voor iedereen gelden). effectieveQuota=null
+  // hergebruikt exact hetzelfde "onbeperkt"-pad dat de RPC en de rest van
+  // deze functie al kennen voor een plan zonder eigen quotarij -- geen
+  // nieuwe, aparte bypass-tak, dus geen nieuw stuk aanvalsoppervlak.
+  const isVerifiedTester = !!(entitlements && entitlements.isVerifiedTester);
+  const ruweQuota = featureKey !== null ? EntitlementCore.getQuota(entitlements, featureKey) : null;
+  const quota = isVerifiedTester ? null : ruweQuota;
   let quotaGereserveerd = false;
   if (featureKey !== null && quota !== null) {
     try {

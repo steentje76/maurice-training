@@ -11081,14 +11081,15 @@ function renderPlanOverzicht(el,catalog,actor){
 // generieke "er ging iets mis" voor een echte quota-/entitlementstatus.
 // Blokkeert nooit de rest van de app: dit is uitsluitend tekst in de
 // chatweergave, geen modal die de app gijzelt.
-function commercialErrorMessage(error){
+function commercialErrorMessage(error, featureLabel){
+  var label=featureLabel||'deze functie';
   if(!error||typeof error!=='object')return 'Er ging iets mis bij het ophalen van je advies. Probeer het zo nog een keer.';
   if(error.code==='QUOTA_EXCEEDED'){
     const resetDatum=(function(){try{return CommercialUxCore.buildQuotaMessageViewModel('ai_coach',null,null).resetOp;}catch(_){return null;}})();
-    return 'Je hebt je maandelijkse limiet voor deze functie bereikt.'+(resetDatum?' Deze wordt op '+resetDatum+' weer bijgevuld.':'')+' Bekijk bij Profiel → Mijn abonnement wat andere plannen bieden.';
+    return 'Je hebt je maandelijkse limiet voor '+label+' bereikt.'+(resetDatum?' Deze wordt op '+resetDatum+' weer bijgevuld.':'')+' Bekijk bij Profiel → Mijn abonnement wat andere plannen bieden.';
   }
   if(error.code==='ENTITLEMENT_REQUIRED'){
-    return 'Deze functie is niet inbegrepen in je huidige plan. Bekijk bij Profiel → Mijn abonnement de mogelijkheden.';
+    return label.charAt(0).toUpperCase()+label.slice(1)+' is niet inbegrepen in je huidige plan. Bekijk bij Profiel → Mijn abonnement de mogelijkheden.';
   }
   return 'Er ging iets mis bij het ophalen van je advies. Probeer het zo nog een keer.';
 }
@@ -22386,6 +22387,17 @@ function voedingKennisAiToggleHow(){
   var el=document.getElementById('nk-ai-how'); if(!el) return;
   el.style.display=el.style.display==='none'?'block':'none';
 }
+/* voedingKennisAiDisableForQuota: AI-QUOTA-FORENSIC Fase 4. Schakelt
+   uitsluitend de Kennis-AI-input uit (nooit FAQ/Wetenschap, die blijven
+   volledig bruikbaar -- Knowledge blijft bruikbaar bij quota=0). Geen
+   client-side "reset"-gok: de knop komt pas terug bij het opnieuw openen
+   van dit scherm (nieuwe poging volgende sessie/maand). */
+function voedingKennisAiDisableForQuota(){
+  var inp=document.getElementById('nk-ai-input');
+  var btn=document.getElementById('nk-ai-submit-btn');
+  if(inp){ inp.disabled=true; inp.placeholder='Limiet bereikt -- probeer het volgende maand opnieuw'; }
+  if(btn){ btn.disabled=true; btn.textContent='Limiet bereikt'; }
+}
 /* voedingKennisAiSubmit: SUBMITTING-state. Dubbele indiening voorkomen
    (_nkAiSending-vlag + disabled-knop, sectie 24/AF). NK-04C sectie 8/12:
    ondersteunt nu CLARIFY (één gerichte vervolgvraag i.p.v. een evidence-
@@ -22445,7 +22457,13 @@ async function voedingKennisAiSubmit(topicId){
     var res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'knowledge_chat',model:'claude-sonnet-4-5',max_tokens:500,system:sys,messages:[{role:'user',content:vraag}]})});
     var d=await res.json();
     if(d.error){
-      if(answerArea) answerArea.innerHTML='<div class="nk-ai-answer-card">'+escHtml(commercialErrorMessage(d.error))+'</div>';
+      if(answerArea) answerArea.innerHTML='<div class="nk-ai-answer-card">'+escHtml(commercialErrorMessage(d.error,'de Kennis-AI'))+'</div>';
+      // AI-QUOTA-FORENSIC Fase 4: bij QUOTA_EXCEEDED de input uitschakelen
+      // i.p.v. een actief ogende "Vraag stellen"-knop te laten staan die
+      // toch weer zal falen -- de FAQ/Wetenschap-tabs (geen AI) blijven
+      // gewoon bruikbaar, alleen dit invoerveld wordt geblokkeerd tot de
+      // volgende kalendermaand.
+      if(d.error.code==='QUOTA_EXCEEDED') voedingKennisAiDisableForQuota();
     } else {
       var raw=d.content[0].text;
       var schoon=nkStripMarkdownLite(raw);
@@ -24439,7 +24457,7 @@ async function sendMsg(txt){
     const sys=await buildCtx(activeSessionCtx);
     const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'chat',model:'claude-sonnet-4-5',max_tokens:1000,system:sys,messages:chatHist.slice(-12)})});
     const d=await res.json();
-    if(d.error){removeMsg(tid);console.warn('coach error',d.error);addMsg('coach',commercialErrorMessage(d.error));}
+    if(d.error){removeMsg(tid);console.warn('coach error',d.error);addMsg('coach',commercialErrorMessage(d.error,'de Trainingskompas Coach'));}
     else{
       const r=d.content[0].text;
       removeMsg(tid);

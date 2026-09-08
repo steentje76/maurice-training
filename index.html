@@ -4359,6 +4359,9 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
     <div id="voeding-supp-error" aria-live="polite" style="color:#c0392b;font-size:13px;margin-bottom:8px;display:none"></div>
     <button class="tk-btn tk-btn-primary" style="width:100%" onclick="voedingSaveSupplement()">Opslaan</button>
+    <!-- NK-07 sectie 19: logging != aanbeveling -- moet expliciet in de UI staan,
+         niet alleen als code-architectuurregel. Compact, geen alarmerende toon. -->
+    <div style="font-size:12px;color:var(--g4);margin-top:10px;text-align:center">Loggen dat je iets gebruikt betekent niet dat Trainingskompas dit adviseert.</div>
     <div class="v43-lbl" style="margin:20px 0 6px">Recente invoer</div>
     <div id="voeding-supp-history"><div style="text-align:center;padding:16px;color:var(--g4);font-size:13px">Laden…</div></div>
   </div>
@@ -22275,11 +22278,18 @@ function voedingKennisKnownTopics(){
   // Langdurige inspanning, Spieropbouw, Vetverlies & sport).
   // NK-05: Hydratatie toegevoegd.
   // NK-06: 8 micronutriëntentopics toegevoegd (IJzer, Vitamine D, Calcium,
-  // Magnesium, Zink, B12, Folaat, Jodium) onder Supplementen. Volgorde
-  // bepaalt geen gedrag, alleen weergavevolgorde binnen de hub-groepen.
+  // Magnesium, Zink, B12, Folaat, Jodium) onder Supplementen.
+  // NK-07: 20 resterende P1-supplementtopics toegevoegd (Supplement Knowledge
+  // Completion) onder Supplementen -- alle actuele P0/P1-catalogusitems zijn
+  // hiermee discoverable. Volgorde bepaalt geen gedrag, alleen
+  // weergavevolgorde binnen de hub-groepen.
   return ['PROTEIN', 'CARBOHYDRATES', 'FATS', 'ENERGY', 'FIBRE', 'HEALTHY_EATING', 'HYDRATION',
     'PRE_TRAINING', 'DURING_TRAINING', 'POST_TRAINING', 'ENDURANCE_CARB', 'MUSCLE_GAIN', 'FAT_LOSS_SPORT',
-    'CREATINE', 'IRON', 'VITAMIN_D', 'CALCIUM', 'MAGNESIUM', 'ZINC', 'VITAMIN_B12', 'FOLATE', 'IODINE'];
+    'CREATINE', 'IRON', 'VITAMIN_D', 'CALCIUM', 'MAGNESIUM', 'ZINC', 'VITAMIN_B12', 'FOLATE', 'IODINE',
+    'SODIUM_BICARBONATE', 'NITRATE_BEETROOT', 'CITRULLINE', 'OMEGA_3', 'EAA', 'BCAA', 'COLLAGEN',
+    'MULTIVITAMIN', 'TART_CHERRY', 'ANTIOXIDANTS_CE', 'THEANINE', 'ASHWAGANDHA',
+    'TESTOSTERONE_BOOSTER', 'FAT_BURNER', 'DHEA', 'DMAA', 'DMBA', 'PROHORMONES',
+    'STIMULANT_ADULTERANTS', 'UNDECLARED_CONTAMINATION', 'CAFFEINE', 'BETA_ALANINE'];
 }
 // NK-04 sectie 17: expliciete Sportvoeding-subgroep binnen Voeding (UI-alleen --
 // verandert het domain-veld van deze topics niet, dat blijft NUTRITION, exact
@@ -22495,7 +22505,7 @@ async function voedingKennisAiSubmit(topicId){
     return;
   }
 
-  var consent=await ensureAiConsent();
+  var consent=await ensureAiConsent('KNOWLEDGE_AI');
   if(!consent){
     if(answerArea) answerArea.innerHTML='<div class="nk-ai-answer-card">De Kennis-AI is uitgeschakeld omdat je geen toestemming hebt gegeven voor het delen van gegevens met de AI-leverancier. Je kunt dit aanzetten via Instellingen → Privacy.</div>';
     _nkAiSending=false; if(btn) btn.disabled=false;
@@ -24484,22 +24494,59 @@ Nooit aannames over gewichten of RPE — altijd vragen als ontbreekt.`;
 // null = nog niet gevraagd, '1' = toegestaan, '0' = geweigerd. Privacy-by-default:
 // vóór een expliciete keuze wordt de AI Coach NIET gebruikt. Wijzigbaar op elk moment
 // via Instellingen -> Privacy (zelfde toggle-mechanisme als de meldingen-instellingen).
-async function ensureAiConsent(){
-  const stored=localStorage.getItem('tk_ai_consent');
+//
+// NK-08A (fysieke-review-bevinding, PR #262): ensureAiConsent() was tot deze
+// fix ÉÉN globale functie/tekst/opslagvlag voor zowel de Daily Coach ('chat',
+// gebruikt wél HRV/slaap/gewicht/lichaamssamenstelling/trainingsgeschiedenis/
+// aandachtspunten via buildCtx()) als de Nutrition Knowledge-AI
+// ('knowledge_chat'). Forensisch bevestigd (coach.js regel ~255-256: alleen
+// payload.system + payload.messages gaan naar Anthropic, en
+// NutritionKnowledgeResolver.buildSystemPrompt() bevat GEEN enkel persoonlijk
+// veld -- uitsluitend topic/gecertificeerde-feiten/regels): de Kennis-AI
+// gebruikt in werkelijkheid alleen de vraagtekst + een begrensd, algemeen
+// evidence-pakket. De gedeelde consenttekst noemde desondanks HRV/slaap/
+// gewicht/lichaamssamenstelling/trainingsgeschiedenis/aandoeningen -- data die
+// knowledge_chat nooit verstuurt. Dat is misleidend en in strijd met data-
+// minimalisatie/AVG-transparantie (consent moet de werkelijke verwerking
+// weergeven).
+//
+// FIX-PRINCIPE (bewust minimaal, geen redesign): het bestaande, werkende
+// consent-mechanisme (confirmModal + localStorage) blijft ongewijzigd. Er
+// komt een `purpose`-parameter met TWEE aparte, feitelijk-juiste teksten en
+// TWEE aparte opslagsleutels (zodat een 'ja' voor de ene functie nooit
+// stilzwijgend geldt voor de andere, en andersom -- een gebruiker kan
+// bijvoorbeeld wél de minimale Kennis-AI toestaan zonder daarmee ook de
+// bredere Daily Coach-dataverwerking goed te keuren). Geen dubbele modal per
+// aanroep: precies één modal, met de tekst die bij de daadwerkelijke
+// aanroeper hoort. Daily Coach (sendMsg) blijft het bestaande gedrag/tekst/
+// opslagsleutel behouden (tk_ai_consent) -- puur ter herbevestiging expliciet
+// als purpose='DAILY_COACH' doorgegeven, geen enkele gedragswijziging.
+const AI_CONSENT_TEXT_BY_PURPOSE = {
+  DAILY_COACH: 'De AI Coach gebruikt je HRV, slaap, gewicht, lichaamssamenstelling, trainingsgeschiedenis en (als je dat zelf hebt vastgelegd) je aandachtspunten/condities om trainingsadvies te geven. Deze gegevens worden gestuurd naar Anthropic (de AI-leverancier) om je vraag te beantwoorden. Je kunt dit op elk moment wijzigen via Instellingen → Privacy.',
+  // KENNIS_AI-tekst noemt uitsluitend wat knowledge_chat daadwerkelijk
+  // verstuurt (zie forensische onderbouwing hierboven) -- geen lijst van
+  // gevoelige gegevens die deze functie niet gebruikt.
+  KNOWLEDGE_AI: 'Trainingskompas AI gebruikt je vraag en de relevante, al-gecertificeerde Trainingskompas-kennis om een antwoord te formuleren. De AI maakt hierbij nooit zelfstandig persoonlijke voedings-, supplement- of hydratatieberekeningen, en stelt geen diagnoses -- dit is algemene informatie, geen medisch advies. Je vraag wordt voor deze functie gestuurd naar Anthropic (de AI-leverancier). Je kunt dit op elk moment wijzigen via Instellingen → Privacy.'
+};
+const AI_CONSENT_STORAGE_KEY_BY_PURPOSE = { DAILY_COACH: 'tk_ai_consent', KNOWLEDGE_AI: 'tk_ai_consent_knowledge' };
+async function ensureAiConsent(purpose){
+  const p = (purpose === 'KNOWLEDGE_AI') ? 'KNOWLEDGE_AI' : 'DAILY_COACH'; // ontbrekend/onbekend purpose valt terug op het bestaande, bredere Daily Coach-gedrag -- nooit omgekeerd (nooit stilzwijgend de kortere Kennis-tekst voor Daily Coach gebruiken)
+  const storageKey = AI_CONSENT_STORAGE_KEY_BY_PURPOSE[p];
+  const stored=localStorage.getItem(storageKey);
   if(stored==='1')return true;
   if(stored==='0')return false;
   const granted=await confirmModal(
-    'De AI Coach gebruikt je HRV, slaap, gewicht, lichaamssamenstelling, trainingsgeschiedenis en (als je dat zelf hebt vastgelegd) je aandachtspunten/condities om trainingsadvies te geven. Deze gegevens worden gestuurd naar Anthropic (de AI-leverancier) om je vraag te beantwoorden. Je kunt dit op elk moment wijzigen via Instellingen → Privacy.',
+    AI_CONSENT_TEXT_BY_PURPOSE[p],
     {title:'AI Coach — toestemming', okLabel:'Toestaan', cancelLabel:'Niet toestaan'}
   );
-  localStorage.setItem('tk_ai_consent', granted?'1':'0');
+  localStorage.setItem(storageKey, granted?'1':'0');
   return granted;
 }
 async function sendChat(){const inp=document.getElementById('chat-inp');const txt=inp.value.trim();if(!txt||sending)return;inp.value='';inp.style.height='';sendMsg(txt);}
 async function sendMsg(txt){
   if(sending)return;
   sending=true;document.getElementById('send-btn').disabled=true;document.getElementById('coach-st').textContent='Coach denkt mee…';
-  const consent=await ensureAiConsent();
+  const consent=await ensureAiConsent('DAILY_COACH');
   if(!consent){
     addMsg('user',txt);
     addMsg('coach','De AI Coach is uitgeschakeld omdat je geen toestemming hebt gegeven voor het delen van je gegevens. Je kunt dit aanzetten via Instellingen → Privacy.');

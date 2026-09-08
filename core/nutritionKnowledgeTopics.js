@@ -664,6 +664,375 @@
   ];
   TOPICS.push.apply(TOPICS, NK06_TOPICS);
 
+  // NK-07: Supplement Knowledge Completion -- resterende P1-items
+  var NK07_TOPICS = [
+    {
+      topic_id: 'SODIUM_BICARBONATE', domain: 'SUPPLEMENT',
+      display_name: 'Sodium bicarbonate', quick_summary_evidence_ref: 'BICARB-PERF-001',
+      quick_summary_text: 'Kan de prestatie bij korte, zeer intensieve inspanning (30 sec-12 min) verbeteren -- kent wel vaak maag-darmklachten.',
+      sections: [
+        { section_id: 'functie', title: 'Functie', body: 'Natriumbicarbonaat verhoogt de buffercapaciteit tegen zuurgraad-opbouw tijdens korte, zeer intensieve inspanning.', evidence_refs: ['BICARB-FUNC-001'] },
+        { section_id: 'prestatie', title: 'Prestatie', body: 'Verbetert prestatie bij hoge-intensiteit fiets-, loop-, zwem- en roeiwerk en vechtsporten van 30 sec tot 12 min.', evidence_refs: ['BICARB-PERF-001'] },
+        { section_id: 'veiligheid', title: 'Veiligheid', body: 'Maag-darmklachten komen vaak voor, vooral bij een hoge eenmalige dosis.', evidence_refs: ['BICARB-SAFETY-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'SODIUM_BICARBONATE-FAQ-1', question: 'Werkt natriumbicarbonaat voor duurlopen van een uur?', evidence_refs: ['BICARB-PERF-001'] },
+        { faq_id: 'SODIUM_BICARBONATE-FAQ-2', question: 'Waarom krijg ik er buikklachten van?', evidence_refs: ['BICARB-SAFETY-001'] }
+      ]
+    },
+    {
+      topic_id: 'NITRATE_BEETROOT', domain: 'SUPPLEMENT',
+      display_name: 'Nitraat / bietensap', quick_summary_evidence_ref: 'NITRATE-PERF-001',
+      quick_summary_text: 'Kan duurprestatie verbeteren, maar het effect wisselt sterk in grootte.',
+      sections: [
+        { section_id: 'functie', title: 'Functie', body: 'Nitraat wordt omgezet naar stikstofmonoxide, wat bloedvatverwijding en zuurstofbenutting kan bevorderen.', evidence_refs: ['NITRATE-FUNC-001'] },
+        { section_id: 'prestatie', title: 'Prestatie', body: 'Effect op duurprestatie is wisselend van grootte, sterk afhankelijk van trainingsstatus en inspanningstype.', evidence_refs: ['NITRATE-PERF-001'] },
+        { section_id: 'veiligheid', title: 'Veiligheid', body: 'Beeturine is onschuldig; bij bloeddrukmedicatie is medisch overleg relevant.', evidence_refs: ['NITRATE-SAFETY-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'NITRATE_BEETROOT-FAQ-1', question: 'Waarom is mijn urine roze na bietensap?', evidence_refs: ['NITRATE-SAFETY-001'] },
+        { faq_id: 'NITRATE_BEETROOT-FAQ-2', question: 'Werkt bietensap voor iedereen even goed?', evidence_refs: ['NITRATE-PERF-001'] }
+      ]
+    },
+    {
+      topic_id: 'CITRULLINE', domain: 'SUPPLEMENT',
+      display_name: 'Citrulline (malaat)', quick_summary_evidence_ref: 'CITRULLINE-PERF-001',
+      quick_summary_text: 'Of het je prestatie verbetert, is nog onzeker -- de nieuwste analyse vindt sterk wisselende resultaten.',
+      sections: [
+        { section_id: 'functie', title: 'Functie', body: 'Citrulline speelt een rol bij doorbloeding en ammoniakverwerking.', evidence_refs: ['CITRULLINE-FUNC-001'] },
+        { section_id: 'prestatie', title: 'Prestatie', body: 'De meest recente meta-analyse concludeert dat het effect op prestatie onzeker blijft.', evidence_refs: ['CITRULLINE-PERF-001'] },
+        { section_id: 'veiligheid', title: 'Veiligheid', body: 'Wordt over het algemeen goed verdragen in onderzochte doseringen.', evidence_refs: ['CITRULLINE-SAFETY-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'CITRULLINE-FAQ-1', question: 'Werkt citrulline hetzelfde als creatine?', evidence_refs: ['CITRULLINE-PERF-001'] }
+      ]
+    },
+    {
+      topic_id: 'OMEGA_3', domain: 'SUPPLEMENT',
+      display_name: 'Omega-3', quick_summary_evidence_ref: 'OMEGA3-FUNC-001',
+      quick_summary_text: 'Belangrijk voor hart- en vaatgezondheid; voor herstel na training is het bewijs bescheiden.',
+      sections: [
+        { section_id: 'functie', title: 'Functie', body: 'Omega-3 (EPA/DHA) speelt een gevestigde rol in hart- en vaatgezondheid en ontstekingsregulatie.', evidence_refs: ['OMEGA3-FUNC-001'] },
+        { section_id: 'herstel', title: 'Herstel na training', body: 'Bescheiden, contextafhankelijke aanwijzing voor een rol bij post-inspanningsontsteking, geen bewezen spieropbouwer.', evidence_refs: ['OMEGA3-RECOVERY-001'] },
+        { section_id: 'veiligheid', title: 'Veiligheid', body: 'Hoge doses kunnen de bloedstolling beïnvloeden -- relevant bij bloedverdunners.', evidence_refs: ['OMEGA3-SAFETY-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'OMEGA_3-FAQ-1', question: 'Helpt visolie tegen spierpijn?', evidence_refs: ['OMEGA3-RECOVERY-001'] },
+        { faq_id: 'OMEGA_3-FAQ-2', question: 'Is omega-3 veilig met bloedverdunners?', evidence_refs: ['OMEGA3-SAFETY-001'] }
+      ]
+    },
+    {
+      topic_id: 'EAA', domain: 'SUPPLEMENT',
+      display_name: 'EAA (essentiële aminozuren)', quick_summary_evidence_ref: 'EAA-FUNC-001',
+      quick_summary_text: 'Alle negen essentiële aminozuren samen zijn nodig voor eiwitsynthese -- bij toereikende eiwitinname geen extra voordeel.',
+      sections: [
+        { section_id: 'functie', title: 'Functie', body: 'Voor maximale eiwitsynthese zijn alle negen essentiële aminozuren tegelijk nodig.', evidence_refs: ['EAA-FUNC-001'] },
+        { section_id: 'context', title: 'In context van je voeding', body: 'Bij een al toereikende, volledige eiwitinname is geen extra voordeel van losse EAA aangetoond.', evidence_refs: ['EAA-VS-PROTEIN-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'EAA-FAQ-1', question: 'Heb ik EAA nodig als ik al genoeg eiwit eet?', evidence_refs: ['EAA-VS-PROTEIN-001'] }
+      ]
+    },
+    {
+      topic_id: 'BCAA', domain: 'SUPPLEMENT',
+      display_name: 'BCAA (los)', quick_summary_evidence_ref: 'BCAA-FUNC-001',
+      quick_summary_text: 'Losse BCAA zijn overbodig als je al voldoende (compleet) eiwit binnenkrijgt.',
+      sections: [
+        { section_id: 'functie', title: 'Functie', body: 'BCAA (met name leucine) activeren de aanzet tot eiwitsynthese en kunnen eiwitafbraak remmen.', evidence_refs: ['BCAA-FUNC-001'] },
+        { section_id: 'beperking', title: 'Beperking', body: 'Losse BCAA zonder de overige aminozuren stimuleert eiwitsynthese na training niet maximaal.', evidence_refs: ['BCAA-INSUFFICIENT-001'] },
+        { section_id: 'context', title: 'In context van je voeding', body: 'Bij voldoende totaal eiwit zijn losse BCAA-supplementen overbodig.', evidence_refs: ['BCAA-REDUNDANT-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'BCAA-FAQ-1', question: 'Is BCAA hetzelfde als EAA?', evidence_refs: ['BCAA-INSUFFICIENT-001'] },
+        { faq_id: 'BCAA-FAQ-2', question: 'Heb ik BCAA nodig naast mijn eiwitshake?', evidence_refs: ['BCAA-REDUNDANT-001'] }
+      ]
+    },
+    {
+      topic_id: 'COLLAGEN', domain: 'SUPPLEMENT',
+      display_name: 'Collageen', quick_summary_evidence_ref: 'COLLAGEN-FUNC-001',
+      quick_summary_text: 'Onderzocht voor pees-/bindweefselherstel -- geen vervanging van wei-eiwit voor spieropbouw.',
+      sections: [
+        { section_id: 'functie', title: 'Functie', body: 'Collageenpeptiden worden onderzocht op een rol bij bindweefsel-/peesremodellering.', evidence_refs: ['COLLAGEN-FUNC-001'] },
+        { section_id: 'spieropbouw', title: 'Spieropbouw', body: 'Laat geen relevante toename van spiermassa zien vergeleken met wei-eiwit.', evidence_refs: ['COLLAGEN-NOT-HYPERTROPHY-001'] },
+        { section_id: 'veiligheid', title: 'Veiligheid', body: 'Wordt over het algemeen goed verdragen.', evidence_refs: ['COLLAGEN-SAFETY-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'COLLAGEN-FAQ-1', question: 'Kan collageen wei-eiwit vervangen?', evidence_refs: ['COLLAGEN-NOT-HYPERTROPHY-001'] }
+      ]
+    },
+    {
+      topic_id: 'MULTIVITAMIN', domain: 'SUPPLEMENT',
+      display_name: 'Multivitamines', quick_summary_evidence_ref: 'MULTIVIT-NO-PERF-001',
+      quick_summary_text: 'Geen aangetoond prestatievoordeel bij een toereikend voedingspatroon.',
+      sections: [
+        { section_id: 'prestatie', title: 'Prestatie', body: 'Bij een gevarieerd, toereikend voedingspatroon geen aangetoond sportprestatievoordeel.', evidence_refs: ['MULTIVIT-NO-PERF-001'] },
+        { section_id: 'context', title: 'Wanneer wel relevant', body: 'Bij sterk beperkte voedingspatronen of een vastgesteld tekort kan een multivitamine relevant zijn -- individueel te beoordelen.', evidence_refs: ['MULTIVIT-CONTEXT-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'MULTIVITAMIN-FAQ-1', question: 'Moet ik als sporter een multivitamine slikken?', evidence_refs: ['MULTIVIT-NO-PERF-001', 'MULTIVIT-CONTEXT-001'] }
+      ]
+    },
+    {
+      topic_id: 'TART_CHERRY', domain: 'SUPPLEMENT',
+      display_name: 'Zure kersen (tart cherry)', quick_summary_evidence_ref: 'TARTCHERRY-RECOVERY-001',
+      quick_summary_text: 'Mogelijk, in bescheiden mate, minder ervaren spierpijn na training.',
+      sections: [
+        { section_id: 'herstel', title: 'Herstel', body: 'Bescheiden bewijs voor een gunstig effect op ervaren spierpijn en herstel.', evidence_refs: ['TARTCHERRY-RECOVERY-001'] },
+        { section_id: 'veiligheid', title: 'Veiligheid', body: 'Wordt over het algemeen goed verdragen.', evidence_refs: ['TARTCHERRY-SAFETY-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'TART_CHERRY-FAQ-1', question: 'Helpt zuurkersensap tegen spierpijn?', evidence_refs: ['TARTCHERRY-RECOVERY-001'] }
+      ]
+    },
+    {
+      topic_id: 'ANTIOXIDANTS_CE', domain: 'SUPPLEMENT',
+      display_name: 'Antioxidanten C+E', quick_summary_evidence_ref: 'ANTIOX-CE-BLUNTING-001',
+      quick_summary_text: 'Hoge supplementdoses kunnen trainingsaanpassing juist afzwakken -- geldt niet voor voeding.',
+      sections: [
+        { section_id: 'trainingsaanpassing', title: 'Trainingsaanpassing', body: 'Hoge doses vitamine C/E als supplement kunnen bepaalde trainingsaanpassingen afzwakken.', evidence_refs: ['ANTIOX-CE-BLUNTING-001'] },
+        { section_id: 'voeding', title: 'Voeding versus supplement', body: 'Antioxidanten uit gewone voeding worden niet met dit effect geassocieerd.', evidence_refs: ['ANTIOX-CE-FOOD-FIRST-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'ANTIOXIDANTS_CE-FAQ-1', question: 'Moet ik stoppen met groente en fruit eten rond training?', evidence_refs: ['ANTIOX-CE-FOOD-FIRST-001'] }
+      ]
+    },
+    {
+      topic_id: 'THEANINE', domain: 'SUPPLEMENT',
+      display_name: 'L-theanine', quick_summary_evidence_ref: 'THEANINE-FUNC-001',
+      quick_summary_text: 'Kan rust geven zonder sufheid en cafeïne-onrust temperen -- geen bewezen slaapmiddel.',
+      sections: [
+        { section_id: 'functie', title: 'Functie', body: 'Rustgevend effect zonder duidelijke sufheid; kan cafeïne-onrust temperen bij combinatie.', evidence_refs: ['THEANINE-FUNC-001'] },
+        { section_id: 'slaap', title: 'Slaap', body: 'Bewijs voor slaap is beperkter en minder eenduidig dan voor melatonine.', evidence_refs: ['THEANINE-SLEEP-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'THEANINE-FAQ-1', question: 'Kan ik L-theanine gebruiken als slaapmiddel?', evidence_refs: ['THEANINE-SLEEP-001'] },
+        { faq_id: 'THEANINE-FAQ-2', question: 'Waarom zit theanine vaak bij cafeïne?', evidence_refs: ['THEANINE-FUNC-001'] }
+      ]
+    },
+    {
+      topic_id: 'ASHWAGANDHA', domain: 'SUPPLEMENT',
+      display_name: 'Ashwagandha', quick_summary_evidence_ref: 'ASHWAGANDHA-PERF-001',
+      quick_summary_text: 'Opkomend, wisselend bewijs voor kracht/stress -- let op hormonale effecten.',
+      sections: [
+        { section_id: 'prestatie', title: 'Prestatie & stress', body: 'Opkomend onderzoek suggereert mogelijke voordelen voor kracht, uithoudingsvermogen en stress, met wisselende kwaliteit.', evidence_refs: ['ASHWAGANDHA-PERF-001'] },
+        { section_id: 'veiligheid', title: 'Veiligheid', body: 'Aantoonbare hormonale activiteit; een gedocumenteerd geval van sterk verhoogde hormoonwaarden bij hoge dosering.', evidence_refs: ['ASHWAGANDHA-HORMONAL-SAFETY-001'] },
+        { section_id: 'dosering', title: 'Dosering', body: 'Geen algemeen erkende, gestandaardiseerde dosering.', evidence_refs: ['ASHWAGANDHA-NO-STANDARD-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'ASHWAGANDHA-FAQ-1', question: 'Is ashwagandha veilig voor iedereen?', evidence_refs: ['ASHWAGANDHA-HORMONAL-SAFETY-001'] },
+        { faq_id: 'ASHWAGANDHA-FAQ-2', question: 'Hoeveel ashwagandha moet ik nemen?', evidence_refs: ['ASHWAGANDHA-NO-STANDARD-001'] }
+      ]
+    },
+    {
+      topic_id: 'TESTOSTERONE_BOOSTER', domain: 'SUPPLEMENT',
+      display_name: 'Testosteron-boosters', quick_summary_evidence_ref: 'TBOOSTER-NO-INHERITANCE-001',
+      quick_summary_text: 'Een marketingnaam, geen bewijs van werking -- de losse ingrediënten bepalen wat een product doet.',
+      sections: [
+        { section_id: 'categorie', title: 'Wat betekent dit label?', body: '"Testosteron-booster" is een marketingcategorie, geen erkende werkzame stof.', evidence_refs: ['TBOOSTER-NO-INHERITANCE-001'] },
+        { section_id: 'ingredienten', title: 'Ingrediënten variëren', body: 'Veelvoorkomende ingrediënten hebben elk hun eigen, vaak beperkt bewijs.', evidence_refs: ['TBOOSTER-INGREDIENTS-VARY-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'TESTOSTERONE_BOOSTER-FAQ-1', question: 'Verhoogt een testosteron-booster mijn testosteron?', evidence_refs: ['TBOOSTER-NO-INHERITANCE-001', 'TBOOSTER-INGREDIENTS-VARY-001'] }
+      ]
+    },
+    {
+      topic_id: 'FAT_BURNER', domain: 'SUPPLEMENT',
+      display_name: 'Fat burners', quick_summary_evidence_ref: 'FATBURNER-NO-INHERITANCE-001',
+      quick_summary_text: 'Een marketingnaam, geen bewijs van vetverbranding -- vervangt nooit een energiebalans.',
+      sections: [
+        { section_id: 'categorie', title: 'Wat betekent dit label?', body: '"Fat burner" is een marketingcategorie, geen erkende werkzame stof.', evidence_refs: ['FATBURNER-NO-INHERITANCE-001'] },
+        { section_id: 'energiebalans', title: 'Energiebalans blijft leidend', body: 'Geen enkel supplement vervangt een energietekort als basis voor vetverlies.', evidence_refs: ['FATBURNER-NO-SHORTCUT-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'FAT_BURNER-FAQ-1', question: 'Verbrandt een fat burner echt vet?', evidence_refs: ['FATBURNER-NO-INHERITANCE-001', 'FATBURNER-NO-SHORTCUT-001'] }
+      ]
+    },
+    {
+      topic_id: 'DHEA', domain: 'SUPPLEMENT',
+      display_name: 'DHEA', quick_summary_evidence_ref: 'DHEA-STATUS-001',
+      quick_summary_text: 'Een verboden hormoonprecursor, geen gewoon voedingssupplement.',
+      sections: [
+        { section_id: 'status', title: 'Status', body: 'DHEA is een hormoonprecursor die geldt als een verboden anabole stof voor getest sporters.', evidence_refs: ['DHEA-STATUS-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'DHEA-FAQ-1', question: 'Mag ik DHEA gebruiken als sporter?', evidence_refs: ['DHEA-STATUS-001'] }
+      ]
+    },
+    {
+      topic_id: 'DMAA', domain: 'SUPPLEMENT',
+      display_name: 'DMAA', quick_summary_evidence_ref: 'DMAA-STATUS-001',
+      quick_summary_text: 'Een verboden stimulerende stof met veiligheidswaarschuwingen.',
+      sections: [
+        { section_id: 'status', title: 'Status', body: 'DMAA is een verboden stimulerende stof waarover autoriteiten veiligheidswaarschuwingen hebben afgegeven.', evidence_refs: ['DMAA-STATUS-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'DMAA-FAQ-1', question: 'Is DMAA legaal in supplementen?', evidence_refs: ['DMAA-STATUS-001'] }
+      ]
+    },
+    {
+      topic_id: 'DMBA', domain: 'SUPPLEMENT',
+      display_name: 'DMBA', quick_summary_evidence_ref: 'DMBA-STATUS-001',
+      quick_summary_text: 'Een verboden stimulerende stof zonder erkende veilige toepassing.',
+      sections: [
+        { section_id: 'status', title: 'Status', body: 'DMBA is, net als DMAA, een verboden stimulerende stof zonder erkende veilige toepassing.', evidence_refs: ['DMBA-STATUS-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'DMBA-FAQ-1', question: 'Wat is het verschil tussen DMAA en DMBA?', evidence_refs: ['DMBA-STATUS-001'] }
+      ]
+    },
+    {
+      topic_id: 'PROHORMONES', domain: 'SUPPLEMENT',
+      display_name: 'Prohormonen', quick_summary_evidence_ref: 'PROHORMONES-STATUS-001',
+      quick_summary_text: 'Allemaal verboden, ook als een specifieke stof niet met naam op de lijst staat.',
+      sections: [
+        { section_id: 'status', title: 'Status', body: 'Alle prohormonen gelden als verboden voor getest sporters, ook zonder specifieke naamsvermelding.', evidence_refs: ['PROHORMONES-STATUS-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'PROHORMONES-FAQ-1', question: 'Is een prohormoon die niet op de lijst staat toegestaan?', evidence_refs: ['PROHORMONES-STATUS-001'] }
+      ]
+    },
+    {
+      topic_id: 'STIMULANT_ADULTERANTS', domain: 'SUPPLEMENT',
+      display_name: 'Stimulant-adulterants', quick_summary_evidence_ref: 'STIMULANT-ADULTERANTS-001',
+      quick_summary_text: 'Sommige producten bevatten niet-gedeclareerde stimulantia die niet op het etiket staan.',
+      sections: [
+        { section_id: 'risico', title: 'Risico', body: 'Vooral gewichtsverlies- en pre-workout-producten zijn herhaaldelijk aangetroffen met niet-gedeclareerde stimulantia.', evidence_refs: ['STIMULANT-ADULTERANTS-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'STIMULANT_ADULTERANTS-FAQ-1', question: 'Is een schoon etiket een garantie?', evidence_refs: ['STIMULANT-ADULTERANTS-001'] }
+      ]
+    },
+    {
+      topic_id: 'UNDECLARED_CONTAMINATION', domain: 'SUPPLEMENT',
+      display_name: 'Ongedeclareerde verontreiniging', quick_summary_evidence_ref: 'UNDECLARED-CONTAMINATION-001',
+      quick_summary_text: 'Certificering verlaagt het risico, maar Trainingskompas geeft nooit een gecertificeerde dopinggarantie.',
+      sections: [
+        { section_id: 'certificering', title: 'Certificering', body: 'Onafhankelijke batch-/productcertificering verlaagt het risico, maar elimineert het niet volledig.', evidence_refs: ['UNDECLARED-CONTAMINATION-001'] },
+        { section_id: 'triage', title: 'Wat Trainingskompas wel/niet doet', body: 'De anti-doping-indicatie is uitsluitend triage-metadata, nooit een officieel gecertificeerde status.', evidence_refs: ['ANTIDOPING-TRIAGE-NOT-CERTIFICATION-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'UNDECLARED_CONTAMINATION-FAQ-1', question: 'Garandeert Trainingskompas dat een supplement dopingvrij is?', evidence_refs: ['ANTIDOPING-TRIAGE-NOT-CERTIFICATION-001'] }
+      ]
+    },
+  ];
+  TOPICS.push.apply(TOPICS, NK07_TOPICS);
+  // NK-08: CAFFEINE en BETA_ALANINE waren beide al P0-CERTIFIED in de
+  // Supplement Evidence Registry, maar hadden nog GEEN Knowledge-topic --
+  // ontdekt tijdens NK-08-testen ("Hoeveel cafeïne moet ik nemen?" kon
+  // niet coherent beantwoord worden). Alle onderstaande claims bestonden
+  // al, ongewijzigd hergebruikt (geen nieuwe claim, geen duplicate truth).
+  var NK08_TOPICS = [
+    {
+      topic_id: 'CAFFEINE', domain: 'SUPPLEMENT',
+      display_name: 'Cafeïne', quick_summary_evidence_ref: 'CAF-END-001',
+      quick_summary_text: 'Verbetert duurprestatie het meest consistent -- iedereen reageert er anders op.',
+      sections: [
+        { section_id: 'duurprestatie', title: 'Duurprestatie', body: 'Cafeïne verbetert duurprestaties; dit is het meest consistent aangetoonde effect.', evidence_refs: ['CAF-END-001'] },
+        { section_id: 'kracht', title: 'Kracht/vermogen', body: 'Cafeïne kan kracht/vermogen verbeteren, al is dit minder eenduidig dan bij duurinspanning.', evidence_refs: ['CAF-STR-001'] },
+        { section_id: 'dosering', title: 'Onderzochte dosering', body: 'Het onderzochte effectieve bereik is 3-6 mg per kg lichaamsgewicht -- een algemene onderzoeksrange, geen persoonlijk voorschrift.', evidence_refs: ['CAF-DOSE-001'] },
+        { section_id: 'timing', title: 'Timing', body: 'Vaak circa 60 minuten voor het sporten ingenomen in onderzoek.', evidence_refs: ['CAF-TIME-001'] },
+        { section_id: 'individuele-verschillen', title: 'Individuele verschillen', body: 'Iedereen reageert anders op cafeïne; wat voor de één werkt, kan voor een ander te veel of te weinig zijn.', evidence_refs: ['CAF-VAR-001'] },
+        { section_id: 'slaap', title: 'Slaap', body: 'Cafeïne dicht bij bedtijd kan je slaap verstoren, ook bij relatief lage hoeveelheden.', evidence_refs: ['CAF-SLEEP-001'] },
+        { section_id: 'veiligheid', title: 'Veiligheid', body: 'Tot 400 mg per dag, of 200 mg in één keer, geldt als veilig voor gezonde volwassenen -- dit is een veiligheidsgrens, geen prestatie-advies.', evidence_refs: ['CAF-SAFE-001'] },
+        { section_id: 'zwangerschap', title: 'Zwangerschap/borstvoeding', body: 'Er geldt een lagere veiligheidsgrens; overleg met je verloskundige of arts.', evidence_refs: ['CAF-PREG-001'] },
+        { section_id: 'interacties', title: 'Combinaties', body: 'Bij normale hoeveelheden is geen gevaarlijke wisselwerking met gangbare energiedrank-ingrediënten of matig alcoholgebruik gevonden.', evidence_refs: ['CAF-INTERACT-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'CAF-FAQ-1', question: 'Wanneer neem je het beste cafeïne?', evidence_refs: ['CAF-TIME-001'] },
+        { faq_id: 'CAF-FAQ-2', question: 'Hoeveel cafeïne mag ik per dag?', evidence_refs: ['CAF-SAFE-001'] },
+        { faq_id: 'CAF-FAQ-3', question: 'Verstoort cafeïne mijn slaap?', evidence_refs: ['CAF-SLEEP-001'] },
+        { faq_id: 'CAF-FAQ-4', question: 'Is cafeïne veilig tijdens zwangerschap?', evidence_refs: ['CAF-PREG-001'] }
+      ]
+    },
+    {
+      topic_id: 'BETA_ALANINE', domain: 'SUPPLEMENT',
+      display_name: 'Bèta-alanine', quick_summary_evidence_ref: 'BA-PERF-001',
+      quick_summary_text: 'Werkt het beste bewezen bij inspanning van 1 tot 4 minuten -- geen algemeen "sterker worden"-effect.',
+      sections: [
+        { section_id: 'kerneffect', title: 'Kerneffect (1-4 min)', body: 'Bèta-alanine werkt het beste bewezen bij inspanning van 1 tot 4 minuten.', evidence_refs: ['BA-PERF-001'] },
+        { section_id: 'bredere-context', title: 'Bredere context', body: 'Er is ook zwakker bewijs voor een effect tot ongeveer 10 minuten inspanning.', evidence_refs: ['BA-PERF-002'] },
+        { section_id: 'dosering', title: 'Onderzocht protocol', body: '4-6 g per dag, minstens 2-4 weken vol te houden, is nodig voor effect -- algemene onderzoeksrange, geen persoonlijk voorschrift.', evidence_refs: ['BA-DOSE-001'] },
+        { section_id: 'bijwerking', title: 'Tintelingen', body: 'Tintelingen (paresthesie) zijn de enige bekende bijwerking en zijn onschuldig.', evidence_refs: ['BA-PARES-001'] },
+        { section_id: 'geen-krachteffect', title: 'Geen apart krachteffect', body: 'Een apart krachteffect (los van de 1-4 min-inspanning) is niet duidelijk aangetoond.', evidence_refs: ['BA-STR-001'] },
+        { section_id: 'langere-duur', title: 'Langere duurinspanning', body: 'Voor langere duurinspanning of lichaamssamenstelling is het bewijs nog onvoldoende.', evidence_refs: ['BA-END-001'] },
+        { section_id: 'veiligheid', title: 'Veiligheid', body: 'Op de aanbevolen dosis is bèta-alanine veilig voor gezonde mensen.', evidence_refs: ['BA-SAFE-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'BA-FAQ-1', question: 'Waarom tintelt mijn huid van bèta-alanine?', evidence_refs: ['BA-PARES-001'] },
+        { faq_id: 'BA-FAQ-2', question: 'Maakt bèta-alanine me sterker?', evidence_refs: ['BA-STR-001'] },
+        { faq_id: 'BA-FAQ-3', question: 'Voor welke sporten werkt bèta-alanine het best?', evidence_refs: ['BA-PERF-001', 'BA-PERF-002'] }
+      ]
+    }
+  ];
+  TOPICS.push.apply(TOPICS, NK08_TOPICS);
+
+
   /* ROADMAP: sectie 17 -- inhoudelijke roadmap, GEEN gebouwde topics.
    * Uitsluitend classificatiedata, geen evidence/claims. NK-03 heeft
    * Koolhydraten/Vetten/Energie/Vezels/Gezonde voeding gebouwd -- deze

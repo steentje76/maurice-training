@@ -179,6 +179,30 @@
       return { status: 'INSUFFICIENT', schema: RESOLVER_VERSION, QUESTION: freeText, INTENT: intent, reason: 'leeg_of_te_kort', matchedTopics: [] };
     }
     var topicScores = scoreTopics(queryTokens);
+
+    // NK-08 sectie 20/34, adversarial test #14 ("Is mijn custom supplement
+    // SuperMegaTestBoost veilig?"): zonder deze guard konden generieke
+    // woorden als "supplement"/"veilig" -- die legitiem in VEEL topics'
+    // secties/FAQ's voorkomen -- samen genoeg score opleveren om
+    // WILLEKEURIGE, ongerelateerde topics (bv. IJzer, Ashwagandha) als
+    // "match" te presenteren voor een vraag over een niet-bestaand product.
+    // Geen enkel echt topic werd daarbij ooit bij NAAM genoemd. Fix:
+    // detecteer een lang (>=10 tekens), nergens in de hele index
+    // voorkomend token (een sterk signaal voor een verzonnen/onbekende
+    // merk-/productnaam) -- gecombineerd met de afwezigheid van een
+    // ECHTE naam-match, wordt dit expliciet als onbekend product
+    // behandeld i.p.v. generieke topics te lenen.
+    var hasUnrecognizedDistinctiveToken = queryTokens.some(function (qt) {
+      if (qt.length < 10) return false;
+      return !Object.keys(_itemIndex).some(function (topicId) {
+        return _topicIndex[topicId].some(function (entry) { return entry.tokens.some(function (it) { return tokenOverlap(qt, it); }); });
+      });
+    });
+    var hasRealTopicNameMatch = topicScores.some(function (t) { return topicNameMatchScore(t.topicId, queryTokens) > 0; });
+    if (hasUnrecognizedDistinctiveToken && !hasRealTopicNameMatch) {
+      return { status: 'INSUFFICIENT', schema: RESOLVER_VERSION, QUESTION: freeText, INTENT: intent, reason: 'onbekend_product', matchedTopics: [] };
+    }
+
     if (preferredTopicId && Topics.getTopic(preferredTopicId) && !topicScores.some(function (t) { return t.topicId === preferredTopicId; })) {
       // Hint telt licht mee, maar alleen als er nog ruimte is (nooit een sterkere match verdringen).
       if (topicScores.length < MAX_TOPICS) topicScores.push({ topicId: preferredTopicId, score: 0.5 });
@@ -269,7 +293,17 @@
    * buildSystemPrompt(pkg) -> de systeeminstructie voor de AI-runtime.
    * Bevat UITSLUITEND het begrensde pakket + harde regels -- nooit de
    * volledige registry, nooit persoonlijke berekening, nooit vrije bronnen.
+   *
+   * NK-08A sectie 12 (server-side allowlist tegen stille scope-creep):
+   * dit zijn de ENIGE pkg-velden die deze functie ooit in de AI-prompt mag
+   * verwerken. Als een toekomstige wijziging een nieuw pkg-veld toevoegt
+   * (bv. een persoonlijk profielveld), moet die wijziging dit hier expliciet
+   * uitbreiden -- geen enkel ander veld mag stilzwijgend meegenomen worden.
+   * Puur documentair/testbaar (geen dynamische pkg[key]-iteratie in deze
+   * functie, dus geen enkel niet-vermeld veld kan hier ooit lekken): zie
+   * fNutritionKnowledgeAiCoach.test.js voor de structurele afdwinging.
    */
+  var KNOWLEDGE_CHAT_SYSTEM_PROMPT_ALLOWED_FIELDS = ['status', 'TOPIC', 'QUESTION', 'APPROVED_FACTS', 'EVIDENCE_LEVEL', 'CONFIDENCE', 'MISSING_INFORMATION', 'LIMITATIONS', 'FORBIDDEN_INTERPRETATIONS'];
   // NK-04B: detecteert of de oorspronkelijke vraag een persoonlijk getal
   // bevat (gewicht/leeftijd/lengte) -- puur signalerend, verandert niets
   // aan de claim-matching/Resolver-principes zelf. Gebruikt om de
@@ -329,6 +363,7 @@
     RESOLVER_VERSION: RESOLVER_VERSION,
     MAX_TOPICS: MAX_TOPICS,
     MAX_CLAIMS: MAX_CLAIMS,
+    KNOWLEDGE_CHAT_SYSTEM_PROMPT_ALLOWED_FIELDS: KNOWLEDGE_CHAT_SYSTEM_PROMPT_ALLOWED_FIELDS,
     INTENTS: INTENTS,
     tokenize: tokenize,
     classifyIntent: classifyIntent,

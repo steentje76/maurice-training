@@ -4391,6 +4391,35 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="scroll" style="flex:1;overflow-y:auto" id="voeding-kennis-ai-body"></div>
 </div>
 
+<!-- ═══ NK-09/NK-05C: Hydratatie — Zweetverlies meten ═══
+     Eenmalige, in-memory meting (sectie 13: geen persistence gebouwd --
+     geen DB-wijziging nodig, geen historie/trend in deze sprint). Gebruikt
+     UITSLUITEND de bestaande, ongewijzigde hydrationCalculation.js
+     (sweat_loss_estimate.v1 / sweat_rate_estimate.v1) -- geen tweede
+     formule in de UI. Flow: UITLEG -> INVOER -> VALIDATIE -> CALCULATION
+     ENGINE -> RESULTAAT -> DATA QUALITY/CONFIDENCE -> UITLEG. -->
+<div class="scr" id="s-voeding-hydratatie-meting">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Zweetverlies meten</div></div><button class="ibtn" onclick="go('s-voeding-kennis-topic')" aria-label="Terug">‹</button></div></div>
+  <div class="scroll" style="flex:1;overflow-y:auto;padding:16px">
+    <div class="tk-card tk-card-l3" style="padding:14px;margin-bottom:16px;font-size:13px;line-height:1.5;color:var(--g4)">
+      Weeg jezelf vlak vóór en vlak ná je training (zo mogelijk zonder kleding, of steeds in dezelfde kleding). Vul hieronder in wat je hebt gedronken en geplast tijdens de training -- dat maakt de schatting nauwkeuriger, maar is niet verplicht.
+    </div>
+    <label class="v43-lbl" for="hyd-meting-pre" style="display:block;margin:8px 0 6px">Lichaamsgewicht vóór training (kg)</label>
+    <input id="hyd-meting-pre" type="number" inputmode="decimal" step="any" min="0" class="vd-input" style="margin-bottom:12px;min-height:44px">
+    <label class="v43-lbl" for="hyd-meting-post" style="display:block;margin:8px 0 6px">Lichaamsgewicht ná training (kg)</label>
+    <input id="hyd-meting-post" type="number" inputmode="decimal" step="any" min="0" class="vd-input" style="margin-bottom:12px;min-height:44px">
+    <label class="v43-lbl" for="hyd-meting-fluid" style="display:block;margin:8px 0 6px">Gedronken tijdens training (L, optioneel)</label>
+    <input id="hyd-meting-fluid" type="number" inputmode="decimal" step="any" min="0" placeholder="Onbekend? Laat leeg" class="vd-input" style="margin-bottom:12px;min-height:44px">
+    <label class="v43-lbl" for="hyd-meting-urine" style="display:block;margin:8px 0 6px">Geplast tijdens training (L, optioneel)</label>
+    <input id="hyd-meting-urine" type="number" inputmode="decimal" step="any" min="0" placeholder="Onbekend? Laat leeg" class="vd-input" style="margin-bottom:12px;min-height:44px">
+    <label class="v43-lbl" for="hyd-meting-duur" style="display:block;margin:8px 0 6px">Duur van de training (minuten)</label>
+    <input id="hyd-meting-duur" type="number" inputmode="decimal" step="any" min="0" class="vd-input" style="margin-bottom:16px;min-height:44px">
+    <div id="hyd-meting-error" aria-live="polite" style="color:#c0392b;font-size:13px;margin-bottom:12px;display:none"></div>
+    <button class="tk-btn tk-btn-primary" style="width:100%;min-height:44px" onclick="voedingHydratatieMetingBereken()">Bereken</button>
+    <div id="hyd-meting-resultaat" style="margin-top:16px"></div>
+  </div>
+</div>
+
 <!-- ═══ VOEDING SET B (foto-/etiketflow) + custom product + correctie ═══ -->
 <div class="scr" id="s-voeding-custom">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Zelf product toevoegen</div></div><button class="ibtn" onclick="go('s-voeding-zoeken')" aria-label="Terug">‹</button></div></div>
@@ -22336,6 +22365,12 @@ function renderVoedingKennisTopic(topicId){
     +'<div class="nk-hero-text">'+escHtml(ov.quick_summary_text)+'</div></div>';
   // AI-CTA — herkenbaar maar niet dominant, direct onder de hero, eerlijke tekst
   html+='<button class="nk-ai-cta" onclick="voedingOpenKennisAi(\''+topicId+'\')"><span>\uD83D\uDCAC Vraag Trainingskompas AI</span><span class="ar" aria-hidden="true">\u203a</span></button>';
+  // NK-09/NK-05C: Zweetverlies meten -- uitsluitend zichtbaar op het
+  // Hydratatie-topic zelf, gebruikt de bestaande, ongewijzigde
+  // hydrationCalculation.js-contracten (geen tweede formule in de UI).
+  if(topicId==='HYDRATION'){
+    html+='<button class="nk-ai-cta" style="background:var(--card2,var(--card))" onclick="voedingOpenHydratatieMeting()"><span>\uD83D\uDCA7 Zweetverlies meten</span><span class="ar" aria-hidden="true">\u203a</span></button>';
+  }
   // SEGMENTED NAV — Overzicht/Praktisch/Verdieping/FAQ/Wetenschap (bestaand .seg/.seg-opt-patroon)
   var tabs=[{id:'overzicht',label:'Overzicht'},{id:'praktisch',label:'Praktisch'},{id:'verdieping',label:'Verdieping'},{id:'faq',label:'FAQ'},{id:'wetenschap',label:'Wetenschap'}];
   html+='<div class="seg nk-seg" role="radiogroup" aria-label="Kennisonderdeel">'+tabs.map(function(t){
@@ -22344,6 +22379,55 @@ function renderVoedingKennisTopic(topicId){
   html+='<div id="voeding-kennis-tab-body"></div>';
   el.innerHTML=html;
   voedingKennisRenderTabBody(topicId,'overzicht');
+}
+/* NK-09/NK-05C: Hydratatie — Zweetverlies meten. Eenmalige, in-memory
+   meting -- geen opslag/persistence (sectie 13: alleen als provenance/
+   data-quality/versie veilig opgeslagen kunnen worden, wat een nieuwe
+   DB-architectuur zou vereisen; dat is bewust NIET in deze sprint gedaan).
+   Roept UITSLUITEND HydrationCalculation.estimateSweatLoss/estimateSweatRate
+   aan -- geen tweede formule, geen eigen berekening in deze functie. */
+function voedingOpenHydratatieMeting(){
+  ['hyd-meting-pre','hyd-meting-post','hyd-meting-fluid','hyd-meting-urine','hyd-meting-duur'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  var errEl=document.getElementById('hyd-meting-error'); if(errEl){ errEl.style.display='none'; errEl.textContent=''; }
+  var resEl=document.getElementById('hyd-meting-resultaat'); if(resEl) resEl.innerHTML='';
+  go('s-voeding-hydratatie-meting');
+}
+function voedingHydratatieMetingBereken(){
+  var errEl=document.getElementById('hyd-meting-error');
+  var resEl=document.getElementById('hyd-meting-resultaat');
+  errEl.style.display='none'; errEl.textContent=''; resEl.innerHTML='';
+  function getal(id){ var v=document.getElementById(id).value; return v===''?null:parseFloat(v); }
+  var pre=getal('hyd-meting-pre'), post=getal('hyd-meting-post'), fluid=getal('hyd-meting-fluid'), urine=getal('hyd-meting-urine'), duur=getal('hyd-meting-duur');
+
+  var verliesResultaat=HydrationCalculation.estimateSweatLoss({ preWeightKg:pre, postWeightKg:post, fluidIntakeL:fluid, urineL:urine });
+  if(verliesResultaat.status==='INSUFFICIENT_INPUT'){ errEl.textContent='Vul in elk geval je gewicht vóór en ná de training in.'; errEl.style.display='block'; return; }
+  if(verliesResultaat.status==='IMPLAUSIBLE'){ errEl.textContent='Deze invoer lijkt niet fysiek mogelijk. Controleer je gewicht(en) en de ingevulde hoeveelheden.'; errEl.style.display='block'; return; }
+
+  var tempoResultaat=HydrationCalculation.estimateSweatRate({ sweatLossResult:verliesResultaat, durationMinutes:duur });
+  if(tempoResultaat.status==='INSUFFICIENT_INPUT'){ errEl.textContent='Vul de duur van je training in (in minuten).'; errEl.style.display='block'; return; }
+  if(tempoResultaat.status==='IMPLAUSIBLE'){ errEl.textContent='De ingevulde duur lijkt niet fysiek mogelijk.'; errEl.style.display='block'; return; }
+
+  // RESULTAAT -> DATA QUALITY/CONFIDENCE -> UITLEG. Uitsluitend
+  // engine-output; geen enkel drinkadvies (allowed_decision_use:false op
+  // beide calculations -- sectie 12 van de NK-09-opdracht, EAH-boundary).
+  var reg=HydrationCalculation.getCalculation('sweat_loss_estimate.v1');
+  var html='<div class="tk-card tk-card-l3" style="padding:16px;text-align:center;margin-bottom:12px">'
+    +'<div style="font-size:12px;color:var(--g4);margin-bottom:4px">Geschat zweetverlies</div>'
+    +'<div style="font-size:28px;font-weight:700">'+verliesResultaat.sweatLossL.toFixed(2)+' L</div>'
+    +'<div style="font-size:12px;color:var(--g4);margin-top:10px">Geschat zweettempo</div>'
+    +'<div style="font-size:22px;font-weight:700">'+tempoResultaat.sweatRateLPerHour.toFixed(2)+' L/uur</div>'
+    +'</div>';
+  html+='<div class="tk-card tk-card-l3" style="padding:14px;margin-bottom:12px;font-size:13px">'
+    +'<div style="font-weight:600;margin-bottom:4px">Meetkwaliteit: '+escHtml(verliesResultaat.dataQuality)+'</div>'
+    +'<div style="color:var(--g4)">Betrouwbaarheid: '+escHtml(verliesResultaat.confidence)+'</div>'
+    +'</div>';
+  html+='<div class="tk-card tk-card-l3" style="padding:14px;margin-bottom:12px;font-size:13px;color:var(--g4);line-height:1.5">'
+    +'<div style="font-weight:600;color:var(--fg,inherit);margin-bottom:6px">Wat dit getal wél en niet betekent</div>'
+    +'<div style="margin-bottom:8px">Dit is een schatting voor déze training, onder deze omstandigheden -- geen vaste waarde voor elke toekomstige sessie.</div>'
+    +(reg&&reg.limitations||[]).map(function(l){ return '<div style="margin-bottom:4px">• '+escHtml(l)+'</div>'; }).join('')
+    +'<div style="margin-top:8px;font-weight:600;color:var(--fg,inherit)">Trainingskompas geeft op basis hiervan geen persoonlijk drinkadvies (bijvoorbeeld "drink X ml per uur") en geen zoutadvies -- overdrinken is een reëel risico, meer drinken is niet automatisch beter, en dit getal alleen bepaalt niet wat voor jou de juiste hoeveelheid is.</div>'
+    +'</div>';
+  resEl.innerHTML=html;
 }
 function voedingKennisSwitchTab(topicId,tabId){
   _voedingKennisActieveTab=tabId;

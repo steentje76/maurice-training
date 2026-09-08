@@ -123,7 +123,17 @@ ok(!NEW_TOPICS.some((topicId) => Topics.getTopic(topicId).faq.some((f) => Servic
   'S/T: geen enkele nieuwe AI-context bevat ooit een REMOVE-achtige of ongesteunde bewering');
 
 // V: geen persoonlijke calculation / W: geen TDEE/BMR-calculator / X: geen carb-calculator / Y: geen fat-calculator / Z: geen fibre-calculator
-const kennisUiBlockMatch = html.match(/renderVoedingKennisTopic[\s\S]{0,6000}voedingKennisWetenschapHtml[\s\S]{0,2000}\n\}/);
+// NK-09: het venster tussen deze twee functienamen groeide legitiem (NK-05C
+// Hydratatie-meetscherm-code ertussen toegevoegd) -- vaste tekenlimieten
+// vervangen door een robuuste, indexOf-gebaseerde extractie die met de
+// werkelijke, actuele afstand meegroeit i.p.v. een geharde, snel-verlopende
+// aanname. Zelfde onderliggende controle (geen persoonlijke berekening in
+// het VOLLEDIGE Kennis-UI-functieblok), niets verzwakt.
+const kennisUiBlockStart = html.indexOf('function renderVoedingKennisTopic');
+const kennisUiBlockEndMarker = html.indexOf('function voedingKennisWetenschapHtml', kennisUiBlockStart);
+const kennisUiBlockMatch = (kennisUiBlockStart > -1 && kennisUiBlockEndMarker > kennisUiBlockStart)
+  ? [html.slice(kennisUiBlockStart, html.indexOf('\n}', kennisUiBlockEndMarker) + 2)]
+  : null;
 ok(!!kennisUiBlockMatch, 'V: de Kennis-UI-functieblok is gevonden voor inspectie');
 if (kennisUiBlockMatch) {
   ok(!/mg\s*\/\s*kg|gewicht\s*\*|weight\s*\*|bodyweight\s*\*/i.test(kennisUiBlockMatch[0]), 'V-b: geen gewichtsgebaseerde berekening in de Kennis-UI-code');

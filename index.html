@@ -8302,7 +8302,17 @@ const IDEMPOTENT_TABELLEN_MET_CLIENT_ID = { sessions: true, race_segments: true,
   // server-write) kon voorheen een echte, zichtbare dubbele meal/water/supplement-rij
   // opleveren -- deze tabellen hebben exact dezelfde id-uuid-structuur als de reeds
   // bewezen tabellen hierboven, dus hergebruikt hetzelfde, bestaande mechanisme.
-  nutrition_meals: true, nutrition_meal_items: true, nutrition_hydration_entries: true, nutrition_supplement_logs: true };
+  nutrition_meals: true, nutrition_meal_items: true, nutrition_hydration_entries: true, nutrition_supplement_logs: true,
+  // V1 Proven Maturity Sprint 03 (Critical Flow Resilience): training_instances
+  // ontbrak hier -- geverifieerd (newTrainingInstanceId() gebruikt exact dezelfde
+  // crypto.randomUUID()-structuur als newClientRowId(), id-kolom is uuid, geen
+  // ander/concurrerend idempotentie-mechanisme voor deze tabel). Zonder deze fix
+  // kon een timeout ná een in werkelijkheid geslaagde training-start/-opslag de
+  // wachtrij-flush permanent laten vastlopen op een 409 (dubbele id) i.p.v. het
+  // veilig als "al gesynchroniseerd" te herkennen -- geen dataverlies/-duplicatie
+  // (de primary-key-constraint voorkwam dat al), maar de gebruiker zag de
+  // trainingssessie voor altijd als "niet gesynchroniseerd" staan.
+  training_instances: true };
 function newClientRowId(){
   return (typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():('row-'+Date.now()+'-'+Math.random().toString(16).slice(2));
 }

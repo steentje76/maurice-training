@@ -103,6 +103,21 @@ ok(pluginCodeOnly.match(/if\s*\(scannerStopped/g).length >= 2, 'audit: scannerSt
 ok(pluginCodeOnly.includes('catch (Exception e)'), 'audit: het camera-start-pad vangt de brede Exception (niet alleen ExecutionException/InterruptedException) -- een bindToLifecycle-runtime-exception (bv. camera-already-in-use) kan de plugin niet meer laten crashen');
 ok(!pluginCodeOnly.includes('catch (ExecutionException'), 'audit: de te-smalle catch is volledig vervangen, niet ernaast toegevoegd');
 ok(pluginCodeOnly.includes('cameraExecutor.shutdown()'), 'audit: cameraExecutor wordt afgesloten in handleOnDestroy (geen executor-leak)');
+// ═══ SESSION/GENERATION-ISOLATIE (finale merge-audit) ═══
+// Scenario: sessie A biedt een frame aan ML Kit aan -> gebruiker sluit de
+// scanner -> gebruiker/app opent de scanner meteen weer (sessie B) -> pas
+// dan komt sessie A's oude, in-flight ML-Kit-resultaat terug. scannerStopped
+// alleen kan dit niet vangen (die staat na de herstart alweer op false).
+ok(pluginCodeOnly.includes('AtomicInteger'), 'session-isolatie: er bestaat een AtomicInteger-generation-teller (niet slechts een boolean)');
+ok(pluginCodeOnly.includes('sessionGeneration.incrementAndGet()'), 'session-isolatie: elke startBarcodeScan() verhoogt de generation -- een oude sessie is daarna onderscheidbaar van een nieuwe');
+ok(pluginCodeOnly.match(/incrementAndGet\(\)/g).length === 1, 'session-isolatie: de generation wordt UITSLUITEND in startBarcodeScan() opgehoogd (niet ook per frame, anders zou elk frame zijn eigen unieke generation krijgen en zou de vergelijking zinloos worden)');
+ok(/final int frameGeneration = sessionGeneration\.get\(\);/.test(pluginSrc), 'session-isolatie: het frame legt de generation vast op het moment van AANBIEDEN aan ML Kit (analyzeImage), niet pas bij het resultaat');
+ok(pluginCodeOnly.includes('handleBarcodeResults(barcodes, frameGeneration)'), 'session-isolatie: de vastgelegde generation wordt daadwerkelijk doorgegeven aan de async-callback-handler');
+ok(/private void handleBarcodeResults\(List<Barcode> barcodes, int frameGeneration\)\s*\{\s*if \(frameGeneration != sessionGeneration\.get\(\)\) return;/.test(pluginSrc),
+  'session-isolatie: handleBarcodeResults vergelijkt de MEEGEGEVEN (oude) generation tegen de HUIDIGE generation en geeft dit als EERSTE, allereerste check terug -- vóór de scannerStopped/lock-checks, dus een stale sessie kan nooit per ongeluk als "huidige sessie" worden behandeld');
+// Adversarial: bevestig dat de oude, kwetsbare aanroepvorm (method reference
+// zonder generation-parameter) nergens is blijven staan naast de nieuwe.
+ok(!pluginCodeOnly.includes('addOnSuccessListener(cameraExecutor, this::handleBarcodeResults)'), 'session-isolatie: de oude, generation-loze aanroepvorm is volledig vervangen, niet ernaast blijven staan');
 ok(pluginCodeOnly.includes('barcodeScanner.close()'), 'audit: de ML Kit BarcodeScanner-client wordt gesloten in handleOnDestroy');
 ok((pluginCodeOnly.match(/imageProxy\.close\(\)/g) || []).length >= 2, 'audit: imageProxy.close() wordt op meerdere paden aangeroepen (vroege return EN addOnCompleteListener) -- ML Kit Task.addOnCompleteListener vuurt exact 1x na succes-of-falen, dus geen dubbele close en geen gemiste close');
 ok(pluginCodeOnly.includes('addOnCompleteListener(cameraExecutor'), 'audit: expliciete executor voor de ML Kit-listeners (geen impliciete main-thread-aanname)');

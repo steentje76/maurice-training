@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * TkBarcodeScannerPlugin — ANDROID-BARCODE-SCANNER-opdracht.
@@ -99,6 +100,23 @@ public class TkBarcodeScannerPlugin extends Plugin {
     // verwijderd) -- zonder deze vlag zou dat een barcodeDetected-event naar
     // JS sturen terwijl het scannerscherm al gesloten is.
     private volatile boolean scannerStopped = true;
+    // FINAL-MERGE-AUDIT bugfix: sessie/generation-isolatie. scannerStopped
+    // alleen onderscheidt "wel/geen actieve sessie" -- het kan NIET
+    // onderscheiden "sessie A gestopt, sessie B alweer gestart" van "sessie
+    // A loopt nog", omdat scannerStopped na een nieuwe startBarcodeScan()
+    // gewoon weer false is. Scenario: sessie A biedt een frame aan ML Kit
+    // aan (analyzeImage) -> gebruiker sluit de scanner (stopBarcodeScan(),
+    // scannerStopped=true) -> gebruiker/app opent de scanner meteen weer
+    // (nieuwe startBarcodeScan(), scannerStopped=false) -> pas DAN komt
+    // sessie A's oude, in-flight ML Kit-resultaat terug. Zonder een aparte
+    // generation-check zou dat stale resultaat ten onrechte als "van de
+    // huidige sessie" worden behandeld. sessionGeneration wordt bij elke
+    // startBarcodeScan() opgehoogd; elk frame onthoudt bij het aanbieden
+    // aan ML Kit welke generation actief was, en de async-callback vergelijkt
+    // dat bij aankomst met de DAN actuele generation -- een mismatch
+    // betekent altijd "hoort bij een inmiddels vervangen sessie", en wordt
+    // stil genegeerd, ongeacht scannerStopped/nativeResultLock.
+    private final AtomicInteger sessionGeneration = new AtomicInteger(0);
 
     @Override
     public void load() {
@@ -154,6 +172,7 @@ public class TkBarcodeScannerPlugin extends Plugin {
         nativeResultLock.set(false);
         scanningPaused = false;
         scannerStopped = false;
+        sessionGeneration.incrementAndGet(); // FINAL-MERGE-AUDIT: nieuwe sessie, oude in-flight frames worden hierdoor herkenbaar "stale"
 
         // Native CameraX-preview wordt als achtergrond-View aan de Activity
         // toegevoegd; de WebView-achtergrond wordt transparant gemaakt zodat
@@ -220,13 +239,18 @@ public class TkBarcodeScannerPlugin extends Plugin {
             imageProxy.close();
             return;
         }
+        // FINAL-MERGE-AUDIT: vastleggen bij het AANBIEDEN van dit frame aan
+        // ML Kit, niet pas bij het terugkomen van het resultaat -- zodat een
+        // stop+restart die precies tussen deze regel en de callback plaatsvindt
+        // altijd correct als "andere generation" wordt herkend.
+        final int frameGeneration = sessionGeneration.get();
         InputImage image = InputImage.fromMediaImage(imageProxy.getImage(), imageProxy.getImageInfo().getRotationDegrees());
         // Expliciete executor i.p.v. het impliciete main-thread-default van
         // ML Kit's Task-listeners -- zelfde executor als de analyzer zelf,
         // zodat er nooit twijfel bestaat op welke thread handleBarcodeResults
         // draait (audit-eis: geen impliciete threading-aannames).
         barcodeScanner.process(image)
-            .addOnSuccessListener(cameraExecutor, this::handleBarcodeResults)
+            .addOnSuccessListener(cameraExecutor, barcodes -> handleBarcodeResults(barcodes, frameGeneration))
             .addOnFailureListener(cameraExecutor, e -> { /* voorbijgaande decode-fout: gewoon volgend frame proberen, geen error-event (sectie 17, spiegelt het web-pad) */ })
             .addOnCompleteListener(cameraExecutor, task -> imageProxy.close());
     }
@@ -247,8 +271,18 @@ public class TkBarcodeScannerPlugin extends Plugin {
      * NutritionCameraCapture.resolveBarcodeDetectionResult() blijft de
      * enige plek die "MULTIPLE_BARCODES" mag concluderen. Hier sturen we
      * daarom, bij twijfel, gewoon niets door in plaats van zelf te kiezen.
+     *
+     * FINAL-MERGE-AUDIT: frameGeneration is de sessionGeneration die gold
+     * toen DIT frame aan ML Kit werd aangeboden (analyzeImage). Als de
+     * huidige sessionGeneration inmiddels anders is (scanner tussentijds
+     * gestopt EN opnieuw gestart terwijl dit frame nog onderweg was), hoort
+     * dit resultaat bij een reeds vervangen sessie en wordt het stil
+     * genegeerd -- ongeacht scannerStopped/nativeResultLock, die dit
+     * specifieke stop-dan-herstart-scenario niet kunnen onderscheiden van
+     * "dezelfde sessie loopt nog".
      */
-    private void handleBarcodeResults(List<Barcode> barcodes) {
+    private void handleBarcodeResults(List<Barcode> barcodes, int frameGeneration) {
+        if (frameGeneration != sessionGeneration.get()) return; // stale resultaat van een inmiddels vervangen sessie
         if (scannerStopped || barcodes == null || barcodes.isEmpty()) return; // BUGFIX: nooit een event na stop
         String eersteWaarde = null;
         for (Barcode b : barcodes) {

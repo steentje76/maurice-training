@@ -129,11 +129,19 @@ ok(!/function\s+\w*[Cc]alculate\w*Target/.test(serviceSrc), 'M/N-b: geen enkele 
 ok(serviceSrc.indexOf('userWeight') === -1 && serviceSrc.indexOf('user_weight') === -1, 'M/N-c: de service accepteert nergens gebruikersgewicht als parameter');
 
 // ---- O: UNKNOWN blijft UNKNOWN ----
-// (van toepassing op anti-doping-triage, hergebruikt via de bestaande catalogus-hardening; hier
-// herbevestigd dat de Knowledge-laag zelf geen enkele anti-doping-bewering toevoegt)
-ok(!/anti_doping|wada|dopingveilig/i.test(fs.readFileSync(path.join(ROOT, 'core/nutritionKnowledgeTopics.js'), 'utf8')),
-  'O: nutritionKnowledgeTopics.js voegt geen enkele anti-doping/WADA-bewering toe');
-ok(!/anti_doping|wada|dopingveilig/i.test(serviceSrc), 'O-b: nutritionKnowledgeService.js voegt geen enkele anti-doping/WADA-bewering toe');
+// (van toepassing op anti-doping-triage, hergebruikt via de bestaande catalogus-hardening)
+// NK-07 (sectie 10): anti_doping_relevance is TRIAGE-metadata, geen
+// gecertificeerde WADA-status. De Knowledge-laag mag daarom WEL correct
+// gehedgede triage-taal bevatten (bv. "staat op de WADA-verbodslijst",
+// "dit is geen gecertificeerde WADA-status") -- dat IS precies de vereiste,
+// veilige onzekerheids-/risico-uitleg. Verboden blijven uitsluitend de
+// ongehedgde OVERCLAIM-patronen zelf (sectie 10, letterlijk genoemd).
+const topicsSrcForAntiDoping = fs.readFileSync(path.join(ROOT, 'core/nutritionKnowledgeTopics.js'), 'utf8');
+const antiDopingOverclaims = [/wada[\s-]?(approved|safe)/i, /dopingveilig/i, /niet[\s-]?verboden.{0,20}gegarandeerd/i, /gegarandeerd\s+dopingvrij/i, /elimineert.{0,15}dopingrisico/i];
+antiDopingOverclaims.forEach((re) => {
+  ok(!re.test(topicsSrcForAntiDoping), 'O: nutritionKnowledgeTopics.js bevat geen anti-doping-overclaim (' + re + ')');
+  ok(!re.test(serviceSrc), 'O-b: nutritionKnowledgeService.js bevat geen anti-doping-overclaim (' + re + ')');
+});
 
 // ---- P: medische grens creatine ----
 const creatinineCtx = Service.buildAiContext('CREATINE', 'CRE-FAQ-CREATININE');

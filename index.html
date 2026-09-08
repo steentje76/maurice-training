@@ -6274,6 +6274,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/nutritionKnowledgeTopics.js"></script>
 <script src="core/nutritionKnowledgeService.js"></script>
 <script src="core/nutritionKnowledgeResolver.js"></script>
+<script src="core/hydrationCalculation.js"></script>
 <script src="core/nutritionKnowledgeUiGroups.js"></script>
 <script src="core/nutritionDiscoveryService.js"></script>
 <script src="core/nutritionCustomProductService.js"></script>
@@ -22214,9 +22215,10 @@ function voedingKennisKnownTopics(){
   // NK-03: uitgebreid van 2 naar 7 topics (Koolhydraten/Vetten/Energie/Vezels/
   // Gezonde voeding toegevoegd aan Eiwitten/Creatine).
   // NK-04: 6 sportvoedingstopics toegevoegd (Voor/Tijdens/Na training,
-  // Langdurige inspanning, Spieropbouw, Vetverlies & sport). Volgorde bepaalt
-  // geen gedrag, alleen weergavevolgorde binnen de hub-groepen.
-  return ['PROTEIN', 'CARBOHYDRATES', 'FATS', 'ENERGY', 'FIBRE', 'HEALTHY_EATING',
+  // Langdurige inspanning, Spieropbouw, Vetverlies & sport).
+  // NK-05: Hydratatie toegevoegd. Volgorde bepaalt geen gedrag, alleen
+  // weergavevolgorde binnen de hub-groepen.
+  return ['PROTEIN', 'CARBOHYDRATES', 'FATS', 'ENERGY', 'FIBRE', 'HEALTHY_EATING', 'HYDRATION',
     'PRE_TRAINING', 'DURING_TRAINING', 'POST_TRAINING', 'ENDURANCE_CARB', 'MUSCLE_GAIN', 'FAT_LOSS_SPORT',
     'CREATINE'];
 }

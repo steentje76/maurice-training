@@ -467,6 +467,45 @@
   ];
   TOPICS.push.apply(TOPICS, NK04_TOPICS);
 
+  // ── NK-05: Hydratatie (vochtbalans, zweten, EAH-veiligheid, elektrolyten) ──
+  var NK05_TOPICS = [
+    {
+      topic_id: 'HYDRATION',
+      domain: 'NUTRITION',
+      display_name: 'Hydratatie',
+      quick_summary_evidence_ref: 'ELEC-OVERDRINK-001',
+      quick_summary_text: 'Drink naar dorst. Te veel drinken is riskanter dan een beetje te weinig -- dat is de belangrijkste veiligheidsboodschap rond sport en vocht.',
+      sections: [
+        { section_id: 'vochtbalans-en-sport', title: 'Vochtbalans & sport', body: 'Elektrolyten spelen een basale rol in de vochtbalans van je lichaam.', evidence_refs: ['ELEC-HYDRA-001'] },
+        { section_id: 'zweten', title: 'Zweten', body: 'Zweten is de manier waarop je lichaam zich tijdens het sporten koelt, waarbij je vocht en elektrolyten verliest.', evidence_refs: ['NK-HYD-SWEAT-001'] },
+        { section_id: 'dehydratie', title: 'Dehydratie', body: 'Meer dan zo\'n 2% van je lichaamsgewicht aan vocht kwijtraken tijdens het sporten hangt samen met een lagere prestatie.', evidence_refs: ['NK-HYD-DEHYDRATION-001'] },
+        { section_id: 'overdrinken-eah', title: 'Overdrinken & exercise-associated hyponatriëmie', body: 'Hyponatriëmie tijdens sport ontstaat vooral door te veel drinken, niet primair door te weinig zout.', evidence_refs: ['ELEC-HYPONATREMIA-CAUSE-001'] },
+        { section_id: 'drink-naar-dorst', title: 'Drink naar dorst', body: 'Drink naar dorst; bewust meer drinken dan nodig is, is riskanter dan te weinig.', evidence_refs: ['ELEC-OVERDRINK-001'] },
+        { section_id: 'noodgeval-herkennen', title: 'Noodgeval herkennen', body: 'Verwardheid, hevige hoofdpijn, braken of toevallen tijdens/na inspanning: zoek direct medische hulp.', evidence_refs: ['ELEC-EMERGENCY-001'] },
+        { section_id: 'elektrolyten-en-natrium', title: 'Elektrolyten & natrium', body: '0,5-0,7 g natrium per liter is een gangbare richtlijn, vooral voor smaak en vochtopname -- geen bewezen middel tegen hyponatriëmie.', evidence_refs: ['ELEC-SODIUM-DOSE-001'] },
+        { section_id: 'individuele-verschillen', title: 'Persoonlijke verschillen', body: 'Hoeveel natrium je verliest via zweet, verschilt sterk van persoon tot persoon.', evidence_refs: ['ELEC-VARIABILITY-001'] },
+        { section_id: 'hitte-en-omgeving', title: 'Hitte & omgeving', body: 'Bij warm en vochtig weer zweet je meestal meer dan bij koel, droog weer.', evidence_refs: ['NK-HYD-HEAT-001'] },
+        { section_id: 'hydratatie-voor-inspanning', title: 'Hydratatie vóór inspanning', body: 'Begin je training of wedstrijd het liefst goed gehydrateerd, met genoeg tijd vooraf om overtollig vocht kwijt te raken.', evidence_refs: ['NK-HYD-PRE-001'] },
+        { section_id: 'hydratatie-tijdens-inspanning', title: 'Hydratatie tijdens inspanning', body: 'Bij inspanning langer dan een uur wordt een koolhydraat-elektrolytendrank vaker aanbevolen.', evidence_refs: ['ELEC-PROLONGED-001'] },
+        { section_id: 'hydratatie-na-inspanning', title: 'Hydratatie na inspanning', body: 'Na het sporten vul je je vochtverlies het beste geleidelijk aan -- dat hoeft niet allemaal in één keer.', evidence_refs: ['NK-HYD-POST-001'] },
+        { section_id: 'zweetverlies-inschatten', title: 'Zweetverlies inschatten', body: 'Jezelf wegen vlak vóór en na het sporten is een praktische manier om een schatting te krijgen van je zweetverlies. Trainingskompas kan deze schatting voor je berekenen (zie de rekenfunctie), maar geeft geen automatisch drinkadvies op basis daarvan.', evidence_refs: ['NK-HYD-MEASURE-001'] },
+        { section_id: 'sportdranken', title: 'Sportdranken in context', body: 'Een koolhydraat-elektrolytendrank kan bij langere inspanning helpen, maar is geen vereiste voor kortere trainingen.', evidence_refs: ['ELEC-PROLONGED-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'HYD-FAQ-VEEL-BETER', question: 'Is meer drinken altijd beter?', evidence_refs: ['ELEC-OVERDRINK-001'] },
+        { faq_id: 'HYD-FAQ-NATRIUM', question: 'Voorkomt natrium in mijn sportdrank hyponatriëmie?', evidence_refs: ['ELEC-SODIUM-DOSE-001', 'ELEC-HYPONATREMIA-CAUSE-001'] },
+        { faq_id: 'HYD-FAQ-ZWEETVERLIES', question: 'Hoe kom ik erachter hoeveel ik zweet?', evidence_refs: ['NK-HYD-MEASURE-001'] },
+        { faq_id: 'HYD-FAQ-SPORTDRANK', question: 'Wanneer heb ik een sportdrank nodig?', evidence_refs: ['ELEC-PROLONGED-001'] },
+        { faq_id: 'HYD-FAQ-SYMPTOMEN', question: 'Welke symptomen zijn een noodgeval?', evidence_refs: ['ELEC-EMERGENCY-001'] },
+        { faq_id: 'HYD-FAQ-WARM-WEER', question: 'Zweet ik meer bij warm weer?', evidence_refs: ['NK-HYD-HEAT-001'] }
+      ]
+    }
+  ];
+  TOPICS.push.apply(TOPICS, NK05_TOPICS);
+
   /* ROADMAP: sectie 17 -- inhoudelijke roadmap, GEEN gebouwde topics.
    * Uitsluitend classificatiedata, geen evidence/claims. NK-03 heeft
    * Koolhydraten/Vetten/Energie/Vezels/Gezonde voeding gebouwd -- deze

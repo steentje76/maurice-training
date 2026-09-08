@@ -88,6 +88,11 @@
       { group_id: 'basis', group_label: 'Basis', section_ids: ['energiebalans', 'duurzaam-tekort', 'behoud-trainingskwaliteit'] },
       { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['eiwitcontext', 'resistance-training-context', 'snelheid-gewichtsverlies', 'behoud-vetvrije-massa'] },
       { group_id: 'verdieping', group_label: 'Verdieping', section_ids: ['sportprestatie', 'herstel', 'lage-energiebeschikbaarheid', 'red-s', 'dieetkwaliteit', 'haalbaarheid'] }
+    ],
+    HYDRATION: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['vochtbalans-en-sport', 'zweten', 'dehydratie', 'individuele-verschillen'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['hydratatie-voor-inspanning', 'hydratatie-tijdens-inspanning', 'hydratatie-na-inspanning', 'zweetverlies-inschatten', 'sportdranken'] },
+      { group_id: 'verdieping', group_label: 'Veiligheid & verdieping', section_ids: ['overdrinken-eah', 'drink-naar-dorst', 'noodgeval-herkennen', 'elektrolyten-en-natrium', 'hitte-en-omgeving'] }
     ]
   };
 

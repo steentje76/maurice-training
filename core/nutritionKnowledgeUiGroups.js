@@ -93,6 +93,46 @@
       { group_id: 'basis', group_label: 'Basis', section_ids: ['vochtbalans-en-sport', 'zweten', 'dehydratie', 'individuele-verschillen'] },
       { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['hydratatie-voor-inspanning', 'hydratatie-tijdens-inspanning', 'hydratatie-na-inspanning', 'zweetverlies-inschatten', 'sportdranken'] },
       { group_id: 'verdieping', group_label: 'Veiligheid & verdieping', section_ids: ['overdrinken-eah', 'drink-naar-dorst', 'noodgeval-herkennen', 'elektrolyten-en-natrium', 'hitte-en-omgeving'] }
+    ],
+    IRON: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['wat-is-ijzer', 'prevalentie', 'diagnose'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['afkapwaarden', 'bij-vastgesteld-tekort', 'bij-normale-status'] },
+      { group_id: 'verdieping', group_label: 'Veiligheid & verdieping', section_ids: ['veiligheid', 'geen-zelfdiagnose'] }
+    ],
+    VITAMIN_D: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['wat-is-vitamine-d', 'richtlijn-scope', 'diagnose'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['bij-tekort'] },
+      { group_id: 'verdieping', group_label: 'Veiligheid & verdieping', section_ids: ['veiligheid', 'geen-zelfdiagnose'] }
+    ],
+    CALCIUM: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['functie', 'voedingsbronnen'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['supplementen-context'] },
+      { group_id: 'verdieping', group_label: 'Sportcontext & verdieping', section_ids: ['sportcontext-red-s'] }
+    ],
+    MAGNESIUM: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['functie', 'veiligheid'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['spierkramp', 'prestatie-sporters'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: ['misverstanden'] }
+    ],
+    ZINC: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['functie'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['restrictief-voedingspatroon'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: ['testosteron-hype', 'misverstanden'] }
+    ],
+    VITAMIN_B12: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['functie'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['veganisme'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: ['diagnose'] }
+    ],
+    FOLATE: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['functie'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['voedingsbronnen'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: ['bovengrens'] }
+    ],
+    IODINE: [
+      { group_id: 'basis', group_label: 'Basis', section_ids: ['functie'] },
+      { group_id: 'praktisch', group_label: 'Praktisch', section_ids: ['balans'] },
+      { group_id: 'verdieping', group_label: 'Verdieping', section_ids: ['diagnose'] }
     ]
   };
 

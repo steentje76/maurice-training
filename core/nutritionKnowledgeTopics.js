@@ -506,6 +506,164 @@
   ];
   TOPICS.push.apply(TOPICS, NK05_TOPICS);
 
+  // ── NK-06: Micronutriënten (IJzer, Vitamine D, Calcium, Magnesium, Zink, B12, Folaat, Jodium) ──
+  var NK06_TOPICS = [
+    {
+      topic_id: 'IRON', domain: 'SUPPLEMENT',
+      display_name: 'IJzer', quick_summary_evidence_ref: 'IRON-PREVAL-001',
+      quick_summary_text: 'IJzertekort komt veel voor bij sporters, met name vrouwen -- maar diagnose vereist bloedonderzoek, geen zelfbeoordeling.',
+      sections: [
+        { section_id: 'wat-is-ijzer', title: 'Wat is ijzer?', body: 'IJzer is nodig voor zuurstoftransport in je bloed.', evidence_refs: ['IRON-PREVAL-001'] },
+        { section_id: 'prevalentie', title: 'Hoe vaak komt tekort voor?', body: 'IJzertekort komt veel voor bij sporters, met name bij vrouwen, tot 60% afhankelijk van discipline.', evidence_refs: ['IRON-PREVAL-001'] },
+        { section_id: 'diagnose', title: 'Diagnose', body: 'Diagnose vereist minimaal twee bloedmarkers, bij vrouwen bij voorkeur op een vast cyclusmoment.', evidence_refs: ['IRON-DIAGNOSIS-001'] },
+        { section_id: 'afkapwaarden', title: 'Afkapwaarden verschillen', body: 'Exacte afkapwaarden voor ijzertekort verschillen tussen studies en richtlijnen -- geen universeel getal.', evidence_refs: ['IRON-THRESHOLD-001'] },
+        { section_id: 'bij-vastgesteld-tekort', title: 'Bij een vastgesteld tekort', body: 'Suppletie kan het uithoudingsvermogen merkbaar verbeteren bij een door een arts vastgesteld tekort.', evidence_refs: ['IRON-PERF-DEFICIENT-001'] },
+        { section_id: 'bij-normale-status', title: 'Bij een normale ijzerstatus', body: 'Extra ijzer levert geen aangetoond voordeel op als je ijzerstatus al normaal is.', evidence_refs: ['IRON-PERF-NONDEF-001'] },
+        { section_id: 'veiligheid', title: 'Veiligheid', body: 'Te veel ijzer kan schadelijk zijn, zeker bij een ijzerstapelingsaandoening.', evidence_refs: ['IRON-SAFETY-001'] },
+        { section_id: 'geen-zelfdiagnose', title: 'Geen zelfdiagnose', body: 'Trainingskompas kan geen ijzertekort vaststellen; dat kan alleen een arts, via bloedonderzoek.', evidence_refs: ['IRON-FORBIDDEN-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'FE-FAQ-WAAROM', question: 'Waarom is ijzer belangrijk voor sporters?', evidence_refs: ['IRON-PREVAL-001'] },
+        { faq_id: 'FE-FAQ-VERMOEIDHEID', question: 'Kan vermoeidheid betekenen dat ik ijzertekort heb?', evidence_refs: ['IRON-FORBIDDEN-001', 'IRON-DIAGNOSIS-001'] },
+        { faq_id: 'FE-FAQ-EXTRA', question: 'Moet ik altijd extra ijzer nemen als sporter?', evidence_refs: ['IRON-PERF-NONDEF-001'] },
+        { faq_id: 'FE-FAQ-VEILIG', question: 'Is ijzer supplementeren altijd veilig?', evidence_refs: ['IRON-SAFETY-001'] }
+      ]
+    },
+    {
+      topic_id: 'VITAMIN_D', domain: 'SUPPLEMENT',
+      display_name: 'Vitamine D', quick_summary_evidence_ref: 'VITD-PHYS-001',
+      quick_summary_text: 'Vitamine D is belangrijk voor botten, spieren en immuunfunctie -- maar verbetert prestaties niet automatisch bij mensen zonder vastgesteld tekort.',
+      sections: [
+        { section_id: 'wat-is-vitamine-d', title: 'Wat is vitamine D?', body: 'Vitamine D speelt een fundamentele rol in bot-, spier- en immuunfunctie.', evidence_refs: ['VITD-PHYS-001'] },
+        { section_id: 'richtlijn-scope', title: 'Voor wie geldt de richtlijn?', body: 'De nieuwste richtlijn (2024) gaat over ziektepreventie bij specifieke groepen, niet over sportprestaties in het algemeen.', evidence_refs: ['VITD-PREVENT-001'] },
+        { section_id: 'diagnose', title: 'Diagnose', body: 'Een tekort vaststellen vereist een bloedtest, geïnterpreteerd door een arts.', evidence_refs: ['VITD-DIAGNOSIS-001'] },
+        { section_id: 'bij-tekort', title: 'Bij een vastgesteld tekort', body: 'Zelfs bij een vastgesteld tekort is niet zeker of suppletie je sportprestatie verbetert.', evidence_refs: ['VITD-PERF-DEFICIENT-001'] },
+        { section_id: 'veiligheid', title: 'Veiligheid', body: 'Te veel vitamine D kan schadelijk zijn; er bestaat een veilige bovengrens.', evidence_refs: ['VITD-SAFE-001'] },
+        { section_id: 'geen-zelfdiagnose', title: 'Geen zelfdiagnose', body: 'Alleen een bloedtest bij je arts kan een tekort vaststellen; Trainingskompas kan dit niet.', evidence_refs: ['VITD-DIAGNOSIS-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'VITD-FAQ-NEMEN', question: 'Moet ik vitamine D nemen?', evidence_refs: ['VITD-PREVENT-001', 'VITD-DIAGNOSIS-001'] },
+        { faq_id: 'VITD-FAQ-PRESTATIE', question: 'Verbetert vitamine D mijn sportprestatie?', evidence_refs: ['VITD-PERF-DEFICIENT-001'] },
+        { faq_id: 'VITD-FAQ-TEVEEL', question: 'Kan ik te veel vitamine D binnenkrijgen?', evidence_refs: ['VITD-SAFE-001'] }
+      ]
+    },
+    {
+      topic_id: 'CALCIUM', domain: 'SUPPLEMENT',
+      display_name: 'Calcium', quick_summary_evidence_ref: 'CALC-FUNC-001',
+      quick_summary_text: 'Calcium is onmisbaar voor sterke botten -- de meeste mensen halen genoeg uit voeding.',
+      sections: [
+        { section_id: 'functie', title: 'Functie', body: 'Calcium is essentieel voor botopbouw, spierfunctie en zenuwsignalering.', evidence_refs: ['CALC-FUNC-001'] },
+        { section_id: 'voedingsbronnen', title: 'Voedingsbronnen', body: 'De meeste mensen halen voldoende calcium uit zuivel, bepaalde groenten en verrijkte plantaardige dranken.', evidence_refs: ['CALC-SOURCES-001'] },
+        { section_id: 'sportcontext-red-s', title: 'Sportcontext & RED-S', body: 'Bij langdurige lage energiebeschikbaarheid spelen calcium en vitamine D een rol in botgezondheid, naast energiebeschikbaarheid zelf.', evidence_refs: ['CALC-REDS-001'] },
+        { section_id: 'supplementen-context', title: 'Supplementen in context', body: 'Een calciumsupplement is niet voor iedereen nodig -- vooral relevant bij sterk beperkte diëten.', evidence_refs: ['CALC-SOURCES-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'CA-FAQ-BOT', question: 'Waarom is calcium belangrijk voor botten?', evidence_refs: ['CALC-FUNC-001'] },
+        { faq_id: 'CA-FAQ-REDS', question: 'Wat heeft calcium met RED-S te maken?', evidence_refs: ['CALC-REDS-001'] },
+        { faq_id: 'CA-FAQ-SUPPLEMENT', question: 'Heb ik een calciumsupplement nodig?', evidence_refs: ['CALC-SOURCES-001'] }
+      ]
+    },
+    {
+      topic_id: 'MAGNESIUM', domain: 'SUPPLEMENT',
+      display_name: 'Magnesium', quick_summary_evidence_ref: 'MAG-FUNC-001',
+      quick_summary_text: 'Magnesium is nodig voor energiestofwisseling en spierwerking -- maar het bewijs voor kramppreventie of extra prestatiewinst bij sporters is zwak.',
+      sections: [
+        { section_id: 'functie', title: 'Functie', body: 'Magnesium speelt een normale rol in energiestofwisseling, spiercontractie en zenuwfunctie.', evidence_refs: ['MAG-FUNC-001'] },
+        { section_id: 'spierkramp', title: 'Spierkramp', body: 'Een grote wetenschappelijke review vindt onvoldoende bewijs dat magnesium spierkrampen voorkomt of verhelpt.', evidence_refs: ['MAG-CRAMP-001'] },
+        { section_id: 'prestatie-sporters', title: 'Prestatie bij sporters', body: 'Bij een normale magnesiumstatus laat onderzoek bij sporters geen duidelijk prestatievoordeel van extra magnesium zien.', evidence_refs: ['MAG-PERF-001'] },
+        { section_id: 'veiligheid', title: 'Veiligheid', body: 'Via voeding is een overdosis vrijwel onmogelijk; hoge supplementdoses kunnen diarree geven.', evidence_refs: ['MAG-SAFE-001'] },
+        { section_id: 'misverstanden', title: 'Veelgemaakte misverstanden', body: '"Magnesium voorkomt kramp" en "magnesium verbetert altijd je herstel" zijn beide onvoldoende onderbouwd voor sporters met een normale status.', evidence_refs: ['MAG-CRAMP-001', 'MAG-PERF-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'MG-FAQ-KRAMP', question: 'Helpt magnesium tegen spierkramp?', evidence_refs: ['MAG-CRAMP-001'] },
+        { faq_id: 'MG-FAQ-HERSTEL', question: 'Verbetert magnesium mijn herstel?', evidence_refs: ['MAG-PERF-001'] },
+        { faq_id: 'MG-FAQ-TEVEEL', question: 'Kan ik te veel magnesium binnenkrijgen?', evidence_refs: ['MAG-SAFE-001'] }
+      ]
+    },
+    {
+      topic_id: 'ZINC', domain: 'SUPPLEMENT',
+      display_name: 'Zink', quick_summary_evidence_ref: 'ZINC-FUNC-001',
+      quick_summary_text: 'Zink ondersteunt je immuunsysteem -- het bewijs dat extra zink je testosteron of prestatie verhoogt, is onvoldoende.',
+      sections: [
+        { section_id: 'functie', title: 'Functie', body: 'Zink speelt een normale rol in immuunfunctie, wondheling en eiwitstofwisseling.', evidence_refs: ['ZINC-FUNC-001'] },
+        { section_id: 'testosteron-hype', title: 'Zink en testosteron', body: 'Er is onvoldoende goed bewijs dat extra zink bij een normale zinkstatus je testosteron of prestatie verhoogt.', evidence_refs: ['ZINC-TESTOSTERONE-001'] },
+        { section_id: 'restrictief-voedingspatroon', title: 'Restrictief/plantaardig voedingspatroon', body: 'Eet je overwegend plantaardig? Dan kan je zinkinname/-opname wat lager uitvallen.', evidence_refs: ['ZINC-RESTRICTIVE-001'] },
+        { section_id: 'misverstanden', title: 'Veelgemaakte misverstanden', body: '"Zink verhoogt testosteron" is gebaseerd op zwak, vaak industrie-gelieerd onderzoek.', evidence_refs: ['ZINC-TESTOSTERONE-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'ZN-FAQ-TESTOSTERON', question: 'Verhoogt zink mijn testosteron?', evidence_refs: ['ZINC-TESTOSTERONE-001'] },
+        { faq_id: 'ZN-FAQ-PLANTAARDIG', question: 'Krijg ik genoeg zink binnen als ik plantaardig eet?', evidence_refs: ['ZINC-RESTRICTIVE-001'] }
+      ]
+    },
+    {
+      topic_id: 'VITAMIN_B12', domain: 'SUPPLEMENT',
+      display_name: 'Vitamine B12', quick_summary_evidence_ref: 'B12-FUNC-001',
+      quick_summary_text: 'B12 is nodig voor bloed en zenuwstelsel -- extra aandachtspunt bij een veganistisch voedingspatroon.',
+      sections: [
+        { section_id: 'functie', title: 'Functie', body: 'Vitamine B12 is essentieel voor rode bloedcellen en een gezonde werking van het zenuwstelsel.', evidence_refs: ['B12-FUNC-001'] },
+        { section_id: 'veganisme', title: 'Veganistisch voedingspatroon', body: 'B12 zit vrijwel alleen in dierlijke producten -- een verrijkt product of supplement wordt daarom vaak aanbevolen.', evidence_refs: ['B12-VEGAN-001'] },
+        { section_id: 'diagnose', title: 'Diagnose', body: 'Alleen een bloedtest bij je arts kan een B12-tekort vaststellen; vermoeidheid alleen zegt dat niet.', evidence_refs: ['B12-DIAGNOSIS-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'B12-FAQ-VEGAN', question: 'Ik ben vegan, moet ik B12 gebruiken?', evidence_refs: ['B12-VEGAN-001'] },
+        { faq_id: 'B12-FAQ-VERMOEID', question: 'Kan vermoeidheid door een B12-tekort komen?', evidence_refs: ['B12-DIAGNOSIS-001'] }
+      ]
+    },
+    {
+      topic_id: 'FOLATE', domain: 'SUPPLEMENT',
+      display_name: 'Folaat', quick_summary_evidence_ref: 'FOL-FUNC-001',
+      quick_summary_text: 'Folaat is nodig voor celdeling en bloedaanmaak, extra belangrijk rond een zwangerschap.',
+      sections: [
+        { section_id: 'functie', title: 'Functie', body: 'Folaat is nodig voor celdeling en de aanmaak van rode bloedcellen, en bijzonder belangrijk rond de zwangerschap.', evidence_refs: ['FOL-FUNC-001'] },
+        { section_id: 'voedingsbronnen', title: 'Voedingsbronnen', body: 'Bladgroenten, peulvruchten en volkoren producten leveren van nature veel folaat.', evidence_refs: ['FOL-SOURCES-001'] },
+        { section_id: 'bovengrens', title: 'Bovengrens ≠ streefdoel', body: 'Er bestaat een veilige bovengrens voor foliumzuur uit supplementen -- dat is geen streefdoel, maar een maximum.', evidence_refs: ['FOL-UL-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'FOL-FAQ-BRONNEN', question: 'Welke voeding levert veel folaat?', evidence_refs: ['FOL-SOURCES-001'] },
+        { faq_id: 'FOL-FAQ-BOVENGRENS', question: 'Kan ik te veel foliumzuur binnenkrijgen?', evidence_refs: ['FOL-UL-001'] }
+      ]
+    },
+    {
+      topic_id: 'IODINE', domain: 'SUPPLEMENT',
+      display_name: 'Jodium', quick_summary_evidence_ref: 'IOD-FUNC-001',
+      quick_summary_text: 'Jodium is nodig voor je schildklier -- zowel te weinig als te veel kan de schildklierfunctie beïnvloeden.',
+      sections: [
+        { section_id: 'functie', title: 'Functie', body: 'Jodium is een essentieel bestanddeel van schildklierhormonen, die de stofwisseling reguleren.', evidence_refs: ['IOD-FUNC-001'] },
+        { section_id: 'balans', title: 'Te weinig én te veel', body: 'Zowel te weinig als te veel jodium kan de schildklierfunctie negatief beïnvloeden.', evidence_refs: ['IOD-BALANCE-001'] },
+        { section_id: 'diagnose', title: 'Diagnose', body: 'Schildklierklachten stel je niet zelf vast -- dat vereist bloedonderzoek bij een arts.', evidence_refs: ['IOD-DIAGNOSIS-001'] },
+        { section_id: 'veelgestelde-vragen', title: 'Veelgestelde vragen', body: 'Zie de FAQ hieronder.', evidence_refs: [] },
+        { section_id: 'wetenschap', title: 'Wetenschappelijke onderbouwing', body: 'Bekijk per uitspraak het bewijsniveau, de populatie/context en de beperkingen.', evidence_refs: [] },
+        { section_id: 'bronnen', title: 'Bronnen', body: 'Alle bronnen die dit dossier onderbouwen.', evidence_refs: [] }
+      ],
+      faq: [
+        { faq_id: 'IOD-FAQ-SCHILDKLIER', question: 'Wat doet jodium voor mijn schildklier?', evidence_refs: ['IOD-FUNC-001'] },
+        { faq_id: 'IOD-FAQ-SUPPLEMENT', question: 'Verbetert een jodiumsupplement mijn sportprestatie?', evidence_refs: ['IOD-BALANCE-001'] }
+      ]
+    }
+  ];
+  TOPICS.push.apply(TOPICS, NK06_TOPICS);
+
   /* ROADMAP: sectie 17 -- inhoudelijke roadmap, GEEN gebouwde topics.
    * Uitsluitend classificatiedata, geen evidence/claims. NK-03 heeft
    * Koolhydraten/Vetten/Energie/Vezels/Gezonde voeding gebouwd -- deze

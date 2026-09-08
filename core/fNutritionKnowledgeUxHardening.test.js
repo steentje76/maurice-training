@@ -66,7 +66,12 @@ ok(FROZEN_NK_CLAIM_IDS.every((id) => !!KEvidence.getById(id)), 'H-b: alle 11 bev
 Object.keys(FROZEN_NK_CLAIM_TEXT_SNAPSHOT).forEach((id) => {
   ok(KEvidence.getById(id).claim_text_internal === FROZEN_NK_CLAIM_TEXT_SNAPSHOT[id], 'H-c: de letterlijke claim-tekst van ' + id + ' is niet stilzwijgend gewijzigd sinds NK-01');
 });
-ok(SupEvidence.CLAIMS.length === 67, 'I: de Supplement Evidence Registry bevat nog steeds precies 67 claims (ongewijzigd)');
+// I: Supplement Evidence Registry -- de vaste "67" gold t/m NK-04 (geen
+// wijziging in die sprints). NK-05 (Elektrolyten-hergebruik, geen nieuwe
+// claims) en NK-06 (19 nieuwe Calcium/Magnesium/Zink/B12/Folaat/Jodium-
+// claims) zijn uitdrukkelijk content-uitbreidingssprints -- zelfde
+// aanpassing als bij H hierboven: minimum in plaats van vast getal.
+ok(SupEvidence.CLAIMS.length >= 67, 'I: de Supplement Evidence Registry bevat minimaal de oorspronkelijke 67 claims (latere sprints voegen toe, verwijderen niets)');
 
 // ---- J: medische boundaries ongewijzigd ----
 const creatinineCtx = Service.buildAiContext('CREATINE', 'CRE-FAQ-CREATININE');

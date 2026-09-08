@@ -156,8 +156,14 @@ const CreCatalog = require('./nutritionSupplementCatalog.js');
 ok(CreCatalog.getById('CREATINE').supplement_id === 'CREATINE', 'S: CREATINE-supplement_id blijft ongewijzigd na toevoeging van het Knowledge Platform');
 ok(CreCatalog.getById('PROTEIN_GROUP').supplement_id === 'PROTEIN_GROUP', 'S-b: PROTEIN_GROUP-supplement_id blijft ongewijzigd');
 
-// ---- T: bestaande Supplement Evidence tests blijven groen (structurele check, volledige run in validatiestap) ----
-ok(SupEvidence.CLAIMS.length === 67, 'T: de Supplement Evidence Registry bevat nog steeds precies 67 claims (geen wijziging door NK-01)');
+// ---- T: bestaande Supplement Evidence claims blijven behouden (structurele check, volledige run in validatiestap) ----
+// De vaste "67"-telling gold specifiek voor NK-01 (geen wijziging door de
+// nieuwe Knowledge-laag). NK-05/NK-06 zijn uitdrukkelijk content-
+// uitbreidingssprints (Elektrolyten-hergebruik + nieuwe Calcium/Magnesium/
+// Zink/B12/Folaat/Jodium-claims) -- een vast totaal past hier niet meer.
+// Het echte, blijvende contract: nooit minder dan de oorspronkelijke 67,
+// en de eerder bevroren NK-01-claim-ID's blijven bestaan.
+ok(SupEvidence.CLAIMS.length >= 67, 'T: de Supplement Evidence Registry bevat minimaal de oorspronkelijke 67 claims (latere sprints voegen toe, verwijderen niets)');
 
 // ---- U: bestaande Nutrition Calculation/Evidence tests blijven groen (structurele check) ----
 ok(fs.existsSync(path.join(ROOT, 'core/nutritionIntelligence.js')), 'U: bestaande NutritionIntelligenceCore-bestand is ongewijzigd aanwezig');

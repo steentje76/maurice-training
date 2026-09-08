@@ -58,6 +58,37 @@ var VERBODEN_CATEGORIEEN = [
     patronen: [
       /\bmoet\s+(vandaag\s+)?absoluut\s+rust\s+nemen\s+wegens\b/i
     ]
+  },
+  // ── NK-04A: Nutrition Knowledge Kennis-AI (sectie 10/14/23) ──────────
+  // Zelfde validator, uitgebreid met sportvoeding-/kennis-specifieke
+  // categorieën -- géén tweede, parallelle validator (sectie 23: "Onderzoek
+  // eerst bestaande AI semantic/output validators. Hergebruik waar mogelijk").
+  {
+    categorie: 'persoonlijke_voedingsberekening',
+    reden: 'De Kennis-AI mag nooit zelf een persoonlijk voedings-/energiegetal berekenen, ook niet als de gebruiker gewicht/leeftijd noemt (NK-04A-opdracht sectie 10/14/16).',
+    patronen: [
+      /\bjouw\s+(persoonlijke\s+)?(calorie|koolhydraat|eiwit|vet)(behoefte|doel|inname)\s+is\b/i,
+      /\bvoor\s+jou\s+(is\s+dat|kom\s+je\s+op)\s+\d/i,
+      /\b\d+\s*(kg|kilogram)\s*[x×]\s*[\d.,]+\s*(g|gram|kcal)\b/i,
+      /\bik\s+bereken\s+(voor\s+jou|je)\b/i,
+      /\bjouw\s+persoonlijke\s+(fueling|voedings)\s*plan\b/i
+    ]
+  },
+  {
+    categorie: 'ongefundeerde_bewering_kennis_ai',
+    reden: 'De Kennis-AI mag alleen het meegegeven, gecertificeerde pakket gebruiken -- nooit eigen modelkennis of een verzonnen bron/getal presenteren als Trainingskompas-kennis (NK-04A-opdracht sectie 10/19).',
+    patronen: [
+      /\bik\s+ga\s+af\s+op\s+(mijn\s+)?(eigen|algemene)\s+kennis\b/i,
+      /\bvolgens\s+mijn\s+trainingsdata\b/i
+    ]
+  },
+  {
+    categorie: 'bevestiging_gebruikersdiagnose',
+    reden: 'De Kennis-AI mag een door de gebruiker gesuggereerde diagnose (RED-S, tekort, blessure) nooit bevestigen (NK-04A-opdracht sectie 20/28).',
+    patronen: [
+      /\bja,?\s+dat\s+klopt,?\s+je\s+hebt\s+(waarschijnlijk\s+)?red-?s\b/i,
+      /\bik\s+bevestig\s+(je\s+)?diagnose\b/i
+    ]
   }
 ];
 

@@ -214,10 +214,56 @@
     }
   }
 
+  // ── V1 Proven Maturity Sprint 02 (Observability): centrale, stabiele
+  // foutentaxonomie (Fase 1). Additief bovenop het bestaande
+  // observability_event.v1-contract -- geen enkel bestaand veld/gedrag
+  // gewijzigd. Callers geven voortaan bij voorkeur een van deze machine-
+  // leesbare TK_*-codes door als error_code (via ctx/opts.error_code aan
+  // normalizeError() of rechtstreeks in tkLog()-data), i.p.v. losse,
+  // vrije foutteksten. Groepering exact volgens de gevraagde categorieën;
+  // dit is een REGISTER (declaratief), geen enkele bestaande foutafhandeling
+  // is hierdoor stilzwijgend veranderd -- bestaande generieke codes
+  // (UNKNOWN/TIMEOUT/NETWORK uit normalizeError) blijven geldig en worden
+  // hier expliciet mee opgenomen zodat er één, volledig register is.
+  var ERROR_TAXONOMY = {
+    AUTH: ['TK_AUTH_SESSION_EXPIRED', 'TK_AUTH_LOGIN_FAILED', 'TK_AUTH_LOGOUT_FAILED', 'TK_AUTH_SESSION_RESTORE_FAILED', 'TK_AUTH_STARTUP_FAILURE'],
+    NETWORK: ['TK_NETWORK_OFFLINE', 'TK_NETWORK_TIMEOUT', 'NETWORK', 'TIMEOUT'],
+    DATABASE: ['TK_DB_WRITE_FAILED', 'TK_DB_READ_FAILED', 'TK_DB_PERMISSION_DENIED'],
+    RLS_PERMISSION: ['TK_DB_PERMISSION_DENIED', 'TK_RLS_DENIED'],
+    VALIDATION: ['TK_VALIDATION_FAILED', 'TK_INPUT_INVALID'],
+    CALCULATION_INPUT: ['TK_CALC_INSUFFICIENT_INPUT', 'TK_CALC_IMPLAUSIBLE_INPUT'],
+    DECISION_INPUT: ['TK_DECISION_INSUFFICIENT_CONTEXT'],
+    AI_TRANSPORT: ['TK_AI_TRANSPORT_FAILED', 'TK_AI_TIMEOUT'],
+    AI_QUOTA: ['TK_AI_QUOTA_EXCEEDED', 'TK_AI_ENTITLEMENT_REQUIRED'],
+    AI_RESPONSE_VALIDATION: ['TK_AI_RESPONSE_REJECTED'],
+    WEARABLE_PROVIDER: ['TK_WEARABLE_SYNC_FAILED', 'TK_WEARABLE_AUTH_FAILED', 'TK_WEARABLE_PROVIDER_UNAVAILABLE'],
+    BARCODE_SCANNER: ['TK_BARCODE_NATIVE_FAILURE', 'TK_BARCODE_PERMISSION_DENIED', 'TK_BARCODE_UNKNOWN'],
+    OFF_PROVIDER: ['TK_NUTRITION_OFF_TIMEOUT', 'TK_NUTRITION_OFF_FAILED', 'TK_NUTRITION_OFF_NOT_FOUND'],
+    OCR: ['TK_OCR_FAILED', 'TK_OCR_LOW_QUALITY'],
+    CAMERA_PERMISSION: ['TK_CAMERA_PERMISSION_DENIED', 'TK_CAMERA_UNAVAILABLE'],
+    NUTRITION_INGEST: ['TK_NUTRITION_INGEST_FAILED', 'TK_NUTRITION_IDENTIFIER_INVALID'],
+    PORTION_ENGINE: ['TK_PORTION_INVALID'],
+    TRAINING_EXECUTION: ['TK_TRAINING_START_FAILED', 'TK_TRAINING_RESUME_FAILED'],
+    TRAINING_LOGGING: ['TK_TRAINING_SAVE_FAILED', 'TK_TRAINING_LOG_FAILED'],
+    RECOVERY: ['TK_RECOVERY_DATA_UNAVAILABLE', 'TK_RECOVERY_PERSISTENCE_FAILED'],
+    SYNC: ['TK_SYNC_FAILED', 'TK_SYNC_CONFLICT'],
+    NATIVE_BRIDGE: ['TK_NATIVE_BRIDGE_UNAVAILABLE', 'TK_NATIVE_SESSION_MISMATCH', 'TK_NATIVE_BACKGROUND_RECOVERY_FAILED'],
+    UNEXPECTED_CLIENT: ['UNKNOWN', 'TK_UNEXPECTED_CLIENT'],
+    UNEXPECTED_SERVER: ['TK_UNEXPECTED_SERVER']
+  };
+  function isKnownErrorCode(code) {
+    if (!code) return false;
+    for (var domain in ERROR_TAXONOMY) {
+      if (ERROR_TAXONOMY[domain].indexOf(code) !== -1) return true;
+    }
+    return false;
+  }
+
   var ObservabilityCore = {
     VERSIONS: VERSIONS, LEVELS: LEVELS, REQUIRED_FIELDS: REQUIRED_FIELDS, REDACT_KEYS: REDACT_KEYS,
     redact: redact, newCorrelationId: newCorrelationId, normalizeError: normalizeError,
-    buildEvent: buildEvent, tkLog: tkLog
+    buildEvent: buildEvent, tkLog: tkLog,
+    ERROR_TAXONOMY: ERROR_TAXONOMY, isKnownErrorCode: isKnownErrorCode
   };
 
   if (typeof module !== 'undefined' && module.exports) { module.exports = ObservabilityCore; }

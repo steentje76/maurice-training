@@ -11684,7 +11684,18 @@ async function afrondenRunningActivity(){
   };
   const ok=await sbPostQ('activities', payload);
   if(ok){toast('Run opgeslagen');renderRunningEntry();}
-  else{toast('Opslaan mislukt — probeer opnieuw');}
+  else{
+    toast('Opslaan mislukt — probeer opnieuw');
+    // V1 Proven Maturity Sprint 02: vóór deze sprint was "opslaan mislukt"
+    // voor de gebruiker zichtbaar, maar wij hadden er geen enkel spoor van
+    // (geen event, geen versie, geen moment) -- exact het probleem dat
+    // deze sprint moest oplossen. Nooit het payload zelf loggen (kan in
+    // potentie trainingsdata bevatten die niet standaard hoeft te worden
+    // bewaard) -- uitsluitend de stabiele taxonomie-code + sport-context.
+    if(typeof ObservabilityCore!=='undefined') ObservabilityCore.tkLog('ERROR', 'training.activity.save_failed', 'training', 'running_manual_entry',
+      { operation: 'save', status: 'failed', error_code: 'TK_TRAINING_SAVE_FAILED' },
+      { app_version: (typeof APP_VER!=='undefined'?APP_VER:'unknown'), environment: (typeof window!=='undefined'&&window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform())?'native_android':'browser' });
+  }
 }
 
 // History: alleen de eigen, canonical activities (RLS garandeert dit al
@@ -21563,6 +21574,14 @@ async function voedingStartScanner(){
     var gestart=NativeBarcodeScannerBridge.startScan(function(rawDetection){ voedingNativeBarcodeDetected(rawDetection); }, function(err){
       voedingScannerActive=false;
       voedingSetScannerStatus('Camera kon niet worden geopend.', false);
+      // V1 Proven Maturity Sprint 02 (Observability): deze faalweg was
+      // vóór deze sprint volledig onzichtbaar voor ons -- de gebruiker
+      // zag een generieke melding, maar er kwam geen enkel spoor van
+      // terecht. Nooit de rauwe err-inhoud loggen (kan platform-specifieke
+      // strings bevatten); uitsluitend de stabiele taxonomie-code.
+      if(typeof ObservabilityCore!=='undefined') ObservabilityCore.tkLog('ERROR', 'nutrition.barcode.native_start_failed', 'nutrition', 'native_scanner',
+        { operation: 'start_scan', status: 'failed', error_code: 'TK_BARCODE_NATIVE_FAILURE' },
+        { app_version: (typeof APP_VER!=='undefined'?APP_VER:'unknown'), environment: 'native_android' });
     });
     if(gestart) voedingSetScannerStatus(null, true); // CAMERA_ACTIVE
     return;
@@ -21586,6 +21605,13 @@ async function voedingStartScanner(){
       : resolved.status==='UNSUPPORTED' ? 'Scannen wordt niet ondersteund in deze browser.' // CAMERA_UNAVAILABLE
       : 'Camera kon niet worden geopend.'; // CAMERA_UNAVAILABLE
     voedingSetScannerStatus(msg, false);
+    // V1 Proven Maturity Sprint 02: dezelfde blindevlek als bij de native
+    // scanner -- deze catch had vóór deze sprint geen enkel spoor
+    // (nooit de rauwe `e` loggen, uitsluitend de al-bestaande,
+    // veilige, geclassificeerde resolved.status).
+    if(typeof ObservabilityCore!=='undefined') ObservabilityCore.tkLog('WARN', 'nutrition.barcode.web_camera_access_failed', 'nutrition', 'web_scanner',
+      { operation: 'get_user_media', status: 'failed', error_code: resolved.status==='PERMISSION_DENIED' ? 'TK_CAMERA_PERMISSION_DENIED' : 'TK_CAMERA_UNAVAILABLE' },
+      { app_version: (typeof APP_VER!=='undefined'?APP_VER:'unknown'), environment: 'browser' });
   }
 }
 /* ═══ NUT-OFF-UI-01 — Open Food Facts UI-integratie ═══

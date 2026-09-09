@@ -23,10 +23,12 @@
     "@tesseract.js-data/nld": "^1.0.0",
     "@zxing/library": "^0.21.3",
     "bwip-js": "^4.11.4",
+    "ical.js": "^2.2.1",
     "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.1.0",
-    "esbuild": "^0.23.0"
+    "esbuild": "^0.23.0",
+    "ical.js": "^2.1.0"
   }
 }

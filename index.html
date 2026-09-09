@@ -6451,6 +6451,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/womensPerformanceContext.js"></script>
 <script src="core/scheduleAdherence.js"></script>
 <script src="core/calendarMonthView.js"></script>
+<script src="core/myTrainingScheduling.js"></script>
 <script src="core/adherenceIntelligence.js"></script>
 <script src="core/longitudinalTrend.js"></script>
 <script src="core/plateauDetection.js"></script>
@@ -7883,6 +7884,7 @@ async function renderSchemaTrainingList(){
       <div class="sc-meta"><span>${V48I.list} ${n} oefening${n===1?'':'en'}</span><span>${V48I.clock} ${escHtml(v48RelDate(lastMap[v.id]))}</span></div>
       <div class="sc-actions">
         <button class="sc-start" onclick="openTrainingPreview('vast','${v.id}')">${V48I.play} Start</button>
+        <button class="sc-ic" onclick="openScheduleMyTraining('${v.id}',${escJsAttr(v.naam)})" aria-label="Inplannen">&#128197;</button>
         <button class="sc-ic" onclick='openRenameVasteTraining(${escJsAttr(v.id)},${escJsAttr(v.naam)})' aria-label="Hernoemen">${V48I.edit}</button>
         <button class="sc-ic del" onclick="deleteVasteTraining('${v.id}')" aria-label="Verwijderen">${V48I.trash}</button>
       </div>
@@ -11370,6 +11372,25 @@ async function renderCalMonth(){
       // de grid wordt hierna niet meer opgebouwd voor deze render-cyclus.
       return;
     }
+    // SPRINT C2-B — Mijn Trainingen occurrence+assignment, parallel aan de
+    // bestaande, ongewijzigde Program-projectie hierboven (geen wijziging aan
+    // CalendarMonthViewCore/buildMonthGrid zelf -- dat blijft exact het reeds
+    // geteste, gemergede Sprint-C1-gedrag). Effective date via de gedeelde
+    // MyTrainingSchedulingCore (geen tweede datum-afleiding).
+    const occR=await sbGetOrFail('planned_training_occurrences','&creator_user_id=eq.'+authSession.user.id+'&planned_date=gte.'+maandStart+'&planned_date=lte.'+maandEind);
+    const occurrences=occR.rows||[];
+    let assignmentsByOcc={};
+    window.calMyTrainingByDate={};
+    if(occurrences.length&&typeof MyTrainingSchedulingCore!=='undefined'){
+      const occIds=occurrences.map(function(o){return o.id;}).join(',');
+      const assR=await sbGetOrFail('planned_training_assignments','&occurrence_id=in.('+occIds+')&athlete_user_id=eq.'+authSession.user.id);
+      (assR.rows||[]).forEach(function(a){ (assignmentsByOcc[a.occurrence_id]=assignmentsByOcc[a.occurrence_id]||[]).push(a); });
+      const myEvents=MyTrainingSchedulingCore.toCalendarSourceEvents(occurrences,assignmentsByOcc);
+      myEvents.forEach(function(ev){
+        if(!ev.plannedDate)return;
+        (window.calMyTrainingByDate[ev.plannedDate]=window.calMyTrainingByDate[ev.plannedDate]||[]).push(ev);
+      });
+    }
     const cellen=CalendarMonthViewCore.buildMonthGrid(calYear,calMonth,{
       programBlocks:blocks, sessions:sessies||[], availabilityPeriods:availRows||[],
       today:td(), getConflict:getProgramAvailabilityConflict, getAvailability:getAvailabilityForDate
@@ -11381,7 +11402,8 @@ async function renderCalMonth(){
       new Array(eersteWeekdag).fill('<div></div>').join('');
     cellen.forEach(function(c){
       const dagNr=parseInt(c.date.slice(8,10),10);
-      const heeftGepland=c.plannedBlocks.length>0, heeftVoltooid=c.completedBlocks.length>0;
+      const myTrainingVandaag=(window.calMyTrainingByDate&&window.calMyTrainingByDate[c.date])||[];
+      const heeftGepland=c.plannedBlocks.length>0||myTrainingVandaag.some(function(m){return m.status==='planned';}), heeftVoltooid=c.completedBlocks.length>0||myTrainingVandaag.some(function(m){return m.status==='completed';});
       const kleur=c.conflictLevel==='conflict'?'#e53935':(c.conflictLevel==='context'?'#f0a500':(heeftGepland||heeftVoltooid||c.hasHistory?'var(--accent)':'var(--g6)'));
       const isSel=calSelectedDate===c.date;
       // Status NIET uitsluitend via kleur (sectie 7): een conflict/context-dag krijgt
@@ -11425,9 +11447,28 @@ function renderCalDayDetail(dateStr,cellen){
   if(cel.availability){
     html+='<div style="font-size:13px;color:var(--g4);margin-bottom:6px">'+(AV_CTX[cel.availability.contextType]||cel.availability.contextType)+' · '+(AV_TR[cel.availability.trainingAvailability]||cel.availability.trainingAvailability)+'</div>';
   }
-  if(!cel.plannedBlocks.length&&!cel.completedBlocks.length&&!cel.skippedBlocks.length&&!cel.hasHistory){
+  if(!cel.plannedBlocks.length&&!cel.completedBlocks.length&&!cel.skippedBlocks.length&&!cel.hasHistory&&!((window.calMyTrainingByDate&&window.calMyTrainingByDate[dateStr])||[]).length){
     html+='<div style="font-size:13px;color:var(--g4)">Geen training gepland of gelogd op deze dag.</div>';
   }
+  // SPRINT C2-B — Mijn Trainingen occurrence+assignment-items op deze dag.
+  // Elk item apart getoond (geen samenvoeging, sectie 41 same-day-oracle),
+  // acties uitsluitend op ASSIGNMENT-niveau (skip) of OCCURRENCE-niveau
+  // (verplaatsen/annuleren) -- exact zoals het schema onderscheidt.
+  ((window.calMyTrainingByDate&&window.calMyTrainingByDate[dateStr])||[]).forEach(function(m){
+    if(m.status==='completed'){
+      html+='<div style="padding:8px 0;border-top:1px solid var(--g6)"><div style="font-weight:700">'+escHtml(m.title)+' — voltooid</div></div>';
+    }else if(m.status==='skipped'){
+      html+='<div style="padding:8px 0;border-top:1px solid var(--g6)"><div style="font-weight:700;color:var(--g4)">'+escHtml(m.title)+' — overgeslagen</div></div>';
+    }else{
+      html+='<div style="padding:8px 0;border-top:1px solid var(--g6)">'+
+        '<div style="font-weight:700">'+escHtml(m.title)+'</div>'+
+        '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">'+
+        (dateStr===td()?'<button class="btn btn-r" style="flex:1" onclick="openTrainingPreview(\'vast\',\''+m.sourceId+'\')">Start</button>':'')+
+        '<button class="btn btn-o" style="flex:1" onclick="myTrainingReschedule(\''+m.sourceId+'\')">Verplaatsen</button>'+
+        '<button class="btn btn-o" style="flex:1" onclick="myTrainingSkipAssignment(\''+m.assignmentId+'\')">Overslaan</button>'+
+        '</div></div>';
+    }
+  });
   cel.completedBlocks.forEach(function(b){
     html+='<div style="padding:8px 0;border-top:1px solid var(--g6)"><div style="font-weight:700">'+(b.fase_naam||'Training')+' — voltooid</div></div>';
   });
@@ -11461,6 +11502,76 @@ function renderCalDayDetail(dateStr,cellen){
 async function calDayAction(actie,blockId){
   if(actie==='skip'){ await availConflictSkip(blockId); }
   else if(actie==='reschedule'){ await availConflictReschedule(blockId); }
+  renderCalMonth();
+}
+
+// ══════════════════════════════════════════════════════════
+// SPRINT C2-B — MIJN TRAININGEN CANONICAL OCCURRENCE + ASSIGNMENT SCHEDULING.
+// Occurrence + Assignment is canonical, ZELFS voor individuele self-
+// scheduling (PO-beslissing 1A) -- future-ready voor coach/team zonder
+// schema-rewrite. programs/program_blocks blijven volledig ongewijzigd
+// (PO-beslissing 1B). Date-only V1, geen tijdstip (PO-beslissing 1F).
+// ══════════════════════════════════════════════════════════
+async function openScheduleMyTraining(vasteTrainingId,naam){
+  const datum=window.prompt('Datum om "'+naam+'" in te plannen (JJJJ-MM-DD):','');
+  if(!datum)return;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(datum)){toast('Ongeldige datum');return;}
+  try{
+    // Hergebruikt EXACT de bestaande snapshotFromVasteTraining() -- geen nieuwe
+    // snapshotlogica, geen fake revisienummer (vaste_trainingen heeft geen
+    // versioning-kolom, C2-A bevestigd). Het bevroren resultaat garandeert dat
+    // een latere wijziging van de Mijn Training deze al-geplande occurrence
+    // niet met terugwerkende kracht verandert.
+    const def=vasteTrainingen.find(function(v){return v.id===vasteTrainingId;});
+    if(!def){toast('Training niet gevonden');return;}
+    const texs=await sbGet('training_exercises','&training_ref=eq.'+encodeURIComponent(vasteTrainingId)+'&order=sort_order.asc');
+    const snapshot=snapshotFromVasteTraining({id:def.id,naam:def.naam},texs);
+    // Atomaire, owner-geverifieerde RPC (migratie_v551): creëert occurrence +
+    // exact één self-assignment in één transactie -- geen orphan occurrence
+    // door een half-mislukte create (sectie 8). Online-only in V1, consistent
+    // met alle overige sbRpc()-aanroepen in de app (geen bestaande offline-
+    // RPC-queue-infrastructuur elders aanwezig om op aan te sluiten).
+    const result=await sbRpc('schedule_my_training',{p_workout_definition_id:vasteTrainingId,p_planned_date:datum,p_definition_snapshot:snapshot});
+    if(!result){toast('Inplannen mislukt — controleer je internetverbinding en probeer opnieuw');return;}
+    toast('"'+naam+'" ingepland voor '+datum);
+  }catch(e){ console.error('openScheduleMyTraining',e); toast('Inplannen mislukt'); }
+}
+
+// Skip = alleen de assignment (sporter-specifiek), NOOIT de gedeelde occurrence
+// en NOOIT training_instances/sessions (PO-beslissing 1E, sectie 32).
+async function myTrainingSkipAssignment(assignmentId){
+  const bevestigd=await confirmModal('Deze geplande training overslaan?',{title:'Overslaan',okLabel:'Overslaan',cancelLabel:'Annuleren'});
+  if(!bevestigd)return;
+  const ok=await sbPatchQ('planned_training_assignments','id=eq.'+assignmentId,{status:'skipped',updated_at:new Date().toISOString()});
+  if(!ok){toast('Kon niet opslaan — probeer opnieuw');return;}
+  toast('Training overgeslagen');
+  renderCalMonth();
+}
+
+// Reschedule V1 (self-scheduling, exact één assignment per occurrence):
+// wijzigt occurrence.planned_date rechtstreeks -- veilig zolang er maar één
+// assignment bestaat (V1-garantie). Zodra coach/team later meerdere
+// assignments op dezelfde occurrence toevoegt, moet deze functie worden
+// uitgebreid om in plaats daarvan een personal_date_override op de
+// EIGEN assignment te zetten (het schema ondersteunt dat al, sectie 6) --
+// bewust NIET nu al zo geïmplementeerd omdat V1 geen coach/team-occurrence
+// met meerdere sporters kan hebben (RLS staat dat sowieso niet toe).
+async function myTrainingReschedule(occurrenceId){
+  const nieuweDatum=window.prompt('Nieuwe datum (JJJJ-MM-DD):','');
+  if(!nieuweDatum)return;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(nieuweDatum)){toast('Ongeldige datum');return;}
+  const ok=await sbPatchQ('planned_training_occurrences','id=eq.'+occurrenceId,{planned_date:nieuweDatum});
+  if(!ok){toast('Kon niet opslaan — probeer opnieuw');return;}
+  toast('Training verplaatst naar '+nieuweDatum);
+  renderCalMonth();
+}
+
+async function myTrainingCancelOccurrence(occurrenceId){
+  const bevestigd=await confirmModal('Deze geplande training volledig annuleren?',{title:'Annuleren',okLabel:'Annuleren van training',cancelLabel:'Terug'});
+  if(!bevestigd)return;
+  const ok=await sbPatchQ('planned_training_occurrences','id=eq.'+occurrenceId,{status:'cancelled'});
+  if(!ok){toast('Kon niet opslaan — probeer opnieuw');return;}
+  toast('Training geannuleerd');
   renderCalMonth();
 }
 

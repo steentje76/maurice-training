@@ -4149,6 +4149,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
         <button class="btn btn-o" style="width:100%;margin-top:6px" onclick="closeAvailabilityForm()">Annuleren</button>
       </div>
     </div>
+    <div id="availability-conflicts"></div>
     <div id="availability-list"></div>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
@@ -10951,6 +10952,7 @@ async function renderAvailabilityScreen(){
   try{
     if(!authSession?.user?.id){el.innerHTML='';return;}
     const rows=await sbGet('availability_periods','&user_id=eq.'+authSession.user.id+'&order=start_date.asc');
+    await renderProgramAvailabilityConflicts(rows);
     if(!rows||!rows.length){el.innerHTML='<div class="tk-empty"><div class="tk-empty-emo">🗓️</div>Nog geen periodes vastgelegd.</div>';return;}
     el.innerHTML=rows.map(function(p){
       const ctx=AVAILABILITY_CONTEXT_LABELS[p.context_type]||p.context_type;
@@ -10966,6 +10968,94 @@ async function renderAvailabilityScreen(){
         '</div></div></div>';
     }).join('');
   }catch(e){ console.error('renderAvailabilityScreen',e); el.innerHTML='<div class="tk-empty">Kon beschikbaarheid niet laden.</div>'; }
+}
+
+// SPRINT B — availability x canonical program_blocks conflict UI.
+// Correcte intersection-target (B0-bewezen): program_blocks.planned_date,
+// NOOIT training_instances. Geen tweede planningstatusmodel: hergebruikt
+// exact de bestaande schedule_status/rescheduled_from/reschedule_reason-
+// vocabulaire en de bestaande ScheduleAdherenceCore-conflictcheck.
+async function renderProgramAvailabilityConflicts(availabilityRows){
+  const el=document.getElementById('availability-conflicts');
+  if(!el)return;
+  el.innerHTML='';
+  try{
+    if(!availabilityRows||!availabilityRows.length||typeof getProgramAvailabilityConflict!=='function')return;
+    const progs=await sbGet('programs','&user_id=eq.'+authSession.user.id+'&status=eq.actief');
+    if(!progs||!progs.length)return;
+    const progIds=progs.map(function(p){return p.id;});
+    // Alleen nog-niet-afgeronde, nog-niet-overgeslagen blocks -- voltooide/overgeslagen
+    // geschiedenis blijft ongemoeid (sectie 26, historical immutability).
+    const blocks=await sbGet('program_blocks','&program_id=in.('+progIds.join(',')+')&completed_at=is.null&schedule_status=not.eq.skipped&planned_date=not.is.null');
+    if(!blocks||!blocks.length)return;
+    const conflicten=blocks.map(function(b){return getProgramAvailabilityConflict(b,availabilityRows);}).filter(function(c){return c&&c.conflictLevel!=='none';});
+    if(!conflicten.length)return;
+    el.innerHTML='<div class="v43-lbl" style="margin:4px 0 9px">Beschikbaarheid × geplande trainingen</div>'+
+      conflicten.map(function(c){
+        const isConflict=c.conflictLevel==='conflict';
+        const tekst=isConflict
+          ? 'Deze training valt binnen een periode waarin je hebt aangegeven niet te kunnen trainen.'
+          : 'Je hebt aangegeven dat trainen in deze periode beperkt mogelijk is.';
+        return '<div class="card" style="margin-bottom:8px;border-left:3px solid '+(isConflict?'#e53935':'#f0a500')+'"><div class="card-body">'+
+          '<div style="font-weight:800">'+c.plannedDate+'</div>'+
+          '<div style="font-size:13px;color:var(--g4)">'+tekst+'</div>'+
+          '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">'+
+          '<button class="btn btn-o" style="flex:1" onclick="availConflictKeep(\''+c.blockId+'\')">Behouden</button>'+
+          '<button class="btn btn-o" style="flex:1" onclick="availConflictReschedule(\''+c.blockId+'\')">Verplaatsen</button>'+
+          '<button class="btn btn-o" style="flex:1" onclick="availConflictSkip(\''+c.blockId+'\')">Overslaan</button>'+
+          '</div></div></div>';
+      }).join('');
+  }catch(e){ console.error('renderProgramAvailabilityConflicts',e); }
+}
+
+// "Behouden" = gebruiker accepteert het conflict bewust. GEEN persisted
+// acknowledgement (sectie 10): het conflict is deterministisch afgeleid uit
+// canonical data (planned_date x availability), dus het verschijnt simpelweg
+// opnieuw zolang de onderliggende availability-periode overlapt -- exact
+// de gewenste semantiek ("nog steeds zichtbaar zolang het conflict bestaat"),
+// zonder een nieuwe kolom/tabel puur voor een dismiss-vlag. Geen mutatie.
+function availConflictKeep(blockId){
+  toast('Training blijft gepland zoals afgesproken.');
+}
+
+async function availConflictSkip(blockId){
+  // Hergebruikt EXACT dezelfde schrijfwijze als de bestaande pscheduleSkip()
+  // (geen tweede skip-implementatie) -- planning-level skip, nooit
+  // training_instances.status aanraken.
+  const bevestigd=await confirmModal('Deze training overslaan vanwege je beschikbaarheid? Hij telt dan niet mee als afgerond, maar blijft zichtbaar als bewust overgeslagen.',{title:'Overslaan',okLabel:'Overslaan',cancelLabel:'Annuleren'});
+  if(!bevestigd)return;
+  const ok=await sbPatchQ('program_blocks','id=eq.'+blockId,{schedule_status:'skipped'});
+  if(!ok){toast('Kon niet opslaan — probeer opnieuw');return;}
+  toast('Training overgeslagen');
+  renderAvailabilityScreen();
+}
+
+async function availConflictReschedule(blockId){
+  // Zelfde onderliggende schrijfwijze/velden als de bestaande
+  // pscheduleShowReschedule() (planned_date/rescheduled_from/
+  // reschedule_reason/schedule_status) -- GEEN tweede reschedule-status-
+  // model. Verschil t.o.v. de bestaande flow: die verplaatst uitsluitend
+  // naar VANDAAG (voor de "gemiste training"-flow); hier moet de
+  // gebruiker een datum BUITEN de onbeschikbare periode kunnen kiezen,
+  // dus een simpele datuminvoer i.p.v. een vaste datum. Hergebruikt wel
+  // dezelfde ScheduleAdherenceCore-botsingscheck.
+  const nieuweDatum=window.prompt('Nieuwe datum (JJJJ-MM-DD):','');
+  if(!nieuweDatum)return;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(nieuweDatum)){toast('Ongeldige datum');return;}
+  try{
+    const blockRows=await sbGet('program_blocks','&id=eq.'+blockId);
+    const block=blockRows&&blockRows[0];
+    if(!block){toast('Training niet gevonden');return;}
+    const allBlocks=await sbGet('program_blocks','&program_id=eq.'+block.program_id);
+    if(typeof ScheduleAdherenceCore!=='undefined'&&ScheduleAdherenceCore.hasScheduleConflict(allBlocks,nieuweDatum,blockId)){
+      const bevestigd=await confirmModal('Er staat al een andere training gepland voor '+nieuweDatum+'. Toch verplaatsen?',{title:'Planning botst',okLabel:'Toch verplaatsen',cancelLabel:'Annuleren'});
+      if(!bevestigd)return;
+    }
+    const ok=await sbPatchQ('program_blocks','id=eq.'+blockId,{planned_date:nieuweDatum,rescheduled_from:block.planned_date,reschedule_reason:'manual',schedule_status:'rescheduled'});
+    if(!ok){toast('Kon niet opslaan — probeer opnieuw');return;}
+    toast('Training verplaatst naar '+nieuweDatum);
+    renderAvailabilityScreen();
+  }catch(e){ console.error('availConflictReschedule',e); toast('Verplaatsen mislukt'); }
 }
 
 let availabilityEditCache={};
@@ -11042,6 +11132,36 @@ function getAvailabilityForDate(dateStr, periods){
   const hit=periods.find(function(p){ return p && p.start_date<=dateStr && dateStr<=p.end_date; });
   if(!hit) return null;
   return { periodId:hit.id, contextType:hit.context_type, trainingAvailability:hit.training_availability, startDate:hit.start_date, endDate:hit.end_date };
+}
+
+// SPRINT B — canonical, deterministische, read-only conflict-resolver.
+// Correcte intersection-target: program_blocks.planned_date x availability_periods
+// (NIET training_instances -- B0 bewees dat training_instances uitsluitend
+// execution is en nooit toekomstige planning bevat).
+// Hergebruikt getAvailabilityForDate() (Sprint A) i.p.v. een tweede
+// datum-intersectie-implementatie te bouwen. Voert GEEN mutatie uit --
+// geeft uitsluitend een gestructureerd resultaat + toegestane acties terug.
+// "normal" is NOOIT een conflict, ook niet bij context_type='vacation'
+// (harde productregel, Sprint A): vakantie betekent niet automatisch
+// een trainingsconflict.
+function getProgramAvailabilityConflict(block, availabilityPeriods){
+  if(!block || !block.planned_date) return null;
+  const ctx=getAvailabilityForDate(block.planned_date, availabilityPeriods);
+  if(!ctx) return { blockId:block.id, plannedDate:block.planned_date, availabilityPeriodId:null, contextType:null, trainingAvailability:null, conflictLevel:'none', allowedActions:[] };
+  var conflictLevel = 'none';
+  if(ctx.trainingAvailability==='unavailable') conflictLevel='conflict';
+  else if(ctx.trainingAvailability==='limited') conflictLevel='context';
+  // 'normal' -> conflictLevel blijft 'none', ongeacht contextType (dus ook bij vacation+normal).
+  var allowedActions = (conflictLevel==='none') ? [] : ['keep','reschedule','skip'];
+  return {
+    blockId: block.id,
+    plannedDate: block.planned_date,
+    availabilityPeriodId: ctx.periodId,
+    contextType: ctx.contextType,
+    trainingAvailability: ctx.trainingAvailability,
+    conflictLevel: conflictLevel,
+    allowedActions: allowedActions
+  };
 }
 
 function go(id){

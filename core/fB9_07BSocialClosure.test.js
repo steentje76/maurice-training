@@ -54,7 +54,7 @@ ok(migratie.includes('check (char_length(body) between 1 and 500)'),
 // ---- F. Geen extra bottom-nav-regressie ----
 {
   const aantalVoortgangTabs = (html.match(/<span class="ni-label">Voortgang<\/span>/g) || []).length;
-  ok(aantalVoortgangTabs === 39, 'F1: geen enkele van de bestaande bottom-nav-blokken is aangeraakt -- 36 -> 38 (Nutrition UX v1) -> 39 door de additieve komst van s-availability (Sprint A: Beschikbaarheid/vakantie foundation)');
+  ok(aantalVoortgangTabs === 41, 'F1: geen enkele van de bestaande bottom-nav-blokken is aangeraakt -- 36 -> 38 (Nutrition UX v1) -> 39 (s-availability) -> 41 door de additieve komst van s-swimming/s-swimming-insights (Endurance Master Sprint E4, Swimming Foundation)');
 }
 
 // ---- G. Moderatie: gebruikt de bestaande social_reports-tabel ----

@@ -11019,6 +11019,14 @@ function availConflictKeep(blockId){
 }
 
 async function availConflictSkip(blockId){
+  // GEVONDEN TIJDENS ADVERSARIAL HERCERTIFICERING (sectie 12): zonder deze
+  // check kon een block worden geskipt terwijl er een ACTIEVE executie voor
+  // datzelfde block liep (via het bestaande 'prog_'+blockId-identiteitspatroon,
+  // zie createTrainingInstance()/vaste_training_id). Minimale, gerichte guard --
+  // geen wijziging aan training_instances zelf, uitsluitend een blokkerende
+  // read-check vóór de bestaande schrijfwijze.
+  const actief=await sbGet('training_instances','&vaste_training_id=eq.prog_'+blockId+'&status=eq.active&limit=1');
+  if(actief&&actief.length){ toast('Deze training wordt nu actief uitgevoerd — overslaan is nu niet mogelijk.'); return; }
   // Hergebruikt EXACT dezelfde schrijfwijze als de bestaande pscheduleSkip()
   // (geen tweede skip-implementatie) -- planning-level skip, nooit
   // training_instances.status aanraken.
@@ -11031,6 +11039,10 @@ async function availConflictSkip(blockId){
 }
 
 async function availConflictReschedule(blockId){
+  // Zelfde adversarieel-gevonden guard als availConflictSkip() hierboven --
+  // een actieve executie mag nooit stil herplanning ondergaan.
+  const actief=await sbGet('training_instances','&vaste_training_id=eq.prog_'+blockId+'&status=eq.active&limit=1');
+  if(actief&&actief.length){ toast('Deze training wordt nu actief uitgevoerd — verplaatsen is nu niet mogelijk.'); return; }
   // Zelfde onderliggende schrijfwijze/velden als de bestaande
   // pscheduleShowReschedule() (planned_date/rescheduled_from/
   // reschedule_reason/schedule_status) -- GEEN tweede reschedule-status-

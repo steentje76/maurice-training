@@ -117,7 +117,7 @@ ok(html.indexOf("reden=(gap==='MISSED')?'missed'") > 0, "17. Bestaande missed-de
 // ═══ 18. training_instances NOOIT aangeraakt door de nieuwe conflict-flow ═══
 {
   const conflictBlok = slice('async function renderProgramAvailabilityConflicts', 'async function availConflictReschedule');
-  ok(!/sbPatchQ\('training_instances'|sbPostQ\('training_instances'|sbGet\('training_instances'/.test(conflictBlok), '18/30. Sprint-B-conflictcode doet GEEN enkele database-operatie op training_instances -- uitsluitend program_blocks (een verklarend commentaar dat de naam noemt telt niet als functionele aanraking)');
+  ok(!/sbPatchQ\('training_instances'|sbPostQ\('training_instances'/.test(conflictBlok), '18/30. Sprint-B-conflictcode schrijft NOOIT naar training_instances -- alleen een lees-controle (guard) is toegestaan, geen enkele write');
 }
 // ═══ 19. skip hergebruikt EXACT dezelfde schrijfwijze als de bestaande pscheduleSkip() ═══
 {
@@ -141,6 +141,28 @@ ok(html.indexOf("reden=(gap==='MISSED')?'missed'") > 0, "17. Bestaande missed-de
 {
   const rescheduleFn = slice('async function availConflictReschedule', 'function getAvailabilityForDate');
   ok(rescheduleFn.indexOf('ScheduleAdherenceCore.hasScheduleConflict') > 0, '22. Reschedule hergebruikt de bestaande ScheduleAdherenceCore-botsingscheck (geen tweede, parallelle implementatie)');
+}
+// ═══ 23. ACTIEVE EXECUTIE-GUARD (adversarieel gevonden tijdens hercertificering,
+// sectie 12): skip/reschedule mogen NOOIT mogelijk zijn terwijl een block via
+// het bestaande 'prog_'+blockId-identiteitspatroon actief wordt uitgevoerd. ═══
+{
+  const skipFn = slice('async function availConflictSkip', 'async function availConflictReschedule');
+  ok(skipFn.indexOf("vaste_training_id=eq.prog_'+blockId") > -1 && skipFn.indexOf('status=eq.active') > -1, "23a. availConflictSkip() controleert EERST op een actieve training_instance (vaste_training_id='prog_'+blockId, status=active) vóórdat enige write plaatsvindt");
+  const skipGuardIdx = skipFn.indexOf('actief&&actief.length');
+  const skipWriteIdx = skipFn.indexOf("sbPatchQ('program_blocks'");
+  ok(skipGuardIdx > -1 && skipWriteIdx > -1 && skipGuardIdx < skipWriteIdx, '23b. De actieve-executie-guard staat AANTOONBAAR vóór de schrijfoperatie in de broncode (volgorde-bewijs, niet alleen aanwezigheid)');
+}
+{
+  const rescheduleFn = slice('async function availConflictReschedule', 'function getAvailabilityForDate');
+  ok(rescheduleFn.indexOf("vaste_training_id=eq.prog_'+blockId") > -1 && rescheduleFn.indexOf('status=eq.active') > -1, "23c. availConflictReschedule() heeft dezelfde actieve-executie-guard vóór de herplanning");
+  const rescheduleGuardIdx = rescheduleFn.indexOf('actief&&actief.length');
+  const rescheduleWriteIdx = rescheduleFn.indexOf("sbPatchQ('program_blocks'");
+  ok(rescheduleGuardIdx > -1 && rescheduleWriteIdx > -1 && rescheduleGuardIdx < rescheduleWriteIdx, '23d. Ook hier staat de guard aantoonbaar vóór de schrijfoperatie');
+}
+// ═══ 24. de guard raakt training_instances zelf niet aan -- uitsluitend een read-check ═══
+{
+  const skipFn = slice('async function availConflictSkip', 'async function availConflictReschedule');
+  ok(!/sbPatchQ\('training_instances'|sbPostQ\('training_instances'/.test(skipFn), '24. De nieuwe guard is uitsluitend een LEES-controle (sbGet) -- geen enkele schrijfoperatie op training_instances zelf, exact zoals vereist (sectie 11)');
 }
 
 console.log('fAvailabilityProgramConflict: ' + pass + ' geslaagd, ' + fail + ' mislukt');

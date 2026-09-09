@@ -6451,6 +6451,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/womensPerformanceContext.js"></script>
 <script src="core/scheduleAdherence.js"></script>
 <script src="core/calendarMonthView.js"></script>
+<script src="core/myTrainingScheduling.js"></script>
 <script src="core/adherenceIntelligence.js"></script>
 <script src="core/longitudinalTrend.js"></script>
 <script src="core/plateauDetection.js"></script>
@@ -7883,6 +7884,7 @@ async function renderSchemaTrainingList(){
       <div class="sc-meta"><span>${V48I.list} ${n} oefening${n===1?'':'en'}</span><span>${V48I.clock} ${escHtml(v48RelDate(lastMap[v.id]))}</span></div>
       <div class="sc-actions">
         <button class="sc-start" onclick="openTrainingPreview('vast','${v.id}')">${V48I.play} Start</button>
+        <button class="sc-ic" onclick="openScheduleMyTraining('${v.id}',${escJsAttr(v.naam)})" aria-label="Inplannen">&#128197;</button>
         <button class="sc-ic" onclick='openRenameVasteTraining(${escJsAttr(v.id)},${escJsAttr(v.naam)})' aria-label="Hernoemen">${V48I.edit}</button>
         <button class="sc-ic del" onclick="deleteVasteTraining('${v.id}')" aria-label="Verwijderen">${V48I.trash}</button>
       </div>
@@ -8473,6 +8475,49 @@ async function sbDelQ(t,f){
     return true;
   }
 }
+// SPRINT C2-D — sbRpcQ: generieke offline/retry-veilige laag voor MUTERENDE RPC's,
+// hergebruikt exact dezelfde IndexedDB-queue/owner_uid-isolatie/retry-classificatie
+// als sbPostQ/sbPatchQ/sbDelQ (geen tweede/parallelle offline-engine). sbRpc() zelf
+// blijft ongewijzigd en online-only voor alle overige (niet-muterende of reeds elders
+// afgedekte) RPC-aanroepen in de app.
+// VEREISTE: de aanroepende RPC moet zelf een server-side idempotency-parameter
+// ondersteunen (bv. schedule_my_training(p_occurrence_id), migratie_v552) die de
+// aanroeper VOORAF, éénmalig, client-side genereert en bij elke retry/replay
+// ongewijzigd doorgeeft in args -- sbRpcQ genereert zelf NOOIT een mutation-id en
+// regenereert er ook nooit een; dat zou de idempotency-garantie juist doorbreken.
+// Niet-idempotente muterende RPC's mogen sbRpcQ NIET gebruiken (zouden bij replay
+// alsnog een dubbel server-side effect kunnen krijgen).
+// Returnwaarde volgt hetzelfde patroon als sbPostQ/sbPatchQ: bij online succes het
+// echte RPC-resultaat; bij offline/gequeued `true` (resultaat nog onbekend, komt pas
+// bij een latere flush); bij een permanente fout (validatie/permission/auth) `false`.
+// SPRINT C2-D (punt 14): observability voor de RPC-offline-laag, via de al
+// bestaande ObservabilityCore.tkLog() (zelfde patroon als calendar.skip.failed/
+// calendar.reschedule.failed hierboven) -- geen nieuwe telemetrielaag. Logt
+// uitsluitend functienaam/status, NOOIT item.args (kan een definition_snapshot
+// bevatten) -- geen gevoelige RPC-argumenten, geen PII in telemetry.
+function tkLogRpcOffline(event,fn,extra){
+  if(typeof ObservabilityCore==='undefined')return;
+  try{ObservabilityCore.tkLog('INFO',event,'offline_queue','rpc',Object.assign({function:fn},extra||{}),{app_version:(typeof APP_VER!=='undefined'?APP_VER:'unknown'),environment:'browser'});}catch(e){}
+}
+async function sbRpcQ(fn,args){
+  if(!navigator.onLine){await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args});updateOfflineBadge();tkLogRpcOffline('rpc_offline_queued',fn);return true;}
+  try{
+    const r=await sbFetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',body:args});
+    if(!r.ok){
+      const err=await r.text();console.error('sbRpcQ',fn,r.status,err);
+      if(sbRetryable(r.status)){await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args});updateOfflineBadge();tkLogRpcOffline('rpc_offline_queued',fn,{status:r.status});return true;}
+      tkLogRpcOffline('rpc_replay_permanent_failure',fn,{status:r.status});
+      return false;
+    }
+    return await r.json();
+  }catch(e){
+    console.warn('sbRpcQ offline, queued',fn,e);
+    await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args});
+    updateOfflineBadge();
+    tkLogRpcOffline('rpc_offline_queued',fn);
+    return true;
+  }
+}
 // Speelt de queue in volgorde af; stopt bij de eerste fout zodat de volgorde behouden
 // blijft.
 let _flushBezig=false;
@@ -8513,7 +8558,12 @@ async function flushOfflineQueue(){
   let syncedAny=false, skippedAny=false;
   for(const item of teVerwerken){
     try{
-      const url=item.method==='POST'?`${SB_URL}/rest/v1/${item.table}`:`${SB_URL}/rest/v1/${item.table}?${item.filter}`;
+      // SPRINT C2-D: item.method==='RPC' -- generieke muterende-RPC-replay
+      // (sbRpcQ). Geen Prefer-header nodig (RPC is geen PostgREST-upsert);
+      // de idempotency zit in de RPC-body zelf (bv. p_occurrence_id) en wordt
+      // hier ongewijzigd meegestuurd -- exact dezelfde args als de eerste,
+      // gefaalde poging, nooit opnieuw gegenereerd.
+      const url=item.method==='POST'?`${SB_URL}/rest/v1/${item.table}`:(item.method==='RPC'?`${SB_URL}/rest/v1/rpc/${item.function}`:`${SB_URL}/rest/v1/${item.table}?${item.filter}`);
       // F13 Post-Audit Remediation (P1-04): dezelfde idempotente upsert-header
       // als sbPostQ() zelf gebruikt. Zonder dit zou een item dat vóór het
       // queuen al succesvol (met hetzelfde, client-gegenereerde id) was
@@ -8522,7 +8572,9 @@ async function flushOfflineQueue(){
       // blijven staan, zonder dat er ooit een echte duplicate ontstaat.
       const opts=item.method==='DELETE'
         ?{method:'DELETE'}
-        :{method:item.method,prefer:(item.method==='POST'&&IDEMPOTENT_TABELLEN_MET_CLIENT_ID[item.table])?'return=representation,resolution=merge-duplicates':'return=representation',body:item.body};
+        :(item.method==='RPC'
+          ?{method:'POST',body:item.args}
+          :{method:item.method,prefer:(item.method==='POST'&&IDEMPOTENT_TABELLEN_MET_CLIENT_ID[item.table])?'return=representation,resolution=merge-duplicates':'return=representation',body:item.body});
       const r=await sbFetch(url,opts);
       if(!r.ok){
         // v5.9.5: serverfout op dit ene item (bv. validatie, verwijzing naar inmiddels
@@ -8531,9 +8583,11 @@ async function flushOfflineQueue(){
         // sync-poging. Item blijft in de wachtrij staan (zichtbaar/beheerbaar via het
         // bestaande wachtrij-scherm), maar de rest wordt gewoon geprobeerd.
         console.error('flushOfflineQueue: item mislukt, wordt overgeslagen (blijft in wachtrij)',item.table,r.status,await r.text());
+        if(item.method==='RPC')tkLogRpcOffline(sbRetryable(r.status)?'rpc_replay_retryable_failure':'rpc_replay_permanent_failure',item.function,{status:r.status});
         skippedAny=true;
         continue;
       }
+      if(item.method==='RPC')tkLogRpcOffline('rpc_replay_success',item.function);
       await offlineQueueRemove(item.id);
       syncedAny=true;
     }catch(e){console.warn('flushOfflineQueue offline again, stop',e);break;}
@@ -8554,7 +8608,9 @@ function updateOfflineBadge(){
 }
 // Korte, leesbare omschrijving van een queue-item voor het beheerscherm.
 function describeOfflineQueueItem(item){
-  const methodLbl={POST:'Nieuw',PATCH:'Wijziging',DELETE:'Verwijdering'}[item.method]||item.method;
+  const methodLbl={POST:'Nieuw',PATCH:'Wijziging',DELETE:'Verwijdering',RPC:'Actie'}[item.method]||item.method;
+  if(item.method==='RPC'&&item.function==='schedule_my_training')return `Mijn Training inplannen — ${escHtml(item.args?.p_planned_date||'')}`;
+  if(item.method==='RPC')return `${methodLbl}: ${item.function}`;
   if(item.table==='sessions'&&item.body){
     const n=exercises?.find(e=>e.id===item.body.exercise_id)?.name||item.body.exercise_id||'sessie';
     return `${methodLbl}: ${escHtml(n)} — ${escHtml(item.body.date||'')}`;
@@ -11370,6 +11426,25 @@ async function renderCalMonth(){
       // de grid wordt hierna niet meer opgebouwd voor deze render-cyclus.
       return;
     }
+    // SPRINT C2-B — Mijn Trainingen occurrence+assignment, parallel aan de
+    // bestaande, ongewijzigde Program-projectie hierboven (geen wijziging aan
+    // CalendarMonthViewCore/buildMonthGrid zelf -- dat blijft exact het reeds
+    // geteste, gemergede Sprint-C1-gedrag). Effective date via de gedeelde
+    // MyTrainingSchedulingCore (geen tweede datum-afleiding).
+    const occR=await sbGetOrFail('planned_training_occurrences','&creator_user_id=eq.'+authSession.user.id+'&planned_date=gte.'+maandStart+'&planned_date=lte.'+maandEind);
+    const occurrences=occR.rows||[];
+    let assignmentsByOcc={};
+    window.calMyTrainingByDate={};
+    if(occurrences.length&&typeof MyTrainingSchedulingCore!=='undefined'){
+      const occIds=occurrences.map(function(o){return o.id;}).join(',');
+      const assR=await sbGetOrFail('planned_training_assignments','&occurrence_id=in.('+occIds+')&athlete_user_id=eq.'+authSession.user.id);
+      (assR.rows||[]).forEach(function(a){ (assignmentsByOcc[a.occurrence_id]=assignmentsByOcc[a.occurrence_id]||[]).push(a); });
+      const myEvents=MyTrainingSchedulingCore.toCalendarSourceEvents(occurrences,assignmentsByOcc);
+      myEvents.forEach(function(ev){
+        if(!ev.plannedDate)return;
+        (window.calMyTrainingByDate[ev.plannedDate]=window.calMyTrainingByDate[ev.plannedDate]||[]).push(ev);
+      });
+    }
     const cellen=CalendarMonthViewCore.buildMonthGrid(calYear,calMonth,{
       programBlocks:blocks, sessions:sessies||[], availabilityPeriods:availRows||[],
       today:td(), getConflict:getProgramAvailabilityConflict, getAvailability:getAvailabilityForDate
@@ -11381,7 +11456,8 @@ async function renderCalMonth(){
       new Array(eersteWeekdag).fill('<div></div>').join('');
     cellen.forEach(function(c){
       const dagNr=parseInt(c.date.slice(8,10),10);
-      const heeftGepland=c.plannedBlocks.length>0, heeftVoltooid=c.completedBlocks.length>0;
+      const myTrainingVandaag=(window.calMyTrainingByDate&&window.calMyTrainingByDate[c.date])||[];
+      const heeftGepland=c.plannedBlocks.length>0||myTrainingVandaag.some(function(m){return m.status==='planned';}), heeftVoltooid=c.completedBlocks.length>0||myTrainingVandaag.some(function(m){return m.status==='completed';});
       const kleur=c.conflictLevel==='conflict'?'#e53935':(c.conflictLevel==='context'?'#f0a500':(heeftGepland||heeftVoltooid||c.hasHistory?'var(--accent)':'var(--g6)'));
       const isSel=calSelectedDate===c.date;
       // Status NIET uitsluitend via kleur (sectie 7): een conflict/context-dag krijgt
@@ -11425,9 +11501,28 @@ function renderCalDayDetail(dateStr,cellen){
   if(cel.availability){
     html+='<div style="font-size:13px;color:var(--g4);margin-bottom:6px">'+(AV_CTX[cel.availability.contextType]||cel.availability.contextType)+' · '+(AV_TR[cel.availability.trainingAvailability]||cel.availability.trainingAvailability)+'</div>';
   }
-  if(!cel.plannedBlocks.length&&!cel.completedBlocks.length&&!cel.skippedBlocks.length&&!cel.hasHistory){
+  if(!cel.plannedBlocks.length&&!cel.completedBlocks.length&&!cel.skippedBlocks.length&&!cel.hasHistory&&!((window.calMyTrainingByDate&&window.calMyTrainingByDate[dateStr])||[]).length){
     html+='<div style="font-size:13px;color:var(--g4)">Geen training gepland of gelogd op deze dag.</div>';
   }
+  // SPRINT C2-B — Mijn Trainingen occurrence+assignment-items op deze dag.
+  // Elk item apart getoond (geen samenvoeging, sectie 41 same-day-oracle),
+  // acties uitsluitend op ASSIGNMENT-niveau (skip) of OCCURRENCE-niveau
+  // (verplaatsen/annuleren) -- exact zoals het schema onderscheidt.
+  ((window.calMyTrainingByDate&&window.calMyTrainingByDate[dateStr])||[]).forEach(function(m){
+    if(m.status==='completed'){
+      html+='<div style="padding:8px 0;border-top:1px solid var(--g6)"><div style="font-weight:700">'+escHtml(m.title)+' — voltooid</div></div>';
+    }else if(m.status==='skipped'){
+      html+='<div style="padding:8px 0;border-top:1px solid var(--g6)"><div style="font-weight:700;color:var(--g4)">'+escHtml(m.title)+' — overgeslagen</div></div>';
+    }else{
+      html+='<div style="padding:8px 0;border-top:1px solid var(--g6)">'+
+        '<div style="font-weight:700">'+escHtml(m.title)+'</div>'+
+        '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">'+
+        (dateStr===td()?'<button class="btn btn-r" style="flex:1" onclick="startPlannedMyTraining(\''+m.assignmentId+'\',\''+m.workoutDefinitionId+'\')">Start</button>':'')+
+        '<button class="btn btn-o" style="flex:1" onclick="myTrainingReschedule(\''+m.sourceId+'\')">Verplaatsen</button>'+
+        '<button class="btn btn-o" style="flex:1" onclick="myTrainingSkipAssignment(\''+m.assignmentId+'\')">Overslaan</button>'+
+        '</div></div>';
+    }
+  });
   cel.completedBlocks.forEach(function(b){
     html+='<div style="padding:8px 0;border-top:1px solid var(--g6)"><div style="font-weight:700">'+(b.fase_naam||'Training')+' — voltooid</div></div>';
   });
@@ -11462,6 +11557,106 @@ async function calDayAction(actie,blockId){
   if(actie==='skip'){ await availConflictSkip(blockId); }
   else if(actie==='reschedule'){ await availConflictReschedule(blockId); }
   renderCalMonth();
+}
+
+// ══════════════════════════════════════════════════════════
+// SPRINT C2-B — MIJN TRAININGEN CANONICAL OCCURRENCE + ASSIGNMENT SCHEDULING.
+// Occurrence + Assignment is canonical, ZELFS voor individuele self-
+// scheduling (PO-beslissing 1A) -- future-ready voor coach/team zonder
+// schema-rewrite. programs/program_blocks blijven volledig ongewijzigd
+// (PO-beslissing 1B). Date-only V1, geen tijdstip (PO-beslissing 1F).
+// ══════════════════════════════════════════════════════════
+async function openScheduleMyTraining(vasteTrainingId,naam){
+  const datum=window.prompt('Datum om "'+naam+'" in te plannen (JJJJ-MM-DD):','');
+  if(!datum)return;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(datum)){toast('Ongeldige datum');return;}
+  try{
+    // Hergebruikt EXACT de bestaande snapshotFromVasteTraining() -- geen nieuwe
+    // snapshotlogica, geen fake revisienummer (vaste_trainingen heeft geen
+    // versioning-kolom, C2-A bevestigd). Het bevroren resultaat garandeert dat
+    // een latere wijziging van de Mijn Training deze al-geplande occurrence
+    // niet met terugwerkende kracht verandert.
+    const def=vasteTrainingen.find(function(v){return v.id===vasteTrainingId;});
+    if(!def){toast('Training niet gevonden');return;}
+    const texs=await sbGet('training_exercises','&training_ref=eq.'+encodeURIComponent(vasteTrainingId)+'&order=sort_order.asc');
+    const snapshot=snapshotFromVasteTraining({id:def.id,naam:def.naam},texs);
+    // SPRINT C2-D: occurrence-id wordt client-side gegenereerd, VOOR de eerste
+    // send -- exact hetzelfde patroon als newTrainingInstanceId() (id-kolom is
+    // uuid, geen server-default meer nodig als de client 'm meegeeft). Blijft
+    // ongewijzigd bij elke retry/replay omdat sbRpcQ 'm nooit zelf opnieuw
+    // genereert: de queue-entry bevat exact deze args, ook na een app-restart.
+    // schedule_my_training (migratie_v552) herkent een replay van dezelfde
+    // p_occurrence_id server-side (PK-based idempotency) en geeft dan gewoon
+    // dezelfde id terug i.p.v. een tweede occurrence aan te maken (sectie 4/16/17).
+    const occurrenceId=newTrainingInstanceId();
+    const result=await sbRpcQ('schedule_my_training',{p_workout_definition_id:vasteTrainingId,p_planned_date:datum,p_definition_snapshot:snapshot,p_occurrence_id:occurrenceId});
+    if(!result){toast('Inplannen mislukt — controleer je internetverbinding en probeer opnieuw');return;}
+    if(result===true){toast('"'+naam+'" wordt gesynchroniseerd zodra je weer online bent');}
+    else{toast('"'+naam+'" ingepland voor '+datum);}
+  }catch(e){ console.error('openScheduleMyTraining',e); toast('Inplannen mislukt'); }
+}
+
+// Skip = alleen de assignment (sporter-specifiek), NOOIT de gedeelde occurrence
+// en NOOIT training_instances/sessions (PO-beslissing 1E, sectie 32).
+async function myTrainingSkipAssignment(assignmentId){
+  const bevestigd=await confirmModal('Deze geplande training overslaan?',{title:'Overslaan',okLabel:'Overslaan',cancelLabel:'Annuleren'});
+  if(!bevestigd)return;
+  const ok=await sbPatchQ('planned_training_assignments','id=eq.'+assignmentId,{status:'skipped',updated_at:new Date().toISOString()});
+  if(!ok){toast('Kon niet opslaan — probeer opnieuw');return;}
+  toast('Training overgeslagen');
+  renderCalMonth();
+}
+
+// Reschedule V1 (self-scheduling, exact één assignment per occurrence):
+// wijzigt occurrence.planned_date rechtstreeks -- veilig zolang er maar één
+// assignment bestaat (V1-garantie). Zodra coach/team later meerdere
+// assignments op dezelfde occurrence toevoegt, moet deze functie worden
+// uitgebreid om in plaats daarvan een personal_date_override op de
+// EIGEN assignment te zetten (het schema ondersteunt dat al, sectie 6) --
+// bewust NIET nu al zo geïmplementeerd omdat V1 geen coach/team-occurrence
+// met meerdere sporters kan hebben (RLS staat dat sowieso niet toe).
+async function myTrainingReschedule(occurrenceId){
+  const nieuweDatum=window.prompt('Nieuwe datum (JJJJ-MM-DD):','');
+  if(!nieuweDatum)return;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(nieuweDatum)){toast('Ongeldige datum');return;}
+  const ok=await sbPatchQ('planned_training_occurrences','id=eq.'+occurrenceId,{planned_date:nieuweDatum});
+  if(!ok){toast('Kon niet opslaan — probeer opnieuw');return;}
+  toast('Training verplaatst naar '+nieuweDatum);
+  renderCalMonth();
+}
+
+async function myTrainingCancelOccurrence(occurrenceId){
+  const bevestigd=await confirmModal('Deze geplande training volledig annuleren?',{title:'Annuleren',okLabel:'Annuleren van training',cancelLabel:'Terug'});
+  if(!bevestigd)return;
+  const ok=await sbPatchQ('planned_training_occurrences','id=eq.'+occurrenceId,{status:'cancelled'});
+  if(!ok){toast('Kon niet opslaan — probeer opnieuw');return;}
+  toast('Training geannuleerd');
+  renderCalMonth();
+}
+
+// SPRINT C2-C — start-wrapper voor een geplande Mijn Training vanuit Calendar.
+// Zet uitsluitend activePlannedAssignmentId vóórdat de BESTAANDE, ongewijzigde
+// openTrainingPreview()-ingang wordt aangeroepen (geen tweede execution-
+// startpad, sectie 34/DEEL IX). Gewone direct-start (rotatie/handmatig, zonder
+// planning) roept deze wrapper nooit aan, dus activePlannedAssignmentId blijft
+// daar correct null -- geen regressie op direct-start (sectie 4).
+//
+// DOUBLE-START GUARD: als deze assignment al een training_instance_id heeft
+// (dus al eerder daadwerkelijk gestart/voltooid) of al completed/skipped is,
+// wordt een nieuwe start geweigerd -- voorkomt dat een dubbele tap/eerdere
+// sessie een tweede actieve training_instance voor dezelfde geplande
+// uitvoering aanmaakt.
+async function startPlannedMyTraining(assignmentId,vasteTrainingId){
+  try{
+    const rows=await sbGet('planned_training_assignments','&id=eq.'+assignmentId+'&limit=1');
+    const a=rows&&rows[0];
+    if(a&&(a.training_instance_id||a.status==='completed')){
+      toast('Deze training is al gestart of afgerond.');
+      return;
+    }
+  }catch(e){ console.warn('startPlannedMyTraining guard-check mislukt, ga toch door',e); }
+  activePlannedAssignmentId=assignmentId;
+  openTrainingPreview('vast',vasteTrainingId);
 }
 
 function go(id){
@@ -15517,6 +15712,7 @@ function showSettings(){
 // gedrag (volledige Definition, geen modificaties mogelijk vanaf die knop).
 let resolvedWorkout=null;   // {t, items, instanceId} — alleen relevant voor vaste trainingen (TRAIN_CFG-pad)
 let activeInstanceId=null;  // training_instances.id van de actieve, via Preview gestarte sessie, of null
+let activePlannedAssignmentId=null; // SPRINT C2-C: planned_training_assignments.id van de actieve, vanuit een geplande Mijn Training gestarte sessie, of null (nooit gezet bij gewone direct-start zonder planning)
 // P1 UNIVERSELE RECOVERY (vaste + overige routes via getSessionExs): sessie-scoped aanpassing die
 // DETERMINISTISCH (DecisionCore) op KOPIEËN van het voorschrift wordt toegepast — nooit op TRAIN_CFG,
 // nooit op gelogde data. Idempotent: getSessionExs mapt altijd vanaf de basis + de vaste delta, dus
@@ -19981,12 +20177,32 @@ async function finishSession(){
     try{ await completeTrainingInstance(activeInstanceId); }
     catch(e){ try{ console.warn('completeTrainingInstance mislukt (sessie is wel opgeslagen)',e&&e.message); }catch(_){ } }
   }
+  // SPRINT C2-C — execution linkage: het echte training_instance-ID vóór het
+  // wissen vasthouden, zodat de canonical assignment-completion hieronder
+  // (uitsluitend bij een ECHTE finish, na saved===0-guard) de juiste FK kan
+  // zetten. Nooit bij Preview/start/eerste-set/abort/crash -- uitsluitend hier,
+  // op exact dezelfde plek als de bestaande program_blocks.completed_at-write.
+  const _voltooideInstanceId=activeInstanceId;
+  const _voltooidePlannedAssignmentId=activePlannedAssignmentId;
   curT=null;sessionLog={};sessionExtra=[];pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};sessionRxAdj={};sessionPrBase={};
-  resolvedWorkout=null;activeInstanceId=null; // Werkblok D: training afgerond — geen enkele volgende, niet-via-Preview-gestarte training mag dit nog meekrijgen
+  resolvedWorkout=null;activeInstanceId=null;activePlannedAssignmentId=null; // Werkblok D: training afgerond — geen enkele volgende, niet-via-Preview-gestarte training mag dit nog meekrijgen
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.remove('show'));
   if(saved===0){toast('Niets om op te slaan');go('s-home');refreshStats();return;}
   if(t.startsWith('prog_')){
     await sbPatchQ('program_blocks','id=eq.'+t.slice('prog_'.length),{completed_at:new Date().toISOString()});
+  }
+  // SPRINT C2-C — Mijn Trainingen assignment-completion. GEEN false completion:
+  // dit codepad wordt uitsluitend bereikt ná de saved===0-guard hierboven, dus
+  // nooit bij Preview/openen/eerste-log/abort/crash. Gebruikt de bestaande,
+  // offline-veilige sbPatchQ (erft dezelfde queue/retry-garanties als reschedule/
+  // skip). Bij een write-mislukking blijft de sessie zelf wél volledig opgeslagen
+  // (exact zoals completeTrainingInstance() hierboven al doet) -- geen permanente
+  // inconsistentie: de sbPatchQ-queue herstelt dit bij reconnect zoals overal
+  // elders in de app.
+  if(_voltooidePlannedAssignmentId){
+    try{
+      await sbPatchQ('planned_training_assignments','id=eq.'+_voltooidePlannedAssignmentId,{status:'completed',training_instance_id:_voltooideInstanceId||null,updated_at:new Date().toISOString()});
+    }catch(e){ try{ console.warn('assignment-completion mislukt (sessie is wel opgeslagen)',e&&e.message); }catch(_){ } }
   }
   toast(saved+' oefeningen opgeslagen');
   document.getElementById('ai-summary-body').textContent='Coach terugblik laden...';
@@ -20214,8 +20430,35 @@ async function refreshHome(){
   await renderVasteTrainingBtns();
   const nextLblEl=document.getElementById('home-next-lbl');
   if(vasteTrainingen.length){
-    const lastDoneMap=await computeLastDoneMap(vasteTrainingen);
-    const next=computeNextVasteTraining(vasteTrainingen,lastDoneMap);
+    // SPRINT C2-C — expliciete planning krijgt voorrang boven de automatische
+    // rotatie (PO-richting sectie 24): computeNextVasteTraining() blijft
+    // ONGEWIJZIGD de fallback-bron wanneer geen expliciete planning voor
+    // vandaag bestaat -- dit is een orchestratie-laag ERBOVEN, geen tweede
+    // planningbron en geen wijziging aan de rotatiefunctie zelf.
+    let next=null;
+    try{
+      const vandaag=td();
+      const occR=await sbGet('planned_training_occurrences','&creator_user_id=eq.'+authSession.user.id+'&planned_date=eq.'+vandaag+'&status=eq.scheduled');
+      if(occR&&occR.length){
+        const occIds=occR.map(function(o){return o.id;}).join(',');
+        const assR=await sbGet('planned_training_assignments','&occurrence_id=in.('+occIds+')&athlete_user_id=eq.'+authSession.user.id+'&status=eq.planned');
+        // Meerdere geplande trainingen vandaag (sectie 26): geen verborgen/
+        // arbitraire keuze -- neem de eerste voor het ene Home-"volgende
+        // training"-label, maar verzin geen sorteerregel; dit is bewust de
+        // eenvoudigste, niet-destructieve keuze zolang de surface maar één
+        // label heeft. Alle overige geplande trainingen blijven gewoon
+        // zichtbaar/bereikbaar via Calendar (geen item verdwijnt).
+        if(assR&&assR.length){
+          const eersteOcc=occR.find(function(o){return o.id===assR[0].occurrence_id;});
+          const def=vasteTrainingen.find(function(v){return v.id===(eersteOcc&&eersteOcc.workout_definition_id);});
+          if(def) next=def;
+        }
+      }
+    }catch(e){ console.warn('explicit-planning precedence check mislukt, val terug op rotatie',e); }
+    if(!next){
+      const lastDoneMap=await computeLastDoneMap(vasteTrainingen);
+      next=computeNextVasteTraining(vasteTrainingen,lastDoneMap);
+    }
     nextT=next;
     nextLblEl.textContent=next?'Volgende training: '+next.naam:'';
   }else{

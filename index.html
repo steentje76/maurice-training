@@ -4169,6 +4169,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
     <div class="card"><div class="card-hd"><div class="card-title">HRV trend</div></div><div class="card-body"><div class="chart-wrap"><canvas id="stats-hrv-chart"></canvas></div><div id="stats-hrv-trend"></div></div></div>
     <div class="card"><div class="card-hd"><div class="card-title">Roei progressie</div></div><div class="card-body" id="stats-row-list"></div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">SkiErg progressie</div></div><div class="card-body" id="stats-skierg-list"></div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">BikeErg progressie</div></div><div class="card-body" id="stats-bikeerg-list"></div></div>
     <div class="card"><div class="card-hd"><div class="card-title">Cardio records</div><div class="card-sub">Beste prestatie per apparaat &middot; machine-aware</div></div><div class="card-body" id="stats-cardio-list"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div></div>
 
     <button class="btn btn-o" onclick="go('s-hist')" style="margin-bottom:10px">&#128203; Volledig trainingslogboek</button>
@@ -23683,6 +23685,40 @@ async function refreshStatsScreen(){
     rh+=`<div class="lrow"><div class="ldate">${s.date}</div><div class="lval">${s.distance||'?'}m</div><div class="lnote">${s.time_str||''}${s.watt?' · '+s.watt+'W':''}${split}</div></div>`;
   });
   const elr=document.getElementById('stats-row-list');if(elr)elr.innerHTML=rh;
+
+  // SkiErg — zelfde patroon als Roeien hierboven (exercise_id-gebaseerd,
+  // split/500m-berekening); dekt het gat dat de generieke, machine-aware
+  // "Cardio records"-kaart hieronder NIET dekt: dat is een beste-PR-kaart,
+  // geen recente-sessies-lijst. Beide kaarten zijn complementair, geen
+  // duplicatie: PR versus geschiedenis.
+  const skd=await v43SafeGet('sessions','&exercise_id=eq.skierg&order=date.desc,created_at.desc&limit=8');
+  let skh=skd.length?'':'<div class="tk-empty"><div class="tk-empty-emo">⛷️</div>Nog geen SkiErg-sessies gelogd.</div>';
+  skd.forEach(s=>{
+    let split='';
+    if(s.distance&&s.time_str&&s.time_str!=='—'){
+      const p=s.time_str.split(':');let sec=0;
+      if(p.length===2)sec=parseFloat(p[0])*60+parseFloat(p[1]);
+      if(sec&&s.distance){const ss2=(sec/s.distance)*500;const sm=Math.floor(ss2/60),sr=Math.round(ss2%60);split=' · '+sm+':'+(sr<10?'0':'')+sr+'/500m';}
+    }
+    skh+=`<div class="lrow"><div class="ldate">${s.date}</div><div class="lval">${s.distance||'?'}m</div><div class="lnote">${s.time_str||''}${s.watt?' · '+s.watt+'W':''}${split}</div></div>`;
+  });
+  const elsk=document.getElementById('stats-skierg-list');if(elsk)elsk.innerHTML=skh;
+
+  // BikeErg — zelfde patroon, split/500m blijft de Concept2-canonieke
+  // referentie-eenheid ook voor BikeErg (CALC-END-001/002, applicability
+  // expliciet RowErg/BikeErg/SkiErg gelijk).
+  const bkd=await v43SafeGet('sessions','&exercise_id=eq.bikeerg&order=date.desc,created_at.desc&limit=8');
+  let bkh=bkd.length?'':'<div class="tk-empty"><div class="tk-empty-emo">🚴</div>Nog geen BikeErg-sessies gelogd.</div>';
+  bkd.forEach(s=>{
+    let split='';
+    if(s.distance&&s.time_str&&s.time_str!=='—'){
+      const p=s.time_str.split(':');let sec=0;
+      if(p.length===2)sec=parseFloat(p[0])*60+parseFloat(p[1]);
+      if(sec&&s.distance){const ss2=(sec/s.distance)*500;const sm=Math.floor(ss2/60),sr=Math.round(ss2%60);split=' · '+sm+':'+(sr<10?'0':'')+sr+'/500m';}
+    }
+    bkh+=`<div class="lrow"><div class="ldate">${s.date}</div><div class="lval">${s.distance||'?'}m</div><div class="lnote">${s.time_str||''}${s.watt?' · '+s.watt+'W':''}${split}</div></div>`;
+  });
+  const elbk=document.getElementById('stats-bikeerg-list');if(elbk)elbk.innerHTML=bkh;
 
   // Body comp
   const bc=await v43SafeGet('body_comp','&order=date.desc,created_at.desc&limit=4');

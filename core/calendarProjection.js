@@ -90,6 +90,48 @@
     return 'program-block-' + blockId + '@trainingskompas.app';
   }
 
+  /* ── getMyTrainingCalendarEvents(occurrences, assignmentsByOccurrenceId) ──
+   * SPRINT C2-C: analoog aan getExternalCalendarEvents() maar voor Mijn
+   * Trainingen canonical occurrences (Sprint C2-B). Zelfde regels: skipped/
+   * cancelled niet gepubliceerd, completed blijft zichtbaar, geen tijdstip
+   * verzonnen. Effective date = personal_date_override ?? occurrence.
+   * planned_date (zelfde regel als Internal Calendar, hier bewust dezelfde
+   * inline logica i.p.v. een afhankelijkheid op myTrainingScheduling.js,
+   * om deze bestaande, al geteste module niet aan een nieuwe module-
+   * afhankelijkheid te binden; de regel zelf is letterlijk identiek).
+   *
+   * UID gebruikt occurrence-identity (NIET workout_definition_id, want
+   * dezelfde definition kan meerdere occurrences hebben).
+   */
+  function getMyTrainingCalendarEvents(occurrences, assignmentsByOccurrenceId) {
+    if (!Array.isArray(occurrences)) return [];
+    var out = [];
+    occurrences.forEach(function (occ) {
+      if (!occ || !occ.id || occ.status === 'cancelled') return;
+      var assignments = (assignmentsByOccurrenceId && assignmentsByOccurrenceId[occ.id]) || [];
+      assignments.forEach(function (a) {
+        if (!a || a.status === 'skipped') return; // skipped: zelfde omissie-regel als Program-blocks
+        var effDate = (a.personal_date_override) ? a.personal_date_override : occ.planned_date;
+        if (!effDate) return;
+        out.push({
+          uid: myTrainingStableUid(occ.id),
+          sourceType: 'my_training_occurrence',
+          sourceId: String(occ.id),
+          title: (occ.definition_snapshot && occ.definition_snapshot.naam) || 'Mijn Training',
+          date: effDate,
+          allDay: true,
+          status: a.status === 'completed' ? 'completed' : 'planned',
+          description: null // zelfde V1-privacydefault: nooit workoutdetails/coach/availability/health-data (sectie 15)
+        });
+      });
+    });
+    return out;
+  }
+
+  function myTrainingStableUid(occurrenceId) {
+    return 'planned-training-' + occurrenceId + '@trainingskompas.app';
+  }
+
   /* ── eventTitle(block) ──────────────────────────────────────────────
    * Uitsluitend canonical, reeds bestaande velden. Geen AI-generatie
    * (sectie 42/43). Fallback alleen bij ontbrekende brondata.
@@ -196,7 +238,9 @@
   var CalendarProjectionCore = {
     VERSIONS: VERSIONS,
     getExternalCalendarEvents: getExternalCalendarEvents,
+    getMyTrainingCalendarEvents: getMyTrainingCalendarEvents,
     stableUid: stableUid,
+    myTrainingStableUid: myTrainingStableUid,
     icsEscape: icsEscape,
     icsDateOnly: icsDateOnly,
     icsTimestamp: icsTimestamp,

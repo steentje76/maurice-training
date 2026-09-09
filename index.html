@@ -11463,7 +11463,7 @@ function renderCalDayDetail(dateStr,cellen){
       html+='<div style="padding:8px 0;border-top:1px solid var(--g6)">'+
         '<div style="font-weight:700">'+escHtml(m.title)+'</div>'+
         '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">'+
-        (dateStr===td()?'<button class="btn btn-r" style="flex:1" onclick="openTrainingPreview(\'vast\',\''+m.sourceId+'\')">Start</button>':'')+
+        (dateStr===td()?'<button class="btn btn-r" style="flex:1" onclick="startPlannedMyTraining(\''+m.assignmentId+'\',\''+m.workoutDefinitionId+'\')">Start</button>':'')+
         '<button class="btn btn-o" style="flex:1" onclick="myTrainingReschedule(\''+m.sourceId+'\')">Verplaatsen</button>'+
         '<button class="btn btn-o" style="flex:1" onclick="myTrainingSkipAssignment(\''+m.assignmentId+'\')">Overslaan</button>'+
         '</div></div>';
@@ -11573,6 +11573,31 @@ async function myTrainingCancelOccurrence(occurrenceId){
   if(!ok){toast('Kon niet opslaan — probeer opnieuw');return;}
   toast('Training geannuleerd');
   renderCalMonth();
+}
+
+// SPRINT C2-C — start-wrapper voor een geplande Mijn Training vanuit Calendar.
+// Zet uitsluitend activePlannedAssignmentId vóórdat de BESTAANDE, ongewijzigde
+// openTrainingPreview()-ingang wordt aangeroepen (geen tweede execution-
+// startpad, sectie 34/DEEL IX). Gewone direct-start (rotatie/handmatig, zonder
+// planning) roept deze wrapper nooit aan, dus activePlannedAssignmentId blijft
+// daar correct null -- geen regressie op direct-start (sectie 4).
+//
+// DOUBLE-START GUARD: als deze assignment al een training_instance_id heeft
+// (dus al eerder daadwerkelijk gestart/voltooid) of al completed/skipped is,
+// wordt een nieuwe start geweigerd -- voorkomt dat een dubbele tap/eerdere
+// sessie een tweede actieve training_instance voor dezelfde geplande
+// uitvoering aanmaakt.
+async function startPlannedMyTraining(assignmentId,vasteTrainingId){
+  try{
+    const rows=await sbGet('planned_training_assignments','&id=eq.'+assignmentId+'&limit=1');
+    const a=rows&&rows[0];
+    if(a&&(a.training_instance_id||a.status==='completed')){
+      toast('Deze training is al gestart of afgerond.');
+      return;
+    }
+  }catch(e){ console.warn('startPlannedMyTraining guard-check mislukt, ga toch door',e); }
+  activePlannedAssignmentId=assignmentId;
+  openTrainingPreview('vast',vasteTrainingId);
 }
 
 function go(id){
@@ -15628,6 +15653,7 @@ function showSettings(){
 // gedrag (volledige Definition, geen modificaties mogelijk vanaf die knop).
 let resolvedWorkout=null;   // {t, items, instanceId} — alleen relevant voor vaste trainingen (TRAIN_CFG-pad)
 let activeInstanceId=null;  // training_instances.id van de actieve, via Preview gestarte sessie, of null
+let activePlannedAssignmentId=null; // SPRINT C2-C: planned_training_assignments.id van de actieve, vanuit een geplande Mijn Training gestarte sessie, of null (nooit gezet bij gewone direct-start zonder planning)
 // P1 UNIVERSELE RECOVERY (vaste + overige routes via getSessionExs): sessie-scoped aanpassing die
 // DETERMINISTISCH (DecisionCore) op KOPIEËN van het voorschrift wordt toegepast — nooit op TRAIN_CFG,
 // nooit op gelogde data. Idempotent: getSessionExs mapt altijd vanaf de basis + de vaste delta, dus
@@ -20092,12 +20118,32 @@ async function finishSession(){
     try{ await completeTrainingInstance(activeInstanceId); }
     catch(e){ try{ console.warn('completeTrainingInstance mislukt (sessie is wel opgeslagen)',e&&e.message); }catch(_){ } }
   }
+  // SPRINT C2-C — execution linkage: het echte training_instance-ID vóór het
+  // wissen vasthouden, zodat de canonical assignment-completion hieronder
+  // (uitsluitend bij een ECHTE finish, na saved===0-guard) de juiste FK kan
+  // zetten. Nooit bij Preview/start/eerste-set/abort/crash -- uitsluitend hier,
+  // op exact dezelfde plek als de bestaande program_blocks.completed_at-write.
+  const _voltooideInstanceId=activeInstanceId;
+  const _voltooidePlannedAssignmentId=activePlannedAssignmentId;
   curT=null;sessionLog={};sessionExtra=[];pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};sessionRxAdj={};sessionPrBase={};
-  resolvedWorkout=null;activeInstanceId=null; // Werkblok D: training afgerond — geen enkele volgende, niet-via-Preview-gestarte training mag dit nog meekrijgen
+  resolvedWorkout=null;activeInstanceId=null;activePlannedAssignmentId=null; // Werkblok D: training afgerond — geen enkele volgende, niet-via-Preview-gestarte training mag dit nog meekrijgen
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.remove('show'));
   if(saved===0){toast('Niets om op te slaan');go('s-home');refreshStats();return;}
   if(t.startsWith('prog_')){
     await sbPatchQ('program_blocks','id=eq.'+t.slice('prog_'.length),{completed_at:new Date().toISOString()});
+  }
+  // SPRINT C2-C — Mijn Trainingen assignment-completion. GEEN false completion:
+  // dit codepad wordt uitsluitend bereikt ná de saved===0-guard hierboven, dus
+  // nooit bij Preview/openen/eerste-log/abort/crash. Gebruikt de bestaande,
+  // offline-veilige sbPatchQ (erft dezelfde queue/retry-garanties als reschedule/
+  // skip). Bij een write-mislukking blijft de sessie zelf wél volledig opgeslagen
+  // (exact zoals completeTrainingInstance() hierboven al doet) -- geen permanente
+  // inconsistentie: de sbPatchQ-queue herstelt dit bij reconnect zoals overal
+  // elders in de app.
+  if(_voltooidePlannedAssignmentId){
+    try{
+      await sbPatchQ('planned_training_assignments','id=eq.'+_voltooidePlannedAssignmentId,{status:'completed',training_instance_id:_voltooideInstanceId||null,updated_at:new Date().toISOString()});
+    }catch(e){ try{ console.warn('assignment-completion mislukt (sessie is wel opgeslagen)',e&&e.message); }catch(_){ } }
   }
   toast(saved+' oefeningen opgeslagen');
   document.getElementById('ai-summary-body').textContent='Coach terugblik laden...';
@@ -20325,8 +20371,35 @@ async function refreshHome(){
   await renderVasteTrainingBtns();
   const nextLblEl=document.getElementById('home-next-lbl');
   if(vasteTrainingen.length){
-    const lastDoneMap=await computeLastDoneMap(vasteTrainingen);
-    const next=computeNextVasteTraining(vasteTrainingen,lastDoneMap);
+    // SPRINT C2-C — expliciete planning krijgt voorrang boven de automatische
+    // rotatie (PO-richting sectie 24): computeNextVasteTraining() blijft
+    // ONGEWIJZIGD de fallback-bron wanneer geen expliciete planning voor
+    // vandaag bestaat -- dit is een orchestratie-laag ERBOVEN, geen tweede
+    // planningbron en geen wijziging aan de rotatiefunctie zelf.
+    let next=null;
+    try{
+      const vandaag=td();
+      const occR=await sbGet('planned_training_occurrences','&creator_user_id=eq.'+authSession.user.id+'&planned_date=eq.'+vandaag+'&status=eq.scheduled');
+      if(occR&&occR.length){
+        const occIds=occR.map(function(o){return o.id;}).join(',');
+        const assR=await sbGet('planned_training_assignments','&occurrence_id=in.('+occIds+')&athlete_user_id=eq.'+authSession.user.id+'&status=eq.planned');
+        // Meerdere geplande trainingen vandaag (sectie 26): geen verborgen/
+        // arbitraire keuze -- neem de eerste voor het ene Home-"volgende
+        // training"-label, maar verzin geen sorteerregel; dit is bewust de
+        // eenvoudigste, niet-destructieve keuze zolang de surface maar één
+        // label heeft. Alle overige geplande trainingen blijven gewoon
+        // zichtbaar/bereikbaar via Calendar (geen item verdwijnt).
+        if(assR&&assR.length){
+          const eersteOcc=occR.find(function(o){return o.id===assR[0].occurrence_id;});
+          const def=vasteTrainingen.find(function(v){return v.id===(eersteOcc&&eersteOcc.workout_definition_id);});
+          if(def) next=def;
+        }
+      }
+    }catch(e){ console.warn('explicit-planning precedence check mislukt, val terug op rotatie',e); }
+    if(!next){
+      const lastDoneMap=await computeLastDoneMap(vasteTrainingen);
+      next=computeNextVasteTraining(vasteTrainingen,lastDoneMap);
+    }
     nextT=next;
     nextLblEl.textContent=next?'Volgende training: '+next.naam:'';
   }else{

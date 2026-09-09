@@ -116,7 +116,7 @@ ok(html.indexOf("onclick=\"openScheduleMyTraining('${v.id}'") > 0, '24. "Inplann
   const fn = slice('function renderCalDayDetail', 'async function calDayAction');
   ok(fn.indexOf('window.calMyTrainingByDate') > 0, '33. Dagdetail toont Mijn Training-items apart naast Program-blocks (geen samenvoeging, same-day-oracle)');
   ok(fn.indexOf('myTrainingSkipAssignment') > 0 && fn.indexOf('myTrainingReschedule') > 0, '34. Skip/reschedule-acties daadwerkelijk aanwezig in de dagdetail-rendering');
-  ok(fn.indexOf("openTrainingPreview(\\'vast\\'") > 0, "35. 'Start' routeert naar de bestaande openTrainingPreview()-ingang (Direct Start-pad blijft ongewijzigd bruikbaar, geen tweede execution-startpad, sectie 38)");
+  ok(fn.indexOf("startPlannedMyTraining(") > 0, "35. 'Start' routeert via de nieuwe startPlannedMyTraining()-wrapper (Sprint C2-C: zet activePlannedAssignmentId + dubbele-start-guard, roept daarna zelf de bestaande openTrainingPreview() aan -- geen tweede execution-ENGINE, wel een dunne wrapper voor executie-koppeling)");
 }
 
 // ═══ DEEL IV: NEGATIVE CONTROLS (sectie 51-achtig, expliciet vereist) ═══

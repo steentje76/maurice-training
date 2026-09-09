@@ -42,6 +42,7 @@
           sourceType: 'my_training',
           sourceId: occ.id,
           assignmentId: a.id,
+          workoutDefinitionId: occ.workout_definition_id,
           plannedDate: effDate,
           title: (occ.definition_snapshot && occ.definition_snapshot.naam) || 'Mijn Training',
           status: a.status // planned | skipped | completed -- assignment-niveau, NOOIT occurrence-niveau (PO-beslissing 1E, sectie 35)

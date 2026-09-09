@@ -67,7 +67,29 @@ exports.handler = async function (event) {
       blocks = blockRes.ok ? await blockRes.json() : [];
     }
 
-    const events = CalendarProjectionCore.getExternalCalendarEvents(blocks);
+    // SPRINT C2-C — Mijn Trainingen occurrences toevoegen aan dezelfde,
+    // bestaande feed (geen tweede ICS-generator, geen tweede feed-endpoint --
+    // exact zoals vereist). Uitsluitend velden die de projectie nodig heeft
+    // (data-minimalisatie, sectie 15): geen coach-metadata, geen availability-
+    // reden, geen health/recovery/RPE/nutrition/roster-data.
+    const occRes = await fetch(
+      supabaseUrl + '/rest/v1/planned_training_occurrences?select=id,planned_date,definition_snapshot,status&creator_user_id=eq.' + userId + '&status=eq.scheduled',
+      { headers }
+    );
+    const occurrences = occRes.ok ? await occRes.json() : [];
+    let assignmentsByOccurrenceId = {};
+    if (occurrences.length) {
+      const occIds = occurrences.map(function (o) { return o.id; }).join(',');
+      const assRes = await fetch(
+        supabaseUrl + '/rest/v1/planned_training_assignments?select=id,occurrence_id,athlete_user_id,personal_date_override,status&occurrence_id=in.(' + occIds + ')&athlete_user_id=eq.' + userId,
+        { headers }
+      );
+      const assignments = assRes.ok ? await assRes.json() : [];
+      assignments.forEach(function (a) { (assignmentsByOccurrenceId[a.occurrence_id] = assignmentsByOccurrenceId[a.occurrence_id] || []).push(a); });
+    }
+
+    const events = CalendarProjectionCore.getExternalCalendarEvents(blocks)
+      .concat(CalendarProjectionCore.getMyTrainingCalendarEvents(occurrences, assignmentsByOccurrenceId));
     const ics = CalendarProjectionCore.buildIcsCalendar(events);
 
     return {

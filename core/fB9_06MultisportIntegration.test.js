@@ -28,7 +28,15 @@ ok(migratie533.includes("sport in ('running','cycling','rowing','swimming')"),
 
 // ---- C. Geen dubbeltelling: activities vs race_segments (HYROX/Triathlon/Brick) ----
 {
-  const activitiesSchrijfActies = (html.match(/sport:'running'|sport:'cycling'/g) || []).length;
+  // ENDURANCE MASTER SPRINT — E0-correctie: de nieuwe upsert_endurance_profile_target-
+  // RPC-aanroepen (setCyclingFtp/setRunningThresholdPace) gebruiken een p_sport-parameter
+  // (SQL-conventie, zelfde p_-prefix als overal elders in de RPC-laag). De ongeankerde
+  // regex matchte per ongeluk ook 'sport:'cycling'' binnen 'p_sport:'cycling'' -- geen
+  // echte activities-schrijfactie, dus false-positive. Negative lookbehind sluit een
+  // voorafgaand woordteken (zoals de 'p' van p_sport) uit, zodat alleen de kale
+  // sport:'...'-sleutel (activities-schrijfacties) blijft meetellen -- de eigenlijke
+  // dubbeltellingsbewaking blijft ongewijzigd.
+  const activitiesSchrijfActies = (html.match(/(?<![A-Za-z0-9_])sport:'running'|(?<![A-Za-z0-9_])sport:'cycling'/g) || []).length;
   ok(activitiesSchrijfActies === 3,
     'C1: exact 3 schrijfacties naar activities met sport running/cycling bestaan (de bekende Running/Cycling-standalone-flows) -- geen extra, onverwachte schrijfpad vanuit HYROX/Triathlon/Brick-code');
 }

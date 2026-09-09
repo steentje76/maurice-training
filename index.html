@@ -13224,6 +13224,16 @@ async function renderRunningInsights(){
   }
   const r4=rollingTotaal(4), r8=rollingTotaal(8);
 
+  // ENDURANCE MASTER SPRINT — E0-correctie: zelfde profiel-fetch als Cycling
+  // (renderCyclingInsights), symmetrische remediation van dezelfde dormant-
+  // data-makke (threshold_pace_seconds_per_km had ook nergens een schrijfpad).
+  let profielRij=null;
+  try{
+    const rows=await sbGet('athlete_endurance_profile', `&sport=eq.running&limit=1`);
+    profielRij=rows&&rows[0]?rows[0]:null;
+  }catch(e){profielRij=null;}
+  const paceDoel=profielRij&&profielRij.threshold_pace_seconds_per_km?profielRij.threshold_pace_seconds_per_km:null;
+
   // Pace-trend per distance-band (sectie 8: appels-met-appels, nooit
   // een 5km-tempo-run met een 25km-duurloop vergelijken). Gebruikt de
   // canonieke ProgressionCore.trendBy(), geen nieuwe trend-engine.
@@ -13293,6 +13303,12 @@ async function renderRunningInsights(){
       </div></div>
 
       <div class="card" style="margin-bottom:14px"><div class="card-body">
+        <div class="card-title" style="margin-bottom:8px">Pace-doel</div>
+        <div style="font-size:13px">${paceDoel?CardioCore.formatTime(paceDoel)+'/km (bron: door jou ingesteld)':'Nog niet ingesteld'}</div>
+        <button class="btn btn-o btn-sm" style="margin-top:8px" onclick="setRunningThresholdPace()">${paceDoel?'Pace-doel aanpassen':'Pace-doel instellen'}</button>
+      </div></div>
+
+      <div class="card" style="margin-bottom:14px"><div class="card-body">
         <div class="card-title" style="margin-bottom:8px">Belasting</div>
         ${aantalMetRpe>0?`<div style="font-size:13px">Rolling load (laatste ${aantalMetRpe} runs met RPE): <b>${rollingLoad}</b> AU</div>`:`<div style="font-size:13px;color:var(--g4)">Nog geen RPE ingevuld — vul dit bij het afronden van een run in om belasting te zien.</div>`}
       </div></div>
@@ -13302,6 +13318,24 @@ async function renderRunningInsights(){
         <div style="font-size:13px;color:var(--g4)">Nog niet beschikbaar (canonieke berekening ontbreekt) — geen verzonnen zones.</div>
       </div></div>
     </div>`;
+}
+
+// ENDURANCE MASTER SPRINT — E0-correctie, symmetrisch met setCyclingFtp().
+// threshold_pace_seconds_per_km had exact dezelfde dormant-data-makke: kolom/
+// weergave/provenance bestonden, schrijfpad niet. Invoer in mm:ss (herkenbare
+// loop-pace-notatie), intern opgeslagen als seconden/km (bestaande kolomvorm,
+// CardioCore.formatTime() rendert 'm terug in dezelfde mm:ss-notatie).
+async function setRunningThresholdPace(){
+  const invoer=window.prompt('Pace-doel per km, formaat mm:ss (uitsluitend jouw eigen, bekende waarde):','');
+  if(invoer===null)return;
+  const m=/^(\d{1,2}):([0-5]\d)$/.exec(invoer.trim());
+  if(!m){toast('Ongeldig formaat — gebruik mm:ss');return;}
+  const seconden=parseInt(m[1],10)*60+parseInt(m[2],10);
+  if(seconden<=0||seconden>3600){toast('Ongeldige pace-waarde');return;}
+  const result=await sbRpcQ('upsert_endurance_profile_target',{p_sport:'running',p_threshold_pace_seconds_per_km:seconden});
+  if(!result){toast('Opslaan mislukt — probeer opnieuw');return;}
+  if(result===true){toast('Pace-doel wordt opgeslagen zodra je weer online bent');}
+  else{toast('Pace-doel ingesteld');renderRunningInsights();}
 }
 
 // ══════════════════════════════════════════════════════════
@@ -13801,6 +13835,7 @@ async function renderCyclingInsights(){
       <div class="card" style="margin-bottom:14px"><div class="card-body">
         <div class="card-title" style="margin-bottom:8px">FTP</div>
         <div style="font-size:13px">${ftp?ftp+' W (bron: door jou ingesteld)':'Nog niet ingesteld'}</div>
+        <button class="btn btn-o btn-sm" style="margin-top:8px" onclick="setCyclingFtp()">${ftp?'FTP aanpassen':'FTP instellen'}</button>
       </div></div>
 
       <div class="card" style="margin-bottom:14px"><div class="card-body">
@@ -13819,6 +13854,26 @@ async function renderCyclingInsights(){
         <div style="font-size:13px;color:var(--g4)">Nog niet beschikbaar (canonieke berekening ontbreekt) — geen verzonnen zones.</div>
       </div></div>
     </div>`;
+}
+
+// ENDURANCE MASTER SPRINT — E0-correctie (CASE CYCLE-C): FTP was al
+// architectonisch aanwezig (kolom, provenance, weergave) maar had NERGENS
+// een schrijfpad -- 0 rijen in productie, "Nog niet ingesteld" was dus altijd
+// het enige mogelijke resultaat. Dit is het enige ontbrekende stuk: een
+// invoerveld dat via de nieuwe, atomaire upsert_endurance_profile_target-RPC
+// (migratie_v553) schrijft. Geen zone-berekening, geen FTP-testprotocol --
+// uitsluitend het al beloofde "user-entered met expliciete bron" waarmaken.
+// Offline/retry via sbRpcQ (zelfde primitive als schedule_my_training,
+// C2-D) -- geen nieuwe mutatie-infrastructuur.
+async function setCyclingFtp(){
+  const invoer=window.prompt('FTP in watt (uitsluitend jouw eigen, bekende waarde -- geen automatische schatting):','');
+  if(invoer===null)return;
+  const watt=parseFloat(invoer);
+  if(!isFinite(watt)||watt<=0||watt>2000){toast('Ongeldige FTP-waarde');return;}
+  const result=await sbRpcQ('upsert_endurance_profile_target',{p_sport:'cycling',p_ftp_watts_user_entered:Math.round(watt)});
+  if(!result){toast('Opslaan mislukt — probeer opnieuw');return;}
+  if(result===true){toast('FTP wordt opgeslagen zodra je weer online bent');}
+  else{toast('FTP ingesteld');renderCyclingInsights();}
 }
 
 // ══════════════════════════════════════════════════════════

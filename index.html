@@ -8337,21 +8337,41 @@ async function sbPostQ(t,d){
     return true;
   }
 }
-async function sbPatchQ(t,f,d){
-  if(!navigator.onLine){await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d});updateOfflineBadge();return true;}
+// sbPatchQ(t,f,d,opts) — opts is optioneel en 100% backward compatible: alle
+// bestaande aanroepen zonder 4e argument gedragen zich EXACT als voorheen
+// (retourneren een boolean). opts.returnRows:true (Backend Ordering
+// Integrity Hardening) laat de functie i.p.v. een boolean een object
+// {ok, rows, superseded} teruggeven zodat een aanroeper met een
+// compare-and-set-filter (bv. '...&edit_revision=lt.N') kan onderscheiden
+// tussen "toegepast" en "0 rijen geraakt omdat een nieuwere revision al
+// bestond" -- PostgREST geeft in dat laatste geval gewoon HTTP 200 met een
+// lege array terug, wat zonder deze uitbreiding onterecht als volledig
+// succes zou worden gelezen. Alleen relevant voor de ONLINE tak: bij
+// offline queuen is de uitkomst per definitie nog onbekend, dus daar blijft
+// het bestaande, ongewijzigde "true, wordt later verwerkt"-gedrag gelden --
+// de compare-and-set-voorwaarde zelf staat al in f/d en wordt door
+// flushOfflineQueue() ongewijzigd meegestuurd bij de latere, echte poging.
+async function sbPatchQ(t,f,d,opts){
+  const wantRows=opts&&opts.returnRows;
+  if(!navigator.onLine){await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d});updateOfflineBadge();return wantRows?{ok:true,rows:null,superseded:false}:true;}
   try{
     const r=await sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',prefer:'return=representation',body:d});
     if(!r.ok){
       console.error('sbPatchQ',t,r.status,await r.text());
-      if(sbRetryable(r.status)){await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d});updateOfflineBadge();return true;}
-      return false;
+      if(sbRetryable(r.status)){await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d});updateOfflineBadge();return wantRows?{ok:true,rows:null,superseded:false}:true;}
+      return wantRows?{ok:false,rows:null,superseded:false}:false;
+    }
+    if(wantRows){
+      let rows=null;
+      try{rows=await r.json();}catch(_){rows=null;}
+      return {ok:true,rows,superseded:Array.isArray(rows)&&rows.length===0};
     }
     return true;
   }catch(e){
     console.warn('sbPatchQ offline, queued',t,e);
     await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d});
     updateOfflineBadge();
-    return true;
+    return wantRows?{ok:true,rows:null,superseded:false}:true;
   }
 }
 // sbDelQ: als sbDel, maar queuet bij netwerkfout. Wordt alleen aangeroepen met een échte
@@ -20745,8 +20765,38 @@ async function saveEditSession(btnEl){
     } else toast('Fout bij opslaan');
     return;
   }
-  const ok=await sbPatchQ('sessions','id=eq.'+curEditSess.id,row);
-  if(ok){closeModal('m-edit-session');toast('Opgeslagen');loadHistory();}else toast('Fout bij opslaan');
+  // Backend Ordering Integrity Hardening — deze write bewerkt een AL GELOGDE
+  // sessions-rij (i.t.t. live set-logging tijdens een training, dat via de
+  // reeds bewezen array-index-overschrijving in sessionLog veilig is). Een
+  // compare-and-set op edit_revision voorkomt dat een oudere, laat-
+  // arriverende PATCH (retry/offline-flush/reconnect) een aantoonbaar
+  // nieuwere bewerking van dezelfde rij stil overschrijft. newRevision is
+  // altijd strikt groter dan zowel de laatst bekende server-revision als de
+  // vorige newRevision op dit device (voorkomt gelijke waarden bij zeer
+  // snel na elkaar opgeslagen edits), en overleeft een app-herstart zonder
+  // extra opslag omdat curEditSess.edit_revision bij het heropenen van het
+  // bewerkscherm gewoon opnieuw van de server komt (sbGet gebruikt altijd
+  // select=*). Scope: single-device (zie migratie_v547.sql voor de volledige
+  // onderbouwing en de bewust buiten V1 gehouden cross-device/cross-tab-
+  // scenario's).
+  const _huidigeRevision=Number(curEditSess.edit_revision)||0;
+  const _nieuweRevision=Math.max(Date.now(),_huidigeRevision+1,(window._tkLastEditRevision||0)+1);
+  window._tkLastEditRevision=_nieuweRevision;
+  row.edit_revision=_nieuweRevision;
+  const _patchResult=await sbPatchQ('sessions','id=eq.'+curEditSess.id+'&edit_revision=lt.'+_nieuweRevision,row,{returnRows:true});
+  if(_patchResult.ok&&_patchResult.superseded){
+    // Een nieuwere edit (op dit of een ander tabblad/moment) is de server al
+    // gepasseerd -- deze write is terecht NIET toegepast. Geen foutmelding
+    // ("mislukt"), want er is niets misgegaan: de server bevat al een
+    // nieuwere, geldige gebruikersintentie. Wel duidelijk communiceren dat
+    // DEZE specifieke wijziging niet is doorgevoerd, i.p.v. ten onrechte
+    // "Opgeslagen" te tonen (geen nep-succes, zelfde principe als F0.7N).
+    toast('Niet opgeslagen — er bestaat al een nieuwere wijziging van deze set');
+  } else if(_patchResult.ok){
+    closeModal('m-edit-session');toast('Opgeslagen');loadHistory();
+  } else {
+    toast('Fout bij opslaan');
+  }
   }finally{if(btnEl)btnEl.disabled=false;}
 }
 async function deleteSessionEntry(){

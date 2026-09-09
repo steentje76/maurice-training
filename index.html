@@ -4102,11 +4102,54 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <div class="scr" id="s-hist">
   <div class="hdr"><div class="hdr-title" role="heading" aria-level="1">Logboek</div><div class="hdr-sub">Trainingsgeschiedenis</div></div>
   <div class="scroll" style="padding-top:8px">
+    <button class="btn btn-o" style="width:100%;margin-bottom:10px" onclick="go('s-availability')">&#128197; Beschikbaarheid / vakantie beheren</button>
     <div class="filter-tabs" id="hist-filter-tabs">
       <button class="filter-tab active" onclick="setHistFilter('all',this)">Alles</button>
     </div>
     <div id="hist-list"></div>
     <button class="btn btn-o" id="hist-more" onclick="loadMoreHistory()" style="margin-top:4px">Meer laden</button>
+  </div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
+  </nav>
+</div>
+
+<!-- ═══ BESCHIKBAARHEID / VAKANTIE (Sprint A — canonical foundation) ═══ -->
+<div class="scr" id="s-availability">
+  <div class="hdr"><div class="hdr-title" role="heading" aria-level="1">Beschikbaarheid</div><div class="hdr-sub">Vakantie, reis of periodes met beperkte training</div></div>
+  <div class="scroll" style="padding-top:8px">
+    <button class="btn btn-r" style="width:100%;margin-bottom:12px" onclick="openAvailabilityForm(null)">+ Periode toevoegen</button>
+    <div id="availability-form-wrap" style="display:none" class="card">
+      <div class="card-body">
+        <input type="hidden" id="avail-edit-id" value="">
+        <div class="row-item"><label class="row-inp-lbl" for="avail-start">Startdatum</label><input class="row-inp" type="date" id="avail-start"></div>
+        <div class="row-item"><label class="row-inp-lbl" for="avail-end">Einddatum</label><input class="row-inp" type="date" id="avail-end"></div>
+        <div class="row-item"><label class="row-inp-lbl" for="avail-context">Waarom</label>
+          <select class="row-inp" id="avail-context">
+            <option value="vacation">Vakantie</option>
+            <option value="travel">Reis</option>
+            <option value="personal">Persoonlijk</option>
+            <option value="unavailable_period">Anders niet beschikbaar</option>
+          </select>
+        </div>
+        <div class="row-item"><label class="row-inp-lbl" for="avail-training">Trainen tijdens deze periode</label>
+          <select class="row-inp" id="avail-training">
+            <option value="normal">Normaal trainen</option>
+            <option value="limited">Beperkt trainen</option>
+            <option value="unavailable">Niet trainen</option>
+          </select>
+        </div>
+        <div class="row-item"><label class="row-inp-lbl" for="avail-note">Notitie (optioneel)</label><textarea class="row-inp" id="avail-note" maxlength="500" rows="2"></textarea></div>
+        <div id="avail-form-error" style="color:#e53935;font-size:12.5px;margin:4px 0;display:none"></div>
+        <button class="btn btn-r" style="width:100%;margin-top:6px" onclick="saveAvailabilityPeriod()">Opslaan</button>
+        <button class="btn btn-o" style="width:100%;margin-top:6px" onclick="closeAvailabilityForm()">Annuleren</button>
+      </div>
+    </div>
+    <div id="availability-list"></div>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
@@ -10889,6 +10932,118 @@ async function askCoachAboutGoal(goalId){
   sendMsg(msg);
 }
 
+// ══════════════════════════════════════════════════════════
+// SPRINT A — BESCHIKBAARHEID/VAKANTIE FOUNDATION (canonical CRUD).
+// Database is source of truth (public.availability_periods, migratie_v549.sql).
+// GEEN conflict-detectie, GEEN automatische training-mutatie -- dat is Sprint B.
+// GEEN tweede statusmodel: training_instances.status blijft ongewijzigd
+// ('active'/'completed'/'aborted'); context_type/training_availability zijn
+// volledig aparte, eigen kolommen op deze nieuwe tabel.
+// ══════════════════════════════════════════════════════════
+const AVAILABILITY_CONTEXT_LABELS={vacation:'Vakantie',travel:'Reis',personal:'Persoonlijk',unavailable_period:'Anders niet beschikbaar'};
+const AVAILABILITY_TRAINING_LABELS={normal:'Normaal trainen',limited:'Beperkt trainen',unavailable:'Niet trainen'};
+
+async function renderAvailabilityScreen(){
+  const el=document.getElementById('availability-list');
+  if(!el)return;
+  el.innerHTML='<div class="tk-skel h32"></div>';
+  closeAvailabilityForm();
+  try{
+    if(!authSession?.user?.id){el.innerHTML='';return;}
+    const rows=await sbGet('availability_periods','&user_id=eq.'+authSession.user.id+'&order=start_date.asc');
+    if(!rows||!rows.length){el.innerHTML='<div class="tk-empty"><div class="tk-empty-emo">🗓️</div>Nog geen periodes vastgelegd.</div>';return;}
+    el.innerHTML=rows.map(function(p){
+      const ctx=AVAILABILITY_CONTEXT_LABELS[p.context_type]||p.context_type;
+      const tr=AVAILABILITY_TRAINING_LABELS[p.training_availability]||p.training_availability;
+      const periode=(p.start_date===p.end_date)?p.start_date:(p.start_date+' t/m '+p.end_date);
+      return '<div class="card" style="margin-bottom:8px"><div class="card-body">'+
+        '<div style="font-weight:800">'+periode+'</div>'+
+        '<div style="font-size:13px;color:var(--g4)">'+ctx+' · '+tr+'</div>'+
+        (p.note?('<div style="font-size:12.5px;margin-top:4px">'+String(p.note).replace(/</g,'&lt;')+'</div>'):'')+
+        '<div style="margin-top:8px;display:flex;gap:8px">'+
+        '<button class="btn btn-o" style="flex:1" onclick="openAvailabilityForm(\''+p.id+'\')">Wijzigen</button>'+
+        '<button class="btn btn-o" style="flex:1" onclick="deleteAvailabilityPeriod(\''+p.id+'\')">Verwijderen</button>'+
+        '</div></div></div>';
+    }).join('');
+  }catch(e){ console.error('renderAvailabilityScreen',e); el.innerHTML='<div class="tk-empty">Kon beschikbaarheid niet laden.</div>'; }
+}
+
+let availabilityEditCache={};
+async function openAvailabilityForm(id){
+  const wrap=document.getElementById('availability-form-wrap'); if(!wrap)return;
+  document.getElementById('avail-form-error').style.display='none';
+  document.getElementById('avail-edit-id').value=id||'';
+  if(id){
+    let row=availabilityEditCache[id];
+    if(!row){ const rows=await sbGet('availability_periods','&id=eq.'+id); row=rows&&rows[0]; }
+    if(!row){ wrap.style.display='none'; return; }
+    document.getElementById('avail-start').value=row.start_date;
+    document.getElementById('avail-end').value=row.end_date;
+    document.getElementById('avail-context').value=row.context_type;
+    document.getElementById('avail-training').value=row.training_availability;
+    document.getElementById('avail-note').value=row.note||'';
+  }else{
+    document.getElementById('avail-start').value='';
+    document.getElementById('avail-end').value='';
+    document.getElementById('avail-context').value='vacation';
+    document.getElementById('avail-training').value='normal';
+    document.getElementById('avail-note').value='';
+  }
+  wrap.style.display='block';
+}
+function closeAvailabilityForm(){ const wrap=document.getElementById('availability-form-wrap'); if(wrap)wrap.style.display='none'; }
+
+function showAvailabilityError(msg){
+  const el=document.getElementById('avail-form-error'); if(!el)return;
+  el.textContent=msg; el.style.display='block';
+}
+
+async function saveAvailabilityPeriod(){
+  const id=document.getElementById('avail-edit-id').value||null;
+  const start=document.getElementById('avail-start').value;
+  const end=document.getElementById('avail-end').value;
+  const context=document.getElementById('avail-context').value;
+  const training=document.getElementById('avail-training').value;
+  const note=document.getElementById('avail-note').value.trim();
+  // Applicatielaag-validatie (sectie 6) -- AANVULLEND op, niet vervangend voor, de DB-CHECK-constraints.
+  if(!start||!end){ showAvailabilityError('Start- en einddatum zijn verplicht.'); return; }
+  if(end<start){ showAvailabilityError('Einddatum mag niet vóór startdatum liggen.'); return; }
+  if(note.length>500){ showAvailabilityError('Notitie is te lang (max 500 tekens).'); return; }
+  const row={start_date:start,end_date:end,context_type:context,training_availability:training,note:note||null};
+  try{
+    if(id){
+      row.updated_at=new Date().toISOString();
+      const ok=await sbPatchQ('availability_periods','id=eq.'+id,row);
+      if(!ok){ showAvailabilityError('Opslaan mislukt (mogelijk overlapt deze periode met een bestaande).'); return; }
+    }else{
+      row.user_id=authSession.user.id;
+      const ok=await sbPostQ('availability_periods',row);
+      if(!ok){ showAvailabilityError('Opslaan mislukt (mogelijk overlapt deze periode met een bestaande).'); return; }
+    }
+    closeAvailabilityForm();
+    renderAvailabilityScreen();
+  }catch(e){ console.error('saveAvailabilityPeriod',e); showAvailabilityError('Opslaan mislukt door een onverwachte fout.'); }
+}
+
+async function deleteAvailabilityPeriod(id){
+  if(!id)return;
+  try{
+    await sbDelQ('availability_periods','id=eq.'+id);
+    renderAvailabilityScreen();
+  }catch(e){ console.error('deleteAvailabilityPeriod',e); }
+}
+
+// Sprint A read-only Context Engine-reader (sectie 11/32): bepaalt uitsluitend
+// OF en WELKE availability-context op een datum van toepassing is. Geeft NOOIT
+// een actie/advies terug (geen skip/move/reduceVolume/pauseProgram) -- dat is
+// Sprint B (Decision Engine). Puur, alleen leest reeds opgehaalde rijen.
+function getAvailabilityForDate(dateStr, periods){
+  if(!dateStr || !Array.isArray(periods)) return null;
+  const hit=periods.find(function(p){ return p && p.start_date<=dateStr && dateStr<=p.end_date; });
+  if(!hit) return null;
+  return { periodId:hit.id, contextType:hit.context_type, trainingAvailability:hit.training_availability, startDate:hit.start_date, endDate:hit.end_date };
+}
+
 function go(id){
   if(id==='s-admin-pin'){adminPinBuf='';updA();document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));const pinEl=document.getElementById('s-admin-pin');pinEl.classList.add('active');focusScreenForA11y(pinEl);return;}
   // v4.20.0 (Sprint 5.1) — Schema/Workouts geconsolideerd in 'Mijn trainingen' (s-train-mine).
@@ -10912,6 +11067,7 @@ function go(id){
   if(id==='s-nutrition')renderNutritionScreen();
   if(id==='s-cycling')renderCyclingShell();
   if(id==='s-hist'){histOff=0;renderHistFilterTabs();loadHistory();}
+  if(id==='s-availability')renderAvailabilityScreen();
   if(id==='s-train-mgr'){renderSportSwitcher();renderV43Train();}
   if(id==='s-train-mine'){renderSchemaTrainingList();renderCustomTrainList();renderCustomTrainBtns();mineSeg(window._minePendingSeg||'schema');window._minePendingSeg=null;}
   // Fase 1 — Lichaam en zijn subschermen delen één renderer. De doel-ids staan altijd

@@ -12653,7 +12653,7 @@ async function renderSocialScreen(){
       <div style="font-size:13px">${samenvatting.recentReactionsOnOwnShares===null?'Onbekend (kon niet laden)':samenvatting.recentReactionsOnOwnShares+' nieuwe reactie(s) op jouw gedeelde trainingen'}</div>
     </div></div>
 
-    <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Mijn profiel</div></div><div class="card-body">
+    <div class="card" style="margin-bottom:14px${(function(){const preset=resolveSocialThemePreset(profiel&&profiel.theme_id);return preset.accentVar?';--color-primary-surface:'+preset.accentVar:'';})()}"><div class="card-hd"><div class="card-title">Mijn profiel</div></div><div class="card-body">
       <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Weergavenaam</label>
       <input type="text" id="social-display-name" maxlength="60" style="width:100%;margin-bottom:10px" value="${profiel?escHtml(profiel.display_name||''):''}" placeholder="Hoe anderen je zien">
       <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Bio (optioneel)</label>
@@ -12663,6 +12663,10 @@ async function renderSocialScreen(){
         <option value="private" ${profiel&&profiel.visibility==='private'?'selected':''}>Privé (niemand vindt je profiel)</option>
         <option value="connections" ${!profiel||profiel.visibility==='connections'?'selected':''}>Alleen connecties</option>
         <option value="discoverable" ${profiel&&profiel.visibility==='discoverable'?'selected':''}>Vindbaar (iedereen kan je profiel zien)</option>
+      </select>
+      <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Thema (cosmetisch, alleen zichtbaar op je Social-profiel)</label>
+      <select id="social-theme-select" style="width:100%;margin-bottom:12px">
+        ${SOCIAL_THEME_PRESETS.map(p=>`<option value="${p.id}" ${(profiel&&profiel.theme_id?profiel.theme_id:'default')===p.id?'selected':''}>${escHtml(p.label)}</option>`).join('')}
       </select>
       <button class="btn btn-p" style="width:100%" onclick="socialSaveProfile()">Profiel opslaan</button>
     </div></div>
@@ -13333,14 +13337,41 @@ async function nutritionDeleteEntry(entryId){
   if(ok)renderNutritionScreen();
 }
 
+// ══════════════════════════════════════════════════════════
+// SOCIAL / SAMEN MASTER SPRINT — S7 THEMES & PERSONALIZATION
+// THEME CONFIGURATION -> APPROVED TOKENS -> SOCIAL PRESENTATION (sectie 29).
+// Uitsluitend een allowlist van reeds bestaande, in productie gebruikte
+// design-tokens -- geen user-supplied CSS/HTML/JS, geen nieuwe kleurwaarde.
+// Cosmetisch en scope-beperkt tot de Social-laag (sectie 30/34): raakt
+// nooit de Training Execution UI. Zuiver cosmetisch: heeft geen enkel
+// effect op enige berekende score, volgorde, prestatie-vergelijking of
+// Coach-aanbeveling (sectie 36, no pay-to-win).
+// ══════════════════════════════════════════════════════════
+const SOCIAL_THEME_PRESETS=[
+  {id:'default',label:'Standaard',accentVar:null},
+  {id:'sportief_groen',label:'Sportief groen',accentVar:'var(--df-g)'},
+  {id:'sportief_blauw',label:'Sportief blauw',accentVar:'var(--df-b)'},
+  {id:'energiek_amber',label:'Energiek amber',accentVar:'var(--df-a)'}
+];
+// Deterministische fallback (sectie 39): een onbekende/verwijderde/corrupte
+// waarde levert altijd 'default' op, nooit een kapotte of lege presentatie.
+function resolveSocialThemePreset(themeId){
+  return SOCIAL_THEME_PRESETS.find(p=>p.id===themeId)||SOCIAL_THEME_PRESETS[0];
+}
+
 async function socialSaveProfile(){
   const uid=authSession?.user?.id;
   if(!uid)return;
   const displayName=document.getElementById('social-display-name').value.trim();
   const bio=document.getElementById('social-bio').value.trim();
   const visibility=document.getElementById('social-visibility').value;
+  const themeSelectEl=document.getElementById('social-theme-select');
+  const gekozenThemeId=themeSelectEl?themeSelectEl.value:'default';
+  // Allowlist-validatie client-side (defense-in-depth; de database-CHECK
+  // constraint, migratie_v556, is de daadwerkelijke, harde afdwinging).
+  const themeId=SOCIAL_THEME_PRESETS.some(p=>p.id===gekozenThemeId)?gekozenThemeId:'default';
   if(!displayName){toast('Weergavenaam is verplicht');return;}
-  const payload={user_id:uid,display_name:displayName,bio:bio||null,visibility};
+  const payload={user_id:uid,display_name:displayName,bio:bio||null,visibility,theme_id:themeId};
   const ok=await fetch(`${SB_URL}/rest/v1/social_profiles`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(payload)});
   toast(ok.ok?'Profiel opgeslagen':'Opslaan mislukt');
   if(ok.ok)renderSocialScreen();

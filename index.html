@@ -7611,7 +7611,14 @@ function cardioDataToRow(cardioType, d){
   // verzonnen 'measured' default. Hergebruikt de bestaande
   // concept2_measured/concept2_derived-vocabulaire (DeviceCore), geen
   // nieuwe waarden uitgevonden.
-  if(d.wattSource && (d.wattSource==='concept2_measured'||d.wattSource==='concept2_derived') && row.watt!=null){
+  // GAP-P2-013: watt-herkomst meeschrijven als bekend EN whitelisted.
+  // Alleen gezet als er daadwerkelijk een watt-waarde is -- nooit een
+  // verzonnen 'measured'-default. 'concept2_measured' staat in de
+  // whitelist voor een toekomstig, hier niet gebouwd device-datapad --
+  // deze fix zet die waarde zelf nergens (zie recomputeCardioFields:
+  // directe invoer -> 'manual', geen bewezen devicemeting).
+  var TOEGESTANE_WATT_BRONNEN=['concept2_measured','concept2_derived','manual','imported_unknown','unknown'];
+  if(d.wattSource && TOEGESTANE_WATT_BRONNEN.indexOf(d.wattSource)>=0 && row.watt!=null){
     row.watt_source=d.wattSource;
   }
   // Zwemmen: pace_sec is een afgeleide kolom (geen los invoerveld), vandaar los van rowMap.
@@ -17911,6 +17918,15 @@ function round1(v){ return Math.round(v*10)/10; }
 // oude calcCardioSplit(), die alleen afstand+tijd→split kon en verder niets deed.
 function recomputeCardioFields(exId,cardioType,changedField){
   const cfg=CARDIO_TYPES[cardioType];
+  // GAP-P2-013: directe invoer in het watt-veld markeren als 'manual'
+  // VOORDAT de early-return hieronder plaatsvindt. Sommige apparaten
+  // (Assault Bike, Stairmaster) hebben cfg.calc===null (geen tijd/
+  // afstand-verband), maar hebben WEL een 'watt'-veld -- zonder deze
+  // regel vóór de early-return zou hun watt-herkomst nooit worden
+  // bijgehouden. Geldt ongeacht basis: elke directe invoer in het
+  // watt-veld bewijst geen devicemeting, altijd 'manual' (nooit
+  // 'concept2_measured' -- zie migratie_v548.sql-commentaar).
+  if(cfg.fields.includes('watt') && changedField==='watt') cardioWattSource[exId]='manual';
   if(!cfg.calc)return; // apparaten zonder tijd/afstand-verband (bv. Stairmaster, Assault Bike): niets te berekenen
   const distF=cfg.calc.distField, basis=cfg.calc.basis;
   const outField=cfg.calc.type==='pace'?'pace':'split';
@@ -17926,9 +17942,9 @@ function recomputeCardioFields(exId,cardioType,changedField){
     if(w){
       splitVal=CardioEngine.splitFromWatt500(w);
       setCardioVal(exId,outField,CardioEngine.formatTime(splitVal));
-      // GAP-P2-013: de gebruiker heeft dit getal zelf ingetypt (van het
-      // scherm van de erg afgelezen) -- device-gemeten, geen afleiding.
-      cardioWattSource[exId]='concept2_measured';
+      // (wattSource='manual' is al gezet aan het begin van deze functie,
+      // vóór de cfg.calc-early-return -- geldt voor elk apparaat met een
+      // watt-veld, niet uitsluitend Concept2-erg-types.)
     }
   }
 
@@ -18873,6 +18889,32 @@ function cardioBestMetric(type, curPerf){
   }
   return {field:'durationSec', dir:'min', label:'tijd', fmt:function(p){return CardioCore.formatTime(p.durationSec);}};
 }
+// GAP-P2-013 CORRECTIE (Hard Gate-terugkoppeling): watt-waarden met
+// verschillende herkomst mogen NIET stil als vergelijkbaar behandeld
+// worden voor PB-/trenddetectie (isNewBest/trendBy). Filtert een
+// geschiedenis-array zodat alleen items met DEZELFDE, bekende
+// wattsSource-klasse als de huidige performance overblijven.
+// - Onbekende bron (huidige performance heeft geen wattsSource, of is
+//   'unknown'/'imported_unknown') -> GEEN watt-PB/trend mogelijk (lege
+//   array): veiligste V1-keuze, geen gok over legacy-vergelijkbaarheid.
+// - manual<->manual IS een toegestane vergelijkingsklasse (bewuste V1-
+//   keuze A): een gebruiker die consequent zelf watt intypt (bv. Assault
+//   Bike, waar geen splitderivatie bestaat) mag zijn eigen historie
+//   daarmee vergelijken -- uitsluiten van watt-progressie zou voor
+//   Assault Bike de functionaliteit vrijwel volledig laten vervallen,
+//   aangezien daar per ontwerp nooit een concept2_derived-waarde
+//   ontstaat.
+// - measured<->measured en derived<->derived: ongewijzigd toegestaan
+//   (bestonden al impliciet, nu expliciet afgedwongen i.p.v. toevallig).
+// Alleen aangeroepen op het MOMENT van watt-specifieke PB/trend-checks
+// (bm.field==='watts') -- durationSec/splitSec-vergelijkingen voor
+// Rowing/SkiErg/BikeErg blijven volledig ongewijzigd (die gebruiken
+// cardioBestMetric() hierboven NOOIT 'watts' als veld, alleen Assault
+// Bike doet dat).
+function wattComparableHistory(histPerfs, currentWattsSource){
+  if(!currentWattsSource || currentWattsSource==='unknown' || currentWattsSource==='imported_unknown') return [];
+  return (histPerfs||[]).filter(function(p){ return p && p.wattsSource===currentWattsSource; });
+}
 // F4.4/F4.11 strength-presentatie-helpers. Geschat 1RM UITSLUITEND via CalcCore (Epley) \u2014 geen parallelle rekenlogica.
 function tkFmtKg(kg){ return (Math.round(kg*10)/10).toString().replace('.',','); }
 // Beste geschatte 1RM over de sets van een reeds-opgeslagen sessions-rij (sets_detail jsonb; fallback op rij-samenvatting).
@@ -18954,12 +18996,16 @@ async function enhanceSummaryProgression(list){
             if(verdict) rows.push({text:verdict+(extra.length?(' \u00b7 '+extra.join(' \u00b7 ')):''), color:vColor});
           }
           var bm=cardioBestMetric(type2, curPerf);
-          if(ProgressionCore.isNewBest(histPerfs, curPerf.key, curPerf, bm.field, bm.dir)){
+          // GAP-P2-013: bij watt-gebaseerde PB/trend (uitsluitend Assault
+          // Bike -- Rowing/SkiErg/BikeErg gebruiken hier altijd durationSec)
+          // eerst filteren op vergelijkbare herkomst.
+          var histVoorBm=(bm.field==='watts')?wattComparableHistory(histPerfs,curPerf.wattsSource):histPerfs;
+          if(ProgressionCore.isNewBest(histVoorBm, curPerf.key, curPerf, bm.field, bm.dir)){
             var bv=bm.fmt(curPerf);
             if(bv) rows.push({text:'\ud83c\udfc6 Nieuwe beste '+bm.label+': '+bv, color:'#b8860b', strong:true});
           }
           if(suff.canTrend){
-            var tr=ProgressionCore.trendBy(histPerfs, curPerf.key, bm.field, bm.dir, 3);
+            var tr=ProgressionCore.trendBy(histVoorBm, curPerf.key, bm.field, bm.dir, 3);
             if(tr && tr.status==='trend'){
               if(tr.improving===true) rows.push({text:'\ud83d\udcc8 Stijgende lijn over je laatste vergelijkbare trainingen.', color:'#2e7d32'});
               else if(tr.improving===false) rows.push({text:'Licht dalend \u2014 herstel telt ook mee.', color:'var(--g4)'});
@@ -19005,8 +19051,10 @@ async function enhanceSummaryProgression(list){
               var _pr = isCardio ? (l.cardio.type==='assaultbike'?_rep.calPerMin:_rep.splitSec) : _rep.e1rm;
               _better = _pr ? _pr.better : undefined;
             }
-            var _isBest = ProgressionCore.isNewBest(histPerfs, curPerf.key, curPerf, _bm.field, _bm.dir);
-            var _trImp; if(suff.canTrend){ var _tr=ProgressionCore.trendBy(histPerfs, curPerf.key, _bm.field, _bm.dir, 3); _trImp=(_tr&&_tr.status==='trend')?_tr.improving:undefined; }
+            // GAP-P2-013: zelfde provenance-filter als hierboven bij watt-gebaseerde PB/trend.
+            var _histVoorBm=(_bm.field==='watts')?wattComparableHistory(histPerfs,curPerf.wattsSource):histPerfs;
+            var _isBest = ProgressionCore.isNewBest(_histVoorBm, curPerf.key, curPerf, _bm.field, _bm.dir);
+            var _trImp; if(suff.canTrend){ var _tr=ProgressionCore.trendBy(_histVoorBm, curPerf.key, _bm.field, _bm.dir, 3); _trImp=(_tr&&_tr.status==='trend')?_tr.improving:undefined; }
             var _sig = CoachingCore.deriveSignals({comparableCount:comp.length, better:_better, isBest:_isBest, canTrend:suff.canTrend, trendImproving:_trImp});
             // F6.5 next-action: UITSLUITEND via bestaande DecisionCore.computeProgression (rpe-regel).
             // Geen nieuwe trainingslogica; geen actie als er geen RPE is (computeProgression -> null).
@@ -20995,11 +21043,13 @@ function buildImprovementItems(allSessions){
     if(!comp.length) return;
     var suff=ProgressionCore.sufficiency(comp.length);
     var bm=isCardio?cardioBestMetric(type,current):{field:'e1rm',dir:'max'};
-    var newBest=ProgressionCore.isNewBest(hist, current.key, current, bm.field, bm.dir);
+    // GAP-P2-013: zelfde provenance-filter (deze functie voedt de AI-coach-context via buildImprovementItems).
+    var histVoorBm2=(bm.field==='watts')?wattComparableHistory(hist,current.wattsSource):hist;
+    var newBest=ProgressionCore.isNewBest(histVoorBm2, current.key, current, bm.field, bm.dir);
     var prev=ProgressionCore.comparablePrevious(hist, current.key), improved=false;
     if(prev){ var mets=isCardio?cardioProgressionMetrics(type):[{field:'e1rm',dir:'max'}]; var rep=ProgressionCore.deltaReport(current, prev, mets); var pr=isCardio?(type==='assaultbike'?rep.calPerMin:rep.splitSec):rep.e1rm; improved=!!(pr&&pr.better===true); }
     var trendUp=false;
-    if(suff.canTrend){ var tr=ProgressionCore.trendBy(hist, current.key, bm.field, bm.dir, 3); trendUp=!!(tr&&tr.status==='trend'&&tr.improving===true); }
+    if(suff.canTrend){ var tr=ProgressionCore.trendBy(histVoorBm2, current.key, bm.field, bm.dir, 3); trendUp=!!(tr&&tr.status==='trend'&&tr.improving===true); }
     if(newBest||improved||trendUp){
       var reason=isCardio?(type==='assaultbike'?'hoger vermogen':'sneller'):'hogere geschatte 1RM';
       items.push({exercise:(ex.name||ex.naam||ex.id), domain:isCardio?'cardio':'strength', newBest:newBest, improved:improved, trendUp:trendUp, reason:reason});

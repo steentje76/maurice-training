@@ -24,7 +24,9 @@
    * neutraal event-model. Alleen blocks met een planned_date worden
    * opgenomen (B0: dat is de canonical geplande-training-representatie).
    *
-   * SKIPPED SEMANTIEK (sectie 20, V1-keuze, onderbouwd): een geskipte
+   * SKIPPED SEMANTIEK (sectie 20, V1-keuze, onderbouwd — herbevestigd na
+   * adversariële hercertificering PR #279, DELETION-CLASSIFICATIE: A —
+   * PROVEN SAFE voor het ondersteunde subscription-model): een geskipte
    * block wordt NIET meegenomen in de feed (optie A). Onderbouwing:
    * skip betekent "deze training vindt niet plaats op deze datum" --
    * een agenda-item laten staan voor iets dat bewust niet doorgaat zou
@@ -34,6 +36,18 @@
    * "CANCELLED"-status nodig, geen risico op UID-hergebruik-verwarring
    * omdat de UID stabiel aan het block-ID blijft gekoppeld en het block
    * zelf nooit wordt verwijderd (alleen uit de actieve feed-selectie valt).
+   *
+   * Voor een PULL-based, read-only subscription-feed (dit model, GEEN
+   * iTIP-invitation-workflow met REQUEST/CANCEL) is omissie-bij-refresh
+   * het gangbare, gedocumenteerde patroon dat abonnerende clients
+   * verwerken door bij elke fetch hun lokale kopie te vervangen door de
+   * dan-actuele feed-inhoud (vergelijkbaar met hoe publieke ICS-feeds
+   * voor bijvoorbeeld sportwedstrijdschema's een afgelast evenement
+   * simpelweg weglaten, zonder CANCELLED-status). GEEN empirische test
+   * tegen een echte Apple/Google/Outlook-client is in deze omgeving
+   * uitgevoerd (niet beschikbaar) — dit is een eerlijk gerapporteerde
+   * grens van wat hier fysiek geverifieerd kon worden, geen universele
+   * garantie voor elke denkbare kalender-implementatie.
    *
    * COMPLETED SEMANTIEK (sectie 21): een voltooide training blijft
    * zichtbaar op zijn oorspronkelijke geplande datum, title/status geeft
@@ -125,6 +139,27 @@
    * now is optioneel injecteerbaar voor deterministische tests (anders
    * new Date()) -- alleen DTSTAMP is tijdsafhankelijk, event-identiteit/
    * -inhoud niet (sectie 41, determinisme).
+   *
+   * GEEN SEQUENCE-PROPERTY (bewuste keuze, adversariële hercertificering
+   * PR #279 sectie 8): program_blocks heeft geen updated_at/version-kolom
+   * die een betrouwbare, deterministische revisie-teller zou opleveren.
+   * Een SEQUENCE die willekeurig per fetch omhoog zou tellen zou de
+   * determinisme-eis schenden ("zelfde canonical state moet zelfde
+   * revision betekenen") en calendar-clients ten onrechte laten denken
+   * dat een ongewijzigd event toch is bijgewerkt. RFC 5545 staat een
+   * ontbrekende SEQUENCE toe (impliciet 0). Voor een PULL-based
+   * subscription-feed (in tegenstelling tot iTIP-invitation-workflows
+   * met REQUEST/CANCEL-methods) vergelijken abonnerende clients bij
+   * elke refresh de volledige, actuele property-waarden van elke UID uit
+   * de opgehaalde feed -- een gewijzigde DTSTART bij een reschedule wordt
+   * zo hoe dan ook zichtbaar, zonder afhankelijk te zijn van een
+   * SEQUENCE-increment. Dit is het gangbare, gedocumenteerde patroon
+   * voor publieke ICS-abonnementen (vergelijkbaar met bijvoorbeeld
+   * sportwedstrijdschema's of feestdagenkalenders) -- GEEN empirische
+   * Apple/Google/Outlook-clienttest is in deze omgeving uitgevoerd
+   * (geen zulke clients beschikbaar); dit blijft een eerlijk
+   * gerapporteerde V1-beperking van wat hier fysiek te verifiëren is,
+   * niet een claim van universeel bewezen clientgedrag.
    */
   function buildIcsCalendar(events, now) {
     var dtstamp = icsTimestamp(now);

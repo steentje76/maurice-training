@@ -19,6 +19,17 @@ ok(!/CREATE POLICY\s+\S*delete/i.test(migratie), '7. Geen DELETE-policy -- revoc
 ok(migratie.indexOf('REFERENCES auth.users(id) ON DELETE CASCADE') > 0, '8. FK naar auth.users met CASCADE (geen orphaned tokens bij accountverwijdering)');
 ok(migratie.indexOf('ALTER TABLE public.sessions') === -1 && migratie.indexOf('ALTER TABLE public.program_blocks') === -1 && migratie.indexOf('ALTER TABLE public.training_instances') === -1 && migratie.indexOf('ALTER TABLE public.availability_periods') === -1, '9. Additive-only: GEEN wijziging aan enige bestaande tabel');
 
+// ═══ ADVERSARIËLE HERCERTIFICERING PR #279 — token-entropie ═══
+{
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const s = html.indexOf('function calendarFeedRandomToken');
+  const e = html.indexOf('function calendarFeedSha256Hex');
+  const fn = html.slice(s, e);
+  ok(fn.indexOf('crypto.getRandomValues') > 0, '10. Token wordt gegenereerd via crypto.getRandomValues (cryptografisch veilige randomness), NIET Math.random');
+  ok(fn.indexOf('Math.random') === -1, '10b. Geen enkel gebruik van Math.random in de tokengenerator');
+  ok(fn.indexOf('Uint8Array(32)') > 0, '11. 32 bytes = 256 bit entropie, ruim voldoende om brute-force onhaalbaar te maken');
+}
+
 console.log('fCalendarFeedTokensMigration: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (msgs.length) console.log(msgs.join('\n'));
 console.log('Resultaat: ' + pass + ' geslaagd, ' + fail + ' mislukt');

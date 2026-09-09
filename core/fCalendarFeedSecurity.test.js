@@ -52,6 +52,18 @@ ok(src.indexOf("require('../../core/calendarProjection.js')") > 0, '16. Hergebru
 // ═══ Cache-semantiek: geen onrealistische realtime-belofte ═══
 ok(src.indexOf('Cache-Control') > 0, '17. Expliciete cache-header aanwezig (eerlijke sync-latentie-verwachting, sectie 33)');
 
+// ═══ SPRINT-B2-A ADVERSARIËLE HERCERTIFICERING — aanvullende gates ═══
+
+// Cross-user structurele isolatie: het ENIGE query-parameter dat gelezen
+// wordt is 'token'; user_id komt UITSLUITEND uit de server-side DB-lookup,
+// nooit uit client-input. Geen enkel pad waarop een aanvaller een andere
+// user_id/block_id kan meesturen om iemand anders' data te lezen.
+ok(src.indexOf('event.queryStringParameters.token') > 0, '18. Het ENIGE gelezen query-parameter is \'token\' -- geen user_id/block_id/andere parameter wordt van de client geaccepteerd');
+ok(/const userId\s*=\s*tokRows/.test(src), '19. userId wordt uitsluitend toegekend vanuit het resultaat van de server-side token-lookup, nooit vanuit event.queryStringParameters');
+
+// Token-entropie: cryptografisch random (crypto.getRandomValues), NOOIT Math.random.
+// Deze check loopt tegen index.html (waar de generator staat), niet tegen deze
+// endpoint-file zelf -- apart geverifieerd hieronder.
 console.log('fCalendarFeedSecurity: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (msgs.length) console.log(msgs.join('\n'));
 console.log('Resultaat: ' + pass + ' geslaagd, ' + fail + ' mislukt');

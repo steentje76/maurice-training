@@ -71,6 +71,17 @@ ok(!migratie.match(/INSERT INTO public\.messages/), 'E1: de nieuwe migratie voeg
     'G1: renderMessageThreadScreen weigert expliciet toegang als de ingelogde gebruiker geen participant is (client-side spiegel van de RLS, niet de enige controle)');
 }
 
+// ---- H. S9 Integrated Certification: block moet ook messaging raken (sectie 42) ----
+{
+  const migratieV557 = fs.readFileSync(path.join(ROOT, 'migratie_v557.sql'), 'utf8');
+  ok(migratieV557.includes('social_is_blocked_pair(v_user_id, p_other_user_id)'),
+    'H1: get_or_create_direct_thread weigert een nieuw gesprek als er een social-block bestaat tussen de twee gebruikers (niet alleen het ontbreken van een connectie)');
+  ok(migratieV557.includes('social_is_blocked_pair(auth.uid(), mp2.user_id)'),
+    'H2: de messages-INSERT-policy weigert een nieuw bericht als de afzender een social-block heeft met een andere deelnemer in de thread -- dezelfde functie als feed/reacties/comments, geen los, tweede blokkeer-concept');
+  ok(!migratieV557.match(/DELETE FROM public\.messages|DROP TABLE/i),
+    'H3: bestaande berichtgeschiedenis tussen inmiddels geblokkeerde gebruikers wordt niet verwijderd -- alleen nieuwe berichten worden geblokkeerd (consistent met het coach-athlete-revocation-precedent)');
+}
+
 console.log('\n========================================================');
 console.log('fMessagingUI.test.js — ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { msgs.forEach(m => console.error(m)); process.exitCode = 1; }

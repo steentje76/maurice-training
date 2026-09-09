@@ -4100,14 +4100,29 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
 <!-- ═══ LOGBOEK ═══ -->
 <div class="scr" id="s-hist">
-  <div class="hdr"><div class="hdr-title" role="heading" aria-level="1">Logboek</div><div class="hdr-sub">Trainingsgeschiedenis</div></div>
+  <div class="hdr"><div class="hdr-title" role="heading" aria-level="1">Logboek</div><div class="hdr-sub">Trainingsgeschiedenis &amp; planning</div></div>
   <div class="scroll" style="padding-top:8px">
     <button class="btn btn-o" style="width:100%;margin-bottom:10px" onclick="go('s-availability')">&#128197; Beschikbaarheid / vakantie beheren</button>
-    <div class="filter-tabs" id="hist-filter-tabs">
-      <button class="filter-tab active" onclick="setHistFilter('all',this)">Alles</button>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <button class="btn btn-o" id="hist-mode-list-btn" style="flex:1" onclick="histSetMode('list')">Lijst</button>
+      <button class="btn btn-o" id="hist-mode-calendar-btn" style="flex:1" onclick="histSetMode('calendar')">Kalender</button>
     </div>
-    <div id="hist-list"></div>
-    <button class="btn btn-o" id="hist-more" onclick="loadMoreHistory()" style="margin-top:4px">Meer laden</button>
+    <div id="hist-list-mode">
+      <div class="filter-tabs" id="hist-filter-tabs">
+        <button class="filter-tab active" onclick="setHistFilter('all',this)">Alles</button>
+      </div>
+      <div id="hist-list"></div>
+      <button class="btn btn-o" id="hist-more" onclick="loadMoreHistory()" style="margin-top:4px">Meer laden</button>
+    </div>
+    <div id="hist-calendar-mode" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <button class="ibtn" onclick="calMonthNav(-1)" aria-label="Vorige maand">&#8592;</button>
+        <div id="cal-month-label" style="font-weight:800;font-size:15px" role="heading" aria-level="2"></div>
+        <button class="ibtn" onclick="calMonthNav(1)" aria-label="Volgende maand">&#8594;</button>
+      </div>
+      <div id="cal-month-grid"></div>
+      <div id="cal-day-detail" style="margin-top:12px"></div>
+    </div>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
@@ -6435,6 +6450,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/cycleTraining.js"></script>
 <script src="core/womensPerformanceContext.js"></script>
 <script src="core/scheduleAdherence.js"></script>
+<script src="core/calendarMonthView.js"></script>
 <script src="core/adherenceIntelligence.js"></script>
 <script src="core/longitudinalTrend.js"></script>
 <script src="core/plateauDetection.js"></script>
@@ -11102,7 +11118,10 @@ async function availConflictSkip(blockId){
   const bevestigd=await confirmModal('Deze training overslaan vanwege je beschikbaarheid? Hij telt dan niet mee als afgerond, maar blijft zichtbaar als bewust overgeslagen.',{title:'Overslaan',okLabel:'Overslaan',cancelLabel:'Annuleren'});
   if(!bevestigd)return;
   const ok=await sbPatchQ('program_blocks','id=eq.'+blockId,{schedule_status:'skipped'});
-  if(!ok){toast('Kon niet opslaan — probeer opnieuw');return;}
+  if(!ok){
+    if(typeof ObservabilityCore!=='undefined'){ObservabilityCore.tkLog('ERROR','calendar.skip.failed','calendar','conflict_action',{},{app_version:(typeof APP_VER!=='undefined'?APP_VER:'unknown'),environment:'browser'});}
+    toast('Kon niet opslaan — probeer opnieuw');return;
+  }
   toast('Training overgeslagen');
   renderAvailabilityScreen();
 }
@@ -11133,7 +11152,10 @@ async function availConflictReschedule(blockId){
       if(!bevestigd)return;
     }
     const ok=await sbPatchQ('program_blocks','id=eq.'+blockId,{planned_date:nieuweDatum,rescheduled_from:block.planned_date,reschedule_reason:'manual',schedule_status:'rescheduled'});
-    if(!ok){toast('Kon niet opslaan — probeer opnieuw');return;}
+    if(!ok){
+      if(typeof ObservabilityCore!=='undefined'){ObservabilityCore.tkLog('ERROR','calendar.reschedule.failed','calendar','conflict_action',{},{app_version:(typeof APP_VER!=='undefined'?APP_VER:'unknown'),environment:'browser'});}
+      toast('Kon niet opslaan — probeer opnieuw');return;
+    }
     toast('Training verplaatst naar '+nieuweDatum);
     renderAvailabilityScreen();
   }catch(e){ console.error('availConflictReschedule',e); toast('Verplaatsen mislukt'); }
@@ -11245,6 +11267,203 @@ function getProgramAvailabilityConflict(block, availabilityPeriods){
   };
 }
 
+// ══════════════════════════════════════════════════════════
+// SPRINT C1 — INTERNAL CALENDAR FUTURE PLANNING.
+// Calendar is UITSLUITEND een projectie/interactiesurface boven canonical
+// bronnen (program_blocks/sessions/availability_periods) -- GEEN nieuwe
+// planningbron, GEEN duplicaat-conflictberekening (hergebruikt de
+// bestaande getProgramAvailabilityConflict/getAvailabilityForDate via
+// CalendarMonthViewCore.buildMonthGrid als dependency-injection, exact
+// dezelfde logica als de Availability-conflictkaarten uit Sprint B).
+// training_instances wordt hier NERGENS gebruikt (Hard Gate sectie 5).
+// ══════════════════════════════════════════════════════════
+let histMode='list';
+let calYear=null, calMonth=null, calSelectedDate=null;
+
+function histSetMode(mode){
+  histMode=mode;
+  const listBtn=document.getElementById('hist-mode-list-btn');
+  const calBtn=document.getElementById('hist-mode-calendar-btn');
+  const listEl=document.getElementById('hist-list-mode');
+  const calEl=document.getElementById('hist-calendar-mode');
+  if(!listEl||!calEl)return;
+  if(mode==='calendar'){
+    listEl.style.display='none'; calEl.style.display='block';
+    if(listBtn)listBtn.className='btn btn-o'; if(calBtn)calBtn.className='btn btn-r';
+    if(calYear==null){ const t=new Date(); calYear=t.getFullYear(); calMonth=t.getMonth()+1; }
+    renderCalMonth();
+  }else{
+    listEl.style.display='block'; calEl.style.display='none';
+    if(listBtn)listBtn.className='btn btn-r'; if(calBtn)calBtn.className='btn btn-o';
+  }
+}
+
+function calMonthNav(delta){
+  calMonth+=delta;
+  if(calMonth<1){calMonth=12;calYear--;} else if(calMonth>12){calMonth=1;calYear++;}
+  calSelectedDate=null;
+  renderCalMonth();
+}
+
+const CAL_MAAND_NAMEN=['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+
+// GEVONDEN TIJDENS ADVERSARIAL HARDENING (C1-B, sectie 25/26): de bestaande,
+// gedeelde sbGet() retourneert bij een laadfout stil [] -- niet te onderscheiden
+// van "genuinely geen data". Voor Calendar is dit onderscheid functioneel
+// belangrijk (nooit "geen trainingen" tonen als het laden feitelijk mislukte).
+// Minimale, LOKALE wrapper -- raakt de gedeelde sbGet() zelf niet aan (dat zou
+// een appbrede, risicovollere wijziging zijn, buiten deze sprint-scope).
+async function sbGetOrFail(t,p){
+  try{
+    const r=await sbFetch(`${SB_URL}/rest/v1/${t}?select=*${p||''}`,{});
+    if(!r.ok){ return {failed:true, rows:[]}; }
+    return {failed:false, rows:await r.json()};
+  }catch(e){ return {failed:true, rows:[]}; }
+}
+
+async function renderCalMonth(){
+  const labelEl=document.getElementById('cal-month-label');
+  const gridEl=document.getElementById('cal-month-grid');
+  const detailEl=document.getElementById('cal-day-detail');
+  if(!labelEl||!gridEl)return;
+  labelEl.textContent=CAL_MAAND_NAMEN[calMonth-1]+' '+calYear;
+  gridEl.innerHTML='<div class="tk-skel h32"></div>';
+  if(detailEl)detailEl.innerHTML='';
+  try{
+    if(!authSession?.user?.id){gridEl.innerHTML='';return;}
+    const maandStart=CalendarMonthViewCore.ymd(calYear,calMonth,1);
+    const maandEind=CalendarMonthViewCore.ymd(calYear,calMonth,CalendarMonthViewCore.daysInMonth(calYear,calMonth));
+    // Canonical bronnen, elk apart en direct opgehaald -- geen synchronisatietabel,
+    // geen kopie (sectie 54). Fail-safe: bij een load-fout tonen we een expliciete
+    // foutmelding (via sbGetOrFail's failed-vlag), NOOIT stil een lege maand alsof
+    // er bewezen niets gepland staat (sectie 42) -- elke bron apart gecontroleerd
+    // zodat een PARTIAL failure (bv. availability faalt, program_blocks lukt) niet
+    // ten onrechte een vals conflictvrij beeld geeft (sectie 26).
+    const [progsR, sessiesR, availR] = await Promise.all([
+      sbGetOrFail('programs','&user_id=eq.'+authSession.user.id+'&status=eq.actief'),
+      sbGetOrFail('sessions','&date=gte.'+maandStart+'&date=lte.'+maandEind),
+      sbGetOrFail('availability_periods','&user_id=eq.'+authSession.user.id+'&order=start_date.asc')
+    ]);
+    const anyFailed = progsR.failed||sessiesR.failed||availR.failed;
+    if(anyFailed){
+      if(typeof ObservabilityCore!=='undefined'){
+        ObservabilityCore.tkLog('ERROR','calendar.load.partial_or_full_failed','calendar','month_view',
+          {programs_failed:progsR.failed,sessions_failed:sessiesR.failed,availability_failed:availR.failed},
+          {app_version:(typeof APP_VER!=='undefined'?APP_VER:'unknown'),environment:'browser'});
+      }
+    }
+    const progs=progsR.rows, sessies=sessiesR.rows, availRows=availR.rows;
+    let blocks=[]; let blocksFailed=false;
+    if(progs&&progs.length){
+      const progIds=progs.map(function(p){return p.id;}).join(',');
+      const blocksR=await sbGetOrFail('program_blocks','&program_id=in.('+progIds+')&planned_date=gte.'+maandStart+'&planned_date=lte.'+maandEind);
+      blocks=blocksR.rows; blocksFailed=blocksR.failed;
+      if(blocksFailed&&typeof ObservabilityCore!=='undefined'){
+        ObservabilityCore.tkLog('ERROR','calendar.load.program_blocks_failed','calendar','month_view',{},
+          {app_version:(typeof APP_VER!=='undefined'?APP_VER:'unknown'),environment:'browser'});
+      }
+    }
+    if(anyFailed||blocksFailed){
+      gridEl.innerHTML='<div class="tk-empty">Kon kalender niet volledig laden — probeer te vernieuwen. Getoonde informatie kan onvolledig zijn.</div>';
+      // Bewust GEEN return hier: we tonen de foutmelding, maar renderen NIET
+      // stil verder alsof de ontbrekende data "geen trainingen" betekent --
+      // de grid wordt hierna niet meer opgebouwd voor deze render-cyclus.
+      return;
+    }
+    const cellen=CalendarMonthViewCore.buildMonthGrid(calYear,calMonth,{
+      programBlocks:blocks, sessions:sessies||[], availabilityPeriods:availRows||[],
+      today:td(), getConflict:getProgramAvailabilityConflict, getAvailability:getAvailabilityForDate
+    });
+    const eersteWeekdag=(new Date(calYear,calMonth-1,1).getDay()+6)%7; // maandag=0
+    let html='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;font-size:10.5px;color:var(--g4);text-align:center;margin-bottom:4px">'+
+      ['ma','di','wo','do','vr','za','zo'].map(function(d){return '<div>'+d+'</div>';}).join('')+'</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">'+
+      new Array(eersteWeekdag).fill('<div></div>').join('');
+    cellen.forEach(function(c){
+      const dagNr=parseInt(c.date.slice(8,10),10);
+      const heeftGepland=c.plannedBlocks.length>0, heeftVoltooid=c.completedBlocks.length>0;
+      const kleur=c.conflictLevel==='conflict'?'#e53935':(c.conflictLevel==='context'?'#f0a500':(heeftGepland||heeftVoltooid||c.hasHistory?'var(--accent)':'var(--g6)'));
+      const isSel=calSelectedDate===c.date;
+      // Status NIET uitsluitend via kleur (sectie 7): een conflict/context-dag krijgt
+      // een tekstglyph (⚠/•) bovenop de kleur, en elke cel krijgt een beschrijvend
+      // aria-label zodat de status ook zonder kleurperceptie/via screenreader
+      // te onderscheiden is.
+      const glyph=c.conflictLevel==='conflict'?'&#9888;':(c.conflictLevel==='context'?'&#8226;':'');
+      let statusTekst='geen training';
+      if(heeftVoltooid)statusTekst='voltooid';
+      else if(c.skippedBlocks.length)statusTekst='overgeslagen';
+      else if(heeftGepland&&c.conflictLevel==='conflict')statusTekst='gepland, conflict met beschikbaarheid';
+      else if(heeftGepland&&c.conflictLevel==='context')statusTekst='gepland, beperkte beschikbaarheid';
+      else if(heeftGepland)statusTekst='gepland';
+      else if(c.hasHistory)statusTekst='trainingshistorie';
+      const ariaLabel=c.date+', '+statusTekst+(c.isToday?', vandaag':'');
+      html+='<button onclick="calSelectDay(\''+c.date+'\')" aria-label="'+ariaLabel+'" aria-pressed="'+(isSel?'true':'false')+'" style="aspect-ratio:1;border-radius:8px;border:'+(c.isToday?'2px solid var(--accent)':'1px solid var(--g6)')+';background:'+(isSel?'var(--accent)':'transparent')+';color:'+(isSel?'#fff':'var(--dark)')+';font-size:12px;font-weight:'+(c.isToday?'800':'500')+';position:relative;cursor:pointer">'+dagNr+
+        (glyph?'<span style="position:absolute;top:1px;right:2px;font-size:9px;line-height:1">'+glyph+'</span>':'')+
+        ((heeftGepland||heeftVoltooid||c.hasHistory)?'<span style="position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:'+(isSel?'#fff':kleur)+'"></span>':'')+
+        '</button>';
+    });
+    html+='</div>';
+    gridEl.innerHTML=html;
+    if(calSelectedDate)renderCalDayDetail(calSelectedDate,cellen);
+  }catch(e){ console.error('renderCalMonth',e); gridEl.innerHTML='<div class="tk-empty">Kon kalender niet laden.</div>'; }
+}
+
+function calSelectDay(dateStr){
+  calSelectedDate=dateStr;
+  renderCalMonth();
+}
+
+function renderCalDayDetail(dateStr,cellen){
+  const detailEl=document.getElementById('cal-day-detail');
+  if(!detailEl)return;
+  const cel=(cellen||[]).find(function(c){return c.date===dateStr;});
+  if(!cel){detailEl.innerHTML='';return;}
+  const AV_CTX={vacation:'Vakantie',travel:'Reis',personal:'Persoonlijk',unavailable_period:'Anders niet beschikbaar'};
+  const AV_TR={normal:'Normaal trainen',limited:'Beperkt trainen',unavailable:'Niet trainen'};
+  let html='<div class="card"><div class="card-body">';
+  html+='<div style="font-weight:800;margin-bottom:6px">'+dateStr+'</div>';
+  if(cel.availability){
+    html+='<div style="font-size:13px;color:var(--g4);margin-bottom:6px">'+(AV_CTX[cel.availability.contextType]||cel.availability.contextType)+' · '+(AV_TR[cel.availability.trainingAvailability]||cel.availability.trainingAvailability)+'</div>';
+  }
+  if(!cel.plannedBlocks.length&&!cel.completedBlocks.length&&!cel.skippedBlocks.length&&!cel.hasHistory){
+    html+='<div style="font-size:13px;color:var(--g4)">Geen training gepland of gelogd op deze dag.</div>';
+  }
+  cel.completedBlocks.forEach(function(b){
+    html+='<div style="padding:8px 0;border-top:1px solid var(--g6)"><div style="font-weight:700">'+(b.fase_naam||'Training')+' — voltooid</div></div>';
+  });
+  cel.skippedBlocks.forEach(function(b){
+    html+='<div style="padding:8px 0;border-top:1px solid var(--g6)"><div style="font-weight:700;color:var(--g4)">'+(b.fase_naam||'Training')+' — overgeslagen</div></div>';
+  });
+  cel.plannedBlocks.forEach(function(b){
+    html+='<div style="padding:8px 0;border-top:1px solid var(--g6)">'+
+      '<div style="font-weight:700">'+(b.fase_naam||'Training')+'</div>'+
+      (cel.conflictLevel!=='none'?'<div style="font-size:12.5px;color:'+(cel.conflictLevel==='conflict'?'#e53935':'#f0a500')+';margin:2px 0">'+(cel.conflictLevel==='conflict'?'Valt binnen een periode waarin je niet kunt trainen.':'Trainen in deze periode is beperkt mogelijk.')+'</div>':'')+
+      '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">'+
+      (cel.conflictLevel!=='none'?(
+        '<button class="btn btn-o" style="flex:1" onclick="availConflictKeep(\''+b.id+'\')">Behouden</button>'+
+        '<button class="btn btn-o" style="flex:1" onclick="calDayAction(\'reschedule\',\''+b.id+'\')">Verplaatsen</button>'+
+        '<button class="btn btn-o" style="flex:1" onclick="calDayAction(\'skip\',\''+b.id+'\')">Overslaan</button>'
+      ):(
+        dateStr===td()
+          ?'<button class="btn btn-r" style="flex:1" onclick="previewStartTraining(\'normal\')">Start training</button>'
+          :'<button class="btn btn-o" style="flex:1" onclick="calDayAction(\'reschedule\',\''+b.id+'\')">Verplaatsen</button>'
+      ))+
+      '</div></div>';
+  });
+  html+='</div>';
+  detailEl.innerHTML=html;
+}
+
+// Herbruikt EXACT dezelfde canonical acties als de Availability-conflictkaarten
+// (Sprint B) -- GEEN tweede reschedule/skip-implementatie vanuit Calendar
+// (sectie 15/19). Na de actie wordt de maand opnieuw gerenderd zodat Calendar
+// direct de nieuwe canonical toestand toont (cross-surface consistency, sectie 41).
+async function calDayAction(actie,blockId){
+  if(actie==='skip'){ await availConflictSkip(blockId); }
+  else if(actie==='reschedule'){ await availConflictReschedule(blockId); }
+  renderCalMonth();
+}
+
 function go(id){
   if(id==='s-admin-pin'){adminPinBuf='';updA();document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));const pinEl=document.getElementById('s-admin-pin');pinEl.classList.add('active');focusScreenForA11y(pinEl);return;}
   // v4.20.0 (Sprint 5.1) — Schema/Workouts geconsolideerd in 'Mijn trainingen' (s-train-mine).
@@ -11267,7 +11486,7 @@ function go(id){
   if(id==='s-social')renderSocialScreen();
   if(id==='s-nutrition')renderNutritionScreen();
   if(id==='s-cycling')renderCyclingShell();
-  if(id==='s-hist'){histOff=0;renderHistFilterTabs();loadHistory();}
+  if(id==='s-hist'){histOff=0;renderHistFilterTabs();loadHistory();histSetMode(histMode||'list');}
   if(id==='s-availability')renderAvailabilityScreen();
   if(id==='s-train-mgr'){renderSportSwitcher();renderV43Train();}
   if(id==='s-train-mine'){renderSchemaTrainingList();renderCustomTrainList();renderCustomTrainBtns();mineSeg(window._minePendingSeg||'schema');window._minePendingSeg=null;}

@@ -216,8 +216,69 @@ ok(html.indexOf("if(draft){clearTrainingDraft()}") === -1, 'sanity: clearTrainin
 }
 
 
+  
+  // ═══ SECTIE 13/14 (05D heruitgave) — BACKEND ORDERING: een OUDER PATCH-
+  // verzoek dat NA een NIEUWER PATCH-verzoek op DEZELFDE serverrij arriveert.
+  // Dit is expliciet anders dan de eerdere stale-write A/B-test hierboven
+  // (die toonde dat de LOKALE state nooit door een respons wordt
+  // teruggeschreven) -- hier testen we specifiek het scenario waarbij een
+  // gebruiker een set-waarde TWEEMAAL bewerkt (via de bestaande
+  // sbPatchQ('sessions','id=eq.'+curEditSess.id,row)-editflow, bevestigd
+  // live in index.html) en de twee PATCH-requests de SERVER in omgekeerde
+  // volgorde bereiken.
+  {
+    const mockServerRows = { sessions: [{ id: 'sess-edit-1', user_id: 'user-A', weight: 'origineel' }] };
+    const volgordeVanAankomst = [];
+    const sandbox = {
+      indexedDB: undefined, navigator: { onLine: true }, authSession: { user: { id: 'user-A' }, refresh_token: null },
+      SB_H: {}, SB_URL: 'https://mock.supabase.co', document: { getElementById: () => null }, toast: () => {},
+      updateOfflineBadge: () => {}, renderOfflineQueueModal: () => {}, console, setTimeout,
+      crypto: require('crypto').webcrypto || { randomUUID: () => require('crypto').randomUUID() }, Object, Promise,
+      fetch: async function (url, init) {
+        if (init.method !== 'PATCH') return { ok: true, status: 200, json: async () => ({}) };
+        const body = JSON.parse(init.body);
+        const idMatch = /id=eq\.([^&]+)/.exec(url);
+        const row = mockServerRows.sessions.find((r) => r.id === decodeURIComponent(idMatch[1]));
+        // Simuleert netwerkvertraging: request A (ouder, gebruikersintentie
+        // "eerste-edit") komt PAS NA request B (nieuwer, "tweede-edit") aan.
+        const vertragingMs = body.weight === 'eerste-edit' ? 40 : 5;
+        await new Promise((r) => setTimeout(r, vertragingMs));
+        volgordeVanAankomst.push(body.weight);
+        if (row) Object.assign(row, body); // exact PostgREST-PATCH-semantiek: laatst-AANGEKOMEN write wint op serverniveau
+        return { ok: true, status: 200, json: async () => ({}) };
+      }
+    };
+    // basisIndexedDB nodig voor sbPostQ (niet gebruikt hier) en offlineQueue* --
+    // hergebruik dezelfde fake als de rest van het harnas via buildSandbox()
+    // zou vereisen, maar voor een pure PATCH-test volstaat een sandbox zonder
+    // offline-pad: sbPatchQ() gaat bij navigator.onLine=true direct naar fetch.
+    const vm = require('vm');
+    function sliceSrc(startMarker, endMarker) {
+      const s = html.indexOf(startMarker);
+      const e = html.indexOf(endMarker, s);
+      return html.slice(s, e);
+    }
+    const patchSrc = [
+      sliceSrc('function sbRetryable', 'async function sbFetch'),
+      sliceSrc('async function sbFetch(url,o)', 'async function sbGet'),
+      sliceSrc('async function sbPatchQ(t,f,d)', 'async function sbDelQ')
+    ].join('\n');
+    const context = vm.createContext(sandbox);
+    vm.runInContext(patchSrc + "\nglobalThis.__exports = { sbPatchQ };", context);
+    const mod = context.__exports;
+    // Gebruiker bewerkt de set EERST naar 'eerste-edit', bedenkt zich SNEL en
+    // bewerkt naar 'tweede-edit' -- beide PATCH-calls worden nagenoeg
+    // gelijktijdig afgevuurd (zoals snel double-editen in de UI zou doen).
+    await Promise.all([
+      mod.sbPatchQ('sessions', 'id=eq.sess-edit-1', { weight: 'eerste-edit' }),
+      mod.sbPatchQ('sessions', 'id=eq.sess-edit-1', { weight: 'tweede-edit' })
+    ]);
+    ok(volgordeVanAankomst[0] === 'tweede-edit' && volgordeVanAankomst[1] === 'eerste-edit', 'BACKEND ORDERING - setup: het oudere verzoek (eerste-edit) is bewezen NA het nieuwere verzoek (tweede-edit) op de server aangekomen (de kunstmatige vertraging werkt zoals bedoeld)');
+    ok(mockServerRows.sessions[0].weight === 'eerste-edit', 'BACKEND ORDERING - GECLASSIFICEERDE BEVINDING: de server past "last ARRIVAL wins" toe (niet "last user-intent wins") -- het ouder-ingevoerde \'eerste-edit\' overschrijft het latere, eigenlijk-bedoelde \'tweede-edit\' omdat het toevallig als laatste aankomt. Dit is GEEN theoretische aanname maar hier empirisch aangetoond gedrag van kale, ongesequencede PATCH-requests.');
+  }
+
 })().then(() => {
-  console.log('fTrainingExecutionFinalClosure: ' + pass + ' geslaagd, ' + fail + ' mislukt');
+console.log('fTrainingExecutionFinalClosure: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (msgs.length) console.log(msgs.join('\n'));
 console.log('Resultaat: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail > 0 ? 1 : 0);

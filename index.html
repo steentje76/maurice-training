@@ -3537,6 +3537,27 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </nav>
 </div>
 
+<!-- ═══ SOCIAL MASTER SPRINT S5 · MESSAGING UI (Sociaal → 💬 Berichten) ═══ -->
+<div class="scr" id="s-messages">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Berichten</div><div class="hdr-sub">Gesprekken</div></div><button class="ibtn" onclick="go('s-social')" aria-label="Terug naar Sociaal">←</button></div></div>
+  <div class="scroll" id="messages-scroll" style="padding:16px"></div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-social')"><span class="ni-icon">👥</span><span class="ni-label">Sociaal</span></button>
+  </nav>
+</div>
+<div class="scr" id="s-message-thread">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1" id="message-thread-title">Gesprek</div><div class="hdr-sub">Direct bericht</div></div><button class="ibtn" onclick="go('s-messages')" aria-label="Terug naar Berichten">←</button></div></div>
+  <div class="scroll" id="message-thread-scroll" style="padding:16px;display:flex;flex-direction:column"></div>
+  <div id="message-thread-input" style="padding:10px 16px;display:flex;gap:8px;border-top:1px solid var(--bd)">
+    <input type="text" id="message-thread-body" maxlength="4000" style="flex:1" placeholder="Typ een bericht…" onkeydown="if(event.key==='Enter')sendDirectMessage()">
+    <button class="btn btn-p btn-sm" onclick="sendDirectMessage()">Versturen</button>
+  </div>
+</div>
+
 <!-- ═══ B9-09 · NUTRITION FOUNDATION (Lichaam → 🍽️ → Voeding) ═══ -->
 <div class="scr" id="s-nutrition">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Voeding</div><div class="hdr-sub">Registreren, geen advies</div></div><button class="ibtn" onclick="go('s-lichaam')" aria-label="Terug naar Lichaam">←</button></div></div>
@@ -6452,6 +6473,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/socialChallenge.js"></script>
 <script src="core/socialPrivacy.js"></script>
 <script src="core/socialSharing.js"></script>
+<script src="core/messaging.js"></script>
 <script src="core/socialIntelligence.js"></script>
 <script src="core/nutritionFoundation.js"></script>
 <script src="core/nutritionIntelligence.js"></script>
@@ -8417,7 +8439,11 @@ const IDEMPOTENT_TABELLEN_MET_CLIENT_ID = { sessions: true, race_segments: true,
   // veilig als "al gesynchroniseerd" te herkennen -- geen dataverlies/-duplicatie
   // (de primary-key-constraint voorkwam dat al), maar de gebruiker zag de
   // trainingssessie voor altijd als "niet gesynchroniseerd" staan.
-  training_instances: true };
+  // SOCIAL/SAMEN MASTER SPRINT S5 -- Messaging: een verloren HTTP-response na
+  // sendDirectMessage() zou zonder dit een dubbel bericht in de wachtrij
+  // kunnen opleveren bij een retry. Zelfde id-uuid-structuur (newTrainingInstanceId()),
+  // hergebruikt hetzelfde, bestaande mechanisme -- geen nieuwe idempotency-laag.
+  training_instances: true, messages: true };
 function newClientRowId(){
   return (typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():('row-'+Date.now()+'-'+Math.random().toString(16).slice(2));
 }
@@ -11704,6 +11730,8 @@ function go(id){
   if(id==='s-running-insights')renderRunningInsights();
   if(id==='s-cycling-insights')renderCyclingInsights();
   if(id==='s-social')renderSocialScreen();
+  if(id==='s-messages')renderMessagesScreen();
+  if(id==='s-message-thread'){}
   if(id==='s-nutrition')renderNutritionScreen();
   if(id==='s-cycling')renderCyclingShell();
   if(id==='s-swimming')renderSwimmingEntry();
@@ -12650,8 +12678,12 @@ async function renderSocialScreen(){
       ${pendingIn.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px">${escHtml(p.follower_id)}</span><button class="btn btn-p btn-sm" onclick="socialAcceptFollow('${p.id}','${p.follower_id}')">Accepteren</button></div>`).join('')}
     </div></div>`:''}
 
+    <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Berichten</div></div><div class="card-body">
+      <button class="btn btn-o btn-sm" style="width:100%" onclick="go('s-messages')">Openen <span id="social-unread-badge"></span></button>
+    </div></div>
+
     <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Mijn connecties (${connections.length})</div></div><div class="card-body">
-      ${connections.length?connections.map(c=>{const anderId=c.follower_id===uid?c.followee_id:c.follower_id;return `<div style="font-size:13px;margin-bottom:6px">${escHtml(anderId)}</div>`;}).join(''):'<p style="font-size:13px;color:var(--g4);margin:0">Nog geen connecties.</p>'}
+      ${connections.length?connections.map(c=>{const anderId=c.follower_id===uid?c.followee_id:c.follower_id;return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:13px">${escHtml(anderId)}</span><button class="btn btn-o btn-sm" onclick="startDirectMessage('${anderId}')">Bericht sturen</button></div>`;}).join(''):'<p style="font-size:13px;color:var(--g4);margin:0">Nog geen connecties.</p>'}
     </div></div>
 
     <div class="card"><div class="card-hd"><div class="card-title">Geblokkeerd (${blocks.length})</div></div><div class="card-body">
@@ -12683,6 +12715,7 @@ async function renderSocialScreen(){
   socialRenderNotifications();
   socialRenderChallenges();
   socialRenderFeed();
+  updateSocialUnreadBadge();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -12778,6 +12811,147 @@ async function socialShareActivity(activityData,achievementLabel,athleteNote,vis
 }
 
 // --- Feed: gedeelde activiteiten van jezelf + connecties, met reacties/comments ---
+// ══════════════════════════════════════════════════════════
+// SOCIAL / SAMEN MASTER SPRINT — S5 MESSAGING UI
+// Hergebruikt uitsluitend de bestaande, volledig geteste (47/47)
+// MessagingCore + message_threads/message_participants/messages -- geen
+// tweede DM-model, geen nieuwe chat-engine. RLS blijft de daadwerkelijke
+// autorisatiegrens; MessagingCore-functies worden hier alleen gebruikt om
+// de UI consistent te tonen/verbergen (nooit als enige controle).
+// ══════════════════════════════════════════════════════════
+
+// Start of hervind een DIRECT-gesprek met een connectie. Idempotent via de
+// nieuwe get_or_create_direct_thread-RPC (migratie_v555) -- een herhaalde
+// klik opent altijd hetzelfde gesprek, nooit een duplicaat. Bewust online-
+// only (sbRpc, niet sbRpcQ): het resultaat (thread_id) is nodig voor
+// onmiddellijke navigatie -- een offline-gequeued "true" zou nergens naartoe
+// kunnen navigeren. Het versturen van berichten BINNEN een geopend gesprek
+// (sendDirectMessage) is wel offline-safe via sbPostQ.
+async function startDirectMessage(otherUserId){
+  const threadId=await sbRpc('get_or_create_direct_thread',{p_other_user_id:otherUserId});
+  if(!threadId){toast('Gesprek starten mislukt — controleer of jullie verbonden zijn');return;}
+  openMessageThread(threadId);
+}
+
+function openMessageThread(threadId){
+  document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById('s-message-thread');
+  if(el){el.classList.add('active');focusScreenForA11y(el);}
+  renderMessageThreadScreen(threadId);
+}
+
+async function updateSocialUnreadBadge(){
+  const uid=authSession?.user?.id;
+  const el=document.getElementById('social-unread-badge');
+  if(!el||!uid)return;
+  try{
+    const participaties=await sbGet('message_participants',`&user_id=eq.${uid}`);
+    if(!participaties.length)return;
+    let totaalOngelezen=0;
+    for(const p of participaties){
+      const berichten=await sbGet('messages',`&thread_id=eq.${p.thread_id}&sender_user_id=neq.${uid}`);
+      totaalOngelezen+=MessagingCore.unreadCount(p.last_read_at,berichten);
+    }
+    if(totaalOngelezen>0)el.textContent='('+totaalOngelezen+' ongelezen)';
+  }catch(e){}
+}
+
+// Thread-lijst: alleen threads waar de gebruiker daadwerkelijk participant
+// van is (RLS dwingt dit sowieso af server-side; dit is uitsluitend de
+// UI-query). Toont de tegenpartij (DIRECT) of het thread_type (GROUP/TEAM/
+// COACH_ATHLETE) en het ongelezen-aantal via MessagingCore.unreadCount().
+async function renderMessagesScreen(){
+  const el=document.getElementById('messages-scroll');
+  if(!el)return;
+  el.innerHTML='<p style="font-size:13px;color:var(--g4)">Laden…</p>';
+  const uid=authSession?.user?.id;
+  if(!uid){el.innerHTML='<p style="font-size:13px;color:var(--g4)">Niet ingelogd.</p>';return;}
+  let participaties=[];
+  try{participaties=await sbGet('message_participants',`&user_id=eq.${uid}&order=thread_id.desc`);}catch(e){}
+  if(!participaties.length){el.innerHTML='<div class="card"><div class="card-body"><p style="font-size:14px;margin:0">Nog geen gesprekken. Start er een vanaf een connectie in Sociaal.</p></div></div>';return;}
+  const threadIds=participaties.map(p=>p.thread_id);
+  let threads=[];
+  try{threads=await sbGet('message_threads',`&id=in.(${threadIds.join(',')})`);}catch(e){}
+  const rijen=[];
+  for(const p of participaties){
+    const thread=threads.find(t=>t.id===p.thread_id);
+    if(!thread)continue;
+    let anderePartij=null;
+    if(thread.thread_type==='DIRECT'){
+      try{
+        const overigen=await sbGet('message_participants',`&thread_id=eq.${thread.id}&user_id=neq.${uid}&limit=1`);
+        anderePartij=overigen&&overigen[0]?overigen[0].user_id:null;
+      }catch(e){}
+    }
+    let ongelezenAantal=0;
+    try{
+      const berichten=await sbGet('messages',`&thread_id=eq.${thread.id}&sender_user_id=neq.${uid}`);
+      ongelezenAantal=MessagingCore.unreadCount(p.last_read_at,berichten);
+    }catch(e){}
+    const label=thread.thread_type==='DIRECT'?(anderePartij||'Direct gesprek'):thread.thread_type==='COACH_ATHLETE'?'Coach':thread.thread_type;
+    rijen.push({threadId:thread.id,label,ongelezenAantal,status:thread.status});
+  }
+  el.innerHTML=rijen.map(r=>`<button class="row" onclick="openMessageThread('${r.threadId}')"><span class="b"><span class="t">${escHtml(r.label)}${r.status!=='active'?' (gesloten)':''}</span>${r.ongelezenAantal?`<span class="s">${r.ongelezenAantal} ongelezen</span>`:''}</span><span class="ar">›</span></button>`).join('');
+}
+
+// Gesprek-detail: history + versturen. sender_type wordt server-side
+// afgedwongen (m_insert_own_sender), hier alleen client-side gespiegeld
+// voor de weergave (MessagingCore.renderSenderLabel) -- Human Coach en AI
+// Coach worden nooit door elkaar getoond (sectie 22 van de opdracht).
+let _messageThreadHuidigId=null;
+async function renderMessageThreadScreen(threadId){
+  _messageThreadHuidigId=threadId;
+  const el=document.getElementById('message-thread-scroll');
+  const titelEl=document.getElementById('message-thread-title');
+  if(!el)return;
+  el.innerHTML='<p style="font-size:13px;color:var(--g4)">Laden…</p>';
+  const uid=authSession?.user?.id;
+  if(!uid)return;
+  let thread=null,participants=[],berichten=[];
+  try{const rows=await sbGet('message_threads',`&id=eq.${threadId}&limit=1`);thread=rows&&rows[0];}catch(e){}
+  try{participants=await sbGet('message_participants',`&thread_id=eq.${threadId}`);}catch(e){}
+  try{berichten=await sbGet('messages',`&thread_id=eq.${threadId}&order=created_at.asc&limit=200`);}catch(e){}
+  if(!thread||!MessagingCore.isParticipant(uid,threadId,participants)){
+    el.innerHTML='<p style="font-size:13px;color:var(--g4)">Gesprek niet gevonden of niet toegankelijk.</p>';
+    return;
+  }
+  if(titelEl){
+    const anderePartij=participants.find(p=>p.user_id!==uid);
+    titelEl.textContent=thread.thread_type==='DIRECT'?(anderePartij?anderePartij.user_id:'Gesprek'):thread.thread_type;
+  }
+  el.innerHTML=berichten.map(m=>{
+    const senderInfo=MessagingCore.renderSenderLabel(m.sender_type);
+    const isEigen=m.sender_user_id===uid;
+    return `<div style="align-self:${isEigen?'flex-end':'flex-start'};max-width:80%;margin-bottom:8px">
+      <div style="font-size:10px;color:var(--g4);margin-bottom:2px">${escHtml(senderInfo.label)}${senderInfo.isAi?' 🤖':senderInfo.isHuman?' 👤':''}</div>
+      <div style="background:${isEigen?'var(--accent2)':'var(--g1)'};color:${isEigen?'#fff':'inherit'};padding:8px 12px;border-radius:12px;font-size:13px">${escHtml(m.body)}</div>
+    </div>`;
+  }).join('')||'<p style="font-size:13px;color:var(--g4)">Nog geen berichten -- stuur het eerste.</p>';
+  el.scrollTop=el.scrollHeight;
+  // Markeer als gelezen (eigen participant-rij, RLS: mp_update_own_read_state).
+  try{await sbPatchQ('message_participants','thread_id=eq.'+threadId+'&user_id=eq.'+uid,{last_read_at:new Date().toISOString()});}catch(e){}
+  const inputWrap=document.getElementById('message-thread-input');
+  if(inputWrap)inputWrap.style.display=thread.status==='active'?'flex':'none';
+}
+
+// Versturen: client-gegenereerd id (newTrainingInstanceId()-patroon, exact
+// dezelfde idempotency-garantie als eerdere sprints) + sbPostQ met de
+// bestaande IDEMPOTENT_TABELLEN_MET_CLIENT_ID-merge-upsert -- een retry na
+// een netwerkfout kan nooit een duplicaat bericht opleveren (sectie 46 van
+// de opdracht: één gebruikersintentie = maximaal één canonical mutation).
+async function sendDirectMessage(){
+  const uid=authSession?.user?.id;
+  const inputEl=document.getElementById('message-thread-body');
+  if(!uid||!inputEl||!_messageThreadHuidigId)return;
+  const body=inputEl.value.trim();
+  if(!body)return;
+  const payload={id:newTrainingInstanceId(),thread_id:_messageThreadHuidigId,sender_user_id:uid,sender_type:'ATHLETE',body:body.slice(0,4000)};
+  const ok=await sbPostQ('messages',payload);
+  if(!ok){toast('Versturen mislukt — probeer opnieuw');return;}
+  inputEl.value='';
+  renderMessageThreadScreen(_messageThreadHuidigId);
+}
+
 async function socialRenderFeed(){
   const uid=authSession?.user?.id;
   const el=document.getElementById('social-feed-list');

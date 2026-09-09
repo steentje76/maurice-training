@@ -24,6 +24,19 @@
 -- DEFAULT NULL. Een aanroep zonder dit argument (oudere client, of een
 -- toekomstige niet-offline-safe caller) gedraagt zich exact als voorheen
 -- (server-gegenereerd id, geen dedupe) -- 0 regressie op bestaand gedrag.
+--
+-- CORRECTIE (ontdekt tijdens live-uitvoeringspoging, sprint C2-E): CREATE OR
+-- REPLACE FUNCTION matcht in Postgres op de VOLLEDIGE parameterlijst (aantal +
+-- types), niet alleen op de naam. Een extra parameter toevoegen via CREATE OR
+-- REPLACE creëert daarom een TWEEDE, overloaded functie naast de bestaande
+-- 3-parameter-versie i.p.v. die te vervangen -- een aanroep met exact 3
+-- named args wordt dan ambigu tussen beide overloads ("function name is not
+-- unique"). DROP FUNCTION op de exacte, huidige 3-parameter-signatuur is
+-- daarom vereist vóór de nieuwe 4-parameter-CREATE. Dit is veilig: de nieuwe
+-- functie ondersteunt exact dezelfde 3-argument-aanroep (4e parameter heeft
+-- een DEFAULT), dus geen enkele bestaande caller breekt -- er is precies één
+-- functie-object na deze migratie, niet twee.
+DROP FUNCTION IF EXISTS public.schedule_my_training(text, date, jsonb);
 
 CREATE OR REPLACE FUNCTION public.schedule_my_training(
   p_workout_definition_id text,
@@ -98,7 +111,8 @@ COMMENT ON FUNCTION public.schedule_my_training IS
   'Sprint C2-D: atomaire, owner-geverifieerde, offline/retry-idempotente creatie van één occurrence + exact één self-assignment. p_occurrence_id (optioneel, client-gegenereerd) maakt een exacte replay van dezelfde gebruikersintentie een veilige no-op i.p.v. een duplicate create -- PK-based idempotency, concurrency-safe via unique_violation-catch, geen client-side lock als enige bescherming.';
 
 -- Geen schemawijziging (geen nieuwe kolom, geen nieuwe index, geen nieuwe
--- tabel) -- uitsluitend CREATE OR REPLACE FUNCTION. Geen backfill nodig:
+-- tabel) -- uitsluitend DROP FUNCTION (exacte oude signatuur) + CREATE
+-- FUNCTION (nieuwe signatuur, functioneel compatibel). Geen backfill nodig:
 -- bestaande rijen in planned_training_occurrences behouden hun server-
 -- gegenereerde id: p_occurrence_id was altijd al optioneel en NULL voor elke
 -- rij die vóór deze migratie is aangemaakt.

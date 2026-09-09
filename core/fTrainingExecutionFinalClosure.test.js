@@ -261,7 +261,7 @@ ok(html.indexOf("if(draft){clearTrainingDraft()}") === -1, 'sanity: clearTrainin
     const patchSrc = [
       sliceSrc('function sbRetryable', 'async function sbFetch'),
       sliceSrc('async function sbFetch(url,o)', 'async function sbGet'),
-      sliceSrc('async function sbPatchQ(t,f,d)', 'async function sbDelQ')
+      sliceSrc('async function sbPatchQ(t,f,d,opts)', 'async function sbDelQ')
     ].join('\n');
     const context = vm.createContext(sandbox);
     vm.runInContext(patchSrc + "\nglobalThis.__exports = { sbPatchQ };", context);

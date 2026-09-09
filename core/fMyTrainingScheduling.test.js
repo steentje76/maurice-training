@@ -90,7 +90,14 @@ ok(html.indexOf("onclick=\"openScheduleMyTraining('${v.id}'") > 0, '24. "Inplann
 {
   const fn = slice('async function openScheduleMyTraining', 'async function myTrainingSkipAssignment');
   ok(fn.indexOf('snapshotFromVasteTraining(') > 0, '25. Hergebruikt EXACT de bestaande snapshotFromVasteTraining() -- geen nieuwe, parallelle snapshotlogica en geen fake revisienummer');
-  ok(fn.indexOf("sbRpc('schedule_my_training'") > 0, '26. Roept de atomaire, owner-geverifieerde RPC aan (geen aparte, twee-staps client-side create die een orphan occurrence zou kunnen achterlaten)');
+  // SPRINT C2-D: create is nu offline/retry-veilig via sbRpcQ (migratie_v552,
+  // p_occurrence_id-idempotency) i.p.v. het online-only sbRpc(). Nog steeds
+  // dezelfde atomaire, owner-geverifieerde RPC -- alleen de transportlaag is
+  // uitgebreid, geen aparte twee-staps client-side create. Zie
+  // fMyTrainingOfflineRpcHardening.test.js voor de dekking van de offline/
+  // retry/idempotency-eigenschappen zelf.
+  ok(fn.indexOf("sbRpcQ('schedule_my_training'") > 0, '26. Roept de atomaire, owner-geverifieerde RPC aan via de offline/retry-veilige sbRpcQ (geen aparte, twee-staps client-side create die een orphan occurrence zou kunnen achterlaten)');
+  ok(fn.indexOf('newTrainingInstanceId()') > 0, '26b. occurrence_id wordt client-side gegenereerd (zelfde patroon als training_instances) zodat de mutation-identity al voor de eerste send vaststaat');
 }
 {
   const fn = slice('async function myTrainingSkipAssignment', 'async function myTrainingReschedule');

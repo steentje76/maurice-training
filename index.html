@@ -8475,6 +8475,38 @@ async function sbDelQ(t,f){
     return true;
   }
 }
+// SPRINT C2-D — sbRpcQ: generieke offline/retry-veilige laag voor MUTERENDE RPC's,
+// hergebruikt exact dezelfde IndexedDB-queue/owner_uid-isolatie/retry-classificatie
+// als sbPostQ/sbPatchQ/sbDelQ (geen tweede/parallelle offline-engine). sbRpc() zelf
+// blijft ongewijzigd en online-only voor alle overige (niet-muterende of reeds elders
+// afgedekte) RPC-aanroepen in de app.
+// VEREISTE: de aanroepende RPC moet zelf een server-side idempotency-parameter
+// ondersteunen (bv. schedule_my_training(p_occurrence_id), migratie_v552) die de
+// aanroeper VOORAF, éénmalig, client-side genereert en bij elke retry/replay
+// ongewijzigd doorgeeft in args -- sbRpcQ genereert zelf NOOIT een mutation-id en
+// regenereert er ook nooit een; dat zou de idempotency-garantie juist doorbreken.
+// Niet-idempotente muterende RPC's mogen sbRpcQ NIET gebruiken (zouden bij replay
+// alsnog een dubbel server-side effect kunnen krijgen).
+// Returnwaarde volgt hetzelfde patroon als sbPostQ/sbPatchQ: bij online succes het
+// echte RPC-resultaat; bij offline/gequeued `true` (resultaat nog onbekend, komt pas
+// bij een latere flush); bij een permanente fout (validatie/permission/auth) `false`.
+async function sbRpcQ(fn,args){
+  if(!navigator.onLine){await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args});updateOfflineBadge();return true;}
+  try{
+    const r=await sbFetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',body:args});
+    if(!r.ok){
+      const err=await r.text();console.error('sbRpcQ',fn,r.status,err);
+      if(sbRetryable(r.status)){await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args});updateOfflineBadge();return true;}
+      return false;
+    }
+    return await r.json();
+  }catch(e){
+    console.warn('sbRpcQ offline, queued',fn,e);
+    await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args});
+    updateOfflineBadge();
+    return true;
+  }
+}
 // Speelt de queue in volgorde af; stopt bij de eerste fout zodat de volgorde behouden
 // blijft.
 let _flushBezig=false;
@@ -8515,7 +8547,12 @@ async function flushOfflineQueue(){
   let syncedAny=false, skippedAny=false;
   for(const item of teVerwerken){
     try{
-      const url=item.method==='POST'?`${SB_URL}/rest/v1/${item.table}`:`${SB_URL}/rest/v1/${item.table}?${item.filter}`;
+      // SPRINT C2-D: item.method==='RPC' -- generieke muterende-RPC-replay
+      // (sbRpcQ). Geen Prefer-header nodig (RPC is geen PostgREST-upsert);
+      // de idempotency zit in de RPC-body zelf (bv. p_occurrence_id) en wordt
+      // hier ongewijzigd meegestuurd -- exact dezelfde args als de eerste,
+      // gefaalde poging, nooit opnieuw gegenereerd.
+      const url=item.method==='POST'?`${SB_URL}/rest/v1/${item.table}`:(item.method==='RPC'?`${SB_URL}/rest/v1/rpc/${item.function}`:`${SB_URL}/rest/v1/${item.table}?${item.filter}`);
       // F13 Post-Audit Remediation (P1-04): dezelfde idempotente upsert-header
       // als sbPostQ() zelf gebruikt. Zonder dit zou een item dat vóór het
       // queuen al succesvol (met hetzelfde, client-gegenereerde id) was
@@ -8524,7 +8561,9 @@ async function flushOfflineQueue(){
       // blijven staan, zonder dat er ooit een echte duplicate ontstaat.
       const opts=item.method==='DELETE'
         ?{method:'DELETE'}
-        :{method:item.method,prefer:(item.method==='POST'&&IDEMPOTENT_TABELLEN_MET_CLIENT_ID[item.table])?'return=representation,resolution=merge-duplicates':'return=representation',body:item.body};
+        :(item.method==='RPC'
+          ?{method:'POST',body:item.args}
+          :{method:item.method,prefer:(item.method==='POST'&&IDEMPOTENT_TABELLEN_MET_CLIENT_ID[item.table])?'return=representation,resolution=merge-duplicates':'return=representation',body:item.body});
       const r=await sbFetch(url,opts);
       if(!r.ok){
         // v5.9.5: serverfout op dit ene item (bv. validatie, verwijzing naar inmiddels
@@ -8556,7 +8595,9 @@ function updateOfflineBadge(){
 }
 // Korte, leesbare omschrijving van een queue-item voor het beheerscherm.
 function describeOfflineQueueItem(item){
-  const methodLbl={POST:'Nieuw',PATCH:'Wijziging',DELETE:'Verwijdering'}[item.method]||item.method;
+  const methodLbl={POST:'Nieuw',PATCH:'Wijziging',DELETE:'Verwijdering',RPC:'Actie'}[item.method]||item.method;
+  if(item.method==='RPC'&&item.function==='schedule_my_training')return `Mijn Training inplannen — ${escHtml(item.args?.p_planned_date||'')}`;
+  if(item.method==='RPC')return `${methodLbl}: ${item.function}`;
   if(item.table==='sessions'&&item.body){
     const n=exercises?.find(e=>e.id===item.body.exercise_id)?.name||item.body.exercise_id||'sessie';
     return `${methodLbl}: ${escHtml(n)} — ${escHtml(item.body.date||'')}`;
@@ -11526,14 +11567,19 @@ async function openScheduleMyTraining(vasteTrainingId,naam){
     if(!def){toast('Training niet gevonden');return;}
     const texs=await sbGet('training_exercises','&training_ref=eq.'+encodeURIComponent(vasteTrainingId)+'&order=sort_order.asc');
     const snapshot=snapshotFromVasteTraining({id:def.id,naam:def.naam},texs);
-    // Atomaire, owner-geverifieerde RPC (migratie_v551): creëert occurrence +
-    // exact één self-assignment in één transactie -- geen orphan occurrence
-    // door een half-mislukte create (sectie 8). Online-only in V1, consistent
-    // met alle overige sbRpc()-aanroepen in de app (geen bestaande offline-
-    // RPC-queue-infrastructuur elders aanwezig om op aan te sluiten).
-    const result=await sbRpc('schedule_my_training',{p_workout_definition_id:vasteTrainingId,p_planned_date:datum,p_definition_snapshot:snapshot});
+    // SPRINT C2-D: occurrence-id wordt client-side gegenereerd, VOOR de eerste
+    // send -- exact hetzelfde patroon als newTrainingInstanceId() (id-kolom is
+    // uuid, geen server-default meer nodig als de client 'm meegeeft). Blijft
+    // ongewijzigd bij elke retry/replay omdat sbRpcQ 'm nooit zelf opnieuw
+    // genereert: de queue-entry bevat exact deze args, ook na een app-restart.
+    // schedule_my_training (migratie_v552) herkent een replay van dezelfde
+    // p_occurrence_id server-side (PK-based idempotency) en geeft dan gewoon
+    // dezelfde id terug i.p.v. een tweede occurrence aan te maken (sectie 4/16/17).
+    const occurrenceId=newTrainingInstanceId();
+    const result=await sbRpcQ('schedule_my_training',{p_workout_definition_id:vasteTrainingId,p_planned_date:datum,p_definition_snapshot:snapshot,p_occurrence_id:occurrenceId});
     if(!result){toast('Inplannen mislukt — controleer je internetverbinding en probeer opnieuw');return;}
-    toast('"'+naam+'" ingepland voor '+datum);
+    if(result===true){toast('"'+naam+'" wordt gesynchroniseerd zodra je weer online bent');}
+    else{toast('"'+naam+'" ingepland voor '+datum);}
   }catch(e){ console.error('openScheduleMyTraining',e); toast('Inplannen mislukt'); }
 }
 

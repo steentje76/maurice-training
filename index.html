@@ -7606,6 +7606,14 @@ function cardioDataToRow(cardioType, d){
     if(sp.length)notes.push('splits:'+sp.join(','));
   }
   if(notes.length)row.extraNote=notes.join(' | ');
+  // GAP-P2-013: watt-herkomst meeschrijven als bekend. Alleen gezet als
+  // er daadwerkelijk een watt-waarde EN een bekende bron is -- nooit een
+  // verzonnen 'measured' default. Hergebruikt de bestaande
+  // concept2_measured/concept2_derived-vocabulaire (DeviceCore), geen
+  // nieuwe waarden uitgevonden.
+  if(d.wattSource && (d.wattSource==='concept2_measured'||d.wattSource==='concept2_derived') && row.watt!=null){
+    row.watt_source=d.wattSource;
+  }
   // Zwemmen: pace_sec is een afgeleide kolom (geen los invoerveld), vandaar los van rowMap.
   if(cfg.derivePaceSec&&row.distance&&row.time_str){
     const sec=parseTimeToSec(row.time_str);
@@ -17918,6 +17926,9 @@ function recomputeCardioFields(exId,cardioType,changedField){
     if(w){
       splitVal=CardioEngine.splitFromWatt500(w);
       setCardioVal(exId,outField,CardioEngine.formatTime(splitVal));
+      // GAP-P2-013: de gebruiker heeft dit getal zelf ingetypt (van het
+      // scherm van de erg afgelezen) -- device-gemeten, geen afleiding.
+      cardioWattSource[exId]='concept2_measured';
     }
   }
 
@@ -17935,7 +17946,13 @@ function recomputeCardioFields(exId,cardioType,changedField){
   // Watt afleiden uit de (evt. zojuist herberekende) split, tenzij watt zelf de invoer was.
   if(hasWatt && changedField!=='watt'){
     const finalSplit=CardioEngine.parseTime(getCardioVal(exId,outField));
-    if(finalSplit)setCardioVal(exId,'watt',Math.round(CardioEngine.wattFromSplit500(finalSplit)));
+    if(finalSplit){
+      setCardioVal(exId,'watt',Math.round(CardioEngine.wattFromSplit500(finalSplit)));
+      // GAP-P2-013: dit getal is NIET door de gebruiker ingetypt -- het is
+      // automatisch berekend uit de split (CALC-END-002). Expliciet
+      // gemarkeerd, nooit stilzwijgend als gemeten behandeld.
+      cardioWattSource[exId]='concept2_derived';
+    }
   }
 }
 
@@ -17949,6 +17966,18 @@ function recomputeCardioFields(exId,cardioType,changedField){
 // ══════════════════════════════════════════════════════════
 let cardioSplitMode={};
 let cardioSplits={};
+// GAP-P2-013: houdt per exId bij of de laatst-bekende watt-waarde direct
+// door de gebruiker is ingetypt (device-gemeten, van het scherm van de
+// erg afgelezen) of automatisch is afgeleid uit de split (CALC-END-002).
+// Hergebruikt bewust de al-bestaande, correct ontworpen vocabulaire uit
+// DeviceCore/tkRenderConcept2Actual ('concept2_measured'/'concept2_derived')
+// i.p.v. een nieuwe uit te vinden. In-memory (niet in localStorage) --
+// overleeft geen page-reload op zichzelf, maar cardioDataToRow() leest dit
+// op het moment van opslaan, dus de EERSTVOLGENDE opslag na een reload
+// heeft geen bekende bron totdat de gebruiker het veld opnieuw aanraakt;
+// dat is de bestaande, aanvaarde staat sinds vóór deze fix (watt zelf had
+// ook geen enkele herkomstinformatie), dus geen regressie.
+let cardioWattSource={};
 function numSplitsFor(exId,cfg){
   const distVal=numNL(getCardioVal(exId,cfg.calc?.distField))||cfg.splitTotal; // KOMMA-VEILIG
   return Math.max(1,Math.round(distVal/cfg.splitDist));
@@ -18074,6 +18103,9 @@ function logCardio(exId, cardioType){
   if(!sessionLog[exId]) sessionLog[exId]={};
   const data={type:cardioType,machine:localStorage.getItem('sel_'+cardioType)||''};
   cfg.fields.forEach(f=>{data[f]=getCardioVal(exId,f);});
+  // GAP-P2-013: watt-herkomst meenemen (geen zichtbaar veld -- alleen
+  // relevant voor apparaten waar watt daadwerkelijk een veld is).
+  if(cfg.fields.includes('watt') && cardioWattSource[exId]) data.wattSource=cardioWattSource[exId];
   if(cfg.splits){
     data.splitMode=cardioSplitMode[exId]||'auto';
     data.splits=cardioSplits[exId]?{...cardioSplits[exId]}:{};
@@ -18805,10 +18837,15 @@ function cardioPerfFromSession(s, cardioType){
   var basis = (cfg && cfg.calc && cfg.calc.basis) ? cfg.calc.basis : null;
   var splitSec = (distance && durationSec && basis) ? CardioCore.splitFromDistTime(distance, durationSec, basis) : null;
   var watts = (s.watt!=null && s.watt!=="") ? Number(s.watt) : null;
+  // GAP-P2-013: herkomst doorgeven indien bekend (nooit verzonnen). Bestaande
+  // vergelijkingslogica (isNewBest/trendBy) blijft in deze fix ONGEWIJZIGD --
+  // dit maakt de herkomst uitsluitend ZICHTBAAR voor een latere UI-/AI-laag,
+  // geen wijziging aan wélke waarde als 'beste' geldt.
+  var wattsSource = s.watt_source || null;
   var calories = (s.calories!=null && s.calories!=="") ? Number(s.calories) : null;
   var calPerMin = (calories!=null && durationSec) ? (calories/(durationSec/60)) : null;
   var key = s.exercise_id + '@' + (distance!=null ? distance : (cardioType==='assaultbike'?'cal':''));
-  return { key:key, date:s.date, durationSec:durationSec, splitSec:splitSec, watts:watts, calPerMin:calPerMin, calories:calories };
+  return { key:key, date:s.date, durationSec:durationSec, splitSec:splitSec, watts:watts, wattsSource:wattsSource, calPerMin:calPerMin, calories:calories };
 }
 function cardioProgressionMetrics(cardioType){
   if(cardioType==='assaultbike') return [ {field:'calPerMin',dir:'max'}, {field:'watts',dir:'max'} ];

@@ -11118,7 +11118,10 @@ async function availConflictSkip(blockId){
   const bevestigd=await confirmModal('Deze training overslaan vanwege je beschikbaarheid? Hij telt dan niet mee als afgerond, maar blijft zichtbaar als bewust overgeslagen.',{title:'Overslaan',okLabel:'Overslaan',cancelLabel:'Annuleren'});
   if(!bevestigd)return;
   const ok=await sbPatchQ('program_blocks','id=eq.'+blockId,{schedule_status:'skipped'});
-  if(!ok){toast('Kon niet opslaan — probeer opnieuw');return;}
+  if(!ok){
+    if(typeof ObservabilityCore!=='undefined'){ObservabilityCore.tkLog('ERROR','calendar.skip.failed','calendar','conflict_action',{},{app_version:(typeof APP_VER!=='undefined'?APP_VER:'unknown'),environment:'browser'});}
+    toast('Kon niet opslaan — probeer opnieuw');return;
+  }
   toast('Training overgeslagen');
   renderAvailabilityScreen();
 }
@@ -11149,7 +11152,10 @@ async function availConflictReschedule(blockId){
       if(!bevestigd)return;
     }
     const ok=await sbPatchQ('program_blocks','id=eq.'+blockId,{planned_date:nieuweDatum,rescheduled_from:block.planned_date,reschedule_reason:'manual',schedule_status:'rescheduled'});
-    if(!ok){toast('Kon niet opslaan — probeer opnieuw');return;}
+    if(!ok){
+      if(typeof ObservabilityCore!=='undefined'){ObservabilityCore.tkLog('ERROR','calendar.reschedule.failed','calendar','conflict_action',{},{app_version:(typeof APP_VER!=='undefined'?APP_VER:'unknown'),environment:'browser'});}
+      toast('Kon niet opslaan — probeer opnieuw');return;
+    }
     toast('Training verplaatst naar '+nieuweDatum);
     renderAvailabilityScreen();
   }catch(e){ console.error('availConflictReschedule',e); toast('Verplaatsen mislukt'); }
@@ -11301,6 +11307,20 @@ function calMonthNav(delta){
 
 const CAL_MAAND_NAMEN=['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
 
+// GEVONDEN TIJDENS ADVERSARIAL HARDENING (C1-B, sectie 25/26): de bestaande,
+// gedeelde sbGet() retourneert bij een laadfout stil [] -- niet te onderscheiden
+// van "genuinely geen data". Voor Calendar is dit onderscheid functioneel
+// belangrijk (nooit "geen trainingen" tonen als het laden feitelijk mislukte).
+// Minimale, LOKALE wrapper -- raakt de gedeelde sbGet() zelf niet aan (dat zou
+// een appbrede, risicovollere wijziging zijn, buiten deze sprint-scope).
+async function sbGetOrFail(t,p){
+  try{
+    const r=await sbFetch(`${SB_URL}/rest/v1/${t}?select=*${p||''}`,{});
+    if(!r.ok){ return {failed:true, rows:[]}; }
+    return {failed:false, rows:await r.json()};
+  }catch(e){ return {failed:true, rows:[]}; }
+}
+
 async function renderCalMonth(){
   const labelEl=document.getElementById('cal-month-label');
   const gridEl=document.getElementById('cal-month-grid');
@@ -11314,17 +11334,41 @@ async function renderCalMonth(){
     const maandStart=CalendarMonthViewCore.ymd(calYear,calMonth,1);
     const maandEind=CalendarMonthViewCore.ymd(calYear,calMonth,CalendarMonthViewCore.daysInMonth(calYear,calMonth));
     // Canonical bronnen, elk apart en direct opgehaald -- geen synchronisatietabel,
-    // geen kopie (sectie 54). Fail-safe: bij een load-fout tonen we een foutmelding,
-    // NOOIT stil een lege maand alsof er bewezen niets gepland staat (sectie 42).
-    const [progs, sessies, availRows] = await Promise.all([
-      sbGet('programs','&user_id=eq.'+authSession.user.id+'&status=eq.actief'),
-      sbGet('sessions','&date=gte.'+maandStart+'&date=lte.'+maandEind),
-      sbGet('availability_periods','&user_id=eq.'+authSession.user.id+'&order=start_date.asc')
+    // geen kopie (sectie 54). Fail-safe: bij een load-fout tonen we een expliciete
+    // foutmelding (via sbGetOrFail's failed-vlag), NOOIT stil een lege maand alsof
+    // er bewezen niets gepland staat (sectie 42) -- elke bron apart gecontroleerd
+    // zodat een PARTIAL failure (bv. availability faalt, program_blocks lukt) niet
+    // ten onrechte een vals conflictvrij beeld geeft (sectie 26).
+    const [progsR, sessiesR, availR] = await Promise.all([
+      sbGetOrFail('programs','&user_id=eq.'+authSession.user.id+'&status=eq.actief'),
+      sbGetOrFail('sessions','&date=gte.'+maandStart+'&date=lte.'+maandEind),
+      sbGetOrFail('availability_periods','&user_id=eq.'+authSession.user.id+'&order=start_date.asc')
     ]);
-    let blocks=[];
+    const anyFailed = progsR.failed||sessiesR.failed||availR.failed;
+    if(anyFailed){
+      if(typeof ObservabilityCore!=='undefined'){
+        ObservabilityCore.tkLog('ERROR','calendar.load.partial_or_full_failed','calendar','month_view',
+          {programs_failed:progsR.failed,sessions_failed:sessiesR.failed,availability_failed:availR.failed},
+          {app_version:(typeof APP_VER!=='undefined'?APP_VER:'unknown'),environment:'browser'});
+      }
+    }
+    const progs=progsR.rows, sessies=sessiesR.rows, availRows=availR.rows;
+    let blocks=[]; let blocksFailed=false;
     if(progs&&progs.length){
       const progIds=progs.map(function(p){return p.id;}).join(',');
-      blocks=await sbGet('program_blocks','&program_id=in.('+progIds+')&planned_date=gte.'+maandStart+'&planned_date=lte.'+maandEind);
+      const blocksR=await sbGetOrFail('program_blocks','&program_id=in.('+progIds+')&planned_date=gte.'+maandStart+'&planned_date=lte.'+maandEind);
+      blocks=blocksR.rows; blocksFailed=blocksR.failed;
+      if(blocksFailed&&typeof ObservabilityCore!=='undefined'){
+        ObservabilityCore.tkLog('ERROR','calendar.load.program_blocks_failed','calendar','month_view',{},
+          {app_version:(typeof APP_VER!=='undefined'?APP_VER:'unknown'),environment:'browser'});
+      }
+    }
+    if(anyFailed||blocksFailed){
+      gridEl.innerHTML='<div class="tk-empty">Kon kalender niet volledig laden — probeer te vernieuwen. Getoonde informatie kan onvolledig zijn.</div>';
+      // Bewust GEEN return hier: we tonen de foutmelding, maar renderen NIET
+      // stil verder alsof de ontbrekende data "geen trainingen" betekent --
+      // de grid wordt hierna niet meer opgebouwd voor deze render-cyclus.
+      return;
     }
     const cellen=CalendarMonthViewCore.buildMonthGrid(calYear,calMonth,{
       programBlocks:blocks, sessions:sessies||[], availabilityPeriods:availRows||[],
@@ -11340,7 +11384,21 @@ async function renderCalMonth(){
       const heeftGepland=c.plannedBlocks.length>0, heeftVoltooid=c.completedBlocks.length>0;
       const kleur=c.conflictLevel==='conflict'?'#e53935':(c.conflictLevel==='context'?'#f0a500':(heeftGepland||heeftVoltooid||c.hasHistory?'var(--accent)':'var(--g6)'));
       const isSel=calSelectedDate===c.date;
-      html+='<button onclick="calSelectDay(\''+c.date+'\')" style="aspect-ratio:1;border-radius:8px;border:'+(c.isToday?'2px solid var(--accent)':'1px solid var(--g6)')+';background:'+(isSel?'var(--accent)':'transparent')+';color:'+(isSel?'#fff':'var(--dark)')+';font-size:12px;font-weight:'+(c.isToday?'800':'500')+';position:relative;cursor:pointer">'+dagNr+
+      // Status NIET uitsluitend via kleur (sectie 7): een conflict/context-dag krijgt
+      // een tekstglyph (⚠/•) bovenop de kleur, en elke cel krijgt een beschrijvend
+      // aria-label zodat de status ook zonder kleurperceptie/via screenreader
+      // te onderscheiden is.
+      const glyph=c.conflictLevel==='conflict'?'&#9888;':(c.conflictLevel==='context'?'&#8226;':'');
+      let statusTekst='geen training';
+      if(heeftVoltooid)statusTekst='voltooid';
+      else if(c.skippedBlocks.length)statusTekst='overgeslagen';
+      else if(heeftGepland&&c.conflictLevel==='conflict')statusTekst='gepland, conflict met beschikbaarheid';
+      else if(heeftGepland&&c.conflictLevel==='context')statusTekst='gepland, beperkte beschikbaarheid';
+      else if(heeftGepland)statusTekst='gepland';
+      else if(c.hasHistory)statusTekst='trainingshistorie';
+      const ariaLabel=c.date+', '+statusTekst+(c.isToday?', vandaag':'');
+      html+='<button onclick="calSelectDay(\''+c.date+'\')" aria-label="'+ariaLabel+'" aria-pressed="'+(isSel?'true':'false')+'" style="aspect-ratio:1;border-radius:8px;border:'+(c.isToday?'2px solid var(--accent)':'1px solid var(--g6)')+';background:'+(isSel?'var(--accent)':'transparent')+';color:'+(isSel?'#fff':'var(--dark)')+';font-size:12px;font-weight:'+(c.isToday?'800':'500')+';position:relative;cursor:pointer">'+dagNr+
+        (glyph?'<span style="position:absolute;top:1px;right:2px;font-size:9px;line-height:1">'+glyph+'</span>':'')+
         ((heeftGepland||heeftVoltooid||c.hasHistory)?'<span style="position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:'+(isSel?'#fff':kleur)+'"></span>':'')+
         '</button>';
     });

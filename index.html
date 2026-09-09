@@ -8490,13 +8490,23 @@ async function sbDelQ(t,f){
 // Returnwaarde volgt hetzelfde patroon als sbPostQ/sbPatchQ: bij online succes het
 // echte RPC-resultaat; bij offline/gequeued `true` (resultaat nog onbekend, komt pas
 // bij een latere flush); bij een permanente fout (validatie/permission/auth) `false`.
+// SPRINT C2-D (punt 14): observability voor de RPC-offline-laag, via de al
+// bestaande ObservabilityCore.tkLog() (zelfde patroon als calendar.skip.failed/
+// calendar.reschedule.failed hierboven) -- geen nieuwe telemetrielaag. Logt
+// uitsluitend functienaam/status, NOOIT item.args (kan een definition_snapshot
+// bevatten) -- geen gevoelige RPC-argumenten, geen PII in telemetry.
+function tkLogRpcOffline(event,fn,extra){
+  if(typeof ObservabilityCore==='undefined')return;
+  try{ObservabilityCore.tkLog('INFO',event,'offline_queue','rpc',Object.assign({function:fn},extra||{}),{app_version:(typeof APP_VER!=='undefined'?APP_VER:'unknown'),environment:'browser'});}catch(e){}
+}
 async function sbRpcQ(fn,args){
-  if(!navigator.onLine){await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args});updateOfflineBadge();return true;}
+  if(!navigator.onLine){await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args});updateOfflineBadge();tkLogRpcOffline('rpc_offline_queued',fn);return true;}
   try{
     const r=await sbFetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',body:args});
     if(!r.ok){
       const err=await r.text();console.error('sbRpcQ',fn,r.status,err);
-      if(sbRetryable(r.status)){await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args});updateOfflineBadge();return true;}
+      if(sbRetryable(r.status)){await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args});updateOfflineBadge();tkLogRpcOffline('rpc_offline_queued',fn,{status:r.status});return true;}
+      tkLogRpcOffline('rpc_replay_permanent_failure',fn,{status:r.status});
       return false;
     }
     return await r.json();
@@ -8504,6 +8514,7 @@ async function sbRpcQ(fn,args){
     console.warn('sbRpcQ offline, queued',fn,e);
     await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args});
     updateOfflineBadge();
+    tkLogRpcOffline('rpc_offline_queued',fn);
     return true;
   }
 }
@@ -8572,9 +8583,11 @@ async function flushOfflineQueue(){
         // sync-poging. Item blijft in de wachtrij staan (zichtbaar/beheerbaar via het
         // bestaande wachtrij-scherm), maar de rest wordt gewoon geprobeerd.
         console.error('flushOfflineQueue: item mislukt, wordt overgeslagen (blijft in wachtrij)',item.table,r.status,await r.text());
+        if(item.method==='RPC')tkLogRpcOffline(sbRetryable(r.status)?'rpc_replay_retryable_failure':'rpc_replay_permanent_failure',item.function,{status:r.status});
         skippedAny=true;
         continue;
       }
+      if(item.method==='RPC')tkLogRpcOffline('rpc_replay_success',item.function);
       await offlineQueueRemove(item.id);
       syncedAny=true;
     }catch(e){console.warn('flushOfflineQueue offline again, stop',e);break;}

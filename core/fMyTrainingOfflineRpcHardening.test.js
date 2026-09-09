@@ -76,7 +76,7 @@ var _sandboxScript = new vm.Script([konstVar('OFFLINE_DB_NAME'), konstVar('SB_RE
                  pak('sbRetryable'), pak('sbRefreshOnce'), pak('sbSessieVerlopen'),
                  pak('sbFetch'), pak('offlineDb'), pak('offlineQueueAdd'),
                  pak('offlineQueueAll'), pak('offlineQueueRemove'), pak('sbPostQ'),
-                 pak('sbPatchQ'), pak('sbDelQ'), pak('sbRpcQ'),
+                 pak('sbPatchQ'), pak('sbDelQ'), pak('tkLogRpcOffline'), pak('sbRpcQ'),
                  pak('flushOfflineQueue')].join('\n'));
 
 function queueZandbak(opts) {
@@ -222,6 +222,25 @@ tAsync('C2-D-8: poison item (blijft structureel falen) blokkeert de rest van de 
     assert.strictEqual(idb._store()[0].function, 'schedule_my_training');
     var sessiePost = ctx._verzoeken.filter(function (v) { return v.url.indexOf('/sessions') !== -1; });
     assert.strictEqual(sessiePost.length, 1, 'het latere, op zichzelf staande item wordt gewoon verwerkt -- het poison-item blokkeert de rest niet');
+  });
+});
+
+tAsync('C2-D-9: observability -- rpc_offline_queued/rpc_replay_success worden gelogd via de bestaande ObservabilityCore, NOOIT met item.args (geen gevoelige snapshot-data in telemetry)', function () {
+  var idb = nepIndexedDB();
+  var events = [];
+  var ctx = queueZandbak({ idb: idb, online: false, sessie: GEBRUIKER_A });
+  ctx.ObservabilityCore = { tkLog: function (level, event, domain, component, data) { events.push({ event: event, data: data }); } };
+  return ctx.sbRpcQ('schedule_my_training', { p_workout_definition_id: 'w1', p_planned_date: '2026-09-10', p_definition_snapshot: { naam: 'Squat' }, p_occurrence_id: 'occ-obs' }).then(function () {
+    assert.strictEqual(events.length, 1);
+    assert.strictEqual(events[0].event, 'rpc_offline_queued');
+    assert.strictEqual(JSON.stringify(events[0].data).indexOf('occ-obs'), -1, 'de mutation-id/args mogen niet in de telemetry-data terechtkomen');
+    assert.strictEqual(JSON.stringify(events[0].data).indexOf('Squat'), -1, 'de definition_snapshot mag nooit in telemetry-data terechtkomen');
+    // Replay-succes:
+    var ctx2 = queueZandbak({ idb: idb, online: true, sessie: GEBRUIKER_A, antwoord: function () { return { ok: true, json: 'occ-obs' }; } });
+    ctx2.ObservabilityCore = { tkLog: function (level, event) { events.push({ event: event }); } };
+    return ctx2.flushOfflineQueue().then(function () {
+      assert.ok(events.some(function (e) { return e.event === 'rpc_replay_success'; }), 'succesvolle replay wordt gelogd');
+    });
   });
 });
 

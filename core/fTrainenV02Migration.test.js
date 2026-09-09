@@ -49,7 +49,7 @@ ok(trainMgr.includes('id="sport-switcher"') && trainMgr.includes('setActiveSport
 {
   const startBlok = trainMgr.split('>Start een activiteit</div>')[1].split('Maken &amp; ontdekken')[0];
   const zichtbareTiles = (startBlok.match(/class="quick-act"/g) || []).length;
-  ok(zichtbareTiles === 7, '4a: 7 quick-act-elementen totaal -- 5 primair zichtbaar (Kracht/Hardlopen/Fietsen/HYROX/Meer, PO-contract max. 5) + 2 initieel verborgen in de "Meer"-uitklap (Triathlon/Losse oefening)');
+  ok(zichtbareTiles === 8, '4a: 8 quick-act-elementen totaal -- 5 primair zichtbaar (Kracht/Hardlopen/Fietsen/HYROX/Meer, PO-contract max. 5) + 3 initieel verborgen in de "Meer"-uitklap (Zwemmen/Triathlon/Losse oefening, Endurance Master Sprint E4 voegde Zwemmen toe)');
   ok(startBlok.includes('id="trainen-meer-activiteiten"') && startBlok.includes('style="display:none'),
     '4b: de "Meer"-activiteiten (Triathlon, Losse oefening) zijn initieel verborgen (display:none), niet verwijderd -- toegankelijk via de Meer-toggle, geen tweede execution-path/nieuw scherm');
   ok(startBlok.includes('id="trainen-meer-btn"') && startBlok.includes('aria-expanded="false"'),

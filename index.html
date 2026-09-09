@@ -4149,6 +4149,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
         <button class="btn btn-o" style="width:100%;margin-top:6px" onclick="closeAvailabilityForm()">Annuleren</button>
       </div>
     </div>
+    <div class="card" style="margin-bottom:12px"><div class="card-hd"><div class="card-title">Agenda</div><div class="card-sub">Trainingsplanning toevoegen aan Apple/Google/Outlook</div></div><div class="card-body" id="calendar-feed-card"></div></div>
     <div id="availability-conflicts"></div>
     <div id="availability-list"></div>
   </div>
@@ -10949,6 +10950,7 @@ async function renderAvailabilityScreen(){
   if(!el)return;
   el.innerHTML='<div class="tk-skel h32"></div>';
   closeAvailabilityForm();
+  renderCalendarFeedCard();
   try{
     if(!authSession?.user?.id){el.innerHTML='';return;}
     const rows=await sbGet('availability_periods','&user_id=eq.'+authSession.user.id+'&order=start_date.asc');
@@ -10968,6 +10970,73 @@ async function renderAvailabilityScreen(){
         '</div></div></div>';
     }).join('');
   }catch(e){ console.error('renderAvailabilityScreen',e); el.innerHTML='<div class="tk-empty">Kon beschikbaarheid niet laden.</div>'; }
+}
+
+// SPRINT B2-A — Agenda-instelling: ICS-subscription-feed genereren/
+// intrekken. Token wordt CLIENT-SIDE gegenereerd (hoge entropie via
+// crypto.getRandomValues) en CLIENT-SIDE gehasht (SHA-256, SubtleCrypto)
+// vóórdat het naar de database gaat -- het plaintext-token wordt NOOIT
+// naar de server verzonden buiten de uiteindelijke, eenmalige agenda-URL
+// die de gebruiker zelf kopieert. Alleen de hash wordt opgeslagen
+// (RLS-beschermde INSERT, geen aparte serverless-endpoint nodig voor
+// generatie zelf -- alleen het FEED-ophalen loopt via calendar-feed.js).
+async function renderCalendarFeedCard(){
+  const el=document.getElementById('calendar-feed-card');
+  if(!el||!authSession?.user?.id)return;
+  try{
+    const rows=await sbGet('calendar_feed_tokens','&user_id=eq.'+authSession.user.id+'&active=eq.true&limit=1');
+    const heeftActief=rows&&rows.length>0;
+    el.innerHTML = heeftActief
+      ? '<p style="font-size:13px;color:var(--g4);margin-bottom:10px">Je agenda-abonnement is actief. Compatibel met Apple Calendar, Google Calendar (via "Abonneren op agenda") en Outlook.</p>'+
+        '<button class="btn btn-o" style="width:100%;margin-bottom:6px" onclick="calendarFeedShowLink()">Toon abonnement-link</button>'+
+        '<button class="btn btn-o" style="width:100%" onclick="calendarFeedRevoke()">Agenda-koppeling intrekken</button>'
+      : '<p style="font-size:13px;color:var(--g4);margin-bottom:10px">Nog geen agenda gekoppeld. Maak een abonnement-link aan om je geplande programma-trainingen te zien in Apple/Google/Outlook.</p>'+
+        '<button class="btn btn-r" style="width:100%" onclick="calendarFeedGenerate()">Agenda-link aanmaken</button>';
+  }catch(e){ console.error('renderCalendarFeedCard',e); el.innerHTML=''; }
+}
+
+function calendarFeedRandomToken(){
+  const bytes=new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+}
+async function calendarFeedSha256Hex(text){
+  const enc=new TextEncoder().encode(text);
+  const buf=await crypto.subtle.digest('SHA-256',enc);
+  return Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+}
+
+let calendarFeedPlaintextCache=null;
+async function calendarFeedGenerate(){
+  const bevestigd=await confirmModal('Een agenda-link geeft toegang tot je geplande trainingsdata (titels en datums, geen gezondheids- of hersteldata). Doorgaan?',{title:'Agenda-link aanmaken',okLabel:'Aanmaken',cancelLabel:'Annuleren'});
+  if(!bevestigd)return;
+  try{
+    const token=calendarFeedRandomToken();
+    const hash=await calendarFeedSha256Hex(token);
+    // Regenereren (sectie 29, rotation): bestaand actief token eerst deactiveren --
+    // de partial unique index (calendar_feed_tokens_one_active_per_user) staat
+    // sowieso nooit twee actieve tokens tegelijk toe.
+    await sbPatchQ('calendar_feed_tokens','user_id=eq.'+authSession.user.id+'&active=eq.true',{active:false,revoked_at:new Date().toISOString()});
+    const ok=await sbPostQ('calendar_feed_tokens',{user_id:authSession.user.id,token_hash:hash,active:true});
+    if(!ok){toast('Aanmaken mislukt — probeer opnieuw');return;}
+    calendarFeedPlaintextCache=token;
+    calendarFeedShowLink();
+    renderCalendarFeedCard();
+  }catch(e){ console.error('calendarFeedGenerate',e); toast('Aanmaken mislukt'); }
+}
+function calendarFeedShowLink(){
+  if(!calendarFeedPlaintextCache){ toast('Link niet meer beschikbaar in dit scherm — maak indien nodig een nieuwe aan (intrekken + opnieuw aanmaken).'); return; }
+  const url=window.location.origin+'/.netlify/functions/calendar-feed?token='+calendarFeedPlaintextCache;
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).catch(function(){}); }
+  toast('Link gekopieerd. Voeg toe via "Abonneren op agenda" in je agenda-app.');
+}
+async function calendarFeedRevoke(){
+  const bevestigd=await confirmModal('Agenda-koppeling intrekken? De bestaande link werkt dan niet meer.',{title:'Intrekken',okLabel:'Intrekken',cancelLabel:'Annuleren'});
+  if(!bevestigd)return;
+  await sbPatchQ('calendar_feed_tokens','user_id=eq.'+authSession.user.id+'&active=eq.true',{active:false,revoked_at:new Date().toISOString()});
+  calendarFeedPlaintextCache=null;
+  toast('Agenda-koppeling ingetrokken');
+  renderCalendarFeedCard();
 }
 
 // SPRINT B — availability x canonical program_blocks conflict UI.

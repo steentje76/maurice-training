@@ -76,14 +76,46 @@ Zie eerdere sprintrapporten (PR's #293-#300).
 - FORENSISCHE HERKOMST (correctie): eerdere versie van dit document classificeerde Garmin als "NOT STARTED" -- onjuist. Bij nader forensisch onderzoek bleek een volledige OAuth2+PKCE-fundering al lokaal gebouwd te zijn (eerder in dezelfde sessie, buiten het op dat moment zichtbare venster), inclusief auth-start/auth-callback/status/disconnect/webhook-ontvanger en migratie_v561 (provider/code_verifier-kolommen op wearable_oauth_state). Onafhankelijk geverifieerd (niet blind vertrouwd): het geclaimde bewijsniveau A (developerportal.garmin.com/sites/default/files/OAuth2PKCE_1.pdf, Garmin's eigen officiele PKCE-specificatie) is door mij zelf herbevestigd via een aparte zoekopdracht, inclusief verbatim teruggevonden tekst uit het PDF zelf. Zie docs/WEARABLE_PROVIDER_SOURCE_PACK.md voor de volledige bronverantwoording.
 - STATUS: SOFTWARE FOUNDATION VERIFIED -- ACTIVATION BLOCKED. Auth-start/callback/status/disconnect zijn met bewijsniveau A/C gebouwd en getest (17/17, gemockte netwerkrespons o.b.v. de officiele spec). Het deregistratie-endpoint (DELETE /wellness-api/rest/user/registration) is tijdens deze correctieronde alsnog met dezelfde zekerheid bevestigd en toegevoegd aan disconnect (was eerder bewust weggelaten wegens onvoldoende zekerheid op dat moment).
 - WAT NIET GEBOUWD IS (bewust): de exacte webhook-payload-schema's per samenvattingstype en het officiele verificatiemechanisme (signature/gedeeld geheim) zijn niet met A/B-zekerheid bevestigd -- garmin-webhook.js ontvangt en logt daarom uitsluitend structurele, PII-vrije diagnostiek, schrijft geen canonical data.
-- MIGRATIE: migratie_v561.sql (wearable_oauth_state.provider/code_verifier) is gecontroleerd NOT APPLIED bevonden voor uitvoering, en vervolgens veilig, additief uitgevoerd tegen productie (bestaande rij kreeg de DEFAULT 'google_health', geen breaking change).
-- PO ACTION REQUIRED -- GARMIN:
-  1. Garmin Connect Developer Program-aanvraag indienen (zakelijke rechtvaardiging vereist).
-  2. Na goedkeuring: evaluatie-tier consumer key/secret genereren.
-  3. Netlify env vars: GARMIN_CLIENT_ID, GARMIN_CLIENT_SECRET, GARMIN_REDIRECT_URI.
-  4. Webhook-endpoint (Ping/Pull of Push, keuze bij aanvraag) registreren in het portaal, wijzend naar de gedeployde garmin-webhook.js-URL.
-  5. Zodra portaaltoegang er is: de officiele webhook-documentatie raadplegen voor het exacte payload-schema per samenvattingstype en de verificatiemethode -- pas dan canonical-mapping-code aan garmin-webhook.js toevoegen (het ontvangst-mechanisme staat al klaar).
-- EXTERNAL BLOCKER: Ja -- partner-goedkeuring is een harde voorwaarde vóór activatie; de software zelf is niet de blocker.
+- MIGRATIE: migratie_v561.sql (wearable_oauth_state.provider/code_verifier) is gecontroleerd NOT APPLIED bevonden vóór uitvoering, en vervolgens veilig, additief uitgevoerd tegen productie (bestaande rij kreeg de DEFAULT 'google_health', geen breaking change). Post-verify (deze ronde): RLS actief op wearable_oauth_state, nul policies -- default-deny voor anon/authenticated, uitsluitend service_role kan de tabel benaderen. Exact hetzelfde patroon als het al-geauditeerde wearable_connections (ook nul policies) -- geen nieuwe kwetsbaarheid geïntroduceerd. 1 bestaande rij correct gemigreerd, geen dataverlies, geen dubbele schema-objecten, geen ongeplande mutaties.
+
+### GARMIN — EXACTE STATUS
+
+```
+SOFTWARE FUNCTIONAL   = COMPLETE
+PRODUCT UI            = COMPLETE (Provider Management UI, eerlijk disabled totdat actief)
+PRODUCTION SCHEMA     = ACTIVE (migratie_v561, post-verified)
+PROVIDER ACTIVATION   = BLOCKED — GARMIN PARTNER APPROVAL/CREDENTIALS
+REAL PROVIDER SYNC    = NOT YET PROVEN
+```
+
+### PO ACTION CARD — GARMIN
+
+```
+PROVIDER:                 Garmin
+OFFICIAL PORTAL:          developerportal.garmin.com (Garmin Connect Developer Program)
+ACCOUNT/PROGRAM:          Garmin Connect Developer Program-aanvraag (zakelijk account)
+APPLICATION REQUIRED:     Ja — evaluatie-tier aanvraag, met bedrijfs-/productrechtvaardiging
+COMPANY/PRODUCT INFO:     Bedrijfsnaam, productbeschrijving (Trainingskompas), beoogd datagebruik
+CLIENT ID:                Wordt uitgegeven ná goedkeuring (consumer key)
+CLIENT SECRET/PKCE:       Wordt uitgegeven ná goedkeuring (consumer secret); PKCE (S256) is al
+                          volledig geïmplementeerd aan onze kant, vereist geen aparte PO-actie
+REDIRECT URI:             https://maurice-art.netlify.app/.netlify/functions/garmin-auth-callback
+WEBHOOK URI:               https://maurice-art.netlify.app/.netlify/functions/garmin-webhook
+                          (kiezen: Push- of Ping/Pull-architectuur bij de aanvraag)
+APPROVAL REQUIREMENT:     Ja — partner-gated, geen zelfregistratie mogelijk
+CONTRACT/LICENSING:       Onbekend/nog te bevestigen bij aanvraag (geen kosteninformatie
+                          gevonden in publiek beschikbare bronnen deze sessie)
+WAT PO MOET AANLEVEREN:   1) Developer Program-aanvraag indienen; 2) na goedkeuring
+                          GARMIN_CLIENT_ID + GARMIN_CLIENT_SECRET + GARMIN_REDIRECT_URI
+                          als Netlify-omgevingsvariabelen instellen; 3) in het portaal
+                          bevestigen welke summary-types (dailies/epochs/sleeps/
+                          activities/...) geabonneerd worden
+WAT CLAUDE DOET DAARNA:   Zodra portaaltoegang er is: de dan-toegankelijke officiële
+                          webhook-documentatie raadplegen voor het exacte payload-schema
+                          en verificatiemechanisme per summary-type, canonical-mapping-
+                          code toevoegen aan garmin-webhook.js (ontvangst-mechanisme staat
+                          al klaar), een live OAuth-round-trip uitvoeren en documenteren
+```
 
 ---
 
@@ -115,25 +147,40 @@ Zie eerdere sprintrapporten (PR's #293-#300).
 
 ---
 
-## Fitbit (direct)
+## Fitbit (direct) -- CORRECTIE: platform sluit deze maand, niet meer bouwbaar
 
-- OFFICIAL API: Fitbit Web API (api.fitbit.com, onder Google-beheer), apart van Google Health aan te vragen.
-- BELANGRIJKE VERWARRING RECHTGEZET: de bestaande Google Health-integratie noemt zichzelf in UI/foutmeldingen historisch "Fitbit" -- dat is de oude merknaam, blijven staan na de migratie naar de Google Health API, GEEN aparte tweede integratie. Er bestaat vandaag dus GEEN directe Fitbit Web API-koppeling.
-- AUTH MODEL: OAuth 2.0, self-serve via dev.fitbit.com.
-- IMPLEMENTATION STATUS: NOT STARTED -- bewust niet gebouwd deze sessie (tijdsbudget), geen technische blocker.
-- PO ACTION: Fitbit-app registreren op dev.fitbit.com (self-serve) -- daarna direct bouwbaar naar hetzelfde patroon als Polar.
-- EXTERNAL BLOCKER: Nee (self-serve). Eerstvolgende bouwkandidaat na Polar.
-- DEDUPE-AANDACHTSPUNT: zodra gebouwd, dedupliceren tegen dezelfde activiteit die ook via de bestaande Google Health-koppeling binnenkomt.
+- KRITIEKE BEVINDING (deze ronde, meerdere onafhankelijke eerste-partij bronnen inclusief Fitbit's eigen developer-portaal dev.fitbit.com/legal/coming-soon en Fitbit's eigen community-aankondiging "Introducing the next phase of the Fitbit Web API"): de legacy Fitbit Web API wordt op **30 september 2026** definitief uitgezet -- vandaag is 10 september 2026, dat is over ongeveer drie weken. **Nieuwe developer-app-registraties zijn al gesloten sinds mei 2026** (dev.fitbit.com/apps/new accepteert geen nieuwe aanvragen meer, bevestigd via een concrete, gedateerde GitHub-issue).
+- Google's eigen, officieel voorgeschreven migratiepad voor bestaande Fitbit-integraties is de Google Health API -- exact de integratie die Trainingskompas al volledig gebouwd en live heeft.
+- CONCLUSIE: een directe Fitbit Web API-integratie bouwen is nu zinloos -- geen nieuwe credentials meer te verkrijgen, het platform zelf verdwijnt over drie weken, en het zou een overbodige tweede route zijn naast een integratie die er al ligt en die Google zelf als de juiste opvolger aanwijst. Dit is GEEN self-serve bouwkandidaat meer (correctie op de eerdere status).
+- BELANGRIJKE VERWARRING (blijft staan): de bestaande Google Health-integratie noemt zichzelf in UI/foutmeldingen historisch "Fitbit" -- dat is de oude merknaam, blijven staan na Google's eigen migratie. Dat is toevallig nu wél de daadwerkelijk juiste, toekomstbestendige route voor Fitbit-gebruikers.
+- IMPLEMENTATION STATUS: NOT APPLICABLE -- V1 MUST voor "Fitbit" wordt gedekt door de bestaande, live Google Health-integratie. Geen aparte code te bouwen.
+- PO ACTION: geen -- als bestaande Fitbit-gebruikers via TK willen blijven syncen, is het bestaande "Fitbit koppelen"-knop (die intern al de Google Health-flow gebruikt) de juiste weg. Geen actie vereist tenzij PO alsnog een reden ziet om dit verder te onderzoeken.
+- EXTERNAL BLOCKER: Ja, in de zin dat het onderliggende platform niet meer toegankelijk is voor nieuwe integraties -- niet oplosbaar door een PO-actie.
 
 ---
 
-## WHOOP (direct)
+## WHOOP (direct) -- SOFTWARE COMPLETE deze sprint
 
-- OFFICIAL API: WHOOP Developer Platform (api.prod.whoop.com), OAuth 2.0, self-serve.
-- SUPPORTED DATA: Cycles, Recovery, Sleep, Workouts, Body/profile. Recovery/Strain blijven PROVIDER_DERIVED.
-- IMPLEMENTATION STATUS: NOT STARTED -- bewust niet gebouwd deze sessie.
-- PO ACTION: developer.whoop.com-account, app registreren (self-serve).
-- EXTERNAL BLOCKER: Nee (self-serve) -- nog niet gebouwd.
+- OFFICIAL API: WHOOP Developer Platform (developer.whoop.com), OAuth 2.0 authorization code, self-serve (~5 min setup, geen goedkeuringsperiode).
+- AUTORISATIE-ENDPOINT: GET https://api.prod.whoop.com/oauth/oauth2/auth -- Bewijsniveau A, meerdere officiele developer.whoop.com-pagina's, verbatim teruggevonden.
+- TOKEN-ENDPOINT: POST https://api.prod.whoop.com/oauth/oauth2/token (authorization_code + refresh_token grant) -- Bewijsniveau A, zelfde bronnen.
+- SCOPES: offline, read:profile, read:recovery, read:sleep, read:workout, read:cycles, read:body_measurement -- Bewijsniveau A.
+- DATA-ENDPOINT (deze sprint): GET https://api.prod.whoop.com/developer/v2/activity/workout, gepagineerd via next_token/nextToken -- Bewijsniveau A, exact, verbatim JSON-responsschema teruggevonden op developer.whoop.com/api/ (sport_name als leesbare string, bv. "running"; score_state; score.average_heart_rate/distance_meter/kilojoule/...).
+- CANONICAL MAPPING: activities-tabel, sport_name gemapt naar het bestaande strikte enum (running/cycling/rowing/swimming) -- niet-mapbare WHOOP-sporttypes (tientallen, o.a. "weightlifting") worden bewust overgeslagen. Ongescoorde workouts (score_state != 'SCORED') worden ook overgeslagen -- UNKNOWN != ZERO, geen cijfers tonen die er nog niet zijn.
+- DEDUPE: dedupe_key='whoop-workout-'+id, bestaande unieke index, ignore-duplicates.
+- TOKEN REFRESH: geimplementeerd (5 min. voor verlopen, zelfde patroon als Google Health).
+- REVOKE: EERLIJKE BEPERKING -- WHOOP's API-changelog noemt een "revokeUserOauthAccess"-mechanisme, maar de exacte, aanroepbare REST-URL is niet met dezelfde A-zekerheid bevestigd. disconnect verwijdert daarom altijd de lokale tokens/koppeling (binnen eigen controle, altijd veilig), maar roept nog geen externe revoke-aanroep aan. PO ACTION: bevestigen zodra credentials/volledige documentatietoegang er is.
+- UI STATUS: Geimplementeerd (Lichaam -> Gezondheidsgegevens, eigen kaart naast Polar/Garmin).
+- IMPLEMENTATION STATUS: SOFTWARE COMPLETE -- ACTIVATION BLOCKED (credentials ontbreken, self-serve, geen wachttijd).
+- TEST STATUS: fWhoopIntegration.test.js, 20/20 (OAuth-contract, sport-mapping, ongescoorde-workout-filtering, Vault-gebruik, token-refresh-pad, ontbrekende-env-var-afhandeling).
+- REAL DEVICE STATUS: OPEN.
+- PO ACTION REQUIRED -- WHOOP:
+  1. developer.whoop.com, inloggen via id.whoop.com met een WHOOP-account (geen band vereist voor test-mode).
+  2. Team + App aanmaken in het Developer Dashboard.
+  3. Redirect URL registreren: https://maurice-art.netlify.app/.netlify/functions/whoop-auth-callback
+  4. Netlify env vars: WHOOP_CLIENT_ID, WHOOP_CLIENT_SECRET, WHOOP_REDIRECT_URI.
+  5. Herdeploy -- direct bruikbaar.
+- EXTERNAL BLOCKER: Ja (credentials ontbreken, self-serve, geen wachttijd).
 
 ---
 
@@ -179,9 +226,10 @@ Zie eerdere sprintrapporten (PR's #293-#300).
 ## Samenvattende status
 
 - PRODUCT WORKING: Google Health, Concept2/PM5, BLE HR, BLE Power, BLE CSC, FTMS.
-- SOFTWARE COMPLETE -- ACTIVATION BLOCKED (credentials, self-serve, geen wachttijd): Polar (live op main).
+- SOFTWARE COMPLETE -- ACTIVATION BLOCKED (credentials, self-serve, geen wachttijd): Polar (live op main), WHOOP (live op main).
 - SOFTWARE FOUNDATION VERIFIED -- ACTIVATION BLOCKED (partner-goedkeuring vereist): Garmin.
-- NOT STARTED, self-serve, geen blocker om te bouwen: Fitbit, WHOOP, Oura.
+- NOT APPLICABLE (platform sluit binnenkort, al gedekt via bestaande integratie): Fitbit -- zie eigen sectie, geen aparte code te bouwen.
+- NOT STARTED, self-serve, geen blocker om te bouwen: Oura.
 - NOT STARTED, partner-goedkeuring vereist vóór bouwen (onbevestigd of Garmin-achtig gated): COROS.
 - NOT STARTED, harde platformvoorwaarde (native iOS-target): Apple HealthKit/Watch.
 - GEDEELTELIJK GEDEKT via bestaande integratie, directe adapter niet bewezen noodzakelijk: Samsung Health/Galaxy Watch/Ring.
@@ -189,8 +237,8 @@ Zie eerdere sprintrapporten (PR's #293-#300).
 Devices/Wearables blijft NOT FROZEN totdat elke regel hierboven PRODUCT
 WORKING is, of SOFTWARE COMPLETE/SOFTWARE FOUNDATION VERIFIED + exacte
 external activation action known + no internal implementation gap. Voor
-Garmin/Apple/Samsung/COROS is dat laatste nu het geval. Fitbit/WHOOP/Oura
-zijn de eerstvolgende bouwkandidaten (geen externe blocker).
+Garmin/Apple/Samsung/COROS is dat laatste nu het geval. Oura is de
+eerstvolgende bouwkandidaat (geen externe blocker).
 
 **Belangrijke les uit deze sprint**: eerder werd Garmin abusievelijk als
 "NOT STARTED" geclassificeerd op basis van een te snelle, onvolledige

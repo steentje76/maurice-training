@@ -10058,6 +10058,10 @@ function handleWearableRedirect(){
     tkVerversGegevensScherm(); // geen garminSyncNow(): sync-endpoint bouwen we pas na PO-activatie
     return;
   }
+  if(provider==='whoop'){
+    if(w==='connected')whoopSyncNow(); else tkVerversGegevensScherm();
+    return;
+  }
   if(w==='connected')wearableSyncNow();
   else renderWearableCard();
 }
@@ -10139,6 +10143,53 @@ async function garminDisconnect(){
     toast('Losgekoppeld');
     tkVerversGegevensScherm();
   }catch(e){toast('Verbindingsfout bij loskoppelen');}
+}
+
+// ══════════════════════════════════════════════════════════
+// DEVICES/WEARABLES V1 MUST — WHOOP (self-serve, developer.whoop.com)
+// ══════════════════════════════════════════════════════════
+async function fetchWhoopStatus(){
+  const h=wearableAuthHeaders();
+  if(!h)return {connected:false};
+  try{
+    const r=await fetch('/.netlify/functions/whoop-status',{method:'POST',headers:h});
+    if(!r.ok)return {connected:false};
+    return await r.json();
+  }catch(e){console.warn('whoop-status fout',e);return {connected:false};}
+}
+async function whoopConnect(){
+  const h=wearableAuthHeaders();
+  if(!h){toast('Geen actieve sessie');return;}
+  try{
+    const r=await fetch('/.netlify/functions/whoop-auth-start',{method:'POST',headers:h});
+    const d=await r.json();
+    if(!r.ok||!d.authUrl){toast('Koppelen mislukt: '+(d.error?.message||r.status));return;}
+    window.location.href=d.authUrl;
+  }catch(e){toast('Verbindingsfout bij koppelen');}
+}
+async function whoopDisconnect(){
+  if(!await confirmModal('Automatische synchronisatie van WHOOP-trainingen stopt dan.',{title:'WHOOP loskoppelen',okLabel:'Loskoppelen',danger:true}))return;
+  const h=wearableAuthHeaders();
+  if(!h){toast('Geen actieve sessie');return;}
+  try{
+    const r=await fetch('/.netlify/functions/whoop-disconnect',{method:'POST',headers:h});
+    if(!r.ok){toast('Loskoppelen mislukt');return;}
+    toast('Losgekoppeld');
+    tkVerversGegevensScherm();
+  }catch(e){toast('Verbindingsfout bij loskoppelen');}
+}
+async function whoopSyncNow(){
+  const h=wearableAuthHeaders();
+  if(!h){toast('Geen actieve sessie');return;}
+  toast('Synchroniseren met WHOOP...');
+  try{
+    const r=await fetch('/.netlify/functions/whoop-sync',{method:'POST',headers:h});
+    const d=await r.json();
+    if(!r.ok||!d.synced){toast('Synchroniseren met WHOOP mislukt — probeer het later opnieuw');tkVerversGegevensScherm();return;}
+    toast(d.imported>0?(d.imported+' training'+(d.imported===1?'':'en')+' bijgewerkt vanaf WHOOP'):'Verbonden met WHOOP — geen nieuwe trainingen gevonden');
+    tkVerversGegevensScherm();
+    refreshHome();
+  }catch(e){toast('Verbindingsfout bij synchroniseren');}
 }
 
 // ══════════════════════════════════════════════════════════
@@ -30556,6 +30607,18 @@ async function _renderLichaamGegevens(el){
     },{now:new Date().toISOString()});
   }catch(_){ garminSync=null; }
 
+  // Devices/Wearables V1 MUST-vervolg — WHOOP (self-serve, geen
+  // goedkeuringsperiode, developer.whoop.com). Zelfde patroon als Polar.
+  let whoopSync=null;
+  try{
+    const wst=await fetchWhoopStatus();
+    whoopSync=dc.deviceConnectionState({
+      connected:!!wst.connected, connectedAt:wst.connectedAt||null,
+      lastSyncAt:wst.lastSyncAt||null, lastSyncStatus:wst.lastSyncStatus||null,
+      tokenExpired:wst.lastSyncStatus==='token_expired_no_refresh', syncing:false
+    },{now:new Date().toISOString()});
+  }catch(_){ whoopSync=null; }
+
   const eindH=(hd&&hd.length)?String(hd[0].date).slice(0,10):null;
   const vandaag=td();
   const serieVan=function(veld){
@@ -30719,6 +30782,23 @@ async function _renderLichaamGegevens(el){
         ((garminSync&&garminSync.connected)
           ? '<button class="btn btn-o btn-sm" style="flex:1" onclick="garminDisconnect()">Loskoppelen</button>'
           : '<button class="btn btn-o btn-sm" style="flex:1" disabled title="Vereist Garmin Developer Program-goedkeuring">Garmin koppelen (nog niet actief)</button>')+
+      '</div>'+
+    '</div>'+
+
+    // ── WHOOP (self-serve) ──
+    '<div class="card" style="padding:13px 14px;margin-top:10px">'+
+      '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">'+
+        '<div style="font-size:13px;font-weight:800;color:var(--dark)">WHOOP</div>'+
+        '<div style="font-size:11px;font-weight:800;color:'+((whoopSync&&whoopSync.connected)?'var(--status-good)':'var(--g4)')+'">'+
+          escHtml(!whoopSync?'Status onbekend':(whoopSync.status==='not_connected'?'Niet gekoppeld':(whoopSync.status==='token_expired'?'Opnieuw koppelen nodig':(whoopSync.status==='sync_failed'?'Laatste synchronisatie mislukt':'Gekoppeld'))))+
+        '</div></div>'+
+      (whoopSync&&whoopSync.lastSyncAt?'<div style="font-size:11.5px;color:var(--g4);font-weight:600;margin-top:5px">Laatste synchronisatie '+escHtml(fmtDate(String(whoopSync.lastSyncAt).slice(0,10)))+'</div>':'')+
+      '<div style="font-size:11px;color:var(--g3);font-weight:600;margin-top:6px;line-height:1.5">Trainingen (running/cycling/rowing/swimming) van een WHOOP-band.</div>'+
+      '<div style="display:flex;gap:8px;margin-top:11px">'+
+        ((whoopSync&&whoopSync.connected)
+          ? '<button class="btn btn-o btn-sm" style="flex:1" onclick="whoopSyncNow()">Sync nu</button>'+
+            '<button class="btn btn-o btn-sm" style="flex:1" onclick="whoopDisconnect()">Loskoppelen</button>'
+          : '<button class="btn btn-r btn-sm" style="flex:1" onclick="whoopConnect()">WHOOP koppelen</button>')+
       '</div>'+
     '</div>'+
 

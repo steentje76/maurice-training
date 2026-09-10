@@ -208,13 +208,20 @@ WAT CLAUDE DOET DAARNA:   Zodra portaaltoegang er is: de dan-toegankelijke offic
 
 ---
 
-## COROS (direct)
+## COROS (direct) -- architectuurmismatch gevonden, geen gok gebouwd
 
-- OFFICIAL API: COROS Open Platform/Partner API.
-- APPROVAL REQUIRED: vermoedelijk partner-gate (vergelijkbaar met Garmin) -- NIET bevestigd via eerste-partij documentatie deze sessie.
-- IMPLEMENTATION STATUS: NOT STARTED.
-- PO ACTION: contact opnemen met COROS voor partner/developer-toegang; exacte procedure nog te bevestigen.
-- EXTERNAL BLOCKER: Ja (vermoedelijk) -- laagste prioriteit gezien onzekerheid over zelfs de toegangsprocedure.
+- OFFICIAL BRON: support.coros.com (COROS Help Center), eigen officiele artikelen "Connect Your Data", "Build on COROS MCP", "Partner API Access", "Submit an API Application" -- bewijsniveau A, alle vier onderling consistent.
+- TWEE TOEGANGSPADEN (genuanceerder dan eerder aangenomen -- niet simpelweg "partner-gated zoals Garmin"):
+  1. "Build on COROS MCP" -- zelfbediening, OAuth 2.0, GEEN goedkeuring nodig. Maar dit is letterlijk het Model Context Protocol (dezelfde soort interface als waarmee Claude zelf tools aanroept), expliciet omschreven voor "AI coaching apps that analyze training and prescribe workouts" -- ontworpen voor LIVE agent-toegang tijdens een gesprek, niet voor een geplande, server-side batch-sync-job die canonical data in een database wegschrijft (exact wat TK bij elke andere provider doet).
+  2. "Partner API" -- multi-user OAuth-credentials, webhook push-notificaties, two-way data sync, GPX-routes -- architecturaal WEL de juiste vorm voor TK's daadwerkelijke behoefte, maar vereist een handmatige aanvraag (bedrijfsgegevens + technische contactpersonen + OAuth2-redirect-URI's naar api@coros.com, identiteits-/veiligheidsverificatie, standaardvoorwaarden accepteren) voordat er Client ID/Secret bestaan.
+- CONCLUSIE: dit is geen eenvoudige "nog niet gebouwd, wel self-serve"-situatie zoals Fitbit/WHOOP/Oura waren. De zelfbedieningsroute (MCP) past architecturaal niet bij TK's canonical-sync-behoefte; de wel-passende route (Partner API) is partner-gated. Een MCP-client bouwen binnen een Netlify Function om alsnog batch-data te syncen zou een oneigenlijke, ongeteste architectuur-aanname zijn (JSON-RPC-achtig protocol i.p.v. eenvoudige REST-aanroepen) -- bewust niet gebouwd, geen gok.
+- IMPLEMENTATION STATUS: NOT STARTED -- externe actie vereist voor de architecturaal juiste route.
+- PO ACTION REQUIRED -- COROS:
+  1. Beoordeel of Partner API-toegang de juiste stap is (vereist een gevestigd gebruikersbestand/platform -- controleer of TK daaraan voldoet).
+  2. Zo ja: e-mail naar api@coros.com met bedrijfsgegevens, technische contactpersoon, en de beoogde OAuth2-redirect-URI (https://maurice-art.netlify.app/.netlify/functions/coros-auth-callback, naar analogie met de andere providers).
+  3. Standaardvoorwaarden accepteren; na identiteits-/veiligheidsverificatie levert COROS een Client ID/Secret.
+  4. Zodra credentials er zijn: de dan-toegankelijke, volledige Partner API-documentatie raadplegen voor exacte REST-endpoints (deze sessie kon dat detailniveau niet bevestigen, uitsluitend het toegangsmodel zelf) -- dan pas bouwen, zelfde discipline als de rest van deze sprint.
+- EXTERNAL BLOCKER: Ja -- Partner API-goedkeuring is de architecturaal juiste, maar niet-software-oplosbare, vereiste stap.
 
 ---
 
@@ -243,15 +250,15 @@ WAT CLAUDE DOET DAARNA:   Zodra portaaltoegang er is: de dan-toegankelijke offic
 - SOFTWARE COMPLETE -- ACTIVATION BLOCKED (credentials, self-serve, geen wachttijd): Polar, WHOOP, Oura (alle drie live op main).
 - SOFTWARE FOUNDATION VERIFIED -- ACTIVATION BLOCKED (partner-goedkeuring vereist): Garmin.
 - NOT APPLICABLE (platform sluit binnenkort, al gedekt via bestaande integratie): Fitbit -- zie eigen sectie, geen aparte code te bouwen.
-- NOT STARTED, partner-goedkeuring vereist vóór bouwen (onbevestigd of Garmin-achtig gated): COROS.
+- NOT STARTED, architectuurmismatch tussen de zelfbedieningsroute (MCP, voor AI-agents) en de architecturaal juiste maar partner-gated route (Partner API): COROS -- geen gok gebouwd, zie eigen sectie.
 - NOT STARTED, harde platformvoorwaarde (native iOS-target): Apple HealthKit/Watch.
 - GEDEELTELIJK GEDEKT via bestaande integratie, directe adapter niet bewezen noodzakelijk: Samsung Health/Galaxy Watch/Ring.
 
 Devices/Wearables blijft NOT FROZEN totdat elke regel hierboven PRODUCT
 WORKING is, of SOFTWARE COMPLETE/SOFTWARE FOUNDATION VERIFIED + exacte
 external activation action known + no internal implementation gap. Voor
-Garmin/Apple/Samsung/COROS is dat laatste nu het geval. COROS-onderzoek is
-het eerstvolgende punt, gevolgd door Apple en Samsung.
+Garmin/COROS is dat laatste nu het geval. Apple en Samsung zijn de
+eerstvolgende onderzoekspunten.
 
 **Belangrijke les uit deze sprint**: eerder werd Garmin abusievelijk als
 "NOT STARTED" geclassificeerd op basis van een te snelle, onvolledige
@@ -260,4 +267,9 @@ bleek al te bestaan (eerder in dezelfde sessie gebouwd). Forensisch
 onderzoek (git-geschiedenis, bestandsherkomst, onafhankelijke
 herverificatie van elke brongebonden bewering) vóór het overschrijven of
 weggooien van onverwacht aangetroffen werk is daarom vaste procedure
-geworden, niet alleen voor Garmin.
+geworden, niet alleen voor Garmin. Bij COROS bleek het omgekeerde
+probleem relevant: een op het eerste gezicht "self-serve, geen
+goedkeuring nodig"-optie bleek bij nader onderzoek architecturaal niet te
+passen bij wat TK nodig heeft -- zelfbediening is niet automatisch
+hetzelfde als "de juiste, bruikbare optie".
+

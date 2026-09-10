@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="nl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UX-1 PROPOSED — geïsoleerde design preview</title>
+<!-- GEÏSOLEERDE PREVIEW. Geen productiepad. Niet geladen door index.html.
+     Tokens zijn AFGELEID uit docs/ux/baseline/v1/ (pixelsampling), niet verzonnen. -->
+<style>
+:root{
+  --tk-teal:#04AE9B; --tk-teal-tint:#E6F7F5; --tk-navy:#053146; --tk-ink:#223A4B;
+  --tk-bg:#F4F6F9; --tk-card:#FFFFFF; --tk-muted:#7C8B98; --tk-line:#E7ECF1;
+  --tk-danger:#C4453D; --tk-warn:#E8A33D;
+  --r-card:16px; --r-pill:999px; --r-ctl:12px;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px;
+  --tap:44px;
+  --f:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--f);background:#5A6673;padding:16px;color:var(--tk-ink)}
+.frame{width:390px;background:var(--tk-bg);border-radius:22px;overflow:hidden;margin:0 auto 20px;
+  box-shadow:0 10px 40px rgba(0,0,0,.35);position:relative;padding-bottom:84px}
+.lab{color:#fff;font:700 12px var(--f);letter-spacing:.08em;text-transform:uppercase;
+  width:390px;margin:0 auto 8px;opacity:.85}
+.pad{padding:0 var(--s4)}
+
+/* HEADER */
+.hd{display:flex;align-items:flex-start;justify-content:space-between;padding:22px var(--s4) 14px;gap:12px}
+.hd h1{margin:0;font-size:30px;line-height:1.1;font-weight:800;color:var(--tk-navy);letter-spacing:-.02em}
+.hd .sub{margin:6px 0 0;font-size:13.5px;color:var(--tk-muted);font-weight:500}
+.avatar{width:48px;height:48px;border-radius:50%;flex:0 0 48px;background:#CBD6DF;
+  border:2px solid var(--tk-teal);display:grid;place-items:center;font-weight:700;color:var(--tk-navy);font-size:15px}
+
+/* SECTION LABEL */
+.sec{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--tk-muted);margin:22px 0 10px}
+
+/* CARDS */
+.card{background:var(--tk-card);border-radius:var(--r-card);padding:var(--s4);
+  box-shadow:0 1px 3px rgba(16,40,64,.06),0 6px 18px rgba(16,40,64,.05)}
+.card-primary{background:var(--tk-navy);color:#fff}
+.card-primary h3{margin:2px 0 4px;font-size:21px;font-weight:800}
+.card-compact{padding:var(--s3) var(--s4)}
+.row{display:flex;align-items:center;gap:12px;min-height:var(--tap);
+  padding:12px 0;border-bottom:1px solid var(--tk-line);cursor:pointer}
+.row:last-child{border-bottom:0}
+.ic{width:40px;height:40px;flex:0 0 40px;border-radius:12px;background:var(--tk-teal-tint);
+  display:grid;place-items:center}
+.ic svg{width:20px;height:20px;stroke:var(--tk-teal);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.row .tx{flex:1;min-width:0}
+.row .t{font-size:15px;font-weight:700;color:var(--tk-navy)}
+.row .s{font-size:12.5px;color:var(--tk-muted);margin-top:2px}
+.chev{color:#B7C3CE;font-size:20px}
+
+/* BUTTONS */
+.btn{min-height:var(--tap);border-radius:var(--r-pill);border:0;font:700 15px var(--f);
+  padding:0 20px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn-p{background:var(--tk-teal);color:#fff}
+.btn-s{background:transparent;color:var(--tk-navy);border:1.5px solid var(--tk-line)}
+.btn-t{background:transparent;color:var(--tk-teal);padding:0 8px}
+.btn-d{background:transparent;color:var(--tk-danger);border:1.5px solid #F0D3D1}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn-full{width:100%}
+.spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;
+  border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* INPUTS — label boven veld, geen vaste breedte (lost E-/mailadres op) */
+.fld{margin-bottom:14px}
+.fld label{display:block;font-size:12.5px;font-weight:700;color:var(--tk-ink);margin-bottom:6px}
+.fld input{width:100%;min-height:var(--tap);border-radius:var(--r-ctl);border:1.5px solid var(--tk-line);
+  background:#FBFCFD;padding:0 14px;font-size:16px;font-family:var(--f);color:var(--tk-navy)}
+.fld input:focus{outline:none;border-color:var(--tk-teal);background:#fff}
+.fld.err input{border-color:var(--tk-danger);background:#FEF7F6}
+.fld .msg{font-size:12px;color:var(--tk-danger);margin-top:6px;display:flex;gap:6px;align-items:center}
+.hint{font-size:12px;color:var(--tk-muted);margin-top:6px}
+
+/* STEPPER — compacte control met 44px hit area */
+.stp{display:flex;align-items:center;gap:10px}
+.stp button{width:var(--tap);height:var(--tap);border-radius:12px;border:1.5px solid var(--tk-line);
+  background:#fff;font-size:20px;font-weight:700;color:var(--tk-navy);cursor:pointer}
+.stp .val{flex:1;text-align:center;font-size:22px;font-weight:800;color:var(--tk-navy)}
+
+/* DIALOG / SHEET */
+.sheet{background:#fff;border-radius:20px 20px 0 0;padding:var(--s5) var(--s4) var(--s6);
+  box-shadow:0 -8px 30px rgba(16,40,64,.18)}
+.grab{width:38px;height:4px;border-radius:2px;background:#DDE4EA;margin:0 auto 16px}
+.sheet h3{margin:0 0 4px;font-size:18px;font-weight:800;color:var(--tk-navy)}
+.sheet p{margin:0 0 16px;font-size:13.5px;color:var(--tk-muted);line-height:1.5}
+.acts{display:flex;gap:10px;margin-top:18px}
+.acts .btn{flex:1}
+.opt{display:flex;align-items:center;gap:12px;min-height:56px;padding:10px 14px;border:1.5px solid var(--tk-line);
+  border-radius:var(--r-ctl);margin-bottom:10px;cursor:pointer}
+.opt.on{border-color:var(--tk-teal);background:var(--tk-teal-tint)}
+.opt .t{font-size:14.5px;font-weight:700;color:var(--tk-navy)}
+.opt .s{font-size:12px;color:var(--tk-muted);margin-top:2px}
+.rad{width:20px;height:20px;border-radius:50%;border:2px solid #C9D4DD;flex:0 0 20px}
+.opt.on .rad{border-color:var(--tk-teal);background:radial-gradient(circle,var(--tk-teal) 0 5px,#fff 6px 20px)}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:26px 18px}
+.empty .eic{width:52px;height:52px;border-radius:16px;background:var(--tk-teal-tint);
+  margin:0 auto 12px;display:grid;place-items:center}
+.empty .eic svg{width:24px;height:24px;stroke:var(--tk-teal);fill:none;stroke-width:2}
+.empty h4{margin:0 0 6px;font-size:15.5px;font-weight:800;color:var(--tk-navy)}
+.empty p{margin:0 0 14px;font-size:13px;color:var(--tk-muted);line-height:1.5}
+
+/* FEEDBACK */
+.toast{display:flex;align-items:center;gap:10px;background:var(--tk-navy);color:#fff;
+  border-radius:14px;padding:13px 15px;font-size:13.5px;font-weight:600;margin-bottom:10px}
+.toast .dot{width:8px;height:8px;border-radius:50%;background:var(--tk-teal);flex:0 0 8px}
+.inline{display:flex;gap:10px;align-items:flex-start;border-radius:14px;padding:13px 15px;font-size:13px;margin-bottom:10px}
+.inline.e{background:#FEF7F6;border:1px solid #F0D3D1;color:#8C3A34}
+.inline.w{background:#FDF7EC;border:1px solid #F2E0BE;color:#8A6524}
+.inline b{display:block;margin-bottom:2px}
+
+/* BOTTOM NAV */
+.bn{position:absolute;left:0;right:0;bottom:0;display:flex;background:rgba(255,255,255,.97);
+  border-top:1px solid var(--tk-line);padding-bottom:18px}
+.bn a{flex:1;min-height:var(--tap);display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:4px;padding:9px 0 4px;text-decoration:none;color:#9AA8B4;font-size:10.5px;font-weight:700}
+.bn a.on{color:var(--tk-teal)}
+.bn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.metrics{display:flex;gap:10px;margin-top:14px}
+.m{flex:1;background:#fff;border-radius:14px;padding:12px 8px;text-align:center;min-height:76px}
+.card-primary .m{background:rgba(255,255,255,.08)}
+.m .v{font-size:19px;font-weight:800;color:var(--tk-navy)}
+.card-primary .m .v{color:#fff}
+.m .l{font-size:10.5px;color:var(--tk-muted);margin-top:3px;font-weight:600}
+.card-primary .m .l{color:rgba(255,255,255,.7)}
+.note{font-size:11px;color:#8794A1;padding:0 16px 10px}
+</style></head>
+<body>
+
+<div class="lab">PROPOSED — App shell · header · cards · secties · bottom nav</div>
+<div class="frame" id="p-shell">
+  <div class="hd">
+    <div><h1>Vandaag</h1><div class="sub">Donderdag 3 september</div></div>
+    <div class="avatar" title="Profiel via avatar">MS</div>
+  </div>
+  <div class="pad">
+    <div class="card card-primary">
+      <div style="font-size:10.5px;font-weight:800;letter-spacing:.12em;opacity:.65">VOLGENDE ACTIE</div>
+      <h3>Training A</h3>
+      <div style="font-size:13px;opacity:.8">Vandaag · 19:00 · 7 oefeningen</div>
+      <div class="metrics">
+        <div class="m"><div class="v">78%</div><div class="l">Herstel</div></div>
+        <div class="m"><div class="v">62</div><div class="l">HRV ms</div></div>
+        <div class="m"><div class="v">7u32</div><div class="l">Slaap</div></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn btn-p" style="flex:1">Start training</button>
+        <button class="btn btn-s" style="flex:1;color:#fff;border-color:rgba(255,255,255,.3)">Details</button>
+      </div>
+    </div>
+    <div class="sec">Snel overzicht</div>
+    <div class="card">
+      <div class="row"><div class="ic"><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l8.8 8.8 8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/></svg></div>
+        <div class="tx"><div class="t">Herstel &amp; belasting</div><div class="s">Herstelstatus, HRV en slaap</div></div><div class="chev">›</div></div>
+      <div class="row"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></div>
+        <div class="tx"><div class="t">Ontwikkeling</div><div class="s">Trends over 7 dagen</div></div><div class="chev">›</div></div>
+    </div>
+  </div>
+  <nav class="bn">
+    <a class="on" href="#"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 10v10h14V10"/></svg>Vandaag</a>
+    <a href="#"><svg viewBox="0 0 24 24"><path d="M6 8v8M18 8v8M3 12h18"/></svg>Trainen</a>
+    <a href="#"><svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-6"/></svg>Inzicht</a>
+    <a href="#"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Coach</a>
+    <a href="#"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2 20a7 7 0 0 1 14 0"/><path d="M17 8a3 3 0 0 1 0 6"/></svg>Samen</a>
+  </nav>
+</div>
+<div class="note">Canonical IA: Vandaag · Trainen · Inzicht · Coach · Samen. Profiel uitsluitend via avatar. Alle nav-items ≥44px.</div>
+
+<div class="lab">PROPOSED — Knoppen · invoer (lost "E-/mailadres" op)</div>
+<div class="frame" style="padding-bottom:24px">
+  <div class="pad" style="padding-top:20px">
+    <div class="sec">Knoppen</div>
+    <div class="card">
+      <button class="btn btn-p btn-full" style="margin-bottom:10px">Primair</button>
+      <button class="btn btn-s btn-full" style="margin-bottom:10px">Secundair</button>
+      <button class="btn btn-t" style="margin-bottom:10px">Tertiair</button>
+      <button class="btn btn-d btn-full" style="margin-bottom:10px">Verwijderen</button>
+      <button class="btn btn-p btn-full" style="margin-bottom:10px" disabled>Uitgeschakeld</button>
+      <button class="btn btn-p btn-full"><span class="spin"></span>Bezig…</button>
+    </div>
+    <div class="sec">Invoer</div>
+    <div class="card">
+      <div class="fld"><label for="e">E-mailadres</label><input id="e" type="email" placeholder="jij@voorbeeld.nl"></div>
+      <div class="fld"><label for="w">Wachtwoord</label><input id="w" type="password" placeholder="Minimaal 6 tekens"><div class="hint">Minimaal 6 tekens.</div></div>
+      <div class="fld err"><label for="g">Gewicht (kg)</label><input id="g" inputmode="decimal" value="abc"><div class="msg">⚠ Voer een getal in, bijvoorbeeld 82,5.</div></div>
+    </div>
+  </div>
+</div>
+<div class="note">Label staat BOVEN het veld en is niet begrensd op 72px — Nederlandse labels breken niet meer af.</div>
+
+<div class="lab">PROPOSED — Dialogen (vervangen confirm())</div>
+<div class="frame" style="padding-bottom:24px;background:#8A939D">
+  <div style="height:60px"></div>
+  <div class="sheet" style="margin-bottom:18px">
+    <div class="grab"></div>
+    <h3>Registratie verwijderen?</h3>
+    <p>Deze meting wordt permanent verwijderd. Je kunt dit niet ongedaan maken.</p>
+    <div class="acts"><button class="btn btn-s">Annuleren</button><button class="btn btn-d">Verwijderen</button></div>
+  </div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h3>Wie mag deze training zien?</h3>
+    <p>Je kunt dit later altijd aanpassen bij je privacyinstellingen.</p>
+    <div class="opt on"><span class="rad"></span><div><div class="t">Alleen mijn connecties</div><div class="s">Zichtbaar voor mensen die je hebt geaccepteerd</div></div></div>
+    <div class="opt"><span class="rad"></span><div><div class="t">Iedereen</div><div class="s">Openbaar zichtbaar in Samen</div></div></div>
+    <div class="acts"><button class="btn btn-s">Annuleren</button><button class="btn btn-p">Delen</button></div>
+  </div>
+</div>
+<div class="note">Privacykeuze is nu een expliciete keuze i.p.v. OK/Annuleren in een OS-dialoog. Destructieve actie rechts, rustig links.</div>
+
+<div class="lab">PROPOSED — Set bewerken (vervangt 3× prompt())</div>
+<div class="frame" style="padding-bottom:24px;background:#8A939D">
+  <div style="height:40px"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h3>Set bewerken</h3>
+    <p>Set 3 · Frontsquat</p>
+    <div class="fld"><label>Gewicht (kg)</label>
+      <div class="stp"><button aria-label="Minder">−</button><div class="val">82,5</div><button aria-label="Meer">+</button></div></div>
+    <div class="fld"><label>Herhalingen</label>
+      <div class="stp"><button aria-label="Minder">−</button><div class="val">5</div><button aria-label="Meer">+</button></div></div>
+    <div class="fld"><label>Afstand (m) <span style="color:#9AA8B4;font-weight:600">— optioneel</span></label>
+      <input inputmode="numeric" placeholder="Leeg = ongewijzigd"></div>
+    <div class="acts"><button class="btn btn-s">Annuleren</button><button class="btn btn-p">Opslaan</button></div>
+  </div>
+</div>
+<div class="note">Eén sheet met alle velden tegelijk zichtbaar, ± steppers van 44×44px. Vervangt drie opeenvolgende browserprompts.</div>
+
+<div class="lab">PROPOSED — Lege staat &amp; feedback</div>
+<div class="frame" style="padding-bottom:24px">
+  <div class="pad" style="padding-top:20px">
+    <div class="sec">Hersteltrends</div>
+    <div class="card">
+      <div class="empty">
+        <div class="eic"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3.5-3.5 3 3L20 7"/></svg></div>
+        <h4>Nog geen hersteltrend</h4>
+        <p>Na ongeveer een week metingen laten we hier je patroon in HRV, rusthartslag en slaap zien.</p>
+        <button class="btn btn-p">Meting toevoegen</button>
+      </div>
+    </div>
+    <div class="sec">Feedback</div>
+    <div class="toast"><span class="dot"></span>Training opgeslagen</div>
+    <div class="inline e"><span>⚠</span><div><b>Synchroniseren niet gelukt</b>Je gegevens staan veilig op dit toestel en worden vanzelf verstuurd.</div></div>
+    <div class="inline w"><span>◐</span><div><b>Offline</b>Je kunt gewoon doortrainen — we synchroniseren later.</div></div>
+  </div>
+</div>
+<div class="note">Lege sectie toont nu uitleg + vervolgactie i.p.v. een kop zonder inhoud. Foutteksten zijn menselijk, zonder technische codes.</div>
+
+</body></html>

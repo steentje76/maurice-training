@@ -194,3 +194,66 @@ functionele P0/P1 (de onderliggende acties werken).
 ## 8. OPEN PRODUCTVRAAG
 Geen blokkerende. De navigatie-onzekerheid is gesloten door het
 canonical Navigation Contract.
+
+---
+
+# UX-1 DESIGN PREVIEW (ter goedkeuring — NIET geïmplementeerd)
+
+Preview: `docs/ux/preview/ux1-proposed.html` — volledig geïsoleerd, niet
+geladen door `index.html`, raakt geen productiepad.
+
+## Design tokens (AFGELEID uit de zes canonical PNG's, via pixelsampling)
+
+| Token | Waarde | Herkomst |
+|---|---|---|
+| `--tk-teal` | `#04AE9B` | gesampled uit Start-training-knop, trainen-v0.2 |
+| `--tk-navy` | `#053146` | gesampled uit donkere primaire kaart, trainen-v0.2 |
+| `--tk-ink` | `#223A4B` | gesampled uit bottom-nav-label |
+| `--tk-bg` | `#F4F6F9` | dominante achtergrondkleur alle drie mock-ups |
+| `--tk-card` | `#FFFFFF` | kaartvlak |
+| radii | card 16 · pill 999 · control 12 | mock-up-observatie |
+| spacing | 4·8·12·16·20·24 | mock-up-ritme |
+| touch target | **min. 44px** | WCAG/afwijking t.o.v. mock-up, zie D |
+
+## B. Welke canonical mock-up ondersteunt wat
+App shell/nav/header/avatar → alle zes · primaire donkere kaart +
+metric-tegels → vandaag-v0.11 en trainen-v0.2 · lijstrij met teal
+icoonvlak + sectielabel → inzicht-v0.1 en profiel-v0.1 · teal pill-CTA →
+trainen-v0.2 · segmented/keuze-behandeling → coach-v0.2 en samen-v0.1.
+
+## C. Welke UX-0-bevinding wordt opgelost
+- **L-01** (6× `prompt()`) → canonical "Set bewerken"-sheet met alle velden
+  tegelijk zichtbaar en ± steppers.
+- **L-02** (4× `confirm()`) → canonical bevestigings-sheet + expliciete
+  privacykeuze i.p.v. OK/Annuleren.
+- **Touch targets** → gemeten in de preview: **0 van 28** onder 44px
+  (huidige app: 116 van 431).
+- **V-02** → label boven het veld, geen vaste 72px-breedte.
+- **V-05** → lege staat met uitleg en vervolgactie.
+- **V-03/V-04** → previewbanner afwezig; teal lijn-icoonvlakken i.p.v. emoji.
+- **IA** → canonical Vandaag · Trainen · Inzicht · Coach · Samen.
+
+## D. Bewuste afwijkingen van de mock-up (gedocumenteerd)
+1. **Touch targets ≥44px** — de mock-ups tonen compactere controls; WCAG
+   en de gemeten 27%-bevinding wegen zwaarder. Opgelost met hit-area, niet
+   door alles visueel groter te maken.
+2. **Label boven veld** — mock-ups tonen geen inlogformulier; dit lost een
+   bewezen afbreekfout in Nederlandse labels op.
+3. **Lege staat** — komt niet in de mock-ups voor (die tonen gevulde data);
+   ontworpen binnen dezelfde taal.
+4. **Steppers bij Set bewerken** — geen mock-up beschikbaar; afgeleid.
+
+## E. Voorgestelde UX-1 implementatiescope (NA goedkeuring)
+Alleen app shell + design system: bottom nav naar canonical IA (labels/
+iconen/actief-staat, capabilities blijven), token-laag, knop-/invoer-/
+sectie-/kaart-normalisatie, canonical dialog- én nieuw input-sheet-
+component, empty-state-component, verwijderen dev-previewbanner.
+
+## F. Bestanden die daarna zouden wijzigen
+`index.html` (CSS-tokenlaag, bottom-nav-markup, `confirmModal` uitbreiden,
+nieuw input-sheet, 10 call-sites van `confirm()`/`prompt()`),
+plus nieuwe dedicated tests. Geen migraties, geen DB, geen architectuur.
+
+## G. MAIN UNCHANGED — bevestigd
+Alles staat op branch `ux/ux0-forensic-baseline`. Geen PR gemerged, geen
+commit op main, geen productiepad gewijzigd.

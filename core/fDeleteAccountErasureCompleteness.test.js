@@ -40,6 +40,18 @@ ok(src.includes("'ai_usage'"),
 ok(/auth\/v1\/admin\/users\//.test(src),
   'A3: de auth-user zelf wordt verwijderd -- dit is de stap die alle ON DELETE CASCADE-tabellen opruimt (zonder deze stap dekt de expliciete lijst maar een deel)');
 
+// Archief-/backup-tabellen uit eerdere migraties: eigen user_id-kolom, geen
+// FK-cascade, RLS met nul policies. Bevatten echte persoonsgegevens (incl.
+// gezondheidsdata in hrv_log_archive_v500) en overleefden verwijdering.
+[['bak_p_sessions','trainingsessies'],['bak_p_training_instances','uitgevoerde trainingen'],
+ ['bak_p_exercises','oefeningen'],['bak_p_goals','doelen'],
+ ['bak_p_training_exercises','trainingsoefeningen'],['bak_p_exercise_equipment','uitrusting'],
+ ['bak_p_exercise_goals','oefeningdoelen'],['bak_p_program_block_exercises','programmablokken'],
+ ['hrv_log_archive_v500','GEZONDHEIDSDATA (HRV/rusthartslag/slaap)']].forEach(function(pair){
+  ok(src.includes("'"+pair[0]+"'"),
+    'B-' + pair[0] + ': archieftabel wordt opgeruimd bij accountverwijdering -- bevat ' + pair[1] + ', geen FK-cascade');
+});
+
 // Falsificatie-bescherming: de twee toevoegingen mogen niet per ongeluk
 // in een uitgecommentarieerd of onbereikbaar blok belanden.
 {

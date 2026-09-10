@@ -12691,6 +12691,8 @@ async function renderCoachPtScreen(){
       }).join(''):'<p style="font-size:13px;color:var(--g4);margin:0">Geen actieve coach.</p>'}
     </div></div>
 
+    ${actiefAlsAthlete.length?`<div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Toegewezen programma's</div></div><div class="card-body" id="coachpt-assignments-list"><p style="font-size:13px;color:var(--g4)">Laden…</p></div></div>`:''}
+
     <div class="card"><div class="card-hd"><div class="card-title">Mijn sporters (${actiefAlsCoach.length})</div></div><div class="card-body" id="coachpt-roster">
       ${actiefAlsCoach.length?actiefAlsCoach.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <span style="font-size:13px">${escHtml(r.athlete_user_id)}</span>
@@ -12700,6 +12702,7 @@ async function renderCoachPtScreen(){
         </div>
       </div>`).join(''):'<p style="font-size:13px;color:var(--g4);margin:0">Nog geen sporters.</p>'}
     </div></div>`;
+  if(actiefAlsAthlete.length)renderAthleteCoachAssignments();
 }
 
 async function coachPtSearch(){
@@ -12792,7 +12795,11 @@ async function coachPtOpenAthlete(athleteId,relationshipId){
     try{instanties=await sbGet('training_instances',`&user_id=eq.${athleteId}&status=eq.completed&order=completed_at.desc&limit=10`);}catch(e){}
     html+=`<div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Training</div></div><div class="card-body">
       ${instanties.length?`<p style="font-size:13px;margin:0 0 6px">Laatste ${instanties.length} afgeronde trainingen</p>${instanties.map(t=>`<div style="font-size:12px;color:var(--g4)">${t.completed_at?new Date(t.completed_at).toLocaleDateString('nl-NL'):'onbekende datum'}</div>`).join('')}`:'<p style="font-size:13px;color:var(--g4);margin:0">Nog geen afgeronde trainingen.</p>'}
-    </div></div>`;
+    </div></div>
+    <div class="card" style="margin-bottom:14px" id="coachpt-programming-card">
+      <div class="card-hd"><div class="card-title">Programma toewijzen</div></div>
+      <div class="card-body" id="coachpt-programming-body"><p style="font-size:13px;color:var(--g4)">Laden…</p></div>
+    </div>`;
   }
   if(secties.includes('RECOVERY_HEALTH')){
     let hrv=[];
@@ -12807,6 +12814,138 @@ async function coachPtOpenAthlete(athleteId,relationshipId){
     </div></div>`;
   }
   el.innerHTML=html;
+  if(secties.includes('TRAINING_CORE'))renderCoachProgrammingSection(athleteId);
+}
+
+// ══════════════════════════════════════════════════════════
+// COACH/PT MASTER SPRINT — CPT4 PROGRAMMING / ASSIGNMENT
+// Root cause (CPT0-audit): coach_program_templates/coach_program_assignments
+// + materialize_coach_assignment() (MS-F10-03) bestonden volledig getest en
+// live adversarial bewezen, maar met 0 UI-verwijzingen -- exact hetzelfde
+// patroon als de eerdere Messaging-gap (backend != productcapability).
+// Hergebruikt uitsluitend bestaande infrastructuur: Mijn Trainingen-
+// architectuur (programs/program_blocks/custom_trainings/training_exercises,
+// via materialize_coach_assignment, NIET hier zelf herbouwd), de bestaande
+// Exercise Library (EX_CATALOG) voor oefeningselectie, en coach_has_scope
+// (TRAINING_CORE) als enige autorisatie -- geen tweede coach-execution-engine.
+// ══════════════════════════════════════════════════════════
+let _coachProgramBuilderDagen=[];
+async function renderCoachProgrammingSection(athleteId){
+  const el=document.getElementById('coachpt-programming-body');
+  if(!el)return;
+  const uid=authSession?.user?.id;
+  let templates=[];
+  try{templates=await sbGet('coach_program_templates',`&coach_user_id=eq.${uid}&order=created_at.desc&limit=30`);}catch(e){}
+  el.innerHTML=`
+    <p style="font-size:12px;color:var(--g4);margin:0 0 10px">Kies een bestaand programma of maak een nieuwe. De sporter moet dit zelf accepteren voordat het aan Mijn Trainingen wordt toegevoegd — coach kan nooit zelf materialiseren.</p>
+    <div id="coachpt-template-list" style="margin-bottom:10px">
+      ${templates.length?templates.map(t=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:13px">${escHtml(t.title)} (${escHtml(t.sport)})</span><button class="btn btn-p btn-sm" onclick="coachAssignProgramTemplate('${t.id}','${athleteId}')">Toewijzen</button></div>`).join(''):'<p style="font-size:13px;color:var(--g4);margin:0">Nog geen eigen programma\'s.</p>'}
+    </div>
+    <button class="btn btn-o btn-sm" onclick="coachToggleProgramBuilder()">Nieuw programma maken</button>
+    <div id="coachpt-program-builder" style="display:none;margin-top:10px"></div>`;
+}
+
+function coachToggleProgramBuilder(){
+  const el=document.getElementById('coachpt-program-builder');
+  if(!el)return;
+  const zichtbaar=el.style.display!=='none';
+  if(zichtbaar){el.style.display='none';return;}
+  _coachProgramBuilderDagen=[{week_nr:1,day_offset:0,training_name:'Dag 1',exercises:[{exercise_id:'',sets:3,reps:'8-10',rpe:'8'}]}];
+  el.style.display='block';
+  renderCoachProgramBuilder();
+}
+
+// EX_CATALOG.catalog is de bestaande, canonieke Exercise Library -- exact
+// dezelfde exercise_id's die materialize_coach_assignment() server-side
+// valideert. Geen nieuwe oefeningenbron.
+function renderCoachProgramBuilder(){
+  const el=document.getElementById('coachpt-program-builder');
+  if(!el)return;
+  const oefeningOpties=(typeof EX_CATALOG!=='undefined'?EX_CATALOG.catalog:[]).map(o=>`<option value="${o.catalog_id}">${escHtml(o.identity.name)}</option>`).join('');
+  el.innerHTML=`
+    <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Titel</label>
+    <input type="text" id="coachpt-template-title" maxlength="80" style="width:100%;margin-bottom:8px" placeholder="bv. Kracht basis -- week 1-4">
+    <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Sport</label>
+    <select id="coachpt-template-sport" style="width:100%;margin-bottom:10px">
+      <option value="strength">Kracht</option><option value="running">Hardlopen</option><option value="cycling">Fietsen</option><option value="swimming">Zwemmen</option>
+    </select>
+    ${_coachProgramBuilderDagen.map((dag,dIdx)=>`
+      <div class="card" style="margin-bottom:8px"><div class="card-body">
+        <input type="text" value="${escHtml(dag.training_name)}" oninput="_coachProgramBuilderDagen[${dIdx}].training_name=this.value" style="width:100%;margin-bottom:6px" placeholder="Naam van deze trainingsdag">
+        <div style="display:flex;gap:8px;margin-bottom:6px">
+          <div style="flex:1"><label style="font-size:11px;color:var(--g4)">Week</label><input type="number" min="1" value="${dag.week_nr}" oninput="_coachProgramBuilderDagen[${dIdx}].week_nr=parseInt(this.value)||1" style="width:100%"></div>
+          <div style="flex:1"><label style="font-size:11px;color:var(--g4)">Dag-offset (dagen vanaf vandaag)</label><input type="number" min="0" value="${dag.day_offset}" oninput="_coachProgramBuilderDagen[${dIdx}].day_offset=parseInt(this.value)||0" style="width:100%"></div>
+        </div>
+        ${dag.exercises.map((ex,eIdx)=>`
+          <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">
+            <select onchange="_coachProgramBuilderDagen[${dIdx}].exercises[${eIdx}].exercise_id=this.value" style="flex:2"><option value="">Kies oefening…</option>${oefeningOpties}</select>
+            <input type="number" min="1" value="${ex.sets}" oninput="_coachProgramBuilderDagen[${dIdx}].exercises[${eIdx}].sets=parseInt(this.value)||1" style="width:50px" title="Sets">
+            <input type="text" value="${escHtml(ex.reps)}" oninput="_coachProgramBuilderDagen[${dIdx}].exercises[${eIdx}].reps=this.value" style="width:60px" title="Reps" placeholder="8-10">
+          </div>`).join('')}
+        <button class="btn btn-o btn-sm" onclick="_coachProgramBuilderDagen[${dIdx}].exercises.push({exercise_id:'',sets:3,reps:'8-10',rpe:'8'});renderCoachProgramBuilder()">+ Oefening</button>
+      </div></div>`).join('')}
+    <button class="btn btn-o btn-sm" style="margin-bottom:10px" onclick="_coachProgramBuilderDagen.push({week_nr:1,day_offset:_coachProgramBuilderDagen.length,training_name:'Dag '+(_coachProgramBuilderDagen.length+1),exercises:[{exercise_id:'',sets:3,reps:'8-10',rpe:'8'}]});renderCoachProgramBuilder()">+ Dag</button>
+    <button class="btn btn-p" style="width:100%" onclick="coachSaveProgramTemplate()">Programma opslaan</button>`;
+}
+
+async function coachSaveProgramTemplate(){
+  const uid=authSession?.user?.id;
+  if(!uid)return;
+  const title=document.getElementById('coachpt-template-title').value.trim();
+  const sport=document.getElementById('coachpt-template-sport').value;
+  if(!title){toast('Titel is verplicht');return;}
+  // Server-side exercise_id-validatie (materialize_coach_assignment) is de
+  // daadwerkelijke afdwinging; deze client-check is uitsluitend een snelle,
+  // vriendelijke foutmelding vóórdat er iets wordt opgeslagen.
+  const heeftOngeldigeOefening=_coachProgramBuilderDagen.some(d=>d.exercises.some(e=>!e.exercise_id));
+  if(heeftOngeldigeOefening){toast('Kies voor elke regel een oefening');return;}
+  const content={schema_version:1,days:_coachProgramBuilderDagen};
+  const r=await fetch(`${SB_URL}/rest/v1/coach_program_templates`,{method:'POST',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify({coach_user_id:uid,title,sport,content})});
+  if(!r.ok){toast('Opslaan mislukt — probeer opnieuw');return;}
+  toast('Programma opgeslagen');
+  const athleteIdEl=document.getElementById('coachpt-athlete-sub');
+  renderCoachProgrammingSection(athleteIdEl?athleteIdEl.textContent:null);
+}
+
+// Toewijzen: status start altijd 'pending' (RLS cpa_coach_maakt_aan dwingt
+// coach_user_id=auth.uid() + coach_has_scope af) -- de athlete moet zelf
+// materialiseren (materialize_coach_assignment weigert de coach expliciet).
+async function coachAssignProgramTemplate(templateId,athleteId){
+  const uid=authSession?.user?.id;
+  if(!uid)return;
+  const r=await fetch(`${SB_URL}/rest/v1/coach_program_assignments`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({coach_user_id:uid,athlete_user_id:athleteId,template_id:templateId,status:'pending'})});
+  toast(r.ok?'Toegewezen — sporter moet dit zelf accepteren':'Toewijzen mislukt');
+}
+
+// Athlete-zijde: eigen toegewezen programma's, materialiseren via de
+// bestaande, adversarial bewezen RPC (schrijft in de canonical Mijn
+// Trainingen-keten -- programs/program_blocks/custom_trainings/
+// training_exercises -- geen tweede planningarchitectuur).
+async function renderAthleteCoachAssignments(){
+  const el=document.getElementById('coachpt-assignments-list');
+  if(!el)return;
+  const uid=authSession?.user?.id;
+  if(!uid)return;
+  let assignments=[];
+  try{assignments=await sbGet('coach_program_assignments',`&athlete_user_id=eq.${uid}&order=created_at.desc&limit=20`);}catch(e){}
+  if(!assignments.length){el.innerHTML='<p style="font-size:13px;color:var(--g4);margin:0">Nog geen toegewezen programma\'s.</p>';return;}
+  let templates=[];
+  try{templates=await sbGet('coach_program_templates',`&id=in.(${assignments.map(a=>a.template_id).join(',')})`);}catch(e){}
+  el.innerHTML=assignments.map(a=>{
+    const tpl=templates.find(t=>t.id===a.template_id);
+    const label=tpl?tpl.title:'Programma';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:13px">${escHtml(label)}${a.status!=='pending'?' ('+escHtml(a.status)+')':''}</span>
+      ${a.status==='pending'?`<button class="btn btn-p btn-sm" onclick="athleteMaterializeAssignment('${a.id}')">Accepteren</button>`:'<span style="font-size:11px;color:var(--g4)">Toegevoegd aan Mijn Trainingen</span>'}
+    </div>`;
+  }).join('');
+}
+
+async function athleteMaterializeAssignment(assignmentId){
+  const nieuwProgramId=await sbRpc('materialize_coach_assignment',{p_assignment_id:assignmentId});
+  if(!nieuwProgramId){toast('Accepteren mislukt — probeer opnieuw');return;}
+  toast('Toegevoegd aan Mijn Trainingen');
+  renderAthleteCoachAssignments();
 }
 
 async function renderSocialScreen(){

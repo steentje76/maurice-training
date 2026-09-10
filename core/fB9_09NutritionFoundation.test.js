@@ -90,7 +90,7 @@ ok(delAcct.includes("['nutrition_entries', ['user_id']]"),
 // ---- I. Geen extra bottom-nav-regressie ----
 {
   const aantalSociaalTabs = (html.match(/<span class="ni-label">Sociaal<\/span>/g) || []).length;
-  ok(aantalSociaalTabs === 3, 'I1: geen brede bottom-nav-refactor -- het bestaande Sociaal-scherm, het Nutrition-scherm, en het nieuwe Berichten-scherm (Social/Samen Master Sprint S5, bereikt vanuit Sociaal) hebben deze tab, geen wijziging aan de overige bestaande schermen');
+  ok(aantalSociaalTabs === 4, 'I1: geen brede bottom-nav-refactor -- het bestaande Sociaal-scherm, Nutrition, Berichten (S5), en het nieuwe Coach/PT-scherm (Coach/PT Master Sprint CPT2/CPT3, bereikt vanuit Sociaal) hebben deze tab, geen wijziging aan de overige bestaande schermen');
 }
 
 console.log('fB9_09NutritionFoundation: ' + pass + ' geslaagd, ' + fail + ' mislukt');

@@ -6488,6 +6488,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/swimmingIntelligence.js"></script>
 <script src="core/bleHeartRate.js"></script>
 <script src="core/bleCyclingPower.js"></script>
+<script src="core/dailyActivityCalculation.js"></script>
 <script src="core/socialGroup.js"></script>
 <script src="core/socialChallenge.js"></script>
 <script src="core/socialPrivacy.js"></script>
@@ -10024,9 +10025,9 @@ async function wearableSyncNow(){
     // Eerlijke, PER-METRIC microcopy: OAuth/API-succes ≠ nieuwe data. RHR=0 → "geen nieuwe data"
     // (nooit suggereren dat alles gesynct is). d.metrics = parsed dagen per metric.
     const _days=Number(d.daysWritten)||0, mm=d.metrics||null;
-    if(mm && (mm.hrv!=null||mm.rhr!=null||mm.sleep!=null)){
+    if(mm && (mm.hrv!=null||mm.rhr!=null||mm.sleep!=null||mm.steps!=null)){
       const seg=(lbl,c)=>lbl+' '+((c>0)?(c+' dag'+(c===1?'':'en')):'geen nieuwe data');
-      toast(seg('HRV',mm.hrv||0)+' · '+seg('slaap',mm.sleep||0)+' · '+seg('rusthartslag',mm.rhr||0));
+      toast(seg('HRV',mm.hrv||0)+' · '+seg('slaap',mm.sleep||0)+' · '+seg('rusthartslag',mm.rhr||0)+' · '+seg('stappen',mm.steps||0));
     } else {
       toast(_days>0 ? (_days+' dag'+(_days===1?'':'en')+' bijgewerkt') : 'Verbonden — geen nieuwe metingen gevonden');
     }
@@ -30277,8 +30278,23 @@ async function _renderLichaamGegevens(el){
     hrv:   dc.observation(serieVan('hrv'),   {today:vandaag, unit:'ms'}),
     rhr:   dc.observation(serieVan('rhr'),   {today:vandaag, unit:'bpm'}),
     slaap: dc.observation(serieVan('sleep'), {today:vandaag, unit:'u'}),
-    gewicht: dc.observation(gewichtSerie,    {today:vandaag, unit:'kg', kind:'entered'})
+    gewicht: dc.observation(gewichtSerie,    {today:vandaag, unit:'kg', kind:'entered'}),
+    stappen: dc.observation(serieVan('steps'), {today:vandaag, unit:'stappen'})
   };
+  // Devices/Wearables Master Sprint — sectie 5: baseline uit de EIGEN
+  // historische reeks (hergebruikt dezelfde hd/serieVan-bron, geen nieuwe
+  // fetch). UNKNOWN != ZERO wordt door serieVan('steps')/healthSeries() al
+  // gegarandeerd (value:null voor een dag zonder rij) en dailyStepsBaseline()
+  // filtert die er zelf nogmaals defensief uit.
+  let stappenContext=null;
+  if(typeof DailyActivityCalculationCore!=='undefined'){
+    const stappenReeks=serieVan('steps').map(function(p){return {date:p.date,steps:p.value};});
+    const baseline=DailyActivityCalculationCore.dailyStepsBaseline(stappenReeks);
+    if(OBS.stappen&&OBS.stappen.value!=null){
+      const deviation=DailyActivityCalculationCore.dailyStepsDeviation(OBS.stappen.value,baseline);
+      stappenContext=DailyActivityCalculationCore.contextText(deviation);
+    }
+  }
   const kwaliteit=function(k){ return dc.observationQuality(OBS[k], sync||{}); };
   // Dezelfde drie metrics als de statusregel op het Lichaam-overzicht (renderLichaamDataStatus):
   // dat zijn de gegevens die een wearable of check-in dagelijks levert. Gewicht wordt met
@@ -30289,7 +30305,7 @@ async function _renderLichaamGegevens(el){
   const kop=TK_DQ_TEKST[strengste]||TK_DQ_TEKST.no_data;
 
   // ── E. geen enkele gezondheidsmeting ──
-  const iets=['hrv','rhr','slaap','gewicht'].some(function(k){ return OBS[k] && OBS[k].value!=null; });
+  const iets=['hrv','rhr','slaap','gewicht','stappen'].some(function(k){ return OBS[k] && OBS[k].value!=null; });
   const laatsteBc=(bc&&bc.length)?bc[0]:null;
 
   const rij=function(icoon,label,obs,eenheid,fmt){
@@ -30347,6 +30363,8 @@ async function _renderLichaamGegevens(el){
           rij('🧠','HRV',OBS.hrv,'ms')+
           rij('❤️','Rusthartslag',OBS.rhr,'bpm')+
           rij('😴','Slaap',OBS.slaap,'',function(v){ return (typeof tkFmtSleepHours==='function')?tkFmtSleepHours(v):String(v); })+
+          rij('🚶','Stappen',OBS.stappen,'',function(v){ return Math.round(v).toLocaleString('nl-NL'); })+
+          (stappenContext?'<div style="font-size:11.5px;color:var(--g4);padding:4px 0 8px">'+escHtml(stappenContext)+'</div>':'')+
           rij('⚖️','Gewicht',OBS.gewicht,'kg')+
           (laatsteBc
             ? '<div class="lich-krow" style="align-items:flex-start"><span class="k" style="color:var(--dark);font-weight:700">📏 Lichaamsmetingen'+

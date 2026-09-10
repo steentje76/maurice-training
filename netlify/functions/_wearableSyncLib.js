@@ -49,7 +49,7 @@ function provenanceNote(existingNote) {
 
 function contributed(vals) {
   vals = vals || {};
-  return (vals.hrv != null) || (vals.rhr != null) || (vals.sleep != null);
+  return (vals.hrv != null) || (vals.rhr != null) || (vals.sleep != null) || (vals.steps != null);
 }
 
 function buildRow(date, userId, vals, existing) {
@@ -144,6 +144,20 @@ function parseSleepPoint(point) {
   return { date: date, value: minutesToHours(min) };
 }
 
+// Devices/Wearables Master Sprint — dailyRollUp-respons voor stappen
+// (rollupDataPoints[].steps.countSum, civilStartTime/civilEndTime als
+// datumvelden). Zelfde defensieve meerdere-paden-aanpak als hierboven (geen
+// vaste veldnaam blind aannemen) -- countSum kan int64-als-string zijn.
+// Retourneert null bij een ontbrekend steps-veld (UNKNOWN, sectie 3 van de
+// opdracht) -- NOOIT 0 tenzij de provider countSum=0 daadwerkelijk teruggaf.
+function parseStepsRollupPoint(rollupPoint) {
+  var date = _dateFrom(rollupPoint && rollupPoint.civilStartTime) || _dateFrom(rollupPoint && rollupPoint.civilEndTime) || _dateFrom(rollupPoint && rollupPoint.date);
+  var stepsRec = rollupPoint && rollupPoint.steps;
+  if (!stepsRec) return { date: date, value: null }; // geen steps-veld in deze rollup-entry -> UNKNOWN
+  var count = firstNum(stepsRec, ['countSum', 'count_sum', 'count']);
+  return { date: date, value: count == null ? null : Math.round(count) };
+}
+
 function minutesToHours(min) {
   if (typeof min !== 'number' || !isFinite(min) || min <= 0) return null;
   return Math.round(min / 60 * 100) / 100;
@@ -186,9 +200,10 @@ function todaySummary(byDate, todayDate) {
   var metrics = {
     hrv: vals.hrv != null,
     rhr: vals.rhr != null,
-    sleep: vals.sleep != null
+    sleep: vals.sleep != null,
+    steps: vals.steps != null
   };
-  var available = metrics.hrv || metrics.rhr || metrics.sleep;
+  var available = metrics.hrv || metrics.rhr || metrics.sleep || metrics.steps;
   return {
     date: todayDate,
     fetched: Object.prototype.hasOwnProperty.call(byDate, todayDate),
@@ -215,5 +230,6 @@ module.exports = {
   classifyWrite: classifyWrite, dailyDateOf: dailyDateOf, sessionDateOf: sessionDateOf,
   sleepMinutesOf: sleepMinutesOf, minutesToHours: minutesToHours, pointShape: pointShape, recordShape: recordShape,
   amsterdamToday: amsterdamToday, todaySummary: todaySummary, syncResult: syncResult,
-  parseHrvPoint: parseHrvPoint, parseRhrPoint: parseRhrPoint, parseSleepPoint: parseSleepPoint
+  parseHrvPoint: parseHrvPoint, parseRhrPoint: parseRhrPoint, parseSleepPoint: parseSleepPoint,
+  parseStepsRollupPoint: parseStepsRollupPoint
 };

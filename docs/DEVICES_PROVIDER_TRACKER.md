@@ -184,13 +184,27 @@ WAT CLAUDE DOET DAARNA:   Zodra portaaltoegang er is: de dan-toegankelijke offic
 
 ---
 
-## Oura (direct)
+## Oura (direct) -- SOFTWARE COMPLETE deze sprint
 
-- OFFICIAL API: Oura API v2 (api.ouraring.com), OAuth 2.0, self-serve.
-- SUPPORTED DATA: Sleep, Readiness, Activity, Workouts, HR/HRV. Scores blijven PROVIDER_DERIVED.
-- IMPLEMENTATION STATUS: NOT STARTED.
-- PO ACTION: cloud.ouraring.com-developeraccount, OAuth2-app registreren.
-- EXTERNAL BLOCKER: Nee (self-serve) -- nog niet gebouwd.
+- OFFICIAL API: Oura API v2 (api.ouraring.com), OAuth 2.0, self-serve (tot 10 gebruikers zonder Oura-goedkeuring, daarna goedkeuring vereist voor verdere groei -- bevestigd via cloud.ouraring.com/v2/docs).
+- AUTORISATIE-ENDPOINT: https://cloud.ouraring.com/oauth/authorize -- Bewijsniveau A, cloud.ouraring.com/docs/authentication, verbatim teruggevonden.
+- TOKEN-ENDPOINT: https://api.ouraring.com/oauth/token (authorization_code + refresh_token) -- Bewijsniveau A, zelfde bron.
+- REVOKE-ENDPOINT: GET https://api.ouraring.com/oauth/revoke?access_token={access_token} -- Bewijsniveau A, EXACTE URL verbatim teruggevonden (beter bevestigd dan bij WHOOP/Garmin) -- daadwerkelijk aangeroepen in disconnect, niet alleen lokaal.
+- SCOPES gebruikt: daily, heartrate, workout (van de 8 beschikbare: email, personal, daily, heartrate, workout, tag, session, spo2Daily).
+- DATA-ENDPOINT (deze sprint): GET https://api.ouraring.com/v2/usercollection/workout, start_date/end_date, gepagineerd via next_token -- Bewijsniveau A, exact curl-voorbeeld verbatim teruggevonden op cloud.ouraring.com/v2/docs, gecorroboreerd door meerdere onafhankelijke clientbibliotheken met identieke veldnamen (activity als leesbare string, bv. "running"/"tableTennis" -- echt teruggevonden voorbeeldwaarden).
+- CANONICAL MAPPING: activities-tabel, activity gemapt naar het strikte enum (running/cycling/rowing/swimming) -- niet-mapbare Oura-activiteiten (bv. tableTennis) bewust overgeslagen.
+- DEDUPE: dedupe_key='oura-workout-'+id, bestaande unieke index, ignore-duplicates.
+- TOKEN REFRESH: geimplementeerd, zelfde patroon als de andere providers.
+- UI STATUS: Geimplementeerd (Lichaam -> Gezondheidsgegevens, eigen kaart).
+- IMPLEMENTATION STATUS: SOFTWARE COMPLETE -- ACTIVATION BLOCKED (credentials ontbreken, self-serve, geen wachttijd tot 10 gebruikers).
+- TEST STATUS: fOuraIntegration.test.js, 20/20 (OAuth-contract, activity-mapping, Vault-gebruik, daadwerkelijke revoke-aanroep geverifieerd).
+- REAL DEVICE STATUS: OPEN.
+- PO ACTION REQUIRED -- OURA:
+  1. cloud.ouraring.com, account aanmaken/inloggen, een OAuth2-app registreren (niet het Personal Access Token-pad, dat is voor eigen-data-only-gebruik).
+  2. Redirect URI registreren: https://maurice-art.netlify.app/.netlify/functions/oura-auth-callback
+  3. Netlify env vars: OURA_CLIENT_ID, OURA_CLIENT_SECRET, OURA_REDIRECT_URI.
+  4. Herdeploy -- direct bruikbaar voor de eerste 10 gebruikers; bij groei daarboven moet een Oura-goedkeuring worden aangevraagd (apart, niet-blokkerend aandachtspunt voor later).
+- EXTERNAL BLOCKER: Ja (credentials ontbreken, self-serve, geen wachttijd).
 
 ---
 
@@ -226,10 +240,9 @@ WAT CLAUDE DOET DAARNA:   Zodra portaaltoegang er is: de dan-toegankelijke offic
 ## Samenvattende status
 
 - PRODUCT WORKING: Google Health, Concept2/PM5, BLE HR, BLE Power, BLE CSC, FTMS.
-- SOFTWARE COMPLETE -- ACTIVATION BLOCKED (credentials, self-serve, geen wachttijd): Polar (live op main), WHOOP (live op main).
+- SOFTWARE COMPLETE -- ACTIVATION BLOCKED (credentials, self-serve, geen wachttijd): Polar, WHOOP, Oura (alle drie live op main).
 - SOFTWARE FOUNDATION VERIFIED -- ACTIVATION BLOCKED (partner-goedkeuring vereist): Garmin.
 - NOT APPLICABLE (platform sluit binnenkort, al gedekt via bestaande integratie): Fitbit -- zie eigen sectie, geen aparte code te bouwen.
-- NOT STARTED, self-serve, geen blocker om te bouwen: Oura.
 - NOT STARTED, partner-goedkeuring vereist vóór bouwen (onbevestigd of Garmin-achtig gated): COROS.
 - NOT STARTED, harde platformvoorwaarde (native iOS-target): Apple HealthKit/Watch.
 - GEDEELTELIJK GEDEKT via bestaande integratie, directe adapter niet bewezen noodzakelijk: Samsung Health/Galaxy Watch/Ring.
@@ -237,8 +250,8 @@ WAT CLAUDE DOET DAARNA:   Zodra portaaltoegang er is: de dan-toegankelijke offic
 Devices/Wearables blijft NOT FROZEN totdat elke regel hierboven PRODUCT
 WORKING is, of SOFTWARE COMPLETE/SOFTWARE FOUNDATION VERIFIED + exacte
 external activation action known + no internal implementation gap. Voor
-Garmin/Apple/Samsung/COROS is dat laatste nu het geval. Oura is de
-eerstvolgende bouwkandidaat (geen externe blocker).
+Garmin/Apple/Samsung/COROS is dat laatste nu het geval. COROS-onderzoek is
+het eerstvolgende punt, gevolgd door Apple en Samsung.
 
 **Belangrijke les uit deze sprint**: eerder werd Garmin abusievelijk als
 "NOT STARTED" geclassificeerd op basis van een te snelle, onvolledige

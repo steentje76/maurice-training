@@ -369,3 +369,127 @@ P1 (het dode-knop-geval heeft nul impact; de 6 ongebruikte modules zijn
 nog niet geclassificeerd als schadelijk vs. onschadelijk). Een volgende
 pas moet in elk geval punt 2 (canonical aansluiting), 9 (voeding, het
 grootste domein) en 13 (auth-lifecycle) prioriteren.
+
+
+---
+
+# ONAFHANKELIJKE HERCERTIFICERING (Opus, tegen main fd8a48d5)
+
+Uitgevoerd als onafhankelijke auditor. Eerdere conclusies in dit document
+zijn behandeld als onderzoeksinput, niet als bewijs. Waar mijn bevinding
+afwijkt van een eerdere, staat dat expliciet vermeld.
+
+## H1. Baseline zelf herberekend (niet overgenomen)
+
+| Item | Eerder gemeld | Zelf gemeten | Oordeel |
+|---|---|---|---|
+| Schermen (`id="s-*"`) | 79 | 79 | bevestigd |
+| Netlify functions | 42 | **43** | gecorrigeerd (42 + de deze sessie toegevoegde gedeelde mapper) |
+| Core-modules (excl. tests) | 101 | 101 | bevestigd |
+| Core-tests | 344 | 345 | bevestigd (+1 nieuw) |
+| Migraties | 83 | 83 | bevestigd |
+| APP_VER | n.v.t. | v4.69.67 | vastgesteld |
+
+## H2. METHODOLOGISCHE FOUT IN DE EERDERE MODULE-SCAN (belangrijk)
+
+De eerdere passes zochten op **bestandsnamen**. Deze core-modules
+exporteren zich echter als **globale symbolen** (`global.XxxCore`), en
+worden in index.html aangeroepen via dat symbool -- niet via de
+bestandsnaam. Een bestandsnaam-scan levert daardoor structureel
+false negatives/positives op. Herscan uitgevoerd op de werkelijk
+geexporteerde globals.
+
+**Uitkomst: 15 modules zonder enig runtime-spoor** (eerdere passes
+meldden achtereenvolgens 6 en 14 -- beide te laag):
+adaptiveCoaching, coachIntelligence, coachProgram, coachProgramming,
+contextEngine, equipmentCore, externalDataModel,
+nutritionDegradedStateClassifier, platformRoles, scientificEvidence,
+sportDefinition, teamAnalyticsCore, teamPerformance, **commonData**,
+en release-gate.js (testinfrastructuur, geen productmodule).
+
+**NIEUW GEVONDEN, door geen enkele eerdere pas opgemerkt**:
+`commonData.js` is **transitief dormant** -- zijn enige consument is
+`externalDataModel.js`, die zelf dormant is. Daarmee is de volledige,
+in TRAININGSKOMPAS_PRODUCT_ARCHITECTURE.md als canonical beschreven
+**NORMALIZATION/CANONICAL-laag runtime onbereikbaar**.
+
+Tegenbewijs-controle uitgevoerd (om false positives te vermijden): drie
+modules zonder script-tag bleken wel degelijk actief via server-side
+require -- `calendarProjection.js` (calendar-feed.js),
+`cloudActivityIngestion.js` (wearable-sync-activities.js),
+`nutritionProviderOpenFoodFacts.js` (nutrition-off-lookup.js). Die zijn
+dus NIET dormant.
+
+## H3. Hercertificering per module (bewijs uit runtime, niet uit docs)
+
+- **externalDataModel.js + commonData.js -> CATEGORIE B (replaced by
+  active equivalent), GEEN P1.** Bewijs: de auditregel zegt P1 "als
+  iedere provider een eigen incompatibel model schrijft". Dat is
+  weerlegd: alle actieve providers schrijven naar dezelfde canonieke
+  `activities`-vorm met `source_provenance`/`source_provider`/
+  `data_quality`, afgedwongen door DB CHECK-constraints. Provider-neutrale
+  canonicalisatie en provenance worden dus wel degelijk bereikt --
+  alleen op DB-/adapterniveau i.p.v. via deze modules. De documentatie
+  loopt achter op de runtime; de runtime is niet defect.
+- **adaptiveCoaching.js -> CATEGORIE C (future foundation), GEEN P1.**
+  Doorslaggevend bewijs (sterker dan de eerdere "er is al iets
+  eenvoudigers"-redenering): de vereiste input `rpeTrend` bestaat
+  NERGENS in de codebase -- er wordt losse RPE per set vastgelegd, maar
+  geen enkele trend/aggregatie. De capability was dus nooit voltooibaar,
+  niet louter "vergeten aan te sluiten". Geen ontbrekende V1-beslislogica.
+- **Team/Gym -> GEEN P1 (expliciet false positive vermeden).** De
+  auditopdracht noemt P1 "als actieve UI naar legacy model schrijft
+  terwijl canonical bestaat". Onderzocht: de 7 `gym_id`-treffers in
+  index.html zijn (a) een leesbare badge-vlag, (b) een bewust
+  `gym_id: null`-placeholder met de comment "Fase 1, personal app", en
+  (c) RLS-comments. Er is geen actieve legacy write. De canonieke
+  tabellen (`organizations`/`memberships`/`teams`) worden wel gebruikt,
+  server-side via coach.js/gym-team.js. Bewuste gefaseerde architectuur.
+- Overige dormante modules (coachIntelligence, coachProgram,
+  coachProgramming, equipmentCore, platformRoles, scientificEvidence,
+  sportDefinition, teamAnalyticsCore, teamPerformance,
+  nutritionDegradedStateClassifier): **UNRESOLVED (F)** -- niet
+  geclassificeerd, want niet individueel tegen runtime bewezen. Ik ken
+  hier bewust geen categorie toe zonder bewijs.
+
+## H4. Severity-correctie op de eigen fix van deze sessie
+
+De sport-mapping-consolidatie (PR #314) is door de vorige pas als **P1**
+geclassificeerd. Onafhankelijk oordeel: **dat was te hoog -- dit is P2.**
+Drie kopieen van een 6-regelige mapper schreven alle drie naar hetzelfde
+canonieke enum met (op een randgeval na) dezelfde uitkomst; er was geen
+divergerend productgedrag, alleen onderhoudsrisico. De fix blijft
+waardevol en is gemerged, maar de classificatie is gecorrigeerd.
+
+**Tevens gecorrigeerd: de fix was NIET gedrag-neutraal.** Bewezen met een
+directe vergelijking oud vs. nieuw: Polar gebruikte `toUpperCase()` +
+`'SPINNING'`, de gedeelde mapper gebruikt `toLowerCase()` + `'spin'`.
+Een bare `SPIN`/`Spin` mapt nu naar `cycling` waar dat eerder `null`
+opleverde. Semantisch correct (een spinsessie IS cycling), maar het is
+een gedragswijziging en hoort niet als "pure refactor" te worden
+weggeschreven.
+
+## H5. Stand van zaken -- eerlijk
+
+Onafhankelijk afgerond: baseline, module-forensics (met gecorrigeerde
+methode), Team/Gym-risicocontrole, hercertificering van de drie zwaarst
+gewogen moduleclaims, severity-correctie.
+
+**Niet afgerond en dus NIET gecertificeerd**: de 79-schermen-audit
+(surface-per-surface), volledige Nutrition-pass, Social/block-coherentie,
+Analytics-consumers, Auth/account-lifecycle, Offline/resilience,
+risicogestuurde RLS-policy-inhoud (alleen RLS-AAN is eerder bevestigd,
+niet policy-correctheid), en productie-schema-driftcontrole.
+
+**P0 gevonden: 0. P1 gevonden: 0.** Maar dat cijfer geldt uitsluitend
+voor het wel-onderzochte deel. Het is GEEN uitspraak over de niet
+onderzochte domeinen hierboven.
+
+## H6. FREEZE-OORDEEL (onafhankelijk)
+
+**NIET FREEZE-READY.** Niet omdat er een bekende P0/P1 openstaat, maar
+omdat de freeze-criteria bewijs vereisen dat voor de meerderheid van de
+domeinen simpelweg nog niet geleverd is. Een freeze uitspreken op basis
+van vier onderzochte deelgebieden zou precies de "valse volledigheid"
+zijn die deze opdracht verbiedt. Freeze pas na afronding van de in H5
+genoemde domeinen.

@@ -6486,6 +6486,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/runningIntelligence.js"></script>
 <script src="core/cyclingIntelligence.js"></script>
 <script src="core/swimmingIntelligence.js"></script>
+<script src="core/bleHeartRate.js"></script>
 <script src="core/socialGroup.js"></script>
 <script src="core/socialChallenge.js"></script>
 <script src="core/socialPrivacy.js"></script>
@@ -12313,6 +12314,7 @@ function startRunningExecution(){
   _runningExecState=r.state;
   _runningExecState.ownerUserId=authSession?.user?.id||null;
   persisteerRunningExecState();
+  hrPairResetForNewSession();
   renderRunningExecutionScreen();
 }
 
@@ -12409,6 +12411,7 @@ function renderRunningExecutionScreen(){
           <button class="btn btn-o" style="width:100%" onclick="runningCancelFinish()">Doorgaan met trainen</button>
         </div></div>`:`
         <div style="font-size:48px;font-weight:700;margin:20px 0" id="running-exec-timer">${CardioCore.formatTime(actiefS)}</div>
+        <div id="hr-pair-widget" style="margin-bottom:14px"></div>
         ${intervalStap?`<div style="font-size:16px;font-weight:600;margin-bottom:4px" aria-live="polite">${intervalStap.blok.label} (${intervalStap.index+1}/${intervalStap.totaal})</div><div style="font-size:13px;color:var(--g4);margin-bottom:16px">Nog ${Math.round(intervalStap.resterendS)}s — volgende: ${intervalStap.volgende?intervalStap.volgende.label:'—'}</div>`:'<div style="margin-bottom:16px"></div>'}
         <div style="font-size:13px;color:var(--g4);margin-bottom:20px" role="status">${st.status==='RUNNING'?'Bezig':'Gepauzeerd'}${st.laps.length?' · '+st.laps.length+' lap(s)':''}</div>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
@@ -12423,7 +12426,83 @@ function renderRunningExecutionScreen(){
       `}
     </div>`;
   if(st.status==='RUNNING')_runningExecTimerHandle=setInterval(()=>renderRunningExecutionScreen(),1000);
+  if(st.status!=='FINISH_CONFIRM')renderHrPairWidget('hr-pair-widget');
 }
+
+// ══════════════════════════════════════════════════════════
+// DEVICES/WEARABLES MASTER SPRINT — BLE HEART RATE MID-WORKOUT ATTACH (sectie 12/15)
+// Generiek, sport-onafhankelijk widget -- hergebruikbaar in Running/Cycling/
+// Swimming-executieschermen (hier aangesloten op Running als bewijs van de
+// hard requirement; hetzelfde patroon geldt mechanisch voor de andere sporten).
+// HARD INVARIANT: dit object heeft GEEN enkele verwijzing naar/invloed op
+// _runningExecState of enige andere execution-state -- device-lifecycle bezit
+// nooit de workout-execution-lifecycle. Bij falen/loskoppelen/nooit-koppelen
+// loopt de training gewoon door; er wordt alleen een BPM-gemiddelde
+// meegegeven aan runningConfirmFinish() als er samples zijn.
+// ══════════════════════════════════════════════════════════
+let _hrPair={state:'idle',devices:[],samples:[],lastBpm:null};
+function tkHrTransport(){
+  return (typeof window!=='undefined' && window.TKHeartRateTransport && window.TKHeartRateTransport.available===true)
+    ? window.TKHeartRateTransport : null;
+}
+function renderHrPairWidget(containerId){
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  const t=tkHrTransport();
+  if(!t){el.innerHTML='<div style="font-size:11px;color:var(--g4)">Hartslagband koppelen: live koppeling in de app-versie</div>';return;}
+  if(_hrPair.state==='connected'){
+    el.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px"><span style="color:var(--r)">❤️</span> ${_hrPair.lastBpm||'—'} bpm <button class="btn btn-o btn-sm" style="padding:2px 8px" onclick="hrPairDisconnect()">Loskoppelen</button></div>`;
+    return;
+  }
+  if(_hrPair.state==='scanning'){el.innerHTML='<div style="font-size:12px;color:var(--g4)">◌ Scannen naar hartslagband…</div>';return;}
+  if(_hrPair.state==='selecting'&&_hrPair.devices.length){
+    el.innerHTML='<div style="font-size:11px;color:var(--g4);margin-bottom:4px">Kies je hartslagband:</div>'+
+      _hrPair.devices.map((d,i)=>`<button class="btn btn-o btn-sm" style="margin:2px" onclick="hrPairSelect(${i})">${escHtml(d.name||'Onbekend apparaat')}</button>`).join('');
+    return;
+  }
+  el.innerHTML='<button class="btn btn-o btn-sm" onclick="hrPairStart()">❤️ Hartslagband koppelen</button>';
+}
+async function hrPairStart(){
+  const t=tkHrTransport();
+  if(!t)return;
+  _hrPair.state='scanning';
+  renderHrPairWidget('hr-pair-widget');
+  try{
+    const devs=await t.discover();
+    if(!devs.length){_hrPair.state='idle';renderHrPairWidget('hr-pair-widget');toast('Geen hartslagband gevonden');return;}
+    _hrPair.devices=devs;_hrPair.state='selecting';
+    renderHrPairWidget('hr-pair-widget');
+  }catch(e){_hrPair.state='idle';renderHrPairWidget('hr-pair-widget');toast('Scannen mislukt');}
+}
+async function hrPairSelect(idx){
+  const t=tkHrTransport();
+  const dev=_hrPair.devices[idx];
+  if(!t||!dev)return;
+  try{
+    await t.connect(dev.deviceId);
+    _hrPair.state='connected';_hrPair.samples=[];
+    t.onBpm(function(reading){ _hrPair.lastBpm=reading.bpm; _hrPair.samples.push(reading.bpm); renderHrPairWidget('hr-pair-widget'); });
+    renderHrPairWidget('hr-pair-widget');
+  }catch(e){_hrPair.state='idle';renderHrPairWidget('hr-pair-widget');toast('Verbinden mislukt');}
+}
+async function hrPairDisconnect(){
+  const t=tkHrTransport();
+  if(t){try{await t.disconnect();}catch(e){}}
+  _hrPair.state='idle';_hrPair.devices=[];
+  renderHrPairWidget('hr-pair-widget');
+}
+// Gemiddelde over de sessie (BleHeartRateCore.averageBpm, pure aggregatie) --
+// null (niet 0) als er geen samples zijn, zodat "onbekend" nooit als "0 bpm"
+// wordt opgeslagen (UNKNOWN != ZERO).
+function hrPairSessionAverage(){
+  return (typeof BleHeartRateCore!=='undefined')?BleHeartRateCore.averageBpm(_hrPair.samples):null;
+}
+// Nieuwe sessie = nieuwe hartslag-samples. Ontkoppelt eventueel nog actief
+// verbonden apparaat NIET automatisch (een sensor mag over meerdere
+// trainingen aan blijven, sectie 12 noemt dit niet als vereiste) -- reset
+// uitsluitend de sample-buffer zodat een oud gemiddelde nooit aan een
+// nieuwe training wordt toegeschreven.
+function hrPairResetForNewSession(){ _hrPair.samples=[]; }
 
 function runningPause(){
   const r=RunningExecutionCore.pause(_runningExecState,Date.now());
@@ -12480,6 +12559,7 @@ async function runningConfirmFinish(){
       user_id:uid,sport:'running',
       distance_meters:afstandM,
       duration_seconds:duurS,
+      avg_heart_rate_bpm:hrPairSessionAverage(),
       source_provenance:'manual',data_quality:'unverified',
       recorded_at:new Date(_runningExecState.startedAt).toISOString(),
       dedupe_key:dedupeKey,
@@ -12518,6 +12598,7 @@ async function runningConfirmFinish(){
     }
     { const k=runningExecLocalStorageKey(); if(k)localStorage.removeItem(k); }
     toast('Training opgeslagen');
+    hrPairResetForNewSession();
     renderRunDetail(activityId);
   }finally{
     _runningOpslagBezig=false;

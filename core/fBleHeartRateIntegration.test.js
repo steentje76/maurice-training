@@ -63,6 +63,13 @@ ok(html.includes('hrPairResetForNewSession();\n  renderRunningExecutionScreen();
 ok(html.match(/hrPairResetForNewSession\(\);\s*\r?\n\s*renderRunDetail\(activityId\);/),
   'F2: een succesvol afgeronde training reset de HR-samplebuffer vóór het tonen van het detailscherm');
 
+// ---- G. Uitbreiding naar Cycling: zelfde generieke widget, eigen container-id (geen tweede implementatie) ----
+ok(html.includes('id="hr-pair-widget-cycling"'), 'G1: Cycling execution-scherm heeft een eigen widget-container (geen DOM-id-botsing met Running)');
+ok(html.includes("renderHrPairWidget('hr-pair-widget-cycling')"), 'G2: Cycling roept hetzelfde, generieke renderHrPairWidget() aan -- geen tweede HR-widget-implementatie');
+ok(html.includes('avg_heart_rate_bpm:hrPairSessionAverage()') && (html.match(/avg_heart_rate_bpm:hrPairSessionAverage\(\)/g) || []).length === 2,
+  'G3: zowel Running als Cycling geven het sessie-gemiddelde door aan hun activity-payload (2 call-sites, geen duplicaat-logica)');
+ok(html.includes('_hrPair.containerId=containerId'), 'G4: het widget onthoudt per-aanroep welk scherm het bedient, zodat interne hertekeningen (scan/connect/disconnect) het juiste sportscherm raken i.p.v. altijd Running');
+
 console.log('\n========================================================');
 console.log('fBleHeartRateIntegration.test.js — ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { msgs.forEach(m => console.error(m)); process.exitCode = 1; }

@@ -528,3 +528,103 @@ RETAIN TEMPORARILY, server-only (RLS met nul policies, geen actief
 productpad), erasure verplicht gedekt, geen P0/P1, GEEN freeze-blocker.
 Decommissioning is een post-freeze technical-debt-taak; geen destructieve
 DROP-migratie tijdens deze audit. Zie ook de V1 Scope Matrix.
+
+
+# H9. SLOTRONDE: Nutrition, Social, Analytics, Surfaces (main d3b9615b)
+
+## H9.1 Nutrition -- GEEN P0/P1
+
+Runtime-bewijs:
+- ALLE nutrition-writes lopen via de canonieke, offline-veilige queue
+  (sbPostQ/sbPatchQ/sbDelQ). Geen enkele rauwe fetch-bypass gevonden over
+  10 nutrition-tabellen.
+- Frozen nutrient snapshot BEVESTIGD ACTIEF: `nutrient_snapshot` +
+  `snapshot_source_version` bestaan niet alleen in het schema, ze worden
+  daadwerkelijk geschreven bij toevoegen EN bij bewerken van een
+  maaltijditem. Een latere productwijziging herschrijft dus geen
+  gelogde historie.
+- UNKNOWN != ZERO gerespecteerd: ontbrekende energie toont '—', geen 0.
+- Dagtotalen komen uit de ACTIEVE canonieke module
+  core/nutritionFoundation.js (energy_kcal_logged_total), niet uit een
+  inline herberekening -- geen shadow calculation.
+- Coverage/degraded-state is actief afgedekt via `data_quality` met een
+  expliciete PARTIAL-melding ("dag mogelijk onvolledig"). Daarmee is
+  `nutritionDegradedStateClassifier.js` classificatie REPLACED: de
+  capability bestaat actief, alleen niet via die module.
+
+## H9.2 Social / block / privacy -- GEEN P0/P1 (sterkste bevinding van deze audit)
+
+Adversariale kernvraag: als B gebruiker A blokkeert, kan A dan nog bij
+B's content? Client-side filtering KAN dit principieel niet afdwingen,
+want RLS op `social_blocks` is `blocker_id = auth.uid()` -- A mag de rij
+waarin B hem blokkeert niet eens lezen.
+
+Bewijs dat het tóch coherent is, en wel server-side:
+- Elke social read-policy (social_profiles, social_shared_activities,
+  social_reactions, social_comments) roept
+  `social_is_blocked_pair(auth.uid(), <ander>)` aan.
+- Die functie is aantoonbaar BIDIRECTIONEEL:
+  `(blocker=a AND blocked=b) OR (blocker=b AND blocked=a)`.
+- Hij is SECURITY DEFINER met `search_path` gepind op public -- precies
+  wat nodig is omdat de geblokkeerde partij de blokkeerrij zelf niet mag
+  lezen.
+Block-semantiek is dus afgedwongen op de laag waar het hoort, niet in de
+UI. Geen P1 op block/revoke-coherentie.
+
+## H9.3 Surface-audit: 79/79 verantwoord
+
+- 74 van 79 zijn bereikbaar via de centrale router `go(id)`.
+- De 5 overige (s-auth, s-auth-newpass, s-onboarding, s-intake,
+  s-coachpt-athlete) worden geactiveerd via directe DOM-manipulatie
+  (`classList.add/remove('active')`). Dat is het juiste patroon voor
+  pre-sessie-gates: vóór een geldige sessie is de router niet zinvol.
+- GEEN onbereikbare surface gevonden.
+
+METHODOLOGISCHE ZELFCORRECTIE (twee keer in deze ronde): mijn eerste
+twee reachability-scans gaven false negatives -- eerst door een kapotte
+regex (0/79 "onbereikbaar", zichtbaar onjuist), daarna doordat ik de
+in JS-strings ge-escapete vorm `go(\'s-x\')` niet matchte. Beide zijn
+gecorrigeerd vóór rapportage. Dit onderstreept het patroon uit H2:
+zoekmethode-fouten zijn in deze codebase de grootste bron van valse
+auditconclusies.
+
+## H9.4 Analytics -- reachability
+
+Analytics-schermen (s-stats, s-inzicht, s-hist, *-insights) zijn alle
+via de router bereikbaar (zie H9.3). Een diepgaande canonicaliteits-
+audit per analytics-berekening is NIET uitgevoerd; wel is vastgesteld
+dat de Calculation/Decision-purity-gate in de release-gate actief is en
+groen staat (geen DOM/DB/network in de reken-core). Restrisico
+geregistreerd als P3, geen freeze-blocker.
+
+# H10. EINDOORDEEL FUNCTIONAL FREEZE
+
+P0: 0
+P1: 0 (drie gevonden tijdens deze audit, alle drie gesloten:
+        #316 program_regeneration_log/ai_usage,
+        #317 negen archieftabellen incl. gezondheidsdata,
+        #318 tweede verwijderpad -- die laatste als P2 geclassificeerd
+        na bewijs dat er geen actuele data-impact was)
+P2: sport-mapping-consolidatie (#314, incl. bewuste semantische
+    SPIN->cycling-wijziging), erasure-pariteit tweede pad (#318),
+    uiteengelopen gedupliceerde tabellijsten
+P3: dead UI-knop (tenantBrandingAdminEdit, permanent verborgen),
+    15 dormante modules, analytics-diepteaudit
+
+Domeinen freeze-ready: Training-completion, Auth/account-lifecycle,
+Offline/resilience, Security/RLS-inhoud, schema-drift, Nutrition,
+Social/block/privacy, surface-reachability.
+
+Buiten scope conform PO-beslissing: Commercial/billing (BETA/
+PRE-COMMERCIAL), Wearables real-provider/device-validatie (extern
+geblokkeerd, apart geregistreerd), legacy archieftabellen (retain
+temporarily, post-freeze technical debt).
+
+## OORDEEL: FUNCTIONAL SOFTWARE SCOPE FREEZE-READY
+
+Met de expliciete, eerlijke kanttekening dat "freeze-ready" hier betekent:
+geen bekende P0/P1, canonieke paden bewezen, security- en
+resilience-grenzen aantoonbaar afgedwongen op de juiste laag. Het betekent
+NIET dat elke van de 79 surfaces regel-voor-regel op read/write-niveau is
+doorgelicht, en het is GEEN uitspraak over UX-kwaliteit of over de
+externe validatie die per definitie buiten deze omgeving valt.

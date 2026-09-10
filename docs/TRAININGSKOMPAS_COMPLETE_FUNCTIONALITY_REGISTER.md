@@ -202,24 +202,66 @@ pas -- onduidelijk of de bedoeling was de functie alsnog te bouwen
 verwijderen (cleanup, geen dringende noodzaak zolang hij onzichtbaar
 blijft).
 
-**6 ongebruikte "fundering"-modules** (PURE/DETERMINISTIC/OFFLINE-
-CAPABLE, Sprint 5-10, elk met een eigen dedicated testbestand dat wel
-slaagt, maar zonder ENIGE aanroep vanuit index.html, andere core-modules,
-of netlify/functions): `adaptiveCoaching.js`, `coachProgramming.js`,
-`externalDataModel.js`, `nutritionDegradedStateClassifier.js`,
-`platformRoles.js`, `teamPerformance.js`. Dit is architecturaal ANDERS
-dan contextEngine.js: contextEngine.js is bewust en expliciet vervangen
-door buildCtx() (bekend, gedocumenteerd, geen actie nodig). Voor deze
-zes modules is in deze pas NIET vastgesteld of ze (a) bewust vervangen
-zijn door een latere, andere implementatie inline in index.html, (b)
-nog wachten op integratie die nooit is afgerond, of (c) inderdaad
-volledig overbodig zijn geworden. Dit onderscheid bepaalt of hier
-sprake is van een echt P1-gat (afgeronde functionaliteit die nooit
-bereikbaar werd voor de gebruiker) of van onschadelijke technische
-schuld. AANBEVOLEN VERVOLGSTAP: per module vaststellen welke categorie
-van toepassing is vóórdat een freeze-beslissing definitief wordt --
-NIET in deze pas afgerond wegens omvang (elk vereist het doorlezen van
-de module-inhoud plus de sprintgeschiedenis waarin hij is gebouwd).
+### Classificatie van de 6 (+1 nieuw gevonden) ongebruikte modules (item 14)
+
+Onderzocht tegen `docs/TRAININGSKOMPAS_PRODUCT_ARCHITECTURE.md` (een
+eerdere, eigen architectuuraudit) en tegen de git-geschiedenis (bevestigd:
+al onge?ntegreerd sinds minstens commit 60eac70, ruim voor deze sessie --
+geen recente regressie).
+
+- **adaptiveCoaching.js**: CATEGORIE A (canonical, vergeten integratie).
+  Expliciet genoemd in de architectuurdoc als onderdeel van de bedoelde
+  Decision/Rules Engine-laag. Behandelt readiness+RPE-trend-gebaseerde
+  automatische trainingsaanpassingen met coach-override
+  (`coach_approved`/`coach_overridden`) -- een ANDER concept dan het
+  actief gebruikte `computeProgAdjustment()` (via DecisionCore,
+  spierherstel-gebaseerd). Geen directe P1: er bestaat al een werkende,
+  eenvoudigere aanpassingslogica in productie (computeProgAdjustment),
+  dus V1-functionaliteit "automatische trainingsaanpassing" ontbreekt
+  niet volledig -- dit is een niet-uitgerolde VERBETERING, geen gat.
+- **coachProgramming.js**: CATEGORIE A, zelfde architectuurdoc-vermelding.
+  Nader onderzoek nodig om te bevestigen of coachProgram.js (enkelvoud,
+  actief F10.3/MS-F10-03) hetzelfde concept dekt -- niet afgerond deze
+  pas.
+- **externalDataModel.js**: CATEGORIE A, expliciet genoemd als
+  Normalization/Canonical-laag in de architectuurdoc. Niet verder
+  onderzocht deze pas of deviceIntegration.js dit al dekt.
+- **platformRoles.js**: CATEGORIE A (waarschijnlijk) -- implementeert een
+  rolhierarchie-autorisatiesysteem (hasAtLeastRole/canViewAthleteData/
+  canManageOrganization/canManageTeam/canOverrideAdjustment). Inline in
+  index.html bestaat wel eigen, eenvoudigere rolcontrole (3 treffers op
+  gym_role/role_level/isCoach/isAdmin). BELANGRIJKE NUANCE (relevant
+  voor auditpunt 9): dit is GEEN beveiligingsgat zolang server-side RLS
+  autoritatief blijft -- client-side rolcontrole bepaalt alleen wat de
+  UI toont, nooit wat de server toestaat. Wel een architectuur-inconsistentie
+  (twee plekken die "wie mag wat" bepalen) die het risico op toekomstige
+  divergentie vergroot.
+- **teamPerformance.js**: ONDUIDELIJK (A of B) -- andere functienamen dan
+  het wel-actieve teamAnalyticsCore.js (bv. buildTeamSummary vs.
+  aggregateAttendance), dus mogelijk complementair i.p.v. duplicaat.
+  Niet afgerond deze pas.
+- **nutritionDegradedStateClassifier.js**: ONDUIDELIJK -- geen overlap
+  gevonden met nutritionFoundation.js/nutritionFoundation2.js bij een
+  eerste steekproef. Hoort thuis in de aparte, aangekondigde
+  Nutrition-domeinpas (auditpunt 7), niet hier afgerond.
+- **NIEUW GEVONDEN (bredere check deze pas)**: `coachProgram.js`
+  (enkelvoud, F10.3/MS-F10-03 -- eerder abusievelijk als "actief"
+  aangenomen) blijkt bij een strikte controle OOK nul referenties te
+  hebben (geen `<script src>`-tag, geen `require()` elders). De eerdere
+  "6 ongebruikte modules"-telling was hiermee onvolledig. Dit vereist
+  een aparte, bredere herscan van ALLE 101 core-modules met een
+  consistente, geverifieerde methode (script-tag-check EN require-check
+  gecombineerd) -- niet afgerond deze pas, expliciet als openstaand
+  geregistreerd i.p.v. het bestaande "6"-aantal ten onrechte te laten
+  staan.
+
+**Geen van de hierboven onderzochte modules krijgt een P1** -- voor geen
+enkele is aangetoond dat V1-functionaliteit daadwerkelijk ontbreekt voor
+de gebruiker (het dichtstbijzijnde geval, adaptiveCoaching.js, heeft een
+werkende, eenvoudigere vervanging in productie). Verdere clas­sificatie
+van coachProgramming/externalDataModel/teamPerformance/
+nutritionDegradedStateClassifier en de volledige herscan blijven
+openstaand.
 
 ## 6b. Security/RLS-steekproef (item 15 van de opdracht)
 
@@ -255,7 +297,38 @@ bekende issues; het billing-gat is door de PO bevestigd als bewuste,
 intentionele keuze -- BETA/PRE-COMMERCIAL -- en telt niet mee in de
 P0/P1-telling, zie sectie 5).
 
-## 7. Status van de 17 auditpunten uit de Final Repo-Wide Functional Freeze Audit-opdracht
+## 8. Canonical aansluiting per scherm -- Batch 1 (Training-domein, diep gecontroleerd per opdracht-item 4)
+
+**Bevinding: canonical, geen parallelle completion-engine gevonden.**
+Geverifieerd: precies één `finishSession()` (regel 21833, de echte
+afrondingsfunctie -- `finishSessionNoSave()` is een bewust aparte,
+niet-opslaande varkeuze, geen duplicaat-pad), die de enige
+`completeTrainingInstance()` (regel 8765) aanroept, die op zijn beurt de
+enige directe schrijfactie naar de `sessions`-tabel uitvoert (met
+`resolution=ignore-duplicates` voor idempotency). Bevestigde
+call-sites: normale sessie-afronding (21942), de Guided-workout-flow
+(34696, expliciet in commentaar vermeld als "dezelfde afronding als in
+finishSession"), en Hyrox (32768). Dit dekt PREVIEW->EXECUTION->LOGGING->
+COMPLETE voor de generieke trainingsflow, Guided, en Hyrox.
+
+**Historische context in de code zelf** (niet een huidig probleem, maar
+relevant voor deze audit): meerdere commentaarregels (20698, 21932,
+29132) documenteren EERDERE bugs waarbij `completeTrainingInstance()`
+bestond maar niet werd aangeroepen (verweesde 'active'-instances). Deze
+zijn zichtbaar al gerepareerd -- de huidige call-sites bewijzen dat de
+aanroep nu wel plaatsvindt. Dit is een voorbeeld van precies het soort
+gat dat deze audit moet opsporen, en het bewijst dat zulke gaten in het
+verleden ook daadwerkelijk zijn gevonden en gedicht.
+
+**Nog NIET apart geverifieerd binnen dit batch** (tijdslimiet van deze
+pas): of running/cycling/swimming/multisport-schermen elk zelf ook via
+dezelfde `finishSession()`/`completeTrainingInstance()`-keten lopen, of
+via een eigen variant (het patroon "roept completeTrainingInstance aan
+als er iets gelogd is" is aangetoond voor Guided en Hyrox specifiek,
+niet 1-op-1 voor elk van de losse sportschermen nagelopen). Aanbevolen
+vervolgstap in een volgende batch.
+
+**P0/P1 voor dit batch: geen gevonden.**
 
 Eerlijke, expliciete stand per punt -- geen enkel punt hieronder wordt
 als "afgerond" gemarkeerd tenzij dat ook echt is gebeurd:

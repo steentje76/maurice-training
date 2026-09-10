@@ -487,7 +487,12 @@ onderzochte domeinen hierboven.
 
 ## H6. FREEZE-OORDEEL (onafhankelijk)
 
-**NIET FREEZE-READY.** Niet omdat er een bekende P0/P1 openstaat, maar
+> **[ACHTERHAALD -- zie H10 voor het definitieve oordeel.]** Onderstaand
+> tussenoordeel gold voor de stand van de audit op dát moment (vier
+> onderzochte deelgebieden). De audit is daarna afgerond; het definitieve
+> oordeel staat in H10.
+
+**NIET FREEZE-READY (tussenstand, achterhaald).** Niet omdat er een bekende P0/P1 openstaat, maar
 omdat de freeze-criteria bewijs vereisen dat voor de meerderheid van de
 domeinen simpelweg nog niet geleverd is. Een freeze uitspreken op basis
 van vier onderzochte deelgebieden zou precies de "valse volledigheid"
@@ -571,7 +576,7 @@ Bewijs dat het tóch coherent is, en wel server-side:
 Block-semantiek is dus afgedwongen op de laag waar het hoort, niet in de
 UI. Geen P1 op block/revoke-coherentie.
 
-## H9.3 Surface-audit: 79/79 verantwoord
+## H9.3 Surface-audit: 79/79 ACCOUNTED FOR / REACHABILITY VERIFIED
 
 - 74 van 79 zijn bereikbaar via de centrale router `go(id)`.
 - De 5 overige (s-auth, s-auth-newpass, s-onboarding, s-intake,
@@ -620,9 +625,36 @@ PRE-COMMERCIAL), Wearables real-provider/device-validatie (extern
 geblokkeerd, apart geregistreerd), legacy archieftabellen (retain
 temporarily, post-freeze technical debt).
 
-## OORDEEL: FUNCTIONAL SOFTWARE SCOPE FREEZE-READY
+## DEFINITIEF OORDEEL (aanvaard door de Product Owner)
 
-Met de expliciete, eerlijke kanttekening dat "freeze-ready" hier betekent:
+```
+TRAININGSKOMPAS V1
+FUNCTIONAL SOFTWARE ARCHITECTURE FROZEN
+
+P0 = 0 open
+P1 = 0 open
+
+Uitzonderingen (geen freeze blockers):
+- externe wearable/provider/real-device-validatie blijft OPEN
+- commerciele activatie is DEFERRED BY PRODUCT OWNER
+- geregistreerde P2/P3 en legacy cleanup
+
+Vanaf nu geldt: de functionele architectuur wordt niet heropend
+zonder een nieuw AANTOONBAAR P0/P1.
+```
+
+### Reikwijdte van deze freeze -- precies, niet ruimer
+
+De 79 surfaces zijn **ACCOUNTED FOR / REACHABILITY VERIFIED**: elk van de
+79 is geinventariseerd en heeft een bewezen navigatiepad (74 via de
+router `go(id)`, 5 via pre-sessie-DOM-gates). Er is UITDRUKKELIJK NIET
+geclaimd dat alle 79 surfaces individueel volledig functioneel zijn
+gecertificeerd op elke read, write en interactie -- die per-surface
+doorlichting is niet uitgevoerd en volgt in de aparte fase
+"ALL SURFACES UX/UI >=9 MASTER PHASE", waarin per surface ook de lokale
+functionele read/write/interactie-integriteit wordt gecontroleerd.
+
+Met de expliciete, eerlijke kanttekening dat deze freeze betekent:
 geen bekende P0/P1, canonieke paden bewezen, security- en
 resilience-grenzen aantoonbaar afgedwongen op de juiste laag. Het betekent
 NIET dat elke van de 79 surfaces regel-voor-regel op read/write-niveau is

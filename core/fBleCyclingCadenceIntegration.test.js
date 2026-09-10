@@ -33,7 +33,7 @@ ok(bootstrap.match(/registerCscTransport[\s\S]{0,150}return;/), 'B3: alleen op e
 
 // ---- C. Hergebruik van de bestaande generieke gateway (vier transports, één gateway-fabriek) ----
 ok(nativeTransportCode.includes('gateway.scan(') && nativeTransportCode.includes('gateway.startNotifications('), 'C1: hergebruikt exact dezelfde BleGateway-interface');
-ok((bootstrap.match(/makeCapacitorBleGateway\(\)/g) || []).length === 4, 'C2: alle vier transports (Concept2/HR/Power/CSC) delen dezelfde makeCapacitorBleGateway()-fabrieksfunctie');
+ok((bootstrap.match(/makeCapacitorBleGateway\(\)/g) || []).length >= 4, 'C2: minstens vier transports (Concept2/HR/Power/CSC, eventueel meer zoals FTMS) delen dezelfde makeCapacitorBleGateway()-fabrieksfunctie');
 
 // ---- D. Architectuurscheiding: parser/calculation in core/, transport roept alleen aan ----
 ok(nativeTransportCode.includes('CSC.parseCscMeasurement') && nativeTransportCode.includes('CSC.deriveCadenceRpm'),

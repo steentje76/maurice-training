@@ -6489,6 +6489,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/bleHeartRate.js"></script>
 <script src="core/bleCyclingPower.js"></script>
 <script src="core/bleCyclingSpeedCadence.js"></script>
+<script src="core/ftmsCore.js"></script>
 <script src="core/dailyActivityCalculation.js"></script>
 <script src="core/socialGroup.js"></script>
 <script src="core/socialChallenge.js"></script>
@@ -12639,6 +12640,66 @@ function cadencePairSessionAverage(){
 }
 function cadencePairResetForNewSession(){ _cadencePair.samples=[]; }
 
+// ══════════════════════════════════════════════════════════
+// DEVICES/WEARABLES MASTER SPRINT — FTMS (Fitness Machine Service)
+// Discovery/verbinden/machinetype-herkenning werkt (bevestigde UUID's).
+// Databytes blijven UNKNOWN totdat een decoder expliciet bevestigd wordt
+// (zie core/ftmsCore.js) -- deze widget toont daarom bewust GEEN live
+// cijfers, alleen een eerlijke verbindingsstatus. Geen fake meting.
+// ══════════════════════════════════════════════════════════
+let _ftmsPair={state:'idle',devices:[],machineType:null,containerId:'ftms-pair-widget'};
+function tkFtmsTransport(){
+  return (typeof window!=='undefined' && window.TKFtmsTransport && window.TKFtmsTransport.available===true)
+    ? window.TKFtmsTransport : null;
+}
+function renderFtmsPairWidget(containerId){
+  _ftmsPair.containerId=containerId;
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  const t=tkFtmsTransport();
+  if(!t){el.innerHTML='<div style="font-size:11px;color:var(--g4)">FTMS-apparaat (indoor bike/roeier/loopband) koppelen: live koppeling in de app-versie</div>';return;}
+  if(_ftmsPair.state==='connected'){
+    const label=_ftmsPair.machineType?_ftmsPair.machineType.label:'apparaat';
+    el.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;color:var(--g4)">Verbonden met ${escHtml(label)} — wachten op bevestigde data <button class="btn btn-o btn-sm" style="padding:2px 8px" onclick="ftmsPairDisconnect()">Loskoppelen</button></div>`;
+    return;
+  }
+  if(_ftmsPair.state==='scanning'){el.innerHTML='<div style="font-size:12px;color:var(--g4)">◌ Scannen naar FTMS-apparaat…</div>';return;}
+  if(_ftmsPair.state==='selecting'&&_ftmsPair.devices.length){
+    el.innerHTML='<div style="font-size:11px;color:var(--g4);margin-bottom:4px">Kies je apparaat:</div>'+
+      _ftmsPair.devices.map((d,i)=>`<button class="btn btn-o btn-sm" style="margin:2px" onclick="ftmsPairSelect(${i})">${escHtml(d.name||'Onbekend apparaat')}</button>`).join('');
+    return;
+  }
+  el.innerHTML='<button class="btn btn-o btn-sm" onclick="ftmsPairStart()">🏋️ FTMS-apparaat koppelen (indoor bike/roeier/loopband)</button>';
+}
+async function ftmsPairStart(){
+  const t=tkFtmsTransport();
+  if(!t)return;
+  _ftmsPair.state='scanning';
+  renderFtmsPairWidget(_ftmsPair.containerId);
+  try{
+    const devs=await t.discover();
+    if(!devs.length){_ftmsPair.state='idle';renderFtmsPairWidget(_ftmsPair.containerId);toast('Geen FTMS-apparaat gevonden');return;}
+    _ftmsPair.devices=devs;_ftmsPair.state='selecting';
+    renderFtmsPairWidget(_ftmsPair.containerId);
+  }catch(e){_ftmsPair.state='idle';renderFtmsPairWidget(_ftmsPair.containerId);toast('Scannen mislukt');}
+}
+async function ftmsPairSelect(idx){
+  const t=tkFtmsTransport();
+  const dev=_ftmsPair.devices[idx];
+  if(!t||!dev)return;
+  try{
+    await t.connect(dev.deviceId);
+    _ftmsPair.state='connected';_ftmsPair.machineType=t.getMachineType?t.getMachineType():null;
+    renderFtmsPairWidget(_ftmsPair.containerId);
+  }catch(e){_ftmsPair.state='idle';renderFtmsPairWidget(_ftmsPair.containerId);toast('Verbinden mislukt');}
+}
+async function ftmsPairDisconnect(){
+  const t=tkFtmsTransport();
+  if(t){try{await t.disconnect();}catch(e){}}
+  _ftmsPair.state='idle';_ftmsPair.devices=[];_ftmsPair.machineType=null;
+  renderFtmsPairWidget(_ftmsPair.containerId);
+}
+
 function runningPause(){
   const r=RunningExecutionCore.pause(_runningExecState,Date.now());
   if(!r.ok){toast('Kon niet pauzeren');return;}
@@ -14526,7 +14587,8 @@ function renderCyclingExecutionScreen(){
         <div style="font-size:48px;font-weight:700;margin:20px 0" id="cycling-exec-timer">${CardioCore.formatTime(actiefS)}</div>
         <div id="hr-pair-widget-cycling" style="margin-bottom:8px"></div>
         <div id="power-pair-widget" style="margin-bottom:8px"></div>
-        <div id="cadence-pair-widget" style="margin-bottom:14px"></div>
+        <div id="cadence-pair-widget" style="margin-bottom:8px"></div>
+        <div id="ftms-pair-widget" style="margin-bottom:14px"></div>
         ${intervalStap?`<div style="font-size:16px;font-weight:600;margin-bottom:4px" aria-live="polite">${intervalStap.blok.label} (${intervalStap.index+1}/${intervalStap.totaal})</div><div style="font-size:13px;color:var(--g4);margin-bottom:16px">Nog ${Math.round(intervalStap.resterendS)}s — volgende: ${intervalStap.volgende?intervalStap.volgende.label:'—'}</div>`:'<div style="margin-bottom:16px"></div>'}
         <div style="font-size:13px;color:var(--g4);margin-bottom:20px" role="status">${st.status==='RUNNING'?'Bezig':'Gepauzeerd'}${st.laps.length?' · '+st.laps.length+' lap(s)':''}</div>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
@@ -14541,7 +14603,7 @@ function renderCyclingExecutionScreen(){
       `}
     </div>`;
   if(st.status==='RUNNING')_cyclingExecTimerHandle=setInterval(()=>renderCyclingExecutionScreen(),1000);
-  if(st.status!=='FINISH_CONFIRM'){renderHrPairWidget('hr-pair-widget-cycling');renderPowerPairWidget('power-pair-widget');renderCadencePairWidget('cadence-pair-widget');}
+  if(st.status!=='FINISH_CONFIRM'){renderHrPairWidget('hr-pair-widget-cycling');renderPowerPairWidget('power-pair-widget');renderCadencePairWidget('cadence-pair-widget');renderFtmsPairWidget('ftms-pair-widget');}
 }
 
 function cyclingPause(){

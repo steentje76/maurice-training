@@ -40,10 +40,16 @@ ok(authCallback.includes("'https://www.polaraccesslink.com/v3/users'") && authCa
 ok(authCallback.includes('registerRes.status !== 409'), 'B2: een 409 (al geregistreerd) wordt correct als geen-fout behandeld, niet als koppel-fout gerapporteerd');
 
 // ---- C. Sport-mapping respecteert het strikte canonical enum ----
-ok(sync.includes("activities_sport_check") || sync.match(/mapPolarSportToCanonical/),
-  'C1: er bestaat een expliciete mapping-functie naar het canonieke sportmodel (niet een rechtstreekse, ongefilterde Polar-sportnaam)');
-ok(sync.match(/return 'running'/) && sync.match(/return 'cycling'/) && sync.match(/return 'rowing'/) && sync.match(/return 'swimming'/),
-  'C2: de mapping dekt alle vier de door TK toegestane sporten (activities_sport_check: running/cycling/rowing/swimming)');
+// (na de Functional Freeze Audit-consolidatie: gedeelde mapper in
+// _providerSportMapping.js i.p.v. een eigen kopie per provider)
+ok(sync.includes("require('./_providerSportMapping.js')") && sync.match(/mapProviderSportToCanonical/),
+  'C1: polar-sync.js gebruikt de gedeelde, canonieke mapping-functie (niet een rechtstreekse, ongefilterde Polar-sportnaam, en geen eigen losse kopie meer)');
+{
+  const shared = require('../netlify/functions/_providerSportMapping.js');
+  ok(shared.mapProviderSportToCanonical('RUNNING') === 'running' && shared.mapProviderSportToCanonical('BIKING') === 'cycling'
+     && shared.mapProviderSportToCanonical('ROWING') === 'rowing' && shared.mapProviderSportToCanonical('SWIMMING') === 'swimming',
+    'C2: de gedeelde mapping dekt alle vier de door TK toegestane sporten (activities_sport_check: running/cycling/rowing/swimming)');
+}
 ok(sync.includes('return null') && sync.includes('!canonicalSport'),
   'C3: een niet-mapbaar Polar-sporttype (Polar kent 100+ types) wordt overgeslagen (skipped), NOOIT geforceerd in een van de vier categorieen -- zou anders de CHECK-constraint laten falen of, erger, een verkeerde sport claimen');
 

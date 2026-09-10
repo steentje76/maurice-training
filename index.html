@@ -12665,6 +12665,7 @@ function ftmsLiveSummary(){
   if(d.strokeRatePerMin!=null)delen.push(d.strokeRatePerMin+' spm');
   if(d.totalDistanceM!=null)delen.push(Math.round(d.totalDistanceM)+' m');
   if(d.instantaneousPaceSecPer500m!=null)delen.push(CardioCore.formatTime(d.instantaneousPaceSecPer500m)+'/500m');
+  if(d.inclinationPercent!=null)delen.push(d.inclinationPercent+'% helling');
   return delen.length?delen.join(' · '):null;
 }
 function renderFtmsPairWidget(containerId){

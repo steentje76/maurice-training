@@ -127,6 +127,35 @@ ok(FtmsCore.parseIndoorBikeData(null) === null, 'G9: null-input -> null (geen cr
 ok(FtmsCore.parseRowerData(dv([0x00])) === null, 'H5: te korte payload -> null');
 ok(FtmsCore.parseRowerData(null) === null, 'H6: null-input -> null (geen crash)');
 
+// ---- I. parseTreadmillData: bewust beperkte, bevestigde scope (bits 0-3) ----
+{
+  // flags=0x0000 (bit0=0 -> speed aanwezig), speed=8.50 km/u (850*0.01)
+  const bytes = [...u16le(0x0000), ...u16le(850)];
+  const r = FtmsCore.parseTreadmillData(dv(bytes));
+  ok(r && r.instantaneousSpeedKmh === 8.5, 'I1: bit0=0 betekent Instantaneous Speed IS aanwezig (zelfde omgekeerde logica als Indoor Bike), correct met resolutie 0.01');
+}
+{
+  // bit0=1 (speed afwezig) + bit3 (Inclination+Ramp Angle Setting, gedeelde bit), inclinatie = 2.5%
+  const bytes = [...u16le(0x0009), ...i16le(25), ...i16le(0x7FFF)]; // 0x0009=bit0|bit3; inclinatie=25*0.1=2.5%; ramp=data-not-available (genegeerd)
+  const r = FtmsCore.parseTreadmillData(dv(bytes));
+  ok(r && r.instantaneousSpeedKmh === null, 'I2: bit0=1 betekent Instantaneous Speed juist AFWEZIG');
+  ok(r.inclinationPercent === 2.5, 'I3: Inclination correct gedecodeerd (sint16, resolutie 0.1%), Ramp Angle Setting-offset correct doorgeschoven zonder de waarde te claimen');
+}
+{
+  // Negatieve inclinatie (bergafwaarts, officieel toegestaan) + Total Distance (bit2, uint24)
+  const bytes = [...u16le(0x000D), 0x88, 0x13, 0x00, ...i16le(-15), ...i16le(0)]; // 0x000D=bit0|bit2|bit3; 0x001388=5000m; inclinatie=-1.5%
+  const r = FtmsCore.parseTreadmillData(dv(bytes));
+  ok(r && r.totalDistanceM === 5000, 'I4: Total Distance (uint24) correct op de juiste offset ná speed, vóór inclination');
+  ok(r.inclinationPercent === -1.5, 'I5: negatieve inclinatie (bergafwaarts) correct gedecodeerd -- signed veld, geen absolute-waarde-aanname');
+}
+ok(FtmsCore.parseTreadmillData(dv([0x00])) === null, 'I6: te korte payload -> null');
+ok(FtmsCore.parseTreadmillData(null) === null, 'I7: null-input -> null (geen crash)');
+{
+  // bit3 aangekondigd maar payload afgekapt vóór het volledige 4-byte paar -> null, geen halve waarde
+  const bytes = [...u16le(0x0009), ...i16le(25)]; // Ramp Angle Setting-bytes ontbreken
+  ok(FtmsCore.parseTreadmillData(dv(bytes)) === null, 'I8: een aangekondigd maar afgekapt Inclination/Ramp-paar geeft null, geen halve waarde');
+}
+
 console.log('\n========================================================');
 console.log('fFtmsCore.test.js — ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) process.exitCode = 1;

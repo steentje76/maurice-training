@@ -35,21 +35,54 @@ Zie eerdere sprintrapporten (PR's #293-#300).
 
 ---
 
-## Apple Health / HealthKit / Apple Watch
+## Apple Health / HealthKit / Apple Watch -- ARCHITECTURE DESIGNED, IMPLEMENTATION BLOCKED (omgeving + productbeslissing)
 
-- OFFICIAL API: Apple HealthKit -- native iOS-framework, GEEN REST-API.
-- AUTH MODEL: geen OAuth -- systeemeigen iOS-permissiedialoog, binnen een native app-container.
-- HARDE ARCHITECTUURVOORWAARDE: uitsluitend bruikbaar vanuit een native iOS-app-target (Capacitor `npx cap add ios`). Een reine web/PWA-context kan HealthKit nooit aanroepen, ongeacht credentials.
-- SOFTWARE READINESS: canonical model (externalDataModel.js kent al `apple_healthkit`) en Calculation/Context-laag zijn platform-neutraal, herbruikbaar (fHealthKitArchitectureDoc.test.js bevestigt dit eerder al).
-- IMPLEMENTATION STATUS: NOT STARTED (vereist eerst een iOS-platformtarget).
-- PO ACTION REQUIRED -- APPLE:
-  1. Apple Developer Program-account ($99/jaar).
-  2. Bundle ID met HealthKit-capability.
-  3. Provisioning profile + signing certificates.
-  4. Fysiek iOS-testtoestel of TestFlight.
-  5. `npx cap add ios` (nieuw platformtarget, raakt geen bestaande code) -- daarna pas de adapter bouwen.
-  6. Beslissing: Watch-data uitsluitend via HealthKit (aanbevolen) of een eigen companion-app.
-- EXTERNAL BLOCKER: Ja -- Apple Developer-account + iOS-target zijn een harde technische voorwaarde.
+- OFFICIAL API: Apple HealthKit -- native iOS-framework, GEEN REST-API, geen OAuth. Bevestigd (evidence-niveau A, developer.apple.com/documentation/healthkit): `HKHealthStore.requestAuthorization(toShare:read:)`, per-type systeemeigen iOS-permissiedialoog, uitsluitend binnen een native app-container.
+- FUNDAMENTELE ARCHITECTUURWET (al eerder correct vastgesteld, deze ronde onafhankelijk herbevestigd tegen actuele Apple-documentatie): HealthKit-data leeft uitsluitend op het apparaat; een reine web/PWA-context kan HealthKit nooit aanroepen, ongeacht credentials. Zie docs/MS-F5-04_APPLE_HEALTHKIT_ARCHITECTURE.md voor het volledige, reeds bevestigde ontwerp (keten, autorisatiemodel, datatypen-tabel met HRV-methodologienuance, achtergrondlevering, privacygrens) -- niet hier herhaald.
+- OMGEVINGSBLOKKADE (fundamenteel, niet credential-gerelateerd, bevestigd in docs/MS-F13-06_IOS_FEASIBILITY_RESEARCH.md): een werkende iOS Xcode-projectstructuur (`npx cap add ios`) vereist CocoaPods en de Xcode-command-line-tools, die uitsluitend op macOS bestaan. Deze sessie draait in een Linux-sandbox (bevestigd: geen `pod`/`xcodebuild`/`xcode-select`). Dit is dus GEEN kwestie van ontbrekende Apple Developer-credentials (die zijn alleen nodig om te signeren/publiceren) -- zelfs met credentials kan in déze omgeving geen ios/-map worden aangemaakt.
+- PRODUCTBESLISSING NOG OPEN: docs/TRAININGSKOMPAS_MASTER_ROADMAP.md §24 ("iOS timing") is een expliciet nog-open Product Owner-beslissing die aan een native iOS-implementatie voorafgaat. De bestaande, getested architectuur-acceptance-gate (fHealthKitArchitectureDoc.test.js) bewaakt letterlijk dat er GEEN ios/-map bestaat zolang dit ontwerp-only blijft -- dat is een bewuste, bestaande governance-grens, geen omissie.
+- SOFTWARE READINESS: canonical model (core/externalDataModel.js kent al `apple_healthkit`) en de Calculation/Context-laag zijn platform-neutraal en herbruikbaar zodra een adapter er is (fHealthKitArchitectureDoc.test.js bevestigt dit).
+- IMPLEMENTATION STATUS: ARCHITECTURE DESIGNED -- IMPLEMENTATION BLOCKED. Geen ios/-map, geen Capacitor-iOS-dependency, geen Swift-code (bewust, correct, getest).
+- WAT WEL AL KLAAR STAAT ZODRA DE OMGEVING ER IS: het volledige ontwerp (keten/datatypen/privacy/achtergrondlevering) in MS-F5-04, plus een bevestigd technisch onafhankelijk deelpad (Sign in with Apple, volledig web-based bouwbaar zonder native app -- zie MS-F13-06) dat NIET op de "iOS timing"-beslissing hoeft te wachten.
+
+### PO ACTION CARD — APPLE
+
+```
+OFFICIAL PORTAL:              developer.apple.com
+APPLE DEVELOPER PROGRAM:      Vereist (business/individueel, $99/jaar)
+TEAM ID:                      Uitgegeven bij Developer Program-registratie
+BUNDLE ID:                    Nog te kiezen (bv. com.trainingskompas.app), met
+                               HealthKit-capability ingeschakeld in Xcode/App ID-configuratie
+HEALTHKIT CAPABILITY:         Aan te vinken in Xcode (Signing & Capabilities) +
+                               App ID-configuratie in het Developer Portal
+ENTITLEMENTS:                 com.apple.developer.healthkit (automatisch via Xcode-
+                               capability-toggle, geen handmatige aanvraag)
+PROVISIONING:                 Development + Distribution provisioning profiles
+SIGNING:                      Distribution-certificaat (Developer Program-lidmaatschap)
+TEST IPHONE:                  Vereist -- HealthKit werkt niet in de iOS Simulator
+                               (geen Health-data beschikbaar in Simulator)
+APPLE WATCH VEREIST?:         Nee voor V1 -- Watch-data loopt via HealthKit op de
+                               gekoppelde iPhone (Watch -> Health-app -> HealthKit -> TK),
+                               geen aparte watchOS-app nodig tenzij een toekomstige
+                               capability dit expliciet vereist
+XCODE/MAC VEREIST?:           Ja -- fundamentele omgevingsvoorwaarde, ontbreekt in deze
+                               sessie (Linux-sandbox). Dit is de kern-blokkade, los van
+                               credentials.
+TESTFLIGHT VEREIST?:          Voor interne test vóór App Store-publicatie, ja
+WAT PO MOET AANLEVEREN:       1) Apple Developer Program-account; 2) een macOS-omgeving
+                               met Xcode (eigen Mac, of een macOS CI-runner) waarin een
+                               toekomstige sessie/ontwikkelaar `npx cap add ios` kan
+                               uitvoeren; 3) een fysiek testtoestel; 4) een expliciete
+                               beslissing over "iOS timing" (roadmap §24)
+WAT CLAUDE DOET DAARNA:       Zodra een macOS-omgeving beschikbaar is: `npx cap add ios`,
+                               het al-ontworpen HealthKit-adapterpatroon (MS-F5-04)
+                               implementeren in Swift, canonieke JS-brug bouwen
+                               (window.TKHealthKitTransport, analoog aan het bestaande
+                               Concept2-patroon), en dezelfde _wearableSyncLib.js-
+                               canonieke-mapping hergebruiken.
+```
+
+- EXTERNAL BLOCKER: Ja -- tweevoudig: (1) een macOS/Xcode-omgeving (fundamenteel, ontbreekt in deze sessie ongeacht credentials), (2) de nog-open "iOS timing"-productbeslissing.
 
 ---
 

@@ -10045,12 +10045,68 @@ function handleWearableRedirect(){
   const params=new URLSearchParams(window.location.search);
   const w=params.get('wearable');
   if(!w)return;
+  const provider=params.get('provider'); // 'polar' of afwezig (=google_health/Fitbit, bestaand gedrag)
   const messages={connected:'Wearable gekoppeld!',denied:'Koppelen geannuleerd',expired:'Koppel-poging verlopen, probeer opnieuw',token_error:'Koppelen mislukt (token)',save_error:'Koppelen mislukt (opslaan)',config_error:'Wearable-koppeling nog niet geconfigureerd',server_error:'Serverfout bij koppelen',invalid_request:'Ongeldig koppelverzoek'};
   toast(messages[w]||'Koppelen: '+w);
   window.history.replaceState({},'',window.location.pathname);
   go('s-profiel');
+  if(provider==='polar'){
+    if(w==='connected')polarSyncNow(); else tkVerversGegevensScherm();
+    return;
+  }
   if(w==='connected')wearableSyncNow();
   else renderWearableCard();
+}
+
+// ══════════════════════════════════════════════════════════
+// DEVICES/WEARABLES MASTER SPRINT — POLAR ACCESSLINK (V1 MUST, self-serve)
+// Exact hetzelfde patroon als de bestaande wearableConnect/wearableSyncNow/
+// wearableDisconnect (Google Health) hierboven -- eigen, parallelle
+// functies i.p.v. de bestaande generaliseren, om de werkende Google
+// Health-flow niet te raken.
+// ══════════════════════════════════════════════════════════
+async function fetchPolarStatus(){
+  const h=wearableAuthHeaders();
+  if(!h)return {connected:false};
+  try{
+    const r=await fetch('/.netlify/functions/polar-status',{method:'POST',headers:h});
+    if(!r.ok)return {connected:false};
+    return await r.json();
+  }catch(e){console.warn('polar-status fout',e);return {connected:false};}
+}
+async function polarConnect(){
+  const h=wearableAuthHeaders();
+  if(!h){toast('Geen actieve sessie');return;}
+  try{
+    const r=await fetch('/.netlify/functions/polar-auth-start',{method:'POST',headers:h});
+    const d=await r.json();
+    if(!r.ok||!d.authUrl){toast('Koppelen mislukt: '+(d.error?.message||r.status));return;}
+    window.location.href=d.authUrl;
+  }catch(e){toast('Verbindingsfout bij koppelen');}
+}
+async function polarDisconnect(){
+  if(!await confirmModal('Automatische synchronisatie van Polar-trainingen stopt dan.',{title:'Polar loskoppelen',okLabel:'Loskoppelen',danger:true}))return;
+  const h=wearableAuthHeaders();
+  if(!h){toast('Geen actieve sessie');return;}
+  try{
+    const r=await fetch('/.netlify/functions/polar-disconnect',{method:'POST',headers:h});
+    if(!r.ok){toast('Loskoppelen mislukt');return;}
+    toast('Losgekoppeld');
+    tkVerversGegevensScherm();
+  }catch(e){toast('Verbindingsfout bij loskoppelen');}
+}
+async function polarSyncNow(){
+  const h=wearableAuthHeaders();
+  if(!h){toast('Geen actieve sessie');return;}
+  toast('Synchroniseren met Polar...');
+  try{
+    const r=await fetch('/.netlify/functions/polar-sync',{method:'POST',headers:h});
+    const d=await r.json();
+    if(!r.ok||!d.synced){toast('Synchroniseren met Polar mislukt — probeer het later opnieuw');tkVerversGegevensScherm();return;}
+    toast(d.imported>0?(d.imported+' training'+(d.imported===1?'':'en')+' bijgewerkt vanaf Polar'):'Verbonden met Polar — geen nieuwe trainingen gevonden');
+    tkVerversGegevensScherm();
+    refreshHome();
+  }catch(e){toast('Verbindingsfout bij synchroniseren');}
 }
 
 // ══════════════════════════════════════════════════════════
@@ -30441,6 +30497,19 @@ async function _renderLichaamGegevens(el){
     },{now:new Date().toISOString()});
   }catch(_){ sync=null; }
 
+  // Devices/Wearables V1 MUST-vervolg — Polar (self-serve, geen
+  // goedkeuringsperiode) als tweede, onafhankelijke koppeling. Zelfde
+  // dc.deviceConnectionState()-keten, geen nieuwe statuslogica.
+  let polarSync=null;
+  try{
+    const pst=await fetchPolarStatus();
+    polarSync=dc.deviceConnectionState({
+      connected:!!pst.connected, connectedAt:pst.connectedAt||null,
+      lastSyncAt:pst.lastSyncAt||null, lastSyncStatus:pst.lastSyncStatus||null,
+      tokenExpired:pst.lastSyncStatus==='token_expired_no_refresh', syncing:false
+    },{now:new Date().toISOString()});
+  }catch(_){ polarSync=null; }
+
   const eindH=(hd&&hd.length)?String(hd[0].date).slice(0,10):null;
   const vandaag=td();
   const serieVan=function(veld){
@@ -30569,6 +30638,23 @@ async function _renderLichaamGegevens(el){
           ? '<button class="btn btn-o btn-sm" style="flex:1" onclick="wearableSyncNow()">Sync nu</button>'+
             '<button class="btn btn-o btn-sm" style="flex:1" onclick="wearableDisconnect()">Loskoppelen</button>'
           : '<button class="btn btn-r btn-sm" style="flex:1" onclick="wearableConnect()">Fitbit koppelen</button>')+
+      '</div>'+
+    '</div>'+
+
+    // ── Polar (self-serve, tweede/onafhankelijke koppeling) ──
+    '<div class="card" style="padding:13px 14px;margin-top:10px">'+
+      '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">'+
+        '<div style="font-size:13px;font-weight:800;color:var(--dark)">Polar</div>'+
+        '<div style="font-size:11px;font-weight:800;color:'+((polarSync&&polarSync.connected)?'var(--status-good)':'var(--g4)')+'">'+
+          escHtml(!polarSync?'Status onbekend':(polarSync.status==='not_connected'?'Niet gekoppeld':(polarSync.status==='token_expired'?'Opnieuw koppelen nodig':(polarSync.status==='sync_failed'?'Laatste synchronisatie mislukt':'Gekoppeld'))))+
+        '</div></div>'+
+      (polarSync&&polarSync.lastSyncAt?'<div style="font-size:11.5px;color:var(--g4);font-weight:600;margin-top:5px">Laatste synchronisatie '+escHtml(fmtDate(String(polarSync.lastSyncAt).slice(0,10)))+'</div>':'')+
+      '<div style="font-size:11px;color:var(--g3);font-weight:600;margin-top:6px;line-height:1.5">Sporttrainingen (running/cycling/rowing/swimming) van een Polar-apparaat.</div>'+
+      '<div style="display:flex;gap:8px;margin-top:11px">'+
+        ((polarSync&&polarSync.connected)
+          ? '<button class="btn btn-o btn-sm" style="flex:1" onclick="polarSyncNow()">Sync nu</button>'+
+            '<button class="btn btn-o btn-sm" style="flex:1" onclick="polarDisconnect()">Loskoppelen</button>'
+          : '<button class="btn btn-r btn-sm" style="flex:1" onclick="polarConnect()">Polar koppelen</button>')+
       '</div>'+
     '</div>'+
 

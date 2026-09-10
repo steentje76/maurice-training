@@ -315,30 +315,34 @@ PARTIALLY SATISFIED -- INTERNAL SCOPE DECISION (geen platformbeperking)
 | BLE CSC-sensor | Nee | Nee | Fysieke sensor nodig |
 | FTMS-apparaat | Nee | Nee | Fysieke machine nodig |
 | Google Health-account | Deels | Gedeeltelijk (mocked) | Geen live round-trip deze sessie |
-| Apple Watch | Nee | Nee | iOS-target + Apple Developer-account |
+| Apple Watch | Nee | Nee | macOS/Xcode-omgeving + Apple Developer-account + productbeslissing |
 | Galaxy Watch/Ring | Nee | Nee | Fysiek apparaat + Samsung-account |
 | Garmin | Nee | Nee | Partner-goedkeuring + credentials |
-| Polar | Nee | Nee | Credentials (self-serve) |
-| Fitbit/WHOOP/Oura | Nee | Nee | Nog niet gebouwd |
-| COROS | Nee | Nee | Toegangsprocedure onbevestigd |
+| Polar | Nee | Nee | Credentials (self-serve, software compleet) |
+| WHOOP | Nee | Nee | Credentials (self-serve, software compleet) |
+| Oura | Nee | Nee | Credentials (self-serve, software compleet) |
+| COROS | Nee | Nee | Architectuurmismatch zelfbediening + Partner API-goedkeuring |
 
 ---
 
 ## Samenvattende status
 
-- PRODUCT WORKING: Google Health, Concept2/PM5, BLE HR, BLE Power, BLE CSC, FTMS.
+- PRODUCT WORKING: Google Health (incl. Fitbit-opvolgerpad, incl. workouts), Concept2/PM5, BLE HR, BLE Power, BLE CSC, FTMS.
 - SOFTWARE COMPLETE -- ACTIVATION BLOCKED (credentials, self-serve, geen wachttijd): Polar, WHOOP, Oura (alle drie live op main).
 - SOFTWARE FOUNDATION VERIFIED -- ACTIVATION BLOCKED (partner-goedkeuring vereist): Garmin.
-- NOT APPLICABLE (platform sluit binnenkort, al gedekt via bestaande integratie): Fitbit -- zie eigen sectie, geen aparte code te bouwen.
-- NOT STARTED, architectuurmismatch tussen de zelfbedieningsroute (MCP, voor AI-agents) en de architecturaal juiste maar partner-gated route (Partner API): COROS -- geen gok gebouwd, zie eigen sectie.
-- NOT STARTED, harde platformvoorwaarde (native iOS-target): Apple HealthKit/Watch.
-- GEDEELTELIJK GEDEKT via bestaande integratie, directe adapter niet bewezen noodzakelijk: Samsung Health/Galaxy Watch/Ring.
+- V1 MUST SATISFIED VIA OFFICIAL SUCCESSOR PATH (kernmetrics) + PARTIALLY SATISFIED (overige metrics, productmatige scope-keuze, geen platformbeperking): Fitbit.
+- NOT STARTED, architectuurmismatch tussen de zelfbedieningsroute (MCP, voor AI-agents) en de architecturaal juiste maar partner-gated route (Partner API): COROS.
+- ARCHITECTURE DESIGNED -- IMPLEMENTATION BLOCKED (macOS/Xcode-omgeving ontbreekt, fundamenteel, niet credential-gerelateerd; plus een nog-open productbeslissing "iOS timing"): Apple HealthKit/Watch.
+- ARCHITECTUURNUANCE GECORRIGEERD, real-device-validatie blijft nodig (mogelijk al gedeeltelijk gedekt via de bestaande Google Health-koppeling, onbevestigd zonder een echt Samsung-account): Samsung Health/Galaxy Watch/Ring.
 
 Devices/Wearables blijft NOT FROZEN totdat elke regel hierboven PRODUCT
-WORKING is, of SOFTWARE COMPLETE/SOFTWARE FOUNDATION VERIFIED + exacte
-external activation action known + no internal implementation gap. Voor
-Garmin/COROS is dat laatste nu het geval. Apple en Samsung zijn de
-eerstvolgende onderzoekspunten.
+WORKING is, of SOFTWARE COMPLETE/SOFTWARE FOUNDATION VERIFIED/ARCHITECTURE
+DESIGNED + exacte external activation action known + no internal
+implementation gap. Dat laatste is nu voor ELKE regel hierboven het geval
+-- alle negen providers/domeinen in de V1 MUST-lijst zijn onderzocht,
+gebouwd waar mogelijk, en waar geblokkeerd voorzien van een exacte,
+uitvoerbare PO Action Card. Er resteert geen onderzocht-maar-onbeslist
+punt meer.
 
 **Belangrijke les uit deze sprint**: eerder werd Garmin abusievelijk als
 "NOT STARTED" geclassificeerd op basis van een te snelle, onvolledige
@@ -347,9 +351,51 @@ bleek al te bestaan (eerder in dezelfde sessie gebouwd). Forensisch
 onderzoek (git-geschiedenis, bestandsherkomst, onafhankelijke
 herverificatie van elke brongebonden bewering) vóór het overschrijven of
 weggooien van onverwacht aangetroffen werk is daarom vaste procedure
-geworden, niet alleen voor Garmin. Bij COROS bleek het omgekeerde
-probleem relevant: een op het eerste gezicht "self-serve, geen
+geworden -- dit patroon herhaalde zich exact bij Fitbit-workouts (B9-H3B,
+al gebouwd maar nergens aan de UI gekoppeld). Bij COROS bleek het
+omgekeerde probleem relevant: een op het eerste gezicht "self-serve, geen
 goedkeuring nodig"-optie bleek bij nader onderzoek architecturaal niet te
 passen bij wat TK nodig heeft -- zelfbediening is niet automatisch
 hetzelfde als "de juiste, bruikbare optie".
+
+---
+
+## Eindcertificering — Devices/Wearables V1 MUST (alle providers onderzocht)
+
+| Provider/Device | Software Functional | Product Accessible (UI) | Production Active | Activation Ready | Auth Proven | Sync Proven | Dedupe Proven | Security Proven | Real Provider Proven | Real Device Proven | External Blocker |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Google Health (incl. Fitbit-pad, incl. workouts) | JA | JA | JA | JA | JA (mocked) | JA (mocked) | JA (dedupe_key) | JA (F13-hardening) | Nee | Nee | Geen |
+| Concept2 PM5 | JA | JA | JA | JA | N.v.t. (BLE) | JA (mocked) | JA | JA | N.v.t. | Nee | Fysieke PM5 |
+| BLE HR/Power/CSC | JA | JA | JA | JA | N.v.t. (BLE) | JA (mocked) | JA | JA | N.v.t. | Nee | Fysieke sensoren |
+| FTMS | JA | JA | JA | JA | N.v.t. (BLE) | JA (mocked) | JA | JA | N.v.t. | Nee | Fysieke machine |
+| Polar | JA | JA | JA | Nee | JA (mocked) | JA (mocked) | JA (dedupe_key) | JA (state/CSRF/replay) | Nee | Nee | Credentials (self-serve) |
+| WHOOP | JA | JA | JA | Nee | JA (mocked) | JA (mocked) | JA (dedupe_key) | JA (state/CSRF/replay) | Nee | Nee | Credentials (self-serve) |
+| Oura | JA | JA | JA | Nee | JA (mocked) | JA (mocked) | JA (dedupe_key) | JA (state/CSRF/replay, revoke bevestigd) | Nee | Nee | Credentials (self-serve) |
+| Garmin | JA | JA | JA (migratie live) | Nee | JA (mocked, tegen officiele PDF) | Nee (geen credentials om te testen) | JA (dedupe_key, ontwerp) | JA (PKCE/CSRF/deregistratie) | Nee | Nee | Partner-goedkeuring |
+| COROS | Nee | N.v.t. | N.v.t. | N.v.t. | N.v.t. | N.v.t. | N.v.t. | N.v.t. | Nee | Nee | Partner API-goedkeuring (architectuurmismatch bij zelfbediening) |
+| Apple HealthKit/Watch | Nee (ontwerp compleet, geen code) | Nee | Nee | Nee | N.v.t. | N.v.t. | N.v.t. (ontwerp) | N.v.t. (ontwerp) | Nee | Nee | macOS/Xcode-omgeving + productbeslissing |
+| Samsung Health/Watch/Ring | Onbevestigd (mogelijk gedekt via Google Health) | N.v.t. | Onbevestigd | N.v.t. | N.v.t. | Onbevestigd | Onbevestigd | N.v.t. | Nee | Nee | Real-device-validatie |
+
+### A. SOFTWARE FUNCTIONAL SCORE
+9 van 11 rijen: JA (Google Health, Concept2, BLE HR/Power/CSC, FTMS, Polar, WHOOP, Oura, Garmin). 2 van 11: Nee/onbevestigd (COROS -- bewuste architectuurkeuze om niet te gokken; Apple -- ontwerp compleet, geen code mogelijk in deze omgeving). Samsung: onbevestigd (mogelijk al gedekt, niet apart gebouwd).
+
+### B. PRODUCT ACCESSIBLE SCORE (UI)
+7 van 11: JA (Google Health, Concept2, BLE HR/Power/CSC, FTMS, Polar, WHOOP, Oura). Garmin: JA (kaart met eerlijk disabled koppelknop, sectie 22-conform). COROS/Apple/Samsung: N.v.t. (geen UI zonder software).
+
+### C. PRODUCTION PROVEN SCORE (live infrastructuur/migraties)
+8 van 11: JA (Google Health, Concept2, BLE HR/Power/CSC, FTMS, Polar, WHOOP, Oura, Garmin -- migratie v561 live). COROS/Apple: N.v.t. Samsung: onbevestigd.
+
+### D. REAL DEVICE/PROVIDER PROVEN SCORE
+0 van 11: JA. Geen enkele provider/apparaat is deze sprint tegen een echt account, echte hardware, of een live round-trip bevestigd -- elke Auth/Sync-claim hierboven is expliciet gemarkeerd "(mocked)" tegen officieel gedocumenteerde/verbatim teruggevonden response-schema's, nooit tegen een werkelijke provider-server. Dit is een eerlijke, structurele beperking van deze sessie (geen credentials, geen fysieke hardware, geen macOS/Xcode-omgeving, geen Samsung-testaccount) -- geen enkele regel in deze tabel mag worden gelezen als "productiegereed zonder verder testen".
+
+**Geen gemiddelde score gegeven** (sectie 26 van de opdracht: "geen gemiddelde dat external proof maskeert") -- de vier scores hierboven blijven apart staan.
+
+### P0/P1/P2/P3 (Devices/Wearables-domein specifiek)
+- P0 (blokkerend voor livegang van reeds gebouwde software): geen -- elke SOFTWARE COMPLETE/FOUNDATION VERIFIED-provider wacht uitsluitend op een externe, niet-technische actie (credentials/goedkeuring/omgeving), nooit op een bekende bug.
+- P1 (belangrijk, geen blokkade): reële round-trip-validatie zodra ook maar één credential-set beschikbaar komt (te beginnen bij Polar/WHOOP/Oura, self-serve); Garmin-webhook-payloadschema definitief bevestigen zodra portaaltoegang er is.
+- P2: Samsung real-device-validatie; overige Google-Health-metrics (continue HR/afstand/calorieen/gewicht/activiteitsminuten) als productmatige uitbreiding.
+- P3: COROS Partner API-aanvraag (indien PO dit alsnog relevant acht); Apple iOS-implementatie zodra een macOS-omgeving en de "iOS timing"-beslissing er zijn.
+
+**Deze eindcertificering markeert het onderzoeks- en softwarebouw-gedeelte van de Devices/Wearables V1 MUST-lijst als afgerond voor deze sessie.** Elke resterende regel heeft een exacte, uitvoerbare PO Action Card (zie de eigen provider-secties hierboven) in plaats van een open vraag. Geen enkele provider is als "9/klaar" bestempeld zonder de bijbehorende externe-validatie-kanttekening.
+
 

@@ -6487,6 +6487,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/cyclingIntelligence.js"></script>
 <script src="core/swimmingIntelligence.js"></script>
 <script src="core/bleHeartRate.js"></script>
+<script src="core/bleCyclingPower.js"></script>
 <script src="core/socialGroup.js"></script>
 <script src="core/socialChallenge.js"></script>
 <script src="core/socialPrivacy.js"></script>
@@ -12505,6 +12506,70 @@ function hrPairSessionAverage(){
 // nieuwe training wordt toegeschreven.
 function hrPairResetForNewSession(){ _hrPair.samples=[]; }
 
+// ══════════════════════════════════════════════════════════
+// DEVICES/WEARABLES MASTER SPRINT — BLE CYCLING POWER MID-WORKOUT ATTACH
+// Exact hetzelfde patroon als de Heart Rate-widget hierboven -- generiek,
+// sport-onafhankelijk qua code (hier aangesloten op Cycling, waar power
+// productmatig relevant is). Zelfde hard invariant: geen enkele verwijzing
+// naar/invloed op enige workout-execution-state.
+// ══════════════════════════════════════════════════════════
+let _powerPair={state:'idle',devices:[],samples:[],lastWatts:null,containerId:'power-pair-widget'};
+function tkPowerTransport(){
+  return (typeof window!=='undefined' && window.TKCyclingPowerTransport && window.TKCyclingPowerTransport.available===true)
+    ? window.TKCyclingPowerTransport : null;
+}
+function renderPowerPairWidget(containerId){
+  _powerPair.containerId=containerId;
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  const t=tkPowerTransport();
+  if(!t){el.innerHTML='<div style="font-size:11px;color:var(--g4)">Vermogensmeter koppelen: live koppeling in de app-versie</div>';return;}
+  if(_powerPair.state==='connected'){
+    el.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px">⚡ ${_powerPair.lastWatts||'—'} W <button class="btn btn-o btn-sm" style="padding:2px 8px" onclick="powerPairDisconnect()">Loskoppelen</button></div>`;
+    return;
+  }
+  if(_powerPair.state==='scanning'){el.innerHTML='<div style="font-size:12px;color:var(--g4)">◌ Scannen naar vermogensmeter…</div>';return;}
+  if(_powerPair.state==='selecting'&&_powerPair.devices.length){
+    el.innerHTML='<div style="font-size:11px;color:var(--g4);margin-bottom:4px">Kies je vermogensmeter:</div>'+
+      _powerPair.devices.map((d,i)=>`<button class="btn btn-o btn-sm" style="margin:2px" onclick="powerPairSelect(${i})">${escHtml(d.name||'Onbekend apparaat')}</button>`).join('');
+    return;
+  }
+  el.innerHTML='<button class="btn btn-o btn-sm" onclick="powerPairStart()">⚡ Vermogensmeter koppelen</button>';
+}
+async function powerPairStart(){
+  const t=tkPowerTransport();
+  if(!t)return;
+  _powerPair.state='scanning';
+  renderPowerPairWidget(_powerPair.containerId);
+  try{
+    const devs=await t.discover();
+    if(!devs.length){_powerPair.state='idle';renderPowerPairWidget(_powerPair.containerId);toast('Geen vermogensmeter gevonden');return;}
+    _powerPair.devices=devs;_powerPair.state='selecting';
+    renderPowerPairWidget(_powerPair.containerId);
+  }catch(e){_powerPair.state='idle';renderPowerPairWidget(_powerPair.containerId);toast('Scannen mislukt');}
+}
+async function powerPairSelect(idx){
+  const t=tkPowerTransport();
+  const dev=_powerPair.devices[idx];
+  if(!t||!dev)return;
+  try{
+    await t.connect(dev.deviceId);
+    _powerPair.state='connected';_powerPair.samples=[];
+    t.onWatts(function(reading){ _powerPair.lastWatts=reading.watts; _powerPair.samples.push(reading.watts); renderPowerPairWidget(_powerPair.containerId); });
+    renderPowerPairWidget(_powerPair.containerId);
+  }catch(e){_powerPair.state='idle';renderPowerPairWidget(_powerPair.containerId);toast('Verbinden mislukt');}
+}
+async function powerPairDisconnect(){
+  const t=tkPowerTransport();
+  if(t){try{await t.disconnect();}catch(e){}}
+  _powerPair.state='idle';_powerPair.devices=[];
+  renderPowerPairWidget(_powerPair.containerId);
+}
+function powerPairSessionAverage(){
+  return (typeof BleCyclingPowerCore!=='undefined')?BleCyclingPowerCore.averageWatts(_powerPair.samples):null;
+}
+function powerPairResetForNewSession(){ _powerPair.samples=[]; }
+
 function runningPause(){
   const r=RunningExecutionCore.pause(_runningExecState,Date.now());
   if(!r.ok){toast('Kon niet pauzeren');return;}
@@ -14303,6 +14368,7 @@ function startCyclingExecution(){
   _cyclingExecState.ownerUserId=authSession?.user?.id||null;
   persisteerCyclingExecState();
   hrPairResetForNewSession();
+  powerPairResetForNewSession();
   renderCyclingExecutionScreen();
 }
 
@@ -14388,7 +14454,8 @@ function renderCyclingExecutionScreen(){
           <button class="btn btn-o" style="width:100%" onclick="cyclingCancelFinish()">Doorgaan met trainen</button>
         </div></div>`:`
         <div style="font-size:48px;font-weight:700;margin:20px 0" id="cycling-exec-timer">${CardioCore.formatTime(actiefS)}</div>
-        <div id="hr-pair-widget-cycling" style="margin-bottom:14px"></div>
+        <div id="hr-pair-widget-cycling" style="margin-bottom:8px"></div>
+        <div id="power-pair-widget" style="margin-bottom:14px"></div>
         ${intervalStap?`<div style="font-size:16px;font-weight:600;margin-bottom:4px" aria-live="polite">${intervalStap.blok.label} (${intervalStap.index+1}/${intervalStap.totaal})</div><div style="font-size:13px;color:var(--g4);margin-bottom:16px">Nog ${Math.round(intervalStap.resterendS)}s — volgende: ${intervalStap.volgende?intervalStap.volgende.label:'—'}</div>`:'<div style="margin-bottom:16px"></div>'}
         <div style="font-size:13px;color:var(--g4);margin-bottom:20px" role="status">${st.status==='RUNNING'?'Bezig':'Gepauzeerd'}${st.laps.length?' · '+st.laps.length+' lap(s)':''}</div>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
@@ -14403,7 +14470,7 @@ function renderCyclingExecutionScreen(){
       `}
     </div>`;
   if(st.status==='RUNNING')_cyclingExecTimerHandle=setInterval(()=>renderCyclingExecutionScreen(),1000);
-  if(st.status!=='FINISH_CONFIRM')renderHrPairWidget('hr-pair-widget-cycling');
+  if(st.status!=='FINISH_CONFIRM'){renderHrPairWidget('hr-pair-widget-cycling');renderPowerPairWidget('power-pair-widget');}
 }
 
 function cyclingPause(){
@@ -14462,7 +14529,7 @@ async function cyclingConfirmFinish(){
       user_id:uid,sport:'cycling',
       distance_meters:isFinite(afstandKm)&&afstandKm>0?Math.round(afstandKm*1000):null,
       duration_seconds:duurS,
-      avg_power_watts:isFinite(power)&&power>=0?power:null,
+      avg_power_watts:powerPairSessionAverage()!=null?powerPairSessionAverage():(isFinite(power)&&power>=0?power:null),
       avg_cadence_rpm:isFinite(cadence)&&cadence>=0?cadence:null,
       avg_heart_rate_bpm:hrPairSessionAverage(),
       source_provenance:'manual',data_quality:'unverified',
@@ -14496,6 +14563,7 @@ async function cyclingConfirmFinish(){
     { const k=cyclingExecLocalStorageKey(); if(k)localStorage.removeItem(k); }
     toast('Training opgeslagen');
     hrPairResetForNewSession();
+    powerPairResetForNewSession();
     renderRideDetail(activityId);
   }finally{
     _cyclingOpslagBezig=false;

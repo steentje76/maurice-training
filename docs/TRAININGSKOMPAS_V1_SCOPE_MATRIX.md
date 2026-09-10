@@ -81,6 +81,18 @@ genomen -- dit document registreert scope-keuzes, niet audit-volledigheid.
 | Commercial / Billing | Nee (deze fase) | Backend ja | n.v.t. | NEE -- bewust | Ja | n.v.t. | n.v.t. | 0 | 0 | n.v.t. (DEFERRED BY PO) |
 | Legacy archive tables | n.v.t. | n.v.t. | n.v.t. | Server-only | Ja (RLS nul policies) | n.v.t. | Nee | 0 | 0 | Geen blocker (post-freeze debt) |
 
-**TRAININGSKOMPAS V1 -- FUNCTIONAL SOFTWARE SCOPE FROZEN**, met
-geregistreerde uitzonderingen voor externe wearable-validatie en de door
-de Product Owner uitgestelde commerciële activatie.
+**TRAININGSKOMPAS V1 -- FUNCTIONAL SOFTWARE ARCHITECTURE FROZEN**
+(aanvaard door de Product Owner). P0 = 0 open, P1 = 0 open.
+
+Uitzonderingen, geen freeze blockers: externe wearable/provider/
+real-device-validatie blijft open; commerciele activatie is deferred by
+Product Owner; geregistreerde P2/P3 en legacy cleanup.
+
+Vanaf nu wordt de functionele architectuur niet heropend zonder een nieuw
+aantoonbaar P0/P1.
+
+REIKWIJDTE: de 79 surfaces zijn ACCOUNTED FOR / REACHABILITY VERIFIED --
+geinventariseerd met een bewezen navigatiepad. Dit is NADRUKKELIJK GEEN
+claim dat elke surface individueel volledig functioneel is gecertificeerd
+op elke read/write/interactie; die doorlichting volgt per surface in de
+aparte ALL SURFACES UX/UI >=9 MASTER PHASE.

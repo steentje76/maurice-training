@@ -12931,7 +12931,7 @@ async function coachSaveProgramTemplate(){
 async function coachAssignProgramTemplate(templateId,athleteId){
   const uid=authSession?.user?.id;
   if(!uid)return;
-  const r=await fetch(`${SB_URL}/rest/v1/coach_program_assignments`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({coach_user_id:uid,athlete_user_id:athleteId,template_id:templateId,status:'pending'})});
+  const r=await fetch(`${SB_URL}/rest/v1/coach_program_assignments`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({coach_user_id:uid,athlete_user_id:athleteId,template_id:templateId,status:'assigned'})});
   toast(r.ok?'Toegewezen — sporter moet dit zelf accepteren':'Toewijzen mislukt');
 }
 
@@ -12953,8 +12953,8 @@ async function renderAthleteCoachAssignments(){
     const tpl=templates.find(t=>t.id===a.template_id);
     const label=tpl?tpl.title:'Programma';
     return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <span style="font-size:13px">${escHtml(label)}${a.status!=='pending'?' ('+escHtml(a.status)+')':''}</span>
-      ${a.status==='pending'?`<button class="btn btn-p btn-sm" onclick="athleteMaterializeAssignment('${a.id}')">Accepteren</button>`:'<span style="font-size:11px;color:var(--g4)">Toegevoegd aan Mijn Trainingen</span>'}
+      <span style="font-size:13px">${escHtml(label)}${a.status!=='assigned'?' ('+escHtml(a.status)+')':''}</span>
+      ${a.status==='assigned'?`<button class="btn btn-p btn-sm" onclick="athleteMaterializeAssignment('${a.id}')">Accepteren</button>`:'<span style="font-size:11px;color:var(--g4)">Toegevoegd aan Mijn Trainingen</span>'}
     </div>`;
   }).join('');
 }

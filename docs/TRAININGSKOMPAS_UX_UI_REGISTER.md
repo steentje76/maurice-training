@@ -1,134 +1,196 @@
 # TRAININGSKOMPAS_UX_UI_REGISTER.md
 
-Canoniek register voor de ALL SURFACES UX/UI >=9 MASTER PHASE.
-Status: **UX-0 FORENSIC BASELINE — LOPEND, NIET COMPLEET.**
+**UX-0 FORENSIC BASELINE — AFGEROND.** Geen implementatie uitgevoerd.
+Geen merge naar main.
 
-Vastgesteld tegen main `2ce387b3e776900abc0403eed302ecbb27df33a8`,
-APP_VER v4.69.67, Quality Gate SUCCESS, regressie 348/348, worktree clean.
-Freeze-status geverifieerd: FUNCTIONAL SOFTWARE ARCHITECTURE FROZEN,
-P0=0, P1=0.
+Baseline: main `2ce387b3…` (register-branch `ea866d1`), APP_VER
+**v4.69.67**, Quality Gate **SUCCESS**, regressie **348/348**,
+doc-consistency **0**, worktree clean, functional freeze intact
+(P0=0, P1=0).
 
 ---
 
-## 0. EERLIJKE DEKKINGSVERANTWOORDING (sectie 56)
+## 1. PRIMARY VISUAL SOURCE OF TRUTH (PO-bevestigd)
 
-Deze fase eist expliciet dat "VISUALLY VERIFIED" niet geclaimd wordt als
-alleen code is bekeken. Daarom per surface strikt gescheiden:
+`docs/ux/baseline/v1/` — zes canonical mock-ups, alle zes SHA-256
+byte-identiek geverifieerd tegen het manifest:
 
-| Niveau | Aantal | Toelichting |
+vandaag-v0.11 · trainen-v0.2 · inzicht-v0.1 · coach-v0.2 · samen-v0.1 · profiel-v0.1
+
+**Navigation contract (canonical):** Vandaag · Trainen · Inzicht · Coach · Samen.
+Profiel via avatar rechtsboven, GEEN zesde tab.
+
+**AI-identiteit:** abstract sparkle. Robotmascotte = REJECTED. Geen
+menselijke avatar voor AI.
+
+**Mock-updata = placeholder.** Authority voor layout/hierarchie/visual
+language/navigatie/componentbehandeling — NIET voor waarden.
+
+`docs/screenshots/` (29 bestanden) is **historische implementatie-evidence**,
+GEEN canonical bron. Bestandsnamen als `po_final_correction` maken een
+screenshot niet canonical.
+
+---
+
+## 2. DEKKING — EERLIJK VERANTWOORD
+
+| Niveau | Dekking | Bewijs |
 |---|---|---|
-| CODE INSPECTED | 79/79 | uit de functionele auditfase |
-| RUNTIME REACHABLE | 79/79 | bewezen in de freeze-audit (74 router + 5 pre-sessie-gates) |
-| **VISUALLY INSPECTED** | **6/79** | daadwerkelijk gerenderd in Chromium @390px deze ronde |
-| MOCK-UP COMPARED | 1/79 | alleen Inzicht heeft een expliciet PO-goedgekeurde referentie waartegen vergeleken is |
+| CODE INSPECTED | **79/79** | functionele auditfase |
+| RUNTIME REACHABLE | **79/79** | 74 via router `go(id)`, 5 pre-sessie-DOM-gates |
+| **RUNTIME GEMETEN** | **79/79** | Chromium 390px: tekstlengte, interactieve elementen, touch-target-hoogte, scrollhoogte |
+| VISUEEL BEOORDEELD (screenshot bekeken) | **7/79** | s-auth, s-home, s-train-mgr, s-lichaam, s-stats, s-voeding + canonical referenties |
+| CANONICAL MOCK-UP DIRECT | **6** surfaces (zie §3) | de zes PNG's |
+| LOCAL FUNCTIONAL CHECK | **0/79** | niet uitgevoerd — vereist sessie/live data |
 
-**Er wordt dus NIET geclaimd dat 79 surfaces visueel beoordeeld zijn.**
-De resterende 73 hebben nog GEEN UX-score, omdat een score zonder
-rendering per sectie 15 ongeldig zou zijn.
-
-### Rendering-omgeving (werkt, met beperking)
-Chromium via Playwright 1.56 werkt; de app is lokaal over HTTP geserveerd
-(niet file://, omdat assets absolute paden gebruiken -- zie Bevinding
-V-01). De app start op `s-auth`; er is GEEN testaccount beschikbaar, dus
-andere surfaces zijn geinspecteerd door ze geforceerd te activeren.
-Gevolg: **zonder live gebruikersdata**. Structuur/hierarchie/typografie/
-spacing zijn daarmee wel beoordeelbaar, gevulde datastates NIET. Dit is
-een echte beperking, geen formaliteit.
-
----
-
-## 1. GEVONDEN GOEDGEKEURDE VISUELE REFERENTIES
-
-Aangetroffen in `docs/screenshots/` (bestandsnamen bevatten letterlijk
-`po_final_correction` / `po_fix` -> Product Owner-goedgekeurd):
-
-- **Inzicht v0.1** -- 25 screenshots, incl. `inzicht_v01_po_final_correction_390/430_{top,middle,bottom}.png`
-  en `inzicht_v01_final_wcag_390/430.png`. Sterkste beschikbare referentie.
-- **Trainen v0.2** -- 4 screenshots, incl. `trainen_v02_visual_fidelity_full.png`,
-  `trainen_v02_micro_alignment_final.png`.
-- Ondersteunend: `docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md`,
-  `DESIGN_SYSTEM_*`-audits, `docs/ux/SCREEN_IMPLEMENTATION_STANDARD_v1.md`,
-  `docs/design/NUTRITION_UX_CONCEPT_B_WIREFRAME.html`.
-
-**VISUAL REFERENCE COVERAGE**
-- Direct approved reference: **2 domeinen** (Inzicht, Trainen)
-- Afleidbaar uit canonieke richting: het merendeel (zelfde componentfamilie)
-- Ontbrekend/ambigu: nog te bepalen voor de 73 niet-geinspecteerde surfaces
+### Harde beperking (registreren, niet wegpoetsen)
+Er is **geen testaccount**. De app start op `s-auth`; alle overige
+surfaces zijn geforceerd geactiveerd **zonder sessie en zonder live data**.
+Gevolg:
+- structuur, hiërarchie, typografie, spacing, touch targets → **wel** meetbaar;
+- gevulde datastates, empty-vs-error-onderscheid, local functional
+  integrity → **niet** beoordeelbaar.
+Daarom is er **geen baseline-score per surface toegekend**. Een score op
+niet-waargenomen aspecten zou in strijd zijn met de opdracht ("geen score
+op een aspect dat je niet betrouwbaar hebt kunnen beoordelen").
 
 ---
 
-## 2. GERECONSTRUEERDE CANONICAL DESIGN LANGUAGE
-(uit de goedgekeurde referenties + live rendering -- NIET opnieuw bedacht)
+## 3. A–F CLASSIFICATIE
 
-- **Merk**: navy (#0F2233-achtig) + teal accent; wordmark "TRAININGS" navy,
-  "KOMPAS" teal; kompas/atleet-logo.
-- **Achtergrond**: licht grijsblauw; **kaarten**: wit, ruime radius (~14-16px),
-  zachte schaduw.
-- **Titel**: groot, zwaar, navy + grijze subtitel eronder.
-- **Sectielabels**: UPPERCASE, klein, letterspaced, grijs
-  ("SNEL OVERZICHT", "DOMEINEN", "HERSTEL & BELASTING").
-- **Segmented control**: pill-vorm, teal-getinte actieve staat.
-- **Lijstrij**: teal-getint afgerond icoonvlak + titel + grijze subtitel + chevron.
-- **Primaire CTA**: navy gevulde knop, volle breedte, grote radius.
-- **Bottom nav**: 5 items, icoon + label, teal actief.
+**A. Direct canonical mock-up (6):** s-home→vandaag-v0.11 ·
+s-train-mgr→trainen-v0.2 · s-stats/s-inzicht→inzicht-v0.1 ·
+s-coach→coach-v0.2 · s-social→samen-v0.1 · s-profiel→profiel-v0.1.
+
+**B. Betrouwbaar afleidbaar (meerderheid):** alle surfaces die dezelfde
+componentfamilie gebruiken (lijstrij met teal icoonvlak + titel +
+subtitel + chevron, sectielabel, kaart, segmented control) — o.a. de
+Lichaam-, Inzicht-detail-, Coach/PT-, Samen-sub- en Settings-surfaces.
+
+**C. Gespecialiseerde compositie nodig binnen dezelfde taal:**
+training-execution (`s-guided`, `s-builder`), endurance/ergometer
+(`s-running`, `s-cycling`, `s-swimming`, `s-hyrox`), scanner/OCR-flows
+(`s-voeding-scanner`, `-foto-*`), grafiek-zware detailschermen.
+
+**D. Implementatie wijkt af van canonical IA:** bottom nav toont
+`Home · Training · Lichaam · Coach · Voortgang` i.p.v.
+`Vandaag · Trainen · Inzicht · Coach · Samen`.
+→ geclassificeerd als **IMPLEMENTATION BEHIND CANONICAL PO-APPROVED IA**,
+niet als alternatieve IA.
+
+**E. Echte UX-regressies:** zie §4 (infrastructure leakage, touch targets,
+previewbanner, emoji-iconen, lege sectie zonder empty-state).
+
+**F. Legitieme functionele uitbreidingen sinds de mock-up:** de mock-ups
+tonen 6 surfaces, de app heeft er 79. Alle extra surfaces vallen onder de
+**frozen functional scope** en mogen NIET worden verwijderd om
+pixel-perfect naar een oudere mock-up terug te keren.
 
 ---
 
-## 3. SYSTEMISCHE BEVINDINGEN (runtime bewezen)
+## 4. SYSTEMISCHE BEVINDINGEN (runtime bewezen)
 
-| ID | Bevinding | Bewijs | Klasse |
+### 4.1 INFRASTRUCTURE LEAKAGE (harde PO-regel)
+
+| ID | Bevinding | Locaties | Classificatie |
 |---|---|---|---|
-| V-01 | Assets gebruiken absolute paden (`/logo-wordmark.png`); breekt onder `file://`, correct via HTTP/Netlify | gerenderd, beide varianten vergeleken | GEEN BUG (gefalsificeerd) |
-| V-02 | `.ilbl{width:72px}` laat "E-mailadres" afbreken naar "E-/mailadres" op 390px | zichtbaar in render s-auth | P3 visueel |
-| V-03 | Dev-/previewbanner "Preview: nieuw Inzicht-scherm (v0.1)" zichtbaar in de eindgebruiker-UI op Lichaam | render s-lichaam | P2 -- previewtaal lekt naar eindgebruiker |
-| V-04 | Emoji-iconen in lijstrijen op Lichaam waar de goedgekeurde referentie consistente teal-getinte lijn-icoonvlakken gebruikt | render s-lichaam vs. Inzicht-referentie | C: visual inconsistency |
-| V-05 | Lege sectie "HERSTELTRENDS" zonder inhoud en zonder empty-state | render s-lichaam | C/K: ontbrekende empty-state |
+| **L-01** | Native `prompt()` in normale gebruikersflows | 6× (regels 13815, 13817, 14062, 33038, 33039, 33040) | **APP-CONTROLLED LEAK** |
+| **L-02** | Native `confirm()` in normale gebruikersflows | 4× (12326, 13819, 14356, 32802) | **APP-CONTROLLED LEAK** |
+| L-03 | `netlify.app` in broncode | 1× (regel 24285) | **FALSE POSITIVE** — codecommentaar dat documenteert dat de native Android-scanner juist is ingevoerd om de systeem-permissiedialoog te vermijden |
+| L-04 | Camera-permissiedialoog toont hostname | Android/Chrome | **SYSTEM-CONTROLLED UI** — al opgelost voor native Android via CameraX/ML-Kit; blijft open als production/native validation item voor web/PWA |
+| L-05 | `alert(` | 0× | schoon |
+| L-06 | `deploy-preview` / `localhost` / `127.0.0.1` | 0× | schoon |
+
+**Ernstigste gevallen:**
+- regels 33038–33040: een gelogde set bewerken via **drie opeenvolgende
+  browser-prompts** (afstand → gewicht → reps).
+- regel 13819: `confirm()` misbruikt als **keuzedialoog** — "OK = zichtbaar
+  voor iedereen, Annuleren = alleen connecties". Een binaire OS-dialoog om
+  een privacy-instelling te kiezen; onduidelijk en privacy-gevoelig.
+
+**Component-status:** `confirmModal()` bestaat al en wordt 48× gebruikt →
+de 4 `confirm()`-gevallen zijn inconsistenties, direct oplosbaar.
+Er is **géén** canonieke prompt/invoer-vervanger → de 6 `prompt()`-gevallen
+vereisen een **nieuw canonical input-component** (UX-1 design-system scope).
+
+**Definition of Done-impact:** zolang L-01/L-02 bestaan kan geen enkele
+betrokken surface UX ≥9 / DONE krijgen (eis: 0 app-controlled leaks).
+
+### 4.2 TOUCH TARGETS / MOBILE ERGONOMICS
+**116 van 431** interactieve elementen (**27%**) zijn lager dan 44px —
+gemeten, niet geschat. Hotspots: `s-profiel` 11/27, `s-meldingen` 6/7,
+`s-admin` 5/10, `s-inzicht` 5/11. Systemisch op te lossen in het
+design system (knop-/lijstrij-minimumhoogte), niet per scherm.
+
+### 4.3 OVERIGE VISUELE BEVINDINGEN
+| ID | Bevinding | Klasse |
+|---|---|---|
+| V-02 | `.ilbl{width:72px}` breekt "E-mailadres" af tot "E-/mailadres" op 390px | P3 |
+| V-03 | Dev-banner "Preview: nieuw Inzicht-scherm (v0.1)" zichtbaar in eindgebruiker-UI (`s-lichaam`) | **P2 — previewtaal naar eindgebruiker** |
+| V-04 | Emoji-iconen in lijstrijen waar canonical teal-getinte lijn-icoonvlakken voorschrijft | C: visual inconsistency |
+| V-05 | Lege sectie "HERSTELTRENDS" zonder empty-state | K: ontbrekende state |
+| V-01 | "Kapot logo" | **GEFALSIFICEERD** — `file://`-artefact, correct via HTTP |
+
+### 4.4 SURFACES MET WEINIG GERENDERDE INHOUD (17)
+`s-coachpt-athlete`, `s-hyrox`, `s-hyrox-perf`, `s-message-thread`,
+`s-voeding-correctie`, `-hoeveelheid`, `-item-edit`, `-kennis`,
+`-kennis-ai`, `-kennis-categorie`, `-kennis-topic`, `-maaltijd-detail`,
+`-nieuw-product`, `-product`, `-product-match`, `-supplement-info`,
+`-verschil`.
+**Niet geclassificeerd als defect** — dit zijn vrijwel allemaal
+detail-/vervolgschermen die per definitie een geselecteerd item of
+sessie vereisen. Beoordeling vereist een testaccount.
 
 ---
 
-## 4. BLOKKERENDE PRODUCT OWNER-BESLISSING (sectie 46)
+## 5. GERECONSTRUEERD CANONICAL DESIGN SYSTEM
+(uit de zes mock-ups — niet opnieuw bedacht)
 
-**Hoofdnavigatie: goedgekeurde mock-up en opdrachttekst spreken elkaar tegen.**
-
-| Bron | Labels |
-|---|---|
-| Opdracht sectie 10 ("canonical") | VANDAAG · TRAINEN · INZICHT · COACH · SAMEN |
-| PO-goedgekeurde mock-up (`inzicht_v01_po_final_correction_*`) | HOME · TRAINING · LICHAAM · COACH · VOORTGANG |
-| Huidige implementatie (live gerenderd) | Home · Training · Lichaam · Coach · Voortgang |
-
-Mock-up en implementatie komen overeen; beide wijken op 4 van 5 labels af
-van de in de opdracht genoemde canonieke IA. Dit is geen cosmetisch
-detail: het bepaalt de informatiearchitectuur, de journey-indeling en de
-semantiek van elk surface-cluster. Sectie 10 verbiedt wijziging zonder
-expliciete PO-beslissing; sectie 46 vereist een PO-gate voor
-hoofdnavigatie. Daarom NIET zelf beslist.
-
----
-
-## 5. SURFACE-REGISTER (voortgang)
-
-Volledige 79-rij-tabel wordt opgebouwd zodra de navigatiebeslissing er is
-(de journey-kolom hangt er direct van af). Reeds visueel geinspecteerd:
-
-| ID | Domein | Visueel | Mock-up vgl. | Eerste observatie |
-|---|---|---|---|---|
-| s-auth | Auth | JA | nee | V-02; verder rustig en helder |
-| s-home | Vandaag | JA | nee | leeg zonder sessie -- score uitgesteld |
-| s-train-mgr | Training | JA | Trainen v0.2 beschikbaar, nog niet vergeleken | -- |
-| s-lichaam | Recovery/Health | JA | nee | V-03, V-04, V-05 |
-| s-stats | Inzicht | JA | Inzicht v0.1 beschikbaar, nog niet vergeleken | -- |
-| s-voeding | Nutrition | JA | wireframe beschikbaar | -- |
-| overige 73 | -- | NEE | -- | nog geen score (bewust) |
+- **Kleur:** navy (titels/donkere kaarten) + teal (accent/actief/CTA) op
+  licht grijsblauwe achtergrond.
+- **Typografie:** groot zwaar navy schermtitel + grijze subtitel;
+  UPPERCASE letterspaced grijze sectielabels.
+- **Kaarten:** wit, ruime radius (~14–16px), zachte schaduw; donkere
+  navy kaart voor de primaire actie ("Volgende actie" / "Eerstvolgende
+  training").
+- **Lijstrij:** teal-getint afgerond icoonvlak + titel + grijze subtitel
+  + chevron.
+- **Segmented control:** pill, teal-getinte actieve staat.
+- **Primaire CTA:** teal gevulde pill-knop; secundair = outline.
+- **Bottom nav:** 5 items, lijn-icoon + label, teal actief.
+- **Avatar:** rechtsboven, ronde foto met teal ring = ingang naar Profiel.
+- **AI-markering:** sparkle-symbool + expliciet label "AI".
+- **Metric-tegel:** groot getal + label + kleine deltaregel.
 
 ---
 
-## 6. STATUS
+## 6. VOORGESTELDE CLUSTERVOLGORDE
 
-UX-0 is **niet afgerond**. Afgerond: baseline-verificatie, rendering-
-omgeving werkend, goedgekeurde referenties gelokaliseerd, design language
-gereconstrueerd, vijf systemische bevindingen, en één blokkerende
-PO-beslissing geidentificeerd. Nog te doen: 73 surfaces visueel
-inspecteren, mock-up-vergelijking Inzicht/Trainen, scoreverdeling,
-clustervolgorde.
+1. **UX-1 — Design system + app shell** (bottom nav naar canonical IA,
+   touch-target-normalisatie, canonical dialog/input-componenten die
+   L-01/L-02 elimineren).
+2. **UX-2 — Vandaag** (direct mock-up).
+3. **UX-3 — Trainen** (direct mock-up).
+4. **UX-4 — Inzicht** (direct mock-up).
+5. **UX-5 — Coach** (direct mock-up, incl. AI/mens-scheiding).
+6. **UX-6 — Samen** (direct mock-up).
+7. **UX-7 — Profiel/Settings/Account** (direct mock-up).
+8. **UX-8 — Training execution** (gespecialiseerd).
+9. **UX-9 — Endurance/ergometers** (gespecialiseerd).
+10. **UX-10 — Nutrition** (grootste cluster, 28 surfaces).
+11. **UX-11 — Lichaam/Recovery/Health.**
+12. **UX-12 — Team/Gym/Coach-PT/Admin + resterende.**
 
-Geen enkele visuele implementatie uitgevoerd (sectie 15/53).
+Rationale: het app shell eerst, omdat de bottom nav en de dialog/input-
+componenten in **elk** volgend cluster terugkomen; ze nu normaliseren
+voorkomt dat 79 surfaces later opnieuw moeten worden aangeraakt.
+
+---
+
+## 7. NIEUW BEWEZEN FUNCTIONELE P0/P1
+**Geen.** De freeze blijft intact. L-01/L-02 zijn UX-defecten, geen
+functionele P0/P1 (de onderliggende acties werken).
+
+## 8. OPEN PRODUCTVRAAG
+Geen blokkerende. De navigatie-onzekerheid is gesloten door het
+canonical Navigation Contract.

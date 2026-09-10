@@ -28,6 +28,33 @@ is voor de gebruiker.
   teamPerformance) -- classificatie (bewust vervangen vs. onafgemaakte
   integratie) nog te bepalen, zie register sectie 5.
 
+## LEGACY ARCHIVE TABLES — Product Owner-beslissing (vastgelegd)
+
+Negen archief-/backuptabellen uit eerdere migraties (`bak_p_sessions`,
+`bak_p_training_instances`, `bak_p_exercises`, `bak_p_goals`,
+`bak_p_training_exercises`, `bak_p_exercise_equipment`,
+`bak_p_exercise_goals`, `bak_p_program_block_exercises`,
+`hrv_log_archive_v500`).
+
+```
+LEGACY ARCHIVE TABLES
+- Status:                 RETAIN TEMPORARILY (PO-beslissing)
+- Toegang:                server-only -- RLS aan met NUL policies, dus
+                          uitsluitend via service_role benaderbaar.
+                          Live geverifieerd, geen actief productpad.
+- Account/user erasure:   VERPLICHT GEDEKT -- beide verwijderpaden
+                          (delete-account.js PR #316/#317 en
+                          cleanup-unverified-accounts.js) ruimen deze
+                          tabellen nu expliciet op.
+- P0:                     Geen
+- P1:                     Geen -- persoonsgegevens worden correct
+                          verwijderd en er is geen ongeautoriseerde toegang
+- Functional freeze:      GEEN BLOCKER
+- Vervolg:                cleanup/decommissioning is een POST-FREEZE
+                          technical-debt-taak. Geen destructieve
+                          DROP-migratie tijdens deze audit.
+```
+
 ## Openstaand vóór een freeze-beslissing genomen kan worden
 
 Zie docs/TRAININGSKOMPAS_COMPLETE_FUNCTIONALITY_REGISTER.md sectie 7 voor

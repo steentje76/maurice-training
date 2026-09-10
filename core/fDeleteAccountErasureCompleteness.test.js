@@ -62,6 +62,25 @@ ok(/auth\/v1\/admin\/users\//.test(src),
     'A4: beide toevoegingen staan binnen de daadwerkelijke opruimlijst, niet losgekoppeld erbuiten');
 }
 
+// TWEEDE VERWIJDERPAD: cleanup-unverified-accounts.js ruimt nooit-bevestigde
+// accounts op (>30 dagen). Het bestand instrueert zelf om beide lijsten gelijk
+// te houden, maar ze waren uiteengelopen (16 vs 88). Voor de cascade-tabellen is
+// dat onschadelijk (de auth-user wordt verwijderd), maar de elf tabellen ZONDER
+// cascade moesten hier ook staan.
+{
+  const cleanup = fs.readFileSync(path.join(__dirname, '..', 'netlify/functions/cleanup-unverified-accounts.js'), 'utf8');
+  const zonderCascade = ['program_regeneration_log','ai_usage','bak_p_sessions',
+    'bak_p_training_instances','bak_p_exercises','bak_p_goals','bak_p_training_exercises',
+    'bak_p_exercise_equipment','bak_p_exercise_goals','bak_p_program_block_exercises',
+    'hrv_log_archive_v500'];
+  zonderCascade.forEach(function(t){
+    ok(cleanup.includes("'"+t+"'"),
+      'C-' + t + ': ook het tweede verwijderpad (onbevestigde accounts) ruimt deze cascade-loze tabel op');
+  });
+  ok(/auth\/v1\/admin\/users\//.test(cleanup),
+    'C-auth: cleanup verwijdert de auth-user zelf -- dat dekt alle overige, cascade-gebonden tabellen');
+}
+
 console.log('\n========================================================');
 console.log('fDeleteAccountErasureCompleteness.test.js — ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { msgs.forEach(m => console.error('MISLUKT: ' + m)); process.exitCode = 1; }

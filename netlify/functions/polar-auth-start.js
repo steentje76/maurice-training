@@ -36,16 +36,18 @@ exports.handler = async function (event) {
     if (!userId) return { statusCode: 401, body: JSON.stringify({ error: { message: 'Kon gebruiker niet vaststellen' } }) };
 
     // Zelfde oauth_state-patroon als wearable-auth-start.js (Google Health) --
-    // gedeelde wearable_oauth_state-tabel, provider-neutraal (geen aparte
-    // Polar-specifieke state-tabel nodig).
-    await fetch(`${supabaseUrl}/rest/v1/wearable_oauth_state?user_id=eq.${userId}`, {
+    // gedeelde wearable_oauth_state-tabel. provider='polar' wordt sinds
+    // migratie_v561 expliciet gezet (voorheen impliciet ontbrekend/
+    // 'google_health' via de kolom-default) -- puur data-hygiëne, geen
+    // functionele wijziging (state zelf is al een unieke UUID).
+    await fetch(`${supabaseUrl}/rest/v1/wearable_oauth_state?user_id=eq.${userId}&provider=eq.polar`, {
       method: 'DELETE',
       headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, Prefer: 'return=minimal' }
     });
     const stateRes = await fetch(`${supabaseUrl}/rest/v1/wearable_oauth_state`, {
       method: 'POST',
       headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
-      body: JSON.stringify({ user_id: userId })
+      body: JSON.stringify({ user_id: userId, provider: 'polar' })
     });
     if (!stateRes.ok) {
       const err = await stateRes.text();

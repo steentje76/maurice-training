@@ -36,7 +36,7 @@ exports.handler = async function (event) {
   if (!code || !state) return redirectToApp('invalid_request');
 
   try {
-    const stateRes = await fetch(`${supabaseUrl}/rest/v1/wearable_oauth_state?state=eq.${state}&select=user_id,created_at`, {
+    const stateRes = await fetch(`${supabaseUrl}/rest/v1/wearable_oauth_state?state=eq.${state}&provider=eq.polar&select=user_id,created_at`, {
       headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }
     });
     const stateRows = await stateRes.json();

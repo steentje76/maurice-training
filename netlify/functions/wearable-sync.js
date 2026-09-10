@@ -166,22 +166,29 @@ exports.handler = async function (event) {
     const dateTo = new Date().toISOString().split('T')[0];
     // "Vandaag" in Europe/Amsterdam (niet blind UTC) → eerlijke today-semantiek + diagnostiek.
     const todayAms = LIB.amsterdamToday(Date.now());
-    const authFetch = (url) => fetch(url, { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } });
+    const authFetch = (url, opts) => fetch(url, { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json', ...(opts && opts.method === 'POST' ? { 'Content-Type': 'application/json' } : {}) }, ...(opts || {}) });
 
-    const [hrvR, rhrR, sleepR] = await Promise.all([
+    const [hrvR, rhrR, sleepR, stepsR] = await Promise.all([
       fetchDataPoints(authFetch, GOOGLE_HEALTH_DATA_TYPES.hrv, sinceDate),
       fetchDataPoints(authFetch, GOOGLE_HEALTH_DATA_TYPES.rhr, sinceDate),
-      fetchDataPoints(authFetch, GOOGLE_HEALTH_DATA_TYPES.sleep, sinceDate)
+      fetchDataPoints(authFetch, GOOGLE_HEALTH_DATA_TYPES.sleep, sinceDate),
+      fetchDailyRollup(authFetch, 'steps', sinceDate, dateTo)
     ]);
-    const hrvData = hrvR.points, rhrData = rhrR.points, sleepData = sleepR.points;
+    const hrvData = hrvR.points, rhrData = rhrR.points, sleepData = sleepR.points, stepsData = stepsR.points;
 
     // Per datum samenvoegen via de PRODUCTIE-SHAPE parsers (nested records; officiële veldnamen).
     // Datum + waarde komen uit het geneste record — niet top-level (dat was de parsed:0-bug).
     const byDate = {};
-    let parsedHrv = 0, parsedRhr = 0, parsedSleep = 0;
+    let parsedHrv = 0, parsedRhr = 0, parsedSleep = 0, parsedSteps = 0;
     hrvData.forEach(p => { const r = LIB.parseHrvPoint(p); if (r && r.date) { (byDate[r.date] ||= {}).hrv = r.value; if (r.value != null) parsedHrv++; } });
     rhrData.forEach(p => { const r = LIB.parseRhrPoint(p); if (r && r.date) { (byDate[r.date] ||= {}).rhr = r.value; if (r.value != null) parsedRhr++; } });
     sleepData.forEach(p => { const r = LIB.parseSleepPoint(p); if (r && r.date) { (byDate[r.date] ||= {}).sleep = r.value; if (r.value != null) parsedSleep++; } });
+    // UNKNOWN != ZERO (sectie 3): alleen schrijven als de rollup-entry een
+    // daadwerkelijke countSum bevatte -- een dag zonder rollup-entry (of
+    // zonder steps-veld daarin) krijgt HIER geen byDate[date].steps-key,
+    // dus upsert_daily_health() krijgt voor die dag simpelweg geen p_steps
+    // en laat de kolom ongemoeid (COALESCE-semantiek in de RPC).
+    stepsData.forEach(p => { const r = LIB.parseStepsRollupPoint(p); if (r && r.date && r.value != null) { (byDate[r.date] ||= {}).steps = r.value; parsedSteps++; } });
 
     let imported = 0, updated = 0, skipped = 0;
     let todayWrite = 'none'; // 'imported' | 'updated' | 'skipped' | 'none' — wat gebeurde er specifiek met VANDAAG
@@ -207,7 +214,8 @@ exports.handler = async function (event) {
           p_sleep: vals.sleep != null ? vals.sleep : null,
           p_cyclus_fase: null, p_edema: null,
           p_note: LIB.provenanceNote(null),
-          p_source: 'wearable'
+          p_source: 'wearable',
+          p_steps: vals.steps != null ? vals.steps : null
         })
       });
       if (rpcRes.ok) {
@@ -229,13 +237,13 @@ exports.handler = async function (event) {
 
     console.log('wearable-sync diag', JSON.stringify({
       provider: 'google_health', dateFrom: sinceDate, dateTo, today: todayAms,
-      http: { hrv: hrvR.status, rhr: rhrR.status, sleep: sleepR.status },
-      fetched: { hrv: hrvData.length, rhr: rhrData.length, sleep: sleepData.length },
-      parsed: { hrv: parsedHrv, rhr: parsedRhr, sleep: parsedSleep },
+      http: { hrv: hrvR.status, rhr: rhrR.status, sleep: sleepR.status, steps: stepsR.status },
+      fetched: { hrv: hrvData.length, rhr: rhrData.length, sleep: sleepData.length, steps: stepsData.length },
+      parsed: { hrv: parsedHrv, rhr: parsedRhr, sleep: parsedSleep, steps: parsedSteps },
       // VANDAAG apart: onderscheidt A (upstream heeft vandaag niet: fetched=false) van B (veldnaam: fetched=true, parsed=false)
       todayDiag: { date: todayAms, fetched: today.fetched, parsed: today.metrics, written: today.written, available: today.available },
-      shape: { hrv: LIB.pointShape(hrvData[0]), rhr: LIB.pointShape(rhrData[0]), sleep: LIB.pointShape(sleepData[0]) },
-      recordShape: { hrv: LIB.recordShape(hrvData[0], 'dailyHeartRateVariability'), rhr: LIB.recordShape(rhrData[0], 'dailyRestingHeartRate'), sleep: LIB.recordShape(sleepData[0], 'sleep') },
+      shape: { hrv: LIB.pointShape(hrvData[0]), rhr: LIB.pointShape(rhrData[0]), sleep: LIB.pointShape(sleepData[0]), steps: LIB.pointShape(stepsData[0]) },
+      recordShape: { hrv: LIB.recordShape(hrvData[0], 'dailyHeartRateVariability'), rhr: LIB.recordShape(rhrData[0], 'dailyRestingHeartRate'), sleep: LIB.recordShape(sleepData[0], 'sleep'), steps: LIB.recordShape(stepsData[0], 'steps') },
       // sleep.summary-keys: bewijst of we een echte slaapduur gebruiken of terugvallen op
       // het interval (= tijd in bed). Alleen KEYS, nooit waarden.
       sleepSummaryShape: LIB.sleepSummaryShape(sleepData[0]),
@@ -261,8 +269,8 @@ exports.handler = async function (event) {
       // 4xx = provider/permissie, 429 = rate limit.
       http: httpStatuses,
       code: providerErr,
-      fetched: { hrv: hrvData.length, rhr: rhrData.length, sleep: sleepData.length },
-      metrics: { hrv: parsedHrv, rhr: parsedRhr, sleep: parsedSleep },
+      fetched: { hrv: hrvData.length, rhr: rhrData.length, sleep: sleepData.length, steps: stepsData.length },
+      metrics: { hrv: parsedHrv, rhr: parsedRhr, sleep: parsedSleep, steps: parsedSteps },
       today: today });
   } catch (e) {
     const code = classifyException(e);
@@ -292,6 +300,26 @@ async function fetchDataPoints(authFetch, dataType, sinceDate) {
     return { points: LIB.asArray(d.dataPoints || d.data_points), status: r.status, ok: true };
   } catch (e) {
     console.warn('wearable-sync provider exception', JSON.stringify({ type: dataType.id, code: classifyException(e) }));
+    return { points: [], status: 'exception', ok: false };
+  }
+}
+// Devices/Wearables Master Sprint — dailyRollUp voor stappen (officiële
+// endpoint, geverifieerd tegen developers.google.com/health/endpoints en
+// -reference/rest: POST .../dataTypes/{type}/dataPoints:dailyRollUp met
+// {"range":{"startTime":...,"endTime":...}}). Los van fetchDataPoints()
+// omdat dailyRollUp een POST met request-body is, geen GET met filter-query.
+async function fetchDailyRollup(authFetch, dataTypeId, sinceDate, dateTo) {
+  try {
+    const url = `${GOOGLE_HEALTH_BASE}/users/me/dataTypes/${dataTypeId}/dataPoints:dailyRollUp`;
+    const r = await authFetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ range: { startTime: `${sinceDate}T00:00:00Z`, endTime: `${dateTo}T23:59:59Z` } })
+    });
+    if (!r.ok) { console.warn('wearable-sync rollup niet ok', JSON.stringify({ type: dataTypeId, status: r.status, code: providerCode(r.status) })); return { points: [], status: r.status, ok: false }; }
+    const d = await r.json();
+    return { points: LIB.asArray(d.rollupDataPoints || d.rollup_data_points), status: r.status, ok: true };
+  } catch (e) {
+    console.warn('wearable-sync rollup exception', JSON.stringify({ type: dataTypeId, code: classifyException(e) }));
     return { points: [], status: 'exception', ok: false };
   }
 }

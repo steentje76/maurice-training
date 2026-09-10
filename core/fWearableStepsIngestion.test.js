@@ -51,6 +51,18 @@ function makeFetch(rollupEntries) {
 const handlerMod = require('../netlify/functions/wearable-sync.js');
 const event = { httpMethod: 'POST', headers: { authorization: 'Bearer session' } };
 
+// ---- Overload-les (v552/v557-precedent) toegepast op v560 -- synchroon,
+// vóór de async scenario's, zodat de tellingen niet door elkaar lopen. ----
+{
+  const fs = require('fs');
+  const path = require('path');
+  const migratie = fs.readFileSync(path.join(__dirname, '..', 'migratie_v560.sql'), 'utf8');
+  const heeftDrop = migratie.includes('DROP FUNCTION IF EXISTS public.upsert_daily_health(uuid, date, numeric, integer, numeric, text, text, text, text)');
+  const dropVoorCreate = migratie.indexOf('DROP FUNCTION IF EXISTS public.upsert_daily_health') < migratie.indexOf('CREATE OR REPLACE FUNCTION public.upsert_daily_health');
+  ok(heeftDrop && dropVoorCreate,
+    'H1: migratie_v560 dropt expliciet de oude 9-parameter-signatuur VOOR de nieuwe 10-parameter-CREATE -- exact de v552/v557-les (CREATE OR REPLACE creeert een overload i.p.v. te vervangen bij een gewijzigde parameterlijst)');
+}
+
 (async () => {
   // SCENARIO 1: een dag met een echte rollup-entry (countSum=20316) wordt geschreven,
   // ook al zijn er geen hrv/rhr/sleep-data die dag (steps-only -- bewijst de contributed()-fix).
@@ -94,4 +106,17 @@ const event = { httpMethod: 'POST', headers: { authorization: 'Bearer session' }
   console.log('\n========================================================');
   console.log('fWearableStepsIngestion.test.js — ' + pass + ' geslaagd, ' + fail + ' mislukt');
   if (fail) process.exitCode = 1;
+})();
+
+// ---- Overload-les (v552/v557-precedent) toegepast op v560 ----
+(function () {
+  const fs = require('fs');
+  const path = require('path');
+  const migratie = fs.readFileSync(path.join(__dirname, '..', 'migratie_v560.sql'), 'utf8');
+  const heeftDrop = migratie.includes('DROP FUNCTION IF EXISTS public.upsert_daily_health(uuid, date, numeric, integer, numeric, text, text, text, text)');
+  const dropVoorCreate = migratie.indexOf('DROP FUNCTION IF EXISTS public.upsert_daily_health') < migratie.indexOf('CREATE OR REPLACE FUNCTION public.upsert_daily_health');
+  ok(heeftDrop && dropVoorCreate,
+    'H1: migratie_v560 dropt expliciet de oude 9-parameter-signatuur VOOR de nieuwe 10-parameter-CREATE -- exact de v552/v557-les (CREATE OR REPLACE creeert een overload i.p.v. te vervangen bij een gewijzigde parameterlijst)');
+  console.log('fWearableStepsIngestion.test.js (overload-check) — ' + (heeftDrop && dropVoorCreate ? '1 geslaagd' : '0 geslaagd, 1 mislukt'));
+  if (!(heeftDrop && dropVoorCreate)) process.exitCode = 1;
 })();

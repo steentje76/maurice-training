@@ -26,6 +26,18 @@ ALTER TABLE public.hrv_log
 ALTER TABLE public.hrv_log
   ADD CONSTRAINT hrv_log_steps_check CHECK (steps IS NULL OR steps >= 0);
 
+-- CORRECTIE (ontdekt tijdens live-uitvoering): CREATE OR REPLACE FUNCTION
+-- matcht in Postgres op de VOLLEDIGE parameterlijst (aantal + types), niet
+-- alleen de naam -- exact dezelfde les als migratie_v552 (schedule_my_
+-- training). Een extra parameter (p_steps) toevoegen aan het EINDE, zelfs
+-- met een DEFAULT, creëert een TWEEDE, overloaded functie i.p.v. de
+-- bestaande 9-parameter-versie te vervangen. DROP FUNCTION op de exacte,
+-- oude signatuur is daarom vereist vóór de nieuwe CREATE. Functioneel
+-- ongewijzigd: de nieuwe functie ondersteunt nog steeds exact dezelfde
+-- 9-argument-aanroep (10e parameter heeft een DEFAULT) -- geen bestaande
+-- caller breekt, precies één functie-object na de migratie.
+DROP FUNCTION IF EXISTS public.upsert_daily_health(uuid, date, numeric, integer, numeric, text, text, text, text);
+
 CREATE OR REPLACE FUNCTION public.upsert_daily_health(
   p_user_id uuid,
   p_date date,

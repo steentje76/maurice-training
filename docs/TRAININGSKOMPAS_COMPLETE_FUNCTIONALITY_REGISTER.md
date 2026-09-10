@@ -144,10 +144,39 @@ betaalflow, bv. een bewuste bèta-periode zonder betaalmuur). PO ACTION:
 bevestigen of dit een bewust nog-niet-actieve flow is, of een echt
 vergeten koppeling die in een gerichte PR moet worden hersteld.
 
+### PRODUCTBESLISSING (PO, bevestigd): billing/checkout is BEWUST inactief
+
+De PO heeft bevestigd: de ontbrekende betaal-/checkoutflow is een
+bewuste, intentionele keuze -- geen vergeten koppeling. Classificatie:
+
+```
+COMMERCIAL / BILLING
+- Backend/server-side capability:      AANWEZIG (MS-F12-04, volledig
+                                        gebouwd en getest: prijsautoriteit,
+                                        Mollie-integratie, webhook-
+                                        bevestiging)
+- billing-checkout.js:                 INTENTIONAL DORMANT-FROM-UI
+- billing-verify-apple.js:             INTENTIONAL FUTURE NATIVE IAP HOOK
+- billing-verify-google-play.js:       INTENTIONAL FUTURE NATIVE IAP HOOK
+- Huidige fase:                        BETA / PRE-COMMERCIAL
+- Product accessibility:               DEFERRED BY PRODUCT OWNER
+- P0:                                  Geen
+- P1:                                  Geen
+- Functional freeze blocker:           Nee
+```
+
+Geen upgrade-knop, checkoutscherm of IAP-bridge wordt gebouwd tijdens
+deze audit. Commerciele activatie is een aparte, toekomstige product/
+commercial sprint, gepland na de huidige functional freeze en/of tijdens
+de voorbereiding op livegang. Dit item is hiermee AFGESLOTEN voor de
+Final Repo-Wide Functional Freeze Audit -- het telt niet mee in de P0/P1
+telling van deze audit en blokkeert de freeze-beslissing niet.
+
 ### Overige, kleinere bevindingen
 - **wearable-sync-activities.js** (B9-H3B): zelfde gat-patroon, al
   gerepareerd in de Fitbit Successor Certification-sprint. Precedent.
-- **contextEngine.js**: dormant, zie sectie 3 -- geen actie, geen schade.
+- **contextEngine.js**: dormant, zie sectie 3 -- geen actie, geen schade
+  (bewust vervangen door buildCtx(), eerder al vastgesteld).
 - `cleanup-unverified-accounts.js` en `billing-webhook.js` hebben
   terecht 0 client-side aanroepen (respectievelijk een geplande
   achtergrondtaak en een server-to-server webhook-target) -- GEEN gat,
@@ -157,6 +186,58 @@ vergeten koppeling die in een gerichte PR moet worden hersteld.
   calendar-feed.js, nutrition-off-lookup.js, telemetry.js) is deze pas
   wel gedaan (zie sectie 2 aanroeptellingen) en toont geen vergelijkbaar
   gat -- allemaal ≥1 aanroep vanuit index.html.
+
+### NIEUW GEVONDEN (audit-pas 2): dead UI-element + 6 niet-geintegreerde core-modules
+
+**Dead UI (klein, nul huidige impact)**: een knop
+(`id="tenant-brand-admin-btn"`, "Uitstraling beheren") heeft
+`onclick="tenantBrandingAdminEdit()"` -- die functie bestaat nergens in
+de codebase. De knop staat permanent op `style="display:none"` en er is
+geen enkele plek gevonden die dit ooit op zichtbaar zet. Netto-impact op
+gebruikers: nul (de knop is nooit te zien, dus nooit aan te klikken).
+Classificatie: onafgemaakte/orphaned feature-rest, GEEN P0/P1 (geen
+enkel bereikbaar pad leidt hier ooit naartoe). Niet gerepareerd deze
+pas -- onduidelijk of de bedoeling was de functie alsnog te bouwen
+(nieuwe feature, buiten scope van deze audit) of de dode knop te
+verwijderen (cleanup, geen dringende noodzaak zolang hij onzichtbaar
+blijft).
+
+**6 ongebruikte "fundering"-modules** (PURE/DETERMINISTIC/OFFLINE-
+CAPABLE, Sprint 5-10, elk met een eigen dedicated testbestand dat wel
+slaagt, maar zonder ENIGE aanroep vanuit index.html, andere core-modules,
+of netlify/functions): `adaptiveCoaching.js`, `coachProgramming.js`,
+`externalDataModel.js`, `nutritionDegradedStateClassifier.js`,
+`platformRoles.js`, `teamPerformance.js`. Dit is architecturaal ANDERS
+dan contextEngine.js: contextEngine.js is bewust en expliciet vervangen
+door buildCtx() (bekend, gedocumenteerd, geen actie nodig). Voor deze
+zes modules is in deze pas NIET vastgesteld of ze (a) bewust vervangen
+zijn door een latere, andere implementatie inline in index.html, (b)
+nog wachten op integratie die nooit is afgerond, of (c) inderdaad
+volledig overbodig zijn geworden. Dit onderscheid bepaalt of hier
+sprake is van een echt P1-gat (afgeronde functionaliteit die nooit
+bereikbaar werd voor de gebruiker) of van onschadelijke technische
+schuld. AANBEVOLEN VERVOLGSTAP: per module vaststellen welke categorie
+van toepassing is vóórdat een freeze-beslissing definitief wordt --
+NIET in deze pas afgerond wegens omvang (elk vereist het doorlezen van
+de module-inhoud plus de sprintgeschiedenis waarin hij is gebouwd).
+
+## 6b. Security/RLS-steekproef (item 15 van de opdracht)
+
+Live geverifieerd tegen productie (niet aangenomen): **117 van de 117**
+publieke tabellen hebben Row Level Security actief (100%). Geen enkele
+tabel zonder RLS aangetroffen. Dit is een sterke, positieve bevinding --
+geen verdere actie nodig voor dit deelaspect. (Beperking: dit bevestigt
+dat RLS AAN staat, niet dat elke policy inhoudelijk correct is -- dat
+vereist per-tabel beleidsinhoud doorlezen, niet gedaan in deze pas.)
+
+## 6c. Repo-brede TODO/FIXME/HACK/placeholder/deprecated-scan (item 17)
+
+Uitgevoerd over index.html, core/*.js (excl. tests) en
+netlify/functions/*.js. Resultaat: **schoon** -- geen enkele echte
+TODO/FIXME/HACK-marker aangetroffen. De enkele treffers op "todo" en
+"placeholder" bleken bij inspectie stuk voor stuk vals-positief
+(een variabele `todoNote` met een UI-hinttekst, en legitieme HTML
+`placeholder`-attributen/CSS `::placeholder`-selectors).
 
 ## 6. Nog niet gedaan in deze pas (transparant vermeld)
 
@@ -170,6 +251,48 @@ elkaar overlappen); (b) canonical-aansluiting per scherm (schrijft elk
 scherm daadwerkelijk naar de juiste tabel via de juiste RPC); (c)
 formele P0/P1-telling voor dit register specifiek (de bestaande
 P0=0/P1=0 in CURRENT_STATE.md/GAP_ANALYSIS_V2.md dekt de tot nu toe
-bekende issues -- het billing-gat hierboven is NIEUW gevonden deze pas
-en moet nog worden opgenomen in die telling zodra de PO bevestigt dat
-het een echt te repareren gat is, niet een bewuste productkeuze).
+bekende issues; het billing-gat is door de PO bevestigd als bewuste,
+intentionele keuze -- BETA/PRE-COMMERCIAL -- en telt niet mee in de
+P0/P1-telling, zie sectie 5).
+
+## 7. Status van de 17 auditpunten uit de Final Repo-Wide Functional Freeze Audit-opdracht
+
+Eerlijke, expliciete stand per punt -- geen enkel punt hieronder wordt
+als "afgerond" gemarkeerd tenzij dat ook echt is gebeurd:
+
+1. Duplicate/shadow system scan: DEELS -- 6 ongebruikte "fundering"-
+   modules gevonden (sectie 5), oorzaak per module nog te bepalen.
+2. Canonical aansluiting per scherm: NOG NIET GEDAAN.
+3. Dead UI audit: DEELS -- alle onclick-handlers repo-breed
+   gecontroleerd tegen bestaande functienamen, 1 echte dode knop
+   gevonden (sectie 5), nul praktische impact.
+4. Backend-only capability audit: GEDAAN voor alle 42 Netlify functions
+   (sectie 2/5) -- 1 significant gat (billing, nu PO-bevestigd bewust).
+5. Hidden/semi-hidden functionality: DEELS, zie punt 1.
+6. Legacy/dormant/orphaned code: DEELS, zie punt 1 + contextEngine.js
+   (al eerder bevestigd).
+7. Training workflow canonicality: NOG NIET GEDAAN.
+8. Team/Gym legacy-vs-canonical audit: NOG NIET GEDAAN.
+9. Nutrition full-flow audit: NOG NIET GEDAAN (grootste domein qua
+   omvang -- 33 core-modules, 21 schermen -- vereist een eigen,
+   gerichte pas).
+10. Social block/privacy coherence: NOG NIET GEDAAN.
+11. Coach/PT canonical paths: NOG NIET GEDAAN.
+12. Analytics reachable-vs-backend-only: NOG NIET GEDAAN.
+13. Auth/account lifecycle: NOG NIET GEDAAN.
+14. Offline/resilience: NOG NIET GEDAAN.
+15. Security/RLS evidence levels: GEDAAN (steekproef) -- 117/117
+    publieke tabellen hebben RLS actief, live geverifieerd. Beperking:
+    bevestigt RLS-AAN, niet policy-inhoud per tabel.
+16. Production schema consistency: NOG NIET GEDAAN.
+17. Repo-wide TODO/FIXME/HACK/placeholder/deprecated-scan: GEDAAN --
+    schoon, geen echte treffers.
+
+**Conclusie voor de freeze-beslissing**: deze audit is nog NIET compleet
+genoeg om een freeze-beslissing op te baseren. 4 van de 17 punten zijn
+(deels) gedaan met concrete bevindingen; 13 punten zijn nog niet
+onderzocht. Geen enkel tot nu toe gevonden punt is een bevestigd P0 of
+P1 (het dode-knop-geval heeft nul impact; de 6 ongebruikte modules zijn
+nog niet geclassificeerd als schadelijk vs. onschadelijk). Een volgende
+pas moet in elk geval punt 2 (canonical aansluiting), 9 (voeding, het
+grootste domein) en 13 (auth-lifecycle) prioriteren.

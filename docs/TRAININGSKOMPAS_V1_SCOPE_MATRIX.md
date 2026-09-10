@@ -1,0 +1,36 @@
+# TRAININGSKOMPAS_V1_SCOPE_MATRIX.md
+
+Canonieke V1-scope-matrix, bijgehouden naast
+docs/TRAININGSKOMPAS_COMPLETE_FUNCTIONALITY_REGISTER.md. Doel: per
+domein in een oogopslag zien of iets V1 MUST is, of het gebouwd is, en
+of er een bewuste of onbewuste reden is dat iets (nog) niet bereikbaar
+is voor de gebruiker.
+
+| Domein | V1 MUST? | Software status | Product accessible? | Reden indien nee |
+|---|---|---|---|---|
+| Training (bouwen/loggen/programma) | Ja | Compleet | Ja | -- |
+| Voeding | Ja | Compleet (grootste domein, 33 modules) | Ja | -- |
+| Social | Ja | Compleet | Ja | -- |
+| Coach/PT | Ja | Compleet | Ja | -- |
+| Team/Gym | Ja | Compleet | Ja | -- |
+| Devices/Wearables (software) | Ja | Compleet t/m Fitbit-successor+Polar/WHOOP/Oura/Garmin-fundering | Ja (UI-kaarten, deels eerlijk disabled) | Externe activatie (credentials/partnergoedkeuring/macOS) blijft open, zie WEARABLE_ACTIVATION_AND_DEVICE_PROOF.md -- blokkeert freeze niet |
+| **Commercial/Billing** | **Nee (voor deze fase)** | **Compleet server-side** | **NEE -- BEWUST** | **PRODUCTBESLISSING: BETA/PRE-COMMERCIAL. billing-checkout.js intentional dormant-from-UI; billing-verify-apple.js/billing-verify-google-play.js intentional future native IAP hook. Commerciele activatie is een aparte, toekomstige product/commercial sprint (na freeze en/of tijdens livegang-voorbereiding). Geen P0, geen P1, geen freeze-blocker.** |
+| Analytics/Inzicht | Ja | Compleet (nog niet audit-bevestigd op reachable-vs-backend-only, zie register sectie 7 punt 12) | Vermoedelijk ja | -- |
+| Auth/account-lifecycle | Ja | Compleet (nog niet audit-bevestigd, zie register sectie 7 punt 13) | Ja | -- |
+
+## Bekende, geregistreerde niet-P0/P1-bevindingen (geen scope-wijziging)
+
+- Dead UI: één permanent verborgen knop (`tenant-brand-admin-btn`)
+  zonder gekoppelde functie -- nul gebruikersimpact, zie
+  TRAININGSKOMPAS_COMPLETE_FUNCTIONALITY_REGISTER.md sectie 5.
+- 6 ongebruikte "fundering"-modules (adaptiveCoaching, coachProgramming,
+  externalDataModel, nutritionDegradedStateClassifier, platformRoles,
+  teamPerformance) -- classificatie (bewust vervangen vs. onafgemaakte
+  integratie) nog te bepalen, zie register sectie 5.
+
+## Openstaand vóór een freeze-beslissing genomen kan worden
+
+Zie docs/TRAININGSKOMPAS_COMPLETE_FUNCTIONALITY_REGISTER.md sectie 7 voor
+de volledige, eerlijke stand van de 17 auditpunten (4 van 17 gedaan of
+deels gedaan, 13 nog niet onderzocht). Geen freeze-beslissing wordt hier
+genomen -- dit document registreert scope-keuzes, niet audit-volledigheid.

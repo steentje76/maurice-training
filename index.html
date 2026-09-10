@@ -27009,6 +27009,29 @@ async function buildCtx(ctx){
   const wLast=wd[0],wPrev=wd[1];
   const wStr=wLast?`\nGewicht: ${wLast.weight} kg (${wLast.date})`+(wPrev?` | vorige: ${wPrev.weight} kg`:''): '';
   const bcStr=bc[0]?`\nTanita (${bc[0].date}): vet% ${bc[0].fat_pct}% | spier ${bc[0].muscle_mass} kg | BMR ${bc[0].bmr} | visceraal ${bc[0].visceral_fat}`+(bc[0].edema?` | oedeem: ${bc[0].edema}`:''): '';
+  // Devices/Wearables Master Sprint — sectie C0-C4 (correctie): dagelijkse
+  // activiteit (stappen) hergebruikt DEZELFDE, al opgehaalde hd-reeks als
+  // hrvStr hierboven (geen tweede query, geen tweede context-engine) en
+  // dezelfde eenmalige DailyActivityCalculationCore-berekening (geen
+  // AI-herberekening). Alleen de meest recente dag met een BEKENDE
+  // stappenwaarde wordt als 'observed' gebruikt; die dag wordt uit de
+  // baseline-reeks zelf uitgesloten. Evidence Level E, allowed_decision_use:
+  // false blijft gerespecteerd -- dit wordt uitsluitend beschrijvende
+  // context in de prompt, geen Decision Engine-regel.
+  let activityStr='';
+  try{
+    if(typeof DailyActivityCalculationCore!=='undefined'){
+      const bekend=hd.filter(r=>r.steps!=null); // hd is al date.desc gesorteerd
+      if(bekend.length){
+        const observedRow=bekend[0];
+        const baselineReeks=bekend.slice(1).slice().reverse().map(r=>({date:r.date,steps:r.steps}));
+        const baseline=DailyActivityCalculationCore.dailyStepsBaseline(baselineReeks);
+        const deviation=DailyActivityCalculationCore.dailyStepsDeviation(observedRow.steps,baseline);
+        const tekst=DailyActivityCalculationCore.contextText(deviation);
+        if(tekst)activityStr=`\nDagelijkse activiteit (${observedRow.date}): ${Math.round(observedRow.steps).toLocaleString('nl-NL')} stappen. ${tekst}`;
+      }
+    }
+  }catch(_){}
   // nextT/lastT: welke vaste training het langst geleden (of nog nooit) gedaan is.
   // Beide queries hierbinnen zijn onderling onafhankelijk (alleen afhankelijk van
   // vasteTrainingen, dat al geladen is via de Promise.all hierboven) — ook parallel.
@@ -27060,7 +27083,7 @@ De gebruiker hoeft context (huidige oefening, schema, vorige training, doel-RPE,
 reeds uitgevoerde sets) niet zelf te herhalen — die staat hieronder al voor je klaar.
 
 HUIDIGE STATUS:
-${hrvStr}${wStr}${bcStr}
+${hrvStr}${wStr}${bcStr}${activityStr}
 Volgende training: ${nextT} (laatste was ${lastT})
 ${tcSummary?'\nTRAININGSCONTEXT (uit onboarding — houd hier rekening mee bij advies, plan en oefeningkeuze; niet mee rekenen):\n'+tcSummary+'\n':''}${sessionCtx}
 

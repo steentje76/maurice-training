@@ -10062,6 +10062,10 @@ function handleWearableRedirect(){
     if(w==='connected')whoopSyncNow(); else tkVerversGegevensScherm();
     return;
   }
+  if(provider==='oura'){
+    if(w==='connected')ouraSyncNow(); else tkVerversGegevensScherm();
+    return;
+  }
   if(w==='connected')wearableSyncNow();
   else renderWearableCard();
 }
@@ -10187,6 +10191,53 @@ async function whoopSyncNow(){
     const d=await r.json();
     if(!r.ok||!d.synced){toast('Synchroniseren met WHOOP mislukt — probeer het later opnieuw');tkVerversGegevensScherm();return;}
     toast(d.imported>0?(d.imported+' training'+(d.imported===1?'':'en')+' bijgewerkt vanaf WHOOP'):'Verbonden met WHOOP — geen nieuwe trainingen gevonden');
+    tkVerversGegevensScherm();
+    refreshHome();
+  }catch(e){toast('Verbindingsfout bij synchroniseren');}
+}
+
+// ══════════════════════════════════════════════════════════
+// DEVICES/WEARABLES V1 MUST — OURA (self-serve, cloud.ouraring.com)
+// ══════════════════════════════════════════════════════════
+async function fetchOuraStatus(){
+  const h=wearableAuthHeaders();
+  if(!h)return {connected:false};
+  try{
+    const r=await fetch('/.netlify/functions/oura-status',{method:'POST',headers:h});
+    if(!r.ok)return {connected:false};
+    return await r.json();
+  }catch(e){console.warn('oura-status fout',e);return {connected:false};}
+}
+async function ouraConnect(){
+  const h=wearableAuthHeaders();
+  if(!h){toast('Geen actieve sessie');return;}
+  try{
+    const r=await fetch('/.netlify/functions/oura-auth-start',{method:'POST',headers:h});
+    const d=await r.json();
+    if(!r.ok||!d.authUrl){toast('Koppelen mislukt: '+(d.error?.message||r.status));return;}
+    window.location.href=d.authUrl;
+  }catch(e){toast('Verbindingsfout bij koppelen');}
+}
+async function ouraDisconnect(){
+  if(!await confirmModal('Automatische synchronisatie van Oura-trainingen stopt dan.',{title:'Oura loskoppelen',okLabel:'Loskoppelen',danger:true}))return;
+  const h=wearableAuthHeaders();
+  if(!h){toast('Geen actieve sessie');return;}
+  try{
+    const r=await fetch('/.netlify/functions/oura-disconnect',{method:'POST',headers:h});
+    if(!r.ok){toast('Loskoppelen mislukt');return;}
+    toast('Losgekoppeld');
+    tkVerversGegevensScherm();
+  }catch(e){toast('Verbindingsfout bij loskoppelen');}
+}
+async function ouraSyncNow(){
+  const h=wearableAuthHeaders();
+  if(!h){toast('Geen actieve sessie');return;}
+  toast('Synchroniseren met Oura...');
+  try{
+    const r=await fetch('/.netlify/functions/oura-sync',{method:'POST',headers:h});
+    const d=await r.json();
+    if(!r.ok||!d.synced){toast('Synchroniseren met Oura mislukt — probeer het later opnieuw');tkVerversGegevensScherm();return;}
+    toast(d.imported>0?(d.imported+' training'+(d.imported===1?'':'en')+' bijgewerkt vanaf Oura'):'Verbonden met Oura — geen nieuwe trainingen gevonden');
     tkVerversGegevensScherm();
     refreshHome();
   }catch(e){toast('Verbindingsfout bij synchroniseren');}
@@ -30619,6 +30670,18 @@ async function _renderLichaamGegevens(el){
     },{now:new Date().toISOString()});
   }catch(_){ whoopSync=null; }
 
+  // Devices/Wearables V1 MUST-vervolg — Oura (self-serve, geen
+  // goedkeuringsperiode tot 10 gebruikers, cloud.ouraring.com).
+  let ouraSync=null;
+  try{
+    const ost=await fetchOuraStatus();
+    ouraSync=dc.deviceConnectionState({
+      connected:!!ost.connected, connectedAt:ost.connectedAt||null,
+      lastSyncAt:ost.lastSyncAt||null, lastSyncStatus:ost.lastSyncStatus||null,
+      tokenExpired:ost.lastSyncStatus==='token_expired_no_refresh', syncing:false
+    },{now:new Date().toISOString()});
+  }catch(_){ ouraSync=null; }
+
   const eindH=(hd&&hd.length)?String(hd[0].date).slice(0,10):null;
   const vandaag=td();
   const serieVan=function(veld){
@@ -30799,6 +30862,23 @@ async function _renderLichaamGegevens(el){
           ? '<button class="btn btn-o btn-sm" style="flex:1" onclick="whoopSyncNow()">Sync nu</button>'+
             '<button class="btn btn-o btn-sm" style="flex:1" onclick="whoopDisconnect()">Loskoppelen</button>'
           : '<button class="btn btn-r btn-sm" style="flex:1" onclick="whoopConnect()">WHOOP koppelen</button>')+
+      '</div>'+
+    '</div>'+
+
+    // ── Oura (self-serve) ──
+    '<div class="card" style="padding:13px 14px;margin-top:10px">'+
+      '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">'+
+        '<div style="font-size:13px;font-weight:800;color:var(--dark)">Oura</div>'+
+        '<div style="font-size:11px;font-weight:800;color:'+((ouraSync&&ouraSync.connected)?'var(--status-good)':'var(--g4)')+'">'+
+          escHtml(!ouraSync?'Status onbekend':(ouraSync.status==='not_connected'?'Niet gekoppeld':(ouraSync.status==='token_expired'?'Opnieuw koppelen nodig':(ouraSync.status==='sync_failed'?'Laatste synchronisatie mislukt':'Gekoppeld'))))+
+        '</div></div>'+
+      (ouraSync&&ouraSync.lastSyncAt?'<div style="font-size:11.5px;color:var(--g4);font-weight:600;margin-top:5px">Laatste synchronisatie '+escHtml(fmtDate(String(ouraSync.lastSyncAt).slice(0,10)))+'</div>':'')+
+      '<div style="font-size:11px;color:var(--g3);font-weight:600;margin-top:6px;line-height:1.5">Trainingen (running/cycling/rowing/swimming) van een Oura Ring.</div>'+
+      '<div style="display:flex;gap:8px;margin-top:11px">'+
+        ((ouraSync&&ouraSync.connected)
+          ? '<button class="btn btn-o btn-sm" style="flex:1" onclick="ouraSyncNow()">Sync nu</button>'+
+            '<button class="btn btn-o btn-sm" style="flex:1" onclick="ouraDisconnect()">Loskoppelen</button>'
+          : '<button class="btn btn-r btn-sm" style="flex:1" onclick="ouraConnect()">Oura koppelen</button>')+
       '</div>'+
     '</div>'+
 

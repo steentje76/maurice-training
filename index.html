@@ -12686,10 +12686,15 @@ async function renderCoachPtScreen(){
           <div style="font-size:13px;font-weight:700;margin-bottom:6px">${escHtml(r.coach_user_id)}</div>
           <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:4px"><input type="checkbox" ${recovery?'checked':''} onchange="coachPtToggleScope('${r.id}','RECOVERY_HEALTH',this.checked)"> Herstel/gezondheid delen (HRV/RHR)</label>
           <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:8px"><input type="checkbox" ${vrouw?'checked':''} onchange="coachPtToggleScope('${r.id}','WOMENS_PERFORMANCE',this.checked)"> Women's Performance delen</label>
-          <button class="btn btn-o btn-sm" onclick="coachPtRevoke('${r.id}')">Coachrelatie beëindigen</button>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-o btn-sm" onclick="openCoachAthleteThread('${r.id}','${r.coach_user_id}')">Bericht sturen</button>
+            <button class="btn btn-o btn-sm" onclick="coachPtRevoke('${r.id}')">Coachrelatie beëindigen</button>
+          </div>
         </div>`;
       }).join(''):'<p style="font-size:13px;color:var(--g4);margin:0">Geen actieve coach.</p>'}
     </div></div>
+
+    ${actiefAlsAthlete.length?`<div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Feedback van je coach</div></div><div class="card-body" id="coachpt-received-feedback-list"><p style="font-size:13px;color:var(--g4)">Laden…</p></div></div>`:''}
 
     ${actiefAlsAthlete.length?`<div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Toegewezen programma's</div></div><div class="card-body" id="coachpt-assignments-list"><p style="font-size:13px;color:var(--g4)">Laden…</p></div></div>`:''}
 
@@ -12697,12 +12702,13 @@ async function renderCoachPtScreen(){
       ${actiefAlsCoach.length?actiefAlsCoach.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <span style="font-size:13px">${escHtml(r.athlete_user_id)}</span>
         <div style="display:flex;gap:6px">
+          <button class="btn btn-o btn-sm" onclick="openCoachAthleteThread('${r.id}','${r.athlete_user_id}')">Bericht</button>
           <button class="btn btn-o btn-sm" onclick="coachPtOpenAthlete('${r.athlete_user_id}','${r.id}')">Overzicht</button>
           <button class="btn btn-o btn-sm" onclick="coachPtRevoke('${r.id}')">Beëindigen</button>
         </div>
       </div>`).join(''):'<p style="font-size:13px;color:var(--g4);margin:0">Nog geen sporters.</p>'}
     </div></div>`;
-  if(actiefAlsAthlete.length)renderAthleteCoachAssignments();
+  if(actiefAlsAthlete.length){renderAthleteCoachAssignments();renderAthleteReceivedFeedback();}
 }
 
 async function coachPtSearch(){
@@ -12793,8 +12799,8 @@ async function coachPtOpenAthlete(athleteId,relationshipId){
   if(secties.includes('TRAINING_CORE')){
     let instanties=[];
     try{instanties=await sbGet('training_instances',`&user_id=eq.${athleteId}&status=eq.completed&order=completed_at.desc&limit=10`);}catch(e){}
-    html+=`<div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Training</div></div><div class="card-body">
-      ${instanties.length?`<p style="font-size:13px;margin:0 0 6px">Laatste ${instanties.length} afgeronde trainingen</p>${instanties.map(t=>`<div style="font-size:12px;color:var(--g4)">${t.completed_at?new Date(t.completed_at).toLocaleDateString('nl-NL'):'onbekende datum'}</div>`).join('')}`:'<p style="font-size:13px;color:var(--g4);margin:0">Nog geen afgeronde trainingen.</p>'}
+    html+=`<div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Training</div></div><div class="card-body" id="coachpt-training-body">
+      ${instanties.length?`<p style="font-size:13px;margin:0 0 6px">Laatste ${instanties.length} afgeronde trainingen</p>`:'<p style="font-size:13px;color:var(--g4);margin:0">Nog geen afgeronde trainingen.</p>'}
     </div></div>
     <div class="card" style="margin-bottom:14px" id="coachpt-programming-card">
       <div class="card-hd"><div class="card-title">Programma toewijzen</div></div>
@@ -12814,7 +12820,10 @@ async function coachPtOpenAthlete(athleteId,relationshipId){
     </div></div>`;
   }
   el.innerHTML=html;
-  if(secties.includes('TRAINING_CORE'))renderCoachProgrammingSection(athleteId);
+  if(secties.includes('TRAINING_CORE')){
+    renderCoachProgrammingSection(athleteId);
+    renderCoachWorkoutFeedbackSection(athleteId);
+  }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -12946,6 +12955,106 @@ async function athleteMaterializeAssignment(assignmentId){
   if(!nieuwProgramId){toast('Accepteren mislukt — probeer opnieuw');return;}
   toast('Toegevoegd aan Mijn Trainingen');
   renderAthleteCoachAssignments();
+}
+
+// ══════════════════════════════════════════════════════════
+// COACH/PT MASTER SPRINT — CPT5 WORKOUT REVIEW / HUMAN FEEDBACK
+// Nieuwe, minimale coach_workout_feedback-tabel (migratie_v558) -- geen
+// hergebruik van Social Comments (andere privacy-/lifecycle-semantiek,
+// sectie 21 van de opdracht, expliciet onderzocht in de migratie-comments).
+// Altijd expliciet gelabeld als HUMAN COACH-feedback, nooit AI Coach
+// (sectie 2/20: absolute scheiding) -- geen enkele AI-schrijftoegang tot
+// deze tabel.
+// ══════════════════════════════════════════════════════════
+async function renderCoachWorkoutFeedbackSection(athleteId){
+  const el=document.getElementById('coachpt-training-body');
+  if(!el)return;
+  const uid=authSession?.user?.id;
+  let instanties=[],feedback=[];
+  try{instanties=await sbGet('training_instances',`&user_id=eq.${athleteId}&status=eq.completed&order=completed_at.desc&limit=10`);}catch(e){}
+  if(instanties.length){
+    try{feedback=await sbGet('coach_workout_feedback',`&training_instance_id=in.(${instanties.map(t=>t.id).join(',')})&order=created_at.desc`);}catch(e){}
+  }
+  el.innerHTML=instanties.length?instanties.map(t=>{
+    const eigenFeedback=feedback.filter(f=>f.training_instance_id===t.id);
+    return `<div style="border-bottom:1px solid var(--bd);padding-bottom:10px;margin-bottom:10px">
+      <div style="font-size:12px;color:var(--g4);margin-bottom:4px">${t.completed_at?new Date(t.completed_at).toLocaleDateString('nl-NL'):'onbekende datum'}</div>
+      ${eigenFeedback.map(f=>`<div style="font-size:12px;background:var(--g1);border-radius:6px;padding:6px 8px;margin-bottom:4px"><b>Coach-feedback:</b> ${escHtml(f.body)}${f.coach_user_id===uid?` <button class="btn btn-o btn-sm" style="padding:2px 6px;font-size:10px" onclick="coachDeleteWorkoutFeedback('${f.id}','${athleteId}')">Verwijderen</button>`:''}</div>`).join('')}
+      <button class="btn btn-o btn-sm" onclick="coachToggleFeedbackForm('${t.id}')">+ Feedback geven</button>
+      <div id="coachpt-feedback-form-${t.id}" style="display:none;margin-top:6px">
+        <textarea id="coachpt-feedback-input-${t.id}" maxlength="2000" style="width:100%;margin-bottom:6px;min-height:50px" placeholder="Jouw feedback op deze training (zichtbaar voor de sporter als Human Coach-feedback)"></textarea>
+        <button class="btn btn-p btn-sm" onclick="coachSaveWorkoutFeedback('${t.id}','${athleteId}')">Plaatsen</button>
+      </div>
+    </div>`;
+  }).join(''):'<p style="font-size:13px;color:var(--g4);margin:0">Nog geen afgeronde trainingen.</p>';
+}
+
+function coachToggleFeedbackForm(trainingInstanceId){
+  const el=document.getElementById('coachpt-feedback-form-'+trainingInstanceId);
+  if(el)el.style.display=el.style.display==='none'?'block':'none';
+}
+
+async function coachSaveWorkoutFeedback(trainingInstanceId,athleteId){
+  const uid=authSession?.user?.id;
+  if(!uid)return;
+  const inputEl=document.getElementById('coachpt-feedback-input-'+trainingInstanceId);
+  const body=inputEl.value.trim();
+  if(!body)return;
+  const r=await fetch(`${SB_URL}/rest/v1/coach_workout_feedback`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({coach_user_id:uid,athlete_user_id:athleteId,training_instance_id:trainingInstanceId,body})});
+  if(!r.ok){toast('Plaatsen mislukt — probeer opnieuw');return;}
+  toast('Feedback geplaatst');
+  renderCoachWorkoutFeedbackSection(athleteId);
+}
+
+async function coachDeleteWorkoutFeedback(feedbackId,athleteId){
+  const bevestigd=await confirmModal('Deze feedback verwijderen?',{title:'Verwijderen',okLabel:'Verwijderen',cancelLabel:'Terug'});
+  if(!bevestigd)return;
+  await fetch(`${SB_URL}/rest/v1/coach_workout_feedback?id=eq.${feedbackId}`,{method:'DELETE',headers:SB_H});
+  toast('Feedback verwijderd');
+  renderCoachWorkoutFeedbackSection(athleteId);
+}
+
+// Athlete-zijde: eigen ontvangen Human Coach-feedback, over alle trainingen
+// heen (sectie 20: "Athlete ontvangt dit correct"). Expliciet gelabeld als
+// Human Coach -- nooit AI Coach.
+async function renderAthleteReceivedFeedback(){
+  const el=document.getElementById('coachpt-received-feedback-list');
+  if(!el)return;
+  const uid=authSession?.user?.id;
+  if(!uid)return;
+  let feedback=[];
+  try{feedback=await sbGet('coach_workout_feedback',`&athlete_user_id=eq.${uid}&order=created_at.desc&limit=10`);}catch(e){}
+  if(!feedback.length){el.innerHTML='<p style="font-size:13px;color:var(--g4);margin:0">Nog geen feedback ontvangen.</p>';return;}
+  el.innerHTML=feedback.map(f=>`<div style="font-size:12px;background:var(--g1);border-radius:6px;padding:6px 8px;margin-bottom:6px"><b>👤 Human Coach:</b> ${escHtml(f.body)}</div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// COACH/PT MASTER SPRINT — CPT6 MESSAGING (COACH_ATHLETE-context)
+// Hergebruikt de bestaande Messaging Foundation (S5) volledig -- geen
+// tweede DM-model. Voor COACH_ATHLETE-threads is, anders dan bij DIRECT,
+// GEEN nieuwe RPC nodig: de bestaande RLS (mt_insert_coach_athlete +
+// mp_insert_coach_athlete_counterpart) staat een directe client-insert al
+// toe zodra de relatie actief is -- dit is puur de ontbrekende UI-laag.
+// ══════════════════════════════════════════════════════════
+async function openCoachAthleteThread(relationshipId,otherUserId){
+  const uid=authSession?.user?.id;
+  if(!uid)return;
+  // Idempotency (zelfde principe als get_or_create_direct_thread, hier
+  // client-side omdat de RLS het al toestaat zonder SECURITY DEFINER-RPC):
+  // eerst zoeken naar een bestaande COACH_ATHLETE-thread voor exact deze
+  // relatie, nooit een tweede aanmaken.
+  let bestaand=[];
+  try{bestaand=await sbGet('message_threads',`&thread_type=eq.COACH_ATHLETE&context_relationship_id=eq.${relationshipId}&limit=1`);}catch(e){}
+  if(bestaand.length){openMessageThread(bestaand[0].id);return;}
+  const r=await fetch(`${SB_URL}/rest/v1/message_threads`,{method:'POST',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify({thread_type:'COACH_ATHLETE',context_relationship_id:relationshipId,status:'active'})});
+  if(!r.ok){toast('Gesprek starten mislukt');return;}
+  const rows=await r.json();
+  const threadId=rows&&rows[0]?rows[0].id:null;
+  if(!threadId){toast('Gesprek starten mislukt');return;}
+  const zelf=await fetch(`${SB_URL}/rest/v1/message_participants`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({thread_id:threadId,user_id:uid,participant_role:'ATHLETE'})});
+  const tegenpartij=await fetch(`${SB_URL}/rest/v1/message_participants`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({thread_id:threadId,user_id:otherUserId,participant_role:'ATHLETE'})});
+  if(!zelf.ok||!tegenpartij.ok){toast('Gesprek starten mislukt — probeer opnieuw');return;}
+  openMessageThread(threadId);
 }
 
 async function renderSocialScreen(){
@@ -13264,7 +13373,7 @@ async function renderMessageThreadScreen(threadId){
   }
   if(titelEl){
     const anderePartij=participants.find(p=>p.user_id!==uid);
-    titelEl.textContent=thread.thread_type==='DIRECT'?(anderePartij?anderePartij.user_id:'Gesprek'):thread.thread_type;
+    titelEl.textContent=thread.thread_type==='DIRECT'?(anderePartij?anderePartij.user_id:'Gesprek'):thread.thread_type==='COACH_ATHLETE'?'Coach/sporter':thread.thread_type;
   }
   el.innerHTML=berichten.map(m=>{
     const senderInfo=MessagingCore.renderSenderLabel(m.sender_type);

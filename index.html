@@ -10054,6 +10054,10 @@ function handleWearableRedirect(){
     if(w==='connected')polarSyncNow(); else tkVerversGegevensScherm();
     return;
   }
+  if(provider==='garmin'){
+    tkVerversGegevensScherm(); // geen garminSyncNow(): sync-endpoint bouwen we pas na PO-activatie
+    return;
+  }
   if(w==='connected')wearableSyncNow();
   else renderWearableCard();
 }
@@ -10107,6 +10111,34 @@ async function polarSyncNow(){
     tkVerversGegevensScherm();
     refreshHome();
   }catch(e){toast('Verbindingsfout bij synchroniseren');}
+}
+
+// ══════════════════════════════════════════════════════════
+// DEVICES/WEARABLES V1 MUST — GARMIN (partner-gated, software-fundering
+// klaar). Geen garminConnect()/garminSyncNow() nodig zolang de PO-actie
+// (Developer Program-goedkeuring + credentials) niet is voltooid -- de
+// koppelknop in de UI is bewust disabled i.p.v. een altijd-mislukkende
+// aanroep aan te bieden (eerlijke degradatie, geen schijnfunctionaliteit).
+// ══════════════════════════════════════════════════════════
+async function fetchGarminStatus(){
+  const h=wearableAuthHeaders();
+  if(!h)return {connected:false};
+  try{
+    const r=await fetch('/.netlify/functions/garmin-status',{method:'POST',headers:h});
+    if(!r.ok)return {connected:false};
+    return await r.json();
+  }catch(e){console.warn('garmin-status fout',e);return {connected:false};}
+}
+async function garminDisconnect(){
+  if(!await confirmModal('Automatische synchronisatie van Garmin-gegevens stopt dan.',{title:'Garmin loskoppelen',okLabel:'Loskoppelen',danger:true}))return;
+  const h=wearableAuthHeaders();
+  if(!h){toast('Geen actieve sessie');return;}
+  try{
+    const r=await fetch('/.netlify/functions/garmin-disconnect',{method:'POST',headers:h});
+    if(!r.ok){toast('Loskoppelen mislukt');return;}
+    toast('Losgekoppeld');
+    tkVerversGegevensScherm();
+  }catch(e){toast('Verbindingsfout bij loskoppelen');}
 }
 
 // ══════════════════════════════════════════════════════════
@@ -30510,6 +30542,20 @@ async function _renderLichaamGegevens(el){
     },{now:new Date().toISOString()});
   }catch(_){ polarSync=null; }
 
+  // Devices/Wearables V1 MUST-vervolg — Garmin (partner-gated, software-
+  // fundering forensisch teruggevonden/geverifieerd deze sprint). Zelfde
+  // patroon als Polar; toont een correcte "niet gekoppeld"-status totdat
+  // de PO-actie (Developer Program-goedkeuring + credentials) is voltooid.
+  let garminSync=null;
+  try{
+    const gst=await fetchGarminStatus();
+    garminSync=dc.deviceConnectionState({
+      connected:!!gst.connected, connectedAt:gst.connectedAt||null,
+      lastSyncAt:gst.lastSyncAt||null, lastSyncStatus:gst.lastSyncStatus||null,
+      tokenExpired:gst.lastSyncStatus==='token_expired_no_refresh', syncing:false
+    },{now:new Date().toISOString()});
+  }catch(_){ garminSync=null; }
+
   const eindH=(hd&&hd.length)?String(hd[0].date).slice(0,10):null;
   const vandaag=td();
   const serieVan=function(veld){
@@ -30655,6 +30701,24 @@ async function _renderLichaamGegevens(el){
           ? '<button class="btn btn-o btn-sm" style="flex:1" onclick="polarSyncNow()">Sync nu</button>'+
             '<button class="btn btn-o btn-sm" style="flex:1" onclick="polarDisconnect()">Loskoppelen</button>'
           : '<button class="btn btn-r btn-sm" style="flex:1" onclick="polarConnect()">Polar koppelen</button>')+
+      '</div>'+
+    '</div>'+
+
+    // ── Garmin (partner-gated, software staat klaar) ──
+    '<div class="card" style="padding:13px 14px;margin-top:10px">'+
+      '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">'+
+        '<div style="font-size:13px;font-weight:800;color:var(--dark)">Garmin</div>'+
+        '<div style="font-size:11px;font-weight:800;color:'+((garminSync&&garminSync.connected)?'var(--status-good)':'var(--g4)')+'">'+
+          escHtml(!garminSync?'Status onbekend':(garminSync.status==='not_connected'?'Niet gekoppeld':(garminSync.status==='token_expired'?'Opnieuw koppelen nodig':(garminSync.status==='sync_failed'?'Laatste synchronisatie mislukt':'Gekoppeld'))))+
+        '</div></div>'+
+      (garminSync&&garminSync.lastSyncAt?'<div style="font-size:11.5px;color:var(--g4);font-weight:600;margin-top:5px">Laatste synchronisatie '+escHtml(fmtDate(String(garminSync.lastSyncAt).slice(0,10)))+'</div>':'')+
+      '<div style="font-size:11px;color:var(--g3);font-weight:600;margin-top:6px;line-height:1.5">'+
+        ((garminSync&&garminSync.connected)?'Hartslag, dagelijkse activiteit en trainingen van een Garmin-apparaat.':'Koppelen vereist nog goedkeuring van het Garmin Developer Program — neem contact op met de beheerder.')+
+      '</div>'+
+      '<div style="display:flex;gap:8px;margin-top:11px">'+
+        ((garminSync&&garminSync.connected)
+          ? '<button class="btn btn-o btn-sm" style="flex:1" onclick="garminDisconnect()">Loskoppelen</button>'
+          : '<button class="btn btn-o btn-sm" style="flex:1" disabled title="Vereist Garmin Developer Program-goedkeuring">Garmin koppelen (nog niet actief)</button>')+
       '</div>'+
     '</div>'+
 

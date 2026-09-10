@@ -60,6 +60,73 @@ ok(FtmsCore.machineTypeForCharacteristic('0000ffff-0000-1000-8000-00805f9b34fb')
     'F1: Control Point zit niet in de decoder-registry (sectie 13: control blijft uitdrukkelijk buiten scope, alleen UUID gedocumenteerd)');
 }
 
+// ---- G. parseIndoorBikeData: officieel bevestigde byte-layout (correctie -- volledige spec beschikbaar) ----
+function dv(bytes) {
+  const buf = new ArrayBuffer(bytes.length);
+  const view = new DataView(buf);
+  bytes.forEach((b, i) => view.setUint8(i, b));
+  return view;
+}
+function u16le(n) { const b = new ArrayBuffer(2); new DataView(b).setUint16(0, n, true); return [...new Uint8Array(b)]; }
+function i16le(n) { const b = new ArrayBuffer(2); new DataView(b).setInt16(0, n, true); return [...new Uint8Array(b)]; }
+
+{
+  // flags=0x0000 (bit0=0 -> Instantaneous Speed aanwezig), speed=25.50 km/h (2550 * 0.01)
+  const bytes = [...u16le(0x0000), ...u16le(2550)];
+  const r = FtmsCore.parseIndoorBikeData(dv(bytes));
+  ok(r && r.instantaneousSpeedKmh === 25.5, 'G1: bit0=0 betekent Instantaneous Speed IS aanwezig (omgekeerde logica) en wordt correct met resolutie 0.01 gedecodeerd');
+  ok(r.averageSpeedKmh === null, 'G2: Average Speed blijft null als bit1 niet gezet is (UNKNOWN, geen 0)');
+}
+{
+  // flags met bit0=1 (Instantaneous Speed AFWEZIG) + bit2 (Instantaneous Cadence aanwezig, 90.0 rpm = 180*0.5)
+  const bytes = [...u16le(0x0005), ...u16le(180)]; // 0x0005 = bit0 | bit2
+  const r = FtmsCore.parseIndoorBikeData(dv(bytes));
+  ok(r && r.instantaneousSpeedKmh === null, 'G3: bit0=1 betekent Instantaneous Speed juist AFWEZIG is');
+  ok(r.instantaneousCadenceRpm === 90, 'G4: Instantaneous Cadence correct gedecodeerd met resolutie 0.5 op de juiste offset (direct na de 2-byte flags, want speed is afwezig)');
+}
+{
+  // Instantaneous Power (bit6), negatieve waarde toegestaan (sint16)
+  const bytes = [...u16le(0x0041), ...i16le(-15)]; // 0x0041 = bit0 (speed afwezig) | bit6 (power aanwezig)
+  const r = FtmsCore.parseIndoorBikeData(dv(bytes));
+  ok(r && r.instantaneousPowerW === -15, 'G5: Instantaneous Power is signed (sint16) en correct gedecodeerd, ook bij een negatieve waarde (bv. vrijwielen)');
+}
+{
+  // Total Distance (uint24, bit4) -- 3-byte veld
+  const bytes = [...u16le(0x0011), 0x10, 0x27, 0x00]; // 0x0011 = bit0|bit4; 0x002710 = 10000
+  const r = FtmsCore.parseIndoorBikeData(dv(bytes));
+  ok(r && r.totalDistanceM === 10000, 'G6: Total Distance (uint24, 3 bytes) correct gedecodeerd');
+}
+ok(FtmsCore.parseIndoorBikeData(dv([0x00])) === null, 'G7: te korte payload (alleen 1 flags-byte i.p.v. 2) -> null');
+{
+  // flag zet Resistance Level (bit5) maar payload is afgekapt -- offset moet correct doorschuiven en dan falen, geen halve waarde
+  const bytes = [...u16le(0x0021)]; // bit0|bit5, maar geen databytes voor resistance
+  ok(FtmsCore.parseIndoorBikeData(dv(bytes)) === null, 'G8: een aangekondigd maar afgekapt veld (Resistance Level) geeft null, geen gegokte/halve waarde');
+}
+ok(FtmsCore.parseIndoorBikeData(null) === null, 'G9: null-input -> null (geen crash)');
+
+// ---- H. parseRowerData: officieel bevestigde byte-layout ----
+{
+  // flags=0x0000 (bit0=0 -> Stroke Rate + Stroke Count aanwezig): rate=30.0/min (60*0.5), count=142
+  const bytes = [...u16le(0x0000), 60, ...u16le(142)];
+  const r = FtmsCore.parseRowerData(dv(bytes));
+  ok(r && r.strokeRatePerMin === 30 && r.strokeCount === 142, 'H1: bit0=0 betekent Stroke Rate + Stroke Count AANWEZIG (omgekeerde logica), correct gedecodeerd met resolutie 0.5 op Stroke Rate');
+}
+{
+  // bit0=1 (stroke rate/count afwezig) + bit3 (Instantaneous Pace aanwezig) = 120 sec/500m
+  const bytes = [...u16le(0x0009), ...u16le(120)]; // 0x0009 = bit0 | bit3
+  const r = FtmsCore.parseRowerData(dv(bytes));
+  ok(r && r.strokeRatePerMin === null && r.strokeCount === null, 'H2: bit0=1 betekent Stroke Rate/Count juist AFWEZIG');
+  ok(r.instantaneousPaceSecPer500m === 120, 'H3: Instantaneous Pace correct gedecodeerd op de juiste offset');
+}
+{
+  // Total Distance (bit2, uint24) na bit0=1 (geen stroke rate/count ervoor)
+  const bytes = [...u16le(0x0005), 0xE8, 0x03, 0x00]; // 0x0005 = bit0|bit2; 0x0003E8 = 1000
+  const r = FtmsCore.parseRowerData(dv(bytes));
+  ok(r && r.totalDistanceM === 1000, 'H4: Total Distance (uint24) correct gedecodeerd op de juiste offset');
+}
+ok(FtmsCore.parseRowerData(dv([0x00])) === null, 'H5: te korte payload -> null');
+ok(FtmsCore.parseRowerData(null) === null, 'H6: null-input -> null (geen crash)');
+
 console.log('\n========================================================');
 console.log('fFtmsCore.test.js — ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) process.exitCode = 1;

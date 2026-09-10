@@ -46,6 +46,22 @@ ok(!nativeTransportCode.match(/controlPoint/i), 'E2: het transport zelf gebruikt
 // ---- F. Eerlijke degradatie ----
 ok(html.includes("window.TKFtmsTransport && window.TKFtmsTransport.available===true"), 'F1: tkFtmsTransport() controleert expliciet .available===true, zelfde patroon als de andere vier transports');
 
+// ---- G. Correctie verwerkt: Indoor Bike/Rower zijn nu CONFIRMED, overige machinetypes blijven UNKNOWN ----
+ok(nativeTransportCode.includes("registerDecoder(FTMS.MACHINE_DATA_CHARACTERISTICS.indoorBike.uuid, FTMS.parseIndoorBikeData, 'CONFIRMED')"),
+  'G1: Indoor Bike Data is expliciet als CONFIRMED geregistreerd met de nu bevestigde parser');
+ok(nativeTransportCode.includes("registerDecoder(FTMS.MACHINE_DATA_CHARACTERISTICS.rower.uuid, FTMS.parseRowerData, 'CONFIRMED')"),
+  'G2: Rower Data is expliciet als CONFIRMED geregistreerd met de nu bevestigde parser');
+ok(!nativeTransportCode.match(/treadmill\.uuid.*registerDecoder|registerDecoder.*treadmill/i),
+  'G3: Treadmill Data heeft nog GEEN geregistreerde decoder -- blijft eerlijk UNKNOWN totdat die byte-layout met dezelfde zekerheid bevestigd is');
+
+// ---- H. Widget toont nu daadwerkelijk cijfers voor bevestigde machinetypes, blijft eerlijk voor de rest ----
+{
+  const summaryFn = html.split('function ftmsLiveSummary()')[1].split('function renderFtmsPairWidget(containerId)')[0];
+  ok(summaryFn.includes('d.instantaneousSpeedKmh') && summaryFn.includes('d.strokeRatePerMin'),
+    'H1: de live-samenvatting leest uitsluitend velden die parseIndoorBikeData()/parseRowerData() daadwerkelijk kunnen opleveren -- geen verzonnen veldnamen');
+  ok(html.includes("'wachten op bevestigde data'"), 'H2: zolang er geen data binnenkomt (bv. bij een nog-UNKNOWN machinetype zoals Treadmill) blijft de eerlijke fallback-tekst bestaan');
+}
+
 console.log('\n========================================================');
 console.log('fFtmsIntegration.test.js — ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { msgs.forEach(m => console.error(m)); process.exitCode = 1; }

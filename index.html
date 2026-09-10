@@ -12647,10 +12647,25 @@ function cadencePairResetForNewSession(){ _cadencePair.samples=[]; }
 // (zie core/ftmsCore.js) -- deze widget toont daarom bewust GEEN live
 // cijfers, alleen een eerlijke verbindingsstatus. Geen fake meting.
 // ══════════════════════════════════════════════════════════
-let _ftmsPair={state:'idle',devices:[],machineType:null,containerId:'ftms-pair-widget'};
+let _ftmsPair={state:'idle',devices:[],machineType:null,lastData:null,containerId:'ftms-pair-widget'};
 function tkFtmsTransport(){
   return (typeof window!=='undefined' && window.TKFtmsTransport && window.TKFtmsTransport.available===true)
     ? window.TKFtmsTransport : null;
+}
+// Alleen Indoor Bike/Rower hebben een CONFIRMED decoder (zie ftmsCore.js) --
+// deze functie toont bij die twee daadwerkelijk cijfers, en blijft voor elk
+// ander/nog-onbevestigd machinetype eerlijk "wachten op bevestigde data".
+function ftmsLiveSummary(){
+  const d=_ftmsPair.lastData;
+  if(!d)return null;
+  const delen=[];
+  if(d.instantaneousSpeedKmh!=null)delen.push(d.instantaneousSpeedKmh+' km/u');
+  if(d.instantaneousCadenceRpm!=null)delen.push(d.instantaneousCadenceRpm+' rpm');
+  if(d.instantaneousPowerW!=null)delen.push(d.instantaneousPowerW+' W');
+  if(d.strokeRatePerMin!=null)delen.push(d.strokeRatePerMin+' spm');
+  if(d.totalDistanceM!=null)delen.push(Math.round(d.totalDistanceM)+' m');
+  if(d.instantaneousPaceSecPer500m!=null)delen.push(CardioCore.formatTime(d.instantaneousPaceSecPer500m)+'/500m');
+  return delen.length?delen.join(' · '):null;
 }
 function renderFtmsPairWidget(containerId){
   _ftmsPair.containerId=containerId;
@@ -12660,7 +12675,9 @@ function renderFtmsPairWidget(containerId){
   if(!t){el.innerHTML='<div style="font-size:11px;color:var(--g4)">FTMS-apparaat (indoor bike/roeier/loopband) koppelen: live koppeling in de app-versie</div>';return;}
   if(_ftmsPair.state==='connected'){
     const label=_ftmsPair.machineType?_ftmsPair.machineType.label:'apparaat';
-    el.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;color:var(--g4)">Verbonden met ${escHtml(label)} — wachten op bevestigde data <button class="btn btn-o btn-sm" style="padding:2px 8px" onclick="ftmsPairDisconnect()">Loskoppelen</button></div>`;
+    const live=ftmsLiveSummary();
+    const statusTekst=live?escHtml(live):'wachten op bevestigde data';
+    el.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;color:var(--g4)">${escHtml(label)}: ${statusTekst} <button class="btn btn-o btn-sm" style="padding:2px 8px" onclick="ftmsPairDisconnect()">Loskoppelen</button></div>`;
     return;
   }
   if(_ftmsPair.state==='scanning'){el.innerHTML='<div style="font-size:12px;color:var(--g4)">◌ Scannen naar FTMS-apparaat…</div>';return;}
@@ -12689,14 +12706,15 @@ async function ftmsPairSelect(idx){
   if(!t||!dev)return;
   try{
     await t.connect(dev.deviceId);
-    _ftmsPair.state='connected';_ftmsPair.machineType=t.getMachineType?t.getMachineType():null;
+    _ftmsPair.state='connected';_ftmsPair.machineType=t.getMachineType?t.getMachineType():null;_ftmsPair.lastData=null;
+    t.onData(function(data){ _ftmsPair.lastData=data; renderFtmsPairWidget(_ftmsPair.containerId); });
     renderFtmsPairWidget(_ftmsPair.containerId);
   }catch(e){_ftmsPair.state='idle';renderFtmsPairWidget(_ftmsPair.containerId);toast('Verbinden mislukt');}
 }
 async function ftmsPairDisconnect(){
   const t=tkFtmsTransport();
   if(t){try{await t.disconnect();}catch(e){}}
-  _ftmsPair.state='idle';_ftmsPair.devices=[];_ftmsPair.machineType=null;
+  _ftmsPair.state='idle';_ftmsPair.devices=[];_ftmsPair.machineType=null;_ftmsPair.lastData=null;
   renderFtmsPairWidget(_ftmsPair.containerId);
 }
 

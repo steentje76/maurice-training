@@ -4,15 +4,22 @@
  * FTMS-transport (Service 0x1826) -- hergebruikt dezelfde generieke
  * BleGateway-interface als de andere vier transports. Discovery/verbinden/
  * herkennen van het machinetype werkt volledig (bevestigde UUID's, zie
- * core/ftmsCore.js). Databytes worden NOOIT geinterpreteerd zolang er geen
- * CONFIRMED-decoder geregistreerd is (FtmsCore.createDecoderRegistry(),
- * exact het Concept2-precedent) -- "verbonden, wachten op bevestigde data"
- * is de eerlijke tussenstatus, geen gefabriceerde meting.
+ * core/ftmsCore.js).
  *
- * Bij het verbinden wordt via gateway.getServices() opgezocht WELK
- * machinetype dit specifieke apparaat daadwerkelijk aanbiedt (een fysiek
- * apparaat exposeert precies één van de zes Data-characteristics) --
- * geen aanname, echte discovery.
+ * CORRECTIE: de volledige, geadopteerde FTMS 1.0.1-specificatie is
+ * beschikbaar gebleken (bluetooth.com/specifications/specs/
+ * fitness-machine-service-1-0-1/) en de byte-layout van Indoor Bike Data
+ * en Rower Data is drievoudig gecorroboreerd (zie core/ftmsCore.js-
+ * moduledocumentatie) -- deze twee characteristics zijn daarom bij
+ * aanvang al CONFIRMED geregistreerd, niet langer UNKNOWN. Treadmill Data
+ * en de overige machinetypes blijven UNKNOWN totdat hun byte-layout met
+ * dezelfde zekerheid bevestigd is (exact het Concept2-precedent, nu
+ * per-machinetype i.p.v. voor de hele service).
+ *
+ * Bij het verbinden wordt geprobeerd op elk van de zes bevestigde Data-
+ * characteristics te abonneren (geen vertrouwen op een ongeverifieerde
+ * exacte retourvorm van gateway.getServices()) -- een fysiek apparaat
+ * biedt er precies één aan, de overige vijf falen dan stil.
  */
 (function (root, factory) {
   if (typeof module !== 'undefined' && module.exports) { module.exports = factory(); }
@@ -28,6 +35,11 @@
     if (!FTMS || !FTMS.FTMS_SERVICE_UUID) throw new Error('NativeFtmsBleTransport: ftmsCore ontbreekt');
 
     var decoderRegistry = FTMS.createDecoderRegistry();
+    // Indoor Bike Data en Rower Data: byte-layout drievoudig bevestigd (zie
+    // core/ftmsCore.js) -- vanaf nu CONFIRMED, geen UNKNOWN meer voor deze twee.
+    decoderRegistry.registerDecoder(FTMS.MACHINE_DATA_CHARACTERISTICS.indoorBike.uuid, FTMS.parseIndoorBikeData, 'CONFIRMED');
+    decoderRegistry.registerDecoder(FTMS.MACHINE_DATA_CHARACTERISTICS.rower.uuid, FTMS.parseRowerData, 'CONFIRMED');
+
     var connState = 'idle';
     var deviceId = null;
     var machineType = null; // {key,label} of null zolang onbekend

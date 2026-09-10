@@ -61,3 +61,26 @@ Zie docs/TRAININGSKOMPAS_COMPLETE_FUNCTIONALITY_REGISTER.md sectie 7 voor
 de volledige, eerlijke stand van de 17 auditpunten (4 van 17 gedaan of
 deels gedaan, 13 nog niet onderzocht). Geen freeze-beslissing wordt hier
 genomen -- dit document registreert scope-keuzes, niet audit-volledigheid.
+
+
+---
+
+# DEFINITIEVE V1 SCOPE MATRIX (main d3b9615b, audit afgerond)
+
+| Domein | V1 MUST | Functional | Canonical | Accessible | Secure | Resilient | Ext. blocker | P0 | P1 | Freeze ready |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Training (start/execution/logging/completion) | Ja | Ja | Ja (één finishSession -> completeTrainingInstance -> één sessions-write) | Ja | Ja | Ja (offline queue) | Nee | 0 | 0 | JA |
+| Nutrition | Ja | Ja | Ja (canonieke queue + frozen snapshot + nutritionFoundation-totalen) | Ja (28 surfaces) | Ja (RLS eigen data) | Ja | Nee | 0 | 0 | JA |
+| Social / block / privacy | Ja | Ja | Ja | Ja | Ja (bidirectionele block-enforcement in RLS) | Ja | Nee | 0 | 0 | JA |
+| Coach / PT | Ja | Ja | Ja | Ja | Ja (coach_has_scope: active + enabled) | Ja | Nee | 0 | 0 | JA |
+| Team / Gym | Ja | Ja | Ja (canoniek server-side; gym_id is bewuste nullable placeholder) | Ja | Ja | Ja | Nee | 0 | 0 | JA |
+| Auth / account lifecycle | Ja | Ja | Ja (beide verwijderpaden gecertificeerd) | Ja | Ja | Ja | Nee | 0 | 0 | JA |
+| Offline / resilience | Ja | Ja | Ja (owner_uid-isolatie, idempotente replay) | n.v.t. | Ja | Ja | Nee | 0 | 0 | JA |
+| Analytics / Inzicht | Ja | Ja | Deels bewezen (purity-gate groen; geen diepteaudit per berekening) | Ja | Ja | Ja | Nee | 0 | 0 | JA (met P3-restrisico) |
+| Devices / Wearables (software) | Ja | Ja | Ja | Ja | Ja | Ja | JA (credentials/hardware/macOS) | 0 | 0 | JA (software); externe validatie apart open |
+| Commercial / Billing | Nee (deze fase) | Backend ja | n.v.t. | NEE -- bewust | Ja | n.v.t. | n.v.t. | 0 | 0 | n.v.t. (DEFERRED BY PO) |
+| Legacy archive tables | n.v.t. | n.v.t. | n.v.t. | Server-only | Ja (RLS nul policies) | n.v.t. | Nee | 0 | 0 | Geen blocker (post-freeze debt) |
+
+**TRAININGSKOMPAS V1 -- FUNCTIONAL SOFTWARE SCOPE FROZEN**, met
+geregistreerde uitzonderingen voor externe wearable-validatie en de door
+de Product Owner uitgestelde commerciële activatie.

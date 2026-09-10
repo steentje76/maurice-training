@@ -9,21 +9,9 @@
 // sport_name is een leesbare string (bv. "running") -- GEEN numerieke
 // sport_id-mapping nodig/gegokt.
 const { getWearableTokenSecret } = require('./wearableTokenVault.js');
+const { mapProviderSportToCanonical } = require('./_providerSportMapping.js');
 
 function jsonBody(obj) { return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(obj) }; }
-
-// TK's canonical sport-model is bewust beperkt (activities_sport_check:
-// alleen running/cycling/rowing/swimming) -- WHOOP's sport_name-waarden
-// (tientallen sporttypes) die niet mappen worden overgeslagen, nooit
-// geforceerd.
-function mapWhoopSportToCanonical(sportName) {
-  const s = String(sportName || '').toLowerCase();
-  if (s.includes('run')) return 'running';
-  if (s.includes('bik') || s.includes('cycl') || s.includes('spin')) return 'cycling';
-  if (s.includes('row')) return 'rowing';
-  if (s.includes('swim')) return 'swimming';
-  return null;
-}
 
 exports.handler = async function (event) {
   if (event.httpMethod !== 'POST') {
@@ -96,7 +84,7 @@ exports.handler = async function (event) {
 
       for (const w of records) {
         if (w.score_state !== 'SCORED' || !w.score) { skipped++; continue; }
-        const canonicalSport = mapWhoopSportToCanonical(w.sport_name);
+        const canonicalSport = mapProviderSportToCanonical(w.sport_name);
         if (!canonicalSport || !w.start || !w.id) { skipped++; continue; }
         const durationSeconds = (w.end && w.start) ? Math.round((Date.parse(w.end) - Date.parse(w.start)) / 1000) : null;
         const payload = {

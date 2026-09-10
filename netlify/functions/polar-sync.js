@@ -16,23 +16,11 @@
 // top-level keys (nooit waarden) voor diagnostiek, schrijf nooit een
 // geraden waarde.
 const { getWearableTokenSecret } = require('./wearableTokenVault.js');
+const { mapProviderSportToCanonical } = require('./_providerSportMapping.js');
 
 function jsonBody(obj) { return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(obj) }; }
 function firstStr(obj, keys) { for (const k of keys) { if (obj && obj[k] != null && obj[k] !== '') return obj[k]; } return null; }
 function firstNum(obj, keys) { for (const k of keys) { const v = obj && obj[k]; if (v != null && v !== '' && isFinite(Number(v))) return Number(v); } return null; }
-
-// TK's canonical sport-model is bewust beperkt (activities_sport_check:
-// alleen running/cycling/rowing/swimming) -- Polar kent 100+ sporttypes.
-// Een niet-mapbaar Polar-sporttype wordt overgeslagen (skipped), NOOIT
-// geforceerd in een van de vier bestaande categorieen.
-function mapPolarSportToCanonical(polarSport) {
-  const s = String(polarSport || '').toUpperCase();
-  if (s.includes('RUN')) return 'running';
-  if (s.includes('BIK') || s.includes('CYCL') || s.includes('SPINNING')) return 'cycling';
-  if (s.includes('ROW')) return 'rowing';
-  if (s.includes('SWIM')) return 'swimming';
-  return null;
-}
 
 // ISO 8601-duur ("PT1H30M5S") -> seconden. Geen aanname buiten uren/minuten/seconden.
 function iso8601DurationToSeconds(iso) {
@@ -113,7 +101,7 @@ exports.handler = async function (event) {
         const durationIso = firstStr(ex, ['duration']);
         const durationSeconds = iso8601DurationToSeconds(durationIso);
         const rawSport = firstStr(ex, ['sport', 'detailed-sport-info']);
-        const canonicalSport = mapPolarSportToCanonical(rawSport);
+        const canonicalSport = mapProviderSportToCanonical(rawSport);
         const distanceM = firstNum(ex, ['distance']);
         const avgHr = firstNum(ex, ['heart-rate', 'average-heart-rate-bpm']) || (ex && ex['heart-rate'] && firstNum(ex['heart-rate'], ['average']));
         const exerciseId = firstStr(ex, ['id']);

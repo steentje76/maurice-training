@@ -34,8 +34,8 @@ ok(bootstrap.match(/registerCyclingPowerTransport[\s\S]{0,120}return;/), 'B3: al
 // ---- C. Hergebruik van de bestaande generieke gateway ----
 ok(nativeTransportCode.includes('gateway.scan(') && nativeTransportCode.includes('gateway.startNotifications('), 'C1: hergebruikt exact dezelfde BleGateway-interface');
 ok(!nativeTransportCode.match(/BleClient\.|@capacitor-community/), 'C2: geen rechtstreekse plugin-aanroep, alles via de gateway-parameter');
-ok(bootstrap.includes('makeCapacitorBleGateway()') && (bootstrap.match(/makeCapacitorBleGateway\(\)/g) || []).length === 3,
-  'C3: drie transports (Concept2/HR/Power) delen dezelfde makeCapacitorBleGateway()-fabrieksfunctie, geen eigen gateway-strategie per transport');
+ok(bootstrap.includes('makeCapacitorBleGateway()') && (bootstrap.match(/makeCapacitorBleGateway\(\)/g) || []).length >= 3,
+  'C3: minstens drie transports (Concept2/HR/Power, eventueel meer zoals CSC) delen dezelfde makeCapacitorBleGateway()-fabrieksfunctie, geen eigen gateway-strategie per transport');
 
 // ---- D. Officiële spec, bewust beperkte scope (geen giswerk op optionele velden) ----
 ok(nativeTransportCode.includes('CP.parseCyclingPowerMeasurement') && !nativeTransportCode.match(/0x2a63|0x1818/i),
@@ -49,10 +49,10 @@ ok(nativeTransportCode.includes('CP.parseCyclingPowerMeasurement') && !nativeTra
 }
 
 // ---- F. Reset-discipline ----
-ok(html.match(/hrPairResetForNewSession\(\);\s*\r?\n\s*powerPairResetForNewSession\(\);\s*\r?\n\s*renderCyclingExecutionScreen\(\);/),
-  'F1: startCyclingExecution() reset zowel de HR- als de power-samplebuffer');
-ok(html.match(/hrPairResetForNewSession\(\);\s*\r?\n\s*powerPairResetForNewSession\(\);\s*\r?\n\s*renderRideDetail\(activityId\);/),
-  'F2: een succesvolle afronding reset beide samplebuffers vóór het tonen van het detailscherm');
+ok(html.match(/hrPairResetForNewSession\(\);\s*\r?\n\s*powerPairResetForNewSession\(\);[\s\S]{0,80}renderCyclingExecutionScreen\(\);/),
+  'F1: startCyclingExecution() reset zowel de HR- als de power-samplebuffer (eventueel gevolgd door verdere sensor-resets, bv. cadans)');
+ok(html.match(/hrPairResetForNewSession\(\);\s*\r?\n\s*powerPairResetForNewSession\(\);[\s\S]{0,80}renderRideDetail\(activityId\);/),
+  'F2: een succesvolle afronding reset beide samplebuffers vóór het tonen van het detailscherm (eventueel gevolgd door verdere sensor-resets)');
 
 // ---- G. Widget bereikbaar in het Cycling execution-scherm ----
 ok(html.includes('id="power-pair-widget"') && html.includes("renderPowerPairWidget('power-pair-widget')"), 'G1: de widget is daadwerkelijk aangesloten op het Cycling execution-scherm');

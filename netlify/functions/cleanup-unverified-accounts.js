@@ -13,7 +13,24 @@ const USER_DATA_TABLES = [
   'program_block_exercises', 'custom_training_exercises', 'training_exercises',
   'program_blocks', 'custom_trainings', 'vaste_trainingen', 'programs',
   'athlete_conditions', 'atleet_profiel', 'body_comp', 'chat_history',
-  'checkin_conditions', 'exercise_favorites', 'hrv_log', 'sessions', 'weight_log'
+  'checkin_conditions', 'exercise_favorites', 'hrv_log', 'sessions', 'weight_log',
+  // FUNCTIONAL FREEZE AUDIT: de bovenstaande lijst was in de loop van de tijd
+  // uiteengelopen met die in delete-account.js (16 vs 88 entries), ondanks de
+  // instructie hierboven om beide gelijk te houden. Dat is voor het overgrote
+  // deel ONSCHADELIJK: deze functie verwijdert de auth-user zelf (zie hieronder),
+  // en verreweg de meeste gebruikerstabellen hebben ON DELETE CASCADE naar
+  // auth.users en worden daardoor sowieso opgeruimd.
+  // De echte restrisico's zijn uitsluitend de tabellen met een eigen user_id
+  // maar ZONDER FK-cascade -- exact dezelfde elf die in delete-account.js zijn
+  // toegevoegd (PR #316/#317). Zonder deze regels zouden ze bij een
+  // opgeruimd, nooit-bevestigd account achterblijven.
+  // Live geverifieerd ten tijde van deze audit: 0 onbevestigde accounts en 0
+  // bijbehorende rijen, dus er is nu geen data-impact -- dit sluit een LATENT
+  // gat, geen actueel lek.
+  'program_regeneration_log', 'ai_usage',
+  'bak_p_sessions', 'bak_p_training_instances', 'bak_p_exercises', 'bak_p_goals',
+  'bak_p_training_exercises', 'bak_p_exercise_equipment', 'bak_p_exercise_goals',
+  'bak_p_program_block_exercises', 'hrv_log_archive_v500'
 ];
 
 exports.handler = async function () {

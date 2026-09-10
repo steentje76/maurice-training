@@ -493,3 +493,38 @@ domeinen simpelweg nog niet geleverd is. Een freeze uitspreken op basis
 van vier onderzochte deelgebieden zou precies de "valse volledigheid"
 zijn die deze opdracht verbiedt. Freeze pas na afronding van de in H5
 genoemde domeinen.
+
+
+## H7. Account-erasure: beide verwijderpaden gecertificeerd (PR #316/#317 + vervolg)
+
+Twee P1's gevonden en gesloten (persoonsgegevens die een verwijderverzoek
+overleefden). Methode: alle productie-tabellen met een user-kolom gediffed
+tegen de opruimlijst, gevolgd door een FK-controle
+(`pg_constraint.confdeltype`) per verschil -- niet aangenomen.
+
+- Verreweg de meeste tabellen zijn correct afgedekt via ON DELETE CASCADE
+  vanuit `auth.users`; beide verwijderpaden verwijderen de auth-user zelf,
+  wat die cascade afvuurt. Dat is de dragende constructie.
+- Echte gaten waren uitsluitend de tabellen met een eigen user_id maar
+  ZONDER cascade: `program_regeneration_log` (bevat
+  replaced_blocks_snapshot/evidence = echte trainingsinhoud), `ai_usage`,
+  en de negen archieftabellen (incl. 8 rijen gezondheidsdata in
+  `hrv_log_archive_v500`).
+- VERVOLGBEVINDING (deze ronde): het TWEEDE verwijderpad,
+  `cleanup-unverified-accounts.js`, bevatte geen van die elf tabellen. Het
+  bestand instrueert zelf om beide lijsten gelijk te houden, maar ze waren
+  uiteengelopen tot 16 vs 88 entries. Live geverifieerd: 0 onbevestigde
+  accounts en 0 bijbehorende rijen, dus GEEN actuele data-impact -- daarom
+  P2, niet P1, conform de eigen regel "geen P0/P1 zonder bewezen impact".
+  Toch gesloten omdat de ingreep triviaal is en het een latent privacygat
+  in een erasure-pad betrof.
+- Regressietest `fDeleteAccountErasureCompleteness.test.js` (25/25) bewaakt
+  nu beide paden, inclusief de auth-user-verwijdering waar alle
+  cascade-opruiming op steunt.
+
+## H8. LEGACY ARCHIVE TABLES -- PO-beslissing vastgelegd
+
+RETAIN TEMPORARILY, server-only (RLS met nul policies, geen actief
+productpad), erasure verplicht gedekt, geen P0/P1, GEEN freeze-blocker.
+Decommissioning is een post-freeze technical-debt-taak; geen destructieve
+DROP-migratie tijdens deze audit. Zie ook de V1 Scope Matrix.

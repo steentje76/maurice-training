@@ -86,18 +86,19 @@ WAT CLAUDE DOET DAARNA:       Zodra een macOS-omgeving beschikbaar is: `npx cap 
 
 ---
 
-## Samsung Health / Galaxy Watch / Galaxy Ring
+## Samsung Health / Galaxy Watch / Galaxy Ring -- ARCHITECTUURNUANCE GECORRIGEERD, real-device-validatie blijft nodig
 
 - OFFICIAL API: Samsung Health Data SDK -- Android-native, geen cloud-REST-API voor derden.
-- HEALTH CONNECT OVERLAP: Samsung Health schrijft standaard veel metrics door naar Android Health Connect -- de bestaande Google Health-integratie ontvangt Samsung-Watch/Ring-data dus al gedeeltelijk automatisch.
+- CORRECTIE OP EERDERE AANNAME (deze ronde, na het lezen van de bestaande MS-F5-03-architectuuraudit): TK's bestaande "Google Health"-koppeling gebruikt de Google Health API (health.googleapis.com/v4, cloud/OAuth) -- dat is ARCHITECTURAAL iets anders dan Android Health Connect (on-device SDK, geen cloud-API, native Android-permissieschermen). De eerdere aanname "Health Connect voedt automatisch door naar onze koppeling" was te ongenuanceerd.
+- GENUANCEERDE, officieel onderbouwde bevinding (developer.android.com/health-and-fitness/health-connect/migration/fit, gecorroboreerd door twee onafhankelijke technische vergelijkingsartikelen): de Google Health API aggregeert WEL op accountniveau, inclusief Health Connect-brondata -- "it surfaces data from every source connected to a user's Google Health account, including their phone's Health Connect store". Dit is dus GEEN principieel gescheiden databron, MAAR de daadwerkelijke doorstroom hangt af van of Samsung Health's data specifiek als bron aan de gebruiker se Google Health-account is gekoppeld (niet automatisch alleen omdat het lokaal in Health Connect staat) -- dit kon in deze sessie niet live worden bevestigd (geen Samsung-testaccount).
 - PER METRIC (verwachting, NIET live tegen een echt apparaat bevestigd):
-  - Stappen/HR/slaap/HRV: vermoedelijk HEALTH CONNECT VOLDOENDE.
-  - SpO2/lichaamssamenstelling: onzeker.
-  - Huid-/lichaamstemperatuur (Galaxy Ring), stress/Samsung-derived scores: vermoedelijk DIRECT SAMSUNG VEREIST.
-- CONCLUSIE (voorlopig): geen directe Samsung-adapter bouwen tenzij bewezen dat Ring-specifieke sensors een V1-vereiste zijn -- voorkomt dubbele ingestion by design.
-- IMPLEMENTATION STATUS: Health-Connect-pad al PRODUCT WORKING voor kernmetrics; directe SDK-integratie NOT STARTED.
-- PO ACTION: een echt Galaxy Watch/Ring-account beschikbaar stellen om de tabel hierboven te bevestigen.
-- EXTERNAL BLOCKER: Ja -- real-device-validatie nodig; SDK zelf is bovendien Android-native (Kotlin/Java).
+  - Stappen/HR/slaap/HRV: vermoedelijk via Health Connect -> Google Health API-aggregatie bereikbaar, ONBEVESTIGD zonder een echt gekoppeld Samsung-account.
+  - SpO2/lichaamssamenstelling: onzeker of deze typen door de Google Health API se aggregatie worden meegenomen.
+  - Huid-/lichaamstemperatuur (Galaxy Ring), stress/Samsung-derived scores: vermoedelijk DIRECT SAMSUNG SDK VEREIST (Samsung-specifieke metrictypen, minder kans dat deze via de generieke aggregatie meekomen).
+- CONCLUSIE (voorlopig, ongewijzigd qua besluit maar nu met de juiste architecturale onderbouwing): geen directe Samsung-adapter bouwen tenzij bewezen dat Ring-specifieke sensors een V1-vereiste zijn -- voorkomt dubbele ingestion by design EN voorkomt het bouwen van een tweede, Android-native SDK-component (Kotlin/Java) voor data die mogelijk al via de bestaande cloud-koppeling binnenkomt.
+- IMPLEMENTATION STATUS: mogelijk al gedeeltelijk gedekt via de bestaande Google Health-koppeling voor kernmetrics (ONBEVESTIGD, real-device-validatie vereist); directe SDK-integratie NOT STARTED.
+- PO ACTION: een echt Samsung-account met Galaxy Watch/Ring, gekoppeld aan zowel Samsung Health als (waar van toepassing) de Google Health-cloud-account-koppeling, beschikbaar stellen om te bevestigen of stappen/HR/slaap/HRV daadwerkelijk via de bestaande TK-koppeling binnenkomen vóórdat een directe adapter overwogen wordt.
+- EXTERNAL BLOCKER: Ja -- real-device-validatie nodig; de directe SDK-route is bovendien Android-native (Kotlin/Java), een nieuwe technologie-laag t.o.v. de rest van TK's Netlify/JS-architectuur.
 
 ---
 

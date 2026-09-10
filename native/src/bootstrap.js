@@ -13,6 +13,29 @@
 import { Capacitor } from '@capacitor/core';
 import { makeCapacitorBleGateway } from './capacitorBleGateway.js';
 import NT from './nativeConcept2BleTransport.js';
+import { makeNativeHeartRateBleTransport } from './nativeHeartRateBleTransport.js';
+
+function registerHeartRateTransport() {
+  try {
+    if (!Capacitor || typeof Capacitor.isNativePlatform !== 'function' || !Capacitor.isNativePlatform()) {
+      // Web/PWA: geen native BLE -> niets registreren (eerlijke UI blijft, zelfde
+      // patroon als het Concept2-transport hieronder).
+      return;
+    }
+    var HRCore = (typeof window !== 'undefined') ? window.BleHeartRateCore : null;
+    if (!HRCore) {
+      if (typeof setTimeout !== 'undefined') setTimeout(registerHeartRateTransport, 150);
+      return;
+    }
+    if (window.TKHeartRateTransport && window.TKHeartRateTransport.__native) return; // idempotent
+
+    var gateway = makeCapacitorBleGateway();
+    window.TKHeartRateTransport = makeNativeHeartRateBleTransport({ gateway: gateway, bleHeartRateCore: HRCore });
+    if (window.TK_DEBUG) console.log('[TK] NativeHeartRateBleTransport geregistreerd');
+  } catch (e) {
+    // Nooit de app breken door bootstrap-fouten; web-fallback blijft geldig.
+  }
+}
 
 function registerTransport() {
   try {
@@ -50,8 +73,9 @@ function registerTransport() {
 }
 
 if (typeof document !== 'undefined') {
-  if (document.readyState === 'complete' || document.readyState === 'interactive') registerTransport();
-  else document.addEventListener('DOMContentLoaded', registerTransport);
+  if (document.readyState === 'complete' || document.readyState === 'interactive') { registerTransport(); registerHeartRateTransport(); }
+  else document.addEventListener('DOMContentLoaded', function () { registerTransport(); registerHeartRateTransport(); });
 } else {
   registerTransport();
+  registerHeartRateTransport();
 }

@@ -3558,6 +3558,23 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </div>
 </div>
 
+<!-- ═══ COACH/PT MASTER SPRINT CPT2/CPT3 · RELATIONSHIP + ROSTER (Sociaal → Coach/PT) ═══ -->
+<div class="scr" id="s-coachpt">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Coach / PT</div><div class="hdr-sub">Menselijke coach — niet de AI Coach</div></div><button class="ibtn" onclick="go('s-social')" aria-label="Terug naar Sociaal">←</button></div></div>
+  <div class="scroll" id="coachpt-scroll" style="padding:16px"></div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
+    <button class="ni active" aria-current="page" onclick="go('s-social')"><span class="ni-icon">👥</span><span class="ni-label">Sociaal</span></button>
+  </nav>
+</div>
+<div class="scr" id="s-coachpt-athlete">
+  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Sporter</div><div class="hdr-sub" id="coachpt-athlete-sub">Overzicht</div></div><button class="ibtn" onclick="go('s-coachpt')" aria-label="Terug naar Coach/PT">←</button></div></div>
+  <div class="scroll" id="coachpt-athlete-scroll" style="padding:16px"></div>
+</div>
+
 <!-- ═══ B9-09 · NUTRITION FOUNDATION (Lichaam → 🍽️ → Voeding) ═══ -->
 <div class="scr" id="s-nutrition">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Voeding</div><div class="hdr-sub">Registreren, geen advies</div></div><button class="ibtn" onclick="go('s-lichaam')" aria-label="Terug naar Lichaam">←</button></div></div>
@@ -6474,6 +6491,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/socialPrivacy.js"></script>
 <script src="core/socialSharing.js"></script>
 <script src="core/messaging.js"></script>
+<script src="core/coachAccess.js"></script>
+<script src="core/coachRoster.js"></script>
 <script src="core/socialIntelligence.js"></script>
 <script src="core/nutritionFoundation.js"></script>
 <script src="core/nutritionIntelligence.js"></script>
@@ -11736,6 +11755,7 @@ function go(id){
   if(id==='s-cycling')renderCyclingShell();
   if(id==='s-swimming')renderSwimmingEntry();
   if(id==='s-swimming-insights')renderSwimmingInsights();
+  if(id==='s-coachpt')renderCoachPtScreen();
   if(id==='s-hist'){histOff=0;renderHistFilterTabs();loadHistory();histSetMode(histMode||'list');}
   if(id==='s-availability')renderAvailabilityScreen();
   if(id==='s-train-mgr'){renderSportSwitcher();renderV43Train();}
@@ -12610,6 +12630,185 @@ async function renderRunningHistory(){
 // uitsluitend via de bestaande, canonieke RLS-policies -- geen enkele
 // client-side aanname over wie iets mag zien/doen; de database is de
 // enige bron van waarheid voor toegang.
+// ══════════════════════════════════════════════════════════
+// COACH / PT MASTER SPRINT — CPT2/CPT3: relatie-levenscyclus + roster +
+// scope-bewust athlete-overzicht. Hergebruikt uitsluitend de bestaande,
+// volledig geteste CoachAccessCore/CoachRosterCore + coach_athlete_
+// relationships/coach_access_scopes -- geen nieuw relatiemodel. De
+// activatie-trigger (coach_relationship_set_default_scopes, database-niveau)
+// zet automatisch TRAINING_CORE=aan/RECOVERY_HEALTH=uit/WOMENS_PERFORMANCE=uit
+// bij het activeren van een relatie -- de client hoeft dit nooit zelf te
+// insert (er bestaat ook geen INSERT-policy op coach_access_scopes, alleen
+// UPDATE/SELECT: uitsluitend de athlete kan een AL BESTAANDE scope-rij aan-
+// of uitzetten, nooit een nieuwe aanmaken). Human Coach staat hier expliciet
+// los van AI Coach (ander scherm, andere navigatie, ander label overal).
+// ══════════════════════════════════════════════════════════
+async function renderCoachPtScreen(){
+  const el=document.getElementById('coachpt-scroll');
+  if(!el)return;
+  el.innerHTML='<p style="font-size:13px;color:var(--g4)">Laden…</p>';
+  const uid=authSession?.user?.id;
+  if(!uid){el.innerHTML='<p style="font-size:13px;color:var(--g4)">Niet ingelogd.</p>';return;}
+  let relaties=[];
+  try{relaties=await sbGet('coach_athlete_relationships',`&or=(coach_user_id.eq.${uid},athlete_user_id.eq.${uid})`);}catch(e){}
+  const pending=relaties.filter(r=>r.status==='pending');
+  const actiefAlsCoach=relaties.filter(r=>r.status==='active'&&r.coach_user_id===uid);
+  const actiefAlsAthlete=relaties.filter(r=>r.status==='active'&&r.athlete_user_id===uid);
+  let scopeRowsVoorMijnCoaches=[];
+  if(actiefAlsAthlete.length){
+    try{scopeRowsVoorMijnCoaches=await sbGet('coach_access_scopes',`&relationship_id=in.(${actiefAlsAthlete.map(r=>r.id).join(',')})`);}catch(e){}
+  }
+
+  el.innerHTML=`
+    <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Coach of sporter zoeken</div></div><div class="card-body">
+      <input type="text" id="coachpt-search-name" style="width:100%;margin-bottom:10px" placeholder="Weergavenaam">
+      <button class="btn btn-o" style="width:100%;margin-bottom:8px" onclick="coachPtSearch()">Zoeken</button>
+      <div id="coachpt-search-results"></div>
+    </div></div>
+
+    ${pending.length?`<div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Openstaande verzoeken</div></div><div class="card-body">
+      ${pending.map(r=>{
+        const ikBenAthlete=r.athlete_user_id===uid;
+        const anderePartij=ikBenAthlete?r.coach_user_id:r.athlete_user_id;
+        const magActiveren=CoachAccessCore.canActivateRelationship(uid,r);
+        return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:13px">${ikBenAthlete?'Coach-verzoek van':'Jouw verzoek aan'} ${escHtml(anderePartij)}</span>
+          ${magActiveren?`<button class="btn btn-p btn-sm" onclick="coachPtActivate('${r.id}')">Accepteren</button>`:'<span style="font-size:11px;color:var(--g4)">Wacht op bevestiging</span>'}
+        </div>`;
+      }).join('')}
+    </div></div>`:''}
+
+    <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Mijn coach(es)</div></div><div class="card-body">
+      ${actiefAlsAthlete.length?actiefAlsAthlete.map(r=>{
+        const recovery=scopeRowsVoorMijnCoaches.some(s=>s.relationship_id===r.id&&s.scope==='RECOVERY_HEALTH'&&s.enabled===true);
+        const vrouw=scopeRowsVoorMijnCoaches.some(s=>s.relationship_id===r.id&&s.scope==='WOMENS_PERFORMANCE'&&s.enabled===true);
+        return `<div style="border-bottom:1px solid var(--bd);padding-bottom:10px;margin-bottom:10px">
+          <div style="font-size:13px;font-weight:700;margin-bottom:6px">${escHtml(r.coach_user_id)}</div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:4px"><input type="checkbox" ${recovery?'checked':''} onchange="coachPtToggleScope('${r.id}','RECOVERY_HEALTH',this.checked)"> Herstel/gezondheid delen (HRV/RHR)</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:8px"><input type="checkbox" ${vrouw?'checked':''} onchange="coachPtToggleScope('${r.id}','WOMENS_PERFORMANCE',this.checked)"> Women's Performance delen</label>
+          <button class="btn btn-o btn-sm" onclick="coachPtRevoke('${r.id}')">Coachrelatie beëindigen</button>
+        </div>`;
+      }).join(''):'<p style="font-size:13px;color:var(--g4);margin:0">Geen actieve coach.</p>'}
+    </div></div>
+
+    <div class="card"><div class="card-hd"><div class="card-title">Mijn sporters (${actiefAlsCoach.length})</div></div><div class="card-body" id="coachpt-roster">
+      ${actiefAlsCoach.length?actiefAlsCoach.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:13px">${escHtml(r.athlete_user_id)}</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-o btn-sm" onclick="coachPtOpenAthlete('${r.athlete_user_id}','${r.id}')">Overzicht</button>
+          <button class="btn btn-o btn-sm" onclick="coachPtRevoke('${r.id}')">Beëindigen</button>
+        </div>
+      </div>`).join(''):'<p style="font-size:13px;color:var(--g4);margin:0">Nog geen sporters.</p>'}
+    </div></div>`;
+}
+
+async function coachPtSearch(){
+  const term=document.getElementById('coachpt-search-name').value.trim();
+  const resEl=document.getElementById('coachpt-search-results');
+  if(!term){resEl.innerHTML='';return;}
+  resEl.innerHTML='<p style="font-size:12px;color:var(--g4)">Zoeken…</p>';
+  // Zelfde privacy-first patroon als socialSearchProfiles: loopt door de
+  // bestaande, RLS-afgedwongen zichtbaarheidsregels van social_profiles.
+  let rows=[];
+  try{rows=await sbGet('social_profiles',`&display_name=ilike.*${encodeURIComponent(term)}*&limit=10`);}catch(e){}
+  const uid=authSession?.user?.id;
+  rows=rows.filter(r=>r.user_id!==uid);
+  if(!rows.length){resEl.innerHTML='<p style="font-size:12px;color:var(--g4)">Geen (zichtbare) profielen gevonden.</p>';return;}
+  resEl.innerHTML=rows.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <span style="font-size:13px">${escHtml(r.display_name)}</span>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-o btn-sm" onclick="coachPtRequest('${r.user_id}','athlete_wants_coach')">Vraag als coach</button>
+      <button class="btn btn-o btn-sm" onclick="coachPtRequest('${r.user_id}','coach_wants_athlete')">Coach deze sporter</button>
+    </div>
+  </div>`).join('');
+}
+
+// requestType bepaalt uitsluitend welke kolom de aanvrager en welke de
+// tegenpartij wordt -- de RLS (car_insert_pending_only) dwingt af dat
+// requested_by altijd de aanroeper zelf is en status altijd 'pending' start.
+async function coachPtRequest(targetUserId,requestType){
+  const uid=authSession?.user?.id;
+  if(!uid)return;
+  const payload=requestType==='athlete_wants_coach'
+    ?{coach_user_id:targetUserId,athlete_user_id:uid,status:'pending',requested_by:uid}
+    :{coach_user_id:uid,athlete_user_id:targetUserId,status:'pending',requested_by:uid};
+  const ok=await fetch(`${SB_URL}/rest/v1/coach_athlete_relationships`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify(payload)});
+  toast(ok.ok?'Verzoek verstuurd':'Verzoek versturen mislukt');
+  if(ok.ok)renderCoachPtScreen();
+}
+
+// Activeren = alleen de athlete mag dit (car_athlete_grants_consent, "zelf-
+// elevatie onmogelijk" -- de coach kan dit nooit zelf doen). De database-
+// trigger zet hierna automatisch de default-scopes (TRAINING_CORE aan,
+// RECOVERY_HEALTH/WOMENS_PERFORMANCE uit) -- de client doet hier zelf niets
+// mee (er bestaat ook geen INSERT-recht op coach_access_scopes).
+async function coachPtActivate(relationshipId){
+  const ok=await sbPatchQ('coach_athlete_relationships','id=eq.'+relationshipId,{status:'active'});
+  if(!ok){toast('Accepteren mislukt — probeer opnieuw');return;}
+  if(ok===true){toast('Wordt bevestigd zodra je weer online bent');}
+  else{toast('Coachrelatie actief');}
+  renderCoachPtScreen();
+}
+
+async function coachPtRevoke(relationshipId){
+  const bevestigd=await confirmModal('Deze coachrelatie beëindigen? Berichtgeschiedenis blijft leesbaar, nieuwe acties stoppen.',{title:'Beëindigen',okLabel:'Beëindigen',cancelLabel:'Terug'});
+  if(!bevestigd)return;
+  const ok=await sbPatchQ('coach_athlete_relationships','id=eq.'+relationshipId,{status:'revoked'});
+  if(!ok){toast('Beëindigen mislukt — probeer opnieuw');return;}
+  toast('Coachrelatie beëindigd');
+  renderCoachPtScreen();
+}
+
+// Uitsluitend de athlete mag dit (coach_access_scopes_athlete_wijzigt) --
+// dit is een UPDATE op een AL BESTAANDE rij (door de activatie-trigger
+// aangemaakt), nooit een insert.
+async function coachPtToggleScope(relationshipId,scope,enabled){
+  const ok=await sbPatchQ('coach_access_scopes','relationship_id=eq.'+relationshipId+'&scope=eq.'+scope,{enabled});
+  if(!ok){toast('Opslaan mislukt — probeer opnieuw');renderCoachPtScreen();return;}
+  toast(enabled?'Gedeeld met je coach':'Niet langer gedeeld');
+}
+
+// Athlete-overzicht: uitsluitend de secties die CoachRosterCore.
+// athleteOverviewSections() toestaat worden ooit gerenderd -- een
+// ontbrekende sectie bestaat gewoon niet in de output (geen "vergrendeld"-
+// kaart, geen hint van wat er zou kunnen staan).
+async function coachPtOpenAthlete(athleteId,relationshipId){
+  document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
+  const scherm=document.getElementById('s-coachpt-athlete');
+  if(scherm){scherm.classList.add('active');focusScreenForA11y(scherm);}
+  const subEl=document.getElementById('coachpt-athlete-sub');
+  if(subEl)subEl.textContent=athleteId;
+  const el=document.getElementById('coachpt-athlete-scroll');
+  el.innerHTML='<p style="font-size:13px;color:var(--g4)">Laden…</p>';
+  const uid=authSession?.user?.id;
+  let relaties=[],scopeRows=[];
+  try{relaties=await sbGet('coach_athlete_relationships',`&coach_user_id=eq.${uid}&athlete_user_id=eq.${athleteId}`);}catch(e){}
+  try{scopeRows=await sbGet('coach_access_scopes',`&relationship_id=eq.${relationshipId}`);}catch(e){}
+  const secties=CoachRosterCore.athleteOverviewSections(uid,athleteId,relaties,scopeRows,CoachAccessCore);
+  if(!secties.length){el.innerHTML='<p style="font-size:13px;color:var(--g4)">Geen toegestane gegevens zichtbaar.</p>';return;}
+  let html='';
+  if(secties.includes('TRAINING_CORE')){
+    let instanties=[];
+    try{instanties=await sbGet('training_instances',`&user_id=eq.${athleteId}&status=eq.completed&order=completed_at.desc&limit=10`);}catch(e){}
+    html+=`<div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Training</div></div><div class="card-body">
+      ${instanties.length?`<p style="font-size:13px;margin:0 0 6px">Laatste ${instanties.length} afgeronde trainingen</p>${instanties.map(t=>`<div style="font-size:12px;color:var(--g4)">${t.completed_at?new Date(t.completed_at).toLocaleDateString('nl-NL'):'onbekende datum'}</div>`).join('')}`:'<p style="font-size:13px;color:var(--g4);margin:0">Nog geen afgeronde trainingen.</p>'}
+    </div></div>`;
+  }
+  if(secties.includes('RECOVERY_HEALTH')){
+    let hrv=[];
+    try{hrv=await sbGet('hrv_log',`&user_id=eq.${athleteId}&order=date.desc&limit=1`);}catch(e){}
+    html+=`<div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Herstel</div></div><div class="card-body">
+      ${hrv.length?`<div style="font-size:13px">Laatste HRV: ${hrv[0].hrv_ms??'onbekend'} ms${hrv[0].rhr?' · RHR '+hrv[0].rhr+' bpm':''} (${new Date(hrv[0].date).toLocaleDateString('nl-NL')})</div>`:'<p style="font-size:13px;color:var(--g4);margin:0">Nog geen herstelgegevens.</p>'}
+    </div></div>`;
+  }
+  if(secties.includes('WOMENS_PERFORMANCE')){
+    html+=`<div class="card"><div class="card-hd"><div class="card-title">Women's Performance</div></div><div class="card-body">
+      <p style="font-size:13px;margin:0">Cyclus-tracking gedeeld — details bewust beperkt tot wat nodig is voor trainingscontext.</p>
+    </div></div>`;
+  }
+  el.innerHTML=html;
+}
+
 async function renderSocialScreen(){
   const el=document.getElementById('social-scroll');
   if(!el)return;
@@ -12684,6 +12883,11 @@ async function renderSocialScreen(){
 
     <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Berichten</div></div><div class="card-body">
       <button class="btn btn-o btn-sm" style="width:100%" onclick="go('s-messages')">Openen <span id="social-unread-badge"></span></button>
+    </div></div>
+
+    <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Coach / PT</div></div><div class="card-body">
+      <p style="font-size:12px;color:var(--g4);margin:0 0 8px">Menselijke coach — een andere rol dan de AI Coach.</p>
+      <button class="btn btn-o btn-sm" style="width:100%" onclick="go('s-coachpt')">Openen</button>
     </div></div>
 
     <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Mijn connecties (${connections.length})</div></div><div class="card-body">

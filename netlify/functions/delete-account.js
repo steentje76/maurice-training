@@ -98,6 +98,19 @@ exports.handler = async function(event) {
                                   // trainingsinhoud van de gebruiker, geen louter metadata
       'ai_usage',                // user_id + dagelijkse aanroep-/tokentellingen (identifier
                                   // blijft anders bestaan na verwijdering)
+      // FUNCTIONAL FREEZE AUDIT (vervolgronde, RLS/schema-pas): negen ARCHIEF-/BACKUP-tabellen
+      // uit eerdere migraties. Ze hebben elk een eigen user_id-kolom, RLS aan met NUL policies
+      // (server-only, correct), maar GEEN FK naar auth.users en dus geen cascade -- en ze
+      // stonden niet in deze lijst. Ze bevatten echte persoonsgegevens (o.a. 93 rijen in
+      // bak_p_sessions, 154 in bak_p_program_block_exercises en 8 rijen GEZONDHEIDSDATA in
+      // hrv_log_archive_v500) die een accountverwijdering overleefden.
+      // NB: dit ruimt de rijen van de verwijderde gebruiker op. Of deze tabellen als geheel
+      // nog nodig zijn (droppen) is een aparte Product Owner-beslissing -- bewust NIET hier
+      // genomen, want destructief en buiten auditscope.
+      'bak_p_sessions', 'bak_p_training_instances', 'bak_p_exercises', 'bak_p_goals',
+      'bak_p_training_exercises', 'bak_p_exercise_equipment', 'bak_p_exercise_goals',
+      'bak_p_program_block_exercises',
+      'hrv_log_archive_v500',    // gearchiveerde HRV/rusthartslag/slaap -- gezondheidsdata
       // LET OP: activity_laps staat BEWUST NIET in deze lijst -- die tabel heeft, anders
       // dan race_segments, GEEN eigen (gedenormaliseerde) user_id-kolom, alleen een FK naar
       // activities.id. Een generieke "DELETE ... WHERE user_id=eq.X" zou hier falen (kolom

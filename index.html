@@ -12807,6 +12807,14 @@ async function coachPtOpenAthlete(athleteId,relationshipId){
       <div class="card-body" id="coachpt-programming-body"><p style="font-size:13px;color:var(--g4)">Laden…</p></div>
     </div>`;
   }
+  // Coach-notities zijn NOOIT athlete-data (geen scope-toggle van toepassing,
+  // sectie 24: privé, professioneel, los van RECOVERY_HEALTH/WOMENS_PERFORMANCE/
+  // TRAINING_CORE-consent) -- altijd zichtbaar zolang de relatie actief is
+  // (deze functie wordt uitsluitend voor een actieve coach-relatie aangeroepen).
+  html+=`<div class="card" id="coachpt-notes-card">
+    <div class="card-hd"><div class="card-title">Coach-notities (privé, alleen voor jou)</div></div>
+    <div class="card-body" id="coachpt-notes-body"><p style="font-size:13px;color:var(--g4)">Laden…</p></div>
+  </div>`;
   if(secties.includes('RECOVERY_HEALTH')){
     let hrv=[];
     try{hrv=await sbGet('hrv_log',`&user_id=eq.${athleteId}&order=date.desc&limit=1`);}catch(e){}
@@ -12824,6 +12832,7 @@ async function coachPtOpenAthlete(athleteId,relationshipId){
     renderCoachProgrammingSection(athleteId);
     renderCoachWorkoutFeedbackSection(athleteId);
   }
+  renderCoachPrivateNotesSection(athleteId);
 }
 
 // ══════════════════════════════════════════════════════════
@@ -13055,6 +13064,64 @@ async function openCoachAthleteThread(relationshipId,otherUserId){
   const tegenpartij=await fetch(`${SB_URL}/rest/v1/message_participants`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({thread_id:threadId,user_id:otherUserId,participant_role:'ATHLETE'})});
   if(!zelf.ok||!tegenpartij.ok){toast('Gesprek starten mislukt — probeer opnieuw');return;}
   openMessageThread(threadId);
+}
+
+// ══════════════════════════════════════════════════════════
+// COACH/PT MASTER SPRINT — CPT7 COACH NOTES (privé, professioneel)
+// Nieuwe, uitsluitend-coach-toegankelijke coach_private_notes-tabel
+// (migratie_v559) -- wezenlijk anders dan CPT5 coach_workout_feedback:
+// NOOIT athlete-zichtbaar, NOOIT AI Coach-geheugen, NOOIT Social content,
+// niet gekoppeld aan één specifieke training. Deze sectie wordt uitsluitend
+// gerenderd op het coach-eigen athlete-detailscherm -- de athlete heeft
+// nergens toegang tot deze functies of deze data (geen enkele RLS-SELECT-
+// policy voor de athlete bestaat server-side).
+// ══════════════════════════════════════════════════════════
+async function renderCoachPrivateNotesSection(athleteId){
+  const el=document.getElementById('coachpt-notes-body');
+  if(!el)return;
+  const uid=authSession?.user?.id;
+  let notities=[];
+  try{notities=await sbGet('coach_private_notes',`&coach_user_id=eq.${uid}&athlete_user_id=eq.${athleteId}&order=created_at.desc&limit=30`);}catch(e){}
+  el.innerHTML=`
+    <p style="font-size:11px;color:var(--g4);margin:0 0 8px">Alleen jij ziet dit. Nooit zichtbaar voor de sporter, nooit gebruikt door de AI Coach.</p>
+    <div id="coachpt-notes-list" style="margin-bottom:10px">
+      ${notities.length?notities.map(n=>`<div style="border-bottom:1px solid var(--bd);padding-bottom:6px;margin-bottom:6px">
+        <div style="font-size:12px;color:var(--g4);margin-bottom:2px">${new Date(n.created_at).toLocaleDateString('nl-NL')}</div>
+        <div style="font-size:13px">${escHtml(n.body)}</div>
+        <div style="margin-top:4px"><button class="btn btn-o btn-sm" style="padding:2px 6px;font-size:10px" onclick="coachEditPrivateNote('${n.id}','${athleteId}')">Bewerken</button> <button class="btn btn-o btn-sm" style="padding:2px 6px;font-size:10px" onclick="coachDeletePrivateNote('${n.id}','${athleteId}')">Verwijderen</button></div>
+      </div>`).join(''):'<p style="font-size:13px;color:var(--g4);margin:0">Nog geen notities.</p>'}
+    </div>
+    <textarea id="coachpt-new-note" maxlength="4000" style="width:100%;margin-bottom:6px;min-height:50px" placeholder="Nieuwe privé-notitie…"></textarea>
+    <button class="btn btn-p btn-sm" onclick="coachAddPrivateNote('${athleteId}')">Notitie toevoegen</button>`;
+}
+
+async function coachAddPrivateNote(athleteId){
+  const uid=authSession?.user?.id;
+  if(!uid)return;
+  const inputEl=document.getElementById('coachpt-new-note');
+  const body=inputEl.value.trim();
+  if(!body)return;
+  const r=await fetch(`${SB_URL}/rest/v1/coach_private_notes`,{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({coach_user_id:uid,athlete_user_id:athleteId,body})});
+  if(!r.ok){toast('Opslaan mislukt — controleer of de coachrelatie nog actief is');return;}
+  toast('Notitie toegevoegd');
+  renderCoachPrivateNotesSection(athleteId);
+}
+
+async function coachEditPrivateNote(noteId,athleteId){
+  const nieuweTekst=window.prompt('Notitie bewerken:');
+  if(nieuweTekst===null||!nieuweTekst.trim())return;
+  const r=await fetch(`${SB_URL}/rest/v1/coach_private_notes?id=eq.${noteId}`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({body:nieuweTekst.trim(),updated_at:new Date().toISOString()})});
+  if(!r.ok){toast('Bewerken mislukt');return;}
+  toast('Notitie bijgewerkt');
+  renderCoachPrivateNotesSection(athleteId);
+}
+
+async function coachDeletePrivateNote(noteId,athleteId){
+  const bevestigd=await confirmModal('Deze notitie verwijderen?',{title:'Verwijderen',okLabel:'Verwijderen',cancelLabel:'Terug'});
+  if(!bevestigd)return;
+  await fetch(`${SB_URL}/rest/v1/coach_private_notes?id=eq.${noteId}`,{method:'DELETE',headers:SB_H});
+  toast('Notitie verwijderd');
+  renderCoachPrivateNotesSection(athleteId);
 }
 
 async function renderSocialScreen(){

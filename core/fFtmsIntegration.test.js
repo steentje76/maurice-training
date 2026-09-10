@@ -51,8 +51,8 @@ ok(nativeTransportCode.includes("registerDecoder(FTMS.MACHINE_DATA_CHARACTERISTI
   'G1: Indoor Bike Data is expliciet als CONFIRMED geregistreerd met de nu bevestigde parser');
 ok(nativeTransportCode.includes("registerDecoder(FTMS.MACHINE_DATA_CHARACTERISTICS.rower.uuid, FTMS.parseRowerData, 'CONFIRMED')"),
   'G2: Rower Data is expliciet als CONFIRMED geregistreerd met de nu bevestigde parser');
-ok(!nativeTransportCode.match(/treadmill\.uuid.*registerDecoder|registerDecoder.*treadmill/i),
-  'G3: Treadmill Data heeft nog GEEN geregistreerde decoder -- blijft eerlijk UNKNOWN totdat die byte-layout met dezelfde zekerheid bevestigd is');
+ok(!nativeTransportCode.match(/crossTrainer\.uuid.*registerDecoder|registerDecoder.*crossTrainer/i),
+  'G3: Cross Trainer Data heeft nog GEEN geregistreerde decoder -- blijft eerlijk UNKNOWN totdat die byte-layout met dezelfde zekerheid bevestigd is (bit-posities verschillen aantoonbaar per machinetype, zie ftmsCore.js)');
 
 // ---- H. Widget toont nu daadwerkelijk cijfers voor bevestigde machinetypes, blijft eerlijk voor de rest ----
 {
@@ -60,6 +60,14 @@ ok(!nativeTransportCode.match(/treadmill\.uuid.*registerDecoder|registerDecoder.
   ok(summaryFn.includes('d.instantaneousSpeedKmh') && summaryFn.includes('d.strokeRatePerMin'),
     'H1: de live-samenvatting leest uitsluitend velden die parseIndoorBikeData()/parseRowerData() daadwerkelijk kunnen opleveren -- geen verzonnen veldnamen');
   ok(html.includes("'wachten op bevestigde data'"), 'H2: zolang er geen data binnenkomt (bv. bij een nog-UNKNOWN machinetype zoals Treadmill) blijft de eerlijke fallback-tekst bestaan');
+}
+
+// ---- I. Treadmill Data nu ook CONFIRMED (bewust beperkte scope, bits 0-3) ----
+ok(nativeTransportCode.includes("registerDecoder(FTMS.MACHINE_DATA_CHARACTERISTICS.treadmill.uuid, FTMS.parseTreadmillData, 'CONFIRMED')"),
+  'I1: Treadmill Data is expliciet als CONFIRMED geregistreerd met de nu bevestigde (beperkte) parser');
+{
+  const summaryFn = html.split('function ftmsLiveSummary()')[1].split('function renderFtmsPairWidget(containerId)')[0];
+  ok(summaryFn.includes('d.inclinationPercent'), 'I2: de live-samenvatting toont inclinatie wanneer beschikbaar');
 }
 
 console.log('\n========================================================');

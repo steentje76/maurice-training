@@ -159,6 +159,49 @@
     return out;
   }
 
+  // parseTreadmillData(dataView) -> { instantaneousSpeedKmh, averageSpeedKmh,
+  //   totalDistanceM, inclinationPercent } of null bij malformed input.
+  //
+  // BEWUST BEPERKTE SCOPE (correctie, sectie 3 van de opdracht: "Bouw
+  // alleen wanneer alle relevante byte-layoutdetails voldoende bewezen
+  // zijn"): uitsluitend de eerste vier velden (bits 0-3) zijn met dezelfde
+  // drievoudige zekerheid bevestigd als Indoor Bike/Rower. De velden
+  // DAARNA (Elevation Gain-paar, Pace, Force on Belt/Power Output, Energy,
+  // Heart Rate, MET, Elapsed/Remaining Time) hebben WEL bevestigde namen/
+  // grootte uit de officiële spec-tekst, maar niet met dezelfde zekerheid
+  // bevestigde bit-VOLGORDE -- en cruciaal: Cross Trainer Data (een ander
+  // FTMS-machinetype) plaatst zijn eigen Elevation Gain-paar op een ANDERE
+  // bit-positie (bit 5) dan waar Treadmill's positie zou liggen als de
+  // volgorde simpelweg werd doorgetrokken -- het bewijs dat bit-volgorde
+  // NOOIT tussen machinetypes mag worden aangenomen. Deze parser stopt
+  // daarom bewust na Inclination/Ramp Angle Setting (bit 3) -- geen
+  // gegokte offset voor de latere velden, geen halve/foutieve waarde.
+  function parseTreadmillData(dataView) {
+    if (!dataView || dvLength(dataView) < 2) return null;
+    var flags = u16At(dataView, 0);
+    var offset = 2;
+    var out = { instantaneousSpeedKmh: null, averageSpeedKmh: null, totalDistanceM: null, inclinationPercent: null };
+    function need(n) { if (dvLength(dataView) < offset + n) throw new Error('truncated'); }
+    try {
+      // bit 0=0 -> Instantaneous Speed aanwezig (zelfde omgekeerde logica als Indoor Bike/Cross Trainer).
+      if ((flags & 0x0001) === 0) { need(2); out.instantaneousSpeedKmh = Math.round(u16At(dataView, offset) * 0.01 * 100) / 100; offset += 2; }
+      if ((flags & 0x0002) !== 0) { need(2); out.averageSpeedKmh = Math.round(u16At(dataView, offset) * 0.01 * 100) / 100; offset += 2; }
+      if ((flags & 0x0004) !== 0) { need(3); out.totalDistanceM = u24At(dataView, offset); offset += 3; }
+      if ((flags & 0x0008) !== 0) {
+        // "Inclination and Ramp Angle Setting Present" is één gedeelde bit
+        // voor een veldPAAR (bevestigd via de officiële spec-tekst: "if the
+        // Inclination and Ramp Angle Setting Present bit... is set to 1").
+        need(4);
+        out.inclinationPercent = i16At(dataView, offset) * 0.1;
+        offset += 4; // Inclination (2 bytes, gebruikt) + Ramp Angle Setting (2 bytes, offset correct doorgeschoven, waarde niet blootgesteld)
+      }
+      // Bewust GEEN verdere velden gedecodeerd (zie moduledocumentatie) --
+      // een eventueel hogere flag-bit wordt hier niet gecontroleerd, dus de
+      // functie claimt ook niets over data die daarna zou volgen.
+    } catch (e) { return null; }
+    return out;
+  }
+
   // Zoek welk bevestigd machinetype bij een gevonden characteristic-UUID hoort.
   // Retourneert null als de UUID niet in de bevestigde lijst voorkomt (geen
   // gok naar het "dichtstbijzijnde" type).
@@ -206,6 +249,7 @@
     machineTypeForCharacteristic: machineTypeForCharacteristic,
     createDecoderRegistry: createDecoderRegistry,
     parseIndoorBikeData: parseIndoorBikeData,
-    parseRowerData: parseRowerData
+    parseRowerData: parseRowerData,
+    parseTreadmillData: parseTreadmillData
   };
 }));

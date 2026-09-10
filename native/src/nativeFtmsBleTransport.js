@@ -39,6 +39,7 @@
     // core/ftmsCore.js) -- vanaf nu CONFIRMED, geen UNKNOWN meer voor deze twee.
     decoderRegistry.registerDecoder(FTMS.MACHINE_DATA_CHARACTERISTICS.indoorBike.uuid, FTMS.parseIndoorBikeData, 'CONFIRMED');
     decoderRegistry.registerDecoder(FTMS.MACHINE_DATA_CHARACTERISTICS.rower.uuid, FTMS.parseRowerData, 'CONFIRMED');
+    decoderRegistry.registerDecoder(FTMS.MACHINE_DATA_CHARACTERISTICS.treadmill.uuid, FTMS.parseTreadmillData, 'CONFIRMED');
 
     var connState = 'idle';
     var deviceId = null;

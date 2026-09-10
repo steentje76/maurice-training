@@ -39,7 +39,7 @@ ok(!html.match(/coachMaterializeAssignment|coach.*materialize_coach_assignment/i
   'C1: er bestaat geen client-side pad waarmee de COACH (i.p.v. de athlete) materialize_coach_assignment aanroept');
 {
   const assignFn = html.split('async function coachAssignProgramTemplate(templateId,athleteId)')[1].split('// Athlete-zijde')[0];
-  ok(assignFn.includes("status:'pending'"), 'C2: een nieuwe toewijzing start altijd als pending -- nooit direct als geaccepteerd/gematerialiseerd vanuit de coach-kant');
+  ok(assignFn.includes("status:'assigned'"), 'C2: een nieuwe toewijzing start altijd als "assigned" (het canonieke startpunt in de coach_program_assignments_status_check-allowlist: assigned/accepted/modified_by_athlete) -- nooit direct als geaccepteerd/gematerialiseerd vanuit de coach-kant');
 }
 
 // ---- D. Exercise-selectie komt uitsluitend uit de bestaande Exercise Library ----

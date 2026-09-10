@@ -59,14 +59,14 @@ ok(!html.match(/coachMaterializeAssignment|coach.*materialize_coach_assignment/i
 
 // ---- F. Geen gezondheids-/Women\'s Performance-lek in de nieuwe programming-code ----
 {
-  const programmingBlock = html.split('// COACH/PT MASTER SPRINT — CPT4 PROGRAMMING / ASSIGNMENT')[1].split('async function renderSocialScreen')[0];
+  const programmingBlock = html.split('// COACH/PT MASTER SPRINT — CPT4 PROGRAMMING / ASSIGNMENT')[1].split('// COACH/PT MASTER SPRINT — CPT5 WORKOUT REVIEW')[0];
   ok(!programmingBlock.match(/hrv|rhr|womens_performance|cyclus|nutrition/i),
     'F1: het volledige CPT4-codeblok (templates/assignments/builder/materialize) bevat geen enkele HRV/RHR/Women\'s Performance/nutrition-verwijzing');
 }
 
 // ---- G. Human Coach blijft duidelijk (geen AI-Coach-verwarring in de nieuwe UI) ----
 {
-  const programmingBlock = html.split('// COACH/PT MASTER SPRINT — CPT4 PROGRAMMING / ASSIGNMENT')[1].split('async function renderSocialScreen')[0];
+  const programmingBlock = html.split('// COACH/PT MASTER SPRINT — CPT4 PROGRAMMING / ASSIGNMENT')[1].split('// COACH/PT MASTER SPRINT — CPT5 WORKOUT REVIEW')[0];
   ok(!programmingBlock.match(/AI[\s_-]?Coach|ai_coach/i), 'G1: de programming/assignment-UI claimt nergens AI Coach-betrokkenheid -- dit is uitsluitend Human Coach-workflow');
 }
 

@@ -15,6 +15,25 @@ import { makeCapacitorBleGateway } from './capacitorBleGateway.js';
 import NT from './nativeConcept2BleTransport.js';
 import { makeNativeHeartRateBleTransport } from './nativeHeartRateBleTransport.js';
 import { makeNativeCyclingPowerBleTransport } from './nativeCyclingPowerBleTransport.js';
+import { makeNativeCyclingSpeedCadenceBleTransport } from './nativeCyclingSpeedCadenceBleTransport.js';
+
+function registerCscTransport() {
+  try {
+    if (!Capacitor || typeof Capacitor.isNativePlatform !== 'function' || !Capacitor.isNativePlatform()) return;
+    var CSCCore = (typeof window !== 'undefined') ? window.BleCyclingSpeedCadenceCore : null;
+    if (!CSCCore) {
+      if (typeof setTimeout !== 'undefined') setTimeout(registerCscTransport, 150);
+      return;
+    }
+    if (window.TKCyclingCadenceTransport && window.TKCyclingCadenceTransport.__native) return; // idempotent
+
+    var gateway = makeCapacitorBleGateway();
+    window.TKCyclingCadenceTransport = makeNativeCyclingSpeedCadenceBleTransport({ gateway: gateway, bleCscCore: CSCCore });
+    if (window.TK_DEBUG) console.log('[TK] NativeCyclingSpeedCadenceBleTransport geregistreerd');
+  } catch (e) {
+    // Nooit de app breken door bootstrap-fouten; web-fallback blijft geldig.
+  }
+}
 
 function registerCyclingPowerTransport() {
   try {
@@ -92,10 +111,11 @@ function registerTransport() {
 }
 
 if (typeof document !== 'undefined') {
-  if (document.readyState === 'complete' || document.readyState === 'interactive') { registerTransport(); registerHeartRateTransport(); registerCyclingPowerTransport(); }
-  else document.addEventListener('DOMContentLoaded', function () { registerTransport(); registerHeartRateTransport(); registerCyclingPowerTransport(); });
+  if (document.readyState === 'complete' || document.readyState === 'interactive') { registerTransport(); registerHeartRateTransport(); registerCyclingPowerTransport(); registerCscTransport(); }
+  else document.addEventListener('DOMContentLoaded', function () { registerTransport(); registerHeartRateTransport(); registerCyclingPowerTransport(); registerCscTransport(); });
 } else {
   registerTransport();
   registerHeartRateTransport();
   registerCyclingPowerTransport();
+  registerCscTransport();
 }

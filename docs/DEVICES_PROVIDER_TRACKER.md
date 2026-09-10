@@ -147,15 +147,61 @@ WAT CLAUDE DOET DAARNA:   Zodra portaaltoegang er is: de dan-toegankelijke offic
 
 ---
 
-## Fitbit (direct) -- CORRECTIE: platform sluit deze maand, niet meer bouwbaar
+## Fitbit -- V1 SUCCESSOR PATH CERTIFICATION
 
-- KRITIEKE BEVINDING (deze ronde, meerdere onafhankelijke eerste-partij bronnen inclusief Fitbit's eigen developer-portaal dev.fitbit.com/legal/coming-soon en Fitbit's eigen community-aankondiging "Introducing the next phase of the Fitbit Web API"): de legacy Fitbit Web API wordt op **30 september 2026** definitief uitgezet -- vandaag is 10 september 2026, dat is over ongeveer drie weken. **Nieuwe developer-app-registraties zijn al gesloten sinds mei 2026** (dev.fitbit.com/apps/new accepteert geen nieuwe aanvragen meer, bevestigd via een concrete, gedateerde GitHub-issue).
-- Google's eigen, officieel voorgeschreven migratiepad voor bestaande Fitbit-integraties is de Google Health API -- exact de integratie die Trainingskompas al volledig gebouwd en live heeft.
-- CONCLUSIE: een directe Fitbit Web API-integratie bouwen is nu zinloos -- geen nieuwe credentials meer te verkrijgen, het platform zelf verdwijnt over drie weken, en het zou een overbodige tweede route zijn naast een integratie die er al ligt en die Google zelf als de juiste opvolger aanwijst. Dit is GEEN self-serve bouwkandidaat meer (correctie op de eerdere status).
-- BELANGRIJKE VERWARRING (blijft staan): de bestaande Google Health-integratie noemt zichzelf in UI/foutmeldingen historisch "Fitbit" -- dat is de oude merknaam, blijven staan na Google's eigen migratie. Dat is toevallig nu wél de daadwerkelijk juiste, toekomstbestendige route voor Fitbit-gebruikers.
-- IMPLEMENTATION STATUS: NOT APPLICABLE -- V1 MUST voor "Fitbit" wordt gedekt door de bestaande, live Google Health-integratie. Geen aparte code te bouwen.
-- PO ACTION: geen -- als bestaande Fitbit-gebruikers via TK willen blijven syncen, is het bestaande "Fitbit koppelen"-knop (die intern al de Google Health-flow gebruikt) de juiste weg. Geen actie vereist tenzij PO alsnog een reden ziet om dit verder te onderzoeken.
-- EXTERNAL BLOCKER: Ja, in de zin dat het onderliggende platform niet meer toegankelijk is voor nieuwe integraties -- niet oplosbaar door een PO-actie.
+**A. Legacy Fitbit Web API einddatum**: 30 september 2026 (over ~3 weken vanaf vandaag) -- bevestigd via Fitbit's eigen developer-portaal (dev.fitbit.com/legal/coming-soon) en Fitbit's eigen community-aankondiging "Introducing the next phase of the Fitbit Web API". Nieuwe developer-app-registraties al gesloten sinds mei 2026 (dev.fitbit.com/apps/new, bevestigd via een gedateerde GitHub-issue).
+
+**B/C. Officiële opvolger**: de Google Health API. Google's eigen documentatie noemt dit expliciet het voorgeschreven migratiepad voor bestaande Fitbit-integraties.
+
+**D. Komt Fitbit-apparaatdata daar werkelijk in terecht?** JA -- bevestigd via officiële Google-documentatie: de Google Health API is "Google's cloud OAuth layer for Google Health data, and it aggregates data from Fitbit accounts, Health Connect, Google Fit, and other sources" (Fitbit-gebruikers zijn dus een eerste-partij-brondata-bron van deze API, geen aparte/losse integratie).
+
+**E. Mogen derde partijen die data lezen?** JA -- exact de bestaande, al productie-actieve OAuth2-koppeling die Trainingskompas al heeft (client-ID/secret al geconfigureerd, token-vault al gebouwd).
+
+**F/G/H. Coverage-matrix** (officieel bevestigd via developers.google.com/health/release-notes "Data Types Supporting Read" -- niet aangenomen):
+
+| Fitbit-metric | Beschikbaar in Google Health API? | TK haalt dit al binnen? |
+|---|---|---|
+| Steps | JA (`steps`, dailyRollUp) | JA (deze sprint gebouwd) |
+| Sleep | JA (`sleep`, session) | JA |
+| HRV | JA (`daily-heart-rate-variability`) | JA |
+| Resting HR | JA (`daily-resting-heart-rate`) | JA |
+| Workouts/Exercise | JA (`exercise`, volledige sessie: type/duur/afstand/gem. HR) | **JA -- AL EERDER GEBOUWD** (zie hieronder, PR #215/#216, buiten deze sprint om ontdekt en nu pas daadwerkelijk aan de UI gekoppeld) |
+| Continue hartslag | JA (`heart-rate`) | Nee, nog niet gebouwd |
+| Afstand (los van workout) | JA (`distance`) | Nee |
+| Actieve calorieën | JA (`total-calories`/`active-energy-burned`) | Nee |
+| Lichaamsgewicht/-samenstelling | JA (`weight`, `body-fat`) | Nee (TK's `weight_log` is vooralsnog handmatige invoer) |
+| Activiteitsintensiteit/-minuten | JA (`active-minutes`, `activity-level`) | Nee |
+
+**I. Provenance/source-device**: `source_provenance='provider_derived'`, `source_provider='google_health'` -- provider-identiteit blijft bewaard (bevestigd in de reeds bestaande `upsert_provider_activity`-RPC).
+
+**J. Productiegeschiktheid**: zie hieronder -- SOFTWARE COMPLETE, met één concreet, extern verificatiepunt.
+
+### BELANGRIJKE FORENSISCHE ONTDEKKING TIJDENS DEZE CERTIFICERING
+
+Workout-ingestion (Google Health `exercise`-datatype) bleek AL EERDER, buiten deze Devices/Wearables-sprint om, volledig gebouwd, adversarieel getest en GEMERGED te zijn (PR #215/#216, "B9-H3B/B9-H3C Cross-Sport Cloud Provider Integration") -- inclusief een eigen RPC (`upsert_provider_activity`, met manual-data-protection, cross-user-beveiliging en anon-revoke, alle drie live opnieuw geverifieerd deze ronde) en een eigen Netlify Function (`wearable-sync-activities.js`), bewust GESCHEIDEN van `wearable-sync.js` voor failure-isolation. Dit was mij niet bekend totdat een bestaande, eerder gebouwde regressietest (`fB9_H3BCloudProviderIntegration.test.js`) een eigen, foutieve poging om dit opnieuw te bouwen correct blokkeerde.
+
+**Ontbrekend gebleken gat, nu gedicht**: de backend-functie bestond, was beveiligd en getest, maar werd NERGENS vanuit de UI aangeroepen (`wearableSyncNow()` riep het nooit aan). Dat is deze ronde gerepareerd: de client roept nu, na de hoofd-sync, ook `wearable-sync-activities.js` aan, in een eigen, geïsoleerde try/catch (een storing daar kan de al-succesvolle hoofdmelding niet meer verstoren).
+
+**Resterend, echt extern verificatiepunt** (gedocumenteerd in `docs/B9_H3B_PROVIDER_SELECTION.md`, hier herbevestigd): de nieuwe OAuth-scope (`googlehealth.activity_and_fitness.readonly`) staat al in de live autorisatie-aanvraag (`wearable-auth-start.js`, geverifieerd), maar of deze scope daadwerkelijk is vrijgegeven op het OAuth-consent-scherm in de Google Cloud Console van het productieproject kon niet worden geverifieerd (geen toegang tot die Console binnen deze sessie). Als de scope daar nog moet worden toegevoegd/goedgekeurd, is dat een korte, zelfstandige PO-actie in een bestaande Console -- geen nieuwe provider-registratie, geen nieuw contract, geen codewijziging.
+
+### FITBIT V1-BESLISSING
+
+```
+FITBIT
+V1 MUST SATISFIED VIA OFFICIAL GOOGLE HEALTH SUCCESSOR PATH
+-- voor steps/sleep/HRV/resting-HR/workouts (kernmetrics, nu volledig
+   gebouwd, beveiligd, getest EN aan de UI gekoppeld).
+PARTIALLY SATISFIED -- INTERNAL SCOPE DECISION (geen platformbeperking)
+-- voor continue hartslag/afstand/calorieën/lichaamsgewicht/activiteits-
+   minuten: door Google Health API officieel ondersteund, TK heeft er
+   bewust nog geen ingestion voor gebouwd (productmatige prioriteitskeuze,
+   geen technische blokkade).
+```
+
+- IMPLEMENTATION STATUS: workouts SOFTWARE COMPLETE + UI-GEKOPPELD deze ronde. Overige metrics NOT STARTED (geen blokkade, productmatige keuze).
+- PO ACTION: verifieer in de Google Cloud Console of `googlehealth.activity_and_fitness.readonly` is vrijgegeven op het OAuth-consent-scherm; zo niet, voeg toe/vraag verificatie aan (geen nieuwe registratie).
+- UX: de bestaande "Fitbit"-knop/-labels in de UI gebruiken al intern de Google Health-route -- functioneel correct, de merknaam is historisch maar niet misleidend voor de daadwerkelijke werking.
+- EXTERNAL BLOCKER: mogelijk (OAuth-consent-scherm-verificatie, niet bevestigd binnen deze sessie) -- geen nieuwe provider-registratie of contract.
 
 ---
 

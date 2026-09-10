@@ -10038,6 +10038,23 @@ async function wearableSyncNow(){
     refreshHome();
     // Lichaam-history direct verversen als dat scherm actief is (geen volledige page-refresh nodig).
     try{ if(typeof renderLichaam==='function' && document.getElementById('s-lichaam') && document.getElementById('s-lichaam').classList.contains('active')) renderLichaam(); }catch(_){}
+    // B9-H3B: sportactiviteiten (Google Health exercise) -- AANVULLEND, in een
+    // eigen try/catch. Een storing hier (bv. scope_missing zolang de OAuth-
+    // consent-scherm-configuratie nog niet is voltooid) mag de hierboven al
+    // afgeronde, succesvolle HRV/RHR/slaap/stappen-sync niet verstoren of
+    // overschrijven met een foutmelding.
+    try{
+      const ar=await fetch('/.netlify/functions/wearable-sync-activities',{method:'POST',headers:h});
+      const ad=await ar.json();
+      if(ad&&ad.synced&&ad.imported>0){
+        toast(ad.imported+' training'+(ad.imported===1?'':'en')+' bijgewerkt vanaf Google Health');
+        tkVerversGegevensScherm();
+      }
+      // status 'scope_missing'/'provider_error' of ad.synced===false: bewust stil --
+      // dit is een aanvullende, nog-niet-overal-actieve functie (zie
+      // docs/B9_H3B_PROVIDER_SELECTION.md), geen storing tonen boven op een
+      // al-succesvolle hoofdsync.
+    }catch(_){ /* aanvullend, mag de hoofdsync-toast niet overschrijven */ }
   }catch(e){toast('Verbindingsfout bij sync');}
 }
 // Verwerkt de terugkeer van Google na de koppel-flow (?wearable=connected/denied/...).

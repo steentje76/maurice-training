@@ -14,6 +14,25 @@ import { Capacitor } from '@capacitor/core';
 import { makeCapacitorBleGateway } from './capacitorBleGateway.js';
 import NT from './nativeConcept2BleTransport.js';
 import { makeNativeHeartRateBleTransport } from './nativeHeartRateBleTransport.js';
+import { makeNativeCyclingPowerBleTransport } from './nativeCyclingPowerBleTransport.js';
+
+function registerCyclingPowerTransport() {
+  try {
+    if (!Capacitor || typeof Capacitor.isNativePlatform !== 'function' || !Capacitor.isNativePlatform()) return;
+    var CPCore = (typeof window !== 'undefined') ? window.BleCyclingPowerCore : null;
+    if (!CPCore) {
+      if (typeof setTimeout !== 'undefined') setTimeout(registerCyclingPowerTransport, 150);
+      return;
+    }
+    if (window.TKCyclingPowerTransport && window.TKCyclingPowerTransport.__native) return; // idempotent
+
+    var gateway = makeCapacitorBleGateway();
+    window.TKCyclingPowerTransport = makeNativeCyclingPowerBleTransport({ gateway: gateway, bleCyclingPowerCore: CPCore });
+    if (window.TK_DEBUG) console.log('[TK] NativeCyclingPowerBleTransport geregistreerd');
+  } catch (e) {
+    // Nooit de app breken door bootstrap-fouten; web-fallback blijft geldig.
+  }
+}
 
 function registerHeartRateTransport() {
   try {
@@ -73,9 +92,10 @@ function registerTransport() {
 }
 
 if (typeof document !== 'undefined') {
-  if (document.readyState === 'complete' || document.readyState === 'interactive') { registerTransport(); registerHeartRateTransport(); }
-  else document.addEventListener('DOMContentLoaded', function () { registerTransport(); registerHeartRateTransport(); });
+  if (document.readyState === 'complete' || document.readyState === 'interactive') { registerTransport(); registerHeartRateTransport(); registerCyclingPowerTransport(); }
+  else document.addEventListener('DOMContentLoaded', function () { registerTransport(); registerHeartRateTransport(); registerCyclingPowerTransport(); });
 } else {
   registerTransport();
   registerHeartRateTransport();
+  registerCyclingPowerTransport();
 }

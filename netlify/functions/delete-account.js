@@ -89,6 +89,15 @@ exports.handler = async function(event) {
                                   // cycling/rowing/swimming), ON DELETE CASCADE vanuit auth.users
       'athlete_endurance_profile', // B9-01 -- FTP/threshold-pace/Critical Speed-Power-profiel,
                                   // ON DELETE CASCADE vanuit auth.users
+      // FUNCTIONAL FREEZE AUDIT (onafhankelijke hercertificering) -- twee tabellen met een
+      // eigen user_id-kolom maar ZONDER FK naar auth.users, en dus ook zonder ON DELETE
+      // CASCADE. Ze bleven daardoor achter na accountverwijdering. Bewezen via een diff van
+      // alle productie-tabellen met een user-kolom tegen deze lijst, gevolgd door een
+      // FK-controle (pg_constraint.confdeltype) die voor deze twee GEEN cascade toonde.
+      'program_regeneration_log', // bevat replaced_blocks_snapshot + evidence: daadwerkelijke
+                                  // trainingsinhoud van de gebruiker, geen louter metadata
+      'ai_usage',                // user_id + dagelijkse aanroep-/tokentellingen (identifier
+                                  // blijft anders bestaan na verwijdering)
       // LET OP: activity_laps staat BEWUST NIET in deze lijst -- die tabel heeft, anders
       // dan race_segments, GEEN eigen (gedenormaliseerde) user_id-kolom, alleen een FK naar
       // activities.id. Een generieke "DELETE ... WHERE user_id=eq.X" zou hier falen (kolom

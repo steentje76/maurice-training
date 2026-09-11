@@ -1306,3 +1306,54 @@
 - **Verantwoordelijke:** Product Owner (expliciete hotfix-vrijgave, 11
   september 2026), uitgevoerd door Claude.
 
+## Profiel Sprint 2 -- canonical visuele fidelity + UX-semantiek
+
+- **Datum:** 11 september 2026.
+- **Context:** PR #324 herstelde de functionele team-access-regressie; de
+  visuele hero-donkerheid en enkele copy-/navigatie-onvolkomenheden bleven
+  daarna nog open (root cause voor de hero al eerder forensisch bewezen:
+  een verouderde Sprint 5.2 CSS-regel voor `#s-profiel .pf-hero` stond later
+  in de cascade dan de canonical witte regel en won bij gelijke specificity).
+- **Besluit (PO visuele goedkeuring):** hero-maatvoering (padding 16px,
+  border-radius 16px, avatar 60px) ongewijzigd gelaten -- alleen de vier
+  conflicterende oude declaraties (`.pf-hero` achtergrond, `.pf-hero-nm`/
+  `.pf-hero-sub`-tekstkleur, `.pf-hero-edit svg`-stroke) verwijderd; de
+  canonical lichte regel is nu de enige bron (geen `!important`, geen derde
+  override-laag).
+- **Copy gecorrigeerd naar wat de route werkelijk doet:** "Privacy & delen"
+  krijgt de subtitel "Wat we opslaan en waarom" (identiek aan de kop van
+  `s-privacy` zelf); "Account & data" krijgt "E-mail, wachtwoord en
+  gegevens exporteren" (verwijderen expliciet weggehaald -- dat blijft een
+  aparte destructieve actie).
+- **Source-aware back-navigation:** `s-privacy`, `s-help` en `s-meldingen`
+  gingen bij sluiten altijd hardcoded naar `s-settings`, ook vanuit Profiel.
+  Nieuwe `tkNavGoBack()`-helper hergebruikt de al bestaande `tkNavStack`
+  (dezelfde infrastructuur als de Android-hardware-terugknop) -- geen
+  nieuwe state.
+- **Feedback vs Help & ondersteuning:** beide riepen kaal `go('s-help')`
+  aan, zonder enig verschil voor de gebruiker. Nieuwe `openHelpFeedback()`
+  navigeert naar Help en scrollt/focust direct de bestaande "Contact &
+  feedback"-kaart (`tabindex="-1"` + `scrollIntoView`). Geen tweede
+  feedbackformulier gebouwd.
+- **Preview-databevinding (PO-check):** de eerder getoonde Sprint-2-preview
+  gebruikte illustratieve voorbeelddata ("Krachttraining", "Sterker &
+  fitter") uitsluitend binnen een losstaand previewwidget. Geverifieerd:
+  `refreshProfiel()` en alle `atleet.sport`/`atleet.doel`-databronnen zijn
+  in deze sprint niet aangeraakt -- 0 wijzigingen aan data-/mapping-logica.
+  Geen sport-/doelwaarden geherinterpreteerd, geen hardcoded productiedata.
+- **Bewust niet meegenomen:** dode branding-markup (`tenant-brand-card`,
+  `tenantBrandingAdminEdit()`) blijft geregistreerde debt -- verwijderen zou
+  `fProfielIaPreservation.test.js` (regels die deze aanwezigheid vereisen)
+  breken, en tests verzwakken om cleanup mogelijk te maken is expliciet niet
+  toegestaan. Onderzoeksdeelname blijft eigen Profile-row, ongewijzigd.
+  Organisatie & team role-gating (PR #324) ongewijzigd. Bottom-nav-migratie
+  blijft aparte P2 App Shell-scope.
+- **Tests:** `core/fProfielSprint2VisualFidelity.test.js` (nieuw, 31/31) --
+  hero-CSS single-source-of-truth, copy-waarheid, `tkNavGoBack()` per
+  entry-point (Profiel/Instellingen), lege-stack-fallback,
+  `openHelpFeedback()`-deeplink inclusief scroll/focus. Preservation 65/65,
+  team-access-hotfixtests 49/49, volledige regressie 355/355 (was 354, +1
+  nieuw testbestand). Doc-consistency 0. Geen databasewijziging.
+- **Verantwoordelijke:** Product Owner (expliciete visuele goedkeuring, 11
+  september 2026), uitgevoerd door Claude.
+

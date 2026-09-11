@@ -1,5 +1,34 @@
 # Trainingskompas — Changelog
 
+## v4.69.69 — Profiel Sprint 2: canonical visuele fidelity + UX-semantiek (11 september 2026)
+
+Hero-CSS geconsolideerd naar één bron: de vier verouderde Sprint 5.2-
+declaraties die de canonical witte hero overschaduwden (achtergrond,
+naam-/subtitelkleur, edit-icoonkleur) zijn verwijderd; maatvoering
+(padding 16px, border-radius 16px, avatar 60px) ongewijzigd op expliciete
+PO-goedkeuring. Geen `!important`, geen extra override-laag.
+
+Copy gecorrigeerd naar wat de route werkelijk doet: "Privacy & delen" →
+"Wat we opslaan en waarom"; "Account & data" → "E-mail, wachtwoord en
+gegevens exporteren" (verwijderen blijft een aparte destructieve actie).
+
+Source-aware back-navigation: nieuwe `tkNavGoBack()` hergebruikt de
+bestaande `tkNavStack` zodat `s-privacy`/`s-help`/`s-meldingen` teruggaan
+naar de werkelijke schermherkomst (Profiel of Instellingen) i.p.v.
+hardcoded naar Instellingen.
+
+"Feedback" en "Help & ondersteuning" op Profiel deden beide kaal
+`go('s-help')`. Nieuwe `openHelpFeedback()` springt direct naar de
+bestaande "Contact & feedback"-kaart (scroll + focus), geen tweede
+feedbackformulier.
+
+Nieuwe test: `core/fProfielSprint2VisualFidelity.test.js` (31/31).
+Preservation 65/65, team-access-hotfixtests 49/49, regressie 355/355
+(was 354, +1 nieuw testbestand). Doc-consistency 0. Geen
+databasewijziging, geen wijziging aan Organisatie & team-rolgating
+(PR #324) of bottom-nav (blijft P2 App Shell-scope). APP_VER
+v4.69.68 -> v4.69.69.
+
 ## v4.69.68 — HOTFIX: Team access role-gate regressie na PR #323 (11 september 2026)
 
 PR #323 (canonical Profiel-IA) verwijderde `profiel-team-card` uit de markup

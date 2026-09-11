@@ -1,5 +1,37 @@
 # Trainingskompas — Changelog
 
+## v4.69.70 — Active Days: canonical semantic fix (multi-source) (11 september 2026)
+
+"X dagen actief in de afgelopen 30 dagen" telde uitsluitend `sessions`.
+Bewezen: `completeTrainingInstance()` schrijft nooit naar `sessions`, dus
+HYROX/triathlon-trainingen telden nooit mee; standalone hardloop-/fiets-/
+zwemactiviteiten (`activities`-tabel) evenmin. Vensterrand gebruikte
+bovendien UTC (`toISOString()`) terwijl `sessions.date` lokaal is.
+
+Nieuwe canonical `calculateActiveDays30()`: een actieve dag is een lokale
+kalenderdag met minimaal één rij in `sessions`, `activities`, of een
+`training_instances`-rij met `status='completed'`. Geplande/niet-afgeronde
+records tellen nooit mee. Nieuwe generieke `localDateFromTimestamp()`/
+`localDateDaysAgo()` naast `td()` voor consistente lokale-datumsemantiek
+over alle drie bronnen. Eén canonical functie voor Home én Profiel (via
+`window.homeWeekSummary`), geen aparte schaduwtelling per scherm.
+
+Partial-failure-regel: mislukt één van de drie bronqueries, dan is
+`activeDays` expliciet `null` (UNKNOWN) — nooit een gedeeltelijk of
+impliciet 0-resultaat. Home toont de Ritme-/motivatiekaart niet bij
+UNKNOWN; Profiel vereiste geen wijziging (bestaande guard behandelt
+`null` al correct).
+
+Home-copy: de vier "deze maand"-varianten voor deze rolling-30-dagen-
+metric zijn vervangen door "in de afgelopen 30 dagen" (eerder
+geregistreerde P3-debt, nu meegenomen).
+
+Nieuwe test: `core/fActiveDaysCanonicalMultiSource.test.js` (27/27,
+volledige 20-punts testmatrix). Preservation 65/65, team-access-
+hotfixtests 49/49, Profiel-Sprint-2-tests 31/31, regressie 356/356 (was
+355, +1 nieuw testbestand). Doc-consistency 0. Geen databasewijziging.
+APP_VER v4.69.69 -> v4.69.70.
+
 ## v4.69.69 — Profiel Sprint 2: canonical visuele fidelity + UX-semantiek (11 september 2026)
 
 Hero-CSS geconsolideerd naar één bron: de vier verouderde Sprint 5.2-

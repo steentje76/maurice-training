@@ -1357,3 +1357,55 @@
 - **Verantwoordelijke:** Product Owner (expliciete visuele goedkeuring, 11
   september 2026), uitgevoerd door Claude.
 
+## Active Days -- canonical semantic fix (multi-source)
+
+- **Datum:** 11 september 2026.
+- **Context:** een gerichte data-truth-audit (geen live databasetoegang
+  mogelijk vanuit deze sessie) toonde code-niveau aan dat
+  "X dagen actief in de afgelopen 30 dagen" uitsluitend de `sessions`-
+  tabel telde. Bewezen: `completeTrainingInstance()` schrijft nooit naar
+  `sessions`, dus HYROX/triathlon-trainingen telden structureel nooit
+  mee; standalone hardloop-/fiets-/zwemactiviteiten staan in de aparte
+  `activities`-tabel en telden evenmin mee. Daarnaast gebruikte de
+  vensterrand `toISOString()` (UTC) terwijl `sessions.date` al lokaal
+  wordt geschreven via `td()`.
+- **Besluit (PO-goedgekeurde canonical definitie):** een actieve dag is
+  een lokale kalenderdag met minimaal één rij in `sessions`, `activities`,
+  of een `training_instances`-rij met `status='completed'`. Geplande/
+  niet-afgeronde records tellen nooit mee. Nieuwe canonical, generieke
+  hulpfuncties `localDateFromTimestamp()`/`localDateDaysAgo()` (naast
+  `td()`) converteren de UTC-timestamptz-bronnen (`activities.recorded_at`,
+  `training_instances.completed_at`) naar dezelfde lokale kalenderdatum-
+  semantiek als `sessions.date`. Eén canonical `calculateActiveDays30()`
+  voor zowel Home als Profiel (via `window.homeWeekSummary`) -- geen
+  aparte schaduwtelling per scherm.
+- **Partial-failure-regel (hard PO-besluit):** als één van de drie
+  bronqueries mislukt is `activeDays` expliciet `null` (UNKNOWN), nooit
+  een gedeeltelijk of impliciet 0-resultaat. Gebruikt de bestaande
+  `sbGetOrFail()`-precedent (al eerder gebouwd voor Calendar, exact
+  dezelfde ambiguïteit). `renderWeekStats()` toont de Ritme-kaart niet
+  bij UNKNOWN (Volume-kaart blijft onafhankelijk werken); `renderMotivatie()`
+  slaat de motivatiekaart over bij UNKNOWN i.p.v. de "Elke sessie
+  telt"-tekst te tonen (die zou UNKNOWN als ZERO framen). Profiel
+  vereiste geen wijziging: de bestaande `typeof wk.activeDays==='number'`
+  guard behandelt `null` al correct als "niet tonen".
+- **Home-copy gecorrigeerd:** de vier "deze maand"-varianten in
+  `renderMotivatie()` (dezelfde rolling-30-dagen-waarde) zijn vervangen
+  door "in de afgelopen 30 dagen" -- dit was de al eerder geregistreerde
+  P3-debt, nu meegenomen omdat de onderliggende metric zelf wijzigde.
+  Geen andere maandstatistieken aangepast.
+- **Tests:** `core/fActiveDaysCanonicalMultiSource.test.js` (nieuw,
+  27/27) -- volledige 20-punts PO-testmatrix: broncombinaties/dedupe,
+  niet-afgeronde instances, lokale-middernacht-round-trip,
+  venstergrenzen, partial failure per bron, lege-maar-succesvolle
+  bronnen, Home/Profiel-consumergedrag bij UNKNOWN, "deze maand"-copy
+  verdwenen. Preservation 65/65, team-access-hotfixtests 49/49,
+  Profiel-Sprint-2-tests 31/31, volledige regressie 356/356 (was 355,
+  +1 nieuw testbestand). Doc-consistency 0. Geen databasewijziging
+  (uitsluitend nieuwe leesqueries tegen bestaande tabellen).
+- **Bewust niet meegenomen:** wearable-ingestion, nieuwe syncpaden,
+  training-write-path-wijzigingen, Profile-redesign, bottom-nav,
+  clubbranding, thema's, Coach/AI, nieuwe sportdefinities.
+- **Verantwoordelijke:** Product Owner (expliciete implementatie-
+  goedkeuring, 11 september 2026), uitgevoerd door Claude.
+

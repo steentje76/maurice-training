@@ -7426,7 +7426,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.69';
+const APP_VER = 'v4.69.70';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -23038,52 +23038,56 @@ function renderTodayCta(nextT,dfInfo){
     <button onclick="openTrainingPreview('vast','${nextT.id}')" class="today-start" aria-label="Bekijk ${escHtml(nextT.naam)}">Training bekijken</button>
   </div>`;
 }
-// v3.3.45 Dashboard 2.0 — weekvolume + actieve dagen, uitsluitend uit bestaande sessies.
+// v3.3.45 Dashboard 2.0 — weekvolume + actieve dagen. Volume blijft uitsluitend uit
+// sessions (kracht-specifieke metric, buiten scope van de Active Days-correctie).
+// activeDays komt sinds de Active Days Semantic Fix uit de canonical
+// calculateActiveDays30() (sessions+activities+afgeronde training_instances).
 async function renderWeekStats(){
   const el=document.getElementById('home-weekstats');if(!el)return;
   const d=n=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
-  let rows=[];
-  try{rows=await v43SafeGet('sessions','&date=gte.'+d(30));}catch(e){}
-  if(!rows||!rows.length){el.innerHTML='';return;}
+  let sessionsRows=[];
+  try{sessionsRows=await v43SafeGet('sessions','&date=gte.'+d(30));}catch(e){}
   const d7=d(7),d14=d(14);
-  let volThis=0,volPrev=0;const days=new Set();
-  rows.forEach(s=>{days.add(s.date);const v=CalcCore.calculateVolume({weight:parseFloat(s.weight)||0,reps:parseInt(s.reps)||0,sets:parseInt(s.sets)||1});if(s.date>=d7)volThis+=v;else if(s.date>=d14)volPrev+=v;});
-  const activeDays=days.size;
+  let volThis=0,volPrev=0;
+  (sessionsRows||[]).forEach(s=>{const v=CalcCore.calculateVolume({weight:parseFloat(s.weight)||0,reps:parseInt(s.reps)||0,sets:parseInt(s.sets)||1});if(s.date>=d7)volThis+=v;else if(s.date>=d14)volPrev+=v;});
   const pct=volPrev>0?Math.round((volThis-volPrev)/volPrev*100):null;
   const volKg=Math.round(volThis).toLocaleString('nl-NL');
   const pctStr=pct===null?'—':(pct>=0?`+${pct}%`:`${pct}%`);
   const pctCol=pct===null?'var(--g4)':(pct>=0?'var(--accent)':'var(--y)');
+  const {activeDays}=await calculateActiveDays30();
+  const hasVolume=!!(sessionsRows&&sessionsRows.length);
+  const hasRitme=typeof activeDays==='number';
+  if(!hasVolume&&!hasRitme){el.innerHTML='';window.homeWeekSummary={activeDays:null,volKg,pctStr,pct};return;}
   // v3.3.48/51 P6/P13 — coachende duiding bij dezelfde cijfers (geen nieuwe statistiek).
-  const routineLbl=activeDays>=12?'Je bent sterk consistent bezig.':activeDays>=6?'Je bouwt een mooi ritme op.':activeDays>=3?'Je ritme komt op gang.':'Zet vandaag de volgende stap.';
+  const routineLbl=!hasRitme?'':activeDays>=12?'Je bent sterk consistent bezig.':activeDays>=6?'Je bouwt een mooi ritme op.':activeDays>=3?'Je ritme komt op gang.':'Zet vandaag de volgende stap.';
   const volLbl=pct===null?'Je legt de basis voor volgende week.':pct>=5?'Je bouwt zichtbaar kracht op.':pct<=-5?'Rustiger week — herstel telt ook.':'Je houdt je niveau mooi vast.';
-  window.homeWeekSummary={activeDays,volKg,pctStr,pct};
+  window.homeWeekSummary={activeDays:hasRitme?activeDays:null,volKg,pctStr,pct};
   // v3.3.49 P6 — coachend: de boodschap komt eerst, het cijfer ondersteunt.
-  el.innerHTML=`<div class="home-stat-row">
-    <div class="home-stat">
+  const ritmeHtml=hasRitme?`<div class="home-stat">
       <div class="home-stat-top"><svg viewBox="0 0 24 24"><path d="M12 3c1.2 2.4.6 4.2-.9 5.7C9.3 10.5 8 12 8 14.2A4 4 0 0 0 16 14c0-1.3-.5-2.4-1.2-3.3.9.3 3.2 1.7 3.2 4.6A6 6 0 1 1 8 6.3C9.6 5 11.4 4 12 3Z"/></svg>Ritme</div>
       <div class="home-stat-msg">${routineLbl}</div>
       <div class="home-stat-sub"><span class="home-stat-fig">${activeDays}</span> actieve dagen · 30 dgn</div>
-    </div>
-    <div class="home-stat">
+    </div>`:'';
+  const volumeHtml=hasVolume?`<div class="home-stat">
       <div class="home-stat-top"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 19v-6M12 19v-9M16 19v-4M20 19v-11"/></svg>Volume</div>
       <div class="home-stat-msg">${volLbl}</div>
       <div class="home-stat-sub"><span class="home-stat-fig">${volKg} kg</span> · <span style="color:${pctCol};font-weight:700">${pctStr}</span></div>
-    </div>
-  </div>`;
+    </div>`:'';
+  el.innerHTML=`<div class="home-stat-row">${ritmeHtml}${volumeHtml}</div>`;
 }
 // v3.3.49 P1/P8 — Motivatiekaart: sluit het verhaal af met een menselijke boodschap,
 // uitsluitend uit reeds berekende weekcijfers (homeWeekSummary). Geen nieuwe statistiek.
 function renderMotivatie(){
   const el=document.getElementById('home-motivatie');if(!el)return;
   const w=window.homeWeekSummary;
-  if(!w){el.innerHTML='';return;}
+  if(!w||typeof w.activeDays!=='number'){el.innerHTML='';return;}
   // v3.3.51 P7/P13 — persoonlijke coach-afsluiter met het échte cijfer (geen nieuwe data).
   const dagen=w.activeDays;
   let msg;
-  if(w.pct!==null&&w.pct>=10)msg=`Je bent al ${dagen} dagen actief deze maand en bouwt zichtbaar kracht op. Zet deze lijn door.`;
-  else if(dagen>=12)msg=`Al ${dagen} actieve dagen deze maand — je consistentie is sterk. Dit maakt op de lange termijn het verschil.`;
-  else if(dagen>=6)msg=`Je bent al ${dagen} dagen bezig deze maand. Nog een paar sessies en dit wordt een sterke week.`;
-  else if(dagen>=1)msg=`Je hebt deze maand ${dagen} ${dagen===1?'dag':'dagen'} getraind. Zet vandaag de volgende stap.`;
+  if(w.pct!==null&&w.pct>=10)msg=`Je bent al ${dagen} dagen actief in de afgelopen 30 dagen en bouwt zichtbaar kracht op. Zet deze lijn door.`;
+  else if(dagen>=12)msg=`Al ${dagen} actieve dagen in de afgelopen 30 dagen — je consistentie is sterk. Dit maakt op de lange termijn het verschil.`;
+  else if(dagen>=6)msg=`Je bent al ${dagen} dagen bezig in de afgelopen 30 dagen. Nog een paar sessies en dit wordt een sterke week.`;
+  else if(dagen>=1)msg=`Je hebt in de afgelopen 30 dagen ${dagen} ${dagen===1?'dag':'dagen'} getraind. Zet vandaag de volgende stap.`;
   else msg=`Elke sessie telt. Kom in beweging en bouw je ritme stap voor stap op.`;
   el.innerHTML=`<div class="motiv-card"><span class="motiv-bar" aria-hidden="true"></span>${escHtml(msg)}</div>`;
 }
@@ -32577,6 +32581,52 @@ function td(){
   // naar de verkeerde dag — dit was de oorzaak van "coach blijft op oude datum hangen").
   const d=new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+// localDateFromTimestamp/localDateDaysAgo: dezelfde lokale jaar/maand/dag-logica als td(),
+// generiek gemaakt voor een willekeurige timestamp resp. "N dagen geleden". Nodig omdat
+// activities.recorded_at en training_instances.completed_at timestamptz (UTC) zijn, terwijl
+// sessions.date al een lokale kalenderdatumstring is -- zonder deze conversie zou eenzelfde
+// UTC/lokaal-mix ontstaan als td() zelf ooit repareerde.
+function localDateFromTimestamp(value){
+  const dt=new Date(value);
+  if(isNaN(dt.getTime()))return null;
+  return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+}
+function localDateDaysAgo(n){
+  const dt=new Date();
+  dt.setDate(dt.getDate()-n);
+  return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+}
+// Canonical "actieve dag"-berekening (PO-besluit 11 sep, Active Days Semantic Fix).
+// Eén bron van waarheid voor Home én Profiel (via window.homeWeekSummary) -- geen
+// aparte, losse tellingen meer per scherm.
+//
+// Actieve dag = lokale kalenderdag met minimaal één daadwerkelijk uitgevoerde,
+// geldige trainingsactiviteit in: sessions (alle rijen), activities (alle rijen),
+// of training_instances met status='completed'. Geplande/niet-afgeronde records
+// (planned_training_occurrences, planned_training_assignments, custom_trainings,
+// niet-afgeronde training_instances) tellen bewust nooit mee.
+//
+// UNKNOWN (activeDays:null) zodra één van de drie bronqueries mislukt -- nooit een
+// gedeeltelijk resultaat of een impliciete 0 presenteren (UNKNOWN != ZERO).
+async function calculateActiveDays30(){
+  const grens=localDateDaysAgo(29); // vandaag + vorige 29 lokale kalenderdagen = 30 dagen
+  const vandaag=td();
+  // Ruime UTC-padding (2 uur) op de timestamptz-bronqueries zelf, zodat een record vlak
+  // vóór de lokale middernacht van de grensdag (UTC nog op de vorige dag) niet al bij het
+  // ophalen wordt gemist. De exacte lokale grens wordt hierna alsnog per record getoetst.
+  const grensUtcPad=new Date(new Date(grens+'T00:00:00').getTime()-2*60*60*1000).toISOString();
+  const [sessionsR,activitiesR,instancesR]=await Promise.all([
+    sbGetOrFail('sessions','&date=gte.'+grens),
+    sbGetOrFail('activities','&recorded_at=gte.'+encodeURIComponent(grensUtcPad)),
+    sbGetOrFail('training_instances','&status=eq.completed&completed_at=gte.'+encodeURIComponent(grensUtcPad))
+  ]);
+  if(sessionsR.failed||activitiesR.failed||instancesR.failed)return {activeDays:null};
+  const dagen=new Set();
+  (sessionsR.rows||[]).forEach(s=>{ if(s.date&&s.date>=grens&&s.date<=vandaag)dagen.add(s.date); });
+  (activitiesR.rows||[]).forEach(a=>{ const ld=localDateFromTimestamp(a.recorded_at); if(ld&&ld>=grens&&ld<=vandaag)dagen.add(ld); });
+  (instancesR.rows||[]).forEach(i=>{ const ld=localDateFromTimestamp(i.completed_at); if(ld&&ld>=grens&&ld<=vandaag)dagen.add(ld); });
+  return {activeDays:dagen.size};
 }
 const style=document.createElement('style');style.textContent='@keyframes sp{to{transform:rotate(360deg)}}';document.head.appendChild(style);
 

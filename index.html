@@ -846,6 +846,31 @@ body{display:flex;justify-content:center}
 .modal{background:var(--card);border-radius:20px 20px 0 0;padding:20px 18px 32px;width:100%;max-width:430px;max-height:85vh;overflow-y:auto}
 .modal-handle{width:40px;height:4px;background:var(--g2);border-radius:2px;margin:0 auto 16px}
 .modal-title{font-size:18px;font-weight:800;margin-bottom:16px;color:var(--dark)}
+/* CANONICAL CROP-SLIDER (v562). Alleen presentatie: native <input type=range>
+   blijft behouden, dus keyboard (pijltjes/Home/End), screenreader-semantiek
+   en OS-assistive tech werken ongewijzigd. Geen custom control. */
+.tk-zoom{-webkit-appearance:none;appearance:none;width:100%;background:transparent;
+  min-height:44px;margin:0;padding:0;cursor:pointer}
+.tk-zoom:focus{outline:none}
+/* Track: rustig, geen browserachtige omlijning. */
+.tk-zoom::-webkit-slider-runnable-track{height:6px;border-radius:3px;border:0;
+  background:linear-gradient(90deg,var(--accent) 0%,var(--accent) var(--tk-zoom-pct,0%),var(--g2) var(--tk-zoom-pct,0%),var(--g2) 100%)}
+.tk-zoom::-moz-range-track{height:6px;border-radius:3px;border:0;background:var(--g2)}
+.tk-zoom::-moz-range-progress{height:6px;border-radius:3px;background:var(--accent)}
+/* Thumb: duidelijk, teal accent, ruim genoeg om te grijpen. */
+.tk-zoom::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+  width:24px;height:24px;border-radius:50%;background:#fff;
+  border:3px solid var(--accent);box-shadow:0 1px 4px rgba(16,40,64,.22);
+  margin-top:-9px;transition:transform .12s ease}
+.tk-zoom::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#fff;
+  border:3px solid var(--accent);box-shadow:0 1px 4px rgba(16,40,64,.22)}
+.tk-zoom:active::-webkit-slider-thumb{transform:scale(1.08)}
+/* Focus blijft zichtbaar, maar in TK-stijl i.p.v. de blauwe browserring. */
+.tk-zoom:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 4px var(--tk-teal-ring,rgba(18,184,155,.28))}
+.tk-zoom:focus-visible::-moz-range-thumb{box-shadow:0 0 0 4px rgba(18,184,155,.28)}
+.tk-zoom-row{display:flex;align-items:center;gap:10px}
+.tk-zoom-ic{width:20px;height:20px;flex:0 0 20px;stroke:var(--g4);fill:none;stroke-width:2}
+
 
 /* INPUT */
 .inp{width:100%;background:var(--g1);border:1.5px solid var(--g2);border-radius:10px;padding:11px 12px;color:var(--dark);font-size:16px;font-family:var(--f);outline:none;-webkit-appearance:none;display:block}
@@ -2687,7 +2712,14 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-profiel .pf-av img{width:100%;height:100%;object-fit:cover}
 #s-profiel .pf-hero-nm{font-size:20px;font-weight:800;color:#fff;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #s-profiel .pf-hero-sub{font-size:12px;color:rgba(230,240,243,.72);font-weight:600;margin-top:3px}
-#s-profiel .pf-hero-edit{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.12);border:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#s-profiel /* P3-fix: raakvlak naar 44x44 zonder de knop visueel te vergroten.
+   De zichtbare cirkel blijft 32px en staat op exact dezelfde plek
+   (top/right -6px compenseert het grotere box-model); de extra 12px is
+   transparant hitgebied. Geen markup- of functionaliteitswijziging. */
+.pf-hero-edit{position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:50%;background:transparent;border:0;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.pf-hero-edit::before{content:"";position:absolute;top:6px;left:6px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.12);pointer-events:none}
+.pf-hero-edit>svg{position:relative;z-index:1}
+.pf-hero-edit:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #s-profiel .pf-hero-edit svg{width:15px;height:15px;stroke:#fff}
 #s-profiel .pf-hero-pills{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 #s-profiel .pf-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(0,196,143,.18);border:1px solid rgba(0,196,143,.4);color:#7ff0cf;font-size:11px;font-weight:700;padding:5px 11px;border-radius:20px}
@@ -3441,6 +3473,38 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 </div>
 
 <!-- ═══ AUTH — WACHTWOORD VERGETEN ═══ -->
+<input type="file" id="tk-avatar-file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="tkAvatarFileChosen(this)">
+<div class="modal-bg" id="m-avatar-menu" onclick="bgClose(event,'m-avatar-menu')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Profielfoto</div>
+    <div id="m-avatar-menu-body"></div>
+  </div>
+</div>
+<div class="modal-bg" id="m-avatar-crop" onclick="bgClose(event,'m-avatar-crop')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Foto bijsnijden</div>
+    <div style="font-size:12px;color:var(--g4);margin-bottom:10px">Sleep om te verschuiven en gebruik de schuifregelaar om in te zoomen. Je bepaalt zelf de uitsnede.</div>
+    <canvas id="tk-crop-canvas" width="280" height="280" style="width:100%;max-width:280px;aspect-ratio:1;display:block;margin:0 auto;border-radius:14px;touch-action:none;cursor:grab" onmousedown="tkCropPointerDown(event)" onmousemove="tkCropPointerMove(event)" onmouseup="tkCropPointerUp()" onmouseleave="tkCropPointerUp()" ontouchstart="tkCropPointerDown(event)" ontouchmove="tkCropPointerMove(event)" ontouchend="tkCropPointerUp()"></canvas>
+    <div style="display:flex;align-items:center;gap:12px;margin:14px 0 4px">
+      <canvas id="tk-crop-preview" width="56" height="56" style="width:56px;height:56px;border-radius:50%;border:2px solid var(--accent);flex:0 0 56px"></canvas>
+      <div style="flex:1">
+        <label class="ilbl" for="tk-crop-zoom" style="display:block;margin-bottom:6px">Zoom</label>
+        <div class="tk-zoom-row">
+          <svg class="tk-zoom-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M8 11h6"/></svg>
+          <input type="range" class="tk-zoom" id="tk-crop-zoom" min="1" max="4" step="0.01" value="1"
+                 aria-label="Zoomniveau" oninput="tkCropZoom(this.value)">
+          <svg class="tk-zoom-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M8 11h6M11 8v6"/></svg>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-o btn-sm" style="flex:1;min-height:44px" onclick="tkCropCancel()">Annuleren</button>
+      <button class="btn btn-r btn-sm" id="tk-crop-save" style="flex:1;min-height:44px" onclick="tkCropConfirm()">Opslaan</button>
+    </div>
+  </div>
+</div>
 <div class="modal-bg" id="m-pass-reset" onclick="bgClose(event,'m-pass-reset')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -6528,6 +6592,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/plateauDetection.js"></script>
 <script src="core/trainingLoad.js"></script>
 <script src="core/observability.js"></script>
+<script src="core/avatarCore.js"></script>
 <script>
 // ── OPEN-METEO RUNTIME — additive context, NOOIT een blocker voor training ──
 // Keten: geolocation-consent → WeatherCore.buildOpenMeteoRequest → fetch →
@@ -9942,6 +10007,277 @@ async function renderCyclusScreen(){
 // koppelt zijn eigen account. Tokens komen nooit in de client — alle communicatie loopt
 // via Netlify Functions (wearable-*.js) met een server-side service-role key.
 // ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+// CANONICAL USER AVATAR — UI/delivery-laag (v562)
+// Eén canonical bron: AvatarCore (core/avatarCore.js). Geen parallelle
+// avatarlogica per scherm. AI Coach gebruikt deze renderer NIET.
+// ══════════════════════════════════════════════════════════
+
+// Signed-URL cache. Key = storage-pad (immutable: vervangen levert een
+// NIEUWE uuid). Daardoor kan een oude URL de nieuwe foto nooit maskeren en
+// is een Date.now()-cachebuster overbodig.
+const _tkAvatarUrlCache = new Map();
+const TK_AVATAR_TTL = 3600;
+
+function tkAvatarInvalidate(pad){
+  if(pad) _tkAvatarUrlCache.delete(pad); else _tkAvatarUrlCache.clear();
+}
+
+// Levering via SIGNED URL op een PRIVATE bucket. Er is bewust geen publieke
+// permanente URL: die zou social visibility en blocking kunnen omzeilen.
+// Het ondertekenen gebeurt met de GEBRUIKERSSESSIE, zodat de storage-policy
+// (padsegment 1 === auth.uid()) daadwerkelijk geldt. Een kijker kan dus geen
+// URL tekenen voor andermans object.
+async function tkAvatarSignedUrl(pad){
+  if(!pad) return null;
+  const cached=_tkAvatarUrlCache.get(pad);
+  if(cached && cached.exp>Date.now()) return cached.url;
+  const tok=authSession?.access_token; if(!tok) return null;
+  try{
+    const r=await fetch(`${SB_URL}/storage/v1/object/sign/avatars/${pad}`,{
+      method:'POST',
+      headers:{apikey:SB_KEY,Authorization:'Bearer '+tok,'Content-Type':'application/json'},
+      body:JSON.stringify({expiresIn:TK_AVATAR_TTL})
+    });
+    if(!r.ok) return null;
+    const d=await r.json();
+    const url=d&&d.signedURL?`${SB_URL}/storage/v1${d.signedURL}`:null;
+    if(url) _tkAvatarUrlCache.set(pad,{url,exp:Date.now()+(TK_AVATAR_TTL-60)*1000});
+    return url;
+  }catch(e){ return null; }
+}
+
+/* CANONICAL RENDERER. Levert altijd direct HTML met de juiste fallback en
+   vult de foto asynchroon aan zodra de signed URL er is. onerror valt terug
+   op initialen: een verlopen of verwijderde URL mag nooit een gebroken
+   beeldicoon tonen. */
+function tkAvatarHtml(opts){
+  const o=opts||{};
+  const res=AvatarCore.resolve({
+    avatarPath:o.avatarPath, naam:o.naam,
+    zichtbaar:o.zichtbaar, isAI:o.isAI
+  });
+  const size=o.size||44;
+  const id='tkav-'+Math.random().toString(36).slice(2,10);
+  const ring=o.ring===false?'':`border:2px solid var(--accent);`;
+  const base=`width:${size}px;height:${size}px;border-radius:50%;${ring}display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto;background:linear-gradient(135deg,var(--accent),#0a8f74);color:#fff;font-weight:800;font-size:${Math.round(size*0.38)}px`;
+  let inner='';
+  if(res.bron===AvatarCore.BRON.INITIALEN) inner=escHtml(res.initialen);
+  else if(res.bron===AvatarCore.BRON.NEUTRAAL) inner=(typeof V43I!=='undefined'&&V43I.user)?V43I.user:'';
+  if(res.bron===AvatarCore.BRON.FOTO){
+    inner=escHtml(res.initialen||'');
+    tkAvatarSignedUrl(res.pad).then(url=>{
+      const el=document.getElementById(id); if(!el||!url) return;
+      el.innerHTML=`<img src="${escHtml(url)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.parentNode.textContent=${JSON.stringify(res.initialen||'')}">`;
+    });
+  }
+  return `<div id="${id}" class="tk-av" style="${base}">${inner}</div>`;
+}
+
+// ── CROP-STATE ────────────────────────────────────────────────────────
+let _tkCrop={img:null,zoom:1,offsetX:0,offsetY:0,mime:'image/jpeg',orient:1,drag:null};
+
+function tkAvatarMenu(){
+  const heeft=!!(atleet&&atleet.avatar_path);
+  const acties=[
+    {label:'Foto kiezen',fn:'tkAvatarPick()'},
+    heeft?{label:'Foto verwijderen',fn:'tkAvatarDelete()',danger:true}:null
+  ].filter(Boolean);
+  const el=document.getElementById('m-avatar-menu-body');
+  if(el) el.innerHTML=acties.map(a=>
+    `<button class="btn ${a.danger?'btn-o':'btn-r'} btn-sm" style="width:100%;min-height:44px;margin-bottom:8px;${a.danger?'color:var(--red);border-color:#F0D3D1':''}" onclick="closeModal('m-avatar-menu');${a.fn}">${a.label}</button>`
+  ).join('')+`<button class="btn btn-o btn-sm" style="width:100%;min-height:44px" onclick="closeModal('m-avatar-menu')">Annuleren</button>`;
+  openModal('m-avatar-menu');
+}
+
+function tkAvatarPick(){ const i=document.getElementById('tk-avatar-file'); if(i){ i.value=''; i.click(); } }
+
+async function tkAvatarFileChosen(input){
+  const f=input&&input.files&&input.files[0]; if(!f) return;
+  const v=AvatarCore.valideerBestand({type:f.type,size:f.size});
+  if(!v.ok){ toast(v.bericht); return; }
+  try{
+    const bitmap=await createImageBitmap(f);
+    _tkCrop={img:bitmap,zoom:1,offsetX:0,offsetY:0,mime:f.type,orient:1,drag:null};
+    openModal('m-avatar-crop');
+    tkCropZoom(1);
+    requestAnimationFrame(tkCropDraw);
+  }catch(e){
+    toast('Deze afbeelding kon niet worden geopend. Probeer een andere foto.');
+  }
+}
+
+/* Tekent het bronbeeld met de HUIDIGE pan/zoom en legt er een vierkant
+   cropvenster overheen. De uitsnede komt uit AvatarCore.berekenCrop, zodat
+   preview en opgeslagen resultaat exact dezelfde berekening gebruiken. */
+function tkCropDraw(){
+  const c=document.getElementById('tk-crop-canvas'); if(!c||!_tkCrop.img) return;
+  const ctx=c.getContext('2d'); const W=c.width,H=c.height;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#0F1A22'; ctx.fillRect(0,0,W,H);
+  const crop=AvatarCore.berekenCrop({
+    breedte:_tkCrop.img.width,hoogte:_tkCrop.img.height,
+    zoom:_tkCrop.zoom,offsetX:_tkCrop.offsetX,offsetY:_tkCrop.offsetY
+  });
+  if(!crop) return;
+  // Het cropvenster vult het canvas: wat je ziet is exact wat je krijgt.
+  ctx.drawImage(_tkCrop.img,crop.sx,crop.sy,crop.sBreedte,crop.sHoogte,0,0,W,H);
+  // Ronde maskerrand als preview van de uiteindelijke avatar.
+  ctx.save();
+  ctx.fillStyle='rgba(10,20,28,.55)';
+  ctx.beginPath(); ctx.rect(0,0,W,H);
+  ctx.arc(W/2,H/2,Math.min(W,H)/2-2,0,Math.PI*2,true); ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle='#12B89B'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(W/2,H/2,Math.min(W,H)/2-2,0,Math.PI*2); ctx.stroke();
+  tkCropMiniPreview(crop);
+}
+
+// Ronde preview links onderin: komt uit EXACT dezelfde crop.
+function tkCropMiniPreview(crop){
+  const p=document.getElementById('tk-crop-preview'); if(!p||!_tkCrop.img) return;
+  const ctx=p.getContext('2d'); const S=p.width;
+  ctx.clearRect(0,0,S,S);
+  ctx.save(); ctx.beginPath(); ctx.arc(S/2,S/2,S/2,0,Math.PI*2); ctx.clip();
+  ctx.drawImage(_tkCrop.img,crop.sx,crop.sy,crop.sBreedte,crop.sHoogte,0,0,S,S);
+  ctx.restore();
+}
+
+function tkCropZoom(v){
+  _tkCrop.zoom=AvatarCore.clampZoom(parseFloat(v));
+  // Gevulde tracklengte volgt de waarde (webkit kent geen range-progress).
+  const el=document.getElementById('tk-crop-zoom');
+  if(el){ const pct=((_tkCrop.zoom-1)/(4-1))*100; el.style.setProperty('--tk-zoom-pct',pct.toFixed(1)+'%'); }
+  tkCropDraw();
+}
+
+function tkCropPointerDown(e){
+  const p=e.touches?e.touches[0]:e;
+  _tkCrop.drag={x:p.clientX,y:p.clientY,ox:_tkCrop.offsetX,oy:_tkCrop.offsetY};
+}
+function tkCropPointerMove(e){
+  if(!_tkCrop.drag||!_tkCrop.img) return;
+  e.preventDefault();
+  const p=e.touches?e.touches[0]:e;
+  const c=document.getElementById('tk-crop-canvas'); if(!c) return;
+  // Schermpixels -> bronpixels, zodat slepen 1:1 aanvoelt ongeacht zoom.
+  const zijde=Math.min(_tkCrop.img.width,_tkCrop.img.height)/_tkCrop.zoom;
+  const f=zijde/c.clientWidth;
+  _tkCrop.offsetX=_tkCrop.drag.ox-(p.clientX-_tkCrop.drag.x)*f;
+  _tkCrop.offsetY=_tkCrop.drag.oy-(p.clientY-_tkCrop.drag.y)*f;
+  tkCropDraw();
+}
+function tkCropPointerUp(){ _tkCrop.drag=null; }
+
+// Annuleren wijzigt niets: geen upload, geen write, bestaande avatar blijft.
+function tkCropCancel(){ _tkCrop={img:null,zoom:1,offsetX:0,offsetY:0,mime:'image/jpeg',orient:1,drag:null}; closeModal('m-avatar-crop'); }
+
+async function tkCropConfirm(){
+  if(!_tkCrop.img){ toast('Geen afbeelding geselecteerd'); return; }
+  const btn=document.getElementById('tk-crop-save');
+  if(btn){ btn.disabled=true; btn.textContent='Opslaan…'; }
+  try{
+    const crop=AvatarCore.berekenCrop({
+      breedte:_tkCrop.img.width,hoogte:_tkCrop.img.height,
+      zoom:_tkCrop.zoom,offsetX:_tkCrop.offsetX,offsetY:_tkCrop.offsetY
+    });
+    // Resize+compressie: uitvoer is maximaal 512px en wordt als webp/jpeg
+    // weggeschreven. De originele camerafoto wordt nooit opgeslagen.
+    const off=document.createElement('canvas');
+    off.width=crop.uitBreedte; off.height=crop.uitHoogte;
+    off.getContext('2d').drawImage(_tkCrop.img,crop.sx,crop.sy,crop.sBreedte,crop.sHoogte,0,0,off.width,off.height);
+    const uitMime=(_tkCrop.mime==='image/png')?'image/png':'image/jpeg';
+    const blob=await new Promise(res=>off.toBlob(res,uitMime,0.85));
+    if(!blob) throw new Error('encode');
+    const check=AvatarCore.valideerBestand({type:uitMime,size:blob.size});
+    if(!check.ok) throw new Error(check.bericht);
+    await tkAvatarUpload(blob,uitMime);
+    closeModal('m-avatar-crop');
+  }catch(e){
+    // Mislukte vervanging mag de bestaande avatar NOOIT wissen.
+    toast(typeof e==='string'?e:(e&&e.message==='encode'?'De afbeelding kon niet worden verwerkt.':'Opslaan mislukt. Je huidige foto is ongewijzigd.'));
+  }finally{
+    if(btn){ btn.disabled=false; btn.textContent='Opslaan'; }
+  }
+}
+
+/* UPLOAD + REPLACE. Volgorde is bewust:
+   1) nieuw object uploaden (immutable uuid-key)
+   2) pas daarna avatar_path atomair bijwerken
+   3) pas daarna het oude object opruimen
+   Faalt stap 1 of 2, dan blijft de bestaande avatar volledig intact. */
+async function tkAvatarUpload(blob,mime){
+  const uid=authSession?.user?.id, tok=authSession?.access_token;
+  if(!uid||!tok) throw new Error('Geen actieve sessie');
+  const uuid=(crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now())+'-'+Math.random().toString(36).slice(2);
+  const pad=AvatarCore.bouwPad(uid,uuid,mime);
+  if(!pad) throw new Error('Ongeldig pad');
+  const oud=(atleet&&atleet.avatar_path)?atleet.avatar_path:null;
+
+  const up=await fetch(`${SB_URL}/storage/v1/object/avatars/${pad}`,{
+    method:'POST',
+    headers:{apikey:SB_KEY,Authorization:'Bearer '+tok,'Content-Type':mime},
+    body:blob
+  });
+  if(!up.ok) throw new Error('Uploaden mislukt. Je huidige foto is ongewijzigd.');
+
+  const ok=await tkAvatarWritePath(pad);
+  if(!ok){
+    // Rollback: het zojuist geüploade object opruimen zodat er geen wees blijft.
+    try{ await tkAvatarDeleteObject(pad); }catch(e){}
+    throw new Error('Opslaan mislukt. Je huidige foto is ongewijzigd.');
+  }
+  if(oud && oud!==pad){ try{ await tkAvatarDeleteObject(oud); }catch(e){} tkAvatarInvalidate(oud); }
+  atleet.avatar_path=pad;
+  try{ localStorage.setItem('tk_atleet',JSON.stringify(atleet)); }catch(e){}
+  tkAvatarInvalidate(pad);
+  toast('Profielfoto bijgewerkt');
+  tkAvatarRefreshConsumers();
+}
+
+/* EXPLICIETE, OWNER-BOUND WRITE op alleen avatar_path.
+   NOOIT via sbUpsert('atleet_profiel',{...atleet}): dat object wordt
+   ongefilterd doorgestuurd zonder veld-whitelist (P2, buiten scope), en een
+   onbekende kolom zou het opslaan van het HELE atleetprofiel laten falen. */
+async function tkAvatarWritePath(pad){
+  const uid=authSession?.user?.id, tok=authSession?.access_token;
+  if(!uid||!tok) return false;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/atleet_profiel?user_id=eq.${uid}`,{
+      method:'PATCH',
+      headers:{apikey:SB_KEY,Authorization:'Bearer '+tok,'Content-Type':'application/json',Prefer:'return=minimal'},
+      body:JSON.stringify({avatar_path:pad})
+    });
+    return r.ok;
+  }catch(e){ return false; }
+}
+
+async function tkAvatarDeleteObject(pad){
+  const tok=authSession?.access_token; if(!tok||!pad) return false;
+  const r=await fetch(`${SB_URL}/storage/v1/object/avatars/${pad}`,{
+    method:'DELETE',headers:{apikey:SB_KEY,Authorization:'Bearer '+tok}
+  });
+  return r.ok;
+}
+
+async function tkAvatarDelete(){
+  if(!await confirmModal('Je profielfoto wordt verwijderd. Je initialen worden weer getoond.',
+    {title:'Foto verwijderen',okLabel:'Verwijderen',danger:true})) return;
+  const oud=(atleet&&atleet.avatar_path)?atleet.avatar_path:null;
+  const ok=await tkAvatarWritePath(null);
+  if(!ok){ toast('Verwijderen mislukt. Je foto is ongewijzigd.'); return; }
+  if(oud){ try{ await tkAvatarDeleteObject(oud); }catch(e){} tkAvatarInvalidate(oud); }
+  atleet.avatar_path=null;
+  try{ localStorage.setItem('tk_atleet',JSON.stringify(atleet)); }catch(e){}
+  toast('Profielfoto verwijderd');
+  tkAvatarRefreshConsumers();
+}
+
+// Alle canonical consumers opnieuw tekenen na wijzigen/verwijderen.
+function tkAvatarRefreshConsumers(){
+  try{ if(typeof refreshProfiel==='function') refreshProfiel(); }catch(e){}
+  try{ if(typeof refreshHome==='function') refreshHome(); }catch(e){}
+}
+
 function wearableAuthHeaders(){
   return authSession?.access_token?{Authorization:'Bearer '+authSession.access_token}:null;
 }
@@ -28066,10 +28402,11 @@ async function refreshProfiel(){
     const sportMap={crossfit:'CrossFit/Functioneel'};
     const sport=(atleet&&atleet.sport)?(sportMap[atleet.sport]||atleet.sport):'';
     const sub=[niv?niv.charAt(0).toUpperCase()+niv.slice(1)+' atleet':'', sport].filter(Boolean).join(' · ')||'Stel je atleetprofiel in';
-    const avInner=foto?`<img src="${escHtml(foto)}" alt="Profiel">`:escHtml(naam.charAt(0).toUpperCase());
+    // CANONICAL AVATAR: een bron (AvatarCore) i.p.v. losse render-logica.
+    const avHtml=tkAvatarHtml({avatarPath:(atleet&&atleet.avatar_path)||null,naam:naam,size:60});
     heroEl.innerHTML=`
       <div class="pf-hero-top">
-        <div class="pf-av">${avInner}</div>
+        <button class="pf-av-btn" onclick="tkAvatarMenu()" aria-label="Profielfoto wijzigen" style="background:none;border:0;padding:0;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer">${avHtml}</button>
         <div style="min-width:0"><div class="pf-hero-nm">${escHtml(naam)}</div><div class="pf-hero-sub">${escHtml(sub)}</div></div>
         <button class="pf-hero-edit" onclick="openAtleetModal()" aria-label="Profiel bewerken"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h4L18 10l-4-4L4 16v4zM14 6l4 4"/></svg></button>
       </div>
@@ -29668,7 +30005,7 @@ function v43HomeHeader(dfInfo){
   const groet=h<12?'Goedemorgen':h<18?'Goedemiddag':'Goedenavond';
   let dstr='';try{dstr=new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'});dstr=dstr.charAt(0).toUpperCase()+dstr.slice(1);}catch(e){}
   const foto=(typeof atleet!=='undefined'&&atleet&&atleet.foto)?atleet.foto:'';
-  const avatarInner=foto?`<img src="${escHtml(foto)}" alt="Profiel">`:V43I.user;
+  const avatarInner=tkAvatarHtml({avatarPath:(typeof atleet!=='undefined'&&atleet&&atleet.avatar_path)||null,naam:(typeof atleet!=='undefined'&&atleet&&atleet.naam)||'',size:40,ring:false});
   const needCheckin=!dfInfo;
   gEl.innerHTML=`<div class="v43-hh">
     <div style="min-width:0">

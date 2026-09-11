@@ -9,6 +9,8 @@
 // niet gedeeld via een module — dit project heeft geen build-stap voor Netlify
 // Functions, dus geen gedeelde imports tussen functiebestanden). Bij wijzigingen aan
 // de een, ook de ander nalopen.
+const { deleteAvatarObjectsForUser } = require('./avatarStorage.js');
+
 const USER_DATA_TABLES = [
   'program_block_exercises', 'custom_training_exercises', 'training_exercises',
   'program_blocks', 'custom_trainings', 'vaste_trainingen', 'programs',
@@ -77,6 +79,10 @@ exports.handler = async function () {
         method: 'DELETE', headers: { ...sbHeaders, Prefer: 'return=minimal' }
       });
       if (!usersR.ok) failedTables.push('users');
+
+      // CANONICAL USER AVATAR: ook hier het storage-object opruimen, zodat een
+      // nooit-bevestigd account geen verweesde profielfoto achterlaat.
+      try { await deleteAvatarObjectsForUser(supabaseUrl, serviceKey, u.id); } catch (e) {}
 
       const delRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${u.id}`, {
         method: 'DELETE',

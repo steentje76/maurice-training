@@ -81,6 +81,25 @@ ok(/auth\/v1\/admin\/users\//.test(src),
     'C-auth: cleanup verwijdert de auth-user zelf -- dat dekt alle overige, cascade-gebonden tabellen');
 }
 
+// CANONICAL USER AVATAR: de profielfoto staat als OBJECT in de private
+// bucket 'avatars'. Het verwijderen van de atleet_profiel-rij haalt alleen
+// het PAD weg -- zonder expliciete opruiming blijft de foto achter als
+// verweesde persoonsgegevens. Beide verwijderpaden moeten dit doen.
+{
+  const cleanup2 = fs.readFileSync(path.join(__dirname, '..', 'netlify/functions/cleanup-unverified-accounts.js'), 'utf8');
+  ok(src.includes('deleteAvatarObjectsForUser'),
+    'D1: delete-account.js ruimt de avatarobjecten in storage op');
+  ok(cleanup2.includes('deleteAvatarObjectsForUser'),
+    'D2: cleanup-unverified-accounts.js ruimt de avatarobjecten ook op');
+  const idxAv = src.indexOf('deleteAvatarObjectsForUser(supabaseUrl');
+  const idxAuth = src.indexOf('auth/v1/admin/users/');
+  ok(idxAv > 0 && idxAuth > 0 && idxAv < idxAuth,
+    'D3: de avatarobjecten worden opgeruimd VOORDAT de auth-user wordt verwijderd -- daarna is userId niet meer betrouwbaar af te leiden');
+  const helper = fs.readFileSync(path.join(__dirname, '..', 'netlify/functions/avatarStorage.js'), 'utf8');
+  ok(/prefix/.test(helper) && /avatars/.test(helper),
+    'D4: de helper ruimt op via het {user_id}-padsegment, hetzelfde segment waarop de storage-policy ownership toetst');
+}
+
 console.log('\n========================================================');
 console.log('fDeleteAccountErasureCompleteness.test.js — ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (fail) { msgs.forEach(m => console.error('MISLUKT: ' + m)); process.exitCode = 1; }

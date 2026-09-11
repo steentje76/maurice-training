@@ -1272,3 +1272,37 @@
 - **Zelf gevonden en gerepareerd, buiten de oorspronkelijke scope:** gym-team-set-pin.js had een hardcoded, nog 0-indexed drempel die sinds de Track A-fix een manager onterecht toegang gaf tot het instellen van de coach-pincode (bevoegdheid uitsluitend voor owner bedoeld). Gerepareerd en live geverifieerd.
 - **Niet gedaan:** volledige RLS-migratie van exercise_equipment/equipment_catalog naar uitsluitend organization_id (aparte, latere, zuiver technische sprint); verwijderen van legacy kolommen/functies (geen bewezen noodzaak, geen destructieve migratie zonder bewijs).
 - **Verantwoordelijke:** Product Owner (expliciete Track B-vrijgave), uitgevoerd door Claude, elke aanname live, onafhankelijk herverifieerd.
+
+## Hotfix -- Team access role-gate regressie na PR #323
+
+- **Datum:** 11 september 2026.
+- **Context:** audit van de canonical Profiel-IA (PR #323) legde bloot dat
+  `checkTeamAccess()` nog naar het verwijderde element `profiel-team-card`
+  verwees. De functie gaf zich daardoor altijd onmiddellijk gewonnen: `whoami`
+  werd nooit meer uitgevoerd, `teamRoleLevel` bleef permanent op de
+  init-waarde -1 staan, en de nieuwe rij "Organisatie & team" was
+  onvoorwaardelijk zichtbaar voor iedereen, ook solo-sporters zonder team.
+- **Aanvullende bevinding (al eerder als RC0-comment in de code vastgelegd,
+  nu pas gerepareerd):** `teamRoleLevel===-1` betekende zowel bevestigd-solo
+  (na een geslaagde whoami) als onbekend/mislukt (vóór whoami, of bij een
+  netwerk-/serverfout). `canEditEquipmentCatalog()` en
+  `canCreatePersonalExercise()` gebruikten die -1 zonder dat onderscheid,
+  terwijl `openBeheer()` het al wel correct deed via `teamAccessResolved`.
+- **Besluit (PO-akkoord):** `checkTeamAccess()` spreekt nu het canonical
+  element `#pf-org-team-row` aan; zichtbaarheid volgt pas na een geslaagde
+  whoami (drempel coach+, ongewijzigd). `canEditEquipmentCatalog()` en
+  `canCreatePersonalExercise()` zijn fail-closed gemaakt: zonder
+  `teamAccessResolved===true` geen enkele privilege, dus UNKNOWN krijgt nooit
+  meer stilzwijgend solo-gedrag via -1. `openBeheer()` ongewijzigd (was al
+  correct), nu met tests geborgd.
+- **Scope bewust NIET meegenomen (aparte PO-besluiten vereist):** hero-CSS-
+  fidelity, Feedback/Help-duplicatie, Privacy/Export-canonical-home,
+  organisatie/club-branding, thema/kleuren, bottom-nav.
+- **Tests:** `core/fTeamAccessRoleGateHotfix.test.js` (nieuw, 49/49) —
+  RESOLVED/UNRESOLVED per rol (solo/lid/coach/manager/owner), whoami-fout,
+  netwerkfout, geen sessie, rijzichtbaarheid, `openBeheer()`-consistentie.
+  Preservation 65/65, regressie 353/353 (was 352, +1 nieuw testbestand).
+  Geen databasewijziging.
+- **Verantwoordelijke:** Product Owner (expliciete hotfix-vrijgave, 11
+  september 2026), uitgevoerd door Claude.
+

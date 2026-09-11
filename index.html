@@ -846,6 +846,72 @@ body{display:flex;justify-content:center}
 .modal{background:var(--card);border-radius:20px 20px 0 0;padding:20px 18px 32px;width:100%;max-width:430px;max-height:85vh;overflow-y:auto}
 .modal-handle{width:40px;height:4px;background:var(--g2);border-radius:2px;margin:0 auto 16px}
 .modal-title{font-size:18px;font-weight:800;margin-bottom:16px;color:var(--dark)}
+/* ══ APP-INSTELLINGEN — canonical polish (v2) ══
+   SCOPED op #s-settings: raakt geen enkel ander scherm en dus geen brede
+   design-system-refactor. Uitsluitend presentatie: geen handlers, ID's,
+   routing of functionaliteit gewijzigd. De native semantiek van de controls
+   (button role=switch / role=radio, aria-checked) blijft volledig intact --
+   er worden geen cosmetische nep-controls gebouwd. */
+
+/* Sectielabels: canonical uppercase, letterspaced, rustig. */
+#s-settings .pf-sect{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--g4);margin:20px 0 9px}
+/* Witte canonical cards met ruime radius en zachte schaduw. */
+#s-settings .card{border-radius:16px;box-shadow:0 1px 3px rgba(16,40,64,.06),0 6px 18px rgba(16,40,64,.05);
+  border:0;overflow:hidden}
+#s-settings .card+.card{margin-top:10px}
+/* Kaartkoppen compacter; de sectielabels dragen al de hiërarchie. */
+#s-settings .card-hd{padding:13px 14px 4px}
+#s-settings .card-title{font-size:13px;font-weight:800;color:var(--dark)}
+#s-settings .card-body{padding:0 14px 4px}
+
+/* Rijen: compacter maar met een gegarandeerd 44px raakvlak. */
+#s-settings .set-row,#s-settings .set-nav-row{min-height:52px;padding:9px 0;gap:12px;
+  border-bottom:1px solid var(--g2)}
+#s-settings .set-row:last-child,#s-settings .set-nav-row:last-child{border-bottom:0}
+#s-settings .set-row-lbl{font-size:14px;font-weight:700;color:var(--dark)}
+#s-settings .set-row-sub{font-size:12px;color:var(--g4);margin-top:2px;line-height:1.35}
+#s-settings .set-chevron{color:#B7C3CE;font-size:20px}
+
+/* Teal icon-container per rij, zoals canonical. Alleen wanneer aanwezig. */
+#s-settings .set-ic{width:36px;height:36px;flex:0 0 36px;border-radius:11px;
+  background:rgba(18,184,155,.12);display:flex;align-items:center;justify-content:center}
+#s-settings .set-ic svg{width:18px;height:18px;stroke:var(--accent);fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+
+/* Statuschips consistent. */
+#s-settings .set-chip{font-size:10.5px;font-weight:800;color:var(--g4);background:var(--g1);
+  border-radius:6px;padding:3px 8px;white-space:nowrap}
+#s-settings .set-chip.ok{background:rgba(18,184,155,.14);color:var(--accent)}
+
+/* ── TOUCH TARGETS ──
+   Zelfde principe als de eerder opgeloste profiel-editknop: het ZICHTBARE
+   formaat blijft compact, het interactieve raakvlak wordt >=44x44 via een
+   onzichtbare pseudo-overlay. De control zelf verandert niet van grootte,
+   dus geen visuele regressie en geen layoutverschuiving. */
+#s-settings .switch,#s-settings .seg-opt,#s-settings .btn-sm,#s-settings .ibtn{position:relative}
+#s-settings .switch::before,#s-settings .seg-opt::before,
+#s-settings .btn-sm::before,#s-settings .ibtn::before{
+  content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  min-width:44px;min-height:44px;width:100%;height:100%}
+/* Focus blijft zichtbaar en in TK-stijl. */
+#s-settings .switch:focus-visible,#s-settings .seg-opt:focus-visible,
+#s-settings .btn-sm:focus-visible,#s-settings .ibtn:focus-visible{
+  outline:2px solid var(--accent);outline-offset:3px}
+/* Invoervelden binnen instellingen op canonical hoogte. */
+#s-settings .inp{min-height:44px}
+/* Zelfde hit-area-principe scoped op Profiel: zichtbaar formaat ongewijzigd,
+   interactief raakvlak >=44x44. Geen layoutverschuiving, geen redesign --
+   Profiel is visueel goedgekeurd en blijft ongewijzigd ogen. */
+#s-profiel .btn-sm,#s-profiel .inp,#s-profiel .ibtn{position:relative}
+#s-profiel .btn-sm::before,#s-profiel .ibtn::before{
+  content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  min-width:44px;min-height:44px;width:100%;height:100%}
+#s-profiel .inp{min-height:44px}
+#s-profiel .btn-sm:focus-visible,#s-profiel .ibtn:focus-visible{
+  outline:2px solid var(--accent);outline-offset:3px}
+
+
 /* CANONICAL CROP-SLIDER (v562). Alleen presentatie: native <input type=range>
    blijft behouden, dus keyboard (pijltjes/Home/End), screenreader-semantiek
    en OS-assistive tech werken ongewijzigd. Geen custom control. */
@@ -3701,6 +3767,10 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <button class="pf-row" onclick="openPlanOverzicht()"><span class="pf-tx"><div class="pf-lb">Plannen vergelijken</div><div class="pf-sb">Bekijk wat elk plan biedt</div></span><span class="pf-chev">&#8250;</span></button>
     </div>
 
+    <div class="pf-sect">Instellingen</div>
+    <div class="card pf-card">
+      <button class="pf-row" onclick="go('s-settings')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></span><div class="pf-tx"><div class="pf-lb">App-instellingen</div><div class="pf-sb">Meldingen, weergave, training, offline &amp; opslag</div></div><span class="pf-chev">&#8250;</span></button>
+    </div>
     <div class="pf-sect">Mijn account</div>
     <div class="card pf-card">
       <div class="pf-row"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span><div class="pf-tx"><div class="pf-lb">E-mailadres</div><div class="pf-sb" id="account-email-lbl">&mdash;</div></div></div>
@@ -3714,7 +3784,11 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <button class="pf-row pf-danger" onclick="deleteAccount()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></span><div class="pf-tx"><div class="pf-lb">Account verwijderen</div><div class="pf-sb">Onomkeerbaar</div></div><span class="pf-chev">&#8250;</span></button>
     </div>
 
-    <div class="pf-sect">Privacy</div>
+    <div class="pf-sect">Privacy &amp; data</div>
+    <div class="card pf-card">
+      <button class="pf-row" onclick="go('s-privacy')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></span><div class="pf-tx"><div class="pf-lb">Privacy</div><div class="pf-sb">Wat we opslaan en waarom</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="openModal('m-export')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 21h16"/></svg></span><div class="pf-tx"><div class="pf-lb">Gegevens exporteren</div><div class="pf-sb">CSV / JSON backup</div></div><span class="pf-chev">&#8250;</span></button>
+    </div>
     <div class="card">
       <div class="card-hd"><div class="card-title">Onderzoeksdeelname</div></div>
       <div class="card-body" id="pf-research-consent-card"><p style="color:var(--g4);font-size:13px">Laden…</p></div>
@@ -3742,12 +3816,40 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
         <div style="font-size:12px;color:var(--g4)">Ledenlijst, rollen en wijzigingslog voor je gym.</div>
       </div>
     </div>
+    <div class="pf-sect">Apparaten &amp; koppelingen</div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Wearable</div></div>
+      <div class="card-body">
+        <div style="font-size:12px;color:var(--g4);margin-bottom:10px">Koppel je Fitbit (via Google Health) om HRV, rusthartslag en slaap automatisch aan te vullen in je ochtend check-in.</div>
+        <div id="profiel-wearable-detail" style="font-size:13px;color:var(--dark);margin-bottom:10px"><div class="tk-skel w60"></div></div>
+        <div id="profiel-wearable-actions" style="display:flex;gap:8px"></div>
+      </div>
+    </div>
 
+  </div>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
+    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
+    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
+    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
+    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
+  </nav>
+</div>
+
+<!-- ═══ INSTELLINGEN (Hoofdstuk 6, Scherm 8.3) — Sprint 2 ═══ -->
+<div class="scr" id="s-settings">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title" role="heading" aria-level="1">App-instellingen</div><div class="hdr-sub">Hoe de app zich gedraagt en presenteert</div></div>
+      <button class="ibtn" onclick="go('s-profiel')" aria-label="Sluiten, terug naar profiel">&#10005;</button>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px">
     <div class="pf-sect">Meldingen</div>
     <div class="card">
       <div class="card-hd"><div class="card-title">Meldingen &amp; Geluid</div></div>
       <div class="card-body" style="padding:0 14px">
-        <button class="set-nav-row" onclick="go('s-meldingen')">
+        <button class="set-nav-row" onclick="go('s-meldingen')"><span class="set-ic"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9z"/><path d="M10 21h4"/></svg></span>
           <div><div class="set-row-lbl">Meldingen</div><div class="set-row-sub">Per type in- of uitschakelen</div></div>
           <span class="set-chevron" aria-hidden="true">&#8250;</span>
         </button>
@@ -3785,7 +3887,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="card">
       <div class="card-hd"><div class="card-title">Taal</div></div>
       <div class="card-body">
-        <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Nederlands</div><div class="set-row-sub">Enige beschikbare taal op dit moment</div></div></div>
+        <div class="set-row"><span class="set-ic"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></span><div class="set-row-txt"><div class="set-row-lbl">Nederlands</div><div class="set-row-sub">Enige beschikbare taal op dit moment</div></div></div>
       </div>
     </div>
     <div class="card">
@@ -3801,7 +3903,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       </div>
     </div>
 
-    <div class="pf-sect">Synchronisatie</div>
+    <div class="pf-sect">Offline &amp; opslag</div>
     <div class="card">
       <div class="card-hd"><div class="card-title">Data</div></div>
       <div class="card-body">
@@ -3810,15 +3912,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       </div>
     </div>
     <div class="card">
-      <div class="card-hd"><div class="card-title">Wearable</div></div>
-      <div class="card-body">
-        <div style="font-size:12px;color:var(--g4);margin-bottom:10px">Koppel je Fitbit (via Google Health) om HRV, rusthartslag en slaap automatisch aan te vullen in je ochtend check-in.</div>
-        <div id="profiel-wearable-detail" style="font-size:13px;color:var(--dark);margin-bottom:10px"><div class="tk-skel w60"></div></div>
-        <div id="profiel-wearable-actions" style="display:flex;gap:8px"></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Offline &amp; opslag</div></div>
+      <div class="card-hd"><div class="card-title">Verbinding &amp; opslag</div></div>
       <div class="card-body" style="padding:0 14px">
         <div class="set-row">
           <div class="set-row-txt"><div class="set-row-lbl">Verbindingsstatus</div><div class="set-row-sub" id="settings-online-status">&mdash;</div></div>
@@ -3834,49 +3928,26 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       </div>
     </div>
 
-    <div class="pf-sect">Over</div>
+    <div class="pf-sect">Over Trainingskompas</div>
     <div class="card">
       <div class="card-hd"><div class="card-title">App-informatie</div></div>
       <div class="card-body" style="padding:0 14px">
         <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Versie</div><div class="set-row-sub" id="settings-app-ver">&mdash;</div></div></div>
-        <button class="set-nav-row" onclick="go('s-help')">
+        <button class="set-nav-row" onclick="go('s-help')"><span class="set-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 113 2.4V13"/><path d="M12 16.5v.01"/></svg></span>
           <div><div class="set-row-lbl">Help &amp; over de app</div><div class="set-row-sub">FAQ, contact, feedback, licenties</div></div>
           <span class="set-chevron" aria-hidden="true">&#8250;</span>
         </button>
         <div class="set-row">
-          <div class="set-row-txt"><div class="set-row-lbl">Debuginformatie</div><div class="set-row-sub" id="settings-debug-info" style="font-family:monospace;font-size:11px">&mdash;</div></div>
+          <div class="set-row-txt"><div class="set-row-lbl">Technische informatie</div><div class="set-row-sub" id="settings-debug-info" style="font-family:monospace;font-size:11px">&mdash;</div></div>
         </div>
-        <button class="set-nav-row" onclick="debugRestartOnboarding()">
-          <div><div class="set-row-lbl">Onboarding opnieuw doorlopen</div><div class="set-row-sub">Handig om het introductiescherm te controleren</div></div>
+        <button class="set-nav-row" onclick="debugRestartOnboarding()"><span class="set-ic"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 103-6.7"/><path d="M3 4v5h5"/></svg></span>
+          <div><div class="set-row-lbl">Onboarding opnieuw bekijken</div><div class="set-row-sub">Bekijk de introductie van Trainingskompas opnieuw</div></div>
           <span class="set-chevron" aria-hidden="true">&#8250;</span>
         </button>
       </div>
     </div>
 
     <div style="height:8px"></div>
-  </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
-</div>
-
-<!-- ═══ INSTELLINGEN (Hoofdstuk 6, Scherm 8.3) — Sprint 2 ═══ -->
-<div class="scr" id="s-settings">
-  <div class="hdr">
-    <div class="hdr-row">
-      <div><div class="hdr-title" role="heading" aria-level="1">Instellingen</div><div class="hdr-sub">Thema, meldingen, privacy &amp; meer</div></div>
-      <button class="ibtn" onclick="go('s-profiel')" aria-label="Sluiten, terug naar profiel">✕</button>
-    </div>
-  </div>
-  <div class="scroll" style="padding-top:8px">
-    <div class="card"><div class="card-body">
-      <p style="font-size:13px;color:var(--g4);margin-bottom:10px">Instellingen staan nu overzichtelijk in je Profiel (Thema, Meldingen, Synchronisatie, Over).</p>
-      <button class="btn btn-r btn-sm" style="width:100%" onclick="go('s-profiel')">Naar Profiel</button>
-    </div></div>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>

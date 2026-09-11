@@ -1,5 +1,33 @@
 # Trainingskompas — Changelog
 
+## v4.69.71 — Account & data: CSS-scoping root cause + minimale fix (11 september 2026)
+
+Real-device screenshot toonde een enorme navy envelop en enorme zwarte
+"Wachtwoord"/"Gegevens exporteren"-tegels op Profiel -> Account & data.
+Bewezen root cause: `m-account` staat in de DOM als sibling vóór
+`#s-profiel` opent (geen kind), en alle `.pf-row`/`.pf-ic`/`.pf-tx`/
+`.pf-lb`/`.pf-sb`/`.pf-chev`-CSS is uitsluitend geschreven als
+`#s-profiel .pf-*` -- bereikt dit modal dus structureel nooit. Zonder
+CSS kreeg de `<svg>` geen width/height (browser-default replaced-
+element-grootte) en erfde `stroke="currentColor"` de algemene donkere
+tekstkleur. Geen markup-, build-, of cache-probleem (volledige call
+chain geverifieerd: `openModal('m-account')` bouwt geen dynamische
+HTML).
+
+Minimale fix: nieuwe, expliciet `#m-account`-gescopeerde regelset voor
+exact de 7 herbruikte classes, met de effectief renderende (na
+cascade-dedupe) waarden van `#s-profiel` 1-op-1 hergebruikt. Geen
+nieuwe classes, geen `!important`, geen markup- of handlerwijziging.
+
+Nieuwe test: `core/fAccountDataCssScopeFix.test.js` (59/59) --
+DOM-positie-aanname, aanwezigheid/begrensdheid van de nieuwe regels,
+geen `!important`, geen nieuwe classes, automatische 1-op-1-vergelijking
+tegen de effectieve `#s-profiel`-waarden. Preservation 65/65,
+team-access-hotfixtests 49/49, Profiel-Sprint-2-tests 31/31,
+Active-Days-tests 27/27, volledige regressie 357/357 (was 356, +1
+nieuw testbestand). Doc-consistency 0. Geen databasewijziging. APP_VER
+v4.69.70 -> v4.69.71.
+
 ## v4.69.70 — Active Days: canonical semantic fix (multi-source) (11 september 2026)
 
 "X dagen actief in de afgelopen 30 dagen" telde uitsluitend `sessions`.

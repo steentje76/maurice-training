@@ -1,5 +1,29 @@
 # Trainingskompas — Changelog
 
+## v4.69.72 — Exporteren Sprint 3B: canonical visuele correctie + copy-waarheid (11 september 2026)
+
+`m-export` gebruikte nog vijf `.csv-btn`-knoppen met emoji-iconen op een
+vlakke grijze achtergrond. Vervangen door de canonical `pf-row`/`pf-ic`-
+componenttaal (zelfde als Account & data), geen emoji meer. `#m-export`
+is, net als `#m-account`, een DOM-sibling buiten `#s-profiel` -- preventief
+dezelfde bewezen CSS-scope-fix toegepast (1-op-1 identiek aan `#m-account`).
+
+Copy-correctie: "Alles exporteren"/"Volledige back-up" was feitelijk
+onjuist -- `exportJSON()` bevat slechts 7 van de ~70+ datatabellen.
+Vervangen door "Kerngegevens exporteren" met een subtitel die exact de
+werkelijk geëxporteerde categorieën noemt. Toast-copy gelijkgetrokken.
+Functionele bevinding (JSON-export is geen volledige back-up)
+geregistreerd als aparte debt, niet opgelost in deze sprint.
+
+Alle 5 exporthandlers en hun interne logica (query's, formaten,
+`downloadFile()`) volledig ongewijzigd.
+
+Nieuwe test: `core/fExportVisualFidelity.test.js` (56/56). Preservation
+65/65, Account & data-CSS-scope-tests 59/59, Profiel-Sprint-2-tests
+31/31, Active-Days-tests 27/27, team-access-hotfixtests 49/49, volledige
+regressie 358/358 (was 357, +1 nieuw testbestand). Doc-consistency 0.
+Geen databasewijziging. APP_VER v4.69.71 -> v4.69.72.
+
 ## v4.69.71 — Account & data: CSS-scoping root cause + minimale fix (11 september 2026)
 
 Real-device screenshot toonde een enorme navy envelop en enorme zwarte

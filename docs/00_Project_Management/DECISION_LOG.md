@@ -1449,3 +1449,50 @@
 - **Verantwoordelijke:** Product Owner (expliciete visuele
   goedkeuring, 11 september 2026), uitgevoerd door Claude.
 
+## Exporteren Sprint 3B -- canonical visuele correctie + copy-waarheid
+
+- **Datum:** 11 september 2026.
+- **Context:** real-device-controle toonde `m-export` nog met vijf
+  `.csv-btn`-knoppen (emoji-iconen, vlakke grijze achtergrond) --
+  visueel afwijkend van het canonical Profiel-/Account & data-
+  patroon. Tijdens het traceren van de vijf handlers bleek "Alles
+  exporteren (JSON backup)" feitelijk onjuist: `exportJSON()`
+  exporteert slechts `sessions`, `weight_log`, `hrv_log`,
+  `body_comp`, `exercises`, `atleet` en `customTrainings` -- 7 van de
+  ~70+ gebruikersdata-tabellen, zonder voeding, endurance-
+  activiteiten, HYROX/triathlon, doelen, condities, cyclustracking,
+  AI-coach-geschiedenis, social-data, e.d.
+- **Besluit (PO-goedgekeurde canonical visual)**: dezelfde `pf-row`/
+  `pf-ic`-componenttaal als Account & data, geen emoji. Omdat
+  `m-export`, net als `m-account`, een DOM-sibling buiten
+  `#s-profiel` is, is preventief dezelfde bewezen `#m-account`-CSS-
+  scope-fix toegepast op `#m-export` (1-op-1 identieke waarden) --
+  voorkomt dat dezelfde "enorme icoon"-regressie hier opnieuw
+  optreedt.
+- **Copy-correctie (PO-besluit)**: "Alles exporteren"/"Volledige
+  back-up" vervangen door "Kerngegevens exporteren", met een
+  subtitel die exact de daadwerkelijk geëxporteerde categorieën
+  noemt (trainingen, gewicht, HRV, lichaamscompositie, oefeningen,
+  profiel & eigen trainingen). Bevestigingstoast gelijkgetrokken
+  ("Kerngegevens gedownload" i.p.v. "Volledige backup gedownload").
+- **Functionele bevinding, bewust NIET opgelost in deze sprint**:
+  `exportJSON()` is geen volledige data-export/back-up. Geregistreerd
+  als aparte debt/follow-up; geen uitbreiding van de export-tabellen
+  nu.
+- **Preservation**: alle 5 handlers (`exportCSV('sessions'|
+  'weight_log'|'hrv_log'|'body_comp')`, `exportJSON()`) en hun
+  volledige interne logica (query's, bestandsformaten,
+  `downloadFile()`) ongewijzigd. `closeModal('m-export')` ongewijzigd.
+- **Tests:** `core/fExportVisualFidelity.test.js` (nieuw, 56/56) --
+  alle 5 handlers/opties, CSV/JSON-datasetlogica ongewijzigd, geen
+  emoji, `#m-export`-CSS-scope aanwezig/begrensd/identiek aan
+  `#m-account`, geen overflow-gevoelige breedtes, copy-waarheid
+  (geen "Alles"/"Volledige back-up" meer, subtitel noemt exact wat
+  er in zit). Preservation 65/65, Account & data-CSS-scope-tests
+  59/59, Profiel-Sprint-2-tests 31/31, Active-Days-tests 27/27,
+  team-access-hotfixtests 49/49, volledige regressie 358/358 (was
+  357, +1 nieuw testbestand). Doc-consistency 0. Geen
+  databasewijziging.
+- **Verantwoordelijke:** Product Owner (expliciete visuele
+  goedkeuring, 11 september 2026), uitgevoerd door Claude.
+

@@ -964,6 +964,17 @@ body{display:flex;justify-content:center}
 #m-account .pf-lb{font-size:14px;font-weight:700;line-height:1.25;color:var(--dark)}
 #m-account .pf-sb{font-size:11.5px;color:var(--g4);font-weight:500;margin-top:2px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #m-account .pf-chev{color:var(--g4);font-size:18px;font-weight:700;flex:0 0 auto}
+/* Zelfde bewezen root cause/fix als #m-account hierboven: #m-export is ook een DOM-
+   sibling buiten #s-profiel en hergebruikt dezelfde pf-*-classes (Sprint 3B, exportmodal
+   visuele correctie). Identieke, 1-op-1 #s-profiel-waarden. */
+#m-export .pf-row{min-height:48px;display:flex;align-items:center;gap:13px;padding:13px 14px;border-top:1px solid var(--g2);width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0;cursor:pointer;font-family:var(--f)}
+#m-export .pf-card>.pf-row:first-child{border-top:0}
+#m-export .pf-ic{width:34px;height:34px;flex:0 0 auto;border-radius:10px;background:var(--v43-mint);display:flex;align-items:center;justify-content:center;color:var(--accent)}
+#m-export .pf-ic svg{width:18px;height:18px;stroke:var(--accent);fill:none;stroke-width:2}
+#m-export .pf-tx{flex:1;min-width:0}
+#m-export .pf-lb{font-size:14px;font-weight:700;line-height:1.25;color:var(--dark)}
+#m-export .pf-sb{font-size:11.5px;color:var(--g4);font-weight:500;margin-top:2px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#m-export .pf-chev{color:var(--g4);font-size:18px;font-weight:700;flex:0 0 auto}
 #s-profiel .pf-ctx{display:flex;gap:10px;margin-top:14px;border-top:1px solid var(--g2);padding-top:13px}
 #s-profiel .pf-ctx .c{flex:1;min-width:0}
 #s-profiel .pf-ctx .kr{display:flex;align-items:center;gap:5px;margin-bottom:4px}
@@ -6477,12 +6488,15 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title">Exporteren</div>
-    <button class="csv-btn" onclick="exportCSV('sessions')">📊 Trainingen exporteren (CSV)</button>
-    <button class="csv-btn" onclick="exportCSV('weight_log')">⚖️ Gewicht exporteren (CSV)</button>
-    <button class="csv-btn" onclick="exportCSV('hrv_log')">❤️ HRV data exporteren (CSV)</button>
-    <button class="csv-btn" onclick="exportCSV('body_comp')">📏 Lichaamscompositie exporteren (CSV)</button>
-    <button class="csv-btn" onclick="exportJSON()">💾 Alles exporteren (JSON backup)</button>
-    <div style="margin-top:14px"><button class="btn btn-o" onclick="closeModal('m-export')">Sluiten</button></div>
+    <div style="font-size:12px;color:var(--g4);margin-bottom:10px">Download een kopie van je gegevens.</div>
+    <div class="card pf-card">
+      <button class="pf-row" onclick="exportCSV('sessions')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8v8M18 8v8M3 12h18"/></svg></span><div class="pf-tx"><div class="pf-lb">Trainingen</div><div class="pf-sb">CSV-bestand</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="exportCSV('weight_log')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M12 9V5M9 5h6"/><circle cx="12" cy="14.5" r="2"/></svg></span><div class="pf-tx"><div class="pf-lb">Gewicht</div><div class="pf-sb">CSV-bestand</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="exportCSV('hrv_log')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 00-7.8 7.8l8.8 8.8 8.8-8.8a5.5 5.5 0 000-7.8z"/></svg></span><div class="pf-tx"><div class="pf-lb">HRV-data</div><div class="pf-sb">CSV-bestand</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="exportCSV('body_comp')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 13h5"/></svg></span><div class="pf-tx"><div class="pf-lb">Lichaamscompositie</div><div class="pf-sb">CSV-bestand</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="exportJSON()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 21h16"/></svg></span><div class="pf-tx"><div class="pf-lb">Kerngegevens exporteren</div><div class="pf-sb">Trainingen, gewicht, HRV, lichaamscompositie, oefeningen, profiel &amp; eigen trainingen (JSON)</div></div><span class="pf-chev">&#8250;</span></button>
+    </div>
+    <div style="margin-top:12px"><button class="btn btn-o" onclick="closeModal('m-export')">Sluiten</button></div>
   </div>
 </div>
 
@@ -7443,7 +7457,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.71';
+const APP_VER = 'v4.69.72';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -32577,7 +32591,7 @@ async function exportJSON(){
   backup.atleet = atleet;
   backup.customTrainings = customTrainings;
   downloadFile(JSON.stringify(backup,null,2), 'trainingskompas_backup_'+td()+'.json', 'application/json');
-  toast('Volledige backup gedownload');
+  toast('Kerngegevens gedownload');
 }
 
 function downloadFile(content, filename, mimeType){

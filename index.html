@@ -939,12 +939,14 @@ body{display:flex;justify-content:center}
 
 /* WITTE canonical personal summary -- vervangt de donkerblauwe hero. */
 #s-profiel .pf-hero{background:#fff;color:var(--dark);padding:16px;border-radius:16px;
+  margin-bottom:6px;position:relative;
   box-shadow:0 1px 3px rgba(16,40,64,.06),0 6px 18px rgba(16,40,64,.05)}
-#s-profiel .pf-hero-nm{font-size:16.5px;font-weight:800;color:var(--dark);line-height:1.2}
-#s-profiel .pf-hero-sub{font-size:12px;color:var(--g4);margin-top:3px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+#s-profiel .pf-hero-nm{font-size:16.5px;font-weight:800;color:var(--dark);line-height:1.2;
+  letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#s-profiel .pf-hero-sub{font-size:12px;color:var(--g4);font-weight:600;margin-top:3px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 #s-profiel .pf-plan{background:var(--g1);color:var(--g4);border-radius:6px;font-size:10px;padding:2px 7px;font-weight:800}
 #s-profiel .pf-hero-edit::before{background:var(--g1)}
-#s-profiel .pf-hero-edit svg{stroke:var(--dark)}
+#s-profiel .pf-hero-edit svg{width:15px;height:15px;stroke:var(--dark)}
 #s-profiel .pf-ctx{display:flex;gap:10px;margin-top:14px;border-top:1px solid var(--g2);padding-top:13px}
 #s-profiel .pf-ctx .c{flex:1;min-width:0}
 #s-profiel .pf-ctx .kr{display:flex;align-items:center;gap:5px;margin-bottom:4px}
@@ -2824,13 +2826,14 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 /* ══════════════════════════════════════════════════════════════════
    v4.19.0 — Sprint 5.2 Profiel Redesign (account/voorkeuren-hub).
    Presentatie-only; bestaande functies/handlers hergroepeerd.
+   HOTFIX Sprint 2: de donkere .pf-hero/.pf-hero-nm/.pf-hero-sub/.pf-hero-edit
+   svg-kleur uit dit blok zijn verwijderd -- ze wonnen door brondocumentvolgorde
+   van de canonical lichte hero-regel hierboven (zelfde specificity). Enige bron
+   nu: de "WITTE canonical personal summary"-regel bovenin dit bestand.
    ══════════════════════════════════════════════════════════════════ */
-#s-profiel .pf-hero{background:#0E3B4A;border-radius:22px;padding:18px;margin-bottom:6px;box-shadow:0 14px 30px rgba(0,0,0,.28);position:relative}
 #s-profiel .pf-hero-top{display:flex;gap:14px;align-items:center}
 #s-profiel .pf-av{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#0a8f74);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;flex:0 0 auto;overflow:hidden}
 #s-profiel .pf-av img{width:100%;height:100%;object-fit:cover}
-#s-profiel .pf-hero-nm{font-size:20px;font-weight:800;color:#fff;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#s-profiel .pf-hero-sub{font-size:12px;color:rgba(230,240,243,.72);font-weight:600;margin-top:3px}
 #s-profiel /* P3-fix: raakvlak naar 44x44 zonder de knop visueel te vergroten.
    De zichtbare cirkel blijft 32px en staat op exact dezelfde plek
    (top/right -6px compenseert het grotere box-model); de extra 12px is
@@ -2839,7 +2842,6 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .pf-hero-edit::before{content:"";position:absolute;top:6px;left:6px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.12);pointer-events:none}
 .pf-hero-edit>svg{position:relative;z-index:1}
 .pf-hero-edit:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-#s-profiel .pf-hero-edit svg{width:15px;height:15px;stroke:#fff}
 #s-profiel .pf-hero-pills{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 #s-profiel .pf-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(0,196,143,.18);border:1px solid rgba(0,196,143,.4);color:#7ff0cf;font-size:11px;font-weight:700;padding:5px 11px;border-radius:20px}
 #s-profiel .pf-pill svg{width:12px;height:12px}
@@ -3846,7 +3848,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <button class="pf-row" onclick="openModal('m-condities')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 00-7.8 7.8l8.8 8.8 8.8-8.8a5.5 5.5 0 000-7.8z"/></svg></span><div class="pf-tx"><div class="pf-lb">Condities</div><div class="pf-sb">Blessures en aandachtspunten</div></div><span class="pf-chev">&#8250;</span></button>
       <button class="pf-row" onclick="go('s-lichaam')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 13h5"/></svg></span><div class="pf-tx"><div class="pf-lb">Lichaamsgegevens</div><div class="pf-sb">Lengte, gewicht, metingen en historie</div></div><span class="pf-chev">&#8250;</span></button>
       <button class="pf-row" onclick="openModal('m-wearable')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 3h6M9 21h6"/></svg></span><div class="pf-tx"><div class="pf-lb">Apparaten &amp; verbindingen</div><div class="pf-sb">Wearables en synchronisatie</div></div><span class="pf-chev">&#8250;</span></button>
-      <button class="pf-row" onclick="go('s-privacy')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></span><div class="pf-tx"><div class="pf-lb">Privacy &amp; delen</div><div class="pf-sb">Wat je deelt, onderzoek en export</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="go('s-privacy')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></span><div class="pf-tx"><div class="pf-lb">Privacy &amp; delen</div><div class="pf-sb">Wat we opslaan en waarom</div></div><span class="pf-chev">&#8250;</span></button>
     </div>
     <div id="profiel-atleet-card" style="display:none"></div>
     <div class="pf-sect">Voorkeuren &amp; instellingen</div>
@@ -3859,8 +3861,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="pf-sect">Ondersteuning &amp; account</div>
     <div class="card pf-card">
       <button class="pf-row" onclick="go('s-help')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 113 2.4V13"/><path d="M12 16.5v.01"/></svg></span><div class="pf-tx"><div class="pf-lb">Help &amp; ondersteuning</div><div class="pf-sb">Veelgestelde vragen en contact</div></div><span class="pf-chev">&#8250;</span></button>
-      <button class="pf-row" onclick="go('s-help')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H8l-5 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span><div class="pf-tx"><div class="pf-lb">Feedback</div><div class="pf-sb">Deel je ideeën of meld een probleem</div></div><span class="pf-chev">&#8250;</span></button>
-      <button class="pf-row" onclick="openModal('m-account')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3.2"/><path d="M5 20a7 7 0 0114 0"/></svg></span><div class="pf-tx"><div class="pf-lb">Account &amp; data</div><div class="pf-sb">E-mail, wachtwoord, export en verwijderen</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="openHelpFeedback()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H8l-5 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span><div class="pf-tx"><div class="pf-lb">Feedback</div><div class="pf-sb">Deel je ideeën of meld een probleem</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="openModal('m-account')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3.2"/><path d="M5 20a7 7 0 0114 0"/></svg></span><div class="pf-tx"><div class="pf-lb">Account &amp; data</div><div class="pf-sb">E-mail, wachtwoord en gegevens exporteren</div></div><span class="pf-chev">&#8250;</span></button>
       <button class="pf-row" onclick="openModal('m-research')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4L3 9l9 5 9-5z"/><path d="M7 12v4c0 1.5 2.5 3 5 3s5-1.5 5-3v-4"/></svg></span><div class="pf-tx"><div class="pf-lb">Onderzoeksdeelname</div><div class="pf-sb">Vrijwillig, altijd intrekbaar</div></div><span class="pf-chev">&#8250;</span></button>
       <button class="pf-row" id="pf-org-team-row" style="display:none" onclick="openTeamPinModal()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V8h16v13z"/><path d="M12 3l8 5H4z"/></svg></span><div class="pf-tx"><div class="pf-lb">Organisatie &amp; team</div><div class="pf-sb">Trainingskompas · team koppelen</div></div><span class="pf-chev">&#8250;</span></button>
       <button class="pf-row" onclick="authSignOut()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5V3h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></span><div class="pf-tx"><div class="pf-lb">Uitloggen</div><div class="pf-sb">Je gegevens blijven bewaard</div></div><span class="pf-chev">&#8250;</span></button>
@@ -4006,7 +4008,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr">
     <div class="hdr-row">
       <div><div class="hdr-title" role="heading" aria-level="1">Meldingen</div><div class="hdr-sub">Per type in- of uitschakelen</div></div>
-      <button class="ibtn" onclick="go('s-settings')" aria-label="Sluiten, terug naar instellingen">✕</button>
+      <button class="ibtn" onclick="tkNavGoBack('s-settings')" aria-label="Sluiten, terug naar instellingen">✕</button>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
@@ -4030,7 +4032,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr">
     <div class="hdr-row">
       <div><div class="hdr-title" role="heading" aria-level="1">Privacy</div><div class="hdr-sub">Wat we opslaan en waarom</div></div>
-      <button class="ibtn" onclick="go('s-settings')" aria-label="Sluiten, terug naar instellingen">✕</button>
+      <button class="ibtn" onclick="tkNavGoBack('s-settings')" aria-label="Sluiten, terug naar instellingen">✕</button>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
@@ -4070,7 +4072,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr">
     <div class="hdr-row">
       <div><div class="hdr-title" role="heading" aria-level="1">Help &amp; over de app</div><div class="hdr-sub">FAQ, contact, feedback, licenties</div></div>
-      <button class="ibtn" onclick="go('s-settings')" aria-label="Sluiten, terug naar instellingen">✕</button>
+      <button class="ibtn" onclick="tkNavGoBack('s-settings')" aria-label="Sluiten, terug naar instellingen">✕</button>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
@@ -4079,7 +4081,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <strong>Hoe verwijder ik mijn account?</strong><br>Via Profiel → Account verwijderen. Dit is onomkeerbaar.<br><br>
       <strong>Hoe koppel ik mijn wearable?</strong><br>Via Lichaam → Gezondheidsgegevens &amp; koppelingen.
     </div></div>
-    <div class="card"><div class="card-hd"><div class="card-title">Contact &amp; feedback</div></div><div class="card-body" style="font-size:13px;line-height:1.5;color:var(--g4)">
+    <div class="card" id="help-contact-card" tabindex="-1"><div class="card-hd"><div class="card-title">Contact &amp; feedback</div></div><div class="card-body" style="font-size:13px;line-height:1.5;color:var(--g4)">
       <div id="help-contact-body"></div>
     </div></div>
     <div class="card"><div class="card-hd"><div class="card-title">Over de app</div></div><div class="card-body" style="font-size:13px;line-height:1.5">
@@ -7424,7 +7426,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.68';
+const APP_VER = 'v4.69.69';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -10938,6 +10940,18 @@ function renderHelpContact(){
     el.textContent='Er is voor deze versie nog geen openbaar supportadres ingesteld. Neem contact op via het kanaal waarlangs je toegang tot de test hebt gekregen.';
   }
 }
+// Sprint 2 (Profiel-fidelity): "Feedback" en "Help & ondersteuning" op Profiel deden beide
+// kaal go('s-help') -- zelfde scherm, geen enkel verschil voor de gebruiker. Geen tweede
+// feedbackformulier gebouwd; Feedback springt nu direct door naar de bestaande
+// "Contact & feedback"-kaart binnen hetzelfde Help-scherm, met scroll + focus voor
+// screenreaders/toetsenbordgebruik.
+function openHelpFeedback(){
+  go('s-help');
+  requestAnimationFrame(function(){
+    const el=document.getElementById('help-contact-card');
+    if(el){ el.scrollIntoView({block:'start',behavior:'smooth'}); el.focus(); }
+  });
+}
 function openBeheer(){
   if(teamRoleLevel>=3){go('s-admin');return;}
   if(teamRoleLevel>=0){toast('Beheer is alleen voor gym-owners');return;}
@@ -12523,6 +12537,19 @@ function tkNavPush(vorige){
   tkNavStack.push(vorige);
   if(tkNavStack.length>TK_NAV_MAX)tkNavStack.shift();
   try{ history.pushState({tkNav:tkNavStack.length},''); }catch(_){ }
+}
+// Sprint 2 (Profiel-fidelity): source-aware "terug"/sluiten-knoppen (s-meldingen, s-privacy,
+// s-help) waren hardcoded naar go('s-settings'), ook als de gebruiker via Profiel binnenkwam.
+// Hergebruikt de bestaande tkNavStack (zelfde patroon als de popstate-handler verderop) i.p.v.
+// een nieuwe, aparte "waar kwam ik vandaan"-state te introduceren.
+function tkNavGoBack(valtTerugNaar){
+  if(tkNavStack.length){
+    const vorige=tkNavStack.pop();
+    tkNavPoppend=true;
+    try{ go(vorige); }finally{ tkNavPoppend=false; }
+    return;
+  }
+  go(valtTerugNaar);
 }
 // Omhulsel om go(). In een klassiek script is een top-level functiedeclaratie een
 // eigenschap van het globale object, dus deze herbinding geldt ook voor alle bestaande

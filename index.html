@@ -2712,7 +2712,14 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-profiel .pf-av img{width:100%;height:100%;object-fit:cover}
 #s-profiel .pf-hero-nm{font-size:20px;font-weight:800;color:#fff;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #s-profiel .pf-hero-sub{font-size:12px;color:rgba(230,240,243,.72);font-weight:600;margin-top:3px}
-#s-profiel .pf-hero-edit{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.12);border:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#s-profiel /* P3-fix: raakvlak naar 44x44 zonder de knop visueel te vergroten.
+   De zichtbare cirkel blijft 32px en staat op exact dezelfde plek
+   (top/right -6px compenseert het grotere box-model); de extra 12px is
+   transparant hitgebied. Geen markup- of functionaliteitswijziging. */
+.pf-hero-edit{position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:50%;background:transparent;border:0;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.pf-hero-edit::before{content:"";position:absolute;top:6px;left:6px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.12);pointer-events:none}
+.pf-hero-edit>svg{position:relative;z-index:1}
+.pf-hero-edit:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #s-profiel .pf-hero-edit svg{width:15px;height:15px;stroke:#fff}
 #s-profiel .pf-hero-pills{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 #s-profiel .pf-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(0,196,143,.18);border:1px solid rgba(0,196,143,.4);color:#7ff0cf;font-size:11px;font-weight:700;padding:5px 11px;border-radius:20px}

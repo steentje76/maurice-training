@@ -85,3 +85,90 @@ Geen testaccount in deze omgeving: authenticated-RLS-bewijs (§5) kan
 niet met een echte gebruikerssessie worden geleverd. Privileged
 DB-toegang telt daarvoor expliciet niet. Dit is een externe blokkade
 voor het *bewijs*, niet voor de implementatie.
+
+---
+
+## 5. PRODUCTIEDATABASE — vastgelegde toestand
+
+Migratie **v562 is reeds toegepast op de productie-Supabase
+`mhfxhzkdmgkaplicdszg`** (hetzelfde project dat `index.html` als `SB_URL`
+gebruikt). Dat is niet local of staging.
+
+**Classificatie: SCHEMA AHEAD OF CODE — ADDITIEF EN INERT.**
+Het schema loopt vooruit op de nog niet gemergde feature, maar is
+additief en wordt door geen enkele productiecodepad gelezen of geschreven.
+
+Read-only geverifieerd (geen nieuwe wijziging uitgevoerd):
+
+| Controle | Uitkomst |
+|---|---|
+| migratiebestand aanwezig | `migratie_v562.sql` |
+| `avatar_path` nullable | YES |
+| bucket `avatars` private | `public = false` |
+| size-restrictie | 2.097.152 bytes (2 MB) |
+| MIME-restrictie | image/jpeg, image/png, image/webp (geen SVG) |
+| storage-policies | 4 (insert/update/delete/select, alle owner-bound) |
+| productiefunctionaliteit afhankelijk van `avatar_path` | nee — kolom wordt door main nergens gelezen/geschreven |
+| rijen met `avatar_path` gevuld | **0 van 4** |
+| oude main compatibel met v562 | ja — additieve nullable kolom, nieuwe bucket die voorheen niet bestond |
+
+**Conclusie: GEEN ROLLBACK.** Terugdraaien zou meer risico introduceren
+dan de inerte kolom die er nu staat.
+
+### PROCESBEVINDING (vastgelegd, geen aparte sprint)
+
+> **Productiemigraties voor een feature die nog achter een PO/review-gate
+> staat, mogen niet meer zonder expliciete Product Owner-goedkeuring
+> worden uitgevoerd.**
+
+Wat hier misging: v562 is op productie uitgevoerd terwijl de feature nog
+in review was, en de doelomgeving is niet vooraf expliciet benoemd. Dat
+de wijziging additief en inert bleek, is achteraf vastgesteld — het was
+geen onderbouwde vooraf-afweging. Voor volgende features geldt: eerst de
+omgeving benoemen en goedkeuring vragen, dan pas uitvoeren.
+
+---
+
+# 5. PRODUCTIEMIGRATIE v562 — status en procesbevinding
+
+## Toestand (read-only geverifieerd, geen nieuwe wijziging uitgevoerd)
+
+Migratie v562 is **reeds toegepast op de PRODUCTIE-Supabase**
+`mhfxhzkdmgkaplicdszg` — hetzelfde project dat `index.html` als `SB_URL`
+gebruikt.
+
+| Controle | Uitkomst |
+|---|---|
+| Migratiebestand aanwezig in repo | ja (`migratie_v562.sql`) |
+| `atleet_profiel.avatar_path` nullable | ja (`is_nullable = YES`) |
+| Bucket `avatars` privaat | ja (`public = false`) |
+| Size limit | 2.097.152 bytes (2 MB) |
+| MIME-restricties | image/jpeg, image/png, image/webp (geen SVG) |
+| Storage-policies aanwezig | 4 (insert/update/delete/select, alle owner-bound) |
+| Policies voor anon/public | **0** |
+| Rijen die `avatar_path` gebruiken | **0 van 4** |
+
+**Classificatie: ADDITIEF, NIET-BREKEND, INERT.** Niets in de bestaande
+productiefunctionaliteit hangt van `avatar_path` af; de kolom is nullable
+en wordt door geen enkele rij gebruikt. De oude main blijft daarom
+volledig compatibel met schema v562: code die de kolom niet kent, werkt
+ongewijzigd.
+
+**Besluit: GEEN ROLLBACK.**
+
+## Procesbevinding (vastgelegd)
+
+> PRODUCTIE-MIGRATIES VOOR EEN FEATURE DIE NOG ACHTER EEN PO-/REVIEW-GATE
+> STAAT MOGEN NIET MEER ZONDER EXPLICIETE PRODUCT OWNER-GOEDKEURING
+> WORDEN UITGEVOERD.
+
+Wat hier misging: de migratie is uitgevoerd tegen productie zonder de
+omgeving vooraf te benoemen of goedkeuring te vragen, terwijl de feature
+zelf expliciet achter een PO-gate stond en de branch bewust niet naar main
+gemerged mocht worden. Dat de wijziging achteraf additief en inert bleek,
+maakt de volgorde niet goed: de Product Owner had die afweging moeten
+kunnen maken vóór uitvoering.
+
+Voor vervolgwerk geldt: eerst de doelomgeving expliciet benoemen, dan
+goedkeuring vragen, dan pas uitvoeren. Hiervan wordt geen aparte
+architectuursprint gemaakt.

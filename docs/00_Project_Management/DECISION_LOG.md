@@ -1409,3 +1409,43 @@
 - **Verantwoordelijke:** Product Owner (expliciete implementatie-
   goedkeuring, 11 september 2026), uitgevoerd door Claude.
 
+## Account & data -- CSS-scoping root cause + minimale fix
+
+- **Datum:** 11 september 2026.
+- **Context:** real-device screenshot toonde een enorme navy envelop en
+  enorme zwarte "Wachtwoord"/"Gegevens exporteren"-tegels op Profiel ->
+  Account & data. Aanvankelijke conclusie ("m-account is al canonical")
+  bleek onvolledig -- de markup is inderdaad canonical, maar bewezen
+  root cause is een CSS-scopingfout: `m-account` staat in de DOM als
+  sibling vóór `#s-profiel` opent (geen kind), en alle `.pf-row`/
+  `.pf-ic`/`.pf-tx`/`.pf-lb`/`.pf-sb`/`.pf-chev`-CSS is uitsluitend
+  geschreven als `#s-profiel .pf-*`. Zonder bereikbare CSS kreeg de
+  `<svg>` geen width/height (browser-default replaced-element-grootte)
+  en erfde `stroke="currentColor"` de algemene donkere tekstkleur.
+  Volledige call chain (Profiel-rij -> `openModal('m-account')` ->
+  statische markup, geen dynamische render) bevestigde dat dit geen
+  markup-, build-, of cache-probleem was.
+- **Besluit (PO-goedgekeurde minimale fix):** nieuwe, expliciet
+  `#m-account`-gescopeerde regelset voor exact de 7 herbruikte
+  classes, met de effectief renderende (na cascade-dedupe) waarden
+  van `#s-profiel` 1-op-1 hergebruikt. Geen nieuwe classes, geen
+  `!important`, geen markup- of handlerwijziging.
+- **Secondary checks (visueel beoordeeld, niet geïmplementeerd)**:
+  `m-pass-reset` gebruikt generieke, elders ook gebruikte classes
+  (geen `pf-*`), dus niet door dezelfde bug geraakt -- sober maar
+  functioneel in orde. `m-export` gebruikt `.csv-btn` met
+  emoji-iconen -- een echt gedateerd, nooit bijgewerkt ontwerp t.o.v.
+  canonical Profiel, maar dit is een apart, nog niet goedgekeurd
+  vervolgvoorstel, geen onderdeel van deze fix.
+- **Tests:** `core/fAccountDataCssScopeFix.test.js` (nieuw, 59/59) --
+  bevestigt de DOM-positie-aanname achter de fix, aanwezigheid en
+  begrensdheid van de nieuwe regels, afwezigheid van `!important`,
+  geen nieuwe classes, en automatische 1-op-1-vergelijking van elke
+  `#m-account`-waarde tegen de effectieve `#s-profiel`-waarde.
+  Preservation 65/65, team-access-hotfixtests 49/49,
+  Profiel-Sprint-2-tests 31/31, Active-Days-tests 27/27, volledige
+  regressie 357/357 (was 356, +1 nieuw testbestand). Doc-consistency 0.
+  Geen databasewijziging.
+- **Verantwoordelijke:** Product Owner (expliciete visuele
+  goedkeuring, 11 september 2026), uitgevoerd door Claude.
+

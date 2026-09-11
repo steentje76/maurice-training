@@ -3862,7 +3862,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <button class="pf-row" onclick="go('s-help')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H8l-5 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span><div class="pf-tx"><div class="pf-lb">Feedback</div><div class="pf-sb">Deel je ideeën of meld een probleem</div></div><span class="pf-chev">&#8250;</span></button>
       <button class="pf-row" onclick="openModal('m-account')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3.2"/><path d="M5 20a7 7 0 0114 0"/></svg></span><div class="pf-tx"><div class="pf-lb">Account &amp; data</div><div class="pf-sb">E-mail, wachtwoord, export en verwijderen</div></div><span class="pf-chev">&#8250;</span></button>
       <button class="pf-row" onclick="openModal('m-research')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4L3 9l9 5 9-5z"/><path d="M7 12v4c0 1.5 2.5 3 5 3s5-1.5 5-3v-4"/></svg></span><div class="pf-tx"><div class="pf-lb">Onderzoeksdeelname</div><div class="pf-sb">Vrijwillig, altijd intrekbaar</div></div><span class="pf-chev">&#8250;</span></button>
-      <button class="pf-row" onclick="openTeamPinModal()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V8h16v13z"/><path d="M12 3l8 5H4z"/></svg></span><div class="pf-tx"><div class="pf-lb">Organisatie &amp; team</div><div class="pf-sb">Trainingskompas · team koppelen</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" id="pf-org-team-row" style="display:none" onclick="openTeamPinModal()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V8h16v13z"/><path d="M12 3l8 5H4z"/></svg></span><div class="pf-tx"><div class="pf-lb">Organisatie &amp; team</div><div class="pf-sb">Trainingskompas · team koppelen</div></div><span class="pf-chev">&#8250;</span></button>
       <button class="pf-row" onclick="authSignOut()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5V3h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></span><div class="pf-tx"><div class="pf-lb">Uitloggen</div><div class="pf-sb">Je gegevens blijven bewaard</div></div><span class="pf-chev">&#8250;</span></button>
     </div>
     <div class="pf-danger-zone">
@@ -7424,7 +7424,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.67';
+const APP_VER = 'v4.69.68';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -10722,18 +10722,27 @@ let teamRoleLevel=-1, teamPin='';
 // hij zijn EIGEN apparatuur-catalogus en oefeningen niet beheren, terwijl
 // canEditEquipmentCatalog() hem dat recht wel geeft. Deze vlag scheidt de twee.
 let teamAccessResolved=false;
+// HOTFIX (post PR #323): profiel-team-card is in de canonical IA vervangen door de
+// directe rij #pf-org-team-row ("Organisatie & team"). checkTeamAccess() verwees nog
+// naar het verwijderde element, waardoor whoami nooit meer werd uitgevoerd:
+// teamRoleLevel bleef permanent op de init-waarde -1 staan en de rij was
+// onvoorwaardelijk zichtbaar voor iedereen, ook solo-sporters zonder team.
+// Semantiek nu expliciet: UNRESOLVED (whoami nog niet geweest / mislukt) laat
+// teamAccessResolved bewust op false en raakt teamRoleLevel niet aan -- dat wordt
+// NOOIT stilzwijgend als bevestigd-solo (-1) behandeld. Pas na een geslaagde whoami
+// wordt teamAccessResolved true en mag -1 als bevestigde solo-status gelden.
 async function checkTeamAccess(){
   const h=wearableAuthHeaders();
-  const cardEl=document.getElementById('profiel-team-card');
-  if(!h||!cardEl)return;
+  if(!h)return; // geen sessie -- blijft UNRESOLVED, fail closed
   try{
     const r=await fetch('/.netlify/functions/gym-team',{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({action:'whoami'})});
-    if(!r.ok){cardEl.style.display='none';return;}
+    if(!r.ok)return; // whoami-fout -- blijft UNRESOLVED, NIET als solo behandelen
     const d=await r.json();
     teamRoleLevel=d.gymRoleLevel ?? -1;
     teamAccessResolved=true;
-    cardEl.style.display=teamRoleLevel>=1?'block':'none'; // 1 = coach
-  }catch(e){cardEl.style.display='none';}
+    const rowEl=document.getElementById('pf-org-team-row');
+    if(rowEl)rowEl.style.display=teamRoleLevel>=1?'':'none'; // 1 = coach, zelfde drempel als voorheen
+  }catch(e){ /* netwerkfout -- blijft UNRESOLVED */ }
 }
 function openTeamPinModal(){
   document.getElementById('team-pin-input').value='';
@@ -32599,10 +32608,14 @@ async function removeEquipmentType(id){
 // (0/1/2) zien alleen — de server (trigger) handhaaft dit sowieso hard, dit bepaalt enkel
 // of de "+ Nieuw"/bewerk-knoppen getoond worden.
 let equipmentCatalog=[], _equipmentCatalogLoading=null;
-function canEditEquipmentCatalog(){ return teamRoleLevel>=3 || teamRoleLevel===-1; }
+// HOTFIX: fail closed zolang teamAccessResolved false is -- vóór whoami is teruggekomen
+// (of bij een mislukte whoami) mag -1 nooit stilzwijgend als bevestigde solo-status
+// gelden. Zie checkTeamAccess() hierboven.
+function canEditEquipmentCatalog(){ if(!teamAccessResolved)return false; return teamRoleLevel>=3 || teamRoleLevel===-1; }
 // F42: mag deze gebruiker een PERSOONLIJKE eigen oefening aanmaken? Solo-atleet (geen gym,
 // -1) of coach/manager (>=1). Gewone gym-leden (0) niet — die kiezen uit de catalogus.
-function canCreatePersonalExercise(){ return teamRoleLevel===-1 || teamRoleLevel>=1; }
+// HOTFIX: idem fail-closed zolang teamAccessResolved false is.
+function canCreatePersonalExercise(){ if(!teamAccessResolved)return false; return teamRoleLevel===-1 || teamRoleLevel>=1; }
 // v3.3.23 BUGFIX: de basislijst was een pure client-side illusie (nooit in de database) —
 // bewerken/verwijderen van zo'n item probeerde een rij te patchen/deactiveren die nooit
 // bestond, en faalde stil (PATCH op 0 matches "slaagt" zonder effect). Nu wordt de

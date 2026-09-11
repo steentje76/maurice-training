@@ -1,5 +1,28 @@
 # Trainingskompas — Changelog
 
+## v4.69.68 — HOTFIX: Team access role-gate regressie na PR #323 (11 september 2026)
+
+PR #323 (canonical Profiel-IA) verwijderde `profiel-team-card` uit de markup
+zonder `checkTeamAccess()` bij te werken, die dat element nog aansprak.
+Gevolg: `whoami` werd nooit meer uitgevoerd, `teamRoleLevel` bleef permanent op
+de init-waarde -1 staan (ononderscheidbaar van bevestigd-solo), en
+"Organisatie & team" was onvoorwaardelijk zichtbaar voor iedereen.
+
+`checkTeamAccess()` spreekt nu het canonical element `#pf-org-team-row` aan
+en zet de zichtbaarheid pas na een geslaagde `whoami` (coach+ conform de
+bestaande drempel). Aanvullende semantische fix: `-1` betekende zowel
+bevestigd-solo als onbekend/fout. `canEditEquipmentCatalog()` en
+`canCreatePersonalExercise()` zijn fail-closed gemaakt (`teamAccessResolved`
+moet true zijn) zodat een mislukte/nog-niet-voltooide rolcheck nooit meer
+stilzwijgend als solo-privilege wordt behandeld. `openBeheer()` gebruikte dit
+patroon al correct en is ongewijzigd, nu expliciet met tests geborgd.
+
+Nieuwe test: `core/fTeamAccessRoleGateHotfix.test.js` (49/49) — RESOLVED/
+UNRESOLVED per rol (solo/lid/coach/manager/owner), whoami-fout/netwerkfout/
+geen-sessie, rijzichtbaarheid, `openBeheer()`-consistentie. Bestaande
+preservation 65/65, regressie 353/353. Geen databasewijziging, geen UX/IA-
+wijziging buiten de zichtbaarheidsgate zelf.
+
 ## v4.69.67 — NUT-REL-01B: Nutrition aangesloten op de Relationship Engine (7 september 2026)
 
 Sluit Nutrition aan op de bestaande, ongewijzigde Relationship Engine

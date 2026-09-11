@@ -846,6 +846,31 @@ body{display:flex;justify-content:center}
 .modal{background:var(--card);border-radius:20px 20px 0 0;padding:20px 18px 32px;width:100%;max-width:430px;max-height:85vh;overflow-y:auto}
 .modal-handle{width:40px;height:4px;background:var(--g2);border-radius:2px;margin:0 auto 16px}
 .modal-title{font-size:18px;font-weight:800;margin-bottom:16px;color:var(--dark)}
+/* CANONICAL CROP-SLIDER (v562). Alleen presentatie: native <input type=range>
+   blijft behouden, dus keyboard (pijltjes/Home/End), screenreader-semantiek
+   en OS-assistive tech werken ongewijzigd. Geen custom control. */
+.tk-zoom{-webkit-appearance:none;appearance:none;width:100%;background:transparent;
+  min-height:44px;margin:0;padding:0;cursor:pointer}
+.tk-zoom:focus{outline:none}
+/* Track: rustig, geen browserachtige omlijning. */
+.tk-zoom::-webkit-slider-runnable-track{height:6px;border-radius:3px;border:0;
+  background:linear-gradient(90deg,var(--accent) 0%,var(--accent) var(--tk-zoom-pct,0%),var(--g2) var(--tk-zoom-pct,0%),var(--g2) 100%)}
+.tk-zoom::-moz-range-track{height:6px;border-radius:3px;border:0;background:var(--g2)}
+.tk-zoom::-moz-range-progress{height:6px;border-radius:3px;background:var(--accent)}
+/* Thumb: duidelijk, teal accent, ruim genoeg om te grijpen. */
+.tk-zoom::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+  width:24px;height:24px;border-radius:50%;background:#fff;
+  border:3px solid var(--accent);box-shadow:0 1px 4px rgba(16,40,64,.22);
+  margin-top:-9px;transition:transform .12s ease}
+.tk-zoom::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#fff;
+  border:3px solid var(--accent);box-shadow:0 1px 4px rgba(16,40,64,.22)}
+.tk-zoom:active::-webkit-slider-thumb{transform:scale(1.08)}
+/* Focus blijft zichtbaar, maar in TK-stijl i.p.v. de blauwe browserring. */
+.tk-zoom:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 4px var(--tk-teal-ring,rgba(18,184,155,.28))}
+.tk-zoom:focus-visible::-moz-range-thumb{box-shadow:0 0 0 4px rgba(18,184,155,.28)}
+.tk-zoom-row{display:flex;align-items:center;gap:10px}
+.tk-zoom-ic{width:20px;height:20px;flex:0 0 20px;stroke:var(--g4);fill:none;stroke-width:2}
+
 
 /* INPUT */
 .inp{width:100%;background:var(--g1);border:1.5px solid var(--g2);border-radius:10px;padding:11px 12px;color:var(--dark);font-size:16px;font-family:var(--f);outline:none;-webkit-appearance:none;display:block}
@@ -3458,8 +3483,13 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div style="display:flex;align-items:center;gap:12px;margin:14px 0 4px">
       <canvas id="tk-crop-preview" width="56" height="56" style="width:56px;height:56px;border-radius:50%;border:2px solid var(--accent);flex:0 0 56px"></canvas>
       <div style="flex:1">
-        <label class="ilbl" style="display:block;margin-bottom:4px">Zoom</label>
-        <input type="range" id="tk-crop-zoom" min="1" max="4" step="0.01" value="1" style="width:100%;min-height:44px" oninput="tkCropZoom(this.value)">
+        <label class="ilbl" for="tk-crop-zoom" style="display:block;margin-bottom:6px">Zoom</label>
+        <div class="tk-zoom-row">
+          <svg class="tk-zoom-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M8 11h6"/></svg>
+          <input type="range" class="tk-zoom" id="tk-crop-zoom" min="1" max="4" step="0.01" value="1"
+                 aria-label="Zoomniveau" oninput="tkCropZoom(this.value)">
+          <svg class="tk-zoom-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M8 11h6M11 8v6"/></svg>
+        </div>
       </div>
     </div>
     <div style="display:flex;gap:10px;margin-top:8px">
@@ -10063,6 +10093,7 @@ async function tkAvatarFileChosen(input){
     const bitmap=await createImageBitmap(f);
     _tkCrop={img:bitmap,zoom:1,offsetX:0,offsetY:0,mime:f.type,orient:1,drag:null};
     openModal('m-avatar-crop');
+    tkCropZoom(1);
     requestAnimationFrame(tkCropDraw);
   }catch(e){
     toast('Deze afbeelding kon niet worden geopend. Probeer een andere foto.');
@@ -10104,7 +10135,13 @@ function tkCropMiniPreview(crop){
   ctx.restore();
 }
 
-function tkCropZoom(v){ _tkCrop.zoom=AvatarCore.clampZoom(parseFloat(v)); tkCropDraw(); }
+function tkCropZoom(v){
+  _tkCrop.zoom=AvatarCore.clampZoom(parseFloat(v));
+  // Gevulde tracklengte volgt de waarde (webkit kent geen range-progress).
+  const el=document.getElementById('tk-crop-zoom');
+  if(el){ const pct=((_tkCrop.zoom-1)/(4-1))*100; el.style.setProperty('--tk-zoom-pct',pct.toFixed(1)+'%'); }
+  tkCropDraw();
+}
 
 function tkCropPointerDown(e){
   const p=e.touches?e.touches[0]:e;

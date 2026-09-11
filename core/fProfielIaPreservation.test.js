@@ -30,37 +30,85 @@ var S = blok('s-settings');
 // ── A. Klasse A/B op PROFIEL ──────────────────────────────────────────
 [
   ['openAtleetModal(', 'Atleetprofiel bewerken'],
-  ['addCondition(', 'Condities toevoegen'],
+
   ['openTeamPinModal(', 'Team/PIN'],
   ['openPlanOverzicht(', 'Plannen vergelijken'],
-  ['openPasswordReset(', 'Wachtwoord reset'],
+
   ['authSignOut(', 'Uitloggen'],
   ['deleteAccount(', 'Account verwijderen'],
   ["go('s-privacy')", 'Privacy-route'],
-  ["openModal('m-export')", 'Gegevens exporteren'],
+
   ["go('s-settings')", 'App-instellingen-entry']
 ].forEach(function (p) {
   ok(P.indexOf(p[0]) !== -1, 'A-' + p[1] + ': bereikbaar vanaf Profiel');
 });
 [
-  ['account-email-lbl', 'E-mailadres'],
-  ['account-identities-lbl', 'Inlogmethoden'],
+
+
   ['plan-huidig-card', 'Huidig plan'],
   ['tenant-brand-card', 'Organisatie'],
-  ['pf-research-consent-card', 'Onderzoeksdeelname'],
+
   ['profiel-atleet-card', 'Atleetprofiel-kaart'],
-  ['profiel-conditions-card', 'Condities-kaart'],
-  ['profiel-team-card', 'Team-kaart'],
+
+
   ['pf-hero', 'Profiel-hero']
 ].forEach(function (p) {
   ok(P.indexOf(p[0]) !== -1, 'A-' + p[1] + ': aanwezig op Profiel');
 });
 
-// Wearables: PO-eis -- primaire ingang op PROFIEL, niet verstopt in instellingen
-ok(P.indexOf('profiel-wearable-detail') !== -1 && P.indexOf('profiel-wearable-actions') !== -1,
-  'A-Wearables: primaire ingang staat op PROFIEL (PO-eis: niet naar algemene App-instellingen verstoppen)');
-ok(S.indexOf('profiel-wearable-detail') === -1,
-  'A-Wearables: NIET gedupliceerd in App-instellingen');
+/* CANONICAL IA v2 (PO-approved relocatie). Strenger contract: het overzicht
+ * toont een compacte ingang, de VOLLEDIGE functionaliteit zit achter die
+ * ingang. Beide helften worden geeist. Verplaatsen mag, verwijderen niet. */
+function modalBlok(mid) {
+  var s = html.indexOf('id="' + mid + '"');
+  if (s < 0) return '';
+  var e = html.indexOf('<div class="modal-bg"', s + 10);
+  return e > s ? html.slice(s, e) : html.slice(s, s + 5000);
+}
+[
+  ['m-condities', 'conditions-list', 'addCondition(', 'Condities'],
+  ['m-research', 'pf-research-consent-card', null, 'Onderzoeksdeelname'],
+  ['m-wearable', 'profiel-wearable-detail', null, 'Wearables'],
+  ['m-account', 'account-email-lbl', 'openPasswordReset(', 'Account & data']
+].forEach(function (t) {
+  var M = modalBlok(t[0]);
+  ok(P.indexOf("openModal('" + t[0] + "')") !== -1, 'A-' + t[3] + ': compacte ingang op Profiel');
+  ok(M.indexOf(t[1]) !== -1, 'A-' + t[3] + ': volledige functionaliteit (' + t[1] + ') behouden achter die ingang');
+  if (t[2]) ok(M.indexOf(t[2]) !== -1, 'A-' + t[3] + ': bewerkactie ' + t[2] + ' bereikbaar');
+  ok(S.indexOf(t[1]) === -1, 'A-' + t[3] + ': niet verstopt in App-instellingen');
+});
+ok(modalBlok('m-account').indexOf("openModal('m-export')") !== -1,
+  'A-Export: gegevens exporteren bereikbaar via Account & data');
+ok(P.indexOf('account-identities-lbl') === -1 && modalBlok('m-account').indexOf('account-identities-lbl') !== -1,
+  'A-Inlogmethoden: verplaatst naar de accountdetail, niet verdwenen');
+ok(P.indexOf('profiel-atleet-card') !== -1 && P.indexOf('openAtleetModal()') !== -1,
+  'A-Sportprofiel: ingang naar bestaande modal + render-target behouden');
+ok(P.indexOf("go('s-lichaam')") !== -1, 'A-Lichaamsgegevens: canonical rij aanwezig');
+ok(P.indexOf('plan-huidig-naam') !== -1 && P.indexOf('openPlanOverzicht()') !== -1,
+  'A-Abonnement: planstatus-target en plannen vergelijken behouden');
+ok(P.indexOf('tenant-brand-card') !== -1 && P.indexOf('openTeamPinModal()') !== -1,
+  'A-Organisatie & team: contextueel behouden, niet verwijderd');
+
+/* SEMANTISCHE GATES (PO-besluiten) */
+ok(P.indexOf('afgelopen 30 dagen') !== -1 || html.indexOf('afgelopen 30 dagen') !== -1,
+  'S1: consistency-callout gebruikt "afgelopen 30 dagen" -- activeDays telt een rolling 30-dagenvenster, GEEN kalendermaand');
+{
+  var hero = html.slice(html.indexOf('const avHtml=tkAvatarHtml('), html.indexOf('const avHtml=tkAvatarHtml(') + 3500);
+  ok(hero.indexOf('deze maand') === -1, 'S2: de nieuwe hero claimt NERGENS "deze maand"');
+  ok(/typeof wk.activeDays==='number'/.test(hero) && /dagen>0/.test(hero),
+    'S3: de callout verschijnt alleen wanneer de canonical bron daadwerkelijk gevuld is -- geen fake waarde');
+  ok(/Niet beschikbaar/.test(hero) && !/goals\.einddatum/.test(hero),
+    'S4: EVENT blijft UNKNOWN -- geen canonical eventbron, en een doeldeadline wordt NIET als event geherinterpreteerd');
+}
+{
+  var pr = P;
+  ok(!/Niet verbonden/.test(pr),
+    'S5: GEEN statuschip "Niet verbonden" -- connected:false kan ook UNKNOWN/ERROR zijn (geen UNKNOWN->DISCONNECTED)');
+  ok(!/>Geen</.test(pr.slice(pr.indexOf('Condities'), pr.indexOf('Condities') + 400)),
+    'S6: GEEN statuschip "Geen" bij Condities -- KNOWN_EMPTY is niet te onderscheiden van UNKNOWN/ERROR/TIMEOUT');
+}
+ok(S.indexOf('tk-back') !== -1 && S.indexOf('&#10005;') === -1,
+  'S7: App-instellingen gebruikt canonical terugnavigatie "< Profiel", geen grote X');
 
 // ── B. Verplaatste functies staan in APP-INSTELLINGEN ─────────────────
 [

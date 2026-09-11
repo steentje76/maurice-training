@@ -4,6 +4,7 @@
 // gebruiker nooit een ander account dan zijn eigen kan laten verwijderen
 // (er wordt bewust geen user-id van de client zelf geaccepteerd).
 const { deleteWearableTokenSecret } = require('./wearableTokenVault.js');
+    const { deleteAvatarObjectsForUser } = require('./avatarStorage.js');
 exports.handler = async function(event) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: { message: 'Method not allowed' } }) };
@@ -294,6 +295,13 @@ exports.handler = async function(event) {
     if (!usersR.ok) failedTables.push('users');
 
     // Stap 3: verwijder het account zelf via de Admin API (vereist service_role).
+    // CANONICAL USER AVATAR: het storage-object overleeft het verwijderen van
+    // de atleet_profiel-rij, want die rij bevat alleen het PAD. Zonder deze
+    // stap blijft de profielfoto als verweesde persoonsgegevens achter --
+    // dezelfde gatenklasse als in PR #316/#317/#318. Best-effort: een
+    // storagefout mag het verwijderen van het account niet blokkeren.
+    try { await deleteAvatarObjectsForUser(supabaseUrl, serviceKey, userId); } catch (e) {}
+
     const delRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
       method: 'DELETE',
       headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }

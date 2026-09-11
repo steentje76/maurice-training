@@ -908,6 +908,59 @@ body{display:flex;justify-content:center}
   content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
   min-width:44px;min-height:44px;width:100%;height:100%}
 #s-profiel .inp{min-height:44px}
+/* ══ PROFIEL + APP-INSTELLINGEN — canonical fidelity v2 ══
+   SCOPED op deze twee schermen: geen brede design-system-refactor.
+   Alleen presentatie; geen handlers, ID's, routing of businesslogica. */
+
+/* Compacte canonical header. */
+#s-profiel .hdr,#s-settings .hdr{padding-top:14px;padding-bottom:6px}
+#s-profiel .hdr-title,#s-settings .hdr-title{font-size:23px;line-height:1.15}
+#s-profiel .hdr-sub,#s-settings .hdr-sub{font-size:12.5px;margin-top:2px}
+/* Canonical terugnavigatie "‹ Profiel" i.p.v. een grote X. */
+#s-settings .tk-back{display:inline-flex;align-items:center;gap:6px;min-height:44px;
+  background:none;border:0;padding:0 8px 0 0;color:var(--dark);font-size:14px;font-weight:700;cursor:pointer}
+#s-settings .tk-back svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2}
+#s-settings .tk-back:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px}
+
+#s-profiel .pf-sect,#s-settings .pf-sect{margin:16px 0 7px;font-size:10.5px;font-weight:800;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--g4)}
+#s-profiel .card,#s-settings .card{border-radius:14px;box-shadow:0 1px 3px rgba(16,40,64,.06);border:0}
+#s-profiel .card+.card,#s-settings .card+.card{margin-top:8px}
+#s-profiel .card-hd,#s-settings .card-hd{padding:11px 13px 3px}
+#s-profiel .card-title,#s-settings .card-title{font-size:12.5px;font-weight:800}
+#s-profiel .card-body,#s-settings .card-body{padding:0 13px 3px}
+#s-profiel .pf-row,#s-settings .set-row,#s-settings .set-nav-row{min-height:48px;padding:7px 0;gap:11px}
+#s-profiel .pf-lb,#s-settings .set-row-lbl{font-size:13.5px;font-weight:700;line-height:1.25}
+#s-profiel .pf-sb,#s-settings .set-row-sub{font-size:11.5px;margin-top:1px;line-height:1.3}
+#s-profiel .pf-ic,#s-settings .set-ic{width:32px;height:32px;flex:0 0 32px;border-radius:10px;
+  background:rgba(18,184,155,.12);display:flex;align-items:center;justify-content:center}
+#s-profiel .pf-ic svg,#s-settings .set-ic svg{width:16px;height:16px;stroke:var(--accent);fill:none;stroke-width:2}
+#s-profiel .pf-chev,#s-settings .set-chevron{font-size:18px;color:#B7C3CE}
+
+/* WITTE canonical personal summary -- vervangt de donkerblauwe hero. */
+#s-profiel .pf-hero{background:#fff;color:var(--dark);padding:16px;border-radius:16px;
+  box-shadow:0 1px 3px rgba(16,40,64,.06),0 6px 18px rgba(16,40,64,.05)}
+#s-profiel .pf-hero-nm{font-size:16.5px;font-weight:800;color:var(--dark);line-height:1.2}
+#s-profiel .pf-hero-sub{font-size:12px;color:var(--g4);margin-top:3px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+#s-profiel .pf-plan{background:var(--g1);color:var(--g4);border-radius:6px;font-size:10px;padding:2px 7px;font-weight:800}
+#s-profiel .pf-hero-edit::before{background:var(--g1)}
+#s-profiel .pf-hero-edit svg{stroke:var(--dark)}
+#s-profiel .pf-ctx{display:flex;gap:10px;margin-top:14px;border-top:1px solid var(--g2);padding-top:13px}
+#s-profiel .pf-ctx .c{flex:1;min-width:0}
+#s-profiel .pf-ctx .kr{display:flex;align-items:center;gap:5px;margin-bottom:4px}
+#s-profiel .pf-ctx svg{width:13px;height:13px;stroke:var(--accent);fill:none;stroke-width:2.2;flex:0 0 13px}
+#s-profiel .pf-ctx .k{font-size:9.5px;font-weight:800;color:var(--g4);letter-spacing:.05em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#s-profiel .pf-ctx .v{font-size:13.5px;font-weight:800;color:var(--dark);line-height:1.25;overflow-wrap:anywhere}
+#s-profiel .pf-ctx .v.unk{color:#B7C3CE;font-weight:700}
+#s-profiel .pf-ctx .s{font-size:10px;color:var(--g4);margin-top:2px}
+#s-profiel .pf-callout{display:flex;align-items:center;gap:10px;background:rgba(18,184,155,.12);
+  border-radius:12px;padding:10px 13px;margin-top:12px;min-height:44px}
+#s-profiel .pf-callout svg{width:16px;height:16px;stroke:var(--accent);fill:none;stroke-width:2;flex:0 0 16px}
+#s-profiel .pf-callout .t{font-size:12.5px;font-weight:800;color:var(--accent)}
+#s-profiel .pf-callout .s{font-size:10.5px;color:var(--g4);margin-top:1px}
+#s-profiel .pf-danger-zone{border:1px solid #F0D3D1;background:#FEFAFA;border-radius:14px;padding:2px 13px;margin-top:10px}
+
 #s-profiel .btn-sm:focus-visible,#s-profiel .ibtn:focus-visible{
   outline:2px solid var(--accent);outline-offset:3px}
 
@@ -3540,6 +3593,61 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
 <!-- ═══ AUTH — WACHTWOORD VERGETEN ═══ -->
 <input type="file" id="tk-avatar-file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="tkAvatarFileChosen(this)">
+<div class="modal-bg" id="m-condities" onclick="bgClose(event,'m-condities')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Condities</div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Condities</div></div>
+      <div class="card-body" id="profiel-conditions-card">
+        <div id="conditions-list"></div>
+        <div class="eq-add-row">
+          <input class="inp" id="new-condition-label" placeholder="Naam (bv. Rugklachten)">
+          <button class="btn btn-r btn-sm" onclick="addCondition()">+</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<div class="modal-bg" id="m-research" onclick="bgClose(event,'m-research')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Onderzoeksdeelname</div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Onderzoeksdeelname</div></div>
+      <div class="card-body" id="pf-research-consent-card"><p style="color:var(--g4);font-size:13px">Laden…</p></div>
+    </div>
+
+  </div>
+</div>
+<div class="modal-bg" id="m-wearable" onclick="bgClose(event,'m-wearable')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Wearables &amp; apparaten</div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Wearable</div></div>
+      <div class="card-body">
+        <div style="font-size:12px;color:var(--g4);margin-bottom:10px">Koppel je Fitbit (via Google Health) om HRV, rusthartslag en slaap automatisch aan te vullen in je ochtend check-in.</div>
+        <div id="profiel-wearable-detail" style="font-size:13px;color:var(--dark);margin-bottom:10px"><div class="tk-skel w60"></div></div>
+        <div id="profiel-wearable-actions" style="display:flex;gap:8px"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<div class="modal-bg" id="m-account" onclick="bgClose(event,'m-account')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Account &amp; data</div>
+    <div class="card pf-card">
+      <div class="pf-row"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span><div class="pf-tx"><div class="pf-lb">E-mailadres</div><div class="pf-sb" id="account-email-lbl">&mdash;</div></div></div>
+      <div class="pf-row"><div class="pf-tx"><div class="pf-lb">Inlogmethoden</div><div class="pf-sb" id="account-identities-lbl">&mdash;</div></div></div>
+      <button class="pf-row" onclick="openPasswordReset()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></span><div class="pf-tx"><div class="pf-lb">Wachtwoord</div><div class="pf-sb">Reset via e-maillink</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="openModal('m-export')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 21h16"/></svg></span><div class="pf-tx"><div class="pf-lb">Gegevens exporteren</div><div class="pf-sb">CSV / JSON backup</div></div><span class="pf-chev">&#8250;</span></button>
+    </div>
+  </div>
+</div>
 <div class="modal-bg" id="m-avatar-menu" onclick="bgClose(event,'m-avatar-menu')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -3732,100 +3840,35 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </div>
   <div class="scroll" style="padding-top:8px">
     <div class="pf-hero" id="pf-hero"></div>
-
-    <!-- MS-F11-05: minimale, zichtbare tenant-skin. Uitsluitend zichtbaar
-         (logo/naam) wanneer een geldige, geautoriseerde organization-branding
-         actief is (via applyBrandContext()) -- anders blijft dit element leeg/
-         verborgen en toont de app puur de Trainingskompas-identiteit. De
-         "Powered by Trainingskompas"-regel is ALTIJD aanwezig in de DOM zodra
-         deze kaart getoond wordt, ongeacht tenant-branding (co-branding-
-         invariant, nooit volledige vervanging). -->
-    <div class="pf-sect">Organisatie</div>
-    <div class="card pf-card" id="tenant-brand-card">
-      <div class="pf-row">
-        <img id="tenant-brand-logo" alt="" style="display:none;width:32px;height:32px;border-radius:8px;object-fit:cover" />
-        <div class="pf-tx">
-          <div class="pf-lb" id="tenant-brand-name">Trainingskompas</div>
-          <div class="pf-sb" id="tenant-powered-by">Powered by Trainingskompas</div>
-        </div>
-      </div>
-      <button class="pf-row" id="tenant-brand-admin-btn" style="display:none" onclick="tenantBrandingAdminEdit()"><span class="pf-tx"><div class="pf-lb">Uitstraling beheren</div><div class="pf-sb">Logo, kleuren en naam voor deze organisatie</div></span><span class="pf-chev">&#8250;</span></button>
-    </div>
-
-    <!-- MS-F12-03: Commercial UX. Toont uitsluitend wat CommercialUxCore
-         (op basis van EntitlementCore + de canonieke catalogus) teruggeeft
-         -- geen eigen plan-logica hier. UI-lock =/= security: server-side
-         enforcement (coach.js) blijft de bron van waarheid. -->
-    <div class="pf-sect">Mijn abonnement</div>
-    <div class="card pf-card" id="plan-huidig-card">
-      <div class="pf-row">
-        <div class="pf-tx">
-          <div class="pf-lb" id="plan-huidig-naam">Gratis</div>
-          <div class="pf-sb" id="plan-huidig-status"></div>
-        </div>
-      </div>
-      <button class="pf-row" onclick="openPlanOverzicht()"><span class="pf-tx"><div class="pf-lb">Plannen vergelijken</div><div class="pf-sb">Bekijk wat elk plan biedt</div></span><span class="pf-chev">&#8250;</span></button>
-    </div>
-
-    <div class="pf-sect">Instellingen</div>
+    <div class="pf-sect">Mijn profiel</div>
     <div class="card pf-card">
-      <button class="pf-row" onclick="go('s-settings')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></span><div class="pf-tx"><div class="pf-lb">App-instellingen</div><div class="pf-sb">Meldingen, weergave, training, offline &amp; opslag</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="openAtleetModal()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg></span><div class="pf-tx"><div class="pf-lb">Sportprofiel &amp; doelen</div><div class="pf-sb">Sport, niveau, klasse en je doelen</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="openModal('m-condities')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 00-7.8 7.8l8.8 8.8 8.8-8.8a5.5 5.5 0 000-7.8z"/></svg></span><div class="pf-tx"><div class="pf-lb">Condities</div><div class="pf-sb">Blessures en aandachtspunten</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="go('s-lichaam')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 13h5"/></svg></span><div class="pf-tx"><div class="pf-lb">Lichaamsgegevens</div><div class="pf-sb">Lengte, gewicht, metingen en historie</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="openModal('m-wearable')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 3h6M9 21h6"/></svg></span><div class="pf-tx"><div class="pf-lb">Apparaten &amp; verbindingen</div><div class="pf-sb">Wearables en synchronisatie</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="go('s-privacy')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></span><div class="pf-tx"><div class="pf-lb">Privacy &amp; delen</div><div class="pf-sb">Wat je deelt, onderzoek en export</div></div><span class="pf-chev">&#8250;</span></button>
     </div>
-    <div class="pf-sect">Mijn account</div>
+    <div id="profiel-atleet-card" style="display:none"></div>
+    <div class="pf-sect">Voorkeuren &amp; instellingen</div>
     <div class="card pf-card">
-      <div class="pf-row"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span><div class="pf-tx"><div class="pf-lb">E-mailadres</div><div class="pf-sb" id="account-email-lbl">&mdash;</div></div></div>
-      <!-- MS-F13-07: Federated Identity -- toont welke inlogmethoden aan dit
-           account gekoppeld zijn, gebaseerd op de identities-array die
-           Supabase's /auth/v1/user-response al bevat. Presentatie-only,
-           geen enkele beslissing over autorisatie. -->
-      <div class="pf-row"><div class="pf-tx"><div class="pf-lb">Inlogmethoden</div><div class="pf-sb" id="account-identities-lbl">&mdash;</div></div></div>
-      <button class="pf-row" onclick="openPasswordReset()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></span><div class="pf-tx"><div class="pf-lb">Wachtwoord</div><div class="pf-sb">Reset via e-maillink</div></div><span class="pf-chev">&#8250;</span></button>
-      <button class="pf-row" onclick="authSignOut()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5H6v14h9M10 12h10M17 9l3 3-3 3"/></svg></span><div class="pf-tx"><div class="pf-lb">Uitloggen</div></div><span class="pf-chev">&#8250;</span></button>
-      <button class="pf-row pf-danger" onclick="deleteAccount()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></span><div class="pf-tx"><div class="pf-lb">Account verwijderen</div><div class="pf-sb">Onomkeerbaar</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="go('s-meldingen')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9z"/><path d="M10 21h4"/></svg></span><div class="pf-tx"><div class="pf-lb">Meldingen</div><div class="pf-sb">Push, geluid en herinneringen</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="openPlanOverzicht()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l3-4h12l3 4-9 12z"/></svg></span><div class="pf-tx"><div class="pf-lb">Abonnement</div><div class="pf-sb">Huidig plan en plannen vergelijken</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="go('s-settings')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></span><div class="pf-tx"><div class="pf-lb">Instellingen</div><div class="pf-sb">Weergave, training, offline &amp; opslag</div></div><span class="pf-chev">&#8250;</span></button>
     </div>
-
-    <div class="pf-sect">Privacy &amp; data</div>
+    <div id="plan-huidig-card" style="display:none"><span id="plan-huidig-naam"></span><span id="plan-huidig-status"></span></div>
+    <div class="pf-sect">Ondersteuning &amp; account</div>
     <div class="card pf-card">
-      <button class="pf-row" onclick="go('s-privacy')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></span><div class="pf-tx"><div class="pf-lb">Privacy</div><div class="pf-sb">Wat we opslaan en waarom</div></div><span class="pf-chev">&#8250;</span></button>
-      <button class="pf-row" onclick="openModal('m-export')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 21h16"/></svg></span><div class="pf-tx"><div class="pf-lb">Gegevens exporteren</div><div class="pf-sb">CSV / JSON backup</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="go('s-help')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 113 2.4V13"/><path d="M12 16.5v.01"/></svg></span><div class="pf-tx"><div class="pf-lb">Help &amp; ondersteuning</div><div class="pf-sb">Veelgestelde vragen en contact</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="go('s-help')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H8l-5 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span><div class="pf-tx"><div class="pf-lb">Feedback</div><div class="pf-sb">Deel je ideeën of meld een probleem</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="openModal('m-account')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3.2"/><path d="M5 20a7 7 0 0114 0"/></svg></span><div class="pf-tx"><div class="pf-lb">Account &amp; data</div><div class="pf-sb">E-mail, wachtwoord, export en verwijderen</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="openModal('m-research')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4L3 9l9 5 9-5z"/><path d="M7 12v4c0 1.5 2.5 3 5 3s5-1.5 5-3v-4"/></svg></span><div class="pf-tx"><div class="pf-lb">Onderzoeksdeelname</div><div class="pf-sb">Vrijwillig, altijd intrekbaar</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="openTeamPinModal()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V8h16v13z"/><path d="M12 3l8 5H4z"/></svg></span><div class="pf-tx"><div class="pf-lb">Organisatie &amp; team</div><div class="pf-sb">Trainingskompas · team koppelen</div></div><span class="pf-chev">&#8250;</span></button>
+      <button class="pf-row" onclick="authSignOut()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5V3h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></span><div class="pf-tx"><div class="pf-lb">Uitloggen</div><div class="pf-sb">Je gegevens blijven bewaard</div></div><span class="pf-chev">&#8250;</span></button>
     </div>
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Onderzoeksdeelname</div></div>
-      <div class="card-body" id="pf-research-consent-card"><p style="color:var(--g4);font-size:13px">Laden…</p></div>
+    <div class="pf-danger-zone">
+      <button class="pf-row" onclick="deleteAccount()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg></span><div class="pf-tx"><div class="pf-lb">Account verwijderen</div><div class="pf-sb">Onomkeerbaar — alle gegevens worden gewist</div></div><span class="pf-chev">&#8250;</span></button>
     </div>
-
-    <div class="pf-sect">Trainingsprofiel</div>
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Atleet profiel</div><button class="btn btn-o btn-sm" onclick="openAtleetModal()">Bewerken</button></div>
-      <div class="card-body" id="profiel-atleet-card"><p style="color:var(--g4);font-size:13px">Nog niet ingesteld</p></div>
-    </div>
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Condities</div></div>
-      <div class="card-body" id="profiel-conditions-card">
-        <div id="conditions-list"></div>
-        <div class="eq-add-row">
-          <input class="inp" id="new-condition-label" placeholder="Naam (bv. Rugklachten)">
-          <button class="btn btn-r btn-sm" onclick="addCondition()">+</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card" id="profiel-team-card" style="display:none">
-      <div class="card-hd"><div class="card-title">Team</div><button class="btn btn-o btn-sm" onclick="openTeamPinModal()">Openen</button></div>
-      <div class="card-body">
-        <div style="font-size:12px;color:var(--g4)">Ledenlijst, rollen en wijzigingslog voor je gym.</div>
-      </div>
-    </div>
-    <div class="pf-sect">Apparaten &amp; koppelingen</div>
-    <div class="card">
-      <div class="card-hd"><div class="card-title">Wearable</div></div>
-      <div class="card-body">
-        <div style="font-size:12px;color:var(--g4);margin-bottom:10px">Koppel je Fitbit (via Google Health) om HRV, rusthartslag en slaap automatisch aan te vullen in je ochtend check-in.</div>
-        <div id="profiel-wearable-detail" style="font-size:13px;color:var(--dark);margin-bottom:10px"><div class="tk-skel w60"></div></div>
-        <div id="profiel-wearable-actions" style="display:flex;gap:8px"></div>
-      </div>
-    </div>
-
+    <div id="tenant-brand-card" style="display:none"><img id="tenant-brand-logo" alt=""><span id="tenant-brand-name"></span><span id="tenant-powered-by"></span><button id="tenant-brand-admin-btn" style="display:none" onclick="tenantBrandingAdminEdit()"></button></div>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
     <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
@@ -3841,7 +3884,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr">
     <div class="hdr-row">
       <div><div class="hdr-title" role="heading" aria-level="1">App-instellingen</div><div class="hdr-sub">Hoe de app zich gedraagt en presenteert</div></div>
-      <button class="ibtn" onclick="go('s-profiel')" aria-label="Sluiten, terug naar profiel">&#10005;</button>
+      <button class="tk-back" onclick="go('s-profiel')" aria-label="Terug naar Profiel"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Profiel</button>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
@@ -28475,15 +28518,37 @@ async function refreshProfiel(){
     const sub=[niv?niv.charAt(0).toUpperCase()+niv.slice(1)+' atleet':'', sport].filter(Boolean).join(' · ')||'Stel je atleetprofiel in';
     // CANONICAL AVATAR: een bron (AvatarCore) i.p.v. losse render-logica.
     const avHtml=tkAvatarHtml({avatarPath:(atleet&&atleet.avatar_path)||null,naam:naam,size:60});
+    // CANONICAL PERSONAL SUMMARY (wit). Uitsluitend velden met een bewezen bron.
+    const planNm=(document.getElementById('plan-huidig-naam')||{}).textContent||'';
+    const sportTxt=sport||'\u2014';
+    const doelTxt=(atleet&&atleet.doel&&String(atleet.doel).trim())?String(atleet.doel):null;
+    const nivTxt=niv?(niv.charAt(0).toUpperCase()+niv.slice(1)):null;
+    // 30-DAGENVENSTER: homeWeekSummary.activeDays telt unieke dagen uit sessions
+    // met date >= vandaag-30. Dat is GEEN kalendermaand -- daarom "afgelopen 30 dagen".
+    // Alleen tonen wanneer de bron daadwerkelijk gevuld is; anders helemaal weglaten.
+    const wk=window.homeWeekSummary;
+    const dagen=(wk&&typeof wk.activeDays==='number')?wk.activeDays:null;
+    const calloutHtml=(dagen!==null&&dagen>0)?`
+      <div class="pf-callout" onclick="go('s-stats')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 18l6-6 4 3 6-8"/><path d="M20 7v4h-4"/></svg>
+        <div style="flex:1"><div class="t">${dagen} ${dagen===1?'dag':'dagen'} actief in de afgelopen 30 dagen</div><div class="s">Bekijk je voortgang in Inzicht</div></div>
+        <span class="pf-chev">&#8250;</span>
+      </div>`:'';
     heroEl.innerHTML=`
       <div class="pf-hero-top">
         <button class="pf-av-btn" onclick="tkAvatarMenu()" aria-label="Profielfoto wijzigen" style="background:none;border:0;padding:0;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer">${avHtml}</button>
-        <div style="min-width:0"><div class="pf-hero-nm">${escHtml(naam)}</div><div class="pf-hero-sub">${escHtml(sub)}</div></div>
-        <button class="pf-hero-edit" onclick="openAtleetModal()" aria-label="Profiel bewerken"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h4L18 10l-4-4L4 16v4zM14 6l4 4"/></svg></button>
+        <div style="min-width:0;flex:1"><div class="pf-hero-nm">${escHtml(naam)}</div>
+          <div class="pf-hero-sub">Trainingskompas gebruiker${planNm?`<span class="pf-plan">${escHtml(planNm)}</span>`:''}</div></div>
+        <button class="pf-hero-edit" onclick="openAtleetModal()" aria-label="Profiel bewerken"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h4L19 9a2.8 2.8 0 00-4-4L4 16z"/></svg></button>
       </div>
-      <div class="pf-hero-pills">
-        <span class="pf-pill"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.6 4.8L18 8l-4.4 1.2L12 14l-1.6-4.8L6 8l4.4-1.2z"/></svg>AI Coach actief</span>
-      </div>`;
+      <div class="pf-ctx">
+        <div class="c"><div class="kr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8v8M18 8v8M3 12h18"/></svg><span class="k">HOOFDSPORT</span></div>
+          <div class="v${sport?'':' unk'}">${escHtml(sportTxt)}</div>${nivTxt?`<div class="s">${escHtml(nivTxt)}</div>`:''}</div>
+        <div class="c"><div class="kr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg><span class="k">DOEL</span></div>
+          <div class="v${doelTxt?'':' unk'}">${doelTxt?escHtml(doelTxt):'\u2014'}</div>${doelTxt?'':'<div class="s">Niet ingesteld</div>'}</div>
+        <div class="c"><div class="kr"><svg viewBox="0 0 24 24" fill="none" stroke="#B7C3CE" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 11h18"/></svg><span class="k">EVENT</span></div>
+          <div class="v unk">\u2014</div><div class="s">Niet beschikbaar</div></div>
+      </div>${calloutHtml}      </div>`;
   }
   renderConditionsList();
   renderWearableCard();

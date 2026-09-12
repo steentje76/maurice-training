@@ -6,8 +6,12 @@ Consolidatie van de Fase 0 / 0B / 0C action-level navigatie-audits.
 Read-only bewijs, geen enkele fix uitgevoerd tijdens de audit-passen.
 Zie `TRAININGSKOMPAS_ROUTE_RULES.md` voor de invariants.
 
-**LAST_VERIFIED_SHA (main): `88d65878fb6788e1ff7784d80a7e1dfb2ae033fb`**
-(APP_VER v4.69.74 — main ongewijzigd sinds start van de audit-serie)
+**LAST_VERIFIED_SHA (main): `0eecff7d3ed6d6fb3065b295bd3d180e18c18964`**
+(APP_VER v4.69.74 — ongewijzigd)
+
+**WAVE 1 (branch `fix/navigation-root-cause-wave-1`) — RC-OVL-01 en RC-OVL-02
+gerepareerd.** Zie §2a hieronder. Alle overige root causes (RC-NAV-01/02/03,
+RC-OVL-03, RC-IA-01) staan nog OPEN.
 
 **AUDITED DOMAINS: A (Vandaag) · B (Trainen Hub) · D (Coach) · E (Inzicht) ·
 F (Samen) · G (Profiel)**
@@ -26,14 +30,48 @@ domein herhaald hier).
 | Domein | Contracts | GREEN | AMBER | RED | UNKNOWN |
 |---|---|---|---|---|---|
 | A — Vandaag | 11 | 9 | 1 | 0 | 1 |
-| B — Trainen Hub | 24 | 18 | 1 | 5 | 0 |
-| D — Coach | 13 | 7 | 1 | 5 | 0 |
-| E — Inzicht | 17 | 8 | 4 | 5 | 0 |
+| B — Trainen Hub | 24 | 19 | 1 | 4 | 0 |
+| D — Coach | 13 | 9 | 1 | 3 | 0 |
+| E — Inzicht | 17 | 9 | 4 | 4 | 0 |
 | F — Samen | 6 | 5 | 0 | 1 | 0 |
-| G — Profiel | 20 | 18 | 0 | 2 | 0 |
-| **TOTAAL** | **91** | **65** | **7** | **18** | **1** |
+| G — Profiel | 20 | 20 | 0 | 0 | 0 |
+| **TOTAAL (na Wave 1)** | **91** | **71** | **7** | **12** | **1** |
 
-Controle: 65 + 7 + 18 + 1 = 91 ✓
+Controle: 71 + 7 + 12 + 1 = 91 ✓ (was vóór Wave 1: 65/7/18/1)
+
+### 2a. Wave 1 — uitgevoerd
+
+**Centrale fix (geen architectuurherschrijving):** `tkNavModaalOpen()` is
+uitgebreid tot `tkNavTopmostOverlay()`, die naast `.modal-bg.open` nu ook
+`.tk-confirm-bg` (confirmModal) en `.exec-overlay.open` (execution-sheets)
+herkent en sluit via hún eigen bestaande mechanisme (`closeModal`, de
+`.tk-confirm-cancel`-knop, `closeExecOverlay`). De popstate-handler roept nu
+`tkNavTopmostOverlay()` aan i.p.v. `tkNavModaalOpen()`. Geen nieuwe globale
+state, geen wijziging aan de bestaande `tkNavStack`/`go()`-mechanica.
+
+**Bewijs:** `core/fNavigatie.test.js`, nieuwe sectie E (5 assertions):
+Android Back sluit een open confirmModal zonder het scherm te wisselen (E1),
+sluit een open execution-sheet zonder de training te verlaten (E2), een
+`.modal-bg` heeft precedentie boven confirm/exec als er toevallig meerdere
+open zouden staan (E3), gewoon terugnavigeren zonder overlay blijft
+ongewijzigd (E4), en de bestaande Coach-vanuit-Training-terugkeer
+(RC-NAV-03) wordt niet per ongeluk door de nieuwe check onderschept (E5).
+21/21 tests groen in dit bestand; volledige suite 356/358 groen (2 vooraf
+bestaande, omgevingsgebonden falingen — bevestigd los van deze wijziging).
+
+**RC-OVL-01 — FIXED (Wave 1).** Alle 6 geverifieerde instanties (B-26, D-03,
+D-05, P-14, P-15, E-15) RED → GREEN. De overige, niet individueel als
+action-contract geauditeerde confirmModal-aanroepen (49 totaal in de app)
+profiteren van dezelfde centrale fix, aangezien de popstate-check nu op
+klasse `.tk-confirm-bg` werkt, niet op een specifieke actie.
+
+**RC-OVL-02 — FIXED (Wave 1).** Alle 6 execution-sheets (exec-overview/
+next/stop/explain/pause/note) worden nu door Android Back correct gesloten
+zonder de onderliggende training te verlaten.
+
+**Nog OPEN na Wave 1:** RC-NAV-01, RC-NAV-02, RC-NAV-03, RC-OVL-03, RC-IA-01
+— zie root cause registry hieronder voor hun oorspronkelijke, ongewijzigde
+status.
 
 Non-nav interaction contracts (apart, niet in bovenstaande totalen):
 A=2, B=3, D=4, E=4, F=8, G=6 → **totaal 27**.
@@ -91,7 +129,7 @@ achter in de browserstack.
 
 **Instances: 1**
 
-### RC-OVL-01 — `confirmModal()`/`.tk-confirm-bg` niet Android-Back-aware
+### RC-OVL-01 — `confirmModal()`/`.tk-confirm-bg` niet Android-Back-aware — **FIXED (Wave 1)**
 `tkNavModaalOpen()` checkt uitsluitend `.modal-bg.open`. `confirmModal()`
 gebruikt de aparte klasse `.tk-confirm-bg` en wordt dus nooit herkend.
 Android Back sluit de bevestiging niet; de onderliggende navigatie kan
@@ -111,7 +149,7 @@ ondertussen wel doorgaan.
 app — de daadwerkelijke blootstelling is dus groter dan de 6 hier individueel
 als action-contract geaudite instanties.
 
-### RC-OVL-02 — `.exec-overlay` niet Android-Back-aware
+### RC-OVL-02 — `.exec-overlay` niet Android-Back-aware — **FIXED (Wave 1)**
 Zes execution-sheets (`ensureExecOverlay()`/`closeExecOverlay()`), allemaal
 rechtstreeks aan `document.body` toegevoegd, buiten enig `.scr`-scherm.
 `tkNavModaalOpen()` checkt niet op `.exec-overlay.open`. Android Back
@@ -269,6 +307,39 @@ Geen redesign uitgevoerd of voorgesteld hier.
 tot de uiteindelijke schermbestemming herleid.
 **NAV_STATUS: UNKNOWN — nooit als GREEN geregistreerd (R-008).**
 
+### EV-02 — Onboarding `intakeValueCTA()` / `intakeGoHome()` — patroon bewezen, buiten geauditeerde scope
+
+Herbeoordeeld tegen actuele code (regel 11305-11321, ongewijzigd door Wave 1).
+
+Bewezen tegen de drie vereiste criteria:
+1. **Navigation action contract**: ja — beide chip-handlers (`intakeGoHome()` en
+   de inline "Bekijk mijn trainingen"-handler) veroorzaken een zichtbare
+   schermwissel vanuit de AI-intake.
+2. **Directe `.scr`-activatie buiten `go()`**: ja, letterlijk —
+   `document.querySelectorAll('.scr').forEach(s=>s.classList.remove('active'))`
+   gevolgd door `classList.add('active')` op het doelscherm, zonder één
+   aanroep naar `go()`.
+3. **Aantoonbare Android Back-afwijking**: ja — omdat `go()` wordt omzeild,
+   wordt `tkNavPush()` nooit aangeroepen voor deze stap. Android Back na
+   zo'n overgang kan daardoor niet naar de intake terugkeren (geen stack-
+   entry) en `tkPaintBnav()` wordt evenmin aangeroepen, dus de bottom-nav
+   kan tijdelijk de verkeerde tab tonen na aankomst op `s-home`/`s-train-mgr`.
+
+Dit matcht **exact** het RC-NAV-01-patroon (directe screen-activatie buiten
+`go()` → Android Back mist niveau).
+
+**Toch niet toegevoegd aan de 91 geauditeerde action-contracts.** Onboarding/
+intake valt buiten de zes geauditeerde domeinen (`A, B, D, E, F, G` — zie
+`metadata.audited_domains` in de JSON). Canonical opname zou een nieuwe
+domeinscope (of een uitbreiding van domein A) vereisen, wat de PO-
+geverifieerde 71/7/12/1=91-telling van deze Wave zou wijzigen zonder
+expliciete PO-goedkeuring voor scope-uitbreiding.
+
+**Status: PROVEN PATTERN, UNVERIFIED SCOPE.** Root cause: RC-NAV-01
+(patroonmatch). Geen functionele fix in deze Wave. PO-beslissing nodig:
+onboarding toevoegen als nieuw geaudit domein (bv. domein "H — Onboarding")
+in een volgende scope, vóórdat dit als canonical action-contract meetelt.
+
 ---
 
 ## 8. Action Contracts (volledige lijst, oorspronkelijke IDs behouden)
@@ -320,7 +391,7 @@ domein-audits en in `TRAININGSKOMPAS_ROUTE_MAP.json`.
 | B-23 | Waarom vandaag (NON-NAV) | — | — | — |
 | B-24 | Start training (modal, normal/guided) | s-guided / startT() | GREEN | — |
 | B-25 | Naar Builder (custom-preview) | s-builder | RED | RC-NAV-02 |
-| B-26 | Hervatten-prompt | confirmModal | RED | RC-OVL-01 |
+| B-26 | Hervatten-prompt | confirmModal | GREEN (Wave 1) | — |
 | B-27 | Preview annuleren | — | GREEN | — |
 
 ### Domein D — Coach
@@ -328,9 +399,9 @@ domein-audits en in `TRAININGSKOMPAS_ROUTE_MAP.json`.
 |---|---|---|---|---|
 | D-01 | Vraag Coach (vanuit oefening) | s-coach | RED | RC-NAV-03 |
 | D-02 | Coach-back-bar | popstate→returnToTraining | RED | RC-NAV-03 |
-| D-03 | Gesprek wissen | confirmModal | RED | RC-OVL-01 |
+| D-03 | Gesprek wissen | confirmModal | GREEN (Wave 1) | — |
 | D-04 | Coach/PT sporter openen | s-coachpt-athlete | RED | RC-NAV-01 |
-| D-05 | Coachrelatie beëindigen | confirmModal | RED | RC-OVL-01 |
+| D-05 | Coachrelatie beëindigen | confirmModal | GREEN (Wave 1) | — |
 | D-06 | "Naar Home" (post-workout) | s-home | AMBER | hardcoded, niet source-aware |
 | D-07 | Bottom-nav Coach | s-coach | GREEN | — |
 | D-08 | Gespreksgeschiedenis | m-coach-history | GREEN | — |
@@ -357,7 +428,7 @@ domein-audits en in `TRAININGSKOMPAS_ROUTE_MAP.json`.
 | E-12 | Volledig trainingslogboek | s-hist | GREEN | — |
 | E-13 | + Eten toevoegen | s-voeding-maaltijden | GREEN | — |
 | E-14 | spiergroep-rij | s-lich-spier | GREEN | — |
-| E-15 | Doel verwijderen | confirmModal | RED | RC-OVL-01 |
+| E-15 | Doel verwijderen | confirmModal | GREEN (Wave 1) | — |
 | E-16 | Vraag de coach (per doel) | s-coach | GREEN | — |
 | E-17 | Cardio 1RM-item detail | ad-hoc modal | RED | RC-OVL-03 |
 
@@ -388,8 +459,8 @@ domein-audits en in `TRAININGSKOMPAS_ROUTE_MAP.json`.
 | P-11 | Account & data | m-account | GREEN | — |
 | P-12 | Onderzoeksdeelname | m-research | GREEN | — |
 | P-13 | Organisatie & team (CONDITIONAL) | m-team-pin | GREEN | — |
-| P-14 | Uitloggen | confirmModal | RED | RC-OVL-01 |
-| P-15 | Account verwijderen | confirmModal (2×) | RED | RC-OVL-01 |
+| P-14 | Uitloggen | confirmModal | GREEN (Wave 1) | — |
+| P-15 | Account verwijderen | confirmModal (2×) | GREEN (Wave 1) | — |
 | P-16 | Wachtwoord | m-pass-reset | GREEN | — |
 | P-18 | Wachtwoord annuleren | — | GREEN | — |
 | P-19 | Gegevens exporteren | m-export | GREEN | — |

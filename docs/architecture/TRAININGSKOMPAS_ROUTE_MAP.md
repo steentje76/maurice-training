@@ -6,13 +6,16 @@ Consolidatie van de Fase 0 / 0B / 0C action-level navigatie-audits.
 Read-only bewijs, geen enkele fix uitgevoerd tijdens de audit-passen.
 Zie `TRAININGSKOMPAS_ROUTE_RULES.md` voor de invariants.
 
-**LAST_VERIFIED_SHA (main): `b7b72b9adaae69a62e8ca8bb03097681269b6d5f`**
+**LAST_VERIFIED_SHA (main): `5781ae7e1df76eeebb36e04482a8c926e5a38bef`**
 (APP_VER v4.69.75)
 
 **WAVE 1 (gemerged, PR #333) — RC-OVL-01 en RC-OVL-02 gerepareerd.**
-**WAVE 2 (branch `fix/navigation-root-cause-wave-2`) — RC-NAV-01, RC-NAV-02,
-RC-NAV-03 en RC-OVL-03 gerepareerd.** Zie §2a/§2b hieronder. Enige nog open
-root cause: RC-IA-01 (P3, presentatie-debt, geen navigatie-root-cause).
+**WAVE 2 (gemerged, PR #334) — RC-NAV-01, RC-NAV-02, RC-NAV-03 en RC-OVL-03
+gerepareerd.** Zie §2a/§2b hieronder. Enige nog open root cause: RC-IA-01
+(P3, presentatie-debt, geen navigatie-root-cause).
+
+**NAVIGATION & JOURNEY AUDIT: FORMALLY CLOSED (12 september 2026).**
+PO-01 DECIDED — OPTIE C. PO-02 DECIDED — OPTIE B. Zie §10-§12.
 
 **AUDITED DOMAINS: A (Vandaag) · B (Trainen Hub) · D (Coach) · E (Inzicht) ·
 F (Samen) · G (Profiel)**
@@ -30,15 +33,17 @@ domein herhaald hier).
 
 | Domein | Contracts | GREEN | AMBER | RED | UNKNOWN |
 |---|---|---|---|---|---|
-| A — Vandaag | 11 | 9 | 1 | 0 | 1 |
+| A — Vandaag | 11 | 9 | 2 | 0 | 0 |
 | B — Trainen Hub | 24 | 23 | 1 | 0 | 0 |
 | D — Coach | 13 | 12 | 1 | 0 | 0 |
 | E — Inzicht | 17 | 13 | 4 | 0 | 0 |
 | F — Samen | 6 | 6 | 0 | 0 | 0 |
 | G — Profiel | 20 | 20 | 0 | 0 | 0 |
-| **TOTAAL (na Wave 2)** | **91** | **83** | **7** | **0** | **1** |
+| **TOTAAL (na Navigation & IA Closure Sprint)** | **91** | **83** | **8** | **0** | **0** |
 
-Controle: 83 + 7 + 0 + 1 = 91 ✓ (was vóór Wave 1: 65/7/18/1; na Wave 1: 71/7/12/1; na Wave 2: 0 RED resterend)
+Controle: 83 + 8 + 0 + 0 = 91 ✓ (was vóór Wave 1: 65/7/18/1; na Wave 1: 71/7/12/1;
+na Wave 2: 83/7/0/1; na Navigation & IA Closure Sprint: A-11 UNKNOWN -> AMBER,
+0 RED, 0 onverklaarde UNKNOWN resterend)
 
 ### 2a. Wave 1 — uitgevoerd
 
@@ -580,3 +585,229 @@ Zie `core/routeMap.test.js` — controleert dat `TRAININGSKOMPAS_ROUTE_MAP.json`
 parsebaar is, unieke action- en root-cause-IDs bevat, geldige enum-waarden
 gebruikt, de zes geauditeerde domeinen aanwezig zijn, en metadata een
 `last_verified_sha` bevat.
+
+---
+
+## 10. Navigation & IA Closure Sprint (12 september 2026)
+
+### 10a. A-11 — volledig getraceerd, UNKNOWN → AMBER
+
+```
+Vandaag "Verder met programma"
+-> startProgramBlockTraining(blockId)
+-> maybeShowScheduleGate(blockId,block,prog,rows)
+   -> gap===TODAY/null: openProgCheckin() -> modal m-prog-checkin
+   -> gap===COMPLETED/SKIPPED: toast, geen navigatie (defensief, UI verbergt knop al)
+   -> anders: modal m-prog-schedule (pscheduleDoToday/pscheduleSkip/pscheduleShowReschedule)
+-> pchkSubmit()/pchkSkip() -> evaluateProgAdjustment()
+   -> adjustment aanwezig: modal m-prog-advies -> padvAccept()/padvDecline()
+   -> geen adjustment: modal m-prog-intro -> pintroStart()
+-> launchProgramTrainScreen(adjustment)
+   -> guardExistingDraft() (P0-bescherming tegen dataverlies bij andere training)
+   -> resume-detectie (restoreTrainingDraft(), zelfde-dag-check)
+   -> training_instances-rij (canonical instance-creatie, met programma-provenance)
+   -> curT/sessionLog/sessionExtra correct gezet (resume of vers)
+   -> FINAL: s-train-prog-<blockId>, geactiveerd via directe .scr-manipulatie
+```
+
+**FINAL CANONICAL OWNER:** `s-train-prog-<blockId>` (Trainen).
+**STATE READ/WRITE:** uitsluitend bestaande, beschermde mechanismen
+(`activeInstanceId`, `sessionLog`, `sessionExtra`, `curT`) — ongewijzigd.
+**STATE LOSS RISK:** geen — `guardExistingDraft()` en de resume-detectie
+zijn hier al aanwezig en functioneel bewezen (P0/P1-precedent).
+**ANDROID BACK:** AMBER, niet RED — `launchProgramTrainScreen()` activeert
+het scherm via dezelfde directe `.scr`-bypass als de bredere
+`startT()`-familie (zie 10d), dus geen canonical `go()`-gegarandeerde
+Android Back, maar functioneel identiek aan een reeds bekend, bewust
+uitgesteld patroon — geen nieuw, apart defect.
+
+**Conclusie: UNKNOWN → AMBER** (bestemming bewezen; kunstmatige GREEN zou
+de bekende directe-`.scr`-bypass verhullen).
+
+### 10b. AMBER-triage (alle 8, exact één classificatie elk)
+
+| ID | Classificatie | Conclusie |
+|---|---|---|
+| A-10 | B — IA/semantic ambiguity | Redirect naar generieke top van `s-stats`, geen specifieke doelen-anchor. Navigatiemechaniek zelf volledig GREEN. |
+| A-11 | F — Insufficient evidence (nu opgelost tot bewezen bestemming) → gearchiveerd onder TRAINING-DIRECTNAV-DEBT (zie 10d) | Zie 10a. |
+| B-04 | C — Presentation/polish debt | "Bekijk details" vs "Start training" — labelverwarring, geen navigatiedefect (in-app en Android Back al GREEN). |
+| D-06 | E — Intentional product behavior | "Naar Home" na workout-afronding is een bewuste exit-CTA, geen "terug"-knop; hardcoded Home is functioneel correct ongeacht startbron. |
+| E-02 | B — IA/semantic ambiguity | "Prestaties" landt generiek bovenaan `s-stats`. Mogelijke kandidaat-anchor (`#stats-volume-content`/`#stats-1rm-list`) geïdentificeerd maar NIET geïmplementeerd — exacte gebruikersverwachting nog niet PO-bevestigd; geen gok-fix uitgevoerd. |
+| E-04 | B — IA/semantic ambiguity, hangt samen met PO-01 | Zie 10c. Canonical betekenis van "Belasting" nog niet vastgesteld. |
+| E-06 | D — Functional/data architecture (FD-01) | Zie 10e. Herbevestigd: twee actieve, niet-gesynchroniseerde opslagmodellen. |
+| E-08 | B — IA/semantic ambiguity | Zelfde patroon als A-10 (Doelen-redirect naar generieke `s-stats`-top). Geen specifieke doelen-anchor gevonden in `s-stats` (`grep` op `id="stats-*"` levert geen doelen-specifieke sectie op). |
+
+**Geen enkele AMBER is kunstmatig GREEN gemaakt.** Alle 8 vereisen ofwel een
+PO-beslissing (E-04/PO-01) ofwel nader productwerk (E-02/E-08/A-10:
+concrete anchor-doelstelling bepalen — geen navigatiedefect) ofwel blijven
+bewust AMBER (E-06/FD-01, B-04, D-06).
+
+### 10c. PO-01 — Betekenis van "Belasting" (beslisvoorstel)
+
+| | Optie A: historische trainingsbelasting | Optie B: actuele lichaams-/spierbelasting | Optie C: labels expliciet splitsen |
+|---|---|---|---|
+| Betekenis | 7-daags volume/trend (`s-stats`) | Actueel herstel% per spiergroep (`s-lich-spieren`) | Beide behouden, apart benoemd |
+| Huidige data | Al aanwezig, niet-interactief | Al aanwezig, interactief | Geen nieuwe data nodig |
+| Destination | `s-stats` (ongewijzigd) | `s-lich-spieren` (wijziging) | Twee aparte rijen/kaarten |
+| Overlap | Laag | Laag | Geen — expliciet gescheiden |
+| Gebruikersverwachting | "Belasting" impliceert vaak iets actueels/lichaams-gerelateerds, niet puur historisch volume | Sluit beter aan bij de woordbetekenis | Meest ondubbelzinnig, kost een extra rij |
+| Impact Vandaag/Inzicht/Lichaam | Geen wijziging nodig | `go('s-stats')` → `go('s-lich-spieren')` op 1 plek (E-04) | Kleine IA-toevoeging op Inzicht |
+| Schaalbaarheid | Beperkt (blijft impliciet dubbelzinnig) | Goed | Beste |
+| Codewijziging | Geen | 1 regel (`handler`) | Kleine IA-uitbreiding (nieuwe kaart) |
+| Visuele impact | Geen | Geen | Klein (1 extra rij op Inzicht) |
+| Risico | Laag, maar lost de ambiguïteit niet op | Laag | Laagst qua duidelijkheid, iets meer werk |
+
+**Aanbeveling (destijds): Optie B.**
+
+**PO-BESLUIT (12 september 2026): OPTIE C — DECIDED.**
+
+De begrippen zijn canoniek gesplitst tot twee verschillende productconcepten:
+
+- **Trainingsbelasting** = historische trainingsbelasting / volume / load /
+  trend over tijd. Canonical bron: `s-stats` (7-daags volume/load,
+  niet-interactief, historisch overzicht).
+- **Spierbelasting / Herstel** = actuele lichaams-/spierbelasting en
+  herstelstatus. Canonical bron: `s-lich-spieren` (interactief, actuele
+  herstel%-weergave per spiergroep).
+
+Dit is in deze closure-sprint uitsluitend een **semantisch/architectureel
+besluit** — canoniek vastgelegd in `po_decisions` (JSON). **Geen zichtbare
+label-/IA-/visuele wijziging doorgevoerd.** De uitwerking is geregistreerd
+als vervolgactie **PO-01-UX** (zie `functional_issues` in de JSON) en vereist
+de bestaande visual PO-gate (ANALYSIS → DESIGN → RENDERED PREVIEW → PO
+APPROVAL → IMPLEMENTATION) vóór enige implementatie. **E-04 blijft AMBER**
+totdat die uitwerking is doorgevoerd en bewezen.
+
+### 10d. Training direct-nav follow-up (analytisch, geen codewijziging)
+
+`startT()`, `launchProgramTrainScreen()` en de custom-trainingsstart-varianten
+(`buildCustomTrainScreen`/`buildProgramTrainScreen`-paden) omzeilen `go()`
+allemaal op dezelfde manier: rechtstreekse `.scr`-classList-manipulatie
+direct gevolgd door `renderTrainScreen()`/timer-start/resume-restauratie in
+dezelfde synchrone stap.
+
+**Waarom dit gebeurt:** deze functies moeten sessiestaat (`curT`,
+`activeInstanceId`, `sessionLog`, timers) en de DOM-activatie *atomisch*
+laten samenvallen — een generieke `go()`-hook zou een asynchrone/afzonderlijke
+stap introduceren tussen "scherm wordt zichtbaar" en "sessiestaat is klaar",
+wat het risico op een kort zichtbare, nog-niet-geïnitialiseerde trainingsUI
+zou vergroten. Dit lijkt een bewuste (of op zijn minst functioneel
+noodzakelijke) constructie, geen achteloze omissie.
+
+**Betreft:** minimaal 4 fysieke acties (`startT()`, `launchProgramTrainScreen()`,
+en de twee custom/program-block-varianten bij `buildCustomTrainScreen`/
+`buildProgramTrainScreen`).
+
+**Android Back:** aantoonbaar niet canonical gegarandeerd (geen `tkNavStack`-
+entry voor de sprong naar het trainingsscherm), maar geen bewezen dataverlies
+of crash — Android Back valt terug op de laatst wél getrackte stap (meestal
+Vandaag/Trainen-hub), wat in de praktijk vaak toevallig correct aanvoelt.
+
+**Classificatie: TECHNICAL DEBT / FUTURE HARDENING.** Niet
+"INTENTIONAL EXCEPTION" (er is geen expliciete architecturale beslissing
+hiervoor gevonden) en niet "PROVEN NAVIGATION DEFECT" (geen bewezen
+gebruikersschade). Een toekomstige canonical adapter is denkbaar (bv. een
+`go()`-variant die synchroon een pre-render-hook toestaat vóór activatie)
+maar dat is een aparte, zorgvuldig geteste architectuursprint — niet iets
+voor een navigatie-only closure-sprint.
+
+### 10e. FD-01 / Nutrition D3 — herbevestigd op actuele main
+
+Herverifieerd (12 september 2026, main `47df2c4…`): `nutrition_entries`
+(9 code-referenties, `#s-nutrition`) en `nutrition_meals`+`nutrition_meal_items`
+(14+13 code-referenties, `#s-voeding`) zijn **beide nog actief** — geen van
+beide is dead code, geen bewezen synchronisatie tussen de twee gevonden.
+E-06 blijft AMBER (D, functional/data architecture). Geen databasewijziging,
+geen migratiepad in deze sprint — dit vereist een aparte, dedicated
+data-architectuursprint met AI Coach/Calculation-Engine-impactanalyse.
+
+### 10f. PO-02 — Onboarding Route Map scope
+
+**Aanbeveling (destijds): Optie C.**
+
+**PO-BESLUIT (12 september 2026): OPTIE B — DECIDED.**
+
+Onboarding wordt **niet** toegevoegd aan de bestaande 91 normale
+app-route-contracts, en ook **niet** bewust buiten navigatie-governance
+gehouden. Besluit: **onboarding krijgt een aparte Onboarding/Lifecycle
+Route Map.** Reden: onboarding is relevant voor vrijwel iedere nieuwe
+gebruiker en heeft eigen auth-/lifecycle-semantiek, dus hoort formeel getest
+en beheerd te worden — maar is architectonisch niet hetzelfde als normale
+ingelogde app-navigatie. De canonical 91-route-map (dit document) blijft
+daardoor zuiver beperkt tot normale, ingelogde in-app-navigatie.
+
+**PO-02: DECIDED — OPTION B.**
+**EV-02: TRANSFERRED TO ONBOARDING/LIFECYCLE ROUTE GOVERNANCE** — niet
+genegeerd, niet stilzwijgend opgelost. EV-02 vormt de eerste bewezen finding
+voor de toekomstige Onboarding/Lifecycle Route Map. Toekomstige scope
+minimaal (vastgelegd in `po_decisions` → `onboarding_lifecycle_route_map_future_scope`,
+JSON): intake entry, `intakeValueCTA()`, `intakeGoHome()`, alle drie
+bewezen fysieke navigation actions, auth-state transitions, first-login
+behavior, onboarding complete, skip/cancel, browser Back, Android Back,
+deep/direct entry, lifecycle state, resume na interruption,
+failure/degraded states. **Geen onboarding-code gewijzigd in deze PR.**
+
+### 10g. Presentation debt registry (geen navigatie-impact, geen wijziging nu)
+
+- 👥 Samen-shortcut op Vandaag: emoji-icoon (zie A-01, `index.html:3699`) —
+  nog niet gemigreerd naar de canonical SVG-lijnicoon-taal van de rest van
+  de app.
+- 🍽️ Lichaam → Voeding-knop: emoji-icoon (`index.html:5048`, zie eerdere
+  Samen V1/Account&Data-precedent van emoji-vervanging).
+- Coach-conclusie-emojis: `📈`/`📉` in `evaluateProgAdjustment()`
+  (`consistentieBrug`-tekst is emoji-vrij, maar de trend-tekst elders
+  gebruikt ze nog).
+- Engelse "Resume"-restjes: niet opnieuw specifiek gelokaliseerd in deze
+  sprint — vereist een gerichte tekst-audit, geen navigatie-audit.
+- Verschillende resume-presentaties tussen `startT()`/`launchProgramTrainScreen()`/
+  custom-varianten: cosmetisch, geen navigatie-impact.
+
+Geen van deze punten verlaagt een navigation contract naar RED — uitsluitend
+input voor een latere, aparte polish-/presentation-sprint.
+
+### 10h. Dead/unreachable registry (herbevestigd, geen cleanup uitgevoerd)
+
+- `#home-dash`/`DASHUI`: niet opnieuw diepgaand herverifieerd deze sprint
+  (buiten navigatie-scope) — blijft geregistreerd zoals eerder vastgelegd
+  in `dead_unreachable` (JSON).
+- `s-messages` dead-forward-entry en Coach-intake-na-eerste-gebruik: idem,
+  geen nieuwe bevindingen, geen bewezen actieve navigatiebug gevonden die
+  cleanup in deze sprint zou rechtvaardigen.
+
+---
+
+## 11. Exit-criterium — status
+
+- **0 RED** ✅
+- **0 onverklaarde UNKNOWN** ✅ (A-11 volledig getraceerd en geclassificeerd)
+- **Alle 8 AMBER inhoudelijk geclassificeerd** ✅ (zie 10b) — geen kunstmatige
+  GREEN.
+- **PO-01: DECIDED — OPTIE C** ✅ (12 september 2026) — Trainingsbelasting
+  ≠ Spierbelasting/Herstel, canoniek vastgelegd. Zichtbare uitwerking
+  geregistreerd als vervolgactie PO-01-UX, vereist de visual PO-gate.
+  E-04 blijft AMBER tot die uitwerking bewezen is.
+- **PO-02: DECIDED — OPTIE B** ✅ (12 september 2026) — aparte
+  Onboarding/Lifecycle Route Map. EV-02 TRANSFERRED TO ONBOARDING/LIFECYCLE
+  ROUTE GOVERNANCE (niet genegeerd, niet stilzwijgend opgelost).
+
+## 12. NAVIGATION & JOURNEY AUDIT — FORMALLY CLOSED
+
+Residuals bij closure:
+
+- 0 RED
+- 0 UNKNOWN
+- 8 verklaarde AMBERs (A-10, A-11, B-04, D-06, E-02, E-04, E-06, E-08)
+- PO-01 besloten (Optie C) — zichtbare uitwerking (PO-01-UX) doorgeschoven
+  naar de UX/UI-polishfase, met de bestaande visual PO-gate
+- PO-02 besloten (Optie B) — onboarding doorgeschoven naar een aparte
+  toekomstige Onboarding/Lifecycle Route Map, EV-02 als eerste finding
+  daarvoor
+- Nutrition FD-01 doorgeschoven naar een aparte data-architectuursprint
+- Training direct-nav (startT()-familie, A-11) doorgeschoven als
+  TECHNICAL DEBT / FUTURE HARDENING
+- Presentation debt doorgeschoven naar de UX/UI-polishfase
+
+**"Closed" betekent**: geen onbekende of ongeclassificeerde
+navigation-blocker meer aanwezig in de canonical 91-contract-scope.
+**"Closed" betekent NIET**: alle toekomstige UX/IA/presentation-debt is
+opgelost — die punten zijn expliciet doorgeschoven, niet verdwenen.

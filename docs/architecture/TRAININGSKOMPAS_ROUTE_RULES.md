@@ -1,8 +1,8 @@
 STATUS: CANONICAL — SOURCE OF TRUTH
 
-# TrainingsKompas — Route Rules
+# TrainingKompas — Route Rules
 
-Dit document legt de bindende navigatie-invariants vast voor TrainingsKompas.
+Dit document legt de bindende navigatie-invariants vast voor TrainingKompas.
 **Iedere wijziging aan actieve navigation contracts moet in dezelfde PR deze
 Route Map (dit bestand + `TRAININGSKOMPAS_ROUTE_MAP.md` + `.json`) bijwerken.**
 
@@ -50,7 +50,7 @@ meerdere bronnen bereikbaar is. Gebruik source-aware return
 
 **R-005** — Primary-tab ownership blijft logisch tijdens secondary flows.
 
-**R-006** — Actieve Training execution state mag nooit door navigation
+**R-006** — Actieve Training execution state mag nooit door navigatie
 verloren gaan.
 
 **R-007** — Een dead/unreachable scherm mag geen noodzakelijke forward-

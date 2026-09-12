@@ -93,8 +93,12 @@ ok(html.includes('id="trainen-plan-empty"') && html.includes('Nog geen training 
 
 // ---- 9. Bottom navigation (gedeelde component) is NIET gemigreerd ----
 ok(trainMgr.includes('.bnav') === false, '9a: geen nieuwe .bnav-CSS-klasse gedefinieerd binnen dit scherm (blijft de bestaande, gedeelde stijl gebruiken)');
-ok(trainMgr.includes("<span class=\"ni-label\">Training</span>") && trainMgr.includes('🏋️'),
-  '9b: de bottom-nav-labels/iconen (legacy: Home/Training/Lichaam/Coach/Voortgang) zijn bewust ongewijzigd -- een gedeelde component die op elk scherm verschijnt; een label-wijziging hier zou een onbedoelde, halve app-brede navigatiemigratie zijn (NAVIGATION MIGRATION DEPENDENCY, zie het implementatierapport)');
+// UX App Shell Master Sprint: de hier aangekondigde NAVIGATION MIGRATION DEPENDENCY is
+// inmiddels het expliciete doel van die sprint geworden -- een volledige, PO-goedgekeurde
+// migratie (geen halve), met labels/iconen nu uit één gedeelde bron (TK_PRIMARY_NAV) i.p.v.
+// hardcoded per scherm. Dit scherm gebruikt daarom terecht de lege canonical shell.
+ok(trainMgr.includes('<nav class="bnav"') && !/<span class="ni-label">/.test(trainMgr),
+  '9b: dit scherm gebruikt de canonical, lege bottom-nav-shell (inhoud komt runtime uit TK_PRIMARY_NAV) i.p.v. een eigen hardcoded kopie');
 
 // ---- 10. Bestaande schermen (s-train-detail, s-kalender) blijven correct terugverwijzen ----
 ok(html.includes("onclick=\"go('s-train-mgr')\" aria-label=\"Sluiten, terug naar Training\""),

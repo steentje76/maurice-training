@@ -88,9 +88,10 @@ ok(html.includes('id="cycling-finish-rpe"') && html.includes("rpe:isFinite(rpeWa
 
 // ---- H. Geen extra bottom-nav-tab voor Cycling ----
 {
+  // UX App Shell Master Sprint: bottom-nav-inhoud komt uit één gedeelde bron (TK_PRIMARY_NAV).
   const cyclingScreenBlok = html.split('<div class="scr" id="s-cycling">')[1].split(/<div class="scr" id="s-/)[0];
-  const aantalNavTabs = (cyclingScreenBlok.match(/<button class="ni/g) || []).length;
-  ok(aantalNavTabs === 5, 'H1: het Fietsen-scherm gebruikt exact dezelfde, bestaande 5 bottom-nav-tabs, geen extra tab toegevoegd');
+  const aantalNavShells = (cyclingScreenBlok.match(/<nav class="bnav"/g) || []).length;
+  ok(aantalNavShells === 1, 'H1: het Fietsen-scherm gebruikt precies één canonical bottom-nav-shell, geen extra tab/nav toegevoegd');
 }
 
 // ---- I. GPS: geen pseudo-GPS, capability-boundary blijft eerlijk (sectie 19) ----

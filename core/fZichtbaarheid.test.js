@@ -552,10 +552,13 @@ BESCHERMD.forEach(function (p) {
 });
 
 t('L1: de onderste navigatie heeft nog steeds vijf items', function () {
+  // UX App Shell Master Sprint: s-home's nav is een lege canonical shell; de inhoud komt
+  // runtime uit TK_PRIMARY_NAV. Controleer dat die ene, gedeelde bron nog 5 items heeft.
   var i = HTML.indexOf('id="s-home"');
   var blok = HTML.slice(i, i + 20000);
-  var nav = blok.slice(blok.indexOf('<nav class="bnav"'), blok.indexOf('</nav>'));
-  assert.strictEqual((nav.match(/class="ni[ "]/g) || []).length, 5);
+  assert.ok(blok.indexOf('<nav class="bnav"') > -1, 'geen bottom-nav-shell meer op s-home');
+  var navArr = HTML.slice(HTML.indexOf('const TK_PRIMARY_NAV='), HTML.indexOf('const TK_TAB_PREFIX_RULES='));
+  assert.strictEqual((navArr.match(/\{id:'/g) || []).length, 5);
 });
 
 t('M1: de Fitbit-keten is ongewijzigd', function () {

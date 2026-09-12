@@ -35,8 +35,10 @@ ok(html.match(/escHtml\(r\.display_name\)/),
 ok(html.includes('id="s-social"') && html.includes(`onclick="go('s-social')"`),
   'D1: een nieuwe, bereikbare Social-bestemming bestaat, met een expliciete toegangsroute vanaf Home');
 {
-  const aantalVoortgangTabs = (html.match(/<span class="ni-label">Voortgang<\/span>/g) || []).length;
-  ok(aantalVoortgangTabs === 41, 'D2: geen enkele van de bestaande bottom-nav-blokken is aangeraakt -- 36 -> 38 (Nutrition UX v1) -> 39 (s-availability) -> 41 door de additieve komst van s-swimming/s-swimming-insights (Endurance Master Sprint E4, Swimming Foundation)');
+  // UX App Shell Master Sprint: labels komen sindsdien uit TK_PRIMARY_NAV, niet meer
+  // letterlijk in de HTML. Vervangen door: totaal aantal canonical nav-shells onveranderd.
+  const aantalNavShells = (html.match(/<nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"><\/nav>/g) || []).length;
+  ok(aantalNavShells === 45, 'D2: geen enkel bottom-nav-blok is toegevoegd of verwijderd -- 45 canonical shells op de huidige main (post UX App Shell Master Sprint); het historische aantal losse labelkopieën (41 op het moment van deze test) is niet meer van toepassing sinds labels uit TK_PRIMARY_NAV komen');
 }
 
 // ---- E. Geen dubbele functie-definitie (zelf gevonden en gerepareerde fout tijdens het bouwen) ----

@@ -25,9 +25,12 @@ ok(html.includes("body:JSON.stringify({follower_id:uid,followee_id:targetUserId,
 ok(html.includes("body:JSON.stringify({status:'accepted'})") && html.includes('socialAcceptFollow'),
   'B2: alleen een expliciete, aparte accepteer-actie zet de status om naar accepted');
 
-// ---- C. XSS-veiligheid: user-gegenereerde velden altijd via escHtml() ----
-ok(html.match(/escHtml\(profiel\.display_name/) && html.match(/escHtml\(profiel\.bio/),
-  'C1: het eigen profiel (display_name/bio) wordt bij het invullen van het formulier via escHtml() weergegeven');
+// ---- C. XSS-veiligheid: user-gegenereerde velden altijd via escHtml() of veilige DOM-assignment ----
+// Samen V1: het profielformulier wordt sindsdien gevuld via .value-property-
+// assignment (socialLoadInstellingenModal) i.p.v. HTML-template-interpolatie --
+// dat is XSS-veilig door constructie, escHtml() is daar niet meer nodig/aanwezig.
+ok(html.match(/naamEl\.value=profiel\?\(profiel\.display_name/) && html.match(/bioEl\.value=profiel\?\(profiel\.bio/),
+  'C1: het eigen profiel (display_name/bio) wordt via veilige .value-assignment in het formulier gezet, niet via innerHTML-interpolatie');
 ok(html.match(/escHtml\(r\.display_name\)/),
   'C2: zoekresultaten (andermans display_name) worden via escHtml() weergegeven, nooit ongefilterd in innerHTML');
 

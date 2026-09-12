@@ -1538,3 +1538,47 @@
 - **Verantwoordelijke:** Product Owner (canonical v1-mockups + expliciete
   autonome-uitvoering-opdracht, 11 september 2026), uitgevoerd door Claude.
 
+## Samen V1 -- canonical redesign (UX >=9-sprint, Fase 2 implementatie)
+
+- **Datum:** 12 september 2026.
+- **Context:** Samen (`s-social`) werd na de App Shell-migratie een volwaardige
+  hoofdtab, maar de UX bleef een lange verticale stapel formulierkaarten
+  (social-profiel/zoeken/connecties/groepen/challenges/meldingen/feed) zonder
+  segmentatie, met zichtbare ruwe user-ID's in connecties/comments/geblokkeerd.
+  Forensische inventarisatie (Fase 1) bewees welke functionaliteit echt bestond
+  en welke mockup-elementen (online-status, Gym/Club-tegel, challenge-
+  voortgangsbalken/rangnummers, groepsledenaantallen) niet bestonden.
+- **Besluit (PO visuele goedkeuring op `samen-v0.1.png`-gebaseerde mock-up)**:
+  canonical tab-structuur Overzicht/Feed/Vrienden/Groepen + een 5e Challenges-
+  tabblad (zelf gevonden tijdens implementatie: zonder dit tabblad werd de
+  bestaande volledige challenge-lijst-functie onbereikbaar -- functiebehoud
+  gaat voor esthetische tab-economie). Header omgezet naar het canonical
+  Samen + avatar-patroon (was nog "Sociaal" + "Terug naar Home", een restant
+  van vóór de App Shell-migratie). Social-profiel/bio/zichtbaarheid/thema en
+  de geblokkeerd-lijst verplaatst naar een nieuw secondary modal
+  (`m-social-instellingen`), uitsluitend met ongescopeerde `.card`-classes
+  (voorkomt de eerder bewezen CSS-scoping-valkuil van modals buiten hun
+  brondocument-context).
+- **Raw user-ID's verwijderd**: nieuwe `socialResolveDisplayNames()`-helper
+  (dezelfde RLS-gefilterde `social_profiles`-query als de al bestaande
+  zoekfunctie) met privacyveilige fallback ("Sporter") toegepast op
+  connecties, volgverzoeken, feed-auteurs, feed-comments en geblokkeerd-lijst.
+  Emoji in de feed (👍💬🏆) vervangen door canonical SVG-iconen.
+- **Geen functionele uitbreiding, geen databasewijziging**: alle bestaande
+  handlers (volgen/accepteren/groep aanmaken-joinen/challenge joinen/
+  reactie-comment-report/berichten/Coach-PT) ongewijzigd hergebruikt, RLS-
+  aannames en allowlist-validaties (join-mode, thema-migratie_v556) intact.
+  Herbruikte uitsluitend bestaande, globale canonical componentclasses
+  (`.tk-period-selector`/`.tk-overview-grid`, al gebruikt in Inzicht) --
+  geen nieuwe visuele taal.
+- **Tests**: nieuw `core/fSamenV1CanonicalRedesign.test.js` (47/47) -- tabs,
+  geen raw ID's meer, alle handlers/RLS-aannames onveranderd, secondary
+  modal correct geïsoleerd van de CSS-scoping-valkuil, empty/UNKNOWN-states,
+  accessibility. Bestaand `fB9_07SocialProductLayer.test.js` C1 aangepast
+  (profielformulier gebruikt sindsdien veilige `.value`-assignment i.p.v.
+  HTML-interpolatie -- geen escHtml() meer nodig, geen regressie). Volledige
+  regressie 360/360 (was 359, +1 nieuw testbestand). Doc-consistency 0.
+  Geen databasewijziging. APP_VER v4.69.73 -> v4.69.74.
+- **Verantwoordelijke:** Product Owner (PO visuele goedkeuring Samen V1,
+  12 september 2026), uitgevoerd door Claude.
+

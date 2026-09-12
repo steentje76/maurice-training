@@ -4350,7 +4350,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
     <div class="card"><div class="card-hd"><div class="card-title">Multisport endurance</div><div class="card-sub">Hardlopen &amp; fietsen samen &middot; elke sport blijft een eigen bestemming</div></div><div class="card-body" id="stats-multisport-overview"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div></div>
 
-    <div class="v43-lbl" style="margin:18px 0 9px">Doelen</div>
+    <div class="v43-lbl" id="stats-anchor-doelen" style="margin:18px 0 9px" tabindex="-1">Doelen</div>
     <div class="card">
       <div class="card-hd"><div class="card-title">Actieve doelen</div><button class="ibtn" onclick="openModal('m-goal-add')" style="width:auto;height:auto;padding:6px 12px;border-radius:12px;font-size:12px;font-weight:800;font-family:var(--f);background:var(--v43-mint);color:var(--accent)">+ Doel</button></div>
       <div class="card-body" id="doelen-list"><p style="color:var(--g4);font-size:13px;text-align:center;padding:20px 0">Doelen laden...</p></div>
@@ -4360,7 +4360,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <div class="card-body" id="challenges-list"><p style="color:var(--g4);font-size:13px;text-align:center;padding:16px 0">Challenges berekenen...</p></div>
     </div>
 
-    <div class="v43-lbl" style="margin:18px 0 9px">Persoonlijke records</div>
+    <div class="v43-lbl" id="stats-anchor-prestaties" style="margin:18px 0 9px" tabindex="-1">Persoonlijke records</div>
     <div class="card">
       <div class="card-hd"><div class="card-title">PR per herhaling</div><div class="card-sub">Beste gewicht per repbereik (1/3/5/10)</div></div>
       <div class="card-body" id="stats-reppr-content"><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div>
@@ -4383,7 +4383,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
     <div class="card"><div class="card-hd"><div class="card-title">Krachtverhoudingen</div><div class="card-sub">Verwacht t.o.v. backsquat &middot; standaardratio of eigen data</div></div><div class="card-body" id="stats-ratio-list"></div></div>
 
-    <div class="v43-lbl" style="margin:18px 0 9px">Trends</div>
+    <div class="v43-lbl" id="stats-anchor-belasting" style="margin:18px 0 9px" tabindex="-1">Trends</div>
     <div class="card">
       <div class="card-hd"><div class="card-title">Volume per spiergroep</div><div class="card-sub">Afgelopen 7 dagen</div></div>
       <div class="card-body" id="stats-volume-content"><span id="stats-volume-chart" hidden></span><div class="tk-skel h32"></div><div class="tk-skel w60"></div></div>
@@ -4892,18 +4892,9 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="hdr-row">
       <div><div class="hdr-title" role="heading" aria-level="1">Lichaam</div><div class="hdr-sub">Mijn lichaam vandaag</div></div>
       <button class="ibtn" onclick="go('s-nutrition')" aria-label="Naar Voeding" style="margin-right:6px">🍽️</button>
-      <button class="ibtn" onclick="openModal('m-bc')" aria-label="Lichaamsmeting toevoegen">＋</button>
+      <button class="ibtn" onclick="openModal('m-bc')" aria-label="Lichaamsmeting toevoegen"><svg class="tk-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
     </div>
   </div>
-  <!-- TIJDELIJKE PREVIEW-ACCESS (PR #232) -- GEEN bottom-nav-migratie. Additieve,
-       duidelijk gemarkeerde toegang tot het nieuwe, nog niet in de navigatie
-       opgenomen Inzicht v0.1-scherm, uitsluitend zodat de Product Owner het
-       kan bereiken vanaf de bestaande Netlify Preview. Verwijderen zodra de
-       daadwerkelijke navigatie-migratie plaatsvindt (aparte, toekomstige PO-
-       opdracht) -- dit is bewust geen permanente entry point. -->
-  <button onclick="go('s-inzicht')" style="display:flex;align-items:center;justify-content:space-between;width:calc(100% - 36px);margin:8px 18px 0;padding:10px 14px;background:var(--color-primary-soft);border:1px dashed var(--color-primary);border-radius:12px;font-family:var(--f);font-size:12.5px;font-weight:700;color:var(--color-primary);cursor:pointer">
-    <span>🔍 Preview: nieuw Inzicht-scherm (v0.1)</span><span>›</span>
-  </button>
   <!-- Fase 1 — het overzicht toont de stand van vandaag en verwijst door. De verdieping
        (anatomie, trends, metingen) staat op eigen subschermen met dezelfde renderers. -->
   <div class="scroll" style="padding-top:8px">
@@ -4921,7 +4912,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="card lich-anatcard">
       <div class="seg lich-seg" role="tablist" aria-label="Weergave">
         <button id="lich-mode-rec" class="on" role="tab" aria-selected="true" onclick="lichSetMode('rec')">Herstel</button>
-        <button id="lich-mode-load" role="tab" aria-selected="false" onclick="lichSetMode('load')">Belasting</button>
+        <button id="lich-mode-load" role="tab" aria-selected="false" onclick="lichSetMode('load')">Spierbelasting</button>
       </div>
       <div class="lich-figpair">
         <div class="lich-figbox"><div id="lich-fig-front"></div><div class="cap">Voorzijde</div></div>
@@ -4938,17 +4929,17 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
     <div class="v43-lbl" style="margin:16px 0 10px">Verbanden</div>
     <div id="lich-relations"></div>
-    <button class="lich-goto" onclick="go('s-lich-verbanden')"><span class="ic">🔗</span><span class="b"><b>Alle verbanden</b><s>Wat lijkt bij jou samen te hangen?</s></span><span class="chev">›</span></button>
+    <button class="lich-goto" onclick="go('s-lich-verbanden')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="7" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="12" cy="17" r="2"/><path d="M7.8 8.2L11 15.3M16.4 7.3L13 15.3"/></svg></span><span class="b"><b>Alle verbanden</b><s>Wat lijkt bij jou samen te hangen?</s></span><span class="chev">›</span></button>
 
     <div class="v43-lbl" style="margin:16px 0 10px">Wat betekent dit?</div>
-    <button class="lich-goto" onclick="go('s-coach')"><span class="ic">🤖</span><span class="b"><b>Wat betekent dit voor vandaag?</b><s>De coach legt uit en adviseert</s></span><span class="chev">›</span></button>
-    <button class="lich-goto" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ic">🏋️</span><span class="b"><b>Welke training past hierbij?</b><s>Je trainingen en de planning van vandaag</s></span><span class="chev">›</span></button>
+    <button class="lich-goto" onclick="go('s-coach')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.2 3.2L16.4 7.6 13.2 8.8 12 12l-1.2-3.2L7.6 7.6l3.2-1.2z"/><path d="M5 16l.7 1.8L7.5 18.5l-1.8.7L5 21l-.7-1.8L2.5 18.5l1.8-.7z"/></svg></span><span class="b"><b>Wat betekent dit voor vandaag?</b><s>De coach legt uit en adviseert</s></span><span class="chev">›</span></button>
+    <button class="lich-goto" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5l11 11M4 4l3 3M20 20l-3-3M2 8l4-4M22 16l-4 4M14 4l3 3-8 8-3-3z"/></svg></span><span class="b"><b>Welke training past hierbij?</b><s>Je trainingen en de planning van vandaag</s></span><span class="chev">›</span></button>
 
     <div class="v43-lbl" style="margin:16px 0 10px">Lichaam &amp; gegevens</div>
-    <button class="lich-goto" onclick="go('s-lich-health')"><span class="ic">📈</span><span class="b"><b>Gezondheid &amp; herstel</b><s>HRV, rusthartslag en slaap over 7 tot 90 dagen</s></span><span class="chev">›</span></button>
-    <button class="lich-goto" onclick="go('s-lich-metingen')"><span class="ic">⚖️</span><span class="b"><b>Lichaamsmetingen</b><s>Samenstelling, afmetingen en historie</s></span><span class="chev">›</span></button>
+    <button class="lich-goto" onclick="go('s-lich-health')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 8.5c0-2.5-2-4.5-4.5-4.5-1.5 0-2.8.7-3.5 1.8-.7-1.1-2-1.8-3.5-1.8C6 4 4 6 4 8.5c0 4.5 8 10.5 8 10.5s8-6 8-10.5z"/></svg></span><span class="b"><b>Gezondheid &amp; herstel</b><s>HRV, rusthartslag en slaap over 7 tot 90 dagen</s></span><span class="chev">›</span></button>
+    <button class="lich-goto" onclick="go('s-lich-metingen')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.5"/><path d="M9 22v-6l-2-5 1-4h8l1 4-2 5v6"/><path d="M9 12h6"/></svg></span><span class="b"><b>Lichaamsmetingen</b><s>Samenstelling, afmetingen en historie</s></span><span class="chev">›</span></button>
     <button class="lich-goto" onclick="go('s-lich-cyclus')"><span class="ic">🌙</span><span class="b"><b>Cyclus</b><s>Optioneel: menstruatie registreren als trainingscontext</s></span><span class="chev">›</span></button>
-    <button class="lich-goto" onclick="go('s-lich-gegevens')"><span class="ic">🔗</span><span class="b"><b>Gezondheidsgegevens &amp; koppelingen</b><s>Waar je gegevens vandaan komen en wat er gekoppeld is</s></span><span class="chev">›</span></button>
+    <button class="lich-goto" onclick="go('s-lich-gegevens')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="6" height="10" rx="1"/><rect x="14" y="5" width="6" height="13" rx="1"/><path d="M7 18v2M17 18v2"/></svg></span><span class="b"><b>Gezondheidsgegevens &amp; koppelingen</b><s>Waar je gegevens vandaan komen en wat er gekoppeld is</s></span><span class="chev">›</span></button>
     <div style="height:8px"></div>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
@@ -4993,7 +4984,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
     <!-- Alleen op Overzicht: belasting en geschiedenis -->
     <div id="lich-sp-rest">
-      <div class="v43-lbl" style="margin:18px 0 10px">Belasting &middot; laatste 7 dagen</div>
+      <div class="v43-lbl" style="margin:18px 0 10px">Spierbelasting &middot; laatste 7 dagen</div>
       <div id="lich-belasting"></div>
       <div class="card">
         <div class="card-hd">
@@ -7241,7 +7232,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.75';
+const APP_VER = 'v4.69.76';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -10764,6 +10755,32 @@ function openHelpFeedback(){
   go('s-help');
   requestAnimationFrame(function(){
     const el=document.getElementById('help-contact-card');
+    if(el){ el.scrollIntoView({block:'start',behavior:'smooth'}); el.focus(); }
+  });
+}
+// Entry-precisiefixes (UX Polish Sprint 01, §3): Prestaties/Trainingsbelasting/Doelen
+// landden alle drie generiek bovenaan s-stats (E-02/E-04/E-08/A-10, AMBER). Alle drie
+// bestaande secties, geen nieuwe schermen, geen nieuwe data -- uitsluitend deep-link
+// naar de al bestaande, semantisch overeenkomende sectiekop (zelfde patroon als
+// openHelpFeedback()).
+function goInzichtPrestaties(){
+  go('s-stats');
+  requestAnimationFrame(function(){
+    const el=document.getElementById('stats-anchor-prestaties');
+    if(el){ el.scrollIntoView({block:'start',behavior:'smooth'}); el.focus(); }
+  });
+}
+function goInzichtTrainingsbelasting(){
+  go('s-stats');
+  requestAnimationFrame(function(){
+    const el=document.getElementById('stats-anchor-belasting');
+    if(el){ el.scrollIntoView({block:'start',behavior:'smooth'}); el.focus(); }
+  });
+}
+function goInzichtDoelen(){
+  go('s-stats');
+  requestAnimationFrame(function(){
+    const el=document.getElementById('stats-anchor-doelen');
     if(el){ el.scrollIntoView({block:'start',behavior:'smooth'}); el.focus(); }
   });
 }
@@ -23182,7 +23199,7 @@ async function refreshHomeGoalsCard(){
   const cur=g.type==='pr'?prFor(g.exercise_id):await getCurrentValueForGoal(g);
   const pct=g.type==='pr'?computeGoalProgressPr(g,ex):computeGoalProgress(g,cur);
   const label=g.naam||GOAL_TYPE_LABELS[g.type];
-  el.innerHTML=`<div class="card" style="cursor:pointer" onclick="go('s-doelen')">
+  el.innerHTML=`<div class="card" style="cursor:pointer" onclick="goInzichtDoelen()">
     <div class="card-body" style="padding-top:10px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <div style="font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:5px"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2"/></svg>Doel</div>
@@ -24391,13 +24408,13 @@ function inzichtMiniViz(values,color){
 async function inzichtRenderDomains(){
   var el=document.getElementById('inzicht-domain-list'); if(!el) return;
   var domains=[
-    {icon:'prestaties',title:'Prestaties',sub:"PR's, 1RM, krachtverhoudingen, cardio",go:'s-stats',viz:''},
+    {icon:'prestaties',title:'Prestaties',sub:"PR's, 1RM, krachtverhoudingen, cardio",go:'s-stats',fn:'goInzichtPrestaties',viz:''},
     {icon:'herstel',title:'Herstel',sub:'Anatomie, hersteltrends, HRV/slaap',go:'s-lich-health',viz:''},
-    {icon:'belasting',title:'Belasting',sub:'Volume per spiergroep, consistentie',go:'s-stats',viz:''},
+    {icon:'belasting',title:'Trainingsbelasting',sub:'Historisch volume, frequentie en consistentie',go:'s-stats',fn:'goInzichtTrainingsbelasting',viz:''},
     {icon:'lichaam',title:'Lichaam',sub:'Metingen, samenstelling, historie',go:'s-lich-metingen',viz:''},
     {icon:'voeding',title:'Voeding',sub:'Inname, energie, voedingsstoffen',go:'s-voeding',viz:''},
     {icon:'verbanden',title:'Verbanden',sub:'Wat lijkt bij jou samen te hangen?',go:'s-lich-verbanden',viz:''},
-    {icon:'doel',title:'Doelen',sub:'Actieve doelen en challenges',go:'s-stats',viz:''}
+    {icon:'doel',title:'Doelen',sub:'Actieve doelen en challenges',go:'s-stats',fn:'goInzichtDoelen',viz:''}
   ];
   // Herstel: REAL DATA READY -- v43OverallRecovery().rows (per-spiergroep %),
   // bestaande, ongewijzigde functie (zelfde als Home/Lichaam).
@@ -24421,7 +24438,7 @@ async function inzichtRenderDomains(){
     var vizHtml=d.viz
       ? '<span class="miniviz-wrap">'+d.viz+'</span>'
       : '<span class="miniviz-wrap" style="width:44px" aria-hidden="true"></span>';
-    return '<button class="row tk-domain-row" onclick="go(\''+d.go+'\')" '+(i>0?'style="border-top:1px solid var(--color-border)"':'')+'><span class="tk-icon-box">'+tkIcon(d.icon,{size:'standard'})+'</span><span class="b"><span class="t">'+escHtml(d.title)+'</span><span class="s">'+escHtml(d.sub)+'</span></span>'+vizHtml+'<span class="ar">›</span></button>';
+    return '<button class="row tk-domain-row" onclick="'+(d.fn?d.fn+'()':"go('"+d.go+"')")+'" '+(i>0?'style="border-top:1px solid var(--color-border)"':'')+'><span class="tk-icon-box">'+tkIcon(d.icon,{size:'standard'})+'</span><span class="b"><span class="t">'+escHtml(d.title)+'</span><span class="s">'+escHtml(d.sub)+'</span></span>'+vizHtml+'<span class="ar">›</span></button>';
   }).join('');
 }
 

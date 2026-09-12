@@ -223,7 +223,7 @@ ok(html.indexOf('id="lich-coach"') < 0, 'het coachblok is verwijderd');
 const lichBody = extractFn('renderLichaamPremium');
 ok(lichBody.indexOf('homeCoachText') < 0, 'de Lichaam-renderer leest de coachtekst van Home niet meer over');
 ok(lichBody.indexOf('homeNextT') < 0, 'de Lichaam-renderer leest de training van vandaag niet meer over');
-ok(/onclick="go\('s-coach'\)"><span class="ic">🤖/.test(html), 'er staat een verwijskaart naar Coach');
+ok(/onclick="go\('s-coach'\)"><span class="ic"><svg/.test(html), 'er staat een verwijskaart naar Coach (canonical lijnicoon, UX Polish Sprint 01)');
 ok(/Welke training past hierbij\?/.test(html), 'er staat een verwijskaart naar Training');
 
 // Geen dode stijlen van de verwijderde blokken.

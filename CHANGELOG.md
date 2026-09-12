@@ -1,5 +1,54 @@
 # Trainingskompas — Changelog
 
+## v4.69.76 — UX Polish Sprint 01: Inzicht + Belasting/Herstel + PO-01-UX (12 september 2026)
+
+Eerste sprint van de echte UX/UI-polishfase, PO visueel goedgekeurd vóór
+implementatie (rendered preview -> PO approval -> implementation).
+
+PO-01 zichtbaar geïmplementeerd: Inzicht-domeinkaart "Belasting" ->
+"Trainingsbelasting" (historisch volume/frequentie/consistentie), Lichaam-tab
+"Belasting" -> "Spierbelasting" (symmetrisch, ook de bijbehorende
+sectiekop op Herstel & belasting-detail gelijkgetrokken met haar eigen
+inner card-titel die al "Spierbelasting" heette). Twee duidelijk
+onderscheiden productconcepten, geen structuurwijziging, geen nieuwe
+tabs, bestaande anatomische figuur/Herstel-tab/voor-achterzijde/data
+volledig behouden.
+
+Presentation debt: verouderde "Preview: nieuw Inzicht-scherm"-banner op
+Lichaam verwijderd (stale sinds Inzicht al een primaire App Shell-tab is).
+7 emoji-interface-iconen op het Lichaam-hoofdscherm vervangen door
+bestaande canonical SVG-lijniconen uit de designSystemIcons-registry
+(verbanden/coach/trainen/herstel/lichaam/apparaten/toevoegen) -- geen
+nieuwe iconenset. Cyclus (🌙) en de Voeding-snelkoppeling (🍽️) hebben
+bewust geen canonical equivalent en zijn niet aangepast (expliciet
+resterende debt, niet verzwegen).
+
+RC-IA-01 opgelost (E-02, E-04, E-08, A-10: RED/AMBER -> GREEN, bewezen):
+Prestaties/Trainingsbelasting/Doelen landden alle drie generiek bovenaan
+s-stats. Drie nieuwe deep-link-functies (goInzichtPrestaties(),
+goInzichtTrainingsbelasting(), goInzichtDoelen()), exact hetzelfde
+bestaande scroll-naar-sectie-patroon als openHelpFeedback(), naar drie
+bestaande, semantisch overeenkomende secties in s-stats ("Persoonlijke
+records", "Trends"/Volume per spiergroep, "Doelen") -- geen nieuwe
+schermen, geen nieuwe data.
+
+Nieuwe test: core/fUxPolishSprint01.test.js (40/40). Bestaande tests
+root-cause aangepast aan de presentatie-wijzigingen (niet verzwakt):
+fGezondheidsgegevens.test.js (emoji->SVG-marker, venster verruimd),
+fLichaamPhase0.test.js (idem), fInzichtV01BrowserRuntime.test.js
+(navigatie via de canonical bottom-nav-tab i.p.v. de verwijderde
+preview-banner; Prestaties-navigatie via de nieuwe precisie-functie).
+
+Route Map: 91 total, 87 GREEN, 4 AMBER, 0 RED, 0 UNKNOWN (was: 83/8/0/0).
+RC-IA-01 FIXED -- geen open navigatie-root-causes meer. Resterende AMBER:
+A-11 (Training direct-nav technical debt), B-04 (labelambiguïteit,
+presentatie), D-06 (bewust product-gedrag), E-06 (FD-01/Nutrition D3,
+aparte architectuursprint) -- geen van deze in scope van deze sprint.
+
+Volledige regressie 363/363 (was 362, +1 nieuw testbestand).
+Doc-consistency 0. Geen databasewijziging, geen Nutrition-wijziging, geen
+Training-execution-wijziging. APP_VER v4.69.75 -> v4.69.76.
+
 ## v4.69.75 — Navigation Repair Wave 2: P2 root causes (12 september 2026)
 
 Lost de vier resterende P2 navigation-root-causes op (RC-NAV-01, RC-NAV-02,

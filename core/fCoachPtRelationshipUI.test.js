@@ -58,14 +58,14 @@ ok(!html.match(/rest\/v1\/coach_access_scopes[^`]*method:['"]POST['"]/) && !html
 
 // ---- E. Privacy-by-omissie in het athlete-overzicht (geen "vergrendeld"-hint) ----
 {
-  const openFn = html.split('async function coachPtOpenAthlete(athleteId,relationshipId)')[1].split('async function renderSocialScreen')[0];
+  const openFn = html.split('async function renderCoachPtAthlete()')[1].split('async function renderSocialScreen')[0];
   ok(openFn.includes('CoachRosterCore.athleteOverviewSections('), 'E1: welke secties getoond worden komt uitsluitend uit CoachRosterCore.athleteOverviewSections(), geen eigen, losse zichtbaarheidslogica');
   ok(!openFn.match(/vergrendeld|locked|upgrade om te zien|niet gedeeld door/i), 'E2: geen "vergrendeld/locked"-kaart voor een niet-toegestane sectie -- die sectie ontbreekt gewoon volledig (privacy-by-omissie, geen hint van wat er zou kunnen staan)');
 }
 
 // ---- F. Cross-domain privacy: geen gevoelige data-dump zonder scope ----
 {
-  const openFn = html.split('async function coachPtOpenAthlete(athleteId,relationshipId)')[1].split('async function renderSocialScreen')[0];
+  const openFn = html.split('async function renderCoachPtAthlete()')[1].split('async function renderSocialScreen')[0];
   ok(openFn.includes("sbGet('hrv_log'") && openFn.match(/secties\.includes\('RECOVERY_HEALTH'\)[\s\S]{0,50}hrv_log/),
     'F1: hrv_log wordt uitsluitend opgehaald binnen de RECOVERY_HEALTH-sectie-check, niet onvoorwaardelijk');
   ok(!openFn.match(/cycle_periods|cycle_symptom_logs|menstru/i), 'F2: geen rechtstreekse cyclus-/menstruatiedata-query -- Women\'s Performance-sectie toont bewust alleen een neutrale, niet-detaillerende samenvatting');

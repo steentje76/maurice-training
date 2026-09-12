@@ -1,7 +1,7 @@
 {
   "metadata": {
     "status": "CANONICAL - SOURCE OF TRUTH",
-    "last_verified_sha": "7d0a9d001b60fcb110d4820fc55c06a1515b244e",
+    "last_verified_sha": "5781ae7e1df76eeebb36e04482a8c926e5a38bef",
     "app_ver": "v4.69.75",
     "audited_domains": [
       "A",
@@ -2446,7 +2446,16 @@
       ],
       "duplication_class": "D3",
       "risk": "Gegevens via de ene interface zijn niet automatisch bewezen zichtbaar in de andere.",
-      "action_taken": "GEEN — niet gerepareerd, niet gemigreerd, geen canonical keuze gemaakt."
+      "action_taken": "GEEN — niet gerepareerd, niet gemigreerd, geen canonical keuze gemaakt.",
+      "status": "OPEN -- doorgeschoven naar een aparte, dedicated data-architectuursprint. Geen databasewijziging, geen migratie, geen Nutrition-semantiekwijziging in deze of enige closure-sprint tot dusver. E-06 blijft AMBER."
+    },
+    {
+      "id": "PO-01-UX",
+      "title": "Zichtbare IA/label-uitwerking van PO-01 (Trainingsbelasting vs. Spierbelasting/Herstel)",
+      "context": "PO-01 is canoniek besloten (OPTIE C, zie po_decisions) op 12 september 2026. Dit item registreert uitsluitend de nog niet uitgevoerde zichtbare UX-uitwerking.",
+      "scope": "Labels en informatiearchitectuur op Inzicht (en eventueel Vandaag/Lichaam) laten aansluiten op de canonical definities: Trainingsbelasting = historische load/trend (s-stats); Spierbelasting/Herstel = actuele lichaams-/spierstatus (s-lich-spieren).",
+      "gate": "ANALYSIS -> DESIGN -> RENDERED PREVIEW -> PO APPROVAL -> IMPLEMENTATION (bestaande visual PO-gate, verplicht vóór enige zichtbare wijziging).",
+      "status": "NOT STARTED -- mag niet in een navigation/documentatie-only sprint worden geïmplementeerd. E-04 blijft AMBER totdat deze uitwerking is doorgevoerd en bewezen."
     }
   ],
   "po_decisions": [
@@ -2455,7 +2464,13 @@
       "title": "Betekenis van 'Belasting' vanuit Inzicht",
       "candidate_a": "s-stats -> Volume per spiergroep (historisch, 7 dagen, niet-interactief)",
       "candidate_b": "s-lich-spieren -> Herstel & belasting (actueel, interactief)",
-      "status": "PO DECISION REQUIRED"
+      "status": "DECIDED -- OPTION C",
+      "decision_date": "12 september 2026",
+      "canonical_definitions": {
+        "trainingsbelasting": "Historische trainingsbelasting / volume / load / trend over tijd. Canonical bron: s-stats (7-daags volume/load, niet-interactief, historisch overzicht).",
+        "spierbelasting_herstel": "Actuele lichaams-/spierbelasting en herstelstatus. Canonical bron: s-lich-spieren (interactief, actuele herstel%-weergave per spiergroep)."
+      },
+      "note": "Semantisch/architectureel besluit, canoniek vastgelegd. GEEN zichtbare label-/IA-/visuele wijziging in deze PR -- de uitwerking valt onder PO-01-UX (zie functional_issues/follow_ups) en vereist de bestaande visual PO-gate (ANALYSIS -> DESIGN -> RENDERED PREVIEW -> PO APPROVAL -> IMPLEMENTATION). E-04 blijft AMBER totdat die uitwerking bewezen is."
     },
     {
       "id": "PO-02",
@@ -2470,7 +2485,26 @@
       ],
       "risk": "Laag-middel: onboarding is een eenmalig, kort-levend traject per gebruiker (geen herhaald gebruik), dus de praktische impact van een gemiste Back-stap is beperkt tot die ene sessie. Wel structureel aanwezig voor 100% van de nieuwe gebruikers.",
       "inclusion_rationale": "VOOR opname: consistentie met R-001/R-009 zou vereisen dat elke navigatie-actie in de app auditeerbaar is, ook onboarding. TEGEN nu opnemen: zou de PO-geverifieerde 91-telling van Wave 1/2 wijzigen zonder voorafgaande PO-goedkeuring voor scope-uitbreiding, en onboarding was expliciet nooit in de oorspronkelijke auditopdracht inbegrepen.",
-      "status": "PO DECISION REQUIRED -- niet stilzwijgend toegevoegd aan de 91"
+      "status": "DECIDED -- OPTION B",
+      "decision_date": "12 september 2026",
+      "governance_decision": "Onboarding wordt NIET toegevoegd aan de bestaande 91 normale app-route-contracts, en ook NIET bewust buiten navigatie-governance gehouden. Onboarding krijgt een aparte, toekomstige Onboarding/Lifecycle Route Map -- architectonisch niet hetzelfde als normale ingelogde app-navigatie (eigen auth/lifecycle-semantiek), maar wel relevant voor vrijwel iedere nieuwe gebruiker en dus formeel te testen/beheren. De canonical 91-route-map (dit document) blijft daardoor zuiver beperkt tot normale, ingelogde in-app-navigatie.",
+      "ev_02_disposition": "TRANSFERRED TO ONBOARDING/LIFECYCLE ROUTE GOVERNANCE -- niet genegeerd, niet stilzwijgend opgelost; EV-02 vormt de eerste bewezen finding voor de toekomstige Onboarding/Lifecycle Route Map.",
+      "onboarding_lifecycle_route_map_future_scope": [
+        "intake entry",
+        "intakeValueCTA()",
+        "intakeGoHome()",
+        "alle drie bewezen fysieke navigation actions (Naar mijn start, Bekijk mijn trainingen, klassieke wizard-terugval)",
+        "auth-state transitions",
+        "first-login behavior",
+        "onboarding complete",
+        "skip/cancel indien bestaand",
+        "browser Back",
+        "Android Back",
+        "deep/direct entry",
+        "lifecycle state",
+        "resume na interruption",
+        "failure/degraded states"
+      ]
     }
   ],
   "open_evidence": [
@@ -2569,8 +2603,8 @@
     "unique_root_causes": 7,
     "p2_instances": 0,
     "p3_instances": 4,
-    "functional_data_issues": 1,
-    "po_decisions_required": 2,
+    "functional_data_issues": 2,
+    "po_decisions_required": 0,
     "dead_unreachable_registrations": 3,
     "non_existent_registrations": 7,
     "p1_instances_open": 0,

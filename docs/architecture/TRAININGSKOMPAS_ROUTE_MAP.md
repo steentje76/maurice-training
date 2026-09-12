@@ -6,13 +6,16 @@ Consolidatie van de Fase 0 / 0B / 0C action-level navigatie-audits.
 Read-only bewijs, geen enkele fix uitgevoerd tijdens de audit-passen.
 Zie `TRAININGSKOMPAS_ROUTE_RULES.md` voor de invariants.
 
-**LAST_VERIFIED_SHA (main): `7d0a9d001b60fcb110d4820fc55c06a1515b244e`**
+**LAST_VERIFIED_SHA (main): `5781ae7e1df76eeebb36e04482a8c926e5a38bef`**
 (APP_VER v4.69.75)
 
 **WAVE 1 (gemerged, PR #333) — RC-OVL-01 en RC-OVL-02 gerepareerd.**
-**WAVE 2 (branch `fix/navigation-root-cause-wave-2`) — RC-NAV-01, RC-NAV-02,
-RC-NAV-03 en RC-OVL-03 gerepareerd.** Zie §2a/§2b hieronder. Enige nog open
-root cause: RC-IA-01 (P3, presentatie-debt, geen navigatie-root-cause).
+**WAVE 2 (gemerged, PR #334) — RC-NAV-01, RC-NAV-02, RC-NAV-03 en RC-OVL-03
+gerepareerd.** Zie §2a/§2b hieronder. Enige nog open root cause: RC-IA-01
+(P3, presentatie-debt, geen navigatie-root-cause).
+
+**NAVIGATION & JOURNEY AUDIT: FORMALLY CLOSED (12 september 2026).**
+PO-01 DECIDED — OPTIE C. PO-02 DECIDED — OPTIE B. Zie §10-§12.
 
 **AUDITED DOMAINS: A (Vandaag) · B (Trainen Hub) · D (Coach) · E (Inzicht) ·
 F (Samen) · G (Profiel)**
@@ -654,13 +657,26 @@ bewust AMBER (E-06/FD-01, B-04, D-06).
 | Visuele impact | Geen | Geen | Klein (1 extra rij op Inzicht) |
 | Risico | Laag, maar lost de ambiguïteit niet op | Laag | Laagst qua duidelijkheid, iets meer werk |
 
-**Aanbeveling: Optie B.** Het woord "Belasting" sluit taalkundig en qua
-gebruikersverwachting beter aan bij actuele spierbelasting/herstel dan bij
-historisch trainingsvolume, en de bestemming (`s-lich-spieren`) is al
-interactief en actueel — een betere match voor een kaart die om actie/inzicht
-vraagt. Optie C is een geldig alternatief als de PO ook "historische
-belasting" apart zichtbaar wil houden. **Geen wijziging doorgevoerd** — wacht
-op expliciete PO-keuze.
+**Aanbeveling (destijds): Optie B.**
+
+**PO-BESLUIT (12 september 2026): OPTIE C — DECIDED.**
+
+De begrippen zijn canoniek gesplitst tot twee verschillende productconcepten:
+
+- **Trainingsbelasting** = historische trainingsbelasting / volume / load /
+  trend over tijd. Canonical bron: `s-stats` (7-daags volume/load,
+  niet-interactief, historisch overzicht).
+- **Spierbelasting / Herstel** = actuele lichaams-/spierbelasting en
+  herstelstatus. Canonical bron: `s-lich-spieren` (interactief, actuele
+  herstel%-weergave per spiergroep).
+
+Dit is in deze closure-sprint uitsluitend een **semantisch/architectureel
+besluit** — canoniek vastgelegd in `po_decisions` (JSON). **Geen zichtbare
+label-/IA-/visuele wijziging doorgevoerd.** De uitwerking is geregistreerd
+als vervolgactie **PO-01-UX** (zie `functional_issues` in de JSON) en vereist
+de bestaande visual PO-gate (ANALYSIS → DESIGN → RENDERED PREVIEW → PO
+APPROVAL → IMPLEMENTATION) vóór enige implementatie. **E-04 blijft AMBER**
+totdat die uitwerking is doorgevoerd en bewezen.
 
 ### 10d. Training direct-nav follow-up (analytisch, geen codewijziging)
 
@@ -705,19 +721,31 @@ E-06 blijft AMBER (D, functional/data architecture). Geen databasewijziging,
 geen migratiepad in deze sprint — dit vereist een aparte, dedicated
 data-architectuursprint met AI Coach/Calculation-Engine-impactanalyse.
 
-### 10f. PO-02 — Onboarding Route Map scope (beslisvoorstel, herhaling/verfijning)
+### 10f. PO-02 — Onboarding Route Map scope
 
-Reeds vastgelegd in `po_decisions` (PO-02). Aanbeveling **Optie C** (bewust
-buiten de canonical App Shell Route Map houden, met expliciete rationale):
-onboarding is een eenmalige, pre-primary-navigation lifecycle-fase (vóór de
-5-tabs-shell actief is), functioneel en levenscyclus-technisch wezenlijk
-anders dan de 91 audited in-app-navigatiecontracten. Optie A (toevoegen aan
-de bestaande 91) zou de betekenis van "canonical primary navigation audit"
-verwateren met een niet-vergelijkbare categorie. Optie B (aparte
-lifecycle/auth route map) is inhoudelijk het zuiverst, maar is zelf een
-nieuw document/proces dat een eigen PO-goedkeuring verdient vóórdat het wordt
-opgetuigd. **Geen scope-uitbreiding doorgevoerd** — wacht op expliciete
-PO-keuze.
+**Aanbeveling (destijds): Optie C.**
+
+**PO-BESLUIT (12 september 2026): OPTIE B — DECIDED.**
+
+Onboarding wordt **niet** toegevoegd aan de bestaande 91 normale
+app-route-contracts, en ook **niet** bewust buiten navigatie-governance
+gehouden. Besluit: **onboarding krijgt een aparte Onboarding/Lifecycle
+Route Map.** Reden: onboarding is relevant voor vrijwel iedere nieuwe
+gebruiker en heeft eigen auth-/lifecycle-semantiek, dus hoort formeel getest
+en beheerd te worden — maar is architectonisch niet hetzelfde als normale
+ingelogde app-navigatie. De canonical 91-route-map (dit document) blijft
+daardoor zuiver beperkt tot normale, ingelogde in-app-navigatie.
+
+**PO-02: DECIDED — OPTION B.**
+**EV-02: TRANSFERRED TO ONBOARDING/LIFECYCLE ROUTE GOVERNANCE** — niet
+genegeerd, niet stilzwijgend opgelost. EV-02 vormt de eerste bewezen finding
+voor de toekomstige Onboarding/Lifecycle Route Map. Toekomstige scope
+minimaal (vastgelegd in `po_decisions` → `onboarding_lifecycle_route_map_future_scope`,
+JSON): intake entry, `intakeValueCTA()`, `intakeGoHome()`, alle drie
+bewezen fysieke navigation actions, auth-state transitions, first-login
+behavior, onboarding complete, skip/cancel, browser Back, Android Back,
+deep/direct entry, lifecycle state, resume na interruption,
+failure/degraded states. **Geen onboarding-code gewijzigd in deze PR.**
 
 ### 10g. Presentation debt registry (geen navigatie-impact, geen wijziging nu)
 
@@ -753,9 +781,33 @@ input voor een latere, aparte polish-/presentation-sprint.
 - **0 RED** ✅
 - **0 onverklaarde UNKNOWN** ✅ (A-11 volledig getraceerd en geclassificeerd)
 - **Alle 8 AMBER inhoudelijk geclassificeerd** ✅ (zie 10b) — geen kunstmatige
-  GREEN, 2 vereisen expliciete PO-beslissing (E-04/PO-01, onboarding/PO-02),
-  de overige zijn bewust AMBER (presentatie, data-architectuur, of vereisen
-  productwerk buiten navigatie-scope).
+  GREEN.
+- **PO-01: DECIDED — OPTIE C** ✅ (12 september 2026) — Trainingsbelasting
+  ≠ Spierbelasting/Herstel, canoniek vastgelegd. Zichtbare uitwerking
+  geregistreerd als vervolgactie PO-01-UX, vereist de visual PO-gate.
+  E-04 blijft AMBER tot die uitwerking bewezen is.
+- **PO-02: DECIDED — OPTIE B** ✅ (12 september 2026) — aparte
+  Onboarding/Lifecycle Route Map. EV-02 TRANSFERRED TO ONBOARDING/LIFECYCLE
+  ROUTE GOVERNANCE (niet genegeerd, niet stilzwijgend opgelost).
 
-**Navigation & Journey Audit: FORMEEL AFSLUITBAAR**, met twee openstaande
-Product Owner-beslissingen (PO-01, PO-02) die apart worden voorgelegd.
+## 12. NAVIGATION & JOURNEY AUDIT — FORMALLY CLOSED
+
+Residuals bij closure:
+
+- 0 RED
+- 0 UNKNOWN
+- 8 verklaarde AMBERs (A-10, A-11, B-04, D-06, E-02, E-04, E-06, E-08)
+- PO-01 besloten (Optie C) — zichtbare uitwerking (PO-01-UX) doorgeschoven
+  naar de UX/UI-polishfase, met de bestaande visual PO-gate
+- PO-02 besloten (Optie B) — onboarding doorgeschoven naar een aparte
+  toekomstige Onboarding/Lifecycle Route Map, EV-02 als eerste finding
+  daarvoor
+- Nutrition FD-01 doorgeschoven naar een aparte data-architectuursprint
+- Training direct-nav (startT()-familie, A-11) doorgeschoven als
+  TECHNICAL DEBT / FUTURE HARDENING
+- Presentation debt doorgeschoven naar de UX/UI-polishfase
+
+**"Closed" betekent**: geen onbekende of ongeclassificeerde
+navigation-blocker meer aanwezig in de canonical 91-contract-scope.
+**"Closed" betekent NIET**: alle toekomstige UX/IA/presentation-debt is
+opgelost — die punten zijn expliciet doorgeschoven, niet verdwenen.

@@ -1,7 +1,7 @@
 {
   "metadata": {
     "status": "CANONICAL - SOURCE OF TRUTH",
-    "last_verified_sha": "b7b72b9adaae69a62e8ca8bb03097681269b6d5f",
+    "last_verified_sha": "7d0a9d001b60fcb110d4820fc55c06a1515b244e",
     "app_ver": "v4.69.75",
     "audited_domains": [
       "A",
@@ -417,21 +417,21 @@
       "visible_label": "Verder met programma",
       "element_type": "card",
       "active_status": "CONDITIONAL",
-      "handler": "startProgramBlockTraining()->maybeShowScheduleGate()",
-      "destination": "onbekend (EV-01)",
+      "handler": "startProgramBlockTraining()->maybeShowScheduleGate()->openProgCheckin()/m-prog-schedule->pchkSubmit()/pchkSkip()->evaluateProgAdjustment()->m-prog-advies/m-prog-intro->launchProgramTrainScreen()",
+      "destination": "s-train-prog-<blockId> (via launchProgramTrainScreen())",
       "primary_tab_owner": "Vandaag",
       "expected_parent": "s-home",
-      "expected_return_target": null,
-      "in_app_back": "UNKNOWN",
-      "android_back": "UNKNOWN",
+      "expected_return_target": "s-home (waarschijnlijk, niet canonical gegarandeerd)",
+      "in_app_back": "n/a (eindscherm is trainingsuitvoering)",
+      "android_back": "AMBER (zelfde klasse als startT()-familie: launchProgramTrainScreen() activeert s-train-prog-<blockId> via directe .scr-manipulatie, niet via go())",
       "overlay_type": null,
       "state_preserved": null,
       "external_exit_risk": false,
       "duplication_class": null,
-      "nav_status": "UNKNOWN",
-      "severity": null,
-      "root_cause_id": null,
-      "code_evidence": "index.html:28991",
+      "nav_status": "AMBER",
+      "severity": "P3",
+      "root_cause_id": "TRAINING-DIRECTNAV-DEBT",
+      "code_evidence": "index.html: startProgramBlockTraining (29037) -> maybeShowScheduleGate (17650) -> launchProgramTrainScreen (29262, directe .scr-activatie regel ~29330)",
       "instance_count": 1,
       "last_verified_sha": "88d65878fb6788e1ff7784d80a7e1dfb2ae033fb"
     },
@@ -2477,8 +2477,8 @@
     {
       "id": "EV-01",
       "action_id": "A-11",
-      "description": "Verder met programma -> startProgramBlockTraining() -> maybeShowScheduleGate(); finale bestemming niet herleid.",
-      "nav_status": "UNKNOWN"
+      "description": "Verder met programma -> volledig getraceerd (Navigation & IA Closure Sprint): startProgramBlockTraining()->maybeShowScheduleGate()->openProgCheckin()/m-prog-schedule->pchkSubmit()/pchkSkip()->evaluateProgAdjustment()->m-prog-advies/m-prog-intro->launchProgramTrainScreen()->s-train-prog-<blockId>. Bestemming bewezen, maar launchProgramTrainScreen() activeert het scherm via dezelfde directe .scr-bypass als de startT()-familie (TRAINING-DIRECTNAV-DEBT), dus geen canonical GREEN.",
+      "nav_status": "AMBER"
     }
   ],
   "dead_unreachable": [
@@ -2563,9 +2563,9 @@
   "totals": {
     "navigation_action_contracts": 91,
     "green": 83,
-    "amber": 7,
+    "amber": 8,
     "red": 0,
-    "unknown": 1,
+    "unknown": 0,
     "unique_root_causes": 7,
     "p2_instances": 0,
     "p3_instances": 4,

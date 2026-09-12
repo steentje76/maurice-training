@@ -13,6 +13,7 @@ import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.getcapacitor.JSObject;
@@ -132,7 +133,7 @@ public class TkBarcodeScannerPlugin extends Plugin {
     public void cameraPermissionStatus(PluginCall call) {
         JSObject ret = new JSObject();
         ret.put("camera", getPermissionState("camera").toString());
-        ret.put("canRequestAgain", shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) || getPermissionState("camera") != PermissionState.DENIED);
+        ret.put("canRequestAgain", ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.CAMERA) || getPermissionState("camera") != PermissionState.DENIED);
         call.resolve(ret);
     }
 
@@ -158,7 +159,7 @@ public class TkBarcodeScannerPlugin extends Plugin {
         // weigering -- dat combineren we hier server-/native-side, zodat de
         // JS-kant (resolvePermissionUiState) geen aparte Android-API hoeft
         // te kennen (sectie 11, state D).
-        boolean canAskAgain = state == PermissionState.GRANTED || shouldShowRequestPermissionRationale(Manifest.permission.CAMERA);
+        boolean canAskAgain = state == PermissionState.GRANTED || ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.CAMERA);
         ret.put("canRequestAgain", canAskAgain);
         call.resolve(ret);
     }

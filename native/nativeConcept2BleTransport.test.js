@@ -36,6 +36,7 @@ function makeMockGateway(cfg) {
     scanned: cfg.scanned || [],
     connected: false,
     disconnectCb: null,
+    lastScanServices: null,
     calls: { scan: 0, stopScan: 0, connect: 0, disconnect: 0, startNotif: 0, stopNotif: 0, read: 0 }
   };
   var gw = {
@@ -44,6 +45,7 @@ function makeMockGateway(cfg) {
     requestPermission: function () { state.permission = cfg.grantOnRequest === false ? 'denied' : 'granted'; return Promise.resolve(state.permission); },
     scan: function (svc, onResult) {
       state.calls.scan++;
+      state.lastScanServices = Array.isArray(svc) ? svc.slice() : svc;
       state.scanned.forEach(function (d) { onResult(d); });
       return Promise.resolve();
     },
@@ -78,7 +80,7 @@ function makeTransport(cfg) {
   // 1. contract-vorm
   var c = makeTransport().t;
   eq(c.available, true, 'available===true');
-  ['getPermissionState','discover','connect','disconnect','getStatus','getDeviceInfo',
+  ['getPermissionState','discover','getLastDiscoveryDiagnostics','connect','disconnect','getStatus','getDeviceInfo',
    'subscribeMetrics','unsubscribeMetrics','subscribeConnection','getCurrentMetrics','reset']
    .forEach(function (m) { ok(typeof c[m] === 'function', 'contract-methode ' + m); });
 
@@ -86,7 +88,7 @@ function makeTransport(cfg) {
   var uuids = c._notifyChars.map(function (n) { return String(n.uuid).toUpperCase(); });
   ok(uuids.some(function (u) { return u.indexOf('CE060035') === 0; }), 'notify bevat strokeData 0x0035');
   ok(uuids.some(function (u) { return u.indexOf('CE060022') === 0; }), 'notify bevat CSAFE transmit 0x0022');
-  ok(c._scanServiceUuids.length >= 1, 'scan-filter heeft minstens 1 service-UUID');
+  ok(c._scanServiceUuids.length >= 1, 'software-classificatie kent Concept2 service-UUIDs');
 
   // 3. alle decoders standaard UNKNOWN (geen gegokte decoder)
   var ds = c.decoderStatus();
@@ -106,17 +108,28 @@ function makeTransport(cfg) {
   var denyP = makeTransport({ permission: 'denied' });
   denyP.t.refreshPermissionState().then(function (s) { eq(s, 'denied', 'refresh: geweigerd -> denied'); });
 
-  // 5. discovery mapt scan-resultaten -> {id,name,machineType:'unknown',rssi}
+  // 5. discovery scant OS-ongefilterd en classificeert uitsluitend op geadverteerde C2-service-UUIDs
+  var pmDataUuid = Concept2Live.CONCEPT2_BLE_UUIDS.services.pmData.uuid;
+  var deviceInfoUuid = Concept2Live.CONCEPT2_BLE_UUIDS.services.deviceInfo.uuid;
   var dsc = makeTransport({ scanned: [
-    { deviceId: 'AA:BB:CC:11:22:33', name: 'PM5 430', rssi: -60 },
-    { deviceId: 'AA:BB:CC:11:22:33', name: 'PM5 430', rssi: -60 }, // duplicate -> 1
-    { deviceId: 'DD:EE:FF:44:55:66', name: 'PM5', rssi: -75 }
+    { deviceId: 'AA:BB:CC:11:22:33', name: 'PM5 430', rssi: -60, uuids: [pmDataUuid] },
+    { deviceId: 'AA:BB:CC:11:22:33', name: 'PM5 430', rssi: -60, uuids: [pmDataUuid] }, // duplicate -> 1 resultaat
+    { deviceId: 'DD:EE:FF:44:55:66', name: 'PM5', rssi: -75, uuids: [deviceInfoUuid] },
+    { deviceId: '11:22:33:44:55:66', name: 'PM5 fake name', rssi: -50, uuids: ['0000180d-0000-1000-8000-00805f9b34fb'] }
   ]});
   dsc.t.discover({ scanMs: 10 }).then(function (list) {
-    eq(list.length, 2, 'discovery dedupliceert op deviceId');
+    eq(dsc.gw._state.lastScanServices.length, 0, 'Concept2 discovery gebruikt GEEN OS-level servicefilter');
+    eq(list.length, 2, 'discovery accepteert C2-advertenties, dedupliceert en sluit niet-C2 uit');
     ok(list[0].machineType === 'unknown', 'discovery machineType=unknown (niet gegokt pre-connect)');
     ok(typeof list[0].rssi === 'number', 'discovery levert rssi door');
     eq(dsc.gw._state.calls.stopScan, 1, 'discovery stopt de scan');
+    var diag = dsc.t.getLastDiscoveryDiagnostics();
+    eq(diag.permissionState, 'granted', 'diagnostiek bevat permissionstatus');
+    eq(diag.advertisementsSeen, 4, 'diagnostiek telt alle BLE-advertenties');
+    eq(diag.devices.length, 4, 'diagnostiek bevat elk gezien device');
+    eq(diag.devices.filter(function (d) { return d.matched; }).length, 3, 'diagnostiek markeert alleen C2-UUID-advertenties als match');
+    ok(diag.devices.some(function (d) { return !d.matched && d.name === 'PM5 fake name'; }), 'device-naam alleen is NOOIT voldoende voor Concept2-classificatie');
+    ok(diag.devices.every(function (d) { return d.deviceIdMasked && d.deviceIdMasked.charAt(0) === '…'; }), 'diagnostiek maskeert device-id');
   });
 
   // 6. discovery met bluetooth uit -> reject bluetooth_off, geen scan
@@ -172,7 +185,6 @@ function makeTransport(cfg) {
     ok(canon && canon.exerciseId === 'roeien', 'raw -> Concept2Live.normalizeLiveMetric -> exerciseId roeien');
 
     // 12. reconnect-signaal bij echte disconnect tijdens connected (workout NIET resetten)
-    var before = connEvents.length;
     cn.gw._fireDisconnect();
     ok(connEvents[connEvents.length - 1] === 'reconnecting', 'gateway-disconnect tijdens connected -> reconnecting');
 

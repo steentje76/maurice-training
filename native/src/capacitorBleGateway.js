@@ -13,6 +13,7 @@
  * scan falen -> de adapter surft dat door als fout (nooit fake 'connected').
  */
 import { BleClient } from '@capacitor-community/bluetooth-le';
+import './developerMode.mjs';
 
 function lc(u) { return String(u || '').toLowerCase(); }
 
@@ -22,7 +23,7 @@ export function makeCapacitorBleGateway(options) {
 
   async function ensureInit() {
     if (initialized) return;
-    // androidNeverForLocation: we scannen op service-UUID's, geen locatie-afleiding.
+    // androidNeverForLocation: TK gebruikt scanresultaten niet voor locatie-afleiding.
     await BleClient.initialize({ androidNeverForLocation: true });
     initialized = true;
   }
@@ -47,10 +48,12 @@ export function makeCapacitorBleGateway(options) {
         { services, allowDuplicates: false },
         (result) => {
           if (!result || !result.device) return;
+          const uuids = Array.isArray(result.uuids) ? result.uuids.map(lc) : [];
           onResult({
             deviceId: result.device.deviceId,
             name: result.localName || result.device.name || null,
-            rssi: (typeof result.rssi === 'number') ? result.rssi : null
+            rssi: (typeof result.rssi === 'number') ? result.rssi : null,
+            uuids
           });
         }
       );

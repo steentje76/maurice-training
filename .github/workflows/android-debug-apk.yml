@@ -1,0 +1,80 @@
+name: Android Debug APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'feature/android-debug-apk'
+
+permissions:
+  contents: read
+
+jobs:
+  build-debug-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK platform 36
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync Capacitor Android assets
+        run: npm run cap:sync
+
+      - name: Verify native BLE transport and permissions
+        run: |
+          test -f android/app/src/main/assets/public/native-transport.js
+          grep -q "@capacitor-community/bluetooth-le" android/capacitor.settings.gradle
+          grep -q "android.permission.BLUETOOTH_SCAN" android/app/src/main/AndroidManifest.xml
+          grep -q "android.permission.BLUETOOTH_CONNECT" android/app/src/main/AndroidManifest.xml
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x android/gradlew
+
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Record provenance and SHA-256
+        run: |
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -f "$APK"
+          git rev-parse HEAD > android-debug-apk-commit.txt
+          sha256sum "$APK" > app-debug.apk.sha256
+          cat android-debug-apk-commit.txt
+          cat app-debug.apk.sha256
+
+      - name: Upload debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trainingskompas-android-debug-${{ github.sha }}
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            app-debug.apk.sha256
+            android-debug-apk-commit.txt
+          if-no-files-found: error
+          retention-days: 7

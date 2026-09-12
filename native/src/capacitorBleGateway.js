@@ -80,7 +80,7 @@ export function makeCapacitorBleGateway(options) {
       try { await BleClient.stopNotifications(deviceId, lc(service), lc(characteristic)); } catch (e) {}
     },
     async read(deviceId, service, characteristic) {
-      return await BleClient.read(deviceId, lc(service), lc(characteristic);
+      return await BleClient.read(deviceId, lc(service), lc(characteristic));
     },
     async readRssi(deviceId) {
       try { return await BleClient.getBondedDevices ? await BleClient.readRssi(deviceId) : null; }

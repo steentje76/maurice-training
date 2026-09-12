@@ -1627,3 +1627,64 @@
 - **Verantwoordelijke:** Product Owner (expliciete Wave 2-opdracht, 12
   september 2026), uitgevoerd door Claude.
 
+## Navigation & Journey Audit -- formele closure + PO-01/PO-02
+
+- **Datum:** 12 september 2026.
+- **A-11 (UNKNOWN) volledig getraceerd**: startProgramBlockTraining() ->
+  maybeShowScheduleGate() -> ... -> launchProgramTrainScreen() ->
+  s-train-prog-<blockId>. Bestemming bewezen; UNKNOWN -> AMBER (niet
+  GREEN, deelt de startT()-directe-.scr-bypass, geen kunstmatige status).
+- **Alle 8 AMBER-contracts** opnieuw onderzocht, elk exact één
+  classificatie (navigation defect / IA-semantiek / presentatie-debt /
+  functional-data-architectuur / intentional product behavior /
+  insufficient evidence). Geen enkele kunstmatig GREEN gemaakt.
+- **PO-01: DECIDED -- OPTIE C.** Trainingsbelasting (historisch
+  volume/load/trend, s-stats) en Spierbelasting/Herstel (actuele
+  lichaams-/spierstatus, s-lich-spieren) canoniek gesplitst. Zichtbare
+  uitwerking als PO-01-UX geregistreerd, vereist de visual PO-gate.
+- **PO-02: DECIDED -- OPTIE B.** Onboarding krijgt een aparte
+  Onboarding/Lifecycle Route Map, niet toegevoegd aan de 91. EV-02
+  TRANSFERRED TO ONBOARDING/LIFECYCLE ROUTE GOVERNANCE.
+- Route Map: 91 total, 83 GREEN, 8 AMBER, 0 RED, 0 UNKNOWN.
+  Doc-consistency 0. Geen code-/database-/visuele wijziging (documentatie-
+  only sprint).
+- **Verantwoordelijke:** Product Owner (PO-01/PO-02-besluiten, 12
+  september 2026), uitgevoerd door Claude.
+
+## UX Polish Sprint 01 -- Inzicht + Belasting/Herstel + PO-01-UX
+
+- **Datum:** 12 september 2026.
+- **Context:** eerste sprint van de echte UX/UI-polishfase. Workflow
+  gevolgd: ANALYSIS -> DESIGN -> RENDERED PREVIEW -> PO VISUAL APPROVAL
+  -> IMPLEMENTATION (PO keurde Variant A goed vóór enige codewijziging).
+- **PO-01 zichtbaar geïmplementeerd**: Inzicht-domeinkaart "Belasting" ->
+  "Trainingsbelasting"; Lichaam-tab "Belasting" -> "Spierbelasting"
+  (symmetrisch). Bestaande information hierarchy, period-selector,
+  summary, domeinenlijst, anatomische figuur, Herstel-tab, voor-/
+  achterzijde en alle onderliggende data/berekeningen ongewijzigd.
+- **Presentation debt**: verouderde "Preview: nieuw Inzicht-scherm"-
+  banner op Lichaam verwijderd (stale sinds Inzicht al primaire tab is).
+  7 emoji-iconen op het Lichaam-hoofdscherm vervangen door bestaande
+  canonical SVG-lijniconen (designSystemIcons.js-registry) -- geen
+  nieuwe iconenset. Cyclus (🌙) en Voeding-snelkoppeling (🍽️) hebben
+  bewust geen canonical equivalent en zijn niet aangepast (expliciet
+  resterende debt).
+- **RC-IA-01 opgelost** (E-02, E-04, E-08, A-10: -> GREEN, bewezen):
+  drie nieuwe deep-link-functies (goInzichtPrestaties(),
+  goInzichtTrainingsbelasting(), goInzichtDoelen()), zelfde bestaande
+  scroll-patroon als openHelpFeedback(), naar drie bestaande, semantisch
+  overeenkomende secties in s-stats. Geen nieuwe schermen, geen nieuwe
+  data.
+- **Tests**: nieuw core/fUxPolishSprint01.test.js (40/40). Drie
+  bestaande tests root-cause aangepast aan de presentatiewijzigingen
+  (fGezondheidsgegevens, fLichaamPhase0: emoji->SVG-marker;
+  fInzichtV01BrowserRuntime: navigatie via canonical bottom-nav-tab
+  i.p.v. de verwijderde banner) -- geen verzwakking.
+- Route Map: 91 total, 87 GREEN, 4 AMBER, 0 RED, 0 UNKNOWN (was
+  83/8/0/0). RC-IA-01 FIXED -- geen open navigatie-root-causes meer.
+  Volledige regressie 363/363 (was 362, +1 testbestand). Doc-consistency
+  0. Geen databasewijziging, geen Nutrition-wijziging, geen Training-
+  execution-wijziging. APP_VER v4.69.75 -> v4.69.76.
+- **Verantwoordelijke:** Product Owner (visuele goedkeuring vóór
+  implementatie, 12 september 2026), uitgevoerd door Claude.
+

@@ -87,18 +87,20 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     await page.goto(url);
     await page.waitForTimeout(600);
 
-    // PREVIEW ACCESS CHECK (PR #232 follow-up): daadwerkelijke, echte tap-
-    // navigatie vanaf Lichaam via de tijdelijke preview-knop, GEEN directe
-    // go()-aanroep. Bewijst dat de Product Owner het scherm ook echt kan
-    // bereiken vanuit de Netlify Preview zonder bottom-nav-migratie.
-    await page.evaluate(() => { if (typeof go === 'function') go('s-lichaam'); });
+    // PREVIEW ACCESS CHECK -- HISTORISCH (PR #232). De tijdelijke preview-knop
+    // is verwijderd in UX Polish Sprint 01: Inzicht is sinds de App Shell-
+    // migratie een primaire bottom-nav-tab, dus de tijdelijke, expliciet als
+    // stale gemarkeerde toegang is niet langer nodig. Bewijst nu hetzelfde
+    // doel (echte tap-navigatie, geen directe go()-aanroep) via de canonical
+    // bottom-nav-tab.
+    await page.evaluate(() => { if (typeof go === 'function') go('s-home'); });
     await page.waitForTimeout(400);
-    const previewBtnExists = await page.evaluate(() => Array.from(document.querySelectorAll('#s-lichaam button')).some(b => b.textContent.includes('Preview: nieuw Inzicht-scherm')));
-    ok(previewBtnExists, '19: de tijdelijke preview-toegangsknop is zichtbaar op het bestaande Lichaam-scherm (geen bottom-nav-wijziging)');
-    await page.click('#s-lichaam >> text=Preview: nieuw Inzicht-scherm (v0.1)');
+    const inzichtTabExists = await page.evaluate(() => Array.from(document.querySelectorAll('.scr.active nav.bnav button')).some(b => b.textContent.includes('Inzicht')));
+    ok(inzichtTabExists, '19: de canonical Inzicht-tab is zichtbaar in de bottom-nav op het actieve scherm');
+    await page.click('.scr.active nav.bnav >> text=Inzicht');
     await page.waitForTimeout(700);
     const reachedViaRealTap = await page.evaluate(() => document.querySelector('.scr.active')?.id === 's-inzicht');
-    ok(reachedViaRealTap, '20: een echte, daadwerkelijke tap-navigatie (Lichaam -> preview-knop) bereikt s-inzicht -- geen directe go()-aanroep nodig, dus ook bruikbaar in de Netlify Preview zelf');
+    ok(reachedViaRealTap, '20: een echte, daadwerkelijke tap-navigatie (bottom-nav Inzicht-tab) bereikt s-inzicht -- geen directe go()-aanroep nodig');
     const fullText = await page.evaluate(() => document.getElementById('s-inzicht')?.innerText || '');
     ['Inzicht','Jouw ontwikkeling en herstel','7 dagen','4 weken','3 maanden','Alle sporten','JOUW ONTWIKKELING','SNEL OVERZICHT','DOMEINEN','RECENTE INZICHTEN'].forEach(function(txt){
       ok(fullText.includes(txt), '21.' + txt + ': aanwezig in de daadwerkelijk, via tap bereikte s-inzicht-DOM');
@@ -123,7 +125,9 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
 
     // Domain-rows navigeren daadwerkelijk naar bestaande, bewezen bestemmingen.
     const targets = await page.evaluate(() => Array.from(document.querySelectorAll('#inzicht-domain-list .row')).map(r => r.getAttribute('onclick')));
-    ok(targets.some(t => /s-stats/.test(t)), '14: Prestaties-domeincard navigeert naar het bestaande s-stats-scherm');
+    ok(targets.some(t => /goInzichtPrestaties/.test(t)), '14: Prestaties-domeincard navigeert via goInzichtPrestaties() (entry-precisie, UX Polish Sprint 01)');
+    const prestatiesFnGoesToStats = await page.evaluate(() => typeof goInzichtPrestaties === 'function' && goInzichtPrestaties.toString().includes("go('s-stats')"));
+    ok(prestatiesFnGoesToStats, '14b: goInzichtPrestaties() navigeert intern nog steeds naar het bestaande s-stats-scherm');
     ok(targets.some(t => /s-lich-health/.test(t)), '15: Herstel-domeincard navigeert naar het bestaande s-lich-health-scherm');
     ok(targets.some(t => /s-lich-metingen/.test(t)), '16: Lichaam-domeincard navigeert naar het bestaande s-lich-metingen-scherm');
     ok(targets.some(t => /s-lich-verbanden/.test(t)), '17: Verbanden-domeincard navigeert naar het bestaande s-lich-verbanden-scherm');

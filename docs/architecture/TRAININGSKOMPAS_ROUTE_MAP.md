@@ -6,16 +6,22 @@ Consolidatie van de Fase 0 / 0B / 0C action-level navigatie-audits.
 Read-only bewijs, geen enkele fix uitgevoerd tijdens de audit-passen.
 Zie `TRAININGSKOMPAS_ROUTE_RULES.md` voor de invariants.
 
-**LAST_VERIFIED_SHA (main): `5781ae7e1df76eeebb36e04482a8c926e5a38bef`**
-(APP_VER v4.69.75)
+**LAST_VERIFIED_SHA (main): `ded9ba924307446a60245e0810680b246a2bdbee`**
+(APP_VER v4.69.76)
 
 **WAVE 1 (gemerged, PR #333) — RC-OVL-01 en RC-OVL-02 gerepareerd.**
 **WAVE 2 (gemerged, PR #334) — RC-NAV-01, RC-NAV-02, RC-NAV-03 en RC-OVL-03
-gerepareerd.** Zie §2a/§2b hieronder. Enige nog open root cause: RC-IA-01
-(P3, presentatie-debt, geen navigatie-root-cause).
+gerepareerd.** Zie §2a/§2b hieronder.
 
 **NAVIGATION & JOURNEY AUDIT: FORMALLY CLOSED (12 september 2026).**
 PO-01 DECIDED — OPTIE C. PO-02 DECIDED — OPTIE B. Zie §10-§12.
+
+**UX POLISH SPRINT 01 (12 september 2026)** — PO-01 zichtbaar geïmplementeerd
+(Inzicht "Belasting"→"Trainingsbelasting", Lichaam "Belasting"→
+"Spierbelasting"), stale preview-banner verwijderd, presentatie-emoji op
+Lichaam vervangen door canonical lijniconen, en RC-IA-01 (E-02/E-04/E-08/
+A-10 generieke landing) opgelost via deep-link naar bestaande secties. Zie
+§13 hieronder. **Geen open navigatie-root-causes meer.**
 
 **AUDITED DOMAINS: A (Vandaag) · B (Trainen Hub) · D (Coach) · E (Inzicht) ·
 F (Samen) · G (Profiel)**
@@ -33,15 +39,15 @@ domein herhaald hier).
 
 | Domein | Contracts | GREEN | AMBER | RED | UNKNOWN |
 |---|---|---|---|---|---|
-| A — Vandaag | 11 | 9 | 2 | 0 | 0 |
+| A — Vandaag | 11 | 10 | 1 | 0 | 0 |
 | B — Trainen Hub | 24 | 23 | 1 | 0 | 0 |
 | D — Coach | 13 | 12 | 1 | 0 | 0 |
-| E — Inzicht | 17 | 13 | 4 | 0 | 0 |
+| E — Inzicht | 17 | 16 | 1 | 0 | 0 |
 | F — Samen | 6 | 6 | 0 | 0 | 0 |
 | G — Profiel | 20 | 20 | 0 | 0 | 0 |
-| **TOTAAL (na Navigation & IA Closure Sprint)** | **91** | **83** | **8** | **0** | **0** |
+| **TOTAAL (na UX Polish Sprint 01)** | **91** | **87** | **4** | **0** | **0** |
 
-Controle: 83 + 8 + 0 + 0 = 91 ✓ (was vóór Wave 1: 65/7/18/1; na Wave 1: 71/7/12/1;
+Controle: 87 + 4 + 0 + 0 = 91 ✓ (was vóór Wave 1: 65/7/18/1; na Wave 1: 71/7/12/1;
 na Wave 2: 83/7/0/1; na Navigation & IA Closure Sprint: A-11 UNKNOWN -> AMBER,
 0 RED, 0 onverklaarde UNKNOWN resterend)
 
@@ -245,20 +251,26 @@ zonder de modal daadwerkelijk te sluiten.
 
 **Instances: 1**
 
-### RC-IA-01 — Meerdere kaarten landen ongedifferentieerd op dezelfde surface
-Specifiek gelabelde kaarten (Prestaties/Belasting/Doelen) claimen een
-deelonderwerp maar landen altijd bovenaan dezelfde lange `s-stats`-pagina,
-zonder anchor/scroll — terwijl de app elders (`openHelpFeedback()`) al een
-bewezen scroll-naar-sectie-patroon heeft.
+### RC-IA-01 — Meerdere kaarten landen ongedifferentieerd op dezelfde surface — **FIXED (UX Polish Sprint 01)**
+Specifiek gelabelde kaarten (Prestaties/Trainingsbelasting/Doelen) claimden
+een deelonderwerp maar landden altijd bovenaan dezelfde lange `s-stats`-
+pagina, zonder anchor/scroll.
 
-| Instantie | Actie-ID | Severity |
-|---|---|---|
-| Inzicht → Prestaties | E-02 | P3 |
-| Inzicht → Belasting | E-04 | P3 |
-| Inzicht → Doelen | E-08 | P3 |
-| Vandaag → Doelen-preview-kaart | A-10 | P3 |
+**Fix:** exact hetzelfde, al bewezen scroll-naar-sectie-patroon als
+`openHelpFeedback()` hergebruikt (`go()` + `requestAnimationFrame` +
+`scrollIntoView`+`focus()`), toegepast op drie bestaande, semantisch
+overeenkomende secties binnen `s-stats` (geen nieuwe schermen, geen nieuwe
+data): "Persoonlijke records" (Prestaties), "Trends" / Volume per
+spiergroep (Trainingsbelasting), "Doelen" (Doelen).
 
-**Instances: 4**
+| Instantie | Actie-ID | Severity | Nieuwe functie | Anchor |
+|---|---|---|---|---|
+| Inzicht → Prestaties | E-02 | ~~P3~~ FIXED | `goInzichtPrestaties()` | `#stats-anchor-prestaties` |
+| Inzicht → Trainingsbelasting | E-04 | ~~P3~~ FIXED | `goInzichtTrainingsbelasting()` | `#stats-anchor-belasting` |
+| Inzicht → Doelen | E-08 | ~~P3~~ FIXED | `goInzichtDoelen()` | `#stats-anchor-doelen` |
+| Vandaag → Doelen-preview-kaart | A-10 | ~~P3~~ FIXED | `goInzichtDoelen()` | `#stats-anchor-doelen` |
+
+**Instances: 4, alle 4 FIXED.**
 
 ### RC-DATA-01 — zie Functional/Data Architecture Issues (§3), geen gewone nav-root-cause.
 

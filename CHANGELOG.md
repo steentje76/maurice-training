@@ -1,5 +1,25 @@
 # Trainingskompas — Changelog
 
+## v4.69.74 — Samen V1: canonical redesign (12 september 2026)
+
+Samen (`s-social`) herbouwd naar een canonical tab-structuur (Overzicht/
+Feed/Vrienden/Groepen/Challenges) op basis van de PO-approved
+`samen-v0.1.png`-mock-up en een forensische inventarisatie van alle
+bestaande functionaliteit. Header omgezet naar het canonical Samen +
+avatar-patroon (was nog "Sociaal" + "Terug naar Home").
+
+Ruwe user-ID's (in connecties, volgverzoeken, feed-auteurs/comments,
+geblokkeerd-lijst) vervangen door de al bestaande `display_name`-kolom,
+met privacyveilige fallback. Emoji in de feed vervangen door canonical
+SVG-iconen. Social-profiel/bio/zichtbaarheid/thema en de geblokkeerd-lijst
+verplaatst naar een nieuw secondary modal.
+
+Geen nieuwe social-features, databasevelden, tabellen of RLS-wijzigingen.
+Alle bestaande handlers/RLS-aannames/allowlist-validaties ongewijzigd
+hergebruikt. Nieuwe test: `core/fSamenV1CanonicalRedesign.test.js`
+(47/47). Volledige regressie 360/360 (was 359, +1 nieuw testbestand).
+Doc-consistency 0. Geen databasewijziging. APP_VER v4.69.73 -> v4.69.74.
+
 ## v4.69.73 — UX App Shell Master Sprint: canonical primary navigation (11 september 2026)
 
 Primaire navigatie gemigreerd van Home/Training/Lichaam/Coach/Voortgang naar

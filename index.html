@@ -3741,7 +3741,12 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
 <!-- ═══ B9-07 · SOCIAL PRODUCT LAYER (Home → 👥 → Sociaal) ═══ -->
 <div class="scr" id="s-social">
-  <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Sociaal</div><div class="hdr-sub">Profiel, connecties &amp; privacy</div></div><button class="ibtn" onclick="go('s-home')" aria-label="Terug naar Home">←</button></div></div>
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title" role="heading" aria-level="1">Samen</div><div class="hdr-sub">Samen sporten, motiveren en groeien</div></div>
+      <button class="ibtn" onclick="go('s-profiel')" aria-label="Profiel openen"><svg class="tk-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
+    </div>
+  </div>
   <div class="scroll" id="social-scroll" style="padding:16px"></div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
@@ -6235,6 +6240,34 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </div>
 </div>
 
+<div class="modal-bg" id="m-social-instellingen" onclick="bgClose(event,'m-social-instellingen')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Mijn social-profiel</div>
+    <div style="font-size:12px;color:var(--g4);margin-bottom:10px">Hoe anderen je zien op Samen -- los van je accountprofiel.</div>
+    <div class="card" style="margin-bottom:12px"><div class="card-body">
+      <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Weergavenaam</label>
+      <input type="text" id="social-display-name" maxlength="60" style="width:100%;margin-bottom:10px" placeholder="Hoe anderen je zien">
+      <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Bio (optioneel)</label>
+      <textarea id="social-bio" maxlength="280" style="width:100%;margin-bottom:10px;min-height:60px"></textarea>
+      <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Zichtbaarheid</label>
+      <select id="social-visibility" style="width:100%;margin-bottom:12px">
+        <option value="private">Privé (niemand vindt je profiel)</option>
+        <option value="connections">Alleen connecties</option>
+        <option value="discoverable">Vindbaar (iedereen kan je profiel zien)</option>
+      </select>
+      <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Thema (cosmetisch, alleen zichtbaar op je Samen-profiel)</label>
+      <select id="social-theme-select" style="width:100%;margin-bottom:12px"></select>
+      <button class="btn btn-p" style="width:100%" onclick="socialSaveProfile()">Profiel opslaan</button>
+    </div></div>
+    <div class="card"><div class="card-hd"><div class="card-title">Geblokkeerd</div></div><div class="card-body" id="social-blocked-list">
+      <p style="font-size:13px;color:var(--g4);margin:0">Laden…</p>
+      <div style="font-size:11px;color:var(--g4);margin-top:8px">Blokkeren/rapporteren vanaf een profiel wordt uitgebreid in een volgende sprint.</div>
+    </div></div>
+    <div style="margin-top:12px"><button class="btn btn-o" onclick="closeModal('m-social-instellingen')">Sluiten</button></div>
+  </div>
+</div>
+
 <div class="modal-bg" id="m-export" onclick="bgClose(event,'m-export')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -7208,7 +7241,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.73';
+const APP_VER = 'v4.69.74';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -12476,6 +12509,7 @@ function openModal(id){
     renderGoalAddFields();
   }
   if(id==='m-training-preview')renderTrainingPreview();
+  if(id==='m-social-instellingen')socialLoadInstellingenModal();
   const m=document.getElementById(id);
   lastFocusedBeforeModal=document.activeElement;
   m.setAttribute('role','dialog');
@@ -13966,6 +14000,44 @@ async function coachDeletePrivateNote(noteId,athleteId){
   renderCoachPrivateNotesSection(athleteId);
 }
 
+// ══════════════════════════════════════════════════════════
+// SAMEN V1 (UX ≥9-sprint) -- canonical tab-structuur op de bestaande,
+// bewezen databronnen. GEEN nieuwe tabellen/RLS/features: uitsluitend
+// herindeling + het alsnog ophalen van de al bestaande display_name-kolom
+// waar eerder een ruwe user-ID zichtbaar was.
+// ══════════════════════════════════════════════════════════
+
+// Privacyveilige naamresolutie: dezelfde RLS-gefilterde social_profiles-
+// query als socialSearchProfiles() al gebruikt. Een ID die niet terugkomt
+// (RLS verbergt het profiel, of er is nog geen social-profiel aangemaakt)
+// krijgt een neutrale fallback -- NOOIT de ruwe ID tonen.
+async function socialResolveDisplayNames(userIds){
+  const map={};
+  const uniek=[...new Set(userIds)].filter(Boolean);
+  if(!uniek.length)return map;
+  let rows=[];
+  try{rows=await sbGet('social_profiles',`&user_id=in.(${uniek.join(',')})&select=user_id,display_name`);}catch(e){}
+  rows.forEach(r=>{map[r.user_id]=r.display_name;});
+  uniek.forEach(id=>{if(!map[id])map[id]='Sporter';});
+  return map;
+}
+function socialAvatarInitial(naam){
+  const n=(naam||'').trim();
+  return n?n.charAt(0).toUpperCase():'?';
+}
+function socialAvatarHtml(naam){
+  return `<div aria-hidden="true" style="width:32px;height:32px;border-radius:50%;background:var(--v43-mint);color:var(--accent);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex:0 0 auto">${escHtml(socialAvatarInitial(naam))}</div>`;
+}
+
+function socialSetTab(tab,btn){
+  window._socialTab=tab;
+  document.querySelectorAll('#s-social .tk-period-selector button').forEach(function(b){b.setAttribute('aria-selected', b===btn?'true':'false');});
+  ['overzicht','feed','vrienden','groepen','challenges'].forEach(function(t){
+    const p=document.getElementById('social-panel-'+t);
+    if(p)p.style.display=(t===tab)?'':'none';
+  });
+}
+
 async function renderSocialScreen(){
   const el=document.getElementById('social-scroll');
   if(!el)return;
@@ -13973,114 +14045,183 @@ async function renderSocialScreen(){
   const uid=authSession?.user?.id;
   if(!uid){el.innerHTML='<p style="font-size:13px;color:var(--g4)">Niet ingelogd.</p>';return;}
 
-  let profielRows=[],pendingIn=[],connections=[],blocks=[];
-  try{profielRows=await sbGet('social_profiles',`&user_id=eq.${uid}&limit=1`);}catch(e){}
+  let pendingIn=[],connections=[];
   try{pendingIn=await sbGet('social_connections',`&followee_id=eq.${uid}&status=eq.pending`);}catch(e){}
   try{connections=await sbGet('social_connections',`&status=eq.accepted&or=(follower_id.eq.${uid},followee_id.eq.${uid})`);}catch(e){}
-  try{blocks=await sbGet('social_blocks',`&blocker_id=eq.${uid}`);}catch(e){}
-  const profiel=profielRows&&profielRows[0]?profielRows[0]:null;
 
-  // B9-08 Social Intelligence: uitsluitend een pure aggregatie boven
-  // reeds RLS-gefilterde, geautoriseerde data (privacy vóór intelligence,
-  // sectie 4.2). Elke query hieronder is dezelfde als B9-07 al gebruikte
-  // -- geen nieuwe, bredere toegang. 'null' bij een fout, nooit een
-  // stille lege array die als "0" zou worden gelezen.
-  let activeChallengesRaw=null,unreadNotifsRaw=null,recentReactionsRaw=null;
+  // UNKNOWN blijft UNKNOWN (B9-08-precedent, ongewijzigd): 'null' bij een
+  // fout, nooit een stille lege array die als "0" zou worden gelezen.
+  let activeChallengesRaw=null,unreadNotifsRaw=null,groepenRaw=null;
   try{
     const alleChallenges=await sbGet('social_challenges','&order=starts_at.desc&limit=30');
     const vandaag=new Date().toISOString().slice(0,10);
     activeChallengesRaw=alleChallenges.filter(c=>SocialChallengeCore.challengeStatus(c.starts_at,c.ends_at,vandaag)==='active');
   }catch(e){}
   try{unreadNotifsRaw=await sbGet('social_notifications',`&recipient_id=eq.${uid}&read_at=is.null`);}catch(e){}
-  try{
-    const eigenShares=await sbGet('social_shared_activities',`&athlete_id=eq.${uid}&limit=20`);
-    if(eigenShares.length){
-      const ids=eigenShares.map(s=>s.id);
-      recentReactionsRaw=await sbGet('social_reactions',`&shared_activity_id=in.(${ids.join(',')})&user_id=neq.${uid}`);
-    }else{recentReactionsRaw=[];}
-  }catch(e){}
-  const samenvatting=SocialIntelligenceCore.activitySummary({activeChallenges:activeChallengesRaw,pendingFollowRequests:pendingIn,unreadNotifications:unreadNotifsRaw,recentReactionsOnOwnShares:recentReactionsRaw});
+  try{groepenRaw=await sbGet('social_group_memberships',`&user_id=eq.${uid}&status=eq.active`);}catch(e){}
+
+  const naamIds=[...pendingIn.map(p=>p.follower_id),...connections.map(c=>c.follower_id===uid?c.followee_id:c.follower_id)];
+  const namen=await socialResolveDisplayNames(naamIds);
+
+  const vriendenTelling=connections.length;
+  const groepenTelling=groepenRaw===null?null:groepenRaw.length;
+  const challengeTelling=activeChallengesRaw===null?null:activeChallengesRaw.length;
 
   el.innerHTML=`
-    <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Samenvatting</div></div><div class="card-body">
-      <div style="font-size:13px;margin-bottom:4px">${samenvatting.activeChallenges===null?'Onbekend (kon niet laden)':samenvatting.activeChallenges+' actieve challenge(s)'}</div>
-      <div style="font-size:13px;margin-bottom:4px">${samenvatting.pendingFollowRequests===null?'Onbekend (kon niet laden)':samenvatting.pendingFollowRequests+' openstaand volgverzoek(en)'}</div>
-      <div style="font-size:13px;margin-bottom:4px">${samenvatting.unreadNotifications===null?'Onbekend (kon niet laden)':samenvatting.unreadNotifications+' ongelezen melding(en)'}</div>
-      <div style="font-size:13px">${samenvatting.recentReactionsOnOwnShares===null?'Onbekend (kon niet laden)':samenvatting.recentReactionsOnOwnShares+' nieuwe reactie(s) op jouw gedeelde trainingen'}</div>
-    </div></div>
+    <div class="tk-period-selector" role="tablist" aria-label="Samen-onderdeel" style="margin-bottom:16px">
+      <button role="tab" aria-selected="true" onclick="socialSetTab('overzicht',this)">Overzicht</button>
+      <button role="tab" aria-selected="false" onclick="socialSetTab('feed',this)">Feed</button>
+      <button role="tab" aria-selected="false" onclick="socialSetTab('vrienden',this)">Vrienden</button>
+      <button role="tab" aria-selected="false" onclick="socialSetTab('groepen',this)">Groepen</button>
+      <button role="tab" aria-selected="false" onclick="socialSetTab('challenges',this)">Challenges</button>
+    </div>
 
-    <div class="card" style="margin-bottom:14px${(function(){const preset=resolveSocialThemePreset(profiel&&profiel.theme_id);return preset.accentVar?';--color-primary-surface:'+preset.accentVar:'';})()}"><div class="card-hd"><div class="card-title">Mijn profiel</div></div><div class="card-body">
-      <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Weergavenaam</label>
-      <input type="text" id="social-display-name" maxlength="60" style="width:100%;margin-bottom:10px" value="${profiel?escHtml(profiel.display_name||''):''}" placeholder="Hoe anderen je zien">
-      <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Bio (optioneel)</label>
-      <textarea id="social-bio" maxlength="280" style="width:100%;margin-bottom:10px;min-height:60px">${profiel?escHtml(profiel.bio||''):''}</textarea>
-      <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Zichtbaarheid</label>
-      <select id="social-visibility" style="width:100%;margin-bottom:12px">
-        <option value="private" ${profiel&&profiel.visibility==='private'?'selected':''}>Privé (niemand vindt je profiel)</option>
-        <option value="connections" ${!profiel||profiel.visibility==='connections'?'selected':''}>Alleen connecties</option>
-        <option value="discoverable" ${profiel&&profiel.visibility==='discoverable'?'selected':''}>Vindbaar (iedereen kan je profiel zien)</option>
-      </select>
-      <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Thema (cosmetisch, alleen zichtbaar op je Social-profiel)</label>
-      <select id="social-theme-select" style="width:100%;margin-bottom:12px">
-        ${SOCIAL_THEME_PRESETS.map(p=>`<option value="${p.id}" ${(profiel&&profiel.theme_id?profiel.theme_id:'default')===p.id?'selected':''}>${escHtml(p.label)}</option>`).join('')}
-      </select>
-      <button class="btn btn-p" style="width:100%" onclick="socialSaveProfile()">Profiel opslaan</button>
-    </div></div>
+    <div class="tk-overview-grid" style="margin-bottom:16px">
+      <div class="tk-overview-cell"><div class="ic-wrap"><svg class="tk-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8.5" cy="8" r="3"/><circle cx="16" cy="9" r="2.5"/></svg></div><div class="val">${vriendenTelling}</div><div class="lbl">Vrienden</div></div>
+      <div class="tk-overview-cell"><div class="ic-wrap"><svg class="tk-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V8h16v13z"/><path d="M12 3l8 5H4z"/></svg></div><div class="val" id="social-stat-groepen">${groepenTelling===null?'—':groepenTelling}</div><div class="lbl">Groepen</div></div>
+      <div class="tk-overview-cell"><div class="ic-wrap"><svg class="tk-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 01-10 0z"/><path d="M7 5H4v2a3 3 0 003 3M17 5h3v2a3 3 0 01-3 3"/></svg></div><div class="val" id="social-stat-challenges">${challengeTelling===null?'—':challengeTelling}</div><div class="lbl">Challenges</div></div>
+      <div class="tk-overview-cell" style="position:relative"><div id="social-stat-berichten-dot" style="display:none;position:absolute;top:8px;right:14px;width:7px;height:7px;border-radius:50%;background:#E5533D"></div><div class="ic-wrap"><svg class="tk-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H8l-5 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div><div class="val" id="social-stat-berichten">—</div><div class="lbl">Berichten</div></div>
+    </div>
 
-    <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Iemand volgen</div></div><div class="card-body">
-      <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Zoek op weergavenaam</label>
-      <input type="text" id="social-search-name" style="width:100%;margin-bottom:10px" placeholder="Weergavenaam">
-      <button class="btn btn-o" style="width:100%;margin-bottom:8px" onclick="socialSearchProfiles()">Zoeken</button>
-      <div id="social-search-results"></div>
-    </div></div>
+    <div id="social-panel-overzicht">
+      <div class="v43-lbl" style="margin:0 0 6px">Meldingen</div>
+      <div class="v43-tmt" id="social-notifications-list" style="margin-bottom:16px;padding:2px 16px"><p style="font-size:13px;color:var(--g4);padding:14px 0">Laden…</p></div>
 
-    ${pendingIn.length?`<div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Volgverzoeken (${pendingIn.length})</div></div><div class="card-body" id="social-pending-list">
-      ${pendingIn.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px">${escHtml(p.follower_id)}</span><button class="btn btn-p btn-sm" onclick="socialAcceptFollow('${p.id}','${p.follower_id}')">Accepteren</button></div>`).join('')}
-    </div></div>`:''}
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div class="v43-lbl" style="margin:0">Activiteit</div><button class="btn-link" style="background:none;border:0;color:var(--accent);font-family:var(--f);font-size:11.5px;font-weight:700;cursor:pointer" onclick="socialSetTab('feed',document.querySelectorAll('#s-social .tk-period-selector button')[1])">Bekijk feed &rsaquo;</button></div>
+      <div class="v43-tmt" id="social-overzicht-activiteit" style="margin-bottom:16px"><p style="font-size:13px;color:var(--g4);padding:14px 0">Laden…</p></div>
 
-    <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Berichten</div></div><div class="card-body">
-      <button class="btn btn-o btn-sm" style="width:100%" onclick="go('s-messages')">Openen <span id="social-unread-badge"></span></button>
-    </div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div class="v43-lbl" style="margin:0">Actieve challenges</div><button class="btn-link" style="background:none;border:0;color:var(--accent);font-family:var(--f);font-size:11.5px;font-weight:700;cursor:pointer" onclick="socialSetTab('challenges',document.querySelectorAll('#s-social .tk-period-selector button')[4])">Bekijk alle &rsaquo;</button></div>
+      <div id="social-overzicht-challenges" style="margin-bottom:16px"><p style="font-size:13px;color:var(--g4)">Laden…</p></div>
 
-    <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Coach / PT</div></div><div class="card-body">
-      <p style="font-size:12px;color:var(--g4);margin:0 0 8px">Menselijke coach — een andere rol dan de AI Coach.</p>
-      <button class="btn btn-o btn-sm" style="width:100%" onclick="go('s-coachpt')">Openen</button>
-    </div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div class="v43-lbl" style="margin:0">Recente connecties</div><button class="btn-link" style="background:none;border:0;color:var(--accent);font-family:var(--f);font-size:11.5px;font-weight:700;cursor:pointer" onclick="socialSetTab('vrienden',document.querySelectorAll('#s-social .tk-period-selector button')[2])">Bekijk alle &rsaquo;</button></div>
+      <div id="social-overzicht-connecties" style="display:flex;gap:10px;overflow-x:auto;margin-bottom:16px;padding-bottom:2px"><p style="font-size:13px;color:var(--g4)">Laden…</p></div>
 
-    <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Mijn connecties (${connections.length})</div></div><div class="card-body">
-      ${connections.length?connections.map(c=>{const anderId=c.follower_id===uid?c.followee_id:c.follower_id;return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:13px">${escHtml(anderId)}</span><button class="btn btn-o btn-sm" onclick="startDirectMessage('${anderId}')">Bericht sturen</button></div>`;}).join(''):'<p style="font-size:13px;color:var(--g4);margin:0">Nog geen connecties.</p>'}
-    </div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div class="v43-lbl" style="margin:0">Mijn groepen</div><button class="btn-link" style="background:none;border:0;color:var(--accent);font-family:var(--f);font-size:11.5px;font-weight:700;cursor:pointer" onclick="socialSetTab('groepen',document.querySelectorAll('#s-social .tk-period-selector button')[3])">Bekijk alle &rsaquo;</button></div>
+      <div class="v43-tmt" id="social-overzicht-groepen" style="margin-bottom:16px"><p style="font-size:13px;color:var(--g4);padding:14px 0">Laden…</p></div>
 
-    <div class="card"><div class="card-hd"><div class="card-title">Geblokkeerd (${blocks.length})</div></div><div class="card-body">
-      ${blocks.length?blocks.map(b=>`<div style="font-size:13px;margin-bottom:6px">${escHtml(b.blocked_id)}</div>`).join(''):'<p style="font-size:13px;color:var(--g4);margin:0">Niemand geblokkeerd.</p>'}
-      <div style="font-size:11px;color:var(--g4);margin-top:8px">Blokkeren/rapporteren vanaf een profiel wordt uitgebreid in een volgende sprint.</div>
-    </div></div>
+      <button style="width:100%;background:none;border:0;display:flex;align-items:center;gap:8px;padding:10px 2px;color:var(--g4);font-family:var(--f);font-size:12px;cursor:pointer" onclick="openModal('m-social-instellingen')"><svg class="tk-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Mijn social-profiel &amp; geblokkeerd</button>
+    </div>
 
-    <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Groepen aanmaken</div></div><div class="card-body">
-      <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Naam</label>
-      <input type="text" id="social-group-name" maxlength="60" style="width:100%;margin-bottom:10px" placeholder="Groepsnaam">
-      <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Toetreden</label>
-      <select id="social-group-joinmode" style="width:100%;margin-bottom:12px">
-        <option value="open">Open (iedereen kan direct lid worden)</option>
-        <option value="approval_required">Op goedkeuring</option>
-        <option value="invite_only">Alleen op uitnodiging</option>
-      </select>
-      <button class="btn btn-p" style="width:100%" onclick="socialCreateGroup()">Groep aanmaken</button>
-    </div></div>
+    <div id="social-panel-feed" style="display:none">
+      <div id="social-feed-list"><p style="font-size:13px;color:var(--g4)">Laden…</p></div>
+    </div>
 
-    <div class="card" id="social-groups-card"><div class="card-hd"><div class="card-title">Mijn groepen</div></div><div class="card-body" id="social-groups-list"><p style="font-size:13px;color:var(--g4);margin:0">Laden…</p></div></div>
+    <div id="social-panel-vrienden" style="display:none">
+      <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Vrienden zoeken</div></div><div class="card-body">
+        <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Zoek op weergavenaam</label>
+        <input type="text" id="social-search-name" style="width:100%;margin-bottom:10px" placeholder="Weergavenaam">
+        <button class="btn btn-o" style="width:100%;margin-bottom:8px" onclick="socialSearchProfiles()">Zoeken</button>
+        <div id="social-search-results"></div>
+      </div></div>
 
-    <div class="card" style="margin-top:14px"><div class="card-hd"><div class="card-title">Challenges</div></div><div class="card-body" id="social-challenges-list"><p style="font-size:13px;color:var(--g4);margin:0">Laden…</p></div></div>
+      ${pendingIn.length?`<div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Volgverzoeken (${pendingIn.length})</div></div><div class="card-body" id="social-pending-list">
+        ${pendingIn.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:10px">${socialAvatarHtml(namen[p.follower_id])}<span style="font-size:13px;flex:1;min-width:0">${escHtml(namen[p.follower_id])}</span><button class="btn btn-p btn-sm" onclick="socialAcceptFollow('${p.id}','${p.follower_id}')">Accepteren</button></div>`).join('')}
+      </div></div>`:''}
 
-    <div class="card" style="margin:14px 0"><div class="card-hd"><div class="card-title">Meldingen</div></div><div class="card-body" id="social-notifications-list"><p style="font-size:13px;color:var(--g4);margin:0">Laden…</p></div></div>
+      <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Mijn connecties (${connections.length})</div></div><div class="card-body">
+        ${connections.length?connections.map(c=>{const anderId=c.follower_id===uid?c.followee_id:c.follower_id;return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:10px">${socialAvatarHtml(namen[anderId])}<span style="font-size:13px;flex:1;min-width:0">${escHtml(namen[anderId])}</span><button class="btn btn-o btn-sm" onclick="startDirectMessage('${anderId}')">Bericht</button></div>`;}).join(''):'<p style="font-size:13px;color:var(--g4);margin:0">Nog geen connecties. Zoek hierboven op weergavenaam om te beginnen.</p>'}
+      </div></div>
 
-    <div class="card"><div class="card-hd"><div class="card-title">Feed</div></div><div class="card-body" id="social-feed-list"><p style="font-size:13px;color:var(--g4);margin:0">Laden…</p></div></div>`;
+      <div class="card"><div class="card-hd"><div class="card-title">Coach / PT</div></div><div class="card-body">
+        <p style="font-size:12px;color:var(--g4);margin:0 0 8px">Menselijke coach — een andere rol dan de AI Coach.</p>
+        <button class="btn btn-o btn-sm" style="width:100%" onclick="go('s-coachpt')">Openen</button>
+      </div></div>
+    </div>
 
+    <div id="social-panel-groepen" style="display:none">
+      <div class="card" style="margin-bottom:14px"><div class="card-hd"><div class="card-title">Groep aanmaken</div></div><div class="card-body">
+        <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Naam</label>
+        <input type="text" id="social-group-name" maxlength="60" style="width:100%;margin-bottom:10px" placeholder="Groepsnaam">
+        <label style="display:block;font-size:12px;color:var(--g4);margin-bottom:4px">Toetreden</label>
+        <select id="social-group-joinmode" style="width:100%;margin-bottom:12px">
+          <option value="open">Open (iedereen kan direct lid worden)</option>
+          <option value="approval_required">Op goedkeuring</option>
+          <option value="invite_only">Alleen op uitnodiging</option>
+        </select>
+        <button class="btn btn-p" style="width:100%" onclick="socialCreateGroup()">Groep aanmaken</button>
+      </div></div>
+      <div class="card" id="social-groups-card"><div class="card-hd"><div class="card-title">Groepen</div></div><div class="card-body" id="social-groups-list"><p style="font-size:13px;color:var(--g4);margin:0">Laden…</p></div></div>
+    </div>
+
+    <div id="social-panel-challenges" style="display:none">
+      <div class="card"><div class="card-hd"><div class="card-title">Challenges</div></div><div class="card-body" id="social-challenges-list"><p style="font-size:13px;color:var(--g4);margin:0">Laden…</p></div></div>
+    </div>`;
+
+  socialSetTab('overzicht',el.querySelector('.tk-period-selector button'));
+  socialRenderOverzichtPreview(activeChallengesRaw,connections,namen,uid,groepenRaw);
+  socialRenderChallenges();
   socialRenderGroups();
   socialRenderNotifications();
-  socialRenderChallenges();
   socialRenderFeed();
   updateSocialUnreadBadge();
+}
+
+// Overzicht is bewust een PREVIEW van dezelfde data die de tabs tonen --
+// geen tweede databron, geen eigen queries buiten wat hierboven al is
+// opgehaald (behalve de feed-top-3, die de bestaande social_shared_
+// activities-query hergebruikt met limit=3 i.p.v. 30).
+async function socialRenderOverzichtPreview(activeChallengesRaw,connections,namen,uid,groepenRaw){
+  const actEl=document.getElementById('social-overzicht-activiteit');
+  if(actEl){
+    let items=[];
+    try{items=await sbGet('social_shared_activities','&order=completed_at.desc&limit=3');}catch(e){items=null;}
+    if(items===null)actEl.innerHTML='<p style="font-size:13px;color:var(--g4);padding:14px 0">Onbekend (kon niet laden)</p>';
+    else if(!items.length)actEl.innerHTML='<p style="font-size:13px;color:var(--g4);padding:14px 0">Nog geen activiteit. Volg vrienden om hun trainingen hier te zien.</p>';
+    else{
+      const auteurNamen=await socialResolveDisplayNames(items.map(i=>i.athlete_id));
+      actEl.innerHTML=items.map((it,i)=>`<div class="row" style="display:flex;gap:10px;align-items:flex-start;padding:11px 0${i<items.length-1?';border-bottom:1px solid var(--g2)':''}">${socialAvatarHtml(auteurNamen[it.athlete_id])}<div style="flex:1;min-width:0"><div style="font-size:12.5px;color:var(--dark)"><b>${escHtml(auteurNamen[it.athlete_id])}</b> deelde ${escHtml(it.title||it.sport||'een training')}</div><div style="font-size:10.5px;color:var(--g4);margin-top:2px">${new Date(it.completed_at).toLocaleDateString('nl-NL')}</div></div></div>`).join('');
+    }
+  }
+  const chEl=document.getElementById('social-overzicht-challenges');
+  if(chEl){
+    if(activeChallengesRaw===null)chEl.innerHTML='<p style="font-size:13px;color:var(--g4)">Onbekend (kon niet laden)</p>';
+    else if(!activeChallengesRaw.length)chEl.innerHTML='<p style="font-size:13px;color:var(--g4)">Geen actieve challenges op dit moment.</p>';
+    else chEl.innerHTML=activeChallengesRaw.slice(0,3).map(c=>`<div class="card" style="margin-bottom:8px"><div class="card-body" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div style="min-width:0"><div style="font-size:12.5px;font-weight:700;color:var(--dark)">${escHtml(c.title)}</div><div style="font-size:10.5px;color:var(--g4)">t/m ${c.ends_at}</div></div><button class="btn btn-o btn-sm" onclick="socialSetTab('overzicht',document.querySelectorAll('#s-social .tk-period-selector button')[0]);socialJoinChallenge('${c.id}')">Doe mee</button></div></div>`).join('');
+  }
+  const conEl=document.getElementById('social-overzicht-connecties');
+  if(conEl){
+    if(!connections.length)conEl.innerHTML='<p style="font-size:13px;color:var(--g4)">Nog geen connecties.</p>';
+    else conEl.innerHTML=connections.slice(0,8).map(c=>{const anderId=c.follower_id===uid?c.followee_id:c.follower_id;return `<div style="text-align:center;flex:0 0 auto">${socialAvatarHtml(namen[anderId])}<div style="font-size:9.5px;color:var(--g4);margin-top:3px;max-width:44px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(namen[anderId])}</div></div>`;}).join('');
+  }
+  const groepEl=document.getElementById('social-overzicht-groepen');
+  if(groepEl){
+    if(groepenRaw===null)groepEl.innerHTML='<p style="font-size:13px;color:var(--g4);padding:14px 0">Onbekend (kon niet laden)</p>';
+    else if(!groepenRaw.length)groepEl.innerHTML='<p style="font-size:13px;color:var(--g4);padding:14px 0">Nog geen groepen. Ontdek of maak er een via het tabblad Groepen.</p>';
+    else{
+      let groepsnamen={};
+      try{const rows=await sbGet('social_groups',`&id=in.(${groepenRaw.map(g=>g.group_id).join(',')})&select=id,name`);rows.forEach(r=>{groepsnamen[r.id]=r.name;});}catch(e){}
+      groepEl.innerHTML=groepenRaw.slice(0,3).map((g,i)=>`<div class="row" style="padding:11px 0${i<groepenRaw.length-1?';border-bottom:1px solid var(--g2)':''}"><div style="font-size:12.5px;color:var(--dark)">${escHtml(groepsnamen[g.group_id]||'Groep')}</div><div style="font-size:10.5px;color:var(--g4)">${g.role==='owner'?'Eigenaar':'Lid'}</div></div>`).join('');
+    }
+  }
+}
+
+async function socialLoadInstellingenModal(){
+  const uid=authSession?.user?.id;
+  if(!uid)return;
+  let profielRows=[],blocks=[];
+  try{profielRows=await sbGet('social_profiles',`&user_id=eq.${uid}&limit=1`);}catch(e){}
+  try{blocks=await sbGet('social_blocks',`&blocker_id=eq.${uid}`);}catch(e){}
+  const profiel=profielRows&&profielRows[0]?profielRows[0]:null;
+  const naamEl=document.getElementById('social-display-name');
+  const bioEl=document.getElementById('social-bio');
+  const zichtEl=document.getElementById('social-visibility');
+  const themeEl=document.getElementById('social-theme-select');
+  if(naamEl)naamEl.value=profiel?(profiel.display_name||''):'';
+  if(bioEl)bioEl.value=profiel?(profiel.bio||''):'';
+  if(zichtEl)zichtEl.value=profiel&&profiel.visibility?profiel.visibility:'connections';
+  if(themeEl){
+    themeEl.innerHTML=SOCIAL_THEME_PRESETS.map(p=>`<option value="${p.id}">${escHtml(p.label)}</option>`).join('');
+    themeEl.value=profiel&&profiel.theme_id?profiel.theme_id:'default';
+  }
+  const blockEl=document.getElementById('social-blocked-list');
+  if(blockEl){
+    if(!blocks.length){
+      blockEl.innerHTML='<p style="font-size:13px;color:var(--g4);margin:0">Niemand geblokkeerd.</p><div style="font-size:11px;color:var(--g4);margin-top:8px">Blokkeren/rapporteren vanaf een profiel wordt uitgebreid in een volgende sprint.</div>';
+    }else{
+      const namen=await socialResolveDisplayNames(blocks.map(b=>b.blocked_id));
+      blockEl.innerHTML=blocks.map(b=>`<div style="font-size:13px;margin-bottom:6px">${escHtml(namen[b.blocked_id])}</div>`).join('')+'<div style="font-size:11px;color:var(--g4);margin-top:8px">Blokkeren/rapporteren vanaf een profiel wordt uitgebreid in een volgende sprint.</div>';
+    }
+  }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -14119,7 +14260,7 @@ async function socialRenderGroups(){
   let groups=[],memberships=[];
   try{groups=await sbGet('social_groups','&order=created_at.desc&limit=50');}catch(e){}
   try{memberships=await sbGet('social_group_memberships',`&user_id=eq.${uid}`);}catch(e){}
-  if(!groups.length){el.innerHTML='<p style="font-size:13px;color:var(--g4);margin:0">Nog geen groepen zichtbaar.</p>';return;}
+  if(!groups.length){el.innerHTML='<p style="font-size:13px;color:var(--g4);margin:0">Nog geen groepen zichtbaar. Maak hierboven de eerste aan.</p>';return;}
   el.innerHTML=groups.map(g=>{
     const lid=SocialGroupCore.isMember(uid,g.id,memberships);
     const eigenaar=SocialGroupCore.isOwner(uid,g.id,memberships);
@@ -14130,6 +14271,8 @@ async function socialRenderGroups(){
     else{actie='<span style="font-size:11px;color:var(--g4)">Alleen op uitnodiging/goedkeuring</span>';}
     return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px">${escHtml(g.name)}</span>${actie}</div>`;
   }).join('');
+  const teller=document.getElementById('social-stat-groepen');
+  if(teller)teller.textContent=String(memberships.filter(m=>m.status==='active').length);
 }
 
 async function socialJoinGroup(groupId){
@@ -14207,18 +14350,21 @@ function openMessageThread(threadId){
 
 async function updateSocialUnreadBadge(){
   const uid=authSession?.user?.id;
-  const el=document.getElementById('social-unread-badge');
-  if(!el||!uid)return;
+  const waardeEl=document.getElementById('social-stat-berichten');
+  const dotEl=document.getElementById('social-stat-berichten-dot');
+  if(!uid)return;
   try{
     const participaties=await sbGet('message_participants',`&user_id=eq.${uid}`);
-    if(!participaties.length)return;
     let totaalOngelezen=0;
     for(const p of participaties){
       const berichten=await sbGet('messages',`&thread_id=eq.${p.thread_id}&sender_user_id=neq.${uid}`);
       totaalOngelezen+=MessagingCore.unreadCount(p.last_read_at,berichten);
     }
-    if(totaalOngelezen>0)el.textContent='('+totaalOngelezen+' ongelezen)';
-  }catch(e){}
+    if(waardeEl)waardeEl.textContent=String(totaalOngelezen);
+    if(dotEl)dotEl.style.display=totaalOngelezen>0?'block':'none';
+  }catch(e){
+    // UNKNOWN blijft UNKNOWN -- geen 0 tonen bij een mislukte query.
+  }
 }
 
 // Thread-lijst: alleen threads waar de gebruiker daadwerkelijk participant
@@ -14324,30 +14470,33 @@ async function socialRenderFeed(){
   el.innerHTML='<p style="font-size:13px;color:var(--g4)">Laden…</p>';
   let items=[];
   try{items=await sbGet('social_shared_activities','&order=completed_at.desc&limit=30');}catch(e){}
-  if(!items.length){el.innerHTML='<p style="font-size:13px;color:var(--g4);margin:0">Nog geen gedeelde trainingen in je feed.</p>';return;}
+  if(!items.length){el.innerHTML='<p style="font-size:13px;color:var(--g4);margin:0">Nog geen gedeelde trainingen in je feed. Volg vrienden om hun trainingen hier te zien, of deel er zelf een na het afronden van een training.</p>';return;}
   const ids=items.map(i=>i.id);
   let reacties=[],comments=[];
   try{reacties=await sbGet('social_reactions',`&shared_activity_id=in.(${ids.join(',')})`);}catch(e){}
   try{comments=await sbGet('social_comments',`&shared_activity_id=in.(${ids.join(',')})&order=created_at.asc`);}catch(e){}
+  const naamIds=[...items.map(i=>i.athlete_id),...comments.map(c=>c.user_id)];
+  const namen=await socialResolveDisplayNames(naamIds);
   el.innerHTML=items.map(it=>{
     const mijnReactie=reacties.some(r=>r.shared_activity_id===it.id&&r.user_id===uid);
     const aantalReacties=reacties.filter(r=>r.shared_activity_id===it.id).length;
     const itemComments=comments.filter(c=>c.shared_activity_id===it.id);
     return `<div class="card" style="margin-bottom:12px"><div class="card-body">
-      <div style="font-size:13px;font-weight:700">${escHtml(it.title||it.sport)}</div>
-      <div style="font-size:12px;color:var(--g4);margin-bottom:6px">${new Date(it.completed_at).toLocaleDateString('nl-NL')}${it.distance_meters?' · '+(it.distance_meters/1000).toFixed(1)+' km':''}${it.duration_seconds?' · '+CardioCore.formatTime(it.duration_seconds):''}</div>
-      ${it.achievement_label?`<div style="font-size:12px;margin-bottom:4px">🏆 ${escHtml(it.achievement_label)}</div>`:''}
+      <div style="display:flex;gap:9px;align-items:center;margin-bottom:6px">${socialAvatarHtml(namen[it.athlete_id])}<div style="min-width:0"><div style="font-size:13px;font-weight:700;color:var(--dark)">${escHtml(namen[it.athlete_id])}</div><div style="font-size:11px;color:var(--g4)">${new Date(it.completed_at).toLocaleDateString('nl-NL')}</div></div></div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:2px">${escHtml(it.title||it.sport)}</div>
+      <div style="font-size:12px;color:var(--g4);margin-bottom:6px">${it.distance_meters?(it.distance_meters/1000).toFixed(1)+' km':''}${it.distance_meters&&it.duration_seconds?' · ':''}${it.duration_seconds?CardioCore.formatTime(it.duration_seconds):''}</div>
+      ${it.achievement_label?`<div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--dark);margin-bottom:4px;font-weight:700"><svg class="tk-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 01-10 0z"/><path d="M7 5H4v2a3 3 0 003 3M17 5h3v2a3 3 0 01-3 3"/></svg>${escHtml(it.achievement_label)}</div>`:''}
       ${it.athlete_note?`<div style="font-size:12px;color:var(--g4);margin-bottom:6px">${escHtml(it.athlete_note)}</div>`:''}
       <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
-        <button class="btn ${mijnReactie?'btn-p':'btn-o'} btn-sm" onclick="socialToggleReaction('${it.id}',${mijnReactie},'${it.athlete_id}')">👍 ${aantalReacties}</button>
-        <button class="btn btn-o btn-sm" onclick="socialToggleCommentForm('${it.id}')">💬 ${itemComments.length}</button>
+        <button class="btn ${mijnReactie?'btn-p':'btn-o'} btn-sm" onclick="socialToggleReaction('${it.id}',${mijnReactie},'${it.athlete_id}')"><svg class="tk-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:3px"><path d="M7 11v10H3V11h4zm0 0l4-8a2 2 0 012 2v5h5a2 2 0 012 2l-2 8a2 2 0 01-2 1H7"/></svg>${aantalReacties}</button>
+        <button class="btn btn-o btn-sm" onclick="socialToggleCommentForm('${it.id}')"><svg class="tk-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:3px"><path d="M21 15a2 2 0 01-2 2H8l-5 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>${itemComments.length}</button>
         ${it.athlete_id!==uid?`<button class="btn btn-o btn-sm" onclick="socialReport('${it.athlete_id}','shared_activity','${it.id}')">Rapporteren</button>`:''}
       </div>
       <div id="social-comment-form-${it.id}" style="display:none;margin-top:8px">
         <input type="text" id="social-comment-input-${it.id}" maxlength="500" style="width:100%;margin-bottom:6px" placeholder="Schrijf een reactie...">
         <button class="btn btn-p btn-sm" onclick="socialPostComment('${it.id}','${it.athlete_id}')">Plaatsen</button>
       </div>
-      ${itemComments.length?`<div style="margin-top:8px">${itemComments.map(c=>`<div style="font-size:12px;margin-bottom:4px"><b>${escHtml(c.user_id)}:</b> ${escHtml(c.body)}</div>`).join('')}</div>`:''}
+      ${itemComments.length?`<div style="margin-top:8px">${itemComments.map(c=>`<div style="font-size:12px;margin-bottom:4px"><b>${escHtml(namen[c.user_id])}:</b> ${escHtml(c.body)}</div>`).join('')}</div>`:''}
     </div></div>`;
   }).join('');
 }
@@ -14735,7 +14884,7 @@ async function socialSaveProfile(){
   const payload={user_id:uid,display_name:displayName,bio:bio||null,visibility,theme_id:themeId};
   const ok=await fetch(`${SB_URL}/rest/v1/social_profiles`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(payload)});
   toast(ok.ok?'Profiel opgeslagen':'Opslaan mislukt');
-  if(ok.ok)renderSocialScreen();
+  if(ok.ok){closeModal('m-social-instellingen');}
 }
 
 async function socialSearchProfiles(){
@@ -14752,7 +14901,7 @@ async function socialSearchProfiles(){
   let rows=[];
   try{rows=await sbGet('social_profiles',`&display_name=ilike.*${encodeURIComponent(term)}*&limit=10`);}catch(e){}
   if(!rows.length){resEl.innerHTML='<p style="font-size:12px;color:var(--g4)">Geen (zichtbare) profielen gevonden.</p>';return;}
-  resEl.innerHTML=rows.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px">${escHtml(r.display_name)}</span><button class="btn btn-o btn-sm" onclick="socialFollow('${r.user_id}')">Volgen</button></div>`).join('');
+  resEl.innerHTML=rows.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:10px">${socialAvatarHtml(r.display_name)}<span style="font-size:13px;flex:1;min-width:0">${escHtml(r.display_name)}</span><button class="btn btn-o btn-sm" onclick="socialFollow('${r.user_id}')">Volgen</button></div>`).join('');
 }
 
 async function socialFollow(targetUserId){

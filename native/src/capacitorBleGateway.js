@@ -22,7 +22,7 @@ export function makeCapacitorBleGateway(options) {
 
   async function ensureInit() {
     if (initialized) return;
-    // androidNeverForLocation: we scannen op service-UUID's, geen locatie-afleiding.
+    // androidNeverForLocation: TK gebruikt scanresultaten niet voor locatie-afleiding.
     await BleClient.initialize({ androidNeverForLocation: true });
     initialized = true;
   }
@@ -47,10 +47,12 @@ export function makeCapacitorBleGateway(options) {
         { services, allowDuplicates: false },
         (result) => {
           if (!result || !result.device) return;
+          const uuids = Array.isArray(result.uuids) ? result.uuids.map(lc) : [];
           onResult({
             deviceId: result.device.deviceId,
             name: result.localName || result.device.name || null,
-            rssi: (typeof result.rssi === 'number') ? result.rssi : null
+            rssi: (typeof result.rssi === 'number') ? result.rssi : null,
+            uuids
           });
         }
       );
@@ -78,7 +80,7 @@ export function makeCapacitorBleGateway(options) {
       try { await BleClient.stopNotifications(deviceId, lc(service), lc(characteristic)); } catch (e) {}
     },
     async read(deviceId, service, characteristic) {
-      return await BleClient.read(deviceId, lc(service), lc(characteristic));
+      return await BleClient.read(deviceId, lc(service), lc(characteristic);
     },
     async readRssi(deviceId) {
       try { return await BleClient.getBondedDevices ? await BleClient.readRssi(deviceId) : null; }

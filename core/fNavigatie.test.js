@@ -30,18 +30,38 @@ function navBlok() {
 }
 
 /* ── Nagebouwde DOM ────────────────────────────────────────────────────────── */
-function nepDom(schermIds, modalIds) {
+// WAVE 1 (RC-OVL-01/RC-OVL-02): confirmIds en execIds simuleren respectievelijk
+// een open confirmModal()-dialoog (.tk-confirm-bg) en een open execution-sheet
+// (.exec-overlay.open). Een confirm-element krijgt een minimale querySelector
+// die de echte '.tk-confirm-cancel'-knop nabootst: klikken zet 'open' op false
+// en registreert de annulering, exact zoals confirmModal()'s eigen done(false).
+function nepDom(schermIds, modalIds, confirmIds, execIds) {
   var el = {};
+  var confirmCancelled = [];
   (schermIds || []).forEach(function (id) { el[id] = { id: id, soort: 'scr', actief: false }; });
   (modalIds || []).forEach(function (id) { el[id] = { id: id, soort: 'modal', open: false }; });
+  (confirmIds || []).forEach(function (id) {
+    el[id] = {
+      id: id, soort: 'confirm', open: false,
+      querySelector: function (sel) {
+        if (sel !== '.tk-confirm-cancel') return null;
+        var self = el[id];
+        return { click: function () { self.open = false; confirmCancelled.push(id); } };
+      }
+    };
+  });
+  (execIds || []).forEach(function (id) { el[id] = { id: id, soort: 'exec', open: false }; });
   return {
     _el: el,
+    _confirmCancelled: confirmCancelled,
     getElementById: function (id) { return el[id] || null; },
     querySelector: function (sel) {
       var ids = Object.keys(el);
       for (var i = 0; i < ids.length; i++) {
         var e = el[ids[i]];
         if (sel.indexOf('.modal-bg.open') === 0) { if (e.soort === 'modal' && e.open) return e; }
+        else if (sel.indexOf('.tk-confirm-bg') === 0) { if (e.soort === 'confirm' && e.open) return e; }
+        else if (sel.indexOf('.exec-overlay.open') === 0) { if (e.soort === 'exec' && e.open) return e; }
         else if (e.soort === 'scr' && e.actief) return e;
       }
       return null;
@@ -53,7 +73,7 @@ function nepDom(schermIds, modalIds) {
 function zandbak(opts) {
   opts = opts || {};
   var doc = nepDom(opts.schermen || ['s-home', 's-lichaam', 's-lich-verbanden', 's-coach', 's-stats'],
-                   opts.modals || ['m-hrv']);
+                   opts.modals || ['m-hrv'], opts.confirms || [], opts.execs || []);
   var stapel = [];   /* nagebouwde browser-history */
   var handlers = [];
   var ctx = {
@@ -71,6 +91,9 @@ function zandbak(opts) {
     coachReturn: opts.coachReturn || null,
     returnToTraining: function () { ctx._returnToTraining = (ctx._returnToTraining || 0) + 1; },
     closeModal: function (id) { doc._el[id].open = false; ctx._gesloten = (ctx._gesloten || []); ctx._gesloten.push(id); },
+    // WAVE 1: closeExecOverlay() bestaat al in de echte app (buiten het geëxtraheerde
+    // navBlok) — hier gestubd met exact hetzelfde effect (classList 'open' verwijderen).
+    closeExecOverlay: function (id) { if (doc._el[id]) { doc._el[id].open = false; ctx._execGesloten = (ctx._execGesloten || []); ctx._execGesloten.push(id); } },
     toast: function (m) { (ctx._toasts = ctx._toasts || []).push(m); },
     /* de echte go() is 40 regels schermspecifieke render-aanroepen; alleen het
        schermwissel-effect is hier relevant en wordt exact nagebootst */
@@ -87,6 +110,7 @@ function zandbak(opts) {
   ctx.go = ctx.window.go;
   ctx._terug = function () { handlers.forEach(function (f) { f({}); }); };
   ctx._stapel = stapel;
+  ctx._confirmCancelled = doc._confirmCancelled;
   return ctx;
 }
 
@@ -221,6 +245,67 @@ t('C5: in een gewone browsertab wordt de terugknop niet vastgehouden', function 
   assert.strictEqual(ctx._historyDiepte(), diepteVoor,
     'de browsertab wordt vastgehouden met een teruggelegde history-entry');
   assert.strictEqual((ctx._toasts || []).length, 0, 'onnodige melding in een browsertab');
+});
+
+/* ══ E. Overlay-precedentie (WAVE 1 — RC-OVL-01/RC-OVL-02) ════════════════════
+   confirmModal() (.tk-confirm-bg) en de execution-sheets (.exec-overlay.open)
+   werden vóór deze wave niet door tkNavTopmostOverlay()/popstate herkend:
+   Android Back sloeg ze over en navigeerde het onderliggende scherm weg terwijl
+   de overlay zichtbaar bleef. Deze sectie bewijst dat de uitgebreide check nu
+   vóór de normale schermstapel-afwikkeling gaat, voor beide overlaytypes, en
+   dat een gewone terugstap zonder overlay ongewijzigd blijft werken. */
+console.log('\nE. Overlay-precedentie (Wave 1)');
+
+t('E1: Android Back sluit een open confirmModal-dialoog i.p.v. het scherm te wisselen', function () {
+  var ctx = zandbak({ confirms: ['c1'] });
+  ctx.go('s-home'); ctx.go('s-lichaam');
+  ctx.document._el.c1.open = true;   /* confirmModal() staat open, bv. "Doel verwijderen?" */
+  var schermVoor = ctx.document.querySelector('.scr.active') ? 's-lichaam' : null;
+  ctx._terug();
+  assert.strictEqual(ctx.document._el.c1.open, false, 'de confirm-dialoog is gesloten');
+  assert.deepStrictEqual(ctx._confirmCancelled, ['c1'], 'sluiten liep via de eigen annuleer-knop (done(false)), geen apart sluitpad');
+  var actief = ctx.document._el['s-lichaam'].actief;
+  assert.ok(actief, 'het onderliggende scherm (s-lichaam) is NIET weggenavigeerd — bewijst schermVoor=' + schermVoor);
+  assert.strictEqual(ctx.tkNavStack.length, 1, 'de schermstapel is niet gepopt door deze terugactie');
+});
+
+t('E2: Android Back sluit een open execution-sheet i.p.v. de actieve training te verlaten', function () {
+  var ctx = zandbak({ execs: ['exec-pause'] });
+  ctx.go('s-home'); ctx.go('s-lichaam');   /* staat model voor een actief trainingsscherm */
+  ctx.document._el['exec-pause'].open = true;
+  ctx._terug();
+  assert.strictEqual(ctx.document._el['exec-pause'].open, false, 'de execution-sheet is gesloten');
+  assert.deepStrictEqual(ctx._execGesloten, ['exec-pause'], 'sluiten liep via closeExecOverlay(), geen classList-omweg');
+  assert.ok(ctx.document._el['s-lichaam'].actief, 'het onderliggende trainingsscherm is niet weggenavigeerd');
+  assert.strictEqual(ctx.tkNavStack.length, 1, 'de schermstapel is niet gepopt door deze terugactie');
+});
+
+t('E3: precedentie — een modal-bg gaat vóór een confirm en een exec-overlay als er toevallig meerdere open zouden staan', function () {
+  var ctx = zandbak({ modals: ['m-hrv'], confirms: ['c1'], execs: ['exec-pause'] });
+  ctx.document._el['m-hrv'].open = true;
+  ctx.document._el.c1.open = true;
+  ctx.document._el['exec-pause'].open = true;
+  ctx._terug();
+  assert.deepStrictEqual(ctx._gesloten, ['m-hrv'], 'de modal wordt als eerste/enige gesloten in deze terugactie');
+  assert.strictEqual(ctx.document._el.c1.open, true, 'de confirm-dialoog blijft ongemoeid tot de volgende terugactie');
+  assert.strictEqual(ctx.document._el['exec-pause'].open, true, 'de execution-sheet blijft ongemoeid tot de volgende terugactie');
+});
+
+t('E4: zonder open overlay verandert het bestaande scherm-terugpad niet', function () {
+  var ctx = zandbak({ confirms: ['c1'], execs: ['exec-pause'] });
+  ctx.go('s-home'); ctx.go('s-lichaam'); ctx.go('s-lich-verbanden');
+  ctx._terug();
+  assert.strictEqual(ctx.document.querySelector('.scr.active').id, 's-lichaam',
+    'gewone terugnavigatie zonder overlay werkt exact als vóór Wave 1');
+  assert.strictEqual((ctx._confirmCancelled || []).length, 0);
+  assert.strictEqual((ctx._execGesloten || []).length, 0);
+});
+
+t('E5: Coach-vanuit-Training-terugkeer (bekende RC-NAV-03) blijft ongewijzigd naast de nieuwe overlay-check', function () {
+  var ctx = zandbak({ coachReturn: { screen: 's-lichaam', exId: null } });
+  ctx.go('s-home'); ctx.go('s-coach');
+  ctx._terug();
+  assert.strictEqual(ctx._returnToTraining, 1, 'de bestaande coachReturn-tak wordt nog steeds bereikt (niet per ongeluk afgevangen door de overlay-check)');
 });
 
 /* ══ D. Grenzen ════════════════════════════════════════════════════════════ */

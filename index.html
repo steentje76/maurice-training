@@ -12407,6 +12407,30 @@ function tkNavHuidig(){
 function tkNavModaalOpen(){
   return document.querySelector('.modal-bg.open');
 }
+// WAVE 1 (RC-OVL-01/RC-OVL-02, Route Map): tkNavModaalOpen() herkende alleen
+// .modal-bg.open. Twee andere, al bestaande overlay-systemen vervullen dezelfde
+// "topmost dismissible layer"-rol maar werden door Android Back nooit gezien:
+//   - .tk-confirm-bg (confirmModal()) — 49 aanroepen door de hele app.
+//   - .exec-overlay.open (ensureExecOverlay(), 6 execution-sheets).
+// Geen nieuwe architectuur: dit hergebruikt exact de bestaande sluitmechanismen
+// van elk systeem (closeModal/de eigen cancel-knop/closeExecOverlay). De
+// onderliggende scherm-tkNavStack wordt hierdoor nooit aangeraakt — Android Back
+// sluit alleen de bovenste overlay, precies zoals de zichtbare X/Sluiten-knop
+// dat al deed.
+function tkNavTopmostOverlay(){
+  const modaal=document.querySelector('.modal-bg.open');
+  if(modaal)return {el:modaal,close:function(){closeModal(modaal.id);}};
+  const confirmEl=document.querySelector('.tk-confirm-bg');
+  if(confirmEl)return {el:confirmEl,close:function(){
+    // Hergebruikt confirmModal()'s eigen annuleer-knop (roept de bestaande
+    // done(false) aan) i.p.v. een nieuw, apart sluitpad te bouwen.
+    const cancelBtn=confirmEl.querySelector('.tk-confirm-cancel');
+    if(cancelBtn)cancelBtn.click(); else confirmEl.remove();
+  }};
+  const execEl=document.querySelector('.exec-overlay.open');
+  if(execEl)return {el:execEl,close:function(){closeExecOverlay(execEl.id);}};
+  return null;
+}
 // Draait de app als geïnstalleerde app (Capacitor of PWA) of als gewone browsertab?
 // Alleen in het eerste geval is 'terug op het beginscherm' een afsluitactie die om
 // bevestiging vraagt. In een gewone tab hoort de terugknop de gebruiker gewoon naar de
@@ -12456,11 +12480,13 @@ function tkNavGoBack(valtTerugNaar){
 // regel (v306 #7: terug vanuit de coach keert terug naar de lopende training) is
 // hieronder ongewijzigd overgenomen als eerste schermregel.
 window.addEventListener('popstate',function(){
-  // 1) Staat er een modal open, dan sluit 'terug' die — en niet het scherm eronder.
+  // 1) Staat er een overlay open (modal, confirm-dialoog, of execution-sheet),
+  //    dan sluit 'terug' die — en niet het scherm eronder. WAVE 1: naast
+  //    .modal-bg.open worden nu ook .tk-confirm-bg en .exec-overlay.open herkend.
   //    De verbruikte history-entry wordt teruggelegd zodat de stapeldiepte klopt.
-  const modaal=tkNavModaalOpen();
-  if(modaal){
-    try{ closeModal(modaal.id); }catch(_){ }
+  const topOverlay=tkNavTopmostOverlay();
+  if(topOverlay){
+    try{ topOverlay.close(); }catch(_){ }
     try{ history.pushState({tkNav:'modal'},''); }catch(_){ }
     return;
   }

@@ -1,7 +1,7 @@
 {
   "metadata": {
     "status": "CANONICAL - SOURCE OF TRUTH",
-    "last_verified_sha": "88d65878fb6788e1ff7784d80a7e1dfb2ae033fb",
+    "last_verified_sha": "0eecff7d3ed6d6fb3065b295bd3d180e18c18964",
     "app_ver": "v4.69.74",
     "audited_domains": [
       "A",
@@ -72,7 +72,8 @@
         "D-04",
         "F-05"
       ],
-      "severity": "P2"
+      "severity": "P2",
+      "status": "OPEN"
     },
     {
       "id": "RC-NAV-02",
@@ -87,7 +88,8 @@
         "E-05",
         "E-07"
       ],
-      "severity": "P2"
+      "severity": "P2",
+      "status": "OPEN"
     },
     {
       "id": "RC-NAV-03",
@@ -97,7 +99,8 @@
         "D-01",
         "D-02"
       ],
-      "severity": "P2"
+      "severity": "P2",
+      "status": "OPEN"
     },
     {
       "id": "RC-OVL-01",
@@ -112,7 +115,9 @@
         "E-15"
       ],
       "severity": "P1",
-      "note": "49 totale confirmModal() aanroepen in de app (grep-bevestigd); 6 individueel geverifieerd als action-contract."
+      "note": "49 totale confirmModal() aanroepen in de app (grep-bevestigd); 6 individueel geverifieerd als action-contract.",
+      "status": "FIXED - Wave 1 (fix/navigation-root-cause-wave-1)",
+      "fix_evidence": "index.html: tkNavTopmostOverlay() + popstate-handler uitgebreid; core/fNavigatie.test.js sectie E (5 nieuwe assertions, 21/21 groen totaal)"
     },
     {
       "id": "RC-OVL-02",
@@ -126,7 +131,9 @@
         "exec-pause",
         "exec-note"
       ],
-      "severity": "P1"
+      "severity": "P1",
+      "status": "FIXED - Wave 1 (fix/navigation-root-cause-wave-1)",
+      "fix_evidence": "index.html: tkNavTopmostOverlay() + popstate-handler uitgebreid; core/fNavigatie.test.js sectie E (5 nieuwe assertions, 21/21 groen totaal)"
     },
     {
       "id": "RC-OVL-03",
@@ -135,7 +142,8 @@
       "instances": [
         "E-17"
       ],
-      "severity": "P2"
+      "severity": "P2",
+      "status": "OPEN"
     },
     {
       "id": "RC-IA-01",
@@ -147,7 +155,8 @@
         "E-08",
         "A-10"
       ],
-      "severity": "P3"
+      "severity": "P3",
+      "status": "OPEN"
     }
   ],
   "actions": [
@@ -989,15 +998,15 @@
       "expected_parent": "s-train-mgr",
       "expected_return_target": "s-train-mgr",
       "in_app_back": "RED",
-      "android_back": "RED",
+      "android_back": "GREEN",
       "overlay_type": "tk-confirm-bg",
       "state_preserved": null,
       "external_exit_risk": false,
       "duplication_class": null,
-      "nav_status": "RED",
-      "severity": "P1",
-      "root_cause_id": "RC-OVL-01",
-      "code_evidence": "index.html:17785",
+      "nav_status": "GREEN",
+      "severity": null,
+      "root_cause_id": null,
+      "code_evidence": "index.html:17785 [WAVE 1 FIX: tkNavTopmostOverlay() breidt Android-Back-detectie uit met .tk-confirm-bg / .exec-overlay.open; bewezen door fNavigatie.test.js sectie E]",
       "instance_count": 1,
       "last_verified_sha": "88d65878fb6788e1ff7784d80a7e1dfb2ae033fb"
     },
@@ -1089,15 +1098,15 @@
       "expected_parent": "s-coach",
       "expected_return_target": "s-coach",
       "in_app_back": "RED",
-      "android_back": "RED",
+      "android_back": "GREEN",
       "overlay_type": "tk-confirm-bg",
       "state_preserved": null,
       "external_exit_risk": false,
       "duplication_class": null,
-      "nav_status": "RED",
-      "severity": "P1",
-      "root_cause_id": "RC-OVL-01",
-      "code_evidence": "index.html:28104",
+      "nav_status": "GREEN",
+      "severity": null,
+      "root_cause_id": null,
+      "code_evidence": "index.html:28104 [WAVE 1 FIX: tkNavTopmostOverlay() breidt Android-Back-detectie uit met .tk-confirm-bg / .exec-overlay.open; bewezen door fNavigatie.test.js sectie E]",
       "instance_count": 1,
       "last_verified_sha": "88d65878fb6788e1ff7784d80a7e1dfb2ae033fb"
     },
@@ -1139,15 +1148,15 @@
       "expected_parent": "s-coachpt-athlete",
       "expected_return_target": "s-coachpt-athlete",
       "in_app_back": "RED",
-      "android_back": "RED",
+      "android_back": "GREEN",
       "overlay_type": "tk-confirm-bg",
       "state_preserved": null,
       "external_exit_risk": false,
       "duplication_class": null,
-      "nav_status": "RED",
-      "severity": "P1",
-      "root_cause_id": "RC-OVL-01",
-      "code_evidence": "index.html:13638-13649",
+      "nav_status": "GREEN",
+      "severity": null,
+      "root_cause_id": null,
+      "code_evidence": "index.html:13638-13649 [WAVE 1 FIX: tkNavTopmostOverlay() breidt Android-Back-detectie uit met .tk-confirm-bg / .exec-overlay.open; bewezen door fNavigatie.test.js sectie E]",
       "instance_count": 1,
       "last_verified_sha": "88d65878fb6788e1ff7784d80a7e1dfb2ae033fb"
     },
@@ -1714,15 +1723,15 @@
       "expected_parent": "s-stats",
       "expected_return_target": "s-stats",
       "in_app_back": "RED",
-      "android_back": "RED",
+      "android_back": "GREEN",
       "overlay_type": "tk-confirm-bg",
       "state_preserved": null,
       "external_exit_risk": false,
       "duplication_class": null,
-      "nav_status": "RED",
-      "severity": "P1",
-      "root_cause_id": "RC-OVL-01",
-      "code_evidence": "index.html:11553",
+      "nav_status": "GREEN",
+      "severity": null,
+      "root_cause_id": null,
+      "code_evidence": "index.html:11553 [WAVE 1 FIX: tkNavTopmostOverlay() breidt Android-Back-detectie uit met .tk-confirm-bg / .exec-overlay.open; bewezen door fNavigatie.test.js sectie E]",
       "instance_count": 1,
       "last_verified_sha": "88d65878fb6788e1ff7784d80a7e1dfb2ae033fb"
     },
@@ -2289,15 +2298,15 @@
       "expected_parent": "s-profiel",
       "expected_return_target": "n/a (sessie eindigt)",
       "in_app_back": "RED",
-      "android_back": "RED",
+      "android_back": "GREEN",
       "overlay_type": "tk-confirm-bg",
       "state_preserved": null,
       "external_exit_risk": false,
       "duplication_class": null,
-      "nav_status": "RED",
-      "severity": "P1",
-      "root_cause_id": "RC-OVL-01",
-      "code_evidence": "index.html:7416",
+      "nav_status": "GREEN",
+      "severity": null,
+      "root_cause_id": null,
+      "code_evidence": "index.html:7416 [WAVE 1 FIX: tkNavTopmostOverlay() breidt Android-Back-detectie uit met .tk-confirm-bg / .exec-overlay.open; bewezen door fNavigatie.test.js sectie E]",
       "instance_count": 1,
       "last_verified_sha": "88d65878fb6788e1ff7784d80a7e1dfb2ae033fb"
     },
@@ -2314,15 +2323,15 @@
       "expected_parent": "s-profiel",
       "expected_return_target": "n/a",
       "in_app_back": "RED",
-      "android_back": "RED",
+      "android_back": "GREEN",
       "overlay_type": "tk-confirm-bg",
       "state_preserved": null,
       "external_exit_risk": false,
       "duplication_class": null,
-      "nav_status": "RED",
-      "severity": "P1",
-      "root_cause_id": "RC-OVL-01",
-      "code_evidence": "index.html:7425-7426",
+      "nav_status": "GREEN",
+      "severity": null,
+      "root_cause_id": null,
+      "code_evidence": "index.html:7425-7426 [WAVE 1 FIX: tkNavTopmostOverlay() breidt Android-Back-detectie uit met .tk-confirm-bg / .exec-overlay.open; bewezen door fNavigatie.test.js sectie E]",
       "instance_count": 1,
       "last_verified_sha": "88d65878fb6788e1ff7784d80a7e1dfb2ae033fb"
     },
@@ -2538,17 +2547,18 @@
   ],
   "totals": {
     "navigation_action_contracts": 91,
-    "green": 65,
+    "green": 71,
     "amber": 7,
-    "red": 18,
+    "red": 12,
     "unknown": 1,
     "unique_root_causes": 7,
-    "p1_instances": 12,
     "p2_instances": 9,
     "p3_instances": 4,
     "functional_data_issues": 1,
     "po_decisions_required": 1,
     "dead_unreachable_registrations": 3,
-    "non_existent_registrations": 7
+    "non_existent_registrations": 7,
+    "p1_instances_open": 0,
+    "p1_instances_fixed_wave1": 12
   }
 }

@@ -5873,7 +5873,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title">Wissel oefening</div>
-    <div style="font-size:12px;color:var(--g4);margin-bottom:10px">Alternatieven voor dezelfde spiergroep, alleen voor deze training</div>
+    <div id="swap-ex-sub" style="font-size:12px;color:var(--g4);margin-bottom:10px">Alternatieven voor dezelfde spiergroep, alleen voor deze training</div>
     <div id="swap-ex-list" style="display:flex;gap:6px;flex-wrap:wrap"></div>
     <button class="btn btn-o" style="margin-top:16px;width:100%" onclick="closeModal('m-swap-exercise')">Annuleer</button>
   </div>
@@ -7232,7 +7232,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.76';
+const APP_VER = 'v4.69.77';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -29020,20 +29020,65 @@ async function startCustomTraining(id,resolvedItems){
 // pas na bevestiging worden sets/reps/RPE voor deze sessie aangepast. Nooit stilzwijgend.
 // Pure filter — los testbaar: kandidaten die minstens één primaire spiergroep delen met
 // de huidige oefening, met uitsluiting van al aanwezige/eigen oefeningen.
+// FALLBACK-ONLY (Exercise Substitution Source-of-Truth Sprint, Fase B): dit is uitdrukkelijk
+// GEEN semantische bron meer voor canonical oefeningen — uitsluitend gebruikt wanneer de bron
+// geen canonical relations heeft (custom/legacy) of wanneer alle canonical kandidaten na
+// AthleteConstraints-filtering wegvallen. Zie resolveCanonicalAlternatives() hieronder voor de
+// primaire bron.
 function filterSwapCandidates(allExercises,currentMusclesPrimary,excludeIds){
   const primary=new Set(currentMusclesPrimary||[]);
   if(!primary.size)return [];
   return allExercises.filter(e=>!excludeIds.includes(e.id)&&e.active!==false&&(e.muscle_primary||[]).some(m=>primary.has(m)));
+}
+// PRIMARY SEMANTIC SOURCE (Exercise Substitution Source-of-Truth Sprint, Fase B): leest
+// EX_CATALOG.relations.alternatives -- exact dezelfde canonical relatie die de Workout Builder
+// al gebruikt (zie altList() in de WBUI-module). Geen nieuwe substitution-engine: dit is puur
+// het resolven + valideren van een reeds bestaand catalogusveld. Retourneert [] (nooit null)
+// wanneer de bron geen canonical entry heeft (custom/legacy) -- de aanroeper interpreteert een
+// lege array als "geen canonical kandidaten, val terug op fallback".
+function resolveCanonicalAlternatives(exId,excludeIds){
+  try{
+    if(typeof ExerciseCatalogService==='undefined')return [];
+    const src=ExerciseCatalogService.byId(exId);
+    if(!src||!src.relations)return []; // custom/legacy: geen canonical relatie beschikbaar
+    const rawIds=(src.relations.alternatives||[]);
+    const seen=new Set();
+    const out=[];
+    rawIds.forEach(id=>{
+      if(!id||id===exId)return; // geen self-reference
+      if(excludeIds.includes(id))return;
+      if(seen.has(id))return; // dedupliceren
+      const resolved=ExerciseCatalogService.byId(id); // uitsluitend geldige TK-IDs -- fail-safe genegeerd indien onbekend
+      if(!resolved)return;
+      seen.add(id);
+      const picker=resolvePickerEx(id);
+      if(picker&&picker.active!==false)out.push(picker);
+    });
+    return out;
+  }catch(e){ return []; }
 }
 let swapCtx=null;
 function openSwapExercise(exId,t){
   const ex=resolvePickerEx(exId); // F44/Phase2C: legacy of catalogus
   if(!ex){toast('Oefening niet gevonden');return;}
   const excludeIds=[exId,...sessionExtra.map(e=>e.id)];
-  let candidates=filterSwapCandidates(exPickerPool(),ex.muscle_primary,excludeIds); // F44/Phase2C: catalogus-aware pool
+  // Canonical-first (Fase B): relations.alternatives is de primary semantic source. Muscle-
+  // matching is uitsluitend nog een expliciete, herkenbaar gelabelde fallback -- nooit
+  // stilzwijgend vermengd met canonical kandidaten (zelfde set, twee kwaliteitsniveaus).
+  let candidates=resolveCanonicalAlternatives(exId,excludeIds);
   candidates=applyAthleteConstraints(candidates); // F44/Phase8: equipment/avoid (nooit leeg → veilige fallback)
+  let usedFallback=false;
+  if(!candidates.length){
+    usedFallback=true;
+    candidates=filterSwapCandidates(exPickerPool(),ex.muscle_primary,excludeIds); // F44/Phase2C: catalogus-aware pool
+    candidates=applyAthleteConstraints(candidates); // F44/Phase8: equipment/avoid (nooit leeg → veilige fallback)
+  }
   if(!candidates.length){toast('Geen alternatief gevonden voor dezelfde spiergroep');return;}
   swapCtx={fromId:exId,t};
+  const subEl=document.getElementById('swap-ex-sub');
+  if(subEl)subEl.textContent=usedFallback
+    ? 'Andere suggesties op spiergroep, alleen voor deze training'
+    : 'Aanbevolen alternatieven, alleen voor deze training';
   document.getElementById('swap-ex-list').innerHTML=candidates.slice(0,10).map(c=>
     `<button type="button" class="rower-chip" onclick="confirmSwapExercise('${c.id}')">${escHtml(c.name)}</button>`).join('');
   openModal('m-swap-exercise');

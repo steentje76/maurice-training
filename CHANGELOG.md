@@ -1,5 +1,50 @@
 # Trainingskompas — Changelog
 
+## v4.69.77 — Exercise Substitution Source-of-Truth Sprint, Fase B (12 september 2026)
+
+Voorafgegaan door een read-only forensische audit (Fase A) die met codebewijs
+aantoonde: de execution swap-picker (`openSwapExercise()`) negeerde
+`EX_CATALOG.relations.alternatives` volledig en genereerde een eigen,
+parallelle kandidatenset via `muscle_primary`-matching, terwijl de Workout
+Builder (`altList()`) dezelfde canonical relatie al correct gebruikte.
+Geclassificeerd als **C -- DUPLICATE SOURCE**.
+
+Consolidatie (geen nieuwe substitution-engine, geen databasewijziging, geen
+UX-redesign):
+- Nieuwe functie `resolveCanonicalAlternatives(exId, excludeIds)`: leest
+  `EX_CATALOG.relations.alternatives` als primary semantic source, valideert
+  elk ID tegen de canonical catalogus, sluit self-reference en duplicaten
+  uit, faalt veilig (lege array) op elke fout of onbekend ID.
+- `openSwapExercise()`: canonical-first. De bestaande `muscle_primary`-
+  matching (`filterSwapCandidates()`, ongewijzigd) is nu uitsluitend nog een
+  expliciete fallback -- alleen gebruikt wanneer de bron geen canonical
+  relaties heeft (custom/legacy) of wanneer de canonical set na
+  `AthleteConstraints`-filtering leeg is. Canonical en fallback worden nooit
+  vermengd; de modal-subtitel toont expliciet "Aanbevolen alternatieven" vs.
+  "Andere suggesties op spiergroep".
+- `AthleteConstraints`/`applyAthleteConstraints()`: ongewijzigd, blijft
+  uitsluitend filteren (geen semantische kennis toegevoegd).
+- `confirmSwapExercise()`: functioneel ongewijzigd -- identity/history/
+  logging-gedrag (bewezen veilig in Fase A) blijft exact hetzelfde.
+- Builder (`altList()`/`swapAlternative()`) en Library-detail: byte-voor-
+  byte ongewijzigd (regressie-guard, bevestigd via tests).
+
+**Apart, expliciet geregistreerd vervolgrisico (NIET in deze PR opgelost)**:
+`confirmSwapExercise()` neemt sets/reps/RPE/`suggestedWeight` blind over van
+de oude naar de nieuwe (mogelijk biomechanisch andere) oefening -- bewezen
+in Fase A, orthogonaal aan deze source-of-truth-consolidatie. Zie
+DECISION_LOG voor het volledige bewijs en de aanbevolen vervolgsprint.
+
+Nieuwe test: `core/fExerciseSubstitutionCanonicalSource.test.js` (34/34) --
+canonical-first bewijs, self-reference/duplicate/invalid-ID-uitsluiting,
+AthleteConstraints blijft puur filter, fallback-labeling, Builder/Library-
+regressie, Coach-domeinscheiding, identity/history-veiligheid.
+
+Volledige regressie 364/364 (was 363, +1 testbestand). Doc-consistency 0.
+Geen databasewijziging, geen nieuwe MoveKit-oefeningen, geen
+`exercise-intelligence_6.json`-koppeling, geen goal-aware substitution, geen
+AI-selectielogica. APP_VER v4.69.76 -> v4.69.77.
+
 ## v4.69.76 — UX Polish Sprint 01: Inzicht + Belasting/Herstel + PO-01-UX (12 september 2026)
 
 Eerste sprint van de echte UX/UI-polishfase, PO visueel goedgekeurd vóór

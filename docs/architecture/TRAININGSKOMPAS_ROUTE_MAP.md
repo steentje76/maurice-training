@@ -6,12 +6,13 @@ Consolidatie van de Fase 0 / 0B / 0C action-level navigatie-audits.
 Read-only bewijs, geen enkele fix uitgevoerd tijdens de audit-passen.
 Zie `TRAININGSKOMPAS_ROUTE_RULES.md` voor de invariants.
 
-**LAST_VERIFIED_SHA (main): `0eecff7d3ed6d6fb3065b295bd3d180e18c18964`**
-(APP_VER v4.69.74 — ongewijzigd)
+**LAST_VERIFIED_SHA (main): `b7b72b9adaae69a62e8ca8bb03097681269b6d5f`**
+(APP_VER v4.69.75)
 
-**WAVE 1 (branch `fix/navigation-root-cause-wave-1`) — RC-OVL-01 en RC-OVL-02
-gerepareerd.** Zie §2a hieronder. Alle overige root causes (RC-NAV-01/02/03,
-RC-OVL-03, RC-IA-01) staan nog OPEN.
+**WAVE 1 (gemerged, PR #333) — RC-OVL-01 en RC-OVL-02 gerepareerd.**
+**WAVE 2 (branch `fix/navigation-root-cause-wave-2`) — RC-NAV-01, RC-NAV-02,
+RC-NAV-03 en RC-OVL-03 gerepareerd.** Zie §2a/§2b hieronder. Enige nog open
+root cause: RC-IA-01 (P3, presentatie-debt, geen navigatie-root-cause).
 
 **AUDITED DOMAINS: A (Vandaag) · B (Trainen Hub) · D (Coach) · E (Inzicht) ·
 F (Samen) · G (Profiel)**
@@ -30,14 +31,14 @@ domein herhaald hier).
 | Domein | Contracts | GREEN | AMBER | RED | UNKNOWN |
 |---|---|---|---|---|---|
 | A — Vandaag | 11 | 9 | 1 | 0 | 1 |
-| B — Trainen Hub | 24 | 19 | 1 | 4 | 0 |
-| D — Coach | 13 | 9 | 1 | 3 | 0 |
-| E — Inzicht | 17 | 9 | 4 | 4 | 0 |
-| F — Samen | 6 | 5 | 0 | 1 | 0 |
+| B — Trainen Hub | 24 | 23 | 1 | 0 | 0 |
+| D — Coach | 13 | 12 | 1 | 0 | 0 |
+| E — Inzicht | 17 | 13 | 4 | 0 | 0 |
+| F — Samen | 6 | 6 | 0 | 0 | 0 |
 | G — Profiel | 20 | 20 | 0 | 0 | 0 |
-| **TOTAAL (na Wave 1)** | **91** | **71** | **7** | **12** | **1** |
+| **TOTAAL (na Wave 2)** | **91** | **83** | **7** | **0** | **1** |
 
-Controle: 71 + 7 + 12 + 1 = 91 ✓ (was vóór Wave 1: 65/7/18/1)
+Controle: 83 + 7 + 0 + 1 = 91 ✓ (was vóór Wave 1: 65/7/18/1; na Wave 1: 71/7/12/1; na Wave 2: 0 RED resterend)
 
 ### 2a. Wave 1 — uitgevoerd
 
@@ -81,13 +82,71 @@ Dead/Unreachable: A=1 (module), B=0, D=1, E=0, F=1, G=0 → **3 registraties**
 
 Non-existent: A=2, D=1, F=4 → **7 registraties** (zie §5).
 
+### 2b. Wave 2 — uitgevoerd
+
+**RC-NAV-03 — FIXED.** `openCoachSession()` deed een overbodige handmatige
+`history.pushState({coach:true},'','#coach')` bovenop de canonical push van
+`go('s-coach')` — twee history-transities voor één logische stap, waardoor
+`tkNavStack` en de browser-historie per Training→Coach-rondgang 1 entry uit
+elkaar liepen. De popstate-handler (case 2, `actief.id==='s-coach'&&
+coachReturn`) leest de gepushte state-waarde sowieso niet, dus de regel is
+puur verwijderd, geen vervangende logica nodig. D-01/D-02 RED → GREEN.
+
+**RC-NAV-01 — FIXED (beide bewezen instanties).**
+`coachPtOpenAthlete()` (D-04) en `openMessageThread()` (F-05) deden directe
+`.scr`-classList-activatie buiten `go()`, waardoor Android Back het
+s-coachpt- resp. s-social/s-messages-niveau kon overslaan. Beide omgezet
+naar canonical `go(id)` + context via module-variabelen
+(`_pendingCoachPtAthleteId`/`_pendingCoachPtRelationshipId`,
+`_pendingThreadId`), render verplaatst naar `renderCoachPtAthlete()`
+resp. de al aanwezige `go()`-hook voor `s-message-thread`. D-04/F-05 RED →
+GREEN.
+
+**RC-NAV-02 — FIXED (7 bewezen instanties).** Zichtbare terugknoppen waren
+hardcoded naar een verkeerde parent terwijl Android Back al correct was
+(GREEN) via de canonical `go()`-entry:
+- `s-builder` (B-10, B-18, B-25): hardcoded `go('s-home')` → `tkNavGoBack('s-train-mgr')`.
+- `s-library` (B-19): hardcoded `go('s-home')` → `tkNavGoBack('s-train-mgr')`.
+- `s-lich-health`/`s-lich-metingen`/`s-lich-verbanden` (E-03, E-05, E-07):
+  hardcoded `go('s-lichaam')` → `tkNavGoBack('s-inzicht')` (enige bewezen
+  entry point is `s-inzicht Domeinen`).
+
+Alle 7 hergebruiken uitsluitend de bestaande, in Sprint 2 gebouwde
+`tkNavGoBack()`-helper. Geen nieuwe state, geen visuele wijziging.
+
+**RC-OVL-03 — FIXED (E-17).** De ad-hoc cardio-detailmodal
+(`showCardioDetail()`) kreeg nooit een `id`. `tkNavTopmostOverlay()` vond
+hem wel via `.modal-bg.open`, maar `closeModal(modaal.id)` faalde stil op
+`closeModal('')` (`document.getElementById('')` is `null`) — Android Back
+sloot de modal daardoor nooit. Fix: `modal.id='m-cardio-detail-adhoc'`,
+verder ongewijzigd. Geen visuele wijziging.
+
+**Bewijs:** `core/fNavigatie.test.js` sectie F (Wave 2, RC-NAV-03/01/OVL-03)
+en sectie G (RC-NAV-02, source-aware Back per surface + fallback bij lege
+stack). Training-execution-state expliciet getest: geen van de fixes raakt
+`curT`, `activeInstanceId`, sessielog- of timer-state aan.
+
+**Nog OPEN na Wave 2:** uitsluitend RC-IA-01 (P3, presentatie-debt — meerdere
+kaarten landen ongedifferentieerd op dezelfde surface; geen navigatie-root-
+cause, geen Android-Back-defect). 0 RED-contracts resterend.
+
+**Repo-brede scan (nieuwe bevinding, NIET in Wave 2 meegenomen):**
+`startT()` en de custom/programma-trainingsstart-functies
+(`buildCustomTrainScreen()`/`buildProgramTrainScreen()`-aanroeppaden)
+activeren dynamisch aangemaakte `s-train-*`-schermen rechtstreeks via
+`.classList`, buiten `go()` om — een echte RC-NAV-01-achtige bypass. Bewust
+niet gerepareerd: deze functies zitten diep verweven met beschermde
+Training-execution-/resume-/timer-logica (R-006), en deze Wave verbiedt
+functionele wijzigingen aan Training execution. Vereist een eigen, zorgvuldig
+geteste vervolgsprint, geen incidentele meelift-fix.
+
 ---
 
 ## 2. Root Cause Registry
 
 Elke RED wordt hier onder precies één root cause geconsolideerd.
 
-### RC-NAV-01 — Directe screen-activatie buiten `go()` → Android Back mist niveau
+### RC-NAV-01 — Directe screen-activatie buiten `go()` → Android Back mist niveau — **FIXED (Wave 2)**
 Rechtstreekse `.scr`-classmanipulatie i.p.v. `go()`, dus geen `tkNavStack`-push.
 Zichtbare terugknop (indien aanwezig) werkt vaak wél correct — het is
 specifiek Android Back dat een navigatieniveau overslaat.
@@ -99,7 +158,7 @@ specifiek Android Back dat een navigatieniveau overslaat.
 
 **Instances: 2**
 
-### RC-NAV-02 — Hardcoded wrong-parent op zichtbare terugknop
+### RC-NAV-02 — Hardcoded wrong-parent op zichtbare terugknop — **FIXED (Wave 2)**
 Terugknop wijst altijd naar hetzelfde hardcoded scherm, ongeacht werkelijke
 herkomst. Android Back werkt via `tkNavStack` doorgaans wél correct (bewijst
 dat alleen de zichtbare knop het probleem is) — behalve waar expliciet anders
@@ -117,7 +176,7 @@ vermeld.
 **Bewezen fix-patroon reeds aanwezig in de codebase:** `tkNavGoBack(fallback)`
 (zie Profiel → Meldingen/Privacy/Help, die dit al correct doen).
 
-### RC-NAV-03 — Contextuele Coach dubbele history-push
+### RC-NAV-03 — Contextuele Coach dubbele history-push — **FIXED (Wave 2)**
 `openCoachSession()` legt handmatig een extra `history.pushState({coach:true})`
 neer, bovenop de automatische push van `go('s-coach')`. Eerste terugactie
 werkt (herstelt zelfs de exacte oefening + scroll), maar laat een weesentry
@@ -168,7 +227,7 @@ blijft zweven op het scherm waar de gebruiker vervolgens landt.
 **Instances: 6** (ACTIVE-HIGH — pauzeren/volgende-oefening worden in vrijwel
 elke trainingssessie gebruikt).
 
-### RC-OVL-03 — Ad-hoc `modal-bg` herkend maar niet sluitbaar (ontbrekend id)
+### RC-OVL-03 — Ad-hoc `modal-bg` herkend maar niet sluitbaar (ontbrekend id) — **FIXED (Wave 2)**
 `showCardioDetail()` bouwt een modal-element met class `modal-bg open` maar
 zonder `id`-attribuut. `tkNavModaalOpen()` vindt het element wél (class-match),
 maar `closeModal(modaal.id)` faalt stil (`getElementById('')` → `null` →
@@ -339,6 +398,53 @@ expliciete PO-goedkeuring voor scope-uitbreiding.
 (patroonmatch). Geen functionele fix in deze Wave. PO-beslissing nodig:
 onboarding toevoegen als nieuw geaudit domein (bv. domein "H — Onboarding")
 in een volgende scope, vóórdat dit als canonical action-contract meetelt.
+
+**Wave 2 — heronderzoek (§5, code-trace, geen fix):**
+
+- **Actieve user journey, bevestigd.** `startAppAfterAuth()` (regel
+  ~33001-33010) roept `intakeStart()` aan en activeert `s-intake` direct
+  bij elke login/registratie waarvoor `tkOnboardingAfgerond()` false
+  teruggeeft — dit is de daadwerkelijke, actief gebruikte eerste-gebruiker-
+  flow, geen dode/verouderde code.
+- **Concrete Back/history-afwijking bepaald.** De boot-time activatie van
+  `s-intake`/`s-home` in `startAppAfterAuth()` zelf is geen probleem — er
+  bestaat op dat moment nog geen navigatiegeschiedenis om aan te sluiten
+  (`tkNavStack` is leeg, dit ís het beginpunt). Het daadwerkelijke risico
+  zit uitsluitend in `intakeGoHome()`/de inline "Bekijk mijn trainingen"-
+  chip, die vuren wanneer de gebruiker het AI-gesprek AFRONDT. Zonder
+  `go()` registreert `tkNavStack` deze afronding niet. Praktisch gevolg:
+  een Android Back-druk direct na afronding valt terug op case 4 (lege
+  stapel → afsluit-arm) i.p.v. terug het zojuist afgeronde gesprek in te
+  gaan. Functioneel is dit echter twijfelachtig als "afwijking" — een
+  gebruiker verwacht na het voltooien van een intake doorgaans niet dat
+  Back hem terug de wizard in stuurt.
+- **Aantal fysieke navigation actions: 2** — `intakeGoHome()` en de inline
+  "Bekijk mijn trainingen"-handler in `intakeValueCTA()`'s chips. Beide
+  vuren precies één keer per gebruiker (bij intake-afronding), geen
+  herhaalde/dagelijkse interactie zoals Coach of Berichten.
+
+**PO-02 — ROUTE MAP SCOPE EXPANSION: ONBOARDING**
+
+- **Aantal nieuwe contracts bij opname:** 2 (`intakeGoHome()`-chip,
+  "Bekijk mijn trainingen"-chip).
+- **Voorgestelde IDs:** `H-01` (Intake → Vandaag), `H-02` (Intake →
+  Trainen), onder een nieuw domein "H — Onboarding" (buiten de huidige
+  zes geauditeerde domeinen, dus een echte scope-uitbreiding, geen
+  hernummering van bestaand domein A).
+- **Risico:** laag. Eenmalige, niet-herhaalde interactie per gebruiker;
+  de praktische Android-Back-impact is twijfelachtig (zie hierboven) —
+  eerder een randgeval dan een dagelijks ervaren defect.
+- **Waarom inclusion wel zou kunnen:** consistentie — het patroon is
+  identiek aan de al gefixte D-04/F-05 (RC-NAV-01), en de fix zou
+  triviaal zijn (dezelfde `go()`-hook-aanpak).
+- **Waarom inclusion niet noodzakelijk is:** de praktische UX-impact is
+  minimaal (zie boven), het raakt een zeldzaam, eenmalig moment, en
+  toevoegen zonder PO-goedkeuring zou de PO-geverifieerde 91-telling
+  wijzigen buiten de afgesproken sprintgrenzen.
+
+**Geen functionele onboarding-fix uitgevoerd in Wave 2**, conform de
+instructie. Wacht op expliciete PO-beslissing over PO-02 vóór eventuele
+opname of fix.
 
 ---
 

@@ -1,5 +1,52 @@
 # Trainingskompas — Changelog
 
+## v4.69.75 — Navigation Repair Wave 2: P2 root causes (12 september 2026)
+
+Lost de vier resterende P2 navigation-root-causes op (RC-NAV-01, RC-NAV-02,
+RC-NAV-03, RC-OVL-03) uit de canonical Route Map. Zuiver functioneel/
+navigatie -- geen visuele wijziging, geen Training-execution-redesign,
+geen databasewijziging.
+
+RC-NAV-03 (Coach dubbele history-push): `openCoachSession()` deed een
+overbodige handmatige `history.pushState()` bovenop de canonical push van
+`go('s-coach')`, waardoor Training->Coach->Terug de browser-historie liet
+afdrijven. De popstate-handler leest die gepushte waarde niet eens --
+overbodige regel verwijderd (D-01, D-02 RED -> GREEN).
+
+RC-NAV-01 (directe `.scr`-activatie buiten `go()`): `coachPtOpenAthlete()`
+en `openMessageThread()` gerouteerd via canonical `go()` + module-
+variabelen voor context, i.p.v. directe classList-manipulatie (D-04, F-05
+RED -> GREEN). Repo-brede scan uitgevoerd naar overige bypasses; de
+trainingsstart-functies (`startT()` e.a.) vertonen hetzelfde patroon maar
+zijn bewust NIET aangepakt vanwege hun koppeling met beschermde Training-
+execution/resume/timer-logica (R-006).
+
+RC-NAV-02 (hardcoded verkeerde parent): 5 zichtbare terugknoppen
+(Builder/Library -> was `s-home`, Lichaam-detailschermen -> was
+`s-lichaam`) hardcoded naar een parent terwijl Android Back al correct
+naar de echte bron ging. Vervangen door het bestaande `tkNavGoBack()`
+source-aware patroon (B-10, B-18, B-19, B-25, E-03, E-05, E-07 RED ->
+GREEN).
+
+RC-OVL-03 (ad-hoc modal zonder canonical contract): cardio 1RM-detailmodal
+kreeg een `id` zodat `closeModal()`/`tkNavTopmostOverlay()` hem via
+Android Back kan sluiten, plus een kleine aanvulling die een dubbele
+DOM-id voorkomt bij hergebruik (E-17 RED -> GREEN).
+
+Onboarding (EV-02, Wave 1) herbevestigd als bewezen patroon maar NIET
+stilzwijgend aan de 91 audited contracts toegevoegd -- vastgelegd als
+formeel PO-02-voorstel (scope-uitbreiding, 3 kandidaat-contracten),
+PO-beslissing vereist vóór opname.
+
+Route Map: 91 total, 83 GREEN, 7 AMBER, 0 RED, 1 UNKNOWN (was na Wave 1:
+71/7/12/1). Nieuwe test `core/fNavigationWave2.test.js` (34/34), bewijst
+expliciet dat geen van de gewijzigde functies Training-execution-state
+(`curT`/`activeInstanceId`/`sessionLog`/`trainStart`) aanraakt.
+`fCoachPtRelationshipUI.test.js` root-cause aangepast aan de
+`renderCoachPtAthlete()`-refactor. Volledige regressie 362/362 (was 360,
++2 nieuwe/aangepaste testbestanden). Doc-consistency 0. Geen
+databasewijziging. APP_VER v4.69.74 -> v4.69.75.
+
 ## v4.69.74 — Samen V1: canonical redesign (12 september 2026)
 
 Samen (`s-social`) herbouwd naar een canonical tab-structuur (Overzicht/

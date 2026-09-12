@@ -1582,3 +1582,48 @@
 - **Verantwoordelijke:** Product Owner (PO visuele goedkeuring Samen V1,
   12 september 2026), uitgevoerd door Claude.
 
+## Navigation Repair Wave 2 -- P2 root causes
+
+- **Datum:** 12 september 2026.
+- **Context:** vervolg op Wave 1 (PR #333, RC-OVL-01/02). Vier resterende
+  P2-root-causes in de canonical Route Map: RC-NAV-03 (Coach dubbele
+  history-push), RC-NAV-01 (directe .scr-activatie buiten go()),
+  RC-NAV-02 (hardcoded verkeerde parent op zichtbare terugknoppen),
+  RC-OVL-03 (ad-hoc modal zonder canonical close-contract).
+- **Besluit:** alle vier root causes opgelost, uitsluitend via hergebruik
+  van bestaande canonical mechanismen (go()-hooks naar bestaand patroon,
+  tkNavGoBack(), closeModal()/tkNavTopmostOverlay()) -- geen nieuwe
+  architectuur, geen Training-execution-wijziging, geen visuele
+  UX-wijziging, geen databasewijziging.
+- **RC-NAV-03**: overbodige handmatige `history.pushState()` in
+  `openCoachSession()` verwijderd (D-01, D-02 RED -> GREEN).
+- **RC-NAV-01**: `coachPtOpenAthlete()`/`openMessageThread()` gerouteerd
+  via canonical `go()` + module-variabelen voor context i.p.v. directe
+  `.scr`-manipulatie (D-04, F-05 RED -> GREEN). Repo-brede scan naar
+  overige bypasses uitgevoerd; `startT()` en de trainingsstart-varianten
+  vertonen hetzelfde patroon maar zijn bewust NIET aangepakt (gekoppeld
+  aan beschermde Training-execution/resume/timer-logica, R-006) --
+  geregistreerd als aparte follow-up-bevinding, geen Wave 3 gestart.
+- **RC-NAV-02**: 5 hardcoded terugknoppen (Builder/Library, 3x
+  Lichaam-detail) vervangen door het bestaande `tkNavGoBack()`-patroon
+  (B-10, B-18, B-19, B-25, E-03, E-05, E-07 RED -> GREEN).
+- **RC-OVL-03**: cardio 1RM ad-hoc modal kreeg een `id` (was al deels
+  gedaan) + een aanvulling die een dubbele DOM-id voorkomt bij hergebruik
+  (E-17 RED -> GREEN).
+- **EV-02/onboarding**: bevestigd als bewezen, actieve user journey (100%
+  van nieuwe gebruikers, 3 fysieke navigation-acties bypassen go()) maar
+  NIET stilzwijgend toegevoegd aan de 91 audited contracts -- vastgelegd
+  als formeel PO-02-voorstel (scope-uitbreiding), PO-beslissing vereist.
+- **Route Map**: 91 total, 83 GREEN, 7 AMBER, 0 RED, 1 UNKNOWN (was na
+  Wave 1: 71/7/12/1). Domeintabellen herberekend rechtstreeks uit de JSON.
+- **Tests**: nieuw `core/fNavigationWave2.test.js` (34/34) -- bewijst
+  expliciet dat geen enkele gewijzigde functie Training-execution-state
+  (curT/activeInstanceId/sessionLog/trainStart) aanraakt.
+  `fCoachPtRelationshipUI.test.js` root-cause aangepast aan de
+  `renderCoachPtAthlete()`-refactor (14/14, geen verzwakking).
+  `fNavigatie.test.js` 21/21, `routeMap.test.js` 35/35. Volledige
+  regressie 362/362 (was 360, +2 testbestanden). Doc-consistency 0. Geen
+  databasewijziging. APP_VER v4.69.74 -> v4.69.75.
+- **Verantwoordelijke:** Product Owner (expliciete Wave 2-opdracht, 12
+  september 2026), uitgevoerd door Claude.
+

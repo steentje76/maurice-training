@@ -1688,3 +1688,41 @@
 - **Verantwoordelijke:** Product Owner (visuele goedkeuring vóór
   implementatie, 12 september 2026), uitgevoerd door Claude.
 
+## Exercise Substitution Source-of-Truth Sprint -- Fase A (audit) + Fase B (consolidatie)
+
+- **Datum:** 12 september 2026.
+- **Fase A (read-only audit)**: bewees met codecitaten dat de execution
+  swap-picker (`openSwapExercise()`/`filterSwapCandidates()`)
+  `EX_CATALOG.relations.alternatives` volledig negeerde en een eigen,
+  parallelle kandidatenset genereerde via `muscle_primary`-matching, terwijl
+  de Workout Builder (`altList()`/`swapAlternative()`) dezelfde canonical
+  relatie al correct gebruikte. Catalogdata zelf bevestigd schoon: 206/206
+  met alternatives, 0 self-references, 0 duplicaten, 0 ongeldige
+  verwijzingen. Geclassificeerd als **C -- DUPLICATE SOURCE**.
+- **Apart, expliciet bewezen vervolgrisico (NIET opgelost in Fase B,
+  bewust)**: `confirmSwapExercise()` neemt sets/reps/RPE/`suggestedWeight`
+  blind over van de oude naar de nieuwe oefening
+  (`sessionExtra[idx]={...sessionExtra[idx],id:newId,...}` -- spread van het
+  oude item, alleen id/naam/type overschreven). Orthogonaal aan de
+  source-of-truth-vraag, geregistreerd als **P1/P2-vervolgpunt**, niet
+  stilzwijgend meegepatcht.
+- **Fase B (consolidatie)**: nieuwe functie `resolveCanonicalAlternatives()`
+  leest `relations.alternatives` als primary semantic source (valideert elk
+  ID tegen de catalogus, sluit self-reference/duplicaten uit, fail-safe naar
+  lege array). `openSwapExercise()` canonical-first; de bestaande
+  `muscle_primary`-matching is nu uitsluitend expliciete fallback (alleen
+  bij custom/legacy-bron of lege canonical-set na `AthleteConstraints`),
+  herkenbaar gelabeld in de UI ("Aanbevolen alternatieven" vs. "Andere
+  suggesties op spiergroep"), nooit vermengd. `AthleteConstraints` ongewijzigd
+  (blijft puur filter). `confirmSwapExercise()` functioneel ongewijzigd
+  (identity/history/logging-veiligheid uit Fase A bevestigd intact). Builder
+  en Library-detail byte-voor-byte ongewijzigd (regressie-guard, getest).
+- Nieuwe test: `core/fExerciseSubstitutionCanonicalSource.test.js` (34/34).
+  Volledige regressie 364/364 (was 363, +1 testbestand). Doc-consistency 0.
+  Geen databasewijziging, geen MoveKit-uitbreiding, geen koppeling aan
+  `exercise-intelligence_6.json`, geen goal-aware substitution, geen
+  AI-selectielogica, geen weight-conversion-formule. APP_VER v4.69.76 ->
+  v4.69.77.
+- **Verantwoordelijke:** Product Owner (expliciete Fase A/B-opdracht met
+  hard scope, 12 september 2026), uitgevoerd door Claude.
+

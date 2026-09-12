@@ -13,6 +13,7 @@
  * scan falen -> de adapter surft dat door als fout (nooit fake 'connected').
  */
 import { BleClient } from '@capacitor-community/bluetooth-le';
+import './developerMode.mjs';
 
 function lc(u) { return String(u || '').toLowerCase(); }
 

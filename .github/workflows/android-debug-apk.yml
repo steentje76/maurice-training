@@ -52,6 +52,9 @@ jobs:
           grep -q "android.permission.BLUETOOTH_SCAN" android/app/src/main/AndroidManifest.xml
           grep -q "android.permission.BLUETOOTH_CONNECT" android/app/src/main/AndroidManifest.xml
 
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x android/gradlew
+
       - name: Build debug APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon

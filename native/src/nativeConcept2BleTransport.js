@@ -51,6 +51,10 @@
   }
 
   function lc(u) { return String(u || '').toLowerCase(); }
+  function maskDeviceId(id) {
+    var s = String(id || '');
+    return s ? ('…' + s.slice(-4)) : null;
+  }
 
   // ---- factory --------------------------------------------------------------
 
@@ -68,7 +72,7 @@
    *   checkPermission(): Promise<'granted'|'denied'>        // BLE-permissie
    *   requestPermission(): Promise<'granted'|'denied'>
    *   scan(serviceUuids:string[], onResult:fn, opts): Promise<void>
-   *        onResult({deviceId, name, rssi})                 // per gevonden device
+   *        onResult({deviceId, name, rssi, uuids})          // per gevonden device
    *   stopScan(): Promise<void>
    *   connect(deviceId, onDisconnect:fn): Promise<void>     // onDisconnect(deviceId)
    *   disconnect(deviceId): Promise<void>
@@ -108,10 +112,21 @@
       }
     })();
 
-    // scan-filter: primaire PM erg-data service (val terug op device-info).
+    // Bekende Concept2-services voor SOFTWARE-classificatie van advertenties.
+    // Niet gebruiken als Android/OS-level scanfilter: de PM5 kan deze UUID's pas in
+    // de scan response adverteren, waardoor een gefilterde scan het toestel mist.
     var SCAN_SERVICE_UUIDS = [];
-    if (SERVICES.pmData) SCAN_SERVICE_UUIDS.push(SERVICES.pmData.uuid);
-    if (SERVICES.deviceInfo) SCAN_SERVICE_UUIDS.push(SERVICES.deviceInfo.uuid);
+    var SCAN_SERVICE_LOOKUP = {};
+    (function () {
+      for (var svcKey in SERVICES) {
+        if (!SERVICES.hasOwnProperty(svcKey) || !SERVICES[svcKey] || !SERVICES[svcKey].uuid) continue;
+        var u = lc(SERVICES[svcKey].uuid);
+        if (!SCAN_SERVICE_LOOKUP[u]) {
+          SCAN_SERVICE_LOOKUP[u] = true;
+          SCAN_SERVICE_UUIDS.push(SERVICES[svcKey].uuid);
+        }
+      }
+    })();
 
     // -------- interne state --------
     var connState = 'idle';            // uit Concept2Live.CONN_STATES-vocabulaire
@@ -127,6 +142,11 @@
     var scanTimer = null;
     var captureEnabled = false;
     var capture = [];
+    var lastDiscoveryDiagnostics = {
+      permissionState: 'granted',
+      advertisementsSeen: 0,
+      devices: []
+    };
 
     // decoder-registry: uuid(lc) -> { status:'UNKNOWN'|'CONFIRMED', decode(dv)->rawObj|null }
     // Standaard: ALLE bekende notify-chars UNKNOWN (geen gegokte decoder).
@@ -213,10 +233,31 @@
       var scanMs = opts.scanMs || 6000;
       var found = {};   // deviceId -> device
       return ensureReady().then(function () {
+        lastDiscoveryDiagnostics = {
+          permissionState: permStateCache,
+          advertisementsSeen: 0,
+          devices: []
+        };
         emitConn('scanning');
         return new Promise(function (resolve, reject) {
           function onResult(dev) {
             if (!dev || !dev.deviceId) return;
+            var advertised = Array.isArray(dev.uuids) ? dev.uuids.map(lc) : [];
+            var matchedUuid = null;
+            for (var i = 0; i < advertised.length; i++) {
+              if (SCAN_SERVICE_LOOKUP[advertised[i]]) { matchedUuid = advertised[i]; break; }
+            }
+            var matched = !!matchedUuid;
+            lastDiscoveryDiagnostics.advertisementsSeen++;
+            lastDiscoveryDiagnostics.devices.push({
+              deviceIdMasked: maskDeviceId(dev.deviceId),
+              name: dev.name || null,
+              uuids: advertised.slice(),
+              rssi: (typeof dev.rssi === 'number') ? dev.rssi : null,
+              matched: matched,
+              reason: matched ? 'concept2_service_uuid' : 'no_concept2_service_uuid'
+            });
+            if (!matched) return;
             var id = dev.deviceId;
             // machineType is pre-connect NIET betrouwbaar leesbaar (0x0015 layout UNKNOWN)
             // -> 'unknown'; de UI bevestigt/mismatcht via Concept2Live.machineMatchesExercise.
@@ -237,11 +278,29 @@
                 resolve(list);
               });
           }
-          Promise.resolve(gateway.scan(SCAN_SERVICE_UUIDS, onResult, { scanMs: scanMs }))
+          // Ongefilterd op OS-niveau: software classificeert daarna op geadverteerde C2-UUID's.
+          Promise.resolve(gateway.scan([], onResult, { scanMs: scanMs }))
             .then(function () { if (setT) scanTimer = setT(finish, scanMs); else finish(); })
             .catch(function (err) { emitConn('idle'); reject(err); });
         });
       });
+    }
+
+    function getLastDiscoveryDiagnostics() {
+      return {
+        permissionState: lastDiscoveryDiagnostics.permissionState,
+        advertisementsSeen: lastDiscoveryDiagnostics.advertisementsSeen,
+        devices: lastDiscoveryDiagnostics.devices.map(function (d) {
+          return {
+            deviceIdMasked: d.deviceIdMasked,
+            name: d.name,
+            uuids: d.uuids.slice(),
+            rssi: d.rssi,
+            matched: d.matched,
+            reason: d.reason
+          };
+        })
+      };
     }
 
     // -------- connect --------
@@ -336,6 +395,7 @@
         capture = [];
         machineType = 'unknown';
         connState = 'idle';
+        lastDiscoveryDiagnostics = { permissionState: permStateCache, advertisementsSeen: 0, devices: [] };
       });
     }
 
@@ -375,6 +435,7 @@
       getPermissionState: getPermissionState,
       refreshPermissionState: refreshPermissionState,
       discover: discover,
+      getLastDiscoveryDiagnostics: getLastDiscoveryDiagnostics,
       connect: connect,
       disconnect: disconnect,
       getStatus: getStatus,

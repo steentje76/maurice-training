@@ -89,8 +89,11 @@ ok(delAcct.includes("['nutrition_entries', ['user_id']]"),
 
 // ---- I. Geen extra bottom-nav-regressie ----
 {
-  const aantalSociaalTabs = (html.match(/<span class="ni-label">Sociaal<\/span>/g) || []).length;
-  ok(aantalSociaalTabs === 4, 'I1: geen brede bottom-nav-refactor -- het bestaande Sociaal-scherm, Nutrition, Berichten (S5), en het nieuwe Coach/PT-scherm (Coach/PT Master Sprint CPT2/CPT3, bereikt vanuit Sociaal) hebben deze tab, geen wijziging aan de overige bestaande schermen');
+  // UX App Shell Master Sprint: labels komen sindsdien uit TK_PRIMARY_NAV ('Samen' i.p.v.
+  // het toenmalige experimentele 'Sociaal'-label op deze 4 schermen), niet meer letterlijk
+  // in de HTML. Vervangen door: totaal aantal canonical nav-shells onveranderd.
+  const aantalNavShells = (html.match(/<nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"><\/nav>/g) || []).length;
+  ok(aantalNavShells === 45, 'I1: geen brede bottom-nav-refactor buiten de App Shell-migratie -- 45 canonical shells op de huidige main; het historische "Sociaal"-experiment op 4 schermen is opgegaan in de canonical Samen-tab (TK_PRIMARY_NAV)');
 }
 
 console.log('fB9_09NutritionFoundation: ' + pass + ' geslaagd, ' + fail + ' mislukt');

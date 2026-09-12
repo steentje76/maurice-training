@@ -53,8 +53,13 @@ ok(migratie.includes('check (char_length(body) between 1 and 500)'),
 
 // ---- F. Geen extra bottom-nav-regressie ----
 {
-  const aantalVoortgangTabs = (html.match(/<span class="ni-label">Voortgang<\/span>/g) || []).length;
-  ok(aantalVoortgangTabs === 41, 'F1: geen enkele van de bestaande bottom-nav-blokken is aangeraakt -- 36 -> 38 (Nutrition UX v1) -> 39 (s-availability) -> 41 door de additieve komst van s-swimming/s-swimming-insights (Endurance Master Sprint E4, Swimming Foundation)');
+  // UX App Shell Master Sprint: bottom-nav-labels komen sindsdien uit één gedeelde bron
+  // (TK_PRIMARY_NAV) en staan niet meer letterlijk in de HTML ("Voortgang" komt nergens
+  // meer voor). De historische telling (36 -> 38 -> 39 -> 41 losse label-kopieën) is
+  // vervangen door: het totaal aantal canonical nav-shells in het bestand bleef 45 tijdens
+  // de migratie (alleen de inhoud werd geleegd, geen posities toegevoegd/verwijderd).
+  const aantalNavShells = (html.match(/<nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"><\/nav>/g) || []).length;
+  ok(aantalNavShells === 45, 'F1: geen enkel bottom-nav-blok is toegevoegd of verwijderd -- 45 canonical shells op de huidige main (post UX App Shell Master Sprint); het historische aantal losse labelkopieën (41 op het moment van deze test) is niet meer van toepassing sinds labels uit TK_PRIMARY_NAV komen');
 }
 
 // ---- G. Moderatie: gebruikt de bestaande social_reports-tabel ----

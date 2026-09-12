@@ -223,17 +223,24 @@ UI_MOET_BESTAAN.forEach(function (p) {
 });
 
 t('C: de onderste navigatie heeft nog steeds vijf items', function () {
+  // UX App Shell Master Sprint: s-home's nav is een lege canonical shell; de inhoud komt
+  // runtime uit TK_PRIMARY_NAV. Controleer dat die ene, gedeelde bron nog 5 items heeft.
   var i = HTML.indexOf('id="s-home"');
   var blok = HTML.slice(i, i + 20000);
-  var nav = blok.slice(blok.indexOf('<nav class="bnav"'), blok.indexOf('</nav>'));
-  assert.strictEqual((nav.match(/class="ni[ "]/g) || []).length, 5, 'navigatie gewijzigd');
+  assert.ok(blok.indexOf('<nav class="bnav"') > -1, 'geen bottom-nav-shell meer op s-home');
+  var navArr = HTML.slice(HTML.indexOf('const TK_PRIMARY_NAV='), HTML.indexOf('const TK_TAB_PREFIX_RULES='));
+  assert.strictEqual((navArr.match(/\{id:'/g) || []).length, 5, 'navigatie gewijzigd (TK_PRIMARY_NAV heeft geen 5 items meer)');
 });
 
 t('C: de nieuwe schermen hangen onder Lichaam, niet naast de hoofdnavigatie', function () {
   var i = HTML.indexOf('id="s-lich-verbanden"');
   var blok = HTML.slice(i, i + 4000);
   assert.ok(blok.indexOf("go('s-lichaam')") > 0, 'terugknop wijst niet naar Lichaam');
-  assert.ok(blok.indexOf('class="ni active"') > 0, 'Lichaam is niet als actief gemarkeerd');
+  // UX App Shell Master Sprint: Lichaam is geen eigen bottom-nav-tab meer (PO-besluit) --
+  // s-lich-* hoort nu bij de Inzicht-tab-context. Controleer de canonical mapping i.p.v.
+  // een statisch 'Lichaam actief'-label dat niet meer bestaat.
+  var mapping = HTML.slice(HTML.indexOf('const TK_TAB_PREFIX_RULES='), HTML.indexOf('function tkPrimaryTabFor'));
+  assert.ok(/\[\/\^s-lich\/,'inzicht'\]/.test(mapping), 's-lich-* is niet langer gemapt op de Inzicht-tab-context');
 });
 
 t('C: de Workout Builder is niet aangeraakt', function () {

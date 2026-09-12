@@ -1496,3 +1496,45 @@
 - **Verantwoordelijke:** Product Owner (expliciete visuele
   goedkeuring, 11 september 2026), uitgevoerd door Claude.
 
+## UX App Shell Master Sprint -- canonical primary navigation
+
+- **Datum:** 11 september 2026.
+- **Context:** de primaire navigatie bestond uit 45 losse, handmatig gekopieerde
+  `<nav class="bnav">`-blokken met hardcoded labels (Home/Training/Lichaam/
+  Coach/Voortgang, emoji-iconen) in 17 unieke varianten -- de "actieve" tab was
+  dus een build-time toeval, geen runtime-berekening.
+- **Besluit (PO-approved canonical mockups):** primaire navigatie gemigreerd
+  naar Vandaag/Trainen/Inzicht/Coach/Samen. Profiel blijft uitsluitend via
+  avatar bereikbaar, geen zesde tab. Canonical mapping bewezen uit bestaande
+  code (niet aangenomen): `s-inzicht` en `s-social` bestonden al als volwaardige
+  doelschermen (s-inzicht linkte zelf al door naar s-stats voor detail; s-social
+  had al de juiste "Sociaal · Profiel, connecties & privacy"-kop).
+- **Architectuur:** één canonical bron (`TK_PRIMARY_NAV`, 5 items) + prefix-
+  gebaseerde scherm->tab-mapping (`TK_TAB_PREFIX_RULES`, dekt ook dynamisch
+  aangemaakte schermen zoals `s-train-<naam>` zonder per-scherm onderhoud).
+  Alle 45 bnav-instanties zijn nu lege canonical shells; `tkPaintBnav()` vult
+  precies de zichtbare shell, hergebruikt de bestaande go()-wrapper (één
+  repaint per echte schermwissel, geen 45-voudige DOM-arbeid). Renderlogica
+  bewust buiten de door `fNavigatie.test.js` bewaakte "pure navigatielaag"
+  geplaatst (die mag geen innerHTML schrijven).
+- **Lichaam/Voortgang/Nutrition**: geen eigen tab meer, functionaliteit
+  volledig behouden en bereikbaar als Inzicht-context detailflow (PO-besluit).
+  Coach-icoon: abstracte sparkle i.p.v. het vorige robot-emoji, conform de
+  al vastgelegde AI-identiteitsregel (geen robot, geen menselijke avatar).
+- **Regressiebewaking gerepareerd, niet verzwakt:** 9 bestaande tests
+  (fB9_03RunningIntelligence, fB9_04CyclingCore, fB9_05CyclingIntelligence,
+  fB9_07BSocialClosure, fB9_07SocialProductLayer, fB9_09NutritionFoundation,
+  fNightSprint, fTrainenV02Migration, fZichtbaarheid) telden letterlijke
+  legacy-labelkopieën of button-aantallen in specifieke schermblokken. Root
+  cause gerepareerd: dezelfde regressiebewaking, nu op canonical-shell-
+  aanwezigheid en de gedeelde bron i.p.v. hardcoded per-scherm-markup.
+- **Tests:** nieuw `core/fUxAppShellCanonicalNav.test.js` (47/47) -- 5 tabs,
+  exacte labels/volgorde, geen Profiel-tab, legacy labels weg, juiste
+  bestemmingen, Lichaam/Voortgang/Nutrition-reachability, actieve-tab-context
+  in detailflows (Inzicht/Trainen/Samen/Coach), non-primary surfaces (Profiel/
+  Instellingen/Help/Privacy/auth/onboarding) muteren de actieve tab niet,
+  safe-area/accessibility/geen state-mutatie. Volledige regressie 359/359
+  (was 358, +1 nieuw testbestand). Doc-consistency 0. Geen databasewijziging.
+- **Verantwoordelijke:** Product Owner (canonical v1-mockups + expliciete
+  autonome-uitvoering-opdracht, 11 september 2026), uitgevoerd door Claude.
+

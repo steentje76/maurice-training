@@ -1,5 +1,31 @@
 # Trainingskompas — Changelog
 
+## v4.69.73 — UX App Shell Master Sprint: canonical primary navigation (11 september 2026)
+
+Primaire navigatie gemigreerd van Home/Training/Lichaam/Coach/Voortgang naar
+de PO-approved canonical Vandaag/Trainen/Inzicht/Coach/Samen. Profiel blijft
+uitsluitend via avatar bereikbaar, geen zesde tab.
+
+45 losse, handmatig gekopieerde `<nav class="bnav">`-blokken (17 unieke
+varianten, "actief" was een build-time toeval) zijn vervangen door lege
+canonical shells die runtime worden gevuld vanuit één gedeelde bron
+(`TK_PRIMARY_NAV`). Actieve-tab-context is nu prefix-gebaseerd berekend
+(`TK_TAB_PREFIX_RULES`), dekt ook dynamisch aangemaakte schermen zonder
+per-scherm onderhoud, en klopt correct in detailflows (bv. Lichaam-detail
+toont Inzicht als actieve tab, niet een eigen "Lichaam"-tab die niet meer
+bestaat).
+
+Lichaam, Voortgang en Nutrition verliezen hun eigen tab maar niet hun
+functionaliteit -- allemaal bereikbaar en correct gecontextualiseerd onder
+Inzicht. Samen wordt een volwaardige hoofdtab (bestaand Sociaal-scherm).
+Coach-icoon: abstracte sparkle i.p.v. het vorige robot-emoji.
+
+9 bestaande regressietests die op de oude, hardcoded nav-markup gokten zijn
+root-cause gerepareerd (niet verzwakt) naar de nieuwe architectuur. Nieuwe
+test: `core/fUxAppShellCanonicalNav.test.js` (47/47). Volledige regressie
+359/359 (was 358, +1 nieuw testbestand). Doc-consistency 0. Geen
+databasewijziging. APP_VER v4.69.72 -> v4.69.73.
+
 ## v4.69.72 — Exporteren Sprint 3B: canonical visuele correctie + copy-waarheid (11 september 2026)
 
 `m-export` gebruikte nog vijf `.csv-btn`-knoppen met emoji-iconen op een

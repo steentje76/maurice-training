@@ -76,9 +76,12 @@ ok(html.includes('if(!a||!a.recorded_at)return') || fs.readFileSync(path.join(RO
 ok(html.includes('id="s-running-insights"') && !html.match(/id="s-running-insights"[\s\S]{0,50}bnav[\s\S]{0,300}Inzichten/),
   'H1: het nieuwe Inzichten-scherm heeft een eigen route zonder een nieuw, apart bottom-nav-item ervoor');
 {
+  // UX App Shell Master Sprint: bottom-nav-inhoud komt sindsdien uit één gedeelde bron
+  // (TK_PRIMARY_NAV), niet meer uit per-scherm gekopieerde <button>-markup. Dit scherm
+  // mag daarom precies één lege, canonical nav-shell bevatten -- geen extra/dubbele nav.
   const insightsScreenBlok = html.split('<div class="scr" id="s-running-insights">')[1].split('<div class="scr" id="s-cycling">')[0];
-  const aantalNavTabs = (insightsScreenBlok.match(/<button class="ni/g) || []).length;
-  ok(aantalNavTabs === 5, 'H2: het Inzichten-scherm gebruikt exact dezelfde, bestaande 5 bottom-nav-tabs, geen extra tab toegevoegd');
+  const aantalNavShells = (insightsScreenBlok.match(/<nav class="bnav"/g) || []).length;
+  ok(aantalNavShells === 1, 'H2: het Inzichten-scherm gebruikt precies één canonical bottom-nav-shell, geen extra tab/nav toegevoegd');
 }
 
 // ---- I. Schema: rpe/is_max_effort correct gevalideerd ----

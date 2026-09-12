@@ -551,6 +551,7 @@ body{display:flex;justify-content:center}
 .ni{color:var(--g4)}
 .ni.active{color:var(--accent)}
 .ni-icon{font-size:22px;line-height:1;height:23px;display:flex;align-items:center;justify-content:center}
+.ni-icon svg{width:22px;height:22px;stroke:currentColor}
 .ni-icon svg{width:23px;height:23px;display:block;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .ni-label{font-size:9px;font-weight:600;color:var(--g4);text-transform:uppercase;letter-spacing:.3px}
 .ni.active .ni-label{color:var(--accent)}
@@ -3491,95 +3492,47 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Workout Builder</div><div class="hdr-sub">Automatisch complete trainingen</div></div><button class="ibtn" onclick="go('s-home')" aria-label="Terug naar home">←</button></div></div>
   <div id="hyrox-entry" style="padding:0 16px 8px"></div>
   <div class="scroll" id="wb-scroll"></div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 <!-- ═══ B9-02 · RUNNING CORE ═══ -->
 <div class="scr" id="s-running">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Hardlopen</div><div class="hdr-sub">sport: running</div></div><button class="ibtn" onclick="go('s-train-mgr')" aria-label="Terug naar Training">←</button></div></div>
   <div class="scroll" id="running-scroll"></div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 <!-- ═══ B9-03 · RUNNING INSIGHTS (Training → Hardlopen → Inzichten, geen extra bottom-nav) ═══ -->
 <div class="scr" id="s-running-insights">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Inzichten</div><div class="hdr-sub">Hardlopen</div></div><button class="ibtn" onclick="go('s-running')" aria-label="Terug naar Hardlopen">←</button></div></div>
   <div class="scroll" id="running-insights-scroll"></div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 <!-- ═══ B9-02 · CYCLING DESTINATION SHELL (architecture-ready voor B9-04) ═══ -->
 <div class="scr" id="s-cycling">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Fietsen</div><div class="hdr-sub">sport: cycling</div></div><button class="ibtn" onclick="go('s-train-mgr')" aria-label="Terug naar Training">←</button></div></div>
   <div class="scroll" id="cycling-scroll"></div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 <!-- ═══ B9-05 · CYCLING INSIGHTS (Training → Fietsen → Inzichten, geen extra bottom-nav) ═══ -->
 <div class="scr" id="s-cycling-insights">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Inzichten</div><div class="hdr-sub">Fietsen</div></div><button class="ibtn" onclick="go('s-cycling')" aria-label="Terug naar Fietsen">←</button></div></div>
   <div class="scroll" id="cycling-insights-scroll"></div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 <!-- ═══ ENDURANCE MASTER SPRINT E4 · SWIMMING FOUNDATION (zelfde patroon als B9-02/B9-04 Running/Cycling) ═══ -->
 <div class="scr" id="s-swimming">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Zwemmen</div><div class="hdr-sub">sport: swimming</div></div><button class="ibtn" onclick="go('s-train-mgr')" aria-label="Terug naar Training">←</button></div></div>
   <div class="scroll" id="swimming-scroll"></div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 <div class="scr" id="s-swimming-insights">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Inzichten</div><div class="hdr-sub">Zwemmen</div></div><button class="ibtn" onclick="go('s-swimming')" aria-label="Terug naar Zwemmen">←</button></div></div>
   <div class="scroll" id="swimming-insights-scroll"></div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 <div class="scr" id="s-guided">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Begeleide training</div><div class="hdr-sub">Je coach, stap voor stap</div></div><button class="ibtn" onclick="if(window.GWUI)GWUI.quit();else go('s-builder')" aria-label="Terug naar Workout Builder">←</button></div></div>
   <div class="scroll" id="gw-scroll"></div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="go('s-builder')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 <div class="scr" id="s-auth">
   <div class="scroll" style="padding-top:60px;display:flex;flex-direction:column;justify-content:center;min-height:100%">
@@ -3783,39 +3736,21 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="home-recent" style="display:none"></div>
     <div style="height:8px"></div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni active" aria-current="page" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ B9-07 · SOCIAL PRODUCT LAYER (Home → 👥 → Sociaal) ═══ -->
 <div class="scr" id="s-social">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Sociaal</div><div class="hdr-sub">Profiel, connecties &amp; privacy</div></div><button class="ibtn" onclick="go('s-home')" aria-label="Terug naar Home">←</button></div></div>
   <div class="scroll" id="social-scroll" style="padding:16px"></div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-social')"><span class="ni-icon">👥</span><span class="ni-label">Sociaal</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ SOCIAL MASTER SPRINT S5 · MESSAGING UI (Sociaal → 💬 Berichten) ═══ -->
 <div class="scr" id="s-messages">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Berichten</div><div class="hdr-sub">Gesprekken</div></div><button class="ibtn" onclick="go('s-social')" aria-label="Terug naar Sociaal">←</button></div></div>
   <div class="scroll" id="messages-scroll" style="padding:16px"></div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-social')"><span class="ni-icon">👥</span><span class="ni-label">Sociaal</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 <div class="scr" id="s-message-thread">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1" id="message-thread-title">Gesprek</div><div class="hdr-sub">Direct bericht</div></div><button class="ibtn" onclick="go('s-messages')" aria-label="Terug naar Berichten">←</button></div></div>
@@ -3830,13 +3765,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <div class="scr" id="s-coachpt">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Coach / PT</div><div class="hdr-sub">Menselijke coach — niet de AI Coach</div></div><button class="ibtn" onclick="go('s-social')" aria-label="Terug naar Sociaal">←</button></div></div>
   <div class="scroll" id="coachpt-scroll" style="padding:16px"></div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-social')"><span class="ni-icon">👥</span><span class="ni-label">Sociaal</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 <div class="scr" id="s-coachpt-athlete">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Sporter</div><div class="hdr-sub" id="coachpt-athlete-sub">Overzicht</div></div><button class="ibtn" onclick="go('s-coachpt')" aria-label="Terug naar Coach/PT">←</button></div></div>
@@ -3847,13 +3776,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <div class="scr" id="s-nutrition">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Voeding</div><div class="hdr-sub">Registreren, geen advies</div></div><button class="ibtn" onclick="go('s-lichaam')" aria-label="Terug naar Lichaam">←</button></div></div>
   <div class="scroll" id="nutrition-scroll" style="padding:16px"></div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-social')"><span class="ni-icon">👥</span><span class="ni-label">Sociaal</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ TRAINING A ═══ -->
@@ -3900,13 +3823,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
     <div id="tenant-brand-card" style="display:none"><img id="tenant-brand-logo" alt=""><span id="tenant-brand-name"></span><span id="tenant-powered-by"></span><button id="tenant-brand-admin-btn" style="display:none" onclick="tenantBrandingAdminEdit()"></button></div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ INSTELLINGEN (Hoofdstuk 6, Scherm 8.3) — Sprint 2 ═══ -->
@@ -4022,13 +3939,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
     <div style="height:8px"></div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ MELDINGEN (Hoofdstuk 6, Scherm 8.2) — Sprint 2 ═══ -->
@@ -4138,13 +4049,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="scroll" style="padding-top:8px">
     <div class="card"><div class="card-body"><p style="font-size:13px;color:var(--g4);margin-bottom:10px">Doelen &amp; challenges staan nu in <b>Voortgang</b>.</p><button class="btn btn-r btn-sm" style="width:100%" onclick="go('s-stats')">Naar Voortgang</button></div></div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- Modal: nieuw doel toevoegen -->
@@ -4358,13 +4263,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <textarea style="flex:1;background:var(--g1);border:1.5px solid var(--g2);border-radius:14px;padding:10px 12px;color:var(--dark);font-size:15px;font-family:var(--f);outline:none;resize:none;max-height:100px;min-height:42px" id="chat-inp" placeholder="Bericht aan coach..." rows="1" onkeydown="ckd(event)" oninput="ar(this)"></textarea>
     <button style="background:var(--dark);color:#fff;border:none;border-radius:50%;width:42px;height:42px;font-size:20px;cursor:pointer;flex-shrink:0;line-height:1;display:flex;align-items:center;justify-content:center" id="send-btn" onclick="sendChat()">↑</button>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ LOGBOEK ═══ -->
@@ -4393,13 +4292,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <div id="cal-day-detail" style="margin-top:12px"></div>
     </div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ BESCHIKBAARHEID / VAKANTIE (Sprint A — canonical foundation) ═══ -->
@@ -4437,13 +4330,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="availability-conflicts"></div>
     <div id="availability-list"></div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ STATS ═══ -->
@@ -4504,13 +4391,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
     <button class="btn btn-o" onclick="go('s-hist')" style="margin-bottom:10px">&#128203; Volledig trainingslogboek</button>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <div class="scr" id="s-inzicht">
@@ -4549,25 +4430,13 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button onclick="go('s-stats')" style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:14px;padding:14px 16px;background:var(--color-primary-soft);border:none;border-radius:14px;font-family:var(--f);font-size:13.5px;font-weight:700;color:var(--color-primary);cursor:pointer"><span style="display:flex;align-items:center;gap:8px"><svg class="tk-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M5 16l.7 1.8L7.5 18.5l-1.8.7L5 21l-.7-1.8L2.5 18.5l1.8-.7z"/></svg>Bekijk alle inzichten en trends</span><span>›</span></button>
     <div style="height:8px"></div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <div class="scr" id="s-library">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1">Oefeningen</div><div class="hdr-sub">Ontdek · <span id="lib-total"></span> oefeningen</div></div><button class="ibtn" onclick="go('s-home')" aria-label="Terug naar home">←</button></div></div>
   <div id="lib-body" style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0"></div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot"></div></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ VOEDING (Nutrition UX v1) ═══ -->
@@ -4583,12 +4452,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="voeding-overview-body" aria-live="polite"><div style="text-align:center;padding:24px;color:var(--g4);font-size:13px">Laden…</div></div>
   </div>
   <div class="ex-pick-sticky-bottom"><button class="tk-btn tk-btn-primary" style="width:100%" onclick="go('s-voeding-maaltijden')">+ Eten toevoegen</button></div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-inzicht')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <div class="scr" id="s-voeding-maaltijden">
@@ -4599,12 +4463,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
   </div>
   <div class="scroll" style="flex:1;overflow-y:auto" id="voeding-meals-body"><div style="text-align:center;padding:24px;color:var(--g4);font-size:13px">Laden…</div></div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-inzicht')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <div class="scr" id="s-voeding-zoeken">
@@ -4995,13 +4854,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <button class="row" onclick="go('s-hist')"><span class="tk-icon-box"><svg class="tk-icon" data-icon="historie" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/><path d="M4 5l1.5 3"/></svg></span><span class="b"><span class="t">Trainingshistorie / Logboek</span><span class="s">Je volledige trainingsgeschiedenis en statistieken</span></span><span class="ar">›</span></button>
     </div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ TRAINING DAG-DETAIL (Sprint 4.7 Fase 1b — pre-start overzicht) ═══ -->
@@ -5013,13 +4866,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
   </div>
   <div class="scroll" style="padding-top:8px" id="v47d-scroll"></div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ KALENDER (Sprint 4.7 Fase 3 — maandweergave, echte data) ═══ -->
@@ -5031,13 +4878,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
   </div>
   <div class="scroll" style="padding-top:8px" id="kalender-body"></div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ LICHAAM (spierherstel — anatomie-engine, v4.3.0) ═══ -->
@@ -5105,13 +4946,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="lich-goto" onclick="go('s-lich-gegevens')"><span class="ic">🔗</span><span class="b"><b>Gezondheidsgegevens &amp; koppelingen</b><s>Waar je gegevens vandaan komen en wat er gekoppeld is</s></span><span class="chev">›</span></button>
     <div style="height:8px"></div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ LICHAAM · HERSTEL & BELASTING PER SPIERGROEP (Fase 1 — bestaande blokken, eigen route) ═══ -->
@@ -5169,13 +5004,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
     <div style="height:8px"></div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ LICHAAM · SPIERGROEP-DETAIL (bestaande data, bestaande routerstructuur) ═══ -->
@@ -5190,13 +5019,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="lich-spier-body"></div>
     <div style="height:8px"></div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ LICHAAM · OEFENINGEN PER SPIERGROEP (Lichaam 2.1 — derde niveau) ═══
@@ -5214,13 +5037,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="lich-oef-body"></div>
     <div style="height:8px"></div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ LICHAAM · VERBANDEN-OVERZICHT (Sprint 20) ═══
@@ -5239,13 +5056,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="lich-verbanden-body"></div>
     <div style="height:8px"></div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ LICHAAM · VERBAND-DETAIL (Verbanden V1) ═══
@@ -5263,13 +5074,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="lich-verband-body"></div>
     <div style="height:8px"></div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ LICHAAM · GEZONDHEIDSGEGEVENS & KOPPELINGEN (Sprint 9) ═══
@@ -5288,13 +5093,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="lich-geg-body"></div>
     <div style="height:8px"></div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ LICHAAM · GEZONDHEID & HERSTEL (Fase 1 — bestaande grafieken, eigen route) ═══ -->
@@ -5312,13 +5111,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="lich-history-health" style="margin-top:16px"></div>
     <div style="height:8px"></div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ LICHAAM · CYCLUS (v4.95.0 — MVP, optioneel, trainingscontext) ═══
@@ -5353,13 +5146,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="cyclus-historie"></div>
     <div style="height:8px"></div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <div class="scr" id="s-lich-metingen">
@@ -5408,13 +5195,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="btn btn-d" onclick="askCoachProfiel()" style="margin-top:8px;margin-bottom:12px">🤖 Coach: analyseer mijn metingen</button>
     <div style="height:8px"></div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ LICHAAM · METRIC-DETAIL (Lichaam 2.0 — ÉÉN scherm, ÉÉN renderer, vier configuraties) ═══
@@ -5433,13 +5214,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="lich-metric-body"></div>
     <div style="height:8px"></div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ SCHEMA (vaste trainingen — N stuks, eigen namen) ═══ -->
@@ -5487,13 +5262,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <button class="btn btn-o" style="width:100%;margin-top:6px" onclick="openNewTrainingModal()">+ Nieuwe workout aanmaken</button>
     </div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ PROGRAMMA ═══ -->
@@ -5507,13 +5276,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="scroll" style="padding-top:8px" id="programma-list">
     <div style="text-align:center;color:var(--g4);font-size:13px;padding:30px 0">Nog geen programma. Tik op ＋ om er een te genereren.</div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ PROGRAMMA — TRAININGDETAIL ═══ -->
@@ -5529,13 +5292,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <button class="btn btn-o" onclick="addBlockExercise()" style="margin-top:4px">+ Oefening toevoegen</button>
     <button id="pbd-start-btn" class="btn btn-r" style="margin-top:10px;width:100%" onclick="startProgramBlockTraining(curProgramBlockId)">▶ Start deze training</button>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 
 <!-- ═══ ADMIN PIN ═══ -->
@@ -5586,13 +5343,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <div class="card-body" id="admin-eqcat-list" style="padding-top:10px"></div>
     </div>
   </div>
-  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-    <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-    <button class="ni" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-    <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-    <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni active" aria-current="page" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-  </nav>
+  <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
 </div>
 <div class="scr" id="s-hyrox">
   <div class="hdr"><div class="hdr-row"><div><div class="hdr-title" role="heading" aria-level="1" id="hyrox-titel">HYROX</div><div class="hdr-sub" id="hyrox-sub"></div></div><button class="ibtn" onclick="hyroxAfbreken()" aria-label="Race/brick afbreken">←</button></div></div>
@@ -7457,7 +7208,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.72';
+const APP_VER = 'v4.69.73';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -12526,6 +12277,76 @@ function go(id){
   if(id==='s-hyrox-perf')renderHyroxPerformanceOverzicht();
 }
 // ══════════════════════════════════════════════════════════
+// CANONICAL PRIMARY NAVIGATION (App Shell-migratie, PO-approved v1-mockups).
+// AANLEIDING. 45 losse, handmatig gekopieerde <nav class="bnav">-blokken met
+// hardcoded labels (Home/Training/Lichaam/Coach/Voortgang, emoji-iconen) en een
+// hardcoded "active"-klasse per kopie (17 unieke varianten voor 45 instanties --
+// active state was dus een build-time toeval, geen runtime-berekening). Canonical
+// doel: Vandaag · Trainen · Inzicht · Coach · Samen, met Profiel uitsluitend via
+// avatar (geen zesde tab).
+//
+// AANPAK. Eén array (TK_PRIMARY_NAV) is de enige bron voor label/icoon/bestemming.
+// Elke <nav class="bnav"> in de HTML is nu een LEGE SHELL (zelfde positie/CSS als
+// voorheen, geen layoutwijziging) die zijn inhoud krijgt via tkPaintBnav(). Bewust
+// hier geplaatst (vóór de TERUG-NAVIGATIE-module) en niet in de go()-wrapper zelf:
+// dit is renderlogica (schrijft innerHTML), de navigatiestapel-laag hieronder moet
+// dat expliciet niet doen (bewaakt door fNavigatie.test.js D1).
+//
+// ACTIEVE TAB. tkPrimaryTabFor(screenId) is prefix-gebaseerd, dekt dus ook dynamisch
+// aangemaakte schermen (bv. s-train-<naam> via buildVasteTrainingScreen()) zonder
+// per-scherm onderhoud. Schermen die bij geen enkele tab horen (Profiel, Instellingen,
+// Help, Privacy, Meldingen, auth/onboarding/admin) MUTEREN tkLastPrimaryTab niet --
+// de laatst-echte tab blijft gemarkeerd, zodat "detail vanuit Inzicht blijft Inzicht"
+// vanzelf klopt zonder een uitputtende lijst van elk detailscherm.
+const TK_PRIMARY_NAV=[
+  {id:'vandaag',label:'Vandaag',target:'s-home',
+    icon:'<path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/>'},
+  {id:'trainen',label:'Trainen',
+    target:function(){ return (typeof curT!=='undefined'&&curT)?('s-train-'+curT.toLowerCase()):'s-train-mgr'; },
+    icon:'<path d="M6 8v8M18 8v8M3 12h18"/>'},
+  {id:'inzicht',label:'Inzicht',target:'s-inzicht',
+    icon:'<path d="M4 19V5M4 19h16M8 19v-6M12 19v-9M16 19v-4"/>'},
+  {id:'coach',label:'Coach',target:'s-coach',
+    icon:'<path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M5 16l.7 1.8L7.5 18.5l-1.8.7L5 21l-.7-1.8L2.5 18.5l1.8-.7z"/>'},
+  {id:'samen',label:'Samen',target:'s-social',
+    icon:'<circle cx="8.5" cy="8" r="3"/><circle cx="16" cy="9" r="2.5"/><path d="M2.5 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M14.5 15.2c2.6.3 4.5 2.2 4.5 4.8"/>'}
+];
+// Prefix-regels, meest specifiek eerst. s-lichaam/s-lich-*/s-stats/s-doelen/s-nutrition/
+// s-voeding-* horen bewust bij INZICHT (PO-besluit: Lichaam/Voortgang verdwijnen als
+// eigen tab, niet als functionaliteit -- ze worden Inzicht-context detailflows).
+// s-running/s-cycling/s-swimming/s-hyrox (uitvoering) -> TRAINEN; hun -insights/-perf-
+// varianten (analyse) -> INZICHT.
+const TK_TAB_PREFIX_RULES=[
+  [/^s-running-insights/,'inzicht'],[/^s-cycling-insights/,'inzicht'],[/^s-swimming-insights/,'inzicht'],[/^s-hyrox-perf/,'inzicht'],
+  [/^s-running/,'trainen'],[/^s-cycling/,'trainen'],[/^s-swimming/,'trainen'],[/^s-hyrox/,'trainen'],
+  [/^s-home$/,'vandaag'],
+  [/^s-train/,'trainen'],[/^s-builder$/,'trainen'],[/^s-guided$/,'trainen'],[/^s-programma/,'trainen'],[/^s-hist$/,'trainen'],[/^s-library$/,'trainen'],[/^s-kalender$/,'trainen'],[/^s-availability$/,'trainen'],
+  [/^s-inzicht$/,'inzicht'],[/^s-stats$/,'inzicht'],[/^s-doelen$/,'inzicht'],[/^s-lich/,'inzicht'],[/^s-nutrition$/,'inzicht'],[/^s-voeding/,'inzicht'],
+  [/^s-coach/,'coach'],[/^s-coachpt/,'coach'],
+  [/^s-social$/,'samen'],[/^s-messages$/,'samen'],[/^s-message-thread$/,'samen']
+];
+function tkPrimaryTabFor(screenId){
+  for(const [re,tab] of TK_TAB_PREFIX_RULES){ if(re.test(screenId))return tab; }
+  return null; // Profiel/Instellingen/Help/Privacy/Meldingen/auth/onboarding/admin: geen eigen tab
+}
+let tkLastPrimaryTab='vandaag';
+function tkPrimaryNavHtml(activeTab){
+  return TK_PRIMARY_NAV.map(t=>{
+    const actief=t.id===activeTab;
+    const doel=typeof t.target==='function'?t.target():t.target;
+    return '<button class="ni'+(actief?' active':'')+'"'+(actief?' aria-current="page"':'')+' onclick="go(\''+doel+'\')"><span class="ni-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+t.icon+'</svg></span><span class="ni-label">'+t.label+'</span>'+(t.id==='trainen'?'<div class="ni-dot" id="nav-train-dot"></div>':'')+'</button>';
+  }).join('');
+}
+// Repaint uitsluitend de zichtbare bnav (er is er hooguit één per keer relevant --
+// nooit alle 45 shells tegelijk vullen, dat zou onnodige DOM-arbeid per schermwissel zijn).
+function tkPaintBnav(screenId){
+  const tab=tkPrimaryTabFor(screenId);
+  if(tab)tkLastPrimaryTab=tab;
+  const navEl=document.querySelector('.scr.active nav.bnav');
+  if(!navEl)return;
+  navEl.innerHTML=tkPrimaryNavHtml(tkLastPrimaryTab);
+}
+// ══════════════════════════════════════════════════════════
 // TERUG-NAVIGATIE (Android hardware/gesture + browser) — RC0
 // ══════════════════════════════════════════════════════════
 // AANLEIDING. Trainingskompas wordt als Android-app uitgeleverd (Capacitor). De
@@ -12594,6 +12415,7 @@ function tkNavGoBack(valtTerugNaar){
     // Alleen bij een daadwerkelijke wissel. Een go() naar het scherm waar je al staat,
     // of naar een scherm dat niet bestaat, levert geen stap op.
     if(!tkNavPoppend&&vorige&&nu&&vorige!==nu)tkNavPush(vorige);
+    if(nu&&typeof tkPaintBnav==='function')tkPaintBnav(nu);
     return r;
   };
 })();
@@ -17889,14 +17711,7 @@ function buildVasteTrainingScreen(vt){
       <div class="train-save-row"><span class="save-status" id="train-save-status-${t.toLowerCase()}">✓ Alles opgeslagen</span><button class="save-btn" onclick="persistTrainingDraft(false)">Opslaan</button></div>
     </div>
     <div class="scroll" id="train-${t.toLowerCase()}-list" style="padding-top:12px"></div>
-    <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-      <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-      <button class="ni active" aria-current="page" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span><div class="ni-dot" id="nav-train-dot"></div></button>
-      <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-      <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-
-    </nav>`;
+    <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>`;
   // F120-fix: dit scherm wordt dynamisch gebouwd ná de initiële applyNavIcons() — daarom de
   // emoji-nav hier alsnog vervangen door de consistente lijn-iconen (zoals alle andere schermen).
   try{ if(typeof applyNavIcons==='function')applyNavIcons(); }catch(_){}
@@ -29360,14 +29175,7 @@ function buildProgramTrainScreen(block,prog){
       <div class="prog-wrap"><div class="prog-fill" id="prog-${ctxT.toLowerCase()}" style="width:0%"></div></div>
     </div>
     <div class="scroll" id="train-${ctxT.toLowerCase()}-list" style="padding-top:12px"></div>
-    <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-      <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-      <button class="ni active" aria-current="page"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-      <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-      <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-      
-    </nav>`;
+    <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>`;
 }
 
 function buildCustomTrainScreen(t){
@@ -29397,14 +29205,7 @@ function buildCustomTrainScreen(t){
       <div class="prog-wrap"><div class="prog-fill" id="prog-${ctxT}" style="width:0%"></div></div>
     </div>
     <div class="scroll" id="train-${ctxT.toLowerCase()}-list" style="padding-top:12px"></div>
-    <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie">
-      <button class="ni" onclick="go('s-home')"><span class="ni-icon">🏠</span><span class="ni-label">Home</span></button>
-      <button class="ni active" aria-current="page"><span class="ni-icon">🏋️</span><span class="ni-label">Training</span></button>
-      <button class="ni" onclick="go('s-lichaam')"><span class="ni-icon">🧍</span><span class="ni-label">Lichaam</span></button>
-      <button class="ni" onclick="go('s-coach')"><span class="ni-icon">🤖</span><span class="ni-label">Coach</span></button>
-    <button class="ni" onclick="go('s-stats')"><span class="ni-icon">📈</span><span class="ni-label">Voortgang</span></button>
-      <button class="ni" onclick="openBeheer()"><span class="ni-icon">⚙️</span><span class="ni-label">Beheer</span></button>
-    </nav>`;
+    <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>`;
 }
 
 // showSessionSummary: checkt eerst op extra toegevoegde oefeningen (save-as-training),
@@ -33027,6 +32828,7 @@ async function startAppAfterAuth(){
     if(params.get('checkin')==='1') setTimeout(()=>openModal('m-hrv'),500);
   }
   refreshHome();
+  tkPaintBnav('s-home'); // App Shell: s-home is statisch al .active bij boot, go()-wrapper vuurt pas bij een echte wissel
   ensureExercisesLoaded().then(()=>loadTrainCfg());
   ensureEquipmentTypesLoaded();
   migrateLibraryFavoritesToSupabase(); // Sprint 6.0.1 — eenmalig, laadt ook favoriteExIds vroeg

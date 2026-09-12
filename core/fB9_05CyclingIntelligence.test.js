@@ -52,11 +52,12 @@ ok(html.match(/onclick="renderRideDetail\('\$\{r\.id\}'\)"/),
 
 // ---- F. Geen extra bottom-nav-tab ----
 {
+  // UX App Shell Master Sprint: bottom-nav-inhoud komt uit één gedeelde bron (TK_PRIMARY_NAV).
   const startIdx = html.indexOf('<div class="scr" id="s-cycling-insights">');
   const eindIdx = html.indexOf('</nav>', startIdx);
   const cyclingInsightsBlok = html.slice(startIdx, eindIdx);
-  const aantalNavTabs = (cyclingInsightsBlok.match(/<button class="ni/g) || []).length;
-  ok(aantalNavTabs === 5, 'F1: het Cycling-Inzichten-scherm gebruikt exact dezelfde, bestaande 5 bottom-nav-tabs, geen extra tab toegevoegd');
+  const aantalNavShells = (cyclingInsightsBlok.match(/<nav class="bnav"/g) || []).length;
+  ok(aantalNavShells === 1, 'F1: het Cycling-Inzichten-scherm gebruikt precies één canonical bottom-nav-shell, geen extra tab/nav toegevoegd');
 }
 
 // ---- G. De B9-04-placeholder-knop is nu correct geactiveerd ----

@@ -1,5 +1,63 @@
 # Trainingskompas — Changelog
 
+## v4.69.78 — Exercise Swap Prescription Carry-Over Fix (12 september 2026)
+
+Verhelpt het in de Exercise Substitution Source-of-Truth Sprint (Fase A)
+bewezen P1-defect: bij een exercise swap/replace bleef `suggestedWeight`
+van de oude oefening (A) staan terwijl de identity al naar de nieuwe,
+mogelijk biomechanisch andere oefening (B) was gewijzigd -- bijvoorbeeld
+Bankdrukken 100 kg -> Push-up zou 100 kg kunnen meekrijgen.
+
+Root cause, gevonden op exact twee plekken (repo-breed gescand, geen derde
+plek met dezelfde oorzaak):
+- `confirmSwapExercise()` (execution swap-picker): object-spread van het
+  oude sessionExtra-item, alleen `id`/`naam`/`type` overschreven --
+  `suggestedWeight` bleef staan.
+- `execReplaceExercise()`: de `resolvedWorkout.items`-spiegel wiste
+  `suggestedWeight` al correct; de `sessionExtra`-spiegel deed dat niet
+  consequent (dezelfde bugklasse, inconsistent tussen de twee spiegels).
+
+Fix (uitsluitend invalidatie, geen nieuwe berekening/conversie): beide
+plekken zetten nu expliciet `suggestedWeight:null` in dezelfde
+object-override als de identity-wissel. De reeds bestaande, ongewijzigde
+canonical prefill-keten (`prevS`/`computeProgPrefill()`/
+`suggestWeightForRepsRpe()`, allemaal al keyed op `ex.id`) bepaalt daarna
+automatisch B's eigen gewicht of valt terug op de bestaande veilige
+lege staat ("nog te bepalen") -- exact zoals voor elke andere, nooit-
+eerder-gelogde oefening. `_rxWeightMap[ex.id]` gebruikt na de swap
+uitsluitend het nieuwe id; A's sleutel wordt simpelweg niet meer gebruikt.
+
+sets/reps/RPE blijven bewust ongewijzigd behouden (workoutblok-intentie).
+`AthleteConstraints`, de canonical substitution-source (PR #337,
+`relations.alternatives`) en de fallback-labeling blijven ongewijzigd.
+Recovery-adaptatie (`applySessionRecovery()`) schaalt `suggestedWeight`
+uitsluitend als het al bestaat, dus geen dubbele/foutieve herschaling van
+A's oude getal direct na een swap.
+
+**Apart, expliciet niet-opgelost punt (bewust, uit scope van deze PR)**:
+de mogelijke onderliggende `exercise-intelligence`-goal-mismatch tussen
+sterk-uiteenlopende oefeningtypes (bv. compound-vrij-gewicht naar
+bodyweight) wordt hier niet inhoudelijk beoordeeld -- dat blijft een apart
+vervolgpunt zoals eerder geregistreerd.
+
+Nieuwe test: `core/fExerciseSwapPrescriptionWeight.test.js` (34/34) --
+invalidatie op beide plekken, sets/reps/RPE-behoud, geen conversieformule/
+AI, canonical-prefill-keten-bewijs, multi-swap-ketens (A->B->A, A->B->C),
+idempotentie, recovery-exact-once, generieke dekking over gewichtstypes,
+en regressie-guards voor Builder/Library/PR #337-substitution-source/
+fallback-labeling/persistente workout-definitie.
+
+Volledige regressie 365/365 (was 364, +1 testbestand; bestaande
+substitution-test aangepast van 34 naar 35 na een terechte, kleine
+assertie-correctie -- de oude assertie verbood elke wijziging aan
+`suggestedWeight`, wat vóór deze fix correct was maar na deze fix
+achterhaald; nu bevestigt de test specifiek dat het een letterlijke
+null-invalidatie is, geen berekende waarde).
+`fPrescriptionConsistency.test.js` 66/66, `fRecoveryAdaptation.test.js`
+10/10. Doc-consistency 0. Geen databasewijziging, geen MoveKit-uitbreiding,
+geen goal-aware substitution, geen AI-logica, geen weight-conversion-
+formule. APP_VER v4.69.77 -> v4.69.78.
+
 ## v4.69.77 — Exercise Substitution Source-of-Truth Sprint, Fase B (12 september 2026)
 
 Voorafgegaan door een read-only forensische audit (Fase A) die met codebewijs

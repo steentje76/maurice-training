@@ -15,9 +15,14 @@ export function buildDiagnosticsSnapshot(transport) {
     permissionState: null,
     advertisementsSeen: 0,
     matchedDevices: 0,
-    devices: []
+    devices: [],
+    connection: null
   };
   if (!transport) return out;
+  try {
+    // Fase B: verbindingsdiagnostiek (geen payload, geen persoonsgegevens; device-id gemaskeerd door het transport)
+    if (typeof transport.getConnectionDiagnostics === 'function') out.connection = safeJsonClone(transport.getConnectionDiagnostics());
+  } catch (_) {}
 
   try {
     if (typeof transport.getStatus === 'function') out.status = safeJsonClone(transport.getStatus());
@@ -58,6 +63,25 @@ export function diagnosticsToText(snapshot) {
     'Concept2 matches: ' + (Number(s.matchedDevices) || 0),
     ''
   ];
+  const c = s.connection;
+  if (c) {
+    const iso = (t) => (typeof t === 'number' ? new Date(t).toISOString() : '-');
+    lines.push('--- Verbinding ---');
+    lines.push('State: ' + (c.state || '-'));
+    lines.push('Device: ' + (c.deviceIdMasked || '-'));
+    lines.push('connectedAt: ' + iso(c.connectedAt));
+    lines.push('disconnectedAt: ' + iso(c.disconnectedAt));
+    lines.push('lastDisconnectReason: ' + (c.lastDisconnectReason || '-'));
+    const t = c.totals || {};
+    lines.push('Subscriptions ok/failed: ' + (t.subscriptionsOk || 0) + '/' + (t.subscriptionsFailed || 0));
+    (Array.isArray(c.subscriptions) ? c.subscriptions : []).forEach((r) => {
+      lines.push('  ' + (r.ok === true ? 'OK   ' : r.ok === false ? 'FAIL ' : '...  ') + (r.key || '-') + ' ' + (r.uuid || '-') + (r.error ? ' — ' + r.error : ''));
+    });
+    lines.push('Notifications totaal: ' + (t.notifications || 0));
+    const n = c.notifications || {};
+    Object.keys(n).forEach((u) => { lines.push('  ' + u + ': ' + n[u].count + 'x, laatste ' + iso(n[u].lastAt)); });
+    lines.push('');
+  }
   const devices = Array.isArray(s.devices) ? s.devices : [];
   if (!devices.length) lines.push('Geen BLE-advertenties in de laatste Concept2-scan geregistreerd.');
   devices.forEach((d, i) => {

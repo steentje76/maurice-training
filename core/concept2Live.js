@@ -156,6 +156,22 @@
       message: 'Dit apparaat is een ' + (lbl[deviceMachineType] || deviceMachineType) + '. Deze oefening gebruikt ' + (lbl[expected] || expected) + '.' };
   }
 
+  // Fase B (wrong-machine UX): advertised naam als HINT, nooit als classificatie of hard block.
+  // PM5-namen eindigen typisch op ' Row' / ' Bike' / ' Ski'. Geen device-ID-afhankelijkheid.
+  function machineHintFromName(name) {
+    var n = String(name || '');
+    if (/\bRow\b/i.test(n)) return 'rowerg';
+    if (/\bBike\b/i.test(n)) return 'bikeerg';
+    if (/\bSki\b/i.test(n)) return 'skierg';
+    return null;
+  }
+  function machineHintMismatchMessage(hint, cardioType) {
+    var expected = CARDIO_TO_MACHINE[cardioType] || null;
+    if (!hint || !expected || hint === expected) return null;
+    var lbl = { rowerg: 'RowErg', skierg: 'SkiErg', bikeerg: 'BikeErg' };
+    return 'Dit apparaat meldt zich als ' + (lbl[hint] || hint) + ', maar je hebt ' + (lbl[expected] || expected) + ' geselecteerd.';
+  }
+
   function _num(v) { if (v == null) return null; var n = Number(v); return isFinite(n) ? n : null; }
 
   // ── CANONICAL LIVE METRIC (§8) — RAW → canonical. Pace-basis per machine; measured≠derived watts ──
@@ -295,6 +311,7 @@
 
   var Concept2Live = {
     VERSION: VERSION, CONCEPT2_BLE_UUIDS: CONCEPT2_BLE_UUIDS,
+    machineHintFromName: machineHintFromName, machineHintMismatchMessage: machineHintMismatchMessage,
     MACHINE_TYPES: MACHINE_TYPES, MACHINE_EXERCISE: MACHINE_EXERCISE, paceBasisFor: paceBasisFor, exerciseForMachine: exerciseForMachine,
     CONN_STATES: CONN_STATES, nextConnState: nextConnState,
     SESSION_STATES: SESSION_STATES, nextSessionState: nextSessionState, WORKOUT_STATES: WORKOUT_STATES,

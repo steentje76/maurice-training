@@ -6777,14 +6777,45 @@ function _c2wrap(exId, ergLabel, inner){
 function _c2repaint(exId, inner){ var b=document.getElementById('c2body-'+exId); if(b) b.innerHTML=inner; }
 function _c2btn(exId, label){ return '<button class="btn btn-o btn-sm" style="font-size:12px;margin-top:8px" onclick="tkErgPair(\''+exId+'\')">'+label+'</button>'; }
 function _c2note(txt){ return '<div style="font-size:11.5px;color:var(--g4)">'+txt+'</div>'; }
+// Fase B (Connection State Preservation): een rerender (renderTrainScreen -> buildCardioBody)
+// mag een bestaande pairing-state NOOIT overschrijven. Voorheen werd _c2pair[exId] hier
+// onvoorwaardelijk gereset (connected:false), waardoor een actieve BLE-link "Apparaat koppelen"
+// toonde, listener-referenties verloren gingen (wezen-listeners) en de gebruiker opnieuw een
+// scan/connect kon starten bovenop de bestaande verbinding. Nu: bestaande state hergebruiken;
+// verbonden-state alleen tonen als het TRANSPORT dat bevestigt (transport is de waarheid).
+function _c2idleInner(exId){ return _c2note('Meet je training automatisch vanaf je PM5.')+_c2btn(exId,'🔗 Apparaat koppelen'); }
+function _c2disconnectedInner(exId){
+  return '<div style="font-weight:800;color:var(--g5,#1a2b33);font-size:13px;margin-bottom:6px"><span style="color:var(--g3)">⚪</span> De verbinding met de PM5 is verbroken.</div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">'+
+    '<button class="btn btn-o btn-sm" style="font-size:12px" onclick="tkErgReconnect(\''+exId+'\')">Opnieuw verbinden</button>'+
+    '<button class="btn btn-o btn-sm" style="font-size:12px" onclick="tkErgPair(\''+exId+'\')">Ander apparaat kiezen</button></div>';
+}
+function _c2transportConnectedFor(st){
+  var t=tkDeviceTransport(); if(!t||typeof t.getStatus!=='function') return false;
+  var live=null; try{ live=t.getStatus(); }catch(_){ live=null; }
+  return !!(live && live.state==='connected' && (!st.deviceId || !live.deviceId || live.deviceId===st.deviceId));
+}
 function tkRenderErgConnect(exId, cardioType, ergLabel){
-  _c2pair[exId]={ cardioType:cardioType, ergLabel:ergLabel, mt:_c2mt(cardioType), devices:[], connected:false };
   var t=tkDeviceTransport();
+  var prev=_c2pair[exId];
+  if(prev && prev.cardioType===cardioType){
+    prev.ergLabel=ergLabel; // bestaande state (devices, deviceId, listeners) blijft intact
+    if(prev.connected){
+      if(_c2transportConnectedFor(prev)) return _c2wrap(exId, ergLabel, _c2connectedInner(exId, prev.lastCm||null));
+      // UI dacht verbonden, transport niet: herstel UI vanuit transport (geen verborgen reconnect).
+      prev.connected=false; prev.lastCm=null;
+      return _c2wrap(exId, ergLabel, _c2disconnectedInner(exId));
+    }
+    if(prev.wasConnected) return _c2wrap(exId, ergLabel, _c2disconnectedInner(exId));
+    if(!t) return _c2wrap(exId, ergLabel, _c2note(_c2msg('not_available')+' Je kunt je training gewoon handmatig invoeren, of achteraf importeren via Training → Importeren.'));
+    return _c2wrap(exId, ergLabel, _c2idleInner(exId));
+  }
+  _c2pair[exId]={ cardioType:cardioType, ergLabel:ergLabel, mt:_c2mt(cardioType), devices:[], connected:false };
   if(!t){
     // Geen echt transport (web/PWA) → eerlijke melding, geen nep-knop die "verbindt".
     return _c2wrap(exId, ergLabel, _c2note(_c2msg('not_available')+' Je kunt je training gewoon handmatig invoeren, of achteraf importeren via Training → Importeren.'));
   }
-  return _c2wrap(exId, ergLabel, _c2note('Meet je training automatisch vanaf je PM5.')+_c2btn(exId,'🔗 Apparaat koppelen'));
+  return _c2wrap(exId, ergLabel, _c2idleInner(exId));
 }
 // Start pairing: permissie/bluetooth → scannen → echte discovery → apparaatlijst.
 function tkErgPair(exId){
@@ -6795,6 +6826,9 @@ function tkErgPair(exId){
     // (Sectie 9) -- voorkomt twee overlappende discover()-aanroepen die elkaars resultaat
     // in dezelfde _c2repaint() overschrijven.
     if(st._scanning) return;
+    // Fase B (No-Rescan Guard): bij een actieve verbinding voor deze oefening/dit apparaat
+    // GEEN nieuwe discover()/scan()/connect() starten -- toon de bestaande verbonden-state.
+    if(st.connected && _c2transportConnectedFor(st)){ _c2repaint(exId, _c2connectedInner(exId, st.lastCm||null)); return; }
     var perm = (typeof t.getPermissionState==='function') ? t.getPermissionState() : 'granted';
     if(perm==='bluetooth_off'){ _c2repaint(exId, _c2note(_c2msg('bluetooth_off'))+_c2btn(exId,'Opnieuw zoeken')); return; }
     if(perm==='denied'){ _c2repaint(exId, _c2note(_c2msg('permission_required'))+_c2btn(exId,'Opnieuw proberen')); return; }
@@ -6832,12 +6866,25 @@ function tkErgSelect(exId, idx){
       '<button class="btn btn-o btn-sm" style="font-size:12px" onclick="tkErgPair(\''+exId+'\')">Ander apparaat</button></div>');
     return;
   }
+  // Fase B (wrong-machine UX): canonical machineType is pre-connect 'unknown' (0x0015-layout
+  // onbevestigd). De advertised naam ("PM5 … Row/Bike/Ski") dient uitsluitend als HINT: bij een
+  // duidelijke mismatch waarschuwen, nooit blokkeren. Canonical bescherming (hierboven) blijft.
+  if(!mm.known && typeof Concept2Live!=='undefined' && typeof Concept2Live.machineHintFromName==='function'){
+    var hintMsg=Concept2Live.machineHintMismatchMessage(Concept2Live.machineHintFromName(d.name), st.cardioType);
+    if(hintMsg){
+      _c2repaint(exId, _c2note(hintMsg)+
+        '<div style="display:flex;gap:8px;margin-top:8px">'+
+        '<button class="btn btn-o btn-sm" style="font-size:12px" onclick="tkErgPair(\''+exId+'\')">Ander apparaat kiezen</button>'+
+        '<button class="btn btn-o btn-sm" style="font-size:12px" onclick="tkErgConnectDevice(\''+exId+'\','+idx+')">Toch verbinden</button></div>');
+      return;
+    }
+  }
   tkErgConnectDevice(exId, idx);
 }
 function _c2connectedInner(exId, cm){
   var st=_c2pair[exId]; var basis=(typeof Concept2Live!=='undefined')?Concept2Live.paceBasisFor(st.mt):500;
   var paceLbl=(basis===1000)?'/1000m':'/500m';
-  var line='Verbonden — wachten op data…';
+  var line='<div style="font-size:12px;color:var(--g4)">PM5 verbonden — wachten op trainingsdata</div>';
   if(cm){
     var p=[];
     if(cm.distanceM!=null) p.push('<b>'+Math.round(cm.distanceM).toLocaleString('nl-NL')+'</b> m');
@@ -6869,18 +6916,19 @@ function tkErgConnectDevice(exId, idx){
   // gelijktijdig verbonden oefening in dezelfde training kunnen raken).
   if(typeof st._unsubMetrics==='function'){ try{st._unsubMetrics();}catch(_){} st._unsubMetrics=null; }
   if(typeof st._unsubConn==='function'){ try{st._unsubConn();}catch(_){} st._unsubConn=null; }
-  _c2repaint(exId, '<div style="font-size:12.5px;color:var(--g4)">'+_c2msg('connecting')+'</div>');
+  _c2repaint(exId, '<div style="font-size:12.5px;color:var(--g4)">Verbinden met PM5…</div>');
   try{
     Promise.resolve(t.connect(st.mt, d.id)).then(function(res){
       st._connecting=false;
-      if(!res||res.connected!==true){ _c2repaint(exId, _c2note(_c2msg('failed'))+_c2btn(exId,'Opnieuw zoeken')); return; }
-      st.connected=true; st.deviceId=d.id;
+      if(!res||res.connected!==true){ _c2repaint(exId, _c2note('Verbinding mislukt. Probeer opnieuw.')+_c2btn(exId,'Opnieuw zoeken')); return; }
+      st.connected=true; st.wasConnected=true; st.deviceId=d.id; st.lastDevice=d;
       _c2repaint(exId, _c2connectedInner(exId, null));
-      // connectie-events: reconnect/disconnect uit het transport (geen fake).
+      // connectie-events uit het transport (geen fake). Fase B: het transport emit bij een echte
+      // plugin-disconnect 'disconnected' (nooit meer 'reconnecting' zonder reconnect-mechanisme);
+      // de UI zet st.connected=false en toont de expliciete verbroken-staat met acties.
       if(typeof t.subscribeConnection==='function') st._unsubConn=t.subscribeConnection(function(e){
         if(!st.connected) return;
-        if(e&&e.state==='reconnecting') _c2repaint(exId, _c2note('Verbinding verbroken — opnieuw verbinden…'));
-        else if(e&&e.state==='disconnected' && st.connected){ st.connected=false; _c2repaint(exId, _c2note('PM5 niet meer bereikbaar.')+_c2btn(exId,'Opnieuw verbinden')); }
+        if(e&&e.state==='disconnected'){ st.connected=false; st.lastCm=null; _c2repaint(exId, _c2disconnectedInner(exId)); }
         else if(e&&e.state==='connected') _c2repaint(exId, _c2connectedInner(exId, st.lastCm||null));
       });
       st._unsubMetrics=t.subscribeMetrics(function(evt){
@@ -6901,19 +6949,33 @@ function tkErgConnectDevice(exId, idx){
 // ruimt uitsluitend device-gerelateerde state op (via de bestaande,
 // ongewijzigde tkErgDisconnect() per verbonden oefening) -- raakt
 // sessionLog/activeInstanceId/finishSession-uitkomst op geen enkele manier.
-function tkErgDisconnectAll(){
+function tkErgDisconnectAll(reason){
   try{
     Object.keys(_c2pair).forEach(function(exId){
-      if(_c2pair[exId]&&_c2pair[exId].connected) tkErgDisconnect(exId);
+      if(_c2pair[exId]&&_c2pair[exId].connected) tkErgDisconnect(exId, reason||'app_disconnect');
     });
   }catch(_){}
 }
-function tkErgDisconnect(exId){
+// Fase B: app-geïnitieerde disconnect draagt een bekende reden door naar het transport (eerlijk
+// diagnostiek-contract: KNOWN_APP_REASON:user_disconnect|session_finish|leave_execution).
+// Exercise-specifieke listeners worden hier opgeruimd (geen wezen-listeners na bewuste teardown).
+function tkErgDisconnect(exId, reason){
   var st=_c2pair[exId]; var t=tkDeviceTransport();
-  try{ if(t&&typeof t.unsubscribeMetrics==='function') t.unsubscribeMetrics(); }catch(_){}
-  try{ if(t&&typeof t.disconnect==='function') t.disconnect(); }catch(_){}
-  if(st){ st.connected=false; st.lastCm=null; }
-  _c2repaint(exId, _c2note('Meet je training automatisch vanaf je PM5.')+_c2btn(exId,'🔗 Apparaat koppelen'));
+  if(st){ try{ if(typeof st._unsubMetrics==='function') st._unsubMetrics(); }catch(_){} st._unsubMetrics=null;
+          try{ if(typeof st._unsubConn==='function') st._unsubConn(); }catch(_){} st._unsubConn=null; }
+  try{ if(t&&typeof t.disconnect==='function') t.disconnect(reason||'user_disconnect'); }catch(_){}
+  if(st){ st.connected=false; st.lastCm=null; st.wasConnected=false; }
+  _c2repaint(exId, _c2idleInner(exId));
+}
+// Fase B: expliciete "Opnieuw verbinden" = een NIEUWE, zichtbare connect-flow naar het laatst
+// gebruikte apparaat (geen verborgen/automatische reconnect). Zonder bekend apparaat -> koppelen.
+function tkErgReconnect(exId){
+  var st=_c2pair[exId]; if(!st) return;
+  var d=st.lastDevice||null;
+  if(!d||!d.id){ tkErgPair(exId); return; }
+  var idx=st.devices.findIndex(function(x){ return x&&x.id===d.id; });
+  if(idx===-1){ st.devices.push(d); idx=st.devices.length-1; }
+  tkErgConnectDevice(exId, idx);
 }
 // ══════════════════════════════════════════════════════════
 // GEZONDHEID & HERSTEL — HISTORY CHARTS (Lichaam). Grafieken tonen UITSLUITEND opgeslagen data.
@@ -7232,7 +7294,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.80';
+const APP_VER = 'v4.69.81';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -21906,7 +21968,7 @@ async function execLeaveDiscard(){
   closeModal('m-exec-leave');
   stopTrainTimer(); // stopt ook releaseWakeLock() (zie stopTrainTimer())
   cancelRestTimer();
-  tkErgDisconnectAll(); // A5-hardening (v4.67.0) -- zie functiedefinitie: voorkomt een BLE-verbinding/subscriptie die op de achtergrond actief blijft ná het verlaten van de training
+  tkErgDisconnectAll('leave_execution'); // A5-hardening (v4.67.0) -- zie functiedefinitie: voorkomt een BLE-verbinding/subscriptie die op de achtergrond actief blijft ná het verlaten van de training
   clearTrainingDraft();
   curT=null;sessionLog={};sessionExtra=[];pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};sessionRxAdj={};sessionPrBase={};
   resolvedWorkout=null;activeInstanceId=null; // dezelfde opruiming als na een afgeronde training -- geen stale instance/session state
@@ -22461,7 +22523,7 @@ async function finishSession(){
     return;
   }
   closeModal('m-session-end');stopTrainTimer();
-  tkErgDisconnectAll(); // A5-hardening (v4.67.0) -- voorkomt een BLE-verbinding/subscriptie die op de achtergrond actief blijft ná het afronden van de training
+  tkErgDisconnectAll('session_finish'); // A5-hardening (v4.67.0) -- voorkomt een BLE-verbinding/subscriptie die op de achtergrond actief blijft ná het afronden van de training
   clearTrainingDraft();
   /* Fase 2 — LEVENSCYCLUS VAN EEN TRAINING-INSTANCE.
      completeTrainingInstance() bestond sinds Werkblok A maar werd nergens aangeroepen.

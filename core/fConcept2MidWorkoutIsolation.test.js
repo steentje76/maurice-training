@@ -45,7 +45,7 @@ VERBODEN_REFERENTIES.forEach(naam => {
 
 // ---- Bevestig dat de disconnect-handler uitsluitend UI-status wijzigt, geen destructieve actie ----
 ok(body && body.includes("st.connected=false"), 'de disconnect-transitie zet uitsluitend de lokale verbindingsvlag, geen bredere state-mutatie');
-ok(body && body.includes("PM5 niet meer bereikbaar"), 'de gebruiker wordt eerlijk geïnformeerd bij verbindingsverlies, geen stille failure');
+ok(body && (body.includes("De verbinding met de PM5 is verbroken.") || body.includes("_c2disconnectedInner")), 'de gebruiker wordt eerlijk geïnformeerd bij verbindingsverlies, geen stille failure (Fase B: expliciete DISCONNECTED-staat met acties)');
 
 // ---- Busy-guards tegen dubbele/gestapelde subscripties (reeds A5-hardening, hier geregressietest) ----
 ok(body && body.includes('if(st._connecting) return;'), 'busy-guard tegen dubbel tikken op "verbinden" blijft aanwezig');

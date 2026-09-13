@@ -156,6 +156,17 @@
       advertisementsSeen: 0,
       devices: []
     };
+    // Fase B (Connection Observability): developer-only diagnostiek over de VERBINDING.
+    // Geen payloads, geen persoonsgegevens; alleen tijdstippen, uitkomsten en tellers.
+    // lastDisconnectReason volgt het eerlijke contract:
+    //   KNOWN_APP_REASON:<user_disconnect|session_finish|leave_execution|app_disconnect>
+    //   PLUGIN_DISCONNECT:unknown_native_disconnect  (de plugin geeft GEEN native statuscode door)
+    //   SUBSCRIPTION_ERROR:<uuid>                   (uitsluitend bij een concrete, fatale subscriptiefout)
+    function freshConnDiag() {
+      return { connectedAt: null, disconnectedAt: null, lastDisconnectReason: null,
+               subscriptions: [], notifications: {} };
+    }
+    var connDiag = freshConnDiag();
 
     // decoder-registry: uuid(lc) -> { status:'UNKNOWN'|'CONFIRMED', decode(dv)->rawObj|null }
     // Standaard: ALLE bekende notify-chars UNKNOWN (geen gegokte decoder).
@@ -186,6 +197,11 @@
     }
 
     function onNotification(uuid, dv) {
+      // 0) observability: teller + laatste tijdstip per characteristic (geen payload)
+      var nk = lc(uuid);
+      if (!connDiag.notifications[nk]) connDiag.notifications[nk] = { count: 0, lastAt: null };
+      connDiag.notifications[nk].count++;
+      connDiag.notifications[nk].lastAt = now();
       // 1) capture (alleen expliciet aangezet; ruwe bytes voor dev/validatie)
       pushCapture(uuid, dv);
       // 2) decode ALLEEN als er een BEVESTIGDE decoder is (anders UNKNOWN → niets emitten)
@@ -199,9 +215,16 @@
     }
 
     function onDisconnect() {
-      // echte disconnect uit de gateway → reconnecting-signaal (workout niet resetten)
-      if (connState === 'connected') emitConn('reconnecting');
-      else emitConn('disconnected');
+      // Fase B: echte disconnect uit de plugin. Er bestaat GEEN reconnect-mechanisme, dus
+      // nooit een fake 'reconnecting' melden. De plugin heeft de GATT al gesloten; de
+      // native statuscode wordt NIET doorgegeven -> eerlijk 'unknown_native_disconnect'.
+      // Alleen registreren als er ook echt een verbinding was (idempotent).
+      if (connState === 'connected' || connState === 'connecting') {
+        connDiag.disconnectedAt = now();
+        if (!connDiag.lastDisconnectReason) connDiag.lastDisconnectReason = 'PLUGIN_DISCONNECT:unknown_native_disconnect';
+      }
+      deviceId = null;
+      emitConn('disconnected');
     }
 
     // -------- permissie --------
@@ -324,17 +347,24 @@
       var id = reqDeviceId;
       if (!id) return Promise.reject(new Error('connect: deviceId vereist'));
       emitConn('connecting');
+      connDiag = freshConnDiag(); // nieuwe verbindingspoging = schone diagnostiek
       return Promise.resolve(gateway.connect(id, onDisconnect))
         .then(function () {
           deviceId = id;
+          connDiag.connectedAt = now();
           // machineType: gebruiker-bevestigd/gekozen (of 'unknown'); NIET gegokt uit BLE.
           machineType = (reqMachineType && CL.MACHINE_TYPES && CL.MACHINE_TYPES.indexOf(reqMachineType) !== -1)
             ? reqMachineType : 'unknown';
-          // subscribe op alle bekende notify-chars t.b.v. capture (+ toekomstige decoders)
+          // subscribe op alle bekende notify-chars t.b.v. capture (+ toekomstige decoders).
+          // Fase B: bestaand fail-safe gedrag (per-char fout negeren) BEHOUDEN, maar elke
+          // uitkomst wordt nu vastgelegd i.p.v. stil weggeslikt (observability, §8).
           var subs = NOTIFY_CHARS.map(function (nc) {
+            var rec = { uuid: lc(nc.uuid), key: nc.key, service: lc(nc.service), attempted: true, ok: null, at: null, error: null };
+            connDiag.subscriptions.push(rec);
             return Promise.resolve(
               gateway.startNotifications(id, nc.service, nc.uuid, function (dv) { onNotification(nc.uuid, dv); })
-            ).catch(function () { /* niet elke char is altijd aanwezig; negeer per-char fout */ });
+            ).then(function () { rec.ok = true; rec.at = now(); })
+             .catch(function (e) { rec.ok = false; rec.at = now(); rec.error = (e && (e.message || e.code)) ? String(e.message || e.code) : 'unknown'; });
           });
           return Promise.all(subs);
         })
@@ -343,13 +373,20 @@
           return { connected: true, machineType: machineType, deviceId: deviceId };
         })
         .catch(function (err) {
+          connDiag.disconnectedAt = now();
+          connDiag.lastDisconnectReason = 'CONNECT_ERROR:' + ((err && (err.message || err.code)) ? String(err.message || err.code) : 'unknown');
           emitConn('error');
           throw err;
         });
     }
 
-    function disconnect() {
+    function disconnect(reason) {
       var id = deviceId;
+      // Fase B: app-geïnitieerde disconnect krijgt een bekende reden (eerlijk contract).
+      var known = { user_disconnect: 1, session_finish: 1, leave_execution: 1, app_disconnect: 1 };
+      var rs = (typeof reason === 'string' && known[reason]) ? reason : 'app_disconnect';
+      connDiag.lastDisconnectReason = 'KNOWN_APP_REASON:' + rs;
+      connDiag.disconnectedAt = now();
       if (!id) { emitConn('disconnected'); return Promise.resolve(); }
       var stops = NOTIFY_CHARS.map(function (nc) {
         return Promise.resolve(gateway.stopNotifications(id, nc.service, nc.uuid)).catch(function () {});
@@ -362,6 +399,32 @@
 
     function getStatus() {
       return { state: connState, deviceId: deviceId, machineType: machineType, available: true };
+    }
+    // Fase B: developer-only verbindingsdiagnostiek (geen payloads, geen persoonsgegevens).
+    function getConnectionDiagnostics() {
+      var subs = connDiag.subscriptions.map(function (r) {
+        return { uuid: r.uuid, key: r.key, attempted: r.attempted, ok: r.ok, at: r.at, error: r.error };
+      });
+      var notif = {}, total = 0;
+      for (var k in connDiag.notifications) {
+        if (!connDiag.notifications.hasOwnProperty(k)) continue;
+        notif[k] = { count: connDiag.notifications[k].count, lastAt: connDiag.notifications[k].lastAt };
+        total += connDiag.notifications[k].count;
+      }
+      return {
+        state: connState,
+        deviceIdMasked: deviceId ? maskDeviceId(deviceId) : null,
+        connectedAt: connDiag.connectedAt,
+        disconnectedAt: connDiag.disconnectedAt,
+        lastDisconnectReason: connDiag.lastDisconnectReason,
+        subscriptions: subs,
+        totals: {
+          subscriptionsOk: subs.filter(function (r) { return r.ok === true; }).length,
+          subscriptionsFailed: subs.filter(function (r) { return r.ok === false; }).length,
+          notifications: total
+        },
+        notifications: notif
+      };
     }
 
     // device-info: lees RAW; NIET decoderen (layouts deels UNKNOWN). Alleen voor capture/diagnostiek.
@@ -412,6 +475,7 @@
         machineType = 'unknown';
         connState = 'idle';
         lastDiscoveryDiagnostics = { permissionState: permStateCache, advertisementsSeen: 0, devices: [] };
+        connDiag = freshConnDiag();
       });
     }
 
@@ -455,6 +519,7 @@
       connect: connect,
       disconnect: disconnect,
       getStatus: getStatus,
+      getConnectionDiagnostics: getConnectionDiagnostics,
       getDeviceInfo: getDeviceInfo,
       subscribeMetrics: subscribeMetrics,
       unsubscribeMetrics: unsubscribeMetrics,

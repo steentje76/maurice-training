@@ -587,7 +587,7 @@ ok(/st\._connecting=false/.test(connDevSrc) && (connDevSrc.match(/st\._connectin
 ok(!/sessionLog\s*=|activeInstanceId\s*=|resolvedWorkout\s*=|curT\s*=/.test(connDevSrc), 'W8 (Sectie 4, kernprincipe): tkErgConnectDevice() wijzigt NERGENS sessionLog/activeInstanceId/resolvedWorkout/curT -- uitsluitend device-gerelateerde state en een lokaal DOM-fragment (_c2repaint)');
 ok(!/renderTrainScreen\(|finishSession\(\)|completeTrainingInstance\(|execLeaveDiscard\(\)/.test(connDevSrc.replace(/\/\/[^\n]*/g,'')), 'W9 (Sectie 5/6, kernprincipe): connect roept NERGENS een volledige scherm-re-render of de finish-/discard-flow aan -- device-lifecycle is strikt gescheiden van workout-lifecycle (commentaarregels worden eerst gestript, zodat een verklarende opmerking die deze functienamen NOEMT als bewijs dat ze NIET worden aangeroepen niet zelf als schending wordt gezien -- zelf gevonden en gerepareerd tijdens de Trainen v0.2 Visual Fidelity Pass, geen wijziging aan de onderliggende, functionele controle)');
 
-const pairSrc = html.slice(html.indexOf('function tkErgPair('), html.indexOf('function tkErgPair(') + 1600);
+const pairSrc = html.slice(html.indexOf('function tkErgPair('), html.indexOf('function _c2mLabel('));
 ok(/if\(st\._scanning\)return/.test(pairSrc.replace(/\s/g,'')), 'W10 (Sectie 9): dubbel tikken op "apparaat koppelen" tijdens het scannen wordt genegeerd -- geen twee overlappende discover()-aanroepen');
 ok((pairSrc.match(/_scanning=false/g)||[]).length>=3, 'W11: de scan-busy-guard wordt in alle uitgangen correct teruggezet');
 
@@ -597,15 +597,15 @@ ok(/Concept2Live\.normalizeLiveMetric/.test(normalizeSrc), 'W12 (Sectie 18, live
 /* ── X. A5-VERVOLG (v4.67.0) — device-cleanup bij discard/finish (Prioriteiten 9/10) ── */
 console.log('\nX. A5: tkErgDisconnectAll() bij verwerpen/afronden -- geen achtergrond-BLE-verbinding ná einde training');
 const discardFnSrc2 = html.slice(html.indexOf('async function execLeaveDiscard('), html.indexOf('async function execLeaveDiscard(') + 1200);
-ok(/tkErgDisconnectAll\(\)/.test(discardFnSrc2), 'X1 (bewezen gat, gerepareerd): execLeaveDiscard() roept nu tkErgDisconnectAll() aan -- voorkomt een device-verbinding die op de achtergrond blijft na het verwerpen van de training');
+ok(/tkErgDisconnectAll\('leave_execution'\)/.test(discardFnSrc2), 'X1 (bewezen gat, gerepareerd; Fase B: met reden leave_execution): execLeaveDiscard() roept nu tkErgDisconnectAll() aan -- voorkomt een device-verbinding die op de achtergrond blijft na het verwerpen van de training');
 ok(!/sbPostQ|sbPatchQ|finishSession\(\)|completeTrainingInstance/.test(discardFnSrc2), 'X2 (regressie op T16): de nieuwe device-cleanup-aanroep verandert niets aan het bewezen "discard schrijft nooit iets"-principe');
 
 const disconnectAllSrc = html.slice(html.indexOf('function tkErgDisconnectAll('), html.indexOf('function tkErgDisconnectAll(') + 500);
-ok(/if\(_c2pair\[exId\]&&_c2pair\[exId\]\.connected\) tkErgDisconnect\(exId\)/.test(disconnectAllSrc), 'X3: itereert over ALLE oefeningen en ontkoppelt uitsluitend de daadwerkelijk verbonden -- geen blinde, foutieve aanroep op een niet-verbonden oefening');
+ok(/if\(_c2pair\[exId\]&&_c2pair\[exId\]\.connected\) tkErgDisconnect\(exId, reason\|\|'app_disconnect'\)/.test(disconnectAllSrc), 'X3 (Fase B: reden doorgegeven): itereert over ALLE oefeningen en ontkoppelt uitsluitend de daadwerkelijk verbonden -- geen blinde, foutieve aanroep op een niet-verbonden oefening');
 ok(!/sessionLog|activeInstanceId|resolvedWorkout|curT\s*=/.test(disconnectAllSrc), 'X4 (architectuurgrens): tkErgDisconnectAll() raakt UITSLUITEND device-state (_c2pair via het bestaande, ongewijzigde tkErgDisconnect()) -- geen enkele trainingsstaat');
 
 const finishFnSrc = html.slice(html.indexOf("closeModal('m-session-end');stopTrainTimer();"), html.indexOf("closeModal('m-session-end');stopTrainTimer();") + 150);
-ok(/tkErgDisconnectAll\(\)/.test(finishFnSrc), 'X5 (Prioriteit 10): finishSession() roept tkErgDisconnectAll() aan direct na het sluiten van de sessie-modal en het stoppen van de timer');
+ok(/tkErgDisconnectAll\('session_finish'\)/.test(finishFnSrc), 'X5 (Prioriteit 10; Fase B: met reden session_finish): finishSession() roept tkErgDisconnectAll() aan direct na het sluiten van de sessie-modal en het stoppen van de timer');
 const decisionSrcX = fs.readFileSync(path.join(__dirname, 'decision.js'), 'utf8');
 ok(!decisionSrcX.includes('tkErgDisconnectAll'), 'X6 (protected core): core/decision.js bevat geen enkele referentie aan de nieuwe device-cleanup-functie');
 

@@ -107,6 +107,26 @@
   // blockindex (NIET verstreken tijd sinds start van de hele prescriptie -- de
   // aanroeper beheert zelf de klok/pauze-boekhouding, exact zoals de bestaande
   // trainingstimer dat al doet; deze functie is puur en kent geen wall-clock).
+  // --- interval_state.v1 --- blockIndexAtElapsed (B1, Structured Intervals): welk block is
+  // actief na `elapsedSeconds` ACTIEVE seconden, uitsluitend op basis van TIME-terminaties.
+  // Een DISTANCE/MANUAL-block wordt nooit automatisch gepasseerd: zodra zo'n block wordt bereikt
+  // stopt de tijdsprogressie daar (de sporter tikt zelf door; caller houdt een handmatige
+  // offset bij via `fromIndex`). Retourneert de index (== blocks.length als alles voltooid).
+  function blockIndexAtElapsed(prescription, elapsedSeconds, fromIndex, elapsedAtFromIndex) {
+    if (!prescription || !Array.isArray(prescription.blocks) || !prescription.blocks.length) return 0;
+    var i = (typeof fromIndex === 'number' && fromIndex >= 0) ? Math.floor(fromIndex) : 0;
+    var t = (typeof elapsedAtFromIndex === 'number' && elapsedAtFromIndex >= 0) ? elapsedAtFromIndex : 0;
+    var e = (typeof elapsedSeconds === 'number' && isFinite(elapsedSeconds)) ? elapsedSeconds : 0;
+    var n = prescription.blocks.length;
+    while (i < n) {
+      var b = prescription.blocks[i];
+      if (!b || !b.termination || b.termination.type !== 'time') return i; // handmatig/afstand: hier blijven
+      if (e < t + b.termination.seconds) return i;
+      t += b.termination.seconds; i++;
+    }
+    return n;
+  }
+
   function stateAt(prescription, blockIndex) {
     if (!prescription || !Array.isArray(prescription.blocks) || !prescription.blocks.length) {
       return { status: 'leeg', blockIndex: 0, block: null, isLaatsteBlock: true, voltooid: true };
@@ -135,6 +155,7 @@
     normalizePrescription: normalizePrescription,
     totalPlannedSeconds: totalPlannedSeconds,
     stateAt: stateAt,
+    blockIndexAtElapsed: blockIndexAtElapsed,
     nextBlockIndex: nextBlockIndex,
     VERSIONS: VERSIONS
   };

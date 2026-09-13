@@ -1,5 +1,43 @@
 # Trainingskompas — Changelog
 
+## v4.69.84 — Structured Endurance Intervals B1: canonical Definition + running end-to-end (13 september 2026)
+
+GAP-P2-028 gesloten (running); GAP-P2-029 geopend (cross-sport consolidatie).
+Eén canonical lifecycle voor gestructureerde hardloop-intervaltrainingen:
+
+- Training maken (Builder) krijgt een mode 'Hardlopen · interval' (geen aparte
+  Interval Builder): warming-up, herhalingen, werk op tijd óf afstand (handmatig
+  doorgaan), doelpace/RPE, herstel, cooling-down → opgeslagen als Mijn training in
+  `custom_trainings.metadata.intervalPrescription` (IntervalEngineCore-formaat,
+  gevalideerd vóór opslaan). Bewerken via de opgeslagen lijst.
+- Preview (`renderTPInterval`) leest uitsluitend de opgeslagen prescriptie; totale
+  duur via `IntervalEngineCore.totalPlannedSeconds`.
+- Start via bestaande `previewStartTraining` → `createTrainingInstance` met de
+  prescriptie (raw + genormaliseerd) in `training_instances.snapshot`.
+- Executie op het bestaande running-scherm met `IntervalEngineCore` (nieuw:
+  `blockIndexAtElapsed`): auto-lap bij elke tijdtransitie, handmatige lap sluit het
+  huidige blok (distance/manual), guard tegen dubbele/0-seconden-laps; pauze/hervat
+  en reload-herstel via `EnduranceExecutionCore` ongewijzigd.
+- Logging: `activities.training_instance_id` + `activity_laps.lap_type/block_index/
+  repeat_index` (migratie_v563: additief, nullable, forward-only, ON DELETE SET NULL,
+  geen backfill/RLS-wijziging). Planned blijft in Definition/snapshot.
+- History (run-detail): planned-vs-actual per blok via de instance-snapshot; legacy
+  runs renderen ongewijzigd.
+- Scheduling, Calculation Engine en Context ongewijzigd (automatisch consumeren);
+  `is_max_effort` blijft uitsluitend de checkbox; geen raw laps naar de AI.
+- Bewust niet: cycling/swimming/erg-executie (legacy paden blijven), target-
+  enforcement, GPS-auto-afstand, HR-/power-targets voor running, Concept2.
+
+- Review-fix (na diff-review van de aangetroffen implementatie): `runningRequestFinish()`
+  sluit vóór de FINISH_CONFIRM-transitie het nog lopende blok (>=2 s) als actual-lap af
+  (`structuredRunningCloseOpenBlock`), zodat een vroegtijdige finish het laatste
+  (deel)blok niet verliest; cursor-guard tegen dubbele laps; vanuit PAUSED geen fake lap.
+
+Tests: nieuw `core/fStructuredIntervalsCanonical.test.js` 97/97 (A–AE + review-fix;
+sabotage: training_instance_id weg → 1, lokaal intervalBlokken-model i.p.v. snapshot →
+21, lap-semantiek weg → 4 failures). Volledige regressie 370/370. APP_VER v4.69.83 →
+v4.69.84. Draft PR, niet gemergd.
+
 ## v4.69.83 — Endurance → Context Gap 1b: berekende endurance-intelligence in buildCtx() via dunne adapter (13 september 2026)
 
 GAP-P2-026 gesloten. Nieuwe adapter `tkEnduranceCoachContext()` (naar het

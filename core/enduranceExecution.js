@@ -174,6 +174,10 @@
       duration_seconds: Math.round(lapActiveMs / 1000),
       distance_meters: lapData && isFinite(lapData.distance_meters) ? lapData.distance_meters : null,
       avg_heart_rate_bpm: lapData && isFinite(lapData.avg_heart_rate_bpm) ? lapData.avg_heart_rate_bpm : null,
+      // B1 Structured Intervals: optionele bloksemantiek (nullable; legacy laps blijven typeloos).
+      lap_type: lapData && typeof lapData.lap_type === 'string' ? lapData.lap_type : null,
+      block_index: lapData && typeof lapData.block_index === 'number' && isFinite(lapData.block_index) ? lapData.block_index : null,
+      repeat_index: lapData && typeof lapData.repeat_index === 'number' && isFinite(lapData.repeat_index) ? lapData.repeat_index : null,
       _grensMs: nowMs
     });
     return { ok: true, state: next };

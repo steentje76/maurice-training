@@ -1,5 +1,47 @@
 # Trainingskompas — Changelog
 
+## v4.69.79 — Builder + AthleteConstraints Connection Fix (12 september 2026)
+
+Verhelpt het in de Builder + AthleteConstraints Completion Audit (Fase A)
+bewezen connection gap: `swapAlternative()` -- de handmatige "vervang deze
+oefening"-actie binnen een reeds opgebouwd Workout Builder-plan -- las
+`EX_CATALOG.relations.alternatives` correct, maar paste de bestaande
+`AthleteConstraints`-laag niet toe, terwijl Preview (`previewRenderSwapPicker`,
+F23), Autobuild (`generate()`, F24) en Execution (`openSwapExercise`, PR
+#337) dat al wel correct deden. **Connection fix, geen nieuwe
+AthleteConstraints-feature.**
+
+Fix: `swapAlternative()` past nu, tussen `altList()` en de bestaande
+plan-uniciteitsfilter, dezelfde canonical `applyAthleteConstraints()`-
+app-wrapper toe die Preview en Execution al gebruiken (zelfde
+kandidaat-wrap/unwrap-patroon: `{id, naam, _ref}`). Geen eigen equipment-,
+avoid-, home/travel- of injury-logica geschreven -- uitsluitend de
+bestaande, canonical bouwsteen hergebruikt. De bestaande goal-score-
+sortering en `saveDraft()`/`catalog_id`-persistence blijven ongewijzigd.
+
+Fail-safe-semantiek: bestaande, canonical gedrag exact hergebruikt, geen
+nieuw beleid verzonnen. Zonder athlete-context of zonder `AthleteConstraints`
+blijft de kandidatenlijst ongewijzigd. Wanneer alle canonical alternatieven
+door constraints zouden worden uitgesloten, valt `AthleteConstraints.
+applyConstraints()`'s eigen, bestaande "nooit leeg"-regel terug op de
+oorspronkelijke set (bewezen, ongewijzigd in `core/athleteConstraints.js`).
+
+Nieuwe test: `core/fBuilderAthleteConstraints.test.js` (26/26) -- canonical
+keten-volgorde (altList -> constraints -> uniciteitsfilter -> goal-score),
+geen duplicaatfiltering, functionele simulatie (toegestaan/verboden/
+gedeeltelijk verboden/alles-uitgesloten-fallback/avoid-term), geen
+constraints-context-ongewijzigd, custom/legacy-null-flow, persistence, en
+regressie-guards voor Preview/Execution/PR #338/Autobuild F24.
+
+Volledige regressie 366/366 (was 365, +1 testbestand).
+`fExerciseSubstitutionCanonicalSource.test.js` 35/35,
+`fExerciseSwapPrescriptionWeight.test.js` 34/34,
+`fPrescriptionConsistency.test.js` 66/66, `fRecoveryAdaptation.test.js`
+10/10. Doc-consistency 0. Geen databasewijziging, geen MoveKit-uitbreiding,
+geen nieuwe injury-engine, geen AI-logica, geen weight-conversion, geen
+Builder-refactor buiten dit codepad. PR #337/#338 ongewijzigd beschermd.
+APP_VER v4.69.78 -> v4.69.79.
+
 ## v4.69.78 — Exercise Swap Prescription Carry-Over Fix (12 september 2026)
 
 Verhelpt het in de Exercise Substitution Source-of-Truth Sprint (Fase A)

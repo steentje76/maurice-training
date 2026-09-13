@@ -1774,3 +1774,33 @@
 - **Verantwoordelijke:** Product Owner (expliciete opdracht met hard scope,
   12 september 2026), uitgevoerd door Claude.
 
+## Builder + AthleteConstraints Completion Audit (Fase A) + Connection Fix (Fase B)
+
+- **Datum:** 12 september 2026.
+- **Fase A (read-only)**: bewees dat er vier onafhankelijke oefening-
+  vervang-surfaces bestaan (Execution, Preview, Builder-autobuild,
+  Builder-handmatig-bewerken), en dat drie daarvan (Execution/PR #337,
+  Preview/F23, Autobuild/F24) al correct `AthleteConstraints` toepassen --
+  alleen `swapAlternative()` (Builder, handmatige "vervang deze
+  oefening"-actie) deed dit niet. Geclassificeerd als **B -- CONNECTION
+  GAP** (geen architectuurdefect, geen duplicatie -- exact één functie
+  miste een reeds bestaande aanroep).
+- **Fase B (fix)**: `swapAlternative()` past nu, tussen `altList()` en de
+  bestaande plan-uniciteitsfilter, dezelfde canonical
+  `applyAthleteConstraints()`-wrapper toe als Preview en Execution. Geen
+  eigen equipment/avoid/home-travel/injury-logica toegevoegd. Fail-safe-
+  semantiek exact hergebruikt: `AthleteConstraints.applyConstraints()`'s
+  eigen, bestaande "nooit leeg, val terug op de oorspronkelijke set"-regel
+  (ongewijzigd in `core/athleteConstraints.js`) geldt onveranderd ook hier.
+- Nieuwe test: `core/fBuilderAthleteConstraints.test.js` (26/26). Volledige
+  regressie 366/366 (was 365, +1 testbestand).
+  `fExerciseSubstitutionCanonicalSource.test.js` 35/35,
+  `fExerciseSwapPrescriptionWeight.test.js` 34/34,
+  `fPrescriptionConsistency.test.js` 66/66, `fRecoveryAdaptation.test.js`
+  10/10. Doc-consistency 0. Geen databasewijziging, geen MoveKit-
+  uitbreiding, geen nieuwe injury-engine, geen AI-logica, geen Builder-
+  refactor buiten dit codepad. PR #337/#338 ongewijzigd beschermd. APP_VER
+  v4.69.78 -> v4.69.79.
+- **Verantwoordelijke:** Product Owner (expliciete GO-opdracht voor Fase B
+  ná goedgekeurde Fase A-audit, 12 september 2026), uitgevoerd door Claude.
+

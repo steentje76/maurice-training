@@ -132,6 +132,54 @@ function makeTransport(cfg) {
     ok(diag.devices.every(function (d) { return d.deviceIdMasked && d.deviceIdMasked.charAt(0) === '…'; }), 'diagnostiek maskeert device-id');
   });
 
+  // 5b. REAL-DEVICE REGRESSIE (Concept2 RowErg + PM5, Android APK, 13-09-2026):
+  //     de echte PM5 adverteert FTMS 0x1826 + de canonieke Concept2 BASE-UUID (CE060000),
+  //     NIET de specifieke CE0600xx-services. Dit patroon werd vóór deze fix afgewezen
+  //     (no_concept2_service_uuid). Geen enkel fysiek device-ID hieronder; het echte
+  //     serienummer in de naam is bewust irrelevant voor de classificatie.
+  var FTMS = '00001826-0000-1000-8000-00805f9b34fb';
+  var BASE_LC = 'ce060000-43e5-11e4-916c-0800200c9a66';
+  var BASE_UC = 'CE060000-43E5-11E4-916C-0800200C9A66';
+  eq(String(Concept2Live.CONCEPT2_BLE_UUIDS.base).toLowerCase(), BASE_LC, 'CE060000 is de canonieke Concept2 base-UUID in concept2Live.js (spec/APK_OBSERVED)');
+  var rd = makeTransport({ scanned: [
+    { deviceId: 'test-pm5-device', name: 'PM5 430716776 Row', rssi: -40, uuids: [FTMS, BASE_LC] },             // echte PM5-advertentie
+    { deviceId: 'test-pm5-device', name: 'PM5 430716776 Row', rssi: -40, uuids: [BASE_LC, FTMS, BASE_LC] },    // J: dubbele/gemengde UUIDs, zelfde device
+    { deviceId: 'test-ftms-only',  name: 'Generic Bike',       rssi: -55, uuids: [FTMS] },                      // F: generiek FTMS
+    { deviceId: 'test-random',     name: 'Random BLE',         rssi: -70, uuids: ['0000180d-0000-1000-8000-00805f9b34fb'] }, // G
+    { deviceId: 'test-uppercase',  name: 'PM5 other Row',      rssi: -50, uuids: [BASE_UC] },                   // I: uppercase base
+    { deviceId: 'test-name-only',  name: 'PM5 000000 Row',     rssi: -45, uuids: [] },                          // naam alleen
+    { deviceId: 'test-svc-30',     name: 'PM5 svc',            rssi: -52, uuids: [pmDataUuid] }                 // H: specifieke service
+  ]});
+  rd.t.discover({ scanMs: 10 }).then(function (list) {
+    // A. OS-level scan blijft ongefilterd
+    eq(rd.gw._state.lastScanServices.length, 0, 'A: gateway.scan() krijgt [] als servicefilter (ongefilterde discovery intact)');
+    // B/C. echte PM5-advertentie geaccepteerd, exact één device-entry
+    var pm5 = list.filter(function (d) { return d.id === 'test-pm5-device'; });
+    eq(pm5.length, 1, 'B/C/J: echte PM5-advertentie (FTMS + CE060000) wordt als Concept2 geaccepteerd, precies één device-entry ondanks herhaalde/dubbele UUIDs');
+    eq(pm5[0] && pm5[0].name, 'PM5 430716776 Row', 'C: discover() levert de device-naam door (bestaand contract)');
+    eq(pm5[0] && pm5[0].machineType, 'unknown', 'C: machineType blijft unknown pre-connect (geen gok)');
+    eq(pm5[0] && pm5[0].rssi, -40, 'C: rssi doorgegeven');
+    // F/G/naam: negatieve tests
+    ok(!list.some(function (d) { return d.id === 'test-ftms-only'; }), 'F: generiek FTMS-apparaat (alleen 0x1826) is GEEN Concept2');
+    ok(!list.some(function (d) { return d.id === 'test-random'; }), 'G: willekeurig BLE-apparaat zonder Concept2-UUID is GEEN Concept2');
+    ok(!list.some(function (d) { return d.id === 'test-name-only'; }), 'naam "PM5 ... Row" zonder UUID is GEEN Concept2 (geen name-fallback, geen hardcode)');
+    // H/I. specifieke service en uppercase base blijven werken
+    ok(list.some(function (d) { return d.id === 'test-svc-30'; }), 'H: bestaande specifieke Concept2-service-UUID (CE060030) blijft matchen');
+    ok(list.some(function (d) { return d.id === 'test-uppercase'; }), 'I: uppercase CE060000 base-UUID matcht identiek (lc()-normalisatie)');
+    eq(list.length, 3, 'exact 3 Concept2-devices: echte PM5, uppercase-base, specifieke-service');
+    // D/E. diagnostics + reason-semantiek
+    var diag = rd.t.getLastDiscoveryDiagnostics();
+    var dPm5 = diag.devices.filter(function (d) { return d.name === 'PM5 430716776 Row'; });
+    ok(dPm5.length === 2 && dPm5.every(function (d) { return d.matched === true; }), 'D: diagnostics rapporteert matched=true voor de echte PM5-advertentie');
+    ok(dPm5.every(function (d) { return d.reason === 'concept2_base_uuid'; }), 'E: reason = concept2_base_uuid bij base-match');
+    var dSvc = diag.devices.filter(function (d) { return d.name === 'PM5 svc'; })[0];
+    eq(dSvc && dSvc.reason, 'concept2_service_uuid', 'E/H: reason = concept2_service_uuid bij specifieke-service-match (bestaande code behouden)');
+    var dFtms = diag.devices.filter(function (d) { return d.name === 'Generic Bike'; })[0];
+    ok(dFtms && dFtms.matched === false && dFtms.reason === 'no_concept2_service_uuid', 'F: FTMS-only krijgt matched=false, reason=no_concept2_service_uuid');
+    ok(diag.devices.every(function (d) { return d.uuids.every(function (u) { return u === u.toLowerCase(); }); }), 'I: alle UUIDs in diagnostics zijn lowercase-genormaliseerd (één canonical lc())');
+    eq(diag.devices.filter(function (d) { return d.matched; }).length, 4, 'J: matchtelling per advertentie (2x PM5 + uppercase + service), geen extra tellingen door dubbele UUIDs binnen één advertentie');
+  });
+
   // 6. discovery met bluetooth uit -> reject bluetooth_off, geen scan
   var offD = makeTransport({ enabled: false });
   offD.t.discover({ scanMs: 10 }).then(function () { ok(false, 'discovery had moeten falen (bluetooth uit)'); },

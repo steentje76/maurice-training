@@ -7232,7 +7232,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.77';
+const APP_VER = 'v4.69.78';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -21878,7 +21878,7 @@ function execReplaceExercise(t,exId){
       }
     }
     const sxIdx=sessionExtra.findIndex(e=>e.id===exId&&e._t===t);
-    if(sxIdx>=0)sessionExtra[sxIdx]=Object.assign({},sessionExtra[sxIdx],{id:replaced.id,naam:replaced.name});
+    if(sxIdx>=0)sessionExtra[sxIdx]=Object.assign({},sessionExtra[sxIdx],{id:replaced.id,naam:replaced.name,suggestedWeight:null}); // Exercise Swap Prescription Carry-Over Fix: gelijkgetrokken met de resolvedWorkout.items-spiegel hierboven
     delete sessionLog[exId]; // oude, reeds gelogde data hoort NIET automatisch bij de nieuwe oefening (expliciete productregel)
     renderTrainScreen(t);
     scheduleAutosave();
@@ -29089,7 +29089,12 @@ async function confirmSwapExercise(newId){
   if(idx===-1){closeModal('m-swap-exercise');return;}
   const newEx=resolvePickerEx(newId); // F44/Phase2C: legacy of catalogus
   if(!newEx)return;
-  sessionExtra[idx]={...sessionExtra[idx],id:newId,naam:newEx.name,type:newEx.type||sessionExtra[idx].type};
+  // Exercise Swap Prescription Carry-Over Fix: suggestedWeight van A hoort niet mee te gaan naar
+  // B (een biomechanisch andere oefening) -- expliciet invalideren (null), zodat de bestaande
+  // canonical prefill-keten (prevS/computeProgPrefill, hierboven in renderTrainScreen, al keyed
+  // op het NIEUWE id) B's eigen gewicht/"nog te bepalen" bepaalt. Geen nieuwe berekening, geen
+  // conversie. sets/reps/RPE blijven bewust behouden (workoutblok-intentie, ongewijzigd).
+  sessionExtra[idx]={...sessionExtra[idx],id:newId,naam:newEx.name,type:newEx.type||sessionExtra[idx].type,suggestedWeight:null};
   delete sessionLog[fromId];delete pctSelection[fromId];delete rpeManual[fromId];delete warmupState[fromId];
   closeModal('m-swap-exercise');
   await renderTrainScreen(t);

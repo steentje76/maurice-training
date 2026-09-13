@@ -1726,3 +1726,51 @@
 - **Verantwoordelijke:** Product Owner (expliciete Fase A/B-opdracht met
   hard scope, 12 september 2026), uitgevoerd door Claude.
 
+## Exercise Swap Prescription Carry-Over Fix
+
+- **Datum:** 12 september 2026.
+- Verhelpt het in de Exercise Substitution Source-of-Truth Sprint (Fase A)
+  bewezen P1-defect: bij swap/replace bleef `suggestedWeight` van de oude
+  oefening (A) staan terwijl de identity al B was.
+- **Root cause, exact twee plekken** (repo-breed gescand naar `newId`,
+  `replace`, `swap`, `sessionExtra`, `suggestedWeight`, `resolvedWorkout.items`,
+  `exercise_id`, `id:` -- geen derde plek met dezelfde oorzaak gevonden;
+  `execReplaceCurrent()` is een dunne wrapper zonder eigen mutatie, Preview's
+  `previewCtx.swaps` draagt nooit een `suggestedWeight`-veld, Guided
+  Workout's `replaceEx()` deed het al correct via een verse
+  `resolveWorkingWeight()`-aanroep):
+  1. `confirmSwapExercise()` -- object-spread liet `suggestedWeight` staan.
+  2. `execReplaceExercise()` -- de `sessionExtra`-spiegel deed dit
+     inconsistent t.o.v. de al-correcte `resolvedWorkout.items`-spiegel.
+- **Fix**: uitsluitend invalidatie (`suggestedWeight:null`) op beide
+  plekken, in dezelfde object-override als de identity-wissel. Geen nieuwe
+  berekening/conversie/AI/Decision Rule. De reeds bestaande, ongewijzigde
+  canonical prefill-keten (`prevS`/`computeProgPrefill()`/
+  `suggestWeightForRepsRpe()`, keyed op `ex.id`) bepaalt B's eigen gewicht
+  of valt terug op de bestaande veilige lege staat.
+- sets/reps/RPE bewust behouden (workoutblok-intentie). `AthleteConstraints`,
+  de canonical substitution-source (PR #337) en fallback-labeling
+  ongewijzigd. Recovery-adaptatie schaalt `suggestedWeight` alleen als het
+  al bestaat -- geen dubbele toepassing direct na een swap.
+- Bewezen via functionele simulatie (incl. adversariële controle die het
+  ongefixte gedrag reproduceert om te bevestigen dat de fix het probleem
+  echt oplost) en statisch bewijs: multi-swap-ketens (A->B->A, A->B->C),
+  idempotentie, gewichtstype-onafhankelijkheid.
+- Nieuwe test: `core/fExerciseSwapPrescriptionWeight.test.js` (34/34).
+  Bestaande `fExerciseSubstitutionCanonicalSource.test.js` terecht met één
+  assertie aangepast (34->35): de oude assertie verbood elke wijziging aan
+  `suggestedWeight` in `confirmSwapExercise()`, correct vóór deze fix maar
+  achterhaald erna; vervangen door een assertie die specifiek een
+  letterlijke `null`-invalidatie eist (geen berekende waarde).
+- Volledige regressie 365/365 (was 364, +1 testbestand).
+  `fPrescriptionConsistency.test.js` 66/66, `fRecoveryAdaptation.test.js`
+  10/10. Doc-consistency 0. Geen databasewijziging, geen MoveKit-
+  uitbreiding, geen goal-aware substitution, geen AI-logica. APP_VER
+  v4.69.77 -> v4.69.78.
+- **Apart vervolgpunt (bewust niet in deze PR)**: of een swap tussen sterk
+  uiteenlopende oefeningtypes (bv. compound-vrij-gewicht -> bodyweight)
+  ook een inhoudelijke waarschuwing verdient, blijft open -- deze fix lost
+  uitsluitend het data-lek op, niet de bredere UX-vraag.
+- **Verantwoordelijke:** Product Owner (expliciete opdracht met hard scope,
+  12 september 2026), uitgevoerd door Claude.
+

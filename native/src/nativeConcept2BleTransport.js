@@ -156,6 +156,70 @@
       advertisementsSeen: 0,
       devices: []
     };
+    // Fase B (Connection Observability): developer-only diagnostiek over de VERBINDING.
+    // Geen payloads, geen persoonsgegevens; alleen tijdstippen, uitkomsten en tellers.
+    // lastDisconnectReason volgt het eerlijke contract:
+    //   KNOWN_APP_REASON:<user_disconnect|session_finish|leave_execution|app_disconnect>
+    //   PLUGIN_DISCONNECT:unknown_native_disconnect  (de plugin geeft GEEN native statuscode door)
+    //   SUBSCRIPTION_ERROR:<uuid>                   (uitsluitend bij een concrete, fatale subscriptiefout)
+    function freshConnDiag() {
+      return { connectedAt: null, disconnectedAt: null, lastDisconnectReason: null,
+               subscriptions: [], notifications: {},
+               strategy: null, discovery: null, discoveredServices: [],
+               lastLifecycleEvent: null, lastSubscriptionBeforeDisconnect: null };
+    }
+    var connDiag = freshConnDiag();
+    function lifecycle(ev, detail) { connDiag.lastLifecycleEvent = { event: ev, detail: detail || null, at: now() }; }
+
+    // ── SUBSCRIPTION STRATEGY (ErgData-forensics sprint) ─────────────────────────────────
+    // Eén controleerbare bron voor welke notify-characteristics actief worden. Evidence:
+    // - ErgData (APK_OBSERVED): individuele data-chars (PmStrokeData/PmSplitIntervalData,
+    //   forceCurveCharacteristic) + CSAFE-control (0x0021/0x0022). Multiplex 0x0080 is in de
+    //   APK aanwezig, maar gelijktijdig gebruik met individuele chars is NIET bewezen.
+    // - Daarom: nooit multiplex EN individueel tegelijk. Voorkeur INDIVIDUAL (spec-rol BOTH),
+    //   fallback MULTIPLEXED uitsluitend als de individuele data-chars op dit apparaat ontbreken.
+    // - Subscriben uitsluitend op characteristics die de plugin na service discovery werkelijk
+    //   rapporteert (gateway.getServices, plugin-contract bevestigd); sequentieel, expliciete order.
+    var SUBSCRIPTION_MODES = ['AUTO_DISCOVERED', 'INDIVIDUAL', 'MULTIPLEXED'];
+    var subscriptionMode = (deps.subscriptionMode && SUBSCRIPTION_MODES.indexOf(deps.subscriptionMode) !== -1) ? deps.subscriptionMode : 'AUTO_DISCOVERED';
+    var CONTROL_KEYS = ['ctrlTransmit'];
+    var INDIVIDUAL_KEYS = ['strokeData', 'splitData', 'addSplitData', 'workoutSummary', 'addWorkoutSummary', 'forceCurve'];
+    var MULTIPLEX_KEYS = ['multiplexed'];
+    function notifyCharByKey(key) { for (var i = 0; i < NOTIFY_CHARS.length; i++) if (NOTIFY_CHARS[i].key === key) return NOTIFY_CHARS[i]; return null; }
+    // present: { lcUuid: true } van notify-capable characteristics uit service discovery; null = discovery onbeschikbaar
+    function planSubscriptions(present) {
+      var mode = subscriptionMode, chosen = null, reason = null;
+      var indiv = INDIVIDUAL_KEYS.map(notifyCharByKey).filter(Boolean);
+      var mux = MULTIPLEX_KEYS.map(notifyCharByKey).filter(Boolean);
+      var ctrl = CONTROL_KEYS.map(notifyCharByKey).filter(Boolean);
+      function isPresent(nc) { return !present || !!present[lc(nc.uuid)]; }
+      var indivPresent = indiv.filter(isPresent), muxPresent = mux.filter(isPresent), ctrlPresent = ctrl.filter(isPresent);
+      if (mode === 'INDIVIDUAL') { chosen = indivPresent; reason = 'forced_individual'; }
+      else if (mode === 'MULTIPLEXED') { chosen = muxPresent; reason = 'forced_multiplexed'; }
+      else if (!present) { chosen = indiv; reason = 'discovery_unavailable_default_individual'; }
+      else if (indivPresent.length) { chosen = indivPresent; reason = 'individual_present'; }
+      else if (muxPresent.length) { chosen = muxPresent; reason = 'individual_absent_fallback_multiplexed'; }
+      else { chosen = []; reason = 'no_known_data_characteristics'; }
+      var order = ctrlPresent.concat(chosen);
+      return { mode: mode, selected: (chosen === indiv || chosen === indivPresent) ? 'INDIVIDUAL' : (chosen.length ? 'MULTIPLEXED' : 'NONE'),
+               reason: reason, order: order, control: ctrlPresent.length, data: chosen.length };
+    }
+    function presenceFromServices(services) {
+      if (!Array.isArray(services) || !services.length) return null;
+      var present = {}, out = [];
+      for (var i = 0; i < services.length; i++) {
+        var sv = services[i] || {}; var chars = Array.isArray(sv.characteristics) ? sv.characteristics : [];
+        var rec = { uuid: lc(sv.uuid), characteristics: [] };
+        for (var j = 0; j < chars.length; j++) {
+          var c = chars[j] || {}; var p = c.properties || {};
+          var canNotify = !!(p.notify || p.indicate);
+          if (canNotify && c.uuid) present[lc(c.uuid)] = true;
+          rec.characteristics.push({ uuid: lc(c.uuid || ''), notify: canNotify, read: !!p.read, write: !!(p.write || p.writeWithoutResponse) });
+        }
+        out.push(rec);
+      }
+      return { present: present, services: out };
+    }
 
     // decoder-registry: uuid(lc) -> { status:'UNKNOWN'|'CONFIRMED', decode(dv)->rawObj|null }
     // Standaard: ALLE bekende notify-chars UNKNOWN (geen gegokte decoder).
@@ -186,6 +250,11 @@
     }
 
     function onNotification(uuid, dv) {
+      // 0) observability: teller + laatste tijdstip per characteristic (geen payload)
+      var nk = lc(uuid);
+      if (!connDiag.notifications[nk]) connDiag.notifications[nk] = { count: 0, firstAt: now(), lastAt: null };
+      connDiag.notifications[nk].count++;
+      connDiag.notifications[nk].lastAt = now();
       // 1) capture (alleen expliciet aangezet; ruwe bytes voor dev/validatie)
       pushCapture(uuid, dv);
       // 2) decode ALLEEN als er een BEVESTIGDE decoder is (anders UNKNOWN → niets emitten)
@@ -199,9 +268,17 @@
     }
 
     function onDisconnect() {
-      // echte disconnect uit de gateway → reconnecting-signaal (workout niet resetten)
-      if (connState === 'connected') emitConn('reconnecting');
-      else emitConn('disconnected');
+      // Fase B: echte disconnect uit de plugin. Er bestaat GEEN reconnect-mechanisme, dus
+      // nooit een fake 'reconnecting' melden. De plugin heeft de GATT al gesloten; de
+      // native statuscode wordt NIET doorgegeven -> eerlijk 'unknown_native_disconnect'.
+      // Alleen registreren als er ook echt een verbinding was (idempotent).
+      if (connState === 'connected' || connState === 'connecting') {
+        connDiag.disconnectedAt = now();
+        if (!connDiag.lastDisconnectReason) connDiag.lastDisconnectReason = 'PLUGIN_DISCONNECT:unknown_native_disconnect';
+      }
+      lifecycle('plugin_disconnect', connState);
+      deviceId = null;
+      emitConn('disconnected');
     }
 
     // -------- permissie --------
@@ -324,32 +401,65 @@
       var id = reqDeviceId;
       if (!id) return Promise.reject(new Error('connect: deviceId vereist'));
       emitConn('connecting');
+      connDiag = freshConnDiag(); // nieuwe verbindingspoging = schone diagnostiek
       return Promise.resolve(gateway.connect(id, onDisconnect))
         .then(function () {
           deviceId = id;
+          connDiag.connectedAt = now();
           // machineType: gebruiker-bevestigd/gekozen (of 'unknown'); NIET gegokt uit BLE.
           machineType = (reqMachineType && CL.MACHINE_TYPES && CL.MACHINE_TYPES.indexOf(reqMachineType) !== -1)
             ? reqMachineType : 'unknown';
-          // subscribe op alle bekende notify-chars t.b.v. capture (+ toekomstige decoders)
-          var subs = NOTIFY_CHARS.map(function (nc) {
-            return Promise.resolve(
-              gateway.startNotifications(id, nc.service, nc.uuid, function (dv) { onNotification(nc.uuid, dv); })
-            ).catch(function () { /* niet elke char is altijd aanwezig; negeer per-char fout */ });
-          });
-          return Promise.all(subs);
+          lifecycle('connected', null);
+          // SERVICE DISCOVERY (plugin heeft discoverServices al gedaan in connect; getServices leest de
+          // GATT-cache): bepaal welke notify-characteristics ECHT aanwezig zijn. Faalt dit of is het
+          // leeg -> null (discovery onbeschikbaar) -> veilige default (individueel, geen multiplex).
+          return Promise.resolve(typeof gateway.getServices === 'function' ? gateway.getServices(id) : [])
+            .catch(function () { return []; })
+            .then(function (services) {
+              var pres = presenceFromServices(services);
+              connDiag.discovery = { ok: !!pres, serviceCount: pres ? pres.services.length : 0, at: now() };
+              connDiag.discoveredServices = pres ? pres.services : [];
+              var plan = planSubscriptions(pres ? pres.present : null);
+              connDiag.strategy = { mode: plan.mode, selected: plan.selected, reason: plan.reason, control: plan.control, data: plan.data,
+                                    order: plan.order.map(function (nc) { return nc.key; }) };
+              lifecycle('subscribing', plan.selected + ':' + plan.reason);
+              // SEQUENTIEEL en expliciet geordend: control (CSAFE-tx) eerst, daarna de gekozen data-set.
+              // Bestaand fail-safe gedrag blijft: een mislukte char is nooit fatal; uitkomst wordt vastgelegd.
+              var chain = Promise.resolve();
+              plan.order.forEach(function (nc, idx) {
+                chain = chain.then(function () {
+                  if (!deviceId) return; // verbinding viel weg tijdens subscriben: stop de keten (geen gok-writes op gesloten GATT)
+                  var rec = { order: idx + 1, uuid: lc(nc.uuid), key: nc.key, service: lc(nc.service), attempted: true, ok: null, at: null, error: null };
+                  connDiag.subscriptions.push(rec);
+                  return Promise.resolve(
+                    gateway.startNotifications(id, nc.service, nc.uuid, function (dv) { onNotification(nc.uuid, dv); })
+                  ).then(function () { rec.ok = true; rec.at = now(); connDiag.lastSubscriptionBeforeDisconnect = nc.key; })
+                   .catch(function (e) { rec.ok = false; rec.at = now(); rec.error = (e && (e.message || e.code)) ? String(e.message || e.code) : 'unknown'; });
+                });
+              });
+              return chain;
+            });
         })
         .then(function () {
           emitConn('connected');
           return { connected: true, machineType: machineType, deviceId: deviceId };
         })
         .catch(function (err) {
+          connDiag.disconnectedAt = now();
+          connDiag.lastDisconnectReason = 'CONNECT_ERROR:' + ((err && (err.message || err.code)) ? String(err.message || err.code) : 'unknown');
           emitConn('error');
           throw err;
         });
     }
 
-    function disconnect() {
+    function disconnect(reason) {
       var id = deviceId;
+      // Fase B: app-geïnitieerde disconnect krijgt een bekende reden (eerlijk contract).
+      var known = { user_disconnect: 1, session_finish: 1, leave_execution: 1, app_disconnect: 1 };
+      var rs = (typeof reason === 'string' && known[reason]) ? reason : 'app_disconnect';
+      connDiag.lastDisconnectReason = 'KNOWN_APP_REASON:' + rs;
+      connDiag.disconnectedAt = now();
+      lifecycle('app_disconnect', rs);
       if (!id) { emitConn('disconnected'); return Promise.resolve(); }
       var stops = NOTIFY_CHARS.map(function (nc) {
         return Promise.resolve(gateway.stopNotifications(id, nc.service, nc.uuid)).catch(function () {});
@@ -362,6 +472,39 @@
 
     function getStatus() {
       return { state: connState, deviceId: deviceId, machineType: machineType, available: true };
+    }
+    // Fase B: developer-only verbindingsdiagnostiek (geen payloads, geen persoonsgegevens).
+    function getConnectionDiagnostics() {
+      var subs = connDiag.subscriptions.map(function (r) {
+        return { order: r.order || null, uuid: r.uuid, key: r.key, attempted: r.attempted, ok: r.ok, at: r.at, error: r.error };
+      });
+      var notif = {}, total = 0;
+      for (var k in connDiag.notifications) {
+        if (!connDiag.notifications.hasOwnProperty(k)) continue;
+        notif[k] = { count: connDiag.notifications[k].count, firstAt: connDiag.notifications[k].firstAt || null, lastAt: connDiag.notifications[k].lastAt };
+        total += connDiag.notifications[k].count;
+      }
+      var endAt = connDiag.disconnectedAt != null ? connDiag.disconnectedAt : (connState === 'connected' ? now() : null);
+      return {
+        state: connState,
+        deviceIdMasked: deviceId ? maskDeviceId(deviceId) : null,
+        connectedAt: connDiag.connectedAt,
+        disconnectedAt: connDiag.disconnectedAt,
+        connectionDurationMs: (connDiag.connectedAt != null && endAt != null) ? Math.max(0, endAt - connDiag.connectedAt) : null,
+        lastDisconnectReason: connDiag.lastDisconnectReason,
+        lastLifecycleEvent: connDiag.lastLifecycleEvent,
+        lastSubscriptionBeforeDisconnect: connDiag.lastSubscriptionBeforeDisconnect,
+        strategy: connDiag.strategy,
+        discovery: connDiag.discovery,
+        discoveredServices: connDiag.discoveredServices,
+        subscriptions: subs,
+        totals: {
+          subscriptionsOk: subs.filter(function (r) { return r.ok === true; }).length,
+          subscriptionsFailed: subs.filter(function (r) { return r.ok === false; }).length,
+          notifications: total
+        },
+        notifications: notif
+      };
     }
 
     // device-info: lees RAW; NIET decoderen (layouts deels UNKNOWN). Alleen voor capture/diagnostiek.
@@ -412,6 +555,7 @@
         machineType = 'unknown';
         connState = 'idle';
         lastDiscoveryDiagnostics = { permissionState: permStateCache, advertisementsSeen: 0, devices: [] };
+        connDiag = freshConnDiag();
       });
     }
 
@@ -455,6 +599,9 @@
       connect: connect,
       disconnect: disconnect,
       getStatus: getStatus,
+      getConnectionDiagnostics: getConnectionDiagnostics,
+      getSubscriptionMode: function () { return subscriptionMode; },
+      SUBSCRIPTION_MODES: SUBSCRIPTION_MODES.slice(),
       getDeviceInfo: getDeviceInfo,
       subscribeMetrics: subscribeMetrics,
       unsubscribeMetrics: unsubscribeMetrics,

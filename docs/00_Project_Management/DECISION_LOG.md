@@ -1853,3 +1853,22 @@
 - **Docs:** CONTEXT_CONTRACT.md (nieuwe inventory-rij), GAP_ANALYSIS_V2.md (GAP-P2-025 CLOSED = Gap 1a; GAP-P2-026 OPEN = Gap 1b).
 - **Versioning:** runtime-wijziging → APP_VER v4.69.79 -> v4.69.80 (patch, conform conventie).
 - **Verantwoordelijke:** Product Owner (Fase B1-opdracht), uitgevoerd door Claude.
+
+## Concept2 PM5 — Sustained Connection Failure Audit (Fase A) + Fase B (state/diagnostics/UX)
+
+- **Datum:** 13 september 2026. Real-device: discovery/classification PASS, connect-handshake PASS, sustained connection FAIL (niet bewezen), telemetry NOT PROVEN.
+- **Fase A root cause: G — INSUFFICIENT OBSERVABILITY** (fysieke drop niet uit code te bewijzen; plugin geeft geen native statuscode door), met bewezen secundaire defecten: (1) `tkRenderErgConnect()` reset bij elke rerender de pairing-state (connected:false, wezen-listeners, hernieuwde scan/connect mogelijk); (2) transport emitte 'reconnecting' zonder reconnect-mechanisme; (3) `st.connected` bleef true na fysieke disconnect; (4) subscription-uitkomsten stil weggeslikt. Plugin `@capacitor-community/bluetooth-le` 6.1.0 bewezen: JS-queue serialiseert calls; ontbrekende characteristic = schone reject, geen disconnect; `connect` op verbonden device = 'Already connected'.
+- **Fase B (PO GO)**: state preservation + transport-truth in `tkRenderErgConnect()`; no-rescan guard in `tkErgPair()`; transport `onDisconnect` -> deviceId=null + 'disconnected'; `disconnect(reason)` met KNOWN_APP_REASON (user_disconnect/session_finish/leave_execution); `getConnectionDiagnostics()` (connectedAt/disconnectedAt/lastDisconnectReason/subscriptions/notification-tellers) zichtbaar in Developer Mode; UX-states CONNECTING/CONNECTED/WAITING_FOR_DATA/DISCONNECTED/ERROR; `tkErgReconnect()` als expliciete nieuwe connect-flow; naam-hint `Concept2Live.machineHintFromName()`/`machineHintMismatchMessage()` (hint, geen block).
+- **Bewust niet gewijzigd:** subscriptiestrategie, decoders (UNKNOWN), FTMS-wiring, workout control/CSAFE, byte-layouts — eerst hardwarebewijs via de nieuwe diagnostiek.
+- **Tests:** native 104/104, DeveloperMode 24/24, `fConcept2ConnectionState.test.js` 51/51; sabotage 11 resp. 5 failures. Regressie 368/368. APP_VER v4.69.80 -> v4.69.81. Draft PR, NIET mergen vóór real-device validatie (TEST A-D).
+- **Open:** sustained connection UNVERIFIED; telemetry/decoder OPEN (spec vereist); FTMS NIET verbonden; workout control MISSING.
+- **Verantwoordelijke:** Product Owner (GO Fase B), uitgevoerd door Claude.
+
+## Concept2 PM5 — ErgData-forensics → safe subscription strategy (op PR #344)
+
+- **Datum:** 13 september 2026. Hardware tijdelijk niet beschikbaar; doel = testbare APK over ~1 week.
+- **Bron:** `docs/concept2-ergdata-forensic.md` (strings-analyse ErgData 2.16.0; APK niet in repo). BEWEZEN UIT APK: individuele data-chars + CSAFE-control + connection-keeper/inactivity-disconnect. STERKE INFERENTIE: ErgData gebruikt de individuele 0x003x-chars als primaire datastroom (klassen `PmStrokeData`/`PmSplitIntervalData`, `forceCurveCharacteristic`). ONBEKEND: multiplex-vs-individueel-exclusiviteit, subscriptievolgorde, of CSAFE nodig is voor passieve telemetry, byte-layouts, wat 'inactivity' precies is.
+- **TK-afwijkingen (vóór):** blinde batch van 8 notify-chars incl. multiplex 0x0080 én individuele chars tegelijk (HIGH — enige onbewezen-veilige strategie), geen service discovery vóór subscriben (MEDIUM), parallel i.p.v. sequentieel (LOW, plugin queue), geen connection-keeper (UNKNOWN — geen keep-alive gegokt).
+- **Besluit:** strategie-laag `AUTO_DISCOVERED` (default) | `INDIVIDUAL` | `MULTIPLEXED`; nooit beide tegelijk; INDIVIDUAL-first, MULTIPLEXED alleen als fallback bij afwezigheid; discovery via `gateway.getServices()` (plugin-contract geverifieerd in `bleClient.d.ts`/`BluetoothLe.kt`); sequentieel met order; alleen aanwezige chars. Geen decoders, geen CSAFE, geen keep-alive.
+- **Tests:** native 133/133 (S1–S17), DeveloperMode 32/32, connection-state 51/51; sabotage (beide tegelijk) → 4 failures. Regressie 368/368. APP_VER v4.69.81 → v4.69.82. PR #344 (zelfde scope), NIET mergen.
+- **Verantwoordelijke:** Product Owner (GO Fase A–E, geen merge), uitgevoerd door Claude.

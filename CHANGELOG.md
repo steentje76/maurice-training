@@ -1,5 +1,72 @@
 # Trainingskompas — Changelog
 
+## v4.69.82 — Concept2 PM5: discovery-driven subscription-strategie + uitgebreide diagnostiek (13 september 2026)
+
+ErgData-forensics → safe connection strategy. Bron: `docs/concept2-ergdata-forensic.md`
+(statische strings-analyse ErgData 2.16.0 XAPK; het artifact zelf staat niet in de repo).
+Bewezen (APK_OBSERVED): individuele data-characteristics (`PmStrokeData`,
+`PmSplitIntervalData`, `forceCurveCharacteristic`), CSAFE-control (0x0021/0x0022,
+`PmCommandProcessor`), connection-keeper (`PmConnectionKeeperService`,
+`DisconnectInitiatedDueInactivity`). NIET bewezen: gelijktijdig gebruik van
+multiplex 0x0080 met individuele chars; byte-layouts; CSAFE-payloads.
+
+- Subscription-strategie (`AUTO_DISCOVERED` | `INDIVIDUAL` | `MULTIPLEXED`, injecteerbaar):
+  nooit multiplex én individueel tegelijk. Voorkeur INDIVIDUAL (spec-rol BOTH, ErgData-
+  klassen), fallback MULTIPLEXED alleen als de individuele data-chars op het toestel
+  ontbreken; discovery onbeschikbaar → veilige default INDIVIDUAL. Control (0x0022) eerst.
+- Service discovery vóór subscriben: `gateway.getServices()` (plugin-contract bevestigd,
+  BleService/BleCharacteristic.properties.notify); alleen aanwezige notify-chars worden
+  geprobeerd — geen blinde 8-char-batch meer. Subscriptions sequentieel met expliciete
+  `order`; keten stopt zodra de verbinding tijdens het subscriben wegvalt.
+- Developer Mode: strategie + reden, volgorde, service discovery (services/characteristics
+  met notify/read/write), `firstNotificationAt`, connection-duur, `lastLifecycleEvent`,
+  laatste geslaagde subscription vóór disconnect. Geen payloads.
+- Bewust NIET: decoders (UNKNOWN blijft UNKNOWN), CSAFE-commando's, keep-alive-gok,
+  FTMS-wiring, workout programming.
+
+Tests: native transport 104 → 133/133 (strategie S1–S17; sabotage 'beide tegelijk' →
+4 failures), DeveloperMode 24 → 32/32, connection-state 51/51. Volledige regressie
+368/368. APP_VER v4.69.81 → v4.69.82. Draft PR #344, NIET mergen vóór real-device
+validatie.
+
+## v4.69.81 — Concept2 PM5: connection state preservation, echte disconnect-state, developer diagnostics (13 september 2026)
+
+Fase B na de Sustained Connection Failure Audit. Real-device status: discovery/
+classification PASS, connect-handshake PASS, sustained connection NOG NIET
+bewezen, telemetry NOT PROVEN. Deze release lost uitsluitend de BEWEZEN
+lifecycle-defecten op en maakt de fysieke drop diagnosticeerbaar.
+
+- State preservation: `tkRenderErgConnect()` overschrijft een bestaande
+  pairing-state niet meer bij een rerender (voorheen connected:false bij elke
+  `renderTrainScreen()`); verbonden-UI alleen als het transport dat bevestigt.
+- No-rescan guard: `tkErgPair()` start geen discover/scan/connect bij een
+  actieve verbinding voor dezelfde oefening/hetzelfde apparaat.
+- Echte disconnect-state: het transport emit bij een plugin-disconnect
+  'disconnected' (deviceId=null); geen fake 'reconnecting' meer. UI:
+  "De verbinding met de PM5 is verbroken." + [Opnieuw verbinden] (expliciete
+  nieuwe connect-flow) / [Ander apparaat kiezen].
+- Listener-lifecycle: exercise-listeners blijven behouden bij rerender en
+  worden opgeruimd bij bewuste teardown; geen duplicaten na reconnect.
+- Developer Mode: verbindingsdiagnostiek (state, connectedAt, disconnectedAt,
+  lastDisconnectReason met eerlijk contract KNOWN_APP_REASON /
+  PLUGIN_DISCONNECT:unknown_native_disconnect / CONNECT_ERROR, per-characteristic
+  subscription-uitkomst, notificatietellers + lastNotificationAt). Geen
+  payloads, geen persoonsgegevens, geen UUIDs in productie-UI.
+- Productie-UX: "Verbinden met PM5…" / "PM5 verbonden — wachten op
+  trainingsdata" / "Verbinding mislukt. Probeer opnieuw." — geen technische
+  termen; no-data ≠ disconnected.
+- Wrong-machine: advertised naam (Row/Bike/Ski) als hint via
+  `Concept2Live.machineHintFromName()`; bij mismatch waarschuwing met [Ander
+  apparaat kiezen] / [Toch verbinden], geen hard block, geen hardcoded ID.
+- Bewust ONGEWIJZIGD: subscriptiestrategie (8 chars), decoders (UNKNOWN), FTMS,
+  workout control/CSAFE, byte-layouts.
+
+Tests: native transport 77 -> 104/104, DeveloperMode 13 -> 24/24, nieuwe
+`core/fConcept2ConnectionState.test.js` 51/51 (echte UI-functies in sandbox).
+Sabotagebewijs: oude rerender-reset -> 11 failures; disconnect-reset weg -> 5
+failures. Volledige regressie 368/368. Geen databasewijziging. APP_VER
+v4.69.80 -> v4.69.81. NIET gemerged vóór real-device validatie.
+
 ## v4.69.80 — Endurance → Context Fase B1: profiel-drempels in buildCtx() (Gap 1a) (13 september 2026)
 
 Minimale connection-sprint. `buildCtx()` (de live Context Engine) geeft nu de

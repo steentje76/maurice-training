@@ -136,13 +136,15 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Target:** bij een toekomstige wiring van `unifiedLoad()` naar een live dashboard: expliciet testen dat multisport-parent-sessies niet dubbel meetellen. Geen productbeslissing hier gefabriceerd over wanneer/of dit gebouwd wordt.
 **Priority:** P2 (niet-kritiek — geen huidig, actief probleem; een architectuurwaarschuwing voor toekomstig werk). **Complexity:** S.
 
-### GAP-P2-025 — **CLOSED** (Endurance → Context Fase B1, 13 september 2026) — Endurance-profieldrempels niet in de Context Engine (Gap 1a)
+### GAP-P2-027 — **CLOSED** (Endurance → Context Fase B1, 13 september 2026) — Endurance-profieldrempels niet in de Context Engine (Gap 1a)
+_(Hernummerd van GAP-P2-025 bij de Gap 1b-sprint: dat ID was al in gebruik door het F13 endurance-datamodel-item hieronder; inhoud ongewijzigd.)_
 **Capability-ID:** END-DATAFOUNDATION-001, CONTEXT (buildCtx)
 **Current (vóór):** `buildCtx()` bevatte geen enkel endurance-veld; de persisted, door de sporter ingevoerde drempels (`athlete_endurance_profile.threshold_pace_seconds_per_km`, `ftp_watts_user_entered`) waren alleen zichtbaar in Running/Cycling Insights.
 **Closure-bewijs:** één begrensde query in de bestaande `Promise.all` van `buildCtx()`; sport-geïsoleerd tekstblok "ENDURANCE-PROFIEL" met eenheid, provenance ("door de sporter ingesteld/ingevoerd"), expliciet "niet ingesteld ... niet schatten" bij ontbreken, formattering via `CardioCore.formatTime()`, geen berekening, expliciet "geen Critical Speed/Power". Test `core/fEnduranceContextProfileThresholds.test.js` (30, sabotagebewijs 24 failures zonder verbinding).
 **Priority:** P2 — gesloten.
 
-### GAP-P2-026 (nieuw, Endurance & Multisport Completion Audit) — Berekende endurance-intelligence niet in de Context Engine (Gap 1b) — **OPEN**
+### GAP-P2-026 — **CLOSED** (Endurance → Context Gap 1b, 13 september 2026) — Berekende endurance-intelligence niet in de Context Engine (Gap 1b)
+**Closure-bewijs:** dunne adapter `tkEnduranceCoachContext()` (naar `tkHyroxCoachContext()`-precedent) in `buildCtx()`'s `Promise.all`; uitsluitend canonical cores (CS/CP via eligibility, weeklyVolume, sRPE + gevensterde som, trendBy); begrensde queries (≤200 rijen/84 d + ≤50 max-effort) i.p.v. de 500/1000-Insights-queries; sport-geïsoleerd; `insufficient` blijft expliciet; Decision Engine bewust NIET aangesloten. Test `core/fEnduranceCoachContext.test.js` (39; sabotage: adapter los → 1 failure, eligibility omzeild → 5 failures). Oorspronkelijke tekst hieronder bewaard.
 **Capability-ID:** RUNNING-INTELLIGENCE-001, CYCLING-INTELLIGENCE-001, CONTEXT (buildCtx)
 **Current:** Critical Speed/Power, weekvolume, endurance-sRPE/rolling load en pace/power-trends worden uitsluitend in de Insights-renderfuncties georkestreerd (query → eligibility → Core-call → confidence); buiten UI bestaat geen herbruikbare adapter. `buildCtx()`/AI Coach zijn hiervoor blind. CALC-END-004/004B staan formeel op NOT CONNECTED (Context/Decision/AI).
 **Evidence:** CODE VERIFIED, Endurance & Multisport Completion Audit + Gap 1 Fase A (13 september 2026).

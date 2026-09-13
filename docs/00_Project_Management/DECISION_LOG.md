@@ -1872,3 +1872,12 @@
 - **Besluit:** strategie-laag `AUTO_DISCOVERED` (default) | `INDIVIDUAL` | `MULTIPLEXED`; nooit beide tegelijk; INDIVIDUAL-first, MULTIPLEXED alleen als fallback bij afwezigheid; discovery via `gateway.getServices()` (plugin-contract geverifieerd in `bleClient.d.ts`/`BluetoothLe.kt`); sequentieel met order; alleen aanwezige chars. Geen decoders, geen CSAFE, geen keep-alive.
 - **Tests:** native 133/133 (S1–S17), DeveloperMode 32/32, connection-state 51/51; sabotage (beide tegelijk) → 4 failures. Regressie 368/368. APP_VER v4.69.81 → v4.69.82. PR #344 (zelfde scope), NIET mergen.
 - **Verantwoordelijke:** Product Owner (GO Fase A–E, geen merge), uitgevoerd door Claude.
+
+## Endurance → Context Gap 1b — Fase A (audit) + Fase B (dunne adapter)
+
+- **Datum:** 13 september 2026. Fase A-classificatie **C — THIN ADAPTER REQUIRED** (sub-D: Insights-queries ≤500/1000 rijen te zwaar voor per-bericht-hergebruik; sub-G: rolling load vereist caller-side venster, geen calc-gap). Geen shadow calculation gevonden (CS/CP-formule uitsluitend in CardioCore; weeklyVolume één sport-neutrale functie; trendBy canonical; LongitudinalTrendCore/contextEngine.js dormant).
+- **Fase B:** `tkEnduranceCtxSports()` (gating als Gap 1a) + pure `tkEnduranceCtxProject()` + `tkEnduranceCoachContext()` (2 begrensde queries) in `buildCtx()`'s `Promise.all`, blok `${enduranceIntelTekst}` vóór ACTIEVE SPORT. Geen formule; CS/CP alleen bij core-status valid; N uit eligibility; sRPE-venster 7/28 d; trend per band; cycling extra vermogenstrend; W′/D′/R² niet naar AI. Decision Engine bewust NIET aangesloten; geen ACWR-interpretatie.
+- **Docs:** CALCULATION_REGISTRY 004/004B → CONNECTED (Context via adapter)/NOT CONNECTED (Decision); GAP-P2-026 CLOSED; ID-collision opgelost (Gap 1a-entry hernummerd 025→027); CONTEXT_CONTRACT-rij.
+- **Tests:** `fEnduranceCoachContext.test.js` 39/39 (sabotage 1/5 failures), `fEnduranceErgRegistry` 40/40, `fContextContract` 14/14, profiel 30/30; regressie 369/369. APP_VER v4.69.82 → v4.69.83.
+- **Procesnotitie:** in de worktree stond bij aanvang een ongetrackt bestand `core/fEnduranceCoachContext.test.js` van onbekende herkomst (niet in git-historie, verwees naar de nog te bouwen adapter). Niet gebruikt; in quarantaine gezet buiten de repo; eigen test geschreven.
+- **Verantwoordelijke:** Product Owner (GO Fase B na Fase A-rapport), uitgevoerd door Claude.

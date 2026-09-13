@@ -7294,7 +7294,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.82';
+const APP_VER = 'v4.69.83';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -27906,7 +27906,7 @@ async function buildCtx(ctx){
     ? sbGet('sessions','&exercise_id=in.('+[...relevantExIds].join(',')+')&order=exercise_id.asc,date.desc,created_at.desc')
     : sbGet('sessions','&date=gte.'+sinceStr+'&order=exercise_id.asc,date.desc,created_at.desc');
 
-  const [,hd,wd,bc,recentSessions,,blessureContext,conditionsContext,,trainingContextRows,dataBlok,hyroxCtxTekst,eventCtxTekst,progressionTrendResult,womensCtxTekst,enduranceProfileRows] = await Promise.all([
+  const [,hd,wd,bc,recentSessions,,blessureContext,conditionsContext,,trainingContextRows,dataBlok,hyroxCtxTekst,eventCtxTekst,progressionTrendResult,womensCtxTekst,enduranceProfileRows,enduranceIntelTekst] = await Promise.all([
     ensureExercisesLoaded(),
     sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'),
     sbGet('weight_log','&order=date.desc,created_at.desc&limit=3'),
@@ -27930,7 +27930,9 @@ async function buildCtx(ctx){
     // Gap 1a (Endurance -> Context, Fase B1): persisted profiel-drempels uit athlete_endurance_profile.
     // Uitsluitend door de sporter ingevoerde waarden (threshold_pace_seconds_per_km, ftp_watts_user_entered);
     // GEEN Critical Speed/Power, geen berekening, geen fallback. Eén kleine query (max 2 rijen).
-    sbGet('athlete_endurance_profile','&sport=in.(running,cycling)&limit=2').catch(function(){ return []; })
+    sbGet('athlete_endurance_profile','&sport=in.(running,cycling)&limit=2').catch(function(){ return []; }),
+    // GAP-P2-026 (Gap 1b): berekende endurance-intelligence via de dunne adapter (begrensde queries, alleen cores).
+    tkEnduranceCoachContext().catch(function(){ return ''; })
   ]);
   const progressionTrendTekst=(progressionTrendResult&&progressionTrendResult.tekst)||'';
   // Gap 1a — ENDURANCE-PROFIEL (persisted, door sporter ingevoerd). Alleen de waarde van de
@@ -28095,7 +28097,7 @@ ${progressionTrendTekst?'\nPROGRESSIE-TREND PER OEFENING (reeds berekend door Pr
 ${womensCtxTekst?womensCtxTekst+'\n(BELANGRIJK: bereken zelf NOOIT cyclusdag/fase/hormonen, leid nooit zwangerschap/fertility af, stel nooit een diagnose, en pas nooit automatisch trainingsvolume/-intensiteit aan op basis van deze context — erken de context uitsluitend als extra informatie naast readiness/RPE, en laat de sporter zelf beslissen.)':''}
 ${deloadSignaalTekst?'\nGECORROBOREERD BELASTINGSSIGNAAL (reeds bepaald door de Decision Engine op basis van TWEE onafhankelijke signalen, niet zelf herberekenen of op één los signaal baseren):'+deloadSignaalTekst:''}
 
-${enduranceProfielTekst}ACTIEVE SPORT: ${SPORT_LABELS[getActiveSport()]||getActiveSport()}
+${enduranceProfielTekst}${enduranceIntelTekst||''}ACTIEVE SPORT: ${SPORT_LABELS[getActiveSport()]||getActiveSport()}
 ${sportBlock}
 
 ACTIES (v306 #9): als je een concreet gewichtsadvies geeft voor de HUIDIGE OEFENING hierboven,
@@ -34345,6 +34347,102 @@ function performanceConclusie(cluster){
 // generieke 30-dagen-sessieoverzicht als betekenisloze losse oefeningregels (geen
 // racecontext, geen totale tijd, geen onderscheid tussen HYROX/Triathlon-brick) —
 // dit vervangt dat niet, het VULT AAN met een echte race-samenvatting.
+// ═══════════════════════════════════════════════════════════════════════════════
+// GAP-P2-026 (Endurance Gap 1b) — CANONICAL ENDURANCE INTELLIGENCE → CONTEXT ENGINE.
+// Dunne adapter naar het tkHyroxCoachContext()-precedent: VERZAMELT uitsluitend reeds
+// canonieke Calculation-Engine-uitkomsten en projecteert ze als compact tekstblok voor
+// buildCtx(). Rekent NIETS zelf: alle getallen komen uit CardioCore (critical_speed.v1 /
+// critical_power.v1), RunningIntelligenceCore/CyclingIntelligenceCore (eligibility,
+// weeklyVolume, banden), TrainingLoadCore (sessionLoadSRPE / rollingLoadSum) en
+// ProgressionCore.trendBy(). Queries zijn BEGRENSD (venster + limit) — nooit de 500/1000-
+// rij-Insights-queries hergebruiken per AI-Coach-bericht. Sport-geïsoleerd (zelfde gating
+// als het ENDURANCE-PROFIEL-blok). Ontbrekend/insufficient blijft expliciet ontbrekend.
+// Provenance: registry-ID + confidence/N zoals de core ze levert (nooit verzonnen).
+// Expliciet ≠ profiel-drempels (threshold pace ≠ Critical Speed, FTP ≠ Critical Power).
+// ═══════════════════════════════════════════════════════════════════════════════
+var TK_ENDURANCE_CTX_WINDOW_DAYS=84, TK_ENDURANCE_CTX_LIMIT=200, TK_ENDURANCE_CTX_MAXEFFORT_LIMIT=50;
+function tkEnduranceCtxSports(){
+  var sp=String(getActiveSport()||'');
+  var out=[];
+  if(sp==='running'||sp==='hardlopen'||sp==='triathlon')out.push('running');
+  if(sp==='cycling'||sp==='wielrennen'||sp==='triathlon')out.push('cycling');
+  if(sp==='swimming'||sp==='zwemmen'||sp==='triathlon')out.push('swimming');
+  return out;
+}
+// Pure projectie (geen I/O) — apart getest. activities: begrensd venster; maxEffort: eligibility-subset.
+function tkEnduranceCtxProject(sports, activities, maxEffort, nowDate){
+  var nu=nowDate||new Date();
+  var nuMs=nu.getTime();
+  var acts=Array.isArray(activities)?activities.filter(function(a){return a&&a.sport&&a.recorded_at;}):[];
+  var maxs=Array.isArray(maxEffort)?maxEffort.filter(function(a){return a&&a.sport;}):[];
+  var LBL={running:'Hardlopen',cycling:'Fietsen',swimming:'Zwemmen'};
+  var blokken=[];
+  sports.forEach(function(sport){
+    var A=acts.filter(function(a){return a.sport===sport;});
+    var regels=[];
+    // 1) Critical Speed / Critical Power — canonical eligibility + core; alleen bij status valid een getal.
+    if(sport==='running'&&typeof RunningIntelligenceCore!=='undefined'&&typeof CardioCore!=='undefined'){
+      var csElig=RunningIntelligenceCore.criticalSpeedEligiblePerformances(maxs.filter(function(a){return a.sport==='running';}),3);
+      var cs=null; try{ if(csElig&&csElig.status==='eligible'){ var r=CardioCore.criticalSpeed(csElig.performances); if(r&&r.status==='valid')cs=r; } }catch(e){ cs=null; }
+      var nElig=(csElig&&typeof csElig.n==='number')?csElig.n:0;
+      regels.push('- Critical Speed: '+(cs?(CardioCore.formatTime(Math.round(1000/cs.cs_m_s))+'/km (critical_speed.v1; confidence '+cs.confidence+'; '+cs.n_performances+' geschikte max-effort-prestaties)'):'onvoldoende geschikte max-effort-prestaties ('+nElig+'/3) — geen waarde, niet schatten')+' — ≠ drempeltempo uit het profiel');
+    }
+    if(sport==='cycling'&&typeof CyclingIntelligenceCore!=='undefined'&&typeof CardioCore!=='undefined'){
+      var cpElig=CyclingIntelligenceCore.criticalPowerEligiblePerformances(maxs.filter(function(a){return a.sport==='cycling';}),3);
+      var cp=null; try{ if(cpElig&&cpElig.status==='eligible'){ var r2=CardioCore.criticalPower(cpElig.performances); if(r2&&r2.status==='valid')cp=r2; } }catch(e){ cp=null; }
+      var nEligP=(cpElig&&typeof cpElig.n==='number')?cpElig.n:0;
+      regels.push('- Critical Power: '+(cp?(Math.round(cp.cp_w)+' W (critical_power.v1; confidence '+cp.confidence+'; '+cp.n_performances+' geschikte max-effort-prestaties)'):'onvoldoende geschikte max-effort-prestaties ('+nEligP+'/3) — geen waarde, niet schatten')+' — ≠ FTP uit het profiel');
+    }
+    // 2) Weekvolume laatste 4 weken — canonical RunningIntelligenceCore.weeklyVolume() (sport-neutraal).
+    if(typeof RunningIntelligenceCore!=='undefined'){
+      var perWeek=RunningIntelligenceCore.weeklyVolume(A);
+      var afstand=0,duur=0,aantal=0,weken=0;
+      Object.keys(perWeek).forEach(function(wk){ var wkMs=new Date(wk+'T00:00:00Z').getTime(); if(isFinite(wkMs)&&(nuMs-wkMs)<=28*86400000){ afstand+=perWeek[wk].distanceMeters; duur+=perWeek[wk].durationSeconds; aantal+=perWeek[wk].count; weken++; } });
+      regels.push('- Weekvolume laatste 4 weken: '+(aantal?((afstand/1000).toFixed(1)+' km · '+aantal+' sessies · '+CardioCore.formatTime(duur)+' (CALC-RUN-WEEKLY-001)'):'geen sessies geregistreerd'));
+    }
+    // 3) Belasting — canonical sRPE (CALC-LOAD-003) + gevensterde som (CALC-LOAD-005). Alleen sessies met RPE.
+    if(typeof TrainingLoadCore!=='undefined'){
+      function somVenster(dagen){ var v=A.filter(function(a){ var t=new Date(a.recorded_at).getTime(); return isFinite(t)&&(nuMs-t)<=dagen*86400000&&a.rpe!=null&&a.duration_seconds>0; }).map(function(a){return TrainingLoadCore.sessionLoadSRPE(a.duration_seconds,a.rpe);}); return {som:TrainingLoadCore.rollingLoadSum(v),n:v.filter(function(x){return x!=null;}).length}; }
+      var s7=somVenster(7), s28=somVenster(28);
+      var totaal28=A.filter(function(a){ var t=new Date(a.recorded_at).getTime(); return isFinite(t)&&(nuMs-t)<=28*86400000; }).length;
+      regels.push('- Belasting (sRPE, alleen sessies met RPE): 7 d '+s7.som+' AU ('+s7.n+' sessies) · 28 d '+s28.som+' AU ('+s28.n+' van '+totaal28+' sessies) (CALC-LOAD-003/005; geen ACWR-interpretatie)');
+    }
+    // 4) Trend — canonical ProgressionCore.trendBy(), samengevat per afstandsband (min 3 vergelijkbare).
+    if(typeof ProgressionCore!=='undefined'&&typeof CardioCore!=='undefined'){
+      var perfs=[];
+      A.forEach(function(a){
+        if(!(a.distance_meters>0&&a.duration_seconds>0))return;
+        var band=null;
+        if(sport==='running'&&typeof RunningIntelligenceCore!=='undefined')band=RunningIntelligenceCore.distanceBandKey(a.distance_meters);
+        else if(sport==='cycling'&&typeof CyclingIntelligenceCore!=='undefined')band=CyclingIntelligenceCore.speedBandKey(a.distance_meters);
+        else if(sport==='swimming'&&typeof SwimmingIntelligenceCore!=='undefined')band=SwimmingIntelligenceCore.distanceBandKey(a.distance_meters);
+        var split=CardioCore.splitFromDistTime(a.distance_meters,a.duration_seconds,sport==='swimming'?100:1000);
+        if(band&&split!=null)perfs.push({key:band,date:String(a.recorded_at).slice(0,10),pace:split});
+      });
+      var banden=[]; perfs.forEach(function(p){ if(banden.indexOf(p.key)===-1)banden.push(p.key); });
+      var trendTxt=banden.map(function(band){ var tr=ProgressionCore.trendBy(perfs,band,'pace','min',3); if(!tr||tr.status!=='trend')return band+': onvoldoende vergelijkbare data'; return band+': '+(tr.improving===true?'verbeterend':tr.improving===false?'dalend':'stabiel')+' ('+tr.n+' sessies)'; });
+      if(sport==='cycling'){ var pw=A.filter(function(a){return a.avg_power_watts>0;}).map(function(a){return {key:'cycling_power',date:String(a.recorded_at).slice(0,10),w:a.avg_power_watts};}); if(pw.length){ var ptr=ProgressionCore.trendBy(pw,'cycling_power','w','max',3); trendTxt.push('vermogen: '+((ptr&&ptr.status==='trend')?((ptr.improving===true?'stijgend':ptr.improving===false?'dalend':'stabiel')+' ('+ptr.n+' ritten)'):'onvoldoende vergelijkbare data')); } }
+      regels.push('- Trend (CALC-LOAD-004, per afstandsband): '+(trendTxt.length?trendTxt.join('; '):'onvoldoende data'));
+    }
+    if(regels.length)blokken.push('Sport: '+(LBL[sport]||sport)+'\n'+regels.join('\n'));
+  });
+  if(!blokken.length)return '';
+  return '\nENDURANCE-INTELLIGENCE (reeds berekend door de Calculation Engine — niet herberekenen, niet schatten, geen ACWR-/blessure-interpretatie; Critical Speed/Power ≠ de profiel-drempels hierboven):\n'+blokken.join('\n')+'\n';
+}
+async function tkEnduranceCoachContext(){
+  try{
+    var sports=tkEnduranceCtxSports();
+    if(!sports.length)return '';
+    var vanaf=new Date(Date.now()-TK_ENDURANCE_CTX_WINDOW_DAYS*86400000).toISOString().slice(0,10);
+    var res=await Promise.all([
+      sbGet('activities','&sport=in.('+sports.join(',')+')&recorded_at=gte.'+vanaf+'&order=recorded_at.asc&limit='+TK_ENDURANCE_CTX_LIMIT).catch(function(){return [];}),
+      (sports.indexOf('running')!==-1||sports.indexOf('cycling')!==-1)
+        ? sbGet('activities','&is_max_effort=eq.true&sport=in.(running,cycling)&order=recorded_at.desc&limit='+TK_ENDURANCE_CTX_MAXEFFORT_LIMIT).catch(function(){return [];})
+        : Promise.resolve([])
+    ]);
+    return tkEnduranceCtxProject(sports, res[0]||[], res[1]||[], new Date());
+  }catch(e){ return ''; }
+}
 async function tkHyroxCoachContext(){
   try{
     // ARCHITECTUUR-HARDENING (v4.91.0) — race_type is nu het expliciete, eerste-klas

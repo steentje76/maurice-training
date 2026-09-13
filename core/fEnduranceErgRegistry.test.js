@@ -71,8 +71,13 @@ ok(items.length === 6, 'exact 6 CALC-END-items gevonden (001, 002, 003, 004, 004
       id + ' bevat geen stale "niet geïntegreerd/geen tijdrit-markering"-claim meer');
     ok(txt && new RegExp(elig).test(txt) && new RegExp(eligId).test(txt) && /is_max_effort === true/.test(txt),
       id + ' erkent de echte history-integratie via ' + elig + ' (' + eligId + ', is_max_effort === true)');
-    ok(txt && /NOT CONNECTED/.test(txt) && /Nog NIET aangesloten/.test(txt) && /Context Engine/.test(txt) && /Decision Engine/.test(txt) && /AI Coach/.test(txt),
-      id + ' beweert NIET dat Context/Decision/AI al zijn aangesloten (expliciet NOT CONNECTED)');
+    // Gap 1b (GAP-P2-026): Context is nu CONNECTED via de dunne adapter tkEnduranceCoachContext();
+    // Decision blijft NOT CONNECTED; de AI rekent niet (ontvangt uitsluitend Context-waarden).
+    ok(txt && /CONNECTED \(Context via adapter\)/.test(txt) && /tkEnduranceCoachContext\(\)/.test(txt),
+      id + ' erkent de Context-integratie via de adapter tkEnduranceCoachContext() (GAP-P2-026)');
+    ok(txt && /NOT CONNECTED \(Decision\)/.test(txt) && /Nog NIET aangesloten/.test(txt) && /Decision Engine/.test(txt),
+      id + ' beweert NIET dat de Decision Engine is aangesloten (expliciet NOT CONNECTED (Decision))');
+    ok(txt && /rekent niet|niet herberekenen/.test(txt), id + ' documenteert dat de AI niet zelf (her)berekent');
     ok(txt && !/end-to-end (mature|geïntegreerd)/i.test(txt), id + ' claimt geen volledige end-to-end-integratie');
     ok(txt && /niet\*\* gepersisteerd|niet gepersisteerd/.test(txt) && /[Dd]ynamisch/.test(txt), id + ' documenteert dynamische berekening zonder persistentie');
   });

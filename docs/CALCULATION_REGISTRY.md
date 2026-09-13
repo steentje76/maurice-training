@@ -391,7 +391,7 @@ Geen onverklaarde critical threshold gevonden — inclusief het belangrijke onde
 | Evidence level | n.v.t. (architecturale bevinding, geen calculation zelf) |
 | Status | **GAP, geregistreerd** — zie Open Gaps hieronder (GAP-P2-013). Dit is exact de opdrachtvereiste ("MEASURED POWER versus DERIVED/ESTIMATED POWER... provenance verplicht") die momenteel niet expliciet is vastgelegd. |
 
-### CALC-END-004 — Critical Speed — **LIVE_CANONICAL (calculation/history/UI) — NOT CONNECTED (Context/Decision/AI)**
+### CALC-END-004 — Critical Speed — **LIVE_CANONICAL (calculation/history/UI) — CONNECTED (Context via adapter) — NOT CONNECTED (Decision)**
 | Veld | Waarde |
 |---|---|
 | Domain | Endurance & Erg |
@@ -405,10 +405,11 @@ Geen onverklaarde critical threshold gevonden — inclusief het belangrijke onde
 | Minimum geschikte prestaties (runtime) | 3 (eligibility-laag, `status:'eligible'`); de calculation zelf vereist minimaal 2 met verschillende duren en retourneert anders `status:'insufficient'`. |
 | Berekening/persistentie | Dynamisch per render van Running Insights; het resultaat wordt **niet** gepersisteerd. Bij `status !== 'valid'` of een uitzondering wordt niets getoond (`csResultaat = null`). |
 | Zichtbaarheid | Running Insights (`s-running-insights`): "x:xx/km — gebaseerd op N geschikte prestaties". |
-| **Nog NIET aangesloten** | Context Engine (`buildCtx()` bevat geen CS), Decision Engine (geen endurance-rule consumeert CS), AI Coach (volgt uit de context-grens). Dit is een bewuste, open connection gap — zie Endurance & Multisport Completion Audit, Gap 1/4. |
-| Status | **LIVE_CANONICAL** voor calculation, history-integratie en UI — **NOT CONNECTED** voor Context/Decision/AI. GAP-P2-021 (tijdrit-markering) is hiermee gesloten. |
+| Context-integratie (GAP-P2-026, Endurance Gap 1b) | **CONNECTED**: `tkEnduranceCoachContext()` (dunne adapter naar het `tkHyroxCoachContext()`-precedent) roept exact dezelfde keten aan (`activities&is_max_effort=eq.true` ≤50 rijen → `criticalSpeedEligiblePerformances(…,3)` → `CardioCore.criticalSpeed()`) en projecteert `cs_m_s`, `confidence`, `n_performances` als tekst in `buildCtx()` met de instructie "reeds berekend — niet herberekenen" en expliciet "≠ drempeltempo uit het profiel". `insufficient` → tekst "onvoldoende geschikte max-effort-prestaties (N/3)", nooit een getal. D′/R² gaan niet naar de AI. |
+| **Nog NIET aangesloten** | Decision Engine (geen endurance-rule consumeert CS). De AI Coach ontvangt CS uitsluitend als reeds berekende Context-waarde en rekent niet. |
+| Status | **LIVE_CANONICAL** voor calculation, history-integratie en UI — **CONNECTED** voor Context (adapter, GAP-P2-026) — **NOT CONNECTED** voor Decision. GAP-P2-021 (tijdrit-markering) is hiermee gesloten. |
 
-### CALC-END-004B — Critical Power — **LIVE_CANONICAL (calculation/history/UI) — NOT CONNECTED (Context/Decision/AI)**
+### CALC-END-004B — Critical Power — **LIVE_CANONICAL (calculation/history/UI) — CONNECTED (Context via adapter) — NOT CONNECTED (Decision)**
 | Veld | Waarde |
 |---|---|
 | Domain | Endurance & Erg |
@@ -421,8 +422,9 @@ Geen onverklaarde critical threshold gevonden — inclusief het belangrijke onde
 | Berekening/persistentie | Dynamisch per render van Cycling Insights; niet gepersisteerd; bij `status !== 'valid'` niets getoond (`cpResultaat = null`). |
 | Zichtbaarheid | Cycling Insights (`s-cycling-insights`): "N W — gebaseerd op N geschikte prestaties". |
 | Modelgrens (ongewijzigd) | Technisch/fysiologisch model, geen vervanging voor een gestandaardiseerd FTP-testprotocol. |
-| **Nog NIET aangesloten** | Context Engine, Decision Engine, AI Coach — identiek aan CALC-END-004. |
-| Status | **LIVE_CANONICAL** voor calculation, history-integratie en UI — **NOT CONNECTED** voor Context/Decision/AI. |
+| Context-integratie (GAP-P2-026) | **CONNECTED** via `tkEnduranceCoachContext()`: `criticalPowerEligiblePerformances(…,3)` → `CardioCore.criticalPower()` → `cp_w`, `confidence`, `n_performances` als tekst, expliciet "≠ FTP uit het profiel"; W′ gaat niet naar de AI. |
+| **Nog NIET aangesloten** | Decision Engine — identiek aan CALC-END-004. De AI Coach ontvangt CP uitsluitend als reeds berekende Context-waarde en rekent niet. |
+| Status | **LIVE_CANONICAL** voor calculation, history-integratie en UI — **CONNECTED** voor Context (adapter, GAP-P2-026) — **NOT CONNECTED** voor Decision. |
 
 ### CALC-END-005 — TRIMP / Aerobic Decoupling / HR-zones — **NIET GEÏMPLEMENTEERD**
 | Veld | Waarde |

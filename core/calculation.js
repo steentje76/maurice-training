@@ -23,7 +23,8 @@
     volume: 'volume.v1', percentage: 'percentage.v1', warmup: 'warmup.v1', recovery: 'recovery.v1', dayfactor: 'dayfactor.v1',
     goal: 'goal.v1', e1rm_weighted: 'e1rm_weighted.v1', recovery_score: 'recovery_score.v1',
     sleep_unit: 'sleep_unit.v1', correlation: 'correlation.v1',
-    readiness_percent: 'readiness_percent.v1', trend: 'trend.v1'
+    readiness_percent: 'readiness_percent.v1', trend: 'trend.v1',
+    strength_basis: 'strength_basis.v1'
   };
 
   // --- rounding.v1 --- exact gelijk aan legacy index.html r.10668
@@ -31,6 +32,37 @@
 
   // --- e1rm.v1 (RAW) --- exact gelijk aan legacy epley1RMRaw r.10661
   function oneRMRaw(kg, reps) { return reps === 1 ? kg : kg * (1 + reps / 30); }
+
+  // --- strength_basis.v1 (CALC-STR-006) --- CANONICAL STRENGTH BASIS SELECTION.
+  // Input: sessies (nieuwste eerst; elk {weight, reps, rpe?, date}). Output:
+  //   recent = de MEEST RECENTE representatieve prestatie (weight>0, 1<=reps<=maxReps) -> actuele e1RM-basis
+  //   peak   = de hoogste e1RM over de meegegeven rijen (met datum) -> uitsluitend PR/trend/analytics/context
+  //   prev   = de laatste rij met weight+reps (ongeacht reps) -> detraining-datum / "vorige keer"
+  // Productbesluit (Strength Basis Recency B1): geen decay-formule, geen middeling; een oude piek of een
+  // rep-PR is GEEN prescription-basis. Deterministisch, muteert niets, verzint geen datum.
+  function selectStrengthBasis(rows, opts) {
+    var maxReps = (opts && opts.maxReps > 0) ? opts.maxReps : 10;
+    var list = Array.isArray(rows) ? rows.slice() : [];
+    // nieuwste eerst (stabiel): date desc, dan created_at desc
+    list.sort(function (a, b) {
+      var da = String((a && a.date) || ''), db = String((b && b.date) || '');
+      if (da !== db) return da < db ? 1 : -1;
+      var ca = String((a && a.created_at) || ''), cb = String((b && b.created_at) || '');
+      return ca < cb ? 1 : (ca > cb ? -1 : 0);
+    });
+    var recent = null, peak = null, prev = null;
+    for (var i = 0; i < list.length; i++) {
+      var s = list[i]; if (!s) continue;
+      var kg = parseFloat(s.weight), reps = parseInt(s.reps, 10);
+      if (!(kg > 0) || !(reps >= 1)) continue;
+      if (!prev) prev = { weight: kg, reps: reps, rpe: (s.rpe != null ? s.rpe : null), date: s.date || null };
+      var e1 = oneRMRaw(kg, reps);
+      if (!recent && reps <= maxReps) recent = { e1rm: Math.round(e1), weight: kg, reps: reps, rpe: (s.rpe != null ? s.rpe : null), date: s.date || null };
+      if (!peak || e1 > peak.e1rmRaw) peak = { e1rmRaw: e1, e1rm: Math.round(e1), weight: kg, reps: reps, date: s.date || null };
+    }
+    if (peak) delete peak.e1rmRaw;
+    return { version: VERSIONS.strength_basis, recent: recent, peak: peak, prev: prev, n: list.length };
+  }
 
   // --- e1rm.v1 (hele kg) --- exact gelijk aan legacy epley1RM r.10662-10666
   // Legacy-semantiek BEWUST 1-op-1: guard -> null; 1 rep -> kg (NIET afgerond); anders Math.round(raw).
@@ -411,6 +443,7 @@
   var CalcCore = {
     roundKg: roundKg,
     oneRMRaw: oneRMRaw,
+    selectStrengthBasis: selectStrengthBasis,
     calculate1RM: calculate1RM,
     calculateWorkingWeight: calculateWorkingWeight,
     validateProposedWeight: validateProposedWeight,

@@ -18,7 +18,7 @@ function ok(cond, label) { if (cond) { pass++; } else { fail++; msgs.push('MISLU
 
 // Splits de registry op per CALC-STR-item.
 const items = registryText.split(/(?=^### CALC-STR-)/m).filter(s => s.startsWith('### CALC-STR-'));
-ok(items.length === 5, 'exact 5 CALC-STR-items gevonden (001 t/m 005)');
+ok(items.length === 6, 'exact 6 CALC-STR-items gevonden (001 t/m 006; 006 = Strength Basis Selection, Strength Basis Recency B1)');
 
 const REQUIRED_FIELDS = [
   'Domain', 'Name', 'Version', 'Formula', 'Implementation', 'Evidence level',

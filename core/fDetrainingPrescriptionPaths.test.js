@@ -25,6 +25,7 @@ function extractFn(name) {
   return null;
 }
 const FNS = ['resolveWorkingWeight', 'detrainingFactor', 'daysBetweenDates', 'suggestWeightForRepsRpe', 'repsPrefillFromRange',
+  'loadStrengthBasis', 'strengthBasisProvenance', 'getOneRM', 'oneRMFor', 'manualOneRMDate', 'strengthBasisText',
   'resolvePrescriptionRepTarget', 'resolveProgramItemWeight', 'computeProgPrefill', 'loadPrevPerformance', 'previewResolveItemWeight',
   'previewResolveItemDetrain', 'previewRepsMid', 'previewOneRM', 'estimatedOneRM', 'epley1RMRaw', 'roundKg', 'buildPrevBlock'];
 const SRC = {}; FNS.forEach((n) => { SRC[n] = extractFn(n); ok(SRC[n], 'functie gevonden: ' + n); });
@@ -37,11 +38,12 @@ const TODAY = '2026-09-13';
 function sandbox(sessionsByEx) {
   const ctx = {
     DecisionCore, CalcCore, console, Date, Math, JSON, Promise, Object, Array, String, Number, isFinite, isNaN, parseFloat, parseInt, encodeURIComponent,
-    td: () => TODAY, getOneRM: () => null, estOneRMCache: {}, previewCtx: null, window: {},
+    td: () => TODAY, estOneRMCache: {}, previewCtx: null, window: {},
     sbGet: async (table, q) => { if (table !== 'sessions') return []; const m = /exercise_id=eq\.([^&]+)/.exec(q); return (sessionsByEx[decodeURIComponent(m[1])] || []).slice(); },
     prFor: () => null, escHtml: (x) => String(x)
   };
   vm.createContext(ctx);
+  ctx.exerciseGoals = new Map(); ctx.localStorage = { getItem: () => null }; ctx.strengthBasisCache = {};
   vm.runInContext(RULES_SRC + '\nconst DETRAINING_RULES=DETRAINING_RULES_V1;\n' + FNS.map((n) => SRC[n]).join('\n'), ctx);
   return ctx;
 }
@@ -63,7 +65,7 @@ const hist = (n) => ({ 'ex-squat': [{ weight: 100, reps: 5, rpe: 8, date: dAgo(n
     const c = sandbox(hist(days));
     const prev = await c.loadPrevPerformance('ex-squat');
     ok(prev && prev.weight === 100 && prev.reps === 5 && prev.date === dAgo(days), 'D: gedeelde prev-bron levert laatste uitvoering incl. date (' + days + ' d)');
-    eq(c.estOneRMCache['ex-squat'], 117, 'D: estOneRMCache gevuld door de gedeelde bron (max Epley over rijen)');
+    eq(c.estOneRMCache['ex-squat'], 117, 'D: estOneRMCache gevuld door de gedeelde bron (recente representatieve e1RM, CALC-STR-006)');
     // Preview
     c.previewCtx = { prevMap: { 'ex-squat': prev }, overrides: {} };
     const wPreview = c.previewResolveItemWeight({ exercise_id: 'ex-squat', reps: '5', rpe: 8 });

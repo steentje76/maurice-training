@@ -7294,7 +7294,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.83';
+const APP_VER = 'v4.69.84';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -8856,7 +8856,12 @@ function snapshotFromCustomTraining(def,texs,modifications=[]){
     items:(texs||[]).map(t=>({exercise_id:t.exercise_id,sort_order:t.sort_order,sets:t.sets??null,reps:t.reps??null,rpe:t.rpe??null,rest:t.rest??null,pick:t.pick??null,wu:t.wu??null})),
     // F0.7M (M1): actieve Decision-Engine-regel bij plannen (traceability). Additief JSON.
     decision_rules:DecisionCore.Evidence.decisionRulesSnapshot((typeof DETRAINING_RULES!=='undefined')?DETRAINING_RULES:null),
-    modifications
+    modifications,
+    // B1 Structured Intervals: PLAN-SNAPSHOT. Raw prescriptie (auteursvorm, repeat-groepen) +
+    // de canonieke genormaliseerde vorm (IntervalEngineCore, interval_prescription.v1) die de
+    // executie letterlijk consumeert. Geen planned waarden elders dupliceren.
+    intervalPrescription:(def&&def.intervalPrescription)?def.intervalPrescription:null,
+    intervalPrescriptionNormalized:(def&&def.intervalPrescription&&typeof IntervalEngineCore!=='undefined')?IntervalEngineCore.normalizePrescription(def.intervalPrescription):null
   };
 }
 
@@ -8895,6 +8900,8 @@ async function getTrainingDefinition(source,id){
           id:local.id, source:'custom', name:local.name,
           sport:(local.metadata&&local.metadata.sel&&local.metadata.sel.sport)||null,
           goal:(local.metadata&&local.metadata.sel&&local.metadata.sel.goal)||null,
+          // B1 Structured Intervals: canonical plan uit custom_trainings.metadata (raw prescriptie met repeat-groepen).
+          intervalPrescription:(local.metadata&&local.metadata.intervalPrescription)||null,
           exercises:(local.exercise_targets&&local.exercise_targets.length?local.exercise_targets:
             (local.exercises||[]).map(exId=>({exercise_id:exId,sort_order:null,sets:null,reps:null,rpe:null,rest:null})))
         };
@@ -8908,6 +8915,7 @@ async function getTrainingDefinition(source,id){
       id:def.id, source:'custom', name:def.naam,
       sport:(def.metadata&&def.metadata.sel&&def.metadata.sel.sport)||null,
       goal:(def.metadata&&def.metadata.sel&&def.metadata.sel.goal)||null,
+      intervalPrescription:(def.metadata&&def.metadata.intervalPrescription)||null,
       exercises:texs.map(t=>({exercise_id:t.exercise_id,sort_order:t.sort_order,sets:t.sets??null,reps:t.reps??null,rpe:t.rpe??null,rest:t.rest??null,wu:t.wu??null,pick:t.pick??null}))
     };
   }
@@ -8938,7 +8946,7 @@ async function startInstanceFromDefinition(def,modifications=[]){
   if(!def)return null;
   const snapshot=def.source==='vast'
     ?snapshotFromVasteTraining({id:def.id,naam:def.name},def.exercises,modifications)
-    :snapshotFromCustomTraining({id:def.id,naam:def.name},def.exercises,modifications);
+    :snapshotFromCustomTraining({id:def.id,naam:def.name,intervalPrescription:def.intervalPrescription||null},def.exercises,modifications);
   return await createTrainingInstance({
     vasteTrainingId:def.source==='vast'?def.id:null,
     customTrainingId:def.source==='custom'?def.id:null,
@@ -9244,13 +9252,57 @@ function renderTrainingPreview(){
   const el=document.getElementById('tp-body');
   if(!el||!previewCtx)return;
   const v=previewCtx.view||'overview';
-  if(v==='exercise')renderTPExercise(el);
+  // B1 Structured Intervals: een Definition met intervalPrescription krijgt de canonical
+  // structuur-preview (leest UITSLUITEND de opgeslagen prescriptie; geen formulier-reconstructie).
+  if(previewCtx.def&&previewCtx.def.intervalPrescription)renderTPInterval(el);
+  else if(v==='exercise')renderTPExercise(el);
   else if(v==='plan')renderTPPlan(el);
   else renderTPOverview(el);
   // F0.7J: elke Preview-view (S1/S2/S3) opent logisch bovenaan (geen oude scrollpositie).
   const mc=document.querySelector('#m-training-preview .modal'); if(mc)mc.scrollTop=0;
 }
 function previewGoto(view){ if(!previewCtx)return; previewCtx.view=view; previewCtx.swapPickerFor=null; renderTrainingPreview(); }
+// ── B1 STRUCTURED INTERVALS — PREVIEW ──
+// Consumeert rechtstreeks def.intervalPrescription via IntervalEngineCore (normalizePrescription +
+// totalPlannedSeconds). Geen eigen duurformule, geen reconstructie uit UI-velden.
+const TK_IV_BLOCK_LABEL={warmup:'Warming-up',work:'Werk',recovery:'Herstel',cooldown:'Cooling-down',manual:'Handmatig'};
+const TK_IV_SPORT_LABEL={running:'Hardlopen',cycling:'Fietsen',swimming:'Zwemmen',rowing:'RowErg',bikeerg:'BikeErg',skierg:'SkiErg'};
+function tkIvTerminationText(b){
+  if(!b||!b.termination)return '';
+  if(b.termination.type==='time')return CardioCore.formatTime(b.termination.seconds);
+  if(b.termination.type==='distance')return (b.termination.meters>=1000?(b.termination.meters/1000).toFixed(b.termination.meters%1000?2:0)+' km':b.termination.meters+' m')+' (handmatig doorgaan)';
+  return 'handmatig';
+}
+function tkIvTargetText(b){
+  if(!b||!b.target)return '';
+  const parts=[]; if(b.target.pace)parts.push('pace '+escHtml(String(b.target.pace))); if(b.target.rpe!=null)parts.push('RPE '+escHtml(String(b.target.rpe))); if(b.target.power)parts.push(escHtml(String(b.target.power))+' W');
+  return parts.length?' · '+parts.join(' · '):'';
+}
+function renderTPInterval(el){
+  const def=previewCtx.def;
+  const norm=IntervalEngineCore.normalizePrescription(def.intervalPrescription);
+  const totaal=IntervalEngineCore.totalPlannedSeconds(norm);
+  const rawBlocks=Array.isArray(def.intervalPrescription.blocks)?def.intervalPrescription.blocks:[];
+  const rows=rawBlocks.map(entry=>{
+    if(entry&&Array.isArray(entry.of)){
+      const inner=entry.of.map(b=>`<div class="tpv2-why-row"><span class="tpv2-why-nm">${TK_IV_BLOCK_LABEL[b.type]||b.type}</span><span>${tkIvTerminationText(b)}${tkIvTargetText(b)}</span></div>`).join('');
+      return `<div class="tpv2-sec" style="margin-top:8px">${entry.repeat||1}× herhalen</div><div class="tpv2-why">${inner}</div>`;
+    }
+    return `<div class="tpv2-why"><div class="tpv2-why-row"><span class="tpv2-why-nm">${TK_IV_BLOCK_LABEL[entry.type]||entry.type}</span><span>${tkIvTerminationText(entry)}${tkIvTargetText(entry)}</span></div></div>`;
+  }).join('');
+  const werk=norm.blocks.filter(b=>b.type==='work').length;
+  el.innerHTML=`${tpHeader('Training Preview','previewCloseModal()')}
+    <div class="tpv2-hero">
+      <div class="tpv2-hero-nm">${escHtml(def.name)}<span class="tpv2-chip">${TK_IV_SPORT_LABEL[norm.sport]||escHtml(String(norm.sport||''))}</span></div>
+      <div class="tpv2-hero-sub">Intervaltraining · ${norm.blocks.length} blokken · ${werk} werkintervallen${totaal!=null?` · ${CardioCore.formatTime(totaal)} gepland`:' · duur afhankelijk van afstand/handmatig'}</div>
+      ${norm.geldig?'':`<div class="tpv2-hero-say" style="color:var(--r)">Prescriptie ongeldig: ${escHtml(String(norm.reden||''))}</div>`}
+    </div>
+    <div class="tpv2-sec">Structuur</div>${rows}
+    <div class="tpv2-cta" style="margin-top:18px;flex-direction:column">
+      <button class="btn" style="width:100%;background:var(--accent);color:#fff" ${norm.geldig?'':'disabled'} onclick="previewStartTraining()">Start training</button>
+      ${previewCtx.source==='custom'?`<button class="btn btn-o" style="width:100%;margin-top:8px" onclick="previewOpenBuilder()">Training aanpassen</button>`:''}
+    </div>`;
+}
 function previewAdjustFromOverview(){ if(!previewCtx)return; previewCtx.view='plan'; previewCtx.adjustOpen=true; previewCtx.swapPickerFor=null; renderTrainingPreview(); }
 function previewOpenExercise(origId){ if(!previewCtx)return; previewCtx.focusEx=origId; previewCtx.view='exercise'; renderTrainingPreview(); }
 function previewBackToPlan(){ if(!previewCtx)return; previewCtx.view='plan'; previewCtx.swapPickerFor=null; renderTrainingPreview(); }
@@ -9598,6 +9650,16 @@ async function previewStartTraining(mode){
   let instanceId=null;
   try{instanceId=await startInstanceFromDefinition(def,modifications);}
   catch(e){console.warn('previewStartTraining: instance-vastlegging mislukt, training start gewoon door',e);}
+  // B1 Structured Intervals: canonical running-pad. Definition-prescriptie -> instance-snapshot ->
+  // IntervalEngineCore-executie op het bestaande running-scherm. Geen strength-executie, geen GW.
+  if(def&&def.intervalPrescription){
+    const norm=IntervalEngineCore.normalizePrescription(def.intervalPrescription);
+    if(!norm.geldig||norm.sport!=='running'){toast(norm.geldig?'Alleen hardlopen wordt in deze versie gestructureerd uitgevoerd':'Prescriptie ongeldig');previewStarting=false;return;}
+    closeModal('m-training-preview');
+    startStructuredRunningExecution({definitionId:def.id,naam:def.name,instanceId:instanceId||null,prescription:norm,rawPrescription:def.intervalPrescription});
+    previewCtx=null;previewStarting=false;
+    return;
+  }
   closeModal('m-training-preview');
   if(mode==='guided'&&window.GW&&window.GWUI){
     // Begeleide execution-mode op dezelfde instance; GW behoudt zijn eigen rijke UX,
@@ -13064,7 +13126,71 @@ function herstelRunningExecutionIndienAanwezig(){
   }
 }
 
+// ── B1 STRUCTURED INTERVALS — CANONICAL RUNNING EXECUTION ──
+// Plan = instance-snapshot (prescription), executie-semantiek = IntervalEngineCore, actual =
+// EnduranceExecutionCore-laps met bloksemantiek. De legacy `intervalBlokken`/`huidigeIntervalStap`-
+// tak blijft uitsluitend voor ad-hoc (formulier) runs zonder Definition bestaan.
+function startStructuredRunningExecution(cfg){
+  _runningGekozenVorm='interval';
+  _runningPreviewConfig={vorm:'interval',canonical:true,definitionId:cfg.definitionId||null,naam:cfg.naam||null,instanceId:cfg.instanceId||null,
+    prescription:cfg.prescription,rawPrescription:cfg.rawPrescription||null,doelAfstandM:null,doelDuurS:IntervalEngineCore.totalPlannedSeconds(cfg.prescription),
+    manualFromIndex:0,manualFromElapsedS:0};
+  go('s-running');
+  startRunningExecution();
+}
+function structuredBlockLabel(b){ return b?((TK_IV_BLOCK_LABEL[b.type]||b.type)+(b.repeatTotal>1?' '+(b.repeatIndex+1)+'/'+b.repeatTotal:'')):'Klaar'; }
+// Huidige blokindex uit ACTIEVE seconden (IntervalEngineCore) — puur, geen eigen formule.
+function structuredBlockIndexNow(nu){
+  const cfg=_runningPreviewConfig; if(!cfg||!cfg.prescription||!_runningExecState)return null;
+  const actiefS=RunningExecutionCore.elapsedActiveMs(_runningExecState,nu)/1000;
+  return IntervalEngineCore.blockIndexAtElapsed(cfg.prescription,actiefS,cfg.manualFromIndex||0,cfg.manualFromElapsedS||0);
+}
+// Auto-lap bij tijdgestuurde bloktransities: schrijft voor elk VOLTOOID blok exact één lap met
+// lap_type/block_index/repeat_index. Guard: structuredLapCursor (laatste blokindex met lap) voorkomt
+// dubbele laps, ook als de sporter tegelijk handmatig 'Lap' tikt.
+function structuredRunningSync(nu){
+  const cfg=_runningPreviewConfig;
+  if(!cfg||!cfg.prescription||!_runningExecState||_runningExecState.status!=='RUNNING')return;
+  const idx=structuredBlockIndexNow(nu); if(idx==null)return;
+  if(typeof _runningExecState.structuredLapCursor!=='number')_runningExecState.structuredLapCursor=-1;
+  let changed=false;
+  while(_runningExecState.structuredLapCursor<idx-1){
+    const bi=_runningExecState.structuredLapCursor+1; const b=cfg.prescription.blocks[bi]; if(!b)break;
+    const r=RunningExecutionCore.addLap(_runningExecState,nu,{lap_type:b.type,block_index:bi,repeat_index:b.repeatIndex});
+    if(!r.ok)break;
+    _runningExecState=r.state; _runningExecState.structuredLapCursor=bi; changed=true;
+  }
+  if(changed)persisteerRunningExecState();
+}
+// B1 (review-fix): bij finish het lopende blok als lap afsluiten (alleen canonical structured runs,
+// alleen status RUNNING of PAUSED, alleen als het blok nog niet is afgesloten en >=2 s actief was).
+function structuredRunningCloseOpenBlock(nu){
+  const cfg=_runningPreviewConfig;
+  if(!cfg||!cfg.prescription||!_runningExecState)return false;
+  if(_runningExecState.status==='RUNNING')structuredRunningSync(nu);
+  const idx=structuredBlockIndexNow(nu); if(idx==null)return false;
+  const b=cfg.prescription.blocks[idx]; if(!b)return false; // alles voltooid: niets open
+  if(typeof _runningExecState.structuredLapCursor==='number'&&_runningExecState.structuredLapCursor>=idx)return false;
+  const actiefNu=RunningExecutionCore.elapsedActiveMs(_runningExecState,nu)/1000;
+  let start=cfg.manualFromElapsedS||0; for(let i=cfg.manualFromIndex||0;i<idx;i++){ const bb=cfg.prescription.blocks[i]; start+=(bb&&bb.termination.type==='time')?bb.termination.seconds:0; }
+  if(actiefNu-start<2)return false;
+  const r=RunningExecutionCore.addLap(_runningExecState,nu,{lap_type:b.type,block_index:idx,repeat_index:b.repeatIndex});
+  if(!r.ok)return false;
+  _runningExecState=r.state; _runningExecState.structuredLapCursor=idx;
+  cfg.manualFromIndex=idx+1; cfg.manualFromElapsedS=RunningExecutionCore.elapsedActiveMs(_runningExecState,nu)/1000;
+  return true;
+}
 function huidigeIntervalStap(nu){
+  if(_runningPreviewConfig&&_runningPreviewConfig.prescription){
+    const p=_runningPreviewConfig.prescription; const idx=structuredBlockIndexNow(nu);
+    const state=IntervalEngineCore.stateAt(p,idx);
+    if(state.voltooid)return {index:p.blocks.length-1,totaal:p.blocks.length,blok:{label:'Klaar — rond de training af'},resterendS:0,volgende:null,canonical:true,voltooid:true};
+    const b=state.block; const actiefS=RunningExecutionCore.elapsedActiveMs(_runningExecState,nu)/1000;
+    let cumS=_runningPreviewConfig.manualFromElapsedS||0; for(let i=_runningPreviewConfig.manualFromIndex||0;i<idx;i++){ const bb=p.blocks[i]; cumS+=(bb&&bb.termination.type==='time')?bb.termination.seconds:0; }
+    const rest=(b.termination.type==='time')?Math.max(0,cumS+b.termination.seconds-actiefS):null;
+    const vlg=p.blocks[idx+1]||null;
+    return {index:idx,totaal:p.blocks.length,blok:{label:structuredBlockLabel(b)+(b.termination.type!=='time'?' · '+tkIvTerminationText(b):'')+tkIvTargetText(b).replace(/<[^>]+>/g,'')},resterendS:rest,volgende:vlg?{label:structuredBlockLabel(vlg)}:null,canonical:true,manualTermination:b.termination.type!=='time'};
+  }
   if(!_runningPreviewConfig||!_runningPreviewConfig.intervalBlokken)return null;
   const actieveMs=RunningExecutionCore.elapsedActiveMs(_runningExecState,nu);
   let cumS=0;
@@ -13082,8 +13208,9 @@ function renderRunningExecutionScreen(){
   const el=document.getElementById('running-scroll');
   if(!el||!_runningExecState)return;
   clearInterval(_runningExecTimerHandle);
-  const st=_runningExecState;
   const nu=Date.now();
+  structuredRunningSync(nu); // B1: auto-laps voor voltooide tijdblokken (no-op voor legacy runs)
+  const st=_runningExecState;
   const actiefS=Math.round(RunningExecutionCore.elapsedActiveMs(st,nu)/1000);
   const intervalStap=huidigeIntervalStap(nu);
   el.innerHTML=`
@@ -13416,12 +13543,40 @@ function runningResume(){
   _runningExecState=r.state;persisteerRunningExecState();renderRunningExecutionScreen();
 }
 function runningLap(){
-  const r=RunningExecutionCore.addLap(_runningExecState,Date.now(),{});
+  const nu=Date.now();
+  // B1 canonical structured run: handmatige 'Lap' = huidig blok afsluiten (distance/manual-terminatie
+  // of vroegtijdig doortikken). Guard tegen dubbele lap: als het auto-lap-cursor dit blok al heeft
+  // afgesloten, wordt niets dubbel geschreven.
+  if(_runningPreviewConfig&&_runningPreviewConfig.prescription){
+    structuredRunningSync(nu);
+    const idx=structuredBlockIndexNow(nu); const p=_runningPreviewConfig.prescription; const b=p.blocks[idx];
+    if(!b){toast('Training is voltooid — rond af');return;}
+    if(typeof _runningExecState.structuredLapCursor==='number'&&_runningExecState.structuredLapCursor>=idx){toast('Dit blok is al afgesloten');return;}
+    // Guard tegen dubbele tik/gelijktijdige auto-transitie: een blok dat < 2 s geleden begon wordt niet als 0-seconden-lap afgesloten.
+    { const actiefNu=RunningExecutionCore.elapsedActiveMs(_runningExecState,nu)/1000; let start=_runningPreviewConfig.manualFromElapsedS||0; for(let i=_runningPreviewConfig.manualFromIndex||0;i<idx;i++){ const bb=p.blocks[i]; start+=(bb&&bb.termination.type==='time')?bb.termination.seconds:0; }
+      if(actiefNu-start<2){toast('Blok is net gestart');return;} }
+    const r=RunningExecutionCore.addLap(_runningExecState,nu,{lap_type:b.type,block_index:idx,repeat_index:b.repeatIndex});
+    if(!r.ok){toast('Lap alleen mogelijk tijdens actief lopen');return;}
+    _runningExecState=r.state;_runningExecState.structuredLapCursor=idx;
+    // handmatige transitie: tijdsprogressie hervat vanaf het volgende blok op dit moment
+    _runningPreviewConfig.manualFromIndex=idx+1;
+    _runningPreviewConfig.manualFromElapsedS=RunningExecutionCore.elapsedActiveMs(_runningExecState,nu)/1000;
+    persisteerRunningExecState();renderRunningExecutionScreen();
+    toast((TK_IV_BLOCK_LABEL[b.type]||b.type)+' afgesloten');
+    return;
+  }
+  const r=RunningExecutionCore.addLap(_runningExecState,nu,{});
   if(!r.ok){toast('Lap alleen mogelijk tijdens actief lopen');return;}
   _runningExecState=r.state;persisteerRunningExecState();renderRunningExecutionScreen();
   toast('Lap '+_runningExecState.laps.length+' geregistreerd');
 }
 function runningRequestFinish(){
+  // B1 Structured Intervals (review-fix): vóór de FINISH_CONFIRM-transitie (status nog RUNNING) alle
+  // voltooide tijdblokken (auto-laps) én het nog lopende blok (>=2 s actief) als actual-lap afsluiten,
+  // zodat een vroegtijdige finish het laatste (deel)blok niet verliest. Guard via structuredLapCursor.
+  // Bewuste grens: vanuit PAUSED kan EnduranceExecutionCore.addLap geen lap maken; dan blijven alleen
+  // de al voltooide blokken gelogd (geen fake lap).
+  try{ structuredRunningCloseOpenBlock(Date.now()); }catch(_){}
   const r=RunningExecutionCore.requestFinish(_runningExecState,Date.now());
   if(!r.ok){toast('Kon niet afronden');return;}
   _runningExecState=r.state;persisteerRunningExecState();renderRunningExecutionScreen();
@@ -13465,7 +13620,9 @@ async function runningConfirmFinish(){
       recorded_at:new Date(_runningExecState.startedAt).toISOString(),
       dedupe_key:dedupeKey,
       is_max_effort:isMaxEffort,
-      rpe:isFinite(rpeWaarde)&&rpeWaarde>=0&&rpeWaarde<=10?rpeWaarde:null
+      rpe:isFinite(rpeWaarde)&&rpeWaarde>=0&&rpeWaarde<=10?rpeWaarde:null,
+      // B1 Structured Intervals: plan<->actual-koppeling. NULL voor legacy/ad-hoc runs (geen fake instance).
+      training_instance_id:(_runningPreviewConfig&&_runningPreviewConfig.instanceId)||null
     };
     const savedActivity=await fetch(`${SB_URL}/rest/v1/activities`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify(payload)});
     let activityId=null;
@@ -13482,7 +13639,7 @@ async function runningConfirmFinish(){
     let alleLapsGelukt=true;
     if(activityId&&_runningExecState.laps.length){
       for(const lap of _runningExecState.laps){
-        const lapOk=await sbPostQ('activity_laps',{activity_id:activityId,lap_index:lap.lap_index,duration_seconds:lap.duration_seconds,distance_meters:lap.distance_meters,avg_heart_rate_bpm:lap.avg_heart_rate_bpm});
+        const lapOk=await sbPostQ('activity_laps',{activity_id:activityId,lap_index:lap.lap_index,duration_seconds:lap.duration_seconds,distance_meters:lap.distance_meters,avg_heart_rate_bpm:lap.avg_heart_rate_bpm,lap_type:lap.lap_type||null,block_index:(typeof lap.block_index==='number')?lap.block_index:null,repeat_index:(typeof lap.repeat_index==='number')?lap.repeat_index:null});
         if(!lapOk)alleLapsGelukt=false;
       }
     }
@@ -13515,6 +13672,10 @@ async function renderRunDetail(activityId){
   if(!act){el.innerHTML='<div style="padding:16px">Run niet gevonden</div>';return;}
   const laps=await sbGet('activity_laps',`&activity_id=eq.${activityId}&order=lap_index.asc`);
   const paceLine=(act.distance_meters&&act.duration_seconds)?CardioCore.formatTime(CardioCore.splitFromDistTime(act.distance_meters,act.duration_seconds,1000))+'/km':'Onbekend (geen afstand ingevuld)';
+  // B1 Structured Intervals — PLANNED vs ACTUAL: plan uit training_instances.snapshot (via
+  // activities.training_instance_id), actual uit de gestructureerde laps. Legacy rows (geen
+  // instance-koppeling of typeloze laps) renderen exact zoals voorheen.
+  const structured=await renderRunDetailStructuredHtml(act,laps||[]);
   el.innerHTML=`
     <div style="padding:16px">
       <button class="btn btn-o btn-sm" onclick="renderRunningEntry()" style="margin-bottom:12px">← Terug naar geschiedenis</button>
@@ -13526,11 +13687,38 @@ async function renderRunDetail(activityId){
           <div style="font-size:13px;margin-bottom:6px"><b>Gem. pace:</b> ${paceLine}</div>
           <div style="font-size:13px;margin-bottom:6px"><b>HR:</b> ${act.avg_heart_rate_bpm?act.avg_heart_rate_bpm+' bpm':'Onbekend'}</div>
           <div style="font-size:13px;margin-bottom:6px"><b>Bron:</b> ${act.source_provenance} · ${act.data_quality}</div>
-          ${laps&&laps.length?`<div style="font-size:13px;margin-top:10px"><b>Laps:</b><ul style="margin:6px 0 0 18px;padding:0">${laps.map(l=>`<li>Lap ${l.lap_index}: ${CardioCore.formatTime(l.duration_seconds)}${l.distance_meters?' · '+(l.distance_meters/1000).toFixed(2)+' km':''}</li>`).join('')}</ul></div>`:''}
+          ${structured}
+          ${laps&&laps.length?`<div style="font-size:13px;margin-top:10px"><b>Laps:</b><ul style="margin:6px 0 0 18px;padding:0">${laps.map(l=>`<li>${l.lap_type?(TK_IV_BLOCK_LABEL[l.lap_type]||l.lap_type)+(typeof l.repeat_index==='number'?' '+(l.repeat_index+1):'')+' — ':''}Lap ${l.lap_index}: ${CardioCore.formatTime(l.duration_seconds)}${l.distance_meters?' · '+(l.distance_meters/1000).toFixed(2)+' km':''}</li>`).join('')}</ul></div>`:''}
           <button class="btn btn-o btn-sm" style="margin-top:12px" onclick='socialOpenShareDialog(${JSON.stringify({sport:"running",title:"Hardlooptraining",completedAt:act.recorded_at,durationSeconds:act.duration_seconds,distanceMeters:act.distance_meters})})'>Delen met connecties</button>
         </div>
       </div>
     </div>`;
+}
+
+// B1 Structured Intervals: planned-vs-actual-blok voor de run-detail. Leest het plan UITSLUITEND
+// uit de instance-snapshot (intervalPrescriptionNormalized of, als fallback, normalisatie van de
+// raw prescriptie) en koppelt laps op block_index. Geen berekening, geen AI, geen reconstructie.
+async function renderRunDetailStructuredHtml(act,laps){
+  try{
+    if(!act||!act.training_instance_id)return '';
+    const inst=await sbGet('training_instances',`&id=eq.${encodeURIComponent(act.training_instance_id)}&limit=1`);
+    const snap=inst&&inst[0]&&inst[0].snapshot;
+    if(!snap||!(snap.intervalPrescriptionNormalized||snap.intervalPrescription))return '';
+    const norm=snap.intervalPrescriptionNormalized&&Array.isArray(snap.intervalPrescriptionNormalized.blocks)&&snap.intervalPrescriptionNormalized.blocks.length
+      ?snap.intervalPrescriptionNormalized:IntervalEngineCore.normalizePrescription(snap.intervalPrescription);
+    if(!norm||!norm.geldig)return '';
+    const totaal=IntervalEngineCore.totalPlannedSeconds(norm);
+    const byBlock={}; (laps||[]).forEach(l=>{ if(typeof l.block_index==='number'){ if(!byBlock[l.block_index])byBlock[l.block_index]=[]; byBlock[l.block_index].push(l); } });
+    const rows=norm.blocks.map((b,i)=>{
+      const acts=byBlock[i]||[];
+      const actual=acts.length?acts.map(l=>CardioCore.formatTime(l.duration_seconds)+(l.distance_meters?' · '+(l.distance_meters>=1000?(l.distance_meters/1000).toFixed(2)+' km':l.distance_meters+' m'):'')+(l.avg_heart_rate_bpm?' · '+l.avg_heart_rate_bpm+' bpm':'')).join(', '):'<span style="color:var(--g4)">niet gelogd</span>';
+      return `<tr><td style="padding:2px 6px 2px 0">${structuredBlockLabel(b)}</td><td style="padding:2px 6px">${tkIvTerminationText(b)}${tkIvTargetText(b)}</td><td style="padding:2px 0 2px 6px">${actual}</td></tr>`;
+    }).join('');
+    const gedaan=Object.keys(byBlock).length;
+    return `<div style="font-size:13px;margin-top:10px"><b>Intervaltraining (gepland vs. uitgevoerd):</b>
+      <div style="font-size:12px;color:var(--g4);margin:4px 0 6px">${norm.blocks.length} blokken gepland${totaal!=null?' · '+CardioCore.formatTime(totaal):''} · ${gedaan} van ${norm.blocks.length} blokken gelogd</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="color:var(--g4)"><th style="text-align:left;font-weight:600">Blok</th><th style="text-align:left;font-weight:600">Gepland</th><th style="text-align:left;font-weight:600">Uitgevoerd</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }catch(e){ return ''; }
 }
 
 // Afronding: schrijft naar de B9-01 canonical activities-tabel. Pace wordt
@@ -34958,9 +35146,40 @@ var WB=(function(){
         plan:{items:planItemsFromTargets(t.exercise_targets)},
         fav:!!wbFavs[t.id],
         q:(t.metadata&&t.metadata.quality&&t.metadata.quality.score)||0,
-        created:(t.metadata&&t.metadata.created)||0
+        created:(t.metadata&&t.metadata.created)||0,
+        interval:(t.metadata&&t.metadata.intervalPrescription)||null // B1: gestructureerde endurance-training
       };
     });
+  }
+  // ── B1 STRUCTURED INTERVALS — Training maken: gestructureerde endurance-training opslaan als
+  // canonical Definition (custom_trainings + metadata.intervalPrescription). GEEN aparte builder,
+  // GEEN tweede model: `raw` is het IntervalEngineCore-prescriptieformaat (repeat-groepen), de
+  // normalisatie bewijst geldigheid vóór opslaan. Geen oefeningen; source blijft 'builder'.
+  function saveIntervalWorkout(name,raw,existingId){
+    if(typeof IntervalEngineCore==='undefined')return null;
+    var norm=IntervalEngineCore.normalizePrescription(raw);
+    if(!norm.geldig)return null;
+    var isUpdate=!!existingId;
+    var id=existingId||('custom_'+Date.now());
+    var existing=(isUpdate&&typeof customTrainings!=='undefined')?customTrainings.find(function(x){return x.id===id;}):null;
+    var t={
+      id:id, name:name||(existing?existing.name:'Intervaltraining'), color:(existing?existing.color:'#0E3B4A'), note:(existing?existing.note:''),
+      exercises:[], source:(existing?existing.source:'builder'),
+      metadata:{sel:{sport:raw.sport||'running',goal:'conditie'},intervalPrescription:raw,created:(existing&&existing.metadata?existing.metadata.created:Date.now())},
+      exercise_targets:[]
+    };
+    if(typeof customTrainings!=='undefined'){
+      if(isUpdate&&existing){var idx=customTrainings.indexOf(existing);if(idx>=0)customTrainings[idx]=t;else customTrainings.unshift(t);}
+      else customTrainings.unshift(t);
+      lsSet('tk_trainings',customTrainings);
+    }
+    if(isUpdate){
+      sbPatchQ('custom_trainings','id=eq.'+id,{naam:t.name,kleur:t.color,notitie:t.note||null,metadata:t.metadata});
+    }else{
+      sbPostQ('custom_trainings',{id:id,naam:t.name,kleur:t.color,notitie:null,sort_order:(typeof customTrainings!=='undefined'?customTrainings.length:1)-1,scope:'personal',source:'builder',metadata:t.metadata});
+    }
+    pushCustomTrainingExercisesRich(t); // 0 oefeningen: verwijdert eventuele oude exercise-rijen bij update
+    return id;
   }
   function saveWorkout(name,existingId){
     var q=quality(st.plan,st.sel);
@@ -35037,7 +35256,7 @@ var WB=(function(){
     generate:generate, quality:quality, stats:stats, summary:summary, totalTime:totalTime,
     goalScore:goalScore, isHeavy:isHeavy, fatVal:fatVal, blockSets:blockSets, region:region,
     altList:altList, replaceItem:replaceItem, removeItem:removeItem, moveItem:moveItem, swapAlternative:swapAlternative,
-    saveDraft:saveDraft, loadDraft:loadDraft, savedList:savedList, saveWorkout:saveWorkout,
+    saveDraft:saveDraft, loadDraft:loadDraft, savedList:savedList, saveWorkout:saveWorkout, saveIntervalWorkout:saveIntervalWorkout,
     duplicateWorkout:duplicateWorkout, favWorkout:favWorkout, deleteWorkout:deleteWorkout, resumeWorkout:resumeWorkout,
     defaultSel:defaultSel, autoName:autoName
   };
@@ -35057,6 +35276,77 @@ var WBUI=(function(){
   function ex(id){return window.ExerciseCatalogService.byId(id);}
   var s=function(){return WB.st.sel;};
   var _setup=false, _open={};
+  // ── B1 STRUCTURED INTERVALS — "Training maken" → Hardlopen (interval). UI-state is tijdelijk;
+  // de opgeslagen Definition (metadata.intervalPrescription) is leidend. Sport-extensible model
+  // (sport-veld + IntervalEngineCore-schema), in B1 alleen 'running' selecteerbaar.
+  var _ivMode=false, _ivEditId=null;
+  var _iv={sport:"running" /* UI-default (geen activities-write; zie J1/C1-regexcontracten) */,naam:'',warmupMin:10,repeats:6,workTerm:'time',workMin:4,workM:1000,workPace:'',workRpe:'',recMin:2,cooldownMin:10};
+  function ivRaw(){
+    var work={type:'work',termination:_iv.workTerm==='distance'?{type:'distance',meters:Math.max(50,Math.round(Number(_iv.workM)||0))}:{type:'time',seconds:Math.max(10,Math.round((Number(_iv.workMin)||0)*60))}};
+    var tgt={}; if(_iv.workPace)tgt.pace=String(_iv.workPace); if(_iv.workRpe!==''&&isFinite(Number(_iv.workRpe)))tgt.rpe=Number(_iv.workRpe); if(Object.keys(tgt).length)work.target=tgt;
+    var blocks=[];
+    if(Number(_iv.warmupMin)>0)blocks.push({type:'warmup',termination:{type:'time',seconds:Math.round(Number(_iv.warmupMin)*60)}});
+    var of=[work]; if(Number(_iv.recMin)>0)of.push({type:'recovery',termination:{type:'time',seconds:Math.round(Number(_iv.recMin)*60)}});
+    blocks.push({repeat:Math.max(1,Math.round(Number(_iv.repeats)||1)),of:of});
+    if(Number(_iv.cooldownMin)>0)blocks.push({type:'cooldown',termination:{type:'time',seconds:Math.round(Number(_iv.cooldownMin)*60)}});
+    return {version:'interval_prescription.v1',sport:_iv.sport,blocks:blocks};
+  }
+  function ivFromRaw(raw){
+    // editor-state uit een opgeslagen Definition (alleen voor bewerken; opslaan schrijft weer via ivRaw())
+    var o={sport:(raw&&raw.sport)||'running',naam:'',warmupMin:0,repeats:1,workTerm:'time',workMin:4,workM:1000,workPace:'',workRpe:'',recMin:0,cooldownMin:0};
+    (raw&&raw.blocks||[]).forEach(function(b){
+      if(b&&Array.isArray(b.of)){o.repeats=b.repeat||1;b.of.forEach(function(x){
+        if(x.type==='work'){o.workTerm=x.termination.type==='distance'?'distance':'time';o.workMin=Math.round((x.termination.seconds||0)/60);o.workM=x.termination.meters||1000;o.workPace=(x.target&&x.target.pace)||'';o.workRpe=(x.target&&x.target.rpe!=null)?x.target.rpe:'';}
+        if(x.type==='recovery')o.recMin=Math.round((x.termination.seconds||0)/60);});}
+      else if(b&&b.type==='warmup')o.warmupMin=Math.round((b.termination.seconds||0)/60);
+      else if(b&&b.type==='cooldown')o.cooldownMin=Math.round((b.termination.seconds||0)/60);
+    });
+    return o;
+  }
+  function ivField(k,label,type,extra){return '<label class="wb4-exlbl" style="display:block;margin-top:8px">'+label+'<input '+(extra||'')+' type="'+type+'" value="'+esc(String(_iv[k]))+'" oninput="WBUI.ivSet(\''+k+'\',this.value)" style="display:block;width:100%;margin-top:4px"></label>';}
+  function intervalEditorView(){
+    var norm=(typeof IntervalEngineCore!=='undefined')?IntervalEngineCore.normalizePrescription(ivRaw()):{geldig:false,blocks:[]};
+    var tot=norm.geldig?IntervalEngineCore.totalPlannedSeconds(norm):null;
+    var h='<div class="wb4-hero"><div class="eye">Training maken</div><div class="wb4-hname">'+(_ivEditId?'Intervaltraining bewerken':'Intervaltraining · Hardlopen')+'</div>'+
+      '<div class="wb4-meta"><div class="m"><div class="mv">'+norm.blocks.length+'</div><div class="mk">Blokken</div></div>'+
+      '<div class="m"><div class="mv">'+(tot!=null?'~'+Math.round(tot/60):'—')+'</div><div class="mk">Minuten</div></div>'+
+      '<div class="m"><div class="mv">'+_iv.repeats+'</div><div class="mk">Herhalingen</div></div></div>'+
+      '<button class="wb4-cta" '+(norm.geldig?'':'disabled')+' onclick="WBUI.ivSave()">'+ICO.play+' Opslaan als Mijn training</button></div>';
+    h+='<div class="wb4-card" style="padding:12px">'+
+      ivField('naam','Naam','text','placeholder="bv. 6×4 min drempel"')+
+      ivField('warmupMin','Warming-up (min)','number','min="0" step="1"')+
+      ivField('repeats','Herhalingen','number','min="1" step="1"')+
+      '<label class="wb4-exlbl" style="display:block;margin-top:8px">Werkinterval eindigt op<select onchange="WBUI.ivSet(\'workTerm\',this.value)" style="display:block;width:100%;margin-top:4px"><option value="time"'+(_iv.workTerm==='time'?' selected':'')+'>tijd</option><option value="distance"'+(_iv.workTerm==='distance'?' selected':'')+'>afstand (handmatig doorgaan)</option></select></label>'+
+      (_iv.workTerm==='distance'?ivField('workM','Werkafstand (m)','number','min="50" step="50"'):ivField('workMin','Werkduur (min)','number','min="1" step="1"'))+
+      ivField('workPace','Doelpace werk (optioneel, bv. 4:30/km)','text','placeholder="4:30/km"')+
+      ivField('workRpe','Doel-RPE werk (optioneel, 0-10)','number','min="0" max="10" step="1"')+
+      ivField('recMin','Herstel (min)','number','min="0" step="1"')+
+      ivField('cooldownMin','Cooling-down (min)','number','min="0" step="1"')+
+      (norm.geldig?'':'<div style="color:var(--r);font-size:12px;margin-top:8px">'+esc(String(norm.reden||'ongeldig'))+'</div>')+
+      '</div>';
+    return h;
+  }
+  function modeBar(){
+    return '<div class="wb4-card" style="display:flex;gap:8px;padding:8px;margin-bottom:8px">'+
+      '<button class="btn '+(_ivMode?'btn-o':'btn-p')+' btn-sm" style="flex:1" onclick="WBUI.ivMode(false)">Kracht / circuit</button>'+
+      '<button class="btn '+(_ivMode?'btn-p':'btn-o')+' btn-sm" style="flex:1" onclick="WBUI.ivMode(true)">Hardlopen · interval</button></div>';
+  }
+  function ivMode(on){_ivMode=!!on;if(!on)_ivEditId=null;render();}
+  function ivSet(k,v){_iv[k]=v;render();}
+  function ivSave(){
+    var raw=ivRaw();
+    var id=WB.saveIntervalWorkout((_iv.naam||'').trim()||null,raw,_ivEditId);
+    if(!id){if(window.toast)toast('Intervaltraining ongeldig');return;}
+    _ivEditId=null;_ivMode=false;
+    if(window.toast)toast('Intervaltraining opgeslagen');
+    if(typeof openTrainingPreview==='function'){openTrainingPreview('custom',id);return;}
+    render();
+  }
+  function ivEdit(wid){
+    var w=WB.savedList().filter(function(x){return x.id===wid;})[0];
+    if(!w||!w.interval)return false;
+    _iv=ivFromRaw(w.interval);_iv.naam=w.name||'';_ivEditId=wid;_ivMode=true;render();return true;
+  }
 
   function chip(active,label,onclick){
     return '<button class="wb-chip'+(active?' on':'')+'" onclick="'+onclick+'">'+esc(label)+'</button>';
@@ -35204,7 +35494,7 @@ var WBUI=(function(){
     var arr=WB.savedList();if(!arr.length)return '';
     var h='<div class="wb4-exlbl" style="margin-top:16px">Opgeslagen</div>';
     arr.forEach(function(w){
-      h+='<div class="wb4-sv"><button class="wb4-sv-b" onclick="WBUI.resume(\''+w.id+'\')"><div class="wb4-sv-n">'+(w.fav?'★ ':'')+esc(w.name)+'</div><div class="wb4-sv-m">'+w.plan.items.length+' oefeningen</div></button>'+
+      h+='<div class="wb4-sv"><button class="wb4-sv-b" onclick="WBUI.resume(\''+w.id+'\')"><div class="wb4-sv-n">'+(w.fav?'★ ':'')+esc(w.name)+'</div><div class="wb4-sv-m">'+(w.interval?'Intervaltraining · '+((w.interval.sport==='running')?'hardlopen':esc(String(w.interval.sport||'')))+' · '+(function(){try{var n=IntervalEngineCore.normalizePrescription(w.interval);return n.blocks.length+' blokken';}catch(e){return '';}})():w.plan.items.length+' oefeningen')+'</div></button>'+
         '<div class="wb4-sv-a"><button onclick="WBUI.fav(\''+w.id+'\')" aria-label="Favoriet">'+(w.fav?'★':'☆')+'</button>'+
         '<button onclick="WBUI.dupeSaved(\''+w.id+'\')" aria-label="Dupliceren">⧉</button>'+
         '<button onclick="WBUI.del(\''+w.id+'\')" aria-label="Verwijderen">✕</button></div></div>';
@@ -35214,8 +35504,9 @@ var WBUI=(function(){
 
   function render(){
     var el=document.getElementById('wb-scroll');if(!el)return;
+    if(_ivMode){el.innerHTML=modeBar()+intervalEditorView()+savedView();return;} // B1: structured endurance editor
     if(WB.st.dirty||!WB.st.plan)WB.generate(s());
-    el.innerHTML=heroView()+setupBar()+planView()+savedView();
+    el.innerHTML=modeBar()+heroView()+setupBar()+planView()+savedView();
   }
   function rebuild(){WB.st.dirty=true;_open={};render();}
 
@@ -35255,10 +35546,11 @@ var WBUI=(function(){
   function dupeSaved(wid){WB.duplicateWorkout(wid);render();if(window.toast)toast('Gedupliceerd');}
   function fav(wid){WB.favWorkout(wid);render();}
   function del(wid){WB.deleteWorkout(wid);render();if(window.toast)toast('Verwijderd');}
-  function resume(wid){if(WB.resumeWorkout(wid)){_open={};render();var sc=document.getElementById('wb-scroll');if(sc)sc.scrollTop=0;if(window.toast)toast('Training hervat');}}
+  function resume(wid){if(ivEdit(wid))return;if(WB.resumeWorkout(wid)){_open={};render();var sc=document.getElementById('wb-scroll');if(sc)sc.scrollTop=0;if(window.toast)toast('Training hervat');}}
 
   return {render:render,rebuild:rebuild,toggleSetup:toggleSetup,toggleEx:toggleEx,setGoal:setGoal,toggleMuscle:toggleMuscle,toggleEq:toggleEq,setTime:setTime,setLevel:setLevel,setForm:setForm,
-    alt:alt,move:move,remove:remove,setPick:setPick,setSets:setSets,open:open,regen:regen,save:save,dupe:dupe,dupeSaved:dupeSaved,fav:fav,del:del,resume:resume};
+    alt:alt,move:move,remove:remove,setPick:setPick,setSets:setSets,open:open,regen:regen,save:save,dupe:dupe,dupeSaved:dupeSaved,fav:fav,del:del,resume:resume,
+    ivMode:ivMode,ivSet:ivSet,ivSave:ivSave,ivEdit:ivEdit};
 })();
 /* Draft herstellen bij load (stil, geen render) */
 try{WB.loadDraft();}catch(e){}

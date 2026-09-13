@@ -151,6 +151,18 @@ _(Hernummerd van GAP-P2-025 bij de Gap 1b-sprint: dat ID was al in gebruik door 
 **Target:** canonical adapter `tkEnduranceCoachContext()` naar het `tkHyroxCoachContext()`-precedent, met begrensde queries en letterlijke doorgifte van `status`/`confidence`; geen herberekening, geen nieuwe Decision Rule. Vereist aparte PO-gate (Fase B2).
 **Priority:** P2. **Complexity:** M.
 
+### GAP-P2-028 — **CLOSED** (Structured Intervals Fase B1, 13 september 2026) — RUNNING CANONICAL LIFECYCLE voor gestructureerde intervaltrainingen
+**Capability-ID:** RUNNING-CORE (B9-02), TRAINING-DEFINITION, INTERVAL-ENGINE (A6)
+**Current (vóór):** structured intervals liepen ad hoc vanuit formulieren (running: eigen `intervalBlokken`; erg: `IntervalEngineCore` + `exNote`); geen Training Definition, geen canonical Preview, geen structurele planned-vs-actual-persistentie (audit 13-09-2026, classificatie E + D + F-licht).
+**Closure-bewijs (running):** Training maken (Builder, mode 'Hardlopen · interval') → `custom_trainings.metadata.intervalPrescription` (IntervalEngineCore-formaat) → `getTrainingDefinition` → canonical Preview (`renderTPInterval`) → `previewStartTraining` → `training_instances.snapshot` (raw + genormaliseerd) → running-executie op `IntervalEngineCore.blockIndexAtElapsed/stateAt` met auto-laps per tijdblok en handmatige transitie (guard tegen dubbele laps) → `activities.training_instance_id` + `activity_laps.lap_type/block_index/repeat_index` (migratie_v563, nullable, forward-only) → run-detail planned-vs-actual via de instance-snapshot. Bestaande scheduling/calculation/context ongewijzigd (auto). Test `core/fStructuredIntervalsCanonical.test.js` (87; sabotage 1/9/3 failures).
+**Priority:** P2 — gesloten voor running.
+
+### GAP-P2-029 (nieuw, Structured Intervals Fase B1) — CROSS-SPORT STRUCTURED INTERVAL CONSOLIDATION — **OPEN**
+**Capability-ID:** CYCLING-CORE, SWIMMING-CORE, ENDURANCE-ERG (RowErg/BikeErg/SkiErg)
+**Current:** cycling/swimming gebruiken nog hun eigen `intervalBlokken`/`huidige*IntervalStap()` (legacy ad-hoc pad); erg-intervals loggen nog uitsluitend `exNote` + totaaltijd; `previewStartTraining` weigert bewust niet-running prescripties. Het Definition-/persistence-model is sport-extensible (sport-veld, IntervalEngineCore-schema, nullable lap-kolommen).
+**Target:** dezelfde canonical keten voor cycling/swimming (B2) en erg (laps i.p.v. exNote), waarna de drie legacy `intervalBlokken`-kopieën verdwijnen. Geen adaptive prescription, geen Decision Rules.
+**Priority:** P2. **Complexity:** M.
+
 ### GAP-P3-023 (nieuw, Athlete Dashboard 2.0-sprint) — verwarrende naamgeving: computeProgramProgress()'s "adherencePct" is een ander concept dan AdherenceIntelligenceCore
 **Capability-ID:** ADHERENCE-INTELLIGENCE-001
 **Current:** `computeProgramProgress()`/`computeProgramProgressPure()` (F4-erfenis, gebruikt bij programma-regeneratie en het weekoverzicht) berekenen `adherencePct` als `completed.length/blocks.length*100`, waarbij `blocks` het volledige programma kan omvatten inclusief toekomstige, nog-niet-uitgevoerde blokken. Dit is een ander concept ("programma-doorloop-percentage tijdens regeneratie-beslissingen") dan de nieuwe, canonieke `AdherenceIntelligenceCore` (die FUTURE-items expliciet uitsluit van de noemer) — maar de identieke veldnaam is verwarrend en kan tot onterechte aannames leiden dat beide hetzelfde meten.

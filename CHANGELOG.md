@@ -1,5 +1,41 @@
 # Trainingskompas — Changelog
 
+## v4.69.79 — Builder + AthleteConstraints Completion (Connection Gap fix) (13 september 2026)
+
+Voorafgegaan door een read-only completion audit die vier onafhankelijke
+oefening-vervang-surfaces in kaart bracht: Training Execution (PR #337),
+Training Preview (F23), Workout Builder-autobuild `generate()` (F24) en
+Workout Builder handmatig bewerken `swapAlternative()`. De eerste drie
+pasten `AthleteConstraints` al correct toe; **uitsluitend `swapAlternative()`**
+(één oefening vervangen in een reeds opgebouwd Builder-plan) miste dit --
+een verboden of niet-beschikbare oefening kon daar automatisch als "beste
+alternatief" gekozen worden. Geclassificeerd als **B -- CONNECTION GAP**
+(root cause: functie dateert van vóór de F23-constraints-laag en is bij
+F23/F24 niet meegenomen).
+
+Fix (minimaal, één functie in `index.html`): `swapAlternative()` past nu,
+na de canonical `altList()` (relations.alternatives/progressions/
+regressions, ongewijzigd) en vóór de goalScore-sortering, exact hetzelfde
+`AthleteConstraints.applyConstraints()`-patroon toe als de autobuild-
+generator (F24): zelfde context-bronnen (`athleteEquipmentSet()`/
+`athleteAvoidTerms()`), zelfde candidate-wrapping, zelfde fail-safe (geen
+context → geen filter; try/catch → nooit een crash). Geen wijziging aan
+`AthleteConstraints` zelf, geen tweede filter-/substitution-engine, geen
+wijziging aan persistence/identity (canonical `catalog_id` blijft
+opgeslagen).
+
+Nieuwe test: `core/fBuilderSwapAthleteConstraints.test.js` (28/28) --
+statisch patroonbewijs, consistentie met F23/F24, canonical bron intact,
+fail-safe, functionele simulatie met de echte AthleteConstraints-core
+(toegestaan/verboden/gedeeltelijk uitgesloten/alles uitgesloten/geen
+context), custom/legacy-gedrag, persistence, core onaangeraakt, en
+regressie-guards voor PR #337/#338.
+
+Volledige regressie 366/366 (was 365, +1 testbestand). Doc-consistency 0.
+Geen databasewijziging, geen MoveKit-uitbreiding, geen goal-aware
+substitution, geen AI-logica, geen nieuwe Decision Rule. APP_VER
+v4.69.78 -> v4.69.79.
+
 ## v4.69.78 — Exercise Swap Prescription Carry-Over Fix (12 september 2026)
 
 Verhelpt het in de Exercise Substitution Source-of-Truth Sprint (Fase A)

@@ -127,6 +127,15 @@
         }
       }
     })();
+    // Real-device bewijs (PM5 RowErg, 13-09-2026): de PM5 adverteert tijdens discovery de
+    // canonieke Concept2 BASE-UUID (CE060000-...) plus FTMS 0x1826 -- NIET de specifieke
+    // CE0600xx-service-UUID's. Zonder deze lookup werd de echte PM5 afgewezen
+    // (no_concept2_service_uuid). Aparte lookup zodat de diagnostiek base- en service-match
+    // kan onderscheiden. FTMS 0x1826 is generiek (niet Concept2-exclusief) en blijft
+    // bewust GEEN match-criterium.
+    var SCAN_BASE_UUID = lc(UU.base || '');
+    var SCAN_BASE_LOOKUP = {};
+    if (SCAN_BASE_UUID) SCAN_BASE_LOOKUP[SCAN_BASE_UUID] = true;
 
     // -------- interne state --------
     var connState = 'idle';            // uit Concept2Live.CONN_STATES-vocabulaire
@@ -243,9 +252,16 @@
           function onResult(dev) {
             if (!dev || !dev.deviceId) return;
             var advertised = Array.isArray(dev.uuids) ? dev.uuids.map(lc) : [];
-            var matchedUuid = null;
+            // Classificatie: eerst een specifieke Concept2-service-UUID, anders de canonieke
+            // BASE-UUID. Naam, RSSI en FTMS 0x1826 zijn nooit voldoende (alleen diagnostiek).
+            var matchedUuid = null, matchReason = null;
             for (var i = 0; i < advertised.length; i++) {
-              if (SCAN_SERVICE_LOOKUP[advertised[i]]) { matchedUuid = advertised[i]; break; }
+              if (SCAN_SERVICE_LOOKUP[advertised[i]]) { matchedUuid = advertised[i]; matchReason = 'concept2_service_uuid'; break; }
+            }
+            if (!matchedUuid) {
+              for (var j = 0; j < advertised.length; j++) {
+                if (SCAN_BASE_LOOKUP[advertised[j]]) { matchedUuid = advertised[j]; matchReason = 'concept2_base_uuid'; break; }
+              }
             }
             var matched = !!matchedUuid;
             lastDiscoveryDiagnostics.advertisementsSeen++;
@@ -255,7 +271,7 @@
               uuids: advertised.slice(),
               rssi: (typeof dev.rssi === 'number') ? dev.rssi : null,
               matched: matched,
-              reason: matched ? 'concept2_service_uuid' : 'no_concept2_service_uuid'
+              reason: matched ? matchReason : 'no_concept2_service_uuid'
             });
             if (!matched) return;
             var id = dev.deviceId;

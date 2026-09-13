@@ -142,6 +142,26 @@ Herbevestigd tegen de historische `claude_F1_0_CalculationRegistry.md` (F1.0-aud
 
 **Auditmethode:** volledige lezing van `core/trainingLoad.js` en `core/progression.js`, plus een repo-brede zoekactie naar sRPE/rolling-load/stagnatie-signalen. Het `AthleteCore.acuteChronic()`-mechanisme zelf (de daadwerkelijke ACWR-berekening) is **protected core** (index.html) en is in deze sprint bewust NIET aangeraakt of opnieuw geïmplementeerd — alleen de reeds bestaande, losstaande classificatie-/corroboratielaag (`TrainingLoadCore`) en de nieuwe, hieronder toegevoegde sRPE-bouwstenen vallen binnen deze registry.
 
+### CALC-STR-006 — Strength Basis Selection (recente representatieve prestatie)
+
+| Veld | Waarde |
+|---|---|
+| Name | Canonical selectie van de 1RM-basis voor prescriptie |
+| Version | `strength_basis.v1` |
+| Implementation | `core/calculation.js` — `selectStrengthBasis(rows, {maxReps})`; app-wrappers `loadStrengthBasis()`, `strengthBasisProvenance()` (index.html) |
+| Required inputs | sessierijen van één oefening (`weight`, `reps`, `rpe?`, `date`; nieuwste eerst, ≤30) |
+| Output | `recent` (meest recente representatieve prestatie, reps ≤10 → e1RM-basis), `peak` (hoogste e1RM met datum; uitsluitend PR/trend/analytics/context), `prev` (laatste rij ongeacht reps; detraining-datum) |
+| Output unit | kg (e1RM via CALC-STR-001) |
+| Supported sports | krachttraining |
+| Minimum data | 1 geldige set met reps ≤10 voor `recent`; anders `recent=null` (no-base) |
+| Data quality dependency | `strengthBasisProvenance()` levert `source` (manual_1rm/recent_e1rm/none), `basisDate`, `ageDays`, `dataQuality` (high ≤14 d / medium ≤56 d / low = ouder of onbekende datum). **Geen numerieke correctie op de basis**; categorie-grenzen zijn een productkeuze (Strength Basis Recency B1). |
+| Evidence level | **B** voor het principe (1RM fluctueert dag-tot-dag en over korte termijn; prescriptie op één oude test past minder goed; autoregulatie op actuele prestatie is minstens gelijkwaardig — Larsen et al. 2021 systematic review; Greig et al. 2022 meta-analyse; Bosquet et al. 2013 dosis-respons na trainingsstop). **E/productkeuze** voor: reps ≤10 als representativiteitsgrens, geen middeling, dataQuality-categorieën. |
+| Limitations | één prestatie kan een slechte dag zijn (bewust geen middeling in v1); handmatige 1RM behoudt precedence zonder automatische verlaging; historische piek is expliciet géén prescription-basis |
+| Forbidden interpretations | nooit de piek als actuele capaciteit presenteren; nooit een rep-PR als 1RM gebruiken (verwijderd uit `getOneRM`); geen "verval"-percentage suggereren |
+| Allowed Decision Rules | basis voor CALC-STR-002 → `resolveWorkingWeight()` → DEC-DETRAIN-001 (geen tweede recency-factor: basisselectie = representativiteit, detraining = inactiviteit sinds laatste uitvoering) |
+| AI permissions | AI mag bron/datum uitleggen (bestaande resolver-provenance); AI mag nooit zelf een basis kiezen of herberekenen |
+| Status | **LIVE_CANONICAL** (Preview, Programma, Normal execution, Stats/progress-context via dezelfde selector) |
+
 ### CALC-LOAD-001 — ACWR-classificatie (banden)
 | Veld | Waarde |
 |---|---|

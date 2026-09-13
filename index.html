@@ -7294,7 +7294,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.85';
+const APP_VER = 'v4.69.86';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -7573,7 +7573,7 @@ let _exerciseGoalsLoaded=false;
 async function ensureExerciseGoalsLoaded(){
   if(_exerciseGoalsLoaded)return exerciseGoals;
   const rows=await sbGet('exercise_goals','');
-  exerciseGoals=new Map(rows.map(r=>[r.exercise_id,{peak_goal:r.peak_goal,pr:r.pr,one_rm:r.one_rm}]));
+  exerciseGoals=new Map(rows.map(r=>[r.exercise_id,{peak_goal:r.peak_goal,pr:r.pr,one_rm:r.one_rm,updated_at:(r.updated_at||null)}]));
   _exerciseGoalsLoaded=true;
   return exerciseGoals;
 }
@@ -7596,13 +7596,17 @@ async function upsertExerciseGoalField(exId,field,value){
   // entry die tijdens de sessie alleen in het geheugen is aangemaakt (_alleenGeheugen)
   // heeft geen rij om te patchen — dan moet er ingevoegd worden, anders raakt de PATCH
   // nul rijen en verdwijnt de waarde zonder foutmelding.
+  // Strength Basis Recency B1: een handmatige 1RM krijgt een provenance-datum (exercise_goals.updated_at,
+  // nullable, migratie_v564). Alleen bij one_rm; PR/peak_goal raken deze datum niet (geen fake recency).
+  const patch={[field]:value};
+  if(field==='one_rm'){ patch.updated_at=(value==null?null:new Date().toISOString()); }
   if(existing && !existing._alleenGeheugen){
-    await sbPatchQ('exercise_goals','exercise_id=eq.'+exId,{[field]:value});
-    existing[field]=value;
+    await sbPatchQ('exercise_goals','exercise_id=eq.'+exId,patch);
+    Object.assign(existing,patch);
   }else{
-    const row={user_id:authSession?.user?.id,exercise_id:exId,[field]:value};
+    const row=Object.assign({user_id:authSession?.user?.id,exercise_id:exId},patch);
     await sbPostQ('exercise_goals',row);
-    exerciseGoals.set(exId,Object.assign({peak_goal:null,pr:null,one_rm:null},existing||{},{[field]:value,_alleenGeheugen:false}));
+    exerciseGoals.set(exId,Object.assign({peak_goal:null,pr:null,one_rm:null,updated_at:null},existing||{},patch,{_alleenGeheugen:false}));
   }
 }
 
@@ -9047,7 +9051,7 @@ function previewResolveItemDetrain(it){
   const override=(previewCtx&&previewCtx.overrides&&previewCtx.overrides[id]!=null)?previewCtx.overrides[id]:null;
   try{
     const r=resolveWorkingWeight(id,{reps:previewRepsMid(it),rpe:(it.rpe!=null?it.rpe:8),prev:prev,override:override});
-    return {days:r.days,factor:r.factor,reason:r.reason,ruleId:r.ruleId,ruleVersion:r.ruleVersion};
+    return {days:r.days,factor:r.factor,reason:r.reason,ruleId:r.ruleId,ruleVersion:r.ruleVersion,basis:r.strengthBasis||null};
   }catch(e){return null;}
 }
 function previewResolveItemWeight(it){
@@ -9163,7 +9167,7 @@ function previewWeightInfo(it){
   const override=(previewCtx&&previewCtx.overrides&&previewCtx.overrides[id]!=null)?previewCtx.overrides[id]:null;
   const r=resolveWorkingWeight(id,{reps:previewRepsMid(it),rpe:(it.rpe!=null?it.rpe:8),prev:prev,override:override});
   out.suggested=r.suggested; out.base=r.base; out.factor=r.factor; out.days=r.days;
-  out.reason=r.reason; out.oneRM=r.oneRM; out.override=r.override;
+  out.reason=r.reason; out.oneRM=r.oneRM; out.override=r.override; out.basis=r.strengthBasis||null;
   return out;
 }
 function previewWarmupRamp(workKg){
@@ -9474,6 +9478,8 @@ function renderTPExercise(el){
     if(!isPrep&&wi.override==null&&wi.factor!=null&&wi.factor<1&&wi.days!=null){
       detrainEl=`<div class="tpv2-today-detrain">Je deed deze oefening ${wi.days} dagen niet — daarom starten we vandaag iets conservatiever.</div>`;
     }
+    // Strength Basis Recency B1: compacte basisbron/datum (provenance uit de resolver; geen berekening).
+    if(!isPrep&&wi.override==null&&wi.basis){ const _bt=strengthBasisText(wi.basis); if(_bt)detrainEl+=`<div class="tpv2-today-detrain" style="opacity:.8">${escHtml(_bt)}</div>`; }
     // F0.7L — gewicht-override (± 2,5 kg): bewuste sporterkeuze vóór start; wordt de instance-planned load.
     let overrideEl='';
     if(!isPrep&&(wi.suggested!=null||wi.override!=null)){
@@ -17295,18 +17301,45 @@ function daysBetweenDates(fromYmd,toYmd){
 // beste Epley-schatting over dezelfde rijen (exact de vroegere Preview-logica, F0.7K). Verzamelt
 // en normaliseert UITSLUITEND canonical input; berekent geen prescription. Gebruikt door Preview
 // én het programmapad, zodat beide dezelfde prev.date aan resolveWorkingWeight() geven.
-async function loadPrevPerformance(eid){
+// ── STRENGTH BASIS RECENCY B1 — CANONICAL BASIS-HELPER (CALC-STR-006, strength_basis.v1) ──
+// Eén query, één selectie-policy (CalcCore.selectStrengthBasis) voor ALLE prescription-paden:
+//   estOneRMCache[eid]     = recent.e1rm  (meest recente representatieve prestatie, reps<=10) -> prescription-basis
+//   strengthBasisCache[eid] = {recent, peak, prev} (peak uitsluitend voor PR/trend/analytics/context)
+// Verzint niets: zonder representatieve historie blijft de basis null (no-base).
+const strengthBasisCache={};
+async function loadStrengthBasis(eid){
   const rows=await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(eid)+'&order=date.desc,created_at.desc&limit=30');
-  let best=null,prev=null;
-  (rows||[]).forEach(s=>{
-    if(s.weight&&s.reps){
-      if(!prev)prev={weight:s.weight,reps:s.reps,rpe:s.rpe,date:s.date};
-      const est=epley1RMRaw(parseFloat(s.weight),parseInt(s.reps));
-      if(!best||est>best)best=est;
-    }
-  });
-  if(best!=null)estOneRMCache[eid]=Math.round(best);
-  return prev||null;
+  const b=CalcCore.selectStrengthBasis(rows||[],{maxReps:10});
+  strengthBasisCache[eid]=b;
+  estOneRMCache[eid]=(b.recent&&b.recent.e1rm!=null)?b.recent.e1rm:null;
+  return b;
+}
+async function loadPrevPerformance(eid){
+  const b=await loadStrengthBasis(eid);
+  return b.prev||null;
+}
+// Provenance/data-quality van de gebruikte 1RM-basis (geen berekening, geen numerieke straf):
+//   source 'manual_1rm' | 'recent_e1rm' | 'none'; basisDate; ageDays (null bij onbekende datum);
+//   dataQuality 'high' (recent, <=14 d) | 'medium' | 'low' (onbekende datum of oud) | 'none'.
+// De categorie-grenzen zijn een bewuste productkeuze (B1) — geen wetenschappelijke drempel.
+function strengthBasisProvenance(exId,oneRM){
+  const out={source:'none',value:null,basisDate:null,ageDays:null,sampleReps:null,dataQuality:'none',version:CalcCore.VERSIONS.strength_basis};
+  if(oneRM==null)return out;
+  const manual=getOneRM(exId);
+  const b=strengthBasisCache[exId]||null;
+  if(manual!=null&&parseFloat(manual)===parseFloat(oneRM)){
+    out.source='manual_1rm'; out.value=parseFloat(manual); out.basisDate=manualOneRMDate(exId);
+  }else if(b&&b.recent&&b.recent.e1rm===Math.round(oneRM)){
+    out.source='recent_e1rm'; out.value=b.recent.e1rm; out.basisDate=b.recent.date||null; out.sampleReps=b.recent.reps;
+  }else{
+    out.source='recent_e1rm'; out.value=oneRM;
+  }
+  out.ageDays=(out.basisDate&&typeof td==='function')?daysBetweenDates(out.basisDate,td()):null;
+  if(out.ageDays==null)out.dataQuality='low';
+  else if(out.ageDays<=14)out.dataQuality='high';
+  else if(out.ageDays<=56)out.dataQuality='medium';
+  else out.dataQuality='low';
+  return out;
 }
 // ── F0.7L — CANONICAL WEIGHT RESOLVER ──
 // Eén bron voor het voorgestelde werkgewicht in Builder/Preview/Normal/Guided.
@@ -17330,6 +17363,8 @@ function resolveWorkingWeight(exId,opts){
   }
   const oneRM=(opts.oneRM!=null)?opts.oneRM:(typeof previewOneRM==='function'?previewOneRM(exId):null);
   out.oneRM=(oneRM!=null)?oneRM:null;
+  // Strength Basis Recency B1: provenance/data-quality van de basis (geen tweede recency-factor).
+  try{ out.strengthBasis=(typeof strengthBasisProvenance==='function')?strengthBasisProvenance(exId,out.oneRM):null; }catch(_){ out.strengthBasis=null; }
   const reps=(opts.reps!=null)?opts.reps:null;
   const rpe=(opts.rpe!=null)?opts.rpe:8;
   let base=null;
@@ -17376,7 +17411,7 @@ function computeProgPrefill(ex,prevS,oneRM){
   // (base 1RM→Brzycki × detrainingFactor(days sinds prevS.date)). Zonder 1RM: suggested=null →
   // vorige gewicht als ruwe referentie (ongewijzigd fallback-gedrag).
   let suggested=null, detrain=null;
-  try{ const r=resolveWorkingWeight(ex.id,{reps:parseFloat(repsForWeight),rpe:ex.rpe,prev:prevS||null,oneRM:(oneRM!=null?oneRM:null)}); suggested=r.suggested; detrain={days:r.days,factor:r.factor,reason:r.reason,ruleId:r.ruleId,ruleVersion:r.ruleVersion}; }catch(e){}
+  try{ const r=resolveWorkingWeight(ex.id,{reps:parseFloat(repsForWeight),rpe:ex.rpe,prev:prevS||null,oneRM:(oneRM!=null?oneRM:null)}); suggested=r.suggested; detrain={days:r.days,factor:r.factor,reason:r.reason,ruleId:r.ruleId,ruleVersion:r.ruleVersion,basis:r.strengthBasis||null}; }catch(e){}
   const kg=(suggested!=null)?suggested:((prevS&&prevS.weight)?prevS.weight:'');
   return {kg,reps:repsPrefill,rpe:ex.rpe||'',sets:ex.sets||4,detrain};
 }
@@ -20186,12 +20221,17 @@ function buildVideoMuscle(ex){
   return h;
 }
 
+// Strength Basis Recency B1: uitsluitend de HANDMATIGE 1RM (server of offline-kopie). Het rep-PR-gewicht
+// (prFor) is GEEN 1RM en zit niet meer in de precedentie — PR-data blijft bestaan voor PR/trend/analytics.
 function getOneRM(exId){
   const stored1rm=oneRMFor(exId);
   if(stored1rm!=null)return parseFloat(stored1rm);
   const stored=localStorage.getItem('tk_1rm_'+exId); // offline-fallback tot sync gelukt is
   if(stored)return parseFloat(stored);
-  return prFor(exId)||null;
+  return null;
+}
+function manualOneRMDate(exId){
+  try{ const g=exerciseGoals.has(exId)?exerciseGoals.get(exId):null; return (g&&g.updated_at)?String(g.updated_at).slice(0,10):null; }catch(_){ return null; }
 }
 // Sprint 6.0.3 (Businesslogica) — de ruwe Epley-1RM-formule stond letterlijk 7× los in
 // de code (één plek had het zelf al herkend: "zelfde formule/afronding als Stats-
@@ -20684,10 +20724,9 @@ function estimatedOneRM(exId){
   return prFor(exId)||null;
 }
 async function loadEstOneRM(exId){
-  const ss=await sbGet('sessions','&exercise_id=eq.'+exId+'&weight=not.is.null&reps=not.is.null&order=created_at.desc&limit=30');
-  let best=null;
-  ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=epley1RMRaw(s.weight,s.reps);if(!best||est>best)best=est;});
-  estOneRMCache[exId]=best?Math.round(best):null;
+  // Strength Basis Recency B1: via de canonical basis-helper (CALC-STR-006) — recente representatieve
+  // prestatie, niet de hoogste e1RM over 30 sessies.
+  await loadStrengthBasis(exId);
   return estOneRMCache[exId];
 }
 // Zoekt de zwaarste effectieve set van dezelfde oefening in de huidige sessie (alle sets,
@@ -21647,12 +21686,22 @@ function prevEmptyBlock(){
     '<div class="prev2-empty-msg">Nog geen vorige training voor deze oefening — je eerste resultaat wordt vanaf nu je referentie.</div>'+
   '</div>';
 }
+// Strength Basis Recency B1 — compacte, feitelijke basis-uitleg uit de resolver-provenance. Geen percentage,
+// geen AI, geen fake datum: bij onbekende datum staat dat er letterlijk.
+function strengthBasisText(basis){
+  if(!basis||basis.source==='none'||basis.value==null)return '';
+  const dNl=(ymd)=>{ try{ const d=new Date(ymd+'T00:00:00Z'); return d.toLocaleDateString('nl-NL',{day:'numeric',month:'short',timeZone:'UTC'}); }catch(_){ return ymd; } };
+  if(basis.source==='manual_1rm')return 'Basis: handmatige 1RM '+basis.value+' kg ('+(basis.basisDate?('ingevoerd '+dNl(basis.basisDate)):'datum onbekend — controleer je eerste set')+')';
+  return 'Basis: geschat 1RM '+basis.value+' kg uit je sessie van '+(basis.basisDate?dNl(basis.basisDate):'onbekende datum')+(basis.sampleReps?' ('+basis.sampleReps+' reps)':'');
+}
 function buildPrevBlock(prevS, ex, rxWeight, detrain){
   if(!(prevS&&prevS.weight&&prevS.reps))return '';
   // DETRAINING B1: dezelfde F0.7L-uitleg als in Preview, uitsluitend uit de bestaande resolver-provenance
   // (reason 'detraining:Nd', factor<1). Geen nieuwe tekst, geen percentage, geen AI.
   const detrainEl=(detrain&&detrain.days!=null&&typeof detrain.factor==='number'&&detrain.factor<1&&/^detraining:/.test(String(detrain.reason||'')))
     ?`<div class="prev2-today keep" style="font-weight:500">Je deed deze oefening ${detrain.days} dagen niet — daarom starten we vandaag iets conservatiever.</div>`:'';
+  const basisTxt=(detrain&&detrain.basis)?strengthBasisText(detrain.basis):'';
+  const basisEl=basisTxt?`<div class="prev2-today keep" style="font-weight:400;opacity:.85">${escHtml(basisTxt)}</div>`:'';
   const w=prevS.weight,r=prevS.reps,rpe=(prevS.rpe!=null&&prevS.rpe!=='')?parseFloat(prevS.rpe):null;
   let today='';
   // READ-ONLY: verwijs naar de ACTUELE prescription (rxWeight = zelfde getal als de VANDAAG-kaart),
@@ -21667,7 +21716,7 @@ function buildPrevBlock(prevS, ex, rxWeight, detrain){
   return `<div class="ex-prev prev2">
     <div class="prev2-lbl">Vorige keer</div>
     <div class="prev2-main">${w} kg × ${r}${rpe!=null?` <span class="prev2-rpe">· RPE ${rpe}</span>`:''}</div>
-    ${today}${detrainEl}
+    ${today}${detrainEl}${basisEl}
   </div>`;
 }
 function showPostSetAdvice(exId,setNum){
@@ -27142,9 +27191,9 @@ async function refreshStatsScreen(){
       .then(ss=>({ex,ss:ss||[]})).catch(()=>({ex,ss:[]}))
   ));
   _perEx.forEach(({ex,ss})=>{
-    let best=null;
-    ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=epley1RMRaw(s.weight,s.reps);if(!best||est>best)best=est;});
-    const disp=best?Math.round(best):prFor(ex.id);
+    // Strength Basis Recency B1: analytics tonen de historische PIEK (CALC-STR-006 peak), via de canonical selector.
+    const _b=CalcCore.selectStrengthBasis(ss,{maxReps:10});
+    const disp=(_b.peak&&_b.peak.e1rm)?_b.peak.e1rm:prFor(ex.id);
     if(!disp)return;
     const tgt=peakGoalFor(ex.id);const pct=tgt?Math.round(disp/tgt*100):null;
     progExData[ex.id]={disp,tgt,pct,lastDate:ss[0]?ss[0].date:null};
@@ -27320,10 +27369,10 @@ async function refreshStats(){
   const strExs=exercises.filter(e=>e.type==='strength'||!e.type);
   let h='';
   for(const ex of strExs){
-    const ss=await v43SafeGet('sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=created_at.desc&limit=30');
-    let best=null;
-    ss.forEach(s=>{if(!s.weight||!s.reps)return;const est=epley1RMRaw(s.weight,s.reps);if(!best||est>best)best=est;});
-    const disp=best?Math.round(best):prFor(ex.id);if(!disp)continue;
+    const ss=await v43SafeGet('sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=30');
+    // Strength Basis Recency B1: Stats toont de historische PIEK (analytics), via de canonical selector.
+    const _b=CalcCore.selectStrengthBasis(ss,{maxReps:10});
+    const disp=(_b.peak&&_b.peak.e1rm)?_b.peak.e1rm:prFor(ex.id);if(!disp)continue;
     const tgt=peakGoalFor(ex.id);const pct=tgt?Math.round(disp/tgt*100):null;
     const fc=pct?(pct>=100?'var(--green)':pct>=85?'var(--y)':'var(--red)'):'var(--red)';
     h+=`<div class="stat-1rm-item">
@@ -29713,7 +29762,7 @@ async function launchProgramTrainScreen(adjustment){
       try{
         const _prev=await loadPrevPerformance(ex.id);
         const _r=resolveProgramItemWeight(ex.id,_reps,rpe,_prev);
-        _sug=_r.suggested; _detrain={days:_r.days,factor:_r.factor,reason:_r.reason,ruleId:_r.ruleId,ruleVersion:_r.ruleVersion};
+        _sug=_r.suggested; _detrain={days:_r.days,factor:_r.factor,reason:_r.reason,ruleId:_r.ruleId,ruleVersion:_r.ruleVersion,basis:_r.strengthBasis||null};
       }catch(e){}
       sessionExtra.push({id:ex.id,naam:ex.name,type:exType,sets,reps:_reps,rpe:String(rpe),suggestedWeight:(_sug!=null?_sug:null),_detrain:_detrain,_t:ctxT,_preloaded:true});
     }

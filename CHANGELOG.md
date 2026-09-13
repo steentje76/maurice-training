@@ -1,5 +1,33 @@
 # Trainingskompas — Changelog
 
+## v4.69.86 — Strength Basis Recency B1: recente representatieve prestatie als 1RM-basis (13 september 2026)
+
+CALC-STR-006 `strength_basis.v1` (`CalcCore.selectStrengthBasis`): de prescription-basis is
+nu de MEEST RECENTE representatieve prestatie (gewicht + reps ≤10), niet langer de hoogste
+e1RM uit ≤30 sessies. De historische piek (`peak`, met datum) blijft apart beschikbaar voor
+PR/trend/analytics (Stats en progress-context tonen de piek via dezelfde selector).
+
+- `getOneRM()`: het rep-PR-gewicht (`prFor`) is uit de 1RM-precedentie verwijderd — een rep-PR
+  is geen 1RM; PR-data blijft bestaan. Handmatige `one_rm` houdt de hoogste precedentie en
+  wordt NIET automatisch numeriek verlaagd.
+- `migratie_v564.sql`: `exercise_goals.updated_at` (nullable, forward-only) als provenance-
+  datum van de handmatige 1RM; alleen gezet bij `one_rm`-wijzigingen.
+- Eén canonical basis-helper (`loadStrengthBasis`) voor Preview, Programma en Normal execution
+  (`loadPrevPerformance`/`loadEstOneRM` delegeren); de vier losse "max over 30"-selecties zijn
+  geconsolideerd.
+- `resolveWorkingWeight()` draagt `strengthBasis`-provenance (source, basisDate, ageDays,
+  dataQuality high/medium/low — productcategorieën, geen decay-formule); compacte uitleg in
+  Preview en Normal execution ("Basis: geschat 1RM … uit je sessie van …" / "handmatige 1RM …
+  datum onbekend"). Fail-safe: onbekende datum → ageDays null, geen numerieke straf.
+- Geen dubbele straf: basisselectie = representativiteit; DEC-DETRAIN-001 (ongewijzigd) =
+  inactiviteit sinds laatste uitvoering. Geen DEC-BASIS-001 in B1.
+
+Tests: nieuw `core/fStrengthBasisSelection.test.js` 97/97 (scenario A–F, PR-proxy, manual,
+fail-safe, reps>10, no-double-penalty, static gates; sabotage: piek weer basis → 8, prFor
+terug → 4, fake datum → 3 failures); `fDetrainingPrescriptionPaths` 82/82; registry-
+tellingen bijgewerkt (6 STR-items, 32 CALC-items, 5× evidence B). Volledige regressie
+372/372. APP_VER v4.69.85 → v4.69.86.
+
 ## v4.69.85 — Detraining B1: DEC-DETRAIN-001 aangesloten op alle kracht-prescription-paden (13 september 2026)
 
 Return After Absence / Deload Fase B1 (repair). De bestaande detraining-regel

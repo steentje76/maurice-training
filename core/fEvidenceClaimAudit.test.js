@@ -52,9 +52,9 @@ const calcCounts = countCalcEvidence(calcText);
 // sportwetenschappelijke claim (GEEN_EVIDENCE_VELD), net als hun
 // Running-tegenhangers CALC-RUN-DISTBAND-001/CALC-RUN-CSELIG-001.
 // E-telling blijft ongewijzigd op 8.
-ok(calcCounts.total === 31, 'exact 31 CALC-items geregistreerd (reproduceerbare telling, niet handmatig)');
+ok(calcCounts.total === 32, 'exact 32 CALC-items geregistreerd (reproduceerbare telling, niet handmatig; +CALC-STR-006 Strength Basis Selection)');
 ok(calcCounts.A === 1, 'exact 1 CALC-item met evidence A');
-ok(calcCounts.B === 4, 'exact 4 CALC-items met evidence B (Epley/Brzycki/Foster-sRPE/HRV-baseline)');
+ok(calcCounts.B === 5, 'exact 5 CALC-items met evidence B (Epley/Brzycki/Foster-sRPE/HRV-baseline/Strength Basis Selection)');
 ok(calcCounts.C === 4, 'exact 4 CALC-items met evidence C');
 ok(calcCounts.D === 1, 'exact 1 CALC-item met evidence D (Recovery Score)');
 ok(calcCounts.E === 8, 'exact 8 CALC-items met evidence E (was 7, +1 CALC-RUN-CONSIST-001)');

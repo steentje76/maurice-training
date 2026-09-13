@@ -1,5 +1,37 @@
 # Trainingskompas — Changelog
 
+## v4.69.83 — Endurance → Context Gap 1b: berekende endurance-intelligence in buildCtx() via dunne adapter (13 september 2026)
+
+GAP-P2-026 gesloten. Nieuwe adapter `tkEnduranceCoachContext()` (naar het
+`tkHyroxCoachContext()`-precedent) verzamelt uitsluitend reeds canonieke
+Calculation-Engine-uitkomsten en projecteert ze als tekstblok in `buildCtx()`:
+Critical Speed (critical_speed.v1 via CALC-RUN-CSELIG-001), Critical Power
+(critical_power.v1 via CALC-CYC-CPELIG-001), weekvolume laatste 4 weken
+(CALC-RUN-WEEKLY-001), sRPE-belasting 7 d/28 d met N-van-M-sessies-met-RPE
+(CALC-LOAD-003/005, venster caller-side) en pace-/vermogenstrend per
+afstandsband (CALC-LOAD-004). Geen formule in Context; `insufficient` blijft
+expliciet "onvoldoende geschikte max-effort-prestaties (N/3)"; D′/W′/R² gaan
+niet naar de AI; expliciet ≠ profiel-drempels (threshold pace ≠ CS, FTP ≠ CP).
+
+Performance: twee begrensde queries per contextopbouw (activities ≤200 rijen
+binnen 84 d; max-effort ≤50) i.p.v. de 500/1000-rij-Insights-queries; kracht/
+crossfit → geen blok én nul queries. Sport-geïsoleerd (running/cycling/swimming;
+triathlon alle drie, per sport gescheiden). Decision Engine bewust NIET
+aangesloten; geen ACWR-interpretatie; LongitudinalTrendCore/contextEngine.js
+niet geactiveerd; Insights-renderfuncties ongewijzigd.
+
+Registry: CALC-END-004/004B → CONNECTED (Context via adapter), NOT CONNECTED
+(Decision). GAP_ANALYSIS: GAP-P2-026 CLOSED; ID-collision opgelost (mijn Gap 1a-
+entry hernummerd van GAP-P2-025 naar GAP-P2-027, het F13-item behoudt 025).
+CONTEXT_CONTRACT: nieuwe inventory-rij.
+
+Tests: nieuw `core/fEnduranceCoachContext.test.js` 39/39 (echte cores, stub-
+sbGet; sabotage: adapter los → 1 failure, eligibility omzeild → 5 failures);
+`fEnduranceErgRegistry` 36 → 40/40 (verwachting bijgewerkt: Context CONNECTED,
+Decision NOT CONNECTED, AI rekent niet); `fContextContract` 14/14;
+`fEnduranceContextProfileThresholds` 30/30. Volledige regressie 369/369. Geen
+databasewijziging. APP_VER v4.69.82 → v4.69.83.
+
 ## v4.69.82 — Concept2 PM5: discovery-driven subscription-strategie + uitgebreide diagnostiek (13 september 2026)
 
 ErgData-forensics → safe connection strategy. Bron: `docs/concept2-ergdata-forensic.md`

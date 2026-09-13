@@ -31,7 +31,7 @@ ok(body, 'buildCtx() gevonden');
 // ---- Statisch: verbinding, bron, isolatie, geen berekening ----
 ok(/sbGet\('athlete_endurance_profile','&sport=in\.\(running,cycling\)&limit=2'\)/.test(body),
   'S1: exact één begrensde query op athlete_endurance_profile (running,cycling, max 2 rijen) in buildCtx()');
-ok(/enduranceProfileRows\] = await Promise\.all/.test(body), 'S2: profielrijen worden in de bestaande Promise.all opgehaald (geen extra sequentiële roundtrip)');
+ok(/enduranceProfileRows(,[A-Za-z]+)*\] = await Promise\.all/.test(body), 'S2: profielrijen worden in de bestaande Promise.all opgehaald (geen extra sequentiële roundtrip)');
 ok(/threshold_pace_seconds_per_km/.test(body) && /ftp_watts_user_entered/.test(body), 'S3: uitsluitend de twee persisted kolommen worden gelezen');
 ok(!/criticalSpeed\(|criticalPower\(|criticalSpeedEligible|criticalPowerEligible/.test(body),
   'I: geen CardioCore.criticalSpeed/criticalPower- of eligibility-aanroep in buildCtx() (Gap 1b blijft NOT CONNECTED)');

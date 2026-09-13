@@ -121,7 +121,8 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Target:** eventueel een expliciete precedentieregel vastleggen (bv. PM5-hartslag heeft voorrang tijdens een erg-sessie), alleen indien een concrete productbehoefte dit vereist — geen productbeslissing hier gefabriceerd.
 **Priority:** P2 (niet-kritiek — geen incorrecte datavermenging, alleen een onbesliste keuze bij een zeldzaam gelijktijdig-bronnen-scenario). **Complexity:** S.
 
-### GAP-P2-021 (nieuw, Running/Cycling Intelligence-sprints) — Critical Speed/Power niet gewired op trainingsgeschiedenis
+### GAP-P2-021 — **CLOSED** (Endurance Registry Source-of-Truth Fix, 13 september 2026) — Critical Speed/Power niet gewired op trainingsgeschiedenis
+**Closure-bewijs:** het gevraagde tijdrit-markeringsmechanisme bestaat als `activities.is_max_effort`; `criticalSpeedEligiblePerformances()`/`criticalPowerEligiblePerformances()` (CALC-RUN-CSELIG-001 / CALC-CYC-CPELIG-001) filteren daarop en voeden `CardioCore.criticalSpeed()`/`criticalPower()` vanuit `renderRunningInsights()`/`renderCyclingInsights()`. De resterende niet-aansluiting op Context/Decision/AI is een aparte, open gap (Endurance & Multisport Completion Audit, Gap 1/4). Oorspronkelijke tekst hieronder bewaard als historie.
 **Capability-ID:** RUNNING-INTELLIGENCE-001, CYCLING-INTELLIGENCE-001
 **Current:** `CardioCore.criticalSpeed()` (running) en `CardioCore.criticalPower()` (cycling) zijn beide geïmplementeerd en getest, maar worden bewust niet automatisch gevoed met trainingsgeschiedenis. Het TK-datamodel heeft geen mechanisme om een gelogde sessie te markeren als een genuine maximale-inspanning-tijdrit versus een rustige duurloop/duurrit — automatische wiring op willekeurige sessiedata zou een wetenschappelijk ongeldig model opleveren.
 **Evidence:** CODE VERIFIED, zie de Running Intelligence- en Cycling Intelligence-sprintrapporten in `docs/`.

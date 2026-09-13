@@ -391,7 +391,7 @@ Geen onverklaarde critical threshold gevonden — inclusief het belangrijke onde
 | Evidence level | n.v.t. (architecturale bevinding, geen calculation zelf) |
 | Status | **GAP, geregistreerd** — zie Open Gaps hieronder (GAP-P2-013). Dit is exact de opdrachtvereiste ("MEASURED POWER versus DERIVED/ESTIMATED POWER... provenance verplicht") die momenteel niet expliciet is vastgelegd. |
 
-### CALC-END-004 — Critical Speed — **GEÏMPLEMENTEERD (MS-F6-01), niet geïntegreerd op trainingsgeschiedenis**
+### CALC-END-004 — Critical Speed — **LIVE_CANONICAL (calculation/history/UI) — NOT CONNECTED (Context/Decision/AI)**
 | Veld | Waarde |
 |---|---|
 | Domain | Endurance & Erg |
@@ -401,10 +401,14 @@ Geen onverklaarde critical threshold gevonden — inclusief het belangrijke onde
 | Minimum observations | 2 (hard vereist, anders `status:'insufficient'`) |
 | Confidence | `hoog` (N≥3, R²≥0.95), `middel` (N≥2, R²≥0.85), anders `laag` — nooit gefabriceerd bij een zwakke fit. |
 | Invalid input handling | Niet-array/negatieve/non-finite waarden gefilterd; identieke duren → `insufficient` (ongedefinieerde regressie); niet-positieve CS-uitkomst → `invalid`. |
-| **Kritieke, eerlijke beperking (F6 Entry Audit):** | Het TK-datamodel heeft geen mechanisme om een gelogde sessie te markeren als een genuine maximale-inspanning-tijdrit versus een rustige duurloop. De functie wordt daarom **bewust niet automatisch op trainingsgeschiedenis gewired** — de aanroeper moet expliciet gecureerde tijdritprestaties aanleveren. Automatische wiring op willekeurige sessiedata zou een wetenschappelijk ongeldig model opleveren. Zie GAP-P2-021. |
-| Status | **IMPLEMENTED** (functie bestaat, getest, geregistreerd) — **niet INTEGRATED** (geen UI/trainingsgeschiedenis-wiring, om bovenstaande reden) |
+| History-integratie (B9-03, bevestigd Endurance Registry Source-of-Truth Fix) | **Geïntegreerd op echte running-`activities`** via de bestaande eligibility-laag CALC-RUN-CSELIG-001: `renderRunningInsights()` → `sbGet('activities', sport=running)` → `RunningIntelligenceCore.criticalSpeedEligiblePerformances(activities, 3)` → uitsluitend prestaties met `is_max_effort === true` én geldige `distance_meters`/`duration_seconds` → `CardioCore.criticalSpeed()`. Het tijdrit-markeringsmechanisme dat de F6 Entry Audit nog miste, bestaat sindsdien als het `is_max_effort`-veld op `activities`; een gewone duurloop voedt het model nooit. |
+| Minimum geschikte prestaties (runtime) | 3 (eligibility-laag, `status:'eligible'`); de calculation zelf vereist minimaal 2 met verschillende duren en retourneert anders `status:'insufficient'`. |
+| Berekening/persistentie | Dynamisch per render van Running Insights; het resultaat wordt **niet** gepersisteerd. Bij `status !== 'valid'` of een uitzondering wordt niets getoond (`csResultaat = null`). |
+| Zichtbaarheid | Running Insights (`s-running-insights`): "x:xx/km — gebaseerd op N geschikte prestaties". |
+| **Nog NIET aangesloten** | Context Engine (`buildCtx()` bevat geen CS), Decision Engine (geen endurance-rule consumeert CS), AI Coach (volgt uit de context-grens). Dit is een bewuste, open connection gap — zie Endurance & Multisport Completion Audit, Gap 1/4. |
+| Status | **LIVE_CANONICAL** voor calculation, history-integratie en UI — **NOT CONNECTED** voor Context/Decision/AI. GAP-P2-021 (tijdrit-markering) is hiermee gesloten. |
 
-### CALC-END-004B — Critical Power — **GEÏMPLEMENTEERD (MS-F6-02), niet geïntegreerd op trainingsgeschiedenis**
+### CALC-END-004B — Critical Power — **LIVE_CANONICAL (calculation/history/UI) — NOT CONNECTED (Context/Decision/AI)**
 | Veld | Waarde |
 |---|---|
 | Domain | Endurance & Erg |
@@ -412,8 +416,13 @@ Geen onverklaarde critical threshold gevonden — inclusief het belangrijke onde
 | Model | Canoniek Critical Power-model (Monod & Scherrer 1965; Moritani et al. 1981): totaal verricht werk (vermogen × tijd) = CP·tijd + W' (W' = anaerobe werkcapaciteit in joule). Correcte, in de literatuur gestandaardiseerde formulering -- niet simpelweg vermogen tegen tijd uitzetten. |
 | Required performances | Minimaal 2, met aantoonbaar verschillende duren. |
 | Confidence | Identiek aan CALC-END-004 (hoog/middel/laag, gebaseerd op N en R²). |
-| **Kritieke, eerlijke beperking:** | Identiek aan CALC-END-004 -- geen tijdrit-markeringsmechanisme in het datamodel, dus bewust niet automatisch gewired. Zie GAP-P2-021-categorie. Expliciet gedocumenteerd: dit is een technisch/fysiologisch model, geen vervanging voor een gestandaardiseerd FTP-testprotocol. |
-| Status | **IMPLEMENTED** (functie bestaat, getest, geregistreerd) — **niet INTEGRATED** |
+| History-integratie (B9-05, bevestigd Endurance Registry Source-of-Truth Fix) | **Geïntegreerd op echte cycling-`activities`** via de bestaande eligibility-laag CALC-CYC-CPELIG-001: `renderCyclingInsights()` → `sbGet('activities', sport=cycling)` → `CyclingIntelligenceCore.criticalPowerEligiblePerformances(activities, 3)` → uitsluitend prestaties met `is_max_effort === true` én geldig gemiddeld vermogen/duur → `CardioCore.criticalPower()`. |
+| Minimum geschikte prestaties (runtime) | 3 (eligibility-laag); de calculation zelf vereist minimaal 2 met verschillende duren, anders `status:'insufficient'`. |
+| Berekening/persistentie | Dynamisch per render van Cycling Insights; niet gepersisteerd; bij `status !== 'valid'` niets getoond (`cpResultaat = null`). |
+| Zichtbaarheid | Cycling Insights (`s-cycling-insights`): "N W — gebaseerd op N geschikte prestaties". |
+| Modelgrens (ongewijzigd) | Technisch/fysiologisch model, geen vervanging voor een gestandaardiseerd FTP-testprotocol. |
+| **Nog NIET aangesloten** | Context Engine, Decision Engine, AI Coach — identiek aan CALC-END-004. |
+| Status | **LIVE_CANONICAL** voor calculation, history-integratie en UI — **NOT CONNECTED** voor Context/Decision/AI. |
 
 ### CALC-END-005 — TRIMP / Aerobic Decoupling / HR-zones — **NIET GEÏMPLEMENTEERD**
 | Veld | Waarde |

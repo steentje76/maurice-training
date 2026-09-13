@@ -163,6 +163,17 @@ _(Hernummerd van GAP-P2-025 bij de Gap 1b-sprint: dat ID was al in gebruik door 
 **Target:** dezelfde canonical keten voor cycling/swimming (B2) en erg (laps i.p.v. exNote), waarna de drie legacy `intervalBlokken`-kopieën verdwijnen. Geen adaptive prescription, geen Decision Rules.
 **Priority:** P2. **Complexity:** M.
 
+### GAP-P2-030 — **CLOSED** (Detraining B1, 13 september 2026) — Programmapad omzeilde DEC-DETRAIN-001 (tweede prescription-bron)
+**Capability-ID:** DEC-DETRAIN-001, F0.7L canonical weight resolver
+**Current (vóór):** `launchProgramTrainScreen()` en `computeProgPrefill()` berekenden `suggestedWeight` rechtstreeks via `suggestWeightForRepsRpe()` zonder `prev.date` → geen detraining op programma-starts; Preview/Mijn training wél via `resolveWorkingWeight()`.
+**Closure-bewijs:** gedeelde `loadPrevPerformance()`; `resolveProgramItemWeight()`; `computeProgPrefill()` delegeert; F0.7L-uitleg in Normal execution. `core/fDetrainingPrescriptionPaths.test.js` 76/76 (sabotage 3/4 failures). Statische gate: één productiecaller van `suggestWeightForRepsRpe()`.
+**Priority:** P2 — gesloten.
+
+### GAP-P3-031 (nieuw, Return After Absence audit) — Absence/deload vervolgpunten — **OPEN**
+**Current:** (a) Guided `replaceEx()` roept de resolver zonder canonical `prev.date` aan (sync; alleen lokale `tk_gw_hist`) → factor 1.00; (b) geen canonical inactivity-signalen (dagen sinds laatste (kracht)training, missed-streak) in Calculation/Context; adherence loopt niet naar Decision; (c) 1RM-basis zonder recency/data-age (max Epley over 30 sessies; handmatige PR onbeperkt oud); (d) bandfactoren `DETRAINING_RULES_V1` zijn erkende productheuristiek zonder evidence-grading; (e) situaties C/D uit de audit (wel cardio/geen kracht; gemiste planning) niet onderscheidbaar.
+**Target:** aparte sprints met evidence-gate; geen percentage zonder bronnen.
+**Priority:** P3. **Complexity:** M.
+
 ### GAP-P3-023 (nieuw, Athlete Dashboard 2.0-sprint) — verwarrende naamgeving: computeProgramProgress()'s "adherencePct" is een ander concept dan AdherenceIntelligenceCore
 **Capability-ID:** ADHERENCE-INTELLIGENCE-001
 **Current:** `computeProgramProgress()`/`computeProgramProgressPure()` (F4-erfenis, gebruikt bij programma-regeneratie en het weekoverzicht) berekenen `adherencePct` als `completed.length/blocks.length*100`, waarbij `blocks` het volledige programma kan omvatten inclusief toekomstige, nog-niet-uitgevoerde blokken. Dit is een ander concept ("programma-doorloop-percentage tijdens regeneratie-beslissingen") dan de nieuwe, canonieke `AdherenceIntelligenceCore` (die FUTURE-items expliciet uitsluit van de noemer) — maar de identieke veldnaam is verwarrend en kan tot onterechte aannames leiden dat beide hetzelfde meten.

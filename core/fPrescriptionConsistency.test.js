@@ -108,6 +108,17 @@ const CalcCore = require('./calculation.js');
 const repsPrefillFromRange = eval('(' + extractFn('repsPrefillFromRange') + ')');
 const resolvePrescriptionRepTarget = eval('(' + extractFn('resolvePrescriptionRepTarget') + ')');
 const suggestWeightForRepsRpe = eval('(' + extractFn('suggestWeightForRepsRpe') + ')');
+// DETRAINING B1: computeProgPrefill() delegeert nu aan de canonical resolveWorkingWeight()
+// (base × DEC-DETRAIN-001). Zelfde keten laden zoals in productie; prevS zonder date → days=null → factor 1.00,
+// dus alle onderstaande verwachtingen (low-end reps, gewicht volgt RPE, één bron) blijven exact gelijk.
+const DecisionCore = require('./decision.js');
+const roundKg = eval('(' + extractFn('roundKg') + ')');
+const daysBetweenDates = eval('(' + extractFn('daysBetweenDates') + ')');
+const DETRAINING_RULES = eval('(' + (html.match(/const DETRAINING_RULES_V1=(\{[\s\S]*?\n\})/) || [])[1] + ')');
+const detrainingFactor = function(d, rules){ return DecisionCore.detrainingFactor(d, rules || DETRAINING_RULES); };
+const previewOneRM = function(){ return null; };
+const td = function(){ return new Date().toISOString().slice(0,10); };
+const resolveWorkingWeight = eval('(' + extractFn('resolveWorkingWeight') + ')');
 const computeProgPrefill = eval('(' + extractFn('computeProgPrefill') + ')');
 
 // ── REP-RANGE PREFILL: range → MAXIMUM; exact → exact; ongeldig → '' (geen fabricatie) ──

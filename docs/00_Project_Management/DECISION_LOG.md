@@ -1842,3 +1842,14 @@
   wijziging zonder runtimeverandering).
 - **Verantwoordelijke:** Product Owner (GO voor uitsluitend Gap 3), uitgevoerd
   door Claude.
+
+## Endurance → Context Fase B1 — profiel-drempels (Gap 1a)
+
+- **Datum:** 13 september 2026. PO-scope: uitsluitend Gap 1a (persisted profiel-drempels), geen adapter, geen CS/CP.
+- **Verbinding:** één `sbGet('athlete_endurance_profile','&sport=in.(running,cycling)&limit=2')` in de bestaande `Promise.all` van `buildCtx()`; tekstblok "ENDURANCE-PROFIEL" vóór "ACTIEVE SPORT".
+- **Semantiek:** threshold pace ≠ Critical Speed, FTP (user-entered) ≠ Critical Power — beide expliciet in de contexttekst; eenheid + provenance per regel; ontbrekend = "niet ingesteld (geen waarde beschikbaar; niet schatten)"; sportisolatie op actieve sport (triathlon beide); geen confidence verzonnen; formattering via `CardioCore.formatTime()`; fail-safe try/catch → leeg blok.
+- **Consumer-safety:** enige consumer van `buildCtx()` is de AI Coach-systeemprompt; geen Decision Rule, geen Today-kaart geraakt. Geen promptlogica gewijzigd buiten het additieve blok.
+- **Tests:** `core/fEnduranceContextProfileThresholds.test.js` 30/30 (statisch + functionele simulatie van het exacte blok; sabotagebewijs 24 failures zonder verbinding); `fContextContract` 14/14; volledige regressie 367/367; doc-consistency 0.
+- **Docs:** CONTEXT_CONTRACT.md (nieuwe inventory-rij), GAP_ANALYSIS_V2.md (GAP-P2-025 CLOSED = Gap 1a; GAP-P2-026 OPEN = Gap 1b).
+- **Versioning:** runtime-wijziging → APP_VER v4.69.79 -> v4.69.80 (patch, conform conventie).
+- **Verantwoordelijke:** Product Owner (Fase B1-opdracht), uitgevoerd door Claude.

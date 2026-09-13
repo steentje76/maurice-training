@@ -1,5 +1,25 @@
 # Trainingskompas — Changelog
 
+## v4.69.80 — Endurance → Context Fase B1: profiel-drempels in buildCtx() (Gap 1a) (13 september 2026)
+
+Minimale connection-sprint. `buildCtx()` (de live Context Engine) geeft nu de
+persisted, door de sporter ingevoerde endurance-profieldrempels door aan de
+AI Coach: `threshold_pace_seconds_per_km` (hardlopen, als m:ss/km via de
+canonieke `CardioCore.formatTime()`) en `ftp_watts_user_entered` (fietsen, watt).
+Eén begrensde query op `athlete_endurance_profile` (max 2 rijen) in de bestaande
+`Promise.all`. Alleen de waarde van de actieve sport (running/hardlopen,
+cycling/wielrennen; triathlon beide); ontbrekend = expliciet "niet ingesteld
+(niet schatten)"; provenance "door de sporter ingesteld/ingevoerd"; expliciet
+"geen Critical Speed/Power". Geen berekening, geen fallback, geen confidence
+verzonnen. Critical Speed/Power, volume, sRPE en trends blijven NOT CONNECTED
+(Gap 1b, GAP-P2-026, aparte PO-gate).
+
+Nieuwe test `core/fEnduranceContextProfileThresholds.test.js` (30/30, sabotage:
+24 failures zonder de verbinding). `fContextContract` 14/14. Volledige regressie
+367/367. Doc-consistency 0. CONTEXT_CONTRACT.md en GAP_ANALYSIS_V2.md
+(GAP-P2-025 CLOSED, GAP-P2-026 OPEN) bijgewerkt. Geen databasewijziging.
+APP_VER v4.69.79 -> v4.69.80.
+
 ## v4.69.79 — Builder + AthleteConstraints Completion (Connection Gap fix) (13 september 2026)
 
 Voorafgegaan door een read-only completion audit die vier onafhankelijke

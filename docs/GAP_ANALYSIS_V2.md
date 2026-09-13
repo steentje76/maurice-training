@@ -136,6 +136,19 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Target:** bij een toekomstige wiring van `unifiedLoad()` naar een live dashboard: expliciet testen dat multisport-parent-sessies niet dubbel meetellen. Geen productbeslissing hier gefabriceerd over wanneer/of dit gebouwd wordt.
 **Priority:** P2 (niet-kritiek — geen huidig, actief probleem; een architectuurwaarschuwing voor toekomstig werk). **Complexity:** S.
 
+### GAP-P2-025 — **CLOSED** (Endurance → Context Fase B1, 13 september 2026) — Endurance-profieldrempels niet in de Context Engine (Gap 1a)
+**Capability-ID:** END-DATAFOUNDATION-001, CONTEXT (buildCtx)
+**Current (vóór):** `buildCtx()` bevatte geen enkel endurance-veld; de persisted, door de sporter ingevoerde drempels (`athlete_endurance_profile.threshold_pace_seconds_per_km`, `ftp_watts_user_entered`) waren alleen zichtbaar in Running/Cycling Insights.
+**Closure-bewijs:** één begrensde query in de bestaande `Promise.all` van `buildCtx()`; sport-geïsoleerd tekstblok "ENDURANCE-PROFIEL" met eenheid, provenance ("door de sporter ingesteld/ingevoerd"), expliciet "niet ingesteld ... niet schatten" bij ontbreken, formattering via `CardioCore.formatTime()`, geen berekening, expliciet "geen Critical Speed/Power". Test `core/fEnduranceContextProfileThresholds.test.js` (30, sabotagebewijs 24 failures zonder verbinding).
+**Priority:** P2 — gesloten.
+
+### GAP-P2-026 (nieuw, Endurance & Multisport Completion Audit) — Berekende endurance-intelligence niet in de Context Engine (Gap 1b) — **OPEN**
+**Capability-ID:** RUNNING-INTELLIGENCE-001, CYCLING-INTELLIGENCE-001, CONTEXT (buildCtx)
+**Current:** Critical Speed/Power, weekvolume, endurance-sRPE/rolling load en pace/power-trends worden uitsluitend in de Insights-renderfuncties georkestreerd (query → eligibility → Core-call → confidence); buiten UI bestaat geen herbruikbare adapter. `buildCtx()`/AI Coach zijn hiervoor blind. CALC-END-004/004B staan formeel op NOT CONNECTED (Context/Decision/AI).
+**Evidence:** CODE VERIFIED, Endurance & Multisport Completion Audit + Gap 1 Fase A (13 september 2026).
+**Target:** canonical adapter `tkEnduranceCoachContext()` naar het `tkHyroxCoachContext()`-precedent, met begrensde queries en letterlijke doorgifte van `status`/`confidence`; geen herberekening, geen nieuwe Decision Rule. Vereist aparte PO-gate (Fase B2).
+**Priority:** P2. **Complexity:** M.
+
 ### GAP-P3-023 (nieuw, Athlete Dashboard 2.0-sprint) — verwarrende naamgeving: computeProgramProgress()'s "adherencePct" is een ander concept dan AdherenceIntelligenceCore
 **Capability-ID:** ADHERENCE-INTELLIGENCE-001
 **Current:** `computeProgramProgress()`/`computeProgramProgressPure()` (F4-erfenis, gebruikt bij programma-regeneratie en het weekoverzicht) berekenen `adherencePct` als `completed.length/blocks.length*100`, waarbij `blocks` het volledige programma kan omvatten inclusief toekomstige, nog-niet-uitgevoerde blokken. Dit is een ander concept ("programma-doorloop-percentage tijdens regeneratie-beslissingen") dan de nieuwe, canonieke `AdherenceIntelligenceCore` (die FUTURE-items expliciet uitsluit van de noemer) — maar de identieke veldnaam is verwarrend en kan tot onterechte aannames leiden dat beide hetzelfde meten.

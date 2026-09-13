@@ -7232,7 +7232,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.79';
+const APP_VER = 'v4.69.80';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -27844,7 +27844,7 @@ async function buildCtx(ctx){
     ? sbGet('sessions','&exercise_id=in.('+[...relevantExIds].join(',')+')&order=exercise_id.asc,date.desc,created_at.desc')
     : sbGet('sessions','&date=gte.'+sinceStr+'&order=exercise_id.asc,date.desc,created_at.desc');
 
-  const [,hd,wd,bc,recentSessions,,blessureContext,conditionsContext,,trainingContextRows,dataBlok,hyroxCtxTekst,eventCtxTekst,progressionTrendResult,womensCtxTekst] = await Promise.all([
+  const [,hd,wd,bc,recentSessions,,blessureContext,conditionsContext,,trainingContextRows,dataBlok,hyroxCtxTekst,eventCtxTekst,progressionTrendResult,womensCtxTekst,enduranceProfileRows] = await Promise.all([
     ensureExercisesLoaded(),
     sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'),
     sbGet('weight_log','&order=date.desc,created_at.desc&limit=3'),
@@ -27864,9 +27864,39 @@ async function buildCtx(ctx){
     // v4.59.0 — Progressie-trend-per-oefening Context Engine-koppeling (zie tkProgressionTrendContext()).
     tkProgressionTrendContext().catch(function(){ return {tekst:'',aantalDalend:0}; }),
     // MS-F8-03 — Women's Performance Context Engine-koppeling (zie tkWomensPerformanceCoachContext()).
-    tkWomensPerformanceCoachContext().catch(function(){ return ''; })
+    tkWomensPerformanceCoachContext().catch(function(){ return ''; }),
+    // Gap 1a (Endurance -> Context, Fase B1): persisted profiel-drempels uit athlete_endurance_profile.
+    // Uitsluitend door de sporter ingevoerde waarden (threshold_pace_seconds_per_km, ftp_watts_user_entered);
+    // GEEN Critical Speed/Power, geen berekening, geen fallback. Eén kleine query (max 2 rijen).
+    sbGet('athlete_endurance_profile','&sport=in.(running,cycling)&limit=2').catch(function(){ return []; })
   ]);
   const progressionTrendTekst=(progressionTrendResult&&progressionTrendResult.tekst)||'';
+  // Gap 1a — ENDURANCE-PROFIEL (persisted, door sporter ingevoerd). Alleen de waarde van de
+  // actieve sport wordt doorgegeven (running-drempel nooit in cycling-context en andersom;
+  // triathlon krijgt beide). Ontbrekend = expliciet 'niet ingesteld'. Geen berekening: de
+  // pace-notatie gebruikt de bestaande canonieke CardioCore.formatTime(); watt is ruw.
+  // Dit is NIET Critical Speed / Critical Power (die blijven Gap 1b, NOT CONNECTED).
+  let enduranceProfielTekst='';
+  try{
+    const _sp=String(getActiveSport()||'');
+    const _wantRun=(_sp==='running'||_sp==='hardlopen'||_sp==='triathlon');
+    const _wantBike=(_sp==='cycling'||_sp==='wielrennen'||_sp==='triathlon');
+    if(_wantRun||_wantBike){
+      const _rows=Array.isArray(enduranceProfileRows)?enduranceProfileRows:[];
+      const _run=_rows.find(r=>r&&r.sport==='running')||null;
+      const _bike=_rows.find(r=>r&&r.sport==='cycling')||null;
+      const _lines=[];
+      if(_wantRun){
+        const _tp=(_run&&_run.threshold_pace_seconds_per_km!=null&&isFinite(Number(_run.threshold_pace_seconds_per_km))&&Number(_run.threshold_pace_seconds_per_km)>0)?Number(_run.threshold_pace_seconds_per_km):null;
+        _lines.push('- Hardlopen · drempeltempo (pace-doel): '+(_tp!=null?CardioCore.formatTime(Math.round(_tp))+'/km (eenheid: sec/km; bron: door de sporter ingesteld in het profiel; geen berekende waarde, geen Critical Speed)':'niet ingesteld (geen waarde beschikbaar; niet schatten)'));
+      }
+      if(_wantBike){
+        const _ftp=(_bike&&_bike.ftp_watts_user_entered!=null&&isFinite(Number(_bike.ftp_watts_user_entered))&&Number(_bike.ftp_watts_user_entered)>0)?Number(_bike.ftp_watts_user_entered):null;
+        _lines.push('- Fietsen · FTP: '+(_ftp!=null?Math.round(_ftp)+' W (eenheid: watt; bron: door de sporter ingevoerd in het profiel; geen berekende waarde, geen Critical Power)':'niet ingesteld (geen waarde beschikbaar; niet schatten)'));
+      }
+      if(_lines.length)enduranceProfielTekst='\nENDURANCE-PROFIEL (persisted profielwaarden, door de sporter ingevoerd — niet herberekenen, niet schatten, niet verwarren met Critical Speed/Power):\n'+_lines.join('\n')+'\n';
+    }
+  }catch(e){ enduranceProfielTekst=''; }
   // v4.60.0 — G4-herbeoordeling: gecorroboreerd belastingssignaal. Vereist TWEE
   // onafhankelijke, al bestaande signalen tegelijk (ACWR-classificatie EN
   // >=2 dalende oefeningen) -- zie TrainingLoadCore.corroboratedLoadSignal().
@@ -28003,7 +28033,7 @@ ${progressionTrendTekst?'\nPROGRESSIE-TREND PER OEFENING (reeds berekend door Pr
 ${womensCtxTekst?womensCtxTekst+'\n(BELANGRIJK: bereken zelf NOOIT cyclusdag/fase/hormonen, leid nooit zwangerschap/fertility af, stel nooit een diagnose, en pas nooit automatisch trainingsvolume/-intensiteit aan op basis van deze context — erken de context uitsluitend als extra informatie naast readiness/RPE, en laat de sporter zelf beslissen.)':''}
 ${deloadSignaalTekst?'\nGECORROBOREERD BELASTINGSSIGNAAL (reeds bepaald door de Decision Engine op basis van TWEE onafhankelijke signalen, niet zelf herberekenen of op één los signaal baseren):'+deloadSignaalTekst:''}
 
-ACTIEVE SPORT: ${SPORT_LABELS[getActiveSport()]||getActiveSport()}
+${enduranceProfielTekst}ACTIEVE SPORT: ${SPORT_LABELS[getActiveSport()]||getActiveSport()}
 ${sportBlock}
 
 ACTIES (v306 #9): als je een concreet gewichtsadvies geeft voor de HUIDIGE OEFENING hierboven,

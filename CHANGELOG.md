@@ -1,5 +1,35 @@
 # Trainingskompas — Changelog
 
+## v4.69.85 — Detraining B1: DEC-DETRAIN-001 aangesloten op alle kracht-prescription-paden (13 september 2026)
+
+Return After Absence / Deload Fase B1 (repair). De bestaande detraining-regel
+(DEC-DETRAIN-001, `detraining.v1`, `DETRAINING_RULES_V1`: 0–7 → 1.00, 8–14 → 0.97,
+15–28 → 0.94, 29–56 → 0.90, 57–90 → 0.85, >90 → 0.80; null → 1.00/applicable:false)
+is ONGEWIJZIGD. Bewezen root cause: het programmapad (`launchProgramTrainScreen()`)
+en `computeProgPrefill()` berekenden het werkgewicht rechtstreeks via
+`suggestWeightForRepsRpe()` zonder `prev.date`, buiten de canonical
+`resolveWorkingWeight()` om — een trainingsonderbreking telde daar nooit mee.
+
+- Gedeelde previous-performance-bron `loadPrevPerformance(eid)` (sessions →
+  {weight,reps,rpe,date} + estOneRMCache; exact de vroegere Preview-logica),
+  gebruikt door Preview én programmapad.
+- Programmapad: `resolveProgramItemWeight()` → `resolveWorkingWeight()` met
+  prev.date; `computeProgPrefill()` delegeert aan de resolver. Eén prescription-
+  waarheid: Preview = Programma = Normal execution voor dezelfde input.
+- Explainability: bestaande F0.7L-zin ("Je deed deze oefening N dagen niet — daarom
+  starten we vandaag iets conservatiever.") nu ook in Normal execution
+  (`buildPrevBlock`) uit de bestaande resolver-provenance (`_detrain`).
+- Bewust niet: Guided `replaceEx()` (sync, alleen lokale `tk_gw_hist` zonder canonical
+  datum → blijft days=null/1.00, P3), inactivity-Context-signalen, 1RM-recency,
+  evidence-herziening van de banden, nieuwe Decision Rules.
+
+Tests: nieuw `core/fDetrainingPrescriptionPaths.test.js` 76/76 (alle bandgrenzen,
+cross-path gelijkheid bij 3 en 21 dagen, override-precedence, geen dubbele
+toepassing, readiness-laag ongewijzigd, static gates; sabotage: programmapad terug
+naar directe formule → 3 failures, prev.date weggelaten → 4 failures). Statische
+gate: `suggestWeightForRepsRpe()` heeft nog exact één productiecaller (de resolver).
+Volledige regressie 371/371. APP_VER v4.69.84 → v4.69.85.
+
 ## v4.69.84 — Structured Endurance Intervals B1: canonical Definition + running end-to-end (13 september 2026)
 
 GAP-P2-028 gesloten (running); GAP-P2-029 geopend (cross-sport consolidatie).

@@ -7294,7 +7294,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.84';
+const APP_VER = 'v4.69.85';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -9000,19 +9000,7 @@ async function openTrainingPreview(source,id){
     previewWorkingList().forEach(it=>{ if(ids.indexOf(it.exercise_id)<0)ids.push(it.exercise_id); });
     const pmap={};
     for(const eid of ids){
-      try{
-        const rows=await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(eid)+'&order=date.desc,created_at.desc&limit=30');
-        let best=null,prev=null;
-        (rows||[]).forEach(s=>{
-          if(s.weight&&s.reps){
-            if(!prev)prev={weight:s.weight,reps:s.reps,rpe:s.rpe,date:s.date};
-            const est=epley1RMRaw(parseFloat(s.weight),parseInt(s.reps));
-            if(!best||est>best)best=est;
-          }
-        });
-        if(best!=null)estOneRMCache[eid]=Math.round(best);
-        if(prev)pmap[eid]=prev;
-      }catch(_){}
+      try{ const prev=await loadPrevPerformance(eid); if(prev)pmap[eid]=prev; }catch(_){}
     }
     if(previewCtx)previewCtx.prevMap=pmap;
   }catch(e){ if(previewCtx)previewCtx.prevMap={}; }
@@ -9048,6 +9036,20 @@ function previewWorkingList(){
 }
 // F0.7L — resolveed werkgewicht voor één werklijst-item via de canonical resolver.
 // Voorbereidingsrollen (warmup/activation/cooldown) krijgen geen werkgewicht.
+// DETRAINING B1: dezelfde resolver-aanroep, maar de provenance (days/factor/reason/rule) voor de
+// bestaande F0.7L-uitleg in Normal execution. Geen tweede berekening: leest hetzelfde resultaat.
+function previewResolveItemDetrain(it){
+  if(!it)return null;
+  const id=it.exercise_id;
+  if(it.pick==='warmup'||it.pick==='activation'||it.pick==='cooldown')return null;
+  const prevMap=(previewCtx&&previewCtx.prevMap)||null;
+  const prev=(prevMap&&prevMap[id])||null;
+  const override=(previewCtx&&previewCtx.overrides&&previewCtx.overrides[id]!=null)?previewCtx.overrides[id]:null;
+  try{
+    const r=resolveWorkingWeight(id,{reps:previewRepsMid(it),rpe:(it.rpe!=null?it.rpe:8),prev:prev,override:override});
+    return {days:r.days,factor:r.factor,reason:r.reason,ruleId:r.ruleId,ruleVersion:r.ruleVersion};
+  }catch(e){return null;}
+}
 function previewResolveItemWeight(it){
   if(!it)return null;
   const id=it.exercise_id;
@@ -9099,6 +9101,7 @@ function buildResolvedExecutionItems(list){
         yt:null,                 // geen YouTube-ID voor canonical Gym; poster/video lopen apart
         poster:posterUrl, video:videoFile, canonicalId:exId,
         suggestedWeight:previewResolveItemWeight(it),   // F0.7L: canonical resolver-gewicht
+        _detrain:previewResolveItemDetrain(it),          // DETRAINING B1: bestaande resolver-reden voor Normal execution
         muscles:{p:Id.primary||[], s:Id.secondary||[]}
       };
     }
@@ -9114,6 +9117,7 @@ function buildResolvedExecutionItems(list){
       wu:it.wu||0, tip:it.tip??null, pick:it.pick??null,
       yt:exObj?exObj.yt:null,
       suggestedWeight:previewResolveItemWeight(it),   // F0.7L: canonical resolver-gewicht
+      _detrain:previewResolveItemDetrain(it),          // DETRAINING B1: bestaande resolver-reden voor Normal execution
       muscles:{p:(exObj&&exObj.muscle_primary)||[], s:(exObj&&exObj.muscle_secondary)||[]}
     };
   });
@@ -17285,6 +17289,25 @@ function daysBetweenDates(fromYmd,toYmd){
   return d<0?0:d;
 }
 
+// ── DETRAINING B1 — CANONICAL PREVIOUS-PERFORMANCE SOURCE ──
+// Eén gedeelde bron voor de "vorige uitvoering" van een oefening (sessions, nieuwste eerst):
+// {weight, reps, rpe, date} van de laatste rij met gewicht+reps, en vult estOneRMCache met de
+// beste Epley-schatting over dezelfde rijen (exact de vroegere Preview-logica, F0.7K). Verzamelt
+// en normaliseert UITSLUITEND canonical input; berekent geen prescription. Gebruikt door Preview
+// én het programmapad, zodat beide dezelfde prev.date aan resolveWorkingWeight() geven.
+async function loadPrevPerformance(eid){
+  const rows=await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(eid)+'&order=date.desc,created_at.desc&limit=30');
+  let best=null,prev=null;
+  (rows||[]).forEach(s=>{
+    if(s.weight&&s.reps){
+      if(!prev)prev={weight:s.weight,reps:s.reps,rpe:s.rpe,date:s.date};
+      const est=epley1RMRaw(parseFloat(s.weight),parseInt(s.reps));
+      if(!best||est>best)best=est;
+    }
+  });
+  if(best!=null)estOneRMCache[eid]=Math.round(best);
+  return prev||null;
+}
 // ── F0.7L — CANONICAL WEIGHT RESOLVER ──
 // Eén bron voor het voorgestelde werkgewicht in Builder/Preview/Normal/Guided.
 //   base   = Calculation Engine: 1RM (previewOneRM) → Brzycki (suggestWeightForRepsRpe)
@@ -17319,6 +17342,12 @@ function resolveWorkingWeight(exId,opts){
   out.reason=df.applicable?('detraining:'+df.days+'d'):'baseline';
   return out;
 }
+// DETRAINING B1 — programma-item: dezelfde resolver-aanroep als Preview (reps = low-end van de
+// voorgeschreven range, RPE = de (recovery-aangepaste) programmatarget, prev = canonical bron).
+function resolveProgramItemWeight(exId,repsStr,rpe,prev){
+  const reps=parseFloat(repsPrefillFromRange(repsStr));
+  return resolveWorkingWeight(exId,{reps:(isFinite(reps)&&reps>0)?reps:null,rpe:(rpe!=null?rpe:8),prev:prev||null});
+}
 function repsPrefillFromRange(repsStr){
   if(!repsStr)return '';
   const m=String(repsStr).match(/(\d+)/);
@@ -17343,9 +17372,13 @@ function computeProgPrefill(ex,prevS,oneRM){
   if(!ex.reps&&!ex.rpe)return null;
   const repsForWeight=repsPrefillFromRange(ex.reps);                 // low-end → prescription-gewicht ongewijzigd
   const repsPrefill=resolvePrescriptionRepTarget(ex.reps)||repsForWeight; // startset → MAXIMUM van de range
-  const suggested=oneRM?suggestWeightForRepsRpe(oneRM,parseFloat(repsForWeight),ex.rpe):null;
+  // DETRAINING B1: geen eigen prescription meer — delegeren aan de canonical resolver
+  // (base 1RM→Brzycki × detrainingFactor(days sinds prevS.date)). Zonder 1RM: suggested=null →
+  // vorige gewicht als ruwe referentie (ongewijzigd fallback-gedrag).
+  let suggested=null, detrain=null;
+  try{ const r=resolveWorkingWeight(ex.id,{reps:parseFloat(repsForWeight),rpe:ex.rpe,prev:prevS||null,oneRM:(oneRM!=null?oneRM:null)}); suggested=r.suggested; detrain={days:r.days,factor:r.factor,reason:r.reason,ruleId:r.ruleId,ruleVersion:r.ruleVersion}; }catch(e){}
   const kg=(suggested!=null)?suggested:((prevS&&prevS.weight)?prevS.weight:'');
-  return {kg,reps:repsPrefill,rpe:ex.rpe||'',sets:ex.sets||4};
+  return {kg,reps:repsPrefill,rpe:ex.rpe||'',sets:ex.sets||4,detrain};
 }
 // Pure functie — bouwt de prompt voor één week, los testbaar
 // Vuistregel: ±12 minuten per oefening (opwarmen + werksets). Tussen 2 en 8 oefeningen,
@@ -18378,6 +18411,7 @@ async function renderTrainScreen(t){
       } else {
         const oneRM=getOneRM(ex.id)||estimatedOneRM(ex.id);
         prefillData=computeProgPrefill(ex,prevS,oneRM);
+        if(prefillData&&prefillData.detrain&&!ex._detrain)ex._detrain=prefillData.detrain; // DETRAINING B1: reden voor de bestaande uitleg
       }
     } else if(ex.suggestedWeight!=null){
       // F0.7L: Normal Execution start op exact hetzelfde canonical resolver-gewicht als Preview.
@@ -18398,7 +18432,7 @@ async function renderTrainScreen(t){
        getal blijft staan. */
     if(!window._rxWeightMap)window._rxWeightMap={};
     window._rxWeightMap[ex.id]=rxWeight;
-    if(prevS&&prevS.weight&&prevS.reps) prevBlockHtml=buildPrevBlock(prevS, ex, rxWeight);
+    if(prevS&&prevS.weight&&prevS.reps) prevBlockHtml=buildPrevBlock(prevS, ex, rxWeight, ex._detrain||null);
 
     const isDefault=(TRAIN_CFG[t]||[]).some(e=>e.id===ex.id);
     // v3.3.25: deel-knop voor persoonlijke oefeningen — was al mogelijk voor eigen
@@ -21613,8 +21647,12 @@ function prevEmptyBlock(){
     '<div class="prev2-empty-msg">Nog geen vorige training voor deze oefening — je eerste resultaat wordt vanaf nu je referentie.</div>'+
   '</div>';
 }
-function buildPrevBlock(prevS, ex, rxWeight){
+function buildPrevBlock(prevS, ex, rxWeight, detrain){
   if(!(prevS&&prevS.weight&&prevS.reps))return '';
+  // DETRAINING B1: dezelfde F0.7L-uitleg als in Preview, uitsluitend uit de bestaande resolver-provenance
+  // (reason 'detraining:Nd', factor<1). Geen nieuwe tekst, geen percentage, geen AI.
+  const detrainEl=(detrain&&detrain.days!=null&&typeof detrain.factor==='number'&&detrain.factor<1&&/^detraining:/.test(String(detrain.reason||'')))
+    ?`<div class="prev2-today keep" style="font-weight:500">Je deed deze oefening ${detrain.days} dagen niet — daarom starten we vandaag iets conservatiever.</div>`:'';
   const w=prevS.weight,r=prevS.reps,rpe=(prevS.rpe!=null&&prevS.rpe!=='')?parseFloat(prevS.rpe):null;
   let today='';
   // READ-ONLY: verwijs naar de ACTUELE prescription (rxWeight = zelfde getal als de VANDAAG-kaart),
@@ -21629,7 +21667,7 @@ function buildPrevBlock(prevS, ex, rxWeight){
   return `<div class="ex-prev prev2">
     <div class="prev2-lbl">Vorige keer</div>
     <div class="prev2-main">${w} kg × ${r}${rpe!=null?` <span class="prev2-rpe">· RPE ${rpe}</span>`:''}</div>
-    ${today}
+    ${today}${detrainEl}
   </div>`;
 }
 function showPostSetAdvice(exId,setNum){
@@ -29651,14 +29689,14 @@ async function launchProgramTrainScreen(adjustment){
     sessionLog=_draft.sessionLog||{};sessionExtra=_draft.sessionExtra||[];trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
   }else{
     sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
-    rows.forEach(r=>{
+    for(const r of rows){
       const ex=exercises.find(e=>e.id===r.exercise_id);
-      if(!ex)return;
+      if(!ex)continue;
       const cardioType=resolveCardioType(ex);
       const exType=cardioType||ex.type||'strength';
       if(cardioType){
         sessionExtra.push({id:ex.id,naam:ex.name,type:exType,_t:ctxT,_preloaded:true});
-        return;
+        continue;
       }
       let sets=r.sets||3, rpe=parseFloat(r.rpe_target)||7;
       if(adjustment){
@@ -29666,13 +29704,19 @@ async function launchProgramTrainScreen(adjustment){
         rpe=Math.max(5,Math.min(10,rpe+(adjustment.rpeDelta||0)));
       }
       const _reps=r.reps||'8-10';
-      // ÉÉN prescription-truth ook voor Programma: canonical werkgewicht = 1RM × (aangepaste) reps ×
-      // (recovery-aangepaste) RPE — dezelfde bron/formule als computeProgPrefill. Zo tonen de VANDAAG-kaart,
-      // de prefill én de coaching hetzelfde getal (geen "nog te bepalen" en geen concurrerend advies).
-      let _sug=null;
-      try{ const _1rm=getOneRM(ex.id)||estimatedOneRM(ex.id); if(_1rm){ _sug=suggestWeightForRepsRpe(_1rm, parseFloat(repsPrefillFromRange(_reps)), String(rpe)); } }catch(e){}
-      sessionExtra.push({id:ex.id,naam:ex.name,type:exType,sets,reps:_reps,rpe:String(rpe),suggestedWeight:(_sug!=null?_sug:null),_t:ctxT,_preloaded:true});
-    });
+      // ÉÉN prescription-truth ook voor Programma (DETRAINING B1): het werkgewicht komt uit exact
+      // dezelfde canonical resolver als Preview/Mijn training — base 1RM×Brzycki × DEC-DETRAIN-001
+      // detrainingFactor(days sinds laatste uitvoering) — met dezelfde previous-performance-bron
+      // (loadPrevPerformance). Voorheen werd hier rechtstreeks suggestWeightForRepsRpe() aangeroepen
+      // zonder prev.date, waardoor een trainingsonderbreking op het programmapad nooit meetelde.
+      let _sug=null,_detrain=null;
+      try{
+        const _prev=await loadPrevPerformance(ex.id);
+        const _r=resolveProgramItemWeight(ex.id,_reps,rpe,_prev);
+        _sug=_r.suggested; _detrain={days:_r.days,factor:_r.factor,reason:_r.reason,ruleId:_r.ruleId,ruleVersion:_r.ruleVersion};
+      }catch(e){}
+      sessionExtra.push({id:ex.id,naam:ex.name,type:exType,sets,reps:_reps,rpe:String(rpe),suggestedWeight:(_sug!=null?_sug:null),_detrain:_detrain,_t:ctxT,_preloaded:true});
+    }
   }
   buildProgramTrainScreen(block,prog);
   cleanupOtherTrainScreens('s-train-prog-'+blockId);

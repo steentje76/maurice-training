@@ -1774,3 +1774,36 @@
 - **Verantwoordelijke:** Product Owner (expliciete opdracht met hard scope,
   12 september 2026), uitgevoerd door Claude.
 
+
+## Builder + AthleteConstraints Completion -- Fase A (audit) + Fase B (Connection Gap fix)
+
+- **Datum:** 13 september 2026.
+- **Fase A (read-only)** bracht vier onafhankelijke vervang-surfaces in kaart:
+  Execution (PR #337), Preview (F23), Builder-autobuild `generate()` (F24)
+  en Builder-edit `swapAlternative()`. Correctie op een oudere audit-
+  aanname: de autobuild-generator was al aangesloten (F24). Alleen
+  `swapAlternative()` miste `AthleteConstraints` -- **B -- CONNECTION GAP**,
+  root cause: functie dateert van voor F23 en is bij F23/F24 overgeslagen.
+  Geen shadow source, geen eigen equipment/injury-logica, persistence
+  correct (canonical `catalog_id`). Verschil Builder-edit vs. overige
+  surfaces geclassificeerd als DEFECT (geen productbeslissing gevonden die
+  het rechtvaardigt). AthleteConstraints-inventaris: equipment (live,
+  gated op `location` thuis/hybride) en avoid-termen (live); een los
+  injury/pain-systeem en sport/context-restricties bestaan niet (MISSING,
+  P3, geen bewezen acute vraag).
+- **Fase B**: `swapAlternative()` past nu hetzelfde
+  `AthleteConstraints.applyConstraints()`-patroon toe als F24 (zelfde
+  context-bronnen, wrapping en fail-safe), na `altList()` en voor de
+  goalScore-sortering. Geen wijziging aan de core, geen tweede engine.
+- Nieuwe test `core/fBuilderSwapAthleteConstraints.test.js` (28/28).
+  Volledige regressie 366/366. Doc-consistency 0. Geen databasewijziging.
+  APP_VER v4.69.78 -> v4.69.79.
+- **Procesnotitie**: tijdens Fase B bleek een oude `git stash` (uit een
+  eerdere sessie) bij `stash pop` twee vreemde hunks in de worktree te
+  mengen (CSS regel ~2194 en een letterlijke `${tkIcon(`-expressie in
+  statische HTML, regel ~4405) die door bestaande tests correct werden
+  afgevangen (`fTrainenV02Migration` FASE5-1). Worktree hersteld naar main
+  + uitsluitend de eigen `swapAlternative()`-hunk; niets daarvan is
+  gecommit.
+- **Verantwoordelijke:** Product Owner (GO na Fase A-rapport, 13 september
+  2026), uitgevoerd door Claude.

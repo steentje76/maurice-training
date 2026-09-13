@@ -7232,7 +7232,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.78';
+const APP_VER = 'v4.69.79';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -34715,7 +34715,24 @@ var WB=(function(){
   function replaceItem(idx,newId){if(!st.plan||!st.plan.items[idx])return;st.plan.items[idx].id=newId;saveDraft();}
   function removeItem(idx){if(!st.plan)return;st.plan.items.splice(idx,1);saveDraft();}
   function moveItem(idx,dir){if(!st.plan)return;var j=idx+dir;if(j<0||j>=st.plan.items.length)return;var a=st.plan.items;var t=a[idx];a[idx]=a[j];a[j]=t;saveDraft();}
-  function swapAlternative(idx){if(!st.plan)return;var cur=st.plan.items[idx];var alts=altList(cur.id).filter(function(ex){return !st.plan.items.some(function(it){return it.id===ex.catalog_id;});});if(!alts.length)return null;
+  function swapAlternative(idx){if(!st.plan)return;var cur=st.plan.items[idx];var alts=altList(cur.id).filter(function(ex){return !st.plan.items.some(function(it){return it.id===ex.catalog_id;});});
+    // Builder + AthleteConstraints Completion Audit -- Connection Gap fix (P2): zelfde
+    // AthleteConstraints-core als de Execution/Preview-swap-picker (F23) en de autobuild-
+    // generator (F24). Bepaalt alleen beschikbaarheid (equipment/avoid), nooit welke oefening
+    // inhoudelijk beter is -- dat blijft de goalScore-sortering hieronder. Nooit een lege set
+    // door deze stap alleen (fail-safe, zelfde garantie als F23/F24). Geen tweede filter-/
+    // substitution-engine: hergebruikt uitsluitend de bestaande, pure AthleteConstraints-core.
+    try{
+      if(window.AthleteConstraints && typeof athleteEquipmentSet==='function'){
+        var _set=athleteEquipmentSet(), _avoid=(typeof athleteAvoidTerms==='function')?athleteAvoidTerms():[];
+        if(_set || (_avoid&&_avoid.length)){
+          var _cands=alts.map(function(ex){return {name:(ex.identity&&ex.identity.name)||'', equipment:(ex.identity&&ex.identity.equipment)||null, _ref:ex};});
+          var _r=AthleteConstraints.applyConstraints(_cands,{availableSet:_set,avoidTerms:_avoid});
+          alts=_r.kept.map(function(w){return w._ref;});
+        }
+      }
+    }catch(e){}
+    if(!alts.length)return null;
     // kies best passend alternatief voor het doel
     alts.sort(function(a,b){return goalScore(b,st.sel.goal)-goalScore(a,st.sel.goal);});
     st.plan.items[idx].id=alts[0].catalog_id;saveDraft();return alts[0].catalog_id;}

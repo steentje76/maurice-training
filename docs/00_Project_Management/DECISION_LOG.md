@@ -1807,3 +1807,38 @@
   gecommit.
 - **Verantwoordelijke:** Product Owner (GO na Fase A-rapport, 13 september
   2026), uitgevoerd door Claude.
+
+## Endurance Registry Source-of-Truth Fix -- CALC-END-004 / CALC-END-004B
+
+- **Datum:** 13 september 2026. Gap 3 uit de Endurance & Multisport Completion
+  Audit; expliciete PO-scope: uitsluitend registry/evidence-documentatie +
+  testbewaking. Geen runtime-, calculation-, UI- of databasewijziging.
+- **Stale claim (voor):** `docs/CALCULATION_REGISTRY.md` beschreef CS/CP als
+  "GEIMPLEMENTEERD, niet geintegreerd op trainingsgeschiedenis" / "niet
+  INTEGRATED" met als reden "geen tijdrit-markeringsmechanisme in het
+  datamodel"; `GAP_ANALYSIS_V2.md` GAP-P2-021 herhaalde dit.
+- **Bewezen werkelijkheid (actuele main 2e3662a):** `renderRunningInsights()`
+  -> `activities` (sport=running) -> `criticalSpeedEligiblePerformances(
+  activities,3)` (`is_max_effort === true`) -> `CardioCore.criticalSpeed()`;
+  idem cycling via `criticalPowerEligiblePerformances()` ->
+  `CardioCore.criticalPower()`. Dynamisch berekend, niet gepersisteerd,
+  guards (`insufficient`/confidence) aanwezig, zichtbaar in Running/Cycling
+  Insights. `buildCtx()`, Decision Rule Registry en AI-context bevatten CS/CP
+  NIET.
+- **Gecorrigeerde status:** LIVE_CANONICAL (calculation/history/UI) --
+  NOT CONNECTED (Context/Decision/AI). GAP-P2-021 CLOSED (tijdrit-markering
+  bestaat als `is_max_effort`); de Context/Decision/AI-aansluiting blijft een
+  aparte open gap (audit Gap 1/4).
+- **Testbewaking:** `core/fEnduranceErgRegistry.test.js` verscherpt (26 -> 36
+  asserties): bestaan 004/004B, geen stale claims, erkenning van de
+  eligibility-integratie, expliciet NOT CONNECTED voor Context/Decision/AI,
+  geen end-to-end-claim, dynamisch/niet-gepersisteerd, en CALC-END-005 blijft
+  NOT_IMPLEMENTED. Sabotagebewijs: 10 falende asserties op de oude tekst.
+- **Niet aangepast (bewust):** F6/F7/F13-sprintrapporten en -inventarissen
+  zijn gedateerde historische snapshots die de toenmalige stand correct
+  beschrijven; CAPABILITY_REGISTRY-regels 63/64 verwijzen naar MS-F6-docs en
+  bevatten geen eigen statusclaim.
+- **Versioning:** geen APP_VER-bump, conform precedent PR #335 (docs-only
+  wijziging zonder runtimeverandering).
+- **Verantwoordelijke:** Product Owner (GO voor uitsluitend Gap 3), uitgevoerd
+  door Claude.

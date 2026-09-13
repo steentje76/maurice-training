@@ -57,17 +57,29 @@ ok(items.length === 6, 'exact 6 CALC-END-items gevonden (001, 002, 003, 004, 004
 
 // ---- B2. NOT_IMPLEMENTED-items correct en eerlijk gelabeld (geen stille fabricage) ----
 {
-  const csCp = items.find(i => i.startsWith('### CALC-END-004'));
-  // MS-F6-01 (F6): Critical Speed is inmiddels geïmplementeerd en getest
-  // (CardioCore.criticalSpeed(), Monod & Scherrer 1965) -- deze regressie-lock
-  // bewaakt nu dat de status-wijziging expliciet en eerlijk gedocumenteerd is,
-  // inclusief de bewuste niet-integratie-beperking (geen tijdrit-markering).
-  ok(csCp && /\*\*GEÏMPLEMENTEERD/.test(csCp), 'CALC-END-004 (Critical Speed) is expliciet GEÏMPLEMENTEERD (MS-F6-01), niet stilzwijgend teruggedraaid');
-  ok(csCp && /criticalSpeed\(\)/.test(csCp) && /niet automatisch op trainingsgeschiedenis gewired/.test(csCp),
-    'CALC-END-004 documenteert expliciet zowel de implementatie als de bewuste niet-integratie-beperking (geen tijdrit-markeringsmechanisme)');
+  const csCp = items.find(i => i.startsWith('### CALC-END-004 '));
+  const cp = items.find(i => i.startsWith('### CALC-END-004B'));
+  // Endurance Registry Source-of-Truth Fix: CS/CP zijn sinds B9-03/B9-05 aantoonbaar
+  // gewired op echte activities-historie via de eligibility-laag (is_max_effort).
+  // De registry mag dat NIET meer ontkennen, maar mag ook NIET beweren dat Context/
+  // Decision/AI al aangesloten zijn.
+  ok(csCp && cp, 'CALC-END-004 (Critical Speed) en CALC-END-004B (Critical Power) bestaan beide');
+  [['CALC-END-004', csCp, 'criticalSpeedEligiblePerformances', 'CALC-RUN-CSELIG-001'],
+   ['CALC-END-004B', cp, 'criticalPowerEligiblePerformances', 'CALC-CYC-CPELIG-001']].forEach(([id, txt, elig, eligId]) => {
+    ok(txt && /LIVE_CANONICAL/.test(txt), id + ' is gelabeld LIVE_CANONICAL (calculation/history/UI)');
+    ok(txt && !/niet geïntegreerd op trainingsgeschiedenis/.test(txt) && !/niet INTEGRATED/.test(txt) && !/niet automatisch op trainingsgeschiedenis gewired/.test(txt) && !/geen tijdrit-markeringsmechanisme/.test(txt),
+      id + ' bevat geen stale "niet geïntegreerd/geen tijdrit-markering"-claim meer');
+    ok(txt && new RegExp(elig).test(txt) && new RegExp(eligId).test(txt) && /is_max_effort === true/.test(txt),
+      id + ' erkent de echte history-integratie via ' + elig + ' (' + eligId + ', is_max_effort === true)');
+    ok(txt && /NOT CONNECTED/.test(txt) && /Nog NIET aangesloten/.test(txt) && /Context Engine/.test(txt) && /Decision Engine/.test(txt) && /AI Coach/.test(txt),
+      id + ' beweert NIET dat Context/Decision/AI al zijn aangesloten (expliciet NOT CONNECTED)');
+    ok(txt && !/end-to-end (mature|geïntegreerd)/i.test(txt), id + ' claimt geen volledige end-to-end-integratie');
+    ok(txt && /niet\*\* gepersisteerd|niet gepersisteerd/.test(txt) && /[Dd]ynamisch/.test(txt), id + ' documenteert dynamische berekening zonder persistentie');
+  });
 
   const trimpEtc = items.find(i => i.startsWith('### CALC-END-005'));
   ok(trimpEtc && /\*\*NOT_IMPLEMENTED\*\*/.test(trimpEtc), 'CALC-END-005 (TRIMP/decoupling/HR-zones) is expliciet NOT_IMPLEMENTED');
+  ok(trimpEtc && !/LIVE_CANONICAL/.test(trimpEtc), 'CALC-END-005 is NIET meegelift naar LIVE_CANONICAL (blijft eerlijk NOT_IMPLEMENTED)');
 }
 
 // ---- B3. Bevestig dat het architectuurcommentaar waarnaar de registry verwijst ook echt bestaat ----

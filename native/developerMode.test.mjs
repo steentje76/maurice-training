@@ -39,7 +39,12 @@ const t2 = Object.assign({}, transport, {
       subscriptions: [{ uuid: 'ce060035-x', key: 'strokeData', attempted: true, ok: true, at: 1700000001000, error: null },
                       { uuid: 'ce06003c-x', key: 'forceCurve', attempted: true, ok: false, at: 1700000001100, error: 'Characteristic not found.' }],
       totals: { subscriptionsOk: 1, subscriptionsFailed: 1, notifications: 7 },
-      notifications: { 'ce060035-x': { count: 7, lastAt: 1700000050000 } } };
+      connectionDurationMs: 60000, lastLifecycleEvent: { event: 'plugin_disconnect', detail: 'connected', at: 1700000060000 },
+      lastSubscriptionBeforeDisconnect: 'strokeData',
+      strategy: { mode: 'AUTO_DISCOVERED', selected: 'INDIVIDUAL', reason: 'individual_present', order: ['ctrlTransmit', 'strokeData'] },
+      discovery: { ok: true, serviceCount: 2 },
+      discoveredServices: [{ uuid: 'ce060030-x', characteristics: [{ uuid: 'ce060035-x', notify: true, read: false, write: false }] }],
+      notifications: { 'ce060035-x': { count: 7, firstAt: 1700000010000, lastAt: 1700000050000 } } };
   }
 });
 const snap2 = buildDiagnosticsSnapshot(t2);
@@ -51,8 +56,15 @@ assert.match(text2, /lastDisconnectReason: PLUGIN_DISCONNECT:unknown_native_disc
 assert.match(text2, /Subscriptions ok\/failed: 1\/1/);
 assert.match(text2, /FAIL forceCurve ce06003c-x — Characteristic not found\./);
 assert.match(text2, /Notifications totaal: 7/);
-assert.match(text2, /ce060035-x: 7x, laatste 2023-11-14T22:14:10\.000Z/);
+assert.match(text2, /ce060035-x: 7x, eerste 2023-11-14T22:13:30\.000Z, laatste 2023-11-14T22:14:10\.000Z/);
+assert.match(text2, /Duur: 60 s/);
+assert.match(text2, /Strategie: AUTO_DISCOVERED → INDIVIDUAL \(individual_present\)/);
+assert.match(text2, /Volgorde: ctrlTransmit → strokeData/);
+assert.match(text2, /Service discovery: ok, 2 services/);
+assert.match(text2, /ce060035-x \[notify\]/);
+assert.match(text2, /lastLifecycleEvent: plugin_disconnect \(connected\)/);
+assert.match(text2, /Laatste geslaagde subscription vóór disconnect: strokeData/);
 assert.doesNotMatch(text2, /hex|payload|bytes/i, 'geen payload in developer-tekst');
 assert.equal('connection' in buildDiagnosticsSnapshot(transport), true, 'snapshot zonder getConnectionDiagnostics blijft geldig (connection=null)');
 assert.equal(buildDiagnosticsSnapshot(transport).connection, null);
-console.log('DeveloperMode: RESULTAAT: 24 geslaagd, 0 mislukt');
+console.log('DeveloperMode: RESULTAAT: 32 geslaagd, 0 mislukt');

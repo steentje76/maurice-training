@@ -71,15 +71,27 @@ export function diagnosticsToText(snapshot) {
     lines.push('Device: ' + (c.deviceIdMasked || '-'));
     lines.push('connectedAt: ' + iso(c.connectedAt));
     lines.push('disconnectedAt: ' + iso(c.disconnectedAt));
+    lines.push('Duur: ' + (typeof c.connectionDurationMs === 'number' ? Math.round(c.connectionDurationMs / 1000) + ' s' : '-'));
     lines.push('lastDisconnectReason: ' + (c.lastDisconnectReason || '-'));
+    lines.push('lastLifecycleEvent: ' + (c.lastLifecycleEvent ? (c.lastLifecycleEvent.event + (c.lastLifecycleEvent.detail ? ' (' + c.lastLifecycleEvent.detail + ')' : '') + ' @ ' + iso(c.lastLifecycleEvent.at)) : '-'));
+    lines.push('Laatste geslaagde subscription vóór disconnect: ' + (c.lastSubscriptionBeforeDisconnect || '-'));
+    const st = c.strategy;
+    lines.push('Strategie: ' + (st ? (st.mode + ' → ' + st.selected + ' (' + st.reason + ')') : '-'));
+    lines.push('Volgorde: ' + (st && Array.isArray(st.order) && st.order.length ? st.order.join(' → ') : '-'));
+    const dc = c.discovery;
+    lines.push('Service discovery: ' + (dc ? (dc.ok ? 'ok, ' + dc.serviceCount + ' services' : 'niet beschikbaar') : '-'));
+    (Array.isArray(c.discoveredServices) ? c.discoveredServices : []).forEach((sv) => {
+      lines.push('  svc ' + sv.uuid);
+      (sv.characteristics || []).forEach((ch) => { lines.push('    ' + ch.uuid + (ch.notify ? ' [notify]' : '') + (ch.read ? ' [read]' : '') + (ch.write ? ' [write]' : '')); });
+    });
     const t = c.totals || {};
     lines.push('Subscriptions ok/failed: ' + (t.subscriptionsOk || 0) + '/' + (t.subscriptionsFailed || 0));
     (Array.isArray(c.subscriptions) ? c.subscriptions : []).forEach((r) => {
-      lines.push('  ' + (r.ok === true ? 'OK   ' : r.ok === false ? 'FAIL ' : '...  ') + (r.key || '-') + ' ' + (r.uuid || '-') + (r.error ? ' — ' + r.error : ''));
+      lines.push('  ' + (r.order != null ? '#' + r.order + ' ' : '') + (r.ok === true ? 'OK   ' : r.ok === false ? 'FAIL ' : '...  ') + (r.key || '-') + ' ' + (r.uuid || '-') + (r.error ? ' — ' + r.error : ''));
     });
     lines.push('Notifications totaal: ' + (t.notifications || 0));
     const n = c.notifications || {};
-    Object.keys(n).forEach((u) => { lines.push('  ' + u + ': ' + n[u].count + 'x, laatste ' + iso(n[u].lastAt)); });
+    Object.keys(n).forEach((u) => { lines.push('  ' + u + ': ' + n[u].count + 'x, eerste ' + iso(n[u].firstAt) + ', laatste ' + iso(n[u].lastAt)); });
     lines.push('');
   }
   const devices = Array.isArray(s.devices) ? s.devices : [];

@@ -1,5 +1,34 @@
 # Trainingskompas — Changelog
 
+## v4.69.82 — Concept2 PM5: discovery-driven subscription-strategie + uitgebreide diagnostiek (13 september 2026)
+
+ErgData-forensics → safe connection strategy. Bron: `docs/concept2-ergdata-forensic.md`
+(statische strings-analyse ErgData 2.16.0 XAPK; het artifact zelf staat niet in de repo).
+Bewezen (APK_OBSERVED): individuele data-characteristics (`PmStrokeData`,
+`PmSplitIntervalData`, `forceCurveCharacteristic`), CSAFE-control (0x0021/0x0022,
+`PmCommandProcessor`), connection-keeper (`PmConnectionKeeperService`,
+`DisconnectInitiatedDueInactivity`). NIET bewezen: gelijktijdig gebruik van
+multiplex 0x0080 met individuele chars; byte-layouts; CSAFE-payloads.
+
+- Subscription-strategie (`AUTO_DISCOVERED` | `INDIVIDUAL` | `MULTIPLEXED`, injecteerbaar):
+  nooit multiplex én individueel tegelijk. Voorkeur INDIVIDUAL (spec-rol BOTH, ErgData-
+  klassen), fallback MULTIPLEXED alleen als de individuele data-chars op het toestel
+  ontbreken; discovery onbeschikbaar → veilige default INDIVIDUAL. Control (0x0022) eerst.
+- Service discovery vóór subscriben: `gateway.getServices()` (plugin-contract bevestigd,
+  BleService/BleCharacteristic.properties.notify); alleen aanwezige notify-chars worden
+  geprobeerd — geen blinde 8-char-batch meer. Subscriptions sequentieel met expliciete
+  `order`; keten stopt zodra de verbinding tijdens het subscriben wegvalt.
+- Developer Mode: strategie + reden, volgorde, service discovery (services/characteristics
+  met notify/read/write), `firstNotificationAt`, connection-duur, `lastLifecycleEvent`,
+  laatste geslaagde subscription vóór disconnect. Geen payloads.
+- Bewust NIET: decoders (UNKNOWN blijft UNKNOWN), CSAFE-commando's, keep-alive-gok,
+  FTMS-wiring, workout programming.
+
+Tests: native transport 104 → 133/133 (strategie S1–S17; sabotage 'beide tegelijk' →
+4 failures), DeveloperMode 24 → 32/32, connection-state 51/51. Volledige regressie
+368/368. APP_VER v4.69.81 → v4.69.82. Draft PR #344, NIET mergen vóór real-device
+validatie.
+
 ## v4.69.81 — Concept2 PM5: connection state preservation, echte disconnect-state, developer diagnostics (13 september 2026)
 
 Fase B na de Sustained Connection Failure Audit. Real-device status: discovery/

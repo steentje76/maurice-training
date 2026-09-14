@@ -174,6 +174,12 @@ _(Hernummerd van GAP-P2-025 bij de Gap 1b-sprint: dat ID was al in gebruik door 
 **Target:** aparte sprints met evidence-gate; geen percentage zonder bronnen.
 **Priority:** P3. **Complexity:** M.
 
+### GAP-P3-032 — **CLOSED** (Readiness Input & Application Parity, 14 september 2026) — Readiness/recovery op verschillende paden verschillend toegepast
+**Capability-ID:** DEC-RECADJ-001, F0.7L canonical weight resolver
+**Current (vóór):** Programma muteerde sets/RPE vóór Brzycki (check-in incl. gevoel+pijn); Normal/Guided gebruikten `applySessionRecovery`/`recoveryWeightFactor` maar gaven pijn altijd als null door; override-vs-readiness-precedentie ongedocumenteerd.
+**Closure-bewijs:** `recoveryAdjustmentForToday(muscles, opts)` als enige aanroep (gevoel `hrv_log.voelt`, pijn `checkin_conditions`); Programma via `sessionRxAdj[ctxT]` → `applySessionRecovery`; override finaal (`_weightOverride`/`_rxOverrideBypass`) in Normal én Guided; provenance/uitleg. `core/fReadinessParity.test.js` 57/57 (sabotage 2/8/2).
+**Priority:** P3 — gesloten. Buiten scope gebleven: GAP-P3-031 (a/b/d/e), 1RM-middeling, DEC-BASIS-001.
+
 ### GAP-P3-023 (nieuw, Athlete Dashboard 2.0-sprint) — verwarrende naamgeving: computeProgramProgress()'s "adherencePct" is een ander concept dan AdherenceIntelligenceCore
 **Capability-ID:** ADHERENCE-INTELLIGENCE-001
 **Current:** `computeProgramProgress()`/`computeProgramProgressPure()` (F4-erfenis, gebruikt bij programma-regeneratie en het weekoverzicht) berekenen `adherencePct` als `completed.length/blocks.length*100`, waarbij `blocks` het volledige programma kan omvatten inclusief toekomstige, nog-niet-uitgevoerde blokken. Dit is een ander concept ("programma-doorloop-percentage tijdens regeneratie-beslissingen") dan de nieuwe, canonieke `AdherenceIntelligenceCore` (die FUTURE-items expliciet uitsluit van de noemer) — maar de identieke veldnaam is verwarrend en kan tot onterechte aannames leiden dat beide hetzelfde meten.

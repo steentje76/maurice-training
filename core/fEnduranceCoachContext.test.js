@@ -35,7 +35,7 @@ function sandbox(activeSport, queries) {
   const calls = [];
   const ctx = {
     CardioCore, RunningIntelligenceCore, CyclingIntelligenceCore, SwimmingIntelligenceCore, TrainingLoadCore, ProgressionCore,
-    getActiveSport: () => activeSport, Date, Promise, Math, Object, Array, String, Number, isFinite, console,
+    getActiveSport: () => activeSport, Date: FixedDate, Promise, Math, Object, Array, String, Number, isFinite, console,
     sbGet: (table, q) => { calls.push(table + q); return Promise.resolve(queries(table, q)); }
   };
   vm.createContext(ctx);
@@ -43,6 +43,8 @@ function sandbox(activeSport, queries) {
   ctx._calls = calls; return ctx;
 }
 const NOW = new Date('2026-09-13T12:00:00Z');
+// Datum-stabiel: de adapter gebruikt `new Date()`; de sandbox krijgt een Date die zonder argumenten NOW teruggeeft.
+class FixedDate extends Date { constructor(...a) { if (a.length === 0) super(NOW.getTime()); else super(...a); } static now() { return NOW.getTime(); } }
 const d = (daysAgo) => new Date(NOW.getTime() - daysAgo * 86400000).toISOString();
 // Running: 3 max-effort met verschillende duren (CS-eligible) + gewone sessies met RPE
 const RUN = [ // oudste sessies langzamer -> pace-trend verbeterend

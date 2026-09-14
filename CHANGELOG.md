@@ -1,5 +1,37 @@
 # Trainingskompas — Changelog
 
+## v4.69.92 — Structured Intervals B3: RowErg/BikeErg/SkiErg canonical (sessions-domein) (14 september 2026)
+
+PO-architectuurbesluit: **Erg-actuals horen in het sessions-domein** (forensisch bewezen in
+`docs/B9_H6B_CONCEPT2_CANONICAL_DATAFLOW_AUDIT.md`: sessions = workout-execution log, activities =
+standalone endurance; geen migratie, geen dual-write). Een canonieke structured Erg-Definition
+bevat **exact één canonieke erg-oefening** (RowErg `roeien`, BikeErg `bikeerg`, SkiErg `skierg`);
+het plan blijft uitsluitend `metadata.intervalPrescription` (interval_prescription.v1).
+
+- `migratie_v565.sql`: `sessions.intervals_detail` jsonb NULL (additief, idempotent, geen backfill,
+  geen RLS-wijziging — erft de sessions-policies; gekozen boven een child-tabel vanwege atomische
+  write met de sessierij en bewijsbare ownership, zelfde patroon als `sets_detail`).
+- Contract `erg_intervals_actual.v1`: `{version, sport, blocks:[{lap_type, block_index,
+  repeat_index, duration_s, distance_m, power_w}], aborted}` — uitsluitend gemeten actuals;
+  ontbrekend blijft null; nooit prescribed→actual; geen cadans/RPM als `stroke_rate`.
+- Builder: sportkeuze rowerg/bikeerg/skierg met erg-targetlabels; save koppelt de canonieke
+  oefening en faalt gesloten bij sport/oefening-mismatch (`tkErgDefinitionValid`).
+- Start: Preview → `startInstanceFromDefinition` → snapshot → prescriptie klaargezet voor die ene
+  oefeningkaart (`_tkErgPending`); executie leest het snapshot, niet de bron-Definition.
+- Executie: `IntervalEngineCore` (stateAt/nextBlockIndex) blijft de enige engine; per blok wordt de
+  werkelijke duur als actual vastgelegd; vroegtijdig stoppen sluit alleen het lopende blok af.
+- Persistence: exact één sessierij met `exercise_id`, `training_instance_id`, `duration_s` en
+  `intervals_detail`; geen activities-write, geen tweede sessions-write; de exNote-samenvatting
+  blijft display-compatibiliteit, niet de canonieke waarheid.
+- History: planned-vs-actual per blok in het logboek (`renderErgSessionStructuredHtml`), sport-correcte
+  splits (RowErg/SkiErg /500m, BikeErg /1000m) uitsluitend uit gemeten afstand+tijd.
+
+Tests: nieuw `core/fStructuredIntervalsB3Erg.test.js` **176/176** (3 sporten × Definition-round-trip,
+invariant, immutable snapshot, executie, incomplete finish, persistence, History, eenheden, legacy
+ad-hoc). Sabotage: prescribed→actual → 3, activities dual-write → 4, toekomstige blokken → 12,
+cadans als stroke_rate → 4, duplicate session write → 2, contractversie-guard weg → 3 failures.
+B2 181/181, B1 108/108, volledige regressie 378/378. APP_VER v4.69.91 → v4.69.92.
+
 ## v4.69.91 — Structured Intervals B2: cycling + swimming canonical (14 september 2026)
 
 Eén sportneutrale structured-executielaag voor running, cycling en swimming. Plan =

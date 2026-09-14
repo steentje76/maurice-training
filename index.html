@@ -7295,7 +7295,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.91';
+const APP_VER = 'v4.69.92';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -9278,6 +9278,21 @@ function previewGoto(view){ if(!previewCtx)return; previewCtx.view=view; preview
 // totalPlannedSeconds). Geen eigen duurformule, geen reconstructie uit UI-velden.
 const TK_IV_BLOCK_LABEL={warmup:'Warming-up',work:'Werk',recovery:'Herstel',cooldown:'Cooling-down',manual:'Handmatig'};
 const TK_IV_SPORT_LABEL={running:'Hardlopen',cycling:'Fietsen',swimming:'Zwemmen',rowing:'RowErg',bikeerg:'BikeErg',skierg:'SkiErg'};
+// ── STRUCTURED INTERVALS B3 (Erg) ──
+// PO-besluit: een canonieke structured Erg-Definition bevat EXACT ÉÉN canonieke erg-oefening.
+// De oefening levert de executie-identiteit en sessions.exercise_id; het plan blijft uitsluitend
+// metadata.intervalPrescription (interval_prescription.v1). Identiteiten komen uit de bestaande
+// exercises-seed/CARDIO_TYPE_BY_ID (RowErg = 'roeien'; 'rowerg' is alias/relabel).
+const TK_ERG_SPORTS=['rowing','bikeerg','skierg'];
+const TK_ERG_EXERCISE_ID={rowing:'roeien',bikeerg:'bikeerg',skierg:'skierg'};
+const TK_ERG_INTERVALS_VERSION='erg_intervals_actual.v1';
+function tkErgSportForExercise(exId){ const t=(typeof CARDIO_TYPE_BY_ID!=='undefined')?CARDIO_TYPE_BY_ID[exId]:null; return (t&&TK_ERG_SPORTS.indexOf(t)!==-1)?t:null; }
+function tkErgDefinitionValid(sport,exercises){
+  if(TK_ERG_SPORTS.indexOf(sport)===-1)return false;
+  if(!Array.isArray(exercises)||exercises.length!==1)return false;
+  const exId=exercises[0]&&(exercises[0].exercise_id||exercises[0].id);
+  return !!exId && tkErgSportForExercise(exId)===sport;
+}
 function tkIvTerminationText(b){
   if(!b||!b.termination)return '';
   if(b.termination.type==='time')return CardioCore.formatTime(b.termination.seconds);
@@ -9668,11 +9683,21 @@ async function previewStartTraining(mode){
   // IntervalEngineCore-executie op het bestaande running-scherm. Geen strength-executie, geen GW.
   if(def&&def.intervalPrescription){
     const norm=IntervalEngineCore.normalizePrescription(def.intervalPrescription);
-    if(!norm.geldig||TK_STRUCTURED_SPORTS.indexOf(norm.sport)===-1){toast(norm.geldig?'Deze sport wordt nog niet gestructureerd uitgevoerd':'Prescriptie ongeldig');previewStarting=false;return;}
-    closeModal('m-training-preview');
-    startStructuredEnduranceExecution(norm.sport,{definitionId:def.id,naam:def.name,instanceId:instanceId||null,prescription:norm,rawPrescription:def.intervalPrescription}); // B2: running/cycling/swimming
-    previewCtx=null;previewStarting=false;
-    return;
+    // B3 (Erg): Definition bevat exact één canonieke erg-oefening; de structured executie leeft op de
+    // OEFENINGKAART (sessions-domein), niet op een endurance-scherm. Prescriptie komt uit het zojuist
+    // gepersisteerde instance-snapshot en wordt klaargezet voor die ene oefening; daarna loopt de start
+    // door de normale custom-trainingketen (exercise_id, sessionLog, finishSession).
+    if(norm.geldig&&TK_ERG_SPORTS.indexOf(norm.sport)!==-1){
+      const _exId=(def.exercises&&def.exercises[0]&&def.exercises[0].exercise_id)||null;
+      if(!tkErgDefinitionValid(norm.sport,def.exercises||[])){toast('Erg-training mist de juiste oefening');previewStarting=false;return;}
+      _tkErgPending={exId:_exId,sport:norm.sport,instanceId:instanceId||null,prescription:norm,rawPrescription:def.intervalPrescription};
+    }else{
+      if(!norm.geldig||TK_STRUCTURED_SPORTS.indexOf(norm.sport)===-1){toast(norm.geldig?'Deze sport wordt nog niet gestructureerd uitgevoerd':'Prescriptie ongeldig');previewStarting=false;return;}
+      closeModal('m-training-preview');
+      startStructuredEnduranceExecution(norm.sport,{definitionId:def.id,naam:def.name,instanceId:instanceId||null,prescription:norm,rawPrescription:def.intervalPrescription}); // B2: running/cycling/swimming
+      previewCtx=null;previewStarting=false;
+      return;
+    }
   }
   closeModal('m-training-preview');
   if(mode==='guided'&&window.GW&&window.GWUI){
@@ -13741,6 +13766,47 @@ async function renderRunDetail(activityId){
 // B2 (unit-fix): sport-bewuste weergave van een ACTUAL lap binnen de gedeelde structured-History-renderer.
 // Zwemmen gebruikt de canonieke zwemconventie (meters + pace per 100 m via CardioCore.splitFromDistTime);
 // hardlopen/fietsen behouden de bestaande km/m-notatie. Uitsluitend gemeten waarden; ontbrekend blijft weg.
+// B3 (Erg History): planned (training_instances.snapshot.intervalPrescription) vs. actual
+// (sessions.intervals_detail, erg_intervals_actual.v1) voor een ergometer-sessie. Uitsluitend
+// vastgelegde data: ontbrekende actuals blijven 'niet gelogd', toekomstige blokken verschijnen niet,
+// en een geplande waarde wordt nooit als actual getoond. Zelfde blok-/terminatie-/targethelpers als
+// de endurance-History (geen tweede renderer).
+async function renderErgSessionStructuredHtml(sess){
+  try{
+    if(!sess||!sess.intervals_detail||!sess.training_instance_id)return '';
+    const det=sess.intervals_detail;
+    if(!det||det.version!==TK_ERG_INTERVALS_VERSION||!Array.isArray(det.blocks))return '';
+    const inst=await sbGet('training_instances','&id=eq.'+encodeURIComponent(sess.training_instance_id)+'&limit=1');
+    const snap=inst&&inst[0]&&inst[0].snapshot;
+    if(!snap||!(snap.intervalPrescriptionNormalized||snap.intervalPrescription))return '';
+    const norm=(snap.intervalPrescriptionNormalized&&Array.isArray(snap.intervalPrescriptionNormalized.blocks)&&snap.intervalPrescriptionNormalized.blocks.length)
+      ?snap.intervalPrescriptionNormalized:IntervalEngineCore.normalizePrescription(snap.intervalPrescription);
+    if(!norm||!norm.geldig)return '';
+    const sport=det.sport||norm.sport||null;
+    const byBlock={}; det.blocks.forEach(b=>{ if(b&&typeof b.block_index==='number'){ (byBlock[b.block_index]=byBlock[b.block_index]||[]).push(b); } });
+    const rows=norm.blocks.map((b,i)=>{
+      const acts=byBlock[i]||[];
+      const actual=acts.length?acts.map(a=>tkErgActualText(sport,a)).join(', '):'<span style="color:var(--g4)">niet gelogd</span>';
+      return `<tr><td style="padding:2px 6px 2px 0">${structuredBlockLabel(b)}</td><td style="padding:2px 6px">${tkIvTerminationText(b)}${tkIvTargetText(b)}</td><td style="padding:2px 0 2px 6px">${actual}</td></tr>`;
+    }).join('');
+    const gedaan=Object.keys(byBlock).length;
+    return `<div style="font-size:13px;margin-top:10px"><b>Intervaltraining (gepland vs. uitgevoerd):</b>
+      <div style="font-size:12px;color:var(--g4);margin:4px 0 6px">${norm.blocks.length} blokken gepland · ${gedaan} van ${norm.blocks.length} blokken gelogd${det.aborted?' · vroegtijdig gestopt':''}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="color:var(--g4)"><th style="text-align:left;font-weight:600">Blok</th><th style="text-align:left;font-weight:600">Gepland</th><th style="text-align:left;font-weight:600">Uitgevoerd</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }catch(e){ return ''; }
+}
+// Sport-correcte weergave van EEN ACTUAL erg-blok: RowErg/SkiErg split /500m, BikeErg /1000m, uitsluitend
+// afgeleid uit GEMETEN afstand+tijd via CardioCore. Cadans wordt niet getoond (geen canoniek erg-veld).
+function tkErgActualText(sport,a){
+  if(!a)return '';
+  const delen=[CardioCore.formatTime(a.duration_s)];
+  if(a.distance_m){
+    delen.push(Math.round(a.distance_m)+' m');
+    if(a.duration_s>0){ const basis=(sport==='bikeerg')?1000:500; const sp=CardioCore.splitFromDistTime(a.distance_m,a.duration_s,basis); if(sp!=null)delen.push(CardioCore.formatTime(Math.round(sp))+'/'+basis+'m'); }
+  }
+  if(a.power_w)delen.push(Math.round(a.power_w)+' W');
+  return delen.join(' · ');
+}
 function tkStructuredLapActualText(sport,l){
   if(!l)return '';
   const delen=[CardioCore.formatTime(l.duration_seconds)];
@@ -21135,6 +21201,8 @@ function getMachineList(type){
 // los boven deze sectie in buildCardioBody() en blijft ongewijzigd functioneren).
 // ══════════════════════════════════════════════════════════════════════════
 var _ivPrescr={}; // per exId: laatst ingevoerde ruwe formulierwaarden (voor hertoon na re-render)
+// B3: canonieke erg-prescriptie uit het instance-snapshot, klaargezet voor ÉÉN oefeningkaart.
+var _tkErgPending=null; // {exId,sport,instanceId,prescription,rawPrescription}
 var _ivExec=null; // actieve executiestate: {exId,cardioType,prescription,blockIndex,startedAt,elapsedBeforePause,paused}
 var _ivTimerHandle=null, _ivBlockEndAt=null;
 
@@ -21181,9 +21249,14 @@ function buildIntervalPrescriptionFromForm(exId,cardioType){
   return IntervalEngineCore.normalizePrescription({sport:cardioType,blocks});
 }
 function startIntervalExecution(exId,cardioType){
-  const prescription=buildIntervalPrescriptionFromForm(exId,cardioType);
+  // B3: canonieke structured Erg-start leest de prescriptie UITSLUITEND uit het gepersisteerde
+  // instance-snapshot (_tkErgPending); zonder Definition blijft het bestaande ad-hoc formulier gelden.
+  const canon=(_tkErgPending&&_tkErgPending.exId===exId&&_tkErgPending.prescription&&_tkErgPending.prescription.geldig)?_tkErgPending:null;
+  const prescription=canon?canon.prescription:buildIntervalPrescriptionFromForm(exId,cardioType);
   if(!prescription.geldig){ toast('Ongeldige intervalinstelling: '+(prescription.reden||'onbekende fout')); return; }
-  _ivExec={exId,cardioType,prescription,blockIndex:0,workSecondsTotaal:0,completedWorkBlocks:0};
+  _ivExec={exId,cardioType,prescription,blockIndex:0,workSecondsTotaal:0,completedWorkBlocks:0,
+    canonical:!!canon,instanceId:canon?canon.instanceId:null,sport:canon?canon.sport:cardioType,
+    laps:[],blockStartedAt:Date.now(),aborted:false};
   openModal('m-interval-exec');
   renderIntervalExecBlock();
 }
@@ -21232,9 +21305,21 @@ function startIntervalBlockTimer(seconds,isWork){
   tick();
   _ivTimerHandle=setInterval(tick,1000);
 }
+// B3: sluit het huidige blok af als ACTUAL (werkelijk verstreken tijd; geen geplande waarde).
+function tkErgCloseBlockActual(){
+  if(!_ivExec)return;
+  const st=IntervalEngineCore.stateAt(_ivExec.prescription,_ivExec.blockIndex);
+  if(st.voltooid||!st.block)return;
+  const b=st.block;
+  const dur=Math.max(0,Math.round((Date.now()-(_ivExec.blockStartedAt||Date.now()))/1000));
+  if(dur<1)return;
+  _ivExec.laps.push({lap_type:b.type,block_index:_ivExec.blockIndex,repeat_index:b.repeatIndex,duration_s:dur,distance_m:null,power_w:null});
+  _ivExec.blockStartedAt=Date.now();
+}
 function advanceIntervalBlock(){
   if(!_ivExec)return;
   if(_ivTimerHandle){clearInterval(_ivTimerHandle);_ivTimerHandle=null;}
+  tkErgCloseBlockActual();
   _ivExec.blockIndex=IntervalEngineCore.nextBlockIndex(_ivExec.blockIndex);
   renderIntervalExecBlock();
 }
@@ -21248,7 +21333,15 @@ function stopIntervalExecutionEarly(){
 // totale werktijd en aantal voltooide werk-blocks, in dezelfde vorm als een handmatige cardio-invoer.
 async function finishIntervalExecution(vroegtijdigGestopt){
   if(!_ivExec)return;
+  if(vroegtijdigGestopt){ tkErgCloseBlockActual(); _ivExec.aborted=true; } // B3: lopend blok als ACTUAL (werkelijke duur)
   const {exId,cardioType,workSecondsTotaal,completedWorkBlocks}=_ivExec;
+  // B3: canonieke structured ACTUAL (erg_intervals_actual.v1) -> sessions.intervals_detail bij afronden.
+  // Uitsluitend gemeten waarden: duur per blok; afstand/vermogen/cadans blijven null zolang er geen
+  // canonieke meting is (geen prescribed->actual, geen verzonnen telemetrie, geen RPM-in-stroke_rate).
+  if(_ivExec.canonical&&_ivExec.laps.length){
+    if(!sessionLog[exId])sessionLog[exId]={};
+    sessionLog[exId].intervalsDetail={version:TK_ERG_INTERVALS_VERSION,sport:_ivExec.sport,blocks:_ivExec.laps.slice(),aborted:!!_ivExec.aborted};
+  }
   closeModal('m-interval-exec');
   if(workSecondsTotaal>0){
     const m=Math.floor(workSecondsTotaal/60),s=workSecondsTotaal%60;
@@ -22813,7 +22906,7 @@ async function finishSession(){
       // P1: oefeningsnotitie mee in de note-kolom, als vrije-notitie-deel vóór de afgeleide extraNote
       // (zodat de bestaande cardio-edit-strip 'm weer als vrije notitie herkent).
       let _cNote=extraNote||''; if(l.exNote)_cNote=l.exNote+(_cNote?' · '+_cNote:'');
-      await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||null,duration_s:_duurS,weather:_weerData,...cRow});saved++;
+      await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),...cRow});saved++; // B3: structured erg-actuals in dezelfde, enige sessierij
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
       const ws=l.sets.filter(s=>s&&(s.kg||s.reps));if(!ws.length)continue;
@@ -24164,7 +24257,7 @@ async function loadHistory(append=false){
           const clickAttr=s._pending?`onclick='toast("Wachtend op sync — bewerken kan zodra online")'`:`onclick='openEditSess(${JSON.stringify(s.id)},${JSON.stringify(n)},${JSON.stringify(s)})'`;
           return `<div class="lg-ex" ${clickAttr}>
             <span class="lg-ex-th${poster?' has':''}">${thumb}</span>
-            <div class="lg-ex-b"><div class="lg-ex-nm">${pendingTag}${escHtml(n)}</div><div class="lg-ex-did">${v}</div>${prog}${evBtn}</div>
+            <div class="lg-ex-b"><div class="lg-ex-nm">${pendingTag}${escHtml(n)}</div><div class="lg-ex-did">${v}</div>${prog}${evBtn}<div id="ergiv-${s.id}"></div></div>
             <div class="lg-ex-a">${s._pending?'':`<span class="lg-ex-i">${LI.edit}</span>`}<button class="del" onclick="event.stopPropagation();deleteSessionDirect(${JSON.stringify(s.id)})" aria-label="Verwijderen">${LI.trash}</button></div>
           </div>`;
         }).join('')}
@@ -24175,6 +24268,10 @@ async function loadHistory(append=false){
       </div>
     </div>`;
   });
+  // B3: structured erg-sessies krijgen planned-vs-actual (async ingevuld, zelfde patroon als cardioprev-).
+  (async()=>{ for(const s of ss){ if(!s||!s.intervals_detail||!s.training_instance_id)continue;
+      try{ const h=await renderErgSessionStructuredHtml(s); const slot=document.getElementById('ergiv-'+s.id); if(h&&slot)slot.innerHTML=h; }catch(_){}
+  } })();
   const el=document.getElementById('hist-list');
   if(append)el.insertAdjacentHTML('beforeend',html);
   else el.innerHTML=recentHtml+(html||'<div class="tk-empty"><div class="tk-empty-emo">📋</div>Nog geen trainingen gelogd — je sessies verschijnen hier.</div>');
@@ -35416,11 +35513,17 @@ var WB=(function(){
     var norm=IntervalEngineCore.normalizePrescription(raw);
     if(!norm.geldig)return null;
     var isUpdate=!!existingId;
+    var ergEx=[];
+    if(typeof TK_ERG_SPORTS!=='undefined'&&TK_ERG_SPORTS.indexOf(norm.sport)!==-1){
+      var _exId=TK_ERG_EXERCISE_ID[norm.sport];
+      ergEx=[{exercise_id:_exId,sort_order:0,sets:null,reps:null,rpe:null,rest:null,pick:null,wu:null}];
+      if(!tkErgDefinitionValid(norm.sport,ergEx))return null; // fail closed: sport/oefening-mismatch
+    }
     var id=existingId||('custom_'+Date.now());
     var existing=(isUpdate&&typeof customTrainings!=='undefined')?customTrainings.find(function(x){return x.id===id;}):null;
     var t={
       id:id, name:name||(existing?existing.name:'Intervaltraining'), color:(existing?existing.color:'#0E3B4A'), note:(existing?existing.note:''),
-      exercises:[], source:(existing?existing.source:'builder'),
+      exercises:ergEx, source:(existing?existing.source:'builder'), // B3: erg-Definition bevat exact één canonieke erg-oefening
       metadata:{sel:{sport:raw.sport||'running',goal:'conditie'},intervalPrescription:raw,created:(existing&&existing.metadata?existing.metadata.created:Date.now())},
       exercise_targets:[]
     };

@@ -7295,7 +7295,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.89';
+const APP_VER = 'v4.69.90';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -17806,7 +17806,8 @@ async function renderKalender(){
   try{const ss=await v43SafeGet('sessions',`&date=gte.${start}&date=lte.${end}`);(ss||[]).forEach(s=>{if(s.date)doneSet.add(String(s.date).slice(0,10));});}catch(e){}
   // Gepland/deload: alle program_blocks met planned_date.
   const planMap={};const allBlocks=[];
-  try{const blk=await v43SafeGet('program_blocks','&order=week_nr.asc');(blk||[]).forEach(b=>{allBlocks.push(b);if(b.planned_date){const d=String(b.planned_date).slice(0,10);planMap[d]={id:b.id,deload:/deload/i.test(b.fase_naam||''),fase:b.fase_naam||'',done:!!b.completed_at};}});}catch(e){}
+  // GAP-P4-004: owner-scoped (programs.user_id -> program_id=in.), zelfde canonical helper als Context/weekoverzicht.
+  try{const blk=await tkOwnedProgramBlocks(authSession?.user?.id||null,'&order=week_nr.asc');(blk||[]).forEach(b=>{allBlocks.push(b);if(b.planned_date){const d=String(b.planned_date).slice(0,10);planMap[d]={id:b.id,deload:/deload/i.test(b.fase_naam||''),fase:b.fase_naam||'',done:!!b.completed_at};}});}catch(e){}
   // Maandtitel
   let titel=new Date(Y,M,1).toLocaleDateString('nl-NL',{month:'long',year:'numeric'});
   titel=titel.charAt(0).toUpperCase()+titel.slice(1);
@@ -24660,7 +24661,7 @@ async function inzichtRenderDevelopment(){
   grid.innerHTML='<div class="tk-summary-cell">…</div><div class="tk-summary-cell">…</div><div class="tk-summary-cell">…</div><div class="tk-summary-cell">…</div>';
   var all=await inzichtGetOrNull('sessions','&order=date.desc,created_at.desc&limit=500');
   var activities=await inzichtGetOrNull('activities','&order=date.desc&limit=200');
-  var blocks=await inzichtGetOrNull('program_blocks','&order=planned_date.desc&limit=200');
+  var blocks=await tkOwnedProgramBlocks(authSession?.user?.id||null,'&order=planned_date.desc&limit=200',{nullOnError:true}); // GAP-P4-004: owner-scoped; null = niet beschikbaar (bestaande semantiek)
 
   var improvedHtml='<div class="unavailable">—</div>', trendHtml='<div class="unavailable">—</div>', trainingHtml='<div class="unavailable">—</div>', adherenceHtml='<div class="unavailable">—</div>';
 
@@ -27192,8 +27193,10 @@ function weekBounds(dateStr){
 }
 async function tkWeekOverview(){
   const {maandag,zondag}=weekBounds(td());
+  // GAP-P4-003: program_blocks uitsluitend via de eigen programma's (programs.user_id -> program_id=in.),
+  // dezelfde canonical owner-helper als de Context-adapter (#351). Geen uid/programma's/lookup-fout -> [].
   const [blocksWeek,sessiesWeek,prEvents]=await Promise.all([
-    sbGet('program_blocks','&planned_date=gte.'+maandag+'&planned_date=lte.'+zondag),
+    tkOwnedProgramBlocksInWindow(authSession?.user?.id||null, maandag, zondag),
     sbGet('sessions','&date=gte.'+maandag+'&date=lte.'+zondag),
     tkPrTimeline()
   ]);
@@ -34820,14 +34823,21 @@ function tkInactivityAdherenceText(inact, adh){
 // ingelogde gebruiker (zelfde keten als de kalender, r.12141), daarna program_blocks uitsluitend met
 // program_id=in.(<eigen ids>) + datumvenster. Geen eigen programma's -> []. Eigenaarschap niet
 // bepaalbaar (geen uid / query-fout) -> [] (fail-safe: nooit terugvallen op alle blokken).
-async function tkOwnedProgramBlocksInWindow(uid, vanaf, today){
+// Generieke owner-scoped program_blocks-read (GAP-P4-003/004): extraQ = extra PostgREST-filter/sortering.
+// opts.nullOnError=true -> null bij fout (voor 'niet beschikbaar'-semantiek zoals Inzicht), anders [].
+// Nooit een ongescoopte fallback: geen uid / geen eigen programma's -> [] ; fout -> [] of null.
+async function tkOwnedProgramBlocks(uid, extraQ, opts){
+  const onErr=(opts&&opts.nullOnError)?null:[];
   try{
     if(!uid)return [];
     const progs=await sbGet('programs','&user_id=eq.'+encodeURIComponent(uid)+'&select=id');
     const ids=(Array.isArray(progs)?progs:[]).map(p=>p&&p.id).filter(Boolean);
     if(!ids.length)return [];
-    return await sbGet('program_blocks','&program_id=in.('+ids.map(encodeURIComponent).join(',')+')&planned_date=gte.'+vanaf+'&planned_date=lte.'+today);
-  }catch(_){ return []; }
+    return await sbGet('program_blocks','&program_id=in.('+ids.map(encodeURIComponent).join(',')+')'+(extraQ||''));
+  }catch(_){ return onErr; }
+}
+async function tkOwnedProgramBlocksInWindow(uid, vanaf, today){
+  return tkOwnedProgramBlocks(uid,'&planned_date=gte.'+vanaf+'&planned_date=lte.'+today);
 }
 async function tkInactivityAdherenceContext(){
   try{

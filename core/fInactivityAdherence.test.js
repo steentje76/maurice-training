@@ -70,7 +70,7 @@ eq(a.missedStreak, 2, 'missedStreak 2 (laatste twee geplande gemist)');
 ok(!/\b(14|80)\b.*(slecht|goed)|drempel|threshold/.test(fs.readFileSync(path.join(ROOT, 'core/inactivityAdherence.js'), 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '')), 'geen productheuristische drempel in de core (code, excl. commentaar)');
 
 // ── Adapter (echte functies, stub-sbGet) ──
-const FNS = ['tkInactivityAdherenceContext', 'tkInactivityAdherenceText', 'tkLocalDayFromIso', 'tkOwnedProgramBlocksInWindow'];
+const FNS = ['tkInactivityAdherenceContext', 'tkInactivityAdherenceText', 'tkLocalDayFromIso', 'tkOwnedProgramBlocksInWindow', 'tkOwnedProgramBlocks'];
 const SRC = {}; FNS.forEach((n) => { SRC[n] = extractFn(n); ok(SRC[n], 'adapterfunctie gevonden: ' + n); });
 const CONSTS = (html.match(/var TK_ACT_ADHERENCE_WINDOW_DAYS=\d+, TK_ACT_ACTIVITIES_LIMIT=\d+;/) || [''])[0]; ok(CONSTS, 'begrenzingsconstanten gevonden');
 function sandbox(db) {
@@ -116,7 +116,7 @@ function sandbox(db) {
   ok(sD.planned === 0 && sD.missed === 0 && !cD._calls.some((q) => q.startsWith('program_blocks')), 'D: eigenaarschap niet bepaalbaar → [] (fail-safe), geen program_blocks-query, geen fallback naar alle blokken');
   const cE = sandbox(Object.assign({}, base, { programs: () => [{ id: 'pA' }], program_blocks: () => [blk(dAgo(1), false)] })); cE.authSession = null;
   await cE.tkInactivityAdherenceContext(); ok(!cE._calls.some((q) => q.startsWith('program_blocks') || q.startsWith('programs')), 'D: geen ingelogde gebruiker → geen programs-/program_blocks-query');
-  ok(/if\(!ids\.length\)return \[\];/.test(SRC.tkOwnedProgramBlocksInWindow) && /'&program_id=in\.\('\+ids\.map\(encodeURIComponent\)\.join\(','\)\+'\)/.test(SRC.tkOwnedProgramBlocksInWindow) && /catch\(_\)\{ return \[\]; \}/.test(SRC.tkOwnedProgramBlocksInWindow), 'statisch: lege id-lijst → [], id-lijst uit programs.user_id, catch → [] (nooit unscoped)');
+  ok(/if\(!ids\.length\)return \[\];/.test(SRC.tkOwnedProgramBlocks) && /'&program_id=in\.\('\+ids\.map\(encodeURIComponent\)\.join\(','\)\+'\)/.test(SRC.tkOwnedProgramBlocks) && /catch\(_\)\{ return onErr; \}/.test(SRC.tkOwnedProgramBlocks) && /return tkOwnedProgramBlocks\(uid,'&planned_date=gte\./.test(SRC.tkOwnedProgramBlocksInWindow), 'statisch: lege id-lijst → [], id-lijst uit programs.user_id, catch → []/null (nooit unscoped); window-helper delegeert');
   ok(!/sbGet\('program_blocks'/.test(SRC.tkInactivityAdherenceContext) && /tkOwnedProgramBlocksInWindow\(uid, vanaf, today\)/.test(SRC.tkInactivityAdherenceContext), 'statisch: adapter leest program_blocks uitsluitend via de owner-helper');
   const c3 = sandbox({ sessions: () => { throw new Error('db'); }, activities: () => { throw new Error('db'); }, programs: () => [], program_blocks: () => [], planned_training_occurrences: () => [] });
   ok(typeof (await c3.tkInactivityAdherenceContext()) === 'string', 'fail-safe: query-fout → string (leeg of partieel), geen crash');

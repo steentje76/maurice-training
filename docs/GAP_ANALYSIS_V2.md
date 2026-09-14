@@ -275,10 +275,16 @@ Sinds de P0-003-fix skipt deze test zichtbaar i.p.v. hard te falen buiten een An
 
 ## P4 — lange termijn / research / beyond benchmark
 
-### GAP-P4-003 (nieuw, PR #351 security-review) — `tkWeekOverview()` leest `program_blocks` zonder eigenaarschap-scoping — **OPEN**
+### GAP-P4-003 — **CLOSED** (v4.69.90) — `tkWeekOverview()` leest `program_blocks` zonder eigenaarschap-scoping
 **Current:** `tkWeekOverview()` (Home-weekoverzicht) bevraagt `program_blocks` uitsluitend op `planned_date`, zonder `program_id=in.(<eigen programma's>)`; `program_blocks` heeft geen `user_id` (eigenaarschap via `programs.user_id`) en de RLS-policy staat niet in de repo. Pre-existing, buiten scope van PR #351 (daar gerepareerd via `tkOwnedProgramBlocksInWindow`).
 **Target:** dezelfde owner-chain (`programs.user_id` → `program_id=in.`) + test; geen RLS-wijziging.
-**Priority:** P4 (security/ownership-debt; geen bewezen lek).
+**Closure-bewijs:** `tkWeekOverview()` gebruikt dezelfde canonical owner-helper (`tkOwnedProgramBlocksInWindow` → generieke `tkOwnedProgramBlocks`) als de Context-adapter. NB: de eerdere claim "laatste ongescoopte read" was onjuist — de review vond nog twee ongescoopte reads (`renderKalender`, `inzichtRenderDevelopment`), geregistreerd en gesloten als GAP-P4-004 in dezelfde PR. Repo-brede static gate: 0 `program_blocks`-reads zonder `program_id`/`id`-scoping over alle read-helpers (`sbGet`/`sbGetOrFail`/`v43SafeGet`/`inzichtGetOrNull`). `core/fWeekOverviewOwnership.test.js` 28/28.
+**Priority:** P4 — gesloten.
+
+### GAP-P4-004 — **CLOSED** (v4.69.90, PR #352) — `renderKalender()` en `inzichtRenderDevelopment()` lazen `program_blocks` zonder eigenaarschap-scoping
+**Current (vóór):** `v43SafeGet('program_blocks','&order=week_nr.asc')` (kalender, alle blokken) en `inzichtGetOrNull('program_blocks','&order=planned_date.desc&limit=200')` (Inzicht/ontwikkeling) — gevonden bij de onafhankelijke review van PR #352; niet gedekt door de eerdere `planned_date`-only static gate.
+**Closure-bewijs:** beide via de generieke owner-helper `tkOwnedProgramBlocks(uid, extraQ, {nullOnError})` (`programs.user_id` → `program_id=in.` + extra filter/sortering); Inzicht behoudt null-als-niet-beschikbaar-semantiek; kalender behoudt []-fallback. Repo-brede gate + sabotage (kalender 2, inzicht 2, helper-lege-lijst 3 failures).
+**Priority:** P4 — gesloten.
 
 ### GAP-P4-001 — Publieke social/community-laag
 Bewust laag geprioriteerd — geen productbeslissing om dit te bouwen. **Roadmap phase:** F9 (alleen bij expliciete koerswijziging).

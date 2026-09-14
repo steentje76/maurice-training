@@ -7294,7 +7294,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.87';
+const APP_VER = 'v4.69.88';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -9686,6 +9686,7 @@ async function previewStartTraining(mode){
       const _gmus=[]; (workingList||[]).forEach(it=>{ try{(getExerciseMuscles(it.exercise_id)||[]).forEach(m=>m&&_gmus.push(m));}catch(_){}});
       const _gadj=await recoveryAdjustmentForToday([...new Set(_gmus)]);
       applyRecoveryToGuidedPlan(_gplan, _gadj);
+      window._tkGuidedRxAdj=_gadj; // GAP-P3-033: dezelfde adjustment voor latere Guided-vervangingen (één keer)
       recoveryAdjustToast(_gadj);
     }catch(_){}
     GW.start(_gplan,{goal:(def&&def.goal)||null},{instanceId:instanceId||null,trainingType:'guided'});
@@ -17325,6 +17326,24 @@ async function loadPrevPerformance(eid){
 //   source 'manual_1rm' | 'recent_e1rm' | 'none'; basisDate; ageDays (null bij onbekende datum);
 //   dataQuality 'high' (recent, <=14 d) | 'medium' | 'low' (onbekende datum of oud) | 'none'.
 // De categorie-grenzen zijn een bewuste productkeuze (B1) — geen wetenschappelijke drempel.
+// ── GAP-P3-033 — CANONICAL PRESCRIPTION VOOR EEN GEWISSELDE/TOEGEVOEGDE OEFENING ──
+// Workout-INTENT (sets/reps/RPE/rest) komt van het workoutblok (#338-semantiek); de LOAD komt
+// uitsluitend uit de canonical keten van de NIEUWE oefening: loadStrengthBasis (CALC-STR-006, incl.
+// prev.date) → resolveWorkingWeight (CALC-STR-002 × DEC-DETRAIN-001) → daarna past de bestaande
+// readiness-route (sessionRxAdj → applySessionRecovery) één keer toe. Geen cross-exercise gewicht,
+// geen oude provenance/override-vlaggen, geen verzonnen gewicht (no-base ⇒ suggestedWeight null).
+async function canonicalNewExerciseItem(newId,intent){
+  const out={suggestedWeight:null,_detrain:null,_weightOverride:false,_rxAdjusted:false,_rxWeightAdjusted:false,_rxOverrideBypass:false,_rxInputs:null,_rxSetsDelta:0,_rxRpeDelta:0};
+  try{
+    const b=await loadStrengthBasis(newId);
+    const repsRaw=(intent&&intent.reps!=null)?parseFloat(repsPrefillFromRange(String(intent.reps))):NaN;
+    const rpeRaw=(intent&&intent.rpe!=null)?parseFloat(intent.rpe):NaN;
+    const r=resolveWorkingWeight(newId,{reps:(isFinite(repsRaw)&&repsRaw>0)?repsRaw:null,rpe:(isFinite(rpeRaw)?rpeRaw:8),prev:(b&&b.prev)||null});
+    out.suggestedWeight=(r&&r.suggested!=null)?r.suggested:null;
+    out._detrain={days:r.days,factor:r.factor,reason:r.reason,ruleId:r.ruleId,ruleVersion:r.ruleVersion,basis:r.strengthBasis||null};
+  }catch(e){}
+  return out;
+}
 function strengthBasisProvenance(exId,oneRM){
   const out={source:'none',value:null,basisDate:null,ageDays:null,sampleReps:null,dataQuality:'none',version:CalcCore.VERSIONS.strength_basis};
   if(oneRM==null)return out;
@@ -22179,11 +22198,12 @@ function addExToSession(t){
   });
 }
 
-function addExConfirm(exId,t){
+async function addExConfirm(exId,t){
   const ex=resolvePickerEx(exId);if(!ex)return; // F41: legacy of catalogus-fallback (behoudt catalog_id)
   const cardioType=resolveCardioType(ex);
   const exType=cardioType||ex.type||'strength';
   const extra=cardioType?{id:ex.id,naam:ex.name,type:exType,_t:t}:{id:ex.id,naam:ex.name,type:exType,sets:4,reps:'6-8',rpe:'8',_t:t};
+  if(!cardioType){ Object.assign(extra, await canonicalNewExerciseItem(ex.id, extra)); } // GAP-P3-033: canonical load voor toegevoegde oefening
   sessionExtra.push(extra);
   renderTrainScreen(t);
   toast(ex.name+' toegevoegd');
@@ -22231,15 +22251,17 @@ function execReplaceExercise(t,exId){
       const ok=await confirmModal('Voor '+nm+' zijn al sets geregistreerd in deze sessie. Bij vervangen gaan die gegevens verloren -- ze worden NIET automatisch overgezet naar de nieuwe oefening.',{title:'Oefening vervangen',okLabel:'Toch vervangen',cancelLabel:'Annuleren',danger:true});
       if(!ok)return;
     }
+    // GAP-P3-033: intent behouden, load/provenance canonical opnieuw voor de NIEUWE oefening (geen prevS-fallback van A).
     if(resolvedWorkout&&resolvedWorkout.t===t){
       const idx=resolvedWorkout.items.findIndex(e=>e.id===exId);
       if(idx>=0){
         const old=resolvedWorkout.items[idx];
-        resolvedWorkout.items[idx]=Object.assign({},old,{id:replaced.id,naam:replaced.name,suggestedWeight:null});
+        const _rx=await canonicalNewExerciseItem(replaced.id, old);
+        resolvedWorkout.items[idx]=Object.assign({},old,{id:replaced.id,naam:replaced.name},_rx);
       }
     }
     const sxIdx=sessionExtra.findIndex(e=>e.id===exId&&e._t===t);
-    if(sxIdx>=0)sessionExtra[sxIdx]=Object.assign({},sessionExtra[sxIdx],{id:replaced.id,naam:replaced.name,suggestedWeight:null}); // Exercise Swap Prescription Carry-Over Fix: gelijkgetrokken met de resolvedWorkout.items-spiegel hierboven
+    if(sxIdx>=0){ const _rx2=await canonicalNewExerciseItem(replaced.id, sessionExtra[sxIdx]); sessionExtra[sxIdx]=Object.assign({},sessionExtra[sxIdx],{id:replaced.id,naam:replaced.name},_rx2); } // Exercise Swap Prescription Carry-Over Fix: gelijkgetrokken met de resolvedWorkout.items-spiegel hierboven
     delete sessionLog[exId]; // oude, reeds gelogde data hoort NIET automatisch bij de nieuwe oefening (expliciete productregel)
     renderTrainScreen(t);
     scheduleAutosave();
@@ -29509,7 +29531,9 @@ async function confirmSwapExercise(newId){
   // canonical prefill-keten (prevS/computeProgPrefill, hierboven in renderTrainScreen, al keyed
   // op het NIEUWE id) B's eigen gewicht/"nog te bepalen" bepaalt. Geen nieuwe berekening, geen
   // conversie. sets/reps/RPE blijven bewust behouden (workoutblok-intentie, ongewijzigd).
-  sessionExtra[idx]={...sessionExtra[idx],id:newId,naam:newEx.name,type:newEx.type||sessionExtra[idx].type,suggestedWeight:null};
+  // GAP-P3-033: intent (sets/reps/RPE) blijft; load + provenance canonical opnieuw voor de NIEUWE oefening.
+  const _rx=await canonicalNewExerciseItem(newId, sessionExtra[idx]);
+  sessionExtra[idx]={...sessionExtra[idx],id:newId,naam:newEx.name,type:newEx.type||sessionExtra[idx].type,..._rx};
   delete sessionLog[fromId];delete pctSelection[fromId];delete rpeManual[fromId];delete warmupState[fromId];
   closeModal('m-swap-exercise');
   await renderTrainScreen(t);
@@ -35832,12 +35856,24 @@ var GW=(function(){
   function adjustSets(d){var c=cur();if(!c)return;var min=Math.max(1,c.setsDone.length);c.setsTarget=Math.max(min,Math.min(8,c.setsTarget+d));persist();}
   function altList(id){return (window.WB&&WB.altList)?WB.altList(id):[];}
   function replaceEx(newId){var c=cur();if(!c||!ex(newId))return false;c.id=newId;c.label=c.label;c.setsDone=[];c.prev=prevOf(newId);
-    // F0.7M (M2): startgewicht voor de vervangende oefening via de canonical resolver
-    // (base×detraining), consistent met Preview/Normal; val terug op guided-historie.
-    var resolved=null;
-    try{ if(typeof resolveWorkingWeight==='function'){ var reps=(typeof repsPrefillFromRange==='function')?parseFloat(repsPrefillFromRange(c.reps)):null; resolved=resolveWorkingWeight(newId,{reps:(reps&&!isNaN(reps))?reps:null,rpe:8}).suggested; } }catch(e){}
-    c.weight=(resolved!=null)?resolved:((c.prev&&c.prev.weight!=null)?c.prev.weight:null);
+    // F0.7M (M2) + GAP-P3-033/031a: startgewicht voor de vervangende oefening via de canonical resolver
+    // met de canonical prev (incl. date) uit loadStrengthBasis (vooraf geladen door replaceExAsync),
+    // daarna de bestaande readiness-route (recoveryWeightFactor met de bij start bepaalde adjustment)
+    // exact één keer. Geen cross-exercise gewicht, geen oude override-vlag.
+    var resolved=null, prov=null;
+    try{ if(typeof resolveWorkingWeight==='function'){
+      var reps=(typeof repsPrefillFromRange==='function')?parseFloat(repsPrefillFromRange(c.reps)):null;
+      var cb=(typeof strengthBasisCache!=='undefined'&&strengthBasisCache[newId])?strengthBasisCache[newId]:null;
+      var r=resolveWorkingWeight(newId,{reps:(reps&&!isNaN(reps))?reps:null,rpe:8,prev:(cb&&cb.prev)||null});
+      resolved=r.suggested; prov={days:r.days,factor:r.factor,reason:r.reason,ruleId:r.ruleId,ruleVersion:r.ruleVersion,basis:r.strengthBasis||null};
+      var adj=window._tkGuidedRxAdj||null;
+      if(resolved!=null&&adj&&adj.rpeDelta&&typeof recoveryWeightFactor==='function'){ resolved=roundKg(resolved*recoveryWeightFactor(c.reps, adj.rpeDelta)); c._rxWeightAdjusted=true; }
+    } }catch(e){}
+    c._weightOverride=false; c._rxOverrideBypass=false; c._detrain=prov;
+    c.weight=(resolved!=null)?resolved:null;
     persist();return true;}
+  // GAP-P3-033: canonical basis (incl. prev.date) van de nieuwe oefening laden vóór de sync replaceEx.
+  async function replaceExAsync(newId){ try{ if(typeof loadStrengthBasis==='function') await loadStrengthBasis(newId); }catch(e){} return replaceEx(newId); }
 
   /* ── Coachadvies na een set (motiverend, professioneel, geen confidence) ── */
   var SET_ADVICE={
@@ -36015,7 +36051,7 @@ var GW=(function(){
     startRest:startRest, skipRest:skipRest, restTick:restTick, adjustRest:adjustRest,
     nextExercise:nextExercise, finish:finish, persistToSessions:persistToSessions,
     adjustWeight:adjustWeight, setWeight:setWeight, adjustSets:adjustSets,
-    altList:altList, replaceEx:replaceEx, prevOf:prevOf, fatW:fatW,
+    altList:altList, replaceEx:replaceEx, replaceExAsync:replaceExAsync, prevOf:prevOf, fatW:fatW,
     setAdvice:setAdvice, coachText:coachText, restTip:restTip, estRPE:estRPE,
     whyChosen:whyChosen, whyNow:whyNow, transition:transition,
     progress:progress, summaryData:summaryData, recoveryAdvice:recoveryAdvice, coachSummary:coachSummary
@@ -36247,7 +36283,7 @@ var GWUI=(function(){
     var it=GW.cur();if(!it)return;
     var alts=GW.altList(it.id).filter(function(e){return e&&e.catalog_id!==it.id;});
     if(!alts.length){if(window.toast)toast('Geen geschikt alternatief');return;}
-    if(GW.replaceEx(alts[0].catalog_id)){render();if(window.toast)toast('Alternatief gekozen');}
+    GW.replaceExAsync(alts[0].catalog_id).then(function(ok){ if(ok){render();if(window.toast)toast('Alternatief gekozen');} });
   }
   function quit(){go('s-builder');if(window.WBUI)WBUI.render();if(window.toast)toast('Training gepauzeerd — je kunt later hervatten');}
   function finishHome(){GW.abort();go('s-home');}

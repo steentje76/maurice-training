@@ -6,12 +6,12 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.69.87
+v4.69.88
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.69.87 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
-- **Datum van deze stand:** 14 september 2026 — READINESS INPUT & APPLICATION PARITY (GAP-P3-032 CLOSED: één canonical readiness-pad Programma = Normal = Guided; gevoel/pijn-parity; override finaal)
+- **APP_VER:** v4.69.88 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **Datum van deze stand:** 14 september 2026 — CANONICAL REPLACEMENT/ADD PRESCRIPTION (GAP-P3-033 + GAP-P3-031a CLOSED: gewisselde/toegevoegde oefeningen via canonicalNewExerciseItem → basis/detraining/readiness; Guided replaceEx met canonical prev.date)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 
 ## 2. Current roadmap position

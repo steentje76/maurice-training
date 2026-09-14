@@ -113,7 +113,7 @@ console.log('I. Execution-swap (PR #337/#338) intact');
 var OPEN_SWAP = extractFn('openSwapExercise');
 var CONFIRM = extractFn('confirmSwapExercise');
 ok(OPEN_SWAP.indexOf('resolveCanonicalAlternatives(') > -1 && /Andere suggesties op spiergroep/.test(OPEN_SWAP), 'I1: Execution canonical-first + fallback-label (PR #337) ongewijzigd');
-ok(CONFIRM.indexOf('suggestedWeight:null') > -1, 'I2: Prescription carry-over-fix (PR #338) ongewijzigd');
+ok(/canonicalNewExerciseItem\(newId, sessionExtra\[idx\]\)/.test(CONFIRM) && CONFIRM.indexOf('suggestedWeight:null') === -1, 'I2 (GAP-P3-033): geen A-gewicht-carry-over -- B canonical opnieuw geresolved (opvolger van PR #338)');
 
 console.log('\n========================================================');
 console.log('fBuilderSwapAthleteConstraints.test.js — ' + pass + ' geslaagd, ' + fail + ' mislukt');

@@ -77,8 +77,8 @@ ok(CONFIRM_FN.indexOf("sessionExtra[idx]={...sessionExtra[idx],id:newId") > -1,
   'D1: gekozen B wordt als B in sessionExtra gezet (toekomstige logging gebruikt B-ID)');
 ok(/delete sessionLog\[fromId\];delete pctSelection\[fromId\];delete rpeManual\[fromId\];delete warmupState\[fromId\];/.test(CONFIRM_FN),
   'D2: lokale werksessie-staat van A wordt opgeruimd, niet naar B gemigreerd (geen A-B-vermenging)');
-ok(CONFIRM_FN.indexOf('suggestedWeight:null') > -1,
-  'D3: confirmSwapExercise() invalideert suggestedWeight expliciet naar null (Prescription Carry-Over Fix) -- geen berekende/geconverteerde waarde');
+ok(/const _rx=await canonicalNewExerciseItem\(newId, sessionExtra\[idx\]\)/.test(CONFIRM_FN) && CONFIRM_FN.indexOf('suggestedWeight:null') === -1,
+  'D3 (GAP-P3-033): confirmSwapExercise() bepaalt het gewicht van B canonical opnieuw (loadStrengthBasis→resolveWorkingWeight) i.p.v. blind te wissen -- geen A-gewicht, geen conversie');
 ok(!/suggestedWeight\s*[:=]\s*(?!null)[^,}]+/.test(CONFIRM_FN.replace(/id:newId,naam:newEx\.name,type:newEx\.type\|\|sessionExtra\[idx\]\.type,suggestedWeight:null/, '')),
   'D3b: geen enkele berekende/geconverteerde gewichtswaarde in confirmSwapExercise() -- uitsluitend de letterlijke null-invalidatie hierboven');
 

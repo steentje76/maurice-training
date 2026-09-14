@@ -1,5 +1,31 @@
 # Trainingskompas — Changelog
 
+## v4.69.88 — Canonical replacement/add prescription (GAP-P3-033, GAP-P3-031a) (14 september 2026)
+
+Gewisselde en toegevoegde krachtoefeningen gebruiken nu dezelfde canonical prescription-
+keten als normale oefeningen. Nieuwe helper `canonicalNewExerciseItem(newId, intent)`:
+`loadStrengthBasis` (CALC-STR-006, prev incl. date) → `resolveWorkingWeight` (CALC-STR-002 ×
+DEC-DETRAIN-001) → provenance; daarna past de bestaande readiness-route (`sessionRxAdj` →
+`applySessionRecovery`) één keer toe.
+
+- #338-semantiek behouden: workout-INTENT (sets/reps/RPE/rest) komt van het workoutblok;
+  de LOAD is exercise-specifiek en wordt voor de NIEUWE oefening opnieuw geresolved — geen
+  cross-exercise gewicht, geen oude override-/readiness-vlaggen; geen basis → no-base
+  (`suggestedWeight null`, bestaande fallback), nooit een verzonnen gewicht.
+- `confirmSwapExercise`, `execReplaceExercise` (beide state-spiegels) en `addExConfirm`
+  via de helper i.p.v. `suggestedWeight:null`/prevS-fallback.
+- Guided `replaceEx`: canonical prev incl. date via `strengthBasisCache` (geladen door
+  nieuw `replaceExAsync`), readiness één keer via de bij start opgeslagen adjustment,
+  override-vlaggen gereset, geen guided-historie-gewicht meer → sluit GAP-P3-031a.
+- Override finaal volgens #349 (een expliciete override voor de nieuwe oefening zelf).
+
+Tests: nieuw `core/fReplacementPrescription.test.js` 47/47 (swap A→B gebruikt B-basis,
+recent wint van piek, detraining één keer, readiness één keer ná resolver, override finaal,
+no-base zonder lekkage, add, Guided prev.date, intent-behoud, volgende basis; sabotage:
+A-gewicht-fallback → 1, Guided zonder prev.date → 1, readiness twee keer → 3 failures).
+Bestaande #338-locks root-cause bijgewerkt. Volledige regressie 374/374. APP_VER
+v4.69.87 → v4.69.88.
+
 ## v4.69.87 — Readiness Input & Application Parity (GAP-P3-032) (14 september 2026)
 
 Eén canonical readiness/recovery-pad voor alle kracht-startpaden. DEC-RECADJ-001

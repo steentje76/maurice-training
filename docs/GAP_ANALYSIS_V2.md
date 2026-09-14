@@ -170,7 +170,7 @@ _(Hernummerd van GAP-P2-025 bij de Gap 1b-sprint: dat ID was al in gebruik door 
 **Priority:** P2 — gesloten.
 
 ### GAP-P3-031 (nieuw, Return After Absence audit) — Absence/deload vervolgpunten — **OPEN**
-**Current:** (a) Guided `replaceEx()` roept de resolver zonder canonical `prev.date` aan (sync; alleen lokale `tk_gw_hist`) → factor 1.00; (b) geen canonical inactivity-signalen (dagen sinds laatste (kracht)training, missed-streak) in Calculation/Context; adherence loopt niet naar Decision; (c) **CLOSED (Strength Basis Recency B1, CALC-STR-006, v4.69.86)** — basis = recente representatieve prestatie, piek apart, PR-proxy uit precedentie, handmatige 1RM met provenance-datum; nog open: geen middeling/DEC-BASIS-001 (bewust); (d) bandfactoren `DETRAINING_RULES_V1` zijn erkende productheuristiek zonder evidence-grading; (e) situaties C/D uit de audit (wel cardio/geen kracht; gemiste planning) niet onderscheidbaar.
+**Current:** (a) **CLOSED (v4.69.88, GAP-P3-033)** — Guided `replaceEx` krijgt canonical prev incl. date via `replaceExAsync`/`strengthBasisCache`; (b) geen canonical inactivity-signalen (dagen sinds laatste (kracht)training, missed-streak) in Calculation/Context; adherence loopt niet naar Decision; (c) **CLOSED (Strength Basis Recency B1, CALC-STR-006, v4.69.86)** — basis = recente representatieve prestatie, piek apart, PR-proxy uit precedentie, handmatige 1RM met provenance-datum; nog open: geen middeling/DEC-BASIS-001 (bewust); (d) bandfactoren `DETRAINING_RULES_V1` zijn erkende productheuristiek zonder evidence-grading; (e) situaties C/D uit de audit (wel cardio/geen kracht; gemiste planning) niet onderscheidbaar.
 **Target:** aparte sprints met evidence-gate; geen percentage zonder bronnen.
 **Priority:** P3. **Complexity:** M.
 
@@ -179,6 +179,12 @@ _(Hernummerd van GAP-P2-025 bij de Gap 1b-sprint: dat ID was al in gebruik door 
 **Current (vóór):** Programma muteerde sets/RPE vóór Brzycki (check-in incl. gevoel+pijn); Normal/Guided gebruikten `applySessionRecovery`/`recoveryWeightFactor` maar gaven pijn altijd als null door; override-vs-readiness-precedentie ongedocumenteerd.
 **Closure-bewijs:** `recoveryAdjustmentForToday(muscles, opts)` als enige aanroep (gevoel `hrv_log.voelt`, pijn `checkin_conditions`); Programma via `sessionRxAdj[ctxT]` → `applySessionRecovery`; override finaal (`_weightOverride`/`_rxOverrideBypass`) in Normal én Guided; provenance/uitleg. `core/fReadinessParity.test.js` 57/57 (sabotage 2/8/2).
 **Priority:** P3 — gesloten. Buiten scope gebleven: GAP-P3-031 (a/b/d/e), 1RM-middeling, DEC-BASIS-001.
+
+### GAP-P3-033 — **CLOSED** (Canonical Replacement/Add Prescription, 14 september 2026) — Swap/toegevoegde oefening omzeilde de canonical resolver
+**Capability-ID:** F0.7L canonical weight resolver, CALC-STR-006, DEC-DETRAIN-001, DEC-RECADJ-001
+**Current (vóór):** `confirmSwapExercise`/`execReplaceExercise`/`addExConfirm` zetten `suggestedWeight:null` → prefill = laatste gewicht van de (nieuwe) oefening zonder basis/detraining/readiness-gewichtsfactor; oude `_detrain`/`_weightOverride`-vlaggen liftten mee; Guided `replaceEx` zonder canonical prev.date (031a).
+**Closure-bewijs:** `canonicalNewExerciseItem()` (intent van blok, load canonical voor nieuwe oefening), Guided `replaceExAsync` + `strengthBasisCache.prev`; `core/fReplacementPrescription.test.js` 47/47 (sabotage 1/1/3).
+**Priority:** P3 — gesloten.
 
 ### GAP-P3-023 (nieuw, Athlete Dashboard 2.0-sprint) — verwarrende naamgeving: computeProgramProgress()'s "adherencePct" is een ander concept dan AdherenceIntelligenceCore
 **Capability-ID:** ADHERENCE-INTELLIGENCE-001

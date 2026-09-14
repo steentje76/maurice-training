@@ -162,6 +162,40 @@ Herbevestigd tegen de historische `claude_F1_0_CalculationRegistry.md` (F1.0-aud
 | AI permissions | AI mag bron/datum uitleggen (bestaande resolver-provenance); AI mag nooit zelf een basis kiezen of herberekenen |
 | Status | **LIVE_CANONICAL** (Preview, Programma, Normal execution, Stats/progress-context via dezelfde selector) |
 
+### CALC-ACT-001 — Inactivity (dagen sinds laatste uitgevoerde training)
+
+| Veld | Waarde |
+|---|---|
+| Version | `inactivity.v1` (`core/inactivityAdherence.js`) |
+| Required inputs | referentiedatum (kalenderdag, `td()`), `sessions` met gewicht+reps (kracht), alle `sessions` (incl. erg/cardio-in-sessions), `activities` (running/cycling/swimming; `recorded_at` → lokale kalenderdag) |
+| Output | `overall`, `strength`, `endurance`, `enduranceBySport[running|cycling|swimming]` elk `{lastDate, daysSince}`; `dataQuality` ok / no_history / no_reference_date |
+| Output unit | kalenderdagen (integer); `null` bij ontbrekende historie of referentiedatum (nooit 0 verzonnen) |
+| Supported sports | kracht, running, cycling, swimming; erg-sessies tellen mee voor `overall` (niet voor kracht/endurance) |
+| Minimum data | 1 rij; anders `null` |
+| Evidence level | **E** — technische/afgeleide telling, geen zelfstandige wetenschappelijke claim |
+| Limitations | erg/cardio-in-sessions niet aan endurance toegerekend; alleen persisted trainingen |
+| Forbidden interpretations | geen drempel ("14 dagen = slecht"), geen detraining-/blessure-/overtrainingsinterpretatie. **These metrics are descriptive Context signals and do not independently modify training prescription.** |
+| Allowed Decision Rules | geen; DEC-DETRAIN-001 behoudt zijn eigen exercise-level inactivity-input |
+| AI permissions | AI mag de feiten uitleggen; nooit omrekenen naar gewicht/sets/RPE/rust |
+| Status | **LIVE_CANONICAL** (Context via `tkInactivityAdherenceContext()`) |
+
+### CALC-ACT-002 — Adherence (gepland vs. uitgevoerd binnen venster)
+
+| Veld | Waarde |
+|---|---|
+| Version | `adherence.v1` (`core/inactivityAdherence.js`, missed-semantiek = `ScheduleAdherenceCore.resolveScheduleGap`) |
+| Required inputs | referentiedatum, venster (28 d), `program_blocks` (planned_date, completed_at, schedule_status), `planned_training_occurrences` (planned_date, status) + `planned_training_assignments` (status planned/completed/skipped, training_instance_id) van de atleet |
+| Output | `planned, completed, skipped, missed, pending (vandaag), adherencePct` (= completed/beoordeeld, `null` bij 0 beoordeeld), `missedStreak`, `items[]`, `dataQuality` ok / no_planning |
+| Output unit | tellingen; percentage 0–100 |
+| Supported sports | alle geplande trainingen met canonical planning+completion-link |
+| Minimum data | ≥1 gepland item in venster; anders `planned 0`, pct `null` |
+| Evidence level | **E** — afgeleide telling |
+| Limitations | ad-hoc trainingen zonder plan tellen niet (wel voor CALC-ACT-001); verplaatst telt één keer op de nieuwe datum; geannuleerd uitgesloten; vandaag = pending |
+| Forbidden interpretations | "geen planning" ≠ "gemist"; geen "80 % = goed"-drempel. **These metrics are descriptive Context signals and do not independently modify training prescription.** |
+| Allowed Decision Rules | geen |
+| AI permissions | uitleg van tellingen; geen oordeel als feit presenteren |
+| Status | **LIVE_CANONICAL** (Context) |
+
 ### CALC-LOAD-001 — ACWR-classificatie (banden)
 | Veld | Waarde |
 |---|---|

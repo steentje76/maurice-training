@@ -170,7 +170,7 @@ _(Hernummerd van GAP-P2-025 bij de Gap 1b-sprint: dat ID was al in gebruik door 
 **Priority:** P2 — gesloten.
 
 ### GAP-P3-031 (nieuw, Return After Absence audit) — Absence/deload vervolgpunten — **OPEN**
-**Current:** (a) **CLOSED (v4.69.88, GAP-P3-033)** — Guided `replaceEx` krijgt canonical prev incl. date via `replaceExAsync`/`strengthBasisCache`; (b) geen canonical inactivity-signalen (dagen sinds laatste (kracht)training, missed-streak) in Calculation/Context; adherence loopt niet naar Decision; (c) **CLOSED (Strength Basis Recency B1, CALC-STR-006, v4.69.86)** — basis = recente representatieve prestatie, piek apart, PR-proxy uit precedentie, handmatige 1RM met provenance-datum; nog open: geen middeling/DEC-BASIS-001 (bewust); (d) bandfactoren `DETRAINING_RULES_V1` zijn erkende productheuristiek zonder evidence-grading; (e) situaties C/D uit de audit (wel cardio/geen kracht; gemiste planning) niet onderscheidbaar.
+**Current:** (a) **CLOSED (v4.69.88, GAP-P3-033)** — Guided `replaceEx` krijgt canonical prev incl. date via `replaceExAsync`/`strengthBasisCache`; (b) **CLOSED (v4.69.89, CALC-ACT-001/002)** — inactivity (overall/kracht/endurance per sport) en adherence (gepland/uitgevoerd/geskipt/gemist/pending, pct, missed-streak) als beschrijvende Context-signalen via `tkInactivityAdherenceContext()`; bewust GEEN Decision Rule (adherence → Decision blijft productbesluit); (c) **CLOSED (Strength Basis Recency B1, CALC-STR-006, v4.69.86)** — basis = recente representatieve prestatie, piek apart, PR-proxy uit precedentie, handmatige 1RM met provenance-datum; nog open: geen middeling/DEC-BASIS-001 (bewust); (d) bandfactoren `DETRAINING_RULES_V1` zijn erkende productheuristiek zonder evidence-grading; (e) situaties C/D uit de audit (wel cardio/geen kracht; gemiste planning) niet onderscheidbaar.
 **Target:** aparte sprints met evidence-gate; geen percentage zonder bronnen.
 **Priority:** P3. **Complexity:** M.
 
@@ -274,6 +274,11 @@ Sinds de P0-003-fix skipt deze test zichtbaar i.p.v. hard te falen buiten een An
 ---
 
 ## P4 — lange termijn / research / beyond benchmark
+
+### GAP-P4-003 (nieuw, PR #351 security-review) — `tkWeekOverview()` leest `program_blocks` zonder eigenaarschap-scoping — **OPEN**
+**Current:** `tkWeekOverview()` (Home-weekoverzicht) bevraagt `program_blocks` uitsluitend op `planned_date`, zonder `program_id=in.(<eigen programma's>)`; `program_blocks` heeft geen `user_id` (eigenaarschap via `programs.user_id`) en de RLS-policy staat niet in de repo. Pre-existing, buiten scope van PR #351 (daar gerepareerd via `tkOwnedProgramBlocksInWindow`).
+**Target:** dezelfde owner-chain (`programs.user_id` → `program_id=in.`) + test; geen RLS-wijziging.
+**Priority:** P4 (security/ownership-debt; geen bewezen lek).
 
 ### GAP-P4-001 — Publieke social/community-laag
 Bewust laag geprioriteerd — geen productbeslissing om dit te bouwen. **Roadmap phase:** F9 (alleen bij expliciete koerswijziging).

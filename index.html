@@ -6507,6 +6507,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/cycleTraining.js"></script>
 <script src="core/womensPerformanceContext.js"></script>
 <script src="core/scheduleAdherence.js"></script>
+<script src="core/inactivityAdherence.js"></script>
 <script src="core/calendarMonthView.js"></script>
 <script src="core/myTrainingScheduling.js"></script>
 <script src="core/adherenceIntelligence.js"></script>
@@ -7294,7 +7295,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.88';
+const APP_VER = 'v4.69.89';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -28249,7 +28250,7 @@ async function buildCtx(ctx){
     ? sbGet('sessions','&exercise_id=in.('+[...relevantExIds].join(',')+')&order=exercise_id.asc,date.desc,created_at.desc')
     : sbGet('sessions','&date=gte.'+sinceStr+'&order=exercise_id.asc,date.desc,created_at.desc');
 
-  const [,hd,wd,bc,recentSessions,,blessureContext,conditionsContext,,trainingContextRows,dataBlok,hyroxCtxTekst,eventCtxTekst,progressionTrendResult,womensCtxTekst,enduranceProfileRows,enduranceIntelTekst] = await Promise.all([
+  const [,hd,wd,bc,recentSessions,,blessureContext,conditionsContext,,trainingContextRows,dataBlok,hyroxCtxTekst,eventCtxTekst,progressionTrendResult,womensCtxTekst,enduranceProfileRows,enduranceIntelTekst,inactivityAdherenceTekst] = await Promise.all([
     ensureExercisesLoaded(),
     sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'),
     sbGet('weight_log','&order=date.desc,created_at.desc&limit=3'),
@@ -28275,7 +28276,9 @@ async function buildCtx(ctx){
     // GEEN Critical Speed/Power, geen berekening, geen fallback. Eén kleine query (max 2 rijen).
     sbGet('athlete_endurance_profile','&sport=in.(running,cycling)&limit=2').catch(function(){ return []; }),
     // GAP-P2-026 (Gap 1b): berekende endurance-intelligence via de dunne adapter (begrensde queries, alleen cores).
-    tkEnduranceCoachContext().catch(function(){ return ''; })
+    tkEnduranceCoachContext().catch(function(){ return ''; }),
+    // GAP-P3-031b: inactiviteit/planning als beschrijvende Context-signalen (CALC-ACT-001/002).
+    tkInactivityAdherenceContext().catch(function(){ return ''; })
   ]);
   const progressionTrendTekst=(progressionTrendResult&&progressionTrendResult.tekst)||'';
   // Gap 1a — ENDURANCE-PROFIEL (persisted, door sporter ingevoerd). Alleen de waarde van de
@@ -28440,7 +28443,7 @@ ${progressionTrendTekst?'\nPROGRESSIE-TREND PER OEFENING (reeds berekend door Pr
 ${womensCtxTekst?womensCtxTekst+'\n(BELANGRIJK: bereken zelf NOOIT cyclusdag/fase/hormonen, leid nooit zwangerschap/fertility af, stel nooit een diagnose, en pas nooit automatisch trainingsvolume/-intensiteit aan op basis van deze context — erken de context uitsluitend als extra informatie naast readiness/RPE, en laat de sporter zelf beslissen.)':''}
 ${deloadSignaalTekst?'\nGECORROBOREERD BELASTINGSSIGNAAL (reeds bepaald door de Decision Engine op basis van TWEE onafhankelijke signalen, niet zelf herberekenen of op één los signaal baseren):'+deloadSignaalTekst:''}
 
-${enduranceProfielTekst}${enduranceIntelTekst||''}ACTIEVE SPORT: ${SPORT_LABELS[getActiveSport()]||getActiveSport()}
+${enduranceProfielTekst}${enduranceIntelTekst||''}${inactivityAdherenceTekst||''}ACTIEVE SPORT: ${SPORT_LABELS[getActiveSport()]||getActiveSport()}
 ${sportBlock}
 
 ACTIES (v306 #9): als je een concreet gewichtsadvies geeft voor de HUIDIGE OEFENING hierboven,
@@ -34784,6 +34787,68 @@ function tkEnduranceCtxProject(sports, activities, maxEffort, nowDate){
   });
   if(!blokken.length)return '';
   return '\nENDURANCE-INTELLIGENCE (reeds berekend door de Calculation Engine — niet herberekenen, niet schatten, geen ACWR-/blessure-interpretatie; Critical Speed/Power ≠ de profiel-drempels hierboven):\n'+blokken.join('\n')+'\n';
+}
+// ═══════════════════════════════════════════════════════════════════════════════
+// GAP-P3-031b — INACTIVITY & ADHERENCE → CONTEXT (CALC-ACT-001 inactivity.v1, CALC-ACT-002 adherence.v1).
+// Descriptieve signalen: dagen sinds laatste training (overall/kracht/endurance per sport) en gepland-vs-
+// uitgevoerd (program_blocks + Mijn-training-occurrences, canonical missed-semantiek via
+// ScheduleAdherenceCore). Uitsluitend persisted input, begrensde queries, null blijft null.
+// Deze signalen wijzigen GEEN voorschrift: geen Decision Rule, geen gewicht/sets/RPE; DEC-DETRAIN-001
+// houdt zijn eigen exercise-level inactivity-input. De AI mag ze uitleggen, niet omrekenen.
+// ═══════════════════════════════════════════════════════════════════════════════
+var TK_ACT_ADHERENCE_WINDOW_DAYS=28, TK_ACT_ACTIVITIES_LIMIT=60;
+function tkLocalDayFromIso(iso){ try{ if(!iso)return null; const d=new Date(iso); if(isNaN(d.getTime()))return null; return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }catch(_){ return null; } }
+// Pure projectie (apart getest): calculated objecten -> compacte contexttekst, zonder drempels of oordeel.
+function tkInactivityAdherenceText(inact, adh){
+  const lines=[];
+  if(inact){
+    const f=(d)=>(d&&d.daysSince!=null)?(d.daysSince+' d (laatste '+d.lastDate+')'):'geen geregistreerde training';
+    lines.push('- Dagen sinds laatste training (overall): '+f(inact.overall));
+    lines.push('- Dagen sinds laatste krachttraining: '+f(inact.strength));
+    const es=inact.enduranceBySport||{}; const parts=['running','cycling','swimming'].filter(sp=>es[sp]&&es[sp].daysSince!=null).map(sp=>sp+' '+es[sp].daysSince+' d');
+    lines.push('- Dagen sinds laatste endurance-activiteit: '+f(inact.endurance)+(parts.length?' ('+parts.join(', ')+')':''));
+  }
+  if(adh){
+    if(adh.planned>0) lines.push('- Planning laatste '+adh.windowDays+' d: '+adh.planned+' gepland · '+adh.completed+' uitgevoerd · '+adh.skipped+' bewust overgeslagen · '+adh.missed+' gemist'+(adh.pending?' · '+adh.pending+' vandaag nog open':'')+(adh.adherencePct!=null?' · uitgevoerd/beoordeeld '+adh.adherencePct+'%':'')+(adh.missedStreak?' · laatste '+adh.missedStreak+' geplande op rij gemist':''));
+    else lines.push('- Planning laatste '+adh.windowDays+' d: geen geplande trainingen (geen planning ≠ gemist)');
+  }
+  if(!lines.length)return '';
+  return '\nINACTIVITEIT & PLANNING (reeds berekend — CALC-ACT-001/002; beschrijvend, geen voorschrift; ad-hoc trainingen tellen mee voor inactiviteit, niet voor planning):\n'+lines.join('\n')+'\n';
+}
+// OWNERSHIP-SCOPE (PR #351 review-fix, P1): program_blocks heeft geen user_id; eigenaarschap loopt via
+// programs.user_id. Deze adapter leest daarom NOOIT ongescoopt: eerst de eigen programma-id's van de
+// ingelogde gebruiker (zelfde keten als de kalender, r.12141), daarna program_blocks uitsluitend met
+// program_id=in.(<eigen ids>) + datumvenster. Geen eigen programma's -> []. Eigenaarschap niet
+// bepaalbaar (geen uid / query-fout) -> [] (fail-safe: nooit terugvallen op alle blokken).
+async function tkOwnedProgramBlocksInWindow(uid, vanaf, today){
+  try{
+    if(!uid)return [];
+    const progs=await sbGet('programs','&user_id=eq.'+encodeURIComponent(uid)+'&select=id');
+    const ids=(Array.isArray(progs)?progs:[]).map(p=>p&&p.id).filter(Boolean);
+    if(!ids.length)return [];
+    return await sbGet('program_blocks','&program_id=in.('+ids.map(encodeURIComponent).join(',')+')&planned_date=gte.'+vanaf+'&planned_date=lte.'+today);
+  }catch(_){ return []; }
+}
+async function tkInactivityAdherenceContext(){
+  try{
+    if(typeof InactivityAdherenceCore==='undefined')return '';
+    const today=td(); const uid=authSession?.user?.id||null;
+    const vanaf=new Date(Date.now()-TK_ACT_ADHERENCE_WINDOW_DAYS*86400000).toISOString().slice(0,10);
+    const res=await Promise.all([
+      sbGet('sessions','&weight=not.is.null&reps=not.is.null&order=date.desc&limit=1').catch(()=>[]),
+      sbGet('sessions','&order=date.desc&limit=1').catch(()=>[]),
+      sbGet('activities','&sport=in.(running,cycling,swimming)&order=recorded_at.desc&limit='+TK_ACT_ACTIVITIES_LIMIT).catch(()=>[]),
+      tkOwnedProgramBlocksInWindow(uid, vanaf, today),
+      (uid?sbGet('planned_training_occurrences','&creator_user_id=eq.'+uid+'&planned_date=gte.'+vanaf+'&planned_date=lte.'+today).catch(()=>[]):Promise.resolve([]))
+    ]);
+    const occ=res[4]||[]; let ass=[];
+    if(uid&&occ.length){ try{ ass=await sbGet('planned_training_assignments','&occurrence_id=in.('+occ.map(o=>o.id).join(',')+')&athlete_user_id=eq.'+uid); }catch(_){ ass=[]; } }
+    const inact=InactivityAdherenceCore.inactivity({ today, strengthSessions:res[0]||[], allSessions:res[1]||[],
+      activities:(res[2]||[]).map(a=>({sport:a.sport,localDate:tkLocalDayFromIso(a.recorded_at)})) });
+    const adh=InactivityAdherenceCore.adherence({ today, windowDays:TK_ACT_ADHERENCE_WINDOW_DAYS, programBlocks:res[3]||[], occurrences:occ, assignments:ass });
+    window._tkInactivityAdherence={inactivity:inact,adherence:adh}; // provenance/diagnostiek (geen consumer rekent hiermee)
+    return tkInactivityAdherenceText(inact, adh);
+  }catch(e){ return ''; }
 }
 async function tkEnduranceCoachContext(){
   try{

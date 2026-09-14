@@ -1,5 +1,29 @@
 # Trainingskompas — Changelog
 
+## v4.69.89 — Inactivity & adherence als Context-signalen (GAP-P3-031b) (14 september 2026)
+
+Nieuwe pure Calculation-laag `core/inactivityAdherence.js`: **CALC-ACT-001** `inactivity.v1`
+(dagen sinds laatste training: overall / kracht / endurance per sport, kalenderdagen, null bij
+geen historie) en **CALC-ACT-002** `adherence.v1` (gepland vs. uitgevoerd in 28 d over
+program_blocks + Mijn-training-occurrences/assignments; missed-semantiek hergebruikt
+`ScheduleAdherenceCore.resolveScheduleGap`: afgerond/geskipt nooit missed, geen planning ≠
+gemist, verplaatst telt één keer, geannuleerd uitgesloten, vandaag = pending).
+
+- Context: `tkInactivityAdherenceContext()` in `buildCtx()` (begrensde queries) → blok
+  "INACTIVITEIT & PLANNING" met provenance; ad-hoc trainingen tellen voor inactiviteit,
+  niet voor planning. Onderscheid bv. kracht 21 d / overall 1 d (gisteren gefietst).
+- These metrics are descriptive Context signals and do not independently modify training
+  prescription: geen Decision Rule, geen gewicht/sets/RPE, geen rustdag; DEC-DETRAIN-001
+  houdt zijn eigen exercise-level input; geen drempels.
+
+- Ownership-scope (review-fix P1): `program_blocks` uitsluitend via de eigen programma's
+  (`programs.user_id` → `program_id=in.`); geen programma's/geen uid/query-fout → [] (fail-safe,
+  nooit ongescoopt). Pre-existing `tkWeekOverview`-patroon geregistreerd als GAP-P4-003.
+
+Tests: nieuw `core/fInactivityAdherence.test.js` 55/55 (scenario's 1–14 incl. DST-datumgrens; security A–F;
+sabotage: cycling reset kracht → 4, geen planning = missed → 3, metric raakt prescription
+→ 1; ownership-filter weg → 6, lege programmalijst → alles → 2, lookup-fout → alles → 2 failures). Volledige regressie 375/375. APP_VER v4.69.88 → v4.69.89.
+
 ## v4.69.88 — Canonical replacement/add prescription (GAP-P3-033, GAP-P3-031a) (14 september 2026)
 
 Gewisselde en toegevoegde krachtoefeningen gebruiken nu dezelfde canonical prescription-

@@ -31,10 +31,15 @@ function extractFn(name) {
 }
 const FNS = ['snapshotFromCustomTraining', 'startInstanceFromDefinition', 'tkIvTerminationText', 'tkIvTargetText', 'renderTPInterval',
   'startStructuredRunningExecution', 'structuredBlockLabel', 'structuredBlockIndexNow', 'structuredRunningSync', 'huidigeIntervalStap',
-  'runningLap', 'renderRunDetailStructuredHtml', 'startRunningExecution', 'persisteerRunningExecState',
-  'structuredRunningCloseOpenBlock', 'runningRequestFinish', 'runningPause'];
+  'runningLap', 'renderRunDetailStructuredHtml', 'tkStructuredLapActualText', 'startRunningExecution', 'persisteerRunningExecState',
+  'structuredRunningCloseOpenBlock', 'runningRequestFinish', 'runningPause',
+  // B2: sportneutrale structured-laag + dispatch (running-wrappers delegeren hierheen)
+  'startStructuredEnduranceExecution', 'tkEndu', 'structuredBlockIndexNowFor', 'structuredBlockStartS', 'structuredSyncFor', 'structuredCloseOpenBlockFor', 'structuredLapFor', 'huidigeStructuredStapFor', 'tkAdhocIntervalPrescription'];
 const SRC = {}; FNS.forEach((n) => { SRC[n] = extractFn(n); ok(SRC[n], 'functie gevonden: ' + n); });
 const CONST_LINE = (html.match(/const TK_IV_BLOCK_LABEL=\{[^\n]*\n/) || [''])[0] + (html.match(/const TK_IV_SPORT_LABEL=\{[^\n]*\n/) || [''])[0];
+// B2: sport-dispatch + sportlijst (top-level consts, geen functies) mee-extraheren
+const ENDU_DISPATCH = (html.match(/const TK_ENDU_SPORT=\{[\s\S]*?\n\};\nconst TK_STRUCTURED_SPORTS=\[[^\]]*\];/) || [''])[0];
+ok(ENDU_DISPATCH, 'TK_ENDU_SPORT dispatch + TK_STRUCTURED_SPORTS gevonden');
 ok(CONST_LINE.includes('warmup') && CONST_LINE.includes('running'), 'labelconstanten gevonden');
 const PREVIEW_START = extractFn('previewStartTraining'), RUN_FINISH = extractFn('runningConfirmFinish'), GET_DEF = extractFn('getTrainingDefinition');
 const BUILD_CTX = extractFn('buildCtx'), REN_DETAIL = extractFn('renderRunDetail');
@@ -65,7 +70,7 @@ function makeSandbox(opts) {
     _db: db, _dom: dom
   };
   vm.createContext(ctx);
-  vm.runInContext(CONST_LINE + '\n' + FNS.map((n) => SRC[n]).join('\n') + '\nfunction runningExecLocalStorageKey(){return "k";}\nfunction renderRunningExecutionScreen(){ structuredRunningSync(Date.now()); }', ctx);
+  vm.runInContext(CONST_LINE + '\n' + ENDU_DISPATCH + '\n' + FNS.map((n) => SRC[n]).join('\n') + '\nfunction runningExecLocalStorageKey(){return "k";}\nfunction renderRunningExecutionScreen(){ structuredRunningSync(Date.now()); }', ctx);
   return ctx;
 }
 
@@ -105,9 +110,9 @@ function makeSandbox(opts) {
   ok(instId === 'inst-1' && inst.custom_training_id === 'ct-1', 'F: createTrainingInstance met custom_training_id');
   ok(JSON.stringify(inst.snapshot.intervalPrescription) === JSON.stringify(RAW), 'F: snapshot bevat exact de Definition-prescriptie (raw)');
   ok(JSON.stringify(inst.snapshot.intervalPrescriptionNormalized) === JSON.stringify(n1), 'F: snapshot bevat de canonieke normalisatie (executie-input)');
-  ok(/if\(def&&def\.intervalPrescription\)\{/.test(PREVIEW_START) && /startStructuredRunningExecution\(\{definitionId:def\.id,naam:def\.name,instanceId:instanceId\|\|null,prescription:norm,rawPrescription:def\.intervalPrescription\}\)/.test(PREVIEW_START),
+  ok(/if\(def&&def\.intervalPrescription\)\{/.test(PREVIEW_START) && /startStructuredEnduranceExecution\(norm\.sport,\{definitionId:def\.id,naam:def\.name,instanceId:instanceId\|\|null,prescription:norm,rawPrescription:def\.intervalPrescription\}\)/.test(PREVIEW_START),
     'G: previewStartTraining geeft de Definition-prescriptie (genormaliseerd) door aan de structured executie met instance-id');
-  ok(/norm\.sport!=='running'/.test(PREVIEW_START), 'AB: alleen running wordt in B1 gestructureerd uitgevoerd (cycling/swimming/erg niet uitgebreid)');
+  ok(/TK_STRUCTURED_SPORTS\.indexOf\(norm\.sport\)===-1/.test(PREVIEW_START) && /startStructuredEnduranceExecution\(norm\.sport,/.test(PREVIEW_START), 'AB (B2): running/cycling/swimming worden gestructureerd uitgevoerd via de sportneutrale starter; erg niet');
   ok(PREVIEW_START.indexOf('if(def&&def.intervalPrescription)') < PREVIEW_START.indexOf("if(mode==='guided'"), 'G: structured pad vóór guided/strength-executie');
 
   // ── H/L/M/N/O/P/AC: executie via IntervalEngineCore, auto-laps, manual-lap, guard ──
@@ -213,10 +218,10 @@ function makeSandbox(opts) {
   ok(!/IntervalEngineCore/.test(BUILD_CTX), 'Y: Context roept de interval-engine niet aan');
   ok(!/Concept2|nativeConcept2|concept2Live/.test(SRC.startStructuredRunningExecution + SRC.structuredRunningSync + SRC.runningLap + WB_SAVE), 'AA: geen Concept2-wijzigingen in het B1-pad');
   ok(!/huidigeCyclingIntervalStap|huidigeSwimmingIntervalStap/.test(SRC.structuredRunningSync + SRC.huidigeIntervalStap), 'AB: cycling/swimming executie niet aangeraakt');
-  ok(/^function huidigeCyclingIntervalStap/m.test(html) && /^function huidigeSwimmingIntervalStap/m.test(html), 'AB: legacy cycling/swimming-paden bestaan ongewijzigd');
-  ok(/if\(!_runningPreviewConfig\|\|!_runningPreviewConfig\.intervalBlokken\)return null;/.test(SRC.huidigeIntervalStap), 'legacy ad-hoc running (intervalBlokken) blijft compatibel na het canonical pad');
+  ok(/^function huidigeCyclingIntervalStap\(nu\)\{ return huidigeStructuredStapFor\('cycling',nu\); \}/m.test(html) && /^function huidigeSwimmingIntervalStap\(nu\)\{ return huidigeStructuredStapFor\('swimming',nu\); \}/m.test(html), 'AB (B2): cycling/swimming delegeren naar de sportneutrale structured-laag (legacy kopieën verwijderd)');
+  ok((html.replace(/\/\/[^\n]*/g, '').match(/intervalBlokken/g) || []).length === 0 && /tkAdhocIntervalPrescription\('running'/.test(html), 'B2: legacy intervalBlokken volledig verwijderd; ad-hoc running via tkAdhocIntervalPrescription (zelfde IntervalEngineCore-model)');
   ok(!/Math\.pow|Math\.exp|regress|slope/.test(SRC.structuredRunningSync + SRC.structuredBlockIndexNow + SRC.huidigeIntervalStap), 'I: geen duplicate/eigen intervalformule (alleen IntervalEngineCore + core-laps)');
-  ok(/IntervalEngineCore\.blockIndexAtElapsed\(/.test(SRC.structuredBlockIndexNow) && /IntervalEngineCore\.stateAt\(/.test(SRC.huidigeIntervalStap), 'H: IntervalEngineCore is de executie-semantiek');
+  ok(/IntervalEngineCore\.blockIndexAtElapsed\(/.test(SRC.structuredBlockIndexNowFor) && /IntervalEngineCore\.stateAt\(/.test(SRC.huidigeStructuredStapFor) && /structuredBlockIndexNowFor\('running',nu\)/.test(SRC.structuredBlockIndexNow) && /huidigeStructuredStapFor\('running',nu\)/.test(SRC.huidigeIntervalStap), 'H: IntervalEngineCore is de executie-semantiek (sportneutrale laag; running-wrappers delegeren)');
 
   // ── AD: migratie nullable, forward-only ──
   const mig = fs.readFileSync(path.join(ROOT, 'migratie_v563.sql'), 'utf8');

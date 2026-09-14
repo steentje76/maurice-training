@@ -1,5 +1,45 @@
 # Trainingskompas — Changelog
 
+## v4.69.91 — Structured Intervals B2: cycling + swimming canonical (14 september 2026)
+
+Eén sportneutrale structured-executielaag voor running, cycling en swimming. Plan =
+`interval_prescription.v1` (ongewijzigd), executie-semantiek = `IntervalEngineCore`
+(`blockIndexAtElapsed`/`stateAt`) op de ACTIEVE seconden van de bestaande per-sport
+EnduranceExecution-state; laps = `EnduranceExecutionCore.addLap` met
+`lap_type/block_index/repeat_index`. Geen tweede interval-engine, geen nieuw
+prescriptieschema, geen DB-migratie.
+
+- `TK_ENDU_SPORT`-dispatch (running/cycling/swimming) + `startStructuredEnduranceExecution`,
+  `structuredSyncFor`, `structuredCloseOpenBlockFor`, `structuredLapFor`,
+  `huidigeStructuredStapFor`; running-wrappers (B1-namen) delegeren, gedrag ongewijzigd.
+- Preview-gate accepteert running|cycling|swimming (erg blijft uitgesloten); Builder krijgt
+  sportkeuze met sportspecifieke targetlabels (pace /km · watt · pace /100 m).
+- Cycling/swimming finish schrijven `activities.training_instance_id` en laps met
+  bloksemantiek; History (rit/zwem) toont planned-vs-actual via dezelfde renderer.
+- Ad-hoc formulier-intervallen (3 sporten) lopen via `tkAdhocIntervalPrescription` op
+  hetzelfde IntervalEngineCore-model; de vier losse `intervalBlokken`-kopieën en de twee
+  legacy `huidige*IntervalStap`-implementaties zijn verwijderd. Bestaande vaste warming-up/
+  cooling-down (600 s running/cycling, 300 s swimming) blijft exact behouden — geen UX-wijziging.
+- Erg (RowErg/BikeErg/SkiErg) ONGEWIJZIGD: `sessions` + exNote; canonical persistence vereist
+  een product/data-modelbesluit → Structured Intervals B3 (GAP-P2-031).
+
+- Review-remediatie: zwemmen krijgt in de structured History de canonieke zwemconventie
+  (meters + pace per 100 m via `CardioCore.splitFromDistTime`, geen km-notatie) via één
+  gedeelde, sport-bewuste formatter `tkStructuredLapActualText` — geen tweede renderer.
+
+Tests: `core/fStructuredIntervalsB2.test.js` 181/181 — nu inclusief DYNAMISCHE bewijzen met
+productiefuncties: Definition-round-trip (`ivRaw`/`saveIntervalWorkout`/`ivFromRaw`) voor
+cycling én swimming, immutable `training_instances`-snapshot (bronmutatie ná start verandert
+plan noch History), History planned-vs-actual per sport incl. eenheden, incomplete/abort
+(alleen daadwerkelijk uitgevoerd werk, werkelijke deelduur, geen toekomstige blokken),
+Calculation→Context-continuïteit met sport-isolatie, en de executie-grens die niet-
+ondersteunde sporten (incl. erg) weigert. Sabotage: snapshot/History herleest bron → 2,
+zwem-km-notatie → 1, planned→actual → 1, finish logt toekomstig blok → 8, context zonder
+sport-filter → 4 failures. Eerdere sabotages (volgorde/repeat_index/erg-gate/instance-id/
+lap-semantiek/sport-vermenging/legacy) blijven geldig; `fStructuredIntervalsCanonical`
+107/107 (B1 ongewijzigd), `fB9_02BRunningClosure` root-cause bijgewerkt. Volledige
+regressie 377/377. APP_VER v4.69.90 → v4.69.91.
+
 ## v4.69.90 — program_blocks overal via owner-chain (GAP-P4-003 + GAP-P4-004) (14 september 2026)
 
 `tkWeekOverview()` (Voortgang/Stats-weekoverzicht) las `program_blocks` uitsluitend op

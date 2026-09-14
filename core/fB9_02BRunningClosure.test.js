@@ -67,15 +67,18 @@ ok(html.includes('Array.isArray(data.state.segments)') && html.includes('isFinit
 // ---- F. Interval-structuur: correcte repeat-logica (sabotage-scenario 6) ----
 {
   const previewFn = html.split('async function toonRunningPreview()')[1].split('function renderRunningExecutionScreen')[0];
-  ok(previewFn.includes("for(let i=1;i<=herhalingen;i++)"),
-    'F1: de intervalblokken worden gegenereerd met exact het opgegeven aantal herhalingen (geen off-by-one)');
-  ok(previewFn.match(/warmup/) && previewFn.match(/cooldown/),
-    'F2: elke intervalstructuur bevat altijd een warm-up en cool-down blok, ongeacht het aantal herhalingen');
+  // B2 (Structured Intervals): de ad-hoc interval loopt via hetzelfde IntervalEngineCore-model als de Definition
+  // (tkAdhocIntervalPrescription -> {repeat:herhalingen, of:[work,recovery]}); geen losse intervalBlokken meer.
+  ok(previewFn.includes("tkAdhocIntervalPrescription('running',herhalingen,workMin*60,recoveryMin*60,600,600)"),
+    'F1: de intervalstructuur wordt gegenereerd met exact het opgegeven aantal herhalingen via IntervalEngineCore (repeat:herhalingen, geen off-by-one)');
+  const adhocFn = html.split('function tkAdhocIntervalPrescription(')[1].split('function structuredBlockLabel')[0];
+  ok(/type:'warmup'/.test(adhocFn) && /type:'cooldown'/.test(adhocFn) && /repeat:Math\.max\(1,Math\.round\(herhalingen\)\|\|1\)/.test(adhocFn),
+    'F2: elke intervalstructuur bevat een warm-up en cool-down blok (bij >0 s) en exact het opgegeven aantal herhalingen');
 }
 
 // ---- G. Interval-datamodel-beslissing expliciet gedocumenteerd (sectie 10) ----
-ok(html.includes('B9-02B sectie 10 -- architectuurbeslissing') && html.includes('EPHEMERE structuur'),
-  'G1: de keuze om de geplande intervalstructuur client-side/ephemeer te houden (i.p.v. een nieuwe databasetabel) is expliciet gemotiveerd in de code zelf');
+ok(html.includes('Ad-hoc formulier-interval (geen Definition, geen instance): HETZELFDE prescriptiemodel via IntervalEngineCore'),
+  'G1 (B2): de architectuurbeslissing -- ad-hoc intervallen gebruiken hetzelfde IntervalEngineCore-model als Definitions maar worden niet als Definition gepersisteerd -- is expliciet in de code gemotiveerd');
 
 // ---- H. State machine module correct geladen ----
 ok(html.includes('<script src="core/runningExecution.js"></script>'),

@@ -157,10 +157,18 @@ _(Hernummerd van GAP-P2-025 bij de Gap 1b-sprint: dat ID was al in gebruik door 
 **Closure-bewijs (running):** Training maken (Builder, mode 'Hardlopen · interval') → `custom_trainings.metadata.intervalPrescription` (IntervalEngineCore-formaat) → `getTrainingDefinition` → canonical Preview (`renderTPInterval`) → `previewStartTraining` → `training_instances.snapshot` (raw + genormaliseerd) → running-executie op `IntervalEngineCore.blockIndexAtElapsed/stateAt` met auto-laps per tijdblok en handmatige transitie (guard tegen dubbele laps) → `activities.training_instance_id` + `activity_laps.lap_type/block_index/repeat_index` (migratie_v563, nullable, forward-only) → run-detail planned-vs-actual via de instance-snapshot. Bestaande scheduling/calculation/context ongewijzigd (auto). Test `core/fStructuredIntervalsCanonical.test.js` (87; sabotage 1/9/3 failures).
 **Priority:** P2 — gesloten voor running.
 
-### GAP-P2-029 (nieuw, Structured Intervals Fase B1) — CROSS-SPORT STRUCTURED INTERVAL CONSOLIDATION — **OPEN**
+### GAP-P2-029 — **CLOSED voor running/cycling/swimming** (Structured Intervals B2, v4.69.91) — CROSS-SPORT STRUCTURED INTERVAL CONSOLIDATION
 **Capability-ID:** CYCLING-CORE, SWIMMING-CORE, ENDURANCE-ERG (RowErg/BikeErg/SkiErg)
 **Current:** cycling/swimming gebruiken nog hun eigen `intervalBlokken`/`huidige*IntervalStap()` (legacy ad-hoc pad); erg-intervals loggen nog uitsluitend `exNote` + totaaltijd; `previewStartTraining` weigert bewust niet-running prescripties. Het Definition-/persistence-model is sport-extensible (sport-veld, IntervalEngineCore-schema, nullable lap-kolommen).
 **Target:** dezelfde canonical keten voor cycling/swimming (B2) en erg (laps i.p.v. exNote), waarna de drie legacy `intervalBlokken`-kopieën verdwijnen. Geen adaptive prescription, geen Decision Rules.
+**Priority:** P2. **Complexity:** M.
+
+**Closure-bewijs (B2):** één sportneutrale structured-laag (`TK_ENDU_SPORT`-dispatch + `startStructuredEnduranceExecution`/`structuredSyncFor`/`structuredCloseOpenBlockFor`/`structuredLapFor`/`huidigeStructuredStapFor`) op `IntervalEngineCore`; Preview-gate running|cycling|swimming; Builder-sportkeuze met sportspecifieke targetlabels; cycling/swimming-finish schrijft `training_instance_id` + laps met `lap_type/block_index/repeat_index`; History planned-vs-actual via dezelfde renderer; ad-hoc intervallen via `tkAdhocIntervalPrescription` (legacy `intervalBlokken` en de twee legacy `huidige*IntervalStap`-implementaties verwijderd, vaste warm-up/cooling-down-semantiek behouden). `core/fStructuredIntervalsB2.test.js` **181/181** met dynamische bewijzen (Definition-round-trip, immutable instance-snapshot, History planned-vs-actual per sport incl. zwemeenheden, incomplete/abort, Calculation→Context met sport-isolatie, executie-grens weigert erg/onbekende sporten), B1-suite 108/108.
+**Nog OPEN (verplaatst naar GAP-P2-031 / B3):** erg (RowErg/BikeErg/SkiErg) blijft op `sessions` + exNote; canonical `activities`/`activity_laps`-persistence vereist een product/data-modelbesluit.
+
+### GAP-P2-031 (nieuw, Structured Intervals B2-audit) — ERG STRUCTURED PERSISTENCE (B3) — **OPEN**
+**Current:** erg-intervallen draaien via `_ivExec` + `IntervalEngineCore` in de cardio-kaart en worden gelogd als `sessions`-rij met vrije tekst (`exNote`: "Intervaltraining: N× werk, totaal mm:ss"); geen `activities`/`activity_laps`, geen `training_instance_id`, geen planned-vs-actual History.
+**Target (PO-besluit vereist):** A) erg wordt `activities`/`activity_laps`-producent (uniforme endurance-historie, maar erg verschuift uit het sessions-domein), of B) structured lap-persistence wordt toegevoegd aan het sessions-domein. Niet gekozen in B2.
 **Priority:** P2. **Complexity:** M.
 
 ### GAP-P2-030 — **CLOSED** (Detraining B1, 13 september 2026) — Programmapad omzeilde DEC-DETRAIN-001 (tweede prescription-bron)

@@ -173,6 +173,26 @@ function sandbox() {
   ok(!/stroke_rate/.test((SRC.finishIntervalExecution + SRC.tkErgCloseBlockActual + SRC.tkErgActualText).replace(/\/\/[^\n]*/g, '')), 'BikeErg-schuld: cadans/RPM wordt nergens als stroke_rate in de structured actuals geschreven');
   ok(fs.existsSync(path.join(ROOT, 'migratie_v565.sql')) && /add column if not exists intervals_detail jsonb null/.test(fs.readFileSync(path.join(ROOT, 'migratie_v565.sql'), 'utf8')), 'migratie: additief, nullable, idempotent');
 
+  // ── Ownership/RLS (remediatie): sessions/training_instances hebben GEEN client-side query-param-scoping
+  // (zoals de #351/#352-fix voor program_blocks), maar zijn uitsluitend Postgres-RLS-beschermd
+  // (user_id = auth.uid()), afgedwongen door de database zelf op elke rij, ongeacht kolom. Dit
+  // testbestand draait offline (geen live Postgres/pgTAP-infrastructuur bestaat ergens in deze repo,
+  // voor GEEN enkele feature) en kan daarom GEEN twee-JWT live-RLS-bewijs leveren. Wat WEL bewezen
+  // wordt: B3 introduceert geen nieuwe/zwakkere toegangsweg t.o.v. de reeds uitgeleverde, reeds
+  // geaudite B1/B2-mechaniek, gebruikt geen elevated/service-role sleutel, en de client kan
+  // structureel geen andermans user_id meesturen (het veld wordt nooit clientside gezet).
+  const migSql = fs.readFileSync(path.join(ROOT, 'migratie_v565.sql'), 'utf8');
+  ok(!/create policy|alter policy|disable row level security/i.test(migSql), 'ownership A: migratie wijzigt geen enkele RLS-policy — de kolom erft automatisch de bestaande rij-policies op sessions (RLS filtert per rij, niet per kolom; zelfde precedent als edit_revision/migratie_v547)');
+  const ergTrainingInstanceRead = (html.match(/await sbGet\('training_instances','&id=eq\.'\+encodeURIComponent\(sess\.training_instance_id\)\+'&limit=1'\)/) || [''])[0];
+  const preExistingB2Read = (html.match(/await sbGet\('training_instances','&id=eq\.'\+encodeURIComponent\(instanceId\)\+'&limit=1'\)/) || [''])[0];
+  ok(!!ergTrainingInstanceRead && !!preExistingB2Read, 'ownership B: beide training_instances-reads (Erg-History nieuw, bestaande B1/B2-History) gevonden voor vergelijking');
+  eq(ergTrainingInstanceRead.replace('sess.training_instance_id', 'X'), preExistingB2Read.replace('instanceId', 'X'), 'ownership B: Erg-History leest training_instances met EXACT hetzelfde authenticatie-/scopingpatroon (sbGet, alleen id=eq., geen expliciete user_id-override) als de reeds uitgeleverde en geaudite B1/B2-renderer — geen nieuwe/zwakkere toegangsweg');
+  const ergCodeBlock = SRC.finishIntervalExecution + SRC.startIntervalExecution + SRC.tkErgCloseBlockActual + SRC.renderErgSessionStructuredHtml + FINISH_SESSION_WRITE;
+  ok(!/service_role|SUPABASE_SERVICE_ROLE_KEY|SB_KEY_ADMIN/i.test(ergCodeBlock), 'ownership C: geen enkel Erg/B3-codepad gebruikt een elevated/service-role-sleutel — uitsluitend de normale, auth-gebonden sbGet/sbPostQ-weg (RLS blijft de enige poortwachter)');
+  ok(!/user_id\s*:/.test(FINISH_SESSION_WRITE), 'ownership D: de sessierij-insert (incl. intervals_detail) stuurt zelf GEEN user_id mee — het veld wordt structureel niet clientside gezet, dus een client kan niet eens proberen een andermans user_id te spoofen; toewijzing gebeurt uitsluitend serverside (kolom-default/RLS), ongewijzigd door B3');
+  ok(!/sbGet\('sessions',[^)]*user_id=eq\.'\+(?!authSession|uid)/.test(SRC.renderErgSessionStructuredHtml || ''), 'ownership E: History-renderer bevat geen eigen, potentieel foutieve user_id-filterlogica — vertrouwt (zoals B1/B2) volledig op de database-RLS, geen tweede/eigen autorisatiemodel');
+  msgs.push('LIMITATIE (erkend, niet dit-PR-specifiek): een live, twee-gebruikers Postgres-RLS-proef (authSession A vs. authSession B tegen een echte sessions/training_instances-tabel) is met de huidige repository-testinfrastructuur niet uitvoerbaar — er bestaat nergens in deze codebase een lokale Postgres/pgTAP-testharness. Bovenstaande is het sterkste offline-bewijs dat deze architectuur toelaat: geen nieuwe/zwakkere toegangsweg, geen elevated sleutel, geen clientside user_id-spoofing mogelijk, RLS-policies ongewijzigd.');
+
   if (msgs.length) console.log(msgs.join('\n'));
   console.log('fStructuredIntervalsB3Erg: ' + pass + ' geslaagd, ' + fail + ' mislukt');
   process.exit(fail ? 1 : 0);

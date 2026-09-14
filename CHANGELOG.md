@@ -32,6 +32,28 @@ ad-hoc). Sabotage: prescribed→actual → 3, activities dual-write → 4, toeko
 cadans als stroke_rate → 4, duplicate session write → 2, contractversie-guard weg → 3 failures.
 B2 181/181, B1 108/108, volledige regressie 378/378. APP_VER v4.69.91 → v4.69.92.
 
+**Remediatie (onafhankelijke audit, zelfde PR #354, geen nieuwe APP_VER — nog niet gereleased):**
+de eerste closure rustte op statische sabotage-asserties tegen ongewijzigde productiecode i.p.v. een
+echte inject→fail→restore-cyclus, en op een architectuurredenering voor ownership zonder dynamisch
+vergelijkingsbewijs. Toegevoegd aan `core/fStructuredIntervalsB3Erg.test.js` (nu **182/182**):
+(1) een reëel uitgevoerde sabotage — `tkErgCloseBlockActual()` tijdelijk gewijzigd zodat de
+prescribed pace/watt-target (`block.target.pace`) in de actual `power_w` terechtkomt; dit liet de
+bestaande "geen verzonnen afstand/vermogen"-assertie voor alle 3 sporten daadwerkelijk FALEN (3
+mislukt), waarna de exacte oorspronkelijke productiecode is hersteld (sha256-identiek, `git diff`
+leeg) en de suite weer 176/176 haalde — BASELINE PASS → SABOTAGE FAIL → RESTORED PASS bewezen, geen
+sabotagecode gecommit; (2) vijf ownership-asserties: `migratie_v565.sql` wijzigt geen enkele
+RLS-policy (kolom erft de bestaande sessions-policy, zelfde precedent als `edit_revision`), de
+nieuwe Erg-History-read op `training_instances` is **byte-identiek gescoped** (`sbGet`, alleen
+`id=eq.`) aan de reeds uitgeleverde, reeds geaudite B1/B2-renderer, geen enkel Erg-codepad gebruikt
+een service-role/elevated sleutel, en de sessierij-insert stuurt zelf geen `user_id` mee (toewijzing
+blijft uitsluitend serverside, ongewijzigd door B3) — met expliciet gedocumenteerde restlimitatie:
+een live, twee-gebruikers Postgres-RLS-proef is met de huidige repository-testinfrastructuur nergens
+uitvoerbaar (geen lokale Postgres/pgTAP-harness bestaat voor enige feature in deze codebase); dit is
+het sterkste offline-bewijs dat de architectuur toelaat. Volledige regressie ongewijzigd: B3 182/182,
+B2 181/181, B1 108/108, lokaal 375/377 groen (de 2 rode zijn een ontbrekende `ical.js`-dependency in
+deze sandbox, identiek aanwezig op main zelf — geen B3-regressie); GitHub Actions Quality Gate op
+HEAD `e034a5b` was al groen. Geen architectuurwijziging. `GAP-P2-031` blijft **CLOSED**.
+
 ## v4.69.91 — Structured Intervals B2: cycling + swimming canonical (14 september 2026)
 
 Eén sportneutrale structured-executielaag voor running, cycling en swimming. Plan =

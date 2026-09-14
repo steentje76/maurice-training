@@ -1909,3 +1909,10 @@
 - **Tests:** `fStrengthBasisSelection` 97/97 (sabotage 8/4/3), `fDetrainingPrescriptionPaths` 82/82, registry-tellingen (6/32/5) bijgewerkt; regressie 372/372. APP_VER v4.69.85 → v4.69.86. Draft PR, NIET mergen.
 - **Procesnotitie:** tijdens de sabotagefase is met `git checkout -- index.html` één keer de nog niet gecommitte implementatie weggegooid; exact opnieuw uitgevoerd en als tussenstand gecommit vóór verdere sabotage.
 - **Open:** middeling meerdere sessies (evidence/product), DEC-BASIS-001, GAP-P3-031 (a/b/d/e); `CALCULATION_EVIDENCE_SPEC §5.2` bevat een verouderde handmatige telling (23/B=4) — pre-existing docs-debt, niet herschreven.
+
+## Readiness Input & Application Parity (GAP-P3-032) — Fase B
+
+- **Datum:** 14 september 2026. Root cause (Adaptive Prescription Completion Audit): Programma paste DEC-RECADJ-001 vóór Brzycki toe (sets/RPE-mutatie, check-in met gevoel+pijn); Normal/Guided via `applySessionRecovery`/`recoveryWeightFactor` met pijn hard `null`; override-vs-readiness ongedocumenteerd.
+- **Besluit/implementatie:** `recoveryAdjustmentForToday(muscles, opts)` = enige canonical aanroep (gevoel `hrv_log.voelt` vandaag; pijn `checkin_conditions` 'Pijn: …' vandaag via `todayPainMuscle()`; expliciete check-in als opts); Programma via `sessionRxAdj[ctxT]` → `applySessionRecovery` (geen pre-mutatie); `evaluateProgAdjustment` via de canonical functie; `_weightOverride` op Preview-/Guided-items → `_rxOverrideBypass` (gewicht finaal, sets/RPE-delta wel); provenance `inputs` + uitleg (`readinessInputsText`). DEC-RECADJ-001/DEC-DETRAIN-001/DEC-PROG-001 ongewijzigd; geen adaptive use van adherence/inactivity/RPE-trend/dataQuality/peak.
+- **Tests:** `fReadinessParity.test.js` 57/57; sabotage: pre-Brzycki-route → 2, pijn null → 8, override numeriek → 2 failures. Regressie 373/373. APP_VER v4.69.86 → v4.69.87. Draft PR, NIET mergen.
+- **Buiten scope:** GAP-P3-031 (a: Guided `replaceEx` prev.date; b/d/e), 1RM-middeling, DEC-BASIS-001, Structured Intervals B2, Concept2, dormant contextEngine/LongitudinalTrend.

@@ -1,5 +1,31 @@
 # Trainingskompas — Changelog
 
+## v4.69.87 — Readiness Input & Application Parity (GAP-P3-032) (14 september 2026)
+
+Eén canonical readiness/recovery-pad voor alle kracht-startpaden. DEC-RECADJ-001
+(`computeProgAdjustment`) en DEC-DETRAIN-001 zijn ONGEWIJZIGD; geen nieuwe deltas.
+
+- `recoveryAdjustmentForToday(muscles, opts)` is dé canonical aanroep: gevoel uit
+  `hrv_log.voelt` (vandaag), pijn uit `checkin_conditions` 'Pijn: …' (vandaag) via
+  `todayPainMuscle()`; een zojuist ingevulde check-in mag expliciet worden meegegeven.
+  Uitkomst draagt provenance (`inputs{voelt,painMuscle,dagfactor,source}`, rule-ID).
+- Programma: geen pre-Brzycki sets/RPE-mutatie meer in `launchProgramTrainScreen`; de
+  check-in-uitkomst gaat via `sessionRxAdj[ctxT]` → `applySessionRecovery` (zelfde RPE/
+  sets-delta + `recoveryWeightFactor` als Normal/Guided). `evaluateProgAdjustment`
+  gebruikt de canonical functie; Normal levert pijn niet meer hard als null.
+- Precedence vastgelegd: expliciete gewichts-override OF canonical basis → CALC-STR-002
+  → DEC-DETRAIN-001 → DEC-RECADJ-001 → prescription; **override is finaal**: detraining
+  én readiness passen het override-gewicht niet aan (sets/RPE-delta wel, met
+  `_rxOverrideBypass`-provenance); DEC-PROG-001 blijft opt-in advies.
+- Explainability: `readinessInputsText()` in toast en Normal execution ('Herstel
+  vandaag: RPE −0,5 · gewicht blijft jouw eigen instelling (pijn: schouder)').
+
+Tests: nieuw `core/fReadinessParity.test.js` 57/57 (input-parity, application-parity
+Programma = Normal = Guided, override finaal bij slechte readiness/pijn, detraining +
+readiness ieder één keer, geen readiness verzonnen, rules ongewijzigd, DEC-PROG-001
+opt-in; sabotage: pre-Brzycki-route terug → 2, pijn weer null → 8, override numeriek
+→ 2 failures). Volledige regressie 373/373. APP_VER v4.69.86 → v4.69.87.
+
 ## v4.69.86 — Strength Basis Recency B1: recente representatieve prestatie als 1RM-basis (13 september 2026)
 
 CALC-STR-006 `strength_basis.v1` (`CalcCore.selectStrengthBasis`): de prescription-basis is

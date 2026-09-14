@@ -7294,7 +7294,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.86';
+const APP_VER = 'v4.69.87';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -9106,6 +9106,7 @@ function buildResolvedExecutionItems(list){
         poster:posterUrl, video:videoFile, canonicalId:exId,
         suggestedWeight:previewResolveItemWeight(it),   // F0.7L: canonical resolver-gewicht
         _detrain:previewResolveItemDetrain(it),          // DETRAINING B1: bestaande resolver-reden voor Normal execution
+        _weightOverride:!!(previewCtx&&previewCtx.overrides&&previewCtx.overrides[it.exercise_id]!=null), // GAP-P3-032: override finaal
         muscles:{p:Id.primary||[], s:Id.secondary||[]}
       };
     }
@@ -9122,6 +9123,7 @@ function buildResolvedExecutionItems(list){
       yt:exObj?exObj.yt:null,
       suggestedWeight:previewResolveItemWeight(it),   // F0.7L: canonical resolver-gewicht
       _detrain:previewResolveItemDetrain(it),          // DETRAINING B1: bestaande resolver-reden voor Normal execution
+      _weightOverride:!!(previewCtx&&previewCtx.overrides&&previewCtx.overrides[it.exercise_id]!=null), // GAP-P3-032: override finaal
       muscles:{p:(exObj&&exObj.muscle_primary)||[], s:(exObj&&exObj.muscle_secondary)||[]}
     };
   });
@@ -9644,7 +9646,8 @@ function buildGuidedWorkoutPlan(list){
       label:(typeof previewRoleLabel==='function'?previewRoleLabel(it.pick):'')||'',
       sets:(it.sets!=null?it.sets:null), wu:it.wu??null,
       // F0.7L: canonical resolver-gewicht meegeven zodat Guided-baseline = Preview = Normal.
-      weight:previewResolveItemWeight(it)};
+      weight:previewResolveItemWeight(it),
+      _weightOverride:!!(previewCtx&&previewCtx.overrides&&previewCtx.overrides[it.exercise_id]!=null)}; // GAP-P3-032
   })};
 }
 // mode: 'normal' (standaard Execution) | 'guided' (begeleide execution-mode) — beide op
@@ -18349,10 +18352,14 @@ function applySessionRecovery(t,list){
     // C3-fix: verlaagt recovery de RPE, herbereken het werkgewicht deterministisch op DEZELFDE factor
     // als Guided (recoveryWeightFactor), zodat getoond gewicht en RPE-label bij elkaar horen. Idempotent:
     // getSessionExs herbouwt de basis bij elke render, dus de factor compound niet.
-    if(adj.rpeDelta && ex.suggestedWeight!=null && isFinite(parseFloat(ex.suggestedWeight))){
+    // GAP-P3-032: EXPLICIETE GEWICHTS-OVERRIDE IS FINAAL — readiness past sets/RPE aan, maar nooit het
+    // override-gewicht (zoals detraining dat ook al niet doet). Wel provenance voor de uitleg.
+    if(ex._weightOverride){ out._rxOverrideBypass=true; }
+    else if(adj.rpeDelta && ex.suggestedWeight!=null && isFinite(parseFloat(ex.suggestedWeight))){
       out.suggestedWeight = roundKg(parseFloat(ex.suggestedWeight) * recoveryWeightFactor(ex.reps, adj.rpeDelta));
       out._rxWeightAdjusted = true;
     }
+    out._rxInputs=adj.inputs||null;
     return out;
   });
 }
@@ -21694,6 +21701,15 @@ function strengthBasisText(basis){
   if(basis.source==='manual_1rm')return 'Basis: handmatige 1RM '+basis.value+' kg ('+(basis.basisDate?('ingevoerd '+dNl(basis.basisDate)):'datum onbekend — controleer je eerste set')+')';
   return 'Basis: geschat 1RM '+basis.value+' kg uit je sessie van '+(basis.basisDate?dNl(basis.basisDate):'onbekende datum')+(basis.sampleReps?' ('+basis.sampleReps+' reps)':'');
 }
+// GAP-P3-032 — compacte tekst van de gebruikte readiness-inputs (DEC-RECADJ-001-provenance).
+function readinessInputsText(inputs){
+  if(!inputs)return '';
+  const p=[];
+  if(inputs.voelt)p.push('gevoel: '+inputs.voelt);
+  if(inputs.painMuscle)p.push('pijn: '+inputs.painMuscle);
+  if(typeof inputs.dagfactor==='number'&&inputs.dagfactor<0.97)p.push('herstel-dagfactor '+inputs.dagfactor);
+  return p.join(', ');
+}
 function buildPrevBlock(prevS, ex, rxWeight, detrain){
   if(!(prevS&&prevS.weight&&prevS.reps))return '';
   // DETRAINING B1: dezelfde F0.7L-uitleg als in Preview, uitsluitend uit de bestaande resolver-provenance
@@ -21702,6 +21718,14 @@ function buildPrevBlock(prevS, ex, rxWeight, detrain){
     ?`<div class="prev2-today keep" style="font-weight:500">Je deed deze oefening ${detrain.days} dagen niet — daarom starten we vandaag iets conservatiever.</div>`:'';
   const basisTxt=(detrain&&detrain.basis)?strengthBasisText(detrain.basis):'';
   const basisEl=basisTxt?`<div class="prev2-today keep" style="font-weight:400;opacity:.85">${escHtml(basisTxt)}</div>`:'';
+  // GAP-P3-032: readiness/recovery-uitleg (sets/RPE-delta, gewicht, override-bypass) uit de bestaande provenance.
+  let rxEl='';
+  if(ex&&ex._rxAdjusted){
+    const d=[]; if(ex._rxSetsDelta)d.push((ex._rxSetsDelta>0?'+':'')+ex._rxSetsDelta+' set'); if(ex._rxRpeDelta)d.push('RPE '+(ex._rxRpeDelta>0?'+':'')+ex._rxRpeDelta);
+    const inTxt=readinessInputsText(ex._rxInputs);
+    const w=ex._rxOverrideBypass?'gewicht blijft jouw eigen instelling':(ex._rxWeightAdjusted?'gewicht mee verlaagd':'');
+    rxEl=`<div class="prev2-today keep" style="font-weight:400;opacity:.85">${escHtml('Herstel vandaag: '+d.join(', ')+(w?' · '+w:'')+(inTxt?' ('+inTxt+')':''))}</div>`;
+  }
   const w=prevS.weight,r=prevS.reps,rpe=(prevS.rpe!=null&&prevS.rpe!=='')?parseFloat(prevS.rpe):null;
   let today='';
   // READ-ONLY: verwijs naar de ACTUELE prescription (rxWeight = zelfde getal als de VANDAAG-kaart),
@@ -21716,7 +21740,7 @@ function buildPrevBlock(prevS, ex, rxWeight, detrain){
   return `<div class="ex-prev prev2">
     <div class="prev2-lbl">Vorige keer</div>
     <div class="prev2-main">${w} kg × ${r}${rpe!=null?` <span class="prev2-rpe">· RPE ${rpe}</span>`:''}</div>
-    ${today}${detrainEl}${basisEl}
+    ${today}${detrainEl}${basisEl}${rxEl}
   </div>`;
 }
 function showPostSetAdvice(exId,setNum){
@@ -23735,19 +23759,38 @@ function rhrBaselineDelta(hd){
     return Math.round((today-base)*10)/10;
   }catch(_){ return null; }
 }
-async function recoveryAdjustmentForToday(muscleNames){
+// GAP-P3-032 (Readiness Input & Application Parity): DE canonical readiness/recovery-aanroep voor ALLE
+// kracht-startpaden (Normal, Programma, Guided). Inputs komen uit dezelfde persisted bronnen:
+//   gevoel  = hrv_log.voelt van vandaag (check-in), pijn = checkin_conditions 'Pijn: <spier>' van vandaag;
+//   opts.{voelt,painMuscle} mag een zojuist ingevulde check-in expliciet meegeven (zelfde semantiek).
+// Uitkomst = DEC-RECADJ-001 (computeProgAdjustment, ongewijzigd) + provenance van de gebruikte inputs.
+// Geen readiness verzinnen: ontbrekende input blijft null (geen aanpassing op die grond).
+async function todayPainMuscle(){
+  try{
+    const rows=await sbGet('checkin_conditions','&date=eq.'+td()+'&condition_label=like.Pijn*&order=created_at.desc&limit=1');
+    const lbl=(rows&&rows[0]&&rows[0].condition_label)?String(rows[0].condition_label):'';
+    const m=/^Pijn:\s*(.+)$/.exec(lbl); return m?m[1].trim():null;
+  }catch(_){ return null; }
+}
+async function recoveryAdjustmentForToday(muscleNames, opts){
+  opts=opts||{};
   try{
     const hd=await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35');
     const dfInfo=dagfactor(hrvDagFactorPersonal(hd), (hd&&hd[0])?hd[0].sleep:null, (hd&&hd[0])?hd[0].cyclus_fase:null);
     let recRows=[]; try{ if(Array.isArray(muscleNames)&&muscleNames.length) recRows=await getRelevantMuscleRecovery(muscleNames); }catch(_){}
-    // GEVOEL uit de check-in (indien opgeslagen) → beïnvloedt de DecisionCore-aanpassing (slecht/matig).
-    const voelt=(hd&&hd[0]&&hd[0].voelt)?String(hd[0].voelt):null;
-    const adj=computeProgAdjustment(dfInfo.factor, recRows, voelt, null)||{rpeDelta:0,setsDelta:0,redenen:[]}; // null = geen aanpassing nodig
+    // GEVOEL: expliciete check-in > hrv_log.voelt van vandaag > null.
+    const hdVoelt=(hd&&hd[0]&&hd[0].date===td()&&hd[0].voelt)?String(hd[0].voelt):null;
+    const voelt=(opts.voelt!=null)?String(opts.voelt):hdVoelt;
+    // PIJN: expliciete check-in > checkin_conditions van vandaag > null (parity Normal/Programma/Guided).
+    const painMuscle=(opts.painMuscle!==undefined)?(opts.painMuscle||null):await todayPainMuscle();
+    const adj=computeProgAdjustment(dfInfo.factor, recRows, voelt, painMuscle)||{rpeDelta:0,setsDelta:0,redenen:[]}; // null = geen aanpassing nodig
     // RHR-delta → alleen in de zichtbare Recovery Score (niet in de sets/RPE-beslissing; DecisionCore neemt geen RHR).
     const rhrDelta=rhrBaselineDelta(hd);
     const rs=recoveryScoreFrom(dfInfo, recRows, {rhrDelta:(rhrDelta!=null?rhrDelta:undefined), voelt:voelt||undefined});
-    return { rpeDelta:adj.rpeDelta||0, setsDelta:adj.setsDelta||0, redenen:adj.redenen||[], score:(rs&&rs.score!=null?rs.score:null), band:(rs&&rs.band)||'onbekend', confidence:(rs&&rs.confidence)||'geen', factor:dfInfo.factor };
-  }catch(_){ return { rpeDelta:0, setsDelta:0, redenen:[], score:null, band:'onbekend', confidence:'geen' }; }
+    return { rpeDelta:adj.rpeDelta||0, setsDelta:adj.setsDelta||0, redenen:adj.redenen||[], score:(rs&&rs.score!=null?rs.score:null), band:(rs&&rs.band)||'onbekend', confidence:(rs&&rs.confidence)||'geen', factor:dfInfo.factor,
+      inputs:{ dagfactor:dfInfo.factor, voelt:voelt, painMuscle:painMuscle, source:{ voelt:(opts.voelt!=null?'checkin':(hdVoelt?'hrv_log':'geen')), pain:(opts.painMuscle!==undefined?'checkin':(painMuscle?'checkin_conditions':'geen')) } },
+      ruleId:'DEC-RECADJ-001', ruleVersion:'progression_adjust.v1' };
+  }catch(_){ return { rpeDelta:0, setsDelta:0, redenen:[], score:null, band:'onbekend', confidence:'geen', inputs:null, ruleId:'DEC-RECADJ-001', ruleVersion:'progression_adjust.v1' }; }
 }
 // Korte, deterministische "wat + waarom"-melding bij een recovery-aanpassing (geen AI). Toont niets als er niets aangepast is.
 function recoveryAdjustToast(adj){
@@ -23756,7 +23799,9 @@ function recoveryAdjustToast(adj){
   if(adj.setsDelta) parts.push((adj.setsDelta>0?'+':'')+adj.setsDelta+' set');
   if(adj.rpeDelta) parts.push('RPE '+(adj.rpeDelta>0?'+':'')+adj.rpeDelta);
   const scoreTxt=(adj.score!=null)?('Herstel '+adj.score+'/100 · '):'';
-  if(typeof toast==='function') toast(scoreTxt+'vandaag aangepast: '+parts.join(', '));
+  // GAP-P3-032: gebruikte inputs zichtbaar (gevoel/pijn), geen AI, geen nieuwe getallen.
+  const inTxt=readinessInputsText(adj.inputs);
+  if(typeof toast==='function') toast(scoreTxt+'vandaag aangepast: '+parts.join(', ')+(inTxt?' ('+inTxt+')':''));
 }
 // Gewichtsfactor bij een recovery-RPE-delta: exact de working_weight.v1-verhouding (Brzycki) die de
 // programmaflow ook gebruikt — een lagere doel-RPE ⇒ lager gewicht. oneRM-onafhankelijk (valt weg in de
@@ -23856,7 +23901,8 @@ function applyRecoveryToGuidedPlan(plan, adj){
   plan.items=plan.items.map(it=>{
     const out={...it};
     if(out.sets!=null && isFinite(parseInt(out.sets))) out.sets=Math.max(1, parseInt(out.sets)+(adj.setsDelta||0));
-    if(out.weight!=null && isFinite(parseFloat(out.weight)) && adj.rpeDelta){
+    if(it._weightOverride){ out._rxOverrideBypass=true; } // GAP-P3-032: override finaal, ook in Guided
+    else if(out.weight!=null && isFinite(parseFloat(out.weight)) && adj.rpeDelta){
       out.weight=roundKg(parseFloat(out.weight)*recoveryWeightFactor(out.reps||it.reps, adj.rpeDelta));
       out._rxAdjusted=true;
     }
@@ -29610,8 +29656,11 @@ async function evaluateProgAdjustment(){
   const muscleSet=new Set();
   rows.forEach(r=>getExerciseMuscles(r.exercise_id).forEach(m=>muscleSet.add(m)));
   const muscleRows=await getRelevantMuscleRecovery([...muscleSet]);
-  const adj=computeProgAdjustment(df.factor,muscleRows,progCheckinCtx.voelt,progCheckinCtx.pijn);
-  progCheckinCtx.adjustment=adj;
+  // GAP-P3-032: dezelfde canonical readiness-aanroep als Normal/Guided (DEC-RECADJ-001 via
+  // recoveryAdjustmentForToday), met de zojuist ingevulde check-in expliciet als input.
+  const adjFull=await recoveryAdjustmentForToday([...muscleSet],{voelt:progCheckinCtx.voelt,painMuscle:(progCheckinCtx.pijn||null)});
+  const adj=(adjFull&&(adjFull.rpeDelta||adjFull.setsDelta))?adjFull:null; // null = geen aanpassing nodig (bestaande UI-semantiek)
+  progCheckinCtx.adjustment=adjFull;
   // A4 — CONSISTENTIEBRUG (v4.65.0): puur presentatie, GEEN nieuwe Decision Engine. Home
   // en deze pre-workout-aanpassing gebruiken dezelfde computeProgAdjustment(), maar Home
   // kent structureel nooit gevoel/pijn (hrv_log heeft geen kolommen hiervoor) en gebruikt
@@ -29696,8 +29745,11 @@ function padvDecline(){closeModal('m-prog-advies');launchProgramTrainScreen(null
 async function padvAccept(){closeModal('m-prog-advies');await launchProgramTrainScreen(progCheckinCtx.adjustment);}
 
 async function launchProgramTrainScreen(adjustment){
+  // GAP-P3-032: canonical readiness-toepassing voor het programmapad (zelfde object/pad als Normal/Guided).
+  window._tkProgRxAdj=(adjustment&&(adjustment.rpeDelta||adjustment.setsDelta))?adjustment:{rpeDelta:0,setsDelta:0,redenen:[],inputs:(adjustment&&adjustment.inputs)||null};
   const {blockId,block,prog,rows}=progCheckinCtx;
   const ctxT='prog_'+blockId;
+  sessionRxAdj[ctxT]=window._tkProgRxAdj; // GAP-P3-032: applySessionRecovery (getSessionExs) past DEC-RECADJ-001 canonical toe
   if(!(await guardExistingDraft(ctxT))) return; // P0: bescherm niet-afgeronde andere training
   // MS-F2-07/GAP-P1-006 P1-FIX: net als startT/startCustomTraining moet een bestaande, geldige
   // draft VOOR DEZE ZELFDE programmatraining hersteld worden i.p.v. stilzwijgend overschreven.
@@ -29747,11 +29799,10 @@ async function launchProgramTrainScreen(adjustment){
         sessionExtra.push({id:ex.id,naam:ex.name,type:exType,_t:ctxT,_preloaded:true});
         continue;
       }
+      // GAP-P3-032: readiness/recovery wordt NIET meer vóór Brzycki in sets/RPE gemuteerd, maar via het
+      // canonical application-pad (sessionRxAdj[ctxT] -> applySessionRecovery in getSessionExs), exact
+      // zoals Normal/Guided: RPE/sets-delta + recoveryWeightFactor op het resolver-gewicht, één keer.
       let sets=r.sets||3, rpe=parseFloat(r.rpe_target)||7;
-      if(adjustment){
-        sets=Math.max(1,sets+(adjustment.setsDelta||0));
-        rpe=Math.max(5,Math.min(10,rpe+(adjustment.rpeDelta||0)));
-      }
       const _reps=r.reps||'8-10';
       // ÉÉN prescription-truth ook voor Programma (DETRAINING B1): het werkgewicht komt uit exact
       // dezelfde canonical resolver als Preview/Mijn training — base 1RM×Brzycki × DEC-DETRAIN-001

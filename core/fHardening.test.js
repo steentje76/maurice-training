@@ -539,7 +539,11 @@ ok(!/setsDelta|rpeDelta\s*=/.test(extraCtxSrc), 'U5 (kernprincipe): deze functie
 ok(/escHtml\(/.test(extraCtxSrc), 'U6 (XSS-veiligheid): vrije tekst (event_name/oefeningnamen) wordt via escHtml() weergegeven');
 
 const evalAdjSrc = html.slice(html.indexOf('async function evaluateProgAdjustment('), html.indexOf('async function evaluateProgAdjustment(') + 3700);
-ok(/const adj=computeProgAdjustment\(df\.factor,muscleRows,progCheckinCtx\.voelt,progCheckinCtx\.pijn\)/.test(evalAdjSrc), 'U7 (protected-core-isolatie): computeProgAdjustment() wordt aangeroepen met EXACT dezelfde vier parameters als vóór v4.64.0 -- geen nieuw vijfde argument, geen gewijzigde signature');
+// GAP-P3-032 (v4.69.87): evaluateProgAdjustment() loopt via de canonical recoveryAdjustmentForToday(),
+// die computeProgAdjustment() met EXACT dezelfde vier parameters aanroept (dagfactor, spierherstel, gevoel, pijn).
+ok(/recoveryAdjustmentForToday\(\[\.\.\.muscleSet\],\{voelt:progCheckinCtx\.voelt,painMuscle:\(progCheckinCtx\.pijn\|\|null\)\}\)/.test(evalAdjSrc), 'U7a (GAP-P3-032): evaluateProgAdjustment() gebruikt de canonical recoveryAdjustmentForToday() met de check-in-inputs (gevoel, pijn)');
+const rafdSrc=html.slice(html.indexOf('async function recoveryAdjustmentForToday('), html.indexOf('async function recoveryAdjustmentForToday(') + 3000);
+ok(/computeProgAdjustment\(dfInfo\.factor, recRows, voelt, painMuscle\)/.test(rafdSrc), 'U7 (protected-core-isolatie): computeProgAdjustment() wordt aangeroepen met EXACT dezelfde vier parameters als vóór v4.64.0 -- geen nieuw vijfde argument, geen gewijzigde signature');
 ok(/const extraContext=await buildProgAdviesExtraContext\(prog,rows\)/.test(evalAdjSrc), 'U8: de nieuwe context wordt apart, NA de bestaande adj-berekening opgehaald -- nooit vermengd met de Decision Engine-aanroep zelf');
 ok(/extraContext\.length\?/.test(evalAdjSrc), 'U9: de extra contextregel wordt uitsluitend getoond wanneer daadwerkelijk relevante content bestaat -- geen lege sectie');
 ok(/const extraContextIntro=await buildProgAdviesExtraContext\(prog,rows\)/.test(evalAdjSrc), 'U10: dezelfde aanvullende context wordt ook getoond wanneer GEEN readiness-aanpassing nodig is (m-prog-intro-pad) -- consistente informatie ongeacht adj');

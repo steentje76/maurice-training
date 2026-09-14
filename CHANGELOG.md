@@ -1,5 +1,26 @@
 # Trainingskompas — Changelog
 
+## v4.69.90 — program_blocks overal via owner-chain (GAP-P4-003 + GAP-P4-004) (14 september 2026)
+
+`tkWeekOverview()` (Voortgang/Stats-weekoverzicht) las `program_blocks` uitsluitend op
+`planned_date`, zonder scoping op de eigen programma's. Nu via dezelfde canonical helper
+`tkOwnedProgramBlocksInWindow(uid, maandag, zondag)` als de Context-adapter (#351):
+`programs.user_id` → `program_id=in.(<eigen ids>)` + weekvenster; geen uid / geen programma's /
+lookup-fout → [] (nooit ongescoopt). Sessions-, PR- en trendlogica van het weekoverzicht
+ongewijzigd.
+
+Review-correctie: de claim "laatste ongescoopte read" was onjuist. Twee resterende ongescoopte
+reads — `renderKalender()` (`v43SafeGet`, alle blokken) en `inzichtRenderDevelopment()`
+(`inzichtGetOrNull`, laatste 200) — zijn in dezelfde PR via de generieke owner-helper
+`tkOwnedProgramBlocks(uid, extraQ, {nullOnError})` gescoopt (GAP-P4-004 CLOSED); Inzicht
+behoudt null-als-niet-beschikbaar, kalender behoudt []-fallback. Repo-brede static gate:
+0 `program_blocks`-reads zonder `program_id`/`id`-scoping over alle read-helpers.
+
+Tests: nieuw `core/fWeekOverviewOwnership.test.js` 28/28 (cross-user A/B, nul programma's,
+lookup-fout, geen uid, generieke helper/nullOnError; sabotage: ongescoopte read terug → 10,
+lege lijst → alles → 2/3, lookup-fout → alles → 2, kalender/inzicht ongescoopt → 2/2 failures).
+Volledige regressie 376/376. APP_VER v4.69.89 → v4.69.90.
+
 ## v4.69.89 — Inactivity & adherence als Context-signalen (GAP-P3-031b) (14 september 2026)
 
 Nieuwe pure Calculation-laag `core/inactivityAdherence.js`: **CALC-ACT-001** `inactivity.v1`

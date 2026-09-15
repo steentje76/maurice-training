@@ -647,14 +647,14 @@ const buildFormSrc = html.slice(html.indexOf('function buildIntervalPrescription
 ok(/IntervalEngineCore\.normalizePrescription\(/.test(buildFormSrc), 'Z4 (kernprincipe): de UI bouwt uitsluitend een RUWE prescriptie en delegeert ALLE validatie/normalisatie aan het bestaande, pure IntervalEngineCore -- geen eigen validatielogica gedupliceerd');
 ok(!/new Date\(\)|setTimeout|setInterval/.test(buildFormSrc), 'Z5: het bouwen van de prescriptie zelf bevat geen tijdgebaseerde logica -- puur data-transformatie vóór normalisatie');
 
-const startExecSrc = html.slice(html.indexOf('function startIntervalExecution('), html.indexOf('function startIntervalExecution(') + 500);
+const startExecSrc = html.slice(html.indexOf('function startIntervalExecution('), html.indexOf('function startIntervalExecution(') + 1200); // venster verbreed (B3: canonieke snapshot-prescriptie vóór de geldigheidscheck)
 ok(/if\(!prescription\.geldig\)/.test(startExecSrc), 'Z6: een ongeldige prescriptie wordt expliciet geweigerd (toast), nooit stilzwijgend gestart met een kapot model');
 
 const timerSrc = html.slice(html.indexOf('function startIntervalBlockTimer('), html.indexOf('function startIntervalBlockTimer(') + 1200);
 ok(/_ivBlockEndAt=Date\.now\(\)\+seconds\*1000/.test(timerSrc), 'Z7: de intervaltimer gebruikt EXACT hetzelfde wall-clock-patroon (Date.now()+seconds*1000) als de bestaande rusttimer -- geen nieuwe, drift-gevoelige tel-logica');
 ok(/if\(_ivTimerHandle\)clearInterval\(_ivTimerHandle\)/.test(timerSrc), 'Z8: voorkomt gestapelde intervaltimers -- exact hetzelfde principe als de A5 device-connect-hardening (bewezen risico bij niet opruimen vóór hernieuwd starten)');
 
-const ivFinishSrc = html.slice(html.indexOf('async function finishIntervalExecution('), html.indexOf('async function finishIntervalExecution(') + 1400);
+const ivFinishSrc = html.slice(html.indexOf('function finishIntervalExecution('), html.indexOf('function finishIntervalExecution(') + 2600); // B3: exacte functienaam + verbreed venster (structured actuals vóór de bestaande exNote/tijdveld-weg)
 ok(/onCardioFieldInput\(exId,cardioType,'time'\)/.test(ivFinishSrc), 'Z9: schrijft het resultaat via het BESTAANDE cardio-invoerveld/-pad (onCardioFieldInput) -- geen tweede, parallelle schrijfweg naast de bestaande cardio-logging');
 ok(/sessionLog\[exId\]\.exNote=/.test(ivFinishSrc), 'Z10: gebruikt EXACT hetzelfde, al bestaande sessionLog.exNote-veld (P1-fix, overleeft autosave/draft/resume) als execSaveNote() -- geen nieuwe notitie-opslagweg');
 ok(!/writeSessionRow\(|sbPostQ\(/.test(ivFinishSrc), 'Z11 (kernprincipe): finishIntervalExecution() schrijft zelf NOOIT rechtstreeks naar de database -- vult uitsluitend bestaande invoervelden, de sporter behoudt controle en de bestaande finishSession()-schrijfweg blijft de enige bron van waarheid');

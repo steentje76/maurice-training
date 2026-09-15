@@ -6,12 +6,12 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.69.95
+v4.69.96
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.69.95 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
-- **Datum van deze stand:** 15 september 2026 — ERG ANALYTICS VISIBILITY V1 (RowErg/BikeErg/SkiErg zichtbaar in endurance-analytics via read-only sessions-projectie; geen dual-write, geen Decision-regel)
+- **APP_VER:** v4.69.96 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **Datum van deze stand:** 15 september 2026 — ERG CONTINUOUS PROTOCOL IDENTITY (pre-executie protocolkeuze Vrij/Afstand/Tijd voor losse Ergs; intentie in immutable ad-hoc snapshot, sessievelden zijn queryprojectie; geen Performance Intelligence)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 
 ## 2. Current roadmap position

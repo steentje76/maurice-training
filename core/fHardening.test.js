@@ -292,7 +292,11 @@ ok(/viewport-fit=cover/.test(viewportTag), 'F8: viewport-fit=cover blijft behoud
  * registry-vlaggen in relationship.js/athlete.js is een aparte, apart te
  * rechtvaardigen protected-core-wijziging (nog niet in deze milestone). ── */
 console.log('\nG. duration_s wordt vastgelegd bij het afronden van een sessie');
-const finishSrc = html.slice(html.indexOf('async function finishSession('), html.indexOf('async function finishSession(') + 5200);
+// Venster verbreed van 5200 -> 6200 tekens: de Erg Continuous Protocol Identity-sprint
+// voegde een toelichtingsblok + projectie-afleiding toe binnen finishSession(), waardoor het
+// krachtschrijfpad buiten het oude, vaste venster viel. Puur een leesvenster-correctie --
+// de onderliggende asserties (G3/I5) zijn ongewijzigd en toetsen exact hetzelfde gedrag.
+const finishSrc = html.slice(html.indexOf('async function finishSession('), html.indexOf('async function finishSession(') + 6200);
 ok(/const _duurS = trainStart \? Math\.max\(0, Math\.round\(\(Date\.now\(\)-trainStart-\(pausedAccumMs\|\|0\)\)\/1000\)\) : null;/.test(finishSrc),
   'G1: duration_s hergebruikt EXACT dezelfde formule als de al bestaande live-klok (startTrainTimer) -- geen tweede, losse tijdsberekening');
 ok(/duration_s:_duurS/.test(finishSrc), 'G2: het cardio-schrijfpad geeft duration_s mee');

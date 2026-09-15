@@ -1,5 +1,48 @@
 # Trainingskompas — Changelog
 
+## v4.69.96 — Erg Continuous Protocol Identity (protocolintentie vóór actual) (15 september 2026)
+
+Vervolg op de Concept2/Erg-reconciliatiegate. **Nieuw gevonden lifecycle-feit:** het losse Erg-pad
+had GEEN pre-executiemoment — het was een invulformulier achteraf. "Intentie gaat vooraf aan actual"
+was daarmee niet op te lossen met extra velden op dat formulier; er is een echte start-stap nodig.
+
+- `core/ergProtocolIdentity.js` (nieuw): hergebruikt de **bestaande canonieke terminatiesemantiek**
+  van `interval_prescription.v1` (`manual|distance|time`). **Geen parallel contract**, geen
+  `fixed_distance`/`free`-vocabulaire. Een continue inspanning = de kleinst geldige prescriptie
+  (`repeat:1`, één work-blok), gevalideerd door de bestaande `IntervalEngineCore`.
+- **Actual kan per constructie geen intentie worden**: `protocolProjectionFromPrescription()` heeft
+  exact één parameter (de prescriptie) — er is geen kanaal waarlangs een gemeten afstand/duur
+  binnenkomt. Een vrije inspanning die toevallig op 2000 m of 30:00 uitkomt blijft `manual`.
+- Losse RowErg/BikeErg/SkiErg krijgen een compacte **pre-executie protocolkeuze** (Vrij/Afstand/Tijd)
+  in de bestaande cardiokaart — geen nieuw scherm, geen modal-doolhof. **Vrij blijft de kortste
+  route** (geen doelveld, geen startknop). Bij Afstand/Tijd legt één knop het doel vast in een
+  **ad-hoc `training_instance`** (beide saved-workout-ID's `null`, wat `createTrainingInstance`
+  expliciet toestaat) met immutable snapshot — dus **nooit een nep-opgeslagen workout**, en geen lek
+  naar Mijn trainingen (die lijsten lezen `vaste_trainingen`/`custom_trainings`, nooit
+  `training_instances`). Eenmaal vastgelegd is het protocol onwijzigbaar.
+- `migratie_v566.sql`: additief/nullable `sessions.protocol_type` + `protocol_value`, met CHECK-
+  constraints die het canonieke vocabulaire en type/waarde-consistentie afdwingen. **Dit zijn
+  IMMUTABLE QUERY-PROJECTIES van het snapshot, geen zelfstandige bron van waarheid** — bij
+  tegenspraak wint het snapshot. Geen backfill: historische rijen blijven NULL (= onbekende
+  intentie, niet "vrij") en tellen ongewijzigd mee in volume/duur/belasting/Context.
+- Reeds voorgeschreven (opgeslagen/programma) Erg-trainingen tonen de selector **niet** en leveren
+  hun projectie uit het bestaande snapshot — geen dubbele invoer, geen tweede instance.
+- Onvolledige uitvoering: doel 2000 m met actual 1800 m houdt `protocol_value` 2000. Concept2-import
+  zonder TK-prescriptie blijft protocol **onbekend**, ook bij exact 2000 m of 30:00.
+- **Niet in deze sprint**: Erg Performance Intelligence (PB/trend/plateau), Concept2 `duration_s` (P4,
+  apart), manual-cardio-dedup (P3), PM5 workout control. B1/B2/B3 ongewijzigd.
+
+Tests: nieuw `core/fErgContinuousProtocolIdentity.test.js` **106/106** (drie sporten × drie
+protocollen, BikeErg-nooit-rowing, B3 levert géén continue projectie, 14 fail-closed-gevallen,
+protocol ≠ intensiteitsdoel, migratie-asserties, plus 23 runtime-wiring-asserties die bewijzen dat
+dit geen dormant module is). Sabotage, alle byte-exact hersteld: S1 actual→intent-kanaal (2 FAILS),
+S2 actual-seconden→time (2), S4 BikeErg-corruptie (10), S5 Concept2-actual→distance (2), S6
+intensiteitsdoel→terminatie (3), S7 projectie uit actual (2), S8 geen ad-hoc instance (2).
+Twee bestaande tests meegegroeid met de wijziging: `fHardening` (vast leesvenster 5200→6200 tekens,
+asserties ongewijzigd) en `fStructuredIntervalsB3Erg` (`training_instance_id`-expressie nu inclusief
+de ad-hoc fallback; nog steeds één sessierij, geen dual-write). Volledige regressie 381, 2 bekende
+sandbox-fouten. APP_VER v4.69.95 → v4.69.96. Draft PR, NIET mergen.
+
 ## v4.69.95 — Erg Analytics Visibility V1 (RowErg/BikeErg/SkiErg in endurance-analytics) (15 september 2026)
 
 De Analytics-audit toonde aan dat RowErg/BikeErg/SkiErg **volledig onzichtbaar** waren in longitudinale

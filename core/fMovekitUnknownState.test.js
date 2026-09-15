@@ -77,11 +77,29 @@ var render = new Function('ExerciseIntelligence', 'escHtml', '_scoreLabel', '_sc
   function (v) { return v >= 85 ? 'UITSTEKEND' : (v >= 67 ? 'HOOG' : (v >= 40 ? 'GEMIDDELD' : 'LAAG')); },
   function () { return '#000'; });
 
+/* Semantische UNKNOWN-contractcontrole. Bewust NIET op het losse teken "\u2014": dat komt ook
+   voor in legitieme WHY-copy van BEKENDE records (bv. "Zeer vermoeiend \u2014 houd het volume in
+   de gaten."). Getoetst wordt de expliciete markerset die uitsluitend de UNKNOWN-tak zet. */
+var UNKNOWN_MARKERS = ['lib-idx--unknown', 'NIET BEPAALD', 'lvl-unknown'];
+function marksUnknown(html) {
+  for (var mi = 0; mi < UNKNOWN_MARKERS.length; mi++) {
+    if (html.indexOf(UNKNOWN_MARKERS[mi]) < 0) return false;
+  }
+  return true;
+}
+function anyUnknownMarker(html) {
+  for (var mj = 0; mj < UNKNOWN_MARKERS.length; mj++) {
+    if (html.indexOf(UNKNOWN_MARKERS[mj]) >= 0) return true;
+  }
+  return false;
+}
+
 [['S1', 'vermoeidheid'], ['S2', 'herstelduur'], ['S3', 'cns']].forEach(function (t) {
   var out = render(byId['TK-000226'], t[1]);
   ok(out.indexOf('>50 ') < 0 && out.indexOf('>50<') < 0, t[0] + 'a: ' + t[1] + ' rendert geen score 50');
   ok(out.toLowerCase().indexOf('gemiddeld') < 0, t[0] + 'b: ' + t[1] + ' rendert geen "gemiddeld"-copy');
-  ok(out.indexOf('\u2014') >= 0, t[0] + 'c: ' + t[1] + ' rendert een expliciete "\u2014"');
+  ok(marksUnknown(out), t[0] + 'c: ' + t[1] + ' draagt ALLE expliciete UNKNOWN-markers (lib-idx--unknown, NIET BEPAALD, lvl-unknown)');
+  ok(!/>\s*\d+\s+<em>/.test(out), t[0] + 'c2: ' + t[1] + ' toont geen enkele numerieke scorewaarde');
   ok(out.indexOf('width:0%') >= 0, t[0] + 'd: ' + t[1] + ' rendert een lege balk (geen suggestieve vulling)');
 });
 
@@ -90,8 +108,28 @@ console.log('S5. Bestaande heuristische waarden blijven intact');
 var knownOut = render(byId['TK-000001'], 'cns');
 var knownVal = EI.scores(byId['TK-000001']).cns;
 ok(knownOut.indexOf('>' + knownVal + ' ') >= 0, 'S5a: bestaand record toont nog steeds zijn werkelijke score (' + knownVal + ')');
-ok(knownOut.indexOf('\u2014') < 0, 'S5b: bestaand record wordt NIET als onbekend gemarkeerd');
+ok(!anyUnknownMarker(knownOut), 'S5b: bestaand record draagt GEEN enkele UNKNOWN-marker');
 ok(EI.scores(byId['TK-000001']).vermoeidheid === 15, 'S5c: bestaande scorewaarden zijn numeriek ongewijzigd');
+/* S5d: exhaustief \u2014 geen enkel bestaand record mag op een intelligence-afhankelijke score
+   als UNKNOWN worden gerenderd, ongeacht in welke WHY-band de waarde valt. Dit invariant werd
+   door de eerdere, op "\u2014" gebaseerde assertie slechts bij toeval bewaakt. */
+var DEP_KEYS = ['cns', 'vermoeidheid', 'herstelduur', 'calorie', 'herstelbelasting'];
+var ghosts = [], renderCount = 0;
+for (var oi = 1; oi <= 206; oi++) {
+  var oid = 'TK-' + String(oi).padStart(6, '0');
+  for (var di = 0; di < DEP_KEYS.length; di++) {
+    var o = render(byId[oid], DEP_KEYS[di]);
+    renderCount++;
+    if (anyUnknownMarker(o)) ghosts.push(oid + '/' + DEP_KEYS[di]);
+  }
+}
+ok(ghosts.length === 0, 'S5d: geen van de ' + renderCount + ' renders van TK-000001..206 draagt een UNKNOWN-marker (' + ghosts.slice(0, 3).join(', ') + ')');
+/* S5e/S5f: precies het geval waarop de oude assertie stukliep \u2014 een KNOWN record waarvan de
+   legitieme WHY-copy zelf een em-dash bevat. */
+var dashOut = render(byId['TK-000024'], 'vermoeidheid');
+ok(dashOut.indexOf('\u2014') >= 0, 'S5e-voorwaarde: TK-000024 WHY-copy bevat inderdaad een legitiem "\u2014"');
+ok(!anyUnknownMarker(dashOut), 'S5e: een KNOWN record met "\u2014" in de WHY-copy wordt NIET als UNKNOWN geclassificeerd');
+ok(dashOut.indexOf('>' + EI.scores(byId['TK-000024']).vermoeidheid + ' ') >= 0, 'S5f: datzelfde record toont onverminderd zijn werkelijke score');
 
 /* ══ S4 — confidence-comparator ══ */
 console.log('S4. Confidence-sortering');

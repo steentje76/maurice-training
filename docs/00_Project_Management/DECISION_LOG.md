@@ -1952,3 +1952,26 @@
 - **Resterend (P4):** BikeErg-cadans (`stroke_rate`) en drag/weerstand (vrije tekst) blijven semantische schuld — B3 verergert dit niet (cadans wordt niet in de structured actuals geschreven); erg blijft buiten `tkEnduranceCtxProject` (geen dual-write); sabotage 'instance-guard verwijderen' geeft geen gedragsverschil doordat een tweede fail-safe (onbekende instance → lege sectie) hetzelfde resultaat geeft.
 - **Tests:** `fStructuredIntervalsB3Erg` 176/176; sabotage 3/4/12/4/2/3 failures; B2 181/181, B1 108/108; regressie 378/378. APP_VER v4.69.91 → v4.69.92. Draft PR, NIET mergen.
 - **Onafhankelijke recovery-audit + remediatie (PR #354):** eerste closure rustte op statische sabotage-asserties tegen ongewijzigde code en op een architectuurredenering voor ownership zonder dynamisch vergelijkingsbewijs — beide gesloten, geen architectuurwijziging. (1) Reëel uitgevoerde sabotage: prescribed `target.pace` tijdelijk in actual `power_w` geschreven → bestaande "geen verzonnen telemetrie"-assertie faalde voor alle 3 sporten (3 mislukt) → exacte productiecode hersteld (sha256-identiek, `git diff` leeg) → 176/176 hersteld. (2) Ownership: `migratie_v565.sql` wijzigt geen RLS-policy (kolom erft de bestaande sessions-policy, precedent `edit_revision`/migratie_v547); de nieuwe Erg-History-read op `training_instances` is byte-identiek gescoped aan de reeds geaudite B1/B2-renderer; geen service-role-sleutel in enig Erg-codepad; de sessierij-insert stuurt zelf geen `user_id` mee (toewijzing blijft serverside). Expliciete restlimitatie: een live, twee-gebruikers Postgres-RLS-proef is nergens in deze repo uitvoerbaar (geen lokale Postgres/pgTAP-harness bestaat voor enige feature) — bovenstaande is het sterkste offline-bewijs. `fStructuredIntervalsB3Erg` nu **182/182**. Geen APP_VER-bump (nog niet gereleased, zelfde onafgeronde draft). `GAP-P2-031` = **CLOSED**.
+
+## Endurance Typed Target Normalization — CALC-END-006 (Calculation Engine foundation)
+
+- **Datum:** 15 september 2026. Vervolg op de Endurance Decision Authority & Target Semantics Gate.
+  Bewijs: `target.pace`/`target.power` in `interval_prescription.v1` zijn vrije tekst voor alle sporten
+  (hardlopen `4:30/km`, zwemmen `1:45/100m`, RowErg/SkiErg `1:50/500m`, fietsen/BikeErg `250 W` — alles
+  via `.pace`; `.power` is een dood schemaveld zonder producent). Een generieke `target×(1±pct)` is
+  daardoor ongeldig: pace (tijd/afstand) en vermogen lopen tegengesteld bij "lagere intensiteit".
+- **Besluit:** typed-normalisatie hoort in de Calculation Engine (`core/cardio.js`, CALC-END-006,
+  `endurance_target.v1`), niet in Builder/Preview/History/AI/Decision. Geen Decision-regel, geen
+  readiness-koppeling, geen intensiteitstransformatie in deze sprint — uitsluitend parse/format.
+- **Contract:** `{status,kind:'pace'|'power'|'rpe',value,unit,raw,reason}`; canonieke eenheden per
+  oorspronkelijke noemer (`sec_per_km`/`sec_per_100m`/`sec_per_500m`/`watt`/`rpe_0_10`) — nooit stil
+  omgezet tussen noemers. Geen DB-migratie; bestaande vrije-tekst prescripties blijven ongewijzigd
+  bruikbaar en zijn alsnog typeerbaar (compatibiliteitsgrens, geen tweede bron van waarheid).
+- **Tests:** `fStructuredIntervalsB3Erg` nu **182/182**; ` `core/fEnduranceTargetNormalization.test.js`
+  **155/155** (round-trip per sport, RPE, 19 adversariale/fail-closed-gevallen, architectuurgrens tegen
+  Decision/readiness/AdaptiveCoaching, backward-compatibility). Reële sabotage: noemer-semantiek
+  weggegooid (`/500m`→`/km`) → 4 failures bewezen → exact hersteld → 155/155. B3 182/182, B2 181/181,
+  B1 108/108 ongewijzigd. `core/cardio.js` zit in sw-guard `CORE_FILES` — CORE_SIG/CACHE_NAME/
+  CACHE_STATIC meegebumpt in `sw.js`. APP_VER v4.69.92 → v4.69.93. Draft PR, NIET mergen.
+- **Resterend (buiten scope, expliciet niet opgelost):** Decision→Calculation-vertaalregel voor
+  "REDUCE_INTENSITY X%" per typed kind, readiness-koppeling, AdaptiveCoachingCore-refactor, Erg-Context.

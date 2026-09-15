@@ -19,7 +19,7 @@
 (function (global) {
   'use strict';
 
-  var VERSIONS = { time: 'cardio_time.v1', split: 'cardio_split.v1', power: 'cardio_power.v1', criticalSpeed: 'critical_speed.v1', criticalPower: 'critical_power.v1' };
+  var VERSIONS = { time: 'cardio_time.v1', split: 'cardio_split.v1', power: 'cardio_power.v1', criticalSpeed: 'critical_speed.v1', criticalPower: 'critical_power.v1', enduranceTarget: 'endurance_target.v1' };
 
   // --- cardio_time.v1 (parse) --- exact gelijk aan legacy parseTimeToSec.
   // "mm:ss" of "h:mm:ss" of los getal -> seconden. Legacy-quirk behouden: leeg/ongeldig -> null.
@@ -252,6 +252,117 @@
     };
   }
 
+  // --- endurance_target.v1 (CALC-END-006) --------------------------------
+  // Typed-normalisatielaag voor de vrije-tekst intervaldoelen in
+  // interval_prescription.v1 (`block.target.pace` / `.power` / `.rpe`,
+  // zie core/intervalEngine.js). Bewijs (B1/B2/B3-Builder, ivRaw(),
+  // fStructuredIntervalsB3Erg.test.js): ALLE sporten schrijven hun
+  // pace-/vermogensdoel als vrije tekst in `.pace`, ongeacht de fysieke
+  // grootheid — "4:30/km" (hardlopen), "1:45/100m" (zwemmen),
+  // "1:50/500m" (RowErg/SkiErg), "250 W" (fietsen ÉN BikeErg). Het
+  // schemaveld `.power` bestaat wel in IntervalEngineCore maar heeft
+  // GEEN enkele producent (repo-brede grep: alleen één defensieve
+  // leesplek) — dus het "soort" doel wordt NOOIT afgeleid uit welk
+  // objectveld het in staat, uitsluitend uit de tekstinhoud zelf.
+  //
+  // Dit bestand REKENT hier niets fysiologisch: het zet een reeds
+  // ingevoerde tekstwaarde om naar een expliciet getypeerd getal + eenheid
+  // en weer terug (en detecteert ongeldige/onbekende vormen). Geen
+  // intensiteitstransformatie, geen readiness-koppeling, geen Decision
+  // Rule — uitsluitend deterministische parse/format.
+  //
+  // Canonieke eenheden (géén stille omzetting tussen noemers — "1:50/500m"
+  // wordt NOOIT "1:50/km"): pace blijft seconden PER DE OORSPRONKELIJKE
+  // NOEMER (km · 100m · 500m — de enige drie die in de Builder/tests
+  // voorkomen); vermogen blijft watt (bestaande cardio_power.v1-eenheid).
+  var TARGET_PACE_DENOMS = { km: 'sec_per_km', '100m': 'sec_per_100m', '500m': 'sec_per_500m' };
+  var TARGET_PACE_DENOM_LABEL = { sec_per_km: 'km', sec_per_100m: '100m', sec_per_500m: '500m' };
+  // Sport/soort-compatibiliteit zoals die vandaag daadwerkelijk in de Builder/tests
+  // voorkomt (geen verzonnen combinaties) — puur informatief voor toekomstige
+  // consumenten, geen harde parse-restrictie (de tekst zelf is zelfbeschrijvend).
+  var TARGET_KIND_BY_SPORT = {
+    running: ['pace'], cycling: ['power'], swimming: ['pace'],
+    rowing: ['pace'], bikeerg: ['power'], skierg: ['pace']
+  };
+
+  // Strikte mm:ss (of h:mm:ss) parse voor het tijd-deel van een pace-string.
+  // Bewust NIET CardioCore.parseTime() hergebruikt: die accepteert ook een
+  // kaal getal als "seconden" (legacy-quirk voor tijdsinvoervelden) — voor
+  // een pace-tekst zou dat een niet-onderscheidbare gok zijn ("4" = 4 sec of
+  // ongeldig?). Hier: alleen "m:ss"/"h:mm:ss" met exact numerieke, niet-
+  // negatieve onderdelen; al het overige is expliciet ongeldig (fail closed).
+  function _strictParseMmSs(str) {
+    var s = String(str).trim();
+    if (s === '' || s.indexOf(',') !== -1) return null; // komma = locale-ambigu, bewust NIET geraden
+    var p = s.split(':');
+    if (p.length !== 2 && p.length !== 3) return null;
+    var nums = p.map(function (x) { return /^[0-9]+(\.[0-9]+)?$/.test(x) ? parseFloat(x) : NaN; });
+    if (nums.some(function (n) { return isNaN(n) || n < 0; })) return null;
+    var sec = (p.length === 2) ? (nums[0] * 60 + nums[1]) : (nums[0] * 3600 + nums[1] * 60 + nums[2]);
+    return isFinite(sec) ? sec : null;
+  }
+
+  // parseEnduranceTarget: vrije-tekst pace/vermogen-doel -> getypeerd endurance_target.v1.
+  // Retourneert { status:'empty'|'invalid'|'valid', kind, value, unit, raw, reason }
+  // (zelfde status-vocabulaire als classifyNumericInput/classifyTimeInput hierboven).
+  function parseEnduranceTarget(raw) {
+    if (raw === undefined || raw === null) return { status: 'empty', kind: null, value: null, unit: null, raw: raw, reason: null };
+    var s = String(raw).trim();
+    if (s === '') return { status: 'empty', kind: null, value: null, unit: null, raw: raw, reason: null };
+    // Vermogen: "<getal>[ ]W" — exact het patroon uit de Builder ("250 W"/"250W").
+    var mW = /^([0-9]+(\.[0-9]+)?)\s?[Ww]$/.exec(s);
+    if (mW) {
+      if (s.indexOf(',') !== -1) return { status: 'invalid', kind: null, value: null, unit: null, raw: raw, reason: 'locale_ambiguous_decimal' };
+      var watt = parseFloat(mW[1]);
+      if (!isFinite(watt) || watt <= 0) return { status: 'invalid', kind: null, value: null, unit: null, raw: raw, reason: 'non_positive_or_non_finite' };
+      return { status: 'valid', kind: 'power', value: watt, unit: 'watt', raw: raw, reason: null };
+    }
+    // Pace: "<mm:ss>/<denom>" — denom moet één van de drie bewezen noemers zijn.
+    var slash = s.indexOf('/');
+    if (slash === -1) return { status: 'invalid', kind: null, value: null, unit: null, raw: raw, reason: 'missing_denominator' };
+    var timePart = s.slice(0, slash), denomPart = s.slice(slash + 1).trim();
+    var unit = TARGET_PACE_DENOMS[denomPart];
+    if (!unit) return { status: 'invalid', kind: null, value: null, unit: null, raw: raw, reason: 'unknown_denominator' };
+    var sec = _strictParseMmSs(timePart);
+    if (sec === null) return { status: 'invalid', kind: null, value: null, unit: null, raw: raw, reason: 'time_parse_failed' };
+    if (!(sec > 0) || !isFinite(sec)) return { status: 'invalid', kind: null, value: null, unit: null, raw: raw, reason: 'non_positive_or_non_finite' };
+    return { status: 'valid', kind: 'pace', value: sec, unit: unit, raw: raw, reason: null };
+  }
+
+  // formatEnduranceTarget: getypeerd endurance_target.v1 -> exact de bestaande
+  // prescriptie-tekstvorm. Hergebruikt formatTime() voor het tijd-deel, zodat de
+  // notatie (geen leidende nul op minuten, bv. "4:30") identiek blijft aan de rest
+  // van de app. Ongeldige/onbekende invoer -> '' (zelfde conventie als formatTime).
+  function formatEnduranceTarget(typed) {
+    if (!typed || typed.value == null || !isFinite(typed.value) || typed.value <= 0) return '';
+    if (typed.kind === 'power' && typed.unit === 'watt') {
+      var w = typed.value;
+      return (Math.round(w * 100) / 100).toString().replace(/\.0+$/, '') + ' W';
+    }
+    if (typed.kind === 'pace') {
+      var label = TARGET_PACE_DENOM_LABEL[typed.unit];
+      if (!label) return '';
+      return formatTime(typed.value) + '/' + label;
+    }
+    return '';
+  }
+
+  // typedRpeTarget: wrapt de reeds-numerieke, reeds-canonieke RPE-waarde (0-10,
+  // bestaand veld `target.rpe`) in dezelfde getypeerde vorm, voor uniforme
+  // consumptie. Geen nieuwe schaal, geen herberekening — puur vormgelijkheid.
+  function typedRpeTarget(rpe) {
+    if (rpe === undefined || rpe === null || String(rpe).trim() === '') return { status: 'empty', kind: null, value: null, unit: null, raw: rpe, reason: null };
+    var v = Number(rpe);
+    if (!isFinite(v)) return { status: 'invalid', kind: null, value: null, unit: null, raw: rpe, reason: 'non_finite' };
+    if (v < 0 || v > 10) return { status: 'invalid', kind: null, value: null, unit: null, raw: rpe, reason: 'out_of_range_0_10' };
+    return { status: 'valid', kind: 'rpe', value: v, unit: 'rpe_0_10', raw: rpe, reason: null };
+  }
+
+  function isTargetKindSupportedForSport(sport, kind) {
+    var list = TARGET_KIND_BY_SPORT[sport];
+    return Array.isArray(list) && list.indexOf(kind) !== -1;
+  }
+
   var CardioCore = {
     parseTime: parseTime,
     formatTime: formatTime,
@@ -268,6 +379,11 @@
     segmentTransitionS: segmentTransitionS,
     criticalSpeed: criticalSpeed,
     criticalPower: criticalPower,
+    parseEnduranceTarget: parseEnduranceTarget,
+    formatEnduranceTarget: formatEnduranceTarget,
+    typedRpeTarget: typedRpeTarget,
+    isTargetKindSupportedForSport: isTargetKindSupportedForSport,
+    TARGET_KIND_BY_SPORT: TARGET_KIND_BY_SPORT,
     VERSIONS: VERSIONS
   };
 

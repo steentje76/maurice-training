@@ -2126,3 +2126,118 @@ geen veilige gedeelde sessions↔activities-dedup-identiteit bestaat.
   `ErgProtocolIdentity` in zijn sandbox-harness zodat de ECHTE Preview-renderer blijft draaien --
   geen verzwakte assertie, alleen de ontbrekende dependency (108 -> 109 asserties).
   APP_VER blijft v4.69.96 (geen extra bump voor reparatiewerk binnen dezelfde PR).
+
+## DEC-MOVEKIT-001 — MoveKit Batch 001: geen nieuwe media-infrastructuur (15 september 2026)
+
+**Context.** De Exercise Catalog moest van 206 naar uiteindelijk 412 MoveKit-oefeningen. Een
+eerdere pilot had een openstaande architectuurvraag achtergelaten: de catalogus declareert
+`movekit-posters` met `format: webp`, terwijl de repository 0 fysieke .webp-bestanden bevat,
+en `videos/` is 437 MB normale, niet-LFS Git-inhoud.
+
+**Onderzoek (evidence-first).** Vier opties vergeleken: normale Git, Git LFS, Supabase Storage,
+bestaande TK media/CDN.
+- `scripts/build-www.mjs` sluit `videos/` **expliciet** uit van de Capacitor/Android-build met
+  een gedocumenteerde reden (AAB zou ruim 450 MB worden). De Android-app haalt video's dus al
+  van de productie-webomgeving.
+- `sw.js` heeft een aparte, **van de app-versie losgekoppelde** videocache (`tk-videos-v1`) met
+  cache-first, on-demand ophalen en een 250 MB LRU-plafond; app-updates wissen video's niet.
+- `ExerciseAssetProvider` is een schone provider-registry (`resolve(id,type)`,
+  `register(type,provider)`) — nieuwe mediatypen pluggen in zonder cataloguswijziging.
+- Supabase Storage wordt al gebruikt, maar uitsluitend voor de **private** `avatars`-bucket met
+  per-user RLS; publieke, anonieme oefeningmedia is een wezenlijk ander toegangsmodel en zou een
+  nieuwe bucket, nieuw policy-model en een productie-consolehandeling vereisen.
+
+**Besluit.** Voor Batch 001 (20 video's, ~68 MB) wordt **geen nieuwe media-infrastructuur
+gebouwd**. Video's volgen exact het bestaande, bewezen Sprint 11A-patroon (normale Git +
+`VIDEO_MANIFEST` + SW-cache). Posters krijgen `embedded: false`, exact het bestaande
+meerderheidspatroon (194 van de 206 bestaande records), dat al bewezen fail-closed degradeert.
+
+**Waarom niet nu al migreren.** Git LFS of Supabase Storage zijn reële kandidaten voor de
+schaalsprong naar 412+ oefeningen, maar (a) een migratie van de bestaande 206 video's valt
+buiten de opdrachtscope, (b) Supabase Storage vereist een onomkeerbare, externe PO-handeling
+(bucket + publiek toegangsbeleid), en (c) de bestaande architectuur draagt deze batch aantoonbaar
+zonder wijziging. **Expliciet vastgelegd als openstaande vervolgbeslissing:** vóór de resterende
+circa 186 oefeningen moet de opslagroute opnieuw worden gewogen — de repo groeit dan richting
+~1,2 GB zonder LFS.
+
+**Poster-WebP.** De `format: webp`-declaratie is geclassificeerd als **stale metadata**, niet als
+canonieke runtimevorm. Bewust **niet** gecorrigeerd in deze PR: het veld wordt door geen enkele
+resolver gelezen (`_providers.poster.resolve()` kijkt alleen naar `EXERCISE_POSTERS`/`_manifest`),
+dus een wijziging zou puur cosmetisch zijn en de diff onnodig vergroten. Vastgelegd als P4.
+
+**Cycling-poster-brondefect.** `cycling-intervals.png` en `cycling-sprint.png` zijn byte-identiek
+(sha256 `ca6250217d643f0e...`, beide 3.325.805 bytes), terwijl hun video's wél verschillen.
+Classificatie: `SOURCE_ASSET_REVIEW_REQUIRED`. Besluit: **niet gokken** welke van de twee correct
+is en **nooit** dezelfde afbeelding aan beide koppelen. Beide posterbestanden zijn buiten de
+import gehouden; de twee oefeningen zijn wel geimporteerd met correcte, unieke video's. De poster
+resolvet fail-closed naar `null`. **Actie voor de leverancier:** twee vervangende, van elkaar
+verschillende posterbestanden aanleveren.
+
+**Lege intelligence/relations.** Bewust leeg gelaten voor de 20 nieuwe records. De bestaande 206
+hebben NL-cues, fatigue/recovery-classificaties en confidence-scores die aantoonbaar uit een
+deterministische generator komen die niet in de repository aanwezig is. Zelf waarden invullen zou
+neerkomen op het verzinnen van wetenschappelijke classificaties en relationele verbanden —
+expliciet verboden. `ExerciseIntelligence.scores()` valt voor ontbrekende velden terug op een
+neutrale default (50), dus er ontstaat geen crash en geen misleidende uitspraak. **Openstaand
+vervolgwerk:** deze 20 records verrijken zodra de canonieke generator beschikbaar is.
+
+## DEC-MOVEKIT-002 — Mediaclassificatie gecorrigeerd + MoveKit Media Scale Gate verplicht (15 september 2026)
+
+**Aanleiding.** Onafhankelijke pre-merge audit van PR #359, classificatie
+**B — safe after documentation/classification correction only**.
+
+**Correctie op DEC-MOVEKIT-001.** DEC-MOVEKIT-001 beschreef de keuze voor normale Git correct
+als “voor Batch 001” en noemde LFS/Supabase expliciet uitgestelde, niet afgewezen kandidaten.
+De begeleidende sprintrapportage presenteerde die keuze echter als **OPTION A, CONFIDENCE HIGH**,
+wat suggereert dat normale Git een bewezen canonieke langetermijnarchitectuur is. Dat wordt door
+het bewijs niet gedragen.
+
+**Vastgelegde, correcte classificatie.**
+- Normale Git = **acceptable Batch-001 pilot / current-precedent path.**
+- Langetermijndoel voor MoveKit-media = **UNRESOLVED.**
+
+**Onderbouwing.** Het bewijs toont aan dat de bestaande architectuur déze batch draagt
+(`build-www.mjs` sluit `videos/` al uit van de Android-build; `sw.js` cachet on-demand met een
+250 MB LRU-plafond los van de app-versie). Het bewijs zegt niets over schaal: `.git` staat na
+Batch 001 op circa 567 MB, de resterende circa 186 oefeningen voegen naar schatting circa 630 MB
+toe (richting circa 1,2 GB). “Werkt vandaag” is niet hetzelfde als “schaalt canoniek naar
+412/1.000/10.000”.
+
+**Migratieschuld, expliciet beoordeeld.** Het mergen van deze 20 MP4's voegt circa 68 MB
+permanent toe aan de Git-history, bovenop de circa 437 MB die er al staat (+15%). Werkboom-
+migratie naar LFS of object storage is triviaal en omkeerbaar; history-opschoning vereist óf een
+rewrite (`filter-repo`/BFG + force-push op een protected branch) óf het accepteren dat de blobs
+in de history blijven. Die keuze is bij 226 video's even zwaar als bij 206 — de schuld is
+**materieel in bytes maar niet categorisch nieuw**, en daarmee **niet merge-blokkerend**.
+
+**Besluit: MOVEKIT MEDIA SCALE GATE is verplicht en blokkerend vóór Batch 002.** Minimaal te
+vergelijken en te beantwoorden: normale Git · Git LFS · object storage/Supabase Storage ·
+Netlify build/deploy · PWA-videocache (`tk-videos-v1`, 250 MB LRU) · Android/Capacitor
+(`build-www.mjs`-exclusie) · Git-history-groei · bandbreedte en kosten · migratiepad voor de
+reeds gecommitte 226 video's · schaal naar 412 / 1.000 / 10.000 oefeningen. PR #359 wordt
+hiervoor **niet** teruggedraaid.
+
+**Aanvullend geregistreerd, niet gerepareerd in PR #359.**
+- **P3-MOVEKIT-INTEL — intelligence provenance / unknown-state gap.** `intelligence = {}` op de
+  20 nieuwe records omdat geen bewezen deterministische classifier beschikbaar is. Correctie op
+  de eerdere voorstelling dat de default 50 puur intern is: `_intelDashboard()` toont die 50
+  zichtbaar aan de sporter voor onder meer CNS, vermoeidheid en herstelduur, met mid-band-copy,
+  zonder onderscheid van de geclassificeerde 206. Te besluiten vóór grootschalige expansie:
+  (A) UNKNOWN/“—” tonen, (B) een deterministische classifier met aantoonbare provenance
+  terugvinden/herbouwen, of (C) een andere evidence-safe canonieke oplossing. Geen
+  wetenschappelijke waarden verzinnen.
+- **P3-LIB-CONFSORT — confidence-sort unknown-value handling.** Comparator
+  `b.intelligence.confidence - a.intelligence.confidence` kan NaN retourneren bij `undefined`.
+  Geen crash of dataverlies bewezen; sortering niet deterministisch gedefinieerd voor UNKNOWN.
+- **P4-MOVEKIT-POSTERMETA — stale provider metadata.** `format: webp` runtime ongebruikt;
+  `total` is nominale catalogusdekking, geen fysieke posterdekking. Geen runtime-impact.
+
+**S3-precisie.** S3 (missing media) is werkelijk handmatig uitgevoerd en waargenomen, maar is
+**niet** als permanente CI-regressietest vastgelegd, in tegenstelling tot S1/S2/S4/S5/S6.
+Permanent geborgd is wél “wrong media is never substituted” via de
+asset-mapping-integriteitsguard. “Exercise remains usable with missing media” berust op de
+bestaande, ongewijzigde `_libLoad()`-fallback plus die handmatige sabotage.
+
+**Cycling-posters.** `cycling-intervals` en `cycling-sprint` blijven `SOURCE_ASSET_REVIEW_REQUIRED`.
+Geen poster toegevoegd, geen gok, geen fallback. Correcte bronassets zijn nodig vóór
+posteruitrol; dit blokkeert de identiteit/video-import van beide oefeningen niet.

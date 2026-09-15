@@ -1,5 +1,97 @@
 # Trainingskompas — Changelog
 
+## v4.69.96 — MoveKit Batch 001: Exercise Catalog 206 -> 226 (15 september 2026)
+
+Vervolg op de GitHub-baselineverificatie en mediaarchitectuur-audit. Doel: canonieke
+Exercise Catalog uitbreiden met de eerder gevalideerde, maar nooit geimporteerde
+MoveKit Batch 001 (20 oefeningen).
+
+- **Assetarchitectuur-besluit:** geen nieuwe infrastructuur nodig. Video's volgen het
+  bestaande, bewezen Sprint 11A-patroon (normale Git, Android sluit `videos/` uit van de
+  build, web/PWA cachen via de service worker met een 250MB LRU-plafond los van de
+  app-cache). Posters: de `movekit-posters format:webp`-declaratie is bevestigd stale
+  metadata (0 fysieke .webp-bestanden bestaan); nieuwe records krijgen `embedded:false`,
+  exact het bestaande meerderheidspatroon (194/206) dat al bewezen fail-closed degradeert
+  via `_libLoad()` -> `.no-img`. Geen nieuwe poster-infrastructuur gebouwd.
+- **Cycling-poster-defect** (`cycling-intervals.png`/`cycling-sprint.png` byte-identiek,
+  sha256 `ca6250217d643f0e...`, 3.325.805 bytes) onafhankelijk herbevestigd. Beide
+  posterbestanden bewust NIET meegenomen in de import; identiteit en video van beide
+  oefeningen wel veilig geimporteerd (poster resolvet naar `null`, bestaand fail-closed
+  gedrag, geen verkeerde fallback).
+- **20 nieuwe canonieke records TK-000207..TK-000226** toegevoegd aan zowel
+  `exercise-catalog.json` als de identieke, ingebedde `EX_CATALOG`-constante in
+  `index.html` (beide bronnen blijven byte-identiek, geen shadow catalog). Alle 20 slugs
+  waren `NEW_EXACT` (geen exacte of fuzzy-duplicaten tegen de bestaande 206).
+  `VIDEO_MANIFEST` uitgebreid van 206 naar 226 entries met md5-checksums; 20 nieuwe
+  .mp4-bestanden toegevoegd aan `videos/`.
+- **`intelligence`-veld bewust leeg gelaten** voor de 20 nieuwe records: geen toegang tot
+  de originele deterministische classifier voor fatigue/recovery/confidence/evidence-tekst.
+  `ExerciseIntelligence.scores()` valt voor ontbrekende `intelligence.fatigue`/`.recovery`
+  terug op een neutrale default (50) — geen crash, geen verzonnen wetenschap. `relations`
+  (alternatives/progressions/regressions) leeg gelaten om dezelfde reden (geen
+  deterministische generator beschikbaar in deze sessie) — vermijdt relationele
+  hallucinaties. Bronmateriaal bevat wel Engelse `instructions`/`commonMistakes`, maar
+  deze zijn niet vertaald/gemapt naar `cues`/`mistakes` (buiten scope zonder toegang tot
+  het bestaande NL-classificatiesysteem; UI degradeert gracieus, toont geen cues).
+- **TK-000001..TK-000206 volledig onaangeroerd** (identity/source byte-identiek herbevestigd
+  tegen een baseline-fixture in `core/fixtures/movekit_batch_001/baseline_206.json`).
+- Nieuwe test `core/fMovekitBatch001Integrity.test.js` (11 assertions): catalog_id-
+  uniciteit/contiguiteit, provider_id-uniciteit, stabiliteit van de bestaande 206,
+  exercise-catalog.json/EX_CATALOG-gelijkheid (shadow-catalog-guard), poster-asset-
+  mapping-integriteit, en bereikbaarheid van alle 20 nieuwe records via catalog_id.
+  Sabotage S1–S6 allemaal echt geinjecteerd, rood bewezen, byte-exact hersteld (sha256
+  geverifieerd), daarna weer groen.
+- Release gate: 382 uitgevoerd (was 381 + 1 nieuwe testfile), exact dezelfde 2 bekende
+  ical.js-sandboxfailures, geen nieuwe regressie. Doc-consistency: 0 problemen.
+  **Geen APP_VER-bump** (geen databasewijziging, geen core/*.js-logicawijziging; alleen
+  datacatalogus-uitbreiding + nieuwe testfile, conform het bestaande precedent voor
+  content-only wijzigingen zoals B9-01).
+
+### Correcties na onafhankelijke pre-merge audit (doc-only, geen code/records/video's gewijzigd)
+
+De onafhankelijke pre-merge audit van PR #359 classificeerde als **B — safe after
+documentation/classification correction only**. Onderstaande correcties zijn doorgevoerd;
+runtime-code, oefeningrecords, video's, tests en testfixture zijn niet aangeraakt.
+
+- **Mediaclassificatie gecorrigeerd.** Normale Git is hier een **acceptabele Batch-001-pilot op
+  het bestaande precedent**, géén bewezen canonieke langetermijnarchitectuur met hoge
+  betrouwbaarheid. Het **langetermijndoel voor MoveKit-media is expliciet ONOPGELOST**.
+  `.git` staat na deze batch op circa 567 MB; de resterende circa 186 oefeningen voegen naar
+  schatting circa 630 MB toe (richting circa 1,2 GB). Vóór Batch 002 is een blokkerende
+  **MOVEKIT MEDIA SCALE GATE** verplicht (normale Git · Git LFS · object storage/Supabase ·
+  Netlify · PWA-cache · Android/Capacitor · history-groei · bandbreedte/kosten · migratiepad
+  voor de bestaande 226 video's · schaal naar 412/1.000/10.000). PR #359 hoeft hiervoor niet
+  te worden teruggedraaid.
+- **Intelligence-fallback eerlijker beschreven (P3-MOVEKIT-INTEL).** De eerdere formulering
+  “neutrale default, geen gebruikersimpact” was onvolledig. Bewezen: `_intelDashboard()` toont
+  voor ontbrekende intelligence de waarde **50** voor onder meer CNS, vermoeidheid en
+  herstelduur, inclusief mid-band-copy — **zichtbaar voor de sporter** en niet onderscheiden van
+  de geclassificeerde 206. Geregistreerd als P3, niet gerepareerd in deze PR. Wel al correct
+  fail-closed: `meta().recovery` toont “—”, coach- en herstelkaart worden onderdrukt, en de
+  ★-rating leest geen enkel fallbackveld.
+- **Nieuw geregistreerd defect (P3-LIB-CONFSORT).** `sort === 'confidence'` rekent met
+  `b.intelligence.confidence - a.intelligence.confidence`; voor de nieuwe records is
+  `confidence` `undefined`, waardoor de comparator NaN kan retourneren. Geen crash of
+  dataverlies bewezen, sortering niet deterministisch gedefinieerd voor UNKNOWN intelligence.
+  Niet gerepareerd in deze PR.
+- **P4-MOVEKIT-POSTERMETA behouden.** `format: webp` wordt runtime niet gebruikt; `total` is
+  nominale catalogusdekking, niet fysieke posterdekking. Geen runtime-impact. Niet gerepareerd.
+- **S3-precisie gecorrigeerd.** S3 (missing media) is een **werkelijk uitgevoerde handmatige
+  fail-closed-sabotage/observatie**, maar is **niet** als permanente CI-regressietest
+  vastgelegd — anders dan S1/S2/S4/S5/S6, die wél door assertions in
+  `core/fMovekitBatch001Integrity.test.js` worden bewaakt. Permanent geborgd is wél
+  *“wrong media is never substituted”* via de asset-mapping-integriteitsguard
+  (`ref === source.provider_id`, 226/226). *“Exercise remains usable with missing media”*
+  berust op de bestaande, door deze PR ongewijzigde `_libLoad()`-fail-closed-fallback plus de
+  uitgevoerde handmatige sabotage.
+- **Cycling-posters ongewijzigd:** `cycling-intervals` en `cycling-sprint` blijven
+  `SOURCE_ASSET_REVIEW_REQUIRED`. Geen poster toegevoegd, geen gok, geen fallback. Correcte
+  bronassets zijn nodig vóór posteruitrol; dit blokkeert de identiteit/video-import niet.
+
+- **FINALE STATUS: MOVEKIT BATCH 001 CANONICAL IMPORT COMPLETE — CLASSIFICATIE A (SAFE TO MERGE
+  AFTER EXPLICIT PO APPROVAL).** Draft PR #359, NIET gemerged, wacht op expliciete
+  PO-goedkeuring.
+
 ## v4.69.96 — Erg Continuous Protocol Identity (protocolintentie vóór actual) (15 september 2026)
 
 Vervolg op de Concept2/Erg-reconciliatiegate. **Nieuw gevonden lifecycle-feit:** het losse Erg-pad

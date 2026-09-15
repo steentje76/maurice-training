@@ -11,8 +11,66 @@ v4.69.96
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
 - **APP_VER:** v4.69.96 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
-- **Datum van deze stand:** 15 september 2026 — ERG CONTINUOUS PROTOCOL IDENTITY (pre-executie protocolkeuze Vrij/Afstand/Tijd voor losse Ergs; intentie in immutable ad-hoc snapshot, sessievelden zijn queryprojectie; geen Performance Intelligence)
+- **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
+
+## Exercise Catalog (MoveKit)
+
+- **Canonieke omvang: 226 oefeningen** (TK-000001..TK-000226), provider `movekit`, enige
+  toegangspunt blijft `ExerciseCatalogService` (inline gedefinieerd in `index.html`).
+  `exercise-catalog.json` en de ingebedde `EX_CATALOG`-constante zijn en blijven byte-identiek
+  — er is geen tweede, afwijkende bron van waarheid en geen shadow catalog.
+- **MoveKit Batch 001 geimporteerd** (20 oefeningen, TK-000207..TK-000226), alle 20 `NEW_EXACT`.
+  Volledig verslag: zie `CHANGELOG.md` v4.69.96 (MoveKit Batch 001).
+- **Bewust openstaand, eerlijk vastgelegd:**
+  (a) de 20 nieuwe records hebben een leeg `intelligence`-object (geen bewezen deterministische
+  fatigue/recovery/confidence-classifier beschikbaar) — geen crash, geen verzonnen wetenschap,
+  maar **de fallback is NIET puur intern**: zie P3-MOVEKIT-INTEL hieronder;
+  (b) `relations` (alternatives/progressions/regressions) leeg gelaten (geen deterministische
+  generator beschikbaar) — bewust geen geimproviseerde relaties;
+  (c) `cycling-intervals` en `cycling-sprint` hebben **geen poster** wegens een bevestigd
+  brondefect (beide PNG's byte-identiek, sha256 `ca6250217d643f0e...`) — identiteit en video
+  zijn wel correct en uniek; poster resolvet fail-closed naar `null`, nooit de media van een
+  andere oefening. Vervangende bronbestanden zijn nodig voor deze twee posters.
+- **MoveKit-bron totaal: 412 unieke oefeningen.** Na Batch 001 resteren er nog circa 186 voor
+  latere batches. Geen enkele vervolgbatch gestart.
+- **Assetarchitectuur — status: BATCH-001 PILOT OP BESTAAND PRECEDENT, LANGETERMIJNDOEL
+  ONOPGELOST.** Video's staan in normale Git (`videos/`, 226 MP4's); `scripts/build-www.mjs`
+  sluit `videos/` expliciet uit van de Android-build (AAB-limiet), de service worker haalt ze
+  on-demand op en cachet met een 250MB LRU-plafond in een cache die losstaat van de app-versie.
+  Dit is aantoonbaar veilig **voor deze batch** en volgt het bestaande Sprint 11A-precedent.
+  Het is **niet** bewezen als canonieke langetermijnarchitectuur voor 412/1.000/10.000
+  oefeningen: `.git` staat na Batch 001 op circa 567 MB, en de resterende circa 186 oefeningen
+  voegen naar schatting nog circa 630 MB toe (richting circa 1,2 GB). Normale Git, Git LFS en
+  object storage/Supabase Storage blijven alle drie open kandidaten.
+- **VERPLICHTE GATE VÓÓR BATCH 002 — MOVEKIT MEDIA SCALE GATE (blokkerend).** Vóór iedere
+  verdere grootschalige video-import moet deze gate minimaal vergelijken: normale Git · Git LFS ·
+  object storage/Supabase Storage · Netlify build/deploy · PWA-videocache (`tk-videos-v1`,
+  250 MB LRU) · Android/Capacitor (`build-www.mjs`-exclusie) · Git-history-groei · bandbreedte
+  en kosten · migratiepad voor de reeds gecommitte 226 video's · schaal naar 412 / 1.000 /
+  10.000 oefeningen. PR #359 hoeft hiervoor niet te worden teruggedraaid.
+- **P3-MOVEKIT-INTEL — MoveKit intelligence provenance / unknown-state gap.** De 20 nieuwe
+  records hebben `intelligence = {}`. Bewezen runtimegedrag: `_intelDashboard()` toont voor
+  ontbrekende intelligence fallbackwaarde **50** voor onder meer CNS, vermoeidheid en
+  herstelduur, met mid-band-copy (“gemiddeld…”). Die fallback is **zichtbaar voor de sporter**
+  en op dit moment niet duidelijk onderscheiden van de bestaande, geclassificeerde 206 records.
+  Niet gerepareerd in PR #359. Vóór grootschalige catalogusexpansie moet worden bepaald of
+  (A) onbekende intelligence als UNKNOWN/“—” wordt getoond, (B) een bestaande deterministische
+  classifier met aantoonbare provenance wordt teruggevonden of herbouwd, of (C) een andere
+  evidence-safe canonieke oplossing wordt gekozen. **Geen wetenschappelijke waarden verzinnen.**
+  Wat al wél correct fail-closed is: `meta().recovery` toont “—”, de coachkaart en de
+  herstelkaart worden onderdrukt, en de ★-rating leest geen enkel fallbackveld.
+- **P3-LIB-CONFSORT — Exercise Library confidence-sort unknown-value handling.** De sorteermodus
+  `sort === 'confidence'` rekent met `b.intelligence.confidence - a.intelligence.confidence`.
+  Voor de nieuwe records is `confidence` `undefined`, waardoor de comparator NaN kan retourneren.
+  Geen crash en geen dataverlies bewezen, maar de sorteervolgorde is voor UNKNOWN intelligence
+  niet deterministisch gedefinieerd. Niet gerepareerd in PR #359; opgenomen voor gerichte
+  vervolgreparatie.
+- **P4-MOVEKIT-POSTERMETA — stale movekit poster provider metadata.** `asset_providers` declareert
+  `format: webp` terwijl er 0 fysieke `.webp`-bestanden bestaan; het veld wordt runtime door geen
+  enkele resolver gelezen. `total` is **nominale catalogusdekking**, niet fysieke posterdekking
+  (13 posters zijn base64-embedded in `index.html`, de overige records resolven fail-closed naar
+  `null`). Geen runtime-impact bewezen. Niet gerepareerd in PR #359.
 
 ## 2. Current roadmap position
 - **F0 — Verified Baseline: CLOSED**

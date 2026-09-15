@@ -2005,3 +2005,64 @@
 - **Resterend (buiten scope, expliciet niet opgelost):** device-merk-granulariteit in provenance,
   meetcontext-metadata, HRV-CV/non-functioneel-overreaching-signaal, endurance-Context-koppeling,
   Decision-regelvorming — allemaal expliciete non-goals van deze sprint.
+
+## Erg Analytics Visibility V1 — read-only sessions-projectie (geen Calculation)
+
+- **Datum:** 15 september 2026. Aanleiding: de Analytics & Longitudinal Athlete Intelligence-audit
+  toonde dat RowErg/BikeErg/SkiErg volledig onzichtbaar waren in longitudinale analytics — zij worden
+  canoniek in `sessions` gelogd en hebben geen `activities`-tegenhanger, terwijl alle endurance-
+  analytics uit `activities` projecteren.
+- **Besluit (PO, definitief):** V1-projectie omvat UITSLUITEND rowing/bikeerg/skierg. Handmatig
+  gelogde running/cycling/swimming-sessies worden bewust GEWEIGERD: die kunnen ook in `activities`
+  bestaan en er is geen bewezen gedeelde dedup-identifier (`activities` heeft `dedupe_key`, `sessions`
+  niet) — meenemen zou training kunnen dubbeltellen. Apart vastgelegd als **P3 — MANUAL CARDIO
+  ANALYTICS VISIBILITY / CROSS-PERSISTENCE DEDUPLICATION (uitgesteld)**.
+- **Architectuur:** `core/ergAnalyticsProjection.js` is een read-only ADAPTER, expliciet GEEN
+  Calculation — hij rekent niets, claimt geen CALC-ID en introduceert geen nieuw versiecontract; hij
+  normaliseert naar het reeds bestaande analytics-vormcontract. Alle daadwerkelijke berekening blijft
+  bij de bestaande canonieke calculations (weeklyVolume, sessionLoadSRPE/rollingLoadSum).
+  `ProgressionCore.trendBy()` is voor Ergs bewust **niet** runtime-aangesloten (zie scope hieronder).
+  Geen dual-write, geen migratie, geen tweede bron van waarheid.
+- **Semantische grenzen:** sport uitsluitend uit `exercise_id` (nooit uit stroke_rate/afstand/label);
+  BikeErg nooit rowing; cadans weggelaten (RPM vs slagfrequentie onverenigbaar — weglaten boven
+  semantische corruptie); afstand strikt per machine gescheiden, tijd/sRPE wel aggregeerbaar;
+  BikeErg 1000m-splitbasis vs RowErg/SkiErg 500m blijft ongemoeid.
+- **Grenzen bewaard:** geen Decision-regel, geen readiness-autoriteit, geen adaptatie-semantiek;
+  structured-interval-analytics blijft session-summary-only; AI ontvangt uitsluitend reeds berekende
+  waarden; `AdaptiveCoachingCore` blijft losgekoppeld; `LongitudinalTrendCore` blijft dormant.
+- **Tests:** `fErgAnalyticsProjection` 88/88. Sabotage: running door de adapter -> 4 FAILS;
+  bikeerg->rowing -> 12 FAILS; beide sha256-identiek hersteld. Volledige regressie 380, 2 bekende
+  sandbox-fouten. APP_VER v4.69.94 -> v4.69.95. Draft PR, NIET mergen.
+- **Nog open (niet opgelost in deze sprint):** manual-cardio-dedup (P3), interval-niveau-analytics,
+  CSS/zwemanker, coach/team-analytics.
+
+### Scope-correctie na onafhankelijke pre-merge-audit (PR #357)
+
+De onafhankelijke audit stelde vast dat het oorspronkelijke sprintrapport trend-hergebruik claimde dat
+niet is uitgeleverd. Hieronder de accurate scheiding.
+
+**LIVE in PR #357** — RowErg/BikeErg/SkiErg-sessies nemen canoniek deel aan:
+endurance-weekvolume; trainingsduur/-frequentie; sRPE/trainingsbelasting waar de vereiste invoer (RPE)
+bestaat; rolling load waar van toepassing; de endurance-Context; en de daaruit volgende AI-context op
+basis van reeds berekende waarden. Dit is echte analytics-deelname, geen cosmetische zichtbaarheid.
+
+**NIET live in PR #357** — Erg-prestatietrend; verbeter-/achteruitgangsclassificatie; PB-intelligentie;
+plateau-intelligentie; cross-sessie-prestatievergelijking. De tests die sport-/trendisolatie aantonen
+zijn **veiligheidstests voor toekomstig gebruik** en betekenen niet dat een prestatietrendfunctie live is.
+
+**Productbesluit (vastgelegd):** Erg-data moet daadwerkelijk meetellen in Trainingskompas-analytics.
+PR #357 legt de canonieke deelname vast voor volume, belasting en Context. Prestatieprogressie is
+**bewust gescheiden** omdat Erg-prestatievergelijkingen strikte sport- en inspanningsspecifieke
+vergelijkbaarheid vereisen. Een latere Erg Performance Intelligence-sprint mag uitsluitend prestaties
+vergelijken die aantoonbaar vergelijkbaar zijn.
+
+**Uitgestelde toekomstige scope (NIET geïmplementeerd):** RowErg-, BikeErg- en SkiErg-
+prestatie-intelligentie, met als harde invarianten voor die latere sprint: RowErg ≠ BikeErg ≠ SkiErg;
+500m ≠ 2000m ≠ 5000m tenzij een wetenschappelijk/canoniek verantwoorde normalisatie bestaat;
+gestructureerde intervallen ≠ continue inspanningen by default; BikeErg-splitbasis blijft 1000m,
+RowErg/SkiErg 500m; geen universele Erg-prestatiescore zonder bewijs; geen AI-berekende trend; geen
+cross-machine-prestatievergelijking.
+
+**Los uitgesteld (ongewijzigd):** P3 — MANUAL CARDIO ANALYTICS VISIBILITY / CROSS-PERSISTENCE
+DEDUPLICATION. Handmatige running-/cycling-/swimming-sessies blijven buiten de Erg-adapter omdat er
+geen veilige gedeelde sessions↔activities-dedup-identiteit bestaat.

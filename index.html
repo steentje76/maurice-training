@@ -6470,6 +6470,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/enduranceExecution.js"></script>
 <script src="core/runningExecution.js"></script>
 <script src="core/runningIntelligence.js"></script>
+<script src="core/ergAnalyticsProjection.js"></script>
 <script src="core/cyclingIntelligence.js"></script>
 <script src="core/swimmingIntelligence.js"></script>
 <script src="core/bleHeartRate.js"></script>
@@ -7295,7 +7296,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.94';
+const APP_VER = 'v4.69.95';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -34770,8 +34771,19 @@ function tkEnduranceCtxSports(){
   if(sp==='swimming'||sp==='zwemmen'||sp==='triathlon')out.push('swimming');
   return out;
 }
+// Erg Analytics Visibility V1: RowErg/BikeErg/SkiErg worden canoniek in `sessions`
+// gelogd (handmatig cardiopad) en hebben GEEN activities-tegenhanger — ze waren
+// daardoor volledig onzichtbaar in deze endurance-context. Ze worden hier apart
+// bepaald (niet via getActiveSport(), die kent geen erg-sporten) en lopen via de
+// read-only ErgAnalyticsProjection, niet via een tweede analytics-pad.
+// BEWUST NIET meegenomen: handmatig gelogde running/cycling/swimming-sessies —
+// die kunnen ook in `activities` staan en er is geen bewezen gedeelde
+// dedup-identifier tussen beide tabellen (P3, uitgesteld).
+const TK_ENDURANCE_CTX_ERG_EXERCISE_IDS=['roeien','rowerg','bikeerg','bike_erg','skierg','ski_erg'];
+const TK_ENDURANCE_CTX_ERG_LABEL={rowing:'RowErg',bikeerg:'BikeErg',skierg:'SkiErg'};
 // Pure projectie (geen I/O) — apart getest. activities: begrensd venster; maxEffort: eligibility-subset.
-function tkEnduranceCtxProject(sports, activities, maxEffort, nowDate){
+// ergSessions: reeds genormaliseerde ErgAnalyticsProjection-output (mag leeg zijn).
+function tkEnduranceCtxProject(sports, activities, maxEffort, nowDate, ergSessions){
   var nu=nowDate||new Date();
   var nuMs=nu.getTime();
   var acts=Array.isArray(activities)?activities.filter(function(a){return a&&a.sport&&a.recorded_at;}):[];
@@ -34827,6 +34839,29 @@ function tkEnduranceCtxProject(sports, activities, maxEffort, nowDate){
     }
     if(regels.length)blokken.push('Sport: '+(LBL[sport]||sport)+'\n'+regels.join('\n'));
   });
+  // ── Erg Analytics Visibility V1 — RowErg/BikeErg/SkiErg uit `sessions` ──
+  // Uitsluitend BESTAANDE canonieke calculations: RunningIntelligenceCore.weeklyVolume()
+  // (sport-neutraal) en TrainingLoadCore.sessionLoadSRPE()/rollingLoadSum(). Geen nieuwe
+  // formule, geen Erg-specifieke belastingsberekening, geen Decision-semantiek.
+  // Afstand blijft STRIKT per machine gescheiden (RowErg-, BikeErg- en SkiErg-meters zijn
+  // niet optelbaar); tijd/frequentie/sRPE mogen wel per sport worden gerapporteerd.
+  var ergList=Array.isArray(ergSessions)?ergSessions:[];
+  if(ergList.length&&typeof RunningIntelligenceCore!=='undefined'&&typeof CardioCore!=='undefined'){
+    ['rowing','bikeerg','skierg'].forEach(function(ergSport){
+      var E=ergList.filter(function(s){return s&&s.sport===ergSport;});
+      if(!E.length)return;
+      var regels=[];
+      var perWeek=RunningIntelligenceCore.weeklyVolume(E);
+      var afstand=0,duur=0,aantal=0;
+      Object.keys(perWeek).forEach(function(wk){ var wkMs=new Date(wk+'T00:00:00Z').getTime(); if(isFinite(wkMs)&&(nuMs-wkMs)<=28*86400000){ afstand+=perWeek[wk].distanceMeters; duur+=perWeek[wk].durationSeconds; aantal+=perWeek[wk].count; } });
+      regels.push('- Weekvolume laatste 4 weken: '+(aantal?(aantal+' sessies · '+CardioCore.formatTime(duur)+(afstand?' · '+afstand+' m (alleen '+(TK_ENDURANCE_CTX_ERG_LABEL[ergSport]||ergSport)+', niet optelbaar met andere machines)':'')+' (CALC-RUN-WEEKLY-001)'):'geen sessies geregistreerd'));
+      if(typeof TrainingLoadCore!=='undefined'&&TrainingLoadCore.sessionLoadSRPE){
+        var srpe=E.map(function(s){return TrainingLoadCore.sessionLoadSRPE(s.duration_seconds,s.rpe);}).filter(function(v){return v!=null;});
+        regels.push('- Interne belasting laatste 4 weken: '+(srpe.length?(TrainingLoadCore.rollingLoadSum(srpe)+' AU over '+srpe.length+' sessies met RPE (session_load_srpe.v1)'):'geen sessies met ingevulde RPE — geen belasting berekend, niet schatten'));
+      }
+      blokken.push((TK_ENDURANCE_CTX_ERG_LABEL[ergSport]||ergSport)+':\n'+regels.join('\n'));
+    });
+  }
   if(!blokken.length)return '';
   return '\nENDURANCE-INTELLIGENCE (reeds berekend door de Calculation Engine — niet herberekenen, niet schatten, geen ACWR-/blessure-interpretatie; Critical Speed/Power ≠ de profiel-drempels hierboven):\n'+blokken.join('\n')+'\n';
 }
@@ -34902,15 +34937,32 @@ async function tkInactivityAdherenceContext(){
 async function tkEnduranceCoachContext(){
   try{
     var sports=tkEnduranceCtxSports();
-    if(!sports.length)return '';
     var vanaf=new Date(Date.now()-TK_ENDURANCE_CTX_WINDOW_DAYS*86400000).toISOString().slice(0,10);
+    // Erg-sessies staan los van getActiveSport() (die kent geen erg-sporten) en worden
+    // ALTIJD opgehaald binnen hetzelfde begrensde venster/limiet als de activities-query.
+    // Filter op exercise_id (canonieke identiteit) — nooit op tekstlabel of stroke_rate.
+    // Ownership: identieke sbGet/RLS-weg als elke andere sessions-read; geen brede query,
+    // geen service-role, geen cross-user aggregatie.
+    var ergP=(typeof ErgAnalyticsProjection!=='undefined')
+      ? sbGet('sessions','&exercise_id=in.('+TK_ENDURANCE_CTX_ERG_EXERCISE_IDS.join(',')+')&date=gte.'+vanaf+'&order=date.asc&limit='+TK_ENDURANCE_CTX_LIMIT).catch(function(){return [];})
+      : Promise.resolve([]);
+    if(!sports.length){
+      // Geen endurance-sport actief, maar mogelijk wel Erg-historie — anders zou een
+      // pure Erg-sporter opnieuw volledig onzichtbaar zijn.
+      var ergOnly=await ergP;
+      var ergProjOnly=(typeof ErgAnalyticsProjection!=='undefined')?ErgAnalyticsProjection.projectErgSessions(ergOnly||[]):[];
+      if(!ergProjOnly.length)return '';
+      return tkEnduranceCtxProject([], [], [], new Date(), ergProjOnly);
+    }
     var res=await Promise.all([
       sbGet('activities','&sport=in.('+sports.join(',')+')&recorded_at=gte.'+vanaf+'&order=recorded_at.asc&limit='+TK_ENDURANCE_CTX_LIMIT).catch(function(){return [];}),
       (sports.indexOf('running')!==-1||sports.indexOf('cycling')!==-1)
         ? sbGet('activities','&is_max_effort=eq.true&sport=in.(running,cycling)&order=recorded_at.desc&limit='+TK_ENDURANCE_CTX_MAXEFFORT_LIMIT).catch(function(){return [];})
-        : Promise.resolve([])
+        : Promise.resolve([]),
+      ergP
     ]);
-    return tkEnduranceCtxProject(sports, res[0]||[], res[1]||[], new Date());
+    var ergProj=(typeof ErgAnalyticsProjection!=='undefined')?ErgAnalyticsProjection.projectErgSessions(res[2]||[]):[];
+    return tkEnduranceCtxProject(sports, res[0]||[], res[1]||[], new Date(), ergProj);
   }catch(e){ return ''; }
 }
 async function tkHyroxCoachContext(){

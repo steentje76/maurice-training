@@ -2126,3 +2126,57 @@ geen veilige gedeelde sessions↔activities-dedup-identiteit bestaat.
   `ErgProtocolIdentity` in zijn sandbox-harness zodat de ECHTE Preview-renderer blijft draaien --
   geen verzwakte assertie, alleen de ontbrekende dependency (108 -> 109 asserties).
   APP_VER blijft v4.69.96 (geen extra bump voor reparatiewerk binnen dezelfde PR).
+
+## DEC-MOVEKIT-001 — MoveKit Batch 001: geen nieuwe media-infrastructuur (15 september 2026)
+
+**Context.** De Exercise Catalog moest van 206 naar uiteindelijk 412 MoveKit-oefeningen. Een
+eerdere pilot had een openstaande architectuurvraag achtergelaten: de catalogus declareert
+`movekit-posters` met `format: webp`, terwijl de repository 0 fysieke .webp-bestanden bevat,
+en `videos/` is 437 MB normale, niet-LFS Git-inhoud.
+
+**Onderzoek (evidence-first).** Vier opties vergeleken: normale Git, Git LFS, Supabase Storage,
+bestaande TK media/CDN.
+- `scripts/build-www.mjs` sluit `videos/` **expliciet** uit van de Capacitor/Android-build met
+  een gedocumenteerde reden (AAB zou ruim 450 MB worden). De Android-app haalt video's dus al
+  van de productie-webomgeving.
+- `sw.js` heeft een aparte, **van de app-versie losgekoppelde** videocache (`tk-videos-v1`) met
+  cache-first, on-demand ophalen en een 250 MB LRU-plafond; app-updates wissen video's niet.
+- `ExerciseAssetProvider` is een schone provider-registry (`resolve(id,type)`,
+  `register(type,provider)`) — nieuwe mediatypen pluggen in zonder cataloguswijziging.
+- Supabase Storage wordt al gebruikt, maar uitsluitend voor de **private** `avatars`-bucket met
+  per-user RLS; publieke, anonieme oefeningmedia is een wezenlijk ander toegangsmodel en zou een
+  nieuwe bucket, nieuw policy-model en een productie-consolehandeling vereisen.
+
+**Besluit.** Voor Batch 001 (20 video's, ~68 MB) wordt **geen nieuwe media-infrastructuur
+gebouwd**. Video's volgen exact het bestaande, bewezen Sprint 11A-patroon (normale Git +
+`VIDEO_MANIFEST` + SW-cache). Posters krijgen `embedded: false`, exact het bestaande
+meerderheidspatroon (194 van de 206 bestaande records), dat al bewezen fail-closed degradeert.
+
+**Waarom niet nu al migreren.** Git LFS of Supabase Storage zijn reële kandidaten voor de
+schaalsprong naar 412+ oefeningen, maar (a) een migratie van de bestaande 206 video's valt
+buiten de opdrachtscope, (b) Supabase Storage vereist een onomkeerbare, externe PO-handeling
+(bucket + publiek toegangsbeleid), en (c) de bestaande architectuur draagt deze batch aantoonbaar
+zonder wijziging. **Expliciet vastgelegd als openstaande vervolgbeslissing:** vóór de resterende
+circa 186 oefeningen moet de opslagroute opnieuw worden gewogen — de repo groeit dan richting
+~1,2 GB zonder LFS.
+
+**Poster-WebP.** De `format: webp`-declaratie is geclassificeerd als **stale metadata**, niet als
+canonieke runtimevorm. Bewust **niet** gecorrigeerd in deze PR: het veld wordt door geen enkele
+resolver gelezen (`_providers.poster.resolve()` kijkt alleen naar `EXERCISE_POSTERS`/`_manifest`),
+dus een wijziging zou puur cosmetisch zijn en de diff onnodig vergroten. Vastgelegd als P4.
+
+**Cycling-poster-brondefect.** `cycling-intervals.png` en `cycling-sprint.png` zijn byte-identiek
+(sha256 `ca6250217d643f0e...`, beide 3.325.805 bytes), terwijl hun video's wél verschillen.
+Classificatie: `SOURCE_ASSET_REVIEW_REQUIRED`. Besluit: **niet gokken** welke van de twee correct
+is en **nooit** dezelfde afbeelding aan beide koppelen. Beide posterbestanden zijn buiten de
+import gehouden; de twee oefeningen zijn wel geimporteerd met correcte, unieke video's. De poster
+resolvet fail-closed naar `null`. **Actie voor de leverancier:** twee vervangende, van elkaar
+verschillende posterbestanden aanleveren.
+
+**Lege intelligence/relations.** Bewust leeg gelaten voor de 20 nieuwe records. De bestaande 206
+hebben NL-cues, fatigue/recovery-classificaties en confidence-scores die aantoonbaar uit een
+deterministische generator komen die niet in de repository aanwezig is. Zelf waarden invullen zou
+neerkomen op het verzinnen van wetenschappelijke classificaties en relationele verbanden —
+expliciet verboden. `ExerciseIntelligence.scores()` valt voor ontbrekende velden terug op een
+neutrale default (50), dus er ontstaat geen crash en geen misleidende uitspraak. **Openstaand
+vervolgwerk:** deze 20 records verrijken zodra de canonieke generator beschikbaar is.

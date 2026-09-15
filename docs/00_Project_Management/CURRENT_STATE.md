@@ -11,8 +11,35 @@ v4.69.96
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
 - **APP_VER:** v4.69.96 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
-- **Datum van deze stand:** 15 september 2026 — ERG CONTINUOUS PROTOCOL IDENTITY (pre-executie protocolkeuze Vrij/Afstand/Tijd voor losse Ergs; intentie in immutable ad-hoc snapshot, sessievelden zijn queryprojectie; geen Performance Intelligence)
+- **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
+
+## Exercise Catalog (MoveKit)
+
+- **Canonieke omvang: 226 oefeningen** (TK-000001..TK-000226), provider `movekit`, enige
+  toegangspunt blijft `ExerciseCatalogService` (inline gedefinieerd in `index.html`).
+  `exercise-catalog.json` en de ingebedde `EX_CATALOG`-constante zijn en blijven byte-identiek
+  — er is geen tweede, afwijkende bron van waarheid en geen shadow catalog.
+- **MoveKit Batch 001 geimporteerd** (20 oefeningen, TK-000207..TK-000226), alle 20 `NEW_EXACT`.
+  Volledig verslag: zie `CHANGELOG.md` v4.69.96 (MoveKit Batch 001).
+- **Bewust openstaand, eerlijk vastgelegd:**
+  (a) de 20 nieuwe records hebben een leeg `intelligence`-object (geen toegang tot de originele
+  deterministische fatigue/recovery/confidence-classifier in die sessie) — `ExerciseIntelligence`
+  valt terug op neutrale defaults, geen crash, geen verzonnen wetenschap;
+  (b) `relations` (alternatives/progressions/regressions) leeg gelaten (geen deterministische
+  generator beschikbaar) — bewust geen geimproviseerde relaties;
+  (c) `cycling-intervals` en `cycling-sprint` hebben **geen poster** wegens een bevestigd
+  brondefect (beide PNG's byte-identiek, sha256 `ca6250217d643f0e...`) — identiteit en video
+  zijn wel correct en uniek; poster resolvet fail-closed naar `null`, nooit de media van een
+  andere oefening. Vervangende bronbestanden zijn nodig voor deze twee posters.
+- **MoveKit-bron totaal: 412 unieke oefeningen.** Na Batch 001 resteren er nog circa 186 voor
+  latere batches. Geen enkele vervolgbatch gestart.
+- **Assetarchitectuur (bewezen, ongewijzigd):** video's staan in normale Git (`videos/`, 226
+  MP4's); `scripts/build-www.mjs` sluit `videos/` expliciet uit van de Android-build (AAB-limiet),
+  de service worker haalt ze on-demand op en cachet met een 250MB LRU-plafond in een cache die
+  losstaat van de app-versie. De `movekit-posters format:webp`-declaratie in de catalogus is
+  **stale metadata**: er bestaan 0 fysieke .webp-bestanden; 13 posters zijn base64-embedded in
+  `index.html`, de overige records resolven fail-closed naar `null`.
 
 ## 2. Current roadmap position
 - **F0 — Verified Baseline: CLOSED**

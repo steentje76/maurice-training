@@ -1,5 +1,54 @@
 # Trainingskompas — Changelog
 
+## v4.69.96 — MoveKit Batch 001: Exercise Catalog 206 -> 226 (15 september 2026)
+
+Vervolg op de GitHub-baselineverificatie en mediaarchitectuur-audit. Doel: canonieke
+Exercise Catalog uitbreiden met de eerder gevalideerde, maar nooit geimporteerde
+MoveKit Batch 001 (20 oefeningen).
+
+- **Assetarchitectuur-besluit:** geen nieuwe infrastructuur nodig. Video's volgen het
+  bestaande, bewezen Sprint 11A-patroon (normale Git, Android sluit `videos/` uit van de
+  build, web/PWA cachen via de service worker met een 250MB LRU-plafond los van de
+  app-cache). Posters: de `movekit-posters format:webp`-declaratie is bevestigd stale
+  metadata (0 fysieke .webp-bestanden bestaan); nieuwe records krijgen `embedded:false`,
+  exact het bestaande meerderheidspatroon (194/206) dat al bewezen fail-closed degradeert
+  via `_libLoad()` -> `.no-img`. Geen nieuwe poster-infrastructuur gebouwd.
+- **Cycling-poster-defect** (`cycling-intervals.png`/`cycling-sprint.png` byte-identiek,
+  sha256 `ca6250217d643f0e...`, 3.325.805 bytes) onafhankelijk herbevestigd. Beide
+  posterbestanden bewust NIET meegenomen in de import; identiteit en video van beide
+  oefeningen wel veilig geimporteerd (poster resolvet naar `null`, bestaand fail-closed
+  gedrag, geen verkeerde fallback).
+- **20 nieuwe canonieke records TK-000207..TK-000226** toegevoegd aan zowel
+  `exercise-catalog.json` als de identieke, ingebedde `EX_CATALOG`-constante in
+  `index.html` (beide bronnen blijven byte-identiek, geen shadow catalog). Alle 20 slugs
+  waren `NEW_EXACT` (geen exacte of fuzzy-duplicaten tegen de bestaande 206).
+  `VIDEO_MANIFEST` uitgebreid van 206 naar 226 entries met md5-checksums; 20 nieuwe
+  .mp4-bestanden toegevoegd aan `videos/`.
+- **`intelligence`-veld bewust leeg gelaten** voor de 20 nieuwe records: geen toegang tot
+  de originele deterministische classifier voor fatigue/recovery/confidence/evidence-tekst.
+  `ExerciseIntelligence.scores()` valt voor ontbrekende `intelligence.fatigue`/`.recovery`
+  terug op een neutrale default (50) — geen crash, geen verzonnen wetenschap. `relations`
+  (alternatives/progressions/regressions) leeg gelaten om dezelfde reden (geen
+  deterministische generator beschikbaar in deze sessie) — vermijdt relationele
+  hallucinaties. Bronmateriaal bevat wel Engelse `instructions`/`commonMistakes`, maar
+  deze zijn niet vertaald/gemapt naar `cues`/`mistakes` (buiten scope zonder toegang tot
+  het bestaande NL-classificatiesysteem; UI degradeert gracieus, toont geen cues).
+- **TK-000001..TK-000206 volledig onaangeroerd** (identity/source byte-identiek herbevestigd
+  tegen een baseline-fixture in `core/fixtures/movekit_batch_001/baseline_206.json`).
+- Nieuwe test `core/fMovekitBatch001Integrity.test.js` (11 assertions): catalog_id-
+  uniciteit/contiguiteit, provider_id-uniciteit, stabiliteit van de bestaande 206,
+  exercise-catalog.json/EX_CATALOG-gelijkheid (shadow-catalog-guard), poster-asset-
+  mapping-integriteit, en bereikbaarheid van alle 20 nieuwe records via catalog_id.
+  Sabotage S1–S6 allemaal echt geinjecteerd, rood bewezen, byte-exact hersteld (sha256
+  geverifieerd), daarna weer groen.
+- Release gate: 382 uitgevoerd (was 381 + 1 nieuwe testfile), exact dezelfde 2 bekende
+  ical.js-sandboxfailures, geen nieuwe regressie. Doc-consistency: 0 problemen.
+  **Geen APP_VER-bump** (geen databasewijziging, geen core/*.js-logicawijziging; alleen
+  datacatalogus-uitbreiding + nieuwe testfile, conform het bestaande precedent voor
+  content-only wijzigingen zoals B9-01).
+- **FINALE STATUS: MOVEKIT BATCH 001 CANONICAL IMPORT COMPLETE — CLASSIFICATIE A (SAFE
+  FOR PO REVIEW).** Draft PR aangemaakt, NIET gemerged, wacht op expliciete PO-goedkeuring.
+
 ## v4.69.96 — Erg Continuous Protocol Identity (protocolintentie vóór actual) (15 september 2026)
 
 Vervolg op de Concept2/Erg-reconciliatiegate. **Nieuw gevonden lifecycle-feit:** het losse Erg-pad

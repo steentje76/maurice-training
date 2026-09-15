@@ -32,6 +32,14 @@ v4.69.96
   brondefect (beide PNG's byte-identiek, sha256 `ca6250217d643f0e...`) — identiteit en video
   zijn wel correct en uniek; poster resolvet fail-closed naar `null`, nooit de media van een
   andere oefening. Vervangende bronbestanden zijn nodig voor deze twee posters.
+- **Provenance van de bestaande TK-000001..206 (bewezen, niet gevalideerd).** Afgeleid uit
+  `exercise-intelligence_6.json` (S1-kennislaag). Over alle 206: `evidence_level` = identity
+  `source`, biomechanics/muscle_mapping/difficulty `heuristic`, stimulus en fatigue `estimated`,
+  relationships `generated`; `human_verified: true` bij **0/206**; `validation.status`
+  `unreviewed` bij **206/206**; `_meta.status` = “heuristisch gegenereerd — ongeverifieerd”.
+  Deze waarden mogen **niet** als wetenschappelijk gevalideerd worden gepresenteerd. Het verschil
+  met TK-000207..226 is dus niet gevalideerd-versus-onbekend, maar heuristische schatting versus
+  expliciet ontbrekende kennis.
 - **MoveKit-bron totaal: 412 unieke oefeningen.** Na Batch 001 resteren er nog circa 186 voor
   latere batches. Geen enkele vervolgbatch gestart.
 - **Assetarchitectuur — status: BATCH-001 PILOT OP BESTAAND PRECEDENT, LANGETERMIJNDOEL
@@ -49,28 +57,30 @@ v4.69.96
   250 MB LRU) · Android/Capacitor (`build-www.mjs`-exclusie) · Git-history-groei · bandbreedte
   en kosten · migratiepad voor de reeds gecommitte 226 video's · schaal naar 412 / 1.000 /
   10.000 oefeningen. PR #359 hoeft hiervoor niet te worden teruggedraaid.
-- **P3-MOVEKIT-INTEL — MoveKit intelligence provenance / unknown-state gap.** De 20 nieuwe
-  records hebben `intelligence = {}`. Bewezen runtimegedrag: `_intelDashboard()` toont voor
-  ontbrekende intelligence fallbackwaarde **50** voor onder meer CNS, vermoeidheid en
-  herstelduur, met mid-band-copy (“gemiddeld…”). Die fallback is **zichtbaar voor de sporter**
-  en op dit moment niet duidelijk onderscheiden van de bestaande, geclassificeerde 206 records.
-  Niet gerepareerd in PR #359. Vóór grootschalige catalogusexpansie moet worden bepaald of
-  (A) onbekende intelligence als UNKNOWN/“—” wordt getoond, (B) een bestaande deterministische
-  classifier met aantoonbare provenance wordt teruggevonden of herbouwd, of (C) een andere
-  evidence-safe canonieke oplossing wordt gekozen. **Geen wetenschappelijke waarden verzinnen.**
-  Wat al wél correct fail-closed is: `meta().recovery` toont “—”, de coachkaart en de
-  herstelkaart worden onderdrukt, en de ★-rating leest geen enkel fallbackveld.
-- **P3-LIB-CONFSORT — Exercise Library confidence-sort unknown-value handling.** De sorteermodus
-  `sort === 'confidence'` rekent met `b.intelligence.confidence - a.intelligence.confidence`.
-  Voor de nieuwe records is `confidence` `undefined`, waardoor de comparator NaN kan retourneren.
-  Geen crash en geen dataverlies bewezen, maar de sorteervolgorde is voor UNKNOWN intelligence
-  niet deterministisch gedefinieerd. Niet gerepareerd in PR #359; opgenomen voor gerichte
-  vervolgreparatie.
-- **P4-MOVEKIT-POSTERMETA — stale movekit poster provider metadata.** `asset_providers` declareert
-  `format: webp` terwijl er 0 fysieke `.webp`-bestanden bestaan; het veld wordt runtime door geen
-  enkele resolver gelezen. `total` is **nominale catalogusdekking**, niet fysieke posterdekking
-  (13 posters zijn base64-embedded in `index.html`, de overige records resolven fail-closed naar
-  `null`). Geen runtime-impact bewezen. Niet gerepareerd in PR #359.
+- **P3-MOVEKIT-INTEL — GESLOTEN (Gate Closure A).** Optie (A) is gekozen en geïmplementeerd:
+  onbekende intelligence wordt als UNKNOWN getoond, nooit als 50 of “gemiddeld”.
+  TK-000207..226 dragen expliciete UNKNOWN-semantiek (`null` + `evidence_level: unavailable`,
+  `human_verified: false`, `validation.status: unreviewed`), hergebruikt uit het bestaande
+  `exercise-intelligence_6.json`-vocabulaire. `_idxBar()` toont “— NIET BEPAALD” zonder
+  WHY-copy. Bewaakt door `core/fMovekitUnknownState.test.js`. **Geen wetenschappelijke waarden
+  verzonnen**; optie (B) blijft open als toekomstige verrijking zodra een reproduceerbare
+  classifier met aantoonbare provenance bestaat.
+- **P3-LIB-CONFSORT — GESLOTEN (Gate Closure A).** De comparator sorteert bekende confidence
+  aflopend, plaatst UNKNOWN altijd achteraan en valt bij gelijke waarden terug op een stabiele
+  ordening op naam. Retourneert nooit NaN. Bewaakt door een exhaustieve assertie over alle
+  UNKNOWN-paren in `core/fMovekitUnknownState.test.js`.
+- **P4-MOVEKIT-POSTERMETA — SUPERSEDED (berustte op een onjuiste auditinterpretatie).**
+  De bewering “0 fysieke .webp, slechts 13 embedded, rest fail-closed” was feitelijk onjuist.
+  Bewezen: `EXERCISE_POSTERS` 193 + `EXERCISE_ASSETS` 13 = **206/206 dekking** voor de
+  oorspronkelijke oefeningen (~7 kB per webp-data-URI); MoveKit Batch 001 heeft **0/20**.
+  `format: webp` is dus **accuraat**, geen stale metadata. De werkelijke regressie was dat
+  PR #359 `total` naar 226 bumpte terwijl de dekking 206 bleef. Hersteld in Gate Closure A:
+  `total` = 206 (resolvende posters), `catalog_entries` = 226, `missing` = 20,
+  `embedded_in_app` = 13 (was altijd correct).
+- **Posterdekking, actuele stand:** **206/226**. De 20 Batch-001-oefeningen hebben geen poster;
+  `cycling-intervals` en `cycling-sprint` blijven `SOURCE_ASSET_REVIEW_REQUIRED` wegens een
+  bevestigd brondefect. Ontbrekende poster blijft expliciet fail-closed — nooit de media van
+  een andere oefening.
 
 ## 2. Current roadmap position
 - **F0 — Verified Baseline: CLOSED**

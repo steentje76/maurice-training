@@ -1,5 +1,92 @@
 # Trainingskompas — Changelog
 
+## v4.69.96 — MoveKit Gate Closure A: intelligence UNKNOWN-state + posterdekking (15 september 2026)
+
+Begrensde sprint na de MoveKit Media Scale + Intelligence Unknown-State Gate. **Geen
+mediamigratie, geen Supabase-bucket, geen videoverplaatsing, geen nieuwe oefeningen,
+geen gereconstrueerde relatie-intelligentie, geen verzonnen intelligence.**
+
+### Feitelijke correctie op een eerdere auditbevinding
+
+De pre-merge audit van PR #359 stelde dat er “slechts 13 embedded posters” waren en dat
+“de rest fail-closed naar null resolvet”, en classificeerde `format: webp` als stale
+metadata. **Dat was onjuist.** Bewezen werkelijkheid:
+
+- `EXERCISE_POSTERS` bevat **193** webp-data-URI's
+- `EXERCISE_ASSETS` bevat **13** aanvullende (de records met `embedded: true`)
+- samen **206/206 dekking** voor de oorspronkelijke oefeningen, gemiddeld ~7 kB per poster
+- MoveKit Batch 001: **0/20** posters
+- **`format: webp` is dus accuraat**, geen stale metadata: webp is het feitelijke runtimeformaat
+
+**P4-MOVEKIT-POSTERMETA is daarmee superseded.** Die classificatie berustte op een onjuiste
+auditinterpretatie. Wat wel een echte regressie was: PR #359 bumpte `asset_providers.total`
+van 206 naar 226 terwijl de posterdekking 206 bleef — het veld was vóór #359 exact correct en
+is door #359 voor het eerst onjuist geworden. Dat is in deze sprint hersteld.
+
+### Wijzigingen
+
+- **UNKNOWN-schema (TK-000207..TK-000226).** De 20 records krijgen expliciete, machine-leesbare
+  UNKNOWN-semantiek: `fatigue: null`, `recovery: null`, `fatigue_cost: null`, `confidence: null`,
+  plus `evidence_level` met de nieuwe, additieve waarde `unavailable`, `human_verified: false` en
+  `validation.status: "unreviewed"`. Het vocabulaire is hergebruikt uit de bestaande
+  `exercise-intelligence_6.json` (`_meta.evidence_legend`, `enums.validation_status`); er is exact
+  één waarde toegevoegd. **UNKNOWN is nooit 0, nooit 50, nooit “gemiddeld”, nooit een
+  lage-confidence-schatting.** Geen enkele waarde van TK-000001..206 is gewijzigd.
+- **Athlete-facing presentatie.** `ExerciseIntelligence` krijgt `unknown(c, key)` en
+  `confidenceOf(c)`. `_idxBar()` toont voor UNKNOWN een “— NIET BEPAALD” met lege balk en zonder
+  WHY-copy, in plaats van score 50 met “Gemiddelde CNS-belasting” / “Gemiddeld vermoeiend” /
+  “Gemiddeld herstel”. Alleen `cns`, `vermoeidheid`, `herstelduur`, `calorie` en
+  `herstelbelasting` hangen van intelligence af; `kracht`/`hypertrofie`/`techniek`/
+  `explosiviteit`/`stabiliteit`/`coordinatie` en de ★-rating lezen geen fallbackveld en blijven
+  ongewijzigd bepaald.
+- **Confidence-sortering deterministisch.** Bekende confidence sorteert aflopend, UNKNOWN staat
+  altijd achteraan, gelijke waarden krijgen een stabiele secundaire ordening op naam. De
+  comparator kan nooit NaN retourneren.
+- **Posterdekking waarheidsgetrouw.** `asset_providers[movekit-posters]`: `total` = **206**
+  (werkelijk resolvende posters), nieuw `catalog_entries` = **226** (nominale catalogusdekking,
+  de betekenis die `total` eerder impliciet had) en nieuw `missing` = **20**. `embedded_in_app`
+  blijft 13 en was altijd correct. Geen posterdata gewijzigd, geen Batch-001-posters toegevoegd.
+
+### Provenance van de bestaande 206 — accuraat vastgelegd
+
+Bron gevonden: `exercise-intelligence_6.json` (S1-kennislaag, 206 records), waaruit de
+catalogus-`intelligence` is afgeleid. Gemeten over alle 206:
+
+- `evidence_level`: identity `source`; biomechanics/muscle_mapping/difficulty `heuristic`;
+  stimulus en fatigue `estimated`; relationships `generated`
+- `human_verified: true` — **0 / 206**
+- `validation.status` — **`unreviewed`: 206 / 206**
+- `_meta.status`: “heuristisch gegenereerd — ongeverifieerd”
+
+**De bestaande 206 zijn dus heuristisch/geschat en niet wetenschappelijk gevalideerd.** Ze
+worden in deze sprint niet geherlabeld en niet als gevalideerd gepresenteerd.
+
+### Verificatie
+
+- Nieuwe permanente test `core/fMovekitUnknownState.test.js` (32 assertions).
+- Sabotage S1–S6 werkelijk uitgevoerd, elk rood bewezen en byte-exact hersteld (sha256):
+  S1/S2/S3 UNKNOWN-tak uitgeschakeld → 50 en “gemiddeld” keren terug → 12 assertions rood;
+  S4 oude comparator én een record zonder UNKNOWN-schema → NaN + niet-deterministische volgorde;
+  S5 `unknown()` te breed en te smal → bestaande waarden zouden gewist of onterecht bepaald worden;
+  S6 `total` terug naar 226 → valse posterdekking gedetecteerd.
+  Bij S4 bleek de eerste versie van de NaN-assertie een steekproef die het defect kon missen; de
+  guard is daarop verscherpt naar een exhaustieve controle over alle UNKNOWN-paren.
+- Engine/AI-veiligheid herbevestigd: Calculation Engine en Decision Engine lezen de
+  catalogus-intelligence nog steeds niet (0 treffers); de AI Coach ontvangt voor UNKNOWN-records
+  uitsluitend `null`/`[]`, nooit een fallbackgetal. Geen nieuwe numerieke sportregel, geen
+  wetenschappelijke claim toegevoegd.
+- Release gate: **383 uitgevoerd** (382 + 1 nieuwe testfile), exact dezelfde 2 bekende
+  ical.js-sandboxfailures, geen derde. Doc-consistency 0 problemen.
+- **Geen APP_VER-bump**: geen databasewijziging; presentatie- en datacorrectie binnen de
+  bestaande versie.
+
+### Ongewijzigd en nog steeds open
+
+`cycling-intervals` en `cycling-sprint` blijven `SOURCE_ASSET_REVIEW_REQUIRED` (geen poster,
+geen gok, geen fallback). Relations van TK-000207..226 blijven leeg — de S2-generator is niet in
+de repository aanwezig en wordt niet gereconstrueerd. Langetermijn-MoveKit-media-architectuur
+blijft **UNRESOLVED**; Batch 002 blijft **BLOCKED**.
+
 ## v4.69.96 — MoveKit Batch 001: Exercise Catalog 206 -> 226 (15 september 2026)
 
 Vervolg op de GitHub-baselineverificatie en mediaarchitectuur-audit. Doel: canonieke

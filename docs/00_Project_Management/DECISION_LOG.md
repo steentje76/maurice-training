@@ -2241,3 +2241,42 @@ bestaande, ongewijzigde `_libLoad()`-fallback plus die handmatige sabotage.
 **Cycling-posters.** `cycling-intervals` en `cycling-sprint` blijven `SOURCE_ASSET_REVIEW_REQUIRED`.
 Geen poster toegevoegd, geen gok, geen fallback. Correcte bronassets zijn nodig vóór
 posteruitrol; dit blokkeert de identiteit/video-import van beide oefeningen niet.
+
+## DEC-MOVEKIT-003 — UNKNOWN-semantiek en posterdekking (Gate Closure A, 15 september 2026)
+
+**INTEL-01 — UNKNOWN-representatie.** Geen nieuw vocabulaire uitgevonden. Hergebruikt uit
+`exercise-intelligence_6.json` (`_meta.evidence_legend`: source/heuristic/estimated/generated;
+`enums.validation_status`: unreviewed/reviewed/approved/rejected), met exact één additieve waarde:
+**`unavailable`**. Waarde blijft `null`. Toegepast op uitsluitend TK-000207..226.
+**UNKNOWN ≠ 0, ≠ 50, ≠ gemiddeld, ≠ lage-confidence-schatting.**
+
+**INTEL-02 — Athlete-facing presentatie.** UNKNOWN rendert “— NIET BEPAALD” met lege balk en
+zonder WHY-copy. Alleen de vijf intelligence-afhankelijke scores (cns, vermoeidheid, herstelduur,
+calorie, herstelbelasting) vallen hieronder; de overige scores en de ★-rating lezen geen
+fallbackveld en blijven ongewijzigd. Bestaande 206 tonen onveranderd hun werkelijke waarden.
+
+**INTEL-03 — Confidence-sortering.** KNOWN aflopend, UNKNOWN altijd achteraan, stabiele
+secundaire ordening op `identity.name`. Nooit NaN. Bewust géén uitschakeling van de sorteermodus:
+dat zou records verbergen in plaats van ze eerlijk te positioneren.
+
+**INTEL-04 — Provenance bestaande 206.** Vastgelegd als heuristisch/geschat/gegenereerd,
+0/206 `human_verified`, 206/206 `unreviewed`. Niet geherlabeld, niet als gevalideerd
+gepresenteerd.
+
+**MEDIA-06 (deelbesluit) — posterdekking-metadata.** `total` beschreef feitelijk werkelijke
+posterdekking en was vóór PR #359 exact correct (206/206). #359 bumpte het naar 226 zonder
+posters toe te voegen. Kleinste waarheidsgetrouwe reparatie gekozen: `total` = 206 hersteld, en
+de nominale catalogusdekking expliciet gemaakt in een nieuw veld `catalog_entries` = 226 plus
+`missing` = 20. Zo blijft de oorspronkelijke veldbetekenis intact en wordt de tweede betekenis
+niet langer in hetzelfde veld gepropt. `format: webp` blijft ongewijzigd: het is aantoonbaar het
+werkelijke runtimeformaat, geen stale metadata.
+
+**Expliciet NIET gedaan in deze sprint.** Geen mediamigratie, geen Supabase-bucket, geen
+videoverplaatsing, geen verwijdering van embedded posters, geen nieuwe MoveKit-oefeningen of
+-media, geen reconstructie van relatie-intelligentie, geen verzonnen intelligence, geen
+APP_VER-bump.
+
+**Blijft open.** Langetermijn-MoveKit-media-architectuur (MEDIA-01/02/05/06-implementatie),
+INTEL-05 (reproduceerbare intelligence-generator met provenance), INTEL-06 (relations),
+de twee cycling-posterbronbestanden, en de MoveKit-licentievraag over publieke levering.
+**Batch 002 blijft BLOCKED.**

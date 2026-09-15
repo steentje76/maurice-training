@@ -1,5 +1,40 @@
 # Trainingskompas — Changelog
 
+## v4.69.95 — Erg Analytics Visibility V1 (RowErg/BikeErg/SkiErg in endurance-analytics) (15 september 2026)
+
+De Analytics-audit toonde aan dat RowErg/BikeErg/SkiErg **volledig onzichtbaar** waren in longitudinale
+analytics: zij worden canoniek in `sessions` gelogd (handmatig cardiopad) en hebben geen
+`activities`-tegenhanger, terwijl alle endurance-analytics uit `activities` projecteren.
+
+- Nieuw `core/ergAnalyticsProjection.js` — read-only projectie die Erg-sessierijen normaliseert naar
+  het **bestaande** analytics-vormcontract (`{recorded_at, distance_meters, duration_seconds, sport}`).
+  **Expliciet geen Calculation**: rekent niets, claimt geen CALC-ID, introduceert geen versiecontract —
+  het doelcontract bestond al. Filtert, hernoemt, normaliseert.
+- Hergebruikt ongewijzigd: `RunningIntelligenceCore.weeklyVolume()` (sport-neutraal),
+  `TrainingLoadCore.sessionLoadSRPE()`/`rollingLoadSum()`, `ProgressionCore.trendBy()`. Geen duplicaat
+  weekvolume-, belastings- of trendformule.
+- `tkEnduranceCtxProject`/`tkEnduranceCoachContext` uitgebreid met een **begrensde** Erg-sessions-read
+  (`exercise_id=in.(...)`, venster + limit, normale RLS-gebonden `sbGet`-weg). Een sporter die
+  uitsluitend Erg traint krijgt nu ook context (voorheen: lege string bij geen endurance-sport).
+- **Harde scope**: uitsluitend rowing/bikeerg/skierg. Handmatig gelogde running/cycling/swimming-sessies
+  worden geweigerd — die kunnen ook in `activities` staan en er is geen bewezen gedeelde
+  dedup-identifier tussen beide tabellen. Apart geregistreerd als **P3 — MANUAL CARDIO ANALYTICS
+  VISIBILITY / CROSS-PERSISTENCE DEDUPLICATION (uitgesteld)**.
+- **Semantiek bewaard**: BikeErg wordt nooit rowing (sport komt uitsluitend uit `exercise_id`, nooit uit
+  `stroke_rate`/afstand/label); cadans bewust weggelaten (RPM vs slagfrequentie zijn onverenigbaar);
+  afstand blijft strikt per machine gescheiden — tijd en sRPE mogen wel over Erg-sporten worden opgeteld.
+- Structured-interval-analytics blijft **session-summary only**; `intervals_detail` ongemoeid.
+- Geen Decision-regel, geen readiness-semantiek, geen migratie, geen dual-write.
+  `AdaptiveCoachingCore` blijft losgekoppeld, `LongitudinalTrendCore` blijft dormant.
+
+Tests: nieuw `core/fErgAnalyticsProjection.test.js` **88/88** (drie Erg-sporten + aliassen, niet-Erg-
+weigering incl. running/cycling/swimming, BikeErg-nooit-rowing, UTC-datumgrenzen/weekgrenzen,
+duur/afstand-degradatie, ontbrekende RPE -> geen belasting, weekvolume, sport-gescheiden afstand,
+trend-isolatie tussen Erg-sporten, geen-calculation-assertie, architectuurgrenzen). Sabotage:
+running toegelaten -> 4 FAILS; bikeerg->rowing -> 12 FAILS; beide exact hersteld (sha256-identiek).
+Volledige regressie 380, 2 bekende sandbox-fouten (ongewijzigd). APP_VER v4.69.94 -> v4.69.95.
+Draft PR, NIET mergen.
+
 ## v4.69.94 — HRV Calculation Canonicalization (CALC-REC-001, hrv_baseline.v1) (15 september 2026)
 
 Vervolg op de HRV Baseline & Longitudinal Learning Specification Gate: TK had al een live, wetenschappelijk

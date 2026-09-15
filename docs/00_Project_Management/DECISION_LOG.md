@@ -2005,3 +2005,32 @@
 - **Resterend (buiten scope, expliciet niet opgelost):** device-merk-granulariteit in provenance,
   meetcontext-metadata, HRV-CV/non-functioneel-overreaching-signaal, endurance-Context-koppeling,
   Decision-regelvorming — allemaal expliciete non-goals van deze sprint.
+
+## Erg Analytics Visibility V1 — read-only sessions-projectie (geen Calculation)
+
+- **Datum:** 15 september 2026. Aanleiding: de Analytics & Longitudinal Athlete Intelligence-audit
+  toonde dat RowErg/BikeErg/SkiErg volledig onzichtbaar waren in longitudinale analytics — zij worden
+  canoniek in `sessions` gelogd en hebben geen `activities`-tegenhanger, terwijl alle endurance-
+  analytics uit `activities` projecteren.
+- **Besluit (PO, definitief):** V1-projectie omvat UITSLUITEND rowing/bikeerg/skierg. Handmatig
+  gelogde running/cycling/swimming-sessies worden bewust GEWEIGERD: die kunnen ook in `activities`
+  bestaan en er is geen bewezen gedeelde dedup-identifier (`activities` heeft `dedupe_key`, `sessions`
+  niet) — meenemen zou training kunnen dubbeltellen. Apart vastgelegd als **P3 — MANUAL CARDIO
+  ANALYTICS VISIBILITY / CROSS-PERSISTENCE DEDUPLICATION (uitgesteld)**.
+- **Architectuur:** `core/ergAnalyticsProjection.js` is een read-only ADAPTER, expliciet GEEN
+  Calculation — hij rekent niets, claimt geen CALC-ID en introduceert geen nieuw versiecontract; hij
+  normaliseert naar het reeds bestaande analytics-vormcontract. Alle daadwerkelijke berekening blijft
+  bij de bestaande canonieke calculations (weeklyVolume, sessionLoadSRPE/rollingLoadSum, trendBy).
+  Geen dual-write, geen migratie, geen tweede bron van waarheid.
+- **Semantische grenzen:** sport uitsluitend uit `exercise_id` (nooit uit stroke_rate/afstand/label);
+  BikeErg nooit rowing; cadans weggelaten (RPM vs slagfrequentie onverenigbaar — weglaten boven
+  semantische corruptie); afstand strikt per machine gescheiden, tijd/sRPE wel aggregeerbaar;
+  BikeErg 1000m-splitbasis vs RowErg/SkiErg 500m blijft ongemoeid.
+- **Grenzen bewaard:** geen Decision-regel, geen readiness-autoriteit, geen adaptatie-semantiek;
+  structured-interval-analytics blijft session-summary-only; AI ontvangt uitsluitend reeds berekende
+  waarden; `AdaptiveCoachingCore` blijft losgekoppeld; `LongitudinalTrendCore` blijft dormant.
+- **Tests:** `fErgAnalyticsProjection` 88/88. Sabotage: running door de adapter -> 4 FAILS;
+  bikeerg->rowing -> 12 FAILS; beide sha256-identiek hersteld. Volledige regressie 380, 2 bekende
+  sandbox-fouten. APP_VER v4.69.94 -> v4.69.95. Draft PR, NIET mergen.
+- **Nog open (niet opgelost in deze sprint):** manual-cardio-dedup (P3), interval-niveau-analytics,
+  CSS/zwemanker, coach/team-analytics.

@@ -1975,3 +1975,33 @@
   CACHE_STATIC meegebumpt in `sw.js`. APP_VER v4.69.92 → v4.69.93. Draft PR, NIET mergen.
 - **Resterend (buiten scope, expliciet niet opgelost):** Decision→Calculation-vertaalregel voor
   "REDUCE_INTENSITY X%" per typed kind, readiness-koppeling, AdaptiveCoachingCore-refactor, Erg-Context.
+
+## HRV Calculation Canonicalization — CALC-REC-001 (hrv_baseline.v1)
+
+- **Datum:** 15 september 2026. Vervolg op de HRV Baseline & Longitudinal Learning Specification Gate,
+  die vaststelde dat TK al een live, wetenschappelijk onderbouwde HRV-baseline/deviatieberekening had
+  (Plews & Buchheit SWC-methode) maar zonder dedicated test, zonder expliciet versienummer, en met
+  ongescheiden evidence-classificatie voor de 15%-drempel.
+- **Besluit:** canoniseren/hardenen van de BESTAANDE berekening, geen herontwerp. `lnRmssd`/`hrvBaseline`/
+  `hrvRollingRecent`/`hrvStPersonal`/`hrvDagFactorPersonal` verhuisd naar `core/calculation.js`
+  (CALC-REC-001, `hrv_baseline.v1`); `index.html` bevat nu uitsluitend dunne wrappers.
+- **Nieuw, additief:** `direction`-veld (`'above'|'within'|'below'|'ref'`) op `hrvStPersonal`/
+  `hrvDagFactorPersonal` — bestaand `st`/`factor`-contract ongewijzigd; verhoogde HRV wordt nergens
+  automatisch als negatief signaal behandeld (parasympathetic-saturation-fenomeen wel herkenbaar
+  gemaakt, niet automatisch geduid — onvoldoende evidence voor een regel).
+- **15%-ernst-drempel:** bewust ongewijzigd gelaten, expliciet als PRODUCT HEURISTIEK (evidence D)
+  gedocumenteerd, los van de sterkere SWC-methodologie (evidence B) en de TK-vensterkalibratie
+  (evidence C) — geen vervangende drempel verzonnen.
+- **Tests:** `fHrvBaselineCanonicalization` 64/64 (nieuw, dedicated). Reële sabotage: SWC-multiplier
+  0,5→0,3 → 2 FAILS bewezen → exact hersteld → 64/64 PASS. `fRecoveryRegistry`/
+  `fCalculationRegistryCoverage` bijgewerkt naar de nieuwe canonieke locatie (49/49, 5/5). Volledige
+  regressie 379 uitgevoerd, 2 bekende sandbox-omgevingsfouten (ongewijzigd). `core/calculation.js` zit
+  in sw-guard `CORE_FILES` — CORE_SIG/CACHE_NAME/CACHE_STATIC meegebumpt. APP_VER v4.69.93 → v4.69.94.
+  Draft PR, NIET mergen.
+- **Bevestigd ongewijzigd:** `AdaptiveCoachingCore` 0 runtime-aanroepers; geen HRV-verwijzing in
+  `core/cardio.js` (endurance target-normalisatie); geen Decision-actiewoord in `calculation.js`; geen
+  migratie; raw RMSSD blijft de enige persistentiewaarheid (LnRMSSD blijft altijd afgeleid, nooit
+  gepersisteerd).
+- **Resterend (buiten scope, expliciet niet opgelost):** device-merk-granulariteit in provenance,
+  meetcontext-metadata, HRV-CV/non-functioneel-overreaching-signaal, endurance-Context-koppeling,
+  Decision-regelvorming — allemaal expliciete non-goals van deze sprint.

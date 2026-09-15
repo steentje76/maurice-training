@@ -7295,7 +7295,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.93';
+const APP_VER = 'v4.69.94';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -23746,96 +23746,25 @@ async function renderHomeProgramCard(){
 }
 
 // ══════════════════════════════════════════════════════════
-// HRV-BASELINE — Sprint 5.7.1 (RB: HRV op absolute drempels -> persoonlijke baseline)
-// Vervangt de vaste ms-drempels (24/18/14) door de Plews/Buchheit SWC-methode:
-// Ln-RMSSD-transformatie, 7-daags rollend gemiddelde t.o.v. een persoonlijke
-// baseline (Smallest Worthwhile Change = gemiddelde ± 0,5×SD).
-// Bronnen: Frontiers in Sports & Active Living 2025 (10.3389/fspor.2025.1578478) —
-// SWC=mean±0.5SD van Ln-RMSSD 7d-rollend-gemiddelde; TrainingPeaks/Kiviniemi-
-// cyclistenstudie — 2-4 weken baselineperiode, SD van HRV-metingen als bron voor de
-// SWC; athletedata.health (2026) — minimaal 2 weken baseline (4 beter), ≥15% daling
-// t.o.v. rollend gemiddelde als apart ernst-signaal, ≥4-5 metingen/week nodig voor
-// een betrouwbaar weekgemiddelde. Leeftijd is bewust GEEN aparte factor: de
-// literatuur bevestigt dat een persoonlijke baseline leeftijdsverschillen in
-// absolute HRV al zelf opvangt (zie sprint-overleg) — een aparte leeftijdscorrectie
-// zou dubbel corrigeren. Puur informatief, past nooit automatisch iets aan.
+// HRV-BASELINE — CALC-REC-001 (hrv_baseline.v1). Canonieke implementatie
+// verhuisd naar core/calculation.js (Canonicalization Sprint) — dunne
+// wrappers hier, GEEN eigen/tweede berekening. Plews/Buchheit SWC-methode
+// (Ln-RMSSD, 7-daags rollend gemiddelde t.o.v. persoonlijke baseline,
+// SWC=0,5×SD). Volledige bronvermelding/evidence-classificatie: zie
+// core/calculation.js en docs/CALCULATION_REGISTRY.md (CALC-REC-001).
+// Puur informatief, past nooit automatisch iets aan.
 // ══════════════════════════════════════════════════════════
-const HRV_BASELINE_MIN_DAYS = 14;   // ondergrens voorlopige baseline (referentiefase eronder)
-const HRV_BASELINE_FULL_DAYS = 28;  // grens voor een volledige/stabiele baseline
-const HRV_BASELINE_MIN_N = 4;       // minimum aantal metingen, ongeacht dagen verstreken
-const HRV_SWC_MULTIPLIER = 0.5;     // Plews et al. — smallest worthwhile change
-const HRV_SEVERE_DROP_PCT = 0.15;   // athletedata.health — apart ernst-signaal
+const HRV_BASELINE_MIN_DAYS = CalcCore.HRV_BASELINE_MIN_DAYS;
+const HRV_BASELINE_FULL_DAYS = CalcCore.HRV_BASELINE_FULL_DAYS;
+const HRV_BASELINE_MIN_N = CalcCore.HRV_BASELINE_MIN_N;
+const HRV_SWC_MULTIPLIER = CalcCore.HRV_SWC_MULTIPLIER;
+const HRV_SEVERE_DROP_PCT = CalcCore.HRV_SEVERE_DROP_PCT;
 
-function lnRmssd(v){return (typeof v==='number' && v>0) ? Math.log(v) : null;}
-
-// Bouwt de persoonlijke baseline uit historische hrv_log-rijen ({date,hrv}-vorm).
-// fase: 'referentie' (<14 dagen of <4 metingen — geen claim mogelijk), 'voorlopig'
-// (>=14 dagen), 'volledig' (>=28 dagen).
-function hrvBaseline(hdRows, refDate){
-  const ref = refDate ? new Date(refDate) : new Date();
-  const rows = (hdRows||[])
-    .filter(r=>r && r.hrv && r.date)
-    .map(r=>({date:new Date(r.date), hrv:r.hrv, ln:lnRmssd(r.hrv)}))
-    .filter(r=>r.ln!=null && !isNaN(r.date.getTime()) && r.date<=ref);
-  if(!rows.length) return {ready:false, fase:'referentie', n:0, days:0};
-  rows.sort((a,b)=>a.date-b.date);
-  const days = Math.max(0, Math.round((ref-rows[0].date)/86400000));
-  const n = rows.length;
-  if(days < HRV_BASELINE_MIN_DAYS || n < HRV_BASELINE_MIN_N){
-    return {ready:false, fase:'referentie', n, days};
-  }
-  const meanLn = rows.reduce((s,r)=>s+r.ln,0)/n;
-  const variance = rows.reduce((s,r)=>s+Math.pow(r.ln-meanLn,2),0)/n;
-  const sdLn = Math.sqrt(variance);
-  const meanRaw = rows.reduce((s,r)=>s+r.hrv,0)/n;
-  const fase = days>=HRV_BASELINE_FULL_DAYS ? 'volledig' : 'voorlopig';
-  return {ready:true, fase, n, days, meanLn, sdLn, meanRaw, swc:HRV_SWC_MULTIPLIER*sdLn};
-}
-
-// 7-daags rollend gemiddelde t.o.v. refDate. Bij <4 metingen in de afgelopen 7 dagen
-// (te weinig voor een betrouwbaar weekgemiddelde) valt terug op de laatste losse
-// meting — nooit een crash, wel lagere n/bron-transparantie in de output.
-function hrvRollingRecent(hdRows, refDate){
-  const ref = refDate ? new Date(refDate) : new Date();
-  const rows = (hdRows||[])
-    .filter(r=>r && r.hrv && r.date)
-    .map(r=>({date:new Date(r.date), hrv:r.hrv, ln:lnRmssd(r.hrv)}))
-    .filter(r=>r.ln!=null && !isNaN(r.date.getTime()) && r.date<=ref);
-  if(!rows.length) return null;
-  rows.sort((a,b)=>b.date-a.date);
-  const sevenDaysAgo=new Date(ref.getTime()-7*86400000);
-  const last7=rows.filter(r=>r.date>=sevenDaysAgo);
-  if(last7.length>=HRV_BASELINE_MIN_N){
-    const meanLn=last7.reduce((s,r)=>s+r.ln,0)/last7.length;
-    const meanRaw=last7.reduce((s,r)=>s+r.hrv,0)/last7.length;
-    return {meanLn, meanRaw, n:last7.length, bron:'7d-gemiddelde'};
-  }
-  const latest=rows[0];
-  return {meanLn:latest.ln, meanRaw:latest.hrv, n:1, bron:'laatste meting'};
-}
-
-// Classificeert vandaag t.o.v. de eigen baseline. st: 'g' (binnen/boven SWC),
-// 'o' (onder SWC — smallest worthwhile change), 'r' (>=15% daling, apart ernst-
-// signaal), 'ref' (referentiefase, geen persoonlijke claim mogelijk).
-function hrvStPersonal(hdRows, refDate){
-  const baseline=hrvBaseline(hdRows, refDate);
-  if(!baseline.ready)return {st:'ref', baseline, recent:null, drop:null};
-  const recent=hrvRollingRecent(hdRows, refDate);
-  if(!recent)return {st:'ref', baseline, recent:null, drop:null};
-  const drop=(baseline.meanRaw-recent.meanRaw)/baseline.meanRaw;
-  if(drop>=HRV_SEVERE_DROP_PCT)return {st:'r', baseline, recent, drop};
-  if(recent.meanLn < baseline.meanLn-baseline.swc)return {st:'o', baseline, recent, drop};
-  return {st:'g', baseline, recent, drop};
-}
-
-// HRV-dagfactor-component o.b.v. de persoonlijke classificatie. 'ref' (referentiefase)
-// krijgt bewust factor 1.00 (neutraal, geen correctie) — nooit een absolute uitspraak
-// zonder eigen data, conform de fase1/2/3-personalisatie elders in de app.
-function hrvDagFactorPersonal(hdRows, refDate){
-  const c=hrvStPersonal(hdRows, refDate);
-  const factor={g:1.05, o:0.93, r:0.85, ref:1.00}[c.st];
-  return {factor, st:c.st, baseline:c.baseline, recent:c.recent, drop:c.drop};
-}
+function lnRmssd(v){ return CalcCore.lnRmssd(v); } /* CALC-REC-001: canonical shared core (hrv_baseline.v1) */
+function hrvBaseline(hdRows, refDate){ return CalcCore.hrvBaseline(hdRows, refDate); } /* CALC-REC-001: canonical shared core (hrv_baseline.v1) */
+function hrvRollingRecent(hdRows, refDate){ return CalcCore.hrvRollingRecent(hdRows, refDate); } /* CALC-REC-001: canonical shared core (hrv_baseline.v1) */
+function hrvStPersonal(hdRows, refDate){ return CalcCore.hrvStPersonal(hdRows, refDate); } /* CALC-REC-001: canonical shared core (hrv_baseline.v1) */
+function hrvDagFactorPersonal(hdRows, refDate){ return CalcCore.hrvDagFactorPersonal(hdRows, refDate); } /* CALC-REC-001: canonical shared core (hrv_baseline.v1) */
 
 // ══════════════════════════════════════════════════════════
 // DAGFACTOR-MOTOR (v300, HRV-component vernieuwd in Sprint 5.7.1)

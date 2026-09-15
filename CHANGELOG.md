@@ -1,5 +1,37 @@
 # Trainingskompas — Changelog
 
+## v4.69.94 — HRV Calculation Canonicalization (CALC-REC-001, hrv_baseline.v1) (15 september 2026)
+
+Vervolg op de HRV Baseline & Longitudinal Learning Specification Gate: TK had al een live, wetenschappelijk
+onderbouwde HRV-baseline/deviatieberekening (Plews & Buchheit SWC-methode), maar leefde uitsluitend in
+`index.html` zonder dedicated test en zonder expliciet versienummer. Deze sprint canoniseert en hardent
+de BESTAANDE berekening — geen herontwerp, geen Decision-regel, geen endurance-koppeling.
+
+- `core/calculation.js`: `lnRmssd`/`hrvBaseline`/`hrvRollingRecent`/`hrvStPersonal`/`hrvDagFactorPersonal`
+  geëxtraheerd uit `index.html` (gedrag 1-op-1 behouden, karakteriseringstests bewijzen dit). Expliciete
+  versie `hrv_baseline.v1` toegevoegd aan `VERSIONS`.
+- Nieuw, additief, backward-compatible `direction`-veld (`'above'|'within'|'below'|'ref'`) op
+  `hrvStPersonal`/`hrvDagFactorPersonal` — bestaand `st`/`factor`-contract ongewijzigd; verhoogde HRV
+  wordt nergens automatisch als negatief signaal behandeld (onvoldoende evidence voor zo'n regel).
+- `index.html`: de 5 functies zijn nu dunne wrappers naar `CalcCore.*` — geen tweede, zelfstandig
+  uitvoerbare implementatie meer. Repo-breed bevestigd: geen shadow-formule elders.
+- 15%-ernst-drempel (`HRV_SEVERE_DROP_PCT`) bewust ONGEWIJZIGD gelaten (geen vervangende drempel
+  verzonnen), nu expliciet als **PRODUCT HEURISTIEK (evidence D)** gedocumenteerd, los van de sterkere
+  SWC-methodologie (evidence B) en de TK-vensterkalibratie (evidence C).
+- `docs/CALCULATION_REGISTRY.md` (CALC-REC-001) bijgewerkt: expliciete versie, canonieke
+  Implementation-locatie, gesplitste evidence-classificatie, `direction`-veld gedocumenteerd met
+  expliciet verbod op automatische "above = slecht"-interpretatie.
+
+Tests: nieuw `core/fHrvBaselineCanonicalization.test.js` **64/64** (initialisatie/fasen, exacte
+SWC-formule, 7-daags rollend venster, alle st/direction-combinaties, determinisme, architectuurgrens
+tegen Decision/endurance/AdaptiveCoaching, geen-duplicaat-implementatie). Sabotage: SWC-multiplier
+0,5→0,3 gewijzigd → 2 gerichte FAILS bewezen → exact hersteld (sha256-identiek) → 64/64 PASS.
+`core/fRecoveryRegistry.test.js`/`core/fCalculationRegistryCoverage.test.js` bijgewerkt naar de nieuwe
+canonieke locatie (49/49, 5/5). `core/calculation.js` zit in sw-guard `CORE_FILES` — CORE_SIG/CACHE_NAME/
+CACHE_STATIC meegebumpt. Geen migratie, geen Decision-regel, geen `AdaptiveCoachingCore`-koppeling
+(bevestigd 0 runtime-aanroepers), geen endurance-Context-koppeling. APP_VER v4.69.93 → v4.69.94. Draft
+PR, NIET mergen.
+
 ## v4.69.93 — Endurance Typed Target Normalization (CALC-END-006, Calculation Engine foundation) (15 september 2026)
 
 Vervolg op de Endurance Decision Authority & Target Semantics Gate: `target.pace`/`target.power` in

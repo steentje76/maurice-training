@@ -11,8 +11,18 @@ analytics: zij worden canoniek in `sessions` gelogd (handmatig cardiopad) en heb
   **Expliciet geen Calculation**: rekent niets, claimt geen CALC-ID, introduceert geen versiecontract —
   het doelcontract bestond al. Filtert, hernoemt, normaliseert.
 - Hergebruikt ongewijzigd: `RunningIntelligenceCore.weeklyVolume()` (sport-neutraal),
-  `TrainingLoadCore.sessionLoadSRPE()`/`rollingLoadSum()`, `ProgressionCore.trendBy()`. Geen duplicaat
-  weekvolume-, belastings- of trendformule.
+  `TrainingLoadCore.sessionLoadSRPE()`/`rollingLoadSum()`. Geen duplicaat weekvolume- of
+  belastingsformule.
+
+**LIVE in deze PR** — RowErg/BikeErg/SkiErg-sessies tellen canoniek mee in: endurance-weekvolume,
+trainingsduur/-frequentie, sRPE/trainingsbelasting waar de vereiste invoer (RPE) bestaat, rolling load
+waar van toepassing, de endurance-Context, en de daaruit volgende AI-context op basis van reeds
+berekende waarden. Dit is echte analytics-deelname, geen cosmetische zichtbaarheid.
+
+**NIET live in deze PR** — Erg-prestatietrend, verbeter-/achteruitgangsclassificatie, PB-intelligentie,
+plateau-intelligentie en cross-sessie-prestatievergelijking voor Ergs. `ProgressionCore.trendBy()` is
+voor Ergs **niet** runtime-aangesloten. De testdekking die trend- en sportisolatie aantoont is een
+**veiligheidstest voor toekomstig gebruik** — geen bewijs dat een prestatietrendfunctie live is.
 - `tkEnduranceCtxProject`/`tkEnduranceCoachContext` uitgebreid met een **begrensde** Erg-sessions-read
   (`exercise_id=in.(...)`, venster + limit, normale RLS-gebonden `sbGet`-weg). Een sporter die
   uitsluitend Erg traint krijgt nu ook context (voorheen: lege string bij geen endurance-sport).
@@ -30,7 +40,8 @@ analytics: zij worden canoniek in `sessions` gelogd (handmatig cardiopad) en heb
 Tests: nieuw `core/fErgAnalyticsProjection.test.js` **88/88** (drie Erg-sporten + aliassen, niet-Erg-
 weigering incl. running/cycling/swimming, BikeErg-nooit-rowing, UTC-datumgrenzen/weekgrenzen,
 duur/afstand-degradatie, ontbrekende RPE -> geen belasting, weekvolume, sport-gescheiden afstand,
-trend-isolatie tussen Erg-sporten, geen-calculation-assertie, architectuurgrenzen). Sabotage:
+trend-isolatie tussen Erg-sporten (veiligheidstest voor toekomstig gebruik — géén live trendfunctie),
+geen-calculation-assertie, architectuurgrenzen). Sabotage:
 running toegelaten -> 4 FAILS; bikeerg->rowing -> 12 FAILS; beide exact hersteld (sha256-identiek).
 Volledige regressie 380, 2 bekende sandbox-fouten (ongewijzigd). APP_VER v4.69.94 -> v4.69.95.
 Draft PR, NIET mergen.

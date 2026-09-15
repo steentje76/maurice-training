@@ -32,7 +32,7 @@ was daarmee niet op te lossen met extra velden op dat formulier; er is een echte
 - **Niet in deze sprint**: Erg Performance Intelligence (PB/trend/plateau), Concept2 `duration_s` (P4,
   apart), manual-cardio-dedup (P3), PM5 workout control. B1/B2/B3 ongewijzigd.
 
-Tests: nieuw `core/fErgContinuousProtocolIdentity.test.js` **139/139** (drie sporten × drie
+Tests: nieuw `core/fErgContinuousProtocolIdentity.test.js` **164/164** (drie sporten × drie
 protocollen, BikeErg-nooit-rowing, B3 levert géén continue projectie, 14 fail-closed-gevallen,
 protocol ≠ intensiteitsdoel, migratie-asserties, plus 23 runtime-wiring-asserties die bewijzen dat
 dit geen dormant module is). Sabotage, alle byte-exact hersteld: S1 actual→intent-kanaal (2 FAILS),
@@ -50,6 +50,12 @@ sandbox uitvoeren: twee starts vóór de eerste resolve → `createTrainingInsta
 mislukking → busy vrij → retry maakt precies één instance; exception → busy nooit blijvend gezet.
 Sabotage R1 (guard weg), R2 (busy pas ná await) en R3 (geen vrijgave bij mislukking) alle drie
 gedetecteerd en byte-exact hersteld.
+
+**Preview (scope-sluiting):** continue Erg-protocolregel live in de bestaande `renderTPInterval`-hero
+via `tkIvContinuousProtocolText()`, uitsluitend gevoed door de canonieke projectie — geen tweede
+parser, nooit een actual. Fail-closed voor Vrij, gestructureerd B3, onbekend en niet-Erg; intensiteit
+blijft gescheiden; machine-identiteit gepind. Vier Preview-sabotages bewezen en byte-exact hersteld.
+B1-harness aangevuld met de nieuwe dependency (geen verzwakte assertie, 108 -> 109).
 
 **Builder-bevinding (audit P3-B):** forensiek toonde dat de opgeslagen-workout-Builder (`ivRaw()`)
 het canonieke terminatiemodel **al** gebruikt (`workTerm` → `termination.type` `distance`/`time`) en

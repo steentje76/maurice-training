@@ -9306,6 +9306,21 @@ function tkIvTargetText(b){
   const parts=[]; if(b.target.pace)parts.push('pace '+escHtml(String(b.target.pace))); if(b.target.rpe!=null)parts.push('RPE '+escHtml(String(b.target.rpe))); if(b.target.power)parts.push(escHtml(String(b.target.power))+' W');
   return parts.length?' · '+parts.join(' · '):'';
 }
+// CONTINU ERG-PROTOCOL IN PREVIEW (scope-sluiting PR #358).
+// Leest UITSLUITEND de canonieke prescriptie via de reeds bewezen pure helper
+// ErgProtocolIdentity.protocolProjectionFromPrescription() -- geen tweede parser, geen
+// if-distance/if-time-logica hier, en NOOIT een actual (afstand/duur/split/watt/formulier).
+// Faalt gesloten: gestructureerd (B3), manual/vrij, onbekend of niet-Erg -> lege string,
+// dus nooit een verzonnen doel en nooit 8x500m samengevouwen tot "4000 m continu".
+// Protocol blijft gescheiden van intensiteit: tkIvTargetText() toont pace/RPE/W apart.
+function tkIvContinuousProtocolText(norm){
+  if(typeof ErgProtocolIdentity==='undefined'||!norm)return '';
+  if(ErgProtocolIdentity.ERG_SPORTS.indexOf(norm.sport)===-1)return '';
+  const proj=ErgProtocolIdentity.protocolProjectionFromPrescription(norm);
+  if(!proj||proj.protocol_type==='manual')return '';
+  const label=ErgProtocolIdentity.protocolLabelNl(proj.protocol_type,proj.protocol_value);
+  return label?(' \u00b7 doel '+label):'';
+}
 function renderTPInterval(el){
   const def=previewCtx.def;
   const norm=IntervalEngineCore.normalizePrescription(def.intervalPrescription);
@@ -9322,7 +9337,7 @@ function renderTPInterval(el){
   el.innerHTML=`${tpHeader('Training Preview','previewCloseModal()')}
     <div class="tpv2-hero">
       <div class="tpv2-hero-nm">${escHtml(def.name)}<span class="tpv2-chip">${TK_IV_SPORT_LABEL[norm.sport]||escHtml(String(norm.sport||''))}</span></div>
-      <div class="tpv2-hero-sub">Intervaltraining · ${norm.blocks.length} blokken · ${werk} werkintervallen${totaal!=null?` · ${CardioCore.formatTime(totaal)} gepland`:' · duur afhankelijk van afstand/handmatig'}</div>
+      <div class="tpv2-hero-sub">Intervaltraining · ${norm.blocks.length} blokken · ${werk} werkintervallen${totaal!=null?` · ${CardioCore.formatTime(totaal)} gepland`:' · duur afhankelijk van afstand/handmatig'}${tkIvContinuousProtocolText(norm)}</div>
       ${norm.geldig?'':`<div class="tpv2-hero-say" style="color:var(--r)">Prescriptie ongeldig: ${escHtml(String(norm.reden||''))}</div>`}
     </div>
     <div class="tpv2-sec">Structuur</div>${rows}

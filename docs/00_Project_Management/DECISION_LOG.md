@@ -2115,6 +2115,14 @@ geen veilige gedeelde sessions↔activities-dedup-identiteit bestaat.
   bestaande architectuur al tolereert — opschoning is een aparte follow-up; (c) het
   `fHardening`-leesvenster blijft een magic number (nu 6200, 542 tekens marge) — asserties
   ongewijzigd, structurele begrenzing is een losse verbetering.
-- **Preview:** bewust niet uitgebreid in deze PR; de continue protocolweergave in Preview blijft een
-  aparte, kleine vervolgstap. De protocolidentiteit zelf is volledig live via het losse pad en de
-  Builder. APP_VER blijft v4.69.96 (geen extra bump voor een reparatie binnen dezelfde PR).
+- **Preview (scope gesloten in dezelfde PR):** de continue Erg-protocolregel is live in de bestaande
+  `renderTPInterval`-hero via `tkIvContinuousProtocolText()`, uitsluitend gevoed door de canonieke
+  `protocolProjectionFromPrescription()` — geen tweede parser, nooit een actual. Fail-closed voor
+  manual/Vrij, gestructureerd B3 (8x500m wordt nooit "4000 m continu"), onbekend en niet-Erg.
+  Intensiteit blijft gescheiden (pace/RPE/W via `tkIvTargetText`); machine-identiteit gepind (de chip
+  komt uit `norm.sport`, de helper mag `norm` nooit hermappen). Preview-sabotages P1/P2 (actual
+  lezen), P3 (BikeErg->RowErg), P4 (gestructureerd samenvouwen), P5 (shadow-parser) alle vier
+  gedetecteerd en byte-exact hersteld. `fStructuredIntervalsCanonical` (B1) kreeg de nieuwe helper +
+  `ErgProtocolIdentity` in zijn sandbox-harness zodat de ECHTE Preview-renderer blijft draaien --
+  geen verzwakte assertie, alleen de ontbrekende dependency (108 -> 109 asserties).
+  APP_VER blijft v4.69.96 (geen extra bump voor reparatiewerk binnen dezelfde PR).

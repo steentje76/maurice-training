@@ -249,6 +249,67 @@ ok(!/erg_protocol\.v1/.test(src), 'geen nieuw erg_protocol.v1-contract geïntrod
   }
 }
 
+// ── 17: PREVIEW — continu Erg-protocol zichtbaar, fail-closed ──
+// De ECHTE Preview-helper wordt uit index.html geëxtraheerd en in een sandbox uitgevoerd,
+// zodat de runtime-wiring wordt getest en niet alleen de pure kern.
+{
+  const vm = require('vm');
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const src = (html.match(/function tkIvContinuousProtocolText\(norm\)\{[\s\S]*?\n\}/) || [''])[0];
+  ok(src !== '', 'PREVIEW: tkIvContinuousProtocolText bestaat in index.html');
+  const ctx = { ErgProtocolIdentity: E };
+  vm.createContext(ctx); vm.runInContext(src, ctx);
+  const tekst = ctx.tkIvContinuousProtocolText;
+  function norm(sport, type, val){ return IE.normalizePrescription(E.continuousErgPrescription(sport, type, val)); }
+
+  eq(tekst(norm('rowing','distance',2000)), ' \u00b7 doel 2000 m', 'PREVIEW RowErg afstand 2000 -> doel zichtbaar');
+  eq(tekst(norm('rowing','time',1800)), ' \u00b7 doel 30 min', 'PREVIEW RowErg tijd 1800s -> doel zichtbaar');
+  eq(tekst(norm('bikeerg','distance',10000)), ' \u00b7 doel 10000 m', 'PREVIEW BikeErg afstand -> doel zichtbaar');
+  eq(tekst(norm('bikeerg','time',1800)), ' \u00b7 doel 30 min', 'PREVIEW BikeErg tijd -> doel zichtbaar');
+  eq(tekst(norm('skierg','distance',1000)), ' \u00b7 doel 1000 m', 'PREVIEW SkiErg afstand -> doel zichtbaar');
+  eq(tekst(norm('skierg','time',1200)), ' \u00b7 doel 20 min', 'PREVIEW SkiErg tijd -> doel zichtbaar');
+
+  // Fail-closed gevallen: nooit een verzonnen doel.
+  eq(tekst(norm('rowing','manual',null)), '', 'PREVIEW manual/Vrij -> GEEN verzonnen doel');
+  const b3 = IE.normalizePrescription({ version:'interval_prescription.v1', sport:'rowing',
+    blocks:[{ repeat:8, of:[{type:'work',termination:{type:'distance',meters:500}},{type:'recovery',termination:{type:'time',seconds:60}}] }] });
+  eq(tekst(b3), '', 'PREVIEW gestructureerd 8x500m wordt NOOIT samengevouwen tot een continu 4000m-doel');
+  eq(tekst(null), '', 'PREVIEW null-prescriptie -> leeg (fail closed)');
+  eq(tekst({}), '', 'PREVIEW onbekende prescriptie -> leeg (fail closed)');
+  eq(tekst(IE.normalizePrescription({ version:'interval_prescription.v1', sport:'running',
+    blocks:[{repeat:1,of:[{type:'work',termination:{type:'distance',meters:5000}}]}] })), '', 'PREVIEW niet-Erg sport (running) -> geen Erg-protocolregel');
+
+  // Intensiteit wordt NOOIT protocol: alleen een power/RPE-target, terminatie manual.
+  const alleenIntensiteit = IE.normalizePrescription({ version:'interval_prescription.v1', sport:'rowing',
+    blocks:[{repeat:1,of:[{type:'work',termination:{type:'manual'},target:{power:250,rpe:8,pace:'1:50/500m'}}]}] });
+  eq(tekst(alleenIntensiteit), '', 'PREVIEW intensiteitsdoel (250 W / RPE 8 / pace) wordt NOOIT een protocoldoel');
+  // Met zowel terminatie als intensiteit: uitsluitend de terminatie bepaalt het protocol.
+  const beide = IE.normalizePrescription({ version:'interval_prescription.v1', sport:'rowing',
+    blocks:[{repeat:1,of:[{type:'work',termination:{type:'distance',meters:2000},target:{power:250}}]}] });
+  eq(tekst(beide), ' \u00b7 doel 2000 m', 'PREVIEW met intensiteitsdoel erbij -> protocol komt uitsluitend uit de terminatie');
+
+  // Machine-identiteit in Preview. De protocoltekst zelf is bewust machine-agnostisch
+  // ("doel 2000 m") omdat de machine al apart als chip wordt getoond; de identiteit moet
+  // daarom op DIE renderplek gepind worden, plus op de sport-guard in de helper.
+  eq(norm('bikeerg','distance',2000).sport, 'bikeerg', 'PREVIEW BikeErg blijft bikeerg in de prescriptie');
+  ok(/tpv2-chip">\$\{TK_IV_SPORT_LABEL\[norm\.sport\]/.test(html), 'PREVIEW: machine-chip komt uit norm.sport via TK_IV_SPORT_LABEL — BikeErg toont als BikeErg, niet als RowErg');
+  ok(/TK_IV_SPORT_LABEL=\{[^}]*rowing:'RowErg',bikeerg:'BikeErg',skierg:'SkiErg'\}/.test(html), 'PREVIEW: de drie Erg-machines hebben elk hun eigen, gescheiden label');
+  ok(/ErgProtocolIdentity\.ERG_SPORTS\.indexOf\(norm\.sport\)===-1\)return ''/.test(src), 'PREVIEW: sport-guard leest norm.sport rechtstreeks');
+  // HET ECHTE INVARIANT: de helper krijgt de prescriptie read-only binnen en mag de machine
+  // NOOIT hermappen (bv. bikeerg -> rowing) vóór of ná de guard. Elke toewijzing aan `norm`
+  // binnen de helper is per definitie zo'n hermapping en is daarom verboden.
+  ok(!/\bnorm\s*=[^=]/.test(src.replace(/function tkIvContinuousProtocolText\(norm\)/, '')), 'PREVIEW: de helper wijst NOOIT aan `norm` toe — de machine kan niet hermapt worden (BikeErg kan geen RowErg worden)');
+  ok(!/sport\s*:\s*'(rowing|bikeerg|skierg)'/.test(src), 'PREVIEW: de helper zet nooit zelf een sportwaarde');
+
+  // Architectuur: Preview leest GEEN actual en dupliceert de parser niet.
+  ok(src.includes('protocolProjectionFromPrescription'), 'PREVIEW gebruikt de canonieke helper');
+  ok(!/distance_meters|duration_seconds|cRow|l\.cardio|getCardioVal|\.watt\b|split/.test(src), 'PREVIEW leest GEEN actual-bron (afstand/duur/split/watt/formulier)');
+  ok(!/if\s*\(\s*[^)]*type\s*===\s*'distance'\s*\)\s*return\s*[^;]*meters/.test(src), 'PREVIEW bevat GEEN tweede if-distance/if-time-parser');
+  // Runtime-wiring: de helper wordt daadwerkelijk in de Preview-hero gebruikt.
+  ok(/tpv2-hero-sub[\s\S]{0,400}\$\{tkIvContinuousProtocolText\(norm\)\}/.test(html), 'PREVIEW: helper is daadwerkelijk in de Preview-hero gerenderd (runtime-wiring, geen dode functie)');
+  ok(/renderTPInterval/.test(html), 'PREVIEW: bestaande renderTPInterval-renderer hergebruikt, geen nieuw Preview-scherm');
+}
+
 // ── 15: DUBBEL-SUBMIT CONCURRENCY — echt gedrag, niet tekstaanwezigheid ──
 // De functie wordt uit index.html geëxtraheerd en in een sandbox met nagebouwde
 // afhankelijkheden uitgevoerd, zodat de ECHTE productiecode wordt getest.

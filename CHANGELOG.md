@@ -1,5 +1,33 @@
 # Trainingskompas — Changelog
 
+## v4.69.93 — Endurance Typed Target Normalization (CALC-END-006, Calculation Engine foundation) (15 september 2026)
+
+Vervolg op de Endurance Decision Authority & Target Semantics Gate: `target.pace`/`target.power` in
+`interval_prescription.v1` zijn vrije tekst (bewezen: hardlopen `4:30/km`, zwemmen `1:45/100m`,
+RowErg/SkiErg `1:50/500m`, fietsen/BikeErg `250 W` — allemaal via hetzelfde `.pace`-veld; `.power`
+bestaat als schemaveld maar heeft geen producent). Een generieke percentage-transformatie is daardoor
+ongeldig (pace en vermogen lopen tegengesteld bij "lagere intensiteit"). Deze sprint bouwt uitsluitend
+de typed-normalisatielaag — **geen** Decision-regel, **geen** readiness-koppeling, **geen**
+intensiteitstransformatie.
+
+- `core/cardio.js` (CALC-END-006, `endurance_target.v1`): `parseEnduranceTarget`/`formatEnduranceTarget`
+  (round-trip-bewezen, noemer-behoudend — nooit `/500m`→`/km`), `typedRpeTarget`, `isTargetKindSupportedForSport`.
+  Eén canonieke locatie; geen duplicaat-parser in `index.html`.
+- Fail-closed op: ontbrekende/onbekende noemer, onleesbaar tijd-deel, negatief/nul, locale-komma,
+  NaN/Infinity — nooit een gegokte waarde.
+- Geen DB-migratie, geen wijziging aan `IntervalEngineCore`/B1/B2/B3-contracten — bestaande vrije-tekst
+  prescripties blijven ongewijzigd bruikbaar en zijn alsnog typeerbaar (compatibiliteitsgrens).
+- `docs/CALCULATION_REGISTRY.md`: nieuwe entry CALC-END-006, evidence level E, expliciet verboden
+  interpretatie vastgelegd ("normalisatie ≠ trainingsaanpassing").
+
+Tests: nieuw `core/fEnduranceTargetNormalization.test.js` **155/155** (parse/format/round-trip per
+sport, RPE, sport/soort-scheiding, 19 adversariale/fail-closed-gevallen, architectuurgrens tegen
+Decision/readiness/AdaptiveCoaching, backward-compatibility met bestaande prescripties). Sabotage:
+noemer-semantiek weggegooid (`/500m`→`/km`) → 4 failures bewezen → exacte code hersteld → 155/155.
+`core/cardio.js` zit in `CORE_FILES` (sw-guard) — CORE_SIG/CACHE_NAME/CACHE_STATIC in `sw.js`
+meegebumpt. B3 182/182, B2 181/181, B1 108/108 ongewijzigd. APP_VER v4.69.92 → v4.69.93. Draft PR,
+NIET mergen.
+
 ## v4.69.92 — Structured Intervals B3: RowErg/BikeErg/SkiErg canonical (sessions-domein) (14 september 2026)
 
 PO-architectuurbesluit: **Erg-actuals horen in het sessions-domein** (forensisch bewezen in

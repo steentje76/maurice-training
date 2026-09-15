@@ -52,12 +52,15 @@ const calcCounts = countCalcEvidence(calcText);
 // sportwetenschappelijke claim (GEEN_EVIDENCE_VELD), net als hun
 // Running-tegenhangers CALC-RUN-DISTBAND-001/CALC-RUN-CSELIG-001.
 // E-telling blijft ongewijzigd op 8.
-ok(calcCounts.total === 34, 'exact 34 CALC-items geregistreerd (reproduceerbare telling, niet handmatig; +CALC-STR-006, +CALC-ACT-001/002 inactivity/adherence)');
+// CALC-END-006 (Endurance Target Normalization, endurance_target.v1) toegevoegd -- telling stijgt
+// van 34 naar 35. Evidence E (zuivere technische parse/format-conversie, geen fysiologische claim,
+// zelfde categorie als CALC-END-001/002) -- E-telling stijgt van 10 naar 11.
+ok(calcCounts.total === 35, 'exact 35 CALC-items geregistreerd (reproduceerbare telling, niet handmatig; +CALC-END-006 Endurance Target Normalization)');
 ok(calcCounts.A === 1, 'exact 1 CALC-item met evidence A');
 ok(calcCounts.B === 5, 'exact 5 CALC-items met evidence B (Epley/Brzycki/Foster-sRPE/HRV-baseline/Strength Basis Selection)');
 ok(calcCounts.C === 4, 'exact 4 CALC-items met evidence C');
 ok(calcCounts.D === 1, 'exact 1 CALC-item met evidence D (Recovery Score)');
-ok(calcCounts.E === 10, 'exact 10 CALC-items met evidence E (was 8; +CALC-ACT-001/002 inactivity/adherence, technisch/afgeleid)');
+ok(calcCounts.E === 11, 'exact 11 CALC-items met evidence E (was 10; +CALC-END-006 Endurance Target Normalization, technisch/afgeleid)');
 // MS-F6-01 (F6): Critical Speed is niet langer NOT_IMPLEMENTED (nu GEÏMPLEMENTEERD,
 // CardioCore.criticalSpeed()) -- de telling daalt daarom van 3 naar 2 resterende
 // bewust-NOT_IMPLEMENTED-items (TRIMP/decoupling/zones, BMR/RMR/TDEE; Critical Power

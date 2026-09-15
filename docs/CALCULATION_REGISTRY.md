@@ -480,6 +480,26 @@ Geen onverklaarde critical threshold gevonden — inclusief het belangrijke onde
 | **Nog NIET aangesloten** | Decision Engine — identiek aan CALC-END-004. De AI Coach ontvangt CP uitsluitend als reeds berekende Context-waarde en rekent niet. |
 | Status | **LIVE_CANONICAL** voor calculation, history-integratie en UI — **CONNECTED** voor Context (adapter, GAP-P2-026) — **NOT CONNECTED** voor Decision. |
 
+### CALC-END-006 — Endurance Target Normalization (typed pace/vermogen/RPE)
+| Veld | Waarde |
+|---|---|
+| Domain | Endurance & Erg |
+| Name | Deterministische parse/format tussen de vrije-tekst intervaldoelen uit `interval_prescription.v1` (`block.target.pace`/`.power`/`.rpe`) en een expliciet getypeerd `{kind,value,unit}`-object |
+| Version | `endurance_target.v1` |
+| Implementation | `core/cardio.js` — `parseEnduranceTarget`, `formatEnduranceTarget`, `typedRpeTarget`, `isTargetKindSupportedForSport` |
+| Required inputs | de reeds-opgeslagen vrije-tekst prescriptiewaarde (`target.pace`/`target.power`, bv. `"4:30/km"`, `"1:50/500m"`, `"250 W"`) of het reeds-numerieke `target.rpe` |
+| Bevestigde vormen (bewijs: Builder-placeholders + `fStructuredIntervalsB3Erg.test.js`) | hardlopen `mm:ss/km`; zwemmen `mm:ss/100m`; RowErg/SkiErg `mm:ss/500m`; fietsen/BikeErg `<getal>[ ]W`. `target.power` bestaat als schemaveld in `IntervalEngineCore` maar heeft GEEN producent — vermogen wordt in de praktijk altijd via `target.pace` aangeleverd; het "soort" wordt daarom uit de tekstinhoud gesniffeld, nooit uit welk objectveld de waarde in staat |
+| Output | `{status:'empty'\|'invalid'\|'valid', kind:'pace'\|'power'\|'rpe', value, unit, raw, reason}` |
+| Canonieke eenheden | pace: seconden **per de oorspronkelijke noemer** (`sec_per_km`/`sec_per_100m`/`sec_per_500m` — nooit stil omgezet tussen noemers); vermogen: watt; RPE: bestaande 0-10-schaal, ongewijzigd |
+| Evidence level | **E** — zuivere technische parse/format-conversie, geen zelfstandige fysiologische claim |
+| Confidence model | n.v.t. — deterministisch |
+| Fail-closed gedrag | ontbrekende noemer, onbekende noemer/eenheid, onleesbaar tijd-deel, negatieve/nul-waarde, locale-ambigue komma-decimalen, NaN/Infinity → altijd `invalid` met expliciete `reason`, nooit een gegokte waarde |
+| Sport/soort-dekking (bewezen combinaties) | hardlopen/zwemmen/RowErg/SkiErg → `pace`; fietsen/BikeErg → `power`; RPE is sport-onafhankelijk en apart, niet in deze tabel |
+| Limitations | geen omzetting tussen noemers (bv. `/500m` → `/km`) — dat zou een aparte, hier niet geïmplementeerde snelheids-/afstandsconversie vereisen; geen bovengrens op de waarde opgelegd (geen bestaande repository-conventie hiervoor, dus niet verzonnen) |
+| Forbidden interpretations | **normalisatie betekent GEEN trainingsaanpassing** — deze laag rekent niets fysiologisch, bevat geen intensiteitstransformatie (geen `×0.95`/`×1.05`/`magnitudePct`), geen readiness-koppeling, geen Decision Rule. Uitsluitend een technische parse/format-brug tussen de bestaande vrije-tekst prescriptie en een toekomstige, hier NIET geïmplementeerde Decision→Calculation-keten |
+| AI permissions | AI mag deze getypeerde waarden uitsluitend tonen/uitleggen, nooit zelf herberekenen of gebruiken om een nieuwe prescriptiewaarde te bepalen |
+| Status | **VERIFIED** (155/155 dynamische tests inclusief round-trip en adversariale invoer; reële sabotagecyclus bewezen) |
+
 ### CALC-END-005 — TRIMP / Aerobic Decoupling / HR-zones — **NIET GEÏMPLEMENTEERD**
 | Veld | Waarde |
 |---|---|

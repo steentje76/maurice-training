@@ -53,7 +53,8 @@ ok(CardioCore.classifyNumericInput('42').status === 'valid' && CardioCore.classi
 // ---- B. Registry-structuur ----
 const items = registryText.split(/(?=^### CALC-END-)/m).filter(s => s.startsWith('### CALC-END-'));
 // MS-F6-02: CALC-END-004B (Critical Power) toegevoegd -- telling stijgt van 5 naar 6.
-ok(items.length === 6, 'exact 6 CALC-END-items gevonden (001, 002, 003, 004, 004B, 005)');
+// CALC-END-006 (Endurance Target Normalization, endurance_target.v1) toegevoegd -- telling stijgt van 6 naar 7.
+ok(items.length === 7, 'exact 7 CALC-END-items gevonden (001, 002, 003, 004, 004B, 005, 006)');
 
 // ---- B2. NOT_IMPLEMENTED-items correct en eerlijk gelabeld (geen stille fabricage) ----
 {

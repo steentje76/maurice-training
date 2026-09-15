@@ -212,6 +212,45 @@ ok(html.includes('CalcCore.hrvDagFactorPersonal(hdRows, refDate)'), 'index.html 
   eq(s.st, 'r', 'drop >= HRV_SEVERE_DROP_PCT -> st r (>=, ongewijzigd legacy-gedrag)');
 }
 
+// ── 11: EXACTE 7-DAAGSE-VENSTERGRENS bij N precies op HRV_BASELINE_MIN_N ──
+// Onafhankelijke pre-merge-audit (PR #356) vond een dekkingsleemte: een sabotage die het
+// canonieke 7-daagse venster naar 6 dagen verkleinde bleef bij álle bestaande tests groen,
+// omdat geen enkel scenario een meting exact op de INCLUSIEVE 7-dagengrens combineerde met
+// N precies op HRV_BASELINE_MIN_N (waar het uitvallen van precies díe ene meting de
+// terugval-tak triggert). Deze test sluit die leemte expliciet.
+//
+// Constructie (identiek aan het auditbewijs): ref = dag 8; recente metingen op dag 8, 7, 6
+// (3 stuks) + één meting EXACT 7 dagen vóór ref (dag 1) = precies 4 metingen (HRV_BASELINE_MIN_N)
+// binnen het venster [ref-7d, ref]. Correcte inclusieve 7-daagse venstersemantiek moet dag 1
+// meetellen (ref - dag1 = exact 7*86400000 ms) -> n:4, bron:'7d-gemiddelde'. Een gesaboteerd
+// 6-daags venster sluit dag 1 uit -> nog maar 3 metingen (< MIN_N) -> terugval op n:1,
+// bron:'laatste meting'. Baseline-padding (20 losse oudere dagen) zorgt dat hrvBaseline() sowieso
+// 'ready' is, onafhankelijk van dit exacte venstergedrag.
+{
+  const baselinePadding = Array.from({ length: 20 }, function (_, i) {
+    return { date: new Date(2025, 11, 1 + i).toISOString().slice(0, 10), hrv: 55 };
+  });
+  const windowRows = [
+    { date: '2026-01-01', hrv: 50 }, // exact 7 dagen vóór ref (2026-01-08) -- MOET meetellen
+    { date: '2026-01-06', hrv: 60 },
+    { date: '2026-01-07', hrv: 61 },
+    { date: '2026-01-08', hrv: 62 }
+  ];
+  const rows = baselinePadding.concat(windowRows);
+  const ref = new Date('2026-01-08');
+  const baseline = CalcCore.hrvBaseline(rows, ref);
+  ok(baseline.ready, 'grensconstructie: baseline is ready (padding voldoet aan MIN_DAYS/MIN_N, onafhankelijk van het 7d-venstergedrag)');
+  const recent = CalcCore.hrvRollingRecent(rows, ref);
+  eq(recent.n, 4, 'EXACTE 7-daagse-venstergrens: meting exact 7 dagen vóór refDate telt mee -> n:4 (inclusieve grens, geen off-by-one)');
+  eq(recent.bron, '7d-gemiddelde', 'EXACTE 7-daagse-venstergrens: met n=4 (>=HRV_BASELINE_MIN_N) is de bron 7d-gemiddelde, geen terugval');
+  closeTo(recent.meanRaw, (50 + 60 + 61 + 62) / 4, 1e-9, 'EXACTE 7-daagse-venstergrens: meanRaw is het gemiddelde van alle 4 vensterwaarden inclusief de grensmeting');
+  // Eén dag ná de grens (dag 0, 8 dagen vóór ref) mag NOOIT meetellen -- bewijst dat de grens
+  // exact bij 7 dagen ligt, niet ruimer.
+  const rowsOverGrens = rows.concat([{ date: '2025-12-31', hrv: 99 }]); // 8 dagen vóór ref
+  const recentOverGrens = CalcCore.hrvRollingRecent(rowsOverGrens, ref);
+  eq(recentOverGrens.n, 4, 'een meting van 8 dagen vóór refDate (buiten het venster) telt NIET mee -- n blijft 4, niet 5');
+}
+
 if (msgs.length) console.log(msgs.join('\n'));
 console.log('fHrvBaselineCanonicalization: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail ? 1 : 0);

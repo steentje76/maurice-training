@@ -15,16 +15,20 @@ function ok(cond, label) { if (cond) { pass++; } else { fail++; msgs.push('MISLU
 
 const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const registry = fs.readFileSync(path.join(ROOT, 'docs/CALCULATION_REGISTRY.md'), 'utf8');
+const calcCoreSrc = fs.readFileSync(path.join(ROOT, 'core/calculation.js'), 'utf8');
 
 // ---- P1-07: HRV-baseline gebruikt een echt tijdrollend venster, geen vaste rijentelling ----
-ok(html.match(/days\s*=\s*Math\.max\(0,\s*Math\.round\(\(ref-rows\[0\]\.date\)\/86400000\)\)/),
-  'A1: hrvBaseline() berekent het venster op basis van werkelijk verstreken dagen (tijdrollend), niet een vast aantal rijen');
-ok(html.includes('HRV_BASELINE_MIN_DAYS = 14') && html.includes('HRV_BASELINE_FULL_DAYS = 28'),
-  'A2: de baseline-vensterwaarden (14/28 dagen) zijn expliciet, benoemde constanten, geen magic numbers');
+// HRV Canonicalization Sprint: implementatie verhuisd van index.html naar core/calculation.js
+// (CALC-REC-001, hrv_baseline.v1) -- index.html bevat nu uitsluitend een dunne CalcCore-wrapper,
+// dus deze structurele bewijzen worden voortaan tegen de canonieke locatie gecontroleerd.
+ok(calcCoreSrc.match(/days\s*=\s*Math\.max\(0,\s*Math\.round\(\(ref\s*-\s*rows\[0\]\.date\)\s*\/\s*86400000\)\)/),
+  'A1: hrvBaseline() (core/calculation.js) berekent het venster op basis van werkelijk verstreken dagen (tijdrollend), niet een vast aantal rijen');
+ok(calcCoreSrc.includes('HRV_BASELINE_MIN_DAYS = 14') && calcCoreSrc.includes('HRV_BASELINE_FULL_DAYS = 28'),
+  'A2: de baseline-vensterwaarden (14/28 dagen) zijn expliciete, benoemde constanten in core/calculation.js, geen magic numbers');
 
 // ---- P1-06: CALC-REC-001 is volledig geregistreerd, inclusief expliciete locatie ----
-ok(registry.includes('CALC-REC-001') && registry.includes('Implementation | `index.html`'),
-  'B1: CALC-REC-001 vermeldt expliciet dat de implementatie in index.html staat -- transparant, geen verborgen shadow-calculation');
+ok(registry.includes('CALC-REC-001') && registry.includes('Implementation | `core/calculation.js`'),
+  'B1: CALC-REC-001 vermeldt expliciet dat de implementatie in core/calculation.js staat (Canonicalization Sprint) -- transparant, geen verborgen shadow-calculation');
 ok(registry.includes('Plews DJ'), 'B2: CALC-REC-001 bevat een concrete, geciteerde wetenschappelijke bron');
 
 // ---- P1-11: ai_guard.v1 is nu ook formeel geregistreerd ----

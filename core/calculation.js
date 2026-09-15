@@ -24,7 +24,7 @@
     goal: 'goal.v1', e1rm_weighted: 'e1rm_weighted.v1', recovery_score: 'recovery_score.v1',
     sleep_unit: 'sleep_unit.v1', correlation: 'correlation.v1',
     readiness_percent: 'readiness_percent.v1', trend: 'trend.v1',
-    strength_basis: 'strength_basis.v1'
+    strength_basis: 'strength_basis.v1', hrv_baseline: 'hrv_baseline.v1'
   };
 
   // --- rounding.v1 --- exact gelijk aan legacy index.html r.10668
@@ -253,6 +253,107 @@
   function cyclusDagFactor(fase) {
     return ({ menstruatie: 0.93, folliculair: 1.03, ovulatie: 1.00, luteaal: 0.97 })[fase] ?? 1.00;
   }
+
+  // --- hrv_baseline.v1 (CALC-REC-001) --------------------------------------
+  // EXTRACTIE (geen herontwerp) van de reeds-live index.html-functiegroep
+  // lnRmssd/hrvBaseline/hrvRollingRecent/hrvStPersonal/hrvDagFactorPersonal
+  // (Sprint 5.7.1). Gedrag 1-op-1 overgenomen; index.html roept vanaf nu
+  // uitsluitend deze canonieke implementatie aan (dunne wrapper), geen
+  // tweede, zelfstandig-uitvoerbare kopie.
+  //
+  // Methode: Ln-RMSSD-transformatie, persoonlijke baseline (14/28-dagen-
+  // gefaseerd, min. 4 metingen), Smallest Worthwhile Change (SWC=0,5×SD)
+  // t.o.v. een 7-daags rollend gemiddelde. Bron: Plews DJ, Laursen PB,
+  // Stanley J, Kilding AE, Buchheit M. "Training adaptation and heart rate
+  // variability in elite endurance athletes: opening the door to effective
+  // monitoring." Sports Medicine. 2013;43(9):773-781 — evidence-supported
+  // voor de Ln-RMSSD-transformatie en het rollend-gemiddelde+SWC-concept.
+  // De EXACTE TK-vensters (14/28 dagen, min. 4 metingen) zijn een eigen,
+  // hier niet uit één paper overgenomen productkalibratie binnen die
+  // methodologie (evidence C voor de exacte getallen, B voor de methode).
+  //
+  // 15%-ernst-drempel (HRV_SEVERE_DROP_PCT): gedocumenteerd als PRODUCT-HEURISTIEK
+  // (evidence D) — de eerder aangehaalde bron ("athletedata.health") is
+  // consumentencontent, geen peer-reviewed publicatie. Bewust ONGEWIJZIGD
+  // gelaten (geen vervangende drempel verzonnen); uitsluitend de classificatie
+  // in documentatie/registry gecorrigeerd.
+  //
+  // Richting (nieuw, additief, backward-compatible): st blijft exact
+  // 'g'/'o'/'r'/'ref' (ongewijzigd extern contract — bestaande callers/UI
+  // blijven werken). `direction` is een NIEUW, apart, puur informatief veld
+  // ('above'|'within'|'below'|'ref') dat onderscheidt of de recente waarde
+  // BOVEN, BINNEN, of ONDER het baseline-gemiddelde ligt — dit verandert
+  // NOOIT st/factor en betekent NOOIT automatisch "slecht"/"overtraind" bij
+  // 'above' (Plews et al., 2013, noemen "parasympathetic saturation" bij
+  // zeer hoge HRV als bekende, hier niet gecorrigeerde beperking — een
+  // los, beschrijvend veld maakt toekomstige, apart-onderbouwde duiding
+  // mogelijk zonder nu al een ongefundeerde regel te introduceren).
+  var HRV_BASELINE_MIN_DAYS = 14;
+  var HRV_BASELINE_FULL_DAYS = 28;
+  var HRV_BASELINE_MIN_N = 4;
+  var HRV_SWC_MULTIPLIER = 0.5;
+  var HRV_SEVERE_DROP_PCT = 0.15; // PRODUCT HEURISTIEK (evidence D) — zie toelichting hierboven, niet wijzigen zonder nieuwe bron
+
+  function lnRmssd(v) { return (typeof v === 'number' && v > 0) ? Math.log(v) : null; }
+
+  function hrvBaseline(hdRows, refDate) {
+    var ref = refDate ? new Date(refDate) : new Date();
+    var rows = (hdRows || [])
+      .filter(function (r) { return r && r.hrv && r.date; })
+      .map(function (r) { return { date: new Date(r.date), hrv: r.hrv, ln: lnRmssd(r.hrv) }; })
+      .filter(function (r) { return r.ln != null && !isNaN(r.date.getTime()) && r.date <= ref; });
+    if (!rows.length) return { ready: false, fase: 'referentie', n: 0, days: 0 };
+    rows.sort(function (a, b) { return a.date - b.date; });
+    var days = Math.max(0, Math.round((ref - rows[0].date) / 86400000));
+    var n = rows.length;
+    if (days < HRV_BASELINE_MIN_DAYS || n < HRV_BASELINE_MIN_N) {
+      return { ready: false, fase: 'referentie', n: n, days: days };
+    }
+    var meanLn = rows.reduce(function (s, r) { return s + r.ln; }, 0) / n;
+    var variance = rows.reduce(function (s, r) { return s + Math.pow(r.ln - meanLn, 2); }, 0) / n;
+    var sdLn = Math.sqrt(variance);
+    var meanRaw = rows.reduce(function (s, r) { return s + r.hrv; }, 0) / n;
+    var fase = days >= HRV_BASELINE_FULL_DAYS ? 'volledig' : 'voorlopig';
+    return { ready: true, fase: fase, n: n, days: days, meanLn: meanLn, sdLn: sdLn, meanRaw: meanRaw, swc: HRV_SWC_MULTIPLIER * sdLn };
+  }
+
+  function hrvRollingRecent(hdRows, refDate) {
+    var ref = refDate ? new Date(refDate) : new Date();
+    var rows = (hdRows || [])
+      .filter(function (r) { return r && r.hrv && r.date; })
+      .map(function (r) { return { date: new Date(r.date), hrv: r.hrv, ln: lnRmssd(r.hrv) }; })
+      .filter(function (r) { return r.ln != null && !isNaN(r.date.getTime()) && r.date <= ref; });
+    if (!rows.length) return null;
+    rows.sort(function (a, b) { return b.date - a.date; });
+    var sevenDaysAgo = new Date(ref.getTime() - 7 * 86400000);
+    var last7 = rows.filter(function (r) { return r.date >= sevenDaysAgo; });
+    if (last7.length >= HRV_BASELINE_MIN_N) {
+      var meanLn = last7.reduce(function (s, r) { return s + r.ln; }, 0) / last7.length;
+      var meanRaw = last7.reduce(function (s, r) { return s + r.hrv; }, 0) / last7.length;
+      return { meanLn: meanLn, meanRaw: meanRaw, n: last7.length, bron: '7d-gemiddelde' };
+    }
+    var latest = rows[0];
+    return { meanLn: latest.ln, meanRaw: latest.hrv, n: 1, bron: 'laatste meting' };
+  }
+
+  function hrvStPersonal(hdRows, refDate) {
+    var baseline = hrvBaseline(hdRows, refDate);
+    if (!baseline.ready) return { st: 'ref', direction: 'ref', baseline: baseline, recent: null, drop: null };
+    var recent = hrvRollingRecent(hdRows, refDate);
+    if (!recent) return { st: 'ref', direction: 'ref', baseline: baseline, recent: null, drop: null };
+    var drop = (baseline.meanRaw - recent.meanRaw) / baseline.meanRaw;
+    var direction = recent.meanLn > baseline.meanLn ? 'above' : (recent.meanLn < baseline.meanLn ? 'below' : 'within');
+    if (drop >= HRV_SEVERE_DROP_PCT) return { st: 'r', direction: direction, baseline: baseline, recent: recent, drop: drop };
+    if (recent.meanLn < baseline.meanLn - baseline.swc) return { st: 'o', direction: direction, baseline: baseline, recent: recent, drop: drop };
+    return { st: 'g', direction: direction, baseline: baseline, recent: recent, drop: drop };
+  }
+
+  function hrvDagFactorPersonal(hdRows, refDate) {
+    var c = hrvStPersonal(hdRows, refDate);
+    var factor = ({ g: 1.05, o: 0.93, r: 0.85, ref: 1.00 })[c.st];
+    return { factor: factor, st: c.st, direction: c.direction, baseline: c.baseline, recent: c.recent, drop: c.drop };
+  }
+
   // hrvFactor is de reeds-geresolveerde HRV-factor (app-side houdt de hrvComponent||{factor:1.00}
   // default als orchestratie/context). Kern = exact legacy: hrvFactor*slaap*cyclus, clamp, 2 decimalen.
   // sleepHours MOET decimale uren zijn. De normalisatie gebeurt hier één keer, zodat een
@@ -462,6 +563,16 @@
     MAX_SLEEP_HOURS: MAX_SLEEP_HOURS,
     slaapDagFactor: slaapDagFactor,
     cyclusDagFactor: cyclusDagFactor,
+    lnRmssd: lnRmssd,
+    hrvBaseline: hrvBaseline,
+    hrvRollingRecent: hrvRollingRecent,
+    hrvStPersonal: hrvStPersonal,
+    hrvDagFactorPersonal: hrvDagFactorPersonal,
+    HRV_BASELINE_MIN_DAYS: HRV_BASELINE_MIN_DAYS,
+    HRV_BASELINE_FULL_DAYS: HRV_BASELINE_FULL_DAYS,
+    HRV_BASELINE_MIN_N: HRV_BASELINE_MIN_N,
+    HRV_SWC_MULTIPLIER: HRV_SWC_MULTIPLIER,
+    HRV_SEVERE_DROP_PCT: HRV_SEVERE_DROP_PCT,
     calculateDayFactor: calculateDayFactor,
     recoveryScore: recoveryScore,
     readinessPercent: readinessPercent,

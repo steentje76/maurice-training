@@ -2066,3 +2066,63 @@ cross-machine-prestatievergelijking.
 **Los uitgesteld (ongewijzigd):** P3 — MANUAL CARDIO ANALYTICS VISIBILITY / CROSS-PERSISTENCE
 DEDUPLICATION. Handmatige running-/cycling-/swimming-sessies blijven buiten de Erg-adapter omdat er
 geen veilige gedeelde sessions↔activities-dedup-identiteit bestaat.
+
+## Erg Continuous Protocol Identity — protocolintentie vóór actual (v4.69.96)
+
+- **Datum:** 15 september 2026. Vervolg op de Concept2/Erg-reconciliatiegate, die bewees dat
+  `interval_prescription.v1` de protocol-primitief al bezit (`TERMINATION_TYPES = time|distance|manual`)
+  en dat een continue inspanning de kleinst geldige prescriptie is (`repeat:1`, één work-blok).
+- **Nieuw gevonden lifecycle-feit (bepalend voor het ontwerp):** het losse Erg-pad had GEEN
+  pre-executiemoment — het was een invulformulier achteraf. De eis "intentie gaat vooraf aan actual"
+  vereiste daarom een echte start-stap; extra velden op het bestaande formulier zouden per definitie
+  te laat zijn geweest.
+- **Besluit:** géén nieuw protocolcontract. `core/ergProtocolIdentity.js` hergebruikt de bestaande
+  terminatiesemantiek 1-op-1. Atleet-labels (Vrij/Afstand/Tijd) zijn uitsluitend presentatie; de
+  canonieke waarden blijven `manual|distance|time`.
+- **Ad-hoc instance:** losse Ergs met een doel leggen hun intentie vast in een `training_instance` met
+  beide saved-workout-ID's `null` (expliciet toegestaan door `createTrainingInstance`). Geen
+  nep-opgeslagen workout; geen lek naar Mijn trainingen (die lijsten lezen `vaste_trainingen`/
+  `custom_trainings`, nooit `training_instances` — forensisch bevestigd).
+- **Bron van waarheid:** prescriptie/immutable snapshot = INTENTIE. `sessions.protocol_type`/
+  `protocol_value` (migratie_v566) zijn IMMUTABLE QUERY-PROJECTIES, geen zelfstandige waarheid; bij
+  tegenspraak wint het snapshot. Structureel afgedwongen: de projectiefunctie heeft exact één
+  parameter (de prescriptie) en kan een actual dus niet eens zien.
+- **Historisch/Concept2:** geen backfill, geen heuristiek. NULL betekent onbekende intentie, niet
+  "vrij". Concept2-import zonder TK-prescriptie blijft onbekend, ook bij exact 2000 m of 30:00.
+- **Tests:** `fErgContinuousProtocolIdentity` **106/106** incl. 23 runtime-wiring-asserties.
+  Zeven sabotages bewezen en byte-exact hersteld (S1/S2/S4/S5/S6/S7/S8). Twee bestaande tests
+  meegegroeid: `fHardening` (leesvenster 5200→6200, asserties ongewijzigd) en
+  `fStructuredIntervalsB3Erg` (`training_instance_id` nu incl. ad-hoc fallback; nog steeds één
+  sessierij). Volledige regressie 381, 2 bekende sandbox-fouten. APP_VER v4.69.95 → v4.69.96.
+- **Expliciet NIET live:** Erg Performance Intelligence (PB/trend/plateau), PM5 workout control.
+  Uitgesteld en ongewijzigd: Concept2 `duration_s` (P4, aparte PR), manual-cardio-dedup (P3).
+
+### Pre-merge-reparatie PR #358 (audit klasse C → A)
+
+- **P3-A dubbel-submit-race (gerepareerd):** `tkErgStartProtocol` controleerde `instanceId` vóór de
+  `await createTrainingInstance(...)` terwijl dat veld pas erná werd gezet; twee snelle kliks konden
+  twee ad-hoc instances maken. Nu een busy-vlag vóór de eerste await, knop direct disabled, vrijgave
+  in `finally` (ook bij exception). Bewezen met echte concurrency-tests op de geëxtraheerde
+  productiefunctie; sabotage R1/R2/R3 gedetecteerd en byte-exact hersteld.
+- **P3-B Builder (opgelost zonder nieuwe code):** forensiek bewees dat `ivRaw()` het canonieke
+  terminatiemodel al gebruikt en bij `repeats=1` zonder warm-up/cooldown/herstel de continue vorm
+  oplevert. Equivalentie Builder ↔ los pad nu getest (6 combinaties); geen shadow-protocolmodel.
+  Opgeslagen trainingen blijven Definition → `startInstanceFromDefinition` → snapshot volgen; er
+  wordt op dat pad géén ad-hoc instance gemaakt.
+- **Geaccepteerde P4's (bewust niet uitgebreid):** (a) "Vrij" persisteert geen expliciet protocol en
+  is niet te onderscheiden van legacy-onbekend — beide even niet-PB-geschikt, geen onnodige instance
+  aangemaakt; (b) een afgebroken Afstand/Tijd-start laat een `active` ad-hoc instance achter, wat de
+  bestaande architectuur al tolereert — opschoning is een aparte follow-up; (c) het
+  `fHardening`-leesvenster blijft een magic number (nu 6200, 542 tekens marge) — asserties
+  ongewijzigd, structurele begrenzing is een losse verbetering.
+- **Preview (scope gesloten in dezelfde PR):** de continue Erg-protocolregel is live in de bestaande
+  `renderTPInterval`-hero via `tkIvContinuousProtocolText()`, uitsluitend gevoed door de canonieke
+  `protocolProjectionFromPrescription()` — geen tweede parser, nooit een actual. Fail-closed voor
+  manual/Vrij, gestructureerd B3 (8x500m wordt nooit "4000 m continu"), onbekend en niet-Erg.
+  Intensiteit blijft gescheiden (pace/RPE/W via `tkIvTargetText`); machine-identiteit gepind (de chip
+  komt uit `norm.sport`, de helper mag `norm` nooit hermappen). Preview-sabotages P1/P2 (actual
+  lezen), P3 (BikeErg->RowErg), P4 (gestructureerd samenvouwen), P5 (shadow-parser) alle vier
+  gedetecteerd en byte-exact hersteld. `fStructuredIntervalsCanonical` (B1) kreeg de nieuwe helper +
+  `ErgProtocolIdentity` in zijn sandbox-harness zodat de ECHTE Preview-renderer blijft draaien --
+  geen verzwakte assertie, alleen de ontbrekende dependency (108 -> 109 asserties).
+  APP_VER blijft v4.69.96 (geen extra bump voor reparatiewerk binnen dezelfde PR).

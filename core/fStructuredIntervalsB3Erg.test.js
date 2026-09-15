@@ -160,7 +160,7 @@ function sandbox() {
   }
   // ── Statisch: keten, één engine, geen dual-write, geen activities ──
   const code = html.replace(/\/\/[^\n]*/g, '');
-  ok(/intervals_detail:\(l\.intervalsDetail\|\|null\)/.test(FINISH_SESSION_WRITE) && /exercise_id:ex\.id/.test(FINISH_SESSION_WRITE) && /training_instance_id:activeInstanceId\|\|null/.test(FINISH_SESSION_WRITE), 'persistence: intervals_detail gaat mee in DEZELFDE, enige sessierij');
+  ok(/intervals_detail:\(l\.intervalsDetail\|\|null\)/.test(FINISH_SESSION_WRITE) && /exercise_id:ex\.id/.test(FINISH_SESSION_WRITE) && /training_instance_id:activeInstanceId\|\|_ergInst\|\|null/.test(FINISH_SESSION_WRITE), 'persistence: intervals_detail gaat mee in DEZELFDE, enige sessierij (Erg Continuous Protocol Identity: activeInstanceId houdt voorrang; _ergInst is uitsluitend de ad-hoc losse-Erg-instance als er geen programma-instance is -- nog steeds EEN sessierij, geen dual-write)');
   eq((code.match(/intervals_detail:/g) || []).length, 1, 'persistence: exact één schrijfplek voor intervals_detail (geen tweede write)');
   eq((code.match(/await writeSessionRow\(\{date:today,exercise_id:ex\.id/g) || []).length, 1, 'persistence: exact één writeSessionRow-aanroep in de cardio-tak (geen duplicate session write)');
   eq((code.match(/writeSessionRow\(/g) || []).length, 5, 'persistence: totaal aantal writeSessionRow-aanroepen ongewijzigd (definitie + 4 bestaande schrijfpaden; geen extra schrijfweg)');

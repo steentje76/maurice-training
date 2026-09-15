@@ -15,6 +15,10 @@ const IntervalEngineCore = require(path.join(ROOT, 'core/intervalEngine.js'));
 const RunningExecutionCore = require(path.join(ROOT, 'core/runningExecution.js'));
 const EnduranceExecutionCore = require(path.join(ROOT, 'core/enduranceExecution.js'));
 const CardioCore = require(path.join(ROOT, 'core/cardio.js'));
+// Erg Continuous Protocol Identity: renderTPInterval roept tkIvContinuousProtocolText() aan,
+// die deze pure kern leest. Toegevoegd aan de sandbox zodat de ECHTE Preview-renderer draait --
+// geen verzwakking van een assertie, alleen de ontbrekende dependency aangeleverd.
+const ErgProtocolIdentity = require(path.join(ROOT, 'core/ergProtocolIdentity.js'));
 const TrainingLoadCore = require(path.join(ROOT, 'core/trainingLoad.js'));
 const RunningIntelligenceCore = require(path.join(ROOT, 'core/runningIntelligence.js'));
 const ProgressionCore = require(path.join(ROOT, 'core/progression.js'));
@@ -29,7 +33,7 @@ function extractFn(name) {
   for (let j = i; j < html.length; j++) { if (html[j] === '{') d++; else if (html[j] === '}') { d--; if (d === 0) return html.slice(m.index, j + 1); } }
   return null;
 }
-const FNS = ['snapshotFromCustomTraining', 'startInstanceFromDefinition', 'tkIvTerminationText', 'tkIvTargetText', 'renderTPInterval',
+const FNS = ['tkIvContinuousProtocolText', 'snapshotFromCustomTraining', 'startInstanceFromDefinition', 'tkIvTerminationText', 'tkIvTargetText', 'renderTPInterval',
   'startStructuredRunningExecution', 'structuredBlockLabel', 'structuredBlockIndexNow', 'structuredRunningSync', 'huidigeIntervalStap',
   'runningLap', 'renderRunDetailStructuredHtml', 'tkStructuredLapActualText', 'startRunningExecution', 'persisteerRunningExecState',
   'structuredRunningCloseOpenBlock', 'runningRequestFinish', 'runningPause',
@@ -56,7 +60,7 @@ function makeSandbox(opts) {
   const db = { training_instances: [], activities: [], activity_laps: [] };
   const dom = {};
   const ctx = {
-    IntervalEngineCore, RunningExecutionCore, EnduranceExecutionCore, CardioCore, DecisionCore: { Evidence: { decisionRulesSnapshot: () => null } },
+    IntervalEngineCore, RunningExecutionCore, EnduranceExecutionCore, CardioCore, ErgProtocolIdentity, DecisionCore: { Evidence: { decisionRulesSnapshot: () => null } },
     console, Date, Math, JSON, Promise, Object, Array, String, Number, isFinite, encodeURIComponent, setInterval: () => 0, clearInterval: () => {},
     authSession: { user: { id: 'user-1' } }, DETRAINING_RULES: null, SB_URL: 'x', SB_H: {},
     escHtml: (x) => String(x), tpHeader: () => '', toast: (m) => { ctx._toasts.push(m); }, _toasts: [], go: (s) => { ctx._nav.push(s); }, _nav: [],

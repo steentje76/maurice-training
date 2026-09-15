@@ -6471,6 +6471,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/runningExecution.js"></script>
 <script src="core/runningIntelligence.js"></script>
 <script src="core/ergAnalyticsProjection.js"></script>
+<script src="core/ergProtocolIdentity.js"></script>
 <script src="core/cyclingIntelligence.js"></script>
 <script src="core/swimmingIntelligence.js"></script>
 <script src="core/bleHeartRate.js"></script>
@@ -7296,7 +7297,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.95';
+const APP_VER = 'v4.69.96';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -9305,6 +9306,21 @@ function tkIvTargetText(b){
   const parts=[]; if(b.target.pace)parts.push('pace '+escHtml(String(b.target.pace))); if(b.target.rpe!=null)parts.push('RPE '+escHtml(String(b.target.rpe))); if(b.target.power)parts.push(escHtml(String(b.target.power))+' W');
   return parts.length?' · '+parts.join(' · '):'';
 }
+// CONTINU ERG-PROTOCOL IN PREVIEW (scope-sluiting PR #358).
+// Leest UITSLUITEND de canonieke prescriptie via de reeds bewezen pure helper
+// ErgProtocolIdentity.protocolProjectionFromPrescription() -- geen tweede parser, geen
+// if-distance/if-time-logica hier, en NOOIT een actual (afstand/duur/split/watt/formulier).
+// Faalt gesloten: gestructureerd (B3), manual/vrij, onbekend of niet-Erg -> lege string,
+// dus nooit een verzonnen doel en nooit 8x500m samengevouwen tot "4000 m continu".
+// Protocol blijft gescheiden van intensiteit: tkIvTargetText() toont pace/RPE/W apart.
+function tkIvContinuousProtocolText(norm){
+  if(typeof ErgProtocolIdentity==='undefined'||!norm)return '';
+  if(ErgProtocolIdentity.ERG_SPORTS.indexOf(norm.sport)===-1)return '';
+  const proj=ErgProtocolIdentity.protocolProjectionFromPrescription(norm);
+  if(!proj||proj.protocol_type==='manual')return '';
+  const label=ErgProtocolIdentity.protocolLabelNl(proj.protocol_type,proj.protocol_value);
+  return label?(' \u00b7 doel '+label):'';
+}
 function renderTPInterval(el){
   const def=previewCtx.def;
   const norm=IntervalEngineCore.normalizePrescription(def.intervalPrescription);
@@ -9321,7 +9337,7 @@ function renderTPInterval(el){
   el.innerHTML=`${tpHeader('Training Preview','previewCloseModal()')}
     <div class="tpv2-hero">
       <div class="tpv2-hero-nm">${escHtml(def.name)}<span class="tpv2-chip">${TK_IV_SPORT_LABEL[norm.sport]||escHtml(String(norm.sport||''))}</span></div>
-      <div class="tpv2-hero-sub">Intervaltraining · ${norm.blocks.length} blokken · ${werk} werkintervallen${totaal!=null?` · ${CardioCore.formatTime(totaal)} gepland`:' · duur afhankelijk van afstand/handmatig'}</div>
+      <div class="tpv2-hero-sub">Intervaltraining · ${norm.blocks.length} blokken · ${werk} werkintervallen${totaal!=null?` · ${CardioCore.formatTime(totaal)} gepland`:' · duur afhankelijk van afstand/handmatig'}${tkIvContinuousProtocolText(norm)}</div>
       ${norm.geldig?'':`<div class="tpv2-hero-say" style="color:var(--r)">Prescriptie ongeldig: ${escHtml(String(norm.reden||''))}</div>`}
     </div>
     <div class="tpv2-sec">Structuur</div>${rows}
@@ -21207,9 +21223,114 @@ var _tkErgPending=null; // {exId,sport,instanceId,prescription,rawPrescription}
 var _ivExec=null; // actieve executiestate: {exId,cardioType,prescription,blockIndex,startedAt,elapsedBeforePause,paused}
 var _ivTimerHandle=null, _ivBlockEndAt=null;
 
+// ══════════════════════════════════════════════════════════════════════════
+// ERG CONTINUOUS PROTOCOL IDENTITY — pre-executie protocolkeuze (losse Erg)
+// ──────────────────────────────────────────────────────────────────────────
+// GEVONDEN LIFECYCLE-FEIT: het losse Erg-pad had GEEN pre-executiemoment — het
+// was een invulformulier achteraf. "Intentie gaat vooraf aan actual" kon dus
+// niet met extra velden op dat formulier worden opgelost; er is een echte
+// start-stap nodig. Dit is die stap, zo klein mogelijk en binnen de bestaande
+// kaart-UI (geen nieuw scherm, geen modal-doolhof, geen aparte "Erg-modus").
+//
+// Vrij is de standaard en blijft de kortste route: geen doelinvoer, geen extra
+// handeling vóór het normale loggen. Alleen bij Afstand/Tijd verschijnt één
+// doelveld plus een expliciete startknop.
+//
+// CANONIEK: de prescriptie wordt UITSLUITEND gebouwd door de pure
+// ErgProtocolIdentity.continuousErgPrescription() en gevalideerd door de
+// bestaande IntervalEngineCore — geen tweede prescriptie-opbouw hier.
+// De intentie wordt vastgelegd in een AD-HOC training_instance (beide
+// saved-workout-ID's null, wat createTrainingInstance expliciet toestaat), dus
+// er wordt NOOIT een nep-opgeslagen-workout aangemaakt en er lekt niets naar
+// Mijn trainingen (die lijsten lezen vaste_trainingen/custom_trainings, nooit
+// training_instances).
+// ══════════════════════════════════════════════════════════════════════════
+var _ergProtocol={}; // per exId: {type:'manual'|'distance'|'time', value, instanceId, prescription}
+
+function tkIsErgCardioType(cardioType){ return typeof ErgProtocolIdentity!=='undefined' && ErgProtocolIdentity.ERG_SPORTS.indexOf(cardioType)!==-1; }
+
+function tkErgProtocolSection(exId,cardioType){
+  if(!tkIsErgCardioType(cardioType))return '';
+  // Al een canonieke prescriptie uit een opgeslagen/programma-training? Dan toont
+  // Preview het protocol al en mag de atleet het hier NIET nogmaals kiezen.
+  if(_tkErgPending&&_tkErgPending.exId===exId)return '';
+  const st=_ergProtocol[exId]||{type:'manual',value:null,instanceId:null};
+  const vast=!!st.instanceId;
+  const btn=(t,label)=>`<button class="btn ${st.type===t?'btn-r':''}" style="flex:1;padding:8px 4px;font-size:13px" ${vast?'disabled':''} onclick="tkErgSetProtocol('${exId}','${cardioType}','${t}')">${label}</button>`;
+  let doel='';
+  if(!vast&&st.type==='distance')doel=`<div class="row-item" style="margin-top:8px"><input class="row-inp" type="number" min="1" max="200000" id="ergp-val-${exId}" value="${st.value||''}"><div class="row-inp-lbl">Doelafstand (m)</div></div>`;
+  if(!vast&&st.type==='time')doel=`<div class="row-item" style="margin-top:8px"><input class="row-inp" type="text" id="ergp-val-${exId}" value="${st.value?CardioCore.formatTime(st.value):''}" placeholder="30:00"><div class="row-inp-lbl">Doeltijd (mm:ss)</div></div>`;
+  const start=(!vast&&st.type!=='manual')?`<button class="btn btn-r" style="width:100%;margin-top:10px" ${st.busy?'disabled':''} onclick="tkErgStartProtocol('${exId}','${cardioType}')">${st.busy?'Bezig met vastleggen…':'▶ Vastleggen en starten'}</button>`:'';
+  const vastTekst=vast?`<div style="font-size:12px;color:var(--g4);margin-top:8px">Vastgelegd vóór uitvoering: ${ErgProtocolIdentity.protocolLabelNl(st.type,st.value)} — dit doel verandert niet meer door je resultaat.</div>`:'';
+  return `<div class="tks-card" id="ergp-sec-${exId}" style="margin:6px 14px 8px;padding:12px 14px">
+    <div style="font-size:13px;font-weight:700;color:var(--g5,#1a2b33);margin-bottom:8px">Protocol</div>
+    <div style="display:flex;gap:6px">${btn('manual','Vrij')}${btn('distance','Afstand')}${btn('time','Tijd')}</div>
+    ${doel}${start}${vastTekst}
+    <div style="font-size:11px;color:var(--g4);margin-top:6px">Vrij = gewoon loggen zonder doel. Kies je Afstand of Tijd, dan leggen we dat doel vóór je inspanning vast.</div>
+  </div>`;
+}
+
+function tkErgRerenderProtocol(exId,cardioType){
+  const sec=document.getElementById('ergp-sec-'+exId); if(!sec)return;
+  const html=tkErgProtocolSection(exId,cardioType);
+  const m=html.match(/^<div class="tks-card" id="ergp-sec-[^"]*"[^>]*>([\s\S]*)<\/div>$/);
+  sec.innerHTML=m?m[1]:sec.innerHTML;
+}
+function tkErgSetProtocol(exId,cardioType,type){
+  const st=_ergProtocol[exId]||{type:'manual',value:null,instanceId:null};
+  if(st.instanceId)return; // al vastgelegd — nooit achteraf wijzigen
+  _ergProtocol[exId]={type:type,value:null,instanceId:null};
+  tkErgRerenderProtocol(exId,cardioType);
+}
+
+// Legt de protocolintentie CANONIEK vast vóór er ook maar één actual bestaat:
+// pure prescriptie -> IntervalEngineCore-validatie -> ad-hoc training_instance
+// met immutable snapshot. Faalt gesloten (geen half vastgelegd protocol).
+async function tkErgStartProtocol(exId,cardioType){
+  // AUDIT-REPARATIE (P3-A): de instanceId-guard alleen was niet async-veilig — hij draaide
+  // VOOR de await, terwijl instanceId pas ERNA werd gezet. Twee snelle kliks passeerden dus
+  // beide en creeerden twee ad-hoc training_instances. Nu een busy-vlag die VOOR de eerste
+  // await wordt gezet en in finally altijd wordt vrijgegeven (ook bij een exception), zodat
+  // een mislukte poging opnieuw geprobeerd kan worden. Zelfde patroon als de bestaande
+  // busy-guards elders in dit bestand (A5-hardening) — geen nieuw async-raamwerk.
+  const st=_ergProtocol[exId]; if(!st||st.instanceId||st.busy)return;
+  const el=document.getElementById('ergp-val-'+exId);
+  let waarde=null;
+  if(st.type==='distance'){ waarde=parseInt(String(el&&el.value||'').replace(',','.'),10); }
+  else if(st.type==='time'){ waarde=CardioCore.parseTime(String(el&&el.value||'')); }
+  if(!(typeof waarde==='number'&&isFinite(waarde)&&waarde>0)){ toast(st.type==='distance'?'Vul een doelafstand in':'Vul een doeltijd in'); return; }
+  const raw=ErgProtocolIdentity.continuousErgPrescription(cardioType,st.type,waarde);
+  const norm=raw?IntervalEngineCore.normalizePrescription(raw):null;
+  if(!raw||!norm||!norm.geldig){ toast('Ongeldig protocol'); return; }
+  const snapshot=snapshotFromCustomTraining({id:null,naam:'Losse '+(TK_IV_SPORT_LABEL[cardioType]||cardioType),intervalPrescription:raw},[{exercise_id:exId,sort_order:0}],[]);
+  st.busy=true; tkErgRerenderProtocol(exId,cardioType); // knop direct uitgeschakeld: geen tweede write mogelijk
+  let instanceId=null;
+  try{ instanceId=await createTrainingInstance({vasteTrainingId:null,customTrainingId:null,snapshot}); }
+  catch(_e){ instanceId=null; }
+  finally{ st.busy=false; }
+  if(!instanceId){ toast('Vastleggen mislukt — probeer opnieuw'); tkErgRerenderProtocol(exId,cardioType); return; }
+  _ergProtocol[exId]={type:st.type,value:Math.round(waarde),instanceId:instanceId,prescription:norm,busy:false};
+  toast('Doel vastgelegd: '+ErgProtocolIdentity.protocolLabelNl(st.type,waarde));
+  tkErgRerenderProtocol(exId,cardioType);
+}
+
+// Leidt de IMMUTABLE QUERY-PROJECTIE af voor de sessierij. Leest UITSLUITEND de
+// vastgelegde prescriptie (snapshot-intentie) — nooit het cardio-formulier.
+// Faalt gesloten naar null (= onbekend) in plaats van iets uit de actual af te leiden.
+function tkErgProtocolProjectionFor(exId){
+  if(typeof ErgProtocolIdentity==='undefined')return null;
+  if(_tkErgPending&&_tkErgPending.exId===exId&&_tkErgPending.prescription)
+    return ErgProtocolIdentity.protocolProjectionFromPrescription(_tkErgPending.prescription);
+  const st=_ergProtocol[exId];
+  if(st&&st.instanceId&&st.prescription)return ErgProtocolIdentity.protocolProjectionFromPrescription(st.prescription);
+  return null;
+}
+function tkErgProtocolInstanceId(exId){ const st=_ergProtocol[exId]; return (st&&st.instanceId)?st.instanceId:null; }
+
+
 function buildIntervalSection(exId,cardioType){
   const p=_ivPrescr[exId]||{on:false,repeats:6,work:60,rest:60,warmup:0,cooldown:0};
-  return `<div class="tks-card" style="margin:6px 14px 8px;padding:12px 14px">
+  return tkErgProtocolSection(exId,cardioType)+`<div class="tks-card" style="margin:6px 14px 8px;padding:12px 14px">
     <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--g5,#1a2b33);cursor:pointer">
       <input type="checkbox" id="ivon-${exId}" ${p.on?'checked':''} onchange="toggleIntervalMode('${exId}','${cardioType}')"> Intervaltraining
     </label>
@@ -22907,7 +23028,15 @@ async function finishSession(){
       // P1: oefeningsnotitie mee in de note-kolom, als vrije-notitie-deel vóór de afgeleide extraNote
       // (zodat de bestaande cardio-edit-strip 'm weer als vrije notitie herkent).
       let _cNote=extraNote||''; if(l.exNote)_cNote=l.exNote+(_cNote?' · '+_cNote:'');
-      await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),...cRow});saved++; // B3: structured erg-actuals in dezelfde, enige sessierij
+      // ERG CONTINUOUS PROTOCOL IDENTITY: de protocolvelden zijn een IMMUTABLE
+      // QUERY-PROJECTIE van de vóór uitvoering vastgelegde prescriptie/snapshot —
+      // NOOIT afgeleid uit het zojuist ingevulde cardio-formulier. Faalt gesloten
+      // naar null (onbekend) i.p.v. iets uit de actual te gokken. Een afgebroken
+      // 2000 m die op 1800 m eindigt houdt dus protocol_value 2000.
+      const _ergProj=(typeof tkErgProtocolProjectionFor==='function')?tkErgProtocolProjectionFor(ex.id):null;
+      const _ergInst=(typeof tkErgProtocolInstanceId==='function')?tkErgProtocolInstanceId(ex.id):null;
+      const _protoCols=_ergProj?{protocol_type:_ergProj.protocol_type,protocol_value:_ergProj.protocol_value}:{};
+      await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow});saved++; // B3: structured erg-actuals in dezelfde, enige sessierij
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
       const ws=l.sets.filter(s=>s&&(s.kg||s.reps));if(!ws.length)continue;

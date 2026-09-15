@@ -32,12 +32,32 @@ was daarmee niet op te lossen met extra velden op dat formulier; er is een echte
 - **Niet in deze sprint**: Erg Performance Intelligence (PB/trend/plateau), Concept2 `duration_s` (P4,
   apart), manual-cardio-dedup (P3), PM5 workout control. B1/B2/B3 ongewijzigd.
 
-Tests: nieuw `core/fErgContinuousProtocolIdentity.test.js` **106/106** (drie sporten × drie
+Tests: nieuw `core/fErgContinuousProtocolIdentity.test.js` **139/139** (drie sporten × drie
 protocollen, BikeErg-nooit-rowing, B3 levert géén continue projectie, 14 fail-closed-gevallen,
 protocol ≠ intensiteitsdoel, migratie-asserties, plus 23 runtime-wiring-asserties die bewijzen dat
 dit geen dormant module is). Sabotage, alle byte-exact hersteld: S1 actual→intent-kanaal (2 FAILS),
 S2 actual-seconden→time (2), S4 BikeErg-corruptie (10), S5 Concept2-actual→distance (2), S6
 intensiteitsdoel→terminatie (3), S7 projectie uit actual (2), S8 geen ad-hoc instance (2).
+**Pre-merge-reparatie na onafhankelijke audit (klasse C → A, zelfde PR #358, geen versiebump):**
+de audit vond een **dubbel-submit-race** in `tkErgStartProtocol`: de `instanceId`-guard draaide vóór
+de `await`, terwijl `instanceId` pas erná werd gezet — twee snelle kliks creëerden dus twee ad-hoc
+`training_instances`. Dit schond de eigen repo-conventie "dubbel-klik-bescherming op alle
+schrijf-acties". Gerepareerd met een busy-vlag die vóór de eerste await wordt gezet, de startknop
+direct uitschakelt ("Bezig met vastleggen…") en in `finally` altijd wordt vrijgegeven — ook bij een
+exception — zodat een mislukte poging opnieuw te proberen is en nooit doet alsof de instance bestaat.
+Bewezen met echte concurrency-tests die de uit `index.html` geëxtraheerde productiefunctie in een
+sandbox uitvoeren: twee starts vóór de eerste resolve → `createTrainingInstance` **exact éénmaal**;
+mislukking → busy vrij → retry maakt precies één instance; exception → busy nooit blijvend gezet.
+Sabotage R1 (guard weg), R2 (busy pas ná await) en R3 (geen vrijgave bij mislukking) alle drie
+gedetecteerd en byte-exact hersteld.
+
+**Builder-bevinding (audit P3-B):** forensiek toonde dat de opgeslagen-workout-Builder (`ivRaw()`)
+het canonieke terminatiemodel **al** gebruikt (`workTerm` → `termination.type` `distance`/`time`) en
+bij `repeats=1` zonder warm-up/cooldown/herstel per definitie de continue vorm oplevert. Er was dus
+geen Builder-protocolmodel nodig; equivalentie is nu getest: Builder en het losse pad leveren voor
+hetzelfde protocol **identieke** protocolidentiteit (6 combinaties × 3 machines), en een
+gestructureerde Builder-training levert nog steeds géén continu protocol.
+
 Twee bestaande tests meegegroeid met de wijziging: `fHardening` (vast leesvenster 5200→6200 tekens,
 asserties ongewijzigd) en `fStructuredIntervalsB3Erg` (`training_instance_id`-expressie nu inclusief
 de ad-hoc fallback; nog steeds één sessierij, geen dual-write). Volledige regressie 381, 2 bekende

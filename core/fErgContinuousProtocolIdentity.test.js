@@ -10,6 +10,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const E = require(path.join(__dirname, 'ergProtocolIdentity.js'));
 const IE = require(path.join(__dirname, 'intervalEngine.js'));
+const CardioCoreReal = require(path.join(__dirname, 'cardio.js'));
 
 let pass = 0, fail = 0; const msgs = [];
 function ok(c, l) { if (c) pass++; else { fail++; msgs.push('MISLUKT: ' + l); } }
@@ -212,6 +213,120 @@ ok(!/erg_protocol\.v1/.test(src), 'geen nieuw erg_protocol.v1-contract geïntrod
   ok(/if\(st\.instanceId\)return;/.test(html), 'wiring: na vastleggen is het protocol onwijzigbaar (intentie blijft immutable)');
 }
 
-if (msgs.length) console.log(msgs.join('\n'));
-console.log('fErgContinuousProtocolIdentity: ' + pass + ' geslaagd, ' + fail + ' mislukt');
-process.exit(fail ? 1 : 0);
+// ── 16: BUILDER ↔ LOSSE EQUIVALENTIE ──
+// De opgeslagen-workout-Builder (ivRaw) gebruikt AL het canonieke terminatiemodel
+// (workTerm 'distance'|'time'). Bij repeats=1 zonder warmup/cooldown/recovery is zijn
+// uitkomst per definitie de continue vorm. Bewijs dat beide paden voor hetzelfde
+// protocol IDENTIEKE protocolidentiteit opleveren — geen shadow-model in de Builder.
+{
+  function ivRawSim(sport, workTerm, workM, workMin){
+    var work = { type: 'work', termination: workTerm === 'distance'
+      ? { type: 'distance', meters: Math.max(50, Math.round(workM || 0)) }
+      : { type: 'time', seconds: Math.max(10, Math.round((workMin || 0) * 60)) } };
+    return { version: 'interval_prescription.v1', sport: sport, blocks: [{ repeat: 1, of: [work] }] };
+  }
+  [['rowing','distance',2000,0],['rowing','time',0,30],['bikeerg','distance',10000,0],
+   ['bikeerg','time',0,30],['skierg','distance',1000,0],['skierg','time',0,20]].forEach(function(c){
+    var sport=c[0], term=c[1], m=c[2], min=c[3];
+    var b = IE.normalizePrescription(ivRawSim(sport, term, m, min));
+    var l = IE.normalizePrescription(E.continuousErgPrescription(sport, term, term === 'distance' ? m : min * 60));
+    var pb = E.protocolProjectionFromPrescription(b), pl = E.protocolProjectionFromPrescription(l);
+    eq(pb, pl, 'EQUIVALENTIE ' + sport + '/' + term + ': Builder en losse pad leveren identieke protocolidentiteit');
+    ok(pb !== null, 'EQUIVALENTIE ' + sport + '/' + term + ': Builder-prescriptie levert een geldige protocolidentiteit');
+    eq(b.sport, sport, 'EQUIVALENTIE ' + sport + ': machine-identiteit behouden in de Builder-prescriptie');
+  });
+  // De Builder bouwt zijn terminatie met exact hetzelfde vocabulaire (geen shadow-model).
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const ivRawSrc = (html.match(/function ivRaw\(\)\{[\s\S]*?\n  \}/) || [''])[0];
+  ok(/termination:_iv\.workTerm==='distance'\?\{type:'distance'/.test(ivRawSrc), 'Builder gebruikt canonieke distance-terminatie');
+  ok(/\{type:'time',seconds:/.test(ivRawSrc), 'Builder gebruikt canonieke time-terminatie');
+  ok(!/fixed_distance|fixed_duration|protocol_type/.test(ivRawSrc), 'Builder introduceert GEEN parallel protocolvocabulaire');
+  // Gestructureerde Builder-uitkomst (repeats>1 of met recovery) blijft GEEN continu protocol.
+  {
+    const gestructureerd = IE.normalizePrescription({ version:'interval_prescription.v1', sport:'rowing',
+      blocks:[{ repeat:8, of:[{type:'work',termination:{type:'distance',meters:500}},{type:'recovery',termination:{type:'time',seconds:60}}] }] });
+    eq(E.protocolProjectionFromPrescription(gestructureerd), null, 'B3-ISOLATIE: gestructureerde Builder-training levert GEEN continu protocol');
+  }
+}
+
+// ── 15: DUBBEL-SUBMIT CONCURRENCY — echt gedrag, niet tekstaanwezigheid ──
+// De functie wordt uit index.html geëxtraheerd en in een sandbox met nagebouwde
+// afhankelijkheden uitgevoerd, zodat de ECHTE productiecode wordt getest.
+{
+  const vm = require('vm');
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  function fnSrc(name){
+    const i = html.indexOf('async function ' + name + '(');
+    const j = html.indexOf('function ' + name + '(');
+    const start = i !== -1 ? i : j;
+    let d = 0, b = html.indexOf('{', start);
+    for (let k = b; k < html.length; k++){
+      if (html[k] === '{') d++;
+      else if (html[k] === '}'){ d--; if (d === 0) return html.slice(start, k + 1); }
+    }
+    return null;
+  }
+  function maakCtx(createImpl){
+    const calls = { n: 0 };
+    const ctx = {
+      _ergProtocol: { roeien: { type: 'distance', value: null, instanceId: null } },
+      document: { getElementById: () => ({ value: '2000' }) },
+      CardioCore: CardioCoreReal,
+      ErgProtocolIdentity: E,
+      IntervalEngineCore: IE,
+      TK_IV_SPORT_LABEL: { rowing: 'RowErg' },
+      snapshotFromCustomTraining: (def) => ({ source: 'custom_training', definition_id: def.id, intervalPrescription: def.intervalPrescription }),
+      createTrainingInstance: function (arg) { calls.n++; return createImpl(arg, calls.n); },
+      toast: () => {},
+      tkErgRerenderProtocol: () => {},
+      calls: calls
+    };
+    vm.createContext(ctx);
+    vm.runInContext(fnSrc('tkErgStartProtocol'), ctx);
+    return ctx;
+  }
+  // A. Twee starts vóór de eerste resolve -> EXACT ÉÉN createTrainingInstance-aanroep.
+  {
+    let los; const wacht = new Promise(r => { los = r; });
+    const ctx = maakCtx(() => wacht);
+    const p1 = ctx.tkErgStartProtocol('roeien', 'rowing');
+    const p2 = ctx.tkErgStartProtocol('roeien', 'rowing'); // tweede klik vóór resolve
+    eq(ctx.calls.n, 1, 'DUBBEL-SUBMIT: twee starts vóór de eerste resolve -> createTrainingInstance EXACT ÉÉNMAAL aangeroepen');
+    los('inst-1');
+    return Promise.all([p1, p2]).then(function () {
+      eq(ctx._ergProtocol.roeien.instanceId, 'inst-1', 'DUBBEL-SUBMIT: exact één instanceId vastgelegd');
+      eq(ctx._ergProtocol.roeien.busy, false, 'DUBBEL-SUBMIT: busy weer vrijgegeven na succes');
+      ok(!!ctx._ergProtocol.roeien.prescription, 'DUBBEL-SUBMIT: immutable prescriptie bewaard');
+      eq(ctx.calls.n, 1, 'DUBBEL-SUBMIT: ook na resolve geen tweede aanroep');
+      return vervolg();
+    });
+  }
+  function vervolg(){
+    // B. Mislukte aanmaak -> busy vrijgegeven -> retry maakt precies één nieuwe instance.
+    let eerste = true;
+    const ctx = maakCtx(() => { if (eerste){ eerste = false; return Promise.resolve(null); } return Promise.resolve('inst-2'); });
+    return ctx.tkErgStartProtocol('roeien', 'rowing').then(function(){
+      eq(ctx._ergProtocol.roeien.instanceId, null, 'FOUTPAD: mislukte aanmaak zet GEEN instanceId (doet niet alsof de instance bestaat)');
+      eq(ctx._ergProtocol.roeien.busy, false, 'FOUTPAD: busy vrijgegeven na mislukking -> opnieuw proberen mogelijk');
+      return ctx.tkErgStartProtocol('roeien', 'rowing');
+    }).then(function(){
+      eq(ctx._ergProtocol.roeien.instanceId, 'inst-2', 'FOUTPAD: retry legt precies één nieuwe instance vast');
+      eq(ctx.calls.n, 2, 'FOUTPAD: exact twee aanroepen totaal (één mislukt, één geslaagd) — geen extra writes');
+      return derde();
+    });
+  }
+  function derde(){
+    // C. Exception in createTrainingInstance -> busy mag NIET blijven hangen (finally).
+    const ctx = maakCtx(() => { throw new Error('netwerk'); });
+    return Promise.resolve(ctx.tkErgStartProtocol('roeien', 'rowing')).then(function(){
+      eq(ctx._ergProtocol.roeien.busy, false, 'EXCEPTIE: busy wordt via finally vrijgegeven, blijft nooit hangen');
+      eq(ctx._ergProtocol.roeien.instanceId, null, 'EXCEPTIE: geen instanceId gezet');
+      return klaar();
+    });
+  }
+  function klaar(){
+    if (msgs.length) console.log(msgs.join('\n'));
+    console.log('fErgContinuousProtocolIdentity: ' + pass + ' geslaagd, ' + fail + ' mislukt');
+    process.exit(fail ? 1 : 0);
+  }
+}

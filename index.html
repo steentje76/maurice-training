@@ -21245,7 +21245,7 @@ function tkErgProtocolSection(exId,cardioType){
   let doel='';
   if(!vast&&st.type==='distance')doel=`<div class="row-item" style="margin-top:8px"><input class="row-inp" type="number" min="1" max="200000" id="ergp-val-${exId}" value="${st.value||''}"><div class="row-inp-lbl">Doelafstand (m)</div></div>`;
   if(!vast&&st.type==='time')doel=`<div class="row-item" style="margin-top:8px"><input class="row-inp" type="text" id="ergp-val-${exId}" value="${st.value?CardioCore.formatTime(st.value):''}" placeholder="30:00"><div class="row-inp-lbl">Doeltijd (mm:ss)</div></div>`;
-  const start=(!vast&&st.type!=='manual')?`<button class="btn btn-r" style="width:100%;margin-top:10px" onclick="tkErgStartProtocol('${exId}','${cardioType}')">▶ Vastleggen en starten</button>`:'';
+  const start=(!vast&&st.type!=='manual')?`<button class="btn btn-r" style="width:100%;margin-top:10px" ${st.busy?'disabled':''} onclick="tkErgStartProtocol('${exId}','${cardioType}')">${st.busy?'Bezig met vastleggen…':'▶ Vastleggen en starten'}</button>`:'';
   const vastTekst=vast?`<div style="font-size:12px;color:var(--g4);margin-top:8px">Vastgelegd vóór uitvoering: ${ErgProtocolIdentity.protocolLabelNl(st.type,st.value)} — dit doel verandert niet meer door je resultaat.</div>`:'';
   return `<div class="tks-card" id="ergp-sec-${exId}" style="margin:6px 14px 8px;padding:12px 14px">
     <div style="font-size:13px;font-weight:700;color:var(--g5,#1a2b33);margin-bottom:8px">Protocol</div>
@@ -21272,7 +21272,13 @@ function tkErgSetProtocol(exId,cardioType,type){
 // pure prescriptie -> IntervalEngineCore-validatie -> ad-hoc training_instance
 // met immutable snapshot. Faalt gesloten (geen half vastgelegd protocol).
 async function tkErgStartProtocol(exId,cardioType){
-  const st=_ergProtocol[exId]; if(!st||st.instanceId)return;
+  // AUDIT-REPARATIE (P3-A): de instanceId-guard alleen was niet async-veilig — hij draaide
+  // VOOR de await, terwijl instanceId pas ERNA werd gezet. Twee snelle kliks passeerden dus
+  // beide en creeerden twee ad-hoc training_instances. Nu een busy-vlag die VOOR de eerste
+  // await wordt gezet en in finally altijd wordt vrijgegeven (ook bij een exception), zodat
+  // een mislukte poging opnieuw geprobeerd kan worden. Zelfde patroon als de bestaande
+  // busy-guards elders in dit bestand (A5-hardening) — geen nieuw async-raamwerk.
+  const st=_ergProtocol[exId]; if(!st||st.instanceId||st.busy)return;
   const el=document.getElementById('ergp-val-'+exId);
   let waarde=null;
   if(st.type==='distance'){ waarde=parseInt(String(el&&el.value||'').replace(',','.'),10); }
@@ -21282,9 +21288,13 @@ async function tkErgStartProtocol(exId,cardioType){
   const norm=raw?IntervalEngineCore.normalizePrescription(raw):null;
   if(!raw||!norm||!norm.geldig){ toast('Ongeldig protocol'); return; }
   const snapshot=snapshotFromCustomTraining({id:null,naam:'Losse '+(TK_IV_SPORT_LABEL[cardioType]||cardioType),intervalPrescription:raw},[{exercise_id:exId,sort_order:0}],[]);
-  const instanceId=await createTrainingInstance({vasteTrainingId:null,customTrainingId:null,snapshot});
-  if(!instanceId){ toast('Vastleggen mislukt — probeer opnieuw'); return; }
-  _ergProtocol[exId]={type:st.type,value:Math.round(waarde),instanceId:instanceId,prescription:norm};
+  st.busy=true; tkErgRerenderProtocol(exId,cardioType); // knop direct uitgeschakeld: geen tweede write mogelijk
+  let instanceId=null;
+  try{ instanceId=await createTrainingInstance({vasteTrainingId:null,customTrainingId:null,snapshot}); }
+  catch(_e){ instanceId=null; }
+  finally{ st.busy=false; }
+  if(!instanceId){ toast('Vastleggen mislukt — probeer opnieuw'); tkErgRerenderProtocol(exId,cardioType); return; }
+  _ergProtocol[exId]={type:st.type,value:Math.round(waarde),instanceId:instanceId,prescription:norm,busy:false};
   toast('Doel vastgelegd: '+ErgProtocolIdentity.protocolLabelNl(st.type,waarde));
   tkErgRerenderProtocol(exId,cardioType);
 }

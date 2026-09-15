@@ -2096,3 +2096,25 @@ geen veilige gedeelde sessions↔activities-dedup-identiteit bestaat.
   sessierij). Volledige regressie 381, 2 bekende sandbox-fouten. APP_VER v4.69.95 → v4.69.96.
 - **Expliciet NIET live:** Erg Performance Intelligence (PB/trend/plateau), PM5 workout control.
   Uitgesteld en ongewijzigd: Concept2 `duration_s` (P4, aparte PR), manual-cardio-dedup (P3).
+
+### Pre-merge-reparatie PR #358 (audit klasse C → A)
+
+- **P3-A dubbel-submit-race (gerepareerd):** `tkErgStartProtocol` controleerde `instanceId` vóór de
+  `await createTrainingInstance(...)` terwijl dat veld pas erná werd gezet; twee snelle kliks konden
+  twee ad-hoc instances maken. Nu een busy-vlag vóór de eerste await, knop direct disabled, vrijgave
+  in `finally` (ook bij exception). Bewezen met echte concurrency-tests op de geëxtraheerde
+  productiefunctie; sabotage R1/R2/R3 gedetecteerd en byte-exact hersteld.
+- **P3-B Builder (opgelost zonder nieuwe code):** forensiek bewees dat `ivRaw()` het canonieke
+  terminatiemodel al gebruikt en bij `repeats=1` zonder warm-up/cooldown/herstel de continue vorm
+  oplevert. Equivalentie Builder ↔ los pad nu getest (6 combinaties); geen shadow-protocolmodel.
+  Opgeslagen trainingen blijven Definition → `startInstanceFromDefinition` → snapshot volgen; er
+  wordt op dat pad géén ad-hoc instance gemaakt.
+- **Geaccepteerde P4's (bewust niet uitgebreid):** (a) "Vrij" persisteert geen expliciet protocol en
+  is niet te onderscheiden van legacy-onbekend — beide even niet-PB-geschikt, geen onnodige instance
+  aangemaakt; (b) een afgebroken Afstand/Tijd-start laat een `active` ad-hoc instance achter, wat de
+  bestaande architectuur al tolereert — opschoning is een aparte follow-up; (c) het
+  `fHardening`-leesvenster blijft een magic number (nu 6200, 542 tekens marge) — asserties
+  ongewijzigd, structurele begrenzing is een losse verbetering.
+- **Preview:** bewust niet uitgebreid in deze PR; de continue protocolweergave in Preview blijft een
+  aparte, kleine vervolgstap. De protocolidentiteit zelf is volledig live via het losse pad en de
+  Builder. APP_VER blijft v4.69.96 (geen extra bump voor een reparatie binnen dezelfde PR).

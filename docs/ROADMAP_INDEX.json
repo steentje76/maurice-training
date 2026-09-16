@@ -5659,9 +5659,11 @@
   "source_mastersprints": [
    "MS-F2-07"
   ],
-  "normalization_evidence": "index.html: 54 treffers; 10 core-testbestanden; 1 migratie",
+  "normalization_evidence": "Home-orkestratie over 12+ zelfstandige secties (home-hero, home-next, home-coach-advies, home-context, home-goals-card, home-hrv-card, home-last, home-morning, home-improve, home-dash, home-attn); function renderHome. 54 treffers, 10 core-testbestanden, 1 migratie.",
   "normalization_change_type": "D BASELINE_MODEL_REVISION (BASELINE-1.1)",
-  "next_action": "A-J subcriteria beoordelen in de A-J Product Maturity Audit"
+  "next_action": "A-J subcriteria beoordelen in de A-J Product Maturity Audit",
+  "root_responsibility_delimitation": "ATHLETE-DASHBOARD-2-001 (T12) bezit UITSLUITEND de analytics-attentiesectie #home-f7-attention via renderF7Antention/PlateauDetectionCore/AdherenceIntelligenceCore. TRAIN-HOME-001 bezit de orkestratie van de volgende actie over alle home-secties. Containment, geen duplicate root responsibility.",
+  "confidence": "HIGH"
  },
  {
   "id": "EXERCISE-CATALOG-001",
@@ -5735,7 +5737,7 @@
  {
   "id": "EXERCISE-MEDIA-001",
   "type": "capability",
-  "name": "MoveKit media-associatie en runtime-levering",
+  "name": "Exercise instructional media: associatie, resolutie en runtime-levering",
   "track": "Exercise Intelligence",
   "primary_track": "T2",
   "secondary_tracks": [],
@@ -5751,9 +5753,10 @@
   "source_mastersprints": [
    "MS-F2-04"
   ],
-  "normalization_evidence": "MediaUrlResolver/VIDEO_MANIFEST/movekit: 56 treffers, 6 core-testbestanden; fMediaUrlResolver 29/29 (#361)",
+  "normalization_evidence": "Provider- en opslagonafhankelijke product responsibility. ExerciseAssetProvider is een provider-registry (register(type,provider) / resolve(id,type) / contract / types); MediaUrlResolver abstraheert de media-origin achter een configureerbaar punt. MoveKit is de HUIDIGE provider en VIDEO_MANIFEST de huidige associatiebron, geen onderdeel van de capability-identiteit. Evidence: 56 treffers in index.html, 6 core-testbestanden, fMediaUrlResolver 29/29 (#361), poster/video fail-closed bewezen (#362).",
   "normalization_change_type": "D BASELINE_MODEL_REVISION (BASELINE-1.1)",
-  "next_action": "A-J subcriteria beoordelen in de A-J Product Maturity Audit"
+  "next_action": "A-J subcriteria beoordelen in de A-J Product Maturity Audit",
+  "provider_independence": "capability is gedefinieerd op product responsibility, niet op provider (MoveKit), opslagmethode (Git/object storage), batch (Batch 001/002) of sprint (MEDIA-0C/0D)"
  },
  {
   "id": "EXERCISE-SENSOR-MOVEMENT-001",

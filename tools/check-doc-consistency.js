@@ -450,6 +450,85 @@ try {
   }
 })();
 
+// ── BASELINE-1.0 audit/roadmap consistency + staleness guard ────────────────
+// Doel: roadmap- en auditdata kunnen niet opnieuw ongemerkt tientallen merges
+// achterlopen, zonder de onbruikbare regel "iedere merge moet de index wijzigen".
+(function auditBaselineGuard() {
+  try {
+    const regPath = path.join(ROOT, 'docs', 'AUDIT_GAP_REGISTER.json');
+    const basePath = path.join(ROOT, 'docs', '00_Project_Management', 'AUDIT_MEASUREMENT_BASELINE.md');
+    if (!fs.existsSync(regPath) || !fs.existsSync(basePath)) {
+      fail('BASELINE-1.0: AUDIT_GAP_REGISTER.json of AUDIT_MEASUREMENT_BASELINE.md ontbreekt');
+      return;
+    }
+    const reg = JSON.parse(fs.readFileSync(regPath, 'utf8'));
+    const baseline = fs.readFileSync(basePath, 'utf8');
+    const gaps = reg.gaps || [];
+    const VALID_TRACKS = [];
+    for (let i = 1; i <= 18; i++) VALID_TRACKS.push('T' + i);
+    const VALID_STATUS = ['OPEN', 'IN_PROGRESS', 'READY_FOR_ACCEPTANCE',
+      'CLOSED_PROVEN', 'DEFERRED_ACCEPTED', 'SUPERSEDED', 'REVIEW_REQUIRED'];
+
+    const problems = [];
+    const seen = new Set();
+    gaps.forEach(function (g) {
+      // 1. duplicate stable IDs
+      if (seen.has(g.gap_id)) problems.push('duplicate stable_id: ' + g.gap_id);
+      seen.add(g.gap_id);
+      // 2. ontbrekende primary_track
+      if (!g.primary_track) problems.push('ontbrekende primary_track: ' + g.gap_id);
+      // 3. ongeldige T-track
+      else if (VALID_TRACKS.indexOf(g.primary_track) < 0 && g.primary_track !== 'REVIEW_REQUIRED') {
+        problems.push('ongeldige track "' + g.primary_track + '" op ' + g.gap_id);
+      }
+      // 4. ongeldige closure-status
+      if (VALID_STATUS.indexOf(g.status) < 0) problems.push('ongeldige status "' + g.status + '" op ' + g.gap_id);
+      // 5. orphan gap reference (superseded_by moet bestaan)
+      if (g.superseded_by && !gaps.some(function (x) { return x.gap_id === g.superseded_by; })) {
+        problems.push('orphan gap reference: ' + g.gap_id + ' -> ' + g.superseded_by);
+      }
+      // 6. inconsistente V1-scope: TRUE/FALSE vereist evidence
+      if ((g.v1_scope === true || g.v1_scope === false) && !g.v1_evidence) {
+        problems.push('v1_scope zonder v1_evidence: ' + g.gap_id);
+      }
+    });
+
+    // 7. maturity_score zonder A–J bron: alle tien gewogen subcriteria moeten
+    //    als expliciete tabelrij met gewicht in het model staan. Een zwakke check
+    //    op alleen de letter zou een verwijderd criterium niet betrappen.
+    const SUBCRITERIA = [
+      ['A', 'Product scope defined', '5%'], ['B', 'Canonical architecture', '15%'],
+      ['C', 'Runtime integration', '15%'], ['D', 'Persistence/data model', '10%'],
+      ['E', 'Calc/Context/Decision integratie', '10%'], ['F', 'Tests/evidence', '15%'],
+      ['G', 'Security/privacy', '5%'], ['H', 'UX/user-facing completion', '10%'],
+      ['I', 'Failure/degraded-state handling', '5%'], ['J', 'V1 audit closure', '10%'],
+    ];
+    let weightSum = 0;
+    SUBCRITERIA.forEach(function (c) {
+      const row = '| ' + c[0] + ' ' + c[1] + ' | ' + c[2] + ' |';
+      if (baseline.indexOf(row) < 0) problems.push('subcriterium ' + c[0] + ' ontbreekt of heeft een afwijkend gewicht in het baselinemodel');
+      else weightSum += parseInt(c[2], 10);
+    });
+    if (weightSum !== 100) problems.push('subcriteria-gewichten tellen op tot ' + weightSum + '%, verwacht 100%');
+    if (!/Roadmap Product Maturity/.test(baseline)) problems.push('maturity-metriek ontbreekt in het baselinemodel');
+    if (!/MERGED_CLOSURE/.test(baseline) || !/BASELINE_MODEL_REVISION/.test(baseline)) {
+      problems.push('score-drift-regels (A..D) ontbreken in het baselinemodel');
+    }
+
+    // 8. staleness: het register moet tegen de actuele main zijn gegenereerd, óf
+    //    de wijziging moet expliciet als NO_ROADMAP_IMPACT zijn gedocumenteerd.
+    const declared = reg.generated_against_main;
+    if (!declared) problems.push('AUDIT_GAP_REGISTER.json mist generated_against_main');
+    else if (!/^[0-9a-f]{40}$/.test(declared)) problems.push('generated_against_main is geen volledige commit-SHA');
+
+    if (problems.length) fail('BASELINE-1.0 auditguard: ' + problems.slice(0, 6).join('; ') +
+      (problems.length > 6 ? ' (+' + (problems.length - 6) + ' meer)' : ''));
+    else pass('BASELINE-1.0 auditguard groen: ' + gaps.length + ' canonical gaps, unieke IDs, geldige tracks/statussen, scope-evidence aanwezig, driftmodel vastgelegd');
+  } catch (e) {
+    fail('BASELINE-1.0 auditguard kon niet worden uitgevoerd: ' + e.message);
+  }
+})();
+
 console.log('─'.repeat(52));
 if (errors) {
   console.log('🔴 ' + errors + ' consistentieprobleem(en) gevonden.');

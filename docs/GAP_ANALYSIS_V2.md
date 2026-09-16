@@ -11,9 +11,15 @@
 |---|---|
 | P0 | **0 open** |
 | P1 | 0 |
-| P2 | 23 |
-| P3 | 6 |
-| P4 | 2 |
+| P2 | 27 |
+| P3 | 10 |
+| P4 | 4 |
+
+> **Gecorrigeerd in BASELINE-0 (16 september 2026).** De eerdere telling (P2=23,
+> P3=6, P4=2 → 31) kwam niet overeen met de werkelijke `### GAP-`-blokken in dit
+> document (27/10/4 → 41). De machinaal geverifieerde telling staat in
+> `docs/AUDIT_GAP_REGISTER.json`; severity is daar afgeleid uit het expliciete
+> `**Priority:**`-veld en, waar dat ontbrak, deterministisch uit de gap-ID.
 
 Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de volledige sluitingsgeschiedenis (F1-bevindingen + de execution-defecten uit de F2 Canonical-Training-Start-sprint + de latere GAP-P1-006-closure).
 

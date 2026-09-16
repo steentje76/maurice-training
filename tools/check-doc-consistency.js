@@ -570,6 +570,55 @@ try {
       if (!/ten minste één V1-capability/.test(baseline)) problems.push('capability-based tracknoemer ontbreekt in het baselinemodel');
     }
 
+    // ── BASELINE-1.2: A-J audit artifact guard ──
+    const ajPath = path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_BATCH_A.json');
+    if (fs.existsSync(ajPath)) {
+      const aj = JSON.parse(fs.readFileSync(ajPath, 'utf8'));
+      const CRIT = ['A','B','C','D','E','F','G','H','I','J'];
+      const CONF = ['HIGH','MEDIUM','LOW'];
+      const W = aj.weights || {};
+      const known = {};
+      JSON.parse(fs.readFileSync(idxPath, 'utf8')).forEach(function (x) { known[x.id] = x; });
+      const seenAj = {};
+      (aj.capabilities || []).forEach(function (c) {
+        if (seenAj[c.stable_id]) problems.push('duplicate capability audit record: ' + c.stable_id);
+        seenAj[c.stable_id] = 1;
+        if (!known[c.stable_id]) problems.push('onbekende stable_id in A-J artifact: ' + c.stable_id);
+        else if (known[c.stable_id].v1_scope !== true && c.v1_scope === true) {
+          problems.push('post-V1 record in V1 trackscore: ' + c.stable_id);
+        }
+        let aw = 0, sum = 0;
+        CRIT.forEach(function (k) {
+          const r = c.criteria && c.criteria[k];
+          if (!r) { problems.push('ontbrekend criterium ' + k + ' op ' + c.stable_id); return; }
+          if (CONF.indexOf(r.confidence) < 0) problems.push('confidence buiten enum op ' + c.stable_id + '/' + k);
+          if (r.applicable === false) {
+            if (!r.na_rationale) problems.push('applicable=false zonder N/A rationale: ' + c.stable_id + '/' + k);
+          } else {
+            if (typeof r.score !== 'number') problems.push('applicable=true zonder score: ' + c.stable_id + '/' + k);
+            else if (r.score < 0 || r.score > 5) problems.push('score buiten 0-5: ' + c.stable_id + '/' + k);
+            if (!r.evidence_refs || !r.evidence_refs.length) problems.push('score zonder evidence_refs: ' + c.stable_id + '/' + k);
+            aw += W[k]; sum += W[k] * r.score;
+          }
+        });
+        if (aw > 0) {
+          const calc = Math.round((sum / aw) * 1000) / 1000;
+          if (Math.abs(calc - c.weighted_score) > 0.002) {
+            problems.push('weighted score mismatch op ' + c.stable_id + ': artifact ' + c.weighted_score + ' vs herberekend ' + calc);
+          }
+        } else problems.push('geen enkel applicable criterium op ' + c.stable_id);
+      });
+      const v1Total = Object.keys(known).filter(function (k) {
+        return known[k].type === 'capability' && known[k].v1_scope === true; }).length;
+      if (aj.complete === true && (aj.capabilities || []).length < v1Total) {
+        problems.push('incomplete batch gemarkeerd als complete: ' + (aj.capabilities || []).length + '/' + v1Total);
+      }
+      if (/V1 Product Maturity[^|]*\|[^|]*\|[^|]*\|\s*\*\*CANONICAL\*\*/.test(baseline) &&
+          (aj.capabilities || []).length < v1Total) {
+        problems.push('totale V1 maturity canonical terwijl slechts ' + (aj.capabilities || []).length + '/' + v1Total + ' V1-capabilities zijn beoordeeld');
+      }
+    }
+
     if (problems.length) fail('BASELINE-1.0 auditguard: ' + problems.slice(0, 6).join('; ') +
       (problems.length > 6 ? ' (+' + (problems.length - 6) + ' meer)' : ''));
     else pass('BASELINE-1.0 auditguard groen: ' + gaps.length + ' canonical gaps, unieke IDs, geldige tracks/statussen, scope-evidence aanwezig, driftmodel vastgelegd');

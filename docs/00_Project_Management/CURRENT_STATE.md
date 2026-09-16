@@ -6,11 +6,11 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.69.96
+v4.69.97
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.69.96 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.69.97 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 
@@ -21,7 +21,7 @@ v4.69.96
   `exercise-catalog.json` en de ingebedde `EX_CATALOG`-constante zijn en blijven byte-identiek
   — er is geen tweede, afwijkende bron van waarheid en geen shadow catalog.
 - **MoveKit Batch 001 geimporteerd** (20 oefeningen, TK-000207..TK-000226), alle 20 `NEW_EXACT`.
-  Volledig verslag: zie `CHANGELOG.md` v4.69.96 (MoveKit Batch 001).
+  Volledig verslag: zie `CHANGELOG.md` v4.69.97 (MoveKit Batch 001).
 - **Bewust openstaand, eerlijk vastgelegd:**
   (a) de 20 nieuwe records hebben een leeg `intelligence`-object (geen bewezen deterministische
   fatigue/recovery/confidence-classifier beschikbaar) — geen crash, geen verzonnen wetenschap,
@@ -51,6 +51,12 @@ v4.69.96
   oefeningen: `.git` staat na Batch 001 op circa 567 MB, en de resterende circa 186 oefeningen
   voegen naar schatting nog circa 630 MB toe (richting circa 1,2 GB). Normale Git, Git LFS en
   object storage/Supabase Storage blijven alle drie open kandidaten.
+- **MEDIA-0C — Android-videoweergave losgekoppeld van de service worker.** Basale online
+  weergave vereist geen service worker meer: `MediaUrlResolver` levert het media-adres
+  rechtstreeks aan `<video src>` en de WebView doet een native, no-cors media-request. Daarmee
+  zijn zowel H1 (CORS) als H2 (SW-registratie) geen single point of failure meer, **zonder** dat
+  is vastgesteld welke van beide de feitelijke oorzaak was. Web-gedrag ongewijzigd.
+  **Android-weergave blijft DEVICE VALIDATION REQUIRED.**
 - **VERPLICHTE GATE VÓÓR BATCH 002 — MOVEKIT MEDIA SCALE GATE (blokkerend).** Vóór iedere
   verdere grootschalige video-import moet deze gate minimaal vergelijken: normale Git · Git LFS ·
   object storage/Supabase Storage · Netlify build/deploy · PWA-videocache (`tk-videos-v1`,

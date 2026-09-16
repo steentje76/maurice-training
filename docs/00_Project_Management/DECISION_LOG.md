@@ -2280,3 +2280,40 @@ APP_VER-bump.
 INTEL-05 (reproduceerbare intelligence-generator met provenance), INTEL-06 (relations),
 de twee cycling-posterbronbestanden, en de MoveKit-licentievraag over publieke levering.
 **Batch 002 blijft BLOCKED.**
+
+## DEC-MEDIA-004 — Basale online videoweergave mag geen service worker vereisen (MEDIA-0C, 15 september 2026)
+
+**Aanleiding.** Device-bewijs: alle video's falen in de Android-app (v4.69.80), terwijl dezelfde
+video's op het web afspelen. H1 (ontbrekende CORS) en H2 (SW registreert/activeert niet in
+Capacitor) bleven na alle beschikbare diagnostiek even sterk ondersteund en waren statisch niet
+te scheiden; de UI onderscheidt de twee faalpaden niet en live meting was onmogelijk.
+
+**Overwogen opties.** (A) SW verplicht houden en alleen CORS repareren — lost H2 niet op en
+gokt dus op één van twee oorzaken. (B) Canonieke media-URL-resolver met directe `<video src>`.
+(C) Native Capacitor HTTP/media-bridge — zwaar, plugin-afhankelijk, breekt het webpad.
+(D) Video's terug in de Android-bundel — onmogelijk: 529 MB tegen een Play-limiet van 200 MB.
+(E) Proxy via app-origin — op Capacitor bestaat geen server om op te proxyen.
+
+**Besluit: optie B.** Het is de kleinste ingreep die het structurele defect wegneemt in plaats
+van één symptoom. Doorslaggevend is het verschil tussen een `fetch()` in een service worker en
+een `HTMLMediaElement`-request: de eerste is standaard mode `cors` en vereist een ACAO-header,
+de tweede is zonder `crossorigin`-attribuut een no-cors mediarequest die de bytes niet aan
+JavaScript blootstelt en daarom geen ACAO nodig heeft — terwijl de browser wel native Range en
+streaming toepast. **Er is bewust géén `crossorigin`-attribuut toegevoegd**: dat zou CORS juist
+verplicht maken en H1 opnieuw introduceren.
+
+**Rol van de service worker na de reparatie (optie A uit §13).** De SW wordt gepasseerd voor
+normale remote online weergave en behoudt zijn bestaande rol voor same-origin video (web,
+offline-cache). Bewust niet verwijderd en niet uitgebreid: dat is MEDIA-1.
+
+**Grenzen van deze beslissing.** Dit bewijst niet dat H1 of H2 de feitelijke oorzaak was; het
+maakt beide irrelevant voor basale weergave. Of de mediaserver Range met `206` beantwoordt is
+niet gemeten. Het webpad blijft volledig downloaden via de SW. Offline weergave op Android is
+niet toegevoegd — die bestond daar nooit.
+
+**Media-origin blijft configureerbaar** en wordt niet als permanente Netlify-koppeling
+vastgelegd, zodat de latere overstap naar object storage/Supabase één plek raakt.
+
+**Blijft open.** MEDIA-1 (Range op het webpad, cachestrategie, expliciete offline-download),
+mediamigratie, MoveKit-licentie (publiek versus signed), de twee cycling-posterbronbestanden.
+**Batch 002 blijft BLOCKED.**

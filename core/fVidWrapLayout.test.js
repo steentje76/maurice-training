@@ -1,4 +1,12 @@
-/* fVidWrapLayout.test.js — MEDIA-0D: geen zwart vlak boven video's
+/* fVidWrapLayout.test.js — MEDIA-0D: ACTIVITY → START EXERCISE VIDEO PRESENTATION DEFECT
+ *
+ * Gemeld/geobserveerd in de flow: Activiteit → Oefening starten → "▶ Bekijk video & uitleg"
+ * (applyExecutionFocus → openExecExplain). Dezelfde technische fout bestaat latent in
+ * buildVideoMuscle (uitklapbare oefeningkaart en losse-oefening-scherm); de gedeelde
+ * `.vid-wrap video`-regel repareert daarom bewust beide paden.
+ *
+ * Dit is GEEN algemeen Android playback-defect, GEEN MEDIA-0C-defect, GEEN MoveKit
+ * Batch 001-defect en GEEN posterdefect — uitsluitend een presentatie-/layoutfout.
  *
  * `.vid-wrap` reserveert een 16:9-mediavlak met `padding-top:56.25%` en een zwarte
  * achtergrond. Die techniek werkt UITSLUITEND wanneer het kind absoluut gepositioneerd
@@ -65,9 +73,19 @@ ok(has(videoDecls, 'object-fit', 'contain'),
   '3b: video schaalt met object-fit:contain \u2014 correcte verhouding, geen uitsnijding');
 
 /* ══ 4. Elk .vid-wrap-renderpad levert een video die door de regel wordt gedekt ══ */
-console.log('4. Renderpaden');
+console.log('4. Renderpaden (beide .vid-wrap-flows technisch gedekt)');
 var paths = HTML.match(/class="vid-wrap"><video/g) || [];
-ok(paths.length >= 2, '4a: de bekende .vid-wrap-renderpaden zijn aanwezig (' + paths.length + ')');
+ok(paths.length >= 2, '4a: beide .vid-wrap-videorenderpaden zijn aanwezig (' + paths.length + ')');
+/* Het gemelde pad: Activiteit → Oefening starten → "Bekijk video & uitleg". */
+ok(/function openExecExplain\s*\(/.test(HTML) && HTML.indexOf('openExecExplain') > 0,
+  '4c: gemelde flow aanwezig — openExecExplain (Activiteit → Oefening starten)');
+/* Het latente pad: uitklapbare oefeningkaart / losse-oefening-scherm. */
+ok(/function buildVideoMuscle\s*\(/.test(HTML),
+  '4d: latente flow aanwezig — buildVideoMuscle (oefeningkaart / losse oefening)');
+/* Beide worden door dezelfde selector gedekt: geen enkel .vid-wrap-videopad mag
+   buiten het bereik van de regel vallen. */
+ok(paths.length === 2,
+  '4e: er zijn exact 2 .vid-wrap-videopaden, beide gedekt door .vid-wrap video (' + paths.length + ')');
 /* Geen enkel pad mag het video-element buiten .vid-wrap plaatsen of een eigen
    position meegeven die de regel overschrijft. */
 var inlinePos = (HTML.match(/class="vid-wrap"><video[^>]*style="[^"]*position\s*:/g) || []).length;

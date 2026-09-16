@@ -57,6 +57,16 @@ v4.69.98
   zijn zowel H1 (CORS) als H2 (SW-registratie) geen single point of failure meer, **zonder** dat
   is vastgesteld welke van beide de feitelijke oorzaak was. Web-gedrag ongewijzigd.
   **Android-weergave blijft DEVICE VALIDATION REQUIRED.**
+- **ACTIVITY → START EXERCISE UX IMPROVEMENT — open vervolgitem, geen defect.** Los van de
+  presentatiefix in MEDIA-0D is de bredere UX van de flow *Activiteit → Oefening starten*
+  (`applyExecutionFocus` → `openExecExplain`) verbeterbaar. Te behandelen in een eigen UX-gate,
+  **niet** in MEDIA-0D: directe/duidelijkere toegang tot de instructievideo (nu twee stappen via
+  een sheet) · informatiehiërarchie binnen de sheet · videoformaat en ruimtebenutting
+  (`.vid-wrap` heeft eigen marge binnen een sheet die al padding heeft) · ontbrekende primaire
+  Start/Log-CTA (de enige actie is sluiten) · positie en prominentie van Vervang/Verwijder (nu
+  visueel gelijkwaardig aan de video-CTA) · sluiten/terug · scrollgedrag bij lange inhoud ·
+  no-media state (kale tekstregel zonder mediaregio-vorm) · aansluiting Execution → Logging ·
+  consistentie met de Trainingskompas/KZP-UI.
 - **VERPLICHTE GATE VÓÓR BATCH 002 — MOVEKIT MEDIA SCALE GATE (blokkerend).** Vóór iedere
   verdere grootschalige video-import moet deze gate minimaal vergelijken: normale Git · Git LFS ·
   object storage/Supabase Storage · Netlify build/deploy · PWA-videocache (`tk-videos-v1`,

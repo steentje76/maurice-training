@@ -3,7 +3,7 @@
  "baseline": "BASELINE-1.0",
  "generated_against_main": "3415744992008607181e7a078483de372d989efd",
  "counts": {
-  "entries": 57,
+  "entries": 59,
   "open": 41,
   "closed_proven": 16,
   "deferred_accepted": 0,
@@ -1104,6 +1104,36 @@
    "v1_evidence": "V1_SCOPE_MATRIX: Devices/Wearables = V1 MUST Ja",
    "blocker": false,
    "section": "HISTORICAL"
+  },
+  {
+   "gap_id": "GAP-P2-006-DUP",
+   "title": "(tweede voorkomen van GAP-P2-006 in GAP_ANALYSIS_V2.md)",
+   "primary_track": "T7",
+   "severity": "P3",
+   "status": "SUPERSEDED",
+   "superseded_by": "GAP-P2-006",
+   "root_cause_group": "GAP-P2-006",
+   "v1_scope": true,
+   "v1_evidence": "erft van canonical GAP-P2-006",
+   "blocker": false,
+   "blocker_evidence": "SUPERSEDED — telt niet mee",
+   "section": "HISTORICAL",
+   "track_evidence": "historie behouden: root-cause-duplicaat, niet in closure-noemer"
+  },
+  {
+   "gap_id": "GAP-P2-003-DUP",
+   "title": "(tweede voorkomen van GAP-P2-003 in GAP_ANALYSIS_V2.md)",
+   "primary_track": "T17",
+   "severity": "P2",
+   "status": "SUPERSEDED",
+   "superseded_by": "GAP-P2-003",
+   "root_cause_group": "GAP-P2-003",
+   "v1_scope": true,
+   "v1_evidence": "erft van canonical GAP-P2-003",
+   "blocker": false,
+   "blocker_evidence": "SUPERSEDED — telt niet mee",
+   "section": "HISTORICAL",
+   "track_evidence": "historie behouden: root-cause-duplicaat, niet in closure-noemer"
   }
  ],
  "_corrections": {

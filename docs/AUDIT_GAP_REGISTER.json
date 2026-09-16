@@ -28,16 +28,17 @@
    "offset": 908,
    "severity_source": "explicit_field",
    "blocker_evidence": "expliciete non-blocking formulering in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
   },
   {
    "gap_id": "GAP-P2-007",
    "title": "### GAP-P2-007 — Commercial/Entitlements heeft geen UI (verplaatst van P1/F2, zie Roadmap 2.0 v1.1 §32)",
-   "primary_track": "T7",
+   "primary_track": "T16",
    "severity": "P2",
    "status": "OPEN",
-   "v1_scope": true,
-   "blocker": true,
+   "v1_scope": false,
+   "blocker": false,
    "dependency": "GYM-RLS-SCOPING-001 — inmiddels VALIDATED (zie sectie \"CLOSED GAPS / HISTORICAL\"), geen resterende blocker.",
    "evidence": [
     "CODE VERIFIED (index.html doorzocht op `plans`/`features`-referenties: 0 treffers client-side)."
@@ -47,13 +48,17 @@
    "section": "OPEN",
    "offset": 1752,
    "severity_source": "explicit_field",
-   "blocker_evidence": "expliciete blokkerende formulering in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "blocker_evidence": "buiten V1-scope (T16) — kan per definitie geen V1-acceptatievoorwaarde verhinderen",
+   "v1_evidence": "V1_SCOPE_MATRIX: Commercial/Billing = V1 MUST NEE (BETA/PRE-COMMERCIAL)",
+   "secondary_tracks": [
+    "T7"
+   ],
+   "track_evidence": "Capability-ID COMM-UI-001 -> T16 (sterker dan trefwoordclassificatie)"
   },
   {
    "gap_id": "GAP-P2-008",
    "title": "### GAP-P2-008 — Home toont geen proactieve \"hervat je training\"-banner (Home/Dashboard-sprint)",
-   "primary_track": "T7",
+   "primary_track": "T1",
    "severity": "P2",
    "status": "OPEN",
    "v1_scope": true,
@@ -68,7 +73,11 @@
    "offset": 2725,
    "severity_source": "explicit_field",
    "blocker_evidence": "expliciete blokkerende formulering in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "V1_SCOPE_MATRIX: Training = V1 MUST Ja",
+   "secondary_tracks": [
+    "T7"
+   ],
+   "track_evidence": "Capability-ID CAP-REGISTRY-SCREENS-001 -> T1 (sterker dan trefwoordclassificatie)"
   },
   {
    "gap_id": "GAP-P2-009",
@@ -88,12 +97,13 @@
    "offset": 3790,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
   },
   {
    "gap_id": "GAP-P2-010",
    "title": "### GAP-P2-010 — 13 `core/*.js`-bestanden ontbreken in de service-worker-precache",
-   "primary_track": "T3",
+   "primary_track": "T17",
    "severity": "P2",
    "status": "OPEN",
    "v1_scope": true,
@@ -108,12 +118,16 @@
    "offset": 4594,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "V1_SCOPE_MATRIX: Auth/account-lifecycle = V1 MUST Ja",
+   "secondary_tracks": [
+    "T3"
+   ],
+   "track_evidence": "Capability-ID PLAT-OBSERVABILITY-001 -> T17 (sterker dan trefwoordclassificatie)"
   },
   {
    "gap_id": "GAP-P2-011",
    "title": "### GAP-P2-011 — Geen dedicated `core/`-unit-test voor de HRV-baseline-functiegroep (Recovery-sprint)",
-   "primary_track": "T9",
+   "primary_track": "T4",
    "severity": "P2",
    "status": "OPEN",
    "v1_scope": true,
@@ -128,12 +142,16 @@
    "offset": 5509,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "secondary_tracks": [
+    "T9"
+   ],
+   "track_evidence": "Capability-ID CALC-REC-REGISTRY-001 -> T4 (sterker dan trefwoordclassificatie)"
   },
   {
    "gap_id": "GAP-P2-012",
    "title": "### GAP-P2-012 — RHR-delta-minimum (2 metingen) inconsistent met HRV's striktere datakwaliteitsgates (Recovery",
-   "primary_track": "T9",
+   "primary_track": "T4",
    "severity": "P2",
    "status": "OPEN",
    "v1_scope": true,
@@ -148,12 +166,16 @@
    "offset": 6253,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "secondary_tracks": [
+    "T9"
+   ],
+   "track_evidence": "Capability-ID CALC-REC-REGISTRY-001 -> T4 (sterker dan trefwoordclassificatie)"
   },
   {
    "gap_id": "GAP-P2-013",
    "title": "### GAP-P2-013 — Geen provenance-onderscheid tussen device-gemeten en split-afgeleid vermogen (Endurance & Erg",
-   "primary_track": "T11",
+   "primary_track": "T4",
    "severity": "P2",
    "status": "OPEN",
    "v1_scope": true,
@@ -168,7 +190,11 @@
    "offset": 6877,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Devices/Wearables = V1 MUST Ja"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "secondary_tracks": [
+    "T11"
+   ],
+   "track_evidence": "Capability-ID CALC-END-REGISTRY-001 -> T4 (sterker dan trefwoordclassificatie)"
   },
   {
    "gap_id": "GAP-P2-014",
@@ -188,12 +214,13 @@
    "offset": 7514,
    "severity_source": "explicit_field",
    "blocker_evidence": "expliciete blokkerende formulering in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
   },
   {
    "gap_id": "GAP-P2-015",
    "title": "### GAP-P2-015 — `recoveryScore()`'s confidence telt alleen componentaantal, geen componentkwaliteit (Data Qua",
-   "primary_track": "T9",
+   "primary_track": "T7",
    "severity": "P2",
    "status": "OPEN",
    "v1_scope": true,
@@ -208,12 +235,16 @@
    "offset": 8404,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "secondary_tracks": [
+    "T9"
+   ],
+   "track_evidence": "Capability-ID DQ-CONFIDENCE-CONTRACT-001 -> T7 (sterker dan trefwoordclassificatie)"
   },
   {
    "gap_id": "GAP-P2-016",
    "title": "### GAP-P2-016 (voorheen GAP-P1-003) — AI-outputcontract, resterend structured-JSON-gat — **STATUS: DEELS GESL",
-   "primary_track": "T9",
+   "primary_track": "T8",
    "severity": "P2",
    "status": "OPEN",
    "v1_scope": true,
@@ -228,12 +259,16 @@
    "offset": 9263,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "secondary_tracks": [
+    "T9"
+   ],
+   "track_evidence": "Capability-ID AI-OUTPUT-CONTRACT-001 -> T8 (sterker dan trefwoordclassificatie)"
   },
   {
    "gap_id": "GAP-P2-018",
    "title": "### GAP-P2-018 (voorheen GAP-F5-001) — Geen granulair per-waarde quality-veld voor wearable-gezondheidsdata",
-   "primary_track": "T9",
+   "primary_track": "T11",
    "severity": "P2",
    "status": "OPEN",
    "v1_scope": true,
@@ -248,7 +283,11 @@
    "offset": 10739,
    "severity_source": "explicit_field",
    "blocker_evidence": "expliciete blokkerende formulering in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)"
+   "v1_evidence": "V1_SCOPE_MATRIX: Devices/Wearables = V1 MUST Ja",
+   "secondary_tracks": [
+    "T9"
+   ],
+   "track_evidence": "Capability-ID PROVIDER-INTEGRATION-CONTRACT-001 -> T11 (sterker dan trefwoordclassificatie)"
   },
   {
    "gap_id": "GAP-P2-019",
@@ -268,7 +307,8 @@
    "offset": 11550,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Devices/Wearables = V1 MUST Ja"
+   "v1_evidence": "V1_SCOPE_MATRIX: Devices/Wearables = V1 MUST Ja",
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
   },
   {
    "gap_id": "GAP-P2-020",
@@ -288,7 +328,8 @@
    "offset": 12144,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Devices/Wearables = V1 MUST Ja"
+   "v1_evidence": "V1_SCOPE_MATRIX: Devices/Wearables = V1 MUST Ja",
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
   },
   {
    "gap_id": "GAP-P2-021",
@@ -308,7 +349,8 @@
    "offset": 13086,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
   },
   {
    "gap_id": "GAP-P2-022",
@@ -328,7 +370,8 @@
    "offset": 14881,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
   },
   {
    "gap_id": "GAP-P2-027",
@@ -346,7 +389,8 @@
    "offset": 16083,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
   },
   {
    "gap_id": "GAP-P2-026",
@@ -366,7 +410,8 @@
    "offset": 17184,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
   },
   {
    "gap_id": "GAP-P2-028",
@@ -384,7 +429,8 @@
    "offset": 18764,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
   },
   {
    "gap_id": "GAP-P2-029",
@@ -402,7 +448,8 @@
    "offset": 20122,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
   },
   {
    "gap_id": "GAP-P2-031",
@@ -425,7 +472,7 @@
   {
    "gap_id": "GAP-P2-030",
    "title": "### GAP-P2-030 — **CLOSED** (Detraining B1, 13 september 2026) — Programmapad omzeilde DEC-DETRAIN-001 (tweede",
-   "primary_track": "T1",
+   "primary_track": "T6",
    "severity": "P2",
    "status": "OPEN",
    "v1_scope": true,
@@ -438,7 +485,11 @@
    "offset": 24585,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Training = V1 MUST Ja"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "secondary_tracks": [
+    "T1"
+   ],
+   "track_evidence": "Capability-ID DEC-DETRAIN-001 -> T6 (sterker dan trefwoordclassificatie)"
   },
   {
    "gap_id": "GAP-P3-031",
@@ -461,7 +512,7 @@
   {
    "gap_id": "GAP-P3-032",
    "title": "### GAP-P3-032 — **CLOSED** (Readiness Input & Application Parity, 14 september 2026) — Readiness/recovery op ",
-   "primary_track": "T9",
+   "primary_track": "T6",
    "severity": "P3",
    "status": "OPEN",
    "v1_scope": true,
@@ -474,7 +525,11 @@
    "offset": 26472,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "secondary_tracks": [
+    "T9"
+   ],
+   "track_evidence": "Capability-ID DEC-RECADJ-001 -> T6 (sterker dan trefwoordclassificatie)"
   },
   {
    "gap_id": "GAP-P3-033",
@@ -492,7 +547,8 @@
    "offset": 27397,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)"
+   "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)",
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
   },
   {
    "gap_id": "GAP-P3-023",
@@ -512,12 +568,13 @@
    "offset": 28215,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)"
+   "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)",
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
   },
   {
    "gap_id": "GAP-P3-024",
    "title": "### GAP-P3-024 (nieuw, Life-stage Performance Context-sprint) — geen suggestie-koppeling tussen de dagelijkse ",
-   "primary_track": "T9",
+   "primary_track": "T5",
    "severity": "P3",
    "status": "OPEN",
    "v1_scope": true,
@@ -532,12 +589,16 @@
    "offset": 29732,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "secondary_tracks": [
+    "T9"
+   ],
+   "track_evidence": "Capability-ID CTX-CYCLE-001 -> T5 (sterker dan trefwoordclassificatie)"
   },
   {
    "gap_id": "GAP-P2-002",
    "title": "### GAP-P2-002 (uitgebreid via de Backup & Retention Decision-sprint) — 8 `bak_p_*`-backuptabellen, audit comp",
-   "primary_track": "T6",
+   "primary_track": "T17",
    "severity": "P2",
    "status": "OPEN",
    "v1_scope": true,
@@ -552,12 +613,16 @@
    "offset": 32381,
    "severity_source": "explicit_field",
    "blocker_evidence": "expliciete blokkerende formulering in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "V1_SCOPE_MATRIX: Auth/account-lifecycle = V1 MUST Ja",
+   "secondary_tracks": [
+    "T6"
+   ],
+   "track_evidence": "Capability-ID PLAT-BACKUP-CLEANUP-001 -> T17 (sterker dan trefwoordclassificatie)"
   },
   {
    "gap_id": "GAP-P2-003",
    "title": "### GAP-P2-003 (verkleind) — Observability: resterende instrumentatie",
-   "primary_track": "T11",
+   "primary_track": "T17",
    "severity": "P2",
    "status": "OPEN",
    "v1_scope": true,
@@ -572,12 +637,16 @@
    "offset": 33590,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Devices/Wearables = V1 MUST Ja"
+   "v1_evidence": "V1_SCOPE_MATRIX: Auth/account-lifecycle = V1 MUST Ja",
+   "secondary_tracks": [
+    "T11"
+   ],
+   "track_evidence": "Capability-ID PLAT-OBSERVABILITY-001 -> T17 (sterker dan trefwoordclassificatie)"
   },
   {
    "gap_id": "GAP-P2-004",
    "title": "### GAP-P2-004 (uitgebreid via de Secrets & Configuration Hygiene-sprint) — Orphaned secret-achtige DB-kolomme",
-   "primary_track": "T6",
+   "primary_track": "T17",
    "severity": "P2",
    "status": "OPEN",
    "v1_scope": true,
@@ -592,7 +661,11 @@
    "offset": 34443,
    "severity_source": "explicit_field",
    "blocker_evidence": "expliciete blokkerende formulering in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "V1_SCOPE_MATRIX: Auth/account-lifecycle = V1 MUST Ja",
+   "secondary_tracks": [
+    "T6"
+   ],
+   "track_evidence": "Capability-ID SEC-CONFIG-001 -> T17 (sterker dan trefwoordclassificatie)"
   },
   {
    "gap_id": "GAP-P2-024",
@@ -705,7 +778,7 @@
   {
    "gap_id": "GAP-P3-004",
    "title": "### GAP-P3-004 — 18 plekken gebruiken nog `toISOString()` voor datumbereikgrenzen (History/Calendar-sprint)",
-   "primary_track": "T7",
+   "primary_track": "T1",
    "severity": "P3",
    "status": "OPEN",
    "v1_scope": true,
@@ -720,7 +793,11 @@
    "offset": 39490,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "V1_SCOPE_MATRIX: Training = V1 MUST Ja",
+   "secondary_tracks": [
+    "T7"
+   ],
+   "track_evidence": "Capability-ID CAP-REGISTRY-SCREENS-001 -> T1 (sterker dan trefwoordclassificatie)"
   },
   {
    "gap_id": "GAP-P4-003",
@@ -1028,5 +1105,9 @@
    "blocker": false,
    "section": "HISTORICAL"
   }
- ]
+ ],
+ "_corrections": {
+  "gap_track_reclassified": 16,
+  "method": "Capability-ID-prefix is primaire evidence; trefwoorden alleen als fallback"
+ }
 }

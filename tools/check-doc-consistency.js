@@ -505,12 +505,29 @@ try {
     ];
     let weightSum = 0;
     SUBCRITERIA.forEach(function (c) {
-      const row = '| ' + c[0] + ' ' + c[1] + ' | ' + c[2] + ' |';
+      // Exacte rij inclusief regeleinde: de haalbaarheidstabel verderop bevat dezelfde
+      // prefix met een derde kolom en zou een prefix-check stilzwijgend groen houden.
+      const row = '| ' + c[0] + ' ' + c[1] + ' | ' + c[2] + ' |\n';
       if (baseline.indexOf(row) < 0) problems.push('subcriterium ' + c[0] + ' ontbreekt of heeft een afwijkend gewicht in het baselinemodel');
       else weightSum += parseInt(c[2], 10);
     });
     if (weightSum !== 100) problems.push('subcriteria-gewichten tellen op tot ' + weightSum + '%, verwacht 100%');
     if (!/Roadmap Product Maturity/.test(baseline)) problems.push('maturity-metriek ontbreekt in het baselinemodel');
+    // Maturity mag pas CANONICAL heten wanneer A-J per capability is ingevuld.
+    if (/Roadmap Product Maturity[^|]*\|[^|]*\|[^|]*\| *\*\*CANONICAL\*\*/.test(baseline)) {
+      problems.push('Roadmap Product Maturity staat als CANONICAL terwijl A-J per capability niet is ingevuld');
+    }
+    // De canonieke roadmap-SoT moet elk item een primary_track en v1_scope geven.
+    const idxPath = path.join(ROOT, 'docs', 'ROADMAP_INDEX.json');
+    if (fs.existsSync(idxPath)) {
+      const items = JSON.parse(fs.readFileSync(idxPath, 'utf8'));
+      const noTrack = items.filter(function (x) { return !x.primary_track; }).length;
+      const noScope = items.filter(function (x) { return typeof x.v1_scope === 'undefined'; }).length;
+      if (noTrack) problems.push(noTrack + ' ROADMAP_INDEX-items zonder primary_track');
+      if (noScope) problems.push(noScope + ' ROADMAP_INDEX-items zonder v1_scope');
+      const badT = items.filter(function (x) { return x.primary_track && VALID_TRACKS.indexOf(x.primary_track) < 0; });
+      if (badT.length) problems.push('ongeldige primary_track in ROADMAP_INDEX: ' + badT[0].id);
+    } else problems.push('canonical roadmap-SoT docs/ROADMAP_INDEX.json ontbreekt');
     if (!/MERGED_CLOSURE/.test(baseline) || !/BASELINE_MODEL_REVISION/.test(baseline)) {
       problems.push('score-drift-regels (A..D) ontbreken in het baselinemodel');
     }

@@ -50,17 +50,47 @@ B+C+F = 45%, omdat daar de drie harde regels van dit project worden getoetst: `B
 
 ## Officiële metrieken — Baseline 1.0
 
-| Metriek | Teller / Noemer | Waarde |
+| Metriek | Teller / Noemer | Waarde | Status |
+|---|---|---|---|
+| **Audit Coverage** | 78 / 81 | **96,30%** | **CANONICAL** |
+| **Audit Closure** (V1_SCOPE=TRUE, excl. SUPERSEDED) | 16 / 55 | **29,09%** | **CANONICAL** |
+| Roadmap Product Maturity | 4,04 / 5 | 80,8% | **PROVISIONAL — NIET CANONICAL** |
+
+### Waarom Maturity nog niet canonical is
+
+Het model schrijft voor dat maturity uit de tien gewogen subcriteria A–J wordt
+berekend, en dat decimalen uitsluitend uit expliciete subcriteria volgen. Dat kan
+vandaag niet worden waargemaakt. De capability-items in `ROADMAP_INDEX.json` dragen
+uitsluitend de velden `status`, `priority`, `phase`, `target`, `software_validation`,
+`device_validation`, `evidence_status`, `dependencies` en `next_action`. Daaruit is
+afleidbaar:
+
+| Criterium | Gewicht | Afleidbaar uit de index? |
 |---|---|---|
-| **Audit Coverage** | 78 / 81 | **96.30%** |
-| **Audit Closure** (V1_SCOPE=TRUE, excl. SUPERSEDED) | 16 / 56 | **28.57%** |
-| **Roadmap Product Maturity** | 4.041 / 5 | **80.82%** |
+| A Product scope defined | 5% | ja |
+| B Canonical architecture | 15% | **nee** |
+| C Runtime integration | 15% | **nee** |
+| D Persistence/data model | 10% | **nee** |
+| E Calc/Context/Decision integratie | 10% | **nee** |
+| F Tests/evidence | 15% | ja |
+| G Security/privacy | 5% | deels |
+| H UX/user-facing completion | 10% | **nee** |
+| I Failure/degraded-state handling | 5% | **nee** |
+| J V1 audit closure | 10% | ja |
 
-### Noemers
+**30% van het gewicht is afleidbaar, 5% deels, 65% niet.** Die 65% zou per capability
+handmatig in de codebase moeten worden vastgesteld: 81 capabilities × 6 criteria =
+486 afzonderlijke beoordelingen.
 
-- **Coverage**: alle auditeerbare capability-items (`type=capability` in ROADMAP_INDEX) plus de 7 canonieke T9-capabilities. COVERED = `evidence_status` ∈ {VERIFIED, N/A, PARTIAL}.
-- **Closure**: alle canonical gaps met `v1_scope=true`, exclusief SUPERSEDED. Teller = CLOSED_PROVEN + DEFERRED_ACCEPTED.
-- **Maturity**: equal weight over de 18 tracks; per track het gemiddelde maturityniveau van de eraan gekoppelde index-items.
+De getoonde 80,8% is daarom **provisioneel** en berust op de statusafbeelding
+(`NOT STARTED`=1 · `IMPLEMENTED`=2 · `INTEGRATED`/`TESTED`=3 · `VALIDATED`=4 ·
+`CLOSED`=5). Die afbeelding is **geen alternatieve scorebron** en wordt niet als
+canonical verklaard. Zodra A–J per capability is ingevuld, vervangt die berekening
+de provisionele waarde via change_type **D BASELINE_MODEL_REVISION**.
+
+**Canonieke methode, vastgelegd:** capability-maturity uit A–J → trackscore =
+gemiddelde capabilityscore → totaal = equal-weight over T1–T18. `status` is een
+afgeleid label van die evidence, nooit de bron.
 
 ## T1–T18 matrix
 

@@ -88,9 +88,32 @@ De getoonde 80,8% is daarom **provisioneel** en berust op de statusafbeelding
 canonical verklaard. Zodra A–J per capability is ingevuld, vervangt die berekening
 de provisionele waarde via change_type **D BASELINE_MODEL_REVISION**.
 
-**Canonieke methode, vastgelegd:** capability-maturity uit A–J → trackscore =
-gemiddelde capabilityscore → totaal = equal-weight over T1–T18. `status` is een
-afgeleid label van die evidence, nooit de bron.
+**Canonieke methode, vastgelegd (BASELINE-1.1, change_type D):**
+
+**OFFICIËLE METRIEK = V1 PRODUCT MATURITY.**
+
+| Element | Definitie |
+|---|---|
+| Populatie | alle capabilities met `v1_scope = true` |
+| Capabilityscore | gewogen A–J |
+| Trackscore | gemiddelde van de **V1-capabilities** binnen die track |
+| Totaal | equal-weight gemiddelde over **alle tracks die ten minste één V1-capability bevatten** |
+| Tracks zonder V1-capability | **niet** in de V1-noemer |
+| Post-V1-capabilities | **niet** in de V1-maturity, wel behouden in `ROADMAP_INDEX.json` |
+| J bij `v1_scope = false` | **N/A** — geen fictieve 0 of 5 |
+
+`status` is een afgeleid label van de evidence, nooit de scorebron.
+
+De tracknoemer is **capability-based bewezen**, niet aangenomen: een track telt mee
+zodra hij één V1-capability bevat. Op BASELINE-1.1 levert dat **16 V1-tracks** op
+(T1–T15 en T17); T16 en T18 vallen af omdat al hun capabilities `v1_scope = false`
+dragen. Die uitkomst is afgeleid, geen regel — verschuift een capability van scope,
+dan verschuift de noemer mee.
+
+**ALL-ROADMAP PRODUCT MATURITY** over alle 18 tracks is een mogelijke aparte
+toekomstige metriek. Die is op dit moment **niet canonical en niet berekend**. De
+≈80,8% blijft uitsluitend een legacy/provisionele statusmapping-indicator tot A–J
+hem vervangt.
 
 ## T1–T18 matrix
 

@@ -519,6 +519,7 @@ try {
     }
     // De canonieke roadmap-SoT moet elk item een primary_track en v1_scope geven.
     const idxPath = path.join(ROOT, 'docs', 'ROADMAP_INDEX.json');
+    const idxPath2 = idxPath;
     if (fs.existsSync(idxPath)) {
       const items = JSON.parse(fs.readFileSync(idxPath, 'utf8'));
       const noTrack = items.filter(function (x) { return !x.primary_track; }).length;
@@ -537,6 +538,37 @@ try {
     const declared = reg.generated_against_main;
     if (!declared) problems.push('AUDIT_GAP_REGISTER.json mist generated_against_main');
     else if (!/^[0-9a-f]{40}$/.test(declared)) problems.push('generated_against_main is geen volledige commit-SHA');
+
+    // ── BASELINE-1.1: capability-populatie en V1-maturitynoemer ──
+    if (fs.existsSync(idxPath2)) {
+      const items2 = JSON.parse(fs.readFileSync(idxPath2, 'utf8'));
+      const caps2 = items2.filter(function (x) { return x.type === 'capability'; });
+      const seenCap = new Set();
+      caps2.forEach(function (c) {
+        if (seenCap.has(c.id)) problems.push('duplicate capability stable_id: ' + c.id);
+        seenCap.add(c.id);
+        if (!c.primary_track) problems.push('capability zonder primary_track: ' + c.id);
+        if (typeof c.v1_scope === 'undefined') problems.push('capability zonder v1_scope: ' + c.id);
+        // J mag op een post-V1 capability nooit iets anders zijn dan N/A
+        if (c.v1_scope === false && c.criteria && c.criteria.J && c.criteria.J.applicable !== false) {
+          problems.push('post-V1 capability ' + c.id + ' heeft J anders dan N/A');
+        }
+      });
+      // Een mastersprint mag nooit A-J-scoredata dragen
+      items2.filter(function (x) { return x.type === 'mastersprint' && x.criteria; })
+            .forEach(function (m) { problems.push('mastersprint ' + m.id + ' draagt A-J-data en zou als capability gescoord worden'); });
+      // Elke V1-track moet capability-representatie hebben
+      const v1Tracks = {};
+      caps2.filter(function (c) { return c.v1_scope === true; })
+           .forEach(function (c) { v1Tracks[c.primary_track] = true; });
+      items2.filter(function (x) { return x.v1_scope === true; }).forEach(function (x) {
+        if (!v1Tracks[x.primary_track]) {
+          problems.push('V1-track ' + x.primary_track + ' heeft geen enkele V1-capability (noemer ondefinieerbaar)');
+        }
+      });
+      if (!/V1 PRODUCT MATURITY/.test(baseline)) problems.push('V1-maturityformule ontbreekt in het baselinemodel');
+      if (!/ten minste één V1-capability/.test(baseline)) problems.push('capability-based tracknoemer ontbreekt in het baselinemodel');
+    }
 
     if (problems.length) fail('BASELINE-1.0 auditguard: ' + problems.slice(0, 6).join('; ') +
       (problems.length > 6 ? ' (+' + (problems.length - 6) + ' meer)' : ''));

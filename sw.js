@@ -5,8 +5,8 @@
 // Reden: de static-fetch is cache-first over ALLE caches; een oude core-entry in de niet-gebumpte
 // dynamische cache kon de nieuwe precache overschaduwen (stale serve na deploy). Door CACHE_NAME mee te
 // bumpen ruimt de activate-handler de oude dynamische cache op. REGEL: core wijzigt -> bump CACHE_NAME + CACHE_STATIC.
-const CACHE_NAME = 'trainingskompas-v469960';
-const CACHE_STATIC = 'trainingskompas-static-v469960';
+const CACHE_NAME = 'trainingskompas-v469970';
+const CACHE_STATIC = 'trainingskompas-static-v469970';
 // F1.9 SW-GUARD: hash (CRLF-agnostisch) van core/calculation.js + core/decision.js.
 // core/sw-guard.test.js faalt als de core wijzigt zonder dat deze CORE_SIG + CACHE_STATIC gebumpt zijn.
 // Bij een core-wijziging: draai `node core/sw-guard.test.js` -> die print de nieuwe CORE_SIG; werk hem
@@ -102,6 +102,14 @@ function mediaUrl(pathname) {
   return MEDIA_ORIGIN ? (MEDIA_ORIGIN + pathname) : pathname;
 }
 function isVideoRequest(url) {
+  /* MEDIA-0C: alleen SAME-ORIGIN video's onderscheppen.
+     De canonieke resolver levert op Capacitor/Android een absolute remote URL aan
+     <video src>; die moet de WebView zelf afhandelen (native streaming + Range).
+     Zou de SW die onderscheppen, dan keerden precies de defecten terug die deze
+     reparatie wegneemt: verplichte SW, cross-origin fetch, CORS-afhankelijkheid en
+     het vernietigen van Range door een volledige 200-download. */
+  try { if (new URL(url, self.location.href).origin !== self.location.origin) return false; }
+  catch (e) { return false; }
   return /\/videos\/[^?#]+\.(mp4|webm|mov)$/i.test(url);
 }
 async function videoMeta(cache) {

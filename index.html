@@ -7297,7 +7297,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.96';
+const APP_VER = 'v4.69.97';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -18931,7 +18931,7 @@ function openExecExplain(t){
   // tijdens de training (was eerder onzichtbaar), anders YouTube, anders poster, anders nette melding.
   var _media=resolveExerciseMedia(ex);
   if(_media.kind==='mp4'){
-    body+='<div class="vid-wrap"><video controls preload="metadata" playsinline'+(_media.poster?(' poster="'+_media.poster+'"'):'')+' style="width:100%;display:block;border-radius:12px" src="'+_media.src+'"></video><div class="vid-label">'+nm+' — techniek video</div></div>';
+    body+='<div class="vid-wrap"><video controls preload="none" playsinline'+(_media.poster?(' poster="'+_media.poster+'"'):'')+' style="width:100%;display:block;border-radius:12px" src="'+_media.src+'"></video><div class="vid-label">'+nm+' — techniek video</div></div>';
   } else if(_media.kind==='yt'){
     body+='<div class="vid-wrap" onclick="loadVid(this,\''+_media.src+'\')"><img src="https://img.youtube.com/vi/'+_media.src+'/mqdefault.jpg" alt="'+nm+'" loading="lazy" onerror="this.parentElement.style.display=\'none\'"><div class="vid-play">▶</div><div class="vid-label">▶ '+nm+' — techniek video</div></div>';
   } else if(_media.kind==='poster'){
@@ -19365,11 +19365,63 @@ var VIDEO_MANIFEST={"TK-000206":{"catalog_id":"TK-000206","slug":"wall-sit","pos
   var VCACHE='tk-videos-v1';
   var _bySlug={};for(var cid in VIDEO_MANIFEST){var e=VIDEO_MANIFEST[cid];_bySlug[e.slug]=e;}
   /* Video-provider (manifest-gedreven, provider-onafhankelijk) via de bestaande extensie-API. */
+  /* ═══ CANONIEKE MEDIA URL RESOLVER (MEDIA-0C) ═══════════════════════════════
+     Waarom: op Capacitor/Android is de app-origin https://localhost. Een relatief
+     pad 'videos/<slug>.mp4' resolveert daar naar https://localhost/videos/<slug>.mp4,
+     terwijl videos/ bewust NIET in de Android-bundel zit (build-www.mjs) -> 404.
+     Tot nu toe herstelde uitsluitend de service worker dat, door het verzoek te
+     onderscheppen en cross-origin te fetchen. Daarmee hing BASALE ONLINE PLAYBACK
+     af van SW-beschikbaarheid, -registratie, -activatie, cross-origin fetch, geldige
+     CORS en Cache-API-compatibiliteit: zes single points of failure.
+
+     Deze resolver geeft het absolute media-adres rechtstreeks terug, zodat het aan
+     <video src> kan worden toegekend. De WebView doet dan zelf een native
+     media-request (no-cors, mét Range). Geen service worker nodig, geen CORS nodig.
+
+     Identiteit is exact: alleen het pad wordt geprefixt, nooit herschreven, nooit
+     vervangen door een andere oefening. Onbekend/misvormd -> null (fail closed). */
+  var MediaUrlResolver=(function(){
+    var RE_SAFE=/^videos\/[A-Za-z0-9][A-Za-z0-9._-]*\.(mp4|webm|mov)$/i;
+    /* Runtimecontext: alleen op een localhost-origin (Capacitor/Android, en lokale dev)
+       moet media van de externe origin komen. Op het web blijft alles same-origin. */
+    function originFor(ctx){
+      var host=(ctx&&ctx.hostname!=null)?ctx.hostname:(typeof location!=='undefined'?location.hostname:'');
+      if(host==='localhost'||host==='127.0.0.1'){
+        return (typeof MEDIA_ORIGIN_OVERRIDE!=='undefined'&&MEDIA_ORIGIN_OVERRIDE)?MEDIA_ORIGIN_OVERRIDE:MEDIA_ORIGIN_DEFAULT;
+      }
+      return '';
+    }
+    function resolve(relativePath,ctx){
+      if(typeof relativePath!=='string')return null;
+      var p=relativePath.trim();
+      if(!p)return null;
+      /* Al absoluut: uitsluitend toestaan wanneer het exact de geconfigureerde
+         media-origin is. Elke andere externe URL wordt geweigerd (§12: geen
+         willekeurige externe URL-injectie). */
+      if(/^https?:\/\//i.test(p)){
+        var allowed=originFor(ctx)||MEDIA_ORIGIN_DEFAULT;
+        if(p.indexOf(allowed+'/videos/')!==0)return null;
+        return RE_SAFE.test(p.slice(allowed.length+1))?p:null;
+      }
+      if(p.charAt(0)==='/')p=p.slice(1);
+      if(!RE_SAFE.test(p))return null;           /* fail closed: geen willekeurige paden */
+      var o=originFor(ctx);
+      return o?(o+'/'+p):p;
+    }
+    return {resolve:resolve,originFor:originFor,isSafePath:function(p){return RE_SAFE.test(String(p||''));}};
+  })();
+  /* Configureerbaar: één plek om later naar object storage/Supabase te wijzen.
+     Bewust geen nieuwe permanente Netlify-koppeling — dit is de bestaande origin. */
+  var MEDIA_ORIGIN_DEFAULT='https://maurice-art.netlify.app';
+  window.MediaUrlResolver=MediaUrlResolver;
+
   ExerciseAssetProvider.register('video',{id:'movekit-videos',type:'video',format:'mp4',
-    resolve:function(slug){var e=_bySlug[slug];return (e&&e.videos&&e.videos[0])?e.videos[0].file:null;},
+    resolve:function(slug){var e=_bySlug[slug];var f=(e&&e.videos&&e.videos[0])?e.videos[0].file:null;return f?MediaUrlResolver.resolve(f):null;},
     has:function(slug){var e=_bySlug[slug];return !!(e&&e.videos&&e.videos.length);}});
   /* Publieke video-API (videos[]-model: meerdere video's per oefening voorbereid). */
-  ExerciseAssetProvider.videos=function(catalogId){var e=VIDEO_MANIFEST[catalogId];return (e&&e.videos)?e.videos.slice():[];};
+  /* videos(): file blijft het canonieke manifestpad; url is het runtime-adres (MEDIA-0C). */
+  ExerciseAssetProvider.videos=function(catalogId){var e=VIDEO_MANIFEST[catalogId];if(!(e&&e.videos))return [];
+    return e.videos.map(function(v){var c={};for(var k in v)c[k]=v[k];c.url=MediaUrlResolver.resolve(v.file);return c;});};
   ExerciseAssetProvider.video=function(catalogId,i){var v=this.videos(catalogId);return v[i||0]||null;};
   ExerciseAssetProvider.hasVideo=function(catalogId){return this.videos(catalogId).length>0;};
   ExerciseAssetProvider.videoManifest=function(){return VIDEO_MANIFEST;};
@@ -20159,7 +20211,9 @@ function _libPlayVideo(el){var src=el.getAttribute('data-vsrc'),id=el.getAttribu
   v.src=src;el.classList.add('playing');el.innerHTML='';el.appendChild(v);
   var pr=v.play();if(pr&&pr.catch)pr.catch(function(){});
   /* Warm de offline-cache (Cache-First tk-videos-v1); de service worker cachet ook automatisch. */
-  try{if('caches' in window)caches.open('tk-videos-v1').then(function(c){c.add(new Request(src)).catch(function(){});}).catch(function(){});}catch(e){}}
+  /* MEDIA-0C: cache-warmup alleen same-origin. Cross-origin c.add() vereist CORS en
+     zou stil falen; de native media-request heeft de cache niet nodig om te spelen. */
+  try{if('caches' in window && src.indexOf('http')!==0)caches.open('tk-videos-v1').then(function(c){c.add(new Request(src)).catch(function(){});}).catch(function(){});}catch(e){}}
 /* Memory: stop en ontkoppel elke actieve video vóór her-render/verlaten scherm. */
 function _libDisposeVideo(){try{var vs=document.querySelectorAll('#s-library video');for(var i=0;i<vs.length;i++){try{vs[i].pause();vs[i].removeAttribute('src');vs[i].load();}catch(e){}}}catch(e){}}
 
@@ -20349,7 +20403,7 @@ function buildVideoMuscle(ex){
   // MoveKit-.mp4 speelt hier daadwerkelijk af (<video controls>), niet enkel een poster met play-knop.
   const _m=resolveExerciseMedia(ex);
   if(_m.kind==='mp4'){
-    h+=`<div class="vid-wrap"><video controls preload="metadata" playsinline${_m.poster?` poster="${_m.poster}"`:''} style="width:100%;display:block;border-radius:12px" src="${_m.src}"></video><div class="vid-label">${escHtml(ex.naam)} — techniek video</div></div>`;
+    h+=`<div class="vid-wrap"><video controls preload="none" playsinline${_m.poster?` poster="${_m.poster}"`:''} style="width:100%;display:block;border-radius:12px" src="${_m.src}"></video><div class="vid-label">${escHtml(ex.naam)} — techniek video</div></div>`;
   } else if(_m.kind==='yt'){
     h+=`<div class="vid-wrap" onclick="loadVid(this,'${_m.src}')"><img src="https://img.youtube.com/vi/${_m.src}/mqdefault.jpg" alt="${escHtml(ex.naam)}" loading="lazy" onerror="this.parentElement.style.display='none'"><div class="vid-play">▶</div><div class="vid-label">▶ ${escHtml(ex.naam)} — techniek video</div></div>`;
   } else if(_m.kind==='poster'){
@@ -36408,7 +36462,7 @@ var GWUI=(function(){
     try{has=A().hasVideo(id);}catch(_){}
     try{poster=A().poster(id)||'';}catch(_){}
     if(has){var src='';try{src=A().resolve(id,'video');}catch(_){}
-      return '<div class="gw-media"><video class="gw-video" controls playsinline preload="metadata" poster="'+poster+'"><source src="'+src+'" type="video/mp4"></video></div>';}
+      return '<div class="gw-media"><video class="gw-video" controls playsinline preload="none" poster="'+poster+'"><source src="'+src+'" type="video/mp4"></video></div>';}
     return '<div class="gw-media gw-media-ph" style="background-image:url(\''+poster+'\')"><span class="gw-media-tag">Techniekbeeld</span></div>';
   }
   function detailPanel(it,e){

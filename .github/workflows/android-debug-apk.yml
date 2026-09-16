@@ -33,6 +33,8 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
 
       - name: Install Android SDK platform 36
         run: |
@@ -48,18 +50,15 @@ jobs:
       - name: Verify native BLE transport and permissions
         run: |
           test -f android/app/src/main/assets/public/native-transport.js
-          grep -q "@capacitor-community/bluetooth-le" android/capacitor.settings.gradle
+          grep -q "@capacitor-community/bluetooth-le" android/app/src/main/assets/public/native-transport.js
           grep -q "android.permission.BLUETOOTH_SCAN" android/app/src/main/AndroidManifest.xml
           grep -q "android.permission.BLUETOOTH_CONNECT" android/app/src/main/AndroidManifest.xml
-
-      - name: Ensure Gradle wrapper is executable
-        run: chmod +x android/gradlew
 
       - name: Build debug APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
 
-      - name: Record provenance and SHA-256
+      - name: Verify APK and write provenance
         run: |
           APK="android/app/build/outputs/apk/debug/app-debug.apk"
           test -f "$APK"

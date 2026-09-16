@@ -1,5 +1,83 @@
 # Trainingskompas — Changelog
 
+## v4.69.97 — MEDIA-0C: Android-videoweergave zonder service worker (15 september 2026)
+
+**Device-bewijs dat deze sprint uitlokte.** In de geïnstalleerde Android-app (v4.69.80) falen
+**alle** oefeningvideo's; op het web spelen dezelfde video's wel af. MEDIA-0B bewees dat het
+volledige Android-videopad van v4.69.80 architectonisch gelijk is aan dat van main.
+
+**Structurele oorzaak.** Op Capacitor/Android is de app-origin `https://localhost`. Een relatief
+pad `videos/<slug>.mp4` resolveert daar naar `https://localhost/videos/<slug>.mp4`, terwijl
+`videos/` bewust niet in de Android-bundel zit. Alleen de service worker herstelde dat, door het
+verzoek te onderscheppen en cross-origin te fetchen. Daarmee hing **basale online weergave** af
+van zes schakels op rij: SW-beschikbaarheid, -registratie, -activatie, cross-origin `fetch()`
+binnen de SW, geldige CORS, en Cache-API-compatibiliteit. Elk daarvan is een single point of
+failure; twee ervan (H1 CORS en H2 SW-registratie) bleven na alle diagnostiek even sterk
+ondersteund en waren statisch niet te scheiden.
+
+**Gekozen reparatie: de indirectie weghalen in plaats van één van beide oorzaken gokken.**
+Nieuw architectuurprincipe: *basale online videoweergave mag nooit een service worker vereisen.*
+Een canonieke resolver levert het media-adres rechtstreeks aan `<video src>`; de WebView doet dan
+zelf een native media-request. Dat verzoek is **no-cors** — een `HTMLMediaElement` zonder
+`crossorigin`-attribuut leest de bytes niet via JavaScript en heeft daarom **geen ACAO-header
+nodig**. Daarmee vervallen H1 én H2 tegelijk als single point of failure, zonder dat is
+vastgesteld welke van de twee vandaag de feitelijke oorzaak is.
+
+### Wijzigingen
+
+- **`MediaUrlResolver`** — één deterministisch resolutiepunt. Web: pad blijft relatief en
+  same-origin, gedrag ongewijzigd. Capacitor/Android (`localhost`): pad wordt geprefixt met de
+  configureerbare media-origin. Padidentiteit blijft exact; er wordt nooit herschreven of
+  vervangen door een andere oefening. Onbekend, misvormd of extern pad → `null` (fail closed).
+  Een reeds absolute URL wordt uitsluitend geaccepteerd wanneer die exact op de geconfigureerde
+  media-origin plus `/videos/` staat — geen willekeurige externe URL-injectie.
+- **`ExerciseAssetProvider`** — `resolve(id,'video')` en `videos(id)` geven nu het runtime-adres.
+  `videos()[n].file` blijft het canonieke manifestpad; het nieuwe veld `url` draagt het
+  runtime-adres. Checksums en manifestidentiteit zijn ongemoeid. Dit is het enige
+  convergentiepunt, dus alle vier de videopaden erven het zonder duplicatie.
+- **`sw.js`** — `isVideoRequest()` onderschept voortaan uitsluitend **same-origin** video's. Zou
+  de SW de remote URL onderscheppen, dan keerden precies de defecten terug die deze reparatie
+  wegneemt. Het bestaande same-origin gedrag (web, offline-cache) blijft ongewijzigd.
+- **`preload="metadata"` → `preload="none"`** op alle drie de resterende videopaden. Door het
+  ontbreken van Range-support veroorzaakte `metadata` een volledige download van gemiddeld
+  2,34 MB bij het enkel openen van een oefening. De poster blijft de directe visuele staat.
+- **Cache-warmup** in de bibliotheek alleen nog same-origin: `cache.add()` vereist wél CORS en
+  zou cross-origin stil falen.
+
+### Bewijs
+
+Nieuw: `core/fMediaUrlResolver.test.js` (29 assertions), die de **echte** resolver uit
+`index.html` en de **echte** `isVideoRequest` uit `sw.js` laadt.
+
+- Web-pad ongewijzigd; SW onderschept op web nog steeds same-origin video.
+- Android resolvet naar de remote media-origin, ook met `navigator` volledig afwezig én met
+  `register()` afwijzend en `controller === null`.
+- Alle **226** oefeningen resolven exact hun eigen slug; geen kruisbesmetting; onbekende
+  `catalog_id` → `null`.
+- Dertien fail-closed gevallen, waaronder pad-traversal en vreemde origins.
+- De SW onderschept de remote URL niet meer → TK vernietigt de Range niet langer.
+
+Sabotage S1–S5 werkelijk uitgevoerd, elk rood bewezen, byte-exact hersteld (sha256):
+resolver geeft localhost-pad → 4 rood; verkeerde slug → 4 rood; SW weer verplicht → 2 rood;
+misvormd pad geaccepteerd → 4 rood; `preload="metadata"` terug → 1 rood.
+
+### Bekende beperkingen — expliciet
+
+- **Of de mediaserver werkelijk `206` teruggeeft is NIET gemeten** (egress geblokkeerd). Bewezen
+  is uitsluitend dat TK de Range niet langer vernietigt. De servercapaciteit blijft UNPROVEN.
+- **Het webpad routeert nog steeds via de service worker** en downloadt daar nog steeds volledig.
+  Bewust buiten scope gehouden: dat is MEDIA-1, en het web werkt vandaag aantoonbaar.
+- **Offline weergave op Android is niet toegevoegd en niet verwijderd.** Video's stonden daar
+  nooit in de bundel; de remote URL wordt nu niet meer door de SW gecachet. Dat is geen
+  regressie ten opzichte van een werkende situatie — er was geen werkende situatie. Expliciete
+  offline-download is MEDIA-1.
+- **De werkelijke oorzaak (H1 dan wel H2) blijft onbepaald.** Deze reparatie maakt beide
+  irrelevant voor basale weergave; ze bewijst niet welke van de twee actief was.
+- **Android-weergave blijft DEVICE VALIDATION REQUIRED.** Geen enkel statisch bewijs vervangt
+  één keer op play drukken op een toestel.
+
+Geen mediamigratie, geen bucket, geen catalogusuitbreiding, geen posterwijziging, geen Batch 002.
+
 ## v4.69.96 — MoveKit Gate Closure A: intelligence UNKNOWN-state + posterdekking (15 september 2026)
 
 Begrensde sprint na de MoveKit Media Scale + Intelligence Unknown-State Gate. **Geen

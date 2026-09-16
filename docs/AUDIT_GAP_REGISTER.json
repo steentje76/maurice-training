@@ -724,7 +724,7 @@
   {
    "gap_id": "GAP-P3-001",
    "title": "### GAP-P3-001 — Redundante ownership-check ontbreekt in `WITH CHECK` (defense-in-depth)",
-   "primary_track": "T2",
+   "primary_track": "T17",
    "severity": "P3",
    "status": "REVIEW_REQUIRED",
    "v1_scope": true,
@@ -737,7 +737,11 @@
    "offset": 38735,
    "severity_source": "derived_from_id",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "V1_SCOPE_MATRIX: Auth/account-lifecycle = V1 MUST Ja",
+   "secondary_tracks": [
+    "T2"
+   ],
+   "track_evidence": "BASELINE-1.2 C-A3: root cause is ownership-afdwinging via BEFORE INSERT-triggers in plaats van RLS WITH CHECK, op exercises/custom_trainings/equipment_catalog. Responsibility = security/RLS (T17), niet exercise intelligence. Metadata-correctie, geen productprogressie."
   },
   {
    "gap_id": "GAP-P3-002",

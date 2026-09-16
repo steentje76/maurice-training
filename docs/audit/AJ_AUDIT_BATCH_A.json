@@ -1,0 +1,935 @@
+{
+ "_schema": "trainingskompas-aj-audit/1.0",
+ "audit_model_version": "A-J/1.0",
+ "baseline_sha": "66e36f92e4144146c3ea4838bad9c7280af5194f",
+ "batch": "A",
+ "batch_scope": [
+  "T1",
+  "T2"
+ ],
+ "audit_timestamp": "2026-09-16",
+ "provenance": "BASELINE-1.2 A-J Batch A + evidence closure gate",
+ "anchors_frozen": true,
+ "weights": {
+  "A": 5,
+  "B": 15,
+  "C": 15,
+  "D": 10,
+  "E": 10,
+  "F": 15,
+  "G": 5,
+  "H": 10,
+  "I": 5,
+  "J": 10
+ },
+ "complete": false,
+ "note": "Batch A dekt 9 van 86 V1-capabilities. V1 Product Maturity is NIET canonical.",
+ "track_results": {
+  "T1": {
+   "score": 3.32,
+   "capabilities": 5,
+   "confidence": "MEDIUM"
+  },
+  "T2": {
+   "score": 3.591,
+   "capabilities": 4,
+   "confidence": "HIGH"
+  }
+ },
+ "capabilities": [
+  {
+   "stable_id": "TRAIN-EXECUTION-001",
+   "primary_track": "T1",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html createTrainingInstance(); openTrainingPreview() 17 callers; applyExecutionFocus() 7; logSet() 15; training_instances 18 migraties; 19 core-testbestanden; device proof PR #362 (openExecExplain); docs/F13_POST_AUDIT_RECONCILIATION_REPORT.md r218 \"0 tabellen zonder RLS\""
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html createTrainingInstance(); openTrainingPreview() 17 callers; applyExecutionFocus() 7; logSet() 15; training_instances 18 migraties; 19 core-testbestanden; device proof PR #362 (openExecExplain); docs/F13_POST_AUDIT_RECONCILIATION_REPORT.md r218 \"0 tabellen zonder RLS\""
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html createTrainingInstance(); openTrainingPreview() 17 callers; applyExecutionFocus() 7; logSet() 15; training_instances 18 migraties; 19 core-testbestanden; device proof PR #362 (openExecExplain); docs/F13_POST_AUDIT_RECONCILIATION_REPORT.md r218 \"0 tabellen zonder RLS\""
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "D": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html createTrainingInstance(); openTrainingPreview() 17 callers; applyExecutionFocus() 7; logSet() 15; training_instances 18 migraties; 19 core-testbestanden; device proof PR #362 (openExecExplain); docs/F13_POST_AUDIT_RECONCILIATION_REPORT.md r218 \"0 tabellen zonder RLS\""
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "E": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html createTrainingInstance(); openTrainingPreview() 17 callers; applyExecutionFocus() 7; logSet() 15; training_instances 18 migraties; 19 core-testbestanden; device proof PR #362 (openExecExplain); docs/F13_POST_AUDIT_RECONCILIATION_REPORT.md r218 \"0 tabellen zonder RLS\""
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html createTrainingInstance(); openTrainingPreview() 17 callers; applyExecutionFocus() 7; logSet() 15; training_instances 18 migraties; 19 core-testbestanden; device proof PR #362 (openExecExplain); docs/F13_POST_AUDIT_RECONCILIATION_REPORT.md r218 \"0 tabellen zonder RLS\""
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "G": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html createTrainingInstance(); openTrainingPreview() 17 callers; applyExecutionFocus() 7; logSet() 15; training_instances 18 migraties; 19 core-testbestanden; device proof PR #362 (openExecExplain); docs/F13_POST_AUDIT_RECONCILIATION_REPORT.md r218 \"0 tabellen zonder RLS\""
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html createTrainingInstance(); openTrainingPreview() 17 callers; applyExecutionFocus() 7; logSet() 15; training_instances 18 migraties; 19 core-testbestanden; device proof PR #362 (openExecExplain); docs/F13_POST_AUDIT_RECONCILIATION_REPORT.md r218 \"0 tabellen zonder RLS\""
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html createTrainingInstance(); openTrainingPreview() 17 callers; applyExecutionFocus() 7; logSet() 15; training_instances 18 migraties; 19 core-testbestanden; device proof PR #362 (openExecExplain); docs/F13_POST_AUDIT_RECONCILIATION_REPORT.md r218 \"0 tabellen zonder RLS\""
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html createTrainingInstance(); openTrainingPreview() 17 callers; applyExecutionFocus() 7; logSet() 15; training_instances 18 migraties; 19 core-testbestanden; device proof PR #362 (openExecExplain); docs/F13_POST_AUDIT_RECONCILIATION_REPORT.md r218 \"0 tabellen zonder RLS\""
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    }
+   },
+   "weighted_score": 3.7,
+   "gap_refs": [],
+   "limitations": "geen live two-user adversarial RLS-harness; device proof dekt uitsluitend de openExecExplain-subflow"
+  },
+  {
+   "stable_id": "TRAIN-BUILDER-001",
+   "primary_track": "T1",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html openNewTrainingModal(), startCustomTraining() 3 callers; 6 core-testbestanden; 1 migratie; RLS-dekking via F13-rapport"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html openNewTrainingModal(), startCustomTraining() 3 callers; 6 core-testbestanden; 1 migratie; RLS-dekking via F13-rapport"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html openNewTrainingModal(), startCustomTraining() 3 callers; 6 core-testbestanden; 1 migratie; RLS-dekking via F13-rapport"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "D": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html openNewTrainingModal(), startCustomTraining() 3 callers; 6 core-testbestanden; 1 migratie; RLS-dekking via F13-rapport"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "E": {
+     "applicable": true,
+     "confidence": "LOW",
+     "evidence_refs": [
+      "index.html openNewTrainingModal(), startCustomTraining() 3 callers; 6 core-testbestanden; 1 migratie; RLS-dekking via F13-rapport"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 2
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html openNewTrainingModal(), startCustomTraining() 3 callers; 6 core-testbestanden; 1 migratie; RLS-dekking via F13-rapport"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "G": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html openNewTrainingModal(), startCustomTraining() 3 callers; 6 core-testbestanden; 1 migratie; RLS-dekking via F13-rapport"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html openNewTrainingModal(), startCustomTraining() 3 callers; 6 core-testbestanden; 1 migratie; RLS-dekking via F13-rapport"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "LOW",
+     "evidence_refs": [
+      "index.html openNewTrainingModal(), startCustomTraining() 3 callers; 6 core-testbestanden; 1 migratie; RLS-dekking via F13-rapport"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html openNewTrainingModal(), startCustomTraining() 3 callers; 6 core-testbestanden; 1 migratie; RLS-dekking via F13-rapport"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    }
+   },
+   "weighted_score": 3.25,
+   "gap_refs": [],
+   "limitations": "geen capability-specifieke evidence voor Calc/Context-integratie en degraded states"
+  },
+  {
+   "stable_id": "TRAIN-SCHEDULE-001",
+   "primary_track": "T1",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html openScheduleMyTraining(), openRepeatWorkout(); program_blocks 8 migraties; 12 core-testbestanden; open GAP-P3-004 (toISOString tijdzone)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html openScheduleMyTraining(), openRepeatWorkout(); program_blocks 8 migraties; 12 core-testbestanden; open GAP-P3-004 (toISOString tijdzone)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html openScheduleMyTraining(), openRepeatWorkout(); program_blocks 8 migraties; 12 core-testbestanden; open GAP-P3-004 (toISOString tijdzone)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "D": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html openScheduleMyTraining(), openRepeatWorkout(); program_blocks 8 migraties; 12 core-testbestanden; open GAP-P3-004 (toISOString tijdzone)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "E": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html openScheduleMyTraining(), openRepeatWorkout(); program_blocks 8 migraties; 12 core-testbestanden; open GAP-P3-004 (toISOString tijdzone)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html openScheduleMyTraining(), openRepeatWorkout(); program_blocks 8 migraties; 12 core-testbestanden; open GAP-P3-004 (toISOString tijdzone)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "G": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html openScheduleMyTraining(), openRepeatWorkout(); program_blocks 8 migraties; 12 core-testbestanden; open GAP-P3-004 (toISOString tijdzone)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html openScheduleMyTraining(), openRepeatWorkout(); program_blocks 8 migraties; 12 core-testbestanden; open GAP-P3-004 (toISOString tijdzone)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html openScheduleMyTraining(), openRepeatWorkout(); program_blocks 8 migraties; 12 core-testbestanden; open GAP-P3-004 (toISOString tijdzone)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 2
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html openScheduleMyTraining(), openRepeatWorkout(); program_blocks 8 migraties; 12 core-testbestanden; open GAP-P3-004 (toISOString tijdzone)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 2
+    }
+   },
+   "weighted_score": 3.35,
+   "gap_refs": [
+    "GAP-P3-004"
+   ],
+   "limitations": "GAP-P3-004 open; degraded states niet per state herbewezen"
+  },
+  {
+   "stable_id": "TRAIN-ONBOARDING-001",
+   "primary_track": "T1",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html onboarding-keten 221 refs; 3 core-testbestanden; RLS-dekking via F13-rapport"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html onboarding-keten 221 refs; 3 core-testbestanden; RLS-dekking via F13-rapport"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html onboarding-keten 221 refs; 3 core-testbestanden; RLS-dekking via F13-rapport"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "D": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html onboarding-keten 221 refs; 3 core-testbestanden; RLS-dekking via F13-rapport"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "E": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html onboarding-keten 221 refs; 3 core-testbestanden; RLS-dekking via F13-rapport"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html onboarding-keten 221 refs; 3 core-testbestanden; RLS-dekking via F13-rapport"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "G": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html onboarding-keten 221 refs; 3 core-testbestanden; RLS-dekking via F13-rapport"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html onboarding-keten 221 refs; 3 core-testbestanden; RLS-dekking via F13-rapport"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "LOW",
+     "evidence_refs": [
+      "index.html onboarding-keten 221 refs; 3 core-testbestanden; RLS-dekking via F13-rapport"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 2
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html onboarding-keten 221 refs; 3 core-testbestanden; RLS-dekking via F13-rapport"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    }
+   },
+   "weighted_score": 3.2,
+   "gap_refs": [],
+   "limitations": "geen capability-specifieke degraded-state-evidence"
+  },
+  {
+   "stable_id": "TRAIN-HOME-001",
+   "primary_track": "T1",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html renderHome() + 12 home-secties; core/fNightSprint.test.js (renderHome), fEvidence/fHardening (home-hero), fMyTrainingC2CHardening (home-next), fHardening (home-context); afbakening t.o.v. ATHLETE-DASHBOARD-2-001 (renderF7Attention / core/fDashboardF7Consumption.test.js)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html renderHome() + 12 home-secties; core/fNightSprint.test.js (renderHome), fEvidence/fHardening (home-hero), fMyTrainingC2CHardening (home-next), fHardening (home-context); afbakening t.o.v. ATHLETE-DASHBOARD-2-001 (renderF7Attention / core/fDashboardF7Consumption.test.js)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html renderHome() + 12 home-secties; core/fNightSprint.test.js (renderHome), fEvidence/fHardening (home-hero), fMyTrainingC2CHardening (home-next), fHardening (home-context); afbakening t.o.v. ATHLETE-DASHBOARD-2-001 (renderF7Attention / core/fDashboardF7Consumption.test.js)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "D": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html renderHome() + 12 home-secties; core/fNightSprint.test.js (renderHome), fEvidence/fHardening (home-hero), fMyTrainingC2CHardening (home-next), fHardening (home-context); afbakening t.o.v. ATHLETE-DASHBOARD-2-001 (renderF7Attention / core/fDashboardF7Consumption.test.js)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 2
+    },
+    "E": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html renderHome() + 12 home-secties; core/fNightSprint.test.js (renderHome), fEvidence/fHardening (home-hero), fMyTrainingC2CHardening (home-next), fHardening (home-context); afbakening t.o.v. ATHLETE-DASHBOARD-2-001 (renderF7Attention / core/fDashboardF7Consumption.test.js)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html renderHome() + 12 home-secties; core/fNightSprint.test.js (renderHome), fEvidence/fHardening (home-hero), fMyTrainingC2CHardening (home-next), fHardening (home-context); afbakening t.o.v. ATHLETE-DASHBOARD-2-001 (renderF7Attention / core/fDashboardF7Consumption.test.js)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "G": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html renderHome() + 12 home-secties; core/fNightSprint.test.js (renderHome), fEvidence/fHardening (home-hero), fMyTrainingC2CHardening (home-next), fHardening (home-context); afbakening t.o.v. ATHLETE-DASHBOARD-2-001 (renderF7Attention / core/fDashboardF7Consumption.test.js)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html renderHome() + 12 home-secties; core/fNightSprint.test.js (renderHome), fEvidence/fHardening (home-hero), fMyTrainingC2CHardening (home-next), fHardening (home-context); afbakening t.o.v. ATHLETE-DASHBOARD-2-001 (renderF7Attention / core/fDashboardF7Consumption.test.js)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html renderHome() + 12 home-secties; core/fNightSprint.test.js (renderHome), fEvidence/fHardening (home-hero), fMyTrainingC2CHardening (home-next), fHardening (home-context); afbakening t.o.v. ATHLETE-DASHBOARD-2-001 (renderF7Attention / core/fDashboardF7Consumption.test.js)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 2
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html renderHome() + 12 home-secties; core/fNightSprint.test.js (renderHome), fEvidence/fHardening (home-hero), fMyTrainingC2CHardening (home-next), fHardening (home-context); afbakening t.o.v. ATHLETE-DASHBOARD-2-001 (renderF7Attention / core/fDashboardF7Consumption.test.js)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 2
+    }
+   },
+   "weighted_score": 3.1,
+   "gap_refs": [
+    "GAP-P2-008"
+   ],
+   "limitations": "8 van 12 home-secties zonder testreferentie; GAP-P2-008 open (blocker=true)"
+  },
+  {
+   "stable_id": "EXERCISE-CATALOG-001",
+   "primary_track": "T2",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseCatalogService 28 callers, EX_CATALOG; core/fMovekitBatch001Integrity.test.js 11/11 (shadow-catalog-guard); 226 records"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 5
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseCatalogService 28 callers, EX_CATALOG; core/fMovekitBatch001Integrity.test.js 11/11 (shadow-catalog-guard); 226 records"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 5
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseCatalogService 28 callers, EX_CATALOG; core/fMovekitBatch001Integrity.test.js 11/11 (shadow-catalog-guard); 226 records"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "D": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseCatalogService 28 callers, EX_CATALOG; core/fMovekitBatch001Integrity.test.js 11/11 (shadow-catalog-guard); 226 records"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "E": {
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "catalogus voedt geen berekening; Calculation/Decision Engine lezen de catalogus aantoonbaar niet"
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseCatalogService 28 callers, EX_CATALOG; core/fMovekitBatch001Integrity.test.js 11/11 (shadow-catalog-guard); 226 records"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "G": {
+     "applicable": false,
+     "confidence": "MEDIUM",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "publieke referentiedata zonder persoonsgegevens of ownership"
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html ExerciseCatalogService 28 callers, EX_CATALOG; core/fMovekitBatch001Integrity.test.js 11/11 (shadow-catalog-guard); 226 records"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseCatalogService 28 callers, EX_CATALOG; core/fMovekitBatch001Integrity.test.js 11/11 (shadow-catalog-guard); 226 records"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseCatalogService 28 callers, EX_CATALOG; core/fMovekitBatch001Integrity.test.js 11/11 (shadow-catalog-guard); 226 records"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    }
+   },
+   "weighted_score": 3.882,
+   "gap_refs": [],
+   "limitations": "geen DB-schema; catalogus is in-repo JSON + embedded kopie"
+  },
+  {
+   "stable_id": "EXERCISE-INTELLIGENCE-001",
+   "primary_track": "T2",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseIntelligence 18 callers; core/fMovekitUnknownState.test.js 39/39; bewezen: Calculation/Decision Engine lezen deze intelligence niet; AI Coach ontvangt null/[]"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseIntelligence 18 callers; core/fMovekitUnknownState.test.js 39/39; bewezen: Calculation/Decision Engine lezen deze intelligence niet; AI Coach ontvangt null/[]"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseIntelligence 18 callers; core/fMovekitUnknownState.test.js 39/39; bewezen: Calculation/Decision Engine lezen deze intelligence niet; AI Coach ontvangt null/[]"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "D": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseIntelligence 18 callers; core/fMovekitUnknownState.test.js 39/39; bewezen: Calculation/Decision Engine lezen deze intelligence niet; AI Coach ontvangt null/[]"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "E": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseIntelligence 18 callers; core/fMovekitUnknownState.test.js 39/39; bewezen: Calculation/Decision Engine lezen deze intelligence niet; AI Coach ontvangt null/[]"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseIntelligence 18 callers; core/fMovekitUnknownState.test.js 39/39; bewezen: Calculation/Decision Engine lezen deze intelligence niet; AI Coach ontvangt null/[]"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "G": {
+     "applicable": false,
+     "confidence": "MEDIUM",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "publieke referentiedata zonder persoonsgegevens of ownership"
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseIntelligence 18 callers; core/fMovekitUnknownState.test.js 39/39; bewezen: Calculation/Decision Engine lezen deze intelligence niet; AI Coach ontvangt null/[]"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseIntelligence 18 callers; core/fMovekitUnknownState.test.js 39/39; bewezen: Calculation/Decision Engine lezen deze intelligence niet; AI Coach ontvangt null/[]"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 5
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseIntelligence 18 callers; core/fMovekitUnknownState.test.js 39/39; bewezen: Calculation/Decision Engine lezen deze intelligence niet; AI Coach ontvangt null/[]"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    }
+   },
+   "weighted_score": 3.737,
+   "gap_refs": [],
+   "limitations": "intelligence van TK-000207..226 is UNKNOWN; bestaande 206 zijn heuristisch, 0/206 human_verified"
+  },
+  {
+   "stable_id": "EXERCISE-SUBSTITUTION-001",
+   "primary_track": "T2",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html openSwapExercise() 3 callers, confirmSwapExercise(); core/fExerciseSubstitutionCanonicalSource.test.js 35/35 (canonical-first + gelabelde fallback)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html openSwapExercise() 3 callers, confirmSwapExercise(); core/fExerciseSubstitutionCanonicalSource.test.js 35/35 (canonical-first + gelabelde fallback)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html openSwapExercise() 3 callers, confirmSwapExercise(); core/fExerciseSubstitutionCanonicalSource.test.js 35/35 (canonical-first + gelabelde fallback)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "D": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html openSwapExercise() 3 callers, confirmSwapExercise(); core/fExerciseSubstitutionCanonicalSource.test.js 35/35 (canonical-first + gelabelde fallback)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "E": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html openSwapExercise() 3 callers, confirmSwapExercise(); core/fExerciseSubstitutionCanonicalSource.test.js 35/35 (canonical-first + gelabelde fallback)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html openSwapExercise() 3 callers, confirmSwapExercise(); core/fExerciseSubstitutionCanonicalSource.test.js 35/35 (canonical-first + gelabelde fallback)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "G": {
+     "applicable": false,
+     "confidence": "MEDIUM",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "opereert op publieke catalogusdata; ownership ligt bij de trainingcapability"
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html openSwapExercise() 3 callers, confirmSwapExercise(); core/fExerciseSubstitutionCanonicalSource.test.js 35/35 (canonical-first + gelabelde fallback)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html openSwapExercise() 3 callers, confirmSwapExercise(); core/fExerciseSubstitutionCanonicalSource.test.js 35/35 (canonical-first + gelabelde fallback)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html openSwapExercise() 3 callers, confirmSwapExercise(); core/fExerciseSubstitutionCanonicalSource.test.js 35/35 (canonical-first + gelabelde fallback)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    }
+   },
+   "weighted_score": 3.579,
+   "gap_refs": [],
+   "limitations": "relations van de 20 nieuwe records leeg; fallback-pad actief"
+  },
+  {
+   "stable_id": "EXERCISE-MEDIA-001",
+   "primary_track": "T2",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseAssetProvider 34 callers (provider-registry), MediaUrlResolver; core/fMediaUrlResolver.test.js 29/29, core/fVidWrapLayout.test.js 22/22; device proof PR #361 + #362"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseAssetProvider 34 callers (provider-registry), MediaUrlResolver; core/fMediaUrlResolver.test.js 29/29, core/fVidWrapLayout.test.js 22/22; device proof PR #361 + #362"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseAssetProvider 34 callers (provider-registry), MediaUrlResolver; core/fMediaUrlResolver.test.js 29/29, core/fVidWrapLayout.test.js 22/22; device proof PR #361 + #362"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "D": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseAssetProvider 34 callers (provider-registry), MediaUrlResolver; core/fMediaUrlResolver.test.js 29/29, core/fVidWrapLayout.test.js 22/22; device proof PR #361 + #362"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 2
+    },
+    "E": {
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "mediaresolutie is geen berekening, context of beslisregel"
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseAssetProvider 34 callers (provider-registry), MediaUrlResolver; core/fMediaUrlResolver.test.js 29/29, core/fVidWrapLayout.test.js 22/22; device proof PR #361 + #362"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "G": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html ExerciseAssetProvider 34 callers (provider-registry), MediaUrlResolver; core/fMediaUrlResolver.test.js 29/29, core/fVidWrapLayout.test.js 22/22; device proof PR #361 + #362"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 2
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseAssetProvider 34 callers (provider-registry), MediaUrlResolver; core/fMediaUrlResolver.test.js 29/29, core/fVidWrapLayout.test.js 22/22; device proof PR #361 + #362"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseAssetProvider 34 callers (provider-registry), MediaUrlResolver; core/fMediaUrlResolver.test.js 29/29, core/fVidWrapLayout.test.js 22/22; device proof PR #361 + #362"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html ExerciseAssetProvider 34 callers (provider-registry), MediaUrlResolver; core/fMediaUrlResolver.test.js 29/29, core/fVidWrapLayout.test.js 22/22; device proof PR #361 + #362"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 2
+    }
+   },
+   "weighted_score": 3.167,
+   "gap_refs": [],
+   "limitations": "Offline Video Contract open; Git is bron en levering; MoveKit-licentie onbeantwoord"
+  }
+ ]
+}

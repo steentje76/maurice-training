@@ -1,5 +1,58 @@
 # Trainingskompas — Changelog
 
+## v4.69.98 — MEDIA-0D: Activity → Start Exercise video presentation defect (16 september 2026)
+
+**Classificatie: ACTIVITY → START EXERCISE VIDEO PRESENTATION DEFECT.**
+
+**Symptoom (device-waargenomen).** In de flow *Activiteit → Oefening starten → "▶ Bekijk video
+& uitleg"* bleef bij het afspelen een groot zwart vlak zichtbaar bóven de video.
+
+**Wat dit expliciet NIET is.** Geen algemeen Android playback-defect — Android-levering is
+device-bewezen correct (MEDIA-0C). Geen MEDIA-0C-defect: de resolver en de mediaketen werken.
+Geen MoveKit Batch 001-defect: legacy- en Batch-001-oefeningen gedragen zich identiek. Geen
+posterdefect: `.vid-wrap` toont het zwarte vlak ongeacht of er een poster is. Het is uitsluitend
+een presentatie-/layoutfout in één CSS-container.
+
+**Root cause (pre-existing, bewezen).** `.vid-wrap` reserveert een 16:9-vlak met
+`padding-top:56.25%` en `background:#000`. Die techniek werkt alleen wanneer het kind
+absoluut gepositioneerd is. Voor `img` en `iframe` gebeurde dat al; het `<video>`-element
+ontbrak in die reeks en bleef daardoor normale in-flow content, die per definitie **na** de
+padding wordt geplaatst. Het gereserveerde zwarte vlak bleef dus zichtbaar boven de video.
+
+**Niet veroorzaakt door MEDIA-0C (#361).** De betreffende CSS-regel en markup staan
+ongewijzigd in de historie; #361 wijzigde op die regels uitsluitend
+`preload="metadata"` → `preload="none"`, wat de layout niet raakt.
+
+**Fix.** Één CSS-regel, in lijn met de bestaande `img`/`iframe`-regels:
+`.vid-wrap video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000}`.
+
+**Getroffen renderpaden — en waarom de gedeelde fix bewust correct is.**
+`.vid-wrap` komt op de canonieke main in precies twee functies voor:
+
+| Functie | Gebruikersflow | Gemeld |
+|---|---|---|
+| `openExecExplain(t)` | **Activiteit → Oefening starten** → Execution Focus → "▶ Bekijk video & uitleg" | **ja** |
+| `buildVideoMuscle(ex)` | uitklapbare oefeningkaart in een training en het losse-oefening-scherm | nee |
+
+In `buildVideoMuscle` bestaat **exact dezelfde technische fout latent**: dezelfde container,
+hetzelfde in-flow video-kind. De regel `.vid-wrap video` repareert daarom bewust beide paden.
+Een nauwere selector zou dezelfde bug in het tweede pad laten staan en twee divergerende
+mediapresentaties opleveren — slechter, niet veiliger.
+
+Het bibliotheekpad (`.lib-video-ready` / `.lib-video-el`) is een aparte implementatie, was al
+correct absoluut gepositioneerd en is **niet** gewijzigd. Dat verklaart waarom het defect daar
+nooit is waargenomen.
+
+Bredere UX-verbetering van de flow *Activiteit → Oefening starten* is bewust **buiten deze PR**
+gehouden en staat apart geregistreerd (zie CURRENT_STATE).
+
+Bewust **niet** meegenomen: geen opruiming van de inline `style="width:100%"` op de
+video-tags (overbodig maar onschadelijk), geen wijziging aan de media-resolver, video-URL's,
+posters of het losse `gw-media` `poster=""`-punt.
+
+Nieuwe test `core/fVidWrapLayout.test.js`. Sabotage: de regel verwijderd → rood; byte-exact
+hersteld → groen. Release gate zonder nieuwe failure.
+
 ## v4.69.97 — MEDIA-0C: Android-videoweergave zonder service worker (15 september 2026)
 
 **Device-bewijs dat deze sprint uitlokte.** In de geïnstalleerde Android-app (v4.69.80) falen

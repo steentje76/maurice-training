@@ -1,5 +1,34 @@
 # Trainingskompas — Changelog
 
+## v4.69.98 — MEDIA-0D: zwart vlak boven video's in `.vid-wrap` (16 september 2026)
+
+**Symptoom (device-waargenomen).** Bij het afspelen van een techniekvideo bleef een groot
+zwart vlak zichtbaar bóven de video.
+
+**Root cause (pre-existing, bewezen).** `.vid-wrap` reserveert een 16:9-vlak met
+`padding-top:56.25%` en `background:#000`. Die techniek werkt alleen wanneer het kind
+absoluut gepositioneerd is. Voor `img` en `iframe` gebeurde dat al; het `<video>`-element
+ontbrak in die reeks en bleef daardoor normale in-flow content, die per definitie **na** de
+padding wordt geplaatst. Het gereserveerde zwarte vlak bleef dus zichtbaar boven de video.
+
+**Niet veroorzaakt door MEDIA-0C (#361).** De betreffende CSS-regel en markup staan
+ongewijzigd in de historie; #361 wijzigde op die regels uitsluitend
+`preload="metadata"` → `preload="none"`, wat de layout niet raakt.
+
+**Fix.** Één CSS-regel, in lijn met de bestaande `img`/`iframe`-regels:
+`.vid-wrap video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000}`.
+
+Getroffen renderpaden: de techniekvideo in het uitvoeringsscherm en in de
+spier-/videoweergave. Het bibliotheekpad (`.lib-video-ready` / `.lib-video-el`) was al
+correct absoluut gepositioneerd en is **niet** gewijzigd.
+
+Bewust **niet** meegenomen: geen opruiming van de inline `style="width:100%"` op de
+video-tags (overbodig maar onschadelijk), geen wijziging aan de media-resolver, video-URL's,
+posters of het losse `gw-media` `poster=""`-punt.
+
+Nieuwe test `core/fVidWrapLayout.test.js`. Sabotage: de regel verwijderd → rood; byte-exact
+hersteld → groen. Release gate zonder nieuwe failure.
+
 ## v4.69.97 — MEDIA-0C: Android-videoweergave zonder service worker (15 september 2026)
 
 **Device-bewijs dat deze sprint uitlokte.** In de geïnstalleerde Android-app (v4.69.80) falen

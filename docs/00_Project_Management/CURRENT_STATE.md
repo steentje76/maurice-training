@@ -6,11 +6,11 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.69.97
+v4.69.98
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.69.97 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.69.98 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 
@@ -21,7 +21,7 @@ v4.69.97
   `exercise-catalog.json` en de ingebedde `EX_CATALOG`-constante zijn en blijven byte-identiek
   — er is geen tweede, afwijkende bron van waarheid en geen shadow catalog.
 - **MoveKit Batch 001 geimporteerd** (20 oefeningen, TK-000207..TK-000226), alle 20 `NEW_EXACT`.
-  Volledig verslag: zie `CHANGELOG.md` v4.69.97 (MoveKit Batch 001).
+  Volledig verslag: zie `CHANGELOG.md` v4.69.98 (MoveKit Batch 001).
 - **Bewust openstaand, eerlijk vastgelegd:**
   (a) de 20 nieuwe records hebben een leeg `intelligence`-object (geen bewezen deterministische
   fatigue/recovery/confidence-classifier beschikbaar) — geen crash, geen verzonnen wetenschap,

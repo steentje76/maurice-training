@@ -571,6 +571,132 @@ try {
       if (!/ten minste één V1-capability/.test(baseline)) problems.push('capability-based tracknoemer ontbreekt in het baselinemodel');
     }
 
+    // ── Evidence Inventory v1.0: proof firewall ──
+    (function evidenceInventoryGuard() {
+      const ip = path.join(ROOT, 'docs', 'audit', 'EVIDENCE_INVENTORY.json');
+      if (!fs.existsSync(ip)) return; // inventaris is optioneel tot hij bestaat
+      let inv;
+      try { inv = JSON.parse(fs.readFileSync(ip, 'utf8')); }
+      catch (e) { problems.push('EVIDENCE_INVENTORY.json parset niet: ' + e.message); return; }
+      const m12 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_MEASUREMENT_MODEL_v1_2.json'), 'utf8'));
+      const idx = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'ROADMAP_INDEX.json'), 'utf8'));
+      const known = {};
+      idx.forEach(function (x) { if (x.type === 'capability') known[x.id] = x; });
+
+      if (inv.inventory_version !== '1.0') problems.push('inventaris: inventory_version is niet 1.0');
+      if (!inv.baseline_sha || !/^[0-9a-f]{40}$/.test(inv.baseline_sha)) problems.push('inventaris: baseline_sha ontbreekt of is geen volledige SHA');
+      if (inv.audit_model_id !== m12.audit_model_id) problems.push('inventaris: audit_model_id wijkt af van het canonieke model');
+      if (inv.audit_model_version !== '1.2') problems.push('inventaris: audit_model_version is niet 1.2');
+      if (inv.audit_model_fingerprint !== m12.model_fingerprint) problems.push('inventaris: fingerprint wijkt af van het canonieke model');
+
+      const ROUTES = ['NAME_TOKEN','CALLER_SEARCH','IMPORT_SEARCH','SCRIPT_LOAD','SERVER_CALLER','TEST_REFERENCE','GAP_LINK','REGISTRY_LINK','MANUAL_TRACE','OTHER'];
+      const PROOF = ['PROVEN_DIRECT','PROVEN_INDIRECT','UNPROVEN'];
+      const CONF = ['HIGH','MEDIUM','LOW'];
+      const ENV = ['BROWSER','SERVER','BUILD','TEST','DOCUMENTATION'];
+      const LINK = ['DIRECTLY_PROVEN','CANDIDATE_ONLY'];
+      const STALE = ['BASELINE_PINNED','STILL_VALIDATED','STALE_REVERIFY','INVALIDATED'];
+      const CRIT = ['A','B','C','D','E','F','G','H','I','J'];
+      // Scorevelden zijn categorisch verboden in de inventaris.
+      const FORBIDDEN = /("(weighted_score|capability_score|track_score|score|maturity|maturity_score|weighted_contribution|percentage)"\s*:)/;
+      if (FORBIDDEN.test(JSON.stringify(inv))) {
+        problems.push('inventaris bevat een verboden scoreveld (score/maturity/weighted/percentage)');
+      }
+
+      const items = inv.evidence_items || [];
+      if (!items.length) problems.push('inventaris bevat geen evidence_items');
+      const seen = {};
+      const byId = {};
+      items.forEach(function (e) {
+        const id = e.evidence_id;
+        if (!id) { problems.push('inventaris: evidence-item zonder evidence_id'); return; }
+        if (seen[id]) problems.push('inventaris: dubbel evidence_id ' + id);
+        seen[id] = 1; byId[id] = e;
+        if (e.baseline_sha !== inv.baseline_sha) problems.push('inventaris ' + id + ': baseline_sha wijkt af van de inventaris-baseline');
+        if (ROUTES.indexOf(e.discovery_route) < 0) problems.push('inventaris ' + id + ': ongeldige discovery_route');
+        if (PROOF.indexOf(e.proof_status) < 0) problems.push('inventaris ' + id + ': ongeldige proof_status');
+        if (CONF.indexOf(e.confidence) < 0) problems.push('inventaris ' + id + ': ongeldige confidence');
+        if (ENV.indexOf(e.runtime_environment) < 0) problems.push('inventaris ' + id + ': ongeldige runtime_environment');
+        if (STALE.indexOf(e.staleness_status) < 0) problems.push('inventaris ' + id + ': ongeldige staleness_status');
+        if (e.proof_status !== 'UNPROVEN' && (!e.source_refs || !e.source_refs.length)) {
+          problems.push('inventaris ' + id + ': bewezen evidence zonder source_refs');
+        }
+        (e.criterion_links || []).forEach(function (k) {
+          if (CRIT.indexOf(k) < 0) problems.push('inventaris ' + id + ': ongeldig criterium ' + k);
+        });
+        (e.capability_links || []).forEach(function (l) {
+          if (LINK.indexOf(l.link_status) < 0) problems.push('inventaris ' + id + ': ongeldige link_status');
+          if (!known[l.capability_id]) problems.push('inventaris ' + id + ': onbekende capability_id ' + l.capability_id);
+        });
+        // PROOF FIREWALL op itemniveau
+        if (e.criterion_links && e.criterion_links.length) {
+          if (e.proof_status === 'UNPROVEN') {
+            problems.push('proof firewall: ' + id + ' is UNPROVEN maar draagt criterion_links');
+          }
+          if (e.discovery_route === 'NAME_TOKEN' && e.proof_status === 'UNPROVEN') {
+            problems.push('proof firewall: ' + id + ' is uitsluitend via NAME_TOKEN gevonden en mag geen criterium dragen');
+          }
+          const proven = (e.capability_links || []).filter(function (l) { return l.link_status === 'DIRECTLY_PROVEN'; });
+          if (!proven.length) {
+            problems.push('proof firewall: ' + id + ' draagt criterion_links zonder enige DIRECTLY_PROVEN capability_link');
+          }
+          if (e.runtime_environment === 'TEST' || e.runtime_environment === 'DOCUMENTATION') {
+            const okEnv = e.criterion_links.every(function (k) { return k === 'F' || k === 'A' || k === 'J'; });
+            if (!okEnv) {
+              problems.push('proof firewall: ' + id + ' is ' + e.runtime_environment + ' en mag geen runtime-criterium (B/C/D/E/G/H/I) dragen');
+            }
+          }
+        }
+      });
+
+      // PROOF FIREWALL op de capability_evidence_map
+      const cem = inv.capability_evidence_map || {};
+      Object.keys(cem).forEach(function (cid) {
+        if (!known[cid]) { problems.push('inventaris: capability_evidence_map bevat onbekende capability ' + cid); return; }
+        const rec = cem[cid];
+        Object.keys(rec.proven_evidence_ids || {}).forEach(function (k) {
+          if (CRIT.indexOf(k) < 0) problems.push('inventaris ' + cid + ': ongeldig criterium ' + k + ' in proven_evidence_ids');
+          (rec.proven_evidence_ids[k] || []).forEach(function (eid) {
+            const e = byId[eid];
+            if (!e) { problems.push('inventaris ' + cid + '/' + k + ': onbekend evidence_id ' + eid); return; }
+            if (e.proof_status === 'UNPROVEN') {
+              problems.push('proof firewall: ' + cid + '/' + k + ' gebruikt UNPROVEN evidence ' + eid + ' als bewijs');
+            }
+            const l = (e.capability_links || []).filter(function (x) { return x.capability_id === cid; })[0];
+            if (!l || l.link_status !== 'DIRECTLY_PROVEN') {
+              problems.push('proof firewall: ' + cid + '/' + k + ' gebruikt evidence ' + eid + ' zonder DIRECTLY_PROVEN koppeling naar deze capability');
+            }
+          });
+        });
+        (rec.candidate_evidence_ids || []).forEach(function (eid) {
+          if (!byId[eid]) problems.push('inventaris ' + cid + ': onbekend candidate evidence_id ' + eid);
+          const provenLists = rec.proven_evidence_ids || {};
+          Object.keys(provenLists).forEach(function (k) {
+            if ((provenLists[k] || []).indexOf(eid) >= 0) {
+              problems.push('proof firewall: ' + cid + ': evidence ' + eid + ' staat zowel als kandidaat als als bewijs');
+            }
+          });
+        });
+      });
+
+      // Capability-universum moet de canonieke index weerspiegelen
+      const u = inv.capability_universe || {};
+      const nCap = Object.keys(known).length;
+      const nV1 = Object.keys(known).filter(function (k) { return known[k].v1_scope === true; }).length;
+      if (u.total !== nCap) problems.push('inventaris: capability_universe.total ' + u.total + ', index ' + nCap);
+      if (u.v1 !== nV1) problems.push('inventaris: capability_universe.v1 ' + u.v1 + ', index ' + nV1);
+      if (u.post_v1 !== nCap - nV1) problems.push('inventaris: capability_universe.post_v1 klopt niet');
+      const trks = {}; Object.keys(known).forEach(function (k) { trks[known[k].primary_track] = 1; });
+      const v1trks = {}; Object.keys(known).forEach(function (k) { if (known[k].v1_scope === true) v1trks[known[k].primary_track] = 1; });
+      if (u.structural_tracks !== Object.keys(trks).length) problems.push('inventaris: structural_tracks klopt niet met de index');
+      if (u.v1_track_denominator !== Object.keys(v1trks).length) problems.push('inventaris: v1_track_denominator klopt niet met de index');
+      // 12-module reconciliatie
+      const ac = ((inv.modules || {}).adjudication_counts) || {};
+      const adj = ((inv.modules || {}).adjudicated_non_wired) || {};
+      if (Object.keys(adj).length !== 12) problems.push('inventaris: adjudicated_non_wired telt ' + Object.keys(adj).length + ' modules, verwacht 12');
+      const sum = (ac.UTILITY_NOT_EXPECTED_AS_RUNTIME_ENTRY || 0) + (ac.DORMANT_V1_EXPECTED || 0) + (ac.UNRESOLVED || 0);
+      if (sum !== 12 || ac.total !== 12) problems.push('inventaris: 12-module reconciliatie telt ' + sum + ', verwacht 12');
+    })();
+
     // ── Model v1.2 N/A-semantiek: een enkele gedeelde beslisfunctie ──
     // Canoniek model (na_model): allowed_criteria ['D','E','G','H'],
     // forbidden_criteria ['A','B','C','F','I'], j_rule "J is N/A uitsluitend bij

@@ -1,0 +1,285 @@
+{
+ "_schema": "trainingskompas-aj-measurement-model/1.0",
+ "audit_model_id": "trainingskompas-aj/v1.0",
+ "audit_model_version": "1.0",
+ "model_fingerprint": "sha256:cab0ca8b662e30c2e6ee6a22097c41466d132f8e3b0417bc5a42d421f0ee436e",
+ "fingerprint_scope": [
+  "criteria",
+  "ladder",
+  "na_model",
+  "confidence_model",
+  "rounding_model",
+  "evidence_contract"
+ ],
+ "fingerprint_note": "deterministisch over de frozen velden, sorted keys, geen timestamp of niet-deterministisch veld",
+ "change_type": "D BASELINE_MODEL_REVISION",
+ "approved_by": "Product Owner",
+ "approved_on": "2026-09-16",
+ "canonicalized_at_sha": "3deb7eecc7455d5bfbb5d540afb8f76d207d8e8b",
+ "provenance": {
+  "historically_repository_proven": [
+   "criterium-identiteiten A-J",
+   "gewichten",
+   "algemene 0-5 ladder",
+   "bestaande N/A-semantiek"
+  ],
+  "proven_in_commits": [
+   "e8fcbe9 BASELINE-1.0",
+   "66e36f9 BASELINE-1.1"
+  ],
+  "new_po_approved_baseline_revision": [
+   "criterium-specifieke 0-5 ankers (60)",
+   "volledige confidence-semantiek",
+   "deterministische afrondingsspecificatie",
+   "aanvullende evidence-vereisten"
+  ],
+  "explicit_statement": "De criterium-specifieke ankers zijn NIET retrospectief repository-proven. Zij worden hier voor het eerst formeel vastgesteld als Product-Owner-goedgekeurd auditmodel. Er wordt geen historische provenance geclaimd."
+ },
+ "semantics": {
+  "frozen_meaning": "audit_model_version 1.0 betekent conformiteit aan exact deze fingerprint",
+  "mutation_rule": "wijziging van frozen semantiek onder dezelfde versie is niet toegestaan en vereist een versiebump",
+  "historical_artifacts": "artefacten met audit_model_status HISTORICAL_PRE_V1_MODEL behouden hun scores en worden niet als v1.0-audits voorgesteld"
+ },
+ "audited_count_semantics": {
+  "historical_audited": "capabilities beoordeeld onder een pre-v1.0 model; scores behouden, niet v1.0-verifieerbaar",
+  "model_v1_verified": "capabilities beoordeeld onder audit_model_version 1.0 met criterion-specifieke evidence",
+  "rule": "historical_audited en model_v1_verified worden altijd afzonderlijk gerapporteerd; historical_audited mag niet zonder qualifier als canonical audited worden gepresenteerd"
+ },
+ "criteria": {
+  "A": {
+   "name": "Product scope defined",
+   "weight": 5,
+   "definition": "Hoe expliciet en canoniek de functionele V1-scope, verantwoordelijkheid, afbakening en acceptance expectations zijn vastgelegd.",
+   "anchors": {
+    "0": "niet onderzocht",
+    "1": "capability bestaat als naam, verantwoordelijkheid onbenoemd",
+    "2": "verantwoordelijkheid beschreven in ten minste een canoniek document",
+    "3": "plus afbakening tegen ten minste een aangrenzende capability expliciet vastgelegd",
+    "4": "plus v1_scope met evidence-verwijzing in de canonieke index",
+    "5": "plus acceptance expectations en dependencies expliciet en versioneerbaar vastgelegd"
+   },
+   "na_allowed": false,
+   "caps": [
+    "Een goede implementatie maskeert een lage A-score niet."
+   ]
+  },
+  "B": {
+   "name": "Canonical architecture",
+   "weight": 15,
+   "definition": "Of er een duidelijke canonieke architectuur, eigenaar en pad bestaat, zonder onbeheerste parallelle paden.",
+   "anchors": {
+    "0": "niet onderzocht",
+    "1": "meerdere implementaties, geen aanwijsbare eigenaar",
+    "2": "een hoofdimplementatie aanwijsbaar, parallelle paden niet onderzocht",
+    "3": "een hoofdimplementatie, parallelle of legacy paden geinventariseerd en geclassificeerd",
+    "4": "plus aantoonbaar geen onbeheerst shadow-pad: elk alternatief is DORMANT of LEGACY_BUT_ISOLATED met bewijs, of canoniek geregistreerd als gap",
+    "5": "plus een guard of test bewaakt dat er geen tweede pad kan ontstaan"
+   },
+   "na_allowed": false,
+   "caps": [
+    "Documentatie alleen bereikt nooit 4 of 5."
+   ]
+  },
+  "C": {
+   "name": "Runtime integration",
+   "weight": 15,
+   "definition": "Werkelijke productie-integratie, aangetoond met callers en call-chain in plaats van bestaan van code.",
+   "anchors": {
+    "0": "niet onderzocht",
+    "1": "module bestaat, geen productie-caller aangetoond",
+    "2": "productie-callers bestaan, aantal niet geverifieerd",
+    "3": "ten minste een productie-caller met bestandsverwijzing bewezen",
+    "4": "plus volledige call-chain van entrypoint tot consumer bewezen, inclusief payload-inhoud",
+    "5": "plus aangetoond dat alle relevante entrypoints op dit pad convergeren"
+   },
+   "na_allowed": false,
+   "caps": [
+    "Tests met nul productie-callers geven maximaal 1.",
+    "Caller-count zonder call-chain geeft maximaal 2."
+   ]
+  },
+  "D": {
+   "name": "Persistence/data model",
+   "weight": 10,
+   "definition": "Schema, ownership, integriteit, migratie en runtime-persistentie, uitsluitend waar data-ownership tot de scope behoort.",
+   "anchors": {
+    "0": "niet onderzocht",
+    "1": "ad-hoc opslag zonder schema",
+    "2": "schema bestaat",
+    "3": "plus owner-binding op rijniveau bewezen",
+    "4": "plus lifecycle en migratiehistorie bewezen",
+    "5": "plus versionering en historiebehoud bewezen"
+   },
+   "na_allowed": true,
+   "caps": [
+    "N/A uitsluitend wanneer de capability aantoonbaar stateless is."
+   ]
+  },
+  "E": {
+   "name": "Calc/Context/Decision integration",
+   "weight": 10,
+   "definition": "Integratie in de keten RAW DATA naar Calculation Engine naar Context Engine naar Decision/Rules Engine naar consument, waar die laag inhoudelijk relevant is.",
+   "anchors": {
+    "0": "niet onderzocht",
+    "1": "consument rekent of beslist zelf",
+    "2": "losse koppeling, keten niet aangetoond",
+    "3": "deel van de keten call-chain-bewezen",
+    "4": "volledige relevante keten bewezen en geen bypass aangetroffen",
+    "5": "plus de afwezigheid van bypass is door test of guard afgedwongen"
+   },
+   "na_allowed": true,
+   "caps": [
+    "AI of UI die zelf rekent of beslist geeft maximaal 1.",
+    "N/A uitsluitend wanneer de laag architectonisch aantoonbaar niet relevant is."
+   ]
+  },
+  "F": {
+   "name": "Tests/evidence",
+   "weight": 15,
+   "definition": "Aard van het testbewijs, oplopend van geen test tot adversarial of device-bewijs voor exact deze flow.",
+   "anchors": {
+    "0": "niet onderzocht",
+    "1": "geen test",
+    "2": "uitsluitend documentatietest: assertions op tekst of structuur, niet op gedrag",
+    "3": "unittest op het gedrag van deze capability",
+    "4": "plus integratie- of runtimetest over de echte call-chain",
+    "5": "plus adversarial- of failure-test, of device-bewijs voor exact deze flow"
+   },
+   "na_allowed": false,
+   "caps": [
+    "Het aantal assertions verhoogt de score nooit."
+   ]
+  },
+  "G": {
+   "name": "Security/privacy",
+   "weight": 5,
+   "definition": "Ownership, autorisatie en enforcement op de datalaag, uitsluitend waar een trust boundary, persoonsgegevens of misbruikroute bestaat.",
+   "anchors": {
+    "0": "niet onderzocht",
+    "1": "geen ownership-mechanisme",
+    "2": "ownership in applicatiecode",
+    "3": "plus enforcement op datalaag zoals RLS of policy aangetoond",
+    "4": "plus auditbewijs dat de enforcement dekkend is",
+    "5": "plus adversarial bewijs met twee werkelijke accounts"
+   },
+   "na_allowed": true,
+   "caps": [
+    "Beleid of documentatie alleen geeft maximaal 2.",
+    "N/A uitsluitend bij publieke referentiedata zonder trust boundary of persoonsgegevens."
+   ]
+  },
+  "H": {
+   "name": "UX/user-facing completion",
+   "weight": 10,
+   "definition": "Feitelijke athlete-facing bruikbaarheid en consistentie van de keten ontdekken, gebruiken, feedback en vervolgactie.",
+   "anchors": {
+    "0": "niet onderzocht",
+    "1": "geen bereikbare gebruikersroute",
+    "2": "UI bestaat, keten niet aangetoond",
+    "3": "keten ontdekken naar gebruiken bruikbaar bewezen",
+    "4": "plus feedback en vervolgactie compleet",
+    "5": "plus op een echt apparaat bevestigd voor deze flow"
+   },
+   "na_allowed": true,
+   "caps": [
+    "Backend-completion alleen is onvoldoende bij een user-facing contract.",
+    "N/A uitsluitend wanneer geen user-facing gedrag tot de scope behoort."
+   ]
+  },
+  "I": {
+   "name": "Failure/degraded-state handling",
+   "weight": 5,
+   "definition": "Gedrag bij unknown, null, missing, timeout, malformed, conflicterende of low-confidence input.",
+   "anchors": {
+    "0": "niet onderzocht",
+    "1": "faalt hard of onvoorspelbaar",
+    "2": "generieke foutafhandeling",
+    "3": "relevante failure modes benoemd en afgevangen",
+    "4": "plus unknown blijft unknown: geen verzonnen of gefabriceerde waarde, deterministisch bewezen",
+    "5": "plus fail-closed gedrag door test of sabotage bewezen"
+   },
+   "na_allowed": false,
+   "caps": [
+    "Alleen happy-path bewijs geeft maximaal 2."
+   ]
+  },
+  "J": {
+   "name": "V1 audit closure",
+   "weight": 10,
+   "definition": "Mate waarin de V1-auditverplichting voor deze capability is onderzocht en gesloten.",
+   "anchors": {
+    "0": "niet onderzocht",
+    "1": "capability niet ge-audit",
+    "2": "deels onderzocht, of een open V1-gap met blocker true op deze capability",
+    "3": "volledig A-J ge-audit, open V1-gaps aanwezig maar geen bewezen blocker",
+    "4": "volledig ge-audit en geen open V1-gap op deze capability",
+    "5": "plus closure-evidence per gesloten gap in het canonieke register, of formeel DEFERRED_ACCEPTED"
+   },
+   "na_allowed": true,
+   "caps": [
+    "Alleen gaps met capability_id gelijk aan deze capability, v1_scope true en status OPEN of REVIEW_REQUIRED tellen mee.",
+    "blocker REVIEW_REQUIRED telt als niet-blokkerend tot het tegendeel bewezen is.",
+    "N/A uitsluitend bij v1_scope false."
+   ]
+  }
+ },
+ "ladder": {
+  "0": "NOT ASSESSED",
+  "1": "DISCOVERED",
+  "2": "FOUNDATION",
+  "3": "FUNCTIONAL",
+  "4": "CANONICAL",
+  "5": "AUDIT CLOSED"
+ },
+ "na_model": {
+  "allowed_criteria": [
+   "D",
+   "E",
+   "G",
+   "H"
+  ],
+  "j_rule": "J is N/A uitsluitend bij v1_scope false",
+  "forbidden_criteria": [
+   "A",
+   "B",
+   "C",
+   "F",
+   "I"
+  ],
+  "requires": "criterion-specifieke na_rationale met positief bewijs dat het criterium architectonisch of functioneel niet toepasselijk is",
+  "weight_rule": "gewicht van N/A-criteria wordt uitgesloten uit de noemer; resterende gewichten tellen proportioneel",
+  "forbidden_use": "N/A mag nooit worden gebruikt voor niet onderzocht of geen bewijs gevonden; dat is score 0"
+ },
+ "confidence_model": {
+  "HIGH": "direct capability-specifiek bewijs: concrete file plus functie, testnaam met uitslag, of migratie/policy",
+  "MEDIUM": "indirect of afgeleid bewijs, onvoldoende voor volledige directe capability-specifieke verificatie",
+  "LOW": "gericht onderzocht maar slechts zwak of geen capability-specifiek bewijs gevonden",
+  "rule": "confidence is geen maturity en geeft geen scorebonus of scoremalus"
+ },
+ "rounding_model": {
+  "step1": "criterion maturity is een geheel getal 0 tot en met 5",
+  "step2": "N/A-gewichten worden uitgesloten uit de noemer",
+  "step3": "capability raw weighted score = som(gewicht maal score) gedeeld door som(applicable gewicht)",
+  "step4": "capability canonical stored score = half-up afgerond op exact 3 decimalen",
+  "step5": "trackscore = gemiddelde van de canonical stored 3-decimale capabilityscores",
+  "step6": "trackscore half-up afgerond op exact 3 decimalen",
+  "step7": "percentage = stored trackscore gedeeld door 5 maal 100",
+  "step8": "percentage half-up afgerond op exact 2 decimalen",
+  "consequence": "T6 3.623 is 72.46 procent; rapportage op verborgen onafgeronde trackwaarden is niet toegestaan"
+ },
+ "evidence_contract": {
+  "per_criterion_evidence_refs": "verplicht: elk criterion-record draagt eigen criterion-specifieke evidence_refs",
+  "shared_capability_evidence": "een capability-brede gedeelde evidence-set is onvoldoende als enige bewijs voor tien criteria",
+  "generic_rationale_forbidden": "de generieke rationale \"zie evidence_refs\" is onder v1.0 niet toegestaan",
+  "required_fields": [
+   "criterion",
+   "applicable",
+   "score indien applicable",
+   "confidence",
+   "criterion-specifieke rationale",
+   "criterion-specifieke evidence_refs",
+   "na_rationale indien N/A"
+  ],
+  "retroactivity": "dit contract geldt niet retroactief voor artefacten met audit_model_status HISTORICAL_PRE_V1_MODEL"
+ }
+}

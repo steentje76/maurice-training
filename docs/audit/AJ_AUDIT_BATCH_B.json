@@ -1,6 +1,6 @@
 {
  "_schema": "trainingskompas-aj-audit/1.0",
- "audit_model_version": "A-J/1.0",
+ "audit_model_version": "pre-1.0",
  "baseline_sha": "326c0678dc652ba0e51604af289681ef97bb98bd",
  "batch": "B",
  "batch_scope": [
@@ -11,7 +11,7 @@
  "audit_timestamp": "2026-09-16",
  "provenance": "BASELINE-1.2 A-J Batch B (read-only audit), gecanonicaliseerd zonder heraudit",
  "frozen_model_origin": "docs/audit/AJ_AUDIT_BATCH_A.json",
- "anchors_frozen": true,
+ "anchors_frozen": false,
  "weights": {
   "A": 5,
   "B": 15,
@@ -1333,5 +1333,8 @@
    "evidence": "core/calculation.js:385 recoveryScore() leidt confidence uitsluitend af uit comps.length; readinessDay() past wel een kwaliteitsfilter toe",
    "verified_at_sha": "ed8b4513d9c3d4c0de798f2e6b5fc66256f5b020"
   }
- ]
+ ],
+ "audit_model_status": "HISTORICAL_PRE_V1_MODEL",
+ "historical_weights_frozen": true,
+ "model_status_note": "Gewichten, criterium-identiteiten, 0-5 ladder en N/A-semantiek waren historisch repository-proven; de criterium-specifieke ankers niet. Dit artefact is NIET uitgevoerd tegen audit_model_id trainingskompas-aj/v1.0 en mag niet als v1.0-audit worden voorgesteld. Scores, rationales, evidence en trackscores zijn ongewijzigd behouden. Her-audit onder v1.0 is voorzien als Batch A-prime / B-prime."
 }

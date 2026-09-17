@@ -138,6 +138,53 @@ hem vervangt.
 | T17 | Platform/Security | 22 | 4.23 | 84.5% | 0 | TRUE | MEDIUM |
 | T18 | Scientific Platform | 4 | 4.25 | 85.0% | 0 | FALSE | HIGH |
 
+## Canonical Audit Measurement Model v1.0
+
+**Canonieke bron:** `docs/audit/AJ_MEASUREMENT_MODEL_v1.json` — machineleesbaar, met
+deterministische fingerprint over de frozen velden. Dit document verwijst ernaar; het
+dupliceert de 60 ankers niet.
+
+| | |
+|---|---|
+| `audit_model_id` | `trainingskompas-aj/v1.0` |
+| `audit_model_version` | `1.0` |
+| `model_fingerprint` | `sha256:cab0ca8b662e30c2e6ee6a22097c41466d132f8e3b0417bc5a42d421f0ee436e` |
+| change_type | **D BASELINE_MODEL_REVISION** |
+
+### Provenance — expliciet
+
+**Historisch repository-proven:** criterium-identiteiten A–J, gewichten, de algemene
+0–5 ladder en de bestaande N/A-semantiek (`e8fcbe9`, `66e36f9`).
+
+**Nieuw, PO-goedgekeurd:** de 60 criterium-specifieke 0–5 ankers, de volledige
+confidence-semantiek, de deterministische afrondingsspecificatie en de aanvullende
+evidence-vereisten.
+
+De criterium-specifieke ankers zijn **niet retrospectief repository-proven**. Zij worden
+hier voor het eerst formeel vastgesteld. Er wordt geen historische provenance geclaimd.
+
+### Afrondingsregel — één deterministische regel
+
+Criteriumscore geheel 0–5 · N/A-gewicht uit de noemer · capabilityscore =
+Σ(gewicht × score) / Σ(applicable gewicht), **half-up op 3 decimalen opgeslagen** ·
+trackscore = **gemiddelde van de opgeslagen 3-decimale capabilityscores**, half-up op
+3 decimalen · percentage = stored trackscore / 5 × 100, half-up op 2 decimalen.
+
+Canoniek gevolg: **T6 3,623 = 72,46%**. Rapportage op verborgen onafgeronde
+trackwaarden is niet toegestaan.
+
+### Auditvoortgang — twee gescheiden tellingen
+
+| Telling | Betekenis | Stand |
+|---|---|---|
+| `historical_audited` | beoordeeld onder een pre-v1.0 model; scores behouden, **niet v1.0-verifieerbaar** | **22 / 86** |
+| `model_v1_verified` | beoordeeld onder `audit_model_version 1.0` met criterium-specifieke evidence | **0 / 86** |
+
+`historical_audited` mag **niet** zonder qualifier als "canonical audited" worden
+gepresenteerd. Batch A en B dragen `audit_model_status: HISTORICAL_PRE_V1_MODEL`,
+`anchors_frozen: false` en `historical_weights_frozen: true` — hun gewichten waren wél
+historisch bewezen, hun ankers niet. Her-audit onder v1.0 is voorzien als Batch A′/B′.
+
 ## Score-drift-regels
 
 Na Baseline 1.0 mag een score uitsluitend wijzigen via:

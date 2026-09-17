@@ -1,6 +1,6 @@
 {
  "_schema": "trainingskompas-aj-audit/1.0",
- "audit_model_version": "A-J/1.0",
+ "audit_model_version": "pre-1.0",
  "baseline_sha": "66e36f92e4144146c3ea4838bad9c7280af5194f",
  "batch": "A",
  "batch_scope": [
@@ -9,7 +9,7 @@
  ],
  "audit_timestamp": "2026-09-16",
  "provenance": "BASELINE-1.2 A-J Batch A + evidence closure gate",
- "anchors_frozen": true,
+ "anchors_frozen": false,
  "weights": {
   "A": 5,
   "B": 15,
@@ -931,5 +931,8 @@
    "gap_refs": [],
    "limitations": "Offline Video Contract open; Git is bron en levering; MoveKit-licentie onbeantwoord"
   }
- ]
+ ],
+ "audit_model_status": "HISTORICAL_PRE_V1_MODEL",
+ "historical_weights_frozen": true,
+ "model_status_note": "Gewichten, criterium-identiteiten, 0-5 ladder en N/A-semantiek waren historisch repository-proven; de criterium-specifieke ankers niet. Dit artefact is NIET uitgevoerd tegen audit_model_id trainingskompas-aj/v1.0 en mag niet als v1.0-audit worden voorgesteld. Scores, rationales, evidence en trackscores zijn ongewijzigd behouden. Her-audit onder v1.0 is voorzien als Batch A-prime / B-prime."
 }

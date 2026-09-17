@@ -256,6 +256,40 @@ Een geldig NO_CAPABILITY_RELATION_PROVEN-record maakt dit **op zichzelf niet fal
 `model_v1_verified`, dat uitsluitend capability-niveau verificatie telt en deze
 register-debt niet mag verbergen.
 
+## Model-v1.2 auditvoortgang — Batch A′ (T1 + T2)
+
+**Canoniek artefact:** `docs/audit/AJ_AUDIT_BATCH_A_PRIME.json` — 9 capabilities,
+90 criterion records, `audit_model_version: 1.2`.
+
+| Telling | Betekenis | Stand |
+|---|---|---|
+| `historical_audited` | beoordeeld onder een pre-v1.0 model; scores behouden, niet v1-verifieerbaar | **22 / 86** |
+| **`model_v1_verified`** | beoordeeld onder `audit_model_version 1.2` met criterium-specifieke evidence | **9 / 86** |
+
+### Canonieke Model-v1.2 trackresultaten
+
+| Track | Model v1.2 | Historisch pre-v1 |
+|---|---|---|
+| **T1** | **3,056 / 5 = 61,12%** | 3,320 |
+| **T2** | **3,208 / 5 = 64,16%** | 3,591 |
+
+De historische waarden **T1 3,320** en **T2 3,591** blijven geldig voor het historische
+Batch A-artefact en worden niet overschreven. `docs/audit/AJ_AUDIT_BATCH_A.json` behoudt
+`HISTORICAL_PRE_V1_MODEL` en is ongewijzigd.
+
+### Evidence-methodiek voor criterium F
+
+De evidence-class volgt uit de uitvoeringsvorm van de test: `vm.runInContext` geldt als
+**INTEGRATION_RUNTIME**, `new Function` of `require` van een core-module als
+**BEHAVIORAL_UNIT**, en regex- of stringinspectie van `index.html` als
+**DOCUMENTATION_ONLY**. Bestandsnamen, grep-tellingen, assertion-aantallen en het aantal
+testbestanden dienen uitsluitend als zoekroute en gelden nergens als zelfstandig bewijs.
+
+Vier gedeelde evidencebronnen zijn expliciet afgewezen voor een tweede capability, zodat
+één integratietest nooit meerdere F-scores verhoogt.
+
+Coverage blijft **87/91 = 95,60%**, Closure blijft **18/55 = 32,73%**.
+
 ## Score-drift-regels
 
 Na Baseline 1.0 mag een score uitsluitend wijzigen via:

@@ -185,6 +185,49 @@ gepresenteerd. Batch A en B dragen `audit_model_status: HISTORICAL_PRE_V1_MODEL`
 `anchors_frozen: false` en `historical_weights_frozen: true` — hun gewichten waren wél
 historisch bewezen, hun ankers niet. Her-audit onder v1.0 is voorzien als Batch A′/B′.
 
+## Audit Measurement Model v1.1 — gap traceability
+
+**Canonieke bron:** `docs/audit/AJ_MEASUREMENT_MODEL_v1_1.json`. Model v1.0 blijft
+integraal bewaard in `AJ_MEASUREMENT_MODEL_v1.json` en wordt niet gewijzigd.
+
+| | |
+|---|---|
+| `audit_model_id` | `trainingskompas-aj/v1.1` |
+| `audit_model_version` | `1.1` |
+| `model_fingerprint` | `sha256:7d90ab1cef59b4c035a78a4746515a6634c33b902bd85cb22553181363d4718d` |
+| change_type | **D BASELINE_MODEL_REVISION** |
+| supersedes | `trainingskompas-aj/v1.0` |
+
+### Delta v1.0 → v1.1
+
+**Gewijzigd:** uitsluitend `criteria.J.caps` en `evidence_contract.gap_traceability`.
+**Ongewijzigd:** criteria A–I inclusief alle ankers, de J-ankers 0–5, alle gewichten,
+de ladder, het N/A-model, het confidence-model en het rounding-model.
+
+Reden: J meet audit closure **per capability**. Een gap die capability X aantoonbaar
+raakt, mag niet buiten J van X vallen alleen omdat capability Y de primaire eigenaar is.
+
+### Gap-traceability-contract
+
+```
+primary_capability_id   : string | null   — max. één, canoniek indien niet-null
+affected_capability_ids : string[]        — uniek, 0..N, canoniek, primary niet erin
+traceability_status     : COMPLETE | INCOMPLETE | AMBIGUOUS | NO_CAPABILITY_RELATION_PROVEN
+traceability_evidence   : verplicht; positief bewijs bij NO_CAPABILITY_RELATION_PROVEN
+capability_id           : deprecated alias — moet exact gelijk zijn aan primary_capability_id
+```
+
+**J telt** een gap voor capability X wanneer X gelijk is aan `primary_capability_id`
+óf voorkomt in `affected_capability_ids`, én `v1_scope` true is én de status OPEN of
+REVIEW_REQUIRED. `blocker: true` → J=2; `blocker: REVIEW_REQUIRED` → niet-blokkerend.
+
+**Ontbrekende traceability betekent nooit impliciet "geen gap".** Bij INCOMPLETE of
+AMBIGUOUS geldt **J_UNPROVEN** en is de capability niet model-verified.
+
+**Scope-regel:** een onopgeloste gap blokkeert uitsluitend de capabilities in zijn
+primary ∪ affected, of — bij leeg primary — de capabilities op zijn `primary_track` en
+`secondary_tracks`. Een ongerelateerde onopgeloste gap blokkeert nooit alle capabilities.
+
 ## Score-drift-regels
 
 Na Baseline 1.0 mag een score uitsluitend wijzigen via:
@@ -205,3 +248,4 @@ Elke wijziging registreert: datum, track, old_score, new_score, delta, change_ty
 | # | Datum | Track | Oud | Nieuw | Δ | Type | Evidence | Rationale |
 |---|---|---|---|---|---|---|---|---|
 | 0 | 2026-09-16 | alle | — | Baseline 1.0 | — | D | BASELINE-0 completion run | Eerste reproduceerbare meting; vervangt de hypotheses 82,7% / ~93% / ~91%. |
+| 1 | 2026-09-17 | alle | v1.0 | v1.1 | — | D | gap-traceability gate, PO-goedgekeurd | J telt voortaan primary én affected capability; gap-register gemigreerd naar het traceability-contract. Geen score gewijzigd. |

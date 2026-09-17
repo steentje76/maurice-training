@@ -571,6 +571,56 @@ try {
       if (!/ten minste één V1-capability/.test(baseline)) problems.push('capability-based tracknoemer ontbreekt in het baselinemodel');
     }
 
+    // ── BASELINE-1.2 / v1.1: gap traceability contract ──
+    (function traceabilityGuard() {
+      const mdl11 = path.join(ROOT, 'docs', 'audit', 'AJ_MEASUREMENT_MODEL_v1_1.json');
+      if (!fs.existsSync(mdl11)) { problems.push('Model v1.1 ontbreekt'); return; }
+      const m11 = JSON.parse(fs.readFileSync(mdl11, 'utf8'));
+      if (m11.audit_model_id !== 'trainingskompas-aj/v1.1' || m11.audit_model_version !== '1.1') {
+        problems.push('Model v1.1 identiteit onjuist');
+      }
+      const fz = {};
+      (m11.fingerprint_scope || []).forEach(function (k) { fz[k] = m11[k]; });
+      const cn = function (v) {
+        if (v === null || typeof v !== 'object') return JSON.stringify(v);
+        if (Array.isArray(v)) return '[' + v.map(cn).join(',') + ']';
+        return '{' + Object.keys(v).sort().map(function (k) { return JSON.stringify(k) + ':' + cn(v[k]); }).join(',') + '}';
+      };
+      const f11 = 'sha256:' + crypto.createHash('sha256').update(cn(fz), 'utf8').digest('hex');
+      if (f11 !== m11.model_fingerprint) problems.push('Model v1.1 fingerprint mismatch: J-semantiek gewijzigd zonder versiebump');
+      const v10 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_MEASUREMENT_MODEL_v1.json'), 'utf8'));
+      if (f11 === v10.model_fingerprint) problems.push('v1.1 draagt de v1.0-fingerprint');
+      ['A','B','C','D','E','F','G','H','I'].forEach(function (k) {
+        if (cn(v10.criteria[k]) !== cn(m11.criteria[k])) problems.push('criterium ' + k + ' wijkt af tussen v1.0 en v1.1');
+      });
+      if (cn(v10.criteria.J.anchors) !== cn(m11.criteria.J.anchors)) problems.push('J-ankers gewijzigd tussen v1.0 en v1.1');
+      const reg2 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'AUDIT_GAP_REGISTER.json'), 'utf8'));
+      const known2 = {};
+      JSON.parse(fs.readFileSync(idxPath, 'utf8')).forEach(function (x) { if (x.type === 'capability') known2[x.id] = x; });
+      const ST = ['COMPLETE','INCOMPLETE','AMBIGUOUS','NO_CAPABILITY_RELATION_PROVEN'];
+      (reg2.gaps || []).forEach(function (gp) {
+        const id = gp.gap_id;
+        if (ST.indexOf(gp.traceability_status) < 0) { problems.push('gap ' + id + ' zonder geldige traceability_status'); return; }
+        if (!gp.traceability_evidence) problems.push('gap ' + id + ' zonder traceability_evidence');
+        const p = gp.primary_capability_id, aff = gp.affected_capability_ids || [];
+        if (p !== null && p !== undefined) {
+          if (!known2[p]) problems.push('gap ' + id + ' primary_capability_id bestaat niet: ' + p);
+          if (aff.indexOf(p) >= 0) problems.push('gap ' + id + ' primary ook in affected');
+          if (gp.capability_id && gp.capability_id !== p) problems.push('gap ' + id + ' legacy capability_id wijkt af van primary');
+          if (gp.v1_scope === true && known2[p] && known2[p].v1_scope !== true) {
+            problems.push('gap ' + id + ' is V1 maar primary capability ' + p + ' is post-V1');
+          }
+        } else if (gp.traceability_status === 'COMPLETE') {
+          problems.push('gap ' + id + ' COMPLETE zonder primary_capability_id');
+        }
+        if (gp.traceability_status === 'NO_CAPABILITY_RELATION_PROVEN' && (p || aff.length)) {
+          problems.push('gap ' + id + ' NO_CAPABILITY_RELATION_PROVEN maar met capability-relatie');
+        }
+        aff.forEach(function (a) { if (!known2[a]) problems.push('gap ' + id + ' affected bestaat niet: ' + a); });
+        if (aff.length !== new Set(aff).size) problems.push('gap ' + id + ' duplicate in affected_capability_ids');
+      });
+    })();
+
     // ── BASELINE-1.2: A-J audit artifact guard ──
     const ajBatches = ['AJ_AUDIT_BATCH_A.json', 'AJ_AUDIT_BATCH_B.json']
       .map(function (f) { return path.join(ROOT, 'docs', 'audit', f); })
@@ -701,7 +751,13 @@ try {
       // reeds geauditte capability hangt, moet in de gap_refs van die capability staan.
       // Read-only getoetst tegen alle 59 canonical gaps: 6 toepasselijk, 1 violation,
       // 0 false positives -- capability_id is een expliciet canoniek veld, geen heuristiek.
-      const regForAj = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'AUDIT_GAP_REGISTER.json'), 'utf8'));
+      // BASELINE-1.2/v1.1: deze invariant geldt alleen voor Model-v1-artefacten.
+      // Historische pre-v1 artefacten zijn onder v1.0 geauditeerd, toen de
+      // traceability-correcties nog niet bestonden; retroactief gap_refs eisen zou
+      // hun historische karakter aantasten. Zij worden opnieuw beoordeeld in A-prime/B-prime.
+      const regForAj = aj.audit_model_status === 'HISTORICAL_PRE_V1_MODEL'
+        ? { gaps: [] }
+        : JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'AUDIT_GAP_REGISTER.json'), 'utf8'));
       const byCap = {};
       (aj.capabilities || []).forEach(function (c) { byCap[c.stable_id] = c.gap_refs || []; });
       (regForAj.gaps || []).forEach(function (gp) {

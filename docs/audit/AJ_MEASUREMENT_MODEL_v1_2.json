@@ -1,0 +1,332 @@
+{
+ "_schema": "trainingskompas-aj-measurement-model/1.0",
+ "audit_model_id": "trainingskompas-aj/v1.2",
+ "audit_model_version": "1.2",
+ "model_fingerprint": "sha256:82891683aad13cccf779a13783d90bb77279cbab5dfd035989607226fa0a9264",
+ "fingerprint_scope": [
+  "criteria",
+  "ladder",
+  "na_model",
+  "confidence_model",
+  "rounding_model",
+  "evidence_contract"
+ ],
+ "fingerprint_note": "deterministisch over de frozen velden, sorted keys, geen timestamp of niet-deterministisch veld",
+ "change_type": "D BASELINE_MODEL_REVISION",
+ "approved_by": "Product Owner",
+ "approved_on": "2026-09-17",
+ "canonicalized_at_sha": "42c6aeb61d628dd4b95cd43f748089c74a8a1ce6",
+ "supersedes": {
+  "audit_model_id": "trainingskompas-aj/v1.0",
+  "audit_model_version": "1.0",
+  "model_fingerprint": "sha256:cab0ca8b662e30c2e6ee6a22097c41466d132f8e3b0417bc5a42d421f0ee436e",
+  "note": "v1.0 blijft integraal historisch bewaard in docs/audit/AJ_MEASUREMENT_MODEL_v1.json en is niet gewijzigd"
+ },
+ "non_canonical_predecessor": {
+  "audit_model_id": "trainingskompas-aj/v1.1",
+  "note": "v1.1 is als voorstel opgesteld maar heeft canonical main nooit bereikt en wordt niet als canonical of historisch modelartefact bewaard. v1.2 supersedeert uitsluitend v1.0. Reden voor de herziening van het voorstel: de v1.1-trackfallback zou bij onbewezen trackmetadata willekeurig capabilities J_UNPROVEN maken."
+ },
+ "delta_vs_v1_0": {
+  "changed": [
+   "criteria.J.caps",
+   "evidence_contract.gap_traceability",
+   "evidence_contract.register_traceability_completeness"
+  ],
+  "unchanged": [
+   "criteria A t/m I inclusief alle ankers",
+   "criteria.J.anchors 0-5",
+   "criteria.J.weight",
+   "alle gewichten",
+   "ladder",
+   "na_model",
+   "confidence_model",
+   "rounding_model"
+  ],
+  "reason": "J telt zowel primary_capability_id als affected_capability_ids, en is scope-bewust: een gap zonder bewezen owner en zonder bewezen scope blokkeert geen enkele capability maar blijft register-level audit debt"
+ },
+ "provenance": {
+  "historically_repository_proven": [
+   "criterium-identiteiten A-J",
+   "gewichten",
+   "algemene 0-5 ladder",
+   "bestaande N/A-semantiek"
+  ],
+  "proven_in_commits": [
+   "e8fcbe9 BASELINE-1.0",
+   "66e36f9 BASELINE-1.1"
+  ],
+  "new_po_approved_baseline_revision": [
+   "criterium-specifieke 0-5 ankers (60)",
+   "volledige confidence-semantiek",
+   "deterministische afrondingsspecificatie",
+   "aanvullende evidence-vereisten"
+  ],
+  "explicit_statement": "De criterium-specifieke ankers zijn NIET retrospectief repository-proven. Zij worden hier voor het eerst formeel vastgesteld als Product-Owner-goedgekeurd auditmodel. Er wordt geen historische provenance geclaimd.",
+  "v1_2_note": "De J-matchingsemantiek is uitgebreid met affected_capability_ids en met scope-bewuste relevantie. Dit is een PO-goedgekeurde baseline model revision, geen herinterpretatie van v1.0. Artefacten die tegen v1.0 zijn uitgevoerd behouden hun v1.0-identiteit."
+ },
+ "semantics": {
+  "frozen_meaning": "audit_model_version 1.0 betekent conformiteit aan exact deze fingerprint",
+  "mutation_rule": "wijziging van frozen semantiek onder dezelfde versie is niet toegestaan en vereist een versiebump",
+  "historical_artifacts": "artefacten met audit_model_status HISTORICAL_PRE_V1_MODEL behouden hun scores en worden niet als v1.0-audits voorgesteld",
+  "version_rule": "een wijziging van frozen semantiek vereist een nieuwe versie en fingerprint; v1.0 blijft geldig voor bestaande artefacten"
+ },
+ "audited_count_semantics": {
+  "historical_audited": "capabilities beoordeeld onder een pre-v1.0 model; scores behouden, niet v1.0-verifieerbaar",
+  "model_v1_verified": "capabilities beoordeeld onder audit_model_version 1.0 met criterion-specifieke evidence",
+  "rule": "historical_audited en model_v1_verified worden altijd afzonderlijk gerapporteerd; historical_audited mag niet zonder qualifier als canonical audited worden gepresenteerd"
+ },
+ "gap_traceability_contract": {
+  "primary_capability_id": "string of null; maximaal een; moet een canonical capability zijn indien niet-null",
+  "affected_capability_ids": "array, uniek, 0..N, iedere id canonical, primary mag niet opnieuw in affected staan",
+  "traceability_status": "COMPLETE | INCOMPLETE | AMBIGUOUS | NO_CAPABILITY_RELATION_PROVEN",
+  "traceability_scope": "CAPABILITY_SCOPED | TRACK_SCOPED | UNSCOPED | NOT_APPLICABLE",
+  "traceability_evidence": "verplicht; capability-specifiek waar van toepassing; positief bewijs verplicht bij NO_CAPABILITY_RELATION_PROVEN",
+  "legacy_capability_id": "deprecated alias, moet exact gelijk zijn aan primary_capability_id; bij null primary eveneens null",
+  "scope_tracks": "uitsluitend bij TRACK_SCOPED; eindige, onafhankelijk bewezen verzameling tracks met evidence"
+ },
+ "criteria": {
+  "A": {
+   "name": "Product scope defined",
+   "weight": 5,
+   "definition": "Hoe expliciet en canoniek de functionele V1-scope, verantwoordelijkheid, afbakening en acceptance expectations zijn vastgelegd.",
+   "anchors": {
+    "0": "niet onderzocht",
+    "1": "capability bestaat als naam, verantwoordelijkheid onbenoemd",
+    "2": "verantwoordelijkheid beschreven in ten minste een canoniek document",
+    "3": "plus afbakening tegen ten minste een aangrenzende capability expliciet vastgelegd",
+    "4": "plus v1_scope met evidence-verwijzing in de canonieke index",
+    "5": "plus acceptance expectations en dependencies expliciet en versioneerbaar vastgelegd"
+   },
+   "na_allowed": false,
+   "caps": [
+    "Een goede implementatie maskeert een lage A-score niet."
+   ]
+  },
+  "B": {
+   "name": "Canonical architecture",
+   "weight": 15,
+   "definition": "Of er een duidelijke canonieke architectuur, eigenaar en pad bestaat, zonder onbeheerste parallelle paden.",
+   "anchors": {
+    "0": "niet onderzocht",
+    "1": "meerdere implementaties, geen aanwijsbare eigenaar",
+    "2": "een hoofdimplementatie aanwijsbaar, parallelle paden niet onderzocht",
+    "3": "een hoofdimplementatie, parallelle of legacy paden geinventariseerd en geclassificeerd",
+    "4": "plus aantoonbaar geen onbeheerst shadow-pad: elk alternatief is DORMANT of LEGACY_BUT_ISOLATED met bewijs, of canoniek geregistreerd als gap",
+    "5": "plus een guard of test bewaakt dat er geen tweede pad kan ontstaan"
+   },
+   "na_allowed": false,
+   "caps": [
+    "Documentatie alleen bereikt nooit 4 of 5."
+   ]
+  },
+  "C": {
+   "name": "Runtime integration",
+   "weight": 15,
+   "definition": "Werkelijke productie-integratie, aangetoond met callers en call-chain in plaats van bestaan van code.",
+   "anchors": {
+    "0": "niet onderzocht",
+    "1": "module bestaat, geen productie-caller aangetoond",
+    "2": "productie-callers bestaan, aantal niet geverifieerd",
+    "3": "ten minste een productie-caller met bestandsverwijzing bewezen",
+    "4": "plus volledige call-chain van entrypoint tot consumer bewezen, inclusief payload-inhoud",
+    "5": "plus aangetoond dat alle relevante entrypoints op dit pad convergeren"
+   },
+   "na_allowed": false,
+   "caps": [
+    "Tests met nul productie-callers geven maximaal 1.",
+    "Caller-count zonder call-chain geeft maximaal 2."
+   ]
+  },
+  "D": {
+   "name": "Persistence/data model",
+   "weight": 10,
+   "definition": "Schema, ownership, integriteit, migratie en runtime-persistentie, uitsluitend waar data-ownership tot de scope behoort.",
+   "anchors": {
+    "0": "niet onderzocht",
+    "1": "ad-hoc opslag zonder schema",
+    "2": "schema bestaat",
+    "3": "plus owner-binding op rijniveau bewezen",
+    "4": "plus lifecycle en migratiehistorie bewezen",
+    "5": "plus versionering en historiebehoud bewezen"
+   },
+   "na_allowed": true,
+   "caps": [
+    "N/A uitsluitend wanneer de capability aantoonbaar stateless is."
+   ]
+  },
+  "E": {
+   "name": "Calc/Context/Decision integration",
+   "weight": 10,
+   "definition": "Integratie in de keten RAW DATA naar Calculation Engine naar Context Engine naar Decision/Rules Engine naar consument, waar die laag inhoudelijk relevant is.",
+   "anchors": {
+    "0": "niet onderzocht",
+    "1": "consument rekent of beslist zelf",
+    "2": "losse koppeling, keten niet aangetoond",
+    "3": "deel van de keten call-chain-bewezen",
+    "4": "volledige relevante keten bewezen en geen bypass aangetroffen",
+    "5": "plus de afwezigheid van bypass is door test of guard afgedwongen"
+   },
+   "na_allowed": true,
+   "caps": [
+    "AI of UI die zelf rekent of beslist geeft maximaal 1.",
+    "N/A uitsluitend wanneer de laag architectonisch aantoonbaar niet relevant is."
+   ]
+  },
+  "F": {
+   "name": "Tests/evidence",
+   "weight": 15,
+   "definition": "Aard van het testbewijs, oplopend van geen test tot adversarial of device-bewijs voor exact deze flow.",
+   "anchors": {
+    "0": "niet onderzocht",
+    "1": "geen test",
+    "2": "uitsluitend documentatietest: assertions op tekst of structuur, niet op gedrag",
+    "3": "unittest op het gedrag van deze capability",
+    "4": "plus integratie- of runtimetest over de echte call-chain",
+    "5": "plus adversarial- of failure-test, of device-bewijs voor exact deze flow"
+   },
+   "na_allowed": false,
+   "caps": [
+    "Het aantal assertions verhoogt de score nooit."
+   ]
+  },
+  "G": {
+   "name": "Security/privacy",
+   "weight": 5,
+   "definition": "Ownership, autorisatie en enforcement op de datalaag, uitsluitend waar een trust boundary, persoonsgegevens of misbruikroute bestaat.",
+   "anchors": {
+    "0": "niet onderzocht",
+    "1": "geen ownership-mechanisme",
+    "2": "ownership in applicatiecode",
+    "3": "plus enforcement op datalaag zoals RLS of policy aangetoond",
+    "4": "plus auditbewijs dat de enforcement dekkend is",
+    "5": "plus adversarial bewijs met twee werkelijke accounts"
+   },
+   "na_allowed": true,
+   "caps": [
+    "Beleid of documentatie alleen geeft maximaal 2.",
+    "N/A uitsluitend bij publieke referentiedata zonder trust boundary of persoonsgegevens."
+   ]
+  },
+  "H": {
+   "name": "UX/user-facing completion",
+   "weight": 10,
+   "definition": "Feitelijke athlete-facing bruikbaarheid en consistentie van de keten ontdekken, gebruiken, feedback en vervolgactie.",
+   "anchors": {
+    "0": "niet onderzocht",
+    "1": "geen bereikbare gebruikersroute",
+    "2": "UI bestaat, keten niet aangetoond",
+    "3": "keten ontdekken naar gebruiken bruikbaar bewezen",
+    "4": "plus feedback en vervolgactie compleet",
+    "5": "plus op een echt apparaat bevestigd voor deze flow"
+   },
+   "na_allowed": true,
+   "caps": [
+    "Backend-completion alleen is onvoldoende bij een user-facing contract.",
+    "N/A uitsluitend wanneer geen user-facing gedrag tot de scope behoort."
+   ]
+  },
+  "I": {
+   "name": "Failure/degraded-state handling",
+   "weight": 5,
+   "definition": "Gedrag bij unknown, null, missing, timeout, malformed, conflicterende of low-confidence input.",
+   "anchors": {
+    "0": "niet onderzocht",
+    "1": "faalt hard of onvoorspelbaar",
+    "2": "generieke foutafhandeling",
+    "3": "relevante failure modes benoemd en afgevangen",
+    "4": "plus unknown blijft unknown: geen verzonnen of gefabriceerde waarde, deterministisch bewezen",
+    "5": "plus fail-closed gedrag door test of sabotage bewezen"
+   },
+   "na_allowed": false,
+   "caps": [
+    "Alleen happy-path bewijs geeft maximaal 2."
+   ]
+  },
+  "J": {
+   "name": "V1 audit closure",
+   "weight": 10,
+   "definition": "Mate waarin de V1-auditverplichting voor deze capability is onderzocht en gesloten.",
+   "anchors": {
+    "0": "niet onderzocht",
+    "1": "capability niet ge-audit",
+    "2": "deels onderzocht, of een open V1-gap met blocker true op deze capability",
+    "3": "volledig A-J ge-audit, open V1-gaps aanwezig maar geen bewezen blocker",
+    "4": "volledig ge-audit en geen open V1-gap op deze capability",
+    "5": "plus closure-evidence per gesloten gap in het canonieke register, of formeel DEFERRED_ACCEPTED"
+   },
+   "na_allowed": true,
+   "caps": [
+    "Een gap is voor J relevant volgens zijn traceability_scope. CAPABILITY_SCOPED: de relatie geldt uitsluitend voor primary_capability_id en affected_capability_ids. TRACK_SCOPED: uitsluitend capabilities binnen de onafhankelijk bewezen scope_tracks. UNSCOPED: er mag geen enkele individuele capability-relatie worden afgeleid. NOT_APPLICABLE: geen capability-J-relatie.",
+    "Een gap telt alleen mee wanneer v1_scope true is en de status OPEN of REVIEW_REQUIRED.",
+    "blocker true geeft J 2; blocker REVIEW_REQUIRED telt als niet-blokkerend en geeft J 3.",
+    "CLOSED_PROVEN en DEFERRED_ACCEPTED geven geen open-gap penalty; score 5 vereist onverminderd closure-evidence of een formeel DEFERRED_ACCEPTED-besluit.",
+    "J is niet berekenbaar voor een capability wanneer een CAPABILITY_SCOPED of TRACK_SCOPED gap die deze capability raakt traceability_status INCOMPLETE of AMBIGUOUS heeft: dan geldt J_UNPROVEN.",
+    "Een UNSCOPED gap maakt GEEN enkele individuele capability J_UNPROVEN. Hij blijft expliciete register-level audit debt en zet traceability_complete op false.",
+    "Er is geen fallback op een historische capability_id, op onbewezen primary_track of secondary_tracks, en nooit op globale blokkade van alle capabilities.",
+    "NO_CAPABILITY_RELATION_PROVEN beinvloedt geen enkele capability-J en vereist positieve traceability_evidence.",
+    "N/A uitsluitend bij v1_scope false."
+   ]
+  }
+ },
+ "ladder": {
+  "0": "NOT ASSESSED",
+  "1": "DISCOVERED",
+  "2": "FOUNDATION",
+  "3": "FUNCTIONAL",
+  "4": "CANONICAL",
+  "5": "AUDIT CLOSED"
+ },
+ "na_model": {
+  "allowed_criteria": [
+   "D",
+   "E",
+   "G",
+   "H"
+  ],
+  "j_rule": "J is N/A uitsluitend bij v1_scope false",
+  "forbidden_criteria": [
+   "A",
+   "B",
+   "C",
+   "F",
+   "I"
+  ],
+  "requires": "criterion-specifieke na_rationale met positief bewijs dat het criterium architectonisch of functioneel niet toepasselijk is",
+  "weight_rule": "gewicht van N/A-criteria wordt uitgesloten uit de noemer; resterende gewichten tellen proportioneel",
+  "forbidden_use": "N/A mag nooit worden gebruikt voor niet onderzocht of geen bewijs gevonden; dat is score 0"
+ },
+ "confidence_model": {
+  "HIGH": "direct capability-specifiek bewijs: concrete file plus functie, testnaam met uitslag, of migratie/policy",
+  "MEDIUM": "indirect of afgeleid bewijs, onvoldoende voor volledige directe capability-specifieke verificatie",
+  "LOW": "gericht onderzocht maar slechts zwak of geen capability-specifiek bewijs gevonden",
+  "rule": "confidence is geen maturity en geeft geen scorebonus of scoremalus"
+ },
+ "rounding_model": {
+  "step1": "criterion maturity is een geheel getal 0 tot en met 5",
+  "step2": "N/A-gewichten worden uitgesloten uit de noemer",
+  "step3": "capability raw weighted score = som(gewicht maal score) gedeeld door som(applicable gewicht)",
+  "step4": "capability canonical stored score = half-up afgerond op exact 3 decimalen",
+  "step5": "trackscore = gemiddelde van de canonical stored 3-decimale capabilityscores",
+  "step6": "trackscore half-up afgerond op exact 3 decimalen",
+  "step7": "percentage = stored trackscore gedeeld door 5 maal 100",
+  "step8": "percentage half-up afgerond op exact 2 decimalen",
+  "consequence": "T6 3.623 is 72.46 procent; rapportage op verborgen onafgeronde trackwaarden is niet toegestaan"
+ },
+ "evidence_contract": {
+  "per_criterion_evidence_refs": "verplicht: elk criterion-record draagt eigen criterion-specifieke evidence_refs",
+  "shared_capability_evidence": "een capability-brede gedeelde evidence-set is onvoldoende als enige bewijs voor tien criteria",
+  "generic_rationale_forbidden": "de generieke rationale \"zie evidence_refs\" is onder v1.0 niet toegestaan",
+  "required_fields": [
+   "criterion",
+   "applicable",
+   "score indien applicable",
+   "confidence",
+   "criterion-specifieke rationale",
+   "criterion-specifieke evidence_refs",
+   "na_rationale indien N/A"
+  ],
+  "retroactivity": "dit contract geldt niet retroactief voor artefacten met audit_model_status HISTORICAL_PRE_V1_MODEL",
+  "gap_traceability": "gaps dragen primary_capability_id, affected_capability_ids[], traceability_status, traceability_scope en traceability_evidence. Geldige combinaties: COMPLETE met CAPABILITY_SCOPED en een non-null primary plus 0..N affected; INCOMPLETE met TRACK_SCOPED, null primary, lege affected en onafhankelijk bewezen eindige scope_tracks; INCOMPLETE met UNSCOPED, null primary en lege affected; AMBIGUOUS met TRACK_SCOPED of UNSCOPED, null primary en lege affected; NO_CAPABILITY_RELATION_PROVEN met NOT_APPLICABLE, null primary, lege affected en positief bewijs. Elke andere combinatie is ongeldig. capability_id is uitsluitend een deprecated alias en moet gelijk zijn aan primary_capability_id; bij een null primary is de alias eveneens null. Ontbrekende traceability betekent nooit impliciet geen gap.",
+  "register_traceability_completeness": "Voor iedere relevante V1-gap is traceability RESOLVED wanneer ofwel traceability_status COMPLETE is met traceability_scope CAPABILITY_SCOPED en alle relatie- en evidence-invarianten slagen, ofwel traceability_status NO_CAPABILITY_RELATION_PROVEN is met traceability_scope NOT_APPLICABLE en positieve traceability_evidence bewijst waarom geen capability-relatie nodig is. Traceability is UNRESOLVED bij INCOMPLETE of AMBIGUOUS. traceability_complete is waar wanneer geen enkele relevante V1-gap unresolved traceability heeft. Een geldig NO_CAPABILITY_RELATION_PROVEN-record maakt traceability_complete op zichzelf NIET false. traceability_complete is register-niveau en staat los van model_v1_verified, dat uitsluitend capability-niveau verificatie telt en deze register-debt niet mag verbergen."
+ }
+}

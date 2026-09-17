@@ -29,7 +29,12 @@
    "severity_source": "explicit_field",
    "blocker_evidence": "expliciete non-blocking formulering in gaptekst",
    "v1_evidence": "PO-besluit 16-09-2026",
-   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie",
+   "primary_capability_id": "DOC-HANDBOOK-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P2-007",
@@ -53,7 +58,12 @@
    "secondary_tracks": [
     "T7"
    ],
-   "track_evidence": "Capability-ID COMM-UI-001 -> T16 (sterker dan trefwoordclassificatie)"
+   "track_evidence": "Capability-ID COMM-UI-001 -> T16 (sterker dan trefwoordclassificatie)",
+   "primary_capability_id": "COMM-UI-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P2-008",
@@ -68,7 +78,7 @@
     "CODE VERIFIED, zie het Home/Dashboard-sprintrapport in `docs/`."
    ],
    "intended_closure": "een prominente resume-banner/kaart bovenaan Home wanneer `restoreTrainingDraft()` een geldige, data-bevattende draft oplevert, die routeert ",
-   "capability_id": "CAP-REGISTRY-SCREENS-001",
+   "capability_id": "TRAIN-EXECUTION-001",
    "section": "OPEN",
    "offset": 2725,
    "severity_source": "explicit_field",
@@ -77,7 +87,15 @@
    "secondary_tracks": [
     "T7"
    ],
-   "track_evidence": "Capability-ID CAP-REGISTRY-SCREENS-001 -> T1 (sterker dan trefwoordclassificatie)"
+   "track_evidence": "Capability-ID CAP-REGISTRY-SCREENS-001 -> T1 (sterker dan trefwoordclassificatie)",
+   "primary_capability_id": "TRAIN-EXECUTION-001",
+   "affected_capability_ids": [
+    "TRAIN-HOME-001",
+    "CAP-REGISTRY-SCREENS-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P2-009",
@@ -92,13 +110,18 @@
     "CODE VERIFIED, zie het Load & Progression-sprintrapport in `docs/`."
    ],
    "intended_closure": "productbeslissing + ontwerp voor hoe een tweede belasting-signaal (sRPE-gebaseerd) naast de bestaande ACWR-classificatie zinvol en niet-verw",
-   "capability_id": "CALC-LOAD-REGISTRY-001",
    "section": "OPEN",
    "offset": 3790,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
    "v1_evidence": "PO-besluit 16-09-2026",
-   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie",
+   "primary_capability_id": "CALC-LOAD-REGISTRY-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "sRPE-bouwstenen nog niet UI-geintegreerd; de gap beschrijft een tweede belastingsignaal naast de bestaande ACWR-classificatie, de kern van de load-registry.",
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "capability_id": "CALC-LOAD-REGISTRY-001"
   },
   {
    "gap_id": "GAP-P2-010",
@@ -113,7 +136,6 @@
     "CODE VERIFIED, repo-brede vergelijking van `index.html`-scripttags tegen `sw.js`'s `STATIC_ASSETS`-array."
    ],
    "intended_closure": "de resterende 13 bestanden toevoegen aan `STATIC_ASSETS`, met een `CACHE_STATIC`-bump.",
-   "capability_id": "PLAT-OBSERVABILITY-001",
    "section": "OPEN",
    "offset": 4594,
    "severity_source": "explicit_field",
@@ -122,7 +144,13 @@
    "secondary_tracks": [
     "T3"
    ],
-   "track_evidence": "Capability-ID PLAT-OBSERVABILITY-001 -> T17 (sterker dan trefwoordclassificatie)"
+   "track_evidence": "Capability-ID PLAT-OBSERVABILITY-001 -> T17 (sterker dan trefwoordclassificatie)",
+   "primary_capability_id": null,
+   "affected_capability_ids": [],
+   "traceability_status": "INCOMPLETE",
+   "traceability_evidence": "13 core/*.js-bestanden ontbreken in de service-worker-precache (sw.js STATIC_ASSETS); closure vereist toevoeging plus een CACHE_STATIC-bump. Owner-zoektocht over alle 91 canonical capabilities op offline, service-worker, precache, pwa, cache en static-asset gaf nul treffers. De historische capability_id PLAT-OBSERVABILITY-001 is onderzocht en verworpen als bewezen owner: docs/OBSERVABILITY_CONTRACT.md bevat nul referenties naar precache of STATIC_ASSETS, en de capability betreft instrumentatie van coach.js, wearable-sync.js en frontend-error-capture. Trackscope-zoektocht: primary_track T17 was blijkens track_evidence volledig afgeleid van diezelfde verworpen capability-ID, en secondary_track T3 (Endurance) is inhoudelijk onjuist; beide worden daarom NIET als fallback J-scope gebruikt. De relatie met Trainingskompas bestaat aantoonbaar; canonical owner en scope zijn unresolved. Dit is daarom INCOMPLETE/UNSCOPED en uitdrukkelijk geen NO_CAPABILITY_RELATION_PROVEN.",
+   "traceability_scope": "UNSCOPED",
+   "capability_id": null
   },
   {
    "gap_id": "GAP-P2-011",
@@ -137,7 +165,6 @@
     "CODE VERIFIED, zie het Recovery-sprintrapport in `docs/`."
    ],
    "intended_closure": "de HRV-baseline-functiegroep extraheren naar een pure `core/recovery.js`-module, analoog aan `core/trainingLoad.js`/`core/progression.js`.",
-   "capability_id": "CALC-REC-REGISTRY-001",
    "section": "OPEN",
    "offset": 5509,
    "severity_source": "explicit_field",
@@ -146,7 +173,15 @@
    "secondary_tracks": [
     "T9"
    ],
-   "track_evidence": "Capability-ID CALC-REC-REGISTRY-001 -> T4 (sterker dan trefwoordclassificatie)"
+   "track_evidence": "Capability-ID CALC-REC-REGISTRY-001 -> T4 (sterker dan trefwoordclassificatie)",
+   "primary_capability_id": "CALC-REC-REGISTRY-001",
+   "affected_capability_ids": [
+    "RECOV-HRV-PROV-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "Geen dedicated core-unittest voor de HRV-baseline-functiegroep; closure vraagt extractie naar core/recovery.js binnen de recovery-registry. Raakt tevens de HRV-provenancecapability.",
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "capability_id": "CALC-REC-REGISTRY-001"
   },
   {
    "gap_id": "GAP-P2-012",
@@ -161,7 +196,6 @@
     "CODE VERIFIED, zie het Recovery-sprintrapport in `docs/`."
    ],
    "intended_closure": "heroverwegen of RHR-delta een strengere minimumdrempel verdient, consistent met de HRV-aanpak.",
-   "capability_id": "CALC-REC-REGISTRY-001",
    "section": "OPEN",
    "offset": 6253,
    "severity_source": "explicit_field",
@@ -170,7 +204,15 @@
    "secondary_tracks": [
     "T9"
    ],
-   "track_evidence": "Capability-ID CALC-REC-REGISTRY-001 -> T4 (sterker dan trefwoordclassificatie)"
+   "track_evidence": "Capability-ID CALC-REC-REGISTRY-001 -> T4 (sterker dan trefwoordclassificatie)",
+   "primary_capability_id": "CALC-REC-REGISTRY-001",
+   "affected_capability_ids": [
+    "DQ-CONFIDENCE-CONTRACT-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "RHR-delta-minimum inconsistent met de striktere HRV-datakwaliteitsgates; de gap betreft de recovery-registry en raakt expliciet het data quality- en confidence-contract.",
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "capability_id": "CALC-REC-REGISTRY-001"
   },
   {
    "gap_id": "GAP-P2-013",
@@ -185,7 +227,6 @@
     "CODE VERIFIED, zie het Endurance & Erg-sprintrapport in `docs/`."
    ],
    "intended_closure": "expliciete provenance-vlag (`measured`/`derived`) toevoegen aan de opslag van erg-vermogenswaarden.",
-   "capability_id": "CALC-END-REGISTRY-001",
    "section": "OPEN",
    "offset": 6877,
    "severity_source": "explicit_field",
@@ -194,7 +235,16 @@
    "secondary_tracks": [
     "T11"
    ],
-   "track_evidence": "Capability-ID CALC-END-REGISTRY-001 -> T4 (sterker dan trefwoordclassificatie)"
+   "track_evidence": "Capability-ID CALC-END-REGISTRY-001 -> T4 (sterker dan trefwoordclassificatie)",
+   "primary_capability_id": "CALC-END-REGISTRY-001",
+   "affected_capability_ids": [
+    "PROVENANCE-EXPLAINABILITY-001",
+    "DEV-CONCEPT2-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "Geen provenance-onderscheid tussen device-gemeten en split-afgeleid vermogen; closure vraagt een measured/derived-vlag op erg-vermogenswaarden. Raakt provenance en de Concept2-capability.",
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "capability_id": "CALC-END-REGISTRY-001"
   },
   {
    "gap_id": "GAP-P2-014",
@@ -209,13 +259,18 @@
     "CODE VERIFIED, zie het Context Taxonomy-sprintrapport in `docs/`."
    ],
    "intended_closure": "ofwel `ContextEngineCore` alsnog bedraden in `buildCtx()` (bewuste architectuurkeuze, geen technische blocker meer sinds F2), ofwel explicie",
-   "capability_id": "CTX-CONTRACT-001",
    "section": "OPEN",
    "offset": 7514,
    "severity_source": "explicit_field",
    "blocker_evidence": "expliciete blokkerende formulering in gaptekst",
    "v1_evidence": "PO-besluit 16-09-2026",
-   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie",
+   "primary_capability_id": "CTX-CONTRACT-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "ContextEngineCore is dode code, nooit aangeroepen vanuit index.html; closure betreft bedrading in buildCtx(), exact de verantwoordelijkheid van het context-contract.",
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "capability_id": "CTX-CONTRACT-001"
   },
   {
    "gap_id": "GAP-P2-015",
@@ -230,7 +285,7 @@
     "CODE VERIFIED, zie het Data Quality & Confidence-sprintrapport in `docs/`."
    ],
    "intended_closure": "`recoveryScore()` uitbreiden met hetzelfde soort kwaliteitsfilter dat `readinessDay()` al gebruikt.",
-   "capability_id": "DQ-CONFIDENCE-CONTRACT-001",
+   "capability_id": "CALC-REC-REGISTRY-001",
    "section": "OPEN",
    "offset": 8404,
    "severity_source": "explicit_field",
@@ -249,7 +304,15 @@
      "change_type": "AUDIT_METADATA_CORRECTION (C-C5)",
      "reason": "track alignment met capability_id; status ongewijzigd OPEN"
     }
-   ]
+   ],
+   "primary_capability_id": "CALC-REC-REGISTRY-001",
+   "affected_capability_ids": [
+    "DQ-CONFIDENCE-CONTRACT-001",
+    "DEC-CORE-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P2-016",
@@ -264,7 +327,6 @@
     "CODE VERIFIED + `core/fAiOutputContract.test.js` 17/17, sabotagebewijs geleverd."
    ],
    "intended_closure": "eventueel toekomstig structured-JSON-outputcontract, alleen indien de productrisico-omvang dat ooit rechtvaardigt (`PRODUCT_DECISION_REQUIRE",
-   "capability_id": "AI-OUTPUT-CONTRACT-001",
    "section": "OPEN",
    "offset": 9263,
    "severity_source": "explicit_field",
@@ -273,7 +335,13 @@
    "secondary_tracks": [
     "T9"
    ],
-   "track_evidence": "Capability-ID AI-OUTPUT-CONTRACT-001 -> T8 (sterker dan trefwoordclassificatie)"
+   "track_evidence": "Capability-ID AI-OUTPUT-CONTRACT-001 -> T8 (sterker dan trefwoordclassificatie)",
+   "primary_capability_id": "AI-OUTPUT-CONTRACT-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "AI-outputcontract, resterend structured-JSON-gat; evidence verwijst naar core/fAiOutputContract.test.js 17/17 met sabotagebewijs.",
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "capability_id": "AI-OUTPUT-CONTRACT-001"
   },
   {
    "gap_id": "GAP-P2-018",
@@ -297,7 +365,14 @@
    "secondary_tracks": [
     "T9"
    ],
-   "track_evidence": "Capability-ID PROVIDER-INTEGRATION-CONTRACT-001 -> T11 (sterker dan trefwoordclassificatie)"
+   "track_evidence": "Capability-ID PROVIDER-INTEGRATION-CONTRACT-001 -> T11 (sterker dan trefwoordclassificatie)",
+   "primary_capability_id": "PROVIDER-INTEGRATION-CONTRACT-001",
+   "affected_capability_ids": [
+    "DEV-WEARSYNC-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P2-019",
@@ -318,7 +393,14 @@
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
    "v1_evidence": "V1_SCOPE_MATRIX: Devices/Wearables = V1 MUST Ja",
-   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie",
+   "primary_capability_id": "PROVIDER-INTEGRATION-CONTRACT-001",
+   "affected_capability_ids": [
+    "DEV-WEARSYNC-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P2-020",
@@ -333,13 +415,20 @@
     "CODE VERIFIED, zie het Concept2 PM5 Real-device Validation-sprintrapport in `docs/`."
    ],
    "intended_closure": "eventueel een expliciete precedentieregel vastleggen (bv. PM5-hartslag heeft voorrang tijdens een erg-sessie), alleen indien een concrete pr",
-   "capability_id": "CONCEPT2-LIVE-001",
+   "capability_id": "DEV-CONCEPT2-001",
    "section": "OPEN",
    "offset": 12144,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
    "v1_evidence": "V1_SCOPE_MATRIX: Devices/Wearables = V1 MUST Ja",
-   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie",
+   "primary_capability_id": "DEV-CONCEPT2-001",
+   "affected_capability_ids": [
+    "PROVIDER-INTEGRATION-CONTRACT-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P2-021",
@@ -360,7 +449,14 @@
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
    "v1_evidence": "PO-besluit 16-09-2026",
-   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie",
+   "primary_capability_id": "RUNNING-INTELLIGENCE-001",
+   "affected_capability_ids": [
+    "CYCLING-INTELLIGENCE-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P2-022",
@@ -381,7 +477,14 @@
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
    "v1_evidence": "PO-besluit 16-09-2026",
-   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie",
+   "primary_capability_id": "END-HYROX-001",
+   "affected_capability_ids": [
+    "ATHLETE-DASHBOARD-2-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P2-027",
@@ -400,7 +503,12 @@
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
    "v1_evidence": "PO-besluit 16-09-2026",
-   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie",
+   "primary_capability_id": "END-DATAFOUNDATION-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P2-026",
@@ -421,7 +529,15 @@
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
    "v1_evidence": "PO-besluit 16-09-2026",
-   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie",
+   "primary_capability_id": "RUNNING-INTELLIGENCE-001",
+   "affected_capability_ids": [
+    "CYCLING-INTELLIGENCE-001",
+    "CTX-CONTRACT-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P2-028",
@@ -434,13 +550,20 @@
    "dependency": null,
    "evidence": [],
    "intended_closure": null,
-   "capability_id": "RUNNING-CORE",
+   "capability_id": "END-RUNNINGCORE-001",
    "section": "OPEN",
    "offset": 18764,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
    "v1_evidence": "PO-besluit 16-09-2026",
-   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie",
+   "primary_capability_id": "END-RUNNINGCORE-001",
+   "affected_capability_ids": [
+    "END-INTERVAL-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P2-029",
@@ -453,13 +576,22 @@
    "dependency": null,
    "evidence": [],
    "intended_closure": "dezelfde canonical keten voor cycling/swimming (B2) en erg (laps i.p.v. exNote), waarna de drie legacy `intervalBlokken`-kopieën verdwijnen.",
-   "capability_id": "CYCLING-CORE",
+   "capability_id": "END-CYCLINGCORE-001",
    "section": "OPEN",
    "offset": 20122,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
    "v1_evidence": "PO-besluit 16-09-2026",
-   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie",
+   "primary_capability_id": "END-CYCLINGCORE-001",
+   "affected_capability_ids": [
+    "END-INTERVAL-001",
+    "END-RUNNINGCORE-001",
+    "SWIMMING-FEASIBILITY-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P2-031",
@@ -472,12 +604,17 @@
    "dependency": null,
    "evidence": [],
    "intended_closure": null,
-   "capability_id": null,
    "section": "OPEN",
    "offset": 22140,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "primary_capability_id": null,
+   "affected_capability_ids": [],
+   "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
+   "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
+   "traceability_scope": "NOT_APPLICABLE",
+   "capability_id": null
   },
   {
    "gap_id": "GAP-P2-030",
@@ -490,7 +627,7 @@
    "dependency": null,
    "evidence": [],
    "intended_closure": null,
-   "capability_id": "DEC-DETRAIN-001",
+   "capability_id": "DEC-CORE-001",
    "section": "OPEN",
    "offset": 24585,
    "severity_source": "explicit_field",
@@ -519,7 +656,12 @@
    ],
    "closure_rationale": "Programma, Preview en Mijn training gebruiken geen afwijkend detraining-prescription-pad meer; de canonical flow loopt via gedeelde previous-performance loading en de canonical working-weight resolver.",
    "closure_verified_at_sha": "6f38c0cea6bcb95649213175e4f19c36b6b6493c",
-   "closure_method": "read-only root-cause closure trace (BASELINE-1.2 Batch-B evidence correction gate)"
+   "closure_method": "read-only root-cause closure trace (BASELINE-1.2 Batch-B evidence correction gate)",
+   "primary_capability_id": "DEC-CORE-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P3-031",
@@ -532,12 +674,17 @@
    "dependency": null,
    "evidence": [],
    "intended_closure": "aparte sprints met evidence-gate; geen percentage zonder bronnen.",
-   "capability_id": null,
+   "capability_id": "CALC-LOAD-REGISTRY-001",
    "section": "OPEN",
    "offset": 25372,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)"
+   "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)",
+   "primary_capability_id": "CALC-LOAD-REGISTRY-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P3-032",
@@ -550,7 +697,7 @@
    "dependency": null,
    "evidence": [],
    "intended_closure": null,
-   "capability_id": "DEC-RECADJ-001",
+   "capability_id": "DEC-CORE-001",
    "section": "OPEN",
    "offset": 26472,
    "severity_source": "explicit_field",
@@ -579,7 +726,12 @@
    ],
    "closure_rationale": "Programma, Normal en Guided gebruiken dezelfde canonical readiness/recovery application met persisted gevoel- en pijn-input, expliciete weight override, en eenmalige toepassing van readiness en detraining op hun eigen canonical laag.",
    "closure_verified_at_sha": "6f38c0cea6bcb95649213175e4f19c36b6b6493c",
-   "closure_method": "read-only root-cause closure trace (BASELINE-1.2 Batch-B evidence correction gate)"
+   "closure_method": "read-only root-cause closure trace (BASELINE-1.2 Batch-B evidence correction gate)",
+   "primary_capability_id": "DEC-CORE-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P3-033",
@@ -592,13 +744,18 @@
    "dependency": null,
    "evidence": [],
    "intended_closure": null,
-   "capability_id": "F0",
+   "capability_id": "EXERCISE-SUBSTITUTION-001",
    "section": "OPEN",
    "offset": 27397,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
    "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)",
-   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie",
+   "primary_capability_id": "EXERCISE-SUBSTITUTION-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P3-023",
@@ -619,7 +776,12 @@
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
    "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)",
-   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie"
+   "track_evidence": "Capability-ID bevestigt trefwoordclassificatie",
+   "primary_capability_id": "ADHERENCE-INTELLIGENCE-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P3-024",
@@ -643,7 +805,15 @@
    "secondary_tracks": [
     "T9"
    ],
-   "track_evidence": "Capability-ID CTX-CYCLE-001 -> T5 (sterker dan trefwoordclassificatie)"
+   "track_evidence": "Capability-ID CTX-CYCLE-001 -> T5 (sterker dan trefwoordclassificatie)",
+   "primary_capability_id": "CTX-CYCLE-001",
+   "affected_capability_ids": [
+    "CALC-REC-REGISTRY-001",
+    "RECOV-HRV-PROV-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P2-002",
@@ -667,7 +837,12 @@
    "secondary_tracks": [
     "T6"
    ],
-   "track_evidence": "Capability-ID PLAT-BACKUP-CLEANUP-001 -> T17 (sterker dan trefwoordclassificatie)"
+   "track_evidence": "Capability-ID PLAT-BACKUP-CLEANUP-001 -> T17 (sterker dan trefwoordclassificatie)",
+   "primary_capability_id": "PLAT-BACKUP-CLEANUP-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P2-003",
@@ -682,7 +857,6 @@
     "CODE VERIFIED — zie `docs/OBSERVABILITY_CONTRACT.md` §\"Gedekte flows\" en §\"Open gaps\"."
    ],
    "intended_closure": "resterende functies/flows instrumenteren met het bestaande contract; retentiebeleid formaliseren.",
-   "capability_id": "PLAT-OBSERVABILITY-001",
    "section": "OPEN",
    "offset": 33590,
    "severity_source": "explicit_field",
@@ -691,7 +865,13 @@
    "secondary_tracks": [
     "T11"
    ],
-   "track_evidence": "Capability-ID PLAT-OBSERVABILITY-001 -> T17 (sterker dan trefwoordclassificatie)"
+   "track_evidence": "Capability-ID PLAT-OBSERVABILITY-001 -> T17 (sterker dan trefwoordclassificatie)",
+   "primary_capability_id": "PLAT-OBSERVABILITY-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "Observability: resterende instrumentatie; docs/OBSERVABILITY_CONTRACT.md paragraaf Gedekte flows en Open gaps benoemt exact deze restpost binnen PLAT-OBSERVABILITY-001.",
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "capability_id": "PLAT-OBSERVABILITY-001"
   },
   {
    "gap_id": "GAP-P2-004",
@@ -706,7 +886,6 @@
     "DB VERIFIED (aanwezigheid, nooit waarden) + CODE VERIFIED (0 referenties). Zie `docs/CONFIGURATION_SECURITY_CONTRACT.md` F-01/F-02/F-03."
    ],
    "intended_closure": "F-01/F-02 — bevestig met Product Owner dat niets buiten deze repo deze kolommen leest, verwijder daarna in een aparte, expliciet goedgekeurd",
-   "capability_id": "SEC-CONFIG-001",
    "section": "OPEN",
    "offset": 34443,
    "severity_source": "explicit_field",
@@ -715,7 +894,13 @@
    "secondary_tracks": [
     "T6"
    ],
-   "track_evidence": "Capability-ID SEC-CONFIG-001 -> T17 (sterker dan trefwoordclassificatie)"
+   "track_evidence": "Capability-ID SEC-CONFIG-001 -> T17 (sterker dan trefwoordclassificatie)",
+   "primary_capability_id": "SEC-CONFIG-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "Orphaned secret-achtige DB-kolommen; docs/CONFIGURATION_SECURITY_CONTRACT.md is de evidence-bron van SEC-CONFIG-001, DB VERIFIED plus CODE VERIFIED met 0 referenties.",
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "capability_id": "SEC-CONFIG-001"
   },
   {
    "gap_id": "GAP-P2-024",
@@ -728,12 +913,17 @@
    "dependency": null,
    "evidence": [],
    "intended_closure": "`created_by` op `ON DELETE SET NULL` in plaats van CASCADE, zodat het event (en de aanwezigheidshistorie van anderen) blijft bestaan met een",
-   "capability_id": null,
    "section": "OPEN",
    "offset": 35876,
    "severity_source": "explicit_field",
    "blocker_evidence": "expliciete blokkerende formulering in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "primary_capability_id": null,
+   "affected_capability_ids": [],
+   "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
+   "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
+   "traceability_scope": "NOT_APPLICABLE",
+   "capability_id": null
   },
   {
    "gap_id": "GAP-P2-025",
@@ -746,12 +936,17 @@
    "dependency": null,
    "evidence": [],
    "intended_closure": null,
-   "capability_id": null,
+   "capability_id": "CALC-END-REGISTRY-001",
    "section": "OPEN",
    "offset": 36813,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "primary_capability_id": "CALC-END-REGISTRY-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P2-005",
@@ -764,12 +959,17 @@
    "dependency": null,
    "evidence": [],
    "intended_closure": "zie `docs/DOCUMENTATION_GOVERNANCE.md` — bij een volgende relevante gebeurtenis een nieuw gedateerd document toevoegen i.p.v. overschrijven.",
-   "capability_id": null,
+   "capability_id": "DOC-HANDBOOK-001",
    "section": "OPEN",
    "offset": 38246,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)"
+   "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)",
+   "primary_capability_id": "DOC-HANDBOOK-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P3-001",
@@ -782,7 +982,7 @@
    "dependency": null,
    "evidence": [],
    "intended_closure": null,
-   "capability_id": null,
+   "capability_id": "SEC-CONFIG-001",
    "section": "OPEN",
    "offset": 38735,
    "severity_source": "derived_from_id",
@@ -791,7 +991,16 @@
    "secondary_tracks": [
     "T2"
    ],
-   "track_evidence": "BASELINE-1.2 C-A3: root cause is ownership-afdwinging via BEFORE INSERT-triggers in plaats van RLS WITH CHECK, op exercises/custom_trainings/equipment_catalog. Responsibility = security/RLS (T17), niet exercise intelligence. Metadata-correctie, geen productprogressie."
+   "track_evidence": "BASELINE-1.2 C-A3: root cause is ownership-afdwinging via BEFORE INSERT-triggers in plaats van RLS WITH CHECK, op exercises/custom_trainings/equipment_catalog. Responsibility = security/RLS (T17), niet exercise intelligence. Metadata-correctie, geen productprogressie.",
+   "primary_capability_id": "SEC-CONFIG-001",
+   "affected_capability_ids": [
+    "TRAIN-BUILDER-001",
+    "EXERCISE-CATALOG-001",
+    "EXERCISE-INTELLIGENCE-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P3-002",
@@ -804,12 +1013,17 @@
    "dependency": null,
    "evidence": [],
    "intended_closure": null,
-   "capability_id": null,
+   "capability_id": "DOC-HANDBOOK-001",
    "section": "OPEN",
    "offset": 39000,
    "severity_source": "derived_from_id",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "primary_capability_id": "DOC-HANDBOOK-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P3-003",
@@ -822,12 +1036,17 @@
    "dependency": null,
    "evidence": [],
    "intended_closure": null,
-   "capability_id": null,
    "section": "OPEN",
    "offset": 39209,
    "severity_source": "derived_from_id",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "track niet classificeerbaar"
+   "v1_evidence": "track niet classificeerbaar",
+   "primary_capability_id": null,
+   "affected_capability_ids": [],
+   "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
+   "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
+   "traceability_scope": "NOT_APPLICABLE",
+   "capability_id": null
   },
   {
    "gap_id": "GAP-P3-004",
@@ -842,7 +1061,7 @@
     "CODE VERIFIED, zie het History/Calendar-sprintrapport in `docs/`."
    ],
    "intended_closure": "de 18 call sites gericht vervangen door `td()`-equivalenten, per geval beoordeeld (sommige betreffen een datum in het verleden, niet \"vandaa",
-   "capability_id": "CAP-REGISTRY-SCREENS-001",
+   "capability_id": "TRAIN-SCHEDULE-001",
    "section": "OPEN",
    "offset": 39490,
    "severity_source": "explicit_field",
@@ -851,7 +1070,15 @@
    "secondary_tracks": [
     "T7"
    ],
-   "track_evidence": "Capability-ID CAP-REGISTRY-SCREENS-001 -> T1 (sterker dan trefwoordclassificatie)"
+   "track_evidence": "Capability-ID CAP-REGISTRY-SCREENS-001 -> T1 (sterker dan trefwoordclassificatie)",
+   "primary_capability_id": "TRAIN-SCHEDULE-001",
+   "affected_capability_ids": [
+    "EXERCISE-SUBSTITUTION-001",
+    "CAP-REGISTRY-SCREENS-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P4-003",
@@ -864,12 +1091,19 @@
    "dependency": null,
    "evidence": [],
    "intended_closure": "dezelfde owner-chain (`programs.user_id` → `program_id=in.`) + test; geen RLS-wijziging.",
-   "capability_id": null,
+   "capability_id": "TRAIN-SCHEDULE-001",
    "section": "OPEN",
    "offset": 40464,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Analytics/Inzicht = V1 MUST Ja"
+   "v1_evidence": "V1_SCOPE_MATRIX: Analytics/Inzicht = V1 MUST Ja",
+   "primary_capability_id": "TRAIN-SCHEDULE-001",
+   "affected_capability_ids": [
+    "SEC-CONFIG-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P4-004",
@@ -882,12 +1116,17 @@
    "dependency": null,
    "evidence": [],
    "intended_closure": null,
-   "capability_id": null,
+   "capability_id": "TRAIN-SCHEDULE-001",
    "section": "OPEN",
    "offset": 41662,
    "severity_source": "explicit_field",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Analytics/Inzicht = V1 MUST Ja"
+   "v1_evidence": "V1_SCOPE_MATRIX: Analytics/Inzicht = V1 MUST Ja",
+   "primary_capability_id": "TRAIN-SCHEDULE-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P4-001",
@@ -900,12 +1139,17 @@
    "dependency": null,
    "evidence": [],
    "intended_closure": null,
-   "capability_id": null,
    "section": "OPEN",
    "offset": 42494,
    "severity_source": "derived_from_id",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Social = V1 MUST Ja"
+   "v1_evidence": "V1_SCOPE_MATRIX: Social = V1 MUST Ja",
+   "primary_capability_id": null,
+   "affected_capability_ids": [],
+   "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
+   "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
+   "traceability_scope": "NOT_APPLICABLE",
+   "capability_id": null
   },
   {
    "gap_id": "GAP-P4-002",
@@ -920,12 +1164,17 @@
     "`docs/F8_EXISTING_WOMENS_PERFORMANCE_AUDIT.md`, `core/fWomensPerformanceDecisions.test.js` 13/13 met sabotagebewijs."
    ],
    "intended_closure": null,
-   "capability_id": null,
+   "capability_id": "EVID-SCI-001",
    "section": "OPEN",
    "offset": 42674,
    "severity_source": "derived_from_id",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)"
+   "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)",
+   "primary_capability_id": "EVID-SCI-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P1-004",
@@ -940,12 +1189,17 @@
     "live SQL-transactietest met 2 volledig gescheiden tenants — lid van tenant A ziet tenant A (ALLOW), ziet tenant B niet (DENY), onbetrokken gebruiker ziet geen v"
    ],
    "intended_closure": null,
-   "capability_id": null,
+   "capability_id": "SEC-CONFIG-001",
    "section": "HISTORICAL",
    "offset": 59406,
    "severity_source": "derived_from_id",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "primary_capability_id": "SEC-CONFIG-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P0-004",
@@ -960,12 +1214,17 @@
     "live SQL-transactietest — self-update van de drie kolommen wordt geblokkeerd (waarden blijven ongewijzigd); service-role-update (simuleert `gym-team.js`) slaagt"
    ],
    "intended_closure": null,
-   "capability_id": null,
    "section": "HISTORICAL",
    "offset": 60322,
    "severity_source": "derived_from_id",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "primary_capability_id": null,
+   "affected_capability_ids": [],
+   "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
+   "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
+   "traceability_scope": "NOT_APPLICABLE",
+   "capability_id": null
   },
   {
    "gap_id": "GAP-P0-001",
@@ -980,12 +1239,17 @@
     "`SET LOCAL ROLE anon/authenticated` → 0 rijen; `service_role` → 1 rij. Regressietest `core/fGymsRlsSecurity.test.js`."
    ],
    "intended_closure": null,
-   "capability_id": null,
+   "capability_id": "SEC-CONFIG-001",
    "section": "HISTORICAL",
    "offset": 61548,
    "severity_source": "derived_from_id",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "primary_capability_id": "SEC-CONFIG-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P0-002",
@@ -1000,12 +1264,17 @@
     "`core/fCoachProxySecurity.test.js` (12/12), `core/fGymTeamSecurity.test.js` (17/17), `core/fWearableAuthSecurity.test.js` (20/20), `core/fDeleteAccountSecurity."
    ],
    "intended_closure": null,
-   "capability_id": null,
+   "capability_id": "SEC-CONFIG-001",
    "section": "HISTORICAL",
    "offset": 62229,
    "severity_source": "derived_from_id",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "V1_SCOPE_MATRIX: Devices/Wearables = V1 MUST Ja"
+   "v1_evidence": "V1_SCOPE_MATRIX: Devices/Wearables = V1 MUST Ja",
+   "primary_capability_id": "SEC-CONFIG-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-P0-003",
@@ -1020,12 +1289,17 @@
     "`node core/release-gate.js` → 80 uitgevoerd, 1 zichtbaar geskipt (Android), 0 gefaald."
    ],
    "intended_closure": null,
-   "capability_id": null,
    "section": "HISTORICAL",
    "offset": 63168,
    "severity_source": "derived_from_id",
    "blocker_evidence": "geen blocker-evidence in gaptekst",
-   "v1_evidence": "PO-besluit 16-09-2026"
+   "v1_evidence": "PO-besluit 16-09-2026",
+   "primary_capability_id": null,
+   "affected_capability_ids": [],
+   "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
+   "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
+   "traceability_scope": "NOT_APPLICABLE",
+   "capability_id": null
   },
   {
    "gap_id": "GAP-HIST-001",
@@ -1037,7 +1311,13 @@
    "v1_scope": true,
    "v1_evidence": "V1_SCOPE_MATRIX: Analytics/Inzicht = V1 MUST Ja",
    "blocker": false,
-   "section": "HISTORICAL"
+   "section": "HISTORICAL",
+   "primary_capability_id": null,
+   "affected_capability_ids": [],
+   "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
+   "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
+   "traceability_scope": "NOT_APPLICABLE",
+   "capability_id": null
   },
   {
    "gap_id": "GAP-HIST-002",
@@ -1049,7 +1329,13 @@
    "v1_scope": true,
    "v1_evidence": "V1_SCOPE_MATRIX: Team/Gym = V1 MUST Ja",
    "blocker": false,
-   "section": "HISTORICAL"
+   "section": "HISTORICAL",
+   "primary_capability_id": null,
+   "affected_capability_ids": [],
+   "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
+   "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
+   "traceability_scope": "NOT_APPLICABLE",
+   "capability_id": null
   },
   {
    "gap_id": "GAP-HIST-003",
@@ -1061,7 +1347,13 @@
    "v1_scope": true,
    "v1_evidence": "V1_SCOPE_MATRIX: Team/Gym = V1 MUST Ja",
    "blocker": false,
-   "section": "HISTORICAL"
+   "section": "HISTORICAL",
+   "primary_capability_id": null,
+   "affected_capability_ids": [],
+   "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
+   "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
+   "traceability_scope": "NOT_APPLICABLE",
+   "capability_id": null
   },
   {
    "gap_id": "GAP-HIST-004",
@@ -1073,7 +1365,13 @@
    "v1_scope": true,
    "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)",
    "blocker": false,
-   "section": "HISTORICAL"
+   "section": "HISTORICAL",
+   "primary_capability_id": null,
+   "affected_capability_ids": [],
+   "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
+   "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
+   "traceability_scope": "NOT_APPLICABLE",
+   "capability_id": null
   },
   {
    "gap_id": "GAP-HIST-005",
@@ -1085,7 +1383,13 @@
    "v1_scope": true,
    "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)",
    "blocker": false,
-   "section": "HISTORICAL"
+   "section": "HISTORICAL",
+   "primary_capability_id": null,
+   "affected_capability_ids": [],
+   "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
+   "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
+   "traceability_scope": "NOT_APPLICABLE",
+   "capability_id": null
   },
   {
    "gap_id": "GAP-HIST-006",
@@ -1097,7 +1401,15 @@
    "v1_scope": true,
    "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)",
    "blocker": false,
-   "section": "HISTORICAL"
+   "section": "HISTORICAL",
+   "primary_capability_id": "CALC-REC-REGISTRY-001",
+   "affected_capability_ids": [
+    "HRV-LOG-ATOMICITY-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "capability_id": "CALC-REC-REGISTRY-001",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-HIST-007",
@@ -1109,7 +1421,16 @@
    "v1_scope": true,
    "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)",
    "blocker": false,
-   "section": "HISTORICAL"
+   "section": "HISTORICAL",
+   "primary_capability_id": "CALC-REC-REGISTRY-001",
+   "affected_capability_ids": [
+    "PROVENANCE-EXPLAINABILITY-001",
+    "HRV-LOG-ATOMICITY-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "capability_id": "CALC-REC-REGISTRY-001",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-HIST-008",
@@ -1121,7 +1442,13 @@
    "v1_scope": true,
    "v1_evidence": "V1_SCOPE_MATRIX: Voeding = V1 MUST Ja + PO-besluit A (Nutrition onder T9)",
    "blocker": false,
-   "section": "HISTORICAL"
+   "section": "HISTORICAL",
+   "primary_capability_id": "TRAIN-EXECUTION-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "capability_id": "TRAIN-EXECUTION-001",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-HIST-009",
@@ -1133,7 +1460,15 @@
    "v1_scope": true,
    "v1_evidence": "PO-besluit 16-09-2026",
    "blocker": false,
-   "section": "HISTORICAL"
+   "section": "HISTORICAL",
+   "primary_capability_id": "TRAIN-EXECUTION-001",
+   "affected_capability_ids": [
+    "TRAIN-HOME-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "capability_id": "TRAIN-EXECUTION-001",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-HIST-010",
@@ -1145,7 +1480,13 @@
    "v1_scope": true,
    "v1_evidence": "PO-besluit 16-09-2026",
    "blocker": false,
-   "section": "HISTORICAL"
+   "section": "HISTORICAL",
+   "primary_capability_id": "TRAIN-EXECUTION-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
+   "capability_id": "TRAIN-EXECUTION-001",
+   "traceability_scope": "CAPABILITY_SCOPED"
   },
   {
    "gap_id": "GAP-HIST-011",
@@ -1157,7 +1498,13 @@
    "v1_scope": true,
    "v1_evidence": "V1_SCOPE_MATRIX: Devices/Wearables = V1 MUST Ja",
    "blocker": false,
-   "section": "HISTORICAL"
+   "section": "HISTORICAL",
+   "primary_capability_id": null,
+   "affected_capability_ids": [],
+   "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
+   "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
+   "traceability_scope": "NOT_APPLICABLE",
+   "capability_id": null
   },
   {
    "gap_id": "GAP-P2-006-DUP",
@@ -1172,7 +1519,13 @@
    "blocker": false,
    "blocker_evidence": "SUPERSEDED — telt niet mee",
    "section": "HISTORICAL",
-   "track_evidence": "historie behouden: root-cause-duplicaat, niet in closure-noemer"
+   "track_evidence": "historie behouden: root-cause-duplicaat, niet in closure-noemer",
+   "primary_capability_id": null,
+   "affected_capability_ids": [],
+   "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
+   "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
+   "traceability_scope": "NOT_APPLICABLE",
+   "capability_id": null
   },
   {
    "gap_id": "GAP-P2-003-DUP",
@@ -1187,11 +1540,23 @@
    "blocker": false,
    "blocker_evidence": "SUPERSEDED — telt niet mee",
    "section": "HISTORICAL",
-   "track_evidence": "historie behouden: root-cause-duplicaat, niet in closure-noemer"
+   "track_evidence": "historie behouden: root-cause-duplicaat, niet in closure-noemer",
+   "primary_capability_id": null,
+   "affected_capability_ids": [],
+   "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
+   "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
+   "traceability_scope": "NOT_APPLICABLE",
+   "capability_id": null
   }
  ],
  "_corrections": {
   "gap_track_reclassified": 16,
   "method": "Capability-ID-prefix is primaire evidence; trefwoorden alleen als fallback"
- }
+ },
+ "_traceability_contract": "trainingskompas-aj/v1.2 gap_traceability_contract",
+ "_migrated_at_sha": "42c6aeb61d628dd4b95cd43f748089c74a8a1ce6",
+ "traceability_complete": false,
+ "traceability_unresolved": [
+  "GAP-P2-010"
+ ]
 }

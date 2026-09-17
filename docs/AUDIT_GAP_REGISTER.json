@@ -5,7 +5,7 @@
  "counts": {
   "entries": 59,
   "open": 41,
-  "closed_proven": 16,
+  "closed_proven": 18,
   "deferred_accepted": 0,
   "superseded": 2
  },
@@ -474,7 +474,7 @@
    "title": "### GAP-P2-030 — **CLOSED** (Detraining B1, 13 september 2026) — Programmapad omzeilde DEC-DETRAIN-001 (tweede",
    "primary_track": "T6",
    "severity": "P2",
-   "status": "OPEN",
+   "status": "CLOSED_PROVEN",
    "v1_scope": true,
    "blocker": "REVIEW_REQUIRED",
    "dependency": null,
@@ -489,7 +489,27 @@
    "secondary_tracks": [
     "T1"
    ],
-   "track_evidence": "Capability-ID DEC-DETRAIN-001 -> T6 (sterker dan trefwoordclassificatie)"
+   "track_evidence": "Capability-ID DEC-DETRAIN-001 -> T6 (sterker dan trefwoordclassificatie)",
+   "status_history": [
+    {
+     "from": "OPEN",
+     "to": "CLOSED_PROVEN",
+     "date": "2026-09-16",
+     "change_type": "B NEW_EVIDENCE_CORRECTION",
+     "reason": "closure aantoonbaar, register stond ten onrechte op OPEN"
+    }
+   ],
+   "closure_evidence": [
+    "index.html computeProgPrefill(): delegeert aan resolveWorkingWeight(ex.id,{reps,rpe,prev,oneRM}) -- geen eigen prescription meer",
+    "index.html launchProgramTrainScreen(): loadPrevPerformance(ex.id) -> resolveProgramItemWeight(ex.id,_reps,rpe,_prev); voorheen rechtstreeks suggestWeightForRepsRpe() zonder prev.date",
+    "index.html loadPrevPerformance(): 1 definitie, gedeeld door Preview en Programma",
+    "index.html resolveWorkingWeight(): 1 definitie, 9 callers -- canonical working-weight resolver",
+    "suggestWeightForRepsRpe() resterende aanroep ligt binnen resolveWorkingWeight() -- geen bypass",
+    "core/fDetrainingPrescriptionPaths.test.js: 82 geslaagd, 0 mislukt"
+   ],
+   "closure_rationale": "Programma, Preview en Mijn training gebruiken geen afwijkend detraining-prescription-pad meer; de canonical flow loopt via gedeelde previous-performance loading en de canonical working-weight resolver.",
+   "closure_verified_at_sha": "6f38c0cea6bcb95649213175e4f19c36b6b6493c",
+   "closure_method": "read-only root-cause closure trace (BASELINE-1.2 Batch-B evidence correction gate)"
   },
   {
    "gap_id": "GAP-P3-031",
@@ -514,7 +534,7 @@
    "title": "### GAP-P3-032 — **CLOSED** (Readiness Input & Application Parity, 14 september 2026) — Readiness/recovery op ",
    "primary_track": "T6",
    "severity": "P3",
-   "status": "OPEN",
+   "status": "CLOSED_PROVEN",
    "v1_scope": true,
    "blocker": "REVIEW_REQUIRED",
    "dependency": null,
@@ -529,7 +549,27 @@
    "secondary_tracks": [
     "T9"
    ],
-   "track_evidence": "Capability-ID DEC-RECADJ-001 -> T6 (sterker dan trefwoordclassificatie)"
+   "track_evidence": "Capability-ID DEC-RECADJ-001 -> T6 (sterker dan trefwoordclassificatie)",
+   "status_history": [
+    {
+     "from": "OPEN",
+     "to": "CLOSED_PROVEN",
+     "date": "2026-09-16",
+     "change_type": "B NEW_EVIDENCE_CORRECTION",
+     "reason": "closure aantoonbaar, register stond ten onrechte op OPEN"
+    }
+   ],
+   "closure_evidence": [
+    "index.html recoveryAdjustmentForToday(muscleNames,opts): 1 definitie, 7 callers -- enige toegangspunt",
+    "gevoel: expliciete check-in > hrv_log.voelt van vandaag > null; pijn: expliciete check-in > checkin_conditions van vandaag > null (parity Normal/Programma/Guided)",
+    "index.html launchProgramTrainScreen(): sessionRxAdj[ctxT]=window._tkProgRxAdj -> applySessionRecovery in getSessionExs",
+    "index.html applySessionRecovery(): 1 definitie, aangeroepen vanuit getSessionExs -- een toepassingspunt",
+    "expliciete weight override via recoveryWeightFactor() op het resolver-gewicht; readiness en detraining elk exact eenmaal op hun eigen canonical laag",
+    "core/fReadinessParity.test.js 57/0; core/fReadiness.test.js 167/0; core/fReplacementPrescription.test.js 47/0"
+   ],
+   "closure_rationale": "Programma, Normal en Guided gebruiken dezelfde canonical readiness/recovery application met persisted gevoel- en pijn-input, expliciete weight override, en eenmalige toepassing van readiness en detraining op hun eigen canonical laag.",
+   "closure_verified_at_sha": "6f38c0cea6bcb95649213175e4f19c36b6b6493c",
+   "closure_method": "read-only root-cause closure trace (BASELINE-1.2 Batch-B evidence correction gate)"
   },
   {
    "gap_id": "GAP-P3-033",

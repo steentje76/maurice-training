@@ -220,7 +220,7 @@
   {
    "gap_id": "GAP-P2-015",
    "title": "### GAP-P2-015 — `recoveryScore()`'s confidence telt alleen componentaantal, geen componentkwaliteit (Data Qua",
-   "primary_track": "T7",
+   "primary_track": "T4",
    "severity": "P2",
    "status": "OPEN",
    "v1_scope": true,
@@ -237,9 +237,19 @@
    "blocker_evidence": "geen blocker-evidence in gaptekst",
    "v1_evidence": "PO-besluit 16-09-2026",
    "secondary_tracks": [
+    "T7",
     "T9"
    ],
-   "track_evidence": "Capability-ID DQ-CONFIDENCE-CONTRACT-001 -> T7 (sterker dan trefwoordclassificatie)"
+   "track_evidence": "TRACK_ALIGNMENT (C-C5, AUDIT_METADATA_CORRECTION): capability_id DQ-CONFIDENCE-CONTRACT-001 staat in ROADMAP_INDEX op T4. De eerdere T7-toewijzing kwam uit de DQ--prefixmapping van BASELINE-1.1 en week af van de capability zelf. Geen gap closure, geen nieuwe productevidence.",
+   "status_history": [
+    {
+     "from_primary_track": "T7",
+     "to_primary_track": "T4",
+     "date": "2026-09-16",
+     "change_type": "AUDIT_METADATA_CORRECTION (C-C5)",
+     "reason": "track alignment met capability_id; status ongewijzigd OPEN"
+    }
+   ]
   },
   {
    "gap_id": "GAP-P2-016",

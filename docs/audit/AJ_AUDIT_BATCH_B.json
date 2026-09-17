@@ -28,7 +28,7 @@
  "note": "Batch B dekt 13 van 86 V1-capabilities; samen met Batch A 22/86. V1 Product Maturity is NIET canonical.",
  "track_results": {
   "T4": {
-   "score": 3.579,
+   "score": 3.564,
    "capabilities": 8,
    "confidence": "HIGH"
   },
@@ -623,13 +623,15 @@
      "evidence_refs": [
       "core/calculation.js + core/decision.js: onzekerheid bewaard via null (50 resp. 106 voorkomens); confidence-contract in registry"
      ],
-     "rationale": "zie evidence_refs",
-     "score": 3
+     "rationale": "open V1-scoped gap GAP-P2-015 is direct via capability_id aan deze capability gekoppeld; naar de frozen J-anchor is \"onderzocht, geen blocking gap\" (3) daarmee niet houdbaar",
+     "score": 2
     }
    },
-   "weighted_score": 3.941,
-   "gap_refs": [],
-   "limitations": "onzekerheid uitsluitend via null bewaard; geen expliciete insufficient/unknown/degraded-toestanden"
+   "weighted_score": 3.824,
+   "gap_refs": [
+    "GAP-P2-015"
+   ],
+   "limitations": "onzekerheid uitsluitend via null bewaard; geen expliciete insufficient/unknown/degraded-toestanden Gecorrigeerd in C-C5: GAP-P2-015 ontbrak als gap_ref (AUDIT_OMISSION)."
   },
   {
    "stable_id": "EVIDENCE-CLAIM-AUDIT-001",
@@ -1316,6 +1318,20 @@
    "weighted_score": 3.353,
    "gap_refs": [],
    "limitations": "evidence_status N/A in index; beperkte testdekking (4 bestanden)"
+  }
+ ],
+ "corrections": [
+  {
+   "id": "C-C5",
+   "type": "NEW_EVIDENCE_CORRECTION",
+   "date": "2026-09-16",
+   "capability": "DQ-CONFIDENCE-CONTRACT-001",
+   "criterion": "J",
+   "from_score": 3,
+   "to_score": 2,
+   "reason": "AUDIT_OMISSION: open V1-scoped GAP-P2-015 (capability_id-gekoppeld) ontbrak in gap_refs",
+   "evidence": "core/calculation.js:385 recoveryScore() leidt confidence uitsluitend af uit comps.length; readinessDay() past wel een kwaliteitsfilter toe",
+   "verified_at_sha": "ed8b4513d9c3d4c0de798f2e6b5fc66256f5b020"
   }
  ]
 }

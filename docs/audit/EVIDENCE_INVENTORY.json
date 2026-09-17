@@ -1,0 +1,2987 @@
+{
+ "_schema": "trainingskompas-evidence-inventory/1.0",
+ "inventory_version": "1.0",
+ "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+ "audit_model_id": "trainingskompas-aj/v1.2",
+ "audit_model_version": "1.2",
+ "audit_model_fingerprint": "sha256:82891683aad13cccf779a13783d90bb77279cbab5dfd035989607226fa0a9264",
+ "purpose": "Herbruikbare repository-brede evidence voor toekomstige Model-v1.2 audits. Bevat geen maturity-, capability- of trackscores en mag die nooit bevatten.",
+ "capability_universe": {
+  "total": 91,
+  "v1": 86,
+  "post_v1": 5,
+  "structural_tracks": 18,
+  "structural_track_ids": [
+   "T1",
+   "T2",
+   "T3",
+   "T4",
+   "T5",
+   "T6",
+   "T7",
+   "T8",
+   "T9",
+   "T10",
+   "T11",
+   "T12",
+   "T13",
+   "T14",
+   "T15",
+   "T16",
+   "T17",
+   "T18"
+  ],
+  "v1_track_denominator": 16,
+  "v1_track_ids": [
+   "T1",
+   "T2",
+   "T3",
+   "T4",
+   "T5",
+   "T6",
+   "T7",
+   "T8",
+   "T9",
+   "T10",
+   "T11",
+   "T12",
+   "T13",
+   "T14",
+   "T15",
+   "T17"
+  ],
+  "v1_track_note": "De 16-track noemer is AFGELEID uit capability-scope, niet hardgecodeerd: een track telt mee zodra hij minstens een v1_scope=true capability bevat. T16 en T18 vallen af omdat al hun capabilities post-V1 zijn. Verschuift een capability van scope, dan verschuift de noemer mee.",
+  "model_v1_2_verified": 22,
+  "remaining_v1": 64,
+  "verified_capability_ids": [
+   "CALC-END-REGISTRY-001",
+   "CALC-ENE-REGISTRY-001",
+   "CALC-EVIDENCE-SPEC-001",
+   "CALC-LOAD-REGISTRY-001",
+   "CALC-REC-REGISTRY-001",
+   "CALC-STR-REGISTRY-001",
+   "CTX-CONTRACT-001",
+   "DEC-CORE-001",
+   "DEC-RULE-REGISTRY-001",
+   "DQ-CONFIDENCE-CONTRACT-001",
+   "EVIDENCE-CLAIM-AUDIT-001",
+   "EXERCISE-CATALOG-001",
+   "EXERCISE-INTELLIGENCE-001",
+   "EXERCISE-MEDIA-001",
+   "EXERCISE-SUBSTITUTION-001",
+   "SCHEDULE-ADHERENCE-001",
+   "TRAIN-BUILDER-001",
+   "TRAIN-EXECUTION-001",
+   "TRAIN-HOME-001",
+   "TRAIN-ONBOARDING-001",
+   "TRAIN-SCHEDULE-001",
+   "WEATHER-CONTEXT-001"
+  ],
+  "remaining_v1_capability_ids": [
+   "ADHERENCE-INTELLIGENCE-001",
+   "AI-COACH-001",
+   "AI-OUTPUT-CONTRACT-001",
+   "AI-PROGRAM-AUTOGEN-001",
+   "ATHLETE-DASHBOARD-2-001",
+   "BENCHMARK-TRACKING-001",
+   "CAP-REGISTRY-SCREENS-001",
+   "COACH-INTELLIGENCE-001",
+   "COACH-PROGRAM-ASSIGNMENT-001",
+   "COACH-RELATIONSHIP-001",
+   "CTX-CYCLE-001",
+   "CYCLING-INTELLIGENCE-001",
+   "DAILY-COACH-EXPLAINABILITY-001",
+   "DEV-CONCEPT2-001",
+   "DEV-VALIDATION-001",
+   "DEV-WEARAUTH-001",
+   "DEV-WEARSYNC-001",
+   "DOC-HANDBOOK-001",
+   "DYNAMIC-BRANDING-ADMIN-001",
+   "END-CYCINTEL-001",
+   "END-CYCLINGCORE-001",
+   "END-DATAFOUNDATION-001",
+   "END-HYROX-001",
+   "END-INTERVAL-001",
+   "END-RUNINTEL-001",
+   "END-RUNNINGCORE-001",
+   "EVID-SCI-001",
+   "EXERCISE-PROGRESSION-COACH-001",
+   "GYM-DEVICE-FEASIBILITY-001",
+   "GYM-PROGRAMMING-EQUIPMENT-001",
+   "GYM-RLS-SCOPING-001",
+   "HEALTHKIT-ARCHITECTURE-001",
+   "HRV-LOG-ATOMICITY-001",
+   "LONGITUDINAL-TREND-001",
+   "NUTR-FOUNDATION-001",
+   "NUTR-INGEST-001",
+   "NUTR-INTEL-001",
+   "NUTR-PRODUCT-001",
+   "NUTR-TARGETS-001",
+   "NUTR-UX-001",
+   "ORGANIZATION-CORE-001",
+   "PLAT-BACKUP-CLEANUP-001",
+   "PLAT-DELETE-001",
+   "PLAT-OBSERVABILITY-001",
+   "PLATEAU-DETECTION-001",
+   "PROVENANCE-EXPLAINABILITY-001",
+   "PROVIDER-INTEGRATION-CONTRACT-001",
+   "RECOV-HRV-PROV-001",
+   "RELATIONSHIP-DISCOVERY-001",
+   "RUNNING-INTELLIGENCE-001",
+   "SEC-CONFIG-001",
+   "SEC-GATE-001",
+   "SEC-GYMS-001",
+   "SEC-TEST-001",
+   "SEC-USERROLE-001",
+   "SOC-GYMTEAM-001",
+   "SOCIAL-GROUPS-CHALLENGES-001",
+   "SOCIAL-IDENTITY-PRIVACY-001",
+   "SOCIAL-SHARING-NOTIFICATIONS-001",
+   "SWIMMING-FEASIBILITY-001",
+   "TEAMS-GROUPS-ANALYTICS-001",
+   "WEARABLE-FEASIBILITY-MATRIX-001",
+   "WOMENS-PERF-DECISIONS-001",
+   "WOMENS-PRIVACY-CONSENT-001"
+  ],
+  "post_v1_capability_ids": [
+   "COMM-UI-001",
+   "EXERCISE-SENSOR-MOVEMENT-001",
+   "FEDERATED-IDENTITY-001",
+   "MULTI-PROVIDER-BILLING-001",
+   "SCI-CONSENT-001"
+  ]
+ },
+ "proof_firewall": {
+  "rule": "Discovery is geen bewijs en kandidaat-koppeling is geen bewijs. Een evidence-item mag door geen enkel toekomstig A-J criterium als evidence_ref worden gebruikt wanneer proof_status UNPROVEN is, of wanneer de relevante capability_link CANDIDATE_ONLY is.",
+  "name_token_rule": "NAME_TOKEN is uitsluitend een discovery_route. Het kan nooit zelfstandig evidence readiness, capability-eigendom, runtime-integratie, N/A, confidence, maturity of een A-J score vestigen.",
+  "server_runtime_rule": "Productie-runtime is niet beperkt tot de browser. SERVER telt als productiebewijs wanneer de canonieke verantwoordelijkheid dat gedrag omvat, productiebereikbaarheid bewezen is, de exacte aanroep bewezen is, de payload op het vereiste niveau bewezen is en de downstream consument bewezen is waar vereist. Een require in een Netlify-functie alleen is onvoldoende.",
+  "test_rule": "TEST is nooit automatisch een production caller.",
+  "documentation_rule": "DOCUMENTATION is nooit automatisch runtime-bewijs."
+ },
+ "evidence_items": [
+  {
+   "evidence_id": "EV-REG-SCOPE-001",
+   "evidence_type": "REGISTRY_SCOPE",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "docs/ROADMAP_INDEX.json#capability[].v1_scope",
+    "docs/ROADMAP_INDEX.json#capability[].v1_evidence",
+    "docs/ROADMAP_INDEX.json#capability[].primary_track"
+   ],
+   "discovery_route": "REGISTRY_LINK",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "DOCUMENTATION",
+   "capability_links": [
+    {
+     "capability_id": "SEC-GYMS-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SEC-TEST-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SEC-GATE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "EVID-SCI-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DEC-CORE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DOC-HANDBOOK-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "GYM-RLS-SCOPING-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "PLAT-BACKUP-CLEANUP-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "PLAT-OBSERVABILITY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "COMM-UI-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "AI-OUTPUT-CONTRACT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "AI-PROGRAM-AUTOGEN-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DEV-VALIDATION-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CAP-REGISTRY-SCREENS-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SCI-CONSENT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "WOMENS-PERF-DECISIONS-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "AI-COACH-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "COACH-RELATIONSHIP-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CTX-CYCLE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DEV-CONCEPT2-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DEV-WEARAUTH-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DEV-WEARSYNC-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "END-HYROX-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "END-INTERVAL-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SOC-GYMTEAM-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "PLAT-DELETE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SEC-USERROLE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SEC-CONFIG-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CALC-STR-REGISTRY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CALC-LOAD-REGISTRY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CALC-REC-REGISTRY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CALC-END-REGISTRY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CALC-ENE-REGISTRY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CTX-CONTRACT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DEC-RULE-REGISTRY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DQ-CONFIDENCE-CONTRACT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "EVIDENCE-CLAIM-AUDIT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "PROVENANCE-EXPLAINABILITY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CALC-EVIDENCE-SPEC-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "HRV-LOG-ATOMICITY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DAILY-COACH-EXPLAINABILITY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "EXERCISE-PROGRESSION-COACH-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SCHEDULE-ADHERENCE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "BENCHMARK-TRACKING-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "PROVIDER-INTEGRATION-CONTRACT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "HEALTHKIT-ARCHITECTURE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "WEARABLE-FEASIBILITY-MATRIX-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "WEATHER-CONTEXT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "RUNNING-INTELLIGENCE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CYCLING-INTELLIGENCE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SWIMMING-FEASIBILITY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "LONGITUDINAL-TREND-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "PLATEAU-DETECTION-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "ADHERENCE-INTELLIGENCE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "RELATIONSHIP-DISCOVERY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "ATHLETE-DASHBOARD-2-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "WOMENS-PRIVACY-CONSENT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SOCIAL-IDENTITY-PRIVACY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SOCIAL-GROUPS-CHALLENGES-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SOCIAL-SHARING-NOTIFICATIONS-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "COACH-PROGRAM-ASSIGNMENT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "COACH-INTELLIGENCE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "ORGANIZATION-CORE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "GYM-PROGRAMMING-EQUIPMENT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "TEAMS-GROUPS-ANALYTICS-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "GYM-DEVICE-FEASIBILITY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DYNAMIC-BRANDING-ADMIN-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "FEDERATED-IDENTITY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "MULTI-PROVIDER-BILLING-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "END-DATAFOUNDATION-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "END-RUNNINGCORE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "END-RUNINTEL-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "END-CYCLINGCORE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "END-CYCINTEL-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "NUTR-FOUNDATION-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "NUTR-INGEST-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "NUTR-PRODUCT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "NUTR-INTEL-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "NUTR-TARGETS-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "NUTR-UX-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "RECOV-HRV-PROV-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "TRAIN-EXECUTION-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "TRAIN-BUILDER-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "TRAIN-SCHEDULE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "TRAIN-ONBOARDING-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "TRAIN-HOME-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "EXERCISE-CATALOG-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "EXERCISE-INTELLIGENCE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "EXERCISE-SUBSTITUTION-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "EXERCISE-MEDIA-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "EXERCISE-SENSOR-MOVEMENT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    }
+   ],
+   "criterion_links": [
+    "A"
+   ],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "De canonieke index draagt per capability scope, track en v1_evidence. De koppeling naar de capability is structureel bewezen omdat het record de capability zelf is. Ondersteunt uitsluitend criterium A, en nooit automatisch een score: de index bewijst dat scope is vastgelegd, niet op welk ankerniveau."
+  },
+  {
+   "evidence_id": "EV-GAP-LINK-001",
+   "evidence_type": "GAP_TRACEABILITY",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "docs/AUDIT_GAP_REGISTER.json#gaps[].primary_capability_id",
+    "docs/AUDIT_GAP_REGISTER.json#gaps[].affected_capability_ids",
+    "docs/AUDIT_GAP_REGISTER.json#gaps[].traceability_scope"
+   ],
+   "discovery_route": "GAP_LINK",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "DOCUMENTATION",
+   "capability_links": [
+    {
+     "capability_id": "SEC-GYMS-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SEC-TEST-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SEC-GATE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "EVID-SCI-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DEC-CORE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DOC-HANDBOOK-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "GYM-RLS-SCOPING-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "PLAT-BACKUP-CLEANUP-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "PLAT-OBSERVABILITY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "AI-OUTPUT-CONTRACT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "AI-PROGRAM-AUTOGEN-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DEV-VALIDATION-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CAP-REGISTRY-SCREENS-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "WOMENS-PERF-DECISIONS-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "AI-COACH-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "COACH-RELATIONSHIP-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CTX-CYCLE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DEV-CONCEPT2-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DEV-WEARAUTH-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DEV-WEARSYNC-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "END-HYROX-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "END-INTERVAL-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SOC-GYMTEAM-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "PLAT-DELETE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SEC-USERROLE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SEC-CONFIG-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CALC-STR-REGISTRY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CALC-LOAD-REGISTRY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CALC-REC-REGISTRY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CALC-END-REGISTRY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CALC-ENE-REGISTRY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CTX-CONTRACT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DEC-RULE-REGISTRY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DQ-CONFIDENCE-CONTRACT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "EVIDENCE-CLAIM-AUDIT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "PROVENANCE-EXPLAINABILITY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CALC-EVIDENCE-SPEC-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "HRV-LOG-ATOMICITY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DAILY-COACH-EXPLAINABILITY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "EXERCISE-PROGRESSION-COACH-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SCHEDULE-ADHERENCE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "BENCHMARK-TRACKING-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "PROVIDER-INTEGRATION-CONTRACT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "HEALTHKIT-ARCHITECTURE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "WEARABLE-FEASIBILITY-MATRIX-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "WEATHER-CONTEXT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "RUNNING-INTELLIGENCE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CYCLING-INTELLIGENCE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SWIMMING-FEASIBILITY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "LONGITUDINAL-TREND-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "PLATEAU-DETECTION-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "ADHERENCE-INTELLIGENCE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "RELATIONSHIP-DISCOVERY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "ATHLETE-DASHBOARD-2-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "WOMENS-PRIVACY-CONSENT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SOCIAL-IDENTITY-PRIVACY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SOCIAL-GROUPS-CHALLENGES-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "SOCIAL-SHARING-NOTIFICATIONS-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "COACH-PROGRAM-ASSIGNMENT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "COACH-INTELLIGENCE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "ORGANIZATION-CORE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "GYM-PROGRAMMING-EQUIPMENT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "TEAMS-GROUPS-ANALYTICS-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "GYM-DEVICE-FEASIBILITY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DYNAMIC-BRANDING-ADMIN-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "END-DATAFOUNDATION-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "END-RUNNINGCORE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "END-RUNINTEL-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "END-CYCLINGCORE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "END-CYCINTEL-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "NUTR-FOUNDATION-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "NUTR-INGEST-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "NUTR-PRODUCT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "NUTR-INTEL-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "NUTR-TARGETS-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "NUTR-UX-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "RECOV-HRV-PROV-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "TRAIN-EXECUTION-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "TRAIN-BUILDER-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "TRAIN-SCHEDULE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "TRAIN-ONBOARDING-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "TRAIN-HOME-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "EXERCISE-CATALOG-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "EXERCISE-INTELLIGENCE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "EXERCISE-SUBSTITUTION-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "EXERCISE-MEDIA-001",
+     "link_status": "DIRECTLY_PROVEN"
+    }
+   ],
+   "criterion_links": [
+    "J"
+   ],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "45 van de 60 gaps dragen CAPABILITY_SCOPED traceability met expliciete capability-IDs. Het register is voor criterium J uitputtend: het bewijst voor iedere V1-capability zowel de aanwezigheid als de bewezen afwezigheid van een relevante open V1-gap, omdat elk gap-record zijn capability-relatie expliciet draagt. Daarom is de koppeling DIRECTLY_PROVEN voor alle 86 V1-capabilities, ook die zonder gap-relatie. GAP-P2-010 is UNSCOPED en koppelt aan geen enkele capability; GAP-P2-032 koppelt aan CALC-EVIDENCE-SPEC-001, EVIDENCE-CLAIM-AUDIT-001 en WEATHER-CONTEXT-001."
+  },
+  {
+   "evidence_id": "EV-MOD-BROWSER-LOADED-001",
+   "evidence_type": "MODULE_LOAD_INVENTORY",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "index.html#script[src^=\"core/\"]"
+   ],
+   "discovery_route": "SCRIPT_LOAD",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "BROWSER",
+   "capability_links": [],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "89 script-tags verwijzen naar core/: 87 top-level core-modules plus 2 vendor-bundles in core/vendor/ (tesseract.min.js, zxing.min.js). Bewijst dat die 87 modules in de browser-runtime worden geladen. Bewijst NIET dat een module door een capability wordt gebruikt; daarvoor is een aparte caller-trace nodig."
+  },
+  {
+   "evidence_id": "EV-MOD-BROWSER-NOTLOADED-001",
+   "evidence_type": "MODULE_LOAD_INVENTORY",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "index.html#script[src^=\"core/\"]",
+    "core/"
+   ],
+   "discovery_route": "SCRIPT_LOAD",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "BROWSER",
+   "capability_links": [],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "18 van de 105 core-modules worden door geen enkele script-tag geladen: adaptiveCoaching, calendarProjection, cloudActivityIngestion, coachIntelligence, coachProgram, coachProgramming, commonData, contextEngine, equipmentCore, externalDataModel, nutritionDegradedStateClassifier, nutritionProviderOpenFoodFacts, platformRoles, release-gate, scientificEvidence, sportDefinition, teamAnalyticsCore, teamPerformance. Afwezigheid van een script-tag sluit browser-runtime uit, maar niet server-runtime."
+  },
+  {
+   "evidence_id": "EV-SRV-LAYER-001",
+   "evidence_type": "SERVER_RUNTIME_LAYER",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "netlify/functions/",
+    "index.html#/.netlify/functions/"
+   ],
+   "discovery_route": "SERVER_CALLER",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "SERVER",
+   "capability_links": [],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "44 Netlify-functies in de repository; de client roept 28 unieke /.netlify/functions/-endpoints aan vanuit index.html. Server-side is daarmee een bewezen productie-runtimelaag van dit product, niet slechts build- of testcode."
+  },
+  {
+   "evidence_id": "EV-SRV-CALPROJ-001",
+   "evidence_type": "SERVER_PRODUCTION_CALLER",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "netlify/functions/calendar-feed.js:20#require(core/calendarProjection.js)",
+    "netlify/functions/calendar-feed.js#exports.handler",
+    "index.html#/.netlify/functions/calendar-feed"
+   ],
+   "discovery_route": "SERVER_CALLER",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "SERVER",
+   "capability_links": [
+    {
+     "capability_id": "TRAIN-SCHEDULE-001",
+     "link_status": "CANDIDATE_ONLY"
+    }
+   ],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "Bewezen: require van core/calendarProjection.js op regel 20, aanroep van CalendarProjectionCore.buildIcsCalendar, CalendarProjectionCore.getExternalCalendarEvents, geexporteerde handler, en aanroep van het endpoint vanuit index.html. Productiebereikbaarheid is daarmee bewezen. Capability-eigendom is NIET bewezen en blijft CANDIDATE_ONLY; criterion_links is bewust leeg."
+  },
+  {
+   "evidence_id": "EV-SRV-CLOUDACT-001",
+   "evidence_type": "SERVER_PRODUCTION_CALLER",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "netlify/functions/wearable-sync-activities.js:25#require(core/cloudActivityIngestion.js)",
+    "netlify/functions/wearable-sync-activities.js#exports.handler",
+    "index.html#/.netlify/functions/wearable-sync-activities"
+   ],
+   "discovery_route": "SERVER_CALLER",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "SERVER",
+   "capability_links": [
+    {
+     "capability_id": "DEV-WEARSYNC-001",
+     "link_status": "CANDIDATE_ONLY"
+    }
+   ],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "Bewezen: require van core/cloudActivityIngestion.js op regel 25, aanroep van CloudActivityIngestion.normalizeGoogleHealthExercise, geexporteerde handler, en aanroep van het endpoint vanuit index.html. Productiebereikbaarheid is daarmee bewezen. Capability-eigendom is NIET bewezen en blijft CANDIDATE_ONLY; criterion_links is bewust leeg."
+  },
+  {
+   "evidence_id": "EV-SRV-OFFLOOKUP-001",
+   "evidence_type": "SERVER_PRODUCTION_CALLER",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "netlify/functions/nutrition-off-lookup.js:14#require(core/nutritionProviderOpenFoodFacts.js)",
+    "netlify/functions/nutrition-off-lookup.js#exports.handler",
+    "index.html#/.netlify/functions/nutrition-off-lookup"
+   ],
+   "discovery_route": "SERVER_CALLER",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "SERVER",
+   "capability_links": [
+    {
+     "capability_id": "NUTR-INGEST-001",
+     "link_status": "CANDIDATE_ONLY"
+    }
+   ],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "Bewezen: require van core/nutritionProviderOpenFoodFacts.js op regel 14, aanroep van OpenFoodFactsAdapter.normalizeBarcode, geexporteerde handler, en aanroep van het endpoint vanuit index.html. Productiebereikbaarheid is daarmee bewezen. Capability-eigendom is NIET bewezen en blijft CANDIDATE_ONLY; criterion_links is bewust leeg."
+  },
+  {
+   "evidence_id": "EV-TEST-CLASS-001",
+   "evidence_type": "TEST_CLASSIFICATION_INVENTORY",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "core/*.test.js"
+   ],
+   "discovery_route": "IMPORT_SEARCH",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "TEST",
+   "capability_links": [],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "383 testbestanden geclassificeerd op uitvoeringsvorm: vm.runInContext = INTEGRATION_RUNTIME, new Function of require van een core-module = BEHAVIORAL_UNIT, regex- of stringinspectie = DOCUMENTATION_ONLY. Dit is een repository-brede telling en bewijst voor geen enkele capability iets; de koppeling test -> capability vergt per geval inhoudelijke inspectie."
+  },
+  {
+   "evidence_id": "EV-TEST-RUNTIME-001",
+   "evidence_type": "TEST_RUNTIME_INVENTORY",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "core/fRC0.test.js",
+    "core/fZichtbaarheid.test.js",
+    "core/fEnduranceCoachContext.test.js",
+    "core/fTrainingExecutionScenarioBDE.test.js",
+    "core/fDetrainingPrescriptionPaths.test.js",
+    "core/fReplacementPrescription.test.js"
+   ],
+   "discovery_route": "IMPORT_SEARCH",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "TEST",
+   "capability_links": [],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "29 testbestanden gebruiken vm.runInContext en zijn daarmee de enige bron van INTEGRATION_RUNTIME-bewijs in de hele repository. Zes representatieve bestanden zijn als source_ref opgenomen; de volledige lijst is per baseline reproduceerbaar met grep -l op vm.runInContext."
+  },
+  {
+   "evidence_id": "EV-TEST-ADVERSARIAL-001",
+   "evidence_type": "TEST_ADVERSARIAL_INVENTORY",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "core/fDecisionRuleRegistry.test.js",
+    "core/fScheduleAdherenceAudit.test.js",
+    "core/fDailyCoachExplainability.test.js",
+    "core/fBillingReconciliationRls.test.js"
+   ],
+   "discovery_route": "IMPORT_SEARCH",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "MEDIUM",
+   "runtime_environment": "TEST",
+   "capability_links": [],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "92 testbestanden bevatten sabotage-, fail-closed- of adversarial-terminologie. Alleen bestanden die daarnaast productcode uitvoeren tellen als ADVERSARIAL_FAILURE; een sabotagetest die uitsluitend tekst inspecteert blijft DOCUMENTATION_ONLY. De telling is een zoekroute, geen bewijs."
+  },
+  {
+   "evidence_id": "EV-DATA-SCHEMA-001",
+   "evidence_type": "DATA_SCHEMA_INVENTORY",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "migratie_v*.sql"
+   ],
+   "discovery_route": "MANUAL_TRACE",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "SERVER",
+   "capability_links": [],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "88 migratiebestanden, 52 unieke tabellen, 59 bestanden met auth.uid(), 43 met CREATE POLICY en 31 met expliciet ingeschakelde row level security. Repository-breed feit; koppeling tabel -> capability is niet bewezen."
+  },
+  {
+   "evidence_id": "EV-DATA-BILLING-EVENTS-001",
+   "evidence_type": "DATA_SECURITY_FINDING",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "migratie_v524.sql#create table public.billing_events",
+    "migratie_v524.sql#alter table public.billing_events enable row level security",
+    "core/fBillingReconciliationRls.test.js:13-16",
+    "migratie_v529.sql"
+   ],
+   "discovery_route": "MANUAL_TRACE",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "SERVER",
+   "capability_links": [],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "public.billing_events = SERVER_ONLY_INTENT_PROVEN_SAFE. Row level security is expliciet ingeschakeld en er bestaat nul CREATE POLICY en nul GRANT, wat volledige default-deny oplevert voor anon en authenticated; alleen service_role passeert. Schrijven gebeurt binnen een plpgsql-functie (insert into public.billing_events), niet vanuit de client: nul referenties in index.html en nul in Netlify-functies. Het ontwerp is bovendien getest: core/fBillingReconciliationRls.test.js asserteert dat er geen policy wordt aangemaakt en dat RLS aan staat. De tabel draagt target_user_id en target_organization_id, dus persoonsidentificeerbare billingdata, maar de afwezigheid van auth.uid() is hier bewust en veilig. GEEN security gap. Deze bevinding geldt uitsluitend voor deze tabel en mag niet naar andere capabilities worden doorgetrokken."
+  },
+  {
+   "evidence_id": "EV-CHAIN-PROGRESSION-001",
+   "evidence_type": "CALL_CHAIN",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "index.html:20961#getEffectiveKg",
+    "index.html:20977#CalcCore.applyPercentage",
+    "index.html:20981#CalcCore.applyPercentage",
+    "index.html:20986#CalcCore.applyPercentage",
+    "index.html:22006#computeProgression",
+    "core/decision.js:31#computeProgression",
+    "core/decision.js:96#progressionDecision",
+    "index.html:22103#DecisionCore.progressionDecision",
+    "index.html:22829#DecisionCore.computeProgression",
+    "index.html:22927#DecisionCore.progressionDecision",
+    "core/fLiveCoach.test.js:176#bypass-guard",
+    "core/fRC0.test.js:140#bypass-guard",
+    "core/fEvidence.test.js:94#bypass-guard"
+   ],
+   "discovery_route": "MANUAL_TRACE",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "BROWSER",
+   "capability_links": [
+    {
+     "capability_id": "TRAIN-EXECUTION-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "CALC-STR-REGISTRY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DEC-CORE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    }
+   ],
+   "criterion_links": [
+    "C",
+    "E"
+   ],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "Sessiedata -> getEffectiveKg -> CalcCore.applyPercentage -> productie-wrapper computeProgression -> DecisionCore.computeProgression -> progressionDecision -> athlete. Edge-voor-edge bewezen in de Batch B-prime adjudicatie. CalcCore neemt deel voor de afgeleide modi 1rm, backoff, pct en plus, niet voor vast en topset. Afwezigheid van bypass is afgedwongen door drie guards."
+  },
+  {
+   "evidence_id": "EV-CHAIN-READINESS-001",
+   "evidence_type": "CALL_CHAIN",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "index.html#DecisionCore.trainReadiness",
+    "index.html#DecisionCore.readinessDay",
+    "core/calculation.js#hrvDagFactorPersonal",
+    "core/calculation.js#recoveryScore"
+   ],
+   "discovery_route": "CALLER_SEARCH",
+   "proof_status": "PROVEN_INDIRECT",
+   "confidence": "MEDIUM",
+   "runtime_environment": "BROWSER",
+   "capability_links": [
+    {
+     "capability_id": "CALC-REC-REGISTRY-001",
+     "link_status": "DIRECTLY_PROVEN"
+    },
+    {
+     "capability_id": "DEC-CORE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    }
+   ],
+   "criterion_links": [
+    "E"
+   ],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "HRV, RHR en slaap gaan via CalcCore naar DecisionCore.trainReadiness en readinessDay, elk met 3 referenties in index.html. De keten is aangetoond maar niet edge-voor-edge met payload; daarom PROVEN_INDIRECT."
+  },
+  {
+   "evidence_id": "EV-CHAIN-SCHEDULE-001",
+   "evidence_type": "CALL_CHAIN",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "index.html#ScheduleAdherenceCore.daysUntilEvent",
+    "index.html#ScheduleAdherenceCore.weeksUntilEvent",
+    "core/scheduleAdherence.js"
+   ],
+   "discovery_route": "CALLER_SEARCH",
+   "proof_status": "PROVEN_INDIRECT",
+   "confidence": "MEDIUM",
+   "runtime_environment": "BROWSER",
+   "capability_links": [
+    {
+     "capability_id": "SCHEDULE-ADHERENCE-001",
+     "link_status": "DIRECTLY_PROVEN"
+    }
+   ],
+   "criterion_links": [
+    "C",
+    "E"
+   ],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "Agenda-afstand via daysUntilEvent en weeksUntilEvent voedt de beslislaag; 21 referenties naar ScheduleAdherenceCore in index.html."
+  },
+  {
+   "evidence_id": "EV-CHAIN-WEATHER-001",
+   "evidence_type": "CALL_CHAIN",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "index.html#WeatherCore.normalizeWeather",
+    "core/weather.js#normalizeWeather",
+    "index.html#buildCtx"
+   ],
+   "discovery_route": "CALLER_SEARCH",
+   "proof_status": "PROVEN_INDIRECT",
+   "confidence": "MEDIUM",
+   "runtime_environment": "BROWSER",
+   "capability_links": [
+    {
+     "capability_id": "WEATHER-CONTEXT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    }
+   ],
+   "criterion_links": [
+    "C",
+    "E"
+   ],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "WeatherCore levert genormaliseerde weercontext aan de contextopbouw; 7 referenties naar WeatherCore en 2 naar normalizeWeather in index.html."
+  },
+  {
+   "evidence_id": "EV-DORMANT-CONTEXTENGINE-001",
+   "evidence_type": "DORMANCY_FINDING",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "core/contextEngine.js:91#ContextEngineCore",
+    "core/contextEngine.js:99-100",
+    "docs/AUDIT_GAP_REGISTER.json#GAP-P2-014"
+   ],
+   "discovery_route": "CALLER_SEARCH",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "BROWSER",
+   "capability_links": [
+    {
+     "capability_id": "CTX-CONTRACT-001",
+     "link_status": "DIRECTLY_PROVEN"
+    }
+   ],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "ContextEngineCore heeft nul productie-callers: geen script-tag, 0 treffers in index.html, 0 in andere core-productiecode, 0 server-side. Canoniek geregistreerd als GAP-P2-014 met blocker true."
+  },
+  {
+   "evidence_id": "EV-DORMANT-EVIDENCECORE-001",
+   "evidence_type": "DORMANCY_FINDING",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "core/scientificEvidence.js:165#EvidenceCore",
+    "core/scientificEvidence.js:172-173",
+    "core/fWeatherEvidence.test.js:6",
+    "docs/AUDIT_GAP_REGISTER.json#GAP-P2-032"
+   ],
+   "discovery_route": "CALLER_SEARCH",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "BROWSER",
+   "capability_links": [
+    {
+     "capability_id": "CALC-EVIDENCE-SPEC-001",
+     "link_status": "DIRECTLY_PROVEN"
+    }
+   ],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "EvidenceCore heeft nul productie-callers; enige executable consumer is core/fWeatherEvidence.test.js. Canoniek geregistreerd als GAP-P2-032 met blocker REVIEW_REQUIRED."
+  },
+  {
+   "evidence_id": "EV-DORMANT-MOD-ADAPTIVECOACHING",
+   "evidence_type": "MODULE_WIRING_ADJUDICATION",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "core/adaptiveCoaching.js",
+    "index.html#geen-script-tag",
+    "netlify/#geen-require"
+   ],
+   "discovery_route": "CALLER_SEARCH",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "BUILD",
+   "capability_links": [],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "Nul browser-callers, nul server-callers, nul dynamische loaders; alleen tests en documentatie. Verantwoordelijkheid volgens kopregel: Adaptive Coaching Core, \"Sprint 7 fundering\". Classificatie: UNRESOLVED."
+  },
+  {
+   "evidence_id": "EV-DORMANT-MOD-COACHINTELLIGENCE",
+   "evidence_type": "MODULE_WIRING_ADJUDICATION",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "core/coachIntelligence.js",
+    "index.html#geen-script-tag",
+    "netlify/#geen-require"
+   ],
+   "discovery_route": "CALLER_SEARCH",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "BUILD",
+   "capability_links": [
+    {
+     "capability_id": "COACH-INTELLIGENCE-001",
+     "link_status": "CANDIDATE_ONLY"
+    }
+   ],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "Nul browser-callers, nul server-callers, nul dynamische loaders; alleen tests en documentatie. Verantwoordelijkheid volgens kopregel: Coach Intelligence Core, feature-sprint F10.4. Classificatie: DORMANT_V1_EXPECTED. Mogelijke relatie met COACH-INTELLIGENCE-001 is NIET bewezen en blijft CANDIDATE_ONLY."
+  },
+  {
+   "evidence_id": "EV-DORMANT-MOD-COACHPROGRAM",
+   "evidence_type": "MODULE_WIRING_ADJUDICATION",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "core/coachProgram.js",
+    "index.html#geen-script-tag",
+    "netlify/#geen-require"
+   ],
+   "discovery_route": "CALLER_SEARCH",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "BUILD",
+   "capability_links": [
+    {
+     "capability_id": "COACH-PROGRAM-ASSIGNMENT-001",
+     "link_status": "CANDIDATE_ONLY"
+    }
+   ],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "Nul browser-callers, nul server-callers, nul dynamische loaders; alleen tests en documentatie. Verantwoordelijkheid volgens kopregel: Coach Program Core, feature-sprint F10.3. Classificatie: DORMANT_V1_EXPECTED. Mogelijke relatie met COACH-PROGRAM-ASSIGNMENT-001 is NIET bewezen en blijft CANDIDATE_ONLY."
+  },
+  {
+   "evidence_id": "EV-DORMANT-MOD-COACHPROGRAMMING",
+   "evidence_type": "MODULE_WIRING_ADJUDICATION",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "core/coachProgramming.js",
+    "index.html#geen-script-tag",
+    "netlify/#geen-require"
+   ],
+   "discovery_route": "CALLER_SEARCH",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "BUILD",
+   "capability_links": [],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "Nul browser-callers, nul server-callers, nul dynamische loaders; alleen tests en documentatie. Verantwoordelijkheid volgens kopregel: Coach Programming Core, \"Sprint 6 fundering\". Classificatie: UNRESOLVED."
+  },
+  {
+   "evidence_id": "EV-DORMANT-MOD-COMMONDATA",
+   "evidence_type": "MODULE_WIRING_ADJUDICATION",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "core/commonData.js",
+    "index.html#geen-script-tag",
+    "netlify/#geen-require"
+   ],
+   "discovery_route": "CALLER_SEARCH",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "BUILD",
+   "capability_links": [],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "Nul browser-callers, nul server-callers, nul dynamische loaders; alleen tests en documentatie. Verantwoordelijkheid volgens kopregel: Common Data Model Core, expliciet \"Unified Sport & Data Architecture, fundering\". Classificatie: UTILITY_NOT_EXPECTED_AS_RUNTIME_ENTRY."
+  },
+  {
+   "evidence_id": "EV-DORMANT-MOD-EQUIPMENTCORE",
+   "evidence_type": "MODULE_WIRING_ADJUDICATION",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "core/equipmentCore.js",
+    "index.html#geen-script-tag",
+    "netlify/#geen-require"
+   ],
+   "discovery_route": "CALLER_SEARCH",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "BUILD",
+   "capability_links": [
+    {
+     "capability_id": "GYM-PROGRAMMING-EQUIPMENT-001",
+     "link_status": "CANDIDATE_ONLY"
+    }
+   ],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "Nul browser-callers, nul server-callers, nul dynamische loaders; alleen tests en documentatie. Verantwoordelijkheid volgens kopregel: Equipment Core, feature-sprint F11.2. Classificatie: DORMANT_V1_EXPECTED. Mogelijke relatie met GYM-PROGRAMMING-EQUIPMENT-001 is NIET bewezen en blijft CANDIDATE_ONLY."
+  },
+  {
+   "evidence_id": "EV-DORMANT-MOD-EXTERNALDATAMODEL",
+   "evidence_type": "MODULE_WIRING_ADJUDICATION",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "core/externalDataModel.js",
+    "index.html#geen-script-tag",
+    "netlify/#geen-require"
+   ],
+   "discovery_route": "CALLER_SEARCH",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "BUILD",
+   "capability_links": [],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "Nul browser-callers, nul server-callers, nul dynamische loaders; alleen tests en documentatie. Verantwoordelijkheid volgens kopregel: External Data Model Core, expliciet \"Sprint 10 fundering\". Classificatie: UTILITY_NOT_EXPECTED_AS_RUNTIME_ENTRY."
+  },
+  {
+   "evidence_id": "EV-DORMANT-MOD-NUTRITIONDEGRADEDSTATECLASSIFIER",
+   "evidence_type": "MODULE_WIRING_ADJUDICATION",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "core/nutritionDegradedStateClassifier.js",
+    "index.html#geen-script-tag",
+    "netlify/#geen-require"
+   ],
+   "discovery_route": "CALLER_SEARCH",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "BUILD",
+   "capability_links": [],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "Nul browser-callers, nul server-callers, nul dynamische loaders; alleen tests en documentatie. Verantwoordelijkheid volgens kopregel: kopregel noemt alleen \"eerlijke classificatie\", geen sprint- of funderingsstatus. Classificatie: UNRESOLVED."
+  },
+  {
+   "evidence_id": "EV-DORMANT-MOD-PLATFORMROLES",
+   "evidence_type": "MODULE_WIRING_ADJUDICATION",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "core/platformRoles.js",
+    "index.html#geen-script-tag",
+    "netlify/#geen-require"
+   ],
+   "discovery_route": "CALLER_SEARCH",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "BUILD",
+   "capability_links": [],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "Nul browser-callers, nul server-callers, nul dynamische loaders; alleen tests en documentatie. Verantwoordelijkheid volgens kopregel: Platform Roles & Permissions Core, \"Sprint 5/8 fundering\". Classificatie: UNRESOLVED."
+  },
+  {
+   "evidence_id": "EV-DORMANT-MOD-SPORTDEFINITION",
+   "evidence_type": "MODULE_WIRING_ADJUDICATION",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "core/sportDefinition.js",
+    "index.html#geen-script-tag",
+    "netlify/#geen-require"
+   ],
+   "discovery_route": "CALLER_SEARCH",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "BUILD",
+   "capability_links": [],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "Nul browser-callers, nul server-callers, nul dynamische loaders; alleen tests en documentatie. Verantwoordelijkheid volgens kopregel: Sport Definition Core, expliciet \"fundering\". Classificatie: UTILITY_NOT_EXPECTED_AS_RUNTIME_ENTRY."
+  },
+  {
+   "evidence_id": "EV-DORMANT-MOD-TEAMANALYTICSCORE",
+   "evidence_type": "MODULE_WIRING_ADJUDICATION",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "core/teamAnalyticsCore.js",
+    "index.html#geen-script-tag",
+    "netlify/#geen-require"
+   ],
+   "discovery_route": "CALLER_SEARCH",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "BUILD",
+   "capability_links": [
+    {
+     "capability_id": "TEAMS-GROUPS-ANALYTICS-001",
+     "link_status": "CANDIDATE_ONLY"
+    }
+   ],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "Nul browser-callers, nul server-callers, nul dynamische loaders; alleen tests en documentatie. Verantwoordelijkheid volgens kopregel: Team Analytics Core, feature-sprint F11.3. Classificatie: DORMANT_V1_EXPECTED. Mogelijke relatie met TEAMS-GROUPS-ANALYTICS-001 is NIET bewezen en blijft CANDIDATE_ONLY."
+  },
+  {
+   "evidence_id": "EV-DORMANT-MOD-TEAMPERFORMANCE",
+   "evidence_type": "MODULE_WIRING_ADJUDICATION",
+   "baseline_sha": "97036cbd61db9e1f30b03c25d770c2f1f96d3543",
+   "source_refs": [
+    "core/teamPerformance.js",
+    "index.html#geen-script-tag",
+    "netlify/#geen-require"
+   ],
+   "discovery_route": "CALLER_SEARCH",
+   "proof_status": "PROVEN_DIRECT",
+   "confidence": "HIGH",
+   "runtime_environment": "BUILD",
+   "capability_links": [],
+   "criterion_links": [],
+   "staleness_status": "BASELINE_PINNED",
+   "note": "Nul browser-callers, nul server-callers, nul dynamische loaders; alleen tests en documentatie. Verantwoordelijkheid volgens kopregel: Team Performance Core, \"Sprint 9 fundering\". Classificatie: UNRESOLVED."
+  }
+ ],
+ "modules": {
+  "total_core_modules": 105,
+  "browser_loaded_core_modules": 87,
+  "vendor_bundles_loaded": 2,
+  "script_tag_refs_to_core": 89,
+  "not_browser_loaded": 18,
+  "server_side_active": [
+   "calendarProjection",
+   "cloudActivityIngestion",
+   "nutritionProviderOpenFoodFacts"
+  ],
+  "build_tooling_only": [
+   "release-gate"
+  ],
+  "dormancy_registered_as_gap": {
+   "contextEngine": "GAP-P2-014",
+   "scientificEvidence": "GAP-P2-032"
+  },
+  "adjudicated_non_wired": {
+   "commonData": "UTILITY_NOT_EXPECTED_AS_RUNTIME_ENTRY",
+   "sportDefinition": "UTILITY_NOT_EXPECTED_AS_RUNTIME_ENTRY",
+   "externalDataModel": "UTILITY_NOT_EXPECTED_AS_RUNTIME_ENTRY",
+   "coachIntelligence": "DORMANT_V1_EXPECTED",
+   "coachProgram": "DORMANT_V1_EXPECTED",
+   "equipmentCore": "DORMANT_V1_EXPECTED",
+   "teamAnalyticsCore": "DORMANT_V1_EXPECTED",
+   "platformRoles": "UNRESOLVED",
+   "adaptiveCoaching": "UNRESOLVED",
+   "coachProgramming": "UNRESOLVED",
+   "teamPerformance": "UNRESOLVED",
+   "nutritionDegradedStateClassifier": "UNRESOLVED"
+  },
+  "adjudication_counts": {
+   "UTILITY_NOT_EXPECTED_AS_RUNTIME_ENTRY": 3,
+   "DORMANT_V1_EXPECTED": 4,
+   "UNRESOLVED": 5,
+   "total": 12
+  }
+ },
+ "call_chains": [
+  "EV-CHAIN-PROGRESSION-001",
+  "EV-CHAIN-READINESS-001",
+  "EV-CHAIN-SCHEDULE-001",
+  "EV-CHAIN-WEATHER-001"
+ ],
+ "tests": {
+  "total": 383,
+  "evidence_ids": [
+   "EV-TEST-CLASS-001",
+   "EV-TEST-RUNTIME-001",
+   "EV-TEST-ADVERSARIAL-001"
+  ],
+  "integration_runtime_files": 29,
+  "adversarial_terminology_files": 92,
+  "note": "Klasse volgt uit uitvoeringsvorm, niet uit bestandsnaam, grep-telling of assertion-aantal."
+ },
+ "data_security": {
+  "evidence_ids": [
+   "EV-DATA-SCHEMA-001",
+   "EV-DATA-BILLING-EVENTS-001"
+  ],
+  "migrations": 88,
+  "tables": 52,
+  "migrations_with_auth_uid": 59,
+  "billing_events": "SERVER_ONLY_INTENT_PROVEN_SAFE"
+ },
+ "ux_flows": {
+  "evidence_ids": [],
+  "note": "Geen capability-gekoppeld UX-bewijs op deze baseline buiten de reeds gecanonicaliseerde A-prime en B-prime records. UX blijft targeted audit work."
+ },
+ "failure_modes": {
+  "evidence_ids": [
+   "EV-TEST-ADVERSARIAL-001"
+  ],
+  "note": "Happy-path bewijs kan nooit volwassen failure handling bewijzen. 92 bestanden dragen sabotage-terminologie; alleen die welke productcode uitvoeren tellen mee."
+ },
+ "gap_links": {
+  "evidence_id": "EV-GAP-LINK-001",
+  "gap_register_records": 60,
+  "capability_scoped": 45,
+  "traceability_unresolved": [
+   "GAP-P2-010"
+  ],
+  "traceability_complete": false
+ },
+ "capability_evidence_map": {
+  "SEC-GYMS-001": {
+   "primary_track": "T17",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "SEC-TEST-001": {
+   "primary_track": "T17",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "SEC-GATE-001": {
+   "primary_track": "T17",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "EVID-SCI-001": {
+   "primary_track": "T7",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "DEC-CORE-001": {
+   "primary_track": "T6",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ],
+    "C": [
+     "EV-CHAIN-PROGRESSION-001"
+    ],
+    "E": [
+     "EV-CHAIN-PROGRESSION-001",
+     "EV-CHAIN-READINESS-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "DOC-HANDBOOK-001": {
+   "primary_track": "T17",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "GYM-RLS-SCOPING-001": {
+   "primary_track": "T15",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "PLAT-BACKUP-CLEANUP-001": {
+   "primary_track": "T17",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "PLAT-OBSERVABILITY-001": {
+   "primary_track": "T17",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "COMM-UI-001": {
+   "primary_track": "T16",
+   "v1_scope": false,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "AI-OUTPUT-CONTRACT-001": {
+   "primary_track": "T8",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "AI-PROGRAM-AUTOGEN-001": {
+   "primary_track": "T8",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "DEV-VALIDATION-001": {
+   "primary_track": "T11",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "CAP-REGISTRY-SCREENS-001": {
+   "primary_track": "T17",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "SCI-CONSENT-001": {
+   "primary_track": "T18",
+   "v1_scope": false,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "WOMENS-PERF-DECISIONS-001": {
+   "primary_track": "T10",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "AI-COACH-001": {
+   "primary_track": "T8",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "COACH-RELATIONSHIP-001": {
+   "primary_track": "T14",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "CTX-CYCLE-001": {
+   "primary_track": "T10",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "DEV-CONCEPT2-001": {
+   "primary_track": "T11",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "DEV-WEARAUTH-001": {
+   "primary_track": "T11",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "DEV-WEARSYNC-001": {
+   "primary_track": "T11",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": [
+    "EV-SRV-CLOUDACT-001"
+   ]
+  },
+  "END-HYROX-001": {
+   "primary_track": "T3",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "END-INTERVAL-001": {
+   "primary_track": "T3",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "SOC-GYMTEAM-001": {
+   "primary_track": "T15",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "PLAT-DELETE-001": {
+   "primary_track": "T17",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "SEC-USERROLE-001": {
+   "primary_track": "T17",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "SEC-CONFIG-001": {
+   "primary_track": "T17",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "CALC-STR-REGISTRY-001": {
+   "primary_track": "T4",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ],
+    "C": [
+     "EV-CHAIN-PROGRESSION-001"
+    ],
+    "E": [
+     "EV-CHAIN-PROGRESSION-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "CALC-LOAD-REGISTRY-001": {
+   "primary_track": "T4",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "CALC-REC-REGISTRY-001": {
+   "primary_track": "T4",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ],
+    "E": [
+     "EV-CHAIN-READINESS-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "CALC-END-REGISTRY-001": {
+   "primary_track": "T4",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "CALC-ENE-REGISTRY-001": {
+   "primary_track": "T4",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "CTX-CONTRACT-001": {
+   "primary_track": "T5",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "DEC-RULE-REGISTRY-001": {
+   "primary_track": "T6",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "DQ-CONFIDENCE-CONTRACT-001": {
+   "primary_track": "T4",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "EVIDENCE-CLAIM-AUDIT-001": {
+   "primary_track": "T4",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "PROVENANCE-EXPLAINABILITY-001": {
+   "primary_track": "T7",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "CALC-EVIDENCE-SPEC-001": {
+   "primary_track": "T4",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "HRV-LOG-ATOMICITY-001": {
+   "primary_track": "T7",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "DAILY-COACH-EXPLAINABILITY-001": {
+   "primary_track": "T8",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "EXERCISE-PROGRESSION-COACH-001": {
+   "primary_track": "T8",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "SCHEDULE-ADHERENCE-001": {
+   "primary_track": "T6",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ],
+    "C": [
+     "EV-CHAIN-SCHEDULE-001"
+    ],
+    "E": [
+     "EV-CHAIN-SCHEDULE-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "BENCHMARK-TRACKING-001": {
+   "primary_track": "T8",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "PROVIDER-INTEGRATION-CONTRACT-001": {
+   "primary_track": "T11",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "HEALTHKIT-ARCHITECTURE-001": {
+   "primary_track": "T11",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "WEARABLE-FEASIBILITY-MATRIX-001": {
+   "primary_track": "T11",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "WEATHER-CONTEXT-001": {
+   "primary_track": "T5",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ],
+    "C": [
+     "EV-CHAIN-WEATHER-001"
+    ],
+    "E": [
+     "EV-CHAIN-WEATHER-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "RUNNING-INTELLIGENCE-001": {
+   "primary_track": "T3",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "CYCLING-INTELLIGENCE-001": {
+   "primary_track": "T3",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "SWIMMING-FEASIBILITY-001": {
+   "primary_track": "T3",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "LONGITUDINAL-TREND-001": {
+   "primary_track": "T12",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "PLATEAU-DETECTION-001": {
+   "primary_track": "T12",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "ADHERENCE-INTELLIGENCE-001": {
+   "primary_track": "T12",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "RELATIONSHIP-DISCOVERY-001": {
+   "primary_track": "T12",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "ATHLETE-DASHBOARD-2-001": {
+   "primary_track": "T12",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "WOMENS-PRIVACY-CONSENT-001": {
+   "primary_track": "T10",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "SOCIAL-IDENTITY-PRIVACY-001": {
+   "primary_track": "T13",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "SOCIAL-GROUPS-CHALLENGES-001": {
+   "primary_track": "T13",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "SOCIAL-SHARING-NOTIFICATIONS-001": {
+   "primary_track": "T13",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "COACH-PROGRAM-ASSIGNMENT-001": {
+   "primary_track": "T14",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": [
+    "EV-DORMANT-MOD-COACHPROGRAM"
+   ]
+  },
+  "COACH-INTELLIGENCE-001": {
+   "primary_track": "T14",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": [
+    "EV-DORMANT-MOD-COACHINTELLIGENCE"
+   ]
+  },
+  "ORGANIZATION-CORE-001": {
+   "primary_track": "T15",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "GYM-PROGRAMMING-EQUIPMENT-001": {
+   "primary_track": "T15",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": [
+    "EV-DORMANT-MOD-EQUIPMENTCORE"
+   ]
+  },
+  "TEAMS-GROUPS-ANALYTICS-001": {
+   "primary_track": "T15",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": [
+    "EV-DORMANT-MOD-TEAMANALYTICSCORE"
+   ]
+  },
+  "GYM-DEVICE-FEASIBILITY-001": {
+   "primary_track": "T15",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "DYNAMIC-BRANDING-ADMIN-001": {
+   "primary_track": "T15",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "FEDERATED-IDENTITY-001": {
+   "primary_track": "T16",
+   "v1_scope": false,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "MULTI-PROVIDER-BILLING-001": {
+   "primary_track": "T16",
+   "v1_scope": false,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "END-DATAFOUNDATION-001": {
+   "primary_track": "T3",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "END-RUNNINGCORE-001": {
+   "primary_track": "T3",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "END-RUNINTEL-001": {
+   "primary_track": "T3",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "END-CYCLINGCORE-001": {
+   "primary_track": "T3",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "END-CYCINTEL-001": {
+   "primary_track": "T3",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "NUTR-FOUNDATION-001": {
+   "primary_track": "T9",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "NUTR-INGEST-001": {
+   "primary_track": "T9",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": [
+    "EV-SRV-OFFLOOKUP-001"
+   ]
+  },
+  "NUTR-PRODUCT-001": {
+   "primary_track": "T9",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "NUTR-INTEL-001": {
+   "primary_track": "T9",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "NUTR-TARGETS-001": {
+   "primary_track": "T9",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "NUTR-UX-001": {
+   "primary_track": "T9",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "RECOV-HRV-PROV-001": {
+   "primary_track": "T9",
+   "v1_scope": true,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "TRAIN-EXECUTION-001": {
+   "primary_track": "T1",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ],
+    "C": [
+     "EV-CHAIN-PROGRESSION-001"
+    ],
+    "E": [
+     "EV-CHAIN-PROGRESSION-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "TRAIN-BUILDER-001": {
+   "primary_track": "T1",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "TRAIN-SCHEDULE-001": {
+   "primary_track": "T1",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": [
+    "EV-SRV-CALPROJ-001"
+   ]
+  },
+  "TRAIN-ONBOARDING-001": {
+   "primary_track": "T1",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "TRAIN-HOME-001": {
+   "primary_track": "T1",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "EXERCISE-CATALOG-001": {
+   "primary_track": "T2",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "EXERCISE-INTELLIGENCE-001": {
+   "primary_track": "T2",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "EXERCISE-SUBSTITUTION-001": {
+   "primary_track": "T2",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "EXERCISE-MEDIA-001": {
+   "primary_track": "T2",
+   "v1_scope": true,
+   "model_v1_2_verified": true,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ],
+    "J": [
+     "EV-GAP-LINK-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  },
+  "EXERCISE-SENSOR-MOVEMENT-001": {
+   "primary_track": "T2",
+   "v1_scope": false,
+   "model_v1_2_verified": false,
+   "proven_evidence_ids": {
+    "A": [
+     "EV-REG-SCOPE-001"
+    ]
+   },
+   "candidate_evidence_ids": []
+  }
+ },
+ "unresolved_items": [
+  {
+   "id": "U1",
+   "title": "Runtime-verantwoordelijkheid van vijf modules onbeslist",
+   "detail": "platformRoles, adaptiveCoaching, coachProgramming, teamPerformance en nutritionDegradedStateClassifier zijn niet bedraad. Of \"fundering\" een geldige V1-status is zonder runtime-gebruik vergt een canonieke verantwoordelijkheidsdefinitie die de index niet draagt.",
+   "requires": "PO-besluit"
+  },
+  {
+   "id": "U2",
+   "title": "Vier dormant-V1 module/capability-relaties vergen direct bewijs",
+   "detail": "coachIntelligence, coachProgram, equipmentCore en teamAnalyticsCore zijn niet bedraad terwijl hun feature-sprintnummer geleverde functionaliteit claimt. De koppeling naar respectievelijk COACH-INTELLIGENCE-001, COACH-PROGRAM-ASSIGNMENT-001, GYM-PROGRAMMING-EQUIPMENT-001 en TEAMS-GROUPS-ANALYTICS-001 berust op naamtoken plus sprintnummer en is CANDIDATE_ONLY. Gapregistratie vereist eerst bewezen koppeling.",
+   "requires": "bewezen capability-koppeling voor gapregistratie"
+  },
+  {
+   "id": "U3",
+   "title": "evidence_status VERIFIED naast mogelijk niet-bedrade implementatie",
+   "detail": "COACH-INTELLIGENCE-001, COACH-PROGRAM-ASSIGNMENT-001, GYM-PROGRAMMING-EQUIPMENT-001 en TEAMS-GROUPS-ANALYTICS-001 dragen evidence_status VERIFIED in de canonieke index. Dat verdient een aparte index-integriteitscontrole, los van deze inventaris.",
+   "requires": "aparte index-integriteitscontrole"
+  },
+  {
+   "id": "U4",
+   "title": "B-I capability-koppeling blijft targeted audit work",
+   "detail": "Voor de 64 resterende V1-capabilities bestaat op deze baseline geen bewezen capability-gekoppelde evidence voor de criteria B tot en met I. De inventaris bespaart repository-discovery, niet de koppeling module-naar-capability.",
+   "requires": "per-capability audit"
+  }
+ ],
+ "reuse_rules": {
+  "allowed_when": [
+   "identiek relevant implementatie- of runtimepad",
+   "bronreferentie bestaat nog op de baseline",
+   "capability_link is DIRECTLY_PROVEN",
+   "criterion_link is toepasselijk",
+   "geen tegenstrijdig bewijs",
+   "evidence niet STALE_REVERIFY of INVALIDATED"
+  ],
+  "forbidden_when": [
+   "zelfde track",
+   "zelfde modulefamilie",
+   "gelijkende capabilitynaam",
+   "gedeelde documentatie",
+   "zelfde testsuite",
+   "conceptueel verband"
+  ]
+ },
+ "staleness_rules": {
+  "BASELINE_PINNED": "vastgelegd op baseline_sha; geldt tot herverificatie",
+  "STILL_VALIDATED": "bronregel of symbool ongewijzigd op een latere main; blob-hash gelijk",
+  "STALE_REVERIFY": "bronbestand gewijzigd maar symbool bestaat nog; bewijs moet opnieuw worden vastgesteld",
+  "INVALIDATED": "bronbestand of symbool verdwenen; bewijs vervalt",
+  "rule": "Herverificatie gebeurt per evidence_id, nooit per capability of per batch."
+ },
+ "integrity_summary": {
+  "evidence_item_count": 31,
+  "proven_direct": 28,
+  "proven_indirect": 3,
+  "unproven": 0,
+  "directly_proven_links": 186,
+  "candidate_only_links": 7,
+  "contains_no_scores": true,
+  "note": "Deze inventaris bevat bewust geen A-J waarden, capabilityscores of trackscores. De guard weigert elk veld dat daarop lijkt."
+ }
+}

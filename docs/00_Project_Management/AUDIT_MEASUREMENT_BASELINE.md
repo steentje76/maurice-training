@@ -264,7 +264,7 @@ register-debt niet mag verbergen.
 | Telling | Betekenis | Stand |
 |---|---|---|
 | `historical_audited` | beoordeeld onder een pre-v1.0 model; scores behouden, niet v1-verifieerbaar | **22 / 86** |
-| **`model_v1_verified`** | beoordeeld onder `audit_model_version 1.2` met criterium-specifieke evidence | **22 / 86** |
+| **`model_v1_verified`** | beoordeeld onder `audit_model_version 1.2` met criterium-specifieke evidence | **32 / 86** |
 
 ### Canonieke Model-v1.2 trackresultaten
 
@@ -292,6 +292,26 @@ De historische waarden **T4 3,564**, **T5 3,225** en **T6 3,623** blijven geldig
 het historische Batch B-artefact en worden niet overschreven.
 `docs/audit/AJ_AUDIT_BATCH_B.json` behoudt `HISTORICAL_PRE_V1_MODEL` en is ongewijzigd.
 
+### Canonieke Model-v1.2 trackresultaten — T17 (Platform / Security)
+
+**Canoniek artefact:** `docs/audit/AJ_AUDIT_T17_PRIME.json` — 10 capabilities,
+100 criterion records (27 N/A, 73 gescoord), `audit_model_version: 1.2`.
+
+| Track | Model v1.2 | Historisch pre-v1 |
+|---|---|---|
+| **T17** | **2,873 / 5 = 57,46%** | NOT_COMPARABLE |
+
+T17 is nooit eerder als track gescoord; Batch A en B dekten T1, T2, T4, T5 en T6.
+
+### Extern geverifieerd bewijs in T17
+
+`PLAT-BACKUP-CLEANUP-001` is de eerste capability waarvan criteria mede berusten op
+**read-only live metadata** uit de Supabase-database in plaats van op repository-bewijs.
+De acht `bak_p_*`-tabellen bestaan aantoonbaar en komen exact 8/8 overeen met
+`docs/BACKUP_RETENTION_CONTRACT.md`. Die feiten zijn vastgelegd als
+`external_evidence_refs` met `evidence_origin: EXTERNAL_LIVE_METADATA`, nooit als
+repository-`source_ref`. Er zijn nul databasemutaties uitgevoerd en nul rijen gelezen.
+
 ### Canonieke Model-v1.2 trackresultaten — totaaloverzicht
 
 | Track | Model v1.2 | Artefact |
@@ -301,6 +321,7 @@ het historische Batch B-artefact en worden niet overschreven.
 | T4 | 2,943 / 58,86% | `AJ_AUDIT_BATCH_B_PRIME.json` |
 | T5 | 2,471 / 49,42% | `AJ_AUDIT_BATCH_B_PRIME.json` |
 | T6 | 3,395 / 67,90% | `AJ_AUDIT_BATCH_B_PRIME.json` |
+| T17 | 2,873 / 57,46% | `AJ_AUDIT_T17_PRIME.json` |
 
 ### GAP-P2-032 en de J-impact in Batch B′
 

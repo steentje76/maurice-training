@@ -573,31 +573,36 @@ try {
 
     // ── BASELINE-1.2 / v1.1: gap traceability contract ──
     (function traceabilityGuard() {
-      const mdl11 = path.join(ROOT, 'docs', 'audit', 'AJ_MEASUREMENT_MODEL_v1_1.json');
-      if (!fs.existsSync(mdl11)) { problems.push('Model v1.1 ontbreekt'); return; }
+      const mdl11 = path.join(ROOT, 'docs', 'audit', 'AJ_MEASUREMENT_MODEL_v1_2.json');
+      if (!fs.existsSync(mdl11)) { problems.push('Model v1.2 ontbreekt'); return; }
       const m11 = JSON.parse(fs.readFileSync(mdl11, 'utf8'));
-      if (m11.audit_model_id !== 'trainingskompas-aj/v1.1' || m11.audit_model_version !== '1.1') {
-        problems.push('Model v1.1 identiteit onjuist');
+      if (m11.audit_model_id !== 'trainingskompas-aj/v1.2' || m11.audit_model_version !== '1.2') {
+        problems.push('Model v1.2 identiteit onjuist');
       }
       const fz = {};
       (m11.fingerprint_scope || []).forEach(function (k) { fz[k] = m11[k]; });
+      const canon = function (v) { return cn(v); };
       const cn = function (v) {
         if (v === null || typeof v !== 'object') return JSON.stringify(v);
         if (Array.isArray(v)) return '[' + v.map(cn).join(',') + ']';
         return '{' + Object.keys(v).sort().map(function (k) { return JSON.stringify(k) + ':' + cn(v[k]); }).join(',') + '}';
       };
       const f11 = 'sha256:' + crypto.createHash('sha256').update(cn(fz), 'utf8').digest('hex');
-      if (f11 !== m11.model_fingerprint) problems.push('Model v1.1 fingerprint mismatch: J-semantiek gewijzigd zonder versiebump');
+      if (f11 !== m11.model_fingerprint) problems.push('Model v1.2 fingerprint mismatch: J-semantiek gewijzigd zonder versiebump');
       const v10 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_MEASUREMENT_MODEL_v1.json'), 'utf8'));
-      if (f11 === v10.model_fingerprint) problems.push('v1.1 draagt de v1.0-fingerprint');
+      if (f11 === v10.model_fingerprint) problems.push('v1.2 draagt de v1.0-fingerprint');
       ['A','B','C','D','E','F','G','H','I'].forEach(function (k) {
-        if (cn(v10.criteria[k]) !== cn(m11.criteria[k])) problems.push('criterium ' + k + ' wijkt af tussen v1.0 en v1.1');
+        if (cn(v10.criteria[k]) !== cn(m11.criteria[k])) problems.push('criterium ' + k + ' wijkt af tussen v1.0 en v1.2');
       });
-      if (cn(v10.criteria.J.anchors) !== cn(m11.criteria.J.anchors)) problems.push('J-ankers gewijzigd tussen v1.0 en v1.1');
+      if (cn(v10.criteria.J.anchors) !== cn(m11.criteria.J.anchors)) problems.push('J-ankers gewijzigd tussen v1.0 en v1.2');
       const reg2 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'AUDIT_GAP_REGISTER.json'), 'utf8'));
       const known2 = {};
       JSON.parse(fs.readFileSync(idxPath, 'utf8')).forEach(function (x) { if (x.type === 'capability') known2[x.id] = x; });
       const ST = ['COMPLETE','INCOMPLETE','AMBIGUOUS','NO_CAPABILITY_RELATION_PROVEN'];
+      const SC = ['CAPABILITY_SCOPED','TRACK_SCOPED','UNSCOPED','NOT_APPLICABLE'];
+      const VALID = { COMPLETE:['CAPABILITY_SCOPED'], INCOMPLETE:['TRACK_SCOPED','UNSCOPED'],
+                      AMBIGUOUS:['TRACK_SCOPED','UNSCOPED'], NO_CAPABILITY_RELATION_PROVEN:['NOT_APPLICABLE'] };
+      const unresolved = [];
       (reg2.gaps || []).forEach(function (gp) {
         const id = gp.gap_id;
         if (ST.indexOf(gp.traceability_status) < 0) { problems.push('gap ' + id + ' zonder geldige traceability_status'); return; }
@@ -618,7 +623,35 @@ try {
         }
         aff.forEach(function (a) { if (!known2[a]) problems.push('gap ' + id + ' affected bestaat niet: ' + a); });
         if (aff.length !== new Set(aff).size) problems.push('gap ' + id + ' duplicate in affected_capability_ids');
+        // v1.2 scope-contract
+        const sc = gp.traceability_scope;
+        if (SC.indexOf(sc) < 0) { problems.push('gap ' + id + ' zonder geldige traceability_scope'); return; }
+        if ((VALID[gp.traceability_status] || []).indexOf(sc) < 0) {
+          problems.push('gap ' + id + ' ongeldige combinatie ' + gp.traceability_status + ' + ' + sc);
+        }
+        if (gp.traceability_status === 'COMPLETE' && !p) problems.push('gap ' + id + ' COMPLETE zonder primary');
+        if (['INCOMPLETE','AMBIGUOUS'].indexOf(gp.traceability_status) >= 0) {
+          if (p) problems.push('gap ' + id + ' ' + gp.traceability_status + ' mag geen primary hebben');
+          if (aff.length) problems.push('gap ' + id + ' ' + gp.traceability_status + ' mag geen affected hebben');
+        }
+        if (sc === 'TRACK_SCOPED' && !(Array.isArray(gp.scope_tracks) && gp.scope_tracks.length)) {
+          problems.push('gap ' + id + ' TRACK_SCOPED zonder bewezen scope_tracks');
+        }
+        if (sc === 'UNSCOPED' && gp.scope_tracks) problems.push('gap ' + id + ' UNSCOPED mag geen scope_tracks activeren');
+        if (!p && gp.capability_id) problems.push('gap ' + id + ' null primary maar niet-null alias');
+        if (gp.v1_scope === true && ['OPEN','REVIEW_REQUIRED'].indexOf(gp.status) >= 0 &&
+            ['INCOMPLETE','AMBIGUOUS'].indexOf(gp.traceability_status) >= 0) unresolved.push(id);
       });
+      // register-level traceability completeness
+      const tcExpected = unresolved.length === 0;
+      if (typeof reg2.traceability_complete !== 'boolean') problems.push('gap-register mist traceability_complete');
+      else if (reg2.traceability_complete !== tcExpected) {
+        problems.push('traceability_complete is ' + reg2.traceability_complete + ' maar unresolved V1-gaps zijn: ' +
+          (unresolved.join(',') || 'geen'));
+      }
+      if (canon(reg2.traceability_unresolved || []) !== canon(unresolved)) {
+        problems.push('traceability_unresolved wijkt af van de berekende verzameling');
+      }
     })();
 
     // ── BASELINE-1.2: A-J audit artifact guard ──

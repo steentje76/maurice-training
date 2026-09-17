@@ -1,8 +1,8 @@
 {
  "_schema": "trainingskompas-aj-measurement-model/1.0",
- "audit_model_id": "trainingskompas-aj/v1.1",
- "audit_model_version": "1.1",
- "model_fingerprint": "sha256:7d90ab1cef59b4c035a78a4746515a6634c33b902bd85cb22553181363d4718d",
+ "audit_model_id": "trainingskompas-aj/v1.2",
+ "audit_model_version": "1.2",
+ "model_fingerprint": "sha256:82891683aad13cccf779a13783d90bb77279cbab5dfd035989607226fa0a9264",
  "fingerprint_scope": [
   "criteria",
   "ladder",
@@ -20,12 +20,17 @@
   "audit_model_id": "trainingskompas-aj/v1.0",
   "audit_model_version": "1.0",
   "model_fingerprint": "sha256:cab0ca8b662e30c2e6ee6a22097c41466d132f8e3b0417bc5a42d421f0ee436e",
-  "note": "v1.0 blijft integraal historisch bewaard in docs/audit/AJ_MEASUREMENT_MODEL_v1.json en wordt niet gewijzigd"
+  "note": "v1.0 blijft integraal historisch bewaard in docs/audit/AJ_MEASUREMENT_MODEL_v1.json en is niet gewijzigd"
+ },
+ "non_canonical_predecessor": {
+  "audit_model_id": "trainingskompas-aj/v1.1",
+  "note": "v1.1 is als voorstel opgesteld maar heeft canonical main nooit bereikt en wordt niet als canonical of historisch modelartefact bewaard. v1.2 supersedeert uitsluitend v1.0. Reden voor de herziening van het voorstel: de v1.1-trackfallback zou bij onbewezen trackmetadata willekeurig capabilities J_UNPROVEN maken."
  },
  "delta_vs_v1_0": {
   "changed": [
    "criteria.J.caps",
-   "evidence_contract.gap_traceability"
+   "evidence_contract.gap_traceability",
+   "evidence_contract.register_traceability_completeness"
   ],
   "unchanged": [
    "criteria A t/m I inclusief alle ankers",
@@ -37,7 +42,7 @@
    "confidence_model",
    "rounding_model"
   ],
-  "reason": "J telt voortaan zowel primary_capability_id als affected_capability_ids, omdat J audit closure PER CAPABILITY meet"
+  "reason": "J telt zowel primary_capability_id als affected_capability_ids, en is scope-bewust: een gap zonder bewezen owner en zonder bewezen scope blokkeert geen enkele capability maar blijft register-level audit debt"
  },
  "provenance": {
   "historically_repository_proven": [
@@ -57,7 +62,7 @@
    "aanvullende evidence-vereisten"
   ],
   "explicit_statement": "De criterium-specifieke ankers zijn NIET retrospectief repository-proven. Zij worden hier voor het eerst formeel vastgesteld als Product-Owner-goedgekeurd auditmodel. Er wordt geen historische provenance geclaimd.",
-  "v1_1_note": "De J-matchingsemantiek is in v1.1 uitgebreid met affected_capability_ids. Dit is een PO-goedgekeurde baseline model revision, geen herinterpretatie van v1.0. Artefacten die tegen v1.0 zijn uitgevoerd behouden hun v1.0-identiteit."
+  "v1_2_note": "De J-matchingsemantiek is uitgebreid met affected_capability_ids en met scope-bewuste relevantie. Dit is een PO-goedgekeurde baseline model revision, geen herinterpretatie van v1.0. Artefacten die tegen v1.0 zijn uitgevoerd behouden hun v1.0-identiteit."
  },
  "semantics": {
   "frozen_meaning": "audit_model_version 1.0 betekent conformiteit aan exact deze fingerprint",
@@ -74,9 +79,10 @@
   "primary_capability_id": "string of null; maximaal een; moet een canonical capability zijn indien niet-null",
   "affected_capability_ids": "array, uniek, 0..N, iedere id canonical, primary mag niet opnieuw in affected staan",
   "traceability_status": "COMPLETE | INCOMPLETE | AMBIGUOUS | NO_CAPABILITY_RELATION_PROVEN",
+  "traceability_scope": "CAPABILITY_SCOPED | TRACK_SCOPED | UNSCOPED | NOT_APPLICABLE",
   "traceability_evidence": "verplicht; capability-specifiek waar van toepassing; positief bewijs verplicht bij NO_CAPABILITY_RELATION_PROVEN",
-  "legacy_capability_id": "deprecated alias, read-only, moet exact gelijk zijn aan primary_capability_id; geen tweede source of truth",
-  "j_computability": "J is berekenbaar voor capability X wanneer elke gap die X noemt in primary of affected traceability_status COMPLETE heeft, en geen gap met INCOMPLETE of AMBIGUOUS status X kan raken. De blokkadeverzameling van een onopgeloste gap is primary + affected, of bij leeg primary alle capabilities op zijn primary_track en secondary_tracks. Een ongerelateerde onopgeloste gap blokkeert nooit alle capabilities."
+  "legacy_capability_id": "deprecated alias, moet exact gelijk zijn aan primary_capability_id; bij null primary eveneens null",
+  "scope_tracks": "uitsluitend bij TRACK_SCOPED; eindige, onafhankelijk bewezen verzameling tracks met evidence"
  },
  "criteria": {
   "A": {
@@ -250,10 +256,13 @@
    },
    "na_allowed": true,
    "caps": [
-    "Een gap raakt deze capability wanneer de capability gelijk is aan primary_capability_id OF voorkomt in affected_capability_ids, en v1_scope true is en de status OPEN of REVIEW_REQUIRED.",
+    "Een gap is voor J relevant volgens zijn traceability_scope. CAPABILITY_SCOPED: de relatie geldt uitsluitend voor primary_capability_id en affected_capability_ids. TRACK_SCOPED: uitsluitend capabilities binnen de onafhankelijk bewezen scope_tracks. UNSCOPED: er mag geen enkele individuele capability-relatie worden afgeleid. NOT_APPLICABLE: geen capability-J-relatie.",
+    "Een gap telt alleen mee wanneer v1_scope true is en de status OPEN of REVIEW_REQUIRED.",
     "blocker true geeft J 2; blocker REVIEW_REQUIRED telt als niet-blokkerend en geeft J 3.",
     "CLOSED_PROVEN en DEFERRED_ACCEPTED geven geen open-gap penalty; score 5 vereist onverminderd closure-evidence of een formeel DEFERRED_ACCEPTED-besluit.",
-    "J is niet berekenbaar wanneer een in scope zijnde gap traceability_status INCOMPLETE of AMBIGUOUS heeft: dan geldt J_UNPROVEN en is de capability niet model-verified.",
+    "J is niet berekenbaar voor een capability wanneer een CAPABILITY_SCOPED of TRACK_SCOPED gap die deze capability raakt traceability_status INCOMPLETE of AMBIGUOUS heeft: dan geldt J_UNPROVEN.",
+    "Een UNSCOPED gap maakt GEEN enkele individuele capability J_UNPROVEN. Hij blijft expliciete register-level audit debt en zet traceability_complete op false.",
+    "Er is geen fallback op een historische capability_id, op onbewezen primary_track of secondary_tracks, en nooit op globale blokkade van alle capabilities.",
     "NO_CAPABILITY_RELATION_PROVEN beinvloedt geen enkele capability-J en vereist positieve traceability_evidence.",
     "N/A uitsluitend bij v1_scope false."
    ]
@@ -317,6 +326,7 @@
    "na_rationale indien N/A"
   ],
   "retroactivity": "dit contract geldt niet retroactief voor artefacten met audit_model_status HISTORICAL_PRE_V1_MODEL",
-  "gap_traceability": "gaps dragen primary_capability_id, affected_capability_ids[], traceability_status en traceability_evidence; ontbrekende traceability betekent nooit impliciet geen gap"
+  "gap_traceability": "gaps dragen primary_capability_id, affected_capability_ids[], traceability_status, traceability_scope en traceability_evidence. Geldige combinaties: COMPLETE met CAPABILITY_SCOPED en een non-null primary plus 0..N affected; INCOMPLETE met TRACK_SCOPED, null primary, lege affected en onafhankelijk bewezen eindige scope_tracks; INCOMPLETE met UNSCOPED, null primary en lege affected; AMBIGUOUS met TRACK_SCOPED of UNSCOPED, null primary en lege affected; NO_CAPABILITY_RELATION_PROVEN met NOT_APPLICABLE, null primary, lege affected en positief bewijs. Elke andere combinatie is ongeldig. capability_id is uitsluitend een deprecated alias en moet gelijk zijn aan primary_capability_id; bij een null primary is de alias eveneens null. Ontbrekende traceability betekent nooit impliciet geen gap.",
+  "register_traceability_completeness": "Voor iedere relevante V1-gap is traceability RESOLVED wanneer ofwel traceability_status COMPLETE is met traceability_scope CAPABILITY_SCOPED en alle relatie- en evidence-invarianten slagen, ofwel traceability_status NO_CAPABILITY_RELATION_PROVEN is met traceability_scope NOT_APPLICABLE en positieve traceability_evidence bewijst waarom geen capability-relatie nodig is. Traceability is UNRESOLVED bij INCOMPLETE of AMBIGUOUS. traceability_complete is waar wanneer geen enkele relevante V1-gap unresolved traceability heeft. Een geldig NO_CAPABILITY_RELATION_PROVEN-record maakt traceability_complete op zichzelf NIET false. traceability_complete is register-niveau en staat los van model_v1_verified, dat uitsluitend capability-niveau verificatie telt en deze register-debt niet mag verbergen."
  }
 }

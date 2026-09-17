@@ -571,6 +571,54 @@ try {
       if (!/ten minste één V1-capability/.test(baseline)) problems.push('capability-based tracknoemer ontbreekt in het baselinemodel');
     }
 
+    // ── T17 metadata-consistentie ──
+    (function t17MetadataGuard() {
+      const idx = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'ROADMAP_INDEX.json'), 'utf8'));
+      const known = {};
+      idx.forEach(function (x) { if (x.type === 'capability') known[x.id] = x; });
+
+      // 1. CAP-REGISTRY-SCREENS-001 blijft T17 (PO-besluit, cross-cutting kwaliteits-capability)
+      const cs = known['CAP-REGISTRY-SCREENS-001'];
+      if (!cs) problems.push('CAP-REGISTRY-SCREENS-001 ontbreekt in ROADMAP_INDEX');
+      else if (cs.primary_track !== 'T17') problems.push('CAP-REGISTRY-SCREENS-001 primary_track is ' + cs.primary_track + ', verwacht T17');
+
+      // 2. De registry mag "38" niet opnieuw als actuele totaaltelling presenteren.
+      // Deterministisch: de regel moet het getal als historische F2-auditset kwalificeren.
+      const regPath = path.join(ROOT, 'docs', 'CAPABILITY_REGISTRY.md');
+      if (fs.existsSync(regPath)) {
+        const lines = fs.readFileSync(regPath, 'utf8').split('\n');
+        const row = lines.filter(function (l) { return l.indexOf('| CAP-REGISTRY-SCREENS-001 |') === 0; })[0];
+        if (!row) problems.push('CAP-REGISTRY-SCREENS-001 heeft geen rij in CAPABILITY_REGISTRY.md');
+        else {
+          const cells = row.split(' | ');
+          const resp = cells[1] || '';
+          if (!resp.trim()) problems.push('CAP-REGISTRY-SCREENS-001 heeft lege verantwoordelijkheidskolom');
+          if (resp.indexOf('38') >= 0 && resp.indexOf('HISTORISCHE') < 0) {
+            problems.push('CAP-REGISTRY-SCREENS-001: "38" wordt niet als HISTORISCHE F2-auditset gekwalificeerd');
+          }
+          if (resp.indexOf('GEEN functionele implementatie') < 0) {
+            problems.push('CAP-REGISTRY-SCREENS-001: verantwoordelijkheid sluit functioneel schermeigendom niet expliciet uit');
+          }
+        }
+      }
+
+      // 3. Elk capability-ID dat in track_evidence wordt genoemd, moet in de index bestaan.
+      // Het patroon is deterministisch (HOOFDLETTERS-...-NNN) en over alle bestaande records
+      // vals-positief-vrij geverifieerd. Bewust NIET afgedwongen: gelijkheid van
+      // gap.primary_track aan de track van primary_capability_id - die velden hebben
+      // aantoonbaar verschillende semantiek (19 van 45 verschillen legitiem).
+      const reg = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'AUDIT_GAP_REGISTER.json'), 'utf8'));
+      (reg.gaps || []).forEach(function (g) {
+        if (g.traceability_status !== 'COMPLETE' || g.traceability_scope !== 'CAPABILITY_SCOPED') return;
+        const te = g.track_evidence;
+        if (typeof te !== 'string' || !te) return;
+        const ids = te.match(/\b[A-Z][A-Z0-9-]*-\d{3}\b/g) || [];
+        ids.forEach(function (id) {
+          if (!known[id]) problems.push('track_evidence van ' + g.gap_id + ' noemt onbekend capability-ID ' + id);
+        });
+      });
+    })();
+
     // ── Evidence Inventory v1.0: proof firewall ──
     (function evidenceInventoryGuard() {
       const ip = path.join(ROOT, 'docs', 'audit', 'EVIDENCE_INVENTORY.json');

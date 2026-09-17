@@ -571,8 +571,12 @@ try {
     }
 
     // ── BASELINE-1.2: A-J audit artifact guard ──
-    const ajPath = path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_BATCH_A.json');
-    if (fs.existsSync(ajPath)) {
+    const ajBatches = ['AJ_AUDIT_BATCH_A.json', 'AJ_AUDIT_BATCH_B.json']
+      .map(function (f) { return path.join(ROOT, 'docs', 'audit', f); })
+      .filter(function (p2) { return fs.existsSync(p2); });
+    let ajAudited = 0;
+    const ajSeenGlobal = {};
+    ajBatches.forEach(function (ajPath) {
       const aj = JSON.parse(fs.readFileSync(ajPath, 'utf8'));
       const CRIT = ['A','B','C','D','E','F','G','H','I','J'];
       const CONF = ['HIGH','MEDIUM','LOW'];
@@ -613,9 +617,28 @@ try {
       if (aj.complete === true && (aj.capabilities || []).length < v1Total) {
         problems.push('incomplete batch gemarkeerd als complete: ' + (aj.capabilities || []).length + '/' + v1Total);
       }
-      if (/V1 Product Maturity[^|]*\|[^|]*\|[^|]*\|\s*\*\*CANONICAL\*\*/.test(baseline) &&
-          (aj.capabilities || []).length < v1Total) {
-        problems.push('totale V1 maturity canonical terwijl slechts ' + (aj.capabilities || []).length + '/' + v1Total + ' V1-capabilities zijn beoordeeld');
+      // Frozen model moet identiek zijn over batches heen
+      if (aj.batch !== 'A') {
+        const base = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_BATCH_A.json'), 'utf8'));
+        CRIT.forEach(function (k) {
+          if (base.weights[k] !== aj.weights[k]) problems.push('gewicht ' + k + ' wijkt af van het frozen model in batch ' + aj.batch);
+        });
+        if (aj.anchors_frozen !== true) problems.push('batch ' + aj.batch + ' heeft anchors_frozen != true');
+      }
+      // Een capability mag niet in twee batches voorkomen
+      (aj.capabilities || []).forEach(function (c) {
+        if (ajSeenGlobal[c.stable_id]) problems.push('capability in twee A-J batches: ' + c.stable_id);
+        ajSeenGlobal[c.stable_id] = 1;
+      });
+      ajAudited += (aj.capabilities || []).length;
+    });
+    {
+      const knownAll = {};
+      JSON.parse(fs.readFileSync(idxPath, 'utf8')).forEach(function (x) { knownAll[x.id] = x; });
+      const v1Total = Object.keys(knownAll).filter(function (k) {
+        return knownAll[k].type === 'capability' && knownAll[k].v1_scope === true; }).length;
+      if (/V1 Product Maturity[^|]*\|[^|]*\|[^|]*\|\s*\*\*CANONICAL\*\*/.test(baseline) && ajAudited < v1Total) {
+        problems.push('totale V1 maturity canonical terwijl slechts ' + ajAudited + '/' + v1Total + ' V1-capabilities zijn beoordeeld');
       }
     }
 

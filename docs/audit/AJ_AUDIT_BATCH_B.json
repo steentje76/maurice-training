@@ -1,0 +1,1321 @@
+{
+ "_schema": "trainingskompas-aj-audit/1.0",
+ "audit_model_version": "A-J/1.0",
+ "baseline_sha": "326c0678dc652ba0e51604af289681ef97bb98bd",
+ "batch": "B",
+ "batch_scope": [
+  "T4",
+  "T5",
+  "T6"
+ ],
+ "audit_timestamp": "2026-09-16",
+ "provenance": "BASELINE-1.2 A-J Batch B (read-only audit), gecanonicaliseerd zonder heraudit",
+ "frozen_model_origin": "docs/audit/AJ_AUDIT_BATCH_A.json",
+ "anchors_frozen": true,
+ "weights": {
+  "A": 5,
+  "B": 15,
+  "C": 15,
+  "D": 10,
+  "E": 10,
+  "F": 15,
+  "G": 5,
+  "H": 10,
+  "I": 5,
+  "J": 10
+ },
+ "complete": false,
+ "note": "Batch B dekt 13 van 86 V1-capabilities; samen met Batch A 22/86. V1 Product Maturity is NIET canonical.",
+ "track_results": {
+  "T4": {
+   "score": 3.579,
+   "capabilities": 8,
+   "confidence": "HIGH"
+  },
+  "T5": {
+   "score": 3.225,
+   "capabilities": 2,
+   "confidence": "HIGH"
+  },
+  "T6": {
+   "score": 3.623,
+   "capabilities": 3,
+   "confidence": "HIGH"
+  }
+ },
+ "capabilities": [
+  {
+   "stable_id": "CALC-STR-REGISTRY-001",
+   "primary_track": "T4",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md (40 CALC-ids, claim-specifieke evidence levels, Epley-oorsprong expliciet niet peer-reviewed); core/calculation.js 22 index-refs; CalculationCore.calculateWorkingWeight/estimate1RM runtime; core/calculation.test.js 81/0"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 5
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md (40 CALC-ids, claim-specifieke evidence levels, Epley-oorsprong expliciet niet peer-reviewed); core/calculation.js 22 index-refs; CalculationCore.calculateWorkingWeight/estimate1RM runtime; core/calculation.test.js 81/0"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md (40 CALC-ids, claim-specifieke evidence levels, Epley-oorsprong expliciet niet peer-reviewed); core/calculation.js 22 index-refs; CalculationCore.calculateWorkingWeight/estimate1RM runtime; core/calculation.test.js 81/0"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "D": {
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "stateloze berekening/registry: geen eigen persistentie; resultaten worden door de consumerende capability opgeslagen"
+    },
+    "E": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md (40 CALC-ids, claim-specifieke evidence levels, Epley-oorsprong expliciet niet peer-reviewed); core/calculation.js 22 index-refs; CalculationCore.calculateWorkingWeight/estimate1RM runtime; core/calculation.test.js 81/0"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 5
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md (40 CALC-ids, claim-specifieke evidence levels, Epley-oorsprong expliciet niet peer-reviewed); core/calculation.js 22 index-refs; CalculationCore.calculateWorkingWeight/estimate1RM runtime; core/calculation.test.js 81/0"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 5
+    },
+    "G": {
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "opereert uitsluitend op reeds ge-owned input en bezit zelf geen persoonsgegevens"
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md (40 CALC-ids, claim-specifieke evidence levels, Epley-oorsprong expliciet niet peer-reviewed); core/calculation.js 22 index-refs; CalculationCore.calculateWorkingWeight/estimate1RM runtime; core/calculation.test.js 81/0"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md (40 CALC-ids, claim-specifieke evidence levels, Epley-oorsprong expliciet niet peer-reviewed); core/calculation.js 22 index-refs; CalculationCore.calculateWorkingWeight/estimate1RM runtime; core/calculation.test.js 81/0"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md (40 CALC-ids, claim-specifieke evidence levels, Epley-oorsprong expliciet niet peer-reviewed); core/calculation.js 22 index-refs; CalculationCore.calculateWorkingWeight/estimate1RM runtime; core/calculation.test.js 81/0"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    }
+   },
+   "weighted_score": 4.118,
+   "gap_refs": [],
+   "limitations": "geen device-evidence; wetenschappelijke claims niet onafhankelijk geherverifieerd"
+  },
+  {
+   "stable_id": "CALC-LOAD-REGISTRY-001",
+   "primary_track": "T4",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md load/sRPE-entries; core/calculation.js runtime; open GAP-P2-009 (sRPE-bouwstenen)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md load/sRPE-entries; core/calculation.js runtime; open GAP-P2-009 (sRPE-bouwstenen)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md load/sRPE-entries; core/calculation.js runtime; open GAP-P2-009 (sRPE-bouwstenen)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "D": {
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "stateloze berekening/registry: geen eigen persistentie; resultaten worden door de consumerende capability opgeslagen"
+    },
+    "E": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md load/sRPE-entries; core/calculation.js runtime; open GAP-P2-009 (sRPE-bouwstenen)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md load/sRPE-entries; core/calculation.js runtime; open GAP-P2-009 (sRPE-bouwstenen)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "G": {
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "opereert uitsluitend op reeds ge-owned input en bezit zelf geen persoonsgegevens"
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md load/sRPE-entries; core/calculation.js runtime; open GAP-P2-009 (sRPE-bouwstenen)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md load/sRPE-entries; core/calculation.js runtime; open GAP-P2-009 (sRPE-bouwstenen)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md load/sRPE-entries; core/calculation.js runtime; open GAP-P2-009 (sRPE-bouwstenen)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 2
+    }
+   },
+   "weighted_score": 3.588,
+   "gap_refs": [
+    "GAP-P2-009"
+   ],
+   "limitations": "GAP-P2-009 open (sRPE-bouwstenen)"
+  },
+  {
+   "stable_id": "CALC-REC-REGISTRY-001",
+   "primary_track": "T4",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md recovery/HRV/RHR (HRV 31 vermeldingen met beperkingen); open GAP-P2-011 (geen dedicated core-unittest HRV-baseline), GAP-P2-012 (RHR-delta)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md recovery/HRV/RHR (HRV 31 vermeldingen met beperkingen); open GAP-P2-011 (geen dedicated core-unittest HRV-baseline), GAP-P2-012 (RHR-delta)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md recovery/HRV/RHR (HRV 31 vermeldingen met beperkingen); open GAP-P2-011 (geen dedicated core-unittest HRV-baseline), GAP-P2-012 (RHR-delta)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "D": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md recovery/HRV/RHR (HRV 31 vermeldingen met beperkingen); open GAP-P2-011 (geen dedicated core-unittest HRV-baseline), GAP-P2-012 (RHR-delta)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "E": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md recovery/HRV/RHR (HRV 31 vermeldingen met beperkingen); open GAP-P2-011 (geen dedicated core-unittest HRV-baseline), GAP-P2-012 (RHR-delta)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md recovery/HRV/RHR (HRV 31 vermeldingen met beperkingen); open GAP-P2-011 (geen dedicated core-unittest HRV-baseline), GAP-P2-012 (RHR-delta)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "G": {
+     "applicable": false,
+     "confidence": "MEDIUM",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "opereert uitsluitend op reeds ge-owned input en bezit zelf geen persoonsgegevens"
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md recovery/HRV/RHR (HRV 31 vermeldingen met beperkingen); open GAP-P2-011 (geen dedicated core-unittest HRV-baseline), GAP-P2-012 (RHR-delta)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md recovery/HRV/RHR (HRV 31 vermeldingen met beperkingen); open GAP-P2-011 (geen dedicated core-unittest HRV-baseline), GAP-P2-012 (RHR-delta)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md recovery/HRV/RHR (HRV 31 vermeldingen met beperkingen); open GAP-P2-011 (geen dedicated core-unittest HRV-baseline), GAP-P2-012 (RHR-delta)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 2
+    }
+   },
+   "weighted_score": 3.211,
+   "gap_refs": [
+    "GAP-P2-011",
+    "GAP-P2-012"
+   ],
+   "limitations": "GAP-P2-011 en GAP-P2-012 open; geen dedicated unittest voor de HRV-baseline"
+  },
+  {
+   "stable_id": "CALC-END-REGISTRY-001",
+   "primary_track": "T4",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md endurance-entries; index status TESTED / evidence_status PARTIAL; open GAP-P2-013 (provenance)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md endurance-entries; index status TESTED / evidence_status PARTIAL; open GAP-P2-013 (provenance)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md endurance-entries; index status TESTED / evidence_status PARTIAL; open GAP-P2-013 (provenance)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "D": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md endurance-entries; index status TESTED / evidence_status PARTIAL; open GAP-P2-013 (provenance)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "E": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md endurance-entries; index status TESTED / evidence_status PARTIAL; open GAP-P2-013 (provenance)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md endurance-entries; index status TESTED / evidence_status PARTIAL; open GAP-P2-013 (provenance)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "G": {
+     "applicable": false,
+     "confidence": "MEDIUM",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "opereert uitsluitend op reeds ge-owned input en bezit zelf geen persoonsgegevens"
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md endurance-entries; index status TESTED / evidence_status PARTIAL; open GAP-P2-013 (provenance)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md endurance-entries; index status TESTED / evidence_status PARTIAL; open GAP-P2-013 (provenance)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md endurance-entries; index status TESTED / evidence_status PARTIAL; open GAP-P2-013 (provenance)"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 2
+    }
+   },
+   "weighted_score": 2.947,
+   "gap_refs": [
+    "GAP-P2-013"
+   ],
+   "limitations": "evidence_status PARTIAL; GAP-P2-013 open (provenance); laagste T4-score"
+  },
+  {
+   "stable_id": "CALC-ENE-REGISTRY-001",
+   "primary_track": "T4",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md energy-entries; core/calculation.js runtime"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md energy-entries; core/calculation.js runtime"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md energy-entries; core/calculation.js runtime"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "D": {
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "stateloze berekening/registry: geen eigen persistentie; resultaten worden door de consumerende capability opgeslagen"
+    },
+    "E": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md energy-entries; core/calculation.js runtime"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md energy-entries; core/calculation.js runtime"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "G": {
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "opereert uitsluitend op reeds ge-owned input en bezit zelf geen persoonsgegevens"
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md energy-entries; core/calculation.js runtime"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md energy-entries; core/calculation.js runtime"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md energy-entries; core/calculation.js runtime"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    }
+   },
+   "weighted_score": 3.706,
+   "gap_refs": [],
+   "limitations": "geen device-evidence"
+  },
+  {
+   "stable_id": "DQ-CONFIDENCE-CONTRACT-001",
+   "primary_track": "T4",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/calculation.js + core/decision.js: onzekerheid bewaard via null (50 resp. 106 voorkomens); confidence-contract in registry"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/calculation.js + core/decision.js: onzekerheid bewaard via null (50 resp. 106 voorkomens); confidence-contract in registry"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/calculation.js + core/decision.js: onzekerheid bewaard via null (50 resp. 106 voorkomens); confidence-contract in registry"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "D": {
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "stateloze berekening/registry: geen eigen persistentie; resultaten worden door de consumerende capability opgeslagen"
+    },
+    "E": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/calculation.js + core/decision.js: onzekerheid bewaard via null (50 resp. 106 voorkomens); confidence-contract in registry"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 5
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/calculation.js + core/decision.js: onzekerheid bewaard via null (50 resp. 106 voorkomens); confidence-contract in registry"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "G": {
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "opereert uitsluitend op reeds ge-owned input en bezit zelf geen persoonsgegevens"
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "core/calculation.js + core/decision.js: onzekerheid bewaard via null (50 resp. 106 voorkomens); confidence-contract in registry"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/calculation.js + core/decision.js: onzekerheid bewaard via null (50 resp. 106 voorkomens); confidence-contract in registry"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 5
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/calculation.js + core/decision.js: onzekerheid bewaard via null (50 resp. 106 voorkomens); confidence-contract in registry"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    }
+   },
+   "weighted_score": 3.941,
+   "gap_refs": [],
+   "limitations": "onzekerheid uitsluitend via null bewaard; geen expliciete insufficient/unknown/degraded-toestanden"
+  },
+  {
+   "stable_id": "EVIDENCE-CLAIM-AUDIT-001",
+   "primary_track": "T4",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md claim-specifieke evidence levels A/B/E; MS-F3-09"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 5
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md claim-specifieke evidence levels A/B/E; MS-F3-09"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md claim-specifieke evidence levels A/B/E; MS-F3-09"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "D": {
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "stateloze berekening/registry: geen eigen persistentie; resultaten worden door de consumerende capability opgeslagen"
+    },
+    "E": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md claim-specifieke evidence levels A/B/E; MS-F3-09"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md claim-specifieke evidence levels A/B/E; MS-F3-09"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "G": {
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "opereert uitsluitend op reeds ge-owned input en bezit zelf geen persoonsgegevens"
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md claim-specifieke evidence levels A/B/E; MS-F3-09"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 2
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md claim-specifieke evidence levels A/B/E; MS-F3-09"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md claim-specifieke evidence levels A/B/E; MS-F3-09"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    }
+   },
+   "weighted_score": 3.471,
+   "gap_refs": [],
+   "limitations": "geen eigen gebruikersgerichte oppervlakte"
+  },
+  {
+   "stable_id": "CALC-EVIDENCE-SPEC-001",
+   "primary_track": "T4",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md evidence-specificatie; registry-identity per CALC-id"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 5
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md evidence-specificatie; registry-identity per CALC-id"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md evidence-specificatie; registry-identity per CALC-id"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "D": {
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "stateloze berekening/registry: geen eigen persistentie; resultaten worden door de consumerende capability opgeslagen"
+    },
+    "E": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md evidence-specificatie; registry-identity per CALC-id"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md evidence-specificatie; registry-identity per CALC-id"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 5
+    },
+    "G": {
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "opereert uitsluitend op reeds ge-owned input en bezit zelf geen persoonsgegevens"
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md evidence-specificatie; registry-identity per CALC-id"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 2
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md evidence-specificatie; registry-identity per CALC-id"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/CALCULATION_REGISTRY.md evidence-specificatie; registry-identity per CALC-id"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    }
+   },
+   "weighted_score": 3.647,
+   "gap_refs": [],
+   "limitations": "geen eigen gebruikersgerichte oppervlakte"
+  },
+  {
+   "stable_id": "CTX-CONTRACT-001",
+   "primary_track": "T5",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html buildCtx(): 1 definitie, 6 callers (live canonical). core/contextEngine.js ContextEngineCore: 0 callers in index.html en in core/*.js (niet-test), 4 testreferenties -> DORMANT/SHADOW_RISK. Canonical geregistreerd als GAP-P2-014, blocker=true"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html buildCtx(): 1 definitie, 6 callers (live canonical). core/contextEngine.js ContextEngineCore: 0 callers in index.html en in core/*.js (niet-test), 4 testreferenties -> DORMANT/SHADOW_RISK. Canonical geregistreerd als GAP-P2-014, blocker=true"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 2
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html buildCtx(): 1 definitie, 6 callers (live canonical). core/contextEngine.js ContextEngineCore: 0 callers in index.html en in core/*.js (niet-test), 4 testreferenties -> DORMANT/SHADOW_RISK. Canonical geregistreerd als GAP-P2-014, blocker=true"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "D": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html buildCtx(): 1 definitie, 6 callers (live canonical). core/contextEngine.js ContextEngineCore: 0 callers in index.html en in core/*.js (niet-test), 4 testreferenties -> DORMANT/SHADOW_RISK. Canonical geregistreerd als GAP-P2-014, blocker=true"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "E": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html buildCtx(): 1 definitie, 6 callers (live canonical). core/contextEngine.js ContextEngineCore: 0 callers in index.html en in core/*.js (niet-test), 4 testreferenties -> DORMANT/SHADOW_RISK. Canonical geregistreerd als GAP-P2-014, blocker=true"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html buildCtx(): 1 definitie, 6 callers (live canonical). core/contextEngine.js ContextEngineCore: 0 callers in index.html en in core/*.js (niet-test), 4 testreferenties -> DORMANT/SHADOW_RISK. Canonical geregistreerd als GAP-P2-014, blocker=true"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "G": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html buildCtx(): 1 definitie, 6 callers (live canonical). core/contextEngine.js ContextEngineCore: 0 callers in index.html en in core/*.js (niet-test), 4 testreferenties -> DORMANT/SHADOW_RISK. Canonical geregistreerd als GAP-P2-014, blocker=true"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html buildCtx(): 1 definitie, 6 callers (live canonical). core/contextEngine.js ContextEngineCore: 0 callers in index.html en in core/*.js (niet-test), 4 testreferenties -> DORMANT/SHADOW_RISK. Canonical geregistreerd als GAP-P2-014, blocker=true"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "index.html buildCtx(): 1 definitie, 6 callers (live canonical). core/contextEngine.js ContextEngineCore: 0 callers in index.html en in core/*.js (niet-test), 4 testreferenties -> DORMANT/SHADOW_RISK. Canonical geregistreerd als GAP-P2-014, blocker=true"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "index.html buildCtx(): 1 definitie, 6 callers (live canonical). core/contextEngine.js ContextEngineCore: 0 callers in index.html en in core/*.js (niet-test), 4 testreferenties -> DORMANT/SHADOW_RISK. Canonical geregistreerd als GAP-P2-014, blocker=true"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 1
+    }
+   },
+   "weighted_score": 2.95,
+   "gap_refs": [
+    "GAP-P2-014"
+   ],
+   "limitations": "GAP-P2-014 open met blocker=true: ContextEngineCore is dode code naast het live buildCtx"
+  },
+  {
+   "stable_id": "WEATHER-CONTEXT-001",
+   "primary_track": "T5",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/weather.js 11 index-refs, 5 testbestanden; WeatherCore.normalizeWeather 2 runtime-aanroepen -> PARTIAL_CHAIN"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/weather.js 11 index-refs, 5 testbestanden; WeatherCore.normalizeWeather 2 runtime-aanroepen -> PARTIAL_CHAIN"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/weather.js 11 index-refs, 5 testbestanden; WeatherCore.normalizeWeather 2 runtime-aanroepen -> PARTIAL_CHAIN"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "D": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "core/weather.js 11 index-refs, 5 testbestanden; WeatherCore.normalizeWeather 2 runtime-aanroepen -> PARTIAL_CHAIN"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "E": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/weather.js 11 index-refs, 5 testbestanden; WeatherCore.normalizeWeather 2 runtime-aanroepen -> PARTIAL_CHAIN"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/weather.js 11 index-refs, 5 testbestanden; WeatherCore.normalizeWeather 2 runtime-aanroepen -> PARTIAL_CHAIN"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "G": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "core/weather.js 11 index-refs, 5 testbestanden; WeatherCore.normalizeWeather 2 runtime-aanroepen -> PARTIAL_CHAIN"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "core/weather.js 11 index-refs, 5 testbestanden; WeatherCore.normalizeWeather 2 runtime-aanroepen -> PARTIAL_CHAIN"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/weather.js 11 index-refs, 5 testbestanden; WeatherCore.normalizeWeather 2 runtime-aanroepen -> PARTIAL_CHAIN"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/weather.js 11 index-refs, 5 testbestanden; WeatherCore.normalizeWeather 2 runtime-aanroepen -> PARTIAL_CHAIN"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    }
+   },
+   "weighted_score": 3.5,
+   "gap_refs": [],
+   "limitations": "downstream-consumptie beperkt aantoonbaar (PARTIAL_CHAIN)"
+  },
+  {
+   "stable_id": "DEC-CORE-001",
+   "primary_track": "T6",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/decision.js 32 index-refs, 52 testbestanden; 19 unieke CalculationCore/DecisionCore-aanroepen; volledige keten sessiedata -> CalculationCore -> DecisionCore.computeProgression -> athlete"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/decision.js 32 index-refs, 52 testbestanden; 19 unieke CalculationCore/DecisionCore-aanroepen; volledige keten sessiedata -> CalculationCore -> DecisionCore.computeProgression -> athlete"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/decision.js 32 index-refs, 52 testbestanden; 19 unieke CalculationCore/DecisionCore-aanroepen; volledige keten sessiedata -> CalculationCore -> DecisionCore.computeProgression -> athlete"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "D": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "core/decision.js 32 index-refs, 52 testbestanden; 19 unieke CalculationCore/DecisionCore-aanroepen; volledige keten sessiedata -> CalculationCore -> DecisionCore.computeProgression -> athlete"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "E": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/decision.js 32 index-refs, 52 testbestanden; 19 unieke CalculationCore/DecisionCore-aanroepen; volledige keten sessiedata -> CalculationCore -> DecisionCore.computeProgression -> athlete"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 5
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/decision.js 32 index-refs, 52 testbestanden; 19 unieke CalculationCore/DecisionCore-aanroepen; volledige keten sessiedata -> CalculationCore -> DecisionCore.computeProgression -> athlete"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "G": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "core/decision.js 32 index-refs, 52 testbestanden; 19 unieke CalculationCore/DecisionCore-aanroepen; volledige keten sessiedata -> CalculationCore -> DecisionCore.computeProgression -> athlete"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "core/decision.js 32 index-refs, 52 testbestanden; 19 unieke CalculationCore/DecisionCore-aanroepen; volledige keten sessiedata -> CalculationCore -> DecisionCore.computeProgression -> athlete"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/decision.js 32 index-refs, 52 testbestanden; 19 unieke CalculationCore/DecisionCore-aanroepen; volledige keten sessiedata -> CalculationCore -> DecisionCore.computeProgression -> athlete"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/decision.js 32 index-refs, 52 testbestanden; 19 unieke CalculationCore/DecisionCore-aanroepen; volledige keten sessiedata -> CalculationCore -> DecisionCore.computeProgression -> athlete"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    }
+   },
+   "weighted_score": 3.75,
+   "gap_refs": [],
+   "limitations": "geen live two-user adversarial harness"
+  },
+  {
+   "stable_id": "DEC-RULE-REGISTRY-001",
+   "primary_track": "T6",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/DECISION_RULE_REGISTRY.md 20 rule-IDs met versionering en thresholds; DecisionCore runtime"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 5
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/DECISION_RULE_REGISTRY.md 20 rule-IDs met versionering en thresholds; DecisionCore runtime"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/DECISION_RULE_REGISTRY.md 20 rule-IDs met versionering en thresholds; DecisionCore runtime"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "D": {
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "stateloze berekening/registry: geen eigen persistentie; resultaten worden door de consumerende capability opgeslagen"
+    },
+    "E": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/DECISION_RULE_REGISTRY.md 20 rule-IDs met versionering en thresholds; DecisionCore runtime"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 5
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/DECISION_RULE_REGISTRY.md 20 rule-IDs met versionering en thresholds; DecisionCore runtime"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "G": {
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "opereert uitsluitend op reeds ge-owned input en bezit zelf geen persoonsgegevens"
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/DECISION_RULE_REGISTRY.md 20 rule-IDs met versionering en thresholds; DecisionCore runtime"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 2
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "docs/DECISION_RULE_REGISTRY.md 20 rule-IDs met versionering en thresholds; DecisionCore runtime"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "docs/DECISION_RULE_REGISTRY.md 20 rule-IDs met versionering en thresholds; DecisionCore runtime"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    }
+   },
+   "weighted_score": 3.765,
+   "gap_refs": [],
+   "limitations": "registry zonder eigen gebruikersgerichte oppervlakte"
+  },
+  {
+   "stable_id": "SCHEDULE-ADHERENCE-001",
+   "primary_track": "T6",
+   "v1_scope": true,
+   "criteria": {
+    "A": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/scheduleAdherence.js 2 index-refs, 4 testbestanden; ScheduleAdherenceCore.daysUntilEvent/weeksUntilEvent 3+3 aanroepen -> FULL_CANONICAL_CHAIN"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "B": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/scheduleAdherence.js 2 index-refs, 4 testbestanden; ScheduleAdherenceCore.daysUntilEvent/weeksUntilEvent 3+3 aanroepen -> FULL_CANONICAL_CHAIN"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "C": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "core/scheduleAdherence.js 2 index-refs, 4 testbestanden; ScheduleAdherenceCore.daysUntilEvent/weeksUntilEvent 3+3 aanroepen -> FULL_CANONICAL_CHAIN"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "D": {
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "stateloze berekening/registry: geen eigen persistentie; resultaten worden door de consumerende capability opgeslagen"
+    },
+    "E": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/scheduleAdherence.js 2 index-refs, 4 testbestanden; ScheduleAdherenceCore.daysUntilEvent/weeksUntilEvent 3+3 aanroepen -> FULL_CANONICAL_CHAIN"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 4
+    },
+    "F": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "core/scheduleAdherence.js 2 index-refs, 4 testbestanden; ScheduleAdherenceCore.daysUntilEvent/weeksUntilEvent 3+3 aanroepen -> FULL_CANONICAL_CHAIN"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "G": {
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_refs": [],
+     "rationale": "zie evidence_refs",
+     "na_rationale": "opereert uitsluitend op reeds ge-owned input en bezit zelf geen persoonsgegevens"
+    },
+    "H": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "core/scheduleAdherence.js 2 index-refs, 4 testbestanden; ScheduleAdherenceCore.daysUntilEvent/weeksUntilEvent 3+3 aanroepen -> FULL_CANONICAL_CHAIN"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "I": {
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_refs": [
+      "core/scheduleAdherence.js 2 index-refs, 4 testbestanden; ScheduleAdherenceCore.daysUntilEvent/weeksUntilEvent 3+3 aanroepen -> FULL_CANONICAL_CHAIN"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    },
+    "J": {
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_refs": [
+      "core/scheduleAdherence.js 2 index-refs, 4 testbestanden; ScheduleAdherenceCore.daysUntilEvent/weeksUntilEvent 3+3 aanroepen -> FULL_CANONICAL_CHAIN"
+     ],
+     "rationale": "zie evidence_refs",
+     "score": 3
+    }
+   },
+   "weighted_score": 3.353,
+   "gap_refs": [],
+   "limitations": "evidence_status N/A in index; beperkte testdekking (4 bestanden)"
+  }
+ ]
+}

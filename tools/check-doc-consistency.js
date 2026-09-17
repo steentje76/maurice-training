@@ -74,6 +74,7 @@
  * probleem dat een mens sneller met een globale grep-controle kan verifiëren. */
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const ROOT = path.join(__dirname, '..');
 
 let errors = 0;
@@ -623,13 +624,78 @@ try {
         CRIT.forEach(function (k) {
           if (base.weights[k] !== aj.weights[k]) problems.push('gewicht ' + k + ' wijkt af van het frozen model in batch ' + aj.batch);
         });
-        if (aj.anchors_frozen !== true) problems.push('batch ' + aj.batch + ' heeft anchors_frozen != true');
+        // BASELINE-1.2: anchors_frozen true is alleen vereist voor Model-v1.0-artefacten.
+        // Historische pre-v1 artefacten dragen bewust anchors_frozen false, omdat hun
+        // criterium-specifieke ankers nooit repository-frozen waren.
+        if (aj.audit_model_status !== 'HISTORICAL_PRE_V1_MODEL' && aj.anchors_frozen !== true) {
+          problems.push('batch ' + aj.batch + ' heeft anchors_frozen != true');
+        }
       }
       // Een capability mag niet in twee batches voorkomen
       (aj.capabilities || []).forEach(function (c) {
         if (ajSeenGlobal[c.stable_id]) problems.push('capability in twee A-J batches: ' + c.stable_id);
         ajSeenGlobal[c.stable_id] = 1;
       });
+      // ── Model v1.0 identiteit en contract ──
+      const mdlPath = path.join(ROOT, 'docs', 'audit', 'AJ_MEASUREMENT_MODEL_v1.json');
+      if (!fs.existsSync(mdlPath)) problems.push('canoniek meetmodel AJ_MEASUREMENT_MODEL_v1.json ontbreekt');
+      else {
+        const mdl = JSON.parse(fs.readFileSync(mdlPath, 'utf8'));
+        if (mdl.audit_model_id !== 'trainingskompas-aj/v1.0') problems.push('model_id wijkt af van trainingskompas-aj/v1.0');
+        if (mdl.audit_model_version !== '1.0') problems.push('model_version wijkt af van 1.0');
+        // fingerprint deterministisch herberekenen over exact de frozen velden
+        const frozen = {};
+        (mdl.fingerprint_scope || []).forEach(function (k) { frozen[k] = mdl[k]; });
+        const canon = function (v) {
+          if (v === null || typeof v !== 'object') return JSON.stringify(v);
+          if (Array.isArray(v)) return '[' + v.map(canon).join(',') + ']';
+          return '{' + Object.keys(v).sort().map(function (k) { return JSON.stringify(k) + ':' + canon(v[k]); }).join(',') + '}';
+        };
+        const fp = 'sha256:' + crypto.createHash('sha256').update(canon(frozen), 'utf8').digest('hex');
+        if (fp !== mdl.model_fingerprint) {
+          problems.push('model fingerprint mismatch: frozen semantiek gewijzigd zonder versiebump (' + fp.slice(0, 22) + '... vs ' + String(mdl.model_fingerprint).slice(0, 22) + '...)');
+        }
+        const CW = { A: 5, B: 15, C: 15, D: 10, E: 10, F: 15, G: 5, H: 10, I: 5, J: 10 };
+        let wsum = 0;
+        Object.keys(CW).forEach(function (k) {
+          const c = (mdl.criteria || {})[k];
+          if (!c) { problems.push('model mist criterium ' + k); return; }
+          if (c.weight !== CW[k]) problems.push('model gewicht ' + k + ' = ' + c.weight + ', verwacht ' + CW[k]);
+          else wsum += c.weight;
+          if (!c.anchors || Object.keys(c.anchors).length !== 6) problems.push('criterium ' + k + ' heeft geen zes ankers');
+        });
+        if (wsum !== 100) problems.push('modelgewichten tellen op tot ' + wsum + '%, verwacht 100%');
+        // Artefactconformiteit
+        const st = aj.audit_model_status;
+        if (aj.audit_model_version === '1.0' || aj.audit_model_version === mdl.audit_model_id) {
+          if (st === 'HISTORICAL_PRE_V1_MODEL') problems.push('historisch artefact batch ' + aj.batch + ' claimt audit_model_version 1.0');
+          (aj.capabilities || []).forEach(function (c) {
+            const seenRefs = {};
+            CRIT.forEach(function (k) {
+              const r = (c.criteria || {})[k]; if (!r) return;
+              if (r.applicable === false) { if (!r.na_rationale) problems.push('v1 N/A zonder rationale: ' + c.stable_id + '/' + k);
+                else if (['D','E','G','H','J'].indexOf(k) < 0) problems.push('v1 N/A niet toegestaan op criterium ' + k + ': ' + c.stable_id); return; }
+              if (!r.evidence_refs || !r.evidence_refs.length) problems.push('v1 criterium zonder evidence_refs: ' + c.stable_id + '/' + k);
+              else { const key = JSON.stringify(r.evidence_refs); if (seenRefs[key]) problems.push('v1 gedeelde evidence_refs over criteria: ' + c.stable_id + '/' + k); seenRefs[key] = 1; }
+              if (r.rationale === 'zie evidence_refs') problems.push('v1 generieke rationale verboden: ' + c.stable_id + '/' + k);
+              if (!Number.isInteger(r.score) || r.score < 0 || r.score > 5) problems.push('v1 score niet integer 0-5: ' + c.stable_id + '/' + k);
+            });
+          });
+        } else if (st !== 'HISTORICAL_PRE_V1_MODEL') {
+          problems.push('batch ' + aj.batch + ' heeft geen geldige audit_model_version en geen HISTORICAL_PRE_V1_MODEL-status');
+        } else if (aj.anchors_frozen === true) {
+          problems.push('historisch artefact batch ' + aj.batch + ' claimt anchors_frozen true terwijl de ankers niet repository-frozen waren');
+        }
+        // trackscore volgens de stored-score afrondingsregel
+        Object.keys(aj.track_results || {}).forEach(function (t) {
+          const cs = (aj.capabilities || []).filter(function (c) { return c.primary_track === t; });
+          if (!cs.length) return;
+          const avg = Math.round((cs.reduce(function (a, c) { return a + c.weighted_score; }, 0) / cs.length) * 1000) / 1000;
+          if (Math.abs(avg - aj.track_results[t].score) > 0.0005) {
+            problems.push('trackscore ' + t + ' in batch ' + aj.batch + ' = ' + aj.track_results[t].score + ', herberekend ' + avg);
+          }
+        });
+      }
       ajAudited += (aj.capabilities || []).length;
       // C-C5: een OPEN/REVIEW_REQUIRED gap die via capability_id expliciet aan een
       // reeds geauditte capability hangt, moet in de gap_refs van die capability staan.

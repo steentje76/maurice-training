@@ -631,6 +631,21 @@ try {
         ajSeenGlobal[c.stable_id] = 1;
       });
       ajAudited += (aj.capabilities || []).length;
+      // C-C5: een OPEN/REVIEW_REQUIRED gap die via capability_id expliciet aan een
+      // reeds geauditte capability hangt, moet in de gap_refs van die capability staan.
+      // Read-only getoetst tegen alle 59 canonical gaps: 6 toepasselijk, 1 violation,
+      // 0 false positives -- capability_id is een expliciet canoniek veld, geen heuristiek.
+      const regForAj = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'AUDIT_GAP_REGISTER.json'), 'utf8'));
+      const byCap = {};
+      (aj.capabilities || []).forEach(function (c) { byCap[c.stable_id] = c.gap_refs || []; });
+      (regForAj.gaps || []).forEach(function (gp) {
+        if (['OPEN', 'REVIEW_REQUIRED'].indexOf(gp.status) < 0) return;
+        if (!gp.capability_id || !byCap[gp.capability_id]) return;
+        if (byCap[gp.capability_id].indexOf(gp.gap_id) < 0) {
+          problems.push('open gap ' + gp.gap_id + ' hangt via capability_id aan geauditte capability ' +
+            gp.capability_id + ' maar ontbreekt in gap_refs');
+        }
+      });
     });
     {
       const knownAll = {};

@@ -264,7 +264,7 @@ register-debt niet mag verbergen.
 | Telling | Betekenis | Stand |
 |---|---|---|
 | `historical_audited` | beoordeeld onder een pre-v1.0 model; scores behouden, niet v1-verifieerbaar | **22 / 86** |
-| **`model_v1_verified`** | beoordeeld onder `audit_model_version 1.2` met criterium-specifieke evidence | **9 / 86** |
+| **`model_v1_verified`** | beoordeeld onder `audit_model_version 1.2` met criterium-specifieke evidence | **22 / 86** |
 
 ### Canonieke Model-v1.2 trackresultaten
 
@@ -276,6 +276,40 @@ register-debt niet mag verbergen.
 De historische waarden **T1 3,320** en **T2 3,591** blijven geldig voor het historische
 Batch A-artefact en worden niet overschreven. `docs/audit/AJ_AUDIT_BATCH_A.json` behoudt
 `HISTORICAL_PRE_V1_MODEL` en is ongewijzigd.
+
+### Canonieke Model-v1.2 trackresultaten — Batch B′ (T4 + T5 + T6)
+
+**Canoniek artefact:** `docs/audit/AJ_AUDIT_BATCH_B_PRIME.json` — 13 capabilities,
+130 criterion records (22 N/A, 108 gescoord), `audit_model_version: 1.2`.
+
+| Track | Model v1.2 | Historisch pre-v1 |
+|---|---|---|
+| **T4** | **2,943 / 5 = 58,86%** | 3,564 |
+| **T5** | **2,471 / 5 = 49,42%** | 3,225 |
+| **T6** | **3,395 / 5 = 67,90%** | 3,623 |
+
+De historische waarden **T4 3,564**, **T5 3,225** en **T6 3,623** blijven geldig voor
+het historische Batch B-artefact en worden niet overschreven.
+`docs/audit/AJ_AUDIT_BATCH_B.json` behoudt `HISTORICAL_PRE_V1_MODEL` en is ongewijzigd.
+
+### Canonieke Model-v1.2 trackresultaten — totaaloverzicht
+
+| Track | Model v1.2 | Artefact |
+|---|---|---|
+| T1 | 3,056 / 61,12% | `AJ_AUDIT_BATCH_A_PRIME.json` |
+| T2 | 3,208 / 64,16% | `AJ_AUDIT_BATCH_A_PRIME.json` |
+| T4 | 2,943 / 58,86% | `AJ_AUDIT_BATCH_B_PRIME.json` |
+| T5 | 2,471 / 49,42% | `AJ_AUDIT_BATCH_B_PRIME.json` |
+| T6 | 3,395 / 67,90% | `AJ_AUDIT_BATCH_B_PRIME.json` |
+
+### GAP-P2-032 en de J-impact in Batch B′
+
+De canonieke registratie van **GAP-P2-032** (EvidenceCore zonder productieconsument,
+`blocker: REVIEW_REQUIRED`, dus nonblocking) verlaagt J van 4 naar 3 voor
+`CALC-EVIDENCE-SPEC-001` (primary), `EVIDENCE-CLAIM-AUDIT-001` en
+`WEATHER-CONTEXT-001` (affected). De overige tien B′-capabilities zijn niet geraakt;
+dat is geverifieerd door J voor alle dertien opnieuw over het volledige register te
+berekenen, niet alleen voor de drie genoemde.
 
 ### Evidence-methodiek voor criterium F
 

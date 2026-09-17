@@ -1,0 +1,2005 @@
+{
+ "_schema": "trainingskompas-aj-audit-batch/1.2",
+ "batch": "B_PRIME",
+ "tracks": [
+  "T4",
+  "T5",
+  "T6"
+ ],
+ "audit_model_id": "trainingskompas-aj/v1.2",
+ "audit_model_version": "1.2",
+ "audit_model_fingerprint": "sha256:82891683aad13cccf779a13783d90bb77279cbab5dfd035989607226fa0a9264",
+ "canonicalization_baseline_sha": "c4a1f5522a37f4e6afbc15bf30eb2c6fa78f203e",
+ "complete": true,
+ "record_count": 130,
+ "capability_count": 13,
+ "na_record_count": 22,
+ "scored_record_count": 108,
+ "weights": {
+  "A": 5,
+  "B": 15,
+  "C": 15,
+  "D": 10,
+  "E": 10,
+  "F": 15,
+  "G": 5,
+  "H": 10,
+  "I": 5,
+  "J": 10
+ },
+ "anchors_frozen": true,
+ "supersedes_historical": false,
+ "historical_artifact_note": "Het historische docs/audit/AJ_AUDIT_BATCH_B.json is NIET overschreven en behoudt zijn status HISTORICAL_PRE_V1_MODEL met audit_model_version pre-1.0. Dit B-prime-artefact is een zelfstandige her-audit onder Model v1.2 en vervangt het historische artefact niet.",
+ "evidence_methodology": "Iedere criterium-score rust op criterium-specifieke evidence die reproduceerbaar is op de canonicalisatie-baseline. Voor criterium F is de evidence-class bepaald uit de uitvoeringsvorm van de test: vm.runInContext geldt als INTEGRATION_RUNTIME, new Function of require van een core-module als BEHAVIORAL_UNIT, en regex- of stringinspectie van bronbestanden als DOCUMENTATION_ONLY; een expliciete sabotage- of fail-closed-test op deze capability geldt als ADVERSARIAL_FAILURE. De F-ladder is cumulatief: de canonieke modeltekst noemt de reeks oplopend en formuleert anker 4 en 5 elk als \"plus\" op het voorafgaande anker, zodat adversarial bewijs zonder bewezen integratie- of runtimetest niet verder reikt dan 3. Bestandsnamen, grep-tellingen, assertion-aantallen en het aantal testbestanden zijn uitsluitend als zoekroute gebruikt en gelden nergens als zelfstandig bewijs.",
+ "progression_chain_proof": "De keten sessiedata naar CalculationCore naar DecisionCore.computeProgression naar progressionDecision naar athlete is op deze baseline volledig bewezen, inclusief de productie-wrapper op index.html:22006 die naar core/decision.js:31 delegeert. CalcCore neemt deel via getEffectiveKg dat CalcCore.applyPercentage aanroept op index.html:20977, 20981 en 20986; dat geldt voor de afgeleide modi 1rm, backoff, pct en plus, niet voor de modi vast en topset waar het kg-veld zelf de waarde is. Afwezigheid van bypass is afgedwongen door drie guards: core/fLiveCoach.test.js:176, core/fRC0.test.js:140 en core/fEvidence.test.js:94.",
+ "evidencecore_dormancy_note": "EvidenceCore in core/scientificEvidence.js heeft nul productie-callers: 0 treffers in index.html, 0 in andere core-productiecode buiten de eigen definitie, een byte-identieke build mirror in www/ en als enige executable consumer core/fWeatherEvidence.test.js. Dit is canoniek geregistreerd als GAP-P2-032 met blocker REVIEW_REQUIRED, en verlaagt J van 4 naar 3 voor CALC-EVIDENCE-SPEC-001 (primary), EVIDENCE-CLAIM-AUDIT-001 en WEATHER-CONTEXT-001 (affected).",
+ "cross_capability_evidence_rejections": [
+  {
+   "evidence": "core/fProvenanceClosure.test.js",
+   "primary_capability": "PROVENANCE-EXPLAINABILITY-001",
+   "rejected_for": "EVIDENCE-CLAIM-AUDIT-001",
+   "reason": "test per-veld provenance van tkMergeHealthRow en _wearableSyncLib.js plus immutability van het decision-evidence-snapshot, niet de claim-audit"
+  },
+  {
+   "evidence": "core/fDailyActivityContextIntegration.test.js",
+   "primary_capability": "CALC-ENE-REGISTRY-001",
+   "rejected_for": "CTX-CONTRACT-001",
+   "reason": "voert dailyActivityCalculation.js uit, niet het contextcontract"
+  },
+  {
+   "evidence": "core/fDataQuality.test.js",
+   "primary_capability": "CALC-REC-REGISTRY-001",
+   "rejected_for": "DQ-CONFIDENCE-CONTRACT-001",
+   "reason": "executeert calculation.js en decision.js en bewijst geen zelfstandig confidence-contract; telt daar niet als B- of C-bewijs"
+  },
+  {
+   "evidence": "core/fWeatherEvidence.test.js",
+   "primary_capability": "WEATHER-CONTEXT-001",
+   "rejected_for": "CALC-EVIDENCE-SPEC-001",
+   "reason": "EvidenceCore wordt hier uitsluitend als weer-hulpstuk aangeroepen en bewijst de evidence-specificatie niet"
+  }
+ ],
+ "gap_traceability_note": "J is bepaald met de canonieke v1.2 gap-traceability over alle 60 gaps in het register. GAP-P2-010 is INCOMPLETE met traceability_scope UNSCOPED en blokkeert exact 0 van de 13 capability-J-scores; de register-level debt blijft zichtbaar via traceability_complete false in het gap-register. GAP-P2-014 heeft blocker true en zet CTX-CONTRACT-001 op J=2; alle overige relevante gaps hebben blocker REVIEW_REQUIRED en tellen onder Model v1.2 als nonblocking.",
+ "track_results": {
+  "T4": {
+   "score": "2.943",
+   "percentage": "58.86",
+   "capability_count": 8,
+   "historical_pre_v1_score": "3.564",
+   "historical_note": "de historische pre-v1 trackwaarde blijft geldig voor het historische Batch B-artefact en wordt hier niet overschreven"
+  },
+  "T5": {
+   "score": "2.471",
+   "percentage": "49.42",
+   "capability_count": 2,
+   "historical_pre_v1_score": "3.225",
+   "historical_note": "de historische pre-v1 trackwaarde blijft geldig voor het historische Batch B-artefact en wordt hier niet overschreven"
+  },
+  "T6": {
+   "score": "3.395",
+   "percentage": "67.90",
+   "capability_count": 3,
+   "historical_pre_v1_score": "3.623",
+   "historical_note": "de historische pre-v1 trackwaarde blijft geldig voor het historische Batch B-artefact en wordt hier niet overschreven"
+  }
+ },
+ "capabilities": [
+  {
+   "stable_id": "CALC-STR-REGISTRY-001",
+   "primary_track": "T4",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_score": "3.588",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 4.118,
+   "delta_vs_historical": "-0.530",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "v1_scope met PO-besluit 16-09-2026 in de canonieke index, plus afbakening tegen de load- en recovery-registries; capability-specifieke acceptance expectations zijn niet apart vastgelegd, wat anker 4 wel eist.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#CALC-STR-REGISTRY-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.706",
+     "rationale": "CalcCore in core/calculation.js (592 regels) is de enige eigenaar van de krachtregels: roundKg, oneRMRaw, selectStrengthBasis, calculate1RM, calculateWorkingWeight, validateProposedWeight, applyPercentage, calculateWarmup, rpeMultiplier en weightedOneRM staan alle in deze ene module. Parallelle paden geinventariseerd, geen onbeheerst shadow-pad. Geen guard tegen een tweede pad, dus geen 5.",
+     "evidence_refs": [
+      "core/calculation.js#calculate1RM",
+      "core/calculation.js#calculateWorkingWeight",
+      "core/calculation.js#selectStrengthBasis"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.706",
+     "rationale": "volledige call-chain inclusief payload bewezen: CalcCore heeft 72 referenties in index.html en 6 core-productiebestanden; getEffectiveKg roept CalcCore.applyPercentage aan op index.html:20977, 20981 en 20986 en levert effKg door aan de progressie-keten. Convergentie van alle relevante entrypoints niet aangetoond, dus geen 5.",
+     "evidence_refs": [
+      "index.html#getEffectiveKg",
+      "index.html:20977#CalcCore.applyPercentage",
+      "core/calculation.js#applyPercentage"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "de krachtregistry is bewijsbaar stateless: core/calculation.js bevat 1 persistentie-marker en er bestaat geen enkele migratietabel voor berekende krachtuitkomsten. Persistentie van sets en sessies behoort aantoonbaar tot TRAIN-EXECUTION-001, niet tot deze rekenlaag.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.471",
+     "rationale": "de volledige relevante keten is bewezen en er is geen bypass: sessiedata gaat via getEffectiveKg naar CalcCore.applyPercentage, dan via de productie-wrapper computeProgression (index.html:22006) naar DecisionCore.computeProgression (core/decision.js:31) en progressionDecision (core/decision.js:96), met athlete-facing consument op index.html:22927. Bypass is door guards uitgesloten: core/fLiveCoach.test.js:176, core/fRC0.test.js:140 en core/fEvidence.test.js:94 asserteren alle drie dat presentatielagen CalcCore en de progressiefuncties niet zelf aanroepen. Anker 5 vereist afdwinging van de volledige keten, niet alleen van de bypass, en dat ontbreekt.",
+     "evidence_refs": [
+      "index.html:22006#computeProgression",
+      "core/decision.js:96#progressionDecision",
+      "index.html:22927#DecisionCore.progressionDecision",
+      "core/fLiveCoach.test.js:176#bypass-guard"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "BEHAVIORAL_UNIT: core/calculation.test.js voert CalcCore uit via require en new Function en test het gedrag van de krachtfuncties direct (roundKg 12 aanroepen, calculateWorkingWeight 12, calculate1RM 10, plus oneRMRaw, weightedOneRM, validateProposedWeight, calculateWarmup en applyPercentage). Geen vm-runtime over de echte call-chain voor deze registry, dus geen 4; het aantal aanroepen verhoogt de score niet.",
+     "evidence_refs": [
+      "core/calculation.test.js#require(./calculation.js)",
+      "core/fExerciseProgressionCoach.test.js#require(./calculation.js)"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "BEHAVIORAL_UNIT"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "de krachtregistry rekent uitsluitend op door de sporter zelf ingevoerde gewichten en herhalingen binnen diens eigen sessie; er is geen trust boundary, geen tweede partij, geen autorisatiebeslissing en geen misbruikroute binnen deze rekenlaag. Enforcement op de onderliggende sessiedata behoort tot TRAIN-EXECUTION-001.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "de keten ontdekken naar gebruiken is bruikbaar bewezen: berekende werkgewichten verschijnen in het kg-veld via recomputeEffectiveKg en zijn zichtbaar tijdens de uitvoering. Volledigheid van feedback en vervolgactie is niet apart aangetoond.",
+     "evidence_refs": [
+      "index.html#recomputeEffectiveKg"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "relevante failure modes zijn benoemd en afgevangen: getEffectiveKg geeft deterministisch null terug bij ontbrekende of niet-numerieke invoer en validateProposedWeight begrenst voorgestelde gewichten. Deterministisch bewijs dat unknown unknown blijft over de hele registry ontbreekt.",
+     "evidence_refs": [
+      "index.html#getEffectiveKg",
+      "core/calculation.js#validateProposedWeight"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.471",
+     "rationale": "geen enkele gap noemt deze capability in primary_capability_id of affected_capability_ids met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over alle 60 canonieke gaps. Anker J=4; 5 vereist closure-evidence van een gesloten gap, die hier niet bestaat.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "CALC-LOAD-REGISTRY-001",
+   "primary_track": "T4",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_score": "2.941",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 3.588,
+   "delta_vs_historical": "-0.647",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "verantwoordelijkheid en afbakening tegen de krachtregistry beschreven met PO-besluit in de index; geen capability-specifieke acceptance expectations.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#CALC-LOAD-REGISTRY-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "core/trainingLoad.js (153 regels) is de aanwijsbare hoofdimplementatie en exporteert via een factory; parallelle paden zijn geinventariseerd maar beheersing is niet aangetoond tot het niveau van anker 4.",
+     "evidence_refs": [
+      "core/trainingLoad.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "productie-callers bewezen met bestandsverwijzing: TrainingLoadCore heeft 25 referenties in index.html en 1 core-productiebestand. Geen volledige payload-chain van entrypoint tot consumer aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#TrainingLoadCore",
+      "core/trainingLoad.js"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "de belastingregistry is bewijsbaar stateless: core/trainingLoad.js bevat 0 persistentie-aanroepen en er bestaat geen migratietabel training_load. Belasting wordt per sessie afgeleid uit reeds gepersisteerde sets.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "deel van de keten is aangetoond: trainingLoad wordt door de endurance- en progressielagen geconsumeerd, maar de volledige keten van entrypoint tot beslissing zonder bypass is voor deze registry niet bewezen.",
+     "evidence_refs": [
+      "core/trainingLoad.js",
+      "index.html#TrainingLoadCore"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "BEHAVIORAL_UNIT: core/fTrainingLoad.test.js en core/fLoadProgressionRegistry.test.js requiren beide core/trainingLoad.js en voeren de belastingberekening uit. Geen vm-runtime over de echte call-chain, dus geen 4; geen adversarial of device-bewijs voor deze registry, dus geen 5.",
+     "evidence_refs": [
+      "core/fTrainingLoad.test.js#require(trainingLoad.js)",
+      "core/fLoadProgressionRegistry.test.js#require(trainingLoad.js)"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "BEHAVIORAL_UNIT"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "de belastingregistry leidt af uit de eigen sessiedata van de sporter zonder trust boundary, tweede partij, autorisatiebeslissing of misbruikroute; enforcement zit op de onderliggende sessietabellen, niet in deze rekenlaag.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "de keten ontdekken naar gebruiken is bruikbaar: belasting is zichtbaar in de voortgangs- en trainingsweergaven. Feedback en vervolgactie niet volledig aangetoond.",
+     "evidence_refs": [
+      "index.html#TrainingLoadCore"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.118",
+     "rationale": "generieke foutafhandeling aanwezig, maar core/trainingLoad.js draagt slechts 9 unknown- of fallback-markers en er is geen capability-specifiek bewijs dat ontbrekende belastingdata deterministisch tot een expliciete onbekend-status leidt. Happy-path-only evidence, dus maximaal 2.",
+     "evidence_refs": [
+      "core/trainingLoad.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "GAP-P2-009 en GAP-P3-031 noemen deze capability als primary, beide v1_scope true, status OPEN en blocker REVIEW_REQUIRED, wat onder Model v1.2 als nonblocking telt zolang de blocker niet bewezen is. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-009",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-031"
+     ],
+     "gap_refs": [
+      "GAP-P2-009",
+      "GAP-P3-031"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "CALC-REC-REGISTRY-001",
+   "primary_track": "T4",
+   "v1_scope": true,
+   "applicable_weight": 90,
+   "weighted_score": "3.000",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 3.211,
+   "delta_vs_historical": "-0.211",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "verantwoordelijkheid en afbakening beschreven met PO-besluit in de index; acceptance expectations niet capability-specifiek vastgelegd.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#CALC-REC-REGISTRY-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "de herstelregels wonen in CalcCore: calculateMuscleRecoveryPct, normalizeSleepHours, sleepToHours, slaapDagFactor, cyclusDagFactor, lnRmssd, hrvBaseline, hrvRollingRecent, hrvStPersonal, hrvDagFactorPersonal, calculateDayFactor, readinessPercent, recoveryScore en recoveryBand. Aanwijsbare hoofdimplementatie, maar geen bewezen beheersing van parallelle paden voor anker 4.",
+     "evidence_refs": [
+      "core/calculation.js#recoveryScore",
+      "core/calculation.js#hrvDagFactorPersonal",
+      "core/calculation.js#calculateDayFactor"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "productie-callers bewezen: de herstelfuncties worden vanuit index.html aangeroepen binnen de CalcCore-referenties (72 in totaal) en gaan door naar DecisionCore.trainReadiness (3 referenties). Geen volledige payload-chain per herstelfunctie aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#CalcCore",
+      "index.html#DecisionCore.trainReadiness"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "de herstelregistry is bewijsbaar stateless: er bestaat geen migratietabel readiness_days en core/calculation.js schrijft niet naar persistentie. HRV- en RHR-metingen worden gepersisteerd door de gezondheidsdata-capability, niet door deze rekenlaag.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "deel van de keten is aangetoond: HRV en RHR gaan via CalcCore naar DecisionCore.trainReadiness en readinessDay (elk 3 referenties in index.html). De volledige keten zonder bypass is voor deze registry niet bewezen.",
+     "evidence_refs": [
+      "index.html#DecisionCore.trainReadiness",
+      "index.html#DecisionCore.readinessDay"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "BEHAVIORAL_UNIT: core/calculation.test.js voert calculateMuscleRecoveryPct, slaapDagFactor, cyclusDagFactor en calculateDayFactor uit via require en new Function; core/fDataQuality.test.js requiret calculation.js en decision.js samen. Geen vm-runtime over de echte call-chain, dus geen 4.",
+     "evidence_refs": [
+      "core/calculation.test.js#require(./calculation.js)",
+      "core/fDataQuality.test.js#require(calculation.js,decision.js)"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "BEHAVIORAL_UNIT"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "deze registry verwerkt HRV, RHR en slaap: persoonlijke gezondheidsdata met een echte trust boundary. Enforcement is aangetoond op de datalaag via auth.uid()-policies in 59 migratiebestanden; capability-specifiek dekkend auditbewijs ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "de keten ontdekken naar gebruiken is bruikbaar bewezen: herstelscore en -band zijn zichtbaar in de dagelijkse readiness-weergave. Feedback en vervolgactie niet volledig aangetoond.",
+     "evidence_refs": [
+      "index.html#DecisionCore.readinessDay"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "relevante failure modes zijn benoemd en afgevangen: core/calculation.js draagt 52 unknown- en fallback-markers en de herstelfuncties geven bij ontbrekende HRV of slaap geen gefabriceerde waarde terug. Deterministisch bewijs over de hele registry ontbreekt.",
+     "evidence_refs": [
+      "core/calculation.js#hrvBaseline",
+      "core/calculation.js#normalizeSleepHours"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "GAP-P2-011, GAP-P2-012 en GAP-P2-015 noemen deze capability als primary en GAP-P3-024 als affected; alle v1_scope true, status OPEN of REVIEW_REQUIRED en blocker REVIEW_REQUIRED, dus nonblocking. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-011",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-012",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-015",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-024"
+     ],
+     "gap_refs": [
+      "GAP-P2-011",
+      "GAP-P2-012",
+      "GAP-P2-015",
+      "GAP-P3-024"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "CALC-END-REGISTRY-001",
+   "primary_track": "T4",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_score": "3.118",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 2.947,
+   "delta_vs_historical": "0.171",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "de canonieke index draagt evidence_status PARTIAL voor deze capability met PO-besluit; verantwoordelijkheid is beschreven maar acceptance expectations zijn niet capability-specifiek vastgelegd.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#CALC-END-REGISTRY-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "core/cardio.js (392 regels) en core/enduranceExecution.js (210 regels) vormen samen de aanwijsbare hoofdimplementatie; parallelle paden per sport zijn geinventariseerd maar niet beheerst tot anker 4.",
+     "evidence_refs": [
+      "core/cardio.js",
+      "core/enduranceExecution.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "productie-callers bewezen met bestandsverwijzing vanuit de cardio- en duurtrainingsschermen. Geen volledige payload-chain van entrypoint tot consumer aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#cardio",
+      "core/cardio.js"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "de duurregistry is bewijsbaar stateless: core/cardio.js kent geen eigen persistentietabel en er bestaat geen migratietabel voor berekende duuruitkomsten; cardio-sessies worden gepersisteerd door de uitvoeringscapability.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "deel van de keten is aangetoond via de duurprescriptie naar de coach-context; de volledige keten zonder bypass is niet bewezen.",
+     "evidence_refs": [
+      "core/cardio.js",
+      "core/enduranceExecution.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.706",
+     "rationale": "INTEGRATION_RUNTIME: core/fEnduranceCoachContext.test.js voert productcode uit met vm.runInContext over de echte duurketen en laadt daarbij cardio.js, runningIntelligence.js, cyclingIntelligence.js, swimmingIntelligence.js, trainingLoad.js en progression.js. Daarnaast BEHAVIORAL_UNIT via core/cardio.test.js (new Function, require cardio.js). Geen adversarial suite en geen device-bewijs voor exact deze flow, dus geen 5.",
+     "evidence_refs": [
+      "core/fEnduranceCoachContext.test.js#vm.runInContext",
+      "core/cardio.test.js#require(cardio.js)"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "INTEGRATION_RUNTIME"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "de duurregistry rekent op de eigen trainingsdata van de sporter zonder trust boundary, tweede partij of autorisatiebeslissing; enforcement zit op de onderliggende cardio-sessietabellen.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "de keten ontdekken naar gebruiken is bruikbaar bewezen in de cardioschermen; feedback en vervolgactie niet volledig aangetoond.",
+     "evidence_refs": [
+      "index.html#cardio"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.118",
+     "rationale": "generieke foutafhandeling aanwezig, maar er is geen capability-specifiek bewijs dat ontbrekende duurdata deterministisch tot een expliciete onbekend-status leidt in plaats van een stille nul. Happy-path-only evidence, dus maximaal 2.",
+     "evidence_refs": [
+      "core/cardio.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "GAP-P2-013 en GAP-P2-025 noemen deze capability als primary, beide v1_scope true, status OPEN en blocker REVIEW_REQUIRED, dus nonblocking. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-013",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-025"
+     ],
+     "gap_refs": [
+      "GAP-P2-013",
+      "GAP-P2-025"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "CALC-ENE-REGISTRY-001",
+   "primary_track": "T4",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_score": "3.059",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 3.706,
+   "delta_vs_historical": "-0.647",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "verantwoordelijkheid en afbakening beschreven met PO-besluit in de index; acceptance expectations niet capability-specifiek.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#CALC-ENE-REGISTRY-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "core/dailyActivityCalculation.js (178 regels) en core/hydrationCalculation.js (196 regels) zijn de aanwijsbare hoofdimplementaties, met DailyActivityCalculationCore en HydrationCalculation als globale exports; parallelle paden geinventariseerd, niet beheerst tot anker 4.",
+     "evidence_refs": [
+      "core/dailyActivityCalculation.js",
+      "core/hydrationCalculation.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "productie-callers bewezen: DailyActivityCalculation heeft 9 referenties in index.html en 1 core-productiebestand, HydrationCalculation 4 referenties en 1 core-bestand. Geen volledige payload-chain aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#DailyActivityCalculation",
+      "index.html#HydrationCalculation"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "de energieregistry is bewijsbaar stateless: beide modules schrijven niet naar persistentie en er bestaat geen migratietabel voor berekende energie- of hydratatieuitkomsten; de onderliggende activiteits- en voedingsdata worden elders gepersisteerd.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "deel van de keten is aangetoond: dagactiviteit voedt de contextopbouw, maar de volledige keten zonder bypass is voor deze registry niet bewezen.",
+     "evidence_refs": [
+      "core/dailyActivityCalculation.js",
+      "index.html#DailyActivityCalculation"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "BEHAVIORAL_UNIT: core/fDailyActivityCalculation.test.js requiret dailyActivityCalculation.js en core/fHydrationIntelligence.test.js requiret hydrationCalculation.js; beide voeren de berekening uit. Geen vm-runtime over de echte call-chain, dus geen 4.",
+     "evidence_refs": [
+      "core/fDailyActivityCalculation.test.js#require(dailyActivityCalculation.js)",
+      "core/fHydrationIntelligence.test.js#require(hydrationCalculation.js)"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "BEHAVIORAL_UNIT"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "de energieregistry rekent op de eigen activiteits- en vochtdata van de sporter zonder trust boundary, tweede partij of autorisatiebeslissing; enforcement zit op de onderliggende tabellen.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "de keten ontdekken naar gebruiken is bruikbaar bewezen in de activiteits- en hydratatieweergaven; feedback en vervolgactie niet volledig aangetoond.",
+     "evidence_refs": [
+      "index.html#DailyActivityCalculation"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.118",
+     "rationale": "generieke foutafhandeling aanwezig, maar core/dailyActivityCalculation.js draagt slechts 9 unknown- of fallback-markers en er is geen capability-specifiek bewijs dat ontbrekende activiteitsdata deterministisch tot een expliciete onbekend-status leidt. Happy-path-only evidence, dus maximaal 2.",
+     "evidence_refs": [
+      "core/dailyActivityCalculation.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.471",
+     "rationale": "geen enkele gap noemt deze capability in primary_capability_id of affected_capability_ids met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over alle 60 canonieke gaps. Anker J=4.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "DQ-CONFIDENCE-CONTRACT-001",
+   "primary_track": "T4",
+   "v1_scope": true,
+   "applicable_weight": 100,
+   "weighted_score": "2.600",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 3.824,
+   "delta_vs_historical": "-1.224",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "verantwoordelijkheid beschreven met PO-besluit in de index; acceptance expectations niet capability-specifiek vastgelegd.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#DQ-CONFIDENCE-CONTRACT-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "LOW",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.300",
+     "rationale": "er bestaat geen aanwijsbare canonieke contractmodule: gericht gezocht op CONFIDENCE_CONTRACT, confidenceContract en dataQualityConfidence levert 0 treffers in productiecode. De confidence-semantiek zit verspreid in core/calculation.js en core/decision.js als veld op uitkomstobjecten. Fundament aanwezig, geen canonieke eigenaar, dus anker 2.",
+     "evidence_refs": [
+      "core/calculation.js#confidence",
+      "core/decision.js#confidence"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "LOW",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.300",
+     "rationale": "de confidence-velden worden gelezen door consumenten, maar zonder aanwijsbare contracteigenaar is er geen bewezen chain van entrypoint naar consumer; caller-aanwezigheid zonder bewezen keten is per Model v1.2 maximaal 2.",
+     "evidence_refs": [
+      "core/decision.js#confidence"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "anders dan de rekenregistries heeft dit contract wel persistentie: data_quality komt voor in 4 migratiebestanden met schema en owner-binding. Lifecycle- en versioneringshistorie is niet aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#data_quality"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "deel van de keten is aangetoond: confidence reist mee van CalcCore naar DecisionCore en wordt daar in de beslissing opgenomen. De volledige keten zonder bypass is niet bewezen.",
+     "evidence_refs": [
+      "core/calculation.js#confidence",
+      "core/decision.js#confidence"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "BEHAVIORAL_UNIT: core/fDataQualityConfidence.test.js requiret calculation.js en decision.js en voert het gedrag uit, onder meer dat DecisionCore.computeProgression(null, 100) exact null teruggeeft en dus geen advies fabriceert. Geen vm-runtime over de echte call-chain, dus geen 4.",
+     "evidence_refs": [
+      "core/fDataQualityConfidence.test.js#require(calculation.js,decision.js)",
+      "core/fDataQuality.test.js#require(calculation.js,decision.js)"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "BEHAVIORAL_UNIT"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "het contract draagt confidence over gezondheidsdata zoals HRV en RHR en raakt daarmee een echte trust boundary; enforcement is aangetoond op de datalaag via auth.uid()-policies in 59 migratiebestanden. Capability-specifiek dekkend auditbewijs ontbreekt.",
+     "evidence_refs": [
+      "migratie_v*.sql#auth.uid()",
+      "migratie_v*.sql#data_quality"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "LOW",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.200",
+     "rationale": "confidence is als veld aanwezig in de uitkomsten, maar er is geen bewezen user-facing contract dat de sporter de betrouwbaarheid toont met een vervolgactie; fundament aanwezig, geen bruikbare keten, dus anker 2.",
+     "evidence_refs": [
+      "core/decision.js#confidence"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "relevante failure modes zijn benoemd en afgevangen: bij ontbrekende invoer levert de beslislaag aantoonbaar null in plaats van een gefabriceerde waarde met valse confidence. Deterministisch bewijs over het hele contract ontbreekt.",
+     "evidence_refs": [
+      "core/fDataQualityConfidence.test.js#computeProgression(null)"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "GAP-P2-012 en GAP-P2-015 noemen deze capability in affected_capability_ids, beide v1_scope true, status OPEN of REVIEW_REQUIRED en blocker REVIEW_REQUIRED, dus nonblocking. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-012",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-015"
+     ],
+     "gap_refs": [
+      "GAP-P2-012",
+      "GAP-P2-015"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "EVIDENCE-CLAIM-AUDIT-001",
+   "primary_track": "T4",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_score": "2.176",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 3.471,
+   "delta_vs_historical": "-1.295",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "verantwoordelijkheid beschreven met PO-besluit in de index; acceptance expectations niet capability-specifiek vastgelegd.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#EVIDENCE-CLAIM-AUDIT-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "LOW",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.353",
+     "rationale": "gericht gezocht op claimAudit, CALC_EVIDENCE en evidenceSpec: 0 treffers in productiecode. De enige kandidaat-implementatielaag is EvidenceCore in core/scientificEvidence.js, en die heeft nul productie-callers (zie GAP-P2-032). Fundament aanwezig zonder canonieke bedrade eigenaar, dus anker 2.",
+     "evidence_refs": [
+      "core/scientificEvidence.js#EvidenceCore",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-032"
+     ],
+     "gap_refs": [
+      "GAP-P2-032"
+     ]
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "LOW",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.353",
+     "rationale": "geen bewezen productie-call-chain: EvidenceCore heeft 0 referenties in index.html en 0 in andere core-productiecode. Caller-aanwezigheid zonder bewezen chain is maximaal 2; alleen omdat de claim-auditverantwoordelijkheid deels in de decision-evidence van core/decision.js landt blijft het boven 1.",
+     "evidence_refs": [
+      "core/decision.js#buildDecisionEvidence"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "claim-audit is een afleidings- en verificatielaag over reeds gepersisteerde beslis-evidence; er bestaat geen migratietabel evidence_claims en de capability schrijft zelf niets weg.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "LOW",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.235",
+     "rationale": "de keten is niet aangetoond: zonder bedrade resolutielaag bestaat er geen bewezen verbinding tussen de rekenuitkomsten en een claim-audit. Fundament aanwezig, geen bewezen keten.",
+     "evidence_refs": [
+      "core/scientificEvidence.js#resolveRefs"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.353",
+     "rationale": "DOCUMENTATION_ONLY: core/fEvidenceClaimAudit.test.js requiret uitsluitend assert, fs en path en bevat nul uitvoeringsconstructies, dus het inspecteert bron en structuur zonder de capability uit te voeren. core/fProvenanceClosure.test.js voert wel code uit maar test per-veld provenance van tkMergeHealthRow en _wearableSyncLib.js plus de immutability van het decision-evidence-snapshot; dat is PROVENANCE-EXPLAINABILITY, niet deze capability, en is daarom afgewezen als cross-capability evidence. Geen behavioral unit test van deze capability, dus anker 2.",
+     "evidence_refs": [
+      "core/fEvidenceClaimAudit.test.js#geen-uitvoering"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "DOCUMENTATION_ONLY"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "claim-audit opereert op wetenschappelijke bronverwijzingen en reeds geautoriseerde beslis-evidence; er is geen eigen trust boundary, geen persoonsgegeven en geen autorisatiebeslissing binnen deze laag.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "LOW",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.235",
+     "rationale": "er is geen bewezen user-facing contract: de sporter krijgt nergens een claim-audit te zien. Fundament aanwezig in de evidence-weergave, geen bruikbare keten voor deze capability, dus anker 2.",
+     "evidence_refs": [
+      "index.html#openEvidence"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "LOW",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.118",
+     "rationale": "gericht gezocht: geen capability-specifiek bewijs dat een niet-resolveerbare claim deterministisch als onbekend wordt getoond in plaats van stil weggelaten. Happy-path-only evidence, dus maximaal 2.",
+     "evidence_refs": [
+      "core/scientificEvidence.js#validateEntry"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "GAP-P2-032 noemt deze capability in affected_capability_ids, v1_scope true, status OPEN en blocker REVIEW_REQUIRED, wat onder Model v1.2 nonblocking is zolang de blocker niet bewezen is. Anker J=3, verlaagd van 4 na canonieke registratie van GAP-P2-032.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-032"
+     ],
+     "gap_refs": [
+      "GAP-P2-032"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "CALC-EVIDENCE-SPEC-001",
+   "primary_track": "T4",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_score": "3.059",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 3.647,
+   "delta_vs_historical": "-0.588",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "verantwoordelijkheid en afbakening beschreven met PO-besluit in de index; acceptance expectations niet capability-specifiek vastgelegd.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#CALC-EVIDENCE-SPEC-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "buildDecisionEvidence in core/decision.js is de aanwijsbare hoofdimplementatie van de evidence-specificatie, met 3 referenties in index.html; de bedoelde registratie- en resolutielaag EvidenceCore is echter niet bedraad (GAP-P2-032). Aanwijsbaar fundament met werkende kern, geen bewezen beheersing van het geheel, dus anker 3.",
+     "evidence_refs": [
+      "core/decision.js#buildDecisionEvidence",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-032"
+     ],
+     "gap_refs": [
+      "GAP-P2-032"
+     ]
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "productie-callers bewezen met bestandsverwijzing: buildDecisionEvidence heeft 3 referenties in index.html en wordt gevoed met een echte progressionDecision-uitkomst. Geen volledige payload-chain over alle evidence-soorten, dus geen 4.",
+     "evidence_refs": [
+      "index.html#buildDecisionEvidence",
+      "core/decision.js#buildDecisionEvidence"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "de evidence-specificatie is een vormcontract over reeds gepersisteerde beslisdata; er bestaat geen eigen migratietabel en de capability schrijft zelf niets weg.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "deel van de keten is aangetoond: de beslisuitkomst van DecisionCore gaat aantoonbaar in buildDecisionEvidence en wordt daar als snapshot vastgelegd. De volledige keten inclusief wetenschappelijke onderbouwing is niet bewezen zolang EvidenceCore dormant is.",
+     "evidence_refs": [
+      "core/decision.js#buildDecisionEvidence",
+      "core/fEvidence.test.js#evidenceReproduceerbaar"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.706",
+     "rationale": "INTEGRATION_RUNTIME: core/fRC0.test.js voert met vier vm.runInContext-aanroepen de echte evidence-renderketen uit (tkEvidenceVanSessieAlle, tkEvidenceSetHtml, openEvidence uit index.html), gevoed met een door DecisionCore.progressionDecision gebouwde snapshot via buildDecisionEvidence. Daarnaast BEHAVIORAL_UNIT via core/fEvidence.test.js (new Function, require calculation.js/coaching.js/decision.js). Geen adversarial suite en geen device-bewijs voor exact deze flow, dus geen 5.",
+     "evidence_refs": [
+      "core/fRC0.test.js#vm.runInContext",
+      "core/fEvidence.test.js#new Function"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "INTEGRATION_RUNTIME"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "de evidence-specificatie bepaalt uitsluitend de vorm van het bewijsspoor van de eigen sessie van de sporter; er is geen eigen trust boundary, tweede partij of autorisatiebeslissing binnen deze laag.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.235",
+     "rationale": "het bewijsspoor is technisch aanwezig en render-baar via openEvidence, maar de keten ontdekken naar gebruiken is niet bruikbaar bewezen: de wetenschappelijke onderbouwing die EvidenceCore zou leveren bereikt de sporter niet. Fundament aanwezig, dus anker 2.",
+     "evidence_refs": [
+      "index.html#openEvidence",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-032"
+     ],
+     "gap_refs": [
+      "GAP-P2-032"
+     ]
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "relevante failure modes zijn benoemd en afgevangen: core/fEvidence.test.js bewijst dat een karig of tijdloos evidence-record deterministisch wordt afgehandeld en dat evidenceReproduceerbaar bij een andere uitkomst de reden andere_uitkomst geeft in plaats van stil te slagen.",
+     "evidence_refs": [
+      "core/fEvidence.test.js#evidenceReproduceerbaar"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "GAP-P2-032 noemt deze capability als primary_capability_id, v1_scope true, status OPEN en blocker REVIEW_REQUIRED, wat onder Model v1.2 nonblocking is zolang de blocker niet bewezen is. Anker J=3, verlaagd van 4 na canonieke registratie van GAP-P2-032.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-032"
+     ],
+     "gap_refs": [
+      "GAP-P2-032"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "CTX-CONTRACT-001",
+   "primary_track": "T5",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_score": "1.941",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 2.95,
+   "delta_vs_historical": "-1.009",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "verantwoordelijkheid en afbakening beschreven met PO-besluit in de index; acceptance expectations niet capability-specifiek vastgelegd.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#CTX-CONTRACT-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.353",
+     "rationale": "core/contextEngine.js (101 regels) bestaat en exporteert ContextEngineCore, maar is niet bedraad: nul productie-callers. Een implementatie die door geen enkele consument wordt aangeroepen kan geen canonieke bron zijn. Fundament aanwezig, dus anker 2.",
+     "evidence_refs": [
+      "core/contextEngine.js#ContextEngineCore",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-014"
+     ],
+     "gap_refs": [
+      "GAP-P2-014"
+     ]
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 1,
+     "weighted_contribution": "0.176",
+     "rationale": "ContextEngineCore komt buiten het eigen bestand, de www-buildkopie en vier tests nergens voor: 0 treffers in index.html en 0 in andere core-productiecode. Model v1.2 begrenst een capability met tests maar nul production callers expliciet op anker 1.",
+     "evidence_refs": [
+      "core/contextEngine.js:91#ContextEngineCore",
+      "index.html#0-treffers"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "het contextcontract is bewijsbaar stateless: core/contextEngine.js bevat 0 persistentie-aanroepen en er bestaat geen migratietabel context_snapshots; context wordt per aanroep afgeleid.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.235",
+     "rationale": "de keten is niet aangetoond: omdat ContextEngineCore nul productie-callers heeft, zit het per definitie in geen enkele Calculation naar Context naar Decision-keten. De contextopbouw die wel draait loopt via buildCtx in index.html, niet via deze module. Fundament aanwezig, geen bewezen keten.",
+     "evidence_refs": [
+      "core/contextEngine.js",
+      "index.html#buildCtx"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "BEHAVIORAL_UNIT: core/contextEngine.test.js en core/fContextContract.test.js requiren beide core/contextEngine.js en voeren het contractgedrag uit. Dat de module niet bedraad is verlaagt B, C en E maar niet F: de tests voeren de capability wel degelijk uit. Geen vm-runtime over een echte call-chain, die immers niet bestaat, dus geen 4.",
+     "evidence_refs": [
+      "core/contextEngine.test.js#require(contextEngine.js)",
+      "core/fContextContract.test.js#require(contextEngine.js)"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "BEHAVIORAL_UNIT"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "het contextcontract voegt afgeleide velden samen zonder eigen trust boundary, tweede partij of autorisatiebeslissing; enforcement zit op de bronnen waaruit context wordt afgeleid.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 1,
+     "weighted_contribution": "0.118",
+     "rationale": "er is geen user-facing keten: omdat de module nul productie-callers heeft, bereikt geen enkel veld uit dit contract de sporter. Niet bruikbaar, dus anker 1. N/A is hier niet toegestaan, want een contextcontract is functioneel wel degelijk bedoeld voor gebruikersgerichte weergave.",
+     "evidence_refs": [
+      "core/contextEngine.js#0-callers"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.118",
+     "rationale": "core/contextEngine.js draagt 17 unknown- of fallback-markers, maar zonder productieketen is er geen capability-specifiek bewijs dat unknown in de praktijk unknown blijft. Happy-path-only evidence, dus maximaal 2.",
+     "evidence_refs": [
+      "core/contextEngine.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.235",
+     "rationale": "GAP-P2-014 noemt deze capability als primary_capability_id met v1_scope true, status OPEN en blocker exact true; GAP-P2-026 noemt haar als affected. Model v1.2 anker J=2 bij een open V1-gap met bewezen blocker.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-014",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-026"
+     ],
+     "gap_refs": [
+      "GAP-P2-014",
+      "GAP-P2-026"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "WEATHER-CONTEXT-001",
+   "primary_track": "T5",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_score": "3.000",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 3.5,
+   "delta_vs_historical": "-0.500",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "verantwoordelijkheid en afbakening beschreven met PO-besluit in de index; acceptance expectations niet capability-specifiek vastgelegd.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#WEATHER-CONTEXT-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "core/weather.js is de aanwijsbare hoofdimplementatie met WeatherCore als globale export en normalizeWeather als kern; parallelle paden geinventariseerd, niet beheerst tot anker 4.",
+     "evidence_refs": [
+      "core/weather.js#WeatherCore",
+      "core/weather.js#normalizeWeather"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "productie-callers bewezen met bestandsverwijzing: WeatherCore heeft 7 referenties in index.html en normalizeWeather 2. Geen volledige payload-chain van entrypoint tot consumer aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#WeatherCore",
+      "index.html#WeatherCore.normalizeWeather"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "de weercontext is bewijsbaar stateless: core/weather.js bevat 0 persistentie-aanroepen en er bestaat geen migratietabel weather_observations; weerdata wordt per aanroep opgehaald en genormaliseerd.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "deel van de keten is aangetoond: WeatherCore.normalizeWeather levert genormaliseerde weercontext aan de contextopbouw. De volledige keten zonder bypass is niet bewezen.",
+     "evidence_refs": [
+      "index.html#WeatherCore.normalizeWeather",
+      "index.html#buildCtx"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "BEHAVIORAL_UNIT: core/fWeatherEvidence.test.js requiret weather.js en scientificEvidence.js en voert de normalisatie uit. core/fWeatherSessionAttachment.test.js bevat nul uitvoeringsconstructies en is DOCUMENTATION_ONLY, dus telt niet mee voor anker 3. Geen vm-runtime over de echte call-chain, dus geen 4.",
+     "evidence_refs": [
+      "core/fWeatherEvidence.test.js#require(weather.js)",
+      "core/fWeatherSessionAttachment.test.js#geen-uitvoering"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "BEHAVIORAL_UNIT"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "weerdata is publieke omgevingsdata zonder persoonsgegeven, trust boundary of autorisatiebeslissing binnen deze capability; de koppeling aan een sessie valt onder de sessiecapability.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "de keten ontdekken naar gebruiken is bruikbaar bewezen: genormaliseerde weercontext is zichtbaar bij buitentrainingen. Feedback en vervolgactie niet volledig aangetoond.",
+     "evidence_refs": [
+      "index.html#WeatherCore"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "relevante failure modes zijn benoemd en afgevangen: core/weather.js draagt 26 unknown- en fallback-markers en normalizeWeather levert bij ontbrekende meting geen gefabriceerde waarde. Deterministisch bewijs over de hele capability ontbreekt.",
+     "evidence_refs": [
+      "core/weather.js#normalizeWeather"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "GAP-P2-032 noemt deze capability in affected_capability_ids, v1_scope true, status OPEN en blocker REVIEW_REQUIRED, wat onder Model v1.2 nonblocking is zolang de blocker niet bewezen is. Anker J=3, verlaagd van 4 na canonieke registratie van GAP-P2-032.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-032"
+     ],
+     "gap_refs": [
+      "GAP-P2-032"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "DEC-CORE-001",
+   "primary_track": "T6",
+   "v1_scope": true,
+   "applicable_weight": 90,
+   "weighted_score": "3.833",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 3.75,
+   "delta_vs_historical": "0.083",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "verantwoordelijkheid en afbakening beschreven met PO-besluit in de index; acceptance expectations niet capability-specifiek vastgelegd.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#DEC-CORE-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.667",
+     "rationale": "DecisionCore in core/decision.js is de enige eigenaar van de beslisregels, met 62 referenties in index.html en 6 core-productiebestanden; alternatieven zijn geinventariseerd en geclassificeerd en er is geen onbeheerst shadow-pad. Geen guard die een tweede beslispad structureel onmogelijk maakt, dus geen 5.",
+     "evidence_refs": [
+      "core/decision.js#DecisionCore",
+      "index.html#DecisionCore"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.667",
+     "rationale": "volledige call-chain inclusief payload bewezen: de productie-wrapper computeProgression op index.html:22006 delegeert naar DecisionCore.computeProgression in core/decision.js:31, progressionDecision op core/decision.js:96 bouwt daarop voort, en de uitkomst landt bij consumenten op index.html:22103, 22829 en 22927. Convergentie van alle relevante entrypoints niet aangetoond, dus geen 5.",
+     "evidence_refs": [
+      "index.html:22006#computeProgression",
+      "core/decision.js:31#computeProgression",
+      "index.html:22927#progressionDecision"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "de beslislaag is bewijsbaar stateless: core/decision.js bevat 1 persistentie-marker en er bestaat geen migratietabel progression_decisions of readiness_days; beslissingen worden per aanroep afgeleid en als evidence-snapshot door de uitvoeringscapability weggeschreven.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "de volledige relevante keten is bewezen en er is geen bypass: sessiedata gaat via getEffectiveKg en CalcCore.applyPercentage naar DecisionCore.computeProgression en progressionDecision, met athlete-facing consument. Bypass is door drie guards uitgesloten: core/fLiveCoach.test.js:176, core/fRC0.test.js:140 en core/fEvidence.test.js:94 asserteren dat presentatielagen de beslisfuncties en CalcCore niet zelf aanroepen. Anker 5 vereist afdwinging van de volledige keten zelf, niet alleen van de bypass.",
+     "evidence_refs": [
+      "index.html#getEffectiveKg",
+      "core/decision.js:96#progressionDecision",
+      "core/fRC0.test.js:140#bypass-guard",
+      "core/fEvidence.test.js:94#bypass-guard"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 5,
+     "weighted_contribution": "0.833",
+     "rationale": "cumulatief voldaan. F3 BEHAVIORAL_UNIT: core/decision.test.js voert DecisionCore uit via new Function en require. F4 INTEGRATION_RUNTIME: core/fRC0.test.js draait vier vm.runInContext-aanroepen over de echte call-chain met een door DecisionCore.progressionDecision gebouwde snapshot, en core/fZichtbaarheid.test.js draait vm.runInContext over zeven core-modules waaronder decision.js. F5 ADVERSARIAL_FAILURE: core/fDecisionRuleRegistry.test.js roept DecisionCore.readinessDay aan met volledige input en bewijst dat er nooit een verzonnen zone buiten ready, caution en reduce uitkomt. Alle drie betreffen dezelfde capability en flow.",
+     "evidence_refs": [
+      "core/decision.test.js#new Function",
+      "core/fRC0.test.js#vm.runInContext",
+      "core/fZichtbaarheid.test.js#vm.runInContext",
+      "core/fDecisionRuleRegistry.test.js#sabotage-readinessDay"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "ADVERSARIAL_FAILURE"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "de beslislaag verwerkt HRV, RHR en slaap tot readiness-uitkomsten en raakt daarmee een echte trust boundary met persoonlijke gezondheidsdata; enforcement is aangetoond op de datalaag via auth.uid()-policies in 59 migratiebestanden. Capability-specifiek dekkend auditbewijs ontbreekt.",
+     "evidence_refs": [
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "de keten ontdekken naar gebruiken is bruikbaar bewezen: beslissingen verschijnen als coachreactie en next-action tijdens de training. Feedback en vervolgactie niet volledig aangetoond.",
+     "evidence_refs": [
+      "index.html:22103#progressionDecision"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "unknown blijft unknown, door test bewezen: DecisionCore.computeProgression(null, 100) levert exact null in plaats van een gefabriceerd advies, en de zone-sabotagetest bewijst dat readinessDay nooit een verzonnen uitkomst produceert. Anker 5 vereist fail-closed gedrag afgedwongen over de hele capability, niet alleen op deze twee paden.",
+     "evidence_refs": [
+      "core/fDataQualityConfidence.test.js#computeProgression(null)",
+      "core/fDecisionRuleRegistry.test.js#zone-sabotage"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "GAP-P2-015 noemt deze capability in affected_capability_ids, v1_scope true, status OPEN of REVIEW_REQUIRED en blocker REVIEW_REQUIRED, dus nonblocking. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-015"
+     ],
+     "gap_refs": [
+      "GAP-P2-015"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "DEC-RULE-REGISTRY-001",
+   "primary_track": "T6",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_score": "3.176",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 3.765,
+   "delta_vs_historical": "-0.589",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "verantwoordelijkheid en afbakening tegen DEC-CORE-001 beschreven met PO-besluit in de index; acceptance expectations niet capability-specifiek vastgelegd.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#DEC-RULE-REGISTRY-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "de regelidentiteiten zijn aanwijsbaar belegd in core/decision.js met progression.v1 als benoemde regelversie; parallelle paden geinventariseerd maar niet beheerst tot anker 4.",
+     "evidence_refs": [
+      "core/decision.js#progression.v1",
+      "core/decision.js#DETRAINING_RULES_V1"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "productie-callers bewezen met bestandsverwijzing via de DecisionCore-aanroepen in index.html. Geen volledige payload-chain per regelidentiteit aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#DecisionCore",
+      "core/decision.js#computeProgression"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "de regelregistry is bewijsbaar stateless: regelidentiteiten zijn code-constanten in core/decision.js zonder eigen migratietabel of persistentie-aanroep.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "deel van de keten is aangetoond: de regelidentiteit reist mee in de beslisuitkomst naar de evidence-laag. De volledige keten zonder bypass is voor de registry als geheel niet bewezen.",
+     "evidence_refs": [
+      "core/decision.js#computeProgression",
+      "core/decision.js#buildDecisionEvidence"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "BEHAVIORAL_UNIT plus adversarial, maar cumulatief begrensd op 3. core/fDecisionRuleRegistry.test.js requiret decision.js en voert DecisionCore.computeProgression en readinessDay uit, inclusief een guardrail-sabotagetest en een determinismecheck. Er is echter geen INTEGRATION_RUNTIME over de echte call-chain voor deze registry; omdat anker 5 volgens de canonieke modeltekst oplopend is en 4 vereist, blijft F op 3.",
+     "evidence_refs": [
+      "core/fDecisionRuleRegistry.test.js#require(decision.js)",
+      "core/fDecisionRuleRegistry.test.js#sabotage-readinessDay"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "ADVERSARIAL_FAILURE"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "de regelregistry bevat uitsluitend regelidentiteiten en versies; er is geen persoonsgegeven, trust boundary of autorisatiebeslissing binnen deze laag.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "de keten ontdekken naar gebruiken is bruikbaar bewezen: de toegepaste regel is voor de sporter herleidbaar via het bewijsspoor. Feedback en vervolgactie niet volledig aangetoond.",
+     "evidence_refs": [
+      "index.html#openEvidence"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.235",
+     "rationale": "unknown blijft unknown, door test bewezen: DecisionCore.computeProgression(null, 100) geeft exact null (DEC-PROG-001, geen fabricage) en de zone-sabotagetest bewijst dat readinessDay nooit buiten de drie gedefinieerde zones treedt. Anker 5 vereist fail-closed gedrag afgedwongen over de hele registry.",
+     "evidence_refs": [
+      "core/fDecisionRuleRegistry.test.js#DEC-PROG-001-null",
+      "core/fDecisionRuleRegistry.test.js#zone-sabotage"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.471",
+     "rationale": "geen enkele gap noemt deze capability in primary_capability_id of affected_capability_ids met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over alle 60 canonieke gaps. Anker J=4.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "SCHEDULE-ADHERENCE-001",
+   "primary_track": "T6",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_score": "3.176",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 3.353,
+   "delta_vs_historical": "-0.177",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "de canonieke index draagt evidence_status N/A met PO-besluit voor deze capability; verantwoordelijkheid is beschreven maar acceptance expectations zijn niet capability-specifiek vastgelegd.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#SCHEDULE-ADHERENCE-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "core/scheduleAdherence.js is de aanwijsbare hoofdimplementatie en exporteert via een factory; parallelle paden geinventariseerd maar niet beheerst tot anker 4.",
+     "evidence_refs": [
+      "core/scheduleAdherence.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "productie-callers bewezen met bestandsverwijzing: ScheduleAdherenceCore heeft 21 referenties in index.html en 2 core-productiebestanden, waaronder daysUntilEvent en weeksUntilEvent. Geen volledige payload-chain aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#ScheduleAdherenceCore",
+      "index.html#ScheduleAdherenceCore.daysUntilEvent"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "de adherence-laag is bewijsbaar stateless: core/scheduleAdherence.js bevat 0 persistentie-aanroepen en er bestaat geen migratietabel schedule_events; adherence wordt afgeleid uit reeds gepersisteerde planning.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "deel van de keten is aangetoond: agenda-afstand via daysUntilEvent en weeksUntilEvent voedt de beslislaag. De volledige keten zonder bypass is niet bewezen.",
+     "evidence_refs": [
+      "index.html#ScheduleAdherenceCore.daysUntilEvent",
+      "core/scheduleAdherence.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "BEHAVIORAL_UNIT plus adversarial, maar cumulatief begrensd op 3. core/fScheduleAdherence.test.js en core/fScheduleAdherenceAudit.test.js requiren beide scheduleAdherence.js en voeren het gedrag uit, met een sabotagetest die bewijst dat een conflict altijd wordt gedetecteerd en nooit stil wordt overschreven. Er is geen INTEGRATION_RUNTIME over de echte call-chain; omdat anker 5 oplopend is en 4 vereist, blijft F op 3.",
+     "evidence_refs": [
+      "core/fScheduleAdherence.test.js#require(scheduleAdherence.js)",
+      "core/fScheduleAdherenceAudit.test.js#sabotage-conflict"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "ADVERSARIAL_FAILURE"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "de adherence-laag rekent op de eigen planning van de sporter zonder trust boundary, tweede partij of autorisatiebeslissing; enforcement zit op de onderliggende planningstabellen.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "de keten ontdekken naar gebruiken is bruikbaar bewezen: afstand tot het doelevenement en conflictwaarschuwingen zijn zichtbaar in de planning. Feedback en vervolgactie niet volledig aangetoond.",
+     "evidence_refs": [
+      "index.html#ScheduleAdherenceCore"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.235",
+     "rationale": "unknown blijft unknown, door test bewezen: de sabotagetest in core/fScheduleAdherenceAudit.test.js toont dat een conflict altijd wordt gedetecteerd en nooit stil wordt overschreven. Anker 5 vereist fail-closed gedrag afgedwongen over de hele capability.",
+     "evidence_refs": [
+      "core/fScheduleAdherenceAudit.test.js#sabotage-conflict"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.471",
+     "rationale": "geen enkele gap noemt deze capability in primary_capability_id of affected_capability_ids met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over alle 60 canonieke gaps. Anker J=4.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  }
+ ]
+}

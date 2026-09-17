@@ -87,7 +87,7 @@
    "secondary_tracks": [
     "T7"
    ],
-   "track_evidence": "Capability-ID CAP-REGISTRY-SCREENS-001 -> T1 (sterker dan trefwoordclassificatie)",
+   "track_evidence": "Gap-track T1 volgt uit primary_capability_id TRAIN-EXECUTION-001 (T1). CAP-REGISTRY-SCREENS-001 staat in affected_capability_ids als cross-cutting auditdekking en draagt zelf track T17; de gap-track is dus niet gelijk aan de track van iedere affected capability.",
    "primary_capability_id": "TRAIN-EXECUTION-001",
    "affected_capability_ids": [
     "TRAIN-HOME-001",
@@ -636,7 +636,7 @@
    "secondary_tracks": [
     "T1"
    ],
-   "track_evidence": "Capability-ID DEC-DETRAIN-001 -> T6 (sterker dan trefwoordclassificatie)",
+   "track_evidence": "Gap-track T6 volgt uit primary_capability_id DEC-CORE-001 (T6), dat de detrainingsregel bezit. De eerdere verklaring verwees naar een capability-ID dat niet in de canonieke index bestaat en is daarom vervangen.",
    "status_history": [
     {
      "from": "OPEN",
@@ -706,7 +706,7 @@
    "secondary_tracks": [
     "T9"
    ],
-   "track_evidence": "Capability-ID DEC-RECADJ-001 -> T6 (sterker dan trefwoordclassificatie)",
+   "track_evidence": "Gap-track T6 volgt uit primary_capability_id DEC-CORE-001 (T6), dat de herstelaanpassingsregel bezit. De eerdere verklaring verwees naar een capability-ID dat niet in de canonieke index bestaat en is daarom vervangen.",
    "status_history": [
     {
      "from": "OPEN",
@@ -1070,7 +1070,7 @@
    "secondary_tracks": [
     "T7"
    ],
-   "track_evidence": "Capability-ID CAP-REGISTRY-SCREENS-001 -> T1 (sterker dan trefwoordclassificatie)",
+   "track_evidence": "Gap-track T1 volgt uit primary_capability_id TRAIN-SCHEDULE-001 (T1). EXERCISE-SUBSTITUTION-001 (T2) en CAP-REGISTRY-SCREENS-001 (T17) staan in affected_capability_ids; de gap-track is dus niet gelijk aan de track van iedere affected capability.",
    "primary_capability_id": "TRAIN-SCHEDULE-001",
    "affected_capability_ids": [
     "EXERCISE-SUBSTITUTION-001",

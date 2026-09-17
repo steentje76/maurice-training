@@ -3,8 +3,8 @@
  "baseline": "BASELINE-1.0",
  "generated_against_main": "3415744992008607181e7a078483de372d989efd",
  "counts": {
-  "entries": 59,
-  "open": 41,
+  "entries": 60,
+  "open": 42,
   "closed_proven": 18,
   "deferred_accepted": 0,
   "superseded": 2
@@ -1547,6 +1547,44 @@
    "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
    "traceability_scope": "NOT_APPLICABLE",
    "capability_id": null
+  },
+  {
+   "gap_id": "GAP-P2-032",
+   "title": "### GAP-P2-032 — EvidenceCore (scientificEvidence.js) heeft geen productieconsument",
+   "primary_track": "T4",
+   "severity": "P2",
+   "status": "OPEN",
+   "v1_scope": true,
+   "blocker": "REVIEW_REQUIRED",
+   "dependency": null,
+   "evidence": [
+    "CODE VERIFIED op main 739fcecbcd690a7e228c359359e9fabbccf499d3: `core/scientificEvidence.js` definieert `EvidenceCore` (regels 165, 172, 173).",
+    "CODE VERIFIED: `EvidenceCore` heeft 0 production callers in `index.html` (0 treffers).",
+    "CODE VERIFIED: `EvidenceCore` heeft 0 production callers in andere core-productiecode buiten de eigen definitie.",
+    "CODE VERIFIED: `www/core/scientificEvidence.js` is een byte-identieke build mirror (`diff` leeg) en daarmee geen zelfstandige production caller.",
+    "CODE VERIFIED: de enige bewezen executable consumer is `core/fWeatherEvidence.test.js:6` (`require('./scientificEvidence.js')`).",
+    "CODE VERIFIED: `core/observability.js:8` noemt `core/scientificEvidence.js` uitsluitend in comment/documentary context, niet als aanroep.",
+    "CODE VERIFIED: `EvidenceCore` exposeert `validateEntry`, `evidenceId`, `parseRef`, `makeStore`, `resolveRefs` en `ruleBacking`; `resolveRefs` en `ruleBacking` bewijzen een bedoelde evidence registration/resolution responsibility en sluiten uit dat de module uitsluitend testhelper is.",
+    "REGISTER VERIFIED: geen bestaande canonical gap dekt deze dormancy (0 treffers op EvidenceCore, scientificEvidence, dormant, ongebruikt en niet-bedraad over alle 59 records)."
+   ],
+   "intended_closure": "exact een van twee: (A) een bewezen production call-chain vanaf een relevante production entrypoint naar `EvidenceCore.resolveRefs` of `EvidenceCore.ruleBacking`, met downstream athlete-facing, AI- of decision-consumer, afgedekt door een test die deze echte keten uitvoert; OF (B) een formeel PO-besluit dat deze runtime responsibility niet tot V1 behoort, waarna module-, capability-contract en scope canoniek consistent worden aangepast.",
+   "capability_id": "CALC-EVIDENCE-SPEC-001",
+   "section": "OPEN",
+   "severity_source": "explicit_field",
+   "blocker_evidence": "blokkerendheid nog niet bewezen: de dormancy is vastgesteld, maar of een ontbrekende evidence-resolutielaag een V1-acceptatievoorwaarde verhindert vereist PO-adjudicatie. Tot die bewijsvoering geldt REVIEW_REQUIRED en telt de gap onder Model v1.2 als nonblocking.",
+   "v1_evidence": "V1_SCOPE_MATRIX: Calculation/Evidence = V1 MUST Ja; CALC-EVIDENCE-SPEC-001 draagt v1_scope true in de canonieke capability-index.",
+   "secondary_tracks": [
+    "T5"
+   ],
+   "track_evidence": "Capability-ID CALC-EVIDENCE-SPEC-001 -> T4 (sterker dan trefwoordclassificatie); WEATHER-CONTEXT-001 -> T5 als secundair geraakte track.",
+   "primary_capability_id": "CALC-EVIDENCE-SPEC-001",
+   "affected_capability_ids": [
+    "EVIDENCE-CLAIM-AUDIT-001",
+    "WEATHER-CONTEXT-001"
+   ],
+   "traceability_status": "COMPLETE",
+   "traceability_evidence": "Capability-relatie direct bewezen op main 739fcecb: CALC-EVIDENCE-SPEC-001 is eigenaar van de evidence-specificatie waarvan `EvidenceCore` de registratie- en resolutielaag is; EVIDENCE-CLAIM-AUDIT-001 is geraakt omdat claim-audit zonder resolutielaag geen bron kan aanwijzen; WEATHER-CONTEXT-001 is geraakt omdat `core/fWeatherEvidence.test.js` de enige executable consumer is en die koppeling uitsluitend in test bestaat. Alle drie de IDs bestaan in de canonieke capability-index.",
+   "traceability_scope": "CAPABILITY_SCOPED"
   }
  ],
  "_corrections": {

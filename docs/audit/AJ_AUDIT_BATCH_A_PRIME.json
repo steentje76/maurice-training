@@ -1,0 +1,1407 @@
+{
+ "_schema": "trainingskompas-aj-audit-batch/1.2",
+ "batch": "A-prime",
+ "tracks": [
+  "T1",
+  "T2"
+ ],
+ "audit_model_id": "trainingskompas-aj/v1.2",
+ "audit_model_version": "1.2",
+ "audit_model_fingerprint": "sha256:82891683aad13cccf779a13783d90bb77279cbab5dfd035989607226fa0a9264",
+ "canonicalization_baseline_sha": "5be6a5ea3b76bbcdb87270bd8c69f666c84fb68f",
+ "complete": true,
+ "record_count": 90,
+ "capability_count": 9,
+ "weights": {
+  "A": 5,
+  "B": 15,
+  "C": 15,
+  "D": 10,
+  "E": 10,
+  "F": 15,
+  "G": 5,
+  "H": 10,
+  "I": 5,
+  "J": 10
+ },
+ "anchors_frozen": true,
+ "supersedes_historical": false,
+ "historical_artifact_note": "Het historische docs/audit/AJ_AUDIT_BATCH_A.json is NIET overschreven en behoudt zijn status HISTORICAL_PRE_V1_MODEL met audit_model_version pre-1.0. Dit A-prime-artefact is een zelfstandige her-audit onder Model v1.2 en vervangt het historische artefact niet.",
+ "evidence_methodology": "Iedere criterium-score rust op criterium-specifieke evidence die reproduceerbaar is op de canonicalisatie-baseline. Voor criterium F is de evidence-class bepaald uit de uitvoeringsvorm van de test: vm.runInContext geldt als INTEGRATION_RUNTIME, new Function of require van een core-module als BEHAVIORAL_UNIT, en regex- of stringinspectie van index.html als DOCUMENTATION_ONLY. Bestandsnamen, grep-tellingen, assertion-aantallen en het aantal testbestanden zijn uitsluitend als zoekroute gebruikt en gelden nergens als zelfstandig bewijs.",
+ "cross_capability_evidence_rejections": [
+  {
+   "evidence": "core/fMovekitUnknownState.test.js",
+   "primary_capability": "EXERCISE-INTELLIGENCE-001",
+   "rejected_for": "EXERCISE-CATALOG-001",
+   "reason": "noemt de catalogus maar test het gedrag van de UNKNOWN-state van de intelligencelaag"
+  },
+  {
+   "evidence": "core/fMyTrainingC2CHardening.test.js",
+   "primary_capability": "TRAIN-BUILDER-001",
+   "rejected_for": "TRAIN-HOME-001",
+   "reason": "gedragstest van de planningsprecedence van Mijn Trainingen; de Home-referentie is slechts het DOM-aanknopingspunt"
+  },
+  {
+   "evidence": "core/fDashboardF7Consumption.test.js",
+   "primary_capability": "ATHLETE-DASHBOARD-2-001",
+   "rejected_for": "TRAIN-HOME-001",
+   "reason": "gedragstest van de attentiesectie van het athlete dashboard, een andere capability"
+  },
+  {
+   "evidence": "core/fExerciseSubstitutionCanonicalSource.test.js",
+   "primary_capability": "EXERCISE-SUBSTITUTION-001",
+   "rejected_for": "EXERCISE-CATALOG-001",
+   "reason": "geen behavioral evidence voor de catalogus, en voor substitution zelf slechts DOCUMENTATION_ONLY"
+  }
+ ],
+ "gap_traceability_note": "J is bepaald met de canonieke v1.2 gap-traceability. GAP-P2-010 is INCOMPLETE met traceability_scope UNSCOPED en blokkeert exact 0 van de 9 capability-J-scores; de register-level debt blijft zichtbaar via traceability_complete false in het gap-register.",
+ "track_results": {
+  "T1": {
+   "score": "3.056",
+   "percentage": "61.12",
+   "capability_count": 5,
+   "historical_pre_v1_score": "3.320",
+   "historical_note": "de historische pre-v1 trackwaarde blijft geldig voor het historische Batch A-artefact en wordt hier niet overschreven"
+  },
+  "T2": {
+   "score": "3.208",
+   "percentage": "64.16",
+   "capability_count": 4,
+   "historical_pre_v1_score": "3.591",
+   "historical_note": "de historische pre-v1 trackwaarde blijft geldig voor het historische Batch A-artefact en wordt hier niet overschreven"
+  }
+ },
+ "capabilities": [
+  {
+   "stable_id": "TRAIN-EXECUTION-001",
+   "primary_track": "T1",
+   "v1_scope": true,
+   "applicable_weight": 100,
+   "weighted_score": "3.450",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 3.7,
+   "delta_vs_historical": "-0.250",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "v1_scope met evidence-verwijzing aanwezig in de canonieke index; capability-specifieke acceptance expectations en dependencies zijn niet apart vastgelegd, wat anker 4 wel eist.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#TRAIN-EXECUTION-001.v1_evidence"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.600",
+     "rationale": "een hoofdimplementatie voor uitvoering is aanwijsbaar in index.html; parallelle en legacy paden zijn geinventariseerd en geclassificeerd, geen onbeheerst shadow-pad aangetroffen. Geen guard tegen een tweede pad, dus geen 5.",
+     "evidence_refs": [
+      "index.html#createTrainingInstance",
+      "index.html#applyExecutionFocus"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.600",
+     "rationale": "volledige call-chain van entrypoint tot consumer bewezen inclusief payload: openTrainingPreview 17 aanroepen, createTrainingInstance 9, applyExecutionFocus 7, logSet 15, alle met een enkele definitie. Geen bewijs dat alle relevante entrypoints convergeren, dus geen 5.",
+     "evidence_refs": [
+      "index.html#openTrainingPreview",
+      "index.html#createTrainingInstance",
+      "index.html#applyExecutionFocus",
+      "index.html#logSet"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.400",
+     "rationale": "training_instances heeft schema, owner-binding en een migratiehistorie over 18 migratiebestanden; versionering en historiebehoud zijn niet aangetoond, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v*.sql#training_instances",
+      "index.html#training_instances"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "deel van de keten is call-chain-bewezen via DecisionCore- en CalculationCore-aanroepen vanuit de uitvoeringsflow; de volledige relevante keten zonder bypass is niet aangetoond.",
+     "evidence_refs": [
+      "index.html#DecisionCore.computeProgression",
+      "index.html#buildCtx"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.600",
+     "rationale": "INTEGRATION_RUNTIME: drie testpaden voeren productcode uit via vm.runInContext met een gesimuleerde backend-sandbox, niet via tekstinspectie. fTrainingExecutionScenarioBDE bevat zes failure-injecties waaronder offline (simulated). Geen als adversarial aangemerkte suite en geen device-bewijs voor deze flow, dus geen 5.",
+     "evidence_refs": [
+      "core/fDetrainingPrescriptionPaths.test.js#vm.runInContext",
+      "core/fTrainingExecutionScenarioBDE.test.js#vm.runInContext",
+      "core/fReplacementPrescription.test.js#vm.runInContext"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "INTEGRATION_RUNTIME"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "enforcement op de datalaag is aangetoond via auth.uid()-policies in 59 migratiebestanden; capability-specifiek dekkend auditbewijs ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "de keten ontdekken naar gebruiken is bruikbaar bewezen via de preview- en uitvoeringsschermen; volledigheid van feedback en vervolgactie is niet apart aangetoond.",
+     "evidence_refs": [
+      "index.html#openTrainingPreview"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "relevante failure modes zijn benoemd en afgevangen: resume- en discard-paden bestaan en worden in tests geraakt. Deterministisch bewijs dat unknown unknown blijft ontbreekt voor deze capability.",
+     "evidence_refs": [
+      "index.html#resumeSession",
+      "core/fTrainingExecutionScenarioBDE.test.js#offline"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.200",
+     "rationale": "GAP-P2-008 is via primary_capability_id aan deze capability gekoppeld, heeft v1_scope true, status OPEN en blocker true. Model v1.2 anker J=2 bij een open V1-gap met bewezen blocker.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-008"
+     ],
+     "gap_refs": [
+      "GAP-P2-008"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "TRAIN-BUILDER-001",
+   "primary_track": "T1",
+   "v1_scope": true,
+   "applicable_weight": 100,
+   "weighted_score": "2.950",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 3.25,
+   "delta_vs_historical": "-0.300",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "verantwoordelijkheid en afbakening tegen Mijn Trainingen zijn beschreven; capability-specifieke acceptance expectations ontbreken.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#TRAIN-BUILDER-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "een hoofdimplementatie is aanwijsbaar; parallelle paden zijn geinventariseerd maar niet aantoonbaar beheerst tot het niveau van anker 4.",
+     "evidence_refs": [
+      "index.html#openNewTrainingModal",
+      "index.html#startCustomTraining"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "productie-callers bewezen met bestandsverwijzing: openNewTrainingModal 2 aanroepen, startCustomTraining 3. Geen volledige payload-chain, dus geen 4.",
+     "evidence_refs": [
+      "index.html#openNewTrainingModal",
+      "index.html#startCustomTraining"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.400",
+     "rationale": "custom_trainings heeft schema, owner-binding en migratiehistorie over 5 migratiebestanden.",
+     "evidence_refs": [
+      "migratie_v*.sql#custom_trainings"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "LOW",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.200",
+     "rationale": "losse koppeling met de rekenlaag; de keten is niet aangetoond. Gericht gezocht, geen capability-specifiek bewijs van Calculation- of Decision-integratie gevonden.",
+     "evidence_refs": [
+      "index.html#saveWorkout"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "BEHAVIORAL_UNIT: fBuilderSwapAthleteConstraints voert productcode uit via require(./athleteConstraints.js) over de builder-swap-keten. De toegewijde buildertest fWorkoutBuilder is DOCUMENTATION_ONLY (regex op de body van saveWorkout(), geen uitvoering) en telt niet mee voor anker 3. Confidence MEDIUM omdat het primaire testobject de constraints-laag is met de builder als integratiecontext.",
+     "evidence_refs": [
+      "core/fBuilderSwapAthleteConstraints.test.js#require(./athleteConstraints.js)"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "BEHAVIORAL_UNIT"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "enforcement op de datalaag via auth.uid()-policies; geen capability-specifiek dekkingsbewijs.",
+     "evidence_refs": [
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "de keten ontdekken naar gebruiken is bruikbaar; feedback en vervolgactie niet volledig aangetoond.",
+     "evidence_refs": [
+      "index.html#openNewTrainingModal"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "LOW",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.100",
+     "rationale": "generieke foutafhandeling aanwezig; gericht gezocht, geen capability-specifiek bewijs van benoemde en afgevangen failure modes.",
+     "evidence_refs": [
+      "index.html#saveWorkout"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "GAP-P3-001 noemt deze capability in affected_capability_ids, v1_scope true, status REVIEW_REQUIRED, blocker REVIEW_REQUIRED en telt onder v1.2 als niet-blokkerend. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-001"
+     ],
+     "gap_refs": [
+      "GAP-P3-001"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "TRAIN-SCHEDULE-001",
+   "primary_track": "T1",
+   "v1_scope": true,
+   "applicable_weight": 100,
+   "weighted_score": "3.050",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 3.35,
+   "delta_vs_historical": "-0.300",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "verantwoordelijkheid en afbakening beschreven; acceptance expectations niet capability-specifiek vastgelegd.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#TRAIN-SCHEDULE-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "een hoofdimplementatie met calendarProjection als canonieke module; parallelle paden geinventariseerd, niet beheerst tot anker 4.",
+     "evidence_refs": [
+      "core/calendarProjection.js",
+      "index.html#openScheduleMyTraining"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "productie-callers bewezen: openScheduleMyTraining 2 aanroepen, openRepeatWorkout 2. Geen volledige payload-chain.",
+     "evidence_refs": [
+      "index.html#openScheduleMyTraining",
+      "index.html#openRepeatWorkout"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.400",
+     "rationale": "program_blocks heeft schema, owner-binding en migratiehistorie over 8 migratiebestanden.",
+     "evidence_refs": [
+      "migratie_v*.sql#program_blocks"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "deel van de keten aangetoond via de planningsprojectie; volledige keten zonder bypass niet bewezen.",
+     "evidence_refs": [
+      "core/calendarProjection.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "BEHAVIORAL_UNIT: drie tests requiren core/calendarProjection.js en voeren de projectiecode uit. Geen vm-runtime over de echte entrypoint-chain, dus geen 4.",
+     "evidence_refs": [
+      "core/fCalendarProjectionIcs.test.js#require(core/calendarProjection.js)",
+      "core/fCalendarFeedSecurity.test.js#require(../../core/calendarProjection.js)",
+      "core/fCalendarIcsIndependentValidation.test.js#require(core/calendarProjection.js)"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "BEHAVIORAL_UNIT"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "datalaag-enforcement aangetoond; geen capability-specifiek dekkingsbewijs.",
+     "evidence_refs": [
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "ontdekken naar gebruiken bruikbaar via kalender- en planningsschermen.",
+     "evidence_refs": [
+      "index.html#openScheduleMyTraining"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.100",
+     "rationale": "generieke foutafhandeling; geen capability-specifiek bewijs van benoemde failure modes.",
+     "evidence_refs": [
+      "index.html#openScheduleMyTraining"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "drie gaps noemen deze capability als primary: GAP-P3-004, GAP-P4-003 en GAP-P4-004, alle v1_scope true, status OPEN, blocker REVIEW_REQUIRED en dus niet-blokkerend. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-004",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P4-003",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P4-004"
+     ],
+     "gap_refs": [
+      "GAP-P3-004",
+      "GAP-P4-003",
+      "GAP-P4-004"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "TRAIN-ONBOARDING-001",
+   "primary_track": "T1",
+   "v1_scope": true,
+   "applicable_weight": 100,
+   "weighted_score": "3.050",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 3.2,
+   "delta_vs_historical": "-0.150",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "verantwoordelijkheid beschreven met afbakening; acceptance expectations niet capability-specifiek.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#TRAIN-ONBOARDING-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "core/onboarding.js is de aanwijsbare hoofdimplementatie; parallelle paden geinventariseerd.",
+     "evidence_refs": [
+      "core/onboarding.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "productie-callers bewezen met bestandsverwijzing in de onboardingflow; geen volledige payload-chain.",
+     "evidence_refs": [
+      "index.html#onboarding"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "schema met owner-binding aanwezig; lifecycle- en migratiehistorie beperkt tot 1 migratiebestand, onvoldoende voor anker 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#onboarding"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "deel van de keten aangetoond; volledige keten niet bewezen.",
+     "evidence_refs": [
+      "core/onboarding.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "BEHAVIORAL_UNIT: core/onboarding.test.js requiret ./onboarding.js en voert de onboarding-core uit. fOnboarding (MS-F2-06) is DOCUMENTATION_ONLY en telt niet mee. Geen runtime call-chain, dus geen 4.",
+     "evidence_refs": [
+      "core/onboarding.test.js#require(./onboarding.js)"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "BEHAVIORAL_UNIT"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "datalaag-enforcement aangetoond; geen capability-specifiek dekkingsbewijs.",
+     "evidence_refs": [
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "ontdekken naar gebruiken bruikbaar bewezen in de intakeflow.",
+     "evidence_refs": [
+      "index.html#onboarding"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "LOW",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.100",
+     "rationale": "generieke foutafhandeling; gericht gezocht, geen capability-specifiek bewijs van degraded-state gedrag.",
+     "evidence_refs": [
+      "core/onboarding.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.400",
+     "rationale": "geen enkele gap noemt deze capability in primary_capability_id of affected_capability_ids met v1_scope true en status OPEN of REVIEW_REQUIRED. Volledig A-J ge-audit zonder open V1-gap. Anker J=4; 5 vereist closure-evidence van een gesloten gap, die hier niet bestaat.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "TRAIN-HOME-001",
+   "primary_track": "T1",
+   "v1_scope": true,
+   "applicable_weight": 90,
+   "weighted_score": "2.778",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 3.1,
+   "delta_vs_historical": "-0.322",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "verantwoordelijkheid beschreven; acceptance expectations niet capability-specifiek vastgelegd.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#TRAIN-HOME-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "er bestaat geen enkele renderHome-orkestrator (0 treffers met woordgrens); Home bestaat uit vier sectierenderers die hier zijn geinventariseerd en geclassificeerd. Geen alternatief orkestratiepad aangetroffen. Anker 3, niet 4, omdat beheersing van de parallelle secties niet is aangetoond.",
+     "evidence_refs": [
+      "index.html#renderHomeCard",
+      "index.html#renderHomeContextCard",
+      "index.html#renderHomeImprove",
+      "index.html#renderHomeProgramCard"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "productie-callers per sectierenderer bewezen met regelverwijzing; geen enkele orkestrator, dus geen volledige entrypoint-tot-consumer chain en geen 4.",
+     "evidence_refs": [
+      "index.html#renderHomeContextCard",
+      "index.html#renderHomeProgramCard"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Home is volledig afgeleide presentatie over sectierenderers; nul home-tabellen in de migratiebestanden. Persistentie behoort aantoonbaar niet tot de scope van deze capability.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "de volledige relevante keten is bewezen: Home consumeert Calculation-, Context- en Decision-uitkomsten via buildCtx met 6 callers, en er is geen bypass aangetroffen waarin Home zelf rekent of beslist. Anker 5 vereist afdwinging door test of guard, die ontbreekt.",
+     "evidence_refs": [
+      "index.html#buildCtx",
+      "index.html#renderHomeContextCard"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.333",
+     "rationale": "DOCUMENTATION_ONLY. Zes testbestanden refereren aan Home-identifiers; alle zes inhoudelijk onderzocht. fEvidence:258 en fVoortgang:183 doen stringaanwezigheid op container-ids, expliciet gelabeld als UI ongemoeid respectievelijk buiten Voortgang ongewijzigd. fHardening:168-178 controleert 11 container-ids en verklaart in de code zelf: deze controles ontwerpen NIETS en zeggen niets over volgorde, styling of opmaak. fMyTrainingC2CHardening:47 is een gedragstest van de planningsprecedence van Mijn Trainingen, niet van Home. fDashboardF7Consumption:25 is een gedragstest van ATHLETE-DASHBOARD-2-001. fNightSprint:269 gebruikt HTML.indexOf(function renderHome), wat als prefix op function renderHomeCard matcht, en bewijst een afwezigheid. Geen van de zes is een behavioral unit test van deze capability conform anker F=3.",
+     "evidence_refs": [
+      "core/fEvidence.test.js:258",
+      "core/fHardening.test.js:168-178",
+      "core/fVoortgang.test.js:183",
+      "core/fMyTrainingC2CHardening.test.js:47",
+      "core/fDashboardF7Consumption.test.js:25",
+      "core/fNightSprint.test.js:269"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "DOCUMENTATION_ONLY"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "datalaag-enforcement aangetoond voor de door Home gelezen bronnen; geen capability-specifiek dekkingsbewijs.",
+     "evidence_refs": [
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "ontdekken naar gebruiken bruikbaar bewezen via de Home-secties; feedback en vervolgactie niet volledig aangetoond.",
+     "evidence_refs": [
+      "index.html#renderHomeProgramCard"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.111",
+     "rationale": "generieke foutafhandeling; renderHomeContextCard(null) wordt afgevangen maar er is geen capability-specifiek bewijs dat unknown deterministisch unknown blijft.",
+     "evidence_refs": [
+      "index.html#renderHomeContextCard"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.222",
+     "rationale": "GAP-P2-008 noemt deze capability in affected_capability_ids, v1_scope true, status OPEN en blocker true. Onder Model v1.2 telt een affected-relatie mee voor J. Anker J=2.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-008"
+     ],
+     "gap_refs": [
+      "GAP-P2-008"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "EXERCISE-CATALOG-001",
+   "primary_track": "T2",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_score": "3.176",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 3.882,
+   "delta_vs_historical": "-0.706",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.235",
+     "rationale": "v1_scope met evidence-verwijzing in de canonieke index, plus afbakening tegen de intelligence- en substitutielagen.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#EXERCISE-CATALOG-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 5,
+     "weighted_contribution": "0.882",
+     "rationale": "een canonieke catalogusbron met ExerciseCatalogService als enige eigenaar, en de integriteitstest bewaakt dat er geen tweede catalogusbron kan ontstaan.",
+     "evidence_refs": [
+      "index.html#ExerciseCatalogService",
+      "core/fMovekitBatch001Integrity.test.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "productie-callers bewezen: ExerciseCatalogService 55 referenties in index.html. Geen volledige payload-chain aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#ExerciseCatalogService"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.235",
+     "rationale": "schema bestaat voor de oefeningencatalogus; geen owner-binding op rijniveau, wat bij publieke referentiedata ook niet van toepassing is. Anker 2.",
+     "evidence_refs": [
+      "migratie_v*.sql#exercises"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "de catalogus voedt geen berekening of beslisregel: nul niet-test bestanden in core/ refereren aan ExerciseCatalogService. De Calculation-, Context- en Decision-laag is voor deze capability architectonisch niet relevant.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.353",
+     "rationale": "DOCUMENTATION_ONLY. fMovekitBatch001Integrity requiret uitsluitend assert, fs en path en bevat nul uitvoeringsconstructies (vm.runInContext 0, new Function 0): het inspecteert de catalogus-JSON als data en de bron als tekst, zonder de capability uit te voeren. Van de zeven testbestanden die ExerciseCatalogService noemen voert geen enkele die uit voor deze capability; fMovekitUnknownState en fLichaam21Tabs testen andere capabilities. Geen behavioral unit test van deze capability, dus anker 2.",
+     "evidence_refs": [
+      "core/fMovekitBatch001Integrity.test.js#geen-uitvoering",
+      "core/fExerciseLibrary.test.js#geen-uitvoering",
+      "core/f41Picker.test.js#geen-uitvoering"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "DOCUMENTATION_ONLY"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "publieke referentiedata zonder trust boundary, persoonsgegevens, autorisatie of misbruikroute; security en privacy zijn voor deze capability niet van toepassing.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "de keten ontdekken naar gebruiken is bruikbaar bewezen via de oefeningenbibliotheek; feedback en vervolgactie niet volledig aangetoond.",
+     "evidence_refs": [
+      "index.html#ExerciseCatalogService"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.235",
+     "rationale": "unknown blijft unknown: ontbrekende catalogusvelden leiden deterministisch tot een expliciete onbekend-status zonder gefabriceerde waarde, aangetoond in de integriteitsbewaking.",
+     "evidence_refs": [
+      "core/fMovekitBatch001Integrity.test.js#unknown"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "GAP-P3-001 noemt deze capability in affected_capability_ids, v1_scope true, status REVIEW_REQUIRED en niet-blokkerend. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-001"
+     ],
+     "gap_refs": [
+      "GAP-P3-001"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "EXERCISE-INTELLIGENCE-001",
+   "primary_track": "T2",
+   "v1_scope": true,
+   "applicable_weight": 95,
+   "weighted_score": "3.263",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 3.737,
+   "delta_vs_historical": "-0.474",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.158",
+     "rationale": "verantwoordelijkheid en afbakening beschreven; acceptance expectations niet capability-specifiek.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#EXERCISE-INTELLIGENCE-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.632",
+     "rationale": "een canonieke intelligencelaag met geinventariseerde en geclassificeerde alternatieven; geen onbeheerst shadow-pad. Geen guard tegen een tweede pad, dus geen 5.",
+     "evidence_refs": [
+      "index.html#ExerciseIntelligence"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.474",
+     "rationale": "productie-callers bewezen: ExerciseIntelligence 28 referenties. Geen volledige payload-chain.",
+     "evidence_refs": [
+      "index.html#ExerciseIntelligence"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.211",
+     "rationale": "schema voor de metadatalaag bestaat; geen owner-binding op rijniveau van toepassing.",
+     "evidence_refs": [
+      "migratie_v*.sql#exercises"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.421",
+     "rationale": "de volledige relevante keten is bewezen en er is geen bypass aangetroffen waarin de consument zelf afleidt. Anker 5 vereist afdwinging, die ontbreekt.",
+     "evidence_refs": [
+      "index.html#ExerciseIntelligence",
+      "index.html#buildCtx"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.474",
+     "rationale": "BEHAVIORAL_UNIT: fMovekitUnknownState voert productcode uit via new Function (3 constructies) en test het gedrag van de UNKNOWN-state van deze capability. Geen vm-runtime over de echte call-chain, dus geen 4. Nul treffers op sabotage-, fail-closed- of adversarial-termen en geen device-bewijs, dus geen 5. De eerder veronderstelde 5 rustte op assertion-count, wat het model expliciet verbiedt.",
+     "evidence_refs": [
+      "core/fMovekitUnknownState.test.js#new Function"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "BEHAVIORAL_UNIT"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "publieke referentiedata zonder trust boundary of persoonsgegevens; security en privacy zijn voor deze capability niet van toepassing.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.316",
+     "rationale": "de keten ontdekken naar gebruiken is bruikbaar bewezen; feedback en vervolgactie niet volledig.",
+     "evidence_refs": [
+      "index.html#ExerciseIntelligence"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 5,
+     "weighted_contribution": "0.263",
+     "rationale": "fail-closed gedrag is door test bewezen: bij ontbrekende of onbruikbare metadata valt de intelligencelaag deterministisch terug op een expliciete unknown-status zonder fabricage, afgedwongen in de uitgevoerde testsuite.",
+     "evidence_refs": [
+      "core/fMovekitUnknownState.test.js#new Function"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.316",
+     "rationale": "GAP-P3-001 noemt deze capability in affected_capability_ids, v1_scope true, status REVIEW_REQUIRED en niet-blokkerend. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-001"
+     ],
+     "gap_refs": [
+      "GAP-P3-001"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "EXERCISE-SUBSTITUTION-001",
+   "primary_track": "T2",
+   "v1_scope": true,
+   "applicable_weight": 95,
+   "weighted_score": "2.947",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 3.579,
+   "delta_vs_historical": "-0.632",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.158",
+     "rationale": "verantwoordelijkheid en afbakening beschreven; acceptance expectations niet capability-specifiek.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#EXERCISE-SUBSTITUTION-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.632",
+     "rationale": "een canonieke substitutiebron met geinventariseerde alternatieven en geen onbeheerst shadow-pad. Geen guard, dus geen 5.",
+     "evidence_refs": [
+      "index.html#openSwapExercise",
+      "index.html#confirmSwapExercise"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.474",
+     "rationale": "productie-callers bewezen: openSwapExercise 3 referenties, confirmSwapExercise 3. Geen volledige payload-chain.",
+     "evidence_refs": [
+      "index.html#openSwapExercise",
+      "index.html#confirmSwapExercise"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.211",
+     "rationale": "schema aanwezig via de catalogusbron; geen eigen owner-binding op rijniveau.",
+     "evidence_refs": [
+      "migratie_v*.sql#exercises"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.316",
+     "rationale": "deel van de keten is aangetoond in de substitutieprescriptie; de volledige keten zonder bypass niet.",
+     "evidence_refs": [
+      "index.html#confirmSwapExercise"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.316",
+     "rationale": "DOCUMENTATION_ONLY. fExerciseSubstitutionCanonicalSource requiret uitsluitend assert, fs en path en bevat nul uitvoeringsconstructies (vm.runInContext 0, new Function 0): het inspecteert bron en structuur van index.html en voert swapAlternatives, openSwapExercise en confirmSwapExercise niet uit. Geen behavioral unit test van deze capability, dus anker 2.",
+     "evidence_refs": [
+      "core/fExerciseSubstitutionCanonicalSource.test.js#geen-uitvoering"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "DOCUMENTATION_ONLY"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "de substitutielaag opereert uitsluitend op publieke catalogusdata zonder trust boundary of persoonsgegevens; security en privacy zijn niet van toepassing.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.316",
+     "rationale": "de keten ontdekken naar gebruiken is bruikbaar bewezen via de swapflow.",
+     "evidence_refs": [
+      "index.html#openSwapExercise"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.211",
+     "rationale": "unknown blijft unknown: wanneer geen geschikt alternatief bestaat wordt deterministisch geen vervanging voorgesteld in plaats van een gefabriceerde keuze.",
+     "evidence_refs": [
+      "index.html#confirmSwapExercise"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.316",
+     "rationale": "GAP-P3-033 noemt deze capability als primary en GAP-P3-004 als affected, beide v1_scope true, status OPEN en blocker REVIEW_REQUIRED en dus niet-blokkerend. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-033",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-004"
+     ],
+     "gap_refs": [
+      "GAP-P3-033",
+      "GAP-P3-004"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "EXERCISE-MEDIA-001",
+   "primary_track": "T2",
+   "v1_scope": true,
+   "applicable_weight": 90,
+   "weighted_score": "3.444",
+   "model_v1_2_verified": true,
+   "historical_pre_v1_score": 3.167,
+   "delta_vs_historical": "0.277",
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "v1_scope met evidence-verwijzing in de canonieke index plus afbakening tegen de catalogus.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#EXERCISE-MEDIA-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "ExerciseAssetProvider en MediaUrlResolver zijn de aanwijsbare hoofdimplementatie; parallelle paden geinventariseerd maar niet beheerst tot anker 4.",
+     "evidence_refs": [
+      "index.html#ExerciseAssetProvider",
+      "index.html#MediaUrlResolver"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.667",
+     "rationale": "volledige call-chain bewezen inclusief payload: ExerciseAssetProvider 52 referenties met doorgifte naar MediaUrlResolver en de service worker. Geen bewijs van convergentie van alle entrypoints, dus geen 5.",
+     "evidence_refs": [
+      "index.html#ExerciseAssetProvider",
+      "index.html#MediaUrlResolver",
+      "sw.js#isVideoRequest"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.222",
+     "rationale": "schema aanwezig voor media-verwijzingen; geen owner-binding op rijniveau van toepassing.",
+     "evidence_refs": [
+      "migratie_v*.sql#exercises"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "mediaresolutie is geen berekening, context of beslisregel; de Calculation-, Context- en Decision-laag is voor deze capability architectonisch niet relevant.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "BEHAVIORAL_UNIT: fMediaUrlResolver voert productcode uit via new Function (2 constructies) en instantieert ExerciseAssetProvider, MediaUrlResolver en isVideoRequest uit sw.js. fVidWrapLayout bevat nul uitvoeringsconstructies en is DOCUMENTATION_ONLY. Device-bewijs is afgewezen: device_validation staat op N/A in de canonieke index, het woord device komt nul keer voor in beide testbestanden en er bestaat geen canoniek reproduceerbaar capability-specifiek device-artefact dat deze mediaflow bewijst. Daarom geen 5.",
+     "evidence_refs": [
+      "core/fMediaUrlResolver.test.js#new Function",
+      "core/fVidWrapLayout.test.js#geen-uitvoering"
+     ],
+     "gap_refs": [],
+     "f_evidence_class": "BEHAVIORAL_UNIT"
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.111",
+     "rationale": "ownership in applicatiecode aanwezig; publieke hotlinkbaarheid van media en de MoveKit-licentievraag zijn onopgelost, dus geen datalaag-enforcement en anker 2.",
+     "evidence_refs": [
+      "index.html#MediaUrlResolver"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 5,
+     "weighted_contribution": "0.556",
+     "rationale": "de keten ontdekken, gebruiken, feedback en vervolgactie is compleet en op een echt apparaat bevestigd voor exact deze flow via de MEDIA-0D acceptatie van de Activity naar Start Exercise videopresentatie.",
+     "evidence_refs": [
+      "docs/audit/MEDIA-0D#device-acceptatie",
+      "index.html#openExecExplain"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "unknown blijft unknown: ontbrekende media leidt deterministisch tot een lege of poster-fallback zonder gefabriceerde bron, bewezen in de uitgevoerde resolvertest.",
+     "evidence_refs": [
+      "core/fMediaUrlResolver.test.js#new Function"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "geen enkele gap noemt deze capability in primary_capability_id of affected_capability_ids met v1_scope true en status OPEN of REVIEW_REQUIRED. Anker J=4; 5 vereist closure-evidence van een gesloten gap, die hier niet bestaat.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  }
+ ]
+}

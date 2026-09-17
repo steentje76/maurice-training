@@ -571,6 +571,94 @@ try {
       if (!/ten minste één V1-capability/.test(baseline)) problems.push('capability-based tracknoemer ontbreekt in het baselinemodel');
     }
 
+    // ── Batch A-prime: Model-v1.2 auditartefact ──
+    (function aPrimeGuard() {
+      // Model v1.2 schrijft ROUND_HALF_UP voor. Math.round() op een binaire float
+      // rondt 3.2075 naar beneden omdat de waarde intern 3.20749999... is. Deze
+      // helper corrigeert die representatiefout zodat de guard hetzelfde resultaat
+      // geeft als de decimale berekening in het artefact. Nooit de score aanpassen
+      // om de guard groen te krijgen; de afrondingsimplementatie hoort te kloppen.
+      const halfUp = function (x, dp) {
+        const f = Math.pow(10, dp);
+        const scaled = parseFloat((x * f).toPrecision(12));
+        return (Math.round(scaled) / f).toFixed(dp);
+      };
+      const ap = path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_BATCH_A_PRIME.json');
+      if (!fs.existsSync(ap)) { problems.push('canoniek Batch A-prime artefact ontbreekt'); return; }
+      const a = JSON.parse(fs.readFileSync(ap, 'utf8'));
+      const m12 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_MEASUREMENT_MODEL_v1_2.json'), 'utf8'));
+      if (a.audit_model_id !== m12.audit_model_id) problems.push('A-prime model_id wijkt af van het canonieke model');
+      if (a.audit_model_version !== '1.2') problems.push('A-prime audit_model_version is niet 1.2');
+      if (a.audit_model_fingerprint !== m12.model_fingerprint) problems.push('A-prime fingerprint wijkt af van het canonieke model');
+      const FROZEN = { 'TRAIN-EXECUTION-001': '3.450', 'TRAIN-BUILDER-001': '2.950', 'TRAIN-SCHEDULE-001': '3.050',
+        'TRAIN-ONBOARDING-001': '3.050', 'TRAIN-HOME-001': '2.778', 'EXERCISE-CATALOG-001': '3.176',
+        'EXERCISE-INTELLIGENCE-001': '3.263', 'EXERCISE-SUBSTITUTION-001': '2.947', 'EXERCISE-MEDIA-001': '3.444' };
+      const CRIT = ['A','B','C','D','E','F','G','H','I','J'];
+      const NA_OK = ['D','E','G','H','J'];
+      const CONF = ['HIGH','MEDIUM','LOW'];
+      const caps = a.capabilities || [];
+      if (caps.length !== 9) problems.push('A-prime heeft ' + caps.length + ' capabilities, verwacht 9');
+      const seen = {};
+      let recs = 0, verified = 0;
+      const reg = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'AUDIT_GAP_REGISTER.json'), 'utf8'));
+      const gapIds = {}; (reg.gaps || []).forEach(function (g) { gapIds[g.gap_id] = g; });
+      const byTrack = {};
+      caps.forEach(function (c) {
+        const id = c.stable_id;
+        if (seen[id]) problems.push('A-prime dubbele capability ' + id); seen[id] = 1;
+        if (!FROZEN[id]) { problems.push('A-prime onverwachte capability ' + id); return; }
+        const ks = Object.keys(c.criteria || {}).sort();
+        if (ks.join('') !== CRIT.join('')) problems.push('A-prime ' + id + ' heeft niet exact A-J');
+        let aw = 0, num = 0;
+        CRIT.forEach(function (k) {
+          const r = (c.criteria || {})[k]; if (!r) return;
+          recs++;
+          if (CONF.indexOf(r.confidence) < 0) problems.push('A-prime ' + id + '/' + k + ' ongeldige confidence');
+          if (r.applicable === false) {
+            if (NA_OK.indexOf(k) < 0) problems.push('A-prime N/A niet toegestaan op ' + id + '/' + k);
+            if (!r.na_rationale) problems.push('A-prime N/A zonder rationale: ' + id + '/' + k);
+            return;
+          }
+          if (!Number.isInteger(r.score) || r.score < 0 || r.score > 5) problems.push('A-prime ' + id + '/' + k + ' score niet integer 0-5');
+          if (!r.evidence_refs || !r.evidence_refs.length) problems.push('A-prime ' + id + '/' + k + ' zonder evidence_refs');
+          if (!r.rationale) problems.push('A-prime ' + id + '/' + k + ' zonder rationale');
+          (r.gap_refs || []).forEach(function (g) { if (!gapIds[g]) problems.push('A-prime ' + id + '/' + k + ' verwijst naar onbekende gap ' + g); });
+          aw += r.weight; num += r.weight * r.score;
+        });
+        const sc = halfUp(num / aw, 3);
+        if (sc !== c.weighted_score) problems.push('A-prime ' + id + ' opgeslagen score ' + c.weighted_score + ', herberekend ' + sc);
+        if (c.weighted_score !== FROZEN[id]) problems.push('A-prime ' + id + ' wijkt af van de gecanonicaliseerde score ' + FROZEN[id]);
+        if (c.model_v1_2_verified === true) verified++;
+        (byTrack[c.primary_track] = byTrack[c.primary_track] || []).push(parseFloat(c.weighted_score));
+      });
+      if (recs !== 90) problems.push('A-prime heeft ' + recs + ' criterion records, verwacht 90');
+      if (verified !== 9) problems.push('A-prime heeft ' + verified + '/9 MODEL_v1.2_VERIFIED');
+      const EXPT = { T1: '3.056', T2: '3.208' };
+      Object.keys(EXPT).forEach(function (t) {
+        const s = byTrack[t] || [];
+        const avg = halfUp(s.reduce(function (x, y) { return x + y; }, 0) / s.length, 3);
+        const st = (a.track_results || {})[t] || {};
+        if (avg !== EXPT[t]) problems.push('A-prime ' + t + ' herberekend ' + avg + ', verwacht ' + EXPT[t]);
+        if (st.score !== EXPT[t]) problems.push('A-prime ' + t + ' opgeslagen ' + st.score + ', verwacht ' + EXPT[t]);
+        const pct = halfUp(parseFloat(EXPT[t]) / 5 * 100, 2);
+        if (st.percentage !== pct) problems.push('A-prime ' + t + ' percentage ' + st.percentage + ', verwacht ' + pct);
+      });
+      // GAP-P2-010 mag geen A-prime J blokkeren
+      const p210 = gapIds['GAP-P2-010'];
+      if (!p210 || p210.traceability_scope !== 'UNSCOPED') problems.push('GAP-P2-010 is niet langer UNSCOPED');
+      else if (p210.primary_capability_id || (p210.affected_capability_ids || []).length) {
+        problems.push('GAP-P2-010 heeft een capability-relatie gekregen en zou A-prime J beinvloeden');
+      }
+      // historisch Batch A niet gemuteerd
+      const hist = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_BATCH_A.json'), 'utf8'));
+      if (hist.audit_model_status !== 'HISTORICAL_PRE_V1_MODEL') problems.push('historisch Batch A is niet langer HISTORICAL_PRE_V1_MODEL');
+      if (a.supersedes_historical !== false) problems.push('A-prime claimt het historische artefact te vervangen');
+      // baseline-tellers
+      const bl = fs.readFileSync(path.join(ROOT, 'docs', '00_Project_Management', 'AUDIT_MEASUREMENT_BASELINE.md'), 'utf8');
+      if (bl.indexOf('**9 / 86**') < 0) problems.push('baseline meldt model_v1_verified niet als 9/86');
+      if (bl.indexOf('**22 / 86**') < 0) problems.push('baseline meldt historical_audited niet als 22/86');
+    })();
+
     // ── BASELINE-1.2 / v1.1: gap traceability contract ──
     (function traceabilityGuard() {
       const mdl11 = path.join(ROOT, 'docs', 'audit', 'AJ_MEASUREMENT_MODEL_v1_2.json');

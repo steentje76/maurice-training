@@ -571,6 +571,140 @@ try {
       if (!/ten minste één V1-capability/.test(baseline)) problems.push('capability-based tracknoemer ontbreekt in het baselinemodel');
     }
 
+    // ── T17: Model-v1.2 auditartefact ──
+    (function t17PrimeGuard() {
+      const halfUp = function (x, dp) {
+        const f = Math.pow(10, dp);
+        const sc = parseFloat((x * f).toPrecision(12));
+        return (Math.round(sc) / f).toFixed(dp);
+      };
+      const tp = path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_T17_PRIME.json');
+      if (!fs.existsSync(tp)) { problems.push('canoniek T17-artefact ontbreekt'); return; }
+      const t = JSON.parse(fs.readFileSync(tp, 'utf8'));
+      const m12 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_MEASUREMENT_MODEL_v1_2.json'), 'utf8'));
+      if (t.audit_model_id !== m12.audit_model_id) problems.push('T17 model_id wijkt af van het canonieke model');
+      if (t.audit_model_version !== '1.2') problems.push('T17 audit_model_version is niet 1.2');
+      if (t.audit_model_fingerprint !== m12.model_fingerprint) problems.push('T17 fingerprint wijkt af van het canonieke model');
+      const FROZEN = { 'CAP-REGISTRY-SCREENS-001': '2.385', 'DOC-HANDBOOK-001': '2.308',
+        'PLAT-BACKUP-CLEANUP-001': '2.313', 'PLAT-DELETE-001': '3.611', 'PLAT-OBSERVABILITY-001': '3.429',
+        'SEC-CONFIG-001': '2.563', 'SEC-GATE-001': '1.923', 'SEC-GYMS-001': '3.563',
+        'SEC-TEST-001': '3.071', 'SEC-USERROLE-001': '3.563' };
+      const CRIT = ['A','B','C','D','E','F','G','H','I','J'];
+      const NA_OK = ['D','E','G','H'];   // J nooit N/A hier: alle T17-capabilities zijn v1_scope true
+      const CONF = ['HIGH','MEDIUM','LOW'];
+      const caps = t.capabilities || [];
+      if (caps.length !== 10) problems.push('T17 heeft ' + caps.length + ' capabilities, verwacht 10');
+      const idx = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'ROADMAP_INDEX.json'), 'utf8'));
+      const known = {}; idx.forEach(function (x) { if (x.type === 'capability') known[x.id] = x; });
+      const reg = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'AUDIT_GAP_REGISTER.json'), 'utf8'));
+      const gapIds = {}; (reg.gaps || []).forEach(function (g) { gapIds[g.gap_id] = g; });
+      // exacte T17 V1-set uit de index
+      const fromIndex = Object.keys(known).filter(function (k) {
+        return known[k].primary_track === 'T17' && known[k].v1_scope === true;
+      }).sort();
+      const inArtifact = caps.map(function (c) { return c.stable_id; }).sort();
+      if (fromIndex.join(',') !== inArtifact.join(',')) {
+        problems.push('T17 capability-set wijkt af van de canonieke index');
+      }
+      let recs = 0, na = 0, verified = 0;
+      const naByCrit = {};
+      const stored = [];
+      caps.forEach(function (c) {
+        const id = c.stable_id;
+        if (!FROZEN[id]) { problems.push('T17 onverwachte capability ' + id); return; }
+        if (!known[id] || known[id].v1_scope !== true) problems.push('T17 ' + id + ' is geen V1-capability in de index');
+        const ks = Object.keys(c.criteria || {}).sort();
+        if (ks.join('') !== CRIT.join('')) problems.push('T17 ' + id + ' heeft niet exact A-J');
+        let aw = 0, num = 0;
+        CRIT.forEach(function (k) {
+          const r = (c.criteria || {})[k]; if (!r) return;
+          recs++;
+          if (CONF.indexOf(r.confidence) < 0) problems.push('T17 ' + id + '/' + k + ' ongeldige confidence');
+          if (r.applicable === false) {
+            na++; naByCrit[k] = (naByCrit[k] || 0) + 1;
+            if (NA_OK.indexOf(k) < 0) problems.push('T17 N/A niet toegestaan op ' + id + '/' + k);
+            if (!r.na_rationale) problems.push('T17 N/A zonder rationale: ' + id + '/' + k);
+            return;
+          }
+          if (!Number.isInteger(r.score) || r.score < 0 || r.score > 5) problems.push('T17 ' + id + '/' + k + ' score niet integer 0-5');
+          if (!r.rationale) problems.push('T17 ' + id + '/' + k + ' zonder rationale');
+          const refs = (r.evidence_refs || []).concat(r.external_evidence_refs || []);
+          if (!refs.length) problems.push('T17 ' + id + '/' + k + ' zonder evidence_refs');
+          (r.gap_refs || []).forEach(function (g) {
+            if (!gapIds[g]) problems.push('T17 ' + id + '/' + k + ' verwijst naar onbekende gap ' + g);
+          });
+          // extern bewijs mag nooit als repository-ref worden gepresenteerd
+          (r.evidence_refs || []).forEach(function (e) {
+            if (typeof e === 'string' && e.indexOf('supabase://') === 0 && !r.evidence_origin) {
+              problems.push('T17 ' + id + '/' + k + ' draagt externe evidence zonder evidence_origin');
+            }
+          });
+          (r.external_evidence_refs || []).forEach(function (e) {
+            if (typeof e !== 'string' || e.indexOf('supabase://') !== 0) {
+              problems.push('T17 ' + id + '/' + k + ' external_evidence_refs is geen externe bron');
+            }
+          });
+          // Een repository-ref moet naar een bestaand pad wijzen. Dit vangt deterministisch
+          // het fabriceren van een bronverwijzing voor een feit dat alleen extern bewezen is.
+          (r.evidence_refs || []).forEach(function (e) {
+            if (typeof e !== 'string') return;
+            if (e.indexOf('supabase://') === 0) return;
+            const p0 = e.split('#')[0];
+            if (!p0 || p0.indexOf('*') >= 0) return; // globpatronen overslaan
+            if (p0.indexOf('/') < 0 && !/\.(sql|js|md|json|html)$/.test(p0)) return; // geen pad en geen bestandsnaam
+            if (!fs.existsSync(path.join(ROOT, p0))) {
+              problems.push('T17 ' + id + '/' + k + ' verwijst naar een niet-bestaand repository-pad: ' + p0);
+            }
+          });
+          aw += r.weight; num += r.weight * r.score;
+        });
+        const sc = halfUp(num / aw, 3);
+        if (sc !== c.weighted_score) problems.push('T17 ' + id + ' opgeslagen score ' + c.weighted_score + ', herberekend ' + sc);
+        if (c.weighted_score !== FROZEN[id]) problems.push('T17 ' + id + ' wijkt af van de gecanonicaliseerde score ' + FROZEN[id]);
+        if (c.applicable_weight !== aw) problems.push('T17 ' + id + ' applicable_weight klopt niet');
+        if (c.weighted_numerator !== num) problems.push('T17 ' + id + ' weighted_numerator klopt niet');
+        if (c.model_v1_2_verified === true) verified++;
+        stored.push(parseFloat(c.weighted_score));
+      });
+      if (recs !== 100) problems.push('T17 heeft ' + recs + ' criterion records, verwacht 100');
+      if (na !== 27) problems.push('T17 heeft ' + na + ' N/A-records, verwacht 27');
+      const NAEXP = { D: 5, E: 10, G: 3, H: 9 };
+      Object.keys(NAEXP).forEach(function (k) {
+        if ((naByCrit[k] || 0) !== NAEXP[k]) problems.push('T17 N/A op ' + k + ' is ' + (naByCrit[k] || 0) + ', verwacht ' + NAEXP[k]);
+      });
+      if (verified !== 10) problems.push('T17 heeft ' + verified + '/10 MODEL_v1.2_VERIFIED');
+      // trackrekenkunde uit de OPGESLAGEN scores
+      const sum = stored.reduce(function (a, b) { return a + b; }, 0);
+      if (sum.toFixed(3) !== '28.729') problems.push('T17 som van opgeslagen scores is ' + sum.toFixed(3) + ', verwacht 28.729');
+      const tscore = halfUp(sum / stored.length, 3);
+      const tr = (t.track_results || {}).T17 || {};
+      if (tscore !== '2.873') problems.push('T17 herberekend ' + tscore + ', verwacht 2.873');
+      if (tr.score !== '2.873') problems.push('T17 opgeslagen ' + tr.score + ', verwacht 2.873');
+      if (tr.sum_of_stored_scores !== '28.729') problems.push('T17 sum_of_stored_scores klopt niet');
+      const pct = halfUp(parseFloat('2.873') / 5 * 100, 2);
+      if (tr.percentage !== pct || pct !== '57.46') problems.push('T17 percentage ' + tr.percentage + ', verwacht 57.46');
+      // externe verificatie moet aanwezig en eerlijk zijn
+      const ev = t.external_verification || {};
+      if (ev.row_data_read !== false) problems.push('T17 external_verification meldt niet dat nul rijdata is gelezen');
+      if (ev.database_mutations !== 0) problems.push('T17 external_verification meldt niet-nul databasemutaties');
+      if (!ev.performed_queries || !ev.performed_queries.length) problems.push('T17 external_verification zonder uitgevoerde queries');
+      // baseline
+      const bl = fs.readFileSync(path.join(ROOT, 'docs', '00_Project_Management', 'AUDIT_MEASUREMENT_BASELINE.md'), 'utf8');
+      if (bl.indexOf('met criterium-specifieke evidence | **32 / 86**') < 0) problems.push('baseline meldt model_v1_verified niet als 32/86');
+      if (bl.indexOf('**22 / 86**') < 0) problems.push('baseline meldt historical_audited niet als 22/86');
+      // A-prime en B-prime blijven bestaan en ongewijzigd van omvang
+      const ap = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_BATCH_A_PRIME.json'), 'utf8'));
+      const bp = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_BATCH_B_PRIME.json'), 'utf8'));
+      if (ap.capabilities.length !== 9 || bp.capabilities.length !== 13) problems.push('A-prime of B-prime is van omvang veranderd');
+      if (ap.track_results.T1.score !== '3.056' || bp.track_results.T4.score !== '2.943') problems.push('A-prime of B-prime trackscore is veranderd');
+      // gapregister ongewijzigd in omvang en GAP-P2-010-semantiek
+      if ((reg.gaps || []).length !== 60) problems.push('gap register telt niet langer 60 records');
+      const g210 = gapIds['GAP-P2-010'];
+      if (!g210 || g210.traceability_scope !== 'UNSCOPED' || g210.primary_capability_id || (g210.affected_capability_ids || []).length) {
+        problems.push('GAP-P2-010-semantiek is veranderd');
+      }
+    })();
+
     // ── T17 metadata-consistentie ──
     (function t17MetadataGuard() {
       const idx = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'ROADMAP_INDEX.json'), 'utf8'));
@@ -856,9 +990,10 @@ try {
       if (hist.audit_model_status !== 'HISTORICAL_PRE_V1_MODEL') problems.push('historisch Batch B is niet langer HISTORICAL_PRE_V1_MODEL');
       if (b.supersedes_historical !== false) problems.push('B-prime claimt het historische artefact te vervangen');
       const bl = fs.readFileSync(path.join(ROOT, 'docs', '00_Project_Management', 'AUDIT_MEASUREMENT_BASELINE.md'), 'utf8');
-      if (bl.indexOf('met criterium-specifieke evidence | **22 / 86**') < 0) {
-        problems.push('baseline meldt model_v1_verified niet als 22/86');
-      }
+      // model_v1_verified loopt op naarmate tracks onder v1.2 worden gecanonicaliseerd:
+      // 9/86 na A-prime, 22/86 na B-prime, 32/86 na T17. De actuele teller wordt centraal
+      // in de T17-guard hierboven gecontroleerd; hier alleen dat B-prime zelf 13 bijdraagt.
+      if (caps.length !== 13) problems.push('B-prime draagt niet 13 capabilities aan model_v1_verified bij');
     })();
 
     // ── Batch A-prime: Model-v1.2 auditartefact ──

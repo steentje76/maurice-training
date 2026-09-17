@@ -1,0 +1,1577 @@
+{
+ "_schema": "trainingskompas-aj-audit-batch/1.2",
+ "batch": "T17_PRIME",
+ "tracks": [
+  "T17"
+ ],
+ "audit_model_id": "trainingskompas-aj/v1.2",
+ "audit_model_version": "1.2",
+ "audit_model_fingerprint": "sha256:82891683aad13cccf779a13783d90bb77279cbab5dfd035989607226fa0a9264",
+ "canonicalization_baseline_sha": "80d4c802f1a85f394e406f258c5e89602aa73b45",
+ "complete": true,
+ "record_count": 100,
+ "capability_count": 10,
+ "na_record_count": 27,
+ "scored_record_count": 73,
+ "weights": {
+  "A": 5,
+  "B": 15,
+  "C": 15,
+  "D": 10,
+  "E": 10,
+  "F": 15,
+  "G": 5,
+  "H": 10,
+  "I": 5,
+  "J": 10
+ },
+ "anchors_frozen": true,
+ "supersedes_historical": false,
+ "historical_comparison": "NOT_COMPARABLE: er bestaat geen historische T17-trackscore; Batch A en B dekten T1, T2, T4, T5 en T6.",
+ "evidence_methodology": "Iedere criterium-score rust op criterium-specifieke evidence die reproduceerbaar is op de canonicalisatie-baseline. Voor criterium F is de evidence-class bepaald uit de uitvoeringsvorm van de test: vm.runInContext geldt als INTEGRATION_RUNTIME, new Function of require van een module als BEHAVIORAL_UNIT, en regex- of stringinspectie als DOCUMENTATION_ONLY. De F-ladder is cumulatief: 4 vereist 3 en 5 vereist 4, zodat adversarial bewijs zonder bewezen integratie- of runtimetest niet verder reikt dan 3. Bestandsnamen, grep-tellingen en assertion-aantallen zijn uitsluitend als zoekroute gebruikt en gelden nergens als zelfstandig bewijs. Productie-runtime is niet beperkt tot de browser: server-side Netlify-functies tellen mee wanneer de aanroep, de bereikbaarheid en de payload bewezen zijn.",
+ "external_verification": {
+  "capability": "PLAT-BACKUP-CLEANUP-001",
+  "method": "READ_ONLY_LIVE_METADATA",
+  "target": "Supabase project mhfxhzkdmgkaplicdszg (Maurice training), schema public",
+  "performed_queries": [
+   "SELECT table_schema, table_name FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'bak_p_%' ORDER BY table_name",
+   "SELECT relname, pg_get_userbyid(relowner), relrowsecurity, policy/constraint/index/column counts FROM pg_class JOIN pg_namespace WHERE nspname='public' AND relkind='r' AND relname LIKE 'bak_p_%'",
+   "SELECT table_name, column-name aggregates FROM information_schema.columns WHERE table_schema='public' AND table_name LIKE 'bak_p_%' GROUP BY table_name"
+  ],
+  "tables_found": [
+   "bak_p_exercise_equipment",
+   "bak_p_exercise_goals",
+   "bak_p_exercises",
+   "bak_p_goals",
+   "bak_p_program_block_exercises",
+   "bak_p_sessions",
+   "bak_p_training_exercises",
+   "bak_p_training_instances"
+  ],
+  "findings": {
+   "table_count": 8,
+   "contract_match": "8/8 exact, geen afwijking in beide richtingen",
+   "owner": "postgres (alle 8)",
+   "rls_enabled": "true (alle 8)",
+   "policies": 0,
+   "user_id_column": "aanwezig in alle 8",
+   "constraints": 0,
+   "indexes": 0,
+   "comments": 0
+  },
+  "row_data_read": false,
+  "database_mutations": 0,
+  "provenance_note": "Deze feiten zijn UITSLUITEND bewezen via read-only metadata op de live database en zijn NIET afleidbaar uit de repository. Zij zijn daarom vastgelegd als external_evidence_refs met evidence_origin EXTERNAL_LIVE_METADATA en nooit als repository source_ref. De repository bevat nul migraties die deze tabellen aanmaken of beheren.",
+  "schema_note": "Het bestaande A-prime en B-prime artefactschema kende geen veld voor extern bewijs. In plaats van repository-refs te fabriceren zijn twee additieve velden toegevoegd op criterium-niveau, evidence_origin en external_evidence_refs, plus dit external_verification-blok. Geen bestaand veld is van betekenis veranderd."
+ },
+ "sec_gate_adjudication": "SEC-GATE-001 is canoniek een CI-, build- of release-time capability. core/release-gate.js kent geen browser-, server-, build- of CI-uitvoeringsroute en geen uitvoerende test; mechanisch getraceerd over import, require, dynamische import, script-tag, node-invocatie, npm-script, workflowstap, shellscript, Netlify build- en deploycommando en child_process. Model v1.2 ondersteunt evaluatie van build- en CI-uitvoering al: een bewezen CI-entrypoint naar node-invocatie naar runReleaseGate naar discovery-resultaat naar exit of blokkade zou onder het bestaande C-anker vallen. Die keten bestaat niet. Geen modelwijziging nodig; B2, C1, F1 en I2 zijn definitief.",
+ "cross_capability_evidence_rejections": [
+  {
+   "evidence": "core/fDeleteAccountErasureCompleteness.test.js",
+   "primary_capability": "PLAT-DELETE-001",
+   "rejected_for": "PLAT-BACKUP-CLEANUP-001",
+   "reason": "noemt vier bak_p_-tabelnamen maar test de erasure-volledigheid van accountverwijdering"
+  },
+  {
+   "evidence": "core/fRC0.test.js",
+   "primary_capability": "CALC-EVIDENCE-SPEC-001",
+   "rejected_for": "PLAT-BACKUP-CLEANUP-001",
+   "reason": "noemt bak_p_ uitsluitend in een commentaarregel; test de evidence-renderketen"
+  },
+  {
+   "evidence": "core/fTrainenBrowserRuntime.test.js",
+   "primary_capability": "TRAIN-EXECUTION-001",
+   "rejected_for": "SEC-GATE-001",
+   "reason": "noemt de release gate maar test browserruntime"
+  },
+  {
+   "evidence": "core/fShadowCommercialLogicAudit.test.js",
+   "primary_capability": "ENTITLEMENT-CORE",
+   "rejected_for": "SEC-CONFIG-001",
+   "reason": "requiret entitlementCore.js en test commerciele logica, niet configuratiehygiene"
+  },
+  {
+   "evidence": "core/fEntitlementCore.test.js",
+   "primary_capability": "ENTITLEMENT-CORE",
+   "rejected_for": "SEC-USERROLE-001",
+   "reason": "test entitlements, niet privilege-escalatiebescherming"
+  },
+  {
+   "evidence": "A-prime schermevidence (TRAIN-HOME-001, TRAIN-EXECUTION-001 en verder)",
+   "primary_capability": "functionele T1/T2-capabilities",
+   "rejected_for": "CAP-REGISTRY-SCREENS-001",
+   "reason": "de geharde cross-cutting boundary sluit functioneel schermeigendom expliciet uit"
+  }
+ ],
+ "gap_traceability_note": "J is mechanisch herrekend uit het canonieke register van 60 gaps, met de relatieverzameling primary_capability_id UNION affected_capability_ids voor COMPLETE en CAPABILITY_SCOPED records. GAP-P2-010 is UNSCOPED met primary null en lege affected en blokkeert exact 0 van de 10 capabilities. Drie capabilities dragen een open V1-gap met blocker true en komen op J=2: CAP-REGISTRY-SCREENS-001 (GAP-P2-008), PLAT-BACKUP-CLEANUP-001 (GAP-P2-002) en SEC-CONFIG-001 (GAP-P2-004). Twee dragen een open nonblocking gap en komen op J=3. Vijf hebben geen relevante open V1-gap en komen op J=4. Er is geen nieuwe gap aangemaakt.",
+ "track_results": {
+  "T17": {
+   "score": "2.873",
+   "percentage": "57.46",
+   "capability_count": 10,
+   "sum_of_stored_scores": "28.729",
+   "arithmetic": "som van de tien OPGESLAGEN driedecimale capabilityscores gedeeld door 10, ROUND_HALF_UP op 3 decimalen; percentage uit de opgeslagen trackscore gedeeld door 5 maal 100, ROUND_HALF_UP op 2 decimalen",
+   "historical_pre_v1_score": null,
+   "historical_note": "NOT_COMPARABLE: T17 is nooit eerder als track gescoord."
+  }
+ },
+ "capabilities": [
+  {
+   "stable_id": "CAP-REGISTRY-SCREENS-001",
+   "primary_track": "T17",
+   "v1_scope": true,
+   "applicable_weight": 65,
+   "weighted_numerator": 155,
+   "unrounded_quotient": "2.384615384615384615384615385",
+   "weighted_score": "2.385",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.308",
+     "rationale": "Canonieke verantwoordelijkheid vastgelegd in de capability-registry als cross-cutting scherminventaris, auditdekking en volledigheid, met expliciete uitsluiting van functioneel schermeigendom. De v1_scope-onderbouwing staat in de index.",
+     "evidence_refs": [
+      "docs/CAPABILITY_REGISTRY.md#CAP-REGISTRY-SCREENS-001",
+      "docs/ROADMAP_INDEX.json#CAP-REGISTRY-SCREENS-001.v1_evidence"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.692",
+     "rationale": "De acht F2-mastersprintdocumenten vormen de aanwijsbare hoofdimplementatie van de auditdekking. Het zijn audit-artefacten, geen code: de Code-kolom van de registry verwijst naar docs/MS-F2-01..08. Documentatie alleen kan anker 4 niet dragen, dus 3 is het maximum dat het bewijs toelaat.",
+     "evidence_refs": [
+      "docs/MS-F2-01_CANONICAL_TRAINING_START.md",
+      "docs/MS-F2-08_GAP_P1_006_CLOSURE.md",
+      "docs/CAPABILITY_REGISTRY.md#CAP-REGISTRY-SCREENS-001"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.462",
+     "rationale": "De auditdekking heeft een bewezen productiereferent: index.html draagt 79 unieke id=\"s-*\"-schermnodes waarvan 68 via go() routeerbaar zijn, nul dode routes. Er bestaat echter geen keten van entrypoint naar consument die de dekking zelf uitvoert of bewaakt; caller-aanwezigheid zonder bewezen chain is maximaal 2.",
+     "evidence_refs": [
+      "index.html#id=\"s-*\"",
+      "index.html#go(id)"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De capability bezit inventaris en auditdekking, geen eigen staat: er bestaat geen tabel, migratie of opslagabstractie die schermdekking persisteert. De F2-resultaten leven als markdown-documenten in de repository, niet als data.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Scherminventaris en auditdekking nemen architectonisch niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision naar athlete. Nul referenties naar CalcCore, DecisionCore of ContextEngineCore in de F2-documenten of in enige implementatie van deze capability.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.462",
+     "rationale": "DOCUMENTATION_ONLY. core/fExecutionIdentity.test.js en core/fGapP1006Closure.test.js dragen nul uitvoeringsconstructies: geen vm.runInContext, geen new Function, geen require van een core-module. Zij inspecteren bron en structuur van index.html als tekst. Dat is anker 2; behavioral unit testing van deze capability ontbreekt.",
+     "evidence_refs": [
+      "core/fExecutionIdentity.test.js#geen-uitvoering",
+      "core/fGapP1006Closure.test.js#geen-uitvoering"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Auditdekking van schermen kent geen eigen trust boundary, persoonsgegeven, authenticatie, autorisatie of misbruikroute; de F2-documenten bevatten uitsluitend bevindingen. Security van de schermen zelf behoort tot de functionele capabilities.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Er bestaat geen gebruikerscontract: de sporter ziet nergens een scherminventaris of auditdekkingsrapport. De F2-artefacten zijn interne auditdocumenten zonder route, invoer of terugkoppeling in de app.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.154",
+     "rationale": "Generieke foutafhandeling; er is geen capability-specifiek bewijs dat onvolledige of verouderde dekking deterministisch als zodanig wordt gesignaleerd. De F2-documenten leggen bevindingen vast maar kennen geen degraded state of fallback. Happy-path-only evidence, dus maximaal 2.",
+     "evidence_refs": [
+      "docs/MS-F2-01_CANONICAL_TRAINING_START.md"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.308",
+     "rationale": "GAP-P2-008 noemt deze capability in affected_capability_ids met v1_scope true, status OPEN en blocker exact true; GAP-P3-004 is een tweede open relatie. Model v1.2 anker 2 bij een open V1-gap met bewezen blocker.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-008",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-004"
+     ],
+     "gap_refs": [
+      "GAP-P2-008",
+      "GAP-P3-004"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "DOC-HANDBOOK-001",
+   "primary_track": "T17",
+   "v1_scope": true,
+   "applicable_weight": 65,
+   "weighted_numerator": 150,
+   "unrounded_quotient": "2.307692307692307692307692308",
+   "weighted_score": "2.308",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.308",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als documentatiegovernance: Handbook-actualiteit en normatieve consistentie. De afwezigheid in CAPABILITY_REGISTRY.md is een expliciet besluit, niet een omissie: ROADMAP_COVERAGE_AUDIT.md legt vast dat een Handbook-hoofdstuk geen technische capability met code-, DB- of testbewijs is en niet kunstmatig aan de registry wordt toegevoegd.",
+     "evidence_refs": [
+      "docs/ROADMAP_COVERAGE_AUDIT.md#kanttekening-DOC-HANDBOOK-001",
+      "docs/ROADMAP_INDEX.json#DOC-HANDBOOK-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.692",
+     "rationale": "docs/HANDBOOK_UPDATE_PLAN.md is de aanwijsbare hoofdimplementatie van de governance-verantwoordelijkheid, met een prioritering per hoofdstuk. Documentatie alleen kan anker 4 niet dragen; er is geen mechanisme dat actualiteit afdwingt.",
+     "evidence_refs": [
+      "docs/HANDBOOK_UPDATE_PLAN.md"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.462",
+     "rationale": "Het governance-artefact wordt in de roadmap en het gap register aangehaald en heeft daarmee een bewezen referent, maar er is geen keten van entrypoint naar consument die Handbook-actualiteit uitvoert of controleert. Anker 2.",
+     "evidence_refs": [
+      "docs/GAP_ANALYSIS_V2.md#DOC-HANDBOOK-001",
+      "docs/ROADMAP_V1_1_MIGRATION_MATRIX.md#DOC-HANDBOOK-001"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Documentatiegovernance kent geen eigen persistentie: het Handbook en het updateplan zijn versiebeheerde markdownbestanden. Er bestaat geen tabel, migratie of opslagabstractie voor deze capability.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Handbook-actualiteit staat architectonisch volledig los van de keten RAW DATA naar Calculation naar Context naar Decision naar athlete; er is geen enkele engine-referentie in de governance-bronnen.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 1,
+     "weighted_contribution": "0.231",
+     "rationale": "Geen enkele test raakt deze capability: een zoekroute op handbook over alle 383 testbestanden levert nul resultaten. Anker 1, geen test.",
+     "evidence_refs": [
+      "core/*.test.js#nul-treffers-handbook"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Documentatiegovernance kent geen trust boundary, persoonsgegeven, authenticatie, autorisatie, secret of misbruikroute; het betreft normatieve projectdocumentatie in een publieke repository-context.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Er bestaat geen gebruikerscontract: het Handbook richt zich op ontwikkeling en governance, niet op de sporter. Geen route, invoer of terugkoppeling in de app.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.154",
+     "rationale": "Generieke afhandeling: het updateplan benoemt stale hoofdstukken als bevinding, maar er is geen capability-specifiek bewijs dat verouderde normatieve documentatie deterministisch wordt gedetecteerd of gesignaleerd. Happy-path-only, dus maximaal 2.",
+     "evidence_refs": [
+      "docs/HANDBOOK_UPDATE_PLAN.md"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.462",
+     "rationale": "Drie open V1-gaps noemen deze capability: GAP-P2-006, GAP-P2-005 en GAP-P3-002, alle met blocker die niet op true is bewezen en daarmee onder Model v1.2 nonblocking. Anker 3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-006",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-005",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-002"
+     ],
+     "gap_refs": [
+      "GAP-P2-006",
+      "GAP-P2-005",
+      "GAP-P3-002"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "PLAT-BACKUP-CLEANUP-001",
+   "primary_track": "T17",
+   "v1_scope": true,
+   "applicable_weight": 80,
+   "weighted_numerator": 185,
+   "unrounded_quotient": "2.3125",
+   "weighted_score": "2.313",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.188",
+     "rationale": "Verantwoordelijkheid vastgelegd in de registry als beheer van de bak_p_*-backuptabellen met retentiecontract. Het contract bakent af tot retentie, cleanupbeleid en governance; creatie en restore vallen er aantoonbaar buiten. Capability-specifieke acceptance expectations zijn niet apart vastgelegd, dus geen 4.",
+     "evidence_refs": [
+      "docs/CAPABILITY_REGISTRY.md#PLAT-BACKUP-CLEANUP-001",
+      "docs/BACKUP_RETENTION_CONTRACT.md"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "evidence_origin": "MIXED_REPOSITORY_AND_EXTERNAL_LIVE_METADATA",
+     "external_evidence_refs": [
+      "supabase://mhfxhzkdmgkaplicdszg/information_schema.tables?table_schema=public&table_name=bak_p_%25"
+     ],
+     "score": 3,
+     "weighted_contribution": "0.563",
+     "rationale": "docs/BACKUP_RETENTION_CONTRACT.md is de aanwijsbare hoofdimplementatie voor een governance-capability en komt aantoonbaar exact overeen met de productiewerkelijkheid: de acht in het contract genoemde tabelnamen zijn identiek aan de acht die live in het public-schema bestaan, 8 van 8, zonder afwijking in beide richtingen. Er is geen code die retentie afdwingt, dus geen 4.",
+     "evidence_refs": [
+      "docs/BACKUP_RETENTION_CONTRACT.md#classificatietabel",
+      "supabase://mhfxhzkdmgkaplicdszg/information_schema.tables?table_schema=public&table_name=bak_p_%25"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "evidence_origin": "MIXED_REPOSITORY_AND_EXTERNAL_LIVE_METADATA",
+     "external_evidence_refs": [
+      "supabase://mhfxhzkdmgkaplicdszg/information_schema.tables?table_schema=public&table_name=bak_p_%25"
+     ],
+     "score": 2,
+     "weighted_contribution": "0.375",
+     "rationale": "Het retentiecontract heeft een bewezen productiereferent: de acht bak_p_*-tabellen bestaan werkelijk in het live public-schema. Er is echter nul productie-, server-, build- of CI-consument die deze tabellen leest, schrijft of opruimt, en dus geen bewezen keten van entrypoint naar consument. Caller-afwezigheid met bewezen referent is anker 2.",
+     "evidence_refs": [
+      "supabase://mhfxhzkdmgkaplicdszg/information_schema.tables?table_schema=public&table_name=bak_p_%25",
+      "docs/BACKUP_RETENTION_CONTRACT.md#0-code-referenties"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "evidence_origin": "EXTERNAL_LIVE_METADATA",
+     "external_evidence_refs": [
+      "supabase://mhfxhzkdmgkaplicdszg/pg_catalog.pg_class+pg_policies+pg_constraint+pg_index?relname=bak_p_%25",
+      "supabase://mhfxhzkdmgkaplicdszg/information_schema.columns?table_name=bak_p_%25"
+     ],
+     "score": 3,
+     "weighted_contribution": "0.375",
+     "rationale": "Persistentie is extern geverifieerd aanwezig: acht tabellen in het public-schema, eigenaar postgres, row level security ingeschakeld op alle acht, en een user_id-kolom in alle acht. Lifecycle-metadata is echter mager: nul constraints, nul indexen, nul comments en geen enkele migratie in de repository die deze tabellen beheert, dus geen versionering of migratiehistorie. Dat begrenst het anker op 3.",
+     "evidence_refs": [
+      "supabase://mhfxhzkdmgkaplicdszg/pg_catalog.pg_class+pg_policies+pg_constraint+pg_index?relname=bak_p_%25",
+      "supabase://mhfxhzkdmgkaplicdszg/information_schema.columns?table_name=bak_p_%25"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Backupretentie en cleanupbeleid nemen architectonisch niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision naar athlete. Extern geverifieerd: de acht tabellen dragen nul constraints en nul indexen en worden door geen enkele engine gelezen; het contract stelt zelf nul code-referenties vast.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 1,
+     "weighted_contribution": "0.188",
+     "rationale": "Er bestaat geen enkele test voor deze capability. Een zoekroute over alle testbestanden op bak_p_ en BACKUP_RETENTION levert twee treffers, beide afgewezen als cross-capability evidence. Anker 1, geen test.",
+     "evidence_refs": [
+      "core/*.test.js#nul-capability-specifieke-test"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "evidence_origin": "EXTERNAL_LIVE_METADATA",
+     "external_evidence_refs": [
+      "supabase://mhfxhzkdmgkaplicdszg/pg_catalog.pg_class+pg_policies+pg_constraint+pg_index?relname=bak_p_%25",
+      "supabase://mhfxhzkdmgkaplicdszg/information_schema.columns?table_name=bak_p_%25"
+     ],
+     "score": 3,
+     "weighted_contribution": "0.188",
+     "rationale": "De acht tabellen dragen persoonsgebonden data: een user_id-kolom in alle acht, extern geverifieerd. Enforcement op de datalaag is aangetoond: row level security is ingeschakeld op alle acht met nul policies, wat volledige default-deny oplevert voor anon en authenticated, conform het bestaande billing_events-precedent. Capability-specifiek dekkend auditbewijs ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "supabase://mhfxhzkdmgkaplicdszg/pg_catalog.pg_class+pg_policies+pg_constraint+pg_index?relname=bak_p_%25",
+      "supabase://mhfxhzkdmgkaplicdszg/information_schema.columns?table_name=bak_p_%25"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Er bestaat geen gebruikerscontract: backupretentie is een interne platformverantwoordelijkheid zonder route, invoer of terugkoppeling in de app. Extern geverifieerd dragen de tabellen geen enkele index of constraint die een gebruikersgerichte weergave zou ondersteunen, en er is nul applicatiecode die ze benadert.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "evidence_origin": "MIXED_REPOSITORY_AND_EXTERNAL_LIVE_METADATA",
+     "external_evidence_refs": [
+      "supabase://mhfxhzkdmgkaplicdszg/pg_catalog.pg_class+pg_policies+pg_constraint+pg_index?relname=bak_p_%25"
+     ],
+     "score": 3,
+     "weighted_contribution": "0.188",
+     "rationale": "Relevante failure mode expliciet benoemd en afgedwongen: het contract classificeert geen enkele tabel als SAFE TO REMOVE, legt POLICY_DECISION_REQUIRED vast voor verwijdering of archivering en stelt expliciet dat geen termijn wordt verzonnen zonder productbeslissing. Op de datalaag is dat afgedwongen via row level security default-deny. Geen sabotage- of fail-closed-test voor deze capability, dus geen 4.",
+     "evidence_refs": [
+      "docs/BACKUP_RETENTION_CONTRACT.md#POLICY_DECISION_REQUIRED",
+      "docs/BACKUP_RETENTION_CONTRACT.md#geen-termijn-verzonnen",
+      "supabase://mhfxhzkdmgkaplicdszg/pg_catalog.pg_class+pg_policies+pg_constraint+pg_index?relname=bak_p_%25"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.250",
+     "rationale": "GAP-P2-002 noemt deze capability als primary_capability_id met v1_scope true, status OPEN en blocker exact true. Model v1.2 anker 2 bij een open V1-gap met bewezen blocker. De externe verificatie heeft geen nieuwe gap opgeleverd: het ontbrekende verwijder- of archiveerbesluit is precies wat GAP-P2-002 al dekt.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-002"
+     ],
+     "gap_refs": [
+      "GAP-P2-002"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "PLAT-DELETE-001",
+   "primary_track": "T17",
+   "v1_scope": true,
+   "applicable_weight": 90,
+   "weighted_numerator": 325,
+   "unrounded_quotient": "3.611111111111111111111111111",
+   "weighted_score": "3.611",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als accountverwijdering conform GDPR over 29 of meer tabellen en kolomcombinaties, met afbakening tegen de overige accountlifecycle. Evidence-status en scope staan expliciet in de registry en de index.",
+     "evidence_refs": [
+      "docs/CAPABILITY_REGISTRY.md#PLAT-DELETE-001",
+      "docs/ROADMAP_INDEX.json#PLAT-DELETE-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.667",
+     "rationale": "netlify/functions/delete-account.js is de enige eigenaar van de verwijderflow; parallelle paden zijn geinventariseerd en er is geen onbeheerst shadow-pad. Geen guard die een tweede verwijderpad structureel onmogelijk maakt, dus geen 5.",
+     "evidence_refs": [
+      "netlify/functions/delete-account.js",
+      "docs/CAPABILITY_REGISTRY.md#PLAT-DELETE-001"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.667",
+     "rationale": "Volledige call-chain inclusief payload bewezen over de server-runtime: index.html roept het endpoint /.netlify/functions/delete-account aan, de functie exporteert een handler en verwerkt de verwijdering over 29 of meer tabellen, met zeven server-side referenties. Convergentie van alle relevante entrypoints niet aangetoond, dus geen 5.",
+     "evidence_refs": [
+      "index.html#/.netlify/functions/delete-account",
+      "netlify/functions/delete-account.js#exports.handler"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "De capability opereert over 29 of meer tabellen met owner-binding via auth.uid()-policies in de onderliggende migraties. Er is geen eigen lifecycle- of versioneringsmechanisme voor de verwijdering zelf, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/delete-account.js",
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Accountverwijdering is een juridische en datalaag-verantwoordelijkheid die architectonisch niet deelneemt aan de keten RAW DATA naar Calculation naar Context naar Decision naar athlete; de functie raakt geen enkele engine. De index draagt om dezelfde reden evidence_status N/A voor de wetenschappelijke onderbouwing.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "BEHAVIORAL_UNIT: core/fDeleteAccountSecurity.test.js requiret netlify/functions/delete-account.js en voert het gedrag uit, waaronder weigering van ongeauthenticeerde verzoeken en beperking tot het eigen account. Geen vm-runtime over de echte call-chain, dus geen 4.",
+     "evidence_refs": [
+      "core/fDeleteAccountSecurity.test.js#require(delete-account.js)"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Enforcement aangetoond op de datalaag en in de functie: identiteitscontrole met weigering bij ongeauthenticeerde toegang, beperking tot het eigen account, en fail-closed gedrag bij onvaststelbare identity. Capability-specifiek dekkend auditbewijs over alle 29 tabellen ontbreekt, dus geen 5.",
+     "evidence_refs": [
+      "core/fDeleteAccountSecurity.test.js#alleen-eigen-account",
+      "netlify/functions/delete-account.js"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "De keten ontdekken naar gebruiken is bruikbaar bewezen: accountverwijdering is vanuit de app aanroepbaar via het endpoint en geeft terugkoppeling. Geen device-bewijs voor exact deze flow, dus geen 5, en volledigheid van vervolgstaat is niet aangetoond.",
+     "evidence_refs": [
+      "index.html#/.netlify/functions/delete-account"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Unknown blijft unknown, door test bewezen: bij onvaststelbare identity weigert de functie deterministisch in plaats van gedeeltelijk te verwijderen, en ongeauthenticeerde verzoeken worden geweigerd. Anker 5 vereist een sabotagetest die fail-closed over de hele verwijderketen afdwingt; die ontbreekt.",
+     "evidence_refs": [
+      "core/fDeleteAccountSecurity.test.js#fail-closed-identity"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Geen enkele gap noemt deze capability in primary_capability_id of affected_capability_ids met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over alle 60 canonieke gaps. Anker 4; 5 vereist closure-evidence van een gesloten gap, die hier niet bestaat.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "PLAT-OBSERVABILITY-001",
+   "primary_track": "T17",
+   "v1_scope": true,
+   "applicable_weight": 70,
+   "weighted_numerator": 240,
+   "unrounded_quotient": "3.428571428571428571428571429",
+   "weighted_score": "3.429",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.214",
+     "rationale": "Verantwoordelijkheid vastgelegd als structurele logging en monitoring met redactie en foutnormalisatie. Capability-specifieke acceptance expectations zijn niet apart vastgelegd, dus geen 4.",
+     "evidence_refs": [
+      "docs/CAPABILITY_REGISTRY.md#PLAT-OBSERVABILITY-001",
+      "docs/OBSERVABILITY_CONTRACT.md"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.857",
+     "rationale": "core/observability.js is de enige eigenaar van de observability-laag; parallelle paden zijn geinventariseerd en geclassificeerd, geen onbeheerst shadow-pad. Geen guard tegen een tweede logpad, dus geen 5.",
+     "evidence_refs": [
+      "core/observability.js",
+      "docs/OBSERVABILITY_CONTRACT.md"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.857",
+     "rationale": "Volledige call-chain bewezen over twee runtimes: de module wordt via een script-tag in de browser geladen en door tien Netlify-functies server-side gebruikt, met doorgifte van genormaliseerde foutobjecten. Convergentie van alle entrypoints niet aangetoond, dus geen 5.",
+     "evidence_refs": [
+      "index.html#script[src=\"core/observability.js\"]",
+      "netlify/functions/#observability"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De observability-laag kent bewijsbaar geen eigen persistentie: het contract legt vast dat er geen persistente eigen opslag is en dat logretentie gebonden is aan de eigen retentie van Netlify. Er bestaat geen migratietabel voor observability.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Logging en monitoring nemen architectonisch niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision naar athlete; de module normaliseert fouten en raakt geen enkele engine.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.643",
+     "rationale": "BEHAVIORAL_UNIT: core/observability.test.js requiret core/observability.js en voert de normalisatie en redactie uit. Geen vm-runtime over de echte call-chain, dus geen 4.",
+     "evidence_refs": [
+      "core/observability.test.js#require(observability.js)"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.214",
+     "rationale": "Redactie van gevoelige velden is contractueel vastgelegd en in de module aanwezig, wat een echte trust boundary raakt omdat logs persoonsgebonden context kunnen bevatten. Capability-specifiek dekkend auditbewijs over alle logpaden ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "docs/OBSERVABILITY_CONTRACT.md#redactie",
+      "core/observability.js"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Er bestaat geen gebruikerscontract: logging en monitoring zijn interne platformfunctionaliteit zonder route, invoer of terugkoppeling voor de sporter. Het contract beschrijft uitsluitend technische consumenten.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.214",
+     "rationale": "Relevante failure modes zijn benoemd en afgevangen: de module normaliseert fouten naar een vast formaat en valt terug op een veilige representatie bij onbekende invoer. Deterministisch bewijs dat unknown unknown blijft over alle logpaden ontbreekt.",
+     "evidence_refs": [
+      "core/observability.js#normalisatie"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.429",
+     "rationale": "GAP-P2-003 noemt deze capability als primary_capability_id met v1_scope true en status OPEN, met blocker die niet op true is bewezen en daarmee onder Model v1.2 nonblocking. Anker 3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-003"
+     ],
+     "gap_refs": [
+      "GAP-P2-003"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "SEC-CONFIG-001",
+   "primary_track": "T17",
+   "v1_scope": true,
+   "applicable_weight": 80,
+   "weighted_numerator": 205,
+   "unrounded_quotient": "2.5625",
+   "weighted_score": "2.563",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.188",
+     "rationale": "Verantwoordelijkheid vastgelegd als secrets- en configuratiehygiene met client/server-classificatie, redactie en fail-closed gedrag over negen Netlify-functies. Acceptance expectations niet capability-specifiek vastgelegd, dus geen 4.",
+     "evidence_refs": [
+      "docs/CAPABILITY_REGISTRY.md#SEC-CONFIG-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.563",
+     "rationale": "De configuratiehygiene is verspreid over 34 van de 44 Netlify-functies die SERVICE_ROLE gebruiken, zonder een aanwijsbare enkele eigenaar. Er is een werkend fundament met een consistent patroon, maar geen canonieke module die het afdwingt, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/#SERVICE_ROLE",
+      "docs/CAPABILITY_REGISTRY.md#SEC-CONFIG-001"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.563",
+     "rationale": "Productie-callers bewezen: de betrokken functies zijn vanuit index.html aanroepbaar via hun endpoints en draaien server-side met de geclassificeerde configuratie. Geen volledige payload-chain per configuratiewaarde aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#/.netlify/functions/",
+      "netlify/functions/#SERVICE_ROLE"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.250",
+     "rationale": "Configuratie wordt gedeeltelijk gepersisteerd: anthropic_key en pin_hash komen voor in drie migratiebestanden. Er is geen owner-binding op rijniveau en geen lifecycle- of versioneringsmechanisme voor configuratiewaarden, dus anker 2.",
+     "evidence_refs": [
+      "migratie_v*.sql#anthropic_key",
+      "migratie_v*.sql#pin_hash"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Secrets- en configuratiehygiene neemt architectonisch niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision naar athlete; het betreft infrastructuurclassificatie zonder enige engine-referentie.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.375",
+     "rationale": "DOCUMENTATION_ONLY voor deze capability. core/fShadowCommercialLogicAudit.test.js voert wel code uit maar requiret entitlementCore.js en test de commerciele logica, niet de configuratiehygiene: CROSS_CAPABILITY_EVIDENCE_REJECTED. Er is geen test die de client/server-classificatie of de redactie zelf uitvoert. Anker 2.",
+     "evidence_refs": [
+      "core/fShadowCommercialLogicAudit.test.js#cross-capability-afgewezen"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.188",
+     "rationale": "Enforcement aanwezig: 34 functies scheiden server-side SERVICE_ROLE van clientcontext en er is fail-closed gedrag beschreven. Er blijven echter configuratiekolommen in de datalaag zonder aangetoonde afscherming, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/#SERVICE_ROLE",
+      "migratie_v*.sql#anthropic_key"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Er bestaat geen gebruikerscontract: secrets- en configuratiehygiene is interne infrastructuur zonder route, invoer of terugkoppeling voor de sporter.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.188",
+     "rationale": "Relevante failure modes zijn benoemd en afgevangen: de canonieke verantwoordelijkheid noemt fail-closed gedrag expliciet en de functies weigeren bij ontbrekende configuratie. Deterministisch bewijs over alle 34 functies ontbreekt.",
+     "evidence_refs": [
+      "docs/CAPABILITY_REGISTRY.md#SEC-CONFIG-001#fail-closed"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.250",
+     "rationale": "GAP-P2-004 noemt deze capability als primary_capability_id met v1_scope true, status OPEN en blocker exact true; GAP-P3-001 en GAP-P4-003 zijn aanvullende open relaties. Model v1.2 anker 2 bij een open V1-gap met bewezen blocker.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-004",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-001",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P4-003"
+     ],
+     "gap_refs": [
+      "GAP-P2-004",
+      "GAP-P3-001",
+      "GAP-P4-003"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "SEC-GATE-001",
+   "primary_track": "T17",
+   "v1_scope": true,
+   "applicable_weight": 65,
+   "weighted_numerator": 125,
+   "unrounded_quotient": "1.923076923076923076923076923",
+   "weighted_score": "1.923",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.231",
+     "rationale": "Verantwoordelijkheid vastgelegd als discovery-based release gate, een CI-, build- of release-time capability. De canonieke bronnen benoemen het doel maar leggen geen capability-specifieke acceptance expectations vast, dus geen 4.",
+     "evidence_refs": [
+      "docs/CAPABILITY_REGISTRY.md#SEC-GATE-001",
+      "docs/ROADMAP_INDEX.json#SEC-GATE-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.462",
+     "rationale": "core/release-gate.js bestaat en exporteert runReleaseGate, maar is in geen enkele architectuurroute opgenomen: nul script-tags, nul Netlify-referenties, nul package- of npm-scripts, nul workflowstappen. Een implementatie zonder enige aangesloten route kan geen canonieke bron zijn; fundament aanwezig, dus anker 2.",
+     "evidence_refs": [
+      "core/release-gate.js#runReleaseGate",
+      "package.json#geen-script"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 1,
+     "weighted_contribution": "0.231",
+     "rationale": "Nul productie-, server-, build- en CI-consumenten. Mechanisch getraceerd over import, require, dynamische import, script-tag, node-invocatie, npm-script, workflowstap, shellscript, Netlify build- en deploycommando en child_process: geen enkele uitvoeringsroute. Model v1.2 begrenst een capability met nul production callers expliciet op anker 1. Browser-runtime is hier niet vereist, maar ook build- en CI-runtime ontbreken volledig.",
+     "evidence_refs": [
+      "core/release-gate.js#nul-callers",
+      "package.json#scripts",
+      ".github/workflows/#geen-invocatie"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Een release gate is bewijsbaar stateless: core/release-gate.js kent geen persistentie-aanroep en er bestaat geen migratietabel voor gate-uitkomsten. De uitkomst is een in-memory object met ok en reasons.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Een build- en release-gate neemt architectonisch niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision naar athlete; de module inspecteert releasegereedheid en raakt geen enkele engine.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 1,
+     "weighted_contribution": "0.231",
+     "rationale": "Geen enkele test voert release-gate.js uit. Gericht gezocht over directe tests, wrappertests, CI-tests, buildverificatie, subprocess-uitvoering en negatieve fixtures: core/fTrainenBrowserRuntime.test.js noemt de gate maar test browserruntime en is afgewezen als cross-capability evidence. Anker 1.",
+     "evidence_refs": [
+      "core/fTrainenBrowserRuntime.test.js#cross-capability-afgewezen",
+      "core/*.test.js#nul-uitvoerende-test"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De release gate inspecteert releasegereedheid zonder trust boundary, persoonsgegeven, authenticatie, autorisatie of secret; hij draait niet en verwerkt geen invoer van buiten. De module bevat nul referenties naar credentials of gebruikersdata.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Er bestaat geen gebruikerscontract: een release gate is build- en releasetooling zonder enige route of terugkoppeling voor de sporter.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.154",
+     "rationale": "runReleaseGate levert een object met ok en reasons, wat een gestructureerde uitkomst is, maar zonder enige uitvoeringsroute is geen relevante fail-closed releaseflow bewezen: er is geen bewezen gedrag bij een falende gate, geen exit-code, geen blokkade. Generieke afhandeling, dus anker 2.",
+     "evidence_refs": [
+      "core/release-gate.js#runReleaseGate#ok-reasons"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.615",
+     "rationale": "Geen enkele gap noemt deze capability in primary_capability_id of affected_capability_ids met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over alle 60 canonieke gaps. Anker 4.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "SEC-GYMS-001",
+   "primary_track": "T17",
+   "v1_scope": true,
+   "applicable_weight": 80,
+   "weighted_numerator": 285,
+   "unrounded_quotient": "3.5625",
+   "weighted_score": "3.563",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.250",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als row level security-afscherming van de gyms-tabel, met code-verwijzing naar de migratie en afbakening tegen gym-functionaliteit.",
+     "evidence_refs": [
+      "docs/CAPABILITY_REGISTRY.md#SEC-GYMS-001",
+      "migratie_v496.sql"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.750",
+     "rationale": "migratie_v496.sql is de enige eigenaar van de gyms-afscherming, met zeven treffers die het beleid vastleggen. Alternatieven zijn geinventariseerd, geen onbeheerst shadow-pad. Geen guard tegen een tweede beleidspad, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v496.sql#gyms"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.563",
+     "rationale": "Productie-callers bewezen op de datalaag: de policies zijn actief op de gyms-tabel en worden door de gym-functies aangesproken. Geen volledige payload-chain van entrypoint tot consument aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v496.sql#gyms",
+      "netlify/functions/gym-team.js"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.500",
+     "rationale": "De gyms-tabel heeft schema, owner-binding via auth.uid()-policies en een migratiehistorie. Versionering en historiebehoud van het beleid zelf zijn niet aangetoond, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v496.sql#gyms",
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Row level security-afscherming van een tabel neemt architectonisch niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision naar athlete; het betreft datalaagbeleid zonder enige engine-referentie.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.563",
+     "rationale": "BEHAVIORAL_UNIT: core/fGymTeamSecurity.test.js requiret netlify/functions/gym-team.js en gym-team-set-pin.js en voert het afschermingsgedrag uit. core/fGymsRlsSecurity.test.js bevat nul uitvoeringsconstructies en is DOCUMENTATION_ONLY, dus telt niet mee voor anker 3. Geen vm-runtime over de echte call-chain, dus geen 4.",
+     "evidence_refs": [
+      "core/fGymTeamSecurity.test.js#require(gym-team.js)",
+      "core/fGymsRlsSecurity.test.js#geen-uitvoering"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.250",
+     "rationale": "Enforcement aangetoond op de datalaag: row level security met auth.uid()-policies op de gyms-tabel, plus uitgevoerd testbewijs dat ongeautoriseerde toegang wordt geweigerd. Capability-specifiek dekkend auditbewijs over alle toegangspaden ontbreekt, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v496.sql#auth.uid()",
+      "core/fGymTeamSecurity.test.js#geweigerd"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Er bestaat geen gebruikerscontract: tabelafscherming is datalaagbeleid zonder route, invoer of terugkoppeling voor de sporter. De gym-functionaliteit zelf valt aantoonbaar buiten deze capability.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.188",
+     "rationale": "Relevante failure modes zijn benoemd en afgevangen: ongeautoriseerde toegang wordt geweigerd in plaats van gedeeltelijk toegestaan, met uitgevoerd testbewijs. Geen sabotagetest die fail-closed over de hele tabel afdwingt, dus geen 4.",
+     "evidence_refs": [
+      "core/fGymTeamSecurity.test.js#geweigerd"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.500",
+     "rationale": "Geen enkele gap noemt deze capability in primary_capability_id of affected_capability_ids met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over alle 60 canonieke gaps. Anker 4.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "SEC-TEST-001",
+   "primary_track": "T17",
+   "v1_scope": true,
+   "applicable_weight": 70,
+   "weighted_numerator": 215,
+   "unrounded_quotient": "3.071428571428571428571428571",
+   "weighted_score": "3.071",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.286",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als security-regressietests op vier kritieke Netlify-functies, met expliciete afbakening tegen de functionaliteit van die functies zelf.",
+     "evidence_refs": [
+      "docs/CAPABILITY_REGISTRY.md#SEC-TEST-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.643",
+     "rationale": "De testdekking is aanwijsbaar belegd in drie uitgevoerde suites over de vier bewaakte functies. Een vierde suite ontbreekt voor coach.js als zelfstandig securityregressiebestand; de dekking is dus aanwezig maar niet aantoonbaar volledig beheerst, dus geen 4.",
+     "evidence_refs": [
+      "core/fWearableAuthSecurity.test.js",
+      "core/fDeleteAccountSecurity.test.js",
+      "core/fGymTeamSecurity.test.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.429",
+     "rationale": "De bewaakte functies draaien aantoonbaar in productie: coach.js met acht client-aanroepen, gym-team.js met zeven, wearable-auth-start.js en delete-account.js elk met een. De capability zelf is testdekking en heeft geen eigen productieketen; caller-aanwezigheid van het bewaakte object zonder bewezen keten van de dekking zelf is anker 2.",
+     "evidence_refs": [
+      "index.html#/.netlify/functions/coach",
+      "index.html#/.netlify/functions/gym-team"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Security-regressietests kennen bewijsbaar geen eigen persistentie: de testbestanden leven in de repository en er bestaat geen tabel, migratie of opslagabstractie voor testdekking.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Security-regressietesten neemt architectonisch niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision naar athlete; de suites voeren functies uit en raken geen enkele engine.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.643",
+     "rationale": "BEHAVIORAL_UNIT: drie suites requiren hun respectieve functies en voeren het securitygedrag uit, waaronder weigering van ongeauthenticeerde verzoeken. Geen vm-runtime over de echte call-chain, dus geen 4; geen adversarial suite die fail-closed van de dekking zelf bewijst, dus geen 5.",
+     "evidence_refs": [
+      "core/fWearableAuthSecurity.test.js#require(wearable-auth-start.js)",
+      "core/fDeleteAccountSecurity.test.js#require(delete-account.js)",
+      "core/fGymTeamSecurity.test.js#require(gym-team.js)"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.286",
+     "rationale": "De dekking richt zich exact op de trust boundary: authenticatie, eigenaarschap en autorisatie op vier kritieke functies, met uitgevoerd bewijs dat ongeautoriseerde verzoeken worden geweigerd. Dekking over alle securityrelevante functies is niet aangetoond, dus geen 5.",
+     "evidence_refs": [
+      "core/fDeleteAccountSecurity.test.js#ongeauthenticeerd-geweigerd",
+      "core/fGymTeamSecurity.test.js#autorisatie"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Er bestaat geen gebruikerscontract: security-regressietests zijn interne kwaliteitsborging zonder route, invoer of terugkoppeling voor de sporter.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.214",
+     "rationale": "Relevante failure modes zijn benoemd en afgevangen: de suites bewijzen dat ongeauthenticeerde en ongeautoriseerde verzoeken deterministisch worden geweigerd. Geen sabotagetest die de dekking zelf fail-closed maakt, dus geen 4.",
+     "evidence_refs": [
+      "core/fDeleteAccountSecurity.test.js#ongeauthenticeerd-geweigerd"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.571",
+     "rationale": "Geen enkele gap noemt deze capability in primary_capability_id of affected_capability_ids met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over alle 60 canonieke gaps. Anker 4.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "SEC-USERROLE-001",
+   "primary_track": "T17",
+   "v1_scope": true,
+   "applicable_weight": 80,
+   "weighted_numerator": 285,
+   "unrounded_quotient": "3.5625",
+   "weighted_score": "3.563",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.250",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als bescherming tegen self-service privilege-escalatie op users.gym_role, gym_id en system_role, met code-verwijzing naar de migratie en afbakening tegen het rollenmodel zelf.",
+     "evidence_refs": [
+      "docs/CAPABILITY_REGISTRY.md#SEC-USERROLE-001",
+      "migratie_v497.sql"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.750",
+     "rationale": "migratie_v497.sql is de enige eigenaar van de escalatiebescherming, met negen treffers die de trigger en het beleid vastleggen. Alternatieven geinventariseerd, geen onbeheerst shadow-pad. Geen guard tegen een tweede beschermingspad, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v497.sql#gym_role",
+      "migratie_v497.sql#system_role"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.563",
+     "rationale": "Productie-callers bewezen op de datalaag: de trigger is actief op de users-tabel en wordt geraakt bij elke rolwijziging vanuit de applicatie. Geen volledige payload-chain van entrypoint tot consument aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v497.sql#trigger",
+      "netlify/functions/coach.js"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.500",
+     "rationale": "De users-tabel heeft schema, owner-binding en een migratiehistorie waarin de beschermde kolommen expliciet zijn vastgelegd. Versionering en historiebehoud van rolwijzigingen zijn niet aangetoond, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v497.sql#users",
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Privilege-escalatiebescherming neemt architectonisch niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision naar athlete; het betreft een datalaagtrigger zonder enige engine-referentie.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.563",
+     "rationale": "BEHAVIORAL_UNIT: core/fCoachEnforcement.test.js requiret netlify/functions/coach.js en voert de rolhandhaving uit met acht adversarial-markers. Geen vm-runtime over de echte call-chain, dus geen 4; de adversarial markers bewijzen geen fail-closed over de trigger zelf, dus geen 5.",
+     "evidence_refs": [
+      "core/fCoachEnforcement.test.js#require(coach.js)"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.250",
+     "rationale": "Enforcement aangetoond op de datalaag via een BEFORE UPDATE-trigger die zelf toegekende rolverhoging blokkeert, met uitgevoerd testbewijs op de handhaving. Capability-specifiek dekkend auditbewijs over alle escalatieroutes ontbreekt, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v497.sql#trigger",
+      "core/fCoachEnforcement.test.js"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Er bestaat geen gebruikerscontract: escalatiebescherming is datalaagbeleid zonder route, invoer of terugkoppeling voor de sporter; het rollenmodel zelf valt aantoonbaar buiten deze capability.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.188",
+     "rationale": "Relevante failure modes zijn benoemd en afgevangen: een poging tot zelf toegekende rolverhoging wordt geweigerd in plaats van stil toegestaan, met uitgevoerd testbewijs. Geen sabotagetest die fail-closed over alle kolommen afdwingt, dus geen 4.",
+     "evidence_refs": [
+      "core/fCoachEnforcement.test.js#geweigerd",
+      "migratie_v497.sql#trigger"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.500",
+     "rationale": "Geen enkele gap noemt deze capability in primary_capability_id of affected_capability_ids met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over alle 60 canonieke gaps. Anker 4.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  }
+ ]
+}

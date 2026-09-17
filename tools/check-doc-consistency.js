@@ -571,6 +571,30 @@ try {
       if (!/ten minste één V1-capability/.test(baseline)) problems.push('capability-based tracknoemer ontbreekt in het baselinemodel');
     }
 
+    // ── Model v1.2 N/A-semantiek: een enkele gedeelde beslisfunctie ──
+    // Canoniek model (na_model): allowed_criteria ['D','E','G','H'],
+    // forbidden_criteria ['A','B','C','F','I'], j_rule "J is N/A uitsluitend bij
+    // v1_scope false". De guard dwingt dit af en herdefinieert het niet.
+    const naAllowed = function (criterion, capV1Scope) {
+      if (criterion === 'J') return capV1Scope === false;
+      return ['D', 'E', 'G', 'H'].indexOf(criterion) >= 0;
+    };
+    // Zelfvalidatie van de beslisfunctie zelf: faalt de guard hier, dan is de
+    // N/A-handhaving elders in dit bestand niet te vertrouwen.
+    (function naSelfTest() {
+      const cases = [
+        ['D', true, true], ['E', true, true], ['G', true, true], ['H', true, true],
+        ['A', true, false], ['B', true, false], ['C', true, false], ['F', true, false], ['I', true, false],
+        ['J', true, false], ['J', false, true],
+        ['A', false, false], ['B', false, false], ['C', false, false], ['F', false, false], ['I', false, false]
+      ];
+      cases.forEach(function (c) {
+        if (naAllowed(c[0], c[1]) !== c[2]) {
+          problems.push('naAllowed zelftest faalt: criterium ' + c[0] + ', v1_scope ' + c[1] + ' zou ' + c[2] + ' moeten zijn');
+        }
+      });
+    })();
+
     // ── Batch B-prime: Model-v1.2 auditartefact ──
     (function bPrimeGuard() {
       const halfUp = function (x, dp) {
@@ -591,7 +615,6 @@ try {
         'CALC-EVIDENCE-SPEC-001': '3.059', 'CTX-CONTRACT-001': '1.941', 'WEATHER-CONTEXT-001': '3.000',
         'DEC-CORE-001': '3.833', 'DEC-RULE-REGISTRY-001': '3.176', 'SCHEDULE-ADHERENCE-001': '3.176' };
       const CRIT = ['A','B','C','D','E','F','G','H','I','J'];
-      const NA_OK = ['D','E','G','H','J'];
       const CONF = ['HIGH','MEDIUM','LOW'];
       const caps = b.capabilities || [];
       if (caps.length !== 13) problems.push('B-prime heeft ' + caps.length + ' capabilities, verwacht 13');
@@ -619,7 +642,7 @@ try {
           if (CONF.indexOf(r.confidence) < 0) problems.push('B-prime ' + id + '/' + k + ' ongeldige confidence');
           if (r.applicable === false) {
             na++;
-            if (NA_OK.indexOf(k) < 0) problems.push('B-prime N/A niet toegestaan op ' + id + '/' + k);
+            if (!naAllowed(k, c.v1_scope)) problems.push('B-prime N/A niet toegestaan op ' + id + '/' + k + (k === 'J' ? ' (J mag alleen N/A bij v1_scope false)' : ''));
             if (!r.na_rationale) problems.push('B-prime N/A zonder rationale: ' + id + '/' + k);
             return;
           }
@@ -687,7 +710,6 @@ try {
         'TRAIN-ONBOARDING-001': '3.050', 'TRAIN-HOME-001': '2.778', 'EXERCISE-CATALOG-001': '3.176',
         'EXERCISE-INTELLIGENCE-001': '3.263', 'EXERCISE-SUBSTITUTION-001': '2.947', 'EXERCISE-MEDIA-001': '3.444' };
       const CRIT = ['A','B','C','D','E','F','G','H','I','J'];
-      const NA_OK = ['D','E','G','H','J'];
       const CONF = ['HIGH','MEDIUM','LOW'];
       const caps = a.capabilities || [];
       if (caps.length !== 9) problems.push('A-prime heeft ' + caps.length + ' capabilities, verwacht 9');
@@ -708,7 +730,7 @@ try {
           recs++;
           if (CONF.indexOf(r.confidence) < 0) problems.push('A-prime ' + id + '/' + k + ' ongeldige confidence');
           if (r.applicable === false) {
-            if (NA_OK.indexOf(k) < 0) problems.push('A-prime N/A niet toegestaan op ' + id + '/' + k);
+            if (!naAllowed(k, c.v1_scope)) problems.push('A-prime N/A niet toegestaan op ' + id + '/' + k + (k === 'J' ? ' (J mag alleen N/A bij v1_scope false)' : ''));
             if (!r.na_rationale) problems.push('A-prime N/A zonder rationale: ' + id + '/' + k);
             return;
           }
@@ -941,7 +963,7 @@ try {
             CRIT.forEach(function (k) {
               const r = (c.criteria || {})[k]; if (!r) return;
               if (r.applicable === false) { if (!r.na_rationale) problems.push('v1 N/A zonder rationale: ' + c.stable_id + '/' + k);
-                else if (['D','E','G','H','J'].indexOf(k) < 0) problems.push('v1 N/A niet toegestaan op criterium ' + k + ': ' + c.stable_id); return; }
+                else if (!naAllowed(k, c.v1_scope)) problems.push('v1 N/A niet toegestaan op criterium ' + k + ': ' + c.stable_id + (k === 'J' ? ' (J mag alleen N/A bij v1_scope false)' : '')); return; }
               if (!r.evidence_refs || !r.evidence_refs.length) problems.push('v1 criterium zonder evidence_refs: ' + c.stable_id + '/' + k);
               else { const key = JSON.stringify(r.evidence_refs); if (seenRefs[key]) problems.push('v1 gedeelde evidence_refs over criteria: ' + c.stable_id + '/' + k); seenRefs[key] = 1; }
               if (r.rationale === 'zie evidence_refs') problems.push('v1 generieke rationale verboden: ' + c.stable_id + '/' + k);

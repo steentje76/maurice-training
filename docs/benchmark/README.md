@@ -24,7 +24,7 @@ Do not commit competitor binaries, credentials, extracted proprietary source, co
 - [AUDIT_METHOD.md](AUDIT_METHOD.md) — repeatable external audit protocol.
 - [SOLUTION_PATTERNS.md](SOLUTION_PATTERNS.md) — cross-competitor technical/product solution catalogue.
 - [COMPETITOR_MATRIX.md](COMPETITOR_MATRIX.md) — evidence-based comparison index.
-- [competitors/hevy-3.1.9.md](competitors/hevy-3.1.9.md) — complete static Hevy audit.\n- [competitors/fitbod-8.31.0-4.md](competitors/fitbod-8.31.0-4.md) — complete static Fitbod audit.\n- [competitors/runna-8.52.1.md](competitors/runna-8.52.1.md) — complete static Runna audit.\n- [competitors/trainheroic-8.36.0.md](competitors/trainheroic-8.36.0.md) — complete static TrainHeroic audit.
+- [competitors/hevy-3.1.9.md](competitors/hevy-3.1.9.md) — complete static Hevy audit.\n- [competitors/fitbod-8.31.0-4.md](competitors/fitbod-8.31.0-4.md) — complete static Fitbod audit.\n- [competitors/runna-8.52.1.md](competitors/runna-8.52.1.md) — complete static Runna audit.\n- [competitors/trainheroic-8.36.0.md](competitors/trainheroic-8.36.0.md) — complete static TrainHeroic audit.\n- [competitors/boostcamp-264.md](competitors/boostcamp-264.md) — complete static Boostcamp audit.
 
 ## Promotion rule
 A competitor finding does **not** become a roadmap item automatically. Before promotion:

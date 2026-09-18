@@ -1,0 +1,556 @@
+{
+ "_schema": "trainingskompas-aj-audit-batch/1.2",
+ "batch": "T14_PRIME",
+ "tracks": [
+  "T14"
+ ],
+ "audit_model_id": "trainingskompas-aj/v1.2",
+ "audit_model_version": "1.2",
+ "audit_model_fingerprint": "sha256:82891683aad13cccf779a13783d90bb77279cbab5dfd035989607226fa0a9264",
+ "canonicalization_baseline_sha": "da3c6a42b910a9ee3b8007f212df57285fe82ccc",
+ "complete": true,
+ "record_count": 30,
+ "capability_count": 3,
+ "na_record_count": 3,
+ "scored_record_count": 27,
+ "na_distribution": {
+  "D": 1,
+  "G": 1,
+  "E": 1
+ },
+ "confidence_distribution": {
+  "HIGH": 21,
+  "MEDIUM": 9
+ },
+ "f_distribution": {
+  "F3": 3
+ },
+ "weights": {
+  "A": 5,
+  "B": 15,
+  "C": 15,
+  "D": 10,
+  "E": 10,
+  "F": 15,
+  "G": 5,
+  "H": 10,
+  "I": 5,
+  "J": 10
+ },
+ "anchors_frozen": true,
+ "supersedes_historical": false,
+ "historical_comparison": "NOT_COMPARABLE: er bestaat geen historische T14-trackscore.",
+ "evidence_methodology": "Iedere criterium-score rust op criterium-specifieke evidence die reproduceerbaar is op de canonicalisatie-baseline. Voor criterium F is de evidence-class bepaald uit de uitvoeringsvorm van de test: vm.runInContext geldt als INTEGRATION_RUNTIME, require van een core-module of serverfunctie als BEHAVIORAL_UNIT, en bron- of stringinspectie als DOCUMENTATION_ONLY. De F-ladder is cumulatief. Script-load, import en test-import zijn nergens als runtime-integratie geteld: een module die wel geladen maar niet aangeroepen wordt, blijft op criterium C begrensd op anker 1. Confidence volgt de canonieke semantiek waarin HIGH direct capability-specifiek bewijs vereist, is per record afzonderlijk toegekend met een eigen confidence_basis, en is pas na het laatste record geaggregeerd; confidence stuurt geen enkele score.",
+ "track_notes": "coachAccess.js is ACTIVE_CANONICAL en coachRoster.js ACTIVE_SUPPORTING. coachIntelligence.js en coachProgram.js zijn TEST_ONLY met nul script-tag en nul productie-callers; geen actief alternatief vervult hun volledige V1-verantwoordelijkheid, vastgelegd als GAP-P3-037 en GAP-P3-038. Geen van beide is SHADOW_ACTIVE.",
+ "track_results": {
+  "T14": {
+   "score": "2.763",
+   "percentage": "55.26",
+   "capability_count": 3,
+   "sum_of_stored_scores": "8.290",
+   "arithmetic": "som van de OPGESLAGEN driedecimale capabilityscores gedeeld door het aantal capabilities, ROUND_HALF_UP op 3 decimalen; percentage uit de opgeslagen trackscore gedeeld door 5 maal 100, ROUND_HALF_UP op 2 decimalen",
+   "historical_pre_v1_score": null,
+   "historical_note": "NOT_COMPARABLE"
+  }
+ },
+ "capabilities": [
+  {
+   "stable_id": "COACH-INTELLIGENCE-001",
+   "primary_track": "T14",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_numerator": 205,
+   "unrounded_quotient": "2.411764705882352941176470588",
+   "weighted_score": "2.412",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index plus registry",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.235",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als coach-intelligentie en aanbevelingen. Geen acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#COACH-INTELLIGENCE-001",
+      "docs/CAPABILITY_REGISTRY.md#COACH-INTELLIGENCE-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "registry-aangewezen drager, concrete file met export",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "De door de registry aangewezen drager bestaat met benoemde export CoachIntelligenceCore en is als TEST_ONLY geclassificeerd. Anker 3 toelaatbaar; geen bewezen beheersing van alternatieven, dus geen 4.",
+     "evidence_refs": [
+      "core/coachIntelligence.js",
+      "docs/CAPABILITY_REGISTRY.md#COACH-INTELLIGENCE-001"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtend direct negatief bewijs naast positieve zustertellingen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 1,
+     "weighted_contribution": "0.176",
+     "rationale": "Module bestaat maar heeft geen productie-caller: nul script-tag en nul aanroepen in index.html, nul in netlify, tegenover een aanroep voor CoachAccessCore en twee voor CoachRosterCore in dezelfde bundel. Script-tag noch test is runtime; Model v1.2 begrenst dit op anker 1.",
+     "evidence_refs": [
+      "core/coachIntelligence.js",
+      "index.html#nul-CoachIntelligenceCore"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De intelligentielaag is bewijsbaar stateless: zij leidt per aanroep af uit reeds gepersisteerde atleetdata en kent geen eigen migratietabel of persistentie-aanroep.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "volgt uit de dormancy, geen directe ketenobservatie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.235",
+     "rationale": "Losse koppeling: de laag zou beslisuitkomsten voor de coach duiden, maar zonder productie-caller is de keten niet aangetoond. Fundament aanwezig, dus anker 2.",
+     "evidence_refs": [
+      "core/coachIntelligence.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "suite requiret de module",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "BEHAVIORAL_UNIT: de suite requiret coachIntelligence.js en coachAccess.js en voert het gedrag uit. Geen vm-runtime, dus geen 4. Dat een dormante module getest is, verhoogt C niet.",
+     "evidence_refs": [
+      "core/fCoachIntelligenceCore.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De intelligentielaag rekent over data die de coach via coachAccess al geautoriseerd ziet; de autorisatiegrens zelf hoort bij COACH-RELATIONSHIP-001. Nul auth-beslissing in de module.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de dormancy",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.235",
+     "rationale": "Er is coachfunctionaliteit in de app, maar zonder aangeroepen intelligentielaag is de keten van ontdekken naar gebruiken voor deze capability niet bruikbaar bewezen. Fundament aanwezig, dus anker 2.",
+     "evidence_refs": [
+      "core/coachIntelligence.js"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de dormancy",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.118",
+     "rationale": "Generieke afhandeling: zonder productie-caller is er geen capability-specifiek bewijs van gedrag bij ontbrekende atleetdata. Maximaal 2.",
+     "evidence_refs": [
+      "core/coachIntelligence.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "directe gaprelatie met vastgelegde semantiek",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "Volledig A-J geauditeerd met een bewezen, nonduplicate open V1-gap zonder blocker: GAP-P3-037 met primary COACH-INTELLIGENCE-001, v1_scope true, status OPEN en blocker false. Anker 3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-037"
+     ],
+     "gap_refs": [
+      "GAP-P3-037"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "COACH-PROGRAM-ASSIGNMENT-001",
+   "primary_track": "T14",
+   "v1_scope": true,
+   "applicable_weight": 100,
+   "weighted_numerator": 260,
+   "unrounded_quotient": "2.6",
+   "weighted_score": "2.600",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index plus registry",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.200",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als toewijzing en programmering door de coach. Geen acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#COACH-PROGRAM-ASSIGNMENT-001",
+      "docs/CAPABILITY_REGISTRY.md#COACH-PROGRAM-ASSIGNMENT-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "registry-aangewezen drager met export",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "De door de registry aangewezen drager bestaat met export CoachProgramCore en is als TEST_ONLY geclassificeerd. Geen beheersing van alternatieven, dus geen 4.",
+     "evidence_refs": [
+      "core/coachProgram.js",
+      "docs/CAPABILITY_REGISTRY.md#COACH-PROGRAM-ASSIGNMENT-001"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtend direct negatief bewijs",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 1,
+     "weighted_contribution": "0.150",
+     "rationale": "Nul script-tag en nul aanroepen in index.html, nul in netlify. Dat de persistentie wel bestaat verandert dit niet: schema is geen runtime-integratie. Anker 1.",
+     "evidence_refs": [
+      "core/coachProgram.js",
+      "index.html#nul-CoachProgramCore"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs over zeven bestanden",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.400",
+     "rationale": "Volledige lifecycle en migratiehistorie: coach_program_assignments in zeven migratiebestanden, met templates als tweede tabel. Geen versionering, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v*.sql#coach_program_assignments",
+      "migratie_v*.sql#coach_program_templates"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "volgt uit de dormancy",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.200",
+     "rationale": "Losse koppeling: toewijzing zou de programmaflow voeden maar de keten is zonder caller niet aangetoond. Anker 2.",
+     "evidence_refs": [
+      "core/coachProgram.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "suite requiret de module",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "BEHAVIORAL_UNIT: de suite requiret coachProgram.js en coachAccess.js en voert het toewijzingsgedrag uit. Geen vm-runtime, dus geen 4.",
+     "evidence_refs": [
+      "core/fCoachProgramCore.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "RLS-suite plus migratiebewijs",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "Enforcement op de datalaag: de toewijzingstabellen dragen RLS-policies, met een eigen RLS-suite. Geen dekkend auditbewijs over de grens, dus geen 4.",
+     "evidence_refs": [
+      "core/fCoachProgramRls.test.js",
+      "migratie_v*.sql#coach_program_assignments"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de dormancy",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.200",
+     "rationale": "Zonder aangeroepen toewijzingslaag is de keten van ontdekken naar gebruiken niet bruikbaar bewezen. Anker 2.",
+     "evidence_refs": [
+      "core/coachProgram.js"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de dormancy",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.100",
+     "rationale": "Geen capability-specifiek bewijs van gedrag bij een ingetrokken of ongeldige toewijzing. Maximaal 2.",
+     "evidence_refs": [
+      "core/coachProgram.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "directe gaprelatie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Volledig geauditeerd met bewezen nonduplicate open V1-gap zonder blocker: GAP-P3-038 met primary COACH-PROGRAM-ASSIGNMENT-001, v1_scope true, status OPEN en blocker false. Anker 3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-038"
+     ],
+     "gap_refs": [
+      "GAP-P3-038"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "COACH-RELATIONSHIP-001",
+   "primary_track": "T14",
+   "v1_scope": true,
+   "applicable_weight": 90,
+   "weighted_numerator": 295,
+   "unrounded_quotient": "3.277777777777777777777777778",
+   "weighted_score": "3.278",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index plus registry",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als atleet-coachrelatie en autorisatie. Geen acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#COACH-RELATIONSHIP-001",
+      "docs/CAPABILITY_REGISTRY.md#COACH-RELATIONSHIP-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "twee modules zonder afgedwongen exclusiviteit",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "Hoofdimplementatie aanwijsbaar in twee script-geladen modules met benoemde exports; parallelle paden geinventariseerd. Geen guard, dus geen 4.",
+     "evidence_refs": [
+      "core/coachAccess.js",
+      "core/coachRoster.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "concrete aanroepen in index.html",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "Productie-callers bewezen met bestandsverwijzing: CoachAccessCore eenmaal en CoachRosterCore tweemaal aangeroepen. Geen volledige payload-chain van ingang tot consument, dus geen 4.",
+     "evidence_refs": [
+      "index.html#CoachAccessCore",
+      "index.html#CoachRosterCore"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs op de relatietabellen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Volledige lifecycle en migratiehistorie: coach_access_scopes in twee migratiebestanden, naast coach_private_notes en coach_workout_feedback. Geen versionering, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v*.sql#coach_access_scopes",
+      "migratie_v*.sql#coach_private_notes"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul engine-referenties",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De relatie- en autorisatielaag neemt niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision; zij bepaalt wie wat mag zien en rekent niets. Nul engine-referenties in beide modules.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "twee suites die de eigen module requiren",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "BEHAVIORAL_UNIT: beide suites requiren hun module en voeren het toegangs- en rostergedrag uit. Geen vm-runtime over de echte call-chain, dus geen 4.",
+     "evidence_refs": [
+      "core/fCoachAccessCore.test.js",
+      "core/fCoachRosterCore.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "RLS-suite plus migratiebewijs",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "Enforcement op de datalaag: de toegangstabellen dragen RLS-policies met een eigen RLS-suite. Geen adversarial tweerekeningbewijs, dus geen 4.",
+     "evidence_refs": [
+      "core/fCoachAccessRls.test.js",
+      "migratie_v*.sql#coach_access_scopes"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "aanroep met weergave; keten niet per stap geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "Ontdekken naar gebruiken bruikbaar bewezen: de coach bereikt zijn roster en ziet de gekoppelde atleten. Terugkoppeling niet volledig aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#CoachRosterCore"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de toegangssuite",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "Relevante failure modes afgevangen: een ontbrekende of ingetrokken scope levert geen toegang op in plaats van een stille doorlaat. Geen deterministisch bewijs over de hele capability, dus geen 4.",
+     "evidence_refs": [
+      "core/fCoachAccessCore.test.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtende registercontrole",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Geen gap noemt deze capability met v1_scope true en status OPEN of REVIEW_REQUIRED; het huidige register spreekt dit niet tegen.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  }
+ ]
+}

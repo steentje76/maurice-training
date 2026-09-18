@@ -1,0 +1,1044 @@
+{
+ "_schema": "trainingskompas-aj-audit-batch/1.2",
+ "batch": "T8_PRIME",
+ "tracks": [
+  "T8"
+ ],
+ "audit_model_id": "trainingskompas-aj/v1.2",
+ "audit_model_version": "1.2",
+ "audit_model_fingerprint": "sha256:82891683aad13cccf779a13783d90bb77279cbab5dfd035989607226fa0a9264",
+ "canonicalization_baseline_sha": "da3c6a42b910a9ee3b8007f212df57285fe82ccc",
+ "complete": true,
+ "record_count": 60,
+ "capability_count": 6,
+ "na_record_count": 10,
+ "scored_record_count": 50,
+ "na_distribution": {
+  "D": 5,
+  "E": 1,
+  "G": 4
+ },
+ "confidence_distribution": {
+  "HIGH": 41,
+  "MEDIUM": 19
+ },
+ "f_distribution": {
+  "F3": 4,
+  "F2": 2
+ },
+ "weights": {
+  "A": 5,
+  "B": 15,
+  "C": 15,
+  "D": 10,
+  "E": 10,
+  "F": 15,
+  "G": 5,
+  "H": 10,
+  "I": 5,
+  "J": 10
+ },
+ "anchors_frozen": true,
+ "supersedes_historical": false,
+ "historical_comparison": "NOT_COMPARABLE: er bestaat geen historische T8-trackscore.",
+ "evidence_methodology": "Iedere criterium-score rust op criterium-specifieke evidence die reproduceerbaar is op de canonicalisatie-baseline. Voor criterium F is de evidence-class bepaald uit de uitvoeringsvorm van de test: vm.runInContext geldt als INTEGRATION_RUNTIME, require van een core-module of serverfunctie als BEHAVIORAL_UNIT, en bron- of stringinspectie als DOCUMENTATION_ONLY. De F-ladder is cumulatief. Script-load, import en test-import zijn nergens als runtime-integratie geteld: een module die wel geladen maar niet aangeroepen wordt, blijft op criterium C begrensd op anker 1. Confidence volgt de canonieke semantiek waarin HIGH direct capability-specifiek bewijs vereist, is per record afzonderlijk toegekend met een eigen confidence_basis, en is pas na het laatste record geaggregeerd; confidence stuurt geen enkele score.",
+ "track_notes": "AI-architectuur: 7 ruwe call-sites naar /.netlify/functions/coach over 7 aanroepende functies en 5 logische requestType-stromen. Geen verboden AI-zijdige herberekening, geen fabricage van ontbrekende numerieke data en geen nieuwe trainingsregels aangetroffen; AIOutputContract valideert de uitvoer en er bestaat een deterministische terugval. AI-PROGRAM-AUTOGEN-001 is CANONICAL_ACTIVE via de Nederlandstalige functie genereerProgramma.",
+ "track_results": {
+  "T8": {
+   "score": "3.266",
+   "percentage": "65.32",
+   "capability_count": 6,
+   "sum_of_stored_scores": "19.595",
+   "arithmetic": "som van de OPGESLAGEN driedecimale capabilityscores gedeeld door het aantal capabilities, ROUND_HALF_UP op 3 decimalen; percentage uit de opgeslagen trackscore gedeeld door 5 maal 100, ROUND_HALF_UP op 2 decimalen",
+   "historical_pre_v1_score": null,
+   "historical_note": "NOT_COMPARABLE"
+  }
+ },
+ "capabilities": [
+  {
+   "stable_id": "AI-COACH-001",
+   "primary_track": "T8",
+   "v1_scope": true,
+   "applicable_weight": 90,
+   "weighted_numerator": 315,
+   "unrounded_quotient": "3.5",
+   "weighted_score": "3.500",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record met v1_scope plus registry-rij",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Verantwoordelijkheid, afbakening tegen het outputcontract en v1_scope canoniek vastgelegd. Geen versioneerbaar acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#AI-COACH-001",
+      "docs/CAPABILITY_REGISTRY.md#AI-COACH-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "zeven callers is een aggregaat, geen eigenaarsmodule",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "Hoofdimplementatie aanwijsbaar als zeven aanroepende functies boven een serverproxy; parallelle paden geinventariseerd. Geen enkele eigenaarsmodule en geen guard, dus geen 4.",
+     "evidence_refs": [
+      "index.html#sendMsg",
+      "index.html#generateSessionSummaryAI",
+      "netlify/functions/coach.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "concrete functie, endpoint en consument met payloadpad",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.667",
+     "rationale": "Volledige keten bewezen: sendMsg naar fetch op /.netlify/functions/coach met requestType chat, daarna AIOutputContract.validateAiOutputText en weergave. Niet alle vijf stromen convergeren op een ingang, dus geen 5.",
+     "evidence_refs": [
+      "index.html#sendMsg",
+      "netlify/functions/coach.js",
+      "index.html#AIOutputContract"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul migratietabel, nul persistentie-aanroep",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De coachdialoog is bewijsbaar stateless: er bestaat geen gespreks- of berichttabel in de migratielaag en sendMsg kent geen persistentie-aanroep.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "concrete aanroep plus de letterlijke contextkop in de prompt",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Volledige relevante keten zonder bypass: de AI ontvangt reeds door CalcCore, ProgressionCore en DecisionCore berekende waarden en krijgt de instructie die te verwoorden. Geen afdwinging van de keten, dus geen 5.",
+     "evidence_refs": [
+      "index.html#CoachingCore.aiPayload",
+      "index.html#DETERMINISTISCHE-PRESTATIE-CONTEXT"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitvoeringsvorm per suite geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "BEHAVIORAL_UNIT: beide suites requiren netlify/functions/coach.js en voeren gedrag uit. Geen vm-runtime over de echte call-chain, dus geen 4.",
+     "evidence_refs": [
+      "core/fCoachEnforcement.test.js",
+      "core/fCoachProxySecurity.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "serverfunctie plus governance-suite",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "Enforcement op serverniveau: de sleutel staat nooit in de client, de proxy vereist een Authorization-header en kent entitlements. Geen dekkend auditbewijs over de hele grens, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/coach.js",
+      "core/fAiGovernanceServerSide.test.js"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "route aanwijsbaar; keten niet per stap geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "Ontdekken naar gebruiken bruikbaar bewezen: het coachscherm is bereikbaar en het antwoord verschijnt in de dialoog. Terugkoppeling en vervolgactie niet volledig aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#s-coach"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "drie expliciete terugvalpaden in het aanroeppad",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Unknown blijft unknown, deterministisch: bij endpointfout, afgekeurde uitvoer of quotum valt de app terug op de reeds berekende CoachingCore.buildCoachConclusion, nooit op een verzonnen tekst. Geen fail-closed sabotagetest, dus geen 5.",
+     "evidence_refs": [
+      "index.html#detConclusion",
+      "index.html#safeCoachFallback",
+      "index.html#QUOTA_EXCEEDED"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtende registercontrole",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Geen gap noemt deze capability met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over alle 63 records.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "AI-OUTPUT-CONTRACT-001",
+   "primary_track": "T8",
+   "v1_scope": true,
+   "applicable_weight": 75,
+   "weighted_numerator": 265,
+   "unrounded_quotient": "3.533333333333333333333333333",
+   "weighted_score": "3.533",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index plus registry",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.267",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als uitvoercontract dat verboden taal tegenhoudt. Geen versioneerbaar acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#AI-OUTPUT-CONTRACT-001",
+      "docs/CAPABILITY_REGISTRY.md#AI-OUTPUT-CONTRACT-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "concrete file met exclusieve eigenaarsrol",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.800",
+     "rationale": "Een aanwijsbare eigenaarsmodule met benoemde export; alle AI-oppervlakken lopen erlangs en er is geen tweede validatielaag aangetroffen. Geen guard die een tweede pad uitsluit, dus geen 5.",
+     "evidence_refs": [
+      "core/aiOutputContract.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "concrete aanroepen met consument per stroom",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.800",
+     "rationale": "Volledige keten bewezen over meerdere consumenten: acht aanroepen waarvan vijf validaties in de coach-, samenvattings- en kennisstroom, elk gevolgd door een terugval. Geen convergentiebewijs voor alle ingangen, dus geen 5.",
+     "evidence_refs": [
+      "index.html#AIOutputContract",
+      "index.html#validateAiOutputText"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Het contract is een pure validatiefunctie zonder eigen opslag: nul persistentie-aanroep en nul migratietabel.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul engine-referenties",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Het contract neemt niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision; het keurt tekst en rekent niets. Nul engine-referenties in de module.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "suite requiret de module",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.600",
+     "rationale": "BEHAVIORAL_UNIT: de suite requiret aiOutputContract.js en voert het validatiegedrag uit. Geen vm-runtime, dus geen 4.",
+     "evidence_refs": [
+      "core/fAiOutputContract.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Het contract kent geen trust boundary, authenticatie of persoonsgegeven; de serverproxy draagt die grens. Nul auth- of credentialreferenties in de module.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "zichtbaar effect afgeleid uit het terugvalpad",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.400",
+     "rationale": "Ontdekken naar gebruiken bruikbaar bewezen: bij afkeuring ziet de sporter de deterministische terugvaltekst in plaats van een leeg veld. Geen terugkoppeling over de afkeuring zelf, dus geen 4.",
+     "evidence_refs": [
+      "index.html#safeCoachFallback"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "drie aanroepen plus suite",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.267",
+     "rationale": "Unknown blijft unknown: afgekeurde uitvoer wordt nooit doorgelaten en nooit aangevuld; drie terugvalaanroepen. Geen fail-closed sabotagetest, dus geen 5.",
+     "evidence_refs": [
+      "index.html#safeCoachFallback",
+      "core/fAiOutputContract.test.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "directe gaprelatie met status en blocker",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.400",
+     "rationale": "GAP-P2-016 raakt deze capability met v1_scope true en status OPEN; blocker staat op REVIEW_REQUIRED en is niet als true bewezen, dus nonblocking.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-016"
+     ],
+     "gap_refs": [
+      "GAP-P2-016"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "AI-PROGRAM-AUTOGEN-001",
+   "primary_track": "T8",
+   "v1_scope": true,
+   "applicable_weight": 100,
+   "weighted_numerator": 315,
+   "unrounded_quotient": "3.15",
+   "weighted_score": "3.150",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index plus registry",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.200",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als AI-programmageneratie. Geen acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#AI-PROGRAM-AUTOGEN-001",
+      "docs/CAPABILITY_REGISTRY.md#AI-PROGRAM-AUTOGEN-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "functies aanwijsbaar, geen modulaire eigenaar",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "Hoofdimplementatie aanwijsbaar in twee Nederlandstalige functies; parallelle paden geinventariseerd. Geen eigenaarsmodule, geen guard, dus geen 4.",
+     "evidence_refs": [
+      "index.html#genereerProgramma",
+      "index.html#heergenereerResterendeWeken"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "functie, trigger en endpoint met payloadpad",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.600",
+     "rationale": "Volledige keten: knop naar genereerProgramma naar endpoint met requestType program_generation naar het wegschrijven van programmablokken. Drie referenties waaronder de UI-trigger. Geen convergentie van alle generatie-ingangen, dus geen 5.",
+     "evidence_refs": [
+      "index.html#genereerProgramma",
+      "netlify/functions/coach.js"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs op beide doeltabellen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Persistentie met owner-binding: gegenereerde programma s landen in programs en program_blocks, aanwezig in vijf migratiebestanden. Geen eigen lifecycle voor generatie, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#programs",
+      "migratie_v*.sql#program_blocks"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "deelname afgeleid uit het aanroeppad",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Deel van de keten aangetoond: de generatie krijgt trainingscontext mee en de uitkomst voedt de programmaflow. Niet edge-voor-edge bewezen, dus geen 4.",
+     "evidence_refs": [
+      "index.html#genereerProgramma"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "gericht gezocht, nul capability-specifieke uitvoerende suite",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.300",
+     "rationale": "DOCUMENTATION_ONLY: gericht gezocht naar een suite die genereerProgramma uitvoert; die is er niet. fAvailabilityProgramConflict.test.js is INTEGRATION maar toetst beschikbaarheidsconflicten en is afgewezen als cross-capability evidence.",
+     "evidence_refs": [
+      "index.html#genereerProgramma"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de gedeelde proxy, niet capability-specifiek getoetst",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "Enforcement via dezelfde geauthenticeerde serverproxy als de overige AI-stromen. Geen capability-specifiek dekkend auditbewijs, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/coach.js"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "trigger aanwijsbaar; keten niet per stap geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Ontdekken naar gebruiken bruikbaar bewezen: de generatieknop is bereikbaar en het programma verschijnt daarna in de programmaweergave. Terugkoppeling niet volledig aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#genereerProgramma"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de foutafhandeling in het aanroeppad",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "Relevante failure modes afgevangen: een mislukte generatie schrijft geen half programma weg. Geen deterministisch bewijs dat onbekend onbekend blijft, dus geen 4.",
+     "evidence_refs": [
+      "index.html#genereerProgramma"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtende registercontrole",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.400",
+     "rationale": "Geen relevante open V1-gaprelatie; geverifieerd over alle 63 records.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "BENCHMARK-TRACKING-001",
+   "primary_track": "T8",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_numerator": 200,
+   "unrounded_quotient": "2.352941176470588235294117647",
+   "weighted_score": "2.353",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index plus registry",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.235",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als benchmarkvergelijking. Geen acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#BENCHMARK-TRACKING-001",
+      "docs/CAPABILITY_REGISTRY.md#BENCHMARK-TRACKING-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "telling zonder aanwijsbare eigenaarsmodule",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.353",
+     "rationale": "Werkend fundament zonder aanwijsbare enkele eigenaar: zeven referenties in index.html en een core-module die benchmark raakt, zonder benoemde eigenaarsrol. Dat is anker 2.",
+     "evidence_refs": [
+      "index.html#benchmark"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "referentietelling zonder ketenbewijs",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.353",
+     "rationale": "Caller-aanwezigheid zonder bewezen keten: benchmarkreferenties bestaan maar er is geen aantoonbaar pad van ingang naar consument. Anker 2.",
+     "evidence_refs": [
+      "index.html#benchmark"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul migratietabel",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Er bestaat geen benchmarktabel in de migratielaag; vergelijkingen worden per weergave afgeleid uit reeds opgeslagen sessies.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid, geen directe ketenobservatie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.235",
+     "rationale": "Losse koppeling: benchmarkvergelijking leunt op reeds berekende prestatiewaarden maar kent geen bewezen engine-keten. Fundament aanwezig, dus anker 2.",
+     "evidence_refs": [
+      "index.html#benchmark"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitvoeringsvorm direct geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.353",
+     "rationale": "DOCUMENTATION_ONLY: de suite draagt nul uitvoeringsconstructies en inspecteert bron en structuur als tekst. Anker 2.",
+     "evidence_refs": [
+      "core/fBenchmarkTrackingDoc.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Benchmarkvergelijking gebruikt uitsluitend de eigen reeds afgeschermde prestatiedata van de sporter; geen trust boundary, tweede partij of autorisatiebeslissing.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "geen bewezen route naar gebruik",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.235",
+     "rationale": "UI-elementen bestaan maar de keten van ontdekken naar gebruiken is niet als bruikbaar bewezen. Fundament aanwezig, dus anker 2.",
+     "evidence_refs": [
+      "index.html#benchmark"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "gericht gezocht, geen specifiek faalgedrag gevonden",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.118",
+     "rationale": "Generieke afhandeling: geen capability-specifiek bewijs van gedrag bij ontbrekende vergelijkingsdata. Happy-path-only, dus maximaal 2.",
+     "evidence_refs": [
+      "index.html#benchmark"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtende registercontrole",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.471",
+     "rationale": "Geen relevante open V1-gaprelatie.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "DAILY-COACH-EXPLAINABILITY-001",
+   "primary_track": "T8",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_numerator": 305,
+   "unrounded_quotient": "3.588235294117647058823529412",
+   "weighted_score": "3.588",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index plus registry",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.235",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als uitlegbaarheid van het dagadvies. Geen acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#DAILY-COACH-EXPLAINABILITY-001",
+      "docs/CAPABILITY_REGISTRY.md#DAILY-COACH-EXPLAINABILITY-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "drie functies zonder een eigenaar",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "Hoofdimplementatie aanwijsbaar in drie samenwerkende functies bovenop core/coaching.js en core/decision.js; parallelle paden geinventariseerd. Geen eigenaarsmodule, dus geen 4.",
+     "evidence_refs": [
+      "index.html#buildCoachAdvice",
+      "index.html#dagfactorUitleg",
+      "index.html#renderCoachConclusionCard"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "functies, delegatie en weergavepunt met datapad",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.706",
+     "rationale": "Volledige keten: dagfactor naar DecisionCore.trainReadiness naar buildCoachAdvice met zes referenties naar de kaart met uitleg met twee referenties. Geen convergentie van alle uitlegingangen, dus geen 5.",
+     "evidence_refs": [
+      "index.html#buildCoachAdvice",
+      "index.html#renderCoachConclusionCard",
+      "core/coaching.js"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De uitleg wordt per render afgeleid uit reeds gepersisteerde HRV-, slaap- en herstelwaarden; nul eigen migratietabel, nul persistentie-aanroep.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "expliciete delegatie naar de canonieke beslislaag",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.471",
+     "rationale": "Volledige relevante keten zonder bypass: de zoneclassificatie is expliciet gedelegeerd aan DecisionCore.trainReadiness in plaats van de drempels te dupliceren, met een commentaarregel die precies dat motiveert. Geen afdwinging, dus geen 5.",
+     "evidence_refs": [
+      "index.html#DecisionCore.trainReadiness",
+      "core/decision.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "suite requiret beide dragende modules",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "BEHAVIORAL_UNIT: de suite requiret coaching.js en decision.js en voert het uitleggedrag uit. Geen vm-runtime, dus geen 4.",
+     "evidence_refs": [
+      "core/fDailyCoachExplainability.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De uitleg toont de eigen reeds afgeschermde herstelsignalen van de sporter; geen trust boundary, tweede partij of autorisatiebeslissing.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "volledige uitklapketen met terugkoppeling aanwijsbaar",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.471",
+     "rationale": "Ontdekken, gebruiken en terugkoppeling volledig: de dagfactorkaart is bereikbaar, de knop Waarom vandaag klapt de onderbouwing uit met de gebruikte signalen en bronvermelding, inclusief de melding dat spierherstel een vuistregel is. Geen real-device-bewijs, dus geen 5.",
+     "evidence_refs": [
+      "index.html#toggleDagfactorDetail",
+      "index.html#renderDagfactorDetail"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "een expliciet pad; niet capability-breed bewezen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "Relevante failure modes afgevangen: zonder voldoende metingen meldt de uitleg expliciet de referentiefase in plaats van een oordeel. Geen deterministisch bewijs over de hele capability, dus geen 4.",
+     "evidence_refs": [
+      "index.html#referentiefase"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtende registercontrole",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.471",
+     "rationale": "Geen relevante open V1-gaprelatie.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "EXERCISE-PROGRESSION-COACH-001",
+   "primary_track": "T8",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_numerator": 295,
+   "unrounded_quotient": "3.470588235294117647058823529",
+   "weighted_score": "3.471",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index plus registry",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.235",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als per-oefening progressieadvies. Geen acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#EXERCISE-PROGRESSION-COACH-001",
+      "docs/CAPABILITY_REGISTRY.md#EXERCISE-PROGRESSION-COACH-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "twee dragende modules zonder exclusieve eigenaar",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "Hoofdimplementatie aanwijsbaar in ProgressionCore en DecisionCore; parallelle paden geinventariseerd. Geen guard, dus geen 4.",
+     "evidence_refs": [
+      "core/progression.js",
+      "core/decision.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "beide functies met datapad tussen log en advies",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.706",
+     "rationale": "Volledige keten: set gelogd naar DecisionCore.computeProgression met tien referenties naar showPostSetAdvice met vijf referenties naar de opdracht voor de volgende keer. Geen convergentie van alle ingangen, dus geen 5.",
+     "evidence_refs": [
+      "index.html#computeProgression",
+      "index.html#showPostSetAdvice"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Het advies wordt per set afgeleid uit reeds gepersisteerde sessies; nul eigen migratietabel, nul persistentie-aanroep.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "canonieke beslisregel plus presentatie-only consument",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.471",
+     "rationale": "Volledige relevante keten zonder bypass: de progressieregel staat in de Decision Engine en de UI leest die uitkomst, met renderNextActionsCard als presentatie-only consument. Geen afdwinging, dus geen 5.",
+     "evidence_refs": [
+      "index.html#DecisionCore.computeProgression",
+      "core/decision.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "uitvoeringsvorm geclassificeerd, niet elke assertie capability-specifiek nagelopen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "BEHAVIORAL_UNIT: de bepalende suites requiren de dragende modules en voeren het progressiegedrag uit. Geen vm-runtime over deze keten, dus geen 4.",
+     "evidence_refs": [
+      "core/progression.js",
+      "core/decision.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Het advies rekent over de eigen sets van de sporter; geen trust boundary, tweede partij of autorisatiebeslissing.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "twee weergavepunten; opvolging niet aangetoond",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "Ontdekken naar gebruiken bruikbaar bewezen: het advies verschijnt na de set en de opdracht voor de volgende keer staat op de afrondingskaart. Terugkoppeling op naleving ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "index.html#showPostSetAdvice",
+      "index.html#renderNextActionsCard"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit het lege-uitkomstpad",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "Relevante failure modes afgevangen: zonder vergelijkbare historie wordt geen advies gefabriceerd maar niets getoond. Geen deterministisch bewijs over de hele capability, dus geen 4.",
+     "evidence_refs": [
+      "index.html#showPostSetAdvice"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtende registercontrole",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.471",
+     "rationale": "Geen relevante open V1-gaprelatie.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  }
+ ]
+}

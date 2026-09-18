@@ -4,7 +4,7 @@
   "conflicts": [
     {
       "id": "CONFLICT-CTA-001",
-      "status": "PO_REVIEW_REQUIRED",
+      "status": "RESOLVED_BY_PRECEDENCE",
       "severity": "HARD",
       "topic": "primary CTA color",
       "claims": [
@@ -22,13 +22,20 @@
         }
       ],
       "candidate_resolution": "Supersede H7 primary-button color with PO-approved DS1 teal, but record explicit PO closure before marking RESOLVED.",
-      "blocks": [
-        "design-freeze",
-        "implementation-contract"
-      ],
+      "blocks": [],
       "does_not_block": [
         "scenario-exploration"
-      ]
+      ],
+      "resolution": {
+        "canonical_source": "SRC-DS1",
+        "canonical_value": "#00B894 teal",
+        "basis": "Explicit source precedence: PO_APPROVED Design System outranks HANDBOOK for component rules.",
+        "superseded_claim": {
+          "source": "SRC-H7",
+          "scope": "primary-button-color-only"
+        },
+        "po_action_required": false
+      }
     }
   ],
   "policy": {
@@ -39,6 +46,11 @@
       "newer canonical rule vs stale handbook"
     ],
     "automatic_resolution": "Only when precedence is explicit and no genuine semantic ambiguity remains; otherwise PO_REVIEW_REQUIRED.",
-    "hard_conflict_gate": "zero unresolved HARD conflicts before Design Freeze"
+    "hard_conflict_gate": "zero unresolved HARD conflicts before Design Freeze",
+    "resolved_statuses": [
+      "RESOLVED",
+      "RESOLVED_BY_PRECEDENCE",
+      "DEPRECATED"
+    ]
   }
 }

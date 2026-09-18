@@ -34,3 +34,5 @@ jobs:
         run: node docs/ux-lab/multiflow-canvas-ui.test.js
       - name: Source-backed primary canvas UI gate
         run: node docs/ux-lab/source-backed-canvas-ui.test.js
+      - name: Inzicht source-backed drill-down UI gate
+        run: node docs/ux-lab/insight-drilldown-ui.test.js

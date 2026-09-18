@@ -1,6 +1,6 @@
 # TRAININGSKOMPAS V1 — Scientific Evidence & Decision Audit
 
-**Status:** ACTIVE — foundation/gate 0  
+**Status:** FINALIZED — scientific discovery baseline; remediation pending  
 **Baseline main:** `0dcb7cd542d97bcba13209f3ef9662384edc72f8`  
 **Started:** 2026-09-18  
 **Scope:** scientific validity and claim discipline across Calculation → Context → Decision → AI → athlete.
@@ -105,4 +105,15 @@ These anchors seed the registry; they do not close every calculation that cites 
 
 ## Change policy
 
-This branch starts documentation-only. No production calculation, Decision Rule, database migration or AI prompt may be changed until a scientific finding has a traceable evidence record and a separately reviewed implementation action.
+This audit branch is documentation-only. No production calculation, Decision Rule, database migration or AI prompt was changed.
+
+## Finalization Gate — 2026-09-18
+
+- All 9 domain waves are complete.
+- Evidence Registry is frozen at v1.0 for this discovery baseline.
+- Scientific V1 Gap Report records 50 numbered findings.
+- Four CRITICAL findings (SCI-GAP-V1-006, -034, -040, -045) are the mandatory **P0 Scientific Safety** block of the audit-remediation series.
+- CRITICAL findings do **not** need remediation before this discovery audit is merged; they must remain open and traceable until the remediation series closes them.
+- Scientific V1 release closure is prohibited until all four CRITICAL findings and any HIGH finding capable of unsupported athlete-facing prescription/diagnosis are remediated and re-audited.
+- The merged audit is the frozen scientific zero-measurement/source-of-truth for remediation; remediation changes belong in subsequent reviewed PRs.
+

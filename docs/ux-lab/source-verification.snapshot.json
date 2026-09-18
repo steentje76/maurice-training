@@ -1,0 +1,16 @@
+{
+  "schema_version": "2.2",
+  "verified_against_main": "b7c77e4a2e5d8b995931a32b1c64ad559294c26b",
+  "generated_at": "2026-09-18T21:09:00+02:00",
+  "sources": {
+    "SRC-DS1": "c4993ff01589eeaeae57517ea243846509748d1d",
+    "SRC-ROUTES": "aad7174c24e3e674ef6b134238a4bab3a0395f04",
+    "SRC-BASELINE": "439732b0855aee26226be8fb06e0f4bbeccb6b7a",
+    "SRC-SCREEN": "0f16f867647b4d72796ba0086ad25e7fda8e041d",
+    "SRC-MIGRATION": "0d06cceff14f756d415ba27ae5551745bd5a4091",
+    "SRC-PRES": "fe4b162c39d13c1adfc119beca184f88075a6f16",
+    "SRC-GAP": "b56c9df229df997ff5ab9a33df1a743cd6a0c620",
+    "SRC-H7": "80cd7d7469323028d5d21ea5b581b38da8452251d"
+  },
+  "policy": "Any missing or mismatching source SHA invalidates dependent rules/scenarios and blocks Design Freeze."
+}
